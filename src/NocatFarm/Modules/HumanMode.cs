@@ -307,7 +307,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_switchingTo = 0;
 				Bot.StopPlaying();
 				Bot.ClearPersonaOverride();
-				Log.Info("not playing today - just online", Bot.Name);
+				Log.Info($"not playing today - online but idle until bed about {BedTime():HH:mm}", Bot.Name);
 			}
 
 			return;
@@ -447,7 +447,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			_announcedWarmUp = true;
 			int wait = (int) Math.Max(1, (_readyAt - DateTime.UtcNow).TotalMinutes);
 			Log.Info(_wokeUp
-				? $"awake for the day - warming up for ~{Fmt.Hm(wait)}"
+				? $"awake for the day - warming up for ~{Fmt.Hm(wait)} before it plays"
 				: $"warming up for ~{Fmt.Hm(wait)} before it plays", Bot.Name);
 		}
 
@@ -484,7 +484,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// session.
 		if (HumanDay.Load(Bot.Name, DateTime.Now) is { } saved) {
 			Restore(saved);
-			Log.Info($"picking today's plan back up - {Fmt.Hm(_playedMinutesToday)} of about {Fmt.Hm(_targetMinutes)} already played", Bot.Name);
+			Log.Info($"picking today's plan back up - {Fmt.Hm(_playedMinutesToday)} of about {Fmt.Hm(_targetMinutes)} played, bed about {BedTime():HH:mm}", Bot.Name);
 
 			return;
 		}
@@ -876,7 +876,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 			// "Dropped offline", not "signed out" - it stays connected and simply stops being visible, which to
 			// everyone on the friends list is the same thing and costs nothing in login rate limit.
-			Log.Info($"{what} - dropping offline for about {minutes}m", Bot.Name);
+			Log.Info($"{what} - going offline, back in about {minutes}m", Bot.Name);
 
 			return;
 		}

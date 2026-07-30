@@ -298,7 +298,8 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		_status = $"{done}/{Cap} today";
 
 		if (done >= Cap) {
-			Log.Info($"hit the {Cap}/24h cap - resting this account, the others carry on", Bot.Name);
+			string frees = NextSlot is { } t ? $"until ~{t.ToLocalTime():HH:mm}" : "for now";
+			Log.Info($"hit the {Cap}/24h cap - resting this account {frees}, the others carry on", Bot.Name);
 
 			return 20 * 60;
 		}
