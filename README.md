@@ -74,6 +74,10 @@ nothing but Steam is ever contacted.
 **Console** — the primary interface. Type `help`. Up-arrow history, tab completion in the browser console,
 and `help <setting>` explains any setting in one sentence.
 
+<p align="center">
+  <img src="assets/console.png" alt="The console — every action is also a command" width="880">
+</p>
+
 **Tray** — right-click for Open dashboard · Hide console · Start/Stop all · Exit. Minimising the console hides
 it. `--minimized` boots straight to the tray with no window at all, and *Start with Windows* wires that up for
 you.
