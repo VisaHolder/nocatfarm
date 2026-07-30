@@ -62,6 +62,14 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	}
 	public DateTime? LastPost => _state?.LastPost();
 
+	/// <summary>When this account can next post, or null if it has room right now. The window frees up
+	/// post-by-post as each comment ages past 24h, so this is "the soonest", not a fixed daily reset.</summary>
+	public DateTime? NextSlot => _state?.NextSlotAt(Cap);
+
+	/// <summary>The cap actually in force is a ceiling Steam handed us, lower than the number configured - so
+	/// raising the configured cap will NOT lift it. This is what explains "I set 15 but it's stuck at 10".</summary>
+	public bool CapIsSteamLimit => _state is { CapLearned: true, Cap: > 0 } && (_state.Cap < Math.Max(1, Bot.Cfg.Rep4RepDailyCap));
+
 	/// <summary>Skip the wait and try a post right now. Never skips the daily cap.</summary>
 	public void RunNow() => _forceNext = true;
 

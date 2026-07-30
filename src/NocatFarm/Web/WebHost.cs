@@ -697,7 +697,9 @@ public sealed class WebHost : IAsyncDisposable {
 					Today = mod?.PostsToday ?? 0,
 					Cap = mod?.Cap ?? bot.Cfg.Rep4RepDailyCap,
 					Status = mod?.Status ?? "",
-					LastPost = mod?.LastPost
+					LastPost = mod?.LastPost,
+					NextSlot = mod?.NextSlot,
+					CapIsSteamLimit = mod?.CapIsSteamLimit ?? false
 				};
 			}));
 		});

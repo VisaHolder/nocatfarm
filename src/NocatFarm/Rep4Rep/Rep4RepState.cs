@@ -107,6 +107,26 @@ public sealed class Rep4RepState {
 		return new DateTime(Posts.Max(), DateTimeKind.Utc);
 	}
 
+	/// <summary>
+	/// When the account can next post given <paramref name="cap"/>, or null if there is room right now.
+	///
+	/// This is a ROLLING 24h window, not a midnight reset: the count only drops as each comment ages past 24h.
+	/// To get back under the cap, the oldest posts have to age out - the one that tips it is the (count - cap)th
+	/// oldest, and it frees up exactly 24h after it went out. That is the soonest slot; the window keeps opening
+	/// post-by-post after that.
+	/// </summary>
+	public DateTime? NextSlotAt(int cap) {
+		cap = Math.Max(1, cap);
+		long cutoff = DateTime.UtcNow.AddHours(-24).Ticks;
+		List<long> inWindow = Posts.Where(t => t >= cutoff).OrderBy(static t => t).ToList();
+
+		if (inWindow.Count < cap) {
+			return null;   // room now
+		}
+
+		return new DateTime(inWindow[inWindow.Count - cap], DateTimeKind.Utc).AddHours(24);
+	}
+
 	public bool IsBlocked => BlockedUntil > DateTime.UtcNow.Ticks;
 
 	public bool IsDeadTarget(ulong steamId) =>

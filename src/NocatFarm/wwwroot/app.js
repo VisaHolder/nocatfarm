@@ -132,6 +132,16 @@ function ago(iso) {
   return hm(mins) + ' ago';
 }
 
+// A future time: "in 45m" when it's close, a clock time "~14:30" when it's further off.
+function until(iso) {
+  if (!iso) return '';
+  const mins = Math.round((new Date(iso).getTime() - Date.now()) / 60000);
+  if (mins <= 0) return 'now';
+  if (mins < 90) return 'in ' + hm(mins);
+  const d = new Date(iso);
+  return '~' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+
 // rep4rep is optional and can be switched off entirely (a third-party site many users won't touch). When it's
 // off the whole feature vanishes from the UI. Default to ON if we haven't heard from the server yet.
 const r4rOn = () => !state || state.Rep4RepEnabled !== false;
@@ -943,11 +953,24 @@ async function connectRep4Rep() {
   refresh();
 }
 
+// The "Today" cell: count / cap, plus WHY it's stuck and WHEN it frees up - the two things the rolling window
+// never made obvious.
+function capCell(p) {
+  let s = `${p.Today} / ${p.Cap}`;
+  if (p.CapIsSteamLimit) {
+    s += ` <span class="muted small" data-tip="This is the ceiling Steam enforced on this account, not the number you set - so raising the configured cap won't lift it.">(Steam's limit)</span>`;
+  }
+  if (p.Today >= p.Cap && p.NextSlot) {
+    s += ` <span class="muted small" data-tip="Rolling 24h window: the count drops as each comment ages past 24h. This is the soonest this account can post again.">· frees ${esc(until(p.NextSlot))}</span>`;
+  }
+  return s;
+}
+
 function renderRep4RepProfiles() {
   if (!r4rProfiles.length) { $('r4rProfiles').innerHTML = '<p class="muted">No accounts configured yet.</p>'; return; }
 
   $('r4rProfiles').innerHTML = `<div class="tablewrap"><table>
-    <tr><th>Account</th><th>SteamID64</th><th data-tip="rep4rep's own id for this profile. It is not your SteamID - this is the one their support and their API ask for.">rep4rep ID</th><th>Status</th><th data-tip="Comments posted from this account in the last 24 hours, against its daily cap.">Today</th><th></th></tr>
+    <tr><th>Account</th><th>SteamID64</th><th data-tip="rep4rep's own id for this profile. It is not your SteamID - this is the one their support and their API ask for.">rep4rep ID</th><th>Status</th><th data-tip="Comments posted in the last ROLLING 24 hours - not a midnight reset. Each one ages off on its own 24h after it went out, so the count frees up gradually. Shown against the cap.">Today</th><th></th></tr>
     ${r4rProfiles.map((p) => `<tr>
       <td><b>${esc(p.Account)}</b></td>
       <td class="muted small">${esc(p.SteamId === '0' ? '—' : p.SteamId)}</td>
@@ -955,7 +978,7 @@ function renderRep4RepProfiles() {
       <td>${p.Registered
         ? (p.Enabled ? '<span class="pill good">Ready</span>' : '<span class="pill">Commenting off</span>')
         : (p.Online ? '<span class="pill warn">Not on rep4rep</span>' : '<span class="pill">Log in first</span>')}</td>
-      <td>${p.Enabled ? p.Today + ' / ' + p.Cap : '—'}</td>
+      <td>${p.Enabled ? capCell(p) : '—'}</td>
       <td>${p.Registered
         ? `<button class="ghost" data-tip="Skip the wait and post the next comment as soon as the daily cap allows. It never goes over the cap." data-act="postnow" data-bot="${esc(p.Account)}">Post now</button>`
         : (p.Online ? `<button class="ghost" data-act="register" data-bot="${esc(p.Account)}">Register</button>` : '')}</td>

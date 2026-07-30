@@ -1086,7 +1086,9 @@ public static class Commands {
 					}
 
 					string last = m.LastPost == null ? "never" : Fmt.Ago(m.LastPost) + " ago";
-					sb.AppendLine($"{bot.Name,-14}{(bot.Cfg.Rep4Rep ? "on " : "off")}  {m.PostsToday}/{m.Cap} in 24h   last {last,-10} {m.Status}");
+					string steam = m.CapIsSteamLimit ? " (Steam's)" : "";
+					string frees = (m.PostsToday >= m.Cap) && m.NextSlot is { } ns ? $"   frees {ns.ToLocalTime():HH:mm}" : "";
+					sb.AppendLine($"{bot.Name,-14}{(bot.Cfg.Rep4Rep ? "on " : "off")}  {m.PostsToday}/{m.Cap}{steam} in 24h   last {last,-10} {m.Status}{frees}");
 				}
 
 				return sb.ToString().TrimEnd();
@@ -1121,7 +1123,11 @@ public static class Commands {
 			case "now":
 				mod?.RunNow();
 
-				return $"{target.Name}: will post as soon as the daily cap allows.";
+				if (mod is { } m2 && (m2.PostsToday >= m2.Cap) && m2.NextSlot is { } slot) {
+					return $"{target.Name}: at its cap ({m2.PostsToday}/{m2.Cap}) - the next slot frees at {slot.ToLocalTime():HH:mm}, it'll post then.";
+				}
+
+				return $"{target.Name}: queued - it'll post at the next gap.";
 			case "pause":
 				if (mod != null) {
 					mod.Paused = true;
