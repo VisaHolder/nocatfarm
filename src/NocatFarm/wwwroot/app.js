@@ -878,8 +878,11 @@ function renderRep4RepAccount() {
       <ol class="steps">
         <li>
           <b>Make a rep4rep account</b>
-          <div class="muted">Free. <a href="https://rep4rep.com/?r=reap" target="_blank" rel="noopener">rep4rep.com/?r=reap ↗</a>
-            — then click the verification link in your email, or the token below won't work.</div>
+          <div class="muted">Free, and it takes a minute. Sign up, then click the verification link in your email
+            — the token below won't work until you do.</div>
+          <div class="toolbar" style="margin:10px 0 0">
+            <button onclick="window.open('https://rep4rep.com/?r=reap', '_blank', 'noopener')">Sign up for rep4rep ↗</button>
+          </div>
         </li>
         <li>
           <b>Copy your API token</b>
