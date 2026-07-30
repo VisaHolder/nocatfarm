@@ -31,19 +31,13 @@ namespace NocatFarm.Modules;
 ///   • <b>Real unlocks cluster.</b> Finishing a level pops three at once and then nothing for a day. A steady
 ///     one-every-N-minutes metronome does not happen, so bursts are modelled explicitly.
 ///
-/// Two hard safety rules come across with it, both learned the hard way:
-///   • <b>Never appId 730.</b> Writing achievements into a VAC-protected competitive game is not worth it.
-///   • <b>Never the main game.</b> The account's headline game is the one people look at.
+/// One rule comes across with it, learned the hard way:
+///   • <b>Never the main game.</b> The account's headline game is the one people look at, so it is left alone
+///     during normal play. (A deliberate grind still earns it - that path is opt-in, so it's yours to make.)
+/// Games are excluded only if you list them under <c>AchievementNeverGames</c>; nothing is hardcoded off. (VAC
+/// does not act on achievement writes - it's an in-game anti-cheat - so there is no game to block on that basis.)
 /// </remarks>
 public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
-	/// <summary>
-	/// Counter-Strike 2. Never written to, whatever the settings say.
-	///
-	/// Not a preference - a VAC-protected competitive game is the last place to be setting achievement bits
-	/// from a third-party client.
-	/// </summary>
-	private const uint NeverTouch = 730;
-
 	/// <summary>
 	/// How a particular game doles out its achievements.
 	///
@@ -212,7 +206,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// <summary>
 	/// Which games are eligible for a minute of credit right now.
 	///
-	/// The main game is deliberately excluded, as is <see cref="NeverTouch"/>. Both rules came across from the
+	/// The main game is deliberately excluded during normal play (a grind still earns it), plus anything on the account's AchievementNeverGames list. This came across from the
 	/// ArchiSteamFarm version, where they were arrived at deliberately rather than by accident.
 	/// </summary>
 	private List<uint> CurrentGames() {
@@ -236,7 +230,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		List<uint> never = Bot.Cfg.AchievementNeverGames;
 
 		return running
-			.Where(a => (a != NeverTouch) && !never.Contains(a) && ((allowed.Count == 0) || allowed.Contains(a)))
+			.Where(a => !never.Contains(a) && ((allowed.Count == 0) || allowed.Contains(a)))
 			.Distinct()
 			.ToList();
 	}
@@ -448,7 +442,6 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 					int floor = Math.Max(Math.Max(1, prof.MinPercent), RarityFloorForHours(eff));
 
 					string why =
-						kv.Key == NeverTouch ? "never touched - VAC-protected" :
 						never.Contains(kv.Key) ? "on your never list" :
 						(main != 0) && (kv.Key == main) ? "the main game - left alone" :
 						(allowed.Count > 0) && !allowed.Contains(kv.Key) ? "not on your allow list" :
