@@ -197,7 +197,7 @@ function render() {
   bots.forEach((b) => { counts[b.Group] = (counts[b.Group] || 0) + 1; });
   $('railChips').innerHTML = Object.keys(STATUS_META)
     .filter((k) => counts[k])
-    .map((k) => `<span class="chip ${k}" data-tip="${esc(STATUS_META[k].tip)}" onclick="filterTo('${k}')"><i class="dot"></i>${STATUS_META[k].label} ${counts[k]}</span>`)
+    .map((k) => `<span class="chip ${k}" data-tip="${esc(STATUS_META[k].tip)}" onclick="filterTo('${k}')"><i class="dot"></i>${STATUS_META[k].label}<b>${counts[k]}</b></span>`)
     .join('') || '<span class="muted small">no accounts yet</span>';
 
   $('railStats').innerHTML = `
