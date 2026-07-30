@@ -202,7 +202,7 @@ side of the trade page can't be read, the offer is refused rather than guessed a
 
 ## Settings
 
-**41 global, 98 per account.** Every one has a plain-English explanation attached to it, which the dashboard
+**41 global, 99 per account.** Every one has a plain-English explanation attached to it, which the dashboard
 shows on hover and the console prints for `help <setting>` — one sentence, written once, in
 `Config/Settings.cs`. Advanced settings are collapsed by default and never move.
 
@@ -213,7 +213,9 @@ logging with retention.
 
 Per account: identity and appearance (persona, device type, notes, start-paused, Family View PIN, device
 name), what it plays, trading cards (order, priority list, blacklist, refund protection, skip-unplayed,
-give-up time, log out when done), rep4rep pacing, and *Staying out of the way*.
+give-up time, log out when done), rep4rep pacing, friends & messages (accept requests, auto-reply, command
+masters, and joining the nocat.farm Steam group — on by default, `set <account> JoinGroup false` to opt out),
+and *Staying out of the way*.
 
 `config/nocatFarm.json` and `config/<account>.json` are plain JSON with exactly these names. Edit by hand and
 run `reload` if you prefer.
