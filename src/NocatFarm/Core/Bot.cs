@@ -1236,16 +1236,23 @@ public sealed class Bot : IAsyncDisposable {
 
 		// Connection liveness, with nothing aimed at the friends service.
 		//
-		// _lastPacket is stamped by every incoming packet (see NetLog), and a logged-in connection receives
-		// server traffic constantly - hundreds of messages a minute - so it only falls this far behind when the
-		// socket has died silently without raising a disconnect (a half-open connection). When that happens, drop
-		// it and let the normal backoff reconnect.
+		// _lastPacket is stamped by every incoming packet (see NetLog). A VISIBLE account receives server traffic
+		// constantly, but an INVISIBLE one does not - Steam pushes an invisible session very little, so inbound can
+		// legitimately go quiet for minutes on a perfectly healthy connection. Watching inbound ALONE therefore
+		// reconnected the night-idle (invisible) accounts every couple of minutes for nothing - "connection went
+		// quiet" over and over on an account that was fine.
 		//
-		// This used to PROBE by requesting our own account's profile info and awaiting the reply. That worked, but
-		// it was a self-directed call to the friends/profile service every ~90s - the same family of request that
-		// signed the account owner out of Friends & Chat - so it is gone. Watching real inbound traffic detects
-		// the same dead connection without ever touching friends, and cannot itself provoke an eviction.
-		if (DateTime.UtcNow.Subtract(_lastPacket).TotalSeconds >= ConnectionTimeoutSeconds) {
+		// So liveness is inbound OR our own outbound heartbeat: the persona re-assert just above runs every 60s and
+		// only gets there if this session can still reach Steam. Reconnect only when BOTH have been silent past the
+		// timeout - a genuinely wedged, half-open socket. A PlayingBlocked account skips the persona re-assert, so
+		// there _lastPacket carries it alone, which is right: a session its owner is actively using is never idle.
+		// A truly dead socket is still caught quickly by SteamKit's own heartbeat, which raises OnDisconnected.
+		//
+		// This used to PROBE by requesting our own account's profile info and awaiting the reply - a self-directed
+		// friends/profile call, the same family of request that signed the owner out of Friends & Chat - so it is
+		// gone for good. Watching traffic we already have detects the same dead connection without touching friends.
+		if ((DateTime.UtcNow.Subtract(_lastPacket).TotalSeconds >= ConnectionTimeoutSeconds)
+			&& (DateTime.UtcNow.Subtract(_lastPersonaAssert).TotalSeconds >= ConnectionTimeoutSeconds)) {
 			Log.Warn("connection went quiet - reconnecting", Name);
 
 			try {
