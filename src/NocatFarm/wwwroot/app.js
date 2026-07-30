@@ -1338,6 +1338,9 @@ async function loadPacer(name) {
   try {
     const d = await api(`/api/bots/${encodeURIComponent(name)}/achievements`);
     pacerRows = d.Games || [];
+    // Resolve any "app 12345" names against Steam so the table reads with real game names; learnNames redraws
+    // the settings pane (which this pacer lives in) once they land.
+    learnNames(pacerRows.map((g) => g.App).filter(Boolean));
   } catch { pacerRows = []; }
 
   if (view === 'settings' && settingsTarget === name) renderSettings();
@@ -1358,25 +1361,22 @@ function pacerTable() {
     const next = new Date(g.NextAllow);
     const soon = next <= new Date();
     const pct = Math.max(0, Math.min(100, Math.round((g.EffectiveHours / 80) * 100)));
+    const hrs = g.PlayedMinutes >= 60 ? (g.PlayedMinutes / 60).toFixed(1) + 'h' : g.PlayedMinutes + 'm';
 
     return `<tr class="${blocked ? 'off' : ''}">
-      <td class="g">${esc(g.Game)}</td>
-      <td class="n">${g.PlayedMinutes >= 60 ? (g.PlayedMinutes / 60).toFixed(1) + 'h' : g.PlayedMinutes + 'm'}</td>
+      <td class="g">${esc(GAME_NAMES[g.App] || g.Game)}</td>
+      <td class="n">${hrs}</td>
       <td class="bar"><span style="width:${pct}%"></span></td>
-      <td class="n">${blocked ? '—' : g.FloorPercent > 100 ? 'none yet' : g.FloorPercent + '%'}</td>
-      <td class="n">${g.CeilingPercent > 0 ? g.CeilingPercent + '%' : '—'}</td>
-      <td class="w">${blocked ? esc(g.Why) : soon ? 'due' : next.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</td>
+      <td class="w">${blocked ? esc(g.Why) : soon ? 'soon' : '~' + next.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</td>
     </tr>`;
   }).join('');
 
   return `<div class="tablewrap pacer"><table>
     <tr>
       <th>Game</th>
-      <th data-tip="Hours this account has actually spent running that game, as counted by nocat.farm.">Played</th>
-      <th data-tip="How far through the rarity ladder those hours have taken it. Full bar is eighty hours, where the last tier opens.">Progress</th>
-      <th data-tip="The rarest achievement currently eligible. Nothing below this can be unlocked yet however long it waits.">Floor</th>
-      <th data-tip="The most of this game that will ever be completed. Rolled once per game and never reached exactly.">Ceiling</th>
-      <th data-tip="When the next unlock is even allowed to happen. Not a promise that one will.">Next</th>
+      <th data-tip="Hours this account has spent in this game.">Played</th>
+      <th data-tip="How far along it is - the more hours, the more achievements it's allowed to unlock. A full bar is about 80 hours.">Progress</th>
+      <th data-tip="Roughly when the next achievement is due to unlock, or why this game is left alone. It's a pace, not a promise.">Next unlock</th>
     </tr>
     ${rows}
   </table></div>${pacerRows.length > 12 ? `<p class="muted small">…and ${pacerRows.length - 12} more.</p>` : ''}`;
@@ -1398,18 +1398,11 @@ function sectionIntro(section, values) {
     const cap = val('AchievementMaxCompletionPct');
 
     return `<div class="explain">
-      <b>Earned against playtime, not on a timer${esc(pace)}.</b>
-      <p style="margin:8px 0 0">An achievement only becomes eligible once this account has enough hours in that
-      game for it to be plausible. The bar starts at <b>40% of owners or more</b> and drops as the hours build -
-      to 5% at around 35 hours, and to 1% at eighty. It never reaches 0%: an achievement that fewer than one in
-      two hundred players has is the thing that gives an idled account away.</p>
-      <p style="margin:8px 0 0">Each game is paced to its own shape, so a three-hour puzzle game front-loads its
-      easy ones while a co-op grind crawls. Unlocks cluster the way real ones do - two or three together, then
-      nothing for a long stretch - and the most common still-locked one is always taken first.</p>
-      <p style="margin:8px 0 0">${cap > 0
-        ? `No game is taken past <b>${cap}%</b> complete.`
-        : 'No game is ever finished - each stops well short, because 100% on an idled account is its own tell.'}
-      <b>Counter-Strike 2 is never touched</b>, nor is whatever this account plays most.</p>
+      <b>Earns achievements slowly, from real playtime${esc(pace)}.</b>
+      <p style="margin:8px 0 0">Unlocking a pile of achievements the second it logs in is what gives a bot away.
+      This drips them out the way a real player would instead - a few at a time, only the common ones, paced to
+      the hours actually put in. It never fully completes a game${cap > 0 ? ` (it stops at ${cap}%)` : ''}, and
+      leaves the game this account plays most well alone.</p>
     </div>
     ${pacerTable()}`;
   }
