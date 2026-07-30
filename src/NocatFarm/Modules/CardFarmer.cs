@@ -238,10 +238,13 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				// anybody actually wants to know here is how much this account has done in total.
 				int lifetime = Lifetime.For(Bot.Name);
 				string been = lifetime > 0 ? $" · {Fmt.Hm(lifetime)} played" : "";
+				string idle = !string.IsNullOrWhiteSpace(Bot.CustomName)
+					? Bot.CustomName + (Bot.Cfg.IdleGames.Count > 0 ? $" (+{Bot.Cfg.IdleGames.Count})" : "")
+					: Bot.Cfg.IdleGames.Count > 0 ? $"{Bot.Cfg.IdleGames.Count} game(s)" : "your games";
 
 				Log.Info(Bot.HumanOwned
 					? $"no cards left - human mode carries on{been}"
-					: $"no cards left to farm - idling instead{been}", Bot.Name);
+					: $"no cards left to farm - now idling {idle}{been}", Bot.Name);
 			}
 
 			// Hand the session straight back to the idler so the custom game name goes back up NOW.

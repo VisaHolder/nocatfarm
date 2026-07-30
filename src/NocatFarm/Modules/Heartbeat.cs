@@ -26,9 +26,6 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 	private string _lastDoing = "";
 	private DateTime _doingSince = DateTime.MinValue;
 
-	/// <summary>Whether a status line has ever been printed. The very first one says "now"; there is nothing
-	/// before it for it to be "still" doing.</summary>
-	private bool _reported;
 
 	public override string Name => "heartbeat";
 
@@ -136,8 +133,11 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 		// roughly the last minute - a genuinely fresh event worth flagging. Anything that has been running longer
 		// is "still", even if this is the first heartbeat to mention it: the change was announced when it happened
 		// by the module responsible, so calling it "now" an hour later is what read as a second, phantom start.
-		bool same = _reported && (now - _doingSince >= TimeSpan.FromSeconds(75));
-		_reported = true;
+		// "still" whenever the activity itself has been going longer than a minute or so - even if this is the
+		// FIRST heartbeat to mention it. The module that started it already announced it when it happened, so a
+		// heartbeat an hour later calling it "now" is a phantom second start (exactly what read as "it sat idle
+		// for an hour"). _doingSince is the real start, tracked every tick above, so trust it directly.
+		bool same = now - _doingSince >= TimeSpan.FromSeconds(75);
 
 		Log.Info((same ? "still " : "now ") + status.Line(), Bot.Name);
 	}
