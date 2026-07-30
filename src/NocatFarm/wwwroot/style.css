@@ -99,11 +99,13 @@ h2 a:hover { color: var(--text); }
   background: var(--panel); border-bottom: 1px solid var(--line);
   display: flex; align-items: center; gap: var(--s5); height: var(--railh);
 
-  /* Line the bar up with the centred column beneath it.
-     The column is 1400px wide INCLUDING its own --s6 of padding, so the bar has to add that padding on top of
-     half the leftover space - without it the bar sat exactly --s6 to the left of the content on every window
-     wide enough to matter, which is the misalignment you notice without being able to name. */
-  padding-inline: calc(max(0px, (100vw - 1400px) / 2) + var(--s6));
+  /* LEFT edge lines up with the centred column beneath it (so the wordmark sits over the page content), but the
+     RIGHT side uses the full window width instead of being pinned to the 1400px column. Pinning both edges made
+     the bar's usable width ~1336px, which is NARROWER than the tabs + status + stats need on a wide screen - so
+     the labels wrapped two-high ("Night idle" -> "Night"/"idle"). A top bar that spans the window has all the
+     room it needs and reads as normal. */
+  padding-left: calc(max(0px, (100vw - 1400px) / 2) + var(--s6));
+  padding-right: var(--s6);
 }
 
 nav { display: flex; flex-direction: row; gap: var(--s1); }
@@ -194,12 +196,13 @@ nav { display: flex; flex-direction: row; gap: var(--s1); }
 .rail-foot .chips { flex-wrap: nowrap; gap: var(--s4); }
 .rail-foot .chip {
   background: none; border: 0; padding: 0; color: var(--muted); font-size: 12px; gap: var(--s2);
+  white-space: nowrap;
 }
 .rail-foot .chip:hover { color: var(--text); }
 .rail-foot .chip b { color: var(--text); font-weight: 600; }
 
 /* Same label/value language as the chips: muted label, bright value. */
-.railstats { margin: 0; display: flex; align-items: center; gap: var(--s4); font-size: 12px; }
+.railstats { margin: 0; display: flex; align-items: center; gap: var(--s4); font-size: 12px; white-space: nowrap; }
 .railstats dt { color: var(--muted); display: inline; }
 .railstats dd { margin: 0 0 0 var(--s1); display: inline; color: var(--text); font-weight: 600; }
 .railstats dd .muted { font-weight: 400; }
