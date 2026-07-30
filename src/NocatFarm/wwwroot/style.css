@@ -4,7 +4,7 @@
   --bg: #0a0a0a;
   --panel: #111111;
   --panel2: #1a1a1a;      /* nocat declares only two surfaces; this sits between them for insets and wells */
-  --line: #222222;
+  --line: #333333;        /* structural dividers - visible against the near-black surfaces, not hairline-faint */
   --line2: #666666;       /* nocat --accent-dim */
   --text: #c8c8c8;
   --muted: #8a8a8a;       /* #4a4a4a was 2.13:1 on the panel - nav items and every settings label unreadable */
@@ -68,7 +68,8 @@ code {
   color: var(--text);
 }
 
-h1.wordmark { font-size: 17px; margin: 0; letter-spacing: 1px; font-weight: 400; text-transform: lowercase; }
+h1.wordmark { font-size: 17px; margin: 0; letter-spacing: 1px; font-weight: 400; text-transform: lowercase;
+  padding-right: var(--s5); border-right: 1px solid var(--line); }
 h1.wordmark span { color: var(--accent); }
 h2 {
   font-size: 12px; margin: 0 0 var(--s3); text-transform: uppercase; letter-spacing: .5px;
@@ -180,8 +181,9 @@ nav { display: flex; flex-direction: row; gap: var(--s1); }
 }
 .themetoggle:hover { border-color: var(--line2); color: var(--text); }
 
-/* Pushed to the right-hand end of the bar. */
-.rail-foot { margin-left: auto; display: flex; align-items: center; gap: var(--s3); }
+/* Pushed to the right-hand end of the bar, fenced off from the tabs by a divider. */
+.rail-foot { margin-left: auto; display: flex; align-items: center; gap: var(--s3);
+  padding-left: var(--s4); border-left: 1px solid var(--line); }
 
 .railstats { margin: 0; display: flex; align-items: center; gap: var(--s3); font-size: 12px; }
 .railstats dt { color: var(--muted); display: inline; }
