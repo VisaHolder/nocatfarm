@@ -965,6 +965,13 @@ public sealed class WebHost : IAsyncDisposable {
 		Bot[] bots = [.. _mgr.All];
 		(int cards, int comments) = Stats.Totals(24);
 
+		// Per-account card drops in the last 24h, for the Overview's "Today" table. Comments per account are
+		// already carried as Rep4RepToday (PostsInLast24h). Computed once here, not once per bot.
+		Dictionary<string, int> cardsByBot = Stats.Recent(24)
+			.Where(static e => e.Kind == Stats.KindCard)
+			.GroupBy(static e => e.Bot, StringComparer.OrdinalIgnoreCase)
+			.ToDictionary(static g => g.Key, static g => g.Count(), StringComparer.OrdinalIgnoreCase);
+
 		// Keep the points figure warm in the background so the rail and the Overview aren't stuck on 0 until
 		// somebody happens to open the rep4rep tab. The TTL setting is what actually paces this.
 		if (_mgr.Rep4Rep.HasToken) {
@@ -992,7 +999,7 @@ public sealed class WebHost : IAsyncDisposable {
 			CommentsToday = comments,
 			CardsLeft = bots.Sum(static b => b.CardsRemaining),
 			GamesLeft = bots.Sum(static b => b.GamesRemaining),
-			Bots = bots.Select(static b => {
+			Bots = bots.Select(b => {
 				Rep4RepModule? r4r = BotManager.ModuleOf<Rep4RepModule>(b);
 
 				return new {
@@ -1024,6 +1031,7 @@ public sealed class WebHost : IAsyncDisposable {
 				HumanTargetMinutes = BotManager.ModuleOf<HumanMode>(b)?.TargetMinutesToday ?? 0,
 					Rep4RepToday = r4r?.PostsToday ?? 0,
 					Rep4RepCap = r4r?.Cap ?? b.Cfg.Rep4RepDailyCap,
+					CardsToday = cardsByBot.GetValueOrDefault(b.Name),
 					Modules = b.Modules.Select(static m => new { Name = m.Name, Status = m.Status })
 				};
 			})

@@ -378,22 +378,14 @@ tr.click:hover td { background: var(--panel2); }
 .pill.warn { color: var(--warn); border-color: rgba(255,224,0,.35); }
 .pill.bad { color: var(--bad); border-color: rgba(255,49,49,.40); }
 
-/* ── chart ─────────────────────────────────────────────────────────── */
-.chart { display: flex; align-items: flex-end; gap: 3px; height: 120px; }
-.chart .col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; min-width: 4px; }
-.chart .col i { display: block; border-radius: 0; }
-
-/* Cards and comments were both --accent, so the two-colour legend under the chart was describing a
-   distinction that was not on screen. Separated by brightness, which survives a hueless palette. */
-.chart .col i.cards { background: var(--text); }
-.chart .col i.comments { background: var(--line2); }
-.legend i.cards { background: var(--text); }
-.legend i.comments { background: var(--line2); }
-.chart .col .c { background: var(--good); }
-.chart .col .m { background: var(--accent); }
-.chart .col .lbl { font-size: 9px; color: var(--muted); text-align: center; }
-.legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-top: 10px; }
-.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 0; margin-right: 5px; }
+/* ── today ─────────────────────────────────────────────────────────── */
+/* Per-account activity over the last 24h on the Overview. Replaced a by-hour bar chart that was 24 near-empty
+   bars once a farm had finished its cards - a table stays legible however little happened. The fleet row is the
+   running total, fenced off by a top border and a muted label. */
+table.today td, table.today th { font-variant-numeric: tabular-nums; }
+table.today tr.fleet td { border-top: 1px solid var(--line); }
+table.today tr.fleet td:first-child { color: var(--muted); }
+.today h2 span { margin-left: auto; }
 
 .recent .line { display: flex; gap: 10px; font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--line); }
 .recent .line:last-child { border-bottom: 0; }

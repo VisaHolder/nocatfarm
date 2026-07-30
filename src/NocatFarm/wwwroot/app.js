@@ -318,7 +318,7 @@ function renderOverview() {
     </table></div>`
     : `<p class="muted">No accounts yet. <a href="#console" onclick="go('console')">Add one</a> or type <code>add mybot mysteamlogin</code>.</p>`;
 
-  api('/api/stats?hours=24').then(renderChart).catch(() => {});
+  renderToday();
 
   const interesting = logLines.filter((l) => l.Level !== 'INFO' && l.Level !== 'DEBUG').slice(-8).reverse();
   $('recent').innerHTML = interesting.length
@@ -326,29 +326,31 @@ function renderOverview() {
     : '<p class="muted">Nothing worth reporting yet.</p>';
 }
 
-function renderChart(stats) {
-  const total = stats.Cards + stats.Comments;
+// Per-account activity in the last 24h. A tidy table, because the old by-hour bar chart was 24 near-empty bars
+// the moment a farm finished its cards and was just idling - which reads as broken, not informative.
+function renderToday() {
+  const bots = state.Bots;
+  if (!bots.length) { $('today').innerHTML = '<p class="muted empty">No accounts yet.</p>'; return; }
 
-  // An all-zero chart is 24 invisible bars and reads as broken. Say so instead.
-  if (!total) {
-    $('chart').innerHTML = '<p class="muted empty">Nothing earned in the last 24 hours yet.</p>';
-    $('chartLegend').classList.add('hidden');
-    return;
-  }
+  const r4r = r4rOn();
+  const num = (n) => n ? n : '<span class="muted">0</span>';
+  let totCards = 0, totComments = 0;
 
-  $('chartLegend').classList.remove('hidden');
-  // With rep4rep off there are no comments to plot, so drop its legend key (the second span).
-  const r4rKey = $('chartLegend').querySelector('span:last-child');
-  if (r4rKey) r4rKey.classList.toggle('hidden', !r4rOn());
-  const peak = Math.max(1, ...stats.Buckets.map((b) => b.Cards + b.Comments));
-
-  $('chart').innerHTML = stats.Buckets.map((b, i) => {
-    const c = Math.round((b.Cards / peak) * 100);
-    const m = Math.round((b.Comments / peak) * 100);
-    return `<div class="col" data-tip="${esc(b.Hour)} — ${b.Cards} card(s), ${b.Comments} comment(s)">
-      <i class="m" style="height:${m}%"></i><i class="c" style="height:${c}%"></i>
-      <span class="lbl">${i % 3 === 0 ? esc(b.Hour.slice(0, 2)) : ''}</span></div>`;
+  const rows = bots.map((b) => {
+    const c = b.CardsToday || 0;
+    const cm = b.Rep4RepToday || 0;
+    totCards += c; totComments += cm;
+    return `<tr>
+      <td><b>${esc(b.Name)}</b></td>
+      <td>${num(c)}</td>
+      ${r4r ? `<td>${num(cm)}</td>` : ''}</tr>`;
   }).join('');
+
+  $('today').innerHTML = `<div class="tablewrap"><table class="today">
+    <tr><th>Account</th><th data-tip="Trading cards that dropped in the last 24 hours.">Cards</th>${r4r ? '<th data-tip="rep4rep comments posted in the last 24 hours.">Comments</th>' : ''}</tr>
+    ${rows}
+    <tr class="fleet"><td>fleet</td><td>${totCards}</td>${r4r ? `<td>${totComments}</td>` : ''}</tr>
+    </table></div>`;
 }
 
 // ── render: accounts ─────────────────────────────────────────────────
