@@ -121,7 +121,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				Phase.Playing => $"{GameName(_game)} · {Left(_sessionEnds)} left · {Fmt.Hm(_playedMinutesToday)}/{Fmt.Hm(_targetMinutes)} today",
 				Phase.SwitchingGame => _switchingTo != 0 ? $"closing the game, then {GameName(_switchingTo)}" : "closing the game",
 				Phase.ShortBreak => $"short break · back in {Left(_phaseEnds)}",
-				Phase.MealBreak => $"away from the desk · back in {Left(_phaseEnds)}",
+				Phase.MealBreak => $"meal break · back in {Left(_phaseEnds)}",
 				Phase.NightIdle => $"asleep, banking hours quietly · up {WakeTime():HH:mm}",
 				Phase.Asleep => $"asleep · up {WakeTime():HH:mm}",
 				Phase.DoneForToday => $"done for today ({Fmt.Hm(_playedMinutesToday)}) · back {WakeTime():HH:mm}",
@@ -170,7 +170,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		Phase.Playing => "playing " + GameName(_game),
 		Phase.SwitchingGame => _switchingTo != 0 ? "closing, then " + GameName(_switchingTo) : "closing the game",
 		Phase.ShortBreak => "on a break",
-		Phase.MealBreak => "away from the desk",
+		Phase.MealBreak => "meal break",
 		Phase.NightIdle => "asleep, banking hours",
 		Phase.Asleep => "asleep",
 		Phase.DoneForToday => "done for today",
@@ -860,7 +860,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_phase = Phase.MealBreak;
 		_phaseEnds = DateTime.UtcNow.AddMinutes(minutes);
 		Bot.StopPlaying();
-		StepAway(minutes, 4, "away from the desk", 2.0);   // Snooze - what Steam does to a real user who walks off
+		StepAway(minutes, 4, "meal break", 2.0);   // Snooze - what Steam does to a real user who walks off
 	}
 
 	/// <summary>

@@ -1645,7 +1645,15 @@ public sealed class Bot : IAsyncDisposable {
 		string shown = !string.IsNullOrWhiteSpace(label) ? label : apps.Count > 0 ? GameNames.Of(apps[0]) : "nothing";
 		if (shown != _lastLoggedPlaying) {
 			if (_lastLoggedPlaying != null) {
-				Log.Info($"now showing {shown}", Name);
+				// A human-mode account narrates every change itself - "short break - back in about 24m",
+				// "playing X for about Ym" - so this lower-level "now showing nothing / <game>" line only stacks
+				// noise on a clearer one. Keep it for the trace, at debug. Other accounts have no such narrator
+				// (and this is the line that proves their custom name never lapsed), so there it stays visible.
+				if (HumanOwned) {
+					Log.Debug($"now showing {shown}", Name);
+				} else {
+					Log.Info($"now showing {shown}", Name);
+				}
 			}
 
 			_lastLoggedPlaying = shown;
@@ -1830,7 +1838,14 @@ public sealed class Bot : IAsyncDisposable {
 		// transitions after that - online -> invisible for the night, back again, a manual override - get a line.
 		if (state != _lastLoggedPersona) {
 			if (_lastLoggedPersona >= 0) {
-				Log.Info($"now appearing {Word(state)}", Name);
+				// Human mode already says WHY the appearance changed - a break, a meal, bedtime - in one clear
+				// line of its own, so on that account this bare "now appearing away / invisible" only clutters it.
+				// Debug keeps the trace; other accounts (no narrator) keep it visible.
+				if (HumanOwned) {
+					Log.Debug($"now appearing {Word(state)}", Name);
+				} else {
+					Log.Info($"now appearing {Word(state)}", Name);
+				}
 			}
 
 			_lastLoggedPersona = state;
