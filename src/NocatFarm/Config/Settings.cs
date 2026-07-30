@@ -321,7 +321,7 @@ public static class Settings {
 	private static List<SettingDef> BuildGlobal() => [
 		// ── Dashboard ──
 		new("WebEnabled", "Web dashboard", SecDashboard, SettingKind.Bool,
-			"Serve the web dashboard. Turn it off and nocatFarm is console-only - everything still works, you just drive it by typing.",
+			"Serve the web dashboard. Turn it off and nocat.farm is console-only - everything still works, you just drive it by typing.",
 			NeedsRestart: true),
 		new("WebHost", "Listen on", SecDashboard, SettingKind.Text,
 			"Which addresses the dashboard answers on. 127.0.0.1 means this PC only; use 0.0.0.0 to reach it from your phone or another machine, and set a password first.",
@@ -335,7 +335,7 @@ public static class Settings {
 		new("OpenDashboardAfterAdd", "Open the dashboard after adding an account", SecDashboard, SettingKind.Bool,
 			"Open the dashboard in your browser once a new account has been added, so you can set it up. A brand new account does nothing at all until it is told what to play, and the app window has no form for that - only the dashboard does. Turning this off means you are on your own to remember."),
 		new("OpenBrowserOnStart", "Open the browser on start", SecDashboard, SettingKind.Bool,
-			"Open the dashboard in your browser automatically when nocatFarm starts."),
+			"Open the dashboard in your browser automatically when nocat.farm starts."),
 		new("WebRefreshSeconds", "Refresh every", SecDashboard, SettingKind.Int,
 			"How often the dashboard refreshes itself, in seconds. Lower feels snappier and costs nothing - it's all local.",
 			Advanced: true, Min: 1, Max: 60),
@@ -345,14 +345,14 @@ public static class Settings {
 
 		// ── Running in the background ──
 		new("Tray", "Tray icon", SecBackground, SettingKind.Bool,
-			"Put an icon in the notification area (bottom-right, by the clock) so nocatFarm can run in the background. Right-click it for the menu.",
+			"Put an icon in the notification area (bottom-right, by the clock) so nocat.farm can run in the background. Right-click it for the menu.",
 			NeedsRestart: true),
 		new("MinimizeToTray", "Minimise to the tray", SecBackground, SettingKind.Bool,
 			"Minimising the console window hides it to the tray instead of leaving it in the taskbar."),
 		new("StartMinimized", "Start hidden", SecBackground, SettingKind.Bool,
 			"Start with the console window hidden, straight to the tray. Double-click the tray icon to bring it back."),
 		new("StartWithWindows", "Start with Windows", SecBackground, SettingKind.Bool,
-			"Launch nocatFarm when you sign in to Windows. It adds one entry under your own user account and touches nothing else."),
+			"Launch nocat.farm when you sign in to Windows. It adds one entry under your own user account and touches nothing else."),
 		new("KeepAwake", "Keep this PC awake", SecBackground, SettingKind.Bool,
 			"Stop Windows going to sleep while accounts are running. The screen can still switch off - only sleep is blocked."),
 		new("TrayNotifications", "Show pop-ups", SecBackground, SettingKind.Bool,
@@ -411,7 +411,7 @@ public static class Settings {
 			"AppIDs no account will ever farm or idle, so you don't have to repeat the same list on every account you add. Each account can still add its own on top.",
 			Advanced: true),
 		new("ExitWhenAllFinished", "Close when everything's done", SecBackground, SettingKind.Bool,
-			"Close nocatFarm completely once every account has finished farming and logged out, instead of leaving it sitting in the tray doing nothing.",
+			"Close nocat.farm completely once every account has finished farming and logged out, instead of leaving it sitting in the tray doing nothing.",
 			Advanced: true),
 
 		// ── Logging ──
@@ -441,12 +441,12 @@ public static class Settings {
 		new("SteamLogin", "Steam account name", SecAccount, SettingKind.Text,
 			"The Steam account name you type when signing in - not your display name and not your email."),
 		new("SteamPassword", "Password", SecAccount, SettingKind.Secret,
-			"Optional. Leave it empty and nocatFarm asks once, then remembers the account with a login token instead - which is safer than a password sitting in a file."),
+			"Optional. Leave it empty and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password sitting in a file."),
 		new("OnlineStatus", "Appear as", SecAccount, SettingKind.Choice,
-			"How this account looks to your friends while nocatFarm runs. Invisible still plays and still farms - nobody just sees it happening. While human mode is on, this is what it shows WHILE PLAYING; human mode takes the rest over by itself - Away on a quick break, Snooze over a meal, offline overnight - so leaving this on Online is the right answer there.",
+			"How this account looks to your friends while nocat.farm runs. Invisible still plays and still farms - nobody just sees it happening. While human mode is on, this is what it shows WHILE PLAYING; human mode takes the rest over by itself - Away on a quick break, Snooze over a meal, offline overnight - so leaving this on Online is the right answer there.",
 			Choices: "0 offline | 1 online | 2 busy | 3 away | 4 snooze | 5 looking to trade | 6 looking to play | 7 invisible"),
 		new("IUseThisAccount", "I sign into this one myself", SecAccount, SettingKind.Bool,
-			"Turn this on for an account you also use from your own Steam client. nocatFarm will then never change its online status - because Steam handles two sessions setting a persona by signing the other one out of Friends and Chat, which on your own account means kicking you off your friends list. Everything else still works: it plays, farms, comments and keeps its schedule. It just leaves your online status alone."),
+			"Turn this on for an account you also use from your own Steam client. nocat.farm will then never change its online status - because Steam handles two sessions setting a persona by signing the other one out of Friends and Chat, which on your own account means kicking you off your friends list. Everything else still works: it plays, farms, comments and keeps its schedule. It just leaves your online status alone."),
 		new("UIMode", "Sign in as", SecAccount, SettingKind.Choice,
 			"What kind of Steam client this tells Steam it is. Desktop is the right answer and the default - it is what the real Steam application says, so Steam has nothing to work out and leaves your own session alone. The others exist because Steam offers them; they are not better hidden and there is no reason to pick one unless you are debugging something.",
 			Choices: "7 desktop (default) | 3 web | 2 mobile | 1 big picture | 0 desktop, legacy",
@@ -472,7 +472,7 @@ public static class Settings {
 			"The device name this account shows in Steam's list of authorised devices. Leave it empty to use this PC's real name.",
 			Advanced: true),
 		new("SharedSecret", "Authenticator code secret", SecAccount, SettingKind.Secret,
-			"This account's mobile authenticator shared secret. With it, nocatFarm answers its own Steam Guard prompts and the account logs back in unattended - which is the difference between a farmer that survives a reboot at 4am and one that sits there waiting for you. Drop the account's maFile into config/authenticators/ and it is picked up automatically instead.",
+			"This account's mobile authenticator shared secret. With it, nocat.farm answers its own Steam Guard prompts and the account logs back in unattended - which is the difference between a farmer that survives a reboot at 4am and one that sits there waiting for you. Drop the account's maFile into config/authenticators/ and it is picked up automatically instead.",
 			Advanced: true),
 		new("IdentitySecret", "Authenticator confirm secret", SecAccount, SettingKind.Secret,
 			"The other half of the same authenticator, used to clear the \"confirm on your phone\" prompt. Only matters when this account GIVES something away - receiving never needs confirming - so a donation-only idler can leave it empty.",
@@ -591,7 +591,7 @@ public static class Settings {
 			"AppIDs to never farm and never idle, whatever the badge page says.",
 			Advanced: true),
 		new("SkipUnplayedGames", "Skip games you've never played", SecCards, SettingKind.Bool,
-			"Skip games you have never launched yourself, so nocatFarm doesn't put first-ever playtime on games you'd rather nobody saw.",
+			"Skip games you have never launched yourself, so nocat.farm doesn't put first-ever playtime on games you'd rather nobody saw.",
 			Advanced: true),
 		new("SkipRefundableGames", "Protect refundable games", SecCards, SettingKind.Bool,
 			"Leave a game alone for the first two weeks after you buy it - playing past two hours is what makes it non-refundable.",
@@ -703,7 +703,7 @@ public static class Settings {
 			"Hold trades, replies and friend requests until human mode says this account is up. Without it the account is asleep on the friends list at 4am and still accepting trades that minute - which is worse than not pretending at all. Ignored when human mode is off.",
 			Mode: "legit"),
 		new("CommandMasters", "Accept commands from", SecSocial, SettingKind.Text,
-			"SteamID64s allowed to drive nocatFarm by messaging this account on Steam, comma separated. Commands must start with a slash - send /help and the answer comes back as a Steam message. Anything without a slash is treated as ordinary conversation, so you can still just talk to your own account. Empty means nobody can.",
+			"SteamID64s allowed to drive nocat.farm by messaging this account on Steam, comma separated. Commands must start with a slash - send /help and the answer comes back as a Steam message. Anything without a slash is treated as ordinary conversation, so you can still just talk to your own account. Empty means nobody can.",
 			Advanced: true, Placeholder: "76561198000000000"),
 
 		// ── Trades ──
@@ -734,7 +734,7 @@ public static class Settings {
 
 		// ── Staying out of the way ──
 		new("PauseWhenYouPlay", "Stand down when you play", SecCourtesy, SettingKind.Bool,
-			"Stop playing the second you launch a game on this account yourself, so nocatFarm never fights your own Steam client for the session."),
+			"Stop playing the second you launch a game on this account yourself, so nocat.farm never fights your own Steam client for the session."),
 		new("ResumeDelayMinutes", "Wait before resuming", SecCourtesy, SettingKind.Int,
 			"How long to wait after you stop playing before this account quietly picks up where it left off, in minutes.",
 			Min: 0, Max: 240)

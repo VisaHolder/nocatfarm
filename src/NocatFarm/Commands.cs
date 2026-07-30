@@ -70,12 +70,12 @@ public static class Commands {
 
 		new("log", "[count]", GroupOther, "The last few log lines.", "logs"),
 		new("stats", "[hours]", GroupOther, "Cards dropped and comments posted, by hour."),
-		new("answer", "<text>", GroupOther, "Answer whatever nocatFarm is waiting on - a Steam Guard code, or a password."),
+		new("answer", "<text>", GroupOther, "Answer whatever nocat.farm is waiting on - a Steam Guard code, or a password."),
 		new("tutorial", "[topic]", GroupOther, "Getting started, in order, ticking off what you have already done.", "guide|setup"),
 		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does.", "?|h"),
 		new("theme", "[dark|light]", GroupOther, "Switch the dashboard between the dark and light themes. Without an argument it says which is on.", "dark|light"),
 		new("version", "", GroupOther, "Which version this is.", "about"),
-		new("exit", "", GroupOther, "Shut nocatFarm down.", "quit|q")
+		new("exit", "", GroupOther, "Shut nocat.farm down.", "quit|q")
 	];
 
 	public static bool ExitRequested { get; private set; }
@@ -96,7 +96,7 @@ public static class Commands {
 		BotManager? mgr = Host;
 
 		if (mgr == null) {
-			return "nocatFarm isn't ready yet";
+			return "nocat.farm isn't ready yet";
 		}
 
 		string line = input.Trim();
@@ -268,7 +268,7 @@ public static class Commands {
 
 	private static string About() =>
 		"""
-		nocatFarm 1.0.0 - Steam idler, trading-card farmer and rep4rep commenter.
+		nocat.farm 1.0.0 - Steam idler, trading-card farmer and rep4rep commenter.
 		Everything runs on this PC. Your accounts never leave it; the only thing that talks
 		to rep4rep is the task queue.
 		""";
@@ -297,7 +297,7 @@ public static class Commands {
 				sb.AppendLine($"  Default: {(fallback is List<uint> l ? (l.Count == 0 ? "(none)" : string.Join(", ", l)) : fallback)}");
 
 				if (def.NeedsRestart) {
-					sb.AppendLine("  Takes effect the next time nocatFarm starts.");
+					sb.AppendLine("  Takes effect the next time nocat.farm starts.");
 				}
 
 				return sb.ToString().TrimEnd();
@@ -1304,7 +1304,7 @@ public static class Commands {
 
 	private static async Task<string> ImportAsync(BotManager mgr, string[] args) {
 		if (args.Length == 0 || !args[0].Equals("asf", StringComparison.OrdinalIgnoreCase)) {
-			return "import asf [path to ASF's config folder] [force]\n  Leave the path out and nocatFarm looks for an ASF install nearby.\n  Add 'force' to overwrite accounts that already exist here.";
+			return "import asf [path to ASF's config folder] [force]\n  Leave the path out and nocat.farm looks for an ASF install nearby.\n  Add 'force' to overwrite accounts that already exist here.";
 		}
 
 		bool force = args.Any(static a => a.Equals("force", StringComparison.OrdinalIgnoreCase));
