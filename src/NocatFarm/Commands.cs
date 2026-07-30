@@ -70,6 +70,7 @@ public static class Commands {
 
 		new("log", "[count]", GroupOther, "The last few log lines.", "logs"),
 		new("stats", "[hours]", GroupOther, "Cards dropped and comments posted, by hour."),
+		new("report", "", GroupOther, "Write the daily summary - hours banked, cards, comments, totals - to the log now."),
 		new("answer", "<text>", GroupOther, "Answer whatever nocat.farm is waiting on - a Steam Guard code, or a password."),
 		new("tutorial", "[topic]", GroupOther, "Getting started, in order, ticking off what you have already done.", "guide|setup"),
 		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does.", "?|h"),
@@ -215,6 +216,7 @@ public static class Commands {
 				"reload" => await ReloadAsync(mgr).ConfigureAwait(false),
 				"log" or "logs" => Logs(rest),
 				"stats" => StatsText(rest),
+				"report" => DailyReport.RunNow(),
 				"answer" => Prompt.Answer(string.Join(' ', rest)) ? "answered" : "nothing is waiting for an answer",
 				"theme" or "dark" or "light" => Theme(cmd, rest),
 				"version" or "about" => About(),

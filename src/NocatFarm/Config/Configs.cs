@@ -89,6 +89,15 @@ public sealed class GlobalConfig {
 
 	public int StatusEveryMinutes { get; set; } = 5;
 	public int StatusQuietEveryMinutes { get; set; } = 30;
+
+	// ── daily report ──
+	// A once-a-day plain-language summary of what the whole fleet banked in the last 24h - hours, cards,
+	// comments, running total - written to the log/console at a chosen time (default 09:30). The per-minute
+	// heartbeat says what an account is doing NOW; this answers "what did I get overnight?" in one place.
+	public bool DailyReportEnabled { get; set; } = true;
+	public int DailyReportHour { get; set; } = 9;
+	public int DailyReportMinute { get; set; } = 30;
+
 	public bool FileLogging { get; set; } = true;
 	public bool Debug { get; set; }
 	public int LogRetentionDays { get; set; } = 14;

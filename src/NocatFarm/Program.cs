@@ -205,6 +205,10 @@ if (manager.All.Count == 0) {
 	await manager.StartAllAsync().ConfigureAwait(false);
 }
 
+// Once-a-day "what did the fleet bank overnight" summary to the log (default 09:30). Self-scheduling; no-ops
+// with no accounts. Type `report` to see it on demand.
+NocatFarm.Core.DailyReport.Start(manager);
+
 if (global.OpenBrowserOnStart && (web != null)) {
 	OpenBrowser(web.Url);
 }

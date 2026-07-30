@@ -428,7 +428,15 @@ public static class Settings {
 			Advanced: true),
 		new("LogRetentionDays", "Keep logs for", SecLogging, SettingKind.Int,
 			"Delete log files older than this many days. 0 keeps them forever.",
-			Advanced: true, Min: 0, Max: 3650)
+			Advanced: true, Min: 0, Max: 3650),
+		new("DailyReportEnabled", "Daily summary in the log", SecLogging, SettingKind.Bool,
+			"Once a day, write a one-look summary of what every account banked in the last 24 hours - hours played, cards, rep4rep comments and a running total. Answers \"what did I get overnight?\" without scrolling; type `report` to see it any time."),
+		new("DailyReportHour", "Summary time · hour", SecLogging, SettingKind.Int,
+			"Hour of day the daily summary is written, 0-23 (local time). Default 9.",
+			Min: 0, Max: 23),
+		new("DailyReportMinute", "Summary time · minute", SecLogging, SettingKind.Int,
+			"Minute past the hour for the daily summary, 0-59. Hour 9 + minute 30 = 09:30.",
+			Min: 0, Max: 59)
 	];
 
 	// ═════════════════════════════════════════════════════════════════════════
