@@ -212,7 +212,7 @@ nav { display: flex; flex-direction: row; gap: var(--s1); }
 /* Below these widths the bar can't hold everything on one row, so the least important parts step aside in
    order rather than wrapping the whole thing onto three lines. */
 @media (max-width: 1150px) { .railstats { display: none; } }
-@media (max-width: 900px)  { .rail-foot .chips { display: none; } }
+/* The 900px block below hides the chips (and stats and version), leaving just the theme control. */
 @media (max-width: 760px) {
   .rail { height: auto; flex-wrap: wrap; padding-block: var(--s2); }
   .rail-foot { margin-left: 0; padding-left: 0; border-left: 0; }
@@ -581,7 +581,6 @@ button:hover:not(:disabled) { filter: brightness(1.1); }
 button:disabled { opacity: .45; cursor: default; }
 button.ghost { background: var(--panel2); color: var(--text); border: 1px solid var(--line); font-weight: 500; }
 button.ghost:hover:not(:disabled) { background: var(--line); }
-button.danger { background: var(--bad); color: var(--on-accent); }
 
 /* ── tooltips ──────────────────────────────────────────────────────── */
 .info {
@@ -640,7 +639,6 @@ button.danger { background: var(--bad); color: var(--on-accent); }
   .rail-foot .chips, .rail-foot .railstats, .rail-foot .muted { display: none; }
   .main { padding: 16px; }
   .settingswrap { grid-template-columns: 1fr; }
-  .settingsnav { position: static; }
   .field { grid-template-columns: 1fr; gap: 4px; }
   .field .meta { justify-content: flex-start; }
 }

@@ -54,10 +54,10 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 		}
 	}
 
-	/// <summary>Re-send what this account should be playing, unless something with a stronger claim owns it.</summary>
 	/// <summary>When the current run of idling began, so the log can say how long it has been going.</summary>
 	public DateTime? IdlingSince { get; private set; }
 
+	/// <summary>Re-send what this account should be playing, unless something with a stronger claim owns it.</summary>
 	public void Assert() {
 		if (Bot.Grinding) {
 			Bot.SetPlaying([Bot.GrindGame]);
