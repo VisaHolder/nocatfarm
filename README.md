@@ -200,7 +200,7 @@ side of the trade page can't be read, the offer is refused rather than guessed a
 
 ## Settings
 
-**36 global, 96 per account.** Every one has a plain-English explanation attached to it, which the dashboard
+**38 global, 98 per account.** Every one has a plain-English explanation attached to it, which the dashboard
 shows on hover and the console prints for `help <setting>` — one sentence, written once, in
 `Config/Settings.cs`. Advanced settings are collapsed by default and never move.
 
