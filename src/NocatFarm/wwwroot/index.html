@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nocat.farm</title>
+<link rel="icon" href="favicon.ico">
+<script>
+  // Before the stylesheet paints, so a light-theme user never sees a dark flash.
+  try { document.documentElement.setAttribute('data-theme', localStorage.getItem('nocatfarm-theme') || 'dark'); } catch (e) {}
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ── password gate ─────────────────────────────────────────────────── -->
+<div id="login" class="gate hidden">
+  <form class="card gate-card" onsubmit="return doLogin(event)">
+    <h1 class="wordmark">nocat.<span>farm</span></h1>
+    <p class="muted">This dashboard is password protected.</p>
+    <input id="pw" type="password" placeholder="Password" autocomplete="current-password">
+    <button type="submit">Sign in</button>
+    <p id="loginError" class="error"></p>
+  </form>
+</div>
+
+<!-- ── first run ─────────────────────────────────────────────────────── -->
+<div id="welcome" class="gate hidden">
+  <div class="card welcome-card">
+    <h1 class="wordmark">nocat.<span>farm</span></h1>
+
+    <div id="importBanner" class="hidden"></div>
+
+    <p class="lead">Let's add your first Steam account.</p>
+
+    <div class="form2">
+      <label for="w-name">Name<i class="info" data-tip="A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam."></i></label>
+      <input id="w-name" type="text" placeholder="mybot" autocomplete="off">
+
+      <label for="w-login">Steam account name<i class="info" data-tip="What you type into Steam's sign-in box. Not your display name, not your email."></i></label>
+      <input id="w-login" type="text" placeholder="your steam login" autocomplete="off">
+
+      <label for="w-pass">Password <span class="muted">(optional)</span><i class="info" data-tip="nocat.farm signs in once and then keeps a login token, so this doesn't have to be stored at all. Leave it blank and it'll ask you when it needs it."></i></label>
+      <input id="w-pass" type="password" placeholder="leave blank and it'll ask" autocomplete="off">
+    </div>
+
+    <p id="welcomeError" class="error"></p>
+    <button onclick="createFirstBot()">Add account</button>
+    <p class="muted small foot">Everything here is also a command. This step is <code>add mybot mysteamlogin</code>.</p>
+  </div>
+</div>
+
+<!-- ── app ───────────────────────────────────────────────────────────── -->
+<div id="app" class="hidden">
+
+  <header class="rail">
+    <h1 class="wordmark">nocat.<span>farm</span></h1>
+
+    <nav id="nav">
+      <a class="navitem" tabindex="0" role="button" data-view="overview"><span>Overview</span></a>
+      <a class="navitem" tabindex="0" role="button" data-view="accounts"><span>Accounts</span><b id="navAccounts"></b></a>
+      <a class="navitem" tabindex="0" role="button" data-view="rep4rep"><span>rep4rep</span><b id="navPoints"></b></a>
+      <a class="navitem" tabindex="0" role="button" data-view="log"><span>Log</span></a>
+      <a class="navitem" tabindex="0" role="button" data-view="console"><span>Console</span></a>
+      <a class="navitem" tabindex="0" role="button" data-view="settings"><span>Settings</span></a>
+    </nav>
+
+    <div class="rail-foot">
+      <button class="themetoggle" id="themeToggle" onclick="toggleTheme()"
+              data-tip="Switch between the dark and light themes.">theme</button>
+      <div id="railChips" class="chips"></div>
+      <dl id="railStats" class="railstats"></dl>
+      <div class="muted small">v1.0.0</div>
+    </div>
+  </header>
+
+  <div class="main">
+    <div id="alerts" class="alerts"></div>
+
+    <!-- Overview -->
+    <section id="view-overview" class="view">
+      <p id="verdict" class="verdict">&nbsp;</p>
+      <div id="tiles" class="tiles"><div class="tile skeleton"></div><div class="tile skeleton"></div><div class="tile skeleton"></div><div class="tile skeleton"></div></div>
+      <div class="card">
+        <h2>Accounts</h2>
+        <div id="glance"><p class="muted empty">Loading…</p></div>
+      </div>
+      <div class="card">
+        <h2>Today<i class="info" data-tip="Trading cards that dropped and rep4rep comments that were posted, hour by hour."></i></h2>
+        <div id="chart" class="chart"><p class="muted empty">Loading…</p></div>
+        <div id="chartLegend" class="legend hidden">
+          <span><i style="background:var(--good)"></i>trading cards</span>
+          <span><i style="background:var(--accent)"></i>rep4rep comments</span>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Recent activity<a class="muted small" style="margin-left:auto;cursor:pointer" onclick="startTutorial()">Show the walkthrough again</a></h2>
+        <div id="recent" class="recent"><p class="muted empty">Loading…</p></div>
+      </div>
+    </section>
+
+    <!-- Accounts -->
+    <section id="view-accounts" class="view hidden">
+      <div class="toolbar">
+        <input id="acctSearch" type="text" placeholder="Search accounts…" oninput="render()">
+        <div id="acctFilters" class="chips"></div>
+        <span class="spacer"></span>
+        <button class="ghost" onclick="showImport()">Import from ASF</button>
+        <button onclick="showAddAccount()">+ Add account</button>
+      </div>
+      <div id="bots" class="grid"><p class="muted empty">Loading…</p></div>
+    </section>
+
+    <!-- rep4rep -->
+    <section id="view-rep4rep" class="view hidden">
+      <div id="r4rAccount" class="card"></div>
+      <div class="card">
+        <h2>Your Steam profiles</h2>
+        <div id="r4rProfiles"></div>
+      </div>
+      <div class="card">
+        <h2>Queued tasks</h2>
+        <p class="banner">nocatFarm posts these for you on a schedule. There's nothing to do here — this is just what's waiting.</p>
+        <div class="toolbar">
+          <label class="inline muted" for="r4rBot">Show tasks for</label>
+          <select id="r4rBot" onchange="loadTasks()"></select>
+          <button class="ghost" onclick="loadTasks()">Refresh</button>
+        </div>
+        <div id="r4rTasks"></div>
+      </div>
+      <div class="card">
+        <h2>Pacing</h2>
+        <p class="explain"><b>Steam lets an account leave about 10 comments a day on people who aren't its friends.</b>
+          Go past that and Steam quietly stops accepting comments from that account for around a day. It isn't a ban and
+          nothing is broken, but nothing you post gets through either — and rep4rep will never credit it. nocatFarm keeps
+          every account under the line, spaces the comments out at random, and only posts during the hours you allow.</p>
+        <div id="r4rPacing"></div>
+      </div>
+      <div class="card muted small">
+        <b>These live on rep4rep.com, because their API can't do them:</b>
+        removing a Steam profile · editing your custom comment list · task history · buying points · referrals.
+        <a href="https://rep4rep.com/dashboard/" target="_blank" rel="noopener">Open rep4rep.com ↗</a>
+      </div>
+    </section>
+
+    <!-- Log -->
+    <section id="view-log" class="view hidden">
+      <div class="card logcard">
+        <div class="toolbar">
+          <input id="logSearch" type="text" placeholder="Search the log…" oninput="renderLog()">
+          <div id="logLevels" class="chips"></div>
+          <select id="logBot" onchange="renderLog()"></select>
+          <label class="inline"><input type="checkbox" id="logFollow" checked> Follow</label>
+          <button class="ghost" onclick="copyLog()">Copy</button>
+        </div>
+        <div id="logBody" class="out"><p class="muted empty">Loading…</p></div>
+      </div>
+    </section>
+
+    <!-- Console -->
+    <section id="view-console" class="view hidden">
+      <p class="muted small">Anything you can do on the other tabs you can type here — and the other way round.</p>
+      <div class="consolewrap">
+        <div class="card console-card">
+          <div id="out" class="out"></div>
+          <form class="cmdline" onsubmit="return sendCommand(event)">
+            <span class="chev">&gt;</span>
+            <input id="cmd" type="text" autocomplete="off" spellcheck="false" placeholder="type a command, or 'help'">
+            <button type="submit">Run</button>
+          </form>
+        </div>
+        <div class="card cmdlist">
+          <h2>Commands</h2>
+          <div id="cmdList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section id="view-settings" class="view hidden">
+      <div class="settingswrap">
+        <div class="card settingsnav">
+          <h2>Global</h2>
+          <div id="settingsNavGlobal"></div>
+          <h2>Accounts</h2>
+          <div id="settingsNavBots"></div>
+          <h2>Jump to</h2>
+          <div id="settingsNavJump"></div>
+        </div>
+        <div class="card settingsform">
+          <div class="toolbar sticky">
+            <input id="setSearch" type="text" placeholder="Search settings…" oninput="renderSettings()">
+            <label class="inline"><input type="checkbox" id="setAdvanced" onchange="renderSettings()"> Show advanced<i class="info" data-tip="Settings most people never need. Nothing here is dangerous, it's just detail."></i></label>
+            <label class="inline"><input type="checkbox" id="setChanged" onchange="renderSettings()"> Only changed<i class="info" data-tip="Show only the settings that differ from their defaults."></i></label>
+            <span class="spacer"></span>
+            <button id="saveBtn" onclick="saveSettings()" disabled>Save</button>
+          </div>
+          <div id="settingsHeader"></div>
+          <div id="settingsBody"><p class="muted empty">Loading…</p></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div id="tip" class="tip hidden"></div>
+<div id="modal" class="modal hidden"><div id="modalCard" class="card"></div></div>
+
+<script src="app.js"></script>
+</body>
+</html>

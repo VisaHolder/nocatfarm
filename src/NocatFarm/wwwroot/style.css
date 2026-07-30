@@ -1,0 +1,747 @@
+/* nocat.lol, base dark. The variable names are unchanged on purpose - every var() call site and everything
+   in app.js keeps working, and only the values move. */
+:root {
+  --bg: #0a0a0a;
+  --panel: #111111;
+  --panel2: #1a1a1a;      /* nocat declares only two surfaces; this sits between them for insets and wells */
+  --line: #222222;
+  --line2: #666666;       /* nocat --accent-dim */
+  --text: #c8c8c8;
+  --muted: #8a8a8a;       /* #4a4a4a was 2.13:1 on the panel - nav items and every settings label unreadable */
+  --accent: #c8c8c8;      /* a light GREY, not a colour - see the status ramp below */
+  --accent-dim: #666666;
+  --accent-glow: rgba(170, 170, 170, .06);
+  --good: #c8c8c8;
+  --warn: #ffe000;
+  --bad: #ff3131;
+  --info: #8a8a8a;
+  --on-accent: #000;      /* text on an accent-filled surface - inverts in the light theme */
+  --radius: 0px;          /* sharp corners */
+  --rail: 224px;
+  --railh: 52px;          /* the top bar's height - everything sticky measures from this */
+
+  /* One 4px scale, so spacing stops being invented per rule. */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 40px;
+}
+
+/* The light variant.
+   Same structure, inverted. The accent goes DARK because it is used as a fill with text on top - keeping it
+   light would put light text on a light surface everywhere at once. --on-accent flips with it. */
+:root[data-theme="light"] {
+  --bg: #f4f4f4;
+  --panel: #ffffff;
+  --panel2: #eaeaea;
+  --line: #d4d4d4;
+  --line2: #9a9a9a;
+  --text: #1a1a1a;
+  --muted: #6b6b6b;
+  --accent: #2a2a2a;
+  --accent-dim: #9a9a9a;
+  --accent-glow: rgba(0, 0, 0, .05);
+  --good: #2a2a2a;
+  --warn: #8a6d00;     /* #ffe000 is unreadable on white; this is the same hue at a usable contrast */
+  --bad: #c00000;
+  --info: #5a5a5a;
+  --on-accent: #fff;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.55 "Share Tech Mono", ui-monospace, "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
+}
+
+.hidden { display: none !important; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.spacer { flex: 1; }
+a { color: var(--accent); }
+
+code {
+  background: var(--panel2); padding: 1px 6px;
+  font: 12px/1.5 inherit;
+  color: var(--text);
+}
+
+h1.wordmark { font-size: 17px; margin: 0; letter-spacing: 1px; font-weight: 400; text-transform: lowercase; }
+h1.wordmark span { color: var(--accent); }
+h2 {
+  font-size: 12px; margin: 0 0 var(--s3); text-transform: uppercase; letter-spacing: .5px;
+  color: var(--muted); display: flex; align-items: center; gap: var(--s2);
+}
+/* A heading can carry an action on its right - the walkthrough replay link sits in one. */
+h2 a { text-transform: none; letter-spacing: 0; text-decoration: none; }
+h2 a:hover { color: var(--text); }
+
+/* ── gates ─────────────────────────────────────────────────────────── */
+.gate { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+.gate-card { width: 330px; display: grid; gap: 12px; }
+.welcome-card { width: 520px; }
+.welcome-card .lead { font-size: 18px; margin: 6px 0 20px; }
+.welcome-card .foot { margin-top: 18px; }
+.error { color: var(--bad); min-height: 18px; margin: 8px 0; font-size: 13px; }
+
+/* ── shell ─────────────────────────────────────────────────────────── */
+/* A column, not a row.
+   While the rail was a 224px flex sibling of .main, "centred" could only ever mean centred in the leftover
+   space - the optical middle sat 112px right of the real one. As a top bar the content column gets the whole
+   window and margin:0 auto does what it says. */
+#app { display: flex; flex-direction: column; min-height: 100vh; }
+
+.rail {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--panel); border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: var(--s5); height: var(--railh);
+
+  /* Line the bar up with the centred column beneath it.
+     The column is 1400px wide INCLUDING its own --s6 of padding, so the bar has to add that padding on top of
+     half the leftover space - without it the bar sat exactly --s6 to the left of the content on every window
+     wide enough to matter, which is the misalignment you notice without being able to name. */
+  padding-inline: calc(max(0px, (100vw - 1400px) / 2) + var(--s6));
+}
+
+nav { display: flex; flex-direction: row; gap: var(--s1); }
+
+.navitem {
+  display: flex; align-items: center; gap: var(--s2);
+  padding: var(--s2) var(--s3); color: var(--muted); cursor: pointer;
+  text-decoration: none; font-size: 14px; white-space: nowrap;
+}
+.navitem:hover { background: var(--panel2); color: var(--text); }
+
+/* Underlined rather than left-barred, now that it is a horizontal bar. */
+.navitem.active { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
+.navitem b { font-size: 12px; color: var(--muted); }
+
+/* Dividers.
+   A flat monochrome palette with sharp corners has no drop shadows and no rounding to separate one region
+   from the next, so without an explicit line the top bar, the settings nav and the content column all read as
+   one undifferentiated sheet. These are the only structural lines in the app and they earn their place. */
+.rail { border-bottom: 1px solid var(--line); }
+.settingsnav { border-right: 1px solid var(--line); padding-right: var(--s4); }
+.settingsform { border-left: 1px solid var(--line); padding-left: var(--s4); margin-left: -1px; }
+
+/* Between the groups inside a settings pane, so a 40-row page has visible joints. */
+.section + .section { border-top: 1px solid var(--line); padding-top: var(--s5); margin-top: var(--s5); }
+
+/* And in the nav itself, between Global and the account list. */
+.settingsnav h2 + .jump, .settingsnav .s:first-of-type { border-top: 1px solid var(--line); padding-top: var(--s2); }
+
+/* The achievement pacer's working, shown rather than asserted. Deliberately plain: this is a readout, and
+   anything decorative here would be competing with the numbers for attention. */
+.pacer { margin: var(--s3) 0 0; max-width: 90ch; }
+.pacer table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.pacer th {
+  text-align: left; font-weight: 400; color: var(--muted); font-size: 11px;
+  text-transform: uppercase; letter-spacing: .06em; padding: 0 var(--s2) var(--s1) 0;
+  border-bottom: 1px solid var(--line); white-space: nowrap;
+}
+.pacer td { padding: var(--s1) var(--s2) var(--s1) 0; border-bottom: 1px solid var(--line); }
+.pacer tr:last-child td { border-bottom: 0; }
+.pacer .g { color: var(--text); }
+.pacer .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pacer .w { color: var(--muted); white-space: nowrap; }
+
+/* A game that is deliberately left alone reads as struck out rather than merely dim, so "why is this doing
+   nothing" answers itself. */
+.pacer tr.off td { color: var(--muted); }
+.pacer tr.off .g { text-decoration: line-through; }
+
+.pacer .bar { width: 90px; }
+.pacer .bar span {
+  display: block; height: 4px; background: var(--text); min-width: 1px;
+}
+.pacer td.bar { position: relative; }
+.pacer td.bar::before {
+  content: ""; position: absolute; left: 0; right: var(--s2); top: 50%;
+  height: 4px; margin-top: -2px; background: var(--panel2);
+}
+.pacer td.bar span { position: relative; }
+
+/* The command reference, in a modal that scrolls by itself rather than growing the dialog off screen. */
+.helplist { max-height: 55vh; overflow-y: auto; margin: var(--s3) 0; border-top: 1px solid var(--line); }
+.helplist .grp {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+  margin: var(--s3) 0 var(--s1); position: sticky; top: 0; background: var(--panel); padding: var(--s1) 0;
+}
+.helplist .c { padding: var(--s1) var(--s2); cursor: pointer; }
+.helplist .c:hover { background: var(--panel2); }
+.helplist .c code { background: none; padding: 0; color: var(--text); }
+.helplist .c .h { display: block; font-size: 11.5px; color: var(--muted); }
+
+.themetoggle {
+  background: none; border: 1px solid var(--line); color: var(--muted);
+  padding: var(--s1) var(--s2); font: inherit; font-size: 12px; cursor: pointer; line-height: 1;
+}
+.themetoggle:hover { border-color: var(--line2); color: var(--text); }
+
+/* Pushed to the right-hand end of the bar. */
+.rail-foot { margin-left: auto; display: flex; align-items: center; gap: var(--s3); }
+
+.railstats { margin: 0; display: flex; align-items: center; gap: var(--s3); font-size: 12px; }
+.railstats dt { color: var(--muted); display: inline; }
+.railstats dd { margin: 0 0 0 var(--s1); display: inline; }
+
+/* Below this the bar cannot hold everything at once, so the least important parts step aside rather than
+   wrapping the whole thing onto three rows. */
+@media (max-width: 1000px) {
+  .railstats { display: none; }
+}
+
+@media (max-width: 760px) {
+  .rail { height: auto; flex-wrap: wrap; padding-block: var(--s2); }
+  .rail-foot { margin-left: 0; }
+}
+
+/* margin: 0 auto is the whole difference between this and nocat.lol's own .app-content. Without it the
+   max-width just pins the column to the left and leaves the rest of a wide monitor as dead background. */
+.main { flex: 1; min-width: 0; width: 100%; padding: var(--s5) var(--s6) var(--s7); max-width: 1400px; margin: 0 auto; }
+
+/* ── chips ─────────────────────────────────────────────────────────── */
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; padding: 3px 9px; border-radius: 0; cursor: pointer;
+  background: var(--panel2); color: var(--muted); border: 1px solid var(--line); user-select: none;
+}
+.chip:hover { border-color: var(--line2); color: var(--text); }
+.chip.on { color: var(--text); border-color: var(--accent); }
+.chip .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+/* Working: bright and lit. */
+.chip.farming .dot,
+.chip.playing .dot { background: var(--text); box-shadow: 0 0 6px var(--text); }
+
+/* Running, but not the headline job: bright, unlit. */
+.chip.idling .dot { background: var(--text); }
+
+/* Up but doing nothing: mid grey. */
+.chip.online .dot { background: var(--line2); }
+
+/* Resting: hollow, so it reads as "paused" at a glance without needing a colour. */
+.chip.break .dot,
+.chip.nightidle .dot { background: transparent; box-shadow: inset 0 0 0 2px var(--line2); }
+
+/* Asleep and off: hollow and dim - the least ink on the page. */
+.chip.asleep .dot,
+.chip.off .dot { background: transparent; box-shadow: inset 0 0 0 1px var(--muted); }
+
+/* Connecting: mid, hollow, so it is clearly not settled yet. */
+.chip.connecting .dot { background: transparent; box-shadow: inset 0 0 0 2px var(--text); }
+
+/* The two that KEEP a hue, because these are the only ones you must not miss. */
+.chip.needsyou .dot { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+.chip.problem .dot { background: var(--bad); box-shadow: 0 0 6px var(--bad); }
+.bot.playing { border-top-color: var(--good); }
+.bot.break { border-top-color: var(--warn); }
+.bot.nightidle { border-top-color: var(--line2); }
+.bot.asleep { border-top-color: var(--muted); }
+
+/* ── alerts ────────────────────────────────────────────────────────── */
+.alerts { display: grid; gap: 8px; margin-bottom: 16px; }
+
+.alert {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 11px 14px; border-radius: 0; font-size: 13px;
+  border: 1px solid;
+}
+.alert.warn { background: rgba(255,224,0,.05); border-color: rgba(255,224,0,.35); color: var(--warn); }
+.alert.bad  { background: rgba(255,49,49,.06); border-color: rgba(255,49,49,.40); color: var(--bad); }
+.alert.info { background: var(--accent-glow); border-color: var(--accent-dim); color: var(--text); }
+.alert input { max-width: 190px; }
+.alert .spacer { flex: 1; }
+
+/* ── cards & layout ────────────────────────────────────────────────── */
+.card {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 0; padding: 16px; margin-bottom: 16px;
+}
+
+.toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+/* Below the bar, and above it in stacking order.
+   These offsets were written for a 224px LEFT rail, where top:0 was correct. After the bar moved to the top
+   they parked inside the band it occupies, and it painted over them - so on the settings page the Save button,
+   the search box and both checkboxes were all unclickable once the page scrolled. Clicks landed on the bar. */
+.toolbar.sticky { top: var(--railh) !important; z-index: 60; }
+
+.toolbar.sticky { position: sticky; top: 0; background: var(--panel); z-index: 3; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+/* Every control in a toolbar, not just the ones that happen to be <input type=text>. A <select> is not an
+   input element, so the old selector never matched one - which is exactly why the log and rep4rep toolbars
+   were three rows tall with their controls stretched across the full width. */
+.toolbar input:not([type=checkbox]):not([type=radio]),
+.toolbar select { max-width: 240px; }
+label.inline { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+
+.verdict { font-size: 20px; margin: 2px 0 var(--s4); max-width: 70ch; letter-spacing: .3px; }
+
+/* auto-FIT collapses the empty tracks and stretches whatever is left, so four tiles each holding one number
+   became 328px wide on a big monitor. A max in the minmax stops them growing; start keeps them together. */
+.tiles {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 200px));
+  justify-content: start; gap: var(--s3); margin-bottom: var(--s4);
+}
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 0; padding: 14px 16px; }
+.tile .n { font-size: 26px; letter-spacing: .5px; line-height: 1.15; }
+.tile .k { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.tile .sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+
+/* Same trouble: two accounts became two 660px cards. Cards have a natural width - let them keep it. */
+.grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 380px));
+  justify-content: start; gap: var(--s3);
+}
+
+/* ── account cards ─────────────────────────────────────────────────── */
+.bot { border-top: 3px solid var(--line2); }
+.bot.farming { border-top-color: var(--good); }
+.bot.idling { border-top-color: var(--accent); }
+.bot.needsyou { border-top-color: var(--warn); }
+.bot.problem { border-top-color: var(--bad); }
+.bot.connecting { border-top-color: var(--info); }
+
+.bot-head { display: flex; align-items: baseline; gap: 8px; }
+.bot-name {
+  letter-spacing: .5px; font-size: 15px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1;
+}
+.bot-head .chip { flex: 0 0 auto; }
+
+/* Every one of these can hold text from Steam or from the user, so every one has to be able to be long. */
+.bot-login, .bot-notes, .bot-playing, .bot-guard {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.bot-login { color: var(--muted); font-size: 12px; }
+.bot-notes { color: var(--muted); font-size: 12px; font-style: italic; margin-top: 5px; }
+.bot-guard { margin-top: 8px; font-size: 13px; color: var(--warn); }
+.bot-playing { margin-top: 10px; font-size: 13px; }
+.bot-playing .real { color: var(--muted); }
+
+.statline {
+  display: flex; flex-wrap: wrap; gap: 4px 14px;
+  margin-top: 10px; font-size: 12px; color: var(--muted);
+}
+.statline b { color: var(--text); letter-spacing: .5px; font-size: 13px; }
+
+.bar { height: 4px; background: var(--panel2); border-radius: 0; overflow: hidden; margin: 9px 0 2px; }
+.bar > i { display: block; height: 100%; background: var(--accent); transition: width .3s ease; }
+
+.empty { padding: 22px 0; text-align: center; font-size: 13px; }
+
+.rows { margin-top: 10px; display: grid; gap: 5px; }
+.row { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; }
+.row .k { color: var(--muted); flex: 0 0 auto; white-space: nowrap; }
+/* min-width:0 is what lets the value shrink below its own text and actually ellipsize; without it a flex item
+   refuses to shrink past its content and the text spills out past the card edge. */
+.row .v { flex: 0 1 auto; min-width: 0; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+/* The small button, defined once. app.js used to inline "padding:4px 9px;font-size:12px" in three places,
+   which disagreed with this rule by a pixel or two and made the same control two different sizes. */
+.actions button, button.small { font-size: 12px; padding: var(--s1) var(--s2); }
+
+/* ── tables ────────────────────────────────────────────────────────── */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tr:last-child td { border-bottom: 0; }
+tr.click { cursor: pointer; }
+tr.click:hover td { background: var(--panel2); }
+.tablewrap { overflow-x: auto; }
+
+.pill { font-size: 11px; padding: 2px 8px; border-radius: 0; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.pill.good { color: var(--text); border-color: var(--accent-dim); }
+.pill.warn { color: var(--warn); border-color: rgba(255,224,0,.35); }
+.pill.bad { color: var(--bad); border-color: rgba(255,49,49,.40); }
+
+/* ── chart ─────────────────────────────────────────────────────────── */
+.chart { display: flex; align-items: flex-end; gap: 3px; height: 120px; }
+.chart .col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; min-width: 4px; }
+.chart .col i { display: block; border-radius: 0; }
+
+/* Cards and comments were both --accent, so the two-colour legend under the chart was describing a
+   distinction that was not on screen. Separated by brightness, which survives a hueless palette. */
+.chart .col i.cards { background: var(--text); }
+.chart .col i.comments { background: var(--line2); }
+.legend i.cards { background: var(--text); }
+.legend i.comments { background: var(--line2); }
+.chart .col .c { background: var(--good); }
+.chart .col .m { background: var(--accent); }
+.chart .col .lbl { font-size: 9px; color: var(--muted); text-align: center; }
+.legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-top: 10px; }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 0; margin-right: 5px; }
+
+.recent .line { display: flex; gap: 10px; font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--line); }
+.recent .line:last-child { border-bottom: 0; }
+.recent .who { color: var(--info); min-width: 90px; }
+.recent .when { color: var(--muted); margin-left: auto; font-size: 12px; white-space: nowrap; }
+
+/* ── log & console ─────────────────────────────────────────────────── */
+.logcard, .console-card { padding: 0; overflow: hidden; }
+
+/* The output area takes whatever the command line does not, rather than being a fixed slice of the viewport
+   that happens to differ from the panel beside it. */
+.console-card { display: flex; flex-direction: column; min-height: 0; }
+.console-card .out { flex: 1; height: auto; min-height: 0; }
+.console-card .cmdline { flex: 0 0 auto; }
+.logcard .toolbar { margin: 0; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+
+.out {
+  height: 60vh; overflow-y: auto; padding: 12px 14px; margin: 0;
+  font-size: 12.5px; line-height: 1.6;
+  white-space: pre-wrap; word-break: break-word;
+}
+.out .l { display: flex; gap: 10px; border-left: 3px solid transparent; padding-left: 8px; margin-left: -8px; }
+.out .l.WARN { border-left-color: var(--warn); }
+.out .l.ERROR { border-left-color: var(--bad); }
+.out .l.GOOD { border-left-color: var(--good); }
+.out .l.DEBUG { color: var(--muted); }
+.out .t { color: var(--muted); flex: 0 0 auto; }
+.out .s { color: var(--info); flex: 0 0 92px; cursor: pointer; }
+.out .m { flex: 1; min-width: 0; }
+.out mark { background: rgba(255,224,0,.18); color: var(--warn); }
+.out .echo { color: var(--accent); }
+.out .reply { color: var(--good); white-space: pre-wrap; }
+
+.cmdline { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--line); padding: 10px 14px; background: var(--panel2); }
+.cmdline .chev { color: var(--accent); }
+.cmdline input { flex: 1; }
+
+.consolewrap {
+  display: grid; grid-template-columns: 1fr 300px; gap: var(--s4);
+  align-items: stretch;
+
+  /* The row height, set once. Everything inside scrolls within it, so the page itself never grows a second
+     scrollbar and the two panels always end on the same line. */
+  height: calc(100vh - 190px); min-height: 320px;
+}
+
+/* min-height: 0 is load-bearing. A grid item defaults to min-height:auto, which refuses to shrink below its
+   content - so without it the commands list would push the row taller instead of scrolling inside it, and the
+   overhang would come straight back. */
+.cmdlist {
+  max-height: none; min-height: 0; overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+.cmdlist #cmdList { overflow-y: auto; min-height: 0; }
+.cmdlist .grp { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 14px 0 6px; }
+.cmdlist .grp:first-child { margin-top: 0; }
+.cmdlist .c { padding: 4px 6px; border-radius: 0; cursor: pointer; }
+.cmdlist .c:hover { background: var(--panel2); }
+.cmdlist .c code { background: none; padding: 0; color: var(--text); }
+.cmdlist .c .h { display: block; font-size: 11.5px; color: var(--muted); }
+
+/* ── settings ──────────────────────────────────────────────────────── */
+.settingswrap { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 18px; align-items: start; }
+
+.settingsnav { position: sticky; top: calc(var(--railh) + var(--s5)); padding: var(--s3); }
+.settingsnav h2 { margin: 14px 0 6px 8px; }
+.settingsnav h2:first-child { margin-top: 4px; }
+.settingsnav .s {
+  padding: 7px 10px; border-radius: 0; cursor: pointer; font-size: 13px; color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.settingsnav .s:hover { background: var(--panel2); color: var(--text); }
+.settingsnav .s.active { background: var(--panel2); color: var(--text); box-shadow: inset 2px 0 0 var(--accent); }
+
+.settingsform { padding: 0; }
+.settingsform .toolbar.sticky {
+  margin: 0; padding: 12px 18px; border-radius: 0;
+}
+#settingsHeader { padding: 14px 18px 0; }
+#settingsHeader .toolbar { margin-bottom: 0; }
+#settingsBody { padding: 4px 18px 18px; }
+
+/* Sections read as blocks, with the heading doing the separating rather than a hairline in mid-air. */
+.section { padding-top: 18px; margin-top: 18px; border-top: 1px solid var(--line); }
+.section:first-of-type { border-top: 0; margin-top: 6px; padding-top: 6px; }
+.section > h3 {
+  font-size: 13.5px; margin: 0 0 14px; color: var(--text); letter-spacing: .5px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* Label, then the control at its natural size, then the meta right beside it - not flung to the far edge of
+   a 900px row with a canyon in between. */
+/* The third track was 1fr, which on a wide window put a 520px canyon between the control and its note. It
+   now takes only what it needs and the row stops there. */
+.field {
+  display: grid; grid-template-columns: 210px minmax(0, 320px) minmax(0, max-content);
+  gap: var(--s1) var(--s4); align-items: center; padding: 6px 0;
+}
+.field.changed > label { color: var(--accent); }
+.field > label { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.field .ctl { min-width: 0; }
+
+/* The weights editor is a table, not a single control, and 320px is not enough for one: the columns needed
+   350px and simply spilled out of the cell. It is the only field that gets the meta column as well. */
+.field:has(.weights) .ctl { grid-column: 2 / -1; }
+.field .ctl input[type=number] { max-width: 120px; }
+.field .meta {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 11.5px; color: var(--muted); white-space: nowrap;
+}
+.field .revert { cursor: pointer; text-decoration: underline dotted; }
+.field .revert:hover { color: var(--text); }
+.field .restart { color: var(--warn); cursor: help; }
+
+.tags { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.tag { background: var(--panel2); border: 1px solid var(--line); border-radius: 0; padding: 2px 6px; font-size: 12px; display: inline-flex; gap: 5px; align-items: center; }
+.tag b { cursor: pointer; color: var(--muted); font-weight: 400; }
+.tag b:hover { color: var(--bad); }
+
+.pills { display: flex; flex-wrap: wrap; gap: 5px; }
+.pills .p { font-size: 12px; padding: 4px 10px; border-radius: 0; border: 1px solid var(--line); cursor: pointer; color: var(--muted); }
+.pills .p:hover { border-color: var(--line2); color: var(--text); }
+.pills .p.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); letter-spacing: .5px; }
+
+.banner {
+  background: var(--panel2); border-left: 3px solid var(--accent);
+  padding: var(--s3); font-size: 13px; margin: 0 0 var(--s3); max-width: 90ch;
+}
+.explain {
+  background: var(--panel2); padding: var(--s3) var(--s4); font-size: 13px;
+  line-height: 1.6; margin: 0 0 var(--s3); max-width: 90ch;
+}
+
+/* live "here is what this actually does" panel above a group of settings */
+.preview {
+  background: var(--panel2); border: 1px dashed var(--line2); border-radius: 0;
+  padding: 11px 14px; font-size: 13px; line-height: 1.65; margin: 0 0 16px;
+}
+.preview .k {
+  display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .09em;
+  color: var(--muted); margin-bottom: 3px;
+}
+.preview b { color: var(--accent); letter-spacing: .5px; }
+
+/* numbered setup steps */
+ol.steps { margin: 0; padding-left: 0; list-style: none; counter-reset: step; display: grid; gap: 18px; }
+ol.steps li { counter-increment: step; padding-left: 42px; position: relative; font-size: 13.5px; }
+ol.steps li::before {
+  content: counter(step);
+  position: absolute; left: 0; top: -1px;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--accent); color: var(--on-accent);
+  display: grid; place-items: center; letter-spacing: .5px; font-size: 13px;
+}
+ol.steps li.muted::before { background: var(--line2); color: var(--muted); }
+ol.steps li > div { margin-top: 3px; }
+
+/* ── inputs ────────────────────────────────────────────────────────── */
+/* Matched by ELEMENT plus a not() for the two that are genuinely different, rather than by listing types.
+   Listing types is how #cmd ended up as a raw white platform box: it had no type attribute at all, so it
+   matched nothing here and fell back to the browser default on a dark panel. */
+input:not([type=checkbox]):not([type=radio]), select, textarea {
+  background: var(--bg); border: 1px solid var(--line); color: var(--text);
+  border-radius: 0; padding: 7px 10px; font: inherit; width: 100%;
+}
+input:focus, select:focus { outline: none; border-color: var(--accent); }
+
+/* Keyboard users need to see where they are. :focus-visible so a mouse click doesn't ring everything. */
+button:focus-visible,
+.navitem:focus-visible,
+.chip:focus-visible,
+.settingsnav .s:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); flex: 0 0 auto; }
+select { cursor: pointer; }
+
+.switch { position: relative; display: inline-block; width: 38px; height: 21px; flex: 0 0 auto; }
+.switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.switch span { position: absolute; inset: 0; background: var(--panel2); border: 1px solid var(--line); border-radius: 20px; cursor: pointer; transition: .12s; }
+.switch span::before { content: ""; position: absolute; width: 15px; height: 15px; left: 2px; top: 2px; background: var(--muted); border-radius: 50%; transition: .12s; }
+.switch input:checked + span { background: var(--accent-glow); border-color: var(--accent); }
+.switch input:checked + span::before { transform: translateX(17px); background: var(--accent); }
+
+button {
+  background: var(--accent); border: 0; color: var(--on-accent); letter-spacing: .5px;
+  border-radius: 0; padding: 8px 14px; font: inherit; cursor: pointer; white-space: nowrap;
+}
+button:hover:not(:disabled) { filter: brightness(1.1); }
+button:disabled { opacity: .45; cursor: default; }
+button.ghost { background: var(--panel2); color: var(--text); border: 1px solid var(--line); font-weight: 500; }
+button.ghost:hover:not(:disabled) { background: var(--line); }
+button.danger { background: var(--bad); color: var(--on-accent); }
+
+/* ── tooltips ──────────────────────────────────────────────────────── */
+.info {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--line2);
+  color: var(--muted); font-size: 10px; font-style: normal; cursor: help; flex: 0 0 auto;
+}
+.info::after { content: "i"; font-family: Georgia, serif; }
+.info:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Explicitly inverted rather than inherited: the tip is a dark chip in BOTH themes, so its text has to be
+   light in both. Reading var(--text) made it black text on a near-black box the moment the light theme was
+   switched on - every tooltip in the app, unreadable. */
+.tip { background: #111 !important; color: #e8e8e8 !important; border-color: #333 !important; }
+
+.tip {
+  position: fixed; z-index: 100; max-width: 340px;
+  background: #000; border: 1px solid var(--accent-dim); border-radius: 0;
+  padding: 9px 12px; font-size: 12.5px; line-height: 1.5; color: var(--text);
+  box-shadow: 0 8px 30px rgba(0,0,0,.6); pointer-events: none;
+}
+
+/* ── modal ─────────────────────────────────────────────────────────── */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.72); display: grid; place-items: center; z-index: 90; padding: 24px; }
+.modal .card { width: 460px; max-width: 100%; max-height: 86vh; overflow-y: auto; margin: 0; }
+
+.form2 { display: grid; grid-template-columns: 190px 1fr; gap: 10px 14px; align-items: center; }
+.form2 label { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+
+.toast {
+  position: fixed; bottom: 20px; right: 20px; z-index: 120;
+  background: var(--panel); border: 1px solid var(--line2); border-left: 3px solid var(--good);
+  border-radius: 0; padding: 11px 15px; font-size: 13px; box-shadow: 0 8px 30px rgba(0,0,0,.5);
+}
+.toast.bad { border-left-color: var(--bad); }
+
+/* ── responsive ────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .consolewrap { grid-template-columns: 1fr; }
+  .cmdlist { max-height: none; }
+}
+
+@media (max-width: 900px) {
+  #app { flex-direction: column; }
+  /* Already horizontal now, so this only needs to let it scroll rather than rebuild it. The bar stops being
+     sticky here, so the offsets that cleared it have to go back to zero or they leave a gap. */
+  .rail { position: static; overflow-x: auto; }
+  /* Let the tab bar scroll rather than wrap or clip if the six tabs ever outgrow a narrow screen. */
+  nav { overflow-x: auto; flex-wrap: nowrap; }
+  .navitem { flex: 0 0 auto; }
+  .toolbar.sticky { top: 0 !important; }
+  .settingsnav { position: static; }
+  /* The stats go; the theme control does NOT - hiding it left no way to switch back, and the 760px rule
+     written to reflow it could never match because this 900px block had already removed its parent. */
+  .rail-foot { display: flex; margin-left: auto; }
+  .rail-foot .chips, .rail-foot .railstats, .rail-foot .muted { display: none; }
+  .main { padding: 16px; }
+  .settingswrap { grid-template-columns: 1fr; }
+  .settingsnav { position: static; }
+  .field { grid-template-columns: 1fr; gap: 4px; }
+  .field .meta { justify-content: flex-start; }
+}
+
+/* ── loading ───────────────────────────────────────────────────────── */
+/* A blank page for the first second reads as broken; a shimmer reads as "on its way". */
+.skeleton {
+  min-height: 78px;
+  background: linear-gradient(90deg, var(--panel) 25%, var(--panel2) 50%, var(--panel) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-color: transparent;
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+  .bar > i { transition: none; }
+}
+
+/* section jump list in the settings sidebar */
+.jump { display: grid; gap: 1px; }
+.jump .j {
+  display: block; padding: 5px 10px; border-radius: 0; cursor: pointer;
+  font-size: 12.5px; color: var(--muted); text-decoration: none;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.jump .j:hover { background: var(--panel2); color: var(--text); }
+
+/* ── the weights editor ────────────────────────────────────────────────── */
+/* One row per game, sized so the bars line up and the whole mix reads at a glance. */
+.weights { display: flex; flex-direction: column; gap: 3px; max-width: 520px; }
+
+/* Every row is the same grid, so the bars and the boxes line up down the column. The name track is
+   minmax(0, 1fr) rather than minmax(120px, 1fr) deliberately: a floor of 120px cannot shrink, so in a narrow
+   container the whole row overflowed instead of the long name simply truncating. */
+.wrow {
+  display: grid; grid-template-columns: minmax(0, 1fr) 96px 62px 10px 44px;
+  gap: 8px; align-items: center; min-height: 30px;
+}
+.wname { display: flex; align-items: center; gap: 6px; font-size: 13px; min-width: 0; }
+
+/* The name gives way; the appID never does. Without this the name wrapped to two lines and shoved the appID
+   out of the column and over the bar next to it. */
+.wgame { font-weight: 400; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wname .wid { font-style: normal; font-size: 11px; color: var(--muted); opacity: .6; flex: none; }
+.wtag { background: var(--accent); color: var(--on-accent); font-size: 10px; letter-spacing: .5px; letter-spacing: .3px;
+        text-transform: uppercase; border-radius: 0; padding: 1px 5px; }
+.wbar { background: var(--panel2); border-radius: 0; height: 6px; overflow: hidden; }
+.wbar i { display: block; height: 100%; background: var(--line2); border-radius: 0; }
+.wrow.wmain .wbar i { background: var(--accent); }
+
+/* An explicit height on both the input and the read-only figure, because otherwise the input was 38px tall
+   and the main row's plain number 25px, and no two rows shared a baseline. */
+/* Both selectors on purpose: `.field .ctl input[type=number]` further up sets max-width 120px and outranks a
+   plain `.field .ctl .wpct`, so the max-width here never actually applied. Harmless while the grid track is
+   62px, and a trap the moment anyone widens the column. */
+.field .ctl input[type=number].wpct, .field .ctl .wpct {
+  max-width: none; width: 100%; height: 30px; box-sizing: border-box;
+  padding: 0 8px; font-size: 12px; text-align: right;
+  font-variant-numeric: tabular-nums; border-radius: 0;
+  -moz-appearance: textfield; appearance: textfield;
+}
+
+/* The native spinner goes. The column is 62px, and after the border and padding there are ~44px left for a
+   value that can only ever be 1-99. Firefox spends ~16px of that on its spin box and Chrome ~13px, so a third
+   of the control was a widget you only see on hover - and because the text is right-aligned the digits sat
+   pressed straight against the arrows with no gap at all, which is what made it read as a broken scrollbar
+   stub. Scoped to .wpct so the ordinary number settings keep theirs; they have 140px and no two-digit range. */
+.field .ctl .wpct::-webkit-outer-spin-button,
+.field .ctl .wpct::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* The spinner was also the only hint the box was editable, so the border takes that job over. :not(:focus)
+   because this selector outranks the shared input:focus rule and would otherwise strip the accent ring off the
+   box you are typing in; input.wpct so the read-only main-game figure does not light up as if it were editable. */
+.field .ctl input.wpct:hover:not(:focus) { border-color: var(--line2); }
+.wsign { color: var(--muted); font-size: 12px; }
+.wact { display: flex; gap: 6px; justify-content: flex-end; min-height: 16px; }
+.wact b { cursor: pointer; color: var(--muted); font-weight: 400; font-size: 13px; line-height: 1; }
+.wact b:hover { color: var(--text); }
+.wact b:last-child:hover { color: var(--bad); }
+.wadd { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+.wadd input { max-width: 180px; }
+
+/* What the friends list actually shows. Dimmed when nobody can see the account at all. */
+/* Dragging an account card. grab/grabbing on the name only - making the whole card grab would fight the
+   buttons inside it, which still need an ordinary pointer. */
+.card.bot { transition: opacity .12s; }
+.card.bot .bot-name { cursor: grab; }
+.card.bot.dragging { opacity: .45; outline: 2px dashed var(--accent); outline-offset: -2px; }
+.card.bot.dragging .bot-name { cursor: grabbing; }
+
+/* The one destructive control in the settings. Red, boxed and set apart, so it never reads as just another
+   row - everything else on that page can be changed back and this cannot. */
+.section.danger h3 { color: var(--bad); }
+.dangerbox { border: 1px solid rgba(255,49,49,.40); padding: var(--s4); background: rgba(255,49,49,.05); }
+.dangerbox b { display: block; margin-bottom: 6px; }
+.dangerbox p { margin: 0 0 12px; }
+button.danger { background: var(--bad); border-color: var(--bad); color: #fff; }
+button.danger:hover:not(:disabled) { filter: brightness(1.1); }
+button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
+
+.bot-persona { font-size: 11px; color: var(--muted); margin-top: -2px; }
+.bot-persona b { color: var(--text); letter-spacing: .5px; }
+.bot-persona.hidden-persona b { color: var(--muted); }
+.bot-mismatch { font-size: 11px; color: var(--warn); margin-top: 2px; }
+/* The main game's share is owned by MainGameSharePct, so it reads as a figure rather than a box you can edit.
+   It still has to occupy the column exactly like the inputs below it or the whole column looks bent. */
+.field .ctl .wpct.wfixed {
+  display: flex; align-items: center; justify-content: flex-end;
+  border: 1px solid transparent; color: var(--muted); cursor: help;
+}
