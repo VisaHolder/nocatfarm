@@ -156,7 +156,7 @@ public sealed class Bot : IAsyncDisposable {
 	/// This is worth surfacing because it is the one thing you cannot check from inside the app - "it says it is
 	/// offline idling" and "my friends can see it playing" were the same screen for far too long.
 	/// </summary>
-	public int EffectivePersona => State == BotState.Online ? _personaOverride ?? Cfg.OnlineStatus : 0;
+	public int EffectivePersona => State != BotState.Online ? 0 : Cfg.IUseThisAccount ? 1 : _personaOverride ?? Cfg.OnlineStatus;
 
 	/// <summary>
 	/// The persona Steam last reported for this account, which is not always the one we asked for.
@@ -388,6 +388,7 @@ public sealed class Bot : IAsyncDisposable {
 
 	// Last time the schedule's persona was re-asserted, so the heartbeat can keep it true without spamming.
 	private DateTime _lastPersonaAssert;
+	private DateTime _lastNameHeal;
 
 	// Last appear-as status and displayed game actually announced, so a CHANGE can be logged (and only a change -
 	// the re-asserts that keep them steady stay silent). -1 / null means nothing announced yet this run.
@@ -1078,7 +1079,7 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		State = BotState.Reconnecting;
-		StatusText = "you're playing";
+		StatusText = cb.Result == EResult.LoggedInElsewhere ? "you're playing" : "reconnecting";
 		OnlineSince = null;
 	}
 
@@ -1223,6 +1224,27 @@ public sealed class Bot : IAsyncDisposable {
 				ApplyPersona();
 			} catch {
 				// cosmetic - never worth disturbing the heartbeat over
+			}
+		}
+
+		// Heal a custom name that has slipped off the top.
+		//
+		// Steam shows whichever game started MOST RECENTLY, and it non-deterministically leaves a real game there
+		// instead of the shortcut, so the friends list shows "Counter-Strike 2" rather than the custom name. Once
+		// that has PERSISTED (CustomNameNotShowing = 90s, so a login blip doesn't count), re-announce with force so
+		// the shortcut is the newest thing again. The routine re-assert can't fix this on its own - it only
+		// relaunches when the GAME LIST changes, and an idling account's list doesn't, so a slipped name stayed
+		// slipped forever. Throttled, and only for an account that should be showing a custom name at all.
+		if (CustomNameNotShowing && !PlayingBlocked && !Paused && !HumanOwned
+			&& !string.IsNullOrWhiteSpace(CustomName)
+			&& (DateTime.UtcNow.Subtract(_lastNameHeal).TotalSeconds >= 120)) {
+			_lastNameHeal = DateTime.UtcNow;
+			Log.Info($"custom name slipped (Steam shows {PlayingAsSeen}) - re-asserting it", Name);
+
+			try {
+				SetPlaying(PlayingApps, force: true);
+			} catch {
+				// next heartbeat tries again
 			}
 		}
 
@@ -1511,7 +1533,6 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		Interlocked.Exchange(ref _dropPending, 0);
-		_commentBaselineSet = false;
 
 		return true;
 	}
@@ -1598,7 +1619,7 @@ public sealed class Bot : IAsyncDisposable {
 	/// Steam then shows the custom name on the profile and the friends list while the real games still accrue
 	/// playtime. Order matters: the shortcut has to lead, or the real game's store name wins the display.
 	/// </summary>
-	public void SetPlaying(IReadOnlyCollection<uint> appIds, string? overrideName = null) {
+	public void SetPlaying(IReadOnlyCollection<uint> appIds, string? overrideName = null, bool force = false) {
 		if (State != BotState.Online) {
 			return;
 		}
@@ -1652,8 +1673,7 @@ public sealed class Bot : IAsyncDisposable {
 		// nothing, and the sequence guard makes even that impossible to leave behind.
 		bool relaunch = !string.IsNullOrWhiteSpace(label)
 			&& (apps.Count > 0)
-			&& (_announcedApps != null)
-			&& !_announcedApps.SequenceEqual(apps);
+			&& (force || ((_announcedApps != null) && !_announcedApps.SequenceEqual(apps)));
 
 		// Captured before _announcedApps is overwritten below - the persona re-apply further down needs to
 		// know whether this call actually CHANGED anything, and by then the record has already been updated.

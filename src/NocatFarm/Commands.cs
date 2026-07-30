@@ -444,8 +444,6 @@ public static class Commands {
 		return $"There's no account called '{name}'. You have: {known}";
 	}
 
-	private static string Trim(string s, int max) => s.Length <= max ? s : s[..(max - 1)] + "…";
-
 	private static async Task<string> LifecycleAsync(BotManager mgr, string[] args, string verb) {
 		if (args.Length == 0) {
 			return $"{verb} <account|all>";
@@ -605,7 +603,7 @@ public static class Commands {
 			sb.AppendLine($"  right now   {human.Status}");
 
 			if (human.TargetMinutesToday > 0) {
-				int pct = human.TargetMinutesToday == 0 ? 0 : human.PlayedMinutesToday * 100 / human.TargetMinutesToday;
+				int pct = human.PlayedMinutesToday * 100 / human.TargetMinutesToday;
 				sb.AppendLine($"  today       {Fmt.Hm(human.PlayedMinutesToday)} of about {Fmt.Hm(human.TargetMinutesToday)}  ({pct}%)");
 			}
 
@@ -982,7 +980,20 @@ public static class Commands {
 	}
 
 	private static string Cards(BotManager mgr, string[] args) {
-		IEnumerable<Bot> bots = args.Length > 0 ? (mgr.Get(args[0]) is Bot b ? [b] : []) : mgr.All;
+		IEnumerable<Bot> bots;
+
+		if (args.Length > 0) {
+			Bot? one = mgr.Get(args[0]);
+
+			if (one == null) {
+				return NoSuchAccount(mgr, args[0]);
+			}
+
+			bots = [one];
+		} else {
+			bots = mgr.All;
+		}
+
 		StringBuilder sb = new();
 
 		foreach (Bot bot in bots) {

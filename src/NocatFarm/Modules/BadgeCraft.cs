@@ -101,14 +101,18 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 
 		// Descriptions carry the type; assets carry the id. Match them up by classid.
 		foreach (string classId in BoosterClassIds(inv)) {
+			// market_fee_app depends only on classId, so read it once per class, not once per asset. Match the
+			// FULL "classid":"<id>" including the closing quote - without it, classid 123 also matches 1234, so we
+			// would read the appid from the wrong description, POST the wrong appid, and Steam refuses the unpack.
+			int at = inv.IndexOf("\"classid\":\"" + classId + "\"", StringComparison.Ordinal);
+			string? appId = at < 0 ? null : Json.Str(inv[at..], "market_fee_app");
+
+			if (appId == null) {
+				continue;
+			}
+
 			foreach (ulong assetId in AssetIdsFor(inv, classId)) {
 				ct.ThrowIfCancellationRequested();
-
-				string? appId = Json.Str(inv[Math.Max(0, inv.IndexOf("\"classid\":\"" + classId, StringComparison.Ordinal))..], "market_fee_app");
-
-				if (appId == null) {
-					continue;
-				}
 
 				string? body = await Bot.Web.PostAsync(
 					new Uri(WebSession.Community, "/my/ajaxunpackbooster/"),

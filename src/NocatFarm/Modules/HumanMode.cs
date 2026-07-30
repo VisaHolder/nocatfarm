@@ -1006,7 +1006,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		// Two in three, not always. A player who owns four games does not play only the ones that happen to
 		// still be dropping cards, and an account that did would be reading as a farmer again.
-		return (farmable.Count > 0) && (Rng(0, 100) < 66) ? farmable[Rng(0, farmable.Count)] : 0;
+		return (farmable.Count > 0) && (Rng(0, 100) < 66) ? farmable[Rng(0, farmable.Count - 1)] : 0;
 	}
 
 	private uint MainGame() {

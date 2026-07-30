@@ -378,7 +378,7 @@ public sealed class UserStatsHandler : ClientMsgHandler {
 
 		Client.Send(request);
 
-		return await WaitAsync(answer.Task, () => Forget(_pendingGets, request.SourceJobID), ct).ConfigureAwait(false);
+		return (await WaitAsync(answer.Task, () => Forget(_pendingGets, request.SourceJobID), ct).ConfigureAwait(false)).Value;
 	}
 
 	public async Task<EResult> StoreUserStatsAsync(uint appId, ulong steamId, Dictionary<uint, uint> statValues, uint crcStats, CancellationToken ct = default) {
@@ -412,22 +412,24 @@ public sealed class UserStatsHandler : ClientMsgHandler {
 
 		Client.Send(request);
 
-		return await WaitAsync(answer.Task, () => Forget(_pendingStores, request.SourceJobID), ct).ConfigureAwait(false) is { } result
-			? result
-			: EResult.Timeout;
+		(bool ok, EResult result) = await WaitAsync(answer.Task, () => Forget(_pendingStores, request.SourceJobID), ct).ConfigureAwait(false);
+
+		return ok ? result : EResult.Timeout;
 	}
 
-	/// <summary>Wait with a ceiling, and never leave the pending entry behind when it expires.</summary>
-	private static async Task<T?> WaitAsync<T>(Task<T> task, Action cleanUp, CancellationToken ct) {
+	/// <summary>Wait with a ceiling, and never leave the pending entry behind when it expires. Returns Ok=false
+	/// on timeout - a bare sentinel value doesn't work here because T can be a value type (EResult), where
+	/// default is a real, valid-looking value (Invalid), not a "didn't happen" marker.</summary>
+	private static async Task<(bool Ok, T? Value)> WaitAsync<T>(Task<T> task, Action cleanUp, CancellationToken ct) {
 		using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
 		timeout.CancelAfter(TimeSpan.FromSeconds(30));
 
 		try {
-			return await task.WaitAsync(timeout.Token).ConfigureAwait(false);
+			return (true, await task.WaitAsync(timeout.Token).ConfigureAwait(false));
 		} catch (Exception) {
 			cleanUp();
 
-			return default;
+			return (false, default);
 		}
 	}
 

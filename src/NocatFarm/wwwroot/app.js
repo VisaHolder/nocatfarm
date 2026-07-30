@@ -300,7 +300,7 @@ function renderOverview() {
     tile(state.GamesLeft, 'Games left', 'Games with at least one card still to drop, across every account.') +
     tile(state.CardsToday, 'Cards today', 'Trading cards that dropped in the last 24 hours.') +
     (!r4rOn()
-      ? tile(state.CardsLeft, 'Cards left', 'Trading cards still to drop across every account that is farming.')
+      ? ''
       : state.Rep4RepToken
         ? tile(state.Points, 'rep4rep points', "Points you can spend. Pending points are comments rep4rep hasn't verified yet - they turn into real points on their own, usually within a few hours. Nothing is lost.",
             state.PendingPoints ? state.PendingPoints + ' pending' : '')
@@ -814,13 +814,6 @@ function helpModal(filter) {
   if (f) { f.focus(); f.setSelectionRange(f.value.length, f.value.length); }
 }
 
-function useCommand(name) {
-  closeModal();
-  go('console');
-  const el = $('cmd');
-  if (el) { el.value = name + ' '; el.focus(); }
-}
-
 function modal(html) { $('modalCard').innerHTML = html; $('modal').classList.remove('hidden'); }
 function closeModal() { $('modal').classList.add('hidden'); }
 $('modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
@@ -1102,8 +1095,23 @@ function highlight(text, q) {
 }
 
 function copyLog() {
-  navigator.clipboard.writeText(logLines.map((l) => `${l.Time} ${l.Source} ${l.Text}`).join('\n'));
-  toast('Log copied');
+  const text = logLines.map((l) => `${l.Time} ${l.Source} ${l.Text}`).join('\n');
+  // navigator.clipboard only exists in a secure context - over http://<lan-ip> (which this app supports) it's
+  // undefined, so guard and fall back to a hidden textarea instead of throwing and copying nothing.
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => toast('Log copied')).catch(() => toast('Copy failed - select it manually', true));
+      return;
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast(ok ? 'Log copied' : 'Copy failed - select it manually', !ok);
+  } catch {
+    toast('Copy failed - select it manually', true);
+  }
 }
 
 // ── render: console ──────────────────────────────────────────────────
@@ -1160,9 +1168,13 @@ function renderCommandList() {
 }
 
 function useCommand(name, args) {
+  // Also reached from the help modal, which needs it to close the modal and jump to the console - the old
+  // second definition (this one) shadowed the first via hoisting and did neither, so help-modal clicks silently
+  // filled a box behind the overlay.
+  closeModal();
+  go('console');
   const input = $('cmd');
-  input.value = args ? name + ' ' : name;
-  input.focus();
+  if (input) { input.value = args ? name + ' ' : name; input.focus(); }
 }
 
 $('cmd').addEventListener('keydown', (e) => {
@@ -2073,10 +2085,16 @@ async function boot() {
   // Nothing configured yet: the first screen is adding an account, not an empty dashboard.
   syncWelcome();
 
-  // The server is the source of truth once it has answered; localStorage only got us through the first paint.
-  setTheme((config && config.Global && config.Global.Theme) || document.documentElement.getAttribute('data-theme') || 'dark', false);
+  // localStorage/the DOM attr got us through the first paint; keep that for now.
+  setTheme(document.documentElement.getAttribute('data-theme') || 'dark', false);
   commands = await api('/api/commands').catch(() => []);
   await loadConfig().catch(() => {});
+
+  // NOW config exists, so the server-stored theme (which is meant to follow you between browsers) can actually
+  // be applied - the old code read config.Global.Theme one line BEFORE loadConfig, when config was still null.
+  if (config && config.Global && config.Global.Theme) {
+    setTheme(config.Global.Theme, false);
+  }
   go(view);
   await refresh();   // arms the single polling timer
 
