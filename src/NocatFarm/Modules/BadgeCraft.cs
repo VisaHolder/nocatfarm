@@ -20,6 +20,8 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 	private const int SweepHighHours = 26;
 	private const int CraftGapLowSeconds = 6;
 	private const int CraftGapHighSeconds = 14;
+	private const int UnpackGapLowSeconds = 3;
+	private const int UnpackGapHighSeconds = 12;
 	private const int BackoffHours = 6;
 	private const int MaxBadgePages = 20;
 
@@ -120,7 +122,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 					opened++;
 				}
 
-				if (!await Sleep(TimeSpan.FromSeconds(3), ct).ConfigureAwait(false)) {
+				if (!await Sleep(Rng.Seconds(UnpackGapLowSeconds, UnpackGapHighSeconds), ct).ConfigureAwait(false)) {
 					return opened;
 				}
 			}

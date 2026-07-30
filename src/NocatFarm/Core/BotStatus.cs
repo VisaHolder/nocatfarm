@@ -56,6 +56,12 @@ public readonly record struct BotStatus(
 			doing = "paused";
 		} else if (bot.PlayingBlocked) {
 			doing = "waiting - you're playing on this account";
+		} else if (bot.InResumeGrace) {
+			// You've stopped, Steam freed the account, and we're sitting out the courtesy delay before picking
+			// back up. Saying "you're playing on this account" here (the human-mode StoodDown text, which is still
+			// the live phase until the delay elapses) directly contradicts the "free again - picking back up"
+			// line that just fired, which is exactly the confusion this branch removes.
+			doing = "picking back up in a moment";
 		} else if (human is { Current: not HumanMode.Phase.Off }) {
 			doing = human.Doing;
 			(done, total) = human.Session;

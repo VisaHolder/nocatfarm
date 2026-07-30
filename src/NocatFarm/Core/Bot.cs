@@ -338,6 +338,13 @@ public sealed class Bot : IAsyncDisposable {
 	/// <summary>Online, not paused, not standing down for the human, and past the courtesy delay.</summary>
 	public bool CanPlay => IsOnline && !Paused && !PlayingBlocked && (DateTime.UtcNow >= _resumeAt);
 
+	/// <summary>
+	/// You've stopped playing (Steam freed the session) but the courtesy delay before we pick back up hasn't
+	/// elapsed yet. In this window the account is NOT yours anymore, so the status must not still say "you're
+	/// playing on this account" - that was the line that read as a contradiction right after "free again".
+	/// </summary>
+	public bool InResumeGrace => IsOnline && !Paused && !PlayingBlocked && (DateTime.UtcNow < _resumeAt);
+
 	/// <summary>Does this account already have that package? Stops free-game claiming wasting an activation.</summary>
 	public bool OwnsPackage(uint packageId) {
 		lock (_licenses) {

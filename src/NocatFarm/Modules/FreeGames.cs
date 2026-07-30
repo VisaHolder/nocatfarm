@@ -23,7 +23,8 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 	private const string FeedUrl = "https://gist.githubusercontent.com/C4illin/77a4bcb9a9a7a95e5f291badc93ec6cd/raw/Latest%2520Steam%2520Games";
 	private const int PollLowMinutes = 55;
 	private const int PollHighMinutes = 75;
-	private const int ClaimGapSeconds = 8;
+	private const int ClaimGapLowSeconds = 6;
+	private const int ClaimGapHighSeconds = 20;
 	private const int MaxPerWindow = 20;
 	private const int WindowMinutes = 90;
 
@@ -150,7 +151,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				Log.Debug($"couldn't claim {name} (sub {subId})", Bot.Name);
 			}
 
-			await Sleep(TimeSpan.FromSeconds(ClaimGapSeconds), ct).ConfigureAwait(false);
+			await Sleep(Rng.Seconds(ClaimGapLowSeconds, ClaimGapHighSeconds), ct).ConfigureAwait(false);
 		}
 
 		return added;

@@ -20,8 +20,15 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 	private bool _armed;
 	private DateTime _lastTick = DateTime.MinValue;
 
-	/// <summary>What was reported last, so the first line about a NEW activity does not claim it is continuing.</summary>
+	/// <summary>What the account was doing at the last tick, and when that activity began - tracked every tick,
+	/// not just when we print, so a change during a long quiet gap doesn't make the next report say "now" about
+	/// something that has actually been running for an hour.</summary>
 	private string _lastDoing = "";
+	private DateTime _doingSince = DateTime.MinValue;
+
+	/// <summary>Whether a status line has ever been printed. The very first one says "now"; there is nothing
+	/// before it for it to be "still" doing.</summary>
+	private bool _reported;
 
 	public override string Name => "heartbeat";
 
@@ -63,6 +70,16 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 
 		if ((since > 0) && (Bot.PlayingApps.Count > 0)) {
 			Lifetime.Add(Bot.Name, since);
+		}
+
+		// Note when the current activity actually began, checked on every 20-second tick rather than only when a
+		// line is printed. The card farmer finishing and the idler taking over happens mid-gap and is announced by
+		// those modules; without tracking it here, the next heartbeat - possibly an hour later, its last PRINT
+		// having been about farming - would announce hour-old idling as "now idling", which reads as if it had
+		// only just begun. Recording the real start time lets the periodic report correctly say "still".
+		if (status.Doing != _lastDoing) {
+			_lastDoing = status.Doing;
+			_doingSince = now;
 		}
 
 		// Per account first, global second.
@@ -114,12 +131,13 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 
 		// "still" only when it IS still.
 		//
-		// The word is what makes a heartbeat read as a progress report rather than a fresh event - but on the
-		// first report after the activity changes there is nothing to be still doing, and "still playing
-		// Counter-Strike 2" as the very first line about a session that just began reads as though something
-		// was missed. The first one says what started; every one after it says it is continuing.
-		bool same = status.Doing == _lastDoing;
-		_lastDoing = status.Doing;
+		// The word is what makes a heartbeat read as a progress report rather than a fresh event. It says "now"
+		// for the very first line (nothing precedes it to be "still" doing) and whenever the activity changed in
+		// roughly the last minute - a genuinely fresh event worth flagging. Anything that has been running longer
+		// is "still", even if this is the first heartbeat to mention it: the change was announced when it happened
+		// by the module responsible, so calling it "now" an hour later is what read as a second, phantom start.
+		bool same = _reported && (now - _doingSince >= TimeSpan.FromSeconds(75));
+		_reported = true;
 
 		Log.Info((same ? "still " : "now ") + status.Line(), Bot.Name);
 	}
