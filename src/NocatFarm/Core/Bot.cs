@@ -684,6 +684,7 @@ public sealed class Bot : IAsyncDisposable {
 		await StopAsync().ConfigureAwait(false);
 
 		_running = true;
+		Log.Info("starting up", Name);
 		Paused = Cfg.StartPaused;   // re-applied per start, so 'restart' doesn't quietly un-pause the account
 		PlayingBlocked = false;
 		_resumeAt = DateTime.MinValue;
@@ -719,6 +720,11 @@ public sealed class Bot : IAsyncDisposable {
 
 	private async Task StopCoreAsync() {
 		bool wasPrompting = _guardPrompt != null;
+
+		// Announce the stop only if this session was actually meant to be running. The teardown that StartCoreAsync
+		// does before a (re)start reaches here with _running already false, so a routine start/restart doesn't log
+		// a phantom "stopped"; a genuine user stop, a shutdown or a config removal does.
+		bool wasRunning = _running;
 
 		_running = false;
 		State = BotState.Stopped;
@@ -765,6 +771,10 @@ public sealed class Bot : IAsyncDisposable {
 		_cts = null;
 		_pump = null;
 		Web.Invalidate();
+
+		if (wasRunning) {
+			Log.Info("stopped - logged out", Name);
+		}
 	}
 
 	private async Task StopModulesAsync() {
