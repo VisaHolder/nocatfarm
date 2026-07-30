@@ -28,7 +28,10 @@ if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
 
 # --- build ---------------------------------------------------------------------------------------------
-dotnet publish $proj -c Release -o $stage --nologo -v q
+# Self-contained win-x64: the release zip runs on a clean Windows box with no .NET install. (Building from
+# source, per the README, stays framework-dependent - that path assumes you already have the SDK.)
+dotnet publish $proj -c Release -o $stage -r win-x64 --self-contained true `
+    -p:PublishSingleFile=false -p:DebugType=none --nologo -v q
 if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed' }
 
 # --- SAFETY: never ship personal data. Abort loudly if any is present. ---------------------------------

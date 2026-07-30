@@ -23,8 +23,12 @@ touch a third party are opt-in and off by default — see [Privacy](#privacy-and
 
 ### Building it
 
-You need the [.NET 10 SDK](https://dotnet.microsoft.com/download). Nothing else — there is no npm step, no
-bundler, and the dashboard is plain static files.
+**Just want to run it?** Grab the latest `nocat.farm-v*.zip` from
+[Releases](https://github.com/VisaHolder/nocatfarm/releases), unzip it anywhere, and run `nocatFarm.exe`. The
+release build is self-contained — no .NET install, nothing else to set up.
+
+To build from source instead, you need the [.NET 10 SDK](https://dotnet.microsoft.com/download). Nothing else —
+there is no npm step, no bundler, and the dashboard is plain static files.
 
 ```
 git clone https://github.com/VisaHolder/nocatfarm.git
