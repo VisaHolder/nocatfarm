@@ -237,10 +237,10 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				// "idling 0m so far" thirty seconds after a logon was technically true and worth nothing. What
 				// anybody actually wants to know here is how much this account has done in total.
 				int lifetime = Lifetime.For(Bot.Name);
-				string been = lifetime > 0 ? $" - {Fmt.Hm(lifetime)} played on this account so far" : "";
+				string been = lifetime > 0 ? $" · {Fmt.Hm(lifetime)} played" : "";
 
 				Log.Info(Bot.HumanOwned
-					? $"no card drops left on this account - human mode carries on as normal{been}"
+					? $"no cards left - human mode carries on{been}"
 					: $"no cards left to farm - idling instead{been}", Bot.Name);
 			}
 
