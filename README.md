@@ -10,7 +10,7 @@ dashboard beside it. It sits in the tray, runs every account in the background a
 like a person doing it rather than a bot.
 
 <p align="center">
-  <img src="assets/dashboard.png" alt="The nocat.farm dashboard" width="880">
+  <img src="assets/app.png" alt="The nocat.farm app — a small tray window running the whole fleet" width="700">
 </p>
 
 **Everything stays on your machine.** Your accounts, login tokens and logs never leave it. The only things that
@@ -84,6 +84,10 @@ you.
 
 **Dashboard** — `http://127.0.0.1:7242/`. Overview · Accounts · rep4rep · Log · Console · Settings.
 Turn it off with `set WebEnabled false` and nothing is lost.
+
+<p align="center">
+  <img src="assets/dashboard.png" alt="The web dashboard — overview" width="880">
+</p>
 
 ---
 
