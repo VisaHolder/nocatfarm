@@ -59,6 +59,7 @@ nothing but Steam is ever contacted.
 | **rep4rep** | Posts the comments rep4rep assigns, on a human schedule, from every opted-in account — all into one points pool. |
 | **Comment alerts** | Steam pushes the moment somebody comments on one of your profiles; it hits the log and a tray balloon. |
 | **Stays out of your way** | Launch a game yourself and every account stands down, then quietly picks back up after a delay you choose. |
+| **Daily report** | Once a day (default 09:30) it writes a one-look summary to the log: hours banked in the last 24h, cards, rep4rep comments and a running total, per account. Type `report` for it on demand. |
 
 ## Three ways to drive it
 
@@ -166,7 +167,8 @@ play <account> <appIDs|none>         name <account> [text]  persona <account> <s
 cards [account]                      farm <account> on|off
 rep4rep status|points|profiles|tasks|on|off|now|pause|resume|clear
 config [account]                     set [account] <key> <value>      reload
-log [count]                          stats [hours]          version   exit
+log [count]                          stats [hours]          report
+version                              exit
 ```
 
 ## Achievements
