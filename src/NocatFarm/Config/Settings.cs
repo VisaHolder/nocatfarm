@@ -685,6 +685,8 @@ public static class Settings {
 		new("AcceptGroupInvites", "Accept group invites", SecSocial, SettingKind.Bool,
 			"Join Steam groups this account gets invited to.",
 			Advanced: true),
+		new("JoinGroup", "Join the nocat.farm group", SecSocial, SettingKind.Bool,
+			"Have this account join the nocat.farm Steam group once, on sign-in. Purely optional - turn it off and it won't. Nothing else depends on it."),
 		new("IgnoreSuspiciousInvites", "Ignore obvious spam", SecSocial, SettingKind.Bool,
 			"Quietly ignore friend requests from brand new level-0 private profiles - the shape every scam bot has. Only does anything while accepting requests is on.",
 			Advanced: true),

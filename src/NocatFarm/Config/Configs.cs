@@ -248,6 +248,7 @@ public sealed class BotConfig {
 	// ── friends & messages ──
 	public bool AcceptFriendRequests { get; set; }
 	public bool AcceptGroupInvites { get; set; }
+	public bool JoinGroup { get; set; } = true;
 	public bool IgnoreSuspiciousInvites { get; set; } = true;
 	public bool RejectInvalidFriendInvites { get; set; }
 	/// <summary>
