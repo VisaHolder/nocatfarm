@@ -9,6 +9,10 @@ A Steam idler, trading-card farmer and — if you want it — rep4rep commenter.
 dashboard beside it. It sits in the tray, runs every account in the background all day, and is built to look
 like a person doing it rather than a bot.
 
+<p align="center">
+  <img src="assets/dashboard.png" alt="The nocat.farm dashboard" width="880">
+</p>
+
 **Everything stays on your machine.** Your accounts, login tokens and logs never leave it. The only things that
 touch a third party are opt-in and off by default — see [Privacy](#privacy-and-safety).
 
@@ -60,6 +64,10 @@ nothing but Steam is ever contacted.
 | **Comment alerts** | Steam pushes the moment somebody comments on one of your profiles; it hits the log and a tray balloon. |
 | **Stays out of your way** | Launch a game yourself and every account stands down, then quietly picks back up after a delay you choose. |
 | **Daily report** | Once a day (default 09:30) it writes a one-look summary to the log: hours banked in the last 24h, cards, rep4rep comments and a running total, per account. Type `report` for it on demand. |
+
+<p align="center">
+  <img src="assets/accounts.png" alt="The per-account view — state, custom name, and what your friends actually see" width="880">
+</p>
 
 ## Three ways to drive it
 
