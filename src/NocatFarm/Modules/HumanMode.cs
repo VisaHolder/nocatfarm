@@ -104,6 +104,8 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	private DateTime _readyAt = DateTime.MinValue;
 	private DateTime _gateArmedFor = DateTime.MinValue;
 	private bool _announcedWarmUp;
+	private bool _wokeUp;
+	private bool _wasGrinding;
 	private int _clearReads;
 
 	public override string Name => "human";
@@ -256,6 +258,8 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// A grind outranks the schedule. Banked first, so the hours it puts in still count toward the day
 		// rather than vanishing, and the phase is dropped so the day resumes cleanly when it expires.
 		if (Bot.Grinding) {
+			_wasGrinding = true;
+
 			if (_phase != Phase.Off) {
 				BankSession();
 				_phase = Phase.Off;
@@ -267,6 +271,15 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			ReassertPlaying([Bot.GrindGame]);
 
 			return;
+		}
+
+		// Grind just finished: ease back into the day instead of snapping straight into a game. Re-arming the
+		// warm-up gate makes the flow below take a short settle first, the way it does after waking.
+		if (_wasGrinding) {
+			_wasGrinding = false;
+			_phase = Phase.Off;
+			_gateArmedFor = default;
+			Log.Info("done grinding - back to the usual day", Bot.Name);
 		}
 
 		if (Bot.Paused || Bot.PlayingBlocked) {
@@ -308,7 +321,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_switchingTo = 0;
 				Bot.StopPlaying();
 				Bot.ClearPersonaOverride();
-				Log.Info($"that's {Fmt.Hm(_playedMinutesToday)} today - done until tomorrow", Bot.Name);
+				Log.Info($"done for the day - {Fmt.Hm(_playedMinutesToday)} played, back around {WakeTime():HH:mm}", Bot.Name);
 			}
 
 			return;
@@ -414,6 +427,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		}
 
 		if (_phase != Phase.WarmingUp) {
+			// Coming out of the overnight sleep reads as "waking up", not "just signed in" - which is what it said
+			// at the wake time even though the account had been online all night.
+			_wokeUp = _phase is Phase.NightIdle or Phase.Asleep;
 			_phase = Phase.WarmingUp;
 			_game = 0;
 			_switchingTo = 0;
@@ -430,7 +446,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		if (!_announcedWarmUp) {
 			_announcedWarmUp = true;
 			int wait = (int) Math.Max(1, (_readyAt - DateTime.UtcNow).TotalMinutes);
-			Log.Info($"just signed in - settling for about {Fmt.Hm(wait)} before starting anything", Bot.Name);
+			Log.Info(_wokeUp
+				? $"awake for the day - warming up for ~{Fmt.Hm(wait)}"
+				: $"warming up for ~{Fmt.Hm(wait)} before it plays", Bot.Name);
 		}
 
 		return false;
@@ -629,7 +647,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_phase = want;
 				_game = 0;
 				_switchingTo = 0;
-				Log.Info($"offline for the night - letting the card farmer work until {WakeTime():HH:mm}", Bot.Name);
+				Log.Info($"asleep - the card farmer keeps going until {WakeTime():HH:mm}", Bot.Name);
 			}
 
 			return;
@@ -649,10 +667,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		if (banking) {
 			Bot.SetPlaying(Bot.Cfg.OfflineIdleGames);
-			Log.Info($"offline for the night - quietly idling {Bot.Cfg.OfflineIdleGames.Count} game(s) until {WakeTime():HH:mm}", Bot.Name);
+			Log.Info($"asleep - banking hours quietly until {WakeTime():HH:mm}", Bot.Name);
 		} else {
 			Bot.StopPlaying();
-			Log.Info($"offline for the night - back around {WakeTime():HH:mm}", Bot.Name);
+			Log.Info($"asleep - back around {WakeTime():HH:mm}", Bot.Name);
 		}
 	}
 
