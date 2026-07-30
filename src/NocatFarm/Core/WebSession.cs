@@ -104,7 +104,15 @@ public sealed class WebSession : IDisposable {
 						return null;
 					}
 
-					Dictionary<string, string> payload = new(form, StringComparer.Ordinal) { ["sessionid"] = cookieSession };
+					// The CSRF token is the sessionid, but the field casing Steam accepts is not consistent across
+					// the community site: the comment endpoints read "sessionid", while the group-join endpoint reads
+					// only "sessionID" and answers a lowercase-only POST with a 200 "invalid form session key" error
+					// page that looks just like success. Sending both - the same value - satisfies either, so a caller
+					// never has to know which a given endpoint wants.
+					Dictionary<string, string> payload = new(form, StringComparer.Ordinal) {
+						["sessionid"] = cookieSession,
+						["sessionID"] = cookieSession
+					};
 					request.Content = new FormUrlEncodedContent(payload);
 				}
 
