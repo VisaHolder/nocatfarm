@@ -322,6 +322,18 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return;
 		}
 
+		// The card farmer owns the session while it has work - stand off completely. Human mode plays exactly
+		// ONE game at a time; a second one on top of the farmer is the loudest bot tell there is. Resume the
+		// day when the cards are done.
+		if (Bot.IsFarming) {
+			BankSession();
+			_game = 0;
+			_switchingTo = 0;
+			_phase = Phase.Off;
+
+			return;
+		}
+
 		if (_targetMinutes == 0) {
 			if (_phase != Phase.DayOff) {
 				_phase = Phase.DayOff;
