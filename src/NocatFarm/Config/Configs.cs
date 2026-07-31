@@ -230,7 +230,7 @@ public sealed class BotConfig {
 
 	// sessions and breaks
 	public int SessionMinMinutes { get; set; } = 30;
-	public int SessionMaxMinutes { get; set; } = 240;
+	public int SessionMaxMinutes { get; set; } = 150;
 	public int BreakMinMinutes { get; set; } = 2;
 	public int BreakMaxMinutes { get; set; } = 30;
 	public int MealBreaksPerDay { get; set; } = 2;
