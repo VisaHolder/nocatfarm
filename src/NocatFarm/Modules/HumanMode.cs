@@ -477,7 +477,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			Bot.ClearPersonaOverride();
 		}
 
-		if (!_announcedWarmUp) {
+		// Hold this line for a moment after login so the card farmer's first scan can claim the account first -
+		// otherwise it announces "warming up to play" and is contradicted a few seconds later by "farming X".
+		// If there ARE cards, the IsFarming stand-off above fires before this ever runs, so it stays silent.
+		if (!_announcedWarmUp && (DateTime.UtcNow - loggedOn).TotalSeconds >= 60) {
 			_announcedWarmUp = true;
 			int wait = (int) Math.Max(1, (_readyAt - DateTime.UtcNow).TotalMinutes);
 			Log.Info(_wokeUp

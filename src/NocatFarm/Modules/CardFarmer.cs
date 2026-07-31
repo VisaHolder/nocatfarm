@@ -263,7 +263,10 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		_sweptThisRun = false;
 		_saidNothingLeft = false;
 
-		Log.Good($"{found.Count} game(s) with {Bot.CardsRemaining} card(s) left", Bot.Name);
+		// One game is already spelled out by the "farming X - N to go" line below; only summarise a batch.
+		if (found.Count > 1) {
+			Log.Good($"{found.Count} games with {Bot.CardsRemaining} cards left to farm", Bot.Name);
+		}
 
 		float threshold = Bot.Cfg.HoursUntilCardDrops;
 		List<FarmTarget> underThreshold = found.Where(g => g.HoursPlayed < threshold).ToList();
