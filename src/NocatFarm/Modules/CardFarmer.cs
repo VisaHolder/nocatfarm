@@ -292,6 +292,21 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		// account is up; whenever it is, the farmer takes priority over the weighted games and hands back the
 		// instant the drops are gone. It farms while asleep too. "Card farming on but not farming" is not a thing.
 
+		// Two opt-in limits on WHEN to farm - both off by default.
+		HumanMode? human = BotManager.ModuleOf<HumanMode>(Bot);
+
+		if (Bot.HumanOwned && Bot.Cfg.FarmOnlyWhileAsleep && human?.InBed != true) {
+			_status = $"{Bot.CardsRemaining} card(s) - farming tonight, once it's asleep";
+
+			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
+		}
+
+		if (!InFarmWindow()) {
+			_status = $"{Bot.CardsRemaining} card(s) - waiting for the {Bot.Cfg.FarmFromHour:00}:00-{Bot.Cfg.FarmUntilHour:00}:00 farming window";
+
+			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
+		}
+
 		// Only hold a farming slot while actually farming, never while sleeping between rounds.
 		SemaphoreSlim? slots = _slots;
 
@@ -603,6 +618,20 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				suspect.Add(game);
 			}
 		}
+	}
+
+	/// <summary>Whether now is inside the card-farming clock window, if the account set one (0-0 = any time).</summary>
+	private bool InFarmWindow() {
+		int from = Bot.Cfg.FarmFromHour;
+		int until = Bot.Cfg.FarmUntilHour;
+
+		if (from == until) {
+			return true;
+		}
+
+		int hour = DateTime.Now.Hour;
+
+		return from < until ? (hour >= from) && (hour < until) : (hour >= from) || (hour < until);
 	}
 
 	private bool ShouldIdle(uint appId) =>

@@ -168,6 +168,9 @@ public sealed class BotConfig {
 	public List<uint> BlacklistedGames { get; set; } = [];
 	public bool SkipUnplayedGames { get; set; }
 	public bool SkipRefundableGames { get; set; }
+	public bool FarmOnlyWhileAsleep { get; set; }
+	public int FarmFromHour { get; set; }
+	public int FarmUntilHour { get; set; }
 	public int FarmingDelayMinutes { get; set; } = 15;
 	public int MaxFarmingHoursPerGame { get; set; } = 10;
 	public bool StopWhenFarmingDone { get; set; }
