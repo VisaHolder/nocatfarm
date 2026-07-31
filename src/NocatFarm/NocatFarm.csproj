@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <!-- WinExe, not Exe: a console app is handed a console window by Windows BEFORE any of our code runs,
+         so it cannot be suppressed from inside. This starts with no console and allocates one only when
+         something asks for it. -->
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>nocatFarm</AssemblyName>
+    <RootNamespace>NocatFarm</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+    <Version>1.0.0</Version>
+    <Product>nocatFarm</Product>
+    <Company>nocat.lol</Company>
+    <ApplicationIcon>nocatFarm.ico</ApplicationIcon>
+    <!-- The dashboard is served from wwwroot; a launch profile would only get in the way of a console app. -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- SteamKit2 only. Steam's HTML is hand-parsed (see CardFarmer) rather than pulling in a full parser,
+         which keeps the dependency surface at exactly one package. -->
+    <PackageReference Include="SteamKit2" Version="3.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Shipped alongside the exe as well as embedded, so the console window can load it at runtime. -->
+    <None Include="nocatFarm.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
