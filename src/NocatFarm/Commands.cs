@@ -50,6 +50,7 @@ public static class Commands {
 		new("grind", "<account|all> <appID> <hours> | <account> off", GroupPlaying,
 			"Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs."),
 		new("human", "[account] [week]", GroupPlaying, "What human mode is doing today, and what it played. Add 'week' to see the next seven days."),
+		new("wake", "<account>", GroupPlaying, "Wake a sleeping human-mode account and start its day now. Bed time is unchanged."),
 		new("name", "<account> [text]", GroupPlaying, "Custom non-Steam game name shown instead of the real game. No text clears it."),
 		new("persona", "<account> <state>", GroupPlaying, "online | offline | busy | away | snooze | invisible."),
 
@@ -197,6 +198,7 @@ public static class Commands {
 				"play" => Play(mgr, rest),
 				"grind" => Grind(mgr, rest),
 				"human" => Human(mgr, rest),
+				"wake" or "wakeup" or "skipsleep" => Wake(mgr, rest),
 				"redeem" or "key" => await RedeemAsync(mgr, rest).ConfigureAwait(false),
 				"send" or "loot" => await SendAsync(mgr, rest).ConfigureAwait(false),
 				"2fa" or "guard" => TwoFactor(mgr, rest),
@@ -565,6 +567,36 @@ public static class Commands {
 	}
 
 	// ── playing ─────────────────────────────────────────────────────────────
+	private static string Wake(BotManager mgr, string[] args) {
+		if (args.Length == 0) {
+			return "usage: wake <account>   - wake a sleeping human-mode account and start its day now";
+		}
+
+		Bot? bot = mgr.Get(args[0]);
+
+		if (bot == null) {
+			return NoSuchAccount(mgr, args[0]);
+		}
+
+		if (!bot.Cfg.LegitMode) {
+			return $"{bot.Name} isn't in human mode, so it never sleeps - there's nothing to wake.";
+		}
+
+		HumanMode? human = BotManager.ModuleOf<HumanMode>(bot);
+
+		if (human == null) {
+			return $"{bot.Name} has no human-mode module running.";
+		}
+
+		if (!human.InBed) {
+			return $"{bot.Name} is already awake.";
+		}
+
+		human.WakeNow();
+
+		return $"waking {bot.Name} up - starting its day now (a short settle, then it plays or farms).";
+	}
+
 	/// <summary>
 	/// What human mode is up to.
 	///

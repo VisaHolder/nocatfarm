@@ -150,6 +150,28 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// </summary>
 	public bool InBed => _phase is Phase.Asleep or Phase.NightIdle;
 
+	/// <summary>
+	/// Skip the rest of the night and start the day now. Pulls today's wake time up to this minute so it counts as
+	/// awake, drops the invisible-for-night persona, and falls back to the ordinary wake path (a short settle,
+	/// then play/farm) on the next tick. Bed time is untouched, so it still turns in at its usual hour.
+	/// </summary>
+	public void WakeNow() {
+		int nowMin = (int) (DateTime.Now - DateTime.Now.Date).TotalMinutes;
+
+		if (_wakeMinuteOfDay > nowMin) {
+			_wakeMinuteOfDay = nowMin;
+		}
+
+		_wokeUp = true;
+		_phase = Phase.Off;
+		Bot.ClearPersonaOverride();
+
+		// It's a manual "start now", so skip the random settle - but NOT the owner-safety check. Clearing the
+		// timed part of the warm-up lets it start as soon as the clear-reads confirm the owner isn't mid-game,
+		// rather than sitting through a fresh ~15-minute settle.
+		_readyAt = DateTime.UtcNow;
+	}
+
 	/// <summary>How long the current sitting has been running, and how long it is meant to run.</summary>
 	public (int Elapsed, int Total) Session {
 		get {
