@@ -288,21 +288,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
 		}
 
-		// Human mode owns what plays while anybody can see it - but the night belongs to the farmer.
-		//
-		// Awake: discovery still runs so the counts stay real, and human mode prefers a game that still has
-		// drops, but this module must not call Claim() and SetPlaying() mid-sitting and yank the session away
-		// from the scheduler. Asleep: the account is invisible, nobody can see forty games running, and there
-		// is no reason to leave drops on the table until morning - so it farms exactly as it would on an
-		// account with no human mode at all.
-		HumanMode? human = BotManager.ModuleOf<HumanMode>(Bot);
-		bool nightShift = human?.InBed == true;
-
-		if (Bot.HumanOwned && !nightShift) {
-			_status = $"{Bot.CardsRemaining} card(s) waiting until tonight - human mode is playing";
-
-			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
-		}
+		// Cards are the point: farm the moment there are any. In human mode the schedule decides only WHEN the
+		// account is up; whenever it is, the farmer takes priority over the weighted games and hands back the
+		// instant the drops are gone. It farms while asleep too. "Card farming on but not farming" is not a thing.
 
 		// Only hold a farming slot while actually farming, never while sleeping between rounds.
 		SemaphoreSlim? slots = _slots;
