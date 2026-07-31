@@ -104,6 +104,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	private DateTime _readyAt = DateTime.MinValue;
 	private DateTime _gateArmedFor = DateTime.MinValue;
 	private bool _announcedWarmUp;
+	private bool _warmedUp;
 	private bool _wokeUp;
 	private bool _wasGrinding;
 	private int _clearReads;
@@ -149,6 +150,15 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// properly instead of the account sitting on a fixed list of games chosen months ago.
 	/// </summary>
 	public bool InBed => _phase is Phase.Asleep or Phase.NightIdle;
+
+	/// <summary>
+	/// True once the post-login warm-up has finished - the card farmer waits on this so a human-mode account
+	/// settles in first (gets online for a bit) and only then starts farming, exactly like it would before
+	/// playing. Falls back to a time check for days it never enters the play warm-up (a day off), so the farmer
+	/// is never stuck waiting.
+	/// </summary>
+	public bool WarmedUp => _warmedUp
+		|| (Bot.OnlineSince is { } on && DateTime.UtcNow >= on.AddSeconds(SafetyGateSeconds).AddMinutes(Math.Max(1, Bot.Cfg.WarmUpMaxMinutes)));
 
 	/// <summary>
 	/// Skip the rest of the night and start the day now. Pulls today's wake time up to this minute so it counts as
@@ -410,6 +420,14 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return;
 		}
 
+		// Warmed up. If there are cards, hand off to the farmer (it takes priority) rather than starting a
+		// weighted game on top of it - it will claim on its next tick now that the warm-up is done.
+		if (Bot.CardsRemaining > 0) {
+			_phase = Phase.Off;
+
+			return;
+		}
+
 		StartSession();
 	}
 
@@ -435,6 +453,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			_gateArmedFor = loggedOn;
 			_clearReads = 0;
 			_announcedWarmUp = false;
+			_warmedUp = false;
 
 			int lo = Math.Max(0, Bot.Cfg.WarmUpMinMinutes);
 			int hi = Math.Max(lo, Bot.Cfg.WarmUpMaxMinutes);
@@ -450,6 +469,8 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		bool stillSettling = DateTime.UtcNow < _readyAt;
 
 		if (!stillSettling && (_clearReads >= 4)) {
+			_warmedUp = true;
+
 			return true;
 		}
 
@@ -477,15 +498,12 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			Bot.ClearPersonaOverride();
 		}
 
-		// Hold this line for a moment after login so the card farmer's first scan can claim the account first -
-		// otherwise it announces "warming up to play" and is contradicted a few seconds later by "farming X".
-		// If there ARE cards, the IsFarming stand-off above fires before this ever runs, so it stays silent.
-		if (!_announcedWarmUp && (DateTime.UtcNow - loggedOn).TotalSeconds >= 60) {
+		if (!_announcedWarmUp) {
 			_announcedWarmUp = true;
 			int wait = (int) Math.Max(1, (_readyAt - DateTime.UtcNow).TotalMinutes);
 			Log.Info(_wokeUp
-				? $"awake for the day - warming up for ~{Fmt.Hm(wait)} before it plays"
-				: $"warming up for ~{Fmt.Hm(wait)} before it plays", Bot.Name);
+				? $"awake for the day - warming up for ~{Fmt.Hm(wait)}"
+				: $"warming up for ~{Fmt.Hm(wait)}", Bot.Name);
 		}
 
 		return false;

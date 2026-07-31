@@ -298,6 +298,13 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		// Two opt-in limits on WHEN to farm - both off by default.
 		HumanMode? human = BotManager.ModuleOf<HumanMode>(Bot);
 
+		// Settle in first, like a person - only start farming once the post-login warm-up is done.
+		if (Bot.HumanOwned && (human != null) && !human.WarmedUp) {
+			_status = $"{Bot.CardsRemaining} card(s) - warming up first";
+
+			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
+		}
+
 		if (Bot.HumanOwned && Bot.Cfg.FarmOnlyWhileAsleep && human?.InBed != true) {
 			_status = $"{Bot.CardsRemaining} card(s) - farming tonight, once it's asleep";
 
