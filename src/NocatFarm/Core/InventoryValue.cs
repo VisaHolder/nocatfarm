@@ -216,7 +216,7 @@ public sealed partial class InventoryValue(Bot bot) {
 
 	// ── pricing ──────────────────────────────────────────────────────────────
 	private async Task PriceSomeAsync(CancellationToken ct) {
-		List<(uint App, string Hash)> wanted = [];
+		List<(uint App, string Hash, int Names)> wanted = [];
 
 		lock (_holdings) {
 			foreach ((uint app, (string _, Dictionary<string, int> items, bool blocked)) in _holdings) {
@@ -226,7 +226,7 @@ public sealed partial class InventoryValue(Bot bot) {
 
 				foreach (string hash in items.Keys) {
 					if (PriceBook.NeedsRefresh(app, hash)) {
-						wanted.Add((app, hash));
+						wanted.Add((app, hash, items.Count));
 					}
 				}
 			}
@@ -241,9 +241,13 @@ public sealed partial class InventoryValue(Bot bot) {
 		// whatever order they came out of the inventory, nine hundred trading cards worth a penny each were
 		// consuming the whole rate limit while fifty skins worth four figures sat unpriced, so an account with
 		// $1,500 of CS2 read as $13. Game inventories go first (app 753 is Steam's own cards, backgrounds and
-		// emoticons - thousands of items, pennies each), then anything never priced, then the stalest.
-		foreach ((uint app, string hash) in wanted
+		// emoticons - thousands of items, pennies each), and within those the games with the FEWEST distinct item
+		// names go first. That second rule is what actually finds the money: a dozen knives and skins is few names
+		// and enormous value, while junk is hundreds of names worth pennies each - without it, 116 Team Fortress
+		// hats were still being priced ahead of 56 CS2 skins. Then anything never priced, then the stalest.
+		foreach ((uint app, string hash, int _) in wanted
 			.OrderBy(static w => w.App == SteamCommunityApp)
+			.ThenBy(static w => w.Names)
 			.ThenBy(w => PriceBook.Known(w.App, w.Hash).HasValue)
 			.Take(PricesPerSweep)) {
 			ct.ThrowIfCancellationRequested();
