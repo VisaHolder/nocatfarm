@@ -229,6 +229,7 @@ the auto-reply instead, so ordinary chat is never mistaken for a command.
 |---|---|
 | `cards [account]` | What is still left to farm. |
 | `farm <account> on\|off` | Turn trading-card farming on or off. |
+| `value [account\|all] [refresh]` &nbsp;·&nbsp; `inv` `inventory` | What each inventory is worth at the market's median, by game, with how it has moved in the last 24 hours. `refresh` reads the inventories again. |
 | `send <account\|all>` &nbsp;·&nbsp; `loot` | Send an account's tradable items to the account listed under Trades. |
 
 **rep4rep** &nbsp;(alias `r4r`; run bare for a summary)
@@ -306,7 +307,7 @@ side of the trade page can't be read, the offer is refused rather than guessed a
 
 ## Settings
 
-**41 global, 117 per account.** Every one has a plain-English explanation attached to it, which the dashboard
+**42 global, 120 per account.** Every one has a plain-English explanation attached to it, which the dashboard
 shows on hover and the console prints for `help <setting>` — one sentence, written once, in
 `Config/Settings.cs`. Advanced settings are collapsed by default and never move.
 

@@ -195,6 +195,10 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 	private string WhyNot(Library.Entry game) {
 		uint main = Bot.HumanOwned ? BotManager.ModuleOf<HumanMode>(Bot)?.MainGameId ?? 0 : 0;
 
+		if (Bot.Cfg.YieldToFamily && Bot.Library.FamilyIsPlaying(game.AppId)) {
+			return "someone in the family is playing it";
+		}
+
 		if (Bot.Refunds.Holds(game.AppId)) {
 			return "inside its refund window";
 		}
@@ -365,7 +369,8 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		uint main = Bot.HumanOwned ? BotManager.ModuleOf<HumanMode>(Bot)?.MainGameId ?? 0 : 0;
 
 		return raw.Where(app =>
-			!Bot.Refunds.Holds(app)
+			!(Bot.Cfg.YieldToFamily && Bot.Library.FamilyIsPlaying(app))
+			&& !Bot.Refunds.Holds(app)
 			&& !Bot.Cfg.BlacklistedGames.Contains(app)
 			&& !Live.Global.GlobalBlacklistedGames.Contains(app)
 			&& !Bot.Cfg.AchievementNeverGames.Contains(app)
@@ -377,6 +382,17 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 	private void Tick() {
 		// A grind is running. If it's ours, let it run; if it's a manual grind, stay completely out of the way.
 		if (Bot.Grinding) {
+			// Unless the family has taken the game back. Steam lends a shared game to one person at a time and the
+			// owner wins, so carrying on would leave the account "playing" something it has been thrown out of -
+			// earning nothing and looking like it is. Hand it back and move down the list; the twenty-minute grace
+			// in the library keeps it out of the rotation until they are actually finished with it.
+			if (_ours && Bot.Cfg.YieldToFamily && Bot.Library.FamilyIsPlaying(Bot.GrindGame)) {
+				Log.Info($"someone in the family started {GameNames.Of(Bot.GrindGame)} - leaving it to them and moving on", Bot.Name);
+				Bot.StopGrind();
+
+				return;   // the next tick sees the grind gone and starts the rest before the following game
+			}
+
 			_sawGrind = true;
 			_status = _ours ? $"hunting {GameNames.Of(Bot.GrindGame)}" : "waiting - a manual grind is running";
 

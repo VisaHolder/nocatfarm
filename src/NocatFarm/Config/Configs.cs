@@ -195,6 +195,7 @@ public sealed class BotConfig {
 	public int BoostRestMinutesHuman { get; set; } = 120;
 	public bool IncludeFamilyLibrary { get; set; }
 	public bool HoldNewFamilyGames { get; set; } = true;
+	public bool YieldToFamily { get; set; } = true;
 	public int BoostMinReviews { get; set; } = 200;
 	public bool BoostOnlyPlayedGames { get; set; }
 	public List<uint> AchievementGames { get; set; } = [];

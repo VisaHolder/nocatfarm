@@ -38,6 +38,55 @@ public sealed class Library(Bot bot) {
 
 	public DateTime RefreshedAt { get; private set; }
 
+	// ── who else in the family is playing what ───────────────────────────────
+	private HashSet<uint> _familyBusy = [];
+	private readonly Dictionary<uint, DateTime> _freeSince = [];
+
+	/// <summary>
+	/// A family member is playing this shared game right now, so it is not ours to touch.
+	///
+	/// Steam lends a shared game to one person at a time and the OWNER always wins: start hunting something they
+	/// then launch and the account is thrown out of it mid-session, left "playing" a game it no longer has. This
+	/// is the polite version of the same rule - don't take a game somebody is using, and don't pounce the instant
+	/// they put it down either.
+	/// </summary>
+	public bool FamilyIsPlaying(uint app) {
+		if (_familyBusy.Contains(app)) {
+			return true;
+		}
+
+		// A grace period after they stop. Somebody who just quit is quite likely to start it up again, and an
+		// account that grabs the game four seconds after they close it is not behaving like a housemate.
+		return _freeSince.TryGetValue(app, out DateTime free) && (DateTime.UtcNow - free < TimeSpan.FromMinutes(20));
+	}
+
+	/// <summary>
+	/// Steam's live "who in the family is running what" push. It carries the WHOLE current picture each time, so
+	/// the set is replaced rather than added to.
+	///
+	/// This account appears in it too, playing whatever it is playing - counting that would mean reading our own
+	/// hunt as somebody else's and standing down from it immediately, so we are filtered out by SteamID.
+	/// </summary>
+	internal void NoteFamilyRunning(IEnumerable<(uint App, IEnumerable<ulong> Members)> running) {
+		HashSet<uint> busy = [];
+
+		foreach ((uint app, IEnumerable<ulong> members) in running) {
+			if (members.Any(m => m != bot.SteamId)) {
+				busy.Add(app);
+			}
+		}
+
+		foreach (uint app in _familyBusy.Except(busy)) {
+			_freeSince[app] = DateTime.UtcNow;   // they've just stopped - start the grace period
+		}
+
+		foreach (uint app in busy) {
+			_freeSince.Remove(app);
+		}
+
+		_familyBusy = busy;
+	}
+
 	public Entry? Find(uint app) => _byApp.GetValueOrDefault(app);
 
 	/// <summary>Minutes on record for a game, or 0 if we've never heard of it.</summary>

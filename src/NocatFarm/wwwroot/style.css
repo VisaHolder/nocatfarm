@@ -779,3 +779,9 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 .unlocks li { padding: 3px 0; border-bottom: 1px solid var(--line); }
 .unlocks li:last-child { border-bottom: 0; }
 .unlocks .rare { color: var(--accent); font-size: 11px; margin-left: 6px; }
+
+/* Up or down on the day. Small and beside the number, never instead of it - the total is the fact, the
+   percentage is the commentary. */
+.delta { font-size: 10px; margin-left: 5px; letter-spacing: .02em; }
+.delta.up { color: #6fcf7f; }
+.delta.down { color: #e06c6c; }

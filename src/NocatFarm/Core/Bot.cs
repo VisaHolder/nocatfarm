@@ -532,6 +532,11 @@ public sealed class Bot : IAsyncDisposable {
 		// callback is subscribed but nothing ever routes to it - the account silently never sees a word sent to it.
 		Unified?.CreateService<FriendMessagesClient>();
 
+		// Steam pushes "who in the family is running what" to every member. Without the service registered the
+		// notification is never routed, and the hunter would only find out a shared game had been taken back by
+		// being silently thrown out of it.
+		Unified?.CreateService<FamilyGroupsClient>();
+
 		_cb.Subscribe<SteamClient.ConnectedCallback>(OnConnected);
 		_cb.Subscribe<SteamClient.DisconnectedCallback>(OnDisconnected);
 		_cb.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
@@ -542,6 +547,7 @@ public sealed class Bot : IAsyncDisposable {
 		_cb.Subscribe<SteamApps.LicenseListCallback>(OnLicenseList);
 		_cb.Subscribe<SteamFriends.FriendsListCallback>(OnFriendsList);
 		_cb.Subscribe<SteamUnifiedMessages.ServiceMethodNotification<CFriendMessages_IncomingMessage_Notification>>(OnIncomingMessage);
+		_cb.Subscribe<SteamUnifiedMessages.ServiceMethodNotification<CFamilyGroupsClient_NotifyRunningApps_Notification>>(OnFamilyRunningApps);
 		_cb.Subscribe<SteamFriends.PersonaStateCallback>(OnPersonaState);
 	}
 
@@ -553,6 +559,16 @@ public sealed class Bot : IAsyncDisposable {
 	/// app would happily report the custom name while the friends list showed a real game, and there was no way
 	/// to tell from inside. Now the two are separate values and a mismatch is visible instead of invisible.
 	/// </summary>
+	/// <summary>A family member started or stopped a shared game. Hand the whole picture to the library.</summary>
+	private void OnFamilyRunningApps(SteamUnifiedMessages.ServiceMethodNotification<CFamilyGroupsClient_NotifyRunningApps_Notification> cb) {
+		try {
+			Library.NoteFamilyRunning(cb.Body.running_apps
+				.Select(static a => (a.appid, a.playing_members.Select(static m => m.member_steamid))));
+		} catch (Exception e) {
+			Log.Debug($"couldn't read the family's running games: {e.Message}", Name);
+		}
+	}
+
 	private void OnPersonaState(SteamFriends.PersonaStateCallback cb) {
 		if ((SteamId == 0) || (cb.FriendID.ConvertToUInt64() != SteamId)) {
 			return;   // somebody else on the friends list

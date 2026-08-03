@@ -107,6 +107,7 @@ public sealed class BotManager : IAsyncDisposable {
 		Lifetime.Save();
 		GameCatalog.Flush();   // the store catalogue saves on a timer, so a clean exit shouldn't drop the tail of it
 		PriceBook.Save();      // ditto the market prices, which are slow and rate-limited to re-fetch
+		InventoryHistory.Save();
 	}
 
 	/// <summary>Start every enabled bot, staggered so several logins don't hit Steam at once.</summary>

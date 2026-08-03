@@ -64,6 +64,7 @@ public static class Commands {
 		new("2fa", "<account>", GroupAccounts, "Show this account's Steam Guard code, if its authenticator is set up here.", "guard"),
 		new("cheevo", "<account> <appID> [list|unlock|lock] [name|all]", GroupPlaying, "Achievements: see them, unlock them all, or put them back.", "ach|achievements"),
 		new("hunt", "[account]", GroupPlaying, "What the achievement hunter would play, in order - and what it ruled out and why.", "boost"),
+		new("value", "[account|all] [refresh]", GroupCards, "What each inventory is worth, by game, and how it has moved in the last day. Add 'refresh' to read the inventories again.", "inv|inventory"),
 
 		new("import", "asf [path] [force]", GroupSettings, "Bring accounts across from ArchiSteamFarm, login tokens and all."),
 		new("config", "[account]", GroupSettings, "Show every setting and its current value."),
@@ -205,6 +206,7 @@ public static class Commands {
 				"2fa" or "guard" => TwoFactor(mgr, rest),
 				"cheevo" or "ach" or "achievements" => await CheevoAsync(mgr, rest).ConfigureAwait(false),
 				"hunt" or "boost" => await HuntAsync(mgr, rest).ConfigureAwait(false),
+				"value" or "inv" or "inventory" => InventoryText(mgr, rest),
 				"name" => Name(mgr, rest),
 				"persona" => Persona(mgr, rest),
 				"farm" => Farm(mgr, rest),
@@ -783,6 +785,68 @@ public static class Commands {
 	/// profile with one shared timestamp, and there is no undo on Steam's side beyond re-locking. Something that
 	/// consequential should be a thing you typed, not a checkbox you left on.
 	/// </summary>
+	/// <summary>
+	/// What the inventories are worth.
+	///
+	/// The per-game breakdown matters as much as the total: "$1,900" tells you nothing about whether that is one
+	/// knife or four hundred trading cards, and the answer changes what you would do about it.
+	/// </summary>
+	private static string InventoryText(BotManager mgr, string[] args) {
+		bool refresh = args.Any(static a => a.Equals("refresh", StringComparison.OrdinalIgnoreCase));
+		string[] names = [.. args.Where(static a => !a.Equals("refresh", StringComparison.OrdinalIgnoreCase))];
+
+		List<Bot> targets = (names.Length == 0) || names[0].Equals("all", StringComparison.OrdinalIgnoreCase)
+			? [.. mgr.All]
+			: mgr.Get(names[0]) is { } one ? [one] : [];
+
+		if (targets.Count == 0) {
+			return names.Length == 0 ? "No accounts are set up yet." : NoSuchAccount(mgr, names[0]);
+		}
+
+		List<string> lines = [];
+		decimal total = 0;
+		int pending = 0;
+
+		foreach (Bot bot in targets) {
+			if (refresh) {
+				bot.Inventory.ForceRefresh();
+			}
+
+			if (!bot.Cfg.ShowInventoryValue) {
+				lines.Add($"{bot.Name}: not being valued (its \"Work out what its inventory is worth\" setting is off)");
+
+				continue;
+			}
+
+			total += bot.Inventory.Total;
+			pending += bot.Inventory.Pending;
+
+			string moved = InventoryHistory.Since(bot.Name, TimeSpan.FromHours(24)) is { } d
+				? $"   {(d.Change >= 0 ? "+" : "")}{PriceBook.Symbol}{d.Change:0.00} ({(d.Percent >= 0 ? "+" : "")}{d.Percent:0.0}%) in 24h"
+				: "";
+
+			lines.Add($"{bot.Name}: {PriceBook.Symbol}{bot.Inventory.Total:N2}{moved}"
+				+ (bot.Inventory.Pending > 0 ? $"   ({bot.Inventory.Pending} item(s) still being priced)" : "")
+				+ (bot.Inventory.Ready ? "" : "   (reading it now)"));
+
+			foreach (InventoryValue.GameValue game in bot.Inventory.ByGame.Take(6)) {
+				lines.Add(game.Blocked
+					? $"      {game.Game,-30} skipped - on this account's ignore list ({game.Items} item(s))"
+					: $"      {game.Game,-30} {PriceBook.Symbol}{game.Value,10:N2}   {game.Items} item(s)");
+			}
+		}
+
+		if (targets.Count > 1) {
+			lines.Add($"all: {PriceBook.Symbol}{total:N2}{(pending > 0 ? $"   ({pending} still being priced)" : "")}");
+		}
+
+		if (refresh) {
+			lines.Add("Reading the inventories again - prices are kept for a day, so only what CHANGED gets looked up.");
+		}
+
+		return string.Join(Environment.NewLine, lines);
+	}
+
 	/// <summary>
 	/// What the achievement hunter would play next, and what it has ruled out.
 	///

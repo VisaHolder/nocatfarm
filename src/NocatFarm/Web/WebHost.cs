@@ -417,6 +417,20 @@ public sealed class WebHost : IAsyncDisposable {
 		// The dashboard theme, stored server-side so the toggle and the 'theme' command agree and the choice
 		// follows you between browsers.
 		// What the achievement pacer is doing, per game. Read-only.
+		// Read an inventory again on demand. Prices are left alone - they're cached for a day and shared between
+		// accounts, and re-fetching hundreds of them because somebody pressed a button is how you get refused.
+		app.MapPost("/api/bots/{name}/inventory/refresh", (HttpContext ctx, string name) => Guard(ctx, () => {
+			Bot? bot = _mgr.Get(name);
+
+			if (bot == null) {
+				return Results.Json(new { ok = false, error = "No such account." }, statusCode: 404);
+			}
+
+			bot.Inventory.ForceRefresh();
+
+			return Results.Json(new { ok = true });
+		}));
+
 		app.MapGet("/api/bots/{name}/achievements", (HttpContext ctx, string name) => Guard(ctx, () => {
 			Bot? bot = _mgr.Get(name);
 			Modules.AchievementPacer? pacer = bot == null ? null : BotManager.ModuleOf<Modules.AchievementPacer>(bot);
@@ -1047,6 +1061,8 @@ public sealed class WebHost : IAsyncDisposable {
 				HumanPlayedMinutes = BotManager.ModuleOf<HumanMode>(b)?.PlayedMinutesToday ?? 0,
 				HumanTargetMinutes = BotManager.ModuleOf<HumanMode>(b)?.TargetMinutesToday ?? 0,
 					InventoryValue = b.Inventory.Total,
+					InventoryChange = InventoryHistory.Since(b.Name, TimeSpan.FromHours(24))?.Change,
+					InventoryChangePct = InventoryHistory.Since(b.Name, TimeSpan.FromHours(24))?.Percent,
 					InventoryPending = b.Inventory.Pending,
 					InventoryReady = b.Inventory.Ready,
 					InventoryByGame = b.Inventory.ByGame.Take(8).Select(static g => new { g.Game, g.Items, g.Value, g.Blocked }),

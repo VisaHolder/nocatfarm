@@ -125,6 +125,19 @@ const cur = () => (state && state.Currency) || '$';
 const usd = (n) => cur() + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const usdExact = (n) => cur() + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+// Up or down over the last day. Nothing at all until there is a reading old enough to compare against - a
+// percentage worked out from twenty minutes of history is noise dressed up as information.
+function valueDelta(b) {
+  if (b.InventoryChangePct === null || b.InventoryChangePct === undefined) return '';
+  const up = b.InventoryChangePct >= 0;
+  return `<span class="delta ${up ? 'up' : 'down'}" data-tip="${esc((up ? 'Up ' : 'Down ') + usdExact(Math.abs(b.InventoryChange)) + ' over the last 24 hours, at the market median.')}">${up ? '+' : '-'}${Math.abs(b.InventoryChangePct).toFixed(1)}%</span>`;
+}
+
+async function refreshInventory(name) {
+  await post(`/api/bots/${encodeURIComponent(name)}/inventory/refresh`, {});
+  toast(`Reading ${name}'s inventory again…`);
+}
+
 // The hover breakdown: which games hold the value, biggest first.
 const nlChar = String.fromCharCode(10);
 function valueTip(b) {
@@ -334,7 +347,7 @@ function renderOverview() {
       <td><span class="chip ${b.Group}"><i class="dot"></i>${esc(b.Status)}</span></td>
       <td>${esc(b.Playing || '—')}</td>
       <td>${b.Cards || '—'}</td>
-      <td data-tip="${esc(valueTip(b))}">${b.InventoryValue > 0 ? usd(b.InventoryValue) + (b.InventoryPending > 0 ? '<span class="muted">+</span>' : '') : (b.InventoryReady ? '—' : '<span class="muted">…</span>')}</td>
+      <td data-tip="${esc(valueTip(b))}">${b.InventoryValue > 0 ? usd(b.InventoryValue) + (b.InventoryPending > 0 ? '<span class="muted">+</span>' : '') + valueDelta(b) : (b.InventoryReady ? '—' : '<span class="muted">…</span>')}</td>
       ${r4rOn() ? `<td>${b.Rep4Rep ? b.Rep4RepToday + '/' + b.Rep4RepCap : '—'}</td>` : ''}
       <td>${b.UptimeMinutes ? hm(b.UptimeMinutes) : '—'}</td></tr>`).join('')}
     </table></div>`
@@ -422,7 +435,7 @@ function renderAccounts() {
         <span><b>${b.Cards}</b> card${b.Cards === 1 ? '' : 's'}${b.Games ? ` in ${b.Games}` : ''}</span>
         ${r4rOn() && b.Rep4Rep ? `<span><b>${b.Rep4RepToday}</b>/${b.Rep4RepCap} comments</span>` : ''}
         <span><b>${b.UptimeMinutes ? hm(b.UptimeMinutes) : '—'}</b> up</span>
-        ${b.InventoryValue > 0 ? `<span data-tip="${esc(valueTip(b))}"><b>${usd(b.InventoryValue)}</b> inventory</span>` : ''}
+        ${b.InventoryValue > 0 ? `<span data-tip="${esc(valueTip(b))}"><b>${usd(b.InventoryValue)}</b> inventory ${valueDelta(b)}</span>` : ''}
       </div>
       ${r4rOn() && b.Rep4Rep ? `<div class="bar" data-tip="Comments posted in the last 24 hours against this account's daily cap."><i style="width:${capPct}%"></i></div>` : ''}
       <div class="rows">
@@ -430,6 +443,7 @@ function renderAccounts() {
           `<div class="row"><span class="k">${esc(m.Name)}</span><span class="v" title="${esc(m.Status)}">${esc(m.Status)}</span></div>`).join('')}
       </div>
       <div class="actions">
+        ${b.InventoryValue > 0 || b.InventoryReady ? `<button data-tip="Read this account's inventory again. Prices are kept for a day, so only what changed is looked up." onclick="refreshInventory('${esc(b.Name)}')">Value</button>` : ''}
         ${b.Online
           ? (b.Paused
             ? `<button data-tip="Start playing, farming and commenting again." data-act="resume" data-bot="${esc(b.Name)}">Resume</button>`

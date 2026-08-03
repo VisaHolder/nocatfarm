@@ -52,6 +52,15 @@ public sealed partial class InventoryValue(Bot bot) {
 
 	private DateTime _readAt = DateTime.MinValue;
 
+	/// <summary>
+	/// Read the inventories again on the next pass, whatever the timer says.
+	///
+	/// Prices are untouched - they are cached for a day and shared, and re-fetching hundreds of them because
+	/// somebody pressed a button is how you get rate-limited. This picks up what has CHANGED: items traded away,
+	/// items received, a case opened.
+	/// </summary>
+	public void ForceRefresh() => _readAt = DateTime.MinValue;
+
 	public async Task RefreshIfStaleAsync(TimeSpan maxAge, CancellationToken ct) {
 		if (!bot.IsOnline || !bot.Cfg.ShowInventoryValue) {
 			return;
@@ -359,8 +368,14 @@ public sealed partial class InventoryValue(Bot bot) {
 		Total = decimal.Round(_byGame.Sum(static g => g.Value), 2);
 		RefreshedAt = DateTime.UtcNow;
 
+		// Only banked once the whole thing has a price. A total that is still filling in would otherwise be
+		// recorded as a genuine drop and then a genuine rise, and the day's percentage would be fiction.
+		if (Pending == 0) {
+			InventoryHistory.Note(bot.Name, Total);
+		}
+
 		if (Total != was) {
-			Log.Debug($"inventory now ${Total:0.00} across {_byGame.Count} game(s), {Pending} item(s) still to price", bot.Name);
+			Log.Debug($"inventory now {PriceBook.Symbol}{Total:0.00} across {_byGame.Count} game(s), {Pending} item(s) still to price", bot.Name);
 		}
 	}
 
