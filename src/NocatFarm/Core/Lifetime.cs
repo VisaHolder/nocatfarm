@@ -96,7 +96,7 @@ public static class Lifetime {
 
 			string path = Path;
 			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
-			File.WriteAllText(path, JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true }));
+			AtomicFile.Write(path, JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true }));
 		} catch (Exception e) {
 			Log.Debug($"couldn't save the lifetime totals: {e.GetType().Name}: {e.Message}");
 		}

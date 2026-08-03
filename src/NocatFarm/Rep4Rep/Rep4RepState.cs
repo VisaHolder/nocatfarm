@@ -33,6 +33,45 @@ public sealed class Rep4RepState {
 
 	public bool CapLearned { get; set; }
 
+	// Guards the in-memory collections (Posts / PostedTasks / DeadTargets) so the background commenting loop and a
+	// dashboard/console action (post now, clear, rest) can't touch them at the same time - which otherwise throws
+	// "collection modified" mid-enumeration or tears the 24h count the cap depends on.
+	private readonly object _sync = new();
+
+	/// <summary>Record a posted comment - into the rolling window and the task history - atomically.</summary>
+	public void RecordPost(string taskId) {
+		lock (_sync) {
+			long now = DateTime.UtcNow.Ticks;
+			Posts.Add(now);
+			PostedTasks[taskId] = now;
+		}
+	}
+
+	/// <summary>Empty the rolling window for a clean baseline (used by 'rep4rep rest').</summary>
+	public void ClearWindow() {
+		lock (_sync) {
+			Posts.Clear();
+		}
+	}
+
+	public void MarkDeadTarget(ulong steamId, DateTime until) {
+		lock (_sync) {
+			DeadTargets[steamId.ToString()] = until.Ticks;
+		}
+	}
+
+	public void ClearDeadTargets() {
+		lock (_sync) {
+			DeadTargets.Clear();
+		}
+	}
+
+	public bool HasPostedTask(string taskId) {
+		lock (_sync) {
+			return PostedTasks.ContainsKey(taskId);
+		}
+	}
+
 	// ── storage ─────────────────────────────────────────────────────────────
 	private static readonly SemaphoreSlim Gate = new(1, 1);
 
@@ -70,21 +109,27 @@ public sealed class Rep4RepState {
 		long taskCutoff = DateTime.UtcNow.AddDays(-30).Ticks;
 		long now = DateTime.UtcNow.Ticks;
 
-		Posts.RemoveAll(t => t < cutoff);
+		string body;
 
-		foreach (string k in PostedTasks.Where(kv => kv.Value < taskCutoff).Select(static kv => kv.Key).ToArray()) {
-			PostedTasks.Remove(k);
-		}
+		lock (_sync) {
+			Posts.RemoveAll(t => t < cutoff);
 
-		foreach (string k in DeadTargets.Where(kv => kv.Value <= now).Select(static kv => kv.Key).ToArray()) {
-			DeadTargets.Remove(k);
+			foreach (string k in PostedTasks.Where(kv => kv.Value < taskCutoff).Select(static kv => kv.Key).ToArray()) {
+				PostedTasks.Remove(k);
+			}
+
+			foreach (string k in DeadTargets.Where(kv => kv.Value <= now).Select(static kv => kv.Key).ToArray()) {
+				DeadTargets.Remove(k);
+			}
+
+			body = JsonSerializer.Serialize(this, Json);   // snapshot under the lock, so nothing mutates mid-serialize
 		}
 
 		await Gate.WaitAsync().ConfigureAwait(false);
 
 		try {
 			Directory.CreateDirectory(Dir);
-			await File.WriteAllTextAsync(PathFor(bot), JsonSerializer.Serialize(this, Json)).ConfigureAwait(false);
+			await AtomicFile.WriteAsync(PathFor(bot), body).ConfigureAwait(false);
 		} catch (Exception e) {
 			Log.Warn($"couldn't save commenting state: {e.Message}", bot);
 		} finally {
@@ -96,15 +141,19 @@ public sealed class Rep4RepState {
 	public int PostsInLast24h() {
 		long cutoff = DateTime.UtcNow.AddHours(-24).Ticks;
 
-		return Posts.Count(t => t >= cutoff);
+		lock (_sync) {
+			return Posts.Count(t => t >= cutoff);
+		}
 	}
 
 	public DateTime? LastPost() {
-		if (Posts.Count == 0) {
-			return null;
-		}
+		lock (_sync) {
+			if (Posts.Count == 0) {
+				return null;
+			}
 
-		return new DateTime(Posts.Max(), DateTimeKind.Utc);
+			return new DateTime(Posts.Max(), DateTimeKind.Utc);
+		}
 	}
 
 	/// <summary>
@@ -118,17 +167,23 @@ public sealed class Rep4RepState {
 	public DateTime? NextSlotAt(int cap) {
 		cap = Math.Max(1, cap);
 		long cutoff = DateTime.UtcNow.AddHours(-24).Ticks;
-		List<long> inWindow = Posts.Where(t => t >= cutoff).OrderBy(static t => t).ToList();
 
-		if (inWindow.Count < cap) {
-			return null;   // room now
+		lock (_sync) {
+			List<long> inWindow = Posts.Where(t => t >= cutoff).OrderBy(static t => t).ToList();
+
+			if (inWindow.Count < cap) {
+				return null;   // room now
+			}
+
+			return new DateTime(inWindow[inWindow.Count - cap], DateTimeKind.Utc).AddHours(24);
 		}
-
-		return new DateTime(inWindow[inWindow.Count - cap], DateTimeKind.Utc).AddHours(24);
 	}
 
 	public bool IsBlocked => BlockedUntil > DateTime.UtcNow.Ticks;
 
-	public bool IsDeadTarget(ulong steamId) =>
-		DeadTargets.TryGetValue(steamId.ToString(), out long until) && (until > DateTime.UtcNow.Ticks);
+	public bool IsDeadTarget(ulong steamId) {
+		lock (_sync) {
+			return DeadTargets.TryGetValue(steamId.ToString(), out long until) && (until > DateTime.UtcNow.Ticks);
+		}
+	}
 }

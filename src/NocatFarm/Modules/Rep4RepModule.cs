@@ -248,7 +248,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 	private async Task<int> RetryOnceAsync(Rep4RepTask task, string? error, CancellationToken ct) {
 		int pause = Rng.Next(RetryLowSeconds, RetryHighSeconds + 1);
-		Log.Warn($"comment on {task.TargetName} didn't go through{(string.IsNullOrEmpty(error) ? "" : $" (\"{error}\")")} - trying once more in ~{pause / 60}m", Bot.Name);
+		Log.Warn($"comment on {task.TargetName} didn't go through{(string.IsNullOrEmpty(error) ? "" : $" (\"{error}\")")} - trying once more in ~{Fmt.Hm(Math.Max(1, pause / 60))}", Bot.Name);
 
 		if (!await Sleep(TimeSpan.FromSeconds(pause), ct).ConfigureAwait(false)) {
 			return 60;
@@ -270,7 +270,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 				return await OnTargetRefusedAsync(task).ConfigureAwait(false);
 		}
 
-		Log.Info("the retry worked", Bot.Name);
+		Log.Info($"retry posted on {task.TargetName}", Bot.Name);
 
 		return await CreditAsync(task, ct).ConfigureAwait(false);
 	}
@@ -291,9 +291,9 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		}
 
 		if (credited) {
-			Log.Reward($"commented on {task.TargetName} + credited  ({done}/{Cap} today)", Bot.Name);
+			Log.Reward($"commented on {task.TargetName} and credited ({done}/{Cap} today)", Bot.Name);
 		} else {
-			Log.Warn($"commented on {task.TargetName} but rep4rep did NOT credit it  ({done}/{Cap} today)", Bot.Name);
+			Log.Warn($"commented on {task.TargetName} but rep4rep didn't credit it ({done}/{Cap} today)", Bot.Name);
 		}
 
 		_status = $"{done}/{Cap} today";
@@ -309,9 +309,8 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	}
 
 	private async Task CountPostAsync(Rep4RepTask task) {
-		_state!.Posts.Add(DateTime.UtcNow.Ticks);
+		_state!.RecordPost(task.TaskId);
 		_rateLimitRun = 0;
-		_state.PostedTasks[task.TaskId] = DateTime.UtcNow.Ticks;
 		Stats.Record(Stats.KindComment, Bot.Name);
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 	}
@@ -319,7 +318,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	private async Task<int> OnTargetRefusedAsync(Rep4RepTask task) {
 		// One bad profile is not a bad account. Skip the target, try a different one, and only after three
 		// DIFFERENT profiles refuse in a row conclude that it's the account.
-		_state!.DeadTargets[task.TargetSteamId.ToString()] = DateTime.UtcNow.AddSeconds(DeadTargetSeconds).Ticks;
+		_state!.MarkDeadTarget(task.TargetSteamId, DateTime.UtcNow.AddSeconds(DeadTargetSeconds));
 		_state.Strikes++;
 
 		if (_state.Strikes < StrikesToBlock) {
@@ -409,7 +408,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 	private async Task<Rep4RepTask?> NextTaskAsync(string profileId, CancellationToken ct) {
 		foreach (Rep4RepTask task in await _api.GetTasksAsync(profileId, ct).ConfigureAwait(false)) {
-			if (_state!.PostedTasks.ContainsKey(task.TaskId) || _state.IsDeadTarget(task.TargetSteamId)) {
+			if (_state!.HasPostedTask(task.TaskId) || _state.IsDeadTarget(task.TargetSteamId)) {
 				continue;
 			}
 
@@ -661,7 +660,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		_state.BlockedUntil = 0;
 		_state.BlockReason = "";
 		_state.Strikes = 0;
-		_state.DeadTargets.Clear();
+		_state.ClearDeadTargets();
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 		_status = "hold cleared";
 		_forceNext = true;
@@ -675,7 +674,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 		_state.BlockedUntil = DateTime.UtcNow.AddHours(24).Ticks;
 		_state.BlockReason = reason;
-		_state.Posts.Clear();   // baseline now - old comments won't count against tomorrow's fresh batch
+		_state.ClearWindow();   // baseline now - old comments won't count against tomorrow's fresh batch
 		_state.Strikes = 0;
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 		_rateLimitRun = 0;

@@ -1132,7 +1132,7 @@ public sealed class Bot : IAsyncDisposable {
 			// The owner just started playing on this account, so Steam handed them the session. Expected, not a
 			// fault - so it reads as Info, in plain language, and says it will come back. The actual rejoin is
 			// kept quiet in OnDisconnected so this is the only line the user sees for a normal step-aside.
-			Log.Info("you're playing on this account - stepping aside, back to farming when you're done", Name);
+			Log.Info("you're on this account now - standing aside until you're done", Name);
 
 			if (Cfg.PauseWhenYouPlay) {
 				PlayingBlocked = true;
@@ -1264,7 +1264,7 @@ public sealed class Bot : IAsyncDisposable {
 		// A stand-down that was too fresh to trust at logon gets announced here, once, if it held.
 		if (PlayingBlocked && _blockWarnDue is { } due && (DateTime.UtcNow >= due)) {
 			_blockWarnDue = null;
-			Log.Warn("you're playing on this account - standing down until you're finished", Name);
+			Log.Info("you're on this account now - standing aside until you're done", Name);
 		}
 
 		// Re-assert the schedule's persona so it actually holds: online during active hours, invisible while
@@ -1403,7 +1403,7 @@ public sealed class Bot : IAsyncDisposable {
 				Log.Debug($"Steam reports another session on app {cb.PlayingAppID} right after logon - probably our own, waiting before saying so", Name);
 			} else {
 				_blockWarnDue = null;
-				Log.Warn("you're playing on this account - standing down until you're finished", Name);
+				Log.Info("you're on this account now - standing aside until you're done", Name);
 			}
 		} else {
 			_blockWarnDue = null;
@@ -1693,7 +1693,7 @@ public sealed class Bot : IAsyncDisposable {
 		bool clearing = (appIds.Count == 0) && string.IsNullOrWhiteSpace(overrideName ?? CustomName);
 
 		if (!clearing && (PlayingBlocked || Paused)) {
-			Log.Debug($"games-played NOT sent - {(PlayingBlocked ? "you're using the account" : "paused")}", Name);
+			Log.Debug($"games-played not sent - {(PlayingBlocked ? "you're using the account" : "paused")}", Name);
 
 			return;
 		}
@@ -2044,7 +2044,7 @@ public static class TokenStore {
 	public static void Save(string bot, string token) {
 		try {
 			Directory.CreateDirectory(Dir);
-			File.WriteAllText(PathFor(bot), token);
+			AtomicFile.Write(PathFor(bot), token);
 		} catch (Exception e) {
 			Log.Warn($"couldn't store the login token: {e.Message}", bot);
 		}
@@ -2053,7 +2053,7 @@ public static class TokenStore {
 	public static void SaveAccess(string bot, string accessToken) {
 		try {
 			Directory.CreateDirectory(Dir);
-			File.WriteAllText(AccessPathFor(bot), accessToken);
+			AtomicFile.Write(AccessPathFor(bot), accessToken);
 		} catch (Exception e) {
 			Log.Debug($"couldn't store the access token: {e.Message}", bot);
 		}

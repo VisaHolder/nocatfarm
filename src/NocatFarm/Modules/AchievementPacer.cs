@@ -643,7 +643,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 			string path = PathFor(Bot.Name);
 			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-			File.WriteAllText(path, JsonSerializer.Serialize(saved, new JsonSerializerOptions { WriteIndented = true }));
+			AtomicFile.Write(path, JsonSerializer.Serialize(saved, new JsonSerializerOptions { WriteIndented = true }));
 		} catch (Exception e) {
 			Log.Debug($"couldn't save the achievement state: {e.GetType().Name}: {e.Message}", Bot.Name);
 		}
