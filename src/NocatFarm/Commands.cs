@@ -57,7 +57,7 @@ public static class Commands {
 		new("cards", "[account]", GroupCards, "What is still left to farm."),
 		new("farm", "<account> on|off", GroupCards, "Turn trading-card farming on or off."),
 
-		new("rep4rep", "status|points|profiles|tasks|on|off|now|pause|resume|clear", GroupRep4Rep, "Everything rep4rep. Run it bare for a summary.", "r4r"),
+		new("rep4rep", "status|points|profiles|tasks|on|off|now|pause|resume|clear|rest", GroupRep4Rep, "Everything rep4rep. Run it bare for a summary.", "r4r"),
 
 		new("redeem", "[account] <key> [key...]", GroupAccounts, "Activate product keys. Without an account it tries each in turn until one can use it.", "key"),
 		new("send", "<account|all>", GroupCards, "Send an account's tradable items to the account listed under Trades.", "loot"),
@@ -272,7 +272,7 @@ public static class Commands {
 
 	private static string About() =>
 		"""
-		nocat.farm 1.1.0 - Steam idler, trading-card farmer and rep4rep commenter.
+		nocat.farm 1.1.1 - Steam idler, trading-card farmer and rep4rep commenter.
 		Everything runs on this PC. Your accounts never leave it; the only thing that talks
 		to rep4rep is the task queue.
 		""";
