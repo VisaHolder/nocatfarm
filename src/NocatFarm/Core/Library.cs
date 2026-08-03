@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using NocatFarm.Config;
 
 namespace NocatFarm.Core;

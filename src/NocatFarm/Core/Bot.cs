@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using NocatFarm.Config;
 using SteamKit2;
 using SteamKit2.Authentication;

@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using NocatFarm.Config;
 using NocatFarm.Core;
 using NocatFarm.Modules;
