@@ -307,15 +307,30 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// beat (GrindStartsAt) the current game keeps playing and the day carries on normally, so it looks like a
 		// person finishing up and then switching games. On a non-human account it starts immediately.
 		if (Bot.Grinding && (!Bot.HumanOwned || (DateTime.UtcNow >= Bot.GrindStartsAt))) {
-			_wasGrinding = true;
+			if (!_wasGrinding) {
+				_wasGrinding = true;
 
-			if (_phase != Phase.Off) {
-				BankSession();
-				_phase = Phase.Off;
+				if (_phase != Phase.Off) {
+					BankSession();
+				}
+
+				// A grind IS playing, so the day's total has to keep counting through it.
+				//
+				// Handing the account over used to stop the clock: human mode banked what it had, went to Off and
+				// accrued nothing until the grind ended. That made a two-hour achievement session invisible to the
+				// schedule, so an account with a six-hour day could put in six hours of weighted play PLUS three
+				// two-hour hunts and still believe it had done its six. Keeping the Playing phase (with no game of
+				// its own) leaves the per-tick banking below running, so hunting comes OUT of the day's budget
+				// instead of being stacked on top of it - which is what a person's evening actually looks like.
+				_phase = Phase.Playing;
 				_game = 0;
 				_switchingTo = 0;
+				_sessionEnds = Bot.GrindUntil ?? DateTime.UtcNow.AddHours(2);
+				_bankedTo = DateTime.UtcNow;
+				_bankedForLogon = Bot.OnlineSince ?? DateTime.UtcNow;
 			}
 
+			BankSession();
 			Bot.ClearPersonaOverride();
 
 			// Put the grind game on directly (idempotent - only re-sends when it isn't already the one running).

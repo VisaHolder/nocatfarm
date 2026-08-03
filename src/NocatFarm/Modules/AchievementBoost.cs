@@ -428,6 +428,20 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 				return;
 			}
 
+			// Hunting comes out of the day's budget, not on top of it.
+			//
+			// Human mode rolls a target for how long the account plays today; a hunt is playing, so once that
+			// target is met the day is over for hunting too. Without this the two settings quietly fought - the
+			// schedule would finish its six hours and stop, and the hunter would carry on adding two-hour
+			// sessions to an account that was supposed to be done for the night.
+			HumanMode? human = BotManager.ModuleOf<HumanMode>(Bot);
+
+			if ((human != null) && (human.TargetMinutesToday > 0) && (human.PlayedMinutesToday >= human.TargetMinutesToday)) {
+				_status = "done for today - hunting again tomorrow";
+
+				return;
+			}
+
 			int rest = Math.Max(15, Bot.Cfg.BoostRestMinutesHuman);
 			bool capped = _inARow >= Math.Max(1, Bot.Cfg.MaxBoostGamesInARow);
 			int need = capped ? rest * 3 : rest;
