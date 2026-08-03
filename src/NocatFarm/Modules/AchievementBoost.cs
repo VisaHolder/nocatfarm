@@ -31,7 +31,9 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 
 	/// <summary>New store lookups per tick. Each is throttled, so this is about a minute's worth.</summary>
 	private const int LookupsPerTick = 40;
+	private readonly Random _rng = new();
 	private DateTime _lastEnded = DateTime.MinValue;
+	private int _restNeeded;                      // this gap's own jittered length, rolled when the gap starts
 	private string _status = "";
 
 	private List<uint> _singleplayer = [];       // discovered owned single-player games with achievements (mode 2)
@@ -458,15 +460,27 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 				return;
 			}
 
+			// The gap is rolled ONCE per gap, not read from the setting each tick.
+			//
+			// A setting of 120 used literally means every gap between hunts is exactly two hours, for ever - and a
+			// perfectly regular rhythm is the thing human mode exists to avoid. This spreads it across roughly
+			// two-thirds to one-and-a-half times the setting, and holds that roll until the gap is served, so the
+			// countdown doesn't jump about while it waits.
 			int rest = Math.Max(15, Bot.Cfg.BoostRestMinutesHuman);
 			bool capped = _inARow >= Math.Max(1, Bot.Cfg.MaxBoostGamesInARow);
-			int need = capped ? rest * 3 : rest;
 
-			if ((_lastEnded != DateTime.MinValue) && (DateTime.UtcNow - _lastEnded < TimeSpan.FromMinutes(need))) {
-				_status = $"weighted schedule - next hunt in {Fmt.Hm((int) (TimeSpan.FromMinutes(need) - (DateTime.UtcNow - _lastEnded)).TotalMinutes)}";
+			if (_restNeeded <= 0) {
+				int spread = _rng.Next(rest * 65 / 100, (rest * 150 / 100) + 1);
+				_restNeeded = capped ? spread * _rng.Next(25, 36) / 10 : spread;   // 2.5-3.5x after a run of them
+			}
+
+			if ((_lastEnded != DateTime.MinValue) && (DateTime.UtcNow - _lastEnded < TimeSpan.FromMinutes(_restNeeded))) {
+				_status = $"weighted schedule - next hunt in {Fmt.Hm((int) (TimeSpan.FromMinutes(_restNeeded) - (DateTime.UtcNow - _lastEnded)).TotalMinutes)}";
 
 				return;
 			}
+
+			_restNeeded = 0;   // served - the next gap rolls its own
 
 			if (capped) {
 				_inARow = 0;   // the longer weighted rest has been served; start a fresh run of boost sessions
@@ -476,16 +490,18 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		uint target = targets[_index % targets.Count];
 		_index++;
 
+		// Nobody plays for exactly two hours, twice. The setting is the middle of a range, not a stopwatch.
 		int hours = Math.Clamp(Bot.Cfg.BoostSessionHours, 1, 24);
+		int minutes = _rng.Next(hours * 60 * 70 / 100, (hours * 60 * 130 / 100) + 1);
 
 		// Targets are already filtered, so a refusal here means the guard changed its mind between the two - fine,
 		// leave it, the next tick picks the game after it.
-		if (!Bot.StartGrind(target, TimeSpan.FromHours(hours))) {
+		if (!Bot.StartGrind(target, TimeSpan.FromMinutes(minutes))) {
 			return;
 		}
 
 		_ours = true;
 		_status = $"hunting {GameNames.Of(target)}";
-		Log.Info($"achievement boost - hunting {GameNames.Of(target)} for ~{hours}h ({_index}/{targets.Count} through the list)", Bot.Name);
+		Log.Info($"achievement boost - hunting {GameNames.Of(target)} for {Fmt.Hm(minutes)} ({_index}/{targets.Count} through the list)", Bot.Name);
 	}
 }
