@@ -30,5 +30,304 @@
   "type a command, or 'help'": "wpisz polecenie lub 'help'",
   "your steam login": "twój login Steam"
  },
- "settings": {}
+ "settings": {
+  "WebEnabled": {
+   "label": "Panel webowy"
+  },
+  "WebHost": {
+   "label": "Nasłuchuj na"
+  },
+  "WebPort": {
+   "label": "Port"
+  },
+  "WebPassword": {
+   "label": "Hasło panelu"
+  },
+  "OpenDashboardAfterAdd": {
+   "label": "Otwórz panel po dodaniu konta"
+  },
+  "OpenBrowserOnStart": {
+   "label": "Otwórz przeglądarkę przy starcie"
+  },
+  "Tray": {
+   "label": "Ikona w zasobniku"
+  },
+  "MinimizeToTray": {
+   "label": "Minimalizuj do zasobnika"
+  },
+  "StartMinimized": {
+   "label": "Uruchom ukryty"
+  },
+  "StartWithWindows": {
+   "label": "Uruchamiaj z Windows"
+  },
+  "KeepAwake": {
+   "label": "Nie pozwól temu PC zasnąć"
+  },
+  "TrayNotifications": {
+   "label": "Pokazuj powiadomienia"
+  },
+  "NotifyEarnings": {
+   "label": "Powiadom o zyskach"
+  },
+  "NotifySocial": {
+   "label": "Powiadom o komentarzach"
+  },
+  "NotifyProblems": {
+   "label": "Powiadom o problemach"
+  },
+  "Rep4RepEnabled": {
+   "label": "Używaj rep4rep"
+  },
+  "Rep4RepApiToken": {
+   "label": "Token API"
+  },
+  "Rep4RepAutoAddProfiles": {
+   "label": "Rejestruj konta automatycznie"
+  },
+  "LoginStaggerSeconds": {
+   "label": "Odstęp między logowaniami"
+  },
+  "StatusEveryMinutes": {
+   "label": "Mów, co robi, co"
+  },
+  "StatusQuietEveryMinutes": {
+   "label": "A w spoczynku co"
+  },
+  "Language": {
+   "label": "Język",
+   "tip": "Język panelu. To, co jeszcze nieprzetłumaczone, pokazuje się po angielsku, a nie pusto, więc język zrobiony w połowie nadal jest w pełni używalny."
+  },
+  "MarketCurrency": {
+   "label": "Ceny ekwipunku w",
+   "tip": "Waluta cen ekwipunku. Ustaw taką jak w twoim sklepie Steam, inaczej sumy nie zgodzą się z tym, co widzisz na rynku."
+  },
+  "FileLogging": {
+   "label": "Zapisuj plik dziennika"
+  },
+  "DailyReportEnabled": {
+   "label": "Dzienne podsumowanie w dzienniku"
+  },
+  "DailyReportHour": {
+   "label": "Godzina podsumowania · godz."
+  },
+  "DailyReportMinute": {
+   "label": "Godzina podsumowania · min."
+  },
+  "Enabled": {
+   "label": "Włączone"
+  },
+  "SteamLogin": {
+   "label": "Nazwa konta Steam"
+  },
+  "SteamPassword": {
+   "label": "Hasło"
+  },
+  "OnlineStatus": {
+   "label": "Pokazuj jako",
+   "tip": "Jak widzą cię inni: dostępny, zaraz wracam, zajęty albo niewidoczny. Niewidoczny dalej zbiera godziny, a nikt nic nie widzi."
+  },
+  "IUseThisAccount": {
+   "label": "Sam się loguję na to konto",
+   "tip": "Zaznacz, jeśli sam logujesz się na to konto. Wtedy nocat.farm nie rusza jego statusu - robienie tego z drugiej sesji wyrzuca cię z twojego własnego czatu Steam."
+  },
+  "StartPaused": {
+   "label": "Uruchom wstrzymane"
+  },
+  "LogColour": {
+   "label": "Kolor w dzienniku"
+  },
+  "Notes": {
+   "label": "Notatki"
+  },
+  "LegitMode": {
+   "label": "Tryb ludzki",
+   "tip": "Sprawia, że konto gra jak człowiek: jedna gra naraz, sesje i przerwy o różnej długości, wiarygodne pory snu i wstawania oraz dni całkiem bez grania. Wyłączone - po prostu zbiera godziny."
+  },
+  "LegitStopMaxSeconds": {
+   "label": "Przy zatrzymaniu kończ jeszcze do"
+  },
+  "GameWeights": {
+   "label": "Gry i jak często",
+   "tip": "Gry i ich wagi, na przykład \"730:70, 440:20\". Najcięższa jest grą główną i dostaje większość czasu; pozostałe pojawiają się od czasu do czasu, zrywami, a nie codziennie."
+  },
+  "WeekdayHours": {
+   "label": "Godzin w dzień powszedni"
+  },
+  "WeekendHours": {
+   "label": "Godzin w weekend"
+  },
+  "DayOffChancePct": {
+   "label": "Szansa na dzień wolny"
+  },
+  "DayStartHour": {
+   "label": "Wchodzi około"
+  },
+  "BedHour": {
+   "label": "Kładzie się około"
+  },
+  "LateNightExtraHours": {
+   "label": "W pt/sob siedzi dłużej"
+  },
+  "MainGameSharePct": {
+   "label": "Główna gra dostaje"
+  },
+  "PureMainDayChancePct": {
+   "label": "Dni tylko z główną grą"
+  },
+  "SideGameSharePct": {
+   "label": "W dzień mieszany pozostałe dostają"
+  },
+  "WarmUpMinMinutes": {
+   "label": "Rozgrzewka co najmniej"
+  },
+  "WarmUpMaxMinutes": {
+   "label": "I najwyżej"
+  },
+  "SessionMinMinutes": {
+   "label": "Najkrótsza sesja"
+  },
+  "SessionMaxMinutes": {
+   "label": "Najdłuższa sesja"
+  },
+  "MealBreaksPerDay": {
+   "label": "Posiłków dziennie"
+  },
+  "MealBreakMinutes": {
+   "label": "Ile trwa posiłek"
+  },
+  "SignOutOnBreakChancePct": {
+   "label": "Szansa na wylogowanie w przerwie"
+  },
+  "OfflineIdleAtNight": {
+   "label": "Zbieraj godziny w nocy"
+  },
+  "OfflineIdleGames": {
+   "label": "Gry na noc"
+  },
+  "IdleGames": {
+   "label": "Gry do zbierania godzin",
+   "tip": "Gry uruchamiane dla godzin. Steam pozwala na 32 naraz."
+  },
+  "CustomGameNameEnabled": {
+   "label": "Pokaż własną nazwę gry",
+   "tip": "Pokazuje na liście znajomych wymyśloną nazwę zamiast prawdziwej gry. Godziny nadal liczą się prawdziwej grze."
+  },
+  "CustomGameName": {
+   "label": "Pokazuj jako"
+  },
+  "FarmCards": {
+   "label": "Farmienie kart",
+   "tip": "Wyciąga karty, które zostały jeszcze w twojej bibliotece, i kończy, gdy nic nie zostaje. Nie ma czego ustawiać."
+  },
+  "HoursUntilCardDrops": {
+   "label": "Godzin do wypadnięcia kart"
+  },
+  "FarmingOrder": {
+   "label": "Farm w tej kolejności"
+  },
+  "FarmOffline": {
+   "label": "Farm, pokazując się offline"
+  },
+  "UnlockAchievements": {
+   "label": "Zdobywaj osiągnięcia z czasem",
+   "tip": "Zdobywa osiągnięcia po trochu, na podstawie faktycznego czasu gry, zaczynając od najpospolitszych. Nigdy nie odblokuje czegoś, czego godziny nie uzasadniają, i nigdy nie kończy gry w 100%."
+  },
+  "AchievementPace": {
+   "label": "Jak szybko"
+  },
+  "AchievementMaxCompletionPct": {
+   "label": "Nigdy nie ukończ więcej niż"
+  },
+  "ClaimFreeGames": {
+   "label": "Odbieraj darmowe gry",
+   "tip": "Odbiera pojawiające się darmowe gry, żeby biblioteka rosła sama."
+  },
+  "CraftBadges": {
+   "label": "Twórz odznaki z kart",
+   "tip": "Zamienia pełne zestawy kart w odznaki, co daje doświadczenie profilu i czasem przedmioty."
+  },
+  "Rep4Rep": {
+   "label": "Publikuj komentarze rep4rep",
+   "tip": "Publikuje komentarze, które rep4rep przydziela temu kontu, w ludzkim tempie."
+  },
+  "Rep4RepDailyCap": {
+   "label": "Najwyżej na 24 godziny"
+  },
+  "Rep4RepGapMinMinutes": {
+   "label": "Najkrótszy odstęp"
+  },
+  "Rep4RepGapMaxMinutes": {
+   "label": "Najdłuższy odstęp"
+  },
+  "Rep4RepStartHour": {
+   "label": "Publikuj dopiero od"
+  },
+  "Rep4RepEndHour": {
+   "label": "Do"
+  },
+  "AcceptFriendRequests": {
+   "label": "Akceptuj zaproszenia do znajomych"
+  },
+  "JoinGroup": {
+   "label": "Dołącz do grupy nocat.farm"
+  },
+  "AutoReplyEnabled": {
+   "label": "Odpowiadaj na wiadomości"
+  },
+  "AutoReply": {
+   "label": "Odpowiadaj treścią"
+  },
+  "AutoReplyOncePerDay": {
+   "label": "Odpowiadaj tylko raz dziennie"
+  },
+  "FriendRequestDelayMinMinutes": {
+   "label": "Czekaj co najmniej"
+  },
+  "FriendRequestDelayMaxMinutes": {
+   "label": "I najwyżej"
+  },
+  "ActOnlyWhileAwake": {
+   "label": "Reaguj tylko, gdy nie śpi"
+  },
+  "AcceptDonations": {
+   "label": "Przyjmuj darowizny",
+   "tip": "Przyjmuje oferty, które o nic nie proszą. Nie mogą nic kosztować, więc z natury są bezpieczne."
+  },
+  "AcceptFromMasters": {
+   "label": "Przyjmuj wszystko z własnych kont"
+  },
+  "TradeMasters": {
+   "label": "Twoje własne konta",
+   "tip": "SteamID twoich własnych kont. Tam \"send\" wysyła przedmioty i stamtąd oferty są przyjmowane bez pytania."
+  },
+  "DeclineOtherTrades": {
+   "label": "Odrzucaj całą resztę"
+  },
+  "TradeDelayMinMinutes": {
+   "label": "Czekaj co najmniej"
+  },
+  "TradeDelayMaxMinutes": {
+   "label": "I najwyżej"
+  },
+  "PauseWhenYouPlay": {
+   "label": "Ustąp, gdy grasz",
+   "tip": "Gdy sam zaczniesz grać, konto natychmiast ustępuje i czeka, zanim wróci do swojego."
+  },
+  "ResumeDelayMinutes": {
+   "label": "Czekaj przed wznowieniem"
+  },
+  "AchievementBoost": {
+   "tip": "Sam poluje na osiągnięcia w wielu grach, bez ręcznego startowania każdej sesji. Domyślnie wyłączone. \"Wszystkie dla jednego gracza\" wybiera z twojej biblioteki: tylko prawdziwe gry (nigdy DLC ani dema), z osiągnięciami i z wystarczającą liczbą recenzji."
+  },
+  "SkipRefundableGames": {
+   "tip": "Zostawia świeżo kupioną grę w spokoju, dopóki możesz odzyskać pieniądze: Steam odmawia, gdy ma dwie godziny, a dwie godziny to jedna sesja. Działa wszędzie, nie tylko przy kartach. Darmowe gry nigdy nie są wstrzymywane."
+  },
+  "ShowInventoryValue": {
+   "tip": "Liczy, ile wart jest ekwipunek tego konta po medianie ceny rynkowej. Czyta WŁASNY ekwipunek, więc prywatny profil nie ma znaczenia."
+  },
+  "CheckForUpdates": {
+   "tip": "Raz dziennie sprawdza, czy jest nowsza wersja, i pisze o tym w dzienniku. Tylko informuje: nigdy nic nie pobiera, nie podmienia ani nie restartuje."
+  }
+ }
 }

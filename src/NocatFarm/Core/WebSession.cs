@@ -177,7 +177,19 @@ public sealed class WebSession : IDisposable {
 			}
 
 			if (!response.IsSuccessStatusCode) {
-				Log.Debug($"{(form == null ? "GET" : "POST")} {url.PathAndQuery} -> {(int) response.StatusCode}", _bot.Name);
+				// Steam puts the REASON in the body of a failed POST - "you cannot trade because...", "this
+				// account is trade banned" - and throwing it away left every failure looking like a network
+				// fault. The first couple of hundred characters is always enough to say what went wrong.
+				string failure = "";
+
+				try {
+					failure = (await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false)).Trim();
+				} catch {
+					// the status code on its own will have to do
+				}
+
+				Log.Debug($"{(form == null ? "GET" : "POST")} {url.PathAndQuery} -> {(int) response.StatusCode}"
+					+ (failure.Length > 0 ? $"  {failure[..Math.Min(300, failure.Length)]}" : ""), _bot.Name);
 
 				return null;
 			}
@@ -207,6 +219,50 @@ public sealed class WebSession : IDisposable {
 		string? body = await PostAsync(url, form, referer, ct).ConfigureAwait(false);
 
 		return (body != null, body);
+	}
+
+	/// <summary>
+	/// POST and hand back the body whatever the status code was.
+	///
+	/// Steam explains itself in the BODY of a failed POST - a trade offer refusal comes back as a 500 carrying
+	/// {"strError":"...(15)"} - so the ordinary path, which returns null on any non-2xx, throws away the only
+	/// useful part of the answer and leaves the caller guessing at the cause.
+	/// </summary>
+	public async Task<string?> PostAllowingFailureAsync(Uri url, Dictionary<string, string> form, Uri? referer = null, CancellationToken ct = default) {
+		if (!Ready && !await RefreshAsync(true, ct).ConfigureAwait(false)) {
+			return null;
+		}
+
+		try {
+			return await Limiters.WebAsync(url.Host, async () => {
+				using HttpRequestMessage request = new(HttpMethod.Post, url);
+				string? cookieSession = CookieValue(url, "sessionid");
+
+				if (string.IsNullOrEmpty(cookieSession)) {
+					return null;
+				}
+
+				Dictionary<string, string> payload = new(form, StringComparer.Ordinal) {
+					["sessionid"] = cookieSession,
+					["sessionID"] = cookieSession
+				};
+				request.Content = new FormUrlEncodedContent(payload);
+
+				if (referer != null) {
+					request.Headers.Referrer = referer;
+				}
+
+				using HttpResponseMessage response = await _http.SendAsync(request, HttpCompletionOption.ResponseContentRead, ct).ConfigureAwait(false);
+
+				return await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+			}).ConfigureAwait(false);
+		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+			throw;
+		} catch (Exception e) {
+			Log.Debug($"POST {url.PathAndQuery} failed: {e.Message}", _bot.Name);
+
+			return null;
+		}
 	}
 
 	private static bool IsSessionExpired(Uri uri) =>

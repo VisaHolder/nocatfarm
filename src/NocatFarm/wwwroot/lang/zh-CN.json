@@ -30,5 +30,304 @@
   "type a command, or 'help'": "输入命令，或 'help'",
   "your steam login": "你的 Steam 登录名"
  },
- "settings": {}
+ "settings": {
+  "WebEnabled": {
+   "label": "网页面板"
+  },
+  "WebHost": {
+   "label": "监听地址"
+  },
+  "WebPort": {
+   "label": "端口"
+  },
+  "WebPassword": {
+   "label": "面板密码"
+  },
+  "OpenDashboardAfterAdd": {
+   "label": "添加账户后打开面板"
+  },
+  "OpenBrowserOnStart": {
+   "label": "启动时打开浏览器"
+  },
+  "Tray": {
+   "label": "托盘图标"
+  },
+  "MinimizeToTray": {
+   "label": "最小化到托盘"
+  },
+  "StartMinimized": {
+   "label": "启动时隐藏"
+  },
+  "StartWithWindows": {
+   "label": "开机自动启动"
+  },
+  "KeepAwake": {
+   "label": "阻止此电脑休眠"
+  },
+  "TrayNotifications": {
+   "label": "显示弹窗提示"
+  },
+  "NotifyEarnings": {
+   "label": "有收获时提示"
+  },
+  "NotifySocial": {
+   "label": "有评论时提示"
+  },
+  "NotifyProblems": {
+   "label": "出问题时提示"
+  },
+  "Rep4RepEnabled": {
+   "label": "启用 rep4rep"
+  },
+  "Rep4RepApiToken": {
+   "label": "API 令牌"
+  },
+  "Rep4RepAutoAddProfiles": {
+   "label": "自动注册账户"
+  },
+  "LoginStaggerSeconds": {
+   "label": "两次登录的间隔"
+  },
+  "StatusEveryMinutes": {
+   "label": "汇报当前状态，每隔"
+  },
+  "StatusQuietEveryMinutes": {
+   "label": "空闲时则每隔"
+  },
+  "Language": {
+   "label": "语言",
+   "tip": "面板语言。尚未翻译的内容会显示英文而不是留空，所以翻译到一半的语言依然完全可用。"
+  },
+  "MarketCurrency": {
+   "label": "库存价格使用",
+   "tip": "库存价格使用的货币。请与你的 Steam 商店保持一致，否则总额会和你在市场上看到的对不上。"
+  },
+  "FileLogging": {
+   "label": "写入日志文件"
+  },
+  "DailyReportEnabled": {
+   "label": "在日志中写每日汇总"
+  },
+  "DailyReportHour": {
+   "label": "汇总时间 · 时"
+  },
+  "DailyReportMinute": {
+   "label": "汇总时间 · 分"
+  },
+  "Enabled": {
+   "label": "已启用"
+  },
+  "SteamLogin": {
+   "label": "Steam 账户名"
+  },
+  "SteamPassword": {
+   "label": "密码"
+  },
+  "OnlineStatus": {
+   "label": "显示状态为",
+   "tip": "别人看到的状态：在线、离开、忙碌或隐身。隐身时照样累积时长，而且谁也看不到。"
+  },
+  "IUseThisAccount": {
+   "label": "这个账户我自己也登录",
+   "tip": "如果你自己也登录这个账户，请勾选。这样 nocat.farm 就不会去改它的状态——从第二个会话改状态会把你踢出自己的 Steam 聊天。"
+  },
+  "StartPaused": {
+   "label": "启动后暂停"
+  },
+  "LogColour": {
+   "label": "日志中的颜色"
+  },
+  "Notes": {
+   "label": "备注"
+  },
+  "LegitMode": {
+   "label": "拟人模式",
+   "tip": "让账户像真人一样玩：一次只玩一个游戏，每段时长和休息都不一样，作息时间合理，还会有几天完全不玩。关闭后就只是单纯挂时长。"
+  },
+  "LegitStopMaxSeconds": {
+   "label": "停止时最多再收尾"
+  },
+  "GameWeights": {
+   "label": "游戏及其频率",
+   "tip": "游戏及其权重，例如“730:70, 440:20”。权重最高的是主力游戏，占据大部分时间；其余的偶尔出现，且是一阵一阵的，而不是每天都玩。"
+  },
+  "WeekdayHours": {
+   "label": "工作日时长"
+  },
+  "WeekendHours": {
+   "label": "周末时长"
+  },
+  "DayOffChancePct": {
+   "label": "休息一天的概率"
+  },
+  "DayStartHour": {
+   "label": "大约几点上线"
+  },
+  "BedHour": {
+   "label": "大约几点睡觉"
+  },
+  "LateNightExtraHours": {
+   "label": "周五/周六熬得更晚"
+  },
+  "MainGameSharePct": {
+   "label": "主力游戏占比"
+  },
+  "PureMainDayChancePct": {
+   "label": "只玩主力游戏的天数占比"
+  },
+  "SideGameSharePct": {
+   "label": "混合的日子里其他游戏占"
+  },
+  "WarmUpMinMinutes": {
+   "label": "至少先适应"
+  },
+  "WarmUpMaxMinutes": {
+   "label": "最多"
+  },
+  "SessionMinMinutes": {
+   "label": "最短一次游玩"
+  },
+  "SessionMaxMinutes": {
+   "label": "最长一次游玩"
+  },
+  "MealBreaksPerDay": {
+   "label": "每天用餐次数"
+  },
+  "MealBreakMinutes": {
+   "label": "一次用餐多久"
+  },
+  "SignOutOnBreakChancePct": {
+   "label": "休息时下线的概率"
+  },
+  "OfflineIdleAtNight": {
+   "label": "夜间累积时长"
+  },
+  "OfflineIdleGames": {
+   "label": "夜间挂的游戏"
+  },
+  "IdleGames": {
+   "label": "挂时长的游戏",
+   "tip": "用来挂时长的游戏。Steam 最多允许同时挂 32 个。"
+  },
+  "CustomGameNameEnabled": {
+   "label": "显示自定义游戏名",
+   "tip": "在好友列表里显示一个自定义名称，而不是真实游戏。时长依然记在真实游戏上。"
+  },
+  "CustomGameName": {
+   "label": "显示为"
+  },
+  "FarmCards": {
+   "label": "刷集换式卡牌",
+   "tip": "把你库里还没掉完的集换式卡牌刷出来，掉完就停。无需任何配置。"
+  },
+  "HoursUntilCardDrops": {
+   "label": "掉卡所需时长"
+  },
+  "FarmingOrder": {
+   "label": "按此顺序刷"
+  },
+  "FarmOffline": {
+   "label": "以离线状态刷卡"
+  },
+  "UnlockAchievements": {
+   "label": "随时间获得成就",
+   "tip": "根据真实游玩时长慢慢获得成就，从最普通的开始。绝不会解锁时长撑不起来的成就，也绝不会把一个游戏做到 100%。"
+  },
+  "AchievementPace": {
+   "label": "速度"
+  },
+  "AchievementMaxCompletionPct": {
+   "label": "完成度上限"
+  },
+  "ClaimFreeGames": {
+   "label": "领取免费游戏",
+   "tip": "领取遇到的免费游戏，让游戏库自己变大。"
+  },
+  "CraftBadges": {
+   "label": "用卡牌合成徽章",
+   "tip": "把集齐的卡牌合成徽章，可以获得个人资料经验，有时还有物品。"
+  },
+  "Rep4Rep": {
+   "label": "发布 rep4rep 评论",
+   "tip": "按照拟人的节奏，发布 rep4rep 分配给这个账户的评论。"
+  },
+  "Rep4RepDailyCap": {
+   "label": "每 24 小时最多"
+  },
+  "Rep4RepGapMinMinutes": {
+   "label": "最短间隔"
+  },
+  "Rep4RepGapMaxMinutes": {
+   "label": "最长间隔"
+  },
+  "Rep4RepStartHour": {
+   "label": "仅在此时间之后发布"
+  },
+  "Rep4RepEndHour": {
+   "label": "直到"
+  },
+  "AcceptFriendRequests": {
+   "label": "接受好友请求"
+  },
+  "JoinGroup": {
+   "label": "加入 nocat.farm 组"
+  },
+  "AutoReplyEnabled": {
+   "label": "自动回复消息"
+  },
+  "AutoReply": {
+   "label": "回复内容"
+  },
+  "AutoReplyOncePerDay": {
+   "label": "每天只回复一次"
+  },
+  "FriendRequestDelayMinMinutes": {
+   "label": "至少等待"
+  },
+  "FriendRequestDelayMaxMinutes": {
+   "label": "最多等待"
+  },
+  "ActOnlyWhileAwake": {
+   "label": "仅在“清醒”时响应"
+  },
+  "AcceptDonations": {
+   "label": "接受赠送",
+   "tip": "接受不索取任何回报的报价。它们不可能让你有任何损失，因此天然安全。"
+  },
+  "AcceptFromMasters": {
+   "label": "接受自己账户的一切"
+  },
+  "TradeMasters": {
+   "label": "你自己的账户",
+   "tip": "你自己账户的 SteamID。“send”会把物品送到那里，来自那里的报价也会被直接接受。"
+  },
+  "DeclineOtherTrades": {
+   "label": "拒绝其他一切"
+  },
+  "TradeDelayMinMinutes": {
+   "label": "至少等待"
+  },
+  "TradeDelayMaxMinutes": {
+   "label": "最多等待"
+  },
+  "PauseWhenYouPlay": {
+   "label": "你玩游戏时自动让位",
+   "tip": "只要你开始玩，账户会立刻让位，并等待一段时间后才继续自己的事。"
+  },
+  "ResumeDelayMinutes": {
+   "label": "恢复前等待"
+  },
+  "AchievementBoost": {
+   "tip": "自动在多个游戏里刷成就，不需要你手动开每一局。默认关闭。“所有单人游戏”会自己从库里挑：只挑真正的游戏（绝不碰 DLC 和试玩），有成就，且评测数量足够。"
+  },
+  "SkipRefundableGames": {
+   "tip": "刚买的游戏在还能退款前完全不碰：一旦游玩超过两小时 Steam 就不给退，而两小时不过是一次挂机。这条规则处处生效，不只是刷卡时。免费游戏永远不受限制。"
+  },
+  "ShowInventoryValue": {
+   "tip": "按市场中位价算出这个账户库存的价值。它读取的是自己的库存，所以资料是私密的也没关系。"
+  },
+  "CheckForUpdates": {
+   "tip": "每天查看一次是否有新版本，并在日志里说明。它只会告知：绝不下载、替换或重启任何东西。"
+  }
+ }
 }

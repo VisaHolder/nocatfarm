@@ -30,5 +30,304 @@
   "type a command, or 'help'": "escribe un comando, o 'help'",
   "your steam login": "tu usuario de Steam"
  },
- "settings": {}
+ "settings": {
+  "WebEnabled": {
+   "label": "Panel web"
+  },
+  "WebHost": {
+   "label": "Escuchar en"
+  },
+  "WebPort": {
+   "label": "Puerto"
+  },
+  "WebPassword": {
+   "label": "Contraseña del panel"
+  },
+  "OpenDashboardAfterAdd": {
+   "label": "Abrir el panel al añadir una cuenta"
+  },
+  "OpenBrowserOnStart": {
+   "label": "Abrir el navegador al iniciar"
+  },
+  "Tray": {
+   "label": "Icono en la bandeja"
+  },
+  "MinimizeToTray": {
+   "label": "Minimizar a la bandeja"
+  },
+  "StartMinimized": {
+   "label": "Iniciar oculto"
+  },
+  "StartWithWindows": {
+   "label": "Iniciar con Windows"
+  },
+  "KeepAwake": {
+   "label": "Mantener este PC despierto"
+  },
+  "TrayNotifications": {
+   "label": "Mostrar avisos"
+  },
+  "NotifyEarnings": {
+   "label": "Avisar cuando ganes algo"
+  },
+  "NotifySocial": {
+   "label": "Avisar de comentarios"
+  },
+  "NotifyProblems": {
+   "label": "Avisar de problemas"
+  },
+  "Rep4RepEnabled": {
+   "label": "Usar rep4rep"
+  },
+  "Rep4RepApiToken": {
+   "label": "Token de API"
+  },
+  "Rep4RepAutoAddProfiles": {
+   "label": "Registrar cuentas automáticamente"
+  },
+  "LoginStaggerSeconds": {
+   "label": "Intervalo entre inicios de sesión"
+  },
+  "StatusEveryMinutes": {
+   "label": "Decir qué hace cada"
+  },
+  "StatusQuietEveryMinutes": {
+   "label": "Y mientras descansa, cada"
+  },
+  "Language": {
+   "label": "Idioma",
+   "tip": "El idioma del panel. Lo que aún no esté traducido se muestra en inglés en lugar de quedarse en blanco, así que un idioma a medias sigue siendo perfectamente usable."
+  },
+  "MarketCurrency": {
+   "label": "Precios del inventario en",
+   "tip": "La moneda de los precios del inventario. Ponla igual que la de tu tienda de Steam o los totales no coincidirán con lo que ves en el mercado."
+  },
+  "FileLogging": {
+   "label": "Escribir un archivo de registro"
+  },
+  "DailyReportEnabled": {
+   "label": "Resumen diario en el registro"
+  },
+  "DailyReportHour": {
+   "label": "Hora del resumen · hora"
+  },
+  "DailyReportMinute": {
+   "label": "Hora del resumen · minuto"
+  },
+  "Enabled": {
+   "label": "Activada"
+  },
+  "SteamLogin": {
+   "label": "Nombre de cuenta de Steam"
+  },
+  "SteamPassword": {
+   "label": "Contraseña"
+  },
+  "OnlineStatus": {
+   "label": "Aparecer como",
+   "tip": "Cómo te ven los demás: conectado, ausente, ocupado o invisible. Invisible sigue acumulando horas sin que nadie vea nada."
+  },
+  "IUseThisAccount": {
+   "label": "Yo uso esta cuenta",
+   "tip": "Marca esto si tú también entras en esta cuenta. Evita que nocat.farm toque su estado, porque hacerlo desde una segunda sesión te expulsa de tu propio chat de Steam."
+  },
+  "StartPaused": {
+   "label": "Iniciar en pausa"
+  },
+  "LogColour": {
+   "label": "Color en el registro"
+  },
+  "Notes": {
+   "label": "Notas"
+  },
+  "LegitMode": {
+   "label": "Modo humano",
+   "tip": "Hace que la cuenta juegue como una persona: un juego a la vez, sesiones y descansos de duración variable, se acuesta y se levanta a horas realistas, y algunos días no juega nada. Desactivado, simplemente acumula horas."
+  },
+  "LegitStopMaxSeconds": {
+   "label": "Al parar, terminar durante hasta"
+  },
+  "GameWeights": {
+   "label": "Juegos y con qué frecuencia",
+   "tip": "Los juegos y su peso, por ejemplo «730:70, 440:20». El de mayor peso es el principal y se lleva la mayor parte del tiempo; los demás aparecen de vez en cuando, a rachas, no todos los días."
+  },
+  "WeekdayHours": {
+   "label": "Horas entre semana"
+  },
+  "WeekendHours": {
+   "label": "Horas el fin de semana"
+  },
+  "DayOffChancePct": {
+   "label": "Probabilidad de día libre"
+  },
+  "DayStartHour": {
+   "label": "Se conecta sobre las"
+  },
+  "BedHour": {
+   "label": "Se acuesta sobre las"
+  },
+  "LateNightExtraHours": {
+   "label": "Se queda hasta más tarde vie/sáb"
+  },
+  "MainGameSharePct": {
+   "label": "El juego principal se lleva"
+  },
+  "PureMainDayChancePct": {
+   "label": "Días solo con el juego principal"
+  },
+  "SideGameSharePct": {
+   "label": "En un día mixto, los demás"
+  },
+  "WarmUpMinMinutes": {
+   "label": "Aclimatarse al menos"
+  },
+  "WarmUpMaxMinutes": {
+   "label": "Y como mucho"
+  },
+  "SessionMinMinutes": {
+   "label": "Sesión más corta"
+  },
+  "SessionMaxMinutes": {
+   "label": "Sesión más larga"
+  },
+  "MealBreaksPerDay": {
+   "label": "Comidas al día"
+  },
+  "MealBreakMinutes": {
+   "label": "Duración de una comida"
+  },
+  "SignOutOnBreakChancePct": {
+   "label": "Probabilidad de desconectarse en un descanso"
+  },
+  "OfflineIdleAtNight": {
+   "label": "Acumular horas de noche"
+  },
+  "OfflineIdleGames": {
+   "label": "Juegos para la noche"
+  },
+  "IdleGames": {
+   "label": "Juegos en segundo plano",
+   "tip": "Los juegos que se ejecutan para acumular horas. Steam permite 32 a la vez."
+  },
+  "CustomGameNameEnabled": {
+   "label": "Mostrar un nombre de juego propio",
+   "tip": "Muestra un nombre inventado en lugar del juego real en tu lista de amigos. Las horas siguen contando en el juego de verdad."
+  },
+  "CustomGameName": {
+   "label": "Mostrar como"
+  },
+  "FarmCards": {
+   "label": "Farmear cromos",
+   "tip": "Consigue los cromos que aún quedan por caer en tu biblioteca, y para cuando no queda ninguno. No hay nada que configurar."
+  },
+  "HoursUntilCardDrops": {
+   "label": "Horas antes de que caigan cromos"
+  },
+  "FarmingOrder": {
+   "label": "Farmear en este orden"
+  },
+  "FarmOffline": {
+   "label": "Farmear apareciendo desconectado"
+  },
+  "UnlockAchievements": {
+   "label": "Ganar logros con el tiempo",
+   "tip": "Consigue logros poco a poco a partir del tiempo real de juego, empezando por los más comunes. Nunca desbloquea nada que las horas jugadas no justifiquen, y nunca completa un juego al 100%."
+  },
+  "AchievementPace": {
+   "label": "A qué ritmo"
+  },
+  "AchievementMaxCompletionPct": {
+   "label": "Nunca completar más del"
+  },
+  "ClaimFreeGames": {
+   "label": "Reclamar juegos gratis",
+   "tip": "Reclama los juegos gratuitos que aparezcan, para que la biblioteca crezca sola."
+  },
+  "CraftBadges": {
+   "label": "Crear insignias con los cromos",
+   "tip": "Convierte los cromos completos en insignias, lo que da experiencia de perfil y a veces objetos."
+  },
+  "Rep4Rep": {
+   "label": "Publicar comentarios de rep4rep",
+   "tip": "Publica los comentarios que rep4rep asigna a esta cuenta, con un ritmo humano."
+  },
+  "Rep4RepDailyCap": {
+   "label": "Máximo cada 24 horas"
+  },
+  "Rep4RepGapMinMinutes": {
+   "label": "Intervalo mínimo"
+  },
+  "Rep4RepGapMaxMinutes": {
+   "label": "Intervalo máximo"
+  },
+  "Rep4RepStartHour": {
+   "label": "Publicar solo desde"
+  },
+  "Rep4RepEndHour": {
+   "label": "Hasta"
+  },
+  "AcceptFriendRequests": {
+   "label": "Aceptar solicitudes de amistad"
+  },
+  "JoinGroup": {
+   "label": "Unirse al grupo nocat.farm"
+  },
+  "AutoReplyEnabled": {
+   "label": "Responder a los mensajes"
+  },
+  "AutoReply": {
+   "label": "Responder con"
+  },
+  "AutoReplyOncePerDay": {
+   "label": "Responder solo una vez al día"
+  },
+  "FriendRequestDelayMinMinutes": {
+   "label": "Esperar al menos"
+  },
+  "FriendRequestDelayMaxMinutes": {
+   "label": "Y como mucho"
+  },
+  "ActOnlyWhileAwake": {
+   "label": "Reaccionar solo cuando esté despierta"
+  },
+  "AcceptDonations": {
+   "label": "Aceptar donaciones",
+   "tip": "Acepta ofertas que no piden nada a cambio. No pueden costarte nada, así que son seguras por definición."
+  },
+  "AcceptFromMasters": {
+   "label": "Aceptar todo de tus propias cuentas"
+  },
+  "TradeMasters": {
+   "label": "Tus propias cuentas",
+   "tip": "Los SteamID de tus propias cuentas. Es a donde van los objetos con «send», y de donde se aceptan intercambios sin preguntar."
+  },
+  "DeclineOtherTrades": {
+   "label": "Rechazar todo lo demás"
+  },
+  "TradeDelayMinMinutes": {
+   "label": "Esperar al menos"
+  },
+  "TradeDelayMaxMinutes": {
+   "label": "Y como mucho"
+  },
+  "PauseWhenYouPlay": {
+   "label": "Apartarse cuando juegues",
+   "tip": "Si empiezas a jugar tú, la cuenta se aparta al instante y espera antes de retomar lo suyo."
+  },
+  "ResumeDelayMinutes": {
+   "label": "Esperar antes de reanudar"
+  },
+  "AchievementBoost": {
+   "tip": "Busca logros por sí mismo en varios juegos, sin que tengas que iniciar cada sesión a mano. Desactivado por defecto. «Todos los de un jugador» elige de tu biblioteca: solo juegos de verdad (nunca DLC ni demos), con logros y con reseñas suficientes."
+  },
+  "SkipRefundableGames": {
+   "tip": "Deja en paz un juego recién comprado hasta que ya no puedas pedir el reembolso: Steam lo niega en cuanto tiene dos horas jugadas, y dos horas es una sola sesión. Vale para todo, no solo para los cromos. Los juegos gratis nunca se retienen."
+  },
+  "ShowInventoryValue": {
+   "tip": "Calcula lo que vale el inventario de esta cuenta al precio medio del mercado. Lee su propio inventario, así que un perfil privado da igual."
+  },
+  "CheckForUpdates": {
+   "tip": "Mira una vez al día si hay una versión nueva y lo dice en el registro. Solo avisa: nunca descarga, reemplaza ni reinicia nada."
+  }
+ }
 }

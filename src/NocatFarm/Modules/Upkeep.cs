@@ -26,6 +26,13 @@ public sealed class Upkeep(Bot bot) : BotModule(bot) {
 					await Bot.Library.RefreshIfStaleAsync(TimeSpan.FromHours(6), ct).ConfigureAwait(false);
 					await Bot.Refunds.RefreshAsync(ct).ConfigureAwait(false);
 					await Bot.Inventory.RefreshIfStaleAsync(TimeSpan.FromHours(6), ct).ConfigureAwait(false);
+					await UpdateCheck.LookAsync(ct).ConfigureAwait(false);   // once a day, whichever account gets there first
+
+					// One queued key at a time, and only ONE account drives it - the queue is shared, so every
+					// account running this would be several accounts racing each other for the same key.
+					if ((BotManager.Instance?.All.FirstOrDefault()?.Name == Bot.Name) && (KeyQueue.Count > 0)) {
+						await Redeeming.WorkQueueAsync(BotManager.Instance.All, ct).ConfigureAwait(false);
+					}
 				} catch (OperationCanceledException) {
 					throw;
 				} catch (Exception e) {

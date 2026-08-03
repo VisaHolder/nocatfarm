@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Text.Json;
 using NocatFarm.Config;
 
@@ -19,7 +20,7 @@ public static class Looting {
 	private const uint SteamAppId = 753;
 	private const uint CommunityContext = 6;
 
-	public readonly record struct Item(ulong AssetId, ulong ClassId, ulong InstanceId, uint Amount, string Type, string Name);
+	public readonly record struct Item(ulong AssetId, ulong ClassId, ulong InstanceId, uint Amount, string Type, string Name, uint App, uint Context);
 
 	/// <summary>
 	/// This account's tradable Steam community items: cards, backgrounds, emoticons, boosters.
@@ -28,6 +29,14 @@ public static class Looting {
 	/// the descriptions know whether an item may be traded at all. Sending an untradable item does not fail
 	/// politely; the whole offer is rejected, so they are filtered out here rather than discovered later.
 	/// </summary>
+	/// <summary>
+	/// Everything tradable the account holds, across every game - not just Steam's own cards and backgrounds.
+	///
+	/// It used to read app 753 context 6 and nothing else, which is where cards, backgrounds, emoticons, boosters
+	/// and gems live. That is the right answer for "loot the card farmer" and the wrong one for "send me
+	/// everything": an account with two hundred game items reported "nothing tradable to send". The inventory
+	/// page lists which games hold items, so the list comes from Steam rather than from a guess.
+	/// </summary>
 	public static async Task<List<Item>> InventoryAsync(Bot bot, CancellationToken ct = default) {
 		List<Item> items = [];
 
@@ -35,8 +44,57 @@ public static class Looting {
 			return items;
 		}
 
+		foreach ((uint app, uint context) in await InventoriesAsync(bot, ct).ConfigureAwait(false)) {
+			items.AddRange(await OneInventoryAsync(bot, app, context, ct).ConfigureAwait(false));
+		}
+
+		return items;
+	}
+
+	/// <summary>Which (game, context) pairs actually hold something. Steam's own inventory is always included.</summary>
+	private static async Task<List<(uint App, uint Context)>> InventoriesAsync(Bot bot, CancellationToken ct) {
+		List<(uint, uint)> found = [(SteamAppId, CommunityContext)];
+
+		try {
+			string? page = await bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{bot.SteamId}/inventory/"), ct).ConfigureAwait(false);
+
+			if (string.IsNullOrEmpty(page)) {
+				return found;
+			}
+
+			Match blob = Regex.Match(page, @"g_rgAppContextData\s*=\s*(\{.*?\})\s*;", RegexOptions.Singleline);
+
+			if (!blob.Success) {
+				return found;
+			}
+
+			using JsonDocument doc = JsonDocument.Parse(blob.Groups[1].Value);
+
+			foreach (JsonProperty app in doc.RootElement.EnumerateObject()) {
+				if (!uint.TryParse(app.Name, out uint appId) || !app.Value.TryGetProperty("rgContexts", out JsonElement contexts)) {
+					continue;
+				}
+
+				foreach (JsonProperty context in contexts.EnumerateObject()) {
+					bool holds = context.Value.TryGetProperty("asset_count", out JsonElement a) && a.TryGetInt32(out int count) && (count > 0);
+
+					if (holds && uint.TryParse(context.Name, out uint contextId) && !found.Contains((appId, contextId))) {
+						found.Add((appId, contextId));
+					}
+				}
+			}
+		} catch (Exception e) {
+			Log.Debug($"couldn't list the inventories: {e.Message}", bot.Name);
+		}
+
+		return found;
+	}
+
+	private static async Task<List<Item>> OneInventoryAsync(Bot bot, uint app, uint context, CancellationToken ct) {
+		List<Item> items = [];
+
 		string? body = await bot.Web.GetAsync(
-			new Uri(WebSession.Community, $"/inventory/{bot.SteamId}/{SteamAppId}/{CommunityContext}?l=english&count=2000"), ct).ConfigureAwait(false);
+			new Uri(WebSession.Community, $"/inventory/{bot.SteamId}/{app}/{context}?l=english&count=2000"), ct).ConfigureAwait(false);
 
 		if (string.IsNullOrEmpty(body)) {
 			return items;
@@ -73,7 +131,7 @@ public static class Looting {
 				ulong.TryParse(Text(asset, "instanceid"), out ulong instanceId);
 				uint.TryParse(Text(asset, "amount"), out uint amount);
 
-				items.Add(new Item(assetId, classId, instanceId, Math.Max(1, amount), info.Type, info.Name));
+				items.Add(new Item(assetId, classId, instanceId, Math.Max(1, amount), info.Type, info.Name, app, context));
 			}
 		} catch (Exception e) {
 			Log.Warn($"couldn't read the inventory: {e.Message}", bot.Name);
@@ -169,7 +227,51 @@ public static class Looting {
 		return problems.Count > 0 ? note + $" (then stopped: {problems[0]})" : note;
 	}
 
-	private static async Task<(bool Ok, string Message)> SendOfferAsync(Bot bot, ulong master, IReadOnlyCollection<Item> items, string accessToken, CancellationToken ct) {
+	/// <summary>
+	/// Steam's trade errors are a sentence and a number, and the number is the useful half.
+	///
+	/// "There was an error sending your trade offer. Please try again later. (15)" is not a transient fault to be
+	/// retried, whatever it says - 15 is access denied, and on this endpoint that almost always means the sending
+	/// account has never enabled the mobile authenticator, which Steam requires before an account may send a trade
+	/// offer at all. Passing that through unexplained had people waiting for a problem that never resolves.
+	/// </summary>
+	private static string Explain(string steamError) {
+		string extra = steamError switch {
+			_ when steamError.Contains("(15)", StringComparison.Ordinal) =>
+				"  -  that's Steam's \"access denied\". Usually it means the SENDING account has no Steam Guard Mobile Authenticator: Steam won't let an account send trade offers without one. A trade ban or trade hold on either account does the same thing.",
+			_ when steamError.Contains("(16)", StringComparison.Ordinal) => "  -  Steam timed out. Worth trying again.",
+			_ when steamError.Contains("(26)", StringComparison.Ordinal) =>
+				"  -  one of the items is no longer there. The inventory has changed since it was read; try again.",
+			_ when steamError.Contains("(20)", StringComparison.Ordinal) => "  -  Steam's trading service is down for the moment.",
+			_ when steamError.Contains("(25)", StringComparison.Ordinal) =>
+				"  -  too many offers already open between these accounts, or a Steam limit has been hit.",
+			_ when steamError.Contains("(2)", StringComparison.Ordinal) =>
+				"  -  Steam gave a generic failure. Check neither account is limited, trade banned, or newly password-changed.",
+			_ => ""
+		};
+
+		return steamError + extra;
+	}
+
+	/// <summary>
+	/// A two-way offer: these items for those. Used by the card matcher, where a one-sided offer would be a gift.
+	///
+	/// Steam wants both halves in the same message, so this is the same endpoint as a plain send with the "them"
+	/// side filled in as well.
+	/// </summary>
+	public static async Task<(bool Ok, string Message)> SwapAsync(Bot bot, Bot partner, IReadOnlyCollection<Item> giving, IReadOnlyCollection<Item> taking, CancellationToken ct = default) {
+		if ((giving.Count == 0) || (taking.Count == 0)) {
+			return (false, "a swap needs items on both sides");
+		}
+
+		if (!bot.IsOnline || !bot.Web.Ready) {
+			return (false, $"{bot.Name} isn't logged in");
+		}
+
+		return await SendOfferAsync(bot, partner.SteamId, giving, bot.Cfg.TradeMasterToken, ct, taking).ConfigureAwait(false);
+	}
+
+	private static async Task<(bool Ok, string Message)> SendOfferAsync(Bot bot, ulong master, IReadOnlyCollection<Item> items, string accessToken, CancellationToken ct, IReadOnlyCollection<Item>? wanted = null) {
 		StringBuilder assets = new();
 
 		foreach (Item item in items) {
@@ -178,12 +280,23 @@ public static class Looting {
 			}
 
 			assets.Append(CultureInfo.InvariantCulture,
-				$"{{\"appid\":{SteamAppId},\"contextid\":\"{CommunityContext}\",\"amount\":{item.Amount},\"assetid\":\"{item.AssetId}\"}}");
+				$"{{\"appid\":{item.App},\"contextid\":\"{item.Context}\",\"amount\":{item.Amount},\"assetid\":\"{item.AssetId}\"}}");
+		}
+
+		StringBuilder theirs = new();
+
+		foreach (Item item in wanted ?? []) {
+			if (theirs.Length > 0) {
+				theirs.Append(',');
+			}
+
+			theirs.Append(CultureInfo.InvariantCulture,
+				$"{{\"appid\":{item.App},\"contextid\":\"{item.Context}\",\"amount\":{item.Amount},\"assetid\":\"{item.AssetId}\"}}");
 		}
 
 		string offer = "{\"newversion\":true,\"version\":2,"
 			+ "\"me\":{\"assets\":[" + assets + "],\"currency\":[],\"ready\":false},"
-			+ "\"them\":{\"assets\":[],\"currency\":[],\"ready\":false}}";
+			+ "\"them\":{\"assets\":[" + theirs + "],\"currency\":[],\"ready\":false}}";
 
 		// The account id (the low 32 bits) is what the trade URL wants, not the full SteamID64.
 		uint partnerAccountId = (uint) (master & 0xFFFFFFFF);
@@ -200,17 +313,18 @@ public static class Looting {
 		};
 
 		Uri referer = new(WebSession.Community, $"/tradeoffer/new/?partner={partnerAccountId}" + (token.Length > 0 ? "&token=" + Uri.EscapeDataString(token) : ""));
-		string? body = await bot.Web.PostAsync(new Uri(WebSession.Community, "/tradeoffer/new/send"), form, referer, ct).ConfigureAwait(false);
+		// Keeps the body on a failure: a refusal is a 500 whose body carries Steam's own explanation.
+		string? body = await bot.Web.PostAllowingFailureAsync(new Uri(WebSession.Community, "/tradeoffer/new/send"), form, referer, ct).ConfigureAwait(false);
 
 		if (string.IsNullOrEmpty(body)) {
-			return (false, "Steam didn't answer");
+			return (false, "Steam didn't answer at all - check the connection and try again.");
 		}
 
 		try {
 			using JsonDocument doc = JsonDocument.Parse(body);
 
 			if (doc.RootElement.TryGetProperty("strError", out JsonElement error)) {
-				return (false, error.GetString() ?? "refused");
+				return (false, Explain(error.GetString() ?? "refused"));
 			}
 
 			if (doc.RootElement.TryGetProperty("tradeofferid", out JsonElement id)) {

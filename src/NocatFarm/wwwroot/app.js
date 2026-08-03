@@ -375,6 +375,21 @@ function renderOverview() {
             state.PendingPoints ? state.PendingPoints + ' pending' : '')
         : tile(state.CommentsToday, 'Comments today', 'rep4rep comments posted in the last 24 hours.'));
 
+  // Version, and whether there's a newer one. The link always goes to the repo; when an update exists it says
+  // so and points at that release instead.
+  const ver = $('version');
+  if (ver) {
+    if (state.UpdateAvailable) {
+      ver.textContent = `v${state.Version} → ${state.UpdateAvailable}`;
+      ver.href = state.UpdateUrl || 'https://github.com/VisaHolder/nocatfarm/releases';
+      ver.classList.add('update');
+      ver.dataset.tip = `${state.UpdateAvailable} is out - you have ${state.Version}. Click to see what changed.`;
+    } else {
+      ver.textContent = 'v' + state.Version;
+      ver.classList.remove('update');
+    }
+  }
+
   $('glance').innerHTML = bots.length ? `<div class="tablewrap"><table>
     <tr><th>Account</th><th>State</th><th>Playing</th><th>Cards</th><th data-tip="What everything in this account&apos;s inventory would fetch at the market&apos;s median price. Items with no market listing count as nothing; items it merely can&apos;t sell right now (trade holds, bans) are still counted at what they are worth.">Value</th>${r4rOn() ? '<th>rep4rep</th>' : ''}<th>Up</th></tr>
     ${bots.map((b) => `<tr class="click" data-act="cards" data-bot="${esc(b.Name)}">

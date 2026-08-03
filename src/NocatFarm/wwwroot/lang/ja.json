@@ -30,5 +30,304 @@
   "type a command, or 'help'": "コマンドを入力、または 'help'",
   "your steam login": "Steam のログイン名"
  },
- "settings": {}
+ "settings": {
+  "WebEnabled": {
+   "label": "Web ダッシュボード"
+  },
+  "WebHost": {
+   "label": "待ち受けアドレス"
+  },
+  "WebPort": {
+   "label": "ポート"
+  },
+  "WebPassword": {
+   "label": "ダッシュボードのパスワード"
+  },
+  "OpenDashboardAfterAdd": {
+   "label": "アカウント追加後にダッシュボードを開く"
+  },
+  "OpenBrowserOnStart": {
+   "label": "起動時にブラウザーを開く"
+  },
+  "Tray": {
+   "label": "トレイアイコン"
+  },
+  "MinimizeToTray": {
+   "label": "トレイに最小化"
+  },
+  "StartMinimized": {
+   "label": "非表示で起動"
+  },
+  "StartWithWindows": {
+   "label": "Windows と一緒に起動"
+  },
+  "KeepAwake": {
+   "label": "この PC をスリープさせない"
+  },
+  "TrayNotifications": {
+   "label": "通知を表示"
+  },
+  "NotifyEarnings": {
+   "label": "獲得時に通知"
+  },
+  "NotifySocial": {
+   "label": "コメントを通知"
+  },
+  "NotifyProblems": {
+   "label": "問題を通知"
+  },
+  "Rep4RepEnabled": {
+   "label": "rep4rep を使う"
+  },
+  "Rep4RepApiToken": {
+   "label": "API トークン"
+  },
+  "Rep4RepAutoAddProfiles": {
+   "label": "アカウントを自動登録"
+  },
+  "LoginStaggerSeconds": {
+   "label": "ログインの間隔"
+  },
+  "StatusEveryMinutes": {
+   "label": "状況を伝える間隔"
+  },
+  "StatusQuietEveryMinutes": {
+   "label": "休止中の間隔"
+  },
+  "Language": {
+   "label": "言語",
+   "tip": "ダッシュボードの言語。未翻訳の箇所は空欄ではなく英語で出るので、途中まででも問題なく使えます。"
+  },
+  "MarketCurrency": {
+   "label": "インベントリの通貨",
+   "tip": "インベントリ価格の通貨。Steam ストアと同じにしないと、合計がマーケットの表示と合いません。"
+  },
+  "FileLogging": {
+   "label": "ログファイルに記録"
+  },
+  "DailyReportEnabled": {
+   "label": "ログに毎日のまとめ"
+  },
+  "DailyReportHour": {
+   "label": "まとめの時刻 · 時"
+  },
+  "DailyReportMinute": {
+   "label": "まとめの時刻 · 分"
+  },
+  "Enabled": {
+   "label": "有効"
+  },
+  "SteamLogin": {
+   "label": "Steam アカウント名"
+  },
+  "SteamPassword": {
+   "label": "パスワード"
+  },
+  "OnlineStatus": {
+   "label": "表示ステータス",
+   "tip": "他人からの見え方：オンライン、離席中、取り込み中、オフライン表示。オフライン表示でも時間は貯まり、誰にも見えません。"
+  },
+  "IUseThisAccount": {
+   "label": "このアカウントは自分でも使う",
+   "tip": "自分でもログインするアカウントならオンに。nocat.farm がステータスに触れなくなります - 二つ目のセッションから変更すると、あなた自身が Steam のチャットから追い出されます。"
+  },
+  "StartPaused": {
+   "label": "一時停止状態で開始"
+  },
+  "LogColour": {
+   "label": "ログでの色"
+  },
+  "Notes": {
+   "label": "メモ"
+  },
+  "LegitMode": {
+   "label": "人間モード",
+   "tip": "アカウントを人間らしく遊ばせます。一度に一本だけ、長さの違うプレイと休憩、現実的な就寝と起床、そして何もしない日もあります。オフなら単に時間を稼ぐだけです。"
+  },
+  "LegitStopMaxSeconds": {
+   "label": "停止時に切り上げる最大時間"
+  },
+  "GameWeights": {
+   "label": "ゲームと頻度",
+   "tip": "ゲームと比重です（例：「730:70, 440:20」）。一番重いものがメインで大半の時間を占め、他は毎日ではなく、ときどきまとめて登場します。"
+  },
+  "WeekdayHours": {
+   "label": "平日の時間"
+  },
+  "WeekendHours": {
+   "label": "週末の時間"
+  },
+  "DayOffChancePct": {
+   "label": "休む日の確率"
+  },
+  "DayStartHour": {
+   "label": "だいたい何時に始める"
+  },
+  "BedHour": {
+   "label": "だいたい何時に寝る"
+  },
+  "LateNightExtraHours": {
+   "label": "金・土は遅くまで起きている"
+  },
+  "MainGameSharePct": {
+   "label": "メインゲームの割合"
+  },
+  "PureMainDayChancePct": {
+   "label": "メインゲームだけの日の割合"
+  },
+  "SideGameSharePct": {
+   "label": "混ざる日の他ゲームの割合"
+  },
+  "WarmUpMinMinutes": {
+   "label": "最低これだけ慣らす"
+  },
+  "WarmUpMaxMinutes": {
+   "label": "最大で"
+  },
+  "SessionMinMinutes": {
+   "label": "最短のプレイ"
+  },
+  "SessionMaxMinutes": {
+   "label": "最長のプレイ"
+  },
+  "MealBreaksPerDay": {
+   "label": "1 日の食事回数"
+  },
+  "MealBreakMinutes": {
+   "label": "食事にかかる時間"
+  },
+  "SignOutOnBreakChancePct": {
+   "label": "休憩中にオフラインになる確率"
+  },
+  "OfflineIdleAtNight": {
+   "label": "夜間に時間を稼ぐ"
+  },
+  "OfflineIdleGames": {
+   "label": "夜間に回すゲーム"
+  },
+  "IdleGames": {
+   "label": "時間を稼ぐゲーム",
+   "tip": "時間を稼ぐために起動しておくゲーム。Steam は同時に 32 本まで許可します。"
+  },
+  "CustomGameNameEnabled": {
+   "label": "カスタムのゲーム名を表示",
+   "tip": "フレンドリストに本当のゲームではなく好きな名前を表示します。時間は本当のゲームに記録され続けます。"
+  },
+  "CustomGameName": {
+   "label": "表示名"
+  },
+  "FarmCards": {
+   "label": "トレーディングカードを集める",
+   "tip": "ライブラリにまだ残っているトレーディングカードを回収し、なくなったら止まります。設定は不要です。"
+  },
+  "HoursUntilCardDrops": {
+   "label": "カードが落ちるまでの時間"
+  },
+  "FarmingOrder": {
+   "label": "この順で集める"
+  },
+  "FarmOffline": {
+   "label": "オフライン表示のまま集める"
+  },
+  "UnlockAchievements": {
+   "label": "時間をかけて実績を獲得",
+   "tip": "実際のプレイ時間に応じて、よくある実績から順に少しずつ獲得します。時間に見合わないものは決して解除せず、100% 達成もしません。"
+  },
+  "AchievementPace": {
+   "label": "速さ"
+  },
+  "AchievementMaxCompletionPct": {
+   "label": "達成率の上限"
+  },
+  "ClaimFreeGames": {
+   "label": "無料ゲームを受け取る",
+   "tip": "見つけた無料ゲームを受け取り、ライブラリを自動的に増やします。"
+  },
+  "CraftBadges": {
+   "label": "カードからバッジを作る",
+   "tip": "揃ったカードセットをバッジにします。プロフィール経験値が入り、ときどきアイテムももらえます。"
+  },
+  "Rep4Rep": {
+   "label": "rep4rep のコメントを投稿",
+   "tip": "rep4rep がこのアカウントに割り当てたコメントを、人間らしい間隔で投稿します。"
+  },
+  "Rep4RepDailyCap": {
+   "label": "24 時間あたりの上限"
+  },
+  "Rep4RepGapMinMinutes": {
+   "label": "最短の間隔"
+  },
+  "Rep4RepGapMaxMinutes": {
+   "label": "最長の間隔"
+  },
+  "Rep4RepStartHour": {
+   "label": "投稿の開始時刻"
+  },
+  "Rep4RepEndHour": {
+   "label": "終了時刻"
+  },
+  "AcceptFriendRequests": {
+   "label": "フレンド申請を承認"
+  },
+  "JoinGroup": {
+   "label": "nocat.farm グループに参加"
+  },
+  "AutoReplyEnabled": {
+   "label": "メッセージに返信"
+  },
+  "AutoReply": {
+   "label": "返信内容"
+  },
+  "AutoReplyOncePerDay": {
+   "label": "1 日 1 回だけ返信"
+  },
+  "FriendRequestDelayMinMinutes": {
+   "label": "最低これだけ待つ"
+  },
+  "FriendRequestDelayMaxMinutes": {
+   "label": "最大で"
+  },
+  "ActOnlyWhileAwake": {
+   "label": "起きている間だけ反応する"
+  },
+  "AcceptDonations": {
+   "label": "寄付を受け取る",
+   "tip": "見返りを求めないオファーだけを受けます。損のしようがないので、性質上安全です。"
+  },
+  "AcceptFromMasters": {
+   "label": "自分のアカウントからは全部受け取る"
+  },
+  "TradeMasters": {
+   "label": "自分のアカウント",
+   "tip": "自分のアカウントの SteamID。「send」はここへ送り、ここからのオファーは確認なしで受け入れます。"
+  },
+  "DeclineOtherTrades": {
+   "label": "それ以外はすべて拒否"
+  },
+  "TradeDelayMinMinutes": {
+   "label": "最低これだけ待つ"
+  },
+  "TradeDelayMaxMinutes": {
+   "label": "最大で"
+  },
+  "PauseWhenYouPlay": {
+   "label": "自分が遊ぶときは譲る",
+   "tip": "あなたが遊び始めたら、アカウントはすぐに身を引き、少し待ってから再開します。"
+  },
+  "ResumeDelayMinutes": {
+   "label": "再開までの待ち時間"
+  },
+  "AchievementBoost": {
+   "tip": "毎回手で始めなくても、複数のゲームで自動的に実績を狙います。既定はオフ。「すべてのシングルプレイ」はライブラリから自分で選びます - 本物のゲームだけ（DLC や体験版は決して選ばない）、実績があり、レビュー数も十分なもの。"
+  },
+  "SkipRefundableGames": {
+   "tip": "買ったばかりのゲームは、返金できなくなるまで一切触りません。Steam は 2 時間を超えると返金を断りますが、2 時間はたった一度の放置分です。カード集めだけでなく全体に効きます。無料のゲームが止められることはありません。"
+  },
+  "ShowInventoryValue": {
+   "tip": "このアカウントのインベントリの価値を、マーケットの中央値で計算します。自分自身のインベントリを読むので、非公開プロフィールでも関係ありません。"
+  },
+  "CheckForUpdates": {
+   "tip": "一日一度、新しいバージョンがないか確認してログに書きます。知らせるだけで、ダウンロードも置き換えも再起動もしません。"
+  }
+ }
 }

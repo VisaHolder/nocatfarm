@@ -235,7 +235,7 @@ public sealed class LiveConsole : IDisposable {
 		}
 
 		if (s.Warning.Length > 0) {
-			doing += "[33m  " + s.Warning + "[0m";
+			doing += "\u001b[33m  " + s.Warning + "\u001b[0m";
 		}
 
 		string said = s.Comments.Length > 0 ? s.Comments : Dim("-");
@@ -248,7 +248,7 @@ public sealed class LiveConsole : IDisposable {
 		const int Cells = 8;
 		int filled = total <= 0 ? 0 : Math.Clamp((int) Math.Round((double) done / total * Cells), 0, Cells);
 
-		return "[36m" + new string('#', filled) + "[90m" + new string('.', Cells - filled) + "[0m";
+		return "\u001b[36m" + new string('#', filled) + "\u001b[90m" + new string('.', Cells - filled) + "\u001b[0m";
 	}
 
 	/// <summary>Pad to a column width counting only VISIBLE characters, so colour codes can't skew the layout.</summary>
@@ -271,7 +271,7 @@ public sealed class LiveConsole : IDisposable {
 				continue;
 			}
 
-			if (c == '') {
+			if (c == '\u001b') {
 				escape = true;
 
 				continue;

@@ -521,10 +521,10 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	private static int RequiredPriorAchievements(Achievement a) {
 		string text = $"{a.Display} {a.Description}".ToLowerInvariant();
 
-		Match m = Regex.Match(text, @"(?:achieve|complete|earn|unlock|obtain|collect)\s+(\d{1,3})[^.!?]*achievement");
+		Match m = Regex.Match(text, @"\b(?:achieve|complete|earn|unlock|obtain|collect)\s+(\d{1,3})\b[^.!?]*achievement");
 
 		if (!m.Success) {
-			m = Regex.Match(text, @"(\d{1,3})\s+of\s+the\s+achievements");
+			m = Regex.Match(text, @"\b(\d{1,3})\s+of\s+the\s+achievements\b");
 		}
 
 		return m.Success && int.TryParse(m.Groups[1].Value, out int n) ? n : 0;

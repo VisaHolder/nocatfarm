@@ -858,7 +858,7 @@ public sealed class WebHost : IAsyncDisposable {
 	}
 
 	/// <summary>Empty means "unchanged"; the explicit sentinel the UI's Clear button sends means "erase it".</summary>
-	private const string ClearSecret = " clear";
+	private const string ClearSecret = "\0clear";
 
 	private static string Keep(string incoming, string existing) =>
 		incoming == ClearSecret ? "" : string.IsNullOrEmpty(incoming) ? existing : incoming;
@@ -1007,7 +1007,7 @@ public sealed class WebHost : IAsyncDisposable {
 		}
 
 		return new {
-			Version = "1.0.0",
+			Version = Build.Version,   // read from the assembly, not typed in - it was stuck at 1.0.0 for two releases
 			BootId = _started.Ticks,   // the browser resets its log buffer when this changes
 			RefreshSeconds = Math.Clamp(_mgr.Global.WebRefreshSeconds, 1, 60),
 			UptimeMinutes = (int) (DateTime.UtcNow - _started).TotalMinutes,
@@ -1028,6 +1028,8 @@ public sealed class WebHost : IAsyncDisposable {
 			CardsLeft = bots.Sum(static b => b.CardsRemaining),
 			InventoryValue = bots.Sum(static b => b.Inventory.Total),
 			Currency = PriceBook.Symbol,
+			UpdateAvailable = UpdateCheck.Available,
+			UpdateUrl = UpdateCheck.Url,
 			InventoryPending = bots.Sum(static b => b.Inventory.Pending),
 			GamesLeft = bots.Sum(static b => b.GamesRemaining),
 			Bots = bots.Select(b => {

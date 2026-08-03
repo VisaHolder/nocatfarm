@@ -87,7 +87,10 @@ h1.wordmark::after {
   mix-blend-mode: multiply;
 }
 
-h1.wordmark span { color: inherit; opacity: .82; }
+/* "farm" in purple. The one deliberate spot of colour on the page - it is the product's name, not a state, so
+   it is a deep muted purple rather than anything that could be mistaken for a link or a warning. */
+h1.wordmark span { color: #8b5cf6; opacity: 1; }
+:root[data-theme="light"] h1.wordmark span { color: #6d28d9; }
 
 /* Light theme has nothing to glow against, and dark lines over white read as dirt rather than a CRT. */
 :root[data-theme="light"] h1.wordmark { text-shadow: none; }
@@ -815,3 +818,10 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 }
 .langpick .p:hover { border-color: var(--muted); }
 .langpick .p.on { border-color: var(--text); color: var(--text); background: var(--panel); }
+
+/* The version, which doubles as the link to the repo. Underlined only on hover so the footer stays quiet. */
+.ghlink { text-decoration: none; }
+.ghlink:hover { text-decoration: underline; color: var(--text); }
+
+/* An update is the one thing down here worth noticing, so it borrows the wordmark's purple. */
+.ghlink.update { color: #8b5cf6; }
