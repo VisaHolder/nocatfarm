@@ -646,7 +646,7 @@ public static class Settings {
 			Min: 0, Max: 95),
 		new("AchievementBoost", "Achievement boost", SecAchievements, SettingKind.Choice,
 			"Auto-hunt achievements across several games without starting each grind by hand. OFF by default; most accounts won't use it. \"Games you pick\" works through the list below, one game at a time - each played like a normal grind (easiest-first, at your Achievement pace, only what the hours make reachable), then it rotates to the next.",
-			Choices: "0 off | 1 games you pick"),
+			Choices: "0 off | 1 games you pick | 2 all single-player"),
 		new("AchievementBoostGames", "Boost these games", SecAchievements, SettingKind.AppIds,
 			"The games the boost works through, comma separated (appIDs or store URLs). Only used when Achievement boost is \"games you pick\".",
 			Placeholder: "440, 400, 220"),

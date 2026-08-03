@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using NocatFarm.Config;
 using NocatFarm.Core;
 
@@ -258,12 +259,11 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			bool onboarding = (g.Unlocked < 0) || (g.Unlocked < prof.OnboardCount);
 			int playedGate = onboarding ? prof.OnboardPlayedMins : prof.SteadyPlayedMins;
 
-			// Two ways past the slow played-time gate: a mid-burst (several unlocks from one moment of play, minutes
-			// apart), and a deliberate GRIND. A grind means "sit on this game and knock the achievements out" - a
-			// game with hundreds left (TF2 has ~520) at one-per-half-hour would take days, which no real grinder
-			// does. So a grind is paced only by the short spacing gap below, working easiest-first through the
-			// backlog. Normal (non-grind) play keeps the gate, so the stealthy drip is unchanged.
-			if (!Bot.Grinding && (g.BurstLeft <= 0) && ((g.PlayedMins - g.MinsAtLastUnlock) < playedGate)) {
+			// The played-time gate applies to EVERYTHING, including a grind: you cannot legitimately unlock an
+			// achievement faster than you put the hours in, and a game with 0-1 hours on it must not dump a pile of
+			// them. A grind just plays the game continuously so the hours (and the unlocks) come steadily. The only
+			// bypass is a mid-burst (a cluster from one moment of play).
+			if ((g.BurstLeft <= 0) && ((g.PlayedMins - g.MinsAtLastUnlock) < playedGate)) {
 				return false;
 			}
 
@@ -345,7 +345,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		List<Achievement> eligible = set.All
 			// Unknown rarity (Steam's global-percent endpoint was unreachable) counts as eligible rather than being
 			// excluded - otherwise a missing fetch would silently stop the account unlocking anything at all.
-			.Where(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a) && ((a.GlobalPercent ?? floor) >= floor))
+			.Where(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a) && ((a.GlobalPercent ?? floor) >= floor)
+				&& (RequiredPriorAchievements(a) <= already))
 			.ToList();
 
 		if (eligible.Count == 0) {
@@ -441,6 +442,24 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// Left 4 Dead 2's GNOME ALONE is the example: handed out en masse in 2010, so it reads as a comfortable
 	/// ~69% "common" while being nothing of the sort. The pacer must never feature one.
 	/// </summary>
+	/// <summary>
+	/// How many OTHER achievements a milestone/meta achievement needs first (e.g. TF2's "Achieve 17 of the
+	/// achievements in the Sniper pack" -> 17). Unlocking one before its prerequisites is impossible for a real
+	/// player, so the caller holds it until the account has at least this many unlocked in the game. We only know
+	/// the COUNT, not which ones, so "N unlocked total" is the safe necessary condition.
+	/// </summary>
+	private static int RequiredPriorAchievements(Achievement a) {
+		string text = $"{a.Display} {a.Description}".ToLowerInvariant();
+
+		Match m = Regex.Match(text, @"(?:achieve|complete|earn|unlock|obtain|collect)\s+(\d{1,3})[^.!?]*achievement");
+
+		if (!m.Success) {
+			m = Regex.Match(text, @"(\d{1,3})\s+of\s+the\s+achievements");
+		}
+
+		return m.Success && int.TryParse(m.Groups[1].Value, out int n) ? n : 0;
+	}
+
 	private static bool IsSpecialGlobal(Achievement a) => a.Name.StartsWith("GLOBAL_", StringComparison.Ordinal);
 
 	/// <summary>

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using NocatFarm.Config;
 using NocatFarm.Core;
 
@@ -9,13 +10,17 @@ namespace NocatFarm.Modules;
 ///
 /// It drives the ordinary grind, so a boost session behaves exactly like a deliberate one: it sits on a game and
 /// unlocks easiest-first, at the account's Achievement pace, only what the hours in the game make reachable - and
-/// it's persisted, so a restart resumes mid-session. When a session ends it rotates to the next game in the list.
+/// it's persisted, so a restart resumes mid-session. When a session ends it rotates to the next game.
+///
+/// Targets come from one of two modes: "games you pick" (the <c>AchievementBoostGames</c> list) or "all
+/// single-player" (every owned game Steam's store marks Single-player AND with achievements, discovered from the
+/// account's own games list and cached). Multiplayer games are left out - grinding a multiplayer game for
+/// achievements looks less like a person.
 ///
 /// A HUMAN account stays weighted-FIRST: a boost session is only an occasional grind slotted between long
 /// stretches of the normal weighted schedule (<c>BoostRestMinutesHuman</c> apart, capped at
-/// <c>MaxBoostGamesInARow</c> before a longer weighted rest), and never while the account is asleep. A NON-human
-/// account has no weighted schedule, so it rotates targets back-to-back. It never fights a manual grind: while one
-/// the operator started is running, the boost stays completely out of the way.
+/// <c>MaxBoostGamesInARow</c> before a longer weighted rest), and never while asleep. A NON-human account rotates
+/// targets back-to-back. It never fights a manual grind: while one the operator started is running, it stays out.
 /// </summary>
 public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 	private int _index;                          // round-robin position in the target list
@@ -23,6 +28,9 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 	private bool _ours;                           // is the grind currently running one WE started?
 	private DateTime _lastEnded = DateTime.MinValue;
 	private string _status = "off";
+
+	private List<uint> _singleplayer = [];       // discovered owned single-player games with achievements (mode 2)
+	private DateTime _discoveredAt = DateTime.MinValue;
 
 	public override string Name => "boost";
 	public override string Status => On ? _status : "";
@@ -33,10 +41,13 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		while (!ct.IsCancellationRequested) {
 			try {
 				if (On) {
+					await DiscoverIfNeededAsync(ct).ConfigureAwait(false);
 					Tick();
 				} else {
 					_status = "off";
 				}
+			} catch (OperationCanceledException) {
+				throw;
 			} catch (Exception e) {
 				Log.Warn($"achievement boost hiccup: {e.Message}", Bot.Name);
 			}
@@ -47,6 +58,101 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		}
 	}
 
+	// ── target discovery (mode 2: all single-player) ─────────────────────────
+	private async Task DiscoverIfNeededAsync(CancellationToken ct) {
+		if (Bot.Cfg.AchievementBoost != 2) {
+			return;   // only "all single-player" needs discovery; the picked list is just the setting
+		}
+
+		if ((_discoveredAt != DateTime.MinValue) && (DateTime.UtcNow - _discoveredAt < TimeSpan.FromHours(6))) {
+			return;   // rebuilt at most every 6h - store categories don't change and libraries rarely do
+		}
+
+		if (!Bot.IsOnline) {
+			return;
+		}
+
+		// The owned-games list needs the account's web session. Nothing else may have woken it (a pure grind does
+		// no web work), so mint it here rather than waiting forever for another module to.
+		if (!Bot.Web.Ready && !await Bot.Web.RefreshAsync(false, ct).ConfigureAwait(false)) {
+			_status = "on - waiting for a web session";
+
+			return;
+		}
+
+		List<uint> owned = await OwnedAppsAsync(ct).ConfigureAwait(false);
+
+		if (owned.Count == 0) {
+			if (_singleplayer.Count == 0) {
+				_status = "on - couldn't read this account's games yet, retrying";
+			}
+
+			return;   // private/blip - keep any list we already had and try again next cycle
+		}
+
+		List<uint> found = [];
+		int unknown = 0;
+
+		foreach (uint app in owned) {
+			if (ct.IsCancellationRequested) {
+				return;
+			}
+
+			bool? sp = await GameCatalog.IsSingleplayerWithAchievementsAsync(app, ct).ConfigureAwait(false);
+
+			if (sp == true) {
+				found.Add(app);
+			} else if (sp == null) {
+				unknown++;   // store didn't answer for this one; don't finalise a list that's still missing games
+			}
+		}
+
+		// Only replace the list once every game has a definite answer (or we found some) - so a half-finished store
+		// sweep doesn't briefly shrink the target list.
+		if ((found.Count > 0) || (unknown == 0)) {
+			_singleplayer = found;
+			_discoveredAt = DateTime.UtcNow;
+			Log.Info($"achievement boost - {found.Count} single-player game(s) with achievements to hunt", Bot.Name);
+		}
+	}
+
+	private async Task<List<uint>> OwnedAppsAsync(CancellationToken ct) {
+		List<uint> apps = [];
+
+		try {
+			// The store's own "what do I own" data for the logged-in session - every owned app, independent of the
+			// profile's privacy (the games XML needs public game details; this doesn't). Uses the store cookies the
+			// web session already sets.
+			string? json = await Bot.Web.GetAsync(new Uri(WebSession.Store, "/dynamicstore/userdata/"), ct).ConfigureAwait(false);
+
+			if (string.IsNullOrEmpty(json)) {
+				return apps;
+			}
+
+			using JsonDocument doc = JsonDocument.Parse(json);
+
+			if (doc.RootElement.TryGetProperty("rgOwnedApps", out JsonElement owned) && (owned.ValueKind == JsonValueKind.Array)) {
+				foreach (JsonElement e in owned.EnumerateArray()) {
+					if (e.TryGetInt64(out long id) && (id > 0) && (id <= uint.MaxValue)) {
+						apps.Add((uint) id);
+					}
+				}
+			}
+		} catch (Exception e) {
+			Log.Debug($"couldn't read owned games: {e.Message}", Bot.Name);
+		}
+
+		return apps;
+	}
+
+	/// <summary>The games to work through, in order.</summary>
+	private List<uint> Targets() => Bot.Cfg.AchievementBoost switch {
+		1 => Bot.Cfg.AchievementBoostGames,
+		2 => _singleplayer,
+		_ => []
+	};
+
+	// ── the boost decision ───────────────────────────────────────────────────
 	private void Tick() {
 		// A grind is running. If it's ours, let it run; if it's a manual grind, stay completely out of the way.
 		if (Bot.Grinding) {
@@ -72,13 +178,15 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		List<uint> targets = Targets();
 
 		if (targets.Count == 0) {
-			_status = "on - no games to hunt (pick some under \"Boost these games\")";
+			_status = Bot.Cfg.AchievementBoost == 2
+				? "on - no single-player games with achievements found"
+				: "on - no games to hunt (pick some under \"Boost these games\")";
 
 			return;
 		}
 
-		// Human accounts hunt only while awake, and stay weighted-first: a longer stretch of the normal schedule
-		// sits between boost sessions, and a longer one still after a run of them.
+		// Human accounts hunt only while awake, and stay weighted-first: a stretch of the normal schedule sits
+		// between boost sessions, and a longer one after a run of them.
 		if (Bot.HumanOwned) {
 			if (!HumanMode.AwakeFor(Bot)) {
 				_status = "resting until the account is awake";
@@ -110,10 +218,4 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		_status = $"hunting {GameNames.Of(target)}";
 		Log.Info($"achievement boost - hunting {GameNames.Of(target)} for ~{hours}h", Bot.Name);
 	}
-
-	/// <summary>
-	/// The games to work through, in order. Only "games you pick" for now; the all-singleplayer auto-detect mode
-	/// (owned-games discovery + Steam store categories) is the next stage.
-	/// </summary>
-	private List<uint> Targets() => Bot.Cfg.AchievementBoost == 1 ? Bot.Cfg.AchievementBoostGames : [];
 }

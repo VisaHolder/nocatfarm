@@ -13,6 +13,9 @@ public sealed record Achievement {
 	/// <summary>What a person sees on the profile.</summary>
 	public required string Display { get; init; }
 
+	/// <summary>The achievement's description - used to spot milestone/meta ones that need other achievements first.</summary>
+	public string Description { get; init; } = "";
+
 	/// <summary>Which stat holds it, and which bit inside that stat. Together these are its address.</summary>
 	public required uint StatId { get; init; }
 	public required int Bit { get; init; }
@@ -186,12 +189,17 @@ public static class Achievements {
 					?? bitNode["display"]["name"].AsString()
 					?? apiName;
 
+				string desc = bitNode["display"]["desc"].Children.FirstOrDefault(static k => k.Name == "english")?.Value
+					?? bitNode["display"]["desc"].AsString()
+					?? "";
+
 				// The bit is an offset within THIS stat's value, not a global achievement index.
 				bool unlocked = (statValues.GetValueOrDefault(statId) & (1u << (bit & 31))) != 0;
 
 				all.Add(new Achievement {
 					Name = apiName,
 					Display = display,
+					Description = desc,
 					StatId = statId,
 					Bit = bit,
 					Unlocked = unlocked,
