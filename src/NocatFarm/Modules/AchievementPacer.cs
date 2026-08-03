@@ -110,6 +110,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		public DateTime NextAllow;      // earliest wall-clock moment the next unlock may fire
 		public int Ceiling = -1;        // rolled once per game: the most of this game we will ever complete
 		public int Unlocked = -1;       // last known unlocked count; -1 means unknown, so treat as onboarding
+		public int Total;               // how many the game has at all, so progress reads as a fraction
 		public int BurstLeft;           // mid-burst: this many more pop quickly, bypassing the played-time gate
 	}
 
@@ -304,6 +305,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 		lock (_gate) {
 			g.Unlocked = already;
+			g.Total = total;
 		}
 
 		// Stop well short of everything. Never below the onboarding cluster though, or a game with a low
@@ -526,6 +528,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		int FloorPercent,
 		int CeilingPercent,
 		int Unlocked,
+		int Total,
 		DateTime NextAllow,
 		bool Blocked,
 		string Why
@@ -567,6 +570,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						Math.Min(floor, 100),
 						kv.Value.Ceiling,
 						kv.Value.Unlocked,
+						kv.Value.Total,
 						kv.Value.NextAllow,
 						why.Length > 0,
 						why);
@@ -596,6 +600,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		public DateTime NextAllow { get; set; }
 		public int Ceiling { get; set; } = -1;
 		public int Unlocked { get; set; } = -1;
+		public int Total { get; set; }
 	}
 
 	private static string PathFor(string bot) => Path.Combine(ConfigStore.ConfigDir, "state", $"cheevo-{bot}.json");
@@ -623,7 +628,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						MinsAtLastUnlock = s.MinsAtLastUnlock,
 						NextAllow = s.NextAllow,
 						Ceiling = s.Ceiling,
-						Unlocked = s.Unlocked
+						Unlocked = s.Unlocked,
+						Total = s.Total
 					};
 				}
 			}
@@ -721,7 +727,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 					MinsAtLastUnlock = kv.Value.MinsAtLastUnlock,
 					NextAllow = kv.Value.NextAllow,
 					Ceiling = kv.Value.Ceiling,
-					Unlocked = kv.Value.Unlocked
+					Unlocked = kv.Value.Unlocked,
+					Total = kv.Value.Total
 				}).ToList();
 			}
 

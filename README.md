@@ -22,7 +22,8 @@ touch a third party are opt-in and off by default — see [Privacy](#privacy-and
 
 [Building it](#building-it) · [What it does](#what-it-does) · [Three ways to drive it](#three-ways-to-drive-it)
 · [Getting started](#getting-started) · [Human mode](#human-mode) · [rep4rep](#rep4rep) ·
-[Commands](#commands) · [Achievements](#achievements) · [Trades, keys & items](#trades-keys-and-items) ·
+[Commands](#commands) · [Achievements](#achievements) · [The hunter](#the-hunter) ·
+[Inventory value](#what-the-inventories-are-worth) · [Trades, keys & items](#trades-keys-and-items) ·
 [Settings](#settings) · [Privacy & safety](#privacy-and-safety)
 
 ### Building it
@@ -63,6 +64,10 @@ nothing but Steam is ever contacted.
 | **rep4rep** | Posts the comments rep4rep assigns, on a human schedule, from every opted-in account — all into one points pool. |
 | **Comment alerts** | Steam pushes the moment somebody comments on one of your profiles; it hits the log and a tray balloon. |
 | **Stays out of your way** | Launch a game yourself and every account stands down, then quietly picks back up after a delay you choose. |
+| **Achievement hunter** | Optional. Picks single-player games out of the library itself — never DLC, demos or bundle filler nobody plays — and works through them one at a time as occasional sessions, earning at the account's own legit pace. On a human account it stays weighted-first and comes out of the day's play budget rather than being stacked on top of it. |
+| **Inventory value** | What every account's items are worth at the market's median, per game, in your own currency, with how it has moved in the last 24 hours. Reads the account's OWN inventory, so a private profile makes no difference. |
+| **Refund protection** | A game bought in the last fortnight and under two hours played is left completely alone — by the idler, the schedule, grinds and the hunter alike — until it can no longer be refunded. |
+| **Steam Families** | Games shared into the account can be hunted too, and are handed straight back the moment the person who owns them starts playing. |
 | **Daily report** | Once a day (default 09:30) it writes a one-look summary to the log: hours banked in the last 24h, cards, rep4rep comments and a running total, per account. Type `report` for it on demand. |
 
 <p align="center">
@@ -289,6 +294,48 @@ only in a game the account actually has open.
 legit pace on a human-mode one. The catch is that **some games' achievements are set by Steam's servers, not
 the client — Counter-Strike 2 is the classic case — and nothing can unlock those.** Grind says so plainly for
 such a game instead of looking stuck.
+
+### The hunter
+
+`UnlockAchievements` decides *how* achievements come out of games the account was going to play anyway. It never
+starts a game. The **achievement hunter** is the other half: it decides *which games get played at all*, so there
+is something to earn in.
+
+```
+set myaccount AchievementBoost 2      # 0 off (default) · 1 games you pick · 2 every single-player game it owns
+```
+
+Mode 2 works the library out for itself. A game has to be a **game** (never DLC, a demo, a soundtrack or a
+tool), be single-player, have achievements, and have enough Steam reviews that a person might plausibly own it —
+which is what keeps bundle filler out. Blacklists, the never-list, the achievement allow-list, a human account's
+main game and anything inside its refund window are all stripped out on top.
+
+One game at a time, about two hours each (`BoostSessionHours`), then it rotates to the next. On a **human**
+account it stays weighted-first: a session, then a long stretch of the normal schedule (`BoostRestMinutesHuman`),
+capped at `MaxBoostGamesInARow` before a longer one — never while asleep, never over card farming, never over a
+grind you started, and it stops for the day once the schedule's daily target is met. `hunt` prints exactly what
+it would play next and why everything else was ruled out.
+
+Without it, the only way to earn across a library is to put every single-player game into `GameWeights` — which
+destroys the thing human mode exists for, because a weighted schedule is supposed to look like one game somebody
+mains and a couple they dip into, not two hundred at equal weight.
+
+## What the inventories are worth
+
+```
+value                    # every account, by game, and how it moved in the last 24h
+value myaccount refresh  # read that account's inventory again
+```
+
+Priced at the community market's **median**, in whatever currency the global `MarketCurrency` is set to — match
+it to your Steam store or the totals won't agree with what you see on the market. Everything in the inventory is
+counted at what it is worth, whether or not this particular copy could be sold today: a trade hold doesn't make
+a knife worthless. Prices are cached for a day and shared between accounts, and looked up slowly, because
+everything the app does on steamcommunity.com shares one rate limit — a big inventory takes an hour to settle
+the first time and is instant afterwards.
+
+Games the account is **banned** in go in `InventoryIgnoreGames`. Steam doesn't publish which game a ban is in and
+nothing in the inventory reliably shows it, so it is a list you fill in rather than something guessed at.
 
 ## Trades, keys and items
 

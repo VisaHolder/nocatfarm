@@ -1448,23 +1448,38 @@ function pacerTable() {
     const blocked = g.Blocked;
     const next = new Date(g.NextAllow);
     const soon = next <= new Date();
-    const pct = Math.max(0, Math.min(100, Math.round((g.EffectiveHours / 80) * 100)));
     const hrs = g.PlayedMinutes >= 60 ? (g.PlayedMinutes / 60).toFixed(1) + 'h' : g.PlayedMinutes + 'm';
 
+    // Two different things worth seeing, so two different bars would be one too many: the fraction earned is the
+    // one people care about, and the rarity floor is the reason it isn't higher.
+    const done = g.Total > 0 ? Math.round((g.Unlocked / g.Total) * 100) : 0;
+    const earned = g.Total > 0
+      ? `<b>${g.Unlocked}</b><span class="muted">/${g.Total}</span>`
+      : (g.Unlocked > 0 ? `<b>${g.Unlocked}</b>` : '<span class="muted">—</span>');
+
+    // A floor above 100 means the hours don't justify ANY achievement yet - saying "≥101%" would be nonsense.
+    const floor = g.FloorPercent > 100
+      ? '<span class="muted">not yet</span>'
+      : `≥${g.FloorPercent}%`;
+
     return `<tr class="${blocked ? 'off' : ''}">
-      <td class="g">${esc(GAME_NAMES[g.App] || g.Game)}</td>
+      <td class="g" title="${esc(GAME_NAMES[g.App] || g.Game)}">${esc(GAME_NAMES[g.App] || g.Game)}</td>
       <td class="n">${hrs}</td>
-      <td class="bar"><span style="width:${pct}%"></span></td>
-      <td class="w">${blocked ? esc(g.Why) : soon ? 'soon' : '~' + next.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</td>
+      <td class="n">${earned}</td>
+      <td class="bar" data-tip="${g.Total > 0 ? done + '% of this game earned. It stops at ' + (g.CeilingPercent > 0 ? g.CeilingPercent + '%' : 'this game&apos;s own ceiling') + '.' : 'Nothing read from this game yet.'}"><span style="width:${Math.max(0, Math.min(100, done))}%"></span></td>
+      <td class="n">${floor}</td>
+      <td class="w">${blocked ? esc(g.Why) : soon ? 'due now' : '~' + next.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</td>
     </tr>`;
   }).join('');
 
   return `<div class="tablewrap pacer"><table>
     <tr>
       <th>Game</th>
-      <th data-tip="Hours this account has spent in this game.">Played</th>
-      <th data-tip="How far along it is - the more hours, the more achievements it's allowed to unlock. A full bar is about 80 hours.">Progress</th>
-      <th data-tip="Roughly when the next achievement is due to unlock, or why this game is left alone. It's a pace, not a promise.">Next unlock</th>
+      <th data-tip="Hours this account has spent in this game. This is what decides how much it is allowed to earn.">Played</th>
+      <th data-tip="Achievements earned out of what the game has.">Earned</th>
+      <th data-tip="How much of the game is done. The bar never fills - it stops at this game's ceiling, because 100% on an idled account is the giveaway.">Progress</th>
+      <th data-tip="The rarest achievement the hours so far have opened up. It starts at the common ones and works down as the playtime builds, which is the order a real player earns them in.">Rarity</th>
+      <th data-tip="Roughly when the next one is due, or why this game is left alone. It is a pace, not a promise.">Next</th>
     </tr>
     ${rows}
   </table></div>${pacerRows.length > 12 ? `<p class="muted small">…and ${pacerRows.length - 12} more.</p>` : ''}`;
