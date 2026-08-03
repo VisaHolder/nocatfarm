@@ -88,7 +88,7 @@ async function doLogin(e) {
     body: JSON.stringify({ Password: $('pw').value })
   }).then((r) => r.json()).catch(() => ({ ok: false }));
 
-  if (!res.ok) { $('loginError').textContent = 'Wrong password.'; return false; }
+  if (!res.ok) { $('loginError').textContent = t('Wrong password.'); return false; }
   token = res.token;
   localStorage.setItem('nocatfarm-token', token);
   $('loginError').textContent = '';
@@ -1604,19 +1604,20 @@ function sectionIntro(section, values) {
   // the entire reason to trust it - so the section says so in words.
   if (section === 'Achievements') {
     if (!val('UnlockAchievements')) {
-      return `<div class="explain">Off. This account earns no achievements at all - nothing is written to any
-        game. Turn it on and it starts earning them at a pace that follows the hours actually put in.</div>`;
+      return `<div class="explain">${esc(t('Off. This account earns no achievements at all - nothing is written to any game. Turn it on and it starts earning them at a pace that follows the hours actually put in.'))}</div>`;
     }
 
-    const pace = [' at twice the normal spacing', '', ' at half the normal spacing'][val('AchievementPace') ?? 1] || '';
+    const pace = ['at twice the normal spacing', '', 'at half the normal spacing'][val('AchievementPace') ?? 1] || '';
     const cap = val('AchievementMaxCompletionPct');
 
     return `<div class="explain">
-      <b>Earns achievements slowly, from real playtime${esc(pace)}.</b>
-      <p style="margin:8px 0 0">Unlocking a pile of achievements the second it logs in is what gives a bot away.
-      This drips them out the way a real player would instead - a few at a time, only the common ones, paced to
-      the hours actually put in. It never fully completes a game${cap > 0 ? ` (it stops at ${cap}%)` : ''}, and
-      leaves the game this account plays most well alone.</p>
+      <b>${esc(pace
+        ? tf('Earns achievements slowly, from real playtime, {0}.', t(pace))
+        : t('Earns achievements slowly, from real playtime.'))}</b>
+      <p style="margin:8px 0 0">${esc(t('Unlocking a pile of achievements the second it logs in is what gives a bot away. This drips them out the way a real player would instead - a few at a time, only the common ones, paced to the hours actually put in.'))}
+      ${esc(cap > 0
+        ? tf('It never fully completes a game (it stops at {0}%), and leaves the game this account plays most well alone.', cap)
+        : t('It never fully completes a game, and leaves the game this account plays most well alone.'))}</p>
     </div>
     ${huntPanel()}
     ${recentUnlocks()}
@@ -1630,11 +1631,13 @@ function sectionIntro(section, values) {
     // when a full schedule is running was simply wrong.
     if (val('LegitMode')) {
       const top = parseWeights(val('GameWeights'))[0];
-      const main = top ? gameLabel(top.game) : 'the games you list under Human mode';
+      const main = top ? gameLabel(top.game) : t('the games you list under Human mode');
 
-      return `<div class="preview"><span class="k">Right now</span>
-        Human mode picks what it plays — mostly <b>${esc(main)}</b>, one game at a time.
-        ${name ? `Your friends see <b>${esc(name)}</b> instead of the real game; the hours still count.` : 'Your friends see the real game.'}
+      return `<div class="preview"><span class="k">${esc(t('Right now'))}</span>
+        ${tf('Human mode picks what it plays — mostly {0}, one game at a time.', `<b>${esc(main)}</b>`)}
+        ${name
+          ? tf('Your friends see {0} instead of the real game; the hours still count.', `<b>${esc(name)}</b>`)
+          : esc(t('Your friends see the real game.'))}
         </div>`;
     }
 
@@ -1642,25 +1645,26 @@ function sectionIntro(section, values) {
     const black = val('BlacklistedGames') || [];
     const playing = games.filter((g) => !black.includes(g));
 
+    const shownName = `<b>${esc(name)}</b>`;
+    const list = `<b>${esc(playing.map(gameLabel).join(', '))}</b>`;
     let line;
     if (name && playing.length) {
-      line = `Your friends see <b>${esc(name)}</b>. Underneath, <b>${playing.map(gameLabel).join(', ')}</b> keep gaining real playtime — both at the same time.`;
+      line = tf('Your friends see {0}. Underneath, {1} keep gaining real playtime — both at the same time.', shownName, list);
     } else if (name) {
-      line = `Your friends see <b>${esc(name)}</b>. No games are listed, so no playtime is being banked — add some below if you want hours too.`;
+      line = tf('Your friends see {0}. No games are listed, so no playtime is being banked — add some below if you want hours too.', shownName);
     } else if (playing.length) {
-      line = `<b>${playing.map(gameLabel).join(', ')}</b> gain playtime, all at once. Set a name below to show something else instead while the hours still count.`;
+      line = tf('{0} gain playtime, all at once. Set a name below to show something else instead while the hours still count.', list);
     } else {
-      line = `Nothing set yet. Add games to bank playtime, and optionally a name to display instead of the real one.`;
+      line = esc(t('Nothing set yet. Add games to bank playtime, and optionally a name to display instead of the real one.'));
     }
 
-    return `<div class="preview"><span class="k">Right now</span>${line}</div>`;
+    return `<div class="preview"><span class="k">${esc(t('Right now'))}</span>${line}</div>`;
   }
 
   if (section === 'Human mode') {
     if (!val('LegitMode')) {
-      return `<div class="preview"><span class="k">Off</span>
-        This account idles everything at once, around the clock. Switch Human mode on to play one game at a time
-        on a believable schedule — the settings that would give it away are hidden and put back if you switch it off.</div>`;
+      return `<div class="preview"><span class="k">${esc(t('Off'))}</span>
+        ${esc(t('This account idles everything at once, around the clock. Switch Human mode on to play one game at a time on a believable schedule — the settings that would give it away are hidden and put back if you switch it off.'))}</div>`;
     }
 
     const w = parseWeights(val('GameWeights'));
@@ -1671,12 +1675,25 @@ function sectionIntro(section, values) {
     const dayOff = val('DayOffChancePct');
     const night = val('OfflineIdleAtNight') && (val('OfflineIdleGames') || []).length;
 
-    return `<div class="preview"><span class="k">A day looks like</span>
-      On around <b>${String(from).padStart(2, '0')}:00</b>, bed around <b>${String(to).padStart(2, '0')}:00</b> — both jittered daily.
-      About <b>${weekday}h</b> on a weekday and <b>${weekend}h</b> at the weekend${dayOff > 0 ? `, and roughly <b>${dayOff} in 100</b> days off entirely` : ''}.
-      One game at a time, in sittings of <b>${val('SessionMinMinutes')}–${val('SessionMaxMinutes')} min</b>.
-      ${w.length ? `Mostly <b>${esc(gameLabel(w[0].game))}</b>${w.length > 1 ? `, with ${w.length - 1} other${w.length > 2 ? 's' : ''} in bursts rather than every day` : ''}.` : 'No games listed yet.'}
-      ${night ? ' Overnight it goes invisible and keeps banking hours.' : ''}
+    const others = w.length - 1;
+    let mostly;
+    if (!w.length) {
+      mostly = esc(t('No games listed yet.'));
+    } else if (others <= 0) {
+      mostly = tf('Mostly {0}.', `<b>${esc(gameLabel(w[0].game))}</b>`);
+    } else {
+      mostly = tf('Mostly {0}, with {1} in bursts rather than every day.', `<b>${esc(gameLabel(w[0].game))}</b>`,
+        others === 1 ? t('one other') : tf('{0} others', others));
+    }
+
+    return `<div class="preview"><span class="k">${esc(t('A day looks like'))}</span>
+      ${tf('On around {0}, bed around {1} — both jittered daily.',
+        `<b>${String(from).padStart(2, '0')}:00</b>`, `<b>${String(to).padStart(2, '0')}:00</b>`)}
+      ${tf('About {0} on a weekday and {1} at the weekend.', `<b>${weekday}h</b>`, `<b>${weekend}h</b>`)}
+      ${dayOff > 0 ? tf('Roughly {0} days off entirely.', `<b>${dayOff} in 100</b>`) : ''}
+      ${tf('One game at a time, in sittings of {0}.', `<b>${val('SessionMinMinutes')}–${val('SessionMaxMinutes')} min</b>`)}
+      ${mostly}
+      ${night ? esc(t('Overnight it goes invisible and keeps banking hours.')) : ''}
       </div>`;
   }
 
@@ -1686,12 +1703,14 @@ function sectionIntro(section, values) {
     const hi = Math.max(lo, val('Rep4RepGapMaxMinutes') || 0);
     const from = val('Rep4RepStartHour');
     const to = val('Rep4RepEndHour');
-    const hours = from === to ? 'around the clock' : `between ${String(from).padStart(2, '0')}:00 and ${String(to).padStart(2, '0')}:00`;
+    const hours = from === to
+      ? t('around the clock')
+      : tf('between {0} and {1}', String(from).padStart(2, '0') + ':00', String(to).padStart(2, '0') + ':00');
     const span = Math.round((cap * (lo + hi) / 2) / 60 * 10) / 10;
 
-    return `<div class="preview"><span class="k">Right now</span>
-      Up to <b>${cap}</b> comments a day, <b>${lo}–${hi} minutes</b> apart, ${hours}.
-      That's roughly <b>${span}h</b> of posting spread across the day.</div>`;
+    return `<div class="preview"><span class="k">${esc(t('Right now'))}</span>
+      ${tf('Up to {0} comments a day, {1} apart, {2}.', `<b>${cap}</b>`, `<b>${lo}–${hi} ${esc(t('minutes'))}</b>`, esc(hours))}
+      ${tf("That's roughly {0} of posting spread across the day.", `<b>${span}h</b>`)}</div>`;
   }
 
   return '';
@@ -1785,22 +1804,22 @@ function weightsEditor(spec) {
     // its `padding: 22px 26px 40px`. That is the whole reason the first row sat 26px to the right of every
     // other one and stood three times as tall - it was being laid out as if it were the page.
     return `<div class="wrow ${i === 0 ? 'wmain' : ''}">
-      <span class="wname"><b class="wgame" title="${esc(gameLabel(r.game))}">${esc(gameLabel(r.game))}</b>${i === 0 ? '<b class="wtag">main</b>' : ''}<i class="wid">${r.game}</i></span>
+      <span class="wname"><b class="wgame" title="${esc(gameLabel(r.game))}">${esc(gameLabel(r.game))}</b>${i === 0 ? `<b class="wtag">${esc(t('main'))}</b>` : ''}<i class="wid">${r.game}</i></span>
       <span class="wbar"><i style="width:${share}%"></i></span>
       ${i === 0
-        ? `<span class="wpct wfixed" data-tip="The main game's share is set by &quot;Main game gets&quot; below, not here — it's held at that share however many other games you add. Click to jump to it.">${share}</span>`
+        ? `<span class="wpct wfixed" data-tip="${esc(t('The main game\'s share is set by "Main game gets" below, not here — it\'s held at that share however many other games you add. Click to jump to it.'))}">${share}</span>`
         : `<input class="wpct" type="number" min="1" max="99" value="${share}" data-w-index="${i}"
-             onchange="setShare(${i},parseInt(this.value)||1)" data-tip="This game's share of the week. Every row here adds up to 100, including the main game - change one and the others move to make room.">`}
+             onchange="setShare(${i},parseInt(this.value)||1)" data-tip="${esc(t("This game's share of the week. Every row here adds up to 100, including the main game - change one and the others move to make room."))}">`}
       <span class="wsign">%</span>
-      ${i === 0 ? '<span class="wact"></span>' : `<span class="wact"><b onclick="makeMain(${i})" data-tip="Make this the main game">↑</b><b onclick="dropWeight(${i})" data-tip="Remove">×</b></span>`}
+      ${i === 0 ? '<span class="wact"></span>' : `<span class="wact"><b onclick="makeMain(${i})" data-tip="${esc(t('Make this the main game'))}">↑</b><b onclick="dropWeight(${i})" data-tip="${esc(t('Remove'))}">×</b></span>`}
     </div>`;
   }).join('');
 
   return `<div class="weights" data-setting="GameWeights">
-    ${body || '<p class="muted small" style="margin:0 0 8px">No games yet — add the one this account is meant to be into first.</p>'}
+    ${body || `<p class="muted small" style="margin:0 0 8px">${esc(t('No games yet — add the one this account is meant to be into first.'))}</p>`}
     <div class="wadd">
-      <input type="text" placeholder="appID or store URL" onkeydown="if(event.key==='Enter'){addWeight(this);event.preventDefault();}" onblur="addWeight(this)">
-      <span class="muted small">The first game added is the main one.</span>
+      <input type="text" placeholder="${esc(t('appID or store URL'))}" onkeydown="if(event.key==='Enter'){addWeight(this);event.preventDefault();}" onblur="addWeight(this)">
+      <span class="muted small">${esc(t('The first game added is the main one.'))}</span>
     </div>
   </div>`;
 }
@@ -1933,14 +1952,11 @@ function isChanged(def, values, defaults) {
 // sharing one timestamp, and Steam stamps that time server-side so there is no undoing it.
 function dangerZone(name) {
   return `<div class="section danger">
-    <h3>Careful</h3>
+    <h3 data-section="Careful">${esc(t('Careful'))}</h3>
     <div class="dangerbox">
-      <b>Unlock every achievement, in every game this account owns</b>
-      <p class="muted small">This is for accounts that are not pretending to be anyone. Thousands of achievements
-      appear at once, all stamped with the same moment, and that stamp is set by Steam and cannot be changed or
-      hidden. Anyone looking at the profile can see it, permanently. If this account is meant to look played,
-      leave this alone and let the pacer earn them instead.</p>
-      <button class="danger" data-bot="${esc(name)}" onclick="askUnlockAll(this.dataset.bot)">Unlock everything…</button>
+      <b>${esc(t('Unlock every achievement, in every game this account owns'))}</b>
+      <p class="muted small">${esc(t('This is for accounts that are not pretending to be anyone. Thousands of achievements appear at once, all stamped with the same moment, and that stamp is set by Steam and cannot be changed or hidden. Anyone looking at the profile can see it, permanently. If this account is meant to look played, leave this alone and let the pacer earn them instead.'))}</p>
+      <button class="danger" data-bot="${esc(name)}" onclick="askUnlockAll(this.dataset.bot)">${esc(t('Unlock everything…'))}</button>
     </div>
   </div>`;
 }
@@ -1950,19 +1966,19 @@ function dangerZone(name) {
 // quote and break the handler, and on the one irreversible action in the app that is not a risk worth taking.
 function askUnlockAll(name) {
   modal(`
-    <h2>Unlock everything on ${esc(name)}?</h2>
-    <p>Every achievement in every game <b>${esc(name)}</b> owns will be unlocked, right now.</p>
+    <h2>${esc(tf('Unlock everything on {0}?', name))}</h2>
+    <p>${tf('Every achievement in every game {0} owns will be unlocked, right now.', `<b>${esc(name)}</b>`)}</p>
     <ul class="muted small">
-      <li>They all get the same unlock time. That is what makes it obvious.</li>
-      <li>Steam sets that time itself - it cannot be back-dated or hidden.</li>
-      <li>It runs for a long time on a big library, and it cannot be meaningfully undone.</li>
+      <li>${esc(t('They all get the same unlock time. That is what makes it obvious.'))}</li>
+      <li>${esc(t('Steam sets that time itself - it cannot be back-dated or hidden.'))}</li>
+      <li>${esc(t('It runs for a long time on a big library, and it cannot be meaningfully undone.'))}</li>
     </ul>
-    <p class="small">Type <code>confirm</code> below to enable the button.</p>
-    <input type="text" id="unlockConfirm" autocomplete="off" spellcheck="false" placeholder="type confirm"
+    <p class="small">${tf('Type {0} below to enable the button.', '<code>confirm</code>')}</p>
+    <input type="text" id="unlockConfirm" autocomplete="off" spellcheck="false" placeholder="${esc(t('type confirm'))}"
            oninput="$('unlockGo').disabled = this.value.trim().toLowerCase() !== 'confirm'">
     <div class="actions">
-      <button class="ghost" onclick="closeModal()">Cancel</button>
-      <button class="danger" id="unlockGo" disabled data-bot="${esc(name)}" onclick="doUnlockAll(this.dataset.bot)">Unlock everything</button>
+      <button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button>
+      <button class="danger" id="unlockGo" disabled data-bot="${esc(name)}" onclick="doUnlockAll(this.dataset.bot)">${esc(t('Unlock everything'))}</button>
     </div>`);
   setTimeout(() => { const el = $('unlockConfirm'); if (el) el.focus(); }, 30);
 }
@@ -1974,9 +1990,9 @@ async function doUnlockAll(name) {
   const res = await post(`/api/bots/${encodeURIComponent(name)}/achievements/unlock-all`, { Confirm: typed });
   closeModal();
 
-  if (!res.ok) { toast(res.error || "That didn't work", true); return; }
+  if (!res.ok) { toast(res.error || t("That didn't work"), true); return; }
 
-  toast(`${name}: unlocking everything - watch the log`);
+  toast(tf('{0}: unlocking everything - watch the log', name));
   go('log');
 }
 
@@ -1986,11 +2002,9 @@ async function doUnlockAll(name) {
 // switching it OFF leaves the app quietly less useful in a way that will not be obvious later.
 const GUARDED_OFF = {
   OpenDashboardAfterAdd: {
-    title: 'Turn off opening the dashboard?',
-    body: `<p>A newly added account does <b>nothing at all</b> until it is told what to play, and the app window
-      has no form for that - only the dashboard does.</p>
-      <p class="muted small">With this off, adding an account leaves you at a command line with an account that
-      will sit there idle until you remember to go and configure it. This is for people who already know that.</p>`,
+    title: () => t('Turn off opening the dashboard?'),
+    body: () => `<p>${tf('A newly added account does {0} until it is told what to play, and the app window has no form for that - only the dashboard does.', `<b>${esc(t('nothing at all'))}</b>`)}</p>
+      <p class="muted small">${esc(t('With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.'))}</p>`,
   },
 };
 
@@ -2008,15 +2022,15 @@ function editBool(name, el) {
   el.checked = true;
 
   modal(`
-    <h2>${esc(guard.title)}</h2>
-    ${guard.body}
-    <p class="small">Type <code>off</code> to confirm.</p>
-    <input type="text" id="guardConfirm" autocomplete="off" spellcheck="false" placeholder="type off"
+    <h2>${esc(guard.title())}</h2>
+    ${guard.body()}
+    <p class="small">${tf('Type {0} to confirm.', '<code>off</code>')}</p>
+    <input type="text" id="guardConfirm" autocomplete="off" spellcheck="false" placeholder="${esc(t('type off'))}"
            oninput="$('guardGo').disabled = this.value.trim().toLowerCase() !== 'off'">
     <div class="actions">
-      <button class="ghost" onclick="closeModal()">Keep it on</button>
+      <button class="ghost" onclick="closeModal()">${esc(t('Keep it on'))}</button>
       <button class="danger" id="guardGo" disabled data-setting="${esc(name)}"
-              onclick="edit(this.dataset.setting, false); closeModal(); renderSettings();">Turn it off</button>
+              onclick="edit(this.dataset.setting, false); closeModal(); renderSettings();">${esc(t('Turn it off'))}</button>
     </div>`);
   setTimeout(() => { const i = $('guardConfirm'); if (i) i.focus(); }, 30);
 }
@@ -2053,12 +2067,12 @@ function fieldHtml(def, values, defaults) {
       // lives inside .tags rather than in the meta column because .tags already wraps; .field .meta is nowrap
       // with no min-width, so a chip there would push a narrow settings row out of its card.
       const state = cleared
-        ? '<span class="pill bad">will be erased when you save</span>'
+        ? `<span class="pill bad">${esc(t('will be erased when you save'))}</span>`
         : typing
-          ? '<span class="pill warn">will be replaced when you save</span>'
+          ? `<span class="pill warn">${esc(t('will be replaced when you save'))}</span>`
           : isSet
-            ? '<span class="pill good">saved</span>'
-            : '<span class="pill">not set</span>';
+            ? `<span class="pill good">${esc(t('saved'))}</span>`
+            : `<span class="pill">${esc(t('not set'))}</span>`;
 
       // Locked while something is stored, so a stray keystroke in a focused box cannot quietly overwrite a
       // working token with half a word. Clear is the deliberate act that unlocks it. Still enabled once a
@@ -2068,12 +2082,12 @@ function fieldHtml(def, values, defaults) {
       ctl = `<div class="tags">
         <input type="password" id="${id}" data-setting="${def.Name}" style="max-width:260px"
                ${locked ? 'disabled' : ''}
-               title="${locked ? 'Locked so it cannot be changed by accident. Press Clear to replace it.' : ''}"
-               placeholder="${cleared ? 'paste the new one here' : isSet ? 'stored - press Clear to replace' : 'paste it here'}"
+               title="${locked ? esc(t('Locked so it cannot be changed by accident. Press Clear to replace it.')) : ''}"
+               placeholder="${esc(cleared ? t('paste the new one here') : isSet ? t('stored - press Clear to replace') : t('paste it here'))}"
                value="${cleared || cur === undefined ? '' : esc(cur)}" oninput="edit('${def.Name}',this.value)">
         ${state}
-        ${isSet && !cleared ? `<button class="ghost small" data-tip="Erase the stored value. There's no undo." onclick="clearSecret('${def.Name}')">Clear</button>` : ''}
-        ${cleared ? `<button class="ghost small" onclick="editAndRender('${def.Name}','')">Undo</button>` : ''}
+        ${isSet && !cleared ? `<button class="ghost small" data-tip="${esc(t("Erase the stored value. There's no undo."))}" onclick="clearSecret('${def.Name}')">${esc(t('Clear'))}</button>` : ''}
+        ${cleared ? `<button class="ghost small" onclick="editAndRender('${def.Name}','')">${esc(t('Undo'))}</button>` : ''}
       </div>`;
       break;
     }
@@ -2099,7 +2113,7 @@ function fieldHtml(def, values, defaults) {
       const list = cur || [];
       ctl = `<div class="tags" data-setting="${def.Name}">
         ${list.map((a, i) => `<span class="tag">${a}<b onclick="removeApp('${def.Name}',${i})">×</b></span>`).join('')}
-        <input type="text" style="max-width:150px" placeholder="appID or store URL" onkeydown="if(event.key==='Enter'||event.key===','){addApp('${def.Name}',this);event.preventDefault();}" onblur="addApp('${def.Name}',this)">
+        <input type="text" style="max-width:150px" placeholder="${esc(t('appID or store URL'))}" onkeydown="if(event.key==='Enter'||event.key===','){addApp('${def.Name}',this);event.preventDefault();}" onblur="addApp('${def.Name}',this)">
       </div>`;
       break;
     }
@@ -2112,23 +2126,23 @@ function fieldHtml(def, values, defaults) {
   }
 
   const def0 = defaults[def.Name];
-  const defText = Array.isArray(def0) ? (def0.length ? def0.join(', ') : 'none') : (def.Kind === 'Secret' ? '' : String(def0));
+  const defText = Array.isArray(def0) ? (def0.length ? def0.join(', ') : t('none')) : (def.Kind === 'Secret' ? '' : String(def0));
 
   return `<div class="field ${changed ? 'changed' : ''}">
     <label for="${id}">${esc(tSetting(def, 'label'))}${tipIcon(tSetting(def, 'tip'))}</label>
     <div class="ctl">${ctl}</div>
     <div class="meta">
-      ${def.NeedsRestart ? `<span class="restart" data-tip="This takes effect the next time nocat.farm starts.">⟳</span>` : ''}
-      ${defText !== '' ? `<span class="revert" data-tip="Put this back to the default." onclick="editAndRender('${def.Name}',${JSON.stringify(def0).replace(/"/g, '&quot;')})">default ${esc(defText)}</span>` : ''}
+      ${def.NeedsRestart ? `<span class="restart" data-tip="${esc(t('This takes effect the next time nocat.farm starts.'))}">⟳</span>` : ''}
+      ${defText !== '' ? `<span class="revert" data-tip="${esc(t('Put this back to the default.'))}" onclick="editAndRender('${def.Name}',${JSON.stringify(def0).replace(/"/g, '&quot;')})">${esc(tf('default {0}', defText))}</span>` : ''}
     </div></div>`;
 }
 
 function parseChoices(choices) {
   if (!choices) return [];
   return choices.split('|').map((o) => {
-    const t = o.trim();
-    const sp = t.indexOf(' ');
-    return { value: parseInt(t.slice(0, sp)), label: t.slice(sp + 1) };
+    const text = o.trim();
+    const sp = text.indexOf(' ');
+    return { value: parseInt(text.slice(0, sp)), label: text.slice(sp + 1) };
   });
 }
 
@@ -2160,7 +2174,11 @@ function refreshPreviews() {
     if (!title || !prev) return;
     // Update the panel's CONTENTS, never replace the node: swapping an element out from under a live form can
     // move focus, and this runs on every keystroke.
-    const html = sectionIntro(title.textContent, values);
+    //
+    // Keyed on data-section, which holds the ENGLISH name. sectionIntro switches on that name, so reading the
+    // heading's own text matched nothing once the heading was translated - every live preview would have
+    // frozen in any language but English.
+    const html = sectionIntro(title.dataset.section || title.textContent, values);
 
     if (html) {
       const tmp = document.createElement('div');
@@ -2172,7 +2190,7 @@ function refreshPreviews() {
 }
 
 function clearSecret(name) {
-  if (!confirm('Erase the stored value? There is no undo.')) return;
+  if (!confirm(t('Erase the stored value? There is no undo.'))) return;
   editAndRender(name, CLEAR_SECRET);
 }
 
@@ -2188,7 +2206,7 @@ function addApp(name, input) {
   const raw = input.value.trim().replace(/,$/, '');
   if (!raw) return;
   const m = raw.match(/\/app\/(\d+)/) || raw.match(/^(\d+)$/);
-  if (!m) { toast('That is not an appID', true); return; }
+  if (!m) { toast(t('That is not an appID'), true); return; }
   const list = (pending[name] !== undefined ? pending[name] : settingsValues()[name] || []).slice();
   const id = parseInt(m[1]);
   if (!list.includes(id)) list.push(id);
@@ -2206,7 +2224,7 @@ function updateSaveButton() {
   const n = Object.keys(pending).length;
   const btn = $('saveBtn');
   btn.disabled = n === 0;
-  btn.textContent = n === 0 ? 'Save' : `Save ${n} change${n > 1 ? 's' : ''}`;
+  btn.textContent = n === 0 ? t('Save') : n === 1 ? t('Save one change') : tf('Save {0} changes', n);
 }
 
 async function saveSettings() {
@@ -2217,22 +2235,23 @@ async function saveSettings() {
   // opened would quietly revert anything changed from the console (or another tab) in the meantime.
   await loadConfig();
   const base = target === GLOBAL ? config.Global : config.Bots[target];
-  if (!base) { toast('That account is gone', true); settingsTarget = GLOBAL; renderSettings(); return; }
+  if (!base) { toast(t('That account is gone'), true); settingsTarget = GLOBAL; renderSettings(); return; }
 
   const body = { ...base, ...edits };
   const res = target === GLOBAL
     ? await post('/api/config', body)
     : await post('/api/bots/' + encodeURIComponent(target) + '/config', body);
 
-  if (!res.ok) { toast(res.error || 'Save failed', true); return; }
+  if (!res.ok) { toast(res.error || t('Save failed'), true); return; }
 
   const restart = (res.RestartNeeded || []).filter(Boolean);
   const adjusted = (res.Adjusted || []).filter(Boolean);
 
   if (adjusted.length) toast(adjusted.join(' · '), true);
-  else toast(restart.length
-    ? `Saved. ${restart.join(', ')} ${restart.length > 1 ? 'apply' : 'applies'} after a restart.`
-    : 'Saved.');
+  else if (!restart.length) toast(t('Saved.'));
+  else toast(restart.length > 1
+    ? tf('Saved. {0} apply after a restart.', restart.join(', '))
+    : tf('Saved. {0} applies after a restart.', restart[0]));
 
   pending = {};
   await loadConfig();
@@ -2292,7 +2311,7 @@ async function refresh() {
 
 async function boot() {
   const ping = await fetch('/api/ping').then((r) => r.json()).catch(() => null);
-  if (!ping) { showLogin("Can't reach nocat.farm."); return; }
+  if (!ping) { showLogin(t("Can't reach nocat.farm.")); return; }
   if (ping.needsPassword && !ping.authorised && !token) { showLogin(); return; }
 
   $('login').classList.add('hidden');
