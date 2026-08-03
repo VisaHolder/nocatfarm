@@ -386,6 +386,14 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			return;
 		}
 
+		// Cards outrank achievements. A grind takes the account off whatever the farmer is doing, and a drop that
+		// was twenty minutes away would have to start its hours over - so hunting waits for the farmer to finish.
+		if (Bot.IsFarming) {
+			_status = "waiting - farming cards first";
+
+			return;
+		}
+
 		List<uint> targets = Targets();
 
 		if (targets.Count == 0) {

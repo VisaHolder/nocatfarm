@@ -240,16 +240,15 @@ public sealed partial class InventoryValue(Bot bot) {
 		// to price - and what gets asked about FIRST decides what the number looks like for that hour. Left in
 		// whatever order they came out of the inventory, nine hundred trading cards worth a penny each were
 		// consuming the whole rate limit while fifty skins worth four figures sat unpriced, so an account with
-		// $1,500 of CS2 read as $13. Game inventories go first (app 753 is Steam's own cards, backgrounds and
-		// emoticons - thousands of items, pennies each), and within those the games with the FEWEST distinct item
-		// names go first. That second rule is what actually finds the money: a dozen knives and skins is few names
-		// and enormous value, while junk is hundreds of names worth pennies each - without it, 116 Team Fortress
-		// hats were still being priced ahead of 56 CS2 skins. Then anything never priced, then the stalest.
-		foreach ((uint app, string hash, int _) in wanted
-			.OrderBy(static w => w.App == SteamCommunityApp)
-			.ThenBy(static w => w.Names)
-			.ThenBy(w => PriceBook.Known(w.App, w.Hash).HasValue)
-			.Take(PricesPerSweep)) {
+		// $1,500 of CS2 read as $13. Two rules fix it. Steam's own inventory goes LAST - app 753 is cards,
+		// backgrounds and emoticons, thousands of items worth pennies each - and the games themselves are worked
+		// through ROUND-ROBIN, one item from each in turn.
+		//
+		// Round-robin rather than any cleverer ordering because every proxy for "where the money is" turns out to
+		// be wrong somewhere: ordering by fewest distinct names put Team Fortress (many hats, few names) ahead of
+		// CS2 (few skins, every one unique) and starved exactly the inventory that mattered. Taking turns needs no
+		// guess - every game's total starts climbing immediately, and none of them can be starved by another.
+		foreach ((uint app, string hash) in RoundRobin(wanted).Take(PricesPerSweep)) {
 			ct.ThrowIfCancellationRequested();
 
 			if (await PriceBook.FetchAsync(app, hash, ct).ConfigureAwait(false) == null) {
@@ -257,6 +256,33 @@ public sealed partial class InventoryValue(Bot bot) {
 			}
 
 			Pending--;
+		}
+	}
+
+	/// <summary>One item from each game in turn, Steam's own inventory last. Never priced beats already priced.</summary>
+	private static IEnumerable<(uint App, string Hash)> RoundRobin(List<(uint App, string Hash, int Names)> wanted) {
+		List<List<(uint App, string Hash)>> queues = [.. wanted
+			.GroupBy(static w => w.App)
+			.OrderBy(static g => g.Key == SteamCommunityApp)
+			.Select(static g => g
+				.OrderBy(w => PriceBook.Known(w.App, w.Hash).HasValue)
+				.Select(static w => (w.App, w.Hash))
+				.ToList())];
+
+		for (int round = 0; queues.Count > 0; round++) {
+			bool any = false;
+
+			foreach (List<(uint App, string Hash)> queue in queues) {
+				if (round < queue.Count) {
+					any = true;
+
+					yield return queue[round];
+				}
+			}
+
+			if (!any) {
+				yield break;
+			}
 		}
 	}
 
