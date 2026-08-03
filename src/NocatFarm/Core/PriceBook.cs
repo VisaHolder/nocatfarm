@@ -39,8 +39,25 @@ public static partial class PriceBook {
 
 	private static string Path => System.IO.Path.Combine(ConfigStore.ConfigDir, "state", "prices.json");
 
-	/// <summary>Market prices are per (game, item name) - the same name in two games is two different things.</summary>
-	private static string Key(uint app, string marketHashName) => $"{app}/{marketHashName}";
+	/// <summary>Steam's currency id for everything here. Changing it makes every cached price a different key.</summary>
+	private static int Currency => Math.Max(1, Live.Global.MarketCurrency);
+
+	/// <summary>The symbol to print. Steam uses "$" for several of these, which is exactly what people expect.</summary>
+	public static string Symbol => Currency switch {
+		2 => "£",
+		3 => "€",
+		8 or 23 => "¥",
+		5 => "₽",
+		24 => "₹",
+		_ => "$"
+	};
+
+	/// <summary>
+	/// Market prices are per (game, item name, currency) - the same name in two games is two different things,
+	/// and the same item in two currencies is two different numbers. Currency is part of the key so switching it
+	/// re-prices from scratch instead of quietly mixing dollars into a euro total.
+	/// </summary>
+	private static string Key(uint app, string marketHashName) => $"{app}/{Currency}/{marketHashName}";
 
 	/// <summary>A price we already hold, or null. Never touches the network.</summary>
 	public static decimal? Known(uint app, string marketHashName) {
@@ -77,7 +94,7 @@ public static partial class PriceBook {
 
 			_lastCall = DateTime.UtcNow;
 
-			string url = $"/market/priceoverview/?appid={app}&currency=1&market_hash_name={Uri.EscapeDataString(marketHashName)}";
+			string url = $"/market/priceoverview/?appid={app}&currency={Currency}&market_hash_name={Uri.EscapeDataString(marketHashName)}";
 			string? json = await web.GetAsync(new Uri(WebSession.Community, url), ct).ConfigureAwait(false);
 
 			if (string.IsNullOrEmpty(json)) {
@@ -112,7 +129,7 @@ public static partial class PriceBook {
 	private static string? Text(JsonElement node, string name) =>
 		node.TryGetProperty(name, out JsonElement v) && (v.ValueKind == JsonValueKind.String) ? v.GetString() : null;
 
-	/// <summary>"$1,234.56" / "1.234,56€" -> 1234.56. Currency is forced to USD, so the symbol is noise.</summary>
+	/// <summary>"$1,234.56" / "1.234,56 EUR" -> 1234.56. The symbol is noise; only the digits matter.</summary>
 	private static decimal? Money(string? text) {
 		if (string.IsNullOrWhiteSpace(text)) {
 			return null;

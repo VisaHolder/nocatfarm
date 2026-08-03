@@ -98,6 +98,10 @@ public sealed class GlobalConfig {
 	public int DailyReportHour { get; set; } = 9;
 	public int DailyReportMinute { get; set; } = 30;
 
+	// ── inventory value ──
+	/// <summary>Steam's currency id for market prices. 1 USD, 2 GBP, 3 EUR, 20 CAD, 21 AUD - as the store uses.</summary>
+	public int MarketCurrency { get; set; } = 1;
+
 	public bool FileLogging { get; set; } = true;
 	public bool Debug { get; set; }
 	public int LogRetentionDays { get; set; } = 14;
@@ -190,6 +194,7 @@ public sealed class BotConfig {
 	public int MaxBoostGamesInARow { get; set; } = 3;
 	public int BoostRestMinutesHuman { get; set; } = 120;
 	public bool IncludeFamilyLibrary { get; set; }
+	public bool HoldNewFamilyGames { get; set; } = true;
 	public int BoostMinReviews { get; set; } = 200;
 	public bool BoostOnlyPlayedGames { get; set; }
 	public List<uint> AchievementGames { get; set; } = [];

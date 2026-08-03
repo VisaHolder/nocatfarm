@@ -24,7 +24,10 @@ public sealed partial class InventoryValue(Bot bot) {
 	/// <summary>Inventories to look at, largest first. Nobody has thirty games worth of tradables.</summary>
 	private const int MaxInventories = 12;
 
-	public sealed record GameValue(uint AppId, string Game, int Items, decimal Value);
+	/// <summary>Steam's own inventory - trading cards, backgrounds, emoticons. Thousands of items, pennies each.</summary>
+	private const uint SteamCommunityApp = 753;
+
+	public sealed record GameValue(uint AppId, string Game, int Items, decimal Value, bool Blocked);
 
 	private List<GameValue> _byGame = [];
 
@@ -42,7 +45,7 @@ public sealed partial class InventoryValue(Bot bot) {
 	public DateTime RefreshedAt { get; private set; }
 
 	/// <summary>Every item with a market name, keyed by game, gathered from the last inventory read.</summary>
-	private readonly Dictionary<uint, (string Game, Dictionary<string, int> Items)> _holdings = [];
+	private readonly Dictionary<uint, (string Game, Dictionary<string, int> Items, bool Blocked)> _holdings = [];
 
 	private DateTime _readAt = DateTime.MinValue;
 
@@ -123,14 +126,35 @@ public sealed partial class InventoryValue(Bot bot) {
 		// answer to "what is in there" is the market value of what is in there. Items with no market listing at
 		// all price at zero on their own, which is the correct answer for them.
 		Dictionary<string, string> named = [];
+		int sellable = 0;
+		int kinds = 0;
 
 		foreach (JsonElement d in descriptions.EnumerateArray()) {
 			string? hash = d.TryGetProperty("market_hash_name", out JsonElement h) ? h.GetString() : null;
 			string? classId = d.TryGetProperty("classid", out JsonElement c) ? c.GetString() : null;
 
-			if (!string.IsNullOrEmpty(hash) && !string.IsNullOrEmpty(classId)) {
-				named[classId] = hash;
+			if (string.IsNullOrEmpty(hash) || string.IsNullOrEmpty(classId)) {
+				continue;
 			}
+
+			named[classId] = hash;
+			kinds++;
+
+			if (d.TryGetProperty("marketable", out JsonElement m) && (m.ValueKind == JsonValueKind.Number) && (m.GetInt32() == 1)) {
+				sellable++;
+			}
+		}
+
+		// A whole inventory in which NOTHING can be sold is what a ban looks like from here.
+		//
+		// Steam does not publish which game an account is banned in, but it does mark every item from that game
+		// unsellable - so an inventory with items in it and not one sellable line is the signal, and it needs no
+		// ban list to consult. Individual unsellable items mean nothing (trade holds, fresh purchases) and are
+		// still priced normally; it is only the all-or-nothing case that counts as blocked.
+		bool blocked = (kinds > 0) && (sellable == 0);
+
+		if (blocked) {
+			Log.Debug($"{game}: nothing in that inventory can be sold - counting it as blocked", bot.Name);
 		}
 
 		Dictionary<string, int> counts = new(StringComparer.Ordinal);
@@ -150,7 +174,7 @@ public sealed partial class InventoryValue(Bot bot) {
 			if (counts.Count == 0) {
 				_holdings.Remove(app);
 			} else {
-				_holdings[app] = (game, counts);
+				_holdings[app] = (game, counts, blocked);
 			}
 		}
 	}
@@ -195,7 +219,11 @@ public sealed partial class InventoryValue(Bot bot) {
 		List<(uint App, string Hash)> wanted = [];
 
 		lock (_holdings) {
-			foreach ((uint app, (string _, Dictionary<string, int> items)) in _holdings) {
+			foreach ((uint app, (string _, Dictionary<string, int> items, bool blocked)) in _holdings) {
+				if (blocked) {
+					continue;   // banned game: nothing here can be sold, so there is nothing worth asking about
+				}
+
 				foreach (string hash in items.Keys) {
 					if (PriceBook.NeedsRefresh(app, hash)) {
 						wanted.Add((app, hash));
@@ -206,9 +234,18 @@ public sealed partial class InventoryValue(Bot bot) {
 
 		Pending = wanted.Count;
 
-		// Unpriced things first, then the stalest - so a brand new case shows up in the total before a price
-		// that is merely a day old gets refreshed.
-		foreach ((uint app, string hash) in wanted.OrderBy(w => PriceBook.Known(w.App, w.Hash).HasValue).Take(PricesPerSweep)) {
+		// Order matters more than it looks.
+		//
+		// The market answers about one item every few seconds, so a large inventory takes the best part of an hour
+		// to price - and what gets asked about FIRST decides what the number looks like for that hour. Left in
+		// whatever order they came out of the inventory, nine hundred trading cards worth a penny each were
+		// consuming the whole rate limit while fifty skins worth four figures sat unpriced, so an account with
+		// $1,500 of CS2 read as $13. Game inventories go first (app 753 is Steam's own cards, backgrounds and
+		// emoticons - thousands of items, pennies each), then anything never priced, then the stalest.
+		foreach ((uint app, string hash) in wanted
+			.OrderBy(static w => w.App == SteamCommunityApp)
+			.ThenBy(w => PriceBook.Known(w.App, w.Hash).HasValue)
+			.Take(PricesPerSweep)) {
 			ct.ThrowIfCancellationRequested();
 
 			if (await PriceBook.FetchAsync(bot.Web, app, hash, ct).ConfigureAwait(false) == null) {
@@ -223,17 +260,17 @@ public sealed partial class InventoryValue(Bot bot) {
 		List<GameValue> byGame = [];
 
 		lock (_holdings) {
-			foreach ((uint app, (string game, Dictionary<string, int> items)) in _holdings) {
+			foreach ((uint app, (string game, Dictionary<string, int> items, bool blocked)) in _holdings) {
 				decimal value = 0;
 				int count = 0;
 
 				foreach ((string hash, int amount) in items) {
-					value += (PriceBook.Known(app, hash) ?? 0) * amount;
+					value += blocked ? 0 : (PriceBook.Known(app, hash) ?? 0) * amount;
 					count += amount;
 				}
 
 				if (count > 0) {
-					byGame.Add(new GameValue(app, game, count, decimal.Round(value, 2)));
+					byGame.Add(new GameValue(app, game, count, decimal.Round(value, 2), blocked));
 				}
 			}
 		}

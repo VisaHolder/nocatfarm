@@ -121,16 +121,19 @@ const tipIcon = (text) => text ? `<i class="info" data-tip="${esc(text)}"></i>` 
 
 // Inventory money. Whole dollars in the table - cents on a four-figure inventory are noise - and the full
 // figure in the tooltip, where the breakdown lives.
-const usd = (n) => '$' + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-const usdExact = (n) => '$' + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const cur = () => (state && state.Currency) || '$';
+const usd = (n) => cur() + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const usdExact = (n) => cur() + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // The hover breakdown: which games hold the value, biggest first.
 const nlChar = String.fromCharCode(10);
 function valueTip(b) {
   if (!b.InventoryReady) return 'Reading this inventory...';
-  const rows = (b.InventoryByGame || []).filter((g) => g.Value > 0);
-  if (!rows.length) return 'Nothing marketable in this inventory.';
-  const lines = rows.map((g) => `${g.Game} - ${usdExact(g.Value)}  (${g.Items} item${g.Items === 1 ? '' : 's'})`);
+  const rows = (b.InventoryByGame || []).filter((g) => g.Value > 0 || g.Blocked);
+  if (!rows.length) return 'Nothing with a market price in this inventory.';
+  const lines = rows.map((g) => g.Blocked
+    ? `${g.Game} - skipped, nothing in it can be sold (${g.Items} item${g.Items === 1 ? '' : 's'})`
+    : `${g.Game} - ${usdExact(g.Value)}  (${g.Items} item${g.Items === 1 ? '' : 's'})`);
   if (b.InventoryPending > 0) lines.push(`...${b.InventoryPending} more item${b.InventoryPending === 1 ? '' : 's'} still being priced`);
   return `${usdExact(b.InventoryValue)} at market median${nlChar}${nlChar}${lines.join(nlChar)}`;
 }

@@ -12,9 +12,13 @@ namespace NocatFarm.Core;
 ///
 /// This is that check in one place, asked by all of them. It holds a game while ALL of these are true:
 ///   - the account is set to protect refunds (<c>SkipRefundableGames</c>, per account),
-///   - the account BOUGHT it - free-to-play, claimed freebies and family-shared games are never held,
+///   - the account BOUGHT it - free-to-play and claimed freebies are never held,
 ///   - it was bought less than <c>RefundHoldDays</c> ago, and
 ///   - it has under two hours on it, which is the line Steam actually draws.
+///
+/// Family-shared games are the exception, and are judged on arrival alone (<c>HoldNewFamilyGames</c>): a borrowed
+/// game is left alone for its first fortnight in the shared library, because whoever paid for it might still be
+/// deciding - and their playtime, the number that would actually settle it, is not visible from here.
 ///
 /// The hold lifts on its own: buy a game today and the hunter picks it up in a fortnight, or the moment you have
 /// played two hours of it yourself. Fails OPEN by design - if Steam won't say what a licence is, nothing is held,
@@ -79,17 +83,24 @@ public sealed class RefundGuard(Bot bot) {
 
 			int days = Math.Max(1, bot.Cfg.RefundHoldDays);
 			HashSet<uint> held = [];
+			HashSet<uint> shared = [];
 
 			foreach (Library.Entry game in bot.Library.Games) {
-				// Borrowed games are never held.
+				// A borrowed game is judged on ARRIVAL only, never on playtime.
 				//
-				// A family-shared game was bought by somebody else, and the only two numbers we can see about it
-				// are when it appeared in THIS account's library and how long THIS account has played it - neither
-				// of which says anything about the owner's refund window. Judging it on those got it flatly wrong:
-				// a game the owner had sixteen hours in was reported as "still refundable" because it was new to
-				// the shared library and this account had never launched it. Guessing about somebody else's
-				// purchase with the wrong data is worse than not guessing.
+				// It was bought by somebody else, and the only two numbers visible from here are when it appeared
+				// in this account's library and how long THIS account has played it. The second one says nothing
+				// at all about the owner's refund window - using it reported a game the owner had sixteen hours in
+				// as "still refundable", because it was new to the shared library and this account had never
+				// launched it. So a freshly shared game is simply left alone for a fortnight while whoever paid
+				// for it makes their mind up, and the log says that rather than claiming to know it's refundable.
 				if (game.Shared) {
+					if (bot.Cfg.HoldNewFamilyGames && (game.Acquired != DateTime.MinValue)
+						&& ((DateTime.UtcNow - game.Acquired).TotalDays < days)) {
+						held.Add(game.AppId);
+						shared.Add(game.AppId);
+					}
+
 					continue;
 				}
 
@@ -107,9 +118,18 @@ public sealed class RefundGuard(Bot bot) {
 				List<uint> fresh = [.. held.Except(_held)];
 				List<uint> freed = [.. _held.Except(held)];
 
-				// One line, not one per game: a fortnight's worth of purchases is a sentence, not a wall.
-				if (fresh.Count > 0) {
-					Log.Info($"leaving {Names(fresh)} alone - still refundable{(fresh.Count == 1 ? $" until {Since(fresh[0], owned).AddDays(days):d}" : "")}", bot.Name);
+				// One line, not one per game: a fortnight's worth of purchases is a sentence, not a wall. Borrowed
+				// games get their own wording - we know when one arrived, not whether its owner could still
+				// refund it, and saying otherwise is how this got called out for being wrong.
+				List<uint> bought = [.. fresh.Where(a => !shared.Contains(a))];
+				List<uint> borrowed = [.. fresh.Where(shared.Contains)];
+
+				if (bought.Count > 0) {
+					Log.Info($"leaving {Names(bought)} alone - still refundable{(bought.Count == 1 ? $" until {Since(bought[0], owned).AddDays(days):d}" : "")}", bot.Name);
+				}
+
+				if (borrowed.Count > 0) {
+					Log.Info($"leaving {Names(borrowed)} alone - only just shared into this account's library", bot.Name);
 				}
 
 				if (freed.Count > 0) {

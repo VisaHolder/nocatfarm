@@ -1013,6 +1013,7 @@ public sealed class WebHost : IAsyncDisposable {
 			CommentsToday = comments,
 			CardsLeft = bots.Sum(static b => b.CardsRemaining),
 			InventoryValue = bots.Sum(static b => b.Inventory.Total),
+			Currency = PriceBook.Symbol,
 			InventoryPending = bots.Sum(static b => b.Inventory.Pending),
 			GamesLeft = bots.Sum(static b => b.GamesRemaining),
 			Bots = bots.Select(b => {
@@ -1048,7 +1049,7 @@ public sealed class WebHost : IAsyncDisposable {
 					InventoryValue = b.Inventory.Total,
 					InventoryPending = b.Inventory.Pending,
 					InventoryReady = b.Inventory.Ready,
-					InventoryByGame = b.Inventory.ByGame.Take(8).Select(static g => new { g.Game, g.Items, g.Value }),
+					InventoryByGame = b.Inventory.ByGame.Take(8).Select(static g => new { g.Game, g.Items, g.Value, g.Blocked }),
 					Rep4RepToday = r4r?.PostsToday ?? 0,
 					Rep4RepCap = r4r?.Cap ?? b.Cfg.Rep4RepDailyCap,
 					CardsToday = cardsByBot.GetValueOrDefault(b.Name),
