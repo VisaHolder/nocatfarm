@@ -510,6 +510,9 @@ public sealed class Bot : IAsyncDisposable {
 	private int _dropPending;
 	private uint _knownComments;
 	private bool _commentBaselineSet;
+	private int _tradeOffersWaiting = -1;
+	private TaskCompletionSource<bool> _tradeOffer = new(TaskCreationOptions.RunContinuationsAsynchronously);
+	private int _tradeOfferPending;
 
 	public Bot(string name, BotConfig cfg) {
 		Name = name;
@@ -555,6 +558,7 @@ public sealed class Bot : IAsyncDisposable {
 		_cb.Subscribe<SteamUser.PlayingSessionStateCallback>(OnPlayingSessionState);
 		_cb.Subscribe<ItemAnnouncementsCallback>(OnItemAnnouncements);
 		_cb.Subscribe<CommentNotificationsCallback>(OnCommentNotifications);
+		_cb.Subscribe<TradeOfferNotificationCallback>(OnTradeOfferNotifications);
 		_cb.Subscribe<SteamApps.LicenseListCallback>(OnLicenseList);
 		_cb.Subscribe<SteamFriends.FriendsListCallback>(OnFriendsList);
 		_cb.Subscribe<SteamUnifiedMessages.ServiceMethodNotification<CFriendMessages_IncomingMessage_Notification>>(OnIncomingMessage);
@@ -1203,6 +1207,11 @@ public sealed class Bot : IAsyncDisposable {
 		_commentBaselineSet = false;
 		_announcedApps = null;
 
+		// Back to "Steam hasn't said yet". Carrying the old count across a reconnect would let an account skip
+		// its one look at the offers page on the strength of an answer from before it dropped off.
+		Volatile.Write(ref _tradeOffersWaiting, -1);
+		Interlocked.Exchange(ref _tradeOfferPending, 0);
+
 		try {
 			Notifications?.RequestItemAnnouncements();
 			Notifications?.RequestCommentNotifications();
@@ -1668,6 +1677,67 @@ public sealed class Bot : IAsyncDisposable {
 				}
 			});
 		}
+	}
+
+	/// <summary>
+	/// How many trade offers Steam says are waiting, or -1 if it has not told us yet.
+	///
+	/// Steam pushes this on login and again the moment it changes, so an account with nothing waiting never has
+	/// to open the trade offers page to find that out - which is what a five-minute poll was doing all day, on
+	/// every account, until the community site started answering 429.
+	/// </summary>
+	public int TradeOffersWaiting => Volatile.Read(ref _tradeOffersWaiting);
+
+	private void OnTradeOfferNotifications(TradeOfferNotificationCallback cb) {
+		_lastPacket = DateTime.UtcNow;
+
+		int previous = Volatile.Read(ref _tradeOffersWaiting);
+		Volatile.Write(ref _tradeOffersWaiting, (int) cb.Waiting);
+
+		if ((cb.Waiting == 0) || (cb.Waiting == previous)) {
+			return;
+		}
+
+		Log.Debug($"Steam says {cb.Waiting} trade offer(s) are waiting", Name);
+
+		// Latched like the item drop: if the trade module is mid-check nobody is on the TCS, and the news would
+		// be lost until the slow pass came round the better part of an hour later.
+		Volatile.Write(ref _tradeOfferPending, 1);
+		_tradeOffer.TrySetResult(true);
+	}
+
+	/// <summary>
+	/// Wait for Steam to say a trade offer is waiting, or for <paramref name="timeout"/> to run out.
+	///
+	/// This is what lets the offers page go unread for an hour at a time without an offer sitting unanswered for
+	/// an hour: the news arrives as a push, and the wait ends the moment it does.
+	/// </summary>
+	public async Task<bool> WaitForTradeOfferAsync(TimeSpan timeout, CancellationToken ct) {
+		if (Interlocked.Exchange(ref _tradeOfferPending, 0) == 1) {
+			return true;
+		}
+
+		TaskCompletionSource<bool> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		_tradeOffer = tcs;
+
+		if (Interlocked.Exchange(ref _tradeOfferPending, 0) == 1) {
+			return true;
+		}
+
+		using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+		Task delay = Task.Delay(timeout, linked.Token);
+		Task winner = await Task.WhenAny(tcs.Task, delay).ConfigureAwait(false);
+
+		await linked.CancelAsync().ConfigureAwait(false);
+
+		if (winner != tcs.Task) {
+			return false;
+		}
+
+		Interlocked.Exchange(ref _tradeOfferPending, 0);
+
+		return true;
 	}
 
 	private void OnCommentNotifications(CommentNotificationsCallback cb) {

@@ -19,10 +19,14 @@ namespace NocatFarm.Modules;
 /// Nothing is acted on the instant it lands. A trade accepted two seconds after it was sent is a bot accepting.
 /// </summary>
 public sealed partial class Trading(Bot bot) : BotModule(bot) {
+	/// <summary>How many looks that turn up nothing to do before Steam's waiting count stops meaning "hurry".</summary>
+	private const int FruitlessBeforeBackingOff = 3;
+
 	private readonly Dictionary<ulong, DateTime> _actOn = [];
 	private readonly HashSet<ulong> _done = [];
 	private int _accepted;
 	private int _declined;
+	private int _fruitless;
 
 	public override string Name => "trades";
 
@@ -54,7 +58,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		while (!ct.IsCancellationRequested) {
 			// A trade accepted at 4am by an account whose friends list says it is offline is not a person. When
 			// human mode owns the account, offers simply sit until morning - which is what would really happen.
-			if (Wanted && Bot.IsOnline && Bot.Web.Ready && HumanMode.AwakeFor(Bot)) {
+			if (Wanted && Bot.IsOnline && Bot.Web.Ready && HumanMode.AwakeFor(Bot) && ShouldLook()) {
 				try {
 					await CheckAsync(ct).ConfigureAwait(false);
 				} catch (OperationCanceledException) {
@@ -64,10 +68,50 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 				}
 			}
 
-			if (!await Sleep(Rng.Minutes(4, 9), ct).ConfigureAwait(false)) {
+			// Sleeps until the gap runs out OR Steam says an offer arrived, whichever comes first. That is what
+			// makes the long gap safe: nothing waits an hour, it just stops asking when there is nothing to ask.
+			try {
+				await Bot.WaitForTradeOfferAsync(NextGap(), ct).ConfigureAwait(false);
+			} catch (OperationCanceledException) {
 				return;
 			}
 		}
+	}
+
+	/// <summary>
+	/// Whether there is any point opening the trade offers page at all.
+	///
+	/// Steam pushes the number of waiting offers over the client connection - on login and again the instant it
+	/// changes - so an account it has told us has none does not need to go and look. Fetching that page every
+	/// few minutes on every account, to learn nothing, is what got the community site answering 429; it is also
+	/// nothing like what a person does. When Steam hasn't told us yet, or something is mid-flight, we still look.
+	/// </summary>
+	private bool ShouldLook() {
+		lock (_actOn) {
+			if (_actOn.Count > 0) {
+				return true;   // an offer is sitting out its delay and has to be re-read to be acted on
+			}
+		}
+
+		return Bot.TradeOffersWaiting != 0;
+	}
+
+	/// <summary>
+	/// How long to wait before looking again. Minutes while something is actually in flight, the better part of
+	/// an hour otherwise - the slow pass exists only to catch an offer Steam never pushed a notification for.
+	/// </summary>
+	private TimeSpan NextGap() {
+		lock (_actOn) {
+			if (_actOn.Count > 0) {
+				return Rng.Minutes(4, 9);
+			}
+		}
+
+		// Steam's counter can stand at one for something we are never going to touch - an offer held in escrow,
+		// or one from a stranger on an account that accepts nothing. Coming back every five minutes to re-read
+		// the same untouchable offer is the same wasted request as before, so after a few fruitless looks the
+		// count stops being taken as a reason to hurry.
+		return (Bot.TradeOffersWaiting > 0) && (_fruitless < FruitlessBeforeBackingOff) ? Rng.Minutes(4, 9) : Rng.Minutes(45, 90);
 	}
 
 	private async Task CheckAsync(CancellationToken ct) {
@@ -77,6 +121,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 			return;
 		}
 
+		bool actedOnSomething = false;
 		HashSet<ulong> masters = Social.ParseIds(Bot.Cfg.TradeMasters);
 
 		foreach (Offer offer in Parse(html)) {
@@ -99,6 +144,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 			}
 
 			// Everything waits its turn. The wait is per offer, so two arriving together are not handled together.
+			actedOnSomething = true;
 			DateTime when;
 
 			lock (_actOn) {
@@ -139,6 +185,8 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 
 			await Task.Delay(Rng.Seconds(3, 12), ct).ConfigureAwait(false);
 		}
+
+		_fruitless = actedOnSomething ? 0 : _fruitless + 1;
 	}
 
 	private async Task<bool> AcceptAsync(Offer offer, CancellationToken ct) {

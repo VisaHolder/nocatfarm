@@ -52,8 +52,13 @@ public static partial class PriceBook {
 	/// </summary>
 	private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
 
+	/// <summary>Shortest and longest pause after the market refuses. It doubles from one to the other.</summary>
+	private const int CoolMinMinutes = 15;
+	private const int CoolMaxMinutes = 240;
+
 	private static DateTime _lastCall = DateTime.MinValue;
 	private static DateTime _coolUntil = DateTime.MinValue;
+	private static int _coolMinutes;
 	private static DateTime _lastSave = DateTime.MinValue;
 	private static bool _loaded;
 
@@ -122,12 +127,23 @@ public static partial class PriceBook {
 			using HttpResponseMessage response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
 			if (!response.IsSuccessStatusCode) {
-				// 429 is the market saying "enough". Back off for a good while rather than retrying into the wall.
-				_coolUntil = DateTime.UtcNow.AddMinutes(response.StatusCode == System.Net.HttpStatusCode.TooManyRequests ? 15 : 2);
+				// 429 is the market saying "enough". A flat fifteen minutes was not enough: the sweep came back,
+				// tripped the same limit within a minute, and spent hours doing that - which is what starved the
+				// accounts' own community requests. So the wait doubles each time it happens and only resets on
+				// an answer, which turns an endless retry loop into a handful of attempts spread over the day.
+				if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests) {
+					_coolMinutes = _coolMinutes <= 0 ? CoolMinMinutes : Math.Min(CoolMaxMinutes, _coolMinutes * 2);
+					_coolUntil = DateTime.UtcNow.AddMinutes(_coolMinutes);
+				} else {
+					_coolUntil = DateTime.UtcNow.AddMinutes(2);
+				}
+
 				Log.Debug($"the market answered {(int) response.StatusCode} - pausing price lookups until {_coolUntil.ToLocalTime():HH:mm}");
 
 				return null;
 			}
+
+			_coolMinutes = 0;
 
 			string json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 

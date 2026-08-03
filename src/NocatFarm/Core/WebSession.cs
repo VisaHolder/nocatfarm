@@ -177,6 +177,19 @@ public sealed class WebSession : IDisposable {
 			}
 
 			if (!response.IsSuccessStatusCode) {
+				// A 429 is not a fault to be retried on the caller's usual schedule - it is Steam saying this IP
+				// has asked too often, and every further request while it stands makes it last longer. Shut the
+				// whole host for everybody instead, and don't print the generic error page that comes with it.
+				if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests) {
+					TimeSpan shut = Limiters.NoteRateLimited(url.Host);
+
+					if (shut > TimeSpan.Zero) {
+						Log.Warn($"Steam is rate-limiting {url.Host} - every account stays off it for {Fmt.Hm((int) shut.TotalMinutes)}", _bot.Name);
+					}
+
+					return null;
+				}
+
 				// Steam puts the REASON in the body of a failed POST - "you cannot trade because...", "this
 				// account is trade banned" - and throwing it away left every failure looking like a network
 				// fault. The first couple of hundred characters is always enough to say what went wrong.
@@ -194,6 +207,7 @@ public sealed class WebSession : IDisposable {
 				return null;
 			}
 
+			Limiters.NoteWebOk(url.Host);
 			body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;   // genuinely shutting down
@@ -253,6 +267,21 @@ public sealed class WebSession : IDisposable {
 				}
 
 				using HttpResponseMessage response = await _http.SendAsync(request, HttpCompletionOption.ResponseContentRead, ct).ConfigureAwait(false);
+
+				// This path keeps the body of a failure on purpose, but a 429 carries nothing worth keeping and
+				// still has to shut the host - otherwise the one caller that wants failure bodies is the one
+				// caller that goes on hammering a live rate limit.
+				if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests) {
+					TimeSpan shut = Limiters.NoteRateLimited(url.Host);
+
+					if (shut > TimeSpan.Zero) {
+						Log.Warn($"Steam is rate-limiting {url.Host} - every account stays off it for {Fmt.Hm((int) shut.TotalMinutes)}", _bot.Name);
+					}
+
+					return null;
+				}
+
+				Limiters.NoteWebOk(url.Host);
 
 				return await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 			}).ConfigureAwait(false);
