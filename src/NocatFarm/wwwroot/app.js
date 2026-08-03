@@ -116,6 +116,11 @@ async function loadLanguage(code) {
 /// Translate a chrome string. The English text IS the key, so nothing has to be kept in sync by hand.
 const t = (english) => (lang.ui && lang.ui[english]) || english;
 
+/// Translate, then fill in the blanks. Placeholders are {0}, {1}... rather than the sentence being glued
+/// together from fragments, because word order differs between languages and a translator has to be able to
+/// move the value to wherever it belongs - which is impossible once the English order is baked into the code.
+const tf = (english, ...args) => t(english).replace(/\{(\d+)\}/g, (whole, i) => (args[i] === undefined ? whole : args[i]));
+
 /// A setting's translated label / explanation / choice labels, falling back to whatever the schema carries.
 function tSetting(def, field) {
   const entry = lang.settings && lang.settings[def.Name];
@@ -165,46 +170,52 @@ const usdExact = (n) => cur() + (Number(n) || 0).toLocaleString('en-US', { minim
 function valueDelta(b) {
   if (b.InventoryChangePct === null || b.InventoryChangePct === undefined) return '';
   const up = b.InventoryChangePct >= 0;
-  return `<span class="delta ${up ? 'up' : 'down'}" data-tip="${esc((up ? 'Up ' : 'Down ') + usdExact(Math.abs(b.InventoryChange)) + ' over the last 24 hours, at the market median.')}">${up ? '+' : '-'}${Math.abs(b.InventoryChangePct).toFixed(1)}%</span>`;
+  const tip = up
+    ? tf('Up {0} over the last 24 hours, at the market median.', usdExact(Math.abs(b.InventoryChange)))
+    : tf('Down {0} over the last 24 hours, at the market median.', usdExact(Math.abs(b.InventoryChange)));
+  return `<span class="delta ${up ? 'up' : 'down'}" data-tip="${esc(tip)}">${up ? '+' : '-'}${Math.abs(b.InventoryChangePct).toFixed(1)}%</span>`;
 }
 
 async function refreshInventory(name) {
   await post(`/api/bots/${encodeURIComponent(name)}/inventory/refresh`, {});
-  toast(`Reading ${name}'s inventory again…`);
+  toast(tf('Reading {0}’s inventory again…', name));
 }
 
 // The hover breakdown: which games hold the value, biggest first.
 const nlChar = String.fromCharCode(10);
 function valueTip(b) {
-  if (!b.InventoryReady) return 'Reading this inventory...';
+  if (!b.InventoryReady) return t('Reading this inventory...');
   const rows = (b.InventoryByGame || []).filter((g) => g.Value > 0 || g.Blocked);
-  if (!rows.length) return 'Nothing with a market price in this inventory.';
+  if (!rows.length) return t('Nothing with a market price in this inventory.');
+  const items = (n) => (n === 1 ? tf('{0} item', n) : tf('{0} items', n));
   const lines = rows.map((g) => g.Blocked
-    ? `${g.Game} - skipped, nothing in it can be sold (${g.Items} item${g.Items === 1 ? '' : 's'})`
-    : `${g.Game} - ${usdExact(g.Value)}  (${g.Items} item${g.Items === 1 ? '' : 's'})`);
-  if (b.InventoryPending > 0) lines.push(`...${b.InventoryPending} more item${b.InventoryPending === 1 ? '' : 's'} still being priced`);
-  return `${usdExact(b.InventoryValue)} at market median${nlChar}${nlChar}${lines.join(nlChar)}`;
+    ? tf('{0} - skipped, nothing in it can be sold ({1})', g.Game, items(g.Items))
+    : tf('{0} - {1}  ({2})', g.Game, usdExact(g.Value), items(g.Items)));
+  if (b.InventoryPending > 0) lines.push(tf('...{0} more still being priced', items(b.InventoryPending)));
+  return tf('{0} at market median', usdExact(b.InventoryValue)) + nlChar + nlChar + lines.join(nlChar);
 }
 
 // ── formatting ───────────────────────────────────────────────────────
 function hm(minutes) {
-  if (!minutes) return '0m';
-  return minutes < 60 ? minutes + 'm' : Math.floor(minutes / 60) + 'h' + String(minutes % 60).padStart(2, '0') + 'm';
+  if (!minutes) return '0' + t('m');
+  return minutes < 60
+    ? minutes + t('m')
+    : Math.floor(minutes / 60) + t('h') + String(minutes % 60).padStart(2, '0') + t('m');
 }
 
 function ago(iso) {
-  if (!iso) return 'never';
+  if (!iso) return t('never');
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-  if (mins < 1) return 'just now';
-  return hm(mins) + ' ago';
+  if (mins < 1) return t('just now');
+  return tf('{0} ago', hm(mins));
 }
 
 // A future time: "in 45m" when it's close, a clock time "~14:30" when it's further off.
 function until(iso) {
   if (!iso) return '';
   const mins = Math.round((new Date(iso).getTime() - Date.now()) / 60000);
-  if (mins <= 0) return 'now';
-  if (mins < 90) return 'in ' + hm(mins);
+  if (mins <= 0) return t('now');
+  if (mins < 90) return tf('in {0}', hm(mins));
   const d = new Date(iso);
   return '~' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
 }
@@ -264,13 +275,13 @@ function render() {
   bots.forEach((b) => { counts[b.Group] = (counts[b.Group] || 0) + 1; });
   $('railChips').innerHTML = Object.keys(STATUS_META)
     .filter((k) => counts[k])
-    .map((k) => `<span class="chip ${k}" data-tip="${esc(STATUS_META[k].tip)}" onclick="filterTo('${k}')"><i class="dot"></i>${STATUS_META[k].label}<b>${counts[k]}</b></span>`)
-    .join('') || '<span class="muted small">no accounts yet</span>';
+    .map((k) => `<span class="chip ${k}" data-tip="${esc(t(STATUS_META[k].tip))}" onclick="filterTo('${k}')"><i class="dot"></i>${esc(t(STATUS_META[k].label))}<b>${counts[k]}</b></span>`)
+    .join('') || `<span class="muted small">${esc(t('no accounts yet'))}</span>`;
 
   $('railStats').innerHTML = `
-    <dt data-tip="Trading cards still to drop across every account that's farming.">Cards left</dt><dd>${state.CardsLeft}</dd>
-    ${r4rOn() && state.Rep4RepToken ? `<dt data-tip="Points you can spend on rep4rep. Pending ones are comments rep4rep hasn't verified yet.">Points</dt><dd>${state.Points}${state.PendingPoints ? ' <span class="muted">+' + state.PendingPoints + '</span>' : ''}</dd>` : ''}
-    <dt data-tip="How long nocat.farm has been running.">Up</dt><dd>${hm(state.UptimeMinutes)}</dd>`;
+    <dt data-tip="${esc(t("Trading cards still to drop across every account that's farming."))}">${esc(t('Cards left'))}</dt><dd>${state.CardsLeft}</dd>
+    ${r4rOn() && state.Rep4RepToken ? `<dt data-tip="${esc(t("Points you can spend on rep4rep. Pending ones are comments rep4rep hasn't verified yet."))}">${esc(t('Points'))}</dt><dd>${state.Points}${state.PendingPoints ? ' <span class="muted">+' + state.PendingPoints + '</span>' : ''}</dd>` : ''}
+    <dt data-tip="${esc(t('How long nocat.farm has been running.'))}">${esc(t('Up'))}</dt><dd>${hm(state.UptimeMinutes)}</dd>`;
 
   renderAlerts();
 
@@ -286,27 +297,30 @@ function renderAlerts() {
 
   if (state.Prompt) {
     out.push(`<div class="alert warn">
-      <span data-tip="Type the code from the Steam app on your phone, or from your email. nocat.farm can't finish logging in until you do.">${esc(state.Prompt)}</span>
+      <span data-tip="${esc(t("Type the code from the Steam app on your phone, or from your email. nocat.farm can't finish logging in until you do."))}">${esc(state.Prompt)}</span>
       <input id="promptInput" type="${state.PromptSecret ? 'password' : 'text'}" autocomplete="off">
-      <button onclick="sendPrompt()">Submit</button></div>`);
+      <button onclick="sendPrompt()">${esc(t('Submit'))}</button></div>`);
   }
 
   // Exposed only fires when a password IS set and is short — so "anyone can open this" was simply untrue, and
   // "set a password" pointed at a box that already had one in it. Say the thing that's actually wrong.
   if (state.Exposed) {
-    out.push(`<div class="alert bad"><span>This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.</span>
-      <span class="spacer"></span><button onclick="goSetting('WebPassword')">Use a longer one</button></div>`);
+    out.push(`<div class="alert bad"><span>${esc(t('This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.'))}</span>
+      <span class="spacer"></span><button onclick="goSetting('WebPassword')">${esc(t('Use a longer one'))}</button></div>`);
   }
 
   // The case that genuinely means "nobody else can get in" was computed and then never shown.
   if (state.LockedToThisPc) {
-    out.push(`<div class="alert warn"><span>This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.</span>
-      <span class="spacer"></span><button onclick="goSetting('WebPassword')">Set a password to open it up</button></div>`);
+    out.push(`<div class="alert warn"><span>${esc(t("This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here."))}</span>
+      <span class="spacer"></span><button onclick="goSetting('WebPassword')">${esc(t('Set a password to open it up'))}</button></div>`);
   }
 
   if (state.Rep4RepWanted > 0 && !state.Rep4RepToken) {
-    out.push(`<div class="alert warn"><span>rep4rep is switched on for ${state.Rep4RepWanted} account${state.Rep4RepWanted > 1 ? 's' : ''} but there's no API token, so nothing is being posted.</span>
-      <span class="spacer"></span><button onclick="go('rep4rep')">Add token</button></div>`);
+    const many = state.Rep4RepWanted > 1;
+    out.push(`<div class="alert warn"><span>${esc(many
+      ? tf("rep4rep is switched on for {0} accounts but there's no API token, so nothing is being posted.", state.Rep4RepWanted)
+      : t("rep4rep is switched on for one account but there's no API token, so nothing is being posted."))}</span>
+      <span class="spacer"></span><button onclick="go('rep4rep')">${esc(t('Add token'))}</button></div>`);
   }
 
   state.Bots.filter((b) => b.Group === 'problem').forEach((b) => {
@@ -340,7 +354,7 @@ function sendPrompt() {
   const value = el.value;
   el.value = '';
   post('/api/prompt', { Value: value }).then((res) => {
-    if (!res.ok) toast('Nothing was waiting for that answer', true);
+    if (!res.ok) toast(t('Nothing was waiting for that answer'), true);
     refresh();
   });
 }
@@ -353,26 +367,32 @@ function renderOverview() {
   const busy = bots.filter((b) => b.Group === 'farming' || b.Group === 'idling');
 
   let verdict;
-  if (!bots.length) verdict = 'No accounts yet.';
-  else if (need.length) verdict = `${need.map((b) => b.Name).join(', ')} ${need.length > 1 ? 'need' : 'needs'} something from you.`;
-  else if (bad.length) verdict = `${bad.length} account${bad.length > 1 ? 's have' : ' has'} a problem.`;
-  else verdict = `${bots.length} account${bots.length > 1 ? 's' : ''} · ${busy.length} working · everything's fine.`;
+  if (!bots.length) verdict = t('No accounts yet.');
+  else if (need.length) {
+    const who = need.map((b) => b.Name).join(', ');
+    verdict = need.length > 1 ? tf('{0} need something from you.', who) : tf('{0} needs something from you.', who);
+  } else if (bad.length) {
+    verdict = bad.length > 1 ? tf('{0} accounts have a problem.', bad.length) : t('One account has a problem.');
+  } else {
+    const many = bots.length > 1 ? tf('{0} accounts', bots.length) : tf('{0} account', bots.length);
+    verdict = tf("{0} · {1} working · everything's fine.", many, busy.length);
+  }
   $('verdict').textContent = verdict;
 
   const tile = (n, k, tip, sub) =>
-    `<div class="tile"><div class="n">${n}</div><div class="k">${k}${tipIcon(tip)}</div>${sub ? `<div class="sub">${sub}</div>` : ''}</div>`;
+    `<div class="tile"><div class="n">${n}</div><div class="k">${esc(t(k))}${tipIcon(t(tip))}</div>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}</div>`;
 
   $('tiles').innerHTML =
-    tile(state.CardsLeft, 'Cards left', "Trading cards still to drop across every account.", state.CardsLeft ? '' : 'nothing left to farm') +
+    tile(state.CardsLeft, 'Cards left', 'Trading cards still to drop across every account.', state.CardsLeft ? '' : t('nothing left to farm')) +
     tile(state.GamesLeft, 'Games left', 'Games with at least one card still to drop, across every account.') +
     tile(state.CardsToday, 'Cards today', 'Trading cards that dropped in the last 24 hours.') +
     tile(usd(state.InventoryValue), 'Inventory', "What every account's inventory would fetch at the market's median price. Everything in there is counted at what it's worth, whether or not it can be sold right now.",
-      state.InventoryPending > 0 ? 'still pricing ' + state.InventoryPending : '') +
+      state.InventoryPending > 0 ? tf('still pricing {0}', state.InventoryPending) : '') +
     (!r4rOn()
       ? ''
       : state.Rep4RepToken
         ? tile(state.Points, 'rep4rep points', "Points you can spend. Pending points are comments rep4rep hasn't verified yet - they turn into real points on their own, usually within a few hours. Nothing is lost.",
-            state.PendingPoints ? state.PendingPoints + ' pending' : '')
+            state.PendingPoints ? tf('{0} pending', state.PendingPoints) : '')
         : tile(state.CommentsToday, 'Comments today', 'rep4rep comments posted in the last 24 hours.'));
 
   // Version, and whether there's a newer one. The link always goes to the repo; when an update exists it says
@@ -383,7 +403,7 @@ function renderOverview() {
       ver.textContent = `v${state.Version} → ${state.UpdateAvailable}`;
       ver.href = state.UpdateUrl || 'https://github.com/VisaHolder/nocatfarm/releases';
       ver.classList.add('update');
-      ver.dataset.tip = `${state.UpdateAvailable} is out - you have ${state.Version}. Click to see what changed.`;
+      ver.dataset.tip = tf('{0} is out - you have {1}. Click to see what changed.', state.UpdateAvailable, state.Version);
     } else {
       ver.textContent = 'v' + state.Version;
       ver.classList.remove('update');
@@ -391,7 +411,7 @@ function renderOverview() {
   }
 
   $('glance').innerHTML = bots.length ? `<div class="tablewrap"><table>
-    <tr><th>Account</th><th>State</th><th>Playing</th><th>Cards</th><th data-tip="What everything in this account&apos;s inventory would fetch at the market&apos;s median price. Items with no market listing count as nothing; items it merely can&apos;t sell right now (trade holds, bans) are still counted at what they are worth.">Value</th>${r4rOn() ? '<th>rep4rep</th>' : ''}<th>Up</th></tr>
+    <tr><th>${esc(t('Account'))}</th><th>${esc(t('State'))}</th><th>${esc(t('Playing'))}</th><th>${esc(t('Cards'))}</th><th data-tip="${esc(t("What everything in this account's inventory would fetch at the market's median price. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth."))}">${esc(t('Value'))}</th>${r4rOn() ? `<th>${esc(t('rep4rep'))}</th>` : ''}<th>${esc(t('Up'))}</th></tr>
     ${bots.map((b) => `<tr class="click" data-act="cards" data-bot="${esc(b.Name)}">
       <td><b>${esc(b.Name)}</b></td>
       <td><span class="chip ${b.Group}"><i class="dot"></i>${esc(b.Status)}</span></td>
@@ -401,21 +421,21 @@ function renderOverview() {
       ${r4rOn() ? `<td>${b.Rep4Rep ? b.Rep4RepToday + '/' + b.Rep4RepCap : '—'}</td>` : ''}
       <td>${b.UptimeMinutes ? hm(b.UptimeMinutes) : '—'}</td></tr>`).join('')}
     </table></div>`
-    : `<p class="muted">No accounts yet. <a href="#console" onclick="go('console')">Add one</a> or type <code>add mybot mysteamlogin</code>.</p>`;
+    : `<p class="muted">${esc(t('No accounts yet.'))} <a href="#console" onclick="go('console')">${esc(t('Add one'))}</a> ${esc(t('or type'))} <code>add mybot mysteamlogin</code>.</p>`;
 
   renderToday();
 
   const interesting = logLines.filter((l) => l.Level !== 'INFO' && l.Level !== 'DEBUG').slice(-8).reverse();
   $('recent').innerHTML = interesting.length
     ? interesting.map((l) => `<div class="line"><span class="who">${esc(l.Source)}</span><span>${esc(l.Text)}</span><span class="when">${esc(l.Time)}</span></div>`).join('')
-    : '<p class="muted">Nothing worth reporting yet.</p>';
+    : `<p class="muted">${esc(t('Nothing worth reporting yet.'))}</p>`;
 }
 
 // Per-account activity in the last 24h. A tidy table, because the old by-hour bar chart was 24 near-empty bars
 // the moment a farm finished its cards and was just idling - which reads as broken, not informative.
 function renderToday() {
   const bots = state.Bots;
-  if (!bots.length) { $('today').innerHTML = '<p class="muted empty">No accounts yet.</p>'; return; }
+  if (!bots.length) { $('today').innerHTML = `<p class="muted empty">${esc(t('No accounts yet.'))}</p>`; return; }
 
   const r4r = r4rOn();
   const num = (n) => n ? n : '<span class="muted">0</span>';
@@ -432,9 +452,9 @@ function renderToday() {
   }).join('');
 
   $('today').innerHTML = `<div class="tablewrap"><table class="today">
-    <tr><th>Account</th><th data-tip="Trading cards that dropped in the last 24 hours.">Cards</th>${r4r ? '<th data-tip="rep4rep comments posted in the last 24 hours.">Comments</th>' : ''}</tr>
+    <tr><th>${esc(t('Account'))}</th><th data-tip="${esc(t('Trading cards that dropped in the last 24 hours.'))}">${esc(t('Cards'))}</th>${r4r ? `<th data-tip="${esc(t('rep4rep comments posted in the last 24 hours.'))}">${esc(t('Comments'))}</th>` : ''}</tr>
     ${rows}
-    <tr class="fleet"><td>fleet</td><td>${totCards}</td>${r4r ? `<td>${totComments}</td>` : ''}</tr>
+    <tr class="fleet"><td>${esc(t('fleet'))}</td><td>${totCards}</td>${r4r ? `<td>${totComments}</td>` : ''}</tr>
     </table></div>`;
 }
 
@@ -446,7 +466,7 @@ function renderAccounts() {
   const q = ($('acctSearch').value || '').toLowerCase();
 
   $('acctFilters').innerHTML = Object.keys(STATUS_META).map((k) =>
-    `<span class="chip ${k} ${acctFilter === k ? 'on' : ''}" data-tip="${esc(STATUS_META[k].tip)}" onclick="acctFilter='${acctFilter === k ? '' : k}';render()"><i class="dot"></i>${STATUS_META[k].label}</span>`).join('');
+    `<span class="chip ${k} ${acctFilter === k ? 'on' : ''}" data-tip="${esc(t(STATUS_META[k].tip))}" onclick="acctFilter='${acctFilter === k ? '' : k}';render()"><i class="dot"></i>${esc(t(STATUS_META[k].label))}</span>`).join('');
 
   const bots = state.Bots.filter((b) =>
     (!acctFilter || b.Group === acctFilter) &&
@@ -454,10 +474,10 @@ function renderAccounts() {
 
   if (!bots.length) {
     $('bots').innerHTML = state.Bots.length
-      ? '<p class="muted">No accounts match that.</p>'
-      : `<div class="card"><h2>No accounts yet</h2>
-         <p class="muted">Add one and nocat.farm will ask for the password and a Steam Guard code once, then remember it with a login token.</p>
-         <button onclick="showAddAccount()">+ Add account</button></div>`;
+      ? `<p class="muted">${esc(t('No accounts match that.'))}</p>`
+      : `<div class="card"><h2>${esc(t('No accounts yet'))}</h2>
+         <p class="muted">${esc(t('Add one and nocat.farm will ask for the password and a Steam Guard code once, then remember it with a login token.'))}</p>
+         <button onclick="showAddAccount()">+ ${esc(t('Add account'))}</button></div>`;
     return;
   }
 
@@ -469,39 +489,39 @@ function renderAccounts() {
     return `<div class="card bot ${b.Group}" draggable="true" data-name="${esc(b.Name)}"
       ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragend="dragEnd()" ondrop="dragEnd()">
       <div class="bot-head">
-        <span class="bot-name" title="${esc(b.Name)}" data-tip="Drag this card to move the account. The order is used everywhere - here, the app window and the console.">${esc(b.Name)}</span>
-        <span class="chip ${b.Group}" data-tip="${esc(STATUS_META[b.Group].tip)}"><i class="dot"></i>${esc(b.Status)}</span>
+        <span class="bot-name" title="${esc(b.Name)}" data-tip="${esc(t('Drag this card to move the account. The order is used everywhere - here, the app window and the console.'))}">${esc(b.Name)}</span>
+        <span class="chip ${b.Group}" data-tip="${esc(t(STATUS_META[b.Group].tip))}"><i class="dot"></i>${esc(b.Status)}</span>
       </div>
       <div class="bot-login" title="${esc(b.Login)}">${esc(b.Login)}${b.SteamId !== '0' ? ' · ' + esc(b.SteamId) : ''}</div>
       ${b.Notes ? `<div class="bot-notes" title="${esc(b.Notes)}">${esc(b.Notes)}</div>` : ''}
-      ${b.Guard ? `<div class="bot-guard">Waiting on you: ${esc(b.Guard)}</div>` : ''}
-      <div class="bot-playing" title="${esc(b.Playing || '')}">${b.Playing ? esc(b.Playing) : '<span class="real">not playing anything</span>'}</div>
+      ${b.Guard ? `<div class="bot-guard">${esc(tf('Waiting on you: {0}', b.Guard))}</div>` : ''}
+      <div class="bot-playing" title="${esc(b.Playing || '')}">${b.Playing ? esc(b.Playing) : `<span class="real">${esc(t('not playing anything'))}</span>`}</div>
       ${b.Online ? `<div class="bot-persona ${b.Persona === 'invisible' || b.Persona === 'offline' ? 'hidden-persona' : ''}"
-        data-tip="What your friends list shows for this account. The GAME comes straight back from Steam, so it's what other people genuinely see; the status is what nocat.farm set it to. Human mode changes the status by itself: invisible overnight, away on a break, Snooze over a meal.">your friends see: <b>${esc(b.Persona)}</b>${b.Seen ? ` · <b>${esc(b.Seen)}</b>` : ''}</div>` : ''}
+        data-tip="${esc(t("What your friends list shows for this account. The GAME comes straight back from Steam, so it's what other people genuinely see; the status is what nocat.farm set it to. Human mode changes the status by itself: invisible overnight, away on a break, Snooze over a meal."))}">${esc(t('your friends see:'))} <b>${esc(b.Persona)}</b>${b.Seen ? ` · <b>${esc(b.Seen)}</b>` : ''}</div>` : ''}
       ${b.NameNotShowing
-        ? `<div class="bot-mismatch" data-tip="Steam decides what to display when a custom name is sent alongside real games, and it has settled on the real one. Idling fewer games, or only the custom name, makes it show yours. A brief mismatch right after signing in is normal and isn't reported here.">Steam is showing ${esc(b.Seen)}, not your custom name</div>`
+        ? `<div class="bot-mismatch" data-tip="${esc(t("Steam decides what to display when a custom name is sent alongside real games, and it has settled on the real one. Idling fewer games, or only the custom name, makes it show yours. A brief mismatch right after signing in is normal and isn't reported here."))}">${esc(tf('Steam is showing {0}, not your custom name', b.Seen))}</div>`
         : ''}
       <div class="statline">
-        <span><b>${b.Cards}</b> card${b.Cards === 1 ? '' : 's'}${b.Games ? ` in ${b.Games}` : ''}</span>
-        ${r4rOn() && b.Rep4Rep ? `<span><b>${b.Rep4RepToday}</b>/${b.Rep4RepCap} comments</span>` : ''}
-        <span><b>${b.UptimeMinutes ? hm(b.UptimeMinutes) : '—'}</b> up</span>
-        ${b.InventoryValue > 0 ? `<span data-tip="${esc(valueTip(b))}"><b>${usd(b.InventoryValue)}</b> inventory ${valueDelta(b)}</span>` : ''}
+        <span>${b.Cards === 1 ? tf('<b>{0}</b> card', b.Cards) : tf('<b>{0}</b> cards', b.Cards)}${b.Games ? ' ' + esc(tf('in {0}', b.Games)) : ''}</span>
+        ${r4rOn() && b.Rep4Rep ? `<span>${tf('<b>{0}</b>/{1} comments', b.Rep4RepToday, b.Rep4RepCap)}</span>` : ''}
+        <span>${tf('<b>{0}</b> up', b.UptimeMinutes ? hm(b.UptimeMinutes) : '—')}</span>
+        ${b.InventoryValue > 0 ? `<span data-tip="${esc(valueTip(b))}">${tf('<b>{0}</b> inventory', usd(b.InventoryValue))} ${valueDelta(b)}</span>` : ''}
       </div>
-      ${r4rOn() && b.Rep4Rep ? `<div class="bar" data-tip="Comments posted in the last 24 hours against this account's daily cap."><i style="width:${capPct}%"></i></div>` : ''}
+      ${r4rOn() && b.Rep4Rep ? `<div class="bar" data-tip="${esc(t("Comments posted in the last 24 hours against this account's daily cap."))}"><i style="width:${capPct}%"></i></div>` : ''}
       <div class="rows">
         ${b.Modules.filter((m) => m.Status && m.Status !== 'off' && m.Status !== 'idle').map((m) =>
           `<div class="row"><span class="k">${esc(m.Name)}</span><span class="v" title="${esc(m.Status)}">${esc(m.Status)}</span></div>`).join('')}
       </div>
       <div class="actions">
-        ${b.InventoryValue > 0 || b.InventoryReady ? `<button data-tip="Read this account's inventory again. Prices are kept for a day, so only what changed is looked up." onclick="refreshInventory('${esc(b.Name)}')">Value</button>` : ''}
+        ${b.InventoryValue > 0 || b.InventoryReady ? `<button data-tip="${esc(t("Read this account's inventory again. Prices are kept for a day, so only what changed is looked up."))}" onclick="refreshInventory('${esc(b.Name)}')">${esc(t('Value'))}</button>` : ''}
         ${b.Online
           ? (b.Paused
-            ? `<button data-tip="Start playing, farming and commenting again." data-act="resume" data-bot="${esc(b.Name)}">Resume</button>`
-            : `<button class="ghost" data-tip="Stop playing, farming and commenting. The account stays logged in." data-act="pause" data-bot="${esc(b.Name)}">Pause</button>`)
-          : `<button data-tip="Log this account in." data-act="start" data-bot="${esc(b.Name)}">Start</button>`}
-        ${b.State !== 'Stopped' ? `<button class="ghost" data-tip="Log this account out. It stays configured." data-act="stop" data-bot="${esc(b.Name)}">Stop</button>` : ''}
-        <button class="ghost" data-tip="What this account still has left to farm." data-act="cards" data-bot="${esc(b.Name)}">Cards</button>
-        <button class="ghost" data-tip="This account's settings." data-act="settings" data-bot="${esc(b.Name)}">Settings</button>
+            ? `<button data-tip="${esc(t('Start playing, farming and commenting again.'))}" data-act="resume" data-bot="${esc(b.Name)}">${esc(t('Resume'))}</button>`
+            : `<button class="ghost" data-tip="${esc(t('Stop playing, farming and commenting. The account stays logged in.'))}" data-act="pause" data-bot="${esc(b.Name)}">${esc(t('Pause'))}</button>`)
+          : `<button data-tip="${esc(t('Log this account in.'))}" data-act="start" data-bot="${esc(b.Name)}">${esc(t('Start'))}</button>`}
+        ${b.State !== 'Stopped' ? `<button class="ghost" data-tip="${esc(t('Log this account out. It stays configured.'))}" data-act="stop" data-bot="${esc(b.Name)}">${esc(t('Stop'))}</button>` : ''}
+        <button class="ghost" data-tip="${esc(t('What this account still has left to farm.'))}" data-act="cards" data-bot="${esc(b.Name)}">${esc(t('Cards'))}</button>
+        <button class="ghost" data-tip="${esc(t("This account's settings."))}" data-act="settings" data-bot="${esc(b.Name)}">${esc(t('Settings'))}</button>
       </div></div>`;
   }).join('');
 }
@@ -559,14 +579,14 @@ async function dragEnd() {
 
   const order = [...visible, ...hidden];
   const res = await post('/api/accounts/order', order);
-  if (!res.ok) toast(res.error || "Couldn't save that order", true);
+  if (!res.ok) toast(res.error || t("Couldn't save that order"), true);
   refresh();
 }
 
 // Every one of these used to ignore the reply, so a failure looked exactly like a success.
 async function act(name, action) {
   const res = await post(`/api/bots/${encodeURIComponent(name)}/${action}`);
-  if (!res.ok) toast(res.error || "That didn't work", true);
+  if (!res.ok) toast(res.error || t("That didn't work"), true);
   refresh();
 }
 
@@ -574,33 +594,33 @@ async function openBot(name) {
   const data = await api(`/api/bots/${encodeURIComponent(name)}/cards`);
   const bot = state.Bots.find((b) => b.Name === name);
   modal(`
-    <h2>${esc(name)} — trading cards</h2>
+    <h2>${esc(tf('{0} — trading cards', name))}</h2>
     <p class="muted small">${esc(data.Status || '')}</p>
     ${data.Games.length ? `<div class="tablewrap"><table>
-      <tr><th>Cards</th><th data-tip="How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.">Hours</th><th>Game</th></tr>
+      <tr><th>${esc(t('Cards'))}</th><th data-tip="${esc(t("How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings."))}">${esc(t('Hours'))}</th><th>${esc(t('Game'))}</th></tr>
       ${data.Games.map((g) => `<tr><td>${g.Cards}</td><td>${g.Hours}</td><td>${esc(g.Name)}</td></tr>`).join('')}
-      </table></div>` : '<p class="muted">Nothing left to farm on this account.</p>'}
+      </table></div>` : `<p class="muted">${esc(t('Nothing left to farm on this account.'))}</p>`}
     <div class="actions">
-      <button class="ghost" data-act="settings" data-bot="${esc(name)}">Settings</button>
-      <button class="ghost" onclick="closeModal()">Close</button>
+      <button class="ghost" data-act="settings" data-bot="${esc(name)}">${esc(t('Settings'))}</button>
+      <button class="ghost" onclick="closeModal()">${esc(t('Close'))}</button>
       <span class="spacer"></span>
-      <button class="danger" data-act="remove" data-bot="${esc(name)}">Remove</button>
+      <button class="danger" data-act="remove" data-bot="${esc(name)}">${esc(t('Remove'))}</button>
     </div>`);
 }
 
 function showAddAccount() {
   modal(`
-    <h2>Add a Steam account</h2>
+    <h2>${esc(t('Add a Steam account'))}</h2>
     <div class="form2">
-      <label for="a-name">Name${tipIcon("A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam.")}</label>
+      <label for="a-name">${esc(t('Name'))}${tipIcon(t("A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam."))}</label>
       <input id="a-name" type="text" placeholder="mybot" autocomplete="off">
-      <label for="a-login">Steam account name${tipIcon("What you type into Steam's sign-in box. Not your display name, not your email.")}</label>
+      <label for="a-login">${esc(t('Steam account name'))}${tipIcon(t("What you type into Steam's sign-in box. Not your display name, not your email."))}</label>
       <input id="a-login" type="text" autocomplete="off">
-      <label for="a-pass">Password${tipIcon("Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.")}</label>
-      <input id="a-pass" type="password" placeholder="leave blank and it'll ask" autocomplete="off">
+      <label for="a-pass">${esc(t('Password'))}${tipIcon(t('Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.'))}</label>
+      <input id="a-pass" type="password" placeholder="${esc(t("leave blank and it'll ask"))}" autocomplete="off">
     </div>
     <p id="addError" class="error"></p>
-    <div class="actions"><button onclick="createBot()">Add account</button><button class="ghost" onclick="closeModal()">Cancel</button></div>`);
+    <div class="actions"><button onclick="createBot()">${esc(t('Add account'))}</button><button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button></div>`);
   setTimeout(() => $('a-name').focus(), 50);
 }
 
@@ -620,41 +640,43 @@ async function checkForAsf() {
 
   const withTokens = found.Accounts.filter((a) => a.HasToken).length;
   $('importBanner').classList.remove('hidden');
+  const n = found.Accounts.length;
   $('importBanner').innerHTML = `
     <div class="alert info" style="margin-bottom:18px;display:block">
-      <b>Found an ArchiSteamFarm install with ${found.Accounts.length} account${found.Accounts.length === 1 ? '' : 's'}.</b>
+      <b>${esc(n === 1 ? t('Found an ArchiSteamFarm install with one account.') : tf('Found an ArchiSteamFarm install with {0} accounts.', n))}</b>
       <div class="muted small" style="margin:4px 0 10px">
         ${esc(found.Path)}<br>
-        ${withTokens ? `${withTokens} of them can come across with their saved logins — no passwords, no Steam Guard codes.` : 'You will still need to sign in to each one once.'}
+        ${esc(withTokens
+          ? tf('{0} of them can come across with their saved logins — no passwords, no Steam Guard codes.', withTokens)
+          : t('You will still need to sign in to each one once.'))}
       </div>
-      <button onclick="runImport()">Import ${found.Accounts.length} account${found.Accounts.length === 1 ? '' : 's'}</button>
+      <button onclick="runImport()">${esc(n === 1 ? t('Import one account') : tf('Import {0} accounts', n))}</button>
     </div>`;
 }
 
 function showImport() {
   api('/api/import/asf').then((found) => {
     if (!found || !found.Found) {
-      modal(`<h2>Import from ArchiSteamFarm</h2>
-        <p class="muted">No ASF install found automatically. Point at its <code>config</code> folder:</p>
+      modal(`<h2>${esc(t('Import from ArchiSteamFarm'))}</h2>
+        <p class="muted">${t('No ASF install found automatically. Point at its {0} folder:').replace('{0}', '<code>config</code>')}</p>
         <input id="importPath" type="text" placeholder="C:\\...\\ArchiSteamFarm\\config" autocomplete="off">
         <p id="importError" class="error"></p>
-        <div class="actions"><button onclick="runImport()">Import</button><button class="ghost" onclick="closeModal()">Cancel</button></div>`);
+        <div class="actions"><button onclick="runImport()">${esc(t('Import'))}</button><button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button></div>`);
       return;
     }
 
-    modal(`<h2>Import from ArchiSteamFarm</h2>
+    modal(`<h2>${esc(t('Import from ArchiSteamFarm'))}</h2>
       <p class="muted small">${esc(found.Path)}</p>
       <div class="tablewrap"><table>
-        <tr><th>Account</th><th>Steam login</th><th>Sign-in</th></tr>
+        <tr><th>${esc(t('Account'))}</th><th>${esc(t('Steam login'))}</th><th>${esc(t('Sign-in'))}</th></tr>
         ${found.Accounts.map((a) => `<tr><td><b>${esc(a.Name)}</b></td><td class="muted">${esc(a.SteamLogin)}</td>
-          <td>${a.HasToken ? '<span class="pill good">token — no password needed</span>'
-            : a.HasPassword ? '<span class="pill warn">password only</span>'
-            : '<span class="pill">will ask on first login</span>'}</td></tr>`).join('')}
+          <td>${a.HasToken ? `<span class="pill good">${esc(t('token — no password needed'))}</span>`
+            : a.HasPassword ? `<span class="pill warn">${esc(t('password only'))}</span>`
+            : `<span class="pill">${esc(t('will ask on first login'))}</span>`}</td></tr>`).join('')}
       </table></div>
-      <p class="muted small" style="margin-top:12px">Accounts you already have here are left alone.
-        Don't run ASF and nocat.farm on the same account at once — they'd take turns kicking each other off Steam.</p>
+      <p class="muted small" style="margin-top:12px">${esc(t("Accounts you already have here are left alone. Don't run ASF and nocat.farm on the same account at once — they'd take turns kicking each other off Steam."))}</p>
       <p id="importError" class="error"></p>
-      <div class="actions"><button onclick="runImport()">Import ${found.Accounts.length}</button><button class="ghost" onclick="closeModal()">Cancel</button></div>`);
+      <div class="actions"><button onclick="runImport()">${esc(tf('Import {0}', found.Accounts.length))}</button><button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button></div>`);
   });
 }
 
@@ -671,16 +693,17 @@ async function runImport() {
   closeModal();
   $('importBanner').classList.add('hidden');
   sessionStorage.setItem('skip-welcome', '1');
-  toast(`Imported ${res.Imported} account${res.Imported === 1 ? '' : 's'}`);
+  const done = res.Imported === 1 ? t('Imported one account') : tf('Imported {0} accounts', res.Imported);
+  toast(done);
   await loadConfig();
   await refresh();
   go('accounts');
 
   if (res.Notes && res.Notes.length) {
-    modal(`<h2>Imported ${res.Imported} account${res.Imported === 1 ? '' : 's'}</h2>
+    modal(`<h2>${esc(done)}</h2>
       <div class="rows">${res.Notes.map((n) => `<div class="row"><span>${esc(n)}</span></div>`).join('')}</div>
-      <p class="muted small" style="margin-top:12px">They're added but not started. Press Start on each, or run <code>start all</code>.</p>
-      <div class="actions"><button onclick="closeModal();run('start all')">Start them all</button><button class="ghost" onclick="closeModal()">Not yet</button></div>`);
+      <p class="muted small" style="margin-top:12px">${t("They're added but not started. Press Start on each, or run {0}.").replace('{0}', '<code>start all</code>')}</p>
+      <div class="actions"><button onclick="closeModal();run('start all')">${esc(t('Start them all'))}</button><button class="ghost" onclick="closeModal()">${esc(t('Not yet'))}</button></div>`);
   }
 }
 
@@ -701,28 +724,28 @@ async function createFirstBot() {
 // and a fixed word would not catch that.
 function removeBot(name) {
   modal(`
-    <h2>Remove ${esc(name)}?</h2>
-    <p>This deletes <code>config/${esc(name)}.json</code> and the stored login token for it.</p>
+    <h2>${esc(tf('Remove {0}?', name))}</h2>
+    <p>${tf('This deletes {0} and the stored login token for it.', `<code>config/${esc(name)}.json</code>`)}</p>
     <ul class="muted small">
-      <li>Nothing happens to the Steam account itself - it is only removed from nocat.farm.</li>
-      <li>Adding it back needs the password and a fresh Steam Guard code.</li>
-      <li>Anything it was farming stops.</li>
+      <li>${esc(t('Nothing happens to the Steam account itself - it is only removed from nocat.farm.'))}</li>
+      <li>${esc(t('Adding it back needs the password and a fresh Steam Guard code.'))}</li>
+      <li>${esc(t('Anything it was farming stops.'))}</li>
     </ul>
-    <p class="small">Type <code>${esc(name)}</code> to enable the button.</p>
-    <input type="text" id="removeConfirm" autocomplete="off" spellcheck="false" placeholder="type the account name"
+    <p class="small">${tf('Type {0} to enable the button.', `<code>${esc(name)}</code>`)}</p>
+    <input type="text" id="removeConfirm" autocomplete="off" spellcheck="false" placeholder="${esc(t('type the account name'))}"
            data-expect="${esc(name)}"
            oninput="$('removeGo').disabled = this.value.trim() !== this.dataset.expect">
     <div class="actions">
-      <button class="ghost" onclick="closeModal()">Cancel</button>
-      <button class="danger" id="removeGo" disabled data-bot="${esc(name)}" onclick="doRemoveBot(this.dataset.bot)">Remove it</button>
+      <button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button>
+      <button class="danger" id="removeGo" disabled data-bot="${esc(name)}" onclick="doRemoveBot(this.dataset.bot)">${esc(t('Remove it'))}</button>
     </div>`);
   setTimeout(() => { const el = $('removeConfirm'); if (el) el.focus(); }, 30);
 }
 
 async function doRemoveBot(name) {
   const res = await del('/api/bots/' + encodeURIComponent(name));
-  if (!res.ok) { toast(res.error || 'Could not remove that account', true); return; }
-  toast(`Removed ${name}`);
+  if (!res.ok) { toast(res.error || t('Could not remove that account'), true); return; }
+  toast(tf('Removed {0}', name));
   if (settingsTarget === name) { settingsTarget = GLOBAL; pending = {}; }
   closeModal();
   await loadConfig();
@@ -800,62 +823,56 @@ function renderTutorial() {
     {
       // Language first, before a word of the rest is read. Skipping leaves it English, which is also what an
       // untranslated string falls back to - so there is no way to end up looking at blanks.
-      title: 'Language',
-      body: `<p>Pick the language for this dashboard. You can change it later under Settings &rsaquo; Global.</p>
+      title: t('Language'),
+      body: `<p>${esc(t('Pick the language for this dashboard. You can change it later under Settings › Global.'))}</p>
         <div class="langpick">${LANGUAGES.map((l) =>
           `<span class="p ${(config && config.Global && config.Global.Language || 'en') === l.code ? 'on' : ''}"
             onclick="pickTutorialLanguage('${l.code}')">${esc(l.name)}</span>`).join('')}</div>
-        <p class="muted small">Anything a translation hasn't covered yet stays in English rather than showing a
-        blank, so a part-finished language is still perfectly usable. The console and the log stay in English.</p>`,
-      next: 'Continue',
+        <p class="muted small">${esc(t("Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. The console and the log stay in English."))}</p>`,
+      next: t('Continue'),
     },
     {
-      title: 'Welcome to nocat.farm',
-      body: `<p>It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts
-        rep4rep comments - all from this machine. Your accounts never leave it.</p>
-        <p class="muted small">This takes about a minute. You can skip it and come back from the Overview page.</p>`,
-      next: 'Start',
+      title: t('Welcome to nocat.farm'),
+      body: `<p>${esc(t('It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts rep4rep comments - all from this machine. Your accounts never leave it.'))}</p>
+        <p class="muted small">${esc(t('This takes about a minute. You can skip it and come back from the Overview page.'))}</p>`,
+      next: t('Start'),
     },
     {
-      title: found ? 'Bring your ArchiSteamFarm accounts across' : 'Add your first account',
+      title: found ? t('Bring your ArchiSteamFarm accounts across') : t('Add your first account'),
       body: found
-        ? `<p>Found an ArchiSteamFarm setup at <code>${esc(tutorialAsf.Path)}</code> with
-            <b>${tutorialAsf.Accounts.length} account${tutorialAsf.Accounts.length === 1 ? '' : 's'}</b>.</p>
+        ? `<p>${tf('Found an ArchiSteamFarm setup at {0} with {1}.', `<code>${esc(tutorialAsf.Path)}</code>`,
+             `<b>${esc(tutorialAsf.Accounts.length === 1 ? t('one account') : tf('{0} accounts', tutorialAsf.Accounts.length))}</b>`)}</p>
            <ul class="muted small">
-             ${tutorialAsf.Accounts.map((a) => `<li>${esc(a.Name)} - ${esc(a.SteamLogin)}${a.HasToken ? ' (login token comes across, so no password needed)' : ''}</li>`).join('')}
+             ${tutorialAsf.Accounts.map((a) => `<li>${esc(a.Name)} - ${esc(a.SteamLogin)}${a.HasToken ? ' ' + esc(t('(login token comes across, so no password needed)')) : ''}</li>`).join('')}
            </ul>
-           <p class="muted small">Importing copies the accounts and their login tokens. It changes nothing in ArchiSteamFarm.</p>`
-        : `<p>Add the Steam account you want it to run. You will be asked for the password <b>once</b>, and for a
-            Steam Guard code - after that it remembers a login token and never needs the password again.</p>
-           <p class="muted small">No ArchiSteamFarm install was found on this machine, so there is nothing to import.</p>`,
-      next: found ? 'Import them' : 'Add an account',
+           <p class="muted small">${esc(t('Importing copies the accounts and their login tokens. It changes nothing in ArchiSteamFarm.'))}</p>`
+        : `<p>${tf('Add the Steam account you want it to run. You will be asked for the password {0}, and for a Steam Guard code - after that it remembers a login token and never needs the password again.', `<b>${esc(t('once'))}</b>`)}</p>
+           <p class="muted small">${esc(t('No ArchiSteamFarm install was found on this machine, so there is nothing to import.'))}</p>`,
+      next: found ? t('Import them') : t('Add an account'),
       act: found ? doTutorialImport : () => { closeTutorial(); go('accounts'); showAddAccount(); },
     },
     {
-      title: 'Tell it what to play',
-      body: `<p>An account does nothing until it knows what to run. Two ways:</p>
+      title: t('Tell it what to play'),
+      body: `<p>${esc(t('An account does nothing until it knows what to run. Two ways:'))}</p>
         <ul class="muted small">
-          <li><b>Trading cards</b> - it works through everything in your library that still has drops, then stops. Nothing to configure.</li>
-          <li><b>Human mode</b> - it keeps a believable daily routine: a few games, one at a time, with breaks, meals and a bedtime. Use this on an account you care about.</li>
+          <li>${tf('{0} - it works through everything in your library that still has drops, then stops. Nothing to configure.', `<b>${esc(t('Trading cards'))}</b>`)}</li>
+          <li>${tf('{0} - it keeps a believable daily routine: a few games, one at a time, with breaks, meals and a bedtime. Use this on an account you care about.', `<b>${esc(t('Human mode'))}</b>`)}</li>
         </ul>
-        <p class="muted small">Both live under Settings, per account.</p>`,
-      next: 'Next',
+        <p class="muted small">${esc(t('Both live under Settings, per account.'))}</p>`,
+      next: t('Next'),
     },
     {
-      title: 'rep4rep, if you want it',
-      body: `<p>Optional. Your accounts post comments on other people's Steam profiles and earn points you can
-        spend on comments for your own.</p>
-        <p class="muted small">Needs a free account -
-        <a href="https://rep4rep.com/?r=reap" target="_blank" rel="noopener">rep4rep.com ↗</a> - and the API token
-        pasted into Settings. Skip it entirely if you only want cards and playtime.</p>`,
-      next: 'Next',
+      title: t('rep4rep, if you want it'),
+      body: `<p>${esc(t("Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own."))}</p>
+        <p class="muted small">${tf('Needs a free account - {0} - and the API token pasted into Settings. Skip it entirely if you only want cards and playtime.',
+          '<a href="https://rep4rep.com/?r=reap" target="_blank" rel="noopener">rep4rep.com ↗</a>')}</p>`,
+      next: t('Next'),
     },
     {
-      title: "That's it",
-      body: `<p>Everything has an explanation attached - hover the <i class="info" style="display:inline-flex"></i>
-        beside any setting.</p>
-        <p class="muted small">The Console tab does anything the other tabs do, by typing. <code>help</code> lists it all.</p>`,
-      next: 'Finish',
+      title: t("That's it"),
+      body: `<p>${tf('Everything has an explanation attached - hover the {0} beside any setting.', '<i class="info" style="display:inline-flex"></i>')}</p>
+        <p class="muted small">${tf('The Console tab does anything the other tabs do, by typing. {0} lists it all.', '<code>help</code>')}</p>`,
+      next: t('Finish'),
       act: closeTutorial,
     },
   ];
@@ -864,12 +881,12 @@ function renderTutorial() {
   const last = tutorialStep >= steps.length - 1;
 
   modal(`
-    <div class="muted small" style="letter-spacing:1px">STEP ${tutorialStep + 1} OF ${steps.length}</div>
+    <div class="muted small" style="letter-spacing:1px">${esc(tf('STEP {0} OF {1}', tutorialStep + 1, steps.length))}</div>
     <h2>${esc(st.title)}</h2>
     ${st.body}
     <div class="actions">
-      ${tutorialStep > 0 ? `<button class="ghost" onclick="tutorialStep--;renderTutorial()">Back</button>` : ''}
-      <button class="ghost" onclick="closeTutorial()">${last ? 'Close' : 'Skip'}</button>
+      ${tutorialStep > 0 ? `<button class="ghost" onclick="tutorialStep--;renderTutorial()">${esc(t('Back'))}</button>` : ''}
+      <button class="ghost" onclick="closeTutorial()">${esc(last ? t('Close') : t('Skip'))}</button>
       <button id="tutNext">${esc(st.next)}</button>
     </div>`);
 
@@ -879,18 +896,18 @@ function renderTutorial() {
 async function doTutorialImport() {
   const btn = $('tutNext');
   btn.disabled = true;
-  btn.textContent = 'Importing…';
+  btn.textContent = t('Importing…');
 
   const res = await post('/api/import/asf', { Path: tutorialAsf.Path });
 
   if (!res.ok) {
-    toast(res.error || 'Import failed', true);
+    toast(res.error || t('Import failed'), true);
     btn.disabled = false;
-    btn.textContent = 'Import them';
+    btn.textContent = t('Import them');
     return;
   }
 
-  toast(`Imported ${res.Imported || ''} account(s)`.replace('  ', ' '));
+  toast(res.Imported === 1 ? t('Imported one account') : tf('Imported {0} accounts', res.Imported || 0));
   await loadConfig();
   refresh();
   tutorialStep++;
@@ -921,14 +938,14 @@ function helpModal(filter) {
           <code>${esc(c.Display || c.Name)}${c.Args ? ' ' + esc(c.Args) : ''}</code>
           <span class="h">${esc(c.Help)}</span>
         </div>`).join('')}`).join('')
-    : '<p class="muted">Nothing matches.</p>';
+    : `<p class="muted">${esc(t('Nothing matches.'))}</p>`;
 
   modal(`
-    <h2>Commands</h2>
-    <input type="text" id="helpFilter" autocomplete="off" spellcheck="false" placeholder="filter…"
+    <h2>${esc(t('Commands'))}</h2>
+    <input type="text" id="helpFilter" autocomplete="off" spellcheck="false" placeholder="${esc(t('filter…'))}"
            oninput="helpModal(this.value)" value="${esc(filter || '')}">
     <div class="helplist">${body}</div>
-    <div class="actions"><button class="ghost" onclick="closeModal()">Close</button></div>`);
+    <div class="actions"><button class="ghost" onclick="closeModal()">${esc(t('Close'))}</button></div>`);
 
   const f = $('helpFilter');
   if (f) { f.focus(); f.setSelectionRange(f.value.length, f.value.length); }
@@ -960,7 +977,7 @@ document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-task]');
   if (!el) return;
   el.disabled = true;
-  el.textContent = 'posting…';
+  el.textContent = t('posting…');
   post('/api/rep4rep/tasks/' + encodeURIComponent(el.dataset.task) + '/post?bot=' + encodeURIComponent($('r4rBot').value))
     .then((res) => { toast(res.message, !res.ok); loadTasks(); refresh(); });
 });
@@ -980,7 +997,7 @@ async function loadRep4Rep() {
     renderBotPicker();
     loadTasks();
   } else {
-    $('r4rProfiles').innerHTML = '<p class="muted">Connect your rep4rep account first.</p>';
+    $('r4rProfiles').innerHTML = `<p class="muted">${esc(t('Connect your rep4rep account first.'))}</p>`;
     $('r4rTasks').innerHTML = '';
   }
   renderRep4RepPacing();
@@ -989,36 +1006,33 @@ async function loadRep4Rep() {
 function renderRep4RepAccount() {
   if (!r4r || !r4r.Connected) {
     $('r4rAccount').innerHTML = `
-      <h2>Set up rep4rep</h2>
+      <h2>${esc(t('Set up rep4rep'))}</h2>
       <p class="explain" style="margin-bottom:18px">
-        <b>How it works:</b> your accounts post a comment on someone else's Steam profile → you earn points →
-        you spend those points to get comments on <i>your</i> profile. nocat.farm does the posting for you,
-        on a schedule that keeps every account under Steam's daily limit.</p>
+        ${tf("{0} your accounts post a comment on someone else's Steam profile → you earn points → you spend those points to get comments on {1} profile. nocat.farm does the posting for you, on a schedule that keeps every account under Steam's daily limit.",
+          `<b>${esc(t('How it works:'))}</b>`, `<i>${esc(t('your'))}</i>`)}</p>
 
       <ol class="steps">
         <li>
-          <b>Make a rep4rep account</b>
-          <div class="muted">Free, and it takes a minute. Sign up, then click the verification link in your email
-            — the token below won't work until you do.</div>
+          <b>${esc(t('Make a rep4rep account'))}</b>
+          <div class="muted">${esc(t("Free, and it takes a minute. Sign up, then click the verification link in your email — the token below won't work until you do."))}</div>
           <div class="toolbar" style="margin:10px 0 0">
-            <button onclick="window.open('https://rep4rep.com/?r=reap', '_blank', 'noopener')">Sign up for rep4rep ↗</button>
+            <button onclick="window.open('https://rep4rep.com/?r=reap', '_blank', 'noopener')">${esc(t('Sign up for rep4rep ↗'))}</button>
           </div>
         </li>
         <li>
-          <b>Copy your API token</b>
-          <div class="muted">It's on <a href="https://rep4rep.com/user/settings" target="_blank" rel="noopener">rep4rep.com → Settings ↗</a>.
-            Copy the whole string.</div>
+          <b>${esc(t('Copy your API token'))}</b>
+          <div class="muted">${tf("It's on {0}. Copy the whole string.",
+            '<a href="https://rep4rep.com/user/settings" target="_blank" rel="noopener">rep4rep.com → Settings ↗</a>')}</div>
           <div class="toolbar" style="margin:10px 0 0">
-            <input id="r4rToken" type="password" placeholder="paste the token here" autocomplete="off" style="max-width:340px"
+            <input id="r4rToken" type="password" placeholder="${esc(t('paste the token here'))}" autocomplete="off" style="max-width:340px"
                    onkeydown="if(event.key==='Enter')connectRep4Rep()">
-            <button onclick="connectRep4Rep()">Connect</button>
+            <button onclick="connectRep4Rep()">${esc(t('Connect'))}</button>
           </div>
           <p id="r4rError" class="error">${r4r && r4r.Error ? esc(r4r.Error) : ''}</p>
         </li>
         <li class="muted">
-          <b>That's it</b>
-          <div>nocat.farm registers your Steam accounts with rep4rep by itself and starts posting.
-            You don't have to add anything on their website.</div>
+          <b>${esc(t("That's it"))}</b>
+          <div>${esc(t("nocat.farm registers your Steam accounts with rep4rep by itself and starts posting. You don't have to add anything on their website."))}</div>
         </li>
       </ol>`;
     return;
@@ -1028,22 +1042,23 @@ function renderRep4RepAccount() {
   const total = state ? state.Bots.length : 0;
 
   $('r4rAccount').innerHTML = `
-    <h2>Your rep4rep account</h2>
+    <h2>${esc(t('Your rep4rep account'))}</h2>
     <div class="tiles">
-      <div class="tile"><div class="n">${r4r.Points}</div><div class="k">Points you can spend${tipIcon('Spend these on comments for your own Steam profile, over on rep4rep.com. Read fresh from rep4rep every time you open this tab, so it matches the site.')}</div>
-        ${r4r.SyncedAt ? `<div class="muted small">as of ${new Date(r4r.SyncedAt).toLocaleTimeString()}</div>` : ''}</div>
-      <div class="tile"><div class="n">${r4r.Pending}</div><div class="k">Waiting to be verified${tipIcon("Comments you've posted that rep4rep hasn't checked yet. They turn into spendable points on their own, usually within a few hours - nothing is lost and nothing is stuck.")}</div>
-        <div class="sub">turns into points on its own</div></div>
+      <div class="tile"><div class="n">${r4r.Points}</div><div class="k">${esc(t('Points you can spend'))}${tipIcon(t('Spend these on comments for your own Steam profile, over on rep4rep.com. Read fresh from rep4rep every time you open this tab, so it matches the site.'))}</div>
+        ${r4r.SyncedAt ? `<div class="muted small">${esc(tf('as of {0}', new Date(r4r.SyncedAt).toLocaleTimeString()))}</div>` : ''}</div>
+      <div class="tile"><div class="n">${r4r.Pending}</div><div class="k">${esc(t('Waiting to be verified'))}${tipIcon(t("Comments you've posted that rep4rep hasn't checked yet. They turn into spendable points on their own, usually within a few hours - nothing is lost and nothing is stuck."))}</div>
+        <div class="sub">${esc(t('turns into points on its own'))}</div></div>
     </div>
     ${on === 0 && total > 0
-      ? `<div class="alert warn" style="margin:4px 0 12px"><span>Connected, but commenting isn't switched on for any account yet.</span>
-         <span class="spacer"></span><button onclick="enableAllRep4Rep()">Turn it on for all ${total}</button></div>`
-      : `<p class="muted small">Posting from <b>${on}</b> of ${total} account${total === 1 ? '' : 's'}.</p>`}
+      ? `<div class="alert warn" style="margin:4px 0 12px"><span>${esc(t("Connected, but commenting isn't switched on for any account yet."))}</span>
+         <span class="spacer"></span><button onclick="enableAllRep4Rep()">${esc(tf('Turn it on for all {0}', total))}</button></div>`
+      : `<p class="muted small">${tf('Posting from {0} of {1}.', `<b>${on}</b>`,
+          total === 1 ? t('one account') : tf('{0} accounts', total))}</p>`}
     <div class="toolbar">
-      <span class="muted small">Token set · synced ${esc(ago(r4r.SyncedAt))}</span>
-      <button class="ghost" onclick="loadRep4Rep()">Refresh</button>
-      <button class="ghost" onclick="replaceToken()">Replace token</button>
-      <a class="muted small" href="https://rep4rep.com/dashboard/" target="_blank" rel="noopener" style="margin-left:auto">Spend your points ↗</a>
+      <span class="muted small">${esc(tf('Token set · synced {0}', ago(r4r.SyncedAt)))}</span>
+      <button class="ghost" onclick="loadRep4Rep()">${esc(t('Refresh'))}</button>
+      <button class="ghost" onclick="replaceToken()">${esc(t('Replace token'))}</button>
+      <a class="muted small" href="https://rep4rep.com/dashboard/" target="_blank" rel="noopener" style="margin-left:auto">${esc(t('Spend your points ↗'))}</a>
     </div>`;
 }
 
@@ -1055,7 +1070,7 @@ async function enableAllRep4Rep() {
     if (!base) continue;
     await post('/api/bots/' + encodeURIComponent(b.Name) + '/config', { ...base, Rep4Rep: true });
   }
-  toast('rep4rep commenting switched on for every account');
+  toast(t('rep4rep commenting switched on for every account'));
   await loadConfig();
   loadRep4Rep();
   refresh();
@@ -1066,7 +1081,7 @@ function replaceToken() { r4r = { Connected: false }; renderRep4RepAccount(); }
 async function connectRep4Rep() {
   const res = await post('/api/rep4rep/token', { Token: $('r4rToken').value.trim() });
   if (!res.ok) { $('r4rError').textContent = res.error; return; }
-  toast('rep4rep connected');
+  toast(t('rep4rep connected'));
   loadRep4Rep();
   refresh();
 }
@@ -1076,44 +1091,44 @@ async function connectRep4Rep() {
 function capCell(p) {
   let s = `${p.Today} / ${p.Cap}`;
   if (p.CapIsSteamLimit) {
-    s += ` <span class="muted small" data-tip="This is the ceiling Steam enforced on this account, not the number you set - so raising the configured cap won't lift it.">(Steam's limit)</span>`;
+    s += ` <span class="muted small" data-tip="${esc(t("This is the ceiling Steam enforced on this account, not the number you set - so raising the configured cap won't lift it."))}">${esc(t("(Steam's limit)"))}</span>`;
   }
   if (p.Today >= p.Cap && p.NextSlot) {
-    s += ` <span class="muted small" data-tip="Rolling 24h window: the count drops as each comment ages past 24h. This is the soonest this account can post again.">· frees ${esc(until(p.NextSlot))}</span>`;
+    s += ` <span class="muted small" data-tip="${esc(t('Rolling 24h window: the count drops as each comment ages past 24h. This is the soonest this account can post again.'))}">${esc(tf('· frees {0}', until(p.NextSlot)))}</span>`;
   }
   return s;
 }
 
 function renderRep4RepProfiles() {
-  if (!r4rProfiles.length) { $('r4rProfiles').innerHTML = '<p class="muted">No accounts configured yet.</p>'; return; }
+  if (!r4rProfiles.length) { $('r4rProfiles').innerHTML = `<p class="muted">${esc(t('No accounts configured yet.'))}</p>`; return; }
 
   $('r4rProfiles').innerHTML = `<div class="tablewrap"><table>
-    <tr><th>Account</th><th>SteamID64</th><th data-tip="rep4rep's own id for this profile. It is not your SteamID - this is the one their support and their API ask for.">rep4rep ID</th><th>Status</th><th data-tip="Comments posted in the last ROLLING 24 hours - not a midnight reset. Each one ages off on its own 24h after it went out, so the count frees up gradually. Shown against the cap.">Today</th><th></th></tr>
+    <tr><th>${esc(t('Account'))}</th><th>SteamID64</th><th data-tip="${esc(t("rep4rep's own id for this profile. It is not your SteamID - this is the one their support and their API ask for."))}">${esc(t('rep4rep ID'))}</th><th>${esc(t('Status'))}</th><th data-tip="${esc(t('Comments posted in the last ROLLING 24 hours - not a midnight reset. Each one ages off on its own 24h after it went out, so the count frees up gradually. Shown against the cap.'))}">${esc(t('Today'))}</th><th></th></tr>
     ${r4rProfiles.map((p) => `<tr>
       <td><b>${esc(p.Account)}</b></td>
       <td class="muted small">${esc(p.SteamId === '0' ? '—' : p.SteamId)}</td>
       <td class="muted small">${esc(p.Rep4RepId || '—')}</td>
       <td>${p.Registered
-        ? (p.Enabled ? '<span class="pill good">Ready</span>' : '<span class="pill">Commenting off</span>')
-        : (p.Online ? '<span class="pill warn">Not on rep4rep</span>' : '<span class="pill">Log in first</span>')}</td>
+        ? (p.Enabled ? `<span class="pill good">${esc(t('Ready'))}</span>` : `<span class="pill">${esc(t('Commenting off'))}</span>`)
+        : (p.Online ? `<span class="pill warn">${esc(t('Not on rep4rep'))}</span>` : `<span class="pill">${esc(t('Log in first'))}</span>`)}</td>
       <td>${p.Enabled ? capCell(p) : '—'}</td>
       <td>${p.Registered
-        ? `<button class="ghost" data-tip="Skip the wait and post the next comment as soon as the daily cap allows. It never goes over the cap." data-act="postnow" data-bot="${esc(p.Account)}">Post now</button>`
-        : (p.Online ? `<button class="ghost" data-act="register" data-bot="${esc(p.Account)}">Register</button>` : '')}</td>
+        ? `<button class="ghost" data-tip="${esc(t('Skip the wait and post the next comment as soon as the daily cap allows. It never goes over the cap.'))}" data-act="postnow" data-bot="${esc(p.Account)}">${esc(t('Post now'))}</button>`
+        : (p.Online ? `<button class="ghost" data-act="register" data-bot="${esc(p.Account)}">${esc(t('Register'))}</button>` : '')}</td>
       </tr>`).join('')}
     </table></div>
-    <p class="muted small" style="margin-top:10px">This is rep4rep's cached copy of your Steam settings, not live. If you just changed something on Steam, it can take a while to show here.</p>`;
+    <p class="muted small" style="margin-top:10px">${esc(t("This is rep4rep's cached copy of your Steam settings, not live. If you just changed something on Steam, it can take a while to show here."))}</p>`;
 }
 
 async function registerProfile(name) {
   const res = await post(`/api/rep4rep/profiles/${encodeURIComponent(name)}/register`);
-  toast(res.ok ? `${name} registered with rep4rep` : res.error, !res.ok);
+  toast(res.ok ? tf('{0} registered with rep4rep', name) : res.error, !res.ok);
   loadRep4Rep();
 }
 
 async function postNow(name) {
   const res = await post('/api/bots/' + encodeURIComponent(name) + '/rep4repnow');
-  toast(res.ok ? `${name}: will post as soon as the daily cap allows` : (res.error || "That didn't work"), !res.ok);
+  toast(res.ok ? tf('{0}: will post as soon as the daily cap allows', name) : (res.error || t("That didn't work")), !res.ok);
 }
 
 function renderBotPicker() {
@@ -1125,21 +1140,22 @@ function renderBotPicker() {
 
 async function loadTasks() {
   const bot = $('r4rBot').value;
-  if (!bot) { $('r4rTasks').innerHTML = '<p class="muted">No registered accounts yet.</p>'; return; }
+  if (!bot) { $('r4rTasks').innerHTML = `<p class="muted">${esc(t('No registered accounts yet.'))}</p>`; return; }
   r4rTasks = await api('/api/rep4rep/tasks?bot=' + encodeURIComponent(bot)).catch(() => []);
 
   $('r4rTasks').innerHTML = r4rTasks.length
-    ? `<p class="muted small">${r4rTasks.length} task(s) waiting. Every task is worth the same to rep4rep — their API doesn't rank them, so there's nothing to pick between.</p>
+    ? `<p class="muted small">${esc(tf("{0} waiting. Every task is worth the same to rep4rep — their API doesn't rank them, so there's nothing to pick between.",
+         r4rTasks.length === 1 ? t('One task') : tf('{0} tasks', r4rTasks.length)))}</p>
        <div class="tablewrap"><table>
-       <tr><th>Target</th><th>Comment to post</th><th></th></tr>
-       ${r4rTasks.map((t) => `<tr>
-         <td><a href="https://steamcommunity.com/profiles/${esc(t.TargetSteamId)}" target="_blank" rel="noopener">${esc(t.TargetName)} ↗</a></td>
-         <td><code>${esc(t.Comment)}</code></td>
-         <td><button class="ghost small" data-tip="Post this one right now instead of waiting for the schedule. It still counts against the daily cap." data-task="${esc(t.TaskId)}">Post now</button></td>
+       <tr><th>${esc(t('Target'))}</th><th>${esc(t('Comment to post'))}</th><th></th></tr>
+       ${r4rTasks.map((task) => `<tr>
+         <td><a href="https://steamcommunity.com/profiles/${esc(task.TargetSteamId)}" target="_blank" rel="noopener">${esc(task.TargetName)} ↗</a></td>
+         <td><code>${esc(task.Comment)}</code></td>
+         <td><button class="ghost small" data-tip="${esc(t('Post this one right now instead of waiting for the schedule. It still counts against the daily cap.'))}" data-task="${esc(task.TaskId)}">${esc(t('Post now'))}</button></td>
          </tr>`).join('')}
        </table></div>
-       <p class="muted small" style="margin-top:10px">rep4rep checks the text matches exactly, so these are posted character for character.</p>`
-    : '<p class="muted">No tasks for this account right now. rep4rep hands them out in batches — check back later.</p>';
+       <p class="muted small" style="margin-top:10px">${esc(t('rep4rep checks the text matches exactly, so these are posted character for character.'))}</p>`
+    : `<p class="muted">${esc(t('No tasks for this account right now. rep4rep hands them out in batches — check back later.'))}</p>`;
 }
 
 function renderRep4RepPacing() {
@@ -1148,7 +1164,7 @@ function renderRep4RepPacing() {
   const defs = keys.map((k) => (schema ? schema.Bot.find((d) => d.Name === k) : null));
 
   $('r4rPacing').innerHTML = `<div class="tablewrap"><table>
-    <tr><th>Account</th>${defs.map((d, i) => `<th${d ? ` data-tip="${esc(d.Tooltip)}"` : ''}>${esc(d ? d.Label : keys[i])}</th>`).join('')}</tr>
+    <tr><th>${esc(t('Account'))}</th>${defs.map((d, i) => `<th${d ? ` data-tip="${esc(tSetting(d, 'tip'))}"` : ''}>${esc(d ? tSetting(d, 'label') : keys[i])}</th>`).join('')}</tr>
     ${state.Bots.map((b) => `<tr>
       <td><b>${esc(b.Name)}</b></td>
       ${keys.map((k) => `<td><input type="number" style="max-width:80px" value="${config && config.Bots[b.Name] ? config.Bots[b.Name][k] : ''}"
@@ -1164,13 +1180,13 @@ async function quickSet(bot, key, value) {
   // body with ONE key, and the server materialised every other field as its default - wiping the Steam login.
   if (!config || !config.Bots[bot]) await loadConfig();
   const base = config && config.Bots[bot];
-  if (!base) { toast('That account is not loaded yet - try again in a second', true); return; }
+  if (!base) { toast(t('That account is not loaded yet - try again in a second'), true); return; }
 
   const cfg = { ...base };
   cfg[key] = Number(value) || 0;
   const res = await post('/api/bots/' + encodeURIComponent(bot) + '/config', cfg);
-  if (!res.ok) { toast(res.error || 'Could not save that', true); return; }
-  toast((res.Adjusted && res.Adjusted.length) ? res.Adjusted[0] : `${bot}: saved`, !!(res.Adjusted && res.Adjusted.length));
+  if (!res.ok) { toast(res.error || t('Could not save that'), true); return; }
+  toast((res.Adjusted && res.Adjusted.length) ? res.Adjusted[0] : tf('{0}: saved', bot), !!(res.Adjusted && res.Adjusted.length));
   await loadConfig();
   renderRep4RepPacing();
 }
@@ -1181,11 +1197,11 @@ function renderLog() {
   const who = $('logBot').value;
 
   $('logLevels').innerHTML = Object.keys(logLevels).map((l) =>
-    `<span class="chip ${logLevels[l] ? 'on' : ''}" onclick="logLevels['${l}']=!logLevels['${l}'];renderLog()">${l === 'GOOD' ? 'Good' : l[0] + l.slice(1).toLowerCase()}</span>`).join('');
+    `<span class="chip ${logLevels[l] ? 'on' : ''}" onclick="logLevels['${l}']=!logLevels['${l}'];renderLog()">${esc(t(l === 'GOOD' ? 'Good' : l[0] + l.slice(1).toLowerCase()))}</span>`).join('');
 
   const sources = [...new Set(logLines.map((l) => l.Source))].sort();
   if ($('logBot').options.length !== sources.length + 1) {
-    $('logBot').innerHTML = '<option value="">All accounts</option>' + sources.map((s) => `<option>${esc(s)}</option>`).join('');
+    $('logBot').innerHTML = `<option value="">${esc(t('All accounts'))}</option>` + sources.map((s) => `<option>${esc(s)}</option>`).join('');
     $('logBot').value = who;
   }
 
@@ -1197,7 +1213,7 @@ function renderLog() {
 
   body.innerHTML = rows.length
     ? rows.map((l) => `<div class="l ${esc(l.Level)}"><span class="t">${esc(l.Time)}</span><span class="s"${sourceStyle(l.Source)} onclick="$('logBot').value='${esc(l.Source)}';renderLog()">${esc(l.Source)}</span><span class="m">${highlight(l.Text, q)}</span></div>`).join('')
-    : '<p class="muted">Nothing matches.</p>';
+    : `<p class="muted">${esc(t('Nothing matches.'))}</p>`;
 
   if (atBottom && $('logFollow').checked) body.scrollTop = body.scrollHeight;
 }
@@ -1223,7 +1239,7 @@ function copyLog() {
   // undefined, so guard and fall back to a hidden textarea instead of throwing and copying nothing.
   try {
     if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(text).then(() => toast('Log copied')).catch(() => toast('Copy failed - select it manually', true));
+      navigator.clipboard.writeText(text).then(() => toast(t('Log copied'))).catch(() => toast(t('Copy failed - select it manually'), true));
       return;
     }
     const ta = document.createElement('textarea');
@@ -1231,9 +1247,9 @@ function copyLog() {
     document.body.appendChild(ta); ta.select();
     const ok = document.execCommand('copy');
     document.body.removeChild(ta);
-    toast(ok ? 'Log copied' : 'Copy failed - select it manually', !ok);
+    toast(ok ? t('Log copied') : t('Copy failed - select it manually'), !ok);
   } catch {
-    toast('Copy failed - select it manually', true);
+    toast(t('Copy failed - select it manually'), true);
   }
 }
 
@@ -1333,14 +1349,16 @@ function selectSettings(name) {
   // Kick off the pacer read for this account; it re-renders itself when it lands.
   if (name) loadPacer(name); else { pacerFor = null; pacerRows = null; }
 
-  if (Object.keys(pending).length && !confirm('You have unsaved changes here. Discard them?')) return;
+  if (Object.keys(pending).length && !confirm(t('You have unsaved changes here. Discard them?'))) return;
   settingsTarget = name == null ? GLOBAL : name;
   pending = {};
   renderSettings();
 }
 
+// Matched on the data-section attribute, not the heading text: the heading is translated and the jump link
+// carries the English name, so comparing what is on screen stopped finding anything in every language but one.
 function jumpTo(section) {
-  const target = [...document.querySelectorAll('#settingsBody .section h3')].find((h) => h.textContent.trim() === section);
+  const target = document.querySelector(`#settingsBody .section h3[data-section="${CSS.escape(section)}"]`);
   if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -1371,8 +1389,8 @@ function botActions(name) {
   const stopped = !bot || bot.State === 'Stopped';
 
   return stopped
-    ? `<button data-tip="Log this account in." data-act="start" data-bot="${esc(name)}">Start</button>`
-    : `<button class="ghost" data-tip="Log this account out. It stays configured." data-act="stop" data-bot="${esc(name)}">Stop</button>`;
+    ? `<button data-tip="${esc(t('Log this account in.'))}" data-act="start" data-bot="${esc(name)}">${esc(t('Start'))}</button>`
+    : `<button class="ghost" data-tip="${esc(t('Log this account out. It stays configured.'))}" data-act="stop" data-bot="${esc(name)}">${esc(t('Stop'))}</button>`;
 }
 
 function renderSettings() {
@@ -1382,16 +1400,16 @@ function renderSettings() {
 
   // left pane: Global, then one entry per account
   $('settingsNavGlobal').innerHTML =
-    `<div class="s ${settingsTarget === GLOBAL ? 'active' : ''}" onclick="selectSettings(null)">Global settings</div>`;
+    `<div class="s ${settingsTarget === GLOBAL ? 'active' : ''}" onclick="selectSettings(null)">${esc(t('Global settings'))}</div>`;
   // Section jump-list for whatever pane is open. A 40-setting page without one is a scroll hunt.
   const sectionNames = [...new Set(settingsDefs().map((d) => d.Section))];
   const jump = `<div class="jump">${sectionNames.map((n) =>
-    `<a class="j" onclick="jumpTo('${esc(n)}')">${esc(n)}</a>`).join('')}</div>`;
+    `<a class="j" onclick="jumpTo('${esc(n)}')">${esc(t(n))}</a>`).join('')}</div>`;
 
   $('settingsNavBots').innerHTML = Object.keys(config.Bots).length
     ? Object.keys(config.Bots).map((n) =>
         `<div class="s ${settingsTarget === n ? 'active' : ''}" data-bot="${esc(n)}" onclick="selectSettings(this.dataset.bot)">${esc(n)}</div>`).join('')
-    : '<p class="muted small">No accounts yet.</p>';
+    : `<p class="muted small">${esc(t('No accounts yet.'))}</p>`;
 
   $('settingsNavJump').innerHTML = jump;
 
@@ -1403,12 +1421,12 @@ function renderSettings() {
   const q = ($('setSearch').value || '').toLowerCase();
 
   $('settingsHeader').innerHTML = settingsTarget === GLOBAL
-    ? `<p class="muted small">These apply to nocat.farm as a whole. <code>config/nocat.farm.json</code></p>`
+    ? `<p class="muted small">${esc(t('These apply to nocat.farm as a whole.'))} <code>config/nocat.farm.json</code></p>`
     : `<div class="toolbar"><b>${esc(settingsTarget)}</b>
         <span class="muted small">config/${esc(settingsTarget)}.json</span>
         <span class="spacer"></span>
         ${botActions(settingsTarget)}
-        <button class="danger" data-act="remove" data-bot="${esc(settingsTarget)}">Remove</button></div>`;
+        <button class="danger" data-act="remove" data-bot="${esc(settingsTarget)}">${esc(t('Remove'))}</button></div>`;
 
   const sections = [...new Set(defs.map((d) => d.Section))];
   let html = '';
@@ -1424,13 +1442,14 @@ function renderSettings() {
       if (d.Mode === 'rage' && legitOn) return false;
       if (d.Mode === 'legit' && !legitOn) return false;
       if (!advanced && d.Advanced) { hiddenAdvanced++; return false; }
-      if (q && !(d.Label.toLowerCase().includes(q) || d.Name.toLowerCase().includes(q) || d.Tooltip.toLowerCase().includes(q))) return false;
+      if (q && !(tSetting(d, 'label').toLowerCase().includes(q) || d.Label.toLowerCase().includes(q)
+        || d.Name.toLowerCase().includes(q) || tSetting(d, 'tip').toLowerCase().includes(q))) return false;
       if (onlyChanged && !isChanged(d, values, defaults)) return false;
       return true;
     });
 
     if (!fields.length) continue;
-    html += `<div class="section"><h3>${esc(section)}</h3>${sectionIntro(section, values)}${fields.map((d) => fieldHtml(d, values, defaults)).join('')}</div>`;
+    html += `<div class="section"><h3 data-section="${esc(section)}">${esc(t(section))}</h3>${sectionIntro(section, values)}${fields.map((d) => fieldHtml(d, values, defaults)).join('')}</div>`;
   }
 
   // Only on a real account, and only when nothing is being searched or filtered - it is not a setting and
@@ -1439,8 +1458,11 @@ function renderSettings() {
   // scrolling an account's ordinary settings, and anyone who needs it can find the switch.
   if (settingsTarget !== GLOBAL && !q && !onlyChanged && advanced) html += dangerZone(settingsTarget);
 
-  if (!html) html = '<p class="muted">Nothing matches.</p>';
-  if (hiddenAdvanced && !q) html += `<p class="muted small" style="margin-top:16px">${hiddenAdvanced} advanced setting(s) hidden. Tick “Show advanced” to see them.</p>`;
+  if (!html) html = `<p class="muted">${esc(t('Nothing matches.'))}</p>`;
+  if (hiddenAdvanced && !q) {
+    const many = hiddenAdvanced === 1 ? t('One advanced setting is hidden.') : tf('{0} advanced settings are hidden.', hiddenAdvanced);
+    html += `<p class="muted small" style="margin-top:16px">${esc(many)} ${esc(t('Tick “Show advanced” to see them.'))}</p>`;
+  }
 
   $('settingsBody').innerHTML = html;
   updateSaveButton();
@@ -1486,26 +1508,27 @@ function huntPanel() {
   if (!h || h.Mode === 'off') return '';
 
   const now = h.Now
-    ? `<b>Hunting ${esc(h.Now)}</b>${h.Left ? ` <span class="muted">- about ${hm(h.Left)} left</span>` : ''}`
-    : `<b>Standing by</b> <span class="muted">- ${esc(h.Status || 'waiting')}</span>`;
+    ? `<b>${esc(tf('Hunting {0}', h.Now))}</b>${h.Left ? ` <span class="muted">${esc(tf('- about {0} left', hm(h.Left)))}</span>` : ''}`
+    : `<b>${esc(t('Standing by'))}</b> <span class="muted">- ${esc(h.Status || t('waiting'))}</span>`;
 
-  const chip = (g) => `<span class="hchip${g.Shared ? ' shared' : ''}" data-tip="${esc(g.Shared ? 'Shared with this account by a Steam Family.' : 'Owned by this account.')} ${esc(hm(g.Minutes))} played.">${esc(g.Game)}</span>`;
+  const chip = (g) => `<span class="hchip${g.Shared ? ' shared' : ''}" data-tip="${esc(g.Shared ? t('Shared with this account by a Steam Family.') : t('Owned by this account.'))} ${esc(tf('{0} played.', hm(g.Minutes)))}">${esc(g.Game)}</span>`;
 
   const shown = (h.Next || []).slice(0, 6);
   const next = shown.map(chip).join('');
-  const more = h.NextCount > shown.length ? `<span class="hchip ghost">+${h.NextCount - shown.length} more</span>` : '';
+  const more = h.NextCount > shown.length ? `<span class="hchip ghost">${esc(tf('+{0} more', h.NextCount - shown.length))}</span>` : '';
 
   // Everything it ruled out is a COUNT, not a list. A family library leaves a thousand games out, and one
   // line saying why beats a wall of names nobody is going to read. The counts are worked out server-side over
   // the WHOLE list, so they always add up to the total.
-  const shownOut = (h.OutReasons || []).map((r) => `${r.Count} ${r.Why}`).join(' · ');
+  const shownOut = (h.OutReasons || []).map((r) => `${r.Count} ${t(r.Why)}`).join(' · ');
+  const outCount = h.OutCount === 1 ? t('one game') : tf('{0} games', h.OutCount);
   const outLine = h.OutCount > 0
-    ? `<div class="huntrow"><span class="k">Left out</span><span class="muted small">${h.OutCount} game${h.OutCount === 1 ? '' : 's'}${shownOut ? ' — ' + esc(shownOut) : ''}</span></div>`
+    ? `<div class="huntrow"><span class="k">${esc(t('Left out'))}</span><span class="muted small">${esc(outCount)}${shownOut ? ' — ' + esc(shownOut) : ''}</span></div>`
     : '';
 
   return `<div class="hunt">
-    <div class="huntnow">${now}<span class="spacer"></span><span class="muted small">${esc(h.Mode)}</span></div>
-    <div class="huntrow"><span class="k">Next up</span><div class="chips">${next || '<span class="muted small">nothing queued</span>'}${more}</div></div>
+    <div class="huntnow">${now}<span class="spacer"></span><span class="muted small">${esc(t(h.Mode))}</span></div>
+    <div class="huntrow"><span class="k">${esc(t('Next up'))}</span><div class="chips">${next || `<span class="muted small">${esc(t('nothing queued'))}</span>`}${more}</div></div>
     ${outLine}
   </div>`;
 }
@@ -1517,21 +1540,22 @@ function recentUnlocks() {
   const rows = pacerRecent.map((u) => {
     const mins = Math.max(0, Math.round((Date.now() - new Date(u.When).getTime()) / 60000));
     const rarity = u.Percent == null ? '' : `<span class="rare">${Number(u.Percent).toFixed(1)}%</span>`;
-    return `<li><b>${esc(u.Name)}</b> ${rarity}<span class="muted"> ${esc(GAME_NAMES[u.App] || u.Game)} · ${u.Unlocked}/${u.Total} · ${mins < 1 ? 'just now' : hm(mins) + ' ago'}</span></li>`;
+    const when = mins < 1 ? t('just now') : tf('{0} ago', hm(mins));
+    return `<li><b>${esc(u.Name)}</b> ${rarity}<span class="muted"> ${esc(GAME_NAMES[u.App] || u.Game)} · ${u.Unlocked}/${u.Total} · ${esc(when)}</span></li>`;
   }).join('');
 
   return `<ul class="unlocks">${rows}</ul>`;
 }
 
 function pacerTable() {
-  if (pacerRows === null) return '<p class="muted small">Reading what it has done so far…</p>';
-  if (!pacerRows.length) return '<p class="muted small empty">Nothing tracked yet. It starts counting the first minute a game is running.</p>';
+  if (pacerRows === null) return `<p class="muted small">${esc(t('Reading what it has done so far…'))}</p>`;
+  if (!pacerRows.length) return `<p class="muted small empty">${esc(t('Nothing tracked yet. It starts counting the first minute a game is running.'))}</p>`;
 
   const rows = pacerRows.slice(0, 12).map((g) => {
     const blocked = g.Blocked;
     const next = new Date(g.NextAllow);
     const soon = next <= new Date();
-    const hrs = g.PlayedMinutes >= 60 ? (g.PlayedMinutes / 60).toFixed(1) + 'h' : g.PlayedMinutes + 'm';
+    const hrs = g.PlayedMinutes >= 60 ? (g.PlayedMinutes / 60).toFixed(1) + t('h') : g.PlayedMinutes + t('m');
 
     // Two different things worth seeing, so two different bars would be one too many: the fraction earned is the
     // one people care about, and the rarity floor is the reason it isn't higher.
@@ -1544,32 +1568,32 @@ function pacerTable() {
     // is still locked, so a game with none of the easy ones done gets an easy one, never the 3% tail. Writing it
     // as "≥3%" read as a promise to unlock a 3% achievement, which is the opposite of what happens.
     const floor = g.FloorPercent > 100
-      ? '<span class="muted">none yet</span>'
-      : `<span class="muted">down to</span> ${g.FloorPercent}%`;
+      ? `<span class="muted">${esc(t('none yet'))}</span>`
+      : `<span class="muted">${esc(t('down to'))}</span> ${g.FloorPercent}%`;
 
     return `<tr class="${blocked ? 'off' : ''}">
       <td class="g" title="${esc(GAME_NAMES[g.App] || g.Game)}">${esc(GAME_NAMES[g.App] || g.Game)}</td>
       <td class="n">${hrs}</td>
       <td class="n">${earned}</td>
       ${g.Total > 0
-        ? `<td class="bar" data-tip="${done}% of this game earned. It stops at ${g.CeilingPercent > 0 ? g.CeilingPercent + '%' : "this game's own ceiling"}."><span style="width:${Math.max(0, Math.min(100, done))}%"></span></td>`
-        : `<td class="w muted" data-tip="This game's achievements haven't been read yet - that happens the first time it comes up for one.">not read yet</td>`}
+        ? `<td class="bar" data-tip="${esc(tf('{0}% of this game earned. It stops at {1}.', done, g.CeilingPercent > 0 ? g.CeilingPercent + '%' : t("this game's own ceiling")))}"><span style="width:${Math.max(0, Math.min(100, done))}%"></span></td>`
+        : `<td class="w muted" data-tip="${esc(t("This game's achievements haven't been read yet - that happens the first time it comes up for one."))}">${esc(t('not read yet'))}</td>`}
       <td class="n">${floor}</td>
-      <td class="w">${blocked ? esc(g.Why) : soon ? 'due now' : '~' + next.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</td>
+      <td class="w">${blocked ? esc(t(g.Why)) : soon ? esc(t('due now')) : '~' + next.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</td>
     </tr>`;
   }).join('');
 
   return `<div class="tablewrap pacer"><table>
     <tr>
-      <th>Game</th>
-      <th data-tip="Hours this account has spent in this game. This is what decides how much it is allowed to earn.">Played</th>
-      <th data-tip="Achievements earned out of what the game has.">Earned</th>
-      <th data-tip="How much of the game is done. The bar never fills - it stops at this game's ceiling, because 100% on an idled account is the giveaway.">Progress</th>
-      <th data-tip="How far down the rarity list the hours so far have opened. It always unlocks the MOST COMMON one still locked - the ones you get just by playing - and only works down toward the rare tail as the hours build. This figure is the limit, never the next pick: a game with none of the easy ones done gets an easy one.">Opened</th>
-      <th data-tip="Roughly when the next one is due, or why this game is left alone. It is a pace, not a promise.">Next</th>
+      <th>${esc(t('Game'))}</th>
+      <th data-tip="${esc(t('Hours this account has spent in this game. This is what decides how much it is allowed to earn.'))}">${esc(t('Played'))}</th>
+      <th data-tip="${esc(t('Achievements earned out of what the game has.'))}">${esc(t('Earned'))}</th>
+      <th data-tip="${esc(t("How much of the game is done. The bar never fills - it stops at this game's ceiling, because 100% on an idled account is the giveaway."))}">${esc(t('Progress'))}</th>
+      <th data-tip="${esc(t('How far down the rarity list the hours so far have opened. It always unlocks the MOST COMMON one still locked - the ones you get just by playing - and only works down toward the rare tail as the hours build. This figure is the limit, never the next pick: a game with none of the easy ones done gets an easy one.'))}">${esc(t('Opened'))}</th>
+      <th data-tip="${esc(t('Roughly when the next one is due, or why this game is left alone. It is a pace, not a promise.'))}">${esc(t('Next'))}</th>
     </tr>
     ${rows}
-  </table></div>${pacerRows.length > 12 ? `<p class="muted small">…and ${pacerRows.length - 12} more.</p>` : ''}`;
+  </table></div>${pacerRows.length > 12 ? `<p class="muted small">${esc(tf('…and {0} more.', pacerRows.length - 12))}</p>` : ''}`;
 }
 
 function sectionIntro(section, values) {
