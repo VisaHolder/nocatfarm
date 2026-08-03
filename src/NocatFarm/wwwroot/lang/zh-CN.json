@@ -30,5 +30,276 @@
   "type a command, or 'help'": "输入命令，或 'help'",
   "your steam login": "你的 Steam 登录名"
  },
- "settings": {}
+ "settings": {
+  "WebEnabled": {
+   "label": "网页面板"
+  },
+  "WebHost": {
+   "label": "监听地址"
+  },
+  "WebPort": {
+   "label": "端口"
+  },
+  "WebPassword": {
+   "label": "面板密码"
+  },
+  "OpenDashboardAfterAdd": {
+   "label": "添加账户后打开面板"
+  },
+  "OpenBrowserOnStart": {
+   "label": "启动时打开浏览器"
+  },
+  "Tray": {
+   "label": "托盘图标"
+  },
+  "MinimizeToTray": {
+   "label": "最小化到托盘"
+  },
+  "StartMinimized": {
+   "label": "启动时隐藏"
+  },
+  "StartWithWindows": {
+   "label": "开机自动启动"
+  },
+  "KeepAwake": {
+   "label": "阻止此电脑休眠"
+  },
+  "TrayNotifications": {
+   "label": "显示弹窗提示"
+  },
+  "NotifyEarnings": {
+   "label": "有收获时提示"
+  },
+  "NotifySocial": {
+   "label": "有评论时提示"
+  },
+  "NotifyProblems": {
+   "label": "出问题时提示"
+  },
+  "Rep4RepEnabled": {
+   "label": "启用 rep4rep"
+  },
+  "Rep4RepApiToken": {
+   "label": "API 令牌"
+  },
+  "Rep4RepAutoAddProfiles": {
+   "label": "自动注册账户"
+  },
+  "LoginStaggerSeconds": {
+   "label": "两次登录的间隔"
+  },
+  "StatusEveryMinutes": {
+   "label": "汇报当前状态，每隔"
+  },
+  "StatusQuietEveryMinutes": {
+   "label": "空闲时则每隔"
+  },
+  "Language": {
+   "label": "语言"
+  },
+  "MarketCurrency": {
+   "label": "库存价格使用"
+  },
+  "FileLogging": {
+   "label": "写入日志文件"
+  },
+  "DailyReportEnabled": {
+   "label": "在日志中写每日汇总"
+  },
+  "DailyReportHour": {
+   "label": "汇总时间 · 时"
+  },
+  "DailyReportMinute": {
+   "label": "汇总时间 · 分"
+  },
+  "Enabled": {
+   "label": "已启用"
+  },
+  "SteamLogin": {
+   "label": "Steam 账户名"
+  },
+  "SteamPassword": {
+   "label": "密码"
+  },
+  "OnlineStatus": {
+   "label": "显示状态为"
+  },
+  "IUseThisAccount": {
+   "label": "这个账户我自己也登录"
+  },
+  "StartPaused": {
+   "label": "启动后暂停"
+  },
+  "LogColour": {
+   "label": "日志中的颜色"
+  },
+  "Notes": {
+   "label": "备注"
+  },
+  "LegitMode": {
+   "label": "拟人模式"
+  },
+  "LegitStopMaxSeconds": {
+   "label": "停止时最多再收尾"
+  },
+  "GameWeights": {
+   "label": "游戏及其频率"
+  },
+  "WeekdayHours": {
+   "label": "工作日时长"
+  },
+  "WeekendHours": {
+   "label": "周末时长"
+  },
+  "DayOffChancePct": {
+   "label": "休息一天的概率"
+  },
+  "DayStartHour": {
+   "label": "大约几点上线"
+  },
+  "BedHour": {
+   "label": "大约几点睡觉"
+  },
+  "LateNightExtraHours": {
+   "label": "周五/周六熬得更晚"
+  },
+  "MainGameSharePct": {
+   "label": "主力游戏占比"
+  },
+  "PureMainDayChancePct": {
+   "label": "只玩主力游戏的天数占比"
+  },
+  "SideGameSharePct": {
+   "label": "混合的日子里其他游戏占"
+  },
+  "WarmUpMinMinutes": {
+   "label": "至少先适应"
+  },
+  "WarmUpMaxMinutes": {
+   "label": "最多"
+  },
+  "SessionMinMinutes": {
+   "label": "最短一次游玩"
+  },
+  "SessionMaxMinutes": {
+   "label": "最长一次游玩"
+  },
+  "MealBreaksPerDay": {
+   "label": "每天用餐次数"
+  },
+  "MealBreakMinutes": {
+   "label": "一次用餐多久"
+  },
+  "SignOutOnBreakChancePct": {
+   "label": "休息时下线的概率"
+  },
+  "OfflineIdleAtNight": {
+   "label": "夜间累积时长"
+  },
+  "OfflineIdleGames": {
+   "label": "夜间挂的游戏"
+  },
+  "IdleGames": {
+   "label": "挂时长的游戏"
+  },
+  "CustomGameNameEnabled": {
+   "label": "显示自定义游戏名"
+  },
+  "CustomGameName": {
+   "label": "显示为"
+  },
+  "FarmCards": {
+   "label": "刷集换式卡牌"
+  },
+  "HoursUntilCardDrops": {
+   "label": "掉卡所需时长"
+  },
+  "FarmingOrder": {
+   "label": "按此顺序刷"
+  },
+  "FarmOffline": {
+   "label": "以离线状态刷卡"
+  },
+  "UnlockAchievements": {
+   "label": "随时间获得成就"
+  },
+  "AchievementPace": {
+   "label": "速度"
+  },
+  "AchievementMaxCompletionPct": {
+   "label": "完成度上限"
+  },
+  "ClaimFreeGames": {
+   "label": "领取免费游戏"
+  },
+  "CraftBadges": {
+   "label": "用卡牌合成徽章"
+  },
+  "Rep4Rep": {
+   "label": "发布 rep4rep 评论"
+  },
+  "Rep4RepDailyCap": {
+   "label": "每 24 小时最多"
+  },
+  "Rep4RepGapMinMinutes": {
+   "label": "最短间隔"
+  },
+  "Rep4RepGapMaxMinutes": {
+   "label": "最长间隔"
+  },
+  "Rep4RepStartHour": {
+   "label": "仅在此时间之后发布"
+  },
+  "Rep4RepEndHour": {
+   "label": "直到"
+  },
+  "AcceptFriendRequests": {
+   "label": "接受好友请求"
+  },
+  "JoinGroup": {
+   "label": "加入 nocat.farm 组"
+  },
+  "AutoReplyEnabled": {
+   "label": "自动回复消息"
+  },
+  "AutoReply": {
+   "label": "回复内容"
+  },
+  "AutoReplyOncePerDay": {
+   "label": "每天只回复一次"
+  },
+  "FriendRequestDelayMinMinutes": {
+   "label": "至少等待"
+  },
+  "FriendRequestDelayMaxMinutes": {
+   "label": "最多等待"
+  },
+  "ActOnlyWhileAwake": {
+   "label": "仅在“清醒”时响应"
+  },
+  "AcceptDonations": {
+   "label": "接受赠送"
+  },
+  "AcceptFromMasters": {
+   "label": "接受自己账户的一切"
+  },
+  "TradeMasters": {
+   "label": "你自己的账户"
+  },
+  "DeclineOtherTrades": {
+   "label": "拒绝其他一切"
+  },
+  "TradeDelayMinMinutes": {
+   "label": "至少等待"
+  },
+  "TradeDelayMaxMinutes": {
+   "label": "最多等待"
+  },
+  "PauseWhenYouPlay": {
+   "label": "你玩游戏时自动让位"
+  },
+  "ResumeDelayMinutes": {
+   "label": "恢复前等待"
+  }
+ }
 }

@@ -30,5 +30,276 @@
   "type a command, or 'help'": "wpisz polecenie lub 'help'",
   "your steam login": "twój login Steam"
  },
- "settings": {}
+ "settings": {
+  "WebEnabled": {
+   "label": "Panel webowy"
+  },
+  "WebHost": {
+   "label": "Nasłuchuj na"
+  },
+  "WebPort": {
+   "label": "Port"
+  },
+  "WebPassword": {
+   "label": "Hasło panelu"
+  },
+  "OpenDashboardAfterAdd": {
+   "label": "Otwórz panel po dodaniu konta"
+  },
+  "OpenBrowserOnStart": {
+   "label": "Otwórz przeglądarkę przy starcie"
+  },
+  "Tray": {
+   "label": "Ikona w zasobniku"
+  },
+  "MinimizeToTray": {
+   "label": "Minimalizuj do zasobnika"
+  },
+  "StartMinimized": {
+   "label": "Uruchom ukryty"
+  },
+  "StartWithWindows": {
+   "label": "Uruchamiaj z Windows"
+  },
+  "KeepAwake": {
+   "label": "Nie pozwól temu PC zasnąć"
+  },
+  "TrayNotifications": {
+   "label": "Pokazuj powiadomienia"
+  },
+  "NotifyEarnings": {
+   "label": "Powiadom o zyskach"
+  },
+  "NotifySocial": {
+   "label": "Powiadom o komentarzach"
+  },
+  "NotifyProblems": {
+   "label": "Powiadom o problemach"
+  },
+  "Rep4RepEnabled": {
+   "label": "Używaj rep4rep"
+  },
+  "Rep4RepApiToken": {
+   "label": "Token API"
+  },
+  "Rep4RepAutoAddProfiles": {
+   "label": "Rejestruj konta automatycznie"
+  },
+  "LoginStaggerSeconds": {
+   "label": "Odstęp między logowaniami"
+  },
+  "StatusEveryMinutes": {
+   "label": "Mów, co robi, co"
+  },
+  "StatusQuietEveryMinutes": {
+   "label": "A w spoczynku co"
+  },
+  "Language": {
+   "label": "Język"
+  },
+  "MarketCurrency": {
+   "label": "Ceny ekwipunku w"
+  },
+  "FileLogging": {
+   "label": "Zapisuj plik dziennika"
+  },
+  "DailyReportEnabled": {
+   "label": "Dzienne podsumowanie w dzienniku"
+  },
+  "DailyReportHour": {
+   "label": "Godzina podsumowania · godz."
+  },
+  "DailyReportMinute": {
+   "label": "Godzina podsumowania · min."
+  },
+  "Enabled": {
+   "label": "Włączone"
+  },
+  "SteamLogin": {
+   "label": "Nazwa konta Steam"
+  },
+  "SteamPassword": {
+   "label": "Hasło"
+  },
+  "OnlineStatus": {
+   "label": "Pokazuj jako"
+  },
+  "IUseThisAccount": {
+   "label": "Sam się loguję na to konto"
+  },
+  "StartPaused": {
+   "label": "Uruchom wstrzymane"
+  },
+  "LogColour": {
+   "label": "Kolor w dzienniku"
+  },
+  "Notes": {
+   "label": "Notatki"
+  },
+  "LegitMode": {
+   "label": "Tryb ludzki"
+  },
+  "LegitStopMaxSeconds": {
+   "label": "Przy zatrzymaniu kończ jeszcze do"
+  },
+  "GameWeights": {
+   "label": "Gry i jak często"
+  },
+  "WeekdayHours": {
+   "label": "Godzin w dzień powszedni"
+  },
+  "WeekendHours": {
+   "label": "Godzin w weekend"
+  },
+  "DayOffChancePct": {
+   "label": "Szansa na dzień wolny"
+  },
+  "DayStartHour": {
+   "label": "Wchodzi około"
+  },
+  "BedHour": {
+   "label": "Kładzie się około"
+  },
+  "LateNightExtraHours": {
+   "label": "W pt/sob siedzi dłużej"
+  },
+  "MainGameSharePct": {
+   "label": "Główna gra dostaje"
+  },
+  "PureMainDayChancePct": {
+   "label": "Dni tylko z główną grą"
+  },
+  "SideGameSharePct": {
+   "label": "W dzień mieszany pozostałe dostają"
+  },
+  "WarmUpMinMinutes": {
+   "label": "Rozgrzewka co najmniej"
+  },
+  "WarmUpMaxMinutes": {
+   "label": "I najwyżej"
+  },
+  "SessionMinMinutes": {
+   "label": "Najkrótsza sesja"
+  },
+  "SessionMaxMinutes": {
+   "label": "Najdłuższa sesja"
+  },
+  "MealBreaksPerDay": {
+   "label": "Posiłków dziennie"
+  },
+  "MealBreakMinutes": {
+   "label": "Ile trwa posiłek"
+  },
+  "SignOutOnBreakChancePct": {
+   "label": "Szansa na wylogowanie w przerwie"
+  },
+  "OfflineIdleAtNight": {
+   "label": "Zbieraj godziny w nocy"
+  },
+  "OfflineIdleGames": {
+   "label": "Gry na noc"
+  },
+  "IdleGames": {
+   "label": "Gry do zbierania godzin"
+  },
+  "CustomGameNameEnabled": {
+   "label": "Pokaż własną nazwę gry"
+  },
+  "CustomGameName": {
+   "label": "Pokazuj jako"
+  },
+  "FarmCards": {
+   "label": "Farmienie kart"
+  },
+  "HoursUntilCardDrops": {
+   "label": "Godzin do wypadnięcia kart"
+  },
+  "FarmingOrder": {
+   "label": "Farm w tej kolejności"
+  },
+  "FarmOffline": {
+   "label": "Farm, pokazując się offline"
+  },
+  "UnlockAchievements": {
+   "label": "Zdobywaj osiągnięcia z czasem"
+  },
+  "AchievementPace": {
+   "label": "Jak szybko"
+  },
+  "AchievementMaxCompletionPct": {
+   "label": "Nigdy nie ukończ więcej niż"
+  },
+  "ClaimFreeGames": {
+   "label": "Odbieraj darmowe gry"
+  },
+  "CraftBadges": {
+   "label": "Twórz odznaki z kart"
+  },
+  "Rep4Rep": {
+   "label": "Publikuj komentarze rep4rep"
+  },
+  "Rep4RepDailyCap": {
+   "label": "Najwyżej na 24 godziny"
+  },
+  "Rep4RepGapMinMinutes": {
+   "label": "Najkrótszy odstęp"
+  },
+  "Rep4RepGapMaxMinutes": {
+   "label": "Najdłuższy odstęp"
+  },
+  "Rep4RepStartHour": {
+   "label": "Publikuj dopiero od"
+  },
+  "Rep4RepEndHour": {
+   "label": "Do"
+  },
+  "AcceptFriendRequests": {
+   "label": "Akceptuj zaproszenia do znajomych"
+  },
+  "JoinGroup": {
+   "label": "Dołącz do grupy nocat.farm"
+  },
+  "AutoReplyEnabled": {
+   "label": "Odpowiadaj na wiadomości"
+  },
+  "AutoReply": {
+   "label": "Odpowiadaj treścią"
+  },
+  "AutoReplyOncePerDay": {
+   "label": "Odpowiadaj tylko raz dziennie"
+  },
+  "FriendRequestDelayMinMinutes": {
+   "label": "Czekaj co najmniej"
+  },
+  "FriendRequestDelayMaxMinutes": {
+   "label": "I najwyżej"
+  },
+  "ActOnlyWhileAwake": {
+   "label": "Reaguj tylko, gdy nie śpi"
+  },
+  "AcceptDonations": {
+   "label": "Przyjmuj darowizny"
+  },
+  "AcceptFromMasters": {
+   "label": "Przyjmuj wszystko z własnych kont"
+  },
+  "TradeMasters": {
+   "label": "Twoje własne konta"
+  },
+  "DeclineOtherTrades": {
+   "label": "Odrzucaj całą resztę"
+  },
+  "TradeDelayMinMinutes": {
+   "label": "Czekaj co najmniej"
+  },
+  "TradeDelayMaxMinutes": {
+   "label": "I najwyżej"
+  },
+  "PauseWhenYouPlay": {
+   "label": "Ustąp, gdy grasz"
+  },
+  "ResumeDelayMinutes": {
+   "label": "Czekaj przed wznowieniem"
+  }
+ }
 }

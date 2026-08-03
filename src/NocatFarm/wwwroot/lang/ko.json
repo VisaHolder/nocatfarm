@@ -30,5 +30,276 @@
   "type a command, or 'help'": "명령어를 입력하거나 'help'",
   "your steam login": "Steam 로그인 이름"
  },
- "settings": {}
+ "settings": {
+  "WebEnabled": {
+   "label": "웹 대시보드"
+  },
+  "WebHost": {
+   "label": "수신 주소"
+  },
+  "WebPort": {
+   "label": "포트"
+  },
+  "WebPassword": {
+   "label": "대시보드 비밀번호"
+  },
+  "OpenDashboardAfterAdd": {
+   "label": "계정 추가 후 대시보드 열기"
+  },
+  "OpenBrowserOnStart": {
+   "label": "시작할 때 브라우저 열기"
+  },
+  "Tray": {
+   "label": "트레이 아이콘"
+  },
+  "MinimizeToTray": {
+   "label": "트레이로 최소화"
+  },
+  "StartMinimized": {
+   "label": "숨긴 채로 시작"
+  },
+  "StartWithWindows": {
+   "label": "Windows와 함께 시작"
+  },
+  "KeepAwake": {
+   "label": "이 PC를 깨어 있게 유지"
+  },
+  "TrayNotifications": {
+   "label": "알림 표시"
+  },
+  "NotifyEarnings": {
+   "label": "수익이 생기면 알림"
+  },
+  "NotifySocial": {
+   "label": "댓글 알림"
+  },
+  "NotifyProblems": {
+   "label": "문제 알림"
+  },
+  "Rep4RepEnabled": {
+   "label": "rep4rep 사용"
+  },
+  "Rep4RepApiToken": {
+   "label": "API 토큰"
+  },
+  "Rep4RepAutoAddProfiles": {
+   "label": "계정 자동 등록"
+  },
+  "LoginStaggerSeconds": {
+   "label": "로그인 간격"
+  },
+  "StatusEveryMinutes": {
+   "label": "상태를 알리는 주기"
+  },
+  "StatusQuietEveryMinutes": {
+   "label": "쉬는 동안의 주기"
+  },
+  "Language": {
+   "label": "언어"
+  },
+  "MarketCurrency": {
+   "label": "인벤토리 가격 통화"
+  },
+  "FileLogging": {
+   "label": "로그 파일 기록"
+  },
+  "DailyReportEnabled": {
+   "label": "로그에 일일 요약"
+  },
+  "DailyReportHour": {
+   "label": "요약 시각 · 시"
+  },
+  "DailyReportMinute": {
+   "label": "요약 시각 · 분"
+  },
+  "Enabled": {
+   "label": "사용함"
+  },
+  "SteamLogin": {
+   "label": "Steam 계정 이름"
+  },
+  "SteamPassword": {
+   "label": "비밀번호"
+  },
+  "OnlineStatus": {
+   "label": "표시 상태"
+  },
+  "IUseThisAccount": {
+   "label": "이 계정은 내가 직접 씁니다"
+  },
+  "StartPaused": {
+   "label": "일시정지 상태로 시작"
+  },
+  "LogColour": {
+   "label": "로그에서의 색"
+  },
+  "Notes": {
+   "label": "메모"
+  },
+  "LegitMode": {
+   "label": "사람 모드"
+  },
+  "LegitStopMaxSeconds": {
+   "label": "정지할 때 마무리 최대 시간"
+  },
+  "GameWeights": {
+   "label": "게임과 빈도"
+  },
+  "WeekdayHours": {
+   "label": "평일 시간"
+  },
+  "WeekendHours": {
+   "label": "주말 시간"
+  },
+  "DayOffChancePct": {
+   "label": "쉬는 날 확률"
+  },
+  "DayStartHour": {
+   "label": "대략 접속하는 시각"
+  },
+  "BedHour": {
+   "label": "대략 자는 시각"
+  },
+  "LateNightExtraHours": {
+   "label": "금/토는 더 늦게까지"
+  },
+  "MainGameSharePct": {
+   "label": "주력 게임 비중"
+  },
+  "PureMainDayChancePct": {
+   "label": "주력 게임만 하는 날 비율"
+  },
+  "SideGameSharePct": {
+   "label": "섞이는 날 다른 게임 비중"
+  },
+  "WarmUpMinMinutes": {
+   "label": "최소 적응 시간"
+  },
+  "WarmUpMaxMinutes": {
+   "label": "최대"
+  },
+  "SessionMinMinutes": {
+   "label": "가장 짧은 플레이"
+  },
+  "SessionMaxMinutes": {
+   "label": "가장 긴 플레이"
+  },
+  "MealBreaksPerDay": {
+   "label": "하루 식사 횟수"
+  },
+  "MealBreakMinutes": {
+   "label": "식사에 걸리는 시간"
+  },
+  "SignOutOnBreakChancePct": {
+   "label": "쉬는 동안 오프라인이 될 확률"
+  },
+  "OfflineIdleAtNight": {
+   "label": "밤에 시간 쌓기"
+  },
+  "OfflineIdleGames": {
+   "label": "밤에 돌릴 게임"
+  },
+  "IdleGames": {
+   "label": "시간을 쌓을 게임"
+  },
+  "CustomGameNameEnabled": {
+   "label": "사용자 지정 게임 이름 표시"
+  },
+  "CustomGameName": {
+   "label": "이렇게 표시"
+  },
+  "FarmCards": {
+   "label": "트레이딩 카드 파밍"
+  },
+  "HoursUntilCardDrops": {
+   "label": "카드가 나오기까지의 시간"
+  },
+  "FarmingOrder": {
+   "label": "이 순서로 파밍"
+  },
+  "FarmOffline": {
+   "label": "오프라인으로 보이면서 파밍"
+  },
+  "UnlockAchievements": {
+   "label": "시간에 따라 도전 과제 획득"
+  },
+  "AchievementPace": {
+   "label": "속도"
+  },
+  "AchievementMaxCompletionPct": {
+   "label": "완료율 상한"
+  },
+  "ClaimFreeGames": {
+   "label": "무료 게임 받기"
+  },
+  "CraftBadges": {
+   "label": "카드로 배지 제작"
+  },
+  "Rep4Rep": {
+   "label": "rep4rep 댓글 작성"
+  },
+  "Rep4RepDailyCap": {
+   "label": "24시간당 최대"
+  },
+  "Rep4RepGapMinMinutes": {
+   "label": "최소 간격"
+  },
+  "Rep4RepGapMaxMinutes": {
+   "label": "최대 간격"
+  },
+  "Rep4RepStartHour": {
+   "label": "이 시각부터만 작성"
+  },
+  "Rep4RepEndHour": {
+   "label": "이 시각까지"
+  },
+  "AcceptFriendRequests": {
+   "label": "친구 요청 수락"
+  },
+  "JoinGroup": {
+   "label": "nocat.farm 그룹 가입"
+  },
+  "AutoReplyEnabled": {
+   "label": "메시지에 답장"
+  },
+  "AutoReply": {
+   "label": "답장 내용"
+  },
+  "AutoReplyOncePerDay": {
+   "label": "하루에 한 번만 답장"
+  },
+  "FriendRequestDelayMinMinutes": {
+   "label": "최소 대기"
+  },
+  "FriendRequestDelayMaxMinutes": {
+   "label": "최대 대기"
+  },
+  "ActOnlyWhileAwake": {
+   "label": "깨어 있을 때만 반응"
+  },
+  "AcceptDonations": {
+   "label": "기부 수락"
+  },
+  "AcceptFromMasters": {
+   "label": "내 계정에서 오는 것은 모두 수락"
+  },
+  "TradeMasters": {
+   "label": "내 계정"
+  },
+  "DeclineOtherTrades": {
+   "label": "그 외에는 모두 거절"
+  },
+  "TradeDelayMinMinutes": {
+   "label": "최소 대기"
+  },
+  "TradeDelayMaxMinutes": {
+   "label": "최대 대기"
+  },
+  "PauseWhenYouPlay": {
+   "label": "직접 플레이할 때 물러나기"
+  },
+  "ResumeDelayMinutes": {
+   "label": "재개 전 대기"
+  }
+ }
 }

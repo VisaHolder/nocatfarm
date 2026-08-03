@@ -30,5 +30,276 @@
   "type a command, or 'help'": "コマンドを入力、または 'help'",
   "your steam login": "Steam のログイン名"
  },
- "settings": {}
+ "settings": {
+  "WebEnabled": {
+   "label": "Web ダッシュボード"
+  },
+  "WebHost": {
+   "label": "待ち受けアドレス"
+  },
+  "WebPort": {
+   "label": "ポート"
+  },
+  "WebPassword": {
+   "label": "ダッシュボードのパスワード"
+  },
+  "OpenDashboardAfterAdd": {
+   "label": "アカウント追加後にダッシュボードを開く"
+  },
+  "OpenBrowserOnStart": {
+   "label": "起動時にブラウザーを開く"
+  },
+  "Tray": {
+   "label": "トレイアイコン"
+  },
+  "MinimizeToTray": {
+   "label": "トレイに最小化"
+  },
+  "StartMinimized": {
+   "label": "非表示で起動"
+  },
+  "StartWithWindows": {
+   "label": "Windows と一緒に起動"
+  },
+  "KeepAwake": {
+   "label": "この PC をスリープさせない"
+  },
+  "TrayNotifications": {
+   "label": "通知を表示"
+  },
+  "NotifyEarnings": {
+   "label": "獲得時に通知"
+  },
+  "NotifySocial": {
+   "label": "コメントを通知"
+  },
+  "NotifyProblems": {
+   "label": "問題を通知"
+  },
+  "Rep4RepEnabled": {
+   "label": "rep4rep を使う"
+  },
+  "Rep4RepApiToken": {
+   "label": "API トークン"
+  },
+  "Rep4RepAutoAddProfiles": {
+   "label": "アカウントを自動登録"
+  },
+  "LoginStaggerSeconds": {
+   "label": "ログインの間隔"
+  },
+  "StatusEveryMinutes": {
+   "label": "状況を伝える間隔"
+  },
+  "StatusQuietEveryMinutes": {
+   "label": "休止中の間隔"
+  },
+  "Language": {
+   "label": "言語"
+  },
+  "MarketCurrency": {
+   "label": "インベントリの通貨"
+  },
+  "FileLogging": {
+   "label": "ログファイルに記録"
+  },
+  "DailyReportEnabled": {
+   "label": "ログに毎日のまとめ"
+  },
+  "DailyReportHour": {
+   "label": "まとめの時刻 · 時"
+  },
+  "DailyReportMinute": {
+   "label": "まとめの時刻 · 分"
+  },
+  "Enabled": {
+   "label": "有効"
+  },
+  "SteamLogin": {
+   "label": "Steam アカウント名"
+  },
+  "SteamPassword": {
+   "label": "パスワード"
+  },
+  "OnlineStatus": {
+   "label": "表示ステータス"
+  },
+  "IUseThisAccount": {
+   "label": "このアカウントは自分でも使う"
+  },
+  "StartPaused": {
+   "label": "一時停止状態で開始"
+  },
+  "LogColour": {
+   "label": "ログでの色"
+  },
+  "Notes": {
+   "label": "メモ"
+  },
+  "LegitMode": {
+   "label": "人間モード"
+  },
+  "LegitStopMaxSeconds": {
+   "label": "停止時に切り上げる最大時間"
+  },
+  "GameWeights": {
+   "label": "ゲームと頻度"
+  },
+  "WeekdayHours": {
+   "label": "平日の時間"
+  },
+  "WeekendHours": {
+   "label": "週末の時間"
+  },
+  "DayOffChancePct": {
+   "label": "休む日の確率"
+  },
+  "DayStartHour": {
+   "label": "だいたい何時に始める"
+  },
+  "BedHour": {
+   "label": "だいたい何時に寝る"
+  },
+  "LateNightExtraHours": {
+   "label": "金・土は遅くまで起きている"
+  },
+  "MainGameSharePct": {
+   "label": "メインゲームの割合"
+  },
+  "PureMainDayChancePct": {
+   "label": "メインゲームだけの日の割合"
+  },
+  "SideGameSharePct": {
+   "label": "混ざる日の他ゲームの割合"
+  },
+  "WarmUpMinMinutes": {
+   "label": "最低これだけ慣らす"
+  },
+  "WarmUpMaxMinutes": {
+   "label": "最大で"
+  },
+  "SessionMinMinutes": {
+   "label": "最短のプレイ"
+  },
+  "SessionMaxMinutes": {
+   "label": "最長のプレイ"
+  },
+  "MealBreaksPerDay": {
+   "label": "1 日の食事回数"
+  },
+  "MealBreakMinutes": {
+   "label": "食事にかかる時間"
+  },
+  "SignOutOnBreakChancePct": {
+   "label": "休憩中にオフラインになる確率"
+  },
+  "OfflineIdleAtNight": {
+   "label": "夜間に時間を稼ぐ"
+  },
+  "OfflineIdleGames": {
+   "label": "夜間に回すゲーム"
+  },
+  "IdleGames": {
+   "label": "時間を稼ぐゲーム"
+  },
+  "CustomGameNameEnabled": {
+   "label": "カスタムのゲーム名を表示"
+  },
+  "CustomGameName": {
+   "label": "表示名"
+  },
+  "FarmCards": {
+   "label": "トレーディングカードを集める"
+  },
+  "HoursUntilCardDrops": {
+   "label": "カードが落ちるまでの時間"
+  },
+  "FarmingOrder": {
+   "label": "この順で集める"
+  },
+  "FarmOffline": {
+   "label": "オフライン表示のまま集める"
+  },
+  "UnlockAchievements": {
+   "label": "時間をかけて実績を獲得"
+  },
+  "AchievementPace": {
+   "label": "速さ"
+  },
+  "AchievementMaxCompletionPct": {
+   "label": "達成率の上限"
+  },
+  "ClaimFreeGames": {
+   "label": "無料ゲームを受け取る"
+  },
+  "CraftBadges": {
+   "label": "カードからバッジを作る"
+  },
+  "Rep4Rep": {
+   "label": "rep4rep のコメントを投稿"
+  },
+  "Rep4RepDailyCap": {
+   "label": "24 時間あたりの上限"
+  },
+  "Rep4RepGapMinMinutes": {
+   "label": "最短の間隔"
+  },
+  "Rep4RepGapMaxMinutes": {
+   "label": "最長の間隔"
+  },
+  "Rep4RepStartHour": {
+   "label": "投稿の開始時刻"
+  },
+  "Rep4RepEndHour": {
+   "label": "終了時刻"
+  },
+  "AcceptFriendRequests": {
+   "label": "フレンド申請を承認"
+  },
+  "JoinGroup": {
+   "label": "nocat.farm グループに参加"
+  },
+  "AutoReplyEnabled": {
+   "label": "メッセージに返信"
+  },
+  "AutoReply": {
+   "label": "返信内容"
+  },
+  "AutoReplyOncePerDay": {
+   "label": "1 日 1 回だけ返信"
+  },
+  "FriendRequestDelayMinMinutes": {
+   "label": "最低これだけ待つ"
+  },
+  "FriendRequestDelayMaxMinutes": {
+   "label": "最大で"
+  },
+  "ActOnlyWhileAwake": {
+   "label": "起きている間だけ反応する"
+  },
+  "AcceptDonations": {
+   "label": "寄付を受け取る"
+  },
+  "AcceptFromMasters": {
+   "label": "自分のアカウントからは全部受け取る"
+  },
+  "TradeMasters": {
+   "label": "自分のアカウント"
+  },
+  "DeclineOtherTrades": {
+   "label": "それ以外はすべて拒否"
+  },
+  "TradeDelayMinMinutes": {
+   "label": "最低これだけ待つ"
+  },
+  "TradeDelayMaxMinutes": {
+   "label": "最大で"
+  },
+  "PauseWhenYouPlay": {
+   "label": "自分が遊ぶときは譲る"
+  },
+  "ResumeDelayMinutes": {
+   "label": "再開までの待ち時間"
+  }
+ }
 }

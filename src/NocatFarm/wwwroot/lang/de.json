@@ -30,5 +30,276 @@
   "type a command, or 'help'": "Befehl eingeben, oder 'help'",
   "your steam login": "dein Steam-Login"
  },
- "settings": {}
+ "settings": {
+  "WebEnabled": {
+   "label": "Web-Oberfläche"
+  },
+  "WebHost": {
+   "label": "Lauschen auf"
+  },
+  "WebPort": {
+   "label": "Port"
+  },
+  "WebPassword": {
+   "label": "Passwort der Oberfläche"
+  },
+  "OpenDashboardAfterAdd": {
+   "label": "Oberfläche nach dem Hinzufügen eines Kontos öffnen"
+  },
+  "OpenBrowserOnStart": {
+   "label": "Browser beim Start öffnen"
+  },
+  "Tray": {
+   "label": "Symbol im Infobereich"
+  },
+  "MinimizeToTray": {
+   "label": "In den Infobereich minimieren"
+  },
+  "StartMinimized": {
+   "label": "Versteckt starten"
+  },
+  "StartWithWindows": {
+   "label": "Mit Windows starten"
+  },
+  "KeepAwake": {
+   "label": "Diesen PC wach halten"
+  },
+  "TrayNotifications": {
+   "label": "Hinweise anzeigen"
+  },
+  "NotifyEarnings": {
+   "label": "Hinweis bei Erträgen"
+  },
+  "NotifySocial": {
+   "label": "Hinweis bei Kommentaren"
+  },
+  "NotifyProblems": {
+   "label": "Hinweis bei Problemen"
+  },
+  "Rep4RepEnabled": {
+   "label": "rep4rep überhaupt nutzen"
+  },
+  "Rep4RepApiToken": {
+   "label": "API-Token"
+  },
+  "Rep4RepAutoAddProfiles": {
+   "label": "Konten automatisch registrieren"
+  },
+  "LoginStaggerSeconds": {
+   "label": "Abstand zwischen Anmeldungen"
+  },
+  "StatusEveryMinutes": {
+   "label": "Sagen, was es tut, alle"
+  },
+  "StatusQuietEveryMinutes": {
+   "label": "Und in Ruhe alle"
+  },
+  "Language": {
+   "label": "Sprache"
+  },
+  "MarketCurrency": {
+   "label": "Inventarpreise in"
+  },
+  "FileLogging": {
+   "label": "Protokolldatei schreiben"
+  },
+  "DailyReportEnabled": {
+   "label": "Tägliche Zusammenfassung im Protokoll"
+  },
+  "DailyReportHour": {
+   "label": "Uhrzeit · Stunde"
+  },
+  "DailyReportMinute": {
+   "label": "Uhrzeit · Minute"
+  },
+  "Enabled": {
+   "label": "Aktiviert"
+  },
+  "SteamLogin": {
+   "label": "Steam-Kontoname"
+  },
+  "SteamPassword": {
+   "label": "Passwort"
+  },
+  "OnlineStatus": {
+   "label": "Erscheinen als"
+  },
+  "IUseThisAccount": {
+   "label": "Ich melde mich selbst hier an"
+  },
+  "StartPaused": {
+   "label": "Pausiert starten"
+  },
+  "LogColour": {
+   "label": "Farbe im Protokoll"
+  },
+  "Notes": {
+   "label": "Notizen"
+  },
+  "LegitMode": {
+   "label": "Menschlicher Modus"
+  },
+  "LegitStopMaxSeconds": {
+   "label": "Beim Stoppen noch fertig spielen bis zu"
+  },
+  "GameWeights": {
+   "label": "Spiele und wie oft"
+  },
+  "WeekdayHours": {
+   "label": "Stunden unter der Woche"
+  },
+  "WeekendHours": {
+   "label": "Stunden am Wochenende"
+  },
+  "DayOffChancePct": {
+   "label": "Chance auf einen freien Tag"
+  },
+  "DayStartHour": {
+   "label": "Kommt ungefähr online um"
+  },
+  "BedHour": {
+   "label": "Geht ungefähr schlafen um"
+  },
+  "LateNightExtraHours": {
+   "label": "Bleibt Fr/Sa länger auf"
+  },
+  "MainGameSharePct": {
+   "label": "Hauptspiel bekommt"
+  },
+  "PureMainDayChancePct": {
+   "label": "Tage nur mit dem Hauptspiel"
+  },
+  "SideGameSharePct": {
+   "label": "An gemischten Tagen die anderen"
+  },
+  "WarmUpMinMinutes": {
+   "label": "Mindestens ankommen für"
+  },
+  "WarmUpMaxMinutes": {
+   "label": "Und höchstens"
+  },
+  "SessionMinMinutes": {
+   "label": "Kürzeste Sitzung"
+  },
+  "SessionMaxMinutes": {
+   "label": "Längste Sitzung"
+  },
+  "MealBreaksPerDay": {
+   "label": "Mahlzeiten pro Tag"
+  },
+  "MealBreakMinutes": {
+   "label": "Wie lange eine Mahlzeit dauert"
+  },
+  "SignOutOnBreakChancePct": {
+   "label": "Chance, in einer Pause offline zu gehen"
+  },
+  "OfflineIdleAtNight": {
+   "label": "Nachts Stunden sammeln"
+  },
+  "OfflineIdleGames": {
+   "label": "Spiele für die Nacht"
+  },
+  "IdleGames": {
+   "label": "Spiele zum Sammeln"
+  },
+  "CustomGameNameEnabled": {
+   "label": "Eigenen Spielnamen anzeigen"
+  },
+  "CustomGameName": {
+   "label": "Anzeigen als"
+  },
+  "FarmCards": {
+   "label": "Sammelkarten farmen"
+  },
+  "HoursUntilCardDrops": {
+   "label": "Stunden bis Karten fallen"
+  },
+  "FarmingOrder": {
+   "label": "In dieser Reihenfolge farmen"
+  },
+  "FarmOffline": {
+   "label": "Farmen und dabei offline erscheinen"
+  },
+  "UnlockAchievements": {
+   "label": "Errungenschaften mit der Zeit verdienen"
+  },
+  "AchievementPace": {
+   "label": "Wie schnell"
+  },
+  "AchievementMaxCompletionPct": {
+   "label": "Nie mehr abschließen als"
+  },
+  "ClaimFreeGames": {
+   "label": "Gratisspiele holen"
+  },
+  "CraftBadges": {
+   "label": "Abzeichen aus Kartensätzen herstellen"
+  },
+  "Rep4Rep": {
+   "label": "rep4rep-Kommentare posten"
+  },
+  "Rep4RepDailyCap": {
+   "label": "Höchstens pro 24 Stunden"
+  },
+  "Rep4RepGapMinMinutes": {
+   "label": "Kürzester Abstand"
+  },
+  "Rep4RepGapMaxMinutes": {
+   "label": "Längster Abstand"
+  },
+  "Rep4RepStartHour": {
+   "label": "Nur posten ab"
+  },
+  "Rep4RepEndHour": {
+   "label": "Bis"
+  },
+  "AcceptFriendRequests": {
+   "label": "Freundschaftsanfragen annehmen"
+  },
+  "JoinGroup": {
+   "label": "Der nocat.farm-Gruppe beitreten"
+  },
+  "AutoReplyEnabled": {
+   "label": "Auf Nachrichten antworten"
+  },
+  "AutoReply": {
+   "label": "Antworten mit"
+  },
+  "AutoReplyOncePerDay": {
+   "label": "Nur einmal am Tag antworten"
+  },
+  "FriendRequestDelayMinMinutes": {
+   "label": "Mindestens warten"
+  },
+  "FriendRequestDelayMaxMinutes": {
+   "label": "Und höchstens"
+  },
+  "ActOnlyWhileAwake": {
+   "label": "Nur reagieren, wenn wach"
+  },
+  "AcceptDonations": {
+   "label": "Geschenke annehmen"
+  },
+  "AcceptFromMasters": {
+   "label": "Alles von deinen eigenen Konten annehmen"
+  },
+  "TradeMasters": {
+   "label": "Deine eigenen Konten"
+  },
+  "DeclineOtherTrades": {
+   "label": "Alles andere ablehnen"
+  },
+  "TradeDelayMinMinutes": {
+   "label": "Mindestens warten"
+  },
+  "TradeDelayMaxMinutes": {
+   "label": "Und höchstens"
+  },
+  "PauseWhenYouPlay": {
+   "label": "Zurücktreten, wenn du spielst"
+  },
+  "ResumeDelayMinutes": {
+   "label": "Warten vor dem Weitermachen"
+  }
+ }
 }

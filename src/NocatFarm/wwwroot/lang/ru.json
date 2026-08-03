@@ -30,5 +30,276 @@
   "type a command, or 'help'": "введите команду или 'help'",
   "your steam login": "ваш логин Steam"
  },
- "settings": {}
+ "settings": {
+  "WebEnabled": {
+   "label": "Веб-панель"
+  },
+  "WebHost": {
+   "label": "Слушать на"
+  },
+  "WebPort": {
+   "label": "Порт"
+  },
+  "WebPassword": {
+   "label": "Пароль панели"
+  },
+  "OpenDashboardAfterAdd": {
+   "label": "Открывать панель после добавления аккаунта"
+  },
+  "OpenBrowserOnStart": {
+   "label": "Открывать браузер при запуске"
+  },
+  "Tray": {
+   "label": "Значок в трее"
+  },
+  "MinimizeToTray": {
+   "label": "Сворачивать в трей"
+  },
+  "StartMinimized": {
+   "label": "Запускать скрыто"
+  },
+  "StartWithWindows": {
+   "label": "Запускать вместе с Windows"
+  },
+  "KeepAwake": {
+   "label": "Не давать ПК засыпать"
+  },
+  "TrayNotifications": {
+   "label": "Показывать уведомления"
+  },
+  "NotifyEarnings": {
+   "label": "Уведомлять о доходе"
+  },
+  "NotifySocial": {
+   "label": "Уведомлять о комментариях"
+  },
+  "NotifyProblems": {
+   "label": "Уведомлять о проблемах"
+  },
+  "Rep4RepEnabled": {
+   "label": "Использовать rep4rep"
+  },
+  "Rep4RepApiToken": {
+   "label": "API-токен"
+  },
+  "Rep4RepAutoAddProfiles": {
+   "label": "Регистрировать аккаунты автоматически"
+  },
+  "LoginStaggerSeconds": {
+   "label": "Пауза между входами"
+  },
+  "StatusEveryMinutes": {
+   "label": "Сообщать, чем занят, каждые"
+  },
+  "StatusQuietEveryMinutes": {
+   "label": "А в покое — каждые"
+  },
+  "Language": {
+   "label": "Язык"
+  },
+  "MarketCurrency": {
+   "label": "Цены инвентаря в"
+  },
+  "FileLogging": {
+   "label": "Писать файл журнала"
+  },
+  "DailyReportEnabled": {
+   "label": "Ежедневная сводка в журнале"
+  },
+  "DailyReportHour": {
+   "label": "Время сводки · час"
+  },
+  "DailyReportMinute": {
+   "label": "Время сводки · минута"
+  },
+  "Enabled": {
+   "label": "Включён"
+  },
+  "SteamLogin": {
+   "label": "Имя аккаунта Steam"
+  },
+  "SteamPassword": {
+   "label": "Пароль"
+  },
+  "OnlineStatus": {
+   "label": "Показывать статус"
+  },
+  "IUseThisAccount": {
+   "label": "Я сам захожу в этот аккаунт"
+  },
+  "StartPaused": {
+   "label": "Запускать на паузе"
+  },
+  "LogColour": {
+   "label": "Цвет в журнале"
+  },
+  "Notes": {
+   "label": "Заметки"
+  },
+  "LegitMode": {
+   "label": "Человеческий режим"
+  },
+  "LegitStopMaxSeconds": {
+   "label": "При остановке доигрывать до"
+  },
+  "GameWeights": {
+   "label": "Игры и как часто"
+  },
+  "WeekdayHours": {
+   "label": "Часов в будний день"
+  },
+  "WeekendHours": {
+   "label": "Часов в выходные"
+  },
+  "DayOffChancePct": {
+   "label": "Шанс выходного дня"
+  },
+  "DayStartHour": {
+   "label": "Заходит примерно в"
+  },
+  "BedHour": {
+   "label": "Ложится примерно в"
+  },
+  "LateNightExtraHours": {
+   "label": "Сидит дольше в пт/сб"
+  },
+  "MainGameSharePct": {
+   "label": "Основной игре достаётся"
+  },
+  "PureMainDayChancePct": {
+   "label": "Дни только с основной игрой"
+  },
+  "SideGameSharePct": {
+   "label": "В смешанный день остальным"
+  },
+  "WarmUpMinMinutes": {
+   "label": "Осваиваться не меньше"
+  },
+  "WarmUpMaxMinutes": {
+   "label": "И не больше"
+  },
+  "SessionMinMinutes": {
+   "label": "Самый короткий заход"
+  },
+  "SessionMaxMinutes": {
+   "label": "Самый длинный заход"
+  },
+  "MealBreaksPerDay": {
+   "label": "Приёмов пищи в день"
+  },
+  "MealBreakMinutes": {
+   "label": "Сколько длится еда"
+  },
+  "SignOutOnBreakChancePct": {
+   "label": "Шанс выйти из сети на перерыве"
+  },
+  "OfflineIdleAtNight": {
+   "label": "Копить часы ночью"
+  },
+  "OfflineIdleGames": {
+   "label": "Игры на ночь"
+  },
+  "IdleGames": {
+   "label": "Игры для фарма часов"
+  },
+  "CustomGameNameEnabled": {
+   "label": "Показывать своё название игры"
+  },
+  "CustomGameName": {
+   "label": "Показывать как"
+  },
+  "FarmCards": {
+   "label": "Фармить карточки"
+  },
+  "HoursUntilCardDrops": {
+   "label": "Часов до выпадения карточек"
+  },
+  "FarmingOrder": {
+   "label": "Фармить в таком порядке"
+  },
+  "FarmOffline": {
+   "label": "Фармить, показываясь офлайн"
+  },
+  "UnlockAchievements": {
+   "label": "Получать достижения со временем"
+  },
+  "AchievementPace": {
+   "label": "Насколько быстро"
+  },
+  "AchievementMaxCompletionPct": {
+   "label": "Не проходить больше"
+  },
+  "ClaimFreeGames": {
+   "label": "Забирать бесплатные игры"
+  },
+  "CraftBadges": {
+   "label": "Собирать значки из карточек"
+  },
+  "Rep4Rep": {
+   "label": "Писать комментарии rep4rep"
+  },
+  "Rep4RepDailyCap": {
+   "label": "Не более чем за 24 часа"
+  },
+  "Rep4RepGapMinMinutes": {
+   "label": "Минимальный интервал"
+  },
+  "Rep4RepGapMaxMinutes": {
+   "label": "Максимальный интервал"
+  },
+  "Rep4RepStartHour": {
+   "label": "Писать только с"
+  },
+  "Rep4RepEndHour": {
+   "label": "До"
+  },
+  "AcceptFriendRequests": {
+   "label": "Принимать заявки в друзья"
+  },
+  "JoinGroup": {
+   "label": "Вступить в группу nocat.farm"
+  },
+  "AutoReplyEnabled": {
+   "label": "Отвечать на сообщения"
+  },
+  "AutoReply": {
+   "label": "Отвечать текстом"
+  },
+  "AutoReplyOncePerDay": {
+   "label": "Отвечать только раз в день"
+  },
+  "FriendRequestDelayMinMinutes": {
+   "label": "Ждать не меньше"
+  },
+  "FriendRequestDelayMaxMinutes": {
+   "label": "И не больше"
+  },
+  "ActOnlyWhileAwake": {
+   "label": "Реагировать только когда не спит"
+  },
+  "AcceptDonations": {
+   "label": "Принимать подарки"
+  },
+  "AcceptFromMasters": {
+   "label": "Принимать всё от своих аккаунтов"
+  },
+  "TradeMasters": {
+   "label": "Ваши аккаунты"
+  },
+  "DeclineOtherTrades": {
+   "label": "Отклонять всё остальное"
+  },
+  "TradeDelayMinMinutes": {
+   "label": "Ждать не меньше"
+  },
+  "TradeDelayMaxMinutes": {
+   "label": "И не больше"
+  },
+  "PauseWhenYouPlay": {
+   "label": "Уступать, когда вы играете"
+  },
+  "ResumeDelayMinutes": {
+   "label": "Ждать перед возвратом"
+  }
+ }
 }
