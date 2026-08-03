@@ -145,65 +145,84 @@
    "tip": "Hace que la cuenta juegue como una persona: un juego a la vez, sesiones y descansos de duración variable, se acuesta y se levanta a horas realistas, y algunos días no juega nada. Desactivado, simplemente acumula horas."
   },
   "LegitStopMaxSeconds": {
-   "label": "Al parar, terminar durante hasta"
+   "label": "Al parar, terminar durante hasta",
+   "tip": "Solo en modo humano: al pararla a mano, sigue jugando unos segundos al azar hasta este máximo (alguien que termina lo que estaba haciendo) antes de desconectarse, en vez de desaparecer de golpe."
   },
   "GameWeights": {
    "label": "Juegos y con qué frecuencia",
    "tip": "Los juegos y su peso, por ejemplo «730:70, 440:20». El de mayor peso es el principal y se lleva la mayor parte del tiempo; los demás aparecen de vez en cuando, a rachas, no todos los días."
   },
   "WeekdayHours": {
-   "label": "Horas entre semana"
+   "label": "Horas entre semana",
+   "tip": "Aproximadamente cuántas horas juega de lunes a viernes. El número real se sortea cada mañana alrededor de este, unos días menos y otros más, así que no hay dos días iguales."
   },
   "WeekendHours": {
-   "label": "Horas el fin de semana"
+   "label": "Horas el fin de semana",
+   "tip": "Lo mismo para sábado y domingo. Que los fines de semana duren más que los días laborables es buena parte de lo que hace que una semana parezca real."
   },
   "DayOffChancePct": {
-   "label": "Probabilidad de día libre"
+   "label": "Probabilidad de día libre",
+   "tip": "La probabilidad, sobre 100, de que un día no juegue nada. Quien juega absolutamente todos los días es un bot; esto es lo que lo evita."
   },
   "DayStartHour": {
-   "label": "Se conecta sobre las"
+   "label": "Se conecta sobre las",
+   "tip": "La hora a la que suele conectarse, 0-23. La hora real cae en una campana alrededor de esta y los fines de semana empieza antes, así que nunca es el mismo minuto dos veces."
   },
   "BedHour": {
-   "label": "Se acuesta sobre las"
+   "label": "Se acuesta sobre las",
+   "tip": "La hora a la que lo deja por la noche, 0-23. La madrugada vale: 2 significa las 2 de la mañana."
   },
   "LateNightExtraHours": {
-   "label": "Se queda hasta más tarde vie/sáb"
+   "label": "Se queda hasta más tarde vie/sáb",
+   "tip": "Horas de más que se queda despierto un viernes y un sábado por la noche, cuando al día siguiente no hay nada."
   },
   "MainGameSharePct": {
-   "label": "El juego principal se lleva"
+   "label": "El juego principal se lleva",
+   "tip": "Qué parte del día se lleva el PRIMER juego de la lista cuando juega también a otros, en porcentaje. Se sortea cada día unos 10 puntos arriba o abajo."
   },
   "PureMainDayChancePct": {
-   "label": "Días solo con el juego principal"
+   "label": "Días solo con el juego principal",
+   "tip": "La probabilidad, sobre 100, de que un día entero vaya solo al juego principal. Esto es lo que hace que los demás juegos aparezcan a rachas en vez de en la misma dosis diaria."
   },
   "SideGameSharePct": {
-   "label": "En un día mixto, los demás"
+   "label": "En un día mixto, los demás",
+   "tip": "En los días en que sí se sale del principal, más o menos qué parte del día se reparten los otros juegos. Cuando se agota, vuelve al principal el resto del día."
   },
   "WarmUpMinMinutes": {
-   "label": "Aclimatarse al menos"
+   "label": "Aclimatarse al menos",
+   "tip": "Espera mínima tras conectarse antes de empezar nada, en minutos. Estar dentro de un juego en el mismo segundo en que la cuenta se conecta es lo más mecánico que puede hacer."
   },
   "WarmUpMaxMinutes": {
-   "label": "Y como mucho"
+   "label": "Y como mucho",
+   "tip": "Espera máxima de aclimatación, en minutos. La real se elige al azar entre ambas. Pongas lo que pongas, nunca empieza en los tres minutos siguientes a conectarse."
   },
   "SessionMinMinutes": {
-   "label": "Sesión más corta"
+   "label": "Sesión más corta",
+   "tip": "Lo mínimo que se queda en un juego antes de hacer otra cosa. Nadie cambia de juego cada cinco minutos."
   },
   "SessionMaxMinutes": {
-   "label": "Sesión más larga"
+   "label": "Sesión más larga",
+   "tip": "Lo máximo que se queda en un juego. La mayoría de las sesiones cae entre ambos valores; media hora rápida y una tarde entera son igual de normales, así que deja margen."
   },
   "MealBreaksPerDay": {
-   "label": "Comidas al día"
+   "label": "Comidas al día",
+   "tip": "Cuántas pausas de verdad, lejos del escritorio, se toma al día. Caen alrededor de horas de comida reales y no al azar, que es lo que hace que parezcan comidas."
   },
   "MealBreakMinutes": {
-   "label": "Duración de una comida"
+   "label": "Cuánto dura una comida",
+   "tip": "Aproximadamente cuánto tiempo está fuera en una de ellas, en minutos. A veces se alarga bastante: la gente se pone a hablar."
   },
   "SignOutOnBreakChancePct": {
-   "label": "Probabilidad de desconectarse en un descanso"
+   "label": "Probabilidad de desconectarse en un descanso",
+   "tip": "La probabilidad, sobre 100, de pasar un descanso apareciendo desconectado en vez de solo Ausente, que para tu lista de amigos es indistinguible de cerrar Steam."
   },
   "OfflineIdleAtNight": {
-   "label": "Acumular horas de noche"
+   "label": "Acumular horas de noche",
+   "tip": "Mientras duerme, se pone invisible y sigue acumulando horas igualmente. Tu lista de amigos ve la cuenta desconectada, nadie ve nada, y las horas siguen contando."
   },
   "OfflineIdleGames": {
-   "label": "Juegos para la noche"
+   "label": "Juegos para la noche",
+   "tip": "Qué ejecutar mientras está desconectada por la noche, una vez no quedan cromos que farmear. Tantos como quieras: no hay nadie para ver cuántos son, así que la regla de «uno a la vez» aquí no aplica."
   },
   "IdleGames": {
    "label": "Juegos en segundo plano",
@@ -328,6 +347,18 @@
   },
   "CheckForUpdates": {
    "tip": "Mira una vez al día si hay una versión nueva y lo dice en el registro. Solo avisa: nunca descarga, reemplaza ni reinicia nada."
+  },
+  "BreakMinMinutes": {
+   "label": "Descanso más corto",
+   "tip": "El hueco más corto entre sesiones, en minutos. La mayoría de los descansos se queda en este extremo: beber algo, mirar otra cosa un momento."
+  },
+  "BreakMaxMinutes": {
+   "label": "Descanso más largo",
+   "tip": "El descanso normal más largo, en minutos. Las duraciones reales se inclinan hacia el extremo corto en vez de repartirse por igual, porque así es como descansa la gente."
+  },
+  "MaxSignOutsPerDay": {
+   "label": "Desconectarse como mucho",
+   "tip": "Un tope de cuántas veces al día hace eso, para que la cuenta no esté parpadeando en tu lista de amigos toda la tarde. 0 lo desactiva y entonces cada descanso es solo Ausente."
   }
  }
 }

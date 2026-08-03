@@ -145,65 +145,84 @@
    "tip": "Sprawia, że konto gra jak człowiek: jedna gra naraz, sesje i przerwy o różnej długości, wiarygodne pory snu i wstawania oraz dni całkiem bez grania. Wyłączone - po prostu zbiera godziny."
   },
   "LegitStopMaxSeconds": {
-   "label": "Przy zatrzymaniu kończ jeszcze do"
+   "label": "Przy zatrzymaniu kończ jeszcze do",
+   "tip": "Tylko tryb ludzki: przy ręcznym zatrzymaniu gra jeszcze losowe kilka sekund, najwyżej tyle (ktoś kończy), zanim się wyloguje, zamiast zniknąć natychmiast."
   },
   "GameWeights": {
    "label": "Gry i jak często",
    "tip": "Gry i ich wagi, na przykład \"730:70, 440:20\". Najcięższa jest grą główną i dostaje większość czasu; pozostałe pojawiają się od czasu do czasu, zrywami, a nie codziennie."
   },
   "WeekdayHours": {
-   "label": "Godzin w dzień powszedni"
+   "label": "Godzin w dzień powszedni",
+   "tip": "Mniej więcej ile godzin gra od poniedziałku do piątku. Prawdziwa liczba losuje się co rano wokół tej - raz krócej, raz dłużej - więc żadne dwa dni nie są takie same."
   },
   "WeekendHours": {
-   "label": "Godzin w weekend"
+   "label": "Godzin w weekend",
+   "tip": "To samo dla soboty i niedzieli. To, że weekendy trwają dłużej niż dni robocze, to spora część tego, co sprawia, że tydzień wygląda prawdziwie."
   },
   "DayOffChancePct": {
-   "label": "Szansa na dzień wolny"
+   "label": "Szansa na dzień wolny",
+   "tip": "Szansa na 100, że danego dnia w ogóle nie zagra. Ktoś, kto gra absolutnie codziennie, jest botem - to właśnie temu zapobiega."
   },
   "DayStartHour": {
-   "label": "Wchodzi około"
+   "label": "Wchodzi około",
+   "tip": "Godzina, o której zwykle wchodzi, 0-23. Prawdziwa pora układa się dzwonem wokół niej, a w weekendy zaczyna wcześniej, więc nigdy nie jest to ta sama minuta."
   },
   "BedHour": {
-   "label": "Kładzie się około"
+   "label": "Kładzie się około",
+   "tip": "Godzina, o której kończy na noc, 0-23. Nad ranem też może być: 2 znaczy 2 w nocy."
   },
   "LateNightExtraHours": {
-   "label": "W pt/sob siedzi dłużej"
+   "label": "W pt/sob siedzi dłużej",
+   "tip": "Dodatkowe godziny, które spędza na nogach w piątkowy i sobotni wieczór, gdy nazajutrz nic nie ma."
   },
   "MainGameSharePct": {
-   "label": "Główna gra dostaje"
+   "label": "Główna gra dostaje",
+   "tip": "Jaką część dnia bierze PIERWSZA gra z listy, gdy gra też w inne, w procentach. Losowane co dzień w granicach około 10 punktów."
   },
   "PureMainDayChancePct": {
-   "label": "Dni tylko z główną grą"
+   "label": "Dni tylko z główną grą",
+   "tip": "Szansa na 100, że cały dzień pójdzie wyłącznie na główną grę. To sprawia, że pozostałe gry pojawiają się zrywami, a nie w tej samej codziennej dawce."
   },
   "SideGameSharePct": {
-   "label": "W dzień mieszany pozostałe dostają"
+   "label": "W dzień mieszany pozostałe dostają",
+   "tip": "W dni, gdy faktycznie wychodzi poza główną grę, mniej więcej jaką część dnia dzielą między siebie pozostałe. Gdy się wyczerpie, reszta dnia wraca do głównej."
   },
   "WarmUpMinMinutes": {
-   "label": "Rozgrzewka co najmniej"
+   "label": "Rozgrzewka co najmniej",
+   "tip": "Najkrótsze oczekiwanie po zalogowaniu, zanim cokolwiek zacznie, w minutach. Być w grze w tej samej sekundzie, w której konto wchodzi online, to najbardziej mechaniczna rzecz z możliwych."
   },
   "WarmUpMaxMinutes": {
-   "label": "I najwyżej"
+   "label": "I najwyżej",
+   "tip": "Najdłuższe oczekiwanie na rozgrzewkę, w minutach. Prawdziwe losuje się między tymi dwoma. Cokolwiek ustawisz, nigdy nie zaczyna w ciągu trzech minut od zalogowania."
   },
   "SessionMinMinutes": {
-   "label": "Najkrótsza sesja"
+   "label": "Najkrótsza sesja",
+   "tip": "Najkrócej, jak zostanie w jednej grze, zanim zrobi coś innego. Nikt nie zmienia gry co pięć minut."
   },
   "SessionMaxMinutes": {
-   "label": "Najdłuższa sesja"
+   "label": "Najdłuższa sesja",
+   "tip": "Najdłużej, jak zostanie w jednej grze. Większość sesji wypada pomiędzy; szybkie pół godziny i cały wieczór są tak samo normalne, więc zostaw zapas."
   },
   "MealBreaksPerDay": {
-   "label": "Posiłków dziennie"
+   "label": "Posiłków dziennie",
+   "tip": "Ile prawdziwych przerw od biurka robi w ciągu dnia. Wypadają wokół realnych pór posiłków, a nie losowo - i to sprawia, że czyta się je jako posiłki."
   },
   "MealBreakMinutes": {
-   "label": "Ile trwa posiłek"
+   "label": "Ile trwa posiłek",
+   "tip": "Mniej więcej ile go nie ma przy takiej przerwie, w minutach. Czasem mocno się przeciąga - ludzie zaczynają rozmawiać."
   },
   "SignOutOnBreakChancePct": {
-   "label": "Szansa na wylogowanie w przerwie"
+   "label": "Szansa na wylogowanie w przerwie",
+   "tip": "Szansa na 100, że przerwę spędzi jako niedostępny zamiast po prostu Zaraz wracam - dla twojej listy znajomych nie do odróżnienia od zamkniętego Steam."
   },
   "OfflineIdleAtNight": {
-   "label": "Zbieraj godziny w nocy"
+   "label": "Zbieraj godziny w nocy",
+   "tip": "Kiedy śpi, przechodzi w tryb niewidoczny i mimo to po cichu zbiera godziny. Twoja lista znajomych widzi konto offline, nikt nic nie widzi, a godziny dalej lecą."
   },
   "OfflineIdleGames": {
-   "label": "Gry na noc"
+   "label": "Gry na noc",
+   "tip": "Co uruchamiać, gdy jest w nocy offline, a kart do farmienia już nie ma. Ile chcesz: nie ma komu liczyć, więc zasada \"jedna naraz\" tu nie obowiązuje."
   },
   "IdleGames": {
    "label": "Gry do zbierania godzin",
@@ -328,6 +347,18 @@
   },
   "CheckForUpdates": {
    "tip": "Raz dziennie sprawdza, czy jest nowsza wersja, i pisze o tym w dzienniku. Tylko informuje: nigdy nic nie pobiera, nie podmienia ani nie restartuje."
+  },
+  "BreakMinMinutes": {
+   "label": "Najkrótsza przerwa",
+   "tip": "Najkrótsza przerwa między sesjami, w minutach. Większość przerw jest właśnie taka: coś do picia, chwila poza grą."
+  },
+  "BreakMaxMinutes": {
+   "label": "Najdłuższa przerwa",
+   "tip": "Najdłuższa zwykła przerwa, w minutach. Prawdziwe długości ciążą ku krótkiemu końcowi zamiast rozkładać się równo, bo tak właśnie robią ludzie."
+  },
+  "MaxSignOutsPerDay": {
+   "label": "Wyloguj się najwyżej",
+   "tip": "Górna granica, ile razy dziennie to robi, żeby konto nie migało na twojej liście znajomych przez cały wieczór. 0 wyłącza i wtedy każda przerwa to tylko Zaraz wracam."
   }
  }
 }

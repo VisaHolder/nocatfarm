@@ -145,65 +145,84 @@
    "tip": "Lässt das Konto wie ein Mensch spielen: ein Spiel zur Zeit, unterschiedlich lange Sitzungen und Pausen, realistische Schlafens- und Aufstehzeiten, und manche Tage ohne Spielen. Aus gesammelt es einfach Stunden."
   },
   "LegitStopMaxSeconds": {
-   "label": "Beim Stoppen noch fertig spielen bis zu"
+   "label": "Beim Stoppen noch fertig spielen bis zu",
+   "tip": "Nur im Menschen-Modus: bei einem manuellen Stopp noch ein paar zufällige Sekunden weiterspielen, höchstens so lange (jemand macht fertig), statt schlagartig zu verschwinden."
   },
   "GameWeights": {
    "label": "Spiele und wie oft",
    "tip": "Spiele und ihr Gewicht, etwa «730:70, 440:20». Das schwerste ist das Hauptspiel und bekommt die meiste Zeit; die anderen kommen gelegentlich vor, schubweise statt jeden Tag."
   },
   "WeekdayHours": {
-   "label": "Stunden unter der Woche"
+   "label": "Stunden unter der Woche",
+   "tip": "Ungefähr wie viele Stunden es Montag bis Freitag spielt. Die echte Zahl wird jeden Morgen um diese herum ausgewürfelt - mal kürzer, mal länger - also gleicht kein Tag dem anderen."
   },
   "WeekendHours": {
-   "label": "Stunden am Wochenende"
+   "label": "Stunden am Wochenende",
+   "tip": "Dasselbe für Samstag und Sonntag. Dass Wochenenden länger laufen als Wochentage, macht einen guten Teil davon aus, dass eine Woche echt wirkt."
   },
   "DayOffChancePct": {
-   "label": "Chance auf einen freien Tag"
+   "label": "Chance auf einen freien Tag",
+   "tip": "Die Chance von 100, dass an einem Tag gar nicht gespielt wird. Wer ausnahmslos jeden Tag spielt, ist ein Bot - das hier verhindert genau das."
   },
   "DayStartHour": {
-   "label": "Kommt ungefähr online um"
+   "label": "Kommt ungefähr online um",
+   "tip": "Die Stunde, zu der es normalerweise online kommt, 0-23. Die echte Zeit fällt in eine Glocke darum herum, am Wochenende früher - nie zweimal dieselbe Minute."
   },
   "BedHour": {
-   "label": "Geht ungefähr schlafen um"
+   "label": "Geht ungefähr schlafen um",
+   "tip": "Die Stunde, zu der für die Nacht Schluss ist, 0-23. Kleine Stunden sind in Ordnung: 2 heißt 2 Uhr nachts."
   },
   "LateNightExtraHours": {
-   "label": "Bleibt Fr/Sa länger auf"
+   "label": "Bleibt Fr/Sa länger auf",
+   "tip": "Zusätzliche Stunden, die es Freitag- und Samstagnacht aufbleibt, wenn am nächsten Tag nichts ansteht."
   },
   "MainGameSharePct": {
-   "label": "Hauptspiel bekommt"
+   "label": "Hauptspiel bekommt",
+   "tip": "Welchen Anteil des Tages das ERSTE Spiel der Liste bekommt, wenn auch andere gespielt werden, in Prozent. Wird täglich um etwa 10 Punkte herum neu ausgewürfelt."
   },
   "PureMainDayChancePct": {
-   "label": "Tage nur mit dem Hauptspiel"
+   "label": "Tage nur mit dem Hauptspiel",
+   "tip": "Die Chance von 100, dass ein ganzer Tag allein aufs Hauptspiel geht. Das lässt die anderen Spiele schubweise auftauchen statt in derselben täglichen Dosis."
   },
   "SideGameSharePct": {
-   "label": "An gemischten Tagen die anderen"
+   "label": "An gemischten Tagen die anderen",
+   "tip": "An Tagen, an denen es ausschert, ungefähr welchen Anteil des Tages sich die anderen Spiele teilen. Ist der aufgebraucht, geht es für den Rest des Tages zurück aufs Hauptspiel."
   },
   "WarmUpMinMinutes": {
-   "label": "Mindestens ankommen für"
+   "label": "Mindestens ankommen für",
+   "tip": "Kürzeste Wartezeit nach dem Anmelden, bevor irgendetwas startet, in Minuten. In derselben Sekunde online und im Spiel zu sein, ist das Mechanischste überhaupt."
   },
   "WarmUpMaxMinutes": {
-   "label": "Und höchstens"
+   "label": "Und höchstens",
+   "tip": "Längste Eingewöhnungszeit, in Minuten. Die echte wird zufällig zwischen beiden gewählt. Was auch immer eingestellt ist: nie innerhalb von drei Minuten nach dem Anmelden."
   },
   "SessionMinMinutes": {
-   "label": "Kürzeste Sitzung"
+   "label": "Kürzeste Sitzung",
+   "tip": "Wie kurz es mindestens in einem Spiel bleibt, bevor es etwas anderes macht. Niemand wechselt alle fünf Minuten das Spiel."
   },
   "SessionMaxMinutes": {
-   "label": "Längste Sitzung"
+   "label": "Längste Sitzung",
+   "tip": "Wie lange es höchstens in einem Spiel bleibt. Die meisten Sitzungen liegen dazwischen; eine schnelle halbe Stunde und ein ganzer Abend sind beide normal - also Luft lassen."
   },
   "MealBreaksPerDay": {
-   "label": "Mahlzeiten pro Tag"
+   "label": "Mahlzeiten pro Tag",
+   "tip": "Wie viele echte Pausen weg vom Schreibtisch es am Tag macht. Sie liegen um echte Essenszeiten herum statt zufällig - deshalb wirken sie wie Mahlzeiten."
   },
   "MealBreakMinutes": {
-   "label": "Wie lange eine Mahlzeit dauert"
+   "label": "Wie lange eine Mahlzeit dauert",
+   "tip": "Ungefähr wie lange es dabei weg ist, in Minuten. Manchmal wird es deutlich länger - man kommt ins Reden."
   },
   "SignOutOnBreakChancePct": {
-   "label": "Chance, in einer Pause offline zu gehen"
+   "label": "Chance, in einer Pause offline zu gehen",
+   "tip": "Die Chance von 100, eine Pause offline statt nur als Abwesend zu verbringen - für die Freundesliste nicht von einem geschlossenen Steam zu unterscheiden."
   },
   "OfflineIdleAtNight": {
-   "label": "Nachts Stunden sammeln"
+   "label": "Nachts Stunden sammeln",
+   "tip": "Während es schläft, unsichtbar gehen und trotzdem leise weiter Stunden sammeln. Die Freundesliste zeigt das Konto offline, niemand sieht etwas, und die Stunden zählen weiter."
   },
   "OfflineIdleGames": {
-   "label": "Spiele für die Nacht"
+   "label": "Spiele für die Nacht",
+   "tip": "Was laufen soll, während es nachts offline ist und keine Karten mehr zu farmen sind. So viele wie du willst: es ist niemand da, der zählt, also gilt die Regel \"eins nach dem anderen\" hier nicht."
   },
   "IdleGames": {
    "label": "Spiele zum Sammeln",
@@ -328,6 +347,18 @@
   },
   "CheckForUpdates": {
    "tip": "Sieht einmal täglich nach einer neueren Version und sagt im Protokoll Bescheid. Es sagt nur Bescheid: es lädt nichts, ersetzt nichts und startet nichts neu."
+  },
+  "BreakMinMinutes": {
+   "label": "Kürzeste Pause",
+   "tip": "Die kürzeste Lücke zwischen zwei Sitzungen, in Minuten. Die meisten Pausen liegen an diesem Ende - etwas trinken, kurz wegklicken."
+  },
+  "BreakMaxMinutes": {
+   "label": "Längste Pause",
+   "tip": "Die längste gewöhnliche Pause, in Minuten. Die echten Längen neigen zum kurzen Ende statt gleichmäßig verteilt zu sein, weil Menschen genau so Pause machen."
+  },
+  "MaxSignOutsPerDay": {
+   "label": "Höchstens so oft offline gehen",
+   "tip": "Eine Obergrenze, wie oft am Tag das passiert, damit das Konto nicht den ganzen Abend in deiner Freundesliste flackert. 0 schaltet es ab, dann ist jede Pause nur Abwesend."
   }
  }
 }

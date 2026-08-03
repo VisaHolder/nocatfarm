@@ -145,65 +145,84 @@
    "tip": "Hesabı bir insan gibi oynatır: tek seferde tek oyun, uzunluğu değişen oturumlar ve molalar, gerçekçi yatma ve kalkma saatleri, ve hiç oynanmayan günler. Kapalıyken sadece saat biriktirir."
   },
   "LegitStopMaxSeconds": {
-   "label": "Durdurulunca en fazla şu kadar toparlan"
+   "label": "Durdurulunca en fazla şu kadar toparlan",
+   "tip": "Yalnızca insan modu: elle durdurduğunda, çıkmadan önce en fazla bu kadar rastgele saniye oynamaya devam eder (işini bitiren biri gibi), aniden yok olmak yerine."
   },
   "GameWeights": {
    "label": "Oyunlar ve sıklıkları",
    "tip": "Oyunlar ve ağırlıkları, örneğin \"730:70, 440:20\". En ağırı ana oyundur ve zamanın çoğunu alır; diğerleri her gün değil, arada bir, öbekler hâlinde gelir."
   },
   "WeekdayHours": {
-   "label": "Hafta içi saat"
+   "label": "Hafta içi saat",
+   "tip": "Pazartesiden cumaya kabaca kaç saat oynadığı. Gerçek sayı her sabah bunun etrafında atılır - kimi gün kısa, kimi gün uzun - yani iki gün birbirine benzemez."
   },
   "WeekendHours": {
-   "label": "Hafta sonu saat"
+   "label": "Hafta sonu saat",
+   "tip": "Cumartesi ve pazar için aynısı. Hafta sonlarının hafta içinden uzun sürmesi, bir haftanın gerçek görünmesinin büyük bölümüdür."
   },
   "DayOffChancePct": {
-   "label": "İzin günü olasılığı"
+   "label": "İzin günü olasılığı",
+   "tip": "100 üzerinden, o gün hiç oynamama olasılığı. İstisnasız her gün oynayan biri bottur; bunu engelleyen ayar budur."
   },
   "DayStartHour": {
-   "label": "Yaklaşık şu saatte girer"
+   "label": "Yaklaşık şu saatte girer",
+   "tip": "Genelde çevrimiçi olduğu saat, 0-23. Gerçek saat bunun çevresinde bir çan eğrisine düşer, hafta sonu daha erken başlar; yani asla aynı dakika iki kez olmaz."
   },
   "BedHour": {
-   "label": "Yaklaşık şu saatte yatar"
+   "label": "Yaklaşık şu saatte yatar",
+   "tip": "Geceyi bitirdiği saat, 0-23. Gece yarısından sonrası da olur: 2, gece 02.00 demektir."
   },
   "LateNightExtraHours": {
-   "label": "Cuma/Cumartesi daha geç yatar"
+   "label": "Cuma/Cumartesi daha geç yatar",
+   "tip": "Ertesi gün bir işi olmadığı cuma ve cumartesi geceleri fazladan ayakta kaldığı saatler."
   },
   "MainGameSharePct": {
-   "label": "Ana oyunun payı"
+   "label": "Ana oyunun payı",
+   "tip": "Başka oyunlar da oynadığı bir günde listedeki İLK oyunun aldığı pay, yüzde olarak. Her gün bunun yaklaşık 10 puan çevresinde yeniden atılır."
   },
   "PureMainDayChancePct": {
-   "label": "Yalnızca ana oyun günleri"
+   "label": "Yalnızca ana oyun günleri",
+   "tip": "100 üzerinden, bütün bir günün sadece ana oyuna gitme olasılığı. Diğer oyunların her gün aynı dozda değil de öbekler hâlinde gelmesini sağlayan budur."
   },
   "SideGameSharePct": {
-   "label": "Karışık günde diğerlerinin payı"
+   "label": "Karışık günde diğerlerinin payı",
+   "tip": "Ana oyunun dışına çıktığı günlerde, diğer oyunların aralarında paylaştığı günün kabaca ne kadarı. Bu tükenince günün kalanı yine ana oyundur."
   },
   "WarmUpMinMinutes": {
-   "label": "En az şu kadar alışsın"
+   "label": "En az şu kadar alışsın",
+   "tip": "Giriş yaptıktan sonra bir şeye başlamadan önceki en kısa bekleme, dakika. Hesap çevrimiçi olduğu saniye oyunun içinde olmak, olabilecek en makine işi şeydir."
   },
   "WarmUpMaxMinutes": {
-   "label": "Ve en fazla"
+   "label": "Ve en fazla",
+   "tip": "En uzun alışma süresi, dakika. Gerçeği ikisi arasında rastgele seçilir. Ne ayarlarsanız ayarlayın, girişten sonraki üç dakika içinde asla başlamaz."
   },
   "SessionMinMinutes": {
-   "label": "En kısa oturum"
+   "label": "En kısa oturum",
+   "tip": "Başka bir şeye geçmeden önce bir oyunda kalacağı en kısa süre. Kimse beş dakikada bir oyun değiştirmez."
   },
   "SessionMaxMinutes": {
-   "label": "En uzun oturum"
+   "label": "En uzun oturum",
+   "tip": "Bir oyunda kalacağı en uzun süre. Oturumların çoğu ikisinin arasına düşer; yarım saatlik bir uğrama da bütün bir akşam da normaldir, o yüzden bol bırakın."
   },
   "MealBreaksPerDay": {
-   "label": "Günde öğün sayısı"
+   "label": "Günde öğün sayısı",
+   "tip": "Günde masadan gerçekten kalktığı kaç mola verdiği. Rastgele değil, gerçek yemek saatlerinin çevresine düşerler; onları yemek gibi gösteren de budur."
   },
   "MealBreakMinutes": {
-   "label": "Bir öğün ne kadar sürer"
+   "label": "Bir öğün ne kadar sürer",
+   "tip": "Böyle bir molada kabaca ne kadar uzak kaldığı, dakika. Bazen epey uzar: sohbete dalınır."
   },
   "SignOutOnBreakChancePct": {
-   "label": "Molada çıkış yapma olasılığı"
+   "label": "Molada çıkış yapma olasılığı",
+   "tip": "100 üzerinden, bir molayı sadece Uzakta değil, çevrimdışı görünerek geçirme olasılığı - arkadaş listen için bu, Steam'i kapatmaktan ayırt edilemez."
   },
   "OfflineIdleAtNight": {
-   "label": "Gece saat biriktir"
+   "label": "Gece saat biriktir",
+   "tip": "Uyurken görünmez olur ve yine de sessizce saat biriktirir. Arkadaş listen hesabı çevrimdışı görür, kimse bir şey görmez, saatler yine işler."
   },
   "OfflineIdleGames": {
-   "label": "Gece için oyunlar"
+   "label": "Gece için oyunlar",
+   "tip": "Gece çevrimdışıyken ve toplanacak kart kalmadığında ne çalıştırılacağı. İstediğin kadar: kaç tane olduğunu görecek kimse yok, o yüzden \"teker teker\" kuralı burada geçmez."
   },
   "IdleGames": {
    "label": "Saat biriktirilecek oyunlar",
@@ -328,6 +347,18 @@
   },
   "CheckForUpdates": {
    "tip": "Günde bir kez daha yeni bir sürüm var mı diye bakar ve günlükte söyler. Yalnızca söyler: hiçbir şeyi indirmez, değiştirmez, yeniden başlatmaz."
+  },
+  "BreakMinMinutes": {
+   "label": "En kısa mola",
+   "tip": "İki oturum arasındaki en kısa boşluk, dakika. Molaların çoğu bu uçta olur: bir şey içmek, sekme değiştirmek."
+  },
+  "BreakMaxMinutes": {
+   "label": "En uzun mola",
+   "tip": "Olağan molaların en uzunu, dakika. Gerçek süreler eşit dağılmak yerine kısa uca yığılır, çünkü insanlar gerçekten öyle mola verir."
+  },
+  "MaxSignOutsPerDay": {
+   "label": "En fazla şu kadar çevrimdışı ol",
+   "tip": "Bunu günde kaç kez yaptığının tavanı - hesap bütün akşam arkadaş listende yanıp sönmesin diye. 0 kapatır, o zaman her mola sadece Uzakta olur."
   }
  }
 }

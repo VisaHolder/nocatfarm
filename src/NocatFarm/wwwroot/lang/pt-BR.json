@@ -145,65 +145,84 @@
    "tip": "Faz a conta jogar como uma pessoa: um jogo por vez, sessões e pausas de duração variável, horários realistas de dormir e acordar, e alguns dias sem jogar nada. Desligado, ela apenas acumula horas."
   },
   "LegitStopMaxSeconds": {
-   "label": "Ao parar, encerrar por até"
+   "label": "Ao parar, encerrar por até",
+   "tip": "Só no modo humano: numa parada manual, continua jogando alguns segundos aleatórios até esse máximo (alguém terminando o que fazia) antes de sair, em vez de sumir de repente."
   },
   "GameWeights": {
    "label": "Jogos e com que frequência",
    "tip": "Os jogos e seus pesos, por exemplo \"730:70, 440:20\". O de maior peso é o principal e fica com a maior parte do tempo; os outros aparecem de vez em quando, em fases, não todo dia."
   },
   "WeekdayHours": {
-   "label": "Horas em dia de semana"
+   "label": "Horas em dia de semana",
+   "tip": "Aproximadamente quantas horas joga de segunda a sexta. O número real é sorteado toda manhã em torno deste, uns dias menos e outros mais, então não há dois dias iguais."
   },
   "WeekendHours": {
-   "label": "Horas no fim de semana"
+   "label": "Horas no fim de semana",
+   "tip": "O mesmo para sábado e domingo. O fim de semana durar mais que os dias úteis é boa parte do que faz uma semana parecer real."
   },
   "DayOffChancePct": {
-   "label": "Chance de folga"
+   "label": "Chance de folga",
+   "tip": "A chance, em 100, de que num dia ele não jogue nada. Quem joga absolutamente todo dia é um bot; é isto que evita isso."
   },
   "DayStartHour": {
-   "label": "Entra por volta das"
+   "label": "Entra por volta das",
+   "tip": "A hora em que costuma entrar, 0-23. A hora real cai numa curva em torno desta e nos fins de semana começa mais cedo, então nunca é o mesmo minuto duas vezes."
   },
   "BedHour": {
-   "label": "Vai dormir por volta das"
+   "label": "Vai dormir por volta das",
+   "tip": "A hora em que para por hoje, 0-23. Madrugada serve: 2 quer dizer 2 da manhã."
   },
   "LateNightExtraHours": {
-   "label": "Fica acordada até mais tarde sex/sáb"
+   "label": "Fica acordada até mais tarde sex/sáb",
+   "tip": "Horas a mais que fica acordado nas noites de sexta e sábado, quando não tem nada no dia seguinte."
   },
   "MainGameSharePct": {
-   "label": "O jogo principal fica com"
+   "label": "O jogo principal fica com",
+   "tip": "Que fatia do dia o PRIMEIRO jogo da lista leva quando ele também joga outros, em porcentagem. É sorteado a cada dia uns 10 pontos para mais ou menos."
   },
   "PureMainDayChancePct": {
-   "label": "Dias só com o jogo principal"
+   "label": "Dias só com o jogo principal",
+   "tip": "A chance, em 100, de que um dia inteiro seja só do jogo principal. É isto que faz os outros jogos aparecerem em fases, em vez da mesma dose todo dia."
   },
   "SideGameSharePct": {
-   "label": "Num dia misto, os outros ficam com"
+   "label": "Num dia misto, os outros ficam com",
+   "tip": "Nos dias em que ele varia, mais ou menos que fatia do dia os outros jogos dividem entre si. Quando acaba, volta para o principal pelo resto do dia."
   },
   "WarmUpMinMinutes": {
-   "label": "Se ambientar por pelo menos"
+   "label": "Se ambientar por pelo menos",
+   "tip": "Espera mínima depois de entrar antes de começar qualquer coisa, em minutos. Estar dentro de um jogo no mesmo segundo em que a conta fica online é a coisa mais mecânica possível."
   },
   "WarmUpMaxMinutes": {
-   "label": "E no máximo"
+   "label": "E no máximo",
+   "tip": "Espera máxima de ambientação, em minutos. A real é sorteada entre as duas. Ponha o que puser, nunca começa nos três minutos seguintes ao login."
   },
   "SessionMinMinutes": {
-   "label": "Sessão mais curta"
+   "label": "Sessão mais curta",
+   "tip": "O mínimo que fica num jogo antes de fazer outra coisa. Ninguém troca de jogo a cada cinco minutos."
   },
   "SessionMaxMinutes": {
-   "label": "Sessão mais longa"
+   "label": "Sessão mais longa",
+   "tip": "O máximo que fica num jogo. A maioria das sessões cai entre os dois; meia hora rápida e uma noite inteira são igualmente normais, então deixe folga."
   },
   "MealBreaksPerDay": {
-   "label": "Refeições por dia"
+   "label": "Refeições por dia",
+   "tip": "Quantas pausas de verdade, longe da mesa, ele faz por dia. Caem perto de horários reais de refeição em vez de aleatoriamente, e é isso que as faz parecer refeições."
   },
   "MealBreakMinutes": {
-   "label": "Duração de uma refeição"
+   "label": "Duração de uma refeição",
+   "tip": "Aproximadamente quanto tempo fica fora numa delas, em minutos. Às vezes passa bem do previsto: as pessoas ficam conversando."
   },
   "SignOutOnBreakChancePct": {
-   "label": "Chance de sair durante uma pausa"
+   "label": "Chance de sair durante uma pausa",
+   "tip": "A chance, em 100, de passar uma pausa aparecendo offline em vez de só Ausente - que, para sua lista de amigos, é indistinguível de fechar a Steam."
   },
   "OfflineIdleAtNight": {
-   "label": "Acumular horas à noite"
+   "label": "Acumular horas à noite",
+   "tip": "Enquanto dorme, fica invisível e continua acumulando horas mesmo assim. Sua lista de amigos vê a conta offline, ninguém vê nada, e as horas continuam contando."
   },
   "OfflineIdleGames": {
-   "label": "Jogos para a noite"
+   "label": "Jogos para a noite",
+   "tip": "O que rodar enquanto está offline à noite, quando não sobram mais cartas para farmar. Quantos quiser: não tem ninguém para ver quantos são, então a regra de \"um por vez\" não vale aqui."
   },
   "IdleGames": {
    "label": "Jogos em segundo plano",
@@ -328,6 +347,18 @@
   },
   "CheckForUpdates": {
    "tip": "Procura uma versão mais nova uma vez por dia e avisa no log. Só avisa: nunca baixa, substitui nem reinicia nada."
+  },
+  "BreakMinMinutes": {
+   "label": "Pausa mais curta",
+   "tip": "O menor intervalo entre sessões, em minutos. A maioria das pausas fica nesta ponta: pegar algo para beber, sair da tela um instante."
+  },
+  "BreakMaxMinutes": {
+   "label": "Pausa mais longa",
+   "tip": "A maior pausa comum, em minutos. As durações reais pendem para o lado curto em vez de se espalharem por igual, porque é assim que as pessoas realmente param."
+  },
+  "MaxSignOutsPerDay": {
+   "label": "Sair no máximo",
+   "tip": "Um teto de quantas vezes por dia ele faz isso, para a conta não ficar piscando na sua lista de amigos a noite toda. 0 desliga e aí toda pausa é só Ausente."
   }
  }
 }
