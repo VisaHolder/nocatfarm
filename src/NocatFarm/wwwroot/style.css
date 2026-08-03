@@ -68,9 +68,30 @@ code {
   color: var(--text);
 }
 
-h1.wordmark { font-size: 17px; margin: 0; letter-spacing: 1px; font-weight: 400; text-transform: lowercase;
-  padding-right: var(--s5); border-right: 1px solid var(--line); }
-h1.wordmark span { color: var(--accent); }
+/* The wordmark: a terminal, not a logo.
+   Wide-tracked lowercase monospace with a faint scanline wash over it, in the same grey as everything else.
+   The accent-blue half-word it used to have was the one piece of colour on the page that meant nothing - it
+   wasn't a link, a state or a warning, just decoration, and it read as belonging to some other app. */
+h1.wordmark {
+  position: relative; display: inline-block; margin: 0;
+  font: 400 15px/1.4 var(--mono, ui-monospace, "Cascadia Mono", Consolas, monospace);
+  letter-spacing: 3.5px; text-transform: lowercase; color: var(--text);
+  padding-right: var(--s5); border-right: 1px solid var(--line);
+  text-shadow: 0 0 12px rgba(255, 255, 255, .07);
+}
+
+/* The scanlines. Pointer-events off so it can never sit between a click and the header beneath it. */
+h1.wordmark::after {
+  content: ""; position: absolute; inset: -2px var(--s5) -2px -2px; pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, .22) 0 1px, transparent 1px 2px);
+  mix-blend-mode: multiply;
+}
+
+h1.wordmark span { color: inherit; opacity: .82; }
+
+/* Light theme has nothing to glow against, and dark lines over white read as dirt rather than a CRT. */
+:root[data-theme="light"] h1.wordmark { text-shadow: none; }
+:root[data-theme="light"] h1.wordmark::after { display: none; }
 h2 {
   font-size: 12px; margin: 0 0 var(--s3); text-transform: uppercase; letter-spacing: .5px;
   color: var(--muted); display: flex; align-items: center; gap: var(--s2);

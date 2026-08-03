@@ -43,6 +43,7 @@ public sealed class RefundGuard(Bot bot) {
 
 	private HashSet<uint> _held = [];
 	private DateTime _refreshedAt = DateTime.MinValue;
+	private bool _announced;
 
 	/// <summary>Would playing this game risk a refund? Sync on purpose - every caller is on a hot path.</summary>
 	public bool Holds(uint app) => bot.Cfg.SkipRefundableGames && _held.Contains(app);
@@ -117,6 +118,21 @@ public sealed class RefundGuard(Bot bot) {
 			if (!held.SetEquals(_held)) {
 				List<uint> fresh = [.. held.Except(_held)];
 				List<uint> freed = [.. _held.Except(held)];
+
+				// The FIRST list of a session is a state of affairs, not an event.
+				//
+				// A hold lasts a fortnight, and this set is worked out fresh on every start - so announcing it at
+				// startup meant the same "leaving X alone" line every time the app was restarted, which during a
+				// day of deploys is a lot of times for one unchanged fact. Only a change from here on is news.
+				if (!_announced) {
+					_announced = true;
+					fresh = [];
+					freed = [];
+
+					if (held.Count > 0) {
+						Log.Debug($"refund protection is holding {held.Count} game(s): {Names([.. held])}", bot.Name);
+					}
+				}
 
 				// One line, not one per game: a fortnight's worth of purchases is a sentence, not a wall. Borrowed
 				// games get their own wording - we know when one arrived, not whether its owner could still
