@@ -25,7 +25,7 @@ public sealed record CommandDef(string Name, string Args, string Group, string H
 /// The command set, shared verbatim by the console and the dashboard's command box - so anything you can type
 /// in the terminal you can also type in the browser, and both produce the same text back.
 /// </summary>
-public static class Commands {
+public static partial class Commands {
 	public const string GroupAccounts = "ACCOUNTS";
 	public const string GroupPlaying = "PLAYING";
 	public const string GroupCards = "TRADING CARDS";
@@ -59,11 +59,12 @@ public static class Commands {
 
 		new("rep4rep", "status|points|profiles|tasks|on|off|now|pause|resume|clear|rest", GroupRep4Rep, "Everything rep4rep. Run it bare for a summary.", "r4r"),
 
-		new("redeem", "[account] <key> [key...]", GroupAccounts, "Activate product keys. Without an account it tries each in turn until one can use it.", "key"),
+		new("redeem", "[account] <key|file.txt> [key...]", GroupAccounts, "Activate product keys - or point it at a text file full of them. More than five queues itself and activates them slowly. Without an account it tries each in turn until one can use it.", "key"),
 		new("send", "<account|all>", GroupCards, "Send an account's tradable items to the account listed under Trades.", "loot"),
 		new("2fa", "<account>", GroupAccounts, "Show this account's Steam Guard code, if its authenticator is set up here.", "guard"),
 		new("cheevo", "<account> <appID> [list|unlock|lock] [name|all]", GroupPlaying, "Achievements: see them, unlock them all, or put them back.", "ach|achievements"),
 		new("hunt", "[account]", GroupPlaying, "What the achievement hunter would play, in order - and what it ruled out and why.", "boost"),
+		new("keys", "[list|clear]", GroupAccounts, "Product keys waiting to be activated. A big batch queues itself rather than burning Steam's per-account activation allowance all at once."),
 		new("value", "[account|all] [refresh]", GroupCards, "What each inventory is worth, by game, and how it has moved in the last day. Add 'refresh' to read the inventories again.", "inv|inventory"),
 
 		new("import", "asf [path] [force]", GroupSettings, "Bring accounts across from ArchiSteamFarm, login tokens and all."),
@@ -207,6 +208,7 @@ public static class Commands {
 				"cheevo" or "ach" or "achievements" => await CheevoAsync(mgr, rest).ConfigureAwait(false),
 				"hunt" or "boost" => await HuntAsync(mgr, rest).ConfigureAwait(false),
 				"value" or "inv" or "inventory" => InventoryText(mgr, rest),
+				"keys" => KeysText(rest),
 				"name" => Name(mgr, rest),
 				"persona" => Persona(mgr, rest),
 				"farm" => Farm(mgr, rest),
@@ -696,6 +698,29 @@ public static class Commands {
 		Bot? only = mgr.Get(args[0]);
 		string[] keys = only == null ? args : args[1..];
 
+		// Point it at a text file and it reads the keys out of it.
+		//
+		// A batch of keys arrives as a file far more often than as something anybody would type, and pasting two
+		// hundred of them into a command line is not a thing people do. Any line shape works - one per line, with
+		// or without a game name beside it - because the key is found by its shape rather than by position.
+		if ((keys.Length == 1) && LooksLikePath(keys[0])) {
+			string path = keys[0].Trim('"');
+
+			if (!File.Exists(path)) {
+				return $"There's no file at '{path}'.";
+			}
+
+			try {
+				keys = [.. KeysIn(File.ReadAllText(path))];
+			} catch (Exception e) {
+				return $"Couldn't read '{path}': {e.Message}";
+			}
+
+			if (keys.Length == 0) {
+				return $"No Steam keys found in '{Path.GetFileName(path)}'. They look like AAAAA-BBBBB-CCCCC.";
+			}
+		}
+
 		if (keys.Length == 0) {
 			return "Give me at least one key.";
 		}
@@ -710,6 +735,21 @@ public static class Commands {
 			return "No account is logged in.";
 		}
 
+		// A handful goes straight in; a batch queues.
+		//
+		// Steam counts activations per account and stops answering after a few, so working through fifty keys in
+		// one go means the first few land and the rest come back "rate limited" - which, done then and there,
+		// simply wastes them. Past a handful they go on the queue instead, which retries slowly and survives a
+		// restart. 'keys' shows what is left.
+		const int StraightAway = 5;
+
+		if (keys.Length > StraightAway) {
+			int queued = KeyQueue.Add(keys);
+
+			return $"{queued} key(s) queued - they'll be activated a few at a time, because Steam limits how many "
+				+ $"an account may try per hour. 'keys' shows what's left.{(queued < keys.Length ? $" ({keys.Length - queued} were already in the queue.)" : "")}";
+		}
+
 		StringBuilder sb = new();
 
 		foreach (string key in keys) {
@@ -718,6 +758,51 @@ public static class Commands {
 
 		return sb.ToString().TrimEnd();
 	}
+
+	/// <summary>A path rather than a key - keys have no dots, slashes or backslashes in them.</summary>
+	private static bool LooksLikePath(string text) =>
+		text.Contains('/', StringComparison.Ordinal)
+		|| text.Contains('\\', StringComparison.Ordinal)
+		|| text.EndsWith(".txt", StringComparison.OrdinalIgnoreCase);
+
+	/// <summary>Every Steam key in a blob of text, however the file is laid out around them.</summary>
+	private static IEnumerable<string> KeysIn(string text) =>
+		SteamKeyPattern().Matches(text).Select(static m => m.Value.ToUpperInvariant()).Distinct(StringComparer.Ordinal);
+
+	[System.Text.RegularExpressions.GeneratedRegex(@"\b[A-Za-z0-9]{5}-[A-Za-z0-9]{5}-[A-Za-z0-9]{5}(?:-[A-Za-z0-9]{5}){0,2}\b")]
+	private static partial System.Text.RegularExpressions.Regex SteamKeyPattern();
+
+	/// <summary>What is still waiting to be activated.</summary>
+	private static string KeysText(string[] args) {
+		if (args.FirstOrDefault()?.Equals("clear", StringComparison.OrdinalIgnoreCase) == true) {
+			int had = KeyQueue.Clear();
+
+			return had == 0 ? "The queue was already empty." : $"Dropped {had} queued key(s).";
+		}
+
+		List<(string Key, int Tries, DateTime NotBefore)> pending = KeyQueue.Snapshot();
+
+		if (pending.Count == 0) {
+			return "No keys are waiting. Paste more than five at once and they'll queue automatically.";
+		}
+
+		List<string> lines = [$"{pending.Count} key(s) waiting:"];
+
+		foreach ((string key, int tries, DateTime notBefore) in pending.Take(15)) {
+			string when = notBefore > DateTime.UtcNow ? $"not before {notBefore.ToLocalTime():HH:mm}" : "ready";
+
+			lines.Add($"   {Mask(key),-24} {when}{(tries > 0 ? $"   {tries} try/tries so far" : "")}");
+		}
+
+		if (pending.Count > 15) {
+			lines.Add($"   ...and {pending.Count - 15} more");
+		}
+
+		return string.Join(Environment.NewLine, lines);
+	}
+
+	/// <summary>A key is worth money - show enough to recognise it, not enough to use it over somebody's shoulder.</summary>
+	private static string Mask(string key) => key.Length <= 5 ? key : key[..5] + new string('-', Math.Min(12, key.Length - 5));
 
 	/// <summary>Send an account's items to its trade master. Never anywhere else - see Looting for why.</summary>
 	private static async Task<string> SendAsync(BotManager mgr, string[] args) {

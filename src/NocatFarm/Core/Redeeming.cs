@@ -163,4 +163,60 @@ public static class Redeeming {
 
 		return lines.Count == 0 ? "no account is logged in" : $"{key}\n{string.Join('\n', lines)}";
 	}
+
+	/// <summary>
+	/// Work the queue, one key at a time, slowly.
+	///
+	/// Deliberately unhurried: the reason keys are queued at all is that Steam counts activations per account and
+	/// stops answering after a handful, so hammering the queue is how every key in it gets wasted. One key a
+	/// minute is far below anything Steam objects to, and a queue is patient by nature.
+	/// </summary>
+	public static async Task WorkQueueAsync(IEnumerable<Bot> bots, CancellationToken ct = default) {
+		if (!KeyQueue.DueNow()) {
+			return;
+		}
+
+		string? key = KeyQueue.Next();
+
+		if (key == null) {
+			return;
+		}
+
+		List<Bot> online = [.. bots.Where(static b => b.IsOnline)];
+
+		if (online.Count == 0) {
+			return;
+		}
+
+		KeyQueue.Spent();   // whatever happens below, the next one waits its own jittered gap
+
+		foreach (Bot bot in online) {
+			ct.ThrowIfCancellationRequested();
+
+			RedeemResult result = await RedeemAsync(bot, key, ct).ConfigureAwait(false);
+
+			if (result.Ok) {
+				Log.Reward($"activated a queued key{(result.Packages.Count > 0 ? $" - package(s) {string.Join(", ", result.Packages)}" : "")}  ({KeyQueue.Count - 1} left in the queue)", bot.Name);
+				KeyQueue.Done(key);
+
+				return;
+			}
+
+			// Rate-limited means "not this account, not now" - which is the whole reason the queue exists. Any
+			// other refusal worth passing on just moves down the list of accounts.
+			if (result.Detail == EPurchaseResultDetail.RateLimited) {
+				continue;
+			}
+
+			if (!result.WorthAnotherAccount) {
+				Log.Info($"dropping a queued key - {result.Message}  ({KeyQueue.Count - 1} left)", bot.Name);
+				KeyQueue.Done(key);   // the key is dead, not the account
+
+				return;
+			}
+		}
+
+		// Nobody could take it. Back of the queue, with a cooldown.
+		KeyQueue.Defer(key);
+	}
 }

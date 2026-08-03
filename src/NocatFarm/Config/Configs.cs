@@ -109,6 +109,8 @@ public sealed class GlobalConfig {
 	/// <summary>Steam's currency id for market prices. 1 USD, 2 GBP, 3 EUR, 20 CAD, 21 AUD - as the store uses.</summary>
 	public int MarketCurrency { get; set; } = 1;
 
+	public bool CheckForUpdates { get; set; } = true;
+
 	public bool FileLogging { get; set; } = true;
 	public bool Debug { get; set; }
 	public int LogRetentionDays { get; set; } = 14;

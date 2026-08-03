@@ -14,7 +14,14 @@ public sealed class BotManager : IAsyncDisposable {
 	/// <summary>One rep4rep client for the whole process - one account, one token, many Steam profiles.</summary>
 	public Rep4RepApi Rep4Rep { get; } = new();
 
+	/// <summary>
+	/// The running manager, for the few jobs that belong to the FLEET rather than to one account - working the
+	/// shared key queue, say, which several accounts racing each other would only turn into wasted activations.
+	/// </summary>
+	public static BotManager? Instance { get; private set; }
+
 	public BotManager(GlobalConfig global) {
+		Instance = this;
 		Global = global;
 		ApplyGlobal(global);   // one path, so nothing is applied only on a later save
 	}
