@@ -32,49 +32,64 @@
  },
  "settings": {
   "WebEnabled": {
-   "label": "Panel webowy"
+   "label": "Panel webowy",
+   "tip": "Udostępnia panel webowy. Wyłącz, a nocat.farm zostaje tylko w konsoli - wszystko nadal działa, po prostu sterujesz pisząc."
   },
   "WebHost": {
-   "label": "Nasłuchuj na"
+   "label": "Nasłuchuj na",
+   "tip": "Na jakich adresach panel odpowiada. 127.0.0.1 to tylko ten komputer; użyj 0.0.0.0, by dostać się z telefonu lub innej maszyny - i najpierw ustaw hasło."
   },
   "WebPort": {
-   "label": "Port"
+   "label": "Port",
+   "tip": "Port panelu. Zmień, jeśli coś już zajmuje 7242."
   },
   "WebPassword": {
-   "label": "Hasło panelu"
+   "label": "Hasło panelu",
+   "tip": "Hasło do panelu. Dopóki jest puste, panel odrzuca każde połączenie spoza tego komputera, więc nie opublikujesz przypadkiem swoich kont Steam."
   },
   "OpenDashboardAfterAdd": {
-   "label": "Otwórz panel po dodaniu konta"
+   "label": "Otwórz panel po dodaniu konta",
+   "tip": "Otwiera panel w przeglądarce, gdy tylko dodasz nowe konto, żebyś je skonfigurował. Świeże konto nie robi zupełnie nic, dopóki nie powiesz mu, w co grać, a tego formularza nie ma w oknie aplikacji - tylko w panelu. Wyłączone znaczy, że musisz pamiętać sam."
   },
   "OpenBrowserOnStart": {
-   "label": "Otwórz przeglądarkę przy starcie"
+   "label": "Otwórz przeglądarkę przy starcie",
+   "tip": "Automatycznie otwiera panel w przeglądarce, gdy nocat.farm się uruchamia."
   },
   "Tray": {
-   "label": "Ikona w zasobniku"
+   "label": "Ikona w zasobniku",
+   "tip": "Umieszcza ikonę w obszarze powiadomień (prawy dolny róg, przy zegarze), by nocat.farm mógł działać w tle. Kliknij prawym, by otworzyć menu."
   },
   "MinimizeToTray": {
-   "label": "Minimalizuj do zasobnika"
+   "label": "Minimalizuj do zasobnika",
+   "tip": "Zminimalizowanie okna konsoli chowa je do zasobnika, zamiast zostawiać na pasku zadań."
   },
   "StartMinimized": {
-   "label": "Uruchom ukryty"
+   "label": "Uruchom ukryte",
+   "tip": "Startuje z ukrytym oknem konsoli, prosto do zasobnika. Kliknij dwukrotnie ikonę, by je przywrócić."
   },
   "StartWithWindows": {
-   "label": "Uruchamiaj z Windows"
+   "label": "Uruchamiaj z Windows",
+   "tip": "Uruchamia nocat.farm przy logowaniu do Windows. Dodaje jeden wpis na twoim koncie użytkownika i nie rusza niczego więcej."
   },
   "KeepAwake": {
-   "label": "Nie pozwól temu PC zasnąć"
+   "label": "Nie pozwól temu komputerowi zasnąć",
+   "tip": "Blokuje uśpienie Windows, dopóki działają konta. Ekran nadal może się wyłączyć - blokowane jest tylko uśpienie."
   },
   "TrayNotifications": {
-   "label": "Pokazuj powiadomienia"
+   "label": "Pokazuj dymki",
+   "tip": "Główny przełącznik dymków powiadomień. Trzy poniższe decydują, które faktycznie dostaniesz."
   },
   "NotifyEarnings": {
-   "label": "Powiadom o zyskach"
+   "label": "Powiadamiaj o zyskach",
+   "tip": "Wyskakuje, gdy wpadnie karta albo zaliczy się komentarz rep4rep."
   },
   "NotifySocial": {
-   "label": "Powiadom o komentarzach"
+   "label": "Powiadamiaj o komentarzach",
+   "tip": "Wyskakuje, gdy ktoś skomentuje jeden z twoich profili."
   },
   "NotifyProblems": {
-   "label": "Powiadom o problemach"
+   "label": "Powiadamiaj o problemach",
+   "tip": "Wyskakuje, gdy konto naprawdę cię potrzebuje: kod Steam Guard, nieudane logowanie albo blokada komentarzy."
   },
   "Rep4RepEnabled": {
    "label": "Używaj rep4rep"
@@ -105,16 +120,20 @@
    "tip": "Waluta cen ekwipunku. Ustaw taką jak w twoim sklepie Steam, inaczej sumy nie zgodzą się z tym, co widzisz na rynku."
   },
   "FileLogging": {
-   "label": "Zapisuj plik dziennika"
+   "label": "Zapisuj plik dziennika",
+   "tip": "Zapisuje wszystko do logs/ oprócz ekranu. Zostaw włączone - to jedyny sposób, by zobaczyć, co działo się, gdy spałeś."
   },
   "DailyReportEnabled": {
-   "label": "Dzienne podsumowanie w dzienniku"
+   "label": "Dzienne podsumowanie w dzienniku",
+   "tip": "Raz dziennie zapisuje podsumowanie na jedno spojrzenie: co każde konto zarobiło przez ostatnie 24 godziny - godziny gry, karty, komentarze rep4rep i sumę narastająco. Odpowiada na \"co mi wpadło przez noc?\" bez przewijania; wpisz `report`, by zobaczyć je w każdej chwili."
   },
   "DailyReportHour": {
-   "label": "Godzina podsumowania · godz."
+   "label": "Godzina podsumowania · godzina",
+   "tip": "Godzina dnia, o której zapisywane jest dzienne podsumowanie, 0-23 (czas lokalny). Domyślnie 9."
   },
   "DailyReportMinute": {
-   "label": "Godzina podsumowania · min."
+   "label": "Godzina podsumowania · minuta",
+   "tip": "Minuta tej godziny dla dziennego podsumowania, 0-59. Godzina 9 + minuta 30 = 09:30."
   },
   "Enabled": {
    "label": "Włączone",
@@ -558,6 +577,26 @@
   "CommandMasters": {
    "label": "Przyjmuj polecenia od",
    "tip": "SteamID64, które mogą sterować nocat.farm, pisząc do tego konta na Steam, po przecinku. Polecenia muszą zaczynać się od !"
+  },
+  "WebRefreshSeconds": {
+   "label": "Odświeżaj co",
+   "tip": "Co ile sekund panel się odświeża. Mniej znaczy żwawiej i nic nie kosztuje - wszystko dzieje się lokalnie."
+  },
+  "WebSessionDays": {
+   "label": "Pozostań zalogowany przez",
+   "tip": "Ile dni przeglądarka pozostaje zalogowana, zanim znów zapyta o hasło panelu."
+  },
+  "ExitWhenAllFinished": {
+   "label": "Zamknij, gdy wszystko skończone",
+   "tip": "Zamyka nocat.farm całkowicie, gdy tylko wszystkie konta skończą farmić i się wylogują, zamiast siedzieć bezczynnie w zasobniku."
+  },
+  "Debug": {
+   "label": "Szczegóły diagnostyczne",
+   "tip": "Pokazuje znacznie więcej szczegółów, w tym każde zapytanie sieciowe. Przydatne, gdy coś nie działa; poza tym tylko hałas."
+  },
+  "LogRetentionDays": {
+   "label": "Przechowuj dzienniki przez",
+   "tip": "Usuwa pliki dziennika starsze niż tyle dni. 0 zachowuje je na zawsze."
   }
  }
 }

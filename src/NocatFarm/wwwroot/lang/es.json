@@ -32,49 +32,64 @@
  },
  "settings": {
   "WebEnabled": {
-   "label": "Panel web"
+   "label": "Panel web",
+   "tip": "Sirve el panel web. Desactívalo y nocat.farm queda solo en consola: todo sigue funcionando, solo que lo manejas escribiendo."
   },
   "WebHost": {
-   "label": "Escuchar en"
+   "label": "Escuchar en",
+   "tip": "En qué direcciones responde el panel. 127.0.0.1 significa solo este PC; usa 0.0.0.0 para llegar desde el móvil u otra máquina, y pon antes una contraseña."
   },
   "WebPort": {
-   "label": "Puerto"
+   "label": "Puerto",
+   "tip": "Puerto del panel. Cámbialo si algo ya usa el 7242."
   },
   "WebPassword": {
-   "label": "Contraseña del panel"
+   "label": "Contraseña del panel",
+   "tip": "Contraseña del panel. Mientras esté vacía, el panel rechaza toda conexión que no venga de este PC, así que no puedes publicar tus cuentas de Steam sin querer."
   },
   "OpenDashboardAfterAdd": {
-   "label": "Abrir el panel al añadir una cuenta"
+   "label": "Abrir el panel al añadir una cuenta",
+   "tip": "Abre el panel en el navegador en cuanto se añade una cuenta nueva, para que la configures. Una cuenta recién añadida no hace absolutamente nada hasta que se le dice a qué jugar, y la ventana de la app no tiene ese formulario: solo el panel. Si lo desactivas, tendrás que acordarte tú."
   },
   "OpenBrowserOnStart": {
-   "label": "Abrir el navegador al iniciar"
+   "label": "Abrir el navegador al arrancar",
+   "tip": "Abre el panel en el navegador automáticamente cuando arranca nocat.farm."
   },
   "Tray": {
-   "label": "Icono en la bandeja"
+   "label": "Icono en la bandeja",
+   "tip": "Pone un icono en el área de notificación (abajo a la derecha, junto al reloj) para que nocat.farm pueda correr en segundo plano. Haz clic derecho para el menú."
   },
   "MinimizeToTray": {
-   "label": "Minimizar a la bandeja"
+   "label": "Minimizar a la bandeja",
+   "tip": "Al minimizar la ventana de consola, se esconde en la bandeja en vez de quedarse en la barra de tareas."
   },
   "StartMinimized": {
-   "label": "Iniciar oculto"
+   "label": "Arrancar oculto",
+   "tip": "Arranca con la ventana de consola escondida, directo a la bandeja. Doble clic en el icono para recuperarla."
   },
   "StartWithWindows": {
-   "label": "Iniciar con Windows"
+   "label": "Iniciar con Windows",
+   "tip": "Lanza nocat.farm al iniciar sesión en Windows. Añade una sola entrada bajo tu propio usuario y no toca nada más."
   },
   "KeepAwake": {
-   "label": "Mantener este PC despierto"
+   "label": "Mantener este PC despierto",
+   "tip": "Impide que Windows se suspenda mientras haya cuentas en marcha. La pantalla sí puede apagarse: solo se bloquea la suspensión."
   },
   "TrayNotifications": {
-   "label": "Mostrar avisos"
+   "label": "Mostrar avisos emergentes",
+   "tip": "Interruptor general de los globos de aviso. Los tres de abajo deciden cuáles recibes de verdad."
   },
   "NotifyEarnings": {
-   "label": "Avisar cuando ganes algo"
+   "label": "Avisar cuando ganes algo",
+   "tip": "Avisa cuando cae un cromo o se acredita un comentario de rep4rep."
   },
   "NotifySocial": {
-   "label": "Avisar de comentarios"
+   "label": "Avisar de comentarios",
+   "tip": "Avisa cuando alguien comenta en uno de tus perfiles."
   },
   "NotifyProblems": {
-   "label": "Avisar de problemas"
+   "label": "Avisar de problemas",
+   "tip": "Avisa cuando una cuenta te necesita de verdad: un código de Steam Guard, un inicio de sesión fallido o un baneo de comentarios."
   },
   "Rep4RepEnabled": {
    "label": "Usar rep4rep"
@@ -105,16 +120,20 @@
    "tip": "La moneda de los precios del inventario. Ponla igual que la de tu tienda de Steam o los totales no coincidirán con lo que ves en el mercado."
   },
   "FileLogging": {
-   "label": "Escribir un archivo de registro"
+   "label": "Escribir un archivo de registro",
+   "tip": "Escribe todo en logs/ además de en pantalla. Déjalo activado: es la única forma de ver qué pasó mientras dormías."
   },
   "DailyReportEnabled": {
-   "label": "Resumen diario en el registro"
+   "label": "Resumen diario en el registro",
+   "tip": "Una vez al día, escribe un resumen de un vistazo de lo que ha ingresado cada cuenta en las últimas 24 horas: horas jugadas, cromos, comentarios de rep4rep y un total acumulado. Responde a «¿qué saqué esta noche?» sin desplazarte; escribe `report` para verlo cuando quieras."
   },
   "DailyReportHour": {
-   "label": "Hora del resumen · hora"
+   "label": "Hora del resumen · hora",
+   "tip": "Hora del día a la que se escribe el resumen diario, de 0 a 23 (hora local). Por defecto 9."
   },
   "DailyReportMinute": {
-   "label": "Hora del resumen · minuto"
+   "label": "Hora del resumen · minuto",
+   "tip": "Minuto de esa hora para el resumen diario, de 0 a 59. Hora 9 + minuto 30 = 09:30."
   },
   "Enabled": {
    "label": "Activada",
@@ -558,6 +577,26 @@
   "CommandMasters": {
    "label": "Aceptar comandos de",
    "tip": "SteamID64 autorizados a manejar nocat.farm escribiendo a esta cuenta por Steam, separados por comas. Los comandos deben empezar por !"
+  },
+  "WebRefreshSeconds": {
+   "label": "Refrescar cada",
+   "tip": "Cada cuántos segundos se refresca el panel. Menos se siente más ágil y no cuesta nada: todo es local."
+  },
+  "WebSessionDays": {
+   "label": "Mantener la sesión iniciada",
+   "tip": "Cuántos días sigue iniciada la sesión de un navegador antes de tener que volver a escribir la contraseña del panel."
+  },
+  "ExitWhenAllFinished": {
+   "label": "Cerrar cuando todo esté hecho",
+   "tip": "Cierra nocat.farm del todo en cuanto todas las cuentas han terminado de farmear y han cerrado sesión, en vez de dejarlo en la bandeja sin hacer nada."
+  },
+  "Debug": {
+   "label": "Detalle de depuración",
+   "tip": "Muestra muchísimo más detalle, incluida cada petición web. Útil cuando algo no funciona; ruidoso el resto del tiempo."
+  },
+  "LogRetentionDays": {
+   "label": "Conservar los registros",
+   "tip": "Borra los archivos de registro con más días que este número. 0 los conserva para siempre."
   }
  }
 }

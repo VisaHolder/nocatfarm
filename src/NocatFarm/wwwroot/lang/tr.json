@@ -32,49 +32,64 @@
  },
  "settings": {
   "WebEnabled": {
-   "label": "Web paneli"
+   "label": "Web panosu",
+   "tip": "Web panosunu sunar. Kapatırsan nocat.farm yalnızca konsolda kalır - her şey yine çalışır, sadece yazarak yönetirsin."
   },
   "WebHost": {
-   "label": "Dinlenecek adres"
+   "label": "Şurada dinle",
+   "tip": "Panonun hangi adreslerde yanıt vereceği. 127.0.0.1 yalnızca bu bilgisayar demektir; telefonundan ya da başka bir makineden erişmek için 0.0.0.0 kullan ve önce bir parola koy."
   },
   "WebPort": {
-   "label": "Port"
+   "label": "Bağlantı noktası",
+   "tip": "Panonun bağlantı noktası. 7242'yi başka bir şey kullanıyorsa değiştir."
   },
   "WebPassword": {
-   "label": "Panel parolası"
+   "label": "Pano parolası",
+   "tip": "Panonun parolası. Boş olduğu sürece pano, bu bilgisayardan gelmeyen her bağlantıyı reddeder; böylece Steam hesaplarını yanlışlıkla yayına açamazsın."
   },
   "OpenDashboardAfterAdd": {
-   "label": "Hesap eklendikten sonra paneli aç"
+   "label": "Hesap ekledikten sonra panoyu aç",
+   "tip": "Yeni bir hesap eklenir eklenmez panoyu tarayıcında açar ki ayarlayabilesin. Yepyeni bir hesap, neyi oynayacağı söylenene kadar hiçbir şey yapmaz ve o form uygulama penceresinde yok - yalnızca panoda var. Kapatırsan hatırlamak sana kalır."
   },
   "OpenBrowserOnStart": {
-   "label": "Başlarken tarayıcıyı aç"
+   "label": "Başlangıçta tarayıcıyı aç",
+   "tip": "nocat.farm başladığında panoyu tarayıcında otomatik açar."
   },
   "Tray": {
-   "label": "Bildirim alanı simgesi"
+   "label": "Tepsi simgesi",
+   "tip": "Bildirim alanına (sağ altta, saatin yanına) bir simge koyar, böylece nocat.farm arka planda çalışabilir. Menü için sağ tıkla."
   },
   "MinimizeToTray": {
-   "label": "Bildirim alanına küçült"
+   "label": "Tepsiye küçült",
+   "tip": "Konsol penceresini küçültmek onu görev çubuğunda bırakmak yerine tepsiye gizler."
   },
   "StartMinimized": {
-   "label": "Gizli başlat"
+   "label": "Gizli başlat",
+   "tip": "Konsol penceresi gizli olarak, doğrudan tepsiye başlar. Simgeye çift tıklayınca geri gelir."
   },
   "StartWithWindows": {
-   "label": "Windows ile başlat"
+   "label": "Windows ile başlat",
+   "tip": "Windows'a giriş yaptığında nocat.farm'ı çalıştırır. Yalnızca kendi kullanıcı hesabının altına tek bir kayıt ekler, başka hiçbir şeye dokunmaz."
   },
   "KeepAwake": {
-   "label": "Bu bilgisayarı uyutma"
+   "label": "Bu bilgisayarı uyanık tut",
+   "tip": "Hesaplar çalışırken Windows'un uyku moduna geçmesini engeller. Ekran yine kapanabilir - yalnızca uyku engellenir."
   },
   "TrayNotifications": {
-   "label": "Bildirim balonları göster"
+   "label": "Bildirim balonlarını göster",
+   "tip": "Balon bildirimlerinin ana anahtarı. Aşağıdaki üçü hangilerini gerçekten alacağına karar verir."
   },
   "NotifyEarnings": {
-   "label": "Kazanç olunca bildir"
+   "label": "Kazanç olduğunda bildir",
+   "tip": "Bir kart düştüğünde ya da bir rep4rep yorumu hesaba geçtiğinde bildirir."
   },
   "NotifySocial": {
-   "label": "Yorumları bildir"
+   "label": "Yorumları bildir",
+   "tip": "Biri profillerinden birine yorum yazdığında bildirir."
   },
   "NotifyProblems": {
-   "label": "Sorunları bildir"
+   "label": "Sorunları bildir",
+   "tip": "Bir hesabın gerçekten sana ihtiyacı olduğunda bildirir: Steam Guard kodu, başarısız giriş ya da yorum yasağı."
   },
   "Rep4RepEnabled": {
    "label": "rep4rep kullan"
@@ -105,16 +120,20 @@
    "tip": "Envanter fiyatlarının para birimi. Steam mağazandakiyle aynı yap, yoksa toplamlar pazarda gördüğünle uyuşmaz."
   },
   "FileLogging": {
-   "label": "Günlük dosyası yaz"
+   "label": "Günlük dosyası yaz",
+   "tip": "Her şeyi ekranın yanı sıra logs/ klasörüne de yazar. Açık bıraksan iyi olur - sen uyurken ne olduğunu görmenin tek yolu bu."
   },
   "DailyReportEnabled": {
-   "label": "Günlükte günlük özet"
+   "label": "Günlükte günlük özet",
+   "tip": "Günde bir kez, her hesabın son 24 saatte ne kazandığını tek bakışta gösteren bir özet yazar: oynanan saatler, kartlar, rep4rep yorumları ve toplam. \"Gece boyunca ne kazandım?\" sorusunu kaydırmadan yanıtlar; istediğin an `report` yazarak da görebilirsin."
   },
   "DailyReportHour": {
-   "label": "Özet saati · saat"
+   "label": "Özet saati · saat",
+   "tip": "Günlük özetin yazılacağı saat, 0-23 (yerel saat). Varsayılan 9."
   },
   "DailyReportMinute": {
-   "label": "Özet saati · dakika"
+   "label": "Özet saati · dakika",
+   "tip": "Günlük özet için o saatin dakikası, 0-59. Saat 9 + dakika 30 = 09:30."
   },
   "Enabled": {
    "label": "Etkin",
@@ -558,6 +577,26 @@
   "CommandMasters": {
    "label": "Şunlardan komut kabul et",
    "tip": "Steam'de bu hesaba mesaj atarak nocat.farm'ı yönetmesine izin verilen SteamID64'ler, virgülle ayrılmış. Komutlar ! ile başlamalıdır."
+  },
+  "WebRefreshSeconds": {
+   "label": "Şu sıklıkta yenile",
+   "tip": "Panonun kaç saniyede bir kendini yenileyeceği. Düşük değer daha canlı hissettirir ve hiçbir maliyeti yok - hepsi yerel."
+  },
+  "WebSessionDays": {
+   "label": "Şu kadar süre oturum açık kalsın",
+   "tip": "Bir tarayıcının pano parolasını yeniden girmesi gerekmeden kaç gün oturumunun açık kalacağı."
+  },
+  "ExitWhenAllFinished": {
+   "label": "Her şey bitince kapat",
+   "tip": "Bütün hesaplar toplamayı bitirip çıkış yapar yapmaz nocat.farm'ı tamamen kapatır; tepside boş boş beklemesine gerek kalmaz."
+  },
+  "Debug": {
+   "label": "Hata ayıklama ayrıntısı",
+   "tip": "Her web isteği dahil çok daha fazla ayrıntı gösterir. Bir şey çalışmadığında işe yarar; onun dışında sadece gürültü."
+  },
+  "LogRetentionDays": {
+   "label": "Günlükleri şu kadar sakla",
+   "tip": "Bu kadar günden eski günlük dosyalarını siler. 0 sonsuza dek saklar."
   }
  }
 }

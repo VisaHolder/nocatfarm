@@ -32,49 +32,64 @@
  },
  "settings": {
   "WebEnabled": {
-   "label": "Web-Oberfläche"
+   "label": "Web-Übersicht",
+   "tip": "Stellt die Web-Übersicht bereit. Aus heißt: nocat.farm läuft nur in der Konsole - alles funktioniert weiter, du steuerst es eben durch Tippen."
   },
   "WebHost": {
-   "label": "Lauschen auf"
+   "label": "Lauschen auf",
+   "tip": "Auf welchen Adressen die Übersicht antwortet. 127.0.0.1 heißt nur dieser PC; mit 0.0.0.0 kommst du vom Handy oder einem anderen Rechner dran - vorher ein Passwort setzen."
   },
   "WebPort": {
-   "label": "Port"
+   "label": "Port",
+   "tip": "Port für die Übersicht. Ändern, falls etwas anderes schon 7242 belegt."
   },
   "WebPassword": {
-   "label": "Passwort der Oberfläche"
+   "label": "Passwort für die Übersicht",
+   "tip": "Passwort für die Übersicht. Solange es leer ist, weist die Übersicht jede Verbindung ab, die nicht von diesem PC kommt - so veröffentlichst du deine Steam-Konten nicht aus Versehen."
   },
   "OpenDashboardAfterAdd": {
-   "label": "Oberfläche nach dem Hinzufügen eines Kontos öffnen"
+   "label": "Übersicht nach dem Hinzufügen öffnen",
+   "tip": "Öffnet die Übersicht im Browser, sobald ein neues Konto hinzugefügt wurde, damit du es einrichten kannst. Ein frisches Konto tut überhaupt nichts, bis ihm gesagt wird, was es spielen soll - und dieses Formular gibt es nur in der Übersicht, nicht im App-Fenster. Aus heißt: du musst selbst daran denken."
   },
   "OpenBrowserOnStart": {
-   "label": "Browser beim Start öffnen"
+   "label": "Browser beim Start öffnen",
+   "tip": "Öffnet die Übersicht automatisch im Browser, wenn nocat.farm startet."
   },
   "Tray": {
-   "label": "Symbol im Infobereich"
+   "label": "Symbol im Infobereich",
+   "tip": "Legt ein Symbol in den Infobereich (unten rechts bei der Uhr), damit nocat.farm im Hintergrund laufen kann. Rechtsklick öffnet das Menü."
   },
   "MinimizeToTray": {
-   "label": "In den Infobereich minimieren"
+   "label": "In den Infobereich minimieren",
+   "tip": "Beim Minimieren verschwindet das Konsolenfenster in den Infobereich, statt in der Taskleiste zu bleiben."
   },
   "StartMinimized": {
-   "label": "Versteckt starten"
+   "label": "Versteckt starten",
+   "tip": "Startet mit verstecktem Konsolenfenster, direkt in den Infobereich. Doppelklick auf das Symbol holt es zurück."
   },
   "StartWithWindows": {
-   "label": "Mit Windows starten"
+   "label": "Mit Windows starten",
+   "tip": "Startet nocat.farm, wenn du dich bei Windows anmeldest. Es legt einen einzigen Eintrag unter deinem eigenen Benutzerkonto an und rührt sonst nichts an."
   },
   "KeepAwake": {
-   "label": "Diesen PC wach halten"
+   "label": "Diesen PC wach halten",
+   "tip": "Verhindert, dass Windows in den Ruhezustand geht, solange Konten laufen. Der Bildschirm darf weiterhin ausgehen - blockiert wird nur der Schlaf."
   },
   "TrayNotifications": {
-   "label": "Hinweise anzeigen"
+   "label": "Hinweise einblenden",
+   "tip": "Hauptschalter für die Sprechblasen. Die drei darunter entscheiden, welche du tatsächlich bekommst."
   },
   "NotifyEarnings": {
-   "label": "Hinweis bei Erträgen"
+   "label": "Melden, wenn etwas hereinkommt",
+   "tip": "Meldet sich, wenn eine Sammelkarte fällt oder ein rep4rep-Kommentar gutgeschrieben wird."
   },
   "NotifySocial": {
-   "label": "Hinweis bei Kommentaren"
+   "label": "Bei Kommentaren melden",
+   "tip": "Meldet sich, wenn jemand eines deiner Profile kommentiert."
   },
   "NotifyProblems": {
-   "label": "Hinweis bei Problemen"
+   "label": "Bei Problemen melden",
+   "tip": "Meldet sich, wenn ein Konto dich wirklich braucht: ein Steam-Guard-Code, eine fehlgeschlagene Anmeldung oder eine Kommentarsperre."
   },
   "Rep4RepEnabled": {
    "label": "rep4rep überhaupt nutzen"
@@ -105,16 +120,20 @@
    "tip": "Die Währung der Inventarpreise. Stell sie wie deinen Steam-Shop ein, sonst passen die Summen nicht zu dem, was du auf dem Markt siehst."
   },
   "FileLogging": {
-   "label": "Protokolldatei schreiben"
+   "label": "Protokolldatei schreiben",
+   "tip": "Schreibt alles zusätzlich zum Bildschirm nach logs/. Lass es an - nur so siehst du, was passiert ist, während du geschlafen hast."
   },
   "DailyReportEnabled": {
-   "label": "Tägliche Zusammenfassung im Protokoll"
+   "label": "Tageszusammenfassung im Protokoll",
+   "tip": "Schreibt einmal am Tag eine Zusammenfassung auf einen Blick: was jedes Konto in den letzten 24 Stunden eingefahren hat - Spielstunden, Karten, rep4rep-Kommentare und eine laufende Summe. Beantwortet \"was kam über Nacht rein?\" ohne Scrollen; `report` zeigt sie jederzeit."
   },
   "DailyReportHour": {
-   "label": "Uhrzeit · Stunde"
+   "label": "Zeitpunkt der Zusammenfassung · Stunde",
+   "tip": "Stunde, zu der die Tageszusammenfassung geschrieben wird, 0-23 (Ortszeit). Standard ist 9."
   },
   "DailyReportMinute": {
-   "label": "Uhrzeit · Minute"
+   "label": "Zeitpunkt der Zusammenfassung · Minute",
+   "tip": "Minute nach der vollen Stunde für die Tageszusammenfassung, 0-59. Stunde 9 + Minute 30 = 09:30."
   },
   "Enabled": {
    "label": "Aktiviert",
@@ -558,6 +577,26 @@
   "CommandMasters": {
    "label": "Befehle annehmen von",
    "tip": "SteamID64s, die nocat.farm per Steam-Nachricht an dieses Konto steuern dürfen, per Komma getrennt. Befehle müssen mit ! beginnen."
+  },
+  "WebRefreshSeconds": {
+   "label": "Aktualisieren alle",
+   "tip": "Wie oft sich die Übersicht selbst aktualisiert, in Sekunden. Kleiner wirkt flotter und kostet nichts - es läuft alles lokal."
+  },
+  "WebSessionDays": {
+   "label": "Angemeldet bleiben für",
+   "tip": "Wie viele Tage ein Browser angemeldet bleibt, bevor er das Passwort für die Übersicht erneut braucht."
+  },
+  "ExitWhenAllFinished": {
+   "label": "Schließen, wenn alles fertig ist",
+   "tip": "Beendet nocat.farm vollständig, sobald jedes Konto fertig gefarmt und sich abgemeldet hat, statt untätig im Infobereich zu sitzen."
+  },
+  "Debug": {
+   "label": "Debug-Details",
+   "tip": "Zeigt sehr viel mehr Details, inklusive jeder Web-Anfrage. Hilfreich, wenn etwas klemmt; sonst nur laut."
+  },
+  "LogRetentionDays": {
+   "label": "Protokolle aufbewahren",
+   "tip": "Löscht Protokolldateien, die älter als so viele Tage sind. 0 behält sie für immer."
   }
  }
 }

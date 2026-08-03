@@ -32,49 +32,64 @@
  },
  "settings": {
   "WebEnabled": {
-   "label": "Interface web"
+   "label": "Tableau de bord web",
+   "tip": "Sert le tableau de bord web. Désactivez-le et nocat.farm ne vit plus que dans la console : tout marche encore, vous le pilotez en tapant."
   },
   "WebHost": {
-   "label": "Écouter sur"
+   "label": "Écouter sur",
+   "tip": "Sur quelles adresses le tableau répond. 127.0.0.1 = ce PC uniquement ; utilisez 0.0.0.0 pour y accéder depuis votre téléphone ou une autre machine, et mettez d'abord un mot de passe."
   },
   "WebPort": {
-   "label": "Port"
+   "label": "Port",
+   "tip": "Port du tableau de bord. Changez-le si quelque chose occupe déjà le 7242."
   },
   "WebPassword": {
-   "label": "Mot de passe de l'interface"
+   "label": "Mot de passe du tableau",
+   "tip": "Mot de passe du tableau de bord. Tant qu'il est vide, le tableau refuse toute connexion qui ne vient pas de ce PC : impossible de publier vos comptes Steam par accident."
   },
   "OpenDashboardAfterAdd": {
-   "label": "Ouvrir l'interface après l'ajout d'un compte"
+   "label": "Ouvrir le tableau après l'ajout d'un compte",
+   "tip": "Ouvre le tableau dans le navigateur dès qu'un nouveau compte est ajouté, pour que vous le configuriez. Un compte tout neuf ne fait strictement rien tant qu'on ne lui a pas dit à quoi jouer, et ce formulaire n'existe que dans le tableau, pas dans la fenêtre de l'app. Désactivé, c'est à vous d'y penser."
   },
   "OpenBrowserOnStart": {
-   "label": "Ouvrir le navigateur au démarrage"
+   "label": "Ouvrir le navigateur au démarrage",
+   "tip": "Ouvre automatiquement le tableau de bord dans le navigateur quand nocat.farm démarre."
   },
   "Tray": {
-   "label": "Icône dans la zone de notification"
+   "label": "Icône dans la zone de notification",
+   "tip": "Place une icône dans la zone de notification (en bas à droite, près de l'horloge) pour que nocat.farm tourne en arrière-plan. Clic droit pour le menu."
   },
   "MinimizeToTray": {
-   "label": "Réduire dans la zone de notification"
+   "label": "Réduire dans la zone de notification",
+   "tip": "Réduire la fenêtre de console la cache dans la zone de notification au lieu de la laisser dans la barre des tâches."
   },
   "StartMinimized": {
-   "label": "Démarrer masqué"
+   "label": "Démarrer masqué",
+   "tip": "Démarre avec la fenêtre de console masquée, directement dans la zone de notification. Double-cliquez sur l'icône pour la faire revenir."
   },
   "StartWithWindows": {
-   "label": "Démarrer avec Windows"
+   "label": "Démarrer avec Windows",
+   "tip": "Lance nocat.farm à votre ouverture de session Windows. Ajoute une seule entrée sous votre propre compte utilisateur et ne touche à rien d'autre."
   },
   "KeepAwake": {
-   "label": "Garder ce PC éveillé"
+   "label": "Garder ce PC éveillé",
+   "tip": "Empêche Windows de se mettre en veille tant que des comptes tournent. L'écran peut toujours s'éteindre : seule la mise en veille est bloquée."
   },
   "TrayNotifications": {
-   "label": "Afficher les notifications"
+   "label": "Afficher les bulles",
+   "tip": "Interrupteur principal des bulles de notification. Les trois réglages ci-dessous décident lesquelles vous recevez vraiment."
   },
   "NotifyEarnings": {
-   "label": "Notifier les gains"
+   "label": "Signaler les gains",
+   "tip": "Prévient quand une carte tombe ou qu'un commentaire rep4rep est crédité."
   },
   "NotifySocial": {
-   "label": "Notifier les commentaires"
+   "label": "Signaler les commentaires",
+   "tip": "Prévient quand quelqu'un commente l'un de vos profils."
   },
   "NotifyProblems": {
-   "label": "Notifier les problèmes"
+   "label": "Signaler les problèmes",
+   "tip": "Prévient quand un compte a vraiment besoin de vous : un code Steam Guard, une connexion échouée ou un bannissement de commentaires."
   },
   "Rep4RepEnabled": {
    "label": "Utiliser rep4rep"
@@ -105,16 +120,20 @@
    "tip": "La devise des prix d'inventaire. Réglez-la comme votre boutique Steam, sinon les totaux ne correspondront pas à ce que vous voyez sur le marché."
   },
   "FileLogging": {
-   "label": "Écrire un fichier journal"
+   "label": "Écrire un fichier journal",
+   "tip": "Écrit tout dans logs/ en plus de l'écran. Laissez activé : c'est le seul moyen de voir ce qui s'est passé pendant votre sommeil."
   },
   "DailyReportEnabled": {
-   "label": "Résumé quotidien dans le journal"
+   "label": "Résumé quotidien dans le journal",
+   "tip": "Une fois par jour, écrit un résumé d'un coup d'œil de ce que chaque compte a engrangé en 24 heures : heures jouées, cartes, commentaires rep4rep et un total cumulé. Répond à « qu'est-ce que j'ai eu cette nuit ? » sans faire défiler ; tapez `report` pour le voir quand vous voulez."
   },
   "DailyReportHour": {
-   "label": "Heure du résumé · heure"
+   "label": "Heure du résumé · heure",
+   "tip": "Heure de la journée où le résumé quotidien est écrit, 0-23 (heure locale). Par défaut 9."
   },
   "DailyReportMinute": {
-   "label": "Heure du résumé · minute"
+   "label": "Heure du résumé · minute",
+   "tip": "Minute de cette heure pour le résumé quotidien, 0-59. Heure 9 + minute 30 = 09h30."
   },
   "Enabled": {
    "label": "Activé",
@@ -558,6 +577,26 @@
   "CommandMasters": {
    "label": "Accepter les commandes de",
    "tip": "SteamID64 autorisés à piloter nocat.farm en écrivant à ce compte sur Steam, séparés par des virgules. Les commandes doivent commencer par !"
+  },
+  "WebRefreshSeconds": {
+   "label": "Rafraîchir toutes les",
+   "tip": "À quelle fréquence le tableau se rafraîchit, en secondes. Plus court paraît plus vif et ne coûte rien : tout est local."
+  },
+  "WebSessionDays": {
+   "label": "Rester connecté pendant",
+   "tip": "Combien de jours un navigateur reste connecté avant de redemander le mot de passe du tableau."
+  },
+  "ExitWhenAllFinished": {
+   "label": "Fermer quand tout est fini",
+   "tip": "Ferme complètement nocat.farm dès que tous les comptes ont fini de farmer et se sont déconnectés, au lieu de rester à ne rien faire dans la zone de notification."
+  },
+  "Debug": {
+   "label": "Détail de débogage",
+   "tip": "Affiche beaucoup plus de détails, y compris chaque requête web. Utile quand quelque chose cloche ; bruyant le reste du temps."
+  },
+  "LogRetentionDays": {
+   "label": "Conserver les journaux",
+   "tip": "Supprime les fichiers journaux plus vieux que ce nombre de jours. 0 les garde indéfiniment."
   }
  }
 }
