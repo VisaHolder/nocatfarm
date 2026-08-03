@@ -210,6 +210,7 @@ public sealed class BotConfig {
 
 	// ── inventory ──
 	public bool ShowInventoryValue { get; set; } = true;
+	public List<uint> InventoryIgnoreGames { get; set; } = [];
 
 	// ── free games & badges ──
 	public bool ClaimFreeGames { get; set; }

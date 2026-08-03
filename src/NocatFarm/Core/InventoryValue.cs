@@ -81,6 +81,10 @@ public sealed partial class InventoryValue(Bot bot) {
 
 		List<(uint App, string Name, string Context)> inventories = ParseContexts(page);
 
+		lock (_holdings) {
+			_holdings.Clear();   // a fresh read replaces the old picture; contexts merge into THIS one, not the last
+		}
+
 		if (inventories.Count == 0) {
 			_readAt = DateTime.UtcNow;   // nothing held anywhere: a real answer, not a failure
 			Ready = true;
@@ -138,24 +142,16 @@ public sealed partial class InventoryValue(Bot bot) {
 			}
 
 			named[classId] = hash;
-			kinds++;
-
-			if (d.TryGetProperty("marketable", out JsonElement m) && (m.ValueKind == JsonValueKind.Number) && (m.GetInt32() == 1)) {
-				sellable++;
-			}
 		}
 
-		// A whole inventory in which NOTHING can be sold is what a ban looks like from here.
+		// Which games to skip is TOLD to us, not guessed at.
 		//
-		// Steam does not publish which game an account is banned in, but it does mark every item from that game
-		// unsellable - so an inventory with items in it and not one sellable line is the signal, and it needs no
-		// ban list to consult. Individual unsellable items mean nothing (trade holds, fresh purchases) and are
-		// still priced normally; it is only the all-or-nothing case that counts as blocked.
-		bool blocked = (kinds > 0) && (sellable == 0);
-
-		if (blocked) {
-			Log.Debug($"{game}: nothing in that inventory can be sold - counting it as blocked", bot.Name);
-		}
+		// The guess was "an inventory where nothing is marketable must be a banned game". It was wrong in both
+		// directions on live accounts: it flagged Steam's own trading cards on every account (hundreds of items,
+		// all perfectly sellable) while missing the two accounts that genuinely are CS2-banned, whose skins still
+		// come back marked marketable. Steam does not publish which game an account is banned in, and no signal in
+		// the inventory stands in for it - so this is a list you fill in, and it does exactly what it says.
+		bool blocked = bot.Cfg.InventoryIgnoreGames.Contains(app);
 
 		Dictionary<string, int> counts = new(StringComparer.Ordinal);
 
@@ -172,7 +168,16 @@ public sealed partial class InventoryValue(Bot bot) {
 
 		lock (_holdings) {
 			if (counts.Count == 0) {
-				_holdings.Remove(app);
+				return;
+			}
+
+			// MERGED, not replaced: one game can have several inventory contexts - Steam's own has three, for
+			// cards, backgrounds and emoticons - and writing each one over the last meant only the final context
+			// counted. Everything but the last few hundred items simply vanished from the total.
+			if (_holdings.TryGetValue(app, out (string Game, Dictionary<string, int> Items, bool Blocked) existing)) {
+				foreach ((string hash, int amount) in counts) {
+					existing.Items[hash] = existing.Items.GetValueOrDefault(hash) + amount;
+				}
 			} else {
 				_holdings[app] = (game, counts, blocked);
 			}
@@ -240,6 +245,8 @@ public sealed partial class InventoryValue(Bot bot) {
 		// to price - and what gets asked about FIRST decides what the number looks like for that hour. Left in
 		// whatever order they came out of the inventory, nine hundred trading cards worth a penny each were
 		// consuming the whole rate limit while fifty skins worth four figures sat unpriced, so an account with
+		int done = 0;
+
 		// $1,500 of CS2 read as $13. Two rules fix it. Steam's own inventory goes LAST - app 753 is cards,
 		// backgrounds and emoticons, thousands of items worth pennies each - and the games themselves are worked
 		// through ROUND-ROBIN, one item from each in turn.
@@ -256,6 +263,14 @@ public sealed partial class InventoryValue(Bot bot) {
 			}
 
 			Pending--;
+			done++;
+
+			// Re-total every so often rather than only at the end of the sweep. Sixty lookups is three and a half
+			// minutes of one account's turn, and with several accounts queued behind the same rate limit a total
+			// could sit unchanged for ten - which reads as broken, not as busy.
+			if (done % 10 == 0) {
+				Recount();
+			}
 		}
 	}
 
