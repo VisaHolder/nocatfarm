@@ -25,6 +25,8 @@
     <!-- SteamKit2 only. Steam's HTML is hand-parsed (see CardFarmer) rather than pulling in a full parser,
          which keeps the dependency surface at exactly one package. -->
     <PackageReference Include="SteamKit2" Version="3.3.0" />
+    <!-- DPAPI. Windows-only by nature; Secrets falls back to plain text elsewhere and says so. -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>

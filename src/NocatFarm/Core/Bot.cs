@@ -2187,13 +2187,23 @@ public static class TokenStore {
 	// token for the same reason - so it can reuse it for its full ~24h life and leave the owner's session alone.
 	private static string AccessPathFor(string bot) => Path.Combine(Dir, bot + ".access");
 
+	// These files hold credentials, so they are encrypted at rest - see Secrets. Reading stays tolerant of the
+	// plain-text files older versions wrote: they are read as-is and quietly rewritten encrypted on the next save,
+	// so upgrading needs no migration and logs nobody out.
 	public static string? Load(string bot) => Read(PathFor(bot));
 
 	public static string? LoadAccess(string bot) => Read(AccessPathFor(bot));
 
 	private static string? Read(string path) {
 		try {
-			return File.Exists(path) ? File.ReadAllText(path).Trim() : null;
+			if (!File.Exists(path)) {
+				return null;
+			}
+
+			string stored = File.ReadAllText(path).Trim();
+			string plain = Secrets.Unprotect(stored);
+
+			return plain.Length > 0 ? plain : null;
 		} catch {
 			return null;
 		}
@@ -2202,7 +2212,7 @@ public static class TokenStore {
 	public static void Save(string bot, string token) {
 		try {
 			Directory.CreateDirectory(Dir);
-			AtomicFile.Write(PathFor(bot), token);
+			AtomicFile.Write(PathFor(bot), Secrets.Protect(token, bot));
 		} catch (Exception e) {
 			Log.Warn($"couldn't store the login token: {e.Message}", bot);
 		}
@@ -2211,7 +2221,7 @@ public static class TokenStore {
 	public static void SaveAccess(string bot, string accessToken) {
 		try {
 			Directory.CreateDirectory(Dir);
-			AtomicFile.Write(AccessPathFor(bot), accessToken);
+			AtomicFile.Write(AccessPathFor(bot), Secrets.Protect(accessToken, bot));
 		} catch (Exception e) {
 			Log.Debug($"couldn't store the access token: {e.Message}", bot);
 		}

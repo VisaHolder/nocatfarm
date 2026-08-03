@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using NocatFarm.Core;
 
 namespace NocatFarm.Config;
 
@@ -413,6 +414,13 @@ public static class ConfigStore {
 					cfg.SteamLogin = name;   // default the login to the file name
 				}
 
+				// Decrypt whatever was sealed. Plain text passes straight through, so a hand-edited file and a
+				// config written by an older version both still work.
+				cfg.SteamPassword = Secrets.Unprotect(cfg.SteamPassword);
+				cfg.SharedSecret = Secrets.Unprotect(cfg.SharedSecret);
+				cfg.IdentitySecret = Secrets.Unprotect(cfg.IdentitySecret);
+				cfg.AccountProxyPassword = Secrets.Unprotect(cfg.AccountProxyPassword);
+
 				bots[name] = cfg;
 			} catch (Exception e) {
 				Log.Warn($"config: {Path.GetFileName(file)} is not valid JSON ({e.Message}) - skipped");
@@ -425,10 +433,34 @@ public static class ConfigStore {
 	public static void SaveBot(string name, BotConfig cfg) {
 		try {
 			Directory.CreateDirectory(ConfigDir);
-			File.WriteAllText(Path.Combine(ConfigDir, name + ".json"), JsonSerializer.Serialize(cfg, Json));
+
+			// The secrets go to disk encrypted, but the config in memory stays readable - so a COPY is written
+			// rather than the live object. Encrypting in place would leave every other part of the program
+			// holding ciphertext where it expects a password.
+			BotConfig onDisk = Secrets.Available ? Sealed(cfg) : cfg;
+
+			File.WriteAllText(Path.Combine(ConfigDir, name + ".json"), JsonSerializer.Serialize(onDisk, Json));
 		} catch (Exception e) {
 			Log.Warn($"config: couldn't save {name}: {e.Message}");
 		}
+	}
+
+	/// <summary>
+	/// A copy with the credentials encrypted.
+	///
+	/// A Steam password and an authenticator's secrets are the account. Leaving them as plain text in a JSON file
+	/// meant anything that could read the folder - a sync client, a backup, somebody looking over a shoulder -
+	/// had the account. Hand-edited plain text still works: reading accepts either, and the next save seals it.
+	/// </summary>
+	private static BotConfig Sealed(BotConfig cfg) {
+		BotConfig copy = JsonSerializer.Deserialize<BotConfig>(JsonSerializer.Serialize(cfg, Json), Json)!;
+
+		copy.SteamPassword = Secrets.Protect(cfg.SteamPassword, cfg.SteamLogin);
+		copy.SharedSecret = Secrets.Protect(cfg.SharedSecret, cfg.SteamLogin);
+		copy.IdentitySecret = Secrets.Protect(cfg.IdentitySecret, cfg.SteamLogin);
+		copy.AccountProxyPassword = Secrets.Protect(cfg.AccountProxyPassword, cfg.SteamLogin);
+
+		return copy;
 	}
 
 	public static bool DeleteBot(string name) {
