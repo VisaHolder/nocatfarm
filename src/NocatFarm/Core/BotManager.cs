@@ -67,7 +67,7 @@ public sealed class BotManager : IAsyncDisposable {
 		foreach (string gone in _bots.Keys.Where(k => !onDisk.ContainsKey(k)).ToArray()) {
 			if (_bots.TryRemove(gone, out Bot? b)) {
 				Log.Info("config removed - stopping", gone);
-				await b.StopAsync().ConfigureAwait(false);
+				await b.DisposeAsync().ConfigureAwait(false);   // dispose, not just stop - frees its HttpClient/locks
 			}
 		}
 
@@ -131,7 +131,15 @@ public sealed class BotManager : IAsyncDisposable {
 		(_bots.Count > 0)
 		&& All.All(static b => !b.Cfg.Enabled || b.State is Core.BotState.Stopped or Core.BotState.Failed);
 
-	public async Task StopAllAsync() {
+	public async Task StopAllAsync(bool graceful = false) {
+		if (graceful) {
+			// Wind the legit accounts down together, not one after another, so a "stop all" doesn't take the
+			// sum of every account's finishing-up delay.
+			await Task.WhenAll(All.Select(b => b.StopAsync(true))).ConfigureAwait(false);
+
+			return;
+		}
+
 		foreach (Bot bot in All) {
 			await bot.StopAsync().ConfigureAwait(false);
 		}
@@ -184,7 +192,7 @@ public sealed class BotManager : IAsyncDisposable {
 			return false;
 		}
 
-		await bot.StopAsync().ConfigureAwait(false);
+		await bot.DisposeAsync().ConfigureAwait(false);   // dispose, not just stop - frees its HttpClient/locks
 		TokenStore.Clear(name);
 
 		return ConfigStore.DeleteBot(name);

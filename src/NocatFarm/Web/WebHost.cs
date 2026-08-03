@@ -581,7 +581,7 @@ public sealed class WebHost : IAsyncDisposable {
 
 					break;
 				case "stop":
-					await bot.StopAsync().ConfigureAwait(false);
+					await bot.StopAsync(graceful: true).ConfigureAwait(false);
 
 					break;
 				case "pause":

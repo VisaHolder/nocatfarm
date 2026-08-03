@@ -38,6 +38,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	private Rep4RepState? _state;
 	private string? _profileId;
 	private string _status = "off";
+	private int _rateLimitRun;   // consecutive Steam rate-limits, reset on a good post
 
 	public override string Name => "rep4rep";
 	public override string Status => _status;
@@ -309,6 +310,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 	private async Task CountPostAsync(Rep4RepTask task) {
 		_state!.Posts.Add(DateTime.UtcNow.Ticks);
+		_rateLimitRun = 0;
 		_state.PostedTasks[task.TaskId] = DateTime.UtcNow.Ticks;
 		Stats.Record(Stats.KindComment, Bot.Name);
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
@@ -371,6 +373,24 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		}
 
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
+
+		_rateLimitRun++;
+
+		// Break the "stuck at 9/10 all day" loop. When Steam keeps refusing on spacing, chasing the last
+		// slot every couple of hours just burns the day - so after two in a row, sit out until the whole 24h
+		// window has cleared and come back at a clean baseline, like the account simply stopped for the day.
+		if (_rateLimitRun >= 2) {
+			DateTime clears = (_state.LastPost() ?? DateTime.UtcNow).AddHours(24);
+			int rest = (int) Math.Max(60, (clears - DateTime.UtcNow).TotalMinutes);
+			_state.BlockedUntil = clears.Ticks;
+			_state.BlockReason = "rate-limited - resting to baseline";
+			await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
+			_rateLimitRun = 0;
+			_status = $"rate-limited - resting {Fmt.Hm(rest)}, back at baseline";
+			Log.Attention($"Steam keeps rate-limiting comments at {posted}/{cap} - sitting out {Fmt.Hm(rest)} until the window clears, then starting fresh", Bot.Name);
+
+			return 10 * 60;
+		}
 
 		int wait = Rng.Next(RateLimitLowMinutes, RateLimitHighMinutes + 1);
 		_status = $"rate-limited, backing off {wait}m";
@@ -645,5 +665,20 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 		_status = "hold cleared";
 		_forceNext = true;
+	}
+
+	/// <summary>Pause commenting for a full 24h and come back at a clean baseline (rolling window emptied).</summary>
+	public async Task RestFullDayAsync(string reason) {
+		if (_state == null) {
+			return;
+		}
+
+		_state.BlockedUntil = DateTime.UtcNow.AddHours(24).Ticks;
+		_state.BlockReason = reason;
+		_state.Posts.Clear();   // baseline now - old comments won't count against tomorrow's fresh batch
+		_state.Strikes = 0;
+		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
+		_rateLimitRun = 0;
+		_status = $"resting a day ({reason})";
 	}
 }

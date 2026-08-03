@@ -271,13 +271,18 @@ public static class Achievements {
 		}
 
 		if (percentages == null) {
-			percentages = [];
+			// Only a genuine answer from Steam gets cached. If the fetch throws or returns non-200, `fetched` stays
+			// null and we DON'T cache - a single network blip must never bake an empty dict in for the whole
+			// process, which used to silently disable the achievement pacer for that game forever (everything read
+			// GlobalPercent == null, nothing cleared the rarity floor, and it quietly stopped unlocking).
+			Dictionary<string, double>? fetched = null;
 
 			try {
 				string url = $"https://api.steampowered.com/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/?gameid={set.AppId}";
 				using HttpResponseMessage response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
 				if (response.IsSuccessStatusCode) {
+					fetched = [];
 					using JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
 
 					if (doc.RootElement.TryGetProperty("achievementpercentages", out JsonElement wrapper)
@@ -289,7 +294,7 @@ public static class Achievements {
 								continue;
 							}
 
-							percentages[name] = p.ValueKind == JsonValueKind.Number ? p.GetDouble()
+							fetched[name] = p.ValueKind == JsonValueKind.Number ? p.GetDouble()
 								: double.TryParse(p.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed) ? parsed : 0;
 						}
 					}
@@ -298,8 +303,12 @@ public static class Achievements {
 				Log.Debug($"couldn't read global achievement rates for {set.AppId}: {e.Message}");
 			}
 
-			lock (GlobalCache) {
-				GlobalCache[set.AppId] = percentages;
+			percentages = fetched ?? [];
+
+			if (fetched != null) {
+				lock (GlobalCache) {
+					GlobalCache[set.AppId] = fetched;
+				}
 			}
 		}
 

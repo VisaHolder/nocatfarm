@@ -243,6 +243,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 			// Mid-burst is the exception: a burst is several achievements from one moment of play, so they are
 			// only a couple of wall-clock minutes apart and share the same played-time.
+			// A deliberate grind skips the slow played-time gate - you told it to sit on this game, so it
+			// works through the achievements briskly instead of making you wait hours between each.
 			if ((g.BurstLeft <= 0) && ((g.PlayedMins - g.MinsAtLastUnlock) < playedGate)) {
 				return false;
 			}
@@ -277,6 +279,11 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		int total = set.All.Count;
 		int already = set.All.Count(static a => a.Unlocked);
 
+		// A grind works through the WHOLE game (ignores the rarity floor, up to the account's completion cap), but
+		// it still unlocks at the account's own Achievement-pace setting - never instantly, human mode or not. The
+		// only thing human-mode changes about a grind is the game-switch timing, not the achievement speed.
+		bool grind = Bot.Grinding && (Bot.GrindGame == app);
+
 		lock (_gate) {
 			g.Unlocked = already;
 		}
@@ -292,6 +299,12 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			ceiling = cap;
 		}
 
+		// A grind may take a game far past the stealthy research ceiling - up to the account's own
+		// completion cap, or all of them when no cap is set.
+		if (grind) {
+			ceiling = (cap > 0) ? cap : 100;
+		}
+
 		int ceilingCount = Math.Min(total, Math.Max(prof.OnboardCount, total * ceiling / 100));
 
 		if (already >= ceilingCount) {
@@ -303,10 +316,14 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 		double hours = g.PlayedMins / 60.0;
 		bool onboarding = already < prof.OnboardCount;
-		int floor = Math.Max(Math.Max(1, prof.MinPercent), RarityFloorForHours(hours / prof.RarityScale));
+		// A grind ignores the rarity floor: it works through everything settable, most-common first, rather
+		// than only what the hours "justify". Normal play keeps the floor so it never pops a rare one early.
+		int floor = grind ? 1 : Math.Max(Math.Max(1, prof.MinPercent), RarityFloorForHours(hours / prof.RarityScale));
 
 		List<Achievement> eligible = set.All
-			.Where(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a) && ((a.GlobalPercent ?? 0) >= floor))
+			// Unknown rarity (Steam's global-percent endpoint was unreachable) counts as eligible rather than being
+			// excluded - otherwise a missing fetch would silently stop the account unlocking anything at all.
+			.Where(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a) && ((a.GlobalPercent ?? floor) >= floor))
 			.ToList();
 
 		if (eligible.Count == 0) {
@@ -314,9 +331,19 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				g.BurstLeft = 0;
 			}
 
-			// The gate is shut at this playtime, which is it working, not failing. Come back in an hour or
-			// three rather than asking again every minute.
-			Back(g, TimeSpan.FromMinutes(_rng.Next(60, 181)));
+			// When a grind can't unlock anything but the game still has locked achievements, the usual
+			// reason is Steam controls them server-side (Counter-Strike 2 is the classic case) - say so plainly
+			// and stop hammering Steam's stats for it, rather than looking silently stuck.
+			if (grind && set.All.Any(a => !a.Unlocked && !IsSpecialGlobal(a)) && !set.All.Any(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a))) {
+				Log.Info($"can't unlock {GameNames.Of(app)}'s achievements - Steam sets them server-side, so there's nothing to grind here", Bot.Name);
+				Back(g, TimeSpan.FromHours(_rng.Next(8, 25)));
+
+				return false;
+			}
+
+			// The gate is shut at this playtime, which is it working, not failing. Come back later rather than
+			// asking again every minute (sooner during a grind, which is actively waiting on them).
+			Back(g, TimeSpan.FromMinutes(grind ? _rng.Next(15, 41) : _rng.Next(60, 181)));
 
 			return false;
 		}

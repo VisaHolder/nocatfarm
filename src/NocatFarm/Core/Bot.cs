@@ -55,11 +55,16 @@ public sealed class Bot : IAsyncDisposable {
 
 	public DateTime? GrindUntil { get; private set; }
 
+	/// <summary>When the grind game actually goes on. On a legit account this is a short beat after the command,
+	/// so it finishes up its current game rather than snapping over instantly; on a non-human account it's now.</summary>
+	public DateTime GrindStartsAt { get; private set; }
+
 	public bool Grinding => (GrindGame != 0) && (GrindUntil > DateTime.UtcNow);
 
-	public void StartGrind(uint app, TimeSpan how) {
+	public void StartGrind(uint app, TimeSpan how, TimeSpan delay = default) {
 		GrindGame = app;
-		GrindUntil = DateTime.UtcNow.Add(how);
+		GrindStartsAt = DateTime.UtcNow.Add(delay);
+		GrindUntil = GrindStartsAt.Add(how);   // the hours run from when it actually starts, not the command
 	}
 
 	public void StopGrind() {
@@ -87,6 +92,9 @@ public sealed class Bot : IAsyncDisposable {
 
 	/// <summary>Somebody messaged this account: who, and what they said.</summary>
 	public event Action<ulong, string>? ChatMessage;
+
+	/// <summary>The modern chat service handler, used to send friend messages (see SendChatMessage).</summary>
+	internal SteamUnifiedMessages? Unified { get; private set; }
 
 	private int? _personaOverride;
 
@@ -435,6 +443,16 @@ public sealed class Bot : IAsyncDisposable {
 		Stats = new UserStatsHandler();
 		Client.AddHandler(Stats);
 
+		// The modern chat service. Friend messages arrive and send through this once the account logs on with
+		// NewSteamChat (which it does) - the legacy SteamFriends channel goes silent under it.
+		Unified = Client.GetHandler<SteamUnifiedMessages>();
+
+		// Register the CLIENT-side friend-messages service. This is the bit that makes receiving work: incoming
+		// messages arrive as a "FriendMessagesClient.IncomingMessage" notification, and SteamKit only dispatches
+		// it (raising our ServiceMethodNotification callback below) once that service is created. Without this the
+		// callback is subscribed but nothing ever routes to it - the account silently never sees a word sent to it.
+		Unified?.CreateService<FriendMessagesClient>();
+
 		_cb.Subscribe<SteamClient.ConnectedCallback>(OnConnected);
 		_cb.Subscribe<SteamClient.DisconnectedCallback>(OnDisconnected);
 		_cb.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
@@ -444,7 +462,7 @@ public sealed class Bot : IAsyncDisposable {
 		_cb.Subscribe<CommentNotificationsCallback>(OnCommentNotifications);
 		_cb.Subscribe<SteamApps.LicenseListCallback>(OnLicenseList);
 		_cb.Subscribe<SteamFriends.FriendsListCallback>(OnFriendsList);
-		_cb.Subscribe<SteamFriends.FriendMsgCallback>(OnFriendMsg);
+		_cb.Subscribe<SteamUnifiedMessages.ServiceMethodNotification<CFriendMessages_IncomingMessage_Notification>>(OnIncomingMessage);
 		_cb.Subscribe<SteamFriends.PersonaStateCallback>(OnPersonaState);
 	}
 
@@ -573,13 +591,34 @@ public sealed class Bot : IAsyncDisposable {
 		}
 	}
 
-	private void OnFriendMsg(SteamFriends.FriendMsgCallback cb) {
-		// Typing notifications and read receipts arrive down the same channel as the words.
-		if ((cb.EntryType != EChatEntryType.ChatMsg) || string.IsNullOrWhiteSpace(cb.Message)) {
+	private void OnIncomingMessage(SteamUnifiedMessages.ServiceMethodNotification<CFriendMessages_IncomingMessage_Notification> cb) {
+		CFriendMessages_IncomingMessage_Notification body = cb.Body;
+
+		// Our own outgoing messages echo back down this same channel; ignore them, plus typing notifications
+		// and anything that isn't actually typed words.
+		if (body.local_echo || (body.chat_entry_type != (int) EChatEntryType.ChatMsg) || string.IsNullOrWhiteSpace(body.message)) {
 			return;
 		}
 
-		ChatMessage?.Invoke(cb.Sender.ConvertToUInt64(), cb.Message);
+		ChatMessage?.Invoke(body.steamid_friend, body.message);
+	}
+
+	/// <summary>
+	/// Send a friend chat message over the modern unified service. The legacy SteamFriends.SendChatMessage
+	/// stopped being delivered once the account logs on with NewSteamChat, so this is the path that works.
+	/// </summary>
+	public void SendChatMessage(ulong steamId, string message) {
+		if ((steamId == 0) || string.IsNullOrEmpty(message) || (Unified == null)) {
+			return;
+		}
+
+		CFriendMessages_SendMessage_Request req = new() {
+			steamid = steamId,
+			chat_entry_type = (int) EChatEntryType.ChatMsg,
+			message = message,
+		};
+
+		Unified.SendMessage<CFriendMessages_SendMessage_Request, CFriendMessages_SendMessage_Response>("FriendMessages.SendMessage#1", req);
 	}
 
 	/// <summary>
@@ -707,19 +746,38 @@ public sealed class Bot : IAsyncDisposable {
 		Client.Connect();
 	}
 
-	public async Task StopAsync() {
+	public async Task StopAsync(bool graceful = false) {
 		// Two callers arriving together used to double-dispose the token source and throw out of the middle of
 		// StopAllAsync, leaving the rest of the accounts running.
 		await _stopGate.WaitAsync().ConfigureAwait(false);
 
 		try {
-			await StopCoreAsync().ConfigureAwait(false);
+			await StopCoreAsync(graceful).ConfigureAwait(false);
 		} finally {
 			_stopGate.Release();
 		}
 	}
 
-	private async Task StopCoreAsync() {
+	private async Task StopCoreAsync(bool graceful) {
+		// A legit account doesn't blink out mid-game the moment you hit stop - a person finishes up and logs
+		// off a short, random beat later. Only for a genuine graceful stop of a running human-mode account:
+		// never a restart teardown, a shutdown, a non-human account, or one that wasn't even online.
+		if (graceful && _running && HumanOwned && IsOnline) {
+			int max = Math.Max(0, Cfg.LegitStopMaxSeconds);
+
+			if (max > 0) {
+				int secs = Rng.Next(Math.Max(3, max * 2 / 5), max + 1);
+				StatusText = $"finishing up - logging off in ~{secs}s";
+				Log.Info($"stopping - finishing up, logging off in about {secs}s", Name);
+
+				try {
+					await Task.Delay(TimeSpan.FromSeconds(secs)).ConfigureAwait(false);
+				} catch {
+					// fall through and log off now
+				}
+			}
+		}
+
 		bool wasPrompting = _guardPrompt != null;
 
 		// Announce the stop only if this session was actually meant to be running. The teardown that StartCoreAsync
@@ -1057,7 +1115,12 @@ public sealed class Bot : IAsyncDisposable {
 		// plain "online" (no game) for the idler's settle delay after every reconnect. A boosting account like
 		// old/kylro should never be seen off its 💀nocat.lol💀 - so re-assert it the instant it's back, not in
 		// twenty seconds. Human mode owns its own accounts' timing, so this leaves those alone.
-		if (!HumanOwned && !PlayingBlocked) {
+		//
+		// Keyed on the CONFIG flag, not the runtime HumanOwned: on the very first logon after start/restart,
+		// HumanOwned is still false for a legit account (its module hasn't ticked yet), and asserting here would
+		// slam the multi-game idle list on for a beat and grab the session inside the owner-report lag the warm-up
+		// gate exists to respect. LegitMode is known immediately, so this never fires on a human account.
+		if (!Cfg.LegitMode && !PlayingBlocked) {
 			BotManager.ModuleOf<Modules.Idler>(this)?.Assert();
 		}
 	}

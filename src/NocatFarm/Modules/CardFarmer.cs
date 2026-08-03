@@ -191,6 +191,18 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			return 2;
 		}
 
+		// Settle in first, like a person: on a human-mode account don't even scan badges until the post-login
+		// warm-up is done. Poll every minute (no scan, so no rate-limit hit) so farming starts right when the
+		// warm-up ends instead of up to a full rescan interval later.
+		HumanMode? warmup = BotManager.ModuleOf<HumanMode>(Bot);
+
+		if (Bot.HumanOwned && (warmup != null) && !warmup.WarmedUp) {
+			int mins = warmup.WarmUpMinutesLeft;
+			_status = mins > 0 ? $"settling in first (~{mins}m), then farming" : "settling in first, then farming";
+
+			return 1;
+		}
+
 		_status = "checking badges";
 		List<FarmTarget>? found = await DiscoverAsync(ct).ConfigureAwait(false);
 
@@ -298,13 +310,6 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		// Two opt-in limits on WHEN to farm - both off by default.
 		HumanMode? human = BotManager.ModuleOf<HumanMode>(Bot);
 
-		// Settle in first, like a person - only start farming once the post-login warm-up is done.
-		if (Bot.HumanOwned && (human != null) && !human.WarmedUp) {
-			_status = $"{Bot.CardsRemaining} card(s) - warming up first";
-
-			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
-		}
-
 		if (Bot.HumanOwned && Bot.Cfg.FarmOnlyWhileAsleep && human?.InBed != true) {
 			_status = $"{Bot.CardsRemaining} card(s) - farming tonight, once it's asleep";
 
@@ -409,6 +414,49 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	}
 
 	// ── farming a single game ───────────────────────────────────────────────
+	/// <summary>
+	/// After the last card of a run, keep the game on a jittered while longer for a human-mode account rather
+	/// than quitting the instant the drop lands. Holds the farming claim throughout so the human scheduler stays
+	/// stood off; it takes the session back (and steps away for a break) once this releases. Length is the
+	/// PostFarmWindDown min/max setting; 0/0 switches it off.
+	/// </summary>
+	private async Task WindDownAsync(FarmTarget game, CancellationToken ct) {
+		int lo = Math.Max(0, Bot.Cfg.PostFarmWindDownMinMinutes);
+		int hi = Math.Max(lo, Bot.Cfg.PostFarmWindDownMaxMinutes);
+
+		if (hi <= 0) {
+			return;
+		}
+
+		int mins = Rng.Next(lo, hi + 1);
+
+		if (mins <= 0) {
+			return;
+		}
+
+		Log.Info($"all card drops done - winding down on {game.GameName} for ~{Fmt.Hm(mins)} before the usual games", Bot.Name);
+		DateTime until = DateTime.UtcNow.AddMinutes(mins);
+
+		while (!ct.IsCancellationRequested && (DateTime.UtcNow < until)) {
+			if (!Bot.CanPlay) {
+				Bot.StopPlaying();
+
+				return;
+			}
+
+			Claim();
+			Bot.SetPlaying([game.AppId], Bot.Cfg.PlayWhileFarming ? null : "");
+			int left = (int) Math.Ceiling((until - DateTime.UtcNow).TotalMinutes);
+			_status = $"winding down on {game.GameName} (~{Math.Max(1, left)}m)";
+
+			if (!await Sleep(TimeSpan.FromSeconds(30), ct).ConfigureAwait(false)) {
+				return;
+			}
+		}
+
+		Bot.StopPlaying();
+	}
+
 	private async Task FarmSoloAsync(FarmTarget game, CancellationToken ct) {
 		DateTime started = DateTime.UtcNow;
 		TimeSpan limit = TimeSpan.FromHours(Math.Max(1, Bot.Cfg.MaxFarmingHoursPerGame));
@@ -422,6 +470,15 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		while (!ct.IsCancellationRequested) {
 			if (!Bot.CanPlay) {
 				_status = "paused (account in use)";
+
+				return;
+			}
+
+			if (Bot.Grinding) {
+				// A grind outranks farming - drop the claim and let it take the session, rather than fighting the
+				// idler over what's playing and polling a badge page for a game that isn't even running.
+				_status = "standing by - grinding";
+				Release();
 
 				return;
 			}
@@ -460,10 +517,30 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 			if (game.CardsRemaining == 0) {
 				ClearStall(game.AppId);
-				Log.Reward($"{game.GameName} is done - no cards left", Bot.Name);
+
+				// Count and announce the final card(s) as well. The old early-return here fired BEFORE the drop
+				// tally below, so the last card of a game was never logged and never counted in the daily total.
+				if (before > game.CardsRemaining) {
+					for (int i = 0; i < before - game.CardsRemaining; i++) {
+						Stats.Record(Stats.KindCard, Bot.Name);
+					}
+
+					Log.Reward($"last card dropped in {game.GameName} - that game's done", Bot.Name);
+				} else {
+					Log.Reward($"{game.GameName} is done - no cards left", Bot.Name);
+				}
 
 				lock (_queue) {
 					_queue.RemoveAll(g => g.AppId == game.AppId);
+				}
+
+				Bot.CardsRemaining = Queue.Sum(static g => g.CardsRemaining);
+
+				// That was the last game with cards: on a human-mode account, wind down on it a little longer
+				// like a person who just finished, instead of snapping off the second the drop lands. Human mode
+				// takes the session back and steps away for a break once this releases the claim.
+				if (Bot.HumanOwned && (Bot.CardsRemaining == 0)) {
+					await WindDownAsync(game, ct).ConfigureAwait(false);
 				}
 
 				return;
@@ -505,6 +582,13 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		while (!ct.IsCancellationRequested && DateTime.UtcNow < until) {
 			if (!Bot.CanPlay) {
 				_status = "paused (account in use)";
+
+				return;
+			}
+
+			if (Bot.Grinding) {
+				_status = "standing by - grinding";
+				Release();
 
 				return;
 			}

@@ -60,6 +60,10 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 	/// <summary>Re-send what this account should be playing, unless something with a stronger claim owns it.</summary>
 	public void Assert() {
 		if (Bot.Grinding) {
+			if (DateTime.UtcNow < Bot.GrindStartsAt) {
+				return;   // grind is queued but not started - let whatever's playing keep running (legit switch-over)
+			}
+
 			Bot.SetPlaying([Bot.GrindGame]);
 			IdlingSince ??= DateTime.UtcNow;
 

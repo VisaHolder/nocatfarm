@@ -128,6 +128,11 @@ The part that separates this from an idler. Turn it on per account and it plays 
 * short breaks, proper meal breaks around real meal times, and some of those spent appearing offline
 * a settling-in gap after signing in, because nobody launches a game the second Steam opens
 * offline overnight, where it can still bank hours invisibly
+* **card farming fits the act** — it settles in first, farms, then plays the game on a little longer before
+  stepping away for a break and picking the schedule back up, instead of snapping between tasks
+* **grind fits it too** — `grind` on a legit account eases in (finishes the current game first) and earns
+  achievements at that account's normal pace; on a boost account it just starts instantly
+* stopping it doesn't blink the account out mid-game — it finishes up for a few seconds, then logs off
 
 ```
 set myaccount LegitMode true
@@ -162,6 +167,9 @@ The pacing, all per account:
 * only when **three different profiles** refuse in a row is the *account* treated as blocked — 24h off, while
   the other accounts carry on
 * an unknown outcome is counted and never retried (Steam may have posted it; a retry would double-comment)
+* if Steam keeps rate-limiting one account near its cap, it stops chasing that last slot and rests until its
+  24h window has fully cleared, then starts fresh — rather than retrying into the same wall all day
+* `rep4rep rest <account|all>` forces exactly that: a full day off, then back at a clean baseline
 
 Points appear as **pending** first — that's rep4rep verifying the comment really landed, usually within a few
 hours. Nothing is lost.
@@ -173,19 +181,93 @@ dashboard links out to rep4rep.com for those rather than pretending.
 
 ## Commands
 
-`help` lists everything; `help <setting>` explains any setting. The dashboard's console runs the same commands
-and prints the same output.
+`help` lists everything; `help <command>` or `help <setting>` explains one. The dashboard's console runs the
+same commands and prints the same output. Almost anything that takes an account also takes `all`.
 
-```
-status [account]                     start|stop|restart|pause|resume <account|all>
-add <name> <steamLogin>              remove <account>       enable|disable <account>
-play <account> <appIDs|none>         name <account> [text]  persona <account> <state>
-cards [account]                      farm <account> on|off
-rep4rep status|points|profiles|tasks|on|off|now|pause|resume|clear
-config [account]                     set [account] <key> <value>      reload
-log [count]                          stats [hours]          report
-version                              exit
-```
+You can also drive an account by **Steam chat**: message it from a master (a SteamID64 in that account's
+`CommandMasters`), prefixed with `/` or `!` — e.g. `/help`, `!status new`. A plain message with no prefix gets
+the auto-reply instead, so ordinary chat is never mistaken for a command.
+
+<details>
+<summary><b>Every command</b> — click to expand</summary>
+
+<br>
+
+**Accounts**
+
+| Command | What it does |
+|---|---|
+| `status [account]` &nbsp;·&nbsp; `s` `bots` | What everything is doing right now. |
+| `start <account\|all>` | Log an account in. |
+| `stop <account\|all>` | Log an account out (stays configured). A human-mode account finishes up for a few seconds first. |
+| `restart <account\|all>` | Stop then start again. |
+| `pause <account\|all>` | Stay logged in but stop playing, farming and commenting. |
+| `resume <account\|all>` | Undo a pause. |
+| `add <name> <steamLogin>` | Add an account. Asks for the password once, then remembers a login token. |
+| `remove <account>` &nbsp;·&nbsp; `delete` | Delete an account and its stored login token. |
+| `enable <account>` | Let this account log in again. |
+| `disable <account>` | Keep it configured but never log it in. |
+| `redeem [account] <key> [key…]` &nbsp;·&nbsp; `key` | Activate product keys; without an account it tries each until one works. |
+| `2fa <account>` &nbsp;·&nbsp; `guard` | Show this account's Steam Guard code, if its authenticator is set up here. |
+
+**Playing**
+
+| Command | What it does |
+|---|---|
+| `play <account> <appIDs\|none>` | Set the games this account idles for playtime (multiple allowed). |
+| `grind <account\|all> <appID> <hours>` &nbsp;·&nbsp; `grind <account> off` | Play one game hard for N hours, then back to normal. Earns achievements while it runs. On a legit account it eases in and out; on a boost account it's instant. |
+| `human [account] [week]` | What human mode is doing today; add `week` for the next seven days. |
+| `wake <account>` &nbsp;·&nbsp; `wakeup` `skipsleep` | Wake a sleeping human-mode account and start its day now. Bed time is unchanged. |
+| `name <account> [text]` | Custom non-Steam game name shown instead of the real game. No text clears it. |
+| `persona <account> <state>` | online \| offline \| busy \| away \| snooze \| invisible. |
+| `cheevo <account> <appID> [list\|unlock\|lock] [name\|all]` &nbsp;·&nbsp; `ach` | Achievements: see them, unlock them, or put them back. |
+
+**Trading cards**
+
+| Command | What it does |
+|---|---|
+| `cards [account]` | What is still left to farm. |
+| `farm <account> on\|off` | Turn trading-card farming on or off. |
+| `send <account\|all>` &nbsp;·&nbsp; `loot` | Send an account's tradable items to the account listed under Trades. |
+
+**rep4rep** &nbsp;(alias `r4r`; run bare for a summary)
+
+| Command | What it does |
+|---|---|
+| `rep4rep status` | Per-account count, cap, last post and current state. |
+| `rep4rep points` | Points you can spend, and points still being verified. |
+| `rep4rep profiles` | The Steam profiles registered with rep4rep. |
+| `rep4rep tasks <account>` | The comment tasks waiting for one account. |
+| `rep4rep on\|off <account\|all>` | Turn commenting on or off. |
+| `rep4rep now <account\|all>` | Post now, skipping the wait (never the daily cap). |
+| `rep4rep pause\|resume <account\|all>` | Hold commenting, or let it go again. |
+| `rep4rep clear <account\|all>` | Release a 24h block early. |
+| `rep4rep rest <account\|all>` | Pause a full 24h and come back at a clean baseline. |
+
+**Settings & data**
+
+| Command | What it does |
+|---|---|
+| `config [account]` | Show every setting and its current value. |
+| `set [account] <key> <value>` | Change a setting; without an account name it changes a global one. |
+| `import asf [path] [force]` | Bring accounts across from ArchiSteamFarm, login tokens and all. |
+| `reload` | Re-read every config file from disk. |
+
+**Everything else**
+
+| Command | What it does |
+|---|---|
+| `log [count]` &nbsp;·&nbsp; `logs` | The last few log lines. |
+| `stats [hours]` | Cards dropped and comments posted, by hour. |
+| `report` | Write the daily summary to the log now. |
+| `answer <text>` | Answer whatever nocat.farm is waiting on — a Steam Guard code, or a password. |
+| `tutorial [topic]` &nbsp;·&nbsp; `guide` `setup` | Getting started, in order, ticking off what's done. |
+| `help [command\|setting]` &nbsp;·&nbsp; `?` `h` | This list, or what one command or setting does. |
+| `theme [dark\|light]` | Switch the dashboard theme. |
+| `version` &nbsp;·&nbsp; `about` | Which version this is. |
+| `exit` &nbsp;·&nbsp; `quit` `q` | Shut nocat.farm down (local only — never over Steam chat). |
+
+</details>
 
 ## Achievements
 
@@ -200,6 +282,11 @@ Unlocking a whole list at once is permanent, stamped with one shared timestamp, 
 forever — so for an account meant to look real there's a drip instead: `set myaccount UnlockAchievements true`
 earns a few a day, **easiest first** (the ones most owners have are the ones you get by simply playing), and
 only in a game the account actually has open.
+
+`grind` earns them too, on whatever game you point it at: briskly on a boost account, and at the account's own
+legit pace on a human-mode one. The catch is that **some games' achievements are set by Steam's servers, not
+the client — Counter-Strike 2 is the classic case — and nothing can unlock those.** Grind says so plainly for
+such a game instead of looking stuck.
 
 ## Trades, keys and items
 
@@ -218,7 +305,7 @@ side of the trade page can't be read, the offer is refused rather than guessed a
 
 ## Settings
 
-**41 global, 99 per account.** Every one has a plain-English explanation attached to it, which the dashboard
+**41 global, 105 per account.** Every one has a plain-English explanation attached to it, which the dashboard
 shows on hover and the console prints for `help <setting>` — one sentence, written once, in
 `Config/Settings.cs`. Advanced settings are collapsed by default and never move.
 
@@ -229,7 +316,9 @@ logging with retention.
 
 Per account: identity and appearance (persona, device type, notes, start-paused, Family View PIN, device
 name), what it plays, trading cards (order, priority list, blacklist, refund protection, skip-unplayed,
-give-up time, log out when done), rep4rep pacing, friends & messages (accept requests, auto-reply, command
+give-up time, log out when done, plus *when* to farm — only while asleep, or inside a set clock window, and
+how long to wind down on the last game after finishing), human mode (the whole daily shape, and how long it
+finishes up for on a manual stop), rep4rep pacing, friends & messages (accept requests, auto-reply, command
 masters, and joining the nocat.farm Steam group — on by default, `set <account> JoinGroup false` to opt out),
 and *Staying out of the way*.
 

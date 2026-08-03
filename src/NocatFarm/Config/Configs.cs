@@ -171,6 +171,9 @@ public sealed class BotConfig {
 	public bool FarmOnlyWhileAsleep { get; set; }
 	public int FarmFromHour { get; set; }
 	public int FarmUntilHour { get; set; }
+	public int PostFarmWindDownMinMinutes { get; set; } = 5;
+	public int PostFarmWindDownMaxMinutes { get; set; } = 12;
+	public int LegitStopMaxSeconds { get; set; } = 30;
 	public int FarmingDelayMinutes { get; set; } = 15;
 	public int MaxFarmingHoursPerGame { get; set; } = 10;
 	public bool StopWhenFarmingDone { get; set; }

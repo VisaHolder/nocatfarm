@@ -191,7 +191,7 @@ public static class Commands {
 				"status" or "s" => Status(mgr, rest.FirstOrDefault()),
 				"bots" => Status(mgr, null),
 				"start" => await LifecycleAsync(mgr, rest, "start").ConfigureAwait(false),
-				"stop" => await LifecycleAsync(mgr, rest, "stop").ConfigureAwait(false),
+				"stop" => await LifecycleAsync(mgr, rest, "stop", graceful: true).ConfigureAwait(false),
 				"pause" => await LifecycleAsync(mgr, rest, "pause").ConfigureAwait(false),
 				"resume" => await LifecycleAsync(mgr, rest, "resume").ConfigureAwait(false),
 				"restart" => await RestartAsync(mgr, rest).ConfigureAwait(false),
@@ -272,7 +272,7 @@ public static class Commands {
 
 	private static string About() =>
 		"""
-		nocat.farm 1.0.0 - Steam idler, trading-card farmer and rep4rep commenter.
+		nocat.farm 1.1.0 - Steam idler, trading-card farmer and rep4rep commenter.
 		Everything runs on this PC. Your accounts never leave it; the only thing that talks
 		to rep4rep is the task queue.
 		""";
@@ -446,7 +446,7 @@ public static class Commands {
 		return $"There's no account called '{name}'. You have: {known}";
 	}
 
-	private static async Task<string> LifecycleAsync(BotManager mgr, string[] args, string verb) {
+	private static async Task<string> LifecycleAsync(BotManager mgr, string[] args, string verb, bool graceful = false) {
 		if (args.Length == 0) {
 			return $"{verb} <account|all>";
 		}
@@ -468,6 +468,8 @@ public static class Commands {
 
 		int count = 0;
 
+		List<Task> stops = [];
+
 		foreach (Bot bot in targets.ToArray()) {
 			switch (verb) {
 				case "start":
@@ -479,7 +481,7 @@ public static class Commands {
 
 					break;
 				case "stop":
-					await bot.StopAsync().ConfigureAwait(false);
+					stops.Add(bot.StopAsync(graceful));
 
 					break;
 				case "pause":
@@ -494,6 +496,10 @@ public static class Commands {
 			}
 
 			count++;
+		}
+
+		if (stops.Count > 0) {
+			await Task.WhenAll(stops).ConfigureAwait(false);
 		}
 
 		return all ? $"{verb}: {count} account(s)" : $"{args[0]}: {verb}";
@@ -819,8 +825,12 @@ public static class Commands {
 		TimeSpan how = TimeSpan.FromHours(hours);
 
 		foreach (Bot bot in targets) {
-			bot.StartGrind(appId, how);
-			Log.Info($"grinding {GameNames.Of(appId)} for {Fmt.Hm((int) how.TotalMinutes)} - normal schedule resumes after", bot.Name);
+			// Legit accounts finish up their current game first (a short, jittered beat) rather than snapping over;
+			// non-human accounts start instantly.
+			TimeSpan delay = bot.HumanOwned ? TimeSpan.FromSeconds(Rng.Next(45, 210)) : TimeSpan.Zero;
+			bot.StartGrind(appId, how, delay);
+			string lead = delay > TimeSpan.Zero ? $" (finishing up first, starts in ~{Fmt.Hm((int) Math.Ceiling(delay.TotalMinutes))})" : "";
+			Log.Info($"grinding {GameNames.Of(appId)} for {Fmt.Hm((int) how.TotalMinutes)}{lead} - normal schedule resumes after", bot.Name);
 		}
 
 		return $"{string.Join(", ", targets.Select(static b => b.Name))}: {GameNames.Of(appId)} for {Fmt.Hm((int) how.TotalMinutes)}.";
@@ -1138,6 +1148,33 @@ public static class Commands {
 			}
 		}
 
+		// Fan a per-account action out over every account with one word.
+		if ((who != null) && who.Equals("all", StringComparison.OrdinalIgnoreCase)
+			&& sub is "rest" or "clear" or "pause" or "resume" or "now" or "on" or "off") {
+			int n = 0;
+
+			foreach (Bot b in mgr.All) {
+				Rep4RepModule? mm = BotManager.ModuleOf<Rep4RepModule>(b);
+
+				if (mm == null) {
+					continue;
+				}
+
+				switch (sub) {
+					case "rest": await mm.RestFullDayAsync("manual reset").ConfigureAwait(false); break;
+					case "clear": await mm.ClearHoldAsync().ConfigureAwait(false); break;
+					case "pause": mm.Paused = true; break;
+					case "resume": mm.Paused = false; break;
+					case "now": mm.RunNow(); break;
+					case "on": case "off": b.Cfg.Rep4Rep = sub == "on"; ConfigStore.SaveBot(b.Name, b.Cfg); if (sub == "on") await mm.StartAsync().ConfigureAwait(false); break;
+				}
+
+				n++;
+			}
+
+			return $"rep4rep {sub}: {n} account(s)";
+		}
+
 		if (who == null) {
 			return $"rep4rep {sub} <account>";
 		}
@@ -1189,8 +1226,14 @@ public static class Commands {
 				}
 
 				return $"{target.Name}: hold cleared, refused profiles forgotten";
+			case "rest":
+				if (mod != null) {
+					await mod.RestFullDayAsync("manual reset").ConfigureAwait(false);
+				}
+
+				return $"{target.Name}: rep4rep resting a full day, back at baseline after";
 			default:
-				return "rep4rep status | points | profiles | tasks <account> | on <account> | off <account> | now <account> | pause <account> | resume <account> | clear <account>";
+				return "rep4rep status | points | profiles | tasks <account> | on/off/now/pause/resume/clear/rest <account|all>";
 		}
 	}
 

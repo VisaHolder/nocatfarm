@@ -263,7 +263,7 @@ public sealed class MainWindow : IDisposable {
 
 		// WS_THICKFRAME is what gives the edges a grab handle. The caption is still drawn by hand - this only
 		// adds the sizing border, which Windows keeps outside the client area we paint.
-		_hwnd = CreateWindowEx(0, "nocatFarmWindow", "nocat.farm",
+		_hwnd = CreateWindowEx(WsExToolWindow, "nocatFarmWindow", "nocat.farm",
 			unchecked((int) (WsPopup | WsClipChildren | WsMinimizeBox | WsThickFrame)), x, y, openW, openH,
 			IntPtr.Zero, IntPtr.Zero, GetModuleHandle(null), IntPtr.Zero);
 
@@ -694,7 +694,7 @@ public sealed class MainWindow : IDisposable {
 
 			case 'x':
 				if (bot.IsOnline) {
-					_ = bot.StopAsync();
+					_ = bot.StopAsync(graceful: true);
 				} else {
 					_ = bot.StartAsync();
 				}
@@ -791,7 +791,7 @@ public sealed class MainWindow : IDisposable {
 				break;
 
 			case IdStopAll:
-				_ = _mgr.StopAllAsync();
+				_ = _mgr.StopAllAsync(graceful: true);
 
 				break;
 
@@ -1345,6 +1345,14 @@ public sealed class MainWindow : IDisposable {
 				DeleteObject(font);
 			}
 		}
+
+		foreach (IntPtr icon in new[] { _iconBig, _iconSmall }) {
+			if (icon != IntPtr.Zero) {
+				DestroyIcon(icon);
+			}
+		}
+
+		_iconBig = _iconSmall = IntPtr.Zero;
 	}
 
 	// ── Win32 ───────────────────────────────────────────────────────────────
@@ -1374,6 +1382,11 @@ public sealed class MainWindow : IDisposable {
 	private const uint WsVisible = 0x10000000;
 	private const uint WsClipChildren = 0x02000000;
 	private const uint WsMinimizeBox = 0x00020000;
+
+	// Keeps the window out of the taskbar and Alt-Tab - it's a background process that lives in the tray, only
+	// brought up to set things up. The caption is hand-drawn (WS_POPUP), so the tool-window style costs nothing
+	// visually here; it just removes the taskbar button.
+	private const int WsExToolWindow = 0x00000080;
 	private const int EsAutoHScroll = 0x0080;
 
 	private const int SwHide = 0;
@@ -1457,6 +1470,7 @@ public sealed class MainWindow : IDisposable {
 	[DllImport("user32.dll")] private static extern IntPtr DispatchMessage(ref Msg msg);
 	[DllImport("user32.dll")] private static extern void PostQuitMessage(int code);
 	[DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr hwnd, int cmd);
+	[DllImport("user32.dll", SetLastError = true)] private static extern bool DestroyIcon(IntPtr hIcon);
 	[DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr hwnd);
 	[DllImport("user32.dll")] private static extern IntPtr SetFocus(IntPtr hwnd);
 	[DllImport("user32.dll")] private static extern bool TrackMouseEvent(ref TrackMouseEventArgs args);
