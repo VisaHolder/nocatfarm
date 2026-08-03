@@ -858,7 +858,7 @@ public sealed class WebHost : IAsyncDisposable {
 	}
 
 	/// <summary>Empty means "unchanged"; the explicit sentinel the UI's Clear button sends means "erase it".</summary>
-	private const string ClearSecret = " clear";
+	private const string ClearSecret = "\0clear";
 
 	private static string Keep(string incoming, string existing) =>
 		incoming == ClearSecret ? "" : string.IsNullOrEmpty(incoming) ? existing : incoming;
