@@ -227,6 +227,32 @@ public static class Looting {
 		return problems.Count > 0 ? note + $" (then stopped: {problems[0]})" : note;
 	}
 
+	/// <summary>
+	/// Steam's trade errors are a sentence and a number, and the number is the useful half.
+	///
+	/// "There was an error sending your trade offer. Please try again later. (15)" is not a transient fault to be
+	/// retried, whatever it says - 15 is access denied, and on this endpoint that almost always means the sending
+	/// account has never enabled the mobile authenticator, which Steam requires before an account may send a trade
+	/// offer at all. Passing that through unexplained had people waiting for a problem that never resolves.
+	/// </summary>
+	private static string Explain(string steamError) {
+		string extra = steamError switch {
+			_ when steamError.Contains("(15)", StringComparison.Ordinal) =>
+				"  -  that's Steam's \"access denied\". Usually it means the SENDING account has no Steam Guard Mobile Authenticator: Steam won't let an account send trade offers without one. A trade ban or trade hold on either account does the same thing.",
+			_ when steamError.Contains("(16)", StringComparison.Ordinal) => "  -  Steam timed out. Worth trying again.",
+			_ when steamError.Contains("(26)", StringComparison.Ordinal) =>
+				"  -  one of the items is no longer there. The inventory has changed since it was read; try again.",
+			_ when steamError.Contains("(20)", StringComparison.Ordinal) => "  -  Steam's trading service is down for the moment.",
+			_ when steamError.Contains("(25)", StringComparison.Ordinal) =>
+				"  -  too many offers already open between these accounts, or a Steam limit has been hit.",
+			_ when steamError.Contains("(2)", StringComparison.Ordinal) =>
+				"  -  Steam gave a generic failure. Check neither account is limited, trade banned, or newly password-changed.",
+			_ => ""
+		};
+
+		return steamError + extra;
+	}
+
 	private static async Task<(bool Ok, string Message)> SendOfferAsync(Bot bot, ulong master, IReadOnlyCollection<Item> items, string accessToken, CancellationToken ct) {
 		StringBuilder assets = new();
 
@@ -258,22 +284,18 @@ public static class Looting {
 		};
 
 		Uri referer = new(WebSession.Community, $"/tradeoffer/new/?partner={partnerAccountId}" + (token.Length > 0 ? "&token=" + Uri.EscapeDataString(token) : ""));
-		string? body = await bot.Web.PostAsync(new Uri(WebSession.Community, "/tradeoffer/new/send"), form, referer, ct).ConfigureAwait(false);
+		// Keeps the body on a failure: a refusal is a 500 whose body carries Steam's own explanation.
+		string? body = await bot.Web.PostAllowingFailureAsync(new Uri(WebSession.Community, "/tradeoffer/new/send"), form, referer, ct).ConfigureAwait(false);
 
 		if (string.IsNullOrEmpty(body)) {
-			// Steam answers this endpoint with a 500 and no body for the ordinary case of "you two can't trade",
-			// so a bare "didn't answer" sent people looking for a network fault. By far the most common reason is
-			// that the accounts are not friends and no trade token was given.
-			return (false, accessToken.Trim().Length > 0
-				? "Steam refused the offer. Check the trade token is current, and that neither account is trade-banned or still inside a Steam Guard hold."
-				: "Steam refused the offer. These accounts are probably not friends - paste the token from the receiving account's trade URL into \"Their trade link token\", or add each other as friends first.");
+			return (false, "Steam didn't answer at all - check the connection and try again.");
 		}
 
 		try {
 			using JsonDocument doc = JsonDocument.Parse(body);
 
 			if (doc.RootElement.TryGetProperty("strError", out JsonElement error)) {
-				return (false, error.GetString() ?? "refused");
+				return (false, Explain(error.GetString() ?? "refused"));
 			}
 
 			if (doc.RootElement.TryGetProperty("tradeofferid", out JsonElement id)) {
