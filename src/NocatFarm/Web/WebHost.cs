@@ -1007,7 +1007,7 @@ public sealed class WebHost : IAsyncDisposable {
 		}
 
 		return new {
-			Version = "1.0.0",
+			Version = Build.Version,   // read from the assembly, not typed in - it was stuck at 1.0.0 for two releases
 			BootId = _started.Ticks,   // the browser resets its log buffer when this changes
 			RefreshSeconds = Math.Clamp(_mgr.Global.WebRefreshSeconds, 1, 60),
 			UptimeMinutes = (int) (DateTime.UtcNow - _started).TotalMinutes,
