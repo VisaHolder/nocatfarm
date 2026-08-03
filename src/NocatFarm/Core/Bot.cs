@@ -1694,6 +1694,12 @@ public sealed class Bot : IAsyncDisposable {
 		int previous = Volatile.Read(ref _tradeOffersWaiting);
 		Volatile.Write(ref _tradeOffersWaiting, (int) cb.Waiting);
 
+		// The first one of these is worth a line even when it says none, because "none waiting" and "Steam has
+		// not told us yet" mean opposite things to the trade module and otherwise look identical from outside.
+		if (previous < 0) {
+			Log.Debug($"Steam's trade offer counter says {cb.Waiting} waiting", Name);
+		}
+
 		if ((cb.Waiting == 0) || (cb.Waiting == previous)) {
 			return;
 		}
