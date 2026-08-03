@@ -806,3 +806,12 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 .delta { font-size: 10px; margin-left: 5px; letter-spacing: .02em; }
 .delta.up { color: #6fcf7f; }
 .delta.down { color: #e06c6c; }
+
+/* The tutorial's language picker. Same pill language as the settings choices, wrapped so eleven of them fit. */
+.langpick { display: flex; flex-wrap: wrap; gap: 6px; margin: var(--s3) 0; }
+.langpick .p {
+  padding: 5px 11px; border: 1px solid var(--line); background: var(--panel2);
+  font-size: 12px; cursor: pointer; user-select: none;
+}
+.langpick .p:hover { border-color: var(--muted); }
+.langpick .p.on { border-color: var(--text); color: var(--text); background: var(--panel); }

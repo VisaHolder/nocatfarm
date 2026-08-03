@@ -348,7 +348,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			// Unknown rarity (Steam's global-percent endpoint was unreachable) counts as eligible rather than being
 			// excluded - otherwise a missing fetch would silently stop the account unlocking anything at all.
 			.Where(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a) && ((a.GlobalPercent ?? floor) >= floor)
-				&& (RequiredPriorAchievements(a) <= already))
+				&& (RequiredPriorAchievements(a) <= already)
+				&& !TierBlocked(a, set.All))
 			.ToList();
 
 		if (eligible.Count == 0) {
@@ -451,6 +452,72 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// player, so the caller holds it until the account has at least this many unlocked in the game. We only know
 	/// the COUNT, not which ones, so "N unlocked total" is the safe necessary condition.
 	/// </summary>
+	/// <summary>
+	/// Is this one rung of a ladder whose lower rungs are still locked?
+	///
+	/// Games number their tiers, and the numbering IS the dependency: "Sniper Milestone 3" after 1 and 2, "Level
+	/// 50" after "Level 10", "Chapter 4" after "Chapter 3". Steam publishes no dependency graph at all, so this
+	/// is inferred - achievements whose names are identical once the numbers are stripped are treated as one
+	/// family, and a rung is held until every lower rung in its family is done.
+	///
+	/// Rarity ordering already gets this right most of the time (a later tier is rarer, and the easiest is always
+	/// taken first), but not always: tiers can share a rarity, and a profile showing "Milestone 3" with 1 and 2
+	/// missing is the exact shape of a faked achievement. Belt and braces on the one thing that would give it away.
+	/// </summary>
+	private static bool TierBlocked(Achievement a, IReadOnlyCollection<Achievement> all) {
+		if (!TierOf(a.Display, out string family, out int rung)) {
+			return false;
+		}
+
+		foreach (Achievement other in all) {
+			if (other.Unlocked || (other.Name == a.Name) || !TierOf(other.Display, out string otherFamily, out int otherRung)) {
+				continue;
+			}
+
+			// A lower rung of the same ladder, still locked - so this one is not next.
+			if ((otherRung < rung) && string.Equals(family, otherFamily, StringComparison.OrdinalIgnoreCase)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/// <summary>
+	/// Split "Sniper Milestone 3" into ("sniper milestone", 3). False when there is no number to order by, which
+	/// is most achievements - those are not part of any ladder we can see.
+	/// </summary>
+	private static bool TierOf(string display, out string family, out int rung) {
+		family = "";
+		rung = 0;
+
+		if (string.IsNullOrWhiteSpace(display)) {
+			return false;
+		}
+
+		// The LAST number in the name is the rung: "Half-Life 2 Chapter 3" is chapter three, not half-life two.
+		MatchCollection numbers = Regex.Matches(display, @"\d{1,4}");
+
+		if (numbers.Count == 0) {
+			return false;
+		}
+
+		Match last = numbers[^1];
+
+		if (!int.TryParse(last.Value, out rung)) {
+			return false;
+		}
+
+		// Everything either side of the number, normalised - that is the ladder's identity.
+		family = (display[..last.Index] + display[(last.Index + last.Length)..])
+			.Replace("  ", " ")
+			.Trim()
+			.ToLowerInvariant();
+
+		// A number with no name around it ("100") tells us nothing about what it belongs to.
+		return family.Length >= 3;
+	}
+
 	private static int RequiredPriorAchievements(Achievement a) {
 		string text = $"{a.Display} {a.Description}".ToLowerInvariant();
 

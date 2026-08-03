@@ -10,7 +10,15 @@ public enum SettingKind {
 	Text,
 	Secret,
 	AppIds,
-	Choice
+	Choice,
+
+	/// <summary>
+	/// A choice whose values are TEXT rather than numbers - a language code, say.
+	///
+	/// Separate from <see cref="Choice"/> because that one parses its values as integers and silently drops
+	/// anything that isn't one, so a string-valued list would render with no options at all.
+	/// </summary>
+	Pick
 }
 
 /// <summary>
@@ -88,6 +96,16 @@ public static class Settings {
 			return $"{choice} ({ChoiceLabel(def, choice)})";
 		}
 
+		if ((def.Kind == SettingKind.Pick) && value is string picked) {
+			foreach ((string Value, string Label) option in ParsePicks(def)) {
+				if (option.Value.Equals(picked, StringComparison.OrdinalIgnoreCase)) {
+					return $"{picked} ({option.Label})";
+				}
+			}
+
+			return picked;
+		}
+
 		return value switch {
 			null => "",
 			List<uint> apps => apps.Count == 0 ? "(none)" : string.Join(", ", apps),
@@ -106,6 +124,25 @@ public static class Settings {
 		}
 
 		return value.ToString(CultureInfo.InvariantCulture);
+	}
+
+	/// <summary>The options of a <see cref="SettingKind.Pick"/>, whose values are text.</summary>
+	public static List<(string Value, string Label)> ParsePicks(SettingDef def) {
+		List<(string, string)> options = [];
+
+		if (string.IsNullOrEmpty(def.Choices)) {
+			return options;
+		}
+
+		foreach (string option in def.Choices.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) {
+			int space = option.IndexOf(' ');
+
+			if (space > 0) {
+				options.Add((option[..space], option[(space + 1)..].Trim()));
+			}
+		}
+
+		return options;
 	}
 
 	public static List<(int Value, string Label)> ParseChoices(SettingDef def) {
@@ -188,6 +225,22 @@ public static class Settings {
 				p.SetValue(config, c);
 
 				return null;
+			}
+
+			case SettingKind.Pick: {
+				List<(string Value, string Label)> options = ParsePicks(def);
+
+				// The code or the label - "de" and "Deutsch" should both work from the console.
+				foreach ((string Value, string Label) option in options) {
+					if (option.Value.Equals(raw, StringComparison.OrdinalIgnoreCase)
+						|| option.Label.Equals(raw, StringComparison.OrdinalIgnoreCase)) {
+						p.SetValue(config, option.Value);
+
+						return null;
+					}
+				}
+
+				return $"{def.Label} must be one of: {string.Join(", ", options.Select(static o => o.Value))}";
 			}
 
 			case SettingKind.AppIds: {
@@ -421,6 +474,9 @@ public static class Settings {
 		new("StatusQuietEveryMinutes", "And while it's resting, every", SecLogging, SettingKind.Int,
 			"The same report while an account is asleep, on a break, paused or offline. Slower on purpose - a line every five minutes across an eight-hour night is noise, not information. 0 turns it off.",
 			Min: 0, Max: 1440),
+		new("Language", "Language", SecDashboard, SettingKind.Pick,
+			"What language the dashboard is in. Anything a translation hasn't covered yet falls back to English rather than showing a blank, so a partly translated language is still perfectly usable. The console and the log stay in English.",
+			Choices: "en English | es Español | pt-BR Português (Brasil) | ru Русский | de Deutsch | fr Français | zh-CN 简体中文 | tr Türkçe | pl Polski | ja 日本語 | ko 한국어"),
 		new("MarketCurrency", "Inventory prices in", SecDashboard, SettingKind.Choice,
 			"Which currency inventory values are shown in. Use the same one your Steam store is set to, or the totals will not match what you see on the market. Changing it re-prices everything from scratch.",
 			Choices: "1 US dollar | 20 Canadian dollar | 21 Australian dollar | 2 British pound | 3 Euro | 5 Russian rouble | 7 Brazilian real | 8 Japanese yen | 23 Chinese yuan | 24 Indian rupee"),

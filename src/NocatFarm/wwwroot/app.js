@@ -96,6 +96,41 @@ async function doLogin(e) {
   return false;
 }
 
+// ── language ─────────────────────────────────────────────────────────
+// One JSON file per language under /lang, and English is not one of them: English lives in the markup and in
+// Settings.cs, and every lookup falls back to it. That is what makes a half-finished translation safe to ship -
+// an untranslated string shows the English rather than a key or a blank, so a language can be filled in over
+// time without anything ever looking broken.
+let lang = { ui: {}, settings: {} };
+
+async function loadLanguage(code) {
+  if (!code || code === 'en') { lang = { ui: {}, settings: {} }; return; }
+  try {
+    const res = await fetch(`lang/${encodeURIComponent(code)}.json`, { cache: 'no-cache' });
+    lang = res.ok ? await res.json() : { ui: {}, settings: {} };
+    lang.ui = lang.ui || {};
+    lang.settings = lang.settings || {};
+  } catch { lang = { ui: {}, settings: {} }; }
+}
+
+/// Translate a chrome string. The English text IS the key, so nothing has to be kept in sync by hand.
+const t = (english) => (lang.ui && lang.ui[english]) || english;
+
+/// A setting's translated label / explanation / choice labels, falling back to whatever the schema carries.
+function tSetting(def, field) {
+  const entry = lang.settings && lang.settings[def.Name];
+  const value = entry && entry[field];
+  return value || def[field === 'label' ? 'Label' : field === 'tip' ? 'Tooltip' : 'Choices'];
+}
+
+/// Walk the static markup once and translate anything tagged. data-t on an element translates its text;
+/// data-t-ph translates a placeholder; data-t-tip translates a tooltip.
+function translateChrome(root) {
+  (root || document).querySelectorAll('[data-t]').forEach((el) => { el.textContent = t(el.dataset.t); });
+  (root || document).querySelectorAll('[data-t-ph]').forEach((el) => { el.placeholder = t(el.dataset.tPh); });
+  (root || document).querySelectorAll('[data-t-tip]').forEach((el) => { el.dataset.tip = t(el.dataset.tTip); });
+}
+
 // ── tooltips ─────────────────────────────────────────────────────────
 // One handler for the whole document, so anything with data-tip gets a tooltip without registering anything.
 document.addEventListener('mouseover', (e) => {
@@ -708,6 +743,27 @@ function setTheme(name, save) {
 // and an upgrade that suddenly blocked the dashboard would be the worst possible first impression of a new
 // version. Replayable from the Overview page whenever you want it.
 let tutorialStep = 0;
+
+// Kept here rather than read from the settings schema: the tutorial runs before the schema is needed, and this
+// list is what the picker shows. It must stay in step with the Language setting's choices in Settings.cs.
+const LANGUAGES = [
+  { code: 'en', name: 'English' }, { code: 'es', name: 'Español' }, { code: 'pt-BR', name: 'Português (BR)' },
+  { code: 'ru', name: 'Русский' }, { code: 'de', name: 'Deutsch' }, { code: 'fr', name: 'Français' },
+  { code: 'zh-CN', name: '简体中文' }, { code: 'tr', name: 'Türkçe' }, { code: 'pl', name: 'Polski' },
+  { code: 'ja', name: '日本語' }, { code: 'ko', name: '한국어' },
+];
+
+/// Chosen from the tutorial: saved, loaded and applied at once, so the very next step is already translated.
+async function pickTutorialLanguage(code) {
+  if (config && config.Global) {
+    config.Global.Language = code;
+    await post('/api/config', config.Global).catch(() => {});
+  }
+
+  await loadLanguage(code);
+  translateChrome();
+  renderTutorial();
+}
 let tutorialAsf = null;
 
 function shouldShowTutorial() {
@@ -726,6 +782,18 @@ function renderTutorial() {
   const found = tutorialAsf && tutorialAsf.Found && (tutorialAsf.Accounts || []).length > 0;
 
   const steps = [
+    {
+      // Language first, before a word of the rest is read. Skipping leaves it English, which is also what an
+      // untranslated string falls back to - so there is no way to end up looking at blanks.
+      title: 'Language',
+      body: `<p>Pick the language for this dashboard. You can change it later under Settings &rsaquo; Global.</p>
+        <div class="langpick">${LANGUAGES.map((l) =>
+          `<span class="p ${(config && config.Global && config.Global.Language || 'en') === l.code ? 'on' : ''}"
+            onclick="pickTutorialLanguage('${l.code}')">${esc(l.name)}</span>`).join('')}</div>
+        <p class="muted small">Anything a translation hasn't covered yet stays in English rather than showing a
+        blank, so a part-finished language is still perfectly usable. The console and the log stay in English.</p>`,
+      next: 'Continue',
+    },
     {
       title: 'Welcome to nocat.farm',
       body: `<p>It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts
@@ -1457,16 +1525,20 @@ function pacerTable() {
       ? `<b>${g.Unlocked}</b><span class="muted">/${g.Total}</span>`
       : (g.Unlocked > 0 ? `<b>${g.Unlocked}</b>` : '<span class="muted">—</span>');
 
-    // A floor above 100 means the hours don't justify ANY achievement yet - saying "≥101%" would be nonsense.
+    // The floor is the RAREST it may touch, not what it takes next - it always takes the most common one that
+    // is still locked, so a game with none of the easy ones done gets an easy one, never the 3% tail. Writing it
+    // as "≥3%" read as a promise to unlock a 3% achievement, which is the opposite of what happens.
     const floor = g.FloorPercent > 100
-      ? '<span class="muted">not yet</span>'
-      : `≥${g.FloorPercent}%`;
+      ? '<span class="muted">none yet</span>'
+      : `<span class="muted">down to</span> ${g.FloorPercent}%`;
 
     return `<tr class="${blocked ? 'off' : ''}">
       <td class="g" title="${esc(GAME_NAMES[g.App] || g.Game)}">${esc(GAME_NAMES[g.App] || g.Game)}</td>
       <td class="n">${hrs}</td>
       <td class="n">${earned}</td>
-      <td class="bar" data-tip="${g.Total > 0 ? done + '% of this game earned. It stops at ' + (g.CeilingPercent > 0 ? g.CeilingPercent + '%' : 'this game&apos;s own ceiling') + '.' : 'Nothing read from this game yet.'}"><span style="width:${Math.max(0, Math.min(100, done))}%"></span></td>
+      ${g.Total > 0
+        ? `<td class="bar" data-tip="${done}% of this game earned. It stops at ${g.CeilingPercent > 0 ? g.CeilingPercent + '%' : "this game's own ceiling"}."><span style="width:${Math.max(0, Math.min(100, done))}%"></span></td>`
+        : `<td class="w muted" data-tip="This game's achievements haven't been read yet - that happens the first time it comes up for one.">not read yet</td>`}
       <td class="n">${floor}</td>
       <td class="w">${blocked ? esc(g.Why) : soon ? 'due now' : '~' + next.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</td>
     </tr>`;
@@ -1478,7 +1550,7 @@ function pacerTable() {
       <th data-tip="Hours this account has spent in this game. This is what decides how much it is allowed to earn.">Played</th>
       <th data-tip="Achievements earned out of what the game has.">Earned</th>
       <th data-tip="How much of the game is done. The bar never fills - it stops at this game's ceiling, because 100% on an idled account is the giveaway.">Progress</th>
-      <th data-tip="The rarest achievement the hours so far have opened up. It starts at the common ones and works down as the playtime builds, which is the order a real player earns them in.">Rarity</th>
+      <th data-tip="How far down the rarity list the hours so far have opened. It always unlocks the MOST COMMON one still locked - the ones you get just by playing - and only works down toward the rare tail as the hours build. This figure is the limit, never the next pick: a game with none of the easy ones done gets an easy one.">Opened</th>
       <th data-tip="Roughly when the next one is due, or why this game is left alone. It is a pace, not a promise.">Next</th>
     </tr>
     ${rows}
@@ -1966,8 +2038,17 @@ function fieldHtml(def, values, defaults) {
       </div>`;
       break;
     }
+    case 'Pick': {
+      const opts = (tSetting(def, 'choices') || '').split('|').map((o) => o.trim()).filter(Boolean).map((o) => {
+        const gap = o.indexOf(' ');
+        return { value: o.slice(0, gap), label: o.slice(gap + 1).trim() };
+      });
+      ctl = `<select id="${id}" data-setting="${def.Name}" onchange="editAndRender('${def.Name}',this.value)">${opts.map((o) =>
+        `<option value="${esc(o.value)}" ${cur === o.value ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`;
+      break;
+    }
     case 'Choice': {
-      const opts = parseChoices(def.Choices);
+      const opts = parseChoices(tSetting(def, 'choices'));
       ctl = opts.length <= 6
         ? `<div class="pills" data-setting="${def.Name}">${opts.map((o) =>
             `<span class="p ${Number(cur) === o.value ? 'on' : ''}" onclick="editAndRender('${def.Name}',${o.value})">${esc(o.label)}</span>`).join('')}</div>`
@@ -1995,7 +2076,7 @@ function fieldHtml(def, values, defaults) {
   const defText = Array.isArray(def0) ? (def0.length ? def0.join(', ') : 'none') : (def.Kind === 'Secret' ? '' : String(def0));
 
   return `<div class="field ${changed ? 'changed' : ''}">
-    <label for="${id}">${esc(def.Label)}${tipIcon(def.Tooltip)}</label>
+    <label for="${id}">${esc(tSetting(def, 'label'))}${tipIcon(tSetting(def, 'tip'))}</label>
     <div class="ctl">${ctl}</div>
     <div class="meta">
       ${def.NeedsRestart ? `<span class="restart" data-tip="This takes effect the next time nocat.farm starts.">⟳</span>` : ''}
@@ -2193,6 +2274,11 @@ async function boot() {
   if (config && config.Global && config.Global.Theme) {
     setTheme(config.Global.Theme, false);
   }
+
+  // Language, once config exists, and before the first render so nothing flashes English and then changes.
+  await loadLanguage(config && config.Global ? config.Global.Language : 'en');
+  translateChrome();
+
   go(view);
   await refresh();   // arms the single polling timer
 

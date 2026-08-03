@@ -26,6 +26,12 @@ public sealed class GlobalConfig {
 	public string Theme { get; set; } = "dark";
 
 	/// <summary>
+	/// The dashboard's language, as a file under wwwroot/lang. English is the default and the fallback: anything a
+	/// translation hasn't covered falls back to the English string rather than showing a key.
+	/// </summary>
+	public string Language { get; set; } = "en";
+
+	/// <summary>
 	/// Whether the getting-started walkthrough has been seen.
 	///
 	/// Set by the dashboard, not by hand, so it has no entry in Settings.cs - the same treatment AccountOrder
