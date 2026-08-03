@@ -243,8 +243,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 			// Mid-burst is the exception: a burst is several achievements from one moment of play, so they are
 			// only a couple of wall-clock minutes apart and share the same played-time.
-			// A deliberate grind skips the slow played-time gate - you told it to sit on this game, so it
-			// works through the achievements briskly instead of making you wait hours between each.
+			// The played-time gate applies to a grind too: it earns at the account's own Achievement pace, just
+			// working through the whole game rather than a slice of it - never a rapid-fire burst. (A mid-burst,
+			// BurstLeft > 0, is the only thing that bypasses the gate, and only for a couple of clustered unlocks.)
 			if ((g.BurstLeft <= 0) && ((g.PlayedMins - g.MinsAtLastUnlock) < playedGate)) {
 				return false;
 			}

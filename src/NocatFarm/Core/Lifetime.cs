@@ -52,12 +52,18 @@ public static class Lifetime {
 
 		Load();
 
+		bool due;
+
 		lock (Gate) {
 			Minutes[bot] = Minutes.GetValueOrDefault(bot) + minutes;
+			due = DateTime.UtcNow - _lastSave > TimeSpan.FromMinutes(5);
+
+			if (due) {
+				_lastSave = DateTime.UtcNow;
+			}
 		}
 
-		if (DateTime.UtcNow - _lastSave > TimeSpan.FromMinutes(5)) {
-			_lastSave = DateTime.UtcNow;
+		if (due) {
 			Save();
 		}
 	}

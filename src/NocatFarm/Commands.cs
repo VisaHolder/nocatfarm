@@ -271,8 +271,8 @@ public static class Commands {
 	}
 
 	private static string About() =>
-		"""
-		nocat.farm 1.1.1 - Steam idler, trading-card farmer and rep4rep commenter.
+		$"""
+		nocat.farm {Build.Version} - Steam idler, trading-card farmer and rep4rep commenter.
 		Everything runs on this PC. Your accounts never leave it; the only thing that talks
 		to rep4rep is the task queue.
 		""";

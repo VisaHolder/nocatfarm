@@ -11,13 +11,13 @@ namespace NocatFarm;
 /// </summary>
 public static class AtomicFile {
 	public static void Write(string path, string content) {
-		string tmp = path + ".tmp";
+		string tmp = $"{path}.{Guid.NewGuid():N}.tmp";
 		File.WriteAllText(tmp, content);
 		File.Move(tmp, path, overwrite: true);
 	}
 
 	public static async Task WriteAsync(string path, string content) {
-		string tmp = path + ".tmp";
+		string tmp = $"{path}.{Guid.NewGuid():N}.tmp";
 		await File.WriteAllTextAsync(tmp, content).ConfigureAwait(false);
 		File.Move(tmp, path, overwrite: true);
 	}

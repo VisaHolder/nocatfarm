@@ -222,6 +222,15 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			return NoTaskRetryMinutes * 60;
 		}
 
+		// Final cap check the instant before posting: the count above was taken before the window/gap/session and
+		// task-fetch steps, and a dashboard "post now" could have spent a slot since. This is the one number that
+		// gets an account comment-banned, so it's re-checked here too.
+		if (_state.PostsInLast24h() >= Cap) {
+			_status = $"{Cap}/{Cap} today - done";
+
+			return 20 * 60;
+		}
+
 		_status = $"commenting on {task.TargetName}";
 		(Outcome outcome, string? error) = await PostCommentAsync(task, ct).ConfigureAwait(false);
 
@@ -495,8 +504,10 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		// be reached at a lower count than expected when comments were posted outside nocat.farm (by hand, or
 		// before a reset), which Steam counts but this app never saw. Treating it as a dud profile (the old
 		// fall-through) just burned three targets and mislabelled it.
+		// Both phrases appear together in Steam's real non-friend daily-limit text ("exceeded the maximum number
+		// of comments ... not on your friends list"). Matching "not friends" ALONE would also catch an ordinary
+		// friends-only privacy refusal and wrongly rest the whole account for a day, so it isn't used on its own.
 		if (e.Contains("maximum number of comments", StringComparison.Ordinal)
-			|| (e.Contains("not on your friends", StringComparison.Ordinal) || e.Contains("not friends", StringComparison.Ordinal))
 			|| (e.Contains("exceeded", StringComparison.Ordinal) && e.Contains("comment", StringComparison.Ordinal))) {
 			return Outcome.DailyLimit;
 		}

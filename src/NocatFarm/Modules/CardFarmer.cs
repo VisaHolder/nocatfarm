@@ -444,6 +444,12 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				return;
 			}
 
+			if (Bot.Grinding) {
+				Bot.StopPlaying();   // a grind outranks the wind-down - hand the session over
+
+				return;
+			}
+
 			Claim();
 			Bot.SetPlaying([game.AppId], Bot.Cfg.PlayWhileFarming ? null : "");
 			int left = (int) Math.Ceiling((until - DateTime.UtcNow).TotalMinutes);

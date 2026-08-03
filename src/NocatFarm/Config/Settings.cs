@@ -645,7 +645,7 @@ public static class Settings {
 			"A hard ceiling on how much of any one game gets completed, as a percentage. 0 leaves each game to its own tuned ceiling, which is usually the better answer - a 3-hour puzzle game and a 500-hour grind should not stop at the same figure. 100%% completion on an idled account is itself the giveaway, so this never goes above 95.",
 			Min: 0, Max: 95),
 		new("AchievementNeverGames", "Never in these games", SecAchievements, SettingKind.AppIds,
-			"Games to leave completely alone. Counter-Strike 2 is always on this list whether you put it there or not - writing achievements into a VAC-protected competitive game is not a risk worth taking. In human mode the account's headline game is skipped as well."),
+			"Games to leave completely alone - no achievements are ever written for anything listed here. In human mode the account's headline game is skipped as well. (Note: some games, like Counter-Strike 2, keep their achievements server-side, so they can't be unlocked by anything regardless.)"),
 		new("AchievementGames", "Only these games", SecAchievements, SettingKind.AppIds,
 			"Restrict it to these appIDs. Leave it empty for whatever the account happens to be playing.",
 			Advanced: true),

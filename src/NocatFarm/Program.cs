@@ -268,6 +268,7 @@ if (web != null) {
 }
 
 await manager.DisposeAsync().ConfigureAwait(false);
+BotManager.Flush();   // persist the last few minutes of lifetime totals a clean exit would otherwise drop
 await Task.WhenAny(console, Task.Delay(1000)).ConfigureAwait(false);
 
 return 0;
@@ -282,7 +283,7 @@ void Banner() {
 
 		if (box) {
 			const string Tagline = "Steam idling · trading cards · rep4rep";
-			const string Title = "nocatFarm  1.0.0";
+			string Title = $"nocatFarm  {Build.Version}";
 			int inner = Math.Max(Title.Length, Tagline.Length) + 4;   // 2 spaces of padding each side
 
 			// Padding is computed, never hand-counted: a hand-counted box drifts the moment the text changes.
@@ -295,7 +296,7 @@ void Banner() {
 			Console.ForegroundColor = ConsoleColor.Cyan;
 			Console.Write("farm");
 			Console.ForegroundColor = ConsoleColor.DarkGray;
-			Console.Write("  1.0.0");
+			Console.Write($"  {Build.Version}");
 			Console.ForegroundColor = ConsoleColor.DarkCyan;
 			Console.WriteLine(new string(' ', inner - Title.Length - 2) + "│");
 
@@ -308,7 +309,7 @@ void Banner() {
 			Console.WriteLine("  ╰" + new string('─', inner) + "╯");
 		} else {
 			Console.ForegroundColor = ConsoleColor.Cyan;
-			Console.WriteLine("  nocatFarm 1.0.0");
+			Console.WriteLine($"  nocatFarm {Build.Version}");
 			Console.ForegroundColor = ConsoleColor.DarkGray;
 			Console.WriteLine("  Steam idling, trading cards and rep4rep");
 		}
