@@ -92,16 +92,20 @@
    "tip": "Bir hesabın gerçekten sana ihtiyacı olduğunda bildirir: Steam Guard kodu, başarısız giriş ya da yorum yasağı."
   },
   "Rep4RepEnabled": {
-   "label": "rep4rep kullan"
+   "label": "rep4rep'i hiç kullan(ma)",
+   "tip": "rep4rep, kullanıcılarının birbirine profil yorumu bıraktığı üçüncü taraf bir site. Tamamen isteğe bağlı. Kapatırsan nocat.farm her hesapta rep4rep'e dair her şeyi durdurur ve özelliğin tamamı kaybolur - sekmesi, puanları, hesap başına seçenekleri ve bu ayarlar sen yeniden açana kadar görünmez."
   },
   "Rep4RepApiToken": {
-   "label": "API anahtarı"
+   "label": "API anahtarı",
+   "tip": "rep4rep API anahtarın. Kaç Steam hesabı çalıştırırsan çalıştır, tek anahtar tüm rep4rep hesabını kapsar - rep4rep.com'da Settings altından al. Hesabın yok mu? rep4rep.com/?r=reap"
   },
   "Rep4RepAutoAddProfiles": {
-   "label": "Hesapları otomatik kaydet"
+   "label": "Hesapları otomatik kaydet",
+   "tip": "Her Steam hesabını ilk girişinde rep4rep'e kaydeder, böylece siteden elle eklemen gerekmez."
   },
   "LoginStaggerSeconds": {
-   "label": "Girişler arası bekleme"
+   "label": "Girişler arası boşluk",
+   "tip": "Başlangıçta bir hesabı giriş yaptırdıktan sonra bir sonrakine kadar geçen saniye. Steam IP adresine göre sınırlar, bu yüzden birkaç hesabın sınıra takılmasını önleyen tam da bu boşluktur."
   },
   "StatusEveryMinutes": {
    "label": "Şu sıklıkta rapor ver",
@@ -304,19 +308,24 @@
    "tip": "rep4rep'in bu hesaba verdiği yorumları insan temposunda gönderir."
   },
   "Rep4RepDailyCap": {
-   "label": "24 saatte en fazla"
+   "label": "24 saatte en fazla",
+   "tip": "Bu hesabın 24 saat içinde yazacağı en fazla yorum sayısı. Steam'in arkadaşın olmayan kişiler için gerçek tavanı yaklaşık 10'dur ve bunu aşmak tam da bir hesaba yorum yasağı getiren şeydir."
   },
   "Rep4RepGapMinMinutes": {
-   "label": "En kısa aralık"
+   "label": "En kısa boşluk",
+   "tip": "Bu hesaptan iki yorumu asla bu dakikadan daha yakın aralıkla yazmaz."
   },
   "Rep4RepGapMaxMinutes": {
-   "label": "En uzun aralık"
+   "label": "En uzun boşluk",
+   "tip": "Yorumlar arasındaki en uzun boşluk, dakika. Gerçeği ikisi arasında rastgele seçilir, böylece zamanlama asla mekanik görünmez."
   },
   "Rep4RepStartHour": {
-   "label": "Yalnızca şu saatten sonra gönder"
+   "label": "Yalnızca şu saatten sonra yaz",
+   "tip": "Bu hesabın yorum yapacağı günün en erken saati, 0-23. Sabahın dördünde gelen yorumlar, olabilecek en bariz bot işaretidir."
   },
   "Rep4RepEndHour": {
-   "label": "Şu saate kadar"
+   "label": "Şu saate kadar",
+   "tip": "Bu hesabın yorum yapacağı günün en geç saati, 1-24. Başlangıç saatiyle aynı yaparsan gün boyu yorum yapılabilir."
   },
   "AcceptFriendRequests": {
    "label": "Arkadaşlık isteklerini kabul et",
@@ -355,20 +364,24 @@
    "tip": "Karşılığında hiçbir şey istemeyen teklifleri kabul eder. Sana hiçbir şeye mal olamazlar, dolayısıyla doğaları gereği güvenlidirler."
   },
   "AcceptFromMasters": {
-   "label": "Kendi hesaplarından her şeyi kabul et"
+   "label": "Kendi hesaplarından geleni koşulsuz kabul et",
+   "tip": "Aşağıda listelenen SteamID64'lerden gelen her teklifi kabul eder - eşya götürenler dahil. Boşta çalışan hesaplarındaki kartları tek hesapta toplamanı sağlayan şey budur ve tam bu yüzden listede yalnızca sana ait hesaplar olmalıdır."
   },
   "TradeMasters": {
    "label": "Kendi hesapların",
    "tip": "Kendi hesaplarının SteamID'leri. \"send\" eşyaları oraya gönderir ve oradan gelen teklifler sorgusuz kabul edilir."
   },
   "DeclineOtherTrades": {
-   "label": "Diğer her şeyi reddet"
+   "label": "Diğer her şeyi reddet",
+   "tip": "Diğer tüm teklifleri öylece bırakmak yerine etkin biçimde reddeder. Kapatırsan kabul edilmeyen her şey, sen bakasın diye olduğu gibi kalır."
   },
   "TradeDelayMinMinutes": {
-   "label": "En az bekle"
+   "label": "En az bekle",
+   "tip": "Bir teklife karşılık vermeden önceki en kısa bekleme, dakika. Teklif geldikten iki saniye sonra kabul etmek, bir insanın yapacağı şey değildir."
   },
   "TradeDelayMaxMinutes": {
-   "label": "Ve en fazla"
+   "label": "Ve en fazla",
+   "tip": "Bir teklife karşılık vermeden önceki en uzun bekleme, dakika. Gerçeği ikisi arasında rastgele seçilir."
   },
   "PauseWhenYouPlay": {
    "label": "Sen oynarken çekil",
@@ -379,16 +392,20 @@
    "tip": "Sen oynamayı bıraktıktan sonra, bu hesabın kaldığı yerden sessizce devam etmesi için beklenecek süre, dakika."
   },
   "AchievementBoost": {
-   "tip": "Her oturumu elle başlatmana gerek kalmadan birkaç oyunda kendi başına başarım avlar. Varsayılan olarak kapalı. \"Tüm tek oyunculu\" kütüphanenden seçer: yalnızca gerçek oyunlar (asla DLC veya demo), başarımı olan ve yeterince değerlendirmesi bulunanlar."
+   "tip": "Her oturumu elle başlatmana gerek kalmadan birkaç oyunda kendi başına başarım avlar. Varsayılan olarak kapalı. \"Tüm tek oyunculu\" kütüphanenden seçer: yalnızca gerçek oyunlar (asla DLC veya demo), başarımı olan ve yeterince değerlendirmesi bulunanlar.",
+   "label": "Başarım hızlandırma"
   },
   "SkipRefundableGames": {
-   "tip": "Yeni alınmış bir oyuna, parasını geri alamayacak duruma gelene kadar dokunmaz: Steam iki saat oynanmışsa reddeder ve iki saat tek bir oturumdur. Sadece kart toplamada değil, her yerde geçerli. Ücretsiz oyunlar hiçbir zaman bekletilmez."
+   "tip": "Yeni alınmış bir oyuna, parasını geri alamayacak duruma gelene kadar dokunmaz: Steam iki saat oynanmışsa reddeder ve iki saat tek bir oturumdur. Sadece kart toplamada değil, her yerde geçerli. Ücretsiz oyunlar hiçbir zaman bekletilmez.",
+   "label": "İade edilebilir oyunları koru"
   },
   "ShowInventoryValue": {
-   "tip": "Bu hesabın envanterinin pazarın medyan fiyatıyla ne ettiğini hesaplar. KENDİ envanterini okur, dolayısıyla gizli profil fark etmez."
+   "tip": "Bu hesabın envanterinin pazarın medyan fiyatıyla ne ettiğini hesaplar. KENDİ envanterini okur, dolayısıyla gizli profil fark etmez.",
+   "label": "Envanterinin ne ettiğini hesapla"
   },
   "CheckForUpdates": {
-   "tip": "Günde bir kez daha yeni bir sürüm var mı diye bakar ve günlükte söyler. Yalnızca söyler: hiçbir şeyi indirmez, değiştirmez, yeniden başlatmaz."
+   "tip": "Günde bir kez daha yeni bir sürüm var mı diye bakar ve günlükte söyler. Yalnızca söyler: hiçbir şeyi indirmez, değiştirmez, yeniden başlatmaz.",
+   "label": "Güncelleme varsa haber ver"
   },
   "BreakMinMinutes": {
    "label": "En kısa mola",
@@ -597,6 +614,70 @@
   "LogRetentionDays": {
    "label": "Günlükleri şu kadar sakla",
    "tip": "Bu kadar günden eski günlük dosyalarını siler. 0 sonsuza dek saklar."
+  },
+  "Rep4RepPointsRefreshMinutes": {
+   "label": "Puanları şu sıklıkta kontrol et",
+   "tip": "rep4rep'e puan toplamını kaç dakikada bir soracağı. rep4rep herhangi bir istek sınırı yayımlamıyor, o yüzden 1 yapıp bir ay boyunca açık bırakma."
+  },
+  "ReconnectDelaySeconds": {
+   "label": "Şu süre sonra yeniden bağlan",
+   "tip": "Steam bağlantıyı düşürdükten sonra yeniden bağlanmadan önce beklenecek saniye."
+  },
+  "ConnectionTimeoutSeconds": {
+   "label": "Bağlantı zaman aşımı",
+   "tip": "Vazgeçip yeniden bağlanmadan önce Steam'in yanıtı için beklenecek saniye."
+  },
+  "MaxConcurrentFarming": {
+   "label": "En fazla şu kadar topla",
+   "tip": "Aynı anda kaç hesabın kart toplayabileceği. 0 sınırsız demektir."
+  },
+  "LoginCooldownMinutes": {
+   "label": "Hız sınırı bekleme süresi",
+   "tip": "Steam bir girişi sınırladığında bütün hesaplar bu kadar dakika bekler - sırayla engellenmek için kuyruğa girmek yerine hep birlikte atlatırlar."
+  },
+  "WebRequestGapMs": {
+   "label": "Web istekleri arası boşluk",
+   "tip": "Aynı Steam sitesine iki istek arasındaki en küçük boşluk, milisaniye. Rozet okumayı Steam'in radarının altında tutan en büyük etken budur - hız sınırı uyarıları görürsen artır, asla 200'ün altına inme."
+  },
+  "SteamProtocol": {
+   "label": "Şununla bağlan",
+   "tip": "Steam'e nasıl ulaşılacağı. Bir güvenlik duvarı ya da servis sağlayıcın bir şeyi engellemiyorsa otomatikte bırak - yalnızca-websocket sıradan HTTPS trafiği gibi görünür ve genelde geçer."
+  },
+  "WebProxy": {
+   "label": "Vekil sunucu",
+   "tip": "Steam trafiğini bu vekil sunucudan geçirir, örneğin http://127.0.0.1:8080. Doğrudan bağlanmak için boş bırak."
+  },
+  "WebProxyUsername": {
+   "label": "Vekil sunucu kullanıcı adı",
+   "tip": "Yukarıdaki vekil sunucu istiyorsa kullanıcı adı."
+  },
+  "WebProxyPassword": {
+   "label": "Vekil sunucu parolası",
+   "tip": "Yukarıdaki vekil sunucu istiyorsa parola."
+  },
+  "GlobalBlacklistedGames": {
+   "label": "Bunlara asla dokunma (tüm hesaplar)",
+   "tip": "Hiçbir hesabın toplamayacağı ya da boşta çalıştırmayacağı AppID'ler; böylece eklediğin her hesapta aynı listeyi tekrarlamazsın. Her hesap yine de üstüne kendi listesini ekleyebilir."
+  },
+  "Rep4RepLearnCap": {
+   "label": "Gerçek sınırı öğren",
+   "tip": "Steam, yukarıda ayarlanan üst sınırın ÖTESİNDE bir yorumu reddederse o sayıyı bu hesabın gerçek tavanı olarak hatırla. Sıradan bir \"çok sık yorum yapıyorsun\" reddi yüzünden sınırı asla düşürmez - o mesaj iki yorum arasındaki boşlukla ilgilidir ve normalde 10 olan günlük sınır hakkında hiçbir şey söylemez."
+  },
+  "Rep4RepRetryRefused": {
+   "label": "Reddedilen yorumu yeniden dene",
+   "tip": "Reddedilen bir yoruma, o profili bir günlüğüne rafa kaldırmadan önce bir şans daha verir."
+  },
+  "SendOnFarmingFinished": {
+   "label": "Toplama bitince eşyaları gönder",
+   "tip": "Toplanacak kart kalmadığında, bu hesabın topladıklarını yukarıda listelenen ilk hesaba gönderir. Birden fazla boşta hesap çalıştırmanın bütün amacı budur: kartlar altı ayrı envanter yerine tek bir envanterde toplanır."
+  },
+  "SendItemTypes": {
+   "label": "Ne gönderilecek",
+   "tip": "Bu hesaptan çıkmasına izin verilen eşya türleri, virgülle ayrılmış: cards, foils, backgrounds, emoticons, boosters, gems - ya da \"all\". Burada yazmayan hiçbir şey, başka ne ayarlanmış olursa olsun asla gönderilmez."
+  },
+  "TradeMasterToken": {
+   "label": "Onun takas bağlantısı anahtarı",
+   "tip": "Diğer hesabın takas bağlantısındaki anahtar (&token= sonrasındaki kısım). Yalnızca iki hesap arkadaş değilse gerekir - arkadaşsanız boş bırakabilirsin."
   }
  }
 }

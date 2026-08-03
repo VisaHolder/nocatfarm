@@ -92,16 +92,20 @@
    "tip": "Avisa quando uma conta realmente precisa de você: um código Steam Guard, um login que falhou ou um banimento de comentários."
   },
   "Rep4RepEnabled": {
-   "label": "Usar o rep4rep"
+   "label": "Usar rep4rep, sim ou não",
+   "tip": "O rep4rep é um site de terceiros que troca comentários de perfil entre seus usuários. É totalmente opcional. Desligue e o nocat.farm para tudo o que envolve rep4rep em todas as contas, e o recurso inteiro some: a aba, os pontos, as opções por conta e estas configurações vão embora até você religar."
   },
   "Rep4RepApiToken": {
-   "label": "Token da API"
+   "label": "Token da API",
+   "tip": "Seu token de API do rep4rep. Um token cobre sua conta rep4rep inteira, não importa quantas contas Steam você rode - pegue em rep4rep.com, em Settings. Ainda sem conta? rep4rep.com/?r=reap"
   },
   "Rep4RepAutoAddProfiles": {
-   "label": "Registrar contas automaticamente"
+   "label": "Registrar as contas automaticamente",
+   "tip": "Registra cada conta Steam no rep4rep no primeiro login, para você não ter que adicioná-las na mão pelo site."
   },
   "LoginStaggerSeconds": {
-   "label": "Intervalo entre logins"
+   "label": "Intervalo entre logins",
+   "tip": "Segundos entre entrar em uma conta e na próxima ao iniciar. A Steam limita por endereço IP, então esse intervalo é o que impede várias contas de estourarem o limite."
   },
   "StatusEveryMinutes": {
    "label": "Reportar a cada",
@@ -304,19 +308,24 @@
    "tip": "Publica os comentários que o rep4rep atribui a esta conta, num ritmo humano."
   },
   "Rep4RepDailyCap": {
-   "label": "Máximo a cada 24 horas"
+   "label": "Máximo por 24 horas",
+   "tip": "Máximo de comentários que esta conta vai postar em 24 horas. O teto real da Steam para gente que não é sua amiga é por volta de 10 - passar disso é o que faz uma conta levar banimento de comentários."
   },
   "Rep4RepGapMinMinutes": {
-   "label": "Intervalo mínimo"
+   "label": "Intervalo mínimo",
+   "tip": "Nunca publica dois comentários desta conta com menos que estes minutos entre eles."
   },
   "Rep4RepGapMaxMinutes": {
-   "label": "Intervalo máximo"
+   "label": "Intervalo máximo",
+   "tip": "Maior intervalo entre comentários, em minutos. O real é sorteado entre os dois, então o ritmo nunca parece mecânico."
   },
   "Rep4RepStartHour": {
-   "label": "Publicar só a partir das"
+   "label": "Só postar a partir das",
+   "tip": "Hora mais cedo do dia em que esta conta vai comentar, de 0 a 23. Comentários chegando às 4 da manhã é o sinal de bot mais óbvio que existe."
   },
   "Rep4RepEndHour": {
-   "label": "Até"
+   "label": "Até",
+   "tip": "Hora mais tarde do dia em que esta conta vai comentar, de 1 a 24. Deixe igual à hora inicial para permitir comentar a qualquer hora."
   },
   "AcceptFriendRequests": {
    "label": "Aceitar pedidos de amizade",
@@ -355,20 +364,24 @@
    "tip": "Aceita ofertas que não pedem nada em troca. Não podem custar nada, então são seguras por natureza."
   },
   "AcceptFromMasters": {
-   "label": "Aceitar tudo das suas próprias contas"
+   "label": "Aceitar qualquer coisa das suas próprias contas",
+   "tip": "Aceita qualquer oferta dos SteamID64 listados abaixo, inclusive as que levam itens. É isso que permite varrer as cartas dos seus idlers para uma conta só - e exatamente por isso a lista só pode conter contas suas."
   },
   "TradeMasters": {
    "label": "Suas próprias contas",
    "tip": "Os SteamID das suas próprias contas. É para lá que o \"send\" manda os itens, e de lá que as ofertas são aceitas sem perguntar."
   },
   "DeclineOtherTrades": {
-   "label": "Recusar todo o resto"
+   "label": "Recusar todo o resto",
+   "tip": "Recusa ativamente qualquer outra oferta em vez de deixá-la parada. Desligue e tudo o que não for aceito fica intocado para você mesmo olhar."
   },
   "TradeDelayMinMinutes": {
-   "label": "Esperar pelo menos"
+   "label": "Esperar pelo menos",
+   "tip": "Espera mínima antes de agir sobre uma oferta, em minutos. Aceitar dois segundos depois de ela chegar não é coisa que gente faça."
   },
   "TradeDelayMaxMinutes": {
-   "label": "E no máximo"
+   "label": "E no máximo",
+   "tip": "Espera máxima antes de agir sobre uma oferta, em minutos. A real é sorteada entre as duas."
   },
   "PauseWhenYouPlay": {
    "label": "Sair da frente quando você jogar",
@@ -379,16 +392,20 @@
    "tip": "Quanto espera depois de você parar de jogar antes desta conta retomar discretamente o que estava fazendo, em minutos."
   },
   "AchievementBoost": {
-   "tip": "Caça conquistas sozinho em vários jogos, sem você iniciar cada sessão na mão. Desligado por padrão. \"Todos os single-player\" escolhe da sua biblioteca: só jogos de verdade (nunca DLC ou demos), com conquistas e com avaliações suficientes."
+   "tip": "Caça conquistas sozinho em vários jogos, sem você iniciar cada sessão na mão. Desligado por padrão. \"Todos os single-player\" escolhe da sua biblioteca: só jogos de verdade (nunca DLC ou demos), com conquistas e com avaliações suficientes.",
+   "label": "Impulso de conquistas"
   },
   "SkipRefundableGames": {
-   "tip": "Deixa um jogo recém-comprado em paz até você não poder mais pedir reembolso: a Steam recusa assim que ele tem duas horas jogadas, e duas horas é uma única sessão. Vale para tudo, não só para cartas. Jogos grátis nunca são retidos."
+   "tip": "Deixa um jogo recém-comprado em paz até você não poder mais pedir reembolso: a Steam recusa assim que ele tem duas horas jogadas, e duas horas é uma única sessão. Vale para tudo, não só para cartas. Jogos grátis nunca são retidos.",
+   "label": "Proteger jogos reembolsáveis"
   },
   "ShowInventoryValue": {
-   "tip": "Calcula quanto vale o inventário desta conta pelo preço mediano do mercado. Ele lê o PRÓPRIO inventário, então um perfil privado não faz diferença."
+   "tip": "Calcula quanto vale o inventário desta conta pelo preço mediano do mercado. Ele lê o PRÓPRIO inventário, então um perfil privado não faz diferença.",
+   "label": "Calcular quanto vale o inventário dela"
   },
   "CheckForUpdates": {
-   "tip": "Procura uma versão mais nova uma vez por dia e avisa no log. Só avisa: nunca baixa, substitui nem reinicia nada."
+   "tip": "Procura uma versão mais nova uma vez por dia e avisa no log. Só avisa: nunca baixa, substitui nem reinicia nada.",
+   "label": "Avisar se houver atualização"
   },
   "BreakMinMinutes": {
    "label": "Pausa mais curta",
@@ -597,6 +614,70 @@
   "LogRetentionDays": {
    "label": "Guardar os logs por",
    "tip": "Apaga arquivos de log mais antigos que esta quantidade de dias. 0 guarda para sempre."
+  },
+  "Rep4RepPointsRefreshMinutes": {
+   "label": "Checar os pontos a cada",
+   "tip": "De quantos em quantos minutos perguntar ao rep4rep o seu total de pontos. O rep4rep não publica limite de requisições, então não coloque 1 e deixe rodando por um mês."
+  },
+  "ReconnectDelaySeconds": {
+   "label": "Reconectar após",
+   "tip": "Quanto esperar antes de reconectar depois que a Steam derruba a conexão, em segundos."
+  },
+  "ConnectionTimeoutSeconds": {
+   "label": "Tempo limite de conexão",
+   "tip": "Quanto esperar a Steam responder antes de desistir e reconectar, em segundos."
+  },
+  "MaxConcurrentFarming": {
+   "label": "Farmar no máximo",
+   "tip": "Quantas contas podem farmar cartas ao mesmo tempo. 0 significa sem limite."
+  },
+  "LoginCooldownMinutes": {
+   "label": "Espera por limite de taxa",
+   "tip": "Quando a Steam limita um login, todas as contas esperam estes minutos - elas aguentam juntas em vez de ficarem na fila para serem bloqueadas uma a uma."
+  },
+  "WebRequestGapMs": {
+   "label": "Intervalo entre requisições web",
+   "tip": "Menor intervalo entre duas requisições ao mesmo site da Steam, em milissegundos. É a maior coisa mantendo a leitura de emblemas fora do radar da Steam - aumente se aparecerem avisos de limite e nunca desça abaixo de 200."
+  },
+  "SteamProtocol": {
+   "label": "Conectar usando",
+   "tip": "Como alcançar a Steam. Deixe no automático a menos que um firewall ou seu provedor bloqueie algo - só-websocket parece tráfego HTTPS comum e costuma passar."
+  },
+  "WebProxy": {
+   "label": "Proxy",
+   "tip": "Manda o tráfego Steam por este proxy, por exemplo http://127.0.0.1:8080. Deixe vazio para conectar direto."
+  },
+  "WebProxyUsername": {
+   "label": "Usuário do proxy",
+   "tip": "Nome de usuário do proxy acima, se ele pedir."
+  },
+  "WebProxyPassword": {
+   "label": "Senha do proxy",
+   "tip": "Senha do proxy acima, se ele pedir."
+  },
+  "GlobalBlacklistedGames": {
+   "label": "Nunca encostar nestes (todas as contas)",
+   "tip": "AppIDs que nenhuma conta vai farmar ou idlar, para você não repetir a mesma lista em cada conta que adiciona. Cada conta ainda pode acrescentar as suas por cima."
+  },
+  "Rep4RepLearnCap": {
+   "label": "Aprender o limite real",
+   "tip": "Se a Steam recusar um comentário ALÉM do máximo definido acima, guarde esse número como o teto real desta conta. Nunca vai baixar o máximo por uma recusa comum do tipo \"você está comentando com muita frequência\" - essa mensagem é sobre o intervalo entre dois comentários e não diz nada sobre o limite diário, que normalmente é 10."
+  },
+  "Rep4RepRetryRefused": {
+   "label": "Tentar de novo um comentário recusado",
+   "tip": "Dá mais uma chance a um comentário recusado antes de descartar aquele perfil por um dia."
+  },
+  "SendOnFarmingFinished": {
+   "label": "Enviar os itens quando o farm terminar",
+   "tip": "Quando não sobrar mais nenhuma carta para farmar, manda o que esta conta juntou para a primeira conta listada acima. É esse o sentido de rodar vários idlers: as cartas acabam num inventário só, não em seis."
+  },
+  "SendItemTypes": {
+   "label": "O que enviar",
+   "tip": "Quais tipos de item podem sair desta conta, separados por vírgula: cards, foils, backgrounds, emoticons, boosters, gems - ou \"all\". O que não estiver listado aqui nunca é enviado, dê no que der."
+  },
+  "TradeMasterToken": {
+   "label": "Token do link de troca dela",
+   "tip": "O token da URL de troca da outra conta (a parte depois de &token=). Só é preciso quando as duas contas não são amigas - entre amigos pode deixar vazio."
   }
  }
 }
