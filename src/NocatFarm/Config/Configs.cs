@@ -181,6 +181,8 @@ public sealed class BotConfig {
 
 	// ── achievements ──
 	public bool UnlockAchievements { get; set; }
+	public int AchievementGrindGapMinMinutes { get; set; } = 12;
+	public int AchievementGrindGapMaxMinutes { get; set; } = 24;
 	public List<uint> AchievementGames { get; set; } = [];
 
 	/// <summary>Games never to unlock in, on top of the built-in refusal to ever touch CS2.</summary>

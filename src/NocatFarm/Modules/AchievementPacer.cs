@@ -398,11 +398,22 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			// nothing for a long stretch. A steady one-every-N-minutes drip is the thing to avoid.
 			if (grind) {
 				// Active-play pace: what a real person mopping up a game's easy achievements looks like - a handful
-				// an hour, not a dump. ~12-24 min apart (so roughly 3-5 an hour, never 20), easiest-first, and only
-				// among what's actually reachable for the hours in the game (the rarity floor above). Paced() still
-				// scales it by the account's Achievement-pace setting. The rare/grindy tail stays gated by playtime
-				// exactly like normal play, so it can't pop a "1000 kills" one two hours in.
-				gap = _rng.Next(12, 25);
+				// an hour, not a dump. Mostly the configured gap apart (default ~12-24 min, so ~3-5/hr, never 20),
+				// easiest-first, only among what's reachable for the hours in the game (the rarity floor above), and
+				// still Paced() by the account's setting. But not a metronome: now and then a level or objective
+				// pops two or three together, then a longer quiet - exactly how a person's history looks.
+				int glo = Math.Max(1, Bot.Cfg.AchievementGrindGapMinMinutes);
+				int ghi = Math.Max(glo, Bot.Cfg.AchievementGrindGapMaxMinutes);
+
+				if (g.BurstLeft > 0) {
+					g.BurstLeft--;
+					gap = _rng.Next(1, 5);
+				} else if ((eligible.Count > 1) && (_rng.Next(100) < 25)) {
+					g.BurstLeft = _rng.Next(1, 3);
+					gap = _rng.Next(1, 5);
+				} else {
+					gap = _rng.Next(glo, ghi + 1);
+				}
 			} else if (g.BurstLeft > 0) {
 				g.BurstLeft--;
 				gap = _rng.Next(1, 5);

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using NocatFarm.Config;
 using SteamKit2;
 using SteamKit2.Authentication;
@@ -65,12 +66,66 @@ public sealed class Bot : IAsyncDisposable {
 		GrindGame = app;
 		GrindStartsAt = DateTime.UtcNow.Add(delay);
 		GrindUntil = GrindStartsAt.Add(how);   // the hours run from when it actually starts, not the command
+		SaveGrind();
 	}
 
 	public void StopGrind() {
 		GrindGame = 0;
 		GrindUntil = null;
+		SaveGrind();
 	}
+
+	private string GrindPath => Path.Combine(ConfigStore.ConfigDir, "state", $"grind-{Name}.json");
+
+	/// <summary>Persist the current grind so it survives a restart, a crash, or the owner playing for a while.</summary>
+	private void SaveGrind() {
+		try {
+			if ((GrindGame == 0) || (GrindUntil == null)) {
+				if (File.Exists(GrindPath)) {
+					File.Delete(GrindPath);
+				}
+
+				return;
+			}
+
+			Directory.CreateDirectory(Path.GetDirectoryName(GrindPath)!);
+			AtomicFile.Write(GrindPath, JsonSerializer.Serialize(new GrindSave(GrindGame, GrindUntil.Value.Ticks)));
+		} catch (Exception e) {
+			Log.Debug($"couldn't save the grind: {e.Message}", Name);
+		}
+	}
+
+	/// <summary>Resume a grind that was still running when we last stopped. Expired ones are dropped.</summary>
+	private void LoadGrind() {
+		try {
+			if (!File.Exists(GrindPath)) {
+				return;
+			}
+
+			GrindSave? saved = JsonSerializer.Deserialize<GrindSave>(File.ReadAllText(GrindPath));
+
+			if (saved == null) {
+				return;
+			}
+
+			DateTime until = new(saved.UntilTicks, DateTimeKind.Utc);
+
+			if (until <= DateTime.UtcNow) {
+				File.Delete(GrindPath);   // it finished while we were off
+
+				return;
+			}
+
+			GrindGame = saved.Game;
+			GrindUntil = until;
+			GrindStartsAt = DateTime.UtcNow;   // resume now - no fresh switch-in delay on a resume
+			Log.Info($"resuming the grind of {GameNames.Of(GrindGame)} - {Fmt.Hm((int) (until - DateTime.UtcNow).TotalMinutes)} left", Name);
+		} catch (Exception e) {
+			Log.Debug($"couldn't resume the grind: {e.Message}", Name);
+		}
+	}
+
+	private sealed record GrindSave(uint Game, long UntilTicks);
 
 	/// <summary>
 	/// The custom name actually in effect - empty when the feature is switched off.
@@ -725,6 +780,10 @@ public sealed class Bot : IAsyncDisposable {
 
 		_running = true;
 		Log.Info("starting up", Name);
+
+		if (GrindGame == 0) {
+			LoadGrind();   // pick a still-running grind back up after a restart or crash
+		}
 		Paused = Cfg.StartPaused;   // re-applied per start, so 'restart' doesn't quietly un-pause the account
 		PlayingBlocked = false;
 		_resumeAt = DateTime.MinValue;
