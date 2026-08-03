@@ -37,6 +37,7 @@ public static class GameCatalog {
 	private static readonly SemaphoreSlim FileGate = new(1, 1);
 	private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
 	private static DateTime _lastCall = DateTime.MinValue;
+	private static DateTime _coolUntil = DateTime.MinValue;
 	private static DateTime _lastSave = DateTime.MinValue;
 	private static bool _loaded;
 
@@ -93,6 +94,10 @@ public static class GameCatalog {
 				}
 			}
 
+			if (DateTime.UtcNow < _coolUntil) {
+				return null;   // the store told us to slow down - nothing is learned by asking again yet
+			}
+
 			TimeSpan since = DateTime.UtcNow - _lastCall;
 
 			if (since < TimeSpan.FromSeconds(1.5)) {
@@ -101,8 +106,19 @@ public static class GameCatalog {
 
 			_lastCall = DateTime.UtcNow;
 
-			string body = await Http.GetStringAsync(
+			using HttpResponseMessage response = await Http.GetAsync(
 				$"https://store.steampowered.com/api/appdetails?appids={app}&filters=basic,categories,recommendations", ct).ConfigureAwait(false);
+
+			// The store allows roughly two hundred questions every five minutes, and a sweep of a family library
+			// runs straight into that. A 429 means every lookup until it lifts is wasted, so stop asking.
+			if (!response.IsSuccessStatusCode) {
+				_coolUntil = DateTime.UtcNow.AddMinutes(response.StatusCode == System.Net.HttpStatusCode.TooManyRequests ? 10 : 2);
+				Log.Debug($"the store answered {(int) response.StatusCode} - pausing game lookups until {_coolUntil.ToLocalTime():HH:mm}");
+
+				return null;
+			}
+
+			string body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 			using JsonDocument doc = JsonDocument.Parse(body);
 
 			if (!doc.RootElement.TryGetProperty(app.ToString(), out JsonElement node)

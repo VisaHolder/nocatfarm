@@ -283,8 +283,17 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			// whole time, so it does a slice per tick and picks up where it left off: the catalogue is on disk,
 			// so everything already answered flies past for free.
 			if ((asked >= LookupsPerTick) && (GameCatalog.Known(game.AppId) == null)) {
+				// Out of lookups for this tick - but hunt with whatever has been confirmed so far rather than
+				// sitting idle until the whole library has been asked about. A family library is over a thousand
+				// games and the store answers a couple hundred every five minutes, so "wait for the full sweep"
+				// meant an account with forty perfectly good targets did nothing at all for the best part of an
+				// hour. The list keeps growing on later ticks; _discoveredAt stays unset so the sweep continues.
 				_sweeping = true;
-				_status = "on - working out which games are worth hunting";
+				_status = $"on - {found.Count} game(s) so far, still working through the rest";
+
+				if (found.Count > _singleplayer.Count) {
+					_singleplayer = found;
+				}
 
 				return;
 			}
