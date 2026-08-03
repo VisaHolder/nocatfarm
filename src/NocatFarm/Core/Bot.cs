@@ -78,6 +78,17 @@ public sealed class Bot : IAsyncDisposable {
 		GrindUntil = GrindStartsAt.Add(how);   // the hours run from when it actually starts, not the command
 		SaveGrind();
 
+		// A grind with no delay should start with NO DELAY.
+		//
+		// Nothing here launches games directly: a non-human account takes its games from the idler, which
+		// re-asserts every four to seven minutes. So "instant" actually meant "some time in the next seven
+		// minutes", while the log had already announced the grind as running - which reads as broken, and on a
+		// short grind wastes a noticeable slice of it. Human-mode accounts are untouched: they get a deliberate
+		// jittered hand-over so the switch doesn't look like a machine, and their own scheduler performs it.
+		if ((delay == TimeSpan.Zero) && !HumanOwned && CanPlay) {
+			SetPlaying([app]);
+		}
+
 		return true;
 	}
 
