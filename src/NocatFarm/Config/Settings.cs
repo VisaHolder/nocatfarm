@@ -477,7 +477,7 @@ public static class Settings {
 		new("Language", "Language", SecDashboard, SettingKind.Pick,
 			"What language the dashboard is in. Anything a translation hasn't covered yet falls back to English rather than showing a blank, so a partly translated language is still perfectly usable. The console and the log stay in English.",
 			Choices: "en English | es Español | pt-BR Português (Brasil) | ru Русский | de Deutsch | fr Français | zh-CN 简体中文 | tr Türkçe | pl Polski | ja 日本語 | ko 한국어"),
-		new("CheckForUpdates", "Tell me about new versions", SecDashboard, SettingKind.Bool,
+		new("CheckForUpdates", "Notify if an update is available", SecDashboard, SettingKind.Bool,
 			"Look once a day for a newer release and mention it in the log. It only ever tells you - it never downloads, replaces or restarts anything. Something holding the keys to your Steam accounts should not be able to swap its own binary out on a schedule, and an update landing mid-farm is how a session gets lost.",
 			Advanced: true),
 		new("MarketCurrency", "Inventory prices in", SecDashboard, SettingKind.Choice,

@@ -64,6 +64,7 @@ public static partial class Commands {
 		new("2fa", "<account>", GroupAccounts, "Show this account's Steam Guard code, if its authenticator is set up here.", "guard"),
 		new("cheevo", "<account> <appID> [list|unlock|lock] [name|all]", GroupPlaying, "Achievements: see them, unlock them all, or put them back.", "ach|achievements"),
 		new("hunt", "[account]", GroupPlaying, "What the achievement hunter would play, in order - and what it ruled out and why.", "boost"),
+		new("match", "[do]", GroupCards, "Swap duplicate trading cards between your own accounts so sets finish. Shows what it would trade; 'match do' sends the offers."),
 		new("keys", "[list|clear]", GroupAccounts, "Product keys waiting to be activated. A big batch queues itself rather than burning Steam's per-account activation allowance all at once."),
 		new("value", "[account|all] [refresh]", GroupCards, "What each inventory is worth, by game, and how it has moved in the last day. Add 'refresh' to read the inventories again.", "inv|inventory"),
 
@@ -209,6 +210,7 @@ public static partial class Commands {
 				"hunt" or "boost" => await HuntAsync(mgr, rest).ConfigureAwait(false),
 				"value" or "inv" or "inventory" => InventoryText(mgr, rest),
 				"keys" => KeysText(rest),
+				"match" => await MatchAsync(mgr, rest).ConfigureAwait(false),
 				"name" => Name(mgr, rest),
 				"persona" => Persona(mgr, rest),
 				"farm" => Farm(mgr, rest),
@@ -757,6 +759,70 @@ public static partial class Commands {
 		}
 
 		return sb.ToString().TrimEnd();
+	}
+
+	/// <summary>
+	/// Card swaps between your own accounts.
+	///
+	/// Prints the plan by default and only sends offers when told to - trades are irreversible once accepted, and
+	/// a matcher that fires the moment you type its name is not one anybody should have to trust.
+	/// </summary>
+	private static async Task<string> MatchAsync(BotManager mgr, string[] args) {
+		bool send = args.Any(static a => a.Equals("do", StringComparison.OrdinalIgnoreCase));
+		List<Bot> bots = [.. mgr.All.Where(static b => b.IsOnline && b.Web.Ready)];
+
+		if (bots.Count < 2) {
+			return "Card matching needs at least two accounts logged in - it swaps between your own.";
+		}
+
+		Dictionary<Bot, List<Looting.Item>> inventories = [];
+
+		foreach (Bot bot in bots) {
+			inventories[bot] = await Looting.InventoryAsync(bot).ConfigureAwait(false);
+		}
+
+		List<Matching.Swap> swaps = Matching.Plan(inventories);
+
+		if (swaps.Count == 0) {
+			return "No swaps to make - no account has a spare card that another one is missing.";
+		}
+
+		List<string> lines = [];
+
+		foreach (Matching.Swap swap in swaps) {
+			int pairs = swap.Cards;
+			lines.Add($"{swap.From.Name} <-> {swap.To.Name}: {pairs} card(s) each way");
+
+			foreach (Matching.Move move in swap.Give.Take(pairs).Take(4)) {
+				lines.Add($"      {swap.From.Name} gives  {move.Card}  ({move.Game})");
+			}
+
+			foreach (Matching.Move move in swap.Take.Take(pairs).Take(4)) {
+				lines.Add($"      {swap.To.Name} gives  {move.Card}  ({move.Game})");
+			}
+
+			if (pairs > 4) {
+				lines.Add($"      ...and {pairs - 4} more each way");
+			}
+
+			if (!send) {
+				continue;
+			}
+
+			(bool ok, string message) = await Looting.SwapAsync(
+				swap.From, swap.To,
+				[.. swap.Give.Take(pairs).Select(static m => m.Item)],
+				[.. swap.Take.Take(pairs).Select(static m => m.Item)]).ConfigureAwait(false);
+
+			lines.Add(ok ? $"      offer sent - {swap.To.Name} needs to accept it" : $"      couldn't send - {message}");
+		}
+
+		if (!send) {
+			lines.Add("");
+			lines.Add("Nothing has been sent. 'match do' sends these offers.");
+		}
+
+		return string.Join(Environment.NewLine, lines);
 	}
 
 	/// <summary>A path rather than a key - keys have no dots, slashes or backslashes in them.</summary>

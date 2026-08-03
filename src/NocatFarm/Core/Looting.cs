@@ -253,7 +253,25 @@ public static class Looting {
 		return steamError + extra;
 	}
 
-	private static async Task<(bool Ok, string Message)> SendOfferAsync(Bot bot, ulong master, IReadOnlyCollection<Item> items, string accessToken, CancellationToken ct) {
+	/// <summary>
+	/// A two-way offer: these items for those. Used by the card matcher, where a one-sided offer would be a gift.
+	///
+	/// Steam wants both halves in the same message, so this is the same endpoint as a plain send with the "them"
+	/// side filled in as well.
+	/// </summary>
+	public static async Task<(bool Ok, string Message)> SwapAsync(Bot bot, Bot partner, IReadOnlyCollection<Item> giving, IReadOnlyCollection<Item> taking, CancellationToken ct = default) {
+		if ((giving.Count == 0) || (taking.Count == 0)) {
+			return (false, "a swap needs items on both sides");
+		}
+
+		if (!bot.IsOnline || !bot.Web.Ready) {
+			return (false, $"{bot.Name} isn't logged in");
+		}
+
+		return await SendOfferAsync(bot, partner.SteamId, giving, bot.Cfg.TradeMasterToken, ct, taking).ConfigureAwait(false);
+	}
+
+	private static async Task<(bool Ok, string Message)> SendOfferAsync(Bot bot, ulong master, IReadOnlyCollection<Item> items, string accessToken, CancellationToken ct, IReadOnlyCollection<Item>? wanted = null) {
 		StringBuilder assets = new();
 
 		foreach (Item item in items) {
@@ -265,9 +283,20 @@ public static class Looting {
 				$"{{\"appid\":{item.App},\"contextid\":\"{item.Context}\",\"amount\":{item.Amount},\"assetid\":\"{item.AssetId}\"}}");
 		}
 
+		StringBuilder theirs = new();
+
+		foreach (Item item in wanted ?? []) {
+			if (theirs.Length > 0) {
+				theirs.Append(',');
+			}
+
+			theirs.Append(CultureInfo.InvariantCulture,
+				$"{{\"appid\":{item.App},\"contextid\":\"{item.Context}\",\"amount\":{item.Amount},\"assetid\":\"{item.AssetId}\"}}");
+		}
+
 		string offer = "{\"newversion\":true,\"version\":2,"
 			+ "\"me\":{\"assets\":[" + assets + "],\"currency\":[],\"ready\":false},"
-			+ "\"them\":{\"assets\":[],\"currency\":[],\"ready\":false}}";
+			+ "\"them\":{\"assets\":[" + theirs + "],\"currency\":[],\"ready\":false}}";
 
 		// The account id (the low 32 bits) is what the trade URL wants, not the full SteamID64.
 		uint partnerAccountId = (uint) (master & 0xFFFFFFFF);

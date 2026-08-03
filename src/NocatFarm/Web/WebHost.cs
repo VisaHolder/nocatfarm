@@ -1028,6 +1028,8 @@ public sealed class WebHost : IAsyncDisposable {
 			CardsLeft = bots.Sum(static b => b.CardsRemaining),
 			InventoryValue = bots.Sum(static b => b.Inventory.Total),
 			Currency = PriceBook.Symbol,
+			UpdateAvailable = UpdateCheck.Available,
+			UpdateUrl = UpdateCheck.Url,
 			InventoryPending = bots.Sum(static b => b.Inventory.Pending),
 			GamesLeft = bots.Sum(static b => b.GamesRemaining),
 			Bots = bots.Select(b => {
