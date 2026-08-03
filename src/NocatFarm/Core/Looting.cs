@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Text.Json;
 using NocatFarm.Config;
 
@@ -19,7 +20,7 @@ public static class Looting {
 	private const uint SteamAppId = 753;
 	private const uint CommunityContext = 6;
 
-	public readonly record struct Item(ulong AssetId, ulong ClassId, ulong InstanceId, uint Amount, string Type, string Name);
+	public readonly record struct Item(ulong AssetId, ulong ClassId, ulong InstanceId, uint Amount, string Type, string Name, uint App, uint Context);
 
 	/// <summary>
 	/// This account's tradable Steam community items: cards, backgrounds, emoticons, boosters.
@@ -28,6 +29,14 @@ public static class Looting {
 	/// the descriptions know whether an item may be traded at all. Sending an untradable item does not fail
 	/// politely; the whole offer is rejected, so they are filtered out here rather than discovered later.
 	/// </summary>
+	/// <summary>
+	/// Everything tradable the account holds, across every game - not just Steam's own cards and backgrounds.
+	///
+	/// It used to read app 753 context 6 and nothing else, which is where cards, backgrounds, emoticons, boosters
+	/// and gems live. That is the right answer for "loot the card farmer" and the wrong one for "send me
+	/// everything": an account with two hundred game items reported "nothing tradable to send". The inventory
+	/// page lists which games hold items, so the list comes from Steam rather than from a guess.
+	/// </summary>
 	public static async Task<List<Item>> InventoryAsync(Bot bot, CancellationToken ct = default) {
 		List<Item> items = [];
 
@@ -35,8 +44,57 @@ public static class Looting {
 			return items;
 		}
 
+		foreach ((uint app, uint context) in await InventoriesAsync(bot, ct).ConfigureAwait(false)) {
+			items.AddRange(await OneInventoryAsync(bot, app, context, ct).ConfigureAwait(false));
+		}
+
+		return items;
+	}
+
+	/// <summary>Which (game, context) pairs actually hold something. Steam's own inventory is always included.</summary>
+	private static async Task<List<(uint App, uint Context)>> InventoriesAsync(Bot bot, CancellationToken ct) {
+		List<(uint, uint)> found = [(SteamAppId, CommunityContext)];
+
+		try {
+			string? page = await bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{bot.SteamId}/inventory/"), ct).ConfigureAwait(false);
+
+			if (string.IsNullOrEmpty(page)) {
+				return found;
+			}
+
+			Match blob = Regex.Match(page, @"g_rgAppContextData\s*=\s*(\{.*?\})\s*;", RegexOptions.Singleline);
+
+			if (!blob.Success) {
+				return found;
+			}
+
+			using JsonDocument doc = JsonDocument.Parse(blob.Groups[1].Value);
+
+			foreach (JsonProperty app in doc.RootElement.EnumerateObject()) {
+				if (!uint.TryParse(app.Name, out uint appId) || !app.Value.TryGetProperty("rgContexts", out JsonElement contexts)) {
+					continue;
+				}
+
+				foreach (JsonProperty context in contexts.EnumerateObject()) {
+					bool holds = context.Value.TryGetProperty("asset_count", out JsonElement a) && a.TryGetInt32(out int count) && (count > 0);
+
+					if (holds && uint.TryParse(context.Name, out uint contextId) && !found.Contains((appId, contextId))) {
+						found.Add((appId, contextId));
+					}
+				}
+			}
+		} catch (Exception e) {
+			Log.Debug($"couldn't list the inventories: {e.Message}", bot.Name);
+		}
+
+		return found;
+	}
+
+	private static async Task<List<Item>> OneInventoryAsync(Bot bot, uint app, uint context, CancellationToken ct) {
+		List<Item> items = [];
+
 		string? body = await bot.Web.GetAsync(
-			new Uri(WebSession.Community, $"/inventory/{bot.SteamId}/{SteamAppId}/{CommunityContext}?l=english&count=2000"), ct).ConfigureAwait(false);
+			new Uri(WebSession.Community, $"/inventory/{bot.SteamId}/{app}/{context}?l=english&count=2000"), ct).ConfigureAwait(false);
 
 		if (string.IsNullOrEmpty(body)) {
 			return items;
@@ -73,7 +131,7 @@ public static class Looting {
 				ulong.TryParse(Text(asset, "instanceid"), out ulong instanceId);
 				uint.TryParse(Text(asset, "amount"), out uint amount);
 
-				items.Add(new Item(assetId, classId, instanceId, Math.Max(1, amount), info.Type, info.Name));
+				items.Add(new Item(assetId, classId, instanceId, Math.Max(1, amount), info.Type, info.Name, app, context));
 			}
 		} catch (Exception e) {
 			Log.Warn($"couldn't read the inventory: {e.Message}", bot.Name);
@@ -178,7 +236,7 @@ public static class Looting {
 			}
 
 			assets.Append(CultureInfo.InvariantCulture,
-				$"{{\"appid\":{SteamAppId},\"contextid\":\"{CommunityContext}\",\"amount\":{item.Amount},\"assetid\":\"{item.AssetId}\"}}");
+				$"{{\"appid\":{item.App},\"contextid\":\"{item.Context}\",\"amount\":{item.Amount},\"assetid\":\"{item.AssetId}\"}}");
 		}
 
 		string offer = "{\"newversion\":true,\"version\":2,"
@@ -203,7 +261,12 @@ public static class Looting {
 		string? body = await bot.Web.PostAsync(new Uri(WebSession.Community, "/tradeoffer/new/send"), form, referer, ct).ConfigureAwait(false);
 
 		if (string.IsNullOrEmpty(body)) {
-			return (false, "Steam didn't answer");
+			// Steam answers this endpoint with a 500 and no body for the ordinary case of "you two can't trade",
+			// so a bare "didn't answer" sent people looking for a network fault. By far the most common reason is
+			// that the accounts are not friends and no trade token was given.
+			return (false, accessToken.Trim().Length > 0
+				? "Steam refused the offer. Check the trade token is current, and that neither account is trade-banned or still inside a Steam Guard hold."
+				: "Steam refused the offer. These accounts are probably not friends - paste the token from the receiving account's trade URL into \"Their trade link token\", or add each other as friends first.");
 		}
 
 		try {

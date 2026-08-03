@@ -1426,6 +1426,13 @@ public static class Commands {
 				+ (def.NeedsRestart ? "   (applies after a restart)" : "");
 		}
 
+		// A real account name followed by something that isn't a setting: the complaint is about the SETTING, not
+		// about the account. Falling through to the global branch here reported "there's no setting called 'new'",
+		// which points at the one part of the line that was correct.
+		if ((bot != null) && (args.Length >= 3)) {
+			return $"There's no per-account setting called '{args[1]}'. 'config {bot.Name}' lists them all.";
+		}
+
 		SettingDef? globalDef = Settings.FindGlobal(args[0]);
 
 		if (globalDef == null) {
