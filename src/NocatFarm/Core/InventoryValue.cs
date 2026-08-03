@@ -45,7 +45,10 @@ public sealed partial class InventoryValue(Bot bot) {
 	public DateTime RefreshedAt { get; private set; }
 
 	/// <summary>Every item with a market name, keyed by game, gathered from the last inventory read.</summary>
-	private readonly Dictionary<uint, (string Game, Dictionary<string, int> Items, bool Blocked)> _holdings = [];
+	private readonly Dictionary<uint, (string Game, Dictionary<string, Held> Items, bool Blocked)> _holdings = [];
+
+	/// <summary>How many are held, and how promising it looks - rank 0 is a knife, 7 is grey junk.</summary>
+	private readonly record struct Held(int Count, int Rank);
 
 	private DateTime _readAt = DateTime.MinValue;
 
@@ -129,9 +132,7 @@ public sealed partial class InventoryValue(Bot bot) {
 		// purchase or a ban makes an item unsellable for a while without making it worthless - and the honest
 		// answer to "what is in there" is the market value of what is in there. Items with no market listing at
 		// all price at zero on their own, which is the correct answer for them.
-		Dictionary<string, string> named = [];
-		int sellable = 0;
-		int kinds = 0;
+		Dictionary<string, (string Hash, int Rank)> named = [];
 
 		foreach (JsonElement d in descriptions.EnumerateArray()) {
 			string? hash = d.TryGetProperty("market_hash_name", out JsonElement h) ? h.GetString() : null;
@@ -141,7 +142,8 @@ public sealed partial class InventoryValue(Bot bot) {
 				continue;
 			}
 
-			named[classId] = hash;
+			string? colour = d.TryGetProperty("name_color", out JsonElement n) ? n.GetString() : null;
+			named[classId] = (hash, RankOf(hash, colour));
 		}
 
 		// Which games to skip is TOLD to us, not guessed at.
@@ -153,17 +155,17 @@ public sealed partial class InventoryValue(Bot bot) {
 		// the inventory stands in for it - so this is a list you fill in, and it does exactly what it says.
 		bool blocked = bot.Cfg.InventoryIgnoreGames.Contains(app);
 
-		Dictionary<string, int> counts = new(StringComparer.Ordinal);
+		Dictionary<string, Held> counts = new(StringComparer.Ordinal);
 
 		foreach (JsonElement a in assets.EnumerateArray()) {
 			string? classId = a.TryGetProperty("classid", out JsonElement c) ? c.GetString() : null;
 
-			if ((classId == null) || !named.TryGetValue(classId, out string? hash)) {
+			if ((classId == null) || !named.TryGetValue(classId, out (string Hash, int Rank) item)) {
 				continue;
 			}
 
 			int amount = a.TryGetProperty("amount", out JsonElement q) && int.TryParse(q.GetString(), out int n) ? Math.Max(1, n) : 1;
-			counts[hash] = counts.GetValueOrDefault(hash) + amount;
+			counts[item.Hash] = new Held(counts.GetValueOrDefault(item.Hash).Count + amount, item.Rank);
 		}
 
 		lock (_holdings) {
@@ -174,9 +176,9 @@ public sealed partial class InventoryValue(Bot bot) {
 			// MERGED, not replaced: one game can have several inventory contexts - Steam's own has three, for
 			// cards, backgrounds and emoticons - and writing each one over the last meant only the final context
 			// counted. Everything but the last few hundred items simply vanished from the total.
-			if (_holdings.TryGetValue(app, out (string Game, Dictionary<string, int> Items, bool Blocked) existing)) {
-				foreach ((string hash, int amount) in counts) {
-					existing.Items[hash] = existing.Items.GetValueOrDefault(hash) + amount;
+			if (_holdings.TryGetValue(app, out (string Game, Dictionary<string, Held> Items, bool Blocked) existing)) {
+				foreach ((string hash, Held held) in counts) {
+					existing.Items[hash] = new Held(existing.Items.GetValueOrDefault(hash).Count + held.Count, held.Rank);
 				}
 			} else {
 				_holdings[app] = (game, counts, blocked);
@@ -221,17 +223,17 @@ public sealed partial class InventoryValue(Bot bot) {
 
 	// ── pricing ──────────────────────────────────────────────────────────────
 	private async Task PriceSomeAsync(CancellationToken ct) {
-		List<(uint App, string Hash, int Names)> wanted = [];
+		List<(uint App, string Hash, int Rank)> wanted = [];
 
 		lock (_holdings) {
-			foreach ((uint app, (string _, Dictionary<string, int> items, bool blocked)) in _holdings) {
+			foreach ((uint app, (string _, Dictionary<string, Held> items, bool blocked)) in _holdings) {
 				if (blocked) {
-					continue;   // banned game: nothing here can be sold, so there is nothing worth asking about
+					continue;   // a game you've told it to skip - no point asking what any of it sells for
 				}
 
-				foreach (string hash in items.Keys) {
+				foreach ((string hash, Held held) in items) {
 					if (PriceBook.NeedsRefresh(app, hash)) {
-						wanted.Add((app, hash, items.Count));
+						wanted.Add((app, hash, held.Rank));
 					}
 				}
 			}
@@ -274,13 +276,44 @@ public sealed partial class InventoryValue(Bot bot) {
 		}
 	}
 
-	/// <summary>One item from each game in turn, Steam's own inventory last. Never priced beats already priced.</summary>
-	private static IEnumerable<(uint App, string Hash)> RoundRobin(List<(uint App, string Hash, int Names)> wanted) {
+	/// <summary>
+	/// How promising an item looks before anybody has priced it. Lower is better.
+	///
+	/// Steam hands the answer over in the inventory itself: the star marks knives and gloves, and name_color is
+	/// the rarity every skin game colours its items by - red is Covert, pink Classified, purple Restricted, and
+	/// so on down to grey. That is enough to ask about the gloves and the knives FIRST and leave the blue rifles
+	/// until later, instead of working through a CS2 inventory in whatever order it happened to arrive.
+	/// </summary>
+	private static int RankOf(string marketHashName, string? nameColour) {
+		if (marketHashName.Contains('★')) {
+			return 0;   // knives and gloves
+		}
+
+		return nameColour?.ToLowerInvariant() switch {
+			"e4ae39" => 1,   // contraband
+			"eb4b4b" => 2,   // covert
+			"d32ce6" => 3,   // classified
+			"8650ac" => 3,   // unusual, over in Team Fortress
+			"8847ff" => 4,   // restricted
+			"4b69ff" => 5,   // mil-spec
+			"5e98d9" => 6,   // industrial
+			"b0c3d9" => 7,   // consumer
+			_ => 5           // anything unrecognised sits in the middle rather than at either end
+		};
+	}
+
+	/// <summary>
+	/// One item from each game in turn, Steam's own inventory last, and within each game the most promising items
+	/// first. Taking turns is what stops one big inventory starving the others; the rank is what stops a game
+	/// spending its turns on grey junk while a knife waits.
+	/// </summary>
+	private static IEnumerable<(uint App, string Hash)> RoundRobin(List<(uint App, string Hash, int Rank)> wanted) {
 		List<List<(uint App, string Hash)>> queues = [.. wanted
 			.GroupBy(static w => w.App)
 			.OrderBy(static g => g.Key == SteamCommunityApp)
 			.Select(static g => g
-				.OrderBy(w => PriceBook.Known(w.App, w.Hash).HasValue)
+				.OrderBy(static w => w.Rank)
+				.ThenBy(w => PriceBook.Known(w.App, w.Hash).HasValue)
 				.Select(static w => (w.App, w.Hash))
 				.ToList())];
 
@@ -305,13 +338,13 @@ public sealed partial class InventoryValue(Bot bot) {
 		List<GameValue> byGame = [];
 
 		lock (_holdings) {
-			foreach ((uint app, (string game, Dictionary<string, int> items, bool blocked)) in _holdings) {
+			foreach ((uint app, (string game, Dictionary<string, Held> items, bool blocked)) in _holdings) {
 				decimal value = 0;
 				int count = 0;
 
-				foreach ((string hash, int amount) in items) {
-					value += blocked ? 0 : (PriceBook.Known(app, hash) ?? 0) * amount;
-					count += amount;
+				foreach ((string hash, Held held) in items) {
+					value += blocked ? 0 : (PriceBook.Known(app, hash) ?? 0) * held.Count;
+					count += held.Count;
 				}
 
 				if (count > 0) {
