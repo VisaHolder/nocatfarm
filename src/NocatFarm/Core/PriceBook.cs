@@ -33,7 +33,19 @@ public static partial class PriceBook {
 
 	private static readonly Dictionary<string, Price> Cache = new(StringComparer.Ordinal);
 	private static readonly SemaphoreSlim Gate = new(1, 1);
+
+	/// <summary>
+	/// Its own client, signed in as nobody.
+	///
+	/// Prices are public - the market answers this question to anyone - and asking it through an account's
+	/// session gets that SESSION rate-limited, which is both stricter and far more annoying: after a few hundred
+	/// lookups Steam simply stopped answering the accounts, and every sweep after that gave up on its first item
+	/// while the same URL fetched fine from anywhere else. Nothing here needs to know who is asking.
+	/// </summary>
+	private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
+
 	private static DateTime _lastCall = DateTime.MinValue;
+	private static DateTime _coolUntil = DateTime.MinValue;
 	private static DateTime _lastSave = DateTime.MinValue;
 	private static bool _loaded;
 
@@ -82,7 +94,11 @@ public static partial class PriceBook {
 	/// includes items that simply have no market listing, so those are remembered as zero rather than asked
 	/// about for ever.
 	/// </summary>
-	public static async Task<decimal?> FetchAsync(WebSession web, uint app, string marketHashName, CancellationToken ct) {
+	public static async Task<decimal?> FetchAsync(uint app, string marketHashName, CancellationToken ct) {
+		if (DateTime.UtcNow < _coolUntil) {
+			return null;   // the market told us to slow down; everyone waits it out together
+		}
+
 		await Gate.WaitAsync(ct).ConfigureAwait(false);
 
 		try {
@@ -94,11 +110,21 @@ public static partial class PriceBook {
 
 			_lastCall = DateTime.UtcNow;
 
-			string url = $"/market/priceoverview/?appid={app}&currency={Currency}&market_hash_name={Uri.EscapeDataString(marketHashName)}";
-			string? json = await web.GetAsync(new Uri(WebSession.Community, url), ct).ConfigureAwait(false);
+			string url = $"https://steamcommunity.com/market/priceoverview/?appid={app}&currency={Currency}&market_hash_name={Uri.EscapeDataString(marketHashName)}";
+			using HttpResponseMessage response = await Http.GetAsync(url, ct).ConfigureAwait(false);
+
+			if (!response.IsSuccessStatusCode) {
+				// 429 is the market saying "enough". Back off for a good while rather than retrying into the wall.
+				_coolUntil = DateTime.UtcNow.AddMinutes(response.StatusCode == System.Net.HttpStatusCode.TooManyRequests ? 15 : 2);
+				Log.Debug($"the market answered {(int) response.StatusCode} - pausing price lookups until {_coolUntil.ToLocalTime():HH:mm}");
+
+				return null;
+			}
+
+			string json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
 			if (string.IsNullOrEmpty(json)) {
-				return null;   // rate limited or offline: ask again next sweep, don't poison the cache
+				return null;   // ask again next sweep, don't poison the cache
 			}
 
 			using JsonDocument doc = JsonDocument.Parse(json);
@@ -179,7 +205,11 @@ public static partial class PriceBook {
 			if (saved != null) {
 				lock (Cache) {
 					foreach ((string key, Price p) in saved) {
-						Cache[key] = p;
+						// Anything a month old is either an item nobody holds any more or a currency nobody uses
+						// any more - keeping either for ever is how a cache file quietly becomes a megabyte.
+						if (DateTime.UtcNow - p.When < TimeSpan.FromDays(30)) {
+							Cache[key] = p;
+						}
 					}
 				}
 			}

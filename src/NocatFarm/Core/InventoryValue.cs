@@ -248,7 +248,7 @@ public sealed partial class InventoryValue(Bot bot) {
 			.Take(PricesPerSweep)) {
 			ct.ThrowIfCancellationRequested();
 
-			if (await PriceBook.FetchAsync(bot.Web, app, hash, ct).ConfigureAwait(false) == null) {
+			if (await PriceBook.FetchAsync(app, hash, ct).ConfigureAwait(false) == null) {
 				break;   // the market has stopped answering - stop pushing and try again next sweep
 			}
 
