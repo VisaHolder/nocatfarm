@@ -89,10 +89,12 @@
    "label": "Girişler arası bekleme"
   },
   "StatusEveryMinutes": {
-   "label": "Ne yaptığını şu sıklıkta söyle"
+   "label": "Şu sıklıkta rapor ver",
+   "tip": "Bir oyun açıkken bu hesabın ne yaptığını ne sıklıkla söylediği. 0, Günlük altındaki genel ayarı izler; -1 susturur."
   },
   "StatusQuietEveryMinutes": {
-   "label": "Dinlenirken ise"
+   "label": "Dinlenirken ise",
+   "tip": "Aynısı; hesap uyurken, molada, duraklatılmışken veya çıkış yapmışken. 0 genel ayarı izler; -1 sessiz tutar."
   },
   "Language": {
    "label": "Dil",
@@ -115,13 +117,16 @@
    "label": "Özet saati · dakika"
   },
   "Enabled": {
-   "label": "Etkin"
+   "label": "Etkin",
+   "tip": "Bu hesaba giriş yapar. Kapatırsan yapılandırması durur ama hesaba hiç dokunulmaz."
   },
   "SteamLogin": {
-   "label": "Steam hesap adı"
+   "label": "Steam hesap adı",
+   "tip": "Giriş yaparken yazdığın Steam hesap adı - görünen adın değil, e-postan da değil."
   },
   "SteamPassword": {
-   "label": "Parola"
+   "label": "Parola",
+   "tip": "İsteğe bağlı. Boş bırak; nocat.farm bir kez sorar, sonra hesabı bir giriş anahtarıyla hatırlar - iki seçenekten daha güvenli olanı."
   },
   "OnlineStatus": {
    "label": "Şöyle görün",
@@ -132,13 +137,16 @@
    "tip": "Bu hesaba kendin de giriyorsan işaretle. Böylece nocat.farm durumuna dokunmaz - bunu ikinci bir oturumdan yapmak seni kendi Steam sohbetinden atar."
   },
   "StartPaused": {
-   "label": "Duraklatılmış başlat"
+   "label": "Duraklatılmış başlat",
+   "tip": "Giriş yapar ama sen Devam'a basana kadar oynamaz, toplamaz, yorum yazmaz. Çevrimiçi olup hiçbir şey yapmasını istediğin bir hesap için."
   },
   "LogColour": {
-   "label": "Günlükteki rengi"
+   "label": "Günlükteki rengi",
+   "tip": "Bu hesabın adının günlükte ve panoda hangi renkle yazılacağı. Birkaç hesabı geçtiğinde işe yarar."
   },
   "Notes": {
-   "label": "Notlar"
+   "label": "Notlar",
+   "tip": "Bu hesabın ne için olduğuna dair kendine bir not. Hesap kartında görünür ve Steam'in yanına bile yaklaşmaz."
   },
   "LegitMode": {
    "label": "İnsan modu",
@@ -292,28 +300,36 @@
    "label": "Şu saate kadar"
   },
   "AcceptFriendRequests": {
-   "label": "Arkadaşlık isteklerini kabul et"
+   "label": "Arkadaşlık isteklerini kabul et",
+   "tip": "Gelen arkadaşlık isteklerini otomatik kabul eder. rep4rep hesabında açık olması işe yarar: Steam, arkadaşının profilinde çok daha fazla yorumaizin verir."
   },
   "JoinGroup": {
-   "label": "nocat.farm grubuna katıl"
+   "label": "nocat.farm grubuna katıl",
+   "tip": "Bu hesabın girişte bir kez nocat.farm Steam grubuna katılmasını sağlar. Tamamen isteğe bağlı: kapatırsan katılmaz."
   },
   "AutoReplyEnabled": {
-   "label": "Mesajlara yanıt ver"
+   "label": "Mesajlara yanıt ver",
+   "tip": "Bu hesaba yazan yabancılara cevap verir. Kapatmak aşağıya yazdığını korur, yani yeniden yazmadan tekrar açabilirsin."
   },
   "AutoReply": {
-   "label": "Şu yanıtı ver"
+   "label": "Şu yanıtı ver",
+   "tip": "Biri bu hesaba yazdığında bunu gönderir. Boş bırakırsan hiçbir şey söylemez. Günde sekiz saat oynayıp hiç cevap vermeyen bir hesap, \"şu an müsait değilim\" diyenden daha çok dikkat çeker."
   },
   "AutoReplyOncePerDay": {
-   "label": "Günde yalnızca bir kez yanıtla"
+   "label": "Günde yalnızca bir kez yanıtla",
+   "tip": "Bu yanıtı aynı kişiye günde en fazla bir kez gönderir. Bu olmadan iki kez yazan biri birebir aynı satırı iki kez alır - bot gibi görünmenin en hızlı yolu."
   },
   "FriendRequestDelayMinMinutes": {
-   "label": "En az bekle"
+   "label": "En az bekle",
+   "tip": "Bir arkadaşlık isteğini kabul etmeden önceki en kısa bekleme, dakika. İstek geldiği saniye kabul etmek, bir hesabın yapabileceği en kolay fark edilen şeydir."
   },
   "FriendRequestDelayMaxMinutes": {
-   "label": "Ve en fazla"
+   "label": "Ve en fazla",
+   "tip": "Kabul etmeden önceki en uzun bekleme, dakika. Gerçeği ikisi arasında rastgele seçilir."
   },
   "ActOnlyWhileAwake": {
-   "label": "Yalnızca uyanıkken tepki ver"
+   "label": "Yalnızca uyanıkken tepki ver",
+   "tip": "Takasları, yanıtları ve arkadaşlık isteklerini, insan modu bu hesabın kalktığını söyleyene kadar bekletir. Bu olmadan hesap uyuyordur ama yine de sabahın dördünde cevap verir."
   },
   "AcceptDonations": {
    "label": "Bağışları kabul et",
@@ -490,6 +506,58 @@
   "ClearInventoryNotifications": {
    "label": "Yeni eşya rozetini temizle",
    "tip": "Her kart düştüğünde Steam'in yeşil \"yeni eşya\" sayacını temizler, böylece envanterin sürekli okunmamış görünmez."
+  },
+  "UIMode": {
+   "label": "Şöyle giriş yap",
+   "tip": "Steam'e hangi tür istemci olduğunu söylediği. \"Masaüstü\" doğru cevaptır ve varsayılandır - gerçek istemcinin bildirdiği de budur."
+  },
+  "SteamParentalCode": {
+   "label": "Aile Görünümü PIN'i",
+   "tip": "Bu hesapta Aile Görünümü açıksa onun PIN'i. Onsuz Steam, kart toplamanın okuması gereken sayfaları engeller."
+  },
+  "MachineName": {
+   "label": "Cihaz adı",
+   "tip": "Bu hesabın Steam'in yetkili cihazlar listesinde gösterdiği cihaz adı. Boş bırakırsan bu bilgisayarın gerçek adı kullanılır."
+  },
+  "SharedSecret": {
+   "label": "Doğrulayıcı kod anahtarı",
+   "tip": "Bu hesabın mobil doğrulayıcısının paylaşılan anahtarı. Bununla nocat.farm kendi Steam Guard isteklerini yanıtlar, telefona gerek kalmaz."
+  },
+  "IdentitySecret": {
+   "label": "Doğrulayıcı onay anahtarı",
+   "tip": "Aynı doğrulayıcının diğer yarısı; \"telefonundan onayla\" uyarısını halleden parça. Yalnızca bu hesap takas gönderdiğinde önemlidir."
+  },
+  "AccountProxy": {
+   "label": "Bu hesap için vekil sunucu",
+   "tip": "Yalnızca bu hesabın Steam trafiğini kendi vekil sunucusundan geçirir, örneğin http://sunucu:port. Boş bırakırsan genel olan kullanılır."
+  },
+  "AccountProxyUsername": {
+   "label": "Vekil sunucu kullanıcı adı",
+   "tip": "Bu hesabın kendi vekil sunucusu istiyorsa kullanıcı adı."
+  },
+  "AccountProxyPassword": {
+   "label": "Vekil sunucu parolası",
+   "tip": "Bu hesabın kendi vekil sunucusu istiyorsa parola."
+  },
+  "AcceptGroupInvites": {
+   "label": "Grup davetlerini kabul et",
+   "tip": "Bu hesabın davet edildiği Steam gruplarına katılır."
+  },
+  "IgnoreSuspiciousInvites": {
+   "label": "Bariz spam'i yok say",
+   "tip": "Yepyeni, gizli, seviye 0 profillerden gelen arkadaşlık isteklerini sessizce yok sayar - her dolandırıcı botun biçimi budur."
+  },
+  "RejectInvalidFriendInvites": {
+   "label": "Kabul etmediklerini reddet",
+   "tip": "Bir arkadaşlık isteğini listede öylece bırakmak yerine etkin biçimde reddeder. Kapalıyken kabul edilmeyen her şey sadece bekler."
+  },
+  "AutoReplyDelaySeconds": {
+   "label": "Yanıtlamadan önce bekle",
+   "tip": "Yanıt gitmeden önce beklenecek saniye. Anında cevap, cevap veren bir robottur; gerçek bekleme bu değere kadar rastgele seçilir."
+  },
+  "CommandMasters": {
+   "label": "Şunlardan komut kabul et",
+   "tip": "Steam'de bu hesaba mesaj atarak nocat.farm'ı yönetmesine izin verilen SteamID64'ler, virgülle ayrılmış. Komutlar ! ile başlamalıdır."
   }
  }
 }

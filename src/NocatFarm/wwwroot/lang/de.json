@@ -89,10 +89,12 @@
    "label": "Abstand zwischen Anmeldungen"
   },
   "StatusEveryMinutes": {
-   "label": "Sagen, was es tut, alle"
+   "label": "Melden alle",
+   "tip": "Wie oft dieses Konto sagt, was es tut, während ein Spiel läuft. 0 folgt der globalen Einstellung unter Protokoll; -1 macht es still."
   },
   "StatusQuietEveryMinutes": {
-   "label": "Und in Ruhe alle"
+   "label": "Und in Ruhe alle",
+   "tip": "Dasselbe für die Zeit, in der das Konto schläft, Pause macht, pausiert ist oder abgemeldet. 0 folgt der globalen Einstellung; -1 hält es still."
   },
   "Language": {
    "label": "Sprache",
@@ -115,13 +117,16 @@
    "label": "Uhrzeit · Minute"
   },
   "Enabled": {
-   "label": "Aktiviert"
+   "label": "Aktiviert",
+   "tip": "Meldet dieses Konto an. Aus heißt: es bleibt konfiguriert, wird aber völlig in Ruhe gelassen."
   },
   "SteamLogin": {
-   "label": "Steam-Kontoname"
+   "label": "Steam-Kontoname",
+   "tip": "Der Steam-Kontoname, den du beim Anmelden eintippst - nicht dein Anzeigename und nicht deine E-Mail."
   },
   "SteamPassword": {
-   "label": "Passwort"
+   "label": "Passwort",
+   "tip": "Optional. Leer lassen: nocat.farm fragt einmal und merkt sich das Konto danach über ein Anmeldetoken - die sicherere der beiden Varianten."
   },
   "OnlineStatus": {
    "label": "Erscheinen als",
@@ -132,13 +137,16 @@
    "tip": "Setz das, wenn du dich selbst hier anmeldest. Dann fasst nocat.farm den Status nicht an - aus einer zweiten Sitzung heraus würde das dich aus deinem eigenen Steam-Chat werfen."
   },
   "StartPaused": {
-   "label": "Pausiert starten"
+   "label": "Pausiert starten",
+   "tip": "Meldet sich an, spielt aber nicht, farmt nicht und kommentiert nicht, bis du auf Fortsetzen drückst. Für ein Konto, das online sein und nichts tun soll."
   },
   "LogColour": {
-   "label": "Farbe im Protokoll"
+   "label": "Farbe im Protokoll",
+   "tip": "In welcher Farbe der Name dieses Kontos im Protokoll und auf der Übersicht erscheint. Praktisch, sobald es mehr als ein paar Konten sind."
   },
   "Notes": {
-   "label": "Notizen"
+   "label": "Notizen",
+   "tip": "Eine Notiz an dich selbst, wofür dieses Konto da ist. Steht auf der Kontokarte und kommt Steam nie zu nahe."
   },
   "LegitMode": {
    "label": "Menschlicher Modus",
@@ -292,28 +300,36 @@
    "label": "Bis"
   },
   "AcceptFriendRequests": {
-   "label": "Freundschaftsanfragen annehmen"
+   "label": "Freundschaftsanfragen annehmen",
+   "tip": "Nimmt eingehende Freundschaftsanfragen automatisch an. Für ein rep4rep-Konto lohnt es sich: im Profil eines Freundes lässt Steam deutlich mehr Kommentare zu."
   },
   "JoinGroup": {
-   "label": "Der nocat.farm-Gruppe beitreten"
+   "label": "Der nocat.farm-Gruppe beitreten",
+   "tip": "Lässt dieses Konto beim Anmelden einmalig der Steam-Gruppe nocat.farm beitreten. Völlig optional: aus heißt, es passiert nicht."
   },
   "AutoReplyEnabled": {
-   "label": "Auf Nachrichten antworten"
+   "label": "Auf Nachrichten antworten",
+   "tip": "Antwortet Fremden, die diesem Konto schreiben. Ausschalten behält den Text unten, du kannst es also wieder einschalten, ohne ihn neu zu tippen."
   },
   "AutoReply": {
-   "label": "Antworten mit"
+   "label": "Antworten mit",
+   "tip": "Schickt das zurück, wenn jemand diesem Konto schreibt. Leer lassen heißt: gar nichts sagen. Ein Konto, das acht Stunden am Tag spielt und nie antwortet, fällt mehr auf als eines, das \"gerade keine Zeit\" schreibt."
   },
   "AutoReplyOncePerDay": {
-   "label": "Nur einmal am Tag antworten"
+   "label": "Nur einmal am Tag antworten",
+   "tip": "Schickt diese Antwort höchstens einmal pro Tag an dieselbe Person. Ohne das bekommt, wer zweimal schreibt, zweimal exakt dieselbe Zeile - der schnellste Weg, wie ein Bot zu wirken."
   },
   "FriendRequestDelayMinMinutes": {
-   "label": "Mindestens warten"
+   "label": "Mindestens warten",
+   "tip": "Kürzeste Wartezeit, bevor eine Freundschaftsanfrage angenommen wird, in Minuten. In derselben Sekunde anzunehmen, in der sie eintrifft, ist das am leichtesten Erkennbare überhaupt."
   },
   "FriendRequestDelayMaxMinutes": {
-   "label": "Und höchstens"
+   "label": "Und höchstens",
+   "tip": "Längste Wartezeit vor dem Annehmen, in Minuten. Die echte wird zufällig zwischen beiden gewählt."
   },
   "ActOnlyWhileAwake": {
-   "label": "Nur reagieren, wenn wach"
+   "label": "Nur reagieren, wenn wach",
+   "tip": "Hält Tauschangebote, Antworten und Freundschaftsanfragen zurück, bis der Menschen-Modus sagt, dass dieses Konto auf ist. Ohne das schläft das Konto und antwortet trotzdem um vier Uhr morgens."
   },
   "AcceptDonations": {
    "label": "Geschenke annehmen",
@@ -490,6 +506,58 @@
   "ClearInventoryNotifications": {
    "label": "Den Neue-Gegenstände-Hinweis löschen",
    "tip": "Löscht Steams grünen \"neue Gegenstände\"-Zähler bei jedem Kartenfund, damit dein Inventar nicht dauerhaft als ungelesen markiert bleibt."
+  },
+  "UIMode": {
+   "label": "Anmelden als",
+   "tip": "Welche Art Steam-Client sich hier gegenüber Steam ausgibt. \"Desktop\" ist die richtige Antwort und der Standard - so meldet sich der echte Client."
+  },
+  "SteamParentalCode": {
+   "label": "Family-View-PIN",
+   "tip": "Die Family-View-PIN, falls dieses Konto Family View eingeschaltet hat. Ohne sie sperrt Steam genau die Seiten, die das Kartenfarmen lesen muss."
+  },
+  "MachineName": {
+   "label": "Gerätename",
+   "tip": "Der Gerätename, unter dem dieses Konto in Steams Liste autorisierter Geräte auftaucht. Leer lassen, um den echten Namen dieses PCs zu verwenden."
+  },
+  "SharedSecret": {
+   "label": "Geheimnis für Authenticator-Codes",
+   "tip": "Das Shared Secret des mobilen Authenticators dieses Kontos. Damit beantwortet nocat.farm die eigenen Steam-Guard-Abfragen und das Handy bleibt in der Tasche."
+  },
+  "IdentitySecret": {
+   "label": "Geheimnis für Bestätigungen",
+   "tip": "Die andere Hälfte desselben Authenticators, mit der die \"auf dem Handy bestätigen\"-Abfrage erledigt wird. Zählt nur, wenn dieses Konto Tauschangebote verschickt."
+  },
+  "AccountProxy": {
+   "label": "Proxy für dieses Konto",
+   "tip": "Schickt nur den Steam-Verkehr dieses Kontos über einen eigenen Proxy, etwa http://host:port. Leer lassen, um den globalen zu verwenden."
+  },
+  "AccountProxyUsername": {
+   "label": "Proxy-Benutzername",
+   "tip": "Benutzername für den eigenen Proxy dieses Kontos, falls er einen verlangt."
+  },
+  "AccountProxyPassword": {
+   "label": "Proxy-Passwort",
+   "tip": "Passwort für den eigenen Proxy dieses Kontos, falls er eines verlangt."
+  },
+  "AcceptGroupInvites": {
+   "label": "Gruppeneinladungen annehmen",
+   "tip": "Tritt Steam-Gruppen bei, in die dieses Konto eingeladen wird."
+  },
+  "IgnoreSuspiciousInvites": {
+   "label": "Offensichtlichen Spam ignorieren",
+   "tip": "Ignoriert stillschweigend Freundschaftsanfragen von brandneuen, privaten Level-0-Profilen - die Form, die jeder Betrugsbot hat."
+  },
+  "RejectInvalidFriendInvites": {
+   "label": "Ablehnen, was du nicht annimmst",
+   "tip": "Lehnt eine Freundschaftsanfrage aktiv ab, statt sie in der Liste stehen zu lassen. Aus heißt: alles nicht Angenommene wartet einfach weiter."
+  },
+  "AutoReplyDelaySeconds": {
+   "label": "Vor dem Antworten warten",
+   "tip": "Sekunden, die vor dem Absenden gewartet wird. Eine sofortige Antwort ist ein Roboter, der antwortet; die echte Wartezeit wird bis zu diesem Wert zufällig gewählt."
+  },
+  "CommandMasters": {
+   "label": "Befehle annehmen von",
+   "tip": "SteamID64s, die nocat.farm per Steam-Nachricht an dieses Konto steuern dürfen, per Komma getrennt. Befehle müssen mit ! beginnen."
   }
  }
 }

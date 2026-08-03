@@ -89,10 +89,12 @@
    "label": "两次登录的间隔"
   },
   "StatusEveryMinutes": {
-   "label": "汇报当前状态，每隔"
+   "label": "汇报间隔",
+   "tip": "开着游戏时，这个账户多久说一次自己在干嘛。0 表示跟随「日志」里的全局设置；-1 表示完全不说。"
   },
   "StatusQuietEveryMinutes": {
-   "label": "空闲时则每隔"
+   "label": "休息时则每隔",
+   "tip": "同上，用于账户在睡觉、休息、暂停或已下线的时候。0 跟随全局设置；-1 保持安静。"
   },
   "Language": {
    "label": "语言",
@@ -115,13 +117,16 @@
    "label": "汇总时间 · 分"
   },
   "Enabled": {
-   "label": "已启用"
+   "label": "已启用",
+   "tip": "登录这个账户。关掉则保留配置但完全不去动它。"
   },
   "SteamLogin": {
-   "label": "Steam 账户名"
+   "label": "Steam 账户名",
+   "tip": "你登录时输入的 Steam 账户名——不是显示昵称，也不是邮箱。"
   },
   "SteamPassword": {
-   "label": "密码"
+   "label": "密码",
+   "tip": "可选。留空的话 nocat.farm 会问你一次，之后用登录令牌记住这个账户——两种方式里更安全的一种。"
   },
   "OnlineStatus": {
    "label": "显示状态为",
@@ -132,13 +137,16 @@
    "tip": "如果你自己也登录这个账户，请勾选。这样 nocat.farm 就不会去改它的状态——从第二个会话改状态会把你踢出自己的 Steam 聊天。"
   },
   "StartPaused": {
-   "label": "启动后暂停"
+   "label": "启动后暂停",
+   "tip": "登录但不玩、不刷、不评论，直到你按下继续。适合那种你只想让它在线、什么也不做的账户。"
   },
   "LogColour": {
-   "label": "日志中的颜色"
+   "label": "日志中的颜色",
+   "tip": "在日志和面板里用什么颜色显示这个账户的名字。账户一多就很有用。"
   },
   "Notes": {
-   "label": "备注"
+   "label": "备注",
+   "tip": "给你自己看的说明，记录这个账户是干什么的。只显示在账户卡片上，绝不会传给 Steam。"
   },
   "LegitMode": {
    "label": "拟人模式",
@@ -292,28 +300,36 @@
    "label": "直到"
   },
   "AcceptFriendRequests": {
-   "label": "接受好友请求"
+   "label": "接受好友请求",
+   "tip": "自动接受收到的好友请求。rep4rep 账户值得打开：在好友的个人资料下，Steam 允许评论的次数多得多。"
   },
   "JoinGroup": {
-   "label": "加入 nocat.farm 组"
+   "label": "加入 nocat.farm 群组",
+   "tip": "让这个账户在登录时一次性加入 nocat.farm 的 Steam 群组。纯属可选：关掉就不会加。"
   },
   "AutoReplyEnabled": {
-   "label": "自动回复消息"
+   "label": "自动回复消息",
+   "tip": "回复给这个账户发消息的陌生人。关掉它不会清空你在下面写的内容，随时可以再打开。"
   },
   "AutoReply": {
-   "label": "回复内容"
+   "label": "回复内容",
+   "tip": "有人给这个账户发消息时就回这句。留空则什么都不说。一个每天玩八小时却从不回话的账户，比一个会说「现在不方便」的更显眼。"
   },
   "AutoReplyOncePerDay": {
-   "label": "每天只回复一次"
+   "label": "每天只回复一次",
+   "tip": "对同一个人每天最多回这句一次。否则谁连发两条，就会收到两遍一模一样的话——那是最快暴露自己是机器人的方式。"
   },
   "FriendRequestDelayMinMinutes": {
-   "label": "至少等待"
+   "label": "至少等待",
+   "tip": "接受好友请求前的最短等待（分钟）。请求一到就同一秒接受，是一个账户能做出的最容易被发现的动作。"
   },
   "FriendRequestDelayMaxMinutes": {
-   "label": "最多等待"
+   "label": "最多等待",
+   "tip": "接受前的最长等待（分钟）。实际值在两者之间随机取。"
   },
   "ActOnlyWhileAwake": {
-   "label": "仅在“清醒”时响应"
+   "label": "仅在「清醒」时响应",
+   "tip": "把交易、回复和好友请求压住，直到拟人模式说这个账户已经起床。否则账户明明在「睡觉」，却还是在凌晨四点回你消息。"
   },
   "AcceptDonations": {
    "label": "接受赠送",
@@ -490,6 +506,58 @@
   "ClearInventoryNotifications": {
    "label": "清除新物品提示",
    "tip": "每次掉卡后清掉 Steam 那个绿色的「新物品」计数，免得库存永远挂着未读标记。"
+  },
+  "UIMode": {
+   "label": "登录身份",
+   "tip": "它向 Steam 声称自己是哪种客户端。「桌面」是正确答案，也是默认值——真正的客户端就是这么报的。"
+  },
+  "SteamParentalCode": {
+   "label": "家庭监护 PIN",
+   "tip": "如果这个账户开了家庭监护，就填它的 PIN。没有它，Steam 会挡住刷卡所需要读取的页面。"
+  },
+  "MachineName": {
+   "label": "设备名称",
+   "tip": "这个账户在 Steam 授权设备列表里显示的设备名。留空则使用本机的真实名称。"
+  },
+  "SharedSecret": {
+   "label": "验证器验证码密钥",
+   "tip": "这个账户手机验证器的 shared secret。有了它，nocat.farm 就能自己回答 Steam 令牌提示，不用再掏手机。"
+  },
+  "IdentitySecret": {
+   "label": "验证器确认密钥",
+   "tip": "同一个验证器的另一半，用来处理「请在手机上确认」的提示。只有这个账户要发送交易时才有意义。"
+  },
+  "AccountProxy": {
+   "label": "此账户专用代理",
+   "tip": "只把这个账户的 Steam 流量走它自己的代理，例如 http://主机:端口。留空则用全局代理。"
+  },
+  "AccountProxyUsername": {
+   "label": "代理用户名",
+   "tip": "这个账户专用代理的用户名（如果需要的话）。"
+  },
+  "AccountProxyPassword": {
+   "label": "代理密码",
+   "tip": "这个账户专用代理的密码（如果需要的话）。"
+  },
+  "AcceptGroupInvites": {
+   "label": "接受群组邀请",
+   "tip": "加入这个账户被邀请的 Steam 群组。"
+  },
+  "IgnoreSuspiciousInvites": {
+   "label": "忽略明显的垃圾邀请",
+   "tip": "悄悄忽略来自全新的 0 级私密资料的好友请求——所有诈骗机器人都长这样。"
+  },
+  "RejectInvalidFriendInvites": {
+   "label": "主动拒绝不接受的请求",
+   "tip": "主动拒掉好友请求，而不是让它一直挂在列表里。关掉的话，没被接受的就只是一直等着。"
+  },
+  "AutoReplyDelaySeconds": {
+   "label": "回复前等待",
+   "tip": "回复发出前先等多少秒。秒回就是机器人在回；真正的等待时间会在这个上限内随机。"
+  },
+  "CommandMasters": {
+   "label": "接受来自这些人的命令",
+   "tip": "允许通过 Steam 给这个账户发消息来操作 nocat.farm 的 SteamID64，用逗号分隔。命令必须以 ! 开头。"
   }
  }
 }
