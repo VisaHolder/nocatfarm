@@ -233,20 +233,24 @@
    "tip": "Muestra un nombre inventado en lugar del juego real en tu lista de amigos. Las horas siguen contando en el juego de verdad."
   },
   "CustomGameName": {
-   "label": "Mostrar como"
+   "label": "Mostrar como",
+   "tip": "Muestra este nombre en tu perfil y tu lista de amigos en lugar del juego real. Los juegos de verdad siguen acumulando horas por debajo: pasan las dos cosas a la vez."
   },
   "FarmCards": {
    "label": "Farmear cromos",
    "tip": "Consigue los cromos que aún quedan por caer en tu biblioteca, y para cuando no queda ninguno. No hay nada que configurar."
   },
   "HoursUntilCardDrops": {
-   "label": "Horas antes de que caigan cromos"
+   "label": "Horas antes de que caigan cromos",
+   "tip": "Horas que necesita un juego para que Steam le suelte cromos. 3 va bien para casi todas las cuentas; pon 0 si esta cuenta ha gastado más de 5 $ en Steam."
   },
   "FarmingOrder": {
-   "label": "Farmear en este orden"
+   "label": "Farmear en este orden",
+   "tip": "Qué juego farmear primero. «Menos cromos restantes» termina insignias antes; «más jugado primero» añade la menor cantidad de horas nuevas a tu biblioteca."
   },
   "FarmOffline": {
-   "label": "Farmear apareciendo desconectado"
+   "label": "Farmear apareciendo desconectado",
+   "tip": "Aparece desconectado para tus amigos mientras esta cuenta farmea. Steam sigue contando cada hora y cada cromo cae igual; lo único que cambia es que nadie lo ve."
   },
   "UnlockAchievements": {
    "label": "Ganar logros con el tiempo",
@@ -359,6 +363,66 @@
   "MaxSignOutsPerDay": {
    "label": "Desconectarse como mucho",
    "tip": "Un tope de cuántas veces al día hace eso, para que la cuenta no esté parpadeando en tu lista de amigos toda la tarde. 0 lo desactiva y entonces cada descanso es solo Ausente."
+  },
+  "PlayWhileFarming": {
+   "label": "Mantener el nombre al farmear",
+   "tip": "Mantiene el nombre personalizado visible incluso mientras se farmean cromos. Desactívalo y el farmeo mostrará el juego real."
+  },
+  "GameDevice": {
+   "label": "Jugar como si fuera en",
+   "tip": "En qué tipo de máquina creen tus amigos que estás jugando: esto es lo que pone la insignia de Steam Deck o de móvil junto a tu nombre."
+  },
+  "PriorityGames": {
+   "label": "Farmear estos primero",
+   "tip": "AppIDs que farmear antes que nada, diga lo que diga el orden."
+  },
+  "FarmPriorityOnly": {
+   "label": "Farmear solo esos",
+   "tip": "Farmea únicamente los juegos de la lista de prioridad e ignora todos los demás que aún tengan cromos."
+  },
+  "BlacklistedGames": {
+   "label": "No tocar nunca estos",
+   "tip": "AppIDs que nunca se farmean ni se ejecutan, diga lo que diga la página de insignias."
+  },
+  "SkipUnplayedGames": {
+   "label": "Saltar juegos que nunca has jugado",
+   "tip": "Se salta los juegos que nunca has abierto tú, para que nocat.farm no ponga las primeras horas de tu vida en juegos que preferirías que nadie viera."
+  },
+  "RefundHoldDays": {
+   "label": "...durante estos días",
+   "tip": "Cuántos días se deja en paz un juego recién comprado. La ventana de reembolso de Steam son 14 días, que es el valor por defecto; súbelo si tardas más en decidirte."
+  },
+  "FarmOnlyWhileAsleep": {
+   "label": "Farmear cromos solo mientras duerme",
+   "tip": "Solo en modo humano: retiene el farmeo hasta que la cuenta se duerme por la noche (cuando se vuelve invisible), entonces farmea, y de día juega su horario normal."
+  },
+  "FarmFromHour": {
+   "label": "Farmear cromos solo desde",
+   "tip": "Farmea cromos solo a partir de esta hora, en formato de 24 horas. Deja esta y «hasta» en 0 para farmear a cualquier hora."
+  },
+  "FarmUntilHour": {
+   "label": "...hasta",
+   "tip": "Farmea cromos hasta esta hora (24 horas). Ponla antes que «desde» y la ventana cruza la medianoche: por ejemplo, de 22 a 6 farmea de noche."
+  },
+  "PostFarmWindDownMinMinutes": {
+   "label": "Tras el último cromo, seguir jugando al menos",
+   "tip": "Solo en modo humano: cuando termina una tanda de farmeo, deja ese juego puesto un rato al azar dentro de este rango (minutos) antes de apartarse, en vez de cerrarlo en el mismo segundo."
+  },
+  "PostFarmWindDownMaxMinutes": {
+   "label": "...hasta",
+   "tip": "El máximo de ese margen tras el farmeo, en minutos."
+  },
+  "FarmingDelayMinutes": {
+   "label": "Volver a comprobar cada",
+   "tip": "Cada cuánto vuelve a comprobar un juego mientras lo farmea, en minutos. Steam avisa de los cromos en el momento en que caen, así que esto es solo una red de seguridad."
+  },
+  "MaxFarmingHoursPerGame": {
+   "label": "Rendirse tras",
+   "tip": "Se rinde con un juego tras estas horas y pasa al siguiente. Evita que un juego roto bloquee la cola para siempre."
+  },
+  "StopWhenFarmingDone": {
+   "label": "Desconectarse al terminar",
+   "tip": "Desconecta esta cuenta en cuanto no quedan cromos por farmear, en lugar de quedarse acumulando horas."
   }
  }
 }

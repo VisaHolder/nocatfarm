@@ -233,20 +233,24 @@
    "tip": "Mostra um nome inventado no lugar do jogo real na sua lista de amigos. As horas continuam contando para o jogo de verdade."
   },
   "CustomGameName": {
-   "label": "Mostrar como"
+   "label": "Mostrar como",
+   "tip": "Mostra este nome no seu perfil e na lista de amigos no lugar do jogo real. Os jogos de verdade continuam acumulando horas por baixo - as duas coisas acontecem juntas."
   },
   "FarmCards": {
    "label": "Farmar cartas",
    "tip": "Pega as cartas que ainda faltam cair na sua biblioteca e para quando não sobra nenhuma. Nada para configurar."
   },
   "HoursUntilCardDrops": {
-   "label": "Horas antes das cartas caírem"
+   "label": "Horas antes das cartas caírem",
+   "tip": "Horas que um jogo precisa para a Steam soltar cartas. 3 serve para quase toda conta; ponha 0 se esta conta já gastou mais de US$ 5 na Steam."
   },
   "FarmingOrder": {
-   "label": "Farmar nesta ordem"
+   "label": "Farmar nesta ordem",
+   "tip": "Qual jogo farmar primeiro. \"Menos cartas restantes\" termina emblemas mais cedo; \"mais jogado primeiro\" adiciona menos horas novas à sua biblioteca."
   },
   "FarmOffline": {
-   "label": "Farmar aparecendo offline"
+   "label": "Farmar aparecendo offline",
+   "tip": "Aparece offline para seus amigos enquanto esta conta farma. A Steam continua contando cada hora e cada carta cai igual; a única coisa que muda é que ninguém vê."
   },
   "UnlockAchievements": {
    "label": "Ganhar conquistas com o tempo",
@@ -359,6 +363,66 @@
   "MaxSignOutsPerDay": {
    "label": "Sair no máximo",
    "tip": "Um teto de quantas vezes por dia ele faz isso, para a conta não ficar piscando na sua lista de amigos a noite toda. 0 desliga e aí toda pausa é só Ausente."
+  },
+  "PlayWhileFarming": {
+   "label": "Manter o nome ao farmar",
+   "tip": "Mantém o nome personalizado visível mesmo enquanto farma cartas. Desligue e o farm mostra o jogo real."
+  },
+  "GameDevice": {
+   "label": "Jogar como se fosse em",
+   "tip": "Em que tipo de aparelho seus amigos acham que você está jogando - é isto que põe o selo de Steam Deck ou de celular ao lado do seu nome."
+  },
+  "PriorityGames": {
+   "label": "Farmar estes primeiro",
+   "tip": "AppIDs para farmar antes de tudo, não importa a ordem escolhida."
+  },
+  "FarmPriorityOnly": {
+   "label": "Farmar só esses",
+   "tip": "Farma apenas os jogos da lista de prioridade e ignora todos os outros que ainda têm cartas."
+  },
+  "BlacklistedGames": {
+   "label": "Nunca tocar nestes",
+   "tip": "AppIDs que nunca são farmados nem rodados, não importa o que diga a página de emblemas."
+  },
+  "SkipUnplayedGames": {
+   "label": "Pular jogos que você nunca jogou",
+   "tip": "Pula os jogos que você nunca abriu, para o nocat.farm não colocar as primeiras horas em jogos que você prefere que ninguém veja."
+  },
+  "RefundHoldDays": {
+   "label": "...por estes dias",
+   "tip": "Quantos dias um jogo recém-comprado fica em paz. A janela de reembolso da Steam é de 14 dias, que é o padrão; aumente se você demora mais para decidir."
+  },
+  "FarmOnlyWhileAsleep": {
+   "label": "Farmar cartas só enquanto dorme",
+   "tip": "Só no modo humano: segura o farm até a conta dormir à noite (quando fica invisível), aí farma, e de dia joga o horário normal."
+  },
+  "FarmFromHour": {
+   "label": "Farmar cartas só a partir das",
+   "tip": "Farma cartas só a partir desta hora, no relógio de 24 horas. Deixe esta e a de \"até\" em 0 para farmar a qualquer hora."
+  },
+  "FarmUntilHour": {
+   "label": "...até",
+   "tip": "Farma cartas até esta hora (24 horas). Ponha-a antes de \"a partir de\" e a janela atravessa a meia-noite - por exemplo, 22 às 6 farma de madrugada."
+  },
+  "PostFarmWindDownMinMinutes": {
+   "label": "Depois da última carta, continuar pelo menos",
+   "tip": "Só no modo humano: quando uma rodada de farm termina, mantém aquele jogo aberto por um tempo aleatório nesta faixa (minutos) antes de sair, em vez de fechar no mesmo segundo."
+  },
+  "PostFarmWindDownMaxMinutes": {
+   "label": "...até",
+   "tip": "O topo dessa margem depois do farm, em minutos."
+  },
+  "FarmingDelayMinutes": {
+   "label": "Verificar de novo a cada",
+   "tip": "De quanto em quanto tempo reconfere um jogo enquanto o farma, em minutos. A Steam avisa das cartas no instante em que caem, então isto é só uma rede de segurança."
+  },
+  "MaxFarmingHoursPerGame": {
+   "label": "Desistir depois de",
+   "tip": "Desiste de um jogo depois destas horas e passa para o próximo. Evita que um jogo quebrado trave a fila para sempre."
+  },
+  "StopWhenFarmingDone": {
+   "label": "Sair ao terminar",
+   "tip": "Desconecta esta conta assim que não sobram cartas para farmar, em vez de ficar acumulando horas."
   }
  }
 }

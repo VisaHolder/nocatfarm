@@ -233,20 +233,24 @@
    "tip": "Arkadaş listende gerçek oyun yerine uydurma bir ad gösterir. Saatler yine gerçek oyuna işlemeye devam eder."
   },
   "CustomGameName": {
-   "label": "Şöyle göster"
+   "label": "Şöyle göster",
+   "tip": "Profilinde ve arkadaş listende gerçek oyun yerine bu adı gösterir. Gerçek oyunlar altta saat biriktirmeye devam eder - ikisi aynı anda olur."
   },
   "FarmCards": {
    "label": "Kart topla",
    "tip": "Kütüphanende düşmeyi bekleyen kartları toplar ve hiçbiri kalmayınca durur. Ayarlanacak bir şey yok."
   },
   "HoursUntilCardDrops": {
-   "label": "Kart düşene kadar saat"
+   "label": "Kart düşene kadar saat",
+   "tip": "Steam'in bir oyun için kart vermesine kadar gereken saat. Çoğu hesap için 3 doğrudur; bu hesap Steam'de 5 dolardan fazla harcadıysa 0 yapın."
   },
   "FarmingOrder": {
-   "label": "Bu sırayla topla"
+   "label": "Bu sırayla topla",
+   "tip": "Önce hangi oyunun toplanacağı. \"En az kart kalan\" rozetleri en çabuk bitirir; \"en çok oynanan önce\" kütüphanene en az yeni süre ekler."
   },
   "FarmOffline": {
-   "label": "Çevrimdışı görünerek topla"
+   "label": "Çevrimdışı görünerek topla",
+   "tip": "Bu hesap toplarken arkadaşlarına çevrimdışı görünür. Steam yine her saati sayar ve kartlar yine düşer; değişen tek şey kimsenin görmemesidir."
   },
   "UnlockAchievements": {
    "label": "Zamanla başarım kazan",
@@ -359,6 +363,66 @@
   "MaxSignOutsPerDay": {
    "label": "En fazla şu kadar çevrimdışı ol",
    "tip": "Bunu günde kaç kez yaptığının tavanı - hesap bütün akşam arkadaş listende yanıp sönmesin diye. 0 kapatır, o zaman her mola sadece Uzakta olur."
+  },
+  "PlayWhileFarming": {
+   "label": "Kart toplarken adı koru",
+   "tip": "Kart toplanırken bile özel adı görünür tutar. Kapatırsan kart toplama gerçek oyunu gösterir."
+  },
+  "GameDevice": {
+   "label": "Şu cihazda oynuyormuş gibi",
+   "tip": "Arkadaşlarının seni hangi tür cihazda oynuyor sandığı - adının yanındaki küçük Steam Deck veya telefon rozetini koyan budur."
+  },
+  "PriorityGames": {
+   "label": "Önce bunları topla",
+   "tip": "Sıralama ne derse desin, her şeyden önce toplanacak appID'ler."
+  },
+  "FarmPriorityOnly": {
+   "label": "Yalnızca onları topla",
+   "tip": "Sadece öncelik listesindeki oyunları toplar, hâlâ kartı olan diğer her oyunu görmezden gelir."
+  },
+  "BlacklistedGames": {
+   "label": "Bunlara asla dokunma",
+   "tip": "Rozet sayfası ne derse desin asla toplanmayacak ve asla çalıştırılmayacak appID'ler."
+  },
+  "SkipUnplayedGames": {
+   "label": "Hiç oynamadığın oyunları atla",
+   "tip": "Kendin hiç başlatmadığın oyunları atlar; böylece nocat.farm, kimsenin görmesini istemediğin oyunlara ilk kez süre yazmaz."
+  },
+  "RefundHoldDays": {
+   "label": "...şu kadar gün boyunca",
+   "tip": "Yeni alınmış bir oyunun kaç gün rahat bırakılacağı. Steam'in kendi iade penceresi 14 gündür, varsayılan da odur; karar vermen daha uzun sürüyorsa artır."
+  },
+  "FarmOnlyWhileAsleep": {
+   "label": "Kartları yalnızca uyurken topla",
+   "tip": "Yalnızca insan modu: hesap gece uyuyana (görünmez olana) kadar kart toplamayı bekletir, sonra toplar; gündüz normal programını oynar."
+  },
+  "FarmFromHour": {
+   "label": "Kartları yalnızca şu saatten sonra topla",
+   "tip": "Kartları yalnızca bu saatten itibaren toplar, 24 saatlik gösterimle. Bunu ve \"kadar\" değerini 0 bırakırsan her saat toplar."
+  },
+  "FarmUntilHour": {
+   "label": "...şu saate kadar",
+   "tip": "Kartları bu saate kadar toplar (24 saat). \"Şu saatten\" değerinden erken yaparsan pencere gece yarısını aşar - örneğin 22'den 6'ya gece boyu toplar."
+  },
+  "PostFarmWindDownMinMinutes": {
+   "label": "Son karttan sonra en az şu kadar devam et",
+   "tip": "Yalnızca insan modu: bir toplama turu bittiğinde, aynı saniye kapatmak yerine o oyunu bu aralıkta rastgele bir süre (dakika) açık tutar."
+  },
+  "PostFarmWindDownMaxMinutes": {
+   "label": "...şu kadara kadar",
+   "tip": "Toplama sonrası bu yavaşlama süresinin üst sınırı, dakika."
+  },
+  "FarmingDelayMinutes": {
+   "label": "Şu sıklıkta yeniden bak",
+   "tip": "Bir oyunu toplarken ne sıklıkla yeniden kontrol edileceği, dakika. Steam kartları düştükleri anda bildirir, yani bu sadece bir emniyet ağıdır."
+  },
+  "MaxFarmingHoursPerGame": {
+   "label": "Şu kadar saat sonra vazgeç",
+   "tip": "Bir oyundan bu kadar saat sonra vazgeçip sıradakine geçer. Bozuk tek bir oyunun kuyruğu sonsuza dek tıkamasını engeller."
+  },
+  "StopWhenFarmingDone": {
+   "label": "Bitince çıkış yap",
+   "tip": "Toplanacak kart kalmadığı anda bu hesabı çıkarır, saat biriktirmeye devam etmek yerine."
   }
  }
 }

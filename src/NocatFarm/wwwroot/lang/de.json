@@ -233,20 +233,24 @@
    "tip": "Zeigt in deiner Freundesliste einen ausgedachten Namen statt des echten Spiels. Die Stunden zählen weiter fürs echte Spiel."
   },
   "CustomGameName": {
-   "label": "Anzeigen als"
+   "label": "Anzeigen als",
+   "tip": "Zeigt diesen Namen im Profil und in der Freundesliste statt des echten Spiels. Die echten Spiele sammeln darunter weiter Stunden - beides gleichzeitig."
   },
   "FarmCards": {
    "label": "Sammelkarten farmen",
    "tip": "Holt die Sammelkarten, die deine Bibliothek noch hergibt, und hört auf, wenn keine mehr kommen. Nichts einzustellen."
   },
   "HoursUntilCardDrops": {
-   "label": "Stunden bis Karten fallen"
+   "label": "Stunden bis Karten fallen",
+   "tip": "Stunden, die ein Spiel braucht, bevor Steam Karten dafür ausgibt. 3 passt für die meisten Konten; 0, wenn dieses Konto über 5 $ bei Steam ausgegeben hat."
   },
   "FarmingOrder": {
-   "label": "In dieser Reihenfolge farmen"
+   "label": "In dieser Reihenfolge farmen",
+   "tip": "Welches Spiel zuerst. \"Wenigste Karten übrig\" macht Abzeichen am schnellsten fertig; \"meistgespielte zuerst\" fügt deiner Bibliothek am wenigsten neue Spielzeit hinzu."
   },
   "FarmOffline": {
-   "label": "Farmen und dabei offline erscheinen"
+   "label": "Farmen und dabei offline erscheinen",
+   "tip": "Erscheint deinen Freunden offline, während dieses Konto farmt. Steam zählt jede Stunde weiter und jede Karte fällt trotzdem - nur sieht es niemand."
   },
   "UnlockAchievements": {
    "label": "Errungenschaften mit der Zeit verdienen",
@@ -359,6 +363,66 @@
   "MaxSignOutsPerDay": {
    "label": "Höchstens so oft offline gehen",
    "tip": "Eine Obergrenze, wie oft am Tag das passiert, damit das Konto nicht den ganzen Abend in deiner Freundesliste flackert. 0 schaltet es ab, dann ist jede Pause nur Abwesend."
+  },
+  "PlayWhileFarming": {
+   "label": "Namen auch beim Farmen behalten",
+   "tip": "Behält den eigenen Namen sichtbar, auch während Karten gefarmt werden. Aus heißt: das Kartenfarmen zeigt das echte Spiel."
+  },
+  "GameDevice": {
+   "label": "Spielen wie auf",
+   "tip": "Auf was für einem Gerät deine Freunde dich spielen sehen - das setzt das kleine Steam-Deck- oder Handy-Symbol neben deinen Namen."
+  },
+  "PriorityGames": {
+   "label": "Diese zuerst farmen",
+   "tip": "AppIDs, die vor allem anderen gefarmt werden, ganz gleich was die Sortierung sagt."
+  },
+  "FarmPriorityOnly": {
+   "label": "Nur diese farmen",
+   "tip": "Farmt ausschließlich die Spiele der Prioritätsliste und ignoriert jedes andere, das noch Karten hat."
+  },
+  "BlacklistedGames": {
+   "label": "Diese nie anfassen",
+   "tip": "AppIDs, die nie gefarmt und nie laufen gelassen werden, ganz gleich was die Abzeichenseite sagt."
+  },
+  "SkipUnplayedGames": {
+   "label": "Nie gespielte Spiele überspringen",
+   "tip": "Überspringt Spiele, die du selbst nie gestartet hast - damit nocat.farm nicht die allerersten Stunden auf Spielen sammelt, die lieber niemand sehen soll."
+  },
+  "RefundHoldDays": {
+   "label": "...für so viele Tage",
+   "tip": "Wie lange ein frisch gekauftes Spiel in Ruhe gelassen wird, in Tagen. Steams eigenes Rückgabefenster sind 14 Tage - der Standard; höher, wenn du länger überlegst."
+  },
+  "FarmOnlyWhileAsleep": {
+   "label": "Karten nur im Schlaf farmen",
+   "tip": "Nur im Menschen-Modus: hält das Kartenfarmen zurück, bis das Konto für die Nacht schläft (und unsichtbar wird), farmt dann, und spielt tagsüber seinen normalen Plan."
+  },
+  "FarmFromHour": {
+   "label": "Karten erst ab",
+   "tip": "Farmt Karten erst ab dieser Stunde, im 24-Stunden-Format. Diese und \"bis\" beide auf 0 lassen, um jederzeit zu farmen."
+  },
+  "FarmUntilHour": {
+   "label": "...bis",
+   "tip": "Farmt Karten bis zu dieser Stunde (24 Stunden). Früher als \"ab\" gesetzt, läuft das Fenster über Mitternacht - 22 bis 6 farmt also über Nacht."
+  },
+  "PostFarmWindDownMinMinutes": {
+   "label": "Nach der letzten Karte noch mindestens",
+   "tip": "Nur im Menschen-Modus: wenn ein Farmlauf endet, bleibt das Spiel noch eine zufällige Zeit in dieser Spanne (Minuten) an, bevor es weggeht - statt in derselben Sekunde zu schließen."
+  },
+  "PostFarmWindDownMaxMinutes": {
+   "label": "...bis zu",
+   "tip": "Die Obergrenze dieses Auslaufens nach dem Farmen, in Minuten."
+  },
+  "FarmingDelayMinutes": {
+   "label": "Erneut prüfen alle",
+   "tip": "Wie oft ein Spiel beim Farmen erneut geprüft wird, in Minuten. Steam meldet Karten in dem Moment, in dem sie fallen - das hier ist nur ein Sicherheitsnetz."
+  },
+  "MaxFarmingHoursPerGame": {
+   "label": "Aufgeben nach",
+   "tip": "Gibt ein Spiel nach so vielen Stunden auf und geht zum nächsten. Verhindert, dass ein kaputtes Spiel die Warteschlange für immer blockiert."
+  },
+  "StopWhenFarmingDone": {
+   "label": "Abmelden, wenn fertig",
+   "tip": "Meldet dieses Konto ab, sobald keine Karten mehr zu farmen sind, statt weiter Stunden zu sammeln."
   }
  }
 }
