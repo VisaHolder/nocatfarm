@@ -97,6 +97,7 @@ public sealed class BotManager : IAsyncDisposable {
 		bot.AddModule(new GroupJoin(bot));
 		bot.AddModule(new Trading(bot));
 		bot.AddModule(new AchievementPacer(bot));
+		bot.AddModule(new AchievementBoost(bot));
 		bot.AddModule(new Heartbeat(bot));
 	}
 

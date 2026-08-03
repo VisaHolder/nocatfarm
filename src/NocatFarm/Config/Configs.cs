@@ -183,6 +183,11 @@ public sealed class BotConfig {
 	public bool UnlockAchievements { get; set; }
 	public int AchievementGrindGapMinMinutes { get; set; } = 12;
 	public int AchievementGrindGapMaxMinutes { get; set; } = 24;
+	public int AchievementBoost { get; set; }              // 0 off, 1 games you pick
+	public List<uint> AchievementBoostGames { get; set; } = [];
+	public int BoostSessionHours { get; set; } = 2;
+	public int MaxBoostGamesInARow { get; set; } = 3;
+	public int BoostRestMinutesHuman { get; set; } = 120;
 	public List<uint> AchievementGames { get; set; } = [];
 
 	/// <summary>Games never to unlock in, on top of the built-in refusal to ever touch CS2.</summary>
