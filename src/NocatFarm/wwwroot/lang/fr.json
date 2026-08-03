@@ -257,10 +257,12 @@
    "tip": "Gagne des succès peu à peu à partir du temps de jeu réel, en commençant par les plus courants. Rien n'est débloqué que les heures ne justifient, et un jeu n'est jamais terminé à 100 %."
   },
   "AchievementPace": {
-   "label": "À quelle vitesse"
+   "label": "À quelle vitesse",
+   "tip": "Combien de temps entre deux déblocages. « Prudent » double chaque intervalle, ce qu'il faut sur un compte censé résister à un vrai coup d'œil."
   },
   "AchievementMaxCompletionPct": {
-   "label": "Ne jamais terminer plus de"
+   "label": "Ne jamais terminer plus de",
+   "tip": "Un plafond dur sur ce qui est terminé dans un jeu, en pourcentage. 0 laisse à chaque jeu son propre plafond ajusté, en général la meilleure réponse : un puzzle de 3 heures et une campagne de 500 ne devraient pas s'arrêter au même chiffre. Le 100% sur un compte idle est lui-même le signe, donc jamais au-delà de 95."
   },
   "ClaimFreeGames": {
    "label": "Récupérer les jeux gratuits",
@@ -338,7 +340,8 @@
    "tip": "Si vous vous mettez à jouer, le compte s'efface aussitôt et attend avant de reprendre."
   },
   "ResumeDelayMinutes": {
-   "label": "Attendre avant de reprendre"
+   "label": "Attendre avant de reprendre",
+   "tip": "Combien de temps attendre après que vous arrêtez de jouer avant que ce compte reprenne discrètement où il en était, en minutes."
   },
   "AchievementBoost": {
    "tip": "Chasse les succès tout seul sur plusieurs jeux, sans que vous lanciez chaque session à la main. Désactivé par défaut. « Tous les solo » choisit dans votre bibliothèque : uniquement de vrais jeux (jamais de DLC ni de démos), avec des succès et assez d'évaluations."
@@ -423,6 +426,70 @@
   "StopWhenFarmingDone": {
    "label": "Se déconnecter une fois fini",
    "tip": "Déconnecte ce compte dès qu'il ne reste plus de cartes à farmer, au lieu de continuer à accumuler des heures."
+  },
+  "AchievementBoostGames": {
+   "label": "Booster ces jeux",
+   "tip": "Les jeux que le boost parcourt, séparés par des virgules (appID ou liens du magasin). Utilisé seulement quand le boost est sur « jeux que vous choisissez »."
+  },
+  "BoostSessionHours": {
+   "label": "Jouer chacun environ",
+   "tip": "Combien de temps le boost reste sur un jeu avant de passer au suivant, en heures."
+  },
+  "MaxBoostGamesInARow": {
+   "label": "Mode humain : boosts d'affilée au plus",
+   "tip": "Mode humain seulement : combien de sessions de boost s'enchaînent avant une plus longue tranche du programme normal, pour qu'un compte légitime reste d'abord son programme."
+  },
+  "BoostRestMinutesHuman": {
+   "label": "Mode humain : intervalle de programme entre boosts",
+   "tip": "Mode humain seulement : minutes de programme normal entre deux sessions de boost, pour que la chasse ne domine jamais la journée d'un compte légitime."
+  },
+  "BoostMinReviews": {
+   "label": "Ne chasser que les jeux avec au moins",
+   "tip": "Le nombre d'évaluations Steam qu'il faut à un jeu pour que « tous les solo » s'y intéresse. C'est le filtre anti-remplissage de bundle : personne n'a d'explication pour une soirée passée sur un jeu à onze évaluations jamais lancé. 0 prend tout. Ignoré pour les jeux choisis à la main."
+  },
+  "BoostOnlyPlayedGames": {
+   "label": "Ne chasser que des jeux déjà lancés",
+   "tip": "Limite « tous les solo » aux jeux que ce compte a déjà lancés au moins une fois. Désactivé par défaut - qu'un chasseur commence un nouveau jeu est parfaitement normal - mais c'est la façon la plus stricte de le cantonner à des jeux cohérents avec son historique."
+  },
+  "InventoryIgnoreGames": {
+   "label": "...mais pas ces jeux",
+   "tip": "AppID à exclure de la valeur d'inventaire, séparés par des virgules. C'est ici qu'on met un jeu où le compte est BANNI : les objets restent dans l'inventaire mais ne pourront jamais être vendus, donc les compter gonfle le total. Steam ne dit pas dans quel jeu porte un bannissement, et rien dans l'inventaire ne le montre de façon fiable - c'est donc une liste que vous remplissez plutôt qu'une devinette."
+  },
+  "YieldToFamily": {
+   "label": "Rendre un jeu partagé quand ils le veulent",
+   "tip": "Si quelqu'un de la famille lance un jeu que ce compte emprunte, il le rend immédiatement et passe au suivant. Steam ne prête un jeu partagé qu'à une personne à la fois et le propriétaire gagne toujours : sinon le compte est éjecté en pleine session et reste à « jouer » à ce qu'il n'a plus. Le jeu reste hors rotation vingt minutes après qu'ils s'arrêtent, plutôt que d'être repris à la seconde où ils ferment."
+  },
+  "HoldNewFamilyGames": {
+   "label": "Laisser tranquilles les jeux familiaux tout neufs",
+   "tip": "Ignore un jeu partagé pendant ses deux premières semaines dans la bibliothèque familiale (le même nombre de jours que « protéger les jeux remboursables »), au cas où l'acheteur hésiterait encore. Il ne peut se fonder que sur la date d'ARRIVÉE du jeu, jamais sur le temps de jeu du propriétaire - ce chiffre n'est pas visible depuis ce compte. Il retiendra donc parfois un jeu où le propriétaire a déjà des heures et qu'il ne peut plus se faire rembourser."
+  },
+  "IncludeFamilyLibrary": {
+   "label": "Inclure les jeux partagés en famille",
+   "tip": "Chasse aussi les jeux partagés avec ce compte via une Famille Steam. Les succès obtenus sur un jeu emprunté sont enregistrés sur CE compte, exactement comme pour un jeu possédé. Les jeux que la famille a exclus du partage sont ignorés, comme tout ce qui n'est pas un jeu. Les jeux possédés passent toujours avant les empruntés, car le propriétaire peut reprendre le sien à tout moment."
+  },
+  "AchievementGrindGapMinMinutes": {
+   "label": "En grind, un succès toutes les",
+   "tip": "L'écart entre deux déblocages pendant un GRIND, en minutes (le bas d'une fourchette variable). Un grind, c'est rester activement sur un jeu : c'est donc le rythme de quelqu'un qui chasse pour de bon, pas le goutte-à-goutte de fond. Toujours du plus facile au plus difficile, et toujours limité par les heures dans le jeu."
+  },
+  "AchievementGrindGapMaxMinutes": {
+   "label": "...jusqu'à",
+   "tip": "Le haut de l'écart pendant un grind, en minutes."
+  },
+  "AchievementNeverGames": {
+   "label": "Jamais dans ces jeux",
+   "tip": "Jeux à laisser entièrement tranquilles : aucun succès n'est jamais écrit pour ce qui figure ici, et le boost n'en choisit jamais un. En mode humain, le jeu phare du compte est également ignoré. (Note : certains jeux, comme Counter-Strike 2, gardent leurs succès côté serveur - rien ne peut les débloquer de toute façon.)"
+  },
+  "AchievementGames": {
+   "label": "Seulement ces jeux",
+   "tip": "Limite à ces appID. Laissez vide pour n'importe quel jeu auquel le compte joue."
+  },
+  "UnpackBoosterPacks": {
+   "label": "Ouvrir les packs de boost",
+   "tip": "Ouvre automatiquement les packs de boost qui arrivent dans votre inventaire, pour que les cartes à l'intérieur comptent dans les séries qui servent à fabriquer les badges."
+  },
+  "ClearInventoryNotifications": {
+   "label": "Effacer le badge d'objets nouveaux",
+   "tip": "Efface le compteur vert « nouveaux objets » de Steam à chaque carte obtenue, pour que votre inventaire ne reste pas signalé comme non lu en permanence."
   }
  }
 }

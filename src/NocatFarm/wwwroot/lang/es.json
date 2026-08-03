@@ -257,10 +257,12 @@
    "tip": "Consigue logros poco a poco a partir del tiempo real de juego, empezando por los más comunes. Nunca desbloquea nada que las horas jugadas no justifiquen, y nunca completa un juego al 100%."
   },
   "AchievementPace": {
-   "label": "A qué ritmo"
+   "label": "A qué ritmo",
+   "tip": "Cuánto esperar entre desbloqueos. «Con calma» dobla cada intervalo, que es lo que quieres en una cuenta pensada para aguantar que alguien la mire de verdad."
   },
   "AchievementMaxCompletionPct": {
-   "label": "Nunca completar más del"
+   "label": "Nunca completar más del",
+   "tip": "Un tope duro de cuánto se completa un juego cualquiera, en porcentaje. 0 deja que cada juego use su propio techo ajustado, que suele ser mejor respuesta: un puzle de 3 horas y una campaña de 500 no deberían parar en la misma cifra. El 100% en una cuenta idle es en sí el delator, así que nunca pasa de 95."
   },
   "ClaimFreeGames": {
    "label": "Reclamar juegos gratis",
@@ -338,7 +340,8 @@
    "tip": "Si empiezas a jugar tú, la cuenta se aparta al instante y espera antes de retomar lo suyo."
   },
   "ResumeDelayMinutes": {
-   "label": "Esperar antes de reanudar"
+   "label": "Esperar antes de reanudar",
+   "tip": "Cuánto espera después de que dejes de jugar antes de que esta cuenta retome discretamente lo que estaba haciendo, en minutos."
   },
   "AchievementBoost": {
    "tip": "Busca logros por sí mismo en varios juegos, sin que tengas que iniciar cada sesión a mano. Desactivado por defecto. «Todos los de un jugador» elige de tu biblioteca: solo juegos de verdad (nunca DLC ni demos), con logros y con reseñas suficientes."
@@ -423,6 +426,70 @@
   "StopWhenFarmingDone": {
    "label": "Desconectarse al terminar",
    "tip": "Desconecta esta cuenta en cuanto no quedan cromos por farmear, en lugar de quedarse acumulando horas."
+  },
+  "AchievementBoostGames": {
+   "label": "Impulsar estos juegos",
+   "tip": "Los juegos por los que pasa el impulso, separados por comas (appIDs o URLs de la tienda). Solo se usa cuando el impulso está en «juegos que elijas»."
+  },
+  "BoostSessionHours": {
+   "label": "Jugar cada uno unas",
+   "tip": "Cuánto se queda el impulso en un juego antes de pasar al siguiente, en horas."
+  },
+  "MaxBoostGamesInARow": {
+   "label": "Modo humano: impulsos seguidos como máximo",
+   "tip": "Solo en modo humano: cuántas sesiones de impulso hace seguidas antes de un tramo más largo del horario normal, para que una cuenta legítima siga siendo ante todo su horario."
+  },
+  "BoostRestMinutesHuman": {
+   "label": "Modo humano: hueco de horario entre impulsos",
+   "tip": "Solo en modo humano: minutos de horario normal entre sesiones de impulso, para que la caza nunca domine el día de una cuenta legítima."
+  },
+  "BoostMinReviews": {
+   "label": "Solo cazar juegos con al menos",
+   "tip": "Reseñas de Steam que necesita un juego para que «todos los de un jugador» lo cace. Este es el filtro contra el relleno de packs: nadie tiene explicación para haber pasado una tarde en un juego con once reseñas que jamás ha abierto. 0 caza de todo. Se ignora en los juegos que eliges a mano."
+  },
+  "BoostOnlyPlayedGames": {
+   "label": "Cazar solo en juegos que has jugado",
+   "tip": "Limita «todos los de un jugador» a juegos que esta cuenta haya abierto alguna vez. Desactivado por defecto: que un cazador empiece un juego nuevo es perfectamente normal, pero es la forma más estricta de ceñirlo a juegos que encajan con su historial."
+  },
+  "InventoryIgnoreGames": {
+   "label": "...pero no estos juegos",
+   "tip": "AppIDs que dejar fuera del valor del inventario, separados por comas. Aquí es donde va un juego en el que la cuenta está BANEADA: sus objetos siguen en el inventario pero no se pueden vender nunca, así que contarlos infla el total. Steam no dice en qué juego está baneada una cuenta, y nada del inventario lo indica de forma fiable, así que esta es una lista que rellenas tú en vez de algo adivinado."
+  },
+  "YieldToFamily": {
+   "label": "Devolver un juego compartido cuando lo quieran",
+   "tip": "Si alguien de la familia abre un juego que esta cuenta tiene prestado, se lo devuelve al momento y pasa al siguiente. Steam presta un juego compartido a una sola persona a la vez y el dueño siempre gana, así que la alternativa es que la echen a mitad de sesión y se quede «jugando» a algo que ya no tiene. Queda fuera de la rotación veinte minutos después de que lo dejen, en vez de arrebatárselo en cuanto lo cierran."
+  },
+  "HoldNewFamilyGames": {
+   "label": "Dejar en paz los juegos de familia recién llegados",
+   "tip": "Se salta un juego compartido durante sus dos primeras semanas en la biblioteca familiar (los mismos días que «proteger juegos reembolsables»), por si quien lo compró todavía se lo está pensando. Solo puede fijarse en cuándo LLEGÓ el juego, nunca en cuánto lo ha jugado su dueño (ese dato no se ve desde esta cuenta), así que a veces retendrá un juego en el que el dueño ya lleva horas y que ya no puede devolver."
+  },
+  "IncludeFamilyLibrary": {
+   "label": "Incluir juegos compartidos en familia",
+   "tip": "Caza también los juegos compartidos con esta cuenta a través de una Familia de Steam. Los logros conseguidos en un juego prestado se registran en ESTA cuenta igual que en uno propio. Los juegos que la familia haya excluido del préstamo se saltan, igual que lo que no son juegos. Los juegos propios siempre se cazan antes que los prestados, porque el dueño puede reclamar el suyo en cualquier momento."
+  },
+  "AchievementGrindGapMinMinutes": {
+   "label": "Al machacar, un logro cada",
+   "tip": "Cada cuánto desbloquea logros un MACHAQUE, en minutos (el extremo bajo de un rango con variación). Machacar significa estar sentado activamente en un juego, así que este es el ritmo de alguien cazando en serio, no el goteo de fondo. Sigue siendo del más fácil al más difícil y sigue limitado por las horas dentro del juego."
+  },
+  "AchievementGrindGapMaxMinutes": {
+   "label": "...hasta",
+   "tip": "El extremo alto del espaciado durante un machaque, en minutos."
+  },
+  "AchievementNeverGames": {
+   "label": "Nunca en estos juegos",
+   "tip": "Juegos que dejar completamente en paz: no se escribe ningún logro en nada de esta lista, y el impulso de logros nunca elige uno. En modo humano también se salta el juego insignia de la cuenta. (Nota: algunos juegos, como Counter-Strike 2, guardan sus logros en el servidor, así que nada puede desbloquearlos de todos modos.)"
+  },
+  "AchievementGames": {
+   "label": "Solo estos juegos",
+   "tip": "Lo limita a estos appIDs. Déjalo vacío para que valga cualquier juego que la cuenta esté jugando."
+  },
+  "UnpackBoosterPacks": {
+   "label": "Abrir sobres de refuerzo",
+   "tip": "Abre automáticamente los sobres de refuerzo que caigan en tu inventario, para que los cromos de dentro cuenten para los sets con los que se fabrican insignias."
+  },
+  "ClearInventoryNotifications": {
+   "label": "Quitar el aviso de objetos nuevos",
+   "tip": "Borra el contador verde de «objetos nuevos» de Steam cada vez que cae un cromo, para que tu inventario no quede marcado como sin leer para siempre."
   }
  }
 }

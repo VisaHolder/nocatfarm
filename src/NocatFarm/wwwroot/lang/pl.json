@@ -257,10 +257,12 @@
    "tip": "Zdobywa osiągnięcia po trochu, na podstawie faktycznego czasu gry, zaczynając od najpospolitszych. Nigdy nie odblokuje czegoś, czego godziny nie uzasadniają, i nigdy nie kończy gry w 100%."
   },
   "AchievementPace": {
-   "label": "Jak szybko"
+   "label": "Jak szybko",
+   "tip": "Ile czekać między odblokowaniami. \"Ostrożnie\" podwaja każdą przerwę - dokładnie to, czego chcesz na koncie, które ma wytrzymać, gdy ktoś naprawdę spojrzy."
   },
   "AchievementMaxCompletionPct": {
-   "label": "Nigdy nie ukończ więcej niż"
+   "label": "Nigdy nie ukończ więcej niż",
+   "tip": "Twardy limit tego, ile z jednej gry zostanie ukończone, w procentach. 0 zostawia każdej grze jej własny dostrojony sufit i zwykle to lepsza odpowiedź: 3-godzinna łamigłówka i 500-godzinna kampania nie powinny kończyć na tej samej liczbie. 100% na koncie idle samo w sobie zdradza, więc nigdy nie przekracza 95."
   },
   "ClaimFreeGames": {
    "label": "Odbieraj darmowe gry",
@@ -338,7 +340,8 @@
    "tip": "Gdy sam zaczniesz grać, konto natychmiast ustępuje i czeka, zanim wróci do swojego."
   },
   "ResumeDelayMinutes": {
-   "label": "Czekaj przed wznowieniem"
+   "label": "Czekaj przed wznowieniem",
+   "tip": "Ile czekać po tym, jak przestaniesz grać, zanim to konto po cichu wróci do tego, co robiło, w minutach."
   },
   "AchievementBoost": {
    "tip": "Sam poluje na osiągnięcia w wielu grach, bez ręcznego startowania każdej sesji. Domyślnie wyłączone. \"Wszystkie dla jednego gracza\" wybiera z twojej biblioteki: tylko prawdziwe gry (nigdy DLC ani dema), z osiągnięciami i z wystarczającą liczbą recenzji."
@@ -423,6 +426,70 @@
   "StopWhenFarmingDone": {
    "label": "Wyloguj po zakończeniu",
    "tip": "Wylogowuje to konto, gdy tylko nie zostaną karty do farmienia, zamiast dalej zbierać godziny."
+  },
+  "AchievementBoostGames": {
+   "label": "Podbijaj te gry",
+   "tip": "Gry, przez które przechodzi podbicie, po przecinku (appID lub linki ze sklepu). Używane tylko, gdy podbicie jest ustawione na \"gry, które wybierzesz\"."
+  },
+  "BoostSessionHours": {
+   "label": "Graj w każdą około",
+   "tip": "Jak długo podbicie siedzi na jednej grze, zanim przejdzie do następnej, w godzinach."
+  },
+  "MaxBoostGamesInARow": {
+   "label": "Tryb ludzki: najwyżej pod rząd",
+   "tip": "Tylko tryb ludzki: ile sesji podbicia robi z rzędu, zanim przyjdzie dłuższy odcinek normalnego planu - żeby na uczciwym koncie plan pozostał najważniejszy."
+  },
+  "BoostRestMinutesHuman": {
+   "label": "Tryb ludzki: odstęp planu między podbiciami",
+   "tip": "Tylko tryb ludzki: minuty normalnego planu między sesjami podbicia, żeby polowanie nigdy nie zdominowało dnia uczciwego konta."
+  },
+  "BoostMinReviews": {
+   "label": "Poluj tylko na gry z co najmniej",
+   "tip": "Ile recenzji na Steam potrzebuje gra, żeby \"wszystkie dla jednego gracza\" w ogóle po nią sięgnęło. To filtr na wypełniacze z bundli: nikt nie wytłumaczy wieczoru spędzonego w grze z jedenastoma recenzjami, której nigdy nie uruchomił. 0 bierze wszystko. Przy grach wybranych ręcznie jest pomijane."
+  },
+  "BoostOnlyPlayedGames": {
+   "label": "Poluj tylko w grach, w które grałeś",
+   "tip": "Ogranicza \"wszystkie dla jednego gracza\" do gier, które to konto kiedykolwiek uruchomiło. Domyślnie wyłączone - to, że łowca zaczyna nową grę, jest zupełnie normalne - ale to najostrzejszy sposób, by trzymać go przy grach pasujących do historii."
+  },
+  "InventoryIgnoreGames": {
+   "label": "...ale nie te gry",
+   "tip": "AppID do pominięcia w wartości ekwipunku, po przecinku. Tu wpisuje się grę, w której konto jest ZBANOWANE: przedmioty nadal leżą w ekwipunku, ale nigdy nie da się ich sprzedać, więc liczenie ich zawyża sumę. Steam nie mówi, w której grze jest ban, a w ekwipunku nic tego pewnie nie pokazuje - dlatego to lista, którą wypełniasz, a nie coś zgadywanego."
+  },
+  "YieldToFamily": {
+   "label": "Oddaj współdzieloną grę, gdy jej chcą",
+   "tip": "Jeśli ktoś z rodziny uruchomi grę, którą to konto pożyczyło, oddaje ją natychmiast i przechodzi do następnej. Steam pożycza współdzieloną grę tylko jednej osobie naraz, a właściciel zawsze wygrywa - inaczej konto zostaje wyrzucone w połowie sesji i \"gra\" w coś, czego już nie ma. Gra wypada z rotacji jeszcze na dwadzieścia minut po tym, jak skończą, zamiast być odbierana w sekundzie zamknięcia."
+  },
+  "HoldNewFamilyGames": {
+   "label": "Zostaw w spokoju zupełnie nowe gry rodzinne",
+   "tip": "Pomija współdzieloną grę przez jej pierwsze dwa tygodnie w bibliotece rodziny (tyle samo dni co \"chroń gry podlegające zwrotowi\"), na wypadek gdyby kupujący jeszcze się zastanawiał. Może się opierać tylko na tym, kiedy gra SIĘ POJAWIŁA, nigdy na tym, ile właściciel już zagrał - tej liczby z tego konta nie widać. Czasem więc wstrzyma grę, w której właściciel ma już godziny i której i tak nie zwróci."
+  },
+  "IncludeFamilyLibrary": {
+   "label": "Uwzględniaj gry współdzielone w rodzinie",
+   "tip": "Poluje także na gry udostępnione temu kontu przez Rodzinę Steam. Osiągnięcia zdobyte w pożyczonej grze zapisują się na TYM koncie dokładnie tak samo jak we własnej. Gry, które rodzina wyłączyła z udostępniania, są pomijane, podobnie jak wszystko, co nie jest grą. Własne gry zawsze idą przed pożyczonymi, bo właściciel może odebrać swoją w każdej chwili."
+  },
+  "AchievementGrindGapMinMinutes": {
+   "label": "Podczas grindu jedno osiągnięcie co",
+   "tip": "Jak daleko od siebie GRIND odblokowuje osiągnięcia, w minutach (dolny kraniec rozrzuconego zakresu). Grind znaczy aktywne siedzenie w jednej grze, więc to tempo kogoś, kto naprawdę poluje, a nie tło sączące się powoli. Nadal od najłatwiejszych i nadal ograniczone godzinami w tej grze."
+  },
+  "AchievementGrindGapMaxMinutes": {
+   "label": "...do",
+   "tip": "Górny kraniec odstępu podczas grindu, w minutach."
+  },
+  "AchievementNeverGames": {
+   "label": "Nigdy w tych grach",
+   "tip": "Gry, które zostawia się całkiem w spokoju: dla niczego z tej listy nie zapisuje się osiągnięć, a podbicie nigdy żadnej nie wybiera. W trybie ludzkim pomijana jest też sztandarowa gra konta. (Uwaga: niektóre gry, jak Counter-Strike 2, trzymają osiągnięcia po stronie serwera - i tak nic ich nie odblokuje.)"
+  },
+  "AchievementGames": {
+   "label": "Tylko te gry",
+   "tip": "Ogranicza do tych appID. Zostaw puste, by liczyła się każda gra, w którą konto akurat gra."
+  },
+  "UnpackBoosterPacks": {
+   "label": "Otwieraj paczki boostera",
+   "tip": "Automatycznie otwiera paczki boostera, które trafią do ekwipunku, żeby karty z nich liczyły się do zestawów, z których tworzy się odznaki."
+  },
+  "ClearInventoryNotifications": {
+   "label": "Czyść plakietkę nowych przedmiotów",
+   "tip": "Czyści zielony licznik \"nowe przedmioty\" Steam za każdym razem, gdy wypadnie karta, żeby ekwipunek nie był na stałe oznaczony jako nieprzeczytany."
   }
  }
 }

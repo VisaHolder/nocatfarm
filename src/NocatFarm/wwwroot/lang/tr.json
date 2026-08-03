@@ -257,10 +257,12 @@
    "tip": "Gerçek oynama süresinden yola çıkarak başarımları yavaş yavaş kazanır, en yaygın olanlardan başlayarak. Saatlerin haklı çıkarmadığı hiçbir şeyi açmaz ve bir oyunu asla %100 bitirmez."
   },
   "AchievementPace": {
-   "label": "Ne hızda"
+   "label": "Ne hızda",
+   "tip": "İki açılış arasında ne kadar beklendiği. \"Dikkatli\" her aralığı ikiye katlar; birinin gerçekten bakmasına dayanması gereken bir hesapta istediğin de budur."
   },
   "AchievementMaxCompletionPct": {
-   "label": "Şundan fazlasını asla tamamlama"
+   "label": "Şundan fazlasını asla tamamlama",
+   "tip": "Herhangi bir oyunun ne kadarının tamamlanacağına dair sert bir tavan, yüzde olarak. 0, her oyunu kendi ayarlı tavanına bırakır ve genelde daha doğrusu budur: 3 saatlik bir bulmaca ile 500 saatlik bir kampanya aynı rakamda durmamalı. Idle bir hesapta %100 zaten ele veren şeydir, bu yüzden 95'i asla geçmez."
   },
   "ClaimFreeGames": {
    "label": "Ücretsiz oyunları al",
@@ -338,7 +340,8 @@
    "tip": "Sen oynamaya başlarsan hesap hemen çekilir ve kendi işine dönmeden önce bekler."
   },
   "ResumeDelayMinutes": {
-   "label": "Devam etmeden önce bekle"
+   "label": "Devam etmeden önce bekle",
+   "tip": "Sen oynamayı bıraktıktan sonra, bu hesabın kaldığı yerden sessizce devam etmesi için beklenecek süre, dakika."
   },
   "AchievementBoost": {
    "tip": "Her oturumu elle başlatmana gerek kalmadan birkaç oyunda kendi başına başarım avlar. Varsayılan olarak kapalı. \"Tüm tek oyunculu\" kütüphanenden seçer: yalnızca gerçek oyunlar (asla DLC veya demo), başarımı olan ve yeterince değerlendirmesi bulunanlar."
@@ -423,6 +426,70 @@
   "StopWhenFarmingDone": {
    "label": "Bitince çıkış yap",
    "tip": "Toplanacak kart kalmadığı anda bu hesabı çıkarır, saat biriktirmeye devam etmek yerine."
+  },
+  "AchievementBoostGames": {
+   "label": "Bu oyunları hızlandır",
+   "tip": "Hızlandırmanın sırayla ele alacağı oyunlar, virgülle ayrılmış (appID veya mağaza bağlantısı). Yalnızca hızlandırma \"seçtiğin oyunlar\" iken kullanılır."
+  },
+  "BoostSessionHours": {
+   "label": "Her birini yaklaşık şu kadar oyna",
+   "tip": "Hızlandırmanın bir oyunda kalıp sıradakine geçmeden önceki süresi, saat."
+  },
+  "MaxBoostGamesInARow": {
+   "label": "İnsan modu: art arda en fazla",
+   "tip": "Yalnızca insan modu: normal programın daha uzun bir bölümüne geçmeden önce üst üste kaç hızlandırma oturumu yapacağı - meşru bir hesapta önceliğin hep program kalması için."
+  },
+  "BoostRestMinutesHuman": {
+   "label": "İnsan modu: hızlandırmalar arası program aralığı",
+   "tip": "Yalnızca insan modu: iki hızlandırma oturumu arasında geçen normal program dakikası - avlanmanın meşru bir hesabın gününe hâkim olmaması için."
+  },
+  "BoostMinReviews": {
+   "label": "Yalnızca en az şu kadar değerlendirmesi olanları avla",
+   "tip": "\"Tüm tek oyunculu\" bir oyuna yönelmesi için gereken Steam değerlendirme sayısı. Bu, paket dolgusu filtresidir: on bir değerlendirmesi olan ve hiç açmadığı bir oyunda akşam geçirmiş olmanın kimseye açıklaması yoktur. 0 her şeyi avlar. Elle seçilen oyunlarda yok sayılır."
+  },
+  "BoostOnlyPlayedGames": {
+   "label": "Yalnızca oynadığın oyunlarda avlan",
+   "tip": "\"Tüm tek oyunculu\"yu bu hesabın bir ara gerçekten başlattığı oyunlarla sınırlar. Varsayılan kapalı - bir avcının yeni bir oyuna başlaması gayet normaldir - ama hesabı kendi geçmişine uyan oyunlarda tutmanın en katı yolu budur."
+  },
+  "InventoryIgnoreGames": {
+   "label": "...ama bu oyunlar hariç",
+   "tip": "Envanter değerinin dışında bırakılacak appID'ler, virgülle ayrılmış. Hesabın YASAKLI olduğu oyun buraya yazılır: eşyalar envanterde durur ama asla satılamaz, dolayısıyla saymak toplamı şişirir. Steam yasağın hangi oyunda olduğunu söylemez ve envanterde de bunu güvenilir biçimde gösteren bir şey yoktur - bu yüzden burası tahmin edilen değil, senin doldurduğun bir listedir."
+  },
+  "YieldToFamily": {
+   "label": "Paylaşılan oyunu istediklerinde geri ver",
+   "tip": "Ailedeki biri bu hesabın ödünç aldığı bir oyunu başlatırsa, oyunu hemen geri verip sıradakine geçer. Steam paylaşılan bir oyunu aynı anda tek kişiye ödünç verir ve sahibi her zaman kazanır; alternatifi oturumun ortasında dışarı atılıp artık sahip olmadığı bir oyunu \"oynuyor\" görünmektir. Bıraktıktan sonra yirmi dakika daha rotasyonun dışında kalır, kapattıkları saniye kapılmaz."
+  },
+  "HoldNewFamilyGames": {
+   "label": "Yeni gelen aile oyunlarına dokunma",
+   "tip": "Paylaşılan bir oyunu aile kütüphanesindeki ilk iki hafta boyunca atlar (\"iade edilebilir oyunları koru\" ile aynı gün sayısı), satın alan kişi hâlâ karar veriyor olabilir diye. Yalnızca oyunun ne zaman GELDİĞİNE bakabilir, sahibinin ne kadar oynadığına asla - o sayı bu hesaptan görünmez. Bu yüzden bazen sahibinin çoktan saatler geçirdiği ve zaten iade edemeyeceği bir oyunu bekletir."
+  },
+  "IncludeFamilyLibrary": {
+   "label": "Aileyle paylaşılan oyunları dahil et",
+   "tip": "Steam Ailesi üzerinden bu hesapla paylaşılan oyunları da avlar. Ödünç alınan bir oyunda kazanılan başarımlar, tıpkı sahip olunan bir oyundaki gibi BU hesaba işlenir. Ailenin paylaşımdan çıkardığı oyunlar atlanır, oyun olmayanlar da öyle. Sahip olunan oyunlar ödünç alınanlardan hep önce gelir, çünkü sahibi kendininkini her an geri isteyebilir."
+  },
+  "AchievementGrindGapMinMinutes": {
+   "label": "Sıkı çalışırken, şu sıklıkta bir başarım",
+   "tip": "Bir GRIND'in başarımları ne kadar aralıkla açtığı, dakika (dalgalı aralığın alt ucu). Grind, bir oyunun başında etkin biçimde oturmak demektir; yani bu, gerçekten avlanan birinin temposudur, arka plandaki damla damla akış değil. Yine kolaydan zora ve yine oyundaki saatlerle sınırlı."
+  },
+  "AchievementGrindGapMaxMinutes": {
+   "label": "...şu kadara kadar",
+   "tip": "Grind sırasındaki aralığın üst ucu, dakika."
+  },
+  "AchievementNeverGames": {
+   "label": "Bu oyunlarda asla",
+   "tip": "Tamamen rahat bırakılacak oyunlar: buradaki hiçbir şey için başarım yazılmaz ve hızlandırma asla birini seçmez. İnsan modunda hesabın amiral oyunu da atlanır. (Not: Counter-Strike 2 gibi bazı oyunlar başarımlarını sunucuda tutar, dolayısıyla zaten hiçbir şey onları açamaz.)"
+  },
+  "AchievementGames": {
+   "label": "Yalnızca bu oyunlar",
+   "tip": "Bu appID'lerle sınırlar. Boş bırakırsan hesabın o sırada oynadığı her oyun geçerli olur."
+  },
+  "UnpackBoosterPacks": {
+   "label": "Destek paketlerini aç",
+   "tip": "Envanterine düşen destek paketlerini otomatik açar, böylece içindeki kartlar rozet üretilen setlere sayılır."
+  },
+  "ClearInventoryNotifications": {
+   "label": "Yeni eşya rozetini temizle",
+   "tip": "Her kart düştüğünde Steam'in yeşil \"yeni eşya\" sayacını temizler, böylece envanterin sürekli okunmamış görünmez."
   }
  }
 }

@@ -257,10 +257,12 @@
    "tip": "Ganha conquistas aos poucos a partir do tempo de jogo real, começando pelas mais comuns. Nunca desbloqueia nada que as horas não justifiquem, e nunca completa um jogo em 100%."
   },
   "AchievementPace": {
-   "label": "Em que ritmo"
+   "label": "Em que ritmo",
+   "tip": "Quanto esperar entre desbloqueios. \"Com calma\" dobra cada intervalo, que é o que você quer numa conta feita para aguentar alguém olhando de verdade."
   },
   "AchievementMaxCompletionPct": {
-   "label": "Nunca completar mais que"
+   "label": "Nunca completar mais que",
+   "tip": "Um teto rígido de quanto de um jogo é completado, em porcentagem. 0 deixa cada jogo com o próprio teto ajustado, que costuma ser melhor: um puzzle de 3 horas e uma campanha de 500 não deveriam parar no mesmo número. 100% numa conta idle já é a denúncia, então nunca passa de 95."
   },
   "ClaimFreeGames": {
    "label": "Resgatar jogos grátis",
@@ -338,7 +340,8 @@
    "tip": "Se você começar a jogar, a conta sai da frente na hora e espera antes de retomar."
   },
   "ResumeDelayMinutes": {
-   "label": "Esperar antes de retomar"
+   "label": "Esperar antes de retomar",
+   "tip": "Quanto espera depois de você parar de jogar antes desta conta retomar discretamente o que estava fazendo, em minutos."
   },
   "AchievementBoost": {
    "tip": "Caça conquistas sozinho em vários jogos, sem você iniciar cada sessão na mão. Desligado por padrão. \"Todos os single-player\" escolhe da sua biblioteca: só jogos de verdade (nunca DLC ou demos), com conquistas e com avaliações suficientes."
@@ -423,6 +426,70 @@
   "StopWhenFarmingDone": {
    "label": "Sair ao terminar",
    "tip": "Desconecta esta conta assim que não sobram cartas para farmar, em vez de ficar acumulando horas."
+  },
+  "AchievementBoostGames": {
+   "label": "Impulsionar estes jogos",
+   "tip": "Os jogos pelos quais o impulso passa, separados por vírgula (appIDs ou URLs da loja). Só usado quando o impulso está em \"jogos que você escolhe\"."
+  },
+  "BoostSessionHours": {
+   "label": "Jogar cada um por cerca de",
+   "tip": "Quanto o impulso fica num jogo antes de passar para o próximo, em horas."
+  },
+  "MaxBoostGamesInARow": {
+   "label": "Modo humano: no máximo tantos seguidos",
+   "tip": "Só no modo humano: quantas sessões de impulso faz seguidas antes de um trecho mais longo do horário normal, para uma conta legítima continuar sendo antes de tudo o seu horário."
+  },
+  "BoostRestMinutesHuman": {
+   "label": "Modo humano: intervalo de horário entre impulsos",
+   "tip": "Só no modo humano: minutos do horário normal entre sessões de impulso, para a caça nunca dominar o dia de uma conta legítima."
+  },
+  "BoostMinReviews": {
+   "label": "Só caçar jogos com pelo menos",
+   "tip": "Avaliações da Steam que um jogo precisa para \"todos os single-player\" caçá-lo. É o filtro anti-enchimento de bundle: ninguém tem explicação para ter passado a noite num jogo com onze avaliações que nunca abriu. 0 caça tudo. Ignorado nos jogos escolhidos à mão."
+  },
+  "BoostOnlyPlayedGames": {
+   "label": "Caçar só em jogos que você jogou",
+   "tip": "Limita \"todos os single-player\" a jogos que esta conta já abriu alguma vez. Desligado por padrão - um caçador começar um jogo novo é perfeitamente normal - mas é o jeito mais rígido de mantê-lo em jogos que combinam com o histórico."
+  },
+  "InventoryIgnoreGames": {
+   "label": "...menos estes jogos",
+   "tip": "AppIDs para deixar de fora do valor do inventário, separados por vírgula. É aqui que vai um jogo em que a conta está BANIDA: os itens continuam lá, mas nunca poderão ser vendidos, então contá-los infla o total. A Steam não diz em qual jogo a conta está banida, e nada no inventário mostra isso de forma confiável, então esta é uma lista que você preenche em vez de algo adivinhado."
+  },
+  "YieldToFamily": {
+   "label": "Devolver um jogo compartilhado quando quiserem",
+   "tip": "Se alguém da família abre um jogo que esta conta pegou emprestado, devolve na hora e passa para o próximo. A Steam empresta um jogo compartilhado a uma pessoa por vez e o dono sempre ganha, então a alternativa é ser expulso no meio da sessão e ficar \"jogando\" algo que já não tem. Fica fora do rodízio por vinte minutos depois que param, em vez de tomar de volta no segundo em que fecham."
+  },
+  "HoldNewFamilyGames": {
+   "label": "Deixar em paz os jogos novos da família",
+   "tip": "Pula um jogo compartilhado nas suas duas primeiras semanas na biblioteca da família (os mesmos dias de \"proteger jogos reembolsáveis\"), caso quem comprou ainda esteja decidindo. Só pode se basear em quando o jogo CHEGOU, nunca em quanto o dono já jogou - esse número não é visível desta conta - então às vezes vai segurar um jogo em que o dono já tem horas e que não dá mais para devolver."
+  },
+  "IncludeFamilyLibrary": {
+   "label": "Incluir jogos compartilhados da família",
+   "tip": "Caça também os jogos compartilhados com esta conta por uma Família Steam. As conquistas ganhas num jogo emprestado ficam registradas NESTA conta igual às de um jogo próprio. Jogos que a família excluiu do compartilhamento são pulados, assim como o que não é jogo. Os jogos próprios são sempre caçados antes dos emprestados, porque o dono pode retomar o dele a qualquer momento."
+  },
+  "AchievementGrindGapMinMinutes": {
+   "label": "Ao insistir, uma conquista a cada",
+   "tip": "De quanto em quanto tempo um GRIND desbloqueia conquistas, em minutos (a ponta baixa de uma faixa com variação). Grind quer dizer estar ativamente sentado num jogo, então este é o ritmo de quem está caçando de verdade, não o gotejar de fundo. Continua do mais fácil ao mais difícil e continua limitado pelas horas dentro do jogo."
+  },
+  "AchievementGrindGapMaxMinutes": {
+   "label": "...até",
+   "tip": "A ponta alta do espaçamento durante um grind, em minutos."
+  },
+  "AchievementNeverGames": {
+   "label": "Nunca nestes jogos",
+   "tip": "Jogos para deixar completamente em paz: nenhuma conquista é escrita para nada desta lista, e o impulso nunca escolhe um deles. No modo humano o jogo principal da conta também é pulado. (Nota: alguns jogos, como Counter-Strike 2, guardam as conquistas no servidor, então nada consegue desbloqueá-las de qualquer forma.)"
+  },
+  "AchievementGames": {
+   "label": "Só estes jogos",
+   "tip": "Limita a estes appIDs. Deixe vazio para valer qualquer jogo que a conta estiver jogando."
+  },
+  "UnpackBoosterPacks": {
+   "label": "Abrir pacotes de reforço",
+   "tip": "Abre automaticamente os pacotes de reforço que caírem no seu inventário, para as cartas de dentro contarem nos conjuntos usados para criar emblemas."
+  },
+  "ClearInventoryNotifications": {
+   "label": "Limpar o aviso de itens novos",
+   "tip": "Limpa o contador verde de \"itens novos\" da Steam toda vez que uma carta cai, para seu inventário não ficar marcado como não lido para sempre."
   }
  }
 }

@@ -257,10 +257,12 @@
    "tip": "Verdient Errungenschaften nach und nach aus echter Spielzeit, die häufigsten zuerst. Nichts wird freigeschaltet, was die Stunden nicht rechtfertigen, und ein Spiel wird nie zu 100% abgeschlossen."
   },
   "AchievementPace": {
-   "label": "Wie schnell"
+   "label": "Wie schnell",
+   "tip": "Wie lange zwischen zwei Freischaltungen gewartet wird. \"Vorsichtig\" verdoppelt jeden Abstand - genau das, was ein Konto braucht, das genauer Betrachtung standhalten soll."
   },
   "AchievementMaxCompletionPct": {
-   "label": "Nie mehr abschließen als"
+   "label": "Nie mehr abschließen als",
+   "tip": "Eine harte Obergrenze, wie viel von einem Spiel abgeschlossen wird, in Prozent. 0 lässt jedem Spiel seine eigene abgestimmte Grenze, meist die bessere Antwort: ein 3-Stunden-Puzzle und eine 500-Stunden-Kampagne sollten nicht bei derselben Zahl aufhören. 100% auf einem Idle-Konto ist selbst der Verräter, also nie über 95."
   },
   "ClaimFreeGames": {
    "label": "Gratisspiele holen",
@@ -338,7 +340,8 @@
    "tip": "Fängst du selbst an zu spielen, tritt das Konto sofort zurück und wartet, bevor es weitermacht."
   },
   "ResumeDelayMinutes": {
-   "label": "Warten vor dem Weitermachen"
+   "label": "Warten vor dem Weitermachen",
+   "tip": "Wie lange nach deinem Spielende gewartet wird, bevor dieses Konto still da weitermacht, wo es aufgehört hat, in Minuten."
   },
   "AchievementBoost": {
    "tip": "Jagt Errungenschaften selbstständig über mehrere Spiele, ohne dass du jede Sitzung von Hand startest. Standardmäßig aus. «Alle Einzelspieler» wählt aus deiner Bibliothek: nur echte Spiele (nie DLC oder Demos), mit Errungenschaften und genug Rezensionen."
@@ -423,6 +426,70 @@
   "StopWhenFarmingDone": {
    "label": "Abmelden, wenn fertig",
    "tip": "Meldet dieses Konto ab, sobald keine Karten mehr zu farmen sind, statt weiter Stunden zu sammeln."
+  },
+  "AchievementBoostGames": {
+   "label": "Diese Spiele boosten",
+   "tip": "Die Spiele, die der Boost durcharbeitet, per Komma getrennt (appIDs oder Store-Links). Nur genutzt, wenn der Boost auf \"Spiele deiner Wahl\" steht."
+  },
+  "BoostSessionHours": {
+   "label": "Jedes etwa so lange spielen",
+   "tip": "Wie lange der Boost auf einem Spiel bleibt, bevor er zum nächsten wechselt, in Stunden."
+  },
+  "MaxBoostGamesInARow": {
+   "label": "Menschen-Modus: höchstens am Stück",
+   "tip": "Nur im Menschen-Modus: wie viele Boost-Sitzungen direkt hintereinander laufen, bevor ein längerer Abschnitt des normalen Plans kommt - damit bei einem legitimen Konto der Plan die Hauptsache bleibt."
+  },
+  "BoostRestMinutesHuman": {
+   "label": "Menschen-Modus: Planabschnitt zwischen Boosts",
+   "tip": "Nur im Menschen-Modus: Minuten des normalen Plans zwischen zwei Boost-Sitzungen, damit die Jagd nie den Tag eines legitimen Kontos bestimmt."
+  },
+  "BoostMinReviews": {
+   "label": "Nur Spiele mit mindestens",
+   "tip": "Wie viele Steam-Rezensionen ein Spiel braucht, damit \"alle Einzelspieler\" es überhaupt anfasst. Das ist der Bundle-Müll-Filter: niemand hat eine Erklärung dafür, einen Abend in einem Spiel mit elf Rezensionen verbracht zu haben, das er nie gestartet hat. 0 nimmt alles. Bei handverlesenen Spielen wird es ignoriert."
+  },
+  "BoostOnlyPlayedGames": {
+   "label": "Nur in gespielten Spielen jagen",
+   "tip": "Beschränkt \"alle Einzelspieler\" auf Spiele, die dieses Konto irgendwann selbst gestartet hat. Standardmäßig aus - dass ein Jäger ein neues Spiel anfängt, ist völlig normal - aber es ist die strengste Art, ihn bei Spielen zu halten, die zur Historie passen."
+  },
+  "InventoryIgnoreGames": {
+   "label": "...aber diese Spiele nicht",
+   "tip": "AppIDs, die aus dem Inventarwert herausfallen, per Komma getrennt. Hier kommt ein Spiel hin, in dem das Konto GESPERRT ist: die Gegenstände liegen weiter im Inventar, lassen sich aber nie verkaufen, also bläht ihr Wert die Summe auf. Steam sagt nicht, in welchem Spiel eine Sperre liegt, und im Inventar ist es nicht verlässlich zu sehen - deshalb ist das eine Liste, die du ausfüllst, statt geraten zu werden."
+  },
+  "YieldToFamily": {
+   "label": "Ein geteiltes Spiel zurückgeben, wenn sie es wollen",
+   "tip": "Startet jemand in der Familie ein Spiel, das dieses Konto ausgeliehen hat, gibt es das sofort zurück und geht zum nächsten. Steam verleiht ein geteiltes Spiel immer nur an eine Person, und der Besitzer gewinnt - die Alternative ist, mitten in der Sitzung hinausgeworfen zu werden und ein Spiel zu \"spielen\", das man nicht mehr hat. Es bleibt nach dem Beenden noch zwanzig Minuten aus der Rotation, statt es in derselben Sekunde zu greifen."
+  },
+  "HoldNewFamilyGames": {
+   "label": "Brandneue Familienspiele in Ruhe lassen",
+   "tip": "Überspringt ein geteiltes Spiel in seinen ersten zwei Wochen in der Familienbibliothek (dieselben Tage wie \"erstattungsfähige Spiele schützen\"), falls der Käufer noch überlegt. Es kann sich nur daran orientieren, wann das Spiel ANKAM, nie daran, wie lange der Besitzer schon gespielt hat - diese Zahl ist von diesem Konto aus nicht sichtbar. Also hält es manchmal ein Spiel zurück, in dem der Besitzer längst Stunden hat und das er ohnehin nicht mehr zurückgeben kann."
+  },
+  "IncludeFamilyLibrary": {
+   "label": "Familiengeteilte Spiele einbeziehen",
+   "tip": "Jagt auch Spiele, die über eine Steam-Familie mit diesem Konto geteilt werden. Errungenschaften in einem geliehenen Spiel werden auf DIESEM Konto verbucht, genau wie bei einem eigenen. Was die Familie vom Teilen ausgenommen hat, wird übersprungen, ebenso alles, was kein Spiel ist. Eigene Spiele kommen immer vor geliehenen, weil der Besitzer seins jederzeit zurückholen kann."
+  },
+  "AchievementGrindGapMinMinutes": {
+   "label": "Beim Grinden eine Errungenschaft alle",
+   "tip": "Wie weit ein GRIND Errungenschaften auseinanderlegt, in Minuten (das untere Ende einer gestreuten Spanne). Grinden heißt, aktiv in einem Spiel zu sitzen - das ist also das Tempo einer echten Jagd, nicht das Hintergrundtröpfeln. Weiterhin von leicht nach schwer und weiterhin durch die Stunden im Spiel begrenzt."
+  },
+  "AchievementGrindGapMaxMinutes": {
+   "label": "...bis zu",
+   "tip": "Das obere Ende des Abstands beim Grinden, in Minuten."
+  },
+  "AchievementNeverGames": {
+   "label": "Nie in diesen Spielen",
+   "tip": "Spiele, die völlig in Ruhe gelassen werden: für nichts aus dieser Liste wird je eine Errungenschaft geschrieben, und der Boost wählt nie eines davon. Im Menschen-Modus wird zusätzlich das Hauptspiel des Kontos ausgelassen. (Hinweis: manche Spiele, etwa Counter-Strike 2, halten ihre Errungenschaften serverseitig - die kann ohnehin nichts freischalten.)"
+  },
+  "AchievementGames": {
+   "label": "Nur diese Spiele",
+   "tip": "Beschränkt es auf diese appIDs. Leer lassen, dann gilt jedes Spiel, das das Konto gerade spielt."
+  },
+  "UnpackBoosterPacks": {
+   "label": "Booster-Päckchen öffnen",
+   "tip": "Öffnet automatisch Booster-Päckchen, die im Inventar landen, damit die Karten darin zu den Sätzen zählen, aus denen Abzeichen hergestellt werden."
+  },
+  "ClearInventoryNotifications": {
+   "label": "Den Neue-Gegenstände-Hinweis löschen",
+   "tip": "Löscht Steams grünen \"neue Gegenstände\"-Zähler bei jedem Kartenfund, damit dein Inventar nicht dauerhaft als ungelesen markiert bleibt."
   }
  }
 }
