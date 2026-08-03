@@ -105,6 +105,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	private DateTime _gateArmedFor = DateTime.MinValue;
 	private bool _announcedWarmUp;
 	private bool _warmedUp;
+	private bool _wasFarming;
 	private bool _wokeUp;
 	private bool _wasGrinding;
 	private int _clearReads;
@@ -159,6 +160,19 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// </summary>
 	public bool WarmedUp => _warmedUp
 		|| (Bot.OnlineSince is { } on && DateTime.UtcNow >= on.AddSeconds(SafetyGateSeconds).AddMinutes(Math.Max(1, Bot.Cfg.WarmUpMaxMinutes)));
+
+	/// <summary>Rough minutes until the post-login warm-up finishes, for status display (0 once it's done).</summary>
+	public int WarmUpMinutesLeft {
+		get {
+			if (_warmedUp) {
+				return 0;
+			}
+
+			double mins = (_readyAt - DateTime.UtcNow).TotalMinutes;
+
+			return mins <= 0 ? 0 : (int) Math.Ceiling(mins);
+		}
+	}
 
 	/// <summary>
 	/// Skip the rest of the night and start the day now. Pulls today's wake time up to this minute so it counts as
@@ -289,18 +303,42 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		// A grind outranks the schedule. Banked first, so the hours it puts in still count toward the day
 		// rather than vanishing, and the phase is dropped so the day resumes cleanly when it expires.
-		if (Bot.Grinding) {
-			_wasGrinding = true;
+		// A grind outranks the schedule. On a legit account it doesn't slam over instantly: for the first short
+		// beat (GrindStartsAt) the current game keeps playing and the day carries on normally, so it looks like a
+		// person finishing up and then switching games. On a non-human account it starts immediately.
+		if (Bot.Grinding && (!Bot.HumanOwned || (DateTime.UtcNow >= Bot.GrindStartsAt))) {
+			if (!_wasGrinding) {
+				_wasGrinding = true;
 
-			if (_phase != Phase.Off) {
-				BankSession();
-				_phase = Phase.Off;
+				if (_phase != Phase.Off) {
+					BankSession();
+				}
+
+				// A grind IS playing, so the day's total has to keep counting through it.
+				//
+				// Handing the account over used to stop the clock: human mode banked what it had, went to Off and
+				// accrued nothing until the grind ended. That made a two-hour achievement session invisible to the
+				// schedule, so an account with a six-hour day could put in six hours of weighted play PLUS three
+				// two-hour hunts and still believe it had done its six. Keeping the Playing phase (with no game of
+				// its own) leaves the per-tick banking below running, so hunting comes OUT of the day's budget
+				// instead of being stacked on top of it - which is what a person's evening actually looks like.
+				_phase = Phase.Playing;
 				_game = 0;
 				_switchingTo = 0;
+				_sessionEnds = Bot.GrindUntil ?? DateTime.UtcNow.AddHours(2);
+				_bankedTo = DateTime.UtcNow;
+				_bankedForLogon = Bot.OnlineSince ?? DateTime.UtcNow;
 			}
 
+			BankSession();
 			Bot.ClearPersonaOverride();
-			ReassertPlaying([Bot.GrindGame]);
+
+			// Put the grind game on directly (idempotent - only re-sends when it isn't already the one running).
+			// ReassertPlaying is keyed once-per-logon and would no-op mid-session, so the grind game would never
+			// actually start except by the idler's slow backstop; this makes the switch happen on the next tick.
+			if (!PlayingExactly([Bot.GrindGame])) {
+				Bot.SetPlaying([Bot.GrindGame]);
+			}
 
 			return;
 		}
@@ -336,10 +374,12 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// ONE game at a time; a second one on top of the farmer is the loudest bot tell there is. Resume the
 		// day when the cards are done.
 		if (Bot.IsFarming) {
+			_wasFarming = true;
 			BankSession();
 			_game = 0;
 			_switchingTo = 0;
 			_phase = Phase.Off;
+			Bot.ClearPersonaOverride();   // daytime farming/stand-off looks online, never carrying a night-dark or break-away persona
 
 			return;
 		}
@@ -424,6 +464,16 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// weighted game on top of it - it will claim on its next tick now that the warm-up is done.
 		if (Bot.CardsRemaining > 0) {
 			_phase = Phase.Off;
+			Bot.ClearPersonaOverride();
+
+			return;
+		}
+
+		// Just came off a farming run: don't snap into a weighted game. Step away first like a person who just
+		// finished - a short break, occasionally a meal - and the normal schedule resumes when the break ends.
+		if (_wasFarming) {
+			_wasFarming = false;
+			EndSession();
 
 			return;
 		}
@@ -521,6 +571,15 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return;
 		}
 
+		// Don't roll a new day at calendar midnight while last night's session is still finishing. A wake->bed
+		// cycle routinely runs past midnight (e.g. bed 02:48), and rolling at 00:00 splits it - the post-midnight
+		// hours get counted into THIS morning's total, so the account reads "4h played" at noon having woken at 11.
+		// Roll when it actually reaches its wake time instead, so each day is one clean wake->bed cycle. (_dayStamp
+		// < 0 means a fresh start with no plan yet - that must still roll immediately, even before wake.)
+		if ((_dayStamp >= 0) && (DateTime.Now < WakeTime())) {
+			return;
+		}
+
 		// Close out whatever is in flight FIRST. The default day runs past midnight, so a session is usually
 		// still running when this fires; zeroing the counters underneath it lost the evening's time and left
 		// Steam playing a game the scheduler had already forgotten about.
@@ -539,7 +598,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// session.
 		if (HumanDay.Load(Bot.Name, DateTime.Now) is { } saved) {
 			Restore(saved);
-			Log.Info($"picking today's plan back up - {Fmt.Hm(_playedMinutesToday)} of about {Fmt.Hm(_targetMinutes)} played, bed about {BedTime():HH:mm}", Bot.Name);
+			Log.Info($"today's plan restored - {Fmt.Hm(_playedMinutesToday)}/{Fmt.Hm(_targetMinutes)} played so far, bed about {BedTime():HH:mm}", Bot.Name);
 
 			return;
 		}
@@ -629,6 +688,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_otherPlayed = 0;
 		_signOutsUsed = 0;
 		_mealsUsed = 0;
+		_wasFarming = false;
 		_firstSessionOfDay = true;
 		_game = 0;
 		_lastGame = 0;
@@ -669,6 +729,13 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		return _bedIsTomorrow ? bed.AddDays(1) : bed;
 	}
 
+	/// <summary>True when the games Steam is actually running are exactly this set (order-independent).</summary>
+	private bool PlayingExactly(IReadOnlyCollection<uint> games) {
+		IReadOnlyList<uint> now = Bot.PlayingApps;
+
+		return (now.Count == games.Count) && games.All(g => now.Contains(g));
+	}
+
 	private bool InWakingHours(DateTime now) {
 		if (now < WakeTime()) {
 			// Before today's start hour, last night's session may legitimately still be running.
@@ -681,6 +748,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	private int MinutesUntilBed() => (int) Math.Max(0, (BedTime() - DateTime.Now).TotalMinutes);
 
 	private void GoToBed() {
+		// Re-arm the warm-up gate for the morning. It's keyed on the login timestamp, which doesn't change
+		// across an overnight sleep, so without this the account snaps straight from asleep into a game at wake
+		// with no settle. Cleared here (only reached when asleep), it re-arms on the first waking tick.
+		_gateArmedFor = DateTime.MinValue;
 		BankSession();
 		bool banking = Bot.Cfg.OfflineIdleAtNight && (Bot.Cfg.OfflineIdleGames.Count > 0);
 		Phase want = banking ? Phase.NightIdle : Phase.Asleep;
@@ -702,7 +773,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_phase = want;
 				_game = 0;
 				_switchingTo = 0;
-				Log.Info($"asleep - the card farmer keeps going until {WakeTime():HH:mm}", Bot.Name);
+				Log.Info($"asleep until {WakeTime():HH:mm} - the card farmer keeps working through the night", Bot.Name);
 			}
 
 			return;
@@ -710,6 +781,17 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		if (banking) {
 			ReassertPlaying(Bot.Cfg.OfflineIdleGames);
+
+			// Keep the overnight games actually on. After a night farming run ends, the farmer has left the
+			// account on its farm game (or nothing) and the once-per-login ReassertPlaying won't fire again -
+			// so without this it played nothing the rest of the night while still reading "asleep".
+			if (!PlayingExactly(Bot.Cfg.OfflineIdleGames)) {
+				Bot.SetPlaying(Bot.Cfg.OfflineIdleGames);
+
+				if (_phase == want) {
+					Log.Info($"back to banking hours quietly until {WakeTime():HH:mm}", Bot.Name);
+				}
+			}
 		}
 
 		if (_phase == want) {
@@ -721,7 +803,6 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_switchingTo = 0;
 
 		if (banking) {
-			Bot.SetPlaying(Bot.Cfg.OfflineIdleGames);
 			Log.Info($"asleep - banking hours quietly until {WakeTime():HH:mm}", Bot.Name);
 		} else {
 			Bot.StopPlaying();
@@ -931,13 +1012,13 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 			// "Dropped offline", not "signed out" - it stays connected and simply stops being visible, which to
 			// everyone on the friends list is the same thing and costs nothing in login rate limit.
-			Log.Info($"{what} - going offline, back in about {minutes}m", Bot.Name);
+			Log.Info($"{what} - going offline, back in about {Fmt.Hm(minutes)}", Bot.Name);
 
 			return;
 		}
 
 		Bot.SetPersonaOverride(awayPersona);
-		Log.Info($"{what} - back in about {minutes}m", Bot.Name);
+		Log.Info($"{what} - back in about {Fmt.Hm(minutes)}", Bot.Name);
 	}
 
 	/// <summary>Credit the running session's real elapsed time, once, and never a minute more than it played.</summary>
@@ -1051,6 +1132,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_game = 0;
 		_switchingTo = 0;
 		_firstSessionOfDay = _playedMinutesToday == 0;
+		_wasFarming = false;
 		_phase = Phase.Off;
 	}
 
@@ -1097,7 +1179,21 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			}
 		}
 
-		return weights;
+		// Two things this list must respect, and until now didn't.
+		//
+		// "Never touch these games" meant never for the card farmer and the idler, while human mode - the one that
+		// actually decides what a legit account plays all day - happily rolled a blacklisted game into its
+		// schedule. And a game bought in the last fortnight and barely played is one the owner can still get their
+		// money back for, until this account spends two hours of it for them; that drops out entirely (main game
+		// included) until the window closes.
+		//
+		// If filtering would leave nothing at all, the unfiltered list stands: an account with nothing to play and
+		// no explanation is worse than either, and "no games are set" would be a lie.
+		List<(uint Game, int Weight)> playable = weights
+			.Where(w => !Bot.Cfg.BlacklistedGames.Contains(w.Game) && !Live.Global.GlobalBlacklistedGames.Contains(w.Game) && !Bot.Refunds.Holds(w.Game))
+			.ToList();
+
+		return playable.Count > 0 ? playable : weights;
 	}
 
 	/// <summary>

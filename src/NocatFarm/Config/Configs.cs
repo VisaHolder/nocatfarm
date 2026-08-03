@@ -26,6 +26,12 @@ public sealed class GlobalConfig {
 	public string Theme { get; set; } = "dark";
 
 	/// <summary>
+	/// The dashboard's language, as a file under wwwroot/lang. English is the default and the fallback: anything a
+	/// translation hasn't covered falls back to the English string rather than showing a key.
+	/// </summary>
+	public string Language { get; set; } = "en";
+
+	/// <summary>
 	/// Whether the getting-started walkthrough has been seen.
 	///
 	/// Set by the dashboard, not by hand, so it has no entry in Settings.cs - the same treatment AccountOrder
@@ -98,6 +104,10 @@ public sealed class GlobalConfig {
 	public int DailyReportHour { get; set; } = 9;
 	public int DailyReportMinute { get; set; } = 30;
 
+	// ── inventory value ──
+	/// <summary>Steam's currency id for market prices. 1 USD, 2 GBP, 3 EUR, 20 CAD, 21 AUD - as the store uses.</summary>
+	public int MarketCurrency { get; set; } = 1;
+
 	public bool FileLogging { get; set; } = true;
 	public bool Debug { get; set; }
 	public int LogRetentionDays { get; set; } = 14;
@@ -168,9 +178,13 @@ public sealed class BotConfig {
 	public List<uint> BlacklistedGames { get; set; } = [];
 	public bool SkipUnplayedGames { get; set; }
 	public bool SkipRefundableGames { get; set; }
+	public int RefundHoldDays { get; set; } = 14;
 	public bool FarmOnlyWhileAsleep { get; set; }
 	public int FarmFromHour { get; set; }
 	public int FarmUntilHour { get; set; }
+	public int PostFarmWindDownMinMinutes { get; set; } = 5;
+	public int PostFarmWindDownMaxMinutes { get; set; } = 12;
+	public int LegitStopMaxSeconds { get; set; } = 30;
 	public int FarmingDelayMinutes { get; set; } = 15;
 	public int MaxFarmingHoursPerGame { get; set; } = 10;
 	public bool StopWhenFarmingDone { get; set; }
@@ -178,6 +192,18 @@ public sealed class BotConfig {
 
 	// ── achievements ──
 	public bool UnlockAchievements { get; set; }
+	public int AchievementGrindGapMinMinutes { get; set; } = 12;
+	public int AchievementGrindGapMaxMinutes { get; set; } = 24;
+	public int AchievementBoost { get; set; }              // 0 off, 1 games you pick, 2 every single-player game
+	public List<uint> AchievementBoostGames { get; set; } = [];
+	public int BoostSessionHours { get; set; } = 2;
+	public int MaxBoostGamesInARow { get; set; } = 3;
+	public int BoostRestMinutesHuman { get; set; } = 120;
+	public bool IncludeFamilyLibrary { get; set; }
+	public bool HoldNewFamilyGames { get; set; } = true;
+	public bool YieldToFamily { get; set; } = true;
+	public int BoostMinReviews { get; set; } = 200;
+	public bool BoostOnlyPlayedGames { get; set; }
 	public List<uint> AchievementGames { get; set; } = [];
 
 	/// <summary>Games never to unlock in, on top of the built-in refusal to ever touch CS2.</summary>
@@ -188,6 +214,10 @@ public sealed class BotConfig {
 
 	/// <summary>Hard cap on how much of any one game will ever be completed. 0 uses each game's own ceiling.</summary>
 	public int AchievementMaxCompletionPct { get; set; }
+
+	// ── inventory ──
+	public bool ShowInventoryValue { get; set; } = true;
+	public List<uint> InventoryIgnoreGames { get; set; } = [];
 
 	// ── free games & badges ──
 	public bool ClaimFreeGames { get; set; }

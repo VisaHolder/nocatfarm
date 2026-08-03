@@ -13,6 +13,9 @@ public sealed record Achievement {
 	/// <summary>What a person sees on the profile.</summary>
 	public required string Display { get; init; }
 
+	/// <summary>The achievement's description - used to spot milestone/meta ones that need other achievements first.</summary>
+	public string Description { get; init; } = "";
+
 	/// <summary>Which stat holds it, and which bit inside that stat. Together these are its address.</summary>
 	public required uint StatId { get; init; }
 	public required int Bit { get; init; }
@@ -186,12 +189,17 @@ public static class Achievements {
 					?? bitNode["display"]["name"].AsString()
 					?? apiName;
 
+				string desc = bitNode["display"]["desc"].Children.FirstOrDefault(static k => k.Name == "english")?.Value
+					?? bitNode["display"]["desc"].AsString()
+					?? "";
+
 				// The bit is an offset within THIS stat's value, not a global achievement index.
 				bool unlocked = (statValues.GetValueOrDefault(statId) & (1u << (bit & 31))) != 0;
 
 				all.Add(new Achievement {
 					Name = apiName,
 					Display = display,
+					Description = desc,
 					StatId = statId,
 					Bit = bit,
 					Unlocked = unlocked,
@@ -271,13 +279,18 @@ public static class Achievements {
 		}
 
 		if (percentages == null) {
-			percentages = [];
+			// Only a genuine answer from Steam gets cached. If the fetch throws or returns non-200, `fetched` stays
+			// null and we DON'T cache - a single network blip must never bake an empty dict in for the whole
+			// process, which used to silently disable the achievement pacer for that game forever (everything read
+			// GlobalPercent == null, nothing cleared the rarity floor, and it quietly stopped unlocking).
+			Dictionary<string, double>? fetched = null;
 
 			try {
 				string url = $"https://api.steampowered.com/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/?gameid={set.AppId}";
 				using HttpResponseMessage response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
 				if (response.IsSuccessStatusCode) {
+					fetched = [];
 					using JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
 
 					if (doc.RootElement.TryGetProperty("achievementpercentages", out JsonElement wrapper)
@@ -289,7 +302,7 @@ public static class Achievements {
 								continue;
 							}
 
-							percentages[name] = p.ValueKind == JsonValueKind.Number ? p.GetDouble()
+							fetched[name] = p.ValueKind == JsonValueKind.Number ? p.GetDouble()
 								: double.TryParse(p.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed) ? parsed : 0;
 						}
 					}
@@ -298,8 +311,12 @@ public static class Achievements {
 				Log.Debug($"couldn't read global achievement rates for {set.AppId}: {e.Message}");
 			}
 
-			lock (GlobalCache) {
-				GlobalCache[set.AppId] = percentages;
+			percentages = fetched ?? [];
+
+			if (fetched != null) {
+				lock (GlobalCache) {
+					GlobalCache[set.AppId] = fetched;
+				}
 			}
 		}
 

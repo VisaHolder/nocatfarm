@@ -10,7 +10,15 @@ public enum SettingKind {
 	Text,
 	Secret,
 	AppIds,
-	Choice
+	Choice,
+
+	/// <summary>
+	/// A choice whose values are TEXT rather than numbers - a language code, say.
+	///
+	/// Separate from <see cref="Choice"/> because that one parses its values as integers and silently drops
+	/// anything that isn't one, so a string-valued list would render with no options at all.
+	/// </summary>
+	Pick
 }
 
 /// <summary>
@@ -88,6 +96,16 @@ public static class Settings {
 			return $"{choice} ({ChoiceLabel(def, choice)})";
 		}
 
+		if ((def.Kind == SettingKind.Pick) && value is string picked) {
+			foreach ((string Value, string Label) option in ParsePicks(def)) {
+				if (option.Value.Equals(picked, StringComparison.OrdinalIgnoreCase)) {
+					return $"{picked} ({option.Label})";
+				}
+			}
+
+			return picked;
+		}
+
 		return value switch {
 			null => "",
 			List<uint> apps => apps.Count == 0 ? "(none)" : string.Join(", ", apps),
@@ -106,6 +124,25 @@ public static class Settings {
 		}
 
 		return value.ToString(CultureInfo.InvariantCulture);
+	}
+
+	/// <summary>The options of a <see cref="SettingKind.Pick"/>, whose values are text.</summary>
+	public static List<(string Value, string Label)> ParsePicks(SettingDef def) {
+		List<(string, string)> options = [];
+
+		if (string.IsNullOrEmpty(def.Choices)) {
+			return options;
+		}
+
+		foreach (string option in def.Choices.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) {
+			int space = option.IndexOf(' ');
+
+			if (space > 0) {
+				options.Add((option[..space], option[(space + 1)..].Trim()));
+			}
+		}
+
+		return options;
 	}
 
 	public static List<(int Value, string Label)> ParseChoices(SettingDef def) {
@@ -188,6 +225,22 @@ public static class Settings {
 				p.SetValue(config, c);
 
 				return null;
+			}
+
+			case SettingKind.Pick: {
+				List<(string Value, string Label)> options = ParsePicks(def);
+
+				// The code or the label - "de" and "Deutsch" should both work from the console.
+				foreach ((string Value, string Label) option in options) {
+					if (option.Value.Equals(raw, StringComparison.OrdinalIgnoreCase)
+						|| option.Label.Equals(raw, StringComparison.OrdinalIgnoreCase)) {
+						p.SetValue(config, option.Value);
+
+						return null;
+					}
+				}
+
+				return $"{def.Label} must be one of: {string.Join(", ", options.Select(static o => o.Value))}";
 			}
 
 			case SettingKind.AppIds: {
@@ -421,6 +474,12 @@ public static class Settings {
 		new("StatusQuietEveryMinutes", "And while it's resting, every", SecLogging, SettingKind.Int,
 			"The same report while an account is asleep, on a break, paused or offline. Slower on purpose - a line every five minutes across an eight-hour night is noise, not information. 0 turns it off.",
 			Min: 0, Max: 1440),
+		new("Language", "Language", SecDashboard, SettingKind.Pick,
+			"What language the dashboard is in. Anything a translation hasn't covered yet falls back to English rather than showing a blank, so a partly translated language is still perfectly usable. The console and the log stay in English.",
+			Choices: "en English | es Español | pt-BR Português (Brasil) | ru Русский | de Deutsch | fr Français | zh-CN 简体中文 | tr Türkçe | pl Polski | ja 日本語 | ko 한국어"),
+		new("MarketCurrency", "Inventory prices in", SecDashboard, SettingKind.Choice,
+			"Which currency inventory values are shown in. Use the same one your Steam store is set to, or the totals will not match what you see on the market. Changing it re-prices everything from scratch.",
+			Choices: "1 US dollar | 20 Canadian dollar | 21 Australian dollar | 2 British pound | 3 Euro | 5 Russian rouble | 7 Brazilian real | 8 Japanese yen | 23 Chinese yuan | 24 Indian rupee"),
 		new("FileLogging", "Write a log file", SecLogging, SettingKind.Bool,
 			"Write everything to logs/ as well as the screen. Leave this on - it's the only way to see what happened while you were asleep."),
 		new("Debug", "Debug detail", SecLogging, SettingKind.Bool,
@@ -489,6 +548,9 @@ public static class Settings {
 		// ── Human mode ──
 		new("LegitMode", "Human mode", SecHuman, SettingKind.Bool,
 			"Play like a person: one game at a time, sittings of realistic length, breaks and meals, quiet days, and offline overnight. Everything that would look like a bot is switched off and hidden while this is on, and comes back exactly as you left it when you turn it off."),
+		new("LegitStopMaxSeconds", "When stopped, finish up for up to", SecHuman, SettingKind.Int,
+			"Human mode only: on a manual stop, keep playing for a random few seconds up to this many (a person finishing up) before logging off, instead of vanishing mid-game. Seconds; 0 stops instantly.",
+			Min: 0, Max: 300),
 		new("GameWeights", "Games and how often", SecHuman, SettingKind.Text,
 			"Which games it plays and roughly how much of its time each one gets. The FIRST game is the main game - the one this account is meant to be into - and the rest are what it dips into now and then.",
 			Placeholder: "730:70, 440:20, 550:10", Mode: "legit"),
@@ -602,8 +664,11 @@ public static class Settings {
 			"Skip games you have never launched yourself, so nocat.farm doesn't put first-ever playtime on games you'd rather nobody saw.",
 			Advanced: true),
 		new("SkipRefundableGames", "Protect refundable games", SecCards, SettingKind.Bool,
-			"Leave a game alone for the first two weeks after you buy it - playing past two hours is what makes it non-refundable.",
+			"Leave a newly bought game completely alone until you can no longer get your money back - Steam refuses a refund once a game has two hours on it, and two hours is one boost session. Applies everywhere, not just to card farming: idling, grinds and the achievement hunter all skip the game until the window closes or you have played two hours of it yourself. Free games are never held back, and the hold lifts on its own.",
 			Advanced: true),
+		new("RefundHoldDays", "...for this many days", SecCards, SettingKind.Int,
+			"How long a newly bought game is left alone, in days. Steam's own refund window is 14 days, which is the default; raise it if you take longer than that to make up your mind.",
+			Advanced: true, Min: 1, Max: 90),
 		new("FarmOnlyWhileAsleep", "Only farm cards while asleep", SecCards, SettingKind.Bool,
 			"Human mode only: hold card farming until the account is asleep for the night (when it goes invisible), then farm, and play its normal schedule by day. Off (the default) farms as soon as there are cards, day or night.",
 			Advanced: true),
@@ -613,6 +678,12 @@ public static class Settings {
 		new("FarmUntilHour", "...until", SecCards, SettingKind.Int,
 			"Farm cards up to this hour (24-hour clock). Set it earlier than \"from\" and the window wraps past midnight - e.g. 22 to 6 farms overnight only.",
 			Advanced: true, Min: 0, Max: 24),
+		new("PostFarmWindDownMinMinutes", "After the last card, keep playing at least", SecCards, SettingKind.Int,
+			"Human mode only: when a card-farming run finishes, keep that game on for a random time in this range (minutes) before it steps away, instead of quitting the instant the last card drops. Set both to 0 to switch off instantly.",
+			Advanced: true, Min: 0, Max: 120),
+		new("PostFarmWindDownMaxMinutes", "...up to", SecCards, SettingKind.Int,
+			"The top of the post-farming wind-down range, in minutes.",
+			Advanced: true, Min: 0, Max: 240),
 		new("FarmingDelayMinutes", "Re-check every", SecCards, SettingKind.Int,
 			"How often to re-check a game while farming it, in minutes. Drops are pushed by Steam the moment they happen, so this is only a safety net.",
 			Advanced: true, Min: 1, Max: 240),
@@ -635,8 +706,51 @@ public static class Settings {
 		new("AchievementMaxCompletionPct", "Never finish more than", SecAchievements, SettingKind.Int,
 			"A hard ceiling on how much of any one game gets completed, as a percentage. 0 leaves each game to its own tuned ceiling, which is usually the better answer - a 3-hour puzzle game and a 500-hour grind should not stop at the same figure. 100%% completion on an idled account is itself the giveaway, so this never goes above 95.",
 			Min: 0, Max: 95),
+		new("AchievementBoost", "Achievement boost", SecAchievements, SettingKind.Choice,
+			"Auto-hunt achievements across several games without starting each grind by hand. OFF by default; most accounts won't use it. \"Games you pick\" works through the list below; \"all single-player\" finds them itself - every single-player game in the library that has achievements, is a game (never DLC, demos, soundtracks or tools) and that people actually play. Either way it takes one game at a time, plays it like a normal grind (easiest-first, at your Achievement pace, only what the hours make reachable), then rotates. On a human-mode account it stays weighted-first: a session here and there between long stretches of the normal schedule, never while asleep.",
+			Advanced: true, Choices: "0 off | 1 games you pick | 2 all single-player"),
+		new("AchievementBoostGames", "Boost these games", SecAchievements, SettingKind.AppIds,
+			"The games the boost works through, comma separated (appIDs or store URLs). Only used when Achievement boost is \"games you pick\".",
+			Advanced: true, Placeholder: "440, 400, 220"),
+		new("BoostSessionHours", "Play each for about", SecAchievements, SettingKind.Int,
+			"How long the boost sits on one game before rotating to the next, in hours.",
+			Advanced: true, Min: 1, Max: 24),
+		new("MaxBoostGamesInARow", "Human mode: max boosts in a row", SecAchievements, SettingKind.Int,
+			"Human mode only: how many boost sessions it does back-to-back before a longer stretch of the normal weighted schedule - keeps a legit account weighted-first.",
+			Advanced: true, Min: 1, Max: 20, Mode: "legit"),
+		new("BoostRestMinutesHuman", "Human mode: weighted gap between boosts", SecAchievements, SettingKind.Int,
+			"Human mode only: minutes of the normal weighted schedule between boost sessions, so hunting never dominates a legit account's day.",
+			Advanced: true, Min: 15, Max: 1440, Mode: "legit"),
+		new("BoostMinReviews", "Only hunt games with at least", SecAchievements, SettingKind.Int,
+			"Steam reviews a game needs before \"all single-player\" will hunt it. This is the bundle-filler filter: nobody has an explanation for why their account spent an evening on a game with eleven reviews that they have never launched. 0 hunts everything. Ignored for games you pick by hand.",
+			Advanced: true, Min: 0, Max: 100000),
+		new("BoostOnlyPlayedGames", "Only hunt games you've played", SecAchievements, SettingKind.Bool,
+			"Restrict \"all single-player\" to games this account has actually launched at some point. Off by default - a hunter starting a new game is perfectly normal - but it is the strictest way to keep the account to games that fit its history.",
+			Advanced: true),
+		new("InventoryIgnoreGames", "...but not these games", SecExtras, SettingKind.AppIds,
+			"AppIDs to leave out of the inventory value, comma separated. This is where a game the account is BANNED in goes: its items are still sitting in the inventory but they can never be sold, so counting them inflates the total. Steam doesn't say which game an account is banned in - nothing in the inventory reliably shows it either - so this is a list you fill in rather than something guessed at.",
+			Advanced: true, Placeholder: "730"),
+		new("ShowInventoryValue", "Work out what its inventory is worth", SecExtras, SettingKind.Bool,
+			"Show this account's inventory value on the dashboard, priced at the Steam market's median. It reads the account's OWN inventory with its own session, so a private profile is no obstacle, and it only counts items that can actually be sold - which means a game the account is banned in contributes nothing. Prices are looked up slowly in the background and cached for a day.",
+			Advanced: true),
+		new("YieldToFamily", "Give a shared game back when they want it", SecAchievements, SettingKind.Bool,
+			"If somebody in the family starts a game this account is borrowing, hand it straight back and move on to the next one. Steam lends a shared game to one person at a time and the owner always wins, so the alternative is being thrown out mid-session and sitting there \"playing\" a game it no longer has. It stays out of the rotation for twenty minutes after they stop, rather than grabbing it the second they quit.",
+			Advanced: true),
+		new("HoldNewFamilyGames", "Leave brand-new family games alone", SecAchievements, SettingKind.Bool,
+			"Skip a family-shared game for its first two weeks in the shared library (the same number of days as \"Protect refundable games\"), in case whoever bought it is still deciding. It can only go on when the game ARRIVED, never on how long its owner has played it - that number isn't visible from this account - so it will sometimes hold back a game the owner has already sunk hours into and can no longer refund.",
+			Advanced: true),
+		new("IncludeFamilyLibrary", "Include family-shared games", SecAchievements, SettingKind.Bool,
+			"Also hunt games shared with this account through a Steam Family. Achievements earned on a borrowed game are recorded on THIS account exactly like an owned one. Games the family has excluded from sharing are skipped, as are non-games. Owned games are always hunted before borrowed ones, because the owner can take a shared game back at any moment.",
+			Advanced: true),
+		new("AchievementGrindGapMinMinutes", "While grinding, one achievement every", SecAchievements, SettingKind.Int,
+			"How far apart a GRIND unlocks achievements, in minutes (the low end of a jittered range). A grind means actively sitting on one game, so this is a person's active-hunting pace, not the slow background drip. Easiest-first and still gated by the hours in the game.",
+			Advanced: true, Min: 1, Max: 120),
+		new("AchievementGrindGapMaxMinutes", "...up to", SecAchievements, SettingKind.Int,
+			"The top of the grind unlock spacing, in minutes.",
+			Advanced: true, Min: 1, Max: 240),
 		new("AchievementNeverGames", "Never in these games", SecAchievements, SettingKind.AppIds,
-			"Games to leave completely alone. Counter-Strike 2 is always on this list whether you put it there or not - writing achievements into a VAC-protected competitive game is not a risk worth taking. In human mode the account's headline game is skipped as well."),
+			"Games to leave completely alone - no achievements are ever written for anything listed here, and the achievement boost never picks one. In human mode the account's headline game is skipped as well. (Note: some games, like Counter-Strike 2, keep their achievements server-side, so they can't be unlocked by anything regardless.)",
+			Advanced: true),
 		new("AchievementGames", "Only these games", SecAchievements, SettingKind.AppIds,
 			"Restrict it to these appIDs. Leave it empty for whatever the account happens to be playing.",
 			Advanced: true),

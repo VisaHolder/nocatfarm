@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using NocatFarm.Config;
 using NocatFarm.Core;
 
@@ -109,6 +110,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		public DateTime NextAllow;      // earliest wall-clock moment the next unlock may fire
 		public int Ceiling = -1;        // rolled once per game: the most of this game we will ever complete
 		public int Unlocked = -1;       // last known unlocked count; -1 means unknown, so treat as onboarding
+		public int Total;               // how many the game has at all, so progress reads as a fraction
 		public int BurstLeft;           // mid-burst: this many more pop quickly, bypassing the played-time gate
 	}
 
@@ -119,6 +121,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	private DateTime _lastTick = DateTime.MinValue;
 	private bool _loaded;
 	private string _status = "off";
+	private uint _grindReset;   // the app whose schedule we've already pulled forward for the current grind (0 = none)
 
 	public override string Name => "achievements";
 	public override string Status => Bot.Cfg.UnlockAchievements ? _status : "";
@@ -167,6 +170,10 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			return;
 		}
 
+		if (!Bot.Grinding) {
+			_grindReset = 0;   // grind ended - a later grind may re-engage the schedule
+		}
+
 		List<uint> running = CurrentGames();
 
 		if (running.Count == 0) {
@@ -185,6 +192,18 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				}
 
 				g.PlayedMins++;
+
+				// A deliberate grind engages the achievement schedule NOW. Otherwise a spacing gap set during
+				// ordinary play (NextAllow hours out) blocks the grind for its whole duration - it'd drop nothing.
+				// Pulled forward exactly once when the grind begins; the played-time gate still applies, so the
+				// first unlock isn't instant and the pace stays legit.
+				if (Bot.Grinding && (Bot.GrindGame == app) && (_grindReset != app)) {
+					_grindReset = app;
+
+					if (g.NextAllow > now) {
+						g.NextAllow = now;
+					}
+				}
 			}
 
 			if (!Due(g, prof)) {
@@ -241,8 +260,10 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			bool onboarding = (g.Unlocked < 0) || (g.Unlocked < prof.OnboardCount);
 			int playedGate = onboarding ? prof.OnboardPlayedMins : prof.SteadyPlayedMins;
 
-			// Mid-burst is the exception: a burst is several achievements from one moment of play, so they are
-			// only a couple of wall-clock minutes apart and share the same played-time.
+			// The played-time gate applies to EVERYTHING, including a grind: you cannot legitimately unlock an
+			// achievement faster than you put the hours in, and a game with 0-1 hours on it must not dump a pile of
+			// them. A grind just plays the game continuously so the hours (and the unlocks) come steadily. The only
+			// bypass is a mid-burst (a cluster from one moment of play).
 			if ((g.BurstLeft <= 0) && ((g.PlayedMins - g.MinsAtLastUnlock) < playedGate)) {
 				return false;
 			}
@@ -277,8 +298,14 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		int total = set.All.Count;
 		int already = set.All.Count(static a => a.Unlocked);
 
+		// A grind works through the WHOLE game (ignores the rarity floor, up to the account's completion cap), but
+		// it still unlocks at the account's own Achievement-pace setting - never instantly, human mode or not. The
+		// only thing human-mode changes about a grind is the game-switch timing, not the achievement speed.
+		bool grind = Bot.Grinding && (Bot.GrindGame == app);
+
 		lock (_gate) {
 			g.Unlocked = already;
+			g.Total = total;
 		}
 
 		// Stop well short of everything. Never below the onboarding cluster though, or a game with a low
@@ -292,6 +319,12 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			ceiling = cap;
 		}
 
+		// A grind may take a game far past the stealthy research ceiling - up to the account's own
+		// completion cap, or all of them when no cap is set.
+		if (grind) {
+			ceiling = (cap > 0) ? cap : 100;
+		}
+
 		int ceilingCount = Math.Min(total, Math.Max(prof.OnboardCount, total * ceiling / 100));
 
 		if (already >= ceilingCount) {
@@ -303,10 +336,20 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 		double hours = g.PlayedMins / 60.0;
 		bool onboarding = already < prof.OnboardCount;
+		// A grind ignores the rarity floor: it works through everything settable, most-common first, rather
+		// than only what the hours "justify". Normal play keeps the floor so it never pops a rare one early.
+		// The rarity floor is the "possibility" gate and applies to a grind TOO: it opens with the hours in the
+		// game, so a rare/grindy achievement (a low global %, e.g. "win 1000 rounds") can't be unlocked two hours
+		// in - only what a real player could plausibly have reached by now, easiest-first. A grind just plays the
+		// game continuously so the hours (and the floor) move faster; it does not skip ahead to the hard tail.
 		int floor = Math.Max(Math.Max(1, prof.MinPercent), RarityFloorForHours(hours / prof.RarityScale));
 
 		List<Achievement> eligible = set.All
-			.Where(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a) && ((a.GlobalPercent ?? 0) >= floor))
+			// Unknown rarity (Steam's global-percent endpoint was unreachable) counts as eligible rather than being
+			// excluded - otherwise a missing fetch would silently stop the account unlocking anything at all.
+			.Where(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a) && ((a.GlobalPercent ?? floor) >= floor)
+				&& (RequiredPriorAchievements(a) <= already)
+				&& !TierBlocked(a, set.All))
 			.ToList();
 
 		if (eligible.Count == 0) {
@@ -314,9 +357,19 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				g.BurstLeft = 0;
 			}
 
-			// The gate is shut at this playtime, which is it working, not failing. Come back in an hour or
-			// three rather than asking again every minute.
-			Back(g, TimeSpan.FromMinutes(_rng.Next(60, 181)));
+			// When a grind can't unlock anything but the game still has locked achievements, the usual
+			// reason is Steam controls them server-side (Counter-Strike 2 is the classic case) - say so plainly
+			// and stop hammering Steam's stats for it, rather than looking silently stuck.
+			if (grind && set.All.Any(a => !a.Unlocked && !IsSpecialGlobal(a)) && !set.All.Any(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a))) {
+				Log.Info($"can't unlock {GameNames.Of(app)}'s achievements - Steam sets them server-side, so there's nothing to grind here", Bot.Name);
+				Back(g, TimeSpan.FromHours(_rng.Next(8, 25)));
+
+				return false;
+			}
+
+			// The gate is shut at this playtime, which is it working, not failing. Come back later rather than
+			// asking again every minute (sooner during a grind, which is actively waiting on them).
+			Back(g, TimeSpan.FromMinutes(grind ? _rng.Next(15, 41) : _rng.Next(60, 181)));
 
 			return false;
 		}
@@ -347,7 +400,25 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 			// Cluster like a person: several within a couple of minutes as a level or campaign finishes, then
 			// nothing for a long stretch. A steady one-every-N-minutes drip is the thing to avoid.
-			if (g.BurstLeft > 0) {
+			if (grind) {
+				// Active-play pace: what a real person mopping up a game's easy achievements looks like - a handful
+				// an hour, not a dump. Mostly the configured gap apart (default ~12-24 min, so ~3-5/hr, never 20),
+				// easiest-first, only among what's reachable for the hours in the game (the rarity floor above), and
+				// still Paced() by the account's setting. But not a metronome: now and then a level or objective
+				// pops two or three together, then a longer quiet - exactly how a person's history looks.
+				int glo = Math.Max(1, Bot.Cfg.AchievementGrindGapMinMinutes);
+				int ghi = Math.Max(glo, Bot.Cfg.AchievementGrindGapMaxMinutes);
+
+				if (g.BurstLeft > 0) {
+					g.BurstLeft--;
+					gap = _rng.Next(1, 5);
+				} else if ((eligible.Count > 1) && (_rng.Next(100) < 25)) {
+					g.BurstLeft = _rng.Next(1, 3);
+					gap = _rng.Next(1, 5);
+				} else {
+					gap = _rng.Next(glo, ghi + 1);
+				}
+			} else if (g.BurstLeft > 0) {
 				g.BurstLeft--;
 				gap = _rng.Next(1, 5);
 			} else if ((eligible.Count > 1) && (_rng.Next(100) < (onboarding ? 45 : 12))) {
@@ -364,6 +435,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 		string rarity = pick.GlobalPercent is { } percent ? $" ({percent:0.#}% of owners have it)" : "";
 		Log.Reward($"unlocked \"{pick.Display}\" in {GameNames.Of(app)}{rarity}  ({nowUnlocked}/{total})", Bot.Name);
+		Remember(new Unlock(app, GameNames.Of(app), pick.Display, pick.GlobalPercent, DateTime.UtcNow, nowUnlocked, total));
 
 		return true;
 	}
@@ -374,6 +446,90 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// Left 4 Dead 2's GNOME ALONE is the example: handed out en masse in 2010, so it reads as a comfortable
 	/// ~69% "common" while being nothing of the sort. The pacer must never feature one.
 	/// </summary>
+	/// <summary>
+	/// How many OTHER achievements a milestone/meta achievement needs first (e.g. TF2's "Achieve 17 of the
+	/// achievements in the Sniper pack" -> 17). Unlocking one before its prerequisites is impossible for a real
+	/// player, so the caller holds it until the account has at least this many unlocked in the game. We only know
+	/// the COUNT, not which ones, so "N unlocked total" is the safe necessary condition.
+	/// </summary>
+	/// <summary>
+	/// Is this one rung of a ladder whose lower rungs are still locked?
+	///
+	/// Games number their tiers, and the numbering IS the dependency: "Sniper Milestone 3" after 1 and 2, "Level
+	/// 50" after "Level 10", "Chapter 4" after "Chapter 3". Steam publishes no dependency graph at all, so this
+	/// is inferred - achievements whose names are identical once the numbers are stripped are treated as one
+	/// family, and a rung is held until every lower rung in its family is done.
+	///
+	/// Rarity ordering already gets this right most of the time (a later tier is rarer, and the easiest is always
+	/// taken first), but not always: tiers can share a rarity, and a profile showing "Milestone 3" with 1 and 2
+	/// missing is the exact shape of a faked achievement. Belt and braces on the one thing that would give it away.
+	/// </summary>
+	private static bool TierBlocked(Achievement a, IReadOnlyCollection<Achievement> all) {
+		if (!TierOf(a.Display, out string family, out int rung)) {
+			return false;
+		}
+
+		foreach (Achievement other in all) {
+			if (other.Unlocked || (other.Name == a.Name) || !TierOf(other.Display, out string otherFamily, out int otherRung)) {
+				continue;
+			}
+
+			// A lower rung of the same ladder, still locked - so this one is not next.
+			if ((otherRung < rung) && string.Equals(family, otherFamily, StringComparison.OrdinalIgnoreCase)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/// <summary>
+	/// Split "Sniper Milestone 3" into ("sniper milestone", 3). False when there is no number to order by, which
+	/// is most achievements - those are not part of any ladder we can see.
+	/// </summary>
+	private static bool TierOf(string display, out string family, out int rung) {
+		family = "";
+		rung = 0;
+
+		if (string.IsNullOrWhiteSpace(display)) {
+			return false;
+		}
+
+		// The LAST number in the name is the rung: "Half-Life 2 Chapter 3" is chapter three, not half-life two.
+		MatchCollection numbers = Regex.Matches(display, @"\d{1,4}");
+
+		if (numbers.Count == 0) {
+			return false;
+		}
+
+		Match last = numbers[^1];
+
+		if (!int.TryParse(last.Value, out rung)) {
+			return false;
+		}
+
+		// Everything either side of the number, normalised - that is the ladder's identity.
+		family = (display[..last.Index] + display[(last.Index + last.Length)..])
+			.Replace("  ", " ")
+			.Trim()
+			.ToLowerInvariant();
+
+		// A number with no name around it ("100") tells us nothing about what it belongs to.
+		return family.Length >= 3;
+	}
+
+	private static int RequiredPriorAchievements(Achievement a) {
+		string text = $"{a.Display} {a.Description}".ToLowerInvariant();
+
+		Match m = Regex.Match(text, @"(?:achieve|complete|earn|unlock|obtain|collect)\s+(\d{1,3})[^.!?]*achievement");
+
+		if (!m.Success) {
+			m = Regex.Match(text, @"(\d{1,3})\s+of\s+the\s+achievements");
+		}
+
+		return m.Success && int.TryParse(m.Groups[1].Value, out int n) ? n : 0;
+	}
+
 	private static bool IsSpecialGlobal(Achievement a) => a.Name.StartsWith("GLOBAL_", StringComparison.Ordinal);
 
 	/// <summary>
@@ -406,6 +562,30 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		}
 	}
 
+	/// <summary>An achievement this account earned, newest first. Kept in memory - a session's worth is enough.</summary>
+	public sealed record Unlock(uint App, string Game, string Name, double? Percent, DateTime When, int Unlocked, int Total);
+
+	private readonly List<Unlock> _recent = [];
+
+	/// <summary>The last few achievements earned, newest first.</summary>
+	public IReadOnlyList<Unlock> Recent {
+		get {
+			lock (_recent) {
+				return [.. _recent];
+			}
+		}
+	}
+
+	private void Remember(Unlock unlock) {
+		lock (_recent) {
+			_recent.Insert(0, unlock);
+
+			if (_recent.Count > 20) {
+				_recent.RemoveRange(20, _recent.Count - 20);
+			}
+		}
+	}
+
 	/// <summary>One row per game the pacer is tracking, for anything that wants to show its working.</summary>
 	public sealed record Row(
 		uint App,
@@ -415,6 +595,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		int FloorPercent,
 		int CeilingPercent,
 		int Unlocked,
+		int Total,
 		DateTime NextAllow,
 		bool Blocked,
 		string Why
@@ -456,6 +637,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						Math.Min(floor, 100),
 						kv.Value.Ceiling,
 						kv.Value.Unlocked,
+						kv.Value.Total,
 						kv.Value.NextAllow,
 						why.Length > 0,
 						why);
@@ -485,6 +667,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		public DateTime NextAllow { get; set; }
 		public int Ceiling { get; set; } = -1;
 		public int Unlocked { get; set; } = -1;
+		public int Total { get; set; }
 	}
 
 	private static string PathFor(string bot) => Path.Combine(ConfigStore.ConfigDir, "state", $"cheevo-{bot}.json");
@@ -512,7 +695,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						MinsAtLastUnlock = s.MinsAtLastUnlock,
 						NextAllow = s.NextAllow,
 						Ceiling = s.Ceiling,
-						Unlocked = s.Unlocked
+						Unlocked = s.Unlocked,
+						Total = s.Total
 					};
 				}
 			}
@@ -610,13 +794,14 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 					MinsAtLastUnlock = kv.Value.MinsAtLastUnlock,
 					NextAllow = kv.Value.NextAllow,
 					Ceiling = kv.Value.Ceiling,
-					Unlocked = kv.Value.Unlocked
+					Unlocked = kv.Value.Unlocked,
+					Total = kv.Value.Total
 				}).ToList();
 			}
 
 			string path = PathFor(Bot.Name);
 			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-			File.WriteAllText(path, JsonSerializer.Serialize(saved, new JsonSerializerOptions { WriteIndented = true }));
+			AtomicFile.Write(path, JsonSerializer.Serialize(saved, new JsonSerializerOptions { WriteIndented = true }));
 		} catch (Exception e) {
 			Log.Debug($"couldn't save the achievement state: {e.GetType().Name}: {e.Message}", Bot.Name);
 		}

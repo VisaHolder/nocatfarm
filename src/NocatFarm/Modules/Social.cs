@@ -174,39 +174,40 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 			return;
 		}
 
+		DateTime received = DateTime.UtcNow;
 		string text = message.Trim();
 
-		// Say who messaged the account and what they said.
-		//
-		// Somebody messaging a farming account matters - it is a real person talking to something pretending to
-		// be one, and whether the auto-reply was any good is impossible to judge without seeing what prompted
-		// it. Trimmed, because a pasted wall of text should not take the log with it.
-		Log.Info($"message from {from}: {(text.Length > 160 ? text[..160] + "..." : text)}", Bot.Name);
+		// Log who messaged the account and what they said - a real person talking to something pretending to
+		// be one, and the auto-reply can't be judged without seeing what prompted it. Trimmed so a pasted wall
+		// of text doesn't take the log with it.
+		// Flatten to one short line - a command reply (e.g. the whole /help wall) echoes back to whoever
+		// sent it, and logging its newlines and tab columns raw turned the log into a mess.
+		string oneLine = string.Join(' ', text.Split((char[]?) null, StringSplitOptions.RemoveEmptyEntries));
+		Log.Info($"message from {from}: {(oneLine.Length > 120 ? oneLine[..120] + "…" : oneLine)}", Bot.Name);
 
-		// A command has to LOOK like one.
-		//
-		// Every message from a master used to be run as a command, so saying "hi" to your own account answered
-		// "There's no 'hi' command" - and a master could never receive the ordinary auto-reply either, because
-		// this branch returned before reaching it. Requiring a leading slash means a command is something you
-		// deliberately type and everything else is just talking.
-		if (text.StartsWith('/')) {
-			string command = text[1..].Trim();
+		// A command must be prefixed with / or ! (e.g. /help or !status) - so ordinary chat is never mistaken for
+		// one, and the master still gets the auto-reply when they just talk. Only masters actually run them; a
+		// prefixed command from anyone else is ignored, never answered, since confirming the account takes
+		// commands would tell a stranger exactly what it is.
+		bool looksLikeCommand = text.StartsWith('/') || text.StartsWith('!');
 
-			if (command.Length == 0) {
-				Send(from, "Type a command after the slash - /help lists them.");
-
-				return;
-			}
-
+		if (looksLikeCommand) {
 			if (!IsMaster(from)) {
-				// Deliberately silent. Confirming that an account takes commands, to somebody not on the list,
-				// tells a stranger exactly what this account is.
+				// Silent - confirming the account takes commands tells a stranger exactly what it is.
 				Log.Debug($"ignoring a command from {from} - not on the list", Bot.Name);
 
 				return;
 			}
 
-			_ = Task.Run(() => RunCommandAsync(from, command));
+			string command = text[1..].Trim();
+
+			if (command.Length == 0) {
+				Send(from, "type a command after the / or ! - try /help");
+
+				return;
+			}
+
+			_ = Task.Run(() => RunCommandAsync(from, command, received));
 
 			return;
 		}
@@ -229,20 +230,20 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 
 		_ = Task.Run(async () => {
 			try {
-				// Typing takes time. The wait is randomised up to double the setting so it is never the same gap.
+				// Typing takes time. Randomised up to double the setting so it is never the same gap.
 				int seconds = Math.Max(0, Bot.Cfg.AutoReplyDelaySeconds);
 
 				if (seconds > 0) {
 					await Task.Delay(Rng.Seconds(seconds, seconds * 2)).ConfigureAwait(false);
 				}
 
-				// If the account is meant to be in bed, the reply waits until morning - which is exactly what a
-				// person who was asleep when you messaged them would do.
+				// If the account is meant to be asleep, the reply waits until morning - exactly what a person
+				// who was asleep when you messaged them would do.
 				await WaitUntilAwakeAsync().ConfigureAwait(false);
 
-				Bot.Friends?.SendChatMessage(new SteamID(from), EChatEntryType.ChatMsg, reply);
+				Bot.SendChatMessage(from, reply);
 				_replied++;
-				Log.Info($"replied to a message from {from}", Bot.Name);
+				Log.Info($"auto-replied to {from} after {(int) (DateTime.UtcNow - received).TotalSeconds}s", Bot.Name);
 			} catch (Exception e) {
 				Log.Debug($"couldn't reply to {from}: {e.Message}", Bot.Name);
 			}
@@ -253,7 +254,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 
 	private void Send(ulong to, string text) {
 		try {
-			Bot.Friends?.SendChatMessage(new SteamID(to), EChatEntryType.ChatMsg, text);
+			Bot.SendChatMessage(to, text);
 		} catch (Exception e) {
 			Log.Debug($"couldn't message {to}: {e.Message}", Bot.Name);
 		}
@@ -269,7 +270,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>Run a console command sent by Steam message and send the answer straight back.</summary>
-	private async Task RunCommandAsync(ulong from, string command) {
+	private async Task RunCommandAsync(ulong from, string command, DateTime received) {
 		try {
 			Log.Info($"command from {from}: {command}", Bot.Name);
 			string answer = await Commands.RunAsync(command, Bot.Name).ConfigureAwait(false);
@@ -283,12 +284,13 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 				answer = answer[..1900] + "\n… (cut short)";
 			}
 
-			Bot.Friends?.SendChatMessage(new SteamID(from), EChatEntryType.ChatMsg, answer);
+			Bot.SendChatMessage(from, answer);
+			Log.Info($"answered {from} ({command.Split(' ')[0]}) in {(int) (DateTime.UtcNow - received).TotalSeconds}s", Bot.Name);
 		} catch (Exception e) {
 			Log.Warn($"the command from {from} failed: {e.Message}", Bot.Name);
 
 			try {
-				Bot.Friends?.SendChatMessage(new SteamID(from), EChatEntryType.ChatMsg, "that didn't work: " + e.Message);
+				Bot.SendChatMessage(from, "that didn't work: " + e.Message);
 			} catch {
 				// nothing more to do
 			}

@@ -417,13 +417,41 @@ public sealed class WebHost : IAsyncDisposable {
 		// The dashboard theme, stored server-side so the toggle and the 'theme' command agree and the choice
 		// follows you between browsers.
 		// What the achievement pacer is doing, per game. Read-only.
+		// Read an inventory again on demand. Prices are left alone - they're cached for a day and shared between
+		// accounts, and re-fetching hundreds of them because somebody pressed a button is how you get refused.
+		app.MapPost("/api/bots/{name}/inventory/refresh", (HttpContext ctx, string name) => Guard(ctx, () => {
+			Bot? bot = _mgr.Get(name);
+
+			if (bot == null) {
+				return Results.Json(new { ok = false, error = "No such account." }, statusCode: 404);
+			}
+
+			bot.Inventory.ForceRefresh();
+
+			return Results.Json(new { ok = true });
+		}));
+
 		app.MapGet("/api/bots/{name}/achievements", (HttpContext ctx, string name) => Guard(ctx, () => {
 			Bot? bot = _mgr.Get(name);
 			Modules.AchievementPacer? pacer = bot == null ? null : BotManager.ModuleOf<Modules.AchievementPacer>(bot);
+			Modules.AchievementBoost? boost = bot == null ? null : BotManager.ModuleOf<Modules.AchievementBoost>(bot);
+			(string Mode, string Now, List<Modules.AchievementBoost.PlanRow> Next, List<Modules.AchievementBoost.PlanRow> Out) plan =
+				boost?.Plan() ?? ("off", "", [], []);
 
 			return Results.Json(new {
 				On = bot?.Cfg.UnlockAchievements ?? false,
-				Games = pacer?.Snapshot() ?? []
+				Games = pacer?.Snapshot() ?? [],
+				Recent = pacer?.Recent.Take(6) ?? [],
+				Hunt = new {
+					plan.Mode,
+					plan.Now,
+					Status = boost?.Status ?? "",
+					Left = bot is { Grinding: true, GrindUntil: not null } ? (int) Math.Max(0, (bot.GrindUntil.Value - DateTime.UtcNow).TotalMinutes) : 0,
+					Next = plan.Next.Take(8),
+					NextCount = plan.Next.Count,
+					OutReasons = Modules.AchievementBoost.Reasons(plan.Out).Take(5).Select(static r => new { r.Why, r.Count }),
+					OutCount = plan.Out.Count
+				}
 			});
 		}));
 
@@ -581,7 +609,7 @@ public sealed class WebHost : IAsyncDisposable {
 
 					break;
 				case "stop":
-					await bot.StopAsync().ConfigureAwait(false);
+					await bot.StopAsync(graceful: true).ConfigureAwait(false);
 
 					break;
 				case "pause":
@@ -998,6 +1026,9 @@ public sealed class WebHost : IAsyncDisposable {
 			CardsToday = cards,
 			CommentsToday = comments,
 			CardsLeft = bots.Sum(static b => b.CardsRemaining),
+			InventoryValue = bots.Sum(static b => b.Inventory.Total),
+			Currency = PriceBook.Symbol,
+			InventoryPending = bots.Sum(static b => b.Inventory.Pending),
 			GamesLeft = bots.Sum(static b => b.GamesRemaining),
 			Bots = bots.Select(b => {
 				Rep4RepModule? r4r = BotManager.ModuleOf<Rep4RepModule>(b);
@@ -1029,6 +1060,12 @@ public sealed class WebHost : IAsyncDisposable {
 				HumanPhase = BotManager.ModuleOf<HumanMode>(b)?.Current.ToString() ?? "Off",
 				HumanPlayedMinutes = BotManager.ModuleOf<HumanMode>(b)?.PlayedMinutesToday ?? 0,
 				HumanTargetMinutes = BotManager.ModuleOf<HumanMode>(b)?.TargetMinutesToday ?? 0,
+					InventoryValue = b.Inventory.Total,
+					InventoryChange = InventoryHistory.Since(b.Name, TimeSpan.FromHours(24))?.Change,
+					InventoryChangePct = InventoryHistory.Since(b.Name, TimeSpan.FromHours(24))?.Percent,
+					InventoryPending = b.Inventory.Pending,
+					InventoryReady = b.Inventory.Ready,
+					InventoryByGame = b.Inventory.ByGame.Take(8).Select(static g => new { g.Game, g.Items, g.Value, g.Blocked }),
 					Rep4RepToday = r4r?.PostsToday ?? 0,
 					Rep4RepCap = r4r?.Cap ?? b.Cfg.Rep4RepDailyCap,
 					CardsToday = cardsByBot.GetValueOrDefault(b.Name),

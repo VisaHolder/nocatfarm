@@ -60,6 +60,10 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 	/// <summary>Re-send what this account should be playing, unless something with a stronger claim owns it.</summary>
 	public void Assert() {
 		if (Bot.Grinding) {
+			if (DateTime.UtcNow < Bot.GrindStartsAt) {
+				return;   // grind is queued but not started - let whatever's playing keep running (legit switch-over)
+			}
+
 			Bot.SetPlaying([Bot.GrindGame]);
 			IdlingSince ??= DateTime.UtcNow;
 
@@ -79,9 +83,10 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 		}
 
 		// "Never touch these" has to mean never, not just never farm - the card farmer honoured the blacklist
-		// while the idler happily played the same appIDs anyway.
+		// while the idler happily played the same appIDs anyway. A game inside its refund window is the same
+		// story: the farmer left it alone and the idler would have sat on it for days.
 		List<uint> games = Bot.Cfg.IdleGames
-			.Where(a => !Bot.Cfg.BlacklistedGames.Contains(a) && !Live.Global.GlobalBlacklistedGames.Contains(a))
+			.Where(a => !Bot.Cfg.BlacklistedGames.Contains(a) && !Live.Global.GlobalBlacklistedGames.Contains(a) && !Bot.Refunds.Holds(a))
 			.ToList();
 
 		if (games.Count == 0 && string.IsNullOrWhiteSpace(Bot.CustomName)) {

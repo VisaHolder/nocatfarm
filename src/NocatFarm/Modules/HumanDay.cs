@@ -63,7 +63,7 @@ public sealed class HumanDay {
 		try {
 			string path = PathFor(bot);
 			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-			File.WriteAllText(path, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true }));
+			AtomicFile.Write(path, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true }));
 		} catch (Exception e) {
 			Log.Debug($"couldn't save today's plan: {e.Message}", bot);
 		}

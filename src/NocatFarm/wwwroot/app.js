@@ -96,6 +96,41 @@ async function doLogin(e) {
   return false;
 }
 
+// ── language ─────────────────────────────────────────────────────────
+// One JSON file per language under /lang, and English is not one of them: English lives in the markup and in
+// Settings.cs, and every lookup falls back to it. That is what makes a half-finished translation safe to ship -
+// an untranslated string shows the English rather than a key or a blank, so a language can be filled in over
+// time without anything ever looking broken.
+let lang = { ui: {}, settings: {} };
+
+async function loadLanguage(code) {
+  if (!code || code === 'en') { lang = { ui: {}, settings: {} }; return; }
+  try {
+    const res = await fetch(`lang/${encodeURIComponent(code)}.json`, { cache: 'no-cache' });
+    lang = res.ok ? await res.json() : { ui: {}, settings: {} };
+    lang.ui = lang.ui || {};
+    lang.settings = lang.settings || {};
+  } catch { lang = { ui: {}, settings: {} }; }
+}
+
+/// Translate a chrome string. The English text IS the key, so nothing has to be kept in sync by hand.
+const t = (english) => (lang.ui && lang.ui[english]) || english;
+
+/// A setting's translated label / explanation / choice labels, falling back to whatever the schema carries.
+function tSetting(def, field) {
+  const entry = lang.settings && lang.settings[def.Name];
+  const value = entry && entry[field];
+  return value || def[field === 'label' ? 'Label' : field === 'tip' ? 'Tooltip' : 'Choices'];
+}
+
+/// Walk the static markup once and translate anything tagged. data-t on an element translates its text;
+/// data-t-ph translates a placeholder; data-t-tip translates a tooltip.
+function translateChrome(root) {
+  (root || document).querySelectorAll('[data-t]').forEach((el) => { el.textContent = t(el.dataset.t); });
+  (root || document).querySelectorAll('[data-t-ph]').forEach((el) => { el.placeholder = t(el.dataset.tPh); });
+  (root || document).querySelectorAll('[data-t-tip]').forEach((el) => { el.dataset.tip = t(el.dataset.tTip); });
+}
+
 // ── tooltips ─────────────────────────────────────────────────────────
 // One handler for the whole document, so anything with data-tip gets a tooltip without registering anything.
 document.addEventListener('mouseover', (e) => {
@@ -118,6 +153,38 @@ document.addEventListener('focusin', (e) => {
 });
 
 const tipIcon = (text) => text ? `<i class="info" data-tip="${esc(text)}"></i>` : '';
+
+// Inventory money. Whole dollars in the table - cents on a four-figure inventory are noise - and the full
+// figure in the tooltip, where the breakdown lives.
+const cur = () => (state && state.Currency) || '$';
+const usd = (n) => cur() + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const usdExact = (n) => cur() + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// Up or down over the last day. Nothing at all until there is a reading old enough to compare against - a
+// percentage worked out from twenty minutes of history is noise dressed up as information.
+function valueDelta(b) {
+  if (b.InventoryChangePct === null || b.InventoryChangePct === undefined) return '';
+  const up = b.InventoryChangePct >= 0;
+  return `<span class="delta ${up ? 'up' : 'down'}" data-tip="${esc((up ? 'Up ' : 'Down ') + usdExact(Math.abs(b.InventoryChange)) + ' over the last 24 hours, at the market median.')}">${up ? '+' : '-'}${Math.abs(b.InventoryChangePct).toFixed(1)}%</span>`;
+}
+
+async function refreshInventory(name) {
+  await post(`/api/bots/${encodeURIComponent(name)}/inventory/refresh`, {});
+  toast(`Reading ${name}'s inventory again…`);
+}
+
+// The hover breakdown: which games hold the value, biggest first.
+const nlChar = String.fromCharCode(10);
+function valueTip(b) {
+  if (!b.InventoryReady) return 'Reading this inventory...';
+  const rows = (b.InventoryByGame || []).filter((g) => g.Value > 0 || g.Blocked);
+  if (!rows.length) return 'Nothing with a market price in this inventory.';
+  const lines = rows.map((g) => g.Blocked
+    ? `${g.Game} - skipped, nothing in it can be sold (${g.Items} item${g.Items === 1 ? '' : 's'})`
+    : `${g.Game} - ${usdExact(g.Value)}  (${g.Items} item${g.Items === 1 ? '' : 's'})`);
+  if (b.InventoryPending > 0) lines.push(`...${b.InventoryPending} more item${b.InventoryPending === 1 ? '' : 's'} still being priced`);
+  return `${usdExact(b.InventoryValue)} at market median${nlChar}${nlChar}${lines.join(nlChar)}`;
+}
 
 // ── formatting ───────────────────────────────────────────────────────
 function hm(minutes) {
@@ -299,6 +366,8 @@ function renderOverview() {
     tile(state.CardsLeft, 'Cards left', "Trading cards still to drop across every account.", state.CardsLeft ? '' : 'nothing left to farm') +
     tile(state.GamesLeft, 'Games left', 'Games with at least one card still to drop, across every account.') +
     tile(state.CardsToday, 'Cards today', 'Trading cards that dropped in the last 24 hours.') +
+    tile(usd(state.InventoryValue), 'Inventory', "What every account's inventory would fetch at the market's median price. Everything in there is counted at what it's worth, whether or not it can be sold right now.",
+      state.InventoryPending > 0 ? 'still pricing ' + state.InventoryPending : '') +
     (!r4rOn()
       ? ''
       : state.Rep4RepToken
@@ -307,12 +376,13 @@ function renderOverview() {
         : tile(state.CommentsToday, 'Comments today', 'rep4rep comments posted in the last 24 hours.'));
 
   $('glance').innerHTML = bots.length ? `<div class="tablewrap"><table>
-    <tr><th>Account</th><th>State</th><th>Playing</th><th>Cards</th>${r4rOn() ? '<th>rep4rep</th>' : ''}<th>Up</th></tr>
+    <tr><th>Account</th><th>State</th><th>Playing</th><th>Cards</th><th data-tip="What everything in this account&apos;s inventory would fetch at the market&apos;s median price. Items with no market listing count as nothing; items it merely can&apos;t sell right now (trade holds, bans) are still counted at what they are worth.">Value</th>${r4rOn() ? '<th>rep4rep</th>' : ''}<th>Up</th></tr>
     ${bots.map((b) => `<tr class="click" data-act="cards" data-bot="${esc(b.Name)}">
       <td><b>${esc(b.Name)}</b></td>
       <td><span class="chip ${b.Group}"><i class="dot"></i>${esc(b.Status)}</span></td>
       <td>${esc(b.Playing || '—')}</td>
       <td>${b.Cards || '—'}</td>
+      <td data-tip="${esc(valueTip(b))}">${b.InventoryValue > 0 ? usd(b.InventoryValue) + (b.InventoryPending > 0 ? '<span class="muted">+</span>' : '') + valueDelta(b) : (b.InventoryReady ? '—' : '<span class="muted">…</span>')}</td>
       ${r4rOn() ? `<td>${b.Rep4Rep ? b.Rep4RepToday + '/' + b.Rep4RepCap : '—'}</td>` : ''}
       <td>${b.UptimeMinutes ? hm(b.UptimeMinutes) : '—'}</td></tr>`).join('')}
     </table></div>`
@@ -400,6 +470,7 @@ function renderAccounts() {
         <span><b>${b.Cards}</b> card${b.Cards === 1 ? '' : 's'}${b.Games ? ` in ${b.Games}` : ''}</span>
         ${r4rOn() && b.Rep4Rep ? `<span><b>${b.Rep4RepToday}</b>/${b.Rep4RepCap} comments</span>` : ''}
         <span><b>${b.UptimeMinutes ? hm(b.UptimeMinutes) : '—'}</b> up</span>
+        ${b.InventoryValue > 0 ? `<span data-tip="${esc(valueTip(b))}"><b>${usd(b.InventoryValue)}</b> inventory ${valueDelta(b)}</span>` : ''}
       </div>
       ${r4rOn() && b.Rep4Rep ? `<div class="bar" data-tip="Comments posted in the last 24 hours against this account's daily cap."><i style="width:${capPct}%"></i></div>` : ''}
       <div class="rows">
@@ -407,6 +478,7 @@ function renderAccounts() {
           `<div class="row"><span class="k">${esc(m.Name)}</span><span class="v" title="${esc(m.Status)}">${esc(m.Status)}</span></div>`).join('')}
       </div>
       <div class="actions">
+        ${b.InventoryValue > 0 || b.InventoryReady ? `<button data-tip="Read this account's inventory again. Prices are kept for a day, so only what changed is looked up." onclick="refreshInventory('${esc(b.Name)}')">Value</button>` : ''}
         ${b.Online
           ? (b.Paused
             ? `<button data-tip="Start playing, farming and commenting again." data-act="resume" data-bot="${esc(b.Name)}">Resume</button>`
@@ -671,6 +743,27 @@ function setTheme(name, save) {
 // and an upgrade that suddenly blocked the dashboard would be the worst possible first impression of a new
 // version. Replayable from the Overview page whenever you want it.
 let tutorialStep = 0;
+
+// Kept here rather than read from the settings schema: the tutorial runs before the schema is needed, and this
+// list is what the picker shows. It must stay in step with the Language setting's choices in Settings.cs.
+const LANGUAGES = [
+  { code: 'en', name: 'English' }, { code: 'es', name: 'Español' }, { code: 'pt-BR', name: 'Português (BR)' },
+  { code: 'ru', name: 'Русский' }, { code: 'de', name: 'Deutsch' }, { code: 'fr', name: 'Français' },
+  { code: 'zh-CN', name: '简体中文' }, { code: 'tr', name: 'Türkçe' }, { code: 'pl', name: 'Polski' },
+  { code: 'ja', name: '日本語' }, { code: 'ko', name: '한국어' },
+];
+
+/// Chosen from the tutorial: saved, loaded and applied at once, so the very next step is already translated.
+async function pickTutorialLanguage(code) {
+  if (config && config.Global) {
+    config.Global.Language = code;
+    await post('/api/config', config.Global).catch(() => {});
+  }
+
+  await loadLanguage(code);
+  translateChrome();
+  renderTutorial();
+}
 let tutorialAsf = null;
 
 function shouldShowTutorial() {
@@ -689,6 +782,18 @@ function renderTutorial() {
   const found = tutorialAsf && tutorialAsf.Found && (tutorialAsf.Accounts || []).length > 0;
 
   const steps = [
+    {
+      // Language first, before a word of the rest is read. Skipping leaves it English, which is also what an
+      // untranslated string falls back to - so there is no way to end up looking at blanks.
+      title: 'Language',
+      body: `<p>Pick the language for this dashboard. You can change it later under Settings &rsaquo; Global.</p>
+        <div class="langpick">${LANGUAGES.map((l) =>
+          `<span class="p ${(config && config.Global && config.Global.Language || 'en') === l.code ? 'on' : ''}"
+            onclick="pickTutorialLanguage('${l.code}')">${esc(l.name)}</span>`).join('')}</div>
+        <p class="muted small">Anything a translation hasn't covered yet stays in English rather than showing a
+        blank, so a part-finished language is still perfectly usable. The console and the log stay in English.</p>`,
+      next: 'Continue',
+    },
     {
       title: 'Welcome to nocat.farm',
       body: `<p>It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts
@@ -1332,6 +1437,8 @@ function renderSettings() {
 // refreshed whenever settings are saved.
 let pacerFor = null;
 let pacerRows = null;
+let pacerRecent = [];
+let pacerHunt = null;
 
 async function loadPacer(name) {
   if (pacerFor === name) return;
@@ -1341,10 +1448,12 @@ async function loadPacer(name) {
   try {
     const d = await api(`/api/bots/${encodeURIComponent(name)}/achievements`);
     pacerRows = d.Games || [];
+    pacerRecent = d.Recent || [];
+    pacerHunt = d.Hunt || null;
     // Resolve any "app 12345" names against Steam so the table reads with real game names; learnNames redraws
     // the settings pane (which this pacer lives in) once they land.
     learnNames(pacerRows.map((g) => g.App).filter(Boolean));
-  } catch { pacerRows = []; }
+  } catch { pacerRows = []; pacerRecent = []; pacerHunt = null; }
 
   if (view === 'settings' && settingsTarget === name) renderSettings();
 }
@@ -1355,6 +1464,50 @@ const RARITY_TIERS = [
   { h: 22, floor: 5 }, { h: 35, floor: 3 }, { h: 50, floor: 2 }, { h: 80, floor: 1 },
 ];
 
+// What the hunter is doing and what it will do next. This is the part that was missing: the table below says
+// how the PACE works, and said nothing at all about which games are actually queued up.
+function huntPanel() {
+  const h = pacerHunt;
+  if (!h || h.Mode === 'off') return '';
+
+  const now = h.Now
+    ? `<b>Hunting ${esc(h.Now)}</b>${h.Left ? ` <span class="muted">- about ${hm(h.Left)} left</span>` : ''}`
+    : `<b>Standing by</b> <span class="muted">- ${esc(h.Status || 'waiting')}</span>`;
+
+  const chip = (g) => `<span class="hchip${g.Shared ? ' shared' : ''}" data-tip="${esc(g.Shared ? 'Shared with this account by a Steam Family.' : 'Owned by this account.')} ${esc(hm(g.Minutes))} played.">${esc(g.Game)}</span>`;
+
+  const shown = (h.Next || []).slice(0, 6);
+  const next = shown.map(chip).join('');
+  const more = h.NextCount > shown.length ? `<span class="hchip ghost">+${h.NextCount - shown.length} more</span>` : '';
+
+  // Everything it ruled out is a COUNT, not a list. A family library leaves a thousand games out, and one
+  // line saying why beats a wall of names nobody is going to read. The counts are worked out server-side over
+  // the WHOLE list, so they always add up to the total.
+  const shownOut = (h.OutReasons || []).map((r) => `${r.Count} ${r.Why}`).join(' · ');
+  const outLine = h.OutCount > 0
+    ? `<div class="huntrow"><span class="k">Left out</span><span class="muted small">${h.OutCount} game${h.OutCount === 1 ? '' : 's'}${shownOut ? ' — ' + esc(shownOut) : ''}</span></div>`
+    : '';
+
+  return `<div class="hunt">
+    <div class="huntnow">${now}<span class="spacer"></span><span class="muted small">${esc(h.Mode)}</span></div>
+    <div class="huntrow"><span class="k">Next up</span><div class="chips">${next || '<span class="muted small">nothing queued</span>'}${more}</div></div>
+    ${outLine}
+  </div>`;
+}
+
+// The last few that actually popped. Cheap to render, and it is the only place that shows the thing working.
+function recentUnlocks() {
+  if (!pacerRecent || !pacerRecent.length) return '';
+
+  const rows = pacerRecent.map((u) => {
+    const mins = Math.max(0, Math.round((Date.now() - new Date(u.When).getTime()) / 60000));
+    const rarity = u.Percent == null ? '' : `<span class="rare">${Number(u.Percent).toFixed(1)}%</span>`;
+    return `<li><b>${esc(u.Name)}</b> ${rarity}<span class="muted"> ${esc(GAME_NAMES[u.App] || u.Game)} · ${u.Unlocked}/${u.Total} · ${mins < 1 ? 'just now' : hm(mins) + ' ago'}</span></li>`;
+  }).join('');
+
+  return `<ul class="unlocks">${rows}</ul>`;
+}
+
 function pacerTable() {
   if (pacerRows === null) return '<p class="muted small">Reading what it has done so far…</p>';
   if (!pacerRows.length) return '<p class="muted small empty">Nothing tracked yet. It starts counting the first minute a game is running.</p>';
@@ -1363,23 +1516,42 @@ function pacerTable() {
     const blocked = g.Blocked;
     const next = new Date(g.NextAllow);
     const soon = next <= new Date();
-    const pct = Math.max(0, Math.min(100, Math.round((g.EffectiveHours / 80) * 100)));
     const hrs = g.PlayedMinutes >= 60 ? (g.PlayedMinutes / 60).toFixed(1) + 'h' : g.PlayedMinutes + 'm';
 
+    // Two different things worth seeing, so two different bars would be one too many: the fraction earned is the
+    // one people care about, and the rarity floor is the reason it isn't higher.
+    const done = g.Total > 0 ? Math.round((g.Unlocked / g.Total) * 100) : 0;
+    const earned = g.Total > 0
+      ? `<b>${g.Unlocked}</b><span class="muted">/${g.Total}</span>`
+      : (g.Unlocked > 0 ? `<b>${g.Unlocked}</b>` : '<span class="muted">—</span>');
+
+    // The floor is the RAREST it may touch, not what it takes next - it always takes the most common one that
+    // is still locked, so a game with none of the easy ones done gets an easy one, never the 3% tail. Writing it
+    // as "≥3%" read as a promise to unlock a 3% achievement, which is the opposite of what happens.
+    const floor = g.FloorPercent > 100
+      ? '<span class="muted">none yet</span>'
+      : `<span class="muted">down to</span> ${g.FloorPercent}%`;
+
     return `<tr class="${blocked ? 'off' : ''}">
-      <td class="g">${esc(GAME_NAMES[g.App] || g.Game)}</td>
+      <td class="g" title="${esc(GAME_NAMES[g.App] || g.Game)}">${esc(GAME_NAMES[g.App] || g.Game)}</td>
       <td class="n">${hrs}</td>
-      <td class="bar"><span style="width:${pct}%"></span></td>
-      <td class="w">${blocked ? esc(g.Why) : soon ? 'soon' : '~' + next.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</td>
+      <td class="n">${earned}</td>
+      ${g.Total > 0
+        ? `<td class="bar" data-tip="${done}% of this game earned. It stops at ${g.CeilingPercent > 0 ? g.CeilingPercent + '%' : "this game's own ceiling"}."><span style="width:${Math.max(0, Math.min(100, done))}%"></span></td>`
+        : `<td class="w muted" data-tip="This game's achievements haven't been read yet - that happens the first time it comes up for one.">not read yet</td>`}
+      <td class="n">${floor}</td>
+      <td class="w">${blocked ? esc(g.Why) : soon ? 'due now' : '~' + next.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</td>
     </tr>`;
   }).join('');
 
   return `<div class="tablewrap pacer"><table>
     <tr>
       <th>Game</th>
-      <th data-tip="Hours this account has spent in this game.">Played</th>
-      <th data-tip="How far along it is - the more hours, the more achievements it's allowed to unlock. A full bar is about 80 hours.">Progress</th>
-      <th data-tip="Roughly when the next achievement is due to unlock, or why this game is left alone. It's a pace, not a promise.">Next unlock</th>
+      <th data-tip="Hours this account has spent in this game. This is what decides how much it is allowed to earn.">Played</th>
+      <th data-tip="Achievements earned out of what the game has.">Earned</th>
+      <th data-tip="How much of the game is done. The bar never fills - it stops at this game's ceiling, because 100% on an idled account is the giveaway.">Progress</th>
+      <th data-tip="How far down the rarity list the hours so far have opened. It always unlocks the MOST COMMON one still locked - the ones you get just by playing - and only works down toward the rare tail as the hours build. This figure is the limit, never the next pick: a game with none of the easy ones done gets an easy one.">Opened</th>
+      <th data-tip="Roughly when the next one is due, or why this game is left alone. It is a pace, not a promise.">Next</th>
     </tr>
     ${rows}
   </table></div>${pacerRows.length > 12 ? `<p class="muted small">…and ${pacerRows.length - 12} more.</p>` : ''}`;
@@ -1407,6 +1579,8 @@ function sectionIntro(section, values) {
       the hours actually put in. It never fully completes a game${cap > 0 ? ` (it stops at ${cap}%)` : ''}, and
       leaves the game this account plays most well alone.</p>
     </div>
+    ${huntPanel()}
+    ${recentUnlocks()}
     ${pacerTable()}`;
   }
 
@@ -1864,8 +2038,17 @@ function fieldHtml(def, values, defaults) {
       </div>`;
       break;
     }
+    case 'Pick': {
+      const opts = (tSetting(def, 'choices') || '').split('|').map((o) => o.trim()).filter(Boolean).map((o) => {
+        const gap = o.indexOf(' ');
+        return { value: o.slice(0, gap), label: o.slice(gap + 1).trim() };
+      });
+      ctl = `<select id="${id}" data-setting="${def.Name}" onchange="editAndRender('${def.Name}',this.value)">${opts.map((o) =>
+        `<option value="${esc(o.value)}" ${cur === o.value ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`;
+      break;
+    }
     case 'Choice': {
-      const opts = parseChoices(def.Choices);
+      const opts = parseChoices(tSetting(def, 'choices'));
       ctl = opts.length <= 6
         ? `<div class="pills" data-setting="${def.Name}">${opts.map((o) =>
             `<span class="p ${Number(cur) === o.value ? 'on' : ''}" onclick="editAndRender('${def.Name}',${o.value})">${esc(o.label)}</span>`).join('')}</div>`
@@ -1893,7 +2076,7 @@ function fieldHtml(def, values, defaults) {
   const defText = Array.isArray(def0) ? (def0.length ? def0.join(', ') : 'none') : (def.Kind === 'Secret' ? '' : String(def0));
 
   return `<div class="field ${changed ? 'changed' : ''}">
-    <label for="${id}">${esc(def.Label)}${tipIcon(def.Tooltip)}</label>
+    <label for="${id}">${esc(tSetting(def, 'label'))}${tipIcon(tSetting(def, 'tip'))}</label>
     <div class="ctl">${ctl}</div>
     <div class="meta">
       ${def.NeedsRestart ? `<span class="restart" data-tip="This takes effect the next time nocat.farm starts.">⟳</span>` : ''}
@@ -2091,6 +2274,11 @@ async function boot() {
   if (config && config.Global && config.Global.Theme) {
     setTheme(config.Global.Theme, false);
   }
+
+  // Language, once config exists, and before the first render so nothing flashes English and then changes.
+  await loadLanguage(config && config.Global ? config.Global.Language : 'en');
+  translateChrome();
+
   go(view);
   await refresh();   // arms the single polling timer
 

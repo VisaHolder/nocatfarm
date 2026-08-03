@@ -67,7 +67,7 @@ public sealed class BotManager : IAsyncDisposable {
 		foreach (string gone in _bots.Keys.Where(k => !onDisk.ContainsKey(k)).ToArray()) {
 			if (_bots.TryRemove(gone, out Bot? b)) {
 				Log.Info("config removed - stopping", gone);
-				await b.StopAsync().ConfigureAwait(false);
+				await b.DisposeAsync().ConfigureAwait(false);   // dispose, not just stop - frees its HttpClient/locks
 			}
 		}
 
@@ -97,11 +97,18 @@ public sealed class BotManager : IAsyncDisposable {
 		bot.AddModule(new GroupJoin(bot));
 		bot.AddModule(new Trading(bot));
 		bot.AddModule(new AchievementPacer(bot));
+		bot.AddModule(new AchievementBoost(bot));
+		bot.AddModule(new Upkeep(bot));
 		bot.AddModule(new Heartbeat(bot));
 	}
 
 	/// <summary>Flush anything held in memory. Called on the way out so a clean exit loses nothing.</summary>
-	public static void Flush() => Lifetime.Save();
+	public static void Flush() {
+		Lifetime.Save();
+		GameCatalog.Flush();   // the store catalogue saves on a timer, so a clean exit shouldn't drop the tail of it
+		PriceBook.Save();      // ditto the market prices, which are slow and rate-limited to re-fetch
+		InventoryHistory.Save();
+	}
 
 	/// <summary>Start every enabled bot, staggered so several logins don't hit Steam at once.</summary>
 	public async Task StartAllAsync() {
@@ -131,7 +138,15 @@ public sealed class BotManager : IAsyncDisposable {
 		(_bots.Count > 0)
 		&& All.All(static b => !b.Cfg.Enabled || b.State is Core.BotState.Stopped or Core.BotState.Failed);
 
-	public async Task StopAllAsync() {
+	public async Task StopAllAsync(bool graceful = false) {
+		if (graceful) {
+			// Wind the legit accounts down together, not one after another, so a "stop all" doesn't take the
+			// sum of every account's finishing-up delay.
+			await Task.WhenAll(All.Select(b => b.StopAsync(true))).ConfigureAwait(false);
+
+			return;
+		}
+
 		foreach (Bot bot in All) {
 			await bot.StopAsync().ConfigureAwait(false);
 		}
@@ -184,7 +199,7 @@ public sealed class BotManager : IAsyncDisposable {
 			return false;
 		}
 
-		await bot.StopAsync().ConfigureAwait(false);
+		await bot.DisposeAsync().ConfigureAwait(false);   // dispose, not just stop - frees its HttpClient/locks
 		TokenStore.Clear(name);
 
 		return ConfigStore.DeleteBot(name);

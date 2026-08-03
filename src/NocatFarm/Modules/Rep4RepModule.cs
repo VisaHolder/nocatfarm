@@ -31,13 +31,14 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	private const int RateLimitHighMinutes = 180;
 	private const int CapFloor = 5;
 
-	private enum Outcome { Posted, Refused, Unknown, RateLimited, AccountBlocked }
+	private enum Outcome { Posted, Refused, Unknown, RateLimited, AccountBlocked, DailyLimit }
 
 	private readonly Rep4RepApi _api = api;
 
 	private Rep4RepState? _state;
 	private string? _profileId;
 	private string _status = "off";
+	private int _rateLimitRun;   // consecutive Steam rate-limits, reset on a good post
 
 	public override string Name => "rep4rep";
 	public override string Status => _status;
@@ -221,12 +222,23 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			return NoTaskRetryMinutes * 60;
 		}
 
+		// Final cap check the instant before posting: the count above was taken before the window/gap/session and
+		// task-fetch steps, and a dashboard "post now" could have spent a slot since. This is the one number that
+		// gets an account comment-banned, so it's re-checked here too.
+		if (_state.PostsInLast24h() >= Cap) {
+			_status = $"{Cap}/{Cap} today - done";
+
+			return 20 * 60;
+		}
+
 		_status = $"commenting on {task.TargetName}";
 		(Outcome outcome, string? error) = await PostCommentAsync(task, ct).ConfigureAwait(false);
 
 		switch (outcome) {
 			case Outcome.RateLimited:
 				return await OnRateLimitedAsync().ConfigureAwait(false);
+			case Outcome.DailyLimit:
+				return await OnDailyLimitAsync().ConfigureAwait(false);
 			case Outcome.AccountBlocked:
 				return await BlockAccountAsync("Steam refused: " + (error ?? "commenting blocked")).ConfigureAwait(false);
 			case Outcome.Unknown:
@@ -247,7 +259,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 	private async Task<int> RetryOnceAsync(Rep4RepTask task, string? error, CancellationToken ct) {
 		int pause = Rng.Next(RetryLowSeconds, RetryHighSeconds + 1);
-		Log.Warn($"comment on {task.TargetName} didn't go through{(string.IsNullOrEmpty(error) ? "" : $" (\"{error}\")")} - trying once more in ~{pause / 60}m", Bot.Name);
+		Log.Warn($"comment on {task.TargetName} didn't go through{(string.IsNullOrEmpty(error) ? "" : $" (\"{error}\")")} - trying once more in ~{Fmt.Hm(Math.Max(1, pause / 60))}", Bot.Name);
 
 		if (!await Sleep(TimeSpan.FromSeconds(pause), ct).ConfigureAwait(false)) {
 			return 60;
@@ -258,6 +270,8 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		switch (outcome) {
 			case Outcome.RateLimited:
 				return await OnRateLimitedAsync().ConfigureAwait(false);
+			case Outcome.DailyLimit:
+				return await OnDailyLimitAsync().ConfigureAwait(false);
 			case Outcome.AccountBlocked:
 				return await BlockAccountAsync("Steam refused: " + (retryError ?? "commenting blocked")).ConfigureAwait(false);
 			case Outcome.Unknown:
@@ -269,7 +283,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 				return await OnTargetRefusedAsync(task).ConfigureAwait(false);
 		}
 
-		Log.Info("the retry worked", Bot.Name);
+		Log.Info($"retry posted on {task.TargetName}", Bot.Name);
 
 		return await CreditAsync(task, ct).ConfigureAwait(false);
 	}
@@ -290,9 +304,9 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		}
 
 		if (credited) {
-			Log.Reward($"commented on {task.TargetName} + credited  ({done}/{Cap} today)", Bot.Name);
+			Log.Reward($"commented on {task.TargetName} and credited ({done}/{Cap} today)", Bot.Name);
 		} else {
-			Log.Warn($"commented on {task.TargetName} but rep4rep did NOT credit it  ({done}/{Cap} today)", Bot.Name);
+			Log.Warn($"commented on {task.TargetName} but rep4rep didn't credit it ({done}/{Cap} today)", Bot.Name);
 		}
 
 		_status = $"{done}/{Cap} today";
@@ -308,8 +322,8 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	}
 
 	private async Task CountPostAsync(Rep4RepTask task) {
-		_state!.Posts.Add(DateTime.UtcNow.Ticks);
-		_state.PostedTasks[task.TaskId] = DateTime.UtcNow.Ticks;
+		_state!.RecordPost(task.TaskId);
+		_rateLimitRun = 0;
 		Stats.Record(Stats.KindComment, Bot.Name);
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 	}
@@ -317,7 +331,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	private async Task<int> OnTargetRefusedAsync(Rep4RepTask task) {
 		// One bad profile is not a bad account. Skip the target, try a different one, and only after three
 		// DIFFERENT profiles refuse in a row conclude that it's the account.
-		_state!.DeadTargets[task.TargetSteamId.ToString()] = DateTime.UtcNow.AddSeconds(DeadTargetSeconds).Ticks;
+		_state!.MarkDeadTarget(task.TargetSteamId, DateTime.UtcNow.AddSeconds(DeadTargetSeconds));
 		_state.Strikes++;
 
 		if (_state.Strikes < StrikesToBlock) {
@@ -348,6 +362,24 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	/// If it happened right at the ceiling it also tells us the real daily limit: N posts went through and N+1 was
 	/// refused, so the limit is N.
 	/// </summary>
+	/// <summary>
+	/// Steam's own daily ceiling on comments to non-friends (about 10 per rolling 24h). Unlike the spacing
+	/// rate-limit this means "done for today", so it rests until the window clears rather than retrying in a couple
+	/// of hours. It can be hit at a lower count than this app's own tally when comments were posted outside
+	/// nocat.farm - Steam counts those, we never saw them - so the number here is only what WE posted today.
+	/// </summary>
+	private async Task<int> OnDailyLimitAsync() {
+		int posted = _state!.PostsInLast24h();
+		_state.BlockedUntil = DateTime.UtcNow.AddHours(24).Ticks;
+		_state.BlockReason = "Steam's daily comment limit";
+		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
+		_rateLimitRun = 0;
+		_status = $"Steam's daily comment limit - resting ~24h ({posted} posted here today)";
+		Log.Attention($"Steam's daily non-friend comment limit reached ({posted} posted via nocat.farm today; any others were posted outside it) - resting until it clears in ~24h", Bot.Name);
+
+		return 10 * 60;
+	}
+
 	private async Task<int> OnRateLimitedAsync() {
 		int posted = _state!.PostsInLast24h();
 		int cap = Cap;
@@ -372,6 +404,24 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 
+		_rateLimitRun++;
+
+		// Break the "stuck at 9/10 all day" loop. When Steam keeps refusing on spacing, chasing the last
+		// slot every couple of hours just burns the day - so after two in a row, sit out until the whole 24h
+		// window has cleared and come back at a clean baseline, like the account simply stopped for the day.
+		if (_rateLimitRun >= 2) {
+			DateTime clears = (_state.LastPost() ?? DateTime.UtcNow).AddHours(24);
+			int rest = (int) Math.Max(60, (clears - DateTime.UtcNow).TotalMinutes);
+			_state.BlockedUntil = clears.Ticks;
+			_state.BlockReason = "rate-limited - resting to baseline";
+			await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
+			_rateLimitRun = 0;
+			_status = $"rate-limited - resting {Fmt.Hm(rest)}, back at baseline";
+			Log.Attention($"Steam keeps rate-limiting comments at {posted}/{cap} - sitting out {Fmt.Hm(rest)} until the window clears, then starting fresh", Bot.Name);
+
+			return 10 * 60;
+		}
+
 		int wait = Rng.Next(RateLimitLowMinutes, RateLimitHighMinutes + 1);
 		_status = $"rate-limited, backing off {wait}m";
 		Log.Warn($"Steam rate-limit - backing off ~{wait}m", Bot.Name);
@@ -389,7 +439,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 	private async Task<Rep4RepTask?> NextTaskAsync(string profileId, CancellationToken ct) {
 		foreach (Rep4RepTask task in await _api.GetTasksAsync(profileId, ct).ConfigureAwait(false)) {
-			if (_state!.PostedTasks.ContainsKey(task.TaskId) || _state.IsDeadTarget(task.TargetSteamId)) {
+			if (_state!.HasPostedTask(task.TaskId) || _state.IsDeadTarget(task.TargetSteamId)) {
 				continue;
 			}
 
@@ -448,6 +498,19 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		}
 
 		string e = error.ToLowerInvariant();
+
+		// Steam's NON-FRIEND daily ceiling (10/24h) is a distinct message from the "posting too fast" spacing one.
+		// Checked first, because it's the one that means "done for the day", not "wait a few minutes" - and it can
+		// be reached at a lower count than expected when comments were posted outside nocat.farm (by hand, or
+		// before a reset), which Steam counts but this app never saw. Treating it as a dud profile (the old
+		// fall-through) just burned three targets and mislabelled it.
+		// Both phrases appear together in Steam's real non-friend daily-limit text ("exceeded the maximum number
+		// of comments ... not on your friends list"). Matching "not friends" ALONE would also catch an ordinary
+		// friends-only privacy refusal and wrongly rest the whole account for a day, so it isn't used on its own.
+		if (e.Contains("maximum number of comments", StringComparison.Ordinal)
+			|| (e.Contains("exceeded", StringComparison.Ordinal) && e.Contains("comment", StringComparison.Ordinal))) {
+			return Outcome.DailyLimit;
+		}
 
 		if (e.Contains("too frequently", StringComparison.Ordinal) || e.Contains("rate limit", StringComparison.Ordinal)
 			|| e.Contains("try again later", StringComparison.Ordinal) || e.Contains("too many", StringComparison.Ordinal)) {
@@ -641,9 +704,24 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		_state.BlockedUntil = 0;
 		_state.BlockReason = "";
 		_state.Strikes = 0;
-		_state.DeadTargets.Clear();
+		_state.ClearDeadTargets();
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 		_status = "hold cleared";
 		_forceNext = true;
+	}
+
+	/// <summary>Pause commenting for a full 24h and come back at a clean baseline (rolling window emptied).</summary>
+	public async Task RestFullDayAsync(string reason) {
+		if (_state == null) {
+			return;
+		}
+
+		_state.BlockedUntil = DateTime.UtcNow.AddHours(24).Ticks;
+		_state.BlockReason = reason;
+		_state.ClearWindow();   // baseline now - old comments won't count against tomorrow's fresh batch
+		_state.Strikes = 0;
+		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
+		_rateLimitRun = 0;
+		_status = $"resting a day ({reason})";
 	}
 }

@@ -18,8 +18,8 @@
   <form class="card gate-card" onsubmit="return doLogin(event)">
     <h1 class="wordmark">nocat.<span>farm</span></h1>
     <p class="muted">This dashboard is password protected.</p>
-    <input id="pw" type="password" placeholder="Password" autocomplete="current-password">
-    <button type="submit">Sign in</button>
+    <input id="pw" type="password" placeholder="Password" data-t-ph="Password" autocomplete="current-password">
+    <button type="submit" data-t="Sign in">Sign in</button>
     <p id="loginError" class="error"></p>
   </form>
 </div>
@@ -35,17 +35,17 @@
 
     <div class="form2">
       <label for="w-name">Name<i class="info" data-tip="A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam."></i></label>
-      <input id="w-name" type="text" placeholder="mybot" autocomplete="off">
+      <input id="w-name" type="text" placeholder="mybot" data-t-ph="mybot" autocomplete="off">
 
       <label for="w-login">Steam account name<i class="info" data-tip="What you type into Steam's sign-in box. Not your display name, not your email."></i></label>
-      <input id="w-login" type="text" placeholder="your steam login" autocomplete="off">
+      <input id="w-login" type="text" placeholder="your steam login" data-t-ph="your steam login" autocomplete="off">
 
       <label for="w-pass">Password <span class="muted">(optional)</span><i class="info" data-tip="nocat.farm signs in once and then keeps a login token, so this doesn't have to be stored at all. Leave it blank and it'll ask you when it needs it."></i></label>
-      <input id="w-pass" type="password" placeholder="leave blank and it'll ask" autocomplete="off">
+      <input id="w-pass" type="password" placeholder="leave blank and it'll ask" data-t-ph="leave blank and it'll ask" autocomplete="off">
     </div>
 
     <p id="welcomeError" class="error"></p>
-    <button onclick="createFirstBot()">Add account</button>
+    <button onclick="createFirstBot()" data-t="Add account">Add account</button>
     <p class="muted small foot">Everything here is also a command. This step is <code>add mybot mysteamlogin</code>.</p>
   </div>
 </div>
@@ -57,12 +57,12 @@
     <h1 class="wordmark">nocat.<span>farm</span></h1>
 
     <nav id="nav">
-      <a class="navitem" tabindex="0" role="button" data-view="overview"><span>Overview</span></a>
-      <a class="navitem" tabindex="0" role="button" data-view="accounts"><span>Accounts</span><b id="navAccounts"></b></a>
+      <a class="navitem" tabindex="0" role="button" data-view="overview"><span data-t="Overview">Overview</span></a>
+      <a class="navitem" tabindex="0" role="button" data-view="accounts"><span data-t="Accounts">Accounts</span><b id="navAccounts"></b></a>
       <a class="navitem" tabindex="0" role="button" data-view="rep4rep"><span>rep4rep</span><b id="navPoints"></b></a>
       <a class="navitem" tabindex="0" role="button" data-view="log"><span>Log</span></a>
-      <a class="navitem" tabindex="0" role="button" data-view="console"><span>Console</span></a>
-      <a class="navitem" tabindex="0" role="button" data-view="settings"><span>Settings</span></a>
+      <a class="navitem" tabindex="0" role="button" data-view="console"><span data-t="Console">Console</span></a>
+      <a class="navitem" tabindex="0" role="button" data-view="settings"><span data-t="Settings">Settings</span></a>
     </nav>
 
     <div class="rail-foot">
@@ -84,7 +84,7 @@
       <p id="verdict" class="verdict">&nbsp;</p>
       <div id="tiles" class="tiles"><div class="tile skeleton"></div><div class="tile skeleton"></div><div class="tile skeleton"></div><div class="tile skeleton"></div></div>
       <div class="card">
-        <h2>Accounts</h2>
+        <h2 data-t="Accounts">Accounts</h2>
         <div id="glance"><p class="muted empty">Loading…</p></div>
       </div>
       <div class="card">
@@ -92,7 +92,7 @@
         <div id="today"><p class="muted empty">Loading…</p></div>
       </div>
       <div class="card">
-        <h2>Recent activity<a class="muted small" style="margin-left:auto;cursor:pointer" onclick="startTutorial()">Show the walkthrough again</a></h2>
+        <h2>Recent activity<a class="muted small" style="margin-left:auto;cursor:pointer" onclick="startTutorial()" data-t="Show the walkthrough again">Show the walkthrough again</a></h2>
         <div id="recent" class="recent"><p class="muted empty">Loading…</p></div>
       </div>
     </section>
@@ -100,10 +100,10 @@
     <!-- Accounts -->
     <section id="view-accounts" class="view hidden">
       <div class="toolbar">
-        <input id="acctSearch" type="text" placeholder="Search accounts…" oninput="render()">
+        <input id="acctSearch" type="text" placeholder="Search accounts…" data-t-ph="Search accounts…" oninput="render()">
         <div id="acctFilters" class="chips"></div>
         <span class="spacer"></span>
-        <button class="ghost" onclick="showImport()">Import from ASF</button>
+        <button class="ghost" onclick="showImport()" data-t="Import from ASF">Import from ASF</button>
         <button onclick="showAddAccount()">+ Add account</button>
       </div>
       <div id="bots" class="grid"><p class="muted empty">Loading…</p></div>
@@ -113,21 +113,21 @@
     <section id="view-rep4rep" class="view hidden">
       <div id="r4rAccount" class="card"></div>
       <div class="card">
-        <h2>Your Steam profiles</h2>
+        <h2 data-t="Your Steam profiles">Your Steam profiles</h2>
         <div id="r4rProfiles"></div>
       </div>
       <div class="card">
-        <h2>Queued tasks</h2>
+        <h2 data-t="Queued tasks">Queued tasks</h2>
         <p class="banner">nocat.farm posts these for you on a schedule. There's nothing to do here — this is just what's waiting.</p>
         <div class="toolbar">
-          <label class="inline muted" for="r4rBot">Show tasks for</label>
+          <label class="inline muted" for="r4rBot" data-t="Show tasks for">Show tasks for</label>
           <select id="r4rBot" onchange="loadTasks()"></select>
-          <button class="ghost" onclick="loadTasks()">Refresh</button>
+          <button class="ghost" onclick="loadTasks()" data-t="Refresh">Refresh</button>
         </div>
         <div id="r4rTasks"></div>
       </div>
       <div class="card">
-        <h2>Pacing</h2>
+        <h2 data-t="Pacing">Pacing</h2>
         <p class="explain"><b>Steam lets an account leave about 10 comments a day on people who aren't its friends.</b>
           Go past that and Steam quietly stops accepting comments from that account for around a day. It isn't a ban and
           nothing is broken, but nothing you post gets through either — and rep4rep will never credit it. nocat.farm keeps
@@ -145,11 +145,11 @@
     <section id="view-log" class="view hidden">
       <div class="card logcard">
         <div class="toolbar">
-          <input id="logSearch" type="text" placeholder="Search the log…" oninput="renderLog()">
+          <input id="logSearch" type="text" placeholder="Search the log…" data-t-ph="Search the log…" oninput="renderLog()">
           <div id="logLevels" class="chips"></div>
           <select id="logBot" onchange="renderLog()"></select>
           <label class="inline"><input type="checkbox" id="logFollow" checked> Follow</label>
-          <button class="ghost" onclick="copyLog()">Copy</button>
+          <button class="ghost" onclick="copyLog()" data-t="Copy">Copy</button>
         </div>
         <div id="logBody" class="out"><p class="muted empty">Loading…</p></div>
       </div>
@@ -163,12 +163,12 @@
           <div id="out" class="out"></div>
           <form class="cmdline" onsubmit="return sendCommand(event)">
             <span class="chev">&gt;</span>
-            <input id="cmd" type="text" autocomplete="off" spellcheck="false" placeholder="type a command, or 'help'">
+            <input id="cmd" type="text" autocomplete="off" spellcheck="false" placeholder="type a command, or 'help'" data-t-ph="type a command, or 'help'">
             <button type="submit">Run</button>
           </form>
         </div>
         <div class="card cmdlist">
-          <h2>Commands</h2>
+          <h2 data-t="Commands">Commands</h2>
           <div id="cmdList"></div>
         </div>
       </div>
@@ -178,20 +178,20 @@
     <section id="view-settings" class="view hidden">
       <div class="settingswrap">
         <div class="card settingsnav">
-          <h2>Global</h2>
+          <h2 data-t="Global">Global</h2>
           <div id="settingsNavGlobal"></div>
-          <h2>Accounts</h2>
+          <h2 data-t="Accounts">Accounts</h2>
           <div id="settingsNavBots"></div>
-          <h2>Jump to</h2>
+          <h2 data-t="Jump to">Jump to</h2>
           <div id="settingsNavJump"></div>
         </div>
         <div class="card settingsform">
           <div class="toolbar sticky">
-            <input id="setSearch" type="text" placeholder="Search settings…" oninput="renderSettings()">
+            <input id="setSearch" type="text" placeholder="Search settings…" data-t-ph="Search settings…" oninput="renderSettings()">
             <label class="inline"><input type="checkbox" id="setAdvanced" onchange="renderSettings()"> Show advanced<i class="info" data-tip="Settings most people never need. Nothing here is dangerous, it's just detail."></i></label>
             <label class="inline"><input type="checkbox" id="setChanged" onchange="renderSettings()"> Only changed<i class="info" data-tip="Show only the settings that differ from their defaults."></i></label>
             <span class="spacer"></span>
-            <button id="saveBtn" onclick="saveSettings()" disabled>Save</button>
+            <button id="saveBtn" onclick="saveSettings()" disabled data-t="Save">Save</button>
           </div>
           <div id="settingsHeader"></div>
           <div id="settingsBody"><p class="muted empty">Loading…</p></div>
