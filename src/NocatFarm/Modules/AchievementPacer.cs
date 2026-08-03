@@ -119,6 +119,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	private DateTime _lastTick = DateTime.MinValue;
 	private bool _loaded;
 	private string _status = "off";
+	private uint _grindReset;   // the app whose schedule we've already pulled forward for the current grind (0 = none)
 
 	public override string Name => "achievements";
 	public override string Status => Bot.Cfg.UnlockAchievements ? _status : "";
@@ -167,6 +168,10 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			return;
 		}
 
+		if (!Bot.Grinding) {
+			_grindReset = 0;   // grind ended - a later grind may re-engage the schedule
+		}
+
 		List<uint> running = CurrentGames();
 
 		if (running.Count == 0) {
@@ -185,6 +190,18 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				}
 
 				g.PlayedMins++;
+
+				// A deliberate grind engages the achievement schedule NOW. Otherwise a spacing gap set during
+				// ordinary play (NextAllow hours out) blocks the grind for its whole duration - it'd drop nothing.
+				// Pulled forward exactly once when the grind begins; the played-time gate still applies, so the
+				// first unlock isn't instant and the pace stays legit.
+				if (Bot.Grinding && (Bot.GrindGame == app) && (_grindReset != app)) {
+					_grindReset = app;
+
+					if (g.NextAllow > now) {
+						g.NextAllow = now;
+					}
+				}
 			}
 
 			if (!Due(g, prof)) {
@@ -241,12 +258,12 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			bool onboarding = (g.Unlocked < 0) || (g.Unlocked < prof.OnboardCount);
 			int playedGate = onboarding ? prof.OnboardPlayedMins : prof.SteadyPlayedMins;
 
-			// Mid-burst is the exception: a burst is several achievements from one moment of play, so they are
-			// only a couple of wall-clock minutes apart and share the same played-time.
-			// The played-time gate applies to a grind too: it earns at the account's own Achievement pace, just
-			// working through the whole game rather than a slice of it - never a rapid-fire burst. (A mid-burst,
-			// BurstLeft > 0, is the only thing that bypasses the gate, and only for a couple of clustered unlocks.)
-			if ((g.BurstLeft <= 0) && ((g.PlayedMins - g.MinsAtLastUnlock) < playedGate)) {
+			// Two ways past the slow played-time gate: a mid-burst (several unlocks from one moment of play, minutes
+			// apart), and a deliberate GRIND. A grind means "sit on this game and knock the achievements out" - a
+			// game with hundreds left (TF2 has ~520) at one-per-half-hour would take days, which no real grinder
+			// does. So a grind is paced only by the short spacing gap below, working easiest-first through the
+			// backlog. Normal (non-grind) play keeps the gate, so the stealthy drip is unchanged.
+			if (!Bot.Grinding && (g.BurstLeft <= 0) && ((g.PlayedMins - g.MinsAtLastUnlock) < playedGate)) {
 				return false;
 			}
 
@@ -319,7 +336,11 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		bool onboarding = already < prof.OnboardCount;
 		// A grind ignores the rarity floor: it works through everything settable, most-common first, rather
 		// than only what the hours "justify". Normal play keeps the floor so it never pops a rare one early.
-		int floor = grind ? 1 : Math.Max(Math.Max(1, prof.MinPercent), RarityFloorForHours(hours / prof.RarityScale));
+		// The rarity floor is the "possibility" gate and applies to a grind TOO: it opens with the hours in the
+		// game, so a rare/grindy achievement (a low global %, e.g. "win 1000 rounds") can't be unlocked two hours
+		// in - only what a real player could plausibly have reached by now, easiest-first. A grind just plays the
+		// game continuously so the hours (and the floor) move faster; it does not skip ahead to the hard tail.
+		int floor = Math.Max(Math.Max(1, prof.MinPercent), RarityFloorForHours(hours / prof.RarityScale));
 
 		List<Achievement> eligible = set.All
 			// Unknown rarity (Steam's global-percent endpoint was unreachable) counts as eligible rather than being
@@ -375,7 +396,14 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 			// Cluster like a person: several within a couple of minutes as a level or campaign finishes, then
 			// nothing for a long stretch. A steady one-every-N-minutes drip is the thing to avoid.
-			if (g.BurstLeft > 0) {
+			if (grind) {
+				// Active-play pace: what a real person mopping up a game's easy achievements looks like - a handful
+				// an hour, not a dump. ~12-24 min apart (so roughly 3-5 an hour, never 20), easiest-first, and only
+				// among what's actually reachable for the hours in the game (the rarity floor above). Paced() still
+				// scales it by the account's Achievement-pace setting. The rare/grindy tail stays gated by playtime
+				// exactly like normal play, so it can't pop a "1000 kills" one two hours in.
+				gap = _rng.Next(12, 25);
+			} else if (g.BurstLeft > 0) {
 				g.BurstLeft--;
 				gap = _rng.Next(1, 5);
 			} else if ((eligible.Count > 1) && (_rng.Next(100) < (onboarding ? 45 : 12))) {
