@@ -18,8 +18,16 @@ namespace NocatFarm;
 /// a fresh install shows a value that climbs for a few minutes and then settles.
 /// </summary>
 public static partial class PriceBook {
-	/// <summary>Seconds between two market lookups. The market starts refusing at roughly one every three.</summary>
-	private const double GapSeconds = 3.5;
+	/// <summary>
+	/// Seconds between two market lookups.
+	///
+	/// Five, not three - and the extra second and a half is not about the market. Everything the app does on
+	/// steamcommunity.com shares one budget, so a sweep running flat out for an hour doesn't just get itself
+	/// refused, it starts costing the account's OWN requests: trade offers came back 429 while prices were being
+	/// hammered. Slower here is the difference between an inventory total that takes an hour and a trade check
+	/// that fails.
+	/// </summary>
+	private const double GapSeconds = 5.0;
 
 	/// <summary>How long a price is trusted before it's worth asking again.</summary>
 	private static readonly TimeSpan MaxAge = TimeSpan.FromHours(24);
