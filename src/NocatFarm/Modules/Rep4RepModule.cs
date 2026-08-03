@@ -31,7 +31,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	private const int RateLimitHighMinutes = 180;
 	private const int CapFloor = 5;
 
-	private enum Outcome { Posted, Refused, Unknown, RateLimited, AccountBlocked }
+	private enum Outcome { Posted, Refused, Unknown, RateLimited, AccountBlocked, DailyLimit }
 
 	private readonly Rep4RepApi _api = api;
 
@@ -228,6 +228,8 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		switch (outcome) {
 			case Outcome.RateLimited:
 				return await OnRateLimitedAsync().ConfigureAwait(false);
+			case Outcome.DailyLimit:
+				return await OnDailyLimitAsync().ConfigureAwait(false);
 			case Outcome.AccountBlocked:
 				return await BlockAccountAsync("Steam refused: " + (error ?? "commenting blocked")).ConfigureAwait(false);
 			case Outcome.Unknown:
@@ -259,6 +261,8 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		switch (outcome) {
 			case Outcome.RateLimited:
 				return await OnRateLimitedAsync().ConfigureAwait(false);
+			case Outcome.DailyLimit:
+				return await OnDailyLimitAsync().ConfigureAwait(false);
 			case Outcome.AccountBlocked:
 				return await BlockAccountAsync("Steam refused: " + (retryError ?? "commenting blocked")).ConfigureAwait(false);
 			case Outcome.Unknown:
@@ -349,6 +353,24 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	/// If it happened right at the ceiling it also tells us the real daily limit: N posts went through and N+1 was
 	/// refused, so the limit is N.
 	/// </summary>
+	/// <summary>
+	/// Steam's own daily ceiling on comments to non-friends (about 10 per rolling 24h). Unlike the spacing
+	/// rate-limit this means "done for today", so it rests until the window clears rather than retrying in a couple
+	/// of hours. It can be hit at a lower count than this app's own tally when comments were posted outside
+	/// nocat.farm - Steam counts those, we never saw them - so the number here is only what WE posted today.
+	/// </summary>
+	private async Task<int> OnDailyLimitAsync() {
+		int posted = _state!.PostsInLast24h();
+		_state.BlockedUntil = DateTime.UtcNow.AddHours(24).Ticks;
+		_state.BlockReason = "Steam's daily comment limit";
+		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
+		_rateLimitRun = 0;
+		_status = $"Steam's daily comment limit - resting ~24h ({posted} posted here today)";
+		Log.Attention($"Steam's daily non-friend comment limit reached ({posted} posted via nocat.farm today; any others were posted outside it) - resting until it clears in ~24h", Bot.Name);
+
+		return 10 * 60;
+	}
+
 	private async Task<int> OnRateLimitedAsync() {
 		int posted = _state!.PostsInLast24h();
 		int cap = Cap;
@@ -467,6 +489,17 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		}
 
 		string e = error.ToLowerInvariant();
+
+		// Steam's NON-FRIEND daily ceiling (10/24h) is a distinct message from the "posting too fast" spacing one.
+		// Checked first, because it's the one that means "done for the day", not "wait a few minutes" - and it can
+		// be reached at a lower count than expected when comments were posted outside nocat.farm (by hand, or
+		// before a reset), which Steam counts but this app never saw. Treating it as a dud profile (the old
+		// fall-through) just burned three targets and mislabelled it.
+		if (e.Contains("maximum number of comments", StringComparison.Ordinal)
+			|| (e.Contains("not on your friends", StringComparison.Ordinal) || e.Contains("not friends", StringComparison.Ordinal))
+			|| (e.Contains("exceeded", StringComparison.Ordinal) && e.Contains("comment", StringComparison.Ordinal))) {
+			return Outcome.DailyLimit;
+		}
 
 		if (e.Contains("too frequently", StringComparison.Ordinal) || e.Contains("rate limit", StringComparison.Ordinal)
 			|| e.Contains("try again later", StringComparison.Ordinal) || e.Contains("too many", StringComparison.Ordinal)) {
