@@ -168,6 +168,7 @@ public sealed class BotConfig {
 	public List<uint> BlacklistedGames { get; set; } = [];
 	public bool SkipUnplayedGames { get; set; }
 	public bool SkipRefundableGames { get; set; }
+	public int RefundHoldDays { get; set; } = 14;
 	public bool FarmOnlyWhileAsleep { get; set; }
 	public int FarmFromHour { get; set; }
 	public int FarmUntilHour { get; set; }
@@ -183,11 +184,14 @@ public sealed class BotConfig {
 	public bool UnlockAchievements { get; set; }
 	public int AchievementGrindGapMinMinutes { get; set; } = 12;
 	public int AchievementGrindGapMaxMinutes { get; set; } = 24;
-	public int AchievementBoost { get; set; }              // 0 off, 1 games you pick
+	public int AchievementBoost { get; set; }              // 0 off, 1 games you pick, 2 every single-player game
 	public List<uint> AchievementBoostGames { get; set; } = [];
 	public int BoostSessionHours { get; set; } = 2;
 	public int MaxBoostGamesInARow { get; set; } = 3;
 	public int BoostRestMinutesHuman { get; set; } = 120;
+	public bool IncludeFamilyLibrary { get; set; }
+	public int BoostMinReviews { get; set; } = 200;
+	public bool BoostOnlyPlayedGames { get; set; }
 	public List<uint> AchievementGames { get; set; } = [];
 
 	/// <summary>Games never to unlock in, on top of the built-in refusal to ever touch CS2.</summary>
@@ -198,6 +202,9 @@ public sealed class BotConfig {
 
 	/// <summary>Hard cap on how much of any one game will ever be completed. 0 uses each game's own ceiling.</summary>
 	public int AchievementMaxCompletionPct { get; set; }
+
+	// ── inventory ──
+	public bool ShowInventoryValue { get; set; } = true;
 
 	// ── free games & badges ──
 	public bool ClaimFreeGames { get; set; }

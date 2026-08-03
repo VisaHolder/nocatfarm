@@ -32,6 +32,9 @@ public sealed class WebSession : IDisposable {
 	public bool Ready { get; private set; }
 	public string SessionId { get; private set; } = "";
 
+	/// <summary>The account's current access token, or empty. Only the API caller below needs it directly.</summary>
+	private string _accessToken = "";
+
 	/// <summary>When the current access token stops being usable. Refreshed a few minutes before this.</summary>
 	public DateTime? TokenValidUntil { get; private set; }
 
@@ -69,8 +72,35 @@ public sealed class WebSession : IDisposable {
 			_cookies.Add(new Cookie("timezoneOffset", timezone, "/", host));
 		}
 
+		_accessToken = accessToken;
 		TokenValidUntil = ReadJwtExpiry(accessToken);
 		Ready = true;
+	}
+
+	/// <summary>
+	/// Call a Steam Web API service, authenticated as this account.
+	///
+	/// Some of Steam's services simply are not answered over the client connection - ask the CM for
+	/// Player.GetOwnedGames and the job times out with no reply at all - but the same method over api.steampowered
+	/// .com with the account's own access token returns everything, private profile or not. The token is the one
+	/// already minted for the web session, so this costs no extra login.
+	/// </summary>
+	public async Task<string?> ApiGetAsync(string service, string method, Dictionary<string, string>? args, CancellationToken ct = default) {
+		if (!Ready && !await RefreshAsync(false, ct).ConfigureAwait(false)) {
+			return null;
+		}
+
+		if (string.IsNullOrEmpty(_accessToken)) {
+			return null;
+		}
+
+		List<string> query = [$"access_token={Uri.EscapeDataString(_accessToken)}"];
+
+		foreach ((string key, string value) in args ?? []) {
+			query.Add($"{key}={Uri.EscapeDataString(value)}");
+		}
+
+		return await SendAsync(new Uri(Api, $"/{service}/{method}/v1/?{string.Join('&', query)}"), null, null, true, ct).ConfigureAwait(false);
 	}
 
 	public void Invalidate() => Ready = false;

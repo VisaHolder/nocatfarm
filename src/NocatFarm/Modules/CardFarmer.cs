@@ -678,13 +678,13 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	/// </summary>
 	private async Task DropRefundableAsync(Dictionary<uint, FarmTarget> byApp) {
 		const float HoursForRefund = 2.0f;
-		const int DaysForRefund = 14;
+		int DaysForRefund = Math.Max(1, Bot.Cfg.RefundHoldDays);
 
 		if (byApp.Values.All(static g => g.HoursPlayed >= HoursForRefund)) {
 			return;   // nothing is refundable on playtime alone - no need to ask Steam anything
 		}
 
-		IReadOnlyDictionary<uint, DateTime> owned = await Bot.GetAppOwnershipAsync().ConfigureAwait(false);
+		IReadOnlyDictionary<uint, AppOwnership> owned = await Bot.GetAppOwnershipAsync().ConfigureAwait(false);
 
 		if (owned.Count == 0) {
 			return;
@@ -695,8 +695,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				continue;
 			}
 
-			if (owned.TryGetValue(appId, out DateTime bought) && (DateTime.UtcNow - bought).TotalDays < DaysForRefund) {
-				Log.Debug($"leaving {game.GameName} alone - still refundable until {bought.AddDays(DaysForRefund):d}", Bot.Name);
+			// Free games carry today's date too, and no amount of playing one costs anybody a refund.
+			if (owned.TryGetValue(appId, out AppOwnership own) && own.Paid && ((DateTime.UtcNow - own.Since).TotalDays < DaysForRefund)) {
+				Log.Debug($"leaving {game.GameName} alone - still refundable until {own.Since.AddDays(DaysForRefund):d}", Bot.Name);
 				byApp.Remove(appId);
 			}
 		}

@@ -221,6 +221,7 @@ the auto-reply instead, so ordinary chat is never mistaken for a command.
 | `name <account> [text]` | Custom non-Steam game name shown instead of the real game. No text clears it. |
 | `persona <account> <state>` | online \| offline \| busy \| away \| snooze \| invisible. |
 | `cheevo <account> <appID> [list\|unlock\|lock] [name\|all]` &nbsp;·&nbsp; `ach` | Achievements: see them, unlock them, or put them back. |
+| `hunt [account]` &nbsp;·&nbsp; `boost` | What the achievement hunter would play next, in order - and what it ruled out, with the reason for each. |
 
 **Trading cards**
 
@@ -305,7 +306,7 @@ side of the trade page can't be read, the offer is refused rather than guessed a
 
 ## Settings
 
-**41 global, 105 per account.** Every one has a plain-English explanation attached to it, which the dashboard
+**41 global, 117 per account.** Every one has a plain-English explanation attached to it, which the dashboard
 shows on hover and the console prints for `help <setting>` — one sentence, written once, in
 `Config/Settings.cs`. Advanced settings are collapsed by default and never move.
 

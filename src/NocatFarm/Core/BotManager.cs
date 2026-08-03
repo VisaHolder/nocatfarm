@@ -98,11 +98,16 @@ public sealed class BotManager : IAsyncDisposable {
 		bot.AddModule(new Trading(bot));
 		bot.AddModule(new AchievementPacer(bot));
 		bot.AddModule(new AchievementBoost(bot));
+		bot.AddModule(new Upkeep(bot));
 		bot.AddModule(new Heartbeat(bot));
 	}
 
 	/// <summary>Flush anything held in memory. Called on the way out so a clean exit loses nothing.</summary>
-	public static void Flush() => Lifetime.Save();
+	public static void Flush() {
+		Lifetime.Save();
+		GameCatalog.Flush();   // the store catalogue saves on a timer, so a clean exit shouldn't drop the tail of it
+		PriceBook.Save();      // ditto the market prices, which are slow and rate-limited to re-fetch
+	}
 
 	/// <summary>Start every enabled bot, staggered so several logins don't hit Steam at once.</summary>
 	public async Task StartAllAsync() {

@@ -62,11 +62,23 @@ public sealed class Bot : IAsyncDisposable {
 
 	public bool Grinding => (GrindGame != 0) && (GrindUntil > DateTime.UtcNow);
 
-	public void StartGrind(uint app, TimeSpan how, TimeSpan delay = default) {
+	/// <summary>
+	/// Play one game and nothing else for a while. Returns false, having done nothing, if that game is inside its
+	/// refund window - a grind is hours, and hours is exactly what would spend the refund.
+	/// </summary>
+	public bool StartGrind(uint app, TimeSpan how, TimeSpan delay = default) {
+		if (Refunds.Holds(app)) {
+			Log.Warn($"not grinding {GameNames.Of(app)} - it's still inside its refund window (turn off \"Protect refundable games\" to override)", Name);
+
+			return false;
+		}
+
 		GrindGame = app;
 		GrindStartsAt = DateTime.UtcNow.Add(delay);
 		GrindUntil = GrindStartsAt.Add(how);   // the hours run from when it actually starts, not the command
 		SaveGrind();
+
+		return true;
 	}
 
 	public void StopGrind() {
@@ -415,8 +427,8 @@ public sealed class Bot : IAsyncDisposable {
 		}
 	}
 
-	private readonly Dictionary<uint, (DateTime Created, ulong Token)> _licenses = [];
-	private Dictionary<uint, DateTime>? _appOwnedSince;
+	private readonly Dictionary<uint, (DateTime Created, ulong Token, bool Paid)> _licenses = [];
+	private Dictionary<uint, AppOwnership>? _appOwnedSince;
 	private int _licenseGeneration;
 	private DateTime _resumeAt = DateTime.MinValue;
 
@@ -429,6 +441,15 @@ public sealed class Bot : IAsyncDisposable {
 	/// <summary>Achievement reads and writes. Its two Steam messages are not in SteamKit, so we send them.</summary>
 	internal UserStatsHandler? Stats { get; private set; }
 	internal WebSession Web { get; }
+
+	/// <summary>Everything this account can launch, with playtime - owned, and borrowed from a Steam Family.</summary>
+	public Library Library { get; }
+
+	/// <summary>Games that must not be played yet because doing so would cost a refund.</summary>
+	public RefundGuard Refunds { get; }
+
+	/// <summary>What this account's inventory would fetch on the market, by game.</summary>
+	public InventoryValue Inventory { get; }
 
 	private readonly CallbackManager _cb;
 	private readonly List<IBotModule> _modules = [];
@@ -491,6 +512,9 @@ public sealed class Bot : IAsyncDisposable {
 
 		_cb = new CallbackManager(Client);
 		Web = new WebSession(this);
+		Library = new Library(this);
+		Refunds = new RefundGuard(this);
+		Inventory = new InventoryValue(this);
 
 		Notifications = new NocatHandler();
 		Client.AddHandler(Notifications);
@@ -1211,6 +1235,14 @@ public sealed class Bot : IAsyncDisposable {
 		IsFarming = false;
 		Web.Invalidate();
 
+		// Nothing is announced on a socket that no longer exists, and Steam's last echo describes a session that
+		// has ended. Forgetting both is what makes the next session announce itself properly instead of deciding
+		// it already had - the "same set, Steam agrees" shortcut in SetPlaying leans on these being honest.
+		_announcedApps = null;
+		_announcedLabel = null;
+		PlayingAsSeen = "";
+		_mismatchedSince = null;
+
 		_heartbeat?.Dispose();
 		_heartbeat = null;
 
@@ -1485,7 +1517,7 @@ public sealed class Bot : IAsyncDisposable {
 
 		lock (_licenses) {
 			foreach (SteamApps.LicenseListCallback.License license in cb.LicenseList) {
-				_licenses[license.PackageID] = (license.TimeCreated, license.AccessToken);
+				_licenses[license.PackageID] = (license.TimeCreated, license.AccessToken, IsPaid(license.PaymentMethod));
 			}
 
 			_appOwnedSince = null;   // the mapping is stale now
@@ -1496,14 +1528,26 @@ public sealed class Bot : IAsyncDisposable {
 	}
 
 	/// <summary>
-	/// When each owned app was first licensed to this account, worked out by asking Steam what is inside each
-	/// owned package. Only used for refund protection, so it is built lazily and only when something asks -
-	/// resolving thousands of packages on every login for a setting most people leave off would be rude.
+	/// Money changed hands for this licence, so a refund is a thing that could be lost.
+	///
+	/// Free-to-play, claimed free promos, review copies and hardware bundles are all granted rather than bought;
+	/// nothing about playing them can cost anybody anything, so refund protection must not hold them back. Steam
+	/// still stamps them with today's date, which is exactly why the check is on payment and not only on age.
+	/// </summary>
+	private static bool IsPaid(EPaymentMethod method) => method is not (EPaymentMethod.None or EPaymentMethod.AutoGrant
+		or EPaymentMethod.Complimentary or EPaymentMethod.Promotional or EPaymentMethod.HardwarePromo
+		or EPaymentMethod.GuestPass or EPaymentMethod.OEMTicket or EPaymentMethod.MasterComp);
+
+	/// <summary>
+	/// When each owned app was first licensed to this account and whether it was paid for, worked out by asking
+	/// Steam what is inside each owned package. Only used for refund protection, so it is built lazily and only
+	/// when something asks - resolving thousands of packages on every login for a setting most people leave off
+	/// would be rude.
 	///
 	/// Returns empty on any failure, which means "don't skip anything" rather than "skip everything".
 	/// </summary>
-	internal async Task<IReadOnlyDictionary<uint, DateTime>> GetAppOwnershipAsync() {
-		Dictionary<uint, (DateTime Created, ulong Token)> snapshot;
+	internal async Task<IReadOnlyDictionary<uint, AppOwnership>> GetAppOwnershipAsync() {
+		Dictionary<uint, (DateTime Created, ulong Token, bool Paid)> snapshot;
 		int generation;
 
 		lock (_licenses) {
@@ -1511,11 +1555,11 @@ public sealed class Bot : IAsyncDisposable {
 				return _appOwnedSince;
 			}
 
-			snapshot = new Dictionary<uint, (DateTime, ulong)>(_licenses);
+			snapshot = new Dictionary<uint, (DateTime, ulong, bool)>(_licenses);
 			generation = _licenseGeneration;
 		}
 
-		Dictionary<uint, DateTime> map = [];
+		Dictionary<uint, AppOwnership> map = [];
 
 		if ((Apps == null) || (snapshot.Count == 0)) {
 			return map;
@@ -1534,7 +1578,7 @@ public sealed class Bot : IAsyncDisposable {
 
 			foreach (SteamApps.PICSProductInfoCallback page in pages) {
 				foreach (SteamApps.PICSProductInfoCallback.PICSProductInfo package in page.Packages.Values) {
-					if (!snapshot.TryGetValue(package.ID, out (DateTime Created, ulong Token) license)) {
+					if (!snapshot.TryGetValue(package.ID, out (DateTime Created, ulong Token, bool Paid) license)) {
 						continue;
 					}
 
@@ -1543,8 +1587,18 @@ public sealed class Bot : IAsyncDisposable {
 					foreach (KeyValue app in appIds ?? []) {
 						uint appId = app.AsUnsignedInteger();
 
-						if ((appId > 0) && (!map.TryGetValue(appId, out DateTime existing) || license.Created < existing)) {
-							map[appId] = license.Created;   // earliest licence wins - that's when you really got it
+						if (appId == 0) {
+							continue;
+						}
+
+						// Earliest licence wins - that's when you really got it. A game can also arrive twice (a free
+						// weekend, then the purchase), and if EITHER licence was paid for the refund clock is real.
+						if (!map.TryGetValue(appId, out AppOwnership existing)) {
+							map[appId] = new AppOwnership(license.Created, license.Paid);
+						} else {
+							map[appId] = new AppOwnership(
+								license.Created < existing.Since ? license.Created : existing.Since,
+								existing.Paid || license.Paid);
 						}
 					}
 				}
@@ -1552,7 +1606,7 @@ public sealed class Bot : IAsyncDisposable {
 		} catch (Exception e) {
 			Log.Debug($"couldn't work out when games were bought ({e.Message}) - refund protection is off this round", Name);
 
-			return new Dictionary<uint, DateTime>();
+			return new Dictionary<uint, AppOwnership>();
 		}
 
 		lock (_licenses) {
@@ -1761,6 +1815,26 @@ public sealed class Bot : IAsyncDisposable {
 		List<uint> apps = appIds.Distinct().Where(static a => a != 0).ToList();
 		PlayingApps = apps;
 
+		// A re-assert that changes nothing is NOT free.
+		//
+		// Re-sending the same games-played to a session that is already running is precisely what knocks a custom
+		// name off the friends list: relative to the shortcut - which has been running for minutes - the real games
+		// have just (re)started, so Steam promotes one of them and friends see "Rust" instead of 💀nocat.lol💀.
+		// The idler re-asserts every 4-7 minutes, so each one was a dice roll, and the heartbeat's heal spent all
+		// day putting the name back only for the next re-assert to knock it off again.
+		//
+		// So when the set is unchanged AND Steam itself says it is already showing what we want, send nothing at
+		// all. PlayingAsSeen is Steam's own echo, so this only stays quiet while it genuinely agrees: an empty
+		// echo (never heard from Steam) or any disagreement falls through and re-asserts exactly as before.
+		if (!force
+			&& !string.IsNullOrWhiteSpace(label)
+			&& (label == _announcedLabel)
+			&& (_announcedApps != null)
+			&& _announcedApps.SequenceEqual(apps)
+			&& (PlayingAsSeen == label)) {
+			return;
+		}
+
 		// Log a change in what friends actually see - the custom name, a real game, or nothing - once per change.
 		// This makes "old/kylro should never leave 💀nocat.lol💀" checkable: if the custom name ever lapses to a
 		// real game or to nothing, there's a timestamped line for it instead of a silent flip nobody can trace.
@@ -1803,7 +1877,9 @@ public sealed class Bot : IAsyncDisposable {
 		// nothing, and the sequence guard makes even that impossible to leave behind.
 		bool relaunch = !string.IsNullOrWhiteSpace(label)
 			&& (apps.Count > 0)
-			&& (force || ((_announcedApps != null) && !_announcedApps.SequenceEqual(apps)));
+			&& (force
+				|| ((_announcedApps != null) && !_announcedApps.SequenceEqual(apps))
+				|| ((_announcedLabel != null) && (_announcedLabel != label)));   // name just turned on - put it on top
 
 		// Captured before _announcedApps is overwritten below - the persona re-apply further down needs to
 		// know whether this call actually CHANGED anything, and by then the record has already been updated.
@@ -1811,6 +1887,7 @@ public sealed class Bot : IAsyncDisposable {
 
 		int mine = Interlocked.Increment(ref _playSequence);
 		_announcedApps = apps;
+		_announcedLabel = label;
 
 		if (relaunch) {
 			Client.Send(BuildGamesPlayed(null, []));
@@ -1890,6 +1967,9 @@ public sealed class Bot : IAsyncDisposable {
 
 	/// <summary>The real appIDs last announced, so a CHANGE can be told apart from a routine re-assert.</summary>
 	private List<uint>? _announcedApps;
+
+	/// <summary>The name last announced alongside them - null until the first announcement of this session.</summary>
+	private string? _announcedLabel;
 
 	/// <summary>Bumped by every SetPlaying, so a delayed re-announce knows it has been superseded.</summary>
 	private int _playSequence;
@@ -2017,6 +2097,9 @@ public sealed class Bot : IAsyncDisposable {
 		_tokenLock.Dispose();
 	}
 }
+
+/// <summary>When an app first appeared on the account, and whether it was actually bought.</summary>
+public readonly record struct AppOwnership(DateTime Since, bool Paid);
 
 public static class SteamIds {
 	/// <summary>GameID layout: bits 0-23 appID, 24-31 type, 32-63 modID. Type 2 = Shortcut, i.e. a non-Steam game.</summary>

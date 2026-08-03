@@ -432,6 +432,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 		string rarity = pick.GlobalPercent is { } percent ? $" ({percent:0.#}% of owners have it)" : "";
 		Log.Reward($"unlocked \"{pick.Display}\" in {GameNames.Of(app)}{rarity}  ({nowUnlocked}/{total})", Bot.Name);
+		Remember(new Unlock(app, GameNames.Of(app), pick.Display, pick.GlobalPercent, DateTime.UtcNow, nowUnlocked, total));
 
 		return true;
 	}
@@ -489,6 +490,30 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			}
 
 			return g;
+		}
+	}
+
+	/// <summary>An achievement this account earned, newest first. Kept in memory - a session's worth is enough.</summary>
+	public sealed record Unlock(uint App, string Game, string Name, double? Percent, DateTime When, int Unlocked, int Total);
+
+	private readonly List<Unlock> _recent = [];
+
+	/// <summary>The last few achievements earned, newest first.</summary>
+	public IReadOnlyList<Unlock> Recent {
+		get {
+			lock (_recent) {
+				return [.. _recent];
+			}
+		}
+	}
+
+	private void Remember(Unlock unlock) {
+		lock (_recent) {
+			_recent.Insert(0, unlock);
+
+			if (_recent.Count > 20) {
+				_recent.RemoveRange(20, _recent.Count - 20);
+			}
 		}
 	}
 

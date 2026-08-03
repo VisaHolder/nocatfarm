@@ -594,6 +594,9 @@ button.ghost:hover:not(:disabled) { background: var(--line); }
 /* Explicitly inverted rather than inherited: the tip is a dark chip in BOTH themes, so its text has to be
    light in both. Reading var(--text) made it black text on a near-black box the moment the light theme was
    switched on - every tooltip in the app, unreadable. */
+/* Multi-line tips (the inventory breakdown) keep their line breaks; single-line ones are unaffected. */
+.tip { white-space: pre-line; }
+
 .tip { background: #111 !important; color: #e8e8e8 !important; border-color: #333 !important; }
 
 .tip {
@@ -755,3 +758,24 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
   display: flex; align-items: center; justify-content: flex-end;
   border: 1px solid transparent; color: var(--muted); cursor: help;
 }
+
+/* ── the achievement hunter ────────────────────────────────────────── */
+/* What it is doing and what is queued, above the pacing table. Chips rather than another table: this is a
+   list of names to skim, and a fourth column of numbers would bury the one line that matters (what is
+   running right now). */
+.hunt { margin: var(--s3) 0 0; max-width: 90ch; border: 1px solid var(--line); background: var(--panel2); }
+.huntnow { display: flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s3); border-bottom: 1px solid var(--line); font-size: 13px; }
+.huntrow { display: flex; gap: var(--s3); padding: var(--s2) var(--s3); align-items: flex-start; }
+.huntrow + .huntrow { border-top: 1px solid var(--line); }
+.huntrow .k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; min-width: 62px; flex: none; }
+.huntrow .chips { display: flex; flex-wrap: wrap; align-items: flex-start; align-content: flex-start; gap: 4px; min-width: 0; }
+.hchip { display: inline-block; align-self: flex-start; font-size: 11px; line-height: 1.6; padding: 1px 7px; border: 1px solid var(--line); background: var(--panel); color: var(--text); white-space: nowrap; max-width: 24ch; overflow: hidden; text-overflow: ellipsis; }
+.hchip.shared { border-style: dashed; }
+.hchip.out { color: var(--muted); background: transparent; }
+.hchip.ghost { color: var(--muted); border-style: dotted; }
+
+/* Recently earned. Deliberately a plain list - it is a feed, and it reads better as one. */
+.unlocks { list-style: none; margin: var(--s3) 0 0; padding: 0; max-width: 90ch; font-size: 12px; }
+.unlocks li { padding: 3px 0; border-bottom: 1px solid var(--line); }
+.unlocks li:last-child { border-bottom: 0; }
+.unlocks .rare { color: var(--accent); font-size: 11px; margin-left: 6px; }

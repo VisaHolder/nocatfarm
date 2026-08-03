@@ -63,6 +63,7 @@ public static class Commands {
 		new("send", "<account|all>", GroupCards, "Send an account's tradable items to the account listed under Trades.", "loot"),
 		new("2fa", "<account>", GroupAccounts, "Show this account's Steam Guard code, if its authenticator is set up here.", "guard"),
 		new("cheevo", "<account> <appID> [list|unlock|lock] [name|all]", GroupPlaying, "Achievements: see them, unlock them all, or put them back.", "ach|achievements"),
+		new("hunt", "[account]", GroupPlaying, "What the achievement hunter would play, in order - and what it ruled out and why.", "boost"),
 
 		new("import", "asf [path] [force]", GroupSettings, "Bring accounts across from ArchiSteamFarm, login tokens and all."),
 		new("config", "[account]", GroupSettings, "Show every setting and its current value."),
@@ -203,6 +204,7 @@ public static class Commands {
 				"send" or "loot" => await SendAsync(mgr, rest).ConfigureAwait(false),
 				"2fa" or "guard" => TwoFactor(mgr, rest),
 				"cheevo" or "ach" or "achievements" => await CheevoAsync(mgr, rest).ConfigureAwait(false),
+				"hunt" or "boost" => await HuntAsync(mgr, rest).ConfigureAwait(false),
 				"name" => Name(mgr, rest),
 				"persona" => Persona(mgr, rest),
 				"farm" => Farm(mgr, rest),
@@ -782,6 +784,33 @@ public static class Commands {
 	/// consequential should be a thing you typed, not a checkbox you left on.
 	/// </summary>
 	/// <summary>
+	/// What the achievement hunter would play next, and what it has ruled out.
+	///
+	/// Worth a command of its own: "all single-player" decides its own targets, and a list an account chose for
+	/// itself is exactly the kind of thing that should be inspectable before it runs for a fortnight. It also
+	/// answers the only question anybody actually asks of it - why isn't it playing X.
+	/// </summary>
+	private static async Task<string> HuntAsync(BotManager mgr, string[] args) {
+		List<Bot> targets = (args.Length == 0) || args[0].Equals("all", StringComparison.OrdinalIgnoreCase)
+			? [.. mgr.All]
+			: mgr.Get(args[0]) is { } one ? [one] : [];
+
+		if (targets.Count == 0) {
+			return args.Length == 0 ? "No accounts are set up yet." : NoSuchAccount(mgr, args[0]);
+		}
+
+		List<string> blocks = [];
+
+		foreach (Bot bot in targets) {
+			if (BotManager.ModuleOf<AchievementBoost>(bot) is { } boost) {
+				blocks.Add(await boost.ExplainAsync(CancellationToken.None).ConfigureAwait(false));
+			}
+		}
+
+		return blocks.Count == 0 ? "nothing to show" : string.Join(Environment.NewLine + Environment.NewLine, blocks);
+	}
+
+	/// <summary>
 	/// Hold an account on one game for a while.
 	///
 	/// The hours are capped at a week: a grind is a deliberate short-term thing, and a typo of 1000 should not
@@ -824,16 +853,32 @@ public static class Commands {
 		hours = Math.Min(hours, 24 * 7);
 		TimeSpan how = TimeSpan.FromHours(hours);
 
+		List<Bot> started = [];
+		List<Bot> refused = [];
+
 		foreach (Bot bot in targets) {
 			// Legit accounts finish up their current game first (a short, jittered beat) rather than snapping over;
 			// non-human accounts start instantly.
 			TimeSpan delay = bot.HumanOwned ? TimeSpan.FromSeconds(Rng.Next(45, 210)) : TimeSpan.Zero;
-			bot.StartGrind(appId, how, delay);
+
+			if (!bot.StartGrind(appId, how, delay)) {
+				refused.Add(bot);   // inside its refund window; StartGrind said so in the log
+
+				continue;
+			}
+
+			started.Add(bot);
 			string lead = delay > TimeSpan.Zero ? $" (finishing up first, starts in ~{Fmt.Hm((int) Math.Ceiling(delay.TotalMinutes))})" : "";
 			Log.Info($"grinding {GameNames.Of(appId)} for {Fmt.Hm((int) how.TotalMinutes)}{lead} - normal schedule resumes after", bot.Name);
 		}
 
-		return $"{string.Join(", ", targets.Select(static b => b.Name))}: {GameNames.Of(appId)} for {Fmt.Hm((int) how.TotalMinutes)}.";
+		string no = refused.Count > 0
+			? $"{(started.Count > 0 ? "  " : "")}{string.Join(", ", refused.Select(static b => b.Name))}: skipped - {GameNames.Of(appId)} is still refundable, and a grind would spend that."
+			: "";
+
+		return started.Count > 0
+			? $"{string.Join(", ", started.Select(static b => b.Name))}: {GameNames.Of(appId)} for {Fmt.Hm((int) how.TotalMinutes)}.{no}"
+			: no.TrimStart();
 	}
 
 	private static async Task<string> CheevoAsync(BotManager mgr, string[] args) {

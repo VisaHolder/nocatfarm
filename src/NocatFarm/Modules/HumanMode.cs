@@ -1164,7 +1164,21 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			}
 		}
 
-		return weights;
+		// Two things this list must respect, and until now didn't.
+		//
+		// "Never touch these games" meant never for the card farmer and the idler, while human mode - the one that
+		// actually decides what a legit account plays all day - happily rolled a blacklisted game into its
+		// schedule. And a game bought in the last fortnight and barely played is one the owner can still get their
+		// money back for, until this account spends two hours of it for them; that drops out entirely (main game
+		// included) until the window closes.
+		//
+		// If filtering would leave nothing at all, the unfiltered list stands: an account with nothing to play and
+		// no explanation is worse than either, and "no games are set" would be a lie.
+		List<(uint Game, int Weight)> playable = weights
+			.Where(w => !Bot.Cfg.BlacklistedGames.Contains(w.Game) && !Live.Global.GlobalBlacklistedGames.Contains(w.Game) && !Bot.Refunds.Holds(w.Game))
+			.ToList();
+
+		return playable.Count > 0 ? playable : weights;
 	}
 
 	/// <summary>

@@ -48,7 +48,7 @@ public static class UnlockEverything {
 	}
 
 	private static async Task RunAsync(Bot bot) {
-		IReadOnlyDictionary<uint, DateTime> owned = await bot.GetAppOwnershipAsync().ConfigureAwait(false);
+		IReadOnlyDictionary<uint, AppOwnership> owned = await bot.GetAppOwnershipAsync().ConfigureAwait(false);
 
 		if (owned.Count == 0) {
 			Log.Warn("couldn't work out what this account owns - nothing was changed", bot.Name);
