@@ -348,6 +348,12 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			_ => []
 		};
 
+		// A picked list can name a game this account doesn't have. Steam ignores a games-played for something you
+		// don't own, so the session would be two hours of nothing at all - drop those once the library is known.
+		if ((Bot.Cfg.AchievementBoost == 1) && Bot.Library.Ready) {
+			raw = [.. raw.Where(app => Bot.Library.Find(app) != null)];
+		}
+
 		if (raw.Count == 0) {
 			return [];
 		}
