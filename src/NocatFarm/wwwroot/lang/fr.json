@@ -95,10 +95,12 @@
    "label": "Et au repos, toutes les"
   },
   "Language": {
-   "label": "Langue"
+   "label": "Langue",
+   "tip": "La langue de l'interface. Ce qui n'est pas encore traduit s'affiche en anglais plutôt que vide, donc une langue à moitié faite reste parfaitement utilisable."
   },
   "MarketCurrency": {
-   "label": "Prix de l'inventaire en"
+   "label": "Prix de l'inventaire en",
+   "tip": "La devise des prix d'inventaire. Réglez-la comme votre boutique Steam, sinon les totaux ne correspondront pas à ce que vous voyez sur le marché."
   },
   "FileLogging": {
    "label": "Écrire un fichier journal"
@@ -122,10 +124,12 @@
    "label": "Mot de passe"
   },
   "OnlineStatus": {
-   "label": "Apparaître comme"
+   "label": "Apparaître comme",
+   "tip": "Comment les autres vous voient : en ligne, absent, occupé ou invisible. Invisible continue d'accumuler des heures sans que personne ne voie rien."
   },
   "IUseThisAccount": {
-   "label": "Je me connecte moi-même à ce compte"
+   "label": "Je me connecte moi-même à ce compte",
+   "tip": "Cochez si vous vous connectez vous-même à ce compte. nocat.farm ne touchera plus à son statut : le faire depuis une seconde session vous éjecte de votre propre chat Steam."
   },
   "StartPaused": {
    "label": "Démarrer en pause"
@@ -137,13 +141,15 @@
    "label": "Notes"
   },
   "LegitMode": {
-   "label": "Mode humain"
+   "label": "Mode humain",
+   "tip": "Fait jouer le compte comme une personne : un jeu à la fois, des sessions et des pauses de durée variable, des heures de coucher et de lever réalistes, et des jours sans jouer. Désactivé, il accumule simplement des heures."
   },
   "LegitStopMaxSeconds": {
    "label": "À l'arrêt, finir pendant jusqu'à"
   },
   "GameWeights": {
-   "label": "Jeux et fréquence"
+   "label": "Jeux et fréquence",
+   "tip": "Les jeux et leur poids, par exemple « 730:70, 440:20 ». Le plus lourd est le jeu principal et prend l'essentiel du temps ; les autres reviennent de temps en temps, par périodes plutôt que tous les jours."
   },
   "WeekdayHours": {
    "label": "Heures en semaine"
@@ -200,16 +206,19 @@
    "label": "Jeux pour la nuit"
   },
   "IdleGames": {
-   "label": "Jeux à faire tourner"
+   "label": "Jeux à faire tourner",
+   "tip": "Les jeux à faire tourner pour accumuler des heures. Steam en autorise 32 à la fois."
   },
   "CustomGameNameEnabled": {
-   "label": "Afficher un nom de jeu personnalisé"
+   "label": "Afficher un nom de jeu personnalisé",
+   "tip": "Affiche un nom inventé à la place du vrai jeu dans votre liste d'amis. Les heures continuent de compter pour le vrai jeu."
   },
   "CustomGameName": {
    "label": "Afficher comme"
   },
   "FarmCards": {
-   "label": "Farmer les cartes"
+   "label": "Farmer les cartes",
+   "tip": "Récupère les cartes qu'il reste à obtenir dans votre bibliothèque, puis s'arrête. Rien à configurer."
   },
   "HoursUntilCardDrops": {
    "label": "Heures avant que les cartes tombent"
@@ -221,7 +230,8 @@
    "label": "Farmer en apparaissant hors ligne"
   },
   "UnlockAchievements": {
-   "label": "Gagner des succès avec le temps"
+   "label": "Gagner des succès avec le temps",
+   "tip": "Gagne des succès peu à peu à partir du temps de jeu réel, en commençant par les plus courants. Rien n'est débloqué que les heures ne justifient, et un jeu n'est jamais terminé à 100 %."
   },
   "AchievementPace": {
    "label": "À quelle vitesse"
@@ -230,13 +240,16 @@
    "label": "Ne jamais terminer plus de"
   },
   "ClaimFreeGames": {
-   "label": "Récupérer les jeux gratuits"
+   "label": "Récupérer les jeux gratuits",
+   "tip": "Récupère les jeux gratuits qui passent, pour que la bibliothèque grandisse toute seule."
   },
   "CraftBadges": {
-   "label": "Fabriquer des badges avec les cartes"
+   "label": "Fabriquer des badges avec les cartes",
+   "tip": "Transforme les séries de cartes complètes en badges, ce qui donne de l'expérience de profil et parfois des objets."
   },
   "Rep4Rep": {
-   "label": "Publier des commentaires rep4rep"
+   "label": "Publier des commentaires rep4rep",
+   "tip": "Publie les commentaires que rep4rep attribue à ce compte, à un rythme humain."
   },
   "Rep4RepDailyCap": {
    "label": "Maximum par 24 heures"
@@ -278,13 +291,15 @@
    "label": "Réagir seulement quand il est éveillé"
   },
   "AcceptDonations": {
-   "label": "Accepter les dons"
+   "label": "Accepter les dons",
+   "tip": "Accepte les offres qui ne demandent rien en retour. Elles ne peuvent rien vous coûter, donc elles sont sûres par nature."
   },
   "AcceptFromMasters": {
    "label": "Tout accepter de vos propres comptes"
   },
   "TradeMasters": {
-   "label": "Vos propres comptes"
+   "label": "Vos propres comptes",
+   "tip": "Les SteamID de vos propres comptes. C'est là que « send » envoie les objets, et de là que les offres sont acceptées sans question."
   },
   "DeclineOtherTrades": {
    "label": "Refuser tout le reste"
@@ -296,10 +311,23 @@
    "label": "Et au plus"
   },
   "PauseWhenYouPlay": {
-   "label": "S'effacer quand vous jouez"
+   "label": "S'effacer quand vous jouez",
+   "tip": "Si vous vous mettez à jouer, le compte s'efface aussitôt et attend avant de reprendre."
   },
   "ResumeDelayMinutes": {
    "label": "Attendre avant de reprendre"
+  },
+  "AchievementBoost": {
+   "tip": "Chasse les succès tout seul sur plusieurs jeux, sans que vous lanciez chaque session à la main. Désactivé par défaut. « Tous les solo » choisit dans votre bibliothèque : uniquement de vrais jeux (jamais de DLC ni de démos), avec des succès et assez d'évaluations."
+  },
+  "SkipRefundableGames": {
+   "tip": "Laisse tranquille un jeu récemment acheté tant que le remboursement est possible : Steam le refuse dès deux heures de jeu, et deux heures, c'est une seule session. Vaut partout, pas seulement pour les cartes. Les jeux gratuits ne sont jamais retenus."
+  },
+  "ShowInventoryValue": {
+   "tip": "Calcule ce que vaut l'inventaire de ce compte au prix médian du marché. Il lit son PROPRE inventaire, un profil privé n'y change donc rien."
+  },
+  "CheckForUpdates": {
+   "tip": "Regarde une fois par jour s'il existe une version plus récente et le signale dans le journal. Il se contente de le dire : il ne télécharge, ne remplace et ne redémarre jamais rien."
   }
  }
 }

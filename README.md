@@ -212,7 +212,8 @@ the auto-reply instead, so ordinary chat is never mistaken for a command.
 | `remove <account>` &nbsp;·&nbsp; `delete` | Delete an account and its stored login token. |
 | `enable <account>` | Let this account log in again. |
 | `disable <account>` | Keep it configured but never log it in. |
-| `redeem [account] <key> [key…]` &nbsp;·&nbsp; `key` | Activate product keys; without an account it tries each until one works. |
+| `redeem [account] <key…\|file.txt>` &nbsp;·&nbsp; `key` | Activate product keys, or point it at a text file full of them. More than five queues itself. |
+| `keys [list\|clear]` | Product keys still waiting to be activated. |
 | `2fa <account>` &nbsp;·&nbsp; `guard` | Show this account's Steam Guard code, if its authenticator is set up here. |
 
 **Playing**
@@ -234,6 +235,7 @@ the auto-reply instead, so ordinary chat is never mistaken for a command.
 |---|---|
 | `cards [account]` | What is still left to farm. |
 | `farm <account> on\|off` | Turn trading-card farming on or off. |
+| `match [do]` | Swap duplicate trading cards between your own accounts so sets finish. `match do` sends the offers. |
 | `value [account\|all] [refresh]` &nbsp;·&nbsp; `inv` `inventory` | What each inventory is worth at the market's median, by game, with how it has moved in the last 24 hours. `refresh` reads the inventories again. |
 | `send <account\|all>` &nbsp;·&nbsp; `loot` | Send an account's tradable items to the account listed under Trades. |
 
@@ -354,7 +356,7 @@ side of the trade page can't be read, the offer is refused rather than guessed a
 
 ## Settings
 
-**42 global, 120 per account.** Every one has a plain-English explanation attached to it, which the dashboard
+**44 global, 120 per account.** Every one has a plain-English explanation attached to it, which the dashboard
 shows on hover and the console prints for `help <setting>` — one sentence, written once, in
 `Config/Settings.cs`. Advanced settings are collapsed by default and never move.
 

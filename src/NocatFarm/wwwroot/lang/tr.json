@@ -95,10 +95,12 @@
    "label": "Dinlenirken ise"
   },
   "Language": {
-   "label": "Dil"
+   "label": "Dil",
+   "tip": "Panelin dili. Henüz çevrilmemiş olan boş kalmak yerine İngilizce görünür, yani yarım kalmış bir dil bile gayet kullanılabilir."
   },
   "MarketCurrency": {
-   "label": "Envanter fiyatları şu birimde"
+   "label": "Envanter fiyatları şu birimde",
+   "tip": "Envanter fiyatlarının para birimi. Steam mağazandakiyle aynı yap, yoksa toplamlar pazarda gördüğünle uyuşmaz."
   },
   "FileLogging": {
    "label": "Günlük dosyası yaz"
@@ -122,10 +124,12 @@
    "label": "Parola"
   },
   "OnlineStatus": {
-   "label": "Şöyle görün"
+   "label": "Şöyle görün",
+   "tip": "Başkalarının seni nasıl gördüğü: çevrimiçi, uzakta, meşgul veya görünmez. Görünmez modda saatler birikmeye devam eder ve kimse bir şey görmez."
   },
   "IUseThisAccount": {
-   "label": "Bu hesaba ben de giriyorum"
+   "label": "Bu hesaba ben de giriyorum",
+   "tip": "Bu hesaba kendin de giriyorsan işaretle. Böylece nocat.farm durumuna dokunmaz - bunu ikinci bir oturumdan yapmak seni kendi Steam sohbetinden atar."
   },
   "StartPaused": {
    "label": "Duraklatılmış başlat"
@@ -137,13 +141,15 @@
    "label": "Notlar"
   },
   "LegitMode": {
-   "label": "İnsan modu"
+   "label": "İnsan modu",
+   "tip": "Hesabı bir insan gibi oynatır: tek seferde tek oyun, uzunluğu değişen oturumlar ve molalar, gerçekçi yatma ve kalkma saatleri, ve hiç oynanmayan günler. Kapalıyken sadece saat biriktirir."
   },
   "LegitStopMaxSeconds": {
    "label": "Durdurulunca en fazla şu kadar toparlan"
   },
   "GameWeights": {
-   "label": "Oyunlar ve sıklıkları"
+   "label": "Oyunlar ve sıklıkları",
+   "tip": "Oyunlar ve ağırlıkları, örneğin \"730:70, 440:20\". En ağırı ana oyundur ve zamanın çoğunu alır; diğerleri her gün değil, arada bir, öbekler hâlinde gelir."
   },
   "WeekdayHours": {
    "label": "Hafta içi saat"
@@ -200,16 +206,19 @@
    "label": "Gece için oyunlar"
   },
   "IdleGames": {
-   "label": "Saat biriktirilecek oyunlar"
+   "label": "Saat biriktirilecek oyunlar",
+   "tip": "Saat biriktirmek için çalıştırılacak oyunlar. Steam aynı anda 32 tanesine izin verir."
   },
   "CustomGameNameEnabled": {
-   "label": "Özel bir oyun adı göster"
+   "label": "Özel bir oyun adı göster",
+   "tip": "Arkadaş listende gerçek oyun yerine uydurma bir ad gösterir. Saatler yine gerçek oyuna işlemeye devam eder."
   },
   "CustomGameName": {
    "label": "Şöyle göster"
   },
   "FarmCards": {
-   "label": "Kart topla"
+   "label": "Kart topla",
+   "tip": "Kütüphanende düşmeyi bekleyen kartları toplar ve hiçbiri kalmayınca durur. Ayarlanacak bir şey yok."
   },
   "HoursUntilCardDrops": {
    "label": "Kart düşene kadar saat"
@@ -221,7 +230,8 @@
    "label": "Çevrimdışı görünerek topla"
   },
   "UnlockAchievements": {
-   "label": "Zamanla başarım kazan"
+   "label": "Zamanla başarım kazan",
+   "tip": "Gerçek oynama süresinden yola çıkarak başarımları yavaş yavaş kazanır, en yaygın olanlardan başlayarak. Saatlerin haklı çıkarmadığı hiçbir şeyi açmaz ve bir oyunu asla %100 bitirmez."
   },
   "AchievementPace": {
    "label": "Ne hızda"
@@ -230,13 +240,16 @@
    "label": "Şundan fazlasını asla tamamlama"
   },
   "ClaimFreeGames": {
-   "label": "Ücretsiz oyunları al"
+   "label": "Ücretsiz oyunları al",
+   "tip": "Karşına çıkan ücretsiz oyunları alır, böylece kütüphane kendiliğinden büyür."
   },
   "CraftBadges": {
-   "label": "Kart setlerinden rozet üret"
+   "label": "Kart setlerinden rozet üret",
+   "tip": "Tamamlanmış kart setlerini rozete çevirir; bu profil deneyimi ve bazen eşya verir."
   },
   "Rep4Rep": {
-   "label": "rep4rep yorumları gönder"
+   "label": "rep4rep yorumları gönder",
+   "tip": "rep4rep'in bu hesaba verdiği yorumları insan temposunda gönderir."
   },
   "Rep4RepDailyCap": {
    "label": "24 saatte en fazla"
@@ -278,13 +291,15 @@
    "label": "Yalnızca uyanıkken tepki ver"
   },
   "AcceptDonations": {
-   "label": "Bağışları kabul et"
+   "label": "Bağışları kabul et",
+   "tip": "Karşılığında hiçbir şey istemeyen teklifleri kabul eder. Sana hiçbir şeye mal olamazlar, dolayısıyla doğaları gereği güvenlidirler."
   },
   "AcceptFromMasters": {
    "label": "Kendi hesaplarından her şeyi kabul et"
   },
   "TradeMasters": {
-   "label": "Kendi hesapların"
+   "label": "Kendi hesapların",
+   "tip": "Kendi hesaplarının SteamID'leri. \"send\" eşyaları oraya gönderir ve oradan gelen teklifler sorgusuz kabul edilir."
   },
   "DeclineOtherTrades": {
    "label": "Diğer her şeyi reddet"
@@ -296,10 +311,23 @@
    "label": "Ve en fazla"
   },
   "PauseWhenYouPlay": {
-   "label": "Sen oynarken çekil"
+   "label": "Sen oynarken çekil",
+   "tip": "Sen oynamaya başlarsan hesap hemen çekilir ve kendi işine dönmeden önce bekler."
   },
   "ResumeDelayMinutes": {
    "label": "Devam etmeden önce bekle"
+  },
+  "AchievementBoost": {
+   "tip": "Her oturumu elle başlatmana gerek kalmadan birkaç oyunda kendi başına başarım avlar. Varsayılan olarak kapalı. \"Tüm tek oyunculu\" kütüphanenden seçer: yalnızca gerçek oyunlar (asla DLC veya demo), başarımı olan ve yeterince değerlendirmesi bulunanlar."
+  },
+  "SkipRefundableGames": {
+   "tip": "Yeni alınmış bir oyuna, parasını geri alamayacak duruma gelene kadar dokunmaz: Steam iki saat oynanmışsa reddeder ve iki saat tek bir oturumdur. Sadece kart toplamada değil, her yerde geçerli. Ücretsiz oyunlar hiçbir zaman bekletilmez."
+  },
+  "ShowInventoryValue": {
+   "tip": "Bu hesabın envanterinin pazarın medyan fiyatıyla ne ettiğini hesaplar. KENDİ envanterini okur, dolayısıyla gizli profil fark etmez."
+  },
+  "CheckForUpdates": {
+   "tip": "Günde bir kez daha yeni bir sürüm var mı diye bakar ve günlükte söyler. Yalnızca söyler: hiçbir şeyi indirmez, değiştirmez, yeniden başlatmaz."
   }
  }
 }

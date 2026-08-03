@@ -95,10 +95,12 @@
    "label": "空闲时则每隔"
   },
   "Language": {
-   "label": "语言"
+   "label": "语言",
+   "tip": "面板语言。尚未翻译的内容会显示英文而不是留空，所以翻译到一半的语言依然完全可用。"
   },
   "MarketCurrency": {
-   "label": "库存价格使用"
+   "label": "库存价格使用",
+   "tip": "库存价格使用的货币。请与你的 Steam 商店保持一致，否则总额会和你在市场上看到的对不上。"
   },
   "FileLogging": {
    "label": "写入日志文件"
@@ -122,10 +124,12 @@
    "label": "密码"
   },
   "OnlineStatus": {
-   "label": "显示状态为"
+   "label": "显示状态为",
+   "tip": "别人看到的状态：在线、离开、忙碌或隐身。隐身时照样累积时长，而且谁也看不到。"
   },
   "IUseThisAccount": {
-   "label": "这个账户我自己也登录"
+   "label": "这个账户我自己也登录",
+   "tip": "如果你自己也登录这个账户，请勾选。这样 nocat.farm 就不会去改它的状态——从第二个会话改状态会把你踢出自己的 Steam 聊天。"
   },
   "StartPaused": {
    "label": "启动后暂停"
@@ -137,13 +141,15 @@
    "label": "备注"
   },
   "LegitMode": {
-   "label": "拟人模式"
+   "label": "拟人模式",
+   "tip": "让账户像真人一样玩：一次只玩一个游戏，每段时长和休息都不一样，作息时间合理，还会有几天完全不玩。关闭后就只是单纯挂时长。"
   },
   "LegitStopMaxSeconds": {
    "label": "停止时最多再收尾"
   },
   "GameWeights": {
-   "label": "游戏及其频率"
+   "label": "游戏及其频率",
+   "tip": "游戏及其权重，例如“730:70, 440:20”。权重最高的是主力游戏，占据大部分时间；其余的偶尔出现，且是一阵一阵的，而不是每天都玩。"
   },
   "WeekdayHours": {
    "label": "工作日时长"
@@ -200,16 +206,19 @@
    "label": "夜间挂的游戏"
   },
   "IdleGames": {
-   "label": "挂时长的游戏"
+   "label": "挂时长的游戏",
+   "tip": "用来挂时长的游戏。Steam 最多允许同时挂 32 个。"
   },
   "CustomGameNameEnabled": {
-   "label": "显示自定义游戏名"
+   "label": "显示自定义游戏名",
+   "tip": "在好友列表里显示一个自定义名称，而不是真实游戏。时长依然记在真实游戏上。"
   },
   "CustomGameName": {
    "label": "显示为"
   },
   "FarmCards": {
-   "label": "刷集换式卡牌"
+   "label": "刷集换式卡牌",
+   "tip": "把你库里还没掉完的集换式卡牌刷出来，掉完就停。无需任何配置。"
   },
   "HoursUntilCardDrops": {
    "label": "掉卡所需时长"
@@ -221,7 +230,8 @@
    "label": "以离线状态刷卡"
   },
   "UnlockAchievements": {
-   "label": "随时间获得成就"
+   "label": "随时间获得成就",
+   "tip": "根据真实游玩时长慢慢获得成就，从最普通的开始。绝不会解锁时长撑不起来的成就，也绝不会把一个游戏做到 100%。"
   },
   "AchievementPace": {
    "label": "速度"
@@ -230,13 +240,16 @@
    "label": "完成度上限"
   },
   "ClaimFreeGames": {
-   "label": "领取免费游戏"
+   "label": "领取免费游戏",
+   "tip": "领取遇到的免费游戏，让游戏库自己变大。"
   },
   "CraftBadges": {
-   "label": "用卡牌合成徽章"
+   "label": "用卡牌合成徽章",
+   "tip": "把集齐的卡牌合成徽章，可以获得个人资料经验，有时还有物品。"
   },
   "Rep4Rep": {
-   "label": "发布 rep4rep 评论"
+   "label": "发布 rep4rep 评论",
+   "tip": "按照拟人的节奏，发布 rep4rep 分配给这个账户的评论。"
   },
   "Rep4RepDailyCap": {
    "label": "每 24 小时最多"
@@ -278,13 +291,15 @@
    "label": "仅在“清醒”时响应"
   },
   "AcceptDonations": {
-   "label": "接受赠送"
+   "label": "接受赠送",
+   "tip": "接受不索取任何回报的报价。它们不可能让你有任何损失，因此天然安全。"
   },
   "AcceptFromMasters": {
    "label": "接受自己账户的一切"
   },
   "TradeMasters": {
-   "label": "你自己的账户"
+   "label": "你自己的账户",
+   "tip": "你自己账户的 SteamID。“send”会把物品送到那里，来自那里的报价也会被直接接受。"
   },
   "DeclineOtherTrades": {
    "label": "拒绝其他一切"
@@ -296,10 +311,23 @@
    "label": "最多等待"
   },
   "PauseWhenYouPlay": {
-   "label": "你玩游戏时自动让位"
+   "label": "你玩游戏时自动让位",
+   "tip": "只要你开始玩，账户会立刻让位，并等待一段时间后才继续自己的事。"
   },
   "ResumeDelayMinutes": {
    "label": "恢复前等待"
+  },
+  "AchievementBoost": {
+   "tip": "自动在多个游戏里刷成就，不需要你手动开每一局。默认关闭。“所有单人游戏”会自己从库里挑：只挑真正的游戏（绝不碰 DLC 和试玩），有成就，且评测数量足够。"
+  },
+  "SkipRefundableGames": {
+   "tip": "刚买的游戏在还能退款前完全不碰：一旦游玩超过两小时 Steam 就不给退，而两小时不过是一次挂机。这条规则处处生效，不只是刷卡时。免费游戏永远不受限制。"
+  },
+  "ShowInventoryValue": {
+   "tip": "按市场中位价算出这个账户库存的价值。它读取的是自己的库存，所以资料是私密的也没关系。"
+  },
+  "CheckForUpdates": {
+   "tip": "每天查看一次是否有新版本，并在日志里说明。它只会告知：绝不下载、替换或重启任何东西。"
   }
  }
 }

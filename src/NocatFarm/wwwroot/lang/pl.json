@@ -95,10 +95,12 @@
    "label": "A w spoczynku co"
   },
   "Language": {
-   "label": "Język"
+   "label": "Język",
+   "tip": "Język panelu. To, co jeszcze nieprzetłumaczone, pokazuje się po angielsku, a nie pusto, więc język zrobiony w połowie nadal jest w pełni używalny."
   },
   "MarketCurrency": {
-   "label": "Ceny ekwipunku w"
+   "label": "Ceny ekwipunku w",
+   "tip": "Waluta cen ekwipunku. Ustaw taką jak w twoim sklepie Steam, inaczej sumy nie zgodzą się z tym, co widzisz na rynku."
   },
   "FileLogging": {
    "label": "Zapisuj plik dziennika"
@@ -122,10 +124,12 @@
    "label": "Hasło"
   },
   "OnlineStatus": {
-   "label": "Pokazuj jako"
+   "label": "Pokazuj jako",
+   "tip": "Jak widzą cię inni: dostępny, zaraz wracam, zajęty albo niewidoczny. Niewidoczny dalej zbiera godziny, a nikt nic nie widzi."
   },
   "IUseThisAccount": {
-   "label": "Sam się loguję na to konto"
+   "label": "Sam się loguję na to konto",
+   "tip": "Zaznacz, jeśli sam logujesz się na to konto. Wtedy nocat.farm nie rusza jego statusu - robienie tego z drugiej sesji wyrzuca cię z twojego własnego czatu Steam."
   },
   "StartPaused": {
    "label": "Uruchom wstrzymane"
@@ -137,13 +141,15 @@
    "label": "Notatki"
   },
   "LegitMode": {
-   "label": "Tryb ludzki"
+   "label": "Tryb ludzki",
+   "tip": "Sprawia, że konto gra jak człowiek: jedna gra naraz, sesje i przerwy o różnej długości, wiarygodne pory snu i wstawania oraz dni całkiem bez grania. Wyłączone - po prostu zbiera godziny."
   },
   "LegitStopMaxSeconds": {
    "label": "Przy zatrzymaniu kończ jeszcze do"
   },
   "GameWeights": {
-   "label": "Gry i jak często"
+   "label": "Gry i jak często",
+   "tip": "Gry i ich wagi, na przykład \"730:70, 440:20\". Najcięższa jest grą główną i dostaje większość czasu; pozostałe pojawiają się od czasu do czasu, zrywami, a nie codziennie."
   },
   "WeekdayHours": {
    "label": "Godzin w dzień powszedni"
@@ -200,16 +206,19 @@
    "label": "Gry na noc"
   },
   "IdleGames": {
-   "label": "Gry do zbierania godzin"
+   "label": "Gry do zbierania godzin",
+   "tip": "Gry uruchamiane dla godzin. Steam pozwala na 32 naraz."
   },
   "CustomGameNameEnabled": {
-   "label": "Pokaż własną nazwę gry"
+   "label": "Pokaż własną nazwę gry",
+   "tip": "Pokazuje na liście znajomych wymyśloną nazwę zamiast prawdziwej gry. Godziny nadal liczą się prawdziwej grze."
   },
   "CustomGameName": {
    "label": "Pokazuj jako"
   },
   "FarmCards": {
-   "label": "Farmienie kart"
+   "label": "Farmienie kart",
+   "tip": "Wyciąga karty, które zostały jeszcze w twojej bibliotece, i kończy, gdy nic nie zostaje. Nie ma czego ustawiać."
   },
   "HoursUntilCardDrops": {
    "label": "Godzin do wypadnięcia kart"
@@ -221,7 +230,8 @@
    "label": "Farm, pokazując się offline"
   },
   "UnlockAchievements": {
-   "label": "Zdobywaj osiągnięcia z czasem"
+   "label": "Zdobywaj osiągnięcia z czasem",
+   "tip": "Zdobywa osiągnięcia po trochu, na podstawie faktycznego czasu gry, zaczynając od najpospolitszych. Nigdy nie odblokuje czegoś, czego godziny nie uzasadniają, i nigdy nie kończy gry w 100%."
   },
   "AchievementPace": {
    "label": "Jak szybko"
@@ -230,13 +240,16 @@
    "label": "Nigdy nie ukończ więcej niż"
   },
   "ClaimFreeGames": {
-   "label": "Odbieraj darmowe gry"
+   "label": "Odbieraj darmowe gry",
+   "tip": "Odbiera pojawiające się darmowe gry, żeby biblioteka rosła sama."
   },
   "CraftBadges": {
-   "label": "Twórz odznaki z kart"
+   "label": "Twórz odznaki z kart",
+   "tip": "Zamienia pełne zestawy kart w odznaki, co daje doświadczenie profilu i czasem przedmioty."
   },
   "Rep4Rep": {
-   "label": "Publikuj komentarze rep4rep"
+   "label": "Publikuj komentarze rep4rep",
+   "tip": "Publikuje komentarze, które rep4rep przydziela temu kontu, w ludzkim tempie."
   },
   "Rep4RepDailyCap": {
    "label": "Najwyżej na 24 godziny"
@@ -278,13 +291,15 @@
    "label": "Reaguj tylko, gdy nie śpi"
   },
   "AcceptDonations": {
-   "label": "Przyjmuj darowizny"
+   "label": "Przyjmuj darowizny",
+   "tip": "Przyjmuje oferty, które o nic nie proszą. Nie mogą nic kosztować, więc z natury są bezpieczne."
   },
   "AcceptFromMasters": {
    "label": "Przyjmuj wszystko z własnych kont"
   },
   "TradeMasters": {
-   "label": "Twoje własne konta"
+   "label": "Twoje własne konta",
+   "tip": "SteamID twoich własnych kont. Tam \"send\" wysyła przedmioty i stamtąd oferty są przyjmowane bez pytania."
   },
   "DeclineOtherTrades": {
    "label": "Odrzucaj całą resztę"
@@ -296,10 +311,23 @@
    "label": "I najwyżej"
   },
   "PauseWhenYouPlay": {
-   "label": "Ustąp, gdy grasz"
+   "label": "Ustąp, gdy grasz",
+   "tip": "Gdy sam zaczniesz grać, konto natychmiast ustępuje i czeka, zanim wróci do swojego."
   },
   "ResumeDelayMinutes": {
    "label": "Czekaj przed wznowieniem"
+  },
+  "AchievementBoost": {
+   "tip": "Sam poluje na osiągnięcia w wielu grach, bez ręcznego startowania każdej sesji. Domyślnie wyłączone. \"Wszystkie dla jednego gracza\" wybiera z twojej biblioteki: tylko prawdziwe gry (nigdy DLC ani dema), z osiągnięciami i z wystarczającą liczbą recenzji."
+  },
+  "SkipRefundableGames": {
+   "tip": "Zostawia świeżo kupioną grę w spokoju, dopóki możesz odzyskać pieniądze: Steam odmawia, gdy ma dwie godziny, a dwie godziny to jedna sesja. Działa wszędzie, nie tylko przy kartach. Darmowe gry nigdy nie są wstrzymywane."
+  },
+  "ShowInventoryValue": {
+   "tip": "Liczy, ile wart jest ekwipunek tego konta po medianie ceny rynkowej. Czyta WŁASNY ekwipunek, więc prywatny profil nie ma znaczenia."
+  },
+  "CheckForUpdates": {
+   "tip": "Raz dziennie sprawdza, czy jest nowsza wersja, i pisze o tym w dzienniku. Tylko informuje: nigdy nic nie pobiera, nie podmienia ani nie restartuje."
   }
  }
 }

@@ -95,10 +95,12 @@
    "label": "Und in Ruhe alle"
   },
   "Language": {
-   "label": "Sprache"
+   "label": "Sprache",
+   "tip": "Die Sprache der Oberfläche. Noch nicht Übersetztes erscheint auf Englisch statt leer, eine halbfertige Sprache bleibt also voll benutzbar."
   },
   "MarketCurrency": {
-   "label": "Inventarpreise in"
+   "label": "Inventarpreise in",
+   "tip": "Die Währung der Inventarpreise. Stell sie wie deinen Steam-Shop ein, sonst passen die Summen nicht zu dem, was du auf dem Markt siehst."
   },
   "FileLogging": {
    "label": "Protokolldatei schreiben"
@@ -122,10 +124,12 @@
    "label": "Passwort"
   },
   "OnlineStatus": {
-   "label": "Erscheinen als"
+   "label": "Erscheinen als",
+   "tip": "Wie andere dich sehen: online, abwesend, beschäftigt oder unsichtbar. Unsichtbar sammelt weiter Stunden, ohne dass jemand etwas sieht."
   },
   "IUseThisAccount": {
-   "label": "Ich melde mich selbst hier an"
+   "label": "Ich melde mich selbst hier an",
+   "tip": "Setz das, wenn du dich selbst hier anmeldest. Dann fasst nocat.farm den Status nicht an - aus einer zweiten Sitzung heraus würde das dich aus deinem eigenen Steam-Chat werfen."
   },
   "StartPaused": {
    "label": "Pausiert starten"
@@ -137,13 +141,15 @@
    "label": "Notizen"
   },
   "LegitMode": {
-   "label": "Menschlicher Modus"
+   "label": "Menschlicher Modus",
+   "tip": "Lässt das Konto wie ein Mensch spielen: ein Spiel zur Zeit, unterschiedlich lange Sitzungen und Pausen, realistische Schlafens- und Aufstehzeiten, und manche Tage ohne Spielen. Aus gesammelt es einfach Stunden."
   },
   "LegitStopMaxSeconds": {
    "label": "Beim Stoppen noch fertig spielen bis zu"
   },
   "GameWeights": {
-   "label": "Spiele und wie oft"
+   "label": "Spiele und wie oft",
+   "tip": "Spiele und ihr Gewicht, etwa «730:70, 440:20». Das schwerste ist das Hauptspiel und bekommt die meiste Zeit; die anderen kommen gelegentlich vor, schubweise statt jeden Tag."
   },
   "WeekdayHours": {
    "label": "Stunden unter der Woche"
@@ -200,16 +206,19 @@
    "label": "Spiele für die Nacht"
   },
   "IdleGames": {
-   "label": "Spiele zum Sammeln"
+   "label": "Spiele zum Sammeln",
+   "tip": "Die Spiele, die für Stunden laufen. Steam erlaubt 32 gleichzeitig."
   },
   "CustomGameNameEnabled": {
-   "label": "Eigenen Spielnamen anzeigen"
+   "label": "Eigenen Spielnamen anzeigen",
+   "tip": "Zeigt in deiner Freundesliste einen ausgedachten Namen statt des echten Spiels. Die Stunden zählen weiter fürs echte Spiel."
   },
   "CustomGameName": {
    "label": "Anzeigen als"
   },
   "FarmCards": {
-   "label": "Sammelkarten farmen"
+   "label": "Sammelkarten farmen",
+   "tip": "Holt die Sammelkarten, die deine Bibliothek noch hergibt, und hört auf, wenn keine mehr kommen. Nichts einzustellen."
   },
   "HoursUntilCardDrops": {
    "label": "Stunden bis Karten fallen"
@@ -221,7 +230,8 @@
    "label": "Farmen und dabei offline erscheinen"
   },
   "UnlockAchievements": {
-   "label": "Errungenschaften mit der Zeit verdienen"
+   "label": "Errungenschaften mit der Zeit verdienen",
+   "tip": "Verdient Errungenschaften nach und nach aus echter Spielzeit, die häufigsten zuerst. Nichts wird freigeschaltet, was die Stunden nicht rechtfertigen, und ein Spiel wird nie zu 100% abgeschlossen."
   },
   "AchievementPace": {
    "label": "Wie schnell"
@@ -230,13 +240,16 @@
    "label": "Nie mehr abschließen als"
   },
   "ClaimFreeGames": {
-   "label": "Gratisspiele holen"
+   "label": "Gratisspiele holen",
+   "tip": "Holt auftauchende Gratisspiele ab, damit die Bibliothek von selbst wächst."
   },
   "CraftBadges": {
-   "label": "Abzeichen aus Kartensätzen herstellen"
+   "label": "Abzeichen aus Kartensätzen herstellen",
+   "tip": "Macht aus vollständigen Kartensätzen Abzeichen - das gibt Profil-Erfahrung und manchmal Gegenstände."
   },
   "Rep4Rep": {
-   "label": "rep4rep-Kommentare posten"
+   "label": "rep4rep-Kommentare posten",
+   "tip": "Veröffentlicht die Kommentare, die rep4rep diesem Konto zuteilt, in menschlichem Tempo."
   },
   "Rep4RepDailyCap": {
    "label": "Höchstens pro 24 Stunden"
@@ -278,13 +291,15 @@
    "label": "Nur reagieren, wenn wach"
   },
   "AcceptDonations": {
-   "label": "Geschenke annehmen"
+   "label": "Geschenke annehmen",
+   "tip": "Nimmt Angebote an, die nichts dafür verlangen. Die können dich nichts kosten, sind also von Natur aus sicher."
   },
   "AcceptFromMasters": {
    "label": "Alles von deinen eigenen Konten annehmen"
   },
   "TradeMasters": {
-   "label": "Deine eigenen Konten"
+   "label": "Deine eigenen Konten",
+   "tip": "Die SteamIDs deiner eigenen Konten. Dorthin gehen Gegenstände mit «send», und von dort werden Angebote ungefragt angenommen."
   },
   "DeclineOtherTrades": {
    "label": "Alles andere ablehnen"
@@ -296,10 +311,23 @@
    "label": "Und höchstens"
   },
   "PauseWhenYouPlay": {
-   "label": "Zurücktreten, wenn du spielst"
+   "label": "Zurücktreten, wenn du spielst",
+   "tip": "Fängst du selbst an zu spielen, tritt das Konto sofort zurück und wartet, bevor es weitermacht."
   },
   "ResumeDelayMinutes": {
    "label": "Warten vor dem Weitermachen"
+  },
+  "AchievementBoost": {
+   "tip": "Jagt Errungenschaften selbstständig über mehrere Spiele, ohne dass du jede Sitzung von Hand startest. Standardmäßig aus. «Alle Einzelspieler» wählt aus deiner Bibliothek: nur echte Spiele (nie DLC oder Demos), mit Errungenschaften und genug Rezensionen."
+  },
+  "SkipRefundableGames": {
+   "tip": "Lässt ein frisch gekauftes Spiel in Ruhe, bis du kein Geld mehr zurückbekommen kannst: Steam lehnt ab, sobald zwei Stunden darauf sind, und zwei Stunden sind eine einzige Sitzung. Gilt überall, nicht nur fürs Kartenfarmen. Gratisspiele werden nie zurückgehalten."
+  },
+  "ShowInventoryValue": {
+   "tip": "Rechnet aus, was das Inventar dieses Kontos zum mittleren Marktpreis wert ist. Es liest sein EIGENES Inventar, ein privates Profil ist also egal."
+  },
+  "CheckForUpdates": {
+   "tip": "Sieht einmal täglich nach einer neueren Version und sagt im Protokoll Bescheid. Es sagt nur Bescheid: es lädt nichts, ersetzt nichts und startet nichts neu."
   }
  }
 }
