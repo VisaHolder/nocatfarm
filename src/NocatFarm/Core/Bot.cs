@@ -981,6 +981,7 @@ public sealed class Bot : IAsyncDisposable {
 
 		if (wasRunning) {
 			Log.Info("stopped - logged out", Name);
+			Plugins.PluginHost.RaiseOffline(this);
 		}
 	}
 
@@ -1219,6 +1220,7 @@ public sealed class Bot : IAsyncDisposable {
 		StatusText = "online";
 		_guardPrompt = null;
 		Log.Good($"logged on as {Cfg.SteamLogin} ({SteamId})", Name);
+		Plugins.PluginHost.RaiseOnline(this);
 
 		try {
 			// ALWAYS, even when the state we want is the one we think we already have.
@@ -1772,6 +1774,7 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		Log.Debug($"Steam says {cb.Waiting} trade offer(s) are waiting", Name);
+		Plugins.PluginHost.RaiseTradeOffers(this, (int) cb.Waiting);
 
 		// Latched like the item drop: if the trade module is mid-check nobody is on the TCS, and the news would
 		// be lost until the slow pass came round the better part of an hour later.

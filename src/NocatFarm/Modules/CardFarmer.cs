@@ -105,7 +105,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			// Roll the day up front rather than at the first game with cards on it. An account with nothing to
 			// farm still has a shape for today, and saying so is how you can tell the sittings were rolled at
 			// all - otherwise the whole feature is invisible until cards happen to appear.
-			if (Bot.Cfg.FarmCards && Bot.Cfg.LegitFarming) {
+			if (Bot.Cfg.FarmCards && Bot.Cfg.FarmInSittings) {
 				RollFarmDayIfNeeded();
 			}
 
@@ -339,7 +339,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
 		}
 
-		if (Bot.Cfg.LegitFarming && !InLegitFarmWindow(out DateTime next)) {
+		if (Bot.Cfg.FarmInSittings && !InSittingNow(out DateTime next)) {
 			_status = next > DateTime.Now
 				? $"{Bot.CardsRemaining} card(s) - next sitting around {next:HH:mm}"
 				: $"{Bot.CardsRemaining} card(s) - done farming for today";
@@ -557,6 +557,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 					}
 
 					Log.Reward($"last card dropped in {game.GameName} - that game's done", Bot.Name);
+					Plugins.PluginHost.RaiseCardDropped(Bot, game.AppId, 0);
 				} else {
 					Log.Reward($"{game.GameName} is done - no cards left", Bot.Name);
 				}
@@ -589,6 +590,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				}
 
 				Log.Reward($"card dropped in {game.GameName} - {game.CardsRemaining} to go", Bot.Name);
+				Plugins.PluginHost.RaiseCardDropped(Bot, game.AppId, game.CardsRemaining);
 			}
 		}
 	}
@@ -788,7 +790,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		Random rng = new(seed);
 
 		bool weekend = now.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
-		int hours = Math.Clamp(Bot.Cfg.LegitFarmHoursPerDay, 1, 20);
+		int hours = Math.Clamp(Bot.Cfg.FarmHoursPerDay, 1, 20);
 		int target = (int) (hours * 60 * (weekend ? rng.Next(115, 146) : rng.Next(85, 116)) / 100.0);
 
 		// Start somewhere in the morning-to-midday spread, then lay sittings end to end with gaps until the
@@ -818,7 +820,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>Inside one of today's rolled sittings. The window that is open right now, if any.</summary>
-	private bool InLegitFarmWindow(out DateTime until) {
+	private bool InSittingNow(out DateTime until) {
 		RollFarmDayIfNeeded();
 
 		DateTime now = DateTime.Now;

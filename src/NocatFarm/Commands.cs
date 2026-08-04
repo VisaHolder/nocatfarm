@@ -75,6 +75,7 @@ public static partial class Commands {
 
 		new("log", "[count]", GroupOther, "The last few log lines.", "logs"),
 		new("stats", "[hours]", GroupOther, "Cards dropped and comments posted, by hour."),
+		new("plugins", "", GroupOther, "Which plugins are loaded, and where they came from."),
 		new("owns", "<appID|name>", GroupOther,
 			"Which accounts already own a game, and how long each has played it. Takes an appID, a store URL, or part of a name."),
 		new("addlicense", "<account|all> <subIDs>", GroupOther,
@@ -235,11 +236,16 @@ public static partial class Commands {
 				"answer" => Prompt.Answer(string.Join(' ', rest)) ? "answered" : "nothing is waiting for an answer",
 				"theme" or "dark" or "light" => Theme(cmd, rest),
 				"version" or "about" => About(),
+				"plugins" => PluginList(),
 				"owns" => Owns(mgr, rest),
 				"addlicense" => await AddLicense(mgr, rest).ConfigureAwait(false),
 				"update" => await Update(rest).ConfigureAwait(false),
 				"exit" or "quit" or "q" => Exit(),
-				_ => Suggest(cmd)
+				// A plugin's own command, tried only after every built-in has been ruled out - so a plugin can
+				// never take a verb the app already answers to, whatever it registered.
+				_ => Plugins.PluginHost.Commands.TryGetValue(cmd, out (string Usage, string Help, Func<string[], Task<string>> Run) added)
+					? await added.Run(rest).ConfigureAwait(false)
+					: Suggest(cmd)
 			};
 		} catch (Exception e) {
 			return $"'{cmd}' failed: {e.GetType().Name}: {e.Message}";
@@ -393,6 +399,38 @@ public static partial class Commands {
 
 				bool ok = await FreeGames.AddPackageAsync(bot, sub, CancellationToken.None).ConfigureAwait(false);
 				sb.AppendLine($"{bot.Name}: {sub} - {(ok ? "added" : "refused (not free, region-locked, or already gone)")}");
+			}
+		}
+
+		return sb.ToString().TrimEnd();
+	}
+
+	private static string PluginList() {
+		if (!Live.Global.PluginsEnabled) {
+			return "Plugins are off. Turn them on with 'set PluginsEnabled true' and restart - read what that setting says first.";
+		}
+
+		IReadOnlyList<(string Name, string Version, string File)> running = Plugins.PluginHost.Running;
+
+		if (running.Count == 0) {
+			return $"Plugins are on, but nothing loaded. Put a .dll in:{Environment.NewLine}  {Plugins.PluginHost.Folder}";
+		}
+
+		StringBuilder sb = new();
+		sb.AppendLine($"{running.Count} plugin(s) loaded:");
+
+		foreach ((string name, string version, string file) in running) {
+			sb.AppendLine($"  {name,-24} {version,-10} {file}");
+		}
+
+		IReadOnlyDictionary<string, (string Usage, string Help, Func<string[], Task<string>> Run)> added = Plugins.PluginHost.Commands;
+
+		if (added.Count > 0) {
+			sb.AppendLine();
+			sb.AppendLine("commands they added:");
+
+			foreach ((string verb, (string usage, string help, _)) in added.OrderBy(static c => c.Key, StringComparer.Ordinal)) {
+				sb.AppendLine($"  {(verb + " " + usage).TrimEnd(),-30} {help}");
 			}
 		}
 

@@ -114,6 +114,9 @@ public sealed class GlobalConfig {
 
 	public bool CheckForUpdates { get; set; } = true;
 
+	/// <summary>Whether to load DLLs from plugins/. Off until somebody decides otherwise - see PluginHost.</summary>
+	public bool PluginsEnabled { get; set; }
+
 	public bool FileLogging { get; set; } = true;
 	public bool Debug { get; set; }
 	public int LogRetentionDays { get; set; } = 14;
@@ -197,10 +200,10 @@ public sealed class BotConfig {
 	public bool FarmOffline { get; set; }
 
 	/// <summary>Farm in a few believable sittings a day instead of flat out. Works with or without human mode.</summary>
-	public bool LegitFarming { get; set; }
+	public bool FarmInSittings { get; set; }
 
 	/// <summary>Roughly how many hours a day legit farming spends farming. Jittered daily, longer at weekends.</summary>
-	public int LegitFarmHoursPerDay { get; set; } = 6;
+	public int FarmHoursPerDay { get; set; } = 6;
 
 	// ── achievements ──
 	public bool UnlockAchievements { get; set; }
