@@ -70,7 +70,7 @@ nothing but Steam is ever contacted.
 | **Refund protection** | A game bought in the last fortnight and under two hours played is left completely alone — by the idler, the schedule, grinds and the hunter alike — until it can no longer be refunded. |
 | **Steam Families** | Games shared into the account can be hunted too, and are handed straight back the moment the person who owns them starts playing. |
 | **Daily report** | Once a day (default 09:30) it writes a one-look summary to the log: hours banked in the last 24h, cards, rep4rep comments and a running total, per account. Type `report` for it on demand. |
-| **Eleven languages** | The dashboard is fully translated into Spanish, Portuguese (BR), Russian, German, French, Simplified Chinese, Turkish, Polish, Japanese and Korean — every label, every explanation, all 162 settings. The walkthrough asks which you want before it says anything else. |
+| **Eleven languages** | The dashboard is fully translated into Spanish, Portuguese (BR), Russian, German, French, Simplified Chinese, Turkish, Polish, Japanese and Korean — every label, every explanation, all 164 settings. The walkthrough asks which you want before it says anything else. |
 
 <p align="center">
   <img src="assets/accounts.png" alt="The per-account view — state, custom name, and what your friends actually see" width="880">
@@ -145,7 +145,19 @@ The part that separates this from an idler. Turn it on per account and it plays 
 set myaccount LegitMode true
 set myaccount GameWeights "730:70, 440:20, 550:10"    # first game is the main one
 human myaccount week                                   # the week it rolled, as a sample
+human myaccount reroll                                 # apply changed hours/weights to TODAY
 ```
+
+Those percentages are the real ones — the first game's share is what the main game is held at, rolled within
+about ten points of it each morning, and the rest keep their shares beside it. They describe a **mixed** day
+though, and `PureMainDayChancePct` (25 by default) is the share of days that go on the main game alone. So each
+side game is worth roughly its number times the days that aren't main-only: 20% written is about 15% of a real
+week. Both the dashboard and `human` print the weekly figure next to the one you set, so you never have to work
+that out.
+
+A day is rolled once, at wake time, and then persisted so restarts don't hand out a fresh target every time —
+which means changing the hours or the weights does nothing visible until tomorrow. `human <account> reroll`
+throws today's plan away and rolls a new one from the settings as they stand.
 
 While it's on, the settings that would give an account away are hidden **and cleared from the config** — and
 put back exactly as they were if you turn it off.
@@ -224,7 +236,7 @@ the auto-reply instead, so ordinary chat is never mistaken for a command.
 |---|---|
 | `play <account> <appIDs\|none>` | Set the games this account idles for playtime (multiple allowed). |
 | `grind <account\|all> <appID> <hours>` &nbsp;·&nbsp; `grind <account> off` | Play one game hard for N hours, then back to normal. Earns achievements while it runs. On a legit account it eases in and out; on a boost account it's instant. |
-| `human [account] [week]` | What human mode is doing today; add `week` for the next seven days. |
+| `human [account] [week\|reroll]` | What human mode is doing today; add `week` for the next seven days, or `reroll` to throw today's plan away and roll a fresh one from the current settings. |
 | `wake <account>` &nbsp;·&nbsp; `wakeup` `skipsleep` | Wake a sleeping human-mode account and start its day now. Bed time is unchanged. |
 | `name <account> [text]` | Custom non-Steam game name shown instead of the real game. No text clears it. |
 | `persona <account> <state>` | online \| offline \| busy \| away \| snooze \| invisible. |
@@ -294,6 +306,27 @@ forever — so for an account meant to look real there's a drip instead: `set my
 earns a few a day, **easiest first** (the ones most owners have are the ones you get by simply playing), and
 only in a game the account actually has open.
 
+Four rules keep the result believable, and all four are things a profile would otherwise give away:
+
+* **It stops short.** `AchievementMaxCompletionPct` (90 by default) is the most of any one game that will ever
+  be completed. One figure, yours, applied to every game the same way — a game sitting at exactly 100% on an
+  account that idles is what somebody notices. A deliberate `grind` ignores it; that's the explicit finish-it
+  path.
+* **Rarity opens with the hours.** An achievement 3% of owners have isn't eligible two hours in. The floor
+  starts at "40%+ only" and steps down as the playtime builds, bottoming at 1% — never 0%, because a
+  sub-1% achievement on an idled account is the actual tell. It reads Steam's own total for the game, not just
+  the hours this tool put on it, so a library you already played counts.
+* **Milestones wait for what they're milestones of.** `TF_SNIPER_ACHIEVE_PROGRESS2` is granted for holding
+  eleven other `TF_SNIPER_*` achievements. Nothing in its display name says so, and "Sniper Milestone 2" on a
+  profile showing three Sniper achievements isn't rare, it's impossible. Tiers are held until their group is
+  earned, and a numbered ladder is always climbed in order.
+* **It clusters.** Real unlocks come two or three together and then nothing for a day, so bursts are modelled
+  rather than a steady one-every-N-minutes metronome.
+
+`AchievementNeverGames` excludes games outright, and `AchievementIncludeMainGame` (on) decides whether human
+mode's main game earns like any other — it's where the hours are, so leaving it empty is usually the stranger
+of the two.
+
 `grind` earns them too, on whatever game you point it at: briskly on a boost account, and at the account's own
 legit pace on a human-mode one. The catch is that **some games' achievements are set by Steam's servers, not
 the client — Counter-Strike 2 is the classic case — and nothing can unlock those.** Grind says so plainly for
@@ -311,8 +344,8 @@ set myaccount AchievementBoost 2      # 0 off (default) · 1 games you pick · 2
 
 Mode 2 works the library out for itself. A game has to be a **game** (never DLC, a demo, a soundtrack or a
 tool), be single-player, have achievements, and have enough Steam reviews that a person might plausibly own it —
-which is what keeps bundle filler out. Blacklists, the never-list, the achievement allow-list, a human account's
-main game and anything inside its refund window are all stripped out on top.
+which is what keeps bundle filler out. Blacklists, the never-list, the achievement allow-list and anything inside
+its refund window are all stripped out on top.
 
 One game at a time, about two hours each (`BoostSessionHours`), then it rotates to the next. On a **human**
 account it stays weighted-first: a session, then a long stretch of the normal schedule (`BoostRestMinutesHuman`),
@@ -358,10 +391,14 @@ side of the trade page can't be read, the offer is refused rather than guessed a
 
 ## Settings
 
-**44 global, 120 per account.** Every one has a plain-English explanation attached to it, which the dashboard
-shows on hover and the console prints for `help <setting>` — one sentence, written once, in
-`Config/Settings.cs`. Advanced settings are collapsed by default and never move. Both the name and the
-explanation are translated into all ten languages.
+**44 global, 120 per account** — of which **42 show by default**. Every one has a plain-English explanation
+attached to it, which the dashboard shows on hover and the console prints for `help <setting>` — one
+sentence, written once, in `Config/Settings.cs`. Both the name and the explanation are translated into all
+ten languages.
+
+The split is one rule: a feature's on/off switch and whatever it needs to work stay in front; its timings,
+ranges, gaps and infrastructure go behind **Show advanced**. So the default page is the decisions that make
+an account what it is, and the Steam connection section — pure plumbing — is advanced in its entirety.
 
 Global: the dashboard (host/port/password/auto-open, **language and the currency prices are shown in**),
 background behaviour (tray, minimise-to-tray, start with Windows, keep-awake, three notification categories),
