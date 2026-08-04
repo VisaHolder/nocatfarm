@@ -1285,7 +1285,10 @@ public static partial class Commands {
 		bot.Cfg.FarmCards = on;
 		ConfigStore.SaveBot(bot.Name, bot.Cfg);
 
-		return $"{bot.Name}: card farming {(on ? "on (takes effect on the next start)" : "off")}";
+		// The farmer's loop stays alive while it is off, so both directions take effect on its next pass - a
+		// minute at most. The old message promised a restart was needed, which stopped being true when the loop
+		// was made to survive being switched off.
+		return $"{bot.Name}: card farming {(on ? "on" : "off")}";
 	}
 
 	private static string Cards(BotManager mgr, string[] args) {

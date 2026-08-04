@@ -129,8 +129,18 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 			Release();
 
-			if (!await Sleep(TimeSpan.FromMinutes(waitMinutes), ct).ConfigureAwait(false)) {
-				return;
+			// Slept in chunks rather than in one go, so switching farming off is noticed within the minute
+			// instead of whenever the next scan happened to be due. With nothing left to farm that wait runs to
+			// hours, and for all of it the status line went on saying "nothing left to farm" to somebody who had
+			// just turned the whole thing off.
+			for (int slept = 0; slept < waitMinutes; slept++) {
+				if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
+					return;
+				}
+
+				if (!Bot.Cfg.FarmCards) {
+					break;
+				}
 			}
 		}
 	}
