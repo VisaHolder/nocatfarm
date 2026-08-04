@@ -421,7 +421,19 @@
   "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "これをオフにすると、アカウントを追加してもコマンドラインに残されるだけで、そのアカウントは設定しに行くのを思い出すまで何もせず放置されます。それを承知の人向けです。",
   "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "このダッシュボードはネットワークから到達でき、パスワードは推測できるほど短いです。その裏にはあなたの Steam アカウントがあります。",
   "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "このダッシュボードはネットワークで待ち受ける設定ですが、パスワードがないため、この PC 以外からの接続をすべて拒否します - つまりここからしか開けません。",
-  "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "このアカウントがこのゲームをどれだけ遊んだか。このアカウントの設定にあるしきい値を超えるまで、Steam は何もドロップしません。"
+  "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "このアカウントがこのゲームをどれだけ遊んだか。このアカウントの設定にあるしきい値を超えるまで、Steam は何もドロップしません。",
+  "Dashboard": "ダッシュボード",
+  "Running in the background": "バックグラウンド動作",
+  "rep4rep account": "rep4rep アカウント",
+  "Steam connection": "Steam 接続",
+  "Logging": "ログ",
+  "What it plays": "何を遊ぶか",
+  "Free games & badges": "無料ゲームとバッジ",
+  "Achievements": "実績",
+  "rep4rep commenting": "rep4rep のコメント",
+  "Friends & messages": "フレンドとメッセージ",
+  "Trades": "トレード",
+  "Staying out of the way": "邪魔をしない"
  },
  "settings": {
   "WebEnabled": {

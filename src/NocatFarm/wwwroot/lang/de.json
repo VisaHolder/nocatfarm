@@ -421,7 +421,19 @@
   "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "Ist das aus, landest du nach dem Hinzufügen eines Kontos auf einer Kommandozeile - mit einem Konto, das untätig herumsitzt, bis du daran denkst, es einzurichten. Das ist für Leute, die das schon wissen.",
   "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "Diese Übersicht ist aus deinem Netzwerk erreichbar, und ihr Passwort ist kurz genug zum Raten. Dahinter stecken deine Steam-Konten.",
   "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "Diese Übersicht ist so eingestellt, dass sie im Netzwerk lauscht, weist ohne Passwort aber jede Verbindung ab, die nicht von diesem PC kommt - erreichbar ist sie also nur hier.",
-  "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "Wie lange dieses Konto dieses Spiel gespielt hat. Steam lässt nichts fallen, bevor die Schwelle aus den Einstellungen dieses Kontos überschritten ist."
+  "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "Wie lange dieses Konto dieses Spiel gespielt hat. Steam lässt nichts fallen, bevor die Schwelle aus den Einstellungen dieses Kontos überschritten ist.",
+  "Dashboard": "Übersicht",
+  "Running in the background": "Im Hintergrund laufen",
+  "rep4rep account": "rep4rep-Konto",
+  "Steam connection": "Steam-Verbindung",
+  "Logging": "Protokollierung",
+  "What it plays": "Was es spielt",
+  "Free games & badges": "Gratisspiele & Abzeichen",
+  "Achievements": "Erfolge",
+  "rep4rep commenting": "rep4rep-Kommentare",
+  "Friends & messages": "Freunde & Nachrichten",
+  "Trades": "Tauschangebote",
+  "Staying out of the way": "Nicht im Weg stehen"
  },
  "settings": {
   "WebEnabled": {

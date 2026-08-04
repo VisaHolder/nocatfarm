@@ -421,7 +421,19 @@
   "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "Bu kapalıyken bir hesap eklemek seni komut satırında bırakır ve hesap, sen gidip yapılandırmayı hatırlayana kadar boş boş bekler. Bu, bunu zaten bilenler içindir.",
   "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "Bu panoya ağından erişilebiliyor ve parolası tahmin edilebilecek kadar kısa. Steam hesapların bunun arkasında.",
   "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "Bu pano ağı dinleyecek şekilde ayarlı, ama parola olmadan bu bilgisayardan gelmeyen her bağlantıyı reddediyor - yani yalnızca buradan erişilebilir.",
-  "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "Bu hesabın bu oyunu ne kadar oynadığı. Bu hesabın ayarlarındaki eşik aşılmadan Steam hiçbir şey düşürmez."
+  "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "Bu hesabın bu oyunu ne kadar oynadığı. Bu hesabın ayarlarındaki eşik aşılmadan Steam hiçbir şey düşürmez.",
+  "Dashboard": "Pano",
+  "Running in the background": "Arka planda çalışma",
+  "rep4rep account": "rep4rep hesabı",
+  "Steam connection": "Steam bağlantısı",
+  "Logging": "Günlük tutma",
+  "What it plays": "Ne oynadığı",
+  "Free games & badges": "Ücretsiz oyunlar ve rozetler",
+  "Achievements": "Başarımlar",
+  "rep4rep commenting": "rep4rep yorumlama",
+  "Friends & messages": "Arkadaşlar ve mesajlar",
+  "Trades": "Takaslar",
+  "Staying out of the way": "Yoldan çekilme"
  },
  "settings": {
   "WebEnabled": {

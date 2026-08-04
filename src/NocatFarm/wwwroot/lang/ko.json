@@ -421,7 +421,19 @@
   "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "이 옵션을 끄면 계정을 추가해도 명령줄에 남을 뿐이고, 그 계정은 설정하러 갈 생각이 날 때까지 놀고 있습니다. 그걸 이미 아는 사람을 위한 것입니다.",
   "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "이 대시보드는 네트워크에서 접근할 수 있고 비밀번호가 추측될 만큼 짧습니다. 그 뒤에 당신의 Steam 계정이 있습니다.",
   "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "이 대시보드는 네트워크에서 수신하도록 설정되어 있지만, 비밀번호가 없어 이 PC 외의 모든 접속을 거부합니다 - 즉 여기서만 접근할 수 있습니다.",
-  "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "이 계정이 이 게임을 얼마나 플레이했는지. 이 계정 설정의 기준치를 넘기기 전까지 Steam은 아무것도 드롭하지 않습니다."
+  "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "이 계정이 이 게임을 얼마나 플레이했는지. 이 계정 설정의 기준치를 넘기기 전까지 Steam은 아무것도 드롭하지 않습니다.",
+  "Dashboard": "대시보드",
+  "Running in the background": "백그라운드 실행",
+  "rep4rep account": "rep4rep 계정",
+  "Steam connection": "Steam 연결",
+  "Logging": "로그",
+  "What it plays": "무엇을 플레이하는지",
+  "Free games & badges": "무료 게임과 배지",
+  "Achievements": "도전 과제",
+  "rep4rep commenting": "rep4rep 댓글",
+  "Friends & messages": "친구와 메시지",
+  "Trades": "교환",
+  "Staying out of the way": "방해하지 않기"
  },
  "settings": {
   "WebEnabled": {

@@ -421,7 +421,19 @@
   "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "С выключенной опцией добавление аккаунта оставит вас в командной строке с аккаунтом, который будет простаивать, пока вы не вспомните его настроить. Это для тех, кто уже это знает.",
   "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "Эта панель доступна из вашей сети, а пароль к ней достаточно короткий, чтобы его угадали. За ней — ваши аккаунты Steam.",
   "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "Эта панель настроена слушать сеть, но без пароля она отклоняет любое подключение не с этого ПК — так что доступна она только здесь.",
-  "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "Сколько этот аккаунт наиграл в эту игру. Steam ничего не выдаёт, пока не пройден порог из настроек этого аккаунта."
+  "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "Сколько этот аккаунт наиграл в эту игру. Steam ничего не выдаёт, пока не пройден порог из настроек этого аккаунта.",
+  "Dashboard": "Панель",
+  "Running in the background": "Работа в фоне",
+  "rep4rep account": "Аккаунт rep4rep",
+  "Steam connection": "Подключение к Steam",
+  "Logging": "Журнал",
+  "What it plays": "Во что играет",
+  "Free games & badges": "Бесплатные игры и значки",
+  "Achievements": "Достижения",
+  "rep4rep commenting": "Комментирование rep4rep",
+  "Friends & messages": "Друзья и сообщения",
+  "Trades": "Обмены",
+  "Staying out of the way": "Не мешать"
  },
  "settings": {
   "WebEnabled": {

@@ -421,7 +421,19 @@
   "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "Przy wyłączonej opcji dodanie konta zostawia cię w wierszu poleceń z kontem, które będzie stało bezczynnie, aż przypomnisz sobie, żeby je skonfigurować. To dla osób, które już o tym wiedzą.",
   "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "Ten panel jest osiągalny z twojej sieci, a jego hasło jest na tyle krótkie, że da się je zgadnąć. Za nim są twoje konta Steam.",
   "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "Ten panel jest ustawiony, by nasłuchiwać w sieci, ale bez hasła odrzuca każde połączenie spoza tego komputera - więc jest osiągalny tylko tutaj.",
-  "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "Ile to konto grało w tę grę. Steam nic nie upuszcza, dopóki nie zostanie przekroczony próg z ustawień tego konta."
+  "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "Ile to konto grało w tę grę. Steam nic nie upuszcza, dopóki nie zostanie przekroczony próg z ustawień tego konta.",
+  "Dashboard": "Panel",
+  "Running in the background": "Działanie w tle",
+  "rep4rep account": "Konto rep4rep",
+  "Steam connection": "Połączenie ze Steam",
+  "Logging": "Dziennik",
+  "What it plays": "W co gra",
+  "Free games & badges": "Darmowe gry i odznaki",
+  "Achievements": "Osiągnięcia",
+  "rep4rep commenting": "Komentowanie rep4rep",
+  "Friends & messages": "Znajomi i wiadomości",
+  "Trades": "Wymiany",
+  "Staying out of the way": "Nie wchodzić w drogę"
  },
  "settings": {
   "WebEnabled": {

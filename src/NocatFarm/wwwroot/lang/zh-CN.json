@@ -421,7 +421,19 @@
   "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "关掉之后，添加账户只会把你留在命令行里，而那个账户会一直闲着，直到你想起来去配置它。这是给已经清楚这一点的人用的。",
   "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "这个面板可以从你的网络访问，而它的密码短到能被猜出来。你的 Steam 账户就在它后面。",
   "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "这个面板设置成在网络上监听，但没有密码时它会拒绝一切非本机的连接——所以只有在这里能访问。",
-  "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "这个账户玩了这款游戏多久。在超过该账户设置里的阈值之前，Steam 什么都不会掉。"
+  "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "这个账户玩了这款游戏多久。在超过该账户设置里的阈值之前，Steam 什么都不会掉。",
+  "Dashboard": "面板",
+  "Running in the background": "后台运行",
+  "rep4rep account": "rep4rep 账号",
+  "Steam connection": "Steam 连接",
+  "Logging": "日志",
+  "What it plays": "它玩什么",
+  "Free games & badges": "免费游戏与徽章",
+  "Achievements": "成就",
+  "rep4rep commenting": "rep4rep 评论",
+  "Friends & messages": "好友与消息",
+  "Trades": "交易",
+  "Staying out of the way": "别碍事"
  },
  "settings": {
   "WebEnabled": {
