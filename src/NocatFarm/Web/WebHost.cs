@@ -1127,9 +1127,13 @@ public sealed class WebHost : IAsyncDisposable {
 					Enabled = b.Cfg.Enabled,
 					State = b.State.ToString(),
 					Group = GroupOf(b),
-					Status = Commands.StateWord(b),
-					Detail = b.StatusText,
-					Persona = b.PersonaWord,
+					Status = Loc.T(Commands.StateWord(b)),
+					Detail = Loc.T(b.StatusText),
+					Persona = Loc.T(b.PersonaWord),
+					// The dashboard dims a hidden persona. It used to test Persona === 'invisible', which is
+					// the one thing that string stopped being the moment it was translated - the flag says what
+					// was meant instead of asking the front end to know English.
+					PersonaHidden = b.PersonaWord is "invisible" or "offline",
 					Seen = b.PlayingAsSeen,
 					NameNotShowing = b.CustomNameNotShowing,
 					Online = b.IsOnline,
@@ -1161,7 +1165,15 @@ public sealed class WebHost : IAsyncDisposable {
 					Rep4RepToday = r4r?.PostsToday ?? 0,
 					Rep4RepCap = r4r?.Cap ?? b.Cfg.Rep4RepDailyCap,
 					CardsToday = cardsByBot.GetValueOrDefault(b.Name),
-					Modules = b.Modules.Select(static m => new { Name = m.Name, Status = m.Status })
+					// Quiet is worked out HERE, against the translated words, because Status is localised now.
+					// The dashboard used to filter these rows with m.Status !== 'off' && m.Status !== 'idle',
+					// which silently stopped matching in every language but English and put a wall of idle
+					// module rows on each card.
+					Modules = b.Modules.Select(static m => new {
+						Name = m.Name,
+						Status = m.Status,
+						Quiet = (m.Status.Length == 0) || Loc.Is(m.Status, "off") || Loc.Is(m.Status, "idle")
+					})
 				};
 			})
 		};

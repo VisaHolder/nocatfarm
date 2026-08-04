@@ -32,7 +32,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 
 	private readonly HashSet<uint> _seen = [];
 	private readonly List<DateTime> _claims = [];
-	private string _status = "off";
+	private string _status = Loc.T("off");
 	private int _claimed;
 
 	public override string Name => "free games";
@@ -44,7 +44,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 		// Stays alive when switched off, so turning it on doesn't need a restart.
 		while (!ct.IsCancellationRequested) {
 			if (!Bot.Cfg.ClaimFreeGames) {
-				_status = "off";
+				_status = Loc.T("off");
 
 				if (!await Sleep(TimeSpan.FromSeconds(20), ct).ConfigureAwait(false)) {
 					return;
@@ -54,7 +54,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			}
 
 			if (Bot.Paused) {
-				_status = "paused";
+				_status = Loc.T("paused");
 
 				if (!await Sleep(TimeSpan.FromSeconds(20), ct).ConfigureAwait(false)) {
 					return;
@@ -64,7 +64,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			}
 
 			if (!Bot.IsOnline || !Bot.Web.Ready) {
-				_status = "waiting for the account";
+				_status = Loc.T("waiting for the account");
 
 				if (!await Sleep(TimeSpan.FromMinutes(2), ct).ConfigureAwait(false)) {
 					return;
@@ -76,7 +76,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			try {
 				int added = await CheckAsync(ct).ConfigureAwait(false);
 
-				_status = _claimed == 0 ? "watching for giveaways" : $"{_claimed} claimed since start";
+				_status = _claimed == 0 ? Loc.T("watching for giveaways") : Loc.T("{0} claimed since start", _claimed);
 
 				if (added > 0) {
 					Log.Reward($"claimed {added} free game(s) - the card farmer will pick them up", Bot.Name);
@@ -125,7 +125,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			}
 
 			if (RecentClaims() >= MaxPerWindow) {
-				_status = $"paused - {MaxPerWindow} activations this window";
+				_status = Loc.T("paused - {0} activations this window", MaxPerWindow);
 				Log.Info($"hit {MaxPerWindow} activations in {WindowMinutes}m - pausing so Steam doesn't start refusing", Bot.Name);
 
 				break;

@@ -25,7 +25,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 	private const int BackoffHours = 6;
 	private const int MaxBadgePages = 20;
 
-	private string _status = "off";
+	private string _status = Loc.T("off");
 	private int _crafted;
 
 	public override string Name => "badges";
@@ -36,7 +36,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 	protected override async Task RunAsync(CancellationToken ct) {
 		while (!ct.IsCancellationRequested) {
 			if (!Bot.Cfg.CraftBadges) {
-				_status = "off";
+				_status = Loc.T("off");
 
 				if (!await Sleep(TimeSpan.FromSeconds(20), ct).ConfigureAwait(false)) {
 					return;
@@ -46,7 +46,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			}
 
 			if (Bot.Paused) {
-				_status = "paused";
+				_status = Loc.T("paused");
 
 				if (!await Sleep(TimeSpan.FromSeconds(20), ct).ConfigureAwait(false)) {
 					return;
@@ -56,7 +56,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			}
 
 			if (!Bot.IsOnline || !Bot.Web.Ready) {
-				_status = "waiting for the account";
+				_status = Loc.T("waiting for the account");
 
 				if (!await Sleep(TimeSpan.FromMinutes(2), ct).ConfigureAwait(false)) {
 					return;
@@ -200,7 +200,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 	/// </summary>
 	public async Task<int> SweepAsync(CancellationToken ct) {
 		if (Bot.Cfg.UnpackBoosterPacks) {
-			_status = "opening booster packs";
+			_status = Loc.T("opening booster packs");
 
 			try {
 				await UnpackBoostersAsync(ct).ConfigureAwait(false);
@@ -211,12 +211,12 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			}
 		}
 
-		_status = "checking for completed sets";
+		_status = Loc.T("checking for completed sets");
 
 		string? html = await Bot.Web.GetAsync(new Uri(WebSession.Community, "/my/badges/?l=english&p=1"), ct).ConfigureAwait(false);
 
 		if (html == null) {
-			_status = "couldn't read the badges page";
+			_status = Loc.T("couldn't read the badges page");
 
 			return 0;
 		}
@@ -241,7 +241,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		}
 
 		if (ready.Count == 0) {
-			_status = "nothing ready to craft";
+			_status = Loc.T("nothing ready to craft");
 
 			return 0;
 		}
@@ -253,11 +253,11 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		// extra request during a craft run is what pushes Steam into extending the rate limit.
 		foreach (Craftable c in ready) {
 			ct.ThrowIfCancellationRequested();
-			_status = $"crafting ({made}/{ready.Count})";
+			_status = Loc.T("crafting ({0}/{1})", made, ready.Count);
 
 			if (!await CraftAsync(c, ct).ConfigureAwait(false)) {
 				Log.Warn($"craft refused - backing off {BackoffHours}h rather than retrying", Bot.Name);
-				_status = "rate-limited, backing off";
+				_status = Loc.T("rate-limited, backing off");
 
 				return made > 0 ? made : -1;
 			}
@@ -275,7 +275,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			Log.Reward($"crafted {made} badge(s) - Steam level up", Bot.Name);
 		}
 
-		_status = $"{_crafted} crafted since start";
+		_status = Loc.T("{0} crafted since start", _crafted);
 
 		return made;
 	}

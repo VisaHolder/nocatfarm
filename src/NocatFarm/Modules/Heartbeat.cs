@@ -139,6 +139,9 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 		// for an hour"). _doingSince is the real start, tracked every tick above, so trust it directly.
 		bool same = now - _doingSince >= TimeSpan.FromSeconds(75);
 
-		Log.Info((same ? "still " : "now ") + status.Line(), Bot.Name);
+		// Translated, unlike the rest of the log. status.Line() is already in the user's language, so gluing an
+		// English word onto the front produced lines like "still im Leerlauf · 3 Karten" - half a sentence in
+		// each. A heartbeat is a status readout, not a diagnostic; it belongs in the language the status is in.
+		Log.Info(Loc.T(same ? "still {0}" : "now {0}", status.Line()), Bot.Name);
 	}
 }

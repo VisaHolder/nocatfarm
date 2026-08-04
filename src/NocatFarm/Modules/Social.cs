@@ -26,11 +26,11 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 			List<string> bits = [];
 
 			if (_accepted > 0) {
-				bits.Add($"{_accepted} friend(s) added");
+				bits.Add(Loc.T("{0} friend(s) added", _accepted));
 			}
 
 			if (_replied > 0) {
-				bits.Add($"{_replied} reply(s) sent");
+				bits.Add(Loc.T("{0} reply(s) sent", _replied));
 			}
 
 			return bits.Count > 0 ? string.Join(" · ", bits) : "";

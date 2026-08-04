@@ -207,7 +207,7 @@ public sealed class LiveConsole : IDisposable {
 		string name = Colour(bot, Log.Pad(bot.Name, nameWidth));
 
 		if (!bot.IsOnline) {
-			return $"  {name}  {Dim(bot.StatusText)}";
+			return $"  {name}  {Dim(Loc.T(bot.StatusText))}";
 		}
 
 		// Worked out once in BotStatus and painted here. The bars and the dimming are this board's business;

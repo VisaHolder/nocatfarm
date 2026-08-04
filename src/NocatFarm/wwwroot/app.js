@@ -141,7 +141,7 @@ const tf = (english, ...args) => t(english).replace(/\{(\d+)\}/g, (whole, i) => 
 function tSetting(def, field) {
   const entry = lang.settings && lang.settings[def.Name];
   const value = entry && entry[field];
-  return value || def[field === 'label' ? 'Label' : field === 'tip' ? 'Tooltip' : 'Choices'];
+  return value || def[field === 'label' ? 'Label' : field === 'tip' ? 'Tooltip' : field === 'placeholder' ? 'Placeholder' : 'Choices'];
 }
 
 /// Walk the static markup once and translate anything tagged. data-t on an element translates its text;
@@ -539,7 +539,7 @@ function renderAccounts() {
       ${b.Notes ? `<div class="bot-notes" title="${esc(b.Notes)}">${esc(b.Notes)}</div>` : ''}
       ${b.Guard ? `<div class="bot-guard">${esc(tf('Waiting on you: {0}', b.Guard))}</div>` : ''}
       <div class="bot-playing" title="${esc(b.Playing || '')}">${b.Playing ? esc(b.Playing) : `<span class="real">${esc(t('not playing anything'))}</span>`}</div>
-      ${b.Online ? `<div class="bot-persona ${b.Persona === 'invisible' || b.Persona === 'offline' ? 'hidden-persona' : ''}"
+      ${b.Online ? `<div class="bot-persona ${b.PersonaHidden ? 'hidden-persona' : ''}"
         data-tip="${esc(t("What your friends list shows for this account. The GAME comes straight back from Steam, so it's what other people genuinely see; the status is what nocat.farm set it to. Human mode changes the status by itself: invisible overnight, away on a break, Snooze over a meal."))}">${esc(t('your friends see:'))} <b>${esc(b.Persona)}</b>${b.Seen ? ` · <b>${esc(b.Seen)}</b>` : ''}</div>` : ''}
       ${b.NameNotShowing
         ? `<div class="bot-mismatch" data-tip="${esc(t("Steam decides what to display when a custom name is sent alongside real games, and it has settled on the real one. Idling fewer games, or only the custom name, makes it show yours. A brief mismatch right after signing in is normal and isn't reported here."))}">${esc(tf('Steam is showing {0}, not your custom name', b.Seen))}</div>`
@@ -552,7 +552,7 @@ function renderAccounts() {
       </div>
       ${r4rOn() && b.Rep4Rep ? `<div class="bar" data-tip="${esc(t("Comments posted in the last 24 hours against this account's daily cap."))}"><i style="width:${capPct}%"></i></div>` : ''}
       <div class="rows">
-        ${b.Modules.filter((m) => m.Status && m.Status !== 'off' && m.Status !== 'idle').map((m) =>
+        ${b.Modules.filter((m) => !m.Quiet).map((m) =>
           `<div class="row"><span class="k">${esc(m.Name)}</span><span class="v" title="${esc(m.Status)}">${esc(m.Status)}</span></div>`).join('')}
       </div>
       <div class="actions">
@@ -2384,7 +2384,7 @@ function fieldHtml(def, values, defaults) {
       // to hand-write. It gets a real editor; everything else is a text box.
       ctl = def.Name === 'GameWeights'
         ? weightsEditor(cur)
-        : `<input type="text" id="${id}" data-setting="${def.Name}" value="${esc(cur)}" placeholder="${esc(def.Placeholder || '')}" oninput="edit('${def.Name}',this.value)">`;
+        : `<input type="text" id="${id}" data-setting="${def.Name}" value="${esc(cur)}" placeholder="${esc(tSetting(def, 'placeholder') || '')}" oninput="edit('${def.Name}',this.value)">`;
   }
 
   const def0 = defaults[def.Name];
