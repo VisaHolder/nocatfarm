@@ -214,6 +214,14 @@ nav { display: flex; flex-direction: row; gap: var(--s1); }
 .rail-foot { margin-left: auto; display: flex; align-items: center; gap: var(--s5); flex-wrap: nowrap;
   padding-left: var(--s5); border-left: 1px solid var(--line); }
 
+/* A flex item defaults to min-width:auto, which means "never shrink below your content" - so the bar could not
+   give way and pushed the whole PAGE sideways instead. At 1265px it overflowed by 245px and the entire
+   dashboard scrolled horizontally, which is never the right answer for a top bar. These three let it shrink,
+   and clip as a last resort, so the body cannot scroll sideways however many status chips there are. */
+.rail > * { min-width: 0; }
+.rail-foot { overflow: hidden; }
+.rail-foot .chips { overflow: hidden; }
+
 /* In the top bar the status chips are a glanceable readout, not the heavy filter boxes they are on the
    Accounts page: no border, no fill, no wrapping - just the coloured status dot, a muted label and a bright
    count. This is the single biggest change; the bordered boxes stacking two-high were the whole problem. */
@@ -235,7 +243,7 @@ nav { display: flex; flex-direction: row; gap: var(--s1); }
 
 /* Below these widths the bar can't hold everything on one row, so the least important parts step aside in
    order rather than wrapping the whole thing onto three lines. */
-@media (max-width: 1150px) { .railstats { display: none; } }
+@media (max-width: 1360px) { .railstats { display: none; } }
 /* The 900px block below hides the chips (and stats and version), leaving just the theme control. */
 @media (max-width: 760px) {
   .rail { height: auto; flex-wrap: wrap; padding-block: var(--s2); }
@@ -377,7 +385,11 @@ label.inline { display: inline-flex; align-items: center; gap: 6px; font-size: 1
 .empty { padding: 22px 0; text-align: center; font-size: 13px; }
 
 .rows { margin-top: 10px; display: grid; gap: 5px; }
-.row { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; }
+/* min-width:0 belongs on the ROW as well as on the value inside it. .rows is a grid, and a grid item is
+   min-width:auto by default - so however willing .v was to ellipsize, the row it sat in refused to shrink
+   below its own content and pushed the card past the edge of the screen. Cost 73px of sideways scroll on a
+   phone. Same default that had the top bar overflowing. */
+.row { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; min-width: 0; }
 .row .k { color: var(--muted); flex: 0 0 auto; white-space: nowrap; }
 /* min-width:0 is what lets the value shrink below its own text and actually ellipsize; without it a flex item
    refuses to shrink past its content and the text spills out past the card edge. */
@@ -473,6 +485,7 @@ table.today tr.fleet td:first-child { color: var(--muted); }
 
 /* ── settings ──────────────────────────────────────────────────────── */
 .settingswrap { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 18px; align-items: start; }
+.settingswrap > * { min-width: 0; }
 
 .settingsnav { position: sticky; top: calc(var(--railh) + var(--s5)); padding: var(--s3); }
 .settingsnav h2 { margin: 14px 0 6px 8px; }
@@ -665,7 +678,9 @@ button.ghost:hover:not(:disabled) { background: var(--line); }
   .rail-foot { display: flex; margin-left: auto; }
   .rail-foot .chips, .rail-foot .railstats, .rail-foot .muted { display: none; }
   .main { padding: 16px; }
-  .settingswrap { grid-template-columns: 1fr; }
+  /* minmax(0, 1fr), not 1fr. Plain 1fr is minmax(AUTO, 1fr), so the column can never be narrower than its
+     widest content - the jump links here - and the settings pane pushed 86px off the side of a phone. */
+  .settingswrap { grid-template-columns: minmax(0, 1fr); }
   .field { grid-template-columns: 1fr; gap: 4px; }
   .field .meta { justify-content: flex-start; }
 }

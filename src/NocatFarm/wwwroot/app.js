@@ -113,6 +113,22 @@ async function loadLanguage(code) {
   } catch { lang = { ui: {}, settings: {} }; }
 }
 
+/// Write markup into an element only when it has actually changed.
+///
+/// Every one of these panels was rebuilt from scratch on each poll - three seconds - which destroyed and
+/// recreated every button, link and row inside it. A click landing during a rebuild went nowhere, hover
+/// tooltips vanished mid-read, and any text you were selecting was dropped. Comparing first costs a string
+/// compare and keeps the DOM still whenever nothing has moved.
+function paint(id, html) {
+  const el = $(id);
+
+  if (!el || ((el.innerHTML === html) && (html !== ''))) {
+    return;
+  }
+
+  el.innerHTML = html;
+}
+
 /// Translate a chrome string. The English text IS the key, so nothing has to be kept in sync by hand.
 const t = (english) => (lang.ui && lang.ui[english]) || english;
 
@@ -278,10 +294,10 @@ function render() {
     .map((k) => `<span class="chip ${k}" data-tip="${esc(t(STATUS_META[k].tip))}" onclick="filterTo('${k}')"><i class="dot"></i>${esc(t(STATUS_META[k].label))}<b>${counts[k]}</b></span>`)
     .join('') || `<span class="muted small">${esc(t('no accounts yet'))}</span>`;
 
-  $('railStats').innerHTML = `
+  paint('railStats', `
     <dt data-tip="${esc(t("Trading cards still to drop across every account that's farming."))}">${esc(t('Cards left'))}</dt><dd>${state.CardsLeft}</dd>
     ${r4rOn() && state.Rep4RepToken ? `<dt data-tip="${esc(t("Points you can spend on rep4rep. Pending ones are comments rep4rep hasn't verified yet."))}">${esc(t('Points'))}</dt><dd>${state.Points}${state.PendingPoints ? ' <span class="muted">+' + state.PendingPoints + '</span>' : ''}</dd>` : ''}
-    <dt data-tip="${esc(t('How long nocat.farm has been running.'))}">${esc(t('Up'))}</dt><dd>${hm(state.UptimeMinutes)}</dd>`;
+    <dt data-tip="${esc(t('How long nocat.farm has been running.'))}">${esc(t('Up'))}</dt><dd>${hm(state.UptimeMinutes)}</dd>`);
 
   renderAlerts();
 
@@ -382,7 +398,7 @@ function renderOverview() {
   const tile = (n, k, tip, sub) =>
     `<div class="tile"><div class="n">${n}</div><div class="k">${esc(t(k))}${tipIcon(t(tip))}</div>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}</div>`;
 
-  $('tiles').innerHTML =
+  paint('tiles',
     tile(state.CardsLeft, 'Cards left', 'Trading cards still to drop across every account.', state.CardsLeft ? '' : t('nothing left to farm')) +
     tile(state.GamesLeft, 'Games left', 'Games with at least one card still to drop, across every account.') +
     tile(state.CardsToday, 'Cards today', 'Trading cards that dropped in the last 24 hours.') +
@@ -393,7 +409,7 @@ function renderOverview() {
       : state.Rep4RepToken
         ? tile(state.Points, 'rep4rep points', "Points you can spend. Pending points are comments rep4rep hasn't verified yet - they turn into real points on their own, usually within a few hours. Nothing is lost.",
             state.PendingPoints ? tf('{0} pending', state.PendingPoints) : '')
-        : tile(state.CommentsToday, 'Comments today', 'rep4rep comments posted in the last 24 hours.'));
+        : tile(state.CommentsToday, 'Comments today', 'rep4rep comments posted in the last 24 hours.')));
 
   // Version, and whether there's a newer one. The link always goes to the repo; when an update exists it says
   // so and points at that release instead.
@@ -410,7 +426,7 @@ function renderOverview() {
     }
   }
 
-  $('glance').innerHTML = bots.length ? `<div class="tablewrap"><table>
+  paint('glance', bots.length ? `<div class="tablewrap"><table>
     <tr><th>${esc(t('Account'))}</th><th>${esc(t('State'))}</th><th>${esc(t('Playing'))}</th><th>${esc(t('Cards'))}</th><th data-tip="${esc(t("What everything in this account's inventory would fetch at the market's median price. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth."))}">${esc(t('Value'))}</th>${r4rOn() ? `<th>${esc(t('rep4rep'))}</th>` : ''}<th>${esc(t('Up'))}</th></tr>
     ${bots.map((b) => `<tr class="click" data-act="cards" data-bot="${esc(b.Name)}">
       <td><b>${esc(b.Name)}</b></td>
@@ -421,14 +437,14 @@ function renderOverview() {
       ${r4rOn() ? `<td>${b.Rep4Rep ? b.Rep4RepToday + '/' + b.Rep4RepCap : '—'}</td>` : ''}
       <td>${b.UptimeMinutes ? hm(b.UptimeMinutes) : '—'}</td></tr>`).join('')}
     </table></div>`
-    : `<p class="muted">${esc(t('No accounts yet.'))} <a href="#console" onclick="go('console')">${esc(t('Add one'))}</a> ${esc(t('or type'))} <code>add mybot mysteamlogin</code>.</p>`;
+    : `<p class="muted">${esc(t('No accounts yet.'))} <a href="#console" onclick="go('console')">${esc(t('Add one'))}</a> ${esc(t('or type'))} <code>add mybot mysteamlogin</code>.</p>`);
 
   renderToday();
 
   const interesting = logLines.filter((l) => l.Level !== 'INFO' && l.Level !== 'DEBUG').slice(-8).reverse();
-  $('recent').innerHTML = interesting.length
+  paint('recent', interesting.length
     ? interesting.map((l) => `<div class="line"><span class="who">${esc(l.Source)}</span><span>${esc(l.Text)}</span><span class="when">${esc(l.Time)}</span></div>`).join('')
-    : `<p class="muted">${esc(t('Nothing worth reporting yet.'))}</p>`;
+    : `<p class="muted">${esc(t('Nothing worth reporting yet.'))}</p>`);
 }
 
 // Per-account activity in the last 24h. A tidy table, because the old by-hour bar chart was 24 near-empty bars
@@ -451,11 +467,11 @@ function renderToday() {
       ${r4r ? `<td>${num(cm)}</td>` : ''}</tr>`;
   }).join('');
 
-  $('today').innerHTML = `<div class="tablewrap"><table class="today">
+  paint('today', `<div class="tablewrap"><table class="today">
     <tr><th>${esc(t('Account'))}</th><th data-tip="${esc(t('Trading cards that dropped in the last 24 hours.'))}">${esc(t('Cards'))}</th>${r4r ? `<th data-tip="${esc(t('rep4rep comments posted in the last 24 hours.'))}">${esc(t('Comments'))}</th>` : ''}</tr>
     ${rows}
     <tr class="fleet"><td>${esc(t('fleet'))}</td><td>${totCards}</td>${r4r ? `<td>${totComments}</td>` : ''}</tr>
-    </table></div>`;
+    </table></div>`);
 }
 
 // ── render: accounts ─────────────────────────────────────────────────
@@ -465,8 +481,12 @@ function renderAccounts() {
 
   const q = ($('acctSearch').value || '').toLowerCase();
 
-  $('acctFilters').innerHTML = Object.keys(STATUS_META).map((k) =>
+  const chips = Object.keys(STATUS_META).map((k) =>
     `<span class="chip ${k} ${acctFilter === k ? 'on' : ''}" data-tip="${esc(t(STATUS_META[k].tip))}" onclick="acctFilter='${acctFilter === k ? '' : k}';render()"><i class="dot"></i>${esc(t(STATUS_META[k].label))}</span>`).join('');
+
+  if (chips !== $('acctFilters').innerHTML) {
+    $('acctFilters').innerHTML = chips;
+  }
 
   const bots = state.Bots.filter((b) =>
     (!acctFilter || b.Group === acctFilter) &&
@@ -481,7 +501,7 @@ function renderAccounts() {
     return;
   }
 
-  $('bots').innerHTML = bots.map((b) => {
+  const cards = bots.map((b) => {
     // rep4rep is the only figure here with a real denominator, so it is the only one that gets a bar. The
     // card count has no known total, and inventing one (this used to be 100 - cards*5) is worse than a number.
     const capPct = b.Rep4Rep && b.Rep4RepCap ? Math.min(100, Math.round((b.Rep4RepToday / b.Rep4RepCap) * 100)) : 0;
@@ -523,7 +543,51 @@ function renderAccounts() {
         <button class="ghost" data-tip="${esc(t('What this account still has left to farm.'))}" data-act="cards" data-bot="${esc(b.Name)}">${esc(t('Cards'))}</button>
         <button class="ghost" data-tip="${esc(t("This account's settings."))}" data-act="settings" data-bot="${esc(b.Name)}">${esc(t('Settings'))}</button>
       </div></div>`;
-  }).join('');
+  });
+
+  paintCards(bots.map((b) => b.Name), cards);
+}
+
+/// Update the account list a CARD AT A TIME.
+///
+/// The whole list used to be rebuilt from its markup every poll - three seconds - so every button on every
+/// card was destroyed and recreated under the cursor. A click landing during a rebuild went nowhere, open
+/// tooltips vanished mid-read, and focus was lost.
+///
+/// Comparing the list as a whole is not enough: one account with a live countdown in it (a human-mode account
+/// settling in, say) makes the combined markup differ every single time, and takes every other card down with
+/// it. So each card is compared against the markup it was last built from - kept on the element, because the
+/// browser rewrites attribute quoting and whitespace the moment it parses, and reading outerHTML back would
+/// never match what we generated.
+function paintCards(names, cards) {
+  const container = $('bots');
+  const existing = [...container.children];
+  const sameAccounts = (existing.length === cards.length)
+    && existing.every((el, i) => el.dataset.name === names[i]);
+
+  // The set of accounts or their order changed - the cheap comparison no longer applies.
+  if (!sameAccounts) {
+    container.innerHTML = cards.join('');
+    [...container.children].forEach((el, i) => { el._html = cards[i]; });
+
+    return;
+  }
+
+  existing.forEach((el, i) => {
+    if (el._html === cards[i]) {
+      return;   // nothing about this account moved; leave its buttons exactly where they are
+    }
+
+    const tmp = document.createElement('div');
+    tmp.innerHTML = cards[i];
+
+    const fresh = tmp.firstElementChild;
+
+    if (fresh) {
+      fresh._html = cards[i];
+      el.replaceWith(fresh);
+    }
+  });
 }
 
 // ── arranging the accounts ────────────────────────────────────────────────
