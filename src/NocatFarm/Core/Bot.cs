@@ -2140,7 +2140,7 @@ public sealed class Bot : IAsyncDisposable {
 			return;
 		}
 
-		ClientMsgProtobuf<CMsgClientGamesPlayed> outgoing = BuildGamesPlayed(label, apps);
+		ClientMsgProtobuf<CMsgClientGamesPlayed> outgoing = BuildGamesPlayed(label, apps, Cfg.GameDevice);
 		Client.Send(outgoing);
 
 		Log.Debug($"games-played sent: {outgoing.Body.games_played.Count} entr(ies)"
@@ -2171,14 +2171,17 @@ public sealed class Bot : IAsyncDisposable {
 	}
 
 	/// <summary>One games-played message: the custom-name shortcut first when there is one, then the real games.</summary>
-	private static ClientMsgProtobuf<CMsgClientGamesPlayed> BuildGamesPlayed(string? label, List<uint> apps) {
+	private static ClientMsgProtobuf<CMsgClientGamesPlayed> BuildGamesPlayed(string? label, List<uint> apps, int device = 0) {
 		ClientMsgProtobuf<CMsgClientGamesPlayed> msg = new(EMsg.ClientGamesPlayedWithDataBlob);
 
 		if (!string.IsNullOrWhiteSpace(label)) {
-			msg.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed {
+			CMsgClientGamesPlayed.GamePlayed shortcut = new() {
 				game_id = SteamIds.ShortcutGameId,
 				game_extra_info = label
-			});
+			};
+
+			DescribeDevice(shortcut, device);
+			msg.Body.games_played.Add(shortcut);
 		}
 
 		foreach (uint app in apps) {
@@ -2186,10 +2189,35 @@ public sealed class Bot : IAsyncDisposable {
 				break;   // Steam ignores the whole message past this, so truncate rather than lose everything
 			}
 
-			msg.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed { game_id = app });
+			CMsgClientGamesPlayed.GamePlayed played = new() { game_id = app };
+
+			DescribeDevice(played, device);
+			msg.Body.games_played.Add(played);
 		}
 
 		return msg;
+	}
+
+	/// <summary>
+	/// Say HOW the game is running, not just that it is.
+	///
+	/// The persona flags claim a device; this is the evidence for the claim. Steam accepts the phone, Big
+	/// Picture, VR and controller flags on their own, but it kept dropping LaunchTypeCompatTool - the half of
+	/// the Deck flag that means "running under Proton" - because nothing in the games-played message mentioned
+	/// a compat tool at all. The flag said Proton while the session said nothing, and Steam believed the
+	/// session. So a Deck now sends what a Deck sends: a Proton tool id, the Linux platform it runs on, and the
+	/// built-in controller it has.
+	/// </summary>
+	private static void DescribeDevice(CMsgClientGamesPlayed.GamePlayed played, int device) {
+		if (device != SteamIds.DeviceSteamDeck) {
+			return;
+		}
+
+		played.compat_tool_id = SteamIds.ProtonExperimental;
+		played.compat_tool_cmd = "proton waitforexitandrun";
+		played.game_os_platform = (int) EOSType.Linux6x;
+		played.primary_controller_type = SteamIds.ControllerTypeSteamDeck;
+		played.total_steam_controller_count = 1;
 	}
 
 	/// <summary>The real appIDs last announced, so a CHANGE can be told apart from a routine re-assert.</summary>
@@ -2357,6 +2385,12 @@ public static class SteamIds {
 	/// <summary>Steam's own ceiling on simultaneous games. Send more and it drops the message.</summary>
 	/// <summary>LaunchTypeGamepad | LaunchTypeCompatTool - the pair Steam reads as "this is a Deck".</summary>
 	public const int DeviceSteamDeck = 12288;
+
+	/// <summary>Proton Experimental's appID - what a Deck reports as the compat tool for a Windows title.</summary>
+	public const uint ProtonExperimental = 1493710;
+
+	/// <summary>ESteamInputType for the Deck's own built-in controller.</summary>
+	public const int ControllerTypeSteamDeck = 13;
 
 	public const int MaxGamesPlayedConcurrently = 32;
 }
