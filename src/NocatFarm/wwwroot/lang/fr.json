@@ -1043,7 +1043,7 @@
     },
     "Debug": {
       "label": "Détail de débogage",
-      "tip": "Affiche beaucoup plus de détails, y compris chaque requête web. Utile quand quelque chose cloche ; bruyant le reste du temps."
+      "tip": "Écrit beaucoup plus de détail dans le FICHIER journal - chaque requête web, chaque revérification, tout. Rien n'apparaît dans la console, donc l'activer ne te coûte rien à l'écran ; c'est là pour quand quelque chose cloche et que tu veux toute l'histoire après coup. L'onglet Journal du tableau de bord peut aussi l'afficher, derrière son propre filtre DEBUG."
     },
     "LogRetentionDays": {
       "label": "Conserver les journaux",

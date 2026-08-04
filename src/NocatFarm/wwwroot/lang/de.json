@@ -1043,7 +1043,7 @@
     },
     "Debug": {
       "label": "Debug-Details",
-      "tip": "Zeigt sehr viel mehr Details, inklusive jeder Web-Anfrage. Hilfreich, wenn etwas klemmt; sonst nur laut."
+      "tip": "Schreibt sehr viel mehr Details in die Log-DATEI - jede Web-Anfrage, jede erneute Prüfung, alles. Im Konsolenfenster erscheint davon nichts, das Einschalten kostet dich auf dem Bildschirm also gar nichts; es ist für den Fall da, dass etwas schiefgeht und du hinterher die ganze Geschichte willst. Der Log-Reiter im Dashboard kann es hinter seinem eigenen DEBUG-Filter ebenfalls anzeigen."
     },
     "LogRetentionDays": {
       "label": "Protokolle aufbewahren",
