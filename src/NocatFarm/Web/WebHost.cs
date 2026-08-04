@@ -387,11 +387,10 @@ public sealed class WebHost : IAsyncDisposable {
 
 			List<string> adjusted = Clamp(body, Settings.Bot);
 
-			// A max below the min would make every gap calculation nonsense; fix it rather than store it.
-			if (body.Rep4RepGapMaxMinutes < body.Rep4RepGapMinMinutes) {
-				body.Rep4RepGapMaxMinutes = body.Rep4RepGapMinMinutes;
-				adjusted.Add("Longest gap can't be shorter than the shortest gap - both set the same");
-			}
+			// A max below the min would make every gap calculation nonsense; fix it rather than store it. This
+			// covered only the rep4rep gap for years while seven other pairs went unchecked - it walks them all
+			// now, from the same helper the console uses, so the two paths cannot drift apart again.
+			adjusted.AddRange(Settings.FixRanges(body));
 
 			// Only fire side effects for settings that ACTUALLY changed. Running them all meant editing a note
 			// re-started an account the user had deliberately stopped.

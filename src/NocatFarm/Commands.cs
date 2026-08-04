@@ -1590,11 +1590,17 @@ public static partial class Commands {
 			}
 
 			Settings.ApplyLegitMode(bot.Cfg, wasLegit);
+
+			// Raising a "shortest" above its "longest" (or the reverse) used to be accepted and written to disk.
+			// The dashboard fixed one such pair; this fixes all of them, on both paths.
+			List<string> pulled = Settings.FixRanges(bot.Cfg, def.Name);
+
 			ConfigStore.SaveBot(bot.Name, bot.Cfg);
 			ApplyBotSideEffects(bot, def);
 
 			return $"{bot.Name}.{def.Name} = {Settings.Show(bot.Cfg, def)}"
-				+ (def.NeedsRestart ? "   (applies after a restart)" : "");
+				+ (def.NeedsRestart ? "   (applies after a restart)" : "")
+				+ (pulled.Count > 0 ? Environment.NewLine + "  " + string.Join(Environment.NewLine + "  ", pulled) : "");
 		}
 
 		// A real account name followed by something that isn't a setting: the complaint is about the SETTING, not

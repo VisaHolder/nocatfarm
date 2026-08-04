@@ -312,6 +312,70 @@ public static class Settings {
 	}
 
 	/// <summary>
+	/// Every "shortest / longest" pair in the registry, by setting name.
+	///
+	/// Derived from the names rather than listed by hand, so a pair added later is covered without anyone
+	/// remembering to come back here.
+	/// </summary>
+	public static IReadOnlyList<(string Min, string Max)> RangePairs { get; } = BuildRangePairs();
+
+	private static List<(string, string)> BuildRangePairs() {
+		HashSet<string> names = [.. Bot.Select(static d => d.Name), .. Global.Select(static d => d.Name)];
+
+		return [.. names
+			.Where(static n => n.Contains("Min", StringComparison.Ordinal))
+			.Select(static n => (Min: n, Max: ReplaceFirst(n, "Min", "Max")))
+			.Where(pair => names.Contains(pair.Max))
+			.OrderBy(static pair => pair.Min, StringComparer.Ordinal)];
+	}
+
+	private static string ReplaceFirst(string text, string find, string with) {
+		int at = text.IndexOf(find, StringComparison.Ordinal);
+
+		return at < 0 ? text : text[..at] + with + text[(at + find.Length)..];
+	}
+
+	/// <summary>
+	/// Pull any "longest" that has fallen below its "shortest" back up to meet it.
+	///
+	/// A max under its min makes every gap calculation nonsense - and while the consumers all guard themselves
+	/// with Math.Max, the stored pair still reads as a contradiction and the dashboard shows it as one. The
+	/// dashboard used to fix exactly ONE of the eight pairs, and the console fixed none, so `set kylro
+	/// Rep4RepGapMinMinutes 500` next to a max of 5 was accepted and written to disk.
+	/// </summary>
+	/// <param name="justSet">
+	/// The setting the user has this moment changed, if any. Whichever side that is WINS and its partner moves:
+	/// lowering a "longest" below its "shortest" used to be silently undone, so the number you had just typed
+	/// snapped back and nothing said why. The value someone explicitly asked for is never the one to overwrite.
+	/// </param>
+	/// <returns>One human-readable line per pair that had to be moved.</returns>
+	public static List<string> FixRanges(object config, string? justSet = null) {
+		List<string> adjusted = [];
+
+		foreach ((string min, string max) in RangePairs) {
+			if ((Read(config, min) is not int lo) || (Read(config, max) is not int hi) || (hi >= lo)) {
+				continue;
+			}
+
+			// Move the side the user did NOT just touch.
+			bool moveMin = string.Equals(justSet, max, StringComparison.Ordinal);
+			string moving = moveMin ? min : max;
+			int target = moveMin ? hi : lo;
+
+			SettingDef? def = Bot.FirstOrDefault(d => d.Name == moving) ?? Global.FirstOrDefault(d => d.Name == moving);
+
+			if (def == null) {
+				continue;
+			}
+
+			Apply(config, def, target.ToString(System.Globalization.CultureInfo.InvariantCulture));
+			adjusted.Add($"{def.Label} moved to {target} to match");
+		}
+
+		return adjusted;
+	}
+
+	/// <summary>
 	/// Apply the consequences of Legit mode to a config, in the file itself rather than only in the UI.
 	///
 	/// Turning it ON stashes the settings that don't belong on a believable account and blanks them; turning it
