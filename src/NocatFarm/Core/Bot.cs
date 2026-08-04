@@ -1234,6 +1234,12 @@ public sealed class Bot : IAsyncDisposable {
 			// not fatal - the push arrives anyway once something happens
 		}
 
+		// Sweep from HERE, not from the comment-notification callback. Steam only pushes that callback when it
+		// has something to say, so an account with a clean comment counter but a tray full of gifts and friend
+		// invites would never have swept at all - the one place the sweep is guaranteed to run is the login it
+		// is supposed to run on.
+		ClearAllNotifications();
+
 		_reconnectAttempts = 0;   // a successful logon ends the backoff streak
 		StartHeartbeat();
 
@@ -1703,6 +1709,20 @@ public sealed class Bot : IAsyncDisposable {
 	/// </summary>
 	public int TradeOffersWaiting => Volatile.Read(ref _tradeOffersWaiting);
 
+	/// <summary>
+	/// What actually reading the trade offers page found, which beats anything the counter said.
+	///
+	/// Only ever LOWERS the figure or confirms it. A push that arrives while the page is being read is the more
+	/// recent truth, so this never overwrites a higher number with a stale zero.
+	/// </summary>
+	public void NoteTradeOffersSeen(int seen) {
+		if (seen <= Volatile.Read(ref _tradeOffersWaiting)) {
+			Volatile.Write(ref _tradeOffersWaiting, seen);
+		} else if (Volatile.Read(ref _tradeOffersWaiting) < 0) {
+			Volatile.Write(ref _tradeOffersWaiting, seen);
+		}
+	}
+
 	private void OnTradeOfferNotifications(TradeOfferNotificationCallback cb) {
 		_lastPacket = DateTime.UtcNow;
 
@@ -1783,10 +1803,8 @@ public sealed class Bot : IAsyncDisposable {
 			//
 			// A comment that genuinely arrives while we are connected still gets announced, below, because that
 			// one IS news and the count going UP is how you can tell.
-			if (cb.NewComments > 0) {
-				ClearAllNotifications();
-			}
-
+			//
+			// The sweep itself lives on the login path, so it runs whether or not Steam bothers to send this.
 			return;
 		}
 

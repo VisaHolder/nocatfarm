@@ -125,9 +125,12 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		}
 
 		bool actedOnSomething = false;
+		int seen = 0;
 		HashSet<ulong> masters = Social.ParseIds(Bot.Cfg.TradeMasters);
 
 		foreach (Offer offer in Parse(html)) {
+			seen++;
+
 			lock (_done) {
 				if (_done.Contains(offer.Id)) {
 					continue;
@@ -190,6 +193,12 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		}
 
 		_fruitless = actedOnSomething ? 0 : _fruitless + 1;
+
+		// We have just read the page, so we know better than the notification counter does - tell it. Without
+		// this a count left at "don't know" (which is what the notification sweep deliberately does) stayed that
+		// way for ever, and the account went on opening this page every hour or so with nothing to find. Now the
+		// first look after a sweep settles it, and a genuinely new offer still arrives as its own push.
+		Bot.NoteTradeOffersSeen(seen);
 	}
 
 	private async Task<bool> AcceptAsync(Offer offer, CancellationToken ct) {
