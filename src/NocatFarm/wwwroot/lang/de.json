@@ -368,8 +368,6 @@
     "No games yet — add the one this account is meant to be into first.": "Noch keine Spiele - trag zuerst das ein, auf das dieses Konto angeblich steht.",
     "The first game added is the main one.": "Das zuerst hinzugefügte Spiel ist das Hauptspiel.",
     "Make this the main game": "Zum Hauptspiel machen",
-    "This game's share of the week. Every row here adds up to 100, including the main game - change one and the others move to make room.": "Der Wochenanteil dieses Spiels. Alle Zeilen hier ergeben zusammen 100, das Hauptspiel eingeschlossen - ändere eine, und die anderen rücken, um Platz zu machen.",
-    "The main game's share is set by \"Main game gets\" below, not here — it's held at that share however many other games you add. Click to jump to it.": "Der Anteil des Hauptspiels wird weiter unten von \"Das Hauptspiel bekommt\" gesetzt, nicht hier - er bleibt bei diesem Anteil, wie viele andere Spiele du auch hinzufügst. Klick, um dorthin zu springen.",
     "Set up rep4rep": "rep4rep einrichten",
     "Your rep4rep account": "Dein rep4rep-Konto",
     "How it works:": "So funktioniert es:",
@@ -435,7 +433,11 @@
     "Trades": "Tauschangebote",
     "Staying out of the way": "Nicht im Weg stehen",
     "Log": "Protokoll",
-    "Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick \"Work out what its inventory is worth\".": "Wird nicht bewertet. Zum Wiedereinschalten: Einstellungen öffnen, {0} auswählen, \"Handel\" aufklappen und \"Ausrechnen, was sein Inventar wert ist\" ankreuzen."
+    "Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick \"Work out what its inventory is worth\".": "Wird nicht bewertet. Zum Wiedereinschalten: Einstellungen öffnen, {0} auswählen, \"Handel\" aufklappen und \"Ausrechnen, was sein Inventar wert ist\" ankreuzen.",
+    "/week": "/Woche",
+    "About {0} of an average week once the main-game-only days are counted in.": "Etwa {0} einer durchschnittlichen Woche, wenn die Tage nur mit dem Hauptspiel mitgezählt werden.",
+    "The main game's share of a mixed day, held there however many other games you add. It's rolled within about 10 points of this each morning.": "Der Anteil des Hauptspiels an einem gemischten Tag, gehalten egal wie viele Spiele du hinzufügst. Er wird jeden Morgen im Rahmen von etwa 10 Punkten darum ausgewürfelt.",
+    "This game's share of a mixed day. Every row adds up to 100 - change one and the others move to make room.": "Der Anteil dieses Spiels an einem gemischten Tag. Alle Zeilen ergeben zusammen 100 - änderst du eine, rücken die anderen nach."
   },
   "settings": {
     "WebEnabled": {
@@ -588,7 +590,7 @@
     },
     "GameWeights": {
       "label": "Spiele und wie oft",
-      "tip": "Spiele und ihr Gewicht, etwa «730:70, 440:20». Das schwerste ist das Hauptspiel und bekommt die meiste Zeit; die anderen kommen gelegentlich vor, schubweise statt jeden Tag."
+      "tip": "Welche Spiele es spielt und welchen Anteil seiner Zeit jedes bekommt, als Prozentwerte, die zusammen etwa 100 ergeben sollten. Das ERSTE Spiel ist das Hauptspiel - das, auf das dieses Konto angeblich steht - und seine Zahl ist die echte: Sie legt den Anteil des Hauptspiels fest, täglich im Rahmen von etwa 10 Punkten ausgewürfelt, egal wie viele andere Spiele du hinzufügst. Lässt du eine Zahl weg, bekommt das Spiel einen gleichen Anteil vom Rest. Schreibe \"440:0\", um ein Spiel stillzulegen, ohne es zu löschen."
     },
     "WeekdayHours": {
       "label": "Stunden unter der Woche",
@@ -614,17 +616,9 @@
       "label": "Bleibt Fr/Sa länger auf",
       "tip": "Zusätzliche Stunden, die es Freitag- und Samstagnacht aufbleibt, wenn am nächsten Tag nichts ansteht."
     },
-    "MainGameSharePct": {
-      "label": "Hauptspiel bekommt",
-      "tip": "Welchen Anteil des Tages das ERSTE Spiel der Liste bekommt, wenn auch andere gespielt werden, in Prozent. Wird täglich um etwa 10 Punkte herum neu ausgewürfelt."
-    },
     "PureMainDayChancePct": {
       "label": "Tage nur mit dem Hauptspiel",
-      "tip": "Die Chance von 100, dass ein ganzer Tag allein aufs Hauptspiel geht. Das lässt die anderen Spiele schubweise auftauchen statt in derselben täglichen Dosis."
-    },
-    "SideGameSharePct": {
-      "label": "An gemischten Tagen die anderen",
-      "tip": "An Tagen, an denen es ausschert, ungefähr welchen Anteil des Tages sich die anderen Spiele teilen. Ist der aufgebraucht, geht es für den Rest des Tages zurück aufs Hauptspiel."
+      "tip": "Die Chance von 100, dass ein ganzer Tag allein auf das Hauptspiel geht. Das lässt die anderen Spiele in Schüben auftauchen statt jeden Tag als dieselbe kleine Scheibe - das auffälligste Muster, das ein Bot hinterlässt. Es ist auch das Einzige, was eine Woche von den eingetragenen Prozentwerten wegbewegt: An diesen Tagen bekommen die Nebenspiele nichts, also landet jedes über eine Woche etwa bei seiner Zahl mal dem Anteil der Tage, die nicht reine Hauptspieltage sind. Die Angabe unter dem Spielefeld rechnet das für dich aus."
     },
     "WarmUpMinMinutes": {
       "label": "Mindestens ankommen für",

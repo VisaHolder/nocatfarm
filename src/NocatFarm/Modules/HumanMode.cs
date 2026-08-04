@@ -667,17 +667,25 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			}
 		}
 
-		int mainCentre = Math.Clamp(cfg.MainGameSharePct, 5, 95);
+		// The main game's own written share is the centre of today's roll. It used to be ignored outright in
+		// favour of a separate box, so the number typed beside the main game did nothing at all and only its
+		// position in the list carried meaning.
+		List<(uint Game, int Weight)> spread = Weights();
+		int mainCentre = Math.Clamp(spread.Count > 0 ? spread[0].Weight : 70, 5, 95);
 		_mainSharePct = Math.Clamp(Rng(mainCentre - 10, mainCentre + 10), 5, 95);
 
 		// SIDE GAMES COME IN BURSTS. Most days are pure main game; sometimes there is a real sitting on something
 		// else. A guaranteed slice of every side game every single day is a pattern, not a person.
-		if (Percent(Math.Clamp(cfg.PureMainDayChancePct, 0, 100)) || (Weights().Count < 2)) {
+		if (Percent(Math.Clamp(cfg.PureMainDayChancePct, 0, 100)) || (spread.Count < 2)) {
 			_otherBudget = 0;
 		} else {
-			int side = Math.Clamp(cfg.SideGameSharePct, 1, 90);
-			int pct = Percent(65) ? Rng(Math.Max(1, side - 6), side + 4) : Rng(side + 4, side + 12);
-			_otherBudget = Math.Max(20, _targetMinutes * pct / 100);
+			// Derived from the very share the picker is rolling against, with a little slack on top. A budget
+			// set from its own independent number was a second limit on the same minutes: whichever happened to
+			// be tighter won, and the weights quietly became fiction whenever it was this one. Slack keeps it a
+			// backstop against a run of side-game rolls rather than the thing that decides the day.
+			int side = Math.Clamp(100 - _mainSharePct, 1, 95);
+			int budget = _targetMinutes * side / 100;
+			_otherBudget = Math.Max(20, budget + (budget / 8));
 		}
 
 		int signOuts = Math.Clamp(cfg.MaxSignOutsPerDay, 0, 40);
@@ -1158,9 +1166,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// it, and the cards arrive as a by-product of playing. Only a nudge - the weights still decide, or every
 	/// account would visibly play its farmable games in a block, which is the tell farming always was.
 	/// </summary>
-	private uint PreferDrops(List<uint> candidates) {
+	private uint PreferDrops(List<(uint Game, int Weight)> candidates) {
 		if (candidates.Count < 2) {
-			return candidates.Count == 1 ? candidates[0] : 0;
+			return candidates.Count == 1 ? candidates[0].Game : 0;
 		}
 
 		CardFarmer? farmer = BotManager.ModuleOf<CardFarmer>(Bot);
@@ -1170,11 +1178,36 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		}
 
 		HashSet<uint> withDrops = farmer.Queue.Where(static g => g.CardsRemaining > 0).Select(static g => g.AppId).ToHashSet();
-		List<uint> farmable = candidates.Where(withDrops.Contains).ToList();
+		List<(uint Game, int Weight)> farmable = candidates.Where(c => withDrops.Contains(c.Game)).ToList();
 
 		// Two in three, not always. A player who owns four games does not play only the ones that happen to
 		// still be dropping cards, and an account that did would be reading as a farmer again.
-		return (farmable.Count > 0) && (Rng(0, 100) < 66) ? farmable[Rng(0, farmable.Count - 1)] : 0;
+		if ((farmable.Count == 0) || (Rng(0, 100) >= 66)) {
+			return 0;
+		}
+
+		// Weighted, not uniform. Picking flat among whatever still has drops threw the weights away entirely for
+		// two sessions in three - a 5%-of-the-week game and the main game became equally likely the moment both
+		// had cards left, which is the opposite of what the list is for. The lean toward drops is preserved; it
+		// just happens in proportion now.
+		return WeightedPick(farmable);
+	}
+
+	/// <summary>Rolls one game from a weighted list. A zero or negative weight still counts as one, never none.</summary>
+	private uint WeightedPick(List<(uint Game, int Weight)> pool) {
+		int total = pool.Sum(static p => Math.Max(1, p.Weight));
+		int roll = _rng.Next(0, total);
+		int running = 0;
+
+		foreach ((uint game, int weight) in pool) {
+			running += Math.Max(1, weight);
+
+			if (roll < running) {
+				return game;
+			}
+		}
+
+		return pool[^1].Game;
 	}
 
 	private uint MainGame() {
@@ -1230,7 +1263,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// This is what card farming looks like when it is humanised: no separate module seizing the account and
 		// running games back to back, just a day that spends slightly more of its time on whatever still has
 		// drops left. Returns 0 most of the time, and then the weights decide as normal.
-		uint prefer = PreferDrops([.. weights.Select(static w => w.Game)]);
+		uint prefer = PreferDrops(weights);
 
 		if (prefer != 0) {
 			return prefer;
@@ -1247,19 +1280,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		today[0] = (weights[0].Game, sideTotal > 0 ? Math.Max(1, sideTotal * _mainSharePct / Math.Max(1, 100 - _mainSharePct)) : 100);
 
-		int total = today.Sum(static t => t.Weight);
-		int roll = _rng.Next(0, total);
-		int running = 0;
-
-		foreach ((uint game, int weight) in today) {
-			running += weight;
-
-			if (roll < running) {
-				return game;
-			}
-		}
-
-		return today[0].Game;
+		return WeightedPick(today);
 	}
 
 	/// <summary>
@@ -1420,9 +1441,12 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			if (pureMain) {
 				mix = GameName(weights[0].Game) + " only";
 			} else {
-				int side = Math.Clamp(cfg.SideGameSharePct, 1, 90);
-				int pct = Pct(65) ? Roll(Math.Max(1, side - 6), side + 4) : Roll(side + 4, side + 12);
-				mix = $"mostly {GameName(weights[0].Game)}, about {Fmt.Hm(Math.Max(20, target * pct / 100))} on the others";
+				// Mirrors the real roller: the main game's own written share, jittered, decides how much is left
+				// for everything else. Reading a separate box here made the forecast disagree with the day.
+				int centre = Math.Clamp(weights[0].Weight, 5, 95);
+				int mainToday = Math.Clamp(Roll(centre - 10, centre + 10), 5, 95);
+				int budget = target * Math.Clamp(100 - mainToday, 1, 95) / 100;
+				mix = $"mostly {GameName(weights[0].Game)}, about {Fmt.Hm(Math.Max(20, budget + (budget / 8)))} on the others";
 			}
 
 			lines.Add($"{when}  {Fmt.Hm(target),-7} from {wakeAt / 60:00}:{wakeAt % 60:00} to {bedHour:00}:xx   {mix}");

@@ -368,8 +368,6 @@
     "No games yet — add the one this account is meant to be into first.": "Nenhum jogo ainda - adicione primeiro aquele que esta conta supostamente curte.",
     "The first game added is the main one.": "O primeiro jogo adicionado é o principal.",
     "Make this the main game": "Tornar este o jogo principal",
-    "This game's share of the week. Every row here adds up to 100, including the main game - change one and the others move to make room.": "A fatia semanal deste jogo. Todas as linhas aqui somam 100, incluindo a do jogo principal - mude uma e as outras se ajustam para abrir espaço.",
-    "The main game's share is set by \"Main game gets\" below, not here — it's held at that share however many other games you add. Click to jump to it.": "A fatia do jogo principal é definida por \"O jogo principal fica com\" mais abaixo, não aqui - ela se mantém nessa fatia por mais jogos que você adicione. Clique para ir até lá.",
     "Set up rep4rep": "Configurar o rep4rep",
     "Your rep4rep account": "Sua conta do rep4rep",
     "How it works:": "Como funciona:",
@@ -435,7 +433,11 @@
     "Trades": "Trocas",
     "Staying out of the way": "Ficando fora do caminho",
     "Log": "Log",
-    "Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick \"Work out what its inventory is worth\".": "Não está sendo avaliada. Para ligar de novo, abra Configurações, escolha {0}, abra \"Trocas\" e marque \"Calcular quanto vale o inventário dela\"."
+    "Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick \"Work out what its inventory is worth\".": "Não está sendo avaliada. Para ligar de novo, abra Configurações, escolha {0}, abra \"Trocas\" e marque \"Calcular quanto vale o inventário dela\".",
+    "/week": "/semana",
+    "About {0} of an average week once the main-game-only days are counted in.": "Cerca de {0} de uma semana média, já contando os dias só com o jogo principal.",
+    "The main game's share of a mixed day, held there however many other games you add. It's rolled within about 10 points of this each morning.": "A fatia do jogo principal num dia misto, mantida por mais jogos que você adicione. É sorteada toda manhã dentro de uns 10 pontos deste valor.",
+    "This game's share of a mixed day. Every row adds up to 100 - change one and the others move to make room.": "A fatia deste jogo num dia misto. Todas as linhas somam 100 - mude uma e as outras se ajustam."
   },
   "settings": {
     "WebEnabled": {
@@ -588,7 +590,7 @@
     },
     "GameWeights": {
       "label": "Jogos e com que frequência",
-      "tip": "Os jogos e seus pesos, por exemplo \"730:70, 440:20\". O de maior peso é o principal e fica com a maior parte do tempo; os outros aparecem de vez em quando, em fases, não todo dia."
+      "tip": "Quais jogos ele joga e que fatia do tempo cada um recebe, em porcentagens que devem somar cerca de 100. O PRIMEIRO jogo é o principal - aquele de que esta conta supostamente gosta - e o número dele é o que vale: define a fatia que o jogo principal mantém, sorteada a cada dia dentro de uns 10 pontos, por mais jogos que você adicione. Se você omitir um número, aquele jogo pega uma parte igual do que sobrar. Escreva \"440:0\" para deixar um jogo de fora sem apagá-lo."
     },
     "WeekdayHours": {
       "label": "Horas em dia de semana",
@@ -614,17 +616,9 @@
       "label": "Fica acordada até mais tarde sex/sáb",
       "tip": "Horas a mais que fica acordado nas noites de sexta e sábado, quando não tem nada no dia seguinte."
     },
-    "MainGameSharePct": {
-      "label": "O jogo principal fica com",
-      "tip": "Que fatia do dia o PRIMEIRO jogo da lista leva quando ele também joga outros, em porcentagem. É sorteado a cada dia uns 10 pontos para mais ou menos."
-    },
     "PureMainDayChancePct": {
       "label": "Dias só com o jogo principal",
-      "tip": "A chance, em 100, de que um dia inteiro seja só do jogo principal. É isto que faz os outros jogos aparecerem em fases, em vez da mesma dose todo dia."
-    },
-    "SideGameSharePct": {
-      "label": "Num dia misto, os outros ficam com",
-      "tip": "Nos dias em que ele varia, mais ou menos que fatia do dia os outros jogos dividem entre si. Quando acaba, volta para o principal pelo resto do dia."
+      "tip": "A chance, em 100, de um dia inteiro ir só para o jogo principal. É isso que faz os outros jogos chegarem em ondas em vez da mesma fatiinha todo dia - o padrão mais óbvio que um bot deixa. É também a única coisa que afasta uma semana das porcentagens que você escreveu: nesses dias os jogos secundários não recebem nada, então ao longo de uma semana cada um fica em torno do seu número vezes a proporção de dias que não são só do principal. O valor abaixo da caixa de jogos faz essa conta para você."
     },
     "WarmUpMinMinutes": {
       "label": "Se ambientar por pelo menos",

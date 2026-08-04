@@ -368,8 +368,6 @@
     "No games yet — add the one this account is meant to be into first.": "Jeszcze brak gier - dodaj najpierw tę, w którą to konto rzekomo gra.",
     "The first game added is the main one.": "Pierwsza dodana gra jest tą główną.",
     "Make this the main game": "Ustaw jako grę główną",
-    "This game's share of the week. Every row here adds up to 100, including the main game - change one and the others move to make room.": "Udział tej gry w tygodniu. Wszystkie wiersze sumują się do 100, wliczając grę główną - zmień jeden, a pozostałe się przesuną, by zrobić miejsce.",
-    "The main game's share is set by \"Main game gets\" below, not here — it's held at that share however many other games you add. Click to jump to it.": "Udział głównej gry ustawia \"Główna gra dostaje\" poniżej, a nie tutaj - trzyma się tego udziału niezależnie od tego, ile innych gier dodasz. Kliknij, by tam przejść.",
     "Set up rep4rep": "Skonfiguruj rep4rep",
     "Your rep4rep account": "Twoje konto rep4rep",
     "How it works:": "Jak to działa:",
@@ -435,7 +433,11 @@
     "Trades": "Wymiany",
     "Staying out of the way": "Nie wchodzić w drogę",
     "Log": "Dziennik",
-    "Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick \"Work out what its inventory is worth\".": "Nie jest wyceniane. Aby włączyć z powrotem, wejdź w Ustawienia, wybierz {0}, rozwiń \"Wymiany\" i zaznacz \"Wylicz, ile wart jest jego ekwipunek\"."
+    "Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick \"Work out what its inventory is worth\".": "Nie jest wyceniane. Aby włączyć z powrotem, wejdź w Ustawienia, wybierz {0}, rozwiń \"Wymiany\" i zaznacz \"Wylicz, ile wart jest jego ekwipunek\".",
+    "/week": "/tydzień",
+    "About {0} of an average week once the main-game-only days are counted in.": "Około {0} przeciętnego tygodnia, gdy wliczyć dni wyłącznie z grą główną.",
+    "The main game's share of a mixed day, held there however many other games you add. It's rolled within about 10 points of this each morning.": "Udział gry głównej w dniu mieszanym, utrzymywany niezależnie od liczby dodanych gier. Co rano losowany w granicach około 10 punktów od tej wartości.",
+    "This game's share of a mixed day. Every row adds up to 100 - change one and the others move to make room.": "Udział tej gry w dniu mieszanym. Wszystkie wiersze sumują się do 100 - zmień jeden, a pozostałe się dopasują."
   },
   "settings": {
     "WebEnabled": {
@@ -588,7 +590,7 @@
     },
     "GameWeights": {
       "label": "Gry i jak często",
-      "tip": "Gry i ich wagi, na przykład \"730:70, 440:20\". Najcięższa jest grą główną i dostaje większość czasu; pozostałe pojawiają się od czasu do czasu, zrywami, a nie codziennie."
+      "tip": "W co gra i jaką część czasu dostaje każda gra, w procentach, które powinny sumować się do około 100. PIERWSZA gra to gra główna - ta, którą to konto rzekomo lubi - i jej liczba jest tą prawdziwą: ustala udział gry głównej, losowany co dnia w granicach około 10 punktów, niezależnie od liczby dodanych gier. Pominięcie liczby oznacza równy udział w tym, co zostało. Wpisz \"440:0\", aby odstawić grę bez usuwania jej."
     },
     "WeekdayHours": {
       "label": "Godzin w dzień powszedni",
@@ -614,17 +616,9 @@
       "label": "W pt/sob siedzi dłużej",
       "tip": "Dodatkowe godziny, które spędza na nogach w piątkowy i sobotni wieczór, gdy nazajutrz nic nie ma."
     },
-    "MainGameSharePct": {
-      "label": "Główna gra dostaje",
-      "tip": "Jaką część dnia bierze PIERWSZA gra z listy, gdy gra też w inne, w procentach. Losowane co dzień w granicach około 10 punktów."
-    },
     "PureMainDayChancePct": {
-      "label": "Dni tylko z główną grą",
-      "tip": "Szansa na 100, że cały dzień pójdzie wyłącznie na główną grę. To sprawia, że pozostałe gry pojawiają się zrywami, a nie w tej samej codziennej dawce."
-    },
-    "SideGameSharePct": {
-      "label": "W dzień mieszany pozostałe dostają",
-      "tip": "W dni, gdy faktycznie wychodzi poza główną grę, mniej więcej jaką część dnia dzielą między siebie pozostałe. Gdy się wyczerpie, reszta dnia wraca do głównej."
+      "label": "Dni tylko z grą główną",
+      "tip": "Szansa na 100, że cały dzień pójdzie wyłącznie na grę główną. To sprawia, że pozostałe gry pojawiają się zrywami, a nie jako ten sam plasterek każdego dnia - najbardziej oczywisty wzorzec, jaki zostawia bot. To także jedyna rzecz, która oddala tydzień od wpisanych procentów: w takie dni gry poboczne nie dostają nic, więc w skali tygodnia każda ląduje mniej więcej na swojej liczbie razy udział dni, które nie są wyłącznie dla gry głównej. Wartość pod polem gier robi to wyliczenie za ciebie."
     },
     "WarmUpMinMinutes": {
       "label": "Rozgrzewka co najmniej",

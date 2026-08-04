@@ -685,6 +685,26 @@ public static partial class Commands {
 			if (weights.Count > 0) {
 				int total = Math.Max(1, weights.Sum(static w => w.Weight));
 				sb.AppendLine("  set to play " + string.Join(", ", weights.Select(w => $"{GameNames.Of(w.Game)} {w.Weight * 100 / total}%")));
+
+				// What those percentages actually come to over a week.
+				//
+				// They describe a MIXED day, and main-game-only days don't have any side games in them at all, so
+				// every side number is worth less across a week than it reads on its own - by a lot, at a high
+				// pure-main chance. Printing the configured figures alone made the box look like a promise it was
+				// never making; showing both leaves the tuning alone and stops the number lying.
+				int pure = Math.Clamp(bot.Cfg.PureMainDayChancePct, 0, 100);
+
+				if ((weights.Count > 1) && (pure > 0)) {
+					int mainPct = weights[0].Weight * 100 / total;
+					int mainWeekly = pure + ((100 - pure) * mainPct / 100);
+
+					IEnumerable<string> real = weights
+						.Select((w, i) => i == 0
+							? $"{GameNames.Of(w.Game)} {mainWeekly}%"
+							: $"{GameNames.Of(w.Game)} {(100 - pure) * (w.Weight * 100 / total) / 100}%");
+
+					sb.AppendLine($"  over a week   {string.Join(", ", real)}   ({pure}% of days are {GameNames.Of(weights[0].Game)} only)");
+				}
 			}
 
 			if (week) {

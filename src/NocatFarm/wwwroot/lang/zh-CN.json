@@ -368,8 +368,6 @@
     "No games yet — add the one this account is meant to be into first.": "还没有游戏——先把这个账户「本来就爱玩」的那款加进来。",
     "The first game added is the main one.": "第一个加入的游戏就是主要游戏。",
     "Make this the main game": "把它设为主要游戏",
-    "This game's share of the week. Every row here adds up to 100, including the main game - change one and the others move to make room.": "这款游戏在一周里的占比。这里所有行加起来是 100，包括主要游戏——改动一个，其他的会移动来腾位置。",
-    "The main game's share is set by \"Main game gets\" below, not here — it's held at that share however many other games you add. Click to jump to it.": "主要游戏的占比由下面的「主要游戏占」决定，而不是这里——不管你再加多少款游戏，它都保持那个比例。点击可跳到那里。",
     "Set up rep4rep": "设置 rep4rep",
     "Your rep4rep account": "你的 rep4rep 账号",
     "How it works:": "它是这样运作的：",
@@ -435,7 +433,11 @@
     "Trades": "交易",
     "Staying out of the way": "别碍事",
     "Log": "日志",
-    "Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick \"Work out what its inventory is worth\".": "未在估值。若要重新开启，请进入设置，选择 {0}，展开\"交易\"并勾选\"计算其库存价值\"。"
+    "Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick \"Work out what its inventory is worth\".": "未在估值。若要重新开启，请进入设置，选择 {0}，展开\"交易\"并勾选\"计算其库存价值\"。",
+    "/week": "/周",
+    "About {0} of an average week once the main-game-only days are counted in.": "把只玩主玩游戏的日子也算进去后，约占平均一周的 {0}。",
+    "The main game's share of a mixed day, held there however many other games you add. It's rolled within about 10 points of this each morning.": "在混合的一天里主玩游戏所占的比例；无论再添加多少游戏都保持这个比例，每天早晨会在该数值上下约 10 个百分点内随机。",
+    "This game's share of a mixed day. Every row adds up to 100 - change one and the others move to make room.": "在混合的一天里这款游戏所占的比例。所有行加起来是 100——改动一行，其余会自动让位。"
   },
   "settings": {
     "WebEnabled": {
@@ -587,8 +589,8 @@
       "tip": "仅拟人模式：手动停止时，再随机多玩几秒（最多这么久，像是有人在收尾）然后才下线，而不是瞬间消失。"
     },
     "GameWeights": {
-      "label": "游戏及其频率",
-      "tip": "游戏及其权重，例如“730:70, 440:20”。权重最高的是主力游戏，占据大部分时间；其余的偶尔出现，且是一阵一阵的，而不是每天都玩。"
+      "label": "游戏与频率",
+      "tip": "玩哪些游戏、各占多少时间，用加起来约为 100 的百分比表示。第一个游戏是主玩游戏（这个账号设定上喜欢的那款），它的数字才是真正生效的：它决定主玩游戏所占的比例，无论你再添加多少游戏都保持不变，并且每天会在该数值上下约 10 个百分点内随机。省略数字的游戏平分剩下的份额。想暂时停用某个游戏而不删除，写成“440:0”。"
     },
     "WeekdayHours": {
       "label": "工作日时长",
@@ -614,17 +616,9 @@
       "label": "周五/周六熬得更晚",
       "tip": "周五和周六晚上额外熬的时长——反正第二天没事。"
     },
-    "MainGameSharePct": {
-      "label": "主力游戏占比",
-      "tip": "当它也玩别的游戏时，列表中第一个游戏占当天的比例（百分比）。每天在此基础上上下浮动约 10 个百分点。"
-    },
     "PureMainDayChancePct": {
-      "label": "只玩主力游戏的天数占比",
-      "tip": "在 100 中的概率，表示一整天只玩主力游戏。正是这一点让其他游戏一阵一阵地出现，而不是每天固定来一点。"
-    },
-    "SideGameSharePct": {
-      "label": "混合的日子里其他游戏占",
-      "tip": "在确实会换换口味的日子里，其他游戏大致合起来占当天多少。用完之后，当天剩下的时间就回到主力游戏。"
+      "label": "只玩主玩游戏的天数",
+      "tip": "整天只玩主玩游戏的概率（百分之几）。有了它，其他游戏才会成批出现，而不是每天都切一小片同样的量——每天分配都一样，正是机器人留下的最明显的痕迹。它也是让一周的实际占比偏离你所填数字的唯一因素：这些日子里副游戏拿不到时间，所以按周来看，每款副游戏大致等于它的数字乘以“非纯主玩日”的比例。游戏框下方的数值已经帮你算好了。"
     },
     "WarmUpMinMinutes": {
       "label": "至少先适应",

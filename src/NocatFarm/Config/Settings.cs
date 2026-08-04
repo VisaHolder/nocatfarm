@@ -619,7 +619,7 @@ public static class Settings {
 			"Human mode only: on a manual stop, keep playing for a random few seconds up to this many (a person finishing up) before logging off, instead of vanishing mid-game. Seconds; 0 stops instantly.",
 			Min: 0, Max: 300),
 		new("GameWeights", "Games and how often", SecHuman, SettingKind.Text,
-			"Which games it plays and roughly how much of its time each one gets. The FIRST game is the main game - the one this account is meant to be into - and the rest are what it dips into now and then.",
+			"Which games it plays and what share of its time each one gets, as percentages that should add up to about 100. The FIRST game is the main game - the one this account is meant to be into - and its number is the real one: it sets the share the main game holds, rolled within about 10 points of it each day, however many other games you add. Leave a number off and that game takes an even cut of whatever is left. Write \"440:0\" to bench a game without deleting it.",
 			Placeholder: "730:70, 440:20, 550:10", Mode: "legit"),
 
 		// how the day is shaped
@@ -643,15 +643,9 @@ public static class Settings {
 			Min: 0, Max: 6, Mode: "legit"),
 
 		// how the games are split
-		new("MainGameSharePct", "Main game gets", SecHuman, SettingKind.Int,
-			"What share the FIRST game in the list takes on a day it plays anything else, as a percentage - rolled fresh each day within about 10 points of this and held there however many other games you add. Across a whole week the main game lands well above this number, because most days it is the only thing played at all: that is what \"Days on the main game only\" below controls.",
-			Min: 5, Max: 95, Mode: "legit"),
 		new("PureMainDayChancePct", "Days on the main game only", SecHuman, SettingKind.Int,
-			"The chance, out of 100, that a whole day goes on the main game alone. This is what makes the other games arrive in bursts instead of the same little slice every single day - which is the most obvious pattern a bot leaves behind.",
+			"The chance, out of 100, that a whole day goes on the main game alone. This is what makes the other games arrive in bursts instead of the same little slice every single day - which is the most obvious pattern a bot leaves behind. It is also the one thing that moves a week away from the percentages you wrote: on these days the side games get nothing, so over a week each of them lands at roughly its number times the share of days that aren't main-game-only. The figure underneath the games box does that sum for you.",
 			Min: 0, Max: 100, Mode: "legit"),
-		new("SideGameSharePct", "On a mixed day, others get", SecHuman, SettingKind.Int,
-			"On the days it does branch out, roughly what share of that day the other games take between them. Once that is used up it is back on the main game for the rest of the day.",
-			Min: 1, Max: 90, Mode: "legit"),
 
 		// settling in
 		new("WarmUpMinMinutes", "Settle in for at least", SecHuman, SettingKind.Int,

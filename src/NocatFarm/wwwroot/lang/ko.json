@@ -368,8 +368,6 @@
     "No games yet — add the one this account is meant to be into first.": "아직 게임이 없습니다 - 이 계정이 원래 좋아하는 것으로 설정할 게임부터 추가하세요.",
     "The first game added is the main one.": "가장 먼저 추가한 게임이 메인이 됩니다.",
     "Make this the main game": "이것을 메인 게임으로",
-    "This game's share of the week. Every row here adds up to 100, including the main game - change one and the others move to make room.": "이 게임이 한 주에서 차지하는 비율. 메인 게임을 포함해 여기 모든 행의 합은 100입니다 - 하나를 바꾸면 나머지가 자리를 내주며 움직입니다.",
-    "The main game's share is set by \"Main game gets\" below, not here — it's held at that share however many other games you add. Click to jump to it.": "메인 게임의 비율은 여기가 아니라 아래의 '메인 게임 몫'에서 정합니다 - 다른 게임을 몇 개 추가하든 그 비율로 유지됩니다. 클릭하면 그리로 이동합니다.",
     "Set up rep4rep": "rep4rep 설정",
     "Your rep4rep account": "당신의 rep4rep 계정",
     "How it works:": "작동 방식:",
@@ -435,7 +433,11 @@
     "Trades": "교환",
     "Staying out of the way": "방해하지 않기",
     "Log": "로그",
-    "Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick \"Work out what its inventory is worth\".": "가치를 계산하지 않습니다. 다시 켜려면 설정에서 {0} 계정을 선택하고 '거래'를 연 뒤 '인벤토리 가치 계산'에 체크하세요."
+    "Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick \"Work out what its inventory is worth\".": "가치를 계산하지 않습니다. 다시 켜려면 설정에서 {0} 계정을 선택하고 '거래'를 연 뒤 '인벤토리 가치 계산'에 체크하세요.",
+    "/week": "/주",
+    "About {0} of an average week once the main-game-only days are counted in.": "메인 게임만 하는 날까지 포함하면 평균 한 주의 약 {0}입니다.",
+    "The main game's share of a mixed day, held there however many other games you add. It's rolled within about 10 points of this each morning.": "여러 게임을 하는 날에서 메인 게임이 차지하는 비율입니다. 다른 게임을 몇 개 추가해도 이 비율이 유지되며, 매일 아침 이 값의 약 ±10 범위에서 정해집니다.",
+    "This game's share of a mixed day. Every row adds up to 100 - change one and the others move to make room.": "여러 게임을 하는 날에서 이 게임이 차지하는 비율입니다. 모든 행의 합은 100이며, 하나를 바꾸면 나머지가 조정됩니다."
   },
   "settings": {
     "WebEnabled": {
@@ -587,8 +589,8 @@
       "tip": "사람 모드 전용. 수동으로 멈추면 곧바로 사라지지 않고, 최대 이 시간만큼 무작위로 몇 초 더 플레이한 뒤(하던 걸 마무리하듯) 로그아웃합니다."
     },
     "GameWeights": {
-      "label": "게임과 빈도",
-      "tip": "게임과 가중치입니다(예: \"730:70, 440:20\"). 가장 무거운 것이 주력 게임으로 대부분의 시간을 차지하고, 나머지는 매일이 아니라 가끔 몰아서 등장합니다."
+      "label": "플레이할 게임과 빈도",
+      "tip": "어떤 게임을 얼마나 할지 백분율로 적습니다. 합계가 대략 100이 되게 하세요. 첫 번째 게임이 메인 게임(이 계정이 좋아한다고 설정된 게임)이며, 그 숫자가 실제로 적용됩니다. 게임을 몇 개 더 추가해도 메인 게임은 이 비율로 유지되고, 매일 아침 이 값의 약 ±10 범위에서 정해집니다. 숫자를 생략하면 남은 몫을 균등하게 나눠 갖습니다. 삭제하지 않고 잠시 빼두려면 '440:0'이라고 쓰세요."
     },
     "WeekdayHours": {
       "label": "평일 시간",
@@ -614,17 +616,9 @@
       "label": "금/토는 더 늦게까지",
       "tip": "다음 날 일정이 없는 금요일과 토요일 밤에 추가로 더 깨어 있는 시간입니다."
     },
-    "MainGameSharePct": {
-      "label": "주력 게임 비중",
-      "tip": "다른 게임도 하는 날에 목록의 첫 번째 게임이 차지하는 비율(%). 매일 이 값에서 10포인트 안팎으로 다시 정해집니다."
-    },
     "PureMainDayChancePct": {
-      "label": "주력 게임만 하는 날 비율",
-      "tip": "하루 전체를 주력 게임만 하는 확률(100분율). 다른 게임이 매일 조금씩이 아니라 몰아서 등장하게 만드는 설정입니다."
-    },
-    "SideGameSharePct": {
-      "label": "섞이는 날 다른 게임 비중",
-      "tip": "실제로 다른 게임도 하는 날에, 나머지 게임들이 나눠 갖는 하루의 대략적인 비중. 다 쓰면 그날 남은 시간은 다시 주력 게임입니다."
+      "label": "메인 게임만 하는 날",
+      "tip": "하루 전체를 메인 게임만으로 보낼 확률(100분율)입니다. 덕분에 다른 게임이 매일 똑같이 조금씩이 아니라 몰아서 등장합니다. 매일 같은 배분이야말로 봇이 남기는 가장 뚜렷한 패턴입니다. 또한 입력한 백분율과 실제 한 주가 달라지는 유일한 요인이기도 합니다. 이런 날에는 서브 게임에 시간이 가지 않으므로, 한 주로 보면 각 서브 게임은 대략 '입력값 × 메인 전용이 아닌 날의 비율'이 됩니다. 게임 상자 아래 숫자가 그 계산을 대신해 줍니다."
     },
     "WarmUpMinMinutes": {
       "label": "최소 적응 시간",

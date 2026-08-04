@@ -368,8 +368,6 @@
     "No games yet — add the one this account is meant to be into first.": "Henüz oyun yok - önce bu hesabın sözde tuttuğu oyunu ekle.",
     "The first game added is the main one.": "İlk eklenen oyun ana oyundur.",
     "Make this the main game": "Bunu ana oyun yap",
-    "This game's share of the week. Every row here adds up to 100, including the main game - change one and the others move to make room.": "Bu oyunun haftadaki payı. Buradaki tüm satırlar, ana oyun dahil, toplamda 100 eder - birini değiştir, diğerleri yer açmak için kayar.",
-    "The main game's share is set by \"Main game gets\" below, not here — it's held at that share however many other games you add. Click to jump to it.": "Ana oyunun payını aşağıdaki \"Ana oyunun payı\" belirler, burası değil - kaç oyun eklersen ekle o payda tutulur. Oraya atlamak için tıkla.",
     "Set up rep4rep": "rep4rep'i kur",
     "Your rep4rep account": "rep4rep hesabın",
     "How it works:": "Nasıl çalışır:",
@@ -435,7 +433,11 @@
     "Trades": "Takaslar",
     "Staying out of the way": "Yoldan çekilme",
     "Log": "Günlük",
-    "Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick \"Work out what its inventory is worth\".": "Değerlenmiyor. Yeniden açmak için Ayarlar'a gidip {0} hesabını seçin, \"Takaslar\" bölümünü açın ve \"Envanterinin ne ettiğini hesapla\" kutusunu işaretleyin."
+    "Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick \"Work out what its inventory is worth\".": "Değerlenmiyor. Yeniden açmak için Ayarlar'a gidip {0} hesabını seçin, \"Takaslar\" bölümünü açın ve \"Envanterinin ne ettiğini hesapla\" kutusunu işaretleyin.",
+    "/week": "/hafta",
+    "About {0} of an average week once the main-game-only days are counted in.": "Yalnızca ana oyunun oynandığı günler de sayıldığında ortalama bir haftanın yaklaşık {0} kadarı.",
+    "The main game's share of a mixed day, held there however many other games you add. It's rolled within about 10 points of this each morning.": "Karışık bir günde ana oyunun payı; kaç oyun eklerseniz ekleyin bu oranda tutulur. Her sabah bu değerin yaklaşık 10 puan çevresinde belirlenir.",
+    "This game's share of a mixed day. Every row adds up to 100 - change one and the others move to make room.": "Karışık bir günde bu oyunun payı. Tüm satırlar toplamda 100 eder - birini değiştirin, diğerleri yer açar."
   },
   "settings": {
     "WebEnabled": {
@@ -587,8 +589,8 @@
       "tip": "Yalnızca insan modu: elle durdurduğunda, çıkmadan önce en fazla bu kadar rastgele saniye oynamaya devam eder (işini bitiren biri gibi), aniden yok olmak yerine."
     },
     "GameWeights": {
-      "label": "Oyunlar ve sıklıkları",
-      "tip": "Oyunlar ve ağırlıkları, örneğin \"730:70, 440:20\". En ağırı ana oyundur ve zamanın çoğunu alır; diğerleri her gün değil, arada bir, öbekler hâlinde gelir."
+      "label": "Oyunlar ve ne sıklıkta",
+      "tip": "Hangi oyunları oynadığı ve her birinin zamanının ne kadarını aldığı - toplamı yaklaşık 100 olması gereken yüzdeler halinde. İLK oyun ana oyundur (bu hesabın sevdiği varsayılan oyun) ve asıl geçerli sayı onunkidir: ana oyunun tuttuğu payı belirler, kaç oyun eklerseniz ekleyin korunur ve her gün bu değerin yaklaşık 10 puan çevresinde belirlenir. Sayı yazmazsanız o oyun kalanı eşit olarak paylaşır. Bir oyunu silmeden kenara almak için \"440:0\" yazın."
     },
     "WeekdayHours": {
       "label": "Hafta içi saat",
@@ -614,17 +616,9 @@
       "label": "Cuma/Cumartesi daha geç yatar",
       "tip": "Ertesi gün bir işi olmadığı cuma ve cumartesi geceleri fazladan ayakta kaldığı saatler."
     },
-    "MainGameSharePct": {
-      "label": "Ana oyunun payı",
-      "tip": "Başka oyunlar da oynadığı bir günde listedeki İLK oyunun aldığı pay, yüzde olarak. Her gün bunun yaklaşık 10 puan çevresinde yeniden atılır."
-    },
     "PureMainDayChancePct": {
       "label": "Yalnızca ana oyun günleri",
-      "tip": "100 üzerinden, bütün bir günün sadece ana oyuna gitme olasılığı. Diğer oyunların her gün aynı dozda değil de öbekler hâlinde gelmesini sağlayan budur."
-    },
-    "SideGameSharePct": {
-      "label": "Karışık günde diğerlerinin payı",
-      "tip": "Ana oyunun dışına çıktığı günlerde, diğer oyunların aralarında paylaştığı günün kabaca ne kadarı. Bu tükenince günün kalanı yine ana oyundur."
+      "tip": "Bütün bir günün yalnızca ana oyuna gitme ihtimali (100 üzerinden). Diğer oyunların her gün aynı ince dilim halinde değil, öbekler hâlinde gelmesini sağlayan şey budur; her gün aynı dağılım, bir botun bıraktığı en bariz iz. Ayrıca bir haftayı yazdığınız yüzdelerden uzaklaştıran tek etken de budur: bu günlerde yan oyunlar hiçbir şey almaz, dolayısıyla bir hafta boyunca her biri kabaca kendi sayısı çarpı yalnızca-ana-oyun olmayan günlerin oranı kadar olur. Oyun kutusunun altındaki değer bu hesabı sizin için yapar."
     },
     "WarmUpMinMinutes": {
       "label": "En az şu kadar alışsın",

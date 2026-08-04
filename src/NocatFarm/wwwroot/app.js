@@ -1856,14 +1856,22 @@ function weightsEditor(spec) {
 
   const total = rows.reduce((sum, r) => sum + r.weight, 0) || 1;
 
-  // The main game's share is owned by MainGameSharePct, not by this list — the scheduler sizes row 0 against
-  // the side games every morning and never reads its stored weight. Showing an editable box here was a lie: you
-  // could drag it to 40 and nothing whatsoever would change. It's shown as a read-only figure that links to the
-  // setting that does control it.
-  const mainPct = Math.max(5, Math.min(95, liveValue('MainGameSharePct', settingsValues() || {}) ?? 70));
+  // Row zero's own number is the main game's share now, and the scheduler reads it. It used to be owned by a
+  // separate "Main game gets" box, so this row was shown read-only — you could not set the one figure the whole
+  // schedule turns on from the list it belongs to, and the number sitting in the spec was ignored.
+  const mainPct = Math.max(5, Math.min(95, Math.round((rows[0]?.weight ?? 70) * 100 / total)));
+
+  // What each row is worth across a week rather than on a mixed day. Main-game-only days carry no side games at
+  // all, so every side share is worth less over a week than it reads here - the gap is wide enough at a high
+  // pure-main chance that showing only the configured figure reads as a promise the schedule never made.
+  const pure = Math.max(0, Math.min(100, liveValue('PureMainDayChancePct', settingsValues() || {}) ?? 25));
 
   const body = rows.map((r, i) => {
     const share = i === 0 ? mainPct : Math.round(((r.weight / Math.max(1, total - rows[0].weight)) * (100 - mainPct)));
+    const weekly = i === 0 ? Math.round(pure + ((100 - pure) * share / 100)) : Math.round((100 - pure) * share / 100);
+    const weeklyTip = rows.length > 1 && pure > 0
+      ? tf('About {0} of an average week once the main-game-only days are counted in.', `${weekly}%`)
+      : '';
 
     // "wmain", not "main": the page's own content-area class is .main, and this row was quietly picking up
     // its `padding: 22px 26px 40px`. That is the whole reason the first row sat 26px to the right of every
@@ -1871,11 +1879,14 @@ function weightsEditor(spec) {
     return `<div class="wrow ${i === 0 ? 'wmain' : ''}">
       <span class="wname"><b class="wgame" title="${esc(gameLabel(r.game))}">${esc(gameLabel(r.game))}</b>${i === 0 ? `<b class="wtag">${esc(t('main'))}</b>` : ''}<i class="wid">${r.game}</i></span>
       <span class="wbar"><i style="width:${share}%"></i></span>
-      ${i === 0
-        ? `<span class="wpct wfixed" data-tip="${esc(t('The main game\'s share is set by "Main game gets" below, not here — it\'s held at that share however many other games you add. Click to jump to it.'))}">${share}</span>`
-        : `<input class="wpct" type="number" min="1" max="99" value="${share}" data-w-index="${i}"
-             onchange="setShare(${i},parseInt(this.value)||1)" data-tip="${esc(t("This game's share of the week. Every row here adds up to 100, including the main game - change one and the others move to make room."))}">`}
+      <input class="wpct" type="number" min="1" max="95" value="${share}" data-w-index="${i}"
+             onchange="setShare(${i},parseInt(this.value)||1)" data-tip="${esc(
+               (i === 0
+                 ? t("The main game's share of a mixed day, held there however many other games you add. It's rolled within about 10 points of this each morning.")
+                 : t("This game's share of a mixed day. Every row adds up to 100 - change one and the others move to make room."))
+               + (weeklyTip ? ' ' + weeklyTip : ''))}">
       <span class="wsign">%</span>
+      <span class="wweek"${weeklyTip ? ` data-tip="${esc(weeklyTip)}"` : ''}>${weeklyTip ? `${weekly}%<i>${esc(t('/week'))}</i>` : ''}</span>
       ${i === 0 ? '<span class="wact"></span>' : `<span class="wact"><b onclick="makeMain(${i})" data-tip="${esc(t('Make this the main game'))}">↑</b><b onclick="dropWeight(${i})" data-tip="${esc(t('Remove'))}">×</b></span>`}
     </div>`;
   }).join('');
@@ -1899,20 +1910,23 @@ const weightsSpec = (rows) => rows.map((r) => `${r.game}:${r.weight}`).join(', '
 // for one row, and changing "Main game gets" moved the bar and left the box alone. Everything is a share now,
 // so the column always adds up to 100 and the main game's slider visibly pushes the others around.
 //
-// The main game is never edited here. Its share is owned by MainGameSharePct and the scheduler re-derives row
-// zero against the side games every morning, so a number typed into row zero would simply be ignored.
+// The main game is edited here like any other row - its number is the share the scheduler actually holds it at.
 function setShare(index, wantPct) {
   const rows = parseWeights(liveWeights());
-  if (!rows[index] || index === 0) return;
+  if (!rows[index]) return;
 
-  const mainPct = Math.max(5, Math.min(95, liveValue('MainGameSharePct', settingsValues() || {}) ?? 70));
-  const pool = 100 - mainPct;                       // what all the side games share between them
   const sides = rows.length - 1;
-  if (sides < 1) return;
 
-  // Everyone else needs at least 1, so this one cannot take the whole pool.
-  const mine = Math.max(1, Math.min(pool - (sides - 1), wantPct));
-  const rest = pool - mine;
+  // One game listed: it takes the lot, and there is nothing to balance against.
+  if (sides < 1) { rows[0].weight = 100; editAndRender('GameWeights', weightsSpec(rows)); return; }
+
+  // Dragging the main game moves every side game together; dragging a side game moves only its peers. Both
+  // leave the column adding up to 100, so no row ever has to be worked out by hand.
+  const mainPct = index === 0
+    ? Math.max(5, Math.min(100 - sides, wantPct))
+    : Math.max(5, Math.min(95, Math.round((rows[0].weight * 100) / (rows.reduce((s, r) => s + r.weight, 0) || 1))));
+
+  const pool = 100 - mainPct;                       // what all the side games share between them
   const otherIdx = rows.map((_, i) => i).filter((i) => i !== 0 && i !== index);
 
   // Split what is left in proportion to what the others already had, so nudging one game does not flatten
@@ -1920,12 +1934,28 @@ function setShare(index, wantPct) {
   const prior = otherIdx.map((i) => Math.max(1, rows[i].weight));
   const priorSum = prior.reduce((a, b) => a + b, 0) || 1;
 
-  rows[index].weight = mine;
-  otherIdx.forEach((i, k) => { rows[i].weight = Math.max(1, Math.round(rest * prior[k] / priorSum)); });
-
-  // Row zero's stored weight is not used by the scheduler, but keeping it consistent means the spec written to
-  // disk reads the way the screen looks.
   rows[0].weight = mainPct;
+
+  if (index === 0) {
+    otherIdx.forEach((i, k) => { rows[i].weight = Math.max(1, Math.round(pool * prior[k] / priorSum)); });
+  } else {
+    // Everyone else needs at least 1, so this one cannot take the whole pool.
+    const mine = Math.max(1, Math.min(pool - (sides - 1), wantPct));
+    const rest = pool - mine;
+
+    rows[index].weight = mine;
+    otherIdx.forEach((i, k) => { rows[i].weight = Math.max(1, Math.round(rest * prior[k] / priorSum)); });
+  }
+
+  // Rounding the side games individually leaves the column summing to 99 or 101, and every row is then drawn as
+  // its slice of that total — so typing 70 into the main game showed 71 back. Push the drift onto a row the user
+  // is not currently looking at, so the number they just typed is the number they see.
+  const drift = 100 - rows.reduce((sum, r) => sum + r.weight, 0);
+
+  if (drift !== 0) {
+    const soak = otherIdx.length ? otherIdx.reduce((best, i) => (rows[i].weight > rows[best].weight ? i : best), otherIdx[0]) : index;
+    rows[soak].weight = Math.max(1, rows[soak].weight + drift);
+  }
 
   editAndRender('GameWeights', weightsSpec(rows));
 }

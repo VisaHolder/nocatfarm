@@ -368,8 +368,6 @@
     "No games yet — add the one this account is meant to be into first.": "ゲームがまだありません - このアカウントが「好きなはず」の 1 本をまず追加してください。",
     "The first game added is the main one.": "最初に追加したゲームがメインになります。",
     "Make this the main game": "これをメインのゲームにする",
-    "This game's share of the week. Every row here adds up to 100, including the main game - change one and the others move to make room.": "このゲームが 1 週間に占める割合。メインを含め、ここの各行は合計 100 になります - 1 つ変えると、ほかが場所を空けるように動きます。",
-    "The main game's share is set by \"Main game gets\" below, not here — it's held at that share however many other games you add. Click to jump to it.": "メインのゲームの割合は、ここではなく下の「メインのゲームの取り分」で決まります - 他を何本追加してもその割合に保たれます。クリックでそこへ移動します。",
     "Set up rep4rep": "rep4rep をセットアップ",
     "Your rep4rep account": "あなたの rep4rep アカウント",
     "How it works:": "仕組み：",
@@ -435,7 +433,11 @@
     "Trades": "トレード",
     "Staying out of the way": "邪魔をしない",
     "Log": "ログ",
-    "Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick \"Work out what its inventory is worth\".": "評価していません。オンに戻すには、設定を開いて {0} を選び、「トレード」を開いて「インベントリの価値を算出する」にチェックを入れてください。"
+    "Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick \"Work out what its inventory is worth\".": "評価していません。オンに戻すには、設定を開いて {0} を選び、「トレード」を開いて「インベントリの価値を算出する」にチェックを入れてください。",
+    "/week": "/週",
+    "About {0} of an average week once the main-game-only days are counted in.": "メインゲームのみの日も含めると、平均的な1週間のおよそ {0} です。",
+    "The main game's share of a mixed day, held there however many other games you add. It's rolled within about 10 points of this each morning.": "混在する日におけるメインゲームの割合です。ほかに何本追加してもこの割合が保たれ、毎朝この値の前後10ポイントほどの幅で決まります。",
+    "This game's share of a mixed day. Every row adds up to 100 - change one and the others move to make room.": "混在する日におけるこのゲームの割合です。全行の合計は100になり、1つ変えるとほかが調整されます。"
   },
   "settings": {
     "WebEnabled": {
@@ -587,8 +589,8 @@
       "tip": "人間モードのみ。手動で止めたとき、すぐ消えるのではなく、最大でこの長さだけランダムに数秒プレイを続けてから（区切りをつける人のように）ログオフします。"
     },
     "GameWeights": {
-      "label": "ゲームと頻度",
-      "tip": "ゲームと比重です（例：「730:70, 440:20」）。一番重いものがメインで大半の時間を占め、他は毎日ではなく、ときどきまとめて登場します。"
+      "label": "遊ぶゲームと頻度",
+      "tip": "どのゲームをどれくらいの割合で遊ぶかを、合計およそ100になるパーセントで指定します。最初のゲームがメインゲーム（このアカウントが好きだとされる作品）で、その数値が実際に効きます。ほかに何本追加してもメインゲームはこの割合に保たれ、毎日その前後10ポイントほどの幅で決まります。数値を省くと、残りを均等に分け合います。消さずに一時的に外すには「440:0」と書いてください。"
     },
     "WeekdayHours": {
       "label": "平日の時間",
@@ -614,17 +616,9 @@
       "label": "金・土は遅くまで起きている",
       "tip": "翌日に予定がない金曜と土曜の夜に、余分に起きている時間です。"
     },
-    "MainGameSharePct": {
-      "label": "メインゲームの割合",
-      "tip": "他のゲームも遊ぶ日に、リストの最初のゲームが占める割合（％）。毎日この前後 10 ポイントほどで振り直されます。"
-    },
     "PureMainDayChancePct": {
-      "label": "メインゲームだけの日の割合",
-      "tip": "丸一日メインゲームだけで終わる確率（100 分率）。他のゲームが毎日少しずつではなく、まとまって現れるのはこの設定のためです。"
-    },
-    "SideGameSharePct": {
-      "label": "混ざる日の他ゲームの割合",
-      "tip": "実際に他へ手を出す日に、その他のゲームが分け合う一日のおおよその割合。使い切ると、その日の残りはメインに戻ります。"
+      "label": "メインゲームだけの日",
+      "tip": "まる1日をメインゲームだけで過ごす確率（100分率）です。これがあることで、ほかのゲームが毎日同じ薄さで出てくるのではなく、まとまって現れます。毎日同じ配分こそ、ボットが残す最も分かりやすい痕跡です。また、入力したパーセントから1週間の実績をずらす唯一の要因でもあります。こうした日にはサブのゲームに時間が回らないため、1週間で見ると各サブゲームはおおよそ「入力値 × メイン専用でない日の割合」に落ち着きます。ゲーム欄の下の数字がその計算をしてくれます。"
     },
     "WarmUpMinMinutes": {
       "label": "最低これだけ慣らす",

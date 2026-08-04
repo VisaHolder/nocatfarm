@@ -268,10 +268,15 @@ public sealed class BotConfig {
 	public int BedHour { get; set; } = 2;
 	public int LateNightExtraHours { get; set; } = 2;
 
-	// how the games are split
-	public int MainGameSharePct { get; set; } = 70;
-	public int PureMainDayChancePct { get; set; } = 58;
-	public int SideGameSharePct { get; set; } = 18;
+	// How the games are split.
+	//
+	// One number governs this now, and it lives in GameWeights where it is visible next to the games it
+	// applies to. There used to be three: the share written against the main game in GameWeights (silently
+	// discarded), MainGameSharePct (which actually decided it), and SideGameSharePct (a second, independent
+	// cap on the same minutes). Two of the three could disagree with each other, and by default they did -
+	// 70 implied a 30% side share while SideGameSharePct shipped at 18, so the picker aimed for one figure
+	// and a budget it could not see cut it off at another.
+	public int PureMainDayChancePct { get; set; } = 25;
 
 	// settling in after a login
 	public int WarmUpMinMinutes { get; set; } = 3;

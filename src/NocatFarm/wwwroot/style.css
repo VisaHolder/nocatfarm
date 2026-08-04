@@ -722,7 +722,7 @@ button.ghost:hover:not(:disabled) { background: var(--line); }
    minmax(0, 1fr) rather than minmax(120px, 1fr) deliberately: a floor of 120px cannot shrink, so in a narrow
    container the whole row overflowed instead of the long name simply truncating. */
 .wrow {
-  display: grid; grid-template-columns: minmax(0, 1fr) 96px 62px 10px 44px;
+  display: grid; grid-template-columns: minmax(0, 1fr) 96px 62px 10px auto 44px;
   gap: 8px; align-items: center; min-height: 30px;
 }
 .wname { display: flex; align-items: center; gap: 6px; font-size: 13px; min-width: 0; }
@@ -791,12 +791,13 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 .bot-persona b { color: var(--text); letter-spacing: .5px; }
 .bot-persona.hidden-persona b { color: var(--muted); }
 .bot-mismatch { font-size: 11px; color: var(--warn); margin-top: 2px; }
-/* The main game's share is owned by MainGameSharePct, so it reads as a figure rather than a box you can edit.
-   It still has to occupy the column exactly like the inputs below it or the whole column looks bent. */
-.field .ctl .wpct.wfixed {
-  display: flex; align-items: center; justify-content: flex-end;
-  border: 1px solid transparent; color: var(--muted); cursor: help;
+/* What a row is worth across a whole week, beside the mixed-day share you type. Quiet and narrow: it is a
+   sanity check on the number to its left, not a second figure competing with it for attention. */
+.field .ctl .wweek {
+  min-width: 7ch; text-align: right; font-size: 11px; color: var(--muted);
+  cursor: help; white-space: nowrap;
 }
+.field .ctl .wweek i { font-style: normal; opacity: .65; }
 
 /* ── the achievement hunter ────────────────────────────────────────── */
 /* What it is doing and what is queued, above the pacing table. Chips rather than another table: this is a
