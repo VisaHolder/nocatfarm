@@ -33,7 +33,7 @@ public readonly record struct BotStatus(
 
 	public static BotStatus Of(Bot bot) {
 		if (!bot.IsOnline) {
-			return new BotStatus(bot.StatusText, "", "", "", "", "", 0, 0, 0, 0);
+			return new BotStatus(Loc.T(bot.StatusText), "", "", "", "", "", 0, 0, 0, 0);
 		}
 
 		HumanMode? human = BotManager.ModuleOf<HumanMode>(bot);
@@ -46,47 +46,47 @@ public readonly record struct BotStatus(
 		bool playing = false;
 
 		if (bot.Grinding) {
-			doing = "grinding " + GameNames.Of(bot.GrindGame);
+			doing = Loc.T("grinding {0}", GameNames.Of(bot.GrindGame));
 			playing = true;
 
 			if (bot.GrindUntil is { } until) {
-				sitting = $"{Fmt.Hm((int) Math.Max(0, (until - DateTime.UtcNow).TotalMinutes))} left";
+				sitting = Loc.T("{0} left", Fmt.Hm((int) Math.Max(0, (until - DateTime.UtcNow).TotalMinutes)));
 			}
 		} else if (bot.Paused) {
-			doing = "paused";
+			doing = Loc.T("paused");
 		} else if (bot.PlayingBlocked) {
-			doing = "waiting - you're playing on this account";
+			doing = Loc.T("waiting - you're playing on this account");
 		} else if (bot.InResumeGrace) {
 			// You've stopped, Steam freed the account, and we're sitting out the courtesy delay before picking
 			// back up. Saying "you're playing on this account" here (the human-mode StoodDown text, which is still
 			// the live phase until the delay elapses) directly contradicts the "free again - picking back up"
 			// line that just fired, which is exactly the confusion this branch removes.
-			doing = "picking back up in a moment";
+			doing = Loc.T("picking back up in a moment");
 		} else if (human is { Current: not HumanMode.Phase.Off }) {
 			doing = human.Doing;
 			(done, total) = human.Session;
 			playing = human.PlayingNow != 0;
 
 			if (total > 0) {
-				sitting = $"{Fmt.Hm(done)} of {Fmt.Hm(total)}";
+				sitting = Loc.T("{0} of {1}", Fmt.Hm(done), Fmt.Hm(total));
 			} else if (human.NextChange is { } next) {
 				int left = (int) Math.Max(0, (next - DateTime.UtcNow).TotalMinutes);
-				sitting = left > 0 ? $"{Fmt.Hm(left)} to go" : "any moment";
+				sitting = left > 0 ? Loc.T("{0} to go", Fmt.Hm(left)) : Loc.T("any moment");
 			}
 
 			dayDone = human.PlayedMinutesToday;
 			dayTotal = human.TargetMinutesToday;
 
 			if (dayTotal > 0) {
-				today = $"{Fmt.Hm(dayDone)} of {Fmt.Hm(dayTotal)} today";
+				today = Loc.T("{0} of {1} today", Fmt.Hm(dayDone), Fmt.Hm(dayTotal));
 			}
 		} else if (bot.IsFarming) {
-			doing = "farming trading cards";
-			sitting = $"{bot.CardsRemaining} card(s) in {bot.GamesRemaining} game(s)";
+			doing = Loc.T("farming trading cards");
+			sitting = Loc.T("{0} card(s) in {1} game(s)", bot.CardsRemaining, bot.GamesRemaining);
 			playing = true;
 		} else if (!string.IsNullOrEmpty(bot.Playing)) {
-			doing = "idling " + bot.Playing;
-			today = bot.CardsRemaining > 0 ? $"{bot.CardsRemaining} card(s) left" : "nothing to farm";
+			doing = Loc.T("idling {0}", bot.Playing);
+			today = bot.CardsRemaining > 0 ? Loc.T("{0} card(s) left", bot.CardsRemaining) : Loc.T("nothing to farm");
 			playing = true;
 		} else {
 			// "online, nothing running" was almost never true. Right after logging in the card farmer is part
@@ -95,7 +95,12 @@ public readonly record struct BotStatus(
 			// second before the line saying it had started farming.
 			string busy = BotManager.ModuleOf<CardFarmer>(bot)?.Status ?? "";
 
-			doing = (busy.Length > 0) && (busy is not ("idle" or "off")) ? busy : "online, nothing running";
+			// Loc.Is, not a plain ==: CardFarmer.Status is localised, so `busy is "idle"` stopped matching the
+			// moment the language changed and the readout started reporting "im Leerlauf" as though it were real
+			// work. Loc.Is matches the word in any language, including the one the status was cached in.
+			doing = (busy.Length > 0) && !Loc.Is(busy, "idle") && !Loc.Is(busy, "off")
+				? busy
+				: Loc.T("online, nothing running");
 		}
 
 		// Kept out of Doing so each surface can dim it or not. Only worth saying when it is NOT the ordinary
@@ -108,14 +113,17 @@ public readonly record struct BotStatus(
 		// With "I sign into this one myself" on, the app deliberately never writes the persona - so reporting
 		// the override it WOULD have used is exactly the lie this readout exists to prevent. Say who is
 		// actually in charge instead.
+		//
+		// PersonaWord stays English on the Bot - plugins read it as a stable value and the "online" test below
+		// has to keep matching in every language. It is translated here, at the point it becomes prose.
 		string persona =
-			bot.Cfg.IUseThisAccount ? "status left to your own Steam client" :
-			bot.PersonaOverridden ? $"{bot.PersonaReallyWord} - your own Steam client is overriding this" :
-			bot.PersonaWord is not "online" ? bot.PersonaWord : "";
+			bot.Cfg.IUseThisAccount ? Loc.T("status left to your own Steam client") :
+			bot.PersonaOverridden ? Loc.T("{0} - your own Steam client is overriding this", Loc.T(bot.PersonaReallyWord)) :
+			bot.PersonaWord is not "online" ? Loc.T(bot.PersonaWord) : "";
 
 		// Otherwise this failure is completely silent: the row keeps reporting the name we ASKED for while
 		// Steam shows the real game to everybody who looks at the profile.
-		string warning = bot.CustomNameNotShowing ? $"Steam shows {bot.PlayingAsSeen}" : "";
+		string warning = bot.CustomNameNotShowing ? Loc.T("Steam shows {0}", bot.PlayingAsSeen) : "";
 
 		string said = (comments != null) && bot.Cfg.Rep4Rep ? $"{comments.PostsToday}/{comments.Cap}" : "";
 

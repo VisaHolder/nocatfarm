@@ -19,22 +19,22 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 	public override string Status {
 		get {
 			if (Bot.Paused) {
-				return "paused";
+				return Loc.T("paused");
 			}
 
 			if (Bot.Cfg.IdleGames.Count == 0 && string.IsNullOrWhiteSpace(Bot.CustomName)) {
-				return "nothing configured";
+				return Loc.T("nothing configured");
 			}
 
 			if (Bot.HumanOwned) {
-				return "standing by (human mode)";
+				return Loc.T("standing by (human mode)");
 			}
 
 			if (Bot.IsFarming) {
-				return "standing by (farming cards)";
+				return Loc.T("standing by (farming cards)");
 			}
 
-			return Bot.PlayingBlocked ? "standing down (you're using it)" : string.IsNullOrEmpty(Bot.Playing) ? "idle" : Bot.Playing;
+			return Bot.PlayingBlocked ? Loc.T("standing down (you're using it)") : string.IsNullOrEmpty(Bot.Playing) ? Loc.T("idle") : Bot.Playing;
 		}
 	}
 

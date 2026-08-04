@@ -118,7 +118,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 	private DateTime _lastTick = DateTime.MinValue;
 	private bool _loaded;
-	private string _status = "off";
+	private string _status = Loc.T("off");
 	private uint _grindReset;   // the app whose schedule we've already pulled forward for the current grind (0 = none)
 
 	public override string Name => "achievements";
@@ -130,7 +130,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				if (Bot.Cfg.UnlockAchievements) {
 					await StepAsync(ct).ConfigureAwait(false);
 				} else {
-					_status = "off";
+					_status = Loc.T("off");
 				}
 			} catch (OperationCanceledException) {
 				throw;
@@ -151,7 +151,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		}
 
 		if (!Bot.IsOnline || Bot.Paused || Bot.PlayingBlocked) {
-			_status = "waiting";
+			_status = Loc.T("waiting");
 
 			return;
 		}

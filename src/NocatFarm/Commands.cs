@@ -584,7 +584,10 @@ public static partial class Commands {
 			}
 
 			foreach (IBotModule m in b.Modules) {
-				if (!string.IsNullOrEmpty(m.Status) && m.Status is not ("idle" or "off")) {
+				// Module statuses are localised, so a bare `is not ("idle" or "off")` only ever matched in
+				// English and printed a wall of resting modules in every other language. Compare against the
+				// same words in the same language.
+				if (!string.IsNullOrEmpty(m.Status) && !Core.Loc.Is(m.Status, "idle") && !Core.Loc.Is(m.Status, "off")) {
 					sb.AppendLine($"    {bar} {Log.Pad(m.Name, 8)} {m.Status}");
 				}
 			}
@@ -1926,6 +1929,12 @@ public static partial class Commands {
 
 	public static void ApplyGlobalSideEffects(BotManager mgr, SettingDef def) {
 		switch (def.Name) {
+			// The status text this program writes about itself is translated too, so a language change has to
+			// reach the pack the modules read from - not only the one the browser fetches.
+			case "Language":
+				Core.Loc.Refresh();
+
+				break;
 			case "FileLogging":
 			case "Debug":
 			case "LogRetentionDays":

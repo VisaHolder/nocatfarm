@@ -35,16 +35,16 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 			List<string> bits = [];
 
 			if (_accepted > 0) {
-				bits.Add($"{_accepted} accepted");
+				bits.Add(Loc.T("{0} accepted", _accepted));
 			}
 
 			if (_declined > 0) {
-				bits.Add($"{_declined} declined");
+				bits.Add(Loc.T("{0} declined", _declined));
 			}
 
 			lock (_actOn) {
 				if (_actOn.Count > 0) {
-					bits.Add($"{_actOn.Count} waiting");
+					bits.Add(Loc.T("{0} waiting", _actOn.Count));
 				}
 			}
 

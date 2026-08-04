@@ -915,7 +915,9 @@ public sealed class Bot : IAsyncDisposable {
 
 			if (max > 0) {
 				int secs = Rng.Next(Math.Max(3, max * 2 / 5), max + 1);
-				StatusText = $"finishing up - logging off in ~{secs}s";
+				// The only StatusText with a value baked into it, so it cannot be looked up at render time like
+				// the rest. Translated here instead; Loc.T on an already-translated string returns it untouched.
+				StatusText = Loc.T("finishing up - logging off in ~{0}s", secs);
 				Log.Info($"stopping - finishing up, logging off in about {secs}s", Name);
 
 				try {
@@ -1368,6 +1370,19 @@ public sealed class Bot : IAsyncDisposable {
 					// throttle a burst of restarts/reconnects trips. Left in the default case it retried every ~15s
 					// per account and only dug the hole deeper (and can knock the owner's own client offline). Route
 					// it through the SHARED cooldown so every account sits out together and the rate actually drops.
+					//
+					// It is also the one ambiguous result. Inside the weekly window it means nothing more than
+					// "Steam is switched off", and every account gets it at once. Serving a fleet-wide 25m cooldown
+					// for a restart that is usually over inside five keeps a perfectly healthy fleet down long after
+					// Steam is back - and logs "Steam is rate-limiting logins" when no throttle exists, which is
+					// exactly the wrong thing to read at 3am. The other three name the throttle outright, so they
+					// are never reinterpreted.
+					if (reason == EResult.ServiceUnavailable && SteamMaintenance.LikelyNow) {
+						await BackOffAndWaitAsync().ConfigureAwait(false);
+
+						break;
+					}
+
 					StatusText = "rate-limited";
 					_reconnectAttempts = 0;   // a cooldown is not a failure streak; don't let backoff compound on top
 					await Limiters.ServeLoginCooldownAsync(_cts?.Token ?? CancellationToken.None).ConfigureAwait(false);
@@ -1386,26 +1401,10 @@ public sealed class Bot : IAsyncDisposable {
 					break;
 				}
 
-				default: {
-					StatusText = "reconnecting";
-					int wait = Math.Max(1, Live.Global.ReconnectDelaySeconds);
-
-					// Steam restarts everything once a week and every account drops together. Retrying every ten
-					// seconds through that achieves nothing but a hundred warnings that read like a fault, so the
-					// wait stretches and the line says what is actually happening. The window is never trusted to
-					// mean "do not try" - Valve publishes no schedule and it drifts.
-					_reconnectAttempts++;
-					TimeSpan back = SteamMaintenance.Backoff(_reconnectAttempts, TimeSpan.FromSeconds(Rng.Next(wait, wait * 2)));
-
-					if (SteamMaintenance.LikelyNow) {
-						StatusText = "Steam maintenance";
-					}
-
-					Log.Warn(SteamMaintenance.Explain(back), Name);
-					await Task.Delay(back, _cts?.Token ?? CancellationToken.None).ConfigureAwait(false);
+				default:
+					await BackOffAndWaitAsync().ConfigureAwait(false);
 
 					break;
-				}
 			}
 
 			if (!_running) {
@@ -1425,6 +1424,23 @@ public sealed class Bot : IAsyncDisposable {
 			}
 		} catch (OperationCanceledException) {
 			// shutting down
+		}
+
+		return;
+
+		// Steam restarts everything once a week and every account drops together. Retrying every ten seconds
+		// through that achieves nothing but a hundred warnings that read like a fault, so the wait stretches and
+		// the line says what is actually happening. The window is never trusted to mean "do not try" - Valve
+		// publishes no schedule and it drifts.
+		async Task BackOffAndWaitAsync() {
+			StatusText = SteamMaintenance.LikelyNow ? "Steam maintenance" : "reconnecting";
+
+			int wait = Math.Max(1, Live.Global.ReconnectDelaySeconds);
+			_reconnectAttempts++;
+			TimeSpan back = SteamMaintenance.Backoff(_reconnectAttempts, TimeSpan.FromSeconds(Rng.Next(wait, wait * 2)));
+
+			Log.Warn(SteamMaintenance.Explain(back), Name);
+			await Task.Delay(back, _cts?.Token ?? CancellationToken.None).ConfigureAwait(false);
 		}
 	}
 

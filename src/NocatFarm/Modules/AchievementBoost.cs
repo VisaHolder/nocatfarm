@@ -40,7 +40,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 	private readonly Random _rng = new();
 	private DateTime _lastEnded = DateTime.MinValue;
 	private int _restNeeded;                      // this gap's own jittered length, rolled when the gap starts
-	private string _status = "";
+	private string _status = Loc.T("");
 
 	private List<uint> _singleplayer = [];       // discovered owned single-player games with achievements (mode 2)
 	private DateTime _discoveredAt = DateTime.MinValue;
@@ -68,7 +68,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 
 					_ours = false;
 					_sawGrind = false;
-					_status = "off";
+					_status = Loc.T("off");
 				}
 			} catch (OperationCanceledException) {
 				throw;
@@ -274,7 +274,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 
 		if (!await Bot.Library.RefreshIfStaleAsync(TimeSpan.FromHours(6), ct).ConfigureAwait(false) || (Bot.Library.Games.Count == 0)) {
 			if (_singleplayer.Count == 0) {
-				_status = "on - waiting for this account's library";
+				_status = Loc.T("on - waiting for this account's library");
 			}
 
 			return;   // a blip - keep any list we already had and try again next cycle
@@ -312,7 +312,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 				// meant an account with forty perfectly good targets did nothing at all for the best part of an
 				// hour. The list keeps growing on later ticks; _discoveredAt stays unset so the sweep continues.
 				_sweeping = true;
-				_status = $"on - {found.Count} game(s) so far, still working through the rest";
+				_status = Loc.T("on - {0} game(s) so far, still working through the rest", found.Count);
 
 				if (found.Count > _singleplayer.Count) {
 					_singleplayer = found;
@@ -413,7 +413,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			}
 
 			_sawGrind = true;
-			_status = _ours ? $"hunting {GameNames.Of(Bot.GrindGame)}" : "waiting - a manual grind is running";
+			_status = _ours ? Loc.T("hunting {0}", GameNames.Of(Bot.GrindGame)) : Loc.T("waiting - a manual grind is running");
 
 			return;
 		}
@@ -427,7 +427,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			_inARow += _ours ? 1 : 0;
 			_ours = false;
 			_lastEnded = DateTime.UtcNow;
-			_status = "between games";
+			_status = Loc.T("between games");
 
 			return;
 		}
@@ -439,7 +439,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		// Cards outrank achievements. A grind takes the account off whatever the farmer is doing, and a drop that
 		// was twenty minutes away would have to start its hours over - so hunting waits for the farmer to finish.
 		if (Bot.IsFarming) {
-			_status = "waiting - farming cards first";
+			_status = Loc.T("waiting - farming cards first");
 
 			return;
 		}
@@ -447,7 +447,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		List<uint> targets = Targets();
 
 		if (targets.Count == 0) {
-			_status = _sweeping ? "on - working out which games are worth hunting"
+			_status = _sweeping ? Loc.T("on - working out which games are worth hunting")
 				: Bot.Cfg.AchievementBoost == 2 ? "on - no single-player games with achievements found"
 				: "on - no games to hunt (pick some under \"Boost these games\")";
 
@@ -458,7 +458,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		// between boost sessions, and a longer one after a run of them.
 		if (Bot.HumanOwned) {
 			if (!HumanMode.AwakeFor(Bot)) {
-				_status = "resting until the account is awake";
+				_status = Loc.T("resting until the account is awake");
 
 				return;
 			}
@@ -472,7 +472,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			HumanMode? human = BotManager.ModuleOf<HumanMode>(Bot);
 
 			if ((human != null) && (human.TargetMinutesToday > 0) && (human.PlayedMinutesToday >= human.TargetMinutesToday)) {
-				_status = "done for today - hunting again tomorrow";
+				_status = Loc.T("done for today - hunting again tomorrow");
 
 				return;
 			}
@@ -492,7 +492,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			}
 
 			if ((_lastEnded != DateTime.MinValue) && (DateTime.UtcNow - _lastEnded < TimeSpan.FromMinutes(_restNeeded))) {
-				_status = $"weighted schedule - next hunt in {Fmt.Hm((int) (TimeSpan.FromMinutes(_restNeeded) - (DateTime.UtcNow - _lastEnded)).TotalMinutes)}";
+				_status = Loc.T("weighted schedule - next hunt in {0}", Fmt.Hm((int) (TimeSpan.FromMinutes(_restNeeded) - (DateTime.UtcNow - _lastEnded)).TotalMinutes));
 
 				return;
 			}
@@ -518,7 +518,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		}
 
 		_ours = true;
-		_status = $"hunting {GameNames.Of(target)}";
+		_status = Loc.T("hunting {0}", GameNames.Of(target));
 		Log.Info($"achievement boost - hunting {GameNames.Of(target)} for {Fmt.Hm(minutes)} ({_index}/{targets.Count} through the list)", Bot.Name);
 	}
 }

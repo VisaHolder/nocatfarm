@@ -115,21 +115,21 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	public override string Status {
 		get {
 			if (!Bot.Cfg.LegitMode) {
-				return "off";
+				return Loc.T("off");
 			}
 
 			return _phase switch {
-				Phase.WarmingUp => $"just signed in · settling for {Left(_readyAt)}",
-				Phase.Playing => $"{GameName(_game)} · {Left(_sessionEnds)} left · {Fmt.Hm(_playedMinutesToday)}/{Fmt.Hm(_targetMinutes)} today",
-				Phase.SwitchingGame => _switchingTo != 0 ? $"closing the game, then {GameName(_switchingTo)}" : "closing the game",
-				Phase.ShortBreak => $"short break · back in {Left(_phaseEnds)}",
-				Phase.MealBreak => $"meal break · back in {Left(_phaseEnds)}",
-				Phase.NightIdle => $"asleep, banking hours quietly · up {NextWakeTime():HH:mm}",
-				Phase.Asleep => $"asleep · up {NextWakeTime():HH:mm}",
-				Phase.DoneForToday => $"done for today ({Fmt.Hm(_playedMinutesToday)}) · back {NextWakeTime():HH:mm}",
-				Phase.DayOff => $"not playing today · back {NextWakeTime():HH:mm}",
-				Phase.StoodDown => "standing down, you're using it",
-				_ => "starting up"
+				Phase.WarmingUp => Loc.T("just signed in · settling for {0}", Left(_readyAt)),
+				Phase.Playing => Loc.T("{0} · {1} left · {2}/{3} today", GameName(_game), Left(_sessionEnds), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)),
+				Phase.SwitchingGame => _switchingTo != 0 ? Loc.T("closing the game, then {0}", GameName(_switchingTo)) : Loc.T("closing the game"),
+				Phase.ShortBreak => Loc.T("short break · back in {0}", Left(_phaseEnds)),
+				Phase.MealBreak => Loc.T("meal break · back in {0}", Left(_phaseEnds)),
+				Phase.NightIdle => Loc.T("asleep, banking hours quietly · up {0}", (NextWakeTime()).ToString("HH:mm")),
+				Phase.Asleep => Loc.T("asleep · up {0}", (NextWakeTime()).ToString("HH:mm")),
+				Phase.DoneForToday => Loc.T("done for today ({0}) · back {1}", Fmt.Hm(_playedMinutesToday), (NextWakeTime()).ToString("HH:mm")),
+				Phase.DayOff => Loc.T("not playing today · back {0}", (NextWakeTime()).ToString("HH:mm")),
+				Phase.StoodDown => Loc.T("standing down, you're using it"),
+				_ => Loc.T("starting up")
 			};
 		}
 	}

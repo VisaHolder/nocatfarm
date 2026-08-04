@@ -37,7 +37,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 	private Rep4RepState? _state;
 	private string? _profileId;
-	private string _status = "off";
+	private string _status = Loc.T("off");
 	private int _rateLimitRun;   // consecutive Steam rate-limits, reset on a good post
 
 	public override string Name => "rep4rep";
@@ -118,7 +118,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		// The loop stays alive whether or not commenting is switched on, so flipping it on (or pasting the API
 		// token) takes effect on its own instead of needing the account restarted.
 		while (!ct.IsCancellationRequested && (!CommentingOn || !_api.HasToken)) {
-			_status = !CommentingOn ? "off" : "waiting for the rep4rep API token";
+			_status = !CommentingOn ? Loc.T("off") : Loc.T("waiting for the rep4rep API token");
 
 			if (!await Sleep(TimeSpan.FromSeconds(20), ct).ConfigureAwait(false)) {
 				return;
@@ -136,7 +136,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		// Say so, too. The status was left reading "off" from the gate above for the whole of this wait - up to
 		// ten minutes of a switched-ON account reporting the exact word it would use if the feature had been
 		// switched off, which is indistinguishable from broken and sent me hunting a module that was fine.
-		_status = "settling in after signing in";
+		_status = Loc.T("settling in after signing in");
 
 		if (!await Sleep(Rng.Seconds(90, 600), ct).ConfigureAwait(false)) {
 			return;
@@ -144,7 +144,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 		while (!ct.IsCancellationRequested) {
 			if (!CommentingOn) {
-				_status = "off";
+				_status = Loc.T("off");
 
 				if (!await Sleep(TimeSpan.FromSeconds(20), ct).ConfigureAwait(false)) {
 					return;
@@ -160,7 +160,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 				// The whole module can sit silent for a day when there is nothing to do, which is
 				// indistinguishable from a module that has stopped running. One Debug line per pass says which.
-				Log.Debug($"rep4rep: {_status} - next look in {Fmt.Hm(Math.Max(60, waitSeconds) / 60)}", Bot.Name);
+				Log.Debug(Loc.T("rep4rep: {0} - next look in {1}", _status, Fmt.Hm(Math.Max(60, waitSeconds) / 60)), Bot.Name);
 			} catch (OperationCanceledException) {
 				throw;
 			} catch (Exception e) {
@@ -181,13 +181,13 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		_forceNext = false;
 
 		if (Paused || Bot.Paused) {
-			_status = "paused";
+			_status = Loc.T("paused");
 
 			return 5 * 60;
 		}
 
 		if (!Bot.IsOnline) {
-			_status = "offline";
+			_status = Loc.T("offline");
 
 			return 2 * 60;
 		}
@@ -196,14 +196,14 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		_state ??= await Rep4RepState.LoadAsync(Bot.Name).ConfigureAwait(false);
 
 		if (_state == null) {
-			_status = "state unreadable - holding";
+			_status = Loc.T("state unreadable - holding");
 
 			return 10 * 60;
 		}
 
 		if (_state.IsBlocked) {
 			TimeSpan left = new DateTime(_state.BlockedUntil, DateTimeKind.Utc) - DateTime.UtcNow;
-			_status = $"resting {Fmt.Hm((int) left.TotalMinutes)} ({_state.BlockReason})";
+			_status = Loc.T("resting {0} ({1})", Fmt.Hm((int) left.TotalMinutes), _state.BlockReason);
 
 			return 10 * 60;
 		}
@@ -211,7 +211,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		int posted = _state.PostsInLast24h();
 
 		if (posted >= Cap) {
-			_status = $"{posted}/{Cap} today - done";
+			_status = Loc.T("{0}/{1} today - done", posted, Cap);
 
 			return 20 * 60;
 		}
@@ -220,7 +220,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			int windowWait = WindowWaitSeconds();
 
 			if (windowWait > 0) {
-				_status = $"outside the window, opens in {Fmt.Hm(windowWait / 60)}";
+				_status = Loc.T("outside the window, opens in {0}", Fmt.Hm(windowWait / 60));
 
 				return Math.Min(windowWait, 30 * 60);
 			}
@@ -234,7 +234,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 				int gapSeconds = Bot.Cfg.Rep4RepGapMinMinutes * 60;
 
 				if (sinceSeconds < gapSeconds) {
-					_status = $"{posted}/{Cap} today - next in {Fmt.Hm((gapSeconds - sinceSeconds) / 60)}";
+					_status = Loc.T("{0}/{1} today - next in {2}", posted, Cap, Fmt.Hm((gapSeconds - sinceSeconds) / 60));
 
 					return (gapSeconds - sinceSeconds) + Rng.Next(30, 180);
 				}
@@ -242,7 +242,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		}
 
 		if (!Bot.Web.Ready && !await Bot.Web.RefreshAsync(false, ct).ConfigureAwait(false)) {
-			_status = "no Steam web session";
+			_status = Loc.T("no Steam web session");
 
 			return 5 * 60;
 		}
@@ -250,7 +250,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		_profileId ??= await _api.ResolveProfileIdAsync(Bot.SteamId, Live.Global.Rep4RepAutoAddProfiles, ct).ConfigureAwait(false);
 
 		if (_profileId == null) {
-			_status = "not registered on rep4rep";
+			_status = Loc.T("not registered on rep4rep");
 			Log.Warn(Live.Global.Rep4RepAutoAddProfiles
 				? "rep4rep couldn't register this Steam account - check the API token is right; retrying in 30m"
 				: $"this account isn't registered on rep4rep - add steamcommunity.com/profiles/{Bot.SteamId} on rep4rep.com, or turn Rep4RepAutoAddProfiles on", Bot.Name);
@@ -261,7 +261,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		Rep4RepTask? task = await NextTaskAsync(_profileId, ct).ConfigureAwait(false);
 
 		if (task == null) {
-			_status = $"{posted}/{Cap} today - no task available";
+			_status = Loc.T("{0}/{1} today - no task available", posted, Cap);
 
 			return NoTaskRetryMinutes * 60;
 		}
@@ -270,12 +270,12 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		// task-fetch steps, and a dashboard "post now" could have spent a slot since. This is the one number that
 		// gets an account comment-banned, so it's re-checked here too.
 		if (_state.PostsInLast24h() >= Cap) {
-			_status = $"{Cap}/{Cap} today - done";
+			_status = Loc.T("{0}/{1} today - done", Cap, Cap);
 
 			return 20 * 60;
 		}
 
-		_status = $"commenting on {task.TargetName}";
+		_status = Loc.T("commenting on {0}", task.TargetName);
 		(Outcome outcome, string? error) = await PostCommentAsync(task, ct).ConfigureAwait(false);
 
 		switch (outcome) {
@@ -353,7 +353,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			Log.Warn($"commented on {task.TargetName} but rep4rep didn't credit it ({done}/{Cap} today)", Bot.Name);
 		}
 
-		_status = $"{done}/{Cap} today";
+		_status = Loc.T("{0}/{1} today", done, Cap);
 
 		if (done >= Cap) {
 			string frees = NextSlot is { } t ? $"until ~{t.ToLocalTime():HH:mm}" : "for now";
@@ -394,7 +394,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		_state.BlockReason = reason;
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 
-		_status = "resting 24h";
+		_status = Loc.T("resting 24h");
 		Log.Attention($"Steam won't take comments from this account - sitting out 24h ({reason})", Bot.Name);
 
 		// Re-check every 10 min rather than sleeping the whole day, so 'rep4rep clear' can release it immediately.
@@ -418,7 +418,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		_state.BlockReason = "Steam's daily comment limit";
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 		_rateLimitRun = 0;
-		_status = $"Steam's daily comment limit - resting ~24h ({posted} posted here today)";
+		_status = Loc.T("Steam's daily comment limit - resting ~24h ({0} posted here today)", posted);
 		Log.Attention($"Steam's daily non-friend comment limit reached ({posted} posted via nocat.farm today; any others were posted outside it) - resting until it clears in ~24h", Bot.Name);
 
 		return 10 * 60;
@@ -460,14 +460,14 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			_state.BlockReason = "rate-limited - resting to baseline";
 			await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 			_rateLimitRun = 0;
-			_status = $"rate-limited - resting {Fmt.Hm(rest)}, back at baseline";
+			_status = Loc.T("rate-limited - resting {0}, back at baseline", Fmt.Hm(rest));
 			Log.Attention($"Steam keeps rate-limiting comments at {posted}/{cap} - sitting out {Fmt.Hm(rest)} until the window clears, then starting fresh", Bot.Name);
 
 			return 10 * 60;
 		}
 
 		int wait = Rng.Next(RateLimitLowMinutes, RateLimitHighMinutes + 1);
-		_status = $"rate-limited, backing off {wait}m";
+		_status = Loc.T("rate-limited, backing off {0}m", wait);
 		Log.Warn($"Steam rate-limit - backing off ~{wait}m", Bot.Name);
 
 		return wait * 60;
@@ -750,7 +750,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		_state.Strikes = 0;
 		_state.ClearDeadTargets();
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
-		_status = "hold cleared";
+		_status = Loc.T("hold cleared");
 		_forceNext = true;
 		Wake();
 	}
@@ -767,6 +767,6 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		_state.Strikes = 0;
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 		_rateLimitRun = 0;
-		_status = $"resting a day ({reason})";
+		_status = Loc.T("resting a day ({0})", reason);
 	}
 }
