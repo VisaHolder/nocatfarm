@@ -525,9 +525,6 @@ public sealed class Bot : IAsyncDisposable {
 	private uint _knownComments;
 	private bool _commentBaselineSet;
 
-	// The last un-dismissed count actually reported, so an unchanging number is never announced twice.
-	// Deliberately NOT reset on login - a reconnect is exactly when the duplicate used to appear.
-	private uint _reportedComments;
 	private int _tradeOffersWaiting = -1;
 	private TaskCompletionSource<bool> _tradeOffer = new(TaskCreationOptions.RunContinuationsAsynchronously);
 	private int _tradeOfferPending;
@@ -1776,16 +1773,17 @@ public sealed class Bot : IAsyncDisposable {
 		if (!_commentBaselineSet) {
 			_commentBaselineSet = true;
 
-			// Steam's own un-dismissed notification counter, NOT a count of comments sitting on the profile. It
-			// never falls on its own, so the old code restated the SAME number on every single login forever -
-			// nine identical lines in one evening here - about something nobody could act on.
+			// Deliberately silent.
 			//
-			// Two changes. Try to clear it, the way the new-items counter is cleared; and only ever say anything
-			// when the number is one we have not already reported, so it cannot repeat itself however stubborn
-			// Steam is about the count.
-			if ((cb.NewComments > 0) && (cb.NewComments != _reportedComments)) {
-				_reportedComments = cb.NewComments;
-				Log.Debug($"Steam has {cb.NewComments} un-dismissed comment notification(s) - marking them read", Name);
+			// This is Steam's own un-dismissed notification counter, NOT a count of comments on the profile. It
+			// never falls on its own and nothing here can make it - a real load of /my/commentnotifications/ and
+			// a mark-all-read over the client connection were both tried and verified reaching Steam, and the
+			// number did not move. So it is unchanging, uncleanable and not actionable: three good reasons never
+			// to print it. It was being restated on every single login, forever.
+			//
+			// A comment that genuinely arrives while we are connected still gets announced, below, because that
+			// one IS news and the count going UP is how you can tell.
+			if (cb.NewComments > 0) {
 				ClearAllNotifications();
 			}
 
