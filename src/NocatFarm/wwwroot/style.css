@@ -159,36 +159,9 @@ nav { display: flex; flex-direction: row; gap: var(--s1); }
 /* And in the nav itself, between Global and the account list. */
 .settingsnav h2 + .jump, .settingsnav .s:first-of-type { border-top: 1px solid var(--line); padding-top: var(--s2); }
 
-/* The achievement pacer's working, shown rather than asserted. Deliberately plain: this is a readout, and
-   anything decorative here would be competing with the numbers for attention. */
-.pacer { margin: var(--s3) 0 0; max-width: 90ch; }
-.pacer table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.pacer th {
-  text-align: left; font-weight: 400; color: var(--muted); font-size: 11px;
-  text-transform: uppercase; letter-spacing: .06em; padding: 0 var(--s2) var(--s1) 0;
-  border-bottom: 1px solid var(--line); white-space: nowrap;
-}
-.pacer td { padding: var(--s1) var(--s2) var(--s1) 0; border-bottom: 1px solid var(--line); }
-.pacer tr:last-child td { border-bottom: 0; }
-.pacer .g { color: var(--text); }
-.pacer .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.pacer .w { color: var(--muted); white-space: nowrap; }
-
-/* A game that is deliberately left alone reads as struck out rather than merely dim, so "why is this doing
-   nothing" answers itself. */
-.pacer tr.off td { color: var(--muted); }
-.pacer tr.off .g { text-decoration: line-through; }
-
-.pacer .bar { width: 90px; }
-.pacer .bar span {
-  display: block; height: 4px; background: var(--text); min-width: 1px;
-}
-.pacer td.bar { position: relative; }
-.pacer td.bar::before {
-  content: ""; position: absolute; left: 0; right: var(--s2); top: 50%;
-  height: 4px; margin-top: -2px; background: var(--panel2);
-}
-.pacer td.bar span { position: relative; }
+/* The one line that replaced the pacer grid. A readout, not a table: which game is earning and how far in. */
+.earning { margin: var(--s3) 0 0; font-size: 13px; color: var(--muted); max-width: 90ch; }
+.earning b { color: var(--text); }
 
 /* The command reference, in a modal that scrolls by itself rather than growing the dialog off screen. */
 .helplist { max-height: 55vh; overflow-y: auto; margin: var(--s3) 0; border-top: 1px solid var(--line); }

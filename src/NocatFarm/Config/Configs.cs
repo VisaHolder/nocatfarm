@@ -225,7 +225,7 @@ public sealed class BotConfig {
 	public int AchievementPace { get; set; } = 1;
 
 	/// <summary>Hard cap on how much of any one game will ever be completed. 0 uses each game's own ceiling.</summary>
-	public int AchievementMaxCompletionPct { get; set; }
+	public int AchievementMaxCompletionPct { get; set; } = 90;
 
 	// ── inventory ──
 	public bool ShowInventoryValue { get; set; } = true;
@@ -433,6 +433,26 @@ public static class ConfigStore {
 	/// day the account wakes up to is the day it would have had.
 	/// </summary>
 	/// <returns>true when the config changed and should be written back.</returns>
+	/// <summary>
+	/// Carries a config across the retirement of the per-game achievement ceiling.
+	///
+	/// 0 used to mean "let every game roll its own ceiling out of a hardcoded range". There are no per-game
+	/// ceilings any more, so 0 no longer means anything - and since the setting's floor is now 1, a stored 0
+	/// would clamp to a 1% ceiling and stop almost every game dead after a single achievement. Anything that
+	/// still says 0 is taking the old default meaning, so it takes the new default figure.
+	/// </summary>
+	/// <returns>true when the config changed and should be written back.</returns>
+	public static bool MigrateAchievementCeiling(BotConfig cfg, string name) {
+		if (cfg.AchievementMaxCompletionPct > 0) {
+			return false;
+		}
+
+		cfg.AchievementMaxCompletionPct = 90;
+		Log.Info("achievement ceiling is one figure now, not one per game - set to 90%", name);
+
+		return true;
+	}
+
 	public static bool MigrateGameShares(BotConfig cfg, string name) {
 		if (cfg.MainGameSharePct <= 0) {
 			return false;   // already migrated, or written by a version that never had it
@@ -504,7 +524,11 @@ public static class ConfigStore {
 				cfg.IdentitySecret = Secrets.Unprotect(cfg.IdentitySecret);
 				cfg.AccountProxyPassword = Secrets.Unprotect(cfg.AccountProxyPassword);
 
-				if (MigrateGameShares(cfg, name)) {
+				// Both migrations run, then one write - a config can need either, and neither is worth two saves.
+				bool migrated = MigrateGameShares(cfg, name);
+				migrated |= MigrateAchievementCeiling(cfg, name);
+
+				if (migrated) {
 					SaveBot(name, cfg);
 				}
 

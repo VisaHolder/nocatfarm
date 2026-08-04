@@ -1616,49 +1616,24 @@ function pacerTable() {
   if (pacerRows === null) return `<p class="muted small">${esc(t('Reading what it has done so far…'))}</p>`;
   if (!pacerRows.length) return `<p class="muted small empty">${esc(t('Nothing tracked yet. It starts counting the first minute a game is running.'))}</p>`;
 
-  const rows = pacerRows.slice(0, 12).map((g) => {
-    const blocked = g.Blocked;
-    const next = new Date(g.NextAllow);
-    const soon = next <= new Date();
-    const hrs = g.PlayedMinutes >= 60 ? (g.PlayedMinutes / 60).toFixed(1) + t('h') : g.PlayedMinutes + t('m');
+  // One line, not a grid.
+  //
+  // A game only ever earns while it is being PLAYED, so a table listing sixty-odd owned games was sixty-odd rows
+  // of "not read yet / when it next plays" wrapped around the single row that meant anything. The one fact worth
+  // stating is which game is earning right now and how far along it is; everything else is answered by `cheevo`.
+  const live = pacerRows.find((g) => g.Running && !g.Blocked);
 
-    // Two different things worth seeing, so two different bars would be one too many: the fraction earned is the
-    // one people care about, and the rarity floor is the reason it isn't higher.
-    const done = g.Total > 0 ? Math.round((g.Unlocked / g.Total) * 100) : 0;
-    const earned = g.Total > 0
-      ? `<b>${g.Unlocked}</b><span class="muted">/${g.Total}</span>`
-      : (g.Unlocked > 0 ? `<b>${g.Unlocked}</b>` : '<span class="muted">—</span>');
+  if (!live) {
+    return `<p class="muted small">${esc(t('Nothing is earning right now — a game only earns while this account is playing it.'))}</p>`;
+  }
 
-    // The floor is the RAREST it may touch, not what it takes next - it always takes the most common one that
-    // is still locked, so a game with none of the easy ones done gets an easy one, never the 3% tail. Writing it
-    // as "≥3%" read as a promise to unlock a 3% achievement, which is the opposite of what happens.
-    const floor = g.FloorPercent > 100
-      ? `<span class="muted">${esc(t('none yet'))}</span>`
-      : `<span class="muted">${esc(t('down to'))}</span> ${g.FloorPercent}%`;
+  const name = esc(GAME_NAMES[live.App] || live.Game);
+  const hrs = live.PlayedMinutes >= 60 ? (live.PlayedMinutes / 60).toFixed(1) + t('h') : live.PlayedMinutes + t('m');
+  const done = live.Total > 0
+    ? tf('{0} of {1} done', live.Unlocked, live.Total)
+    : t('reading what it has so far');
 
-    return `<tr class="${blocked ? 'off' : ''}">
-      <td class="g" title="${esc(GAME_NAMES[g.App] || g.Game)}">${esc(GAME_NAMES[g.App] || g.Game)}</td>
-      <td class="n">${hrs}</td>
-      <td class="n">${earned}</td>
-      ${g.Total > 0
-        ? `<td class="bar" data-tip="${esc(tf('{0}% of this game earned. It stops at {1}.', done, g.CeilingPercent > 0 ? g.CeilingPercent + '%' : t("this game's own ceiling")))}"><span style="width:${Math.max(0, Math.min(100, done))}%"></span></td>`
-        : `<td class="w muted" data-tip="${esc(t("This game's achievements haven't been read yet - that happens the first time it comes up for one."))}">${esc(t('not read yet'))}</td>`}
-      <td class="n">${floor}</td>
-      <td class="w">${blocked ? esc(t(g.Why)) : soon ? esc(t('due now')) : '~' + next.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</td>
-    </tr>`;
-  }).join('');
-
-  return `<div class="tablewrap pacer"><table>
-    <tr>
-      <th>${esc(t('Game'))}</th>
-      <th data-tip="${esc(t('Hours this account has spent in this game. This is what decides how much it is allowed to earn.'))}">${esc(t('Played'))}</th>
-      <th data-tip="${esc(t('Achievements earned out of what the game has.'))}">${esc(t('Earned'))}</th>
-      <th data-tip="${esc(t("How much of the game is done. The bar never fills - it stops at this game's ceiling, because 100% on an idled account is the giveaway."))}">${esc(t('Progress'))}</th>
-      <th data-tip="${esc(t('How far down the rarity list the hours so far have opened. It always unlocks the MOST COMMON one still locked - the ones you get just by playing - and only works down toward the rare tail as the hours build. This figure is the limit, never the next pick: a game with none of the easy ones done gets an easy one.'))}">${esc(t('Opened'))}</th>
-      <th data-tip="${esc(t('Roughly when the next one is due, or why this game is left alone. It is a pace, not a promise.'))}">${esc(t('Next'))}</th>
-    </tr>
-    ${rows}
-  </table></div>${pacerRows.length > 12 ? `<p class="muted small">${esc(tf('…and {0} more.', pacerRows.length - 12))}</p>` : ''}`;
+  return `<p class="earning">${tf('Earning in {0} — {1} played, {2}.', `<b>${name}</b>`, hrs, done)}</p>`;
 }
 
 function sectionIntro(section, values) {
@@ -1680,9 +1655,7 @@ function sectionIntro(section, values) {
         ? tf('Earns achievements slowly, from real playtime, {0}.', t(pace))
         : t('Earns achievements slowly, from real playtime.'))}</b>
       <p style="margin:8px 0 0">${esc(t('Unlocking a pile of achievements the second it logs in is what gives a bot away. This drips them out the way a real player would instead - a few at a time, only the common ones, paced to the hours actually put in.'))}
-      ${esc(cap > 0
-        ? tf('It never fully completes a game (it stops at {0}%), and leaves the game this account plays most well alone.', cap)
-        : t('It never fully completes a game, and leaves the game this account plays most well alone.'))}</p>
+      ${esc(tf('It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.', cap || 90))}</p>
     </div>
     ${huntPanel()}
     ${recentUnlocks()}

@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Globalization;
 using NocatFarm.Config;
 using NocatFarm.Core;
 
@@ -13,7 +14,7 @@ namespace NocatFarm.Modules;
 /// rarity data and how-long-to-beat figures over a long period. The old drip here - a few a day, easiest first
 /// - was a reasonable first approximation and is not in the same league: it had no notion of a game's shape, no
 /// completion ceiling, no rarity gate tied to playtime, and it spaced unlocks evenly, which is the one thing
-/// real play never does.
+/// real play never does. (The per-game ceilings that came across with it are gone - see the ceiling note below.)
 ///
 /// What makes an unlock history look earned rather than granted:
 ///
@@ -26,8 +27,8 @@ namespace NocatFarm.Modules;
 ///     hundred-hour co-op grind pops a quick early burst and then crawls for months. One global rate cannot
 ///     express both, so each game carries its own <see cref="Profile"/>.
 ///
-///   • <b>Nobody finishes.</b> Every game gets a completion ceiling rolled once, well short of 100% - a
-///     perfect completion on an idle account is itself the giveaway.
+///   • <b>Nobody finishes.</b> Nothing is taken past the account's completion ceiling - a game sitting at
+///     100% on an idled account is itself the giveaway. One figure, set in the settings, applied everywhere.
 ///
 ///   • <b>Real unlocks cluster.</b> Finishing a level pops three at once and then nothing for a day. A steady
 ///     one-every-N-minutes metronome does not happen, so bursts are modelled explicitly.
@@ -54,26 +55,24 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		int SteadyGapHi,
 		int SteadyPlayedMins,
 		double RarityScale,
-		int CeilingLo,
-		int CeilingHi,
 		int MinPercent = 0
 	);
 
-	//                          onboard: count, gap lo-hi, played gate | steady: gap lo-hi, played gate | rarity scale | ceiling lo-hi
+	//                          onboard: count, gap lo-hi, played gate | steady: gap lo-hi, played gate | rarity scale
 	private static readonly Dictionary<uint, Profile> Profiles = new() {
-		{ 400, new Profile(5, 8, 20, 10, 40, 90, 30, 0.5, 33, 45) },            // Portal - 15 achievements, ~3h. Quick easy cluster, challenge tail basically never.
-		{ 286690, new Profile(5, 12, 30, 12, 40, 90, 25, 1.0, 50, 60) },        // Metro 2033 Redux - 49, ~7h story.
-		{ 220, new Profile(6, 12, 30, 12, 40, 90, 25, 1.3, 40, 50) },           // Half-Life 2 - 69, ~13h, big collectible tail.
-		{ 719070, new Profile(5, 12, 30, 12, 40, 90, 25, 1.0, 50, 60) },        // Project Warlock - ~40, ~8h retro FPS.
-		{ 500, new Profile(9, 6, 18, 8, 45, 100, 30, 2.0, 30, 40) },            // Left 4 Dead - 73, co-op grind.
-		{ 550, new Profile(10, 6, 18, 8, 45, 100, 30, 2.0, 25, 35) },           // Left 4 Dead 2 - 101, co-op grind.
-		{ 440, new Profile(10, 6, 18, 8, 45, 100, 30, 2.0, 18, 28) },           // Team Fortress 2 - 520, a huge 5-19% middle tier and only 10 genuinely rare.
-		{ 1938090, new Profile(3, 60, 180, 30, 150, 360, 50, 1.0, 12, 18) },    // Call of Duty - 157, every one of them under 10% globally. Playtime-gated hard; never the 0% tail.
-		{ 1172470, new Profile(3, 20, 60, 15, 90, 220, 35, 1.0, 60, 80) },      // Apex Legends - 12, all >=10%. A real player has most of them.
-		{ 578080, new Profile(4, 20, 60, 15, 90, 240, 35, 1.3, 40, 58) },       // PUBG - 37, battle-royale grind. The lone 0% is skipped automatically.
-		{ 1085660, new Profile(4, 20, 60, 15, 90, 240, 35, 1.2, 48, 66) },      // Destiny 2 - 23, healthy spread.
-		{ 1808500, new Profile(4, 15, 45, 12, 70, 200, 30, 1.0, 55, 72) },      // ARC Raiders - 50, 39 of them common.
-		{ 1943950, new Profile(4, 15, 45, 12, 60, 180, 30, 1.0, 45, 62) }       // Muck - 34, healthy spread.
+		{ 400, new Profile(5, 8, 20, 10, 40, 90, 30, 0.5) },            // Portal - 15 achievements, ~3h. Quick easy cluster, challenge tail basically never.
+		{ 286690, new Profile(5, 12, 30, 12, 40, 90, 25, 1.0) },        // Metro 2033 Redux - 49, ~7h story.
+		{ 220, new Profile(6, 12, 30, 12, 40, 90, 25, 1.3) },           // Half-Life 2 - 69, ~13h, big collectible tail.
+		{ 719070, new Profile(5, 12, 30, 12, 40, 90, 25, 1.0) },        // Project Warlock - ~40, ~8h retro FPS.
+		{ 500, new Profile(9, 6, 18, 8, 45, 100, 30, 2.0) },            // Left 4 Dead - 73, co-op grind.
+		{ 550, new Profile(10, 6, 18, 8, 45, 100, 30, 2.0) },           // Left 4 Dead 2 - 101, co-op grind.
+		{ 440, new Profile(10, 6, 18, 8, 45, 100, 30, 2.0) },           // Team Fortress 2 - 520, a huge 5-19% middle tier and only 10 genuinely rare.
+		{ 1938090, new Profile(3, 60, 180, 30, 150, 360, 50, 1.0) },    // Call of Duty - 157, every one of them under 10% globally. Playtime-gated hard; never the 0% tail.
+		{ 1172470, new Profile(3, 20, 60, 15, 90, 220, 35, 1.0) },      // Apex Legends - 12, all >=10%. A real player has most of them.
+		{ 578080, new Profile(4, 20, 60, 15, 90, 240, 35, 1.3) },       // PUBG - 37, battle-royale grind. The lone 0% is skipped automatically.
+		{ 1085660, new Profile(4, 20, 60, 15, 90, 240, 35, 1.2) },      // Destiny 2 - 23, healthy spread.
+		{ 1808500, new Profile(4, 15, 45, 12, 70, 200, 30, 1.0) },      // ARC Raiders - 50, 39 of them common.
+		{ 1943950, new Profile(4, 15, 45, 12, 60, 180, 30, 1.0) }       // Muck - 34, healthy spread.
 	};
 
 	/// <summary>
@@ -83,7 +82,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// rarity floor and the played-time gate still hold the hard tail shut. An earlier version used gaps of
 	/// eight to forty HOURS, which meant an all-night session earned nothing at all.
 	/// </summary>
-	private static readonly Profile Fallback = new(3, 20, 120, 25, 60, 150, 25, 1.0, 40, 65);
+	private static readonly Profile Fallback = new(3, 20, 120, 25, 60, 150, 25, 1.0);
 
 	private static Profile ProfileFor(uint app) => Profiles.TryGetValue(app, out Profile? p) ? p : Fallback;
 
@@ -108,7 +107,6 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		public long PlayedMins;         // our accumulated in-game minutes, which drive the rarity gate
 		public long MinsAtLastUnlock;   // enforces the played-time gap
 		public DateTime NextAllow;      // earliest wall-clock moment the next unlock may fire
-		public int Ceiling = -1;        // rolled once per game: the most of this game we will ever complete
 		public int Unlocked = -1;       // last known unlocked count; -1 means unknown, so treat as onboarding
 		public int Total;               // how many the game has at all, so progress reads as a fraction
 		public int BurstLeft;           // mid-burst: this many more pop quickly, bypassing the played-time gate
@@ -195,10 +193,6 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			Profile prof = ProfileFor(app);
 
 			lock (_gate) {
-				if (g.Ceiling < 0) {
-					g.Ceiling = _rng.Next(prof.CeilingLo, prof.CeilingHi + 1);
-				}
-
 				g.PlayedMins++;
 
 				// A deliberate grind engages the achievement schedule NOW. Otherwise a spacing gap set during
@@ -322,29 +316,17 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			g.Total = total;
 		}
 
-		// Stop well short of everything. Never below the onboarding cluster though, or a game with a low
-		// ceiling and a big early cluster (Portal: 33% of 15 is 4, but it onboards 5) gets cut off mid-burst.
-		// The account's own cap wins when it is stricter than the game's. Never the other way round: raising a
-		// game's tuned ceiling from a settings box would undo the research behind it.
-		int ceiling = g.Ceiling;
-		int cap = Bot.Cfg.AchievementMaxCompletionPct;
-
-		// Set the figure and it is the figure, in both directions.
+		// One ceiling, the one in the settings box.
 		//
-		// This used to clamp downward only, so a game's researched ceiling could never be raised from settings.
-		// Defensible for stealth, wrong as a rule: it left no way to say "this account has genuinely played
-		// this game to death, let it finish", and the tuned ceilings are guesses about a typical owner, not
-		// facts about this one. 0 still means "use the game's own tuned ceiling", which stays the default.
-		if (cap > 0) {
-			ceiling = cap;
-		}
+		// Every game used to roll its own out of a hardcoded per-game range - Team Fortress 2 drew from 18-28,
+		// landed on 23, and that number was written into the state file for good. It could not be predicted,
+		// set, or explained: the only honest thing the UI could say was "it stops at 23%", and the only answer
+		// to "why 23" was a dice roll. A single figure the account holder chooses does the same job and can
+		// actually be reasoned about. A grind ignores it, because that is the explicit "finish this" path.
+		int ceiling = grind ? 100 : Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100);
 
-		// A grind may take a game far past the stealthy research ceiling - up to the account's own
-		// completion cap, or all of them when no cap is set.
-		if (grind) {
-			ceiling = (cap > 0) ? cap : 100;
-		}
-
+		// Never below the onboarding cluster, or a short game with a big early burst (Portal onboards 5 of its
+		// 15) would be cut off mid-cluster by a percentage that was never meant to apply that finely.
 		int ceilingCount = Math.Min(total, Math.Max(prof.OnboardCount, total * ceiling / 100));
 
 		if (already >= ceilingCount) {
@@ -377,7 +359,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			// excluded - otherwise a missing fetch would silently stop the account unlocking anything at all.
 			.Where(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a) && ((a.GlobalPercent ?? floor) >= floor)
 				&& (RequiredPriorAchievements(a) <= already)
-				&& !TierBlocked(a, set.All))
+				&& !TierBlocked(a, set.All)
+				&& !MilestoneUnearned(a, set.All))
 			.ToList();
 
 		if (eligible.Count == 0) {
@@ -558,6 +541,81 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		return m.Success && int.TryParse(m.Groups[1].Value, out int n) ? n : 0;
 	}
 
+	/// <summary>
+	/// A milestone and the group of achievements it is a milestone OF, read off the API name.
+	///
+	/// "TF_SNIPER_ACHIEVE_PROGRESS2" is not a thing you earn by playing - it is awarded for having eleven of the
+	/// other TF_SNIPER_* achievements. The display name gives no clue about that; the API name does, and the
+	/// prefix is the group. Returns false for anything that isn't a milestone.
+	/// </summary>
+	private static bool MilestoneOf(Achievement a, out string family, out int rung) {
+		family = "";
+		rung = 0;
+
+		// The two shapes Valve and most others use: a PROGRESS/MILESTONE suffix, or a plain trailing number on a
+		// name whose display says "Milestone".
+		Match m = Regex.Match(a.Name, @"^(?<base>.+?)_?(?:ACHIEVE_)?(?:PROGRESS|MILESTONE)_?(?<n>\d{1,2})$", RegexOptions.IgnoreCase);
+
+		if (!m.Success) {
+			return false;
+		}
+
+		rung = int.Parse(m.Groups["n"].Value, CultureInfo.InvariantCulture);
+		family = m.Groups["base"].Value.TrimEnd('_');
+
+		return (rung > 0) && (family.Length >= 3);
+	}
+
+	/// <summary>
+	/// Is this a milestone whose own group hasn't been earned yet?
+	///
+	/// This is the one dependency Steam really does have and really does publish, just not as a graph: a
+	/// milestone is granted for having N of its siblings. Unlocking "Sniper Milestone 2" on a profile showing
+	/// three Sniper achievements is not a rare-achievement problem, it is an impossible one - no amount of
+	/// playing produces it, so it reads as written rather than earned no matter how well paced everything else
+	/// is. The count comes from the achievement's own description where it states one ("achieve 11 of the
+	/// Sniper achievements"), and otherwise from spreading the group evenly across its rungs, which errs toward
+	/// demanding more rather than fewer.
+	/// </summary>
+	private static bool MilestoneUnearned(Achievement a, IReadOnlyCollection<Achievement> all) {
+		if (!MilestoneOf(a, out string family, out int rung)) {
+			return false;
+		}
+
+		List<Achievement> siblings = [];
+		int topRung = rung;
+
+		foreach (Achievement other in all) {
+			if (other.Name == a.Name) {
+				continue;
+			}
+
+			if (MilestoneOf(other, out string otherFamily, out int otherRung)) {
+				// A higher rung of the same ladder tells us how many steps the ladder has.
+				if (string.Equals(family, otherFamily, StringComparison.OrdinalIgnoreCase)) {
+					topRung = Math.Max(topRung, otherRung);
+				}
+
+				continue;   // milestones don't count toward each other
+			}
+
+			if (other.Name.StartsWith(family + "_", StringComparison.OrdinalIgnoreCase)) {
+				siblings.Add(other);
+			}
+		}
+
+		if (siblings.Count == 0) {
+			return false;   // nothing recognisable to require - don't invent a rule
+		}
+
+		int stated = RequiredPriorAchievements(a);
+		int needed = stated > 0
+			? Math.Min(stated, siblings.Count)
+			: Math.Max(1, (int) Math.Ceiling((double) siblings.Count / (topRung + 1) * rung));
+
+		return siblings.Count(static s => s.Unlocked) < needed;
+	}
+
 	private static bool IsSpecialGlobal(Achievement a) => a.Name.StartsWith("GLOBAL_", StringComparison.Ordinal);
 
 	/// <summary>
@@ -626,7 +684,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		int Total,
 		DateTime NextAllow,
 		bool Blocked,
-		string Why
+		string Why,
+		bool Running
 	);
 
 	/// <summary>
@@ -641,6 +700,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		List<uint> never = Bot.Cfg.AchievementNeverGames;
 		List<uint> allowed = Bot.Cfg.AchievementGames;
 		uint main = BotManager.ModuleOf<HumanMode>(Bot)?.MainGameId ?? 0;
+
+		// Nothing is earned in a game that isn't running, whatever its timers say.
+		HashSet<uint> live = [.. CurrentGames()];
 
 		lock (_gate) {
 			return _games
@@ -663,12 +725,13 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						(int) kv.Value.PlayedMins,
 						eff,
 						Math.Min(floor, 100),
-						kv.Value.Ceiling,
+						Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100),
 						kv.Value.Unlocked,
 						kv.Value.Total,
 						kv.Value.NextAllow,
 						why.Length > 0,
-						why);
+						why,
+						live.Contains(kv.Key));
 				})
 				.ToList();
 		}
@@ -713,7 +776,6 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		public long PlayedMins { get; set; }
 		public long MinsAtLastUnlock { get; set; }
 		public DateTime NextAllow { get; set; }
-		public int Ceiling { get; set; } = -1;
 		public int Unlocked { get; set; } = -1;
 		public int Total { get; set; }
 	}
@@ -742,7 +804,6 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						PlayedMins = s.PlayedMins,
 						MinsAtLastUnlock = s.MinsAtLastUnlock,
 						NextAllow = s.NextAllow,
-						Ceiling = s.Ceiling,
 						Unlocked = s.Unlocked,
 						Total = s.Total
 					};
@@ -815,7 +876,6 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						PlayedMins = mins,
 						MinsAtLastUnlock = mins,
 						NextAllow = next,
-						Ceiling = ceiling
 					};
 
 					taken++;
@@ -841,7 +901,6 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 					PlayedMins = kv.Value.PlayedMins,
 					MinsAtLastUnlock = kv.Value.MinsAtLastUnlock,
 					NextAllow = kv.Value.NextAllow,
-					Ceiling = kv.Value.Ceiling,
 					Unlocked = kv.Value.Unlocked,
 					Total = kv.Value.Total
 				}).ToList();
