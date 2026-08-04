@@ -124,10 +124,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				Phase.SwitchingGame => _switchingTo != 0 ? $"closing the game, then {GameName(_switchingTo)}" : "closing the game",
 				Phase.ShortBreak => $"short break · back in {Left(_phaseEnds)}",
 				Phase.MealBreak => $"meal break · back in {Left(_phaseEnds)}",
-				Phase.NightIdle => $"asleep, banking hours quietly · up {WakeTime():HH:mm}",
-				Phase.Asleep => $"asleep · up {WakeTime():HH:mm}",
-				Phase.DoneForToday => $"done for today ({Fmt.Hm(_playedMinutesToday)}) · back {WakeTime():HH:mm}",
-				Phase.DayOff => $"not playing today · back {WakeTime():HH:mm}",
+				Phase.NightIdle => $"asleep, banking hours quietly · up {NextWakeTime():HH:mm}",
+				Phase.Asleep => $"asleep · up {NextWakeTime():HH:mm}",
+				Phase.DoneForToday => $"done for today ({Fmt.Hm(_playedMinutesToday)}) · back {NextWakeTime():HH:mm}",
+				Phase.DayOff => $"not playing today · back {NextWakeTime():HH:mm}",
 				Phase.StoodDown => "standing down, you're using it",
 				_ => "starting up"
 			};
@@ -230,7 +230,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		Phase.Playing => _sessionEnds,
 		Phase.ShortBreak or Phase.MealBreak or Phase.SwitchingGame => _phaseEnds,
 		Phase.WarmingUp => _readyAt,
-		Phase.NightIdle or Phase.Asleep or Phase.DoneForToday or Phase.DayOff => WakeTime().ToUniversalTime(),
+		Phase.NightIdle or Phase.Asleep or Phase.DoneForToday or Phase.DayOff => NextWakeTime().ToUniversalTime(),
 		_ => null
 	};
 
@@ -721,6 +721,19 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	}
 
 	private DateTime WakeTime() => DateTime.Now.Date.AddMinutes(_wakeMinuteOfDay);
+
+	/// <summary>
+	/// The next time this account gets up, which is tomorrow once today's has been and gone.
+	///
+	/// <see cref="WakeTime"/> is deliberately TODAY's - the waking-hours test needs that - but an account that
+	/// finished at half nine in the evening is not getting up at this morning's time. Reading it as "how long
+	/// until it wakes" clamped a negative eleven hours to zero and reported "any moment", all night.
+	/// </summary>
+	private DateTime NextWakeTime() {
+		DateTime wake = WakeTime();
+
+		return wake > DateTime.Now ? wake : wake.AddDays(1);
+	}
 
 	private DateTime BedTime() {
 		DateTime bed = DateTime.Now.Date.AddHours(_bedHour).AddMinutes(_bedMinute);
