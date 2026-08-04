@@ -206,10 +206,25 @@ public static partial class Looting {
 		}
 
 		List<Item> all = await InventoryAsync(bot, ct).ConfigureAwait(false);
-		List<Item> sending = all.Where(i => WantedType(i.Type, cfg.SendItemTypes)).ToList();
+
+		// Leave out the games this account is banned in.
+		//
+		// A ban does not just stop you SELLING that game's items, it stops you trading them - and Steam refuses
+		// the WHOLE offer if even one is in it, with a bare "(11) try again later". So a single CS2 skin on a
+		// CS2-banned account quietly blocked every card, background and emoticon in the same sweep. The list was
+		// already being kept for the inventory total and says exactly this; it just was not being read here.
+		HashSet<uint> banned = [.. cfg.InventoryIgnoreGames.Select(static a => (uint) a)];
+		List<Item> allowed = all.Where(i => !banned.Contains(i.App)).ToList();
+		int blocked = all.Count - allowed.Count;
+
+		List<Item> sending = allowed.Where(i => WantedType(i.Type, cfg.SendItemTypes)).ToList();
 
 		if (sending.Count == 0) {
-			return $"{bot.Name}: nothing tradable to send" + (all.Count > 0 ? $" ({all.Count} tradable item(s), none of the types you asked for)" : "");
+			string why = blocked > 0
+				? $" ({blocked} left out - this account is banned in that game, so Steam won't let it trade those)"
+				: all.Count > 0 ? $" ({all.Count} tradable item(s), none of the types you asked for)" : "";
+
+			return $"{bot.Name}: nothing tradable to send{why}";
 		}
 
 		// Steam rejects an offer with too many items in it outright, so send it in batches.
@@ -235,7 +250,8 @@ public static partial class Looting {
 			return $"{bot.Name}: couldn't send - {(problems.Count > 0 ? problems[0] : "Steam refused the offer")}";
 		}
 
-		string note = $"{bot.Name}: sent {sent} item(s) to {master}";
+		string note = $"{bot.Name}: sent {sent} item(s) to {master}"
+			+ (blocked > 0 ? $" ({blocked} left out - banned in that game)" : "");
 
 		return problems.Count > 0 ? note + $" (then stopped: {problems[0]})" : note;
 	}
@@ -375,6 +391,12 @@ public static partial class Looting {
 			using JsonDocument doc = JsonDocument.Parse(body);
 
 			if (doc.RootElement.TryGetProperty("strError", out JsonElement error)) {
+				// The one-line strError is the polite half. Everything Steam actually said, plus what we asked it
+				// to move, so a refusal can be diagnosed from the log instead of guessed at.
+				Log.Debug($"trade offer refused. Steam said: {body}", bot.Name);
+				Log.Debug($"we offered {items.Count} item(s) to {master}, token {(token.Length > 0 ? "yes" : "no")}: "
+					+ string.Join(", ", items.Take(6).Select(static i => $"{i.App}/{i.Context}/{i.AssetId} {i.Name}")), bot.Name);
+
 				return (false, Explain(error.GetString() ?? "refused"));
 			}
 
