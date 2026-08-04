@@ -75,6 +75,11 @@ public static partial class Commands {
 
 		new("log", "[count]", GroupOther, "The last few log lines.", "logs"),
 		new("stats", "[hours]", GroupOther, "Cards dropped and comments posted, by hour."),
+		new("plugins", "", GroupOther, "Which plugins are loaded, and where they came from."),
+		new("owns", "<appID|name>", GroupOther,
+			"Which accounts already own a game, and how long each has played it. Takes an appID, a store URL, or part of a name."),
+		new("addlicense", "<account|all> <subIDs>", GroupOther,
+			"Add free packages (subIDs) to an account's library. Only works for genuinely free licences - a paid one is refused by Steam."),
 		new("report", "", GroupOther, "Write the daily summary - hours banked, cards, comments, totals - to the log now."),
 		new("answer", "<text>", GroupOther, "Answer whatever nocat.farm is waiting on - a Steam Guard code, or a password."),
 		new("tutorial", "[topic]", GroupOther, "Getting started, in order, ticking off what you have already done.", "guide|setup"),
@@ -231,9 +236,16 @@ public static partial class Commands {
 				"answer" => Prompt.Answer(string.Join(' ', rest)) ? "answered" : "nothing is waiting for an answer",
 				"theme" or "dark" or "light" => Theme(cmd, rest),
 				"version" or "about" => About(),
+				"plugins" => PluginList(),
+				"owns" => Owns(mgr, rest),
+				"addlicense" => await AddLicense(mgr, rest).ConfigureAwait(false),
 				"update" => await Update(rest).ConfigureAwait(false),
 				"exit" or "quit" or "q" => Exit(),
-				_ => Suggest(cmd)
+				// A plugin's own command, tried only after every built-in has been ruled out - so a plugin can
+				// never take a verb the app already answers to, whatever it registered.
+				_ => Plugins.PluginHost.Commands.TryGetValue(cmd, out (string Usage, string Help, Func<string[], Task<string>> Run) added)
+					? await added.Run(rest).ConfigureAwait(false)
+					: Suggest(cmd)
 			};
 		} catch (Exception e) {
 			return $"'{cmd}' failed: {e.GetType().Name}: {e.Message}";
@@ -273,6 +285,156 @@ public static partial class Commands {
 
 		return await SelfUpdate.ApplyAsync(CancellationToken.None).ConfigureAwait(false)
 			?? "downloading and restarting - this window will come back on its own";
+	}
+
+	/// <summary>
+	/// Who already owns a game, across the whole fleet.
+	///
+	/// The question you ask before buying something: an account that already owns it does not need another
+	/// copy, and one that owns it with no hours on it is a card-farming candidate nobody has touched yet.
+	/// Accepts an appID, a store URL, or part of a name, because nobody remembers appIDs.
+	/// </summary>
+	private static string Owns(BotManager mgr, string[] args) {
+		if (args.Length == 0) {
+			return "owns <appID|name>       which accounts already have it";
+		}
+
+		string term = string.Join(' ', args).Trim();
+		uint wanted = Settings.AppIdFrom(term);
+		List<Bot> bots = mgr.All.Where(static b => b.Library.Ready).ToList();
+
+		if (bots.Count == 0) {
+			return "No account has read its library yet - give it a moment after signing in.";
+		}
+
+		// An appID is exact; a name is a contains-match across every library, so one search can turn up several
+		// games and the answer has to say which is which.
+		List<(uint App, string Name)> hits = wanted > 0
+			? [(wanted, GameNames.Of(wanted))]
+			: bots.SelectMany(static b => b.Library.Games)
+				.Where(g => g.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
+				.GroupBy(static g => g.AppId)
+				.Select(static g => (g.Key, g.First().Name))
+				.OrderBy(static g => g.Item2, StringComparer.OrdinalIgnoreCase)
+				.Take(12)
+				.ToList();
+
+		if (hits.Count == 0) {
+			return $"Nothing in any library matches '{term}'.";
+		}
+
+		StringBuilder sb = new();
+
+		foreach ((uint app, string name) in hits) {
+			List<Bot> owners = bots.Where(b => b.Library.Find(app) != null).ToList();
+
+			sb.AppendLine($"{name}  ({app})");
+
+			if (owners.Count == 0) {
+				sb.AppendLine("  nobody owns it");
+
+				continue;
+			}
+
+			foreach (Bot bot in owners) {
+				Library.Entry entry = bot.Library.Find(app)!;
+				string how = entry.SharedFrom != 0 ? " (family)" : "";
+				string played = entry.MinutesPlayed > 0 ? Fmt.Hm(entry.MinutesPlayed) : "never played";
+
+				sb.AppendLine($"  {bot.Name,-14} {played}{how}");
+			}
+		}
+
+		return sb.ToString().TrimEnd();
+	}
+
+	/// <summary>
+	/// Add free packages by subID.
+	///
+	/// The same call the free-games watcher makes, exposed for the times you know the subID yourself - a
+	/// giveaway that has not been picked up yet, or a free weekend. Steam refuses anything that is not actually
+	/// free, so the worst case is a "no".
+	/// </summary>
+	private static async Task<string> AddLicense(BotManager mgr, string[] args) {
+		if (args.Length < 2) {
+			return "addlicense <account|all> <subIDs>     comma or space separated";
+		}
+
+		List<Bot> targets = args[0].Equals("all", StringComparison.OrdinalIgnoreCase)
+			? mgr.All.Where(static b => b.IsOnline).ToList()
+			: mgr.Get(args[0]) is { } one ? [one] : [];
+
+		if (targets.Count == 0) {
+			return args[0].Equals("all", StringComparison.OrdinalIgnoreCase)
+				? "No account is online."
+				: NoSuchAccount(mgr, args[0]);
+		}
+
+		List<uint> subs = string.Join(' ', args[1..])
+			.Split([',', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+			.Select(static s => uint.TryParse(s, out uint n) ? n : 0)
+			.Where(static n => n > 0)
+			.Distinct()
+			.ToList();
+
+		if (subs.Count == 0) {
+			return "No subID in that. They are numbers - 12345, or several separated by commas.";
+		}
+
+		StringBuilder sb = new();
+
+		foreach (Bot bot in targets) {
+			if (!bot.IsOnline) {
+				sb.AppendLine($"{bot.Name}: not online");
+
+				continue;
+			}
+
+			foreach (uint sub in subs) {
+				if (bot.OwnsPackage(sub)) {
+					sb.AppendLine($"{bot.Name}: {sub} - already has it");
+
+					continue;
+				}
+
+				bool ok = await FreeGames.AddPackageAsync(bot, sub, CancellationToken.None).ConfigureAwait(false);
+				sb.AppendLine($"{bot.Name}: {sub} - {(ok ? "added" : "refused (not free, region-locked, or already gone)")}");
+			}
+		}
+
+		return sb.ToString().TrimEnd();
+	}
+
+	private static string PluginList() {
+		if (!Live.Global.PluginsEnabled) {
+			return "Plugins are off. Turn them on with 'set PluginsEnabled true' and restart - read what that setting says first.";
+		}
+
+		IReadOnlyList<(string Name, string Version, string File)> running = Plugins.PluginHost.Running;
+
+		if (running.Count == 0) {
+			return $"Plugins are on, but nothing loaded. Put a .dll in:{Environment.NewLine}  {Plugins.PluginHost.Folder}";
+		}
+
+		StringBuilder sb = new();
+		sb.AppendLine($"{running.Count} plugin(s) loaded:");
+
+		foreach ((string name, string version, string file) in running) {
+			sb.AppendLine($"  {name,-24} {version,-10} {file}");
+		}
+
+		IReadOnlyDictionary<string, (string Usage, string Help, Func<string[], Task<string>> Run)> added = Plugins.PluginHost.Commands;
+
+		if (added.Count > 0) {
+			sb.AppendLine();
+			sb.AppendLine("commands they added:");
+
+			foreach ((string verb, (string usage, string help, _)) in added.OrderBy(static c => c.Key, StringComparer.Ordinal)) {
+				sb.AppendLine($"  {(verb + " " + usage).TrimEnd(),-30} {help}");
+			}
+		}
+
+		return sb.ToString().TrimEnd();
 	}
 
 	private static string Exit() {
@@ -1731,10 +1893,16 @@ public static partial class Commands {
 	/// <summary>Make a changed setting take effect now, where it can.</summary>
 	public static void ApplyBotSideEffects(Bot bot, SettingDef def) {
 		switch (def.Name) {
-			case "IdleGames":
+			// The name and the switch that turns it on are the same change as far as Steam is concerned. Only the
+			// name was here, so turning the custom name OFF and back ON left the account showing the real game
+			// until something else happened to re-assert - the config said one thing and the friends list showed
+			// another, for as long as nobody looked.
+			case "CustomGameNameEnabled":
 			case "CustomGameName":
+			case "IdleGames":
 			case "PlayWhileFarming":
 			case "BlacklistedGames":
+			case "FarmOffline":
 				BotManager.ModuleOf<Idler>(bot)?.Assert();
 
 				break;

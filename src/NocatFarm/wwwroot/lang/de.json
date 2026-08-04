@@ -438,7 +438,19 @@
     "Download and restart": "Herunterladen und neu starten",
     "Downloading. It restarts by itself when it lands.": "Wird geladen. Startet von selbst neu, sobald es da ist.",
     "Update failed: {0}": "Aktualisierung fehlgeschlagen: {0}",
-    "working…": "arbeitet…"
+    "working…": "arbeitet…",
+    "Plugins": "Plugins",
+    "Commands they added": "Hinzugefügte Befehle",
+    "Nothing installed yet.": "Noch nichts installiert.",
+    "Drop a .dll in this folder and restart:": "Lege eine .dll in diesen Ordner und starte neu:",
+    "How to write one": "Wie man eins schreibt",
+    "Go to the setting": "Zur Einstellung",
+    "Takes effect after a restart — a plugin wires itself up as the app starts.": "Wird erst nach einem Neustart wirksam - ein Plugin klinkt sich beim Start der App ein.",
+    "Plugins are switched off. A plugin is somebody else's code running inside this app, with access to everything it can reach — including your Steam login tokens. Turn it on only for plugins you wrote or whose author you trust.": "Plugins sind aus. Ein Plugin ist fremder Code in dieser App und erreicht alles, was sie erreicht - auch deine Steam-Anmeldetokens. Schalte es nur für Plugins ein, die du selbst geschrieben hast oder deren Autor du vertraust.",
+    "Could not read the plugin list: {0}": "Plugin-Liste nicht lesbar: {0}",
+    "Could not change that: {0}": "Konnte das nicht ändern: {0}",
+    "Could not save that: {0}": "Konnte das nicht speichern: {0}",
+    "{0} saved": "{0} gespeichert"
   },
   "settings": {
     "WebEnabled": {
@@ -1088,6 +1100,26 @@
     "AchievementIncludeMainGame": {
       "label": "Auch im Hauptspiel verdienen",
       "tip": "Ob das Hauptspiel des Menschmodus Erfolge verdient wie jedes andere Spiel. An - und das sollte es sein: Im Hauptspiel stecken die Stunden, also ist es der unauffälligste Ort für Erfolge. Aus lässt es völlig unangetastet, wodurch ein Konto mit Hunderten Stunden in seinem Aushängeschild-Spiel dort gar nichts vorzuweisen hat - meist das Seltsamere von beidem. So oder so gelten Seltenheitsschwelle und Abschlussgrenze weiterhin."
+    },
+    "PluginsEnabled": {
+      "label": "Plugins laden",
+      "tip": "Laedt jede .dll aus dem Ordner \"plugins\". STANDARDMAESSIG AUS, und das sollte so bleiben, sofern du das Plugin nicht selbst geschrieben hast oder dem Autor vertraust: Ein Plugin ist fremder Code in diesem Prozess und erreicht alles, was dieser Prozess erreicht - auch die Steam-Anmeldetokens unter config. Plugins bekommen eine bewusst schmale Schnittstelle, aber das ist eine Leitplanke, kein Kaefig."
+    },
+    "FarmInSittings": {
+      "label": "In Sitzungen farmen, nicht am Stueck",
+      "tip": "Farmt in ein paar Bloecken pro Tag mit Pausen dazwischen, taeglich zu anderen Zeiten, statt durchzulaufen. WICHTIG ZU WISSEN: Eine echte Luecke entsteht nur auf einem Konto ohne Idle-Spiele. Laeuft daneben der Idler - ein eigener Name, eine Idle-Liste -, uebernimmt er in den Pausen und das Konto sammelt so oder so Stunden; es aendert sich nur, auf welchem Spiel sie landen."
+    },
+    "FarmHoursPerDay": {
+      "label": "Stunden pro Tag zum Farmen",
+      "tip": "Ungefaehr wie viel des Tages die Sitzungen zusammen ausmachen. Wird taeglich neu ausgewuerfelt und am Wochenende laenger. Nur relevant, wenn das Farmen in Sitzungen an ist."
+    },
+    "MarketGapSeconds": {
+      "label": "Sekunden zwischen Preisabfragen",
+      "tip": "Wie lange zwischen zwei Anfragen an Steams Markt gewartet wird, was ein Gegenstand kostet. Diese Zahl entscheidet, ob Steam die Abfragen drosselt: zu schnell, und Steam lehnt ab, die App wartet ab und die Inventarwerte veralten, bis es wieder erlaubt ist. Hoeher ist langsamer, aber stabiler. 10 ist bequem; niedriger nur bei kleinen Inventaren."
+    },
+    "PriceCacheHours": {
+      "label": "Einem Preis vertrauen fuer",
+      "tip": "Wie viele Stunden ein Preis behalten wird, bevor neu gefragt wird. Laenger heisst deutlich weniger Anfragen - das ist die eigentliche Kur gegen die Drosselung - dafuer bewegen sich die Werte traeger. Karten- und Gegenstandspreise aendern sich von Tag zu Tag kaum, 24 reicht meist."
     }
   }
 }

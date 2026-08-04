@@ -607,6 +607,25 @@ public sealed class Bot : IAsyncDisposable {
 		// Steam's own word for the persona, which beats ours whenever another session is also setting it.
 		PersonaAsSeen = (int) cb.State;
 
+		// And its own word for the DEVICE flags, which is the only way to know the Deck badge was accepted.
+		//
+		// We can set persona_state_flags to anything; whether Steam keeps them is another matter, and the badge
+		// renders on other people's screens, not ours. This is the echo - what Steam is telling the friends list
+		// about us - so a Deck that did not take shows up here rather than only being visible to somebody else.
+		int flags = (int) cb.StateFlags;
+
+		if (flags != _flagsAsSeen) {
+			_flagsAsSeen = flags;
+
+			if (Cfg.GameDevice > 0) {
+				Log.Debug(
+					$"Steam reports device flags {flags}"
+					+ (flags == Cfg.GameDevice ? $" - matches the {DeviceLabel(Cfg.GameDevice)} we asked for"
+						: $" - we asked for {Cfg.GameDevice} ({DeviceLabel(Cfg.GameDevice)})"),
+					Name);
+			}
+		}
+
 		// Same treatment the custom-name check gets: a disagreement has to PERSIST before it counts.
 		//
 		// The first echo after logon reports the pre-login state, so acting on a single reading is how the
@@ -962,6 +981,7 @@ public sealed class Bot : IAsyncDisposable {
 
 		if (wasRunning) {
 			Log.Info("stopped - logged out", Name);
+			Plugins.PluginHost.RaiseOffline(this);
 		}
 	}
 
@@ -1110,7 +1130,7 @@ public sealed class Bot : IAsyncDisposable {
 			StatusText = "logging in";
 
 			// NAMING TRAP: LogOnDetails.AccessToken wants the REFRESH token, not the access token.
-			User!.LogOn(new SteamUser.LogOnDetails {
+			SteamUser.LogOnDetails logon = new() {
 				Username = Cfg.SteamLogin,
 				AccessToken = _refreshToken,
 				LoginID = LoginId,
@@ -1141,8 +1161,21 @@ public sealed class Bot : IAsyncDisposable {
 				ChatMode = SteamUser.ChatMode.NewSteamChat,
 				UIMode = (EUIMode) Math.Clamp(Cfg.UIMode, 0, 7),
 
+				// The device badge is decided at LOGON, not by the persona flags alone.
+				//
+				// "Play as if on a Steam Deck" sent the right persona_state_flags and did nothing, because the
+				// session underneath still announced itself as Windows - and Steam will not badge a Windows
+				// desktop session as a handheld running SteamOS however the flags are set. A Deck is a Linux
+				// machine, so the logon has to say so. This is why the setting appears to do nothing until the
+				// account signs in again: the flags can be re-sent at any time, this cannot.
 				ShouldRememberPassword = true
-			});
+			};
+
+			if (DeviceOSType(Cfg.GameDevice) is { } os) {
+				logon.ClientOSType = os;
+			}
+
+			User!.LogOn(logon);
 		} finally {
 			_guardPrompt = null;   // whatever happened, nothing is waiting on the operator any more
 			Interlocked.Exchange(ref _loggingIn, 0);
@@ -1187,6 +1220,7 @@ public sealed class Bot : IAsyncDisposable {
 		StatusText = "online";
 		_guardPrompt = null;
 		Log.Good($"logged on as {Cfg.SteamLogin} ({SteamId})", Name);
+		Plugins.PluginHost.RaiseOnline(this);
 
 		try {
 			// ALWAYS, even when the state we want is the one we think we already have.
@@ -1740,6 +1774,7 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		Log.Debug($"Steam says {cb.Waiting} trade offer(s) are waiting", Name);
+		Plugins.PluginHost.RaiseTradeOffers(this, (int) cb.Waiting);
 
 		// Latched like the item drop: if the trade module is mid-check nobody is on the TCS, and the news would
 		// be lost until the slow pass came round the better part of an hour later.
@@ -2108,7 +2143,7 @@ public sealed class Bot : IAsyncDisposable {
 			return;
 		}
 
-		ClientMsgProtobuf<CMsgClientGamesPlayed> outgoing = BuildGamesPlayed(label, apps);
+		ClientMsgProtobuf<CMsgClientGamesPlayed> outgoing = BuildGamesPlayed(label, apps, Cfg.GameDevice);
 		Client.Send(outgoing);
 
 		Log.Debug($"games-played sent: {outgoing.Body.games_played.Count} entr(ies)"
@@ -2139,14 +2174,17 @@ public sealed class Bot : IAsyncDisposable {
 	}
 
 	/// <summary>One games-played message: the custom-name shortcut first when there is one, then the real games.</summary>
-	private static ClientMsgProtobuf<CMsgClientGamesPlayed> BuildGamesPlayed(string? label, List<uint> apps) {
+	private static ClientMsgProtobuf<CMsgClientGamesPlayed> BuildGamesPlayed(string? label, List<uint> apps, int device = 0) {
 		ClientMsgProtobuf<CMsgClientGamesPlayed> msg = new(EMsg.ClientGamesPlayedWithDataBlob);
 
 		if (!string.IsNullOrWhiteSpace(label)) {
-			msg.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed {
+			CMsgClientGamesPlayed.GamePlayed shortcut = new() {
 				game_id = SteamIds.ShortcutGameId,
 				game_extra_info = label
-			});
+			};
+
+			DescribeDevice(shortcut, device);
+			msg.Body.games_played.Add(shortcut);
 		}
 
 		foreach (uint app in apps) {
@@ -2154,10 +2192,35 @@ public sealed class Bot : IAsyncDisposable {
 				break;   // Steam ignores the whole message past this, so truncate rather than lose everything
 			}
 
-			msg.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed { game_id = app });
+			CMsgClientGamesPlayed.GamePlayed played = new() { game_id = app };
+
+			DescribeDevice(played, device);
+			msg.Body.games_played.Add(played);
 		}
 
 		return msg;
+	}
+
+	/// <summary>
+	/// Say HOW the game is running, not just that it is.
+	///
+	/// The persona flags claim a device; this is the evidence for the claim. Steam accepts the phone, Big
+	/// Picture, VR and controller flags on their own, but it kept dropping LaunchTypeCompatTool - the half of
+	/// the Deck flag that means "running under Proton" - because nothing in the games-played message mentioned
+	/// a compat tool at all. The flag said Proton while the session said nothing, and Steam believed the
+	/// session. So a Deck now sends what a Deck sends: a Proton tool id, the Linux platform it runs on, and the
+	/// built-in controller it has.
+	/// </summary>
+	private static void DescribeDevice(CMsgClientGamesPlayed.GamePlayed played, int device) {
+		if (device != SteamIds.DeviceSteamDeck) {
+			return;
+		}
+
+		played.compat_tool_id = SteamIds.ProtonExperimental;
+		played.compat_tool_cmd = "proton waitforexitandrun";
+		played.game_os_platform = (int) EOSType.Linux6x;
+		played.primary_controller_type = SteamIds.ControllerTypeSteamDeck;
+		played.total_steam_controller_count = 1;
 	}
 
 	/// <summary>The real appIDs last announced, so a CHANGE can be told apart from a routine re-assert.</summary>
@@ -2209,6 +2272,28 @@ public sealed class Bot : IAsyncDisposable {
 			}
 		});
 	}
+
+	/// <summary>
+	/// What kind of machine the logon should claim to be, for the device badge to be believed.
+	///
+	/// Only the Deck needs this: a Deck is a Linux handheld, and Steam cross-checks the badge against what the
+	/// session said it was running on. Phone, Big Picture and VR are all things a Windows install genuinely
+	/// does, so those keep the real OS and work from the persona flags alone.
+	/// </summary>
+	private int _flagsAsSeen = -1;
+
+	/// <summary>The device names, for saying which one out loud rather than printing a bitmask.</summary>
+	internal static string DeviceLabel(int device) => device switch {
+		512 => "phone",
+		1024 => "Big Picture",
+		2048 => "VR",
+		SteamIds.DeviceSteamDeck => "Steam Deck",
+		0 => "PC",
+		_ => "device " + device
+	};
+
+	private static EOSType? DeviceOSType(int device) =>
+		device == SteamIds.DeviceSteamDeck ? EOSType.Linux6x : null;   // SteamOS 3 is Arch on a 6.x kernel
 
 	public void ApplyPersona() {
 		if (State != BotState.Online) {
@@ -2301,6 +2386,15 @@ public static class SteamIds {
 	public const ulong ShortcutGameId = (2UL << 24) | (0xFFFFFFFFUL << 32);
 
 	/// <summary>Steam's own ceiling on simultaneous games. Send more and it drops the message.</summary>
+	/// <summary>LaunchTypeGamepad | LaunchTypeCompatTool - the pair Steam reads as "this is a Deck".</summary>
+	public const int DeviceSteamDeck = 12288;
+
+	/// <summary>Proton Experimental's appID - what a Deck reports as the compat tool for a Windows title.</summary>
+	public const uint ProtonExperimental = 1493710;
+
+	/// <summary>ESteamInputType for the Deck's own built-in controller.</summary>
+	public const int ControllerTypeSteamDeck = 13;
+
 	public const int MaxGamesPlayedConcurrently = 32;
 }
 

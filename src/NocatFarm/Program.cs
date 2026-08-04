@@ -199,6 +199,10 @@ if (wantWindow) {
 
 Ready(web?.Url, manager.All.Count);
 
+// Plugins load BEFORE any account signs in, so a plugin that subscribes to "account online" actually sees
+// the first one rather than missing the whole fleet by a second.
+await NocatFarm.Plugins.PluginHost.LoadAllAsync(manager, CancellationToken.None).ConfigureAwait(false);
+
 if (manager.All.Count == 0) {
 	FirstRunHint(web?.Url);
 } else {

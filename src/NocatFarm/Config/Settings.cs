@@ -280,6 +280,10 @@ public static class Settings {
 		}
 	}
 
+	/// <summary>An appID from a bare number or a store URL, or 0 when it is neither (i.e. it's a name).</summary>
+	public static uint AppIdFrom(string token) =>
+		uint.TryParse(ExtractAppId(token.Trim()), out uint id) ? id : 0;
+
 	/// <summary>"https://store.steampowered.com/app/730/CS2/" -> "730". A bare number passes straight through.</summary>
 	private static string ExtractAppId(string token) {
 		const string Marker = "/app/";
@@ -541,7 +545,16 @@ public static class Settings {
 		new("Language", "Language", SecDashboard, SettingKind.Pick,
 			"What language the dashboard is in. Anything a translation hasn't covered yet falls back to English rather than showing a blank, so a partly translated language is still perfectly usable. The console and the log stay in English.",
 			Choices: "en English | es Español | pt-BR Português (Brasil) | ru Русский | de Deutsch | fr Français | zh-CN 简体中文 | tr Türkçe | pl Polski | ja 日本語 | ko 한국어"),
-		new("CheckForUpdates", "Notify if an update is available", SecDashboard, SettingKind.Bool,
+new("PluginsEnabled", "Load plugins", SecDashboard, SettingKind.Bool,
+			"Load any .dll placed in the plugins folder. OFF by default and worth leaving off unless you wrote the plugin or trust whoever did: a plugin is somebody else's code running inside this process, which means it can reach everything this process can - including the Steam login tokens under config. Plugins get a deliberately narrow API (read-only account info, and commands run the same way you would type them), but that is a guard rail, not a cage, and a DLL that wants past it can get past it.",
+			Advanced: true, NeedsRestart: true),
+		new("MarketGapSeconds", "Seconds between price lookups", SecDashboard, SettingKind.Int,
+			"How long to wait between asking Steam's market what one item sells for. This is the number that decides whether Steam rate-limits the lookups: too fast and it starts refusing, the app backs off, and inventory values go stale until it is allowed back. Higher is slower but steadier. 10 is comfortable; drop it only if you have small inventories.",
+			Advanced: true, Min: 1, Max: 60),
+		new("PriceCacheHours", "Trust a price for", SecDashboard, SettingKind.Int,
+			"How many hours a price is kept before it is worth asking about again, in hours. Longer means far fewer requests - which is the real cure for being rate-limited - at the cost of values moving more slowly. Card and item prices do not change much day to day, so 24 is usually plenty.",
+			Advanced: true, Min: 1, Max: 168),
+				new("CheckForUpdates", "Notify if an update is available", SecDashboard, SettingKind.Bool,
 			"Look once a day for a newer release and mention it in the log. It only ever tells you - it never downloads, replaces or restarts anything. Something holding the keys to your Steam accounts should not be able to swap its own binary out on a schedule, and an update landing mid-farm is how a session gets lost.",
 			Advanced: true),
 		new("MarketCurrency", "Inventory prices in", SecDashboard, SettingKind.Choice,
@@ -700,8 +713,8 @@ public static class Settings {
 			"Keep the custom name showing even while trading cards are being farmed. Turn it off and card farming shows the real game.",
 			Advanced: true),
 		new("GameDevice", "Play as if on", SecPlaying, SettingKind.Choice,
-			"What kind of machine your friends think you're playing on - this is what puts the little Steam Deck or phone badge next to your name.",
-			Advanced: true, Choices: "0 a PC | 512 a phone | 1024 Big Picture | 2048 VR | 12288 a Steam Deck"),
+			"What kind of machine your friends think you're playing on - the little badge next to your name in their friends list. The Deck is the one that does not stick. Everything a real Deck sends is sent - a Linux logon, a Proton compat tool, the built-in controller - and Steam still keeps only the controller half of it, because the Deck bit is decided from the session's authenticated client identity rather than from anything a client can claim. Left here because the rest of what it sends is accurate; expect the controller badge, and the log says so when Steam downgrades it.",
+			Advanced: true, Choices: "0 a PC | 512 a phone | 1024 Big Picture | 2048 VR | 4096 a controller | 12288 a Steam Deck"),
 
 		// ── Trading cards ──
 		new("FarmCards", "Farm trading cards", SecCards, SettingKind.Bool,
@@ -728,6 +741,11 @@ public static class Settings {
 		new("RefundHoldDays", "...for this many days", SecCards, SettingKind.Int,
 			"How long a newly bought game is left alone, in days. Steam's own refund window is 14 days, which is the default; raise it if you take longer than that to make up your mind.",
 			Advanced: true, Min: 1, Max: 90),
+		new("FarmInSittings", "Farm in sittings, not flat out", SecCards, SettingKind.Bool,
+			"Farm in a few blocks a day with gaps between them, at different times each day, instead of running until the cards are gone. WORTH KNOWING FIRST: this only leaves a real gap on an account that has no idle games set. If it idles as well - a custom name, an idle list - then the idler simply takes over in the gaps and the account keeps banking hours either way, so all this changes is which game they land on. Useful on a farm-only account, close to pointless on one that idles."),
+		new("FarmHoursPerDay", "Hours a day to farm", SecCards, SettingKind.Int,
+			"Roughly how much of the day the sittings add up to. Rolled fresh every day within a spread of this, and longer at the weekend, so no two days are the same shape. Only used when \"Farm in sittings\" is on.",
+			Min: 1, Max: 20),
 		new("FarmOnlyWhileAsleep", "Only farm cards while asleep", SecCards, SettingKind.Bool,
 			"Human mode only: hold card farming until the account is asleep for the night (when it goes invisible), then farm, and play its normal schedule by day. Off (the default) farms as soon as there are cards, day or night."),
 		new("FarmFromHour", "Farm cards only from", SecCards, SettingKind.Int,
