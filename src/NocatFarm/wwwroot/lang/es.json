@@ -1179,7 +1179,7 @@
     },
     "Debug": {
       "label": "Detalle de depuración",
-      "tip": "Escribe mucho más detalle en el ARCHIVO de registro: cada petición web, cada recomprobación, todo. No aparece nunca en la consola, así que activarlo no te cuesta nada en pantalla; está ahí para cuando algo va mal y quieres la historia completa después. La pestaña Registro del panel también puede mostrarlo, tras su propio filtro DEBUG."
+      "tip": "Escribe mucho más detalle en el ARCHIVO de registro: cada petición web, cada recomprobación, todo. Activado por defecto, porque nunca llega a la ventana ni a la consola: no te cuesta nada en pantalla y significa que, si algo falla, la respuesta ya está en el archivo en lugar de tener que reproducir el fallo con esto activado. La pestaña Registro del panel también puede mostrarlo, tras su propio filtro DEBUG."
     },
     "LogRetentionDays": {
       "label": "Conservar los registros",

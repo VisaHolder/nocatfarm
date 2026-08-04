@@ -1179,7 +1179,7 @@
     },
     "Debug": {
       "label": "Hata ayıklama ayrıntısı",
-      "tip": "Günlük DOSYASINA çok daha fazla ayrıntı yazar - her web isteği, her yeniden denetim, hepsi. Konsol penceresinde hiç görünmez, dolayısıyla açmanın ekranda bir maliyeti yoktur; bir şeyler ters gittiğinde sonradan tüm hikâyeyi görebilmek içindir. Panonun Günlük sekmesi de kendi DEBUG filtresinin ardında bunu gösterebilir."
+      "tip": "Günlük DOSYASINA çok daha fazla ayrıntı yazar - her web isteği, her yeniden denetim, hepsi. Varsayılan olarak açık, çünkü ne pencereye ne de konsola ulaşır: ekranda sana hiçbir maliyeti yok ve bir şey ters gittiğinde, hatayı bu açıkken yeniden üretmek yerine cevap zaten dosyada oluyor. Panonun Günlük sekmesi de kendi DEBUG filtresinin ardında bunu gösterebilir."
     },
     "LogRetentionDays": {
       "label": "Günlükleri şu kadar sakla",

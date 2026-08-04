@@ -1179,7 +1179,7 @@
     },
     "Debug": {
       "label": "Debug-Details",
-      "tip": "Schreibt sehr viel mehr Details in die Log-DATEI - jede Web-Anfrage, jede erneute Prüfung, alles. Im Konsolenfenster erscheint davon nichts, das Einschalten kostet dich auf dem Bildschirm also gar nichts; es ist für den Fall da, dass etwas schiefgeht und du hinterher die ganze Geschichte willst. Der Log-Reiter im Dashboard kann es hinter seinem eigenen DEBUG-Filter ebenfalls anzeigen."
+      "tip": "Schreibt viel mehr Detail in die Log-DATEI - jede Web-Anfrage, jede erneute Prüfung, alles. Standardmäßig an, denn es erscheint weder im Fenster noch in der Konsole: es kostet dich nichts auf dem Bildschirm und bedeutet, dass die Antwort schon in der Datei steht, wenn doch etwas schiefgeht, statt den Fehler mit eingeschaltetem Schalter nachstellen zu müssen. Der Log-Tab im Dashboard kann es hinter seinem eigenen DEBUG-Filter ebenfalls anzeigen."
     },
     "LogRetentionDays": {
       "label": "Protokolle aufbewahren",

@@ -172,7 +172,7 @@ if (wantWindow) {
 	window.Failed += () => {
 		windowFailed = true;
 		Commands.Window = null;
-		Log.Written -= window.Append;
+		Log.Written -= Show;
 		Log.Suppressed = false;
 
 		// There is no console to fall back into - the exe is windowed - so make one, or the app is invisible.
@@ -182,11 +182,21 @@ if (wantWindow) {
 	};
 
 
-	foreach (Log.Entry old in Log.Recent(40)) {
-		window.Append(old);
+	// DEBUG goes to the file and nowhere else. It is written for the moment something has gone wrong and you
+	// want everything; on the window it is a wall of "reusing web token" and "243 licence(s) known" that buries
+	// the six lines actually worth reading. The console already left it out and the dashboard's Log tab has a
+	// DEBUG switch of its own - this window was the one surface still showing it unasked.
+	void Show(Log.Entry entry) {
+		if (entry.Level != "DEBUG") {
+			window.Append(entry);
+		}
 	}
 
-	Log.Written += window.Append;
+	foreach (Log.Entry old in Log.Recent(40)) {
+		Show(old);
+	}
+
+	Log.Written += Show;
 	Log.Suppressed = true;
 	Commands.Window = window;
 

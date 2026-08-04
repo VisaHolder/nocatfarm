@@ -1179,7 +1179,7 @@
     },
     "Debug": {
       "label": "Détail de débogage",
-      "tip": "Écrit beaucoup plus de détail dans le FICHIER journal - chaque requête web, chaque revérification, tout. Rien n'apparaît dans la console, donc l'activer ne te coûte rien à l'écran ; c'est là pour quand quelque chose cloche et que tu veux toute l'histoire après coup. L'onglet Journal du tableau de bord peut aussi l'afficher, derrière son propre filtre DEBUG."
+      "tip": "Écrit beaucoup plus de détails dans le FICHIER journal - chaque requête web, chaque revérification, tout. Activé par défaut, car cela n'atteint ni la fenêtre ni la console : ça ne te coûte rien à l'écran et ça veut dire que si quelque chose tourne mal, la réponse est déjà dans le fichier, au lieu de devoir reproduire la panne avec l'option activée. L'onglet Journal du tableau de bord peut aussi l'afficher, derrière son propre filtre DEBUG."
     },
     "LogRetentionDays": {
       "label": "Conserver les journaux",

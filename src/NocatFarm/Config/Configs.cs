@@ -127,7 +127,13 @@ public sealed class GlobalConfig {
 	public List<string> DisabledPlugins { get; set; } = [];
 
 	public bool FileLogging { get; set; } = true;
-	public bool Debug { get; set; }
+
+	/// <summary>
+	/// On by default: debug detail is written to the log file and shown on no screen at all, so the cost of
+	/// having it is a slightly larger file and the benefit is that when something does go wrong the answer is
+	/// already recorded rather than needing the fault reproduced with the switch flipped.
+	/// </summary>
+	public bool Debug { get; set; } = true;
 	public int LogRetentionDays { get; set; } = 14;
 }
 

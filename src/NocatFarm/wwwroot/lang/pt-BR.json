@@ -1179,7 +1179,7 @@
     },
     "Debug": {
       "label": "Detalhe de depuração",
-      "tip": "Escreve muito mais detalhe no ARQUIVO de log - cada requisição web, cada reverificação, tudo. Nunca aparece na janela do console, então ligar isso não custa nada na tela; está aí para quando algo dá errado e você quer a história inteira depois. A aba Log do painel também pode mostrar, atrás do próprio filtro DEBUG."
+      "tip": "Grava muito mais detalhe no ARQUIVO de log - cada requisição web, cada nova verificação, tudo. Ligado por padrão, porque nunca chega à janela nem ao console: não custa nada na tela e significa que, se algo der errado, a resposta já está no arquivo, em vez de precisar reproduzir a falha com isto ligado. A aba Log do painel também pode mostrar, atrás do seu próprio filtro DEBUG."
     },
     "LogRetentionDays": {
       "label": "Guardar os logs por",

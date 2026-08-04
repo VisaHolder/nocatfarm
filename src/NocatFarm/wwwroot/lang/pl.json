@@ -1179,7 +1179,7 @@
     },
     "Debug": {
       "label": "Szczegóły diagnostyczne",
-      "tip": "Zapisuje dużo więcej szczegółów do PLIKU dziennika - każde zapytanie sieciowe, każde ponowne sprawdzenie, wszystko. Nigdy nie pojawia się w oknie konsoli, więc włączenie tego nic nie kosztuje na ekranie; jest po to, żeby gdy coś pójdzie nie tak, mieć potem całą historię. Karta Dziennik w panelu też może to pokazać, za własnym filtrem DEBUG."
+      "tip": "Zapisuje znacznie więcej szczegółów do PLIKU dziennika - każde żądanie sieciowe, każde ponowne sprawdzenie, wszystko. Domyślnie włączone, bo nie trafia ani do okna, ani do konsoli: nic cię nie kosztuje na ekranie, a oznacza, że gdy coś pójdzie nie tak, odpowiedź jest już w pliku, zamiast odtwarzać usterkę z włączonym przełącznikiem. Zakładka Dziennik w panelu również może to pokazać, za własnym filtrem DEBUG."
     },
     "LogRetentionDays": {
       "label": "Przechowuj dzienniki przez",
