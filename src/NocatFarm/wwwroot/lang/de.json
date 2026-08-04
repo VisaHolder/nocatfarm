@@ -1178,8 +1178,8 @@
       "tip": "Beendet nocat.farm vollständig, sobald jedes Konto fertig gefarmt und sich abgemeldet hat, statt untätig im Infobereich zu sitzen."
     },
     "Debug": {
-      "label": "Debug-Details",
-      "tip": "Schreibt sehr viel mehr Details in die Log-DATEI - jede Web-Anfrage, jede erneute Prüfung, alles. Im Konsolenfenster erscheint davon nichts, das Einschalten kostet dich auf dem Bildschirm also gar nichts; es ist für den Fall da, dass etwas schiefgeht und du hinterher die ganze Geschichte willst. Der Log-Reiter im Dashboard kann es hinter seinem eigenen DEBUG-Filter ebenfalls anzeigen."
+      "label": "Debug-Details auf dem Bildschirm anzeigen",
+      "tip": "Debug-Details - jede Web-Anfrage, jede erneute Prüfung, alles - werden IMMER in die Log-Datei geschrieben, egal wie das hier steht. Genau dafür ist ein Log da: geht etwas schief, ist die Antwort schon aufgezeichnet, statt dass du den Fehler mit umgelegtem Schalter nachstellen musst. Das hier entscheidet nur, ob diese Zeilen zusätzlich im Fenster und in der Konsole erscheinen - standardmäßig aus, weil sie die paar Zeilen, die dich wirklich interessieren, nach oben aus dem Bild schieben."
     },
     "LogRetentionDays": {
       "label": "Protokolle aufbewahren",

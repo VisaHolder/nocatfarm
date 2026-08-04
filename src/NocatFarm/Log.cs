@@ -128,21 +128,18 @@ public static class Log {
 	}
 
 	/// <summary>
-	/// Detail for diagnosing something, written to the log FILE and never to the console.
+	/// Detail for diagnosing something. Always written to the log FILE; on screen only if asked for.
 	///
-	/// This used to print on screen too, and the screen is the one place it does not belong: every web request,
-	/// every licence count, every re-assert, in grey, scrolling the three lines somebody actually wanted off the
-	/// top. The file is where you go when something is wrong and you want everything; the console is where you
-	/// glance to see if anything is. Debug detail serves the first and ruins the second.
+	/// The switch used to decide whether the line existed at all, which is backwards: the one moment you want
+	/// this detail is after something has already gone wrong, and by then a switch that was off means the
+	/// evidence was never recorded and the fault has to be reproduced to get it. So the file always keeps it -
+	/// that is what a log is for - and the setting only decides whether it is ALSO put in front of you.
 	///
-	/// The dashboard's Log tab still receives it - it has a DEBUG filter of its own, off by default, so it can
-	/// be turned on there when it is wanted.
+	/// On screen it is genuinely unwanted by default: every web request, every licence count, every re-assert,
+	/// in grey, scrolling the three lines somebody actually cared about off the top.
 	/// </summary>
-	public static void Debug(string text, string source = "nocat.farm") {
-		if (_debug) {
-			Write("DEBUG", source, text, ConsoleColor.DarkGray, toConsole: false);
-		}
-	}
+	public static void Debug(string text, string source = "nocat.farm") =>
+		Write("DEBUG", source, text, ConsoleColor.DarkGray, toConsole: _debug);
 
 	private static void Write(string level, string source, string text, ConsoleColor colour, bool toConsole = true) {
 		DateTime now = DateTime.Now;

@@ -145,6 +145,16 @@ nav { display: flex; flex-direction: row; gap: var(--s1); }
 .navitem.active { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
 .navitem b { font-size: 12px; color: var(--muted); }
 
+/* A tab for a switched-off feature. Dimmed and tagged rather than removed: hiding it said "there is no such
+   feature" when what was meant was "it is off", and took the panel explaining the difference with it. */
+.navitem.off { opacity: .55; }
+.navitem.off:hover { opacity: 1; }
+.navtag:empty { display: none; }
+.navtag {
+  font-style: normal; font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+  padding: 1px 5px; border-radius: 999px; background: var(--panel2); color: var(--muted);
+}
+
 /* Dividers.
    A flat monochrome palette with sharp corners has no drop shadows and no rounding to separate one region
    from the next, so without an explicit line the top bar, the settings nav and the content column all read as

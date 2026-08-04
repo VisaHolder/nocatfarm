@@ -172,7 +172,7 @@ if (wantWindow) {
 	window.Failed += () => {
 		windowFailed = true;
 		Commands.Window = null;
-		Log.Written -= window.Append;
+		Log.Written -= Show;
 		Log.Suppressed = false;
 
 		// There is no console to fall back into - the exe is windowed - so make one, or the app is invisible.
@@ -182,11 +182,22 @@ if (wantWindow) {
 	};
 
 
-	foreach (Log.Entry old in Log.Recent(40)) {
-		window.Append(old);
+	// DEBUG is always in the file; whether it is also on screen is the "Show debug detail" setting, and it is
+	// read live so the toggle takes effect on the next line rather than the next restart. Left unfiltered this
+	// window showed a wall of "reusing web token" and "243 licence(s) known" that buried the six lines actually
+	// worth reading - the console and the dashboard's Log tab both already filtered it; this was the one surface
+	// still showing it unasked.
+	void Show(Log.Entry entry) {
+		if ((entry.Level != "DEBUG") || Log.DebugEnabled) {
+			window.Append(entry);
+		}
 	}
 
-	Log.Written += window.Append;
+	foreach (Log.Entry old in Log.Recent(40)) {
+		Show(old);
+	}
+
+	Log.Written += Show;
 	Log.Suppressed = true;
 	Commands.Window = window;
 

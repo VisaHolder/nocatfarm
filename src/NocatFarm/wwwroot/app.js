@@ -428,10 +428,18 @@ function renderOverview() {
     }
   }
 
-  // The Plugins tab only exists when plugins are on. Showing a tab for a feature nobody has enabled is one
-  // more thing to scroll past, and hiding it entirely is the clearest possible statement that it is off.
+  // The Plugins tab stays put whether plugins are on or off, and says which inside.
+  //
+  // Hiding it was meant to read as "this is off". It read as "this app has no plugins": the panel behind it
+  // explains what the switch does and offers to take you to it, and hiding the tab was the one thing making
+  // that explanation unreachable by anybody who had not already found the setting.
   const navPlug = $('navPlugins');
-  if (navPlug) navPlug.classList.toggle('hidden', !state.PluginsOn);
+  if (navPlug) {
+    navPlug.classList.remove('hidden');
+    navPlug.classList.toggle('off', !state.PluginsOn);
+    const tag = navPlug.querySelector('.navtag');
+    if (tag) tag.textContent = state.PluginsOn ? '' : t('off');
+  }
 
   // The button that installs it, beside the chip that announces it.
   //

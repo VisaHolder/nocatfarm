@@ -1178,8 +1178,8 @@
       "tip": "Zamyka nocat.farm całkowicie, gdy tylko wszystkie konta skończą farmić i się wylogują, zamiast siedzieć bezczynnie w zasobniku."
     },
     "Debug": {
-      "label": "Szczegóły diagnostyczne",
-      "tip": "Zapisuje dużo więcej szczegółów do PLIKU dziennika - każde zapytanie sieciowe, każde ponowne sprawdzenie, wszystko. Nigdy nie pojawia się w oknie konsoli, więc włączenie tego nic nie kosztuje na ekranie; jest po to, żeby gdy coś pójdzie nie tak, mieć potem całą historię. Karta Dziennik w panelu też może to pokazać, za własnym filtrem DEBUG."
+      "label": "Pokazuj szczegóły debugowania na ekranie",
+      "tip": "Szczegóły debugowania - każde żądanie sieciowe, każde ponowne sprawdzenie, wszystko - są ZAWSZE zapisywane do pliku dziennika, niezależnie od tego ustawienia. Po to właśnie jest dziennik: gdy coś pójdzie nie tak, odpowiedź jest już zapisana, zamiast odtwarzać usterkę z włączonym przełącznikiem. To decyduje wyłącznie o tym, czy te wiersze pojawią się dodatkowo w oknie i w konsoli - domyślnie wyłączone, bo wypychają w górę te kilka wierszy, które naprawdę chciałeś zobaczyć."
     },
     "LogRetentionDays": {
       "label": "Przechowuj dzienniki przez",

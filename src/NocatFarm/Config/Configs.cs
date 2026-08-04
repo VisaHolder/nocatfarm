@@ -127,6 +127,12 @@ public sealed class GlobalConfig {
 	public List<string> DisabledPlugins { get; set; } = [];
 
 	public bool FileLogging { get; set; } = true;
+
+	/// <summary>
+	/// Whether debug detail is also shown on screen. The log FILE always keeps it either way - this decides
+	/// only whether the window and the console show it too, and off is right: it is a wall of grey noise that
+	/// scrolls everything worth reading off the top.
+	/// </summary>
 	public bool Debug { get; set; }
 	public int LogRetentionDays { get; set; } = 14;
 }
