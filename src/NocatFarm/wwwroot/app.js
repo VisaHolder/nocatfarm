@@ -113,6 +113,22 @@ async function loadLanguage(code) {
   } catch { lang = { ui: {}, settings: {} }; }
 }
 
+/// Write markup into an element only when it has actually changed.
+///
+/// Every one of these panels was rebuilt from scratch on each poll - three seconds - which destroyed and
+/// recreated every button, link and row inside it. A click landing during a rebuild went nowhere, hover
+/// tooltips vanished mid-read, and any text you were selecting was dropped. Comparing first costs a string
+/// compare and keeps the DOM still whenever nothing has moved.
+function paint(id, html) {
+  const el = $(id);
+
+  if (!el || ((el.innerHTML === html) && (html !== ''))) {
+    return;
+  }
+
+  el.innerHTML = html;
+}
+
 /// Translate a chrome string. The English text IS the key, so nothing has to be kept in sync by hand.
 const t = (english) => (lang.ui && lang.ui[english]) || english;
 
@@ -184,6 +200,7 @@ async function refreshInventory(name) {
 // The hover breakdown: which games hold the value, biggest first.
 const nlChar = String.fromCharCode(10);
 function valueTip(b) {
+  if (b.InventoryOn === false) return tf('Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick "Work out what its inventory is worth".', b.Name);
   if (!b.InventoryReady) return t('Reading this inventory...');
   const rows = (b.InventoryByGame || []).filter((g) => g.Value > 0 || g.Blocked);
   if (!rows.length) return t('Nothing with a market price in this inventory.');
@@ -278,10 +295,10 @@ function render() {
     .map((k) => `<span class="chip ${k}" data-tip="${esc(t(STATUS_META[k].tip))}" onclick="filterTo('${k}')"><i class="dot"></i>${esc(t(STATUS_META[k].label))}<b>${counts[k]}</b></span>`)
     .join('') || `<span class="muted small">${esc(t('no accounts yet'))}</span>`;
 
-  $('railStats').innerHTML = `
+  paint('railStats', `
     <dt data-tip="${esc(t("Trading cards still to drop across every account that's farming."))}">${esc(t('Cards left'))}</dt><dd>${state.CardsLeft}</dd>
     ${r4rOn() && state.Rep4RepToken ? `<dt data-tip="${esc(t("Points you can spend on rep4rep. Pending ones are comments rep4rep hasn't verified yet."))}">${esc(t('Points'))}</dt><dd>${state.Points}${state.PendingPoints ? ' <span class="muted">+' + state.PendingPoints + '</span>' : ''}</dd>` : ''}
-    <dt data-tip="${esc(t('How long nocat.farm has been running.'))}">${esc(t('Up'))}</dt><dd>${hm(state.UptimeMinutes)}</dd>`;
+    <dt data-tip="${esc(t('How long nocat.farm has been running.'))}">${esc(t('Up'))}</dt><dd>${hm(state.UptimeMinutes)}</dd>`);
 
   renderAlerts();
 
@@ -382,7 +399,7 @@ function renderOverview() {
   const tile = (n, k, tip, sub) =>
     `<div class="tile"><div class="n">${n}</div><div class="k">${esc(t(k))}${tipIcon(t(tip))}</div>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}</div>`;
 
-  $('tiles').innerHTML =
+  paint('tiles',
     tile(state.CardsLeft, 'Cards left', 'Trading cards still to drop across every account.', state.CardsLeft ? '' : t('nothing left to farm')) +
     tile(state.GamesLeft, 'Games left', 'Games with at least one card still to drop, across every account.') +
     tile(state.CardsToday, 'Cards today', 'Trading cards that dropped in the last 24 hours.') +
@@ -393,7 +410,7 @@ function renderOverview() {
       : state.Rep4RepToken
         ? tile(state.Points, 'rep4rep points', "Points you can spend. Pending points are comments rep4rep hasn't verified yet - they turn into real points on their own, usually within a few hours. Nothing is lost.",
             state.PendingPoints ? tf('{0} pending', state.PendingPoints) : '')
-        : tile(state.CommentsToday, 'Comments today', 'rep4rep comments posted in the last 24 hours.'));
+        : tile(state.CommentsToday, 'Comments today', 'rep4rep comments posted in the last 24 hours.')));
 
   // Version, and whether there's a newer one. The link always goes to the repo; when an update exists it says
   // so and points at that release instead.
@@ -410,25 +427,41 @@ function renderOverview() {
     }
   }
 
-  $('glance').innerHTML = bots.length ? `<div class="tablewrap"><table>
+  // The button that installs it, beside the chip that announces it.
+  //
+  // Separate from the link on purpose: the link is "what changed", this is "do it". Nothing updates on its
+  // own and there is no setting to make it - plenty of people would rather keep a build that works than take
+  // whatever is newest, and an update that lands unasked mid-session costs them a night's farming.
+  const upd = $('updateBtn');
+  if (upd) {
+    const busy = state.UpdateBusy;
+    upd.classList.toggle('hidden', !state.UpdateAvailable);
+    upd.disabled = !!busy;
+    upd.textContent = busy ? (state.UpdateProgress || t('working…')) : tf('Update to {0}', state.UpdateAvailable || '');
+    upd.dataset.tip = busy
+      ? t('Downloading. It restarts by itself when it lands.')
+      : tf('Download {0} and restart into it. Your accounts, tokens, settings and logs are left exactly as they are.', state.UpdateAvailable || '');
+  }
+
+  paint('glance', bots.length ? `<div class="tablewrap"><table>
     <tr><th>${esc(t('Account'))}</th><th>${esc(t('State'))}</th><th>${esc(t('Playing'))}</th><th>${esc(t('Cards'))}</th><th data-tip="${esc(t("What everything in this account's inventory would fetch at the market's median price. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth."))}">${esc(t('Value'))}</th>${r4rOn() ? `<th>${esc(t('rep4rep'))}</th>` : ''}<th>${esc(t('Up'))}</th></tr>
     ${bots.map((b) => `<tr class="click" data-act="cards" data-bot="${esc(b.Name)}">
       <td><b>${esc(b.Name)}</b></td>
       <td><span class="chip ${b.Group}"><i class="dot"></i>${esc(b.Status)}</span></td>
       <td>${esc(b.Playing || '—')}</td>
       <td>${b.Cards || '—'}</td>
-      <td data-tip="${esc(valueTip(b))}">${b.InventoryValue > 0 ? usd(b.InventoryValue) + (b.InventoryPending > 0 ? '<span class="muted">+</span>' : '') + valueDelta(b) : (b.InventoryReady ? '—' : '<span class="muted">…</span>')}</td>
+      <td data-tip="${esc(valueTip(b))}">${b.InventoryValue > 0 ? usd(b.InventoryValue) + (b.InventoryPending > 0 ? '<span class="muted">+</span>' : '') + valueDelta(b) : (b.InventoryOn === false || b.InventoryReady ? '—' : '<span class="muted">…</span>')}</td>
       ${r4rOn() ? `<td>${b.Rep4Rep ? b.Rep4RepToday + '/' + b.Rep4RepCap : '—'}</td>` : ''}
       <td>${b.UptimeMinutes ? hm(b.UptimeMinutes) : '—'}</td></tr>`).join('')}
     </table></div>`
-    : `<p class="muted">${esc(t('No accounts yet.'))} <a href="#console" onclick="go('console')">${esc(t('Add one'))}</a> ${esc(t('or type'))} <code>add mybot mysteamlogin</code>.</p>`;
+    : `<p class="muted">${esc(t('No accounts yet.'))} <a href="#console" onclick="go('console')">${esc(t('Add one'))}</a> ${esc(t('or type'))} <code>add mybot mysteamlogin</code>.</p>`);
 
   renderToday();
 
   const interesting = logLines.filter((l) => l.Level !== 'INFO' && l.Level !== 'DEBUG').slice(-8).reverse();
-  $('recent').innerHTML = interesting.length
+  paint('recent', interesting.length
     ? interesting.map((l) => `<div class="line"><span class="who">${esc(l.Source)}</span><span>${esc(l.Text)}</span><span class="when">${esc(l.Time)}</span></div>`).join('')
-    : `<p class="muted">${esc(t('Nothing worth reporting yet.'))}</p>`;
+    : `<p class="muted">${esc(t('Nothing worth reporting yet.'))}</p>`);
 }
 
 // Per-account activity in the last 24h. A tidy table, because the old by-hour bar chart was 24 near-empty bars
@@ -451,11 +484,11 @@ function renderToday() {
       ${r4r ? `<td>${num(cm)}</td>` : ''}</tr>`;
   }).join('');
 
-  $('today').innerHTML = `<div class="tablewrap"><table class="today">
+  paint('today', `<div class="tablewrap"><table class="today">
     <tr><th>${esc(t('Account'))}</th><th data-tip="${esc(t('Trading cards that dropped in the last 24 hours.'))}">${esc(t('Cards'))}</th>${r4r ? `<th data-tip="${esc(t('rep4rep comments posted in the last 24 hours.'))}">${esc(t('Comments'))}</th>` : ''}</tr>
     ${rows}
     <tr class="fleet"><td>${esc(t('fleet'))}</td><td>${totCards}</td>${r4r ? `<td>${totComments}</td>` : ''}</tr>
-    </table></div>`;
+    </table></div>`);
 }
 
 // ── render: accounts ─────────────────────────────────────────────────
@@ -465,8 +498,12 @@ function renderAccounts() {
 
   const q = ($('acctSearch').value || '').toLowerCase();
 
-  $('acctFilters').innerHTML = Object.keys(STATUS_META).map((k) =>
+  const chips = Object.keys(STATUS_META).map((k) =>
     `<span class="chip ${k} ${acctFilter === k ? 'on' : ''}" data-tip="${esc(t(STATUS_META[k].tip))}" onclick="acctFilter='${acctFilter === k ? '' : k}';render()"><i class="dot"></i>${esc(t(STATUS_META[k].label))}</span>`).join('');
+
+  if (chips !== $('acctFilters').innerHTML) {
+    $('acctFilters').innerHTML = chips;
+  }
 
   const bots = state.Bots.filter((b) =>
     (!acctFilter || b.Group === acctFilter) &&
@@ -481,7 +518,7 @@ function renderAccounts() {
     return;
   }
 
-  $('bots').innerHTML = bots.map((b) => {
+  const cards = bots.map((b) => {
     // rep4rep is the only figure here with a real denominator, so it is the only one that gets a bar. The
     // card count has no known total, and inventing one (this used to be 100 - cards*5) is worse than a number.
     const capPct = b.Rep4Rep && b.Rep4RepCap ? Math.min(100, Math.round((b.Rep4RepToday / b.Rep4RepCap) * 100)) : 0;
@@ -523,7 +560,51 @@ function renderAccounts() {
         <button class="ghost" data-tip="${esc(t('What this account still has left to farm.'))}" data-act="cards" data-bot="${esc(b.Name)}">${esc(t('Cards'))}</button>
         <button class="ghost" data-tip="${esc(t("This account's settings."))}" data-act="settings" data-bot="${esc(b.Name)}">${esc(t('Settings'))}</button>
       </div></div>`;
-  }).join('');
+  });
+
+  paintCards(bots.map((b) => b.Name), cards);
+}
+
+/// Update the account list a CARD AT A TIME.
+///
+/// The whole list used to be rebuilt from its markup every poll - three seconds - so every button on every
+/// card was destroyed and recreated under the cursor. A click landing during a rebuild went nowhere, open
+/// tooltips vanished mid-read, and focus was lost.
+///
+/// Comparing the list as a whole is not enough: one account with a live countdown in it (a human-mode account
+/// settling in, say) makes the combined markup differ every single time, and takes every other card down with
+/// it. So each card is compared against the markup it was last built from - kept on the element, because the
+/// browser rewrites attribute quoting and whitespace the moment it parses, and reading outerHTML back would
+/// never match what we generated.
+function paintCards(names, cards) {
+  const container = $('bots');
+  const existing = [...container.children];
+  const sameAccounts = (existing.length === cards.length)
+    && existing.every((el, i) => el.dataset.name === names[i]);
+
+  // The set of accounts or their order changed - the cheap comparison no longer applies.
+  if (!sameAccounts) {
+    container.innerHTML = cards.join('');
+    [...container.children].forEach((el, i) => { el._html = cards[i]; });
+
+    return;
+  }
+
+  existing.forEach((el, i) => {
+    if (el._html === cards[i]) {
+      return;   // nothing about this account moved; leave its buttons exactly where they are
+    }
+
+    const tmp = document.createElement('div');
+    tmp.innerHTML = cards[i];
+
+    const fresh = tmp.firstElementChild;
+
+    if (fresh) {
+      fresh._html = cards[i];
+      el.replaceWith(fresh);
+    }
+  });
 }
 
 // ── arranging the accounts ────────────────────────────────────────────────
@@ -751,6 +832,43 @@ async function doRemoveBot(name) {
   await loadConfig();
   if (view === 'settings') renderSettings();
   refresh();
+}
+
+// ── updating ──────────────────────────────────────────────────────────────
+// Asked for, never automatic. The confirm exists because this restarts the app: accounts drop off Steam for a
+// few seconds and anything mid-session stops there. Everything that matters - accounts, tokens, settings,
+// logs - lives in config/ and is never part of the archive, so it survives untouched.
+function askUpdate() {
+  const to = (state && state.UpdateAvailable) || '';
+  modal(`
+    <h2>${esc(tf('Update to {0}?', to))}</h2>
+    <p>${tf('It downloads {0}, closes, swaps itself over and starts back up. Takes about a minute.', `<b>${esc(to)}</b>`)}</p>
+    <ul class="muted small">
+      <li>${esc(t('Your accounts, login tokens, settings and logs are left exactly as they are.'))}</li>
+      <li>${esc(t('Every account signs out of Steam for a few seconds while it restarts.'))}</li>
+      <li>${esc(t('Anything mid-session - a farm, a grind - stops there and picks up after.'))}</li>
+      <li>${esc(t('If the download fails, nothing is changed and the current version keeps running.'))}</li>
+    </ul>
+    <div class="actions">
+      <button class="ghost" onclick="closeModal()">${esc(t('Not now'))}</button>
+      <button id="updateGo" onclick="doUpdate(true)">${esc(t('Download and restart'))}</button>
+    </div>`);
+}
+
+async function doUpdate(confirmed) {
+  if (!confirmed) { askUpdate(); return; }
+
+  closeModal();
+  const btn = $('updateBtn');
+  if (btn) { btn.disabled = true; btn.textContent = t('working…'); }
+
+  try {
+    const r = await api('/api/update', { method: 'POST' });
+    toast(r && r.Message ? r.Message : t('Downloading. It restarts by itself when it lands.'));
+  } catch (e) {
+    toast(tf('Update failed: {0}', e.message || e));
+    if (btn) btn.disabled = false;
+  }
 }
 
 // ── theme ─────────────────────────────────────────────────────────────────
@@ -1551,49 +1669,24 @@ function pacerTable() {
   if (pacerRows === null) return `<p class="muted small">${esc(t('Reading what it has done so far…'))}</p>`;
   if (!pacerRows.length) return `<p class="muted small empty">${esc(t('Nothing tracked yet. It starts counting the first minute a game is running.'))}</p>`;
 
-  const rows = pacerRows.slice(0, 12).map((g) => {
-    const blocked = g.Blocked;
-    const next = new Date(g.NextAllow);
-    const soon = next <= new Date();
-    const hrs = g.PlayedMinutes >= 60 ? (g.PlayedMinutes / 60).toFixed(1) + t('h') : g.PlayedMinutes + t('m');
+  // One line, not a grid.
+  //
+  // A game only ever earns while it is being PLAYED, so a table listing sixty-odd owned games was sixty-odd rows
+  // of "not read yet / when it next plays" wrapped around the single row that meant anything. The one fact worth
+  // stating is which game is earning right now and how far along it is; everything else is answered by `cheevo`.
+  const live = pacerRows.find((g) => g.Running && !g.Blocked);
 
-    // Two different things worth seeing, so two different bars would be one too many: the fraction earned is the
-    // one people care about, and the rarity floor is the reason it isn't higher.
-    const done = g.Total > 0 ? Math.round((g.Unlocked / g.Total) * 100) : 0;
-    const earned = g.Total > 0
-      ? `<b>${g.Unlocked}</b><span class="muted">/${g.Total}</span>`
-      : (g.Unlocked > 0 ? `<b>${g.Unlocked}</b>` : '<span class="muted">—</span>');
+  if (!live) {
+    return `<p class="muted small">${esc(t('Nothing is earning right now — a game only earns while this account is playing it.'))}</p>`;
+  }
 
-    // The floor is the RAREST it may touch, not what it takes next - it always takes the most common one that
-    // is still locked, so a game with none of the easy ones done gets an easy one, never the 3% tail. Writing it
-    // as "≥3%" read as a promise to unlock a 3% achievement, which is the opposite of what happens.
-    const floor = g.FloorPercent > 100
-      ? `<span class="muted">${esc(t('none yet'))}</span>`
-      : `<span class="muted">${esc(t('down to'))}</span> ${g.FloorPercent}%`;
+  const name = esc(GAME_NAMES[live.App] || live.Game);
+  const hrs = live.PlayedMinutes >= 60 ? (live.PlayedMinutes / 60).toFixed(1) + t('h') : live.PlayedMinutes + t('m');
+  const done = live.Total > 0
+    ? tf('{0} of {1} done', live.Unlocked, live.Total)
+    : t('reading what it has so far');
 
-    return `<tr class="${blocked ? 'off' : ''}">
-      <td class="g" title="${esc(GAME_NAMES[g.App] || g.Game)}">${esc(GAME_NAMES[g.App] || g.Game)}</td>
-      <td class="n">${hrs}</td>
-      <td class="n">${earned}</td>
-      ${g.Total > 0
-        ? `<td class="bar" data-tip="${esc(tf('{0}% of this game earned. It stops at {1}.', done, g.CeilingPercent > 0 ? g.CeilingPercent + '%' : t("this game's own ceiling")))}"><span style="width:${Math.max(0, Math.min(100, done))}%"></span></td>`
-        : `<td class="w muted" data-tip="${esc(t("This game's achievements haven't been read yet - that happens the first time it comes up for one."))}">${esc(t('not read yet'))}</td>`}
-      <td class="n">${floor}</td>
-      <td class="w">${blocked ? esc(t(g.Why)) : soon ? esc(t('due now')) : '~' + next.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</td>
-    </tr>`;
-  }).join('');
-
-  return `<div class="tablewrap pacer"><table>
-    <tr>
-      <th>${esc(t('Game'))}</th>
-      <th data-tip="${esc(t('Hours this account has spent in this game. This is what decides how much it is allowed to earn.'))}">${esc(t('Played'))}</th>
-      <th data-tip="${esc(t('Achievements earned out of what the game has.'))}">${esc(t('Earned'))}</th>
-      <th data-tip="${esc(t("How much of the game is done. The bar never fills - it stops at this game's ceiling, because 100% on an idled account is the giveaway."))}">${esc(t('Progress'))}</th>
-      <th data-tip="${esc(t('How far down the rarity list the hours so far have opened. It always unlocks the MOST COMMON one still locked - the ones you get just by playing - and only works down toward the rare tail as the hours build. This figure is the limit, never the next pick: a game with none of the easy ones done gets an easy one.'))}">${esc(t('Opened'))}</th>
-      <th data-tip="${esc(t('Roughly when the next one is due, or why this game is left alone. It is a pace, not a promise.'))}">${esc(t('Next'))}</th>
-    </tr>
-    ${rows}
-  </table></div>${pacerRows.length > 12 ? `<p class="muted small">${esc(tf('…and {0} more.', pacerRows.length - 12))}</p>` : ''}`;
+  return `<p class="earning">${tf('Earning in {0} — {1} played, {2}.', `<b>${name}</b>`, hrs, done)}</p>`;
 }
 
 function sectionIntro(section, values) {
@@ -1615,9 +1708,7 @@ function sectionIntro(section, values) {
         ? tf('Earns achievements slowly, from real playtime, {0}.', t(pace))
         : t('Earns achievements slowly, from real playtime.'))}</b>
       <p style="margin:8px 0 0">${esc(t('Unlocking a pile of achievements the second it logs in is what gives a bot away. This drips them out the way a real player would instead - a few at a time, only the common ones, paced to the hours actually put in.'))}
-      ${esc(cap > 0
-        ? tf('It never fully completes a game (it stops at {0}%), and leaves the game this account plays most well alone.', cap)
-        : t('It never fully completes a game, and leaves the game this account plays most well alone.'))}</p>
+      ${esc(tf('It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.', cap || 90))}</p>
     </div>
     ${huntPanel()}
     ${recentUnlocks()}
@@ -1791,14 +1882,29 @@ function weightsEditor(spec) {
 
   const total = rows.reduce((sum, r) => sum + r.weight, 0) || 1;
 
-  // The main game's share is owned by MainGameSharePct, not by this list — the scheduler sizes row 0 against
-  // the side games every morning and never reads its stored weight. Showing an editable box here was a lie: you
-  // could drag it to 40 and nothing whatsoever would change. It's shown as a read-only figure that links to the
-  // setting that does control it.
-  const mainPct = Math.max(5, Math.min(95, liveValue('MainGameSharePct', settingsValues() || {}) ?? 70));
+  // Row zero's own number is the main game's share now, and the scheduler reads it. It used to be owned by a
+  // separate "Main game gets" box, so this row was shown read-only — you could not set the one figure the whole
+  // schedule turns on from the list it belongs to, and the number sitting in the spec was ignored.
+  const mainPct = Math.max(5, Math.min(95, Math.round((rows[0]?.weight ?? 70) * 100 / total)));
+
+  // What each row is worth across a week rather than on a mixed day. Main-game-only days carry no side games at
+  // all, so every side share is worth less over a week than it reads here - the gap is wide enough at a high
+  // pure-main chance that showing only the configured figure reads as a promise the schedule never made.
+  const pure = Math.max(0, Math.min(100, liveValue('PureMainDayChancePct', settingsValues() || {}) ?? 25));
+
+  const shares = rows.map((r, i) => i === 0 ? mainPct : Math.round(((r.weight / Math.max(1, total - rows[0].weight)) * (100 - mainPct))));
+
+  // The exact weekly figures always total 100, so the rounded ones have to as well. Rounding each on its own
+  // put a column of 78/6/6/11 on screen — 101, from two values that were really 77.5 and 10.5. Largest
+  // remainder instead: floor everything, then hand the leftover points to whichever rows were cut hardest.
+  const weeklies = roundToTotal(shares.map((s, i) => i === 0 ? pure + ((100 - pure) * s / 100) : (100 - pure) * s / 100), 100);
 
   const body = rows.map((r, i) => {
-    const share = i === 0 ? mainPct : Math.round(((r.weight / Math.max(1, total - rows[0].weight)) * (100 - mainPct)));
+    const share = shares[i];
+    const weekly = weeklies[i];
+    const weeklyTip = rows.length > 1 && pure > 0
+      ? tf('About {0} of an average week once the main-game-only days are counted in.', `${weekly}%`)
+      : '';
 
     // "wmain", not "main": the page's own content-area class is .main, and this row was quietly picking up
     // its `padding: 22px 26px 40px`. That is the whole reason the first row sat 26px to the right of every
@@ -1806,11 +1912,14 @@ function weightsEditor(spec) {
     return `<div class="wrow ${i === 0 ? 'wmain' : ''}">
       <span class="wname"><b class="wgame" title="${esc(gameLabel(r.game))}">${esc(gameLabel(r.game))}</b>${i === 0 ? `<b class="wtag">${esc(t('main'))}</b>` : ''}<i class="wid">${r.game}</i></span>
       <span class="wbar"><i style="width:${share}%"></i></span>
-      ${i === 0
-        ? `<span class="wpct wfixed" data-tip="${esc(t('The main game\'s share is set by "Main game gets" below, not here — it\'s held at that share however many other games you add. Click to jump to it.'))}">${share}</span>`
-        : `<input class="wpct" type="number" min="1" max="99" value="${share}" data-w-index="${i}"
-             onchange="setShare(${i},parseInt(this.value)||1)" data-tip="${esc(t("This game's share of the week. Every row here adds up to 100, including the main game - change one and the others move to make room."))}">`}
+      <input class="wpct" type="number" min="1" max="95" value="${share}" data-w-index="${i}"
+             onchange="setShare(${i},parseInt(this.value)||1)" data-tip="${esc(
+               (i === 0
+                 ? t("The main game's share of a mixed day, held there however many other games you add. It's rolled within about 10 points of this each morning.")
+                 : t("This game's share of a mixed day. Every row adds up to 100 - change one and the others move to make room."))
+               + (weeklyTip ? ' ' + weeklyTip : ''))}">
       <span class="wsign">%</span>
+      <span class="wweek"${weeklyTip ? ` data-tip="${esc(weeklyTip)}"` : ''}>${weeklyTip ? `${weekly}%<i>${esc(t('/week'))}</i>` : ''}</span>
       ${i === 0 ? '<span class="wact"></span>' : `<span class="wact"><b onclick="makeMain(${i})" data-tip="${esc(t('Make this the main game'))}">↑</b><b onclick="dropWeight(${i})" data-tip="${esc(t('Remove'))}">×</b></span>`}
     </div>`;
   }).join('');
@@ -1826,6 +1935,28 @@ function weightsEditor(spec) {
 
 const weightsSpec = (rows) => rows.map((r) => `${r.game}:${r.weight}`).join(', ');
 
+/// Round a set of exact percentages to whole numbers that still add up to `total` (largest remainder / Hare).
+/// Rounding each value on its own is what puts a column of 78/6/6/11 on screen when the exact figures were
+/// 77.5/6/6/10.5 — three of them round up and the total gains a point that does not exist.
+function roundToTotal(values, total) {
+  const floors = values.map((v) => Math.floor(v));
+  let left = total - floors.reduce((a, b) => a + b, 0);
+
+  // Hand the leftover points out to the largest fractional parts first, biggest row winning any tie so the
+  // point lands where it is least visible.
+  const order = values
+    .map((v, i) => ({ i, frac: v - Math.floor(v), size: v }))
+    .sort((a, b) => b.frac - a.frac || b.size - a.size);
+
+  for (const { i } of order) {
+    if (left <= 0) break;
+    floors[i]++;
+    left--;
+  }
+
+  return floors;
+}
+
 /// Set one game's share and even the remainder out across the others, so the row you didn't touch never has to
 /// be worked out by hand and the total is always 100.
 // Set one side game's SHARE OF THE WEEK, and move the other side games to make room.
@@ -1834,20 +1965,23 @@ const weightsSpec = (rows) => rows.map((r) => `${r.game}:${r.weight}`).join(', '
 // for one row, and changing "Main game gets" moved the bar and left the box alone. Everything is a share now,
 // so the column always adds up to 100 and the main game's slider visibly pushes the others around.
 //
-// The main game is never edited here. Its share is owned by MainGameSharePct and the scheduler re-derives row
-// zero against the side games every morning, so a number typed into row zero would simply be ignored.
+// The main game is edited here like any other row - its number is the share the scheduler actually holds it at.
 function setShare(index, wantPct) {
   const rows = parseWeights(liveWeights());
-  if (!rows[index] || index === 0) return;
+  if (!rows[index]) return;
 
-  const mainPct = Math.max(5, Math.min(95, liveValue('MainGameSharePct', settingsValues() || {}) ?? 70));
-  const pool = 100 - mainPct;                       // what all the side games share between them
   const sides = rows.length - 1;
-  if (sides < 1) return;
 
-  // Everyone else needs at least 1, so this one cannot take the whole pool.
-  const mine = Math.max(1, Math.min(pool - (sides - 1), wantPct));
-  const rest = pool - mine;
+  // One game listed: it takes the lot, and there is nothing to balance against.
+  if (sides < 1) { rows[0].weight = 100; editAndRender('GameWeights', weightsSpec(rows)); return; }
+
+  // Dragging the main game moves every side game together; dragging a side game moves only its peers. Both
+  // leave the column adding up to 100, so no row ever has to be worked out by hand.
+  const mainPct = index === 0
+    ? Math.max(5, Math.min(100 - sides, wantPct))
+    : Math.max(5, Math.min(95, Math.round((rows[0].weight * 100) / (rows.reduce((s, r) => s + r.weight, 0) || 1))));
+
+  const pool = 100 - mainPct;                       // what all the side games share between them
   const otherIdx = rows.map((_, i) => i).filter((i) => i !== 0 && i !== index);
 
   // Split what is left in proportion to what the others already had, so nudging one game does not flatten
@@ -1855,12 +1989,28 @@ function setShare(index, wantPct) {
   const prior = otherIdx.map((i) => Math.max(1, rows[i].weight));
   const priorSum = prior.reduce((a, b) => a + b, 0) || 1;
 
-  rows[index].weight = mine;
-  otherIdx.forEach((i, k) => { rows[i].weight = Math.max(1, Math.round(rest * prior[k] / priorSum)); });
-
-  // Row zero's stored weight is not used by the scheduler, but keeping it consistent means the spec written to
-  // disk reads the way the screen looks.
   rows[0].weight = mainPct;
+
+  if (index === 0) {
+    otherIdx.forEach((i, k) => { rows[i].weight = Math.max(1, Math.round(pool * prior[k] / priorSum)); });
+  } else {
+    // Everyone else needs at least 1, so this one cannot take the whole pool.
+    const mine = Math.max(1, Math.min(pool - (sides - 1), wantPct));
+    const rest = pool - mine;
+
+    rows[index].weight = mine;
+    otherIdx.forEach((i, k) => { rows[i].weight = Math.max(1, Math.round(rest * prior[k] / priorSum)); });
+  }
+
+  // Rounding the side games individually leaves the column summing to 99 or 101, and every row is then drawn as
+  // its slice of that total — so typing 70 into the main game showed 71 back. Push the drift onto a row the user
+  // is not currently looking at, so the number they just typed is the number they see.
+  const drift = 100 - rows.reduce((sum, r) => sum + r.weight, 0);
+
+  if (drift !== 0) {
+    const soak = otherIdx.length ? otherIdx.reduce((best, i) => (rows[i].weight > rows[best].weight ? i : best), otherIdx[0]) : index;
+    rows[soak].weight = Math.max(1, rows[soak].weight + drift);
+  }
 
   editAndRender('GameWeights', weightsSpec(rows));
 }
@@ -2243,6 +2393,14 @@ async function saveSettings() {
     : await post('/api/bots/' + encodeURIComponent(target) + '/config', body);
 
   if (!res.ok) { toast(res.error || t('Save failed'), true); return; }
+
+  // Changing the language has to take effect NOW, not on the next reload. The walkthrough's picker has always
+  // applied it immediately; saving the same setting from this page saved it and then carried on in the old
+  // language, which reads as the setting having done nothing at all.
+  if (edits.Language !== undefined) {
+    await loadLanguage(edits.Language);
+    translateChrome();
+  }
 
   const restart = (res.RestartNeeded || []).filter(Boolean);
   const adjusted = (res.Adjusted || []).filter(Boolean);

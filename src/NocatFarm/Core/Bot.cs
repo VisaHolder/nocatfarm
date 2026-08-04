@@ -524,6 +524,7 @@ public sealed class Bot : IAsyncDisposable {
 	private int _dropPending;
 	private uint _knownComments;
 	private bool _commentBaselineSet;
+
 	private int _tradeOffersWaiting = -1;
 	private TaskCompletionSource<bool> _tradeOffer = new(TaskCreationOptions.RunContinuationsAsynchronously);
 	private int _tradeOfferPending;
@@ -1233,6 +1234,12 @@ public sealed class Bot : IAsyncDisposable {
 			// not fatal - the push arrives anyway once something happens
 		}
 
+		// Sweep from HERE, not from the comment-notification callback. Steam only pushes that callback when it
+		// has something to say, so an account with a clean comment counter but a tray full of gifts and friend
+		// invites would never have swept at all - the one place the sweep is guaranteed to run is the login it
+		// is supposed to run on.
+		ClearAllNotifications();
+
 		_reconnectAttempts = 0;   // a successful logon ends the backoff streak
 		StartHeartbeat();
 
@@ -1702,6 +1709,20 @@ public sealed class Bot : IAsyncDisposable {
 	/// </summary>
 	public int TradeOffersWaiting => Volatile.Read(ref _tradeOffersWaiting);
 
+	/// <summary>
+	/// What actually reading the trade offers page found, which beats anything the counter said.
+	///
+	/// Only ever LOWERS the figure or confirms it. A push that arrives while the page is being read is the more
+	/// recent truth, so this never overwrites a higher number with a stale zero.
+	/// </summary>
+	public void NoteTradeOffersSeen(int seen) {
+		if (seen <= Volatile.Read(ref _tradeOffersWaiting)) {
+			Volatile.Write(ref _tradeOffersWaiting, seen);
+		} else if (Volatile.Read(ref _tradeOffersWaiting) < 0) {
+			Volatile.Write(ref _tradeOffersWaiting, seen);
+		}
+	}
+
 	private void OnTradeOfferNotifications(TradeOfferNotificationCallback cb) {
 		_lastPacket = DateTime.UtcNow;
 
@@ -1772,13 +1793,18 @@ public sealed class Bot : IAsyncDisposable {
 		if (!_commentBaselineSet) {
 			_commentBaselineSet = true;
 
-			if (cb.NewComments > 0) {
-				// Steam's own un-dismissed notification counter, NOT a count of comments sitting on the profile.
-				// It survives until somebody opens the notifications page, so an account with a spotless profile
-				// can genuinely report five - and "5 unread comments" made that read as a fault in here.
-				Log.Debug($"Steam still has {cb.NewComments} un-dismissed comment notification(s) for this account", Name);
-			}
-
+			// Deliberately silent.
+			//
+			// This is Steam's own un-dismissed notification counter, NOT a count of comments on the profile. It
+			// never falls on its own and nothing here can make it - a real load of /my/commentnotifications/ and
+			// a mark-all-read over the client connection were both tried and verified reaching Steam, and the
+			// number did not move. So it is unchanging, uncleanable and not actionable: three good reasons never
+			// to print it. It was being restated on every single login, forever.
+			//
+			// A comment that genuinely arrives while we are connected still gets announced, below, because that
+			// one IS news and the count going UP is how you can tell.
+			//
+			// The sweep itself lives on the login path, so it runs whether or not Steam bothers to send this.
 			return;
 		}
 
@@ -1787,6 +1813,58 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		Log.Event($"somebody just commented on this profile - steamcommunity.com/profiles/{SteamId}", Name);
+
+		// Read it, so the counter goes back to zero rather than climbing for the life of the account.
+		ClearAllNotifications();
+	}
+
+	/// <summary>
+	/// Mark EVERY Steam notification read - comments, gifts, help requests, the lot.
+	///
+	/// Steam's tray counters never fall on their own; they sit lit until something reads them, so on an account
+	/// nobody signs into by hand they only ever climb. This asks Steam to mark the whole lot read in one
+	/// message, and also loads the two pages that clear the older per-type counters the tray does not cover.
+	///
+	/// Best effort and deliberately quiet. A counter staying lit is worth nothing to anybody, so this never
+	/// announces success it cannot verify and never interferes with anything that matters.
+	///
+	/// One thing it does NOT shift: the legacy comment counter behind ClientCommentNotifications. Both the tray
+	/// message and a real load of /my/commentnotifications/ (verified reaching Steam and returning the page)
+	/// leave it exactly where it was. That number only ever seems to move for the Steam client itself. The log
+	/// no longer repeats it, which was the part that actually mattered.
+	/// </summary>
+	private void ClearAllNotifications() {
+		if (!Cfg.ClearNotifications) {
+			return;
+		}
+
+		_ = Task.Run(async () => {
+			try {
+				// The modern tray, in one shot.
+				Unified?.CreateService<SteamKit2.WebUI.Internal.SteamNotification>()?.MarkNotificationsRead(new SteamKit2.WebUI.Internal.CSteamNotification_MarkNotificationsRead_Notification {
+					mark_all_read = true
+				});
+			} catch (Exception e) {
+				Log.Debug($"couldn't mark notifications read: {e.Message}", Name);
+			}
+
+			// The two older counters, which the tray message does not touch. Loading the page is what clears them.
+			foreach (string page in (string[]) ["/my/commentnotifications/", "/my/inventory/"]) {
+				try {
+					await Web.GetAsync(new Uri(WebSession.Community, page)).ConfigureAwait(false);
+				} catch {
+					// cosmetic - never let it matter
+				}
+			}
+
+			// Everything Steam had told us about is now swept, so what it said about trade offers is no longer
+			// something we can rely on - we may have just zeroed an offer that was already waiting. Put the count
+			// back to "don't know" and wake the trade module, so it takes exactly one look and finds anything
+			// that was there. From that point on a genuinely new offer arrives as its own push, as before.
+			Volatile.Write(ref _tradeOffersWaiting, -1);
+			Volatile.Write(ref _tradeOfferPending, 1);
+			_tradeOffer.TrySetResult(true);
+		});
 	}
 
 	private void SignalItemDrop() {

@@ -60,7 +60,7 @@
       <a class="navitem" tabindex="0" role="button" data-view="overview"><span data-t="Overview">Overview</span></a>
       <a class="navitem" tabindex="0" role="button" data-view="accounts"><span data-t="Accounts">Accounts</span><b id="navAccounts"></b></a>
       <a class="navitem" tabindex="0" role="button" data-view="rep4rep"><span>rep4rep</span><b id="navPoints"></b></a>
-      <a class="navitem" tabindex="0" role="button" data-view="log"><span>Log</span></a>
+      <a class="navitem" tabindex="0" role="button" data-view="log"><span data-t="Log">Log</span></a>
       <a class="navitem" tabindex="0" role="button" data-view="console"><span data-t="Console">Console</span></a>
       <a class="navitem" tabindex="0" role="button" data-view="settings"><span data-t="Settings">Settings</span></a>
     </nav>
@@ -71,6 +71,7 @@
       <div class="railfoot-meta">
         <button class="themetoggle" id="themeToggle" onclick="toggleTheme()"
                 data-tip="Switch between the dark and light themes.">theme</button>
+        <button class="updatebtn hidden" id="updateBtn" onclick="doUpdate()" data-t="Update"></button>
         <a class="muted small ghlink" id="version" href="https://github.com/VisaHolder/nocatfarm"
            target="_blank" rel="noopener noreferrer"
            data-tip="nocat.farm on GitHub - source, releases and issues.">v1.3.0</a>

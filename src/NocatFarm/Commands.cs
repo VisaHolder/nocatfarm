@@ -49,7 +49,7 @@ public static partial class Commands {
 		new("play", "<account> <appIDs|none>", GroupPlaying, "Set the games this account idles for playtime."),
 		new("grind", "<account|all> <appID> <hours> | <account> off", GroupPlaying,
 			"Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs."),
-		new("human", "[account] [week]", GroupPlaying, "What human mode is doing today, and what it played. Add 'week' to see the next seven days."),
+		new("human", "[account] [week|reroll]", GroupPlaying, "What human mode is doing today, and what it played. Add 'week' to see the next seven days, or 'reroll' to throw today's plan away and roll a fresh one from the current settings."),
 		new("wake", "<account>", GroupPlaying, "Wake a sleeping human-mode account and start its day now. Bed time is unchanged."),
 		new("name", "<account> [text]", GroupPlaying, "Custom non-Steam game name shown instead of the real game. No text clears it."),
 		new("persona", "<account> <state>", GroupPlaying, "online | offline | busy | away | snooze | invisible."),
@@ -81,6 +81,7 @@ public static partial class Commands {
 		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does.", "?|h"),
 		new("theme", "[dark|light]", GroupOther, "Switch the dashboard between the dark and light themes. Without an argument it says which is on.", "dark|light"),
 		new("version", "", GroupOther, "Which version this is.", "about"),
+		new("update", "[now]", GroupOther, "Check for a newer release. 'update now' downloads it and restarts into it - nothing updates on its own, ever."),
 		new("exit", "", GroupOther, "Shut nocat.farm down.", "quit|q")
 	];
 
@@ -230,6 +231,7 @@ public static partial class Commands {
 				"answer" => Prompt.Answer(string.Join(' ', rest)) ? "answered" : "nothing is waiting for an answer",
 				"theme" or "dark" or "light" => Theme(cmd, rest),
 				"version" or "about" => About(),
+				"update" => await Update(rest).ConfigureAwait(false),
 				"exit" or "quit" or "q" => Exit(),
 				_ => Suggest(cmd)
 			};
@@ -245,6 +247,32 @@ public static partial class Commands {
 		return near == null
 			? $"There's no '{cmd}' command. Type 'help' for the list, or 'tutorial' if you're just starting."
 			: $"There's no '{cmd}' command. Did you mean '{near.Name}'? Type 'help' for the list.";
+	}
+
+	/// <summary>
+	/// Check for a newer release, and on "now", install it.
+	///
+	/// The check is forced rather than daily-gated: somebody typing this has asked, and answering "I looked
+	/// this morning" is not an answer. Installing is always explicit - see SelfUpdate for why nothing here
+	/// ever happens on a schedule.
+	/// </summary>
+	private static async Task<string> Update(string[] args) {
+		bool now = args.Any(static a => a.Equals("now", StringComparison.OrdinalIgnoreCase));
+
+		await UpdateCheck.LookAsync(force: true).ConfigureAwait(false);
+
+		if (UpdateCheck.Available == null) {
+			return $"You're on the newest release ({Build.Version}).";
+		}
+
+		if (!now) {
+			return $"{UpdateCheck.Available} is out - you have {Build.Version}."
+				+ Environment.NewLine + $"  {UpdateCheck.Url}"
+				+ Environment.NewLine + "  'update now' downloads it and restarts into it. Nothing updates on its own.";
+		}
+
+		return await SelfUpdate.ApplyAsync(CancellationToken.None).ConfigureAwait(false)
+			?? "downloading and restarting - this window will come back on its own";
 	}
 
 	private static string Exit() {
@@ -637,7 +665,9 @@ public static partial class Commands {
 	/// </summary>
 	private static string Human(BotManager mgr, string[] args) {
 		bool week = args.Any(static a => a.Equals("week", StringComparison.OrdinalIgnoreCase));
-		string? name = args.FirstOrDefault(static a => !a.Equals("week", StringComparison.OrdinalIgnoreCase));
+		bool reroll = args.Any(static a => a.Equals("reroll", StringComparison.OrdinalIgnoreCase));
+		string? name = args.FirstOrDefault(static a =>
+			!a.Equals("week", StringComparison.OrdinalIgnoreCase) && !a.Equals("reroll", StringComparison.OrdinalIgnoreCase));
 
 		List<Bot> bots = name == null
 			? mgr.All.Where(static b => b.Cfg.LegitMode).ToList()
@@ -652,6 +682,26 @@ public static partial class Commands {
 		}
 
 		StringBuilder sb = new();
+
+		if (reroll) {
+			foreach (Bot bot in bots) {
+				HumanMode? mode = BotManager.ModuleOf<HumanMode>(bot);
+
+				if (!bot.Cfg.LegitMode || (mode == null)) {
+					sb.AppendLine($"{bot.Name}: human mode is off - nothing to reroll");
+
+					continue;
+				}
+
+				mode.RerollToday();
+
+				sb.AppendLine(mode.TargetMinutesToday == 0
+					? $"{bot.Name}: rolled a day off - back tomorrow"
+					: $"{bot.Name}: rolled {Fmt.Hm(mode.TargetMinutesToday)} of play for today");
+			}
+
+			return sb.ToString().TrimEnd();
+		}
 
 		foreach (Bot bot in bots) {
 			HumanMode? human = BotManager.ModuleOf<HumanMode>(bot);
@@ -685,6 +735,32 @@ public static partial class Commands {
 			if (weights.Count > 0) {
 				int total = Math.Max(1, weights.Sum(static w => w.Weight));
 				sb.AppendLine("  set to play " + string.Join(", ", weights.Select(w => $"{GameNames.Of(w.Game)} {w.Weight * 100 / total}%")));
+
+				// What those percentages actually come to over a week.
+				//
+				// They describe a MIXED day, and main-game-only days don't have any side games in them at all, so
+				// every side number is worth less across a week than it reads on its own - by a lot, at a high
+				// pure-main chance. Printing the configured figures alone made the box look like a promise it was
+				// never making; showing both leaves the tuning alone and stops the number lying.
+				int pure = Math.Clamp(bot.Cfg.PureMainDayChancePct, 0, 100);
+
+				if ((weights.Count > 1) && (pure > 0)) {
+					// Exact first, rounded once at the end. Rounding each share on its own printed a row that
+					// added up to 101, because a 77.5 and a 10.5 both went up.
+					double[] exact = weights
+						.Select((w, i) => {
+							double share = w.Weight * 100.0 / total;
+
+							return i == 0 ? pure + ((100 - pure) * share / 100) : (100 - pure) * share / 100;
+						})
+						.ToArray();
+
+					int[] shown = Fmt.RoundToTotal(exact, 100);
+
+					IEnumerable<string> real = weights.Select((w, i) => $"{GameNames.Of(w.Game)} {shown[i]}%");
+
+					sb.AppendLine($"  over a week   {string.Join(", ", real)}   ({pure}% of days are {GameNames.Of(weights[0].Game)} only)");
+				}
 			}
 
 			if (week) {
@@ -1572,6 +1648,24 @@ public static partial class Commands {
 		return sb.ToString();
 	}
 
+	/// <summary>
+	/// Drop one matching pair of quotes from around a value typed at the console.
+	///
+	/// The command line is split on spaces with no notion of quoting, so a value written the way the help, the
+	/// tutorial and the README all show it - set acct GameWeights "730:70, 440:20" - arrived with the quote
+	/// characters still attached to the first and last words. For most settings that is a visible mess; for a
+	/// list it was worse than that, because the quote made only the FIRST and LAST entries unparseable and the
+	/// middle ones came through fine. A four-game spread silently became a two-game one with a different main
+	/// game, and nothing reported an error.
+	/// </summary>
+	private static string Unquote(string value) {
+		string trimmed = value.Trim();
+
+		return (trimmed.Length >= 2) && (trimmed[0] == trimmed[^1]) && (trimmed[0] is '"' or '\'')
+			? trimmed[1..^1]
+			: value;
+	}
+
 	private static string Set(BotManager mgr, string[] args) {
 		if (args.Length < 2) {
 			return "set <key> <value>            change a global setting\nset <account> <key> <value>  change one account's setting";
@@ -1583,18 +1677,24 @@ public static partial class Commands {
 		if (bot != null && args.Length >= 3 && Settings.FindBot(args[1]) != null) {
 			SettingDef def = Settings.FindBot(args[1])!;
 			bool wasLegit = bot.Cfg.LegitMode;
-			string? error = Settings.Apply(bot.Cfg, def, string.Join(' ', args[2..]));
+			string? error = Settings.Apply(bot.Cfg, def, Unquote(string.Join(' ', args[2..])));
 
 			if (error != null) {
 				return error;
 			}
 
 			Settings.ApplyLegitMode(bot.Cfg, wasLegit);
+
+			// Raising a "shortest" above its "longest" (or the reverse) used to be accepted and written to disk.
+			// The dashboard fixed one such pair; this fixes all of them, on both paths.
+			List<string> pulled = Settings.FixRanges(bot.Cfg, def.Name);
+
 			ConfigStore.SaveBot(bot.Name, bot.Cfg);
 			ApplyBotSideEffects(bot, def);
 
 			return $"{bot.Name}.{def.Name} = {Settings.Show(bot.Cfg, def)}"
-				+ (def.NeedsRestart ? "   (applies after a restart)" : "");
+				+ (def.NeedsRestart ? "   (applies after a restart)" : "")
+				+ (pulled.Count > 0 ? Environment.NewLine + "  " + string.Join(Environment.NewLine + "  ", pulled) : "");
 		}
 
 		// A real account name followed by something that isn't a setting: the complaint is about the SETTING, not
@@ -1614,7 +1714,7 @@ public static partial class Commands {
 				: $"There's no setting called '{args[0]}'. 'config' lists the global ones, 'config <account>' the per-account ones.";
 		}
 
-		string? failure = Settings.Apply(mgr.Global, globalDef, string.Join(' ', args[1..]));
+		string? failure = Settings.Apply(mgr.Global, globalDef, Unquote(string.Join(' ', args[1..])));
 
 		if (failure != null) {
 			return failure;

@@ -59,6 +59,15 @@ public sealed class HumanDay {
 		}
 	}
 
+	/// <summary>Throw today's plan away so the next tick rolls a fresh one against the current settings.</summary>
+	public static void Forget(string bot) {
+		try {
+			File.Delete(PathFor(bot));
+		} catch (Exception e) {
+			Log.Debug($"couldn't clear today's plan: {e.Message}", bot);
+		}
+	}
+
 	public void Save(string bot) {
 		try {
 			string path = PathFor(bot);

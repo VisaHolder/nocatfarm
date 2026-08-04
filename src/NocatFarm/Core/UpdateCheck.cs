@@ -29,9 +29,16 @@ public static class UpdateCheck {
 		Http.DefaultRequestHeaders.Add("User-Agent", "nocat.farm/" + Build.Version);
 	}
 
-	/// <summary>Look, at most once a day. Safe to call whenever.</summary>
-	public static async Task LookAsync(CancellationToken ct = default) {
-		if (!Live.Global.CheckForUpdates || (DateTime.UtcNow - _lastLooked < TimeSpan.FromHours(24))) {
+	/// <summary>
+	/// Look, at most once a day. Safe to call whenever.
+	///
+	/// <paramref name="force"/> skips both gates, for when somebody has actually asked - the daily timer is
+	/// there to keep the background check quiet, not to make "check now" mean "check tomorrow". A release
+	/// published five minutes after startup is otherwise invisible for a day, which is exactly when somebody
+	/// goes looking for it.
+	/// </summary>
+	public static async Task LookAsync(CancellationToken ct = default, bool force = false) {
+		if (!force && (!Live.Global.CheckForUpdates || (DateTime.UtcNow - _lastLooked < TimeSpan.FromHours(24)))) {
 			return;
 		}
 
@@ -59,6 +66,9 @@ public static class UpdateCheck {
 			Log.Debug($"couldn't check for updates: {e.Message}");
 		}
 	}
+
+	/// <summary>Is this release tag newer than what is running? Used by the updater before it downloads.</summary>
+	public static bool IsNewerThanThisBuild(string tag) => IsNewer(tag.TrimStart('v', 'V'), Build.Version);
 
 	/// <summary>Compares 1.2.10 against 1.2.9 properly, which a string comparison does not.</summary>
 	private static bool IsNewer(string candidate, string current) {

@@ -294,6 +294,26 @@ public sealed class WebHost : IAsyncDisposable {
 			return Results.Json(new { output });
 		});
 
+		// Installing an update, only ever because the button was pressed. There is no GET here and no schedule
+		// anywhere that reaches it - see SelfUpdate for why updating is never something that just happens.
+		app.MapPost("/api/update", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			await UpdateCheck.LookAsync(force: true).ConfigureAwait(false);
+
+			if (UpdateCheck.Available == null) {
+				return Results.Json(new { Message = $"You're on the newest release ({Build.Version})." });
+			}
+
+			string? failure = await SelfUpdate.ApplyAsync(CancellationToken.None).ConfigureAwait(false);
+
+			return Results.Json(new {
+				Message = failure ?? "Downloading. It restarts by itself when it lands."
+			});
+		});
+
 		app.MapPost("/api/prompt", async (HttpContext ctx) => {
 			if (!Authorised(ctx)) {
 				return Unauthorised();
@@ -387,11 +407,10 @@ public sealed class WebHost : IAsyncDisposable {
 
 			List<string> adjusted = Clamp(body, Settings.Bot);
 
-			// A max below the min would make every gap calculation nonsense; fix it rather than store it.
-			if (body.Rep4RepGapMaxMinutes < body.Rep4RepGapMinMinutes) {
-				body.Rep4RepGapMaxMinutes = body.Rep4RepGapMinMinutes;
-				adjusted.Add("Longest gap can't be shorter than the shortest gap - both set the same");
-			}
+			// A max below the min would make every gap calculation nonsense; fix it rather than store it. This
+			// covered only the rep4rep gap for years while seven other pairs went unchecked - it walks them all
+			// now, from the same helper the console uses, so the two paths cannot drift apart again.
+			adjusted.AddRange(Settings.FixRanges(body));
 
 			// Only fire side effects for settings that ACTUALLY changed. Running them all meant editing a note
 			// re-started an account the user had deliberately stopped.
@@ -1030,6 +1049,8 @@ public sealed class WebHost : IAsyncDisposable {
 			Currency = PriceBook.Symbol,
 			UpdateAvailable = UpdateCheck.Available,
 			UpdateUrl = UpdateCheck.Url,
+			UpdateBusy = SelfUpdate.Busy,
+			UpdateProgress = SelfUpdate.Progress,
 			InventoryPending = bots.Sum(static b => b.Inventory.Pending),
 			GamesLeft = bots.Sum(static b => b.GamesRemaining),
 			Bots = bots.Select(b => {
@@ -1067,6 +1088,11 @@ public sealed class WebHost : IAsyncDisposable {
 					InventoryChangePct = InventoryHistory.Since(b.Name, TimeSpan.FromHours(24))?.Percent,
 					InventoryPending = b.Inventory.Pending,
 					InventoryReady = b.Inventory.Ready,
+
+					// Whether it is being valued AT ALL. Without this the dashboard cannot tell "still working
+					// it out" from "switched off", and an account with pricing turned off sat showing the
+					// still-pricing ellipsis for ever.
+					InventoryOn = b.Cfg.ShowInventoryValue,
 					InventoryByGame = b.Inventory.ByGame.Take(8).Select(static g => new { g.Game, g.Items, g.Value, g.Blocked }),
 					Rep4RepToday = r4r?.PostsToday ?? 0,
 					Rep4RepCap = r4r?.Cap ?? b.Cfg.Rep4RepDailyCap,

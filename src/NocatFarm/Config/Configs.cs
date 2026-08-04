@@ -20,7 +20,10 @@ public sealed class GlobalConfig {
 	public string WebHost { get; set; } = "127.0.0.1";
 	public int WebPort { get; set; } = 7242;
 	public string WebPassword { get; set; } = "";
-	public bool OpenBrowserOnStart { get; set; }
+	// On by default. A brand new account does nothing at all until it is told what to play, and the dashboard
+	// is the only place with a form for that - so starting up and showing nothing but a console was the wrong
+	// first impression for the one screen people actually need.
+	public bool OpenBrowserOnStart { get; set; } = true;
 	public bool OpenDashboardAfterAdd { get; set; } = true;
 
 	/// <summary>"dark" or "light". Set from the dashboard's toggle or the theme command, not typed into a form.</summary>
@@ -209,14 +212,20 @@ public sealed class BotConfig {
 	public bool BoostOnlyPlayedGames { get; set; }
 	public List<uint> AchievementGames { get; set; } = [];
 
-	/// <summary>Games never to unlock in, on top of the built-in refusal to ever touch CS2.</summary>
+	/// <summary>
+	/// Games never to unlock in. Note that CS2 needs no entry here and never did: Valve keeps its achievements
+	/// server-side, so the stats interface exposes a single settable one and no tool can touch the rest.
+	/// </summary>
 	public List<uint> AchievementNeverGames { get; set; } = [];
+
+	/// <summary>Whether human mode's main game earns achievements like any other. On - it's where the hours are.</summary>
+	public bool AchievementIncludeMainGame { get; set; } = true;
 
 	/// <summary>0 careful, 1 normal, 2 brisk. Scales every gap the pacer waits.</summary>
 	public int AchievementPace { get; set; } = 1;
 
 	/// <summary>Hard cap on how much of any one game will ever be completed. 0 uses each game's own ceiling.</summary>
-	public int AchievementMaxCompletionPct { get; set; }
+	public int AchievementMaxCompletionPct { get; set; } = 90;
 
 	// ── inventory ──
 	public bool ShowInventoryValue { get; set; } = true;
@@ -227,6 +236,10 @@ public sealed class BotConfig {
 	public bool CraftBadges { get; set; }
 	public bool UnpackBoosterPacks { get; set; }
 	public bool ClearInventoryNotifications { get; set; } = true;
+
+	// Everything else in Steam's notification tray - comments, gifts, help requests, friend invites. None of
+	// these counters fall on their own, so on an account nobody signs into by hand they only ever climb.
+	public bool ClearNotifications { get; set; } = true;
 
 	// ── per-account proxy ──
 	public string AccountProxy { get; set; } = "";
@@ -255,10 +268,25 @@ public sealed class BotConfig {
 	public int BedHour { get; set; } = 2;
 	public int LateNightExtraHours { get; set; } = 2;
 
-	// how the games are split
-	public int MainGameSharePct { get; set; } = 70;
-	public int PureMainDayChancePct { get; set; } = 58;
-	public int SideGameSharePct { get; set; } = 18;
+	// How the games are split.
+	//
+	// One number governs this now, and it lives in GameWeights where it is visible next to the games it
+	// applies to. There used to be three: the share written against the main game in GameWeights (silently
+	// discarded), MainGameSharePct (which actually decided it), and SideGameSharePct (a second, independent
+	// cap on the same minutes). Two of the three could disagree with each other, and by default they did -
+	// 70 implied a 30% side share while SideGameSharePct shipped at 18, so the picker aimed for one figure
+	// and a budget it could not see cut it off at another.
+	public int PureMainDayChancePct { get; set; } = 25;
+
+	/// <summary>
+	/// Retired, and read only so an existing config still means what it meant. A file written before the share
+	/// moved into GameWeights carries the main game's percentage here, and the games list may well carry no
+	/// number at all against the main game - loading that as-is would quietly re-cut somebody's whole schedule.
+	/// <see cref="ConfigStore.MigrateGameShares"/> folds it into the list and zeroes this, at which point
+	/// WhenWritingDefault drops it from the file for good.
+	/// </summary>
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+	public int MainGameSharePct { get; set; }
 
 	// settling in after a login
 	public int WarmUpMinMinutes { get; set; } = 3;
@@ -394,6 +422,79 @@ public static class ConfigStore {
 	}
 
 	/// <summary>Every bot config in the config dir, keyed by bot name (the file name without .json).</summary>
+	/// <summary>
+	/// Carries a pre-split config across: folds the retired MainGameSharePct into the games list.
+	///
+	/// The main game's share used to live in its own box and the number written beside the game in GameWeights
+	/// was ignored, so plenty of configs say "730, 440, 550" with no percentages at all, or carry percentages
+	/// that never did anything. Read straight into the new scheme those become an even three-way split - an
+	/// account set to 85% on one game would quietly drop to 33% and start playing things it rarely touched.
+	/// Folding puts the old share where the scheduler now looks and rescales the side games around it, so the
+	/// day the account wakes up to is the day it would have had.
+	/// </summary>
+	/// <returns>true when the config changed and should be written back.</returns>
+	/// <summary>
+	/// Carries a config across the retirement of the per-game achievement ceiling.
+	///
+	/// 0 used to mean "let every game roll its own ceiling out of a hardcoded range". There are no per-game
+	/// ceilings any more, so 0 no longer means anything - and since the setting's floor is now 1, a stored 0
+	/// would clamp to a 1% ceiling and stop almost every game dead after a single achievement. Anything that
+	/// still says 0 is taking the old default meaning, so it takes the new default figure.
+	/// </summary>
+	/// <returns>true when the config changed and should be written back.</returns>
+	public static bool MigrateAchievementCeiling(BotConfig cfg, string name) {
+		if (cfg.AchievementMaxCompletionPct > 0) {
+			return false;
+		}
+
+		cfg.AchievementMaxCompletionPct = 90;
+		Log.Info("achievement ceiling is one figure now, not one per game - set to 90%", name);
+
+		return true;
+	}
+
+	public static bool MigrateGameShares(BotConfig cfg, string name) {
+		if (cfg.MainGameSharePct <= 0) {
+			return false;   // already migrated, or written by a version that never had it
+		}
+
+		int main = Math.Clamp(cfg.MainGameSharePct, 5, 95);
+
+		cfg.MainGameSharePct = 0;
+
+		List<(uint Game, int Weight)> games = Modules.HumanMode.ParseWeights(cfg.GameWeights);
+
+		if (games.Count == 0) {
+			return true;   // nothing to fold it into, but the retired key still goes
+		}
+
+		if (games.Count == 1) {
+			cfg.GameWeights = $"{games[0].Game}:100";
+
+			return true;
+		}
+
+		int sideTotal = games.Skip(1).Sum(static g => Math.Max(1, g.Weight));
+		int pool = 100 - main;
+		List<string> parts = [$"{games[0].Game}:{main}"];
+		int spent = 0;
+
+		for (int i = 1; i < games.Count; i++) {
+			// The last side game takes the remainder so the list lands on exactly 100 rather than 99 or 101.
+			int share = i == games.Count - 1
+				? Math.Max(1, pool - spent)
+				: Math.Max(1, pool * Math.Max(1, games[i].Weight) / sideTotal);
+
+			spent += share;
+			parts.Add($"{games[i].Game}:{share}");
+		}
+
+		cfg.GameWeights = string.Join(", ", parts);
+		Log.Info($"game shares moved into the games list - now \"{cfg.GameWeights}\"", name);
+
+		return true;
+	}
+
 	public static Dictionary<string, BotConfig> LoadBots() {
 		Dictionary<string, BotConfig> bots = new(StringComparer.OrdinalIgnoreCase);
 		Directory.CreateDirectory(ConfigDir);
@@ -422,6 +523,14 @@ public static class ConfigStore {
 				cfg.SharedSecret = Secrets.Unprotect(cfg.SharedSecret);
 				cfg.IdentitySecret = Secrets.Unprotect(cfg.IdentitySecret);
 				cfg.AccountProxyPassword = Secrets.Unprotect(cfg.AccountProxyPassword);
+
+				// Both migrations run, then one write - a config can need either, and neither is worth two saves.
+				bool migrated = MigrateGameShares(cfg, name);
+				migrated |= MigrateAchievementCeiling(cfg, name);
+
+				if (migrated) {
+					SaveBot(name, cfg);
+				}
 
 				bots[name] = cfg;
 			} catch (Exception e) {

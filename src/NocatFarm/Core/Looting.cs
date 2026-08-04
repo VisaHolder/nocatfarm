@@ -15,7 +15,7 @@ namespace NocatFarm.Core;
 /// and it will not touch anything outside the item types you asked for. There is no "send everything" path and
 /// no way to point it at an arbitrary SteamID from a command.
 /// </summary>
-public static class Looting {
+public static partial class Looting {
 	/// <summary>Steam's own context ids inside app 753 (Steam itself).</summary>
 	private const uint SteamAppId = 753;
 	private const uint CommunityContext = 6;
@@ -192,11 +192,39 @@ public static class Looting {
 			return $"{bot.Name}: not logged in";
 		}
 
+		// The trade-link token is only needed between accounts that are not Steam friends - and when the
+		// recipient is one of YOUR OWN accounts we are signed into it too, so asking the user to go and paste a
+		// token out of a URL is asking for something we can simply read. An explicit setting still wins.
+		string token = cfg.TradeMasterToken.Trim();
+
+		if (token.Length == 0) {
+			token = await TradeTokenOfAsync(master, ct).ConfigureAwait(false) ?? "";
+
+			if (token.Length > 0) {
+				Log.Debug($"using {master}'s own trade token - it is one of your accounts", bot.Name);
+			}
+		}
+
 		List<Item> all = await InventoryAsync(bot, ct).ConfigureAwait(false);
-		List<Item> sending = all.Where(i => WantedType(i.Type, cfg.SendItemTypes)).ToList();
+
+		// Leave out the games this account is banned in.
+		//
+		// A ban does not just stop you SELLING that game's items, it stops you trading them - and Steam refuses
+		// the WHOLE offer if even one is in it, with a bare "(11) try again later". So a single CS2 skin on a
+		// CS2-banned account quietly blocked every card, background and emoticon in the same sweep. The list was
+		// already being kept for the inventory total and says exactly this; it just was not being read here.
+		HashSet<uint> banned = [.. cfg.InventoryIgnoreGames.Select(static a => (uint) a)];
+		List<Item> allowed = all.Where(i => !banned.Contains(i.App)).ToList();
+		int blocked = all.Count - allowed.Count;
+
+		List<Item> sending = allowed.Where(i => WantedType(i.Type, cfg.SendItemTypes)).ToList();
 
 		if (sending.Count == 0) {
-			return $"{bot.Name}: nothing tradable to send" + (all.Count > 0 ? $" ({all.Count} tradable item(s), none of the types you asked for)" : "");
+			string why = blocked > 0
+				? $" ({blocked} left out - this account is banned in that game, so Steam won't let it trade those)"
+				: all.Count > 0 ? $" ({all.Count} tradable item(s), none of the types you asked for)" : "";
+
+			return $"{bot.Name}: nothing tradable to send{why}";
 		}
 
 		// Steam rejects an offer with too many items in it outright, so send it in batches.
@@ -205,7 +233,7 @@ public static class Looting {
 		List<string> problems = [];
 
 		foreach (Item[] batch in sending.Chunk(BatchSize)) {
-			(bool ok, string message) = await SendOfferAsync(bot, master, batch, cfg.TradeMasterToken, ct).ConfigureAwait(false);
+			(bool ok, string message) = await SendOfferAsync(bot, master, batch, token, ct).ConfigureAwait(false);
 
 			if (ok) {
 				sent += batch.Length;
@@ -222,10 +250,47 @@ public static class Looting {
 			return $"{bot.Name}: couldn't send - {(problems.Count > 0 ? problems[0] : "Steam refused the offer")}";
 		}
 
-		string note = $"{bot.Name}: sent {sent} item(s) to {master}";
+		string note = $"{bot.Name}: sent {sent} item(s) to {master}"
+			+ (blocked > 0 ? $" ({blocked} left out - banned in that game)" : "");
 
 		return problems.Count > 0 ? note + $" (then stopped: {problems[0]})" : note;
 	}
+
+	/// <summary>
+	/// The trade-link token belonging to one of our OWN accounts, read from its own session.
+	///
+	/// Steam shows it on the account's trade-offer privacy page as part of the full trade URL. Only works for an
+	/// account this app is signed into - which is exactly the case that matters, because sweeping items between
+	/// your own accounts is what the token requirement gets in the way of.
+	/// </summary>
+	private static async Task<string?> TradeTokenOfAsync(ulong steamId, CancellationToken ct) {
+		Bot? owner = BotManager.Instance?.All.FirstOrDefault(b => b.SteamId == steamId);
+
+		if ((owner == null) || !owner.IsOnline || !owner.Web.Ready) {
+			return null;   // not one of ours, or not signed in - nothing we can read
+		}
+
+		try {
+			string? page = await owner.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{steamId}/tradeoffers/privacy"), ct).ConfigureAwait(false);
+
+			if (page == null) {
+				return null;
+			}
+
+			Match hit = TradeTokenPattern().Match(page);
+
+			return hit.Success ? hit.Groups[1].Value : null;
+		} catch (Exception e) {
+			Log.Debug($"couldn't read the trade token for {steamId}: {e.Message}", owner.Name);
+
+			return null;
+		}
+	}
+
+	// Anchored on the trade URL itself. A bare "token=" appears elsewhere on Steam's pages, and grabbing the
+	// wrong one would send a perfectly well-formed offer that Steam then refuses for a reason nobody could see.
+	[GeneratedRegex(@"tradeoffer/new/\?partner=\d+&(?:amp;)?token=([A-Za-z0-9_-]{6,})", RegexOptions.CultureInvariant)]
+	private static partial Regex TradeTokenPattern();
 
 	/// <summary>
 	/// Steam's trade errors are a sentence and a number, and the number is the useful half.
@@ -239,6 +304,8 @@ public static class Looting {
 		string extra = steamError switch {
 			_ when steamError.Contains("(15)", StringComparison.Ordinal) =>
 				"  -  that's Steam's \"access denied\". Usually it means the SENDING account has no Steam Guard Mobile Authenticator: Steam won't let an account send trade offers without one. A trade ban or trade hold on either account does the same thing.",
+			_ when steamError.Contains("(11)", StringComparison.Ordinal) =>
+				"  -  Steam won't let this offer through to that account. Between two accounts that are not Steam friends it needs the recipient's trade-link token, which is looked up automatically when the recipient is one of your own accounts - so this usually means the RECIPIENT has trading switched off, is trade banned, or has never set up the mobile authenticator.",
 			_ when steamError.Contains("(16)", StringComparison.Ordinal) => "  -  Steam timed out. Worth trying again.",
 			_ when steamError.Contains("(26)", StringComparison.Ordinal) =>
 				"  -  one of the items is no longer there. The inventory has changed since it was read; try again.",
@@ -324,6 +391,12 @@ public static class Looting {
 			using JsonDocument doc = JsonDocument.Parse(body);
 
 			if (doc.RootElement.TryGetProperty("strError", out JsonElement error)) {
+				// The one-line strError is the polite half. Everything Steam actually said, plus what we asked it
+				// to move, so a refusal can be diagnosed from the log instead of guessed at.
+				Log.Debug($"trade offer refused. Steam said: {body}", bot.Name);
+				Log.Debug($"we offered {items.Count} item(s) to {master}, token {(token.Length > 0 ? "yes" : "no")}: "
+					+ string.Join(", ", items.Take(6).Select(static i => $"{i.App}/{i.Context}/{i.AssetId} {i.Name}")), bot.Name);
+
 				return (false, Explain(error.GetString() ?? "refused"));
 			}
 
