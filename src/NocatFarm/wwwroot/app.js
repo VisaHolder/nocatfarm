@@ -2308,6 +2308,14 @@ async function saveSettings() {
 
   if (!res.ok) { toast(res.error || t('Save failed'), true); return; }
 
+  // Changing the language has to take effect NOW, not on the next reload. The walkthrough's picker has always
+  // applied it immediately; saving the same setting from this page saved it and then carried on in the old
+  // language, which reads as the setting having done nothing at all.
+  if (edits.Language !== undefined) {
+    await loadLanguage(edits.Language);
+    translateChrome();
+  }
+
   const restart = (res.RestartNeeded || []).filter(Boolean);
   const adjusted = (res.Adjusted || []).filter(Boolean);
 
