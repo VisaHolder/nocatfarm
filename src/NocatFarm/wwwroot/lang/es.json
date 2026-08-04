@@ -450,7 +450,20 @@
     "Could not read the plugin list: {0}": "No se pudo leer la lista de plugins: {0}",
     "Could not change that: {0}": "No se pudo cambiar: {0}",
     "Could not save that: {0}": "No se pudo guardar: {0}",
-    "{0} saved": "{0} guardado"
+    "{0} saved": "{0} guardado",
+    "(optional)": "(opcional)",
+    "+ Add account": "+ Añadir cuenta",
+    "Anything you can do on the other tabs you can type here — and the other way round.": "Todo lo que puedes hacer en las otras pestañas lo puedes escribir aquí, y al revés.",
+    "Everything here is also a command. This step is": "Todo esto también es un comando. Este paso es",
+    "Let's add your first Steam account.": "Vamos a añadir tu primera cuenta de Steam.",
+    "Loading…": "Cargando…",
+    "Open rep4rep.com ↗": "Abrir rep4rep.com ↗",
+    "Run": "Ejecutar",
+    "Steam lets an account leave about 10 comments a day on people who aren't its friends.": "Steam deja que una cuenta ponga unos 10 comentarios al día a gente que no son sus amigos.",
+    "These live on rep4rep.com, because their API can't do them:": "Esto vive en rep4rep.com, porque su API no puede hacerlo:",
+    "This dashboard is password protected.": "Este panel está protegido con contraseña.",
+    "last 24 hours": "últimas 24 horas",
+    "nocat.farm posts these for you on a schedule. There's nothing to do here — this is just what's waiting.": "nocat.farm los publica por ti según un horario. Aquí no hay nada que hacer: esto es solo lo que está esperando."
   },
   "settings": {
     "WebEnabled": {
@@ -543,7 +556,8 @@
     },
     "MarketCurrency": {
       "label": "Precios del inventario en",
-      "tip": "La moneda de los precios del inventario. Ponla igual que la de tu tienda de Steam o los totales no coincidirán con lo que ves en el mercado."
+      "tip": "La moneda de los precios del inventario. Ponla igual que la de tu tienda de Steam o los totales no coincidirán con lo que ves en el mercado.",
+      "choices": "1 dólar estadounidense | 20 dólar canadiense | 21 dólar australiano | 2 libra esterlina | 3 euro | 5 rublo ruso | 7 real brasileño | 8 yen japonés | 23 yuan chino | 24 rupia india"
     },
     "FileLogging": {
       "label": "Escribir un archivo de registro",
@@ -575,7 +589,8 @@
     },
     "OnlineStatus": {
       "label": "Aparecer como",
-      "tip": "Cómo te ven los demás: conectado, ausente, ocupado o invisible. Invisible sigue acumulando horas sin que nadie vea nada."
+      "tip": "Cómo te ven los demás: conectado, ausente, ocupado o invisible. Invisible sigue acumulando horas sin que nadie vea nada.",
+      "choices": "0 desconectado | 1 conectado | 2 ocupado | 3 ausente | 4 inactivo | 5 busca intercambio | 6 busca jugar | 7 invisible"
     },
     "IUseThisAccount": {
       "label": "Yo uso esta cuenta",
@@ -691,7 +706,8 @@
     },
     "FarmingOrder": {
       "label": "Farmear en este orden",
-      "tip": "Qué juego farmear primero. «Menos cromos restantes» termina insignias antes; «más jugado primero» añade la menor cantidad de horas nuevas a tu biblioteca."
+      "tip": "Qué juego farmear primero. «Menos cromos restantes» termina insignias antes; «más jugado primero» añade la menor cantidad de horas nuevas a tu biblioteca.",
+      "choices": "0 más jugados primero | 1 menos jugados primero | 2 menos cromos restantes | 3 más cromos restantes | 4 aleatorio | 5 alfabético"
     },
     "FarmOffline": {
       "label": "Farmear apareciendo desconectado",
@@ -703,7 +719,8 @@
     },
     "AchievementPace": {
       "label": "A qué ritmo",
-      "tip": "Cuánto esperar entre desbloqueos. «Con calma» dobla cada intervalo, que es lo que quieres en una cuenta pensada para aguantar que alguien la mire de verdad."
+      "tip": "Cuánto esperar entre desbloqueos. «Con calma» dobla cada intervalo, que es lo que quieres en una cuenta pensada para aguantar que alguien la mire de verdad.",
+      "choices": "0 prudente (el doble de lento) | 1 normal | 2 rápido (el doble de rápido)"
     },
     "AchievementMaxCompletionPct": {
       "label": "No completar más de",
@@ -807,7 +824,8 @@
     },
     "AchievementBoost": {
       "tip": "Busca logros por sí mismo en varios juegos, sin que tengas que iniciar cada sesión a mano. Desactivado por defecto. «Todos los de un jugador» elige de tu biblioteca: solo juegos de verdad (nunca DLC ni demos), con logros y con reseñas suficientes.",
-      "label": "Impulso de logros"
+      "label": "Impulso de logros",
+      "choices": "0 desactivado | 1 juegos que elijas | 2 todos los de un jugador"
     },
     "SkipRefundableGames": {
       "tip": "Deja en paz un juego recién comprado hasta que ya no puedas pedir el reembolso: Steam lo niega en cuanto tiene dos horas jugadas, y dos horas es una sola sesión. Vale para todo, no solo para los cromos. Los juegos gratis nunca se retienen.",
@@ -839,7 +857,8 @@
     },
     "GameDevice": {
       "label": "Jugar como si fuera en",
-      "tip": "En qué tipo de máquina creen tus amigos que estás jugando: esto es lo que pone la insignia de Steam Deck o de móvil junto a tu nombre."
+      "tip": "En qué tipo de máquina creen tus amigos que estás jugando: esto es lo que pone la insignia de Steam Deck o de móvil junto a tu nombre.",
+      "choices": "0 un PC | 512 un móvil | 1024 Big Picture | 2048 RV | 4096 un mando | 12288 una Steam Deck"
     },
     "PriorityGames": {
       "label": "Farmear estos primero",
@@ -959,7 +978,8 @@
     },
     "UIMode": {
       "label": "Iniciar sesión como",
-      "tip": "Qué tipo de cliente de Steam le dice a Steam que es. «Escritorio» es la respuesta correcta y la predeterminada: es lo que informa el cliente real."
+      "tip": "Qué tipo de cliente de Steam le dice a Steam que es. «Escritorio» es la respuesta correcta y la predeterminada: es lo que informa el cliente real.",
+      "choices": "7 escritorio (predeterminado) | 3 web | 2 móvil | 1 Big Picture | 0 escritorio, antiguo"
     },
     "SteamParentalCode": {
       "label": "PIN de Vista Familiar",
@@ -1055,7 +1075,8 @@
     },
     "SteamProtocol": {
       "label": "Conectar mediante",
-      "tip": "Cómo llegar a Steam. Déjalo en automático salvo que un cortafuegos o tu proveedor bloqueen algo: solo-websocket parece tráfico HTTPS normal y suele pasar."
+      "tip": "Cómo llegar a Steam. Déjalo en automático salvo que un cortafuegos o tu proveedor bloqueen algo: solo-websocket parece tráfico HTTPS normal y suele pasar.",
+      "choices": "0 automático | 1 solo websocket | 2 solo tcp"
     },
     "WebProxy": {
       "label": "Proxy",

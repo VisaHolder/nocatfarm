@@ -450,7 +450,20 @@
     "Could not read the plugin list: {0}": "Eklenti listesi okunamadı: {0}",
     "Could not change that: {0}": "Bu değiştirilemedi: {0}",
     "Could not save that: {0}": "Bu kaydedilemedi: {0}",
-    "{0} saved": "{0} kaydedildi"
+    "{0} saved": "{0} kaydedildi",
+    "(optional)": "(isteğe bağlı)",
+    "+ Add account": "+ Hesap ekle",
+    "Anything you can do on the other tabs you can type here — and the other way round.": "Diğer sekmelerde yapabildiğiniz her şeyi buraya yazabilirsiniz - tersi de geçerli.",
+    "Everything here is also a command. This step is": "Buradaki her şey aynı zamanda bir komut. Bu adım şu:",
+    "Let's add your first Steam account.": "İlk Steam hesabınızı ekleyelim.",
+    "Loading…": "Yükleniyor…",
+    "Open rep4rep.com ↗": "rep4rep.com'u aç ↗",
+    "Run": "Çalıştır",
+    "Steam lets an account leave about 10 comments a day on people who aren't its friends.": "Steam, bir hesabın arkadaşı olmayan kişilere günde yaklaşık 10 yorum bırakmasına izin verir.",
+    "These live on rep4rep.com, because their API can't do them:": "Bunlar rep4rep.com üzerinde yapılır, çünkü API'leri bunu yapamıyor:",
+    "This dashboard is password protected.": "Bu panel parola korumalı.",
+    "last 24 hours": "son 24 saat",
+    "nocat.farm posts these for you on a schedule. There's nothing to do here — this is just what's waiting.": "nocat.farm bunları sizin için bir programa göre gönderir. Burada yapacak bir şey yok - bu yalnızca bekleyenler."
   },
   "settings": {
     "WebEnabled": {
@@ -543,7 +556,8 @@
     },
     "MarketCurrency": {
       "label": "Envanter fiyatları şu birimde",
-      "tip": "Envanter fiyatlarının para birimi. Steam mağazandakiyle aynı yap, yoksa toplamlar pazarda gördüğünle uyuşmaz."
+      "tip": "Envanter fiyatlarının para birimi. Steam mağazandakiyle aynı yap, yoksa toplamlar pazarda gördüğünle uyuşmaz.",
+      "choices": "1 ABD doları | 20 Kanada doları | 21 Avustralya doları | 2 İngiliz sterlini | 3 euro | 5 Rus rublesi | 7 Brezilya reali | 8 Japon yeni | 23 Çin yuanı | 24 Hindistan rupisi"
     },
     "FileLogging": {
       "label": "Günlük dosyası yaz",
@@ -575,7 +589,8 @@
     },
     "OnlineStatus": {
       "label": "Şöyle görün",
-      "tip": "Başkalarının seni nasıl gördüğü: çevrimiçi, uzakta, meşgul veya görünmez. Görünmez modda saatler birikmeye devam eder ve kimse bir şey görmez."
+      "tip": "Başkalarının seni nasıl gördüğü: çevrimiçi, uzakta, meşgul veya görünmez. Görünmez modda saatler birikmeye devam eder ve kimse bir şey görmez.",
+      "choices": "0 çevrimdışı | 1 çevrimiçi | 2 meşgul | 3 uzakta | 4 uykuda | 5 takas arıyor | 6 oyun arıyor | 7 görünmez"
     },
     "IUseThisAccount": {
       "label": "Bu hesaba ben de giriyorum",
@@ -691,7 +706,8 @@
     },
     "FarmingOrder": {
       "label": "Bu sırayla topla",
-      "tip": "Önce hangi oyunun toplanacağı. \"En az kart kalan\" rozetleri en çabuk bitirir; \"en çok oynanan önce\" kütüphanene en az yeni süre ekler."
+      "tip": "Önce hangi oyunun toplanacağı. \"En az kart kalan\" rozetleri en çabuk bitirir; \"en çok oynanan önce\" kütüphanene en az yeni süre ekler.",
+      "choices": "0 en çok oynananlar önce | 1 en az oynananlar önce | 2 en az kart kalanlar | 3 en çok kart kalanlar | 4 rastgele | 5 alfabetik"
     },
     "FarmOffline": {
       "label": "Çevrimdışı görünerek topla",
@@ -703,7 +719,8 @@
     },
     "AchievementPace": {
       "label": "Ne hızda",
-      "tip": "İki açılış arasında ne kadar beklendiği. \"Dikkatli\" her aralığı ikiye katlar; birinin gerçekten bakmasına dayanması gereken bir hesapta istediğin de budur."
+      "tip": "İki açılış arasında ne kadar beklendiği. \"Dikkatli\" her aralığı ikiye katlar; birinin gerçekten bakmasına dayanması gereken bir hesapta istediğin de budur.",
+      "choices": "0 temkinli (iki kat yavaş) | 1 normal | 2 hızlı (iki kat hızlı)"
     },
     "AchievementMaxCompletionPct": {
       "label": "Şundan fazlasını tamamlama",
@@ -807,7 +824,8 @@
     },
     "AchievementBoost": {
       "tip": "Her oturumu elle başlatmana gerek kalmadan birkaç oyunda kendi başına başarım avlar. Varsayılan olarak kapalı. \"Tüm tek oyunculu\" kütüphanenden seçer: yalnızca gerçek oyunlar (asla DLC veya demo), başarımı olan ve yeterince değerlendirmesi bulunanlar.",
-      "label": "Başarım hızlandırma"
+      "label": "Başarım hızlandırma",
+      "choices": "0 kapalı | 1 seçtiğiniz oyunlar | 2 tüm tek oyunculu oyunlar"
     },
     "SkipRefundableGames": {
       "tip": "Yeni alınmış bir oyuna, parasını geri alamayacak duruma gelene kadar dokunmaz: Steam iki saat oynanmışsa reddeder ve iki saat tek bir oturumdur. Sadece kart toplamada değil, her yerde geçerli. Ücretsiz oyunlar hiçbir zaman bekletilmez.",
@@ -839,7 +857,8 @@
     },
     "GameDevice": {
       "label": "Şu cihazda oynuyormuş gibi",
-      "tip": "Arkadaşlarının seni hangi tür cihazda oynuyor sandığı - adının yanındaki küçük Steam Deck veya telefon rozetini koyan budur."
+      "tip": "Arkadaşlarının seni hangi tür cihazda oynuyor sandığı - adının yanındaki küçük Steam Deck veya telefon rozetini koyan budur.",
+      "choices": "0 bilgisayar | 512 telefon | 1024 Big Picture | 2048 VR | 4096 oyun kumandası | 12288 Steam Deck"
     },
     "PriorityGames": {
       "label": "Önce bunları topla",
@@ -959,7 +978,8 @@
     },
     "UIMode": {
       "label": "Şöyle giriş yap",
-      "tip": "Steam'e hangi tür istemci olduğunu söylediği. \"Masaüstü\" doğru cevaptır ve varsayılandır - gerçek istemcinin bildirdiği de budur."
+      "tip": "Steam'e hangi tür istemci olduğunu söylediği. \"Masaüstü\" doğru cevaptır ve varsayılandır - gerçek istemcinin bildirdiği de budur.",
+      "choices": "7 masaüstü (varsayılan) | 3 web | 2 mobil | 1 Big Picture | 0 masaüstü, eski"
     },
     "SteamParentalCode": {
       "label": "Aile Görünümü PIN'i",
@@ -1055,7 +1075,8 @@
     },
     "SteamProtocol": {
       "label": "Şununla bağlan",
-      "tip": "Steam'e nasıl ulaşılacağı. Bir güvenlik duvarı ya da servis sağlayıcın bir şeyi engellemiyorsa otomatikte bırak - yalnızca-websocket sıradan HTTPS trafiği gibi görünür ve genelde geçer."
+      "tip": "Steam'e nasıl ulaşılacağı. Bir güvenlik duvarı ya da servis sağlayıcın bir şeyi engellemiyorsa otomatikte bırak - yalnızca-websocket sıradan HTTPS trafiği gibi görünür ve genelde geçer.",
+      "choices": "0 otomatik | 1 yalnızca websocket | 2 yalnızca tcp"
     },
     "WebProxy": {
       "label": "Vekil sunucu",

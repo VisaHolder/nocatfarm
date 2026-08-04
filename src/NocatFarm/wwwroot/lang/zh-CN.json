@@ -450,7 +450,20 @@
     "Could not read the plugin list: {0}": "无法读取插件列表：{0}",
     "Could not change that: {0}": "无法更改：{0}",
     "Could not save that: {0}": "无法保存：{0}",
-    "{0} saved": "已保存 {0}"
+    "{0} saved": "已保存 {0}",
+    "(optional)": "（可选）",
+    "+ Add account": "+ 添加账号",
+    "Anything you can do on the other tabs you can type here — and the other way round.": "其他标签页能做的事，这里都能打字完成——反过来也一样。",
+    "Everything here is also a command. This step is": "这里的每一项也都是命令。这一步是",
+    "Let's add your first Steam account.": "先来添加你的第一个 Steam 账号。",
+    "Loading…": "加载中…",
+    "Open rep4rep.com ↗": "打开 rep4rep.com ↗",
+    "Run": "运行",
+    "Steam lets an account leave about 10 comments a day on people who aren't its friends.": "Steam 允许一个账号每天给非好友留大约 10 条评论。",
+    "These live on rep4rep.com, because their API can't do them:": "这些要在 rep4rep.com 上处理，因为他们的 API 做不到：",
+    "This dashboard is password protected.": "此面板已设置密码保护。",
+    "last 24 hours": "最近 24 小时",
+    "nocat.farm posts these for you on a schedule. There's nothing to do here — this is just what's waiting.": "nocat.farm 会按计划替你发布。这里无需操作——这只是正在排队的内容。"
   },
   "settings": {
     "WebEnabled": {
@@ -543,7 +556,8 @@
     },
     "MarketCurrency": {
       "label": "库存价格使用",
-      "tip": "库存价格使用的货币。请与你的 Steam 商店保持一致，否则总额会和你在市场上看到的对不上。"
+      "tip": "库存价格使用的货币。请与你的 Steam 商店保持一致，否则总额会和你在市场上看到的对不上。",
+      "choices": "1 美元 | 20 加元 | 21 澳元 | 2 英镑 | 3 欧元 | 5 俄罗斯卢布 | 7 巴西雷亚尔 | 8 日元 | 23 人民币 | 24 印度卢比"
     },
     "FileLogging": {
       "label": "写日志文件",
@@ -575,7 +589,8 @@
     },
     "OnlineStatus": {
       "label": "显示状态为",
-      "tip": "别人看到的状态：在线、离开、忙碌或隐身。隐身时照样累积时长，而且谁也看不到。"
+      "tip": "别人看到的状态：在线、离开、忙碌或隐身。隐身时照样累积时长，而且谁也看不到。",
+      "choices": "0 离线 | 1 在线 | 2 忙碌 | 3 离开 | 4 打盹 | 5 想交易 | 6 想玩游戏 | 7 隐身"
     },
     "IUseThisAccount": {
       "label": "这个账户我自己也登录",
@@ -691,7 +706,8 @@
     },
     "FarmingOrder": {
       "label": "按此顺序刷",
-      "tip": "先刷哪个游戏。「剩余卡最少」能最快凑齐徽章；「已玩时长最多优先」给你的库添加的新时长最少。"
+      "tip": "先刷哪个游戏。「剩余卡最少」能最快凑齐徽章；「已玩时长最多优先」给你的库添加的新时长最少。",
+      "choices": "0 游玩时间多的优先 | 1 游玩时间少的优先 | 2 剩余卡牌最少 | 3 剩余卡牌最多 | 4 随机 | 5 按字母顺序"
     },
     "FarmOffline": {
       "label": "以离线状态刷卡",
@@ -703,7 +719,8 @@
     },
     "AchievementPace": {
       "label": "速度",
-      "tip": "两次解锁之间等多久。「谨慎」会把每个间隔翻倍——如果这个账户要经得起别人认真查看，那就该选它。"
+      "tip": "两次解锁之间等多久。「谨慎」会把每个间隔翻倍——如果这个账户要经得起别人认真查看，那就该选它。",
+      "choices": "0 谨慎（慢一倍） | 1 正常 | 2 轻快（快一倍）"
     },
     "AchievementMaxCompletionPct": {
       "label": "完成度不超过",
@@ -807,7 +824,8 @@
     },
     "AchievementBoost": {
       "tip": "自动在多个游戏里刷成就，不需要你手动开每一局。默认关闭。“所有单人游戏”会自己从库里挑：只挑真正的游戏（绝不碰 DLC 和试玩），有成就，且评测数量足够。",
-      "label": "成就冲刺"
+      "label": "成就冲刺",
+      "choices": "0 关闭 | 1 你挑选的游戏 | 2 所有单人游戏"
     },
     "SkipRefundableGames": {
       "tip": "刚买的游戏在还能退款前完全不碰：一旦游玩超过两小时 Steam 就不给退，而两小时不过是一次挂机。这条规则处处生效，不只是刷卡时。免费游戏永远不受限制。",
@@ -839,7 +857,8 @@
     },
     "GameDevice": {
       "label": "显示为在此设备上游玩",
-      "tip": "让好友以为你在什么设备上玩——名字旁边那个 Steam Deck 或手机小标就是这么来的。"
+      "tip": "让好友以为你在什么设备上玩——名字旁边那个 Steam Deck 或手机小标就是这么来的。",
+      "choices": "0 电脑 | 512 手机 | 1024 大屏幕模式 | 2048 VR | 4096 手柄 | 12288 Steam Deck"
     },
     "PriorityGames": {
       "label": "优先刷这些",
@@ -959,7 +978,8 @@
     },
     "UIMode": {
       "label": "登录身份",
-      "tip": "它向 Steam 声称自己是哪种客户端。「桌面」是正确答案，也是默认值——真正的客户端就是这么报的。"
+      "tip": "它向 Steam 声称自己是哪种客户端。「桌面」是正确答案，也是默认值——真正的客户端就是这么报的。",
+      "choices": "7 桌面（默认） | 3 网页 | 2 移动端 | 1 大屏幕模式 | 0 桌面（旧版）"
     },
     "SteamParentalCode": {
       "label": "家庭监护 PIN",
@@ -1055,7 +1075,8 @@
     },
     "SteamProtocol": {
       "label": "连接方式",
-      "tip": "用什么方式连到 Steam。除非防火墙或运营商挡了什么，否则保持自动即可——只用 websocket 看起来就像普通 HTTPS 流量，通常能过。"
+      "tip": "用什么方式连到 Steam。除非防火墙或运营商挡了什么，否则保持自动即可——只用 websocket 看起来就像普通 HTTPS 流量，通常能过。",
+      "choices": "0 自动 | 1 仅 WebSocket | 2 仅 TCP"
     },
     "WebProxy": {
       "label": "代理",

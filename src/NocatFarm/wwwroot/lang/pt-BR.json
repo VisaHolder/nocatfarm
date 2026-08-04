@@ -450,7 +450,20 @@
     "Could not read the plugin list: {0}": "Não foi possível ler a lista de plugins: {0}",
     "Could not change that: {0}": "Não foi possível alterar: {0}",
     "Could not save that: {0}": "Não foi possível salvar: {0}",
-    "{0} saved": "{0} salvo"
+    "{0} saved": "{0} salvo",
+    "(optional)": "(opcional)",
+    "+ Add account": "+ Adicionar conta",
+    "Anything you can do on the other tabs you can type here — and the other way round.": "Tudo o que dá para fazer nas outras abas dá para digitar aqui - e vice-versa.",
+    "Everything here is also a command. This step is": "Tudo aqui também é um comando. Este passo é",
+    "Let's add your first Steam account.": "Vamos adicionar sua primeira conta Steam.",
+    "Loading…": "Carregando…",
+    "Open rep4rep.com ↗": "Abrir rep4rep.com ↗",
+    "Run": "Executar",
+    "Steam lets an account leave about 10 comments a day on people who aren't its friends.": "A Steam deixa uma conta comentar cerca de 10 vezes por dia em pessoas que não são amigas dela.",
+    "These live on rep4rep.com, because their API can't do them:": "Isso fica no rep4rep.com, porque a API deles não faz:",
+    "This dashboard is password protected.": "Este painel é protegido por senha.",
+    "last 24 hours": "últimas 24 horas",
+    "nocat.farm posts these for you on a schedule. There's nothing to do here — this is just what's waiting.": "O nocat.farm publica isso por você conforme um cronograma. Não há nada a fazer aqui - isto é só o que está esperando."
   },
   "settings": {
     "WebEnabled": {
@@ -543,7 +556,8 @@
     },
     "MarketCurrency": {
       "label": "Preços do inventário em",
-      "tip": "A moeda dos preços de inventário. Deixe igual à da sua loja Steam, ou os totais não vão bater com o que você vê no mercado."
+      "tip": "A moeda dos preços de inventário. Deixe igual à da sua loja Steam, ou os totais não vão bater com o que você vê no mercado.",
+      "choices": "1 dólar americano | 20 dólar canadense | 21 dólar australiano | 2 libra esterlina | 3 euro | 5 rublo russo | 7 real brasileiro | 8 iene japonês | 23 yuan chinês | 24 rupia indiana"
     },
     "FileLogging": {
       "label": "Gravar um arquivo de log",
@@ -575,7 +589,8 @@
     },
     "OnlineStatus": {
       "label": "Aparecer como",
-      "tip": "Como os outros te veem: online, ausente, ocupado ou invisível. Invisível continua acumulando horas sem ninguém ver nada."
+      "tip": "Como os outros te veem: online, ausente, ocupado ou invisível. Invisível continua acumulando horas sem ninguém ver nada.",
+      "choices": "0 offline | 1 online | 2 ocupado | 3 ausente | 4 dormindo | 5 quer trocar | 6 quer jogar | 7 invisível"
     },
     "IUseThisAccount": {
       "label": "Eu uso esta conta",
@@ -691,7 +706,8 @@
     },
     "FarmingOrder": {
       "label": "Farmar nesta ordem",
-      "tip": "Qual jogo farmar primeiro. \"Menos cartas restantes\" termina emblemas mais cedo; \"mais jogado primeiro\" adiciona menos horas novas à sua biblioteca."
+      "tip": "Qual jogo farmar primeiro. \"Menos cartas restantes\" termina emblemas mais cedo; \"mais jogado primeiro\" adiciona menos horas novas à sua biblioteca.",
+      "choices": "0 mais jogados primeiro | 1 menos jogados primeiro | 2 menos cartas restantes | 3 mais cartas restantes | 4 aleatório | 5 alfabético"
     },
     "FarmOffline": {
       "label": "Farmar aparecendo offline",
@@ -703,7 +719,8 @@
     },
     "AchievementPace": {
       "label": "Em que ritmo",
-      "tip": "Quanto esperar entre desbloqueios. \"Com calma\" dobra cada intervalo, que é o que você quer numa conta feita para aguentar alguém olhando de verdade."
+      "tip": "Quanto esperar entre desbloqueios. \"Com calma\" dobra cada intervalo, que é o que você quer numa conta feita para aguentar alguém olhando de verdade.",
+      "choices": "0 cauteloso (duas vezes mais lento) | 1 normal | 2 rápido (duas vezes mais rápido)"
     },
     "AchievementMaxCompletionPct": {
       "label": "Não concluir mais que",
@@ -807,7 +824,8 @@
     },
     "AchievementBoost": {
       "tip": "Caça conquistas sozinho em vários jogos, sem você iniciar cada sessão na mão. Desligado por padrão. \"Todos os single-player\" escolhe da sua biblioteca: só jogos de verdade (nunca DLC ou demos), com conquistas e com avaliações suficientes.",
-      "label": "Impulso de conquistas"
+      "label": "Impulso de conquistas",
+      "choices": "0 desligado | 1 jogos que você escolher | 2 todos os de um jogador"
     },
     "SkipRefundableGames": {
       "tip": "Deixa um jogo recém-comprado em paz até você não poder mais pedir reembolso: a Steam recusa assim que ele tem duas horas jogadas, e duas horas é uma única sessão. Vale para tudo, não só para cartas. Jogos grátis nunca são retidos.",
@@ -839,7 +857,8 @@
     },
     "GameDevice": {
       "label": "Jogar como se fosse em",
-      "tip": "Em que tipo de aparelho seus amigos acham que você está jogando - é isto que põe o selo de Steam Deck ou de celular ao lado do seu nome."
+      "tip": "Em que tipo de aparelho seus amigos acham que você está jogando - é isto que põe o selo de Steam Deck ou de celular ao lado do seu nome.",
+      "choices": "0 um PC | 512 um celular | 1024 Big Picture | 2048 VR | 4096 um controle | 12288 um Steam Deck"
     },
     "PriorityGames": {
       "label": "Farmar estes primeiro",
@@ -959,7 +978,8 @@
     },
     "UIMode": {
       "label": "Entrar como",
-      "tip": "Que tipo de cliente Steam ele diz à Steam que é. \"Desktop\" é a resposta certa e o padrão - é o que o cliente real informa."
+      "tip": "Que tipo de cliente Steam ele diz à Steam que é. \"Desktop\" é a resposta certa e o padrão - é o que o cliente real informa.",
+      "choices": "7 desktop (padrão) | 3 web | 2 celular | 1 Big Picture | 0 desktop, antigo"
     },
     "SteamParentalCode": {
       "label": "PIN do Modo Família",
@@ -1055,7 +1075,8 @@
     },
     "SteamProtocol": {
       "label": "Conectar usando",
-      "tip": "Como alcançar a Steam. Deixe no automático a menos que um firewall ou seu provedor bloqueie algo - só-websocket parece tráfego HTTPS comum e costuma passar."
+      "tip": "Como alcançar a Steam. Deixe no automático a menos que um firewall ou seu provedor bloqueie algo - só-websocket parece tráfego HTTPS comum e costuma passar.",
+      "choices": "0 automático | 1 só websocket | 2 só tcp"
     },
     "WebProxy": {
       "label": "Proxy",

@@ -450,7 +450,20 @@
     "Could not read the plugin list: {0}": "Nie udało się odczytać listy wtyczek: {0}",
     "Could not change that: {0}": "Nie udało się tego zmienić: {0}",
     "Could not save that: {0}": "Nie udało się zapisać: {0}",
-    "{0} saved": "Zapisano {0}"
+    "{0} saved": "Zapisano {0}",
+    "(optional)": "(opcjonalne)",
+    "+ Add account": "+ Dodaj konto",
+    "Anything you can do on the other tabs you can type here — and the other way round.": "Wszystko, co możesz zrobić na innych kartach, możesz tu wpisać - i odwrotnie.",
+    "Everything here is also a command. This step is": "Wszystko tutaj jest też poleceniem. Ten krok to",
+    "Let's add your first Steam account.": "Dodajmy twoje pierwsze konto Steam.",
+    "Loading…": "Ładowanie…",
+    "Open rep4rep.com ↗": "Otwórz rep4rep.com ↗",
+    "Run": "Uruchom",
+    "Steam lets an account leave about 10 comments a day on people who aren't its friends.": "Steam pozwala koncie zostawić około 10 komentarzy dziennie u osób, które nie są jego znajomymi.",
+    "These live on rep4rep.com, because their API can't do them:": "To dzieje się na rep4rep.com, bo ich API tego nie potrafi:",
+    "This dashboard is password protected.": "Ten panel jest chroniony hasłem.",
+    "last 24 hours": "ostatnie 24 godziny",
+    "nocat.farm posts these for you on a schedule. There's nothing to do here — this is just what's waiting.": "nocat.farm publikuje je za ciebie według harmonogramu. Nie ma tu nic do roboty - to tylko to, co czeka."
   },
   "settings": {
     "WebEnabled": {
@@ -543,7 +556,8 @@
     },
     "MarketCurrency": {
       "label": "Ceny ekwipunku w",
-      "tip": "Waluta cen ekwipunku. Ustaw taką jak w twoim sklepie Steam, inaczej sumy nie zgodzą się z tym, co widzisz na rynku."
+      "tip": "Waluta cen ekwipunku. Ustaw taką jak w twoim sklepie Steam, inaczej sumy nie zgodzą się z tym, co widzisz na rynku.",
+      "choices": "1 dolar amerykański | 20 dolar kanadyjski | 21 dolar australijski | 2 funt brytyjski | 3 euro | 5 rubel rosyjski | 7 real brazylijski | 8 jen japoński | 23 juan chiński | 24 rupia indyjska"
     },
     "FileLogging": {
       "label": "Zapisuj plik dziennika",
@@ -575,7 +589,8 @@
     },
     "OnlineStatus": {
       "label": "Pokazuj jako",
-      "tip": "Jak widzą cię inni: dostępny, zaraz wracam, zajęty albo niewidoczny. Niewidoczny dalej zbiera godziny, a nikt nic nie widzi."
+      "tip": "Jak widzą cię inni: dostępny, zaraz wracam, zajęty albo niewidoczny. Niewidoczny dalej zbiera godziny, a nikt nic nie widzi.",
+      "choices": "0 offline | 1 online | 2 zajęty | 3 zaraz wracam | 4 uśpiony | 5 chce wymieniać | 6 chce grać | 7 niewidoczny"
     },
     "IUseThisAccount": {
       "label": "Sam się loguję na to konto",
@@ -691,7 +706,8 @@
     },
     "FarmingOrder": {
       "label": "Farm w tej kolejności",
-      "tip": "Którą grę farmić najpierw. \"Najmniej kart\" najszybciej kończy odznaki; \"najczęściej grane najpierw\" dokłada twojej bibliotece najmniej nowych godzin."
+      "tip": "Którą grę farmić najpierw. \"Najmniej kart\" najszybciej kończy odznaki; \"najczęściej grane najpierw\" dokłada twojej bibliotece najmniej nowych godzin.",
+      "choices": "0 najczęściej grane najpierw | 1 najrzadziej grane najpierw | 2 najmniej kart do zdobycia | 3 najwięcej kart do zdobycia | 4 losowo | 5 alfabetycznie"
     },
     "FarmOffline": {
       "label": "Farm, pokazując się offline",
@@ -703,7 +719,8 @@
     },
     "AchievementPace": {
       "label": "Jak szybko",
-      "tip": "Ile czekać między odblokowaniami. \"Ostrożnie\" podwaja każdą przerwę - dokładnie to, czego chcesz na koncie, które ma wytrzymać, gdy ktoś naprawdę spojrzy."
+      "tip": "Ile czekać między odblokowaniami. \"Ostrożnie\" podwaja każdą przerwę - dokładnie to, czego chcesz na koncie, które ma wytrzymać, gdy ktoś naprawdę spojrzy.",
+      "choices": "0 ostrożnie (dwa razy wolniej) | 1 normalnie | 2 żwawo (dwa razy szybciej)"
     },
     "AchievementMaxCompletionPct": {
       "label": "Nie kończ więcej niż",
@@ -807,7 +824,8 @@
     },
     "AchievementBoost": {
       "tip": "Sam poluje na osiągnięcia w wielu grach, bez ręcznego startowania każdej sesji. Domyślnie wyłączone. \"Wszystkie dla jednego gracza\" wybiera z twojej biblioteki: tylko prawdziwe gry (nigdy DLC ani dema), z osiągnięciami i z wystarczającą liczbą recenzji.",
-      "label": "Przyspieszenie osiągnięć"
+      "label": "Przyspieszenie osiągnięć",
+      "choices": "0 wyłączone | 1 wybrane gry | 2 wszystkie dla jednego gracza"
     },
     "SkipRefundableGames": {
       "tip": "Zostawia świeżo kupioną grę w spokoju, dopóki możesz odzyskać pieniądze: Steam odmawia, gdy ma dwie godziny, a dwie godziny to jedna sesja. Działa wszędzie, nie tylko przy kartach. Darmowe gry nigdy nie są wstrzymywane.",
@@ -839,7 +857,8 @@
     },
     "GameDevice": {
       "label": "Graj jakby na",
-      "tip": "Na jakim sprzęcie znajomi myślą, że grasz - to właśnie stawia małą plakietkę Steam Decka albo telefonu obok twojej nazwy."
+      "tip": "Na jakim sprzęcie znajomi myślą, że grasz - to właśnie stawia małą plakietkę Steam Decka albo telefonu obok twojej nazwy.",
+      "choices": "0 pecet | 512 telefon | 1024 Big Picture | 2048 VR | 4096 kontroler | 12288 Steam Deck"
     },
     "PriorityGames": {
       "label": "Farm najpierw te",
@@ -959,7 +978,8 @@
     },
     "UIMode": {
       "label": "Zaloguj jako",
-      "tip": "Jakim klientem Steam się przedstawia. \"Pulpit\" to właściwa odpowiedź i wartość domyślna - tak zgłasza się prawdziwy klient."
+      "tip": "Jakim klientem Steam się przedstawia. \"Pulpit\" to właściwa odpowiedź i wartość domyślna - tak zgłasza się prawdziwy klient.",
+      "choices": "7 pulpit (domyślnie) | 3 sieć | 2 mobilny | 1 Big Picture | 0 pulpit, stary"
     },
     "SteamParentalCode": {
       "label": "PIN Widoku Rodzinnego",
@@ -1055,7 +1075,8 @@
     },
     "SteamProtocol": {
       "label": "Łącz się przez",
-      "tip": "Jak dobijać się do Steam. Zostaw na automatyczny, chyba że zapora albo dostawca coś blokują - tryb tylko-websocket wygląda jak zwykły ruch HTTPS i zwykle przechodzi."
+      "tip": "Jak dobijać się do Steam. Zostaw na automatyczny, chyba że zapora albo dostawca coś blokują - tryb tylko-websocket wygląda jak zwykły ruch HTTPS i zwykle przechodzi.",
+      "choices": "0 automatycznie | 1 tylko websocket | 2 tylko tcp"
     },
     "WebProxy": {
       "label": "Proxy",

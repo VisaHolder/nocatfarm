@@ -17,7 +17,7 @@
 <div id="login" class="gate hidden">
   <form class="card gate-card" onsubmit="return doLogin(event)">
     <h1 class="wordmark">nocat.<span>farm</span></h1>
-    <p class="muted">This dashboard is password protected.</p>
+    <p class="muted" data-t="This dashboard is password protected.">This dashboard is password protected.</p>
     <input id="pw" type="password" placeholder="Password" data-t-ph="Password" autocomplete="current-password">
     <button type="submit" data-t="Sign in">Sign in</button>
     <p id="loginError" class="error"></p>
@@ -31,22 +31,22 @@
 
     <div id="importBanner" class="hidden"></div>
 
-    <p class="lead">Let's add your first Steam account.</p>
+    <p class="lead" data-t="Let's add your first Steam account.">Let's add your first Steam account.</p>
 
     <div class="form2">
-      <label for="w-name">Name<i class="info" data-tip="A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam."></i></label>
+      <label for="w-name"><span data-t="Name">Name</span><i class="info" data-tip="A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam."></i></label>
       <input id="w-name" type="text" placeholder="mybot" data-t-ph="mybot" autocomplete="off">
 
-      <label for="w-login">Steam account name<i class="info" data-tip="What you type into Steam's sign-in box. Not your display name, not your email."></i></label>
+      <label for="w-login"><span data-t="Steam account name">Steam account name</span><i class="info" data-tip="What you type into Steam's sign-in box. Not your display name, not your email."></i></label>
       <input id="w-login" type="text" placeholder="your steam login" data-t-ph="your steam login" autocomplete="off">
 
-      <label for="w-pass">Password <span class="muted">(optional)</span><i class="info" data-tip="nocat.farm signs in once and then keeps a login token, so this doesn't have to be stored at all. Leave it blank and it'll ask you when it needs it."></i></label>
+      <label for="w-pass"><span data-t="Password">Password</span> <span class="muted" data-t="(optional)">(optional)</span><i class="info" data-tip="nocat.farm signs in once and then keeps a login token, so this doesn't have to be stored at all. Leave it blank and it'll ask you when it needs it."></i></label>
       <input id="w-pass" type="password" placeholder="leave blank and it'll ask" data-t-ph="leave blank and it'll ask" autocomplete="off">
     </div>
 
     <p id="welcomeError" class="error"></p>
     <button onclick="createFirstBot()" data-t="Add account">Add account</button>
-    <p class="muted small foot">Everything here is also a command. This step is <code>add mybot mysteamlogin</code>.</p>
+    <p class="muted small foot"><span data-t="Everything here is also a command. This step is">Everything here is also a command. This step is</span> <code>add mybot mysteamlogin</code>.</p>
   </div>
 </div>
 
@@ -89,15 +89,15 @@
       <div id="tiles" class="tiles"><div class="tile skeleton"></div><div class="tile skeleton"></div><div class="tile skeleton"></div><div class="tile skeleton"></div></div>
       <div class="card">
         <h2 data-t="Accounts">Accounts</h2>
-        <div id="glance"><p class="muted empty">Loading…</p></div>
+        <div id="glance"><p class="muted empty" data-t="Loading…">Loading…</p></div>
       </div>
       <div class="card">
-        <h2>Today<span class="muted small" style="text-transform:none;letter-spacing:0">last 24 hours</span><i class="info" data-tip="Trading cards that dropped and rep4rep comments posted in the last 24 hours, per account."></i></h2>
-        <div id="today"><p class="muted empty">Loading…</p></div>
+        <h2><span data-t="Today">Today</span><span class="muted small" style="text-transform:none;letter-spacing:0" data-t="last 24 hours">last 24 hours</span><i class="info" data-tip="Trading cards that dropped and rep4rep comments posted in the last 24 hours, per account."></i></h2>
+        <div id="today"><p class="muted empty" data-t="Loading…">Loading…</p></div>
       </div>
       <div class="card">
-        <h2>Recent activity<a class="muted small" style="margin-left:auto;cursor:pointer" onclick="startTutorial()" data-t="Show the walkthrough again">Show the walkthrough again</a></h2>
-        <div id="recent" class="recent"><p class="muted empty">Loading…</p></div>
+        <h2><span data-t="Recent activity">Recent activity</span><a class="muted small" style="margin-left:auto;cursor:pointer" onclick="startTutorial()" data-t="Show the walkthrough again">Show the walkthrough again</a></h2>
+        <div id="recent" class="recent"><p class="muted empty" data-t="Loading…">Loading…</p></div>
       </div>
     </section>
 
@@ -108,9 +108,9 @@
         <div id="acctFilters" class="chips"></div>
         <span class="spacer"></span>
         <button class="ghost" onclick="showImport()" data-t="Import from ASF">Import from ASF</button>
-        <button onclick="showAddAccount()">+ Add account</button>
+        <button onclick="showAddAccount()" data-t="+ Add account">+ Add account</button>
       </div>
-      <div id="bots" class="grid"><p class="muted empty">Loading…</p></div>
+      <div id="bots" class="grid"><p class="muted empty" data-t="Loading…">Loading…</p></div>
     </section>
 
     <!-- rep4rep -->
@@ -122,7 +122,7 @@
       </div>
       <div class="card">
         <h2 data-t="Queued tasks">Queued tasks</h2>
-        <p class="banner">nocat.farm posts these for you on a schedule. There's nothing to do here — this is just what's waiting.</p>
+        <p class="banner" data-t="nocat.farm posts these for you on a schedule. There's nothing to do here — this is just what's waiting.">nocat.farm posts these for you on a schedule. There's nothing to do here — this is just what's waiting.</p>
         <div class="toolbar">
           <label class="inline muted" for="r4rBot" data-t="Show tasks for">Show tasks for</label>
           <select id="r4rBot" onchange="loadTasks()"></select>
@@ -132,16 +132,16 @@
       </div>
       <div class="card">
         <h2 data-t="Pacing">Pacing</h2>
-        <p class="explain"><b>Steam lets an account leave about 10 comments a day on people who aren't its friends.</b>
+        <p class="explain"><b data-t="Steam lets an account leave about 10 comments a day on people who aren't its friends.">Steam lets an account leave about 10 comments a day on people who aren't its friends.</b>
           Go past that and Steam quietly stops accepting comments from that account for around a day. It isn't a ban and
           nothing is broken, but nothing you post gets through either — and rep4rep will never credit it. nocat.farm keeps
           every account under the line, spaces the comments out at random, and only posts during the hours you allow.</p>
         <div id="r4rPacing"></div>
       </div>
       <div class="card muted small">
-        <b>These live on rep4rep.com, because their API can't do them:</b>
+        <b data-t="These live on rep4rep.com, because their API can't do them:">These live on rep4rep.com, because their API can't do them:</b>
         removing a Steam profile · editing your custom comment list · task history · buying points · referrals.
-        <a href="https://rep4rep.com/dashboard/" target="_blank" rel="noopener">Open rep4rep.com ↗</a>
+        <a href="https://rep4rep.com/dashboard/" target="_blank" rel="noopener" data-t="Open rep4rep.com ↗">Open rep4rep.com ↗</a>
       </div>
     </section>
 
@@ -155,7 +155,7 @@
           <label class="inline"><input type="checkbox" id="logFollow" checked> Follow</label>
           <button class="ghost" onclick="copyLog()" data-t="Copy">Copy</button>
         </div>
-        <div id="logBody" class="out"><p class="muted empty">Loading…</p></div>
+        <div id="logBody" class="out"><p class="muted empty" data-t="Loading…">Loading…</p></div>
       </div>
     </section>
 
@@ -168,14 +168,14 @@
     </section>
 
     <section id="view-console" class="view hidden">
-      <p class="muted small">Anything you can do on the other tabs you can type here — and the other way round.</p>
+      <p class="muted small" data-t="Anything you can do on the other tabs you can type here — and the other way round.">Anything you can do on the other tabs you can type here — and the other way round.</p>
       <div class="consolewrap">
         <div class="card console-card">
           <div id="out" class="out"></div>
           <form class="cmdline" onsubmit="return sendCommand(event)">
             <span class="chev">&gt;</span>
             <input id="cmd" type="text" autocomplete="off" spellcheck="false" placeholder="type a command, or 'help'" data-t-ph="type a command, or 'help'">
-            <button type="submit">Run</button>
+            <button type="submit" data-t="Run">Run</button>
           </form>
         </div>
         <div class="card cmdlist">
@@ -205,7 +205,7 @@
             <button id="saveBtn" onclick="saveSettings()" disabled data-t="Save">Save</button>
           </div>
           <div id="settingsHeader"></div>
-          <div id="settingsBody"><p class="muted empty">Loading…</p></div>
+          <div id="settingsBody"><p class="muted empty" data-t="Loading…">Loading…</p></div>
         </div>
       </div>
     </section>
