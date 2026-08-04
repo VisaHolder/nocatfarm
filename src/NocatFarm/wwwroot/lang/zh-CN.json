@@ -434,7 +434,8 @@
   "Friends & messages": "好友与消息",
   "Trades": "交易",
   "Staying out of the way": "别碍事",
-  "Log": "日志"
+  "Log": "日志",
+  "Not being valued - this account has \"Work out what its inventory is worth\" turned off.": "未在估值——这个账户的「算出它的库存值多少钱」是关着的。"
  },
  "settings": {
   "WebEnabled": {

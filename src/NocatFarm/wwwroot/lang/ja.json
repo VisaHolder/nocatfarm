@@ -434,7 +434,8 @@
   "Friends & messages": "フレンドとメッセージ",
   "Trades": "トレード",
   "Staying out of the way": "邪魔をしない",
-  "Log": "ログ"
+  "Log": "ログ",
+  "Not being valued - this account has \"Work out what its inventory is worth\" turned off.": "評価していません - このアカウントは「インベントリの価値を算出する」がオフです。"
  },
  "settings": {
   "WebEnabled": {

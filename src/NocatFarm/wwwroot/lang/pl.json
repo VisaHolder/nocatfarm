@@ -434,7 +434,8 @@
   "Friends & messages": "Znajomi i wiadomości",
   "Trades": "Wymiany",
   "Staying out of the way": "Nie wchodzić w drogę",
-  "Log": "Dziennik"
+  "Log": "Dziennik",
+  "Not being valued - this account has \"Work out what its inventory is worth\" turned off.": "Nie jest wyceniane - to konto ma wyłączone \"Wylicz, ile wart jest jego ekwipunek\"."
  },
  "settings": {
   "WebEnabled": {

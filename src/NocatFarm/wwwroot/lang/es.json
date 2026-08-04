@@ -434,7 +434,8 @@
   "Friends & messages": "Amigos y mensajes",
   "Trades": "Intercambios",
   "Staying out of the way": "No estorbar",
-  "Log": "Registro"
+  "Log": "Registro",
+  "Not being valued - this account has \"Work out what its inventory is worth\" turned off.": "No se está valorando: esta cuenta tiene desactivado «Calcular cuánto vale su inventario»."
  },
  "settings": {
   "WebEnabled": {

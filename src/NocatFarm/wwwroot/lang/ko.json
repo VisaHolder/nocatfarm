@@ -434,7 +434,8 @@
   "Friends & messages": "친구와 메시지",
   "Trades": "교환",
   "Staying out of the way": "방해하지 않기",
-  "Log": "로그"
+  "Log": "로그",
+  "Not being valued - this account has \"Work out what its inventory is worth\" turned off.": "가치를 계산하지 않습니다 - 이 계정은 '인벤토리 가치 계산'이 꺼져 있습니다."
  },
  "settings": {
   "WebEnabled": {

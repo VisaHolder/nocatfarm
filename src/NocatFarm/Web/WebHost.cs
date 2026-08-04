@@ -1066,6 +1066,11 @@ public sealed class WebHost : IAsyncDisposable {
 					InventoryChangePct = InventoryHistory.Since(b.Name, TimeSpan.FromHours(24))?.Percent,
 					InventoryPending = b.Inventory.Pending,
 					InventoryReady = b.Inventory.Ready,
+
+					// Whether it is being valued AT ALL. Without this the dashboard cannot tell "still working
+					// it out" from "switched off", and an account with pricing turned off sat showing the
+					// still-pricing ellipsis for ever.
+					InventoryOn = b.Cfg.ShowInventoryValue,
 					InventoryByGame = b.Inventory.ByGame.Take(8).Select(static g => new { g.Game, g.Items, g.Value, g.Blocked }),
 					Rep4RepToday = r4r?.PostsToday ?? 0,
 					Rep4RepCap = r4r?.Cap ?? b.Cfg.Rep4RepDailyCap,

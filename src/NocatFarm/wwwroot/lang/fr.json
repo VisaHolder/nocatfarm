@@ -434,7 +434,8 @@
   "Friends & messages": "Amis et messages",
   "Trades": "Échanges",
   "Staying out of the way": "Ne pas gêner",
-  "Log": "Journal"
+  "Log": "Journal",
+  "Not being valued - this account has \"Work out what its inventory is worth\" turned off.": "N'est pas évalué - ce compte a « Calculer ce que vaut son inventaire » désactivé."
  },
  "settings": {
   "WebEnabled": {

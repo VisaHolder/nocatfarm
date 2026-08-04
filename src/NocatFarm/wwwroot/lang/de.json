@@ -434,7 +434,8 @@
   "Friends & messages": "Freunde & Nachrichten",
   "Trades": "Tauschangebote",
   "Staying out of the way": "Nicht im Weg stehen",
-  "Log": "Protokoll"
+  "Log": "Protokoll",
+  "Not being valued - this account has \"Work out what its inventory is worth\" turned off.": "Wird nicht bewertet - bei diesem Konto ist \"Ausrechnen, was sein Inventar wert ist\" aus."
  },
  "settings": {
   "WebEnabled": {

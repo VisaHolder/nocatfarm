@@ -434,7 +434,8 @@
   "Friends & messages": "Друзья и сообщения",
   "Trades": "Обмены",
   "Staying out of the way": "Не мешать",
-  "Log": "Журнал"
+  "Log": "Журнал",
+  "Not being valued - this account has \"Work out what its inventory is worth\" turned off.": "Не оценивается — у этого аккаунта выключено «Считать, сколько стоит его инвентарь»."
  },
  "settings": {
   "WebEnabled": {

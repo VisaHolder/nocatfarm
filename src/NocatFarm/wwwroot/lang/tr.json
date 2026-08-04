@@ -434,7 +434,8 @@
   "Friends & messages": "Arkadaşlar ve mesajlar",
   "Trades": "Takaslar",
   "Staying out of the way": "Yoldan çekilme",
-  "Log": "Günlük"
+  "Log": "Günlük",
+  "Not being valued - this account has \"Work out what its inventory is worth\" turned off.": "Değerlenmiyor - bu hesapta \"Envanterinin ne ettiğini hesapla\" kapalı."
  },
  "settings": {
   "WebEnabled": {
