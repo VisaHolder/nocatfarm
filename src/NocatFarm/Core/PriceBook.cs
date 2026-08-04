@@ -27,10 +27,19 @@ public static partial class PriceBook {
 	/// hammered. Slower here is the difference between an inventory total that takes an hour and a trade check
 	/// that fails.
 	/// </summary>
-	private const double GapSeconds = 5.0;
+	/// <summary>
+	/// Seconds between market lookups.
+	///
+	/// This is the number that decides whether Steam rate-limits us, and five was too fast: twelve a minute,
+	/// sustained for as long as it takes to price several hundred items, tripped the limiter fourteen times in
+	/// one day. The backoff caught every one of them and nothing broke, but a backoff firing that often is a
+	/// pacing problem, not a success.
+	/// </summary>
+	private static double GapSeconds => Math.Clamp(Live.Global.MarketGapSeconds, 1, 60);
 
 	/// <summary>How long a price is trusted before it's worth asking again.</summary>
-	private static readonly TimeSpan MaxAge = TimeSpan.FromHours(24);
+	/// <summary>How long a price is trusted before it is worth asking again. Fewer asks, fewer rate limits.</summary>
+	private static TimeSpan MaxAge => TimeSpan.FromHours(Math.Clamp(Live.Global.PriceCacheHours, 1, 168));
 
 	private sealed class Price {
 		public decimal Usd { get; set; }

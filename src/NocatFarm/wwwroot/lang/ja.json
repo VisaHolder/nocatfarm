@@ -438,7 +438,19 @@
     "Download and restart": "ダウンロードして再起動",
     "Downloading. It restarts by itself when it lands.": "ダウンロード中。完了すると自動で再起動します。",
     "Update failed: {0}": "更新に失敗しました: {0}",
-    "working…": "処理中…"
+    "working…": "処理中…",
+    "Plugins": "プラグイン",
+    "Commands they added": "追加されたコマンド",
+    "Nothing installed yet.": "まだ何もインストールされていません。",
+    "Drop a .dll in this folder and restart:": "このフォルダーに .dll を置いて再起動してください:",
+    "How to write one": "書き方",
+    "Go to the setting": "設定を開く",
+    "Takes effect after a restart — a plugin wires itself up as the app starts.": "再起動後に反映されます。プラグインはアプリの起動時に組み込まれます。",
+    "Plugins are switched off. A plugin is somebody else's code running inside this app, with access to everything it can reach — including your Steam login tokens. Turn it on only for plugins you wrote or whose author you trust.": "プラグインはオフです。プラグインはこのアプリの中で動く他人のコードで、Steam のログイントークンを含め、アプリが触れるものすべてに手が届きます。自分で書いたものか、作者を信頼できるものだけ有効にしてください。",
+    "Could not read the plugin list: {0}": "プラグイン一覧を読めませんでした: {0}",
+    "Could not change that: {0}": "変更できませんでした: {0}",
+    "Could not save that: {0}": "保存できませんでした: {0}",
+    "{0} saved": "{0} を保存しました"
   },
   "settings": {
     "WebEnabled": {
@@ -1100,6 +1112,14 @@
     "FarmHoursPerDay": {
       "label": "1日あたりの収集時間",
       "tip": "区切りの合計がおよそ1日のどれくらいになるかです。毎日振り直され、週末は長くなります。分けて収集する設定がオンのときだけ使われます。"
+    },
+    "MarketGapSeconds": {
+      "label": "価格照会の間隔（秒）",
+      "tip": "1つのアイテムの相場をSteamのマーケットに問い合わせる間隔です。Steamに制限されるかどうかを決めるのがこの数値で、速すぎると拒否され、アプリは待機に入り、許可が戻るまで在庫評価が古いままになります。大きいほど遅いですが安定します。10 が無難で、小さくするのは在庫が少ない場合だけにしてください。"
+    },
+    "PriceCacheHours": {
+      "label": "価格を信頼する時間",
+      "tip": "取得した価格を何時間そのまま使うか。長くするとリクエスト数が大幅に減り、これが制限への本当の対処になりますが、その分だけ評価額の反映は遅くなります。カードやアイテムの価格は日ごとに大きくは動かないので、24 で十分なことがほとんどです。"
     }
   }
 }

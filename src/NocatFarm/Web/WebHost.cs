@@ -296,6 +296,69 @@ public sealed class WebHost : IAsyncDisposable {
 
 		// Installing an update, only ever because the button was pressed. There is no GET here and no schedule
 		// anywhere that reaches it - see SelfUpdate for why updating is never something that just happens.
+		// What is installed, and the switch for each. Restart-gated on purpose: a plugin subscribes to events
+		// during load, so flipping one on mid-run would give it a half-wired view of a fleet already running.
+		app.MapGet("/api/plugins", (HttpContext ctx) => Guard(ctx, () => Results.Json(new {
+			Enabled = Live.Global.PluginsEnabled,
+			Folder = Plugins.PluginHost.Folder,
+			Installed = Plugins.PluginHost.Discovered.Select(static p => new {
+				p.Name, p.Version, p.File, p.Enabled,
+				Settings = Plugins.PluginHost.SettingsOf(p.Name).Select(static x => new {
+					x.Setting.Name, x.Setting.Label, x.Setting.Help,
+					Kind = x.Setting.Kind.ToString(),
+					x.Setting.Choices,
+					Value = x.Value
+				})
+			}),
+			Commands = Plugins.PluginHost.Commands.Select(static c => new { Verb = c.Key, c.Value.Usage, c.Value.Help })
+		})));
+
+		app.MapPost("/api/plugins/setting", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			PluginSettingChange? body = await ReadJsonAsync<PluginSettingChange>(ctx).ConfigureAwait(false);
+
+			if (string.IsNullOrWhiteSpace(body?.Plugin) || string.IsNullOrWhiteSpace(body.Name)) {
+				return Results.Json(new { Message = "which plugin, and which setting?" });
+			}
+
+			bool ok = Plugins.PluginHost.SetSetting(body.Plugin, body.Name, body.Value ?? "");
+
+			return Results.Json(new { Message = ok ? "saved" : "no such plugin setting" });
+		});
+
+		app.MapPost("/api/plugins/toggle", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			PluginToggle? body = await ReadJsonAsync<PluginToggle>(ctx).ConfigureAwait(false);
+
+			if (string.IsNullOrWhiteSpace(body?.Name)) {
+				return Results.Json(new { Message = "which plugin?" });
+			}
+
+			List<string> off = [.. Live.Global.DisabledPlugins];
+
+			_ = body.Enabled
+				? off.RemoveAll(n => string.Equals(n, body.Name, StringComparison.OrdinalIgnoreCase))
+				: off.Contains(body.Name, StringComparer.OrdinalIgnoreCase) ? 0 : Add(off, body.Name);
+
+			Live.Global.DisabledPlugins = off;
+			ConfigStore.SaveGlobal(Live.Global);
+			Log.Info($"plugin {body.Name} switched {(body.Enabled ? "on" : "off")} - takes effect after a restart");
+
+			return Results.Json(new { Message = $"{body.Name} is {(body.Enabled ? "on" : "off")} after a restart." });
+
+			static int Add(List<string> list, string name) {
+				list.Add(name);
+
+				return 1;
+			}
+		});
+
 		app.MapPost("/api/update", async (HttpContext ctx) => {
 			if (!Authorised(ctx)) {
 				return Unauthorised();
@@ -1049,6 +1112,7 @@ public sealed class WebHost : IAsyncDisposable {
 			Currency = PriceBook.Symbol,
 			UpdateAvailable = UpdateCheck.Available,
 			UpdateUrl = UpdateCheck.Url,
+			PluginsOn = Live.Global.PluginsEnabled,
 			UpdateBusy = SelfUpdate.Busy,
 			UpdateProgress = SelfUpdate.Progress,
 			InventoryPending = bots.Sum(static b => b.Inventory.Pending),
@@ -1154,6 +1218,17 @@ public sealed class WebHost : IAsyncDisposable {
 
 	private sealed class LoginRequest {
 		public string? Password { get; set; }
+	}
+
+	private sealed class PluginSettingChange {
+		public string Plugin { get; set; } = "";
+		public string Name { get; set; } = "";
+		public string? Value { get; set; }
+	}
+
+	private sealed class PluginToggle {
+		public string Name { get; set; } = "";
+		public bool Enabled { get; set; }
 	}
 
 	private sealed class CommandRequest {

@@ -112,10 +112,19 @@ public sealed class GlobalConfig {
 	/// <summary>Steam's currency id for market prices. 1 USD, 2 GBP, 3 EUR, 20 CAD, 21 AUD - as the store uses.</summary>
 	public int MarketCurrency { get; set; } = 1;
 
+	/// <summary>Seconds between community-market price lookups. Higher is slower but stops Steam rate-limiting us.</summary>
+	public int MarketGapSeconds { get; set; } = 10;
+
+	/// <summary>How many hours a market price is trusted before it is looked up again.</summary>
+	public int PriceCacheHours { get; set; } = 24;
+
 	public bool CheckForUpdates { get; set; } = true;
 
 	/// <summary>Whether to load DLLs from plugins/. Off until somebody decides otherwise - see PluginHost.</summary>
 	public bool PluginsEnabled { get; set; }
+
+	/// <summary>Plugin names that are installed but switched off. Set from the dashboard, not typed by hand.</summary>
+	public List<string> DisabledPlugins { get; set; } = [];
 
 	public bool FileLogging { get; set; } = true;
 	public bool Debug { get; set; }

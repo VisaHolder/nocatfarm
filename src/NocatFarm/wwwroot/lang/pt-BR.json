@@ -438,7 +438,19 @@
     "Download and restart": "Baixar e reiniciar",
     "Downloading. It restarts by itself when it lands.": "Baixando. Ele reinicia sozinho quando terminar.",
     "Update failed: {0}": "A atualização falhou: {0}",
-    "working…": "trabalhando…"
+    "working…": "trabalhando…",
+    "Plugins": "Plugins",
+    "Commands they added": "Comandos que adicionaram",
+    "Nothing installed yet.": "Nada instalado ainda.",
+    "Drop a .dll in this folder and restart:": "Coloque um .dll nesta pasta e reinicie:",
+    "How to write one": "Como escrever um",
+    "Go to the setting": "Ir para a configuração",
+    "Takes effect after a restart — a plugin wires itself up as the app starts.": "Só vale depois de reiniciar - um plugin se conecta quando o app inicia.",
+    "Plugins are switched off. A plugin is somebody else's code running inside this app, with access to everything it can reach — including your Steam login tokens. Turn it on only for plugins you wrote or whose author you trust.": "Os plugins estão desligados. Um plugin é código de outra pessoa rodando dentro deste app, com acesso a tudo que ele alcança, inclusive seus tokens de login do Steam. Ligue apenas para plugins que você escreveu ou em cujo autor confia.",
+    "Could not read the plugin list: {0}": "Não foi possível ler a lista de plugins: {0}",
+    "Could not change that: {0}": "Não foi possível alterar: {0}",
+    "Could not save that: {0}": "Não foi possível salvar: {0}",
+    "{0} saved": "{0} salvo"
   },
   "settings": {
     "WebEnabled": {
@@ -1100,6 +1112,14 @@
     "FarmHoursPerDay": {
       "label": "Horas de farm por dia",
       "tip": "Aproximadamente quanto do dia as sessoes somam. Sorteado todo dia e mais longo no fim de semana. So e usado quando farmar em sessoes esta ligado."
+    },
+    "MarketGapSeconds": {
+      "label": "Segundos entre consultas de preco",
+      "tip": "Quanto esperar entre perguntas ao mercado da Steam sobre o preco de um item. E este numero que decide se a Steam limita as consultas: rapido demais e ela comeca a recusar, o app recua, e os valores do inventario ficam velhos ate ser liberado de novo. Mais alto e mais lento, porem mais estavel. 10 e confortavel; so diminua com inventarios pequenos."
+    },
+    "PriceCacheHours": {
+      "label": "Confiar num preco por",
+      "tip": "Quantas horas um preco e mantido antes de ser consultado de novo. Mais tempo significa muito menos requisicoes - que e a cura real para o limite - ao custo de valores que se movem mais devagar. Precos de cartas e itens mudam pouco de um dia para o outro, entao 24 costuma bastar."
     }
   }
 }

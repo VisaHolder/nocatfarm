@@ -760,6 +760,14 @@ button.danger { background: var(--bad); border-color: var(--bad); color: #fff; }
 button.danger:hover:not(:disabled) { filter: brightness(1.1); }
 button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 
+/* One plugin: its name and switch, with anything it declared underneath. A card each, so two plugins' settings
+   never read as one list. */
+.pcard { border: 1px solid var(--line); padding: var(--s3); margin-bottom: var(--s3); }
+.prow { display: flex; align-items: center; gap: var(--s3); }
+.pname { display: flex; align-items: baseline; gap: var(--s2); flex: 1; min-width: 0; }
+.pname .wid { font-style: normal; font-size: 11px; color: var(--muted); opacity: .6; }
+.psettings { margin-top: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--line); }
+
 /* The update button, beside the version chip that announces one. Accent-filled because it is the one thing in
    the top bar that does something irreversible-ish, and it only exists at all when there is an update. */
 .updatebtn {

@@ -438,7 +438,19 @@
     "Download and restart": "下载并重启",
     "Downloading. It restarts by itself when it lands.": "正在下载。完成后会自行重启。",
     "Update failed: {0}": "更新失败：{0}",
-    "working…": "处理中…"
+    "working…": "处理中…",
+    "Plugins": "插件",
+    "Commands they added": "它们添加的命令",
+    "Nothing installed yet.": "尚未安装任何插件。",
+    "Drop a .dll in this folder and restart:": "把 .dll 放进这个文件夹并重启：",
+    "How to write one": "如何编写插件",
+    "Go to the setting": "前往该设置",
+    "Takes effect after a restart — a plugin wires itself up as the app starts.": "重启后生效——插件在应用启动时接入。",
+    "Plugins are switched off. A plugin is somebody else's code running inside this app, with access to everything it can reach — including your Steam login tokens. Turn it on only for plugins you wrote or whose author you trust.": "插件已关闭。插件是运行在本应用内的他人代码，本应用能访问的一切它都能访问，包括你的 Steam 登录令牌。只为你自己编写的、或你信任其作者的插件开启。",
+    "Could not read the plugin list: {0}": "无法读取插件列表：{0}",
+    "Could not change that: {0}": "无法更改：{0}",
+    "Could not save that: {0}": "无法保存：{0}",
+    "{0} saved": "已保存 {0}"
   },
   "settings": {
     "WebEnabled": {
@@ -1100,6 +1112,14 @@
     "FarmHoursPerDay": {
       "label": "每天挂卡小时数",
       "tip": "各场次加起来大约占一天多久。每天重新决定，周末更长。只有开启分场次挂卡时才会用到。"
+    },
+    "MarketGapSeconds": {
+      "label": "价格查询间隔（秒）",
+      "tip": "每次向 Steam 市场询问单个物品价格之间要等多久。这个数值决定 Steam 会不会限流：太快就会开始拒绝，程序随即退避，在恢复之前库存估值一直是旧的。数值越大越慢但越稳。10 比较从容；只有库存很小时才调低。"
+    },
+    "PriceCacheHours": {
+      "label": "价格信任时长",
+      "tip": "取得的价格在重新查询前保留多少小时。时间越长，请求就少得多——这才是限流的真正解法——代价是估值变化反映得更慢。卡牌和物品的价格逐日变化不大，所以 24 通常足够。"
     }
   }
 }

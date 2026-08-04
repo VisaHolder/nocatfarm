@@ -56,7 +56,47 @@ public interface IPluginAccount {
 
 	/// <summary>Cards still to drop across the library, or -1 when it hasn't looked yet.</summary>
 	int CardsRemaining { get; }
+
+	/// <summary>Everything it owns that can be launched, with Steam's own playtime.</summary>
+	IReadOnlyList<PluginGame> Library { get; }
+
+	/// <summary>What its inventory is worth per game, at the market median. Empty until it has been priced.</summary>
+	IReadOnlyList<PluginGameValue> InventoryByGame { get; }
 }
+
+/// <summary>One owned or family-shared game.</summary>
+public readonly record struct PluginGame(uint AppId, string Name, int MinutesPlayed, bool Shared);
+
+/// <summary>What one game's items are worth.</summary>
+public readonly record struct PluginGameValue(uint AppId, string Game, int Items, decimal Value);
+
+/// <summary>What kind of control a plugin setting gets on the page.</summary>
+public enum PluginSettingKind {
+	Text,
+	Int,
+	Bool,
+
+	/// <summary>A dropdown. Put the options in <see cref="PluginSetting.Choices"/> as "value label" per entry.</summary>
+	Choice
+}
+
+/// <summary>
+/// One setting a plugin declares.
+/// </summary>
+/// <param name="Name">Short, unique within your plugin. This is what <c>Setting(name)</c> takes.</param>
+/// <param name="Label">What the operator sees beside the control.</param>
+/// <param name="Help">One sentence on hover. Say what it does and what happens if it is wrong.</param>
+/// <param name="Kind">Which control to draw.</param>
+/// <param name="Default">The value before anybody touches it.</param>
+/// <param name="Choices">For <see cref="PluginSettingKind.Choice"/>: one "value label" per entry.</param>
+public sealed record PluginSetting(
+	string Name,
+	string Label,
+	string Help,
+	PluginSettingKind Kind = PluginSettingKind.Text,
+	string Default = "",
+	IReadOnlyList<string>? Choices = null
+);
 
 /// <summary>Everything a plugin can ask the app to do.</summary>
 public interface IPluginHost {
@@ -90,6 +130,42 @@ public interface IPluginHost {
 	/// It shows up in `help` alongside the built-ins, prefixed so nobody wonders where it came from.
 	/// </summary>
 	void AddCommand(string verb, string usage, string help, Func<string[], Task<string>> handler);
+
+	/// <summary>
+	/// Read one of an account's settings, by the name it has in the config. Null if there is no such setting.
+	///
+	/// Writing is deliberately not here: use <see cref="RunCommandAsync"/> with a `set` line, so the change is
+	/// validated, has its side effects applied and lands in the log exactly as a typed one would.
+	/// </summary>
+	string? GetSetting(string account, string setting);
+
+	/// <summary>
+	/// Declare a setting of your own. It appears on the Plugins page, under your plugin, and is edited there.
+	///
+	/// Call this during OnLoadAsync. The value is stored per plugin, survives restarts and updates, and is read
+	/// back with <see cref="Setting"/> - so a plugin gets a real settings UI without needing to build one, and
+	/// the operator edits it in the same place as everything else rather than in a file only you know about.
+	/// </summary>
+	void AddSetting(PluginSetting setting);
+
+	/// <summary>
+	/// The current value of one of your settings, as text. The declared default until somebody changes it.
+	///
+	/// Text because that is what a form gives back. Parse it yourself - you declared the kind, so you know what
+	/// it should be, and a plugin that wants an int can say so and still cope with someone typing nonsense.
+	/// </summary>
+	string Setting(string name);
+
+	/// <summary>
+	/// Somewhere to keep your own state between restarts, saved as JSON under config/plugins/&lt;name&gt;.json.
+	///
+	/// Plugins should not be writing files next to the app's own - this is the sanctioned spot, it survives an
+	/// update, and it is obvious to the operator what belongs to whom.
+	/// </summary>
+	Task SaveStateAsync(string json);
+
+	/// <summary>Whatever was last saved, or null the first time.</summary>
+	Task<string?> LoadStateAsync();
 
 	/// <summary>An account finished signing in.</summary>
 	event Action<IPluginAccount>? AccountOnline;

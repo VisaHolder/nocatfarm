@@ -25,7 +25,7 @@ touch a third party are opt-in and off by default — see [Privacy](#privacy-and
 · [Getting started](#getting-started) · [Human mode](#human-mode) · [rep4rep](#rep4rep) ·
 [Commands](#commands) · [Achievements](#achievements) · [The hunter](#the-hunter) ·
 [Inventory value](#what-the-inventories-are-worth) · [Trades, keys & items](#trades-keys-and-items) ·
-[Settings](#settings) · [Privacy & safety](#privacy-and-safety)
+[Settings](#settings) · [Plugins](#plugins) · [Privacy & safety](#privacy-and-safety)
 
 ### Building it
 
@@ -290,6 +290,8 @@ the auto-reply instead, so ordinary chat is never mistaken for a command.
 | `help [command\|setting]` &nbsp;·&nbsp; `?` `h` | This list, or what one command or setting does. |
 | `theme [dark\|light]` | Switch the dashboard theme. |
 | `version` &nbsp;·&nbsp; `about` | Which version this is. |
+| `update [now]` | Check for a newer release. `update now` downloads it and restarts into it — nothing ever updates on its own. |
+| `plugins` | Which plugins are loaded, and where they came from. |
 | `exit` &nbsp;·&nbsp; `quit` `q` | Shut nocat.farm down (local only — never over Steam chat). |
 
 </details>
@@ -390,6 +392,29 @@ redeem AAAAA-BBBBB-CCCCC                # tries each account until one can use t
 A donation is an offer where you give up nothing at all. An offer asking for even one of your items is not a
 donation and is never accepted on that rule — only accounts on your own masters list can take anything. If a
 side of the trade page can't be read, the offer is refused rather than guessed at.
+
+## Plugins
+
+Optional, off by default, and one DLL each. Drop it in `plugins/`, `set PluginsEnabled true`, restart.
+
+```
+plugins                  # what's loaded, and the commands they added
+```
+
+A plugin can watch what happens (accounts online, cards dropping, trade offers), read every account's state and
+library, run any of the 44 commands, add commands of its own, and declare **its own settings** — which appear on
+the dashboard's Plugins page with real controls, no UI work needed. Each plugin has its own on/off switch there.
+
+**Read the plugin switch's warning before turning it on.** A plugin is somebody else's code running inside the
+process that holds your Steam sessions. The API is deliberately narrow — read-only account views, and changes go
+through the same command line you type, so they're validated and logged identically — but that's a guard rail,
+not a cage. Run plugins you wrote or whose author you trust.
+
+**→ [How to write one](PLUGINS.md)** — a working plugin in five minutes, plus settings, events, state and the
+full API.
+
+ASF plugins do not work here and can't be made to; [PLUGINS.md](PLUGINS.md#not-supported-asf-plugins) explains
+why, and porting is usually easier than it sounds.
 
 ## Settings
 

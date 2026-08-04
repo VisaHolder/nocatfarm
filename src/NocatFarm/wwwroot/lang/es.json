@@ -438,7 +438,19 @@
     "Download and restart": "Descargar y reiniciar",
     "Downloading. It restarts by itself when it lands.": "Descargando. Se reinicia solo cuando termine.",
     "Update failed: {0}": "La actualización falló: {0}",
-    "working…": "trabajando…"
+    "working…": "trabajando…",
+    "Plugins": "Plugins",
+    "Commands they added": "Comandos que añadieron",
+    "Nothing installed yet.": "Nada instalado todavía.",
+    "Drop a .dll in this folder and restart:": "Pon un .dll en esta carpeta y reinicia:",
+    "How to write one": "Cómo escribir uno",
+    "Go to the setting": "Ir al ajuste",
+    "Takes effect after a restart — a plugin wires itself up as the app starts.": "Surte efecto tras reiniciar: un plugin se engancha al arrancar la app.",
+    "Plugins are switched off. A plugin is somebody else's code running inside this app, with access to everything it can reach — including your Steam login tokens. Turn it on only for plugins you wrote or whose author you trust.": "Los plugins están desactivados. Un plugin es código ajeno ejecutándose dentro de esta app, con acceso a todo lo que ella alcanza, incluidos tus tokens de Steam. Actívalo solo para plugins que hayas escrito tú o cuyo autor te merezca confianza.",
+    "Could not read the plugin list: {0}": "No se pudo leer la lista de plugins: {0}",
+    "Could not change that: {0}": "No se pudo cambiar: {0}",
+    "Could not save that: {0}": "No se pudo guardar: {0}",
+    "{0} saved": "{0} guardado"
   },
   "settings": {
     "WebEnabled": {
@@ -1100,6 +1112,14 @@
     "FarmHoursPerDay": {
       "label": "Horas al dia farmeando",
       "tip": "Aproximadamente cuanto del dia suman las sesiones. Se sortea cada dia y es mas largo el fin de semana. Solo se usa si el farmeo por sesiones esta activado."
+    },
+    "MarketGapSeconds": {
+      "label": "Segundos entre consultas de precio",
+      "tip": "Cuanto esperar entre preguntas al mercado de Steam por el precio de un objeto. Este numero decide si Steam limita las consultas: demasiado rapido y empieza a rechazarlas, la app se retira y los valores del inventario se quedan viejos hasta que la dejan volver. Mas alto es mas lento pero mas estable. 10 va comodo; bajalo solo con inventarios pequenos."
+    },
+    "PriceCacheHours": {
+      "label": "Confiar en un precio durante",
+      "tip": "Cuantas horas se guarda un precio antes de volver a preguntar. Mas tiempo significa muchas menos peticiones - que es la cura real contra el limite - a cambio de que los valores se muevan mas despacio. Los precios de cromos y objetos apenas cambian de un dia a otro, asi que 24 suele bastar."
     }
   }
 }

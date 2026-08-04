@@ -23,9 +23,10 @@ namespace NocatFarm.Plugins;
 /// </remarks>
 public static class PluginHost {
 	private static readonly List<Loaded> Plugins = [];
-	private static Host? _host;
+	private static readonly List<Host> Hosts = [];
+	private static BotManager? _mgr;
 
-	private sealed record Loaded(INocatPlugin Plugin, string File);
+	private sealed record Loaded(INocatPlugin Plugin, string File, Host Host);
 
 	/// <summary>What is loaded, for the `plugins` command.</summary>
 	public static IReadOnlyList<(string Name, string Version, string File)> Running =>
@@ -38,6 +39,7 @@ public static class PluginHost {
 			return;
 		}
 
+		Seen.Clear();
 		Directory.CreateDirectory(Folder);
 
 		string[] files = Directory.GetFiles(Folder, "*.dll", SearchOption.TopDirectoryOnly);
@@ -48,7 +50,7 @@ public static class PluginHost {
 			return;
 		}
 
-		_host = new Host(mgr);
+		_mgr = mgr;
 
 		foreach (string file in files) {
 			await LoadOneAsync(file, ct).ConfigureAwait(false);
@@ -75,9 +77,24 @@ public static class PluginHost {
 					continue;
 				}
 
+				// Off individually, not just all-or-nothing: one plugin misbehaving should not mean turning the
+				// whole feature off to be rid of it.
+				bool off = Live.Global.DisabledPlugins.Contains(plugin.Name, StringComparer.OrdinalIgnoreCase);
+
+				Seen.Add((plugin.Name, plugin.Version, Path.GetFileName(file), !off));
+
+				if (off) {
+					NocatFarm.Log.Info($"plugin {plugin.Name} is switched off - skipping it");
+
+					continue;
+				}
+
 				try {
-					await plugin.OnLoadAsync(_host!, ct).ConfigureAwait(false);
-					Plugins.Add(new Loaded(plugin, file));
+					Host host = new(_mgr!, plugin.Name);
+
+					await plugin.OnLoadAsync(host, ct).ConfigureAwait(false);
+					Hosts.Add(host);
+					Plugins.Add(new Loaded(plugin, file, host));
 					NocatFarm.Log.Good($"plugin loaded: {plugin.Name} {plugin.Version}");
 				} catch (Exception e) {
 					NocatFarm.Log.Warn($"plugin {plugin.Name} failed while loading and has been left out: {e.GetType().Name}: {e.Message}");
@@ -102,19 +119,61 @@ public static class PluginHost {
 		}
 
 		Plugins.Clear();
+		Hosts.Clear();
 	}
 
 	// ── the events, raised by the app ─────────────────────────────────────────
 	// Every one is a no-op when plugins are off, so the call sites do not have to care.
 
-	public static void RaiseOnline(Bot bot) => _host?.RaiseOnline(bot);
-	public static void RaiseOffline(Bot bot) => _host?.RaiseOffline(bot);
-	public static void RaiseCardDropped(Bot bot, uint app, int left) => _host?.RaiseCardDropped(bot, app, left);
-	public static void RaiseTradeOffers(Bot bot, int waiting) => _host?.RaiseTradeOffers(bot, waiting);
+	public static void RaiseOnline(Bot bot) => Each(h => h.RaiseOnline(bot));
+	public static void RaiseOffline(Bot bot) => Each(h => h.RaiseOffline(bot));
+	public static void RaiseCardDropped(Bot bot, uint app, int left) => Each(h => h.RaiseCardDropped(bot, app, left));
+	public static void RaiseTradeOffers(Bot bot, int waiting) => Each(h => h.RaiseTradeOffers(bot, waiting));
+
+	private static void Each(Action<Host> raise) {
+		// Snapshot: a handler is free to do anything, including something that ends up unloading a plugin.
+		foreach (Host host in Hosts.ToArray()) {
+			raise(host);
+		}
+	}
 
 	/// <summary>A command a plugin added, kept apart from the built-ins.</summary>
-	public static IReadOnlyDictionary<string, (string Usage, string Help, Func<string[], Task<string>> Run)> Commands =>
-		_host?.Commands ?? new Dictionary<string, (string, string, Func<string[], Task<string>>)>(StringComparer.OrdinalIgnoreCase);
+	public static IReadOnlyDictionary<string, (string Usage, string Help, Func<string[], Task<string>> Run)> Commands {
+		get {
+			Dictionary<string, (string Usage, string Help, Func<string[], Task<string>> Run)> all = new(StringComparer.OrdinalIgnoreCase);
+
+			foreach (Host host in Hosts) {
+				foreach ((string verb, (string Usage, string Help, Func<string[], Task<string>> Run) command) in host.Commands) {
+					all.TryAdd(verb, command);
+				}
+			}
+
+			return all;
+		}
+	}
+
+	/// <summary>A plugin's own settings, with current values, for the dashboard.</summary>
+	public static IReadOnlyList<(PluginSetting Setting, string Value)> SettingsOf(string plugin) =>
+		Plugins.FirstOrDefault(p => string.Equals(p.Plugin.Name, plugin, StringComparison.OrdinalIgnoreCase))?.Host.SettingsView() ?? [];
+
+	/// <summary>Change one. Returns false when there is no such plugin or setting.</summary>
+	public static bool SetSetting(string plugin, string name, string value) {
+		Loaded? loaded = Plugins.FirstOrDefault(p => string.Equals(p.Plugin.Name, plugin, StringComparison.OrdinalIgnoreCase));
+
+		if ((loaded == null) || !loaded.Host.Declared.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase))) {
+			return false;
+		}
+
+		loaded.Host.SetValue(name, value);
+		NocatFarm.Log.Info($"plugin {plugin}: {name} = {value}");
+
+		return true;
+	}
+
+	/// <summary>Every plugin found on disk, whether it is switched on or not - for the dashboard's list.</summary>
+	public static IReadOnlyList<(string Name, string Version, string File, bool Enabled)> Discovered => Seen;
+
+	private static readonly List<(string Name, string Version, string File, bool Enabled)> Seen = [];
 
 	private sealed class PluginContext(string file) : AssemblyLoadContext(Path.GetFileNameWithoutExtension(file), true) {
 		private readonly AssemblyDependencyResolver _resolver = new(file);

@@ -255,6 +255,7 @@ function go(name) {
   if (name === 'rep4rep') { loadRep4Rep(); }
   if (name === 'console') { $('cmd').focus(); renderCommandList(); }
   if (name === 'log') renderLog();
+  if (name === 'plugins') loadPlugins();
   render();
 }
 
@@ -426,6 +427,11 @@ function renderOverview() {
       ver.classList.remove('update');
     }
   }
+
+  // The Plugins tab only exists when plugins are on. Showing a tab for a feature nobody has enabled is one
+  // more thing to scroll past, and hiding it entirely is the clearest possible statement that it is off.
+  const navPlug = $('navPlugins');
+  if (navPlug) navPlug.classList.toggle('hidden', !state.PluginsOn);
 
   // The button that installs it, beside the chip that announces it.
   //
@@ -832,6 +838,112 @@ async function doRemoveBot(name) {
   await loadConfig();
   if (view === 'settings') renderSettings();
   refresh();
+}
+
+// ── plugins ───────────────────────────────────────────────────────────────
+// The tab only exists when plugins are switched on, because a page telling you about a feature you have not
+// enabled is just another thing to scroll past.
+let pluginData = null;
+
+async function loadPlugins() {
+  const body = $('pluginsBody');
+  if (!body) return;
+
+  try {
+    pluginData = await api('/api/plugins');
+  } catch (e) {
+    body.innerHTML = `<p class="muted">${esc(tf('Could not read the plugin list: {0}', e.message || e))}</p>`;
+    return;
+  }
+
+  renderPlugins();
+}
+
+function renderPlugins() {
+  const body = $('pluginsBody');
+  const d = pluginData;
+  if (!body || !d) return;
+
+  if (!d.Enabled) {
+    body.innerHTML = `<p class="explain">${esc(t("Plugins are switched off. A plugin is somebody else's code running inside this app, with access to everything it can reach — including your Steam login tokens. Turn it on only for plugins you wrote or whose author you trust."))}</p>
+      <button onclick="goSetting('PluginsEnabled')">${esc(t('Go to the setting'))}</button>`;
+    return;
+  }
+
+  const rows = (d.Installed || []).map((p) => `
+    <div class="pcard">
+      <div class="prow">
+        <span class="pname"><b>${esc(p.Name)}</b> <span class="muted small">${esc(p.Version)}</span><i class="wid">${esc(p.File)}</i></span>
+        <label class="switch" data-tip="${esc(t('Takes effect after a restart — a plugin wires itself up as the app starts.'))}">
+          <input type="checkbox" ${p.Enabled ? 'checked' : ''} onchange="togglePlugin('${esc(p.Name)}', this.checked)"><span></span>
+        </label>
+      </div>
+      ${pluginSettings(p)}
+    </div>`).join('');
+
+  const cmds = (d.Commands || []).map((c) =>
+    `<li><code>${esc(c.Verb)} ${esc(c.Usage || '')}</code> <span class="muted">${esc(c.Help || '')}</span></li>`).join('');
+
+  body.innerHTML = `
+    ${rows || `<p class="muted empty">${esc(t('Nothing installed yet.'))}</p>`}
+    <p class="muted small">${esc(t('Drop a .dll in this folder and restart:'))} <code>${esc(d.Folder)}</code></p>
+    ${cmds ? `<h2 style="margin-top:18px" data-t="Commands they added">${esc(t('Commands they added'))}</h2><ul class="unlocks">${cmds}</ul>` : ''}
+    <p class="muted small"><a href="https://github.com/VisaHolder/nocatfarm/blob/main/PLUGINS.md" target="_blank" rel="noopener noreferrer">${esc(t('How to write one'))}</a></p>`;
+}
+
+// A plugin's own settings, drawn from what it declared. Same controls as everywhere else, so a plugin gets a
+// real settings UI without building one and the operator edits it where they edit everything else.
+function pluginSettings(p) {
+  const list = p.Settings || [];
+  if (!list.length) return '';
+
+  const rows = list.map((sett) => {
+    const id = `ps-${p.Name}-${sett.Name}`.replace(/[^A-Za-z0-9_-]/g, '_');
+    const tip = sett.Help ? ` data-tip="${esc(sett.Help)}"` : '';
+    const set = `setPluginSetting('${esc(p.Name)}','${esc(sett.Name)}',this)`;
+    let ctl;
+
+    if (sett.Kind === 'Bool') {
+      ctl = `<label class="switch"><input type="checkbox" id="${id}" ${sett.Value === 'true' ? 'checked' : ''} onchange="${set}"><span></span></label>`;
+    } else if (sett.Kind === 'Int') {
+      ctl = `<input type="number" id="${id}" value="${esc(sett.Value)}" onchange="${set}">`;
+    } else if (sett.Kind === 'Choice') {
+      const opts = (sett.Choices || []).map((c) => {
+        const sp = String(c).indexOf(' ');
+        const v = sp < 0 ? c : String(c).slice(0, sp);
+        const lab = sp < 0 ? c : String(c).slice(sp + 1);
+        return `<option value="${esc(v)}" ${String(sett.Value) === String(v) ? 'selected' : ''}>${esc(lab)}</option>`;
+      }).join('');
+      ctl = `<select id="${id}" onchange="${set}">${opts}</select>`;
+    } else {
+      ctl = `<input type="text" id="${id}" value="${esc(sett.Value)}" onchange="${set}">`;
+    }
+
+    return `<div class="field"><label for="${id}"${tip}>${esc(sett.Label || sett.Name)}</label><div class="ctl">${ctl}</div></div>`;
+  }).join('');
+
+  return `<div class="psettings">${rows}</div>`;
+}
+
+async function setPluginSetting(plugin, name, el) {
+  const value = el.type === 'checkbox' ? String(el.checked) : String(el.value);
+
+  try {
+    await api('/api/plugins/setting', { method: 'POST', body: JSON.stringify({ Plugin: plugin, Name: name, Value: value }) });
+    toast(tf('{0} saved', name));
+  } catch (e) {
+    toast(tf('Could not save that: {0}', e.message || e), true);
+  }
+}
+
+async function togglePlugin(name, enabled) {
+  try {
+    const r = await api('/api/plugins/toggle', { method: 'POST', body: JSON.stringify({ Name: name, Enabled: enabled }) });
+    toast(r && r.Message ? r.Message : '');
+    await loadPlugins();
+  } catch (e) {
+    toast(tf('Could not change that: {0}', e.message || e), true);
+  }
 }
 
 // ── updating ──────────────────────────────────────────────────────────────

@@ -438,7 +438,19 @@
     "Download and restart": "İndir ve yeniden başlat",
     "Downloading. It restarts by itself when it lands.": "İndiriliyor. Bittiğinde kendi kendine yeniden başlar.",
     "Update failed: {0}": "Güncelleme başarısız: {0}",
-    "working…": "çalışıyor…"
+    "working…": "çalışıyor…",
+    "Plugins": "Eklentiler",
+    "Commands they added": "Ekledikleri komutlar",
+    "Nothing installed yet.": "Henüz hiçbir şey kurulu değil.",
+    "Drop a .dll in this folder and restart:": "Bu klasöre bir .dll koyup yeniden başlatın:",
+    "How to write one": "Nasıl yazılır",
+    "Go to the setting": "Ayara git",
+    "Takes effect after a restart — a plugin wires itself up as the app starts.": "Yeniden başlattıktan sonra geçerli olur - eklenti uygulama açılırken bağlanır.",
+    "Plugins are switched off. A plugin is somebody else's code running inside this app, with access to everything it can reach — including your Steam login tokens. Turn it on only for plugins you wrote or whose author you trust.": "Eklentiler kapalı. Bir eklenti bu uygulamanın içinde çalışan başkasının kodudur ve uygulamanın eriştiği her şeye, Steam oturum jetonlarınız dahil, erişebilir. Yalnızca kendi yazdığınız ya da yazanına güvendiğiniz eklentiler için açın.",
+    "Could not read the plugin list: {0}": "Eklenti listesi okunamadı: {0}",
+    "Could not change that: {0}": "Bu değiştirilemedi: {0}",
+    "Could not save that: {0}": "Bu kaydedilemedi: {0}",
+    "{0} saved": "{0} kaydedildi"
   },
   "settings": {
     "WebEnabled": {
@@ -1100,6 +1112,14 @@
     "FarmHoursPerDay": {
       "label": "Gunde kac saat toplansin",
       "tip": "Oturumlarin toplaminin gunun ne kadarini tuttugu. Her gun yeniden belirlenir, hafta sonu daha uzundur. Yalnizca oturumlar halinde toplama acikken kullanilir."
+    },
+    "MarketGapSeconds": {
+      "label": "Fiyat sorgulari arasi saniye",
+      "tip": "Bir esyanin fiyatini Steam pazarina sormak arasinda ne kadar beklenecegi. Steam'in sorgulari kisitlayip kisitlamayacagini belirleyen sayi budur: cok hizli olursa reddetmeye baslar, uygulama geri cekilir ve tekrar izin verilene kadar envanter degerleri eskir. Yuksek olan daha yavas ama daha istikrarlidir. 10 rahattir; yalnizca envanteriniz kucukse dusurun."
+    },
+    "PriceCacheHours": {
+      "label": "Bir fiyata su kadar guven",
+      "tip": "Bir fiyatin yeniden sorulmadan once kac saat saklanacagi. Uzun tutmak istek sayisini cok azaltir - kisitlamanin gercek caresi budur - karsiliginda degerler daha yavas guncellenir. Kart ve esya fiyatlari gunden gune pek degismez, bu yuzden 24 genelde yeterlidir."
     }
   }
 }

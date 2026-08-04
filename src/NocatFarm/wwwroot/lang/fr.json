@@ -438,7 +438,19 @@
     "Download and restart": "Télécharger et redémarrer",
     "Downloading. It restarts by itself when it lands.": "Téléchargement. Il redémarre tout seul une fois prêt.",
     "Update failed: {0}": "Échec de la mise à jour : {0}",
-    "working…": "en cours…"
+    "working…": "en cours…",
+    "Plugins": "Plugins",
+    "Commands they added": "Commandes ajoutées",
+    "Nothing installed yet.": "Rien d'installé pour l'instant.",
+    "Drop a .dll in this folder and restart:": "Dépose un .dll dans ce dossier et redémarre :",
+    "How to write one": "Comment en écrire un",
+    "Go to the setting": "Aller au réglage",
+    "Takes effect after a restart — a plugin wires itself up as the app starts.": "Prend effet après un redémarrage - un plugin se branche au démarrage de l'app.",
+    "Plugins are switched off. A plugin is somebody else's code running inside this app, with access to everything it can reach — including your Steam login tokens. Turn it on only for plugins you wrote or whose author you trust.": "Les plugins sont désactivés. Un plugin est du code tiers exécuté dans cette app, avec accès à tout ce qu'elle atteint, y compris tes jetons Steam. Ne l'active que pour des plugins que tu as écrits ou dont tu fais confiance à l'auteur.",
+    "Could not read the plugin list: {0}": "Impossible de lire la liste des plugins : {0}",
+    "Could not change that: {0}": "Impossible de changer ça : {0}",
+    "Could not save that: {0}": "Impossible d'enregistrer : {0}",
+    "{0} saved": "{0} enregistré"
   },
   "settings": {
     "WebEnabled": {
@@ -1100,6 +1112,14 @@
     "FarmHoursPerDay": {
       "label": "Heures de farm par jour",
       "tip": "En gros combien de la journee les sessions totalisent. Tire au sort chaque jour, plus long le week-end. Utilise seulement si le farm par sessions est active."
+    },
+    "MarketGapSeconds": {
+      "label": "Secondes entre les requetes de prix",
+      "tip": "Combien attendre entre deux questions au marche Steam sur le prix d'un objet. C'est ce nombre qui decide si Steam limite les requetes : trop vite et il refuse, l'app recule, et les valeurs d'inventaire vieillissent jusqu'a ce qu'elle soit autorisee a revenir. Plus haut est plus lent mais plus stable. 10 est confortable ; ne descends que si tes inventaires sont petits."
+    },
+    "PriceCacheHours": {
+      "label": "Faire confiance a un prix pendant",
+      "tip": "Combien d'heures un prix est conserve avant d'etre redemande. Plus long veut dire beaucoup moins de requetes - c'est le vrai remede a la limitation - au prix de valeurs qui bougent plus lentement. Les prix des cartes et objets changent peu d'un jour a l'autre, 24 suffit generalement."
     }
   }
 }

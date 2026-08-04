@@ -438,7 +438,19 @@
     "Download and restart": "Pobierz i uruchom ponownie",
     "Downloading. It restarts by itself when it lands.": "Pobieranie. Uruchomi się ponownie samo, gdy skończy.",
     "Update failed: {0}": "Aktualizacja nie powiodła się: {0}",
-    "working…": "pracuje…"
+    "working…": "pracuje…",
+    "Plugins": "Wtyczki",
+    "Commands they added": "Dodane polecenia",
+    "Nothing installed yet.": "Nic jeszcze nie zainstalowano.",
+    "Drop a .dll in this folder and restart:": "Wrzuć .dll do tego folderu i uruchom ponownie:",
+    "How to write one": "Jak napisać wtyczkę",
+    "Go to the setting": "Przejdź do ustawienia",
+    "Takes effect after a restart — a plugin wires itself up as the app starts.": "Zadziała po ponownym uruchomieniu - wtyczka podpina się przy starcie aplikacji.",
+    "Plugins are switched off. A plugin is somebody else's code running inside this app, with access to everything it can reach — including your Steam login tokens. Turn it on only for plugins you wrote or whose author you trust.": "Wtyczki są wyłączone. Wtyczka to cudzy kod działający wewnątrz tej aplikacji, z dostępem do wszystkiego, co ona osiąga - łącznie z tokenami logowania Steam. Włączaj tylko dla wtyczek, które sam napisałeś lub których autorowi ufasz.",
+    "Could not read the plugin list: {0}": "Nie udało się odczytać listy wtyczek: {0}",
+    "Could not change that: {0}": "Nie udało się tego zmienić: {0}",
+    "Could not save that: {0}": "Nie udało się zapisać: {0}",
+    "{0} saved": "Zapisano {0}"
   },
   "settings": {
     "WebEnabled": {
@@ -1100,6 +1112,14 @@
     "FarmHoursPerDay": {
       "label": "Godzin farmienia dziennie",
       "tip": "Mniej wiecej ile dnia sumuja sie sesje. Losowane codziennie, w weekend dluzej. Uzywane tylko, gdy farmienie w sesjach jest wlaczone."
+    },
+    "MarketGapSeconds": {
+      "label": "Sekundy miedzy zapytaniami o cene",
+      "tip": "Ile czekac miedzy pytaniami rynku Steam o cene przedmiotu. To ta liczba decyduje, czy Steam ograniczy zapytania: za szybko i zaczyna odmawiac, aplikacja sie wycofuje, a wartosci ekwipunku sa nieaktualne, dopoki nie wroci pozwolenie. Wyzej znaczy wolniej, ale stabilniej. 10 jest wygodne; obnizaj tylko przy malych ekwipunkach."
+    },
+    "PriceCacheHours": {
+      "label": "Ufaj cenie przez",
+      "tip": "Ile godzin cena jest przechowywana, zanim zostanie sprawdzona ponownie. Dluzej oznacza znacznie mniej zapytan - to prawdziwe lekarstwo na limity - kosztem wolniej zmieniajacych sie wartosci. Ceny kart i przedmiotow niewiele zmieniaja sie z dnia na dzien, wiec 24 zwykle wystarcza."
     }
   }
 }
