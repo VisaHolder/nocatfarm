@@ -1083,6 +1083,10 @@
   "TradeMasterToken": {
    "label": "Token do link de troca dela",
    "tip": "O token da URL de troca da outra conta (a parte depois de &token=). Só é preciso quando as duas contas não são amigas - entre amigos pode deixar vazio."
+  },
+  "ClearCommentNotifications": {
+   "label": "Limpar o aviso de comentários",
+   "tip": "Marca as notificações de comentários da Steam como lidas assim que forem notadas, para o contador voltar a zero em vez de subir pela vida inteira da conta. O número da Steam é o contador de avisos não dispensados dela, não uma contagem de comentários no perfil - ele só cai quando alguém abre a página de notificações, que é exatamente o que isto faz."
   }
  }
 }

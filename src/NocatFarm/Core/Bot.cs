@@ -524,6 +524,10 @@ public sealed class Bot : IAsyncDisposable {
 	private int _dropPending;
 	private uint _knownComments;
 	private bool _commentBaselineSet;
+
+	// The last un-dismissed count actually reported, so an unchanging number is never announced twice.
+	// Deliberately NOT reset on login - a reconnect is exactly when the duplicate used to appear.
+	private uint _reportedComments;
 	private int _tradeOffersWaiting = -1;
 	private TaskCompletionSource<bool> _tradeOffer = new(TaskCreationOptions.RunContinuationsAsynchronously);
 	private int _tradeOfferPending;
@@ -1772,11 +1776,17 @@ public sealed class Bot : IAsyncDisposable {
 		if (!_commentBaselineSet) {
 			_commentBaselineSet = true;
 
-			if (cb.NewComments > 0) {
-				// Steam's own un-dismissed notification counter, NOT a count of comments sitting on the profile.
-				// It survives until somebody opens the notifications page, so an account with a spotless profile
-				// can genuinely report five - and "5 unread comments" made that read as a fault in here.
-				Log.Debug($"Steam still has {cb.NewComments} un-dismissed comment notification(s) for this account", Name);
+			// Steam's own un-dismissed notification counter, NOT a count of comments sitting on the profile. It
+			// never falls on its own, so the old code restated the SAME number on every single login forever -
+			// nine identical lines in one evening here - about something nobody could act on.
+			//
+			// Two changes. Try to clear it, the way the new-items counter is cleared; and only ever say anything
+			// when the number is one we have not already reported, so it cannot repeat itself however stubborn
+			// Steam is about the count.
+			if ((cb.NewComments > 0) && (cb.NewComments != _reportedComments)) {
+				_reportedComments = cb.NewComments;
+				Log.Debug($"Steam has {cb.NewComments} un-dismissed comment notification(s) - marking them read", Name);
+				ClearCommentNotifications();
 			}
 
 			return;
@@ -1787,6 +1797,30 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		Log.Event($"somebody just commented on this profile - steamcommunity.com/profiles/{SteamId}", Name);
+
+		// Read it, so the counter goes back to zero rather than climbing for the life of the account.
+		ClearCommentNotifications();
+	}
+
+	/// <summary>
+	/// Mark Steam's comment notifications as read.
+	///
+	/// Loading the notifications page is what clears the counter - there is no message for it. Best effort and
+	/// deliberately quiet: it does not always take, and a number staying lit is worth nothing to anybody, so
+	/// this must never announce success it cannot verify or interfere with anything that matters.
+	/// </summary>
+	private void ClearCommentNotifications() {
+		if (!Cfg.ClearCommentNotifications) {
+			return;
+		}
+
+		_ = Task.Run(async () => {
+			try {
+				await Web.GetAsync(new Uri(WebSession.Community, "/my/commentnotifications/")).ConfigureAwait(false);
+			} catch {
+				// cosmetic - never let it matter
+			}
+		});
 	}
 
 	private void SignalItemDrop() {

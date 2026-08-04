@@ -797,9 +797,8 @@ public static class Settings {
 		new("InventoryIgnoreGames", "...but not these games", SecExtras, SettingKind.AppIds,
 			"AppIDs to leave out of the inventory value, comma separated. This is where a game the account is BANNED in goes: its items are still sitting in the inventory but they can never be sold, so counting them inflates the total. Steam doesn't say which game an account is banned in - nothing in the inventory reliably shows it either - so this is a list you fill in rather than something guessed at.",
 			Advanced: true, Placeholder: "730"),
-		new("ShowInventoryValue", "Work out what its inventory is worth", SecExtras, SettingKind.Bool,
-			"Show this account's inventory value on the dashboard, priced at the Steam market's median. It reads the account's OWN inventory with its own session, so a private profile is no obstacle, and it only counts items that can actually be sold - which means a game the account is banned in contributes nothing. Prices are looked up slowly in the background and cached for a day.",
-			Advanced: true),
+		new("ShowInventoryValue", "Work out what its inventory is worth", SecTrading, SettingKind.Bool,
+			"Price this account's inventory and show what it comes to, at the Steam market's median. Turn it off and this account is skipped entirely - no market lookups, no value on the dashboard - which is worth doing on accounts holding nothing but a handful of cards. It reads the account's OWN inventory with its own session, so a private profile is no obstacle. Prices are looked up slowly in the background and cached for a day, and the currency they are shown in is a global setting."),
 		new("YieldToFamily", "Give a shared game back when they want it", SecAchievements, SettingKind.Bool,
 			"If somebody in the family starts a game this account is borrowing, hand it straight back and move on to the next one. Steam lends a shared game to one person at a time and the owner always wins, so the alternative is being thrown out mid-session and sitting there \"playing\" a game it no longer has. It stays out of the rotation for twenty minutes after they stop, rather than grabbing it the second they quit.",
 			Advanced: true),
@@ -832,6 +831,10 @@ public static class Settings {
 			Advanced: true),
 		new("ClearInventoryNotifications", "Clear the new-items badge", SecExtras, SettingKind.Bool,
 			"Clear Steam's green \"new items\" counter each time a card drops, so your inventory isn't permanently flagged as unread.",
+			Advanced: true),
+
+		new("ClearCommentNotifications", "Clear the comment badge", SecExtras, SettingKind.Bool,
+			"Mark Steam's comment notifications as read once they have been noticed, so the counter goes back to zero instead of climbing for the life of the account. Steam's number is its own un-dismissed counter, not a count of comments on the profile - it only ever falls when somebody opens the notifications page, which is what this does.",
 			Advanced: true),
 
 		new("AccountProxy", "Proxy for this account", SecAccount, SettingKind.Text,

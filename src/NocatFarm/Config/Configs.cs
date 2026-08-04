@@ -20,7 +20,10 @@ public sealed class GlobalConfig {
 	public string WebHost { get; set; } = "127.0.0.1";
 	public int WebPort { get; set; } = 7242;
 	public string WebPassword { get; set; } = "";
-	public bool OpenBrowserOnStart { get; set; }
+	// On by default. A brand new account does nothing at all until it is told what to play, and the dashboard
+	// is the only place with a form for that - so starting up and showing nothing but a console was the wrong
+	// first impression for the one screen people actually need.
+	public bool OpenBrowserOnStart { get; set; } = true;
 	public bool OpenDashboardAfterAdd { get; set; } = true;
 
 	/// <summary>"dark" or "light". Set from the dashboard's toggle or the theme command, not typed into a form.</summary>
@@ -227,6 +230,10 @@ public sealed class BotConfig {
 	public bool CraftBadges { get; set; }
 	public bool UnpackBoosterPacks { get; set; }
 	public bool ClearInventoryNotifications { get; set; } = true;
+
+	// Same idea for the comment counter. Steam's un-dismissed count never falls on its own, so without this
+	// it climbs forever and the app just restated it on every login about something nobody could act on.
+	public bool ClearCommentNotifications { get; set; } = true;
 
 	// ── per-account proxy ──
 	public string AccountProxy { get; set; } = "";

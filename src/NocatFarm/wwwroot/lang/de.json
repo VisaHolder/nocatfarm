@@ -1083,6 +1083,10 @@
   "TradeMasterToken": {
    "label": "Ihr Tausch-Link-Token",
    "tip": "Das Token aus der Tausch-URL des anderen Kontos (der Teil hinter &token=). Nur nötig, wenn die beiden Konten nicht befreundet sind - unter Freunden darf es leer bleiben."
+  },
+  "ClearCommentNotifications": {
+   "label": "Kommentar-Zähler zurücksetzen",
+   "tip": "Markiert Steams Kommentar-Benachrichtigungen als gelesen, sobald sie bemerkt wurden, damit der Zähler auf null zurückgeht statt ein Kontoleben lang zu steigen. Steams Zahl ist sein eigener Zähler nicht weggeklickter Hinweise, keine Anzahl von Kommentaren auf dem Profil - sie fällt nur, wenn jemand die Benachrichtigungsseite öffnet, und genau das passiert hier."
   }
  }
 }

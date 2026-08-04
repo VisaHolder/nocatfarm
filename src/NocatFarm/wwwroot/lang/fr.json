@@ -1083,6 +1083,10 @@
   "TradeMasterToken": {
    "label": "Le jeton de leur lien d'échange",
    "tip": "Le jeton de l'URL d'échange de l'autre compte (la partie après &token=). Nécessaire uniquement si les deux comptes ne sont pas amis - entre amis, laissez vide."
+  },
+  "ClearCommentNotifications": {
+   "label": "Effacer le badge de commentaires",
+   "tip": "Marque les notifications de commentaires de Steam comme lues dès qu'elles ont été vues, pour que le compteur revienne à zéro au lieu de grimper pendant toute la vie du compte. Le nombre affiché par Steam est son propre compteur d'avis non écartés, pas un nombre de commentaires sur le profil : il ne baisse que lorsqu'on ouvre la page des notifications, ce que fait précisément ceci."
   }
  }
 }
