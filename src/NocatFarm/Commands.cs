@@ -1620,6 +1620,24 @@ public static partial class Commands {
 		return sb.ToString();
 	}
 
+	/// <summary>
+	/// Drop one matching pair of quotes from around a value typed at the console.
+	///
+	/// The command line is split on spaces with no notion of quoting, so a value written the way the help, the
+	/// tutorial and the README all show it - set acct GameWeights "730:70, 440:20" - arrived with the quote
+	/// characters still attached to the first and last words. For most settings that is a visible mess; for a
+	/// list it was worse than that, because the quote made only the FIRST and LAST entries unparseable and the
+	/// middle ones came through fine. A four-game spread silently became a two-game one with a different main
+	/// game, and nothing reported an error.
+	/// </summary>
+	private static string Unquote(string value) {
+		string trimmed = value.Trim();
+
+		return (trimmed.Length >= 2) && (trimmed[0] == trimmed[^1]) && (trimmed[0] is '"' or '\'')
+			? trimmed[1..^1]
+			: value;
+	}
+
 	private static string Set(BotManager mgr, string[] args) {
 		if (args.Length < 2) {
 			return "set <key> <value>            change a global setting\nset <account> <key> <value>  change one account's setting";
@@ -1631,7 +1649,7 @@ public static partial class Commands {
 		if (bot != null && args.Length >= 3 && Settings.FindBot(args[1]) != null) {
 			SettingDef def = Settings.FindBot(args[1])!;
 			bool wasLegit = bot.Cfg.LegitMode;
-			string? error = Settings.Apply(bot.Cfg, def, string.Join(' ', args[2..]));
+			string? error = Settings.Apply(bot.Cfg, def, Unquote(string.Join(' ', args[2..])));
 
 			if (error != null) {
 				return error;
@@ -1668,7 +1686,7 @@ public static partial class Commands {
 				: $"There's no setting called '{args[0]}'. 'config' lists the global ones, 'config <account>' the per-account ones.";
 		}
 
-		string? failure = Settings.Apply(mgr.Global, globalDef, string.Join(' ', args[1..]));
+		string? failure = Settings.Apply(mgr.Global, globalDef, Unquote(string.Join(' ', args[1..])));
 
 		if (failure != null) {
 			return failure;
