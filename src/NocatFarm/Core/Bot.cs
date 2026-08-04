@@ -66,7 +66,16 @@ public sealed class Bot : IAsyncDisposable {
 	/// Play one game and nothing else for a while. Returns false, having done nothing, if that game is inside its
 	/// refund window - a grind is hours, and hours is exactly what would spend the refund.
 	/// </summary>
-	public bool StartGrind(uint app, TimeSpan how, TimeSpan delay = default) {
+	/// <summary>
+	/// True when the achievement boost started the grind that is running.
+	///
+	/// Persisted alongside the grind itself. It used to live only in the boost module's memory, so a session
+	/// that outlived a restart came back disowned - and switching the boost off then could not end it, because
+	/// nothing left in the process knew the boost was what had started it.
+	/// </summary>
+	public bool GrindIsBoost { get; internal set; }
+
+	public bool StartGrind(uint app, TimeSpan how, TimeSpan delay = default, bool boost = false) {
 		if (Refunds.Holds(app)) {
 			Log.Warn($"not grinding {GameNames.Of(app)} - it's still inside its refund window (turn off \"Protect refundable games\" to override)", Name);
 
@@ -76,6 +85,7 @@ public sealed class Bot : IAsyncDisposable {
 		GrindGame = app;
 		GrindStartsAt = DateTime.UtcNow.Add(delay);
 		GrindUntil = GrindStartsAt.Add(how);   // the hours run from when it actually starts, not the command
+		GrindIsBoost = boost;
 		SaveGrind();
 
 		// A grind with no delay should start with NO DELAY.
@@ -95,6 +105,7 @@ public sealed class Bot : IAsyncDisposable {
 	public void StopGrind() {
 		GrindGame = 0;
 		GrindUntil = null;
+		GrindIsBoost = false;
 		SaveGrind();
 	}
 
@@ -112,7 +123,7 @@ public sealed class Bot : IAsyncDisposable {
 			}
 
 			Directory.CreateDirectory(Path.GetDirectoryName(GrindPath)!);
-			AtomicFile.Write(GrindPath, JsonSerializer.Serialize(new GrindSave(GrindGame, GrindUntil.Value.Ticks)));
+			AtomicFile.Write(GrindPath, JsonSerializer.Serialize(new GrindSave(GrindGame, GrindUntil.Value.Ticks, GrindIsBoost)));
 		} catch (Exception e) {
 			Log.Debug($"couldn't save the grind: {e.Message}", Name);
 		}
@@ -141,6 +152,7 @@ public sealed class Bot : IAsyncDisposable {
 
 			GrindGame = saved.Game;
 			GrindUntil = until;
+			GrindIsBoost = saved.Boost;
 			GrindStartsAt = DateTime.UtcNow;   // resume now - no fresh switch-in delay on a resume
 			Log.Info($"resuming the grind of {GameNames.Of(GrindGame)} - {Fmt.Hm((int) (until - DateTime.UtcNow).TotalMinutes)} left", Name);
 		} catch (Exception e) {
@@ -148,7 +160,9 @@ public sealed class Bot : IAsyncDisposable {
 		}
 	}
 
-	private sealed record GrindSave(uint Game, long UntilTicks);
+	// Boost defaults to false, so a file written by an older build reads back as a manual grind - which is
+	// the safe way round: the boost declines to touch it rather than ending something you started by hand.
+	private sealed record GrindSave(uint Game, long UntilTicks, bool Boost = false);
 
 	/// <summary>
 	/// The custom name actually in effect - empty when the feature is switched off.
