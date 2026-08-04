@@ -1786,7 +1786,7 @@ public sealed class Bot : IAsyncDisposable {
 			if ((cb.NewComments > 0) && (cb.NewComments != _reportedComments)) {
 				_reportedComments = cb.NewComments;
 				Log.Debug($"Steam has {cb.NewComments} un-dismissed comment notification(s) - marking them read", Name);
-				ClearCommentNotifications();
+				ClearAllNotifications();
 			}
 
 			return;
@@ -1799,27 +1799,55 @@ public sealed class Bot : IAsyncDisposable {
 		Log.Event($"somebody just commented on this profile - steamcommunity.com/profiles/{SteamId}", Name);
 
 		// Read it, so the counter goes back to zero rather than climbing for the life of the account.
-		ClearCommentNotifications();
+		ClearAllNotifications();
 	}
 
 	/// <summary>
-	/// Mark Steam's comment notifications as read.
+	/// Mark EVERY Steam notification read - comments, gifts, help requests, the lot.
 	///
-	/// Loading the notifications page is what clears the counter - there is no message for it. Best effort and
-	/// deliberately quiet: it does not always take, and a number staying lit is worth nothing to anybody, so
-	/// this must never announce success it cannot verify or interfere with anything that matters.
+	/// Steam's tray counters never fall on their own; they sit lit until something reads them, so on an account
+	/// nobody signs into by hand they only ever climb. This asks Steam to mark the whole lot read in one
+	/// message, and also loads the two pages that clear the older per-type counters the tray does not cover.
+	///
+	/// Best effort and deliberately quiet. A counter staying lit is worth nothing to anybody, so this never
+	/// announces success it cannot verify and never interferes with anything that matters.
+	///
+	/// One thing it does NOT shift: the legacy comment counter behind ClientCommentNotifications. Both the tray
+	/// message and a real load of /my/commentnotifications/ (verified reaching Steam and returning the page)
+	/// leave it exactly where it was. That number only ever seems to move for the Steam client itself. The log
+	/// no longer repeats it, which was the part that actually mattered.
 	/// </summary>
-	private void ClearCommentNotifications() {
-		if (!Cfg.ClearCommentNotifications) {
+	private void ClearAllNotifications() {
+		if (!Cfg.ClearNotifications) {
 			return;
 		}
 
 		_ = Task.Run(async () => {
 			try {
-				await Web.GetAsync(new Uri(WebSession.Community, "/my/commentnotifications/")).ConfigureAwait(false);
-			} catch {
-				// cosmetic - never let it matter
+				// The modern tray, in one shot.
+				Unified?.CreateService<SteamKit2.WebUI.Internal.SteamNotification>()?.MarkNotificationsRead(new SteamKit2.WebUI.Internal.CSteamNotification_MarkNotificationsRead_Notification {
+					mark_all_read = true
+				});
+			} catch (Exception e) {
+				Log.Debug($"couldn't mark notifications read: {e.Message}", Name);
 			}
+
+			// The two older counters, which the tray message does not touch. Loading the page is what clears them.
+			foreach (string page in (string[]) ["/my/commentnotifications/", "/my/inventory/"]) {
+				try {
+					await Web.GetAsync(new Uri(WebSession.Community, page)).ConfigureAwait(false);
+				} catch {
+					// cosmetic - never let it matter
+				}
+			}
+
+			// Everything Steam had told us about is now swept, so what it said about trade offers is no longer
+			// something we can rely on - we may have just zeroed an offer that was already waiting. Put the count
+			// back to "don't know" and wake the trade module, so it takes exactly one look and finds anything
+			// that was there. From that point on a genuinely new offer arrives as its own push, as before.
+			Volatile.Write(ref _tradeOffersWaiting, -1);
+			Volatile.Write(ref _tradeOfferPending, 1);
+			_tradeOffer.TrySetResult(true);
 		});
 	}
 

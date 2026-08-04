@@ -1084,9 +1084,9 @@
    "label": "Onun takas bağlantısı anahtarı",
    "tip": "Diğer hesabın takas bağlantısındaki anahtar (&token= sonrasındaki kısım). Yalnızca iki hesap arkadaş değilse gerekir - arkadaşsanız boş bırakabilirsin."
   },
-  "ClearCommentNotifications": {
-   "label": "Yorum rozetini temizle",
-   "tip": "Steam'in yorum bildirimlerini fark edilir edilmez okundu olarak işaretler; böylece sayaç, hesabın ömrü boyunca artmak yerine sıfıra döner. Steam'in gösterdiği sayı, profildeki yorum sayısı değil, kendi kapatılmamış bildirim sayacıdır - yalnızca biri bildirimler sayfasını açtığında düşer ve bu ayarın yaptığı da tam olarak budur."
+  "ClearNotifications": {
+   "label": "Steam bildirimlerini temizle",
+   "tip": "Steam'in bildirim tepsisindeki her şeyi okundu olarak işaretler - yorumlar, hediyeler, yardım talepleri, arkadaşlık istekleri - böylece sayaçlar hesabın ömrü boyunca artmak yerine sıfıra döner. Hiçbiri kendiliğinden düşmez: biri sayfayı açana kadar yanık kalırlar ve elle giriş yapmadığın bir hesapta bunu kimse yapmaz."
   }
  }
 }

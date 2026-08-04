@@ -231,9 +231,9 @@ public sealed class BotConfig {
 	public bool UnpackBoosterPacks { get; set; }
 	public bool ClearInventoryNotifications { get; set; } = true;
 
-	// Same idea for the comment counter. Steam's un-dismissed count never falls on its own, so without this
-	// it climbs forever and the app just restated it on every login about something nobody could act on.
-	public bool ClearCommentNotifications { get; set; } = true;
+	// Everything else in Steam's notification tray - comments, gifts, help requests, friend invites. None of
+	// these counters fall on their own, so on an account nobody signs into by hand they only ever climb.
+	public bool ClearNotifications { get; set; } = true;
 
 	// ── per-account proxy ──
 	public string AccountProxy { get; set; } = "";

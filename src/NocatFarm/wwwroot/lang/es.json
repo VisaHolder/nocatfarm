@@ -1084,9 +1084,9 @@
    "label": "Su token de enlace de intercambio",
    "tip": "El token de la URL de intercambio de la otra cuenta (la parte después de &token=). Solo hace falta cuando las dos cuentas no son amigas; entre amigos puedes dejarlo vacío."
   },
-  "ClearCommentNotifications": {
-   "label": "Limpiar el aviso de comentarios",
-   "tip": "Marca las notificaciones de comentarios de Steam como leídas en cuanto se han visto, para que el contador vuelva a cero en lugar de subir durante toda la vida de la cuenta. El número de Steam es su propio contador de avisos sin descartar, no un recuento de comentarios en el perfil: solo baja cuando alguien abre la página de notificaciones, que es justo lo que hace esto."
+  "ClearNotifications": {
+   "label": "Borrar las notificaciones de Steam",
+   "tip": "Marca como leído todo lo que hay en la bandeja de notificaciones de Steam - comentarios, regalos, peticiones de ayuda, solicitudes de amistad - para que los contadores vuelvan a cero en lugar de subir durante toda la vida de la cuenta. Ninguno baja por sí solo: se quedan encendidos hasta que alguien abre la página, cosa que nadie hace en una cuenta en la que no entra a mano."
   }
  }
 }

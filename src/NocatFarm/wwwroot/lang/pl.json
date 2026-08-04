@@ -1084,9 +1084,9 @@
    "label": "Ich token linku wymiany",
    "tip": "Token z adresu wymiany drugiego konta (część po &token=). Potrzebny tylko wtedy, gdy oba konta nie są znajomymi - między znajomymi możesz zostawić puste."
   },
-  "ClearCommentNotifications": {
-   "label": "Czyść odznakę komentarzy",
-   "tip": "Oznacza powiadomienia o komentarzach jako przeczytane, gdy tylko zostaną zauważone, żeby licznik wracał do zera zamiast rosnąć przez całe życie konta. Liczba pokazywana przez Steam to jego własny licznik nieodrzuconych powiadomień, a nie liczba komentarzy na profilu - spada tylko wtedy, gdy ktoś otworzy stronę powiadomień, i właśnie to tutaj się dzieje."
+  "ClearNotifications": {
+   "label": "Czyść powiadomienia Steam",
+   "tip": "Oznacza jako przeczytane wszystko w zasobniku powiadomień Steam - komentarze, prezenty, prośby o pomoc, zaproszenia do znajomych - żeby liczniki wracały do zera zamiast rosnąć przez całe życie konta. Żaden z nich nie spada sam: świecą, dopóki ktoś nie otworzy strony, a na koncie, do którego nie logujesz się ręcznie, nie robi tego nikt."
   }
  }
 }

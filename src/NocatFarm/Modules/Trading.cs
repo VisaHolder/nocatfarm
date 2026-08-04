@@ -93,6 +93,9 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 			}
 		}
 
+		// A zero here is Steam's word that nothing is waiting, and it is trustworthy: the notification sweep
+		// deliberately resets this to "don't know" and wakes us for one look, so an offer that was already
+		// waiting when the sweep ran is found rather than swept away with everything else.
 		return Bot.TradeOffersWaiting != 0;
 	}
 

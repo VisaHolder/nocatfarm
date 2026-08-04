@@ -833,9 +833,8 @@ public static class Settings {
 			"Clear Steam's green \"new items\" counter each time a card drops, so your inventory isn't permanently flagged as unread.",
 			Advanced: true),
 
-		new("ClearCommentNotifications", "Clear the comment badge", SecExtras, SettingKind.Bool,
-			"Mark Steam's comment notifications as read once they have been noticed, so the counter goes back to zero instead of climbing for the life of the account. Steam's number is its own un-dismissed counter, not a count of comments on the profile - it only ever falls when somebody opens the notifications page, which is what this does.",
-			Advanced: true),
+		new("ClearNotifications", "Clear Steam's notifications", SecExtras, SettingKind.Bool,
+			"Mark everything in Steam's notification tray as read - comments, gifts, help requests, friend invites - so the counters go back to zero instead of climbing for the life of the account. None of them ever fall on their own; they sit lit until somebody opens the page, which nobody does on an account they don't sign into by hand."),
 
 		new("AccountProxy", "Proxy for this account", SecAccount, SettingKind.Text,
 			"Send just this account's Steam traffic through its own proxy, for example http://host:port - leave it empty to use the global proxy, or to connect straight out. Spreading accounts across IPs is what stops one machine tripping Steam's rate limit.",
