@@ -72,9 +72,43 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	public bool CapIsSteamLimit => _state is { CapLearned: true, Cap: > 0 } && (_state.Cap < Math.Max(1, Bot.Cfg.Rep4RepDailyCap));
 
 	/// <summary>Skip the wait and try a post right now. Never skips the daily cap.</summary>
-	public void RunNow() => _forceNext = true;
+	public void RunNow() {
+		_forceNext = true;
+		Wake();
+	}
 
 	private volatile bool _forceNext;
+
+	/// <summary>
+	/// Tripped to cut a wait short.
+	///
+	/// The loop can be part way through a thirty-minute sleep, so setting the flag alone left "post now" and
+	/// "hold cleared" doing nothing visible for half an hour - which reads as broken, and is the opposite of
+	/// what a command called "now" promises.
+	/// </summary>
+	private TaskCompletionSource<bool> _wake = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+	private void Wake() => _wake.TrySetResult(true);
+
+	/// <summary>Sleep, unless somebody asks for the next step sooner. True if the wait ran its course.</summary>
+	private async Task<bool> SleepOrWake(TimeSpan wait, CancellationToken ct) {
+		TaskCompletionSource<bool> woken = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		_wake = woken;
+
+		// Re-check after arming: a wake between the last step and this line would otherwise be missed.
+		if (_forceNext) {
+			return true;
+		}
+
+		using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+		Task delay = Task.Delay(wait, linked.Token);
+		Task winner = await Task.WhenAny(woken.Task, delay).ConfigureAwait(false);
+
+		await linked.CancelAsync().ConfigureAwait(false);
+
+		return !ct.IsCancellationRequested;
+	}
 
 	// Commenting runs only when rep4rep is on globally AND for this account. The global master switch lets the
 	// whole feature be turned off site-wide without touching every account.
@@ -98,6 +132,12 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		_state = await Rep4RepState.LoadAsync(Bot.Name).ConfigureAwait(false);
 
 		// Settle after login. Commenting in the same minute as the logon, every restart, is a pattern.
+		//
+		// Say so, too. The status was left reading "off" from the gate above for the whole of this wait - up to
+		// ten minutes of a switched-ON account reporting the exact word it would use if the feature had been
+		// switched off, which is indistinguishable from broken and sent me hunting a module that was fine.
+		_status = "settling in after signing in";
+
 		if (!await Sleep(Rng.Seconds(90, 600), ct).ConfigureAwait(false)) {
 			return;
 		}
@@ -117,6 +157,10 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 			try {
 				waitSeconds = await StepAsync(ct).ConfigureAwait(false);
+
+				// The whole module can sit silent for a day when there is nothing to do, which is
+				// indistinguishable from a module that has stopped running. One Debug line per pass says which.
+				Log.Debug($"rep4rep: {_status} - next look in {Fmt.Hm(Math.Max(60, waitSeconds) / 60)}", Bot.Name);
 			} catch (OperationCanceledException) {
 				throw;
 			} catch (Exception e) {
@@ -125,7 +169,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 				waitSeconds = 10 * 60;
 			}
 
-			if (!await Sleep(TimeSpan.FromSeconds(Math.Max(60, waitSeconds)), ct).ConfigureAwait(false)) {
+			if (!await SleepOrWake(TimeSpan.FromSeconds(Math.Max(60, waitSeconds)), ct).ConfigureAwait(false)) {
 				return;
 			}
 		}
@@ -708,6 +752,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 		_status = "hold cleared";
 		_forceNext = true;
+		Wake();
 	}
 
 	/// <summary>Pause commenting for a full 24h and come back at a clean baseline (rolling window emptied).</summary>
