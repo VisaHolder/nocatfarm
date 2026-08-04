@@ -196,6 +196,12 @@ public sealed class BotConfig {
 	public bool StopWhenFarmingDone { get; set; }
 	public bool FarmOffline { get; set; }
 
+	/// <summary>Farm in a few believable sittings a day instead of flat out. Works with or without human mode.</summary>
+	public bool LegitFarming { get; set; }
+
+	/// <summary>Roughly how many hours a day legit farming spends farming. Jittered daily, longer at weekends.</summary>
+	public int LegitFarmHoursPerDay { get; set; } = 6;
+
 	// ── achievements ──
 	public bool UnlockAchievements { get; set; }
 	public int AchievementGrindGapMinMinutes { get; set; } = 12;

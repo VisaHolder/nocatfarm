@@ -1088,6 +1088,14 @@
     "AchievementIncludeMainGame": {
       "label": "Ana oyunda da kazan",
       "tip": "İnsan modunun ana oyununun da diğer oyunlar gibi başarım kazanıp kazanmayacağı. Açık ve öyle de olmalı: saatler ana oyunda birikir, dolayısıyla başarım görmek için hesabın en şaşırtıcı olmayan yeridir. Kapatmak onu tamamen rahat bırakır; böylece amiral gemisi oyununda yüzlerce saati olan bir hesap orada hiçbir şey göstermez - genelde ikisinin daha tuhafı budur. Her hâlükârda nadirlik eşiği ve tamamlama tavanı geçerliliğini korur."
+    },
+    "LegitFarming": {
+      "label": "Aralıksız değil, oturumlar hâlinde topla",
+      "tip": "Biri nasıl oynuyorsa öyle toplama: günde birkaç, inandırıcı uzunlukta oturum, aralarında boşluklarla, her gün farklı saatlerde başlayıp biten ve hafta sonu daha uzun. Aralıksız çalışan bir toplayıcı saatleri dümdüz bir çizgi hâlinde yığar, her gece - ve hesapta en göze çarpan şey budur. İnsan moduyla da onsuz da çalışır, böylece yalnızca kart toplayan bir hesap bile oynayan bir hesap gibi görünür. Yalnızca NE ZAMAN topladığını değiştirir, neyi topladığını değil."
+    },
+    "LegitFarmHoursPerDay": {
+      "label": "Günde kaç saat toplansın",
+      "tip": "Oturumların toplamının günün ne kadarını tuttuğu. Her gün bu değerin çevresinde yeniden belirlenir ve hafta sonu daha uzun olur, böylece iki gün aynı şekle sahip olmaz. Yalnızca oturumlar hâlinde toplama açıkken kullanılır."
     }
   }
 }

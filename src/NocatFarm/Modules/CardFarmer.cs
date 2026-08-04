@@ -102,6 +102,13 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		}
 
 		while (!ct.IsCancellationRequested) {
+			// Roll the day up front rather than at the first game with cards on it. An account with nothing to
+			// farm still has a shape for today, and saying so is how you can tell the sittings were rolled at
+			// all - otherwise the whole feature is invisible until cards happen to appear.
+			if (Bot.Cfg.FarmCards && Bot.Cfg.LegitFarming) {
+				RollFarmDayIfNeeded();
+			}
+
 			// The loop stays alive when farming is off, so switching it back on takes effect straight away
 			// instead of needing a restart.
 			if (!Bot.Cfg.FarmCards) {
@@ -330,6 +337,14 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			_status = $"{Bot.CardsRemaining} card(s) - waiting for the {Bot.Cfg.FarmFromHour:00}:00-{Bot.Cfg.FarmUntilHour:00}:00 farming window";
 
 			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
+		}
+
+		if (Bot.Cfg.LegitFarming && !InLegitFarmWindow(out DateTime next)) {
+			_status = next > DateTime.Now
+				? $"{Bot.CardsRemaining} card(s) - next sitting around {next:HH:mm}"
+				: $"{Bot.CardsRemaining} card(s) - done farming for today";
+
+			return Rng.Next(5, 20);   // short, so a sitting starts near its time rather than up to an hour late
 		}
 
 		// Only hold a farming slot while actually farming, never while sleeping between rounds.
@@ -729,6 +744,96 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				suspect.Add(game);
 			}
 		}
+	}
+
+	// ── farming that looks like playing ───────────────────────────────────────
+	//
+	// A card farmer runs flat out until the cards are gone. That is efficient and it is also the single most
+	// obvious thing on the account: hours accruing in a straight line, through the night, every night, on games
+	// nobody would grind. FarmFromHour/FarmUntilHour helped, but a window that opens at exactly 09:00 and shuts
+	// at exactly 23:00 every single day is its own pattern - a person is not a timer.
+	//
+	// Legit farming rolls a DAY instead: a few sittings of believable length, with gaps between them, starting
+	// and finishing at different times, longer at the weekend. The farmer still does everything it did; it just
+	// only does it inside those sittings.
+	//
+	// The roll is seeded from the account name and the date rather than persisted. That is deliberate: a
+	// restart re-rolls the same day rather than handing out a fresh set of sittings, so bouncing the app cannot
+	// be used - accidentally or otherwise - to farm more hours than the day allows.
+	private int _farmDayStamp = -1;
+	private List<(DateTime From, DateTime To)> _farmWindows = [];
+
+	private void RollFarmDayIfNeeded() {
+		DateTime now = DateTime.Now;
+
+		if (_farmDayStamp == now.DayOfYear) {
+			return;
+		}
+
+		_farmDayStamp = now.DayOfYear;
+		_farmWindows = [];
+
+		// Same account, same date, same day - however many times it is rolled.
+		//
+		// NOT HashCode.Combine: .NET randomises string hashing per process, so that produced a different
+		// schedule on every restart - which is precisely the thing this seeding exists to prevent. Restarting
+		// twice would have handed out two fresh sets of sittings. A plain rolling hash of the name is stable
+		// across processes and machines, which is all that is wanted here.
+		int seed = now.Year * 1000 + now.DayOfYear;
+
+		foreach (char c in Bot.Name) {
+			seed = (seed * 31) + c;
+		}
+
+		Random rng = new(seed);
+
+		bool weekend = now.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+		int hours = Math.Clamp(Bot.Cfg.LegitFarmHoursPerDay, 1, 20);
+		int target = (int) (hours * 60 * (weekend ? rng.Next(115, 146) : rng.Next(85, 116)) / 100.0);
+
+		// Start somewhere in the morning-to-midday spread, then lay sittings end to end with gaps until the
+		// day's minutes are spent or it gets too late to plausibly still be at it.
+		DateTime at = now.Date.AddHours(rng.Next(8, 13)).AddMinutes(rng.Next(0, 60));
+		DateTime latest = now.Date.AddHours(rng.Next(23, 27));   // some days run past midnight
+		int spent = 0;
+
+		while ((spent < target) && (at < latest)) {
+			int length = Math.Min(rng.Next(45, 165), target - spent);
+
+			if (length < 20) {
+				break;   // not worth starting a sitting this short
+			}
+
+			DateTime end = at.AddMinutes(length);
+
+			_farmWindows.Add((at, end));
+			spent += length;
+			at = end.AddMinutes(rng.Next(20, 110));   // up, away from the desk, back later
+		}
+
+		Log.Debug(
+			$"today's farming: {_farmWindows.Count} sitting(s), {Fmt.Hm(spent)} in total"
+			+ (_farmWindows.Count > 0 ? $", {_farmWindows[0].From:HH:mm}-{_farmWindows[^1].To:HH:mm}" : ""),
+			Bot.Name);
+	}
+
+	/// <summary>Inside one of today's rolled sittings. The window that is open right now, if any.</summary>
+	private bool InLegitFarmWindow(out DateTime until) {
+		RollFarmDayIfNeeded();
+
+		DateTime now = DateTime.Now;
+
+		foreach ((DateTime from, DateTime to) in _farmWindows) {
+			if ((now >= from) && (now < to)) {
+				until = to;
+
+				return true;
+			}
+		}
+
+		until = _farmWindows.FirstOrDefault(w => w.From > now).From;
+
+		return false;
 	}
 
 	/// <summary>Whether now is inside the card-farming clock window, if the account set one (0-0 = any time).</summary>

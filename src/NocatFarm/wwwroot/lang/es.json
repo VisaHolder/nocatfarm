@@ -1088,6 +1088,14 @@
     "AchievementIncludeMainGame": {
       "label": "Conseguirlos también en el juego principal",
       "tip": "Si el juego principal del modo humano consigue logros como cualquier otro. Activado, y así debería estar: el juego principal es donde están las horas, así que es el sitio menos sorprendente de la cuenta para verlos. Desactivado lo deja completamente en paz, con lo que una cuenta con cientos de horas en su juego insignia no muestra ninguno - normalmente lo más raro de los dos. En cualquier caso siguen aplicándose el filtro de rareza y el techo de finalización."
+    },
+    "LegitFarming": {
+      "label": "Farmear en sesiones, no sin parar",
+      "tip": "Farmear como juega una persona: unas cuantas sesiones al día de duración creíble, con huecos entre ellas, empezando y acabando a horas distintas y más largas el fin de semana. Un farmeo continuo acumula horas en línea recta, toda la noche, todas las noches, que es lo más llamativo de la cuenta. Funciona con o sin modo humano, así que una cuenta que solo farmea puede parecer una que juega. Cambia CUÁNDO farmea, nunca qué."
+    },
+    "LegitFarmHoursPerDay": {
+      "label": "Horas al día farmeando",
+      "tip": "Aproximadamente cuánto del día suman las sesiones. Se sortea cada día dentro de un margen de esto, y más largo el fin de semana, así que no hay dos días con la misma forma. Solo se usa si el farmeo por sesiones está activado."
     }
   }
 }

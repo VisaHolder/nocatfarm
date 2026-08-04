@@ -1088,6 +1088,14 @@
     "AchievementIncludeMainGame": {
       "label": "Les gagner aussi dans le jeu principal",
       "tip": "Si le jeu principal du mode humain gagne des succès comme n'importe quel autre. Activé, et ça devrait l'être : le jeu principal est là où sont les heures, donc l'endroit le moins surprenant du compte pour en voir. Désactivé, il est laissé totalement tranquille, si bien qu'un compte avec des centaines d'heures sur son jeu phare n'y montre rien - en général le plus étrange des deux. Dans les deux cas, le seuil de rareté et le plafond de complétion s'appliquent toujours."
+    },
+    "LegitFarming": {
+      "label": "Farmer par sessions, pas en continu",
+      "tip": "Farmer comme quelqu'un joue : quelques sessions par jour d'une durée crédible, avec des pauses entre elles, à des heures différentes, plus longues le week-end. Un farm continu empile les heures en ligne droite, toute la nuit, chaque nuit - ce qui est la chose la plus visible sur le compte. Marche avec ou sans le mode humain, pour qu'un compte qui ne fait que farmer ressemble quand même à un compte qui joue. Ça change QUAND il farme, jamais quoi."
+    },
+    "LegitFarmHoursPerDay": {
+      "label": "Heures de farm par jour",
+      "tip": "En gros combien de la journée les sessions totalisent. Tiré au sort chaque jour autour de cette valeur, et plus long le week-end, pour que deux jours n'aient jamais la même forme. Utilisé seulement si le farm par sessions est activé."
     }
   }
 }

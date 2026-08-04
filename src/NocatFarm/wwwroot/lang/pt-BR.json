@@ -1088,6 +1088,14 @@
     "AchievementIncludeMainGame": {
       "label": "Conquistar também no jogo principal",
       "tip": "Se o jogo principal do modo humano ganha conquistas como qualquer outro. Ligado, e deveria estar: o jogo principal é onde estão as horas, então é o lugar menos surpreendente da conta para vê-las. Desligado, ele fica totalmente intocado, o que faz uma conta com centenas de horas no seu jogo-símbolo não mostrar nenhuma ali - normalmente o mais estranho dos dois. De qualquer forma, o filtro de raridade e o teto de conclusão continuam valendo."
+    },
+    "LegitFarming": {
+      "label": "Farmar em sessões, não direto",
+      "tip": "Farmar como alguém joga: algumas sessões por dia de duração crível, com intervalos entre elas, começando e terminando em horários diferentes e mais longas no fim de semana. Um farm que roda direto empilha horas em linha reta, a noite toda, toda noite - o que é a coisa mais visível na conta. Funciona com ou sem o modo humano, então uma conta que só farma ainda pode parecer uma que joga. Muda QUANDO farma, nunca o quê."
+    },
+    "LegitFarmHoursPerDay": {
+      "label": "Horas de farm por dia",
+      "tip": "Aproximadamente quanto do dia as sessões somam. Sorteado todo dia em torno disso, e mais longo no fim de semana, para que dois dias nunca tenham o mesmo formato. Só é usado quando farmar em sessões está ligado."
     }
   }
 }

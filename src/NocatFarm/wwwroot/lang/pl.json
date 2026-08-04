@@ -1088,6 +1088,14 @@
     "AchievementIncludeMainGame": {
       "label": "Zdobywaj też w grze głównej",
       "tip": "Czy główna gra trybu ludzkiego zdobywa osiągnięcia jak każda inna. Włączone i tak powinno być: w głównej grze są godziny, więc to najmniej zaskakujące miejsce na koncie, by je zobaczyć. Wyłączenie zostawia ją zupełnie w spokoju, przez co konto z setkami godzin w swojej sztandarowej grze nie ma tam nic - zwykle to dziwniejsze z dwojga. Tak czy inaczej próg rzadkości i limit ukończenia nadal obowiązują."
+    },
+    "LegitFarming": {
+      "label": "Farm w sesjach, nie non stop",
+      "tip": "Farmienie tak, jak ktoś gra: kilka sesji dziennie o wiarygodnej długości, z przerwami, zaczynających i kończących się o różnych porach, dłuższych w weekend. Farmienie bez przerwy układa godziny w prostą linię, całą noc, co noc - a to najbardziej rzucająca się w oczy rzecz na koncie. Działa z trybem ludzkim i bez niego, więc konto, które tylko farmi, też może wyglądać jak grające. Zmienia KIEDY farmi, nigdy co."
+    },
+    "LegitFarmHoursPerDay": {
+      "label": "Godzin farmienia dziennie",
+      "tip": "Mniej więcej ile dnia sumują się sesje. Losowane codziennie w okolicach tej wartości, a w weekend dłużej, żeby żadne dwa dni nie miały tego samego kształtu. Używane tylko, gdy farmienie w sesjach jest włączone."
     }
   }
 }
