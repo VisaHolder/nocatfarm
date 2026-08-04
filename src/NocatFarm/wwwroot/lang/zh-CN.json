@@ -1,1094 +1,1098 @@
 {
- "ui": {
-  "Overview": "概览",
-  "Accounts": "账户",
-  "Console": "控制台",
-  "Settings": "设置",
-  "Commands": "命令",
-  "Global": "全局",
-  "Jump to": "跳转到",
-  "Today": "今天",
-  "Recent activity": "最近动态",
-  "Queued tasks": "排队任务",
-  "Show tasks for": "显示任务：",
-  "Copy": "复制",
-  "Refresh": "刷新",
-  "Save": "保存",
-  "Sign in": "登录",
-  "Add account": "添加账户",
-  "Import from ASF": "从 ASF 导入",
-  "Your Steam profiles": "你的 Steam 个人资料",
-  "Pacing": "节奏",
-  "Show the walkthrough again": "再次查看使用向导",
-  "Steam account name": "Steam 账户名",
-  "Password": "密码",
-  "Search accounts…": "搜索账户…",
-  "Search settings…": "搜索设置…",
-  "Search the log…": "搜索日志…",
-  "leave blank and it'll ask": "留空的话它会问你",
-  "mybot": "我的机器人",
-  "type a command, or 'help'": "输入命令，或 'help'",
-  "your steam login": "你的 Steam 登录名",
-  "Farming": "刷卡中",
-  "Idling": "挂机中",
-  "Online": "在线",
-  "Connecting": "连接中",
-  "Needs you": "需要你",
-  "Problem": "有问题",
-  "Playing": "游戏中",
-  "On a break": "休息中",
-  "Night idle": "夜间挂机",
-  "Asleep": "睡眠中",
-  "Off": "已关闭",
-  "Playing a game that still has trading cards to drop.": "正在玩一款还有卡牌可掉落的游戏。",
-  "Nothing left to farm, so it's building playtime on the games you chose.": "没有可刷的了，于是在你选定的游戏上累积时长。",
-  "Logged in and doing nothing. Give it games to idle or cards to farm.": "已登录但无事可做。给它一些挂机的游戏或要刷的卡牌。",
-  "On its way in.": "正在进入。",
-  "Waiting on you: a Steam Guard code, a password, or a decision.": "在等你：Steam 令牌验证码、密码，或者一个决定。",
-  "Something is wrong - the login failed, or Steam is refusing this account.": "出问题了——登录失败，或者 Steam 拒绝了这个账户。",
-  "Human mode: in a game right now, one at a time, like a person.": "拟人模式：此刻正在玩一款游戏，一次一个，就像真人一样。",
-  "Human mode: stepped away for a few minutes.": "拟人模式：离开了几分钟。",
-  "Offline for the night but quietly banking hours - nobody can see it.": "夜里显示离线，却在悄悄累积时长——没人看得见。",
-  "Done for the night. It comes back on its own in the morning.": "今晚到此为止。早上它会自己回来。",
-  "Disabled or stopped. It won't log in until you start it.": "已禁用或已停止。在你启动它之前不会登录。",
-  "Account": "账户",
-  "State": "状态",
-  "Status": "状态",
-  "Cards": "卡牌",
-  "Value": "价值",
-  "Up": "运行",
-  "Game": "游戏",
-  "Hours": "小时",
-  "Played": "已玩",
-  "Earned": "已获得",
-  "Progress": "进度",
-  "Opened": "已开放到",
-  "Next": "下一步",
-  "Next up": "接下来",
-  "Comments": "评论",
-  "Points": "积分",
-  "Cards left": "剩余卡牌",
-  "Target": "目标",
-  "Steam login": "Steam 账户名",
-  "Sign-in": "登录方式",
-  "Name": "名称",
-  "Language": "语言",
-  "Left out": "被排除",
-  "Comment to post": "要发的评论",
-  "rep4rep ID": "rep4rep ID",
-  "rep4rep": "rep4rep",
-  "Start": "启动",
-  "Stop": "停止",
-  "Pause": "暂停",
-  "Resume": "继续",
-  "Cancel": "取消",
-  "Close": "关闭",
-  "Remove": "移除",
-  "Remove it": "确认移除",
-  "Clear": "清除",
-  "Undo": "撤销",
-  "Submit": "提交",
-  "Back": "上一步",
-  "Skip": "跳过",
-  "Continue": "继续",
-  "Finish": "完成",
-  "Import": "导入",
-  "Import them": "导入它们",
-  "Register": "注册",
-  "Connect": "连接",
-  "Post now": "立即发布",
-  "Add one": "添加一个",
-  "Add an account": "添加一个账户",
-  "Add token": "添加令牌",
-  "Not yet": "暂时不用",
-  "Keep it on": "保持开启",
-  "Turn it off": "关掉它",
-  "Use a longer one": "换个更长的",
-  "Start them all": "全部启动",
-  "Replace token": "更换令牌",
-  "Unlock everything": "解锁全部",
-  "Unlock everything…": "解锁全部…",
-  "Set a password to open it up": "设个密码来开放访问",
-  "h": "小时",
-  "m": "分",
-  "now": "现在",
-  "never": "从未",
-  "just now": "刚刚",
-  "{0} ago": "{0}前",
-  "in {0}": "在 {0} 中",
-  "as of {0}": "截至 {0}",
-  "minutes": "分钟",
-  "fleet": "总计",
-  "main": "主要",
-  "your": "你自己的",
-  "once": "一次",
-  "or type": "或者输入",
-  "down to": "低至",
-  "due now": "现在就该了",
-  "waiting": "等待中",
-  "posting…": "发布中…",
-  "Importing…": "导入中…",
-  "filter…": "筛选…",
-  "around the clock": "全天候",
-  "between {0} and {1}": "在 {0} 到 {1} 之间",
-  "default {0}": "默认 {0}",
-  "none": "无",
-  "none yet": "还没有",
-  "not set": "未设置",
-  "saved": "已保存",
-  "nothing at all": "什么都不做",
-  "nothing left to farm": "没有可刷的了",
-  "nothing queued": "队列为空",
-  "no accounts yet": "还没有账户",
-  "not playing anything": "没在玩任何游戏",
-  "not read yet": "尚未读取",
-  "your friends see:": "你的好友看到：",
-  "one account": "一个账户",
-  "one game": "一款游戏",
-  "one other": "另一款",
-  "One task": "一个任务",
-  "{0} account": "{0} 个账户",
-  "{0} accounts": "{0} 个账户",
-  "{0} games": "{0} 款游戏",
-  "{0} others": "另外 {0} 款",
-  "{0} tasks": "{0} 个任务",
-  "{0} item": "{0} 件物品",
-  "{0} items": "{0} 件物品",
-  "{0} pending": "{0} 待定",
-  "still pricing {0}": "还在为 {0} 件定价",
-  "{0} played.": "已玩 {0}。",
-  "+{0} more": "+{0} 个",
-  "…and {0} more.": "…还有 {0} 个。",
-  "· frees {0}": "· {0} 后释放",
-  "- about {0} left": "- 大约还剩 {0}",
-  "appID or store URL": "appID 或商店链接",
-  "paste it here": "粘贴到这里",
-  "paste the new one here": "把新的粘贴到这里",
-  "paste the token here": "把令牌粘贴到这里",
-  "stored - press Clear to replace": "已保存——按「清除」可替换",
-  "type confirm": "输入 confirm",
-  "type off": "输入 off",
-  "type the account name": "输入账户名",
-  "Ready": "就绪",
-  "Commenting off": "评论已关闭",
-  "Not on rep4rep": "未加入 rep4rep",
-  "Log in first": "请先登录",
-  "token — no password needed": "有令牌——不需要密码",
-  "password only": "仅密码",
-  "will ask on first login": "首次登录时会询问",
-  "will be erased when you save": "保存时会被清除",
-  "will be replaced when you save": "保存时会被替换",
-  "turns into points on its own": "会自己变成积分",
-  "(Steam's limit)": "（Steam 的上限）",
-  "Standing by": "待命中",
-  "this game's own ceiling": "这款游戏自己的上限",
-  "the games you list under Human mode": "你在拟人模式下列出的游戏",
-  "Owned by this account.": "属于这个账户。",
-  "Shared with this account by a Steam Family.": "由 Steam 家庭共享给这个账户。",
-  "Games left": "剩余游戏",
-  "Cards today": "今日卡牌",
-  "Comments today": "今日评论",
-  "Inventory": "库存",
-  "rep4rep points": "rep4rep 积分",
-  "Points you can spend": "可花费的积分",
-  "Waiting to be verified": "等待验证",
-  "Trading cards still to drop across every account.": "所有账户上还可能掉落的卡牌。",
-  "Trading cards still to drop across every account that's farming.": "所有正在刷卡的账户上还可能掉落的卡牌。",
-  "Games with at least one card still to drop, across every account.": "所有账户中，至少还有一张卡未掉落的游戏。",
-  "Trading cards that dropped in the last 24 hours.": "过去 24 小时内掉落的卡牌。",
-  "rep4rep comments posted in the last 24 hours.": "过去 24 小时内发出的 rep4rep 评论。",
-  "What every account's inventory would fetch at the market's median price. Everything in there is counted at what it's worth, whether or not it can be sold right now.": "所有账户的库存按市场中位价能值多少。里面的一切都按其价值计入，不管现在能不能卖。",
-  "What everything in this account's inventory would fetch at the market's median price. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth.": "这个账户库存里的一切按市场中位价能值多少。市场上没有挂单的物品记为零；只是暂时不能卖的（交易冻结、封禁）仍按其价值计入。",
-  "Points you can spend on rep4rep. Pending ones are comments rep4rep hasn't verified yet.": "你可以在 rep4rep 上花的积分。待定的是 rep4rep 还没核验的评论。",
-  "Points you can spend. Pending points are comments rep4rep hasn't verified yet - they turn into real points on their own, usually within a few hours. Nothing is lost.": "你可以花的积分。待定的是 rep4rep 还没核验的评论——它们会自己变成真正的积分，通常几小时内。什么都不会丢。",
-  "How long nocat.farm has been running.": "nocat.farm 已经运行了多久。",
-  "<b>{0}</b> card": "<b>{0}</b> 张卡",
-  "<b>{0}</b> cards": "<b>{0}</b> 张卡",
-  "<b>{0}</b> up": "运行 <b>{0}</b>",
-  "<b>{0}</b> inventory": "库存 <b>{0}</b>",
-  "<b>{0}</b>/{1} comments": "<b>{0}</b>/{1} 条评论",
-  "Waiting on you: {0}": "在等你：{0}",
-  "Steam is showing {0}, not your custom name": "Steam 显示的是 {0}，不是你的自定义名称",
-  "Drag this card to move the account. The order is used everywhere - here, the app window and the console.": "拖动这张卡片来调整账户顺序。这个顺序在任何地方都通用——这里、应用窗口和控制台。",
-  "What your friends list shows for this account. The GAME comes straight back from Steam, so it's what other people genuinely see; the status is what nocat.farm set it to. Human mode changes the status by itself: invisible overnight, away on a break, Snooze over a meal.": "你的好友列表对这个账户显示的内容。游戏名直接来自 Steam，所以那是别人真正看到的；状态则是 nocat.farm 设置的。拟人模式会自己改状态：夜里隐身、休息时离开、吃饭时勿扰。",
-  "Steam decides what to display when a custom name is sent alongside real games, and it has settled on the real one. Idling fewer games, or only the custom name, makes it show yours. A brief mismatch right after signing in is normal and isn't reported here.": "当自定义名称和真实游戏一起发送时，由 Steam 决定显示哪个，而它选了真实的那个。挂机的游戏少一些，或者只发自定义名称，它就会显示你的。刚登录后短暂的不一致是正常的，这里不会报告。",
-  "Comments posted in the last 24 hours against this account's daily cap.": "过去 24 小时发出的评论数，对照这个账户的每日上限。",
-  "Read this account's inventory again. Prices are kept for a day, so only what changed is looked up.": "重新读取这个账户的库存。价格会保留一天，所以只查询有变化的部分。",
-  "Log this account in.": "登录这个账户。",
-  "Log this account out. It stays configured.": "让这个账户登出。配置会保留。",
-  "Start playing, farming and commenting again.": "重新开始游戏、刷卡和评论。",
-  "Stop playing, farming and commenting. The account stays logged in.": "停止游戏、刷卡和评论。账户保持登录。",
-  "What this account still has left to farm.": "这个账户还剩下什么可以刷。",
-  "This account's settings.": "这个账户的设置。",
-  "Up {0} over the last 24 hours, at the market median.": "过去 24 小时上涨 {0}，按市场中位价计。",
-  "Down {0} over the last 24 hours, at the market median.": "过去 24 小时下跌 {0}，按市场中位价计。",
-  "Reading this inventory...": "正在读取这个库存…",
-  "Reading {0}’s inventory again…": "正在重新读取 {0} 的库存…",
-  "Nothing with a market price in this inventory.": "这个库存里没有任何有市场价格的东西。",
-  "{0} at market median": "{0}（按市场中位价）",
-  "{0} - {1}  ({2})": "{0} - {1}（{2}）",
-  "{0} - skipped, nothing in it can be sold ({1})": "{0} - 已跳过，里面没有任何东西能卖（{1}）",
-  "...{0} more still being priced": "…还有 {0} 件正在定价",
-  "Global settings": "全局设置",
-  "These apply to nocat.farm as a whole.": "这些作用于整个 nocat.farm。",
-  "You have unsaved changes here. Discard them?": "这里有未保存的更改。要放弃吗？",
-  "Save one change": "保存 1 项更改",
-  "Save {0} changes": "保存 {0} 项更改",
-  "Saved.": "已保存。",
-  "Saved. {0} applies after a restart.": "已保存。{0} 将在重启后生效。",
-  "Saved. {0} apply after a restart.": "已保存。{0} 将在重启后生效。",
-  "Save failed": "保存失败",
-  "Could not save that": "无法保存该项",
-  "Could not remove that account": "无法移除该账户",
-  "Couldn't save that order": "无法保存该顺序",
-  "That account is gone": "该账户已不存在",
-  "That account is not loaded yet - try again in a second": "该账户还没加载好——过一秒再试",
-  "That didn't work": "没成功",
-  "That is not an appID": "那不是一个 appID",
-  "Nothing was waiting for that answer": "没有任何东西在等这个答案",
-  "Wrong password.": "密码错误。",
-  "Can't reach nocat.farm.": "无法连接到 nocat.farm。",
-  "Log copied": "日志已复制",
-  "Copy failed - select it manually": "复制失败——请手动选中",
-  "All accounts": "所有账户",
-  "No accounts yet": "还没有账户",
-  "No accounts yet.": "还没有账户。",
-  "No accounts match that.": "没有账户符合。",
-  "No accounts configured yet.": "还没有配置任何账户。",
-  "No registered accounts yet.": "还没有已注册的账户。",
-  "Nothing matches.": "没有匹配项。",
-  "Nothing worth reporting yet.": "暂时没什么值得报告的。",
-  "Nothing left to farm on this account.": "这个账户上没有可刷的了。",
-  "One advanced setting is hidden.": "有 1 项高级设置被隐藏。",
-  "{0} advanced settings are hidden.": "有 {0} 项高级设置被隐藏。",
-  "Tick “Show advanced” to see them.": "勾选「显示高级」即可看到。",
-  "Put this back to the default.": "把这项恢复为默认值。",
-  "This takes effect the next time nocat.farm starts.": "这会在 nocat.farm 下次启动时生效。",
-  "Locked so it cannot be changed by accident. Press Clear to replace it.": "已锁定，避免误改。按「清除」可替换。",
-  "Erase the stored value. There's no undo.": "清除已保存的值。无法撤销。",
-  "Erase the stored value? There is no undo.": "要清除已保存的值吗？无法撤销。",
-  "A day looks like": "一天大概是这样",
-  "Right now": "此刻",
-  "Careful": "小心",
-  "Hunting {0}": "正在 {0} 中狩猎",
-  "Mostly {0}.": "主要是 {0}。",
-  "Mostly {0}, with {1} in bursts rather than every day.": "主要是 {0}，另有 {1} 会成阵地出现，而不是每天都玩。",
-  "No games listed yet.": "还没有列出任何游戏。",
-  "On around {0}, bed around {1} — both jittered daily.": "大约 {0} 上线，{1} 左右睡觉——两个时间每天都会浮动。",
-  "About {0} on a weekday and {1} at the weekend.": "工作日大约 {0}，周末 {1}。",
-  "Roughly {0} days off entirely.": "大约 {0} 天完全休息。",
-  "One game at a time, in sittings of {0}.": "一次一款游戏，每次 {0}。",
-  "Overnight it goes invisible and keeps banking hours.": "夜里它会隐身，并继续累积时长。",
-  "This account idles everything at once, around the clock. Switch Human mode on to play one game at a time on a believable schedule — the settings that would give it away are hidden and put back if you switch it off.": "这个账户会 24 小时同时挂着所有游戏。打开拟人模式就会按可信的作息一次玩一款——那些会露馅的设置会被隐藏，关掉后又会回来。",
-  "Human mode picks what it plays — mostly {0}, one game at a time.": "拟人模式自己决定玩什么——主要是 {0}，一次一款。",
-  "Your friends see the real game.": "你的好友看到的是真实游戏。",
-  "Your friends see {0} instead of the real game; the hours still count.": "你的好友看到的是 {0} 而不是真实游戏；时长照样计入。",
-  "Your friends see {0}. Underneath, {1} keep gaining real playtime — both at the same time.": "你的好友看到 {0}。而在底下，{1} 仍在累积真实时长——两件事同时发生。",
-  "Your friends see {0}. No games are listed, so no playtime is being banked — add some below if you want hours too.": "你的好友看到 {0}。但没有列出任何游戏，所以并没有在累积时长——如果你也想要时长，在下面加几款。",
-  "{0} gain playtime, all at once. Set a name below to show something else instead while the hours still count.": "{0} 在同时累积时长。在下面设个名称，就能显示别的东西，而时长照样计入。",
-  "Nothing set yet. Add games to bank playtime, and optionally a name to display instead of the real one.": "还什么都没设。加几款游戏来累积时长，也可以再设个名称来代替真实游戏显示。",
-  "{0} · {1} working · everything's fine.": "{0} · {1} 个在工作 · 一切正常。",
-  "{0} needs something from you.": "{0} 需要你处理点什么。",
-  "{0} need something from you.": "{0} 需要你处理点什么。",
-  "One account has a problem.": "有 1 个账户出了问题。",
-  "{0} accounts have a problem.": "有 {0} 个账户出了问题。",
-  "{0} is out - you have {1}. Click to see what changed.": "{0} 已发布——你用的是 {1}。点击查看更新内容。",
-  "{0}: saved": "{0}：已保存",
-  "Removed {0}": "已移除 {0}",
-  "Remove {0}?": "要移除 {0} 吗？",
-  "{0} — trading cards": "{0} — 集换式卡牌",
-  "{0}: unlocking everything - watch the log": "{0}：正在解锁全部——请看日志",
-  "{0}: will post as soon as the daily cap allows": "{0}：一旦每日上限允许就会发布",
-  "{0} registered with rep4rep": "{0} 已在 rep4rep 注册",
-  "rep4rep connected": "rep4rep 已连接",
-  "rep4rep commenting switched on for every account": "已为所有账户开启 rep4rep 评论",
-  "Import failed": "导入失败",
-  "Imported one account": "已导入 1 个账户",
-  "Imported {0} accounts": "已导入 {0} 个账户",
-  "Import one account": "导入 1 个账户",
-  "Import {0} accounts": "导入 {0} 个账户",
-  "Import {0}": "导入 {0}",
-  "Import from ArchiSteamFarm": "从 ArchiSteamFarm 导入",
-  "Found an ArchiSteamFarm install with one account.": "找到一个带 1 个账户的 ArchiSteamFarm 安装。",
-  "Found an ArchiSteamFarm install with {0} accounts.": "找到一个带 {0} 个账户的 ArchiSteamFarm 安装。",
-  "Found an ArchiSteamFarm setup at {0} with {1}.": "在 {0} 找到一个 ArchiSteamFarm 安装，含 {1}。",
-  "{0} of them can come across with their saved logins — no passwords, no Steam Guard codes.": "其中 {0} 个可以带着已保存的登录一起过来——不用密码，也不用 Steam 令牌验证码。",
-  "You will still need to sign in to each one once.": "你仍然需要在每个账户上登录一次。",
-  "Accounts you already have here are left alone. Don't run ASF and nocat.farm on the same account at once — they'd take turns kicking each other off Steam.": "你这里已有的账户不会被动。不要让 ASF 和 nocat.farm 同时跑同一个账户——它们会轮流把对方踢下 Steam。",
-  "Importing copies the accounts and their login tokens. It changes nothing in ArchiSteamFarm.": "导入只是复制账户和它们的登录令牌，不会改动 ArchiSteamFarm 里的任何东西。",
-  "No ASF install found automatically. Point at its {0} folder:": "没有自动找到 ASF 安装。请指向它的 {0} 文件夹：",
-  "No ArchiSteamFarm install was found on this machine, so there is nothing to import.": "本机上没有找到 ArchiSteamFarm 安装，所以没有可导入的东西。",
-  "(login token comes across, so no password needed)": "（登录令牌会一起过来，所以不需要密码）",
-  "They're added but not started. Press Start on each, or run {0}.": "它们已添加但还没启动。逐个点「启动」，或者执行 {0}。",
-  "STEP {0} OF {1}": "第 {0} 步，共 {1} 步",
-  "Welcome to nocat.farm": "欢迎使用 nocat.farm",
-  "Pick the language for this dashboard. You can change it later under Settings › Global.": "选择这个面板的语言。之后可以在「设置 › 全局」里更改。",
-  "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. The console and the log stay in English.": "翻译还没覆盖到的地方会保持英文而不是留空，所以译到一半的语言照样完全可用。控制台和日志保持英文。",
-  "It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts rep4rep comments - all from this machine. Your accounts never leave it.": "它会登录你的 Steam 账户、玩游戏让时长计入、刷集换式卡牌、发 rep4rep 评论——全都在这台机器上完成。你的账户从不离开这里。",
-  "This takes about a minute. You can skip it and come back from the Overview page.": "这大概要一分钟。你可以跳过，之后从「概览」页面再回来。",
-  "Bring your ArchiSteamFarm accounts across": "把你的 ArchiSteamFarm 账户搬过来",
-  "Add your first account": "添加你的第一个账户",
-  "Add the Steam account you want it to run. You will be asked for the password {0}, and for a Steam Guard code - after that it remembers a login token and never needs the password again.": "添加你想让它运行的 Steam 账户。密码只会问你{0}，外加一个 Steam 令牌验证码——之后它会记住登录令牌，再也不需要密码。",
-  "Tell it what to play": "告诉它玩什么",
-  "An account does nothing until it knows what to run. Two ways:": "账户在知道要运行什么之前什么都不做。有两种方式：",
-  "{0} - it works through everything in your library that still has drops, then stops. Nothing to configure.": "{0}——把你库里所有还有掉落的游戏跑一遍，然后停下。什么都不用配。",
-  "{0} - it keeps a believable daily routine: a few games, one at a time, with breaks, meals and a bedtime. Use this on an account you care about.": "{0}——保持一套可信的日常作息：几款游戏，一次一款，有休息、有吃饭、有睡觉时间。用在你在乎的账户上。",
-  "Both live under Settings, per account.": "两者都在「设置」里，按账户配置。",
-  "rep4rep, if you want it": "rep4rep（可选）",
-  "Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own.": "可选。你的账户在别人的 Steam 个人资料下留言，赚取积分，再用积分换取别人给你自己的资料留言。",
-  "Needs a free account - {0} - and the API token pasted into Settings. Skip it entirely if you only want cards and playtime.": "需要一个免费账号 - {0} - 并把 API 令牌粘贴到「设置」里。如果你只想要卡牌和时长，完全可以跳过。",
-  "That's it": "就这些",
-  "Everything has an explanation attached - hover the {0} beside any setting.": "每一项都带说明——把鼠标移到任意设置旁边的 {0} 上。",
-  "The Console tab does anything the other tabs do, by typing. {0} lists it all.": "「控制台」标签页靠打字就能做其他标签页能做的一切。{0} 会列出全部。",
-  "Add a Steam account": "添加一个 Steam 账户",
-  "A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam.": "只给你自己看的别名。它决定配置文件的名字，也是你在命令里输入的名称——不需要和 Steam 上的任何东西一致。",
-  "What you type into Steam's sign-in box. Not your display name, not your email.": "你在 Steam 登录框里输入的内容。不是显示昵称，也不是邮箱。",
-  "Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.": "可选。留空的话 nocat.farm 会问你一次，之后改用登录令牌记住这个账户——这比把密码写在文件里安全。",
-  "Add one and nocat.farm will ask for the password and a Steam Guard code once, then remember it with a login token.": "添加一个，nocat.farm 会问你一次密码和 Steam 令牌验证码，之后就用登录令牌记住它。",
-  "Type the code from the Steam app on your phone, or from your email. nocat.farm can't finish logging in until you do.": "输入手机上 Steam 应用里的验证码，或者邮件里的那个。在你输入之前，nocat.farm 无法完成登录。",
-  "Trading cards": "集换式卡牌",
-  "Human mode": "拟人模式",
-  "Hours this account has spent in this game. This is what decides how much it is allowed to earn.": "这个账户在这款游戏上花了多少小时。这决定了它被允许拿到多少成就。",
-  "Achievements earned out of what the game has.": "已获得的成就，占这款游戏成就总数的比例。",
-  "How much of the game is done. The bar never fills - it stops at this game's ceiling, because 100% on an idled account is the giveaway.": "这款游戏完成了多少。进度条永远不会满——它会停在这款游戏的上限，因为挂机号上的 100% 正是最露馅的地方。",
-  "How far down the rarity list the hours so far have opened. It always unlocks the MOST COMMON one still locked - the ones you get just by playing - and only works down toward the rare tail as the hours build. This figure is the limit, never the next pick: a game with none of the easy ones done gets an easy one.": "累计的时长把稀有度清单开放到了什么程度。它总是解锁仍未解锁的最常见那个——就是光靠玩就会拿到的那些——只有随着时长增加才会慢慢往稀有的尾部走。这个数字是上限，绝不是下一个要解的：一款连简单成就都没做的游戏，拿到的还是简单成就。",
-  "Roughly when the next one is due, or why this game is left alone. It is a pace, not a promise.": "下一个大概什么时候到，或者这款游戏为什么被放着不动。这是节奏，不是承诺。",
-  "This game's achievements haven't been read yet - that happens the first time it comes up for one.": "这款游戏的成就还没读取过——第一次轮到它时才会读。",
-  "{0}% of this game earned. It stops at {1}.": "这款游戏已获得 {0}%。它会停在 {1}。",
-  "Nothing tracked yet. It starts counting the first minute a game is running.": "还没有任何记录。从游戏运行的第一分钟起开始计数。",
-  "Reading what it has done so far…": "正在读取它到目前为止做了什么…",
-  "Off. This account earns no achievements at all - nothing is written to any game. Turn it on and it starts earning them at a pace that follows the hours actually put in.": "已关闭。这个账户完全不会获得任何成就——不会向任何游戏写入。打开它，就会按实际投入的时长节奏开始获得。",
-  "Earns achievements slowly, from real playtime.": "从真实游戏时长里慢慢获得成就。",
-  "Earns achievements slowly, from real playtime, {0}.": "从真实游戏时长里慢慢获得成就，{0}。",
-  "at twice the normal spacing": "间隔是平常的两倍",
-  "at half the normal spacing": "间隔是平常的一半",
-  "Unlocking a pile of achievements the second it logs in is what gives a bot away. This drips them out the way a real player would instead - a few at a time, only the common ones, paced to the hours actually put in.": "一登录就解锁一大堆成就，正是暴露机器人的地方。这里改成像真人那样一点点地出——每次几个，只挑常见的，按实际投入的时长来把握节奏。",
-  "It never fully completes a game, and leaves the game this account plays most well alone.": "它绝不会把一款游戏做满，也完全不碰这个账户玩得最多的那款游戏。",
-  "It never fully completes a game (it stops at {0}%), and leaves the game this account plays most well alone.": "它绝不会把一款游戏做满（停在 {0}%），也完全不碰这个账户玩得最多的那款游戏。",
-  "No games yet — add the one this account is meant to be into first.": "还没有游戏——先把这个账户「本来就爱玩」的那款加进来。",
-  "The first game added is the main one.": "第一个加入的游戏就是主要游戏。",
-  "Make this the main game": "把它设为主要游戏",
-  "This game's share of the week. Every row here adds up to 100, including the main game - change one and the others move to make room.": "这款游戏在一周里的占比。这里所有行加起来是 100，包括主要游戏——改动一个，其他的会移动来腾位置。",
-  "The main game's share is set by \"Main game gets\" below, not here — it's held at that share however many other games you add. Click to jump to it.": "主要游戏的占比由下面的「主要游戏占」决定，而不是这里——不管你再加多少款游戏，它都保持那个比例。点击可跳到那里。",
-  "Set up rep4rep": "设置 rep4rep",
-  "Your rep4rep account": "你的 rep4rep 账号",
-  "How it works:": "它是这样运作的：",
-  "{0} your accounts post a comment on someone else's Steam profile → you earn points → you spend those points to get comments on {1} profile. nocat.farm does the posting for you, on a schedule that keeps every account under Steam's daily limit.": "{0}你的账户在别人的 Steam 个人资料下留言 → 你赚到积分 → 你用这些积分换取别人给{1}资料留言。nocat.farm 替你发布，并按节奏让每个账户都不超过 Steam 的每日上限。",
-  "Make a rep4rep account": "注册一个 rep4rep 账号",
-  "Free, and it takes a minute. Sign up, then click the verification link in your email — the token below won't work until you do.": "免费，一分钟搞定。注册后点击邮件里的验证链接——在那之前下面的令牌不会生效。",
-  "Sign up for rep4rep ↗": "注册 rep4rep ↗",
-  "Copy your API token": "复制你的 API 令牌",
-  "It's on {0}. Copy the whole string.": "它在 {0}。把整串复制下来。",
-  "nocat.farm registers your Steam accounts with rep4rep by itself and starts posting. You don't have to add anything on their website.": "nocat.farm 会自己把你的 Steam 账户注册到 rep4rep 并开始发布。你不用在他们网站上添加任何东西。",
-  "Spend these on comments for your own Steam profile, over on rep4rep.com. Read fresh from rep4rep every time you open this tab, so it matches the site.": "在 rep4rep.com 上用它们换取别人给你自己 Steam 资料的留言。每次打开这个标签页都会重新从 rep4rep 读取，所以和网站一致。",
-  "Comments you've posted that rep4rep hasn't checked yet. They turn into spendable points on their own, usually within a few hours - nothing is lost and nothing is stuck.": "你已经发出、但 rep4rep 还没核验的评论。它们会自己变成可花费的积分，通常几小时内——什么都不会丢，也不会卡住。",
-  "Spend your points ↗": "去花掉你的积分 ↗",
-  "Token set · synced {0}": "已设置令牌 · 同步于 {0}",
-  "Connect your rep4rep account first.": "请先连接你的 rep4rep 账号。",
-  "Connected, but commenting isn't switched on for any account yet.": "已连接，但还没有为任何账户开启评论。",
-  "Turn it on for all {0}": "为全部 {0} 个开启",
-  "Posting from {0} of {1}.": "{1} 中有 {0} 个在发布。",
-  "rep4rep's own id for this profile. It is not your SteamID - this is the one their support and their API ask for.": "rep4rep 给这个资料的自有 id。它不是你的 SteamID——他们的客服和 API 要的是这个。",
-  "Comments posted in the last ROLLING 24 hours - not a midnight reset. Each one ages off on its own 24h after it went out, so the count frees up gradually. Shown against the cap.": "过去滚动 24 小时内发出的评论——不是午夜清零。每条在发出 24 小时后自己失效，所以计数是逐渐释放的。对照上限显示。",
-  "Rolling 24h window: the count drops as each comment ages past 24h. This is the soonest this account can post again.": "滚动 24 小时窗口：每条评论满 24 小时后计数就减少。这是这个账户最早能再次发布的时间。",
-  "This is the ceiling Steam enforced on this account, not the number you set - so raising the configured cap won't lift it.": "这是 Steam 对这个账户强加的上限，而不是你设的数字——把配置里的上限调高并不会解开它。",
-  "Skip the wait and post the next comment as soon as the daily cap allows. It never goes over the cap.": "跳过等待，一旦每日上限允许就发下一条评论。绝不会超过上限。",
-  "Post this one right now instead of waiting for the schedule. It still counts against the daily cap.": "立刻发这一条，而不是等排程。它仍然计入每日上限。",
-  "This is rep4rep's cached copy of your Steam settings, not live. If you just changed something on Steam, it can take a while to show here.": "这是 rep4rep 缓存的你的 Steam 设置副本，不是实时的。如果你刚在 Steam 上改了什么，这里可能要过一阵才会显示。",
-  "{0} waiting. Every task is worth the same to rep4rep — their API doesn't rank them, so there's nothing to pick between.": "{0} 在等待。对 rep4rep 来说每个任务价值相同——他们的 API 不做排序，所以没什么可挑的。",
-  "No tasks for this account right now. rep4rep hands them out in batches — check back later.": "这个账户现在没有任务。rep4rep 是分批发放的——待会儿再来看。",
-  "rep4rep checks the text matches exactly, so these are posted character for character.": "rep4rep 会核对文本是否完全一致，所以这些内容是一字不差地发出去的。",
-  "rep4rep is switched on for one account but there's no API token, so nothing is being posted.": "有 1 个账户开启了 rep4rep，但没有 API 令牌，所以什么都没在发。",
-  "rep4rep is switched on for {0} accounts but there's no API token, so nothing is being posted.": "有 {0} 个账户开启了 rep4rep，但没有 API 令牌，所以什么都没在发。",
-  "Up to {0} comments a day, {1} apart, {2}.": "每天最多 {0} 条评论，间隔 {1}，{2}。",
-  "That's roughly {0} of posting spread across the day.": "也就是大约 {0} 的发布时间，分散在一天里。",
-  "Unlock every achievement, in every game this account owns": "解锁这个账户拥有的每一款游戏里的每一个成就",
-  "This is for accounts that are not pretending to be anyone. Thousands of achievements appear at once, all stamped with the same moment, and that stamp is set by Steam and cannot be changed or hidden. Anyone looking at the profile can see it, permanently. If this account is meant to look played, leave this alone and let the pacer earn them instead.": "这是给那些根本不打算装成谁的账户用的。成千上万个成就会一次性出现，全都带着同一个时间戳，而这个戳是 Steam 打的，改不了也藏不住。任何人看这个资料都会看到，而且是永久的。如果这个账户是要显得「有人在玩」，就别碰它，交给节奏器去慢慢挣。",
-  "Unlock everything on {0}?": "要在 {0} 上解锁全部吗？",
-  "Every achievement in every game {0} owns will be unlocked, right now.": "{0} 拥有的每一款游戏里的每一个成就都会被立刻解锁。",
-  "They all get the same unlock time. That is what makes it obvious.": "它们全都会拿到同一个解锁时间。这正是显眼的地方。",
-  "Steam sets that time itself - it cannot be back-dated or hidden.": "那个时间是 Steam 自己定的——既不能改成更早，也藏不住。",
-  "It runs for a long time on a big library, and it cannot be meaningfully undone.": "库很大时会跑很久，而且没法真正撤销。",
-  "Type {0} below to enable the button.": "在下面输入 {0} 才能启用按钮。",
-  "Type {0} to enable the button.": "输入 {0} 才能启用按钮。",
-  "Type {0} to confirm.": "输入 {0} 以确认。",
-  "This deletes {0} and the stored login token for it.": "这会删除 {0} 以及为它保存的登录令牌。",
-  "Nothing happens to the Steam account itself - it is only removed from nocat.farm.": "Steam 账户本身不会有任何变化——只是从 nocat.farm 里移除。",
-  "Adding it back needs the password and a fresh Steam Guard code.": "重新加回来需要密码和一个新的 Steam 令牌验证码。",
-  "Anything it was farming stops.": "它正在刷的一切都会停下。",
-  "Turn off opening the dashboard?": "要关掉自动打开面板吗？",
-  "A newly added account does {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "刚添加的账户在被告知要玩什么之前{0}，而应用窗口里并没有那个表单——只有面板才有。",
-  "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "关掉之后，添加账户只会把你留在命令行里，而那个账户会一直闲着，直到你想起来去配置它。这是给已经清楚这一点的人用的。",
-  "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "这个面板可以从你的网络访问，而它的密码短到能被猜出来。你的 Steam 账户就在它后面。",
-  "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "这个面板设置成在网络上监听，但没有密码时它会拒绝一切非本机的连接——所以只有在这里能访问。",
-  "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "这个账户玩了这款游戏多久。在超过该账户设置里的阈值之前，Steam 什么都不会掉。",
-  "Dashboard": "面板",
-  "Running in the background": "后台运行",
-  "rep4rep account": "rep4rep 账号",
-  "Steam connection": "Steam 连接",
-  "Logging": "日志",
-  "What it plays": "它玩什么",
-  "Free games & badges": "免费游戏与徽章",
-  "Achievements": "成就",
-  "rep4rep commenting": "rep4rep 评论",
-  "Friends & messages": "好友与消息",
-  "Trades": "交易",
-  "Staying out of the way": "别碍事",
-  "Log": "日志",
-  "Not being valued - this account has \"Work out what its inventory is worth\" turned off.": "未在估值——这个账户的「算出它的库存值多少钱」是关着的。"
- },
- "settings": {
-  "WebEnabled": {
-   "label": "网页面板",
-   "tip": "提供网页面板。关掉后 nocat.farm 就只剩控制台——功能一样齐全，只是要靠敲命令来操作。"
-  },
-  "WebHost": {
-   "label": "监听地址",
-   "tip": "面板在哪些地址上响应。127.0.0.1 表示仅本机；想从手机或另一台机器访问就用 0.0.0.0，并且先设好密码。"
-  },
-  "WebPort": {
-   "label": "端口",
-   "tip": "面板使用的端口。如果 7242 已被别的程序占用就改掉。"
-  },
-  "WebPassword": {
-   "label": "面板密码",
-   "tip": "面板的密码。只要它是空的，面板就会拒绝一切非本机的连接，你也就不会不小心把 Steam 账户公开出去。"
-  },
-  "OpenDashboardAfterAdd": {
-   "label": "添加账户后打开面板",
-   "tip": "新账户一添加好，就在浏览器里打开面板让你配置它。全新账户在被告知要玩什么之前什么都不会做，而应用窗口里并没有那个表单——只有面板才有。关掉的话，就得你自己记着了。"
-  },
-  "OpenBrowserOnStart": {
-   "label": "启动时打开浏览器",
-   "tip": "nocat.farm 启动时自动在浏览器里打开面板。"
-  },
-  "Tray": {
-   "label": "托盘图标",
-   "tip": "在通知区域（右下角时钟旁）放一个图标，让 nocat.farm 可以在后台运行。右键点开菜单。"
-  },
-  "MinimizeToTray": {
-   "label": "最小化到托盘",
-   "tip": "最小化控制台窗口时收进托盘，而不是留在任务栏上。"
-  },
-  "StartMinimized": {
-   "label": "启动时隐藏",
-   "tip": "启动时直接把控制台窗口藏进托盘。双击托盘图标可以把它调回来。"
-  },
-  "StartWithWindows": {
-   "label": "开机自启",
-   "tip": "登录 Windows 时启动 nocat.farm。只在你自己的用户账户下加一条启动项，别的什么都不动。"
-  },
-  "KeepAwake": {
-   "label": "保持电脑不休眠",
-   "tip": "有账户在运行时阻止 Windows 进入睡眠。屏幕依然可以关闭——被拦住的只是睡眠。"
-  },
-  "TrayNotifications": {
-   "label": "显示气泡提示",
-   "tip": "气泡通知的总开关。下面三项决定你实际会收到哪些。"
-  },
-  "NotifyEarnings": {
-   "label": "有收获时提示",
-   "tip": "掉落卡牌或 rep4rep 评论被计入时弹出提示。"
-  },
-  "NotifySocial": {
-   "label": "有人评论时提示",
-   "tip": "有人在你的某个个人资料下留言时弹出提示。"
-  },
-  "NotifyProblems": {
-   "label": "出问题时提示",
-   "tip": "账户真的需要你时才弹：要 Steam 令牌验证码、登录失败，或者被禁言评论。"
-  },
-  "Rep4RepEnabled": {
-   "label": "到底用不用 rep4rep",
-   "tip": "rep4rep 是一个第三方网站，用户之间互相在个人资料下留言。完全可选。关掉后，nocat.farm 会停掉所有账户上跟 rep4rep 有关的一切，整个功能都会消失——它的标签页、积分、每个账户的选项和这些设置都会隐藏，直到你重新打开。"
-  },
-  "Rep4RepApiToken": {
-   "label": "API 令牌",
-   "tip": "你的 rep4rep API 令牌。不管你跑多少个 Steam 账户，一个令牌就覆盖整个 rep4rep 账户——在 rep4rep.com 的 Settings 里拿。还没账号？rep4rep.com/?r=reap"
-  },
-  "Rep4RepAutoAddProfiles": {
-   "label": "自动注册账户",
-   "tip": "每个 Steam 账户首次登录时自动在 rep4rep 上注册，省得你上网站一个个手动添加。"
-  },
-  "LoginStaggerSeconds": {
-   "label": "登录之间的间隔",
-   "tip": "启动时，登录一个账户到下一个账户之间隔多少秒。Steam 是按 IP 地址限流的，正是这个间隔能防止多个账户一起触发限流。"
-  },
-  "StatusEveryMinutes": {
-   "label": "汇报间隔",
-   "tip": "开着游戏时，这个账户多久说一次自己在干嘛。0 表示跟随「日志」里的全局设置；-1 表示完全不说。"
-  },
-  "StatusQuietEveryMinutes": {
-   "label": "休息时则每隔",
-   "tip": "同上，用于账户在睡觉、休息、暂停或已下线的时候。0 跟随全局设置；-1 保持安静。"
-  },
-  "Language": {
-   "label": "语言",
-   "tip": "面板语言。尚未翻译的内容会显示英文而不是留空，所以翻译到一半的语言依然完全可用。"
-  },
-  "MarketCurrency": {
-   "label": "库存价格使用",
-   "tip": "库存价格使用的货币。请与你的 Steam 商店保持一致，否则总额会和你在市场上看到的对不上。"
-  },
-  "FileLogging": {
-   "label": "写日志文件",
-   "tip": "除了屏幕之外，把所有内容也写进 logs/。建议保持开启——这是你唯一能回看睡觉期间发生了什么的方式。"
-  },
-  "DailyReportEnabled": {
-   "label": "日志里的每日总结",
-   "tip": "每天写一份一眼看完的总结：过去 24 小时每个账户进账了什么——游戏时长、卡牌、rep4rep 评论，还有累计总数。不用翻日志就能回答「我一夜赚了多少」；随时输入 `report` 也能看。"
-  },
-  "DailyReportHour": {
-   "label": "总结时间 · 小时",
-   "tip": "每日总结写入的时刻，0–23（本地时间）。默认 9。"
-  },
-  "DailyReportMinute": {
-   "label": "总结时间 · 分钟",
-   "tip": "每日总结所在小时的分钟数，0–59。9 时 + 30 分 = 09:30。"
-  },
-  "Enabled": {
-   "label": "已启用",
-   "tip": "登录这个账户。关掉则保留配置但完全不去动它。"
-  },
-  "SteamLogin": {
-   "label": "Steam 账户名",
-   "tip": "你登录时输入的 Steam 账户名——不是显示昵称，也不是邮箱。"
-  },
-  "SteamPassword": {
-   "label": "密码",
-   "tip": "可选。留空的话 nocat.farm 会问你一次，之后用登录令牌记住这个账户——两种方式里更安全的一种。"
-  },
-  "OnlineStatus": {
-   "label": "显示状态为",
-   "tip": "别人看到的状态：在线、离开、忙碌或隐身。隐身时照样累积时长，而且谁也看不到。"
-  },
-  "IUseThisAccount": {
-   "label": "这个账户我自己也登录",
-   "tip": "如果你自己也登录这个账户，请勾选。这样 nocat.farm 就不会去改它的状态——从第二个会话改状态会把你踢出自己的 Steam 聊天。"
-  },
-  "StartPaused": {
-   "label": "启动后暂停",
-   "tip": "登录但不玩、不刷、不评论，直到你按下继续。适合那种你只想让它在线、什么也不做的账户。"
-  },
-  "LogColour": {
-   "label": "日志中的颜色",
-   "tip": "在日志和面板里用什么颜色显示这个账户的名字。账户一多就很有用。"
-  },
-  "Notes": {
-   "label": "备注",
-   "tip": "给你自己看的说明，记录这个账户是干什么的。只显示在账户卡片上，绝不会传给 Steam。"
-  },
-  "LegitMode": {
-   "label": "拟人模式",
-   "tip": "让账户像真人一样玩：一次只玩一个游戏，每段时长和休息都不一样，作息时间合理，还会有几天完全不玩。关闭后就只是单纯挂时长。"
-  },
-  "LegitStopMaxSeconds": {
-   "label": "停止时最多再收尾",
-   "tip": "仅拟人模式：手动停止时，再随机多玩几秒（最多这么久，像是有人在收尾）然后才下线，而不是瞬间消失。"
-  },
-  "GameWeights": {
-   "label": "游戏及其频率",
-   "tip": "游戏及其权重，例如“730:70, 440:20”。权重最高的是主力游戏，占据大部分时间；其余的偶尔出现，且是一阵一阵的，而不是每天都玩。"
-  },
-  "WeekdayHours": {
-   "label": "工作日时长",
-   "tip": "周一到周五大致玩多少小时。真实时长每天早上围绕这个数字随机生成，有的天短有的天长，所以不会有两天一样。"
-  },
-  "WeekendHours": {
-   "label": "周末时长",
-   "tip": "周六周日同理。周末比工作日玩得久，本身就是让一周看起来真实的重要一环。"
-  },
-  "DayOffChancePct": {
-   "label": "休息一天的概率",
-   "tip": "在 100 中的概率，表示某天完全不玩。天天不落地玩的只可能是机器人——这个设置就是用来避免那样的。"
-  },
-  "DayStartHour": {
-   "label": "大约几点上线",
-   "tip": "通常上线的整点（0-23）。真实时间在这个点附近呈钟形分布，周末还会更早，所以从不会两次都在同一分钟。"
-  },
-  "BedHour": {
-   "label": "大约几点睡觉",
-   "tip": "当天收工的整点（0-23）。凌晨也可以：2 就是凌晨两点。"
-  },
-  "LateNightExtraHours": {
-   "label": "周五/周六熬得更晚",
-   "tip": "周五和周六晚上额外熬的时长——反正第二天没事。"
-  },
-  "MainGameSharePct": {
-   "label": "主力游戏占比",
-   "tip": "当它也玩别的游戏时，列表中第一个游戏占当天的比例（百分比）。每天在此基础上上下浮动约 10 个百分点。"
-  },
-  "PureMainDayChancePct": {
-   "label": "只玩主力游戏的天数占比",
-   "tip": "在 100 中的概率，表示一整天只玩主力游戏。正是这一点让其他游戏一阵一阵地出现，而不是每天固定来一点。"
-  },
-  "SideGameSharePct": {
-   "label": "混合的日子里其他游戏占",
-   "tip": "在确实会换换口味的日子里，其他游戏大致合起来占当天多少。用完之后，当天剩下的时间就回到主力游戏。"
-  },
-  "WarmUpMinMinutes": {
-   "label": "至少先适应",
-   "tip": "登录后开始做任何事之前的最短等待（分钟）。账户一上线就同一秒进游戏，是最机械的表现。"
-  },
-  "WarmUpMaxMinutes": {
-   "label": "最多",
-   "tip": "适应期的最长等待（分钟）。实际时长在两者之间随机取。无论你怎么设，它都不会在登录后三分钟内开始。"
-  },
-  "SessionMinMinutes": {
-   "label": "最短一次游玩",
-   "tip": "换做别的事之前，待在一个游戏里的最短时长。没人每五分钟换一个游戏。"
-  },
-  "SessionMaxMinutes": {
-   "label": "最长一次游玩",
-   "tip": "待在一个游戏里的最长时长。多数时候落在两者之间；随便玩半小时和玩一整晚同样正常，所以范围留宽一点。"
-  },
-  "MealBreaksPerDay": {
-   "label": "每天用餐次数",
-   "tip": "每天真正离开电脑的休息有几次。它们落在真实的用餐时间附近而不是随机时刻，这才让人觉得那是在吃饭。"
-  },
-  "MealBreakMinutes": {
-   "label": "一次用餐多久",
-   "tip": "这类休息大约离开多久（分钟）。有时会拖得很久——聊起来就忘了时间。"
-  },
-  "SignOutOnBreakChancePct": {
-   "label": "休息时下线的概率",
-   "tip": "在 100 中的概率，表示某次休息期间显示为离线，而不只是「离开」。对好友列表来说，这和关掉 Steam 没有区别。"
-  },
-  "OfflineIdleAtNight": {
-   "label": "夜间累积时长",
-   "tip": "睡觉期间转为隐身，照样悄悄挂时长。好友列表里账户显示离线，没人看得到，而时长照常累积。"
-  },
-  "OfflineIdleGames": {
-   "label": "夜间挂的游戏",
-   "tip": "夜里离线、且已经没有卡可刷时挂什么。想挂多少都行：没人看得见挂了几个，所以「一次一个」的规矩在这里不适用。"
-  },
-  "IdleGames": {
-   "label": "挂时长的游戏",
-   "tip": "用来挂时长的游戏。Steam 最多允许同时挂 32 个。"
-  },
-  "CustomGameNameEnabled": {
-   "label": "显示自定义游戏名",
-   "tip": "在好友列表里显示一个自定义名称，而不是真实游戏。时长依然记在真实游戏上。"
-  },
-  "CustomGameName": {
-   "label": "显示为",
-   "tip": "在个人资料和好友列表里显示这个名称，而不是真实游戏。真实游戏在底下照常累积时长——两件事同时发生。"
-  },
-  "FarmCards": {
-   "label": "刷集换式卡牌",
-   "tip": "把你库里还没掉完的集换式卡牌刷出来，掉完就停。无需任何配置。"
-  },
-  "HoursUntilCardDrops": {
-   "label": "掉卡所需时长",
-   "tip": "一个游戏需要玩够多少小时，Steam 才会给它掉卡。多数账户设 3 即可；如果这个账户在 Steam 消费超过 5 美元，设 0。"
-  },
-  "FarmingOrder": {
-   "label": "按此顺序刷",
-   "tip": "先刷哪个游戏。「剩余卡最少」能最快凑齐徽章；「已玩时长最多优先」给你的库添加的新时长最少。"
-  },
-  "FarmOffline": {
-   "label": "以离线状态刷卡",
-   "tip": "这个账户刷卡时对好友显示为离线。Steam 照样统计每一小时、照样掉卡——唯一的区别是没人看得见。"
-  },
-  "UnlockAchievements": {
-   "label": "随时间获得成就",
-   "tip": "根据真实游玩时长慢慢获得成就，从最普通的开始。绝不会解锁时长撑不起来的成就，也绝不会把一个游戏做到 100%。"
-  },
-  "AchievementPace": {
-   "label": "速度",
-   "tip": "两次解锁之间等多久。「谨慎」会把每个间隔翻倍——如果这个账户要经得起别人认真查看，那就该选它。"
-  },
-  "AchievementMaxCompletionPct": {
-   "label": "完成度上限",
-   "tip": "任何单个游戏最多完成到多少（百分比）。设 0 则各游戏使用各自调好的上限，通常更合适：3 小时的解谜和 500 小时的战役不该停在同一个数字。挂机账户做到 100% 本身就是破绽，所以永远不会超过 95。"
-  },
-  "ClaimFreeGames": {
-   "label": "领取免费游戏",
-   "tip": "领取遇到的免费游戏，让游戏库自己变大。"
-  },
-  "CraftBadges": {
-   "label": "用卡牌合成徽章",
-   "tip": "把集齐的卡牌合成徽章，可以获得个人资料经验，有时还有物品。"
-  },
-  "Rep4Rep": {
-   "label": "发布 rep4rep 评论",
-   "tip": "按照拟人的节奏，发布 rep4rep 分配给这个账户的评论。"
-  },
-  "Rep4RepDailyCap": {
-   "label": "每 24 小时上限",
-   "tip": "这个账户在 24 小时内最多发多少条评论。对非好友，Steam 的真实上限大约是 10 条——超过它正是账户被禁言的原因。"
-  },
-  "Rep4RepGapMinMinutes": {
-   "label": "最短间隔",
-   "tip": "这个账户两条评论之间绝不会短于这么多分钟。"
-  },
-  "Rep4RepGapMaxMinutes": {
-   "label": "最长间隔",
-   "tip": "两条评论之间的最长间隔（分钟）。实际值在两者之间随机取，节奏才不会看起来像机器。"
-  },
-  "Rep4RepStartHour": {
-   "label": "最早从几点开始发",
-   "tip": "这个账户一天中最早会评论的时刻，0–23。凌晨四点冒出评论，是最明显不过的机器人特征。"
-  },
-  "Rep4RepEndHour": {
-   "label": "到几点为止",
-   "tip": "这个账户一天中最晚会评论的时刻，1–24。设成和开始时刻一样就表示全天都可以评论。"
-  },
-  "AcceptFriendRequests": {
-   "label": "接受好友请求",
-   "tip": "自动接受收到的好友请求。rep4rep 账户值得打开：在好友的个人资料下，Steam 允许评论的次数多得多。"
-  },
-  "JoinGroup": {
-   "label": "加入 nocat.farm 群组",
-   "tip": "让这个账户在登录时一次性加入 nocat.farm 的 Steam 群组。纯属可选：关掉就不会加。"
-  },
-  "AutoReplyEnabled": {
-   "label": "自动回复消息",
-   "tip": "回复给这个账户发消息的陌生人。关掉它不会清空你在下面写的内容，随时可以再打开。"
-  },
-  "AutoReply": {
-   "label": "回复内容",
-   "tip": "有人给这个账户发消息时就回这句。留空则什么都不说。一个每天玩八小时却从不回话的账户，比一个会说「现在不方便」的更显眼。"
-  },
-  "AutoReplyOncePerDay": {
-   "label": "每天只回复一次",
-   "tip": "对同一个人每天最多回这句一次。否则谁连发两条，就会收到两遍一模一样的话——那是最快暴露自己是机器人的方式。"
-  },
-  "FriendRequestDelayMinMinutes": {
-   "label": "至少等待",
-   "tip": "接受好友请求前的最短等待（分钟）。请求一到就同一秒接受，是一个账户能做出的最容易被发现的动作。"
-  },
-  "FriendRequestDelayMaxMinutes": {
-   "label": "最多等待",
-   "tip": "接受前的最长等待（分钟）。实际值在两者之间随机取。"
-  },
-  "ActOnlyWhileAwake": {
-   "label": "仅在「清醒」时响应",
-   "tip": "把交易、回复和好友请求压住，直到拟人模式说这个账户已经起床。否则账户明明在「睡觉」，却还是在凌晨四点回你消息。"
-  },
-  "AcceptDonations": {
-   "label": "接受赠送",
-   "tip": "接受不索取任何回报的报价。它们不可能让你有任何损失，因此天然安全。"
-  },
-  "AcceptFromMasters": {
-   "label": "接受来自你自己账户的任何交易",
-   "tip": "无条件接受下面这些 SteamID64 发来的任何报价，包括会拿走物品的那种。正是它让你能把挂机号上的卡牌一次性归拢到一个账户——也正因如此，这个名单里只能是你自己的账户。"
-  },
-  "TradeMasters": {
-   "label": "你自己的账户",
-   "tip": "你自己账户的 SteamID。“send”会把物品送到那里，来自那里的报价也会被直接接受。"
-  },
-  "DeclineOtherTrades": {
-   "label": "其余一律拒绝",
-   "tip": "主动拒掉其他所有报价，而不是让它们挂在那儿。关掉的话，没被接受的就原样留着，等你自己看。"
-  },
-  "TradeDelayMinMinutes": {
-   "label": "至少等待",
-   "tip": "处理一份报价前的最短等待（分钟）。报价刚到两秒就接受，不是人会做的事。"
-  },
-  "TradeDelayMaxMinutes": {
-   "label": "最多等待",
-   "tip": "处理一份报价前的最长等待（分钟）。实际值在两者之间随机取。"
-  },
-  "PauseWhenYouPlay": {
-   "label": "你玩游戏时自动让位",
-   "tip": "只要你开始玩，账户会立刻让位，并等待一段时间后才继续自己的事。"
-  },
-  "ResumeDelayMinutes": {
-   "label": "恢复前等待",
-   "tip": "在你停止游戏之后，这个账户悄悄接着做原来的事之前要等多久（分钟）。"
-  },
-  "AchievementBoost": {
-   "tip": "自动在多个游戏里刷成就，不需要你手动开每一局。默认关闭。“所有单人游戏”会自己从库里挑：只挑真正的游戏（绝不碰 DLC 和试玩），有成就，且评测数量足够。",
-   "label": "成就冲刺"
-  },
-  "SkipRefundableGames": {
-   "tip": "刚买的游戏在还能退款前完全不碰：一旦游玩超过两小时 Steam 就不给退，而两小时不过是一次挂机。这条规则处处生效，不只是刷卡时。免费游戏永远不受限制。",
-   "label": "保护还能退款的游戏"
-  },
-  "ShowInventoryValue": {
-   "tip": "按市场中位价算出这个账户库存的价值。它读取的是自己的库存，所以资料是私密的也没关系。",
-   "label": "算出它的库存值多少钱"
-  },
-  "CheckForUpdates": {
-   "tip": "每天查看一次是否有新版本，并在日志里说明。它只会告知：绝不下载、替换或重启任何东西。",
-   "label": "有更新时告知"
-  },
-  "BreakMinMinutes": {
-   "label": "最短休息",
-   "tip": "两次游玩之间的最短间隔（分钟）。多数休息都在这一端：倒杯水、切出去看一眼。"
-  },
-  "BreakMaxMinutes": {
-   "label": "最长休息",
-   "tip": "普通休息的最长时长（分钟）。实际时长偏向短的一端，而不是均匀分布——人本来就是这样休息的。"
-  },
-  "MaxSignOutsPerDay": {
-   "label": "最多下线次数",
-   "tip": "每天这样做的次数上限，免得账户整晚在你的好友列表里忽隐忽现。设为 0 则关闭，所有休息都只是「离开」。"
-  },
-  "PlayWhileFarming": {
-   "label": "刷卡时保留自定义名称",
-   "tip": "即使在刷卡期间也继续显示自定义名称。关掉的话，刷卡时会显示真实游戏。"
-  },
-  "GameDevice": {
-   "label": "显示为在此设备上游玩",
-   "tip": "让好友以为你在什么设备上玩——名字旁边那个 Steam Deck 或手机小标就是这么来的。"
-  },
-  "PriorityGames": {
-   "label": "优先刷这些",
-   "tip": "无论排序怎么设，都要最先刷的 appID。"
-  },
-  "FarmPriorityOnly": {
-   "label": "只刷这些",
-   "tip": "只刷优先列表里的游戏，其余还有卡的游戏一概不管。"
-  },
-  "BlacklistedGames": {
-   "label": "永不碰这些",
-   "tip": "无论徽章页面怎么显示，都绝不刷、也绝不挂的 appID。"
-  },
-  "SkipUnplayedGames": {
-   "label": "跳过你从未玩过的游戏",
-   "tip": "跳过你自己从没启动过的游戏，免得 nocat.farm 把「有史以来第一小时」记在你不太想让人看到的游戏上。"
-  },
-  "RefundHoldDays": {
-   "label": "...保留这么多天",
-   "tip": "刚买的游戏被放着不碰多少天。Steam 的退款窗口是 14 天，也是默认值；如果你需要更久才拿定主意，就调大。"
-  },
-  "FarmOnlyWhileAsleep": {
-   "label": "只在睡觉时刷卡",
-   "tip": "仅拟人模式：把刷卡推迟到账户夜里「睡着」（转为隐身）之后再刷，白天照常按日程玩。"
-  },
-  "FarmFromHour": {
-   "label": "仅从此时开始刷卡",
-   "tip": "只从这个整点开始刷卡（24 小时制）。把这个和「直到」都留 0，就是任何时候都刷。"
-  },
-  "FarmUntilHour": {
-   "label": "...直到",
-   "tip": "刷卡到这个整点为止（24 小时制）。把它设得比「从」更早，时间窗就会跨过午夜——例如 22 到 6 就是通宵刷。"
-  },
-  "PostFarmWindDownMinMinutes": {
-   "label": "最后一张卡之后，至少再玩",
-   "tip": "仅拟人模式：一轮刷卡结束后，把那个游戏再开着一段随机时长（在此区间内，分钟），然后才离开，而不是在同一秒关掉。"
-  },
-  "PostFarmWindDownMaxMinutes": {
-   "label": "...最多",
-   "tip": "刷卡结束后这段缓冲的上限（分钟）。"
-  },
-  "FarmingDelayMinutes": {
-   "label": "每隔多久重新检查",
-   "tip": "刷某个游戏期间重新检查的间隔（分钟）。卡一掉 Steam 就会推送通知，所以这只是个兜底。"
-  },
-  "MaxFarmingHoursPerGame": {
-   "label": "超过多久就放弃",
-   "tip": "一个游戏刷了这么多小时还不掉卡就放弃，换下一个。免得一个坏掉的游戏永远堵住队列。"
-  },
-  "StopWhenFarmingDone": {
-   "label": "刷完就下线",
-   "tip": "一旦没有卡可刷就把这个账户登出，而不是继续挂时长。"
-  },
-  "AchievementBoostGames": {
-   "label": "刷这些游戏",
-   "tip": "成就冲刺要依次处理的游戏，用逗号分隔（appID 或商店链接）。只在冲刺设为「自己挑的游戏」时使用。"
-  },
-  "BoostSessionHours": {
-   "label": "每个大约玩",
-   "tip": "冲刺在一个游戏上停留多久才换下一个（小时）。"
-  },
-  "MaxBoostGamesInARow": {
-   "label": "拟人模式：最多连续冲刺",
-   "tip": "仅拟人模式：连续做几次冲刺之后，就回到正常日程待更长一段时间——让正经账户始终以自己的日程为主。"
-  },
-  "BoostRestMinutesHuman": {
-   "label": "拟人模式：两次冲刺之间的日程间隔",
-   "tip": "仅拟人模式：两次冲刺之间要走多少分钟的正常日程，好让刷成就永远不会主导一个正经账户的一天。"
-  },
-  "BoostMinReviews": {
-   "label": "只刷至少有这么多评测的游戏",
-   "tip": "一个游戏要有多少条 Steam 评测，「所有单人游戏」才会去刷它。这就是过滤捆绑包凑数货的门槛：谁也解释不清自己为什么在一个只有十一条评测、从没打开过的游戏上耗了一晚。设 0 则不筛。手动挑选的游戏不受此限。"
-  },
-  "BoostOnlyPlayedGames": {
-   "label": "只刷你玩过的游戏",
-   "tip": "把「所有单人游戏」限制在这个账户确实启动过的游戏里。默认关闭——刷成就的人开一个新游戏本来就很正常——但这是把它约束在符合自身历史的游戏范围内最严格的做法。"
-  },
-  "InventoryIgnoreGames": {
-   "label": "...但不含这些游戏",
-   "tip": "要从库存估值中排除的 appID，用逗号分隔。账户被封禁的游戏就填在这里：那些物品还躺在库存里，但永远卖不掉，算进去只会虚高总额。Steam 不会告诉你封禁发生在哪个游戏，库存里也没有可靠迹象——所以这是一份由你填写的名单，而不是靠猜。"
-  },
-  "YieldToFamily": {
-   "label": "对方要玩共享游戏时立刻归还",
-   "tip": "如果家庭成员打开了这个账户正在借用的游戏，它会立刻归还并换下一个。Steam 的共享游戏同一时间只借给一个人，而且所有者永远优先——否则账户会在中途被踢出，然后「玩着」一个自己已经没有的游戏。对方停止后，该游戏还会二十分钟不进轮换，而不是他们一关就抢回来。"
-  },
-  "HoldNewFamilyGames": {
-   "label": "刚进家庭库的新游戏先别碰",
-   "tip": "共享游戏进入家庭库的头两周先跳过（天数与「保护可退款的游戏」相同），以防买它的人还在犹豫。它只能依据游戏「何时进入」，永远看不到所有者玩了多久——这个数字从本账户看不到。所以有时它会拦下一个所有者早已玩了很久、根本退不了的游戏。"
-  },
-  "IncludeFamilyLibrary": {
-   "label": "包含家庭共享的游戏",
-   "tip": "也会去刷通过 Steam 家庭共享给这个账户的游戏。在借来的游戏里拿到的成就，和自有游戏一样记在「本账户」名下。被家庭排除在共享之外的游戏会跳过，非游戏内容也一样。自有游戏永远排在借来的前面，因为所有者随时可能把自己的收回去。"
-  },
-  "AchievementGrindGapMinMinutes": {
-   "label": "集中刷时，每隔多久出一个成就",
-   "tip": "「集中刷」解锁成就的间隔（分钟，抖动区间的下限）。集中刷意味着真的坐在一个游戏里，所以这是认真刷成就的节奏，而不是后台的涓涓细流。依然从易到难，也依然受该游戏内时长的限制。"
-  },
-  "AchievementGrindGapMaxMinutes": {
-   "label": "...最长",
-   "tip": "集中刷期间间隔的上限（分钟）。"
-  },
-  "AchievementNeverGames": {
-   "label": "永不在这些游戏里解锁",
-   "tip": "完全不碰的游戏：这份名单上的任何东西都不会被写入成就，成就冲刺也永远不会选中它们。拟人模式下，账户的招牌游戏同样会被跳过。（注：有些游戏，比如 Counter-Strike 2，成就由服务器保管，无论如何都解锁不了。）"
-  },
-  "AchievementGames": {
-   "label": "只限这些游戏",
-   "tip": "限制在这些 appID 内。留空则账户正在玩的任何游戏都算。"
-  },
-  "UnpackBoosterPacks": {
-   "label": "自动打开补充包",
-   "tip": "自动打开落入库存的补充包，让里面的卡计入用于合成徽章的卡组。"
-  },
-  "ClearInventoryNotifications": {
-   "label": "清除新物品提示",
-   "tip": "每次掉卡后清掉 Steam 那个绿色的「新物品」计数，免得库存永远挂着未读标记。"
-  },
-  "UIMode": {
-   "label": "登录身份",
-   "tip": "它向 Steam 声称自己是哪种客户端。「桌面」是正确答案，也是默认值——真正的客户端就是这么报的。"
-  },
-  "SteamParentalCode": {
-   "label": "家庭监护 PIN",
-   "tip": "如果这个账户开了家庭监护，就填它的 PIN。没有它，Steam 会挡住刷卡所需要读取的页面。"
-  },
-  "MachineName": {
-   "label": "设备名称",
-   "tip": "这个账户在 Steam 授权设备列表里显示的设备名。留空则使用本机的真实名称。"
-  },
-  "SharedSecret": {
-   "label": "验证器验证码密钥",
-   "tip": "这个账户手机验证器的 shared secret。有了它，nocat.farm 就能自己回答 Steam 令牌提示，不用再掏手机。"
-  },
-  "IdentitySecret": {
-   "label": "验证器确认密钥",
-   "tip": "同一个验证器的另一半，用来处理「请在手机上确认」的提示。只有这个账户要发送交易时才有意义。"
-  },
-  "AccountProxy": {
-   "label": "此账户专用代理",
-   "tip": "只把这个账户的 Steam 流量走它自己的代理，例如 http://主机:端口。留空则用全局代理。"
-  },
-  "AccountProxyUsername": {
-   "label": "代理用户名",
-   "tip": "这个账户专用代理的用户名（如果需要的话）。"
-  },
-  "AccountProxyPassword": {
-   "label": "代理密码",
-   "tip": "这个账户专用代理的密码（如果需要的话）。"
-  },
-  "AcceptGroupInvites": {
-   "label": "接受群组邀请",
-   "tip": "加入这个账户被邀请的 Steam 群组。"
-  },
-  "IgnoreSuspiciousInvites": {
-   "label": "忽略明显的垃圾邀请",
-   "tip": "悄悄忽略来自全新的 0 级私密资料的好友请求——所有诈骗机器人都长这样。"
-  },
-  "RejectInvalidFriendInvites": {
-   "label": "主动拒绝不接受的请求",
-   "tip": "主动拒掉好友请求，而不是让它一直挂在列表里。关掉的话，没被接受的就只是一直等着。"
-  },
-  "AutoReplyDelaySeconds": {
-   "label": "回复前等待",
-   "tip": "回复发出前先等多少秒。秒回就是机器人在回；真正的等待时间会在这个上限内随机。"
-  },
-  "CommandMasters": {
-   "label": "接受来自这些人的命令",
-   "tip": "允许通过 Steam 给这个账户发消息来操作 nocat.farm 的 SteamID64，用逗号分隔。命令必须以 ! 开头。"
-  },
-  "WebRefreshSeconds": {
-   "label": "刷新间隔",
-   "tip": "面板每隔多少秒自动刷新一次。数值小感觉更跟手，而且完全不费资源——都是本地的。"
-  },
-  "WebSessionDays": {
-   "label": "保持登录",
-   "tip": "浏览器在需要重新输入面板密码之前，能保持登录多少天。"
-  },
-  "ExitWhenAllFinished": {
-   "label": "全部完成后退出",
-   "tip": "所有账户都刷完并下线后，直接完全关闭 nocat.farm，而不是继续留在托盘里闲着。"
-  },
-  "Debug": {
-   "label": "调试细节",
-   "tip": "显示多得多的细节，包括每一次网络请求。排查问题时有用，平时只会刷屏。"
-  },
-  "LogRetentionDays": {
-   "label": "日志保留时长",
-   "tip": "删除超过这么多天的日志文件。0 表示永久保留。"
-  },
-  "Rep4RepPointsRefreshMinutes": {
-   "label": "查询积分的间隔",
-   "tip": "每隔多少分钟向 rep4rep 查一次你的积分总数。rep4rep 没有公开任何速率限制，所以别设成 1 然后放着跑一个月。"
-  },
-  "ReconnectDelaySeconds": {
-   "label": "重连等待",
-   "tip": "Steam 断开连接后，等多少秒再重新连接。"
-  },
-  "ConnectionTimeoutSeconds": {
-   "label": "连接超时",
-   "tip": "等 Steam 回应多少秒后放弃并重连。"
-  },
-  "MaxConcurrentFarming": {
-   "label": "最多同时刷",
-   "tip": "最多允许多少个账户同时刷卡牌。0 表示不限。"
-  },
-  "LoginCooldownMinutes": {
-   "label": "触发限流后的冷却",
-   "tip": "一旦 Steam 对某次登录限流，所有账户都等这么多分钟——大家一起熬过去，而不是排着队一个个被挡。"
-  },
-  "WebRequestGapMs": {
-   "label": "网络请求之间的间隔",
-   "tip": "对同一个 Steam 网站发两次请求之间的最小间隔（毫秒）。这是让徽章读取不被 Steam 盯上的头号因素——看到限流警告就调高，永远别低于 200。"
-  },
-  "SteamProtocol": {
-   "label": "连接方式",
-   "tip": "用什么方式连到 Steam。除非防火墙或运营商挡了什么，否则保持自动即可——只用 websocket 看起来就像普通 HTTPS 流量，通常能过。"
-  },
-  "WebProxy": {
-   "label": "代理",
-   "tip": "把 Steam 流量走这个代理，例如 http://127.0.0.1:8080。留空则直连。"
-  },
-  "WebProxyUsername": {
-   "label": "代理用户名",
-   "tip": "上面那个代理的用户名（如果需要的话）。"
-  },
-  "WebProxyPassword": {
-   "label": "代理密码",
-   "tip": "上面那个代理的密码（如果需要的话）。"
-  },
-  "GlobalBlacklistedGames": {
-   "label": "永不碰这些（所有账户）",
-   "tip": "任何账户都不会去刷或挂机的 AppID，省得每加一个账户就重写一遍同样的清单。每个账户仍可以在这之上再加自己的。"
-  },
-  "Rep4RepLearnCap": {
-   "label": "学习真实上限",
-   "tip": "如果 Steam 在超过上面设定的上限之后才拒绝了一条评论，就把那个数字记成这个账户的真实天花板。它绝不会因为一句普通的「你评论得太频繁了」就下调上限——那句话说的是两条评论之间的间隔，跟每日上限无关，后者通常是 10。"
-  },
-  "Rep4RepRetryRefused": {
-   "label": "重试被拒的评论",
-   "tip": "被拒的评论再试一次，然后才把那个目标资料搁置一天。"
-  },
-  "SendOnFarmingFinished": {
-   "label": "刷完后把物品寄出去",
-   "tip": "当再没有卡可刷时，把这个账户收集到的东西发给上面列表里的第一个账户。这正是跑多个挂机号的意义：卡最后都进一个库存，而不是散在六个里。"
-  },
-  "SendItemTypes": {
-   "label": "寄什么",
-   "tip": "允许离开这个账户的物品类型，用逗号分隔：cards、foils、backgrounds、emoticons、boosters、gems，或者填 \"all\"。没写在这里的东西永远不会被寄出，其它设置怎么改都一样。"
-  },
-  "TradeMasterToken": {
-   "label": "对方的交易链接令牌",
-   "tip": "另一个账户交易链接里的 token（&token= 后面那段）。只有两个账户不是好友时才需要——是好友的话留空即可。"
-  },
-  "ClearNotifications": {
-   "label": "清除 Steam 的通知",
-   "tip": "把 Steam 通知栏里的一切都标为已读——评论、礼物、求助请求、好友邀请——让计数回到零，而不是伴随账户一辈子往上涨。它们都不会自己下降：只会一直亮着，直到有人打开页面，而你不会手动登录的账户根本没人去开。"
+  "ui": {
+    "Overview": "概览",
+    "Accounts": "账户",
+    "Console": "控制台",
+    "Settings": "设置",
+    "Commands": "命令",
+    "Global": "全局",
+    "Jump to": "跳转到",
+    "Today": "今天",
+    "Recent activity": "最近动态",
+    "Queued tasks": "排队任务",
+    "Show tasks for": "显示任务：",
+    "Copy": "复制",
+    "Refresh": "刷新",
+    "Save": "保存",
+    "Sign in": "登录",
+    "Add account": "添加账户",
+    "Import from ASF": "从 ASF 导入",
+    "Your Steam profiles": "你的 Steam 个人资料",
+    "Pacing": "节奏",
+    "Show the walkthrough again": "再次查看使用向导",
+    "Steam account name": "Steam 账户名",
+    "Password": "密码",
+    "Search accounts…": "搜索账户…",
+    "Search settings…": "搜索设置…",
+    "Search the log…": "搜索日志…",
+    "leave blank and it'll ask": "留空的话它会问你",
+    "mybot": "我的机器人",
+    "type a command, or 'help'": "输入命令，或 'help'",
+    "your steam login": "你的 Steam 登录名",
+    "Farming": "刷卡中",
+    "Idling": "挂机中",
+    "Online": "在线",
+    "Connecting": "连接中",
+    "Needs you": "需要你",
+    "Problem": "有问题",
+    "Playing": "游戏中",
+    "On a break": "休息中",
+    "Night idle": "夜间挂机",
+    "Asleep": "睡眠中",
+    "Off": "已关闭",
+    "Playing a game that still has trading cards to drop.": "正在玩一款还有卡牌可掉落的游戏。",
+    "Nothing left to farm, so it's building playtime on the games you chose.": "没有可刷的了，于是在你选定的游戏上累积时长。",
+    "Logged in and doing nothing. Give it games to idle or cards to farm.": "已登录但无事可做。给它一些挂机的游戏或要刷的卡牌。",
+    "On its way in.": "正在进入。",
+    "Waiting on you: a Steam Guard code, a password, or a decision.": "在等你：Steam 令牌验证码、密码，或者一个决定。",
+    "Something is wrong - the login failed, or Steam is refusing this account.": "出问题了——登录失败，或者 Steam 拒绝了这个账户。",
+    "Human mode: in a game right now, one at a time, like a person.": "拟人模式：此刻正在玩一款游戏，一次一个，就像真人一样。",
+    "Human mode: stepped away for a few minutes.": "拟人模式：离开了几分钟。",
+    "Offline for the night but quietly banking hours - nobody can see it.": "夜里显示离线，却在悄悄累积时长——没人看得见。",
+    "Done for the night. It comes back on its own in the morning.": "今晚到此为止。早上它会自己回来。",
+    "Disabled or stopped. It won't log in until you start it.": "已禁用或已停止。在你启动它之前不会登录。",
+    "Account": "账户",
+    "State": "状态",
+    "Status": "状态",
+    "Cards": "卡牌",
+    "Value": "价值",
+    "Up": "运行",
+    "Game": "游戏",
+    "Hours": "小时",
+    "Played": "已玩",
+    "Earned": "已获得",
+    "Progress": "进度",
+    "Opened": "已开放到",
+    "Next": "下一步",
+    "Next up": "接下来",
+    "Comments": "评论",
+    "Points": "积分",
+    "Cards left": "剩余卡牌",
+    "Target": "目标",
+    "Steam login": "Steam 账户名",
+    "Sign-in": "登录方式",
+    "Name": "名称",
+    "Language": "语言",
+    "Left out": "被排除",
+    "Comment to post": "要发的评论",
+    "rep4rep ID": "rep4rep ID",
+    "rep4rep": "rep4rep",
+    "Start": "启动",
+    "Stop": "停止",
+    "Pause": "暂停",
+    "Resume": "继续",
+    "Cancel": "取消",
+    "Close": "关闭",
+    "Remove": "移除",
+    "Remove it": "确认移除",
+    "Clear": "清除",
+    "Undo": "撤销",
+    "Submit": "提交",
+    "Back": "上一步",
+    "Skip": "跳过",
+    "Continue": "继续",
+    "Finish": "完成",
+    "Import": "导入",
+    "Import them": "导入它们",
+    "Register": "注册",
+    "Connect": "连接",
+    "Post now": "立即发布",
+    "Add one": "添加一个",
+    "Add an account": "添加一个账户",
+    "Add token": "添加令牌",
+    "Not yet": "暂时不用",
+    "Keep it on": "保持开启",
+    "Turn it off": "关掉它",
+    "Use a longer one": "换个更长的",
+    "Start them all": "全部启动",
+    "Replace token": "更换令牌",
+    "Unlock everything": "解锁全部",
+    "Unlock everything…": "解锁全部…",
+    "Set a password to open it up": "设个密码来开放访问",
+    "h": "小时",
+    "m": "分",
+    "now": "现在",
+    "never": "从未",
+    "just now": "刚刚",
+    "{0} ago": "{0}前",
+    "in {0}": "在 {0} 中",
+    "as of {0}": "截至 {0}",
+    "minutes": "分钟",
+    "fleet": "总计",
+    "main": "主要",
+    "your": "你自己的",
+    "once": "一次",
+    "or type": "或者输入",
+    "down to": "低至",
+    "due now": "现在就该了",
+    "waiting": "等待中",
+    "posting…": "发布中…",
+    "Importing…": "导入中…",
+    "filter…": "筛选…",
+    "around the clock": "全天候",
+    "between {0} and {1}": "在 {0} 到 {1} 之间",
+    "default {0}": "默认 {0}",
+    "none": "无",
+    "none yet": "还没有",
+    "not set": "未设置",
+    "saved": "已保存",
+    "nothing at all": "什么都不做",
+    "nothing left to farm": "没有可刷的了",
+    "nothing queued": "队列为空",
+    "no accounts yet": "还没有账户",
+    "not playing anything": "没在玩任何游戏",
+    "not read yet": "尚未读取",
+    "your friends see:": "你的好友看到：",
+    "one account": "一个账户",
+    "one game": "一款游戏",
+    "one other": "另一款",
+    "One task": "一个任务",
+    "{0} account": "{0} 个账户",
+    "{0} accounts": "{0} 个账户",
+    "{0} games": "{0} 款游戏",
+    "{0} others": "另外 {0} 款",
+    "{0} tasks": "{0} 个任务",
+    "{0} item": "{0} 件物品",
+    "{0} items": "{0} 件物品",
+    "{0} pending": "{0} 待定",
+    "still pricing {0}": "还在为 {0} 件定价",
+    "{0} played.": "已玩 {0}。",
+    "+{0} more": "+{0} 个",
+    "…and {0} more.": "…还有 {0} 个。",
+    "· frees {0}": "· {0} 后释放",
+    "- about {0} left": "- 大约还剩 {0}",
+    "appID or store URL": "appID 或商店链接",
+    "paste it here": "粘贴到这里",
+    "paste the new one here": "把新的粘贴到这里",
+    "paste the token here": "把令牌粘贴到这里",
+    "stored - press Clear to replace": "已保存——按「清除」可替换",
+    "type confirm": "输入 confirm",
+    "type off": "输入 off",
+    "type the account name": "输入账户名",
+    "Ready": "就绪",
+    "Commenting off": "评论已关闭",
+    "Not on rep4rep": "未加入 rep4rep",
+    "Log in first": "请先登录",
+    "token — no password needed": "有令牌——不需要密码",
+    "password only": "仅密码",
+    "will ask on first login": "首次登录时会询问",
+    "will be erased when you save": "保存时会被清除",
+    "will be replaced when you save": "保存时会被替换",
+    "turns into points on its own": "会自己变成积分",
+    "(Steam's limit)": "（Steam 的上限）",
+    "Standing by": "待命中",
+    "this game's own ceiling": "这款游戏自己的上限",
+    "the games you list under Human mode": "你在拟人模式下列出的游戏",
+    "Owned by this account.": "属于这个账户。",
+    "Shared with this account by a Steam Family.": "由 Steam 家庭共享给这个账户。",
+    "Games left": "剩余游戏",
+    "Cards today": "今日卡牌",
+    "Comments today": "今日评论",
+    "Inventory": "库存",
+    "rep4rep points": "rep4rep 积分",
+    "Points you can spend": "可花费的积分",
+    "Waiting to be verified": "等待验证",
+    "Trading cards still to drop across every account.": "所有账户上还可能掉落的卡牌。",
+    "Trading cards still to drop across every account that's farming.": "所有正在刷卡的账户上还可能掉落的卡牌。",
+    "Games with at least one card still to drop, across every account.": "所有账户中，至少还有一张卡未掉落的游戏。",
+    "Trading cards that dropped in the last 24 hours.": "过去 24 小时内掉落的卡牌。",
+    "rep4rep comments posted in the last 24 hours.": "过去 24 小时内发出的 rep4rep 评论。",
+    "What every account's inventory would fetch at the market's median price. Everything in there is counted at what it's worth, whether or not it can be sold right now.": "所有账户的库存按市场中位价能值多少。里面的一切都按其价值计入，不管现在能不能卖。",
+    "What everything in this account's inventory would fetch at the market's median price. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth.": "这个账户库存里的一切按市场中位价能值多少。市场上没有挂单的物品记为零；只是暂时不能卖的（交易冻结、封禁）仍按其价值计入。",
+    "Points you can spend on rep4rep. Pending ones are comments rep4rep hasn't verified yet.": "你可以在 rep4rep 上花的积分。待定的是 rep4rep 还没核验的评论。",
+    "Points you can spend. Pending points are comments rep4rep hasn't verified yet - they turn into real points on their own, usually within a few hours. Nothing is lost.": "你可以花的积分。待定的是 rep4rep 还没核验的评论——它们会自己变成真正的积分，通常几小时内。什么都不会丢。",
+    "How long nocat.farm has been running.": "nocat.farm 已经运行了多久。",
+    "<b>{0}</b> card": "<b>{0}</b> 张卡",
+    "<b>{0}</b> cards": "<b>{0}</b> 张卡",
+    "<b>{0}</b> up": "运行 <b>{0}</b>",
+    "<b>{0}</b> inventory": "库存 <b>{0}</b>",
+    "<b>{0}</b>/{1} comments": "<b>{0}</b>/{1} 条评论",
+    "Waiting on you: {0}": "在等你：{0}",
+    "Steam is showing {0}, not your custom name": "Steam 显示的是 {0}，不是你的自定义名称",
+    "Drag this card to move the account. The order is used everywhere - here, the app window and the console.": "拖动这张卡片来调整账户顺序。这个顺序在任何地方都通用——这里、应用窗口和控制台。",
+    "What your friends list shows for this account. The GAME comes straight back from Steam, so it's what other people genuinely see; the status is what nocat.farm set it to. Human mode changes the status by itself: invisible overnight, away on a break, Snooze over a meal.": "你的好友列表对这个账户显示的内容。游戏名直接来自 Steam，所以那是别人真正看到的；状态则是 nocat.farm 设置的。拟人模式会自己改状态：夜里隐身、休息时离开、吃饭时勿扰。",
+    "Steam decides what to display when a custom name is sent alongside real games, and it has settled on the real one. Idling fewer games, or only the custom name, makes it show yours. A brief mismatch right after signing in is normal and isn't reported here.": "当自定义名称和真实游戏一起发送时，由 Steam 决定显示哪个，而它选了真实的那个。挂机的游戏少一些，或者只发自定义名称，它就会显示你的。刚登录后短暂的不一致是正常的，这里不会报告。",
+    "Comments posted in the last 24 hours against this account's daily cap.": "过去 24 小时发出的评论数，对照这个账户的每日上限。",
+    "Read this account's inventory again. Prices are kept for a day, so only what changed is looked up.": "重新读取这个账户的库存。价格会保留一天，所以只查询有变化的部分。",
+    "Log this account in.": "登录这个账户。",
+    "Log this account out. It stays configured.": "让这个账户登出。配置会保留。",
+    "Start playing, farming and commenting again.": "重新开始游戏、刷卡和评论。",
+    "Stop playing, farming and commenting. The account stays logged in.": "停止游戏、刷卡和评论。账户保持登录。",
+    "What this account still has left to farm.": "这个账户还剩下什么可以刷。",
+    "This account's settings.": "这个账户的设置。",
+    "Up {0} over the last 24 hours, at the market median.": "过去 24 小时上涨 {0}，按市场中位价计。",
+    "Down {0} over the last 24 hours, at the market median.": "过去 24 小时下跌 {0}，按市场中位价计。",
+    "Reading this inventory...": "正在读取这个库存…",
+    "Reading {0}’s inventory again…": "正在重新读取 {0} 的库存…",
+    "Nothing with a market price in this inventory.": "这个库存里没有任何有市场价格的东西。",
+    "{0} at market median": "{0}（按市场中位价）",
+    "{0} - {1}  ({2})": "{0} - {1}（{2}）",
+    "{0} - skipped, nothing in it can be sold ({1})": "{0} - 已跳过，里面没有任何东西能卖（{1}）",
+    "...{0} more still being priced": "…还有 {0} 件正在定价",
+    "Global settings": "全局设置",
+    "These apply to nocat.farm as a whole.": "这些作用于整个 nocat.farm。",
+    "You have unsaved changes here. Discard them?": "这里有未保存的更改。要放弃吗？",
+    "Save one change": "保存 1 项更改",
+    "Save {0} changes": "保存 {0} 项更改",
+    "Saved.": "已保存。",
+    "Saved. {0} applies after a restart.": "已保存。{0} 将在重启后生效。",
+    "Saved. {0} apply after a restart.": "已保存。{0} 将在重启后生效。",
+    "Save failed": "保存失败",
+    "Could not save that": "无法保存该项",
+    "Could not remove that account": "无法移除该账户",
+    "Couldn't save that order": "无法保存该顺序",
+    "That account is gone": "该账户已不存在",
+    "That account is not loaded yet - try again in a second": "该账户还没加载好——过一秒再试",
+    "That didn't work": "没成功",
+    "That is not an appID": "那不是一个 appID",
+    "Nothing was waiting for that answer": "没有任何东西在等这个答案",
+    "Wrong password.": "密码错误。",
+    "Can't reach nocat.farm.": "无法连接到 nocat.farm。",
+    "Log copied": "日志已复制",
+    "Copy failed - select it manually": "复制失败——请手动选中",
+    "All accounts": "所有账户",
+    "No accounts yet": "还没有账户",
+    "No accounts yet.": "还没有账户。",
+    "No accounts match that.": "没有账户符合。",
+    "No accounts configured yet.": "还没有配置任何账户。",
+    "No registered accounts yet.": "还没有已注册的账户。",
+    "Nothing matches.": "没有匹配项。",
+    "Nothing worth reporting yet.": "暂时没什么值得报告的。",
+    "Nothing left to farm on this account.": "这个账户上没有可刷的了。",
+    "One advanced setting is hidden.": "有 1 项高级设置被隐藏。",
+    "{0} advanced settings are hidden.": "有 {0} 项高级设置被隐藏。",
+    "Tick “Show advanced” to see them.": "勾选「显示高级」即可看到。",
+    "Put this back to the default.": "把这项恢复为默认值。",
+    "This takes effect the next time nocat.farm starts.": "这会在 nocat.farm 下次启动时生效。",
+    "Locked so it cannot be changed by accident. Press Clear to replace it.": "已锁定，避免误改。按「清除」可替换。",
+    "Erase the stored value. There's no undo.": "清除已保存的值。无法撤销。",
+    "Erase the stored value? There is no undo.": "要清除已保存的值吗？无法撤销。",
+    "A day looks like": "一天大概是这样",
+    "Right now": "此刻",
+    "Careful": "小心",
+    "Hunting {0}": "正在 {0} 中狩猎",
+    "Mostly {0}.": "主要是 {0}。",
+    "Mostly {0}, with {1} in bursts rather than every day.": "主要是 {0}，另有 {1} 会成阵地出现，而不是每天都玩。",
+    "No games listed yet.": "还没有列出任何游戏。",
+    "On around {0}, bed around {1} — both jittered daily.": "大约 {0} 上线，{1} 左右睡觉——两个时间每天都会浮动。",
+    "About {0} on a weekday and {1} at the weekend.": "工作日大约 {0}，周末 {1}。",
+    "Roughly {0} days off entirely.": "大约 {0} 天完全休息。",
+    "One game at a time, in sittings of {0}.": "一次一款游戏，每次 {0}。",
+    "Overnight it goes invisible and keeps banking hours.": "夜里它会隐身，并继续累积时长。",
+    "This account idles everything at once, around the clock. Switch Human mode on to play one game at a time on a believable schedule — the settings that would give it away are hidden and put back if you switch it off.": "这个账户会 24 小时同时挂着所有游戏。打开拟人模式就会按可信的作息一次玩一款——那些会露馅的设置会被隐藏，关掉后又会回来。",
+    "Human mode picks what it plays — mostly {0}, one game at a time.": "拟人模式自己决定玩什么——主要是 {0}，一次一款。",
+    "Your friends see the real game.": "你的好友看到的是真实游戏。",
+    "Your friends see {0} instead of the real game; the hours still count.": "你的好友看到的是 {0} 而不是真实游戏；时长照样计入。",
+    "Your friends see {0}. Underneath, {1} keep gaining real playtime — both at the same time.": "你的好友看到 {0}。而在底下，{1} 仍在累积真实时长——两件事同时发生。",
+    "Your friends see {0}. No games are listed, so no playtime is being banked — add some below if you want hours too.": "你的好友看到 {0}。但没有列出任何游戏，所以并没有在累积时长——如果你也想要时长，在下面加几款。",
+    "{0} gain playtime, all at once. Set a name below to show something else instead while the hours still count.": "{0} 在同时累积时长。在下面设个名称，就能显示别的东西，而时长照样计入。",
+    "Nothing set yet. Add games to bank playtime, and optionally a name to display instead of the real one.": "还什么都没设。加几款游戏来累积时长，也可以再设个名称来代替真实游戏显示。",
+    "{0} · {1} working · everything's fine.": "{0} · {1} 个在工作 · 一切正常。",
+    "{0} needs something from you.": "{0} 需要你处理点什么。",
+    "{0} need something from you.": "{0} 需要你处理点什么。",
+    "One account has a problem.": "有 1 个账户出了问题。",
+    "{0} accounts have a problem.": "有 {0} 个账户出了问题。",
+    "{0} is out - you have {1}. Click to see what changed.": "{0} 已发布——你用的是 {1}。点击查看更新内容。",
+    "{0}: saved": "{0}：已保存",
+    "Removed {0}": "已移除 {0}",
+    "Remove {0}?": "要移除 {0} 吗？",
+    "{0} — trading cards": "{0} — 集换式卡牌",
+    "{0}: unlocking everything - watch the log": "{0}：正在解锁全部——请看日志",
+    "{0}: will post as soon as the daily cap allows": "{0}：一旦每日上限允许就会发布",
+    "{0} registered with rep4rep": "{0} 已在 rep4rep 注册",
+    "rep4rep connected": "rep4rep 已连接",
+    "rep4rep commenting switched on for every account": "已为所有账户开启 rep4rep 评论",
+    "Import failed": "导入失败",
+    "Imported one account": "已导入 1 个账户",
+    "Imported {0} accounts": "已导入 {0} 个账户",
+    "Import one account": "导入 1 个账户",
+    "Import {0} accounts": "导入 {0} 个账户",
+    "Import {0}": "导入 {0}",
+    "Import from ArchiSteamFarm": "从 ArchiSteamFarm 导入",
+    "Found an ArchiSteamFarm install with one account.": "找到一个带 1 个账户的 ArchiSteamFarm 安装。",
+    "Found an ArchiSteamFarm install with {0} accounts.": "找到一个带 {0} 个账户的 ArchiSteamFarm 安装。",
+    "Found an ArchiSteamFarm setup at {0} with {1}.": "在 {0} 找到一个 ArchiSteamFarm 安装，含 {1}。",
+    "{0} of them can come across with their saved logins — no passwords, no Steam Guard codes.": "其中 {0} 个可以带着已保存的登录一起过来——不用密码，也不用 Steam 令牌验证码。",
+    "You will still need to sign in to each one once.": "你仍然需要在每个账户上登录一次。",
+    "Accounts you already have here are left alone. Don't run ASF and nocat.farm on the same account at once — they'd take turns kicking each other off Steam.": "你这里已有的账户不会被动。不要让 ASF 和 nocat.farm 同时跑同一个账户——它们会轮流把对方踢下 Steam。",
+    "Importing copies the accounts and their login tokens. It changes nothing in ArchiSteamFarm.": "导入只是复制账户和它们的登录令牌，不会改动 ArchiSteamFarm 里的任何东西。",
+    "No ASF install found automatically. Point at its {0} folder:": "没有自动找到 ASF 安装。请指向它的 {0} 文件夹：",
+    "No ArchiSteamFarm install was found on this machine, so there is nothing to import.": "本机上没有找到 ArchiSteamFarm 安装，所以没有可导入的东西。",
+    "(login token comes across, so no password needed)": "（登录令牌会一起过来，所以不需要密码）",
+    "They're added but not started. Press Start on each, or run {0}.": "它们已添加但还没启动。逐个点「启动」，或者执行 {0}。",
+    "STEP {0} OF {1}": "第 {0} 步，共 {1} 步",
+    "Welcome to nocat.farm": "欢迎使用 nocat.farm",
+    "Pick the language for this dashboard. You can change it later under Settings › Global.": "选择这个面板的语言。之后可以在「设置 › 全局」里更改。",
+    "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. The console and the log stay in English.": "翻译还没覆盖到的地方会保持英文而不是留空，所以译到一半的语言照样完全可用。控制台和日志保持英文。",
+    "It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts rep4rep comments - all from this machine. Your accounts never leave it.": "它会登录你的 Steam 账户、玩游戏让时长计入、刷集换式卡牌、发 rep4rep 评论——全都在这台机器上完成。你的账户从不离开这里。",
+    "This takes about a minute. You can skip it and come back from the Overview page.": "这大概要一分钟。你可以跳过，之后从「概览」页面再回来。",
+    "Bring your ArchiSteamFarm accounts across": "把你的 ArchiSteamFarm 账户搬过来",
+    "Add your first account": "添加你的第一个账户",
+    "Add the Steam account you want it to run. You will be asked for the password {0}, and for a Steam Guard code - after that it remembers a login token and never needs the password again.": "添加你想让它运行的 Steam 账户。密码只会问你{0}，外加一个 Steam 令牌验证码——之后它会记住登录令牌，再也不需要密码。",
+    "Tell it what to play": "告诉它玩什么",
+    "An account does nothing until it knows what to run. Two ways:": "账户在知道要运行什么之前什么都不做。有两种方式：",
+    "{0} - it works through everything in your library that still has drops, then stops. Nothing to configure.": "{0}——把你库里所有还有掉落的游戏跑一遍，然后停下。什么都不用配。",
+    "{0} - it keeps a believable daily routine: a few games, one at a time, with breaks, meals and a bedtime. Use this on an account you care about.": "{0}——保持一套可信的日常作息：几款游戏，一次一款，有休息、有吃饭、有睡觉时间。用在你在乎的账户上。",
+    "Both live under Settings, per account.": "两者都在「设置」里，按账户配置。",
+    "rep4rep, if you want it": "rep4rep（可选）",
+    "Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own.": "可选。你的账户在别人的 Steam 个人资料下留言，赚取积分，再用积分换取别人给你自己的资料留言。",
+    "Needs a free account - {0} - and the API token pasted into Settings. Skip it entirely if you only want cards and playtime.": "需要一个免费账号 - {0} - 并把 API 令牌粘贴到「设置」里。如果你只想要卡牌和时长，完全可以跳过。",
+    "That's it": "就这些",
+    "Everything has an explanation attached - hover the {0} beside any setting.": "每一项都带说明——把鼠标移到任意设置旁边的 {0} 上。",
+    "The Console tab does anything the other tabs do, by typing. {0} lists it all.": "「控制台」标签页靠打字就能做其他标签页能做的一切。{0} 会列出全部。",
+    "Add a Steam account": "添加一个 Steam 账户",
+    "A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam.": "只给你自己看的别名。它决定配置文件的名字，也是你在命令里输入的名称——不需要和 Steam 上的任何东西一致。",
+    "What you type into Steam's sign-in box. Not your display name, not your email.": "你在 Steam 登录框里输入的内容。不是显示昵称，也不是邮箱。",
+    "Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.": "可选。留空的话 nocat.farm 会问你一次，之后改用登录令牌记住这个账户——这比把密码写在文件里安全。",
+    "Add one and nocat.farm will ask for the password and a Steam Guard code once, then remember it with a login token.": "添加一个，nocat.farm 会问你一次密码和 Steam 令牌验证码，之后就用登录令牌记住它。",
+    "Type the code from the Steam app on your phone, or from your email. nocat.farm can't finish logging in until you do.": "输入手机上 Steam 应用里的验证码，或者邮件里的那个。在你输入之前，nocat.farm 无法完成登录。",
+    "Trading cards": "集换式卡牌",
+    "Human mode": "拟人模式",
+    "Hours this account has spent in this game. This is what decides how much it is allowed to earn.": "这个账户在这款游戏上花了多少小时。这决定了它被允许拿到多少成就。",
+    "Achievements earned out of what the game has.": "已获得的成就，占这款游戏成就总数的比例。",
+    "How much of the game is done. The bar never fills - it stops at this game's ceiling, because 100% on an idled account is the giveaway.": "这款游戏完成了多少。进度条永远不会满——它会停在这款游戏的上限，因为挂机号上的 100% 正是最露馅的地方。",
+    "How far down the rarity list the hours so far have opened. It always unlocks the MOST COMMON one still locked - the ones you get just by playing - and only works down toward the rare tail as the hours build. This figure is the limit, never the next pick: a game with none of the easy ones done gets an easy one.": "累计的时长把稀有度清单开放到了什么程度。它总是解锁仍未解锁的最常见那个——就是光靠玩就会拿到的那些——只有随着时长增加才会慢慢往稀有的尾部走。这个数字是上限，绝不是下一个要解的：一款连简单成就都没做的游戏，拿到的还是简单成就。",
+    "Roughly when the next one is due, or why this game is left alone. It is a pace, not a promise.": "下一个大概什么时候到，或者这款游戏为什么被放着不动。这是节奏，不是承诺。",
+    "This game's achievements haven't been read yet - that happens the first time it comes up for one.": "这款游戏的成就还没读取过——第一次轮到它时才会读。",
+    "{0}% of this game earned. It stops at {1}.": "这款游戏已获得 {0}%。它会停在 {1}。",
+    "Nothing tracked yet. It starts counting the first minute a game is running.": "还没有任何记录。从游戏运行的第一分钟起开始计数。",
+    "Reading what it has done so far…": "正在读取它到目前为止做了什么…",
+    "Off. This account earns no achievements at all - nothing is written to any game. Turn it on and it starts earning them at a pace that follows the hours actually put in.": "已关闭。这个账户完全不会获得任何成就——不会向任何游戏写入。打开它，就会按实际投入的时长节奏开始获得。",
+    "Earns achievements slowly, from real playtime.": "从真实游戏时长里慢慢获得成就。",
+    "Earns achievements slowly, from real playtime, {0}.": "从真实游戏时长里慢慢获得成就，{0}。",
+    "at twice the normal spacing": "间隔是平常的两倍",
+    "at half the normal spacing": "间隔是平常的一半",
+    "Unlocking a pile of achievements the second it logs in is what gives a bot away. This drips them out the way a real player would instead - a few at a time, only the common ones, paced to the hours actually put in.": "一登录就解锁一大堆成就，正是暴露机器人的地方。这里改成像真人那样一点点地出——每次几个，只挑常见的，按实际投入的时长来把握节奏。",
+    "It never fully completes a game, and leaves the game this account plays most well alone.": "它绝不会把一款游戏做满，也完全不碰这个账户玩得最多的那款游戏。",
+    "It never fully completes a game (it stops at {0}%), and leaves the game this account plays most well alone.": "它绝不会把一款游戏做满（停在 {0}%），也完全不碰这个账户玩得最多的那款游戏。",
+    "No games yet — add the one this account is meant to be into first.": "还没有游戏——先把这个账户「本来就爱玩」的那款加进来。",
+    "The first game added is the main one.": "第一个加入的游戏就是主要游戏。",
+    "Make this the main game": "把它设为主要游戏",
+    "This game's share of the week. Every row here adds up to 100, including the main game - change one and the others move to make room.": "这款游戏在一周里的占比。这里所有行加起来是 100，包括主要游戏——改动一个，其他的会移动来腾位置。",
+    "The main game's share is set by \"Main game gets\" below, not here — it's held at that share however many other games you add. Click to jump to it.": "主要游戏的占比由下面的「主要游戏占」决定，而不是这里——不管你再加多少款游戏，它都保持那个比例。点击可跳到那里。",
+    "Set up rep4rep": "设置 rep4rep",
+    "Your rep4rep account": "你的 rep4rep 账号",
+    "How it works:": "它是这样运作的：",
+    "{0} your accounts post a comment on someone else's Steam profile → you earn points → you spend those points to get comments on {1} profile. nocat.farm does the posting for you, on a schedule that keeps every account under Steam's daily limit.": "{0}你的账户在别人的 Steam 个人资料下留言 → 你赚到积分 → 你用这些积分换取别人给{1}资料留言。nocat.farm 替你发布，并按节奏让每个账户都不超过 Steam 的每日上限。",
+    "Make a rep4rep account": "注册一个 rep4rep 账号",
+    "Free, and it takes a minute. Sign up, then click the verification link in your email — the token below won't work until you do.": "免费，一分钟搞定。注册后点击邮件里的验证链接——在那之前下面的令牌不会生效。",
+    "Sign up for rep4rep ↗": "注册 rep4rep ↗",
+    "Copy your API token": "复制你的 API 令牌",
+    "It's on {0}. Copy the whole string.": "它在 {0}。把整串复制下来。",
+    "nocat.farm registers your Steam accounts with rep4rep by itself and starts posting. You don't have to add anything on their website.": "nocat.farm 会自己把你的 Steam 账户注册到 rep4rep 并开始发布。你不用在他们网站上添加任何东西。",
+    "Spend these on comments for your own Steam profile, over on rep4rep.com. Read fresh from rep4rep every time you open this tab, so it matches the site.": "在 rep4rep.com 上用它们换取别人给你自己 Steam 资料的留言。每次打开这个标签页都会重新从 rep4rep 读取，所以和网站一致。",
+    "Comments you've posted that rep4rep hasn't checked yet. They turn into spendable points on their own, usually within a few hours - nothing is lost and nothing is stuck.": "你已经发出、但 rep4rep 还没核验的评论。它们会自己变成可花费的积分，通常几小时内——什么都不会丢，也不会卡住。",
+    "Spend your points ↗": "去花掉你的积分 ↗",
+    "Token set · synced {0}": "已设置令牌 · 同步于 {0}",
+    "Connect your rep4rep account first.": "请先连接你的 rep4rep 账号。",
+    "Connected, but commenting isn't switched on for any account yet.": "已连接，但还没有为任何账户开启评论。",
+    "Turn it on for all {0}": "为全部 {0} 个开启",
+    "Posting from {0} of {1}.": "{1} 中有 {0} 个在发布。",
+    "rep4rep's own id for this profile. It is not your SteamID - this is the one their support and their API ask for.": "rep4rep 给这个资料的自有 id。它不是你的 SteamID——他们的客服和 API 要的是这个。",
+    "Comments posted in the last ROLLING 24 hours - not a midnight reset. Each one ages off on its own 24h after it went out, so the count frees up gradually. Shown against the cap.": "过去滚动 24 小时内发出的评论——不是午夜清零。每条在发出 24 小时后自己失效，所以计数是逐渐释放的。对照上限显示。",
+    "Rolling 24h window: the count drops as each comment ages past 24h. This is the soonest this account can post again.": "滚动 24 小时窗口：每条评论满 24 小时后计数就减少。这是这个账户最早能再次发布的时间。",
+    "This is the ceiling Steam enforced on this account, not the number you set - so raising the configured cap won't lift it.": "这是 Steam 对这个账户强加的上限，而不是你设的数字——把配置里的上限调高并不会解开它。",
+    "Skip the wait and post the next comment as soon as the daily cap allows. It never goes over the cap.": "跳过等待，一旦每日上限允许就发下一条评论。绝不会超过上限。",
+    "Post this one right now instead of waiting for the schedule. It still counts against the daily cap.": "立刻发这一条，而不是等排程。它仍然计入每日上限。",
+    "This is rep4rep's cached copy of your Steam settings, not live. If you just changed something on Steam, it can take a while to show here.": "这是 rep4rep 缓存的你的 Steam 设置副本，不是实时的。如果你刚在 Steam 上改了什么，这里可能要过一阵才会显示。",
+    "{0} waiting. Every task is worth the same to rep4rep — their API doesn't rank them, so there's nothing to pick between.": "{0} 在等待。对 rep4rep 来说每个任务价值相同——他们的 API 不做排序，所以没什么可挑的。",
+    "No tasks for this account right now. rep4rep hands them out in batches — check back later.": "这个账户现在没有任务。rep4rep 是分批发放的——待会儿再来看。",
+    "rep4rep checks the text matches exactly, so these are posted character for character.": "rep4rep 会核对文本是否完全一致，所以这些内容是一字不差地发出去的。",
+    "rep4rep is switched on for one account but there's no API token, so nothing is being posted.": "有 1 个账户开启了 rep4rep，但没有 API 令牌，所以什么都没在发。",
+    "rep4rep is switched on for {0} accounts but there's no API token, so nothing is being posted.": "有 {0} 个账户开启了 rep4rep，但没有 API 令牌，所以什么都没在发。",
+    "Up to {0} comments a day, {1} apart, {2}.": "每天最多 {0} 条评论，间隔 {1}，{2}。",
+    "That's roughly {0} of posting spread across the day.": "也就是大约 {0} 的发布时间，分散在一天里。",
+    "Unlock every achievement, in every game this account owns": "解锁这个账户拥有的每一款游戏里的每一个成就",
+    "This is for accounts that are not pretending to be anyone. Thousands of achievements appear at once, all stamped with the same moment, and that stamp is set by Steam and cannot be changed or hidden. Anyone looking at the profile can see it, permanently. If this account is meant to look played, leave this alone and let the pacer earn them instead.": "这是给那些根本不打算装成谁的账户用的。成千上万个成就会一次性出现，全都带着同一个时间戳，而这个戳是 Steam 打的，改不了也藏不住。任何人看这个资料都会看到，而且是永久的。如果这个账户是要显得「有人在玩」，就别碰它，交给节奏器去慢慢挣。",
+    "Unlock everything on {0}?": "要在 {0} 上解锁全部吗？",
+    "Every achievement in every game {0} owns will be unlocked, right now.": "{0} 拥有的每一款游戏里的每一个成就都会被立刻解锁。",
+    "They all get the same unlock time. That is what makes it obvious.": "它们全都会拿到同一个解锁时间。这正是显眼的地方。",
+    "Steam sets that time itself - it cannot be back-dated or hidden.": "那个时间是 Steam 自己定的——既不能改成更早，也藏不住。",
+    "It runs for a long time on a big library, and it cannot be meaningfully undone.": "库很大时会跑很久，而且没法真正撤销。",
+    "Type {0} below to enable the button.": "在下面输入 {0} 才能启用按钮。",
+    "Type {0} to enable the button.": "输入 {0} 才能启用按钮。",
+    "Type {0} to confirm.": "输入 {0} 以确认。",
+    "This deletes {0} and the stored login token for it.": "这会删除 {0} 以及为它保存的登录令牌。",
+    "Nothing happens to the Steam account itself - it is only removed from nocat.farm.": "Steam 账户本身不会有任何变化——只是从 nocat.farm 里移除。",
+    "Adding it back needs the password and a fresh Steam Guard code.": "重新加回来需要密码和一个新的 Steam 令牌验证码。",
+    "Anything it was farming stops.": "它正在刷的一切都会停下。",
+    "Turn off opening the dashboard?": "要关掉自动打开面板吗？",
+    "A newly added account does {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "刚添加的账户在被告知要玩什么之前{0}，而应用窗口里并没有那个表单——只有面板才有。",
+    "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "关掉之后，添加账户只会把你留在命令行里，而那个账户会一直闲着，直到你想起来去配置它。这是给已经清楚这一点的人用的。",
+    "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "这个面板可以从你的网络访问，而它的密码短到能被猜出来。你的 Steam 账户就在它后面。",
+    "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "这个面板设置成在网络上监听，但没有密码时它会拒绝一切非本机的连接——所以只有在这里能访问。",
+    "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "这个账户玩了这款游戏多久。在超过该账户设置里的阈值之前，Steam 什么都不会掉。",
+    "Dashboard": "面板",
+    "Running in the background": "后台运行",
+    "rep4rep account": "rep4rep 账号",
+    "Steam connection": "Steam 连接",
+    "Logging": "日志",
+    "What it plays": "它玩什么",
+    "Free games & badges": "免费游戏与徽章",
+    "Achievements": "成就",
+    "rep4rep commenting": "rep4rep 评论",
+    "Friends & messages": "好友与消息",
+    "Trades": "交易",
+    "Staying out of the way": "别碍事",
+    "Log": "日志",
+    "Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick \"Work out what its inventory is worth\".": "未在估值。若要重新开启，请进入设置，选择 {0}，展开\"交易\"并勾选\"计算其库存价值\"。"
+  },
+  "settings": {
+    "WebEnabled": {
+      "label": "网页面板",
+      "tip": "提供网页面板。关掉后 nocat.farm 就只剩控制台——功能一样齐全，只是要靠敲命令来操作。"
+    },
+    "WebHost": {
+      "label": "监听地址",
+      "tip": "面板在哪些地址上响应。127.0.0.1 表示仅本机；想从手机或另一台机器访问就用 0.0.0.0，并且先设好密码。"
+    },
+    "WebPort": {
+      "label": "端口",
+      "tip": "面板使用的端口。如果 7242 已被别的程序占用就改掉。"
+    },
+    "WebPassword": {
+      "label": "面板密码",
+      "tip": "面板的密码。只要它是空的，面板就会拒绝一切非本机的连接，你也就不会不小心把 Steam 账户公开出去。"
+    },
+    "OpenDashboardAfterAdd": {
+      "label": "添加账户后打开面板",
+      "tip": "新账户一添加好，就在浏览器里打开面板让你配置它。全新账户在被告知要玩什么之前什么都不会做，而应用窗口里并没有那个表单——只有面板才有。关掉的话，就得你自己记着了。"
+    },
+    "OpenBrowserOnStart": {
+      "label": "启动时打开浏览器",
+      "tip": "nocat.farm 启动时自动在浏览器里打开面板。"
+    },
+    "Tray": {
+      "label": "托盘图标",
+      "tip": "在通知区域（右下角时钟旁）放一个图标，让 nocat.farm 可以在后台运行。右键点开菜单。"
+    },
+    "MinimizeToTray": {
+      "label": "最小化到托盘",
+      "tip": "最小化控制台窗口时收进托盘，而不是留在任务栏上。"
+    },
+    "StartMinimized": {
+      "label": "启动时隐藏",
+      "tip": "启动时直接把控制台窗口藏进托盘。双击托盘图标可以把它调回来。"
+    },
+    "StartWithWindows": {
+      "label": "开机自启",
+      "tip": "登录 Windows 时启动 nocat.farm。只在你自己的用户账户下加一条启动项，别的什么都不动。"
+    },
+    "KeepAwake": {
+      "label": "保持电脑不休眠",
+      "tip": "有账户在运行时阻止 Windows 进入睡眠。屏幕依然可以关闭——被拦住的只是睡眠。"
+    },
+    "TrayNotifications": {
+      "label": "显示气泡提示",
+      "tip": "气泡通知的总开关。下面三项决定你实际会收到哪些。"
+    },
+    "NotifyEarnings": {
+      "label": "有收获时提示",
+      "tip": "掉落卡牌或 rep4rep 评论被计入时弹出提示。"
+    },
+    "NotifySocial": {
+      "label": "有人评论时提示",
+      "tip": "有人在你的某个个人资料下留言时弹出提示。"
+    },
+    "NotifyProblems": {
+      "label": "出问题时提示",
+      "tip": "账户真的需要你时才弹：要 Steam 令牌验证码、登录失败，或者被禁言评论。"
+    },
+    "Rep4RepEnabled": {
+      "label": "到底用不用 rep4rep",
+      "tip": "rep4rep 是一个第三方网站，用户之间互相在个人资料下留言。完全可选。关掉后，nocat.farm 会停掉所有账户上跟 rep4rep 有关的一切，整个功能都会消失——它的标签页、积分、每个账户的选项和这些设置都会隐藏，直到你重新打开。"
+    },
+    "Rep4RepApiToken": {
+      "label": "API 令牌",
+      "tip": "你的 rep4rep API 令牌。不管你跑多少个 Steam 账户，一个令牌就覆盖整个 rep4rep 账户——在 rep4rep.com 的 Settings 里拿。还没账号？rep4rep.com/?r=reap"
+    },
+    "Rep4RepAutoAddProfiles": {
+      "label": "自动注册账户",
+      "tip": "每个 Steam 账户首次登录时自动在 rep4rep 上注册，省得你上网站一个个手动添加。"
+    },
+    "LoginStaggerSeconds": {
+      "label": "登录之间的间隔",
+      "tip": "启动时，登录一个账户到下一个账户之间隔多少秒。Steam 是按 IP 地址限流的，正是这个间隔能防止多个账户一起触发限流。"
+    },
+    "StatusEveryMinutes": {
+      "label": "汇报间隔",
+      "tip": "开着游戏时，这个账户多久说一次自己在干嘛。0 表示跟随「日志」里的全局设置；-1 表示完全不说。"
+    },
+    "StatusQuietEveryMinutes": {
+      "label": "休息时则每隔",
+      "tip": "同上，用于账户在睡觉、休息、暂停或已下线的时候。0 跟随全局设置；-1 保持安静。"
+    },
+    "Language": {
+      "label": "语言",
+      "tip": "面板语言。尚未翻译的内容会显示英文而不是留空，所以翻译到一半的语言依然完全可用。"
+    },
+    "MarketCurrency": {
+      "label": "库存价格使用",
+      "tip": "库存价格使用的货币。请与你的 Steam 商店保持一致，否则总额会和你在市场上看到的对不上。"
+    },
+    "FileLogging": {
+      "label": "写日志文件",
+      "tip": "除了屏幕之外，把所有内容也写进 logs/。建议保持开启——这是你唯一能回看睡觉期间发生了什么的方式。"
+    },
+    "DailyReportEnabled": {
+      "label": "日志里的每日总结",
+      "tip": "每天写一份一眼看完的总结：过去 24 小时每个账户进账了什么——游戏时长、卡牌、rep4rep 评论，还有累计总数。不用翻日志就能回答「我一夜赚了多少」；随时输入 `report` 也能看。"
+    },
+    "DailyReportHour": {
+      "label": "总结时间 · 小时",
+      "tip": "每日总结写入的时刻，0–23（本地时间）。默认 9。"
+    },
+    "DailyReportMinute": {
+      "label": "总结时间 · 分钟",
+      "tip": "每日总结所在小时的分钟数，0–59。9 时 + 30 分 = 09:30。"
+    },
+    "Enabled": {
+      "label": "已启用",
+      "tip": "登录这个账户。关掉则保留配置但完全不去动它。"
+    },
+    "SteamLogin": {
+      "label": "Steam 账户名",
+      "tip": "你登录时输入的 Steam 账户名——不是显示昵称，也不是邮箱。"
+    },
+    "SteamPassword": {
+      "label": "密码",
+      "tip": "可选。留空的话 nocat.farm 会问你一次，之后用登录令牌记住这个账户——两种方式里更安全的一种。"
+    },
+    "OnlineStatus": {
+      "label": "显示状态为",
+      "tip": "别人看到的状态：在线、离开、忙碌或隐身。隐身时照样累积时长，而且谁也看不到。"
+    },
+    "IUseThisAccount": {
+      "label": "这个账户我自己也登录",
+      "tip": "如果你自己也登录这个账户，请勾选。这样 nocat.farm 就不会去改它的状态——从第二个会话改状态会把你踢出自己的 Steam 聊天。"
+    },
+    "StartPaused": {
+      "label": "启动后暂停",
+      "tip": "登录但不玩、不刷、不评论，直到你按下继续。适合那种你只想让它在线、什么也不做的账户。"
+    },
+    "LogColour": {
+      "label": "日志中的颜色",
+      "tip": "在日志和面板里用什么颜色显示这个账户的名字。账户一多就很有用。"
+    },
+    "Notes": {
+      "label": "备注",
+      "tip": "给你自己看的说明，记录这个账户是干什么的。只显示在账户卡片上，绝不会传给 Steam。"
+    },
+    "LegitMode": {
+      "label": "拟人模式",
+      "tip": "让账户像真人一样玩：一次只玩一个游戏，每段时长和休息都不一样，作息时间合理，还会有几天完全不玩。关闭后就只是单纯挂时长。"
+    },
+    "LegitStopMaxSeconds": {
+      "label": "停止时最多再收尾",
+      "tip": "仅拟人模式：手动停止时，再随机多玩几秒（最多这么久，像是有人在收尾）然后才下线，而不是瞬间消失。"
+    },
+    "GameWeights": {
+      "label": "游戏及其频率",
+      "tip": "游戏及其权重，例如“730:70, 440:20”。权重最高的是主力游戏，占据大部分时间；其余的偶尔出现，且是一阵一阵的，而不是每天都玩。"
+    },
+    "WeekdayHours": {
+      "label": "工作日时长",
+      "tip": "周一到周五大致玩多少小时。真实时长每天早上围绕这个数字随机生成，有的天短有的天长，所以不会有两天一样。"
+    },
+    "WeekendHours": {
+      "label": "周末时长",
+      "tip": "周六周日同理。周末比工作日玩得久，本身就是让一周看起来真实的重要一环。"
+    },
+    "DayOffChancePct": {
+      "label": "休息一天的概率",
+      "tip": "在 100 中的概率，表示某天完全不玩。天天不落地玩的只可能是机器人——这个设置就是用来避免那样的。"
+    },
+    "DayStartHour": {
+      "label": "大约几点上线",
+      "tip": "通常上线的整点（0-23）。真实时间在这个点附近呈钟形分布，周末还会更早，所以从不会两次都在同一分钟。"
+    },
+    "BedHour": {
+      "label": "大约几点睡觉",
+      "tip": "当天收工的整点（0-23）。凌晨也可以：2 就是凌晨两点。"
+    },
+    "LateNightExtraHours": {
+      "label": "周五/周六熬得更晚",
+      "tip": "周五和周六晚上额外熬的时长——反正第二天没事。"
+    },
+    "MainGameSharePct": {
+      "label": "主力游戏占比",
+      "tip": "当它也玩别的游戏时，列表中第一个游戏占当天的比例（百分比）。每天在此基础上上下浮动约 10 个百分点。"
+    },
+    "PureMainDayChancePct": {
+      "label": "只玩主力游戏的天数占比",
+      "tip": "在 100 中的概率，表示一整天只玩主力游戏。正是这一点让其他游戏一阵一阵地出现，而不是每天固定来一点。"
+    },
+    "SideGameSharePct": {
+      "label": "混合的日子里其他游戏占",
+      "tip": "在确实会换换口味的日子里，其他游戏大致合起来占当天多少。用完之后，当天剩下的时间就回到主力游戏。"
+    },
+    "WarmUpMinMinutes": {
+      "label": "至少先适应",
+      "tip": "登录后开始做任何事之前的最短等待（分钟）。账户一上线就同一秒进游戏，是最机械的表现。"
+    },
+    "WarmUpMaxMinutes": {
+      "label": "最多",
+      "tip": "适应期的最长等待（分钟）。实际时长在两者之间随机取。无论你怎么设，它都不会在登录后三分钟内开始。"
+    },
+    "SessionMinMinutes": {
+      "label": "最短一次游玩",
+      "tip": "换做别的事之前，待在一个游戏里的最短时长。没人每五分钟换一个游戏。"
+    },
+    "SessionMaxMinutes": {
+      "label": "最长一次游玩",
+      "tip": "待在一个游戏里的最长时长。多数时候落在两者之间；随便玩半小时和玩一整晚同样正常，所以范围留宽一点。"
+    },
+    "MealBreaksPerDay": {
+      "label": "每天用餐次数",
+      "tip": "每天真正离开电脑的休息有几次。它们落在真实的用餐时间附近而不是随机时刻，这才让人觉得那是在吃饭。"
+    },
+    "MealBreakMinutes": {
+      "label": "一次用餐多久",
+      "tip": "这类休息大约离开多久（分钟）。有时会拖得很久——聊起来就忘了时间。"
+    },
+    "SignOutOnBreakChancePct": {
+      "label": "休息时下线的概率",
+      "tip": "在 100 中的概率，表示某次休息期间显示为离线，而不只是「离开」。对好友列表来说，这和关掉 Steam 没有区别。"
+    },
+    "OfflineIdleAtNight": {
+      "label": "夜间累积时长",
+      "tip": "睡觉期间转为隐身，照样悄悄挂时长。好友列表里账户显示离线，没人看得到，而时长照常累积。"
+    },
+    "OfflineIdleGames": {
+      "label": "夜间挂的游戏",
+      "tip": "夜里离线、且已经没有卡可刷时挂什么。想挂多少都行：没人看得见挂了几个，所以「一次一个」的规矩在这里不适用。"
+    },
+    "IdleGames": {
+      "label": "挂时长的游戏",
+      "tip": "用来挂时长的游戏。Steam 最多允许同时挂 32 个。"
+    },
+    "CustomGameNameEnabled": {
+      "label": "显示自定义游戏名",
+      "tip": "在好友列表里显示一个自定义名称，而不是真实游戏。时长依然记在真实游戏上。"
+    },
+    "CustomGameName": {
+      "label": "显示为",
+      "tip": "在个人资料和好友列表里显示这个名称，而不是真实游戏。真实游戏在底下照常累积时长——两件事同时发生。"
+    },
+    "FarmCards": {
+      "label": "刷集换式卡牌",
+      "tip": "把你库里还没掉完的集换式卡牌刷出来，掉完就停。无需任何配置。"
+    },
+    "HoursUntilCardDrops": {
+      "label": "掉卡所需时长",
+      "tip": "一个游戏需要玩够多少小时，Steam 才会给它掉卡。多数账户设 3 即可；如果这个账户在 Steam 消费超过 5 美元，设 0。"
+    },
+    "FarmingOrder": {
+      "label": "按此顺序刷",
+      "tip": "先刷哪个游戏。「剩余卡最少」能最快凑齐徽章；「已玩时长最多优先」给你的库添加的新时长最少。"
+    },
+    "FarmOffline": {
+      "label": "以离线状态刷卡",
+      "tip": "这个账户刷卡时对好友显示为离线。Steam 照样统计每一小时、照样掉卡——唯一的区别是没人看得见。"
+    },
+    "UnlockAchievements": {
+      "label": "随时间获得成就",
+      "tip": "根据真实游玩时长慢慢获得成就，从最普通的开始。绝不会解锁时长撑不起来的成就，也绝不会把一个游戏做到 100%。"
+    },
+    "AchievementPace": {
+      "label": "速度",
+      "tip": "两次解锁之间等多久。「谨慎」会把每个间隔翻倍——如果这个账户要经得起别人认真查看，那就该选它。"
+    },
+    "AchievementMaxCompletionPct": {
+      "label": "完成度不超过",
+      "tip": "单个游戏最多完成到百分之几。填 0 则各游戏沿用自己调校过的上限——3 小时的解谜和 500 小时的大作不该停在同一个数字。填了数字就以它为准，既能压低某个游戏的上限，也同样能抬高它，用于账号确实把某款游戏玩透、理应让它完成的情形。永远不会超过 95：挂机账号上 100% 完成的游戏本身就是破绽。"
+    },
+    "ClaimFreeGames": {
+      "label": "领取免费游戏",
+      "tip": "领取遇到的免费游戏，让游戏库自己变大。"
+    },
+    "CraftBadges": {
+      "label": "用卡牌合成徽章",
+      "tip": "把集齐的卡牌合成徽章，可以获得个人资料经验，有时还有物品。"
+    },
+    "Rep4Rep": {
+      "label": "发布 rep4rep 评论",
+      "tip": "按照拟人的节奏，发布 rep4rep 分配给这个账户的评论。"
+    },
+    "Rep4RepDailyCap": {
+      "label": "每 24 小时上限",
+      "tip": "这个账户在 24 小时内最多发多少条评论。对非好友，Steam 的真实上限大约是 10 条——超过它正是账户被禁言的原因。"
+    },
+    "Rep4RepGapMinMinutes": {
+      "label": "最短间隔",
+      "tip": "这个账户两条评论之间绝不会短于这么多分钟。"
+    },
+    "Rep4RepGapMaxMinutes": {
+      "label": "最长间隔",
+      "tip": "两条评论之间的最长间隔（分钟）。实际值在两者之间随机取，节奏才不会看起来像机器。"
+    },
+    "Rep4RepStartHour": {
+      "label": "最早从几点开始发",
+      "tip": "这个账户一天中最早会评论的时刻，0–23。凌晨四点冒出评论，是最明显不过的机器人特征。"
+    },
+    "Rep4RepEndHour": {
+      "label": "到几点为止",
+      "tip": "这个账户一天中最晚会评论的时刻，1–24。设成和开始时刻一样就表示全天都可以评论。"
+    },
+    "AcceptFriendRequests": {
+      "label": "接受好友请求",
+      "tip": "自动接受收到的好友请求。rep4rep 账户值得打开：在好友的个人资料下，Steam 允许评论的次数多得多。"
+    },
+    "JoinGroup": {
+      "label": "加入 nocat.farm 群组",
+      "tip": "让这个账户在登录时一次性加入 nocat.farm 的 Steam 群组。纯属可选：关掉就不会加。"
+    },
+    "AutoReplyEnabled": {
+      "label": "自动回复消息",
+      "tip": "回复给这个账户发消息的陌生人。关掉它不会清空你在下面写的内容，随时可以再打开。"
+    },
+    "AutoReply": {
+      "label": "回复内容",
+      "tip": "有人给这个账户发消息时就回这句。留空则什么都不说。一个每天玩八小时却从不回话的账户，比一个会说「现在不方便」的更显眼。"
+    },
+    "AutoReplyOncePerDay": {
+      "label": "每天只回复一次",
+      "tip": "对同一个人每天最多回这句一次。否则谁连发两条，就会收到两遍一模一样的话——那是最快暴露自己是机器人的方式。"
+    },
+    "FriendRequestDelayMinMinutes": {
+      "label": "至少等待",
+      "tip": "接受好友请求前的最短等待（分钟）。请求一到就同一秒接受，是一个账户能做出的最容易被发现的动作。"
+    },
+    "FriendRequestDelayMaxMinutes": {
+      "label": "最多等待",
+      "tip": "接受前的最长等待（分钟）。实际值在两者之间随机取。"
+    },
+    "ActOnlyWhileAwake": {
+      "label": "仅在「清醒」时响应",
+      "tip": "把交易、回复和好友请求压住，直到拟人模式说这个账户已经起床。否则账户明明在「睡觉」，却还是在凌晨四点回你消息。"
+    },
+    "AcceptDonations": {
+      "label": "接受赠送",
+      "tip": "接受不索取任何回报的报价。它们不可能让你有任何损失，因此天然安全。"
+    },
+    "AcceptFromMasters": {
+      "label": "接受来自你自己账户的任何交易",
+      "tip": "无条件接受下面这些 SteamID64 发来的任何报价，包括会拿走物品的那种。正是它让你能把挂机号上的卡牌一次性归拢到一个账户——也正因如此，这个名单里只能是你自己的账户。"
+    },
+    "TradeMasters": {
+      "label": "你自己的账户",
+      "tip": "你自己账户的 SteamID。“send”会把物品送到那里，来自那里的报价也会被直接接受。"
+    },
+    "DeclineOtherTrades": {
+      "label": "其余一律拒绝",
+      "tip": "主动拒掉其他所有报价，而不是让它们挂在那儿。关掉的话，没被接受的就原样留着，等你自己看。"
+    },
+    "TradeDelayMinMinutes": {
+      "label": "至少等待",
+      "tip": "处理一份报价前的最短等待（分钟）。报价刚到两秒就接受，不是人会做的事。"
+    },
+    "TradeDelayMaxMinutes": {
+      "label": "最多等待",
+      "tip": "处理一份报价前的最长等待（分钟）。实际值在两者之间随机取。"
+    },
+    "PauseWhenYouPlay": {
+      "label": "你玩游戏时自动让位",
+      "tip": "只要你开始玩，账户会立刻让位，并等待一段时间后才继续自己的事。"
+    },
+    "ResumeDelayMinutes": {
+      "label": "恢复前等待",
+      "tip": "在你停止游戏之后，这个账户悄悄接着做原来的事之前要等多久（分钟）。"
+    },
+    "AchievementBoost": {
+      "tip": "自动在多个游戏里刷成就，不需要你手动开每一局。默认关闭。“所有单人游戏”会自己从库里挑：只挑真正的游戏（绝不碰 DLC 和试玩），有成就，且评测数量足够。",
+      "label": "成就冲刺"
+    },
+    "SkipRefundableGames": {
+      "tip": "刚买的游戏在还能退款前完全不碰：一旦游玩超过两小时 Steam 就不给退，而两小时不过是一次挂机。这条规则处处生效，不只是刷卡时。免费游戏永远不受限制。",
+      "label": "保护还能退款的游戏"
+    },
+    "ShowInventoryValue": {
+      "tip": "按市场中位价算出这个账户库存的价值。它读取的是自己的库存，所以资料是私密的也没关系。",
+      "label": "算出它的库存值多少钱"
+    },
+    "CheckForUpdates": {
+      "tip": "每天查看一次是否有新版本，并在日志里说明。它只会告知：绝不下载、替换或重启任何东西。",
+      "label": "有更新时告知"
+    },
+    "BreakMinMinutes": {
+      "label": "最短休息",
+      "tip": "两次游玩之间的最短间隔（分钟）。多数休息都在这一端：倒杯水、切出去看一眼。"
+    },
+    "BreakMaxMinutes": {
+      "label": "最长休息",
+      "tip": "普通休息的最长时长（分钟）。实际时长偏向短的一端，而不是均匀分布——人本来就是这样休息的。"
+    },
+    "MaxSignOutsPerDay": {
+      "label": "最多下线次数",
+      "tip": "每天这样做的次数上限，免得账户整晚在你的好友列表里忽隐忽现。设为 0 则关闭，所有休息都只是「离开」。"
+    },
+    "PlayWhileFarming": {
+      "label": "刷卡时保留自定义名称",
+      "tip": "即使在刷卡期间也继续显示自定义名称。关掉的话，刷卡时会显示真实游戏。"
+    },
+    "GameDevice": {
+      "label": "显示为在此设备上游玩",
+      "tip": "让好友以为你在什么设备上玩——名字旁边那个 Steam Deck 或手机小标就是这么来的。"
+    },
+    "PriorityGames": {
+      "label": "优先刷这些",
+      "tip": "无论排序怎么设，都要最先刷的 appID。"
+    },
+    "FarmPriorityOnly": {
+      "label": "只刷这些",
+      "tip": "只刷优先列表里的游戏，其余还有卡的游戏一概不管。"
+    },
+    "BlacklistedGames": {
+      "label": "永不碰这些",
+      "tip": "无论徽章页面怎么显示，都绝不刷、也绝不挂的 appID。"
+    },
+    "SkipUnplayedGames": {
+      "label": "跳过你从未玩过的游戏",
+      "tip": "跳过你自己从没启动过的游戏，免得 nocat.farm 把「有史以来第一小时」记在你不太想让人看到的游戏上。"
+    },
+    "RefundHoldDays": {
+      "label": "...保留这么多天",
+      "tip": "刚买的游戏被放着不碰多少天。Steam 的退款窗口是 14 天，也是默认值；如果你需要更久才拿定主意，就调大。"
+    },
+    "FarmOnlyWhileAsleep": {
+      "label": "只在睡觉时刷卡",
+      "tip": "仅拟人模式：把刷卡推迟到账户夜里「睡着」（转为隐身）之后再刷，白天照常按日程玩。"
+    },
+    "FarmFromHour": {
+      "label": "仅从此时开始刷卡",
+      "tip": "只从这个整点开始刷卡（24 小时制）。把这个和「直到」都留 0，就是任何时候都刷。"
+    },
+    "FarmUntilHour": {
+      "label": "...直到",
+      "tip": "刷卡到这个整点为止（24 小时制）。把它设得比「从」更早，时间窗就会跨过午夜——例如 22 到 6 就是通宵刷。"
+    },
+    "PostFarmWindDownMinMinutes": {
+      "label": "最后一张卡之后，至少再玩",
+      "tip": "仅拟人模式：一轮刷卡结束后，把那个游戏再开着一段随机时长（在此区间内，分钟），然后才离开，而不是在同一秒关掉。"
+    },
+    "PostFarmWindDownMaxMinutes": {
+      "label": "...最多",
+      "tip": "刷卡结束后这段缓冲的上限（分钟）。"
+    },
+    "FarmingDelayMinutes": {
+      "label": "每隔多久重新检查",
+      "tip": "刷某个游戏期间重新检查的间隔（分钟）。卡一掉 Steam 就会推送通知，所以这只是个兜底。"
+    },
+    "MaxFarmingHoursPerGame": {
+      "label": "超过多久就放弃",
+      "tip": "一个游戏刷了这么多小时还不掉卡就放弃，换下一个。免得一个坏掉的游戏永远堵住队列。"
+    },
+    "StopWhenFarmingDone": {
+      "label": "刷完就下线",
+      "tip": "一旦没有卡可刷就把这个账户登出，而不是继续挂时长。"
+    },
+    "AchievementBoostGames": {
+      "label": "刷这些游戏",
+      "tip": "成就冲刺要依次处理的游戏，用逗号分隔（appID 或商店链接）。只在冲刺设为「自己挑的游戏」时使用。"
+    },
+    "BoostSessionHours": {
+      "label": "每个大约玩",
+      "tip": "冲刺在一个游戏上停留多久才换下一个（小时）。"
+    },
+    "MaxBoostGamesInARow": {
+      "label": "拟人模式：最多连续冲刺",
+      "tip": "仅拟人模式：连续做几次冲刺之后，就回到正常日程待更长一段时间——让正经账户始终以自己的日程为主。"
+    },
+    "BoostRestMinutesHuman": {
+      "label": "拟人模式：两次冲刺之间的日程间隔",
+      "tip": "仅拟人模式：两次冲刺之间要走多少分钟的正常日程，好让刷成就永远不会主导一个正经账户的一天。"
+    },
+    "BoostMinReviews": {
+      "label": "只刷至少有这么多评测的游戏",
+      "tip": "一个游戏要有多少条 Steam 评测，「所有单人游戏」才会去刷它。这就是过滤捆绑包凑数货的门槛：谁也解释不清自己为什么在一个只有十一条评测、从没打开过的游戏上耗了一晚。设 0 则不筛。手动挑选的游戏不受此限。"
+    },
+    "BoostOnlyPlayedGames": {
+      "label": "只刷你玩过的游戏",
+      "tip": "把「所有单人游戏」限制在这个账户确实启动过的游戏里。默认关闭——刷成就的人开一个新游戏本来就很正常——但这是把它约束在符合自身历史的游戏范围内最严格的做法。"
+    },
+    "InventoryIgnoreGames": {
+      "label": "...但不含这些游戏",
+      "tip": "要从库存估值中排除的 appID，用逗号分隔。账户被封禁的游戏就填在这里：那些物品还躺在库存里，但永远卖不掉，算进去只会虚高总额。Steam 不会告诉你封禁发生在哪个游戏，库存里也没有可靠迹象——所以这是一份由你填写的名单，而不是靠猜。"
+    },
+    "YieldToFamily": {
+      "label": "对方要玩共享游戏时立刻归还",
+      "tip": "如果家庭成员打开了这个账户正在借用的游戏，它会立刻归还并换下一个。Steam 的共享游戏同一时间只借给一个人，而且所有者永远优先——否则账户会在中途被踢出，然后「玩着」一个自己已经没有的游戏。对方停止后，该游戏还会二十分钟不进轮换，而不是他们一关就抢回来。"
+    },
+    "HoldNewFamilyGames": {
+      "label": "刚进家庭库的新游戏先别碰",
+      "tip": "共享游戏进入家庭库的头两周先跳过（天数与「保护可退款的游戏」相同），以防买它的人还在犹豫。它只能依据游戏「何时进入」，永远看不到所有者玩了多久——这个数字从本账户看不到。所以有时它会拦下一个所有者早已玩了很久、根本退不了的游戏。"
+    },
+    "IncludeFamilyLibrary": {
+      "label": "包含家庭共享的游戏",
+      "tip": "也会去刷通过 Steam 家庭共享给这个账户的游戏。在借来的游戏里拿到的成就，和自有游戏一样记在「本账户」名下。被家庭排除在共享之外的游戏会跳过，非游戏内容也一样。自有游戏永远排在借来的前面，因为所有者随时可能把自己的收回去。"
+    },
+    "AchievementGrindGapMinMinutes": {
+      "label": "集中刷时，每隔多久出一个成就",
+      "tip": "「集中刷」解锁成就的间隔（分钟，抖动区间的下限）。集中刷意味着真的坐在一个游戏里，所以这是认真刷成就的节奏，而不是后台的涓涓细流。依然从易到难，也依然受该游戏内时长的限制。"
+    },
+    "AchievementGrindGapMaxMinutes": {
+      "label": "...最长",
+      "tip": "集中刷期间间隔的上限（分钟）。"
+    },
+    "AchievementNeverGames": {
+      "label": "永不在这些游戏里解锁",
+      "tip": "完全不碰的游戏：这份名单上的任何东西都不会被写入成就，成就冲刺也永远不会选中它们。拟人模式下，账户的招牌游戏同样会被跳过。（注：有些游戏，比如 Counter-Strike 2，成就由服务器保管，无论如何都解锁不了。）"
+    },
+    "AchievementGames": {
+      "label": "只限这些游戏",
+      "tip": "限制在这些 appID 内。留空则账户正在玩的任何游戏都算。"
+    },
+    "UnpackBoosterPacks": {
+      "label": "自动打开补充包",
+      "tip": "自动打开落入库存的补充包，让里面的卡计入用于合成徽章的卡组。"
+    },
+    "ClearInventoryNotifications": {
+      "label": "清除新物品提示",
+      "tip": "每次掉卡后清掉 Steam 那个绿色的「新物品」计数，免得库存永远挂着未读标记。"
+    },
+    "UIMode": {
+      "label": "登录身份",
+      "tip": "它向 Steam 声称自己是哪种客户端。「桌面」是正确答案，也是默认值——真正的客户端就是这么报的。"
+    },
+    "SteamParentalCode": {
+      "label": "家庭监护 PIN",
+      "tip": "如果这个账户开了家庭监护，就填它的 PIN。没有它，Steam 会挡住刷卡所需要读取的页面。"
+    },
+    "MachineName": {
+      "label": "设备名称",
+      "tip": "这个账户在 Steam 授权设备列表里显示的设备名。留空则使用本机的真实名称。"
+    },
+    "SharedSecret": {
+      "label": "验证器验证码密钥",
+      "tip": "这个账户手机验证器的 shared secret。有了它，nocat.farm 就能自己回答 Steam 令牌提示，不用再掏手机。"
+    },
+    "IdentitySecret": {
+      "label": "验证器确认密钥",
+      "tip": "同一个验证器的另一半，用来处理「请在手机上确认」的提示。只有这个账户要发送交易时才有意义。"
+    },
+    "AccountProxy": {
+      "label": "此账户专用代理",
+      "tip": "只把这个账户的 Steam 流量走它自己的代理，例如 http://主机:端口。留空则用全局代理。"
+    },
+    "AccountProxyUsername": {
+      "label": "代理用户名",
+      "tip": "这个账户专用代理的用户名（如果需要的话）。"
+    },
+    "AccountProxyPassword": {
+      "label": "代理密码",
+      "tip": "这个账户专用代理的密码（如果需要的话）。"
+    },
+    "AcceptGroupInvites": {
+      "label": "接受群组邀请",
+      "tip": "加入这个账户被邀请的 Steam 群组。"
+    },
+    "IgnoreSuspiciousInvites": {
+      "label": "忽略明显的垃圾邀请",
+      "tip": "悄悄忽略来自全新的 0 级私密资料的好友请求——所有诈骗机器人都长这样。"
+    },
+    "RejectInvalidFriendInvites": {
+      "label": "主动拒绝不接受的请求",
+      "tip": "主动拒掉好友请求，而不是让它一直挂在列表里。关掉的话，没被接受的就只是一直等着。"
+    },
+    "AutoReplyDelaySeconds": {
+      "label": "回复前等待",
+      "tip": "回复发出前先等多少秒。秒回就是机器人在回；真正的等待时间会在这个上限内随机。"
+    },
+    "CommandMasters": {
+      "label": "接受来自这些人的命令",
+      "tip": "允许通过 Steam 给这个账户发消息来操作 nocat.farm 的 SteamID64，用逗号分隔。命令必须以 ! 开头。"
+    },
+    "WebRefreshSeconds": {
+      "label": "刷新间隔",
+      "tip": "面板每隔多少秒自动刷新一次。数值小感觉更跟手，而且完全不费资源——都是本地的。"
+    },
+    "WebSessionDays": {
+      "label": "保持登录",
+      "tip": "浏览器在需要重新输入面板密码之前，能保持登录多少天。"
+    },
+    "ExitWhenAllFinished": {
+      "label": "全部完成后退出",
+      "tip": "所有账户都刷完并下线后，直接完全关闭 nocat.farm，而不是继续留在托盘里闲着。"
+    },
+    "Debug": {
+      "label": "调试细节",
+      "tip": "显示多得多的细节，包括每一次网络请求。排查问题时有用，平时只会刷屏。"
+    },
+    "LogRetentionDays": {
+      "label": "日志保留时长",
+      "tip": "删除超过这么多天的日志文件。0 表示永久保留。"
+    },
+    "Rep4RepPointsRefreshMinutes": {
+      "label": "查询积分的间隔",
+      "tip": "每隔多少分钟向 rep4rep 查一次你的积分总数。rep4rep 没有公开任何速率限制，所以别设成 1 然后放着跑一个月。"
+    },
+    "ReconnectDelaySeconds": {
+      "label": "重连等待",
+      "tip": "Steam 断开连接后，等多少秒再重新连接。"
+    },
+    "ConnectionTimeoutSeconds": {
+      "label": "连接超时",
+      "tip": "等 Steam 回应多少秒后放弃并重连。"
+    },
+    "MaxConcurrentFarming": {
+      "label": "最多同时刷",
+      "tip": "最多允许多少个账户同时刷卡牌。0 表示不限。"
+    },
+    "LoginCooldownMinutes": {
+      "label": "触发限流后的冷却",
+      "tip": "一旦 Steam 对某次登录限流，所有账户都等这么多分钟——大家一起熬过去，而不是排着队一个个被挡。"
+    },
+    "WebRequestGapMs": {
+      "label": "网络请求之间的间隔",
+      "tip": "对同一个 Steam 网站发两次请求之间的最小间隔（毫秒）。这是让徽章读取不被 Steam 盯上的头号因素——看到限流警告就调高，永远别低于 200。"
+    },
+    "SteamProtocol": {
+      "label": "连接方式",
+      "tip": "用什么方式连到 Steam。除非防火墙或运营商挡了什么，否则保持自动即可——只用 websocket 看起来就像普通 HTTPS 流量，通常能过。"
+    },
+    "WebProxy": {
+      "label": "代理",
+      "tip": "把 Steam 流量走这个代理，例如 http://127.0.0.1:8080。留空则直连。"
+    },
+    "WebProxyUsername": {
+      "label": "代理用户名",
+      "tip": "上面那个代理的用户名（如果需要的话）。"
+    },
+    "WebProxyPassword": {
+      "label": "代理密码",
+      "tip": "上面那个代理的密码（如果需要的话）。"
+    },
+    "GlobalBlacklistedGames": {
+      "label": "永不碰这些（所有账户）",
+      "tip": "任何账户都不会去刷或挂机的 AppID，省得每加一个账户就重写一遍同样的清单。每个账户仍可以在这之上再加自己的。"
+    },
+    "Rep4RepLearnCap": {
+      "label": "学习真实上限",
+      "tip": "如果 Steam 在超过上面设定的上限之后才拒绝了一条评论，就把那个数字记成这个账户的真实天花板。它绝不会因为一句普通的「你评论得太频繁了」就下调上限——那句话说的是两条评论之间的间隔，跟每日上限无关，后者通常是 10。"
+    },
+    "Rep4RepRetryRefused": {
+      "label": "重试被拒的评论",
+      "tip": "被拒的评论再试一次，然后才把那个目标资料搁置一天。"
+    },
+    "SendOnFarmingFinished": {
+      "label": "刷完后把物品寄出去",
+      "tip": "当再没有卡可刷时，把这个账户收集到的东西发给上面列表里的第一个账户。这正是跑多个挂机号的意义：卡最后都进一个库存，而不是散在六个里。"
+    },
+    "SendItemTypes": {
+      "label": "寄什么",
+      "tip": "允许离开这个账户的物品类型，用逗号分隔：cards、foils、backgrounds、emoticons、boosters、gems，或者填 \"all\"。没写在这里的东西永远不会被寄出，其它设置怎么改都一样。"
+    },
+    "TradeMasterToken": {
+      "label": "对方的交易链接令牌",
+      "tip": "另一个账户交易链接里的 token（&token= 后面那段）。只有两个账户不是好友时才需要——是好友的话留空即可。"
+    },
+    "ClearNotifications": {
+      "label": "清除 Steam 的通知",
+      "tip": "把 Steam 通知栏里的一切都标为已读——评论、礼物、求助请求、好友邀请——让计数回到零，而不是伴随账户一辈子往上涨。它们都不会自己下降：只会一直亮着，直到有人打开页面，而你不会手动登录的账户根本没人去开。"
+    },
+    "AchievementIncludeMainGame": {
+      "label": "主玩游戏也解锁",
+      "tip": "真人模式的主玩游戏是否像其他游戏一样解锁成就。默认开启，也应当如此：时长本就积累在主玩游戏上，所以那里出现成就最不突兀。关闭后会完全不去碰它，于是一个在招牌游戏上有几百小时的账号却在那里毫无成就——通常这才是更奇怪的一边。无论开关，稀有度门槛和完成度上限都照常生效。"
+    }
   }
- }
 }

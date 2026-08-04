@@ -187,6 +187,26 @@ public static class Fmt {
 		return $"{minutes / 60}h{minutes % 60:00}m";
 	}
 
+	/// <summary>
+	/// A clock time that can never be read as the wrong day.
+	///
+	/// A bare "17:16" is only unambiguous for today. Printed for a stamp on another date it reads as a time
+	/// still to come - the achievement pacer spent a long while reporting "next after 17:16" for a moment that
+	/// had already passed the previous afternoon, which looks exactly like a stuck module.
+	/// </summary>
+	public static string Clock(DateTime utc) {
+		DateTime local = utc.ToLocalTime();
+		int days = (local.Date - DateTime.Now.Date).Days;
+
+		return days switch {
+			0 => $"{local:HH:mm}",
+			1 => $"tomorrow {local:HH:mm}",
+			-1 => $"yesterday {local:HH:mm}",
+			> 1 and < 7 => $"{local:ddd HH:mm}",
+			_ => $"{local:d MMM HH:mm}"
+		};
+	}
+
 	public static string Ago(DateTime? utc) {
 		if (utc == null) {
 			return "-";

@@ -1,1094 +1,1098 @@
 {
- "ui": {
-  "Overview": "개요",
-  "Accounts": "계정",
-  "Console": "콘솔",
-  "Settings": "설정",
-  "Commands": "명령어",
-  "Global": "전체",
-  "Jump to": "이동",
-  "Today": "오늘",
-  "Recent activity": "최근 활동",
-  "Queued tasks": "대기 중인 작업",
-  "Show tasks for": "작업 표시 대상",
-  "Copy": "복사",
-  "Refresh": "새로 고침",
-  "Save": "저장",
-  "Sign in": "로그인",
-  "Add account": "계정 추가",
-  "Import from ASF": "ASF에서 가져오기",
-  "Your Steam profiles": "내 Steam 프로필",
-  "Pacing": "속도",
-  "Show the walkthrough again": "안내 다시 보기",
-  "Steam account name": "Steam 계정 이름",
-  "Password": "비밀번호",
-  "Search accounts…": "계정 검색…",
-  "Search settings…": "설정 검색…",
-  "Search the log…": "로그 검색…",
-  "leave blank and it'll ask": "비워 두면 물어봅니다",
-  "mybot": "내봇",
-  "type a command, or 'help'": "명령어를 입력하거나 'help'",
-  "your steam login": "Steam 로그인 이름",
-  "Farming": "파밍 중",
-  "Idling": "유휴",
-  "Online": "온라인",
-  "Connecting": "연결 중",
-  "Needs you": "확인 필요",
-  "Problem": "문제",
-  "Playing": "플레이 중",
-  "On a break": "휴식 중",
-  "Night idle": "야간 유휴",
-  "Asleep": "취침 중",
-  "Off": "꺼짐",
-  "Playing a game that still has trading cards to drop.": "아직 카드가 남은 게임을 플레이 중입니다.",
-  "Nothing left to farm, so it's building playtime on the games you chose.": "더 파밍할 게 없어서, 선택한 게임에서 플레이 시간을 쌓고 있습니다.",
-  "Logged in and doing nothing. Give it games to idle or cards to farm.": "로그인했지만 아무것도 하지 않습니다. 유휴 실행할 게임이나 파밍할 카드를 지정하세요.",
-  "On its way in.": "들어오는 중입니다.",
-  "Waiting on you: a Steam Guard code, a password, or a decision.": "당신을 기다리는 중: Steam Guard 코드, 비밀번호, 또는 결정.",
-  "Something is wrong - the login failed, or Steam is refusing this account.": "문제가 있습니다 - 로그인에 실패했거나 Steam이 이 계정을 거부하고 있습니다.",
-  "Human mode: in a game right now, one at a time, like a person.": "사람 모드: 지금 게임 중이며, 사람처럼 한 번에 하나씩 플레이합니다.",
-  "Human mode: stepped away for a few minutes.": "사람 모드: 몇 분 자리를 비웠습니다.",
-  "Offline for the night but quietly banking hours - nobody can see it.": "밤에는 오프라인이지만 조용히 시간을 쌓고 있습니다 - 아무도 볼 수 없습니다.",
-  "Done for the night. It comes back on its own in the morning.": "오늘 밤은 끝. 아침이면 스스로 돌아옵니다.",
-  "Disabled or stopped. It won't log in until you start it.": "비활성화되었거나 중지되었습니다. 시작하기 전까지 로그인하지 않습니다.",
-  "Account": "계정",
-  "State": "상태",
-  "Status": "상태",
-  "Cards": "카드",
-  "Value": "가치",
-  "Up": "가동",
-  "Game": "게임",
-  "Hours": "시간",
-  "Played": "플레이",
-  "Earned": "획득",
-  "Progress": "진행",
-  "Opened": "개방 범위",
-  "Next": "다음",
-  "Next up": "다음 차례",
-  "Comments": "댓글",
-  "Points": "포인트",
-  "Cards left": "남은 카드",
-  "Target": "대상",
-  "Steam login": "Steam 로그인",
-  "Sign-in": "로그인",
-  "Name": "이름",
-  "Language": "언어",
-  "Left out": "제외됨",
-  "Comment to post": "게시할 댓글",
-  "rep4rep ID": "rep4rep ID",
-  "rep4rep": "rep4rep",
-  "Start": "시작",
-  "Stop": "중지",
-  "Pause": "일시정지",
-  "Resume": "재개",
-  "Cancel": "취소",
-  "Close": "닫기",
-  "Remove": "제거",
-  "Remove it": "제거하기",
-  "Clear": "지우기",
-  "Undo": "실행 취소",
-  "Submit": "제출",
-  "Back": "뒤로",
-  "Skip": "건너뛰기",
-  "Continue": "계속",
-  "Finish": "완료",
-  "Import": "가져오기",
-  "Import them": "가져오기",
-  "Register": "등록",
-  "Connect": "연결",
-  "Post now": "지금 게시",
-  "Add one": "하나 추가",
-  "Add an account": "계정 추가하기",
-  "Add token": "토큰 추가",
-  "Not yet": "아직",
-  "Keep it on": "켜 둔 채로",
-  "Turn it off": "끄기",
-  "Use a longer one": "더 긴 것으로",
-  "Start them all": "전부 시작",
-  "Replace token": "토큰 교체",
-  "Unlock everything": "전부 해금",
-  "Unlock everything…": "전부 해금…",
-  "Set a password to open it up": "비밀번호를 설정해 개방",
-  "h": "시간",
-  "m": "분",
-  "now": "지금",
-  "never": "없음",
-  "just now": "방금",
-  "{0} ago": "{0} 전",
-  "in {0}": "{0} 내",
-  "as of {0}": "{0} 기준",
-  "minutes": "분",
-  "fleet": "전체",
-  "main": "메인",
-  "your": "당신의",
-  "once": "한 번",
-  "or type": "또는 입력",
-  "down to": "여기까지",
-  "due now": "지금 차례",
-  "waiting": "대기 중",
-  "posting…": "게시 중…",
-  "Importing…": "가져오는 중…",
-  "filter…": "필터…",
-  "around the clock": "하루 종일",
-  "between {0} and {1}": "{0}부터 {1}까지",
-  "default {0}": "기본값 {0}",
-  "none": "없음",
-  "none yet": "아직 없음",
-  "not set": "설정 안 됨",
-  "saved": "저장됨",
-  "nothing at all": "아무것도",
-  "nothing left to farm": "파밍할 것 없음",
-  "nothing queued": "대기열 없음",
-  "no accounts yet": "아직 계정 없음",
-  "not playing anything": "아무것도 하고 있지 않음",
-  "not read yet": "아직 안 읽음",
-  "your friends see:": "친구에게 보이는 것:",
-  "one account": "계정 1개",
-  "one game": "게임 1개",
-  "one other": "다른 하나",
-  "One task": "작업 1개",
-  "{0} account": "계정 {0}개",
-  "{0} accounts": "계정 {0}개",
-  "{0} games": "게임 {0}개",
-  "{0} others": "다른 {0}개",
-  "{0} tasks": "작업 {0}개",
-  "{0} item": "{0}개",
-  "{0} items": "{0}개",
-  "{0} pending": "{0}개 대기",
-  "still pricing {0}": "{0}개 가격 조회 중",
-  "{0} played.": "플레이 {0}.",
-  "+{0} more": "+{0}개 더",
-  "…and {0} more.": "…외 {0}개.",
-  "· frees {0}": "· {0} 후 여유",
-  "- about {0} left": "- 약 {0} 남음",
-  "appID or store URL": "appID 또는 상점 URL",
-  "paste it here": "여기에 붙여넣기",
-  "paste the new one here": "새 값을 여기에 붙여넣기",
-  "paste the token here": "토큰을 여기에 붙여넣기",
-  "stored - press Clear to replace": "저장됨 - 바꾸려면 '지우기'",
-  "type confirm": "confirm 입력",
-  "type off": "off 입력",
-  "type the account name": "계정 이름 입력",
-  "Ready": "준비됨",
-  "Commenting off": "댓글 꺼짐",
-  "Not on rep4rep": "rep4rep에 없음",
-  "Log in first": "먼저 로그인",
-  "token — no password needed": "토큰 있음 — 비밀번호 불필요",
-  "password only": "비밀번호만",
-  "will ask on first login": "첫 로그인 때 물어봄",
-  "will be erased when you save": "저장하면 지워집니다",
-  "will be replaced when you save": "저장하면 교체됩니다",
-  "turns into points on its own": "저절로 포인트가 됩니다",
-  "(Steam's limit)": "(Steam의 한도)",
-  "Standing by": "대기 중",
-  "this game's own ceiling": "이 게임 자체의 상한",
-  "the games you list under Human mode": "사람 모드에 적어 둔 게임들",
-  "Owned by this account.": "이 계정 소유입니다.",
-  "Shared with this account by a Steam Family.": "Steam 가족을 통해 이 계정에 공유되었습니다.",
-  "Games left": "남은 게임",
-  "Cards today": "오늘 카드",
-  "Comments today": "오늘 댓글",
-  "Inventory": "인벤토리",
-  "rep4rep points": "rep4rep 포인트",
-  "Points you can spend": "쓸 수 있는 포인트",
-  "Waiting to be verified": "확인 대기 중",
-  "Trading cards still to drop across every account.": "모든 계정에서 아직 드롭될 수 있는 카드.",
-  "Trading cards still to drop across every account that's farming.": "파밍 중인 모든 계정에서 아직 드롭될 수 있는 카드.",
-  "Games with at least one card still to drop, across every account.": "모든 계정에서 카드가 최소 한 장 남아 있는 게임.",
-  "Trading cards that dropped in the last 24 hours.": "지난 24시간 동안 드롭된 카드.",
-  "rep4rep comments posted in the last 24 hours.": "지난 24시간 동안 게시한 rep4rep 댓글.",
-  "What every account's inventory would fetch at the market's median price. Everything in there is counted at what it's worth, whether or not it can be sold right now.": "각 계정의 인벤토리를 시장 중앙값으로 환산한 금액. 지금 팔 수 있든 없든 모든 것이 가치대로 계산됩니다.",
-  "What everything in this account's inventory would fetch at the market's median price. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth.": "이 계정 인벤토리 전체를 시장 중앙값으로 환산한 금액. 시장에 등록이 없는 아이템은 0으로, 지금 팔 수 없을 뿐인 것(거래 보류·차단)은 가치대로 계산합니다.",
-  "Points you can spend on rep4rep. Pending ones are comments rep4rep hasn't verified yet.": "rep4rep에서 쓸 수 있는 포인트. 대기 중인 것은 rep4rep이 아직 확인하지 않은 댓글입니다.",
-  "Points you can spend. Pending points are comments rep4rep hasn't verified yet - they turn into real points on their own, usually within a few hours. Nothing is lost.": "쓸 수 있는 포인트. 대기 중인 것은 rep4rep이 아직 확인하지 않은 댓글이며, 보통 몇 시간 안에 저절로 실제 포인트가 됩니다. 없어지는 것은 없습니다.",
-  "How long nocat.farm has been running.": "nocat.farm이 실행된 시간.",
-  "<b>{0}</b> card": "카드 <b>{0}</b>장",
-  "<b>{0}</b> cards": "카드 <b>{0}</b>장",
-  "<b>{0}</b> up": "가동 <b>{0}</b>",
-  "<b>{0}</b> inventory": "인벤토리 <b>{0}</b>",
-  "<b>{0}</b>/{1} comments": "댓글 <b>{0}</b>/{1}",
-  "Waiting on you: {0}": "당신을 기다리는 중: {0}",
-  "Steam is showing {0}, not your custom name": "Steam이 사용자 지정 이름이 아니라 {0}을(를) 표시하고 있습니다",
-  "Drag this card to move the account. The order is used everywhere - here, the app window and the console.": "이 카드를 끌어 계정 순서를 바꿉니다. 이 순서는 여기, 앱 창, 콘솔 어디에나 적용됩니다.",
-  "What your friends list shows for this account. The GAME comes straight back from Steam, so it's what other people genuinely see; the status is what nocat.farm set it to. Human mode changes the status by itself: invisible overnight, away on a break, Snooze over a meal.": "친구 목록에 이 계정이 어떻게 보이는지. 게임 이름은 Steam에서 그대로 오므로 남들이 실제로 보는 것이고, 상태는 nocat.farm이 설정한 값입니다. 사람 모드는 이를 알아서 바꿉니다 - 밤에는 오프라인, 휴식 중에는 자리 비움, 식사 중에는 다른 용무 중.",
-  "Steam decides what to display when a custom name is sent alongside real games, and it has settled on the real one. Idling fewer games, or only the custom name, makes it show yours. A brief mismatch right after signing in is normal and isn't reported here.": "사용자 지정 이름을 실제 게임과 함께 보내면 무엇을 표시할지는 Steam이 정하는데, 실제 게임 쪽으로 결정했습니다. 유휴 실행하는 게임을 줄이거나 사용자 지정 이름만 보내면 당신 것이 표시됩니다. 로그인 직후 잠깐 어긋나는 것은 정상이며 여기에 표시되지 않습니다.",
-  "Comments posted in the last 24 hours against this account's daily cap.": "지난 24시간 동안의 댓글 수를 이 계정의 하루 한도와 비교한 값.",
-  "Read this account's inventory again. Prices are kept for a day, so only what changed is looked up.": "이 계정의 인벤토리를 다시 읽습니다. 가격은 하루 동안 보관되므로 바뀐 것만 조회합니다.",
-  "Log this account in.": "이 계정에 로그인합니다.",
-  "Log this account out. It stays configured.": "이 계정을 로그아웃합니다. 설정은 그대로 남습니다.",
-  "Start playing, farming and commenting again.": "플레이·파밍·댓글을 다시 시작합니다.",
-  "Stop playing, farming and commenting. The account stays logged in.": "플레이·파밍·댓글을 멈춥니다. 계정은 로그인 상태로 남습니다.",
-  "What this account still has left to farm.": "이 계정에 남은 파밍 대상.",
-  "This account's settings.": "이 계정의 설정.",
-  "Up {0} over the last 24 hours, at the market median.": "지난 24시간 동안 {0} 상승(시장 중앙값 기준).",
-  "Down {0} over the last 24 hours, at the market median.": "지난 24시간 동안 {0} 하락(시장 중앙값 기준).",
-  "Reading this inventory...": "인벤토리를 읽는 중...",
-  "Reading {0}’s inventory again…": "{0} 인벤토리를 다시 읽는 중…",
-  "Nothing with a market price in this inventory.": "이 인벤토리에는 시장 가격이 있는 것이 없습니다.",
-  "{0} at market median": "{0}(시장 중앙값 기준)",
-  "{0} - {1}  ({2})": "{0} - {1} ({2})",
-  "{0} - skipped, nothing in it can be sold ({1})": "{0} - 건너뜀, 안의 무엇도 팔 수 없습니다 ({1})",
-  "...{0} more still being priced": "…{0}개가 아직 가격 조회 중",
-  "Global settings": "전역 설정",
-  "These apply to nocat.farm as a whole.": "nocat.farm 전체에 적용됩니다.",
-  "You have unsaved changes here. Discard them?": "저장하지 않은 변경이 있습니다. 버릴까요?",
-  "Save one change": "변경 1건 저장",
-  "Save {0} changes": "변경 {0}건 저장",
-  "Saved.": "저장했습니다.",
-  "Saved. {0} applies after a restart.": "저장했습니다. {0}은(는) 재시작 후 적용됩니다.",
-  "Saved. {0} apply after a restart.": "저장했습니다. {0}은(는) 재시작 후 적용됩니다.",
-  "Save failed": "저장 실패",
-  "Could not save that": "저장할 수 없었습니다",
-  "Could not remove that account": "그 계정을 제거할 수 없었습니다",
-  "Couldn't save that order": "그 순서를 저장할 수 없었습니다",
-  "That account is gone": "그 계정은 사라졌습니다",
-  "That account is not loaded yet - try again in a second": "그 계정은 아직 로드되지 않았습니다 - 잠시 후 다시 시도하세요",
-  "That didn't work": "실패했습니다",
-  "That is not an appID": "그건 appID가 아닙니다",
-  "Nothing was waiting for that answer": "그 답을 기다리던 것이 없습니다",
-  "Wrong password.": "비밀번호가 틀렸습니다.",
-  "Can't reach nocat.farm.": "nocat.farm에 연결할 수 없습니다.",
-  "Log copied": "로그를 복사했습니다",
-  "Copy failed - select it manually": "복사에 실패했습니다 - 직접 선택하세요",
-  "All accounts": "모든 계정",
-  "No accounts yet": "아직 계정이 없습니다",
-  "No accounts yet.": "아직 계정이 없습니다.",
-  "No accounts match that.": "일치하는 계정이 없습니다.",
-  "No accounts configured yet.": "아직 설정된 계정이 없습니다.",
-  "No registered accounts yet.": "아직 등록된 계정이 없습니다.",
-  "Nothing matches.": "일치하는 항목이 없습니다.",
-  "Nothing worth reporting yet.": "아직 보고할 만한 일이 없습니다.",
-  "Nothing left to farm on this account.": "이 계정에서 파밍할 것이 없습니다.",
-  "One advanced setting is hidden.": "고급 설정 1개가 숨겨져 있습니다.",
-  "{0} advanced settings are hidden.": "고급 설정 {0}개가 숨겨져 있습니다.",
-  "Tick “Show advanced” to see them.": "'고급 표시'를 체크하면 볼 수 있습니다.",
-  "Put this back to the default.": "이 값을 기본값으로 되돌립니다.",
-  "This takes effect the next time nocat.farm starts.": "이 설정은 nocat.farm을 다시 시작할 때 적용됩니다.",
-  "Locked so it cannot be changed by accident. Press Clear to replace it.": "실수로 바뀌지 않도록 잠겨 있습니다. 바꾸려면 '지우기'를 누르세요.",
-  "Erase the stored value. There's no undo.": "저장된 값을 지웁니다. 되돌릴 수 없습니다.",
-  "Erase the stored value? There is no undo.": "저장된 값을 지울까요? 되돌릴 수 없습니다.",
-  "A day looks like": "하루는 이런 식",
-  "Right now": "지금",
-  "Careful": "주의",
-  "Hunting {0}": "{0}에서 사냥 중",
-  "Mostly {0}.": "주로 {0}.",
-  "Mostly {0}, with {1} in bursts rather than every day.": "주로 {0}, 그리고 {1}은(는) 매일이 아니라 몰아서.",
-  "No games listed yet.": "아직 등록된 게임이 없습니다.",
-  "On around {0}, bed around {1} — both jittered daily.": "대략 {0}에 접속해 {1}쯤 잠듭니다 - 둘 다 매일 조금씩 흔들립니다.",
-  "About {0} on a weekday and {1} at the weekend.": "평일은 약 {0}, 주말은 {1}.",
-  "Roughly {0} days off entirely.": "대략 {0}일은 아예 쉼.",
-  "One game at a time, in sittings of {0}.": "한 번에 한 게임, {0} 단위 세션으로.",
-  "Overnight it goes invisible and keeps banking hours.": "밤에는 오프라인으로 바뀌고 계속 시간을 쌓습니다.",
-  "This account idles everything at once, around the clock. Switch Human mode on to play one game at a time on a believable schedule — the settings that would give it away are hidden and put back if you switch it off.": "이 계정은 모든 것을 한꺼번에, 하루 종일 유휴 실행합니다. 사람 모드를 켜면 그럴듯한 일과에 따라 한 번에 한 게임씩 플레이합니다 - 정체를 드러낼 설정은 숨겨지고, 끄면 다시 나타납니다.",
-  "Human mode picks what it plays — mostly {0}, one game at a time.": "무엇을 플레이할지는 사람 모드가 정합니다 - 주로 {0}, 한 번에 하나씩.",
-  "Your friends see the real game.": "친구에게는 실제 게임이 보입니다.",
-  "Your friends see {0} instead of the real game; the hours still count.": "친구에게는 실제 게임 대신 {0}이(가) 보입니다. 시간은 그대로 쌓입니다.",
-  "Your friends see {0}. Underneath, {1} keep gaining real playtime — both at the same time.": "친구에게는 {0}이(가) 보입니다. 그 아래에서 {1}은(는) 실제 플레이 시간을 계속 쌓습니다 - 둘이 동시에.",
-  "Your friends see {0}. No games are listed, so no playtime is being banked — add some below if you want hours too.": "친구에게는 {0}이(가) 보입니다. 다만 게임이 등록되지 않아 시간은 쌓이지 않습니다 - 시간도 원한다면 아래에 추가하세요.",
-  "{0} gain playtime, all at once. Set a name below to show something else instead while the hours still count.": "{0}이(가) 동시에 시간을 쌓고 있습니다. 시간은 그대로 두고 다른 것을 표시하려면 아래에 이름을 지정하세요.",
-  "Nothing set yet. Add games to bank playtime, and optionally a name to display instead of the real one.": "아직 아무것도 설정되지 않았습니다. 시간을 쌓을 게임을 추가하고, 원한다면 실제 이름 대신 표시할 이름도 지정하세요.",
-  "{0} · {1} working · everything's fine.": "{0} · {1}개 작동 중 · 모두 정상입니다.",
-  "{0} needs something from you.": "{0}이(가) 당신의 조치를 기다립니다.",
-  "{0} need something from you.": "{0}이(가) 당신의 조치를 기다립니다.",
-  "One account has a problem.": "계정 1개에 문제가 있습니다.",
-  "{0} accounts have a problem.": "계정 {0}개에 문제가 있습니다.",
-  "{0} is out - you have {1}. Click to see what changed.": "{0}이(가) 나왔습니다 - 현재 {1}입니다. 클릭하면 변경 내용을 볼 수 있습니다.",
-  "{0}: saved": "{0}: 저장했습니다",
-  "Removed {0}": "{0}을(를) 제거했습니다",
-  "Remove {0}?": "{0}을(를) 제거할까요?",
-  "{0} — trading cards": "{0} — 트레이딩 카드",
-  "{0}: unlocking everything - watch the log": "{0}: 전부 해금 중입니다 - 로그를 보세요",
-  "{0}: will post as soon as the daily cap allows": "{0}: 하루 한도가 허용하는 대로 게시합니다",
-  "{0} registered with rep4rep": "{0}을(를) rep4rep에 등록했습니다",
-  "rep4rep connected": "rep4rep에 연결되었습니다",
-  "rep4rep commenting switched on for every account": "모든 계정에서 rep4rep 댓글을 켰습니다",
-  "Import failed": "가져오기 실패",
-  "Imported one account": "계정 1개를 가져왔습니다",
-  "Imported {0} accounts": "계정 {0}개를 가져왔습니다",
-  "Import one account": "계정 1개 가져오기",
-  "Import {0} accounts": "계정 {0}개 가져오기",
-  "Import {0}": "{0} 가져오기",
-  "Import from ArchiSteamFarm": "ArchiSteamFarm에서 가져오기",
-  "Found an ArchiSteamFarm install with one account.": "계정 1개가 있는 ArchiSteamFarm 설치를 찾았습니다.",
-  "Found an ArchiSteamFarm install with {0} accounts.": "계정 {0}개가 있는 ArchiSteamFarm 설치를 찾았습니다.",
-  "Found an ArchiSteamFarm setup at {0} with {1}.": "{0}에서 ArchiSteamFarm 설치를 찾았습니다({1}).",
-  "{0} of them can come across with their saved logins — no passwords, no Steam Guard codes.": "그중 {0}개는 저장된 로그인과 함께 옮길 수 있습니다 - 비밀번호도, Steam Guard 코드도 필요 없습니다.",
-  "You will still need to sign in to each one once.": "그래도 각각 한 번씩은 로그인해야 합니다.",
-  "Accounts you already have here are left alone. Don't run ASF and nocat.farm on the same account at once — they'd take turns kicking each other off Steam.": "여기 이미 있는 계정은 건드리지 않습니다. 같은 계정에서 ASF와 nocat.farm을 동시에 돌리지 마세요 - 서로 번갈아 Steam에서 밀어냅니다.",
-  "Importing copies the accounts and their login tokens. It changes nothing in ArchiSteamFarm.": "가져오기는 계정과 로그인 토큰을 복사할 뿐, ArchiSteamFarm 쪽은 전혀 바꾸지 않습니다.",
-  "No ASF install found automatically. Point at its {0} folder:": "ASF 설치를 자동으로 찾지 못했습니다. {0} 폴더를 지정하세요:",
-  "No ArchiSteamFarm install was found on this machine, so there is nothing to import.": "이 컴퓨터에서 ArchiSteamFarm 설치를 찾지 못해 가져올 것이 없습니다.",
-  "(login token comes across, so no password needed)": "(로그인 토큰이 함께 옮겨져 비밀번호가 필요 없습니다)",
-  "They're added but not started. Press Start on each, or run {0}.": "추가되었지만 시작되지는 않았습니다. 각각 '시작'을 누르거나 {0}을(를) 실행하세요.",
-  "STEP {0} OF {1}": "{1}단계 중 {0}단계",
-  "Welcome to nocat.farm": "nocat.farm에 오신 것을 환영합니다",
-  "Pick the language for this dashboard. You can change it later under Settings › Global.": "이 대시보드의 언어를 고르세요. 나중에 '설정 › 전역'에서 바꿀 수 있습니다.",
-  "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. The console and the log stay in English.": "번역이 아직 닿지 않은 부분은 빈칸 대신 영어로 남으므로, 절반만 번역된 언어도 문제없이 쓸 수 있습니다. 콘솔과 로그는 영어로 유지됩니다.",
-  "It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts rep4rep comments - all from this machine. Your accounts never leave it.": "Steam 계정에 로그인하고, 시간이 쌓이도록 게임을 돌리고, 카드를 파밍하고, rep4rep 댓글을 게시합니다 - 전부 이 컴퓨터에서. 계정은 결코 이곳을 벗어나지 않습니다.",
-  "This takes about a minute. You can skip it and come back from the Overview page.": "1분 정도 걸립니다. 건너뛰고 나중에 '개요' 페이지에서 다시 열 수 있습니다.",
-  "Bring your ArchiSteamFarm accounts across": "ArchiSteamFarm 계정 가져오기",
-  "Add your first account": "첫 계정 추가",
-  "Add the Steam account you want it to run. You will be asked for the password {0}, and for a Steam Guard code - after that it remembers a login token and never needs the password again.": "실행할 Steam 계정을 추가하세요. 비밀번호는 {0} 묻고, Steam Guard 코드도 함께 묻습니다 - 이후에는 로그인 토큰을 기억하므로 비밀번호가 다시 필요하지 않습니다.",
-  "Tell it what to play": "무엇을 플레이할지 알려 주기",
-  "An account does nothing until it knows what to run. Two ways:": "계정은 무엇을 돌릴지 알기 전까지 아무것도 하지 않습니다. 두 가지 방법:",
-  "{0} - it works through everything in your library that still has drops, then stops. Nothing to configure.": "{0} - 라이브러리에서 아직 드롭이 남은 것을 전부 훑고 나서 멈춥니다. 설정할 것이 없습니다.",
-  "{0} - it keeps a believable daily routine: a few games, one at a time, with breaks, meals and a bedtime. Use this on an account you care about.": "{0} - 그럴듯한 하루 일과를 유지합니다: 몇 개의 게임을 한 번에 하나씩, 휴식·식사·취침 시간과 함께. 아끼는 계정에 쓰세요.",
-  "Both live under Settings, per account.": "둘 다 '설정' 안에 계정별로 있습니다.",
-  "rep4rep, if you want it": "원한다면 rep4rep",
-  "Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own.": "선택 사항입니다. 당신의 계정이 다른 사람의 Steam 프로필에 댓글을 달아 포인트를 벌고, 그 포인트로 자기 프로필에 댓글을 받습니다.",
-  "Needs a free account - {0} - and the API token pasted into Settings. Skip it entirely if you only want cards and playtime.": "무료 계정({0})과 설정에 붙여 넣을 API 토큰이 필요합니다. 카드와 플레이 시간만 원한다면 통째로 건너뛰어도 됩니다.",
-  "That's it": "끝입니다",
-  "Everything has an explanation attached - hover the {0} beside any setting.": "모든 항목에 설명이 붙어 있습니다 - 설정 옆의 {0}에 마우스를 올려 보세요.",
-  "The Console tab does anything the other tabs do, by typing. {0} lists it all.": "'콘솔' 탭은 입력만으로 다른 탭이 하는 모든 것을 합니다. {0}을(를) 입력하면 전부 나옵니다.",
-  "Add a Steam account": "Steam 계정 추가",
-  "A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam.": "당신만을 위한 별칭입니다. 설정 파일 이름이 되고 명령에 입력하는 값이기도 합니다 - Steam의 어떤 것과도 일치할 필요가 없습니다.",
-  "What you type into Steam's sign-in box. Not your display name, not your email.": "Steam 로그인 칸에 입력하는 값입니다. 표시 이름도, 이메일도 아닙니다.",
-  "Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.": "선택 사항입니다. 비워 두면 nocat.farm이 한 번만 묻고, 이후에는 로그인 토큰으로 계정을 기억합니다 - 파일에 비밀번호를 두는 것보다 안전합니다.",
-  "Add one and nocat.farm will ask for the password and a Steam Guard code once, then remember it with a login token.": "하나 추가하면 nocat.farm이 비밀번호와 Steam Guard 코드를 한 번 묻고, 이후에는 로그인 토큰으로 기억합니다.",
-  "Type the code from the Steam app on your phone, or from your email. nocat.farm can't finish logging in until you do.": "휴대폰의 Steam 앱이나 이메일에 온 코드를 입력하세요. 입력하기 전까지 nocat.farm은 로그인을 마칠 수 없습니다.",
-  "Trading cards": "트레이딩 카드",
-  "Human mode": "사람 모드",
-  "Hours this account has spent in this game. This is what decides how much it is allowed to earn.": "이 계정이 이 게임에 쓴 시간. 얼마나 획득해도 되는지를 결정하는 값입니다.",
-  "Achievements earned out of what the game has.": "게임이 가진 도전 과제 중 획득한 수.",
-  "How much of the game is done. The bar never fills - it stops at this game's ceiling, because 100% on an idled account is the giveaway.": "그 게임을 얼마나 진행했는지. 막대는 절대 가득 차지 않고 이 게임의 상한에서 멈춥니다 - 유휴 계정의 100%야말로 결정적인 단서이기 때문입니다.",
-  "How far down the rarity list the hours so far have opened. It always unlocks the MOST COMMON one still locked - the ones you get just by playing - and only works down toward the rare tail as the hours build. This figure is the limit, never the next pick: a game with none of the easy ones done gets an easy one.": "지금까지의 시간이 희귀도 목록을 어디까지 열었는지. 항상 아직 잠긴 것 중 가장 흔한 것 - 그냥 플레이하면 얻는 것 - 을 먼저 해금하고, 시간이 쌓여야 비로소 희귀한 쪽으로 내려갑니다. 이 수치는 한계일 뿐 다음 선택이 아닙니다: 쉬운 것을 하나도 안 한 게임에는 쉬운 것이 옵니다.",
-  "Roughly when the next one is due, or why this game is left alone. It is a pace, not a promise.": "다음 것이 대략 언제 나올지, 또는 이 게임을 왜 건드리지 않는지. 이것은 속도이지 약속이 아닙니다.",
-  "This game's achievements haven't been read yet - that happens the first time it comes up for one.": "이 게임의 도전 과제는 아직 읽지 않았습니다 - 처음 차례가 올 때 읽습니다.",
-  "{0}% of this game earned. It stops at {1}.": "이 게임의 {0}%를 획득했습니다. {1}에서 멈춥니다.",
-  "Nothing tracked yet. It starts counting the first minute a game is running.": "아직 기록된 것이 없습니다. 게임이 실행된 첫 1분부터 세기 시작합니다.",
-  "Reading what it has done so far…": "지금까지 한 것을 읽는 중…",
-  "Off. This account earns no achievements at all - nothing is written to any game. Turn it on and it starts earning them at a pace that follows the hours actually put in.": "꺼짐. 이 계정은 도전 과제를 전혀 획득하지 않으며 어떤 게임에도 기록하지 않습니다. 켜면 실제 투입한 시간에 맞는 속도로 획득하기 시작합니다.",
-  "Earns achievements slowly, from real playtime.": "실제 플레이 시간을 바탕으로 천천히 도전 과제를 획득합니다.",
-  "Earns achievements slowly, from real playtime, {0}.": "실제 플레이 시간을 바탕으로 천천히 도전 과제를 획득합니다({0}).",
-  "at twice the normal spacing": "평소의 두 배 간격으로",
-  "at half the normal spacing": "평소의 절반 간격으로",
-  "Unlocking a pile of achievements the second it logs in is what gives a bot away. This drips them out the way a real player would instead - a few at a time, only the common ones, paced to the hours actually put in.": "로그인하는 순간 도전 과제를 무더기로 해금하는 것이 봇임을 드러냅니다. 여기서는 진짜 플레이어처럼 조금씩 내보냅니다 - 한 번에 몇 개, 흔한 것만, 실제 투입 시간에 맞춰서.",
-  "It never fully completes a game, and leaves the game this account plays most well alone.": "게임을 완전히 끝내는 일은 절대 없으며, 이 계정이 가장 많이 하는 게임은 아예 건드리지 않습니다.",
-  "It never fully completes a game (it stops at {0}%), and leaves the game this account plays most well alone.": "게임을 완전히 끝내는 일은 절대 없고({0}%에서 멈춤), 이 계정이 가장 많이 하는 게임은 아예 건드리지 않습니다.",
-  "No games yet — add the one this account is meant to be into first.": "아직 게임이 없습니다 - 이 계정이 원래 좋아하는 것으로 설정할 게임부터 추가하세요.",
-  "The first game added is the main one.": "가장 먼저 추가한 게임이 메인이 됩니다.",
-  "Make this the main game": "이것을 메인 게임으로",
-  "This game's share of the week. Every row here adds up to 100, including the main game - change one and the others move to make room.": "이 게임이 한 주에서 차지하는 비율. 메인 게임을 포함해 여기 모든 행의 합은 100입니다 - 하나를 바꾸면 나머지가 자리를 내주며 움직입니다.",
-  "The main game's share is set by \"Main game gets\" below, not here — it's held at that share however many other games you add. Click to jump to it.": "메인 게임의 비율은 여기가 아니라 아래의 '메인 게임 몫'에서 정합니다 - 다른 게임을 몇 개 추가하든 그 비율로 유지됩니다. 클릭하면 그리로 이동합니다.",
-  "Set up rep4rep": "rep4rep 설정",
-  "Your rep4rep account": "당신의 rep4rep 계정",
-  "How it works:": "작동 방식:",
-  "{0} your accounts post a comment on someone else's Steam profile → you earn points → you spend those points to get comments on {1} profile. nocat.farm does the posting for you, on a schedule that keeps every account under Steam's daily limit.": "{0} 당신의 계정이 다른 사람의 Steam 프로필에 댓글을 답니다 → 포인트를 법니다 → 그 포인트로 {1} 프로필에 댓글을 받습니다. nocat.farm이 대신 게시하며, 모든 계정이 Steam의 하루 한도를 넘지 않도록 일정을 잡습니다.",
-  "Make a rep4rep account": "rep4rep 계정 만들기",
-  "Free, and it takes a minute. Sign up, then click the verification link in your email — the token below won't work until you do.": "무료이고 1분이면 됩니다. 가입한 뒤 이메일의 인증 링크를 클릭하세요 - 그 전에는 아래 토큰이 작동하지 않습니다.",
-  "Sign up for rep4rep ↗": "rep4rep 가입 ↗",
-  "Copy your API token": "API 토큰 복사",
-  "It's on {0}. Copy the whole string.": "{0}에 있습니다. 문자열 전체를 복사하세요.",
-  "nocat.farm registers your Steam accounts with rep4rep by itself and starts posting. You don't have to add anything on their website.": "nocat.farm이 알아서 당신의 Steam 계정을 rep4rep에 등록하고 게시를 시작합니다. 그쪽 사이트에서 따로 추가할 것이 없습니다.",
-  "Spend these on comments for your own Steam profile, over on rep4rep.com. Read fresh from rep4rep every time you open this tab, so it matches the site.": "rep4rep.com에서 자기 Steam 프로필에 댓글을 받는 데 씁니다. 이 탭을 열 때마다 rep4rep에서 새로 읽어 오므로 사이트와 일치합니다.",
-  "Comments you've posted that rep4rep hasn't checked yet. They turn into spendable points on their own, usually within a few hours - nothing is lost and nothing is stuck.": "게시했지만 rep4rep이 아직 확인하지 않은 댓글. 보통 몇 시간 안에 저절로 쓸 수 있는 포인트가 됩니다 - 사라지거나 막히는 것은 없습니다.",
-  "Spend your points ↗": "포인트 쓰기 ↗",
-  "Token set · synced {0}": "토큰 설정됨 · 동기화 {0}",
-  "Connect your rep4rep account first.": "먼저 rep4rep 계정을 연결하세요.",
-  "Connected, but commenting isn't switched on for any account yet.": "연결되었지만 아직 어떤 계정에도 댓글이 켜져 있지 않습니다.",
-  "Turn it on for all {0}": "{0}개 전부에 켜기",
-  "Posting from {0} of {1}.": "{1} 중 {0}개가 게시 중입니다.",
-  "rep4rep's own id for this profile. It is not your SteamID - this is the one their support and their API ask for.": "이 프로필에 대한 rep4rep 자체 ID. 당신의 SteamID가 아니며, 그쪽 지원과 API가 요구하는 것이 이것입니다.",
-  "Comments posted in the last ROLLING 24 hours - not a midnight reset. Each one ages off on its own 24h after it went out, so the count frees up gradually. Shown against the cap.": "지난 24시간(롤링) 동안 게시한 댓글 - 자정 초기화가 아닙니다. 각각 발송 24시간 뒤 스스로 빠지므로 카운트가 서서히 풀립니다. 한도와 함께 표시됩니다.",
-  "Rolling 24h window: the count drops as each comment ages past 24h. This is the soonest this account can post again.": "24시간 롤링 창: 각 댓글이 24시간을 넘기면 카운트가 줄어듭니다. 이 계정이 다시 게시할 수 있는 가장 이른 시점입니다.",
-  "This is the ceiling Steam enforced on this account, not the number you set - so raising the configured cap won't lift it.": "이것은 Steam이 이 계정에 강제한 상한이며 당신이 설정한 숫자가 아닙니다 - 설정의 상한을 올려도 풀리지 않습니다.",
-  "Skip the wait and post the next comment as soon as the daily cap allows. It never goes over the cap.": "대기를 건너뛰고 하루 한도가 허용하는 대로 다음 댓글을 게시합니다. 한도를 넘지 않습니다.",
-  "Post this one right now instead of waiting for the schedule. It still counts against the daily cap.": "일정을 기다리지 않고 지금 바로 게시합니다. 하루 한도에는 그대로 포함됩니다.",
-  "This is rep4rep's cached copy of your Steam settings, not live. If you just changed something on Steam, it can take a while to show here.": "이것은 rep4rep이 캐시해 둔 당신의 Steam 설정 사본이며 실시간이 아닙니다. 방금 Steam에서 무언가를 바꿨다면 여기 반영되기까지 시간이 걸릴 수 있습니다.",
-  "{0} waiting. Every task is worth the same to rep4rep — their API doesn't rank them, so there's nothing to pick between.": "{0} 대기 중. rep4rep에게 모든 작업의 가치는 같으며, API도 순위를 매기지 않으므로 고를 것이 없습니다.",
-  "No tasks for this account right now. rep4rep hands them out in batches — check back later.": "지금 이 계정에 배정된 작업이 없습니다. rep4rep은 묶음으로 나눠 주니 나중에 다시 확인하세요.",
-  "rep4rep checks the text matches exactly, so these are posted character for character.": "rep4rep이 문구가 정확히 일치하는지 확인하므로 한 글자도 바꾸지 않고 게시합니다.",
-  "rep4rep is switched on for one account but there's no API token, so nothing is being posted.": "계정 1개에 rep4rep이 켜져 있지만 API 토큰이 없어 아무것도 게시되지 않습니다.",
-  "rep4rep is switched on for {0} accounts but there's no API token, so nothing is being posted.": "계정 {0}개에 rep4rep이 켜져 있지만 API 토큰이 없어 아무것도 게시되지 않습니다.",
-  "Up to {0} comments a day, {1} apart, {2}.": "하루 최대 {0}개, {1} 간격, {2}.",
-  "That's roughly {0} of posting spread across the day.": "하루에 걸쳐 대략 {0} 정도의 게시 시간입니다.",
-  "Unlock every achievement, in every game this account owns": "이 계정이 보유한 모든 게임의 모든 도전 과제 해금",
-  "This is for accounts that are not pretending to be anyone. Thousands of achievements appear at once, all stamped with the same moment, and that stamp is set by Steam and cannot be changed or hidden. Anyone looking at the profile can see it, permanently. If this account is meant to look played, leave this alone and let the pacer earn them instead.": "이것은 아무인 척하지 않는 계정을 위한 기능입니다. 수천 개의 도전 과제가 한꺼번에 나타나고 모두 같은 시각이 찍히며, 그 시각은 Steam이 정하므로 바꾸거나 숨길 수 없습니다. 프로필을 보는 누구나 영구적으로 볼 수 있습니다. 이 계정이 실제로 플레이된 것처럼 보여야 한다면 여기는 손대지 말고 페이서가 벌게 두세요.",
-  "Unlock everything on {0}?": "{0}에서 전부 해금할까요?",
-  "Every achievement in every game {0} owns will be unlocked, right now.": "{0}이(가) 보유한 모든 게임의 모든 도전 과제가 지금 바로 해금됩니다.",
-  "They all get the same unlock time. That is what makes it obvious.": "전부 같은 해금 시각을 받습니다. 그래서 바로 티가 납니다.",
-  "Steam sets that time itself - it cannot be back-dated or hidden.": "그 시각은 Steam이 직접 설정합니다 - 소급하거나 숨길 수 없습니다.",
-  "It runs for a long time on a big library, and it cannot be meaningfully undone.": "라이브러리가 크면 오래 걸리며, 사실상 되돌릴 수 없습니다.",
-  "Type {0} below to enable the button.": "버튼을 활성화하려면 아래에 {0}을(를) 입력하세요.",
-  "Type {0} to enable the button.": "버튼을 활성화하려면 {0}을(를) 입력하세요.",
-  "Type {0} to confirm.": "확인하려면 {0}을(를) 입력하세요.",
-  "This deletes {0} and the stored login token for it.": "{0}과(와) 해당 계정의 저장된 로그인 토큰을 삭제합니다.",
-  "Nothing happens to the Steam account itself - it is only removed from nocat.farm.": "Steam 계정 자체에는 아무 일도 일어나지 않습니다 - nocat.farm에서만 제거됩니다.",
-  "Adding it back needs the password and a fresh Steam Guard code.": "다시 추가하려면 비밀번호와 새 Steam Guard 코드가 필요합니다.",
-  "Anything it was farming stops.": "파밍하던 것은 모두 멈춥니다.",
-  "Turn off opening the dashboard?": "대시보드 열기를 끌까요?",
-  "A newly added account does {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "갓 추가한 계정은 무엇을 플레이할지 정해 주기 전까지 {0} 하지 않으며, 그 입력 화면은 앱 창에는 없고 대시보드에만 있습니다.",
-  "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "이 옵션을 끄면 계정을 추가해도 명령줄에 남을 뿐이고, 그 계정은 설정하러 갈 생각이 날 때까지 놀고 있습니다. 그걸 이미 아는 사람을 위한 것입니다.",
-  "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "이 대시보드는 네트워크에서 접근할 수 있고 비밀번호가 추측될 만큼 짧습니다. 그 뒤에 당신의 Steam 계정이 있습니다.",
-  "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "이 대시보드는 네트워크에서 수신하도록 설정되어 있지만, 비밀번호가 없어 이 PC 외의 모든 접속을 거부합니다 - 즉 여기서만 접근할 수 있습니다.",
-  "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "이 계정이 이 게임을 얼마나 플레이했는지. 이 계정 설정의 기준치를 넘기기 전까지 Steam은 아무것도 드롭하지 않습니다.",
-  "Dashboard": "대시보드",
-  "Running in the background": "백그라운드 실행",
-  "rep4rep account": "rep4rep 계정",
-  "Steam connection": "Steam 연결",
-  "Logging": "로그",
-  "What it plays": "무엇을 플레이하는지",
-  "Free games & badges": "무료 게임과 배지",
-  "Achievements": "도전 과제",
-  "rep4rep commenting": "rep4rep 댓글",
-  "Friends & messages": "친구와 메시지",
-  "Trades": "교환",
-  "Staying out of the way": "방해하지 않기",
-  "Log": "로그",
-  "Not being valued - this account has \"Work out what its inventory is worth\" turned off.": "가치를 계산하지 않습니다 - 이 계정은 '인벤토리 가치 계산'이 꺼져 있습니다."
- },
- "settings": {
-  "WebEnabled": {
-   "label": "웹 대시보드",
-   "tip": "웹 대시보드를 제공합니다. 끄면 nocat.farm은 콘솔 전용이 됩니다 - 기능은 그대로고, 입력으로 조작할 뿐입니다."
-  },
-  "WebHost": {
-   "label": "수신 주소",
-   "tip": "대시보드가 응답할 주소. 127.0.0.1은 이 PC만이고, 휴대폰이나 다른 기기에서 접속하려면 0.0.0.0으로 하되 먼저 비밀번호를 설정하세요."
-  },
-  "WebPort": {
-   "label": "포트",
-   "tip": "대시보드 포트. 7242를 다른 프로그램이 쓰고 있으면 바꾸세요."
-  },
-  "WebPassword": {
-   "label": "대시보드 비밀번호",
-   "tip": "대시보드 비밀번호. 비어 있는 동안에는 이 PC 외의 모든 접속을 거부하므로 Steam 계정을 실수로 공개할 일이 없습니다."
-  },
-  "OpenDashboardAfterAdd": {
-   "label": "계정 추가 후 대시보드 열기",
-   "tip": "새 계정을 추가하면 설정할 수 있도록 브라우저에서 대시보드를 엽니다. 갓 추가한 계정은 무엇을 플레이할지 정해 주기 전까지 아무것도 하지 않으며, 그 입력 화면은 앱 창에는 없고 대시보드에만 있습니다. 끄면 직접 기억해야 합니다."
-  },
-  "OpenBrowserOnStart": {
-   "label": "시작할 때 브라우저 열기",
-   "tip": "nocat.farm이 시작될 때 대시보드를 브라우저에서 자동으로 엽니다."
-  },
-  "Tray": {
-   "label": "트레이 아이콘",
-   "tip": "알림 영역(오른쪽 아래 시계 옆)에 아이콘을 두어 nocat.farm이 백그라운드에서 돌 수 있게 합니다. 오른쪽 클릭하면 메뉴가 열립니다."
-  },
-  "MinimizeToTray": {
-   "label": "트레이로 최소화",
-   "tip": "콘솔 창을 최소화하면 작업 표시줄에 남기지 않고 트레이로 숨깁니다."
-  },
-  "StartMinimized": {
-   "label": "숨긴 채로 시작",
-   "tip": "콘솔 창을 숨긴 채 바로 트레이로 시작합니다. 트레이 아이콘을 두 번 클릭하면 다시 나타납니다."
-  },
-  "StartWithWindows": {
-   "label": "Windows와 함께 시작",
-   "tip": "Windows에 로그인할 때 nocat.farm을 실행합니다. 본인 사용자 계정에 항목 하나만 추가하고 그 외에는 아무것도 건드리지 않습니다."
-  },
-  "KeepAwake": {
-   "label": "이 PC를 깨어 있게 유지",
-   "tip": "계정이 실행 중인 동안 Windows가 절전 모드로 가지 않게 합니다. 화면은 꺼져도 되며, 막는 것은 절전뿐입니다."
-  },
-  "TrayNotifications": {
-   "label": "팝업 표시",
-   "tip": "풍선 알림의 마스터 스위치. 실제로 어떤 알림을 받을지는 아래 세 항목이 정합니다."
-  },
-  "NotifyEarnings": {
-   "label": "수확이 있을 때 알림",
-   "tip": "카드가 드롭되거나 rep4rep 댓글이 인정될 때 알려 줍니다."
-  },
-  "NotifySocial": {
-   "label": "댓글 알림",
-   "tip": "누군가 당신의 프로필에 댓글을 달면 알려 줍니다."
-  },
-  "NotifyProblems": {
-   "label": "문제 알림",
-   "tip": "계정이 정말로 당신을 필요로 할 때 알려 줍니다 - Steam Guard 코드, 로그인 실패, 댓글 차단 등."
-  },
-  "Rep4RepEnabled": {
-   "label": "rep4rep을 아예 쓸지",
-   "tip": "rep4rep은 사용자끼리 프로필 댓글을 주고받는 외부 사이트입니다. 완전히 선택 사항입니다. 끄면 nocat.farm은 모든 계정에서 rep4rep 관련 동작을 멈추고 기능 자체가 사라집니다 - 탭, 포인트, 계정별 옵션, 이 설정들 모두 다시 켤 때까지 보이지 않습니다."
-  },
-  "Rep4RepApiToken": {
-   "label": "API 토큰",
-   "tip": "당신의 rep4rep API 토큰. Steam 계정을 몇 개 돌리든 토큰 하나가 rep4rep 계정 전체를 담당합니다 - rep4rep.com의 Settings에서 받으세요. 계정이 아직 없다면 rep4rep.com/?r=reap"
-  },
-  "Rep4RepAutoAddProfiles": {
-   "label": "계정 자동 등록",
-   "tip": "각 Steam 계정을 첫 로그인 때 rep4rep에 등록해, 사이트에서 일일이 손으로 추가할 필요가 없게 합니다."
-  },
-  "LoginStaggerSeconds": {
-   "label": "로그인 사이 간격",
-   "tip": "시작할 때 한 계정을 로그인한 뒤 다음 계정까지 기다리는 초. Steam은 IP 주소 기준으로 제한하므로, 여러 계정이 한꺼번에 걸리는 것을 막아 주는 게 바로 이 간격입니다."
-  },
-  "StatusEveryMinutes": {
-   "label": "보고 주기",
-   "tip": "게임이 켜져 있는 동안 이 계정이 상황을 알리는 주기. 0은 '로그'의 전역 설정을 따르고, -1은 아예 말하지 않습니다."
-  },
-  "StatusQuietEveryMinutes": {
-   "label": "쉬는 동안의 주기",
-   "tip": "계정이 자거나, 쉬거나, 일시정지되었거나, 로그아웃된 동안에 적용되는 같은 설정. 0은 전역 설정을 따르고 -1은 조용히 둡니다."
-  },
-  "Language": {
-   "label": "언어",
-   "tip": "대시보드 언어입니다. 아직 번역되지 않은 부분은 비어 있지 않고 영어로 나오므로, 절반만 된 언어도 문제없이 쓸 수 있습니다."
-  },
-  "MarketCurrency": {
-   "label": "인벤토리 가격 통화",
-   "tip": "인벤토리 가격의 통화입니다. Steam 상점과 같게 맞추지 않으면 합계가 마켓에서 보는 것과 어긋납니다."
-  },
-  "FileLogging": {
-   "label": "로그 파일 기록",
-   "tip": "화면 출력에 더해 모든 내용을 logs/ 에도 기록합니다. 켜 두세요 - 자는 동안 무슨 일이 있었는지 확인할 유일한 방법입니다."
-  },
-  "DailyReportEnabled": {
-   "label": "로그에 일일 요약",
-   "tip": "하루에 한 번, 각 계정이 지난 24시간 동안 벌어들인 것을 한눈에 볼 수 있게 기록합니다 - 플레이 시간, 카드, rep4rep 댓글, 누적 합계. 스크롤 없이 '밤새 뭘 벌었지?'에 답합니다. `report` 를 입력하면 언제든 볼 수 있습니다."
-  },
-  "DailyReportHour": {
-   "label": "요약 시각 · 시",
-   "tip": "일일 요약을 기록할 시각, 0–23(현지 시간). 기본값은 9입니다."
-  },
-  "DailyReportMinute": {
-   "label": "요약 시각 · 분",
-   "tip": "일일 요약의 분 단위, 0–59. 9시 + 30분 = 09:30."
-  },
-  "Enabled": {
-   "label": "사용함",
-   "tip": "이 계정에 로그인합니다. 끄면 설정은 남기고 계정은 전혀 건드리지 않습니다."
-  },
-  "SteamLogin": {
-   "label": "Steam 계정 이름",
-   "tip": "로그인할 때 입력하는 Steam 계정 이름입니다. 표시 이름도, 이메일도 아닙니다."
-  },
-  "SteamPassword": {
-   "label": "비밀번호",
-   "tip": "선택 사항. 비워 두면 nocat.farm이 한 번만 묻고, 이후에는 로그인 토큰으로 계정을 기억합니다 - 둘 중 더 안전한 방식입니다."
-  },
-  "OnlineStatus": {
-   "label": "표시 상태",
-   "tip": "다른 사람에게 보이는 상태: 온라인, 자리 비움, 다른 용무 중, 오프라인 표시. 오프라인 표시로도 시간은 계속 쌓이고 아무도 보지 못합니다."
-  },
-  "IUseThisAccount": {
-   "label": "이 계정은 내가 직접 씁니다",
-   "tip": "직접 로그인하는 계정이라면 켜세요. nocat.farm이 상태를 건드리지 않습니다 - 두 번째 세션에서 상태를 바꾸면 본인이 Steam 채팅에서 튕깁니다."
-  },
-  "StartPaused": {
-   "label": "일시정지 상태로 시작",
-   "tip": "로그인은 하지만 '재개'를 누르기 전까지 플레이·파밍·댓글을 하지 않습니다. 온라인이되 아무것도 안 하길 원하는 계정용입니다."
-  },
-  "LogColour": {
-   "label": "로그에서의 색",
-   "tip": "로그와 보드에서 이 계정 이름을 무슨 색으로 표시할지. 계정이 몇 개를 넘어가면 유용합니다."
-  },
-  "Notes": {
-   "label": "메모",
-   "tip": "이 계정이 무엇을 위한 것인지 스스로 남기는 메모. 계정 카드에만 표시되고 Steam으로는 전혀 가지 않습니다."
-  },
-  "LegitMode": {
-   "label": "사람 모드",
-   "tip": "계정이 사람처럼 플레이하게 합니다. 한 번에 한 게임, 길이가 제각각인 플레이와 휴식, 현실적인 취침·기상 시간, 그리고 아예 하지 않는 날도 있습니다. 끄면 그냥 시간만 쌓습니다."
-  },
-  "LegitStopMaxSeconds": {
-   "label": "정지할 때 마무리 최대 시간",
-   "tip": "사람 모드 전용. 수동으로 멈추면 곧바로 사라지지 않고, 최대 이 시간만큼 무작위로 몇 초 더 플레이한 뒤(하던 걸 마무리하듯) 로그아웃합니다."
-  },
-  "GameWeights": {
-   "label": "게임과 빈도",
-   "tip": "게임과 가중치입니다(예: \"730:70, 440:20\"). 가장 무거운 것이 주력 게임으로 대부분의 시간을 차지하고, 나머지는 매일이 아니라 가끔 몰아서 등장합니다."
-  },
-  "WeekdayHours": {
-   "label": "평일 시간",
-   "tip": "월요일부터 금요일까지 대략 몇 시간 플레이할지. 실제 시간은 매일 아침 이 값 언저리에서 정해지며, 짧은 날도 긴 날도 있어 똑같은 날이 없습니다."
-  },
-  "WeekendHours": {
-   "label": "주말 시간",
-   "tip": "토요일과 일요일도 마찬가지. 주말이 평일보다 길다는 점이 한 주를 진짜처럼 보이게 하는 큰 부분입니다."
-  },
-  "DayOffChancePct": {
-   "label": "쉬는 날 확률",
-   "tip": "그날 아예 플레이하지 않을 확률(100분율). 하루도 빠짐없이 하는 건 봇뿐입니다. 그걸 막는 설정입니다."
-  },
-  "DayStartHour": {
-   "label": "대략 접속하는 시각",
-   "tip": "보통 접속하는 시(0-23). 실제 시각은 그 언저리에 종 모양으로 흩어지고 주말엔 더 일찍 시작하므로, 같은 분에 두 번 접속하지 않습니다."
-  },
-  "BedHour": {
-   "label": "대략 자는 시각",
-   "tip": "그날을 마치는 시(0-23). 새벽도 괜찮습니다. 2는 새벽 2시입니다."
-  },
-  "LateNightExtraHours": {
-   "label": "금/토는 더 늦게까지",
-   "tip": "다음 날 일정이 없는 금요일과 토요일 밤에 추가로 더 깨어 있는 시간입니다."
-  },
-  "MainGameSharePct": {
-   "label": "주력 게임 비중",
-   "tip": "다른 게임도 하는 날에 목록의 첫 번째 게임이 차지하는 비율(%). 매일 이 값에서 10포인트 안팎으로 다시 정해집니다."
-  },
-  "PureMainDayChancePct": {
-   "label": "주력 게임만 하는 날 비율",
-   "tip": "하루 전체를 주력 게임만 하는 확률(100분율). 다른 게임이 매일 조금씩이 아니라 몰아서 등장하게 만드는 설정입니다."
-  },
-  "SideGameSharePct": {
-   "label": "섞이는 날 다른 게임 비중",
-   "tip": "실제로 다른 게임도 하는 날에, 나머지 게임들이 나눠 갖는 하루의 대략적인 비중. 다 쓰면 그날 남은 시간은 다시 주력 게임입니다."
-  },
-  "WarmUpMinMinutes": {
-   "label": "최소 적응 시간",
-   "tip": "로그인 후 무언가를 시작하기까지의 최소 대기(분). 계정이 접속한 바로 그 초에 게임 안에 있는 것이 가장 기계적인 행동입니다."
-  },
-  "WarmUpMaxMinutes": {
-   "label": "최대",
-   "tip": "적응 대기의 최댓값(분). 실제 값은 두 값 사이에서 무작위로 정해집니다. 무엇을 설정하든 로그인 후 3분 안에는 절대 시작하지 않습니다."
-  },
-  "SessionMinMinutes": {
-   "label": "가장 짧은 플레이",
-   "tip": "다른 걸 하기 전에 한 게임에 머무는 최소 시간. 5분마다 게임을 바꾸는 사람은 없습니다."
-  },
-  "SessionMaxMinutes": {
-   "label": "가장 긴 플레이",
-   "tip": "한 게임에 머무는 최대 시간. 대부분은 두 값 사이에 들어갑니다. 30분만 하는 것도, 저녁 내내 하는 것도 똑같이 자연스러우니 여유를 두세요."
-  },
-  "MealBreaksPerDay": {
-   "label": "하루 식사 횟수",
-   "tip": "책상을 실제로 떠나는 휴식을 하루에 몇 번 갖는지. 무작위가 아니라 실제 식사 시간대에 맞춰 배치되므로 식사처럼 읽힙니다."
-  },
-  "MealBreakMinutes": {
-   "label": "식사에 걸리는 시간",
-   "tip": "그런 휴식에 자리를 비우는 대략적인 시간(분). 이야기가 길어져 한참 넘길 때도 있습니다."
-  },
-  "SignOutOnBreakChancePct": {
-   "label": "쉬는 동안 오프라인이 될 확률",
-   "tip": "휴식을 '자리 비움'이 아니라 오프라인 표시로 보내는 확률(100분율). 친구 목록에서는 Steam을 끈 것과 구분되지 않습니다."
-  },
-  "OfflineIdleAtNight": {
-   "label": "밤에 시간 쌓기",
-   "tip": "자는 동안 오프라인으로 표시하면서도 조용히 시간을 계속 쌓습니다. 친구 목록에는 오프라인으로 보이고, 아무도 모르는 채 시간만 늘어납니다."
-  },
-  "OfflineIdleGames": {
-   "label": "밤에 돌릴 게임",
-   "tip": "밤에 오프라인이고 파밍할 카드도 없을 때 무엇을 돌릴지. 몇 개든 상관없습니다. 볼 사람이 없으니 '한 번에 하나' 원칙이 여기서는 적용되지 않습니다."
-  },
-  "IdleGames": {
-   "label": "시간을 쌓을 게임",
-   "tip": "시간을 쌓기 위해 켜 둘 게임. Steam은 동시에 32개까지 허용합니다."
-  },
-  "CustomGameNameEnabled": {
-   "label": "사용자 지정 게임 이름 표시",
-   "tip": "친구 목록에 실제 게임 대신 원하는 이름을 표시합니다. 시간은 그대로 실제 게임에 쌓입니다."
-  },
-  "CustomGameName": {
-   "label": "이렇게 표시",
-   "tip": "프로필과 친구 목록에 실제 게임 대신 이 이름을 표시합니다. 그 아래에서는 실제 게임이 계속 시간을 쌓습니다 - 두 가지가 동시에 일어납니다."
-  },
-  "FarmCards": {
-   "label": "트레이딩 카드 파밍",
-   "tip": "라이브러리에 아직 남아 있는 트레이딩 카드를 얻고, 남지 않으면 멈춥니다. 설정할 것이 없습니다."
-  },
-  "HoursUntilCardDrops": {
-   "label": "카드가 나오기까지의 시간",
-   "tip": "Steam이 그 게임의 카드를 주기까지 필요한 시간. 대부분의 계정은 3이 적당합니다. 이 계정이 Steam에서 5달러 넘게 썼다면 0으로."
-  },
-  "FarmingOrder": {
-   "label": "이 순서로 파밍",
-   "tip": "어떤 게임부터 파밍할지. '남은 카드가 적은 순'은 배지를 가장 빨리 완성하고, '많이 한 순'은 라이브러리에 새로 붙는 시간이 가장 적습니다."
-  },
-  "FarmOffline": {
-   "label": "오프라인으로 보이면서 파밍",
-   "tip": "이 계정이 파밍하는 동안 친구들에게 오프라인으로 보입니다. Steam은 여전히 시간을 세고 카드도 그대로 떨어집니다 - 달라지는 건 아무도 보지 못한다는 것뿐입니다."
-  },
-  "UnlockAchievements": {
-   "label": "시간에 따라 도전 과제 획득",
-   "tip": "실제 플레이 시간에 따라 흔한 것부터 조금씩 도전 과제를 얻습니다. 시간이 뒷받침하지 못하는 것은 절대 해제하지 않고, 게임을 100%로 끝내지도 않습니다."
-  },
-  "AchievementPace": {
-   "label": "속도",
-   "tip": "해제 사이에 얼마나 둘지. '신중히'는 모든 간격을 두 배로 늘립니다 - 누가 제대로 들여다봐도 버텨야 하는 계정이라면 이게 맞습니다."
-  },
-  "AchievementMaxCompletionPct": {
-   "label": "완료율 상한",
-   "tip": "어떤 게임이든 최대 몇 %까지 완료할지의 강한 상한. 0이면 게임마다 조정된 자체 상한을 씁니다. 보통은 그게 더 낫습니다 - 3시간짜리 퍼즐과 500시간짜리 캠페인이 같은 숫자에서 멈출 이유는 없으니까요. 방치 계정의 100%는 그 자체로 증거라서 95를 넘지 않습니다."
-  },
-  "ClaimFreeGames": {
-   "label": "무료 게임 받기",
-   "tip": "눈에 띄는 무료 게임을 받아 라이브러리가 저절로 늘어나게 합니다."
-  },
-  "CraftBadges": {
-   "label": "카드로 배지 제작",
-   "tip": "완성된 카드 세트를 배지로 만듭니다. 프로필 경험치가 오르고 가끔 아이템도 나옵니다."
-  },
-  "Rep4Rep": {
-   "label": "rep4rep 댓글 작성",
-   "tip": "rep4rep이 이 계정에 배정한 댓글을 사람다운 속도로 게시합니다."
-  },
-  "Rep4RepDailyCap": {
-   "label": "24시간당 최대",
-   "tip": "이 계정이 24시간 동안 남길 댓글의 최대 수. 친구가 아닌 사람에 대한 Steam의 실제 상한은 대략 10이며, 그걸 넘기는 것이 바로 댓글 차단을 부릅니다."
-  },
-  "Rep4RepGapMinMinutes": {
-   "label": "최소 간격",
-   "tip": "이 계정에서 두 댓글을 이 분보다 짧은 간격으로는 절대 남기지 않습니다."
-  },
-  "Rep4RepGapMaxMinutes": {
-   "label": "최대 간격",
-   "tip": "댓글 사이의 최대 간격(분). 실제 값은 두 값 사이에서 무작위로 정해져 타이밍이 기계적으로 보이지 않습니다."
-  },
-  "Rep4RepStartHour": {
-   "label": "이 시각부터만 게시",
-   "tip": "이 계정이 댓글을 다는 하루 중 가장 이른 시각, 0–23. 새벽 4시에 도착하는 댓글만큼 뻔한 봇의 흔적은 없습니다."
-  },
-  "Rep4RepEndHour": {
-   "label": "이 시각까지",
-   "tip": "이 계정이 댓글을 다는 하루 중 가장 늦은 시각, 1–24. 시작 시각과 같게 두면 하루 종일 댓글을 허용합니다."
-  },
-  "AcceptFriendRequests": {
-   "label": "친구 요청 수락",
-   "tip": "들어오는 친구 요청을 자동으로 수락합니다. rep4rep 계정이라면 켜 둘 만합니다 - 친구의 프로필에는 Steam이 훨씬 많은 댓글을 허용합니다."
-  },
-  "JoinGroup": {
-   "label": "nocat.farm 그룹 가입",
-   "tip": "로그인할 때 한 번 이 계정을 nocat.farm Steam 그룹에 가입시킵니다. 완전히 선택 사항이며, 끄면 가입하지 않습니다."
-  },
-  "AutoReplyEnabled": {
-   "label": "메시지에 답장",
-   "tip": "이 계정에 메시지를 보낸 낯선 사람에게 답합니다. 꺼도 아래에 쓴 내용은 남으므로 다시 켤 때 새로 쓸 필요가 없습니다."
-  },
-  "AutoReply": {
-   "label": "답장 내용",
-   "tip": "누군가 이 계정에 메시지를 보내면 이걸 보냅니다. 비워 두면 아무 말도 하지 않습니다. 하루 여덟 시간을 하면서 한 번도 답하지 않는 계정이, '지금은 좀'이라고 답하는 계정보다 더 눈에 띕니다."
-  },
-  "AutoReplyOncePerDay": {
-   "label": "하루에 한 번만 답장",
-   "tip": "같은 사람에게 이 답장을 하루 한 번까지만 보냅니다. 없으면 두 번 보낸 사람은 똑같은 문장을 두 번 받습니다 - 봇임을 들키는 가장 빠른 길입니다."
-  },
-  "FriendRequestDelayMinMinutes": {
-   "label": "최소 대기",
-   "tip": "친구 요청을 수락하기까지의 최소 대기(분). 요청이 온 그 초에 수락하는 것은 계정이 할 수 있는 가장 들키기 쉬운 행동입니다."
-  },
-  "FriendRequestDelayMaxMinutes": {
-   "label": "최대",
-   "tip": "수락 전 최대 대기(분). 실제 값은 두 값 사이에서 무작위로 정해집니다."
-  },
-  "ActOnlyWhileAwake": {
-   "label": "깨어 있을 때만 반응",
-   "tip": "교환·답장·친구 요청을 사람 모드가 이 계정이 일어났다고 할 때까지 보류합니다. 없으면 자고 있어야 할 계정이 새벽 4시에 답장합니다."
-  },
-  "AcceptDonations": {
-   "label": "기부 수락",
-   "tip": "대가를 요구하지 않는 제안만 수락합니다. 손해를 볼 수가 없으니 본질적으로 안전합니다."
-  },
-  "AcceptFromMasters": {
-   "label": "내 계정에서 온 것은 무엇이든 수락",
-   "tip": "아래에 적은 SteamID64가 보낸 제안은 아이템을 가져가는 것까지 포함해 무엇이든 수락합니다. 유휴 계정의 카드를 한 계정으로 쓸어 담을 수 있는 이유가 이것이며, 그래서 이 목록에는 본인 소유 계정만 넣어야 합니다."
-  },
-  "TradeMasters": {
-   "label": "내 계정",
-   "tip": "본인 계정들의 SteamID입니다. \"send\"가 아이템을 보내는 곳이자, 묻지 않고 제안을 수락하는 상대입니다."
-  },
-  "DeclineOtherTrades": {
-   "label": "나머지는 전부 거절",
-   "tip": "그 외의 모든 제안을 방치하지 않고 적극적으로 거절합니다. 끄면 수락하지 않은 것은 그대로 남아 직접 확인할 수 있습니다."
-  },
-  "TradeDelayMinMinutes": {
-   "label": "최소 대기",
-   "tip": "제안을 처리하기까지의 최소 대기(분). 도착 2초 만에 수락하는 건 사람이 하는 행동이 아닙니다."
-  },
-  "TradeDelayMaxMinutes": {
-   "label": "최대",
-   "tip": "제안을 처리하기까지의 최대 대기(분). 실제 값은 두 값 사이에서 무작위로 정해집니다."
-  },
-  "PauseWhenYouPlay": {
-   "label": "직접 플레이할 때 물러나기",
-   "tip": "직접 게임을 시작하면 계정이 즉시 물러나고, 잠시 기다린 뒤에야 하던 일로 돌아갑니다."
-  },
-  "ResumeDelayMinutes": {
-   "label": "재개 전 대기",
-   "tip": "당신이 플레이를 마친 뒤, 이 계정이 조용히 하던 일로 돌아가기까지 기다리는 시간(분)."
-  },
-  "AchievementBoost": {
-   "tip": "매번 직접 시작하지 않아도 여러 게임에서 알아서 도전 과제를 노립니다. 기본은 꺼짐. \"모든 싱글플레이\"는 라이브러리에서 직접 고릅니다 - 진짜 게임만(DLC나 체험판은 절대 아님), 도전 과제가 있고 평가 수도 충분한 것.",
-   "label": "도전 과제 부스트"
-  },
-  "SkipRefundableGames": {
-   "tip": "막 산 게임은 환불이 불가능해질 때까지 건드리지 않습니다. Steam은 2시간이 넘으면 환불을 거절하는데, 2시간은 한 번의 세션일 뿐입니다. 카드 파밍뿐 아니라 모든 곳에 적용되며, 무료 게임은 절대 보류되지 않습니다.",
-   "label": "환불 가능한 게임 보호"
-  },
-  "ShowInventoryValue": {
-   "tip": "이 계정 인벤토리의 가치를 마켓 중앙값으로 계산합니다. 자기 자신의 인벤토리를 읽으므로 비공개 프로필이어도 상관없습니다.",
-   "label": "인벤토리 가치 계산"
-  },
-  "CheckForUpdates": {
-   "tip": "하루에 한 번 새 버전이 있는지 확인하고 로그에 알립니다. 알리기만 할 뿐, 내려받거나 교체하거나 재시작하지 않습니다.",
-   "label": "업데이트가 있으면 알림"
-  },
-  "BreakMinMinutes": {
-   "label": "가장 짧은 휴식",
-   "tip": "플레이 사이의 최소 간격(분). 대부분의 휴식은 이 짧은 쪽에 몰립니다. 마실 것을 가져오거나 잠깐 다른 걸 보는 정도죠."
-  },
-  "BreakMaxMinutes": {
-   "label": "가장 긴 휴식",
-   "tip": "일반적인 휴식의 최댓값(분). 실제 길이는 고르게 퍼지지 않고 짧은 쪽으로 치우칩니다. 사람이 실제로 그렇게 쉬기 때문입니다."
-  },
-  "MaxSignOutsPerDay": {
-   "label": "최대 오프라인 횟수",
-   "tip": "하루에 그렇게 하는 횟수의 상한. 계정이 저녁 내내 친구 목록에서 깜빡이지 않게 합니다. 0이면 꺼지고 모든 휴식이 '자리 비움'만 됩니다."
-  },
-  "PlayWhileFarming": {
-   "label": "파밍 중에도 이름 유지",
-   "tip": "카드를 파밍하는 동안에도 사용자 지정 이름을 계속 표시합니다. 끄면 파밍 중에는 실제 게임이 보입니다."
-  },
-  "GameDevice": {
-   "label": "이 기기에서 하는 것처럼",
-   "tip": "친구들이 어떤 기기로 플레이한다고 볼지. 이름 옆에 붙는 Steam Deck이나 휴대폰 배지가 이걸로 정해집니다."
-  },
-  "PriorityGames": {
-   "label": "이것부터 파밍",
-   "tip": "정렬 순서와 상관없이 가장 먼저 파밍할 appID."
-  },
-  "FarmPriorityOnly": {
-   "label": "그것만 파밍",
-   "tip": "우선 목록의 게임만 파밍하고, 아직 카드가 남은 다른 게임은 모두 무시합니다."
-  },
-  "BlacklistedGames": {
-   "label": "절대 건드리지 않을 것",
-   "tip": "배지 페이지가 뭐라 하든 절대 파밍하지도, 실행하지도 않을 appID."
-  },
-  "SkipUnplayedGames": {
-   "label": "직접 해본 적 없는 게임 건너뛰기",
-   "tip": "직접 실행해 본 적 없는 게임을 건너뜁니다. 남에게 보이고 싶지 않은 게임에 nocat.farm이 최초의 플레이 시간을 남기지 않도록."
-  },
-  "RefundHoldDays": {
-   "label": "...이 일수 동안",
-   "tip": "새로 산 게임을 며칠간 건드리지 않을지. Steam의 환불 기간은 14일이고 그게 기본값입니다. 결정에 더 오래 걸린다면 늘리세요."
-  },
-  "FarmOnlyWhileAsleep": {
-   "label": "잘 때만 카드 파밍",
-   "tip": "사람 모드 전용. 계정이 밤에 잠들어(오프라인으로 전환된) 뒤에야 파밍하고, 낮에는 평소 일정대로 플레이합니다."
-  },
-  "FarmFromHour": {
-   "label": "이 시각부터만 카드 파밍",
-   "tip": "이 시각부터만 카드를 파밍합니다(24시간제). 이 값과 '까지'를 모두 0으로 두면 아무 때나 파밍합니다."
-  },
-  "FarmUntilHour": {
-   "label": "...까지",
-   "tip": "이 시각까지 카드를 파밍합니다(24시간제). '부터'보다 이른 시각으로 두면 자정을 넘어갑니다 - 예를 들어 22시부터 6시까지는 밤새 파밍합니다."
-  },
-  "PostFarmWindDownMinMinutes": {
-   "label": "마지막 카드 후 최소 이만큼 더",
-   "tip": "사람 모드 전용. 파밍이 끝나면 같은 초에 바로 닫지 않고, 이 범위(분)에서 무작위 시간만큼 그 게임을 더 켜둔 뒤 자리를 뜹니다."
-  },
-  "PostFarmWindDownMaxMinutes": {
-   "label": "...최대",
-   "tip": "파밍 후 이 여유 시간의 상한(분)."
-  },
-  "FarmingDelayMinutes": {
-   "label": "다시 확인하는 주기",
-   "tip": "파밍 중인 게임을 다시 확인하는 주기(분). 카드는 떨어지는 즉시 Steam이 알려주므로 이건 안전장치일 뿐입니다."
-  },
-  "MaxFarmingHoursPerGame": {
-   "label": "이만큼 지나면 포기",
-   "tip": "한 게임을 이 시간만큼 하고도 안 되면 포기하고 다음으로 넘어갑니다. 고장 난 게임 하나가 대기열을 영원히 막는 걸 방지합니다."
-  },
-  "StopWhenFarmingDone": {
-   "label": "끝나면 로그아웃",
-   "tip": "파밍할 카드가 없어지면 이 계정을 로그아웃시킵니다. 계속 시간만 쌓지 않습니다."
-  },
-  "AchievementBoostGames": {
-   "label": "이 게임들을 노림",
-   "tip": "부스트가 차례로 돌 게임(appID 또는 상점 URL, 쉼표로 구분). 부스트가 '직접 고른 게임'일 때만 사용됩니다."
-  },
-  "BoostSessionHours": {
-   "label": "각각 대략",
-   "tip": "부스트가 다음으로 넘어가기 전에 한 게임에 머무는 시간(시간)."
-  },
-  "MaxBoostGamesInARow": {
-   "label": "사람 모드: 연속 최대",
-   "tip": "사람 모드 전용. 평소 일정의 더 긴 구간으로 돌아가기 전에 부스트를 몇 번까지 연달아 할지 - 정상 계정에서는 일정이 우선이도록."
-  },
-  "BoostRestMinutesHuman": {
-   "label": "사람 모드: 부스트 사이의 일정 간격",
-   "tip": "사람 모드 전용. 부스트 세션 사이에 평소 일정을 몇 분 두는지 - 사냥이 정상 계정의 하루를 지배하지 않도록."
-  },
-  "BoostMinReviews": {
-   "label": "리뷰가 최소 이만큼인 게임만",
-   "tip": "'모든 싱글플레이'가 손대려면 게임에 필요한 Steam 리뷰 수. 번들 채우기용 게임을 걸러내는 조건입니다 - 리뷰 11개짜리, 한 번도 켜본 적 없는 게임에 저녁을 썼다는 걸 설명할 수 있는 사람은 없습니다. 0이면 제한 없음. 직접 고른 게임에는 적용되지 않습니다."
-  },
-  "BoostOnlyPlayedGames": {
-   "label": "해본 게임만 노림",
-   "tip": "'모든 싱글플레이'를 이 계정이 한 번이라도 실행한 게임으로 제한합니다. 기본은 꺼짐 - 도전 과제를 노리는 사람이 새 게임을 시작하는 건 지극히 정상입니다 - 하지만 계정 이력에 맞는 게임만 남기는 가장 엄격한 방법입니다."
-  },
-  "InventoryIgnoreGames": {
-   "label": "...단 이 게임들은 제외",
-   "tip": "인벤토리 가치에서 뺄 appID(쉼표로 구분). 계정이 밴당한 게임을 여기에 적습니다 - 아이템은 인벤토리에 남아 있지만 절대 팔 수 없으므로, 세면 총액만 부풀려집니다. Steam은 어떤 게임의 밴인지 알려주지 않고 인벤토리로도 확실히 알 수 없습니다. 그래서 추측이 아니라 직접 채우는 목록입니다."
-  },
-  "YieldToFamily": {
-   "label": "공유 게임은 원하면 바로 돌려줌",
-   "tip": "가족 중 누군가가 이 계정이 빌린 게임을 시작하면 즉시 돌려주고 다음으로 넘어갑니다. Steam은 공유 게임을 한 번에 한 사람에게만 빌려주고 소유자가 항상 우선입니다 - 아니면 세션 도중에 쫓겨나 더 이상 없는 게임을 '플레이 중'으로 표시하게 됩니다. 상대가 끝낸 뒤에도 20분은 순환에서 빠져, 닫는 즉시 낚아채지 않습니다."
-  },
-  "HoldNewFamilyGames": {
-   "label": "가족 라이브러리에 막 들어온 게임은 두기",
-   "tip": "공유 게임을 가족 라이브러리에 들어온 첫 2주 동안 건너뜁니다('환불 가능한 게임 보호'와 같은 일수). 산 사람이 아직 고민 중일 수 있으니까요. 판단 근거는 게임이 '언제 들어왔는지'뿐이고, 소유자가 얼마나 했는지는 알 수 없습니다 - 그 숫자는 이 계정에서 보이지 않습니다. 그래서 소유자가 이미 몇 시간을 했고 환불도 안 되는 게임을 가끔 붙잡아 둡니다."
-  },
-  "IncludeFamilyLibrary": {
-   "label": "가족 공유 게임도 포함",
-   "tip": "Steam 가족을 통해 이 계정에 공유된 게임도 노립니다. 빌린 게임에서 얻은 도전 과제도 내 게임과 똑같이 '이 계정'에 기록됩니다. 가족이 공유에서 제외한 게임은 건너뛰고, 게임이 아닌 것도 마찬가지입니다. 소유한 게임이 항상 빌린 게임보다 먼저입니다 - 소유자는 언제든 자기 것을 되찾을 수 있으니까요."
-  },
-  "AchievementGrindGapMinMinutes": {
-   "label": "집중 파밍 중에는 이 간격으로 하나",
-   "tip": "'집중 파밍'이 도전 과제를 해제하는 간격(분, 흔들림 있는 범위의 하한). 파밍은 실제로 그 게임에 붙어 있는 것이므로, 이는 진짜로 노리는 사람의 속도이지 배경에서 똑똑 떨어지는 속도가 아닙니다. 여전히 쉬운 것부터이고, 그 게임에서의 시간 제한도 그대로입니다."
-  },
-  "AchievementGrindGapMaxMinutes": {
-   "label": "...최대",
-   "tip": "집중 파밍 중 간격의 상한(분)."
-  },
-  "AchievementNeverGames": {
-   "label": "이 게임들에서는 절대",
-   "tip": "완전히 손대지 않을 게임. 이 목록의 어떤 것에도 도전 과제를 기록하지 않고, 부스트도 절대 고르지 않습니다. 사람 모드에서는 계정의 대표 게임도 함께 제외됩니다. (참고: Counter-Strike 2처럼 도전 과제를 서버에서 관리하는 게임은 어차피 무엇으로도 해제할 수 없습니다.)"
-  },
-  "AchievementGames": {
-   "label": "이 게임들만",
-   "tip": "이 appID로 제한합니다. 비워 두면 계정이 그때 하고 있는 어떤 게임이든 대상이 됩니다."
-  },
-  "UnpackBoosterPacks": {
-   "label": "부스터 팩 열기",
-   "tip": "인벤토리에 들어온 부스터 팩을 자동으로 엽니다. 안의 카드는 배지를 만드는 세트에 포함됩니다."
-  },
-  "ClearInventoryNotifications": {
-   "label": "새 아이템 배지 지우기",
-   "tip": "카드가 떨어질 때마다 Steam의 초록색 '새 아이템' 카운터를 지웁니다. 인벤토리가 계속 안 읽음으로 표시되지 않도록."
-  },
-  "UIMode": {
-   "label": "이 방식으로 로그인",
-   "tip": "Steam에 어떤 종류의 클라이언트라고 알릴지. '데스크톱'이 정답이자 기본값입니다 - 실제 클라이언트가 그렇게 알립니다."
-  },
-  "SteamParentalCode": {
-   "label": "가족 보기 PIN",
-   "tip": "이 계정에 가족 보기가 켜져 있다면 그 PIN. 없으면 Steam이 카드 파밍에 필요한 페이지를 막습니다."
-  },
-  "MachineName": {
-   "label": "기기 이름",
-   "tip": "이 계정이 Steam의 승인된 기기 목록에 표시하는 기기 이름. 비워 두면 이 PC의 실제 이름을 씁니다."
-  },
-  "SharedSecret": {
-   "label": "인증기 코드 시크릿",
-   "tip": "이 계정 모바일 인증기의 shared secret. 이게 있으면 nocat.farm이 자체적으로 Steam Guard 요청에 답해 휴대폰이 필요 없습니다."
-  },
-  "IdentitySecret": {
-   "label": "인증기 확인 시크릿",
-   "tip": "같은 인증기의 나머지 절반으로, '휴대폰에서 확인' 안내를 처리하는 쪽입니다. 이 계정이 교환을 보낼 때만 의미가 있습니다."
-  },
-  "AccountProxy": {
-   "label": "이 계정 전용 프록시",
-   "tip": "이 계정의 Steam 트래픽만 전용 프록시로 보냅니다(예: http://호스트:포트). 비워 두면 전역 설정을 씁니다."
-  },
-  "AccountProxyUsername": {
-   "label": "프록시 사용자 이름",
-   "tip": "이 계정 전용 프록시가 요구하는 경우의 사용자 이름."
-  },
-  "AccountProxyPassword": {
-   "label": "프록시 비밀번호",
-   "tip": "이 계정 전용 프록시가 요구하는 경우의 비밀번호."
-  },
-  "AcceptGroupInvites": {
-   "label": "그룹 초대 수락",
-   "tip": "이 계정이 초대받은 Steam 그룹에 가입합니다."
-  },
-  "IgnoreSuspiciousInvites": {
-   "label": "뻔한 스팸 무시",
-   "tip": "갓 만든 비공개 레벨 0 프로필의 친구 요청을 조용히 무시합니다 - 사기 봇은 하나같이 그 모양입니다."
-  },
-  "RejectInvalidFriendInvites": {
-   "label": "수락하지 않을 건 거절",
-   "tip": "친구 요청을 목록에 방치하지 않고 적극적으로 거절합니다. 끄면 수락하지 않은 요청은 그냥 남아 있습니다."
-  },
-  "AutoReplyDelaySeconds": {
-   "label": "답장 전 대기",
-   "tip": "답장이 나가기 전에 기다리는 초. 즉답은 로봇이 답하는 것입니다. 실제 대기 시간은 이 값 이내에서 무작위로 정해집니다."
-  },
-  "CommandMasters": {
-   "label": "명령을 받을 대상",
-   "tip": "Steam에서 이 계정에 메시지를 보내 nocat.farm을 조작할 수 있는 SteamID64(쉼표로 구분). 명령은 !로 시작해야 합니다."
-  },
-  "WebRefreshSeconds": {
-   "label": "새로 고침 주기",
-   "tip": "대시보드가 스스로 갱신하는 주기(초). 짧을수록 반응이 좋게 느껴지며, 전부 로컬이라 부담이 없습니다."
-  },
-  "WebSessionDays": {
-   "label": "로그인 유지 기간",
-   "tip": "브라우저가 대시보드 비밀번호를 다시 입력하기 전까지 로그인 상태를 유지하는 일수."
-  },
-  "ExitWhenAllFinished": {
-   "label": "모두 끝나면 종료",
-   "tip": "모든 계정이 파밍을 마치고 로그아웃하면 트레이에 남아 놀지 않고 nocat.farm을 완전히 종료합니다."
-  },
-  "Debug": {
-   "label": "디버그 상세",
-   "tip": "모든 웹 요청을 포함해 훨씬 더 많은 정보를 표시합니다. 문제가 있을 때는 유용하지만 평소에는 시끄럽습니다."
-  },
-  "LogRetentionDays": {
-   "label": "로그 보관 기간",
-   "tip": "이 일수보다 오래된 로그 파일을 삭제합니다. 0이면 영구 보관합니다."
-  },
-  "Rep4RepPointsRefreshMinutes": {
-   "label": "포인트 확인 주기",
-   "tip": "rep4rep에 포인트 합계를 물어보는 주기(분). rep4rep은 요청 제한을 공개하지 않으니 1로 두고 한 달을 돌리지는 마세요."
-  },
-  "ReconnectDelaySeconds": {
-   "label": "재연결 대기",
-   "tip": "Steam이 연결을 끊은 뒤 다시 연결하기까지 기다리는 초."
-  },
-  "ConnectionTimeoutSeconds": {
-   "label": "연결 제한 시간",
-   "tip": "포기하고 재연결하기 전까지 Steam의 응답을 기다리는 초."
-  },
-  "MaxConcurrentFarming": {
-   "label": "동시 파밍 최대",
-   "tip": "동시에 카드를 파밍할 수 있는 계정 수. 0이면 제한 없음."
-  },
-  "LoginCooldownMinutes": {
-   "label": "속도 제한 후 대기",
-   "tip": "Steam이 로그인에 제한을 걸면 모든 계정이 이만큼의 분을 기다립니다 - 차례로 막히려고 줄 서는 대신 다 같이 넘깁니다."
-  },
-  "WebRequestGapMs": {
-   "label": "웹 요청 사이 간격",
-   "tip": "같은 Steam 사이트에 보내는 두 요청 사이의 최소 간격(밀리초). 배지 읽기를 Steam의 레이더 아래에 두는 가장 큰 요소입니다 - 속도 제한 경고가 보이면 올리고, 절대 200 미만으로 내리지 마세요."
-  },
-  "SteamProtocol": {
-   "label": "연결 방식",
-   "tip": "Steam에 접속하는 방법. 방화벽이나 통신사가 무언가를 막는 게 아니라면 자동으로 두세요 - websocket 전용은 평범한 HTTPS 트래픽처럼 보여 대개 통과합니다."
-  },
-  "WebProxy": {
-   "label": "프록시",
-   "tip": "Steam 트래픽을 이 프록시로 보냅니다(예: http://127.0.0.1:8080). 비워 두면 직접 연결합니다."
-  },
-  "WebProxyUsername": {
-   "label": "프록시 사용자 이름",
-   "tip": "위 프록시가 요구하는 경우의 사용자 이름."
-  },
-  "WebProxyPassword": {
-   "label": "프록시 비밀번호",
-   "tip": "위 프록시가 요구하는 경우의 비밀번호."
-  },
-  "GlobalBlacklistedGames": {
-   "label": "절대 건드리지 않기 (모든 계정)",
-   "tip": "어떤 계정도 파밍하거나 유휴 실행하지 않을 AppID. 계정을 추가할 때마다 같은 목록을 반복하지 않아도 됩니다. 각 계정은 여기에 자기 목록을 더할 수 있습니다."
-  },
-  "Rep4RepLearnCap": {
-   "label": "실제 한도 학습",
-   "tip": "위에서 정한 상한을 넘어선 지점에서 Steam이 댓글을 거부하면 그 숫자를 이 계정의 실제 한도로 기억합니다. 흔한 '댓글이 너무 잦습니다' 거부로는 절대 상한을 낮추지 않습니다 - 그 메시지는 두 댓글 사이의 간격에 관한 것이며, 보통 10인 하루 한도와는 무관합니다."
-  },
-  "Rep4RepRetryRefused": {
-   "label": "거부된 댓글 재시도",
-   "tip": "거부된 댓글에 한 번 더 기회를 준 뒤, 그 프로필을 하루 동안 건너뜁니다."
-  },
-  "SendOnFarmingFinished": {
-   "label": "파밍이 끝나면 아이템 전송",
-   "tip": "더 이상 파밍할 카드가 없으면 이 계정이 모은 것을 위 목록의 첫 번째 계정으로 보냅니다. 유휴 계정을 여러 개 돌리는 이유가 바로 이것입니다 - 카드가 여섯 군데가 아니라 한 인벤토리에 모입니다."
-  },
-  "SendItemTypes": {
-   "label": "무엇을 보낼지",
-   "tip": "이 계정에서 나갈 수 있는 아이템 종류(쉼표로 구분): cards, foils, backgrounds, emoticons, boosters, gems 또는 \"all\". 여기에 없는 것은 다른 설정이 어떻든 절대 전송되지 않습니다."
-  },
-  "TradeMasterToken": {
-   "label": "상대의 교환 링크 토큰",
-   "tip": "상대 계정 교환 URL의 토큰(&token= 뒤 부분). 두 계정이 친구가 아닐 때만 필요하며, 친구 사이라면 비워 둬도 됩니다."
-  },
-  "ClearNotifications": {
-   "label": "Steam 알림 지우기",
-   "tip": "Steam 알림함에 있는 모든 것을 읽음으로 표시합니다 - 댓글, 선물, 도움 요청, 친구 요청. 카운터가 계정이 살아 있는 내내 늘어나는 대신 0으로 돌아갑니다. 어느 것도 저절로 줄지 않고, 누군가 페이지를 열 때까지 켜져 있는데, 직접 로그인하지 않는 계정에서는 아무도 열지 않습니다."
+  "ui": {
+    "Overview": "개요",
+    "Accounts": "계정",
+    "Console": "콘솔",
+    "Settings": "설정",
+    "Commands": "명령어",
+    "Global": "전체",
+    "Jump to": "이동",
+    "Today": "오늘",
+    "Recent activity": "최근 활동",
+    "Queued tasks": "대기 중인 작업",
+    "Show tasks for": "작업 표시 대상",
+    "Copy": "복사",
+    "Refresh": "새로 고침",
+    "Save": "저장",
+    "Sign in": "로그인",
+    "Add account": "계정 추가",
+    "Import from ASF": "ASF에서 가져오기",
+    "Your Steam profiles": "내 Steam 프로필",
+    "Pacing": "속도",
+    "Show the walkthrough again": "안내 다시 보기",
+    "Steam account name": "Steam 계정 이름",
+    "Password": "비밀번호",
+    "Search accounts…": "계정 검색…",
+    "Search settings…": "설정 검색…",
+    "Search the log…": "로그 검색…",
+    "leave blank and it'll ask": "비워 두면 물어봅니다",
+    "mybot": "내봇",
+    "type a command, or 'help'": "명령어를 입력하거나 'help'",
+    "your steam login": "Steam 로그인 이름",
+    "Farming": "파밍 중",
+    "Idling": "유휴",
+    "Online": "온라인",
+    "Connecting": "연결 중",
+    "Needs you": "확인 필요",
+    "Problem": "문제",
+    "Playing": "플레이 중",
+    "On a break": "휴식 중",
+    "Night idle": "야간 유휴",
+    "Asleep": "취침 중",
+    "Off": "꺼짐",
+    "Playing a game that still has trading cards to drop.": "아직 카드가 남은 게임을 플레이 중입니다.",
+    "Nothing left to farm, so it's building playtime on the games you chose.": "더 파밍할 게 없어서, 선택한 게임에서 플레이 시간을 쌓고 있습니다.",
+    "Logged in and doing nothing. Give it games to idle or cards to farm.": "로그인했지만 아무것도 하지 않습니다. 유휴 실행할 게임이나 파밍할 카드를 지정하세요.",
+    "On its way in.": "들어오는 중입니다.",
+    "Waiting on you: a Steam Guard code, a password, or a decision.": "당신을 기다리는 중: Steam Guard 코드, 비밀번호, 또는 결정.",
+    "Something is wrong - the login failed, or Steam is refusing this account.": "문제가 있습니다 - 로그인에 실패했거나 Steam이 이 계정을 거부하고 있습니다.",
+    "Human mode: in a game right now, one at a time, like a person.": "사람 모드: 지금 게임 중이며, 사람처럼 한 번에 하나씩 플레이합니다.",
+    "Human mode: stepped away for a few minutes.": "사람 모드: 몇 분 자리를 비웠습니다.",
+    "Offline for the night but quietly banking hours - nobody can see it.": "밤에는 오프라인이지만 조용히 시간을 쌓고 있습니다 - 아무도 볼 수 없습니다.",
+    "Done for the night. It comes back on its own in the morning.": "오늘 밤은 끝. 아침이면 스스로 돌아옵니다.",
+    "Disabled or stopped. It won't log in until you start it.": "비활성화되었거나 중지되었습니다. 시작하기 전까지 로그인하지 않습니다.",
+    "Account": "계정",
+    "State": "상태",
+    "Status": "상태",
+    "Cards": "카드",
+    "Value": "가치",
+    "Up": "가동",
+    "Game": "게임",
+    "Hours": "시간",
+    "Played": "플레이",
+    "Earned": "획득",
+    "Progress": "진행",
+    "Opened": "개방 범위",
+    "Next": "다음",
+    "Next up": "다음 차례",
+    "Comments": "댓글",
+    "Points": "포인트",
+    "Cards left": "남은 카드",
+    "Target": "대상",
+    "Steam login": "Steam 로그인",
+    "Sign-in": "로그인",
+    "Name": "이름",
+    "Language": "언어",
+    "Left out": "제외됨",
+    "Comment to post": "게시할 댓글",
+    "rep4rep ID": "rep4rep ID",
+    "rep4rep": "rep4rep",
+    "Start": "시작",
+    "Stop": "중지",
+    "Pause": "일시정지",
+    "Resume": "재개",
+    "Cancel": "취소",
+    "Close": "닫기",
+    "Remove": "제거",
+    "Remove it": "제거하기",
+    "Clear": "지우기",
+    "Undo": "실행 취소",
+    "Submit": "제출",
+    "Back": "뒤로",
+    "Skip": "건너뛰기",
+    "Continue": "계속",
+    "Finish": "완료",
+    "Import": "가져오기",
+    "Import them": "가져오기",
+    "Register": "등록",
+    "Connect": "연결",
+    "Post now": "지금 게시",
+    "Add one": "하나 추가",
+    "Add an account": "계정 추가하기",
+    "Add token": "토큰 추가",
+    "Not yet": "아직",
+    "Keep it on": "켜 둔 채로",
+    "Turn it off": "끄기",
+    "Use a longer one": "더 긴 것으로",
+    "Start them all": "전부 시작",
+    "Replace token": "토큰 교체",
+    "Unlock everything": "전부 해금",
+    "Unlock everything…": "전부 해금…",
+    "Set a password to open it up": "비밀번호를 설정해 개방",
+    "h": "시간",
+    "m": "분",
+    "now": "지금",
+    "never": "없음",
+    "just now": "방금",
+    "{0} ago": "{0} 전",
+    "in {0}": "{0} 내",
+    "as of {0}": "{0} 기준",
+    "minutes": "분",
+    "fleet": "전체",
+    "main": "메인",
+    "your": "당신의",
+    "once": "한 번",
+    "or type": "또는 입력",
+    "down to": "여기까지",
+    "due now": "지금 차례",
+    "waiting": "대기 중",
+    "posting…": "게시 중…",
+    "Importing…": "가져오는 중…",
+    "filter…": "필터…",
+    "around the clock": "하루 종일",
+    "between {0} and {1}": "{0}부터 {1}까지",
+    "default {0}": "기본값 {0}",
+    "none": "없음",
+    "none yet": "아직 없음",
+    "not set": "설정 안 됨",
+    "saved": "저장됨",
+    "nothing at all": "아무것도",
+    "nothing left to farm": "파밍할 것 없음",
+    "nothing queued": "대기열 없음",
+    "no accounts yet": "아직 계정 없음",
+    "not playing anything": "아무것도 하고 있지 않음",
+    "not read yet": "아직 안 읽음",
+    "your friends see:": "친구에게 보이는 것:",
+    "one account": "계정 1개",
+    "one game": "게임 1개",
+    "one other": "다른 하나",
+    "One task": "작업 1개",
+    "{0} account": "계정 {0}개",
+    "{0} accounts": "계정 {0}개",
+    "{0} games": "게임 {0}개",
+    "{0} others": "다른 {0}개",
+    "{0} tasks": "작업 {0}개",
+    "{0} item": "{0}개",
+    "{0} items": "{0}개",
+    "{0} pending": "{0}개 대기",
+    "still pricing {0}": "{0}개 가격 조회 중",
+    "{0} played.": "플레이 {0}.",
+    "+{0} more": "+{0}개 더",
+    "…and {0} more.": "…외 {0}개.",
+    "· frees {0}": "· {0} 후 여유",
+    "- about {0} left": "- 약 {0} 남음",
+    "appID or store URL": "appID 또는 상점 URL",
+    "paste it here": "여기에 붙여넣기",
+    "paste the new one here": "새 값을 여기에 붙여넣기",
+    "paste the token here": "토큰을 여기에 붙여넣기",
+    "stored - press Clear to replace": "저장됨 - 바꾸려면 '지우기'",
+    "type confirm": "confirm 입력",
+    "type off": "off 입력",
+    "type the account name": "계정 이름 입력",
+    "Ready": "준비됨",
+    "Commenting off": "댓글 꺼짐",
+    "Not on rep4rep": "rep4rep에 없음",
+    "Log in first": "먼저 로그인",
+    "token — no password needed": "토큰 있음 — 비밀번호 불필요",
+    "password only": "비밀번호만",
+    "will ask on first login": "첫 로그인 때 물어봄",
+    "will be erased when you save": "저장하면 지워집니다",
+    "will be replaced when you save": "저장하면 교체됩니다",
+    "turns into points on its own": "저절로 포인트가 됩니다",
+    "(Steam's limit)": "(Steam의 한도)",
+    "Standing by": "대기 중",
+    "this game's own ceiling": "이 게임 자체의 상한",
+    "the games you list under Human mode": "사람 모드에 적어 둔 게임들",
+    "Owned by this account.": "이 계정 소유입니다.",
+    "Shared with this account by a Steam Family.": "Steam 가족을 통해 이 계정에 공유되었습니다.",
+    "Games left": "남은 게임",
+    "Cards today": "오늘 카드",
+    "Comments today": "오늘 댓글",
+    "Inventory": "인벤토리",
+    "rep4rep points": "rep4rep 포인트",
+    "Points you can spend": "쓸 수 있는 포인트",
+    "Waiting to be verified": "확인 대기 중",
+    "Trading cards still to drop across every account.": "모든 계정에서 아직 드롭될 수 있는 카드.",
+    "Trading cards still to drop across every account that's farming.": "파밍 중인 모든 계정에서 아직 드롭될 수 있는 카드.",
+    "Games with at least one card still to drop, across every account.": "모든 계정에서 카드가 최소 한 장 남아 있는 게임.",
+    "Trading cards that dropped in the last 24 hours.": "지난 24시간 동안 드롭된 카드.",
+    "rep4rep comments posted in the last 24 hours.": "지난 24시간 동안 게시한 rep4rep 댓글.",
+    "What every account's inventory would fetch at the market's median price. Everything in there is counted at what it's worth, whether or not it can be sold right now.": "각 계정의 인벤토리를 시장 중앙값으로 환산한 금액. 지금 팔 수 있든 없든 모든 것이 가치대로 계산됩니다.",
+    "What everything in this account's inventory would fetch at the market's median price. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth.": "이 계정 인벤토리 전체를 시장 중앙값으로 환산한 금액. 시장에 등록이 없는 아이템은 0으로, 지금 팔 수 없을 뿐인 것(거래 보류·차단)은 가치대로 계산합니다.",
+    "Points you can spend on rep4rep. Pending ones are comments rep4rep hasn't verified yet.": "rep4rep에서 쓸 수 있는 포인트. 대기 중인 것은 rep4rep이 아직 확인하지 않은 댓글입니다.",
+    "Points you can spend. Pending points are comments rep4rep hasn't verified yet - they turn into real points on their own, usually within a few hours. Nothing is lost.": "쓸 수 있는 포인트. 대기 중인 것은 rep4rep이 아직 확인하지 않은 댓글이며, 보통 몇 시간 안에 저절로 실제 포인트가 됩니다. 없어지는 것은 없습니다.",
+    "How long nocat.farm has been running.": "nocat.farm이 실행된 시간.",
+    "<b>{0}</b> card": "카드 <b>{0}</b>장",
+    "<b>{0}</b> cards": "카드 <b>{0}</b>장",
+    "<b>{0}</b> up": "가동 <b>{0}</b>",
+    "<b>{0}</b> inventory": "인벤토리 <b>{0}</b>",
+    "<b>{0}</b>/{1} comments": "댓글 <b>{0}</b>/{1}",
+    "Waiting on you: {0}": "당신을 기다리는 중: {0}",
+    "Steam is showing {0}, not your custom name": "Steam이 사용자 지정 이름이 아니라 {0}을(를) 표시하고 있습니다",
+    "Drag this card to move the account. The order is used everywhere - here, the app window and the console.": "이 카드를 끌어 계정 순서를 바꿉니다. 이 순서는 여기, 앱 창, 콘솔 어디에나 적용됩니다.",
+    "What your friends list shows for this account. The GAME comes straight back from Steam, so it's what other people genuinely see; the status is what nocat.farm set it to. Human mode changes the status by itself: invisible overnight, away on a break, Snooze over a meal.": "친구 목록에 이 계정이 어떻게 보이는지. 게임 이름은 Steam에서 그대로 오므로 남들이 실제로 보는 것이고, 상태는 nocat.farm이 설정한 값입니다. 사람 모드는 이를 알아서 바꿉니다 - 밤에는 오프라인, 휴식 중에는 자리 비움, 식사 중에는 다른 용무 중.",
+    "Steam decides what to display when a custom name is sent alongside real games, and it has settled on the real one. Idling fewer games, or only the custom name, makes it show yours. A brief mismatch right after signing in is normal and isn't reported here.": "사용자 지정 이름을 실제 게임과 함께 보내면 무엇을 표시할지는 Steam이 정하는데, 실제 게임 쪽으로 결정했습니다. 유휴 실행하는 게임을 줄이거나 사용자 지정 이름만 보내면 당신 것이 표시됩니다. 로그인 직후 잠깐 어긋나는 것은 정상이며 여기에 표시되지 않습니다.",
+    "Comments posted in the last 24 hours against this account's daily cap.": "지난 24시간 동안의 댓글 수를 이 계정의 하루 한도와 비교한 값.",
+    "Read this account's inventory again. Prices are kept for a day, so only what changed is looked up.": "이 계정의 인벤토리를 다시 읽습니다. 가격은 하루 동안 보관되므로 바뀐 것만 조회합니다.",
+    "Log this account in.": "이 계정에 로그인합니다.",
+    "Log this account out. It stays configured.": "이 계정을 로그아웃합니다. 설정은 그대로 남습니다.",
+    "Start playing, farming and commenting again.": "플레이·파밍·댓글을 다시 시작합니다.",
+    "Stop playing, farming and commenting. The account stays logged in.": "플레이·파밍·댓글을 멈춥니다. 계정은 로그인 상태로 남습니다.",
+    "What this account still has left to farm.": "이 계정에 남은 파밍 대상.",
+    "This account's settings.": "이 계정의 설정.",
+    "Up {0} over the last 24 hours, at the market median.": "지난 24시간 동안 {0} 상승(시장 중앙값 기준).",
+    "Down {0} over the last 24 hours, at the market median.": "지난 24시간 동안 {0} 하락(시장 중앙값 기준).",
+    "Reading this inventory...": "인벤토리를 읽는 중...",
+    "Reading {0}’s inventory again…": "{0} 인벤토리를 다시 읽는 중…",
+    "Nothing with a market price in this inventory.": "이 인벤토리에는 시장 가격이 있는 것이 없습니다.",
+    "{0} at market median": "{0}(시장 중앙값 기준)",
+    "{0} - {1}  ({2})": "{0} - {1} ({2})",
+    "{0} - skipped, nothing in it can be sold ({1})": "{0} - 건너뜀, 안의 무엇도 팔 수 없습니다 ({1})",
+    "...{0} more still being priced": "…{0}개가 아직 가격 조회 중",
+    "Global settings": "전역 설정",
+    "These apply to nocat.farm as a whole.": "nocat.farm 전체에 적용됩니다.",
+    "You have unsaved changes here. Discard them?": "저장하지 않은 변경이 있습니다. 버릴까요?",
+    "Save one change": "변경 1건 저장",
+    "Save {0} changes": "변경 {0}건 저장",
+    "Saved.": "저장했습니다.",
+    "Saved. {0} applies after a restart.": "저장했습니다. {0}은(는) 재시작 후 적용됩니다.",
+    "Saved. {0} apply after a restart.": "저장했습니다. {0}은(는) 재시작 후 적용됩니다.",
+    "Save failed": "저장 실패",
+    "Could not save that": "저장할 수 없었습니다",
+    "Could not remove that account": "그 계정을 제거할 수 없었습니다",
+    "Couldn't save that order": "그 순서를 저장할 수 없었습니다",
+    "That account is gone": "그 계정은 사라졌습니다",
+    "That account is not loaded yet - try again in a second": "그 계정은 아직 로드되지 않았습니다 - 잠시 후 다시 시도하세요",
+    "That didn't work": "실패했습니다",
+    "That is not an appID": "그건 appID가 아닙니다",
+    "Nothing was waiting for that answer": "그 답을 기다리던 것이 없습니다",
+    "Wrong password.": "비밀번호가 틀렸습니다.",
+    "Can't reach nocat.farm.": "nocat.farm에 연결할 수 없습니다.",
+    "Log copied": "로그를 복사했습니다",
+    "Copy failed - select it manually": "복사에 실패했습니다 - 직접 선택하세요",
+    "All accounts": "모든 계정",
+    "No accounts yet": "아직 계정이 없습니다",
+    "No accounts yet.": "아직 계정이 없습니다.",
+    "No accounts match that.": "일치하는 계정이 없습니다.",
+    "No accounts configured yet.": "아직 설정된 계정이 없습니다.",
+    "No registered accounts yet.": "아직 등록된 계정이 없습니다.",
+    "Nothing matches.": "일치하는 항목이 없습니다.",
+    "Nothing worth reporting yet.": "아직 보고할 만한 일이 없습니다.",
+    "Nothing left to farm on this account.": "이 계정에서 파밍할 것이 없습니다.",
+    "One advanced setting is hidden.": "고급 설정 1개가 숨겨져 있습니다.",
+    "{0} advanced settings are hidden.": "고급 설정 {0}개가 숨겨져 있습니다.",
+    "Tick “Show advanced” to see them.": "'고급 표시'를 체크하면 볼 수 있습니다.",
+    "Put this back to the default.": "이 값을 기본값으로 되돌립니다.",
+    "This takes effect the next time nocat.farm starts.": "이 설정은 nocat.farm을 다시 시작할 때 적용됩니다.",
+    "Locked so it cannot be changed by accident. Press Clear to replace it.": "실수로 바뀌지 않도록 잠겨 있습니다. 바꾸려면 '지우기'를 누르세요.",
+    "Erase the stored value. There's no undo.": "저장된 값을 지웁니다. 되돌릴 수 없습니다.",
+    "Erase the stored value? There is no undo.": "저장된 값을 지울까요? 되돌릴 수 없습니다.",
+    "A day looks like": "하루는 이런 식",
+    "Right now": "지금",
+    "Careful": "주의",
+    "Hunting {0}": "{0}에서 사냥 중",
+    "Mostly {0}.": "주로 {0}.",
+    "Mostly {0}, with {1} in bursts rather than every day.": "주로 {0}, 그리고 {1}은(는) 매일이 아니라 몰아서.",
+    "No games listed yet.": "아직 등록된 게임이 없습니다.",
+    "On around {0}, bed around {1} — both jittered daily.": "대략 {0}에 접속해 {1}쯤 잠듭니다 - 둘 다 매일 조금씩 흔들립니다.",
+    "About {0} on a weekday and {1} at the weekend.": "평일은 약 {0}, 주말은 {1}.",
+    "Roughly {0} days off entirely.": "대략 {0}일은 아예 쉼.",
+    "One game at a time, in sittings of {0}.": "한 번에 한 게임, {0} 단위 세션으로.",
+    "Overnight it goes invisible and keeps banking hours.": "밤에는 오프라인으로 바뀌고 계속 시간을 쌓습니다.",
+    "This account idles everything at once, around the clock. Switch Human mode on to play one game at a time on a believable schedule — the settings that would give it away are hidden and put back if you switch it off.": "이 계정은 모든 것을 한꺼번에, 하루 종일 유휴 실행합니다. 사람 모드를 켜면 그럴듯한 일과에 따라 한 번에 한 게임씩 플레이합니다 - 정체를 드러낼 설정은 숨겨지고, 끄면 다시 나타납니다.",
+    "Human mode picks what it plays — mostly {0}, one game at a time.": "무엇을 플레이할지는 사람 모드가 정합니다 - 주로 {0}, 한 번에 하나씩.",
+    "Your friends see the real game.": "친구에게는 실제 게임이 보입니다.",
+    "Your friends see {0} instead of the real game; the hours still count.": "친구에게는 실제 게임 대신 {0}이(가) 보입니다. 시간은 그대로 쌓입니다.",
+    "Your friends see {0}. Underneath, {1} keep gaining real playtime — both at the same time.": "친구에게는 {0}이(가) 보입니다. 그 아래에서 {1}은(는) 실제 플레이 시간을 계속 쌓습니다 - 둘이 동시에.",
+    "Your friends see {0}. No games are listed, so no playtime is being banked — add some below if you want hours too.": "친구에게는 {0}이(가) 보입니다. 다만 게임이 등록되지 않아 시간은 쌓이지 않습니다 - 시간도 원한다면 아래에 추가하세요.",
+    "{0} gain playtime, all at once. Set a name below to show something else instead while the hours still count.": "{0}이(가) 동시에 시간을 쌓고 있습니다. 시간은 그대로 두고 다른 것을 표시하려면 아래에 이름을 지정하세요.",
+    "Nothing set yet. Add games to bank playtime, and optionally a name to display instead of the real one.": "아직 아무것도 설정되지 않았습니다. 시간을 쌓을 게임을 추가하고, 원한다면 실제 이름 대신 표시할 이름도 지정하세요.",
+    "{0} · {1} working · everything's fine.": "{0} · {1}개 작동 중 · 모두 정상입니다.",
+    "{0} needs something from you.": "{0}이(가) 당신의 조치를 기다립니다.",
+    "{0} need something from you.": "{0}이(가) 당신의 조치를 기다립니다.",
+    "One account has a problem.": "계정 1개에 문제가 있습니다.",
+    "{0} accounts have a problem.": "계정 {0}개에 문제가 있습니다.",
+    "{0} is out - you have {1}. Click to see what changed.": "{0}이(가) 나왔습니다 - 현재 {1}입니다. 클릭하면 변경 내용을 볼 수 있습니다.",
+    "{0}: saved": "{0}: 저장했습니다",
+    "Removed {0}": "{0}을(를) 제거했습니다",
+    "Remove {0}?": "{0}을(를) 제거할까요?",
+    "{0} — trading cards": "{0} — 트레이딩 카드",
+    "{0}: unlocking everything - watch the log": "{0}: 전부 해금 중입니다 - 로그를 보세요",
+    "{0}: will post as soon as the daily cap allows": "{0}: 하루 한도가 허용하는 대로 게시합니다",
+    "{0} registered with rep4rep": "{0}을(를) rep4rep에 등록했습니다",
+    "rep4rep connected": "rep4rep에 연결되었습니다",
+    "rep4rep commenting switched on for every account": "모든 계정에서 rep4rep 댓글을 켰습니다",
+    "Import failed": "가져오기 실패",
+    "Imported one account": "계정 1개를 가져왔습니다",
+    "Imported {0} accounts": "계정 {0}개를 가져왔습니다",
+    "Import one account": "계정 1개 가져오기",
+    "Import {0} accounts": "계정 {0}개 가져오기",
+    "Import {0}": "{0} 가져오기",
+    "Import from ArchiSteamFarm": "ArchiSteamFarm에서 가져오기",
+    "Found an ArchiSteamFarm install with one account.": "계정 1개가 있는 ArchiSteamFarm 설치를 찾았습니다.",
+    "Found an ArchiSteamFarm install with {0} accounts.": "계정 {0}개가 있는 ArchiSteamFarm 설치를 찾았습니다.",
+    "Found an ArchiSteamFarm setup at {0} with {1}.": "{0}에서 ArchiSteamFarm 설치를 찾았습니다({1}).",
+    "{0} of them can come across with their saved logins — no passwords, no Steam Guard codes.": "그중 {0}개는 저장된 로그인과 함께 옮길 수 있습니다 - 비밀번호도, Steam Guard 코드도 필요 없습니다.",
+    "You will still need to sign in to each one once.": "그래도 각각 한 번씩은 로그인해야 합니다.",
+    "Accounts you already have here are left alone. Don't run ASF and nocat.farm on the same account at once — they'd take turns kicking each other off Steam.": "여기 이미 있는 계정은 건드리지 않습니다. 같은 계정에서 ASF와 nocat.farm을 동시에 돌리지 마세요 - 서로 번갈아 Steam에서 밀어냅니다.",
+    "Importing copies the accounts and their login tokens. It changes nothing in ArchiSteamFarm.": "가져오기는 계정과 로그인 토큰을 복사할 뿐, ArchiSteamFarm 쪽은 전혀 바꾸지 않습니다.",
+    "No ASF install found automatically. Point at its {0} folder:": "ASF 설치를 자동으로 찾지 못했습니다. {0} 폴더를 지정하세요:",
+    "No ArchiSteamFarm install was found on this machine, so there is nothing to import.": "이 컴퓨터에서 ArchiSteamFarm 설치를 찾지 못해 가져올 것이 없습니다.",
+    "(login token comes across, so no password needed)": "(로그인 토큰이 함께 옮겨져 비밀번호가 필요 없습니다)",
+    "They're added but not started. Press Start on each, or run {0}.": "추가되었지만 시작되지는 않았습니다. 각각 '시작'을 누르거나 {0}을(를) 실행하세요.",
+    "STEP {0} OF {1}": "{1}단계 중 {0}단계",
+    "Welcome to nocat.farm": "nocat.farm에 오신 것을 환영합니다",
+    "Pick the language for this dashboard. You can change it later under Settings › Global.": "이 대시보드의 언어를 고르세요. 나중에 '설정 › 전역'에서 바꿀 수 있습니다.",
+    "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. The console and the log stay in English.": "번역이 아직 닿지 않은 부분은 빈칸 대신 영어로 남으므로, 절반만 번역된 언어도 문제없이 쓸 수 있습니다. 콘솔과 로그는 영어로 유지됩니다.",
+    "It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts rep4rep comments - all from this machine. Your accounts never leave it.": "Steam 계정에 로그인하고, 시간이 쌓이도록 게임을 돌리고, 카드를 파밍하고, rep4rep 댓글을 게시합니다 - 전부 이 컴퓨터에서. 계정은 결코 이곳을 벗어나지 않습니다.",
+    "This takes about a minute. You can skip it and come back from the Overview page.": "1분 정도 걸립니다. 건너뛰고 나중에 '개요' 페이지에서 다시 열 수 있습니다.",
+    "Bring your ArchiSteamFarm accounts across": "ArchiSteamFarm 계정 가져오기",
+    "Add your first account": "첫 계정 추가",
+    "Add the Steam account you want it to run. You will be asked for the password {0}, and for a Steam Guard code - after that it remembers a login token and never needs the password again.": "실행할 Steam 계정을 추가하세요. 비밀번호는 {0} 묻고, Steam Guard 코드도 함께 묻습니다 - 이후에는 로그인 토큰을 기억하므로 비밀번호가 다시 필요하지 않습니다.",
+    "Tell it what to play": "무엇을 플레이할지 알려 주기",
+    "An account does nothing until it knows what to run. Two ways:": "계정은 무엇을 돌릴지 알기 전까지 아무것도 하지 않습니다. 두 가지 방법:",
+    "{0} - it works through everything in your library that still has drops, then stops. Nothing to configure.": "{0} - 라이브러리에서 아직 드롭이 남은 것을 전부 훑고 나서 멈춥니다. 설정할 것이 없습니다.",
+    "{0} - it keeps a believable daily routine: a few games, one at a time, with breaks, meals and a bedtime. Use this on an account you care about.": "{0} - 그럴듯한 하루 일과를 유지합니다: 몇 개의 게임을 한 번에 하나씩, 휴식·식사·취침 시간과 함께. 아끼는 계정에 쓰세요.",
+    "Both live under Settings, per account.": "둘 다 '설정' 안에 계정별로 있습니다.",
+    "rep4rep, if you want it": "원한다면 rep4rep",
+    "Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own.": "선택 사항입니다. 당신의 계정이 다른 사람의 Steam 프로필에 댓글을 달아 포인트를 벌고, 그 포인트로 자기 프로필에 댓글을 받습니다.",
+    "Needs a free account - {0} - and the API token pasted into Settings. Skip it entirely if you only want cards and playtime.": "무료 계정({0})과 설정에 붙여 넣을 API 토큰이 필요합니다. 카드와 플레이 시간만 원한다면 통째로 건너뛰어도 됩니다.",
+    "That's it": "끝입니다",
+    "Everything has an explanation attached - hover the {0} beside any setting.": "모든 항목에 설명이 붙어 있습니다 - 설정 옆의 {0}에 마우스를 올려 보세요.",
+    "The Console tab does anything the other tabs do, by typing. {0} lists it all.": "'콘솔' 탭은 입력만으로 다른 탭이 하는 모든 것을 합니다. {0}을(를) 입력하면 전부 나옵니다.",
+    "Add a Steam account": "Steam 계정 추가",
+    "A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam.": "당신만을 위한 별칭입니다. 설정 파일 이름이 되고 명령에 입력하는 값이기도 합니다 - Steam의 어떤 것과도 일치할 필요가 없습니다.",
+    "What you type into Steam's sign-in box. Not your display name, not your email.": "Steam 로그인 칸에 입력하는 값입니다. 표시 이름도, 이메일도 아닙니다.",
+    "Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.": "선택 사항입니다. 비워 두면 nocat.farm이 한 번만 묻고, 이후에는 로그인 토큰으로 계정을 기억합니다 - 파일에 비밀번호를 두는 것보다 안전합니다.",
+    "Add one and nocat.farm will ask for the password and a Steam Guard code once, then remember it with a login token.": "하나 추가하면 nocat.farm이 비밀번호와 Steam Guard 코드를 한 번 묻고, 이후에는 로그인 토큰으로 기억합니다.",
+    "Type the code from the Steam app on your phone, or from your email. nocat.farm can't finish logging in until you do.": "휴대폰의 Steam 앱이나 이메일에 온 코드를 입력하세요. 입력하기 전까지 nocat.farm은 로그인을 마칠 수 없습니다.",
+    "Trading cards": "트레이딩 카드",
+    "Human mode": "사람 모드",
+    "Hours this account has spent in this game. This is what decides how much it is allowed to earn.": "이 계정이 이 게임에 쓴 시간. 얼마나 획득해도 되는지를 결정하는 값입니다.",
+    "Achievements earned out of what the game has.": "게임이 가진 도전 과제 중 획득한 수.",
+    "How much of the game is done. The bar never fills - it stops at this game's ceiling, because 100% on an idled account is the giveaway.": "그 게임을 얼마나 진행했는지. 막대는 절대 가득 차지 않고 이 게임의 상한에서 멈춥니다 - 유휴 계정의 100%야말로 결정적인 단서이기 때문입니다.",
+    "How far down the rarity list the hours so far have opened. It always unlocks the MOST COMMON one still locked - the ones you get just by playing - and only works down toward the rare tail as the hours build. This figure is the limit, never the next pick: a game with none of the easy ones done gets an easy one.": "지금까지의 시간이 희귀도 목록을 어디까지 열었는지. 항상 아직 잠긴 것 중 가장 흔한 것 - 그냥 플레이하면 얻는 것 - 을 먼저 해금하고, 시간이 쌓여야 비로소 희귀한 쪽으로 내려갑니다. 이 수치는 한계일 뿐 다음 선택이 아닙니다: 쉬운 것을 하나도 안 한 게임에는 쉬운 것이 옵니다.",
+    "Roughly when the next one is due, or why this game is left alone. It is a pace, not a promise.": "다음 것이 대략 언제 나올지, 또는 이 게임을 왜 건드리지 않는지. 이것은 속도이지 약속이 아닙니다.",
+    "This game's achievements haven't been read yet - that happens the first time it comes up for one.": "이 게임의 도전 과제는 아직 읽지 않았습니다 - 처음 차례가 올 때 읽습니다.",
+    "{0}% of this game earned. It stops at {1}.": "이 게임의 {0}%를 획득했습니다. {1}에서 멈춥니다.",
+    "Nothing tracked yet. It starts counting the first minute a game is running.": "아직 기록된 것이 없습니다. 게임이 실행된 첫 1분부터 세기 시작합니다.",
+    "Reading what it has done so far…": "지금까지 한 것을 읽는 중…",
+    "Off. This account earns no achievements at all - nothing is written to any game. Turn it on and it starts earning them at a pace that follows the hours actually put in.": "꺼짐. 이 계정은 도전 과제를 전혀 획득하지 않으며 어떤 게임에도 기록하지 않습니다. 켜면 실제 투입한 시간에 맞는 속도로 획득하기 시작합니다.",
+    "Earns achievements slowly, from real playtime.": "실제 플레이 시간을 바탕으로 천천히 도전 과제를 획득합니다.",
+    "Earns achievements slowly, from real playtime, {0}.": "실제 플레이 시간을 바탕으로 천천히 도전 과제를 획득합니다({0}).",
+    "at twice the normal spacing": "평소의 두 배 간격으로",
+    "at half the normal spacing": "평소의 절반 간격으로",
+    "Unlocking a pile of achievements the second it logs in is what gives a bot away. This drips them out the way a real player would instead - a few at a time, only the common ones, paced to the hours actually put in.": "로그인하는 순간 도전 과제를 무더기로 해금하는 것이 봇임을 드러냅니다. 여기서는 진짜 플레이어처럼 조금씩 내보냅니다 - 한 번에 몇 개, 흔한 것만, 실제 투입 시간에 맞춰서.",
+    "It never fully completes a game, and leaves the game this account plays most well alone.": "게임을 완전히 끝내는 일은 절대 없으며, 이 계정이 가장 많이 하는 게임은 아예 건드리지 않습니다.",
+    "It never fully completes a game (it stops at {0}%), and leaves the game this account plays most well alone.": "게임을 완전히 끝내는 일은 절대 없고({0}%에서 멈춤), 이 계정이 가장 많이 하는 게임은 아예 건드리지 않습니다.",
+    "No games yet — add the one this account is meant to be into first.": "아직 게임이 없습니다 - 이 계정이 원래 좋아하는 것으로 설정할 게임부터 추가하세요.",
+    "The first game added is the main one.": "가장 먼저 추가한 게임이 메인이 됩니다.",
+    "Make this the main game": "이것을 메인 게임으로",
+    "This game's share of the week. Every row here adds up to 100, including the main game - change one and the others move to make room.": "이 게임이 한 주에서 차지하는 비율. 메인 게임을 포함해 여기 모든 행의 합은 100입니다 - 하나를 바꾸면 나머지가 자리를 내주며 움직입니다.",
+    "The main game's share is set by \"Main game gets\" below, not here — it's held at that share however many other games you add. Click to jump to it.": "메인 게임의 비율은 여기가 아니라 아래의 '메인 게임 몫'에서 정합니다 - 다른 게임을 몇 개 추가하든 그 비율로 유지됩니다. 클릭하면 그리로 이동합니다.",
+    "Set up rep4rep": "rep4rep 설정",
+    "Your rep4rep account": "당신의 rep4rep 계정",
+    "How it works:": "작동 방식:",
+    "{0} your accounts post a comment on someone else's Steam profile → you earn points → you spend those points to get comments on {1} profile. nocat.farm does the posting for you, on a schedule that keeps every account under Steam's daily limit.": "{0} 당신의 계정이 다른 사람의 Steam 프로필에 댓글을 답니다 → 포인트를 법니다 → 그 포인트로 {1} 프로필에 댓글을 받습니다. nocat.farm이 대신 게시하며, 모든 계정이 Steam의 하루 한도를 넘지 않도록 일정을 잡습니다.",
+    "Make a rep4rep account": "rep4rep 계정 만들기",
+    "Free, and it takes a minute. Sign up, then click the verification link in your email — the token below won't work until you do.": "무료이고 1분이면 됩니다. 가입한 뒤 이메일의 인증 링크를 클릭하세요 - 그 전에는 아래 토큰이 작동하지 않습니다.",
+    "Sign up for rep4rep ↗": "rep4rep 가입 ↗",
+    "Copy your API token": "API 토큰 복사",
+    "It's on {0}. Copy the whole string.": "{0}에 있습니다. 문자열 전체를 복사하세요.",
+    "nocat.farm registers your Steam accounts with rep4rep by itself and starts posting. You don't have to add anything on their website.": "nocat.farm이 알아서 당신의 Steam 계정을 rep4rep에 등록하고 게시를 시작합니다. 그쪽 사이트에서 따로 추가할 것이 없습니다.",
+    "Spend these on comments for your own Steam profile, over on rep4rep.com. Read fresh from rep4rep every time you open this tab, so it matches the site.": "rep4rep.com에서 자기 Steam 프로필에 댓글을 받는 데 씁니다. 이 탭을 열 때마다 rep4rep에서 새로 읽어 오므로 사이트와 일치합니다.",
+    "Comments you've posted that rep4rep hasn't checked yet. They turn into spendable points on their own, usually within a few hours - nothing is lost and nothing is stuck.": "게시했지만 rep4rep이 아직 확인하지 않은 댓글. 보통 몇 시간 안에 저절로 쓸 수 있는 포인트가 됩니다 - 사라지거나 막히는 것은 없습니다.",
+    "Spend your points ↗": "포인트 쓰기 ↗",
+    "Token set · synced {0}": "토큰 설정됨 · 동기화 {0}",
+    "Connect your rep4rep account first.": "먼저 rep4rep 계정을 연결하세요.",
+    "Connected, but commenting isn't switched on for any account yet.": "연결되었지만 아직 어떤 계정에도 댓글이 켜져 있지 않습니다.",
+    "Turn it on for all {0}": "{0}개 전부에 켜기",
+    "Posting from {0} of {1}.": "{1} 중 {0}개가 게시 중입니다.",
+    "rep4rep's own id for this profile. It is not your SteamID - this is the one their support and their API ask for.": "이 프로필에 대한 rep4rep 자체 ID. 당신의 SteamID가 아니며, 그쪽 지원과 API가 요구하는 것이 이것입니다.",
+    "Comments posted in the last ROLLING 24 hours - not a midnight reset. Each one ages off on its own 24h after it went out, so the count frees up gradually. Shown against the cap.": "지난 24시간(롤링) 동안 게시한 댓글 - 자정 초기화가 아닙니다. 각각 발송 24시간 뒤 스스로 빠지므로 카운트가 서서히 풀립니다. 한도와 함께 표시됩니다.",
+    "Rolling 24h window: the count drops as each comment ages past 24h. This is the soonest this account can post again.": "24시간 롤링 창: 각 댓글이 24시간을 넘기면 카운트가 줄어듭니다. 이 계정이 다시 게시할 수 있는 가장 이른 시점입니다.",
+    "This is the ceiling Steam enforced on this account, not the number you set - so raising the configured cap won't lift it.": "이것은 Steam이 이 계정에 강제한 상한이며 당신이 설정한 숫자가 아닙니다 - 설정의 상한을 올려도 풀리지 않습니다.",
+    "Skip the wait and post the next comment as soon as the daily cap allows. It never goes over the cap.": "대기를 건너뛰고 하루 한도가 허용하는 대로 다음 댓글을 게시합니다. 한도를 넘지 않습니다.",
+    "Post this one right now instead of waiting for the schedule. It still counts against the daily cap.": "일정을 기다리지 않고 지금 바로 게시합니다. 하루 한도에는 그대로 포함됩니다.",
+    "This is rep4rep's cached copy of your Steam settings, not live. If you just changed something on Steam, it can take a while to show here.": "이것은 rep4rep이 캐시해 둔 당신의 Steam 설정 사본이며 실시간이 아닙니다. 방금 Steam에서 무언가를 바꿨다면 여기 반영되기까지 시간이 걸릴 수 있습니다.",
+    "{0} waiting. Every task is worth the same to rep4rep — their API doesn't rank them, so there's nothing to pick between.": "{0} 대기 중. rep4rep에게 모든 작업의 가치는 같으며, API도 순위를 매기지 않으므로 고를 것이 없습니다.",
+    "No tasks for this account right now. rep4rep hands them out in batches — check back later.": "지금 이 계정에 배정된 작업이 없습니다. rep4rep은 묶음으로 나눠 주니 나중에 다시 확인하세요.",
+    "rep4rep checks the text matches exactly, so these are posted character for character.": "rep4rep이 문구가 정확히 일치하는지 확인하므로 한 글자도 바꾸지 않고 게시합니다.",
+    "rep4rep is switched on for one account but there's no API token, so nothing is being posted.": "계정 1개에 rep4rep이 켜져 있지만 API 토큰이 없어 아무것도 게시되지 않습니다.",
+    "rep4rep is switched on for {0} accounts but there's no API token, so nothing is being posted.": "계정 {0}개에 rep4rep이 켜져 있지만 API 토큰이 없어 아무것도 게시되지 않습니다.",
+    "Up to {0} comments a day, {1} apart, {2}.": "하루 최대 {0}개, {1} 간격, {2}.",
+    "That's roughly {0} of posting spread across the day.": "하루에 걸쳐 대략 {0} 정도의 게시 시간입니다.",
+    "Unlock every achievement, in every game this account owns": "이 계정이 보유한 모든 게임의 모든 도전 과제 해금",
+    "This is for accounts that are not pretending to be anyone. Thousands of achievements appear at once, all stamped with the same moment, and that stamp is set by Steam and cannot be changed or hidden. Anyone looking at the profile can see it, permanently. If this account is meant to look played, leave this alone and let the pacer earn them instead.": "이것은 아무인 척하지 않는 계정을 위한 기능입니다. 수천 개의 도전 과제가 한꺼번에 나타나고 모두 같은 시각이 찍히며, 그 시각은 Steam이 정하므로 바꾸거나 숨길 수 없습니다. 프로필을 보는 누구나 영구적으로 볼 수 있습니다. 이 계정이 실제로 플레이된 것처럼 보여야 한다면 여기는 손대지 말고 페이서가 벌게 두세요.",
+    "Unlock everything on {0}?": "{0}에서 전부 해금할까요?",
+    "Every achievement in every game {0} owns will be unlocked, right now.": "{0}이(가) 보유한 모든 게임의 모든 도전 과제가 지금 바로 해금됩니다.",
+    "They all get the same unlock time. That is what makes it obvious.": "전부 같은 해금 시각을 받습니다. 그래서 바로 티가 납니다.",
+    "Steam sets that time itself - it cannot be back-dated or hidden.": "그 시각은 Steam이 직접 설정합니다 - 소급하거나 숨길 수 없습니다.",
+    "It runs for a long time on a big library, and it cannot be meaningfully undone.": "라이브러리가 크면 오래 걸리며, 사실상 되돌릴 수 없습니다.",
+    "Type {0} below to enable the button.": "버튼을 활성화하려면 아래에 {0}을(를) 입력하세요.",
+    "Type {0} to enable the button.": "버튼을 활성화하려면 {0}을(를) 입력하세요.",
+    "Type {0} to confirm.": "확인하려면 {0}을(를) 입력하세요.",
+    "This deletes {0} and the stored login token for it.": "{0}과(와) 해당 계정의 저장된 로그인 토큰을 삭제합니다.",
+    "Nothing happens to the Steam account itself - it is only removed from nocat.farm.": "Steam 계정 자체에는 아무 일도 일어나지 않습니다 - nocat.farm에서만 제거됩니다.",
+    "Adding it back needs the password and a fresh Steam Guard code.": "다시 추가하려면 비밀번호와 새 Steam Guard 코드가 필요합니다.",
+    "Anything it was farming stops.": "파밍하던 것은 모두 멈춥니다.",
+    "Turn off opening the dashboard?": "대시보드 열기를 끌까요?",
+    "A newly added account does {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "갓 추가한 계정은 무엇을 플레이할지 정해 주기 전까지 {0} 하지 않으며, 그 입력 화면은 앱 창에는 없고 대시보드에만 있습니다.",
+    "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "이 옵션을 끄면 계정을 추가해도 명령줄에 남을 뿐이고, 그 계정은 설정하러 갈 생각이 날 때까지 놀고 있습니다. 그걸 이미 아는 사람을 위한 것입니다.",
+    "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "이 대시보드는 네트워크에서 접근할 수 있고 비밀번호가 추측될 만큼 짧습니다. 그 뒤에 당신의 Steam 계정이 있습니다.",
+    "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "이 대시보드는 네트워크에서 수신하도록 설정되어 있지만, 비밀번호가 없어 이 PC 외의 모든 접속을 거부합니다 - 즉 여기서만 접근할 수 있습니다.",
+    "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "이 계정이 이 게임을 얼마나 플레이했는지. 이 계정 설정의 기준치를 넘기기 전까지 Steam은 아무것도 드롭하지 않습니다.",
+    "Dashboard": "대시보드",
+    "Running in the background": "백그라운드 실행",
+    "rep4rep account": "rep4rep 계정",
+    "Steam connection": "Steam 연결",
+    "Logging": "로그",
+    "What it plays": "무엇을 플레이하는지",
+    "Free games & badges": "무료 게임과 배지",
+    "Achievements": "도전 과제",
+    "rep4rep commenting": "rep4rep 댓글",
+    "Friends & messages": "친구와 메시지",
+    "Trades": "교환",
+    "Staying out of the way": "방해하지 않기",
+    "Log": "로그",
+    "Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick \"Work out what its inventory is worth\".": "가치를 계산하지 않습니다. 다시 켜려면 설정에서 {0} 계정을 선택하고 '거래'를 연 뒤 '인벤토리 가치 계산'에 체크하세요."
+  },
+  "settings": {
+    "WebEnabled": {
+      "label": "웹 대시보드",
+      "tip": "웹 대시보드를 제공합니다. 끄면 nocat.farm은 콘솔 전용이 됩니다 - 기능은 그대로고, 입력으로 조작할 뿐입니다."
+    },
+    "WebHost": {
+      "label": "수신 주소",
+      "tip": "대시보드가 응답할 주소. 127.0.0.1은 이 PC만이고, 휴대폰이나 다른 기기에서 접속하려면 0.0.0.0으로 하되 먼저 비밀번호를 설정하세요."
+    },
+    "WebPort": {
+      "label": "포트",
+      "tip": "대시보드 포트. 7242를 다른 프로그램이 쓰고 있으면 바꾸세요."
+    },
+    "WebPassword": {
+      "label": "대시보드 비밀번호",
+      "tip": "대시보드 비밀번호. 비어 있는 동안에는 이 PC 외의 모든 접속을 거부하므로 Steam 계정을 실수로 공개할 일이 없습니다."
+    },
+    "OpenDashboardAfterAdd": {
+      "label": "계정 추가 후 대시보드 열기",
+      "tip": "새 계정을 추가하면 설정할 수 있도록 브라우저에서 대시보드를 엽니다. 갓 추가한 계정은 무엇을 플레이할지 정해 주기 전까지 아무것도 하지 않으며, 그 입력 화면은 앱 창에는 없고 대시보드에만 있습니다. 끄면 직접 기억해야 합니다."
+    },
+    "OpenBrowserOnStart": {
+      "label": "시작할 때 브라우저 열기",
+      "tip": "nocat.farm이 시작될 때 대시보드를 브라우저에서 자동으로 엽니다."
+    },
+    "Tray": {
+      "label": "트레이 아이콘",
+      "tip": "알림 영역(오른쪽 아래 시계 옆)에 아이콘을 두어 nocat.farm이 백그라운드에서 돌 수 있게 합니다. 오른쪽 클릭하면 메뉴가 열립니다."
+    },
+    "MinimizeToTray": {
+      "label": "트레이로 최소화",
+      "tip": "콘솔 창을 최소화하면 작업 표시줄에 남기지 않고 트레이로 숨깁니다."
+    },
+    "StartMinimized": {
+      "label": "숨긴 채로 시작",
+      "tip": "콘솔 창을 숨긴 채 바로 트레이로 시작합니다. 트레이 아이콘을 두 번 클릭하면 다시 나타납니다."
+    },
+    "StartWithWindows": {
+      "label": "Windows와 함께 시작",
+      "tip": "Windows에 로그인할 때 nocat.farm을 실행합니다. 본인 사용자 계정에 항목 하나만 추가하고 그 외에는 아무것도 건드리지 않습니다."
+    },
+    "KeepAwake": {
+      "label": "이 PC를 깨어 있게 유지",
+      "tip": "계정이 실행 중인 동안 Windows가 절전 모드로 가지 않게 합니다. 화면은 꺼져도 되며, 막는 것은 절전뿐입니다."
+    },
+    "TrayNotifications": {
+      "label": "팝업 표시",
+      "tip": "풍선 알림의 마스터 스위치. 실제로 어떤 알림을 받을지는 아래 세 항목이 정합니다."
+    },
+    "NotifyEarnings": {
+      "label": "수확이 있을 때 알림",
+      "tip": "카드가 드롭되거나 rep4rep 댓글이 인정될 때 알려 줍니다."
+    },
+    "NotifySocial": {
+      "label": "댓글 알림",
+      "tip": "누군가 당신의 프로필에 댓글을 달면 알려 줍니다."
+    },
+    "NotifyProblems": {
+      "label": "문제 알림",
+      "tip": "계정이 정말로 당신을 필요로 할 때 알려 줍니다 - Steam Guard 코드, 로그인 실패, 댓글 차단 등."
+    },
+    "Rep4RepEnabled": {
+      "label": "rep4rep을 아예 쓸지",
+      "tip": "rep4rep은 사용자끼리 프로필 댓글을 주고받는 외부 사이트입니다. 완전히 선택 사항입니다. 끄면 nocat.farm은 모든 계정에서 rep4rep 관련 동작을 멈추고 기능 자체가 사라집니다 - 탭, 포인트, 계정별 옵션, 이 설정들 모두 다시 켤 때까지 보이지 않습니다."
+    },
+    "Rep4RepApiToken": {
+      "label": "API 토큰",
+      "tip": "당신의 rep4rep API 토큰. Steam 계정을 몇 개 돌리든 토큰 하나가 rep4rep 계정 전체를 담당합니다 - rep4rep.com의 Settings에서 받으세요. 계정이 아직 없다면 rep4rep.com/?r=reap"
+    },
+    "Rep4RepAutoAddProfiles": {
+      "label": "계정 자동 등록",
+      "tip": "각 Steam 계정을 첫 로그인 때 rep4rep에 등록해, 사이트에서 일일이 손으로 추가할 필요가 없게 합니다."
+    },
+    "LoginStaggerSeconds": {
+      "label": "로그인 사이 간격",
+      "tip": "시작할 때 한 계정을 로그인한 뒤 다음 계정까지 기다리는 초. Steam은 IP 주소 기준으로 제한하므로, 여러 계정이 한꺼번에 걸리는 것을 막아 주는 게 바로 이 간격입니다."
+    },
+    "StatusEveryMinutes": {
+      "label": "보고 주기",
+      "tip": "게임이 켜져 있는 동안 이 계정이 상황을 알리는 주기. 0은 '로그'의 전역 설정을 따르고, -1은 아예 말하지 않습니다."
+    },
+    "StatusQuietEveryMinutes": {
+      "label": "쉬는 동안의 주기",
+      "tip": "계정이 자거나, 쉬거나, 일시정지되었거나, 로그아웃된 동안에 적용되는 같은 설정. 0은 전역 설정을 따르고 -1은 조용히 둡니다."
+    },
+    "Language": {
+      "label": "언어",
+      "tip": "대시보드 언어입니다. 아직 번역되지 않은 부분은 비어 있지 않고 영어로 나오므로, 절반만 된 언어도 문제없이 쓸 수 있습니다."
+    },
+    "MarketCurrency": {
+      "label": "인벤토리 가격 통화",
+      "tip": "인벤토리 가격의 통화입니다. Steam 상점과 같게 맞추지 않으면 합계가 마켓에서 보는 것과 어긋납니다."
+    },
+    "FileLogging": {
+      "label": "로그 파일 기록",
+      "tip": "화면 출력에 더해 모든 내용을 logs/ 에도 기록합니다. 켜 두세요 - 자는 동안 무슨 일이 있었는지 확인할 유일한 방법입니다."
+    },
+    "DailyReportEnabled": {
+      "label": "로그에 일일 요약",
+      "tip": "하루에 한 번, 각 계정이 지난 24시간 동안 벌어들인 것을 한눈에 볼 수 있게 기록합니다 - 플레이 시간, 카드, rep4rep 댓글, 누적 합계. 스크롤 없이 '밤새 뭘 벌었지?'에 답합니다. `report` 를 입력하면 언제든 볼 수 있습니다."
+    },
+    "DailyReportHour": {
+      "label": "요약 시각 · 시",
+      "tip": "일일 요약을 기록할 시각, 0–23(현지 시간). 기본값은 9입니다."
+    },
+    "DailyReportMinute": {
+      "label": "요약 시각 · 분",
+      "tip": "일일 요약의 분 단위, 0–59. 9시 + 30분 = 09:30."
+    },
+    "Enabled": {
+      "label": "사용함",
+      "tip": "이 계정에 로그인합니다. 끄면 설정은 남기고 계정은 전혀 건드리지 않습니다."
+    },
+    "SteamLogin": {
+      "label": "Steam 계정 이름",
+      "tip": "로그인할 때 입력하는 Steam 계정 이름입니다. 표시 이름도, 이메일도 아닙니다."
+    },
+    "SteamPassword": {
+      "label": "비밀번호",
+      "tip": "선택 사항. 비워 두면 nocat.farm이 한 번만 묻고, 이후에는 로그인 토큰으로 계정을 기억합니다 - 둘 중 더 안전한 방식입니다."
+    },
+    "OnlineStatus": {
+      "label": "표시 상태",
+      "tip": "다른 사람에게 보이는 상태: 온라인, 자리 비움, 다른 용무 중, 오프라인 표시. 오프라인 표시로도 시간은 계속 쌓이고 아무도 보지 못합니다."
+    },
+    "IUseThisAccount": {
+      "label": "이 계정은 내가 직접 씁니다",
+      "tip": "직접 로그인하는 계정이라면 켜세요. nocat.farm이 상태를 건드리지 않습니다 - 두 번째 세션에서 상태를 바꾸면 본인이 Steam 채팅에서 튕깁니다."
+    },
+    "StartPaused": {
+      "label": "일시정지 상태로 시작",
+      "tip": "로그인은 하지만 '재개'를 누르기 전까지 플레이·파밍·댓글을 하지 않습니다. 온라인이되 아무것도 안 하길 원하는 계정용입니다."
+    },
+    "LogColour": {
+      "label": "로그에서의 색",
+      "tip": "로그와 보드에서 이 계정 이름을 무슨 색으로 표시할지. 계정이 몇 개를 넘어가면 유용합니다."
+    },
+    "Notes": {
+      "label": "메모",
+      "tip": "이 계정이 무엇을 위한 것인지 스스로 남기는 메모. 계정 카드에만 표시되고 Steam으로는 전혀 가지 않습니다."
+    },
+    "LegitMode": {
+      "label": "사람 모드",
+      "tip": "계정이 사람처럼 플레이하게 합니다. 한 번에 한 게임, 길이가 제각각인 플레이와 휴식, 현실적인 취침·기상 시간, 그리고 아예 하지 않는 날도 있습니다. 끄면 그냥 시간만 쌓습니다."
+    },
+    "LegitStopMaxSeconds": {
+      "label": "정지할 때 마무리 최대 시간",
+      "tip": "사람 모드 전용. 수동으로 멈추면 곧바로 사라지지 않고, 최대 이 시간만큼 무작위로 몇 초 더 플레이한 뒤(하던 걸 마무리하듯) 로그아웃합니다."
+    },
+    "GameWeights": {
+      "label": "게임과 빈도",
+      "tip": "게임과 가중치입니다(예: \"730:70, 440:20\"). 가장 무거운 것이 주력 게임으로 대부분의 시간을 차지하고, 나머지는 매일이 아니라 가끔 몰아서 등장합니다."
+    },
+    "WeekdayHours": {
+      "label": "평일 시간",
+      "tip": "월요일부터 금요일까지 대략 몇 시간 플레이할지. 실제 시간은 매일 아침 이 값 언저리에서 정해지며, 짧은 날도 긴 날도 있어 똑같은 날이 없습니다."
+    },
+    "WeekendHours": {
+      "label": "주말 시간",
+      "tip": "토요일과 일요일도 마찬가지. 주말이 평일보다 길다는 점이 한 주를 진짜처럼 보이게 하는 큰 부분입니다."
+    },
+    "DayOffChancePct": {
+      "label": "쉬는 날 확률",
+      "tip": "그날 아예 플레이하지 않을 확률(100분율). 하루도 빠짐없이 하는 건 봇뿐입니다. 그걸 막는 설정입니다."
+    },
+    "DayStartHour": {
+      "label": "대략 접속하는 시각",
+      "tip": "보통 접속하는 시(0-23). 실제 시각은 그 언저리에 종 모양으로 흩어지고 주말엔 더 일찍 시작하므로, 같은 분에 두 번 접속하지 않습니다."
+    },
+    "BedHour": {
+      "label": "대략 자는 시각",
+      "tip": "그날을 마치는 시(0-23). 새벽도 괜찮습니다. 2는 새벽 2시입니다."
+    },
+    "LateNightExtraHours": {
+      "label": "금/토는 더 늦게까지",
+      "tip": "다음 날 일정이 없는 금요일과 토요일 밤에 추가로 더 깨어 있는 시간입니다."
+    },
+    "MainGameSharePct": {
+      "label": "주력 게임 비중",
+      "tip": "다른 게임도 하는 날에 목록의 첫 번째 게임이 차지하는 비율(%). 매일 이 값에서 10포인트 안팎으로 다시 정해집니다."
+    },
+    "PureMainDayChancePct": {
+      "label": "주력 게임만 하는 날 비율",
+      "tip": "하루 전체를 주력 게임만 하는 확률(100분율). 다른 게임이 매일 조금씩이 아니라 몰아서 등장하게 만드는 설정입니다."
+    },
+    "SideGameSharePct": {
+      "label": "섞이는 날 다른 게임 비중",
+      "tip": "실제로 다른 게임도 하는 날에, 나머지 게임들이 나눠 갖는 하루의 대략적인 비중. 다 쓰면 그날 남은 시간은 다시 주력 게임입니다."
+    },
+    "WarmUpMinMinutes": {
+      "label": "최소 적응 시간",
+      "tip": "로그인 후 무언가를 시작하기까지의 최소 대기(분). 계정이 접속한 바로 그 초에 게임 안에 있는 것이 가장 기계적인 행동입니다."
+    },
+    "WarmUpMaxMinutes": {
+      "label": "최대",
+      "tip": "적응 대기의 최댓값(분). 실제 값은 두 값 사이에서 무작위로 정해집니다. 무엇을 설정하든 로그인 후 3분 안에는 절대 시작하지 않습니다."
+    },
+    "SessionMinMinutes": {
+      "label": "가장 짧은 플레이",
+      "tip": "다른 걸 하기 전에 한 게임에 머무는 최소 시간. 5분마다 게임을 바꾸는 사람은 없습니다."
+    },
+    "SessionMaxMinutes": {
+      "label": "가장 긴 플레이",
+      "tip": "한 게임에 머무는 최대 시간. 대부분은 두 값 사이에 들어갑니다. 30분만 하는 것도, 저녁 내내 하는 것도 똑같이 자연스러우니 여유를 두세요."
+    },
+    "MealBreaksPerDay": {
+      "label": "하루 식사 횟수",
+      "tip": "책상을 실제로 떠나는 휴식을 하루에 몇 번 갖는지. 무작위가 아니라 실제 식사 시간대에 맞춰 배치되므로 식사처럼 읽힙니다."
+    },
+    "MealBreakMinutes": {
+      "label": "식사에 걸리는 시간",
+      "tip": "그런 휴식에 자리를 비우는 대략적인 시간(분). 이야기가 길어져 한참 넘길 때도 있습니다."
+    },
+    "SignOutOnBreakChancePct": {
+      "label": "쉬는 동안 오프라인이 될 확률",
+      "tip": "휴식을 '자리 비움'이 아니라 오프라인 표시로 보내는 확률(100분율). 친구 목록에서는 Steam을 끈 것과 구분되지 않습니다."
+    },
+    "OfflineIdleAtNight": {
+      "label": "밤에 시간 쌓기",
+      "tip": "자는 동안 오프라인으로 표시하면서도 조용히 시간을 계속 쌓습니다. 친구 목록에는 오프라인으로 보이고, 아무도 모르는 채 시간만 늘어납니다."
+    },
+    "OfflineIdleGames": {
+      "label": "밤에 돌릴 게임",
+      "tip": "밤에 오프라인이고 파밍할 카드도 없을 때 무엇을 돌릴지. 몇 개든 상관없습니다. 볼 사람이 없으니 '한 번에 하나' 원칙이 여기서는 적용되지 않습니다."
+    },
+    "IdleGames": {
+      "label": "시간을 쌓을 게임",
+      "tip": "시간을 쌓기 위해 켜 둘 게임. Steam은 동시에 32개까지 허용합니다."
+    },
+    "CustomGameNameEnabled": {
+      "label": "사용자 지정 게임 이름 표시",
+      "tip": "친구 목록에 실제 게임 대신 원하는 이름을 표시합니다. 시간은 그대로 실제 게임에 쌓입니다."
+    },
+    "CustomGameName": {
+      "label": "이렇게 표시",
+      "tip": "프로필과 친구 목록에 실제 게임 대신 이 이름을 표시합니다. 그 아래에서는 실제 게임이 계속 시간을 쌓습니다 - 두 가지가 동시에 일어납니다."
+    },
+    "FarmCards": {
+      "label": "트레이딩 카드 파밍",
+      "tip": "라이브러리에 아직 남아 있는 트레이딩 카드를 얻고, 남지 않으면 멈춥니다. 설정할 것이 없습니다."
+    },
+    "HoursUntilCardDrops": {
+      "label": "카드가 나오기까지의 시간",
+      "tip": "Steam이 그 게임의 카드를 주기까지 필요한 시간. 대부분의 계정은 3이 적당합니다. 이 계정이 Steam에서 5달러 넘게 썼다면 0으로."
+    },
+    "FarmingOrder": {
+      "label": "이 순서로 파밍",
+      "tip": "어떤 게임부터 파밍할지. '남은 카드가 적은 순'은 배지를 가장 빨리 완성하고, '많이 한 순'은 라이브러리에 새로 붙는 시간이 가장 적습니다."
+    },
+    "FarmOffline": {
+      "label": "오프라인으로 보이면서 파밍",
+      "tip": "이 계정이 파밍하는 동안 친구들에게 오프라인으로 보입니다. Steam은 여전히 시간을 세고 카드도 그대로 떨어집니다 - 달라지는 건 아무도 보지 못한다는 것뿐입니다."
+    },
+    "UnlockAchievements": {
+      "label": "시간에 따라 도전 과제 획득",
+      "tip": "실제 플레이 시간에 따라 흔한 것부터 조금씩 도전 과제를 얻습니다. 시간이 뒷받침하지 못하는 것은 절대 해제하지 않고, 게임을 100%로 끝내지도 않습니다."
+    },
+    "AchievementPace": {
+      "label": "속도",
+      "tip": "해제 사이에 얼마나 둘지. '신중히'는 모든 간격을 두 배로 늘립니다 - 누가 제대로 들여다봐도 버텨야 하는 계정이라면 이게 맞습니다."
+    },
+    "AchievementMaxCompletionPct": {
+      "label": "완료 상한",
+      "tip": "한 게임을 어디까지 완료할지 백분율로 정합니다. 0이면 게임마다 조정된 자체 상한을 씁니다 - 3시간짜리 퍼즐과 500시간짜리 대작이 같은 수치에서 멈출 수는 없으니까요. 숫자를 넣으면 그 값이 우선이며, 게임의 상한을 낮추는 것만큼이나 쉽게 올려 줍니다. 정말로 끝까지 플레이한 계정이 마무리할 수 있게 하기 위한 것입니다. 95를 넘지는 않습니다 - 방치 계정의 100% 완료야말로 결정적인 단서니까요."
+    },
+    "ClaimFreeGames": {
+      "label": "무료 게임 받기",
+      "tip": "눈에 띄는 무료 게임을 받아 라이브러리가 저절로 늘어나게 합니다."
+    },
+    "CraftBadges": {
+      "label": "카드로 배지 제작",
+      "tip": "완성된 카드 세트를 배지로 만듭니다. 프로필 경험치가 오르고 가끔 아이템도 나옵니다."
+    },
+    "Rep4Rep": {
+      "label": "rep4rep 댓글 작성",
+      "tip": "rep4rep이 이 계정에 배정한 댓글을 사람다운 속도로 게시합니다."
+    },
+    "Rep4RepDailyCap": {
+      "label": "24시간당 최대",
+      "tip": "이 계정이 24시간 동안 남길 댓글의 최대 수. 친구가 아닌 사람에 대한 Steam의 실제 상한은 대략 10이며, 그걸 넘기는 것이 바로 댓글 차단을 부릅니다."
+    },
+    "Rep4RepGapMinMinutes": {
+      "label": "최소 간격",
+      "tip": "이 계정에서 두 댓글을 이 분보다 짧은 간격으로는 절대 남기지 않습니다."
+    },
+    "Rep4RepGapMaxMinutes": {
+      "label": "최대 간격",
+      "tip": "댓글 사이의 최대 간격(분). 실제 값은 두 값 사이에서 무작위로 정해져 타이밍이 기계적으로 보이지 않습니다."
+    },
+    "Rep4RepStartHour": {
+      "label": "이 시각부터만 게시",
+      "tip": "이 계정이 댓글을 다는 하루 중 가장 이른 시각, 0–23. 새벽 4시에 도착하는 댓글만큼 뻔한 봇의 흔적은 없습니다."
+    },
+    "Rep4RepEndHour": {
+      "label": "이 시각까지",
+      "tip": "이 계정이 댓글을 다는 하루 중 가장 늦은 시각, 1–24. 시작 시각과 같게 두면 하루 종일 댓글을 허용합니다."
+    },
+    "AcceptFriendRequests": {
+      "label": "친구 요청 수락",
+      "tip": "들어오는 친구 요청을 자동으로 수락합니다. rep4rep 계정이라면 켜 둘 만합니다 - 친구의 프로필에는 Steam이 훨씬 많은 댓글을 허용합니다."
+    },
+    "JoinGroup": {
+      "label": "nocat.farm 그룹 가입",
+      "tip": "로그인할 때 한 번 이 계정을 nocat.farm Steam 그룹에 가입시킵니다. 완전히 선택 사항이며, 끄면 가입하지 않습니다."
+    },
+    "AutoReplyEnabled": {
+      "label": "메시지에 답장",
+      "tip": "이 계정에 메시지를 보낸 낯선 사람에게 답합니다. 꺼도 아래에 쓴 내용은 남으므로 다시 켤 때 새로 쓸 필요가 없습니다."
+    },
+    "AutoReply": {
+      "label": "답장 내용",
+      "tip": "누군가 이 계정에 메시지를 보내면 이걸 보냅니다. 비워 두면 아무 말도 하지 않습니다. 하루 여덟 시간을 하면서 한 번도 답하지 않는 계정이, '지금은 좀'이라고 답하는 계정보다 더 눈에 띕니다."
+    },
+    "AutoReplyOncePerDay": {
+      "label": "하루에 한 번만 답장",
+      "tip": "같은 사람에게 이 답장을 하루 한 번까지만 보냅니다. 없으면 두 번 보낸 사람은 똑같은 문장을 두 번 받습니다 - 봇임을 들키는 가장 빠른 길입니다."
+    },
+    "FriendRequestDelayMinMinutes": {
+      "label": "최소 대기",
+      "tip": "친구 요청을 수락하기까지의 최소 대기(분). 요청이 온 그 초에 수락하는 것은 계정이 할 수 있는 가장 들키기 쉬운 행동입니다."
+    },
+    "FriendRequestDelayMaxMinutes": {
+      "label": "최대",
+      "tip": "수락 전 최대 대기(분). 실제 값은 두 값 사이에서 무작위로 정해집니다."
+    },
+    "ActOnlyWhileAwake": {
+      "label": "깨어 있을 때만 반응",
+      "tip": "교환·답장·친구 요청을 사람 모드가 이 계정이 일어났다고 할 때까지 보류합니다. 없으면 자고 있어야 할 계정이 새벽 4시에 답장합니다."
+    },
+    "AcceptDonations": {
+      "label": "기부 수락",
+      "tip": "대가를 요구하지 않는 제안만 수락합니다. 손해를 볼 수가 없으니 본질적으로 안전합니다."
+    },
+    "AcceptFromMasters": {
+      "label": "내 계정에서 온 것은 무엇이든 수락",
+      "tip": "아래에 적은 SteamID64가 보낸 제안은 아이템을 가져가는 것까지 포함해 무엇이든 수락합니다. 유휴 계정의 카드를 한 계정으로 쓸어 담을 수 있는 이유가 이것이며, 그래서 이 목록에는 본인 소유 계정만 넣어야 합니다."
+    },
+    "TradeMasters": {
+      "label": "내 계정",
+      "tip": "본인 계정들의 SteamID입니다. \"send\"가 아이템을 보내는 곳이자, 묻지 않고 제안을 수락하는 상대입니다."
+    },
+    "DeclineOtherTrades": {
+      "label": "나머지는 전부 거절",
+      "tip": "그 외의 모든 제안을 방치하지 않고 적극적으로 거절합니다. 끄면 수락하지 않은 것은 그대로 남아 직접 확인할 수 있습니다."
+    },
+    "TradeDelayMinMinutes": {
+      "label": "최소 대기",
+      "tip": "제안을 처리하기까지의 최소 대기(분). 도착 2초 만에 수락하는 건 사람이 하는 행동이 아닙니다."
+    },
+    "TradeDelayMaxMinutes": {
+      "label": "최대",
+      "tip": "제안을 처리하기까지의 최대 대기(분). 실제 값은 두 값 사이에서 무작위로 정해집니다."
+    },
+    "PauseWhenYouPlay": {
+      "label": "직접 플레이할 때 물러나기",
+      "tip": "직접 게임을 시작하면 계정이 즉시 물러나고, 잠시 기다린 뒤에야 하던 일로 돌아갑니다."
+    },
+    "ResumeDelayMinutes": {
+      "label": "재개 전 대기",
+      "tip": "당신이 플레이를 마친 뒤, 이 계정이 조용히 하던 일로 돌아가기까지 기다리는 시간(분)."
+    },
+    "AchievementBoost": {
+      "tip": "매번 직접 시작하지 않아도 여러 게임에서 알아서 도전 과제를 노립니다. 기본은 꺼짐. \"모든 싱글플레이\"는 라이브러리에서 직접 고릅니다 - 진짜 게임만(DLC나 체험판은 절대 아님), 도전 과제가 있고 평가 수도 충분한 것.",
+      "label": "도전 과제 부스트"
+    },
+    "SkipRefundableGames": {
+      "tip": "막 산 게임은 환불이 불가능해질 때까지 건드리지 않습니다. Steam은 2시간이 넘으면 환불을 거절하는데, 2시간은 한 번의 세션일 뿐입니다. 카드 파밍뿐 아니라 모든 곳에 적용되며, 무료 게임은 절대 보류되지 않습니다.",
+      "label": "환불 가능한 게임 보호"
+    },
+    "ShowInventoryValue": {
+      "tip": "이 계정 인벤토리의 가치를 마켓 중앙값으로 계산합니다. 자기 자신의 인벤토리를 읽으므로 비공개 프로필이어도 상관없습니다.",
+      "label": "인벤토리 가치 계산"
+    },
+    "CheckForUpdates": {
+      "tip": "하루에 한 번 새 버전이 있는지 확인하고 로그에 알립니다. 알리기만 할 뿐, 내려받거나 교체하거나 재시작하지 않습니다.",
+      "label": "업데이트가 있으면 알림"
+    },
+    "BreakMinMinutes": {
+      "label": "가장 짧은 휴식",
+      "tip": "플레이 사이의 최소 간격(분). 대부분의 휴식은 이 짧은 쪽에 몰립니다. 마실 것을 가져오거나 잠깐 다른 걸 보는 정도죠."
+    },
+    "BreakMaxMinutes": {
+      "label": "가장 긴 휴식",
+      "tip": "일반적인 휴식의 최댓값(분). 실제 길이는 고르게 퍼지지 않고 짧은 쪽으로 치우칩니다. 사람이 실제로 그렇게 쉬기 때문입니다."
+    },
+    "MaxSignOutsPerDay": {
+      "label": "최대 오프라인 횟수",
+      "tip": "하루에 그렇게 하는 횟수의 상한. 계정이 저녁 내내 친구 목록에서 깜빡이지 않게 합니다. 0이면 꺼지고 모든 휴식이 '자리 비움'만 됩니다."
+    },
+    "PlayWhileFarming": {
+      "label": "파밍 중에도 이름 유지",
+      "tip": "카드를 파밍하는 동안에도 사용자 지정 이름을 계속 표시합니다. 끄면 파밍 중에는 실제 게임이 보입니다."
+    },
+    "GameDevice": {
+      "label": "이 기기에서 하는 것처럼",
+      "tip": "친구들이 어떤 기기로 플레이한다고 볼지. 이름 옆에 붙는 Steam Deck이나 휴대폰 배지가 이걸로 정해집니다."
+    },
+    "PriorityGames": {
+      "label": "이것부터 파밍",
+      "tip": "정렬 순서와 상관없이 가장 먼저 파밍할 appID."
+    },
+    "FarmPriorityOnly": {
+      "label": "그것만 파밍",
+      "tip": "우선 목록의 게임만 파밍하고, 아직 카드가 남은 다른 게임은 모두 무시합니다."
+    },
+    "BlacklistedGames": {
+      "label": "절대 건드리지 않을 것",
+      "tip": "배지 페이지가 뭐라 하든 절대 파밍하지도, 실행하지도 않을 appID."
+    },
+    "SkipUnplayedGames": {
+      "label": "직접 해본 적 없는 게임 건너뛰기",
+      "tip": "직접 실행해 본 적 없는 게임을 건너뜁니다. 남에게 보이고 싶지 않은 게임에 nocat.farm이 최초의 플레이 시간을 남기지 않도록."
+    },
+    "RefundHoldDays": {
+      "label": "...이 일수 동안",
+      "tip": "새로 산 게임을 며칠간 건드리지 않을지. Steam의 환불 기간은 14일이고 그게 기본값입니다. 결정에 더 오래 걸린다면 늘리세요."
+    },
+    "FarmOnlyWhileAsleep": {
+      "label": "잘 때만 카드 파밍",
+      "tip": "사람 모드 전용. 계정이 밤에 잠들어(오프라인으로 전환된) 뒤에야 파밍하고, 낮에는 평소 일정대로 플레이합니다."
+    },
+    "FarmFromHour": {
+      "label": "이 시각부터만 카드 파밍",
+      "tip": "이 시각부터만 카드를 파밍합니다(24시간제). 이 값과 '까지'를 모두 0으로 두면 아무 때나 파밍합니다."
+    },
+    "FarmUntilHour": {
+      "label": "...까지",
+      "tip": "이 시각까지 카드를 파밍합니다(24시간제). '부터'보다 이른 시각으로 두면 자정을 넘어갑니다 - 예를 들어 22시부터 6시까지는 밤새 파밍합니다."
+    },
+    "PostFarmWindDownMinMinutes": {
+      "label": "마지막 카드 후 최소 이만큼 더",
+      "tip": "사람 모드 전용. 파밍이 끝나면 같은 초에 바로 닫지 않고, 이 범위(분)에서 무작위 시간만큼 그 게임을 더 켜둔 뒤 자리를 뜹니다."
+    },
+    "PostFarmWindDownMaxMinutes": {
+      "label": "...최대",
+      "tip": "파밍 후 이 여유 시간의 상한(분)."
+    },
+    "FarmingDelayMinutes": {
+      "label": "다시 확인하는 주기",
+      "tip": "파밍 중인 게임을 다시 확인하는 주기(분). 카드는 떨어지는 즉시 Steam이 알려주므로 이건 안전장치일 뿐입니다."
+    },
+    "MaxFarmingHoursPerGame": {
+      "label": "이만큼 지나면 포기",
+      "tip": "한 게임을 이 시간만큼 하고도 안 되면 포기하고 다음으로 넘어갑니다. 고장 난 게임 하나가 대기열을 영원히 막는 걸 방지합니다."
+    },
+    "StopWhenFarmingDone": {
+      "label": "끝나면 로그아웃",
+      "tip": "파밍할 카드가 없어지면 이 계정을 로그아웃시킵니다. 계속 시간만 쌓지 않습니다."
+    },
+    "AchievementBoostGames": {
+      "label": "이 게임들을 노림",
+      "tip": "부스트가 차례로 돌 게임(appID 또는 상점 URL, 쉼표로 구분). 부스트가 '직접 고른 게임'일 때만 사용됩니다."
+    },
+    "BoostSessionHours": {
+      "label": "각각 대략",
+      "tip": "부스트가 다음으로 넘어가기 전에 한 게임에 머무는 시간(시간)."
+    },
+    "MaxBoostGamesInARow": {
+      "label": "사람 모드: 연속 최대",
+      "tip": "사람 모드 전용. 평소 일정의 더 긴 구간으로 돌아가기 전에 부스트를 몇 번까지 연달아 할지 - 정상 계정에서는 일정이 우선이도록."
+    },
+    "BoostRestMinutesHuman": {
+      "label": "사람 모드: 부스트 사이의 일정 간격",
+      "tip": "사람 모드 전용. 부스트 세션 사이에 평소 일정을 몇 분 두는지 - 사냥이 정상 계정의 하루를 지배하지 않도록."
+    },
+    "BoostMinReviews": {
+      "label": "리뷰가 최소 이만큼인 게임만",
+      "tip": "'모든 싱글플레이'가 손대려면 게임에 필요한 Steam 리뷰 수. 번들 채우기용 게임을 걸러내는 조건입니다 - 리뷰 11개짜리, 한 번도 켜본 적 없는 게임에 저녁을 썼다는 걸 설명할 수 있는 사람은 없습니다. 0이면 제한 없음. 직접 고른 게임에는 적용되지 않습니다."
+    },
+    "BoostOnlyPlayedGames": {
+      "label": "해본 게임만 노림",
+      "tip": "'모든 싱글플레이'를 이 계정이 한 번이라도 실행한 게임으로 제한합니다. 기본은 꺼짐 - 도전 과제를 노리는 사람이 새 게임을 시작하는 건 지극히 정상입니다 - 하지만 계정 이력에 맞는 게임만 남기는 가장 엄격한 방법입니다."
+    },
+    "InventoryIgnoreGames": {
+      "label": "...단 이 게임들은 제외",
+      "tip": "인벤토리 가치에서 뺄 appID(쉼표로 구분). 계정이 밴당한 게임을 여기에 적습니다 - 아이템은 인벤토리에 남아 있지만 절대 팔 수 없으므로, 세면 총액만 부풀려집니다. Steam은 어떤 게임의 밴인지 알려주지 않고 인벤토리로도 확실히 알 수 없습니다. 그래서 추측이 아니라 직접 채우는 목록입니다."
+    },
+    "YieldToFamily": {
+      "label": "공유 게임은 원하면 바로 돌려줌",
+      "tip": "가족 중 누군가가 이 계정이 빌린 게임을 시작하면 즉시 돌려주고 다음으로 넘어갑니다. Steam은 공유 게임을 한 번에 한 사람에게만 빌려주고 소유자가 항상 우선입니다 - 아니면 세션 도중에 쫓겨나 더 이상 없는 게임을 '플레이 중'으로 표시하게 됩니다. 상대가 끝낸 뒤에도 20분은 순환에서 빠져, 닫는 즉시 낚아채지 않습니다."
+    },
+    "HoldNewFamilyGames": {
+      "label": "가족 라이브러리에 막 들어온 게임은 두기",
+      "tip": "공유 게임을 가족 라이브러리에 들어온 첫 2주 동안 건너뜁니다('환불 가능한 게임 보호'와 같은 일수). 산 사람이 아직 고민 중일 수 있으니까요. 판단 근거는 게임이 '언제 들어왔는지'뿐이고, 소유자가 얼마나 했는지는 알 수 없습니다 - 그 숫자는 이 계정에서 보이지 않습니다. 그래서 소유자가 이미 몇 시간을 했고 환불도 안 되는 게임을 가끔 붙잡아 둡니다."
+    },
+    "IncludeFamilyLibrary": {
+      "label": "가족 공유 게임도 포함",
+      "tip": "Steam 가족을 통해 이 계정에 공유된 게임도 노립니다. 빌린 게임에서 얻은 도전 과제도 내 게임과 똑같이 '이 계정'에 기록됩니다. 가족이 공유에서 제외한 게임은 건너뛰고, 게임이 아닌 것도 마찬가지입니다. 소유한 게임이 항상 빌린 게임보다 먼저입니다 - 소유자는 언제든 자기 것을 되찾을 수 있으니까요."
+    },
+    "AchievementGrindGapMinMinutes": {
+      "label": "집중 파밍 중에는 이 간격으로 하나",
+      "tip": "'집중 파밍'이 도전 과제를 해제하는 간격(분, 흔들림 있는 범위의 하한). 파밍은 실제로 그 게임에 붙어 있는 것이므로, 이는 진짜로 노리는 사람의 속도이지 배경에서 똑똑 떨어지는 속도가 아닙니다. 여전히 쉬운 것부터이고, 그 게임에서의 시간 제한도 그대로입니다."
+    },
+    "AchievementGrindGapMaxMinutes": {
+      "label": "...최대",
+      "tip": "집중 파밍 중 간격의 상한(분)."
+    },
+    "AchievementNeverGames": {
+      "label": "이 게임들에서는 절대",
+      "tip": "완전히 손대지 않을 게임. 이 목록의 어떤 것에도 도전 과제를 기록하지 않고, 부스트도 절대 고르지 않습니다. 사람 모드에서는 계정의 대표 게임도 함께 제외됩니다. (참고: Counter-Strike 2처럼 도전 과제를 서버에서 관리하는 게임은 어차피 무엇으로도 해제할 수 없습니다.)"
+    },
+    "AchievementGames": {
+      "label": "이 게임들만",
+      "tip": "이 appID로 제한합니다. 비워 두면 계정이 그때 하고 있는 어떤 게임이든 대상이 됩니다."
+    },
+    "UnpackBoosterPacks": {
+      "label": "부스터 팩 열기",
+      "tip": "인벤토리에 들어온 부스터 팩을 자동으로 엽니다. 안의 카드는 배지를 만드는 세트에 포함됩니다."
+    },
+    "ClearInventoryNotifications": {
+      "label": "새 아이템 배지 지우기",
+      "tip": "카드가 떨어질 때마다 Steam의 초록색 '새 아이템' 카운터를 지웁니다. 인벤토리가 계속 안 읽음으로 표시되지 않도록."
+    },
+    "UIMode": {
+      "label": "이 방식으로 로그인",
+      "tip": "Steam에 어떤 종류의 클라이언트라고 알릴지. '데스크톱'이 정답이자 기본값입니다 - 실제 클라이언트가 그렇게 알립니다."
+    },
+    "SteamParentalCode": {
+      "label": "가족 보기 PIN",
+      "tip": "이 계정에 가족 보기가 켜져 있다면 그 PIN. 없으면 Steam이 카드 파밍에 필요한 페이지를 막습니다."
+    },
+    "MachineName": {
+      "label": "기기 이름",
+      "tip": "이 계정이 Steam의 승인된 기기 목록에 표시하는 기기 이름. 비워 두면 이 PC의 실제 이름을 씁니다."
+    },
+    "SharedSecret": {
+      "label": "인증기 코드 시크릿",
+      "tip": "이 계정 모바일 인증기의 shared secret. 이게 있으면 nocat.farm이 자체적으로 Steam Guard 요청에 답해 휴대폰이 필요 없습니다."
+    },
+    "IdentitySecret": {
+      "label": "인증기 확인 시크릿",
+      "tip": "같은 인증기의 나머지 절반으로, '휴대폰에서 확인' 안내를 처리하는 쪽입니다. 이 계정이 교환을 보낼 때만 의미가 있습니다."
+    },
+    "AccountProxy": {
+      "label": "이 계정 전용 프록시",
+      "tip": "이 계정의 Steam 트래픽만 전용 프록시로 보냅니다(예: http://호스트:포트). 비워 두면 전역 설정을 씁니다."
+    },
+    "AccountProxyUsername": {
+      "label": "프록시 사용자 이름",
+      "tip": "이 계정 전용 프록시가 요구하는 경우의 사용자 이름."
+    },
+    "AccountProxyPassword": {
+      "label": "프록시 비밀번호",
+      "tip": "이 계정 전용 프록시가 요구하는 경우의 비밀번호."
+    },
+    "AcceptGroupInvites": {
+      "label": "그룹 초대 수락",
+      "tip": "이 계정이 초대받은 Steam 그룹에 가입합니다."
+    },
+    "IgnoreSuspiciousInvites": {
+      "label": "뻔한 스팸 무시",
+      "tip": "갓 만든 비공개 레벨 0 프로필의 친구 요청을 조용히 무시합니다 - 사기 봇은 하나같이 그 모양입니다."
+    },
+    "RejectInvalidFriendInvites": {
+      "label": "수락하지 않을 건 거절",
+      "tip": "친구 요청을 목록에 방치하지 않고 적극적으로 거절합니다. 끄면 수락하지 않은 요청은 그냥 남아 있습니다."
+    },
+    "AutoReplyDelaySeconds": {
+      "label": "답장 전 대기",
+      "tip": "답장이 나가기 전에 기다리는 초. 즉답은 로봇이 답하는 것입니다. 실제 대기 시간은 이 값 이내에서 무작위로 정해집니다."
+    },
+    "CommandMasters": {
+      "label": "명령을 받을 대상",
+      "tip": "Steam에서 이 계정에 메시지를 보내 nocat.farm을 조작할 수 있는 SteamID64(쉼표로 구분). 명령은 !로 시작해야 합니다."
+    },
+    "WebRefreshSeconds": {
+      "label": "새로 고침 주기",
+      "tip": "대시보드가 스스로 갱신하는 주기(초). 짧을수록 반응이 좋게 느껴지며, 전부 로컬이라 부담이 없습니다."
+    },
+    "WebSessionDays": {
+      "label": "로그인 유지 기간",
+      "tip": "브라우저가 대시보드 비밀번호를 다시 입력하기 전까지 로그인 상태를 유지하는 일수."
+    },
+    "ExitWhenAllFinished": {
+      "label": "모두 끝나면 종료",
+      "tip": "모든 계정이 파밍을 마치고 로그아웃하면 트레이에 남아 놀지 않고 nocat.farm을 완전히 종료합니다."
+    },
+    "Debug": {
+      "label": "디버그 상세",
+      "tip": "모든 웹 요청을 포함해 훨씬 더 많은 정보를 표시합니다. 문제가 있을 때는 유용하지만 평소에는 시끄럽습니다."
+    },
+    "LogRetentionDays": {
+      "label": "로그 보관 기간",
+      "tip": "이 일수보다 오래된 로그 파일을 삭제합니다. 0이면 영구 보관합니다."
+    },
+    "Rep4RepPointsRefreshMinutes": {
+      "label": "포인트 확인 주기",
+      "tip": "rep4rep에 포인트 합계를 물어보는 주기(분). rep4rep은 요청 제한을 공개하지 않으니 1로 두고 한 달을 돌리지는 마세요."
+    },
+    "ReconnectDelaySeconds": {
+      "label": "재연결 대기",
+      "tip": "Steam이 연결을 끊은 뒤 다시 연결하기까지 기다리는 초."
+    },
+    "ConnectionTimeoutSeconds": {
+      "label": "연결 제한 시간",
+      "tip": "포기하고 재연결하기 전까지 Steam의 응답을 기다리는 초."
+    },
+    "MaxConcurrentFarming": {
+      "label": "동시 파밍 최대",
+      "tip": "동시에 카드를 파밍할 수 있는 계정 수. 0이면 제한 없음."
+    },
+    "LoginCooldownMinutes": {
+      "label": "속도 제한 후 대기",
+      "tip": "Steam이 로그인에 제한을 걸면 모든 계정이 이만큼의 분을 기다립니다 - 차례로 막히려고 줄 서는 대신 다 같이 넘깁니다."
+    },
+    "WebRequestGapMs": {
+      "label": "웹 요청 사이 간격",
+      "tip": "같은 Steam 사이트에 보내는 두 요청 사이의 최소 간격(밀리초). 배지 읽기를 Steam의 레이더 아래에 두는 가장 큰 요소입니다 - 속도 제한 경고가 보이면 올리고, 절대 200 미만으로 내리지 마세요."
+    },
+    "SteamProtocol": {
+      "label": "연결 방식",
+      "tip": "Steam에 접속하는 방법. 방화벽이나 통신사가 무언가를 막는 게 아니라면 자동으로 두세요 - websocket 전용은 평범한 HTTPS 트래픽처럼 보여 대개 통과합니다."
+    },
+    "WebProxy": {
+      "label": "프록시",
+      "tip": "Steam 트래픽을 이 프록시로 보냅니다(예: http://127.0.0.1:8080). 비워 두면 직접 연결합니다."
+    },
+    "WebProxyUsername": {
+      "label": "프록시 사용자 이름",
+      "tip": "위 프록시가 요구하는 경우의 사용자 이름."
+    },
+    "WebProxyPassword": {
+      "label": "프록시 비밀번호",
+      "tip": "위 프록시가 요구하는 경우의 비밀번호."
+    },
+    "GlobalBlacklistedGames": {
+      "label": "절대 건드리지 않기 (모든 계정)",
+      "tip": "어떤 계정도 파밍하거나 유휴 실행하지 않을 AppID. 계정을 추가할 때마다 같은 목록을 반복하지 않아도 됩니다. 각 계정은 여기에 자기 목록을 더할 수 있습니다."
+    },
+    "Rep4RepLearnCap": {
+      "label": "실제 한도 학습",
+      "tip": "위에서 정한 상한을 넘어선 지점에서 Steam이 댓글을 거부하면 그 숫자를 이 계정의 실제 한도로 기억합니다. 흔한 '댓글이 너무 잦습니다' 거부로는 절대 상한을 낮추지 않습니다 - 그 메시지는 두 댓글 사이의 간격에 관한 것이며, 보통 10인 하루 한도와는 무관합니다."
+    },
+    "Rep4RepRetryRefused": {
+      "label": "거부된 댓글 재시도",
+      "tip": "거부된 댓글에 한 번 더 기회를 준 뒤, 그 프로필을 하루 동안 건너뜁니다."
+    },
+    "SendOnFarmingFinished": {
+      "label": "파밍이 끝나면 아이템 전송",
+      "tip": "더 이상 파밍할 카드가 없으면 이 계정이 모은 것을 위 목록의 첫 번째 계정으로 보냅니다. 유휴 계정을 여러 개 돌리는 이유가 바로 이것입니다 - 카드가 여섯 군데가 아니라 한 인벤토리에 모입니다."
+    },
+    "SendItemTypes": {
+      "label": "무엇을 보낼지",
+      "tip": "이 계정에서 나갈 수 있는 아이템 종류(쉼표로 구분): cards, foils, backgrounds, emoticons, boosters, gems 또는 \"all\". 여기에 없는 것은 다른 설정이 어떻든 절대 전송되지 않습니다."
+    },
+    "TradeMasterToken": {
+      "label": "상대의 교환 링크 토큰",
+      "tip": "상대 계정 교환 URL의 토큰(&token= 뒤 부분). 두 계정이 친구가 아닐 때만 필요하며, 친구 사이라면 비워 둬도 됩니다."
+    },
+    "ClearNotifications": {
+      "label": "Steam 알림 지우기",
+      "tip": "Steam 알림함에 있는 모든 것을 읽음으로 표시합니다 - 댓글, 선물, 도움 요청, 친구 요청. 카운터가 계정이 살아 있는 내내 늘어나는 대신 0으로 돌아갑니다. 어느 것도 저절로 줄지 않고, 누군가 페이지를 열 때까지 켜져 있는데, 직접 로그인하지 않는 계정에서는 아무도 열지 않습니다."
+    },
+    "AchievementIncludeMainGame": {
+      "label": "메인 게임에서도 획득",
+      "tip": "휴먼 모드의 메인 게임도 다른 게임처럼 도전 과제를 획득할지 여부입니다. 켜짐이 기본이고 그래야 합니다. 메인 게임은 시간이 쌓인 곳이라 도전 과제가 보여도 가장 자연스럽습니다. 끄면 완전히 건드리지 않으므로, 대표 게임에 수백 시간이 있는 계정이 거기서만 아무것도 없게 되는데 보통 그쪽이 더 이상합니다. 어느 쪽이든 희귀도 기준과 완료 상한은 그대로 적용됩니다."
+    }
   }
- }
 }

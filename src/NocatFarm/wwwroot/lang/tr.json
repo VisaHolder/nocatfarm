@@ -1,1094 +1,1098 @@
 {
- "ui": {
-  "Overview": "Genel bakış",
-  "Accounts": "Hesaplar",
-  "Console": "Konsol",
-  "Settings": "Ayarlar",
-  "Commands": "Komutlar",
-  "Global": "Genel",
-  "Jump to": "Şuraya git",
-  "Today": "Bugün",
-  "Recent activity": "Son etkinlik",
-  "Queued tasks": "Sıradaki görevler",
-  "Show tasks for": "Şunun görevlerini göster",
-  "Copy": "Kopyala",
-  "Refresh": "Yenile",
-  "Save": "Kaydet",
-  "Sign in": "Giriş yap",
-  "Add account": "Hesap ekle",
-  "Import from ASF": "ASF'den içe aktar",
-  "Your Steam profiles": "Steam profilleriniz",
-  "Pacing": "Tempo",
-  "Show the walkthrough again": "Tanıtımı tekrar göster",
-  "Steam account name": "Steam hesap adı",
-  "Password": "Parola",
-  "Search accounts…": "Hesap ara…",
-  "Search settings…": "Ayar ara…",
-  "Search the log…": "Günlükte ara…",
-  "leave blank and it'll ask": "boş bırak, sorar",
-  "mybot": "botum",
-  "type a command, or 'help'": "bir komut yazın veya 'help'",
-  "your steam login": "Steam kullanıcı adınız",
-  "Farming": "Toplama",
-  "Idling": "Boşta",
-  "Online": "Çevrimiçi",
-  "Connecting": "Bağlanıyor",
-  "Needs you": "Sana ihtiyacı var",
-  "Problem": "Sorun",
-  "Playing": "Oynuyor",
-  "On a break": "Molada",
-  "Night idle": "Gece boşta",
-  "Asleep": "Uyuyor",
-  "Off": "Kapalı",
-  "Playing a game that still has trading cards to drop.": "Hâlâ düşecek kartı olan bir oyunu oynuyor.",
-  "Nothing left to farm, so it's building playtime on the games you chose.": "Toplanacak bir şey kalmadı, o yüzden seçtiğin oyunlarda süre biriktiriyor.",
-  "Logged in and doing nothing. Give it games to idle or cards to farm.": "Giriş yapmış ama hiçbir şey yapmıyor. Ona boşta çalıştıracak oyun ya da toplayacak kart ver.",
-  "On its way in.": "Girmek üzere.",
-  "Waiting on you: a Steam Guard code, a password, or a decision.": "Seni bekliyor: bir Steam Guard kodu, bir parola ya da bir karar.",
-  "Something is wrong - the login failed, or Steam is refusing this account.": "Bir şeyler ters gitti - giriş başarısız oldu ya da Steam bu hesabı reddediyor.",
-  "Human mode: in a game right now, one at a time, like a person.": "İnsan modu: şu anda bir oyunda, teker teker, bir insan gibi.",
-  "Human mode: stepped away for a few minutes.": "İnsan modu: birkaç dakikalığına ayrıldı.",
-  "Offline for the night but quietly banking hours - nobody can see it.": "Gece boyunca çevrimdışı ama sessizce saat biriktiriyor - kimse göremez.",
-  "Done for the night. It comes back on its own in the morning.": "Bu gecelik bitti. Sabah kendi kendine geri döner.",
-  "Disabled or stopped. It won't log in until you start it.": "Devre dışı ya da durdurulmuş. Sen başlatana kadar giriş yapmaz.",
-  "Account": "Hesap",
-  "State": "Durum",
-  "Status": "Durum",
-  "Cards": "Kartlar",
-  "Value": "Değer",
-  "Up": "Açık",
-  "Game": "Oyun",
-  "Hours": "Saat",
-  "Played": "Oynandı",
-  "Earned": "Kazanıldı",
-  "Progress": "İlerleme",
-  "Opened": "Açılan",
-  "Next": "İleri",
-  "Next up": "Sırada",
-  "Comments": "Yorumlar",
-  "Points": "Puan",
-  "Cards left": "Kalan kart",
-  "Target": "Hedef",
-  "Steam login": "Steam girişi",
-  "Sign-in": "Giriş",
-  "Name": "Ad",
-  "Language": "Dil",
-  "Left out": "Elenenler",
-  "Comment to post": "Yazılacak yorum",
-  "rep4rep ID": "rep4rep kimliği",
-  "rep4rep": "rep4rep",
-  "Start": "Başlat",
-  "Stop": "Durdur",
-  "Pause": "Duraklat",
-  "Resume": "Devam",
-  "Cancel": "İptal",
-  "Close": "Kapat",
-  "Remove": "Kaldır",
-  "Remove it": "Kaldır",
-  "Clear": "Temizle",
-  "Undo": "Geri al",
-  "Submit": "Gönder",
-  "Back": "Geri",
-  "Skip": "Atla",
-  "Continue": "Devam",
-  "Finish": "Bitir",
-  "Import": "İçe aktar",
-  "Import them": "İçe aktar",
-  "Register": "Kaydet",
-  "Connect": "Bağlan",
-  "Post now": "Şimdi yaz",
-  "Add one": "Bir tane ekle",
-  "Add an account": "Bir hesap ekle",
-  "Add token": "Anahtar ekle",
-  "Not yet": "Henüz değil",
-  "Keep it on": "Açık bırak",
-  "Turn it off": "Kapat",
-  "Use a longer one": "Daha uzun bir tane kullan",
-  "Start them all": "Hepsini başlat",
-  "Replace token": "Anahtarı değiştir",
-  "Unlock everything": "Hepsini aç",
-  "Unlock everything…": "Hepsini aç…",
-  "Set a password to open it up": "Açmak için bir parola koy",
-  "h": "sa",
-  "m": "dk",
-  "now": "şimdi",
-  "never": "hiç",
-  "just now": "az önce",
-  "{0} ago": "{0} önce",
-  "in {0}": "{0} içinde",
-  "as of {0}": "{0} itibarıyla",
-  "minutes": "dakika",
-  "fleet": "filo",
-  "main": "ana",
-  "your": "senin",
-  "once": "bir kez",
-  "or type": "ya da şunu yaz",
-  "down to": "şuraya kadar",
-  "due now": "sırası geldi",
-  "waiting": "bekliyor",
-  "posting…": "yazılıyor…",
-  "Importing…": "İçe aktarılıyor…",
-  "filter…": "süz…",
-  "around the clock": "gün boyu",
-  "between {0} and {1}": "{0} ile {1} arasında",
-  "default {0}": "varsayılan {0}",
-  "none": "yok",
-  "none yet": "henüz yok",
-  "not set": "ayarlanmadı",
-  "saved": "kaydedildi",
-  "nothing at all": "hiçbir şey",
-  "nothing left to farm": "toplanacak bir şey yok",
-  "nothing queued": "kuyrukta bir şey yok",
-  "no accounts yet": "henüz hesap yok",
-  "not playing anything": "hiçbir şey oynamıyor",
-  "not read yet": "henüz okunmadı",
-  "your friends see:": "arkadaşların şunu görüyor:",
-  "one account": "bir hesap",
-  "one game": "bir oyun",
-  "one other": "bir tane daha",
-  "One task": "Bir görev",
-  "{0} account": "{0} hesap",
-  "{0} accounts": "{0} hesap",
-  "{0} games": "{0} oyun",
-  "{0} others": "{0} tane daha",
-  "{0} tasks": "{0} görev",
-  "{0} item": "{0} eşya",
-  "{0} items": "{0} eşya",
-  "{0} pending": "{0} beklemede",
-  "still pricing {0}": "{0} tanesi hâlâ fiyatlanıyor",
-  "{0} played.": "{0} oynandı.",
-  "+{0} more": "+{0} tane daha",
-  "…and {0} more.": "…ve {0} tane daha.",
-  "· frees {0}": "· {0} boşalır",
-  "- about {0} left": "- yaklaşık {0} kaldı",
-  "appID or store URL": "appID veya mağaza bağlantısı",
-  "paste it here": "buraya yapıştır",
-  "paste the new one here": "yenisini buraya yapıştır",
-  "paste the token here": "anahtarı buraya yapıştır",
-  "stored - press Clear to replace": "kayıtlı - değiştirmek için Temizle'ye bas",
-  "type confirm": "confirm yaz",
-  "type off": "off yaz",
-  "type the account name": "hesap adını yaz",
-  "Ready": "Hazır",
-  "Commenting off": "Yorum kapalı",
-  "Not on rep4rep": "rep4rep'te yok",
-  "Log in first": "Önce giriş yap",
-  "token — no password needed": "anahtar — parolaya gerek yok",
-  "password only": "yalnızca parola",
-  "will ask on first login": "ilk girişte sorar",
-  "will be erased when you save": "kaydedince silinecek",
-  "will be replaced when you save": "kaydedince değiştirilecek",
-  "turns into points on its own": "kendiliğinden puana dönüşür",
-  "(Steam's limit)": "(Steam'in sınırı)",
-  "Standing by": "Beklemede",
-  "this game's own ceiling": "bu oyunun kendi tavanı",
-  "the games you list under Human mode": "İnsan modunda listelediğin oyunlar",
-  "Owned by this account.": "Bu hesaba ait.",
-  "Shared with this account by a Steam Family.": "Bir Steam Ailesi tarafından bu hesapla paylaşıldı.",
-  "Games left": "Kalan oyun",
-  "Cards today": "Bugünkü kart",
-  "Comments today": "Bugünkü yorum",
-  "Inventory": "Envanter",
-  "rep4rep points": "rep4rep puanı",
-  "Points you can spend": "Harcayabileceğin puan",
-  "Waiting to be verified": "Doğrulanmayı bekliyor",
-  "Trading cards still to drop across every account.": "Tüm hesaplarda hâlâ düşebilecek kartlar.",
-  "Trading cards still to drop across every account that's farming.": "Kart toplayan tüm hesaplarda hâlâ düşebilecek kartlar.",
-  "Games with at least one card still to drop, across every account.": "Tüm hesaplarda en az bir kartı düşmeyi bekleyen oyunlar.",
-  "Trading cards that dropped in the last 24 hours.": "Son 24 saatte düşen kartlar.",
-  "rep4rep comments posted in the last 24 hours.": "Son 24 saatte yazılan rep4rep yorumları.",
-  "What every account's inventory would fetch at the market's median price. Everything in there is counted at what it's worth, whether or not it can be sold right now.": "Her hesabın envanterinin piyasa medyan fiyatıyla ne edeceği. İçindeki her şey, şu anda satılabilir olsun olmasın, değeri üzerinden sayılır.",
-  "What everything in this account's inventory would fetch at the market's median price. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth.": "Bu hesabın envanterindeki her şeyin piyasa medyan fiyatıyla ne edeceği. Piyasada ilanı olmayan eşyalar sıfır sayılır; yalnızca şu an satılamayanlar (takas kilidi, yasak) yine değeri üzerinden sayılır.",
-  "Points you can spend on rep4rep. Pending ones are comments rep4rep hasn't verified yet.": "rep4rep'te harcayabileceğin puanlar. Bekleyenler, rep4rep'in henüz doğrulamadığı yorumlardır.",
-  "Points you can spend. Pending points are comments rep4rep hasn't verified yet - they turn into real points on their own, usually within a few hours. Nothing is lost.": "Harcayabileceğin puanlar. Bekleyenler, rep4rep'in henüz doğrulamadığı yorumlar - kendiliğinden gerçek puana dönüşürler, genelde birkaç saat içinde. Hiçbir şey kaybolmaz.",
-  "How long nocat.farm has been running.": "nocat.farm'ın ne kadardır çalıştığı.",
-  "<b>{0}</b> card": "<b>{0}</b> kart",
-  "<b>{0}</b> cards": "<b>{0}</b> kart",
-  "<b>{0}</b> up": "<b>{0}</b> açık",
-  "<b>{0}</b> inventory": "<b>{0}</b> envanter",
-  "<b>{0}</b>/{1} comments": "<b>{0}</b>/{1} yorum",
-  "Waiting on you: {0}": "Seni bekliyor: {0}",
-  "Steam is showing {0}, not your custom name": "Steam {0} gösteriyor, senin özel adını değil",
-  "Drag this card to move the account. The order is used everywhere - here, the app window and the console.": "Hesabı taşımak için bu kartı sürükle. Sıra her yerde geçerli - burada, uygulama penceresinde ve konsolda.",
-  "What your friends list shows for this account. The GAME comes straight back from Steam, so it's what other people genuinely see; the status is what nocat.farm set it to. Human mode changes the status by itself: invisible overnight, away on a break, Snooze over a meal.": "Arkadaş listenin bu hesap için gösterdiği şey. OYUN doğrudan Steam'den gelir, yani başkalarının gerçekten gördüğü şeydir; durumu ise nocat.farm ayarlar. İnsan modu durumu kendi değiştirir: geceleri görünmez, molada uzakta, yemekte rahatsız etmeyin.",
-  "Steam decides what to display when a custom name is sent alongside real games, and it has settled on the real one. Idling fewer games, or only the custom name, makes it show yours. A brief mismatch right after signing in is normal and isn't reported here.": "Özel bir ad gerçek oyunlarla birlikte gönderildiğinde neyin gösterileceğine Steam karar verir ve gerçek olanda karar kılmış. Daha az oyunu boşta çalıştırmak ya da yalnızca özel adı göndermek, seninkini göstermesini sağlar. Girişin hemen ardından kısa süreli bir uyuşmazlık normaldir ve burada bildirilmez.",
-  "Comments posted in the last 24 hours against this account's daily cap.": "Son 24 saatte yazılan yorumların, bu hesabın günlük sınırına oranı.",
-  "Read this account's inventory again. Prices are kept for a day, so only what changed is looked up.": "Bu hesabın envanterini yeniden okur. Fiyatlar bir gün saklanır, o yüzden yalnızca değişen sorgulanır.",
-  "Log this account in.": "Bu hesaba giriş yapar.",
-  "Log this account out. It stays configured.": "Bu hesaptan çıkış yapar. Yapılandırması kalır.",
-  "Start playing, farming and commenting again.": "Yeniden oynamaya, toplamaya ve yorum yazmaya başlar.",
-  "Stop playing, farming and commenting. The account stays logged in.": "Oynamayı, toplamayı ve yorum yazmayı durdurur. Hesap giriş yapmış kalır.",
-  "What this account still has left to farm.": "Bu hesabın toplayacak neyi kaldığı.",
-  "This account's settings.": "Bu hesabın ayarları.",
-  "Up {0} over the last 24 hours, at the market median.": "Son 24 saatte {0} arttı, piyasa medyan fiyatıyla.",
-  "Down {0} over the last 24 hours, at the market median.": "Son 24 saatte {0} düştü, piyasa medyan fiyatıyla.",
-  "Reading this inventory...": "Bu envanter okunuyor...",
-  "Reading {0}’s inventory again…": "{0} envanteri yeniden okunuyor…",
-  "Nothing with a market price in this inventory.": "Bu envanterde piyasa fiyatı olan hiçbir şey yok.",
-  "{0} at market median": "{0}, piyasa medyan fiyatıyla",
-  "{0} - {1}  ({2})": "{0} - {1}  ({2})",
-  "{0} - skipped, nothing in it can be sold ({1})": "{0} - atlandı, içindeki hiçbir şey satılamaz ({1})",
-  "...{0} more still being priced": "...{0} tanesi hâlâ fiyatlanıyor",
-  "Global settings": "Genel ayarlar",
-  "These apply to nocat.farm as a whole.": "Bunlar nocat.farm'ın tamamı için geçerlidir.",
-  "You have unsaved changes here. Discard them?": "Burada kaydedilmemiş değişiklikler var. Atılsın mı?",
-  "Save one change": "1 değişikliği kaydet",
-  "Save {0} changes": "{0} değişikliği kaydet",
-  "Saved.": "Kaydedildi.",
-  "Saved. {0} applies after a restart.": "Kaydedildi. {0} yeniden başlatınca geçerli olur.",
-  "Saved. {0} apply after a restart.": "Kaydedildi. {0} yeniden başlatınca geçerli olur.",
-  "Save failed": "Kaydedilemedi",
-  "Could not save that": "Bu kaydedilemedi",
-  "Could not remove that account": "Bu hesap kaldırılamadı",
-  "Couldn't save that order": "Bu sıralama kaydedilemedi",
-  "That account is gone": "O hesap artık yok",
-  "That account is not loaded yet - try again in a second": "O hesap henüz yüklenmedi - bir saniye sonra tekrar dene",
-  "That didn't work": "Bu işe yaramadı",
-  "That is not an appID": "Bu bir appID değil",
-  "Nothing was waiting for that answer": "Bu cevabı bekleyen bir şey yoktu",
-  "Wrong password.": "Yanlış parola.",
-  "Can't reach nocat.farm.": "nocat.farm'a ulaşılamıyor.",
-  "Log copied": "Günlük kopyalandı",
-  "Copy failed - select it manually": "Kopyalanamadı - elle seç",
-  "All accounts": "Tüm hesaplar",
-  "No accounts yet": "Henüz hesap yok",
-  "No accounts yet.": "Henüz hesap yok.",
-  "No accounts match that.": "Eşleşen hesap yok.",
-  "No accounts configured yet.": "Henüz yapılandırılmış hesap yok.",
-  "No registered accounts yet.": "Henüz kayıtlı hesap yok.",
-  "Nothing matches.": "Eşleşme yok.",
-  "Nothing worth reporting yet.": "Henüz kayda değer bir şey yok.",
-  "Nothing left to farm on this account.": "Bu hesapta toplanacak bir şey kalmadı.",
-  "One advanced setting is hidden.": "1 gelişmiş ayar gizli.",
-  "{0} advanced settings are hidden.": "{0} gelişmiş ayar gizli.",
-  "Tick “Show advanced” to see them.": "Görmek için \"Gelişmişleri göster\"i işaretle.",
-  "Put this back to the default.": "Bunu varsayılana döndür.",
-  "This takes effect the next time nocat.farm starts.": "Bu, nocat.farm bir sonraki başlayışında geçerli olur.",
-  "Locked so it cannot be changed by accident. Press Clear to replace it.": "Yanlışlıkla değişmesin diye kilitli. Değiştirmek için Temizle'ye bas.",
-  "Erase the stored value. There's no undo.": "Kayıtlı değeri siler. Geri alınamaz.",
-  "Erase the stored value? There is no undo.": "Kayıtlı değer silinsin mi? Geri alınamaz.",
-  "A day looks like": "Bir gün şöyle geçiyor",
-  "Right now": "Şu anda",
-  "Careful": "Dikkat",
-  "Hunting {0}": "{0} içinde avlanıyor",
-  "Mostly {0}.": "Çoğunlukla {0}.",
-  "Mostly {0}, with {1} in bursts rather than every day.": "Çoğunlukla {0}, ayrıca {1} her gün değil, dalgalar hâlinde.",
-  "No games listed yet.": "Henüz oyun listelenmedi.",
-  "On around {0}, bed around {1} — both jittered daily.": "Yaklaşık {0} civarı açılır, {1} civarı yatar - ikisi de her gün oynatılır.",
-  "About {0} on a weekday and {1} at the weekend.": "Hafta içi yaklaşık {0}, hafta sonu {1}.",
-  "Roughly {0} days off entirely.": "Kabaca {0} gün tamamen izinli.",
-  "One game at a time, in sittings of {0}.": "Teker teker tek oyun, {0} süren oturumlarla.",
-  "Overnight it goes invisible and keeps banking hours.": "Gece boyunca görünmez olur ve saat biriktirmeyi sürdürür.",
-  "This account idles everything at once, around the clock. Switch Human mode on to play one game at a time on a believable schedule — the settings that would give it away are hidden and put back if you switch it off.": "Bu hesap her şeyi aynı anda, gün boyu boşta çalıştırır. İnandırıcı bir programla teker teker oynaması için İnsan modunu aç - ele verecek ayarlar gizlenir, kapatırsan geri gelir.",
-  "Human mode picks what it plays — mostly {0}, one game at a time.": "Ne oynayacağını İnsan modu seçer - çoğunlukla {0}, teker teker.",
-  "Your friends see the real game.": "Arkadaşların gerçek oyunu görüyor.",
-  "Your friends see {0} instead of the real game; the hours still count.": "Arkadaşların gerçek oyun yerine {0} görüyor; saatler yine sayılıyor.",
-  "Your friends see {0}. Underneath, {1} keep gaining real playtime — both at the same time.": "Arkadaşların {0} görüyor. Altta ise {1} gerçek oyun süresi kazanmayı sürdürüyor - ikisi aynı anda.",
-  "Your friends see {0}. No games are listed, so no playtime is being banked — add some below if you want hours too.": "Arkadaşların {0} görüyor. Hiç oyun listelenmemiş, dolayısıyla süre birikmiyor - saat de istiyorsan aşağıya birkaçını ekle.",
-  "{0} gain playtime, all at once. Set a name below to show something else instead while the hours still count.": "{0} aynı anda süre kazanıyor. Saatler yine sayılırken başka bir şey göstermek için aşağıya bir ad yaz.",
-  "Nothing set yet. Add games to bank playtime, and optionally a name to display instead of the real one.": "Henüz bir şey ayarlanmadı. Saat biriktirmek için oyun ekle, istersen gerçeğinin yerine gösterilecek bir ad da ver.",
-  "{0} · {1} working · everything's fine.": "{0} · {1} çalışıyor · her şey yolunda.",
-  "{0} needs something from you.": "{0} senden bir şey bekliyor.",
-  "{0} need something from you.": "{0} senden bir şey bekliyor.",
-  "One account has a problem.": "Bir hesapta sorun var.",
-  "{0} accounts have a problem.": "{0} hesapta sorun var.",
-  "{0} is out - you have {1}. Click to see what changed.": "{0} çıktı - sende {1} var. Neyin değiştiğini görmek için tıkla.",
-  "{0}: saved": "{0}: kaydedildi",
-  "Removed {0}": "{0} kaldırıldı",
-  "Remove {0}?": "{0} kaldırılsın mı?",
-  "{0} — trading cards": "{0} — takas kartları",
-  "{0}: unlocking everything - watch the log": "{0}: her şey açılıyor - günlüğe bak",
-  "{0}: will post as soon as the daily cap allows": "{0}: günlük sınır izin verir vermez yazacak",
-  "{0} registered with rep4rep": "{0} rep4rep'e kaydedildi",
-  "rep4rep connected": "rep4rep bağlandı",
-  "rep4rep commenting switched on for every account": "rep4rep yorumlaması tüm hesaplarda açıldı",
-  "Import failed": "İçe aktarma başarısız",
-  "Imported one account": "1 hesap içe aktarıldı",
-  "Imported {0} accounts": "{0} hesap içe aktarıldı",
-  "Import one account": "1 hesabı içe aktar",
-  "Import {0} accounts": "{0} hesabı içe aktar",
-  "Import {0}": "{0} içe aktar",
-  "Import from ArchiSteamFarm": "ArchiSteamFarm'dan içe aktar",
-  "Found an ArchiSteamFarm install with one account.": "1 hesaplı bir ArchiSteamFarm kurulumu bulundu.",
-  "Found an ArchiSteamFarm install with {0} accounts.": "{0} hesaplı bir ArchiSteamFarm kurulumu bulundu.",
-  "Found an ArchiSteamFarm setup at {0} with {1}.": "{0} konumunda {1} olan bir ArchiSteamFarm kurulumu bulundu.",
-  "{0} of them can come across with their saved logins — no passwords, no Steam Guard codes.": "Bunların {0} tanesi kayıtlı girişiyle gelebilir - parola yok, Steam Guard kodu yok.",
-  "You will still need to sign in to each one once.": "Yine de her birine bir kez giriş yapman gerekecek.",
-  "Accounts you already have here are left alone. Don't run ASF and nocat.farm on the same account at once — they'd take turns kicking each other off Steam.": "Burada zaten olan hesaplara dokunulmaz. ASF ile nocat.farm'ı aynı hesapta aynı anda çalıştırma - sırayla birbirlerini Steam'den atarlar.",
-  "Importing copies the accounts and their login tokens. It changes nothing in ArchiSteamFarm.": "İçe aktarma, hesapları ve giriş anahtarlarını kopyalar. ArchiSteamFarm'da hiçbir şeyi değiştirmez.",
-  "No ASF install found automatically. Point at its {0} folder:": "Otomatik olarak ASF kurulumu bulunamadı. {0} klasörünü göster:",
-  "No ArchiSteamFarm install was found on this machine, so there is nothing to import.": "Bu makinede ArchiSteamFarm kurulumu bulunamadı, dolayısıyla içe aktarılacak bir şey yok.",
-  "(login token comes across, so no password needed)": "(giriş anahtarı da geliyor, parolaya gerek yok)",
-  "They're added but not started. Press Start on each, or run {0}.": "Eklendiler ama başlatılmadılar. Her birinde Başlat'a bas ya da {0} çalıştır.",
-  "STEP {0} OF {1}": "ADIM {0} / {1}",
-  "Welcome to nocat.farm": "nocat.farm'a hoş geldin",
-  "Pick the language for this dashboard. You can change it later under Settings › Global.": "Bu panonun dilini seç. Sonradan Ayarlar › Genel altından değiştirebilirsin.",
-  "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. The console and the log stay in English.": "Çevirinin henüz kapsamadığı her şey boş görünmek yerine İngilizce kalır, yani yarım kalmış bir dil bile gayet kullanışlıdır. Konsol ve günlük İngilizce kalır.",
-  "It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts rep4rep comments - all from this machine. Your accounts never leave it.": "Steam hesaplarına giriş yapar, saatler saysın diye oyun oynar, takas kartı toplar ve rep4rep yorumları yazar - hepsi bu makineden. Hesapların buradan hiç çıkmaz.",
-  "This takes about a minute. You can skip it and come back from the Overview page.": "Bu yaklaşık bir dakika sürer. Atlayıp Genel Bakış sayfasından geri dönebilirsin.",
-  "Bring your ArchiSteamFarm accounts across": "ArchiSteamFarm hesaplarını buraya taşı",
-  "Add your first account": "İlk hesabını ekle",
-  "Add the Steam account you want it to run. You will be asked for the password {0}, and for a Steam Guard code - after that it remembers a login token and never needs the password again.": "Çalıştırmasını istediğin Steam hesabını ekle. Parola {0} sorulacak, bir de Steam Guard kodu - sonrasında bir giriş anahtarı hatırlar ve parolaya bir daha ihtiyaç duymaz.",
-  "Tell it what to play": "Ne oynayacağını söyle",
-  "An account does nothing until it knows what to run. Two ways:": "Bir hesap, neyi çalıştıracağını bilene kadar hiçbir şey yapmaz. İki yol var:",
-  "{0} - it works through everything in your library that still has drops, then stops. Nothing to configure.": "{0} - kütüphanendeki hâlâ düşecek şeyi olan her şeyi tek tek işler, sonra durur. Ayarlanacak bir şey yok.",
-  "{0} - it keeps a believable daily routine: a few games, one at a time, with breaks, meals and a bedtime. Use this on an account you care about.": "{0} - inandırıcı bir günlük düzen tutar: birkaç oyun, teker teker, molalar, yemekler ve bir yatma saatiyle. Bunu değer verdiğin bir hesapta kullan.",
-  "Both live under Settings, per account.": "İkisi de Ayarlar altında, hesap bazında.",
-  "rep4rep, if you want it": "İstersen rep4rep",
-  "Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own.": "İsteğe bağlı. Hesapların başkalarının Steam profillerine yorum yazar ve senin profiline yorum almak için harcayabileceğin puanlar kazanır.",
-  "Needs a free account - {0} - and the API token pasted into Settings. Skip it entirely if you only want cards and playtime.": "Ücretsiz bir hesap - {0} - ve Ayarlar'a yapıştırılmış bir API anahtarı gerektirir. Sadece kart ve süre istiyorsan tamamen atla.",
-  "That's it": "Hepsi bu",
-  "Everything has an explanation attached - hover the {0} beside any setting.": "Her şeyin bir açıklaması var - herhangi bir ayarın yanındaki {0} üzerine gel.",
-  "The Console tab does anything the other tabs do, by typing. {0} lists it all.": "Konsol sekmesi, diğer sekmelerin yaptığı her şeyi yazarak yapar. {0} hepsini listeler.",
-  "Add a Steam account": "Bir Steam hesabı ekle",
-  "A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam.": "Yalnızca sana ait bir takma ad. Yapılandırma dosyasına adını verir ve komutlarda yazdığın şeydir - Steam'deki hiçbir şeyle eşleşmesi gerekmez.",
-  "What you type into Steam's sign-in box. Not your display name, not your email.": "Steam'in giriş kutusuna yazdığın şey. Görünen adın da değil, e-postan da değil.",
-  "Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.": "İsteğe bağlı. Boş bırak; nocat.farm bir kez sorar, sonra hesabı bir giriş anahtarıyla hatırlar - bu, dosyadaki bir paroladan daha güvenlidir.",
-  "Add one and nocat.farm will ask for the password and a Steam Guard code once, then remember it with a login token.": "Bir tane ekle; nocat.farm parolayı ve bir Steam Guard kodunu bir kez sorar, sonra bir giriş anahtarıyla hatırlar.",
-  "Type the code from the Steam app on your phone, or from your email. nocat.farm can't finish logging in until you do.": "Telefonundaki Steam uygulamasındaki ya da e-postandaki kodu yaz. Sen yapana kadar nocat.farm girişi tamamlayamaz.",
-  "Trading cards": "Takas kartları",
-  "Human mode": "İnsan modu",
-  "Hours this account has spent in this game. This is what decides how much it is allowed to earn.": "Bu hesabın bu oyunda geçirdiği saat. Ne kadar kazanmasına izin verileceğini bu belirler.",
-  "Achievements earned out of what the game has.": "Oyunun sahip olduklarından kazanılan başarımlar.",
-  "How much of the game is done. The bar never fills - it stops at this game's ceiling, because 100% on an idled account is the giveaway.": "Oyunun ne kadarının bittiği. Çubuk asla dolmaz - bu oyunun tavanında durur, çünkü boşta çalışan bir hesapta %100 tam da ele veren şeydir.",
-  "How far down the rarity list the hours so far have opened. It always unlocks the MOST COMMON one still locked - the ones you get just by playing - and only works down toward the rare tail as the hours build. This figure is the limit, never the next pick: a game with none of the easy ones done gets an easy one.": "Şimdiye kadarki saatlerin nadirlik listesinde ne kadar aşağı açtığı. Her zaman hâlâ kilitli olan EN YAYGIN olanı açar - sırf oynayarak alınanları - ve saatler biriktikçe ancak nadir kuyruğa doğru iner. Bu rakam sınırdır, asla bir sonraki seçim değil: kolaylarından hiçbiri yapılmamış bir oyun kolay bir tane alır.",
-  "Roughly when the next one is due, or why this game is left alone. It is a pace, not a promise.": "Bir sonrakinin kabaca ne zaman geleceği ya da bu oyunun neden rahat bırakıldığı. Bu bir tempodur, söz değil.",
-  "This game's achievements haven't been read yet - that happens the first time it comes up for one.": "Bu oyunun başarımları henüz okunmadı - bu, sırası ilk kez geldiğinde olur.",
-  "{0}% of this game earned. It stops at {1}.": "Bu oyunun %{0}'i kazanıldı. {1} noktasında durur.",
-  "Nothing tracked yet. It starts counting the first minute a game is running.": "Henüz kaydedilen bir şey yok. Bir oyun çalışmaya başladığı ilk dakikadan sayar.",
-  "Reading what it has done so far…": "Şimdiye kadar yaptıkları okunuyor…",
-  "Off. This account earns no achievements at all - nothing is written to any game. Turn it on and it starts earning them at a pace that follows the hours actually put in.": "Kapalı. Bu hesap hiç başarım kazanmaz - hiçbir oyuna bir şey yazılmaz. Aç, gerçekten harcanan saatleri izleyen bir tempoda kazanmaya başlasın.",
-  "Earns achievements slowly, from real playtime.": "Gerçek oyun süresinden yavaş yavaş başarım kazanır.",
-  "Earns achievements slowly, from real playtime, {0}.": "Gerçek oyun süresinden yavaş yavaş başarım kazanır, {0}.",
-  "at twice the normal spacing": "normalin iki katı aralıkla",
-  "at half the normal spacing": "normalin yarısı aralıkla",
-  "Unlocking a pile of achievements the second it logs in is what gives a bot away. This drips them out the way a real player would instead - a few at a time, only the common ones, paced to the hours actually put in.": "Giriş yaptığı saniyede bir yığın başarımı açmak, bir botu ele veren şeydir. Burada bunun yerine gerçek bir oyuncunun yapacağı gibi damla damla verilir - her seferinde birkaç tane, yalnızca yaygın olanlar, gerçekten harcanan saatlere göre.",
-  "It never fully completes a game, and leaves the game this account plays most well alone.": "Bir oyunu asla tamamen bitirmez ve bu hesabın en çok oynadığı oyuna hiç dokunmaz.",
-  "It never fully completes a game (it stops at {0}%), and leaves the game this account plays most well alone.": "Bir oyunu asla tamamen bitirmez (%{0} noktasında durur) ve bu hesabın en çok oynadığı oyuna hiç dokunmaz.",
-  "No games yet — add the one this account is meant to be into first.": "Henüz oyun yok - önce bu hesabın sözde tuttuğu oyunu ekle.",
-  "The first game added is the main one.": "İlk eklenen oyun ana oyundur.",
-  "Make this the main game": "Bunu ana oyun yap",
-  "This game's share of the week. Every row here adds up to 100, including the main game - change one and the others move to make room.": "Bu oyunun haftadaki payı. Buradaki tüm satırlar, ana oyun dahil, toplamda 100 eder - birini değiştir, diğerleri yer açmak için kayar.",
-  "The main game's share is set by \"Main game gets\" below, not here — it's held at that share however many other games you add. Click to jump to it.": "Ana oyunun payını aşağıdaki \"Ana oyunun payı\" belirler, burası değil - kaç oyun eklersen ekle o payda tutulur. Oraya atlamak için tıkla.",
-  "Set up rep4rep": "rep4rep'i kur",
-  "Your rep4rep account": "rep4rep hesabın",
-  "How it works:": "Nasıl çalışır:",
-  "{0} your accounts post a comment on someone else's Steam profile → you earn points → you spend those points to get comments on {1} profile. nocat.farm does the posting for you, on a schedule that keeps every account under Steam's daily limit.": "{0} hesapların başkasının Steam profiline yorum yazar → puan kazanırsın → o puanları {1} profiline yorum almak için harcarsın. nocat.farm senin yerine yazar, her hesabı Steam'in günlük sınırının altında tutan bir programla.",
-  "Make a rep4rep account": "Bir rep4rep hesabı aç",
-  "Free, and it takes a minute. Sign up, then click the verification link in your email — the token below won't work until you do.": "Ücretsiz ve bir dakika sürer. Kaydol, sonra e-postandaki doğrulama bağlantısına tıkla - bunu yapmadan aşağıdaki anahtar çalışmaz.",
-  "Sign up for rep4rep ↗": "rep4rep'e kaydol ↗",
-  "Copy your API token": "API anahtarını kopyala",
-  "It's on {0}. Copy the whole string.": "{0} adresinde. Dizenin tamamını kopyala.",
-  "nocat.farm registers your Steam accounts with rep4rep by itself and starts posting. You don't have to add anything on their website.": "nocat.farm, Steam hesaplarını rep4rep'e kendi kaydeder ve yazmaya başlar. Onların sitesinde bir şey eklemene gerek yok.",
-  "Spend these on comments for your own Steam profile, over on rep4rep.com. Read fresh from rep4rep every time you open this tab, so it matches the site.": "Bunları rep4rep.com üzerinden kendi Steam profiline yorum almak için harca. Bu sekmeyi her açtığında rep4rep'ten yeniden okunur, bu yüzden siteyle aynıdır.",
-  "Comments you've posted that rep4rep hasn't checked yet. They turn into spendable points on their own, usually within a few hours - nothing is lost and nothing is stuck.": "Yazdığın ama rep4rep'in henüz kontrol etmediği yorumlar. Kendiliğinden harcanabilir puana dönüşürler, genelde birkaç saat içinde - hiçbir şey kaybolmaz, hiçbir şey takılı kalmaz.",
-  "Spend your points ↗": "Puanlarını harca ↗",
-  "Token set · synced {0}": "Anahtar ayarlı · eşitlendi {0}",
-  "Connect your rep4rep account first.": "Önce rep4rep hesabını bağla.",
-  "Connected, but commenting isn't switched on for any account yet.": "Bağlandı, ama henüz hiçbir hesapta yorumlama açık değil.",
-  "Turn it on for all {0}": "{0} hesabın hepsinde aç",
-  "Posting from {0} of {1}.": "{1} hesabın {0} tanesinden yazılıyor.",
-  "rep4rep's own id for this profile. It is not your SteamID - this is the one their support and their API ask for.": "rep4rep'in bu profil için kendi kimliği. SteamID'n değil - destekleri ve API'leri bunu ister.",
-  "Comments posted in the last ROLLING 24 hours - not a midnight reset. Each one ages off on its own 24h after it went out, so the count frees up gradually. Shown against the cap.": "Son KAYAN 24 saatte yazılan yorumlar - gece yarısı sıfırlanma yok. Her biri gönderildikten 24 saat sonra kendiliğinden düşer, yani sayaç yavaş yavaş boşalır. Sınıra karşı gösterilir.",
-  "Rolling 24h window: the count drops as each comment ages past 24h. This is the soonest this account can post again.": "Kayan 24 saatlik pencere: her yorum 24 saati geçtikçe sayaç düşer. Bu hesabın yeniden yazabileceği en erken an budur.",
-  "This is the ceiling Steam enforced on this account, not the number you set - so raising the configured cap won't lift it.": "Bu, Steam'in bu hesaba dayattığı tavandır, senin belirlediğin sayı değil - yapılandırılmış sınırı yükseltmek bunu kaldırmaz.",
-  "Skip the wait and post the next comment as soon as the daily cap allows. It never goes over the cap.": "Beklemeyi atla ve günlük sınır izin verir vermez bir sonraki yorumu yaz. Sınırı asla aşmaz.",
-  "Post this one right now instead of waiting for the schedule. It still counts against the daily cap.": "Programı beklemek yerine bunu hemen yaz. Yine de günlük sınıra sayılır.",
-  "This is rep4rep's cached copy of your Steam settings, not live. If you just changed something on Steam, it can take a while to show here.": "Bu, rep4rep'in Steam ayarlarının önbelleğe alınmış kopyasıdır, canlı değil. Steam'de az önce bir şey değiştirdiysen burada görünmesi zaman alabilir.",
-  "{0} waiting. Every task is worth the same to rep4rep — their API doesn't rank them, so there's nothing to pick between.": "{0} bekliyor. rep4rep için her görev aynı değerde - API'leri sıralama yapmıyor, dolayısıyla seçilecek bir şey yok.",
-  "No tasks for this account right now. rep4rep hands them out in batches — check back later.": "Şu an bu hesap için görev yok. rep4rep bunları toplu dağıtır - sonra tekrar bak.",
-  "rep4rep checks the text matches exactly, so these are posted character for character.": "rep4rep metnin birebir eşleştiğini kontrol eder, bu yüzden bunlar harfi harfine yazılır.",
-  "rep4rep is switched on for one account but there's no API token, so nothing is being posted.": "rep4rep 1 hesapta açık ama API anahtarı yok, dolayısıyla hiçbir şey yazılmıyor.",
-  "rep4rep is switched on for {0} accounts but there's no API token, so nothing is being posted.": "rep4rep {0} hesapta açık ama API anahtarı yok, dolayısıyla hiçbir şey yazılmıyor.",
-  "Up to {0} comments a day, {1} apart, {2}.": "Günde en fazla {0} yorum, {1} arayla, {2}.",
-  "That's roughly {0} of posting spread across the day.": "Bu, güne yayılmış yaklaşık {0} yazma süresi demek.",
-  "Unlock every achievement, in every game this account owns": "Bu hesabın sahip olduğu her oyundaki her başarımı aç",
-  "This is for accounts that are not pretending to be anyone. Thousands of achievements appear at once, all stamped with the same moment, and that stamp is set by Steam and cannot be changed or hidden. Anyone looking at the profile can see it, permanently. If this account is meant to look played, leave this alone and let the pacer earn them instead.": "Bu, kimse gibi görünmeye çalışmayan hesaplar içindir. Binlerce başarım bir anda belirir, hepsi aynı ana damgalanır ve o damgayı Steam koyar; ne değiştirilebilir ne de gizlenebilir. Profile bakan herkes bunu görür, kalıcı olarak. Bu hesabın oynanmış görünmesi gerekiyorsa buna dokunma, bırak tempocu onları kazansın.",
-  "Unlock everything on {0}?": "{0} hesabında her şey açılsın mı?",
-  "Every achievement in every game {0} owns will be unlocked, right now.": "{0} hesabının sahip olduğu her oyundaki her başarım, hemen şimdi açılacak.",
-  "They all get the same unlock time. That is what makes it obvious.": "Hepsi aynı açılma zamanını alır. Bunu bariz hâle getiren de budur.",
-  "Steam sets that time itself - it cannot be back-dated or hidden.": "O zamanı Steam kendi koyar - geriye tarihlenemez, gizlenemez.",
-  "It runs for a long time on a big library, and it cannot be meaningfully undone.": "Büyük bir kütüphanede uzun sürer ve anlamlı biçimde geri alınamaz.",
-  "Type {0} below to enable the button.": "Düğmeyi etkinleştirmek için aşağıya {0} yaz.",
-  "Type {0} to enable the button.": "Düğmeyi etkinleştirmek için {0} yaz.",
-  "Type {0} to confirm.": "Onaylamak için {0} yaz.",
-  "This deletes {0} and the stored login token for it.": "Bu, {0} dosyasını ve onun için saklanan giriş anahtarını siler.",
-  "Nothing happens to the Steam account itself - it is only removed from nocat.farm.": "Steam hesabının kendisine bir şey olmaz - yalnızca nocat.farm'dan çıkarılır.",
-  "Adding it back needs the password and a fresh Steam Guard code.": "Geri eklemek için parola ve yeni bir Steam Guard kodu gerekir.",
-  "Anything it was farming stops.": "Ne topluyorsa durur.",
-  "Turn off opening the dashboard?": "Panoyu açma kapatılsın mı?",
-  "A newly added account does {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "Yeni eklenen bir hesap, neyi oynayacağı söylenene kadar {0} yapmaz ve o form uygulama penceresinde yok - yalnızca panoda var.",
-  "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "Bu kapalıyken bir hesap eklemek seni komut satırında bırakır ve hesap, sen gidip yapılandırmayı hatırlayana kadar boş boş bekler. Bu, bunu zaten bilenler içindir.",
-  "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "Bu panoya ağından erişilebiliyor ve parolası tahmin edilebilecek kadar kısa. Steam hesapların bunun arkasında.",
-  "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "Bu pano ağı dinleyecek şekilde ayarlı, ama parola olmadan bu bilgisayardan gelmeyen her bağlantıyı reddediyor - yani yalnızca buradan erişilebilir.",
-  "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "Bu hesabın bu oyunu ne kadar oynadığı. Bu hesabın ayarlarındaki eşik aşılmadan Steam hiçbir şey düşürmez.",
-  "Dashboard": "Pano",
-  "Running in the background": "Arka planda çalışma",
-  "rep4rep account": "rep4rep hesabı",
-  "Steam connection": "Steam bağlantısı",
-  "Logging": "Günlük tutma",
-  "What it plays": "Ne oynadığı",
-  "Free games & badges": "Ücretsiz oyunlar ve rozetler",
-  "Achievements": "Başarımlar",
-  "rep4rep commenting": "rep4rep yorumlama",
-  "Friends & messages": "Arkadaşlar ve mesajlar",
-  "Trades": "Takaslar",
-  "Staying out of the way": "Yoldan çekilme",
-  "Log": "Günlük",
-  "Not being valued - this account has \"Work out what its inventory is worth\" turned off.": "Değerlenmiyor - bu hesapta \"Envanterinin ne ettiğini hesapla\" kapalı."
- },
- "settings": {
-  "WebEnabled": {
-   "label": "Web panosu",
-   "tip": "Web panosunu sunar. Kapatırsan nocat.farm yalnızca konsolda kalır - her şey yine çalışır, sadece yazarak yönetirsin."
-  },
-  "WebHost": {
-   "label": "Şurada dinle",
-   "tip": "Panonun hangi adreslerde yanıt vereceği. 127.0.0.1 yalnızca bu bilgisayar demektir; telefonundan ya da başka bir makineden erişmek için 0.0.0.0 kullan ve önce bir parola koy."
-  },
-  "WebPort": {
-   "label": "Bağlantı noktası",
-   "tip": "Panonun bağlantı noktası. 7242'yi başka bir şey kullanıyorsa değiştir."
-  },
-  "WebPassword": {
-   "label": "Pano parolası",
-   "tip": "Panonun parolası. Boş olduğu sürece pano, bu bilgisayardan gelmeyen her bağlantıyı reddeder; böylece Steam hesaplarını yanlışlıkla yayına açamazsın."
-  },
-  "OpenDashboardAfterAdd": {
-   "label": "Hesap ekledikten sonra panoyu aç",
-   "tip": "Yeni bir hesap eklenir eklenmez panoyu tarayıcında açar ki ayarlayabilesin. Yepyeni bir hesap, neyi oynayacağı söylenene kadar hiçbir şey yapmaz ve o form uygulama penceresinde yok - yalnızca panoda var. Kapatırsan hatırlamak sana kalır."
-  },
-  "OpenBrowserOnStart": {
-   "label": "Başlangıçta tarayıcıyı aç",
-   "tip": "nocat.farm başladığında panoyu tarayıcında otomatik açar."
-  },
-  "Tray": {
-   "label": "Tepsi simgesi",
-   "tip": "Bildirim alanına (sağ altta, saatin yanına) bir simge koyar, böylece nocat.farm arka planda çalışabilir. Menü için sağ tıkla."
-  },
-  "MinimizeToTray": {
-   "label": "Tepsiye küçült",
-   "tip": "Konsol penceresini küçültmek onu görev çubuğunda bırakmak yerine tepsiye gizler."
-  },
-  "StartMinimized": {
-   "label": "Gizli başlat",
-   "tip": "Konsol penceresi gizli olarak, doğrudan tepsiye başlar. Simgeye çift tıklayınca geri gelir."
-  },
-  "StartWithWindows": {
-   "label": "Windows ile başlat",
-   "tip": "Windows'a giriş yaptığında nocat.farm'ı çalıştırır. Yalnızca kendi kullanıcı hesabının altına tek bir kayıt ekler, başka hiçbir şeye dokunmaz."
-  },
-  "KeepAwake": {
-   "label": "Bu bilgisayarı uyanık tut",
-   "tip": "Hesaplar çalışırken Windows'un uyku moduna geçmesini engeller. Ekran yine kapanabilir - yalnızca uyku engellenir."
-  },
-  "TrayNotifications": {
-   "label": "Bildirim balonlarını göster",
-   "tip": "Balon bildirimlerinin ana anahtarı. Aşağıdaki üçü hangilerini gerçekten alacağına karar verir."
-  },
-  "NotifyEarnings": {
-   "label": "Kazanç olduğunda bildir",
-   "tip": "Bir kart düştüğünde ya da bir rep4rep yorumu hesaba geçtiğinde bildirir."
-  },
-  "NotifySocial": {
-   "label": "Yorumları bildir",
-   "tip": "Biri profillerinden birine yorum yazdığında bildirir."
-  },
-  "NotifyProblems": {
-   "label": "Sorunları bildir",
-   "tip": "Bir hesabın gerçekten sana ihtiyacı olduğunda bildirir: Steam Guard kodu, başarısız giriş ya da yorum yasağı."
-  },
-  "Rep4RepEnabled": {
-   "label": "rep4rep'i hiç kullan(ma)",
-   "tip": "rep4rep, kullanıcılarının birbirine profil yorumu bıraktığı üçüncü taraf bir site. Tamamen isteğe bağlı. Kapatırsan nocat.farm her hesapta rep4rep'e dair her şeyi durdurur ve özelliğin tamamı kaybolur - sekmesi, puanları, hesap başına seçenekleri ve bu ayarlar sen yeniden açana kadar görünmez."
-  },
-  "Rep4RepApiToken": {
-   "label": "API anahtarı",
-   "tip": "rep4rep API anahtarın. Kaç Steam hesabı çalıştırırsan çalıştır, tek anahtar tüm rep4rep hesabını kapsar - rep4rep.com'da Settings altından al. Hesabın yok mu? rep4rep.com/?r=reap"
-  },
-  "Rep4RepAutoAddProfiles": {
-   "label": "Hesapları otomatik kaydet",
-   "tip": "Her Steam hesabını ilk girişinde rep4rep'e kaydeder, böylece siteden elle eklemen gerekmez."
-  },
-  "LoginStaggerSeconds": {
-   "label": "Girişler arası boşluk",
-   "tip": "Başlangıçta bir hesabı giriş yaptırdıktan sonra bir sonrakine kadar geçen saniye. Steam IP adresine göre sınırlar, bu yüzden birkaç hesabın sınıra takılmasını önleyen tam da bu boşluktur."
-  },
-  "StatusEveryMinutes": {
-   "label": "Şu sıklıkta rapor ver",
-   "tip": "Bir oyun açıkken bu hesabın ne yaptığını ne sıklıkla söylediği. 0, Günlük altındaki genel ayarı izler; -1 susturur."
-  },
-  "StatusQuietEveryMinutes": {
-   "label": "Dinlenirken ise",
-   "tip": "Aynısı; hesap uyurken, molada, duraklatılmışken veya çıkış yapmışken. 0 genel ayarı izler; -1 sessiz tutar."
-  },
-  "Language": {
-   "label": "Dil",
-   "tip": "Panelin dili. Henüz çevrilmemiş olan boş kalmak yerine İngilizce görünür, yani yarım kalmış bir dil bile gayet kullanılabilir."
-  },
-  "MarketCurrency": {
-   "label": "Envanter fiyatları şu birimde",
-   "tip": "Envanter fiyatlarının para birimi. Steam mağazandakiyle aynı yap, yoksa toplamlar pazarda gördüğünle uyuşmaz."
-  },
-  "FileLogging": {
-   "label": "Günlük dosyası yaz",
-   "tip": "Her şeyi ekranın yanı sıra logs/ klasörüne de yazar. Açık bıraksan iyi olur - sen uyurken ne olduğunu görmenin tek yolu bu."
-  },
-  "DailyReportEnabled": {
-   "label": "Günlükte günlük özet",
-   "tip": "Günde bir kez, her hesabın son 24 saatte ne kazandığını tek bakışta gösteren bir özet yazar: oynanan saatler, kartlar, rep4rep yorumları ve toplam. \"Gece boyunca ne kazandım?\" sorusunu kaydırmadan yanıtlar; istediğin an `report` yazarak da görebilirsin."
-  },
-  "DailyReportHour": {
-   "label": "Özet saati · saat",
-   "tip": "Günlük özetin yazılacağı saat, 0-23 (yerel saat). Varsayılan 9."
-  },
-  "DailyReportMinute": {
-   "label": "Özet saati · dakika",
-   "tip": "Günlük özet için o saatin dakikası, 0-59. Saat 9 + dakika 30 = 09:30."
-  },
-  "Enabled": {
-   "label": "Etkin",
-   "tip": "Bu hesaba giriş yapar. Kapatırsan yapılandırması durur ama hesaba hiç dokunulmaz."
-  },
-  "SteamLogin": {
-   "label": "Steam hesap adı",
-   "tip": "Giriş yaparken yazdığın Steam hesap adı - görünen adın değil, e-postan da değil."
-  },
-  "SteamPassword": {
-   "label": "Parola",
-   "tip": "İsteğe bağlı. Boş bırak; nocat.farm bir kez sorar, sonra hesabı bir giriş anahtarıyla hatırlar - iki seçenekten daha güvenli olanı."
-  },
-  "OnlineStatus": {
-   "label": "Şöyle görün",
-   "tip": "Başkalarının seni nasıl gördüğü: çevrimiçi, uzakta, meşgul veya görünmez. Görünmez modda saatler birikmeye devam eder ve kimse bir şey görmez."
-  },
-  "IUseThisAccount": {
-   "label": "Bu hesaba ben de giriyorum",
-   "tip": "Bu hesaba kendin de giriyorsan işaretle. Böylece nocat.farm durumuna dokunmaz - bunu ikinci bir oturumdan yapmak seni kendi Steam sohbetinden atar."
-  },
-  "StartPaused": {
-   "label": "Duraklatılmış başlat",
-   "tip": "Giriş yapar ama sen Devam'a basana kadar oynamaz, toplamaz, yorum yazmaz. Çevrimiçi olup hiçbir şey yapmasını istediğin bir hesap için."
-  },
-  "LogColour": {
-   "label": "Günlükteki rengi",
-   "tip": "Bu hesabın adının günlükte ve panoda hangi renkle yazılacağı. Birkaç hesabı geçtiğinde işe yarar."
-  },
-  "Notes": {
-   "label": "Notlar",
-   "tip": "Bu hesabın ne için olduğuna dair kendine bir not. Hesap kartında görünür ve Steam'in yanına bile yaklaşmaz."
-  },
-  "LegitMode": {
-   "label": "İnsan modu",
-   "tip": "Hesabı bir insan gibi oynatır: tek seferde tek oyun, uzunluğu değişen oturumlar ve molalar, gerçekçi yatma ve kalkma saatleri, ve hiç oynanmayan günler. Kapalıyken sadece saat biriktirir."
-  },
-  "LegitStopMaxSeconds": {
-   "label": "Durdurulunca en fazla şu kadar toparlan",
-   "tip": "Yalnızca insan modu: elle durdurduğunda, çıkmadan önce en fazla bu kadar rastgele saniye oynamaya devam eder (işini bitiren biri gibi), aniden yok olmak yerine."
-  },
-  "GameWeights": {
-   "label": "Oyunlar ve sıklıkları",
-   "tip": "Oyunlar ve ağırlıkları, örneğin \"730:70, 440:20\". En ağırı ana oyundur ve zamanın çoğunu alır; diğerleri her gün değil, arada bir, öbekler hâlinde gelir."
-  },
-  "WeekdayHours": {
-   "label": "Hafta içi saat",
-   "tip": "Pazartesiden cumaya kabaca kaç saat oynadığı. Gerçek sayı her sabah bunun etrafında atılır - kimi gün kısa, kimi gün uzun - yani iki gün birbirine benzemez."
-  },
-  "WeekendHours": {
-   "label": "Hafta sonu saat",
-   "tip": "Cumartesi ve pazar için aynısı. Hafta sonlarının hafta içinden uzun sürmesi, bir haftanın gerçek görünmesinin büyük bölümüdür."
-  },
-  "DayOffChancePct": {
-   "label": "İzin günü olasılığı",
-   "tip": "100 üzerinden, o gün hiç oynamama olasılığı. İstisnasız her gün oynayan biri bottur; bunu engelleyen ayar budur."
-  },
-  "DayStartHour": {
-   "label": "Yaklaşık şu saatte girer",
-   "tip": "Genelde çevrimiçi olduğu saat, 0-23. Gerçek saat bunun çevresinde bir çan eğrisine düşer, hafta sonu daha erken başlar; yani asla aynı dakika iki kez olmaz."
-  },
-  "BedHour": {
-   "label": "Yaklaşık şu saatte yatar",
-   "tip": "Geceyi bitirdiği saat, 0-23. Gece yarısından sonrası da olur: 2, gece 02.00 demektir."
-  },
-  "LateNightExtraHours": {
-   "label": "Cuma/Cumartesi daha geç yatar",
-   "tip": "Ertesi gün bir işi olmadığı cuma ve cumartesi geceleri fazladan ayakta kaldığı saatler."
-  },
-  "MainGameSharePct": {
-   "label": "Ana oyunun payı",
-   "tip": "Başka oyunlar da oynadığı bir günde listedeki İLK oyunun aldığı pay, yüzde olarak. Her gün bunun yaklaşık 10 puan çevresinde yeniden atılır."
-  },
-  "PureMainDayChancePct": {
-   "label": "Yalnızca ana oyun günleri",
-   "tip": "100 üzerinden, bütün bir günün sadece ana oyuna gitme olasılığı. Diğer oyunların her gün aynı dozda değil de öbekler hâlinde gelmesini sağlayan budur."
-  },
-  "SideGameSharePct": {
-   "label": "Karışık günde diğerlerinin payı",
-   "tip": "Ana oyunun dışına çıktığı günlerde, diğer oyunların aralarında paylaştığı günün kabaca ne kadarı. Bu tükenince günün kalanı yine ana oyundur."
-  },
-  "WarmUpMinMinutes": {
-   "label": "En az şu kadar alışsın",
-   "tip": "Giriş yaptıktan sonra bir şeye başlamadan önceki en kısa bekleme, dakika. Hesap çevrimiçi olduğu saniye oyunun içinde olmak, olabilecek en makine işi şeydir."
-  },
-  "WarmUpMaxMinutes": {
-   "label": "Ve en fazla",
-   "tip": "En uzun alışma süresi, dakika. Gerçeği ikisi arasında rastgele seçilir. Ne ayarlarsanız ayarlayın, girişten sonraki üç dakika içinde asla başlamaz."
-  },
-  "SessionMinMinutes": {
-   "label": "En kısa oturum",
-   "tip": "Başka bir şeye geçmeden önce bir oyunda kalacağı en kısa süre. Kimse beş dakikada bir oyun değiştirmez."
-  },
-  "SessionMaxMinutes": {
-   "label": "En uzun oturum",
-   "tip": "Bir oyunda kalacağı en uzun süre. Oturumların çoğu ikisinin arasına düşer; yarım saatlik bir uğrama da bütün bir akşam da normaldir, o yüzden bol bırakın."
-  },
-  "MealBreaksPerDay": {
-   "label": "Günde öğün sayısı",
-   "tip": "Günde masadan gerçekten kalktığı kaç mola verdiği. Rastgele değil, gerçek yemek saatlerinin çevresine düşerler; onları yemek gibi gösteren de budur."
-  },
-  "MealBreakMinutes": {
-   "label": "Bir öğün ne kadar sürer",
-   "tip": "Böyle bir molada kabaca ne kadar uzak kaldığı, dakika. Bazen epey uzar: sohbete dalınır."
-  },
-  "SignOutOnBreakChancePct": {
-   "label": "Molada çıkış yapma olasılığı",
-   "tip": "100 üzerinden, bir molayı sadece Uzakta değil, çevrimdışı görünerek geçirme olasılığı - arkadaş listen için bu, Steam'i kapatmaktan ayırt edilemez."
-  },
-  "OfflineIdleAtNight": {
-   "label": "Gece saat biriktir",
-   "tip": "Uyurken görünmez olur ve yine de sessizce saat biriktirir. Arkadaş listen hesabı çevrimdışı görür, kimse bir şey görmez, saatler yine işler."
-  },
-  "OfflineIdleGames": {
-   "label": "Gece için oyunlar",
-   "tip": "Gece çevrimdışıyken ve toplanacak kart kalmadığında ne çalıştırılacağı. İstediğin kadar: kaç tane olduğunu görecek kimse yok, o yüzden \"teker teker\" kuralı burada geçmez."
-  },
-  "IdleGames": {
-   "label": "Saat biriktirilecek oyunlar",
-   "tip": "Saat biriktirmek için çalıştırılacak oyunlar. Steam aynı anda 32 tanesine izin verir."
-  },
-  "CustomGameNameEnabled": {
-   "label": "Özel bir oyun adı göster",
-   "tip": "Arkadaş listende gerçek oyun yerine uydurma bir ad gösterir. Saatler yine gerçek oyuna işlemeye devam eder."
-  },
-  "CustomGameName": {
-   "label": "Şöyle göster",
-   "tip": "Profilinde ve arkadaş listende gerçek oyun yerine bu adı gösterir. Gerçek oyunlar altta saat biriktirmeye devam eder - ikisi aynı anda olur."
-  },
-  "FarmCards": {
-   "label": "Kart topla",
-   "tip": "Kütüphanende düşmeyi bekleyen kartları toplar ve hiçbiri kalmayınca durur. Ayarlanacak bir şey yok."
-  },
-  "HoursUntilCardDrops": {
-   "label": "Kart düşene kadar saat",
-   "tip": "Steam'in bir oyun için kart vermesine kadar gereken saat. Çoğu hesap için 3 doğrudur; bu hesap Steam'de 5 dolardan fazla harcadıysa 0 yapın."
-  },
-  "FarmingOrder": {
-   "label": "Bu sırayla topla",
-   "tip": "Önce hangi oyunun toplanacağı. \"En az kart kalan\" rozetleri en çabuk bitirir; \"en çok oynanan önce\" kütüphanene en az yeni süre ekler."
-  },
-  "FarmOffline": {
-   "label": "Çevrimdışı görünerek topla",
-   "tip": "Bu hesap toplarken arkadaşlarına çevrimdışı görünür. Steam yine her saati sayar ve kartlar yine düşer; değişen tek şey kimsenin görmemesidir."
-  },
-  "UnlockAchievements": {
-   "label": "Zamanla başarım kazan",
-   "tip": "Gerçek oynama süresinden yola çıkarak başarımları yavaş yavaş kazanır, en yaygın olanlardan başlayarak. Saatlerin haklı çıkarmadığı hiçbir şeyi açmaz ve bir oyunu asla %100 bitirmez."
-  },
-  "AchievementPace": {
-   "label": "Ne hızda",
-   "tip": "İki açılış arasında ne kadar beklendiği. \"Dikkatli\" her aralığı ikiye katlar; birinin gerçekten bakmasına dayanması gereken bir hesapta istediğin de budur."
-  },
-  "AchievementMaxCompletionPct": {
-   "label": "Şundan fazlasını asla tamamlama",
-   "tip": "Herhangi bir oyunun ne kadarının tamamlanacağına dair sert bir tavan, yüzde olarak. 0, her oyunu kendi ayarlı tavanına bırakır ve genelde daha doğrusu budur: 3 saatlik bir bulmaca ile 500 saatlik bir kampanya aynı rakamda durmamalı. Idle bir hesapta %100 zaten ele veren şeydir, bu yüzden 95'i asla geçmez."
-  },
-  "ClaimFreeGames": {
-   "label": "Ücretsiz oyunları al",
-   "tip": "Karşına çıkan ücretsiz oyunları alır, böylece kütüphane kendiliğinden büyür."
-  },
-  "CraftBadges": {
-   "label": "Kart setlerinden rozet üret",
-   "tip": "Tamamlanmış kart setlerini rozete çevirir; bu profil deneyimi ve bazen eşya verir."
-  },
-  "Rep4Rep": {
-   "label": "rep4rep yorumları gönder",
-   "tip": "rep4rep'in bu hesaba verdiği yorumları insan temposunda gönderir."
-  },
-  "Rep4RepDailyCap": {
-   "label": "24 saatte en fazla",
-   "tip": "Bu hesabın 24 saat içinde yazacağı en fazla yorum sayısı. Steam'in arkadaşın olmayan kişiler için gerçek tavanı yaklaşık 10'dur ve bunu aşmak tam da bir hesaba yorum yasağı getiren şeydir."
-  },
-  "Rep4RepGapMinMinutes": {
-   "label": "En kısa boşluk",
-   "tip": "Bu hesaptan iki yorumu asla bu dakikadan daha yakın aralıkla yazmaz."
-  },
-  "Rep4RepGapMaxMinutes": {
-   "label": "En uzun boşluk",
-   "tip": "Yorumlar arasındaki en uzun boşluk, dakika. Gerçeği ikisi arasında rastgele seçilir, böylece zamanlama asla mekanik görünmez."
-  },
-  "Rep4RepStartHour": {
-   "label": "Yalnızca şu saatten sonra yaz",
-   "tip": "Bu hesabın yorum yapacağı günün en erken saati, 0-23. Sabahın dördünde gelen yorumlar, olabilecek en bariz bot işaretidir."
-  },
-  "Rep4RepEndHour": {
-   "label": "Şu saate kadar",
-   "tip": "Bu hesabın yorum yapacağı günün en geç saati, 1-24. Başlangıç saatiyle aynı yaparsan gün boyu yorum yapılabilir."
-  },
-  "AcceptFriendRequests": {
-   "label": "Arkadaşlık isteklerini kabul et",
-   "tip": "Gelen arkadaşlık isteklerini otomatik kabul eder. rep4rep hesabında açık olması işe yarar: Steam, arkadaşının profilinde çok daha fazla yorumaizin verir."
-  },
-  "JoinGroup": {
-   "label": "nocat.farm grubuna katıl",
-   "tip": "Bu hesabın girişte bir kez nocat.farm Steam grubuna katılmasını sağlar. Tamamen isteğe bağlı: kapatırsan katılmaz."
-  },
-  "AutoReplyEnabled": {
-   "label": "Mesajlara yanıt ver",
-   "tip": "Bu hesaba yazan yabancılara cevap verir. Kapatmak aşağıya yazdığını korur, yani yeniden yazmadan tekrar açabilirsin."
-  },
-  "AutoReply": {
-   "label": "Şu yanıtı ver",
-   "tip": "Biri bu hesaba yazdığında bunu gönderir. Boş bırakırsan hiçbir şey söylemez. Günde sekiz saat oynayıp hiç cevap vermeyen bir hesap, \"şu an müsait değilim\" diyenden daha çok dikkat çeker."
-  },
-  "AutoReplyOncePerDay": {
-   "label": "Günde yalnızca bir kez yanıtla",
-   "tip": "Bu yanıtı aynı kişiye günde en fazla bir kez gönderir. Bu olmadan iki kez yazan biri birebir aynı satırı iki kez alır - bot gibi görünmenin en hızlı yolu."
-  },
-  "FriendRequestDelayMinMinutes": {
-   "label": "En az bekle",
-   "tip": "Bir arkadaşlık isteğini kabul etmeden önceki en kısa bekleme, dakika. İstek geldiği saniye kabul etmek, bir hesabın yapabileceği en kolay fark edilen şeydir."
-  },
-  "FriendRequestDelayMaxMinutes": {
-   "label": "Ve en fazla",
-   "tip": "Kabul etmeden önceki en uzun bekleme, dakika. Gerçeği ikisi arasında rastgele seçilir."
-  },
-  "ActOnlyWhileAwake": {
-   "label": "Yalnızca uyanıkken tepki ver",
-   "tip": "Takasları, yanıtları ve arkadaşlık isteklerini, insan modu bu hesabın kalktığını söyleyene kadar bekletir. Bu olmadan hesap uyuyordur ama yine de sabahın dördünde cevap verir."
-  },
-  "AcceptDonations": {
-   "label": "Bağışları kabul et",
-   "tip": "Karşılığında hiçbir şey istemeyen teklifleri kabul eder. Sana hiçbir şeye mal olamazlar, dolayısıyla doğaları gereği güvenlidirler."
-  },
-  "AcceptFromMasters": {
-   "label": "Kendi hesaplarından geleni koşulsuz kabul et",
-   "tip": "Aşağıda listelenen SteamID64'lerden gelen her teklifi kabul eder - eşya götürenler dahil. Boşta çalışan hesaplarındaki kartları tek hesapta toplamanı sağlayan şey budur ve tam bu yüzden listede yalnızca sana ait hesaplar olmalıdır."
-  },
-  "TradeMasters": {
-   "label": "Kendi hesapların",
-   "tip": "Kendi hesaplarının SteamID'leri. \"send\" eşyaları oraya gönderir ve oradan gelen teklifler sorgusuz kabul edilir."
-  },
-  "DeclineOtherTrades": {
-   "label": "Diğer her şeyi reddet",
-   "tip": "Diğer tüm teklifleri öylece bırakmak yerine etkin biçimde reddeder. Kapatırsan kabul edilmeyen her şey, sen bakasın diye olduğu gibi kalır."
-  },
-  "TradeDelayMinMinutes": {
-   "label": "En az bekle",
-   "tip": "Bir teklife karşılık vermeden önceki en kısa bekleme, dakika. Teklif geldikten iki saniye sonra kabul etmek, bir insanın yapacağı şey değildir."
-  },
-  "TradeDelayMaxMinutes": {
-   "label": "Ve en fazla",
-   "tip": "Bir teklife karşılık vermeden önceki en uzun bekleme, dakika. Gerçeği ikisi arasında rastgele seçilir."
-  },
-  "PauseWhenYouPlay": {
-   "label": "Sen oynarken çekil",
-   "tip": "Sen oynamaya başlarsan hesap hemen çekilir ve kendi işine dönmeden önce bekler."
-  },
-  "ResumeDelayMinutes": {
-   "label": "Devam etmeden önce bekle",
-   "tip": "Sen oynamayı bıraktıktan sonra, bu hesabın kaldığı yerden sessizce devam etmesi için beklenecek süre, dakika."
-  },
-  "AchievementBoost": {
-   "tip": "Her oturumu elle başlatmana gerek kalmadan birkaç oyunda kendi başına başarım avlar. Varsayılan olarak kapalı. \"Tüm tek oyunculu\" kütüphanenden seçer: yalnızca gerçek oyunlar (asla DLC veya demo), başarımı olan ve yeterince değerlendirmesi bulunanlar.",
-   "label": "Başarım hızlandırma"
-  },
-  "SkipRefundableGames": {
-   "tip": "Yeni alınmış bir oyuna, parasını geri alamayacak duruma gelene kadar dokunmaz: Steam iki saat oynanmışsa reddeder ve iki saat tek bir oturumdur. Sadece kart toplamada değil, her yerde geçerli. Ücretsiz oyunlar hiçbir zaman bekletilmez.",
-   "label": "İade edilebilir oyunları koru"
-  },
-  "ShowInventoryValue": {
-   "tip": "Bu hesabın envanterinin pazarın medyan fiyatıyla ne ettiğini hesaplar. KENDİ envanterini okur, dolayısıyla gizli profil fark etmez.",
-   "label": "Envanterinin ne ettiğini hesapla"
-  },
-  "CheckForUpdates": {
-   "tip": "Günde bir kez daha yeni bir sürüm var mı diye bakar ve günlükte söyler. Yalnızca söyler: hiçbir şeyi indirmez, değiştirmez, yeniden başlatmaz.",
-   "label": "Güncelleme varsa haber ver"
-  },
-  "BreakMinMinutes": {
-   "label": "En kısa mola",
-   "tip": "İki oturum arasındaki en kısa boşluk, dakika. Molaların çoğu bu uçta olur: bir şey içmek, sekme değiştirmek."
-  },
-  "BreakMaxMinutes": {
-   "label": "En uzun mola",
-   "tip": "Olağan molaların en uzunu, dakika. Gerçek süreler eşit dağılmak yerine kısa uca yığılır, çünkü insanlar gerçekten öyle mola verir."
-  },
-  "MaxSignOutsPerDay": {
-   "label": "En fazla şu kadar çevrimdışı ol",
-   "tip": "Bunu günde kaç kez yaptığının tavanı - hesap bütün akşam arkadaş listende yanıp sönmesin diye. 0 kapatır, o zaman her mola sadece Uzakta olur."
-  },
-  "PlayWhileFarming": {
-   "label": "Kart toplarken adı koru",
-   "tip": "Kart toplanırken bile özel adı görünür tutar. Kapatırsan kart toplama gerçek oyunu gösterir."
-  },
-  "GameDevice": {
-   "label": "Şu cihazda oynuyormuş gibi",
-   "tip": "Arkadaşlarının seni hangi tür cihazda oynuyor sandığı - adının yanındaki küçük Steam Deck veya telefon rozetini koyan budur."
-  },
-  "PriorityGames": {
-   "label": "Önce bunları topla",
-   "tip": "Sıralama ne derse desin, her şeyden önce toplanacak appID'ler."
-  },
-  "FarmPriorityOnly": {
-   "label": "Yalnızca onları topla",
-   "tip": "Sadece öncelik listesindeki oyunları toplar, hâlâ kartı olan diğer her oyunu görmezden gelir."
-  },
-  "BlacklistedGames": {
-   "label": "Bunlara asla dokunma",
-   "tip": "Rozet sayfası ne derse desin asla toplanmayacak ve asla çalıştırılmayacak appID'ler."
-  },
-  "SkipUnplayedGames": {
-   "label": "Hiç oynamadığın oyunları atla",
-   "tip": "Kendin hiç başlatmadığın oyunları atlar; böylece nocat.farm, kimsenin görmesini istemediğin oyunlara ilk kez süre yazmaz."
-  },
-  "RefundHoldDays": {
-   "label": "...şu kadar gün boyunca",
-   "tip": "Yeni alınmış bir oyunun kaç gün rahat bırakılacağı. Steam'in kendi iade penceresi 14 gündür, varsayılan da odur; karar vermen daha uzun sürüyorsa artır."
-  },
-  "FarmOnlyWhileAsleep": {
-   "label": "Kartları yalnızca uyurken topla",
-   "tip": "Yalnızca insan modu: hesap gece uyuyana (görünmez olana) kadar kart toplamayı bekletir, sonra toplar; gündüz normal programını oynar."
-  },
-  "FarmFromHour": {
-   "label": "Kartları yalnızca şu saatten sonra topla",
-   "tip": "Kartları yalnızca bu saatten itibaren toplar, 24 saatlik gösterimle. Bunu ve \"kadar\" değerini 0 bırakırsan her saat toplar."
-  },
-  "FarmUntilHour": {
-   "label": "...şu saate kadar",
-   "tip": "Kartları bu saate kadar toplar (24 saat). \"Şu saatten\" değerinden erken yaparsan pencere gece yarısını aşar - örneğin 22'den 6'ya gece boyu toplar."
-  },
-  "PostFarmWindDownMinMinutes": {
-   "label": "Son karttan sonra en az şu kadar devam et",
-   "tip": "Yalnızca insan modu: bir toplama turu bittiğinde, aynı saniye kapatmak yerine o oyunu bu aralıkta rastgele bir süre (dakika) açık tutar."
-  },
-  "PostFarmWindDownMaxMinutes": {
-   "label": "...şu kadara kadar",
-   "tip": "Toplama sonrası bu yavaşlama süresinin üst sınırı, dakika."
-  },
-  "FarmingDelayMinutes": {
-   "label": "Şu sıklıkta yeniden bak",
-   "tip": "Bir oyunu toplarken ne sıklıkla yeniden kontrol edileceği, dakika. Steam kartları düştükleri anda bildirir, yani bu sadece bir emniyet ağıdır."
-  },
-  "MaxFarmingHoursPerGame": {
-   "label": "Şu kadar saat sonra vazgeç",
-   "tip": "Bir oyundan bu kadar saat sonra vazgeçip sıradakine geçer. Bozuk tek bir oyunun kuyruğu sonsuza dek tıkamasını engeller."
-  },
-  "StopWhenFarmingDone": {
-   "label": "Bitince çıkış yap",
-   "tip": "Toplanacak kart kalmadığı anda bu hesabı çıkarır, saat biriktirmeye devam etmek yerine."
-  },
-  "AchievementBoostGames": {
-   "label": "Bu oyunları hızlandır",
-   "tip": "Hızlandırmanın sırayla ele alacağı oyunlar, virgülle ayrılmış (appID veya mağaza bağlantısı). Yalnızca hızlandırma \"seçtiğin oyunlar\" iken kullanılır."
-  },
-  "BoostSessionHours": {
-   "label": "Her birini yaklaşık şu kadar oyna",
-   "tip": "Hızlandırmanın bir oyunda kalıp sıradakine geçmeden önceki süresi, saat."
-  },
-  "MaxBoostGamesInARow": {
-   "label": "İnsan modu: art arda en fazla",
-   "tip": "Yalnızca insan modu: normal programın daha uzun bir bölümüne geçmeden önce üst üste kaç hızlandırma oturumu yapacağı - meşru bir hesapta önceliğin hep program kalması için."
-  },
-  "BoostRestMinutesHuman": {
-   "label": "İnsan modu: hızlandırmalar arası program aralığı",
-   "tip": "Yalnızca insan modu: iki hızlandırma oturumu arasında geçen normal program dakikası - avlanmanın meşru bir hesabın gününe hâkim olmaması için."
-  },
-  "BoostMinReviews": {
-   "label": "Yalnızca en az şu kadar değerlendirmesi olanları avla",
-   "tip": "\"Tüm tek oyunculu\" bir oyuna yönelmesi için gereken Steam değerlendirme sayısı. Bu, paket dolgusu filtresidir: on bir değerlendirmesi olan ve hiç açmadığı bir oyunda akşam geçirmiş olmanın kimseye açıklaması yoktur. 0 her şeyi avlar. Elle seçilen oyunlarda yok sayılır."
-  },
-  "BoostOnlyPlayedGames": {
-   "label": "Yalnızca oynadığın oyunlarda avlan",
-   "tip": "\"Tüm tek oyunculu\"yu bu hesabın bir ara gerçekten başlattığı oyunlarla sınırlar. Varsayılan kapalı - bir avcının yeni bir oyuna başlaması gayet normaldir - ama hesabı kendi geçmişine uyan oyunlarda tutmanın en katı yolu budur."
-  },
-  "InventoryIgnoreGames": {
-   "label": "...ama bu oyunlar hariç",
-   "tip": "Envanter değerinin dışında bırakılacak appID'ler, virgülle ayrılmış. Hesabın YASAKLI olduğu oyun buraya yazılır: eşyalar envanterde durur ama asla satılamaz, dolayısıyla saymak toplamı şişirir. Steam yasağın hangi oyunda olduğunu söylemez ve envanterde de bunu güvenilir biçimde gösteren bir şey yoktur - bu yüzden burası tahmin edilen değil, senin doldurduğun bir listedir."
-  },
-  "YieldToFamily": {
-   "label": "Paylaşılan oyunu istediklerinde geri ver",
-   "tip": "Ailedeki biri bu hesabın ödünç aldığı bir oyunu başlatırsa, oyunu hemen geri verip sıradakine geçer. Steam paylaşılan bir oyunu aynı anda tek kişiye ödünç verir ve sahibi her zaman kazanır; alternatifi oturumun ortasında dışarı atılıp artık sahip olmadığı bir oyunu \"oynuyor\" görünmektir. Bıraktıktan sonra yirmi dakika daha rotasyonun dışında kalır, kapattıkları saniye kapılmaz."
-  },
-  "HoldNewFamilyGames": {
-   "label": "Yeni gelen aile oyunlarına dokunma",
-   "tip": "Paylaşılan bir oyunu aile kütüphanesindeki ilk iki hafta boyunca atlar (\"iade edilebilir oyunları koru\" ile aynı gün sayısı), satın alan kişi hâlâ karar veriyor olabilir diye. Yalnızca oyunun ne zaman GELDİĞİNE bakabilir, sahibinin ne kadar oynadığına asla - o sayı bu hesaptan görünmez. Bu yüzden bazen sahibinin çoktan saatler geçirdiği ve zaten iade edemeyeceği bir oyunu bekletir."
-  },
-  "IncludeFamilyLibrary": {
-   "label": "Aileyle paylaşılan oyunları dahil et",
-   "tip": "Steam Ailesi üzerinden bu hesapla paylaşılan oyunları da avlar. Ödünç alınan bir oyunda kazanılan başarımlar, tıpkı sahip olunan bir oyundaki gibi BU hesaba işlenir. Ailenin paylaşımdan çıkardığı oyunlar atlanır, oyun olmayanlar da öyle. Sahip olunan oyunlar ödünç alınanlardan hep önce gelir, çünkü sahibi kendininkini her an geri isteyebilir."
-  },
-  "AchievementGrindGapMinMinutes": {
-   "label": "Sıkı çalışırken, şu sıklıkta bir başarım",
-   "tip": "Bir GRIND'in başarımları ne kadar aralıkla açtığı, dakika (dalgalı aralığın alt ucu). Grind, bir oyunun başında etkin biçimde oturmak demektir; yani bu, gerçekten avlanan birinin temposudur, arka plandaki damla damla akış değil. Yine kolaydan zora ve yine oyundaki saatlerle sınırlı."
-  },
-  "AchievementGrindGapMaxMinutes": {
-   "label": "...şu kadara kadar",
-   "tip": "Grind sırasındaki aralığın üst ucu, dakika."
-  },
-  "AchievementNeverGames": {
-   "label": "Bu oyunlarda asla",
-   "tip": "Tamamen rahat bırakılacak oyunlar: buradaki hiçbir şey için başarım yazılmaz ve hızlandırma asla birini seçmez. İnsan modunda hesabın amiral oyunu da atlanır. (Not: Counter-Strike 2 gibi bazı oyunlar başarımlarını sunucuda tutar, dolayısıyla zaten hiçbir şey onları açamaz.)"
-  },
-  "AchievementGames": {
-   "label": "Yalnızca bu oyunlar",
-   "tip": "Bu appID'lerle sınırlar. Boş bırakırsan hesabın o sırada oynadığı her oyun geçerli olur."
-  },
-  "UnpackBoosterPacks": {
-   "label": "Destek paketlerini aç",
-   "tip": "Envanterine düşen destek paketlerini otomatik açar, böylece içindeki kartlar rozet üretilen setlere sayılır."
-  },
-  "ClearInventoryNotifications": {
-   "label": "Yeni eşya rozetini temizle",
-   "tip": "Her kart düştüğünde Steam'in yeşil \"yeni eşya\" sayacını temizler, böylece envanterin sürekli okunmamış görünmez."
-  },
-  "UIMode": {
-   "label": "Şöyle giriş yap",
-   "tip": "Steam'e hangi tür istemci olduğunu söylediği. \"Masaüstü\" doğru cevaptır ve varsayılandır - gerçek istemcinin bildirdiği de budur."
-  },
-  "SteamParentalCode": {
-   "label": "Aile Görünümü PIN'i",
-   "tip": "Bu hesapta Aile Görünümü açıksa onun PIN'i. Onsuz Steam, kart toplamanın okuması gereken sayfaları engeller."
-  },
-  "MachineName": {
-   "label": "Cihaz adı",
-   "tip": "Bu hesabın Steam'in yetkili cihazlar listesinde gösterdiği cihaz adı. Boş bırakırsan bu bilgisayarın gerçek adı kullanılır."
-  },
-  "SharedSecret": {
-   "label": "Doğrulayıcı kod anahtarı",
-   "tip": "Bu hesabın mobil doğrulayıcısının paylaşılan anahtarı. Bununla nocat.farm kendi Steam Guard isteklerini yanıtlar, telefona gerek kalmaz."
-  },
-  "IdentitySecret": {
-   "label": "Doğrulayıcı onay anahtarı",
-   "tip": "Aynı doğrulayıcının diğer yarısı; \"telefonundan onayla\" uyarısını halleden parça. Yalnızca bu hesap takas gönderdiğinde önemlidir."
-  },
-  "AccountProxy": {
-   "label": "Bu hesap için vekil sunucu",
-   "tip": "Yalnızca bu hesabın Steam trafiğini kendi vekil sunucusundan geçirir, örneğin http://sunucu:port. Boş bırakırsan genel olan kullanılır."
-  },
-  "AccountProxyUsername": {
-   "label": "Vekil sunucu kullanıcı adı",
-   "tip": "Bu hesabın kendi vekil sunucusu istiyorsa kullanıcı adı."
-  },
-  "AccountProxyPassword": {
-   "label": "Vekil sunucu parolası",
-   "tip": "Bu hesabın kendi vekil sunucusu istiyorsa parola."
-  },
-  "AcceptGroupInvites": {
-   "label": "Grup davetlerini kabul et",
-   "tip": "Bu hesabın davet edildiği Steam gruplarına katılır."
-  },
-  "IgnoreSuspiciousInvites": {
-   "label": "Bariz spam'i yok say",
-   "tip": "Yepyeni, gizli, seviye 0 profillerden gelen arkadaşlık isteklerini sessizce yok sayar - her dolandırıcı botun biçimi budur."
-  },
-  "RejectInvalidFriendInvites": {
-   "label": "Kabul etmediklerini reddet",
-   "tip": "Bir arkadaşlık isteğini listede öylece bırakmak yerine etkin biçimde reddeder. Kapalıyken kabul edilmeyen her şey sadece bekler."
-  },
-  "AutoReplyDelaySeconds": {
-   "label": "Yanıtlamadan önce bekle",
-   "tip": "Yanıt gitmeden önce beklenecek saniye. Anında cevap, cevap veren bir robottur; gerçek bekleme bu değere kadar rastgele seçilir."
-  },
-  "CommandMasters": {
-   "label": "Şunlardan komut kabul et",
-   "tip": "Steam'de bu hesaba mesaj atarak nocat.farm'ı yönetmesine izin verilen SteamID64'ler, virgülle ayrılmış. Komutlar ! ile başlamalıdır."
-  },
-  "WebRefreshSeconds": {
-   "label": "Şu sıklıkta yenile",
-   "tip": "Panonun kaç saniyede bir kendini yenileyeceği. Düşük değer daha canlı hissettirir ve hiçbir maliyeti yok - hepsi yerel."
-  },
-  "WebSessionDays": {
-   "label": "Şu kadar süre oturum açık kalsın",
-   "tip": "Bir tarayıcının pano parolasını yeniden girmesi gerekmeden kaç gün oturumunun açık kalacağı."
-  },
-  "ExitWhenAllFinished": {
-   "label": "Her şey bitince kapat",
-   "tip": "Bütün hesaplar toplamayı bitirip çıkış yapar yapmaz nocat.farm'ı tamamen kapatır; tepside boş boş beklemesine gerek kalmaz."
-  },
-  "Debug": {
-   "label": "Hata ayıklama ayrıntısı",
-   "tip": "Her web isteği dahil çok daha fazla ayrıntı gösterir. Bir şey çalışmadığında işe yarar; onun dışında sadece gürültü."
-  },
-  "LogRetentionDays": {
-   "label": "Günlükleri şu kadar sakla",
-   "tip": "Bu kadar günden eski günlük dosyalarını siler. 0 sonsuza dek saklar."
-  },
-  "Rep4RepPointsRefreshMinutes": {
-   "label": "Puanları şu sıklıkta kontrol et",
-   "tip": "rep4rep'e puan toplamını kaç dakikada bir soracağı. rep4rep herhangi bir istek sınırı yayımlamıyor, o yüzden 1 yapıp bir ay boyunca açık bırakma."
-  },
-  "ReconnectDelaySeconds": {
-   "label": "Şu süre sonra yeniden bağlan",
-   "tip": "Steam bağlantıyı düşürdükten sonra yeniden bağlanmadan önce beklenecek saniye."
-  },
-  "ConnectionTimeoutSeconds": {
-   "label": "Bağlantı zaman aşımı",
-   "tip": "Vazgeçip yeniden bağlanmadan önce Steam'in yanıtı için beklenecek saniye."
-  },
-  "MaxConcurrentFarming": {
-   "label": "En fazla şu kadar topla",
-   "tip": "Aynı anda kaç hesabın kart toplayabileceği. 0 sınırsız demektir."
-  },
-  "LoginCooldownMinutes": {
-   "label": "Hız sınırı bekleme süresi",
-   "tip": "Steam bir girişi sınırladığında bütün hesaplar bu kadar dakika bekler - sırayla engellenmek için kuyruğa girmek yerine hep birlikte atlatırlar."
-  },
-  "WebRequestGapMs": {
-   "label": "Web istekleri arası boşluk",
-   "tip": "Aynı Steam sitesine iki istek arasındaki en küçük boşluk, milisaniye. Rozet okumayı Steam'in radarının altında tutan en büyük etken budur - hız sınırı uyarıları görürsen artır, asla 200'ün altına inme."
-  },
-  "SteamProtocol": {
-   "label": "Şununla bağlan",
-   "tip": "Steam'e nasıl ulaşılacağı. Bir güvenlik duvarı ya da servis sağlayıcın bir şeyi engellemiyorsa otomatikte bırak - yalnızca-websocket sıradan HTTPS trafiği gibi görünür ve genelde geçer."
-  },
-  "WebProxy": {
-   "label": "Vekil sunucu",
-   "tip": "Steam trafiğini bu vekil sunucudan geçirir, örneğin http://127.0.0.1:8080. Doğrudan bağlanmak için boş bırak."
-  },
-  "WebProxyUsername": {
-   "label": "Vekil sunucu kullanıcı adı",
-   "tip": "Yukarıdaki vekil sunucu istiyorsa kullanıcı adı."
-  },
-  "WebProxyPassword": {
-   "label": "Vekil sunucu parolası",
-   "tip": "Yukarıdaki vekil sunucu istiyorsa parola."
-  },
-  "GlobalBlacklistedGames": {
-   "label": "Bunlara asla dokunma (tüm hesaplar)",
-   "tip": "Hiçbir hesabın toplamayacağı ya da boşta çalıştırmayacağı AppID'ler; böylece eklediğin her hesapta aynı listeyi tekrarlamazsın. Her hesap yine de üstüne kendi listesini ekleyebilir."
-  },
-  "Rep4RepLearnCap": {
-   "label": "Gerçek sınırı öğren",
-   "tip": "Steam, yukarıda ayarlanan üst sınırın ÖTESİNDE bir yorumu reddederse o sayıyı bu hesabın gerçek tavanı olarak hatırla. Sıradan bir \"çok sık yorum yapıyorsun\" reddi yüzünden sınırı asla düşürmez - o mesaj iki yorum arasındaki boşlukla ilgilidir ve normalde 10 olan günlük sınır hakkında hiçbir şey söylemez."
-  },
-  "Rep4RepRetryRefused": {
-   "label": "Reddedilen yorumu yeniden dene",
-   "tip": "Reddedilen bir yoruma, o profili bir günlüğüne rafa kaldırmadan önce bir şans daha verir."
-  },
-  "SendOnFarmingFinished": {
-   "label": "Toplama bitince eşyaları gönder",
-   "tip": "Toplanacak kart kalmadığında, bu hesabın topladıklarını yukarıda listelenen ilk hesaba gönderir. Birden fazla boşta hesap çalıştırmanın bütün amacı budur: kartlar altı ayrı envanter yerine tek bir envanterde toplanır."
-  },
-  "SendItemTypes": {
-   "label": "Ne gönderilecek",
-   "tip": "Bu hesaptan çıkmasına izin verilen eşya türleri, virgülle ayrılmış: cards, foils, backgrounds, emoticons, boosters, gems - ya da \"all\". Burada yazmayan hiçbir şey, başka ne ayarlanmış olursa olsun asla gönderilmez."
-  },
-  "TradeMasterToken": {
-   "label": "Onun takas bağlantısı anahtarı",
-   "tip": "Diğer hesabın takas bağlantısındaki anahtar (&token= sonrasındaki kısım). Yalnızca iki hesap arkadaş değilse gerekir - arkadaşsanız boş bırakabilirsin."
-  },
-  "ClearNotifications": {
-   "label": "Steam bildirimlerini temizle",
-   "tip": "Steam'in bildirim tepsisindeki her şeyi okundu olarak işaretler - yorumlar, hediyeler, yardım talepleri, arkadaşlık istekleri - böylece sayaçlar hesabın ömrü boyunca artmak yerine sıfıra döner. Hiçbiri kendiliğinden düşmez: biri sayfayı açana kadar yanık kalırlar ve elle giriş yapmadığın bir hesapta bunu kimse yapmaz."
+  "ui": {
+    "Overview": "Genel bakış",
+    "Accounts": "Hesaplar",
+    "Console": "Konsol",
+    "Settings": "Ayarlar",
+    "Commands": "Komutlar",
+    "Global": "Genel",
+    "Jump to": "Şuraya git",
+    "Today": "Bugün",
+    "Recent activity": "Son etkinlik",
+    "Queued tasks": "Sıradaki görevler",
+    "Show tasks for": "Şunun görevlerini göster",
+    "Copy": "Kopyala",
+    "Refresh": "Yenile",
+    "Save": "Kaydet",
+    "Sign in": "Giriş yap",
+    "Add account": "Hesap ekle",
+    "Import from ASF": "ASF'den içe aktar",
+    "Your Steam profiles": "Steam profilleriniz",
+    "Pacing": "Tempo",
+    "Show the walkthrough again": "Tanıtımı tekrar göster",
+    "Steam account name": "Steam hesap adı",
+    "Password": "Parola",
+    "Search accounts…": "Hesap ara…",
+    "Search settings…": "Ayar ara…",
+    "Search the log…": "Günlükte ara…",
+    "leave blank and it'll ask": "boş bırak, sorar",
+    "mybot": "botum",
+    "type a command, or 'help'": "bir komut yazın veya 'help'",
+    "your steam login": "Steam kullanıcı adınız",
+    "Farming": "Toplama",
+    "Idling": "Boşta",
+    "Online": "Çevrimiçi",
+    "Connecting": "Bağlanıyor",
+    "Needs you": "Sana ihtiyacı var",
+    "Problem": "Sorun",
+    "Playing": "Oynuyor",
+    "On a break": "Molada",
+    "Night idle": "Gece boşta",
+    "Asleep": "Uyuyor",
+    "Off": "Kapalı",
+    "Playing a game that still has trading cards to drop.": "Hâlâ düşecek kartı olan bir oyunu oynuyor.",
+    "Nothing left to farm, so it's building playtime on the games you chose.": "Toplanacak bir şey kalmadı, o yüzden seçtiğin oyunlarda süre biriktiriyor.",
+    "Logged in and doing nothing. Give it games to idle or cards to farm.": "Giriş yapmış ama hiçbir şey yapmıyor. Ona boşta çalıştıracak oyun ya da toplayacak kart ver.",
+    "On its way in.": "Girmek üzere.",
+    "Waiting on you: a Steam Guard code, a password, or a decision.": "Seni bekliyor: bir Steam Guard kodu, bir parola ya da bir karar.",
+    "Something is wrong - the login failed, or Steam is refusing this account.": "Bir şeyler ters gitti - giriş başarısız oldu ya da Steam bu hesabı reddediyor.",
+    "Human mode: in a game right now, one at a time, like a person.": "İnsan modu: şu anda bir oyunda, teker teker, bir insan gibi.",
+    "Human mode: stepped away for a few minutes.": "İnsan modu: birkaç dakikalığına ayrıldı.",
+    "Offline for the night but quietly banking hours - nobody can see it.": "Gece boyunca çevrimdışı ama sessizce saat biriktiriyor - kimse göremez.",
+    "Done for the night. It comes back on its own in the morning.": "Bu gecelik bitti. Sabah kendi kendine geri döner.",
+    "Disabled or stopped. It won't log in until you start it.": "Devre dışı ya da durdurulmuş. Sen başlatana kadar giriş yapmaz.",
+    "Account": "Hesap",
+    "State": "Durum",
+    "Status": "Durum",
+    "Cards": "Kartlar",
+    "Value": "Değer",
+    "Up": "Açık",
+    "Game": "Oyun",
+    "Hours": "Saat",
+    "Played": "Oynandı",
+    "Earned": "Kazanıldı",
+    "Progress": "İlerleme",
+    "Opened": "Açılan",
+    "Next": "İleri",
+    "Next up": "Sırada",
+    "Comments": "Yorumlar",
+    "Points": "Puan",
+    "Cards left": "Kalan kart",
+    "Target": "Hedef",
+    "Steam login": "Steam girişi",
+    "Sign-in": "Giriş",
+    "Name": "Ad",
+    "Language": "Dil",
+    "Left out": "Elenenler",
+    "Comment to post": "Yazılacak yorum",
+    "rep4rep ID": "rep4rep kimliği",
+    "rep4rep": "rep4rep",
+    "Start": "Başlat",
+    "Stop": "Durdur",
+    "Pause": "Duraklat",
+    "Resume": "Devam",
+    "Cancel": "İptal",
+    "Close": "Kapat",
+    "Remove": "Kaldır",
+    "Remove it": "Kaldır",
+    "Clear": "Temizle",
+    "Undo": "Geri al",
+    "Submit": "Gönder",
+    "Back": "Geri",
+    "Skip": "Atla",
+    "Continue": "Devam",
+    "Finish": "Bitir",
+    "Import": "İçe aktar",
+    "Import them": "İçe aktar",
+    "Register": "Kaydet",
+    "Connect": "Bağlan",
+    "Post now": "Şimdi yaz",
+    "Add one": "Bir tane ekle",
+    "Add an account": "Bir hesap ekle",
+    "Add token": "Anahtar ekle",
+    "Not yet": "Henüz değil",
+    "Keep it on": "Açık bırak",
+    "Turn it off": "Kapat",
+    "Use a longer one": "Daha uzun bir tane kullan",
+    "Start them all": "Hepsini başlat",
+    "Replace token": "Anahtarı değiştir",
+    "Unlock everything": "Hepsini aç",
+    "Unlock everything…": "Hepsini aç…",
+    "Set a password to open it up": "Açmak için bir parola koy",
+    "h": "sa",
+    "m": "dk",
+    "now": "şimdi",
+    "never": "hiç",
+    "just now": "az önce",
+    "{0} ago": "{0} önce",
+    "in {0}": "{0} içinde",
+    "as of {0}": "{0} itibarıyla",
+    "minutes": "dakika",
+    "fleet": "filo",
+    "main": "ana",
+    "your": "senin",
+    "once": "bir kez",
+    "or type": "ya da şunu yaz",
+    "down to": "şuraya kadar",
+    "due now": "sırası geldi",
+    "waiting": "bekliyor",
+    "posting…": "yazılıyor…",
+    "Importing…": "İçe aktarılıyor…",
+    "filter…": "süz…",
+    "around the clock": "gün boyu",
+    "between {0} and {1}": "{0} ile {1} arasında",
+    "default {0}": "varsayılan {0}",
+    "none": "yok",
+    "none yet": "henüz yok",
+    "not set": "ayarlanmadı",
+    "saved": "kaydedildi",
+    "nothing at all": "hiçbir şey",
+    "nothing left to farm": "toplanacak bir şey yok",
+    "nothing queued": "kuyrukta bir şey yok",
+    "no accounts yet": "henüz hesap yok",
+    "not playing anything": "hiçbir şey oynamıyor",
+    "not read yet": "henüz okunmadı",
+    "your friends see:": "arkadaşların şunu görüyor:",
+    "one account": "bir hesap",
+    "one game": "bir oyun",
+    "one other": "bir tane daha",
+    "One task": "Bir görev",
+    "{0} account": "{0} hesap",
+    "{0} accounts": "{0} hesap",
+    "{0} games": "{0} oyun",
+    "{0} others": "{0} tane daha",
+    "{0} tasks": "{0} görev",
+    "{0} item": "{0} eşya",
+    "{0} items": "{0} eşya",
+    "{0} pending": "{0} beklemede",
+    "still pricing {0}": "{0} tanesi hâlâ fiyatlanıyor",
+    "{0} played.": "{0} oynandı.",
+    "+{0} more": "+{0} tane daha",
+    "…and {0} more.": "…ve {0} tane daha.",
+    "· frees {0}": "· {0} boşalır",
+    "- about {0} left": "- yaklaşık {0} kaldı",
+    "appID or store URL": "appID veya mağaza bağlantısı",
+    "paste it here": "buraya yapıştır",
+    "paste the new one here": "yenisini buraya yapıştır",
+    "paste the token here": "anahtarı buraya yapıştır",
+    "stored - press Clear to replace": "kayıtlı - değiştirmek için Temizle'ye bas",
+    "type confirm": "confirm yaz",
+    "type off": "off yaz",
+    "type the account name": "hesap adını yaz",
+    "Ready": "Hazır",
+    "Commenting off": "Yorum kapalı",
+    "Not on rep4rep": "rep4rep'te yok",
+    "Log in first": "Önce giriş yap",
+    "token — no password needed": "anahtar — parolaya gerek yok",
+    "password only": "yalnızca parola",
+    "will ask on first login": "ilk girişte sorar",
+    "will be erased when you save": "kaydedince silinecek",
+    "will be replaced when you save": "kaydedince değiştirilecek",
+    "turns into points on its own": "kendiliğinden puana dönüşür",
+    "(Steam's limit)": "(Steam'in sınırı)",
+    "Standing by": "Beklemede",
+    "this game's own ceiling": "bu oyunun kendi tavanı",
+    "the games you list under Human mode": "İnsan modunda listelediğin oyunlar",
+    "Owned by this account.": "Bu hesaba ait.",
+    "Shared with this account by a Steam Family.": "Bir Steam Ailesi tarafından bu hesapla paylaşıldı.",
+    "Games left": "Kalan oyun",
+    "Cards today": "Bugünkü kart",
+    "Comments today": "Bugünkü yorum",
+    "Inventory": "Envanter",
+    "rep4rep points": "rep4rep puanı",
+    "Points you can spend": "Harcayabileceğin puan",
+    "Waiting to be verified": "Doğrulanmayı bekliyor",
+    "Trading cards still to drop across every account.": "Tüm hesaplarda hâlâ düşebilecek kartlar.",
+    "Trading cards still to drop across every account that's farming.": "Kart toplayan tüm hesaplarda hâlâ düşebilecek kartlar.",
+    "Games with at least one card still to drop, across every account.": "Tüm hesaplarda en az bir kartı düşmeyi bekleyen oyunlar.",
+    "Trading cards that dropped in the last 24 hours.": "Son 24 saatte düşen kartlar.",
+    "rep4rep comments posted in the last 24 hours.": "Son 24 saatte yazılan rep4rep yorumları.",
+    "What every account's inventory would fetch at the market's median price. Everything in there is counted at what it's worth, whether or not it can be sold right now.": "Her hesabın envanterinin piyasa medyan fiyatıyla ne edeceği. İçindeki her şey, şu anda satılabilir olsun olmasın, değeri üzerinden sayılır.",
+    "What everything in this account's inventory would fetch at the market's median price. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth.": "Bu hesabın envanterindeki her şeyin piyasa medyan fiyatıyla ne edeceği. Piyasada ilanı olmayan eşyalar sıfır sayılır; yalnızca şu an satılamayanlar (takas kilidi, yasak) yine değeri üzerinden sayılır.",
+    "Points you can spend on rep4rep. Pending ones are comments rep4rep hasn't verified yet.": "rep4rep'te harcayabileceğin puanlar. Bekleyenler, rep4rep'in henüz doğrulamadığı yorumlardır.",
+    "Points you can spend. Pending points are comments rep4rep hasn't verified yet - they turn into real points on their own, usually within a few hours. Nothing is lost.": "Harcayabileceğin puanlar. Bekleyenler, rep4rep'in henüz doğrulamadığı yorumlar - kendiliğinden gerçek puana dönüşürler, genelde birkaç saat içinde. Hiçbir şey kaybolmaz.",
+    "How long nocat.farm has been running.": "nocat.farm'ın ne kadardır çalıştığı.",
+    "<b>{0}</b> card": "<b>{0}</b> kart",
+    "<b>{0}</b> cards": "<b>{0}</b> kart",
+    "<b>{0}</b> up": "<b>{0}</b> açık",
+    "<b>{0}</b> inventory": "<b>{0}</b> envanter",
+    "<b>{0}</b>/{1} comments": "<b>{0}</b>/{1} yorum",
+    "Waiting on you: {0}": "Seni bekliyor: {0}",
+    "Steam is showing {0}, not your custom name": "Steam {0} gösteriyor, senin özel adını değil",
+    "Drag this card to move the account. The order is used everywhere - here, the app window and the console.": "Hesabı taşımak için bu kartı sürükle. Sıra her yerde geçerli - burada, uygulama penceresinde ve konsolda.",
+    "What your friends list shows for this account. The GAME comes straight back from Steam, so it's what other people genuinely see; the status is what nocat.farm set it to. Human mode changes the status by itself: invisible overnight, away on a break, Snooze over a meal.": "Arkadaş listenin bu hesap için gösterdiği şey. OYUN doğrudan Steam'den gelir, yani başkalarının gerçekten gördüğü şeydir; durumu ise nocat.farm ayarlar. İnsan modu durumu kendi değiştirir: geceleri görünmez, molada uzakta, yemekte rahatsız etmeyin.",
+    "Steam decides what to display when a custom name is sent alongside real games, and it has settled on the real one. Idling fewer games, or only the custom name, makes it show yours. A brief mismatch right after signing in is normal and isn't reported here.": "Özel bir ad gerçek oyunlarla birlikte gönderildiğinde neyin gösterileceğine Steam karar verir ve gerçek olanda karar kılmış. Daha az oyunu boşta çalıştırmak ya da yalnızca özel adı göndermek, seninkini göstermesini sağlar. Girişin hemen ardından kısa süreli bir uyuşmazlık normaldir ve burada bildirilmez.",
+    "Comments posted in the last 24 hours against this account's daily cap.": "Son 24 saatte yazılan yorumların, bu hesabın günlük sınırına oranı.",
+    "Read this account's inventory again. Prices are kept for a day, so only what changed is looked up.": "Bu hesabın envanterini yeniden okur. Fiyatlar bir gün saklanır, o yüzden yalnızca değişen sorgulanır.",
+    "Log this account in.": "Bu hesaba giriş yapar.",
+    "Log this account out. It stays configured.": "Bu hesaptan çıkış yapar. Yapılandırması kalır.",
+    "Start playing, farming and commenting again.": "Yeniden oynamaya, toplamaya ve yorum yazmaya başlar.",
+    "Stop playing, farming and commenting. The account stays logged in.": "Oynamayı, toplamayı ve yorum yazmayı durdurur. Hesap giriş yapmış kalır.",
+    "What this account still has left to farm.": "Bu hesabın toplayacak neyi kaldığı.",
+    "This account's settings.": "Bu hesabın ayarları.",
+    "Up {0} over the last 24 hours, at the market median.": "Son 24 saatte {0} arttı, piyasa medyan fiyatıyla.",
+    "Down {0} over the last 24 hours, at the market median.": "Son 24 saatte {0} düştü, piyasa medyan fiyatıyla.",
+    "Reading this inventory...": "Bu envanter okunuyor...",
+    "Reading {0}’s inventory again…": "{0} envanteri yeniden okunuyor…",
+    "Nothing with a market price in this inventory.": "Bu envanterde piyasa fiyatı olan hiçbir şey yok.",
+    "{0} at market median": "{0}, piyasa medyan fiyatıyla",
+    "{0} - {1}  ({2})": "{0} - {1}  ({2})",
+    "{0} - skipped, nothing in it can be sold ({1})": "{0} - atlandı, içindeki hiçbir şey satılamaz ({1})",
+    "...{0} more still being priced": "...{0} tanesi hâlâ fiyatlanıyor",
+    "Global settings": "Genel ayarlar",
+    "These apply to nocat.farm as a whole.": "Bunlar nocat.farm'ın tamamı için geçerlidir.",
+    "You have unsaved changes here. Discard them?": "Burada kaydedilmemiş değişiklikler var. Atılsın mı?",
+    "Save one change": "1 değişikliği kaydet",
+    "Save {0} changes": "{0} değişikliği kaydet",
+    "Saved.": "Kaydedildi.",
+    "Saved. {0} applies after a restart.": "Kaydedildi. {0} yeniden başlatınca geçerli olur.",
+    "Saved. {0} apply after a restart.": "Kaydedildi. {0} yeniden başlatınca geçerli olur.",
+    "Save failed": "Kaydedilemedi",
+    "Could not save that": "Bu kaydedilemedi",
+    "Could not remove that account": "Bu hesap kaldırılamadı",
+    "Couldn't save that order": "Bu sıralama kaydedilemedi",
+    "That account is gone": "O hesap artık yok",
+    "That account is not loaded yet - try again in a second": "O hesap henüz yüklenmedi - bir saniye sonra tekrar dene",
+    "That didn't work": "Bu işe yaramadı",
+    "That is not an appID": "Bu bir appID değil",
+    "Nothing was waiting for that answer": "Bu cevabı bekleyen bir şey yoktu",
+    "Wrong password.": "Yanlış parola.",
+    "Can't reach nocat.farm.": "nocat.farm'a ulaşılamıyor.",
+    "Log copied": "Günlük kopyalandı",
+    "Copy failed - select it manually": "Kopyalanamadı - elle seç",
+    "All accounts": "Tüm hesaplar",
+    "No accounts yet": "Henüz hesap yok",
+    "No accounts yet.": "Henüz hesap yok.",
+    "No accounts match that.": "Eşleşen hesap yok.",
+    "No accounts configured yet.": "Henüz yapılandırılmış hesap yok.",
+    "No registered accounts yet.": "Henüz kayıtlı hesap yok.",
+    "Nothing matches.": "Eşleşme yok.",
+    "Nothing worth reporting yet.": "Henüz kayda değer bir şey yok.",
+    "Nothing left to farm on this account.": "Bu hesapta toplanacak bir şey kalmadı.",
+    "One advanced setting is hidden.": "1 gelişmiş ayar gizli.",
+    "{0} advanced settings are hidden.": "{0} gelişmiş ayar gizli.",
+    "Tick “Show advanced” to see them.": "Görmek için \"Gelişmişleri göster\"i işaretle.",
+    "Put this back to the default.": "Bunu varsayılana döndür.",
+    "This takes effect the next time nocat.farm starts.": "Bu, nocat.farm bir sonraki başlayışında geçerli olur.",
+    "Locked so it cannot be changed by accident. Press Clear to replace it.": "Yanlışlıkla değişmesin diye kilitli. Değiştirmek için Temizle'ye bas.",
+    "Erase the stored value. There's no undo.": "Kayıtlı değeri siler. Geri alınamaz.",
+    "Erase the stored value? There is no undo.": "Kayıtlı değer silinsin mi? Geri alınamaz.",
+    "A day looks like": "Bir gün şöyle geçiyor",
+    "Right now": "Şu anda",
+    "Careful": "Dikkat",
+    "Hunting {0}": "{0} içinde avlanıyor",
+    "Mostly {0}.": "Çoğunlukla {0}.",
+    "Mostly {0}, with {1} in bursts rather than every day.": "Çoğunlukla {0}, ayrıca {1} her gün değil, dalgalar hâlinde.",
+    "No games listed yet.": "Henüz oyun listelenmedi.",
+    "On around {0}, bed around {1} — both jittered daily.": "Yaklaşık {0} civarı açılır, {1} civarı yatar - ikisi de her gün oynatılır.",
+    "About {0} on a weekday and {1} at the weekend.": "Hafta içi yaklaşık {0}, hafta sonu {1}.",
+    "Roughly {0} days off entirely.": "Kabaca {0} gün tamamen izinli.",
+    "One game at a time, in sittings of {0}.": "Teker teker tek oyun, {0} süren oturumlarla.",
+    "Overnight it goes invisible and keeps banking hours.": "Gece boyunca görünmez olur ve saat biriktirmeyi sürdürür.",
+    "This account idles everything at once, around the clock. Switch Human mode on to play one game at a time on a believable schedule — the settings that would give it away are hidden and put back if you switch it off.": "Bu hesap her şeyi aynı anda, gün boyu boşta çalıştırır. İnandırıcı bir programla teker teker oynaması için İnsan modunu aç - ele verecek ayarlar gizlenir, kapatırsan geri gelir.",
+    "Human mode picks what it plays — mostly {0}, one game at a time.": "Ne oynayacağını İnsan modu seçer - çoğunlukla {0}, teker teker.",
+    "Your friends see the real game.": "Arkadaşların gerçek oyunu görüyor.",
+    "Your friends see {0} instead of the real game; the hours still count.": "Arkadaşların gerçek oyun yerine {0} görüyor; saatler yine sayılıyor.",
+    "Your friends see {0}. Underneath, {1} keep gaining real playtime — both at the same time.": "Arkadaşların {0} görüyor. Altta ise {1} gerçek oyun süresi kazanmayı sürdürüyor - ikisi aynı anda.",
+    "Your friends see {0}. No games are listed, so no playtime is being banked — add some below if you want hours too.": "Arkadaşların {0} görüyor. Hiç oyun listelenmemiş, dolayısıyla süre birikmiyor - saat de istiyorsan aşağıya birkaçını ekle.",
+    "{0} gain playtime, all at once. Set a name below to show something else instead while the hours still count.": "{0} aynı anda süre kazanıyor. Saatler yine sayılırken başka bir şey göstermek için aşağıya bir ad yaz.",
+    "Nothing set yet. Add games to bank playtime, and optionally a name to display instead of the real one.": "Henüz bir şey ayarlanmadı. Saat biriktirmek için oyun ekle, istersen gerçeğinin yerine gösterilecek bir ad da ver.",
+    "{0} · {1} working · everything's fine.": "{0} · {1} çalışıyor · her şey yolunda.",
+    "{0} needs something from you.": "{0} senden bir şey bekliyor.",
+    "{0} need something from you.": "{0} senden bir şey bekliyor.",
+    "One account has a problem.": "Bir hesapta sorun var.",
+    "{0} accounts have a problem.": "{0} hesapta sorun var.",
+    "{0} is out - you have {1}. Click to see what changed.": "{0} çıktı - sende {1} var. Neyin değiştiğini görmek için tıkla.",
+    "{0}: saved": "{0}: kaydedildi",
+    "Removed {0}": "{0} kaldırıldı",
+    "Remove {0}?": "{0} kaldırılsın mı?",
+    "{0} — trading cards": "{0} — takas kartları",
+    "{0}: unlocking everything - watch the log": "{0}: her şey açılıyor - günlüğe bak",
+    "{0}: will post as soon as the daily cap allows": "{0}: günlük sınır izin verir vermez yazacak",
+    "{0} registered with rep4rep": "{0} rep4rep'e kaydedildi",
+    "rep4rep connected": "rep4rep bağlandı",
+    "rep4rep commenting switched on for every account": "rep4rep yorumlaması tüm hesaplarda açıldı",
+    "Import failed": "İçe aktarma başarısız",
+    "Imported one account": "1 hesap içe aktarıldı",
+    "Imported {0} accounts": "{0} hesap içe aktarıldı",
+    "Import one account": "1 hesabı içe aktar",
+    "Import {0} accounts": "{0} hesabı içe aktar",
+    "Import {0}": "{0} içe aktar",
+    "Import from ArchiSteamFarm": "ArchiSteamFarm'dan içe aktar",
+    "Found an ArchiSteamFarm install with one account.": "1 hesaplı bir ArchiSteamFarm kurulumu bulundu.",
+    "Found an ArchiSteamFarm install with {0} accounts.": "{0} hesaplı bir ArchiSteamFarm kurulumu bulundu.",
+    "Found an ArchiSteamFarm setup at {0} with {1}.": "{0} konumunda {1} olan bir ArchiSteamFarm kurulumu bulundu.",
+    "{0} of them can come across with their saved logins — no passwords, no Steam Guard codes.": "Bunların {0} tanesi kayıtlı girişiyle gelebilir - parola yok, Steam Guard kodu yok.",
+    "You will still need to sign in to each one once.": "Yine de her birine bir kez giriş yapman gerekecek.",
+    "Accounts you already have here are left alone. Don't run ASF and nocat.farm on the same account at once — they'd take turns kicking each other off Steam.": "Burada zaten olan hesaplara dokunulmaz. ASF ile nocat.farm'ı aynı hesapta aynı anda çalıştırma - sırayla birbirlerini Steam'den atarlar.",
+    "Importing copies the accounts and their login tokens. It changes nothing in ArchiSteamFarm.": "İçe aktarma, hesapları ve giriş anahtarlarını kopyalar. ArchiSteamFarm'da hiçbir şeyi değiştirmez.",
+    "No ASF install found automatically. Point at its {0} folder:": "Otomatik olarak ASF kurulumu bulunamadı. {0} klasörünü göster:",
+    "No ArchiSteamFarm install was found on this machine, so there is nothing to import.": "Bu makinede ArchiSteamFarm kurulumu bulunamadı, dolayısıyla içe aktarılacak bir şey yok.",
+    "(login token comes across, so no password needed)": "(giriş anahtarı da geliyor, parolaya gerek yok)",
+    "They're added but not started. Press Start on each, or run {0}.": "Eklendiler ama başlatılmadılar. Her birinde Başlat'a bas ya da {0} çalıştır.",
+    "STEP {0} OF {1}": "ADIM {0} / {1}",
+    "Welcome to nocat.farm": "nocat.farm'a hoş geldin",
+    "Pick the language for this dashboard. You can change it later under Settings › Global.": "Bu panonun dilini seç. Sonradan Ayarlar › Genel altından değiştirebilirsin.",
+    "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. The console and the log stay in English.": "Çevirinin henüz kapsamadığı her şey boş görünmek yerine İngilizce kalır, yani yarım kalmış bir dil bile gayet kullanışlıdır. Konsol ve günlük İngilizce kalır.",
+    "It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts rep4rep comments - all from this machine. Your accounts never leave it.": "Steam hesaplarına giriş yapar, saatler saysın diye oyun oynar, takas kartı toplar ve rep4rep yorumları yazar - hepsi bu makineden. Hesapların buradan hiç çıkmaz.",
+    "This takes about a minute. You can skip it and come back from the Overview page.": "Bu yaklaşık bir dakika sürer. Atlayıp Genel Bakış sayfasından geri dönebilirsin.",
+    "Bring your ArchiSteamFarm accounts across": "ArchiSteamFarm hesaplarını buraya taşı",
+    "Add your first account": "İlk hesabını ekle",
+    "Add the Steam account you want it to run. You will be asked for the password {0}, and for a Steam Guard code - after that it remembers a login token and never needs the password again.": "Çalıştırmasını istediğin Steam hesabını ekle. Parola {0} sorulacak, bir de Steam Guard kodu - sonrasında bir giriş anahtarı hatırlar ve parolaya bir daha ihtiyaç duymaz.",
+    "Tell it what to play": "Ne oynayacağını söyle",
+    "An account does nothing until it knows what to run. Two ways:": "Bir hesap, neyi çalıştıracağını bilene kadar hiçbir şey yapmaz. İki yol var:",
+    "{0} - it works through everything in your library that still has drops, then stops. Nothing to configure.": "{0} - kütüphanendeki hâlâ düşecek şeyi olan her şeyi tek tek işler, sonra durur. Ayarlanacak bir şey yok.",
+    "{0} - it keeps a believable daily routine: a few games, one at a time, with breaks, meals and a bedtime. Use this on an account you care about.": "{0} - inandırıcı bir günlük düzen tutar: birkaç oyun, teker teker, molalar, yemekler ve bir yatma saatiyle. Bunu değer verdiğin bir hesapta kullan.",
+    "Both live under Settings, per account.": "İkisi de Ayarlar altında, hesap bazında.",
+    "rep4rep, if you want it": "İstersen rep4rep",
+    "Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own.": "İsteğe bağlı. Hesapların başkalarının Steam profillerine yorum yazar ve senin profiline yorum almak için harcayabileceğin puanlar kazanır.",
+    "Needs a free account - {0} - and the API token pasted into Settings. Skip it entirely if you only want cards and playtime.": "Ücretsiz bir hesap - {0} - ve Ayarlar'a yapıştırılmış bir API anahtarı gerektirir. Sadece kart ve süre istiyorsan tamamen atla.",
+    "That's it": "Hepsi bu",
+    "Everything has an explanation attached - hover the {0} beside any setting.": "Her şeyin bir açıklaması var - herhangi bir ayarın yanındaki {0} üzerine gel.",
+    "The Console tab does anything the other tabs do, by typing. {0} lists it all.": "Konsol sekmesi, diğer sekmelerin yaptığı her şeyi yazarak yapar. {0} hepsini listeler.",
+    "Add a Steam account": "Bir Steam hesabı ekle",
+    "A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam.": "Yalnızca sana ait bir takma ad. Yapılandırma dosyasına adını verir ve komutlarda yazdığın şeydir - Steam'deki hiçbir şeyle eşleşmesi gerekmez.",
+    "What you type into Steam's sign-in box. Not your display name, not your email.": "Steam'in giriş kutusuna yazdığın şey. Görünen adın da değil, e-postan da değil.",
+    "Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.": "İsteğe bağlı. Boş bırak; nocat.farm bir kez sorar, sonra hesabı bir giriş anahtarıyla hatırlar - bu, dosyadaki bir paroladan daha güvenlidir.",
+    "Add one and nocat.farm will ask for the password and a Steam Guard code once, then remember it with a login token.": "Bir tane ekle; nocat.farm parolayı ve bir Steam Guard kodunu bir kez sorar, sonra bir giriş anahtarıyla hatırlar.",
+    "Type the code from the Steam app on your phone, or from your email. nocat.farm can't finish logging in until you do.": "Telefonundaki Steam uygulamasındaki ya da e-postandaki kodu yaz. Sen yapana kadar nocat.farm girişi tamamlayamaz.",
+    "Trading cards": "Takas kartları",
+    "Human mode": "İnsan modu",
+    "Hours this account has spent in this game. This is what decides how much it is allowed to earn.": "Bu hesabın bu oyunda geçirdiği saat. Ne kadar kazanmasına izin verileceğini bu belirler.",
+    "Achievements earned out of what the game has.": "Oyunun sahip olduklarından kazanılan başarımlar.",
+    "How much of the game is done. The bar never fills - it stops at this game's ceiling, because 100% on an idled account is the giveaway.": "Oyunun ne kadarının bittiği. Çubuk asla dolmaz - bu oyunun tavanında durur, çünkü boşta çalışan bir hesapta %100 tam da ele veren şeydir.",
+    "How far down the rarity list the hours so far have opened. It always unlocks the MOST COMMON one still locked - the ones you get just by playing - and only works down toward the rare tail as the hours build. This figure is the limit, never the next pick: a game with none of the easy ones done gets an easy one.": "Şimdiye kadarki saatlerin nadirlik listesinde ne kadar aşağı açtığı. Her zaman hâlâ kilitli olan EN YAYGIN olanı açar - sırf oynayarak alınanları - ve saatler biriktikçe ancak nadir kuyruğa doğru iner. Bu rakam sınırdır, asla bir sonraki seçim değil: kolaylarından hiçbiri yapılmamış bir oyun kolay bir tane alır.",
+    "Roughly when the next one is due, or why this game is left alone. It is a pace, not a promise.": "Bir sonrakinin kabaca ne zaman geleceği ya da bu oyunun neden rahat bırakıldığı. Bu bir tempodur, söz değil.",
+    "This game's achievements haven't been read yet - that happens the first time it comes up for one.": "Bu oyunun başarımları henüz okunmadı - bu, sırası ilk kez geldiğinde olur.",
+    "{0}% of this game earned. It stops at {1}.": "Bu oyunun %{0}'i kazanıldı. {1} noktasında durur.",
+    "Nothing tracked yet. It starts counting the first minute a game is running.": "Henüz kaydedilen bir şey yok. Bir oyun çalışmaya başladığı ilk dakikadan sayar.",
+    "Reading what it has done so far…": "Şimdiye kadar yaptıkları okunuyor…",
+    "Off. This account earns no achievements at all - nothing is written to any game. Turn it on and it starts earning them at a pace that follows the hours actually put in.": "Kapalı. Bu hesap hiç başarım kazanmaz - hiçbir oyuna bir şey yazılmaz. Aç, gerçekten harcanan saatleri izleyen bir tempoda kazanmaya başlasın.",
+    "Earns achievements slowly, from real playtime.": "Gerçek oyun süresinden yavaş yavaş başarım kazanır.",
+    "Earns achievements slowly, from real playtime, {0}.": "Gerçek oyun süresinden yavaş yavaş başarım kazanır, {0}.",
+    "at twice the normal spacing": "normalin iki katı aralıkla",
+    "at half the normal spacing": "normalin yarısı aralıkla",
+    "Unlocking a pile of achievements the second it logs in is what gives a bot away. This drips them out the way a real player would instead - a few at a time, only the common ones, paced to the hours actually put in.": "Giriş yaptığı saniyede bir yığın başarımı açmak, bir botu ele veren şeydir. Burada bunun yerine gerçek bir oyuncunun yapacağı gibi damla damla verilir - her seferinde birkaç tane, yalnızca yaygın olanlar, gerçekten harcanan saatlere göre.",
+    "It never fully completes a game, and leaves the game this account plays most well alone.": "Bir oyunu asla tamamen bitirmez ve bu hesabın en çok oynadığı oyuna hiç dokunmaz.",
+    "It never fully completes a game (it stops at {0}%), and leaves the game this account plays most well alone.": "Bir oyunu asla tamamen bitirmez (%{0} noktasında durur) ve bu hesabın en çok oynadığı oyuna hiç dokunmaz.",
+    "No games yet — add the one this account is meant to be into first.": "Henüz oyun yok - önce bu hesabın sözde tuttuğu oyunu ekle.",
+    "The first game added is the main one.": "İlk eklenen oyun ana oyundur.",
+    "Make this the main game": "Bunu ana oyun yap",
+    "This game's share of the week. Every row here adds up to 100, including the main game - change one and the others move to make room.": "Bu oyunun haftadaki payı. Buradaki tüm satırlar, ana oyun dahil, toplamda 100 eder - birini değiştir, diğerleri yer açmak için kayar.",
+    "The main game's share is set by \"Main game gets\" below, not here — it's held at that share however many other games you add. Click to jump to it.": "Ana oyunun payını aşağıdaki \"Ana oyunun payı\" belirler, burası değil - kaç oyun eklersen ekle o payda tutulur. Oraya atlamak için tıkla.",
+    "Set up rep4rep": "rep4rep'i kur",
+    "Your rep4rep account": "rep4rep hesabın",
+    "How it works:": "Nasıl çalışır:",
+    "{0} your accounts post a comment on someone else's Steam profile → you earn points → you spend those points to get comments on {1} profile. nocat.farm does the posting for you, on a schedule that keeps every account under Steam's daily limit.": "{0} hesapların başkasının Steam profiline yorum yazar → puan kazanırsın → o puanları {1} profiline yorum almak için harcarsın. nocat.farm senin yerine yazar, her hesabı Steam'in günlük sınırının altında tutan bir programla.",
+    "Make a rep4rep account": "Bir rep4rep hesabı aç",
+    "Free, and it takes a minute. Sign up, then click the verification link in your email — the token below won't work until you do.": "Ücretsiz ve bir dakika sürer. Kaydol, sonra e-postandaki doğrulama bağlantısına tıkla - bunu yapmadan aşağıdaki anahtar çalışmaz.",
+    "Sign up for rep4rep ↗": "rep4rep'e kaydol ↗",
+    "Copy your API token": "API anahtarını kopyala",
+    "It's on {0}. Copy the whole string.": "{0} adresinde. Dizenin tamamını kopyala.",
+    "nocat.farm registers your Steam accounts with rep4rep by itself and starts posting. You don't have to add anything on their website.": "nocat.farm, Steam hesaplarını rep4rep'e kendi kaydeder ve yazmaya başlar. Onların sitesinde bir şey eklemene gerek yok.",
+    "Spend these on comments for your own Steam profile, over on rep4rep.com. Read fresh from rep4rep every time you open this tab, so it matches the site.": "Bunları rep4rep.com üzerinden kendi Steam profiline yorum almak için harca. Bu sekmeyi her açtığında rep4rep'ten yeniden okunur, bu yüzden siteyle aynıdır.",
+    "Comments you've posted that rep4rep hasn't checked yet. They turn into spendable points on their own, usually within a few hours - nothing is lost and nothing is stuck.": "Yazdığın ama rep4rep'in henüz kontrol etmediği yorumlar. Kendiliğinden harcanabilir puana dönüşürler, genelde birkaç saat içinde - hiçbir şey kaybolmaz, hiçbir şey takılı kalmaz.",
+    "Spend your points ↗": "Puanlarını harca ↗",
+    "Token set · synced {0}": "Anahtar ayarlı · eşitlendi {0}",
+    "Connect your rep4rep account first.": "Önce rep4rep hesabını bağla.",
+    "Connected, but commenting isn't switched on for any account yet.": "Bağlandı, ama henüz hiçbir hesapta yorumlama açık değil.",
+    "Turn it on for all {0}": "{0} hesabın hepsinde aç",
+    "Posting from {0} of {1}.": "{1} hesabın {0} tanesinden yazılıyor.",
+    "rep4rep's own id for this profile. It is not your SteamID - this is the one their support and their API ask for.": "rep4rep'in bu profil için kendi kimliği. SteamID'n değil - destekleri ve API'leri bunu ister.",
+    "Comments posted in the last ROLLING 24 hours - not a midnight reset. Each one ages off on its own 24h after it went out, so the count frees up gradually. Shown against the cap.": "Son KAYAN 24 saatte yazılan yorumlar - gece yarısı sıfırlanma yok. Her biri gönderildikten 24 saat sonra kendiliğinden düşer, yani sayaç yavaş yavaş boşalır. Sınıra karşı gösterilir.",
+    "Rolling 24h window: the count drops as each comment ages past 24h. This is the soonest this account can post again.": "Kayan 24 saatlik pencere: her yorum 24 saati geçtikçe sayaç düşer. Bu hesabın yeniden yazabileceği en erken an budur.",
+    "This is the ceiling Steam enforced on this account, not the number you set - so raising the configured cap won't lift it.": "Bu, Steam'in bu hesaba dayattığı tavandır, senin belirlediğin sayı değil - yapılandırılmış sınırı yükseltmek bunu kaldırmaz.",
+    "Skip the wait and post the next comment as soon as the daily cap allows. It never goes over the cap.": "Beklemeyi atla ve günlük sınır izin verir vermez bir sonraki yorumu yaz. Sınırı asla aşmaz.",
+    "Post this one right now instead of waiting for the schedule. It still counts against the daily cap.": "Programı beklemek yerine bunu hemen yaz. Yine de günlük sınıra sayılır.",
+    "This is rep4rep's cached copy of your Steam settings, not live. If you just changed something on Steam, it can take a while to show here.": "Bu, rep4rep'in Steam ayarlarının önbelleğe alınmış kopyasıdır, canlı değil. Steam'de az önce bir şey değiştirdiysen burada görünmesi zaman alabilir.",
+    "{0} waiting. Every task is worth the same to rep4rep — their API doesn't rank them, so there's nothing to pick between.": "{0} bekliyor. rep4rep için her görev aynı değerde - API'leri sıralama yapmıyor, dolayısıyla seçilecek bir şey yok.",
+    "No tasks for this account right now. rep4rep hands them out in batches — check back later.": "Şu an bu hesap için görev yok. rep4rep bunları toplu dağıtır - sonra tekrar bak.",
+    "rep4rep checks the text matches exactly, so these are posted character for character.": "rep4rep metnin birebir eşleştiğini kontrol eder, bu yüzden bunlar harfi harfine yazılır.",
+    "rep4rep is switched on for one account but there's no API token, so nothing is being posted.": "rep4rep 1 hesapta açık ama API anahtarı yok, dolayısıyla hiçbir şey yazılmıyor.",
+    "rep4rep is switched on for {0} accounts but there's no API token, so nothing is being posted.": "rep4rep {0} hesapta açık ama API anahtarı yok, dolayısıyla hiçbir şey yazılmıyor.",
+    "Up to {0} comments a day, {1} apart, {2}.": "Günde en fazla {0} yorum, {1} arayla, {2}.",
+    "That's roughly {0} of posting spread across the day.": "Bu, güne yayılmış yaklaşık {0} yazma süresi demek.",
+    "Unlock every achievement, in every game this account owns": "Bu hesabın sahip olduğu her oyundaki her başarımı aç",
+    "This is for accounts that are not pretending to be anyone. Thousands of achievements appear at once, all stamped with the same moment, and that stamp is set by Steam and cannot be changed or hidden. Anyone looking at the profile can see it, permanently. If this account is meant to look played, leave this alone and let the pacer earn them instead.": "Bu, kimse gibi görünmeye çalışmayan hesaplar içindir. Binlerce başarım bir anda belirir, hepsi aynı ana damgalanır ve o damgayı Steam koyar; ne değiştirilebilir ne de gizlenebilir. Profile bakan herkes bunu görür, kalıcı olarak. Bu hesabın oynanmış görünmesi gerekiyorsa buna dokunma, bırak tempocu onları kazansın.",
+    "Unlock everything on {0}?": "{0} hesabında her şey açılsın mı?",
+    "Every achievement in every game {0} owns will be unlocked, right now.": "{0} hesabının sahip olduğu her oyundaki her başarım, hemen şimdi açılacak.",
+    "They all get the same unlock time. That is what makes it obvious.": "Hepsi aynı açılma zamanını alır. Bunu bariz hâle getiren de budur.",
+    "Steam sets that time itself - it cannot be back-dated or hidden.": "O zamanı Steam kendi koyar - geriye tarihlenemez, gizlenemez.",
+    "It runs for a long time on a big library, and it cannot be meaningfully undone.": "Büyük bir kütüphanede uzun sürer ve anlamlı biçimde geri alınamaz.",
+    "Type {0} below to enable the button.": "Düğmeyi etkinleştirmek için aşağıya {0} yaz.",
+    "Type {0} to enable the button.": "Düğmeyi etkinleştirmek için {0} yaz.",
+    "Type {0} to confirm.": "Onaylamak için {0} yaz.",
+    "This deletes {0} and the stored login token for it.": "Bu, {0} dosyasını ve onun için saklanan giriş anahtarını siler.",
+    "Nothing happens to the Steam account itself - it is only removed from nocat.farm.": "Steam hesabının kendisine bir şey olmaz - yalnızca nocat.farm'dan çıkarılır.",
+    "Adding it back needs the password and a fresh Steam Guard code.": "Geri eklemek için parola ve yeni bir Steam Guard kodu gerekir.",
+    "Anything it was farming stops.": "Ne topluyorsa durur.",
+    "Turn off opening the dashboard?": "Panoyu açma kapatılsın mı?",
+    "A newly added account does {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "Yeni eklenen bir hesap, neyi oynayacağı söylenene kadar {0} yapmaz ve o form uygulama penceresinde yok - yalnızca panoda var.",
+    "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "Bu kapalıyken bir hesap eklemek seni komut satırında bırakır ve hesap, sen gidip yapılandırmayı hatırlayana kadar boş boş bekler. Bu, bunu zaten bilenler içindir.",
+    "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "Bu panoya ağından erişilebiliyor ve parolası tahmin edilebilecek kadar kısa. Steam hesapların bunun arkasında.",
+    "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "Bu pano ağı dinleyecek şekilde ayarlı, ama parola olmadan bu bilgisayardan gelmeyen her bağlantıyı reddediyor - yani yalnızca buradan erişilebilir.",
+    "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "Bu hesabın bu oyunu ne kadar oynadığı. Bu hesabın ayarlarındaki eşik aşılmadan Steam hiçbir şey düşürmez.",
+    "Dashboard": "Pano",
+    "Running in the background": "Arka planda çalışma",
+    "rep4rep account": "rep4rep hesabı",
+    "Steam connection": "Steam bağlantısı",
+    "Logging": "Günlük tutma",
+    "What it plays": "Ne oynadığı",
+    "Free games & badges": "Ücretsiz oyunlar ve rozetler",
+    "Achievements": "Başarımlar",
+    "rep4rep commenting": "rep4rep yorumlama",
+    "Friends & messages": "Arkadaşlar ve mesajlar",
+    "Trades": "Takaslar",
+    "Staying out of the way": "Yoldan çekilme",
+    "Log": "Günlük",
+    "Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick \"Work out what its inventory is worth\".": "Değerlenmiyor. Yeniden açmak için Ayarlar'a gidip {0} hesabını seçin, \"Takaslar\" bölümünü açın ve \"Envanterinin ne ettiğini hesapla\" kutusunu işaretleyin."
+  },
+  "settings": {
+    "WebEnabled": {
+      "label": "Web panosu",
+      "tip": "Web panosunu sunar. Kapatırsan nocat.farm yalnızca konsolda kalır - her şey yine çalışır, sadece yazarak yönetirsin."
+    },
+    "WebHost": {
+      "label": "Şurada dinle",
+      "tip": "Panonun hangi adreslerde yanıt vereceği. 127.0.0.1 yalnızca bu bilgisayar demektir; telefonundan ya da başka bir makineden erişmek için 0.0.0.0 kullan ve önce bir parola koy."
+    },
+    "WebPort": {
+      "label": "Bağlantı noktası",
+      "tip": "Panonun bağlantı noktası. 7242'yi başka bir şey kullanıyorsa değiştir."
+    },
+    "WebPassword": {
+      "label": "Pano parolası",
+      "tip": "Panonun parolası. Boş olduğu sürece pano, bu bilgisayardan gelmeyen her bağlantıyı reddeder; böylece Steam hesaplarını yanlışlıkla yayına açamazsın."
+    },
+    "OpenDashboardAfterAdd": {
+      "label": "Hesap ekledikten sonra panoyu aç",
+      "tip": "Yeni bir hesap eklenir eklenmez panoyu tarayıcında açar ki ayarlayabilesin. Yepyeni bir hesap, neyi oynayacağı söylenene kadar hiçbir şey yapmaz ve o form uygulama penceresinde yok - yalnızca panoda var. Kapatırsan hatırlamak sana kalır."
+    },
+    "OpenBrowserOnStart": {
+      "label": "Başlangıçta tarayıcıyı aç",
+      "tip": "nocat.farm başladığında panoyu tarayıcında otomatik açar."
+    },
+    "Tray": {
+      "label": "Tepsi simgesi",
+      "tip": "Bildirim alanına (sağ altta, saatin yanına) bir simge koyar, böylece nocat.farm arka planda çalışabilir. Menü için sağ tıkla."
+    },
+    "MinimizeToTray": {
+      "label": "Tepsiye küçült",
+      "tip": "Konsol penceresini küçültmek onu görev çubuğunda bırakmak yerine tepsiye gizler."
+    },
+    "StartMinimized": {
+      "label": "Gizli başlat",
+      "tip": "Konsol penceresi gizli olarak, doğrudan tepsiye başlar. Simgeye çift tıklayınca geri gelir."
+    },
+    "StartWithWindows": {
+      "label": "Windows ile başlat",
+      "tip": "Windows'a giriş yaptığında nocat.farm'ı çalıştırır. Yalnızca kendi kullanıcı hesabının altına tek bir kayıt ekler, başka hiçbir şeye dokunmaz."
+    },
+    "KeepAwake": {
+      "label": "Bu bilgisayarı uyanık tut",
+      "tip": "Hesaplar çalışırken Windows'un uyku moduna geçmesini engeller. Ekran yine kapanabilir - yalnızca uyku engellenir."
+    },
+    "TrayNotifications": {
+      "label": "Bildirim balonlarını göster",
+      "tip": "Balon bildirimlerinin ana anahtarı. Aşağıdaki üçü hangilerini gerçekten alacağına karar verir."
+    },
+    "NotifyEarnings": {
+      "label": "Kazanç olduğunda bildir",
+      "tip": "Bir kart düştüğünde ya da bir rep4rep yorumu hesaba geçtiğinde bildirir."
+    },
+    "NotifySocial": {
+      "label": "Yorumları bildir",
+      "tip": "Biri profillerinden birine yorum yazdığında bildirir."
+    },
+    "NotifyProblems": {
+      "label": "Sorunları bildir",
+      "tip": "Bir hesabın gerçekten sana ihtiyacı olduğunda bildirir: Steam Guard kodu, başarısız giriş ya da yorum yasağı."
+    },
+    "Rep4RepEnabled": {
+      "label": "rep4rep'i hiç kullan(ma)",
+      "tip": "rep4rep, kullanıcılarının birbirine profil yorumu bıraktığı üçüncü taraf bir site. Tamamen isteğe bağlı. Kapatırsan nocat.farm her hesapta rep4rep'e dair her şeyi durdurur ve özelliğin tamamı kaybolur - sekmesi, puanları, hesap başına seçenekleri ve bu ayarlar sen yeniden açana kadar görünmez."
+    },
+    "Rep4RepApiToken": {
+      "label": "API anahtarı",
+      "tip": "rep4rep API anahtarın. Kaç Steam hesabı çalıştırırsan çalıştır, tek anahtar tüm rep4rep hesabını kapsar - rep4rep.com'da Settings altından al. Hesabın yok mu? rep4rep.com/?r=reap"
+    },
+    "Rep4RepAutoAddProfiles": {
+      "label": "Hesapları otomatik kaydet",
+      "tip": "Her Steam hesabını ilk girişinde rep4rep'e kaydeder, böylece siteden elle eklemen gerekmez."
+    },
+    "LoginStaggerSeconds": {
+      "label": "Girişler arası boşluk",
+      "tip": "Başlangıçta bir hesabı giriş yaptırdıktan sonra bir sonrakine kadar geçen saniye. Steam IP adresine göre sınırlar, bu yüzden birkaç hesabın sınıra takılmasını önleyen tam da bu boşluktur."
+    },
+    "StatusEveryMinutes": {
+      "label": "Şu sıklıkta rapor ver",
+      "tip": "Bir oyun açıkken bu hesabın ne yaptığını ne sıklıkla söylediği. 0, Günlük altındaki genel ayarı izler; -1 susturur."
+    },
+    "StatusQuietEveryMinutes": {
+      "label": "Dinlenirken ise",
+      "tip": "Aynısı; hesap uyurken, molada, duraklatılmışken veya çıkış yapmışken. 0 genel ayarı izler; -1 sessiz tutar."
+    },
+    "Language": {
+      "label": "Dil",
+      "tip": "Panelin dili. Henüz çevrilmemiş olan boş kalmak yerine İngilizce görünür, yani yarım kalmış bir dil bile gayet kullanılabilir."
+    },
+    "MarketCurrency": {
+      "label": "Envanter fiyatları şu birimde",
+      "tip": "Envanter fiyatlarının para birimi. Steam mağazandakiyle aynı yap, yoksa toplamlar pazarda gördüğünle uyuşmaz."
+    },
+    "FileLogging": {
+      "label": "Günlük dosyası yaz",
+      "tip": "Her şeyi ekranın yanı sıra logs/ klasörüne de yazar. Açık bıraksan iyi olur - sen uyurken ne olduğunu görmenin tek yolu bu."
+    },
+    "DailyReportEnabled": {
+      "label": "Günlükte günlük özet",
+      "tip": "Günde bir kez, her hesabın son 24 saatte ne kazandığını tek bakışta gösteren bir özet yazar: oynanan saatler, kartlar, rep4rep yorumları ve toplam. \"Gece boyunca ne kazandım?\" sorusunu kaydırmadan yanıtlar; istediğin an `report` yazarak da görebilirsin."
+    },
+    "DailyReportHour": {
+      "label": "Özet saati · saat",
+      "tip": "Günlük özetin yazılacağı saat, 0-23 (yerel saat). Varsayılan 9."
+    },
+    "DailyReportMinute": {
+      "label": "Özet saati · dakika",
+      "tip": "Günlük özet için o saatin dakikası, 0-59. Saat 9 + dakika 30 = 09:30."
+    },
+    "Enabled": {
+      "label": "Etkin",
+      "tip": "Bu hesaba giriş yapar. Kapatırsan yapılandırması durur ama hesaba hiç dokunulmaz."
+    },
+    "SteamLogin": {
+      "label": "Steam hesap adı",
+      "tip": "Giriş yaparken yazdığın Steam hesap adı - görünen adın değil, e-postan da değil."
+    },
+    "SteamPassword": {
+      "label": "Parola",
+      "tip": "İsteğe bağlı. Boş bırak; nocat.farm bir kez sorar, sonra hesabı bir giriş anahtarıyla hatırlar - iki seçenekten daha güvenli olanı."
+    },
+    "OnlineStatus": {
+      "label": "Şöyle görün",
+      "tip": "Başkalarının seni nasıl gördüğü: çevrimiçi, uzakta, meşgul veya görünmez. Görünmez modda saatler birikmeye devam eder ve kimse bir şey görmez."
+    },
+    "IUseThisAccount": {
+      "label": "Bu hesaba ben de giriyorum",
+      "tip": "Bu hesaba kendin de giriyorsan işaretle. Böylece nocat.farm durumuna dokunmaz - bunu ikinci bir oturumdan yapmak seni kendi Steam sohbetinden atar."
+    },
+    "StartPaused": {
+      "label": "Duraklatılmış başlat",
+      "tip": "Giriş yapar ama sen Devam'a basana kadar oynamaz, toplamaz, yorum yazmaz. Çevrimiçi olup hiçbir şey yapmasını istediğin bir hesap için."
+    },
+    "LogColour": {
+      "label": "Günlükteki rengi",
+      "tip": "Bu hesabın adının günlükte ve panoda hangi renkle yazılacağı. Birkaç hesabı geçtiğinde işe yarar."
+    },
+    "Notes": {
+      "label": "Notlar",
+      "tip": "Bu hesabın ne için olduğuna dair kendine bir not. Hesap kartında görünür ve Steam'in yanına bile yaklaşmaz."
+    },
+    "LegitMode": {
+      "label": "İnsan modu",
+      "tip": "Hesabı bir insan gibi oynatır: tek seferde tek oyun, uzunluğu değişen oturumlar ve molalar, gerçekçi yatma ve kalkma saatleri, ve hiç oynanmayan günler. Kapalıyken sadece saat biriktirir."
+    },
+    "LegitStopMaxSeconds": {
+      "label": "Durdurulunca en fazla şu kadar toparlan",
+      "tip": "Yalnızca insan modu: elle durdurduğunda, çıkmadan önce en fazla bu kadar rastgele saniye oynamaya devam eder (işini bitiren biri gibi), aniden yok olmak yerine."
+    },
+    "GameWeights": {
+      "label": "Oyunlar ve sıklıkları",
+      "tip": "Oyunlar ve ağırlıkları, örneğin \"730:70, 440:20\". En ağırı ana oyundur ve zamanın çoğunu alır; diğerleri her gün değil, arada bir, öbekler hâlinde gelir."
+    },
+    "WeekdayHours": {
+      "label": "Hafta içi saat",
+      "tip": "Pazartesiden cumaya kabaca kaç saat oynadığı. Gerçek sayı her sabah bunun etrafında atılır - kimi gün kısa, kimi gün uzun - yani iki gün birbirine benzemez."
+    },
+    "WeekendHours": {
+      "label": "Hafta sonu saat",
+      "tip": "Cumartesi ve pazar için aynısı. Hafta sonlarının hafta içinden uzun sürmesi, bir haftanın gerçek görünmesinin büyük bölümüdür."
+    },
+    "DayOffChancePct": {
+      "label": "İzin günü olasılığı",
+      "tip": "100 üzerinden, o gün hiç oynamama olasılığı. İstisnasız her gün oynayan biri bottur; bunu engelleyen ayar budur."
+    },
+    "DayStartHour": {
+      "label": "Yaklaşık şu saatte girer",
+      "tip": "Genelde çevrimiçi olduğu saat, 0-23. Gerçek saat bunun çevresinde bir çan eğrisine düşer, hafta sonu daha erken başlar; yani asla aynı dakika iki kez olmaz."
+    },
+    "BedHour": {
+      "label": "Yaklaşık şu saatte yatar",
+      "tip": "Geceyi bitirdiği saat, 0-23. Gece yarısından sonrası da olur: 2, gece 02.00 demektir."
+    },
+    "LateNightExtraHours": {
+      "label": "Cuma/Cumartesi daha geç yatar",
+      "tip": "Ertesi gün bir işi olmadığı cuma ve cumartesi geceleri fazladan ayakta kaldığı saatler."
+    },
+    "MainGameSharePct": {
+      "label": "Ana oyunun payı",
+      "tip": "Başka oyunlar da oynadığı bir günde listedeki İLK oyunun aldığı pay, yüzde olarak. Her gün bunun yaklaşık 10 puan çevresinde yeniden atılır."
+    },
+    "PureMainDayChancePct": {
+      "label": "Yalnızca ana oyun günleri",
+      "tip": "100 üzerinden, bütün bir günün sadece ana oyuna gitme olasılığı. Diğer oyunların her gün aynı dozda değil de öbekler hâlinde gelmesini sağlayan budur."
+    },
+    "SideGameSharePct": {
+      "label": "Karışık günde diğerlerinin payı",
+      "tip": "Ana oyunun dışına çıktığı günlerde, diğer oyunların aralarında paylaştığı günün kabaca ne kadarı. Bu tükenince günün kalanı yine ana oyundur."
+    },
+    "WarmUpMinMinutes": {
+      "label": "En az şu kadar alışsın",
+      "tip": "Giriş yaptıktan sonra bir şeye başlamadan önceki en kısa bekleme, dakika. Hesap çevrimiçi olduğu saniye oyunun içinde olmak, olabilecek en makine işi şeydir."
+    },
+    "WarmUpMaxMinutes": {
+      "label": "Ve en fazla",
+      "tip": "En uzun alışma süresi, dakika. Gerçeği ikisi arasında rastgele seçilir. Ne ayarlarsanız ayarlayın, girişten sonraki üç dakika içinde asla başlamaz."
+    },
+    "SessionMinMinutes": {
+      "label": "En kısa oturum",
+      "tip": "Başka bir şeye geçmeden önce bir oyunda kalacağı en kısa süre. Kimse beş dakikada bir oyun değiştirmez."
+    },
+    "SessionMaxMinutes": {
+      "label": "En uzun oturum",
+      "tip": "Bir oyunda kalacağı en uzun süre. Oturumların çoğu ikisinin arasına düşer; yarım saatlik bir uğrama da bütün bir akşam da normaldir, o yüzden bol bırakın."
+    },
+    "MealBreaksPerDay": {
+      "label": "Günde öğün sayısı",
+      "tip": "Günde masadan gerçekten kalktığı kaç mola verdiği. Rastgele değil, gerçek yemek saatlerinin çevresine düşerler; onları yemek gibi gösteren de budur."
+    },
+    "MealBreakMinutes": {
+      "label": "Bir öğün ne kadar sürer",
+      "tip": "Böyle bir molada kabaca ne kadar uzak kaldığı, dakika. Bazen epey uzar: sohbete dalınır."
+    },
+    "SignOutOnBreakChancePct": {
+      "label": "Molada çıkış yapma olasılığı",
+      "tip": "100 üzerinden, bir molayı sadece Uzakta değil, çevrimdışı görünerek geçirme olasılığı - arkadaş listen için bu, Steam'i kapatmaktan ayırt edilemez."
+    },
+    "OfflineIdleAtNight": {
+      "label": "Gece saat biriktir",
+      "tip": "Uyurken görünmez olur ve yine de sessizce saat biriktirir. Arkadaş listen hesabı çevrimdışı görür, kimse bir şey görmez, saatler yine işler."
+    },
+    "OfflineIdleGames": {
+      "label": "Gece için oyunlar",
+      "tip": "Gece çevrimdışıyken ve toplanacak kart kalmadığında ne çalıştırılacağı. İstediğin kadar: kaç tane olduğunu görecek kimse yok, o yüzden \"teker teker\" kuralı burada geçmez."
+    },
+    "IdleGames": {
+      "label": "Saat biriktirilecek oyunlar",
+      "tip": "Saat biriktirmek için çalıştırılacak oyunlar. Steam aynı anda 32 tanesine izin verir."
+    },
+    "CustomGameNameEnabled": {
+      "label": "Özel bir oyun adı göster",
+      "tip": "Arkadaş listende gerçek oyun yerine uydurma bir ad gösterir. Saatler yine gerçek oyuna işlemeye devam eder."
+    },
+    "CustomGameName": {
+      "label": "Şöyle göster",
+      "tip": "Profilinde ve arkadaş listende gerçek oyun yerine bu adı gösterir. Gerçek oyunlar altta saat biriktirmeye devam eder - ikisi aynı anda olur."
+    },
+    "FarmCards": {
+      "label": "Kart topla",
+      "tip": "Kütüphanende düşmeyi bekleyen kartları toplar ve hiçbiri kalmayınca durur. Ayarlanacak bir şey yok."
+    },
+    "HoursUntilCardDrops": {
+      "label": "Kart düşene kadar saat",
+      "tip": "Steam'in bir oyun için kart vermesine kadar gereken saat. Çoğu hesap için 3 doğrudur; bu hesap Steam'de 5 dolardan fazla harcadıysa 0 yapın."
+    },
+    "FarmingOrder": {
+      "label": "Bu sırayla topla",
+      "tip": "Önce hangi oyunun toplanacağı. \"En az kart kalan\" rozetleri en çabuk bitirir; \"en çok oynanan önce\" kütüphanene en az yeni süre ekler."
+    },
+    "FarmOffline": {
+      "label": "Çevrimdışı görünerek topla",
+      "tip": "Bu hesap toplarken arkadaşlarına çevrimdışı görünür. Steam yine her saati sayar ve kartlar yine düşer; değişen tek şey kimsenin görmemesidir."
+    },
+    "UnlockAchievements": {
+      "label": "Zamanla başarım kazan",
+      "tip": "Gerçek oynama süresinden yola çıkarak başarımları yavaş yavaş kazanır, en yaygın olanlardan başlayarak. Saatlerin haklı çıkarmadığı hiçbir şeyi açmaz ve bir oyunu asla %100 bitirmez."
+    },
+    "AchievementPace": {
+      "label": "Ne hızda",
+      "tip": "İki açılış arasında ne kadar beklendiği. \"Dikkatli\" her aralığı ikiye katlar; birinin gerçekten bakmasına dayanması gereken bir hesapta istediğin de budur."
+    },
+    "AchievementMaxCompletionPct": {
+      "label": "Şundan fazlasını tamamlama",
+      "tip": "Tek bir oyunun yüzde kaçının tamamlanacağı. 0, her oyunu kendi ayarlanmış tavanına bırakır - 3 saatlik bir bulmaca ile 500 saatlik bir kampanya aynı rakamda durmamalı. Bir sayı girilirse o geçerlidir ve bir oyunun tavanını indirdiği kadar kolay yükseltir de; bir hesap bir oyunu gerçekten sonuna dek oynadıysa bitirebilmesi içindir. 95'in üstüne asla çıkmaz: boşta bekleyen bir hesapta %100 tamamlanmış bir oyun zaten ele veren şeydir."
+    },
+    "ClaimFreeGames": {
+      "label": "Ücretsiz oyunları al",
+      "tip": "Karşına çıkan ücretsiz oyunları alır, böylece kütüphane kendiliğinden büyür."
+    },
+    "CraftBadges": {
+      "label": "Kart setlerinden rozet üret",
+      "tip": "Tamamlanmış kart setlerini rozete çevirir; bu profil deneyimi ve bazen eşya verir."
+    },
+    "Rep4Rep": {
+      "label": "rep4rep yorumları gönder",
+      "tip": "rep4rep'in bu hesaba verdiği yorumları insan temposunda gönderir."
+    },
+    "Rep4RepDailyCap": {
+      "label": "24 saatte en fazla",
+      "tip": "Bu hesabın 24 saat içinde yazacağı en fazla yorum sayısı. Steam'in arkadaşın olmayan kişiler için gerçek tavanı yaklaşık 10'dur ve bunu aşmak tam da bir hesaba yorum yasağı getiren şeydir."
+    },
+    "Rep4RepGapMinMinutes": {
+      "label": "En kısa boşluk",
+      "tip": "Bu hesaptan iki yorumu asla bu dakikadan daha yakın aralıkla yazmaz."
+    },
+    "Rep4RepGapMaxMinutes": {
+      "label": "En uzun boşluk",
+      "tip": "Yorumlar arasındaki en uzun boşluk, dakika. Gerçeği ikisi arasında rastgele seçilir, böylece zamanlama asla mekanik görünmez."
+    },
+    "Rep4RepStartHour": {
+      "label": "Yalnızca şu saatten sonra yaz",
+      "tip": "Bu hesabın yorum yapacağı günün en erken saati, 0-23. Sabahın dördünde gelen yorumlar, olabilecek en bariz bot işaretidir."
+    },
+    "Rep4RepEndHour": {
+      "label": "Şu saate kadar",
+      "tip": "Bu hesabın yorum yapacağı günün en geç saati, 1-24. Başlangıç saatiyle aynı yaparsan gün boyu yorum yapılabilir."
+    },
+    "AcceptFriendRequests": {
+      "label": "Arkadaşlık isteklerini kabul et",
+      "tip": "Gelen arkadaşlık isteklerini otomatik kabul eder. rep4rep hesabında açık olması işe yarar: Steam, arkadaşının profilinde çok daha fazla yorumaizin verir."
+    },
+    "JoinGroup": {
+      "label": "nocat.farm grubuna katıl",
+      "tip": "Bu hesabın girişte bir kez nocat.farm Steam grubuna katılmasını sağlar. Tamamen isteğe bağlı: kapatırsan katılmaz."
+    },
+    "AutoReplyEnabled": {
+      "label": "Mesajlara yanıt ver",
+      "tip": "Bu hesaba yazan yabancılara cevap verir. Kapatmak aşağıya yazdığını korur, yani yeniden yazmadan tekrar açabilirsin."
+    },
+    "AutoReply": {
+      "label": "Şu yanıtı ver",
+      "tip": "Biri bu hesaba yazdığında bunu gönderir. Boş bırakırsan hiçbir şey söylemez. Günde sekiz saat oynayıp hiç cevap vermeyen bir hesap, \"şu an müsait değilim\" diyenden daha çok dikkat çeker."
+    },
+    "AutoReplyOncePerDay": {
+      "label": "Günde yalnızca bir kez yanıtla",
+      "tip": "Bu yanıtı aynı kişiye günde en fazla bir kez gönderir. Bu olmadan iki kez yazan biri birebir aynı satırı iki kez alır - bot gibi görünmenin en hızlı yolu."
+    },
+    "FriendRequestDelayMinMinutes": {
+      "label": "En az bekle",
+      "tip": "Bir arkadaşlık isteğini kabul etmeden önceki en kısa bekleme, dakika. İstek geldiği saniye kabul etmek, bir hesabın yapabileceği en kolay fark edilen şeydir."
+    },
+    "FriendRequestDelayMaxMinutes": {
+      "label": "Ve en fazla",
+      "tip": "Kabul etmeden önceki en uzun bekleme, dakika. Gerçeği ikisi arasında rastgele seçilir."
+    },
+    "ActOnlyWhileAwake": {
+      "label": "Yalnızca uyanıkken tepki ver",
+      "tip": "Takasları, yanıtları ve arkadaşlık isteklerini, insan modu bu hesabın kalktığını söyleyene kadar bekletir. Bu olmadan hesap uyuyordur ama yine de sabahın dördünde cevap verir."
+    },
+    "AcceptDonations": {
+      "label": "Bağışları kabul et",
+      "tip": "Karşılığında hiçbir şey istemeyen teklifleri kabul eder. Sana hiçbir şeye mal olamazlar, dolayısıyla doğaları gereği güvenlidirler."
+    },
+    "AcceptFromMasters": {
+      "label": "Kendi hesaplarından geleni koşulsuz kabul et",
+      "tip": "Aşağıda listelenen SteamID64'lerden gelen her teklifi kabul eder - eşya götürenler dahil. Boşta çalışan hesaplarındaki kartları tek hesapta toplamanı sağlayan şey budur ve tam bu yüzden listede yalnızca sana ait hesaplar olmalıdır."
+    },
+    "TradeMasters": {
+      "label": "Kendi hesapların",
+      "tip": "Kendi hesaplarının SteamID'leri. \"send\" eşyaları oraya gönderir ve oradan gelen teklifler sorgusuz kabul edilir."
+    },
+    "DeclineOtherTrades": {
+      "label": "Diğer her şeyi reddet",
+      "tip": "Diğer tüm teklifleri öylece bırakmak yerine etkin biçimde reddeder. Kapatırsan kabul edilmeyen her şey, sen bakasın diye olduğu gibi kalır."
+    },
+    "TradeDelayMinMinutes": {
+      "label": "En az bekle",
+      "tip": "Bir teklife karşılık vermeden önceki en kısa bekleme, dakika. Teklif geldikten iki saniye sonra kabul etmek, bir insanın yapacağı şey değildir."
+    },
+    "TradeDelayMaxMinutes": {
+      "label": "Ve en fazla",
+      "tip": "Bir teklife karşılık vermeden önceki en uzun bekleme, dakika. Gerçeği ikisi arasında rastgele seçilir."
+    },
+    "PauseWhenYouPlay": {
+      "label": "Sen oynarken çekil",
+      "tip": "Sen oynamaya başlarsan hesap hemen çekilir ve kendi işine dönmeden önce bekler."
+    },
+    "ResumeDelayMinutes": {
+      "label": "Devam etmeden önce bekle",
+      "tip": "Sen oynamayı bıraktıktan sonra, bu hesabın kaldığı yerden sessizce devam etmesi için beklenecek süre, dakika."
+    },
+    "AchievementBoost": {
+      "tip": "Her oturumu elle başlatmana gerek kalmadan birkaç oyunda kendi başına başarım avlar. Varsayılan olarak kapalı. \"Tüm tek oyunculu\" kütüphanenden seçer: yalnızca gerçek oyunlar (asla DLC veya demo), başarımı olan ve yeterince değerlendirmesi bulunanlar.",
+      "label": "Başarım hızlandırma"
+    },
+    "SkipRefundableGames": {
+      "tip": "Yeni alınmış bir oyuna, parasını geri alamayacak duruma gelene kadar dokunmaz: Steam iki saat oynanmışsa reddeder ve iki saat tek bir oturumdur. Sadece kart toplamada değil, her yerde geçerli. Ücretsiz oyunlar hiçbir zaman bekletilmez.",
+      "label": "İade edilebilir oyunları koru"
+    },
+    "ShowInventoryValue": {
+      "tip": "Bu hesabın envanterinin pazarın medyan fiyatıyla ne ettiğini hesaplar. KENDİ envanterini okur, dolayısıyla gizli profil fark etmez.",
+      "label": "Envanterinin ne ettiğini hesapla"
+    },
+    "CheckForUpdates": {
+      "tip": "Günde bir kez daha yeni bir sürüm var mı diye bakar ve günlükte söyler. Yalnızca söyler: hiçbir şeyi indirmez, değiştirmez, yeniden başlatmaz.",
+      "label": "Güncelleme varsa haber ver"
+    },
+    "BreakMinMinutes": {
+      "label": "En kısa mola",
+      "tip": "İki oturum arasındaki en kısa boşluk, dakika. Molaların çoğu bu uçta olur: bir şey içmek, sekme değiştirmek."
+    },
+    "BreakMaxMinutes": {
+      "label": "En uzun mola",
+      "tip": "Olağan molaların en uzunu, dakika. Gerçek süreler eşit dağılmak yerine kısa uca yığılır, çünkü insanlar gerçekten öyle mola verir."
+    },
+    "MaxSignOutsPerDay": {
+      "label": "En fazla şu kadar çevrimdışı ol",
+      "tip": "Bunu günde kaç kez yaptığının tavanı - hesap bütün akşam arkadaş listende yanıp sönmesin diye. 0 kapatır, o zaman her mola sadece Uzakta olur."
+    },
+    "PlayWhileFarming": {
+      "label": "Kart toplarken adı koru",
+      "tip": "Kart toplanırken bile özel adı görünür tutar. Kapatırsan kart toplama gerçek oyunu gösterir."
+    },
+    "GameDevice": {
+      "label": "Şu cihazda oynuyormuş gibi",
+      "tip": "Arkadaşlarının seni hangi tür cihazda oynuyor sandığı - adının yanındaki küçük Steam Deck veya telefon rozetini koyan budur."
+    },
+    "PriorityGames": {
+      "label": "Önce bunları topla",
+      "tip": "Sıralama ne derse desin, her şeyden önce toplanacak appID'ler."
+    },
+    "FarmPriorityOnly": {
+      "label": "Yalnızca onları topla",
+      "tip": "Sadece öncelik listesindeki oyunları toplar, hâlâ kartı olan diğer her oyunu görmezden gelir."
+    },
+    "BlacklistedGames": {
+      "label": "Bunlara asla dokunma",
+      "tip": "Rozet sayfası ne derse desin asla toplanmayacak ve asla çalıştırılmayacak appID'ler."
+    },
+    "SkipUnplayedGames": {
+      "label": "Hiç oynamadığın oyunları atla",
+      "tip": "Kendin hiç başlatmadığın oyunları atlar; böylece nocat.farm, kimsenin görmesini istemediğin oyunlara ilk kez süre yazmaz."
+    },
+    "RefundHoldDays": {
+      "label": "...şu kadar gün boyunca",
+      "tip": "Yeni alınmış bir oyunun kaç gün rahat bırakılacağı. Steam'in kendi iade penceresi 14 gündür, varsayılan da odur; karar vermen daha uzun sürüyorsa artır."
+    },
+    "FarmOnlyWhileAsleep": {
+      "label": "Kartları yalnızca uyurken topla",
+      "tip": "Yalnızca insan modu: hesap gece uyuyana (görünmez olana) kadar kart toplamayı bekletir, sonra toplar; gündüz normal programını oynar."
+    },
+    "FarmFromHour": {
+      "label": "Kartları yalnızca şu saatten sonra topla",
+      "tip": "Kartları yalnızca bu saatten itibaren toplar, 24 saatlik gösterimle. Bunu ve \"kadar\" değerini 0 bırakırsan her saat toplar."
+    },
+    "FarmUntilHour": {
+      "label": "...şu saate kadar",
+      "tip": "Kartları bu saate kadar toplar (24 saat). \"Şu saatten\" değerinden erken yaparsan pencere gece yarısını aşar - örneğin 22'den 6'ya gece boyu toplar."
+    },
+    "PostFarmWindDownMinMinutes": {
+      "label": "Son karttan sonra en az şu kadar devam et",
+      "tip": "Yalnızca insan modu: bir toplama turu bittiğinde, aynı saniye kapatmak yerine o oyunu bu aralıkta rastgele bir süre (dakika) açık tutar."
+    },
+    "PostFarmWindDownMaxMinutes": {
+      "label": "...şu kadara kadar",
+      "tip": "Toplama sonrası bu yavaşlama süresinin üst sınırı, dakika."
+    },
+    "FarmingDelayMinutes": {
+      "label": "Şu sıklıkta yeniden bak",
+      "tip": "Bir oyunu toplarken ne sıklıkla yeniden kontrol edileceği, dakika. Steam kartları düştükleri anda bildirir, yani bu sadece bir emniyet ağıdır."
+    },
+    "MaxFarmingHoursPerGame": {
+      "label": "Şu kadar saat sonra vazgeç",
+      "tip": "Bir oyundan bu kadar saat sonra vazgeçip sıradakine geçer. Bozuk tek bir oyunun kuyruğu sonsuza dek tıkamasını engeller."
+    },
+    "StopWhenFarmingDone": {
+      "label": "Bitince çıkış yap",
+      "tip": "Toplanacak kart kalmadığı anda bu hesabı çıkarır, saat biriktirmeye devam etmek yerine."
+    },
+    "AchievementBoostGames": {
+      "label": "Bu oyunları hızlandır",
+      "tip": "Hızlandırmanın sırayla ele alacağı oyunlar, virgülle ayrılmış (appID veya mağaza bağlantısı). Yalnızca hızlandırma \"seçtiğin oyunlar\" iken kullanılır."
+    },
+    "BoostSessionHours": {
+      "label": "Her birini yaklaşık şu kadar oyna",
+      "tip": "Hızlandırmanın bir oyunda kalıp sıradakine geçmeden önceki süresi, saat."
+    },
+    "MaxBoostGamesInARow": {
+      "label": "İnsan modu: art arda en fazla",
+      "tip": "Yalnızca insan modu: normal programın daha uzun bir bölümüne geçmeden önce üst üste kaç hızlandırma oturumu yapacağı - meşru bir hesapta önceliğin hep program kalması için."
+    },
+    "BoostRestMinutesHuman": {
+      "label": "İnsan modu: hızlandırmalar arası program aralığı",
+      "tip": "Yalnızca insan modu: iki hızlandırma oturumu arasında geçen normal program dakikası - avlanmanın meşru bir hesabın gününe hâkim olmaması için."
+    },
+    "BoostMinReviews": {
+      "label": "Yalnızca en az şu kadar değerlendirmesi olanları avla",
+      "tip": "\"Tüm tek oyunculu\" bir oyuna yönelmesi için gereken Steam değerlendirme sayısı. Bu, paket dolgusu filtresidir: on bir değerlendirmesi olan ve hiç açmadığı bir oyunda akşam geçirmiş olmanın kimseye açıklaması yoktur. 0 her şeyi avlar. Elle seçilen oyunlarda yok sayılır."
+    },
+    "BoostOnlyPlayedGames": {
+      "label": "Yalnızca oynadığın oyunlarda avlan",
+      "tip": "\"Tüm tek oyunculu\"yu bu hesabın bir ara gerçekten başlattığı oyunlarla sınırlar. Varsayılan kapalı - bir avcının yeni bir oyuna başlaması gayet normaldir - ama hesabı kendi geçmişine uyan oyunlarda tutmanın en katı yolu budur."
+    },
+    "InventoryIgnoreGames": {
+      "label": "...ama bu oyunlar hariç",
+      "tip": "Envanter değerinin dışında bırakılacak appID'ler, virgülle ayrılmış. Hesabın YASAKLI olduğu oyun buraya yazılır: eşyalar envanterde durur ama asla satılamaz, dolayısıyla saymak toplamı şişirir. Steam yasağın hangi oyunda olduğunu söylemez ve envanterde de bunu güvenilir biçimde gösteren bir şey yoktur - bu yüzden burası tahmin edilen değil, senin doldurduğun bir listedir."
+    },
+    "YieldToFamily": {
+      "label": "Paylaşılan oyunu istediklerinde geri ver",
+      "tip": "Ailedeki biri bu hesabın ödünç aldığı bir oyunu başlatırsa, oyunu hemen geri verip sıradakine geçer. Steam paylaşılan bir oyunu aynı anda tek kişiye ödünç verir ve sahibi her zaman kazanır; alternatifi oturumun ortasında dışarı atılıp artık sahip olmadığı bir oyunu \"oynuyor\" görünmektir. Bıraktıktan sonra yirmi dakika daha rotasyonun dışında kalır, kapattıkları saniye kapılmaz."
+    },
+    "HoldNewFamilyGames": {
+      "label": "Yeni gelen aile oyunlarına dokunma",
+      "tip": "Paylaşılan bir oyunu aile kütüphanesindeki ilk iki hafta boyunca atlar (\"iade edilebilir oyunları koru\" ile aynı gün sayısı), satın alan kişi hâlâ karar veriyor olabilir diye. Yalnızca oyunun ne zaman GELDİĞİNE bakabilir, sahibinin ne kadar oynadığına asla - o sayı bu hesaptan görünmez. Bu yüzden bazen sahibinin çoktan saatler geçirdiği ve zaten iade edemeyeceği bir oyunu bekletir."
+    },
+    "IncludeFamilyLibrary": {
+      "label": "Aileyle paylaşılan oyunları dahil et",
+      "tip": "Steam Ailesi üzerinden bu hesapla paylaşılan oyunları da avlar. Ödünç alınan bir oyunda kazanılan başarımlar, tıpkı sahip olunan bir oyundaki gibi BU hesaba işlenir. Ailenin paylaşımdan çıkardığı oyunlar atlanır, oyun olmayanlar da öyle. Sahip olunan oyunlar ödünç alınanlardan hep önce gelir, çünkü sahibi kendininkini her an geri isteyebilir."
+    },
+    "AchievementGrindGapMinMinutes": {
+      "label": "Sıkı çalışırken, şu sıklıkta bir başarım",
+      "tip": "Bir GRIND'in başarımları ne kadar aralıkla açtığı, dakika (dalgalı aralığın alt ucu). Grind, bir oyunun başında etkin biçimde oturmak demektir; yani bu, gerçekten avlanan birinin temposudur, arka plandaki damla damla akış değil. Yine kolaydan zora ve yine oyundaki saatlerle sınırlı."
+    },
+    "AchievementGrindGapMaxMinutes": {
+      "label": "...şu kadara kadar",
+      "tip": "Grind sırasındaki aralığın üst ucu, dakika."
+    },
+    "AchievementNeverGames": {
+      "label": "Bu oyunlarda asla",
+      "tip": "Tamamen rahat bırakılacak oyunlar: buradaki hiçbir şey için başarım yazılmaz ve hızlandırma asla birini seçmez. İnsan modunda hesabın amiral oyunu da atlanır. (Not: Counter-Strike 2 gibi bazı oyunlar başarımlarını sunucuda tutar, dolayısıyla zaten hiçbir şey onları açamaz.)"
+    },
+    "AchievementGames": {
+      "label": "Yalnızca bu oyunlar",
+      "tip": "Bu appID'lerle sınırlar. Boş bırakırsan hesabın o sırada oynadığı her oyun geçerli olur."
+    },
+    "UnpackBoosterPacks": {
+      "label": "Destek paketlerini aç",
+      "tip": "Envanterine düşen destek paketlerini otomatik açar, böylece içindeki kartlar rozet üretilen setlere sayılır."
+    },
+    "ClearInventoryNotifications": {
+      "label": "Yeni eşya rozetini temizle",
+      "tip": "Her kart düştüğünde Steam'in yeşil \"yeni eşya\" sayacını temizler, böylece envanterin sürekli okunmamış görünmez."
+    },
+    "UIMode": {
+      "label": "Şöyle giriş yap",
+      "tip": "Steam'e hangi tür istemci olduğunu söylediği. \"Masaüstü\" doğru cevaptır ve varsayılandır - gerçek istemcinin bildirdiği de budur."
+    },
+    "SteamParentalCode": {
+      "label": "Aile Görünümü PIN'i",
+      "tip": "Bu hesapta Aile Görünümü açıksa onun PIN'i. Onsuz Steam, kart toplamanın okuması gereken sayfaları engeller."
+    },
+    "MachineName": {
+      "label": "Cihaz adı",
+      "tip": "Bu hesabın Steam'in yetkili cihazlar listesinde gösterdiği cihaz adı. Boş bırakırsan bu bilgisayarın gerçek adı kullanılır."
+    },
+    "SharedSecret": {
+      "label": "Doğrulayıcı kod anahtarı",
+      "tip": "Bu hesabın mobil doğrulayıcısının paylaşılan anahtarı. Bununla nocat.farm kendi Steam Guard isteklerini yanıtlar, telefona gerek kalmaz."
+    },
+    "IdentitySecret": {
+      "label": "Doğrulayıcı onay anahtarı",
+      "tip": "Aynı doğrulayıcının diğer yarısı; \"telefonundan onayla\" uyarısını halleden parça. Yalnızca bu hesap takas gönderdiğinde önemlidir."
+    },
+    "AccountProxy": {
+      "label": "Bu hesap için vekil sunucu",
+      "tip": "Yalnızca bu hesabın Steam trafiğini kendi vekil sunucusundan geçirir, örneğin http://sunucu:port. Boş bırakırsan genel olan kullanılır."
+    },
+    "AccountProxyUsername": {
+      "label": "Vekil sunucu kullanıcı adı",
+      "tip": "Bu hesabın kendi vekil sunucusu istiyorsa kullanıcı adı."
+    },
+    "AccountProxyPassword": {
+      "label": "Vekil sunucu parolası",
+      "tip": "Bu hesabın kendi vekil sunucusu istiyorsa parola."
+    },
+    "AcceptGroupInvites": {
+      "label": "Grup davetlerini kabul et",
+      "tip": "Bu hesabın davet edildiği Steam gruplarına katılır."
+    },
+    "IgnoreSuspiciousInvites": {
+      "label": "Bariz spam'i yok say",
+      "tip": "Yepyeni, gizli, seviye 0 profillerden gelen arkadaşlık isteklerini sessizce yok sayar - her dolandırıcı botun biçimi budur."
+    },
+    "RejectInvalidFriendInvites": {
+      "label": "Kabul etmediklerini reddet",
+      "tip": "Bir arkadaşlık isteğini listede öylece bırakmak yerine etkin biçimde reddeder. Kapalıyken kabul edilmeyen her şey sadece bekler."
+    },
+    "AutoReplyDelaySeconds": {
+      "label": "Yanıtlamadan önce bekle",
+      "tip": "Yanıt gitmeden önce beklenecek saniye. Anında cevap, cevap veren bir robottur; gerçek bekleme bu değere kadar rastgele seçilir."
+    },
+    "CommandMasters": {
+      "label": "Şunlardan komut kabul et",
+      "tip": "Steam'de bu hesaba mesaj atarak nocat.farm'ı yönetmesine izin verilen SteamID64'ler, virgülle ayrılmış. Komutlar ! ile başlamalıdır."
+    },
+    "WebRefreshSeconds": {
+      "label": "Şu sıklıkta yenile",
+      "tip": "Panonun kaç saniyede bir kendini yenileyeceği. Düşük değer daha canlı hissettirir ve hiçbir maliyeti yok - hepsi yerel."
+    },
+    "WebSessionDays": {
+      "label": "Şu kadar süre oturum açık kalsın",
+      "tip": "Bir tarayıcının pano parolasını yeniden girmesi gerekmeden kaç gün oturumunun açık kalacağı."
+    },
+    "ExitWhenAllFinished": {
+      "label": "Her şey bitince kapat",
+      "tip": "Bütün hesaplar toplamayı bitirip çıkış yapar yapmaz nocat.farm'ı tamamen kapatır; tepside boş boş beklemesine gerek kalmaz."
+    },
+    "Debug": {
+      "label": "Hata ayıklama ayrıntısı",
+      "tip": "Her web isteği dahil çok daha fazla ayrıntı gösterir. Bir şey çalışmadığında işe yarar; onun dışında sadece gürültü."
+    },
+    "LogRetentionDays": {
+      "label": "Günlükleri şu kadar sakla",
+      "tip": "Bu kadar günden eski günlük dosyalarını siler. 0 sonsuza dek saklar."
+    },
+    "Rep4RepPointsRefreshMinutes": {
+      "label": "Puanları şu sıklıkta kontrol et",
+      "tip": "rep4rep'e puan toplamını kaç dakikada bir soracağı. rep4rep herhangi bir istek sınırı yayımlamıyor, o yüzden 1 yapıp bir ay boyunca açık bırakma."
+    },
+    "ReconnectDelaySeconds": {
+      "label": "Şu süre sonra yeniden bağlan",
+      "tip": "Steam bağlantıyı düşürdükten sonra yeniden bağlanmadan önce beklenecek saniye."
+    },
+    "ConnectionTimeoutSeconds": {
+      "label": "Bağlantı zaman aşımı",
+      "tip": "Vazgeçip yeniden bağlanmadan önce Steam'in yanıtı için beklenecek saniye."
+    },
+    "MaxConcurrentFarming": {
+      "label": "En fazla şu kadar topla",
+      "tip": "Aynı anda kaç hesabın kart toplayabileceği. 0 sınırsız demektir."
+    },
+    "LoginCooldownMinutes": {
+      "label": "Hız sınırı bekleme süresi",
+      "tip": "Steam bir girişi sınırladığında bütün hesaplar bu kadar dakika bekler - sırayla engellenmek için kuyruğa girmek yerine hep birlikte atlatırlar."
+    },
+    "WebRequestGapMs": {
+      "label": "Web istekleri arası boşluk",
+      "tip": "Aynı Steam sitesine iki istek arasındaki en küçük boşluk, milisaniye. Rozet okumayı Steam'in radarının altında tutan en büyük etken budur - hız sınırı uyarıları görürsen artır, asla 200'ün altına inme."
+    },
+    "SteamProtocol": {
+      "label": "Şununla bağlan",
+      "tip": "Steam'e nasıl ulaşılacağı. Bir güvenlik duvarı ya da servis sağlayıcın bir şeyi engellemiyorsa otomatikte bırak - yalnızca-websocket sıradan HTTPS trafiği gibi görünür ve genelde geçer."
+    },
+    "WebProxy": {
+      "label": "Vekil sunucu",
+      "tip": "Steam trafiğini bu vekil sunucudan geçirir, örneğin http://127.0.0.1:8080. Doğrudan bağlanmak için boş bırak."
+    },
+    "WebProxyUsername": {
+      "label": "Vekil sunucu kullanıcı adı",
+      "tip": "Yukarıdaki vekil sunucu istiyorsa kullanıcı adı."
+    },
+    "WebProxyPassword": {
+      "label": "Vekil sunucu parolası",
+      "tip": "Yukarıdaki vekil sunucu istiyorsa parola."
+    },
+    "GlobalBlacklistedGames": {
+      "label": "Bunlara asla dokunma (tüm hesaplar)",
+      "tip": "Hiçbir hesabın toplamayacağı ya da boşta çalıştırmayacağı AppID'ler; böylece eklediğin her hesapta aynı listeyi tekrarlamazsın. Her hesap yine de üstüne kendi listesini ekleyebilir."
+    },
+    "Rep4RepLearnCap": {
+      "label": "Gerçek sınırı öğren",
+      "tip": "Steam, yukarıda ayarlanan üst sınırın ÖTESİNDE bir yorumu reddederse o sayıyı bu hesabın gerçek tavanı olarak hatırla. Sıradan bir \"çok sık yorum yapıyorsun\" reddi yüzünden sınırı asla düşürmez - o mesaj iki yorum arasındaki boşlukla ilgilidir ve normalde 10 olan günlük sınır hakkında hiçbir şey söylemez."
+    },
+    "Rep4RepRetryRefused": {
+      "label": "Reddedilen yorumu yeniden dene",
+      "tip": "Reddedilen bir yoruma, o profili bir günlüğüne rafa kaldırmadan önce bir şans daha verir."
+    },
+    "SendOnFarmingFinished": {
+      "label": "Toplama bitince eşyaları gönder",
+      "tip": "Toplanacak kart kalmadığında, bu hesabın topladıklarını yukarıda listelenen ilk hesaba gönderir. Birden fazla boşta hesap çalıştırmanın bütün amacı budur: kartlar altı ayrı envanter yerine tek bir envanterde toplanır."
+    },
+    "SendItemTypes": {
+      "label": "Ne gönderilecek",
+      "tip": "Bu hesaptan çıkmasına izin verilen eşya türleri, virgülle ayrılmış: cards, foils, backgrounds, emoticons, boosters, gems - ya da \"all\". Burada yazmayan hiçbir şey, başka ne ayarlanmış olursa olsun asla gönderilmez."
+    },
+    "TradeMasterToken": {
+      "label": "Onun takas bağlantısı anahtarı",
+      "tip": "Diğer hesabın takas bağlantısındaki anahtar (&token= sonrasındaki kısım). Yalnızca iki hesap arkadaş değilse gerekir - arkadaşsanız boş bırakabilirsin."
+    },
+    "ClearNotifications": {
+      "label": "Steam bildirimlerini temizle",
+      "tip": "Steam'in bildirim tepsisindeki her şeyi okundu olarak işaretler - yorumlar, hediyeler, yardım talepleri, arkadaşlık istekleri - böylece sayaçlar hesabın ömrü boyunca artmak yerine sıfıra döner. Hiçbiri kendiliğinden düşmez: biri sayfayı açana kadar yanık kalırlar ve elle giriş yapmadığın bir hesapta bunu kimse yapmaz."
+    },
+    "AchievementIncludeMainGame": {
+      "label": "Ana oyunda da kazan",
+      "tip": "İnsan modunun ana oyununun da diğer oyunlar gibi başarım kazanıp kazanmayacağı. Açık ve öyle de olmalı: saatler ana oyunda birikir, dolayısıyla başarım görmek için hesabın en şaşırtıcı olmayan yeridir. Kapatmak onu tamamen rahat bırakır; böylece amiral gemisi oyununda yüzlerce saati olan bir hesap orada hiçbir şey göstermez - genelde ikisinin daha tuhafı budur. Her hâlükârda nadirlik eşiği ve tamamlama tavanı geçerliliğini korur."
+    }
   }
- }
 }

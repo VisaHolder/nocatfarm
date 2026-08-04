@@ -200,7 +200,7 @@ async function refreshInventory(name) {
 // The hover breakdown: which games hold the value, biggest first.
 const nlChar = String.fromCharCode(10);
 function valueTip(b) {
-  if (b.InventoryOn === false) return t('Not being valued - this account has "Work out what its inventory is worth" turned off.');
+  if (b.InventoryOn === false) return tf('Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick "Work out what its inventory is worth".', b.Name);
   if (!b.InventoryReady) return t('Reading this inventory...');
   const rows = (b.InventoryByGame || []).filter((g) => g.Value > 0 || g.Blocked);
   if (!rows.length) return t('Nothing with a market price in this inventory.');

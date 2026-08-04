@@ -212,8 +212,14 @@ public sealed class BotConfig {
 	public bool BoostOnlyPlayedGames { get; set; }
 	public List<uint> AchievementGames { get; set; } = [];
 
-	/// <summary>Games never to unlock in, on top of the built-in refusal to ever touch CS2.</summary>
+	/// <summary>
+	/// Games never to unlock in. Note that CS2 needs no entry here and never did: Valve keeps its achievements
+	/// server-side, so the stats interface exposes a single settable one and no tool can touch the rest.
+	/// </summary>
 	public List<uint> AchievementNeverGames { get; set; } = [];
+
+	/// <summary>Whether human mode's main game earns achievements like any other. On - it's where the hours are.</summary>
+	public bool AchievementIncludeMainGame { get; set; } = true;
 
 	/// <summary>0 careful, 1 normal, 2 brisk. Scales every gap the pacer waits.</summary>
 	public int AchievementPace { get; set; } = 1;

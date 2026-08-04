@@ -244,7 +244,13 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		if (human is { Current: not HumanMode.Phase.Off }) {
 			uint playing = human.PlayingNow;
 
-			if ((playing != 0) && (playing != human.MainGameId)) {
+			// The main game used to be skipped outright, on the theory that the one game an account is known for
+			// is the worst place to show a steady drip of unlocks. That reasoning ignored the obvious: the main
+			// game is also where the hours actually are, so it is the one game whose achievements are least
+			// surprising. Skipping it meant an account with a thousand hours in its headline game never earned a
+			// single achievement there, which reads far stranger than earning them. Now a choice, defaulting to
+			// earning them; the rarity floor and the ceiling still apply exactly as they do everywhere else.
+			if ((playing != 0) && (Bot.Cfg.AchievementIncludeMainGame || (playing != human.MainGameId))) {
 				running.Add(playing);
 			}
 		} else {
@@ -323,7 +329,13 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		int ceiling = g.Ceiling;
 		int cap = Bot.Cfg.AchievementMaxCompletionPct;
 
-		if ((cap > 0) && (cap < ceiling)) {
+		// Set the figure and it is the figure, in both directions.
+		//
+		// This used to clamp downward only, so a game's researched ceiling could never be raised from settings.
+		// Defensible for stealth, wrong as a rule: it left no way to say "this account has genuinely played
+		// this game to death, let it finish", and the tuned ceilings are guesses about a typical owner, not
+		// facts about this one. 0 still means "use the game's own tuned ceiling", which stays the default.
+		if (cap > 0) {
 			ceiling = cap;
 		}
 
@@ -342,7 +354,15 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			return false;
 		}
 
-		double hours = g.PlayedMins / 60.0;
+		// Steam's own total for the game, not just the minutes this tool has idled.
+		//
+		// The rarity floor asks one question: could a real player plausibly have reached this achievement by now?
+		// Answering it from our own accrued minutes threw away every hour the account played before nocat.farm
+		// ever saw it. An account with thousands of genuine hours in a game was treated as a beginner and had the
+		// rare tail locked shut forever - the opposite of what the gate is for, and the reason a long-played
+		// library would never fill in. Steam's figure already includes anything we idled, so it is simply the
+		// better number; our own count stays as the throttle below, which is what actually paces the drip.
+		double hours = Math.Max(g.PlayedMins, Bot.Library.MinutesOn(app)) / 60.0;
 		bool onboarding = already < prof.OnboardCount;
 		// A grind ignores the rarity floor: it works through everything settable, most-common first, rather
 		// than only what the hours "justify". Normal play keeps the floor so it never pops a rare one early.
@@ -627,12 +647,12 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				.OrderByDescending(static kv => kv.Value.PlayedMins)
 				.Select(kv => {
 					Profile prof = ProfileFor(kv.Key);
-					double eff = kv.Value.PlayedMins / 60.0 / prof.RarityScale;
+					double eff = Math.Max(kv.Value.PlayedMins, Bot.Library.MinutesOn(kv.Key)) / 60.0 / prof.RarityScale;
 					int floor = Math.Max(Math.Max(1, prof.MinPercent), RarityFloorForHours(eff));
 
 					string why =
 						never.Contains(kv.Key) ? "on your never list" :
-						(main != 0) && (kv.Key == main) ? "the main game - left alone" :
+						(main != 0) && (kv.Key == main) && !Bot.Cfg.AchievementIncludeMainGame ? "the main game - left alone" :
 						(allowed.Count > 0) && !allowed.Contains(kv.Key) ? "not on your allow list" :
 						floor > 100 ? "not enough hours yet" :
 						"";
@@ -660,10 +680,30 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				return "watching";
 			}
 
-			(uint app, GameState g) = _games.OrderByDescending(static kv => kv.Value.PlayedMins).First();
-			double hours = g.PlayedMins / 60.0;
+			// Prefer whatever is actually running. Falling straight to the most-played game meant an account
+			// idling one thing reported its progress on a different one entirely, which reads as a live plan
+			// rather than the standings it actually is.
+			List<uint> running = CurrentGames();
 
-			return $"{GameNames.Of(app)}: {hours:0.#}h in, next after {g.NextAllow.ToLocalTime():HH:mm}";
+			(uint app, GameState g) = _games
+				.OrderByDescending(kv => running.Contains(kv.Key))
+				.ThenByDescending(static kv => kv.Value.PlayedMins)
+				.First();
+
+			double hours = Math.Max(g.PlayedMins, Bot.Library.MinutesOn(app)) / 60.0;
+			Profile prof = ProfileFor(app);
+			bool onboarding = (g.Unlocked < 0) || (g.Unlocked < prof.OnboardCount);
+			int playedGate = onboarding ? prof.OnboardPlayedMins : prof.SteadyPlayedMins;
+			long shortBy = playedGate - (g.PlayedMins - g.MinsAtLastUnlock);
+
+			// Report the gate that is actually holding it up. "next after <time>" while the spacing had long
+			// since elapsed and the real hold-up was in-game minutes gave no way to tell waiting from stuck.
+			string when =
+				DateTime.UtcNow < g.NextAllow ? $"next after {Fmt.Clock(g.NextAllow)}"
+				: (g.BurstLeft <= 0) && (shortBy > 0) ? $"next after {Fmt.Hm((int) shortBy)} more play"
+				: "next one due";
+
+			return $"{GameNames.Of(app)}: {hours:0.#}h in, {when}";
 		}
 	}
 
