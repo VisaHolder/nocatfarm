@@ -13,7 +13,7 @@
     <InvariantGlobalization>true</InvariantGlobalization>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <NoWarn>$(NoWarn);CA1416</NoWarn>
-    <Version>1.5.1</Version>
+    <Version>1.5.0</Version>
     <Product>nocatFarm</Product>
     <Company>nocat.lol</Company>
     <ApplicationIcon>nocatFarm.ico</ApplicationIcon>
