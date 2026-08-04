@@ -424,7 +424,21 @@
     "{0} of {1} done": "{0} из {1} получено",
     "Game": "Игра",
     "Next": "Далее",
-    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Останавливается на {0}% любой игры и никогда не выдаёт веху раньше достижений, вехой которых она является."
+    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Останавливается на {0}% любой игры и никогда не выдаёт веху раньше достижений, вехой которых она является.",
+    "Update": "Обновить",
+    "Update to {0}": "Обновить до {0}",
+    "Update to {0}?": "Обновить до {0}?",
+    "Download {0} and restart into it. Your accounts, tokens, settings and logs are left exactly as they are.": "Скачает {0} и перезапустится на ней. Аккаунты, токены, настройки и логи останутся нетронутыми.",
+    "It downloads {0}, closes, swaps itself over and starts back up. Takes about a minute.": "Скачивает {0}, закрывается, подменяет себя и запускается снова. Примерно минута.",
+    "Your accounts, login tokens, settings and logs are left exactly as they are.": "Ваши аккаунты, токены входа, настройки и логи останутся ровно такими же.",
+    "Every account signs out of Steam for a few seconds while it restarts.": "На время перезапуска каждый аккаунт на несколько секунд выйдет из Steam.",
+    "Anything mid-session - a farm, a grind - stops there and picks up after.": "Всё, что идёт сейчас — фарм, гринд — остановится на этом месте и продолжится после.",
+    "If the download fails, nothing is changed and the current version keeps running.": "Если загрузка сорвётся, ничего не изменится и продолжит работать текущая версия.",
+    "Not now": "Не сейчас",
+    "Download and restart": "Скачать и перезапустить",
+    "Downloading. It restarts by itself when it lands.": "Загружается. Перезапустится сам, когда будет готово.",
+    "Update failed: {0}": "Обновление не удалось: {0}",
+    "working…": "работает…"
   },
   "settings": {
     "WebEnabled": {

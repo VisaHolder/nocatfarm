@@ -294,6 +294,26 @@ public sealed class WebHost : IAsyncDisposable {
 			return Results.Json(new { output });
 		});
 
+		// Installing an update, only ever because the button was pressed. There is no GET here and no schedule
+		// anywhere that reaches it - see SelfUpdate for why updating is never something that just happens.
+		app.MapPost("/api/update", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			await UpdateCheck.LookAsync(force: true).ConfigureAwait(false);
+
+			if (UpdateCheck.Available == null) {
+				return Results.Json(new { Message = $"You're on the newest release ({Build.Version})." });
+			}
+
+			string? failure = await SelfUpdate.ApplyAsync(CancellationToken.None).ConfigureAwait(false);
+
+			return Results.Json(new {
+				Message = failure ?? "Downloading. It restarts by itself when it lands."
+			});
+		});
+
 		app.MapPost("/api/prompt", async (HttpContext ctx) => {
 			if (!Authorised(ctx)) {
 				return Unauthorised();
@@ -1029,6 +1049,8 @@ public sealed class WebHost : IAsyncDisposable {
 			Currency = PriceBook.Symbol,
 			UpdateAvailable = UpdateCheck.Available,
 			UpdateUrl = UpdateCheck.Url,
+			UpdateBusy = SelfUpdate.Busy,
+			UpdateProgress = SelfUpdate.Progress,
 			InventoryPending = bots.Sum(static b => b.Inventory.Pending),
 			GamesLeft = bots.Sum(static b => b.GamesRemaining),
 			Bots = bots.Select(b => {

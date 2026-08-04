@@ -424,7 +424,21 @@
     "{0} of {1} done": "{1} içinden {0} tamam",
     "Game": "Oyun",
     "Next": "İleri",
-    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Her oyunun %{0} kadarında durur ve bir kilometre taşını, ait olduğu başarımlardan önce asla açmaz."
+    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Her oyunun %{0} kadarında durur ve bir kilometre taşını, ait olduğu başarımlardan önce asla açmaz.",
+    "Update": "Güncelle",
+    "Update to {0}": "{0} sürümüne güncelle",
+    "Update to {0}?": "{0} sürümüne güncellensin mi?",
+    "Download {0} and restart into it. Your accounts, tokens, settings and logs are left exactly as they are.": "{0} indirilip ona geçilir. Hesaplarınız, jetonlarınız, ayarlarınız ve kayıtlarınız aynen kalır.",
+    "It downloads {0}, closes, swaps itself over and starts back up. Takes about a minute.": "{0} sürümünü indirir, kapanır, kendini değiştirir ve yeniden başlar. Yaklaşık bir dakika sürer.",
+    "Your accounts, login tokens, settings and logs are left exactly as they are.": "Hesaplarınız, oturum jetonlarınız, ayarlarınız ve kayıtlarınız aynen kalır.",
+    "Every account signs out of Steam for a few seconds while it restarts.": "Yeniden başlarken her hesap birkaç saniyeliğine Steam'den çıkış yapar.",
+    "Anything mid-session - a farm, a grind - stops there and picks up after.": "O sırada süren ne varsa - bir kart toplama, bir grind - orada durur ve sonra devam eder.",
+    "If the download fails, nothing is changed and the current version keeps running.": "İndirme başarısız olursa hiçbir şey değişmez ve mevcut sürüm çalışmaya devam eder.",
+    "Not now": "Şimdi değil",
+    "Download and restart": "İndir ve yeniden başlat",
+    "Downloading. It restarts by itself when it lands.": "İndiriliyor. Bittiğinde kendi kendine yeniden başlar.",
+    "Update failed: {0}": "Güncelleme başarısız: {0}",
+    "working…": "çalışıyor…"
   },
   "settings": {
     "WebEnabled": {

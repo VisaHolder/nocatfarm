@@ -424,7 +424,21 @@
     "{0} of {1} done": "{0} de {1} hechos",
     "Game": "Juego",
     "Next": "Siguiente",
-    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Se detiene en el {0}% de cada juego y nunca desbloquea un hito antes que los logros de los que ese hito depende."
+    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Se detiene en el {0}% de cada juego y nunca desbloquea un hito antes que los logros de los que ese hito depende.",
+    "Update": "Actualizar",
+    "Update to {0}": "Actualizar a {0}",
+    "Update to {0}?": "¿Actualizar a {0}?",
+    "Download {0} and restart into it. Your accounts, tokens, settings and logs are left exactly as they are.": "Descargar {0} y reiniciar con ella. Tus cuentas, tokens, ajustes y registros se quedan tal cual.",
+    "It downloads {0}, closes, swaps itself over and starts back up. Takes about a minute.": "Descarga {0}, se cierra, se sustituye y vuelve a arrancar. Tarda como un minuto.",
+    "Your accounts, login tokens, settings and logs are left exactly as they are.": "Tus cuentas, tokens de inicio de sesión, ajustes y registros se quedan exactamente igual.",
+    "Every account signs out of Steam for a few seconds while it restarts.": "Cada cuenta se desconecta de Steam unos segundos mientras reinicia.",
+    "Anything mid-session - a farm, a grind - stops there and picks up after.": "Lo que esté a medias - un farmeo, un grind - se corta ahí y sigue después.",
+    "If the download fails, nothing is changed and the current version keeps running.": "Si la descarga falla, no se cambia nada y la versión actual sigue funcionando.",
+    "Not now": "Ahora no",
+    "Download and restart": "Descargar y reiniciar",
+    "Downloading. It restarts by itself when it lands.": "Descargando. Se reinicia solo cuando termine.",
+    "Update failed: {0}": "La actualización falló: {0}",
+    "working…": "trabajando…"
   },
   "settings": {
     "WebEnabled": {

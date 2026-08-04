@@ -424,7 +424,21 @@
     "{0} of {1} done": "{0} z {1} zrobione",
     "Game": "Gra",
     "Next": "Dalej",
-    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Zatrzymuje się na {0}% każdej gry i nigdy nie odblokowuje kamienia milowego przed osiągnięciami, których dotyczy."
+    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Zatrzymuje się na {0}% każdej gry i nigdy nie odblokowuje kamienia milowego przed osiągnięciami, których dotyczy.",
+    "Update": "Aktualizuj",
+    "Update to {0}": "Zaktualizuj do {0}",
+    "Update to {0}?": "Zaktualizować do {0}?",
+    "Download {0} and restart into it. Your accounts, tokens, settings and logs are left exactly as they are.": "Pobiera {0} i uruchamia się ponownie. Konta, tokeny, ustawienia i logi pozostają nietknięte.",
+    "It downloads {0}, closes, swaps itself over and starts back up. Takes about a minute.": "Pobiera {0}, zamyka się, podmienia i startuje z powrotem. Zajmuje około minuty.",
+    "Your accounts, login tokens, settings and logs are left exactly as they are.": "Twoje konta, tokeny logowania, ustawienia i logi zostają dokładnie takie, jakie są.",
+    "Every account signs out of Steam for a few seconds while it restarts.": "Każde konto wylogowuje się ze Steam na kilka sekund podczas restartu.",
+    "Anything mid-session - a farm, a grind - stops there and picks up after.": "Cokolwiek trwa - farmienie, grind - kończy się w tym miejscu i wznawia potem.",
+    "If the download fails, nothing is changed and the current version keeps running.": "Jeśli pobieranie się nie powiedzie, nic się nie zmienia i działa dalej obecna wersja.",
+    "Not now": "Nie teraz",
+    "Download and restart": "Pobierz i uruchom ponownie",
+    "Downloading. It restarts by itself when it lands.": "Pobieranie. Uruchomi się ponownie samo, gdy skończy.",
+    "Update failed: {0}": "Aktualizacja nie powiodła się: {0}",
+    "working…": "pracuje…"
   },
   "settings": {
     "WebEnabled": {

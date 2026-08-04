@@ -81,6 +81,7 @@ public static partial class Commands {
 		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does.", "?|h"),
 		new("theme", "[dark|light]", GroupOther, "Switch the dashboard between the dark and light themes. Without an argument it says which is on.", "dark|light"),
 		new("version", "", GroupOther, "Which version this is.", "about"),
+		new("update", "[now]", GroupOther, "Check for a newer release. 'update now' downloads it and restarts into it - nothing updates on its own, ever."),
 		new("exit", "", GroupOther, "Shut nocat.farm down.", "quit|q")
 	];
 
@@ -230,6 +231,7 @@ public static partial class Commands {
 				"answer" => Prompt.Answer(string.Join(' ', rest)) ? "answered" : "nothing is waiting for an answer",
 				"theme" or "dark" or "light" => Theme(cmd, rest),
 				"version" or "about" => About(),
+				"update" => await Update(rest).ConfigureAwait(false),
 				"exit" or "quit" or "q" => Exit(),
 				_ => Suggest(cmd)
 			};
@@ -245,6 +247,32 @@ public static partial class Commands {
 		return near == null
 			? $"There's no '{cmd}' command. Type 'help' for the list, or 'tutorial' if you're just starting."
 			: $"There's no '{cmd}' command. Did you mean '{near.Name}'? Type 'help' for the list.";
+	}
+
+	/// <summary>
+	/// Check for a newer release, and on "now", install it.
+	///
+	/// The check is forced rather than daily-gated: somebody typing this has asked, and answering "I looked
+	/// this morning" is not an answer. Installing is always explicit - see SelfUpdate for why nothing here
+	/// ever happens on a schedule.
+	/// </summary>
+	private static async Task<string> Update(string[] args) {
+		bool now = args.Any(static a => a.Equals("now", StringComparison.OrdinalIgnoreCase));
+
+		await UpdateCheck.LookAsync(force: true).ConfigureAwait(false);
+
+		if (UpdateCheck.Available == null) {
+			return $"You're on the newest release ({Build.Version}).";
+		}
+
+		if (!now) {
+			return $"{UpdateCheck.Available} is out - you have {Build.Version}."
+				+ Environment.NewLine + $"  {UpdateCheck.Url}"
+				+ Environment.NewLine + "  'update now' downloads it and restarts into it. Nothing updates on its own.";
+		}
+
+		return await SelfUpdate.ApplyAsync(CancellationToken.None).ConfigureAwait(false)
+			?? "downloading and restarting - this window will come back on its own";
 	}
 
 	private static string Exit() {

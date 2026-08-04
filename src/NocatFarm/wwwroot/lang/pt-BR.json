@@ -424,7 +424,21 @@
     "{0} of {1} done": "{0} de {1} feitos",
     "Game": "Jogo",
     "Next": "Próximo",
-    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Para em {0}% de cada jogo e nunca desbloqueia um marco antes das conquistas das quais ele é o marco."
+    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Para em {0}% de cada jogo e nunca desbloqueia um marco antes das conquistas das quais ele é o marco.",
+    "Update": "Atualizar",
+    "Update to {0}": "Atualizar para {0}",
+    "Update to {0}?": "Atualizar para {0}?",
+    "Download {0} and restart into it. Your accounts, tokens, settings and logs are left exactly as they are.": "Baixa {0} e reinicia nela. Suas contas, tokens, configurações e logs ficam exatamente como estão.",
+    "It downloads {0}, closes, swaps itself over and starts back up. Takes about a minute.": "Baixa {0}, fecha, se substitui e volta a abrir. Leva cerca de um minuto.",
+    "Your accounts, login tokens, settings and logs are left exactly as they are.": "Suas contas, tokens de login, configurações e logs ficam exatamente como estão.",
+    "Every account signs out of Steam for a few seconds while it restarts.": "Cada conta sai do Steam por alguns segundos enquanto reinicia.",
+    "Anything mid-session - a farm, a grind - stops there and picks up after.": "O que estiver no meio - uma farmagem, um grind - para ali e continua depois.",
+    "If the download fails, nothing is changed and the current version keeps running.": "Se o download falhar, nada é alterado e a versão atual continua rodando.",
+    "Not now": "Agora não",
+    "Download and restart": "Baixar e reiniciar",
+    "Downloading. It restarts by itself when it lands.": "Baixando. Ele reinicia sozinho quando terminar.",
+    "Update failed: {0}": "A atualização falhou: {0}",
+    "working…": "trabalhando…"
   },
   "settings": {
     "WebEnabled": {

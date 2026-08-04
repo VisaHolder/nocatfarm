@@ -760,6 +760,13 @@ button.danger { background: var(--bad); border-color: var(--bad); color: #fff; }
 button.danger:hover:not(:disabled) { filter: brightness(1.1); }
 button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 
+/* The update button, beside the version chip that announces one. Accent-filled because it is the one thing in
+   the top bar that does something irreversible-ish, and it only exists at all when there is an update. */
+.updatebtn {
+  padding: 3px 9px; font-size: 11px; letter-spacing: .3px; white-space: nowrap;
+}
+.updatebtn:disabled { opacity: .6; }
+
 .bot-persona { font-size: 11px; color: var(--muted); margin-top: -2px; }
 .bot-persona b { color: var(--text); letter-spacing: .5px; }
 .bot-persona.hidden-persona b { color: var(--muted); }

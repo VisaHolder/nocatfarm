@@ -424,7 +424,21 @@
     "{0} of {1} done": "{1} 件中 {0} 件達成",
     "Game": "ゲーム",
     "Next": "次へ",
-    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "1本のゲームにつき {0}% で止まり、マイルストーンをその対象となる実績より先に解除することはありません。"
+    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "1本のゲームにつき {0}% で止まり、マイルストーンをその対象となる実績より先に解除することはありません。",
+    "Update": "更新",
+    "Update to {0}": "{0} に更新",
+    "Update to {0}?": "{0} に更新しますか？",
+    "Download {0} and restart into it. Your accounts, tokens, settings and logs are left exactly as they are.": "{0} をダウンロードして再起動します。アカウント、トークン、設定、ログはそのまま残ります。",
+    "It downloads {0}, closes, swaps itself over and starts back up. Takes about a minute.": "{0} をダウンロードし、終了して入れ替え、また起動します。1分ほどです。",
+    "Your accounts, login tokens, settings and logs are left exactly as they are.": "アカウント、ログイントークン、設定、ログはそのまま変わりません。",
+    "Every account signs out of Steam for a few seconds while it restarts.": "再起動の間、各アカウントは数秒 Steam からサインアウトします。",
+    "Anything mid-session - a farm, a grind - stops there and picks up after.": "実行中のもの（カード収集や実績グラインド）はそこで止まり、後で再開します。",
+    "If the download fails, nothing is changed and the current version keeps running.": "ダウンロードに失敗しても何も変更されず、現在のバージョンがそのまま動きます。",
+    "Not now": "今はしない",
+    "Download and restart": "ダウンロードして再起動",
+    "Downloading. It restarts by itself when it lands.": "ダウンロード中。完了すると自動で再起動します。",
+    "Update failed: {0}": "更新に失敗しました: {0}",
+    "working…": "処理中…"
   },
   "settings": {
     "WebEnabled": {

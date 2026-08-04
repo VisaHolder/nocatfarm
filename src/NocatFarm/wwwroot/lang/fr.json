@@ -424,7 +424,21 @@
     "{0} of {1} done": "{0} sur {1} faits",
     "Game": "Jeu",
     "Next": "Suivant",
-    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Il s'arrête à {0}% d'un jeu et ne débloque jamais un palier avant les succès dont ce palier dépend."
+    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Il s'arrête à {0}% d'un jeu et ne débloque jamais un palier avant les succès dont ce palier dépend.",
+    "Update": "Mettre à jour",
+    "Update to {0}": "Passer à {0}",
+    "Update to {0}?": "Passer à {0} ?",
+    "Download {0} and restart into it. Your accounts, tokens, settings and logs are left exactly as they are.": "Télécharge {0} et redémarre dessus. Tes comptes, jetons, réglages et journaux ne bougent pas.",
+    "It downloads {0}, closes, swaps itself over and starts back up. Takes about a minute.": "Il télécharge {0}, se ferme, se remplace et redémarre. Environ une minute.",
+    "Your accounts, login tokens, settings and logs are left exactly as they are.": "Tes comptes, jetons de connexion, réglages et journaux restent exactement tels quels.",
+    "Every account signs out of Steam for a few seconds while it restarts.": "Chaque compte se déconnecte de Steam quelques secondes pendant le redémarrage.",
+    "Anything mid-session - a farm, a grind - stops there and picks up after.": "Ce qui est en cours - un farm, un grind - s'arrête là et reprend ensuite.",
+    "If the download fails, nothing is changed and the current version keeps running.": "Si le téléchargement échoue, rien n'est modifié et la version actuelle continue.",
+    "Not now": "Pas maintenant",
+    "Download and restart": "Télécharger et redémarrer",
+    "Downloading. It restarts by itself when it lands.": "Téléchargement. Il redémarre tout seul une fois prêt.",
+    "Update failed: {0}": "Échec de la mise à jour : {0}",
+    "working…": "en cours…"
   },
   "settings": {
     "WebEnabled": {

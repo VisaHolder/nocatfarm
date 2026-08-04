@@ -424,7 +424,21 @@
     "{0} of {1} done": "已完成 {1} 个中的 {0} 个",
     "Game": "游戏",
     "Next": "下一步",
-    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "每款游戏最多到 {0}% 就停下，并且绝不会在构成里程碑的那些成就之前解锁里程碑。"
+    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "每款游戏最多到 {0}% 就停下，并且绝不会在构成里程碑的那些成就之前解锁里程碑。",
+    "Update": "更新",
+    "Update to {0}": "更新到 {0}",
+    "Update to {0}?": "要更新到 {0} 吗？",
+    "Download {0} and restart into it. Your accounts, tokens, settings and logs are left exactly as they are.": "下载 {0} 并重启到该版本。你的账号、令牌、设置和日志都原封不动。",
+    "It downloads {0}, closes, swaps itself over and starts back up. Takes about a minute.": "它会下载 {0}，关闭自己，替换后重新启动。大约需要一分钟。",
+    "Your accounts, login tokens, settings and logs are left exactly as they are.": "你的账号、登录令牌、设置和日志都保持原样。",
+    "Every account signs out of Steam for a few seconds while it restarts.": "重启期间每个账号会从 Steam 登出几秒钟。",
+    "Anything mid-session - a farm, a grind - stops there and picks up after.": "正在进行的任务——挂卡、刷成就——会停在那里，之后继续。",
+    "If the download fails, nothing is changed and the current version keeps running.": "如果下载失败，不会改动任何东西，当前版本照常运行。",
+    "Not now": "暂不",
+    "Download and restart": "下载并重启",
+    "Downloading. It restarts by itself when it lands.": "正在下载。完成后会自行重启。",
+    "Update failed: {0}": "更新失败：{0}",
+    "working…": "处理中…"
   },
   "settings": {
     "WebEnabled": {

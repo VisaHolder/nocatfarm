@@ -427,6 +427,22 @@ function renderOverview() {
     }
   }
 
+  // The button that installs it, beside the chip that announces it.
+  //
+  // Separate from the link on purpose: the link is "what changed", this is "do it". Nothing updates on its
+  // own and there is no setting to make it - plenty of people would rather keep a build that works than take
+  // whatever is newest, and an update that lands unasked mid-session costs them a night's farming.
+  const upd = $('updateBtn');
+  if (upd) {
+    const busy = state.UpdateBusy;
+    upd.classList.toggle('hidden', !state.UpdateAvailable);
+    upd.disabled = !!busy;
+    upd.textContent = busy ? (state.UpdateProgress || t('working…')) : tf('Update to {0}', state.UpdateAvailable || '');
+    upd.dataset.tip = busy
+      ? t('Downloading. It restarts by itself when it lands.')
+      : tf('Download {0} and restart into it. Your accounts, tokens, settings and logs are left exactly as they are.', state.UpdateAvailable || '');
+  }
+
   paint('glance', bots.length ? `<div class="tablewrap"><table>
     <tr><th>${esc(t('Account'))}</th><th>${esc(t('State'))}</th><th>${esc(t('Playing'))}</th><th>${esc(t('Cards'))}</th><th data-tip="${esc(t("What everything in this account's inventory would fetch at the market's median price. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth."))}">${esc(t('Value'))}</th>${r4rOn() ? `<th>${esc(t('rep4rep'))}</th>` : ''}<th>${esc(t('Up'))}</th></tr>
     ${bots.map((b) => `<tr class="click" data-act="cards" data-bot="${esc(b.Name)}">
@@ -816,6 +832,43 @@ async function doRemoveBot(name) {
   await loadConfig();
   if (view === 'settings') renderSettings();
   refresh();
+}
+
+// ── updating ──────────────────────────────────────────────────────────────
+// Asked for, never automatic. The confirm exists because this restarts the app: accounts drop off Steam for a
+// few seconds and anything mid-session stops there. Everything that matters - accounts, tokens, settings,
+// logs - lives in config/ and is never part of the archive, so it survives untouched.
+function askUpdate() {
+  const to = (state && state.UpdateAvailable) || '';
+  modal(`
+    <h2>${esc(tf('Update to {0}?', to))}</h2>
+    <p>${tf('It downloads {0}, closes, swaps itself over and starts back up. Takes about a minute.', `<b>${esc(to)}</b>`)}</p>
+    <ul class="muted small">
+      <li>${esc(t('Your accounts, login tokens, settings and logs are left exactly as they are.'))}</li>
+      <li>${esc(t('Every account signs out of Steam for a few seconds while it restarts.'))}</li>
+      <li>${esc(t('Anything mid-session - a farm, a grind - stops there and picks up after.'))}</li>
+      <li>${esc(t('If the download fails, nothing is changed and the current version keeps running.'))}</li>
+    </ul>
+    <div class="actions">
+      <button class="ghost" onclick="closeModal()">${esc(t('Not now'))}</button>
+      <button id="updateGo" onclick="doUpdate(true)">${esc(t('Download and restart'))}</button>
+    </div>`);
+}
+
+async function doUpdate(confirmed) {
+  if (!confirmed) { askUpdate(); return; }
+
+  closeModal();
+  const btn = $('updateBtn');
+  if (btn) { btn.disabled = true; btn.textContent = t('working…'); }
+
+  try {
+    const r = await api('/api/update', { method: 'POST' });
+    toast(r && r.Message ? r.Message : t('Downloading. It restarts by itself when it lands.'));
+  } catch (e) {
+    toast(tf('Update failed: {0}', e.message || e));
+    if (btn) btn.disabled = false;
+  }
 }
 
 // ── theme ─────────────────────────────────────────────────────────────────

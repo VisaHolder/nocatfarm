@@ -424,7 +424,21 @@
     "{0} of {1} done": "{0} von {1} erledigt",
     "Game": "Spiel",
     "Next": "Weiter",
-    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Es hört bei {0}% eines Spiels auf und schaltet einen Meilenstein nie vor den Erfolgen frei, deren Meilenstein er ist."
+    "It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.": "Es hört bei {0}% eines Spiels auf und schaltet einen Meilenstein nie vor den Erfolgen frei, deren Meilenstein er ist.",
+    "Update": "Aktualisieren",
+    "Update to {0}": "Auf {0} aktualisieren",
+    "Update to {0}?": "Auf {0} aktualisieren?",
+    "Download {0} and restart into it. Your accounts, tokens, settings and logs are left exactly as they are.": "{0} herunterladen und neu starten. Deine Konten, Tokens, Einstellungen und Logs bleiben unangetastet.",
+    "It downloads {0}, closes, swaps itself over and starts back up. Takes about a minute.": "Lädt {0} herunter, beendet sich, tauscht sich aus und startet wieder. Dauert etwa eine Minute.",
+    "Your accounts, login tokens, settings and logs are left exactly as they are.": "Deine Konten, Login-Tokens, Einstellungen und Logs bleiben genau so, wie sie sind.",
+    "Every account signs out of Steam for a few seconds while it restarts.": "Jedes Konto meldet sich beim Neustart für ein paar Sekunden von Steam ab.",
+    "Anything mid-session - a farm, a grind - stops there and picks up after.": "Was gerade läuft - ein Farm, ein Grind - hört dort auf und macht danach weiter.",
+    "If the download fails, nothing is changed and the current version keeps running.": "Schlägt der Download fehl, wird nichts geändert und die aktuelle Version läuft weiter.",
+    "Not now": "Jetzt nicht",
+    "Download and restart": "Herunterladen und neu starten",
+    "Downloading. It restarts by itself when it lands.": "Wird geladen. Startet von selbst neu, sobald es da ist.",
+    "Update failed: {0}": "Aktualisierung fehlgeschlagen: {0}",
+    "working…": "arbeitet…"
   },
   "settings": {
     "WebEnabled": {
