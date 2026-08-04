@@ -278,6 +278,16 @@ public sealed class BotConfig {
 	// and a budget it could not see cut it off at another.
 	public int PureMainDayChancePct { get; set; } = 25;
 
+	/// <summary>
+	/// Retired, and read only so an existing config still means what it meant. A file written before the share
+	/// moved into GameWeights carries the main game's percentage here, and the games list may well carry no
+	/// number at all against the main game - loading that as-is would quietly re-cut somebody's whole schedule.
+	/// <see cref="ConfigStore.MigrateGameShares"/> folds it into the list and zeroes this, at which point
+	/// WhenWritingDefault drops it from the file for good.
+	/// </summary>
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+	public int MainGameSharePct { get; set; }
+
 	// settling in after a login
 	public int WarmUpMinMinutes { get; set; } = 3;
 	public int WarmUpMaxMinutes { get; set; } = 20;
@@ -412,6 +422,59 @@ public static class ConfigStore {
 	}
 
 	/// <summary>Every bot config in the config dir, keyed by bot name (the file name without .json).</summary>
+	/// <summary>
+	/// Carries a pre-split config across: folds the retired MainGameSharePct into the games list.
+	///
+	/// The main game's share used to live in its own box and the number written beside the game in GameWeights
+	/// was ignored, so plenty of configs say "730, 440, 550" with no percentages at all, or carry percentages
+	/// that never did anything. Read straight into the new scheme those become an even three-way split - an
+	/// account set to 85% on one game would quietly drop to 33% and start playing things it rarely touched.
+	/// Folding puts the old share where the scheduler now looks and rescales the side games around it, so the
+	/// day the account wakes up to is the day it would have had.
+	/// </summary>
+	/// <returns>true when the config changed and should be written back.</returns>
+	public static bool MigrateGameShares(BotConfig cfg, string name) {
+		if (cfg.MainGameSharePct <= 0) {
+			return false;   // already migrated, or written by a version that never had it
+		}
+
+		int main = Math.Clamp(cfg.MainGameSharePct, 5, 95);
+
+		cfg.MainGameSharePct = 0;
+
+		List<(uint Game, int Weight)> games = Modules.HumanMode.ParseWeights(cfg.GameWeights);
+
+		if (games.Count == 0) {
+			return true;   // nothing to fold it into, but the retired key still goes
+		}
+
+		if (games.Count == 1) {
+			cfg.GameWeights = $"{games[0].Game}:100";
+
+			return true;
+		}
+
+		int sideTotal = games.Skip(1).Sum(static g => Math.Max(1, g.Weight));
+		int pool = 100 - main;
+		List<string> parts = [$"{games[0].Game}:{main}"];
+		int spent = 0;
+
+		for (int i = 1; i < games.Count; i++) {
+			// The last side game takes the remainder so the list lands on exactly 100 rather than 99 or 101.
+			int share = i == games.Count - 1
+				? Math.Max(1, pool - spent)
+				: Math.Max(1, pool * Math.Max(1, games[i].Weight) / sideTotal);
+
+			spent += share;
+			parts.Add($"{games[i].Game}:{share}");
+		}
+
+		cfg.GameWeights = string.Join(", ", parts);
+		Log.Info($"game shares moved into the games list - now \"{cfg.GameWeights}\"", name);
+
+		return true;
+	}
+
 	public static Dictionary<string, BotConfig> LoadBots() {
 		Dictionary<string, BotConfig> bots = new(StringComparer.OrdinalIgnoreCase);
 		Directory.CreateDirectory(ConfigDir);
@@ -440,6 +503,10 @@ public static class ConfigStore {
 				cfg.SharedSecret = Secrets.Unprotect(cfg.SharedSecret);
 				cfg.IdentitySecret = Secrets.Unprotect(cfg.IdentitySecret);
 				cfg.AccountProxyPassword = Secrets.Unprotect(cfg.AccountProxyPassword);
+
+				if (MigrateGameShares(cfg, name)) {
+					SaveBot(name, cfg);
+				}
 
 				bots[name] = cfg;
 			} catch (Exception e) {
