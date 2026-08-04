@@ -230,14 +230,20 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 	/// Activate a package through the store, then confirm it by watching for the licence to actually arrive -
 	/// the endpoint answers cheerfully whether or not anything was added.
 	/// </summary>
-	private async Task<bool> ClaimAsync(uint subId, CancellationToken ct) {
+	/// <summary>
+	/// Add one free package to an account. The `addlicense` command's whole implementation.
+	///
+	/// Static and taking a bot, because it is the same request whether the watcher found the package or
+	/// somebody typed the subID - and duplicating a Steam POST is how the two drift apart.
+	/// </summary>
+	public static async Task<bool> AddPackageAsync(Bot bot, uint subId, CancellationToken ct) {
 		Dictionary<string, string> form = new(StringComparer.Ordinal) {
 			["ajax"] = "true",
 			["subid"] = subId.ToString(CultureInfo.InvariantCulture)
 			// sessionid is injected by WebSession
 		};
 
-		string? body = await Bot.Web.PostAsync(
+		string? body = await bot.Web.PostAsync(
 			new Uri(WebSession.Store, "/checkout/addfreelicense"),
 			form,
 			new Uri(WebSession.Store, $"/app/{subId}"),
@@ -249,17 +255,21 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 
 		// Steam pushes a fresh licence list on success; give it a moment and check for real.
 		for (int i = 0; i < 6; i++) {
-			if (Bot.OwnsPackage(subId)) {
+			if (bot.OwnsPackage(subId)) {
 				return true;
 			}
 
-			if (!await Sleep(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false)) {
+			try {
+				await Task.Delay(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false);
+			} catch (OperationCanceledException) {
 				return false;
 			}
 		}
 
 		return false;
 	}
+
+	private Task<bool> ClaimAsync(uint subId, CancellationToken ct) => AddPackageAsync(Bot, subId, ct);
 
 	private int RecentClaims() {
 		DateTime cutoff = DateTime.UtcNow.AddMinutes(-WindowMinutes);

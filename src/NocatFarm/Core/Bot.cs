@@ -1110,7 +1110,7 @@ public sealed class Bot : IAsyncDisposable {
 			StatusText = "logging in";
 
 			// NAMING TRAP: LogOnDetails.AccessToken wants the REFRESH token, not the access token.
-			User!.LogOn(new SteamUser.LogOnDetails {
+			SteamUser.LogOnDetails logon = new() {
 				Username = Cfg.SteamLogin,
 				AccessToken = _refreshToken,
 				LoginID = LoginId,
@@ -1141,8 +1141,21 @@ public sealed class Bot : IAsyncDisposable {
 				ChatMode = SteamUser.ChatMode.NewSteamChat,
 				UIMode = (EUIMode) Math.Clamp(Cfg.UIMode, 0, 7),
 
+				// The device badge is decided at LOGON, not by the persona flags alone.
+				//
+				// "Play as if on a Steam Deck" sent the right persona_state_flags and did nothing, because the
+				// session underneath still announced itself as Windows - and Steam will not badge a Windows
+				// desktop session as a handheld running SteamOS however the flags are set. A Deck is a Linux
+				// machine, so the logon has to say so. This is why the setting appears to do nothing until the
+				// account signs in again: the flags can be re-sent at any time, this cannot.
 				ShouldRememberPassword = true
-			});
+			};
+
+			if (DeviceOSType(Cfg.GameDevice) is { } os) {
+				logon.ClientOSType = os;
+			}
+
+			User!.LogOn(logon);
 		} finally {
 			_guardPrompt = null;   // whatever happened, nothing is waiting on the operator any more
 			Interlocked.Exchange(ref _loggingIn, 0);
@@ -2210,6 +2223,16 @@ public sealed class Bot : IAsyncDisposable {
 		});
 	}
 
+	/// <summary>
+	/// What kind of machine the logon should claim to be, for the device badge to be believed.
+	///
+	/// Only the Deck needs this: a Deck is a Linux handheld, and Steam cross-checks the badge against what the
+	/// session said it was running on. Phone, Big Picture and VR are all things a Windows install genuinely
+	/// does, so those keep the real OS and work from the persona flags alone.
+	/// </summary>
+	private static EOSType? DeviceOSType(int device) =>
+		device == SteamIds.DeviceSteamDeck ? EOSType.Linux6x : null;   // SteamOS 3 is Arch on a 6.x kernel
+
 	public void ApplyPersona() {
 		if (State != BotState.Online) {
 			return;
@@ -2301,6 +2324,9 @@ public static class SteamIds {
 	public const ulong ShortcutGameId = (2UL << 24) | (0xFFFFFFFFUL << 32);
 
 	/// <summary>Steam's own ceiling on simultaneous games. Send more and it drops the message.</summary>
+	/// <summary>LaunchTypeGamepad | LaunchTypeCompatTool - the pair Steam reads as "this is a Deck".</summary>
+	public const int DeviceSteamDeck = 12288;
+
 	public const int MaxGamesPlayedConcurrently = 32;
 }
 

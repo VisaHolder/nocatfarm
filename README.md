@@ -237,6 +237,8 @@ the auto-reply instead, so ordinary chat is never mistaken for a command.
 | `play <account> <appIDs\|none>` | Set the games this account idles for playtime (multiple allowed). |
 | `grind <account\|all> <appID> <hours>` &nbsp;·&nbsp; `grind <account> off` | Play one game hard for N hours, then back to normal. Earns achievements while it runs. On a legit account it eases in and out; on a boost account it's instant. |
 | `human [account] [week\|reroll]` | What human mode is doing today; add `week` for the next seven days, or `reroll` to throw today's plan away and roll a fresh one from the current settings. |
+| `owns <appID\|name>` | Which accounts already own a game, and how long each has played it. Takes an appID, a store URL, or part of a name. |
+| `addlicense <account\|all> <subIDs>` | Add free packages to a library. Steam refuses anything that is not actually free. |
 | `wake <account>` &nbsp;·&nbsp; `wakeup` `skipsleep` | Wake a sleeping human-mode account and start its day now. Bed time is unchanged. |
 | `name <account> [text]` | Custom non-Steam game name shown instead of the real game. No text clears it. |
 | `persona <account> <state>` | online \| offline \| busy \| away \| snooze \| invisible. |

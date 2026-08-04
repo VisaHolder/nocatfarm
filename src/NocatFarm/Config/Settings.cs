@@ -280,6 +280,10 @@ public static class Settings {
 		}
 	}
 
+	/// <summary>An appID from a bare number or a store URL, or 0 when it is neither (i.e. it's a name).</summary>
+	public static uint AppIdFrom(string token) =>
+		uint.TryParse(ExtractAppId(token.Trim()), out uint id) ? id : 0;
+
 	/// <summary>"https://store.steampowered.com/app/730/CS2/" -> "730". A bare number passes straight through.</summary>
 	private static string ExtractAppId(string token) {
 		const string Marker = "/app/";

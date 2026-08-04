@@ -75,6 +75,10 @@ public static partial class Commands {
 
 		new("log", "[count]", GroupOther, "The last few log lines.", "logs"),
 		new("stats", "[hours]", GroupOther, "Cards dropped and comments posted, by hour."),
+		new("owns", "<appID|name>", GroupOther,
+			"Which accounts already own a game, and how long each has played it. Takes an appID, a store URL, or part of a name."),
+		new("addlicense", "<account|all> <subIDs>", GroupOther,
+			"Add free packages (subIDs) to an account's library. Only works for genuinely free licences - a paid one is refused by Steam."),
 		new("report", "", GroupOther, "Write the daily summary - hours banked, cards, comments, totals - to the log now."),
 		new("answer", "<text>", GroupOther, "Answer whatever nocat.farm is waiting on - a Steam Guard code, or a password."),
 		new("tutorial", "[topic]", GroupOther, "Getting started, in order, ticking off what you have already done.", "guide|setup"),
@@ -231,6 +235,8 @@ public static partial class Commands {
 				"answer" => Prompt.Answer(string.Join(' ', rest)) ? "answered" : "nothing is waiting for an answer",
 				"theme" or "dark" or "light" => Theme(cmd, rest),
 				"version" or "about" => About(),
+				"owns" => Owns(mgr, rest),
+				"addlicense" => await AddLicense(mgr, rest).ConfigureAwait(false),
 				"update" => await Update(rest).ConfigureAwait(false),
 				"exit" or "quit" or "q" => Exit(),
 				_ => Suggest(cmd)
@@ -273,6 +279,124 @@ public static partial class Commands {
 
 		return await SelfUpdate.ApplyAsync(CancellationToken.None).ConfigureAwait(false)
 			?? "downloading and restarting - this window will come back on its own";
+	}
+
+	/// <summary>
+	/// Who already owns a game, across the whole fleet.
+	///
+	/// The question you ask before buying something: an account that already owns it does not need another
+	/// copy, and one that owns it with no hours on it is a card-farming candidate nobody has touched yet.
+	/// Accepts an appID, a store URL, or part of a name, because nobody remembers appIDs.
+	/// </summary>
+	private static string Owns(BotManager mgr, string[] args) {
+		if (args.Length == 0) {
+			return "owns <appID|name>       which accounts already have it";
+		}
+
+		string term = string.Join(' ', args).Trim();
+		uint wanted = Settings.AppIdFrom(term);
+		List<Bot> bots = mgr.All.Where(static b => b.Library.Ready).ToList();
+
+		if (bots.Count == 0) {
+			return "No account has read its library yet - give it a moment after signing in.";
+		}
+
+		// An appID is exact; a name is a contains-match across every library, so one search can turn up several
+		// games and the answer has to say which is which.
+		List<(uint App, string Name)> hits = wanted > 0
+			? [(wanted, GameNames.Of(wanted))]
+			: bots.SelectMany(static b => b.Library.Games)
+				.Where(g => g.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
+				.GroupBy(static g => g.AppId)
+				.Select(static g => (g.Key, g.First().Name))
+				.OrderBy(static g => g.Item2, StringComparer.OrdinalIgnoreCase)
+				.Take(12)
+				.ToList();
+
+		if (hits.Count == 0) {
+			return $"Nothing in any library matches '{term}'.";
+		}
+
+		StringBuilder sb = new();
+
+		foreach ((uint app, string name) in hits) {
+			List<Bot> owners = bots.Where(b => b.Library.Find(app) != null).ToList();
+
+			sb.AppendLine($"{name}  ({app})");
+
+			if (owners.Count == 0) {
+				sb.AppendLine("  nobody owns it");
+
+				continue;
+			}
+
+			foreach (Bot bot in owners) {
+				Library.Entry entry = bot.Library.Find(app)!;
+				string how = entry.SharedFrom != 0 ? " (family)" : "";
+				string played = entry.MinutesPlayed > 0 ? Fmt.Hm(entry.MinutesPlayed) : "never played";
+
+				sb.AppendLine($"  {bot.Name,-14} {played}{how}");
+			}
+		}
+
+		return sb.ToString().TrimEnd();
+	}
+
+	/// <summary>
+	/// Add free packages by subID.
+	///
+	/// The same call the free-games watcher makes, exposed for the times you know the subID yourself - a
+	/// giveaway that has not been picked up yet, or a free weekend. Steam refuses anything that is not actually
+	/// free, so the worst case is a "no".
+	/// </summary>
+	private static async Task<string> AddLicense(BotManager mgr, string[] args) {
+		if (args.Length < 2) {
+			return "addlicense <account|all> <subIDs>     comma or space separated";
+		}
+
+		List<Bot> targets = args[0].Equals("all", StringComparison.OrdinalIgnoreCase)
+			? mgr.All.Where(static b => b.IsOnline).ToList()
+			: mgr.Get(args[0]) is { } one ? [one] : [];
+
+		if (targets.Count == 0) {
+			return args[0].Equals("all", StringComparison.OrdinalIgnoreCase)
+				? "No account is online."
+				: NoSuchAccount(mgr, args[0]);
+		}
+
+		List<uint> subs = string.Join(' ', args[1..])
+			.Split([',', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+			.Select(static s => uint.TryParse(s, out uint n) ? n : 0)
+			.Where(static n => n > 0)
+			.Distinct()
+			.ToList();
+
+		if (subs.Count == 0) {
+			return "No subID in that. They are numbers - 12345, or several separated by commas.";
+		}
+
+		StringBuilder sb = new();
+
+		foreach (Bot bot in targets) {
+			if (!bot.IsOnline) {
+				sb.AppendLine($"{bot.Name}: not online");
+
+				continue;
+			}
+
+			foreach (uint sub in subs) {
+				if (bot.OwnsPackage(sub)) {
+					sb.AppendLine($"{bot.Name}: {sub} - already has it");
+
+					continue;
+				}
+
+				bool ok = await FreeGames.AddPackageAsync(bot, sub, CancellationToken.None).ConfigureAwait(false);
+				sb.AppendLine($"{bot.Name}: {sub} - {(ok ? "added" : "refused (not free, region-locked, or already gone)")}");
+			}
+		}
+
+		return sb.ToString().TrimEnd();
 	}
 
 	private static string Exit() {
