@@ -607,6 +607,25 @@ public sealed class Bot : IAsyncDisposable {
 		// Steam's own word for the persona, which beats ours whenever another session is also setting it.
 		PersonaAsSeen = (int) cb.State;
 
+		// And its own word for the DEVICE flags, which is the only way to know the Deck badge was accepted.
+		//
+		// We can set persona_state_flags to anything; whether Steam keeps them is another matter, and the badge
+		// renders on other people's screens, not ours. This is the echo - what Steam is telling the friends list
+		// about us - so a Deck that did not take shows up here rather than only being visible to somebody else.
+		int flags = (int) cb.StateFlags;
+
+		if (flags != _flagsAsSeen) {
+			_flagsAsSeen = flags;
+
+			if (Cfg.GameDevice > 0) {
+				Log.Debug(
+					$"Steam reports device flags {flags}"
+					+ (flags == Cfg.GameDevice ? $" - matches the {DeviceLabel(Cfg.GameDevice)} we asked for"
+						: $" - we asked for {Cfg.GameDevice} ({DeviceLabel(Cfg.GameDevice)})"),
+					Name);
+			}
+		}
+
 		// Same treatment the custom-name check gets: a disagreement has to PERSIST before it counts.
 		//
 		// The first echo after logon reports the pre-login state, so acting on a single reading is how the
@@ -2230,6 +2249,18 @@ public sealed class Bot : IAsyncDisposable {
 	/// session said it was running on. Phone, Big Picture and VR are all things a Windows install genuinely
 	/// does, so those keep the real OS and work from the persona flags alone.
 	/// </summary>
+	private int _flagsAsSeen = -1;
+
+	/// <summary>The device names, for saying which one out loud rather than printing a bitmask.</summary>
+	internal static string DeviceLabel(int device) => device switch {
+		512 => "phone",
+		1024 => "Big Picture",
+		2048 => "VR",
+		SteamIds.DeviceSteamDeck => "Steam Deck",
+		0 => "PC",
+		_ => "device " + device
+	};
+
 	private static EOSType? DeviceOSType(int device) =>
 		device == SteamIds.DeviceSteamDeck ? EOSType.Linux6x : null;   // SteamOS 3 is Arch on a 6.x kernel
 

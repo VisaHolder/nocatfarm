@@ -704,8 +704,8 @@ public static class Settings {
 			"Keep the custom name showing even while trading cards are being farmed. Turn it off and card farming shows the real game.",
 			Advanced: true),
 		new("GameDevice", "Play as if on", SecPlaying, SettingKind.Choice,
-			"What kind of machine your friends think you're playing on - this is what puts the little Steam Deck or phone badge next to your name.",
-			Advanced: true, Choices: "0 a PC | 512 a phone | 1024 Big Picture | 2048 VR | 12288 a Steam Deck"),
+			"What kind of machine your friends think you're playing on - the little badge next to your name in their friends list. There is no Steam Deck here on purpose: Steam accepts the phone, Big Picture, VR and controller flags from any session, but checks the Deck against what the client really is and quietly drops it, so the option would look like it worked and do nothing.",
+			Advanced: true, Choices: "0 a PC | 512 a phone | 1024 Big Picture | 2048 VR | 4096 a controller"),
 
 		// ── Trading cards ──
 		new("FarmCards", "Farm trading cards", SecCards, SettingKind.Bool,
