@@ -564,6 +564,32 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// Roll today. A real week is not flat: weekday gaming is mostly evenings, weekends start earlier and run
 	/// longer, and Friday and Saturday nights go late because nothing is on tomorrow.
 	/// </summary>
+	/// <summary>
+	/// Throw today's plan away and roll a new one from the settings as they stand now.
+	///
+	/// A day is rolled once, at wake time, and then persisted so restarts don't hand out a fresh eight hours
+	/// every time. That is right, but it means changing the hours, the bedtime or the weights does nothing
+	/// visible until tomorrow - the setting saves, the log says nothing, and the account carries on to a target
+	/// rolled against the old numbers. This is the way to say "apply it now" without waiting a day.
+	/// </summary>
+	public void RerollToday() {
+		if (_phase == Phase.Playing) {
+			BankSession();
+			Bot.StopPlaying();
+		}
+
+		HumanDay.Forget(Bot.Name);
+
+		_phase = Phase.Off;
+		_dayStamp = -1;         // < 0 rolls immediately, even before wake time
+		_game = 0;
+		_lastGame = 0;
+		_switchingTo = 0;
+
+		Log.Info("today's plan thrown away - rolling a fresh one from the current settings", Bot.Name);
+		RollNewDayIfNeeded();
+	}
+
 	private void RollNewDayIfNeeded() {
 		int today = DateTime.Now.DayOfYear;
 

@@ -49,7 +49,7 @@ public static partial class Commands {
 		new("play", "<account> <appIDs|none>", GroupPlaying, "Set the games this account idles for playtime."),
 		new("grind", "<account|all> <appID> <hours> | <account> off", GroupPlaying,
 			"Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs."),
-		new("human", "[account] [week]", GroupPlaying, "What human mode is doing today, and what it played. Add 'week' to see the next seven days."),
+		new("human", "[account] [week|reroll]", GroupPlaying, "What human mode is doing today, and what it played. Add 'week' to see the next seven days, or 'reroll' to throw today's plan away and roll a fresh one from the current settings."),
 		new("wake", "<account>", GroupPlaying, "Wake a sleeping human-mode account and start its day now. Bed time is unchanged."),
 		new("name", "<account> [text]", GroupPlaying, "Custom non-Steam game name shown instead of the real game. No text clears it."),
 		new("persona", "<account> <state>", GroupPlaying, "online | offline | busy | away | snooze | invisible."),
@@ -637,7 +637,9 @@ public static partial class Commands {
 	/// </summary>
 	private static string Human(BotManager mgr, string[] args) {
 		bool week = args.Any(static a => a.Equals("week", StringComparison.OrdinalIgnoreCase));
-		string? name = args.FirstOrDefault(static a => !a.Equals("week", StringComparison.OrdinalIgnoreCase));
+		bool reroll = args.Any(static a => a.Equals("reroll", StringComparison.OrdinalIgnoreCase));
+		string? name = args.FirstOrDefault(static a =>
+			!a.Equals("week", StringComparison.OrdinalIgnoreCase) && !a.Equals("reroll", StringComparison.OrdinalIgnoreCase));
 
 		List<Bot> bots = name == null
 			? mgr.All.Where(static b => b.Cfg.LegitMode).ToList()
@@ -652,6 +654,26 @@ public static partial class Commands {
 		}
 
 		StringBuilder sb = new();
+
+		if (reroll) {
+			foreach (Bot bot in bots) {
+				HumanMode? mode = BotManager.ModuleOf<HumanMode>(bot);
+
+				if (!bot.Cfg.LegitMode || (mode == null)) {
+					sb.AppendLine($"{bot.Name}: human mode is off - nothing to reroll");
+
+					continue;
+				}
+
+				mode.RerollToday();
+
+				sb.AppendLine(mode.TargetMinutesToday == 0
+					? $"{bot.Name}: rolled a day off - back tomorrow"
+					: $"{bot.Name}: rolled {Fmt.Hm(mode.TargetMinutesToday)} of play for today");
+			}
+
+			return sb.ToString().TrimEnd();
+		}
 
 		foreach (Bot bot in bots) {
 			HumanMode? human = BotManager.ModuleOf<HumanMode>(bot);
