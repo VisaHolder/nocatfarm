@@ -225,10 +225,13 @@ public static class Fmt {
 		DateTime local = utc.ToLocalTime();
 		int days = (local.Date - DateTime.Now.Date).Days;
 
+		// "tomorrow" and "yesterday" are words, not formats, so they need translating like any other word - a
+		// Chinese dashboard was reporting "下一个在 tomorrow 06:49 之后". The day and month names come from the
+		// framework's own formatting and follow the machine's culture, which is the right source for those.
 		return days switch {
 			0 => $"{local:HH:mm}",
-			1 => $"tomorrow {local:HH:mm}",
-			-1 => $"yesterday {local:HH:mm}",
+			1 => Core.Loc.T("tomorrow {0}", local.ToString("HH:mm")),
+			-1 => Core.Loc.T("yesterday {0}", local.ToString("HH:mm")),
 			> 1 and < 7 => $"{local:ddd HH:mm}",
 			_ => $"{local:d MMM HH:mm}"
 		};

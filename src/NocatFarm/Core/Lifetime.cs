@@ -45,6 +45,18 @@ public static class Lifetime {
 	}
 
 	/// <summary>Credit time actually spent playing. Anything longer than a few minutes is treated as a gap.</summary>
+	/// <remarks>
+	/// Written every minute, not every five.
+	///
+	/// At five, everything since the last write was lost whenever the process ended without the graceful stop
+	/// that calls Save - a crash, a kill, a machine going down. That is not the rare case it sounds like: it
+	/// silently ate most of the number. An account with an hour and a half on the clock for the day was still
+	/// reporting a lifetime total of three minutes, because each run only ever persisted the twenty seconds
+	/// credited by its first tick and then died before the next five-minute boundary.
+	///
+	/// The cost of the shorter interval is one atomic write of a few hundred bytes a minute, which is nothing
+	/// next to a total that is wrong by a factor of thirty.
+	/// </remarks>
 	public static void Add(string bot, double minutes) {
 		if ((minutes <= 0) || (minutes > 5)) {
 			return;
@@ -56,7 +68,7 @@ public static class Lifetime {
 
 		lock (Gate) {
 			Minutes[bot] = Minutes.GetValueOrDefault(bot) + minutes;
-			due = DateTime.UtcNow - _lastSave > TimeSpan.FromMinutes(5);
+			due = DateTime.UtcNow - _lastSave > TimeSpan.FromMinutes(1);
 
 			if (due) {
 				_lastSave = DateTime.UtcNow;

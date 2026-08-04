@@ -135,7 +135,20 @@ public static class Loc {
 		string text = T(english);
 
 		for (int i = 0; i < args.Length; i++) {
-			text = text.Replace("{" + i + "}", args[i]?.ToString() ?? "", StringComparison.Ordinal);
+			// A Func is evaluated HERE rather than wherever the sentence was assembled.
+			//
+			// Most values are language-agnostic - a game name, a count, a clock time - but a few are not, and
+			// one of those is Fmt.Clock, which says "tomorrow". Passed as a plain string it was formatted when
+			// the status was built and then frozen: the achievements row read "已玩 2907.9 小时，下一个在
+			// tomorrow 06:49 之后", the sentence translated around an English word baked into it hours earlier.
+			// Passing `() => Fmt.Clock(x)` defers it to the moment somebody actually reads the line.
+			string value = args[i] switch {
+				null => "",
+				Func<string> lazy => lazy(),
+				{ } other => other.ToString() ?? ""
+			};
+
+			text = text.Replace("{" + i + "}", value, StringComparison.Ordinal);
 		}
 
 		return text;
