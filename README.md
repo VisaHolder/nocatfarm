@@ -69,8 +69,9 @@ nothing but Steam is ever contacted.
 | **Inventory value** | What every account's items are worth at the market's median, per game, in your own currency, with how it has moved in the last 24 hours. Reads the account's OWN inventory, so a private profile makes no difference. |
 | **Refund protection** | A game bought in the last fortnight and under two hours played is left completely alone — by the idler, the schedule, grinds and the hunter alike — until it can no longer be refunded. |
 | **Steam Families** | Games shared into the account can be hunted too, and are handed straight back the moment the person who owns them starts playing. |
+| **Plugins** | Optional and off by default. One DLL in `plugins/` extends the app: react to card drops and trade offers, read every account, run any command, add your own commands, and declare settings that get a real UI. See [PLUGINS.md](PLUGINS.md). |
 | **Daily report** | Once a day (default 09:30) it writes a one-look summary to the log: hours banked in the last 24h, cards, rep4rep comments and a running total, per account. Type `report` for it on demand. |
-| **Eleven languages** | The dashboard is fully translated into Spanish, Portuguese (BR), Russian, German, French, Simplified Chinese, Turkish, Polish, Japanese and Korean — every label, every explanation, all 164 settings. The walkthrough asks which you want before it says anything else. |
+| **Eleven languages** | The dashboard is fully translated into Spanish, Portuguese (BR), Russian, German, French, Simplified Chinese, Turkish, Polish, Japanese and Korean — every label, every explanation, all 169 settings. The walkthrough asks which you want before it says anything else. |
 
 <p align="center">
   <img src="assets/accounts.png" alt="The per-account view — state, custom name, and what your friends actually see" width="880">
@@ -89,7 +90,7 @@ and `help <setting>` explains any setting in one sentence.
 it. `--minimized` boots straight to the tray with no window at all, and *Start with Windows* wires that up for
 you.
 
-**Dashboard** — `http://127.0.0.1:7242/`. Overview · Accounts · rep4rep · Log · Console · Settings.
+**Dashboard** — `http://127.0.0.1:7242/`. Overview · Accounts · rep4rep · Log · Console · Settings, plus a Plugins page once you turn plugins on.
 Turn it off with `set WebEnabled false` and nothing is lost.
 
 <p align="center">
@@ -418,7 +419,7 @@ why, and porting is usually easier than it sounds.
 
 ## Settings
 
-**44 global, 120 per account** — of which **42 show by default**. Every one has a plain-English explanation
+**47 global, 122 per account** — of which **45 show by default**. Every one has a plain-English explanation
 attached to it, which the dashboard shows on hover and the console prints for `help <setting>` — one
 sentence, written once, in `Config/Settings.cs`. Both the name and the explanation are translated into all
 ten languages.
