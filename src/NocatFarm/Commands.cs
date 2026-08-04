@@ -1855,10 +1855,16 @@ public static partial class Commands {
 	/// <summary>Make a changed setting take effect now, where it can.</summary>
 	public static void ApplyBotSideEffects(Bot bot, SettingDef def) {
 		switch (def.Name) {
-			case "IdleGames":
+			// The name and the switch that turns it on are the same change as far as Steam is concerned. Only the
+			// name was here, so turning the custom name OFF and back ON left the account showing the real game
+			// until something else happened to re-assert - the config said one thing and the friends list showed
+			// another, for as long as nobody looked.
+			case "CustomGameNameEnabled":
 			case "CustomGameName":
+			case "IdleGames":
 			case "PlayWhileFarming":
 			case "BlacklistedGames":
+			case "FarmOffline":
 				BotManager.ModuleOf<Idler>(bot)?.Assert();
 
 				break;
