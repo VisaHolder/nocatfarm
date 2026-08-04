@@ -19,13 +19,17 @@ public static class Tutorial {
 		}
 
 		IReadOnlyCollection<Bot> bots = mgr.All;
-		BotConfig? first = bots.FirstOrDefault()?.Cfg;
 
 		bool hasAccount = bots.Count > 0;
 		bool signedIn = bots.Any(static b => b.IsOnline);
 		bool playsSomething = bots.Any(static b => (b.Cfg.IdleGames.Count > 0) || (b.Cfg.GameWeights.Length > 0) || b.Cfg.FarmCards);
 		bool humanOn = bots.Any(static b => b.Cfg.LegitMode);
 		bool rep4rep = mgr.Rep4Rep.HasToken;
+
+		// Every other step asks "has ANY account done this". This one asked only the FIRST, so a fleet where
+		// the custom name is set on the second and third accounts - which is the normal shape, since the one
+		// you care about usually shows the real game - reported the step as never done.
+		bool customName = bots.Any(static b => !string.IsNullOrEmpty(b.Cfg.CustomGameName));
 
 		StringBuilder sb = new();
 		sb.AppendLine("Getting started - the whole thing takes about five minutes.");
@@ -50,7 +54,7 @@ public static class Tutorial {
 			"Card farming is already on by default, and cards come first: it works through everything with cards",
 			"left, then falls back to idling this list. 'cards <name>' shows what's left.");
 
-		Step(sb, 4, !string.IsNullOrEmpty(first?.CustomGameName), "Optional - show a custom name",
+		Step(sb, 4, customName, "Optional - show a custom name",
 			"name <name> whatever you like",
 			"Your friends list shows that text instead of the real game, while the real games keep banking",
 			"playtime underneath. Both at the same time.");

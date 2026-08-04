@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using NocatFarm.Config;
@@ -37,6 +37,10 @@ public sealed class MainWindow : IDisposable {
 	private static readonly int Amber = Rgb(235, 180, 60);
 	private static readonly int Red = Rgb(220, 70, 70);
 	private static readonly int Accent = Rgb(90, 190, 255);
+	
+	/// <summary>The 'farm' half of the wordmark. Deliberately NOT the accent: the accent means
+	/// "interactive" - buttons, links, the account you can click - and the name is not any of those.</summary>
+	private static readonly int Wordmark = Rgb(139, 92, 246);
 
 	/// <summary>Opening size. Everything after this reads _w/_h, which follow the window.</summary>
 	private const int StartW = 620;
@@ -909,7 +913,7 @@ public sealed class MainWindow : IDisposable {
 
 		Text(dc, "nocat.", Pad, 9, _fontBold, TextBright);
 		int w = TextWidth(dc, "nocat.", _fontBold);
-		Text(dc, "farm", Pad + w, 9, _fontBold, Accent);
+		Text(dc, "farm", Pad + w, 9, _fontBold, Wordmark);
 
 		Text(dc, DateTime.Now.ToString("HH:mm:ss"), _w - 150, 10, _fontSmall, TextDim);
 

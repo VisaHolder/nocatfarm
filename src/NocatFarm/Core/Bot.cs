@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using NocatFarm.Config;
 using SteamKit2;
 using SteamKit2.Authentication;
@@ -66,7 +66,16 @@ public sealed class Bot : IAsyncDisposable {
 	/// Play one game and nothing else for a while. Returns false, having done nothing, if that game is inside its
 	/// refund window - a grind is hours, and hours is exactly what would spend the refund.
 	/// </summary>
-	public bool StartGrind(uint app, TimeSpan how, TimeSpan delay = default) {
+	/// <summary>
+	/// True when the achievement boost started the grind that is running.
+	///
+	/// Persisted alongside the grind itself. It used to live only in the boost module's memory, so a session
+	/// that outlived a restart came back disowned - and switching the boost off then could not end it, because
+	/// nothing left in the process knew the boost was what had started it.
+	/// </summary>
+	public bool GrindIsBoost { get; internal set; }
+
+	public bool StartGrind(uint app, TimeSpan how, TimeSpan delay = default, bool boost = false) {
 		if (Refunds.Holds(app)) {
 			Log.Warn($"not grinding {GameNames.Of(app)} - it's still inside its refund window (turn off \"Protect refundable games\" to override)", Name);
 
@@ -76,7 +85,19 @@ public sealed class Bot : IAsyncDisposable {
 		GrindGame = app;
 		GrindStartsAt = DateTime.UtcNow.Add(delay);
 		GrindUntil = GrindStartsAt.Add(how);   // the hours run from when it actually starts, not the command
+		GrindIsBoost = boost;
 		SaveGrind();
+
+		// A grind with no delay should start with NO DELAY.
+		//
+		// Nothing here launches games directly: a non-human account takes its games from the idler, which
+		// re-asserts every four to seven minutes. So "instant" actually meant "some time in the next seven
+		// minutes", while the log had already announced the grind as running - which reads as broken, and on a
+		// short grind wastes a noticeable slice of it. Human-mode accounts are untouched: they get a deliberate
+		// jittered hand-over so the switch doesn't look like a machine, and their own scheduler performs it.
+		if ((delay == TimeSpan.Zero) && !HumanOwned && CanPlay) {
+			SetPlaying([app]);
+		}
 
 		return true;
 	}
@@ -84,6 +105,7 @@ public sealed class Bot : IAsyncDisposable {
 	public void StopGrind() {
 		GrindGame = 0;
 		GrindUntil = null;
+		GrindIsBoost = false;
 		SaveGrind();
 	}
 
@@ -101,7 +123,7 @@ public sealed class Bot : IAsyncDisposable {
 			}
 
 			Directory.CreateDirectory(Path.GetDirectoryName(GrindPath)!);
-			AtomicFile.Write(GrindPath, JsonSerializer.Serialize(new GrindSave(GrindGame, GrindUntil.Value.Ticks)));
+			AtomicFile.Write(GrindPath, JsonSerializer.Serialize(new GrindSave(GrindGame, GrindUntil.Value.Ticks, GrindIsBoost)));
 		} catch (Exception e) {
 			Log.Debug($"couldn't save the grind: {e.Message}", Name);
 		}
@@ -130,6 +152,7 @@ public sealed class Bot : IAsyncDisposable {
 
 			GrindGame = saved.Game;
 			GrindUntil = until;
+			GrindIsBoost = saved.Boost;
 			GrindStartsAt = DateTime.UtcNow;   // resume now - no fresh switch-in delay on a resume
 			Log.Info($"resuming the grind of {GameNames.Of(GrindGame)} - {Fmt.Hm((int) (until - DateTime.UtcNow).TotalMinutes)} left", Name);
 		} catch (Exception e) {
@@ -137,7 +160,9 @@ public sealed class Bot : IAsyncDisposable {
 		}
 	}
 
-	private sealed record GrindSave(uint Game, long UntilTicks);
+	// Boost defaults to false, so a file written by an older build reads back as a manual grind - which is
+	// the safe way round: the boost declines to touch it rather than ending something you started by hand.
+	private sealed record GrindSave(uint Game, long UntilTicks, bool Boost = false);
 
 	/// <summary>
 	/// The custom name actually in effect - empty when the feature is switched off.
@@ -499,6 +524,9 @@ public sealed class Bot : IAsyncDisposable {
 	private int _dropPending;
 	private uint _knownComments;
 	private bool _commentBaselineSet;
+	private int _tradeOffersWaiting = -1;
+	private TaskCompletionSource<bool> _tradeOffer = new(TaskCreationOptions.RunContinuationsAsynchronously);
+	private int _tradeOfferPending;
 
 	public Bot(string name, BotConfig cfg) {
 		Name = name;
@@ -544,6 +572,7 @@ public sealed class Bot : IAsyncDisposable {
 		_cb.Subscribe<SteamUser.PlayingSessionStateCallback>(OnPlayingSessionState);
 		_cb.Subscribe<ItemAnnouncementsCallback>(OnItemAnnouncements);
 		_cb.Subscribe<CommentNotificationsCallback>(OnCommentNotifications);
+		_cb.Subscribe<TradeOfferNotificationCallback>(OnTradeOfferNotifications);
 		_cb.Subscribe<SteamApps.LicenseListCallback>(OnLicenseList);
 		_cb.Subscribe<SteamFriends.FriendsListCallback>(OnFriendsList);
 		_cb.Subscribe<SteamUnifiedMessages.ServiceMethodNotification<CFriendMessages_IncomingMessage_Notification>>(OnIncomingMessage);
@@ -1192,6 +1221,11 @@ public sealed class Bot : IAsyncDisposable {
 		_commentBaselineSet = false;
 		_announcedApps = null;
 
+		// Back to "Steam hasn't said yet". Carrying the old count across a reconnect would let an account skip
+		// its one look at the offers page on the strength of an answer from before it dropped off.
+		Volatile.Write(ref _tradeOffersWaiting, -1);
+		Interlocked.Exchange(ref _tradeOfferPending, 0);
+
 		try {
 			Notifications?.RequestItemAnnouncements();
 			Notifications?.RequestCommentNotifications();
@@ -1657,6 +1691,73 @@ public sealed class Bot : IAsyncDisposable {
 				}
 			});
 		}
+	}
+
+	/// <summary>
+	/// How many trade offers Steam says are waiting, or -1 if it has not told us yet.
+	///
+	/// Steam pushes this on login and again the moment it changes, so an account with nothing waiting never has
+	/// to open the trade offers page to find that out - which is what a five-minute poll was doing all day, on
+	/// every account, until the community site started answering 429.
+	/// </summary>
+	public int TradeOffersWaiting => Volatile.Read(ref _tradeOffersWaiting);
+
+	private void OnTradeOfferNotifications(TradeOfferNotificationCallback cb) {
+		_lastPacket = DateTime.UtcNow;
+
+		int previous = Volatile.Read(ref _tradeOffersWaiting);
+		Volatile.Write(ref _tradeOffersWaiting, (int) cb.Waiting);
+
+		// The first one of these is worth a line even when it says none, because "none waiting" and "Steam has
+		// not told us yet" mean opposite things to the trade module and otherwise look identical from outside.
+		if (previous < 0) {
+			Log.Debug($"Steam's trade offer counter says {cb.Waiting} waiting", Name);
+		}
+
+		if ((cb.Waiting == 0) || (cb.Waiting == previous)) {
+			return;
+		}
+
+		Log.Debug($"Steam says {cb.Waiting} trade offer(s) are waiting", Name);
+
+		// Latched like the item drop: if the trade module is mid-check nobody is on the TCS, and the news would
+		// be lost until the slow pass came round the better part of an hour later.
+		Volatile.Write(ref _tradeOfferPending, 1);
+		_tradeOffer.TrySetResult(true);
+	}
+
+	/// <summary>
+	/// Wait for Steam to say a trade offer is waiting, or for <paramref name="timeout"/> to run out.
+	///
+	/// This is what lets the offers page go unread for an hour at a time without an offer sitting unanswered for
+	/// an hour: the news arrives as a push, and the wait ends the moment it does.
+	/// </summary>
+	public async Task<bool> WaitForTradeOfferAsync(TimeSpan timeout, CancellationToken ct) {
+		if (Interlocked.Exchange(ref _tradeOfferPending, 0) == 1) {
+			return true;
+		}
+
+		TaskCompletionSource<bool> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		_tradeOffer = tcs;
+
+		if (Interlocked.Exchange(ref _tradeOfferPending, 0) == 1) {
+			return true;
+		}
+
+		using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+		Task delay = Task.Delay(timeout, linked.Token);
+		Task winner = await Task.WhenAny(tcs.Task, delay).ConfigureAwait(false);
+
+		await linked.CancelAsync().ConfigureAwait(false);
+
+		if (winner != tcs.Task) {
+			return false;
+		}
+
+		Interlocked.Exchange(ref _tradeOfferPending, 0);
+
+		return true;
 	}
 
 	private void OnCommentNotifications(CommentNotificationsCallback cb) {

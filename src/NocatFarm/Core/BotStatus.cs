@@ -1,4 +1,4 @@
-using NocatFarm.Modules;
+﻿using NocatFarm.Modules;
 
 namespace NocatFarm.Core;
 

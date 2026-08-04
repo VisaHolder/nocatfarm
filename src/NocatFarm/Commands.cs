@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using NocatFarm.Config;
 using NocatFarm.Core;
 using NocatFarm.Modules;
@@ -421,6 +421,13 @@ public static partial class Commands {
 				return "farming";
 			}
 
+			// A grind outranks everything below it, and nothing here was asking. An account put on one game
+			// for three hours reported itself as "idling" - the same word as an account doing nothing in
+			// particular - while the log line right above it said "grinding". One of them had to be wrong.
+			if (b.Grinding) {
+				return "grinding";
+			}
+
 			// "online" while a game is clearly running was the confusing one - say what it is actually doing.
 			HumanMode? human = BotManager.ModuleOf<HumanMode>(b);
 
@@ -510,7 +517,17 @@ public static partial class Commands {
 			await Task.WhenAll(stops).ConfigureAwait(false);
 		}
 
-		return all ? $"{verb}: {count} account(s)" : $"{args[0]}: {verb}";
+		// Echoing the verb back - "kylro: pause" - reads like the command bounced rather than ran. Say what
+		// actually happened to the account instead, in the same shape as every other command's reply.
+		string what = verb switch {
+			"start" => "signing in",
+			"stop" => "signing out",
+			"pause" => "paused - staying signed in, but not playing, farming or commenting",
+			"resume" => "resumed",
+			_ => verb
+		};
+
+		return all ? $"{what}: {count} account(s)" : $"{args[0]}: {what}";
 	}
 
 	private static async Task<string> RestartAsync(BotManager mgr, string[] args) {
@@ -1278,7 +1295,10 @@ public static partial class Commands {
 		bot.Cfg.FarmCards = on;
 		ConfigStore.SaveBot(bot.Name, bot.Cfg);
 
-		return $"{bot.Name}: card farming {(on ? "on (takes effect on the next start)" : "off")}";
+		// The farmer's loop stays alive while it is off, so both directions take effect on its next pass - a
+		// minute at most. The old message promised a restart was needed, which stopped being true when the loop
+		// was made to survive being switched off.
+		return $"{bot.Name}: card farming {(on ? "on" : "off")}";
 	}
 
 	private static string Cards(BotManager mgr, string[] args) {

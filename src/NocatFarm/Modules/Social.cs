@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using NocatFarm.Core;
 using SteamKit2;
 

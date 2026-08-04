@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using NocatFarm.Config;
 using NocatFarm.Core;
 
@@ -25,7 +25,13 @@ namespace NocatFarm.Modules;
 public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 	private int _index;                          // round-robin position in the target list
 	private int _inARow;                         // consecutive boost sessions (human weighted-first cap)
-	private bool _ours;                           // is the grind currently running one WE started?
+	// Was the grind currently running started by the boost? Backed by the flag the grind itself persists, so
+	// a session that outlived a restart is still recognised as ours - it used to come back disowned, which left
+	// it running with nothing able to stop it short of ending the grind by hand.
+	private bool _ours {
+		get => Bot.GrindIsBoost;
+		set => Bot.GrindIsBoost = value;
+	}
 	private bool _sawGrind;                       // a grind was running at the last tick (ours or the operator's)
 	private bool _sweeping;                       // mid store-sweep: the target list is still being worked out
 
@@ -51,6 +57,17 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 					await DiscoverIfNeededAsync(ct).ConfigureAwait(false);
 					Tick();
 				} else {
+					// Switching the boost off has to stop what it is DOING, not just stop it starting anything
+					// else. Without this, an account put on a two-hour hunt carried on playing that game for the
+					// full two hours after the setting said off - and the status line cheerfully said "off" while
+					// it did. A manual grind is somebody else's and is left alone.
+					if (_ours && Bot.Grinding) {
+						Log.Info($"achievement boost switched off - leaving {GameNames.Of(Bot.GrindGame)}", Bot.Name);
+						Bot.StopGrind();
+					}
+
+					_ours = false;
+					_sawGrind = false;
 					_status = "off";
 				}
 			} catch (OperationCanceledException) {
@@ -496,7 +513,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 
 		// Targets are already filtered, so a refusal here means the guard changed its mind between the two - fine,
 		// leave it, the next tick picks the game after it.
-		if (!Bot.StartGrind(target, TimeSpan.FromMinutes(minutes))) {
+		if (!Bot.StartGrind(target, TimeSpan.FromMinutes(minutes), boost: true)) {
 			return;
 		}
 

@@ -22,11 +22,24 @@ public sealed class CommentNotificationsCallback : CallbackMsg {
 }
 
 /// <summary>
+/// Steam pushed the notification counts, one of which is how many trade offers are waiting. This arrives on
+/// login and again on every change, which is the whole reason the trade offers page never needs polling.
+/// </summary>
+public sealed class TradeOfferNotificationCallback : CallbackMsg {
+	public uint Waiting { get; }
+
+	internal TradeOfferNotificationCallback(uint waiting) => Waiting = waiting;
+}
+
+/// <summary>
 /// The messages SteamKit doesn't surface itself but that matter here: item announcements (card drops - they let
-/// farming react instantly instead of re-scraping on a timer) and comment notifications (someone commented on
-/// this account's profile).
+/// farming react instantly instead of re-scraping on a timer), comment notifications (someone commented on
+/// this account's profile) and the user notification counts (trade offers waiting).
 /// </summary>
 public sealed class NocatHandler : ClientMsgHandler {
+	/// <summary>The notification type Steam uses for "a trade offer is waiting for you".</summary>
+	private const uint TradeOfferNotification = 1;
+
 	public override void HandleMsg(IPacketMsg packetMsg) {
 		ArgumentNullException.ThrowIfNull(packetMsg);
 
@@ -40,6 +53,22 @@ public sealed class NocatHandler : ClientMsgHandler {
 			case EMsg.ClientCommentNotifications: {
 				ClientMsgProtobuf<CMsgClientCommentNotifications> msg = new(packetMsg);
 				Client?.PostCallback(new CommentNotificationsCallback(msg.Body.count_new_comments, msg.Body.count_new_comments_owner));
+
+				break;
+			}
+			case EMsg.ClientUserNotifications: {
+				ClientMsgProtobuf<CMsgClientUserNotifications> msg = new(packetMsg);
+				uint waiting = 0;
+
+				// Steam sends only the types that are non-zero, so an offer being dealt with arrives as this
+				// message with the trade entry simply absent - which is why the count starts at zero here.
+				foreach (CMsgClientUserNotifications.Notification n in msg.Body.notifications) {
+					if (n.user_notification_type == TradeOfferNotification) {
+						waiting = n.count;
+					}
+				}
+
+				Client?.PostCallback(new TradeOfferNotificationCallback(waiting));
 
 				break;
 			}
