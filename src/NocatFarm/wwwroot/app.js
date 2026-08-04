@@ -1866,9 +1866,16 @@ function weightsEditor(spec) {
   // pure-main chance that showing only the configured figure reads as a promise the schedule never made.
   const pure = Math.max(0, Math.min(100, liveValue('PureMainDayChancePct', settingsValues() || {}) ?? 25));
 
+  const shares = rows.map((r, i) => i === 0 ? mainPct : Math.round(((r.weight / Math.max(1, total - rows[0].weight)) * (100 - mainPct))));
+
+  // The exact weekly figures always total 100, so the rounded ones have to as well. Rounding each on its own
+  // put a column of 78/6/6/11 on screen — 101, from two values that were really 77.5 and 10.5. Largest
+  // remainder instead: floor everything, then hand the leftover points to whichever rows were cut hardest.
+  const weeklies = roundToTotal(shares.map((s, i) => i === 0 ? pure + ((100 - pure) * s / 100) : (100 - pure) * s / 100), 100);
+
   const body = rows.map((r, i) => {
-    const share = i === 0 ? mainPct : Math.round(((r.weight / Math.max(1, total - rows[0].weight)) * (100 - mainPct)));
-    const weekly = i === 0 ? Math.round(pure + ((100 - pure) * share / 100)) : Math.round((100 - pure) * share / 100);
+    const share = shares[i];
+    const weekly = weeklies[i];
     const weeklyTip = rows.length > 1 && pure > 0
       ? tf('About {0} of an average week once the main-game-only days are counted in.', `${weekly}%`)
       : '';
@@ -1901,6 +1908,28 @@ function weightsEditor(spec) {
 }
 
 const weightsSpec = (rows) => rows.map((r) => `${r.game}:${r.weight}`).join(', ');
+
+/// Round a set of exact percentages to whole numbers that still add up to `total` (largest remainder / Hare).
+/// Rounding each value on its own is what puts a column of 78/6/6/11 on screen when the exact figures were
+/// 77.5/6/6/10.5 — three of them round up and the total gains a point that does not exist.
+function roundToTotal(values, total) {
+  const floors = values.map((v) => Math.floor(v));
+  let left = total - floors.reduce((a, b) => a + b, 0);
+
+  // Hand the leftover points out to the largest fractional parts first, biggest row winning any tie so the
+  // point lands where it is least visible.
+  const order = values
+    .map((v, i) => ({ i, frac: v - Math.floor(v), size: v }))
+    .sort((a, b) => b.frac - a.frac || b.size - a.size);
+
+  for (const { i } of order) {
+    if (left <= 0) break;
+    floors[i]++;
+    left--;
+  }
+
+  return floors;
+}
 
 /// Set one game's share and even the remainder out across the others, so the row you didn't touch never has to
 /// be worked out by hand and the total is always 100.

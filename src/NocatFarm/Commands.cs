@@ -717,13 +717,19 @@ public static partial class Commands {
 				int pure = Math.Clamp(bot.Cfg.PureMainDayChancePct, 0, 100);
 
 				if ((weights.Count > 1) && (pure > 0)) {
-					int mainPct = weights[0].Weight * 100 / total;
-					int mainWeekly = pure + ((100 - pure) * mainPct / 100);
+					// Exact first, rounded once at the end. Rounding each share on its own printed a row that
+					// added up to 101, because a 77.5 and a 10.5 both went up.
+					double[] exact = weights
+						.Select((w, i) => {
+							double share = w.Weight * 100.0 / total;
 
-					IEnumerable<string> real = weights
-						.Select((w, i) => i == 0
-							? $"{GameNames.Of(w.Game)} {mainWeekly}%"
-							: $"{GameNames.Of(w.Game)} {(100 - pure) * (w.Weight * 100 / total) / 100}%");
+							return i == 0 ? pure + ((100 - pure) * share / 100) : (100 - pure) * share / 100;
+						})
+						.ToArray();
+
+					int[] shown = Fmt.RoundToTotal(exact, 100);
+
+					IEnumerable<string> real = weights.Select((w, i) => $"{GameNames.Of(w.Game)} {shown[i]}%");
 
 					sb.AppendLine($"  over a week   {string.Join(", ", real)}   ({pure}% of days are {GameNames.Of(weights[0].Game)} only)");
 				}

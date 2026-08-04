@@ -188,6 +188,33 @@ public static class Fmt {
 	}
 
 	/// <summary>
+	/// Round a set of exact percentages to whole numbers that still add up to <paramref name="total"/>.
+	///
+	/// Largest remainder: floor everything, then give the leftover points to whichever values were cut hardest.
+	/// Rounding each one on its own is what prints a row totalling 101 - an exact 77.5 and an exact 10.5 both go
+	/// up, and the column gains a point that was never there.
+	/// </summary>
+	public static int[] RoundToTotal(double[] values, int total) {
+		int[] floors = values.Select(static v => (int) Math.Floor(v)).ToArray();
+		int left = total - floors.Sum();
+
+		foreach (int i in values
+			.Select(static (v, i) => (Index: i, Frac: v - Math.Floor(v), Size: v))
+			.OrderByDescending(static x => x.Frac)
+			.ThenByDescending(static x => x.Size)   // a tie goes to the biggest row, where a point shows least
+			.Select(static x => x.Index)) {
+			if (left <= 0) {
+				break;
+			}
+
+			floors[i]++;
+			left--;
+		}
+
+		return floors;
+	}
+
+	/// <summary>
 	/// A clock time that can never be read as the wrong day.
 	///
 	/// A bare "17:16" is only unambiguous for today. Printed for a stamp on another date it reads as a time
