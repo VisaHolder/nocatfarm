@@ -118,7 +118,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 	private DateTime _lastTick = DateTime.MinValue;
 	private bool _loaded;
-	private string _status = Loc.T("off");
+	private Said _status = new("off");
 	private uint _grindReset;   // the app whose schedule we've already pulled forward for the current grind (0 = none)
 
 	public override string Name => "achievements";
@@ -130,7 +130,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				if (Bot.Cfg.UnlockAchievements) {
 					await StepAsync(ct).ConfigureAwait(false);
 				} else {
-					_status = Loc.T("off");
+					_status = new Said("off");
 				}
 			} catch (OperationCanceledException) {
 				throw;
@@ -151,7 +151,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		}
 
 		if (!Bot.IsOnline || Bot.Paused || Bot.PlayingBlocked) {
-			_status = Loc.T("waiting");
+			_status = new Said("waiting");
 
 			return;
 		}
@@ -182,8 +182,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			uint main = mode?.MainGameId ?? 0;
 
 			_status = (mode is { Current: not HumanMode.Phase.Off }) && (mode.PlayingNow != 0) && (mode.PlayingNow == main)
-				? $"leaving {GameNames.Of(main)} alone - it's the main game"
-				: "nothing being played";
+				? new Said("leaving {0} alone - it's the main game", GameNames.Of(main))
+				: new Said("nothing being played");
 
 			return;
 		}
@@ -737,10 +737,10 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		}
 	}
 
-	private string Describe() {
+	private Said Describe() {
 		lock (_gate) {
 			if (_games.Count == 0) {
-				return "watching";
+				return new Said("watching");
 			}
 
 			// Prefer whatever is actually running. Falling straight to the most-played game meant an account
@@ -761,12 +761,16 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 			// Report the gate that is actually holding it up. "next after <time>" while the spacing had long
 			// since elapsed and the real hold-up was in-game minutes gave no way to tell waiting from stuck.
-			string when =
-				DateTime.UtcNow < g.NextAllow ? $"next after {Fmt.Clock(g.NextAllow)}"
-				: (g.BurstLeft <= 0) && (shortBy > 0) ? $"next after {Fmt.Hm((int) shortBy)} more play"
-				: "next one due";
+			DateTime next = g.NextAllow;
+			Said when =
+				DateTime.UtcNow < g.NextAllow ? new Said("next after {0}", (Func<string>) (() => Fmt.Clock(next)))
+				: (g.BurstLeft <= 0) && (shortBy > 0) ? new Said("next after {0} more play", Fmt.Hm((int) shortBy))
+				: new Said("next one due");
 
-			return $"{GameNames.Of(app)}: {hours:0.#}h in, {when}";
+			// `when` is passed through as a Said, not as text. Loc.T calls ToString on its arguments when it
+			// renders, so the inner sentence is translated at the same instant as the outer one - bake it to a
+			// string here and it would be frozen in whatever language was selected when the status was written.
+			return new Said("{0}: {1}h in, {2}", GameNames.Of(app), hours.ToString("0.#"), when);
 		}
 	}
 

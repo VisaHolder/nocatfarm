@@ -1170,7 +1170,9 @@ public sealed class WebHost : IAsyncDisposable {
 					// which silently stopped matching in every language but English and put a wall of idle
 					// module rows on each card.
 					Modules = b.Modules.Select(static m => new {
-						Name = m.Name,
+						// The module label the card shows. Name stays English on the module - it is an identifier the
+						// log and the command output use - so it is translated here, where it becomes a row label.
+						Name = Loc.T(m.Name),
 						Status = m.Status,
 						Quiet = (m.Status.Length == 0) || Loc.Is(m.Status, "off") || Loc.Is(m.Status, "idle")
 					})

@@ -193,7 +193,20 @@ if (wantWindow) {
 		}
 	}
 
-	foreach (Log.Entry old in Log.Recent(40)) {
+	// Take 40 lines the window will actually SHOW, not 40 entries of which it might show three.
+	//
+	// Filtering a fixed 40-entry backfill was the mistake: a startup burst is mostly DEBUG, so dropping those
+	// left a window opening on two lines and looking like the log had been wiped. Count what survives.
+	bool ShowsDebug = Log.DebugEnabled;
+	List<Log.Entry> backfill = [];
+
+	foreach (Log.Entry old in Log.Recent(600)) {
+		if ((old.Level != "DEBUG") || ShowsDebug) {
+			backfill.Add(old);
+		}
+	}
+
+	foreach (Log.Entry old in backfill.Skip(Math.Max(0, backfill.Count - 40))) {
 		Show(old);
 	}
 

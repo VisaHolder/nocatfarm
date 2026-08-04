@@ -211,18 +211,23 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>What it is doing, in two or three words, with no timings - the board adds those in its own columns.</summary>
+	/// <remarks>
+	/// This is the main line on every account card, the console board and the tray window, and it was the last
+	/// piece of the status readout still in English in every language. The pass that translated statuses looked
+	/// for `_status = ...` and `override string Status`; nothing was looking for a property called Doing.
+	/// </remarks>
 	public string Doing => _phase switch {
-		Phase.WarmingUp => "settling in",
-		Phase.Playing => "playing " + GameName(_game),
-		Phase.SwitchingGame => _switchingTo != 0 ? "closing, then " + GameName(_switchingTo) : "closing the game",
-		Phase.ShortBreak => "on a break",
-		Phase.MealBreak => "meal break",
-		Phase.NightIdle => "asleep, banking hours",
-		Phase.Asleep => "asleep",
-		Phase.DoneForToday => "done for today",
-		Phase.DayOff => "not playing today",
-		Phase.StoodDown => "waiting - you're playing on this account",
-		_ => "starting up"
+		Phase.WarmingUp => Loc.T("settling in"),
+		Phase.Playing => Loc.T("playing {0}", GameName(_game)),
+		Phase.SwitchingGame => _switchingTo != 0 ? Loc.T("closing, then {0}", GameName(_switchingTo)) : Loc.T("closing the game"),
+		Phase.ShortBreak => Loc.T("on a break"),
+		Phase.MealBreak => Loc.T("meal break"),
+		Phase.NightIdle => Loc.T("asleep, banking hours"),
+		Phase.Asleep => Loc.T("asleep"),
+		Phase.DoneForToday => Loc.T("done for today"),
+		Phase.DayOff => Loc.T("not playing today"),
+		Phase.StoodDown => Loc.T("waiting - you're playing on this account"),
+		_ => Loc.T("starting up")
 	};
 
 	/// <summary>When it next expects to be doing something else - the end of a break, or getting up.</summary>

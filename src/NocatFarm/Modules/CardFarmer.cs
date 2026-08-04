@@ -58,7 +58,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	}
 
 	private readonly List<FarmTarget> _queue = [];
-	private string _status = Loc.T("idle");
+	private Said _status = new("idle");
 
 	/// <summary>
 	/// Games we have given up on, so the queue stops handing back the same one forever.
@@ -112,7 +112,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			// The loop stays alive when farming is off, so switching it back on takes effect straight away
 			// instead of needing a restart.
 			if (!Bot.Cfg.FarmCards) {
-				_status = Loc.T("off");
+				_status = new Said("off");
 				Release();
 
 				if (!await Sleep(TimeSpan.FromSeconds(20), ct).ConfigureAwait(false)) {
@@ -197,13 +197,13 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	/// <summary>One discovery + farming pass. Returns how many minutes to wait before looking again.</summary>
 	private async Task<int> CycleAsync(CancellationToken ct) {
 		if (Bot.Grinding) {
-			_status = Loc.T("standing by - grinding {0}", GameNames.Of(Bot.GrindGame));
+			_status = new Said("standing by - grinding {0}", GameNames.Of(Bot.GrindGame));
 
 			return 5;
 		}
 
 		if (!Bot.CanPlay) {
-			_status = Bot.Paused ? Loc.T("paused") : Bot.PlayingBlocked ? Loc.T("standing down (you're using it)") : Loc.T("waiting for the session");
+			_status = Bot.Paused ? new Said("paused") : Bot.PlayingBlocked ? new Said("standing down (you're using it)") : new Said("waiting for the session");
 
 			return 2;
 		}
@@ -215,16 +215,16 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 		if (Bot.HumanOwned && (warmup != null) && !warmup.WarmedUp) {
 			int mins = warmup.WarmUpMinutesLeft;
-			_status = mins > 0 ? Loc.T("settling in first (~{0}m), then farming", mins) : Loc.T("settling in first, then farming");
+			_status = mins > 0 ? new Said("settling in first (~{0}m), then farming", mins) : new Said("settling in first, then farming");
 
 			return 1;
 		}
 
-		_status = Loc.T("checking badges");
+		_status = new Said("checking badges");
 		List<FarmTarget>? found = await DiscoverAsync(ct).ConfigureAwait(false);
 
 		if (found == null) {
-			_status = Loc.T("badge pages unavailable");
+			_status = new Said("badge pages unavailable");
 
 			return 10;
 		}
@@ -247,14 +247,14 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			}
 
 			if (Bot.Cfg.StopWhenFarmingDone) {
-				_status = Loc.T("finished - logging out");
+				_status = new Said("finished - logging out");
 				Log.Good("nothing left to farm - logging this account out as configured", Bot.Name);
 				_ = Bot.StopAsync();
 
 				return 60;
 			}
 
-			_status = Loc.T("nothing left to farm");
+			_status = new Said("nothing left to farm");
 
 			// Said once, not on every rescan, and never claiming to be "idling instead" while human mode has a
 			// game open - which is what it used to announce every few minutes in the middle of a visible session.
@@ -265,8 +265,12 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				//
 				// "idling 0m so far" thirty seconds after a logon was technically true and worth nothing. What
 				// anybody actually wants to know here is how much this account has done in total.
+				//
+				// Said as "played in total", because "· 4m played" landing directly under human mode's
+				// "1h34m/7h12m today" read as a contradiction rather than a different number: two figures for
+				// the same account a minute apart, neither saying which span it was counting.
 				int lifetime = Lifetime.For(Bot.Name);
-				string been = lifetime > 0 ? $" · {Fmt.Hm(lifetime)} played" : "";
+				string been = lifetime > 0 ? $" · {Fmt.Hm(lifetime)} played in total" : "";
 				string idle = !string.IsNullOrWhiteSpace(Bot.CustomName)
 					? Bot.CustomName + (Bot.Cfg.IdleGames.Count > 0 ? $" (+{Bot.Cfg.IdleGames.Count})" : "")
 					: Bot.Cfg.IdleGames.Count > 0 ? $"{Bot.Cfg.IdleGames.Count} game(s)" : "your games";
@@ -310,7 +314,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 		if (live.Count > 0) {
 			if (live.Count < ready.Count) {
-				_status = Loc.T("farming {0} game(s), {1} set aside", live.Count, ready.Count - live.Count);
+				_status = new Said("farming {0} game(s), {1} set aside", live.Count, ready.Count - live.Count);
 			}
 
 			ready = live;
@@ -328,21 +332,21 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		HumanMode? human = BotManager.ModuleOf<HumanMode>(Bot);
 
 		if (Bot.HumanOwned && Bot.Cfg.FarmOnlyWhileAsleep && human?.InBed != true) {
-			_status = Loc.T("{0} card(s) - farming tonight, once it's asleep", Bot.CardsRemaining);
+			_status = new Said("{0} card(s) - farming tonight, once it's asleep", Bot.CardsRemaining);
 
 			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
 		}
 
 		if (!InFarmWindow()) {
-			_status = Loc.T("{0} card(s) - waiting for the {1}:00-{2}:00 farming window", Bot.CardsRemaining, (Bot.Cfg.FarmFromHour).ToString("00"), (Bot.Cfg.FarmUntilHour).ToString("00"));
+			_status = new Said("{0} card(s) - waiting for the {1}:00-{2}:00 farming window", Bot.CardsRemaining, (Bot.Cfg.FarmFromHour).ToString("00"), (Bot.Cfg.FarmUntilHour).ToString("00"));
 
 			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
 		}
 
 		if (Bot.Cfg.FarmInSittings && !InSittingNow(out DateTime next)) {
 			_status = next > DateTime.Now
-				? $"{Bot.CardsRemaining} card(s) - next sitting around {next:HH:mm}"
-				: $"{Bot.CardsRemaining} card(s) - done farming for today";
+				? new Said("{0} card(s) - next sitting around {1}", Bot.CardsRemaining, next.ToString("HH:mm"))
+				: new Said("{0} card(s) - done farming for today", Bot.CardsRemaining);
 
 			return Rng.Next(5, 20);   // short, so a sitting starts near its time rather than up to an hour late
 		}
@@ -351,7 +355,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		SemaphoreSlim? slots = _slots;
 
 		if (slots != null) {
-			_status = Loc.T("waiting for a farming slot");
+			_status = new Said("waiting for a farming slot");
 			await slots.WaitAsync(ct).ConfigureAwait(false);
 		}
 
@@ -478,7 +482,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			Claim();
 			Bot.SetPlaying([game.AppId], Bot.Cfg.PlayWhileFarming ? null : "");
 			int left = (int) Math.Ceiling((until - DateTime.UtcNow).TotalMinutes);
-			_status = Loc.T("winding down on {0} (~{1}m)", game.GameName, Math.Max(1, left));
+			_status = new Said("winding down on {0} (~{1}m)", game.GameName, Math.Max(1, left));
 
 			if (!await Sleep(TimeSpan.FromSeconds(30), ct).ConfigureAwait(false)) {
 				return;
@@ -495,12 +499,12 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 		Claim();
 		Bot.SetPlaying([game.AppId], Bot.Cfg.PlayWhileFarming ? null : "");
-		_status = Loc.T("farming {0} ({1} left)", game.GameName, game.CardsRemaining);
+		_status = new Said("farming {0} ({1} left)", game.GameName, game.CardsRemaining);
 		Log.Info($"farming {game.GameName} - {game.CardsRemaining} card(s) to go", Bot.Name);
 
 		while (!ct.IsCancellationRequested) {
 			if (!Bot.CanPlay) {
-				_status = Loc.T("paused (account in use)");
+				_status = new Said("paused (account in use)");
 
 				return;
 			}
@@ -508,7 +512,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			if (Bot.Grinding) {
 				// A grind outranks farming - drop the claim and let it take the session, rather than fighting the
 				// idler over what's playing and polling a badge page for a game that isn't even running.
-				_status = Loc.T("standing by - grinding");
+				_status = new Said("standing by - grinding");
 				Release();
 
 				return;
@@ -544,7 +548,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			game.CardsRemaining = fresh.CardsRemaining;
 			game.HoursPlayed = fresh.HoursPlayed;
 			Bot.CardsRemaining = Queue.Sum(static g => g.CardsRemaining);
-			_status = Loc.T("farming {0} ({1} left)", game.GameName, game.CardsRemaining);
+			_status = new Said("farming {0} ({1} left)", game.GameName, game.CardsRemaining);
 
 			if (game.CardsRemaining == 0) {
 				ClearStall(game.AppId);
@@ -607,20 +611,20 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 		Claim();
 		Bot.SetPlaying(batch.Select(static g => g.AppId).ToArray(), Bot.Cfg.PlayWhileFarming ? null : "");
-		_status = Loc.T("building playtime on {0} game(s), ~{1}h to go", batch.Count, (needHours).ToString("0.0"));
+		_status = new Said("building playtime on {0} game(s), ~{1}h to go", batch.Count, (needHours).ToString("0.0"));
 		Log.Info($"none of these have enough playtime to drop yet - running {batch.Count} at once for ~{needHours:0.0}h", Bot.Name);
 
 		DateTime until = DateTime.UtcNow.AddHours(needHours);
 
 		while (!ct.IsCancellationRequested && DateTime.UtcNow < until) {
 			if (!Bot.CanPlay) {
-				_status = Loc.T("paused (account in use)");
+				_status = new Said("paused (account in use)");
 
 				return;
 			}
 
 			if (Bot.Grinding) {
-				_status = Loc.T("standing by - grinding");
+				_status = new Said("standing by - grinding");
 				Release();
 
 				return;
@@ -637,7 +641,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				return;
 			}
 
-			_status = Loc.T("building playtime on {0} game(s), ~{1}h to go", batch.Count, ((until - DateTime.UtcNow).TotalHours).ToString("0.0"));
+			_status = new Said("building playtime on {0} game(s), ~{1}h to go", batch.Count, ((until - DateTime.UtcNow).TotalHours).ToString("0.0"));
 		}
 	}
 
