@@ -1043,7 +1043,7 @@
     },
     "Debug": {
       "label": "Hata ayıklama ayrıntısı",
-      "tip": "Her web isteği dahil çok daha fazla ayrıntı gösterir. Bir şey çalışmadığında işe yarar; onun dışında sadece gürültü."
+      "tip": "Günlük DOSYASINA çok daha fazla ayrıntı yazar - her web isteği, her yeniden denetim, hepsi. Konsol penceresinde hiç görünmez, dolayısıyla açmanın ekranda bir maliyeti yoktur; bir şeyler ters gittiğinde sonradan tüm hikâyeyi görebilmek içindir. Panonun Günlük sekmesi de kendi DEBUG filtresinin ardında bunu gösterebilir."
     },
     "LogRetentionDays": {
       "label": "Günlükleri şu kadar sakla",

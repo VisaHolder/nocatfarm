@@ -8,7 +8,7 @@ write a plugin.
 **Contents** · [The 5-minute version](#the-5-minute-version) · [What a plugin can do](#what-a-plugin-can-do) ·
 [Settings](#giving-your-plugin-settings) · [Saving state](#saving-state) · [Events](#events) ·
 [Commands](#adding-commands) · [Doing things](#doing-things) · [Ideas](#things-worth-building) ·
-[Rules & limits](#rules-and-limits) · [Shipping it](#shipping-it)
+[Rules & limits](#rules-and-limits) · [Shipping it](#shipping-it) · [Licensing](#licensing-your-plugin)
 
 ---
 
@@ -258,6 +258,19 @@ so two plugins can use different versions of the same library without a fight.
 
 Tell people what it does, what settings it has, and — since they're being asked to run your code inside the
 process holding their Steam sessions — why they should trust it.
+
+---
+
+## Licensing your plugin
+
+nocat.farm is [MPL-2.0](LICENSE), which is file-level copyleft — and that is deliberate, because of what it
+means for you:
+
+**Your plugin is your own files, so your plugin is yours.** Licence it however you want, including closed
+source, including commercially. Nothing about MPL reaches into new files.
+
+The only obligation is the obvious one: if you modify **nocat.farm's own** source files, those modifications
+have to be published. Writing a plugin never requires that.
 
 ---
 

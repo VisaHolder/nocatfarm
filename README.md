@@ -5,6 +5,7 @@
 ![Built on SteamKit2](https://img.shields.io/badge/built%20on-SteamKit2-1b2838?logo=steam&logoColor=white)
 ![Dependencies: 1](https://img.shields.io/badge/dependencies-1-brightgreen)
 ![Languages: 11](https://img.shields.io/badge/languages-11-8b5cf6)
+![Licence: MPL-2.0](https://img.shields.io/badge/licence-MPL--2.0-blue)
 
 A Steam idler, trading-card farmer and — if you want it — rep4rep commenter. One small Windows app with a web
 dashboard beside it. It sits in the tray, runs every account in the background all day, and is built to look
@@ -494,3 +495,17 @@ run `reload` if you prefer.
 Built on [SteamKit2](https://github.com/SteamRE/SteamKit). The protocol details and the pacing model follow
 [ArchiSteamFarm](https://github.com/JustArchiNET/ArchiSteamFarm), which is where the hard-won parts (the
 32-games-at-once playtime trick, the badge-page shapes, the login limiter) come from.
+
+## Licence
+
+[Mozilla Public License 2.0](LICENSE). In plain words:
+
+* **Use it, fork it, ship it commercially** — all fine.
+* **Write plugins under any licence you like, including closed-source ones.** MPL is file-level: your own new
+  files are yours, and a plugin is new files.
+* **If you change nocat.farm's own files, publish those changes.** You cannot take this, improve it privately
+  and ship it as your own.
+* **Keep the copyright notice.** Credit stays with the code.
+
+That is the whole point of the choice: the plugin ecosystem stays as open as possible, the codebase itself
+cannot be quietly closed.

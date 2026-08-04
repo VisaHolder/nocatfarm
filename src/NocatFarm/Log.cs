@@ -127,13 +127,24 @@ public static class Log {
 		Notify?.Invoke(NotifyKind.Problem, source, text);
 	}
 
+	/// <summary>
+	/// Detail for diagnosing something, written to the log FILE and never to the console.
+	///
+	/// This used to print on screen too, and the screen is the one place it does not belong: every web request,
+	/// every licence count, every re-assert, in grey, scrolling the three lines somebody actually wanted off the
+	/// top. The file is where you go when something is wrong and you want everything; the console is where you
+	/// glance to see if anything is. Debug detail serves the first and ruins the second.
+	///
+	/// The dashboard's Log tab still receives it - it has a DEBUG filter of its own, off by default, so it can
+	/// be turned on there when it is wanted.
+	/// </summary>
 	public static void Debug(string text, string source = "nocat.farm") {
 		if (_debug) {
-			Write("DEBUG", source, text, ConsoleColor.DarkGray);
+			Write("DEBUG", source, text, ConsoleColor.DarkGray, toConsole: false);
 		}
 	}
 
-	private static void Write(string level, string source, string text, ConsoleColor colour) {
+	private static void Write(string level, string source, string text, ConsoleColor colour, bool toConsole = true) {
 		DateTime now = DateTime.Now;
 		Entry e = new(Interlocked.Increment(ref _seq), now, level, source, text);
 
@@ -149,7 +160,7 @@ public static class Log {
 		// Skipped entirely while the live board owns the screen - it draws these itself as part of its layout,
 		// and two writers on the same rows tear the display apart. Everything below still happens: the entry is
 		// filed, and the subscribers (the dashboard, the board) still get it.
-		if (!Suppressed) {
+		if (toConsole && !Suppressed) {
 			lock (ConsoleLock) {
 				ConsoleColor prev = Console.ForegroundColor;
 

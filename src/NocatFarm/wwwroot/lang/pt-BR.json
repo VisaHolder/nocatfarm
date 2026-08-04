@@ -1043,7 +1043,7 @@
     },
     "Debug": {
       "label": "Detalhe de depuração",
-      "tip": "Mostra muito mais detalhe, incluindo cada requisição web. Útil quando algo não funciona; barulhento no resto do tempo."
+      "tip": "Escreve muito mais detalhe no ARQUIVO de log - cada requisição web, cada reverificação, tudo. Nunca aparece na janela do console, então ligar isso não custa nada na tela; está aí para quando algo dá errado e você quer a história inteira depois. A aba Log do painel também pode mostrar, atrás do próprio filtro DEBUG."
     },
     "LogRetentionDays": {
       "label": "Guardar os logs por",
