@@ -517,7 +517,17 @@ public static partial class Commands {
 			await Task.WhenAll(stops).ConfigureAwait(false);
 		}
 
-		return all ? $"{verb}: {count} account(s)" : $"{args[0]}: {verb}";
+		// Echoing the verb back - "kylro: pause" - reads like the command bounced rather than ran. Say what
+		// actually happened to the account instead, in the same shape as every other command's reply.
+		string what = verb switch {
+			"start" => "signing in",
+			"stop" => "signing out",
+			"pause" => "paused - staying signed in, but not playing, farming or commenting",
+			"resume" => "resumed",
+			_ => verb
+		};
+
+		return all ? $"{what}: {count} account(s)" : $"{args[0]}: {what}";
 	}
 
 	private static async Task<string> RestartAsync(BotManager mgr, string[] args) {
