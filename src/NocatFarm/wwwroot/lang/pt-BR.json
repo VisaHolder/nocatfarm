@@ -1178,8 +1178,8 @@
       "tip": "Fecha o nocat.farm por completo assim que todas as contas terminarem de farmar e saírem, em vez de deixá-lo parado na bandeja."
     },
     "Debug": {
-      "label": "Detalhe de depuração",
-      "tip": "Grava muito mais detalhe no ARQUIVO de log - cada requisição web, cada nova verificação, tudo. Ligado por padrão, porque nunca chega à janela nem ao console: não custa nada na tela e significa que, se algo der errado, a resposta já está no arquivo, em vez de precisar reproduzir a falha com isto ligado. A aba Log do painel também pode mostrar, atrás do seu próprio filtro DEBUG."
+      "label": "Mostrar detalhe de depuração na tela",
+      "tip": "O detalhe de depuração - cada requisição web, cada nova verificação, tudo - é SEMPRE gravado no arquivo de log, esteja isto como estiver. É para isso que serve um log: quando algo dá errado, a resposta já está registrada em vez de precisar reproduzir a falha com uma chave ligada. Isto decide apenas se essas linhas também aparecem na janela e no console, e vem desligado por padrão porque elas empurram para cima as poucas linhas que você realmente queria ver."
     },
     "LogRetentionDays": {
       "label": "Guardar os logs por",

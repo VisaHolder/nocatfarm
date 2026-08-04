@@ -1178,8 +1178,8 @@
       "tip": "Ferme complètement nocat.farm dès que tous les comptes ont fini de farmer et se sont déconnectés, au lieu de rester à ne rien faire dans la zone de notification."
     },
     "Debug": {
-      "label": "Détail de débogage",
-      "tip": "Écrit beaucoup plus de détails dans le FICHIER journal - chaque requête web, chaque revérification, tout. Activé par défaut, car cela n'atteint ni la fenêtre ni la console : ça ne te coûte rien à l'écran et ça veut dire que si quelque chose tourne mal, la réponse est déjà dans le fichier, au lieu de devoir reproduire la panne avec l'option activée. L'onglet Journal du tableau de bord peut aussi l'afficher, derrière son propre filtre DEBUG."
+      "label": "Afficher les détails de débogage à l'écran",
+      "tip": "Les détails de débogage - chaque requête web, chaque revérification, tout - sont TOUJOURS écrits dans le fichier journal, quel que soit ce réglage. C'est à cela que sert un journal : si quelque chose tourne mal, la réponse est déjà enregistrée au lieu d'avoir à reproduire la panne avec une option activée. Ceci décide seulement si ces lignes s'affichent aussi dans la fenêtre et la console — désactivé par défaut, car elles font défiler hors écran les quelques lignes qui vous intéressaient vraiment."
     },
     "LogRetentionDays": {
       "label": "Conserver les journaux",

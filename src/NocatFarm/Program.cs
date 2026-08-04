@@ -182,12 +182,13 @@ if (wantWindow) {
 	};
 
 
-	// DEBUG goes to the file and nowhere else. It is written for the moment something has gone wrong and you
-	// want everything; on the window it is a wall of "reusing web token" and "243 licence(s) known" that buries
-	// the six lines actually worth reading. The console already left it out and the dashboard's Log tab has a
-	// DEBUG switch of its own - this window was the one surface still showing it unasked.
+	// DEBUG is always in the file; whether it is also on screen is the "Show debug detail" setting, and it is
+	// read live so the toggle takes effect on the next line rather than the next restart. Left unfiltered this
+	// window showed a wall of "reusing web token" and "243 licence(s) known" that buried the six lines actually
+	// worth reading - the console and the dashboard's Log tab both already filtered it; this was the one surface
+	// still showing it unasked.
 	void Show(Log.Entry entry) {
-		if (entry.Level != "DEBUG") {
+		if ((entry.Level != "DEBUG") || Log.DebugEnabled) {
 			window.Append(entry);
 		}
 	}

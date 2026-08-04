@@ -1178,8 +1178,8 @@
       "tip": "Bütün hesaplar toplamayı bitirip çıkış yapar yapmaz nocat.farm'ı tamamen kapatır; tepside boş boş beklemesine gerek kalmaz."
     },
     "Debug": {
-      "label": "Hata ayıklama ayrıntısı",
-      "tip": "Günlük DOSYASINA çok daha fazla ayrıntı yazar - her web isteği, her yeniden denetim, hepsi. Varsayılan olarak açık, çünkü ne pencereye ne de konsola ulaşır: ekranda sana hiçbir maliyeti yok ve bir şey ters gittiğinde, hatayı bu açıkken yeniden üretmek yerine cevap zaten dosyada oluyor. Panonun Günlük sekmesi de kendi DEBUG filtresinin ardında bunu gösterebilir."
+      "label": "Hata ayıklama ayrıntılarını ekranda göster",
+      "tip": "Hata ayıklama ayrıntıları - her web isteği, her yeniden denetim, hepsi - bu ayar ne olursa olsun DAİMA günlük dosyasına yazılır. Günlüğün amacı zaten budur: bir şey ters gittiğinde, hatayı bir düğme açıkken yeniden üretmek yerine cevap çoktan kayıt altındadır. Bu ayar yalnızca o satırların pencerede ve konsolda da gösterilip gösterilmeyeceğine karar verir; varsayılan olarak kapalıdır, çünkü gerçekten görmek istediğin birkaç satırı yukarı kaydırıp götürürler."
     },
     "LogRetentionDays": {
       "label": "Günlükleri şu kadar sakla",

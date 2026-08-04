@@ -1178,8 +1178,8 @@
       "tip": "Cierra nocat.farm del todo en cuanto todas las cuentas han terminado de farmear y han cerrado sesión, en vez de dejarlo en la bandeja sin hacer nada."
     },
     "Debug": {
-      "label": "Detalle de depuración",
-      "tip": "Escribe mucho más detalle en el ARCHIVO de registro: cada petición web, cada recomprobación, todo. Activado por defecto, porque nunca llega a la ventana ni a la consola: no te cuesta nada en pantalla y significa que, si algo falla, la respuesta ya está en el archivo en lugar de tener que reproducir el fallo con esto activado. La pestaña Registro del panel también puede mostrarlo, tras su propio filtro DEBUG."
+      "label": "Mostrar detalle de depuración en pantalla",
+      "tip": "El detalle de depuración - cada petición web, cada recomprobación, todo - se escribe SIEMPRE en el archivo de registro, esté esto como esté. Para eso sirve un registro: si algo falla, la respuesta ya está guardada en lugar de tener que reproducir el fallo con un interruptor activado. Esto solo decide si esas líneas se muestran además en la ventana y en la consola, y está desactivado por defecto porque desplazan hacia arriba las pocas líneas que de verdad querías ver."
     },
     "LogRetentionDays": {
       "label": "Conservar los registros",
