@@ -177,7 +177,15 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		List<uint> running = CurrentGames();
 
 		if (running.Count == 0) {
-			_status = "nothing being played";
+			// "nothing being played" while a game is plainly running reads as broken. The main game is skipped
+			// deliberately - never fully completing the one this account plays most is the whole point - so say
+			// that instead of implying the account is idle.
+			HumanMode? mode = BotManager.ModuleOf<HumanMode>(Bot);
+			uint main = mode?.MainGameId ?? 0;
+
+			_status = (mode is { Current: not HumanMode.Phase.Off }) && (mode.PlayingNow != 0) && (mode.PlayingNow == main)
+				? $"leaving {GameNames.Of(main)} alone - it's the main game"
+				: "nothing being played";
 
 			return;
 		}
