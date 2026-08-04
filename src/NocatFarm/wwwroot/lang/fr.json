@@ -1089,13 +1089,17 @@
       "label": "Les gagner aussi dans le jeu principal",
       "tip": "Si le jeu principal du mode humain gagne des succès comme n'importe quel autre. Activé, et ça devrait l'être : le jeu principal est là où sont les heures, donc l'endroit le moins surprenant du compte pour en voir. Désactivé, il est laissé totalement tranquille, si bien qu'un compte avec des centaines d'heures sur son jeu phare n'y montre rien - en général le plus étrange des deux. Dans les deux cas, le seuil de rareté et le plafond de complétion s'appliquent toujours."
     },
-    "LegitFarming": {
-      "label": "Farmer par sessions, pas en continu",
-      "tip": "Farmer comme quelqu'un joue : quelques sessions par jour d'une durée crédible, avec des pauses entre elles, à des heures différentes, plus longues le week-end. Un farm continu empile les heures en ligne droite, toute la nuit, chaque nuit - ce qui est la chose la plus visible sur le compte. Marche avec ou sans le mode humain, pour qu'un compte qui ne fait que farmer ressemble quand même à un compte qui joue. Ça change QUAND il farme, jamais quoi."
+    "PluginsEnabled": {
+      "label": "Charger les plugins",
+      "tip": "Charge toute .dll du dossier « plugins ». DESACTIVE par defaut, et mieux vaut le laisser ainsi sauf si tu as ecrit le plugin ou fais confiance a son auteur : un plugin est du code tiers execute dans ce processus, avec acces a tout ce que ce processus atteint, y compris les jetons Steam sous config. Les plugins recoivent une API volontairement etroite, mais c'est un garde-fou, pas une cage."
     },
-    "LegitFarmHoursPerDay": {
+    "FarmInSittings": {
+      "label": "Farmer par sessions, pas en continu",
+      "tip": "Farme par blocs dans la journee avec des pauses entre eux, a des heures differentes chaque jour, au lieu de tourner jusqu'au bout. A SAVOIR : cela ne laisse un vrai trou que sur un compte sans jeux en idle. S'il fait aussi de l'idle - un nom personnalise, une liste - l'idler prend le relais pendant les pauses et le compte accumule des heures quand meme ; seul le jeu concerne change."
+    },
+    "FarmHoursPerDay": {
       "label": "Heures de farm par jour",
-      "tip": "En gros combien de la journée les sessions totalisent. Tiré au sort chaque jour autour de cette valeur, et plus long le week-end, pour que deux jours n'aient jamais la même forme. Utilisé seulement si le farm par sessions est activé."
+      "tip": "En gros combien de la journee les sessions totalisent. Tire au sort chaque jour, plus long le week-end. Utilise seulement si le farm par sessions est active."
     }
   }
 }

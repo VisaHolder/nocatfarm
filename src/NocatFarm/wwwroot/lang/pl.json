@@ -1089,13 +1089,17 @@
       "label": "Zdobywaj też w grze głównej",
       "tip": "Czy główna gra trybu ludzkiego zdobywa osiągnięcia jak każda inna. Włączone i tak powinno być: w głównej grze są godziny, więc to najmniej zaskakujące miejsce na koncie, by je zobaczyć. Wyłączenie zostawia ją zupełnie w spokoju, przez co konto z setkami godzin w swojej sztandarowej grze nie ma tam nic - zwykle to dziwniejsze z dwojga. Tak czy inaczej próg rzadkości i limit ukończenia nadal obowiązują."
     },
-    "LegitFarming": {
-      "label": "Farm w sesjach, nie non stop",
-      "tip": "Farmienie tak, jak ktoś gra: kilka sesji dziennie o wiarygodnej długości, z przerwami, zaczynających i kończących się o różnych porach, dłuższych w weekend. Farmienie bez przerwy układa godziny w prostą linię, całą noc, co noc - a to najbardziej rzucająca się w oczy rzecz na koncie. Działa z trybem ludzkim i bez niego, więc konto, które tylko farmi, też może wyglądać jak grające. Zmienia KIEDY farmi, nigdy co."
+    "PluginsEnabled": {
+      "label": "Laduj wtyczki",
+      "tip": "Laduje kazdy plik .dll z folderu \"plugins\". DOMYSLNIE WYLACZONE i lepiej tak zostawic, chyba ze sam napisales wtyczke albo ufasz autorowi: wtyczka to cudzy kod dzialajacy w tym procesie, majacy dostep do wszystkiego, co ten proces - lacznie z tokenami logowania Steam w config. Wtyczki dostaja celowo waskie API, ale to barierka, nie klatka."
     },
-    "LegitFarmHoursPerDay": {
+    "FarmInSittings": {
+      "label": "Farm w sesjach, nie non stop",
+      "tip": "Farmi w kilku blokach dziennie z przerwami, o roznych porach kazdego dnia, zamiast dzialac do skutku. WARTO WIEDZIEC: prawdziwa przerwa powstaje tylko na koncie bez gier do idlowania. Jesli konto rowniez idluje - wlasna nazwa, lista gier - to w przerwach przejmuje idler i konto i tak zbiera godziny; zmienia sie tylko, na ktorej grze."
+    },
+    "FarmHoursPerDay": {
       "label": "Godzin farmienia dziennie",
-      "tip": "Mniej więcej ile dnia sumują się sesje. Losowane codziennie w okolicach tej wartości, a w weekend dłużej, żeby żadne dwa dni nie miały tego samego kształtu. Używane tylko, gdy farmienie w sesjach jest włączone."
+      "tip": "Mniej wiecej ile dnia sumuja sie sesje. Losowane codziennie, w weekend dluzej. Uzywane tylko, gdy farmienie w sesjach jest wlaczone."
     }
   }
 }

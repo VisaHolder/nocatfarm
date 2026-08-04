@@ -1089,13 +1089,17 @@
       "label": "Ana oyunda da kazan",
       "tip": "İnsan modunun ana oyununun da diğer oyunlar gibi başarım kazanıp kazanmayacağı. Açık ve öyle de olmalı: saatler ana oyunda birikir, dolayısıyla başarım görmek için hesabın en şaşırtıcı olmayan yeridir. Kapatmak onu tamamen rahat bırakır; böylece amiral gemisi oyununda yüzlerce saati olan bir hesap orada hiçbir şey göstermez - genelde ikisinin daha tuhafı budur. Her hâlükârda nadirlik eşiği ve tamamlama tavanı geçerliliğini korur."
     },
-    "LegitFarming": {
-      "label": "Aralıksız değil, oturumlar hâlinde topla",
-      "tip": "Biri nasıl oynuyorsa öyle toplama: günde birkaç, inandırıcı uzunlukta oturum, aralarında boşluklarla, her gün farklı saatlerde başlayıp biten ve hafta sonu daha uzun. Aralıksız çalışan bir toplayıcı saatleri dümdüz bir çizgi hâlinde yığar, her gece - ve hesapta en göze çarpan şey budur. İnsan moduyla da onsuz da çalışır, böylece yalnızca kart toplayan bir hesap bile oynayan bir hesap gibi görünür. Yalnızca NE ZAMAN topladığını değiştirir, neyi topladığını değil."
+    "PluginsEnabled": {
+      "label": "Eklentileri yukle",
+      "tip": "\"plugins\" klasorundeki her .dll dosyasini yukler. VARSAYILAN OLARAK KAPALI ve eklentiyi kendiniz yazmadiysaniz ya da yazana guvenmiyorsaniz kapali kalmasi iyidir: bir eklenti bu surecin icinde calisan baskasinin kodudur ve bu surecin eristigi her seye, config altindaki Steam oturum jetonlari dahil, erisebilir. Eklentilere bilerek dar bir API verilir, ama bu bir korkuluktur, kafes degil."
     },
-    "LegitFarmHoursPerDay": {
-      "label": "Günde kaç saat toplansın",
-      "tip": "Oturumların toplamının günün ne kadarını tuttuğu. Her gün bu değerin çevresinde yeniden belirlenir ve hafta sonu daha uzun olur, böylece iki gün aynı şekle sahip olmaz. Yalnızca oturumlar hâlinde toplama açıkken kullanılır."
+    "FarmInSittings": {
+      "label": "Aralıksiz degil, oturumlar halinde topla",
+      "tip": "Bitene kadar calismak yerine gunde birkac blok halinde, aralarinda bosluklarla ve her gun farkli saatlerde toplar. ONCE SUNU BILIN: gercek bir bosluk yalnizca bosta bekletilecek oyunu olmayan hesapta olusur. Hesap ayrica bosta bekliyorsa - ozel bir ad, bir oyun listesi - aralarda bosta bekletici devralir ve hesap yine saat biriktirir; yalnizca saatlerin hangi oyuna yazildigi degisir."
+    },
+    "FarmHoursPerDay": {
+      "label": "Gunde kac saat toplansin",
+      "tip": "Oturumlarin toplaminin gunun ne kadarini tuttugu. Her gun yeniden belirlenir, hafta sonu daha uzundur. Yalnizca oturumlar halinde toplama acikken kullanilir."
     }
   }
 }

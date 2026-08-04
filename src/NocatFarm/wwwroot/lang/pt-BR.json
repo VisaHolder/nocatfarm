@@ -1089,13 +1089,17 @@
       "label": "Conquistar também no jogo principal",
       "tip": "Se o jogo principal do modo humano ganha conquistas como qualquer outro. Ligado, e deveria estar: o jogo principal é onde estão as horas, então é o lugar menos surpreendente da conta para vê-las. Desligado, ele fica totalmente intocado, o que faz uma conta com centenas de horas no seu jogo-símbolo não mostrar nenhuma ali - normalmente o mais estranho dos dois. De qualquer forma, o filtro de raridade e o teto de conclusão continuam valendo."
     },
-    "LegitFarming": {
-      "label": "Farmar em sessões, não direto",
-      "tip": "Farmar como alguém joga: algumas sessões por dia de duração crível, com intervalos entre elas, começando e terminando em horários diferentes e mais longas no fim de semana. Um farm que roda direto empilha horas em linha reta, a noite toda, toda noite - o que é a coisa mais visível na conta. Funciona com ou sem o modo humano, então uma conta que só farma ainda pode parecer uma que joga. Muda QUANDO farma, nunca o quê."
+    "PluginsEnabled": {
+      "label": "Carregar plugins",
+      "tip": "Carrega qualquer .dll da pasta \"plugins\". DESLIGADO por padrao, e e melhor deixar assim a menos que voce tenha escrito o plugin ou confie em quem escreveu: um plugin e codigo de outra pessoa rodando dentro deste processo, com acesso a tudo que este processo alcanca, inclusive os tokens de login do Steam em config. Plugins recebem uma API propositalmente estreita, mas isso e um guarda-corpo, nao uma jaula."
     },
-    "LegitFarmHoursPerDay": {
+    "FarmInSittings": {
+      "label": "Farmar em sessoes, nao direto",
+      "tip": "Farma em alguns blocos por dia com intervalos entre eles, em horarios diferentes a cada dia, em vez de rodar ate acabar. VALE SABER: so deixa um intervalo real numa conta sem jogos em idle. Se ela tambem faz idle - um nome personalizado, uma lista - o idler assume nos intervalos e a conta acumula horas de qualquer jeito; so muda em qual jogo elas caem."
+    },
+    "FarmHoursPerDay": {
       "label": "Horas de farm por dia",
-      "tip": "Aproximadamente quanto do dia as sessões somam. Sorteado todo dia em torno disso, e mais longo no fim de semana, para que dois dias nunca tenham o mesmo formato. Só é usado quando farmar em sessões está ligado."
+      "tip": "Aproximadamente quanto do dia as sessoes somam. Sorteado todo dia e mais longo no fim de semana. So e usado quando farmar em sessoes esta ligado."
     }
   }
 }

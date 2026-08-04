@@ -1089,13 +1089,17 @@
       "label": "Conseguirlos también en el juego principal",
       "tip": "Si el juego principal del modo humano consigue logros como cualquier otro. Activado, y así debería estar: el juego principal es donde están las horas, así que es el sitio menos sorprendente de la cuenta para verlos. Desactivado lo deja completamente en paz, con lo que una cuenta con cientos de horas en su juego insignia no muestra ninguno - normalmente lo más raro de los dos. En cualquier caso siguen aplicándose el filtro de rareza y el techo de finalización."
     },
-    "LegitFarming": {
-      "label": "Farmear en sesiones, no sin parar",
-      "tip": "Farmear como juega una persona: unas cuantas sesiones al día de duración creíble, con huecos entre ellas, empezando y acabando a horas distintas y más largas el fin de semana. Un farmeo continuo acumula horas en línea recta, toda la noche, todas las noches, que es lo más llamativo de la cuenta. Funciona con o sin modo humano, así que una cuenta que solo farmea puede parecer una que juega. Cambia CUÁNDO farmea, nunca qué."
+    "PluginsEnabled": {
+      "label": "Cargar plugins",
+      "tip": "Carga cualquier .dll de la carpeta \"plugins\". DESACTIVADO por defecto, y conviene dejarlo asi salvo que hayas escrito tu el plugin o confies en quien lo hizo: un plugin es codigo ajeno ejecutandose dentro de este proceso, con acceso a todo lo que este proceso alcanza, incluidos los tokens de Steam en config. Los plugins reciben una API deliberadamente estrecha, pero eso es un guardarrail, no una jaula."
     },
-    "LegitFarmHoursPerDay": {
-      "label": "Horas al día farmeando",
-      "tip": "Aproximadamente cuánto del día suman las sesiones. Se sortea cada día dentro de un margen de esto, y más largo el fin de semana, así que no hay dos días con la misma forma. Solo se usa si el farmeo por sesiones está activado."
+    "FarmInSittings": {
+      "label": "Farmear en sesiones, no sin parar",
+      "tip": "Farmea en unos cuantos bloques al dia con huecos entre ellos, a horas distintas cada dia, en vez de seguir hasta acabar. CONVIENE SABERLO: solo deja un hueco real en una cuenta sin juegos en idle. Si ademas hace idle - un nombre personalizado, una lista - el idler toma el relevo en los huecos y la cuenta acumula horas igual; solo cambia en que juego caen."
+    },
+    "FarmHoursPerDay": {
+      "label": "Horas al dia farmeando",
+      "tip": "Aproximadamente cuanto del dia suman las sesiones. Se sortea cada dia y es mas largo el fin de semana. Solo se usa si el farmeo por sesiones esta activado."
     }
   }
 }

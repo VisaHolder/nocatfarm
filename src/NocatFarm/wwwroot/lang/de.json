@@ -1089,13 +1089,17 @@
       "label": "Auch im Hauptspiel verdienen",
       "tip": "Ob das Hauptspiel des Menschmodus Erfolge verdient wie jedes andere Spiel. An - und das sollte es sein: Im Hauptspiel stecken die Stunden, also ist es der unauffälligste Ort für Erfolge. Aus lässt es völlig unangetastet, wodurch ein Konto mit Hunderten Stunden in seinem Aushängeschild-Spiel dort gar nichts vorzuweisen hat - meist das Seltsamere von beidem. So oder so gelten Seltenheitsschwelle und Abschlussgrenze weiterhin."
     },
-    "LegitFarming": {
-      "label": "In Sitzungen farmen, nicht am Stück",
-      "tip": "Farmen, wie jemand spielt: ein paar Sitzungen am Tag von glaubwürdiger Länge, mit Pausen dazwischen, jeden Tag zu anderen Zeiten und am Wochenende länger. Ein Farmer, der durchläuft, häuft Stunden schnurgerade an - Nacht für Nacht - und das ist das Auffälligste am Konto. Das hier geht mit und ohne Menschmodus, damit auch ein reines Farm-Konto wie ein spielendes aussieht. Es ändert nur, WANN gefarmt wird, nie was."
+    "PluginsEnabled": {
+      "label": "Plugins laden",
+      "tip": "Laedt jede .dll aus dem Ordner \"plugins\". STANDARDMAESSIG AUS, und das sollte so bleiben, sofern du das Plugin nicht selbst geschrieben hast oder dem Autor vertraust: Ein Plugin ist fremder Code in diesem Prozess und erreicht alles, was dieser Prozess erreicht - auch die Steam-Anmeldetokens unter config. Plugins bekommen eine bewusst schmale Schnittstelle, aber das ist eine Leitplanke, kein Kaefig."
     },
-    "LegitFarmHoursPerDay": {
+    "FarmInSittings": {
+      "label": "In Sitzungen farmen, nicht am Stueck",
+      "tip": "Farmt in ein paar Bloecken pro Tag mit Pausen dazwischen, taeglich zu anderen Zeiten, statt durchzulaufen. WICHTIG ZU WISSEN: Eine echte Luecke entsteht nur auf einem Konto ohne Idle-Spiele. Laeuft daneben der Idler - ein eigener Name, eine Idle-Liste -, uebernimmt er in den Pausen und das Konto sammelt so oder so Stunden; es aendert sich nur, auf welchem Spiel sie landen."
+    },
+    "FarmHoursPerDay": {
       "label": "Stunden pro Tag zum Farmen",
-      "tip": "Ungefähr wie viel des Tages die Sitzungen zusammen ausmachen. Wird täglich neu in einem Bereich darum ausgewürfelt und am Wochenende länger, damit keine zwei Tage gleich aussehen. Wird nur genutzt, wenn das Farmen in Sitzungen an ist."
+      "tip": "Ungefaehr wie viel des Tages die Sitzungen zusammen ausmachen. Wird taeglich neu ausgewuerfelt und am Wochenende laenger. Nur relevant, wenn das Farmen in Sitzungen an ist."
     }
   }
 }
