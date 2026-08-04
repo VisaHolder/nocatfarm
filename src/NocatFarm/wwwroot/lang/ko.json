@@ -450,7 +450,20 @@
     "Could not read the plugin list: {0}": "플러그인 목록을 읽지 못했습니다: {0}",
     "Could not change that: {0}": "변경하지 못했습니다: {0}",
     "Could not save that: {0}": "저장하지 못했습니다: {0}",
-    "{0} saved": "{0} 저장됨"
+    "{0} saved": "{0} 저장됨",
+    "(optional)": "(선택)",
+    "+ Add account": "+ 계정 추가",
+    "Anything you can do on the other tabs you can type here — and the other way round.": "다른 탭에서 할 수 있는 일은 여기서 입력할 수 있고, 그 반대도 됩니다.",
+    "Everything here is also a command. This step is": "여기 있는 것은 모두 명령어이기도 합니다. 이 단계는",
+    "Let's add your first Steam account.": "첫 스팀 계정을 추가해 봅시다.",
+    "Loading…": "불러오는 중…",
+    "Open rep4rep.com ↗": "rep4rep.com 열기 ↗",
+    "Run": "실행",
+    "Steam lets an account leave about 10 comments a day on people who aren't its friends.": "스팀은 친구가 아닌 사람에게 하루 약 10개까지만 댓글을 허용합니다.",
+    "These live on rep4rep.com, because their API can't do them:": "이것들은 rep4rep.com에서 처리합니다. API로는 할 수 없기 때문입니다:",
+    "This dashboard is password protected.": "이 대시보드는 비밀번호로 보호되어 있습니다.",
+    "last 24 hours": "최근 24시간",
+    "nocat.farm posts these for you on a schedule. There's nothing to do here — this is just what's waiting.": "nocat.farm이 일정에 따라 대신 올립니다. 여기서 할 일은 없습니다 - 대기 중인 목록일 뿐입니다."
   },
   "settings": {
     "WebEnabled": {
@@ -543,7 +556,8 @@
     },
     "MarketCurrency": {
       "label": "인벤토리 가격 통화",
-      "tip": "인벤토리 가격의 통화입니다. Steam 상점과 같게 맞추지 않으면 합계가 마켓에서 보는 것과 어긋납니다."
+      "tip": "인벤토리 가격의 통화입니다. Steam 상점과 같게 맞추지 않으면 합계가 마켓에서 보는 것과 어긋납니다.",
+      "choices": "1 미국 달러 | 20 캐나다 달러 | 21 호주 달러 | 2 영국 파운드 | 3 유로 | 5 러시아 루블 | 7 브라질 헤알 | 8 일본 엔 | 23 중국 위안 | 24 인도 루피"
     },
     "FileLogging": {
       "label": "로그 파일 기록",
@@ -575,7 +589,8 @@
     },
     "OnlineStatus": {
       "label": "표시 상태",
-      "tip": "다른 사람에게 보이는 상태: 온라인, 자리 비움, 다른 용무 중, 오프라인 표시. 오프라인 표시로도 시간은 계속 쌓이고 아무도 보지 못합니다."
+      "tip": "다른 사람에게 보이는 상태: 온라인, 자리 비움, 다른 용무 중, 오프라인 표시. 오프라인 표시로도 시간은 계속 쌓이고 아무도 보지 못합니다.",
+      "choices": "0 오프라인 | 1 온라인 | 2 다른 용무 중 | 3 자리 비움 | 4 취침 중 | 5 교환 희망 | 6 게임 희망 | 7 투명 상태"
     },
     "IUseThisAccount": {
       "label": "이 계정은 내가 직접 씁니다",
@@ -691,7 +706,8 @@
     },
     "FarmingOrder": {
       "label": "이 순서로 파밍",
-      "tip": "어떤 게임부터 파밍할지. '남은 카드가 적은 순'은 배지를 가장 빨리 완성하고, '많이 한 순'은 라이브러리에 새로 붙는 시간이 가장 적습니다."
+      "tip": "어떤 게임부터 파밍할지. '남은 카드가 적은 순'은 배지를 가장 빨리 완성하고, '많이 한 순'은 라이브러리에 새로 붙는 시간이 가장 적습니다.",
+      "choices": "0 많이 한 순서 | 1 적게 한 순서 | 2 남은 카드가 적은 순 | 3 남은 카드가 많은 순 | 4 무작위 | 5 가나다순"
     },
     "FarmOffline": {
       "label": "오프라인으로 보이면서 파밍",
@@ -703,7 +719,8 @@
     },
     "AchievementPace": {
       "label": "속도",
-      "tip": "해제 사이에 얼마나 둘지. '신중히'는 모든 간격을 두 배로 늘립니다 - 누가 제대로 들여다봐도 버텨야 하는 계정이라면 이게 맞습니다."
+      "tip": "해제 사이에 얼마나 둘지. '신중히'는 모든 간격을 두 배로 늘립니다 - 누가 제대로 들여다봐도 버텨야 하는 계정이라면 이게 맞습니다.",
+      "choices": "0 신중하게(두 배 느리게) | 1 보통 | 2 빠르게(두 배 빠르게)"
     },
     "AchievementMaxCompletionPct": {
       "label": "완료 상한",
@@ -807,7 +824,8 @@
     },
     "AchievementBoost": {
       "tip": "매번 직접 시작하지 않아도 여러 게임에서 알아서 도전 과제를 노립니다. 기본은 꺼짐. \"모든 싱글플레이\"는 라이브러리에서 직접 고릅니다 - 진짜 게임만(DLC나 체험판은 절대 아님), 도전 과제가 있고 평가 수도 충분한 것.",
-      "label": "도전 과제 부스트"
+      "label": "도전 과제 부스트",
+      "choices": "0 끄기 | 1 직접 고른 게임 | 2 모든 싱글플레이 게임"
     },
     "SkipRefundableGames": {
       "tip": "막 산 게임은 환불이 불가능해질 때까지 건드리지 않습니다. Steam은 2시간이 넘으면 환불을 거절하는데, 2시간은 한 번의 세션일 뿐입니다. 카드 파밍뿐 아니라 모든 곳에 적용되며, 무료 게임은 절대 보류되지 않습니다.",
@@ -839,7 +857,8 @@
     },
     "GameDevice": {
       "label": "이 기기에서 하는 것처럼",
-      "tip": "친구들이 어떤 기기로 플레이한다고 볼지. 이름 옆에 붙는 Steam Deck이나 휴대폰 배지가 이걸로 정해집니다."
+      "tip": "친구들이 어떤 기기로 플레이한다고 볼지. 이름 옆에 붙는 Steam Deck이나 휴대폰 배지가 이걸로 정해집니다.",
+      "choices": "0 PC | 512 휴대폰 | 1024 빅 픽처 | 2048 VR | 4096 컨트롤러 | 12288 스팀 덱"
     },
     "PriorityGames": {
       "label": "이것부터 파밍",
@@ -959,7 +978,8 @@
     },
     "UIMode": {
       "label": "이 방식으로 로그인",
-      "tip": "Steam에 어떤 종류의 클라이언트라고 알릴지. '데스크톱'이 정답이자 기본값입니다 - 실제 클라이언트가 그렇게 알립니다."
+      "tip": "Steam에 어떤 종류의 클라이언트라고 알릴지. '데스크톱'이 정답이자 기본값입니다 - 실제 클라이언트가 그렇게 알립니다.",
+      "choices": "7 데스크톱(기본) | 3 웹 | 2 모바일 | 1 빅 픽처 | 0 데스크톱, 구버전"
     },
     "SteamParentalCode": {
       "label": "가족 보기 PIN",
@@ -1055,7 +1075,8 @@
     },
     "SteamProtocol": {
       "label": "연결 방식",
-      "tip": "Steam에 접속하는 방법. 방화벽이나 통신사가 무언가를 막는 게 아니라면 자동으로 두세요 - websocket 전용은 평범한 HTTPS 트래픽처럼 보여 대개 통과합니다."
+      "tip": "Steam에 접속하는 방법. 방화벽이나 통신사가 무언가를 막는 게 아니라면 자동으로 두세요 - websocket 전용은 평범한 HTTPS 트래픽처럼 보여 대개 통과합니다.",
+      "choices": "0 자동 | 1 웹소켓만 | 2 TCP만"
     },
     "WebProxy": {
       "label": "프록시",
