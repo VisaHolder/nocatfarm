@@ -4,6 +4,7 @@
 ![Windows](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows&logoColor=white)
 ![Built on SteamKit2](https://img.shields.io/badge/built%20on-SteamKit2-1b2838?logo=steam&logoColor=white)
 ![Dependencies: 1](https://img.shields.io/badge/dependencies-1-brightgreen)
+![Languages: 11](https://img.shields.io/badge/languages-11-8b5cf6)
 
 A Steam idler, trading-card farmer and — if you want it — rep4rep commenter. One small Windows app with a web
 dashboard beside it. It sits in the tray, runs every account in the background all day, and is built to look
@@ -69,6 +70,7 @@ nothing but Steam is ever contacted.
 | **Refund protection** | A game bought in the last fortnight and under two hours played is left completely alone — by the idler, the schedule, grinds and the hunter alike — until it can no longer be refunded. |
 | **Steam Families** | Games shared into the account can be hunted too, and are handed straight back the moment the person who owns them starts playing. |
 | **Daily report** | Once a day (default 09:30) it writes a one-look summary to the log: hours banked in the last 24h, cards, rep4rep comments and a running total, per account. Type `report` for it on demand. |
+| **Eleven languages** | The dashboard is fully translated into Spanish, Portuguese (BR), Russian, German, French, Simplified Chinese, Turkish, Polish, Japanese and Korean — every label, every explanation, all 162 settings. The walkthrough asks which you want before it says anything else. |
 
 <p align="center">
   <img src="assets/accounts.png" alt="The per-account view — state, custom name, and what your friends actually see" width="880">
@@ -358,12 +360,13 @@ side of the trade page can't be read, the offer is refused rather than guessed a
 
 **44 global, 120 per account.** Every one has a plain-English explanation attached to it, which the dashboard
 shows on hover and the console prints for `help <setting>` — one sentence, written once, in
-`Config/Settings.cs`. Advanced settings are collapsed by default and never move.
+`Config/Settings.cs`. Advanced settings are collapsed by default and never move. Both the name and the
+explanation are translated into all ten languages.
 
-Global: the dashboard (host/port/password/auto-open), background behaviour (tray, minimise-to-tray, start with
-Windows, keep-awake, three notification categories), the rep4rep account, the Steam connection (login stagger,
-reconnect, timeout, farming concurrency, rate-limit cooldown, web request spacing, protocol, proxy), and
-logging with retention.
+Global: the dashboard (host/port/password/auto-open, **language and the currency prices are shown in**),
+background behaviour (tray, minimise-to-tray, start with Windows, keep-awake, three notification categories),
+the rep4rep account, the Steam connection (login stagger, reconnect, timeout, farming concurrency, rate-limit
+cooldown, web request spacing, protocol, proxy), and logging with retention.
 
 Per account: identity and appearance (persona, device type, notes, start-paused, Family View PIN, device
 name), what it plays, trading cards (order, priority list, blacklist, refund protection, skip-unplayed,
@@ -412,7 +415,12 @@ run `reload` if you prefer.
   redirect to `/login` rather than an error, so that redirect is what triggers a re-mint and one retry.
 * **Rate limits.** Logins from one machine are serialised with a gap, and everyone shares one cooldown when
   Steam pushes back — three accounts each waiting 25 minutes in series helps nobody. Web requests are spaced
-  per host.
+  per host, and a 429 shuts that host for *every* account: the limit is per IP, so one account collecting one
+  is everybody's problem, and each further request while it stands is what keeps it alive. The wait doubles
+  from 5 minutes to 40 and resets on the next answer that works.
+* **Notifications, not polling.** Card drops, profile comments and waiting trade offers all arrive as pushes
+  over the Steam connection. Nothing opens the trade offers page on a timer to learn there is nothing there;
+  the slow pass that remains exists only to catch what a push might have missed.
 * **Occupation.** If you sit down and launch a game, Steam says so, and everything that plays a game stands
   down. It never fights you for your own session.
 * **Security.** With no dashboard password set, the dashboard refuses every connection that isn't from this PC.

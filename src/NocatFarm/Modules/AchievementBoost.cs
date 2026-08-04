@@ -51,6 +51,17 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 					await DiscoverIfNeededAsync(ct).ConfigureAwait(false);
 					Tick();
 				} else {
+					// Switching the boost off has to stop what it is DOING, not just stop it starting anything
+					// else. Without this, an account put on a two-hour hunt carried on playing that game for the
+					// full two hours after the setting said off - and the status line cheerfully said "off" while
+					// it did. A manual grind is somebody else's and is left alone.
+					if (_ours && Bot.Grinding) {
+						Log.Info($"achievement boost switched off - leaving {GameNames.Of(Bot.GrindGame)}", Bot.Name);
+						Bot.StopGrind();
+					}
+
+					_ours = false;
+					_sawGrind = false;
 					_status = "off";
 				}
 			} catch (OperationCanceledException) {

@@ -421,6 +421,13 @@ public static partial class Commands {
 				return "farming";
 			}
 
+			// A grind outranks everything below it, and nothing here was asking. An account put on one game
+			// for three hours reported itself as "idling" - the same word as an account doing nothing in
+			// particular - while the log line right above it said "grinding". One of them had to be wrong.
+			if (b.Grinding) {
+				return "grinding";
+			}
+
 			// "online" while a game is clearly running was the confusing one - say what it is actually doing.
 			HumanMode? human = BotManager.ModuleOf<HumanMode>(b);
 

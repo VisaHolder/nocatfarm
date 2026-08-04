@@ -1099,6 +1099,13 @@ public sealed class WebHost : IAsyncDisposable {
 			return "farming";
 		}
 
+		// Same as the console: a grind is not idling, and saying so contradicted the detail line beside it.
+		// Grouped with "playing" rather than given a chip of its own - it IS playing one game deliberately,
+		// which is exactly what that chip means, and the row's own text names the game and the time left.
+		if (b.Grinding) {
+			return "playing";
+		}
+
 		HumanMode? human = BotManager.ModuleOf<HumanMode>(b);
 
 		if (human is { Current: not HumanMode.Phase.Off }) {
