@@ -1934,6 +1934,12 @@ public static partial class Commands {
 			case "Language":
 				Core.Loc.Refresh();
 
+				// And repaint. Every row on screen can now render in the new language, but neither surface
+				// redraws on its own - so without this the change did not appear until the next log line
+				// happened to arrive, which on a quiet night is minutes of a window that looks broken.
+				Window?.Invalidate();
+				Board?.Repaint();
+
 				break;
 			case "FileLogging":
 			case "Debug":
