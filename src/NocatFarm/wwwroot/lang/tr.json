@@ -949,7 +949,12 @@
     " · {0} run by nocat.farm": " · nocat.farm ile {0}",
     "couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten": "toplam süreler okunamadı ({0}: {1}) - üzerlerine yazılmayacak",
     "the lifetime totals could not be read this run - not writing over them": "bu çalıştırmada toplam süreler okunamadı - üzerlerine yazılmıyor",
-    "nothing to record - leaving the existing lifetime totals alone": "kaydedilecek bir şey yok - mevcut toplam süreler olduğu gibi bırakılıyor"
+    "nothing to record - leaving the existing lifetime totals alone": "kaydedilecek bir şey yok - mevcut toplam süreler olduğu gibi bırakılıyor",
+    "on hold until {0}": "{0} tarihine kadar beklemede",
+    "rep4rep commenting held for {0} day(s) - back on {1}": "rep4rep yorumları {0} gün beklemede - {1} tarihinde dönüyor",
+    "rep4rep hold lifted - commenting resumes on its own schedule": "rep4rep beklemesi kaldırıldı - yorumlar kendi programına dönüyor",
+    "the rep4rep hold has run out - commenting resumes": "rep4rep beklemesi doldu - yorumlar devam ediyor",
+    "the rep4rep hold has run out - starting fresh at 0/{0}": "rep4rep beklemesi doldu - 0/{0} ile sıfırdan başlanıyor"
   },
   "settings": {
     "WebEnabled": {
@@ -1630,6 +1635,10 @@
     "PriceCacheHours": {
       "label": "Bir fiyata su kadar guven",
       "tip": "Bir fiyatin yeniden sorulmadan once kac saat saklanacagi. Uzun tutmak istek sayisini cok azaltir - kisitlamanin gercek caresi budur - karsiliginda degerler daha yavas guncellenir. Kart ve esya fiyatlari gunden gune pek degismez, bu yuzden 24 genelde yeterlidir."
+    },
+    "Rep4RepPauseDays": {
+      "label": "Yorumları şu kadar beklet",
+      "tip": "Tüm hesaplarda yorum yapmayı bu kadar gün boyunca tamamen durdurur, sonra kendiliğinden devam eder. Ayarla ve unut - geri sayım yeniden başlatmayı atlatır ve süresi dolunca kendini temizler, yani hiçbir şeyi geri açman gerekmez. 0, hiçbir şeyin bekletilmediği anlamına gelir. Günlük sınır ve program dokunulmadan kalır; bu yalnızca her şeyi bekletir."
     }
   }
 }

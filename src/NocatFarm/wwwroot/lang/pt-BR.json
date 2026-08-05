@@ -949,7 +949,12 @@
     " · {0} run by nocat.farm": " · {0} executado pelo nocat.farm",
     "couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten": "não foi possível ler os totais acumulados ({0}: {1}) - eles não serão sobrescritos",
     "the lifetime totals could not be read this run - not writing over them": "os totais acumulados não puderam ser lidos nesta execução - não serão sobrescritos",
-    "nothing to record - leaving the existing lifetime totals alone": "nada a registrar - mantendo os totais acumulados existentes"
+    "nothing to record - leaving the existing lifetime totals alone": "nada a registrar - mantendo os totais acumulados existentes",
+    "on hold until {0}": "em espera até {0}",
+    "rep4rep commenting held for {0} day(s) - back on {1}": "comentários do rep4rep em espera por {0} dia(s) - voltam em {1}",
+    "rep4rep hold lifted - commenting resumes on its own schedule": "espera do rep4rep removida - os comentários voltam ao próprio cronograma",
+    "the rep4rep hold has run out - commenting resumes": "a espera do rep4rep acabou - os comentários voltam",
+    "the rep4rep hold has run out - starting fresh at 0/{0}": "a espera do rep4rep acabou - recomeçando do zero em 0/{0}"
   },
   "settings": {
     "WebEnabled": {
@@ -1630,6 +1635,10 @@
     "PriceCacheHours": {
       "label": "Confiar num preco por",
       "tip": "Quantas horas um preco e mantido antes de ser consultado de novo. Mais tempo significa muito menos requisicoes - que e a cura real para o limite - ao custo de valores que se movem mais devagar. Precos de cartas e itens mudam pouco de um dia para o outro, entao 24 costuma bastar."
+    },
+    "Rep4RepPauseDays": {
+      "label": "Pausar comentários por",
+      "tip": "Interrompe completamente os comentários em todas as contas por estes dias e depois segue sozinho. Configure e esqueça - a contagem sobrevive a um reinício e se limpa ao terminar, então você não precisa religar nada. 0 significa que nada está em espera. O teto diário e o cronograma não são tocados; isto apenas deixa tudo passar."
     }
   }
 }

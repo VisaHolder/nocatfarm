@@ -1931,6 +1931,44 @@ public static partial class Commands {
 		switch (def.Name) {
 			// The status text this program writes about itself is translated too, so a language change has to
 			// reach the pack the modules read from - not only the one the browser fetches.
+			// "Hold for N days" is turned into a deadline exactly once, here, when the number changes.
+			//
+			// Counting days down at runtime would restart the count on every launch, so a two-day hold on a
+			// machine that reboots nightly would never end. A stored deadline cannot drift: it either has
+			// passed or it has not.
+			case "Rep4RepPauseDays": {
+				int days = Live.Global.Rep4RepPauseDays;
+
+				if (days <= 0) {
+					if (Live.Global.Rep4RepHoldUntil != null) {
+						Live.Global.Rep4RepHoldUntil = null;
+						Live.Global.Rep4RepHoldFrom = null;
+						ConfigStore.SaveGlobal(Live.Global);
+						Log.Info("rep4rep hold lifted - commenting resumes on its own schedule");
+					}
+
+					break;
+				}
+
+				// Anchored to when the hold STARTED, not to now.
+				//
+				// This runs on every global save, so "now + days" moved the finish line every time any unrelated
+				// setting was touched - a two-day hold plus a theme change an hour later became two days from
+				// then. From a fixed start, saving the same number is a no-op and changing it moves only the end.
+				DateTime from = Live.Global.Rep4RepHoldFrom ?? DateTime.UtcNow;
+				DateTime until = from.AddDays(days);
+
+				if ((Live.Global.Rep4RepHoldFrom != from) || (Live.Global.Rep4RepHoldUntil != until)) {
+					Live.Global.Rep4RepHoldFrom = from;
+					Live.Global.Rep4RepHoldUntil = until;
+					ConfigStore.SaveGlobal(Live.Global);
+					Log.Info(new Said("rep4rep commenting held for {0} day(s) - back on {1}",
+						days, (Func<string>) (() => Fmt.Clock(until))));
+				}
+
+				break;
+			}
+
 			case "Language":
 				Core.Loc.Refresh();
 

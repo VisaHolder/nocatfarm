@@ -949,7 +949,12 @@
     " · {0} run by nocat.farm": " · nocat.farm 运行 {0}",
     "couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten": "无法读取累计总时长（{0}：{1}）—— 不会被覆盖",
     "the lifetime totals could not be read this run - not writing over them": "本次运行未能读取累计总时长 —— 不会覆盖它们",
-    "nothing to record - leaving the existing lifetime totals alone": "没有可记录的内容 —— 保持现有累计总时长不变"
+    "nothing to record - leaving the existing lifetime totals alone": "没有可记录的内容 —— 保持现有累计总时长不变",
+    "on hold until {0}": "暂停至 {0}",
+    "rep4rep commenting held for {0} day(s) - back on {1}": "rep4rep 评论暂停 {0} 天 —— {1} 恢复",
+    "rep4rep hold lifted - commenting resumes on its own schedule": "rep4rep 暂停已解除 —— 评论按原计划继续",
+    "the rep4rep hold has run out - commenting resumes": "rep4rep 暂停已到期 —— 评论恢复",
+    "the rep4rep hold has run out - starting fresh at 0/{0}": "rep4rep 暂停已到期 —— 从 0/{0} 重新开始"
   },
   "settings": {
     "WebEnabled": {
@@ -1630,6 +1635,10 @@
     "PriceCacheHours": {
       "label": "价格信任时长",
       "tip": "取得的价格在重新查询前保留多少小时。时间越长，请求就少得多——这才是限流的真正解法——代价是估值变化反映得更慢。卡牌和物品的价格逐日变化不大，所以 24 通常足够。"
+    },
+    "Rep4RepPauseDays": {
+      "label": "暂停评论",
+      "tip": "在所有账号上完全停止评论，持续这么多天，然后自行继续。设好就不用管 —— 倒计时能挺过重启，到期后会自动清零，你不必再手动打开什么。0 表示没有暂停。每日上限和排程都不受影响；这只是把整件事先搁一搁。"
     }
   }
 }

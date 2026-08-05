@@ -72,7 +72,7 @@ nothing but Steam is ever contacted.
 | **Steam Families** | Games shared into the account can be hunted too, and are handed straight back the moment the person who owns them starts playing. |
 | **Plugins** | Optional and off by default. One DLL in `plugins/` extends the app: react to card drops and trade offers, read every account, run any command, add your own commands, and declare settings that get a real UI. See [PLUGINS.md](PLUGINS.md). |
 | **Daily report** | Once a day (default 09:30) it writes a one-look summary to the log: hours banked in the last 24h, cards, rep4rep comments and a running total, per account. Type `report` for it on demand. |
-| **Eleven languages** | The dashboard is fully translated into Spanish, Portuguese (BR), Russian, German, French, Simplified Chinese, Turkish, Polish, Japanese and Korean — every label, every explanation, all 169 settings. The walkthrough asks which you want before it says anything else. |
+| **Eleven languages** | The dashboard is fully translated into Spanish, Portuguese (BR), Russian, German, French, Simplified Chinese, Turkish, Polish, Japanese and Korean — every label, every explanation, all 170 settings. The walkthrough asks which you want before it says anything else. |
 
 <p align="center">
   <img src="assets/accounts.png" alt="The per-account view — state, custom name, and what your friends actually see" width="880">
@@ -191,6 +191,16 @@ The pacing, all per account:
 * if Steam keeps rate-limiting one account near its cap, it stops chasing that last slot and rests until its
   24h window has fully cleared, then starts fresh — rather than retrying into the same wall all day
 * `rep4rep rest <account|all>` forces exactly that: a full day off, then back at a clean baseline
+
+**Taking a few days off.** *Settings → rep4rep account → "Hold commenting for"* stops every account
+commenting for that many days and then carries on by itself. The countdown is anchored to when you set it, so
+it survives restarts and saving other settings doesn't push it back; when it runs out each account comes back
+at a **clean 0/10** with its strikes, blocks and skipped profiles cleared, and the setting puts itself back to
+0. Nothing else is touched — the daily cap and the schedule are exactly as you left them.
+
+> **Every task is worth the same.** rep4rep's API returns only a task id, the comment text and who it's for —
+> there is no value or credit field to sort or filter on, so there's nothing to pick between and no setting
+> here pretends otherwise.
 
 Points appear as **pending** first — that's rep4rep verifying the comment really landed, usually within a few
 hours. Nothing is lost.
@@ -420,7 +430,7 @@ why, and porting is usually easier than it sounds.
 
 ## Settings
 
-**47 global, 122 per account** — of which **45 show by default**. Every one has a plain-English explanation
+**48 global, 122 per account** — of which **45 show by default**. Every one has a plain-English explanation
 attached to it, which the dashboard shows on hover and the console prints for `help <setting>` — one
 sentence, written once, in `Config/Settings.cs`. Both the name and the explanation are translated into all
 ten languages.
@@ -433,6 +443,11 @@ Global: the dashboard (host/port/password/auto-open, **language and the currency
 background behaviour (tray, minimise-to-tray, start with Windows, keep-awake, three notification categories),
 the rep4rep account, the Steam connection (login stagger, reconnect, timeout, farming concurrency, rate-limit
 cooldown, web request spacing, protocol, proxy), and logging with retention.
+
+Two of those are worth calling out. **Show debug detail on screen** only decides whether debug lines are also
+*displayed* — the log file always keeps them, whatever it's set to, so when something goes wrong the answer is
+already recorded instead of needing the fault reproduced with a switch flipped. And **Hold commenting for**
+sits rep4rep out for a few days and then resumes on its own; see [rep4rep](#rep4rep).
 
 Per account: identity and appearance (persona, device type, notes, start-paused, Family View PIN, device
 name), what it plays, trading cards (order, priority list, blacklist, refund protection, skip-unplayed,

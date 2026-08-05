@@ -949,7 +949,12 @@
     " · {0} run by nocat.farm": " · {0} działania nocat.farm",
     "couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten": "nie udało się odczytać sum całkowitych ({0}: {1}) - nie zostaną nadpisane",
     "the lifetime totals could not be read this run - not writing over them": "w tym uruchomieniu nie udało się odczytać sum całkowitych - nie nadpisuję ich",
-    "nothing to record - leaving the existing lifetime totals alone": "nie ma czego zapisać - istniejące sumy całkowite zostają nietknięte"
+    "nothing to record - leaving the existing lifetime totals alone": "nie ma czego zapisać - istniejące sumy całkowite zostają nietknięte",
+    "on hold until {0}": "wstrzymane do {0}",
+    "rep4rep commenting held for {0} day(s) - back on {1}": "komentarze rep4rep wstrzymane na {0} dni - wracają {1}",
+    "rep4rep hold lifted - commenting resumes on its own schedule": "wstrzymanie rep4rep zniesione - komentarze wracają do swojego harmonogramu",
+    "the rep4rep hold has run out - commenting resumes": "wstrzymanie rep4rep dobiegło końca - komentarze wracają",
+    "the rep4rep hold has run out - starting fresh at 0/{0}": "wstrzymanie rep4rep dobiegło końca - zaczynamy od nowa od 0/{0}"
   },
   "settings": {
     "WebEnabled": {
@@ -1630,6 +1635,10 @@
     "PriceCacheHours": {
       "label": "Ufaj cenie przez",
       "tip": "Ile godzin cena jest przechowywana, zanim zostanie sprawdzona ponownie. Dluzej oznacza znacznie mniej zapytan - to prawdziwe lekarstwo na limity - kosztem wolniej zmieniajacych sie wartosci. Ceny kart i przedmiotow niewiele zmieniaja sie z dnia na dzien, wiec 24 zwykle wystarcza."
+    },
+    "Rep4RepPauseDays": {
+      "label": "Wstrzymaj komentowanie na",
+      "tip": "Całkowicie zatrzymuje komentowanie na wszystkich kontach na tyle dni, a potem samo wraca. Ustaw i zapomnij - odliczanie przetrwa restart i samo się zeruje po zakończeniu, więc nie musisz niczego włączać z powrotem. 0 oznacza brak wstrzymania. Dzienny limit i harmonogram pozostają nietknięte; to po prostu przeczekuje całość."
     }
   }
 }

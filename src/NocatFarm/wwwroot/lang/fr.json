@@ -949,7 +949,12 @@
     " · {0} run by nocat.farm": " · {0} exécuté par nocat.farm",
     "couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten": "impossible de lire les totaux cumulés ({0} : {1}) - ils ne seront pas écrasés",
     "the lifetime totals could not be read this run - not writing over them": "les totaux cumulés n'ont pas pu être lus lors de cette exécution - on ne les écrase pas",
-    "nothing to record - leaving the existing lifetime totals alone": "rien à enregistrer - les totaux cumulés existants sont laissés tels quels"
+    "nothing to record - leaving the existing lifetime totals alone": "rien à enregistrer - les totaux cumulés existants sont laissés tels quels",
+    "on hold until {0}": "en pause jusqu'à {0}",
+    "rep4rep commenting held for {0} day(s) - back on {1}": "commentaires rep4rep en pause {0} jour(s) - reprise le {1}",
+    "rep4rep hold lifted - commenting resumes on its own schedule": "pause rep4rep levée - les commentaires reprennent leur planning",
+    "the rep4rep hold has run out - commenting resumes": "la pause rep4rep est terminée - les commentaires reprennent",
+    "the rep4rep hold has run out - starting fresh at 0/{0}": "la pause rep4rep est terminée - on repart de 0/{0}"
   },
   "settings": {
     "WebEnabled": {
@@ -1630,6 +1635,10 @@
     "PriceCacheHours": {
       "label": "Faire confiance a un prix pendant",
       "tip": "Combien d'heures un prix est conserve avant d'etre redemande. Plus long veut dire beaucoup moins de requetes - c'est le vrai remede a la limitation - au prix de valeurs qui bougent plus lentement. Les prix des cartes et objets changent peu d'un jour a l'autre, 24 suffit generalement."
+    },
+    "Rep4RepPauseDays": {
+      "label": "Mettre les commentaires en pause pendant",
+      "tip": "Arrête complètement les commentaires sur tous les comptes pendant ce nombre de jours, puis reprend tout seul. Tu le règles et tu l'oublies : le compte à rebours survit à un redémarrage et s'efface tout seul à la fin, tu n'as donc rien à réactiver. 0 signifie qu'il n'y a pas de pause. Le plafond quotidien et le planning ne bougent pas ; ceci se contente de tout laisser passer."
     }
   }
 }
