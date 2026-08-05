@@ -954,7 +954,27 @@
     "rep4rep commenting held for {0} day(s) - back on {1}": "rep4rep yorumları {0} gün beklemede - {1} tarihinde dönüyor",
     "rep4rep hold lifted - commenting resumes on its own schedule": "rep4rep beklemesi kaldırıldı - yorumlar kendi programına dönüyor",
     "the rep4rep hold has run out - commenting resumes": "rep4rep beklemesi doldu - yorumlar devam ediyor",
-    "the rep4rep hold has run out - starting fresh at 0/{0}": "rep4rep beklemesi doldu - 0/{0} ile sıfırdan başlanıyor"
+    "the rep4rep hold has run out - starting fresh at 0/{0}": "rep4rep beklemesi doldu - 0/{0} ile sıfırdan başlanıyor",
+    "short break": "kısa mola",
+    "rep4rep commenting held for {0}h - back on {1}": "rep4rep yorumları {0}sa beklemede - {1} tarihinde dönüyor",
+    "  (this PC only - no password set)": "  (yalnızca bu bilgisayar - parola yok)",
+    "achievement boost - {0} game(s) worth hunting": "başarım hızlandırma - avlanmaya değer {0} oyun",
+    "achievement boost - {0} game(s) worth hunting ({1} shared with this account)": "başarım hızlandırma - avlanmaya değer {0} oyun ({1} tanesi bu hesapla paylaşılmış)",
+    "activated a queued key  ({0} left in the queue)": "kuyruktaki bir anahtar etkinleştirildi  (kuyrukta {0} kaldı)",
+    "activated a queued key - package(s) {0}  ({1} left in the queue)": "kuyruktaki bir anahtar etkinleştirildi - paket(ler) {0}  (kuyrukta {1} kaldı)",
+    "games-played not sent - paused": "oynanan oyunlar gönderilmedi - duraklatıldı",
+    "games-played not sent - you're using the account": "oynanan oyunlar gönderilmedi - hesabı sen kullanıyorsun",
+    "leaving {0} alone - still refundable": "{0} rahat bırakılıyor - hâlâ iade edilebilir",
+    "library: {0} game(s) owned": "kütüphane: sahip olunan {0} oyun",
+    "library: {0} game(s) owned, {1} shared by the family": "kütüphane: sahip olunan {0} oyun, aileden paylaşılan {1}",
+    "plugin {0} switched off - takes effect after a restart": "{0} eklentisi kapatıldı - yeniden başlatınca geçerli olur",
+    "plugin {0} switched on - takes effect after a restart": "{0} eklentisi açıldı - yeniden başlatınca geçerli olur",
+    "we offered {0} item(s) to {1}, with a trade token: ": "{1} kişisine {0} eşya teklif ettik, takas jetonu ile: ",
+    "we offered {0} item(s) to {1}, with no trade token: ": "{1} kişisine {0} eşya teklif ettik, takas jetonu olmadan: ",
+    "{0} are past the refund window - free to play again": "{0} iade süresini geçti - yeniden oynanabilir",
+    "{0} is past the refund window - free to play again": "{0} iade süresini geçti - yeniden oynanabilir",
+    "── daily report · last 24h ──": "── günlük rapor · son 24 saat ──",
+    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── günlük rapor · son 24 saat · ilki, \"biriktirildi\" buradan itibaren sayılıyor ──"
   },
   "settings": {
     "WebEnabled": {
@@ -1636,9 +1656,9 @@
       "label": "Bir fiyata su kadar guven",
       "tip": "Bir fiyatin yeniden sorulmadan once kac saat saklanacagi. Uzun tutmak istek sayisini cok azaltir - kisitlamanin gercek caresi budur - karsiliginda degerler daha yavas guncellenir. Kart ve esya fiyatlari gunden gune pek degismez, bu yuzden 24 genelde yeterlidir."
     },
-    "Rep4RepPauseDays": {
-      "label": "Yorumları şu kadar beklet",
-      "tip": "Tüm hesaplarda yorum yapmayı bu kadar gün boyunca tamamen durdurur, sonra kendiliğinden devam eder. Ayarla ve unut - geri sayım yeniden başlatmayı atlatır ve süresi dolunca kendini temizler, yani hiçbir şeyi geri açman gerekmez. 0, hiçbir şeyin bekletilmediği anlamına gelir. Günlük sınır ve program dokunulmadan kalır; bu yalnızca her şeyi bekletir."
+    "Rep4RepPauseHours": {
+      "label": "Yorumları şu kadar beklet (saat)",
+      "tip": "Tüm hesaplarda yorum yapmayı bu kadar saat boyunca tamamen durdurur, sonra kendiliğinden devam eder. 24 bir gün, 48 iki gündür - arasındaki her değer de çalışır, 27 saatlik bir bekletme sadece 27'dir. Ayarla ve unut: geri sayım yeniden başlatmayı atlatır, son kaydetmeden değil ayarladığın andan itibaren sayar ve süresi dolunca kendini temizler. 0, hiçbir şeyin bekletilmediği anlamına gelir. Günlük sınır ve program dokunulmaz; bu yalnızca bekletir ve her hesap tertemiz 0/10 ile döner."
     }
   }
 }

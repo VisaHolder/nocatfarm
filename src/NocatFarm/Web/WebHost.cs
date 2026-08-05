@@ -95,7 +95,11 @@ public sealed class WebHost : IAsyncDisposable {
 			string host = _cfg.WebHost is "0.0.0.0" or "*" or "+" ? "localhost" : _cfg.WebHost;
 			Url = $"http://{host}:{_cfg.WebPort}/";
 
-			Log.Good(new Said("dashboard: {0}{1}", Url, (string.IsNullOrEmpty(_cfg.WebPassword) ? "  (this PC only - no password set)" : "")));
+			// The parenthetical is a Said too. As a bare string it was a finished English phrase by the time the
+			// sentence around it was translated, so a Chinese log read "仪表盘:http://... (this PC only - no
+			// password set)" - which is the whole class of bug this pass exists to remove.
+			Log.Good(new Said("dashboard: {0}{1}", Url,
+				string.IsNullOrEmpty(_cfg.WebPassword) ? new Said("  (this PC only - no password set)") : default));
 
 			return true;
 		} catch (Exception e) {
@@ -348,7 +352,9 @@ public sealed class WebHost : IAsyncDisposable {
 
 			Live.Global.DisabledPlugins = off;
 			ConfigStore.SaveGlobal(Live.Global);
-			Log.Info(new Said("plugin {0} switched {1} - takes effect after a restart", body.Name, (body.Enabled ? "on" : "off")));
+			Log.Info(body.Enabled
+				? new Said("plugin {0} switched on - takes effect after a restart", body.Name)
+				: new Said("plugin {0} switched off - takes effect after a restart", body.Name));
 
 			return Results.Json(new { Message = $"{body.Name} is {(body.Enabled ? "on" : "off")} after a restart." });
 

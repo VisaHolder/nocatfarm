@@ -1114,10 +1114,32 @@ public sealed class MainWindow : IDisposable {
 
 			// Both, when there is something to say for each. The old line picked one and silently dropped the
 			// other, so switching rep4rep on made the hours-played figure disappear with no explanation.
-			string line2 = string.Join("   ", new[] { dayTotal > 0 ? today : "", said }.Where(static s => s.Length > 0));
+			//
+			// Measured rather than joined and hoped for. Joining unconditionally just moved the problem: an
+			// account with a day figure AND a comment count overflowed the column and the row read
+			// "12m of 6h40m today   rep4rep:..." - the ellipsis this column was reworked to get rid of, back
+			// again. So try the pair, then the pair without the second "today" (the first one already said it),
+			// then whichever single fact still fits. Something true and whole beats two things cut in half.
+			if (detailW > 0) {
+				string day = dayTotal > 0 ? today : "";
+				string trimmed = said.EndsWith(" today", StringComparison.Ordinal) && (day.Length > 0)
+					? said[..^6]
+					: said;
 
-			if ((line2.Length > 0) && (detailW > 0)) {
-				Clipped(dc, line2, detailX, y + 22, detailW, _fontSmall, TextDim);
+				foreach (string candidate in new[] {
+					string.Join("   ", new[] { day, said }.Where(static t => t.Length > 0)),
+					string.Join("   ", new[] { day, trimmed }.Where(static t => t.Length > 0)),
+					said,
+					day
+				}) {
+					if ((candidate.Length == 0) || (TextWidth(dc, candidate, _fontSmall) > detailW)) {
+						continue;
+					}
+
+					Clipped(dc, candidate, detailX, y + 22, detailW, _fontSmall, TextDim);
+
+					break;
+				}
 			}
 
 			// Every action for this account, in fixed positions so they are in the same place on every row.

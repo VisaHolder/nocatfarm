@@ -353,7 +353,9 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		if (changed) {
 			int shared = found.Count(a => Bot.Library.Find(a)?.Shared == true);
 
-			Log.Info(new Said("achievement boost - {0} game(s) worth hunting{1}", found.Count, (shared > 0 ? $" ({shared} shared with this account)" : "")), Bot.Name);
+			Log.Info(shared > 0
+				? new Said("achievement boost - {0} game(s) worth hunting ({1} shared with this account)", found.Count, shared)
+				: new Said("achievement boost - {0} game(s) worth hunting", found.Count), Bot.Name);
 		}
 	}
 

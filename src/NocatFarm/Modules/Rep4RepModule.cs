@@ -179,7 +179,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			&& (Interlocked.Exchange(ref _tidied, 1) == 0)) {
 			Live.Global.Rep4RepHoldUntil = null;
 			Live.Global.Rep4RepHoldFrom = null;
-			Live.Global.Rep4RepPauseDays = 0;
+			Live.Global.Rep4RepPauseHours = 0;
 			ConfigStore.SaveGlobal(Live.Global);
 		}
 	}

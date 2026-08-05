@@ -983,14 +983,23 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		}
 
 		// The first sitting of the day is a short one - checking in, not settling down for four hours.
+		//
+		// Short RELATIVE to the configured range, never an absolute 12-28. That absolute ignored
+		// SessionMinMinutes completely, so an account told "at least 30 minutes" opened its day with a
+		// twelve-minute sitting - a minimum that was not a minimum. The floor wins; the cap only shortens
+		// what is above it.
 		if (_firstSessionOfDay) {
-			length = Math.Min(length, Rng(12, 28));
+			int shortCap = Math.Max(min, Math.Min(28, min + (span * 15 / 100)));
+			length = Math.Min(length, Rng(min, shortCap));
 		}
 
 		int remaining = _targetMinutes - _playedMinutesToday;
 
 		if (length > remaining) {
-			length = Math.Max(20, remaining + Rng(-5, 15));
+			// Another hard-coded floor that could sit under a configured minimum. What is left of the target
+			// is a real limit, so it still caps the sitting - but where there IS room for a full-length one,
+			// the account's own minimum is what decides, not the number 20.
+			length = Math.Max(Math.Min(min, remaining), remaining + Rng(-5, 15));
 		}
 
 		int untilBed = MinutesUntilBed();
@@ -1037,7 +1046,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_phase = Phase.ShortBreak;
 		_phaseEnds = DateTime.UtcNow.AddMinutes(minutes);
 		Bot.StopPlaying();
-		StepAway(minutes, 3, "short break");   // Away - stepped away from the keyboard
+		StepAway(minutes, 3, new Said("short break"));   // Away - stepped away from the keyboard
 	}
 
 	private void MealBreak() {
@@ -1048,14 +1057,19 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_phase = Phase.MealBreak;
 		_phaseEnds = DateTime.UtcNow.AddMinutes(minutes);
 		Bot.StopPlaying();
-		StepAway(minutes, 4, "meal break", 2.0);   // Snooze - what Steam does to a real user who walks off
+		StepAway(minutes, 4, new Said("meal break"), 2.0);   // Snooze - what Steam does to a real user who walks off
 	}
 
 	/// <summary>
 	/// Sign out for the break, or just go Away. Real people close Steam sometimes, and an account that is online
 	/// for eighteen unbroken hours a day is doing something no person does.
 	/// </summary>
-	private void StepAway(int minutes, int awayPersona, string what, double weight = 1.0) {
+	/// <remarks>
+	/// `what` is a Said, not a string. As a string the phase name was already finished text by the time the
+	/// sentence around it was translated, so a Chinese log read "short break —— 约 20m 后回来" - the frame
+	/// translated, the words inside it not.
+	/// </remarks>
+	private void StepAway(int minutes, int awayPersona, Said what, double weight = 1.0) {
 		int pct = Math.Clamp((int) (Bot.Cfg.SignOutOnBreakChancePct * weight), 0, 100);
 
 		if (Percent(pct) && (_signOutsUsed < _signOutCap)) {

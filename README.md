@@ -192,8 +192,9 @@ The pacing, all per account:
   24h window has fully cleared, then starts fresh — rather than retrying into the same wall all day
 * `rep4rep rest <account|all>` forces exactly that: a full day off, then back at a clean baseline
 
-**Taking a few days off.** *Settings → rep4rep account → "Hold commenting for"* stops every account
-commenting for that many days and then carries on by itself. The countdown is anchored to when you set it, so
+**Taking a few days off.** *Settings → rep4rep account → "Hold commenting for (hours)"* stops every account
+commenting for that many hours and then carries on by itself. 24 is a day, 48 is two, and anything in
+between works — a 27-hour pause is just 27. The countdown is anchored to when you set it, so
 it survives restarts and saving other settings doesn't push it back; when it runs out each account comes back
 at a **clean 0/10** with its strikes, blocks and skipped profiles cleared, and the setting puts itself back to
 0. Nothing else is touched — the daily cap and the schedule are exactly as you left them.

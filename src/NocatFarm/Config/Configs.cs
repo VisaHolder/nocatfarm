@@ -68,8 +68,12 @@ public sealed class GlobalConfig {
 	public bool Rep4RepAutoAddProfiles { get; set; } = true;
 	public int Rep4RepPointsRefreshMinutes { get; set; } = 15;
 
-	/// <summary>How many days to hold all commenting for. 0 is "not holding"; it clears itself when it expires.</summary>
-	public int Rep4RepPauseDays { get; set; }
+	/// <summary>How many HOURS to hold all commenting for. 0 is "not holding"; it clears itself when it expires.</summary>
+	/// <remarks>
+	/// Hours rather than days because "a day or two" is not the only shape a pause comes in - "27 hours" is a
+	/// perfectly ordinary thing to want and a whole-days field simply cannot say it.
+	/// </remarks>
+	public int Rep4RepPauseHours { get; set; }
 
 	/// <summary>
 	/// When the hold ends, worked out once from Rep4RepPauseDays rather than counted down.

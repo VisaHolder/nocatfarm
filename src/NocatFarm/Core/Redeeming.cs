@@ -196,7 +196,9 @@ public static class Redeeming {
 			RedeemResult result = await RedeemAsync(bot, key, ct).ConfigureAwait(false);
 
 			if (result.Ok) {
-				Log.Reward(new Said("activated a queued key{0}  ({1} left in the queue)", (result.Packages.Count > 0 ? $" - package(s) {string.Join(", ", result.Packages)}" : ""), KeyQueue.Count - 1), bot.Name);
+				Log.Reward(result.Packages.Count > 0
+					? new Said("activated a queued key - package(s) {0}  ({1} left in the queue)", string.Join(", ", result.Packages), KeyQueue.Count - 1)
+					: new Said("activated a queued key  ({0} left in the queue)", KeyQueue.Count - 1), bot.Name);
 				KeyQueue.Done(key);
 
 				return;

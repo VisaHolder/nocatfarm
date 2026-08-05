@@ -142,6 +142,10 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 		// Translated, unlike the rest of the log. status.Line() is already in the user's language, so gluing an
 		// English word onto the front produced lines like "still im Leerlauf · 3 Karten" - half a sentence in
 		// each. A heartbeat is a status readout, not a diagnostic; it belongs in the language the status is in.
-		Log.Info(Loc.T(same ? "still {0}" : "now {0}", status.Line()), Bot.Name);
+		// new Said(...), NOT Loc.T(...). Loc.T renders here and hands Log a finished string, which then becomes
+		// the entry's translation KEY - a sentence with the values already baked in, matching nothing in any
+		// pack and frozen in whatever language was selected when it was written. Passing the Said keeps the key
+		// and the values apart, so the row re-renders like every other one.
+		Log.Info(new Said(same ? "still {0}" : "now {0}", status.Line()), Bot.Name);
 	}
 }

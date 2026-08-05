@@ -954,7 +954,27 @@
     "rep4rep commenting held for {0} day(s) - back on {1}": "rep4rep 댓글을 {0}일간 보류 - {1}에 재개",
     "rep4rep hold lifted - commenting resumes on its own schedule": "rep4rep 보류 해제 - 댓글이 원래 일정대로 재개됩니다",
     "the rep4rep hold has run out - commenting resumes": "rep4rep 보류 기간이 끝났습니다 - 댓글을 재개합니다",
-    "the rep4rep hold has run out - starting fresh at 0/{0}": "rep4rep 보류 기간이 끝났습니다 - 0/{0}부터 새로 시작합니다"
+    "the rep4rep hold has run out - starting fresh at 0/{0}": "rep4rep 보류 기간이 끝났습니다 - 0/{0}부터 새로 시작합니다",
+    "short break": "짧은 휴식",
+    "rep4rep commenting held for {0}h - back on {1}": "rep4rep 댓글을 {0}시간 보류 - {1}에 재개",
+    "  (this PC only - no password set)": "  (이 PC에서만 - 비밀번호 없음)",
+    "achievement boost - {0} game(s) worth hunting": "도전 과제 부스트 - 사냥할 만한 게임 {0}개",
+    "achievement boost - {0} game(s) worth hunting ({1} shared with this account)": "도전 과제 부스트 - 사냥할 만한 게임 {0}개 (이 계정과 공유된 것 {1}개)",
+    "activated a queued key  ({0} left in the queue)": "대기열의 키를 활성화했습니다  (대기열에 {0}개 남음)",
+    "activated a queued key - package(s) {0}  ({1} left in the queue)": "대기열의 키를 활성화했습니다 - 패키지 {0}  (대기열에 {1}개 남음)",
+    "games-played not sent - paused": "플레이 중 게임을 전송하지 않았습니다 - 일시 중지됨",
+    "games-played not sent - you're using the account": "플레이 중 게임을 전송하지 않았습니다 - 계정을 사용 중입니다",
+    "leaving {0} alone - still refundable": "{0}은(는) 건드리지 않습니다 - 아직 환불 가능합니다",
+    "library: {0} game(s) owned": "라이브러리: 보유 게임 {0}개",
+    "library: {0} game(s) owned, {1} shared by the family": "라이브러리: 보유 게임 {0}개, 가족 공유 {1}개",
+    "plugin {0} switched off - takes effect after a restart": "플러그인 {0}을(를) 껐습니다 - 재시작 후 적용됩니다",
+    "plugin {0} switched on - takes effect after a restart": "플러그인 {0}을(를) 켰습니다 - 재시작 후 적용됩니다",
+    "we offered {0} item(s) to {1}, with a trade token: ": "{1}에게 아이템 {0}개를 제안했습니다, 거래 토큰 있음: ",
+    "we offered {0} item(s) to {1}, with no trade token: ": "{1}에게 아이템 {0}개를 제안했습니다, 거래 토큰 없음: ",
+    "{0} are past the refund window - free to play again": "{0}은(는) 환불 기간이 지났습니다 - 다시 플레이할 수 있습니다",
+    "{0} is past the refund window - free to play again": "{0}은(는) 환불 기간이 지났습니다 - 다시 플레이할 수 있습니다",
+    "── daily report · last 24h ──": "── 일일 보고서 · 최근 24시간 ──",
+    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── 일일 보고서 · 최근 24시간 · 첫 보고서, 여기서부터 \"적립\"을 셉니다 ──"
   },
   "settings": {
     "WebEnabled": {
@@ -1636,9 +1656,9 @@
       "label": "가격을 신뢰하는 시간",
       "tip": "가져온 가격을 몇 시간 동안 그대로 쓸지입니다. 길게 잡으면 요청 수가 크게 줄어 제한에 대한 실질적인 해결책이 되지만, 그만큼 가치 변화가 느리게 반영됩니다. 카드와 아이템 가격은 하루 사이에 크게 변하지 않으므로 보통 24면 충분합니다."
     },
-    "Rep4RepPauseDays": {
-      "label": "댓글 보류 기간",
-      "tip": "모든 계정에서 댓글을 완전히 중단하고, 이 일수가 지나면 스스로 다시 시작합니다. 설정해 두고 잊으면 됩니다 - 카운트다운은 재시작해도 이어지고 끝나면 알아서 지워지므로 다시 켤 필요가 없습니다. 0은 보류 없음입니다. 일일 한도와 일정은 건드리지 않으며, 그저 전체를 쉬어갈 뿐입니다."
+    "Rep4RepPauseHours": {
+      "label": "댓글 보류 시간(시간)",
+      "tip": "모든 계정에서 댓글을 완전히 중단하고, 이 시간이 지나면 스스로 다시 시작합니다. 24는 하루, 48은 이틀이며 그 사이 값도 됩니다 - 27시간 보류는 그냥 27입니다. 설정해 두고 잊으면 됩니다. 카운트다운은 재시작해도 이어지고, 마지막 저장이 아니라 설정한 시점부터 재며, 끝나면 알아서 지워집니다. 0은 보류 없음입니다. 일일 한도와 일정은 건드리지 않고 그저 쉬어갈 뿐이며, 각 계정은 0/10으로 깨끗하게 돌아옵니다."
     }
   }
 }
