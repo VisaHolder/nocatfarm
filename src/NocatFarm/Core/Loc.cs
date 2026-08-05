@@ -19,9 +19,14 @@ namespace NocatFarm.Core;
 /// English it was written as, never as a missing-key marker. That is what makes it safe to add a status line
 /// without touching ten JSON files in the same commit - it simply reads in English until somebody translates it.
 ///
-/// Log lines are deliberately NOT run through this. A log is a diagnostic record: it wants to match the file on
-/// disk, be searchable, and be quotable in a bug report by somebody who does not share your language. Status
-/// text is for reading now; log text is for reading later, by whoever is helping.
+/// Log lines go through this too, and they land in two different places with two different rules.
+///
+/// On screen - the window and the dashboard console - a line keeps its Said and is rendered afresh every time it
+/// is drawn. Switch language and the lines already on screen change with it, including ones written hours ago.
+///
+/// In the file on disk, a line is rendered once, when it is written, in whatever language was selected at that
+/// moment. That is why an old log can have a run of Polish in the middle of it - not a bug, just a record of what
+/// the app was set to at the time. A log wants to be a fixed record, so it is never rewritten afterwards.
 /// </remarks>
 public static class Loc {
 	private static Dictionary<string, string> _map = [];
