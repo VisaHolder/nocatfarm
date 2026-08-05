@@ -104,7 +104,7 @@ public static class SelfUpdate {
 			string zip = Path.Combine(work, "release.zip");
 
 			Progress = $"downloading {tag}";
-			Log.Info($"update: downloading {tag} ({size / 1048576}MB)");
+			Log.Info(new Said("update: downloading {0} ({1}MB)", tag, size / 1048576));
 
 			await using (Stream from = await Http.GetStreamAsync(url, ct).ConfigureAwait(false))
 			await using (FileStream to = File.Create(zip)) {
@@ -134,7 +134,7 @@ public static class SelfUpdate {
 			await File.WriteAllTextAsync(script, SwapScript(Environment.ProcessId, staged, here, work), ct).ConfigureAwait(false);
 
 			Progress = "restarting into " + tag;
-			Log.Attention($"update: {tag} is ready - restarting into it now");
+			Log.Attention(new Said("update: {0} is ready - restarting into it now", tag));
 
 			// Detached, and in its own window-less shell, so killing this process doesn't take it with us.
 			Process.Start(new ProcessStartInfo {
@@ -151,7 +151,7 @@ public static class SelfUpdate {
 		} catch (OperationCanceledException) {
 			throw;
 		} catch (Exception e) {
-			Log.Warn($"update failed: {e.GetType().Name}: {e.Message} - nothing has been changed");
+			Log.Warn(new Said("update failed: {0}: {1} - nothing has been changed", e.GetType().Name, e.Message));
 
 			return $"update failed: {e.Message}. Nothing has been changed - the release page is {Releases}";
 		} finally {

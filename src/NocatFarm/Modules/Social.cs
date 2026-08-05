@@ -82,9 +82,9 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 
 				try {
 					Bot.Friends?.RemoveFriend(new SteamID(steamId));
-					Log.Info($"turned down a friend request from {steamId}", Bot.Name);
+					Log.Info(new Said("turned down a friend request from {0}", steamId), Bot.Name);
 				} catch (Exception e) {
-					Log.Debug($"couldn't turn down the request from {steamId}: {e.Message}", Bot.Name);
+					Log.Debug(new Said("couldn't turn down the request from {0}: {1}", steamId, e.Message), Bot.Name);
 				}
 			}
 
@@ -100,7 +100,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 		_ = Task.Run(async () => {
 			try {
 				if (Bot.Cfg.IgnoreSuspiciousInvites && await LooksLikeSpamAsync(steamId).ConfigureAwait(false)) {
-					Log.Info($"ignoring a friend request from {steamId} - brand new private profile", Bot.Name);
+					Log.Info(new Said("ignoring a friend request from {0} - brand new private profile", steamId), Bot.Name);
 					Bot.Friends?.RemoveFriend(new SteamID(steamId));
 
 					return;
@@ -115,9 +115,9 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 
 				Bot.Friends?.AddFriend(new SteamID(steamId));
 				_accepted++;
-				Log.Event($"accepted a friend request from {steamId}", Bot.Name);
+				Log.Event(new Said("accepted a friend request from {0}", steamId), Bot.Name);
 			} catch (Exception e) {
-				Log.Debug($"couldn't handle the friend request from {steamId}: {e.Message}", Bot.Name);
+				Log.Debug(new Said("couldn't handle the friend request from {0}: {1}", steamId, e.Message), Bot.Name);
 			}
 		});
 	}
@@ -162,9 +162,9 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 
 		try {
 			Bot.Notifications?.AcknowledgeClanInvite(clanId, true);
-			Log.Event($"joined group {clanId}", Bot.Name);
+			Log.Event(new Said("joined group {0}", clanId), Bot.Name);
 		} catch (Exception e) {
-			Log.Debug($"couldn't join group {clanId}: {e.Message}", Bot.Name);
+			Log.Debug(new Said("couldn't join group {0}: {1}", clanId, e.Message), Bot.Name);
 		}
 	}
 
@@ -183,7 +183,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 		// Flatten to one short line - a command reply (e.g. the whole /help wall) echoes back to whoever
 		// sent it, and logging its newlines and tab columns raw turned the log into a mess.
 		string oneLine = string.Join(' ', text.Split((char[]?) null, StringSplitOptions.RemoveEmptyEntries));
-		Log.Info($"message from {from}: {(oneLine.Length > 120 ? oneLine[..120] + "…" : oneLine)}", Bot.Name);
+		Log.Info(new Said("message from {0}: {1}", from, (oneLine.Length > 120 ? oneLine[..120] + "…" : oneLine)), Bot.Name);
 
 		// A command must be prefixed with / or ! (e.g. /help or !status) - so ordinary chat is never mistaken for
 		// one, and the master still gets the auto-reply when they just talk. Only masters actually run them; a
@@ -194,7 +194,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 		if (looksLikeCommand) {
 			if (!IsMaster(from)) {
 				// Silent - confirming the account takes commands tells a stranger exactly what it is.
-				Log.Debug($"ignoring a command from {from} - not on the list", Bot.Name);
+				Log.Debug(new Said("ignoring a command from {0} - not on the list", from), Bot.Name);
 
 				return;
 			}
@@ -243,9 +243,9 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 
 				Bot.SendChatMessage(from, reply);
 				_replied++;
-				Log.Info($"auto-replied to {from} after {(int) (DateTime.UtcNow - received).TotalSeconds}s", Bot.Name);
+				Log.Info(new Said("auto-replied to {0} after {1}s", from, (int) (DateTime.UtcNow - received).TotalSeconds), Bot.Name);
 			} catch (Exception e) {
-				Log.Debug($"couldn't reply to {from}: {e.Message}", Bot.Name);
+				Log.Debug(new Said("couldn't reply to {0}: {1}", from, e.Message), Bot.Name);
 			}
 		});
 	}
@@ -256,7 +256,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 		try {
 			Bot.SendChatMessage(to, text);
 		} catch (Exception e) {
-			Log.Debug($"couldn't message {to}: {e.Message}", Bot.Name);
+			Log.Debug(new Said("couldn't message {0}: {1}", to, e.Message), Bot.Name);
 		}
 	}
 
@@ -272,7 +272,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 	/// <summary>Run a console command sent by Steam message and send the answer straight back.</summary>
 	private async Task RunCommandAsync(ulong from, string command, DateTime received) {
 		try {
-			Log.Info($"command from {from}: {command}", Bot.Name);
+			Log.Info(new Said("command from {0}: {1}", from, command), Bot.Name);
 			string answer = await Commands.RunAsync(command, Bot.Name).ConfigureAwait(false);
 
 			if (string.IsNullOrWhiteSpace(answer)) {
@@ -285,9 +285,9 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 			}
 
 			Bot.SendChatMessage(from, answer);
-			Log.Info($"answered {from} ({command.Split(' ')[0]}) in {(int) (DateTime.UtcNow - received).TotalSeconds}s", Bot.Name);
+			Log.Info(new Said("answered {0} ({1}) in {2}s", from, command.Split(' ')[0], (int) (DateTime.UtcNow - received).TotalSeconds), Bot.Name);
 		} catch (Exception e) {
-			Log.Warn($"the command from {from} failed: {e.Message}", Bot.Name);
+			Log.Warn(new Said("the command from {0} failed: {1}", from, e.Message), Bot.Name);
 
 			try {
 				Bot.SendChatMessage(from, "that didn't work: " + e.Message);

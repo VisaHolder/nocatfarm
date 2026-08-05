@@ -79,12 +79,12 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				_status = _claimed == 0 ? new Said("watching for giveaways") : new Said("{0} claimed since start", _claimed);
 
 				if (added > 0) {
-					Log.Reward($"claimed {added} free game(s) - the card farmer will pick them up", Bot.Name);
+					Log.Reward(new Said("claimed {0} free game(s) - the card farmer will pick them up", added), Bot.Name);
 				}
 			} catch (OperationCanceledException) {
 				throw;
 			} catch (Exception e) {
-				Log.Warn($"free-game check failed: {e.GetType().Name}: {e.Message}", Bot.Name);
+				Log.Warn(new Said("free-game check failed: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
 			}
 
 			if (!await Sleep(Rng.Minutes(PollLowMinutes, PollHighMinutes), ct).ConfigureAwait(false)) {
@@ -126,7 +126,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 
 			if (RecentClaims() >= MaxPerWindow) {
 				_status = new Said("paused - {0} activations this window", MaxPerWindow);
-				Log.Info($"hit {MaxPerWindow} activations in {WindowMinutes}m - pausing so Steam doesn't start refusing", Bot.Name);
+				Log.Info(new Said("hit {0} activations in {1}m - pausing so Steam doesn't start refusing", MaxPerWindow, WindowMinutes), Bot.Name);
 
 				break;
 			}
@@ -146,9 +146,9 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				_seen.Add(subId);
 				added++;
 				_claimed++;
-				Log.Reward($"claimed {name}", Bot.Name);
+				Log.Reward(new Said("claimed {0}", name), Bot.Name);
 			} else {
-				Log.Debug($"couldn't claim {name} (sub {subId})", Bot.Name);
+				Log.Debug(new Said("couldn't claim {0} (sub {1})", name, subId), Bot.Name);
 			}
 
 			await Sleep(Rng.Seconds(ClaimGapLowSeconds, ClaimGapHighSeconds), ct).ConfigureAwait(false);

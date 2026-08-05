@@ -64,7 +64,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 				} catch (OperationCanceledException) {
 					throw;
 				} catch (Exception e) {
-					Log.Debug($"couldn't check trade offers: {e.GetType().Name}: {e.Message}", Bot.Name);
+					Log.Debug(new Said("couldn't check trade offers: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
 				}
 			}
 
@@ -142,7 +142,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 			bool accept = fromMaster || donation;
 
 			if (!accept && Bot.Cfg.AcceptDonations && (offer.GivingCount == null)) {
-				Log.Warn($"trade offer #{offer.Id}: couldn't tell what it asks for, so it has been left alone - look at it yourself", Bot.Name);
+				Log.Warn(new Said("trade offer #{0}: couldn't tell what it asks for, so it has been left alone - look at it yourself", offer.Id), Bot.Name);
 			}
 
 			if (!accept && !Bot.Cfg.DeclineOtherTrades) {
@@ -161,7 +161,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 					_actOn[offer.Id] = when;
 
 					string what = accept ? fromMaster ? "from one of your accounts" : "a donation" : "unwanted";
-					Log.Info($"trade offer #{offer.Id} ({what}: {offer.Describe}) - handling it in {Fmt.Hm((int) Math.Max(1, (when - DateTime.UtcNow).TotalMinutes))}", Bot.Name);
+					Log.Info(new Said("trade offer #{0} ({1}: {2}) - handling it in {3}", offer.Id, what, offer.Describe, Fmt.Hm((int) Math.Max(1, (when - DateTime.UtcNow).TotalMinutes))), Bot.Name);
 				}
 			}
 
@@ -182,10 +182,10 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 
 				if (accept) {
 					_accepted++;
-					Log.Reward($"accepted trade offer #{offer.Id} - {offer.ReceivingCount} item(s) in", Bot.Name);
+					Log.Reward(new Said("accepted trade offer #{0} - {1} item(s) in", offer.Id, offer.ReceivingCount), Bot.Name);
 				} else {
 					_declined++;
-					Log.Info($"declined trade offer #{offer.Id}", Bot.Name);
+					Log.Info(new Said("declined trade offer #{0}", offer.Id), Bot.Name);
 				}
 			}
 
@@ -224,7 +224,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 				return true;
 			}
 
-			Log.Warn($"trade offer #{offer.Id} was accepted but needs confirming on your phone - add this account's mobile authenticator secrets to do that here", Bot.Name);
+			Log.Warn(new Said("trade offer #{0} was accepted but needs confirming on your phone - add this account's mobile authenticator secrets to do that here", offer.Id), Bot.Name);
 
 			return true;
 		}

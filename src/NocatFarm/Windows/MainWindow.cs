@@ -148,7 +148,7 @@ public sealed class MainWindow : IDisposable {
 	public void Start(bool show = true) {
 		_showOnCreate = show;
 		_running = true;
-		Log.Debug($"opening the window (show={show})");
+		Log.Debug(new Said("opening the window (show={0})", show));
 
 		// Its own thread with its own message pump, exactly like the tray icon. A UI that shares a thread with
 		// anything else is a UI that freezes whenever that thing is busy.
@@ -216,7 +216,7 @@ public sealed class MainWindow : IDisposable {
 			// A window that dies quietly is the worst outcome here: the console log has already been suppressed
 			// in favour of this window, so the user is left with an app that shows them nothing at all.
 			Log.Suppressed = false;
-			Log.Error($"the window couldn't start ({e.GetType().Name}: {e.Message}) - using the console instead");
+			Log.Error(new Said("the window couldn't start ({0}: {1}) - using the console instead", e.GetType().Name, e.Message));
 			Failed?.Invoke();
 		}
 	}
@@ -370,7 +370,7 @@ public sealed class MainWindow : IDisposable {
 		// this is the ONLY place a Steam Guard code can be typed, so getting it wrong would make adding an
 		// account impossible rather than merely awkward.
 		if (Prompt.Pending != null) {
-			Append(new Log.Entry(0, DateTime.Now, "INFO", "you", "> " + (Prompt.PendingSecret ? new string('*', line.Length) : line)));
+			Append(new Log.Entry(0, DateTime.Now, "INFO", "you", new Core.Said("> " + (Prompt.PendingSecret ? new string('*', line.Length) : line))));
 			Prompt.Answer(line);
 			Invalidate();
 
@@ -391,7 +391,7 @@ public sealed class MainWindow : IDisposable {
 			return;
 		}
 
-		Append(new Log.Entry(0, DateTime.Now, "INFO", "you", "> " + line));
+		Append(new Log.Entry(0, DateTime.Now, "INFO", "you", new Core.Said("> " + line)));
 
 		_ = Task.Run(async () => {
 			try {
@@ -399,11 +399,11 @@ public sealed class MainWindow : IDisposable {
 
 				foreach (string outLine in output.Replace("\r\n", "\n").Split('\n')) {
 					if (outLine.Length > 0) {
-						Append(new Log.Entry(0, DateTime.Now, "INFO", "", "  " + outLine));
+						Append(new Log.Entry(0, DateTime.Now, "INFO", "", new Core.Said("  " + outLine)));
 					}
 				}
 			} catch (Exception e) {
-				Append(new Log.Entry(0, DateTime.Now, "ERROR", "", "  " + e.Message));
+				Append(new Log.Entry(0, DateTime.Now, "ERROR", "", new Core.Said("  " + e.Message)));
 			}
 
 			Invalidate();
@@ -628,7 +628,7 @@ public sealed class MainWindow : IDisposable {
 			Live.Global.WindowHeight = h;
 			ConfigStore.SaveGlobal(Live.Global);
 		} catch (Exception e) {
-			Log.Debug($"couldn't save the window size: {e.GetType().Name}: {e.Message}");
+			Log.Debug(new Said("couldn't save the window size: {0}: {1}", e.GetType().Name, e.Message));
 		}
 	}
 
@@ -706,13 +706,13 @@ public sealed class MainWindow : IDisposable {
 				break;
 
 			case 'c':
-				Append(new Log.Entry(0, DateTime.Now, "INFO", "you", "> cards " + name));
+				Append(new Log.Entry(0, DateTime.Now, "INFO", "you", new Core.Said("> cards " + name)));
 				_ = Task.Run(async () => {
 					string output = await Commands.RunAsync(_mgr, "cards " + name).ConfigureAwait(false);
 
 					foreach (string line in output.Replace("\r\n", "\n").Split('\n')) {
 						if (line.Length > 0) {
-							Append(new Log.Entry(0, DateTime.Now, "INFO", "", "  " + line));
+							Append(new Log.Entry(0, DateTime.Now, "INFO", "", new Core.Said("  " + line)));
 						}
 					}
 
@@ -736,10 +736,10 @@ public sealed class MainWindow : IDisposable {
 	private void StartAddAccount() {
 		SetSheet(false);
 
-		Append(new Log.Entry(0, DateTime.Now, "GOOD", "", "Adding an account - type the name you want to call it, then its Steam login:"));
-		Append(new Log.Entry(0, DateTime.Now, "INFO", "", "    add mybot mysteamlogin"));
-		Append(new Log.Entry(0, DateTime.Now, "INFO", "", "It asks for the password once, then remembers a login token - you never store a password."));
-		Append(new Log.Entry(0, DateTime.Now, "INFO", "", "Already use ArchiSteamFarm?  import asf  brings every account across with its login token."));
+		Append(new Log.Entry(0, DateTime.Now, "GOOD", "", new Core.Said("Adding an account - type the name you want to call it, then its Steam login:")));
+		Append(new Log.Entry(0, DateTime.Now, "INFO", "", new Core.Said("    add mybot mysteamlogin")));
+		Append(new Log.Entry(0, DateTime.Now, "INFO", "", new Core.Said("It asks for the password once, then remembers a login token - you never store a password.")));
+		Append(new Log.Entry(0, DateTime.Now, "INFO", "", new Core.Said("Already use ArchiSteamFarm?  import asf  brings every account across with its login token.")));
 
 		SetWindowText(_input, "add ");
 		SendMessage(_input, EmSetSel, new IntPtr(4), new IntPtr(4));
@@ -783,7 +783,7 @@ public sealed class MainWindow : IDisposable {
 		try {
 			System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
 		} catch (Exception e) {
-			Log.Warn($"couldn't open {url}: {e.Message}");
+			Log.Warn(new Said("couldn't open {0}: {1}", url, e.Message));
 		}
 	}
 
@@ -806,10 +806,10 @@ public sealed class MainWindow : IDisposable {
 					try {
 						System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
 					} catch (Exception e) {
-						Log.Warn($"couldn't open the browser: {e.Message}");
+						Log.Warn(new Said("couldn't open the browser: {0}", e.Message));
 					}
 				} else {
-					Append(new Log.Entry(0, DateTime.Now, "WARN", "", "  the dashboard is switched off - 'set WebEnabled true' then restart"));
+					Append(new Log.Entry(0, DateTime.Now, "WARN", "", new Core.Said("  the dashboard is switched off - 'set WebEnabled true' then restart")));
 				}
 
 				break;
@@ -819,7 +819,7 @@ public sealed class MainWindow : IDisposable {
 				if (Commands.TrayPresent) {
 					Hide();
 				} else {
-					Append(new Log.Entry(0, DateTime.Now, "WARN", "", "there is no tray icon to bring this back - use quit, or start without --no-tray"));
+					Append(new Log.Entry(0, DateTime.Now, "WARN", "", new Core.Said("there is no tray icon to bring this back - use quit, or start without --no-tray")));
 				}
 
 				break;
@@ -898,7 +898,7 @@ public sealed class MainWindow : IDisposable {
 
 			BitBlt(dc, 0, 0, _w, _h, mem, 0, 0, SrcCopy);
 		} catch (Exception e) {
-			Log.Debug($"paint failed: {e.GetType().Name}: {e.Message}");
+			Log.Debug(new Said("paint failed: {0}: {1}", e.GetType().Name, e.Message));
 		} finally {
 			SelectObject(mem, old);
 			DeleteObject(bmp);
@@ -1127,11 +1127,11 @@ public sealed class MainWindow : IDisposable {
 
 		string doing = s.Doing;
 
-		if (s.Persona.Length > 0) {
+		if (!s.Persona.IsEmpty) {
 			doing += "   (" + s.Persona + ")";
 		}
 
-		if (s.Warning.Length > 0) {
+		if (!s.Warning.IsEmpty) {
 			doing += "   " + s.Warning;
 		}
 

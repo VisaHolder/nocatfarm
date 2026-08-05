@@ -36,7 +36,7 @@ public sealed class Upkeep(Bot bot) : BotModule(bot) {
 				} catch (OperationCanceledException) {
 					throw;
 				} catch (Exception e) {
-					Log.Debug($"upkeep hiccup: {e.GetType().Name}: {e.Message}", Bot.Name);
+					Log.Debug(new Said("upkeep hiccup: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
 				}
 			}
 

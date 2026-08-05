@@ -77,7 +77,7 @@ public sealed class Bot : IAsyncDisposable {
 
 	public bool StartGrind(uint app, TimeSpan how, TimeSpan delay = default, bool boost = false) {
 		if (Refunds.Holds(app)) {
-			Log.Warn($"not grinding {GameNames.Of(app)} - it's still inside its refund window (turn off \"Protect refundable games\" to override)", Name);
+			Log.Warn(new Said("not grinding {0} - it's still inside its refund window (turn off \"Protect refundable games\" to override)", GameNames.Of(app)), Name);
 
 			return false;
 		}
@@ -125,7 +125,7 @@ public sealed class Bot : IAsyncDisposable {
 			Directory.CreateDirectory(Path.GetDirectoryName(GrindPath)!);
 			AtomicFile.Write(GrindPath, JsonSerializer.Serialize(new GrindSave(GrindGame, GrindUntil.Value.Ticks, GrindIsBoost)));
 		} catch (Exception e) {
-			Log.Debug($"couldn't save the grind: {e.Message}", Name);
+			Log.Debug(new Said("couldn't save the grind: {0}", e.Message), Name);
 		}
 	}
 
@@ -154,9 +154,9 @@ public sealed class Bot : IAsyncDisposable {
 			GrindUntil = until;
 			GrindIsBoost = saved.Boost;
 			GrindStartsAt = DateTime.UtcNow;   // resume now - no fresh switch-in delay on a resume
-			Log.Info($"resuming the grind of {GameNames.Of(GrindGame)} - {Fmt.Hm((int) (until - DateTime.UtcNow).TotalMinutes)} left", Name);
+			Log.Info(new Said("resuming the grind of {0} - {1} left", GameNames.Of(GrindGame), Fmt.Hm((int) (until - DateTime.UtcNow).TotalMinutes)), Name);
 		} catch (Exception e) {
-			Log.Debug($"couldn't resume the grind: {e.Message}", Name);
+			Log.Debug(new Said("couldn't resume the grind: {0}", e.Message), Name);
 		}
 	}
 
@@ -371,14 +371,14 @@ public sealed class Bot : IAsyncDisposable {
 			string? body = await Web.PostAsync(new Uri(WebSession.Community, "/mobileconf/ajaxop"), form, new Uri(WebSession.Community, "/mobileconf/conf"), ct).ConfigureAwait(false);
 
 			if (body?.Contains("\"success\":true", StringComparison.OrdinalIgnoreCase) == true) {
-				Log.Good($"confirmed trade offer #{tradeOfferId} on this account's own authenticator", Name);
+				Log.Good(new Said("confirmed trade offer #{0} on this account's own authenticator", tradeOfferId), Name);
 
 				return true;
 			}
 
 			return false;
 		} catch (Exception e) {
-			Log.Debug($"couldn't confirm trade offer #{tradeOfferId}: {e.Message}", Name);
+			Log.Debug(new Said("couldn't confirm trade offer #{0}: {1}", tradeOfferId, e.Message), Name);
 
 			return false;
 		}
@@ -595,7 +595,7 @@ public sealed class Bot : IAsyncDisposable {
 			Library.NoteFamilyRunning(cb.Body.running_apps
 				.Select(static a => (a.appid, a.playing_members.Select(static m => m.member_steamid))));
 		} catch (Exception e) {
-			Log.Debug($"couldn't read the family's running games: {e.Message}", Name);
+			Log.Debug(new Said("couldn't read the family's running games: {0}", e.Message), Name);
 		}
 	}
 
@@ -618,8 +618,7 @@ public sealed class Bot : IAsyncDisposable {
 			_flagsAsSeen = flags;
 
 			if (Cfg.GameDevice > 0) {
-				Log.Debug(
-					$"Steam reports device flags {flags}"
+				Log.Debug(new Said("Steam reports device flags {0}", flags)
 					+ (flags == Cfg.GameDevice ? $" - matches the {DeviceLabel(Cfg.GameDevice)} we asked for"
 						: $" - we asked for {Cfg.GameDevice} ({DeviceLabel(Cfg.GameDevice)})"),
 					Name);
@@ -643,7 +642,7 @@ public sealed class Bot : IAsyncDisposable {
 			// Backing off starts NOW, not after the ninety seconds the message waits for. Those ninety seconds
 			// exist so a stale first echo cannot produce a wrong headline - they are not a licence to keep
 			// signing somebody out of their friends list while we make up our mind.
-			Log.Debug($"something else is setting this account's persona (it says {Word((int) PersonaAsSeen)}, we asked for {Word(EffectivePersona)}) - backing off", Name);
+			Log.Debug(new Said("something else is setting this account's persona (it says {0}, we asked for {1}) - backing off", Word((int) PersonaAsSeen), Word(EffectivePersona)), Name);
 		}
 
 		string seen = cb.GameName ?? "";
@@ -818,7 +817,7 @@ public sealed class Bot : IAsyncDisposable {
 			handler.Proxy = proxy;
 			handler.UseProxy = true;
 		} catch (Exception e) {
-			Log.Warn($"proxy '{address}' isn't a usable address ({e.Message}) - connecting directly instead");
+			Log.Warn(new Said("proxy '{0}' isn't a usable address ({1}) - connecting directly instead", address, e.Message));
 		}
 
 		return handler;
@@ -852,7 +851,7 @@ public sealed class Bot : IAsyncDisposable {
 		} catch (Exception e) {
 			State = BotState.Failed;
 			StatusText = "couldn't start";
-			Log.Error($"couldn't start: {e.GetType().Name}: {e.Message}", Name);
+			Log.Error(new Said("couldn't start: {0}: {1}", e.GetType().Name, e.Message), Name);
 		} finally {
 			_startGate.Release();
 		}
@@ -918,7 +917,7 @@ public sealed class Bot : IAsyncDisposable {
 				// The only StatusText with a value baked into it, so it cannot be looked up at render time like
 				// the rest. Translated here instead; Loc.T on an already-translated string returns it untouched.
 				StatusText = Loc.T("finishing up - logging off in ~{0}s", secs);
-				Log.Info($"stopping - finishing up, logging off in about {secs}s", Name);
+				Log.Info(new Said("stopping - finishing up, logging off in about {0}s", secs), Name);
 
 				try {
 					await Task.Delay(TimeSpan.FromSeconds(secs)).ConfigureAwait(false);
@@ -1002,7 +1001,7 @@ public sealed class Bot : IAsyncDisposable {
 			try {
 				_cb.RunWaitCallbacks(TimeSpan.FromSeconds(1));
 			} catch (Exception e) {
-				Log.Debug($"callback pump: {e.Message}", Name);
+				Log.Debug(new Said("callback pump: {0}", e.Message), Name);
 			}
 		}
 	}
@@ -1023,7 +1022,7 @@ public sealed class Bot : IAsyncDisposable {
 		} catch (Exception e) {
 			State = BotState.Failed;
 			StatusText = "login failed";
-			Log.Error($"login failed: {e.Message}", Name);
+			Log.Error(new Said("login failed: {0}", e.Message), Name);
 
 			try {
 				Client.Disconnect();   // OnDisconnected drives the retry
@@ -1101,9 +1100,9 @@ public sealed class Bot : IAsyncDisposable {
 						_running = false;
 						State = BotState.Failed;
 						StatusText = "sign-in failed";
-						Log.Attention($"couldn't sign in after 3 tries ({e.Message}) - stopping. Fix SteamPassword, then 'start {Name}'", Name);
+						Log.Attention(new Said("couldn't sign in after 3 tries ({0}) - stopping. Fix SteamPassword, then 'start {1}'", e.Message, Name), Name);
 					} else {
-						Log.Warn($"sign-in attempt failed: {e.Message}", Name);
+						Log.Warn(new Said("sign-in attempt failed: {0}", e.Message), Name);
 					}
 
 					throw;
@@ -1203,11 +1202,11 @@ public sealed class Bot : IAsyncDisposable {
 				TokenStore.Clear(Name);
 				_refreshToken = null;
 				SetAccessToken(null);   // the whole family is revoked - the cached web token is dead too
-				Log.Warn($"stored login token rejected ({cb.Result}) - the password will be asked for again", Name);
+				Log.Warn(new Said("stored login token rejected ({0}) - the password will be asked for again", cb.Result), Name);
 			} else if (cb.Result is EResult.RateLimitExceeded or EResult.AccountLoginDeniedThrottle) {
 				Log.Warn("Steam is rate-limiting logins for this account", Name);
 			} else {
-				Log.Error($"logon failed: {cb.Result}", Name);
+				Log.Error(new Said("logon failed: {0}", cb.Result), Name);
 			}
 
 			State = BotState.Failed;
@@ -1221,7 +1220,7 @@ public sealed class Bot : IAsyncDisposable {
 		OnlineSince = DateTime.UtcNow;
 		StatusText = "online";
 		_guardPrompt = null;
-		Log.Good($"logged on as {Cfg.SteamLogin} ({SteamId})", Name);
+		Log.Good(new Said("logged on as {0} ({1})", Cfg.SteamLogin, SteamId), Name);
 		Plugins.PluginHost.RaiseOnline(this);
 
 		try {
@@ -1283,7 +1282,7 @@ public sealed class Bot : IAsyncDisposable {
 			try {
 				await m.StartAsync().ConfigureAwait(false);
 			} catch (Exception e) {
-				Log.Warn($"module {m.Name} failed to start: {e.Message}", Name);
+				Log.Warn(new Said("module {0} failed to start: {1}", m.Name, e.Message), Name);
 			}
 		}
 
@@ -1314,7 +1313,7 @@ public sealed class Bot : IAsyncDisposable {
 				PlayingBlocked = true;
 			}
 		} else {
-			Log.Warn($"logged off: {cb.Result}", Name);
+			Log.Warn(new Said("logged off: {0}", cb.Result), Name);
 		}
 
 		State = BotState.Reconnecting;
@@ -1395,7 +1394,7 @@ public sealed class Bot : IAsyncDisposable {
 					int idle = Math.Max(1, Live.Global.ReconnectDelaySeconds);
 					TimeSpan rejoin = TimeSpan.FromSeconds(Rng.Next(idle, idle * 2));
 					StatusText = "you're playing";
-					Log.Debug($"rejoining in ~{(int) rejoin.TotalSeconds}s, then standing down until you're done", Name);
+					Log.Debug(new Said("rejoining in ~{0}s, then standing down until you're done", (int) rejoin.TotalSeconds), Name);
 					await Task.Delay(rejoin, _cts?.Token ?? CancellationToken.None).ConfigureAwait(false);
 
 					break;
@@ -1500,7 +1499,7 @@ public sealed class Bot : IAsyncDisposable {
 			&& !string.IsNullOrWhiteSpace(CustomName)
 			&& (DateTime.UtcNow.Subtract(_lastNameHeal).TotalSeconds >= 120)) {
 			_lastNameHeal = DateTime.UtcNow;
-			Log.Info($"custom name slipped (Steam shows {PlayingAsSeen}) - re-asserting it", Name);
+			Log.Info(new Said("custom name slipped (Steam shows {0}) - re-asserting it", PlayingAsSeen), Name);
 
 			try {
 				SetPlaying(PlayingApps, force: true);
@@ -1563,7 +1562,7 @@ public sealed class Bot : IAsyncDisposable {
 		// PlayingAppID is what a session OTHER than this one claims to be running. Steam allows one playing
 		// session per account, so a non-zero value here means our games-played is accepted and then quietly
 		// ignored - which from the inside looks identical to it never having been sent.
-		Log.Debug($"Steam says: blocked={cb.PlayingBlocked}, other session playing app {cb.PlayingAppID}", Name);
+		Log.Debug(new Said("Steam says: blocked={0}, other session playing app {1}", cb.PlayingBlocked, cb.PlayingAppID), Name);
 
 		// The opt-out only suppresses standing DOWN. It must never suppress standing back up: doing that once
 		// latched the flag on forever, so the setting that promises "don't stand down" was the one that made
@@ -1598,7 +1597,7 @@ public sealed class Bot : IAsyncDisposable {
 
 			if (freshLogon) {
 				_blockWarnDue = DateTime.UtcNow.AddSeconds(25);
-				Log.Debug($"Steam reports another session on app {cb.PlayingAppID} right after logon - probably our own, waiting before saying so", Name);
+				Log.Debug(new Said("Steam reports another session on app {0} right after logon - probably our own, waiting before saying so", cb.PlayingAppID), Name);
 			} else {
 				_blockWarnDue = null;
 				Log.Info("you're on this account now - standing aside until you're done", Name);
@@ -1610,7 +1609,7 @@ public sealed class Bot : IAsyncDisposable {
 			_resumeAt = DateTime.UtcNow.AddMinutes(Math.Max(0, Cfg.ResumeDelayMinutes));
 
 			if (Cfg.ResumeDelayMinutes > 0) {
-				Log.Info($"the account is free again - picking back up in {Cfg.ResumeDelayMinutes}m", Name);
+				Log.Info(new Said("the account is free again - picking back up in {0}m", Cfg.ResumeDelayMinutes), Name);
 			} else {
 				Log.Info("the account is free again - resuming", Name);
 			}
@@ -1631,7 +1630,7 @@ public sealed class Bot : IAsyncDisposable {
 			_licenseGeneration++;
 		}
 
-		Log.Debug($"{cb.LicenseList.Count} licence(s) known", Name);
+		Log.Debug(new Said("{0} licence(s) known", cb.LicenseList.Count), Name);
 	}
 
 	/// <summary>
@@ -1711,7 +1710,7 @@ public sealed class Bot : IAsyncDisposable {
 				}
 			}
 		} catch (Exception e) {
-			Log.Debug($"couldn't work out when games were bought ({e.Message}) - refund protection is off this round", Name);
+			Log.Debug(new Said("couldn't work out when games were bought ({0}) - refund protection is off this round", e.Message), Name);
 
 			return new Dictionary<uint, AppOwnership>();
 		}
@@ -1734,7 +1733,7 @@ public sealed class Bot : IAsyncDisposable {
 			return;
 		}
 
-		Log.Debug($"Steam pushed {cb.NewItems} new item(s)", Name);
+		Log.Debug(new Said("Steam pushed {0} new item(s)", cb.NewItems), Name);
 		SignalItemDrop();
 
 		// A farming account trips Steam's green "new items" counter dozens of times a day and it stays lit
@@ -1782,14 +1781,14 @@ public sealed class Bot : IAsyncDisposable {
 		// The first one of these is worth a line even when it says none, because "none waiting" and "Steam has
 		// not told us yet" mean opposite things to the trade module and otherwise look identical from outside.
 		if (previous < 0) {
-			Log.Debug($"Steam's trade offer counter says {cb.Waiting} waiting", Name);
+			Log.Debug(new Said("Steam's trade offer counter says {0} waiting", cb.Waiting), Name);
 		}
 
 		if ((cb.Waiting == 0) || (cb.Waiting == previous)) {
 			return;
 		}
 
-		Log.Debug($"Steam says {cb.Waiting} trade offer(s) are waiting", Name);
+		Log.Debug(new Said("Steam says {0} trade offer(s) are waiting", cb.Waiting), Name);
 		Plugins.PluginHost.RaiseTradeOffers(this, (int) cb.Waiting);
 
 		// Latched like the item drop: if the trade module is mid-check nobody is on the TCS, and the news would
@@ -1863,7 +1862,7 @@ public sealed class Bot : IAsyncDisposable {
 			return;
 		}
 
-		Log.Event($"somebody just commented on this profile - steamcommunity.com/profiles/{SteamId}", Name);
+		Log.Event(new Said("somebody just commented on this profile - steamcommunity.com/profiles/{0}", SteamId), Name);
 
 		// Read it, so the counter goes back to zero rather than climbing for the life of the account.
 		ClearAllNotifications();
@@ -1896,7 +1895,7 @@ public sealed class Bot : IAsyncDisposable {
 					mark_all_read = true
 				});
 			} catch (Exception e) {
-				Log.Debug($"couldn't mark notifications read: {e.Message}", Name);
+				Log.Debug(new Said("couldn't mark notifications read: {0}", e.Message), Name);
 			}
 
 			// The two older counters, which the tray message does not touch. Loading the page is what clears them.
@@ -1997,7 +1996,7 @@ public sealed class Bot : IAsyncDisposable {
 			// no new session, nothing for Steam to arbitrate against the owner's client.
 			if (!string.IsNullOrEmpty(_accessToken) && _accessTokenValidUntil.HasValue
 				&& (_accessTokenValidUntil.Value > DateTime.UtcNow.AddMinutes(AccessTokenSlackMinutes))) {
-				Log.Debug($"reusing web token (good for {(_accessTokenValidUntil.Value - DateTime.UtcNow).TotalHours:0.#}h) - no new web session", Name);
+				Log.Debug(new Said("reusing web token (good for {0}h) - no new web session", ((_accessTokenValidUntil.Value - DateTime.UtcNow).TotalHours).ToString("0.#")), Name);
 
 				return _accessToken;
 			}
@@ -2025,7 +2024,7 @@ public sealed class Bot : IAsyncDisposable {
 
 			return _accessToken;
 		} catch (Exception e) {
-			Log.Warn($"couldn't get a web token: {e.Message}", Name);
+			Log.Warn(new Said("couldn't get a web token: {0}", e.Message), Name);
 
 			return null;
 		} finally {
@@ -2052,7 +2051,7 @@ public sealed class Bot : IAsyncDisposable {
 		bool clearing = (appIds.Count == 0) && string.IsNullOrWhiteSpace(overrideName ?? CustomName);
 
 		if (!clearing && (PlayingBlocked || Paused)) {
-			Log.Debug($"games-played not sent - {(PlayingBlocked ? "you're using the account" : "paused")}", Name);
+			Log.Debug(new Said("games-played not sent - {0}", (PlayingBlocked ? "you're using the account" : "paused")), Name);
 
 			return;
 		}
@@ -2092,9 +2091,9 @@ public sealed class Bot : IAsyncDisposable {
 				// noise on a clearer one. Keep it for the trace, at debug. Other accounts have no such narrator
 				// (and this is the line that proves their custom name never lapsed), so there it stays visible.
 				if (HumanOwned) {
-					Log.Debug($"now showing {shown}", Name);
+					Log.Debug(new Said("now showing {0}", shown), Name);
 				} else {
-					Log.Info($"now showing {shown}", Name);
+					Log.Info(new Said("now showing {0}", shown), Name);
 				}
 			}
 
@@ -2150,7 +2149,7 @@ public sealed class Bot : IAsyncDisposable {
 					Client.Send(BuildGamesPlayed(label, apps));
 					ApplyPersona();
 				} catch (Exception e) {
-					Log.Debug($"couldn't re-announce after the game list changed: {e.Message}", Name);
+					Log.Debug(new Said("couldn't re-announce after the game list changed: {0}", e.Message), Name);
 				}
 			});
 
@@ -2162,7 +2161,7 @@ public sealed class Bot : IAsyncDisposable {
 		ClientMsgProtobuf<CMsgClientGamesPlayed> outgoing = BuildGamesPlayed(label, apps, Cfg.GameDevice);
 		Client.Send(outgoing);
 
-		Log.Debug($"games-played sent: {outgoing.Body.games_played.Count} entr(ies)"
+		Log.Debug(new Said("games-played sent: {0} entr(ies)", outgoing.Body.games_played.Count)
 			+ (string.IsNullOrWhiteSpace(label) ? "" : ", custom name first")
 			+ $" - apps [{string.Join(",", apps)}]", Name);
 
@@ -2284,7 +2283,7 @@ public sealed class Bot : IAsyncDisposable {
 					ApplyPersona();
 				}
 			} catch (Exception e) {
-				Log.Debug($"couldn't re-apply the persona: {e.GetType().Name}: {e.Message}", Name);
+				Log.Debug(new Said("couldn't re-apply the persona: {0}: {1}", e.GetType().Name, e.Message), Name);
 			}
 		});
 	}
@@ -2340,9 +2339,9 @@ public sealed class Bot : IAsyncDisposable {
 				// line of its own, so on that account this bare "now appearing away / invisible" only clutters it.
 				// Debug keeps the trace; other accounts (no narrator) keep it visible.
 				if (HumanOwned) {
-					Log.Debug($"now appearing {Word(state)}", Name);
+					Log.Debug(new Said("now appearing {0}", Word(state)), Name);
 				} else {
-					Log.Info($"now appearing {Word(state)}", Name);
+					Log.Info(new Said("now appearing {0}", Word(state)), Name);
 				}
 			}
 
@@ -2503,7 +2502,7 @@ public static class TokenStore {
 			Directory.CreateDirectory(Dir);
 			AtomicFile.Write(PathFor(bot), Secrets.Protect(token, bot));
 		} catch (Exception e) {
-			Log.Warn($"couldn't store the login token: {e.Message}", bot);
+			Log.Warn(new Said("couldn't store the login token: {0}", e.Message), bot);
 		}
 	}
 
@@ -2512,7 +2511,7 @@ public static class TokenStore {
 			Directory.CreateDirectory(Dir);
 			AtomicFile.Write(AccessPathFor(bot), Secrets.Protect(accessToken, bot));
 		} catch (Exception e) {
-			Log.Debug($"couldn't store the access token: {e.Message}", bot);
+			Log.Debug(new Said("couldn't store the access token: {0}", e.Message), bot);
 		}
 	}
 

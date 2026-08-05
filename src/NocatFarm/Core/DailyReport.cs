@@ -72,7 +72,7 @@ public static class DailyReport {
 
 			Fire(mgr, today, commit: true);
 		} catch (Exception e) {
-			Log.Debug($"daily report tick failed: {e.GetType().Name}: {e.Message}");
+			Log.Debug(new Said("daily report tick failed: {0}: {1}", e.GetType().Name, e.Message));
 		}
 	}
 
@@ -95,7 +95,7 @@ public static class DailyReport {
 		bool first = prev.Count == 0;
 		Dictionary<string, double> snapshot = new(StringComparer.OrdinalIgnoreCase);
 		int totBanked = 0, totCards = 0, totComments = 0, totLife = 0;
-		List<string> lines = [];
+		List<Said> lines = [];
 
 		foreach (Bot b in bots) {
 			double life = Lifetime.For(b.Name);
@@ -114,25 +114,25 @@ public static class DailyReport {
 
 			// -1 = no baseline yet (first report for this account), shown as a dash rather than a fake "0m".
 			string banked24 = banked < 0 ? "—" : Fmt.Hm(banked);
-			string line = $"  {b.Name,-14} banked {banked24,-7} · {c} card(s)";
-			if (r4r) {
-				line += $" · {cm} comment(s)";
-			}
+			Said row = r4r
+				? new Said("  {0} banked {1} · {2} card(s) · {3} comment(s) · {4} total",
+					b.Name.PadRight(14), banked24.PadRight(7), c, cm, Fmt.Hm((int) life))
+				: new Said("  {0} banked {1} · {2} card(s) · {3} total",
+					b.Name.PadRight(14), banked24.PadRight(7), c, Fmt.Hm((int) life));
 
-			lines.Add(line + $" · {Fmt.Hm((int) life)} total");
+			lines.Add(row);
 		}
 
-		Log.Good($"── daily report · last 24h{(first ? " · first one, 'banked' counts from here on" : "")} ──", "report");
-		foreach (string line in lines) {
+		Log.Good(new Said("── daily report · last 24h{0} ──", (first ? " · first one, 'banked' counts from here on" : "")), "report");
+		foreach (Said line in lines) {
 			Log.Info(line, "report");
 		}
 
-		string fleet = $"  fleet: banked {Fmt.Hm(totBanked)} · {totCards} card(s)";
-		if (r4r) {
-			fleet += $" · {totComments} comment(s)";
-		}
-
-		Log.Good(fleet + $" · {Fmt.Hm(totLife)} total", "report");
+		Log.Good(r4r
+			? new Said("  fleet: banked {0} · {1} card(s) · {2} comment(s) · {3} total",
+				Fmt.Hm(totBanked), totCards, totComments, Fmt.Hm(totLife))
+			: new Said("  fleet: banked {0} · {1} card(s) · {2} total",
+				Fmt.Hm(totBanked), totCards, Fmt.Hm(totLife)), "report");
 
 		if (commit) {
 			lock (Gate) {
@@ -165,7 +165,7 @@ public static class DailyReport {
 					_state = JsonSerializer.Deserialize<State>(File.ReadAllText(Path)) ?? new State();
 				}
 			} catch (Exception e) {
-				Log.Debug($"couldn't read the daily-report state: {e.GetType().Name}: {e.Message}");
+				Log.Debug(new Said("couldn't read the daily-report state: {0}: {1}", e.GetType().Name, e.Message));
 			}
 		}
 	}
@@ -181,7 +181,7 @@ public static class DailyReport {
 			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
 			File.WriteAllText(path, JsonSerializer.Serialize(snap, new JsonSerializerOptions { WriteIndented = true }));
 		} catch (Exception e) {
-			Log.Debug($"couldn't save the daily-report state: {e.GetType().Name}: {e.Message}");
+			Log.Debug(new Said("couldn't save the daily-report state: {0}: {1}", e.GetType().Name, e.Message));
 		}
 	}
 }

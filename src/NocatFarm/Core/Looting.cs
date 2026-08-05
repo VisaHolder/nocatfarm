@@ -84,7 +84,7 @@ public static partial class Looting {
 				}
 			}
 		} catch (Exception e) {
-			Log.Debug($"couldn't list the inventories: {e.Message}", bot.Name);
+			Log.Debug(new Said("couldn't list the inventories: {0}", e.Message), bot.Name);
 		}
 
 		return found;
@@ -134,7 +134,7 @@ public static partial class Looting {
 				items.Add(new Item(assetId, classId, instanceId, Math.Max(1, amount), info.Type, info.Name, app, context));
 			}
 		} catch (Exception e) {
-			Log.Warn($"couldn't read the inventory: {e.Message}", bot.Name);
+			Log.Warn(new Said("couldn't read the inventory: {0}", e.Message), bot.Name);
 		}
 
 		return items;
@@ -201,7 +201,7 @@ public static partial class Looting {
 			token = await TradeTokenOfAsync(master, ct).ConfigureAwait(false) ?? "";
 
 			if (token.Length > 0) {
-				Log.Debug($"using {master}'s own trade token - it is one of your accounts", bot.Name);
+				Log.Debug(new Said("using {0}'s own trade token - it is one of your accounts", master), bot.Name);
 			}
 		}
 
@@ -281,7 +281,7 @@ public static partial class Looting {
 
 			return hit.Success ? hit.Groups[1].Value : null;
 		} catch (Exception e) {
-			Log.Debug($"couldn't read the trade token for {steamId}: {e.Message}", owner.Name);
+			Log.Debug(new Said("couldn't read the trade token for {0}: {1}", steamId, e.Message), owner.Name);
 
 			return null;
 		}
@@ -393,8 +393,8 @@ public static partial class Looting {
 			if (doc.RootElement.TryGetProperty("strError", out JsonElement error)) {
 				// The one-line strError is the polite half. Everything Steam actually said, plus what we asked it
 				// to move, so a refusal can be diagnosed from the log instead of guessed at.
-				Log.Debug($"trade offer refused. Steam said: {body}", bot.Name);
-				Log.Debug($"we offered {items.Count} item(s) to {master}, token {(token.Length > 0 ? "yes" : "no")}: "
+				Log.Debug(new Said("trade offer refused. Steam said: {0}", body), bot.Name);
+				Log.Debug(new Said("we offered {0} item(s) to {1}, token {2}: ", items.Count, master, (token.Length > 0 ? "yes" : "no"))
 					+ string.Join(", ", items.Take(6).Select(static i => $"{i.App}/{i.Context}/{i.AssetId} {i.Name}")), bot.Name);
 
 				return (false, Explain(error.GetString() ?? "refused"));
@@ -406,7 +406,7 @@ public static partial class Looting {
 
 				if (needsConfirming && ulong.TryParse(id.GetString() ?? id.ToString(), out ulong offerId)) {
 					if (!await bot.ConfirmMobileAsync(offerId, true, ct).ConfigureAwait(false)) {
-						Log.Warn($"the offer went out but needs confirming on your phone - add this account's authenticator secrets to do that here", bot.Name);
+						Log.Warn(new Said("the offer went out but needs confirming on your phone - add this account's authenticator secrets to do that here"), bot.Name);
 					}
 				}
 

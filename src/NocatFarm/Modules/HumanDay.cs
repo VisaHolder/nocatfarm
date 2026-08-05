@@ -1,6 +1,8 @@
 using System.Text.Json;
 using NocatFarm.Config;
 
+using NocatFarm.Core;
+
 namespace NocatFarm.Modules;
 
 /// <summary>
@@ -53,7 +55,7 @@ public sealed class HumanDay {
 			// A plan from yesterday is not a plan, it is a leftover. Rolling a fresh one is correct.
 			return day?.IsFor(when) == true ? day : null;
 		} catch (Exception e) {
-			Log.Debug($"couldn't read today's plan: {e.Message}", bot);
+			Log.Debug(new Said("couldn't read today's plan: {0}", e.Message), bot);
 
 			return null;
 		}
@@ -64,7 +66,7 @@ public sealed class HumanDay {
 		try {
 			File.Delete(PathFor(bot));
 		} catch (Exception e) {
-			Log.Debug($"couldn't clear today's plan: {e.Message}", bot);
+			Log.Debug(new Said("couldn't clear today's plan: {0}", e.Message), bot);
 		}
 	}
 
@@ -74,7 +76,7 @@ public sealed class HumanDay {
 			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 			AtomicFile.Write(path, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true }));
 		} catch (Exception e) {
-			Log.Debug($"couldn't save today's plan: {e.Message}", bot);
+			Log.Debug(new Said("couldn't save today's plan: {0}", e.Message), bot);
 		}
 	}
 }

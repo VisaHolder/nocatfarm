@@ -130,7 +130,7 @@ public sealed class RefundGuard(Bot bot) {
 					freed = [];
 
 					if (held.Count > 0) {
-						Log.Debug($"refund protection is holding {held.Count} game(s): {Names([.. held])}", bot.Name);
+						Log.Debug(new Said("refund protection is holding {0} game(s): {1}", held.Count, Names([.. held])), bot.Name);
 					}
 				}
 
@@ -141,15 +141,15 @@ public sealed class RefundGuard(Bot bot) {
 				List<uint> borrowed = [.. fresh.Where(shared.Contains)];
 
 				if (bought.Count > 0) {
-					Log.Info($"leaving {Names(bought)} alone - still refundable{(bought.Count == 1 ? $" until {Since(bought[0], owned).AddDays(days):d}" : "")}", bot.Name);
+					Log.Info(new Said("leaving {0} alone - still refundable{1}", Names(bought), (bought.Count == 1 ? $" until {Since(bought[0], owned).AddDays(days):d}" : "")), bot.Name);
 				}
 
 				if (borrowed.Count > 0) {
-					Log.Info($"leaving {Names(borrowed)} alone - only just shared into this account's library", bot.Name);
+					Log.Info(new Said("leaving {0} alone - only just shared into this account's library", Names(borrowed)), bot.Name);
 				}
 
 				if (freed.Count > 0) {
-					Log.Info($"{Names(freed)} {(freed.Count == 1 ? "is" : "are")} past the refund window - free to play again", bot.Name);
+					Log.Info(new Said("{0} {1} past the refund window - free to play again", Names(freed), (freed.Count == 1 ? "is" : "are")), bot.Name);
 				}
 
 				_held = held;
@@ -158,13 +158,13 @@ public sealed class RefundGuard(Bot bot) {
 			// A grind started before the game was bought - or before protection was switched on - is the one way
 			// a held game can already be running. Hours is precisely what a grind puts on it, so it stops here.
 			if ((bot.GrindGame != 0) && Holds(bot.GrindGame)) {
-				Log.Warn($"stopping the {Name(bot.GrindGame)} grind - that game is inside its refund window", bot.Name);
+				Log.Warn(new Said("stopping the {0} grind - that game is inside its refund window", Name(bot.GrindGame)), bot.Name);
 				bot.StopGrind();
 			}
 		} catch (OperationCanceledException) {
 			throw;
 		} catch (Exception e) {
-			Log.Debug($"couldn't check refund windows: {e.Message}", bot.Name);
+			Log.Debug(new Said("couldn't check refund windows: {0}", e.Message), bot.Name);
 		}
 	}
 }

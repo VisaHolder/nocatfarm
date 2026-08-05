@@ -36,7 +36,7 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 			} catch (OperationCanceledException) {
 				throw;
 			} catch (Exception e) {
-				Log.Debug($"heartbeat hiccup: {e.GetType().Name}: {e.Message}", Bot.Name);
+				Log.Debug(new Said("heartbeat hiccup: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
 			}
 
 			// Checked far more often than it prints, so a change of phase is picked up promptly rather than

@@ -50,7 +50,7 @@ public abstract class BotModule(Bot bot) : IBotModule {
 				// normal shutdown
 			} catch (Exception e) {
 				// never silent: a module dying quietly is the worst failure mode there is
-				Log.Error($"module '{Name}' stopped: {e.GetType().Name}: {e.Message}", Bot.Name);
+				Log.Error(new Said("module '{0}' stopped: {1}: {2}", Name, e.GetType().Name, e.Message), Bot.Name);
 			} finally {
 				// Release the handle whichever way the loop ended, so a module that returned early (feature
 				// switched off) can genuinely be started again later instead of looking permanently running.

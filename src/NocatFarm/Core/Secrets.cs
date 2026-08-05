@@ -43,7 +43,7 @@ public static class Secrets {
 		try {
 			return Marker + Convert.ToBase64String(Encrypt(Encoding.UTF8.GetBytes(plain)));
 		} catch (Exception e) {
-			Log.Debug($"couldn't encrypt a stored secret ({e.Message}) - keeping it as it is", forBot);
+			Log.Debug(new Said("couldn't encrypt a stored secret ({0}) - keeping it as it is", e.Message), forBot);
 
 			return plain;
 		}
@@ -64,7 +64,7 @@ public static class Secrets {
 		} catch (Exception e) {
 			// A different Windows user, a restored profile, or a corrupted file. Treat it as absent: the account
 			// signs in again with its password, which is a nuisance rather than a failure.
-			Log.Debug($"a stored secret couldn't be decrypted ({e.Message}) - it will be asked for again");
+			Log.Debug(new Said("a stored secret couldn't be decrypted ({0}) - it will be asked for again", e.Message));
 
 			return "";
 		}
@@ -85,6 +85,6 @@ public static class Secrets {
 		}
 
 		_warned = true;
-		Log.Warn($"login tokens are stored as plain text on {RuntimeInformation.RuntimeIdentifier} - only Windows has a key store to bind them to. Keep the config folder somewhere private.", bot);
+		Log.Warn(new Said("login tokens are stored as plain text on {0} - only Windows has a key store to bind them to. Keep the config folder somewhere private.", RuntimeInformation.RuntimeIdentifier), bot);
 	}
 }

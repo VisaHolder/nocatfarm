@@ -216,18 +216,18 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// piece of the status readout still in English in every language. The pass that translated statuses looked
 	/// for `_status = ...` and `override string Status`; nothing was looking for a property called Doing.
 	/// </remarks>
-	public string Doing => _phase switch {
-		Phase.WarmingUp => Loc.T("settling in"),
-		Phase.Playing => Loc.T("playing {0}", GameName(_game)),
-		Phase.SwitchingGame => _switchingTo != 0 ? Loc.T("closing, then {0}", GameName(_switchingTo)) : Loc.T("closing the game"),
-		Phase.ShortBreak => Loc.T("on a break"),
-		Phase.MealBreak => Loc.T("meal break"),
-		Phase.NightIdle => Loc.T("asleep, banking hours"),
-		Phase.Asleep => Loc.T("asleep"),
-		Phase.DoneForToday => Loc.T("done for today"),
-		Phase.DayOff => Loc.T("not playing today"),
-		Phase.StoodDown => Loc.T("waiting - you're playing on this account"),
-		_ => Loc.T("starting up")
+	public Said Doing => _phase switch {
+		Phase.WarmingUp => new Said("settling in"),
+		Phase.Playing => new Said("playing {0}", GameName(_game)),
+		Phase.SwitchingGame => _switchingTo != 0 ? new Said("closing, then {0}", GameName(_switchingTo)) : new Said("closing the game"),
+		Phase.ShortBreak => new Said("on a break"),
+		Phase.MealBreak => new Said("meal break"),
+		Phase.NightIdle => new Said("asleep, banking hours"),
+		Phase.Asleep => new Said("asleep"),
+		Phase.DoneForToday => new Said("done for today"),
+		Phase.DayOff => new Said("not playing today"),
+		Phase.StoodDown => new Said("waiting - you're playing on this account"),
+		_ => new Said("starting up")
 	};
 
 	/// <summary>When it next expects to be doing something else - the end of a break, or getting up.</summary>
@@ -258,7 +258,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		try {
 			BankSession();
 		} catch (Exception e) {
-			Log.Debug($"couldn't bank the session on shutdown: {e.Message}", Bot.Name);
+			Log.Debug(new Said("couldn't bank the session on shutdown: {0}", e.Message), Bot.Name);
 		}
 
 		await base.StopAsync().ConfigureAwait(false);
@@ -283,7 +283,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			try {
 				StepAsync();
 			} catch (Exception e) {
-				Log.Warn($"human mode hiccup: {e.GetType().Name}: {e.Message}", Bot.Name);
+				Log.Warn(new Said("human mode hiccup: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
 			}
 
 			if (!await Sleep(TimeSpan.FromSeconds(20), ct).ConfigureAwait(false)) {
@@ -396,7 +396,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_switchingTo = 0;
 				Bot.StopPlaying();
 				Bot.ClearPersonaOverride();
-				Log.Info($"not playing today - online but idle until bed about {BedTime():HH:mm}", Bot.Name);
+				Log.Info(new Said("not playing today - online but idle until bed about {0}", (BedTime()).ToString("HH:mm")), Bot.Name);
 			}
 
 			return;
@@ -410,7 +410,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_switchingTo = 0;
 				Bot.StopPlaying();
 				Bot.ClearPersonaOverride();
-				Log.Info($"done for the day - {Fmt.Hm(_playedMinutesToday)} played, back around {WakeTime():HH:mm}", Bot.Name);
+				Log.Info(new Said("done for the day - {0} played, back around {1}", Fmt.Hm(_playedMinutesToday), (WakeTime()).ToString("HH:mm")), Bot.Name);
 			}
 
 			return;
@@ -557,8 +557,8 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			_announcedWarmUp = true;
 			int wait = (int) Math.Max(1, (_readyAt - DateTime.UtcNow).TotalMinutes);
 			Log.Info(_wokeUp
-				? $"awake for the day - warming up for ~{Fmt.Hm(wait)}"
-				: $"warming up for ~{Fmt.Hm(wait)}", Bot.Name);
+				? new Said("awake for the day - warming up for ~{0}", Fmt.Hm(wait))
+				: new Said("warming up for ~{0}", Fmt.Hm(wait)), Bot.Name);
 		}
 
 		return false;
@@ -629,7 +629,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// session.
 		if (HumanDay.Load(Bot.Name, DateTime.Now) is { } saved) {
 			Restore(saved);
-			Log.Info($"today's plan restored - {Fmt.Hm(_playedMinutesToday)}/{Fmt.Hm(_targetMinutes)} played so far, bed about {BedTime():HH:mm}", Bot.Name);
+			Log.Info(new Said("today's plan restored - {0}/{1} played so far, bed about {2}", Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes), (BedTime()).ToString("HH:mm")), Bot.Name);
 
 			return;
 		}
@@ -740,7 +740,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		Persist();
 
 		if (_targetMinutes == 0) {
-			Log.Info($"taking today off - back tomorrow around {WakeTime():HH:mm}", Bot.Name);
+			Log.Info(new Said("taking today off - back tomorrow around {0}", (WakeTime()).ToString("HH:mm")), Bot.Name);
 
 			return;
 		}
@@ -749,7 +749,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			? $"{GameName(MainGame())} only today"
 			: $"{GameName(MainGame())} about {_mainSharePct}%, up to {Fmt.Hm(_otherBudget)} on the others";
 
-		Log.Info($"today: around {Fmt.Hm(_targetMinutes)} of play, on about {WakeTime():HH:mm}, bed about {BedTime():HH:mm} - {mix}", Bot.Name);
+		Log.Info(new Said("today: around {0} of play, on about {1}, bed about {2} - {3}", Fmt.Hm(_targetMinutes), (WakeTime()).ToString("HH:mm"), (BedTime()).ToString("HH:mm"), mix), Bot.Name);
 	}
 
 	private int WindowMinutes() {
@@ -825,7 +825,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_phase = want;
 				_game = 0;
 				_switchingTo = 0;
-				Log.Info($"asleep until {WakeTime():HH:mm} - the card farmer keeps working through the night", Bot.Name);
+				Log.Info(new Said("asleep until {0} - the card farmer keeps working through the night", (WakeTime()).ToString("HH:mm")), Bot.Name);
 			}
 
 			return;
@@ -841,7 +841,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				Bot.SetPlaying(Bot.Cfg.OfflineIdleGames);
 
 				if (_phase == want) {
-					Log.Info($"back to banking hours quietly until {WakeTime():HH:mm}", Bot.Name);
+					Log.Info(new Said("back to banking hours quietly until {0}", (WakeTime()).ToString("HH:mm")), Bot.Name);
 				}
 			}
 		}
@@ -855,10 +855,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_switchingTo = 0;
 
 		if (banking) {
-			Log.Info($"asleep - banking hours quietly until {WakeTime():HH:mm}", Bot.Name);
+			Log.Info(new Said("asleep - banking hours quietly until {0}", (WakeTime()).ToString("HH:mm")), Bot.Name);
 		} else {
 			Bot.StopPlaying();
-			Log.Info($"asleep - back around {WakeTime():HH:mm}", Bot.Name);
+			Log.Info(new Said("asleep - back around {0}", (WakeTime()).ToString("HH:mm")), Bot.Name);
 		}
 	}
 
@@ -886,7 +886,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		Bot.SetPlaying(games);
 
 		if (_assertedOnce) {
-			Log.Info($"reconnected - put {games.Count} game(s) back on", Bot.Name);
+			Log.Info(new Said("reconnected - put {0} game(s) back on", games.Count), Bot.Name);
 		}
 
 		_assertedOnce = true;
@@ -953,7 +953,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		Bot.SetPlaying([game]);   // ONE game. Six at once is the tell.
 		_playingAssertedFor = Bot.OnlineSince ?? DateTime.UtcNow;
 
-		Log.Good($"playing {GameName(game)} for about {Fmt.Hm(minutes)}  ({Fmt.Hm(_playedMinutesToday)}/{Fmt.Hm(_targetMinutes)} today)", Bot.Name);
+		Log.Good(new Said("playing {0} for about {1}  ({2}/{3} today)", GameName(game), Fmt.Hm(minutes), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)), Bot.Name);
 	}
 
 	/// <summary>
@@ -1064,13 +1064,13 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 			// "Dropped offline", not "signed out" - it stays connected and simply stops being visible, which to
 			// everyone on the friends list is the same thing and costs nothing in login rate limit.
-			Log.Info($"{what} - going offline, back in about {Fmt.Hm(minutes)}", Bot.Name);
+			Log.Info(new Said("{0} - going offline, back in about {1}", what, Fmt.Hm(minutes)), Bot.Name);
 
 			return;
 		}
 
 		Bot.SetPersonaOverride(awayPersona);
-		Log.Info($"{what} - back in about {Fmt.Hm(minutes)}", Bot.Name);
+		Log.Info(new Said("{0} - back in about {1}", what, Fmt.Hm(minutes)), Bot.Name);
 	}
 
 	/// <summary>Credit the running session's real elapsed time, once, and never a minute more than it played.</summary>

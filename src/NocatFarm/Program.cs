@@ -397,7 +397,7 @@ void OpenBrowser(string url) {
 	try {
 		Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
 	} catch (Exception e) {
-		Log.Debug($"couldn't open the browser: {e.Message}");
+		Log.Debug(new Said("couldn't open the browser: {0}", e.Message));
 	}
 }
 

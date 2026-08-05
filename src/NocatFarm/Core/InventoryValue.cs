@@ -112,7 +112,7 @@ public sealed partial class InventoryValue(Bot bot) {
 			} catch (OperationCanceledException) {
 				throw;
 			} catch (Exception e) {
-				Log.Debug($"couldn't read the {name} inventory: {e.Message}", bot.Name);
+				Log.Debug(new Said("couldn't read the {0} inventory: {1}", name, e.Message), bot.Name);
 			}
 		}
 
@@ -224,7 +224,7 @@ public sealed partial class InventoryValue(Bot bot) {
 				}
 			}
 		} catch (Exception e) {
-			Log.Debug($"couldn't read the inventory list: {e.Message}");
+			Log.Debug(new Said("couldn't read the inventory list: {0}", e.Message));
 		}
 
 		return found;
@@ -375,7 +375,7 @@ public sealed partial class InventoryValue(Bot bot) {
 		}
 
 		if (Total != was) {
-			Log.Debug($"inventory now {PriceBook.Symbol}{Total:0.00} across {_byGame.Count} game(s), {Pending} item(s) still to price", bot.Name);
+			Log.Debug(new Said("inventory now {0}{1} across {2} game(s), {3} item(s) still to price", PriceBook.Symbol, (Total).ToString("0.00"), _byGame.Count, Pending), bot.Name);
 		}
 	}
 

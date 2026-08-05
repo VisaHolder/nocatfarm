@@ -2,6 +2,8 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Microsoft.Win32;
 
+using NocatFarm.Core;
+
 namespace NocatFarm.Windows;
 
 /// <summary>
@@ -59,7 +61,7 @@ public static class WindowsIntegration {
 
 			return true;
 		} catch (Exception e) {
-			Log.Warn($"couldn't change the Windows startup entry: {e.Message}");
+			Log.Warn(new Said("couldn't change the Windows startup entry: {0}", e.Message));
 
 			return false;
 		}
@@ -84,7 +86,7 @@ public static class WindowsIntegration {
 
 			_awake = keep;
 		} catch (Exception e) {
-			Log.Debug($"keep-awake: {e.Message}");
+			Log.Debug(new Said("keep-awake: {0}", e.Message));
 		}
 	}
 }

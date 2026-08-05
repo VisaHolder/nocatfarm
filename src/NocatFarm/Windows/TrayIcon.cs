@@ -3,6 +3,8 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 
+using NocatFarm.Core;
+
 namespace NocatFarm.Windows;
 
 /// <summary>
@@ -237,7 +239,7 @@ public sealed class TrayIcon : IDisposable {
 				DispatchMessage(ref msg);
 			}
 		} catch (Exception e) {
-			Log.Debug($"tray: {e.Message}");
+			Log.Debug(new Said("tray: {0}", e.Message));
 		}
 	}
 
@@ -419,7 +421,7 @@ public sealed class TrayIcon : IDisposable {
 		try {
 			Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
 		} catch (Exception e) {
-			Log.Warn($"couldn't open {url}: {e.Message}");
+			Log.Warn(new Said("couldn't open {0}: {1}", url, e.Message));
 		}
 	}
 
