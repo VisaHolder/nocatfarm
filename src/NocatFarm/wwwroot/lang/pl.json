@@ -940,7 +940,16 @@
     "update: asking GitHub what's newest": "aktualizacja: pytam GitHub o najnowszą wersję",
     "web session expired - re-minting the access token": "sesja sieciowa wygasła - tworzę nowy token dostępu",
     "window open": "okno otwarte",
-    "you're on this account now - standing aside until you're done": "jesteś teraz na tym koncie - ustępujemy, aż skończysz"
+    "you're on this account now - standing aside until you're done": "jesteś teraz na tym koncie - ustępujemy, aż skończysz",
+    "the connect handler failed: {0}: {1}": "obsługa połączenia nie powiodła się: {0}: {1}",
+    "the logon handler failed: {0}: {1}": "obsługa logowania nie powiodła się: {0}: {1}",
+    "the disconnect handler failed: {0}: {1}": "obsługa rozłączenia nie powiodła się: {0}: {1}",
+    "the window can't draw ({0}: {1}) - the dashboard still works": "okno nie może się narysować ({0}: {1}) - panel nadal działa",
+    "done - nothing this account can unlock itself ({0} app(s) checked{1}). Steam awards the rest server-side.": "gotowe - to konto nie może niczego odblokować samo ({0} aplikacji sprawdzonych{1}). Resztę przyznaje Steam po stronie serwera.",
+    " · {0} run by nocat.farm": " · {0} działania nocat.farm",
+    "couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten": "nie udało się odczytać sum całkowitych ({0}: {1}) - nie zostaną nadpisane",
+    "the lifetime totals could not be read this run - not writing over them": "w tym uruchomieniu nie udało się odczytać sum całkowitych - nie nadpisuję ich",
+    "nothing to record - leaving the existing lifetime totals alone": "nie ma czego zapisać - istniejące sumy całkowite zostają nietknięte"
   },
   "settings": {
     "WebEnabled": {

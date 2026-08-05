@@ -266,14 +266,18 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				// "idling 0m so far" thirty seconds after a logon was technically true and worth nothing. What
 				// anybody actually wants to know here is how much this account has done in total.
 				//
-				// Said as "played in total", because "· 4m played" landing directly under human mode's
-				// "1h34m/7h12m today" read as a contradiction rather than a different number: two figures for
-				// the same account a minute apart, neither saying which span it was counting.
+				// "run by nocat.farm", not "played in total".
+				//
+				// "in total" was the fix for "· 4m played" reading as a contradiction under human mode's
+				// "1h34m/7h12m today" - but it overshot: it sounds like the account's lifetime Steam hours,
+				// which for an account with thousands of them makes a figure of 3h49m look like a counter that
+				// has just been wiped. It is neither of those spans. It is how long THIS program has had a game
+				// running for this account since it started counting, so it says so.
 				int lifetime = Lifetime.For(Bot.Name);
 				// A Said, not a formatted string. It is passed as a VALUE into the sentence below, and a value that
 				// is already finished text stays in whatever language it was built in - which is how the two lines
 				// ended up reading "keine Karten mehr zu farmen · 1h23m played in total".
-				Said been = lifetime > 0 ? new Said(" · {0} played in total", Fmt.Hm(lifetime)) : default;
+				Said been = lifetime > 0 ? new Said(" · {0} run by nocat.farm", Fmt.Hm(lifetime)) : default;
 				string idle = !string.IsNullOrWhiteSpace(Bot.CustomName)
 					? Bot.CustomName + (Bot.Cfg.IdleGames.Count > 0 ? $" (+{Bot.Cfg.IdleGames.Count})" : "")
 					: Bot.Cfg.IdleGames.Count > 0 ? $"{Bot.Cfg.IdleGames.Count} game(s)" : "your games";

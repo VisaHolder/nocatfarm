@@ -1007,7 +1007,20 @@ public sealed class Bot : IAsyncDisposable {
 	}
 
 	// ── connection ──────────────────────────────────────────────────────────
-	private async void OnConnected(SteamClient.ConnectedCallback _) {
+	/// <summary>
+	/// SteamKit hands callbacks to an `async void`, which is the one signature whose exceptions nobody
+	/// can catch: an escaped throw here goes to the thread pool and takes the process with it, with no
+	/// log line to say why. The body lives in a Task below so it can be wrapped.
+	/// </summary>
+	private async void OnConnected(SteamClient.ConnectedCallback callback) {
+		try {
+			await OnConnectedAsync(callback).ConfigureAwait(false);
+		} catch (Exception e) {
+			Log.Error(new Said("the connect handler failed: {0}: {1}", e.GetType().Name, e.Message), Name);
+		}
+	}
+
+	private async Task OnConnectedAsync(SteamClient.ConnectedCallback _) {
 		_lastPacket = DateTime.UtcNow;
 
 		User = Client.GetHandler<SteamUser>();
@@ -1183,7 +1196,20 @@ public sealed class Bot : IAsyncDisposable {
 		}
 	}
 
-	private async void OnLoggedOn(SteamUser.LoggedOnCallback cb) {
+	/// <summary>
+	/// SteamKit hands callbacks to an `async void`, which is the one signature whose exceptions nobody
+	/// can catch: an escaped throw here goes to the thread pool and takes the process with it, with no
+	/// log line to say why. The body lives in a Task below so it can be wrapped.
+	/// </summary>
+	private async void OnLoggedOn(SteamUser.LoggedOnCallback callback) {
+		try {
+			await OnLoggedOnAsync(callback).ConfigureAwait(false);
+		} catch (Exception e) {
+			Log.Error(new Said("the logon handler failed: {0}: {1}", e.GetType().Name, e.Message), Name);
+		}
+	}
+
+	private async Task OnLoggedOnAsync(SteamUser.LoggedOnCallback cb) {
 		_lastPacket = DateTime.UtcNow;
 		_lastLogOnResult = cb.Result > EResult.OK ? cb.Result : EResult.Invalid;
 
@@ -1321,7 +1347,20 @@ public sealed class Bot : IAsyncDisposable {
 		OnlineSince = null;
 	}
 
-	private async void OnDisconnected(SteamClient.DisconnectedCallback cb) {
+	/// <summary>
+	/// SteamKit hands callbacks to an `async void`, which is the one signature whose exceptions nobody
+	/// can catch: an escaped throw here goes to the thread pool and takes the process with it, with no
+	/// log line to say why. The body lives in a Task below so it can be wrapped.
+	/// </summary>
+	private async void OnDisconnected(SteamClient.DisconnectedCallback callback) {
+		try {
+			await OnDisconnectedAsync(callback).ConfigureAwait(false);
+		} catch (Exception e) {
+			Log.Error(new Said("the disconnect handler failed: {0}: {1}", e.GetType().Name, e.Message), Name);
+		}
+	}
+
+	private async Task OnDisconnectedAsync(SteamClient.DisconnectedCallback cb) {
 		OnlineSince = null;
 		Playing = "";
 		IsFarming = false;
@@ -2156,7 +2195,10 @@ public sealed class Bot : IAsyncDisposable {
 						return;   // superseded, or no longer ours to drive - whoever won will announce its own
 					}
 
-					Client.Send(BuildGamesPlayed(label, apps));
+					// Cfg.GameDevice, same as the ordinary path below. Leaving it off defaulted the device to 0
+					// ("desktop, legacy") on every re-announce, quietly discarding whatever the account was set
+					// to - and now that a login takes this path too, that was every session.
+					Client.Send(BuildGamesPlayed(label, apps, Cfg.GameDevice));
 					ApplyPersona();
 				} catch (Exception e) {
 					Log.Debug(new Said("couldn't re-announce after the game list changed: {0}", e.Message), Name);

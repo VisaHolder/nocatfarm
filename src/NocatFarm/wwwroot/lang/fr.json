@@ -940,7 +940,16 @@
     "update: asking GitHub what's newest": "mise à jour : on demande à GitHub la plus récente",
     "web session expired - re-minting the access token": "session web expirée - nouveau jeton d'accès en cours de création",
     "window open": "fenêtre ouverte",
-    "you're on this account now - standing aside until you're done": "tu es sur ce compte maintenant - on s'écarte jusqu'à ce que tu aies fini"
+    "you're on this account now - standing aside until you're done": "tu es sur ce compte maintenant - on s'écarte jusqu'à ce que tu aies fini",
+    "the connect handler failed: {0}: {1}": "le gestionnaire de connexion a échoué : {0} : {1}",
+    "the logon handler failed: {0}: {1}": "le gestionnaire d'ouverture de session a échoué : {0} : {1}",
+    "the disconnect handler failed: {0}: {1}": "le gestionnaire de déconnexion a échoué : {0} : {1}",
+    "the window can't draw ({0}: {1}) - the dashboard still works": "la fenêtre ne peut pas s'afficher ({0} : {1}) - le tableau de bord fonctionne toujours",
+    "done - nothing this account can unlock itself ({0} app(s) checked{1}). Steam awards the rest server-side.": "terminé - rien que ce compte puisse débloquer lui-même ({0} app(s) vérifiées{1}). Steam attribue le reste côté serveur.",
+    " · {0} run by nocat.farm": " · {0} exécuté par nocat.farm",
+    "couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten": "impossible de lire les totaux cumulés ({0} : {1}) - ils ne seront pas écrasés",
+    "the lifetime totals could not be read this run - not writing over them": "les totaux cumulés n'ont pas pu être lus lors de cette exécution - on ne les écrase pas",
+    "nothing to record - leaving the existing lifetime totals alone": "rien à enregistrer - les totaux cumulés existants sont laissés tels quels"
   },
   "settings": {
     "WebEnabled": {

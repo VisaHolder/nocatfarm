@@ -940,7 +940,16 @@
     "update: asking GitHub what's newest": "업데이트: GitHub에 최신 버전을 묻는 중",
     "web session expired - re-minting the access token": "웹 세션이 만료되었습니다 - 액세스 토큰을 다시 발급합니다",
     "window open": "창이 열렸습니다",
-    "you're on this account now - standing aside until you're done": "지금 이 계정을 쓰고 계시네요 - 끝날 때까지 물러나 있겠습니다"
+    "you're on this account now - standing aside until you're done": "지금 이 계정을 쓰고 계시네요 - 끝날 때까지 물러나 있겠습니다",
+    "the connect handler failed: {0}: {1}": "연결 핸들러가 실패했습니다: {0}: {1}",
+    "the logon handler failed: {0}: {1}": "로그온 핸들러가 실패했습니다: {0}: {1}",
+    "the disconnect handler failed: {0}: {1}": "연결 해제 핸들러가 실패했습니다: {0}: {1}",
+    "the window can't draw ({0}: {1}) - the dashboard still works": "창을 그릴 수 없습니다 ({0}: {1}) - 대시보드는 계속 작동합니다",
+    "done - nothing this account can unlock itself ({0} app(s) checked{1}). Steam awards the rest server-side.": "완료 - 이 계정이 스스로 해제할 수 있는 것이 없습니다 (앱 {0}개 확인{1}). 나머지는 Steam이 서버에서 부여합니다.",
+    " · {0} run by nocat.farm": " · nocat.farm 가동 {0}",
+    "couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten": "누적 합계를 읽지 못했습니다 ({0}: {1}) - 덮어쓰지 않습니다",
+    "the lifetime totals could not be read this run - not writing over them": "이번 실행에서는 누적 합계를 읽지 못했습니다 - 덮어쓰지 않습니다",
+    "nothing to record - leaving the existing lifetime totals alone": "기록할 것이 없습니다 - 기존 누적 합계를 그대로 둡니다"
   },
   "settings": {
     "WebEnabled": {

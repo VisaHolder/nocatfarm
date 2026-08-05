@@ -132,7 +132,12 @@ h2 a:hover { color: var(--text); }
   padding-right: var(--s6);
 }
 
-nav { display: flex; flex-direction: row; gap: var(--s1); }
+/* flex: 0 0 auto - the tabs never give up space.
+   Without it the nav is the flexible item in the rail, so on a window that is merely narrowish it gets
+   squeezed and the last tab is CLIPPED: at 1435px the nav wanted 674px and was handed 600, which cut
+   "Settings" in half with no scrollbar to reach it. The stats and chips beside it are decoration and can
+   go; navigation cannot. Below 900px the rail scrolls, which is where a genuinely small screen is handled. */
+nav { display: flex; flex-direction: row; gap: var(--s1); flex: 0 0 auto; }
 
 .navitem {
   display: flex; align-items: center; gap: var(--s2);
@@ -226,7 +231,9 @@ nav { display: flex; flex-direction: row; gap: var(--s1); }
 
 /* Below these widths the bar can't hold everything on one row, so the least important parts step aside in
    order rather than wrapping the whole thing onto three lines. */
-@media (max-width: 1360px) { .railstats { display: none; } }
+/* 1500, not 1360. The stats are ~275px and the nav needs ~674: at 1435px everything technically fit to
+   within about a dozen pixels, which is another way of saying it did not. Drop them before it is tight. */
+@media (max-width: 1500px) { .railstats { display: none; } }
 /* The 900px block below hides the chips (and stats and version), leaving just the theme control. */
 @media (max-width: 760px) {
   .rail { height: auto; flex-wrap: wrap; padding-block: var(--s2); }

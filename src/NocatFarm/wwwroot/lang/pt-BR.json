@@ -940,7 +940,16 @@
     "update: asking GitHub what's newest": "atualização: perguntando ao GitHub qual é a mais nova",
     "web session expired - re-minting the access token": "a sessão web expirou - gerando novamente o token de acesso",
     "window open": "janela aberta",
-    "you're on this account now - standing aside until you're done": "você está nesta conta agora - saindo do caminho até terminar"
+    "you're on this account now - standing aside until you're done": "você está nesta conta agora - saindo do caminho até terminar",
+    "the connect handler failed: {0}: {1}": "o manipulador de conexão falhou: {0}: {1}",
+    "the logon handler failed: {0}: {1}": "o manipulador de logon falhou: {0}: {1}",
+    "the disconnect handler failed: {0}: {1}": "o manipulador de desconexão falhou: {0}: {1}",
+    "the window can't draw ({0}: {1}) - the dashboard still works": "a janela não consegue desenhar ({0}: {1}) - o painel continua funcionando",
+    "done - nothing this account can unlock itself ({0} app(s) checked{1}). Steam awards the rest server-side.": "concluído - não há nada que esta conta possa desbloquear sozinha ({0} app(s) verificados{1}). O resto a Steam concede no servidor.",
+    " · {0} run by nocat.farm": " · {0} executado pelo nocat.farm",
+    "couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten": "não foi possível ler os totais acumulados ({0}: {1}) - eles não serão sobrescritos",
+    "the lifetime totals could not be read this run - not writing over them": "os totais acumulados não puderam ser lidos nesta execução - não serão sobrescritos",
+    "nothing to record - leaving the existing lifetime totals alone": "nada a registrar - mantendo os totais acumulados existentes"
   },
   "settings": {
     "WebEnabled": {
