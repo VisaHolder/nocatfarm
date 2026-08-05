@@ -394,7 +394,9 @@ public static partial class Looting {
 				// The one-line strError is the polite half. Everything Steam actually said, plus what we asked it
 				// to move, so a refusal can be diagnosed from the log instead of guessed at.
 				Log.Debug(new Said("trade offer refused. Steam said: {0}", body), bot.Name);
-				Log.Debug(new Said("we offered {0} item(s) to {1}, token {2}: ", items.Count, master, (token.Length > 0 ? "yes" : "no"))
+				Log.Debug((token.Length > 0
+						? new Said("we offered {0} item(s) to {1}, with a trade token: ", items.Count, master)
+						: new Said("we offered {0} item(s) to {1}, with no trade token: ", items.Count, master))
 					+ string.Join(", ", items.Take(6).Select(static i => $"{i.App}/{i.Context}/{i.AssetId} {i.Name}")), bot.Name);
 
 				return (false, Explain(error.GetString() ?? "refused"));

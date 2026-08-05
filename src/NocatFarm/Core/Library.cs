@@ -165,7 +165,9 @@ public sealed class Library(Bot bot) {
 		RefreshedAt = DateTime.UtcNow;
 
 		if (first) {
-			Log.Debug(new Said("library: {0} game(s) owned{1}", found.Count - shared, (shared > 0 ? $", {shared} shared by the family" : "")), bot.Name);
+			Log.Debug(shared > 0
+				? new Said("library: {0} game(s) owned, {1} shared by the family", found.Count - shared, shared)
+				: new Said("library: {0} game(s) owned", found.Count - shared), bot.Name);
 		}
 
 		return true;

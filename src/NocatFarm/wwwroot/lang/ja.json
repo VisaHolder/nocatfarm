@@ -954,7 +954,27 @@
     "rep4rep commenting held for {0} day(s) - back on {1}": "rep4repのコメントを{0}日間保留 - {1}に再開",
     "rep4rep hold lifted - commenting resumes on its own schedule": "rep4repの保留を解除 - コメントは通常の予定に戻ります",
     "the rep4rep hold has run out - commenting resumes": "rep4repの保留期間が終了 - コメントを再開します",
-    "the rep4rep hold has run out - starting fresh at 0/{0}": "rep4repの保留期間が終了 - 0/{0}から再開します"
+    "the rep4rep hold has run out - starting fresh at 0/{0}": "rep4repの保留期間が終了 - 0/{0}から再開します",
+    "short break": "小休憩",
+    "rep4rep commenting held for {0}h - back on {1}": "rep4repのコメントを{0}時間保留 - {1}に再開",
+    "  (this PC only - no password set)": "  (このPCのみ - パスワード未設定)",
+    "achievement boost - {0} game(s) worth hunting": "実績ブースト - 狩る価値のあるゲーム{0}本",
+    "achievement boost - {0} game(s) worth hunting ({1} shared with this account)": "実績ブースト - 狩る価値のあるゲーム{0}本 (うち{1}本はこのアカウントと共有)",
+    "activated a queued key  ({0} left in the queue)": "キューのキーを有効化しました  (キューに残り{0})",
+    "activated a queued key - package(s) {0}  ({1} left in the queue)": "キューのキーを有効化しました - パッケージ{0}  (キューに残り{1})",
+    "games-played not sent - paused": "プレイ中のゲームを送信しませんでした - 一時停止中",
+    "games-played not sent - you're using the account": "プレイ中のゲームを送信しませんでした - このアカウントを使用中です",
+    "leaving {0} alone - still refundable": "{0}には手を出しません - まだ返金可能です",
+    "library: {0} game(s) owned": "ライブラリ: 所有ゲーム{0}本",
+    "library: {0} game(s) owned, {1} shared by the family": "ライブラリ: 所有ゲーム{0}本、ファミリー共有{1}本",
+    "plugin {0} switched off - takes effect after a restart": "プラグイン{0}をオフにしました - 再起動後に有効になります",
+    "plugin {0} switched on - takes effect after a restart": "プラグイン{0}をオンにしました - 再起動後に有効になります",
+    "we offered {0} item(s) to {1}, with a trade token: ": "{1}に{0}件のアイテムを提示しました、トレードトークンあり: ",
+    "we offered {0} item(s) to {1}, with no trade token: ": "{1}に{0}件のアイテムを提示しました、トレードトークンなし: ",
+    "{0} are past the refund window - free to play again": "{0} は返金期間を過ぎました - 再びプレイ可能です",
+    "{0} is past the refund window - free to play again": "{0} は返金期間を過ぎました - 再びプレイ可能です",
+    "── daily report · last 24h ──": "── 日次レポート · 直近24時間 ──",
+    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── 日次レポート · 直近24時間 · 初回、ここから「記録」を数えます ──"
   },
   "settings": {
     "WebEnabled": {
@@ -1636,9 +1656,9 @@
       "label": "価格を信頼する時間",
       "tip": "取得した価格を何時間そのまま使うか。長くするとリクエスト数が大幅に減り、これが制限への本当の対処になりますが、その分だけ評価額の反映は遅くなります。カードやアイテムの価格は日ごとに大きくは動かないので、24 で十分なことがほとんどです。"
     },
-    "Rep4RepPauseDays": {
-      "label": "コメントを保留する期間",
-      "tip": "すべてのアカウントでコメントを完全に停止し、この日数が過ぎたら自分で再開します。設定したら放っておけます - カウントダウンは再起動しても続き、期限が来ると自動的に消えるので、何かを戻す必要はありません。0は保留なしです。日次上限や予定はそのままで、これは全体を単に見送るだけです。"
+    "Rep4RepPauseHours": {
+      "label": "コメントを保留する時間数",
+      "tip": "すべてのアカウントでコメントを完全に停止し、この時間数が過ぎたら自分で再開します。24で1日、48で2日、その間の値も使えるので27時間の保留はそのまま27です。設定したら放っておけます。カウントダウンは再起動しても続き、最後の保存時ではなく設定した時点から数え、期限が来ると自動的に消えます。0は保留なしです。日次上限や予定はそのままで、これは全体を見送るだけ。各アカウントは0/10のきれいな状態で戻ります。"
     }
   }
 }

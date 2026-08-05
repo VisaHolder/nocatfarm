@@ -954,7 +954,27 @@
     "rep4rep commenting held for {0} day(s) - back on {1}": "commentaires rep4rep en pause {0} jour(s) - reprise le {1}",
     "rep4rep hold lifted - commenting resumes on its own schedule": "pause rep4rep levée - les commentaires reprennent leur planning",
     "the rep4rep hold has run out - commenting resumes": "la pause rep4rep est terminée - les commentaires reprennent",
-    "the rep4rep hold has run out - starting fresh at 0/{0}": "la pause rep4rep est terminée - on repart de 0/{0}"
+    "the rep4rep hold has run out - starting fresh at 0/{0}": "la pause rep4rep est terminée - on repart de 0/{0}",
+    "short break": "courte pause",
+    "rep4rep commenting held for {0}h - back on {1}": "commentaires rep4rep en pause {0}h - reprise le {1}",
+    "  (this PC only - no password set)": "  (ce PC uniquement - aucun mot de passe défini)",
+    "achievement boost - {0} game(s) worth hunting": "boost de succès - {0} jeu(x) valant la chasse",
+    "achievement boost - {0} game(s) worth hunting ({1} shared with this account)": "boost de succès - {0} jeu(x) valant la chasse ({1} partagés avec ce compte)",
+    "activated a queued key  ({0} left in the queue)": "une clé de la file a été activée  ({0} restantes dans la file)",
+    "activated a queued key - package(s) {0}  ({1} left in the queue)": "une clé de la file a été activée - pack(s) {0}  ({1} restantes dans la file)",
+    "games-played not sent - paused": "jeux joués non envoyés - en pause",
+    "games-played not sent - you're using the account": "jeux joués non envoyés - tu utilises le compte",
+    "leaving {0} alone - still refundable": "on laisse {0} tranquille - encore remboursable",
+    "library: {0} game(s) owned": "bibliothèque : {0} jeu(x) possédé(s)",
+    "library: {0} game(s) owned, {1} shared by the family": "bibliothèque : {0} jeu(x) possédé(s), {1} partagés par la famille",
+    "plugin {0} switched off - takes effect after a restart": "extension {0} désactivée - effectif après redémarrage",
+    "plugin {0} switched on - takes effect after a restart": "extension {0} activée - effectif après redémarrage",
+    "we offered {0} item(s) to {1}, with a trade token: ": "nous avons proposé {0} objet(s) à {1}, avec jeton d'échange : ",
+    "we offered {0} item(s) to {1}, with no trade token: ": "nous avons proposé {0} objet(s) à {1}, sans jeton d'échange : ",
+    "{0} are past the refund window - free to play again": "{0} sont hors du délai de remboursement - de nouveau jouables",
+    "{0} is past the refund window - free to play again": "{0} est hors du délai de remboursement - de nouveau jouable",
+    "── daily report · last 24h ──": "── rapport quotidien · dernières 24 h ──",
+    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── rapport quotidien · dernières 24 h · le premier, « accumulé » compte à partir d'ici ──"
   },
   "settings": {
     "WebEnabled": {
@@ -1636,9 +1656,9 @@
       "label": "Faire confiance a un prix pendant",
       "tip": "Combien d'heures un prix est conserve avant d'etre redemande. Plus long veut dire beaucoup moins de requetes - c'est le vrai remede a la limitation - au prix de valeurs qui bougent plus lentement. Les prix des cartes et objets changent peu d'un jour a l'autre, 24 suffit generalement."
     },
-    "Rep4RepPauseDays": {
-      "label": "Mettre les commentaires en pause pendant",
-      "tip": "Arrête complètement les commentaires sur tous les comptes pendant ce nombre de jours, puis reprend tout seul. Tu le règles et tu l'oublies : le compte à rebours survit à un redémarrage et s'efface tout seul à la fin, tu n'as donc rien à réactiver. 0 signifie qu'il n'y a pas de pause. Le plafond quotidien et le planning ne bougent pas ; ceci se contente de tout laisser passer."
+    "Rep4RepPauseHours": {
+      "label": "Mettre les commentaires en pause pendant (heures)",
+      "tip": "Arrête complètement les commentaires sur tous les comptes pendant ce nombre d'heures, puis reprend tout seul. 24 c'est un jour, 48 deux - et tout ce qu'il y a entre marche aussi, une pause de 27 heures c'est juste 27. Règle-le et oublie-le : le compte à rebours survit à un redémarrage, part du moment où tu le règles et non du dernier enregistrement, et s'efface tout seul à la fin. 0 signifie aucune pause. Le plafond quotidien et le planning ne bougent pas ; ceci laisse simplement passer, et chaque compte revient propre à 0/10."
     }
   }
 }

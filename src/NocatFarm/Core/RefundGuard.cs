@@ -141,7 +141,9 @@ public sealed class RefundGuard(Bot bot) {
 				List<uint> borrowed = [.. fresh.Where(shared.Contains)];
 
 				if (bought.Count > 0) {
-					Log.Info(new Said("leaving {0} alone - still refundable{1}", Names(bought), (bought.Count == 1 ? $" until {Since(bought[0], owned).AddDays(days):d}" : "")), bot.Name);
+					Log.Info(bought.Count == 1
+						? new Said("leaving {0} alone - still refundable until {1}", Names(bought), Since(bought[0], owned).AddDays(days).ToString("d"))
+						: new Said("leaving {0} alone - still refundable", Names(bought)), bot.Name);
 				}
 
 				if (borrowed.Count > 0) {
@@ -149,7 +151,9 @@ public sealed class RefundGuard(Bot bot) {
 				}
 
 				if (freed.Count > 0) {
-					Log.Info(new Said("{0} {1} past the refund window - free to play again", Names(freed), (freed.Count == 1 ? "is" : "are")), bot.Name);
+					Log.Info(freed.Count == 1
+						? new Said("{0} is past the refund window - free to play again", Names(freed))
+						: new Said("{0} are past the refund window - free to play again", Names(freed)), bot.Name);
 				}
 
 				_held = held;

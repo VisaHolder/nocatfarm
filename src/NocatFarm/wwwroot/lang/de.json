@@ -954,7 +954,27 @@
     "rep4rep commenting held for {0} day(s) - back on {1}": "rep4rep-Kommentare für {0} Tag(e) angehalten - weiter am {1}",
     "rep4rep hold lifted - commenting resumes on its own schedule": "rep4rep-Pause aufgehoben - Kommentare laufen wieder nach Plan",
     "the rep4rep hold has run out - commenting resumes": "die rep4rep-Pause ist abgelaufen - Kommentare laufen wieder",
-    "the rep4rep hold has run out - starting fresh at 0/{0}": "die rep4rep-Pause ist abgelaufen - Neustart bei 0/{0}"
+    "the rep4rep hold has run out - starting fresh at 0/{0}": "die rep4rep-Pause ist abgelaufen - Neustart bei 0/{0}",
+    "short break": "kurze Pause",
+    "rep4rep commenting held for {0}h - back on {1}": "rep4rep-Kommentare für {0}h angehalten - weiter am {1}",
+    "  (this PC only - no password set)": "  (nur dieser PC - kein Passwort gesetzt)",
+    "achievement boost - {0} game(s) worth hunting": "Erfolgs-Boost - {0} lohnende Spiele",
+    "achievement boost - {0} game(s) worth hunting ({1} shared with this account)": "Erfolgs-Boost - {0} lohnende Spiele ({1} mit diesem Konto geteilt)",
+    "activated a queued key  ({0} left in the queue)": "einen Key aus der Warteschlange aktiviert  ({0} noch in der Warteschlange)",
+    "activated a queued key - package(s) {0}  ({1} left in the queue)": "einen Key aus der Warteschlange aktiviert - Paket(e) {0}  ({1} noch in der Warteschlange)",
+    "games-played not sent - paused": "gespielte Spiele nicht gesendet - pausiert",
+    "games-played not sent - you're using the account": "gespielte Spiele nicht gesendet - du benutzt das Konto",
+    "leaving {0} alone - still refundable": "lässt {0} in Ruhe - noch erstattungsfähig",
+    "library: {0} game(s) owned": "Bibliothek: {0} Spiele im Besitz",
+    "library: {0} game(s) owned, {1} shared by the family": "Bibliothek: {0} Spiele im Besitz, {1} von der Familie geteilt",
+    "plugin {0} switched off - takes effect after a restart": "Plugin {0} ausgeschaltet - wirkt nach einem Neustart",
+    "plugin {0} switched on - takes effect after a restart": "Plugin {0} eingeschaltet - wirkt nach einem Neustart",
+    "we offered {0} item(s) to {1}, with a trade token: ": "wir haben {1} {0} Gegenstände angeboten, mit Handelstoken: ",
+    "we offered {0} item(s) to {1}, with no trade token: ": "wir haben {1} {0} Gegenstände angeboten, ohne Handelstoken: ",
+    "{0} are past the refund window - free to play again": "{0} sind außerhalb der Rückerstattungsfrist - wieder spielbar",
+    "{0} is past the refund window - free to play again": "{0} ist außerhalb der Rückerstattungsfrist - wieder spielbar",
+    "── daily report · last 24h ──": "── Tagesbericht · letzte 24 Std. ──",
+    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── Tagesbericht · letzte 24 Std. · der erste, ab hier zählt \"verbucht\" ──"
   },
   "settings": {
     "WebEnabled": {
@@ -1636,9 +1656,9 @@
       "label": "Einem Preis vertrauen fuer",
       "tip": "Wie viele Stunden ein Preis behalten wird, bevor neu gefragt wird. Laenger heisst deutlich weniger Anfragen - das ist die eigentliche Kur gegen die Drosselung - dafuer bewegen sich die Werte traeger. Karten- und Gegenstandspreise aendern sich von Tag zu Tag kaum, 24 reicht meist."
     },
-    "Rep4RepPauseDays": {
-      "label": "Kommentare anhalten für",
-      "tip": "Hört auf jedem Konto vollständig mit dem Kommentieren auf, für so viele Tage, und macht danach von selbst weiter. Einstellen und vergessen - der Countdown übersteht einen Neustart und löscht sich selbst, wenn er abläuft, du musst also nichts wieder einschalten. 0 heißt, es wird nichts angehalten. Tageslimit und Zeitplan bleiben unberührt; das hier setzt einfach das Ganze aus."
+    "Rep4RepPauseHours": {
+      "label": "Kommentare anhalten für (Stunden)",
+      "tip": "Hört auf jedem Konto vollständig mit dem Kommentieren auf, für so viele Stunden, und macht danach von selbst weiter. 24 ist ein Tag, 48 sind zwei - und alles dazwischen geht auch, eine 27-Stunden-Pause ist einfach 27. Einstellen und vergessen: der Countdown übersteht einen Neustart, zählt ab dem Setzen und nicht ab dem letzten Speichern, und löscht sich selbst, wenn er abläuft. 0 heißt, es wird nichts angehalten. Tageslimit und Zeitplan bleiben unberührt; das hier setzt einfach alles aus, und jedes Konto kommt sauber bei 0/10 zurück."
     }
   }
 }

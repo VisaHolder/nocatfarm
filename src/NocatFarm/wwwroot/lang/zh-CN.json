@@ -954,7 +954,27 @@
     "rep4rep commenting held for {0} day(s) - back on {1}": "rep4rep 评论暂停 {0} 天 —— {1} 恢复",
     "rep4rep hold lifted - commenting resumes on its own schedule": "rep4rep 暂停已解除 —— 评论按原计划继续",
     "the rep4rep hold has run out - commenting resumes": "rep4rep 暂停已到期 —— 评论恢复",
-    "the rep4rep hold has run out - starting fresh at 0/{0}": "rep4rep 暂停已到期 —— 从 0/{0} 重新开始"
+    "the rep4rep hold has run out - starting fresh at 0/{0}": "rep4rep 暂停已到期 —— 从 0/{0} 重新开始",
+    "short break": "短暂休息",
+    "rep4rep commenting held for {0}h - back on {1}": "rep4rep 评论暂停 {0} 小时 —— {1} 恢复",
+    "  (this PC only - no password set)": "  （仅本机 —— 未设置密码）",
+    "achievement boost - {0} game(s) worth hunting": "成就加速 —— {0} 款值得猎取的游戏",
+    "achievement boost - {0} game(s) worth hunting ({1} shared with this account)": "成就加速 —— {0} 款值得猎取的游戏（其中 {1} 款共享给该账号）",
+    "activated a queued key  ({0} left in the queue)": "已激活队列中的一个密钥（队列中还剩 {0} 个）",
+    "activated a queued key - package(s) {0}  ({1} left in the queue)": "已激活队列中的一个密钥 —— 包 {0}（队列中还剩 {1} 个）",
+    "games-played not sent - paused": "未发送在玩游戏 —— 已暂停",
+    "games-played not sent - you're using the account": "未发送在玩游戏 —— 你正在使用该账号",
+    "leaving {0} alone - still refundable": "不动 {0} —— 仍可退款",
+    "library: {0} game(s) owned": "库：拥有 {0} 款游戏",
+    "library: {0} game(s) owned, {1} shared by the family": "库：拥有 {0} 款游戏，家庭共享 {1} 款",
+    "plugin {0} switched off - takes effect after a restart": "插件 {0} 已关闭 —— 重启后生效",
+    "plugin {0} switched on - takes effect after a restart": "插件 {0} 已开启 —— 重启后生效",
+    "we offered {0} item(s) to {1}, with a trade token: ": "我们向 {1} 提供了 {0} 件物品，带交易令牌：",
+    "we offered {0} item(s) to {1}, with no trade token: ": "我们向 {1} 提供了 {0} 件物品，无交易令牌：",
+    "{0} are past the refund window - free to play again": "{0} 已过退款期 —— 可以再玩了",
+    "{0} is past the refund window - free to play again": "{0} 已过退款期 —— 可以再玩了",
+    "── daily report · last 24h ──": "── 每日报告 · 最近 24 小时 ──",
+    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── 每日报告 · 最近 24 小时 · 第一份，从此开始计算\"累计\" ──"
   },
   "settings": {
     "WebEnabled": {
@@ -1636,9 +1656,9 @@
       "label": "价格信任时长",
       "tip": "取得的价格在重新查询前保留多少小时。时间越长，请求就少得多——这才是限流的真正解法——代价是估值变化反映得更慢。卡牌和物品的价格逐日变化不大，所以 24 通常足够。"
     },
-    "Rep4RepPauseDays": {
-      "label": "暂停评论",
-      "tip": "在所有账号上完全停止评论，持续这么多天，然后自行继续。设好就不用管 —— 倒计时能挺过重启，到期后会自动清零，你不必再手动打开什么。0 表示没有暂停。每日上限和排程都不受影响；这只是把整件事先搁一搁。"
+    "Rep4RepPauseHours": {
+      "label": "暂停评论（小时）",
+      "tip": "在所有账号上完全停止评论，持续这么多小时，然后自行继续。24 是一天，48 是两天，中间任意数值都可以 —— 27 小时的暂停就填 27。设好就不用管：倒计时能挺过重启，从你设置的那一刻起算而非上次保存，到期后自动清零。0 表示没有暂停。每日上限和排程都不受影响；这只是把整件事先搁一搁，每个账号都会以干净的 0/10 回来。"
     }
   }
 }

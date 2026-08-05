@@ -123,7 +123,9 @@ public static class DailyReport {
 			lines.Add(row);
 		}
 
-		Log.Good(new Said("── daily report · last 24h{0} ──", (first ? " · first one, 'banked' counts from here on" : "")), "report");
+		Log.Good(first
+			? new Said("── daily report · last 24h · first one, 'banked' counts from here on ──")
+			: new Said("── daily report · last 24h ──"), "report");
 		foreach (Said line in lines) {
 			Log.Info(line, "report");
 		}

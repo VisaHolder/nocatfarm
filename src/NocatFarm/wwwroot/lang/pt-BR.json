@@ -954,7 +954,27 @@
     "rep4rep commenting held for {0} day(s) - back on {1}": "comentários do rep4rep em espera por {0} dia(s) - voltam em {1}",
     "rep4rep hold lifted - commenting resumes on its own schedule": "espera do rep4rep removida - os comentários voltam ao próprio cronograma",
     "the rep4rep hold has run out - commenting resumes": "a espera do rep4rep acabou - os comentários voltam",
-    "the rep4rep hold has run out - starting fresh at 0/{0}": "a espera do rep4rep acabou - recomeçando do zero em 0/{0}"
+    "the rep4rep hold has run out - starting fresh at 0/{0}": "a espera do rep4rep acabou - recomeçando do zero em 0/{0}",
+    "short break": "pausa curta",
+    "rep4rep commenting held for {0}h - back on {1}": "comentários do rep4rep em espera por {0}h - voltam em {1}",
+    "  (this PC only - no password set)": "  (somente este PC - sem senha)",
+    "achievement boost - {0} game(s) worth hunting": "impulso de conquistas - {0} jogo(s) que valem a caça",
+    "achievement boost - {0} game(s) worth hunting ({1} shared with this account)": "impulso de conquistas - {0} jogo(s) que valem a caça ({1} compartilhados com esta conta)",
+    "activated a queued key  ({0} left in the queue)": "uma chave da fila foi ativada  ({0} restantes na fila)",
+    "activated a queued key - package(s) {0}  ({1} left in the queue)": "uma chave da fila foi ativada - pacote(s) {0}  ({1} restantes na fila)",
+    "games-played not sent - paused": "jogos em execução não enviados - pausado",
+    "games-played not sent - you're using the account": "jogos em execução não enviados - você está usando a conta",
+    "leaving {0} alone - still refundable": "deixando {0} em paz - ainda reembolsável",
+    "library: {0} game(s) owned": "biblioteca: {0} jogo(s) na conta",
+    "library: {0} game(s) owned, {1} shared by the family": "biblioteca: {0} jogo(s) na conta, {1} compartilhados pela família",
+    "plugin {0} switched off - takes effect after a restart": "plugin {0} desligado - efeito após reiniciar",
+    "plugin {0} switched on - takes effect after a restart": "plugin {0} ligado - efeito após reiniciar",
+    "we offered {0} item(s) to {1}, with a trade token: ": "oferecemos {0} item(ns) a {1}, com token de troca: ",
+    "we offered {0} item(s) to {1}, with no trade token: ": "oferecemos {0} item(ns) a {1}, sem token de troca: ",
+    "{0} are past the refund window - free to play again": "{0} estão fora do prazo de reembolso - livres para jogar de novo",
+    "{0} is past the refund window - free to play again": "{0} está fora do prazo de reembolso - livre para jogar de novo",
+    "── daily report · last 24h ──": "── relatório diário · últimas 24 h ──",
+    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── relatório diário · últimas 24 h · o primeiro, \"acumulado\" conta a partir daqui ──"
   },
   "settings": {
     "WebEnabled": {
@@ -1636,9 +1656,9 @@
       "label": "Confiar num preco por",
       "tip": "Quantas horas um preco e mantido antes de ser consultado de novo. Mais tempo significa muito menos requisicoes - que e a cura real para o limite - ao custo de valores que se movem mais devagar. Precos de cartas e itens mudam pouco de um dia para o outro, entao 24 costuma bastar."
     },
-    "Rep4RepPauseDays": {
-      "label": "Pausar comentários por",
-      "tip": "Interrompe completamente os comentários em todas as contas por estes dias e depois segue sozinho. Configure e esqueça - a contagem sobrevive a um reinício e se limpa ao terminar, então você não precisa religar nada. 0 significa que nada está em espera. O teto diário e o cronograma não são tocados; isto apenas deixa tudo passar."
+    "Rep4RepPauseHours": {
+      "label": "Pausar comentários por (horas)",
+      "tip": "Interrompe completamente os comentários em todas as contas por estas horas e depois segue sozinho. 24 é um dia, 48 são dois - e qualquer valor entre eles vale: uma pausa de 27 horas é só 27. Configure e esqueça: a contagem sobrevive a um reinício, conta a partir de quando você define e não do último salvamento, e se limpa ao terminar. 0 significa nada em espera. O teto diário e o cronograma não são tocados; isto apenas deixa passar, e cada conta volta limpa em 0/10."
     }
   }
 }

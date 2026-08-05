@@ -2090,7 +2090,9 @@ public sealed class Bot : IAsyncDisposable {
 		bool clearing = (appIds.Count == 0) && string.IsNullOrWhiteSpace(overrideName ?? CustomName);
 
 		if (!clearing && (PlayingBlocked || Paused)) {
-			Log.Debug(new Said("games-played not sent - {0}", (PlayingBlocked ? "you're using the account" : "paused")), Name);
+			Log.Debug(PlayingBlocked
+					? new Said("games-played not sent - you're using the account")
+					: new Said("games-played not sent - paused"), Name);
 
 			return;
 		}

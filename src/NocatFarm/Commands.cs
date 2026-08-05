@@ -1936,10 +1936,10 @@ public static partial class Commands {
 			// Counting days down at runtime would restart the count on every launch, so a two-day hold on a
 			// machine that reboots nightly would never end. A stored deadline cannot drift: it either has
 			// passed or it has not.
-			case "Rep4RepPauseDays": {
-				int days = Live.Global.Rep4RepPauseDays;
+			case "Rep4RepPauseHours": {
+				int hours = Live.Global.Rep4RepPauseHours;
 
-				if (days <= 0) {
+				if (hours <= 0) {
 					if (Live.Global.Rep4RepHoldUntil != null) {
 						Live.Global.Rep4RepHoldUntil = null;
 						Live.Global.Rep4RepHoldFrom = null;
@@ -1956,14 +1956,14 @@ public static partial class Commands {
 				// setting was touched - a two-day hold plus a theme change an hour later became two days from
 				// then. From a fixed start, saving the same number is a no-op and changing it moves only the end.
 				DateTime from = Live.Global.Rep4RepHoldFrom ?? DateTime.UtcNow;
-				DateTime until = from.AddDays(days);
+				DateTime until = from.AddHours(hours);
 
 				if ((Live.Global.Rep4RepHoldFrom != from) || (Live.Global.Rep4RepHoldUntil != until)) {
 					Live.Global.Rep4RepHoldFrom = from;
 					Live.Global.Rep4RepHoldUntil = until;
 					ConfigStore.SaveGlobal(Live.Global);
-					Log.Info(new Said("rep4rep commenting held for {0} day(s) - back on {1}",
-						days, (Func<string>) (() => Fmt.Clock(until))));
+					Log.Info(new Said("rep4rep commenting held for {0}h - back on {1}",
+						hours, (Func<string>) (() => Fmt.Clock(until))));
 				}
 
 				break;

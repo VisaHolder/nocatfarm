@@ -954,7 +954,27 @@
     "rep4rep commenting held for {0} day(s) - back on {1}": "comentarios de rep4rep en pausa {0} día(s) - vuelve el {1}",
     "rep4rep hold lifted - commenting resumes on its own schedule": "pausa de rep4rep levantada - los comentarios siguen su horario",
     "the rep4rep hold has run out - commenting resumes": "la pausa de rep4rep ha terminado - los comentarios se reanudan",
-    "the rep4rep hold has run out - starting fresh at 0/{0}": "la pausa de rep4rep ha terminado - empezando de cero en 0/{0}"
+    "the rep4rep hold has run out - starting fresh at 0/{0}": "la pausa de rep4rep ha terminado - empezando de cero en 0/{0}",
+    "short break": "descanso corto",
+    "rep4rep commenting held for {0}h - back on {1}": "comentarios de rep4rep en pausa {0}h - vuelven el {1}",
+    "  (this PC only - no password set)": "  (solo este PC - sin contraseña)",
+    "achievement boost - {0} game(s) worth hunting": "impulso de logros - {0} juego(s) que vale la pena cazar",
+    "achievement boost - {0} game(s) worth hunting ({1} shared with this account)": "impulso de logros - {0} juego(s) que vale la pena cazar ({1} compartidos con esta cuenta)",
+    "activated a queued key  ({0} left in the queue)": "se activó una clave en cola  ({0} quedan en la cola)",
+    "activated a queued key - package(s) {0}  ({1} left in the queue)": "se activó una clave en cola - paquete(s) {0}  ({1} quedan en la cola)",
+    "games-played not sent - paused": "juegos jugados no enviados - en pausa",
+    "games-played not sent - you're using the account": "juegos jugados no enviados - estás usando la cuenta",
+    "leaving {0} alone - still refundable": "dejando {0} en paz - aún reembolsable",
+    "library: {0} game(s) owned": "biblioteca: {0} juego(s) en propiedad",
+    "library: {0} game(s) owned, {1} shared by the family": "biblioteca: {0} juego(s) en propiedad, {1} compartidos por la familia",
+    "plugin {0} switched off - takes effect after a restart": "complemento {0} desactivado - surte efecto tras reiniciar",
+    "plugin {0} switched on - takes effect after a restart": "complemento {0} activado - surte efecto tras reiniciar",
+    "we offered {0} item(s) to {1}, with a trade token: ": "ofrecimos {0} objeto(s) a {1}, con token de intercambio: ",
+    "we offered {0} item(s) to {1}, with no trade token: ": "ofrecimos {0} objeto(s) a {1}, sin token de intercambio: ",
+    "{0} are past the refund window - free to play again": "{0} están fuera del plazo de reembolso - libres para jugar de nuevo",
+    "{0} is past the refund window - free to play again": "{0} está fuera del plazo de reembolso - libre para jugar de nuevo",
+    "── daily report · last 24h ──": "── informe diario · últimas 24 h ──",
+    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── informe diario · últimas 24 h · el primero, \"acumulado\" cuenta desde aquí ──"
   },
   "settings": {
     "WebEnabled": {
@@ -1636,9 +1656,9 @@
       "label": "Confiar en un precio durante",
       "tip": "Cuantas horas se guarda un precio antes de volver a preguntar. Mas tiempo significa muchas menos peticiones - que es la cura real contra el limite - a cambio de que los valores se muevan mas despacio. Los precios de cromos y objetos apenas cambian de un dia a otro, asi que 24 suele bastar."
     },
-    "Rep4RepPauseDays": {
-      "label": "Pausar comentarios durante",
-      "tip": "Detiene por completo los comentarios en todas las cuentas durante estos días y luego continúa solo. Ponlo y olvídate: la cuenta atrás sobrevive a un reinicio y se borra al terminar, así que no tienes que volver a activar nada. 0 significa que no hay pausa. El tope diario y el horario no se tocan; esto simplemente lo deja pasar."
+    "Rep4RepPauseHours": {
+      "label": "Pausar comentarios durante (horas)",
+      "tip": "Detiene por completo los comentarios en todas las cuentas durante estas horas y luego continúa solo. 24 es un día, 48 son dos, y cualquier valor intermedio vale: una pausa de 27 horas es simplemente 27. Ponlo y olvídate: la cuenta atrás sobrevive a un reinicio, se mide desde que lo pones y no desde el último guardado, y se borra al terminar. 0 significa que no hay pausa. El tope diario y el horario no se tocan; esto solo lo deja pasar, y cada cuenta vuelve limpia a 0/10."
     }
   }
 }
