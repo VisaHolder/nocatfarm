@@ -78,6 +78,9 @@ public sealed class MainWindow : IDisposable {
 	private readonly Func<string> _url;
 	private readonly Action _exit;
 	private readonly List<LogLine> _log = [];
+
+	/// <summary>Consecutive failed paints, so a persistent one gets said out loud instead of only to the file.</summary>
+	private int _paintFailures;
 	private readonly Lock _logGate = new();
 
 	private IntPtr _hwnd;
@@ -910,8 +913,17 @@ public sealed class MainWindow : IDisposable {
 		}
 
 			BitBlt(dc, 0, 0, _w, _h, mem, 0, 0, SrcCopy);
+			_paintFailures = 0;
 		} catch (Exception e) {
-			Log.Debug(new Said("paint failed: {0}: {1}", e.GetType().Name, e.Message));
+			// A paint that fails ONCE is a resize landing mid-draw and the next tick fixes it. A paint that
+			// keeps failing is a window drawing nothing, and at Debug that is invisible: the log said nothing
+			// at all unless you had debug detail switched on, so the window simply looked dead. Say it out
+			// loud once the failures stop being a blip, and say it only once so the log is not a wall.
+			if (++_paintFailures == 5) {
+				Log.Error(new Said("the window can't draw ({0}: {1}) - the dashboard still works", e.GetType().Name, e.Message));
+			} else if (_paintFailures < 5) {
+				Log.Debug(new Said("paint failed: {0}: {1}", e.GetType().Name, e.Message));
+			}
 		} finally {
 			SelectObject(mem, old);
 			DeleteObject(bmp);
