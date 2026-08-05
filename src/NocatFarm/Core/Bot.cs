@@ -279,6 +279,11 @@ public sealed class Bot : IAsyncDisposable {
 	/// </summary>
 	public string PersonaWord => Word(EffectivePersona);
 
+	/// <summary>
+	/// The persona as a word, in English on purpose - plugins read it as a stable value, and the code tests it
+	/// against "online" and "invisible". Anything showing it to a person must wrap it in a Said, or the word
+	/// rides untranslated inside a translated sentence: "现在显示为 invisible".
+	/// </summary>
 	private static string Word(int persona) => persona switch {
 		0 => "offline",
 		1 => "online",
@@ -642,7 +647,7 @@ public sealed class Bot : IAsyncDisposable {
 			// Backing off starts NOW, not after the ninety seconds the message waits for. Those ninety seconds
 			// exist so a stale first echo cannot produce a wrong headline - they are not a licence to keep
 			// signing somebody out of their friends list while we make up our mind.
-			Log.Debug(new Said("something else is setting this account's persona (it says {0}, we asked for {1}) - backing off", Word((int) PersonaAsSeen), Word(EffectivePersona)), Name);
+			Log.Debug(new Said("something else is setting this account's persona (it says {0}, we asked for {1}) - backing off", new Said(Word((int) PersonaAsSeen)), new Said(Word(EffectivePersona))), Name);
 		}
 
 		string seen = cb.GameName ?? "";
@@ -2393,9 +2398,9 @@ public sealed class Bot : IAsyncDisposable {
 				// line of its own, so on that account this bare "now appearing away / invisible" only clutters it.
 				// Debug keeps the trace; other accounts (no narrator) keep it visible.
 				if (HumanOwned) {
-					Log.Debug(new Said("now appearing {0}", Word(state)), Name);
+					Log.Debug(new Said("now appearing {0}", new Said(Word(state))), Name);
 				} else {
-					Log.Info(new Said("now appearing {0}", Word(state)), Name);
+					Log.Info(new Said("now appearing {0}", new Said(Word(state))), Name);
 				}
 			}
 
