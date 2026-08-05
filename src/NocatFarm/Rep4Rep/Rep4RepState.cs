@@ -68,6 +68,27 @@ public sealed class Rep4RepState {
 		}
 	}
 
+	/// <summary>Wipe everything a hold should leave behind, so commenting restarts from nothing.</summary>
+	/// <remarks>
+	/// The rolling window would empty itself over a hold of a day or more, but the rest of it would not: a
+	/// strike count, a block, and a list of dead targets would all still be sitting there when commenting
+	/// came back, so "fresh" would have meant "fresh except for every reason it had to hold off".
+	///
+	/// The LEARNED cap is deliberately kept. It is not our state - it is a ceiling Steam handed us, and
+	/// forgetting it means re-discovering it the only way there is, by having a comment refused. Everything
+	/// else here is ours and goes.
+	/// </remarks>
+	public void ResetForFreshStart() {
+		lock (_sync) {
+			Posts.Clear();
+			PostedTasks.Clear();
+			DeadTargets.Clear();
+			Strikes = 0;
+			BlockedUntil = 0;
+			BlockReason = "";
+		}
+	}
+
 	public bool HasPostedTask(string taskId) {
 		lock (_sync) {
 			return PostedTasks.ContainsKey(taskId);

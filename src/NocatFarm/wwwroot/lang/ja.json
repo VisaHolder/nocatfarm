@@ -949,7 +949,12 @@
     " · {0} run by nocat.farm": " · nocat.farmでの稼働{0}",
     "couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten": "累計時間を読み込めませんでした ({0}: {1}) - 上書きはしません",
     "the lifetime totals could not be read this run - not writing over them": "今回の実行では累計時間を読み込めませんでした - 上書きしません",
-    "nothing to record - leaving the existing lifetime totals alone": "記録するものがありません - 既存の累計時間はそのままにします"
+    "nothing to record - leaving the existing lifetime totals alone": "記録するものがありません - 既存の累計時間はそのままにします",
+    "on hold until {0}": "{0}まで保留中",
+    "rep4rep commenting held for {0} day(s) - back on {1}": "rep4repのコメントを{0}日間保留 - {1}に再開",
+    "rep4rep hold lifted - commenting resumes on its own schedule": "rep4repの保留を解除 - コメントは通常の予定に戻ります",
+    "the rep4rep hold has run out - commenting resumes": "rep4repの保留期間が終了 - コメントを再開します",
+    "the rep4rep hold has run out - starting fresh at 0/{0}": "rep4repの保留期間が終了 - 0/{0}から再開します"
   },
   "settings": {
     "WebEnabled": {
@@ -1630,6 +1635,10 @@
     "PriceCacheHours": {
       "label": "価格を信頼する時間",
       "tip": "取得した価格を何時間そのまま使うか。長くするとリクエスト数が大幅に減り、これが制限への本当の対処になりますが、その分だけ評価額の反映は遅くなります。カードやアイテムの価格は日ごとに大きくは動かないので、24 で十分なことがほとんどです。"
+    },
+    "Rep4RepPauseDays": {
+      "label": "コメントを保留する期間",
+      "tip": "すべてのアカウントでコメントを完全に停止し、この日数が過ぎたら自分で再開します。設定したら放っておけます - カウントダウンは再起動しても続き、期限が来ると自動的に消えるので、何かを戻す必要はありません。0は保留なしです。日次上限や予定はそのままで、これは全体を単に見送るだけです。"
     }
   }
 }

@@ -949,7 +949,12 @@
     " · {0} run by nocat.farm": " · {0} ejecutado por nocat.farm",
     "couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten": "no se pudieron leer los totales acumulados ({0}: {1}) - no se sobrescribirán",
     "the lifetime totals could not be read this run - not writing over them": "no se pudieron leer los totales acumulados en esta ejecución - no se sobrescriben",
-    "nothing to record - leaving the existing lifetime totals alone": "nada que registrar - se dejan intactos los totales acumulados existentes"
+    "nothing to record - leaving the existing lifetime totals alone": "nada que registrar - se dejan intactos los totales acumulados existentes",
+    "on hold until {0}": "en pausa hasta {0}",
+    "rep4rep commenting held for {0} day(s) - back on {1}": "comentarios de rep4rep en pausa {0} día(s) - vuelve el {1}",
+    "rep4rep hold lifted - commenting resumes on its own schedule": "pausa de rep4rep levantada - los comentarios siguen su horario",
+    "the rep4rep hold has run out - commenting resumes": "la pausa de rep4rep ha terminado - los comentarios se reanudan",
+    "the rep4rep hold has run out - starting fresh at 0/{0}": "la pausa de rep4rep ha terminado - empezando de cero en 0/{0}"
   },
   "settings": {
     "WebEnabled": {
@@ -1630,6 +1635,10 @@
     "PriceCacheHours": {
       "label": "Confiar en un precio durante",
       "tip": "Cuantas horas se guarda un precio antes de volver a preguntar. Mas tiempo significa muchas menos peticiones - que es la cura real contra el limite - a cambio de que los valores se muevan mas despacio. Los precios de cromos y objetos apenas cambian de un dia a otro, asi que 24 suele bastar."
+    },
+    "Rep4RepPauseDays": {
+      "label": "Pausar comentarios durante",
+      "tip": "Detiene por completo los comentarios en todas las cuentas durante estos días y luego continúa solo. Ponlo y olvídate: la cuenta atrás sobrevive a un reinicio y se borra al terminar, así que no tienes que volver a activar nada. 0 significa que no hay pausa. El tope diario y el horario no se tocan; esto simplemente lo deja pasar."
     }
   }
 }

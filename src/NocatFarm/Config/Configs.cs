@@ -68,6 +68,27 @@ public sealed class GlobalConfig {
 	public bool Rep4RepAutoAddProfiles { get; set; } = true;
 	public int Rep4RepPointsRefreshMinutes { get; set; } = 15;
 
+	/// <summary>How many days to hold all commenting for. 0 is "not holding"; it clears itself when it expires.</summary>
+	public int Rep4RepPauseDays { get; set; }
+
+	/// <summary>
+	/// When the hold ends, worked out once from Rep4RepPauseDays rather than counted down.
+	/// </summary>
+	/// <remarks>
+	/// Stored rather than recomputed because "pause for two days" has to survive a restart, and a plain day
+	/// counter would restart its two days every time the app came up - which is the one thing a hold must not
+	/// do. Null means nothing is being held.
+	/// </remarks>
+	public DateTime? Rep4RepHoldUntil { get; set; }
+
+	/// <summary>When the hold began, so its end can be recomputed without moving it.</summary>
+	/// <remarks>
+	/// Without this the deadline was worked out as "now + days" every time ANY global setting was saved, so
+	/// changing the theme an hour into a two-day hold quietly restarted the two days. Anchored to a start,
+	/// saving the same number over and over lands on the same end, and changing the number moves only the end.
+	/// </remarks>
+	public DateTime? Rep4RepHoldFrom { get; set; }
+
 	// ── steam connection ──
 	public int LoginStaggerSeconds { get; set; } = 12;
 	public int ReconnectDelaySeconds { get; set; } = 10;

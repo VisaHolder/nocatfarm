@@ -949,7 +949,12 @@
     " · {0} run by nocat.farm": " · nocat.farm 가동 {0}",
     "couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten": "누적 합계를 읽지 못했습니다 ({0}: {1}) - 덮어쓰지 않습니다",
     "the lifetime totals could not be read this run - not writing over them": "이번 실행에서는 누적 합계를 읽지 못했습니다 - 덮어쓰지 않습니다",
-    "nothing to record - leaving the existing lifetime totals alone": "기록할 것이 없습니다 - 기존 누적 합계를 그대로 둡니다"
+    "nothing to record - leaving the existing lifetime totals alone": "기록할 것이 없습니다 - 기존 누적 합계를 그대로 둡니다",
+    "on hold until {0}": "{0}까지 보류 중",
+    "rep4rep commenting held for {0} day(s) - back on {1}": "rep4rep 댓글을 {0}일간 보류 - {1}에 재개",
+    "rep4rep hold lifted - commenting resumes on its own schedule": "rep4rep 보류 해제 - 댓글이 원래 일정대로 재개됩니다",
+    "the rep4rep hold has run out - commenting resumes": "rep4rep 보류 기간이 끝났습니다 - 댓글을 재개합니다",
+    "the rep4rep hold has run out - starting fresh at 0/{0}": "rep4rep 보류 기간이 끝났습니다 - 0/{0}부터 새로 시작합니다"
   },
   "settings": {
     "WebEnabled": {
@@ -1630,6 +1635,10 @@
     "PriceCacheHours": {
       "label": "가격을 신뢰하는 시간",
       "tip": "가져온 가격을 몇 시간 동안 그대로 쓸지입니다. 길게 잡으면 요청 수가 크게 줄어 제한에 대한 실질적인 해결책이 되지만, 그만큼 가치 변화가 느리게 반영됩니다. 카드와 아이템 가격은 하루 사이에 크게 변하지 않으므로 보통 24면 충분합니다."
+    },
+    "Rep4RepPauseDays": {
+      "label": "댓글 보류 기간",
+      "tip": "모든 계정에서 댓글을 완전히 중단하고, 이 일수가 지나면 스스로 다시 시작합니다. 설정해 두고 잊으면 됩니다 - 카운트다운은 재시작해도 이어지고 끝나면 알아서 지워지므로 다시 켤 필요가 없습니다. 0은 보류 없음입니다. 일일 한도와 일정은 건드리지 않으며, 그저 전체를 쉬어갈 뿐입니다."
     }
   }
 }

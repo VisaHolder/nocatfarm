@@ -114,6 +114,76 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	// whole feature be turned off site-wide without touching every account.
 	private bool CommentingOn => Live.Global.Rep4RepEnabled && Bot.Cfg.Rep4Rep;
 
+	/// <summary>Whether a hold is in force. A pure read - expiring one is SettleHoldAsync's job.</summary>
+	private static bool HoldActive => (Live.Global.Rep4RepHoldUntil is { } until) && (DateTime.UtcNow < until);
+
+	/// <summary>The hold deadline this account has already cleaned up after. Null means none yet.</summary>
+	private DateTime? _settled;
+
+	/// <summary>How long an expired hold is left in the config before the first account tidies it away.</summary>
+	/// <remarks>
+	/// Long enough for every account to have ticked at least once and reset itself. Clear the deadline the
+	/// instant it passes and whichever account notices first erases the only evidence the others had, so they
+	/// come back still carrying every strike, block and dead target from before the hold.
+	/// </remarks>
+	private static readonly TimeSpan TidyGrace = TimeSpan.FromMinutes(2);
+
+	/// <summary>Roughly when this run began - modules are all constructed together at startup.</summary>
+	/// <remarks>
+	/// The tidy has to wait for it as well as for the deadline. On a start AFTER a hold expired, the deadline
+	/// is already long past, so the first module to load would reset itself and erase the deadline in the same
+	/// pass - and the other accounts, loading a second later, would find nothing left to tell them a hold had
+	/// happened. Waiting for the app itself to have been up a couple of minutes gives every account its turn.
+	/// </remarks>
+	private static readonly DateTime Started = DateTime.UtcNow;
+
+	/// <summary>Set once the hold has been tidied away, so three accounts do not all rewrite the same file.</summary>
+	private static int _tidied;
+
+	/// <summary>
+	/// Put this account back to a clean slate once a hold has passed, then tidy the hold away.
+	/// </summary>
+	/// <remarks>
+	/// Keyed on the DEADLINE, not on whether this account watched the hold happen. An account that was still
+	/// settling in when the hold was set - or an app that was closed for the whole of it - never observed one,
+	/// and a flag-based version left those accounts un-reset and the setting stuck on "2 days" with nothing
+	/// left to expire it.
+	/// </remarks>
+	private async Task SettleHoldAsync() {
+		if (Live.Global.Rep4RepHoldUntil is not { } end) {
+			return;
+		}
+
+		DateTime now = DateTime.UtcNow;
+
+		if (now < end) {
+			return;   // still holding - not our business
+		}
+
+		if (_settled != end) {
+			_settled = end;
+
+			if (_state != null) {
+				_state.ResetForFreshStart();
+				await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
+			}
+
+			Log.Info(new Said("the rep4rep hold has run out - starting fresh at 0/{0}", Cap), Bot.Name);
+		}
+
+		// Whichever account gets here after the grace tidies up for everybody. Deliberately NOT pinned to the
+		// first account: that made clearing the setting depend on one particular account being enabled and out
+		// of its settle-in window, so a hold could sit there expired indefinitely because account one happened
+		// to be stopped. Clearing is idempotent, so it does not matter who does it or how often.
+		if ((now >= end + TidyGrace) && (now - Started >= TidyGrace)
+			&& (Interlocked.Exchange(ref _tidied, 1) == 0)) {
+			Live.Global.Rep4RepHoldUntil = null;
+			Live.Global.Rep4RepHoldFrom = null;
+			Live.Global.Rep4RepPauseDays = 0;
+			ConfigStore.SaveGlobal(Live.Global);
+		}
+	}
+
 	protected override async Task RunAsync(CancellationToken ct) {
 		// The loop stays alive whether or not commenting is switched on, so flipping it on (or pasting the API
 		// token) takes effect on its own instead of needing the account restarted.
@@ -130,6 +200,13 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		}
 
 		_state = await Rep4RepState.LoadAsync(Bot.Name).ConfigureAwait(false);
+
+		// Before the settle-in wait, not after it.
+		//
+		// A hold that ran out while the app was closed should be tidied away the moment the state is loaded.
+		// Down in the loop it sat behind up to ten minutes of settling in first, so a restart showed a
+		// finished hold still in force - and if the app was only up briefly, it never cleared at all.
+		await SettleHoldAsync().ConfigureAwait(false);
 
 		// Settle after login. Commenting in the same minute as the logon, every restart, is a pattern.
 		//
@@ -152,6 +229,20 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 				continue;
 			}
+
+			// A hold sits the whole thing out. Nothing is posted, nothing is retried, and when it lifts the
+			// account starts from nothing rather than from whatever it was in the middle of.
+			if (HoldActive) {
+				_status = new Said("on hold until {0}", (Func<string>) (() => Fmt.Clock(Live.Global.Rep4RepHoldUntil ?? DateTime.UtcNow)));
+
+				if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
+					return;
+				}
+
+				continue;
+			}
+
+			await SettleHoldAsync().ConfigureAwait(false);
 
 			int waitSeconds;
 
