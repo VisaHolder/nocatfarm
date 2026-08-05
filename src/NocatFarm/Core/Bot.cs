@@ -2120,10 +2120,20 @@ public sealed class Bot : IAsyncDisposable {
 		// worse - the idler's own re-assert landed inside the gap, superseded the second half, and left the
 		// account announcing nothing at all. Stopping first cannot do that: the worst case is two seconds of
 		// nothing, and the sequence guard makes even that impossible to leave behind.
+		// The comment above says the shortcut wins at login because everything starts at once. It does not,
+		// reliably: Steam picks, and it picked Counter-Strike 2. The account signed in showing the real game
+		// and only flipped to the custom name six seconds later, when the list happened to change and the
+		// relaunch below fired for its own reasons. Every login had that window; it just took somebody
+		// watching the friends list at the right moment to see it.
+		//
+		// So the FIRST announce of a session takes the same path as a changed list. There is nothing to stop
+		// yet - the account only just logged on - so the empty message costs nothing, and the two-second gap
+		// shows nothing rather than showing the wrong thing.
 		bool relaunch = !string.IsNullOrWhiteSpace(label)
 			&& (apps.Count > 0)
 			&& (force
-				|| ((_announcedApps != null) && !_announcedApps.SequenceEqual(apps))
+				|| (_announcedApps == null)                                       // first announce after logon
+				|| !_announcedApps.SequenceEqual(apps)
 				|| ((_announcedLabel != null) && (_announcedLabel != label)));   // name just turned on - put it on top
 
 		// Captured before _announcedApps is overwritten below - the persona re-apply further down needs to

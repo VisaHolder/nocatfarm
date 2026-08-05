@@ -21,7 +21,9 @@ public sealed class LiveConsole : IDisposable {
 
 	private readonly BotManager _mgr;
 	private readonly Lock _paint = new();
-	private readonly List<string> _recent = [];
+	// Entries, not formatted lines. Formatting on arrival froze each row in the language it was logged in,
+	// so a language change left the six rows already on screen untouched - the same mistake the window made.
+	private readonly List<Log.Entry> _recent = [];
 	private CancellationTokenSource? _cts;
 	private string _input = "";
 	private int _lastHeight;
@@ -45,7 +47,7 @@ public sealed class LiveConsole : IDisposable {
 		Log.Written += OnLogged;
 
 		foreach (Log.Entry entry in Log.Recent(LogLines)) {
-			_recent.Add(Format(entry));
+			_recent.Add(entry);
 		}
 
 		_cts = new CancellationTokenSource();
@@ -78,6 +80,9 @@ public sealed class LiveConsole : IDisposable {
 			}
 		}, ct);
 	}
+
+	/// <summary>Redraw now. Used when something off-screen changed what the rows should say - a new language.</summary>
+	public void Repaint() => Paint();
 
 	/// <summary>The line being typed, so a repaint doesn't wipe it out from under the user.</summary>
 	public void SetInput(string text) {
@@ -113,7 +118,7 @@ public sealed class LiveConsole : IDisposable {
 
 	private void OnLogged(Log.Entry entry) {
 		lock (_recent) {
-			_recent.Add(Format(entry));
+			_recent.Add(entry);
 
 			while (_recent.Count > LogLines) {
 				_recent.RemoveAt(0);
@@ -178,8 +183,8 @@ public sealed class LiveConsole : IDisposable {
 			Line("");
 
 			lock (_recent) {
-				foreach (string entry in _recent) {
-					Line(Dim("  " + entry));
+				foreach (Log.Entry entry in _recent) {
+					Line(Dim("  " + Format(entry)));
 				}
 
 				for (int i = _recent.Count; i < LogLines; i++) {

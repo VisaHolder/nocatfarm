@@ -128,7 +128,20 @@ public sealed class MainWindow : IDisposable {
 
 	private sealed record Button(string Text, int Id, int X, int Y, int W, int H, int Colour);
 
-	private sealed record LogLine(string Time, string Source, string Text, int Colour);
+	/// <summary>
+	/// One row of the log pane.
+	/// </summary>
+	/// <remarks>
+	/// Holds the Said, not the rendered text. Rendering at Append time froze each row in the language it was
+	/// logged in, so switching language left every line already on screen exactly as it was - the one thing
+	/// the re-rendering log exists to avoid, and this window was the surface still doing it.
+	///
+	/// The newline stripping happens here rather than once at append, because what gets drawn is the
+	/// translation, and a translator can put a line break anywhere.
+	/// </remarks>
+	private sealed record LogLine(string Time, string Source, Core.Said Said, int Colour) {
+		public string Text => Said.ToString().Replace('\r', ' ').Replace('\n', ' ');
+	}
 
 	public MainWindow(BotManager mgr, Func<string> url, Action exit) {
 		_mgr = mgr;
@@ -193,8 +206,7 @@ public sealed class MainWindow : IDisposable {
 		lock (_logGate) {
 			// The three parts are kept apart so they can be drawn in fixed columns. Pre-joining them into one
 			// string is what makes a log look like a wall - the eye has nothing to line up on.
-			string text = entry.Text.Replace('\r', ' ').Replace('\n', ' ');
-			_log.Add(new LogLine(entry.When.ToString("HH:mm:ss"), entry.Source, text, colour));
+			_log.Add(new LogLine(entry.When.ToString("HH:mm:ss"), entry.Source, entry.Said, colour));
 
 			while (_log.Count > 200) {
 				_log.RemoveAt(0);
@@ -410,7 +422,8 @@ public sealed class MainWindow : IDisposable {
 		});
 	}
 
-	private void Invalidate() {
+	/// <summary>Ask for a repaint. Public so a language change can redraw rows that are already on screen.</summary>
+	public void Invalidate() {
 		if (_hwnd != IntPtr.Zero) {
 			InvalidateRect(_hwnd, IntPtr.Zero, false);
 		}
