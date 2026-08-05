@@ -940,7 +940,16 @@
     "update: asking GitHub what's newest": "обновление: спрашиваем у GitHub, что новее",
     "web session expired - re-minting the access token": "веб-сессия истекла - выпускаем токен доступа заново",
     "window open": "окно открыто",
-    "you're on this account now - standing aside until you're done": "вы сейчас на этом аккаунте - уступаем, пока не закончите"
+    "you're on this account now - standing aside until you're done": "вы сейчас на этом аккаунте - уступаем, пока не закончите",
+    "the connect handler failed: {0}: {1}": "обработчик подключения дал сбой: {0}: {1}",
+    "the logon handler failed: {0}: {1}": "обработчик входа дал сбой: {0}: {1}",
+    "the disconnect handler failed: {0}: {1}": "обработчик отключения дал сбой: {0}: {1}",
+    "the window can't draw ({0}: {1}) - the dashboard still works": "окно не может отрисоваться ({0}: {1}) - панель по-прежнему работает",
+    "done - nothing this account can unlock itself ({0} app(s) checked{1}). Steam awards the rest server-side.": "готово - этому аккаунту нечего разблокировать самому (проверено приложений: {0}{1}). Остальное Steam выдаёт на сервере.",
+    " · {0} run by nocat.farm": " · {0} наработано nocat.farm",
+    "couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten": "не удалось прочитать общие итоги ({0}: {1}) - перезаписаны они не будут",
+    "the lifetime totals could not be read this run - not writing over them": "в этом запуске общие итоги прочитать не удалось - перезаписывать их не будем",
+    "nothing to record - leaving the existing lifetime totals alone": "записывать нечего - существующие общие итоги оставляем как есть"
   },
   "settings": {
     "WebEnabled": {

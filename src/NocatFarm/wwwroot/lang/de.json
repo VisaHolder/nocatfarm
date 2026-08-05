@@ -940,7 +940,16 @@
     "update: asking GitHub what's newest": "Update: fragt GitHub nach der neuesten Version",
     "web session expired - re-minting the access token": "Web-Sitzung abgelaufen - das Zugriffstoken wird neu erzeugt",
     "window open": "Fenster offen",
-    "you're on this account now - standing aside until you're done": "du bist jetzt auf diesem Konto - wir treten zurück, bis du fertig bist"
+    "you're on this account now - standing aside until you're done": "du bist jetzt auf diesem Konto - wir treten zurück, bis du fertig bist",
+    "the connect handler failed: {0}: {1}": "der Verbindungs-Handler ist fehlgeschlagen: {0}: {1}",
+    "the logon handler failed: {0}: {1}": "der Anmelde-Handler ist fehlgeschlagen: {0}: {1}",
+    "the disconnect handler failed: {0}: {1}": "der Trennungs-Handler ist fehlgeschlagen: {0}: {1}",
+    "the window can't draw ({0}: {1}) - the dashboard still works": "das Fenster kann nicht zeichnen ({0}: {1}) - das Dashboard funktioniert weiterhin",
+    "done - nothing this account can unlock itself ({0} app(s) checked{1}). Steam awards the rest server-side.": "fertig - dieses Konto kann selbst nichts freischalten ({0} App(s) geprüft{1}). Den Rest vergibt Steam serverseitig.",
+    " · {0} run by nocat.farm": " · {0} von nocat.farm gelaufen",
+    "couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten": "konnte die Gesamtzeiten nicht lesen ({0}: {1}) - sie werden nicht überschrieben",
+    "the lifetime totals could not be read this run - not writing over them": "die Gesamtzeiten konnten in diesem Lauf nicht gelesen werden - sie werden nicht überschrieben",
+    "nothing to record - leaving the existing lifetime totals alone": "nichts zu verbuchen - die vorhandenen Gesamtzeiten bleiben unangetastet"
   },
   "settings": {
     "WebEnabled": {

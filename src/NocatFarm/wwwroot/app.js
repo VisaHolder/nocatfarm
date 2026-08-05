@@ -288,6 +288,20 @@ function render() {
   if (r4rTab) r4rTab.classList.toggle('hidden', !r4rOn());
   $('navPoints').textContent = r4rOn() && state.Rep4RepToken ? state.Points : '';
 
+  // The Plugins tab stays put whether plugins are on or off, and says which inside.
+  //
+  // Kept HERE, with the rest of the rail, and not in renderOverview where it started: that only runs while
+  // the Overview tab is showing, so toggling the setting from Settings or from the Plugins panel itself -
+  // which is where anybody actually toggles it - left the tab saying whatever it said before, until a reload.
+  // Turning plugins on and straight back off was the visible version: the OFF tag left and never came back.
+  const navPlug = $('navPlugins');
+  if (navPlug) {
+    navPlug.classList.remove('hidden');
+    navPlug.classList.toggle('off', !state.PluginsOn);
+    const tag = navPlug.querySelector('.navtag');
+    if (tag) tag.textContent = state.PluginsOn ? '' : t('off');
+  }
+
   // rail chips
   const counts = {};
   bots.forEach((b) => { counts[b.Group] = (counts[b.Group] || 0) + 1; });
@@ -426,19 +440,6 @@ function renderOverview() {
       ver.textContent = 'v' + state.Version;
       ver.classList.remove('update');
     }
-  }
-
-  // The Plugins tab stays put whether plugins are on or off, and says which inside.
-  //
-  // Hiding it was meant to read as "this is off". It read as "this app has no plugins": the panel behind it
-  // explains what the switch does and offers to take you to it, and hiding the tab was the one thing making
-  // that explanation unreachable by anybody who had not already found the setting.
-  const navPlug = $('navPlugins');
-  if (navPlug) {
-    navPlug.classList.remove('hidden');
-    navPlug.classList.toggle('off', !state.PluginsOn);
-    const tag = navPlug.querySelector('.navtag');
-    if (tag) tag.textContent = state.PluginsOn ? '' : t('off');
   }
 
   // The button that installs it, beside the chip that announces it.

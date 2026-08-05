@@ -940,7 +940,16 @@
     "update: asking GitHub what's newest": "更新：正在向 GitHub 询问最新版本",
     "web session expired - re-minting the access token": "Web 会话已过期 —— 正在重新铸造访问令牌",
     "window open": "窗口已打开",
-    "you're on this account now - standing aside until you're done": "你现在正在使用该账号 —— 我们让位，直到你用完"
+    "you're on this account now - standing aside until you're done": "你现在正在使用该账号 —— 我们让位，直到你用完",
+    "the connect handler failed: {0}: {1}": "连接处理器失败：{0}：{1}",
+    "the logon handler failed: {0}: {1}": "登录处理器失败：{0}：{1}",
+    "the disconnect handler failed: {0}: {1}": "断开连接处理器失败：{0}：{1}",
+    "the window can't draw ({0}: {1}) - the dashboard still works": "窗口无法绘制（{0}：{1}）—— 仪表盘仍可使用",
+    "done - nothing this account can unlock itself ({0} app(s) checked{1}). Steam awards the rest server-side.": "完成 —— 该账号自己没有可解锁的内容（已检查 {0} 个应用{1}）。其余由 Steam 在服务端判定。",
+    " · {0} run by nocat.farm": " · nocat.farm 运行 {0}",
+    "couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten": "无法读取累计总时长（{0}：{1}）—— 不会被覆盖",
+    "the lifetime totals could not be read this run - not writing over them": "本次运行未能读取累计总时长 —— 不会覆盖它们",
+    "nothing to record - leaving the existing lifetime totals alone": "没有可记录的内容 —— 保持现有累计总时长不变"
   },
   "settings": {
     "WebEnabled": {

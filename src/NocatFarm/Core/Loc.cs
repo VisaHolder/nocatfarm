@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using NocatFarm.Config;
 
@@ -131,10 +132,43 @@ public static class Loc {
 	/// Placeholders rather than glued-together fragments, because word order is not the same everywhere and a
 	/// sentence assembled from pieces can only ever be right in the language it was assembled for.
 	/// </summary>
+	/// <remarks>
+	/// One pass over the sentence, not one Replace per value.
+	///
+	/// Replace-per-value re-reads text it has already written, so a value containing a placeholder gets
+	/// substituted into and then substituted again. It is not hypothetical: the rep4rep line passed a status
+	/// whose own text was "{0}/{1} today - done", and the next pass replaced the {1} sitting INSIDE it,
+	/// printing "rep4rep: {0}/20m today - done - next look in 20m". A game or account name with a brace in it
+	/// would do the same to any sentence in the app.
+	///
+	/// Walking once and copying each value in verbatim makes a substituted value final by construction.
+	/// </remarks>
 	public static string T(string english, params object?[] args) {
 		string text = T(english);
 
-		for (int i = 0; i < args.Length; i++) {
+		if ((args.Length == 0) || (text.IndexOf('{') < 0)) {
+			return text;
+		}
+
+		StringBuilder built = new(text.Length + 32);
+
+		for (int i = 0; i < text.Length; i++) {
+			// {{ and }} are literal braces and pass straight through, same as they were written.
+			if (((text[i] == '{') || (text[i] == '}')) && (i + 1 < text.Length) && (text[i + 1] == text[i])) {
+				built.Append(text[i]);
+				i++;
+
+				continue;
+			}
+
+			int close = text.IndexOf('}', i + 1);
+
+			if ((text[i] != '{') || (close < 0) || !int.TryParse(text.AsSpan(i + 1, close - i - 1), out int slot)) {
+				built.Append(text[i]);
+
+				continue;
+			}
+
 			// A Func is evaluated HERE rather than wherever the sentence was assembled.
 			//
 			// Most values are language-agnostic - a game name, a count, a clock time - but a few are not, and
@@ -142,15 +176,17 @@ public static class Loc {
 			// the status was built and then frozen: the achievements row read "已玩 2907.9 小时，下一个在
 			// tomorrow 06:49 之后", the sentence translated around an English word baked into it hours earlier.
 			// Passing `() => Fmt.Clock(x)` defers it to the moment somebody actually reads the line.
-			string value = args[i] switch {
-				null => "",
-				Func<string> lazy => lazy(),
-				{ } other => other.ToString() ?? ""
-			};
+			built.Append((slot >= 0) && (slot < args.Length)
+				? args[slot] switch {
+					null => "",
+					Func<string> lazy => lazy(),
+					{ } other => other.ToString() ?? ""
+				}
+				: text.AsSpan(i, close - i + 1));   // no value for it - leave the placeholder visible, not blank
 
-			text = text.Replace("{" + i + "}", value, StringComparison.Ordinal);
+			i = close;
 		}
 
-		return text;
+		return built.ToString();
 	}
 }

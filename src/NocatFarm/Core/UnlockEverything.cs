@@ -59,6 +59,7 @@ public static class UnlockEverything {
 		Log.Warn(new Said("unlocking every achievement across {0} owned app(s) - this takes a while and cannot be undone", owned.Count), bot.Name);
 
 		int games = 0, unlocked = 0, failed = 0, looked = 0;
+		int step = Math.Max(25, owned.Count / 10);
 
 		foreach (uint app in owned.Keys) {
 			if (!bot.IsOnline) {
@@ -68,6 +69,20 @@ public static class UnlockEverything {
 			}
 
 			looked++;
+
+			// Progress, counted here rather than at the bottom of the loop.
+			//
+			// Down there it sat below two `continue`s, and those two cover almost everything an account owns -
+			// DLC, tools, soundtracks, anything without achievements. So the counter only ever got tested on
+			// the handful of apps that had some, and a 264-app run produced two lines three minutes apart:
+			// "unlocking every achievement across 264 apps", silence, "done - 0 unlocked". Working perfectly
+			// and completely indistinguishable from a hang.
+			//
+			// Ten updates whatever the library size, rather than one every 250 apps - which on a 264-app
+			// account meant a single update, at the very end, after the answer was already known.
+			if ((looked % step) == 0) {
+				Log.Info(new Said("still going - {0}/{1} apps checked, {2} unlocked so far", looked, owned.Count, unlocked), bot.Name);
+			}
 
 			AchievementSet? set;
 
@@ -104,15 +119,20 @@ public static class UnlockEverything {
 				Log.Debug(new Said("couldn't unlock {0} - {1}", GameNames.Of(app), message), bot.Name);
 			}
 
-			// Progress, because on a big library this runs for a long time and silence looks like a hang.
-			if ((looked % 250) == 0) {
-				Log.Info(new Said("still going - {0}/{1} apps checked, {2} unlocked so far", looked, owned.Count, unlocked), bot.Name);
-			}
-
 			await Breathe().ConfigureAwait(false);
 		}
 
 		string trouble = failed > 0 ? $", {failed} game(s) refused" : "";
+
+		// "done - 0 achievement(s) unlocked" is a true sentence that reads as a broken feature. On an account
+		// whose library is mostly multiplayer it is the ORDINARY answer: Steam awards those achievements
+		// server-side and no client can set them, so there was never anything here to unlock.
+		if (unlocked == 0) {
+			Log.Good(new Said("done - nothing this account can unlock itself ({0} app(s) checked{1}). Steam awards the rest server-side.", looked, trouble), bot.Name);
+
+			return;
+		}
+
 		Log.Good(new Said("done - {0} achievement(s) unlocked across {1} game(s){2}", unlocked, games, trouble), bot.Name);
 	}
 

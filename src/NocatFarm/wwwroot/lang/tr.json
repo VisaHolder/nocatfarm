@@ -940,7 +940,16 @@
     "update: asking GitHub what's newest": "güncelleme: GitHub'a en yenisi soruluyor",
     "web session expired - re-minting the access token": "web oturumu doldu - erişim jetonu yeniden üretiliyor",
     "window open": "pencere açık",
-    "you're on this account now - standing aside until you're done": "şu anda bu hesaptasın - sen bitirene kadar kenara çekiliyoruz"
+    "you're on this account now - standing aside until you're done": "şu anda bu hesaptasın - sen bitirene kadar kenara çekiliyoruz",
+    "the connect handler failed: {0}: {1}": "bağlantı işleyicisi başarısız oldu: {0}: {1}",
+    "the logon handler failed: {0}: {1}": "oturum açma işleyicisi başarısız oldu: {0}: {1}",
+    "the disconnect handler failed: {0}: {1}": "bağlantı kesme işleyicisi başarısız oldu: {0}: {1}",
+    "the window can't draw ({0}: {1}) - the dashboard still works": "pencere çizilemiyor ({0}: {1}) - panel hâlâ çalışıyor",
+    "done - nothing this account can unlock itself ({0} app(s) checked{1}). Steam awards the rest server-side.": "tamam - bu hesabın kendi açabileceği bir şey yok ({0} uygulama denetlendi{1}). Gerisini Steam sunucu tarafında veriyor.",
+    " · {0} run by nocat.farm": " · nocat.farm ile {0}",
+    "couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten": "toplam süreler okunamadı ({0}: {1}) - üzerlerine yazılmayacak",
+    "the lifetime totals could not be read this run - not writing over them": "bu çalıştırmada toplam süreler okunamadı - üzerlerine yazılmıyor",
+    "nothing to record - leaving the existing lifetime totals alone": "kaydedilecek bir şey yok - mevcut toplam süreler olduğu gibi bırakılıyor"
   },
   "settings": {
     "WebEnabled": {

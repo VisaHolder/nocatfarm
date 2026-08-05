@@ -22,6 +22,9 @@ public static class Lifetime {
 	private static DateTime _lastSave = DateTime.MinValue;
 	private static bool _loaded;
 
+	/// <summary>Set when the file existed but could not be read, so Save refuses to write over it.</summary>
+	private static bool _loadFailed;
+
 	private static string Path => System.IO.Path.Combine(ConfigStore.ConfigDir, "state", "lifetime.json");
 
 	/// <summary>Total minutes this account has spent with a game running.</summary>
@@ -99,13 +102,32 @@ public static class Lifetime {
 					}
 				}
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't read the lifetime totals: {0}: {1}", e.GetType().Name, e.Message));
+				// Remembered, because a read we could not complete must never be written back over. Starting
+				// from zero after a failed read and then saving is how a transient problem - a file still being
+				// written, a lock, a bad sector - turns into permanent loss.
+				_loadFailed = true;
+				Log.Warn(new Said("couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten", e.GetType().Name, e.Message));
 			}
 		}
 	}
 
+	/// <summary>Write the totals out.</summary>
+	/// <remarks>
+	/// Load FIRST, and never write nothing over something.
+	///
+	/// This is called on shutdown, and it used to serialise whatever was in memory without reading the file
+	/// first. Every read path (For, Total, Add) loads on demand, so a run that ended before ANY of them
+	/// happened - started and stopped again, or stopped while still signing in - held an empty dictionary and
+	/// wrote `{}` straight over months of accumulated hours. One quick restart at the wrong moment and the
+	/// number was gone, silently, with the log line about it sitting at Debug where nobody would see it.
+	///
+	/// The empty-guard is the belt to Load's braces: if there is genuinely nothing to record, the right thing
+	/// to do with a file that already has something in it is leave it alone.
+	/// </remarks>
 	public static void Save() {
 		try {
+			Load();
+
 			Dictionary<string, double> snapshot;
 
 			lock (Gate) {
@@ -113,10 +135,23 @@ public static class Lifetime {
 			}
 
 			string path = Path;
+
+			if (_loadFailed) {
+				Log.Debug("the lifetime totals could not be read this run - not writing over them");
+
+				return;
+			}
+
+			if ((snapshot.Count == 0) && File.Exists(path)) {
+				Log.Debug("nothing to record - leaving the existing lifetime totals alone");
+
+				return;
+			}
+
 			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
 			AtomicFile.Write(path, JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true }));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the lifetime totals: {0}: {1}", e.GetType().Name, e.Message));
+			Log.Warn(new Said("couldn't save the lifetime totals: {0}: {1}", e.GetType().Name, e.Message));
 		}
 	}
 }

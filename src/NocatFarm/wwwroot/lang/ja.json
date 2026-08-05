@@ -940,7 +940,16 @@
     "update: asking GitHub what's newest": "更新: GitHubに最新版を問い合わせています",
     "web session expired - re-minting the access token": "Webセッションが期限切れです - アクセストークンを再発行します",
     "window open": "ウィンドウを開きました",
-    "you're on this account now - standing aside until you're done": "現在このアカウントを使用中ですね - 終わるまで手を引きます"
+    "you're on this account now - standing aside until you're done": "現在このアカウントを使用中ですね - 終わるまで手を引きます",
+    "the connect handler failed: {0}: {1}": "接続ハンドラーが失敗しました: {0}: {1}",
+    "the logon handler failed: {0}: {1}": "ログオンハンドラーが失敗しました: {0}: {1}",
+    "the disconnect handler failed: {0}: {1}": "切断ハンドラーが失敗しました: {0}: {1}",
+    "the window can't draw ({0}: {1}) - the dashboard still works": "ウィンドウを描画できません ({0}: {1}) - ダッシュボードは引き続き使えます",
+    "done - nothing this account can unlock itself ({0} app(s) checked{1}). Steam awards the rest server-side.": "完了 - このアカウント自身が解除できるものはありません ({0}個のアプリを確認{1})。残りはSteamがサーバー側で付与します。",
+    " · {0} run by nocat.farm": " · nocat.farmでの稼働{0}",
+    "couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten": "累計時間を読み込めませんでした ({0}: {1}) - 上書きはしません",
+    "the lifetime totals could not be read this run - not writing over them": "今回の実行では累計時間を読み込めませんでした - 上書きしません",
+    "nothing to record - leaving the existing lifetime totals alone": "記録するものがありません - 既存の累計時間はそのままにします"
   },
   "settings": {
     "WebEnabled": {
