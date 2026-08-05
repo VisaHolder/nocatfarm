@@ -18,15 +18,21 @@ namespace NocatFarm.Core;
 /// </remarks>
 public readonly struct Said(string english, params object?[] args) {
 	/// <summary>The sentence as it was written in the source - the translation key, and what the log uses.</summary>
+	/// <remarks>
+	/// Null on a default(Said), and everything here has to survive that. A struct's default skips the
+	/// constructor entirely, so the `?? ""` above never runs for one - and `default` is exactly what an
+	/// absent status is written as ("no warning", "no persona to mention"). Reading English.Length on one of
+	/// those threw, and it threw in the account readout, which is to say the moment anybody opened Accounts.
+	/// </remarks>
 	public string English { get; } = english ?? "";
 
 	private object?[] Args { get; } = args ?? [];
 
-	/// <summary>True when nothing has been said yet.</summary>
-	public bool IsEmpty => English.Length == 0;
+	/// <summary>True when nothing has been said yet - including on a default(Said).</summary>
+	public bool IsEmpty => string.IsNullOrEmpty(English);
 
 	/// <summary>The sentence in whatever language is selected right now.</summary>
-	public override string ToString() => English.Length == 0 ? "" : Loc.T(English, Args);
+	public override string ToString() => IsEmpty ? "" : Loc.T(English, Args ?? []);
 
 	/// <summary>So a status can be handed to anything expecting a plain string without ceremony.</summary>
 	public static implicit operator string(Said said) => said.ToString();
