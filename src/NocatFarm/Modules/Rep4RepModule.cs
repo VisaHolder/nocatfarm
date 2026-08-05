@@ -294,7 +294,10 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 		if (_state.IsBlocked) {
 			TimeSpan left = new DateTime(_state.BlockedUntil, DateTimeKind.Utc) - DateTime.UtcNow;
-			_status = new Said("resting {0} ({1})", Fmt.Hm((int) left.TotalMinutes), _state.BlockReason);
+			// The reason is stored in English - it is written to disk and has to mean the same thing next week -
+			// so it gets wrapped rather than passed raw. Handed over as a plain string it rode untranslated
+			// inside the translated frame: "rep4rep: 休息 23h47m (manual reset)".
+			_status = new Said("resting {0} ({1})", Fmt.Hm((int) left.TotalMinutes), new Said(_state.BlockReason));
 
 			return 10 * 60;
 		}
@@ -375,7 +378,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			case Outcome.DailyLimit:
 				return await OnDailyLimitAsync().ConfigureAwait(false);
 			case Outcome.AccountBlocked:
-				return await BlockAccountAsync("Steam refused: " + (error ?? "commenting blocked")).ConfigureAwait(false);
+				return await BlockAccountAsync("Steam refused", error).ConfigureAwait(false);
 			case Outcome.Unknown:
 				// Steam may well have posted it. A retry would put a SECOND identical comment on the same profile,
 				// which is exactly the pattern being avoided - so count it, leave the task alone, carry on.
@@ -408,7 +411,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			case Outcome.DailyLimit:
 				return await OnDailyLimitAsync().ConfigureAwait(false);
 			case Outcome.AccountBlocked:
-				return await BlockAccountAsync("Steam refused: " + (retryError ?? "commenting blocked")).ConfigureAwait(false);
+				return await BlockAccountAsync("Steam refused", retryError).ConfigureAwait(false);
 			case Outcome.Unknown:
 				await CountPostAsync(task).ConfigureAwait(false);
 				Log.Warn(new Said("no reply on the retry for {0} - counting it, no further retry", task.TargetName), Bot.Name);
@@ -479,14 +482,20 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		return await BlockAccountAsync("comment-blocked, 24h cooldown").ConfigureAwait(false);
 	}
 
-	private async Task<int> BlockAccountAsync(string reason) {
+	/// <param name="reason">One of a fixed set of English keys. Stored as-is and translated when read.</param>
+	/// <param name="detail">Steam's own wording, if it gave any. Never a key - it goes to the log, not the status.</param>
+	private async Task<int> BlockAccountAsync(string reason, string? detail = null) {
 		_state!.Strikes = 0;
 		_state.BlockedUntil = DateTime.UtcNow.AddSeconds(CooldownSeconds + Rng.Next(0, 1800)).Ticks;
 		_state.BlockReason = reason;
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 
 		_status = new Said("resting 24h");
-		Log.Attention(new Said("Steam won't take comments from this account - sitting out 24h ({0})", reason), Bot.Name);
+		Log.Attention(new Said("Steam won't take comments from this account - sitting out 24h ({0})", new Said(reason)), Bot.Name);
+
+		if (!string.IsNullOrWhiteSpace(detail)) {
+			Log.Debug(new Said("Steam's exact words: {0}", detail), Bot.Name);
+		}
 
 		// Re-check every 10 min rather than sleeping the whole day, so 'rep4rep clear' can release it immediately.
 		return 10 * 60;
@@ -858,6 +867,6 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		_state.Strikes = 0;
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 		_rateLimitRun = 0;
-		_status = new Said("resting a day ({0})", reason);
+		_status = new Said("resting a day ({0})", new Said(reason));
 	}
 }
