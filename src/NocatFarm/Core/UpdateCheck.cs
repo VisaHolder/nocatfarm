@@ -59,11 +59,11 @@ public static class UpdateCheck {
 
 			Available = tag;
 			Url = page;
-			Log.Attention($"nocat.farm {tag} is out - you have {Build.Version}. {page}");
+			Log.Attention(new Said("nocat.farm {0} is out - you have {1}. {2}", tag, Build.Version, page));
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
-			Log.Debug($"couldn't check for updates: {e.Message}");
+			Log.Debug(new Said("couldn't check for updates: {0}", e.Message));
 		}
 	}
 

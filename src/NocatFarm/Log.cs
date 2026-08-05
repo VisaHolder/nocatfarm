@@ -11,7 +11,22 @@ public enum NotifyKind { Earning, Social, Problem }
 /// bleed across wrapped lines, which looks awful.
 /// </summary>
 public static class Log {
-	public sealed record Entry(long Seq, DateTime When, string Level, string Source, string Text);
+	/// <summary>
+	/// One logged line.
+	/// </summary>
+	/// <remarks>
+	/// The sentence is kept as a Said - the English it was written as, plus its values - rather than as finished
+	/// text. That is what lets the log already on screen redraw in a new language the moment one is chosen,
+	/// instead of every line being frozen in the language it happened in.
+	///
+	/// The FILE is a different matter: it is written once, as it happens. A line already on disk stays in the
+	/// language it was written in, and nothing short of rewriting history could change that - a log that edited
+	/// its own past would be worth less than one that did not.
+	/// </remarks>
+	public sealed record Entry(long Seq, DateTime When, string Level, string Source, Core.Said Said) {
+		/// <summary>The line in whatever language is selected right now.</summary>
+		public string Text => Said.ToString();
+	}
 
 	private const int RingSize = 1000;
 
@@ -100,31 +115,42 @@ public static class Log {
 	/// <summary>Everything logged after <paramref name="seq"/>. The dashboard uses this to catch up cheaply.</summary>
 	public static IReadOnlyList<Entry> Since(long seq) => Ring.Where(e => e.Seq > seq).ToArray();
 
-	public static void Info(string text, string source = "nocat.farm") => Write("INFO", source, text, ConsoleColor.Gray);
-	public static void Good(string text, string source = "nocat.farm") => Write("GOOD", source, text, ConsoleColor.Green);
-	public static void Warn(string text, string source = "nocat.farm") => Write("WARN", source, text, ConsoleColor.DarkYellow);
+	public static void Info(string text, string source = "nocat.farm") => Info(new Core.Said(text), source);
+	public static void Info(Core.Said text, string source = "nocat.farm") => Write("INFO", source, text, ConsoleColor.Gray);
+	public static void Good(string text, string source = "nocat.farm") => Good(new Core.Said(text), source);
+	public static void Good(Core.Said text, string source = "nocat.farm") => Write("GOOD", source, text, ConsoleColor.Green);
+	public static void Warn(string text, string source = "nocat.farm") => Warn(new Core.Said(text), source);
+	public static void Warn(Core.Said text, string source = "nocat.farm") => Write("WARN", source, text, ConsoleColor.DarkYellow);
 
-	public static void Error(string text, string source = "nocat.farm") {
+	public static void Error(string text, string source = "nocat.farm") => Error(new Core.Said(text), source);
+
+	public static void Error(Core.Said text, string source = "nocat.farm") {
 		Write("ERROR", source, text, ConsoleColor.Red);
-		Notify?.Invoke(NotifyKind.Problem, source, text);
+		Notify?.Invoke(NotifyKind.Problem, source, text.ToString());
 	}
 
 	/// <summary>Something social happened - somebody commented on a profile.</summary>
-	public static void Event(string text, string source = "nocat.farm") {
+	public static void Event(string text, string source = "nocat.farm") => Event(new Core.Said(text), source);
+
+	public static void Event(Core.Said text, string source = "nocat.farm") {
 		Write("GOOD", source, text, ConsoleColor.Cyan);
-		Notify?.Invoke(NotifyKind.Social, source, text);
+		Notify?.Invoke(NotifyKind.Social, source, text.ToString());
 	}
 
 	/// <summary>Something was earned - a card dropped, a comment was credited.</summary>
-	public static void Reward(string text, string source = "nocat.farm") {
+	public static void Reward(string text, string source = "nocat.farm") => Reward(new Core.Said(text), source);
+
+	public static void Reward(Core.Said text, string source = "nocat.farm") {
 		Write("GOOD", source, text, ConsoleColor.Yellow);
-		Notify?.Invoke(NotifyKind.Earning, source, text);
+		Notify?.Invoke(NotifyKind.Earning, source, text.ToString());
 	}
 
 	/// <summary>Something needs a human: a Steam Guard code, a password, a decision.</summary>
-	public static void Attention(string text, string source = "nocat.farm") {
+	public static void Attention(string text, string source = "nocat.farm") => Attention(new Core.Said(text), source);
+
+	public static void Attention(Core.Said text, string source = "nocat.farm") {
 		Write("WARN", source, text, ConsoleColor.Magenta);
-		Notify?.Invoke(NotifyKind.Problem, source, text);
+		Notify?.Invoke(NotifyKind.Problem, source, text.ToString());
 	}
 
 	/// <summary>
@@ -138,12 +164,18 @@ public static class Log {
 	/// On screen it is genuinely unwanted by default: every web request, every licence count, every re-assert,
 	/// in grey, scrolling the three lines somebody actually cared about off the top.
 	/// </summary>
-	public static void Debug(string text, string source = "nocat.farm") =>
+	public static void Debug(string text, string source = "nocat.farm") => Debug(new Core.Said(text), source);
+
+	public static void Debug(Core.Said text, string source = "nocat.farm") =>
 		Write("DEBUG", source, text, ConsoleColor.DarkGray, toConsole: _debug);
 
-	private static void Write(string level, string source, string text, ConsoleColor colour, bool toConsole = true) {
+	private static void Write(string level, string source, Core.Said said, ConsoleColor colour, bool toConsole = true) {
 		DateTime now = DateTime.Now;
-		Entry e = new(Interlocked.Increment(ref _seq), now, level, source, text);
+		Entry e = new(Interlocked.Increment(ref _seq), now, level, source, said);
+
+		// Rendered once, here, for the console and the file. Both are written as it happens, in the language
+		// selected at that moment; only the entry in the ring can be re-rendered later.
+		string text = e.Text;
 
 		Ring.Enqueue(e);
 

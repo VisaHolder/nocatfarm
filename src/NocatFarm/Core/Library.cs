@@ -137,7 +137,7 @@ public sealed class Library(Bot bot) {
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;   // the account is stopping - not a failure to report
 		} catch (Exception e) {
-			Log.Debug($"couldn't read the library: {e.Message}", bot.Name);
+			Log.Debug(new Said("couldn't read the library: {0}", e.Message), bot.Name);
 
 			return false;
 		}
@@ -152,7 +152,7 @@ public sealed class Library(Bot bot) {
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
-				Log.Debug($"couldn't read the family library: {e.Message}", bot.Name);
+				Log.Debug(new Said("couldn't read the family library: {0}", e.Message), bot.Name);
 			}
 		}
 
@@ -165,7 +165,7 @@ public sealed class Library(Bot bot) {
 		RefreshedAt = DateTime.UtcNow;
 
 		if (first) {
-			Log.Debug($"library: {found.Count - shared} game(s) owned{(shared > 0 ? $", {shared} shared by the family" : "")}", bot.Name);
+			Log.Debug(new Said("library: {0} game(s) owned{1}", found.Count - shared, (shared > 0 ? $", {shared} shared by the family" : "")), bot.Name);
 		}
 
 		return true;

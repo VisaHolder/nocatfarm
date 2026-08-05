@@ -64,7 +64,7 @@ public sealed class LiveConsole : IDisposable {
 					// than no board at all - so give up and hand the console back.
 					if (++_paintFailures >= 5) {
 						Dispose();
-						Log.Warn($"the live view kept failing to draw ({e.GetType().Name}) - back to the plain log");
+						Log.Warn(new Said("the live view kept failing to draw ({0}) - back to the plain log", e.GetType().Name));
 
 						return;
 					}
@@ -220,21 +220,22 @@ public sealed class LiveConsole : IDisposable {
 
 		if (s.SessionTotal > 0) {
 			sitting = $"{Bar(s.SessionDone, s.SessionTotal)} {sitting}";
-		} else if (sitting.Length > 0) {
+		} else if (!s.Sitting.IsEmpty) {
 			sitting = Dim(sitting);
 		}
 
 		if (s.DayTotal > 0) {
 			today = $"{Bar(s.DayDone, s.DayTotal)} {Fmt.Hm(s.DayDone)}/{Fmt.Hm(s.DayTotal)}";
-		} else if (s.Today.Length > 0) {
-			today = s.Today is "nothing to farm" ? Dim(s.Today) : s.Today;
+		} else if (!s.Today.IsEmpty) {
+			// Compared on the ENGLISH, not the painted text - the sentence itself is translated by now.
+			today = s.Today.English is "nothing to farm" ? Dim(s.Today) : s.Today;
 		}
 
-		if (s.Persona.Length > 0) {
+		if (!s.Persona.IsEmpty) {
 			doing += Dim("  (" + s.Persona + ")");
 		}
 
-		if (s.Warning.Length > 0) {
+		if (!s.Warning.IsEmpty) {
 			doing += "\u001b[33m  " + s.Warning + "\u001b[0m";
 		}
 

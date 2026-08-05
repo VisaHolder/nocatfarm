@@ -1,6 +1,8 @@
 ﻿using System.Text.Json;
 using NocatFarm.Config;
 
+using NocatFarm.Core;
+
 namespace NocatFarm.Rep4Rep;
 
 /// <summary>
@@ -96,7 +98,7 @@ public sealed class Rep4RepState {
 
 			return JsonSerializer.Deserialize<Rep4RepState>(body, Json) ?? new Rep4RepState();
 		} catch (Exception e) {
-			Log.Warn($"can't read {Path.GetFileName(path)} ({e.Message}) - not commenting until it's readable, so the 24h limit stays honest", bot);
+			Log.Warn(new Said("can't read {0} ({1}) - not commenting until it's readable, so the 24h limit stays honest", Path.GetFileName(path), e.Message), bot);
 
 			return null;
 		} finally {
@@ -131,7 +133,7 @@ public sealed class Rep4RepState {
 			Directory.CreateDirectory(Dir);
 			await AtomicFile.WriteAsync(PathFor(bot), body).ConfigureAwait(false);
 		} catch (Exception e) {
-			Log.Warn($"couldn't save commenting state: {e.Message}", bot);
+			Log.Warn(new Said("couldn't save commenting state: {0}", e.Message), bot);
 		} finally {
 			Gate.Release();
 		}

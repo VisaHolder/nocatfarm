@@ -28,7 +28,7 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 
 	public IPluginAccount? Account(string name) => mgr.Get(name) is { } bot ? new AccountView(bot) : null;
 
-	public void Log(string message) => NocatFarm.Log.Info($"[plugin] {message}");
+	public void Log(string message) => NocatFarm.Log.Info(new Said("[plugin] {0}", message));
 
 	public Task<string> RunCommandAsync(string line) => Commands_RunAsync(line);
 
@@ -77,7 +77,7 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 			Directory.CreateDirectory(Path.GetDirectoryName(SettingsFile)!);
 			File.WriteAllText(SettingsFile, System.Text.Json.JsonSerializer.Serialize(_values));
 		} catch (Exception e) {
-			NocatFarm.Log.Warn($"couldn't save {_owner}'s settings: {e.Message}");
+			NocatFarm.Log.Warn(new Said("couldn't save {0}'s settings: {1}", _owner, e.Message));
 		}
 	}
 
@@ -96,7 +96,7 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 					?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 			}
 		} catch (Exception e) {
-			NocatFarm.Log.Warn($"couldn't read {_owner}'s settings: {e.Message}");
+			NocatFarm.Log.Warn(new Said("couldn't read {0}'s settings: {1}", _owner, e.Message));
 		}
 	}
 
@@ -114,7 +114,7 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 			Directory.CreateDirectory(Path.GetDirectoryName(StateFile)!);
 			await File.WriteAllTextAsync(StateFile, json).ConfigureAwait(false);
 		} catch (Exception e) {
-			NocatFarm.Log.Warn($"plugin {_owner} couldn't save its state: {e.Message}");
+			NocatFarm.Log.Warn(new Said("plugin {0} couldn't save its state: {1}", _owner, e.Message));
 		}
 	}
 
@@ -122,7 +122,7 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 		try {
 			return File.Exists(StateFile) ? await File.ReadAllTextAsync(StateFile).ConfigureAwait(false) : null;
 		} catch (Exception e) {
-			NocatFarm.Log.Warn($"plugin {_owner} couldn't read its state: {e.Message}");
+			NocatFarm.Log.Warn(new Said("plugin {0} couldn't read its state: {1}", _owner, e.Message));
 
 			return null;
 		}
@@ -147,7 +147,7 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 		// A plugin must not be able to shadow a built-in. Quietly winning the name would mean `stop` doing
 		// something other than stopping, which is the worst possible surprise.
 		if (NocatFarm.Commands.All.Any(c => c.Matches(verb)) || _commands.ContainsKey(verb)) {
-			NocatFarm.Log.Warn($"plugins: a command called '{verb}' already exists - the plugin's version was ignored");
+			NocatFarm.Log.Warn(new Said("plugins: a command called '{0}' already exists - the plugin's version was ignored", verb));
 
 			return;
 		}
@@ -173,7 +173,7 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 		try {
 			raise();
 		} catch (Exception e) {
-			NocatFarm.Log.Warn($"a plugin threw handling {which} and was ignored: {e.GetType().Name}: {e.Message}");
+			NocatFarm.Log.Warn(new Said("a plugin threw handling {0} and was ignored: {1}: {2}", which, e.GetType().Name, e.Message));
 		}
 	}
 

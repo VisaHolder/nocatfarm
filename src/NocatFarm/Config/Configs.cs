@@ -429,8 +429,8 @@ public static class ConfigStore {
 				// best effort
 			}
 
-			Log.Error($"config: {Path.GetFileName(GlobalPath)} is not valid JSON ({e.Message})");
-			Log.Warn($"a copy was kept as {Path.GetFileName(kept)}; running on defaults until you fix it");
+			Log.Error(new Said("config: {0} is not valid JSON ({1})", Path.GetFileName(GlobalPath), e.Message));
+			Log.Warn(new Said("a copy was kept as {0}; running on defaults until you fix it", Path.GetFileName(kept)));
 
 			return new GlobalConfig();
 		}
@@ -441,7 +441,7 @@ public static class ConfigStore {
 			Directory.CreateDirectory(ConfigDir);
 			File.WriteAllText(GlobalPath, JsonSerializer.Serialize(cfg, Json));
 		} catch (Exception e) {
-			Log.Warn($"config: couldn't save global config: {e.Message}");
+			Log.Warn(new Said("config: couldn't save global config: {0}", e.Message));
 		}
 	}
 
@@ -514,7 +514,7 @@ public static class ConfigStore {
 		}
 
 		cfg.GameWeights = string.Join(", ", parts);
-		Log.Info($"game shares moved into the games list - now \"{cfg.GameWeights}\"", name);
+		Log.Info(new Said("game shares moved into the games list - now \"{0}\"", cfg.GameWeights), name);
 
 		return true;
 	}
@@ -558,7 +558,7 @@ public static class ConfigStore {
 
 				bots[name] = cfg;
 			} catch (Exception e) {
-				Log.Warn($"config: {Path.GetFileName(file)} is not valid JSON ({e.Message}) - skipped");
+				Log.Warn(new Said("config: {0} is not valid JSON ({1}) - skipped", Path.GetFileName(file), e.Message));
 			}
 		}
 
@@ -576,7 +576,7 @@ public static class ConfigStore {
 
 			File.WriteAllText(Path.Combine(ConfigDir, name + ".json"), JsonSerializer.Serialize(onDisk, Json));
 		} catch (Exception e) {
-			Log.Warn($"config: couldn't save {name}: {e.Message}");
+			Log.Warn(new Said("config: couldn't save {0}: {1}", name, e.Message));
 		}
 	}
 

@@ -1,6 +1,8 @@
 ﻿using System.Globalization;
 using System.Text.Json;
 
+using NocatFarm.Core;
+
 namespace NocatFarm.Config;
 
 /// <summary>
@@ -177,7 +179,7 @@ public static class AsfImport {
 
 			return true;
 		} catch (Exception e) {
-			Log.Debug($"couldn't bring {name}'s authenticator across: {e.Message}");
+			Log.Debug(new Said("couldn't bring {0}'s authenticator across: {1}", name, e.Message));
 
 			return false;
 		}

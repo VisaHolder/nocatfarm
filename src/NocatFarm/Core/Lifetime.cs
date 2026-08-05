@@ -99,7 +99,7 @@ public static class Lifetime {
 					}
 				}
 			} catch (Exception e) {
-				Log.Debug($"couldn't read the lifetime totals: {e.GetType().Name}: {e.Message}");
+				Log.Debug(new Said("couldn't read the lifetime totals: {0}: {1}", e.GetType().Name, e.Message));
 			}
 		}
 	}
@@ -116,7 +116,7 @@ public static class Lifetime {
 			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
 			AtomicFile.Write(path, JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true }));
 		} catch (Exception e) {
-			Log.Debug($"couldn't save the lifetime totals: {e.GetType().Name}: {e.Message}");
+			Log.Debug(new Said("couldn't save the lifetime totals: {0}: {1}", e.GetType().Name, e.Message));
 		}
 	}
 }

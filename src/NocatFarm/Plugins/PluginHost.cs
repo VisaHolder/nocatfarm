@@ -45,7 +45,7 @@ public static class PluginHost {
 		string[] files = Directory.GetFiles(Folder, "*.dll", SearchOption.TopDirectoryOnly);
 
 		if (files.Length == 0) {
-			NocatFarm.Log.Debug($"plugins: nothing in {Folder}");
+			NocatFarm.Log.Debug(new Said("plugins: nothing in {0}", Folder));
 
 			return;
 		}
@@ -57,7 +57,7 @@ public static class PluginHost {
 		}
 
 		if (Plugins.Count > 0) {
-			NocatFarm.Log.Info($"{Plugins.Count} plugin(s) loaded - type 'plugins' to see them");
+			NocatFarm.Log.Info(new Said("{0} plugin(s) loaded - type 'plugins' to see them", Plugins.Count));
 		}
 	}
 
@@ -84,7 +84,7 @@ public static class PluginHost {
 				Seen.Add((plugin.Name, plugin.Version, Path.GetFileName(file), !off));
 
 				if (off) {
-					NocatFarm.Log.Info($"plugin {plugin.Name} is switched off - skipping it");
+					NocatFarm.Log.Info(new Said("plugin {0} is switched off - skipping it", plugin.Name));
 
 					continue;
 				}
@@ -95,17 +95,17 @@ public static class PluginHost {
 					await plugin.OnLoadAsync(host, ct).ConfigureAwait(false);
 					Hosts.Add(host);
 					Plugins.Add(new Loaded(plugin, file, host));
-					NocatFarm.Log.Good($"plugin loaded: {plugin.Name} {plugin.Version}");
+					NocatFarm.Log.Good(new Said("plugin loaded: {0} {1}", plugin.Name, plugin.Version));
 				} catch (Exception e) {
-					NocatFarm.Log.Warn($"plugin {plugin.Name} failed while loading and has been left out: {e.GetType().Name}: {e.Message}");
+					NocatFarm.Log.Warn(new Said("plugin {0} failed while loading and has been left out: {1}: {2}", plugin.Name, e.GetType().Name, e.Message));
 				}
 			}
 		} catch (ReflectionTypeLoadException e) {
 			// The usual cause is a plugin built against a different nocat.farm. Say so rather than printing a
 			// wall of loader exceptions.
-			NocatFarm.Log.Warn($"plugins: couldn't read {Path.GetFileName(file)} - it was probably built against a different version. ({e.LoaderExceptions.FirstOrDefault()?.Message})");
+			NocatFarm.Log.Warn(new Said("plugins: couldn't read {0} - it was probably built against a different version. ({1})", Path.GetFileName(file), e.LoaderExceptions.FirstOrDefault()?.Message));
 		} catch (Exception e) {
-			NocatFarm.Log.Warn($"plugins: couldn't load {Path.GetFileName(file)}: {e.GetType().Name}: {e.Message}");
+			NocatFarm.Log.Warn(new Said("plugins: couldn't load {0}: {1}: {2}", Path.GetFileName(file), e.GetType().Name, e.Message));
 		}
 	}
 
@@ -114,7 +114,7 @@ public static class PluginHost {
 			try {
 				await loaded.Plugin.OnUnloadAsync().ConfigureAwait(false);
 			} catch (Exception e) {
-				NocatFarm.Log.Debug($"plugin {loaded.Plugin.Name} threw on unload: {e.Message}");
+				NocatFarm.Log.Debug(new Said("plugin {0} threw on unload: {1}", loaded.Plugin.Name, e.Message));
 			}
 		}
 
@@ -165,7 +165,7 @@ public static class PluginHost {
 		}
 
 		loaded.Host.SetValue(name, value);
-		NocatFarm.Log.Info($"plugin {plugin}: {name} = {value}");
+		NocatFarm.Log.Info(new Said("plugin {0}: {1} = {2}", plugin, name, value));
 
 		return true;
 	}

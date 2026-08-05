@@ -161,7 +161,7 @@ public static partial class Commands {
 
 			return true;
 		} catch (Exception e) {
-			Log.Debug($"couldn't open the dashboard: {e.GetType().Name}: {e.Message}");
+			Log.Debug(new Said("couldn't open the dashboard: {0}: {1}", e.GetType().Name, e.Message));
 
 			return false;
 		}
@@ -1342,7 +1342,7 @@ public static partial class Commands {
 
 			started.Add(bot);
 			string lead = delay > TimeSpan.Zero ? $" (finishing up first, starts in ~{Fmt.Hm((int) Math.Ceiling(delay.TotalMinutes))})" : "";
-			Log.Info($"grinding {GameNames.Of(appId)} for {Fmt.Hm((int) how.TotalMinutes)}{lead} - normal schedule resumes after", bot.Name);
+			Log.Info(new Said("grinding {0} for {1}{2} - normal schedule resumes after", GameNames.Of(appId), Fmt.Hm((int) how.TotalMinutes), lead), bot.Name);
 		}
 
 		string no = refused.Count > 0
@@ -1429,7 +1429,7 @@ public static partial class Commands {
 			return $"{bot.Name}: {message}";
 		}
 
-		Log.Reward($"{message} in {GameNames.Of(appId)}", bot.Name);
+		Log.Reward(new Said("{0} in {1}", message, GameNames.Of(appId)), bot.Name);
 
 		return $"{bot.Name}: {message} in {GameNames.Of(appId)}.";
 	}

@@ -125,7 +125,7 @@ public static partial class MobileAuth {
 
 			return (Find(doc.RootElement, "shared_secret"), Find(doc.RootElement, "identity_secret"), Find(doc.RootElement, "device_id"));
 		} catch (Exception e) {
-			Log.Warn($"couldn't read the authenticator file {Path.GetFileName(path)}: {e.Message}");
+			Log.Warn(new Said("couldn't read the authenticator file {0}: {1}", Path.GetFileName(path), e.Message));
 
 			return (null, null, null);
 		}

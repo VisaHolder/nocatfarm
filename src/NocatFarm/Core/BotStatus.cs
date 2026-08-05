@@ -14,12 +14,12 @@ namespace NocatFarm.Core;
 /// there is nothing better to say about it, not something worth saying while it is mid-session on Counter-Strike.
 /// </summary>
 public readonly record struct BotStatus(
-	string Doing,
-	string Persona,
-	string Sitting,
-	string Today,
+	Said Doing,
+	Said Persona,
+	Said Sitting,
+	Said Today,
 	string Comments,
-	string Warning,
+	Said Warning,
 	int SessionDone,
 	int SessionTotal,
 	int DayDone,
@@ -33,60 +33,60 @@ public readonly record struct BotStatus(
 
 	public static BotStatus Of(Bot bot) {
 		if (!bot.IsOnline) {
-			return new BotStatus(Loc.T(bot.StatusText), "", "", "", "", "", 0, 0, 0, 0);
+			return new BotStatus(new Said(bot.StatusText), default, default, default, "", default, 0, 0, 0, 0);
 		}
 
 		HumanMode? human = BotManager.ModuleOf<HumanMode>(bot);
 		Rep4RepModule? comments = BotManager.ModuleOf<Rep4RepModule>(bot);
 
-		string doing;
-		string sitting = "";
-		string today = "";
+		Said doing;
+		Said sitting = default;
+		Said today = default;
 		int done = 0, total = 0, dayDone = 0, dayTotal = 0;
 		bool playing = false;
 
 		if (bot.Grinding) {
-			doing = Loc.T("grinding {0}", GameNames.Of(bot.GrindGame));
+			doing = new Said("grinding {0}", GameNames.Of(bot.GrindGame));
 			playing = true;
 
 			if (bot.GrindUntil is { } until) {
-				sitting = Loc.T("{0} left", Fmt.Hm((int) Math.Max(0, (until - DateTime.UtcNow).TotalMinutes)));
+				sitting = new Said("{0} left", Fmt.Hm((int) Math.Max(0, (until - DateTime.UtcNow).TotalMinutes)));
 			}
 		} else if (bot.Paused) {
-			doing = Loc.T("paused");
+			doing = new Said("paused");
 		} else if (bot.PlayingBlocked) {
-			doing = Loc.T("waiting - you're playing on this account");
+			doing = new Said("waiting - you're playing on this account");
 		} else if (bot.InResumeGrace) {
 			// You've stopped, Steam freed the account, and we're sitting out the courtesy delay before picking
 			// back up. Saying "you're playing on this account" here (the human-mode StoodDown text, which is still
 			// the live phase until the delay elapses) directly contradicts the "free again - picking back up"
 			// line that just fired, which is exactly the confusion this branch removes.
-			doing = Loc.T("picking back up in a moment");
+			doing = new Said("picking back up in a moment");
 		} else if (human is { Current: not HumanMode.Phase.Off }) {
 			doing = human.Doing;
 			(done, total) = human.Session;
 			playing = human.PlayingNow != 0;
 
 			if (total > 0) {
-				sitting = Loc.T("{0} of {1}", Fmt.Hm(done), Fmt.Hm(total));
+				sitting = new Said("{0} of {1}", Fmt.Hm(done), Fmt.Hm(total));
 			} else if (human.NextChange is { } next) {
 				int left = (int) Math.Max(0, (next - DateTime.UtcNow).TotalMinutes);
-				sitting = left > 0 ? Loc.T("{0} to go", Fmt.Hm(left)) : Loc.T("any moment");
+				sitting = left > 0 ? new Said("{0} to go", Fmt.Hm(left)) : new Said("any moment");
 			}
 
 			dayDone = human.PlayedMinutesToday;
 			dayTotal = human.TargetMinutesToday;
 
 			if (dayTotal > 0) {
-				today = Loc.T("{0} of {1} today", Fmt.Hm(dayDone), Fmt.Hm(dayTotal));
+				today = new Said("{0} of {1} today", Fmt.Hm(dayDone), Fmt.Hm(dayTotal));
 			}
 		} else if (bot.IsFarming) {
-			doing = Loc.T("farming trading cards");
-			sitting = Loc.T("{0} card(s) in {1} game(s)", bot.CardsRemaining, bot.GamesRemaining);
+			doing = new Said("farming trading cards");
+			sitting = new Said("{0} card(s) in {1} game(s)", bot.CardsRemaining, bot.GamesRemaining);
 			playing = true;
 		} else if (!string.IsNullOrEmpty(bot.Playing)) {
-			doing = Loc.T("idling {0}", bot.Playing);
-			today = bot.CardsRemaining > 0 ? Loc.T("{0} card(s) left", bot.CardsRemaining) : Loc.T("nothing to farm");
+			doing = new Said("idling {0}", bot.Playing);
+			today = bot.CardsRemaining > 0 ? new Said("{0} card(s) left", bot.CardsRemaining) : new Said("nothing to farm");
 			playing = true;
 		} else {
 			// "online, nothing running" was almost never true. Right after logging in the card farmer is part
@@ -99,8 +99,8 @@ public readonly record struct BotStatus(
 			// moment the language changed and the readout started reporting "im Leerlauf" as though it were real
 			// work. Loc.Is matches the word in any language, including the one the status was cached in.
 			doing = (busy.Length > 0) && !Loc.Is(busy, "idle") && !Loc.Is(busy, "off")
-				? busy
-				: Loc.T("online, nothing running");
+				? new Said(busy)
+				: new Said("online, nothing running");
 		}
 
 		// Kept out of Doing so each surface can dim it or not. Only worth saying when it is NOT the ordinary
@@ -116,14 +116,14 @@ public readonly record struct BotStatus(
 		//
 		// PersonaWord stays English on the Bot - plugins read it as a stable value and the "online" test below
 		// has to keep matching in every language. It is translated here, at the point it becomes prose.
-		string persona =
-			bot.Cfg.IUseThisAccount ? Loc.T("status left to your own Steam client") :
-			bot.PersonaOverridden ? Loc.T("{0} - your own Steam client is overriding this", Loc.T(bot.PersonaReallyWord)) :
-			bot.PersonaWord is not "online" ? Loc.T(bot.PersonaWord) : "";
+		Said persona =
+			bot.Cfg.IUseThisAccount ? new Said("status left to your own Steam client") :
+			bot.PersonaOverridden ? new Said("{0} - your own Steam client is overriding this", new Said(bot.PersonaReallyWord)) :
+			bot.PersonaWord is not "online" ? new Said(bot.PersonaWord) : default;
 
 		// Otherwise this failure is completely silent: the row keeps reporting the name we ASKED for while
 		// Steam shows the real game to everybody who looks at the profile.
-		string warning = bot.CustomNameNotShowing ? Loc.T("Steam shows {0}", bot.PlayingAsSeen) : "";
+		Said warning = bot.CustomNameNotShowing ? new Said("Steam shows {0}", bot.PlayingAsSeen) : default;
 
 		string said = (comments != null) && bot.Cfg.Rep4Rep ? $"{comments.PostsToday}/{comments.Cap}" : "";
 
@@ -134,25 +134,16 @@ public readonly record struct BotStatus(
 	}
 
 	/// <summary>One flat line for the log, with the empty parts dropped rather than left as gaps.</summary>
-	public string Line() {
-		List<string> parts = [Doing];
+	/// <remarks>
+	/// Returns a Said whose single value is a function, so the join happens when somebody reads the line rather
+	/// than when it was logged. Joining here would render every part immediately and freeze the whole sentence
+	/// in the language of the moment - which is the one thing the heartbeat, printed every few minutes for the
+	/// life of the process, must not do.
+	/// </remarks>
+	public Said Line() {
+		Said[] parts = [Doing, Persona, Sitting, Today, Warning];
 
-		if (Persona.Length > 0) {
-			parts.Add(Persona);
-		}
-
-		if (Sitting.Length > 0) {
-			parts.Add(Sitting);
-		}
-
-		if (Today.Length > 0) {
-			parts.Add(Today);
-		}
-
-		if (Warning.Length > 0) {
-			parts.Add(Warning);
-		}
-
-		return string.Join(" · ", parts);
+		return new Said("{0}", (Func<string>) (() => string.Join(" · ",
+			parts.Where(static p => !p.IsEmpty).Select(static p => p.ToString()))));
 	}
 }

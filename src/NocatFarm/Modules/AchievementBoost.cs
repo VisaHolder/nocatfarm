@@ -62,7 +62,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 					// full two hours after the setting said off - and the status line cheerfully said "off" while
 					// it did. A manual grind is somebody else's and is left alone.
 					if (_ours && Bot.Grinding) {
-						Log.Info($"achievement boost switched off - leaving {GameNames.Of(Bot.GrindGame)}", Bot.Name);
+						Log.Info(new Said("achievement boost switched off - leaving {0}", GameNames.Of(Bot.GrindGame)), Bot.Name);
 						Bot.StopGrind();
 					}
 
@@ -73,7 +73,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			} catch (OperationCanceledException) {
 				throw;
 			} catch (Exception e) {
-				Log.Warn($"achievement boost hiccup: {e.Message}", Bot.Name);
+				Log.Warn(new Said("achievement boost hiccup: {0}", e.Message), Bot.Name);
 			}
 
 			if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
@@ -353,7 +353,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		if (changed) {
 			int shared = found.Count(a => Bot.Library.Find(a)?.Shared == true);
 
-			Log.Info($"achievement boost - {found.Count} game(s) worth hunting{(shared > 0 ? $" ({shared} shared with this account)" : "")}", Bot.Name);
+			Log.Info(new Said("achievement boost - {0} game(s) worth hunting{1}", found.Count, (shared > 0 ? $" ({shared} shared with this account)" : "")), Bot.Name);
 		}
 	}
 
@@ -406,7 +406,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			// earning nothing and looking like it is. Hand it back and move down the list; the twenty-minute grace
 			// in the library keeps it out of the rotation until they are actually finished with it.
 			if (_ours && Bot.Cfg.YieldToFamily && Bot.Library.FamilyIsPlaying(Bot.GrindGame)) {
-				Log.Info($"someone in the family started {GameNames.Of(Bot.GrindGame)} - leaving it to them and moving on", Bot.Name);
+				Log.Info(new Said("someone in the family started {0} - leaving it to them and moving on", GameNames.Of(Bot.GrindGame)), Bot.Name);
 				Bot.StopGrind();
 
 				return;   // the next tick sees the grind gone and starts the rest before the following game
@@ -519,6 +519,6 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 
 		_ours = true;
 		_status = new Said("hunting {0}", GameNames.Of(target));
-		Log.Info($"achievement boost - hunting {GameNames.Of(target)} for {Fmt.Hm(minutes)} ({_index}/{targets.Count} through the list)", Bot.Name);
+		Log.Info(new Said("achievement boost - hunting {0} for {1} ({2}/{3} through the list)", GameNames.Of(target), Fmt.Hm(minutes), _index, targets.Count), Bot.Name);
 	}
 }

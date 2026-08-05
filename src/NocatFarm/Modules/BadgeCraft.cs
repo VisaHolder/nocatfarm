@@ -76,7 +76,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			} catch (OperationCanceledException) {
 				throw;
 			} catch (Exception e) {
-				Log.Warn($"badge sweep failed: {e.GetType().Name}: {e.Message}", Bot.Name);
+				Log.Warn(new Said("badge sweep failed: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
 			}
 
 			if (!await Sleep(wait, ct).ConfigureAwait(false)) {
@@ -133,7 +133,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		}
 
 		if (opened > 0) {
-			Log.Reward($"opened {opened} booster pack(s)", Bot.Name);
+			Log.Reward(new Said("opened {0} booster pack(s)", opened), Bot.Name);
 		}
 
 		return opened;
@@ -207,7 +207,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			} catch (OperationCanceledException) {
 				throw;
 			} catch (Exception e) {
-				Log.Debug($"booster unpack: {e.Message}", Bot.Name);
+				Log.Debug(new Said("booster unpack: {0}", e.Message), Bot.Name);
 			}
 		}
 
@@ -246,7 +246,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			return 0;
 		}
 
-		Log.Info($"{ready.Count} completed card set(s) ready to craft", Bot.Name);
+		Log.Info(new Said("{0} completed card set(s) ready to craft", ready.Count), Bot.Name);
 		int made = 0;
 
 		// Deliberately NOT re-reading the page between crafts: the list we already have is accurate, and every
@@ -256,7 +256,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			_status = new Said("crafting ({0}/{1})", made, ready.Count);
 
 			if (!await CraftAsync(c, ct).ConfigureAwait(false)) {
-				Log.Warn($"craft refused - backing off {BackoffHours}h rather than retrying", Bot.Name);
+				Log.Warn(new Said("craft refused - backing off {0}h rather than retrying", BackoffHours), Bot.Name);
 				_status = new Said("rate-limited, backing off");
 
 				return made > 0 ? made : -1;
@@ -272,7 +272,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		}
 
 		if (made > 0) {
-			Log.Reward($"crafted {made} badge(s) - Steam level up", Bot.Name);
+			Log.Reward(new Said("crafted {0} badge(s) - Steam level up", made), Bot.Name);
 		}
 
 		_status = new Said("{0} crafted since start", _crafted);

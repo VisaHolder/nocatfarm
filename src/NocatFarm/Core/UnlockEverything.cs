@@ -36,7 +36,7 @@ public static class UnlockEverything {
 			try {
 				await RunAsync(bot).ConfigureAwait(false);
 			} catch (Exception e) {
-				Log.Error($"unlocking everything stopped: {e.GetType().Name}: {e.Message}", bot.Name);
+				Log.Error(new Said("unlocking everything stopped: {0}: {1}", e.GetType().Name, e.Message), bot.Name);
 			} finally {
 				lock (Running) {
 					Running.Remove(bot.Name);
@@ -56,13 +56,13 @@ public static class UnlockEverything {
 			return;
 		}
 
-		Log.Warn($"unlocking every achievement across {owned.Count} owned app(s) - this takes a while and cannot be undone", bot.Name);
+		Log.Warn(new Said("unlocking every achievement across {0} owned app(s) - this takes a while and cannot be undone", owned.Count), bot.Name);
 
 		int games = 0, unlocked = 0, failed = 0, looked = 0;
 
 		foreach (uint app in owned.Keys) {
 			if (!bot.IsOnline) {
-				Log.Warn($"stopped early - the account signed out. {unlocked} achievement(s) across {games} game(s) were unlocked", bot.Name);
+				Log.Warn(new Said("stopped early - the account signed out. {0} achievement(s) across {1} game(s) were unlocked", unlocked, games), bot.Name);
 
 				return;
 			}
@@ -98,22 +98,22 @@ public static class UnlockEverything {
 			if (ok) {
 				games++;
 				unlocked += locked.Count;
-				Log.Reward($"unlocked all {locked.Count} in {GameNames.Of(app)}", bot.Name);
+				Log.Reward(new Said("unlocked all {0} in {1}", locked.Count, GameNames.Of(app)), bot.Name);
 			} else {
 				failed++;
-				Log.Debug($"couldn't unlock {GameNames.Of(app)} - {message}", bot.Name);
+				Log.Debug(new Said("couldn't unlock {0} - {1}", GameNames.Of(app), message), bot.Name);
 			}
 
 			// Progress, because on a big library this runs for a long time and silence looks like a hang.
 			if ((looked % 250) == 0) {
-				Log.Info($"still going - {looked}/{owned.Count} apps checked, {unlocked} unlocked so far", bot.Name);
+				Log.Info(new Said("still going - {0}/{1} apps checked, {2} unlocked so far", looked, owned.Count, unlocked), bot.Name);
 			}
 
 			await Breathe().ConfigureAwait(false);
 		}
 
 		string trouble = failed > 0 ? $", {failed} game(s) refused" : "";
-		Log.Good($"done - {unlocked} achievement(s) unlocked across {games} game(s){trouble}", bot.Name);
+		Log.Good(new Said("done - {0} achievement(s) unlocked across {1} game(s){2}", unlocked, games, trouble), bot.Name);
 	}
 
 	/// <summary>

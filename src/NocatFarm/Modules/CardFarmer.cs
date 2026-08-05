@@ -130,7 +130,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				throw;
 			} catch (Exception e) {
 				// Never silent. A farmer that dies quietly looks exactly like a farmer with nothing to do.
-				Log.Warn($"card farming hiccup: {e.GetType().Name}: {e.Message}", Bot.Name);
+				Log.Warn(new Said("card farming hiccup: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
 				waitMinutes = 15;
 			}
 
@@ -161,7 +161,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			await Task.Delay(Rng.Minutes(2, 6)).ConfigureAwait(false);
 			Log.Info(await Looting.SendToMasterAsync(Bot).ConfigureAwait(false), Bot.Name);
 		} catch (Exception e) {
-			Log.Warn($"couldn't send the cards on: {e.Message}", Bot.Name);
+			Log.Warn(new Said("couldn't send the cards on: {0}", e.Message), Bot.Name);
 		}
 	}
 
@@ -270,14 +270,17 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				// "1h34m/7h12m today" read as a contradiction rather than a different number: two figures for
 				// the same account a minute apart, neither saying which span it was counting.
 				int lifetime = Lifetime.For(Bot.Name);
-				string been = lifetime > 0 ? $" · {Fmt.Hm(lifetime)} played in total" : "";
+				// A Said, not a formatted string. It is passed as a VALUE into the sentence below, and a value that
+				// is already finished text stays in whatever language it was built in - which is how the two lines
+				// ended up reading "keine Karten mehr zu farmen · 1h23m played in total".
+				Said been = lifetime > 0 ? new Said(" · {0} played in total", Fmt.Hm(lifetime)) : default;
 				string idle = !string.IsNullOrWhiteSpace(Bot.CustomName)
 					? Bot.CustomName + (Bot.Cfg.IdleGames.Count > 0 ? $" (+{Bot.Cfg.IdleGames.Count})" : "")
 					: Bot.Cfg.IdleGames.Count > 0 ? $"{Bot.Cfg.IdleGames.Count} game(s)" : "your games";
 
 				Log.Info(Bot.HumanOwned
-					? $"no cards left - human mode carries on{been}"
-					: $"no cards left to farm - now idling {idle}{been}", Bot.Name);
+					? new Said("no cards left - human mode carries on{0}", been)
+					: new Said("no cards left to farm - now idling {0}{1}", idle, been), Bot.Name);
 			}
 
 			// Hand the session straight back to the idler so the custom game name goes back up NOW.
@@ -298,7 +301,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 		// One game is already spelled out by the "farming X - N to go" line below; only summarise a batch.
 		if (found.Count > 1) {
-			Log.Good($"{found.Count} games with {Bot.CardsRemaining} cards left to farm", Bot.Name);
+			Log.Good(new Said("{0} games with {1} cards left to farm", found.Count, Bot.CardsRemaining), Bot.Name);
 		}
 
 		float threshold = Bot.Cfg.HoursUntilCardDrops;
@@ -411,7 +414,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			strikes = stall.Strikes;
 		}
 
-		Log.Warn($"{game.GameName} gave up nothing in {limit.TotalHours:0}h with {game.CardsRemaining} card(s) still listed - setting it aside for {hours}h and moving on (strike {strikes})", Bot.Name);
+		Log.Warn(new Said("{0} gave up nothing in {1}h with {2} card(s) still listed - setting it aside for {3}h and moving on (strike {4})", game.GameName, (limit.TotalHours).ToString("0"), game.CardsRemaining, hours, strikes), Bot.Name);
 	}
 
 	/// <summary>A game that dropped a card, or finished, is not stuck - forget everything about it.</summary>
@@ -463,7 +466,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			return;
 		}
 
-		Log.Info($"all card drops done - winding down on {game.GameName} for ~{Fmt.Hm(mins)} before the usual games", Bot.Name);
+		Log.Info(new Said("all card drops done - winding down on {0} for ~{1} before the usual games", game.GameName, Fmt.Hm(mins)), Bot.Name);
 		DateTime until = DateTime.UtcNow.AddMinutes(mins);
 
 		while (!ct.IsCancellationRequested && (DateTime.UtcNow < until)) {
@@ -500,7 +503,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		Claim();
 		Bot.SetPlaying([game.AppId], Bot.Cfg.PlayWhileFarming ? null : "");
 		_status = new Said("farming {0} ({1} left)", game.GameName, game.CardsRemaining);
-		Log.Info($"farming {game.GameName} - {game.CardsRemaining} card(s) to go", Bot.Name);
+		Log.Info(new Said("farming {0} - {1} card(s) to go", game.GameName, game.CardsRemaining), Bot.Name);
 
 		while (!ct.IsCancellationRequested) {
 			if (!Bot.CanPlay) {
@@ -560,10 +563,10 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 						Stats.Record(Stats.KindCard, Bot.Name);
 					}
 
-					Log.Reward($"last card dropped in {game.GameName} - that game's done", Bot.Name);
+					Log.Reward(new Said("last card dropped in {0} - that game's done", game.GameName), Bot.Name);
 					Plugins.PluginHost.RaiseCardDropped(Bot, game.AppId, 0);
 				} else {
-					Log.Reward($"{game.GameName} is done - no cards left", Bot.Name);
+					Log.Reward(new Said("{0} is done - no cards left", game.GameName), Bot.Name);
 				}
 
 				lock (_queue) {
@@ -593,7 +596,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 					Stats.Record(Stats.KindCard, Bot.Name);
 				}
 
-				Log.Reward($"card dropped in {game.GameName} - {game.CardsRemaining} to go", Bot.Name);
+				Log.Reward(new Said("card dropped in {0} - {1} to go", game.GameName, game.CardsRemaining), Bot.Name);
 				Plugins.PluginHost.RaiseCardDropped(Bot, game.AppId, game.CardsRemaining);
 			}
 		}
@@ -612,7 +615,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		Claim();
 		Bot.SetPlaying(batch.Select(static g => g.AppId).ToArray(), Bot.Cfg.PlayWhileFarming ? null : "");
 		_status = new Said("building playtime on {0} game(s), ~{1}h to go", batch.Count, (needHours).ToString("0.0"));
-		Log.Info($"none of these have enough playtime to drop yet - running {batch.Count} at once for ~{needHours:0.0}h", Bot.Name);
+		Log.Info(new Said("none of these have enough playtime to drop yet - running {0} at once for ~{1}h", batch.Count, (needHours).ToString("0.0")), Bot.Name);
 
 		DateTime until = DateTime.UtcNow.AddHours(needHours);
 
@@ -728,7 +731,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 			// Free games carry today's date too, and no amount of playing one costs anybody a refund.
 			if (owned.TryGetValue(appId, out AppOwnership own) && own.Paid && ((DateTime.UtcNow - own.Since).TotalDays < DaysForRefund)) {
-				Log.Debug($"leaving {game.GameName} alone - still refundable until {own.Since.AddDays(DaysForRefund):d}", Bot.Name);
+				Log.Debug(new Said("leaving {0} alone - still refundable until {1}", game.GameName, (own.Since.AddDays(DaysForRefund)).ToString("d")), Bot.Name);
 				byApp.Remove(appId);
 			}
 		}
@@ -817,8 +820,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			at = end.AddMinutes(rng.Next(20, 110));   // up, away from the desk, back later
 		}
 
-		Log.Debug(
-			$"today's farming: {_farmWindows.Count} sitting(s), {Fmt.Hm(spent)} in total"
+		Log.Debug(new Said("today's farming: {0} sitting(s), {1} in total", _farmWindows.Count, Fmt.Hm(spent))
 			+ (_farmWindows.Count > 0 ? $", {_farmWindows[0].From:HH:mm}-{_farmWindows[^1].To:HH:mm}" : ""),
 			Bot.Name);
 	}

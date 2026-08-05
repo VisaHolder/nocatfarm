@@ -1,6 +1,8 @@
 using System.Text.Json;
 using NocatFarm.Config;
 
+using NocatFarm.Core;
+
 namespace NocatFarm;
 
 /// <summary>
@@ -113,7 +115,7 @@ public static class GameCatalog {
 			// runs straight into that. A 429 means every lookup until it lifts is wasted, so stop asking.
 			if (!response.IsSuccessStatusCode) {
 				_coolUntil = DateTime.UtcNow.AddMinutes(response.StatusCode == System.Net.HttpStatusCode.TooManyRequests ? 10 : 2);
-				Log.Debug($"the store answered {(int) response.StatusCode} - pausing game lookups until {_coolUntil.ToLocalTime():HH:mm}");
+				Log.Debug(new Said("the store answered {0} - pausing game lookups until {1}", (int) response.StatusCode, (_coolUntil.ToLocalTime()).ToString("HH:mm")));
 
 				return null;
 			}
@@ -165,7 +167,7 @@ public static class GameCatalog {
 		} catch (OperationCanceledException) {
 			throw;
 		} catch (Exception e) {
-			Log.Debug($"store lookup for {app} failed: {e.Message}");
+			Log.Debug(new Said("store lookup for {0} failed: {1}", app, e.Message));
 
 			return null;
 		} finally {
@@ -195,7 +197,7 @@ public static class GameCatalog {
 				}
 			}
 		} catch (Exception e) {
-			Log.Debug($"couldn't read the game catalog: {e.Message}");
+			Log.Debug(new Said("couldn't read the game catalog: {0}", e.Message));
 		}
 	}
 
@@ -221,7 +223,7 @@ public static class GameCatalog {
 			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
 			await AtomicFile.WriteAsync(Path, JsonSerializer.Serialize(snapshot)).ConfigureAwait(false);
 		} catch (Exception e) {
-			Log.Debug($"couldn't save the game catalog: {e.Message}");
+			Log.Debug(new Said("couldn't save the game catalog: {0}", e.Message));
 		}
 	}
 }

@@ -116,7 +116,7 @@ public static class InventoryHistory {
 				}
 			}
 		} catch (Exception e) {
-			Log.Debug($"couldn't read the inventory history: {e.Message}");
+			Log.Debug(new Said("couldn't read the inventory history: {0}", e.Message));
 		}
 	}
 
@@ -135,7 +135,7 @@ public static class InventoryHistory {
 			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
 			AtomicFile.Write(Path, JsonSerializer.Serialize(snapshot));
 		} catch (Exception e) {
-			Log.Debug($"couldn't save the inventory history: {e.Message}");
+			Log.Debug(new Said("couldn't save the inventory history: {0}", e.Message));
 		}
 	}
 }

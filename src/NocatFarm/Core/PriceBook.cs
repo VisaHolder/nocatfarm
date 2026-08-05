@@ -147,7 +147,7 @@ public static partial class PriceBook {
 					_coolUntil = DateTime.UtcNow.AddMinutes(2);
 				}
 
-				Log.Debug($"the market answered {(int) response.StatusCode} - pausing price lookups until {_coolUntil.ToLocalTime():HH:mm}");
+				Log.Debug(new Said("the market answered {0} - pausing price lookups until {1}", (int) response.StatusCode, (_coolUntil.ToLocalTime()).ToString("HH:mm")));
 
 				return null;
 			}
@@ -177,7 +177,7 @@ public static partial class PriceBook {
 		} catch (OperationCanceledException) {
 			throw;
 		} catch (Exception e) {
-			Log.Debug($"market lookup for {marketHashName} failed: {e.Message}");
+			Log.Debug(new Said("market lookup for {0} failed: {1}", marketHashName, e.Message));
 
 			return null;
 		} finally {
@@ -247,7 +247,7 @@ public static partial class PriceBook {
 				}
 			}
 		} catch (Exception e) {
-			Log.Debug($"couldn't read the price book: {e.Message}");
+			Log.Debug(new Said("couldn't read the price book: {0}", e.Message));
 		}
 	}
 
@@ -267,7 +267,7 @@ public static partial class PriceBook {
 			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
 			AtomicFile.Write(Path, JsonSerializer.Serialize(snapshot));
 		} catch (Exception e) {
-			Log.Debug($"couldn't save the price book: {e.Message}");
+			Log.Debug(new Said("couldn't save the price book: {0}", e.Message));
 		}
 	}
 

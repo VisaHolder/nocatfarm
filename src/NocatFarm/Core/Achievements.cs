@@ -113,7 +113,7 @@ public static class Achievements {
 
 		using (MemoryStream stream = new(response.schema)) {
 			if (!schema.TryReadAsBinary(stream)) {
-				Log.Warn($"couldn't read the achievement schema for app {appId}", bot.Name);
+				Log.Warn(new Said("couldn't read the achievement schema for app {0}", appId), bot.Name);
 
 				return null;
 			}
@@ -138,7 +138,7 @@ public static class Achievements {
 		// appID node - its children are "stats" and friends. Looking for a child called "440" underneath it found
 		// nothing at all, and every game came back as 0/0 achievements.
 		if (Log.DebugEnabled) {
-			Log.Debug($"schema root '{schema.Name}' with {schema.Children.Count} child(ren): {string.Join(", ", schema.Children.Take(8).Select(static c => c.Name + "[" + c.Children.Count + "]"))}", bot.Name);
+			Log.Debug(new Said("schema root '{0}' with {1} child(ren): {2}", schema.Name, schema.Children.Count, string.Join(", ", schema.Children.Take(8).Select(static c => c.Name + "[" + c.Children.Count + "]"))), bot.Name);
 
 			KeyValue statsNode = schema["stats"];
 			Dictionary<string, int> byType = [];
@@ -148,10 +148,10 @@ public static class Achievements {
 				byType[t] = byType.GetValueOrDefault(t) + 1;
 			}
 
-			Log.Debug($"stat types: {string.Join(", ", byType.Select(static kv => kv.Key + " x" + kv.Value))}", bot.Name);
+			Log.Debug(new Said("stat types: {0}", string.Join(", ", byType.Select(static kv => kv.Key + " x" + kv.Value))), bot.Name);
 
 			KeyValue first = statsNode.Children.FirstOrDefault() ?? new KeyValue();
-			Log.Debug($"first stat '{first.Name}' children: {string.Join(", ", first.Children.Select(static c => c.Name + "=" + (c.Children.Count > 0 ? "[" + c.Children.Count + "]" : c.Value)))}", bot.Name);
+			Log.Debug(new Said("first stat '{0}' children: {1}", first.Name, string.Join(", ", first.Children.Select(static c => c.Name + "=" + (c.Children.Count > 0 ? "[" + c.Children.Count + "]" : c.Value)))), bot.Name);
 		}
 
 		string appKey = appId.ToString(CultureInfo.InvariantCulture);
@@ -308,7 +308,7 @@ public static class Achievements {
 					}
 				}
 			} catch (Exception e) {
-				Log.Debug($"couldn't read global achievement rates for {set.AppId}: {e.Message}");
+				Log.Debug(new Said("couldn't read global achievement rates for {0}: {1}", set.AppId, e.Message));
 			}
 
 			percentages = fetched ?? [];

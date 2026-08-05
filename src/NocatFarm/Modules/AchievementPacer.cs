@@ -135,7 +135,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			} catch (OperationCanceledException) {
 				throw;
 			} catch (Exception e) {
-				Log.Warn($"achievement pacer hiccup: {e.GetType().Name}: {e.Message}", Bot.Name);
+				Log.Warn(new Said("achievement pacer hiccup: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
 			}
 
 			if (!await Sleep(TimeSpan.FromSeconds(60), ct).ConfigureAwait(false)) {
@@ -372,7 +372,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			// reason is Steam controls them server-side (Counter-Strike 2 is the classic case) - say so plainly
 			// and stop hammering Steam's stats for it, rather than looking silently stuck.
 			if (grind && set.All.Any(a => !a.Unlocked && !IsSpecialGlobal(a)) && !set.All.Any(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a))) {
-				Log.Info($"can't unlock {GameNames.Of(app)}'s achievements - Steam sets them server-side, so there's nothing to grind here", Bot.Name);
+				Log.Info(new Said("can't unlock {0}'s achievements - Steam sets them server-side, so there's nothing to grind here", GameNames.Of(app)), Bot.Name);
 				Back(g, TimeSpan.FromHours(_rng.Next(8, 25)));
 
 				return false;
@@ -396,7 +396,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		(bool ok, string message) = await Achievements.SetAsync(Bot, set, [pick], true, ct).ConfigureAwait(false);
 
 		if (!ok) {
-			Log.Debug($"couldn't unlock \"{pick.Display}\" in {GameNames.Of(app)} - {message}", Bot.Name);
+			Log.Debug(new Said("couldn't unlock \"{0}\" in {1} - {2}", pick.Display, GameNames.Of(app), message), Bot.Name);
 			Back(g, TimeSpan.FromMinutes(_rng.Next(30, 90)));
 
 			return false;
@@ -445,7 +445,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		}
 
 		string rarity = pick.GlobalPercent is { } percent ? $" ({percent:0.#}% of owners have it)" : "";
-		Log.Reward($"unlocked \"{pick.Display}\" in {GameNames.Of(app)}{rarity}  ({nowUnlocked}/{total})", Bot.Name);
+		Log.Reward(new Said("unlocked \"{0}\" in {1}{2}  ({3}/{4})", pick.Display, GameNames.Of(app), rarity, nowUnlocked, total), Bot.Name);
 		Remember(new Unlock(app, GameNames.Of(app), pick.Display, pick.GlobalPercent, DateTime.UtcNow, nowUnlocked, total));
 
 		return true;
@@ -814,9 +814,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				}
 			}
 
-			Log.Debug($"achievement pacing restored for {saved.Count} game(s)", Bot.Name);
+			Log.Debug(new Said("achievement pacing restored for {0} game(s)", saved.Count), Bot.Name);
 		} catch (Exception e) {
-			Log.Debug($"couldn't read the achievement state: {e.GetType().Name}: {e.Message}", Bot.Name);
+			Log.Debug(new Said("couldn't read the achievement state: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
 		}
 	}
 
@@ -887,11 +887,11 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			}
 
 			if (taken > 0) {
-				Log.Good($"picked up ArchiSteamFarm's achievement pacing for {taken} game(s) - carrying on from where it left off", Bot.Name);
+				Log.Good(new Said("picked up ArchiSteamFarm's achievement pacing for {0} game(s) - carrying on from where it left off", taken), Bot.Name);
 				Save();
 			}
 		} catch (Exception e) {
-			Log.Debug($"couldn't import the ArchiSteamFarm achievement state: {e.GetType().Name}: {e.Message}", Bot.Name);
+			Log.Debug(new Said("couldn't import the ArchiSteamFarm achievement state: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
 		}
 	}
 
@@ -914,7 +914,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 			AtomicFile.Write(path, JsonSerializer.Serialize(saved, new JsonSerializerOptions { WriteIndented = true }));
 		} catch (Exception e) {
-			Log.Debug($"couldn't save the achievement state: {e.GetType().Name}: {e.Message}", Bot.Name);
+			Log.Debug(new Said("couldn't save the achievement state: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
 		}
 	}
 }

@@ -160,12 +160,12 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 				// The whole module can sit silent for a day when there is nothing to do, which is
 				// indistinguishable from a module that has stopped running. One Debug line per pass says which.
-				Log.Debug($"rep4rep: {_status.English} - next look in {Fmt.Hm(Math.Max(60, waitSeconds) / 60)}", Bot.Name);
+				Log.Debug(new Said("rep4rep: {0} - next look in {1}", _status.English, Fmt.Hm(Math.Max(60, waitSeconds) / 60)), Bot.Name);
 			} catch (OperationCanceledException) {
 				throw;
 			} catch (Exception e) {
 				// NEVER silent: a throwing step is indistinguishable from "nothing to do" - no post, no log, forever.
-				Log.Warn($"rep4rep step failed: {e.GetType().Name}: {e.Message}", Bot.Name);
+				Log.Warn(new Said("rep4rep step failed: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
 				waitSeconds = 10 * 60;
 			}
 
@@ -252,8 +252,8 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		if (_profileId == null) {
 			_status = new Said("not registered on rep4rep");
 			Log.Warn(Live.Global.Rep4RepAutoAddProfiles
-				? "rep4rep couldn't register this Steam account - check the API token is right; retrying in 30m"
-				: $"this account isn't registered on rep4rep - add steamcommunity.com/profiles/{Bot.SteamId} on rep4rep.com, or turn Rep4RepAutoAddProfiles on", Bot.Name);
+				? new Said("rep4rep couldn't register this Steam account - check the API token is right; retrying in 30m")
+				: new Said("this account isn't registered on rep4rep - add steamcommunity.com/profiles/{0} on rep4rep.com, or turn Rep4RepAutoAddProfiles on", Bot.SteamId), Bot.Name);
 
 			return 30 * 60;
 		}
@@ -289,7 +289,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 				// Steam may well have posted it. A retry would put a SECOND identical comment on the same profile,
 				// which is exactly the pattern being avoided - so count it, leave the task alone, carry on.
 				await CountPostAsync(task).ConfigureAwait(false);
-				Log.Warn($"no reply from Steam for {task.TargetName} - it may have posted, counting it (no retry)", Bot.Name);
+				Log.Warn(new Said("no reply from Steam for {0} - it may have posted, counting it (no retry)", task.TargetName), Bot.Name);
 
 				return NextGapSeconds();
 			case Outcome.Refused:
@@ -303,7 +303,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 	private async Task<int> RetryOnceAsync(Rep4RepTask task, string? error, CancellationToken ct) {
 		int pause = Rng.Next(RetryLowSeconds, RetryHighSeconds + 1);
-		Log.Warn($"comment on {task.TargetName} didn't go through{(string.IsNullOrEmpty(error) ? "" : $" (\"{error}\")")} - trying once more in ~{Fmt.Hm(Math.Max(1, pause / 60))}", Bot.Name);
+		Log.Warn(new Said("comment on {0} didn't go through{1} - trying once more in ~{2}", task.TargetName, (string.IsNullOrEmpty(error) ? "" : $" (\"{error}\")"), Fmt.Hm(Math.Max(1, pause / 60))), Bot.Name);
 
 		if (!await Sleep(TimeSpan.FromSeconds(pause), ct).ConfigureAwait(false)) {
 			return 60;
@@ -320,14 +320,14 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 				return await BlockAccountAsync("Steam refused: " + (retryError ?? "commenting blocked")).ConfigureAwait(false);
 			case Outcome.Unknown:
 				await CountPostAsync(task).ConfigureAwait(false);
-				Log.Warn($"no reply on the retry for {task.TargetName} - counting it, no further retry", Bot.Name);
+				Log.Warn(new Said("no reply on the retry for {0} - counting it, no further retry", task.TargetName), Bot.Name);
 
 				return NextGapSeconds();
 			case Outcome.Refused:
 				return await OnTargetRefusedAsync(task).ConfigureAwait(false);
 		}
 
-		Log.Info($"retry posted on {task.TargetName}", Bot.Name);
+		Log.Info(new Said("retry posted on {0}", task.TargetName), Bot.Name);
 
 		return await CreditAsync(task, ct).ConfigureAwait(false);
 	}
@@ -348,16 +348,16 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		}
 
 		if (credited) {
-			Log.Reward($"commented on {task.TargetName} and credited ({done}/{Cap} today)", Bot.Name);
+			Log.Reward(new Said("commented on {0} and credited ({1}/{2} today)", task.TargetName, done, Cap), Bot.Name);
 		} else {
-			Log.Warn($"commented on {task.TargetName} but rep4rep didn't credit it ({done}/{Cap} today)", Bot.Name);
+			Log.Warn(new Said("commented on {0} but rep4rep didn't credit it ({1}/{2} today)", task.TargetName, done, Cap), Bot.Name);
 		}
 
 		_status = new Said("{0}/{1} today", done, Cap);
 
 		if (done >= Cap) {
 			string frees = NextSlot is { } t ? $"until ~{t.ToLocalTime():HH:mm}" : "for now";
-			Log.Info($"hit the {Cap}/24h cap - resting this account {frees}, the others carry on", Bot.Name);
+			Log.Info(new Said("hit the {0}/24h cap - resting this account {1}, the others carry on", Cap, frees), Bot.Name);
 
 			return 20 * 60;
 		}
@@ -380,7 +380,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 		if (_state.Strikes < StrikesToBlock) {
 			await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
-			Log.Warn($"{task.TargetName} refused - trying another profile ({_state.Strikes}/{StrikesToBlock})", Bot.Name);
+			Log.Warn(new Said("{0} refused - trying another profile ({1}/{2})", task.TargetName, _state.Strikes, StrikesToBlock), Bot.Name);
 
 			return Rng.Next(3 * 60, 8 * 60);
 		}
@@ -395,7 +395,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 
 		_status = new Said("resting 24h");
-		Log.Attention($"Steam won't take comments from this account - sitting out 24h ({reason})", Bot.Name);
+		Log.Attention(new Said("Steam won't take comments from this account - sitting out 24h ({0})", reason), Bot.Name);
 
 		// Re-check every 10 min rather than sleeping the whole day, so 'rep4rep clear' can release it immediately.
 		return 10 * 60;
@@ -419,7 +419,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 		_rateLimitRun = 0;
 		_status = new Said("Steam's daily comment limit - resting ~24h ({0} posted here today)", posted);
-		Log.Attention($"Steam's daily non-friend comment limit reached ({posted} posted via nocat.farm today; any others were posted outside it) - resting until it clears in ~24h", Bot.Name);
+		Log.Attention(new Said("Steam's daily non-friend comment limit reached ({0} posted via nocat.farm today; any others were posted outside it) - resting until it clears in ~24h", posted), Bot.Name);
 
 		return 10 * 60;
 	}
@@ -441,9 +441,9 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		if (Bot.Cfg.Rep4RepLearnCap && (posted > cap) && (posted > CapFloor)) {
 			_state.Cap = posted;
 			_state.CapLearned = true;
-			Log.Info($"daily limit found: {posted}/24h", Bot.Name);
+			Log.Info(new Said("daily limit found: {0}/24h", posted), Bot.Name);
 		} else {
-			Log.Info($"rate-limited at {posted}/{cap} - that's the gap between comments, not the daily cap", Bot.Name);
+			Log.Info(new Said("rate-limited at {0}/{1} - that's the gap between comments, not the daily cap", posted, cap), Bot.Name);
 		}
 
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
@@ -461,14 +461,14 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 			_rateLimitRun = 0;
 			_status = new Said("rate-limited - resting {0}, back at baseline", Fmt.Hm(rest));
-			Log.Attention($"Steam keeps rate-limiting comments at {posted}/{cap} - sitting out {Fmt.Hm(rest)} until the window clears, then starting fresh", Bot.Name);
+			Log.Attention(new Said("Steam keeps rate-limiting comments at {0}/{1} - sitting out {2} until the window clears, then starting fresh", posted, cap, Fmt.Hm(rest)), Bot.Name);
 
 			return 10 * 60;
 		}
 
 		int wait = Rng.Next(RateLimitLowMinutes, RateLimitHighMinutes + 1);
 		_status = new Said("rate-limited, backing off {0}m", wait);
-		Log.Warn($"Steam rate-limit - backing off ~{wait}m", Bot.Name);
+		Log.Warn(new Said("Steam rate-limit - backing off ~{0}m", wait), Bot.Name);
 
 		return wait * 60;
 	}

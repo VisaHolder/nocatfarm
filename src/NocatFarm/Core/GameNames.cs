@@ -164,7 +164,7 @@ public static class GameNames {
 					_dirty = true;
 				}
 			} catch (Exception e) {
-				Log.Debug($"couldn't look up the name of app {appId}: {e.Message}");
+				Log.Debug(new Said("couldn't look up the name of app {0}: {1}", appId, e.Message));
 			}
 
 			await Task.Delay(250, ct).ConfigureAwait(false);
@@ -201,7 +201,7 @@ public static class GameNames {
 				}
 			}
 		} catch (Exception e) {
-			Log.Debug($"couldn't read the game-name cache: {e.Message}");
+			Log.Debug(new Said("couldn't read the game-name cache: {0}", e.Message));
 		}
 	}
 
@@ -222,7 +222,7 @@ public static class GameNames {
 			Directory.CreateDirectory(ConfigStore.ConfigDir);
 			await File.WriteAllTextAsync(CachePath, JsonSerializer.Serialize(map, new JsonSerializerOptions { WriteIndented = true })).ConfigureAwait(false);
 		} catch (Exception e) {
-			Log.Debug($"couldn't save the game-name cache: {e.Message}");
+			Log.Debug(new Said("couldn't save the game-name cache: {0}", e.Message));
 		} finally {
 			SaveLock.Release();
 		}

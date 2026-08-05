@@ -120,7 +120,7 @@ public static class KeyQueue {
 
 			if (entry.Tries >= 8) {
 				Pending.Remove(entry);
-				Log.Warn($"giving up on a key after {entry.Tries} tries - no account could activate it");
+				Log.Warn(new Said("giving up on a key after {0} tries - no account could activate it", entry.Tries));
 			} else {
 				Pending.Remove(entry);
 				Pending.Add(entry);   // to the back, so one stubborn key doesn't block the rest
@@ -176,7 +176,7 @@ public static class KeyQueue {
 				}
 			}
 		} catch (Exception e) {
-			Log.Warn($"couldn't read the key queue: {e.Message}");
+			Log.Warn(new Said("couldn't read the key queue: {0}", e.Message));
 		}
 	}
 
@@ -191,7 +191,7 @@ public static class KeyQueue {
 			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
 			AtomicFile.Write(Path, JsonSerializer.Serialize(snapshot));
 		} catch (Exception e) {
-			Log.Warn($"couldn't save the key queue: {e.Message}");
+			Log.Warn(new Said("couldn't save the key queue: {0}", e.Message));
 		}
 	}
 }

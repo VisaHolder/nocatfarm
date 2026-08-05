@@ -196,7 +196,7 @@ public static class Redeeming {
 			RedeemResult result = await RedeemAsync(bot, key, ct).ConfigureAwait(false);
 
 			if (result.Ok) {
-				Log.Reward($"activated a queued key{(result.Packages.Count > 0 ? $" - package(s) {string.Join(", ", result.Packages)}" : "")}  ({KeyQueue.Count - 1} left in the queue)", bot.Name);
+				Log.Reward(new Said("activated a queued key{0}  ({1} left in the queue)", (result.Packages.Count > 0 ? $" - package(s) {string.Join(", ", result.Packages)}" : ""), KeyQueue.Count - 1), bot.Name);
 				KeyQueue.Done(key);
 
 				return;
@@ -209,7 +209,7 @@ public static class Redeeming {
 			}
 
 			if (!result.WorthAnotherAccount) {
-				Log.Info($"dropping a queued key - {result.Message}  ({KeyQueue.Count - 1} left)", bot.Name);
+				Log.Info(new Said("dropping a queued key - {0}  ({1} left)", result.Message, KeyQueue.Count - 1), bot.Name);
 				KeyQueue.Done(key);   // the key is dead, not the account
 
 				return;

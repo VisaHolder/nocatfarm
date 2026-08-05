@@ -95,11 +95,11 @@ public sealed class WebHost : IAsyncDisposable {
 			string host = _cfg.WebHost is "0.0.0.0" or "*" or "+" ? "localhost" : _cfg.WebHost;
 			Url = $"http://{host}:{_cfg.WebPort}/";
 
-			Log.Good($"dashboard: {Url}{(string.IsNullOrEmpty(_cfg.WebPassword) ? "  (this PC only - no password set)" : "")}");
+			Log.Good(new Said("dashboard: {0}{1}", Url, (string.IsNullOrEmpty(_cfg.WebPassword) ? "  (this PC only - no password set)" : "")));
 
 			return true;
 		} catch (Exception e) {
-			Log.Error($"couldn't start the dashboard on {_cfg.WebHost}:{_cfg.WebPort} - {e.Message}");
+			Log.Error(new Said("couldn't start the dashboard on {0}:{1} - {2}", _cfg.WebHost, _cfg.WebPort, e.Message));
 			Log.Info("the console still works. Change WebPort in config/nocatFarm.json, or set WebEnabled false.");
 
 			return false;
@@ -139,7 +139,7 @@ public sealed class WebHost : IAsyncDisposable {
 			_failures[ip] = (count, DateTime.UtcNow.AddMinutes(LockoutMinutes));
 
 			if (count >= MaxFailedLogins) {
-				Log.Warn($"dashboard: {count} failed logins from {ip} - locked out for {LockoutMinutes}m");
+				Log.Warn(new Said("dashboard: {0} failed logins from {1} - locked out for {2}m", count, ip, LockoutMinutes));
 			}
 
 			return false;
@@ -237,7 +237,7 @@ public sealed class WebHost : IAsyncDisposable {
 
 			AsfImport.Result result = AsfImport.Run(dir, _mgr.Global, body?.Overwrite ?? false);
 			await _mgr.SyncFromDiskAsync().ConfigureAwait(false);
-			Log.Good($"imported {result.Imported} account(s) from ArchiSteamFarm");
+			Log.Good(new Said("imported {0} account(s) from ArchiSteamFarm", result.Imported));
 
 			return Results.Json(new { ok = true, result.Imported, result.Skipped, result.Notes });
 		});
@@ -348,7 +348,7 @@ public sealed class WebHost : IAsyncDisposable {
 
 			Live.Global.DisabledPlugins = off;
 			ConfigStore.SaveGlobal(Live.Global);
-			Log.Info($"plugin {body.Name} switched {(body.Enabled ? "on" : "off")} - takes effect after a restart");
+			Log.Info(new Said("plugin {0} switched {1} - takes effect after a restart", body.Name, (body.Enabled ? "on" : "off")));
 
 			return Results.Json(new { Message = $"{body.Name} is {(body.Enabled ? "on" : "off")} after a restart." });
 
@@ -778,7 +778,7 @@ public sealed class WebHost : IAsyncDisposable {
 			_mgr.Global.Rep4RepApiToken = token;
 			ConfigStore.SaveGlobal(_mgr.Global);
 			RememberPoints(user.Value.Points, user.Value.PendingPoints);
-			Log.Good($"rep4rep connected - {user.Value.Points} points");
+			Log.Good(new Said("rep4rep connected - {0} points", user.Value.Points));
 
 			return Results.Json(new { ok = true, Points = user.Value.Points, Pending = user.Value.PendingPoints });
 		});
@@ -1025,7 +1025,7 @@ public sealed class WebHost : IAsyncDisposable {
 			// line per request buried everything else in the log.
 			if (!_warnedAboutBalance) {
 				_warnedAboutBalance = true;
-				Log.Debug($"rep4rep is reporting an impossible balance ({user.Value.Points} points, {user.Value.PendingPoints} pending) - keeping the last sensible figure");
+				Log.Debug(new Said("rep4rep is reporting an impossible balance ({0} points, {1} pending) - keeping the last sensible figure", user.Value.Points, user.Value.PendingPoints));
 			}
 
 			return _pointsCache.HasValue ? (_pointsCache.Value.Points, _pointsCache.Value.Pending) : null;

@@ -184,7 +184,7 @@ public sealed class WebSession : IDisposable {
 					TimeSpan shut = Limiters.NoteRateLimited(url.Host);
 
 					if (shut > TimeSpan.Zero) {
-						Log.Warn($"Steam is rate-limiting {url.Host} - every account stays off it for {Fmt.Hm((int) shut.TotalMinutes)}", _bot.Name);
+						Log.Warn(new Said("Steam is rate-limiting {0} - every account stays off it for {1}", url.Host, Fmt.Hm((int) shut.TotalMinutes)), _bot.Name);
 					}
 
 					return null;
@@ -201,7 +201,7 @@ public sealed class WebSession : IDisposable {
 					// the status code on its own will have to do
 				}
 
-				Log.Debug($"{(form == null ? "GET" : "POST")} {url.PathAndQuery} -> {(int) response.StatusCode}"
+				Log.Debug(new Said("{0} {1} -> {2}", (form == null ? "GET" : "POST"), url.PathAndQuery, (int) response.StatusCode)
 					+ (failure.Length > 0 ? $"  {failure[..Math.Min(300, failure.Length)]}" : ""), _bot.Name);
 
 				return null;
@@ -214,11 +214,11 @@ public sealed class WebSession : IDisposable {
 		} catch (OperationCanceledException e) {
 			// HttpClient reports its own 30s timeout as a cancellation with nobody having cancelled anything.
 			// Rethrowing that killed the calling module's loop outright and looked exactly like a clean shutdown.
-			Log.Debug($"{(form == null ? "GET" : "POST")} {url.PathAndQuery} timed out: {e.Message}", _bot.Name);
+			Log.Debug(new Said("{0} {1} timed out: {2}", (form == null ? "GET" : "POST"), url.PathAndQuery, e.Message), _bot.Name);
 
 			return null;
 		} catch (Exception e) {
-			Log.Debug($"{(form == null ? "GET" : "POST")} {url.PathAndQuery} failed: {e.Message}", _bot.Name);
+			Log.Debug(new Said("{0} {1} failed: {2}", (form == null ? "GET" : "POST"), url.PathAndQuery, e.Message), _bot.Name);
 
 			return null;
 		} finally {
@@ -275,7 +275,7 @@ public sealed class WebSession : IDisposable {
 					TimeSpan shut = Limiters.NoteRateLimited(url.Host);
 
 					if (shut > TimeSpan.Zero) {
-						Log.Warn($"Steam is rate-limiting {url.Host} - every account stays off it for {Fmt.Hm((int) shut.TotalMinutes)}", _bot.Name);
+						Log.Warn(new Said("Steam is rate-limiting {0} - every account stays off it for {1}", url.Host, Fmt.Hm((int) shut.TotalMinutes)), _bot.Name);
 					}
 
 					return null;
@@ -288,7 +288,7 @@ public sealed class WebSession : IDisposable {
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
-			Log.Debug($"POST {url.PathAndQuery} failed: {e.Message}", _bot.Name);
+			Log.Debug(new Said("POST {0} failed: {1}", url.PathAndQuery, e.Message), _bot.Name);
 
 			return null;
 		}
@@ -356,12 +356,12 @@ public sealed class WebSession : IDisposable {
 				string? body = await SendAsync(new Uri(service, "/parental/ajaxunlock"), form, service, false, ct, true).ConfigureAwait(false);
 
 				if (body == null || body.Contains("\"success\":false", StringComparison.Ordinal)) {
-					Log.Warn($"Family View PIN wasn't accepted by {service.Host} - card farming may see nothing", _bot.Name);
+					Log.Warn(new Said("Family View PIN wasn't accepted by {0} - card farming may see nothing", service.Host), _bot.Name);
 				}
 			} catch (OperationCanceledException) {
 				throw;
 			} catch (Exception e) {
-				Log.Debug($"parental unlock on {service.Host}: {e.Message}", _bot.Name);
+				Log.Debug(new Said("parental unlock on {0}: {1}", service.Host, e.Message), _bot.Name);
 			}
 		}
 	}
