@@ -522,6 +522,54 @@
     "waiting - farming cards first": "bekliyor - önce kartlar",
     "waiting for a farming slot": "toplama sırası bekleniyor",
     "waiting for the account": "hesap bekleniyor",
+    "sending items to your main account every {0} - the first send is around {1}": "eşyalar her {0} ana hesabına gönderiliyor - ilk gönderim {1} civarı",
+    "couldn't read the free-game state: {0}": "ücretsiz oyun durumu okunamadı: {0}",
+    "couldn't save the free-game state: {0}": "ücretsiz oyun durumu kaydedilemedi: {0}",
+    "Steam didn't answer": "Steam yanıt vermedi",
+    "Steam has no such offer for this account": "Steam'de bu hesap için böyle bir teklif yok",
+    "asks for cards this account doesn't have": "bu hesapta olmayan kartları istiyor",
+    "couldn't read this account's cards": "bu hesabın kartları okunamadı",
+    "trade offer #{0} isn't a fair card swap - {1}; left alone": "#{0} numaralı takas teklifi adil bir kart takası değil - {1}; olduğu gibi bırakıldı",
+    "a fair card swap": "adil bir kart takası",
+    "it would set back the {0} set": "{0} setini geriye götürür",
+    "not all ordinary trading cards": "hepsi sıradan koleksiyon kartı değil",
+    "not one for one within each game": "her oyun içinde bire bir değil",
+    "not one for one": "bire bir değil",
+    "one side is empty": "bir taraf boş",
+    "the store's gifts page lists {0} pending gift(s)": "mağazanın hediyeler sayfasında {0} bekleyen hediye var",
+    "couldn't check for free event items: {0}": "ücretsiz etkinlik eşyaları kontrol edilemedi: {0}",
+    "couldn't read the free-item list: {0}": "ücretsiz eşya listesi okunamadı: {0}",
+    "couldn't save the free-item list: {0}": "ücretsiz eşya listesi kaydedilemedi: {0}",
+    "Points Shop item {0} not taken - Steam said {1}": "puan dükkânı eşyası {0} alınmadı - Steam'in yanıtı: {1}",
+    "claimed the free sale item": "indirimin ücretsiz eşyası alındı",
+    "claimed the free sale item: {0}": "indirimin ücretsiz eşyası alındı: {0}",
+    "next look for free items around {0}": "sonraki ücretsiz eşya kontrolü {0} civarı",
+    "the Points Shop has {0} item(s) at 0 points": "puan dükkânında 0 puanlık {0} eşya var",
+    "took a free Points Shop item from {0}": "{0} için ücretsiz bir puan dükkânı eşyası alındı",
+    "couldn't make a {0} booster pack: {1}": "{0} kart paketi oluşturulamadı: {1}",
+    "couldn't make booster packs: {0}": "kart paketleri oluşturulamadı: {0}",
+    "{0} isn't on the booster creator - no booster packs can be made for it right now": "{0} kart paketi oluşturucuda yok - şu an bunun için kart paketi oluşturulamaz",
+    "made a {0} booster pack for {1} gems - {2} gems left": "{1} değerli taşa bir {0} kart paketi oluşturuldu - {2} değerli taş kaldı",
+    "next booster pack around {0}": "sonraki kart paketi {0} civarı",
+    "not enough gems for a {0} booster pack - {1} needed, {2} here": "bir {0} kart paketi için yeterli değerli taş yok - {1} gerekli, {2} var",
+    "Steam's change feed: {0} package(s) changed, {1} newly free - checking them": "Steam değişiklik akışı: {0} paket değişti, {1} yeni ücretsiz - kontrol ediliyor",
+    "couldn't read Steam's change feed: {0}": "Steam değişiklik akışı okunamadı: {0}",
+    "a game was sent to this account as a gift - accept or decline it on the store's gifts page": "bu hesaba hediye olarak bir oyun gönderildi - mağazanın hediyeler sayfasında kabul et ya da reddet",
+    "couldn't accept a Steam wallet gift card: {0}": "Steam cüzdan hediye kartı kabul edilemedi: {0}",
+    "couldn't accept a guest pass - Steam said {0}": "misafir kartı kabul edilemedi - Steam'in yanıtı: {0}",
+    "couldn't check for gifts: {0}": "hediyeler kontrol edilemedi: {0}",
+    "Steam says {0} gift(s) are waiting": "Steam {0} hediyenin beklediğini söylüyor",
+    "Steam says {0} guest pass(es) are waiting": "Steam {0} misafir kartının beklediğini söylüyor",
+    "accepted a Steam wallet gift card": "Steam cüzdan hediye kartı kabul edildi",
+    "accepted a guest pass (package {0})": "misafir kartı kabul edildi (paket {0})",
+    "accepted a guest pass": "misafir kartı kabul edildi",
+    "gift waiting - until the account is awake": "hediye bekliyor - hesap uyanana kadar",
+    "no answer from Steam to a guest pass - trying again next login": "misafir kartı için Steam'den yanıt yok - bir sonraki girişte tekrar denenecek",
+    "Steam won't let this account trade {0} items - it's most likely banned in that game, so they're left out of every send from now on": "Steam bu hesabın {0} eşyalarını takas etmesine izin vermiyor - büyük ihtimalle o oyunda banlı, bu yüzden artık hiçbir gönderime dahil edilmiyorlar",
+    "next send around {0}": "sonraki gönderim {0} civarı",
+    "send due - waiting until the account is awake": "gönderim zamanı - hesabın uyanması bekleniyor",
+    "couldn't read the send schedule: {0}": "gönderim planı okunamadı: {0}",
+    "couldn't save the send schedule: {0}": "gönderim planı kaydedilemedi: {0}",
     "weighted schedule - next hunt in {0}": "ağırlıklı program - sonraki arama {0} sonra",
     "winding down on {0} (~{1}m)": "{0} tamamlanıyor (~{1}dk)",
     "{0} card(s) - farming tonight, once it's asleep": "{0} kart - bu gece, uyuduğunda toplanacak",
@@ -537,6 +585,8 @@
     "closing the game, then {0}": "oyunu kapatıyor, sonra {0}",
     "done for today ({0}) · back {1}": "bugünlük bitti ({0}) · {1} dönecek",
     "just signed in · settling for {0}": "yeni giriş yaptı · {0} yerleşiyor",
+    "done grinding · settling for {0}": "grind bitti · {0} yerleşiyor",
+    "awake for the day · settling for {0}": "gün için uyandı · {0} yerleşiyor",
     "meal break · back in {0}": "yemek molası · {0} sonra dönecek",
     "not playing today · back {0}": "bugün oynamıyor · {0} dönecek",
     "nothing configured": "hiçbir şey ayarlanmamış",
@@ -560,6 +610,7 @@
     "{0} reply(s) sent": "{0} yanıt gönderildi",
     "{0} waiting": "{0} bekliyor",
     "{0} · {1} left · {2}/{3} today": "{0} · {1} kaldı · bugün {2}/{3}",
+    "grinding {0} · {1} left · {2}/{3} today": "{0} grind ediliyor · {1} kaldı · bugün {2}/{3}",
     "Steam maintenance": "Steam bakımı",
     "Steam shows {0}": "Steam {0} gösteriyor",
     "account disabled": "hesap devre dışı",
@@ -977,6 +1028,7 @@
     "no password - put SteamPassword in the config, or type it at the prompt": "parola yok - yapılandırmaya SteamPassword ekle veya istemde yaz",
     "nothing left to farm - logging this account out as configured": "toplanacak bir şey kalmadı - ayarlandığı gibi bu hesaptan çıkılıyor",
     "paused - staying logged in, doing nothing": "duraklatıldı - oturumda kalıyor, hiçbir şey yapmıyor",
+    "paused for {0} - picks back up by itself at {1}": "{0} boyunca duraklatıldı - {1} saatinde kendiliğinden devam eder",
     "resumed": "sürdürüldü",
     "running in the notification area - right-click the icon for the menu": "bildirim alanında çalışıyor - menü için simgeye sağ tıkla",
     "shutting down...": "kapatılıyor...",
@@ -1361,6 +1413,14 @@
       "label": "Bağışları kabul et",
       "tip": "Karşılığında hiçbir şey istemeyen teklifleri kabul eder. Sana hiçbir şeye mal olamazlar, dolayısıyla doğaları gereği güvenlidirler."
     },
+    "AcceptFairCardSwaps": {
+      "label": "Adil kart takaslarını kabul et",
+      "tip": "Aynı oyun içinde koleksiyon kartlarını bire bir değiştiren ve bu hesabın setlerini yalnızca tamamlanmaya yaklaştırabilen teklifleri herkesten kabul eder - Steam Trade Matcher kullanıcılarının gönderdiği ve ArchiSteamFarm'ın SteamTradeMatcher ayarının kabul ettiği şey. Teklifte başka bir şey, parlak bir kart ya da bir kartın son kopyasını alacak bir takas varsa dokunulmaz. Kart vermek mobil doğrulayıcıyla onaylanmalıdır."
+    },
+    "AcceptGifts": {
+      "label": "Hediyeleri ve misafir kartlarını kabul et",
+      "tip": "Birinin bu hesaba gönderdiği Steam cüzdan hediye kartlarını ve misafir kartlarını (ücretsiz denemeler) kabul eder. İkisi de hesaba hiçbir şeye mal olamaz. İnsan modunda bir hediye, hesap uyanana kadar bekler."
+    },
     "AcceptFromMasters": {
       "label": "Kendi hesaplarından geleni koşulsuz kabul et",
       "tip": "Aşağıda listelenen SteamID64'lerden gelen her teklifi kabul eder - eşya götürenler dahil. Boşta çalışan hesaplarındaki kartları tek hesapta toplamanı sağlayan şey budur ve tam bu yüzden listede yalnızca sana ait hesaplar olmalıdır."
@@ -1539,6 +1599,14 @@
       "label": "Destek paketlerini aç",
       "tip": "Envanterine düşen destek paketlerini otomatik açar, böylece içindeki kartlar rozet üretilen setlere sayılır."
     },
+    "ClaimEventItems": {
+      "label": "Ücretsiz etkinlik eşyalarını al",
+      "tip": "Steam'in indirim sırasında her gün dağıttığı ücretsiz çıkartmayı ve puan dükkânında 0 puan olan her şeyi alır. Hiçbiri bir şeye mal olmaz ve kimse almazsa kaybolur. İnsan modunda hesap uyanana kadar bekler."
+    },
+    "BoosterGames": {
+      "label": "Kart paketi oluşturulacak oyunlar",
+      "tip": "Değerli taşların kart paketine çevrileceği AppID'ler, virgülle ayrılmış. Steam oyun başına günde bir pakete, yalnızca bu hesabın hâlâ kart düşürebildiği oyunlar için izin verir ve bir sonrakinin ne zaman yapılabileceğini söyler - mümkün olur olmaz ve insan modu hesabı uyanık tutarken oluşturulur. Boş bırakmak kapatır. 'booster <hesap>' değerli taşları ve uygun oyunları gösterir."
+    },
     "ClearInventoryNotifications": {
       "label": "Yeni eşya rozetini temizle",
       "tip": "Her kart düştüğünde Steam'in yeşil \"yeni eşya\" sayacını temizler, böylece envanterin sürekli okunmamış görünmez."
@@ -1672,6 +1740,10 @@
     "SendOnFarmingFinished": {
       "label": "Toplama bitince eşyaları gönder",
       "tip": "Toplanacak kart kalmadığında, bu hesabın topladıklarını yukarıda listelenen ilk hesaba gönderir. Birden fazla boşta hesap çalıştırmanın bütün amacı budur: kartlar altı ayrı envanter yerine tek bir envanterde toplanır."
+    },
+    "SendEveryHours": {
+      "label": "Eşyaları şu aralıkla gönder",
+      "tip": "Bu kadar saatte bir, bu hesabın eşyalarını yukarıda yazan ilk hesaba gönderir - 'send' komutunun aynısı, ama zamanlanmış, böylece toplama arasında kartlar birikmez. 0 kapalı demek. İlk gönderim açtıktan bir tam süre sonra olur, biraz rastgele pay her seferinde aynı dakikaya denk gelmesini önler ve insan modunda hesap uyanana kadar bekler."
     },
     "SendItemTypes": {
       "label": "Ne gönderilecek",

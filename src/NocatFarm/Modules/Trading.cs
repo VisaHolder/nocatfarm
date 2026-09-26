@@ -52,7 +52,10 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		}
 	}
 
-	private bool Wanted => Bot.Cfg.AcceptDonations || Bot.Cfg.AcceptFromMasters || Bot.Cfg.DeclineOtherTrades;
+	private bool Wanted => Bot.Cfg.AcceptDonations || Bot.Cfg.AcceptFromMasters || Bot.Cfg.AcceptFairCardSwaps || Bot.Cfg.DeclineOtherTrades;
+
+	/// <summary>What the fair-swap test said about each offer, so an offer is read in full once.</summary>
+	private readonly Dictionary<ulong, bool> _fair = [];
 
 	protected override async Task RunAsync(CancellationToken ct) {
 		while (!ct.IsCancellationRequested) {
@@ -139,7 +142,8 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 
 			bool fromMaster = Bot.Cfg.AcceptFromMasters && masters.Contains(offer.Partner);
 			bool donation = Bot.Cfg.AcceptDonations && offer.IsPureDonation;
-			bool accept = fromMaster || donation;
+			bool fair = !fromMaster && !donation && await FairSwapAsync(offer, ct).ConfigureAwait(false);
+			bool accept = fromMaster || donation || fair;
 
 			if (!accept && Bot.Cfg.AcceptDonations && (offer.GivingCount == null)) {
 				Log.Warn(new Said("trade offer #{0}: couldn't tell what it asks for, so it has been left alone - look at it yourself", offer.Id), Bot.Name);
@@ -160,7 +164,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 					when = DateTime.UtcNow.Add(Rng.Minutes(lo, hi));
 					_actOn[offer.Id] = when;
 
-					Said what = accept ? fromMaster ? new Said("from one of your accounts") : new Said("a donation") : new Said("unwanted");
+					Said what = !accept ? new Said("unwanted") : fromMaster ? new Said("from one of your accounts") : fair ? new Said("a fair card swap") : new Said("a donation");
 					Log.Info(new Said("trade offer #{0} ({1}: {2}) - handling it in {3}", offer.Id, what, offer.Describe, Fmt.Hm((int) Math.Max(1, (when - DateTime.UtcNow).TotalMinutes))), Bot.Name);
 				}
 			}
@@ -199,6 +203,34 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		// way for ever, and the account went on opening this page every hour or so with nothing to find. Now the
 		// first look after a sweep settles it, and a genuinely new offer still arrives as its own push.
 		Bot.NoteTradeOffersSeen(seen);
+	}
+
+	/// <summary>
+	/// Whether this is a one-for-one card swap that only helps the sets. Offers whose counts don't even match are
+	/// passed over without reading anything; the rest are read once and the answer kept.
+	/// </summary>
+	private async Task<bool> FairSwapAsync(Offer offer, CancellationToken ct) {
+		if (!Bot.Cfg.AcceptFairCardSwaps || !(offer.GivingCount > 0) || (offer.GivingCount != offer.ReceivingCount)) {
+			return false;
+		}
+
+		lock (_fair) {
+			if (_fair.TryGetValue(offer.Id, out bool known)) {
+				return known;
+			}
+		}
+
+		(bool fair, Said why) = await FairSwap.CheckAsync(Bot, offer.Id, ct).ConfigureAwait(false);
+
+		if (!fair) {
+			Log.Info(new Said("trade offer #{0} isn't a fair card swap - {1}; left alone", offer.Id, why), Bot.Name);
+		}
+
+		lock (_fair) {
+			_fair[offer.Id] = fair;
+		}
+
+		return fair;
 	}
 
 	private async Task<bool> AcceptAsync(Offer offer, CancellationToken ct) {

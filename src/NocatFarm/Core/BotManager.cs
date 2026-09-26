@@ -103,6 +103,10 @@ public sealed class BotManager : IAsyncDisposable {
 		bot.AddModule(new Social(bot));
 		bot.AddModule(new GroupJoin(bot));
 		bot.AddModule(new Trading(bot));
+		bot.AddModule(new Sender(bot));
+		bot.AddModule(new Gifts(bot));
+		bot.AddModule(new Boosters(bot));
+		bot.AddModule(new EventItems(bot));
 		bot.AddModule(new AchievementPacer(bot));
 		bot.AddModule(new AchievementBoost(bot));
 		bot.AddModule(new Upkeep(bot));

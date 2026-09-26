@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using NocatFarm.Config;
 using NocatFarm.Core;
 using NocatFarm.Modules;
@@ -39,7 +40,7 @@ public static partial class Commands {
 		new("start", "<account|all>", GroupAccounts, "Log an account in."),
 		new("stop", "<account|all>", GroupAccounts, "Log an account out. It stays configured."),
 		new("restart", "<account|all>", GroupAccounts, "Stop then start again."),
-		new("pause", "<account|all>", GroupAccounts, "Stay logged in but stop playing, farming and commenting."),
+		new("pause", "<account|all> [minutes]", GroupAccounts, "Stay logged in but stop playing, farming and commenting. Give it minutes and it picks back up by itself."),
 		new("resume", "<account|all>", GroupAccounts, "Undo a pause."),
 		new("add", "<name> <steamLogin>", GroupAccounts, "Add an account. It asks for the password once, then remembers a login token."),
 		new("remove", "<account>", GroupAccounts, "Delete an account and its stored login token.", "delete"),
@@ -53,6 +54,7 @@ public static partial class Commands {
 		new("wake", "<account>", GroupPlaying, "Wake a sleeping human-mode account and start its day now. Bed time is unchanged."),
 		new("name", "<account> [text]", GroupPlaying, "Custom non-Steam game name shown instead of the real game. No text clears it."),
 		new("persona", "<account> <state>", GroupPlaying, "online | offline | busy | away | snooze | invisible."),
+		new("nickname", "<account> <profile name>", GroupPlaying, "Change the name everybody sees on the profile and friends list. Not the custom game name - that's 'name'."),
 
 		new("cards", "[account]", GroupCards, "What is still left to farm."),
 		new("farm", "<account> on|off", GroupCards, "Turn trading-card farming on or off."),
@@ -61,6 +63,7 @@ public static partial class Commands {
 
 		new("redeem", "[account] <key|file.txt> [key...]", GroupAccounts, "Activate product keys - or point it at a text file full of them. More than five queues itself and activates them slowly. Without an account it tries each in turn until one can use it.", "key"),
 		new("send", "<account|all>", GroupCards, "Send an account's tradable items to the account listed under Trades.", "loot"),
+		new("transfer", "<from> <to> [types]", GroupCards, "Send items from one of your accounts to another. Types as in the send setting (cards, foils, backgrounds, emoticons, boosters, gems, all); leave it off for trading cards."),
 		new("2fa", "<account>", GroupAccounts, "Show this account's Steam Guard code, if its authenticator is set up here.", "guard"),
 		new("cheevo", "<account> <appID> [list|unlock|lock] [name|all]", GroupPlaying, "Achievements: see them, unlock them all, or put them back.", "ach|achievements"),
 		new("hunt", "[account]", GroupPlaying, "What the achievement hunter would play, in order - and what it ruled out and why.", "boost"),
@@ -76,6 +79,14 @@ public static partial class Commands {
 		new("log", "[count]", GroupOther, "The last few log lines.", "logs"),
 		new("stats", "[hours]", GroupOther, "Cards dropped and comments posted, by hour."),
 		new("plugins", "", GroupOther, "Which plugins are loaded, and where they came from."),
+		new("level", "[account|all]", GroupAccounts, "Each account's Steam level."),
+		new("balance", "[account|all]", GroupAccounts, "Steam wallet balance, and anything still pending.", "wallet"),
+		new("points", "[account|all]", GroupAccounts, "Steam points each account can spend in the Points Shop."),
+		new("fairswap", "<account> <offerID>", GroupCards, "Whether a trade offer is a fair card swap that AcceptFairCardSwaps would accept, and if not, why. Only looks - never accepts or declines."),
+		new("freeitems", "[account|all]", GroupCards, "Look for free event items now: the daily sale sticker, and anything in the Points Shop at 0 points. The ClaimEventItems setting does it by itself."),
+		new("booster", "[account|all] | <account> <appIDs>", GroupCards, "Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the BoosterGames setting does it by itself every day.", "boosters"),
+		new("privacy", "<account> [public|friends|private|part=level ...]", GroupAccounts,
+			"See an account's profile privacy, or set it - one word for everything, or parts such as inventory=public comments=friends. Parts: profile, games, playtime, friends, inventory, gifts, comments."),
 		new("owns", "<appID|name>", GroupOther,
 			"Which accounts already own a game, and how long each has played it. Takes an appID, a store URL, or part of a name."),
 		new("addlicense", "<account|all> <IDs>", GroupOther,
@@ -219,6 +230,15 @@ public static partial class Commands {
 				"match" => await MatchAsync(mgr, rest).ConfigureAwait(false),
 				"name" => Name(mgr, rest),
 				"persona" => Persona(mgr, rest),
+				"nickname" => Nickname(mgr, rest),
+				"level" => await LevelAsync(mgr, rest).ConfigureAwait(false),
+				"balance" or "wallet" => Balance(mgr, rest),
+				"points" => await PointsAsync(mgr, rest).ConfigureAwait(false),
+				"booster" or "boosters" => await BoosterAsync(mgr, rest).ConfigureAwait(false),
+				"freeitems" => await FreeItemsAsync(mgr, rest).ConfigureAwait(false),
+				"fairswap" => await FairSwapCheckAsync(mgr, rest).ConfigureAwait(false),
+				"privacy" => await PrivacyAsync(mgr, rest).ConfigureAwait(false),
+				"transfer" => await TransferAsync(mgr, rest).ConfigureAwait(false),
 				"farm" => Farm(mgr, rest),
 				"cards" => Cards(mgr, rest),
 				"rep4rep" or "r4r" => await Rep4RepAsync(mgr, rest).ConfigureAwait(false),
@@ -696,6 +716,17 @@ public static partial class Commands {
 
 		int count = 0;
 
+		// "pause kylro 30" pauses for half an hour and then picks back up by itself.
+		TimeSpan? pauseFor = null;
+
+		if ((verb == "pause") && (args.Length > 1)) {
+			if (!double.TryParse(args[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double minutes) || (minutes <= 0)) {
+				return $"'{args[1]}' isn't a number of minutes - e.g. pause {args[0]} 30";
+			}
+
+			pauseFor = TimeSpan.FromMinutes(Math.Min(minutes, 7 * 24 * 60));
+		}
+
 		List<Task> stops = [];
 
 		foreach (Bot bot in targets.ToArray()) {
@@ -713,7 +744,7 @@ public static partial class Commands {
 
 					break;
 				case "pause":
-					bot.Pause();
+					bot.Pause(pauseFor);
 
 					break;
 				case "resume":
@@ -735,7 +766,9 @@ public static partial class Commands {
 		string what = verb switch {
 			"start" => "signing in",
 			"stop" => "signing out",
-			"pause" => "paused - staying signed in, but not playing, farming or commenting",
+			"pause" => pauseFor is { } span
+				? $"paused for {Fmt.Hm((int) Math.Ceiling(span.TotalMinutes))} - picks back up by itself"
+				: "paused - staying signed in, but not playing, farming or commenting",
 			"resume" => "resumed",
 			_ => verb
 		};
@@ -1550,6 +1583,328 @@ public static partial class Commands {
 		bot.ApplyPersona();
 
 		return $"{bot.Name}: {Settings.ChoiceLabel(def, bot.Cfg.OnlineStatus)}";
+	}
+
+	/// <summary>The accounts a read-only command answers for: the one named, or every account for "all" or nothing.</summary>
+	private static List<Bot>? Pick(BotManager mgr, string[] args, out string? problem) {
+		problem = null;
+
+		if ((args.Length == 0) || args[0].Equals("all", StringComparison.OrdinalIgnoreCase)) {
+			return [.. mgr.All];
+		}
+
+		if (mgr.Get(args[0]) is { } one) {
+			return [one];
+		}
+
+		problem = NoSuchAccount(mgr, args[0]);
+
+		return null;
+	}
+
+	private static string Nickname(BotManager mgr, string[] args) {
+		if (args.Length < 2) {
+			return "nickname <account> <profile name>";
+		}
+
+		if (mgr.Get(args[0]) is not { } bot) {
+			return NoSuchAccount(mgr, args[0]);
+		}
+
+		string name = string.Join(' ', args[1..]).Trim();
+
+		// Steam's own limit for a profile name.
+		if (name.Length > 32) {
+			return $"That's {name.Length} characters - Steam allows 32 at most.";
+		}
+
+		return bot.SetProfileName(name) ? $"{bot.Name}: profile name is now \"{name}\"" : $"{bot.Name}: not logged in";
+	}
+
+	private static async Task<string> LevelAsync(BotManager mgr, string[] args) {
+		if (Pick(mgr, args, out string? problem) is not { } bots) {
+			return problem!;
+		}
+
+		string[] lines = await Task.WhenAll(bots.Select(static async b => !b.IsOnline
+			? $"{b.Name}: not logged in"
+			: await b.GetLevelAsync().ConfigureAwait(false) is { } level ? $"{b.Name}: level {level}" : $"{b.Name}: Steam didn't say")).ConfigureAwait(false);
+
+		return string.Join(Environment.NewLine, lines);
+	}
+
+	private static string Balance(BotManager mgr, string[] args) {
+		if (Pick(mgr, args, out string? problem) is not { } bots) {
+			return problem!;
+		}
+
+		return string.Join(Environment.NewLine, bots.Select(static b => {
+			if (!b.IsOnline) {
+				return $"{b.Name}: not logged in";
+			}
+
+			if (b.WalletCents is not { } cents) {
+				return $"{b.Name}: no Steam wallet";
+			}
+
+			string money = (cents / 100.0).ToString("0.00", CultureInfo.InvariantCulture);
+			string pending = b.WalletPendingCents > 0 ? $" (+{(b.WalletPendingCents / 100.0).ToString("0.00", CultureInfo.InvariantCulture)} pending)" : "";
+
+			return $"{b.Name}: {money} {b.WalletCurrency}{pending}";
+		}));
+	}
+
+	private static async Task<string> PointsAsync(BotManager mgr, string[] args) {
+		if (Pick(mgr, args, out string? problem) is not { } bots) {
+			return problem!;
+		}
+
+		string[] lines = await Task.WhenAll(bots.Select(static async b => !b.IsOnline
+			? $"{b.Name}: not logged in"
+			: await b.GetPointsAsync().ConfigureAwait(false) is { } points
+				? $"{b.Name}: {points.ToString("N0", CultureInfo.InvariantCulture)} Steam points"
+				: $"{b.Name}: Steam didn't say")).ConfigureAwait(false);
+
+		return string.Join(Environment.NewLine, lines);
+	}
+
+	private static async Task<string> FairSwapCheckAsync(BotManager mgr, string[] args) {
+		if ((args.Length < 2) || (mgr.Get(args[0]) is not { } bot) || !ulong.TryParse(args[1], NumberStyles.None, CultureInfo.InvariantCulture, out ulong offerId)) {
+			return "fairswap <account> <offerID>";
+		}
+
+		if (!bot.IsOnline || !bot.Web.Ready) {
+			return $"{bot.Name}: not logged in";
+		}
+
+		(bool fair, Said why) = await FairSwap.CheckAsync(bot, offerId, CancellationToken.None).ConfigureAwait(false);
+
+		return fair ? $"{bot.Name}: offer {offerId} is a fair card swap" : $"{bot.Name}: offer {offerId} is not a fair card swap - {why}";
+	}
+
+	private static async Task<string> FreeItemsAsync(BotManager mgr, string[] args) {
+		if (Pick(mgr, args, out string? problem) is not { } bots) {
+			return problem!;
+		}
+
+		List<string> lines = [];
+
+		foreach (Bot b in bots) {
+			if (!b.IsOnline || !b.Web.Ready || (BotManager.ModuleOf<EventItems>(b) is not { } events)) {
+				lines.Add($"{b.Name}: not logged in");
+
+				continue;
+			}
+
+			bool sticker = await events.StickerAsync(CancellationToken.None).ConfigureAwait(false);
+			int shop = await events.ShopAsync(CancellationToken.None).ConfigureAwait(false);
+			lines.Add($"{b.Name}: {(sticker ? "claimed the sale item" : "no sale item to claim right now")} · {shop} free Points Shop item(s) taken");
+		}
+
+		return string.Join(Environment.NewLine, lines);
+	}
+
+	private static async Task<string> BoosterAsync(BotManager mgr, string[] args) {
+		// booster <account> <appIDs> - make them now
+		if ((args.Length > 1) && (mgr.Get(args[0]) is { } maker)) {
+			if (!maker.IsOnline || !maker.Web.Ready) {
+				return $"{maker.Name}: not logged in";
+			}
+
+			if (await Boosters.ReadAsync(maker).ConfigureAwait(false) is not { } page) {
+				return $"{maker.Name}: couldn't read the booster creator";
+			}
+
+			List<string> said = [];
+			uint tradable = page.TradableGems, untradable = page.UntradableGems, gems = page.Gems;
+
+			foreach (string arg in args[1..]) {
+				if (!uint.TryParse(arg.Trim(','), NumberStyles.None, CultureInfo.InvariantCulture, out uint appId) || (appId == 0)) {
+					said.Add($"'{arg}' isn't an appID");
+
+					continue;
+				}
+
+				if (!page.Offers.TryGetValue(appId, out Boosters.Offer? offer)) {
+					said.Add($"{GameNames.Of(appId)}: not on the booster creator - no card drops left in it here, or no cards at all");
+				} else if (offer.Unavailable) {
+					said.Add($"{offer.Name}: made recently - available again {offer.AvailableAt}");
+				} else if (gems < offer.Price) {
+					said.Add($"{offer.Name}: needs {offer.Price} gems, {gems} here");
+				} else {
+					(bool made, uint left, uint leftTradable, uint leftUntradable, string? why) = await Boosters.CreateAsync(maker, offer, tradable, untradable).ConfigureAwait(false);
+
+					if (made) {
+						(gems, tradable, untradable) = (left, leftTradable, leftUntradable);
+						said.Add($"{offer.Name}: made a booster pack for {offer.Price} gems - {gems} left");
+					} else {
+						said.Add($"{offer.Name}: Steam refused it {why}");
+					}
+				}
+			}
+
+			return $"{maker.Name}:{Environment.NewLine}  " + string.Join(Environment.NewLine + "  ", said);
+		}
+
+		if (Pick(mgr, args, out string? problem) is not { } bots) {
+			return problem!;
+		}
+
+		List<string> lines = [];
+
+		foreach (Bot b in bots) {
+			if (!b.IsOnline || !b.Web.Ready) {
+				lines.Add($"{b.Name}: not logged in");
+
+				continue;
+			}
+
+			if (await Boosters.ReadAsync(b).ConfigureAwait(false) is not { } page) {
+				lines.Add($"{b.Name}: couldn't read the booster creator");
+
+				continue;
+			}
+
+			List<Boosters.Offer> ready = [.. page.Offers.Values.Where(o => !o.Unavailable && (o.Price <= page.Gems)).OrderBy(static o => o.Price)];
+			lines.Add($"{b.Name}: {page.Gems.ToString("N0", CultureInfo.InvariantCulture)} gems ({page.TradableGems.ToString("N0", CultureInfo.InvariantCulture)} tradable) · {page.Offers.Count} game(s) on the booster creator, {ready.Count} affordable now");
+
+			foreach (uint appId in Boosters.Games(b)) {
+				lines.Add(page.Offers.TryGetValue(appId, out Boosters.Offer? o)
+					? o.Unavailable ? $"  {o.Name} ({appId}): made - again {o.AvailableAt}" : $"  {o.Name} ({appId}): ready, {o.Price} gems"
+					: $"  {GameNames.Of(appId)} ({appId}): not on the booster creator");
+			}
+
+			if ((Boosters.Games(b).Count == 0) && (ready.Count > 0)) {
+				lines.Add("  cheapest: " + string.Join(", ", ready.Take(5).Select(static o => $"{o.Name} ({o.AppId}) {o.Price}")));
+			}
+		}
+
+		return string.Join(Environment.NewLine, lines);
+	}
+
+	private static string PrivacyWord(int level) => level switch { 1 => "private", 2 => "friends", 3 => "public", _ => $"?{level}" };
+
+	// Comments use their own numbering on Steam's side: 0 friends only, 1 public, 2 private.
+	private static string CommentWord(int permission) => permission switch { 0 => "friends", 1 => "public", 2 => "private", _ => $"?{permission}" };
+
+	private static int? PrivacyLevel(string word) => word.ToLowerInvariant() switch {
+		"private" or "off" or "1" => 1,
+		"friends" or "friendsonly" or "friends-only" or "2" => 2,
+		"public" or "everyone" or "3" => 3,
+		_ => null
+	};
+
+	private static int? CommentLevel(string word) => PrivacyLevel(word) switch { 1 => 2, 2 => 0, 3 => 1, _ => null };
+
+	private static async Task<string> PrivacyAsync(BotManager mgr, string[] args) {
+		if (args.Length == 0) {
+			return "privacy <account> [public|friends|private|part=level ...]";
+		}
+
+		if (mgr.Get(args[0]) is not { } bot) {
+			return NoSuchAccount(mgr, args[0]);
+		}
+
+		if (!bot.IsOnline || !bot.Web.Ready) {
+			return $"{bot.Name}: not logged in";
+		}
+
+		Privacy.Settings? now = await Privacy.ReadAsync(bot).ConfigureAwait(false);
+
+		if (now == null) {
+			return $"{bot.Name}: couldn't read the privacy settings from Steam";
+		}
+
+		static string Show(Privacy.Settings p) =>
+			$"profile {PrivacyWord(p.Profile)} · games {PrivacyWord(p.Games)} · playtime {PrivacyWord(p.Playtime)} · friends {PrivacyWord(p.Friends)}"
+			+ $" · inventory {PrivacyWord(p.Inventory)} · gifts {PrivacyWord(p.Gifts)} · comments {CommentWord(p.Comments)}";
+
+		if (args.Length == 1) {
+			return $"{bot.Name}: {Show(now)}";
+		}
+
+		Privacy.Settings next = now;
+
+		foreach (string arg in args[1..]) {
+			int eq = arg.IndexOf('=');
+
+			// One word on its own sets everything.
+			if (eq < 0) {
+				if (PrivacyLevel(arg) is not { } all) {
+					return $"'{arg}' isn't public, friends or private.";
+				}
+
+				next = new Privacy.Settings(all, all, all, all, all, all, CommentLevel(arg)!.Value);
+
+				continue;
+			}
+
+			string part = arg[..eq].ToLowerInvariant();
+			string value = arg[(eq + 1)..];
+
+			if (part is "comments" or "comment") {
+				next = next with { Comments = CommentLevel(value) ?? -1 };
+			} else if (PrivacyLevel(value) is { } level) {
+				next = part switch {
+					"profile" => next with { Profile = level },
+					"games" or "ownedgames" => next with { Games = level },
+					"playtime" => next with { Playtime = level },
+					"friends" or "friendslist" => next with { Friends = level },
+					"inventory" => next with { Inventory = level },
+					"gifts" or "inventorygifts" => next with { Gifts = level },
+					_ => null!
+				};
+
+				if (next == null) {
+					return $"'{part}' isn't a privacy part. Parts: profile, games, playtime, friends, inventory, gifts, comments.";
+				}
+			} else {
+				return $"'{value}' isn't public, friends or private.";
+			}
+
+			if (next.Comments < 0) {
+				return $"'{value}' isn't public, friends or private.";
+			}
+		}
+
+		if (next == now) {
+			return $"{bot.Name}: already {Show(now)}";
+		}
+
+		if (!await Privacy.WriteAsync(bot, next).ConfigureAwait(false)) {
+			return $"{bot.Name}: Steam didn't accept the change";
+		}
+
+		// Read it back rather than trust the reply, the same way licences are checked by whether they arrive.
+		Privacy.Settings? saved = await Privacy.ReadAsync(bot).ConfigureAwait(false);
+
+		return saved == next ? $"{bot.Name}: {Show(saved)}" : $"{bot.Name}: sent, but Steam now shows {(saved == null ? "nothing readable" : Show(saved))}";
+	}
+
+	private static async Task<string> TransferAsync(BotManager mgr, string[] args) {
+		if (args.Length < 2) {
+			return "transfer <from> <to> [types]";
+		}
+
+		if (mgr.Get(args[0]) is not { } from) {
+			return NoSuchAccount(mgr, args[0]);
+		}
+
+		if (mgr.Get(args[1]) is not { } to) {
+			return NoSuchAccount(mgr, args[1]);
+		}
+
+		if (from == to) {
+			return "That's the same account both ways.";
+		}
+
+		if (to.SteamId == 0) {
+			return $"{to.Name} hasn't signed in yet this run, so its Steam ID isn't known - start it first.";
+		}
+
+		string types = args.Length > 2 ? string.Join(',', args[2..]) : "";
+
+		return await Looting.SendItemsAsync(from, to.SteamId, null, types).ConfigureAwait(false);
 	}
 
 	private static string Farm(BotManager mgr, string[] args) {

@@ -26,7 +26,7 @@ touch a third party are opt-in and off by default — see [Privacy](#privacy-and
 · [Getting started](#getting-started) · [Human mode](#human-mode) · [rep4rep](#rep4rep) ·
 [Commands](#commands) · [Achievements](#achievements) · [The hunter](#the-hunter) ·
 [Inventory value](#what-the-inventories-are-worth) · [Trades, keys & items](#trades-keys-and-items) ·
-[Settings](#settings) · [Plugins](#plugins) · [Privacy & safety](#privacy-and-safety)
+[Free stuff](#free-stuff) · [Settings](#settings) · [Plugins](#plugins) · [Privacy & safety](#privacy-and-safety)
 
 ### Building it
 
@@ -68,12 +68,16 @@ nothing but Steam is ever contacted.
 | **Stays out of your way** | Launch a game yourself and every account stands down, then quietly picks back up after a delay you choose. |
 | **Achievement hunter** | Optional. Picks single-player games out of the library itself — never DLC, demos or bundle filler nobody plays — and works through them one at a time as occasional sessions, earning at the account's own legit pace. On a human account it stays weighted-first and comes out of the day's play budget rather than being stacked on top of it. |
 | **Inventory value** | What every account's items are worth at the market's median, per game, in your own currency, with how it has moved in the last 24 hours. Reads the account's OWN inventory, so a private profile makes no difference. |
-| **Free games** | Optional. Watches a public list of Steam giveaways and claims the paid games being given away free-to-keep, packages and apps alike — never free-to-play filler, DLC or demos. A giveaway that has already ended is tried a few more times, then left alone. |
+| **Free games** | Optional. Watches a public list of Steam giveaways **and Steam's own change feed**, and claims the paid games being given away free-to-keep, packages and apps alike — never free-to-play filler, DLC or demos. The change feed sees a giveaway within minutes of Steam publishing it. A giveaway that has already ended is tried a few more times, then left alone, and that is remembered across restarts. |
+| **Free event items** | The daily sticker during a Steam sale, and anything in the Points Shop at 0 points, collected by themselves (`ClaimEventItems`). |
+| **Gifts** | Steam wallet gift cards and guest passes sent to an account are accepted (`AcceptGifts`). A game sent as a gift is pointed out rather than accepted — that one is the owner's call. |
+| **Booster packs** | Turns gems into booster packs for the games you list, one per game per day as Steam allows, on Steam's own schedule (`BoosterGames`). |
+| **Fair card swaps** | Optional. Accepts the one-for-one card swaps Steam Trade Matcher users send, only when the swap brings the account's sets closer to done — ArchiSteamFarm's SteamTradeMatcher rule (`AcceptFairCardSwaps`). |
 | **Refund protection** | A game bought in the last fortnight and under two hours played is left completely alone — by the idler, the schedule, grinds and the hunter alike — until it can no longer be refunded. |
 | **Steam Families** | Games shared into the account can be hunted too, and are handed straight back the moment the person who owns them starts playing. |
 | **Plugins** | Optional and off by default. One DLL in `plugins/` extends the app: react to card drops and trade offers, read every account, run any command, add your own commands, and declare settings that get a real UI. See [PLUGINS.md](PLUGINS.md). |
 | **Daily report** | Once a day (default 09:30) it writes a one-look summary to the log: hours banked in the last 24h, cards, rep4rep comments and a running total, per account. Type `report` for it on demand. |
-| **Eleven languages** | The dashboard is fully translated into Spanish, Portuguese (BR), Russian, German, French, Simplified Chinese, Turkish, Polish, Japanese and Korean — every label, every explanation, all 170 settings. The walkthrough asks which you want before it says anything else. |
+| **Eleven languages** | The dashboard is fully translated into Spanish, Portuguese (BR), Russian, German, French, Simplified Chinese, Turkish, Polish, Japanese and Korean — every label, every explanation, all 175 settings. The walkthrough asks which you want before it says anything else. |
 
 <p align="center">
   <img src="assets/accounts.png" alt="The per-account view — state, custom name, and what your friends actually see" width="880">
@@ -125,7 +129,8 @@ Drop an account's `maFile` into `config/authenticators/` and it answers its own 
 **Coming from ArchiSteamFarm?** `import asf` brings every bot across *with its login token* — no passwords, no
 Guard codes — plus its games, custom name, farming order and rep4rep settings, and its authenticator if ASF had
 one. ASF's `FarmingPreferences`, `BotBehaviour`, `TradingPreferences` and `SteamUserPermissions` bitfields are
-unpacked into the individual settings here.
+unpacked into the individual settings here, and `SendTradePeriod`, `AcceptGifts`, the SteamTradeMatcher trading
+preference and the BoosterCreator plugin's `GamesToBooster` come across as their equivalents.
 
 ## Human mode
 
@@ -234,7 +239,7 @@ the auto-reply instead, so ordinary chat is never mistaken for a command.
 | `start <account\|all>` | Log an account in. |
 | `stop <account\|all>` | Log an account out (stays configured). A human-mode account finishes up for a few seconds first. |
 | `restart <account\|all>` | Stop then start again. |
-| `pause <account\|all>` | Stay logged in but stop playing, farming and commenting. |
+| `pause <account\|all> [minutes]` | Stay logged in but stop playing, farming and commenting. Give it minutes and it picks back up by itself. |
 | `resume <account\|all>` | Undo a pause. |
 | `add <name> <steamLogin>` | Add an account. Asks for the password once, then remembers a login token. |
 | `remove <account>` &nbsp;·&nbsp; `delete` | Delete an account and its stored login token. |
@@ -243,6 +248,10 @@ the auto-reply instead, so ordinary chat is never mistaken for a command.
 | `redeem [account] <key…\|file.txt>` &nbsp;·&nbsp; `key` | Activate product keys, or point it at a text file full of them. More than five queues itself. |
 | `keys [list\|clear]` | Product keys still waiting to be activated. |
 | `2fa <account>` &nbsp;·&nbsp; `guard` | Show this account's Steam Guard code, if its authenticator is set up here. |
+| `level [account\|all]` | Each account's Steam level. |
+| `balance [account\|all]` &nbsp;·&nbsp; `wallet` | Steam wallet balance, and anything still pending. |
+| `points [account\|all]` | Steam points each account can spend in the Points Shop. |
+| `privacy <account> [public\|friends\|private\|part=level …]` | See the profile privacy, or set it: one word for everything, or parts such as `inventory=public comments=friends`. |
 
 **Playing**
 
@@ -255,6 +264,7 @@ the auto-reply instead, so ordinary chat is never mistaken for a command.
 | `addlicense <account\|all> <IDs>` | Add free licences to a library: a subID, or `a/<appID>` for a free app. Steam refuses anything that isn't actually free, and the answer says why. |
 | `wake <account>` &nbsp;·&nbsp; `wakeup` `skipsleep` | Wake a sleeping human-mode account and start its day now. Bed time is unchanged. |
 | `name <account> [text]` | Custom non-Steam game name shown instead of the real game. No text clears it. |
+| `nickname <account> <profile name>` | Change the name everybody sees on the profile and friends list. |
 | `persona <account> <state>` | online \| offline \| busy \| away \| snooze \| invisible. |
 | `cheevo <account> <appID> [list\|unlock\|lock] [name\|all]` &nbsp;·&nbsp; `ach` | Achievements: see them, unlock them, or put them back. |
 | `hunt [account]` &nbsp;·&nbsp; `boost` | What the achievement hunter would play next, in order - and what it ruled out, with the reason for each. |
@@ -268,6 +278,10 @@ the auto-reply instead, so ordinary chat is never mistaken for a command.
 | `match [do]` | Swap duplicate trading cards between your own accounts so sets finish. `match do` sends the offers. |
 | `value [account\|all] [refresh]` &nbsp;·&nbsp; `inv` `inventory` | What each inventory is worth at the market's median, by game, with how it has moved in the last 24 hours. `refresh` reads the inventories again. |
 | `send <account\|all>` &nbsp;·&nbsp; `loot` | Send an account's tradable items to the account listed under Trades. |
+| `booster [account\|all]` &nbsp;·&nbsp; `booster <account> <appIDs>` | Gems, and which games can be made into booster packs; with appIDs, make those packs now. |
+| `freeitems [account\|all]` | Look for the daily sale sticker and 0-point Points Shop items now. |
+| `fairswap <account> <offerID>` | Whether a trade offer is a fair card swap, and why not if it isn't. Only looks. |
+| `transfer <from> <to> [types]` | Send items from one of your accounts to another: cards, foils, backgrounds, emoticons, boosters, gems or all. Trading cards if left off. |
 
 **rep4rep** &nbsp;(alias `r4r`; run bare for a summary)
 
@@ -391,7 +405,10 @@ They're looked up slowly, because everything the app does on steamcommunity.com 
 the first time and is instant afterwards.
 
 Games the account is **banned** in go in `InventoryIgnoreGames`. Steam doesn't publish which game a ban is in and
-nothing in the inventory reliably shows it, so it is a list you fill in rather than something guessed at.
+nothing in the inventory reliably shows it, so you can fill the list in yourself — but sending items also learns it.
+Steam refuses a whole offer if one game in it is banned, so when an offer is refused that way it's sent again one
+game at a time: a game refused while the others go through is added to the list, and the cards still arrive. If
+every game is refused the problem is the trade itself, and nothing is added.
 
 ## Trades, keys and items
 
@@ -400,6 +417,7 @@ set myaccount AcceptDonations true      # offers that ask for NOTHING - can neve
 set myaccount TradeMasters 7656119...   # accounts you own
 set myaccount AcceptFromMasters true    # let those take items
 send myaccount                          # sweep its cards to the first master
+set myaccount SendEveryHours 24         # ...or do it by itself once a day
 redeem AAAAA-BBBBB-CCCCC                # tries each account until one can use the key
 2fa myaccount                           # its current Steam Guard code
 ```
@@ -407,6 +425,65 @@ redeem AAAAA-BBBBB-CCCCC                # tries each account until one can use t
 A donation is an offer where you give up nothing at all. An offer asking for even one of your items is not a
 donation and is never accepted on that rule — only accounts on your own masters list can take anything. If a
 side of the trade page can't be read, the offer is refused rather than guessed at.
+
+`SendEveryHours` is `send` on a timer, so cards don't pile up between farming runs. The first send is one full
+period after you switch it on, a little random slack keeps it off the same minute every time, and on a
+human-mode account it waits until the account is awake.
+
+### Fair card swaps
+
+```
+set myaccount AcceptFairCardSwaps true   # accept one-for-one swaps that only help your sets
+fairswap myaccount 7812345678           # would it accept this offer - and if not, why not
+```
+
+This is what Steam Trade Matcher users send all day: your duplicate of one card for their copy of another, same
+game, one for one. With `AcceptFairCardSwaps` on, an offer like that is accepted from anyone, but only when:
+
+* every item on both sides is an ordinary trading card — no foils, backgrounds, emoticons or anything else
+* each game gets back exactly as many cards as it gives
+* the swap can only bring the account's sets closer to done. Three of card A and none of card B becoming two
+  and one is fine; giving away the last copy of a card to get a third of another is not
+
+Anything else and the offer is left alone with the reason in the log (or declined, if `DeclineOtherTrades` is
+on). It's ArchiSteamFarm's SteamTradeMatcher rule, and it's off by default because it gives cards away. With the
+account's mobile authenticator here the swap is confirmed by itself; without it, it waits for you on your phone.
+
+## Free stuff
+
+```
+set myaccount ClaimFreeGames true      # paid games given away free-to-keep (off by default)
+set myaccount ClaimEventItems true     # sale stickers and 0-point Points Shop items (on by default)
+set myaccount AcceptGifts true         # wallet gift cards and guest passes (on by default)
+set myaccount BoosterGames "730, 440"  # turn gems into booster packs for these games
+booster myaccount                      # gems, and which games can be made into packs
+freeitems all                          # look for free event items now
+```
+
+**Free games** come from two places. A public list of Steam giveaways is read about once an hour, and Steam's
+own change feed is read every ten minutes or so — every package Steam edits shows up there within seconds, and a
+paid game being given away is a package edit. Either way, the store has the last word: only a real game being
+given away is taken (from the change feed, it must be showing 100% off), never free-to-play filler, DLC, demos
+or unreleased titles. Steam allows about 30 activations per 90 minutes, so this stops at 20 to leave room for
+anything you redeem yourself; if Steam says slow down it waits the hour out, and what it has already decided is
+kept across restarts.
+
+**Event items.** During a Steam sale there is a free sticker to claim every day, and it's claimed shortly after
+the next one opens. The Points Shop has no "free" list of its own, so every item in it is read — once for all
+accounts, since the shop is the same for everyone — and anything at 0 points is taken, remembering what each
+account already has.
+
+**Gifts.** Steam wallet gift cards and guest passes somebody sends are accepted. Steam pushes the number of
+waiting gifts over the connection, so the gifts page is only read when there's something on it. A game sent as a gift is only pointed out
+in the log — accepting it or turning it down so the sender gets a refund is the owner's decision.
+
+**Booster packs.** Steam lets an account make one booster pack per game a day, for gems, for games it can still
+get card drops in. List the games in `BoosterGames` and each pack is made as soon as Steam allows, using
+tradable gems first so the pack is tradable too. `UnpackBoosterPacks` opens them, and `CraftBadges` turns
+finished sets into badges.
+
+Event items, gifts and booster packs all wait until human mode has the account awake — collecting a sticker at
+4am on an account that's asleep on the friends list is the same tell as accepting a trade then.
 
 ## Plugins
 
@@ -417,7 +494,7 @@ plugins                  # what's loaded, and the commands they added
 ```
 
 A plugin can watch what happens (accounts online, cards dropping, trade offers), read every account's state and
-library, run any of the 44 commands, add commands of its own, and declare **its own settings** — which appear on
+library, run any of the 53 commands, add commands of its own, and declare **its own settings** — which appear on
 the dashboard's Plugins page with real controls, no UI work needed. Each plugin has its own on/off switch there.
 
 **Read the plugin switch's warning before turning it on.** A plugin is somebody else's code running inside the
@@ -433,7 +510,7 @@ why, and porting is usually easier than it sounds.
 
 ## Settings
 
-**48 global, 122 per account** — of which **45 show by default**. Every one has a plain-English explanation
+**48 global, 127 per account** — of which **63 show by default**. Every one has a plain-English explanation
 attached to it, which the dashboard shows on hover and the console prints for `help <setting>` — one
 sentence, written once, in `Config/Settings.cs`. Both the name and the explanation are translated into all
 ten languages.
@@ -458,7 +535,8 @@ give-up time, log out when done, plus *when* to farm — only while asleep, or i
 how long to wind down on the last game after finishing), human mode (the whole daily shape, and how long it
 finishes up for on a manual stop), rep4rep pacing, friends & messages (accept requests, auto-reply, command
 masters, and joining the nocat.farm Steam group — on by default, `set <account> JoinGroup false` to opt out),
-and *Staying out of the way*.
+trades (donations, fair card swaps, your own accounts, gifts, what may be sent and how often), free games and
+badges (free games, event items, booster packs, badge crafting), and *Staying out of the way*.
 
 `config/nocatFarm.json` and `config/<account>.json` are plain JSON with exactly these names. Edit by hand and
 run `reload` if you prefer.
@@ -502,7 +580,7 @@ run `reload` if you prefer.
   per host, and a 429 shuts that host for *every* account: the limit is per IP, so one account collecting one
   is everybody's problem, and each further request while it stands is what keeps it alive. The wait doubles
   from 5 minutes to 40 and resets on the next answer that works.
-* **Notifications, not polling.** Card drops, profile comments and waiting trade offers all arrive as pushes
+* **Notifications, not polling.** Card drops, profile comments, waiting trade offers and gifts all arrive as pushes
   over the Steam connection. Nothing opens the trade offers page on a timer to learn there is nothing there;
   the slow pass that remains exists only to catch what a push might have missed.
 * **Occupation.** If you sit down and launch a game, Steam says so, and everything that plays a game stands

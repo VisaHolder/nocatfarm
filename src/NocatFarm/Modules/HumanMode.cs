@@ -108,6 +108,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	private bool _wasFarming;
 	private bool _wokeUp;
 	private bool _wasGrinding;
+	private bool _settlingAfterGrind;   // the settle in progress follows a grind, not a login or a wake-up
 	private int _clearReads;
 
 	public override string Name => "human";
@@ -119,7 +120,14 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			}
 
 			return _phase switch {
-				Phase.WarmingUp => Loc.T("just signed in · settling for {0}", Left(_readyAt)),
+				Phase.WarmingUp => _settlingAfterGrind ? Loc.T("done grinding · settling for {0}", Left(_readyAt))
+					: _wokeUp ? Loc.T("awake for the day · settling for {0}", Left(_readyAt))
+					: Loc.T("just signed in · settling for {0}", Left(_readyAt)),
+				// A grind keeps the Playing phase so its hours count toward the day, but with no game of its own - so
+				// this read "nothing · 1m left" for the whole grind. Name what is actually running.
+				// Keyed on the grind human mode is still handling rather than on Bot.Grinding, which goes false the
+				// moment the timer runs out - up to a tick before the "done grinding" step below takes over.
+				Phase.Playing when (_game == 0) && _wasGrinding && (Bot.GrindGame != 0) =>Loc.T("grinding {0} · {1} left · {2}/{3} today", GameName(Bot.GrindGame), Left(_sessionEnds), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)),
 				Phase.Playing => Loc.T("{0} · {1} left · {2}/{3} today", GameName(_game), Left(_sessionEnds), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)),
 				Phase.SwitchingGame => _switchingTo != 0 ? Loc.T("closing the game, then {0}", GameName(_switchingTo)) : Loc.T("closing the game"),
 				Phase.ShortBreak => Loc.T("short break · back in {0}", Left(_phaseEnds)),
@@ -267,10 +275,18 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	protected override async Task RunAsync(CancellationToken ct) {
 		while (!ct.IsCancellationRequested) {
 			if (!Bot.Cfg.LegitMode) {
-				if (_phase != Phase.Off) {
+				// Release on the flag as well as the phase. Human mode sits in Off for as long as the card farmer
+				// works - hours, sometimes - and switching legit mode off during that left HumanOwned set for good:
+				// the idler kept standing aside, the farmer kept to one game at a time, and the account's own games
+				// never came back until a restart.
+				if ((_phase != Phase.Off) || Bot.HumanOwned) {
 					_phase = Phase.Off;
 					Bot.HumanOwned = false;
 					Bot.ClearPersonaOverride();
+
+					// It is an ordinary idling account from here, and those switch straight away. Left to the idler's
+					// own re-assert it sat on nothing (or the last human game) for up to seven minutes.
+					BotManager.ModuleOf<Idler>(Bot)?.Assert();
 				}
 
 				if (!await Sleep(TimeSpan.FromSeconds(15), ct).ConfigureAwait(false)) {
@@ -352,6 +368,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// warm-up gate makes the flow below take a short settle first, the way it does after waking.
 		if (_wasGrinding) {
 			_wasGrinding = false;
+			_settlingAfterGrind = true;
 			_phase = Phase.Off;
 			_gateArmedFor = default;
 			Log.Info("done grinding - back to the usual day", Bot.Name);
@@ -525,6 +542,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		if (!stillSettling && (_clearReads >= 4)) {
 			_warmedUp = true;
+			_settlingAfterGrind = false;
 
 			return true;
 		}

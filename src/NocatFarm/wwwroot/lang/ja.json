@@ -522,6 +522,54 @@
     "waiting - farming cards first": "待機中 - 先にカードを収集します",
     "waiting for a farming slot": "収集の空き枠を待っています",
     "waiting for the account": "アカウントを待っています",
+    "sending items to your main account every {0} - the first send is around {1}": "{0}ごとにメインアカウントへアイテムを送ります - 初回は{1}頃",
+    "couldn't read the free-game state: {0}": "無料ゲームの状態を読み込めませんでした: {0}",
+    "couldn't save the free-game state: {0}": "無料ゲームの状態を保存できませんでした: {0}",
+    "Steam didn't answer": "Steam から応答がありません",
+    "Steam has no such offer for this account": "このアカウントにそのオファーはありません",
+    "asks for cards this account doesn't have": "このアカウントが持っていないカードを要求しています",
+    "couldn't read this account's cards": "このアカウントのカードを読み込めませんでした",
+    "trade offer #{0} isn't a fair card swap - {1}; left alone": "トレードオファー #{0} は公平なカード交換ではありません - {1}。そのままにします",
+    "a fair card swap": "公平なカード交換",
+    "it would set back the {0} set": "{0} のセットが後退します",
+    "not all ordinary trading cards": "すべてが通常のトレーディングカードではありません",
+    "not one for one within each game": "ゲームごとに1対1ではありません",
+    "not one for one": "1対1ではありません",
+    "one side is empty": "片側が空です",
+    "the store's gifts page lists {0} pending gift(s)": "ストアのギフトページに保留中のギフトが {0} 件",
+    "couldn't check for free event items: {0}": "無料イベントアイテムを確認できませんでした: {0}",
+    "couldn't read the free-item list: {0}": "無料アイテムのリストを読み込めませんでした: {0}",
+    "couldn't save the free-item list: {0}": "無料アイテムのリストを保存できませんでした: {0}",
+    "Points Shop item {0} not taken - Steam said {1}": "ポイントショップのアイテム {0} を取得せず - Steam の応答: {1}",
+    "claimed the free sale item": "セールの無料アイテムを受け取りました",
+    "claimed the free sale item: {0}": "セールの無料アイテムを受け取りました: {0}",
+    "next look for free items around {0}": "次の無料アイテム確認は {0} 頃",
+    "the Points Shop has {0} item(s) at 0 points": "ポイントショップに 0 ポイントのアイテムが {0} 個",
+    "took a free Points Shop item from {0}": "{0} の無料ポイントショップアイテムを取得しました",
+    "couldn't make a {0} booster pack: {1}": "{0} のブースターパックを作成できませんでした: {1}",
+    "couldn't make booster packs: {0}": "ブースターパックを作成できませんでした: {0}",
+    "{0} isn't on the booster creator - no booster packs can be made for it right now": "{0} はブースターパック作成ページにありません - 今はブースターパックを作れません",
+    "made a {0} booster pack for {1} gems - {2} gems left": "{0} のブースターパックを {1} ジェムで作成 - 残り {2} ジェム",
+    "next booster pack around {0}": "次のブースターパックは {0} 頃",
+    "not enough gems for a {0} booster pack - {1} needed, {2} here": "{0} のブースターパックに必要なジェムが足りません - 必要 {1}、所持 {2}",
+    "Steam's change feed: {0} package(s) changed, {1} newly free - checking them": "Steam の変更フィード: {0} 個のパッケージが変更、{1} 個が新たに無料 - 確認中",
+    "couldn't read Steam's change feed: {0}": "Steam の変更フィードを読み込めませんでした: {0}",
+    "a game was sent to this account as a gift - accept or decline it on the store's gifts page": "このアカウントにゲームがギフトとして送られました - ストアのギフトページで受け取るか辞退してください",
+    "couldn't accept a Steam wallet gift card: {0}": "Steam ウォレットのギフトカードを受け取れませんでした: {0}",
+    "couldn't accept a guest pass - Steam said {0}": "ゲストパスを受け取れませんでした - Steam の応答: {0}",
+    "couldn't check for gifts: {0}": "ギフトを確認できませんでした: {0}",
+    "Steam says {0} gift(s) are waiting": "Steam によると {0} 件のギフトが待機中",
+    "Steam says {0} guest pass(es) are waiting": "Steam によると {0} 件のゲストパスが待機中",
+    "accepted a Steam wallet gift card": "Steam ウォレットのギフトカードを受け取りました",
+    "accepted a guest pass (package {0})": "ゲストパスを受け取りました (パッケージ {0})",
+    "accepted a guest pass": "ゲストパスを受け取りました",
+    "gift waiting - until the account is awake": "ギフト待機中 - アカウントが起きるまで",
+    "no answer from Steam to a guest pass - trying again next login": "ゲストパスに Steam から応答なし - 次回ログイン時に再試行",
+    "Steam won't let this account trade {0} items - it's most likely banned in that game, so they're left out of every send from now on": "Steam がこのアカウントの {0} のアイテムのトレードを許可しません - おそらくそのゲームで BAN されているため、今後の送信からは除外します",
+    "next send around {0}": "次の送信は{0}頃",
+    "send due - waiting until the account is awake": "送信の時間 - アカウントが起きるまで待機",
+    "couldn't read the send schedule: {0}": "送信予定を読み込めませんでした: {0}",
+    "couldn't save the send schedule: {0}": "送信予定を保存できませんでした: {0}",
     "weighted schedule - next hunt in {0}": "重み付けスケジュール - 次の探索まで {0}",
     "winding down on {0} (~{1}m)": "{0} を終了処理中（約 {1} 分）",
     "{0} card(s) - farming tonight, once it's asleep": "カード {0} 枚 - 就寝後、今夜収集します",
@@ -537,6 +585,8 @@
     "closing the game, then {0}": "ゲームを終了して {0} へ",
     "done for today ({0}) · back {1}": "本日終了（{0}） · {1} に再開",
     "just signed in · settling for {0}": "サインインしたばかり · {0} 落ち着くまで待機",
+    "done grinding · settling for {0}": "周回完了 · {0} 落ち着くまで待機",
+    "awake for the day · settling for {0}": "本日の活動開始 · {0} 落ち着くまで待機",
     "meal break · back in {0}": "食事休憩 · {0} 後に再開",
     "not playing today · back {0}": "本日はプレイしません · {0} に再開",
     "nothing configured": "何も設定されていません",
@@ -560,6 +610,7 @@
     "{0} reply(s) sent": "{0} 件返信",
     "{0} waiting": "{0} 件待機中",
     "{0} · {1} left · {2}/{3} today": "{0} · 残り {1} · 本日 {2}/{3}",
+    "grinding {0} · {1} left · {2}/{3} today": "{0}を周回中 · 残り {1} · 本日 {2}/{3}",
     "Steam maintenance": "Steamのメンテナンス",
     "Steam shows {0}": "Steamでは{0}と表示",
     "account disabled": "アカウントが無効",
@@ -977,6 +1028,7 @@
     "no password - put SteamPassword in the config, or type it at the prompt": "パスワードがありません - 設定にSteamPasswordを入れるか、プロンプトで入力してください",
     "nothing left to farm - logging this account out as configured": "収集するものがありません - 設定どおりこのアカウントをログアウトします",
     "paused - staying logged in, doing nothing": "一時停止 - ログインしたまま何もしません",
+    "paused for {0} - picks back up by itself at {1}": "{0} 一時停止 - {1} に自動で再開します",
     "resumed": "再開しました",
     "running in the notification area - right-click the icon for the menu": "通知領域で実行中です - アイコンを右クリックするとメニューが開きます",
     "shutting down...": "終了しています...",
@@ -1361,6 +1413,14 @@
       "label": "寄付を受け取る",
       "tip": "見返りを求めないオファーだけを受けます。損のしようがないので、性質上安全です。"
     },
+    "AcceptFairCardSwaps": {
+      "label": "公平なカード交換を受け入れる",
+      "tip": "同じゲーム内でトレーディングカードを1対1で交換し、このアカウントのセット完成に近づくだけのオファーを誰からでも受け入れます。Steam Trade Matcher の利用者が送るもので、ArchiSteamFarm の SteamTradeMatcher 設定が受け入れるものと同じです。他のものが含まれる、フォイルがある、カードの最後の1枚を取られる交換は、そのままにします。カードを渡すにはモバイル認証での確認が必要です。"
+    },
+    "AcceptGifts": {
+      "label": "ギフトとゲストパスを受け取る",
+      "tip": "このアカウントに送られた Steam ウォレットのギフトカードとゲストパス（無料体験）を受け取ります。どちらもアカウントに損はありません。人間モードでは、アカウントが起きるまでギフトは待機します。"
+    },
     "AcceptFromMasters": {
       "label": "自分のアカウントからなら何でも承認",
       "tip": "下に並べた SteamID64 からの申し出は、アイテムを持っていくものも含めて何でも承認します。放置用アカウントのカードを 1 つのインベントリにまとめられるのはこれのおかげであり、だからこそこの一覧には自分が所有するアカウントしか入れてはいけません。"
@@ -1539,6 +1599,14 @@
       "label": "ブースターパックを開ける",
       "tip": "インベントリに届いたブースターパックを自動で開けます。中のカードは、バッジ作成に使うセットの一部として数えられます。"
     },
+    "ClaimEventItems": {
+      "label": "無料イベントアイテムを受け取る",
+      "tip": "セール中に Steam が毎日配る無料ステッカーと、ポイントショップで 0 ポイントのアイテムを受け取ります。どちらも無料で、受け取らなければなくなります。人間モードでは、アカウントが起きるまで待ちます。"
+    },
+    "BoosterGames": {
+      "label": "ブースターパックを作るゲーム",
+      "tip": "ジェムをブースターパックに変える AppID をカンマ区切りで。Steam は1ゲームにつき1日1パック、このアカウントがまだカードドロップを得られるゲームだけに許可し、次に作れる時刻も教えてくれます。作れるようになり次第、人間モードでアカウントが起きている間に作成します。空欄でオフ。'booster <アカウント>' でジェムと対象ゲームを表示します。"
+    },
     "ClearInventoryNotifications": {
       "label": "新着アイテムのバッジを消す",
       "tip": "カードが落ちるたびに Steam の緑色の「新着アイテム」カウンターを消します。インベントリが未読のまま光り続けないようにするためです。"
@@ -1672,6 +1740,10 @@
     "SendOnFarmingFinished": {
       "label": "集め終わったらアイテムを送る",
       "tip": "集めるカードがなくなったら、このアカウントが集めたものを上の一覧の先頭のアカウントへ送ります。放置用アカウントを複数動かす意味はまさにここにあります - カードが 6 つではなく 1 つのインベントリに集まるのです。"
+    },
+    "SendEveryHours": {
+      "label": "アイテムを送る間隔",
+      "tip": "この時間ごとに、このアカウントのアイテムを上に書いた最初のアカウントへ送ります。'send' コマンドと同じことを定期的に行うので、集める合間にカードがたまりません。0 でオフ。初回はオンにしてからちょうど1周期後で、毎回同じ分にならないよう少しランダムにずらし、人間モードではアカウントが起きるまで待ちます。"
     },
     "SendItemTypes": {
       "label": "何を送るか",

@@ -406,11 +406,21 @@ public sealed class Bot : IAsyncDisposable {
 	/// </summary>
 	public bool Paused { get; private set; }
 
-	public void Pause() {
+	/// <summary>When a timed pause lifts by itself. Null for an ordinary pause, which lasts until "resume".</summary>
+	public DateTime? PausedUntil { get; private set; }
+
+	public void Pause(TimeSpan? duration = null) {
 		Paused = true;
+		PausedUntil = duration is { } d && (d > TimeSpan.Zero) ? DateTime.UtcNow + d : null;
 		IsFarming = false;
 		StopPlaying();
-		Log.Info("paused - staying logged in, doing nothing", Name);
+
+		if (PausedUntil is { } until) {
+			Log.Info(new Said("paused for {0} - picks back up by itself at {1}", Fmt.Hm((int) Math.Ceiling(duration!.Value.TotalMinutes)),
+				(Func<string>) (() => Fmt.Clock(until))), Name);
+		} else {
+			Log.Info("paused - staying logged in, doing nothing", Name);
+		}
 	}
 
 	public void Resume() {
@@ -419,6 +429,7 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		Paused = false;
+		PausedUntil = null;
 		Log.Info("resumed", Name);
 
 		// Pick straight back up instead of waiting for the idler's next scheduled re-assert, which is minutes
@@ -588,6 +599,106 @@ public sealed class Bot : IAsyncDisposable {
 		_cb.Subscribe<SteamUnifiedMessages.ServiceMethodNotification<CFriendMessages_IncomingMessage_Notification>>(OnIncomingMessage);
 		_cb.Subscribe<SteamUnifiedMessages.ServiceMethodNotification<CFamilyGroupsClient_NotifyRunningApps_Notification>>(OnFamilyRunningApps);
 		_cb.Subscribe<SteamFriends.PersonaStateCallback>(OnPersonaState);
+		_cb.Subscribe<SteamUser.WalletInfoCallback>(OnWalletInfo);
+		_cb.Subscribe<GiftNotificationCallback>(OnGiftNotification);
+		_cb.Subscribe<SteamApps.GuestPassListCallback>(OnGuestPassList);
+	}
+
+	/// <summary>Raised when Steam says gifts or guest passes are waiting. The gifts module does the accepting.</summary>
+	public event Action? GiftsWaiting;
+
+	/// <summary>How many gifts Steam last said were waiting. -1 until it has said.</summary>
+	public int GiftsWaitingCount { get; private set; } = -1;
+
+	/// <summary>Guest passes Steam last said this account can redeem.</summary>
+	public IReadOnlyList<ulong> GuestPasses { get; private set; } = [];
+
+	private void OnGiftNotification(GiftNotificationCallback cb) {
+		int previous = GiftsWaitingCount;
+		GiftsWaitingCount = (int) cb.Waiting;
+
+		if ((cb.Waiting > 0) && ((int) cb.Waiting != previous)) {
+			Log.Debug(new Said("Steam says {0} gift(s) are waiting", cb.Waiting), Name);
+			GiftsWaiting?.Invoke();
+		}
+	}
+
+	private void OnGuestPassList(SteamApps.GuestPassListCallback cb) {
+		if (cb.CountGuestPassesToRedeem == 0) {
+			GuestPasses = [];
+
+			return;
+		}
+
+		GuestPasses = [.. cb.GuestPasses.Select(static p => p["gid"].AsUnsignedLong()).Where(static gid => gid != 0)];
+
+		if (GuestPasses.Count > 0) {
+			Log.Debug(new Said("Steam says {0} guest pass(es) are waiting", GuestPasses.Count), Name);
+			GiftsWaiting?.Invoke();
+		}
+	}
+
+	/// <summary>Wallet balance in the currency's smallest unit (cents), as Steam last pushed it. Null until it has.</summary>
+	public long? WalletCents { get; private set; }
+
+	/// <summary>Part of the balance still pending - a recent purchase refund, a market sale in escrow.</summary>
+	public long WalletPendingCents { get; private set; }
+
+	public ECurrencyCode WalletCurrency { get; private set; } = ECurrencyCode.Invalid;
+
+	private void OnWalletInfo(SteamUser.WalletInfoCallback cb) {
+		if (!cb.HasWallet) {
+			WalletCents = null;
+
+			return;
+		}
+
+		WalletCents = cb.LongBalance;
+		WalletPendingCents = cb.LongBalanceDelayed;
+		WalletCurrency = cb.Currency;
+	}
+
+	/// <summary>The account's Steam level, asked of Steam each time. Null if it wouldn't say.</summary>
+	public async Task<uint?> GetLevelAsync() {
+		if (Unified?.CreateService<Player>() is not { } player) {
+			return null;
+		}
+
+		try {
+			SteamUnifiedMessages.ServiceMethodResponse<CPlayer_GetGameBadgeLevels_Response> answer =
+				await player.GetGameBadgeLevels(new CPlayer_GetGameBadgeLevels_Request()).ToTask().WaitAsync(TimeSpan.FromSeconds(20)).ConfigureAwait(false);
+
+			return answer.Result == EResult.OK ? answer.Body.player_level : null;
+		} catch (Exception e) when (e is TimeoutException or TaskCanceledException or AsyncJobFailedException) {
+			return null;
+		}
+	}
+
+	/// <summary>Steam points available to spend in the Points Shop. Null if Steam wouldn't say.</summary>
+	public async Task<long?> GetPointsAsync() {
+		if ((SteamId == 0) || (Unified?.CreateService<SteamKit2.WebUI.Internal.LoyaltyRewards>() is not { } loyalty)) {
+			return null;
+		}
+
+		try {
+			SteamUnifiedMessages.ServiceMethodResponse<SteamKit2.WebUI.Internal.CLoyaltyRewards_GetSummary_Response> answer =
+				await loyalty.GetSummary(new SteamKit2.WebUI.Internal.CLoyaltyRewards_GetSummary_Request { steamid = SteamId }).ToTask().WaitAsync(TimeSpan.FromSeconds(20)).ConfigureAwait(false);
+
+			return answer.Result == EResult.OK ? answer.Body.summary?.points : null;
+		} catch (Exception e) when (e is TimeoutException or TaskCanceledException or AsyncJobFailedException) {
+			return null;
+		}
+	}
+
+	/// <summary>Change the name everybody sees on the profile and friends list. Not the custom game name.</summary>
+	public bool SetProfileName(string name) {
+		if ((Friends == null) || !IsOnline || string.IsNullOrWhiteSpace(name)) {
+			return false;
+		}
+
+		Friends.SetPersonaName(name.Trim());
+
+		return true;
 	}
 
 	/// <summary>
@@ -1522,6 +1633,12 @@ public sealed class Bot : IAsyncDisposable {
 	private async Task HeartbeatAsync() {
 		if (!_running || State != BotState.Online || SteamId == 0) {
 			return;
+		}
+
+		// A timed pause lifts itself. Checked here because the heartbeat is the one thing still ticking while an
+		// account is paused - every module is standing off.
+		if (Paused && (PausedUntil is { } liftAt) && (DateTime.UtcNow >= liftAt)) {
+			Resume();
 		}
 
 		// A stand-down that was too fresh to trust at logon gets announced here, once, if it held.

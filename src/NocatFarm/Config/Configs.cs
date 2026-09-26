@@ -284,6 +284,8 @@ public sealed class BotConfig {
 	public bool ClaimFreeGames { get; set; }
 	public bool CraftBadges { get; set; }
 	public bool UnpackBoosterPacks { get; set; }
+	public string BoosterGames { get; set; } = "";
+	public bool ClaimEventItems { get; set; } = true;
 	public bool ClearInventoryNotifications { get; set; } = true;
 
 	// Everything else in Steam's notification tray - comments, gifts, help requests, friend invites. None of
@@ -384,6 +386,8 @@ public sealed class BotConfig {
 
 	// ── trades ──
 	public bool AcceptDonations { get; set; } = true;
+	public bool AcceptGifts { get; set; } = true;
+	public bool AcceptFairCardSwaps { get; set; }
 	public bool AcceptFromMasters { get; set; }
 	public string TradeMasters { get; set; } = "";
 	public bool DeclineOtherTrades { get; set; }
@@ -392,6 +396,9 @@ public sealed class BotConfig {
 	public string SendItemTypes { get; set; } = "cards";
 	public string TradeMasterToken { get; set; } = "";
 	public bool SendOnFarmingFinished { get; set; }
+
+	/// <summary>Send items to the first trade master every this many hours. 0 is off.</summary>
+	public int SendEveryHours { get; set; }
 
 	// ── staying out of the way ──
 	public bool PauseWhenYouPlay { get; set; } = true;

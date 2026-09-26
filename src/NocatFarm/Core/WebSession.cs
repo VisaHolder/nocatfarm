@@ -103,6 +103,20 @@ public sealed class WebSession : IDisposable {
 		return await SendAsync(new Uri(Api, $"/{service}/{method}/v1/?{string.Join('&', query)}"), null, null, true, ct).ConfigureAwait(false);
 	}
 
+	/// <summary>The same as <see cref="ApiGetAsync"/>, for the Web API methods that only take a POST.</summary>
+	public async Task<string?> ApiPostAsync(string service, string method, Dictionary<string, string>? form, CancellationToken ct = default) {
+		if (!Ready && !await RefreshAsync(false, ct).ConfigureAwait(false)) {
+			return null;
+		}
+
+		if (string.IsNullOrEmpty(_accessToken)) {
+			return null;
+		}
+
+		return await SendAsync(new Uri(Api, $"/{service}/{method}/v1/?access_token={Uri.EscapeDataString(_accessToken)}"),
+			form ?? [], new Uri(Store, "/"), true, ct).ConfigureAwait(false);
+	}
+
 	public void Invalidate() => Ready = false;
 
 	// ── requests ────────────────────────────────────────────────────────────

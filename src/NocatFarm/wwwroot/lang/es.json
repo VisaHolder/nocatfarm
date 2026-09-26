@@ -522,6 +522,54 @@
     "waiting - farming cards first": "esperando: primero farmea cromos",
     "waiting for a farming slot": "esperando un hueco de farmeo",
     "waiting for the account": "esperando a la cuenta",
+    "sending items to your main account every {0} - the first send is around {1}": "enviando los objetos a tu cuenta principal cada {0} - el primer envío hacia las {1}",
+    "couldn't read the free-game state: {0}": "no se pudo leer el estado de juegos gratis: {0}",
+    "couldn't save the free-game state: {0}": "no se pudo guardar el estado de juegos gratis: {0}",
+    "Steam didn't answer": "Steam no respondió",
+    "Steam has no such offer for this account": "Steam no tiene esa oferta para esta cuenta",
+    "asks for cards this account doesn't have": "pide cromos que esta cuenta no tiene",
+    "couldn't read this account's cards": "no se pudieron leer los cromos de esta cuenta",
+    "trade offer #{0} isn't a fair card swap - {1}; left alone": "la oferta #{0} no es un intercambio justo de cromos - {1}; se deja tal cual",
+    "a fair card swap": "un intercambio justo de cromos",
+    "it would set back the {0} set": "retrasaría la colección de {0}",
+    "not all ordinary trading cards": "no son todo cromos normales",
+    "not one for one within each game": "no es uno por uno dentro de cada juego",
+    "not one for one": "no es uno por uno",
+    "one side is empty": "un lado está vacío",
+    "the store's gifts page lists {0} pending gift(s)": "la página de regalos de la tienda muestra {0} regalo(s) pendiente(s)",
+    "couldn't check for free event items: {0}": "no se pudieron comprobar los objetos gratis del evento: {0}",
+    "couldn't read the free-item list: {0}": "no se pudo leer la lista de objetos gratis: {0}",
+    "couldn't save the free-item list: {0}": "no se pudo guardar la lista de objetos gratis: {0}",
+    "Points Shop item {0} not taken - Steam said {1}": "objeto {0} de la tienda de puntos no obtenido - Steam dijo {1}",
+    "claimed the free sale item": "reclamado el objeto gratis de las rebajas",
+    "claimed the free sale item: {0}": "reclamado el objeto gratis de las rebajas: {0}",
+    "next look for free items around {0}": "próxima búsqueda de objetos gratis hacia las {0}",
+    "the Points Shop has {0} item(s) at 0 points": "la tienda de puntos tiene {0} objeto(s) a 0 puntos",
+    "took a free Points Shop item from {0}": "obtenido un objeto gratis de la tienda de puntos de {0}",
+    "couldn't make a {0} booster pack: {1}": "no se pudo crear un sobre de {0}: {1}",
+    "couldn't make booster packs: {0}": "no se pudieron crear sobres: {0}",
+    "{0} isn't on the booster creator - no booster packs can be made for it right now": "{0} no está en el creador de sobres - ahora mismo no se pueden crear sobres de este juego",
+    "made a {0} booster pack for {1} gems - {2} gems left": "creado un sobre de {0} por {1} gemas - quedan {2} gemas",
+    "next booster pack around {0}": "próximo sobre hacia las {0}",
+    "not enough gems for a {0} booster pack - {1} needed, {2} here": "no hay gemas suficientes para un sobre de {0} - hacen falta {1}, hay {2}",
+    "Steam's change feed: {0} package(s) changed, {1} newly free - checking them": "feed de cambios de Steam: {0} paquete(s) cambiado(s), {1} nuevo(s) gratis - comprobándolos",
+    "couldn't read Steam's change feed: {0}": "no se pudo leer el feed de cambios de Steam: {0}",
+    "a game was sent to this account as a gift - accept or decline it on the store's gifts page": "le han regalado un juego a esta cuenta: acéptalo o recházalo en la página de regalos de la tienda",
+    "couldn't accept a Steam wallet gift card: {0}": "no se pudo aceptar una tarjeta regalo de Steam: {0}",
+    "couldn't accept a guest pass - Steam said {0}": "no se pudo aceptar un pase de invitado: Steam dijo {0}",
+    "couldn't check for gifts: {0}": "no se pudieron comprobar los regalos: {0}",
+    "Steam says {0} gift(s) are waiting": "Steam dice que hay {0} regalo(s) esperando",
+    "Steam says {0} guest pass(es) are waiting": "Steam dice que hay {0} pase(s) de invitado esperando",
+    "accepted a Steam wallet gift card": "tarjeta regalo de Steam aceptada",
+    "accepted a guest pass (package {0})": "pase de invitado aceptado (paquete {0})",
+    "accepted a guest pass": "pase de invitado aceptado",
+    "gift waiting - until the account is awake": "regalo esperando - hasta que la cuenta esté despierta",
+    "no answer from Steam to a guest pass - trying again next login": "Steam no respondió a un pase de invitado - se volverá a intentar en el próximo inicio de sesión",
+    "Steam won't let this account trade {0} items - it's most likely banned in that game, so they're left out of every send from now on": "Steam no deja que esta cuenta intercambie objetos de {0}: lo más probable es que esté baneada en ese juego, así que a partir de ahora se dejan fuera de todos los envíos",
+    "next send around {0}": "próximo envío hacia las {0}",
+    "send due - waiting until the account is awake": "toca enviar - esperando a que la cuenta esté despierta",
+    "couldn't read the send schedule: {0}": "no se pudo leer el calendario de envíos: {0}",
+    "couldn't save the send schedule: {0}": "no se pudo guardar el calendario de envíos: {0}",
     "weighted schedule - next hunt in {0}": "horario ponderado: próxima caza en {0}",
     "winding down on {0} (~{1}m)": "terminando en {0} (~{1}m)",
     "{0} card(s) - farming tonight, once it's asleep": "{0} cromo(s): farmea esta noche, cuando duerma",
@@ -537,6 +585,8 @@
     "closing the game, then {0}": "cerrando el juego, luego {0}",
     "done for today ({0}) · back {1}": "hecho por hoy ({0}) · vuelve a las {1}",
     "just signed in · settling for {0}": "recién conectada · asentándose {0}",
+    "done grinding · settling for {0}": "grindeo terminado · asentándose {0}",
+    "awake for the day · settling for {0}": "despierto por hoy · asentándose {0}",
     "meal break · back in {0}": "pausa para comer · vuelve en {0}",
     "not playing today · back {0}": "hoy no juega · vuelve a las {0}",
     "nothing configured": "nada configurado",
@@ -560,6 +610,7 @@
     "{0} reply(s) sent": "{0} respuesta(s) enviadas",
     "{0} waiting": "{0} en espera",
     "{0} · {1} left · {2}/{3} today": "{0} · quedan {1} · {2}/{3} hoy",
+    "grinding {0} · {1} left · {2}/{3} today": "grindeando {0} · quedan {1} · {2}/{3} hoy",
     "Steam maintenance": "mantenimiento de Steam",
     "Steam shows {0}": "Steam muestra {0}",
     "account disabled": "cuenta deshabilitada",
@@ -977,6 +1028,7 @@
     "no password - put SteamPassword in the config, or type it at the prompt": "sin contraseña - pon SteamPassword en la configuración, o escríbela en el prompt",
     "nothing left to farm - logging this account out as configured": "no queda nada que farmear - cerrando la sesión de esta cuenta según la configuración",
     "paused - staying logged in, doing nothing": "en pausa - permanece conectado sin hacer nada",
+    "paused for {0} - picks back up by itself at {1}": "en pausa durante {0} - sigue sola a las {1}",
     "resumed": "reanudado",
     "running in the notification area - right-click the icon for the menu": "ejecutándose en el área de notificación - clic derecho en el icono para el menú",
     "shutting down...": "cerrando...",
@@ -1361,6 +1413,14 @@
       "label": "Aceptar donaciones",
       "tip": "Acepta ofertas que no piden nada a cambio. No pueden costarte nada, así que son seguras por definición."
     },
+    "AcceptFairCardSwaps": {
+      "label": "Aceptar intercambios justos de cromos",
+      "tip": "Acepta ofertas de cualquiera que cambien cromos uno por uno dentro del mismo juego, cuando el cambio solo puede acercar las colecciones de esta cuenta a completarse: lo que envían los usuarios de Steam Trade Matcher y lo que acepta el ajuste SteamTradeMatcher de ArchiSteamFarm. Si hay cualquier otra cosa en la oferta, un cromo foil o un cambio que se llevaría la última copia de un cromo, se deja tal cual. Entregar cromos necesita el autenticador móvil para confirmarse."
+    },
+    "AcceptGifts": {
+      "label": "Aceptar regalos y pases de invitado",
+      "tip": "Acepta las tarjetas regalo de Steam y los pases de invitado (pruebas gratuitas) que alguien envíe a esta cuenta. Ninguno puede costarle nada. Con el modo humano, un regalo espera a que la cuenta esté despierta."
+    },
     "AcceptFromMasters": {
       "label": "Aceptar cualquier cosa de tus propias cuentas",
       "tip": "Acepta absolutamente cualquier oferta de los SteamID64 listados abajo, incluidas las que se llevan objetos. Eso es lo que te permite barrer los cromos de tus idlers a una sola cuenta, y exactamente por eso la lista solo debe contener cuentas que sean tuyas."
@@ -1539,6 +1599,14 @@
       "label": "Abrir sobres de refuerzo",
       "tip": "Abre automáticamente los sobres de refuerzo que caigan en tu inventario, para que los cromos de dentro cuenten para los sets con los que se fabrican insignias."
     },
+    "ClaimEventItems": {
+      "label": "Reclamar objetos gratis de eventos",
+      "tip": "Recoge el sticker gratis que Steam reparte cada día durante unas rebajas y cualquier cosa de la tienda de puntos que cueste 0 puntos. Nada de eso cuesta nada y se pierde si nadie lo recoge. Con el modo humano, espera a que la cuenta esté despierta."
+    },
+    "BoosterGames": {
+      "label": "Crear sobres de",
+      "tip": "AppIDs para convertir gemas en sobres, separados por comas. Steam permite un sobre por juego al día, solo de juegos en los que esta cuenta aún puede conseguir cromos, y dice cuándo se puede volver a crear: se crea en cuanto se puede y mientras el modo humano tenga la cuenta despierta. Vacío lo desactiva. 'booster <cuenta>' muestra las gemas y qué juegos califican."
+    },
     "ClearInventoryNotifications": {
       "label": "Quitar el aviso de objetos nuevos",
       "tip": "Borra el contador verde de «objetos nuevos» de Steam cada vez que cae un cromo, para que tu inventario no quede marcado como sin leer para siempre."
@@ -1672,6 +1740,10 @@
     "SendOnFarmingFinished": {
       "label": "Enviar los objetos al terminar de farmear",
       "tip": "Cuando ya no quedan cromos por farmear, envía lo que esta cuenta ha recogido a la primera cuenta de la lista de arriba. Ese es todo el sentido de tener varios idlers: los cromos acaban en un inventario y no en seis."
+    },
+    "SendEveryHours": {
+      "label": "Enviar los objetos cada",
+      "tip": "Cada tantas horas, envía los objetos de esta cuenta a la primera cuenta de arriba: lo mismo que el comando 'send', pero con horario, para que los cromos no se acumulen entre una tanda de farmeo y otra. 0 lo desactiva. El primer envío llega un periodo completo después de activarlo, un poco de margen aleatorio evita que caiga siempre en el mismo minuto y, con el modo humano, espera a que la cuenta esté despierta."
     },
     "SendItemTypes": {
       "label": "Qué enviar",

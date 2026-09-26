@@ -522,6 +522,54 @@
     "waiting - farming cards first": "attend - farm les cartes d'abord",
     "waiting for a farming slot": "attend une place de farm",
     "waiting for the account": "attend le compte",
+    "sending items to your main account every {0} - the first send is around {1}": "envoie les objets à ton compte principal toutes les {0} - premier envoi vers {1}",
+    "couldn't read the free-game state: {0}": "impossible de lire l'état des jeux gratuits : {0}",
+    "couldn't save the free-game state: {0}": "impossible d'enregistrer l'état des jeux gratuits : {0}",
+    "Steam didn't answer": "Steam n'a pas répondu",
+    "Steam has no such offer for this account": "Steam n'a pas cette offre pour ce compte",
+    "asks for cards this account doesn't have": "demande des cartes que ce compte n'a pas",
+    "couldn't read this account's cards": "impossible de lire les cartes de ce compte",
+    "trade offer #{0} isn't a fair card swap - {1}; left alone": "l'offre #{0} n'est pas un échange de cartes équitable - {1} ; laissée telle quelle",
+    "a fair card swap": "un échange de cartes équitable",
+    "it would set back the {0} set": "ça ferait reculer la collection {0}",
+    "not all ordinary trading cards": "pas uniquement des cartes à échanger ordinaires",
+    "not one for one within each game": "pas un pour un dans chaque jeu",
+    "not one for one": "pas un pour un",
+    "one side is empty": "un côté est vide",
+    "the store's gifts page lists {0} pending gift(s)": "la page des cadeaux du magasin liste {0} cadeau(x) en attente",
+    "couldn't check for free event items: {0}": "impossible de vérifier les objets d'événement gratuits : {0}",
+    "couldn't read the free-item list: {0}": "impossible de lire la liste des objets gratuits : {0}",
+    "couldn't save the free-item list: {0}": "impossible d'enregistrer la liste des objets gratuits : {0}",
+    "Points Shop item {0} not taken - Steam said {1}": "objet {0} de la boutique des points non pris - Steam a répondu {1}",
+    "claimed the free sale item": "objet gratuit des soldes récupéré",
+    "claimed the free sale item: {0}": "objet gratuit des soldes récupéré : {0}",
+    "next look for free items around {0}": "prochaine recherche d'objets gratuits vers {0}",
+    "the Points Shop has {0} item(s) at 0 points": "la boutique des points a {0} objet(s) à 0 point",
+    "took a free Points Shop item from {0}": "objet gratuit de la boutique des points pris pour {0}",
+    "couldn't make a {0} booster pack: {1}": "impossible de créer un booster {0} : {1}",
+    "couldn't make booster packs: {0}": "impossible de créer des boosters : {0}",
+    "{0} isn't on the booster creator - no booster packs can be made for it right now": "{0} n'est pas dans le créateur de boosters - aucun booster ne peut être créé pour lui pour l'instant",
+    "made a {0} booster pack for {1} gems - {2} gems left": "booster {0} créé pour {1} gemmes - il reste {2} gemmes",
+    "next booster pack around {0}": "prochain booster vers {0}",
+    "not enough gems for a {0} booster pack - {1} needed, {2} here": "pas assez de gemmes pour un booster {0} - il en faut {1}, il y en a {2}",
+    "Steam's change feed: {0} package(s) changed, {1} newly free - checking them": "flux de changements de Steam : {0} paquet(s) modifié(s), {1} devenu(s) gratuit(s) - vérification",
+    "couldn't read Steam's change feed: {0}": "impossible de lire le flux de changements de Steam : {0}",
+    "a game was sent to this account as a gift - accept or decline it on the store's gifts page": "un jeu a été offert à ce compte - accepte-le ou refuse-le sur la page des cadeaux du magasin",
+    "couldn't accept a Steam wallet gift card: {0}": "impossible d'accepter une carte cadeau Steam : {0}",
+    "couldn't accept a guest pass - Steam said {0}": "impossible d'accepter un pass invité - Steam a répondu {0}",
+    "couldn't check for gifts: {0}": "impossible de vérifier les cadeaux : {0}",
+    "Steam says {0} gift(s) are waiting": "Steam indique {0} cadeau(x) en attente",
+    "Steam says {0} guest pass(es) are waiting": "Steam indique {0} pass invité(s) en attente",
+    "accepted a Steam wallet gift card": "carte cadeau Steam acceptée",
+    "accepted a guest pass (package {0})": "pass invité accepté (paquet {0})",
+    "accepted a guest pass": "pass invité accepté",
+    "gift waiting - until the account is awake": "cadeau en attente - jusqu'à ce que le compte soit réveillé",
+    "no answer from Steam to a guest pass - trying again next login": "pas de réponse de Steam pour un pass invité - nouvel essai à la prochaine connexion",
+    "Steam won't let this account trade {0} items - it's most likely banned in that game, so they're left out of every send from now on": "Steam ne laisse pas ce compte échanger les objets de {0} - il est très probablement banni de ce jeu, donc ils sont désormais exclus de chaque envoi",
+    "next send around {0}": "prochain envoi vers {0}",
+    "send due - waiting until the account is awake": "envoi prévu - attend que le compte soit réveillé",
+    "couldn't read the send schedule: {0}": "impossible de lire le planning d'envoi : {0}",
+    "couldn't save the send schedule: {0}": "impossible d'enregistrer le planning d'envoi : {0}",
     "weighted schedule - next hunt in {0}": "planning pondéré - prochaine chasse dans {0}",
     "winding down on {0} (~{1}m)": "termine sur {0} (~{1}m)",
     "{0} card(s) - farming tonight, once it's asleep": "{0} carte(s) - farm cette nuit, une fois endormi",
@@ -537,6 +585,8 @@
     "closing the game, then {0}": "ferme le jeu, puis {0}",
     "done for today ({0}) · back {1}": "fini pour aujourd'hui ({0}) · de retour à {1}",
     "just signed in · settling for {0}": "vient de se connecter · s'installe pendant {0}",
+    "done grinding · settling for {0}": "grind terminé · s'installe pendant {0}",
+    "awake for the day · settling for {0}": "réveillé pour la journée · s'installe pendant {0}",
     "meal break · back in {0}": "pause repas · de retour dans {0}",
     "not playing today · back {0}": "ne joue pas aujourd'hui · de retour à {0}",
     "nothing configured": "rien de configuré",
@@ -560,6 +610,7 @@
     "{0} reply(s) sent": "{0} réponse(s) envoyées",
     "{0} waiting": "{0} en attente",
     "{0} · {1} left · {2}/{3} today": "{0} · {1} restant · {2}/{3} aujourd'hui",
+    "grinding {0} · {1} left · {2}/{3} today": "grind de {0} · {1} restant · {2}/{3} aujourd'hui",
     "Steam maintenance": "maintenance Steam",
     "Steam shows {0}": "Steam affiche {0}",
     "account disabled": "compte désactivé",
@@ -977,6 +1028,7 @@
     "no password - put SteamPassword in the config, or type it at the prompt": "pas de mot de passe - mets SteamPassword dans la configuration, ou saisis-le à l'invite",
     "nothing left to farm - logging this account out as configured": "plus rien à récolter - déconnexion de ce compte comme configuré",
     "paused - staying logged in, doing nothing": "en pause - reste connecté sans rien faire",
+    "paused for {0} - picks back up by itself at {1}": "en pause pendant {0} - reprend toute seule à {1}",
     "resumed": "repris",
     "running in the notification area - right-click the icon for the menu": "s'exécute dans la zone de notification - clic droit sur l'icône pour le menu",
     "shutting down...": "arrêt en cours...",
@@ -1361,6 +1413,14 @@
       "label": "Accepter les dons",
       "tip": "Accepte les offres qui ne demandent rien en retour. Elles ne peuvent rien vous coûter, donc elles sont sûres par nature."
     },
+    "AcceptFairCardSwaps": {
+      "label": "Accepter les échanges de cartes équitables",
+      "tip": "Accepte les offres de n'importe qui qui échangent des cartes une contre une dans le même jeu, quand l'échange ne peut que rapprocher les collections de ce compte de leur fin - ce qu'envoient les utilisateurs de Steam Trade Matcher et ce qu'accepte le réglage SteamTradeMatcher d'ArchiSteamFarm. Autre chose dans l'offre, une carte brillante ou un échange qui prendrait le dernier exemplaire d'une carte, et elle est laissée telle quelle. Donner des cartes doit être confirmé avec l'authentificateur mobile."
+    },
+    "AcceptGifts": {
+      "label": "Accepter les cadeaux et pass invités",
+      "tip": "Accepte les cartes cadeaux Steam et les pass invités (essais gratuits) envoyés à ce compte. Aucun des deux ne peut lui coûter quoi que ce soit. Avec le mode humain, un cadeau attend que le compte soit réveillé."
+    },
     "AcceptFromMasters": {
       "label": "Accepter n'importe quoi de vos propres comptes",
       "tip": "Accepte absolument toute offre venant des SteamID64 listés ci-dessous, y compris celles qui emportent des objets. C'est ce qui permet de rassembler les cartes de vos idlers sur un seul compte - et exactement pourquoi cette liste ne doit contenir que des comptes qui vous appartiennent."
@@ -1539,6 +1599,14 @@
       "label": "Ouvrir les packs de boost",
       "tip": "Ouvre automatiquement les packs de boost qui arrivent dans votre inventaire, pour que les cartes à l'intérieur comptent dans les séries qui servent à fabriquer les badges."
     },
+    "ClaimEventItems": {
+      "label": "Récupérer les objets d'événement gratuits",
+      "tip": "Récupère l'autocollant gratuit que Steam offre chaque jour pendant des soldes, et tout ce qui coûte 0 point dans la boutique des points. Rien de tout ça ne coûte quoi que ce soit, et c'est perdu si personne ne le récupère. Avec le mode humain, il attend que le compte soit réveillé."
+    },
+    "BoosterGames": {
+      "label": "Créer des boosters pour",
+      "tip": "AppIDs pour lesquels transformer les gemmes en boosters, séparés par des virgules. Steam autorise un booster par jeu et par jour, seulement pour les jeux où ce compte peut encore obtenir des cartes, et indique quand le suivant est possible - il est créé dès que possible, et tant que le mode humain garde le compte réveillé. Vide désactive. 'booster <compte>' affiche les gemmes et les jeux éligibles."
+    },
     "ClearInventoryNotifications": {
       "label": "Effacer le badge d'objets nouveaux",
       "tip": "Efface le compteur vert « nouveaux objets » de Steam à chaque carte obtenue, pour que votre inventaire ne reste pas signalé comme non lu en permanence."
@@ -1672,6 +1740,10 @@
     "SendOnFarmingFinished": {
       "label": "Envoyer les objets à la fin du farm",
       "tip": "Quand il ne reste plus aucune carte à farmer, envoie ce que ce compte a récolté au premier compte listé ci-dessus. C'est tout l'intérêt de faire tourner plusieurs idlers : les cartes finissent dans un seul inventaire au lieu de six."
+    },
+    "SendEveryHours": {
+      "label": "Envoyer les objets toutes les",
+      "tip": "Toutes les tant d'heures, envoie les objets de ce compte au premier compte indiqué ci-dessus - comme la commande 'send', mais à intervalle régulier, pour que les cartes ne s'accumulent pas entre deux sessions de farm. 0 désactive. Le premier envoi a lieu une période complète après l'activation, un peu de marge aléatoire évite de tomber toujours à la même minute et, avec le mode humain, il attend que le compte soit réveillé."
     },
     "SendItemTypes": {
       "label": "Ce qu'il faut envoyer",

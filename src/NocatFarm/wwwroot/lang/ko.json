@@ -522,6 +522,54 @@
     "waiting - farming cards first": "대기 - 카드부터 수집합니다",
     "waiting for a farming slot": "수집 자리를 기다리는 중",
     "waiting for the account": "계정을 기다리는 중",
+    "sending items to your main account every {0} - the first send is around {1}": "{0}마다 메인 계정으로 아이템을 보냅니다 - 첫 전송은 {1}쯤",
+    "couldn't read the free-game state: {0}": "무료 게임 상태를 읽지 못했습니다: {0}",
+    "couldn't save the free-game state: {0}": "무료 게임 상태를 저장하지 못했습니다: {0}",
+    "Steam didn't answer": "Steam이 응답하지 않았습니다",
+    "Steam has no such offer for this account": "이 계정에 그런 제안이 없습니다",
+    "asks for cards this account doesn't have": "이 계정에 없는 카드를 요구합니다",
+    "couldn't read this account's cards": "이 계정의 카드를 읽지 못했습니다",
+    "trade offer #{0} isn't a fair card swap - {1}; left alone": "거래 제안 #{0}은(는) 공정한 카드 교환이 아닙니다 - {1}; 그대로 둡니다",
+    "a fair card swap": "공정한 카드 교환",
+    "it would set back the {0} set": "{0} 세트가 뒤로 밀립니다",
+    "not all ordinary trading cards": "모두 일반 트레이딩 카드가 아닙니다",
+    "not one for one within each game": "게임별로 1대1이 아닙니다",
+    "not one for one": "1대1이 아닙니다",
+    "one side is empty": "한쪽이 비어 있습니다",
+    "the store's gifts page lists {0} pending gift(s)": "상점 선물 페이지에 대기 중인 선물 {0}개",
+    "couldn't check for free event items: {0}": "무료 이벤트 아이템을 확인하지 못했습니다: {0}",
+    "couldn't read the free-item list: {0}": "무료 아이템 목록을 읽지 못했습니다: {0}",
+    "couldn't save the free-item list: {0}": "무료 아이템 목록을 저장하지 못했습니다: {0}",
+    "Points Shop item {0} not taken - Steam said {1}": "포인트 상점 아이템 {0}을(를) 받지 않음 - Steam 응답: {1}",
+    "claimed the free sale item": "세일 무료 아이템을 받았습니다",
+    "claimed the free sale item: {0}": "세일 무료 아이템을 받았습니다: {0}",
+    "next look for free items around {0}": "다음 무료 아이템 확인은 {0}쯤",
+    "the Points Shop has {0} item(s) at 0 points": "포인트 상점에 0포인트 아이템이 {0}개 있습니다",
+    "took a free Points Shop item from {0}": "{0}의 무료 포인트 상점 아이템을 받았습니다",
+    "couldn't make a {0} booster pack: {1}": "{0} 부스터 팩을 만들지 못했습니다: {1}",
+    "couldn't make booster packs: {0}": "부스터 팩을 만들지 못했습니다: {0}",
+    "{0} isn't on the booster creator - no booster packs can be made for it right now": "{0}은(는) 부스터 팩 제작 목록에 없습니다 - 지금은 부스터 팩을 만들 수 없습니다",
+    "made a {0} booster pack for {1} gems - {2} gems left": "{0} 부스터 팩을 보석 {1}개로 만들었습니다 - 보석 {2}개 남음",
+    "next booster pack around {0}": "다음 부스터 팩은 {0}쯤",
+    "not enough gems for a {0} booster pack - {1} needed, {2} here": "{0} 부스터 팩에 보석이 부족합니다 - {1}개 필요, {2}개 있음",
+    "Steam's change feed: {0} package(s) changed, {1} newly free - checking them": "Steam 변경 피드: 패키지 {0}개 변경, {1}개 새로 무료 - 확인 중",
+    "couldn't read Steam's change feed: {0}": "Steam 변경 피드를 읽지 못했습니다: {0}",
+    "a game was sent to this account as a gift - accept or decline it on the store's gifts page": "이 계정에 게임이 선물로 왔습니다 - 상점의 선물 페이지에서 받거나 거절하세요",
+    "couldn't accept a Steam wallet gift card: {0}": "Steam 지갑 기프트 카드를 받지 못했습니다: {0}",
+    "couldn't accept a guest pass - Steam said {0}": "게스트 패스를 받지 못했습니다 - Steam 응답: {0}",
+    "couldn't check for gifts: {0}": "선물을 확인하지 못했습니다: {0}",
+    "Steam says {0} gift(s) are waiting": "Steam에 따르면 선물 {0}개가 기다리는 중",
+    "Steam says {0} guest pass(es) are waiting": "Steam에 따르면 게스트 패스 {0}개가 기다리는 중",
+    "accepted a Steam wallet gift card": "Steam 지갑 기프트 카드를 받았습니다",
+    "accepted a guest pass (package {0})": "게스트 패스를 받았습니다 (패키지 {0})",
+    "accepted a guest pass": "게스트 패스를 받았습니다",
+    "gift waiting - until the account is awake": "선물 대기 중 - 계정이 깨어날 때까지",
+    "no answer from Steam to a guest pass - trying again next login": "게스트 패스에 Steam 응답 없음 - 다음 로그인 때 다시 시도",
+    "Steam won't let this account trade {0} items - it's most likely banned in that game, so they're left out of every send from now on": "Steam이 이 계정의 {0} 아이템 거래를 허용하지 않습니다 - 그 게임에서 밴당했을 가능성이 높아서, 앞으로 모든 전송에서 제외합니다",
+    "next send around {0}": "다음 전송은 {0}쯤",
+    "send due - waiting until the account is awake": "전송할 때가 됨 - 계정이 깨어날 때까지 기다리는 중",
+    "couldn't read the send schedule: {0}": "전송 일정을 읽지 못했습니다: {0}",
+    "couldn't save the send schedule: {0}": "전송 일정을 저장하지 못했습니다: {0}",
     "weighted schedule - next hunt in {0}": "가중 일정 - 다음 탐색까지 {0}",
     "winding down on {0} (~{1}m)": "{0} 마무리 중 (약 {1}분)",
     "{0} card(s) - farming tonight, once it's asleep": "카드 {0}장 - 오늘 밤 잠든 뒤 수집",
@@ -537,6 +585,8 @@
     "closing the game, then {0}": "게임을 종료한 뒤 {0}",
     "done for today ({0}) · back {1}": "오늘은 종료 ({0}) · {1}에 복귀",
     "just signed in · settling for {0}": "방금 로그인 · {0} 동안 자리 잡는 중",
+    "done grinding · settling for {0}": "집중 플레이 완료 · {0} 동안 자리 잡는 중",
+    "awake for the day · settling for {0}": "오늘 기상 · {0} 동안 자리 잡는 중",
     "meal break · back in {0}": "식사 휴식 · {0} 후 복귀",
     "not playing today · back {0}": "오늘은 플레이하지 않음 · {0}에 복귀",
     "nothing configured": "설정된 것이 없음",
@@ -560,6 +610,7 @@
     "{0} reply(s) sent": "답장 {0}건 전송",
     "{0} waiting": "{0}건 대기",
     "{0} · {1} left · {2}/{3} today": "{0} · {1} 남음 · 오늘 {2}/{3}",
+    "grinding {0} · {1} left · {2}/{3} today": "{0} 집중 플레이 중 · {1} 남음 · 오늘 {2}/{3}",
     "Steam maintenance": "Steam 점검",
     "Steam shows {0}": "Steam에는 {0}(으)로 표시",
     "account disabled": "계정 비활성화됨",
@@ -977,6 +1028,7 @@
     "no password - put SteamPassword in the config, or type it at the prompt": "비밀번호가 없습니다 - 설정에 SteamPassword를 넣거나 프롬프트에 입력하세요",
     "nothing left to farm - logging this account out as configured": "파밍할 것이 없습니다 - 설정대로 이 계정을 로그아웃합니다",
     "paused - staying logged in, doing nothing": "일시 중지 - 로그인은 유지하고 아무것도 하지 않습니다",
+    "paused for {0} - picks back up by itself at {1}": "{0} 동안 일시 중지 - {1}에 알아서 다시 시작합니다",
     "resumed": "재개됨",
     "running in the notification area - right-click the icon for the menu": "알림 영역에서 실행 중입니다 - 아이콘을 우클릭하면 메뉴가 열립니다",
     "shutting down...": "종료하는 중...",
@@ -1361,6 +1413,14 @@
       "label": "기부 수락",
       "tip": "대가를 요구하지 않는 제안만 수락합니다. 손해를 볼 수가 없으니 본질적으로 안전합니다."
     },
+    "AcceptFairCardSwaps": {
+      "label": "공정한 카드 교환 받기",
+      "tip": "같은 게임 안에서 트레이딩 카드를 1대1로 바꾸고, 이 계정의 세트 완성에 도움만 되는 제안을 누구에게서든 받습니다. Steam Trade Matcher 사용자가 보내는 것이며, ArchiSteamFarm의 SteamTradeMatcher 설정이 받는 것과 같습니다. 다른 물건이 섞였거나, 포일이 있거나, 카드의 마지막 한 장을 가져가는 교환이면 그대로 둡니다. 카드를 내주려면 모바일 인증기로 확인해야 합니다."
+    },
+    "AcceptGifts": {
+      "label": "선물과 게스트 패스 받기",
+      "tip": "누군가 이 계정에 보낸 Steam 지갑 기프트 카드와 게스트 패스(무료 체험)를 받습니다. 둘 다 계정에 손해가 될 수 없습니다. 사람 모드에서는 계정이 깨어날 때까지 선물이 기다립니다."
+    },
     "AcceptFromMasters": {
       "label": "내 계정에서 온 것은 무엇이든 수락",
       "tip": "아래에 적은 SteamID64가 보낸 제안은 아이템을 가져가는 것까지 포함해 무엇이든 수락합니다. 유휴 계정의 카드를 한 계정으로 쓸어 담을 수 있는 이유가 이것이며, 그래서 이 목록에는 본인 소유 계정만 넣어야 합니다."
@@ -1539,6 +1599,14 @@
       "label": "부스터 팩 열기",
       "tip": "인벤토리에 들어온 부스터 팩을 자동으로 엽니다. 안의 카드는 배지를 만드는 세트에 포함됩니다."
     },
+    "ClaimEventItems": {
+      "label": "무료 이벤트 아이템 받기",
+      "tip": "세일 기간 동안 Steam이 매일 주는 무료 스티커와, 포인트 상점에서 0포인트인 아이템을 받습니다. 둘 다 비용이 없고 아무도 받지 않으면 사라집니다. 사람 모드에서는 계정이 깨어날 때까지 기다립니다."
+    },
+    "BoosterGames": {
+      "label": "부스터 팩을 만들 게임",
+      "tip": "보석을 부스터 팩으로 바꿀 AppID, 쉼표로 구분. Steam은 게임당 하루 한 팩, 이 계정이 아직 카드 드롭을 받을 수 있는 게임에만 허용하고 다음에 만들 수 있는 시간을 알려 줍니다 - 만들 수 있게 되는 즉시, 사람 모드가 계정을 깨어 있게 할 때 만듭니다. 비우면 끔. 'booster <계정>'은 보석과 대상 게임을 보여 줍니다."
+    },
     "ClearInventoryNotifications": {
       "label": "새 아이템 배지 지우기",
       "tip": "카드가 떨어질 때마다 Steam의 초록색 '새 아이템' 카운터를 지웁니다. 인벤토리가 계속 안 읽음으로 표시되지 않도록."
@@ -1672,6 +1740,10 @@
     "SendOnFarmingFinished": {
       "label": "파밍이 끝나면 아이템 전송",
       "tip": "더 이상 파밍할 카드가 없으면 이 계정이 모은 것을 위 목록의 첫 번째 계정으로 보냅니다. 유휴 계정을 여러 개 돌리는 이유가 바로 이것입니다 - 카드가 여섯 군데가 아니라 한 인벤토리에 모입니다."
+    },
+    "SendEveryHours": {
+      "label": "아이템 보내는 주기",
+      "tip": "이 시간마다 이 계정의 아이템을 위에 적은 첫 번째 계정으로 보냅니다. 'send' 명령과 같은 일을 정해진 시간마다 해서, 파밍 사이에 카드가 쌓이지 않습니다. 0은 끔. 첫 전송은 켠 뒤 한 주기가 지나서이고, 매번 같은 분이 되지 않게 약간 무작위로 늦추며, 사람 모드에서는 계정이 깨어날 때까지 기다립니다."
     },
     "SendItemTypes": {
       "label": "무엇을 보낼지",

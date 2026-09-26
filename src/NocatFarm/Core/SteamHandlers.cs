@@ -31,6 +31,13 @@ public sealed class TradeOfferNotificationCallback : CallbackMsg {
 	internal TradeOfferNotificationCallback(uint waiting) => Waiting = waiting;
 }
 
+/// <summary>Steam pushed the notification counts and says this many gifts are waiting to be accepted.</summary>
+public sealed class GiftNotificationCallback : CallbackMsg {
+	public uint Waiting { get; }
+
+	internal GiftNotificationCallback(uint waiting) => Waiting = waiting;
+}
+
 /// <summary>
 /// The messages SteamKit doesn't surface itself but that matter here: item announcements (card drops - they let
 /// farming react instantly instead of re-scraping on a timer), comment notifications (someone commented on
@@ -39,6 +46,9 @@ public sealed class TradeOfferNotificationCallback : CallbackMsg {
 public sealed class NocatHandler : ClientMsgHandler {
 	/// <summary>The notification type Steam uses for "a trade offer is waiting for you".</summary>
 	private const uint TradeOfferNotification = 1;
+
+	/// <summary>The notification type for "a gift is waiting" - a wallet gift card, or a game sent as a gift.</summary>
+	private const uint GiftNotification = 8;
 
 	public override void HandleMsg(IPacketMsg packetMsg) {
 		ArgumentNullException.ThrowIfNull(packetMsg);
@@ -59,16 +69,20 @@ public sealed class NocatHandler : ClientMsgHandler {
 			case EMsg.ClientUserNotifications: {
 				ClientMsgProtobuf<CMsgClientUserNotifications> msg = new(packetMsg);
 				uint waiting = 0;
+				uint gifts = 0;
 
 				// Steam sends only the types that are non-zero, so an offer being dealt with arrives as this
 				// message with the trade entry simply absent - which is why the count starts at zero here.
 				foreach (CMsgClientUserNotifications.Notification n in msg.Body.notifications) {
 					if (n.user_notification_type == TradeOfferNotification) {
 						waiting = n.count;
+					} else if (n.user_notification_type == GiftNotification) {
+						gifts = n.count;
 					}
 				}
 
 				Client?.PostCallback(new TradeOfferNotificationCallback(waiting));
+				Client?.PostCallback(new GiftNotificationCallback(gifts));
 
 				break;
 			}
@@ -82,6 +96,25 @@ public sealed class NocatHandler : ClientMsgHandler {
 	/// <summary>Same for comment notifications.</summary>
 	public void RequestCommentNotifications() =>
 		Client?.Send(new ClientMsgProtobuf<CMsgClientRequestCommentNotifications>(EMsg.ClientRequestCommentNotifications));
+
+	/// <summary>
+	/// Redeem a guest pass - a free trial somebody sent this account. SteamKit reads the reply itself, as its
+	/// RedeemGuestPassResponseCallback; it just has no method to send the request.
+	/// </summary>
+	public AsyncJob<SteamApps.RedeemGuestPassResponseCallback>? RedeemGuestPass(ulong guestPassId) {
+		if (Client is not { IsConnected: true } client) {
+			return null;
+		}
+
+		ClientMsgProtobuf<CMsgClientRedeemGuestPass> request = new(EMsg.ClientRedeemGuestPass) {
+			SourceJobID = client.GetNextJobID(),
+			Body = { guest_pass_id = guestPassId }
+		};
+
+		client.Send(request);
+
+		return new AsyncJob<SteamApps.RedeemGuestPassResponseCallback>(client, request.SourceJobID);
+	}
 
 	/// <summary>
 	/// Answer a Steam group invite. Groups don't go through the friend-request path - accepting one is its own

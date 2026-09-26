@@ -522,6 +522,54 @@
     "waiting - farming cards first": "czeka - najpierw karty",
     "waiting for a farming slot": "czeka na miejsce do farmienia",
     "waiting for the account": "czeka na konto",
+    "sending items to your main account every {0} - the first send is around {1}": "wysyła przedmioty na główne konto co {0} - pierwsza wysyłka około {1}",
+    "couldn't read the free-game state: {0}": "nie udało się odczytać stanu darmowych gier: {0}",
+    "couldn't save the free-game state: {0}": "nie udało się zapisać stanu darmowych gier: {0}",
+    "Steam didn't answer": "Steam nie odpowiedział",
+    "Steam has no such offer for this account": "Steam nie ma takiej oferty dla tego konta",
+    "asks for cards this account doesn't have": "prosi o karty, których to konto nie ma",
+    "couldn't read this account's cards": "nie udało się odczytać kart tego konta",
+    "trade offer #{0} isn't a fair card swap - {1}; left alone": "oferta #{0} nie jest uczciwą wymianą kart - {1}; zostawiona",
+    "a fair card swap": "uczciwa wymiana kart",
+    "it would set back the {0} set": "cofnęłaby zestaw {0}",
+    "not all ordinary trading cards": "nie same zwykłe karty kolekcjonerskie",
+    "not one for one within each game": "nie jeden za jeden w każdej grze",
+    "not one for one": "nie jeden za jeden",
+    "one side is empty": "jedna strona jest pusta",
+    "the store's gifts page lists {0} pending gift(s)": "strona prezentów w sklepie pokazuje {0} oczekujących prezentów",
+    "couldn't check for free event items: {0}": "nie udało się sprawdzić darmowych przedmiotów z wydarzeń: {0}",
+    "couldn't read the free-item list: {0}": "nie udało się odczytać listy darmowych przedmiotów: {0}",
+    "couldn't save the free-item list: {0}": "nie udało się zapisać listy darmowych przedmiotów: {0}",
+    "Points Shop item {0} not taken - Steam said {1}": "przedmiot {0} ze sklepu z punktami nie odebrany - Steam odpowiedział {1}",
+    "claimed the free sale item": "odebrano darmowy przedmiot z wyprzedaży",
+    "claimed the free sale item: {0}": "odebrano darmowy przedmiot z wyprzedaży: {0}",
+    "next look for free items around {0}": "następne szukanie darmowych przedmiotów około {0}",
+    "the Points Shop has {0} item(s) at 0 points": "sklep z punktami ma {0} przedmiot(ów) za 0 punktów",
+    "took a free Points Shop item from {0}": "odebrano darmowy przedmiot ze sklepu z punktami z {0}",
+    "couldn't make a {0} booster pack: {1}": "nie udało się stworzyć pakietu kart {0}: {1}",
+    "couldn't make booster packs: {0}": "nie udało się stworzyć pakietów kart: {0}",
+    "{0} isn't on the booster creator - no booster packs can be made for it right now": "{0} nie ma w kreatorze pakietów - na razie nie da się stworzyć dla niej pakietów kart",
+    "made a {0} booster pack for {1} gems - {2} gems left": "stworzono pakiet kart {0} za {1} klejnotów - zostało {2}",
+    "next booster pack around {0}": "następny pakiet kart około {0}",
+    "not enough gems for a {0} booster pack - {1} needed, {2} here": "za mało klejnotów na pakiet kart {0} - potrzeba {1}, jest {2}",
+    "Steam's change feed: {0} package(s) changed, {1} newly free - checking them": "kanał zmian Steam: zmieniono {0} pakiet(ów), {1} nowo darmowych - sprawdzanie",
+    "couldn't read Steam's change feed: {0}": "nie udało się odczytać kanału zmian Steam: {0}",
+    "a game was sent to this account as a gift - accept or decline it on the store's gifts page": "to konto dostało grę w prezencie - przyjmij ją lub odrzuć na stronie prezentów w sklepie",
+    "couldn't accept a Steam wallet gift card: {0}": "nie udało się przyjąć karty podarunkowej Steam: {0}",
+    "couldn't accept a guest pass - Steam said {0}": "nie udało się przyjąć przepustki gościa - Steam odpowiedział {0}",
+    "couldn't check for gifts: {0}": "nie udało się sprawdzić prezentów: {0}",
+    "Steam says {0} gift(s) are waiting": "Steam mówi, że czeka {0} prezent(ów)",
+    "Steam says {0} guest pass(es) are waiting": "Steam mówi, że czeka {0} przepustek gościa",
+    "accepted a Steam wallet gift card": "przyjęto kartę podarunkową Steam",
+    "accepted a guest pass (package {0})": "przyjęto przepustkę gościa (pakiet {0})",
+    "accepted a guest pass": "przyjęto przepustkę gościa",
+    "gift waiting - until the account is awake": "prezent czeka - aż konto się obudzi",
+    "no answer from Steam to a guest pass - trying again next login": "brak odpowiedzi Steam na przepustkę gościa - ponowna próba przy następnym logowaniu",
+    "Steam won't let this account trade {0} items - it's most likely banned in that game, so they're left out of every send from now on": "Steam nie pozwala temu kontu wymieniać przedmiotów z {0} - najpewniej ma bana w tej grze, więc od teraz są pomijane przy każdej wysyłce",
+    "next send around {0}": "następna wysyłka około {0}",
+    "send due - waiting until the account is awake": "pora wysłać - czeka, aż konto się obudzi",
+    "couldn't read the send schedule: {0}": "nie udało się odczytać harmonogramu wysyłki: {0}",
+    "couldn't save the send schedule: {0}": "nie udało się zapisać harmonogramu wysyłki: {0}",
     "weighted schedule - next hunt in {0}": "harmonogram ważony - następne szukanie za {0}",
     "winding down on {0} (~{1}m)": "kończy na {0} (~{1}m)",
     "{0} card(s) - farming tonight, once it's asleep": "{0} kart - zafarmi w nocy, gdy zaśnie",
@@ -537,6 +585,8 @@
     "closing the game, then {0}": "zamyka grę, potem {0}",
     "done for today ({0}) · back {1}": "na dziś koniec ({0}) · wraca o {1}",
     "just signed in · settling for {0}": "właśnie zalogowane · układa się przez {0}",
+    "done grinding · settling for {0}": "grind zakończony · układa się przez {0}",
+    "awake for the day · settling for {0}": "obudzony na dziś · układa się przez {0}",
     "meal break · back in {0}": "przerwa na posiłek · wraca za {0}",
     "not playing today · back {0}": "dziś nie gra · wraca o {0}",
     "nothing configured": "nic nie skonfigurowano",
@@ -560,6 +610,7 @@
     "{0} reply(s) sent": "wysłano {0} odpowiedzi",
     "{0} waiting": "{0} oczekuje",
     "{0} · {1} left · {2}/{3} today": "{0} · zostało {1} · dziś {2}/{3}",
+    "grinding {0} · {1} left · {2}/{3} today": "grinduje {0} · zostało {1} · dziś {2}/{3}",
     "Steam maintenance": "przerwa techniczna Steam",
     "Steam shows {0}": "Steam pokazuje {0}",
     "account disabled": "konto wyłączone",
@@ -977,6 +1028,7 @@
     "no password - put SteamPassword in the config, or type it at the prompt": "brak hasła - wpisz SteamPassword w konfiguracji albo podaj je w wierszu poleceń",
     "nothing left to farm - logging this account out as configured": "nie ma czego farmić - wylogowuję to konto zgodnie z ustawieniami",
     "paused - staying logged in, doing nothing": "wstrzymane - pozostaje zalogowane, nic nie robi",
+    "paused for {0} - picks back up by itself at {1}": "wstrzymane na {0} - samo wznowi o {1}",
     "resumed": "wznowiono",
     "running in the notification area - right-click the icon for the menu": "działa w obszarze powiadomień - kliknij ikonę prawym przyciskiem, by otworzyć menu",
     "shutting down...": "zamykanie...",
@@ -1361,6 +1413,14 @@
       "label": "Przyjmuj darowizny",
       "tip": "Przyjmuje oferty, które o nic nie proszą. Nie mogą nic kosztować, więc z natury są bezpieczne."
     },
+    "AcceptFairCardSwaps": {
+      "label": "Przyjmuj uczciwe wymiany kart",
+      "tip": "Przyjmuje od każdego oferty wymieniające karty jeden za jeden w obrębie tej samej gry, gdy wymiana może tylko przybliżyć zestawy tego konta do ukończenia - to, co wysyłają użytkownicy Steam Trade Matcher i co przyjmuje ustawienie SteamTradeMatcher w ArchiSteamFarm. Cokolwiek innego w ofercie, karta foliowa albo wymiana zabierająca ostatnią kopię karty - i oferta zostaje nietknięta. Oddanie kart wymaga potwierdzenia mobilnym uwierzytelniaczem."
+    },
+    "AcceptGifts": {
+      "label": "Przyjmuj prezenty i przepustki gościa",
+      "tip": "Przyjmuje karty podarunkowe Steam i przepustki gościa (darmowe wersje próbne), które ktoś wyśle na to konto. Żadne z nich nie może go nic kosztować. W trybie ludzkim prezent czeka, aż konto się obudzi."
+    },
     "AcceptFromMasters": {
       "label": "Przyjmuj wszystko z własnych kont",
       "tip": "Przyjmuje dowolną ofertę od wypisanych niżej SteamID64, także tę, która zabiera przedmioty. To właśnie pozwala zgarnąć karty z twoich idlerów na jedno konto - i dokładnie dlatego na liście mogą być wyłącznie konta, które należą do ciebie."
@@ -1539,6 +1599,14 @@
       "label": "Otwieraj paczki boostera",
       "tip": "Automatycznie otwiera paczki boostera, które trafią do ekwipunku, żeby karty z nich liczyły się do zestawów, z których tworzy się odznaki."
     },
+    "ClaimEventItems": {
+      "label": "Odbieraj darmowe przedmioty z wydarzeń",
+      "tip": "Odbiera darmową naklejkę, którą Steam rozdaje codziennie podczas wyprzedaży, i wszystko w sklepie z punktami, co kosztuje 0 punktów. Nic z tego nie kosztuje, a przepada, jeśli nikt tego nie odbierze. W trybie ludzkim czeka, aż konto się obudzi."
+    },
+    "BoosterGames": {
+      "label": "Twórz pakiety kart dla",
+      "tip": "AppID, dla których klejnoty zamieniać na pakiety kart, oddzielone przecinkami. Steam pozwala na jeden pakiet na grę dziennie, tylko dla gier, w których to konto może jeszcze dostać karty, i mówi, kiedy da się zrobić następny - powstaje, gdy tylko można, i gdy tryb ludzki ma konto obudzone. Puste wyłącza. 'booster <konto>' pokazuje klejnoty i pasujące gry."
+    },
     "ClearInventoryNotifications": {
       "label": "Czyść plakietkę nowych przedmiotów",
       "tip": "Czyści zielony licznik \"nowe przedmioty\" Steam za każdym razem, gdy wypadnie karta, żeby ekwipunek nie był na stałe oznaczony jako nieprzeczytany."
@@ -1672,6 +1740,10 @@
     "SendOnFarmingFinished": {
       "label": "Wyślij przedmioty po zakończeniu farmienia",
       "tip": "Gdy nie zostanie już żadna karta do wyfarmienia, wysyła to, co zebrało to konto, do pierwszego konta z listy powyżej. W tym cały sens uruchamiania kilku idlerów: karty lądują w jednym ekwipunku, a nie w sześciu."
+    },
+    "SendEveryHours": {
+      "label": "Wysyłaj przedmioty co",
+      "tip": "Co tyle godzin wysyła przedmioty z tego konta na pierwsze konto podane wyżej - to samo co polecenie 'send', tylko według harmonogramu, żeby karty nie zbierały się między farmieniami. 0 wyłącza. Pierwsza wysyłka następuje pełny okres po włączeniu, trochę losowego zapasu sprawia, że nie wypada zawsze w tej samej minucie, a w trybie ludzkim czeka, aż konto się obudzi."
     },
     "SendItemTypes": {
       "label": "Co wysyłać",

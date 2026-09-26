@@ -522,6 +522,54 @@
     "waiting - farming cards first": "等待——先挂卡",
     "waiting for a farming slot": "等待挂卡名额",
     "waiting for the account": "等待账号",
+    "sending items to your main account every {0} - the first send is around {1}": "每 {0} 把物品寄到你的主账号 —— 第一次大约在 {1}",
+    "couldn't read the free-game state: {0}": "无法读取免费游戏状态：{0}",
+    "couldn't save the free-game state: {0}": "无法保存免费游戏状态：{0}",
+    "Steam didn't answer": "Steam 没有回应",
+    "Steam has no such offer for this account": "Steam 上此账号没有这个报价",
+    "asks for cards this account doesn't have": "要的卡牌此账号没有",
+    "couldn't read this account's cards": "无法读取此账号的卡牌",
+    "trade offer #{0} isn't a fair card swap - {1}; left alone": "交易报价 #{0} 不是公平的卡牌交换——{1}；不作处理",
+    "a fair card swap": "公平的卡牌交换",
+    "it would set back the {0} set": "会让 {0} 的卡组倒退",
+    "not all ordinary trading cards": "并非全是普通集换式卡牌",
+    "not one for one within each game": "每个游戏内不是一换一",
+    "not one for one": "不是一换一",
+    "one side is empty": "有一方是空的",
+    "the store's gifts page lists {0} pending gift(s)": "商店礼物页面列出了 {0} 个待处理礼物",
+    "couldn't check for free event items: {0}": "无法检查免费活动物品：{0}",
+    "couldn't read the free-item list: {0}": "无法读取免费物品列表：{0}",
+    "couldn't save the free-item list: {0}": "无法保存免费物品列表：{0}",
+    "Points Shop item {0} not taken - Steam said {1}": "未领取点数商店物品 {0}——Steam 回复 {1}",
+    "claimed the free sale item": "已领取促销免费物品",
+    "claimed the free sale item: {0}": "已领取促销免费物品：{0}",
+    "next look for free items around {0}": "下次查找免费物品大约在 {0}",
+    "the Points Shop has {0} item(s) at 0 points": "点数商店有 {0} 件 0 点物品",
+    "took a free Points Shop item from {0}": "已领取 {0} 的免费点数商店物品",
+    "couldn't make a {0} booster pack: {1}": "无法制作 {0} 的补充包：{1}",
+    "couldn't make booster packs: {0}": "无法制作补充包：{0}",
+    "{0} isn't on the booster creator - no booster packs can be made for it right now": "{0} 不在补充包制作器里——现在无法为它制作补充包",
+    "made a {0} booster pack for {1} gems - {2} gems left": "用 {1} 宝石制作了 {0} 的补充包——剩余 {2} 宝石",
+    "next booster pack around {0}": "下一个补充包大约在 {0}",
+    "not enough gems for a {0} booster pack - {1} needed, {2} here": "宝石不够制作 {0} 的补充包——需要 {1}，现有 {2}",
+    "Steam's change feed: {0} package(s) changed, {1} newly free - checking them": "Steam 变更源：{0} 个包有变动，{1} 个新变为免费——正在检查",
+    "couldn't read Steam's change feed: {0}": "无法读取 Steam 变更源：{0}",
+    "a game was sent to this account as a gift - accept or decline it on the store's gifts page": "有人把一款游戏作为礼物送给了此账号——请在商店的礼物页面接受或拒绝",
+    "couldn't accept a Steam wallet gift card: {0}": "无法接受 Steam 钱包礼品卡：{0}",
+    "couldn't accept a guest pass - Steam said {0}": "无法接受访客通行证——Steam 回复 {0}",
+    "couldn't check for gifts: {0}": "无法检查礼物：{0}",
+    "Steam says {0} gift(s) are waiting": "Steam 说有 {0} 个礼物在等待",
+    "Steam says {0} guest pass(es) are waiting": "Steam 说有 {0} 个访客通行证在等待",
+    "accepted a Steam wallet gift card": "已接受 Steam 钱包礼品卡",
+    "accepted a guest pass (package {0})": "已接受访客通行证（包 {0}）",
+    "accepted a guest pass": "已接受访客通行证",
+    "gift waiting - until the account is awake": "有礼物等待中——等账号醒来",
+    "no answer from Steam to a guest pass - trying again next login": "Steam 没有回应访客通行证——下次登录时重试",
+    "Steam won't let this account trade {0} items - it's most likely banned in that game, so they're left out of every send from now on": "Steam 不允许此账号交易 {0} 的物品——很可能在该游戏中被封禁，因此今后每次寄送都会把它们排除在外",
+    "next send around {0}": "下次寄送大约在 {0}",
+    "send due - waiting until the account is awake": "该寄送了 —— 等待账号醒来",
+    "couldn't read the send schedule: {0}": "无法读取寄送计划：{0}",
+    "couldn't save the send schedule: {0}": "无法保存寄送计划：{0}",
     "weighted schedule - next hunt in {0}": "加权计划——距下次寻找 {0}",
     "winding down on {0} (~{1}m)": "正在收尾 {0}（约 {1} 分钟）",
     "{0} card(s) - farming tonight, once it's asleep": "{0} 张卡——今晚睡下后开挂",
@@ -537,6 +585,8 @@
     "closing the game, then {0}": "正在关闭游戏，然后是 {0}",
     "done for today ({0}) · back {1}": "今天到此为止（{0}） · {1} 回来",
     "just signed in · settling for {0}": "刚刚登录 · 缓冲 {0}",
+    "done grinding · settling for {0}": "刷进度完成 · 缓冲 {0}",
+    "awake for the day · settling for {0}": "今日已醒 · 缓冲 {0}",
     "meal break · back in {0}": "用餐休息 · {0} 后回来",
     "not playing today · back {0}": "今天不玩 · {0} 回来",
     "nothing configured": "尚未配置",
@@ -560,6 +610,7 @@
     "{0} reply(s) sent": "已发送 {0} 条回复",
     "{0} waiting": "{0} 个待处理",
     "{0} · {1} left · {2}/{3} today": "{0} · 还剩 {1} · 今天 {2}/{3}",
+    "grinding {0} · {1} left · {2}/{3} today": "正在刷 {0} · 还剩 {1} · 今天 {2}/{3}",
     "Steam maintenance": "Steam 维护",
     "Steam shows {0}": "Steam 显示 {0}",
     "account disabled": "账号已停用",
@@ -977,6 +1028,7 @@
     "no password - put SteamPassword in the config, or type it at the prompt": "无密码 —— 请在配置中填写 SteamPassword，或在提示符处输入",
     "nothing left to farm - logging this account out as configured": "没有可挂的了 —— 按配置登出该账号",
     "paused - staying logged in, doing nothing": "已暂停 —— 保持登录，什么都不做",
+    "paused for {0} - picks back up by itself at {1}": "暂停 {0} —— 将在 {1} 自动恢复",
     "resumed": "已恢复",
     "running in the notification area - right-click the icon for the menu": "正在通知区域运行 —— 右键点击图标可打开菜单",
     "shutting down...": "正在关闭…",
@@ -1361,6 +1413,14 @@
       "label": "接受赠送",
       "tip": "接受不索取任何回报的报价。它们不可能让你有任何损失，因此天然安全。"
     },
+    "AcceptFairCardSwaps": {
+      "label": "接受公平的卡牌交换",
+      "tip": "接受任何人发来的、在同一游戏内一换一交换集换式卡牌的报价，前提是交换只会让此账号的卡组更接近集齐——这正是 Steam Trade Matcher 用户会发的报价，也是 ArchiSteamFarm 的 SteamTradeMatcher 设置会接受的。报价里有其他东西、有闪卡，或者会拿走某张卡的最后一张，就不作处理。送出卡牌需要用手机令牌确认。"
+    },
+    "AcceptGifts": {
+      "label": "接受礼物和访客通行证",
+      "tip": "接受别人寄给此账号的 Steam 钱包礼品卡和访客通行证（免费试玩）。两者都不会让账号有任何损失。开启拟人模式时，礼物会等账号醒来再接受。"
+    },
     "AcceptFromMasters": {
       "label": "接受来自你自己账户的任何交易",
       "tip": "无条件接受下面这些 SteamID64 发来的任何报价，包括会拿走物品的那种。正是它让你能把挂机号上的卡牌一次性归拢到一个账户——也正因如此，这个名单里只能是你自己的账户。"
@@ -1539,6 +1599,14 @@
       "label": "自动打开补充包",
       "tip": "自动打开落入库存的补充包，让里面的卡计入用于合成徽章的卡组。"
     },
+    "ClaimEventItems": {
+      "label": "领取免费活动物品",
+      "tip": "领取促销期间 Steam 每天发放的免费贴纸，以及点数商店里 0 点的物品。这些都不花钱，没人领就没了。开启拟人模式时，会等账号醒来再领。"
+    },
+    "BoosterGames": {
+      "label": "为这些游戏制作补充包",
+      "tip": "要把宝石换成补充包的 AppID，用逗号分隔。Steam 每个游戏每天只允许做一个，而且只限此账号还能掉卡的游戏，并会告诉你下次何时可做——一到时间就做，前提是拟人模式让账号醒着。留空表示关闭。'booster <账号>' 会显示宝石数量和符合条件的游戏。"
+    },
     "ClearInventoryNotifications": {
       "label": "清除新物品提示",
       "tip": "每次掉卡后清掉 Steam 那个绿色的「新物品」计数，免得库存永远挂着未读标记。"
@@ -1672,6 +1740,10 @@
     "SendOnFarmingFinished": {
       "label": "刷完后把物品寄出去",
       "tip": "当再没有卡可刷时，把这个账户收集到的东西发给上面列表里的第一个账户。这正是跑多个挂机号的意义：卡最后都进一个库存，而不是散在六个里。"
+    },
+    "SendEveryHours": {
+      "label": "每隔多久寄出物品",
+      "tip": "每隔这么多小时，把此账号的物品寄到上面列出的第一个账号——和 'send' 命令一样，只是按时进行，免得两次刷卡之间卡牌越积越多。0 表示关闭。第一次寄送在开启后整整一个周期，另加一点随机余量，不会每次都落在同一分钟；开启拟人模式时会等账号醒来再寄。"
     },
     "SendItemTypes": {
       "label": "寄什么",

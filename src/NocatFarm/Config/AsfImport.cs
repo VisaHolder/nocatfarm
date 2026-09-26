@@ -209,6 +209,20 @@ public static class AsfImport {
 			bot.HoursUntilCardDrops = (float) hours;
 		}
 
+		// ASF's scheduled loot, in hours - the same meaning as ours.
+		if (Int(cfg, "SendTradePeriod") is int period && period > 0) {
+			bot.SendEveryHours = Math.Min(period, 168);
+		}
+
+		// The BoosterCreator plugin's list, in the same bot config.
+		if (cfg.TryGetProperty("GamesToBooster", out JsonElement boosters) && (boosters.ValueKind == JsonValueKind.Array)) {
+			bot.BoosterGames = string.Join(", ", boosters.EnumerateArray().Where(static e => e.ValueKind == JsonValueKind.Number).Select(static e => e.GetRawText()));
+		}
+
+		if (Bool(cfg, "AcceptGifts") is bool gifts) {
+			bot.AcceptGifts = gifts;
+		}
+
 		if (Int(cfg, "FarmingOrder") is int order) {
 			bot.FarmingOrder = MapFarmingOrder(order);
 		}
@@ -286,6 +300,7 @@ public static class AsfImport {
 	private static void TranslateTrading(JsonElement cfg, BotConfig bot) {
 		if (Int(cfg, "TradingPreferences") is int flags) {
 			bot.AcceptDonations = (flags & 1) != 0;   // AcceptDonations
+			bot.AcceptFairCardSwaps = (flags & 2) != 0;   // SteamTradeMatcher
 		}
 
 		List<string> masters = [];

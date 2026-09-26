@@ -180,6 +180,18 @@ public static partial class Looting {
 			return $"{bot.Name}: it is the trade master, so there is nothing to send anywhere";
 		}
 
+		return await SendItemsAsync(bot, master, cfg.TradeMasterToken, cfg.SendItemTypes, ct).ConfigureAwait(false);
+	}
+
+	/// <summary>
+	/// Send this account's items of the given types to another account. What "send" and "transfer" both come down to.
+	/// </summary>
+	/// <param name="token">The recipient's trade-link token, if known. Read automatically when it's one of your accounts.</param>
+	/// <param name="types">Item types, as in the "Which items to send" setting - blank means trading cards.</param>
+	public static async Task<string> SendItemsAsync(Bot bot, ulong to, string? token, string types, CancellationToken ct = default) {
+		BotConfig cfg = bot.Cfg;
+		ulong master = to;
+
 		if (!bot.IsOnline || !bot.Web.Ready) {
 			return $"{bot.Name}: not logged in";
 		}
@@ -187,7 +199,7 @@ public static partial class Looting {
 		// The trade-link token is only needed between accounts that are not Steam friends - and when the
 		// recipient is one of YOUR OWN accounts we are signed into it too, so asking the user to go and paste a
 		// token out of a URL is asking for something we can simply read. An explicit setting still wins.
-		string token = cfg.TradeMasterToken.Trim();
+		token = (token ?? "").Trim();
 
 		if (token.Length == 0) {
 			token = await TradeTokenOfAsync(master, ct).ConfigureAwait(false) ?? "";
@@ -209,12 +221,18 @@ public static partial class Looting {
 		List<Item> allowed = all.Where(i => !banned.Contains(i.App)).ToList();
 		int blocked = all.Count - allowed.Count;
 
-		List<Item> sending = allowed.Where(i => WantedType(i.Type, cfg.SendItemTypes)).ToList();
+		List<Item> sending = allowed.Where(i => WantedType(i.Type, types)).ToList();
 
 		if (sending.Count == 0) {
-			string why = blocked > 0
-				? $" ({blocked} left out - this account is banned in that game, so Steam won't let it trade those)"
-				: all.Count > 0 ? $" ({all.Count} tradable item(s), none of the types you asked for)" : "";
+			// Blame the ban only when the ban is actually what stopped it. Asked for booster packs on an account
+			// with none, this used to answer "44 left out - banned in that game", which were CS2 skins that had
+			// nothing to do with the question.
+			int wantedButBanned = all.Count(i => banned.Contains(i.App) && WantedType(i.Type, types));
+
+			string why = wantedButBanned > 0
+				? $" ({wantedButBanned} of that type, all in a game this account is banned in - Steam won't let it trade those)"
+				: allowed.Count > 0 ? $" ({allowed.Count} tradable item(s), none of the types you asked for)"
+				: all.Count > 0 ? $" (everything tradable is in a game this account is banned in)" : " (no tradable items)";
 
 			return $"{bot.Name}: nothing tradable to send{why}";
 		}
@@ -224,11 +242,48 @@ public static partial class Looting {
 		int sent = 0;
 		List<string> problems = [];
 
-		foreach (Item[] batch in sending.Chunk(BatchSize)) {
+		foreach (Item[] chunk in sending.Chunk(BatchSize)) {
+			// A game learned to be banned partway through is left out of the batches still to go.
+			Item[] batch = chunk.Where(i => !banned.Contains(i.App)).ToArray();
+			blocked += chunk.Length - batch.Length;
+
+			if (batch.Length == 0) {
+				continue;
+			}
+
 			(bool ok, string message) = await SendOfferAsync(bot, master, batch, token, ct).ConfigureAwait(false);
 
 			if (ok) {
 				sent += batch.Length;
+			} else if (message.Contains("(11)", StringComparison.Ordinal) && (batch.Select(static i => i.App).Distinct().Count() > 1)) {
+				// Steam refuses the whole offer if one game in it is one this account is banned in - and says only
+				// "(11)", which is also what it says when the recipient can't take trades at all. Sending each game
+				// on its own tells the two apart: when some games go through and others don't, the ones that don't
+				// are the ban, and they're added to the list so no send ever includes them again.
+				(int more, List<uint> learned, string? stopped) = await SendGameByGameAsync(batch, async game => {
+					await Task.Delay(Rng.Seconds(5, 15), ct).ConfigureAwait(false);
+
+					return await SendOfferAsync(bot, master, game, token, ct).ConfigureAwait(false);
+				}).ConfigureAwait(false);
+				sent += more;
+
+				if (learned.Count > 0) {
+					foreach (uint app in learned) {
+						cfg.InventoryIgnoreGames.Add(app);
+						banned.Add(app);
+					}
+
+					Config.ConfigStore.SaveBot(bot.Name, cfg);
+					Log.Attention(new Said("Steam won't let this account trade {0} items - it's most likely banned in that game, so they're left out of every send from now on",
+						string.Join(", ", learned.Select(GameNames.Of))), bot.Name);
+					blocked += batch.Count(i => learned.Contains(i.App));
+				}
+
+				if (stopped != null) {
+					problems.Add(stopped);
+
+					break;
+				}
 			} else {
 				problems.Add(message);
 
@@ -292,6 +347,35 @@ public static partial class Looting {
 	/// account has never enabled the mobile authenticator, which Steam requires before an account may send a trade
 	/// offer at all. Passing that through unexplained had people waiting for a problem that never resolves.
 	/// </summary>
+	/// <summary>
+	/// Resend a refused offer one game at a time, to find the game Steam won't let this account trade.
+	/// </summary>
+	/// <returns>How many items went through, the games that were refused while others weren't, and - if nothing at
+	/// all went through - the reason to report, since then the problem is the trade itself rather than one game.</returns>
+	internal static async Task<(int Sent, List<uint> Banned, string? Stopped)> SendGameByGameAsync(Item[] batch, Func<Item[], Task<(bool Ok, string Message)>> send) {
+		int sent = 0;
+		List<uint> refused = [];
+		string? firstRefusal = null;
+
+		foreach (IGrouping<uint, Item> game in batch.GroupBy(static i => i.App)) {
+			(bool ok, string message) = await send([.. game]).ConfigureAwait(false);
+
+			if (ok) {
+				sent += game.Count();
+			} else if (message.Contains("(11)", StringComparison.Ordinal)) {
+				refused.Add(game.Key);
+				firstRefusal ??= message;
+			} else {
+				// A different refusal - not a ban. Stop here rather than guess at the rest.
+				return (sent, sent > 0 ? refused : [], message);
+			}
+		}
+
+		// Only a game refused while another one went through is a ban. If every game was refused, the trade itself
+		// is the problem (the recipient can't take offers), and marking every game as banned would be wrong.
+		return sent > 0 ? (sent, refused, null) : (0, [], firstRefusal);
+	}
+
 	private static string Explain(string steamError) {
 		string extra = steamError switch {
 			_ when steamError.Contains("(15)", StringComparison.Ordinal) =>
