@@ -108,7 +108,7 @@ Turn it off with `set WebEnabled false` and nothing is lost.
 ## Getting started
 
 Type `tutorial`. It walks the six steps in order and ticks off the ones this machine has already done, so the
-next thing to do is always the first unticked line. `tutorial cards`, `tutorial human`, `tutorial rep4rep`,
+next thing to do is always the first unticked line. `tutorial cards`, `tutorial human`, `tutorial free`, `tutorial rep4rep`,
 `tutorial trades`, `tutorial achievements` and `tutorial tray` go deeper on one thing each.
 
 The short version:

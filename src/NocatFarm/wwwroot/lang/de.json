@@ -87,7 +87,7 @@
     "Continue": "Weiter",
     "Finish": "Fertig",
     "Import": "Importieren",
-    "Import them": "Sie importieren",
+    "Import them": "Importieren",
     "Register": "Registrieren",
     "Connect": "Verbinden",
     "Post now": "Jetzt posten",
@@ -311,7 +311,7 @@
     "They're added but not started. Press Start on each, or run {0}.": "Sie sind hinzugefügt, aber nicht gestartet. Drück bei jedem auf Starten, oder führ {0} aus.",
     "STEP {0} OF {1}": "SCHRITT {0} VON {1}",
     "Welcome to nocat.farm": "Willkommen bei nocat.farm",
-    "Pick the language for this dashboard. You can change it later under Settings › Global.": "Wähl die Sprache für diese Übersicht. Du kannst sie später unter Einstellungen › Global ändern.",
+    "Pick the language for this dashboard. You can change it later under Settings › Global.": "Wähl die Sprache für dieses Dashboard. Du kannst sie später unter Einstellungen › Global ändern.",
     "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. The console and the log stay in English.": "Was eine Übersetzung noch nicht abdeckt, bleibt auf Englisch statt leer zu sein - eine halbfertige Sprache ist also trotzdem gut benutzbar. Konsole und Protokoll bleiben englisch.",
     "It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts rep4rep comments - all from this machine. Your accounts never leave it.": "Es meldet deine Steam-Konten an, spielt, damit die Stunden zählen, farmt Sammelkarten und postet rep4rep-Kommentare - alles von diesem Rechner aus. Deine Konten verlassen ihn nie.",
     "This takes about a minute. You can skip it and come back from the Overview page.": "Das dauert etwa eine Minute. Du kannst es überspringen und von der Übersichtsseite zurückkommen.",
@@ -319,13 +319,11 @@
     "Add your first account": "Füg dein erstes Konto hinzu",
     "Add the Steam account you want it to run. You will be asked for the password {0}, and for a Steam Guard code - after that it remembers a login token and never needs the password again.": "Füg das Steam-Konto hinzu, das es betreiben soll. Nach dem Passwort wirst du {0} gefragt, dazu nach einem Steam-Guard-Code - danach merkt es sich ein Anmeldetoken und braucht das Passwort nie wieder.",
     "Tell it what to play": "Sag ihm, was es spielen soll",
-    "An account does nothing until it knows what to run. Two ways:": "Ein Konto tut nichts, bis es weiß, was es laufen lassen soll. Zwei Wege:",
     "{0} - it works through everything in your library that still has drops, then stops. Nothing to configure.": "{0} - arbeitet alles in deiner Bibliothek ab, aus dem noch etwas fällt, und hört dann auf. Nichts einzustellen.",
     "{0} - it keeps a believable daily routine: a few games, one at a time, with breaks, meals and a bedtime. Use this on an account you care about.": "{0} - hält einen glaubwürdigen Tagesablauf ein: ein paar Spiele, eins nach dem anderen, mit Pausen, Mahlzeiten und Schlafenszeit. Nimm das für ein Konto, an dem dir liegt.",
     "Both live under Settings, per account.": "Beides steht unter Einstellungen, pro Konto.",
     "rep4rep, if you want it": "rep4rep, falls du magst",
     "Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own.": "Optional. Deine Konten schreiben Kommentare auf fremden Steam-Profilen und verdienen Punkte, die du für Kommentare auf deinem eigenen ausgeben kannst.",
-    "Needs a free account - {0} - and the API token pasted into Settings. Skip it entirely if you only want cards and playtime.": "Braucht ein kostenloses Konto - {0} - und den API-Token, eingefügt in den Einstellungen. Überspring es ganz, wenn du nur Karten und Spielzeit willst.",
     "That's it": "Das war's",
     "Everything has an explanation attached - hover the {0} beside any setting.": "Zu allem gibt es eine Erklärung - fahr über das {0} neben einer beliebigen Einstellung.",
     "The Console tab does anything the other tabs do, by typing. {0} lists it all.": "Der Konsolen-Tab kann alles, was die anderen Tabs können - durch Tippen. {0} listet alles auf.",
@@ -394,13 +392,13 @@
     "Nothing happens to the Steam account itself - it is only removed from nocat.farm.": "Dem Steam-Konto selbst passiert nichts - es wird nur aus nocat.farm entfernt.",
     "Adding it back needs the password and a fresh Steam Guard code.": "Um es wieder hinzuzufügen, braucht es das Passwort und einen frischen Steam-Guard-Code.",
     "Anything it was farming stops.": "Alles, was es gefarmt hat, hört auf.",
-    "Turn off opening the dashboard?": "Das Öffnen der Übersicht abschalten?",
-    "A newly added account does {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "Ein frisch hinzugefügtes Konto tut {0}, bis ihm gesagt wird, was es spielen soll - und dieses Formular gibt es nur in der Übersicht, nicht im App-Fenster.",
+    "Turn off opening the dashboard?": "Das Öffnen des Dashboards abschalten?",
+    "A newly added account does {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "Ein frisch hinzugefügtes Konto tut {0}, bis ihm gesagt wird, was es spielen soll - und dieses Formular gibt es nur im Dashboard, nicht im App-Fenster.",
     "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "Ist das aus, landest du nach dem Hinzufügen eines Kontos auf einer Kommandozeile - mit einem Konto, das untätig herumsitzt, bis du daran denkst, es einzurichten. Das ist für Leute, die das schon wissen.",
-    "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "Diese Übersicht ist aus deinem Netzwerk erreichbar, und ihr Passwort ist kurz genug zum Raten. Dahinter stecken deine Steam-Konten.",
-    "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "Diese Übersicht ist so eingestellt, dass sie im Netzwerk lauscht, weist ohne Passwort aber jede Verbindung ab, die nicht von diesem PC kommt - erreichbar ist sie also nur hier.",
+    "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "Dieses Dashboard ist aus deinem Netzwerk erreichbar, und sein Passwort ist kurz genug zum Raten. Dahinter stecken deine Steam-Konten.",
+    "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "Dieses Dashboard ist so eingestellt, dass es im Netzwerk lauscht, weist ohne Passwort aber jede Verbindung ab, die nicht von diesem PC kommt - erreichbar ist es also nur hier.",
     "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "Wie lange dieses Konto dieses Spiel gespielt hat. Steam lässt nichts fallen, bevor die Schwelle aus den Einstellungen dieses Kontos überschritten ist.",
-    "Dashboard": "Übersicht",
+    "Dashboard": "Dashboard",
     "Running in the background": "Im Hintergrund laufen",
     "rep4rep account": "rep4rep-Konto",
     "Steam connection": "Steam-Verbindung",
@@ -523,6 +521,19 @@
     "waiting for a farming slot": "wartet auf einen Farm-Platz",
     "waiting for the account": "wartet auf das Konto",
     "sending items to your main account every {0} - the first send is around {1}": "sendet Gegenstände alle {0} an dein Hauptkonto - das erste Mal gegen {1}",
+    "Added. It's signing in now - answer the password and Steam Guard questions in the bar at the top.": "Hinzugefügt. Es meldet sich jetzt an - beantworte die Fragen nach Passwort und Steam-Guard-Code in der Leiste oben.",
+    "Couldn't add that account.": "Das Konto konnte nicht hinzugefügt werden.",
+    "A new account starts farming trading cards straight away. There are two ways it can spend its time:": "Ein neues Konto beginnt sofort, Sammelkarten zu farmen. Es kann seine Zeit auf zwei Arten verbringen:",
+    "Add one by hand instead": "Stattdessen eins von Hand hinzufügen",
+    "Free event items": "Kostenlose Event-Gegenstände",
+    "Free games, booster packs from gems and fair card swaps are one switch each under Settings, per account.": "Gratisspiele, Boosterpacks aus Edelsteinen und faire Kartentausche sind je ein Schalter in den Einstellungen, pro Konto.",
+    "Free stuff, collected for you": "Gratis-Sachen, für dich eingesammelt",
+    "Gifts": "Geschenke",
+    "Needs a free account - {0}. Then switch on {1} under Settings, paste the API token, and choose which accounts comment. Skip it entirely if you only want cards and playtime.": "Braucht ein kostenloses Konto - {0}. Dann schalte {1} in den Einstellungen ein, füge das API-Token ein und wähle, welche Konten kommentieren. Lass es ganz weg, wenn du nur Karten und Spielzeit willst.",
+    "Two things happen by themselves on every account:": "Zwei Dinge passieren auf jedem Konto von selbst:",
+    "Use rep4rep at all": "rep4rep überhaupt nutzen",
+    "{0} - Steam wallet gift cards and guest passes people send you.": "{0} - Steam-Guthabenkarten und Gastpässe, die dir jemand schickt.",
+    "{0} - the daily sticker during a Steam sale, and anything in the Points Shop that costs 0 points.": "{0} - der tägliche Sticker während eines Steam-Sales und alles im Punkteshop, was 0 Punkte kostet.",
     "couldn't read the free-game state: {0}": "Gratisspiel-Status nicht lesbar: {0}",
     "couldn't save the free-game state: {0}": "Gratisspiel-Status konnte nicht gespeichert werden: {0}",
     "Steam didn't answer": "Steam hat nicht geantwortet",
@@ -1084,28 +1095,28 @@
   },
   "settings": {
     "WebEnabled": {
-      "label": "Web-Übersicht",
-      "tip": "Stellt die Web-Übersicht bereit. Aus heißt: nocat.farm läuft nur in der Konsole - alles funktioniert weiter, du steuerst es eben durch Tippen."
+      "label": "Web-Dashboard",
+      "tip": "Stellt das Web-Dashboard bereit. Aus heißt: nocat.farm läuft nur in der Konsole - alles funktioniert weiter, du steuerst es eben durch Tippen."
     },
     "WebHost": {
       "label": "Lauschen auf",
-      "tip": "Auf welchen Adressen die Übersicht antwortet. 127.0.0.1 heißt nur dieser PC; mit 0.0.0.0 kommst du vom Handy oder einem anderen Rechner dran - vorher ein Passwort setzen."
+      "tip": "Auf welchen Adressen das Dashboard antwortet. 127.0.0.1 heißt nur dieser PC; mit 0.0.0.0 kommst du vom Handy oder einem anderen Rechner dran - vorher ein Passwort setzen."
     },
     "WebPort": {
       "label": "Port",
-      "tip": "Port für die Übersicht. Ändern, falls etwas anderes schon 7242 belegt."
+      "tip": "Port für das Dashboard. Ändern, falls etwas anderes schon 7242 belegt."
     },
     "WebPassword": {
-      "label": "Passwort für die Übersicht",
-      "tip": "Passwort für die Übersicht. Solange es leer ist, weist die Übersicht jede Verbindung ab, die nicht von diesem PC kommt - so veröffentlichst du deine Steam-Konten nicht aus Versehen."
+      "label": "Passwort für das Dashboard",
+      "tip": "Passwort für das Dashboard. Solange es leer ist, weist das Dashboard jede Verbindung ab, die nicht von diesem PC kommt - so veröffentlichst du deine Steam-Konten nicht aus Versehen."
     },
     "OpenDashboardAfterAdd": {
-      "label": "Übersicht nach dem Hinzufügen öffnen",
-      "tip": "Öffnet die Übersicht im Browser, sobald ein neues Konto hinzugefügt wurde, damit du es einrichten kannst. Ein frisches Konto tut überhaupt nichts, bis ihm gesagt wird, was es spielen soll - und dieses Formular gibt es nur in der Übersicht, nicht im App-Fenster. Aus heißt: du musst selbst daran denken."
+      "label": "Dashboard nach dem Hinzufügen öffnen",
+      "tip": "Öffnet das Dashboard im Browser, sobald ein neues Konto hinzugefügt wurde, damit du es einrichten kannst. Ein frisches Konto tut überhaupt nichts, bis ihm gesagt wird, was es spielen soll - und dieses Formular gibt es nur im Dashboard, nicht im App-Fenster. Aus heißt: du musst selbst daran denken."
     },
     "OpenBrowserOnStart": {
       "label": "Browser beim Start öffnen",
-      "tip": "Öffnet die Übersicht automatisch im Browser, wenn nocat.farm startet."
+      "tip": "Öffnet das Dashboard automatisch im Browser, wenn nocat.farm startet."
     },
     "Tray": {
       "label": "Symbol im Infobereich",
@@ -1219,7 +1230,7 @@
     },
     "LogColour": {
       "label": "Farbe im Protokoll",
-      "tip": "In welcher Farbe der Name dieses Kontos im Protokoll und auf der Übersicht erscheint. Praktisch, sobald es mehr als ein paar Konten sind."
+      "tip": "In welcher Farbe der Name dieses Kontos im Protokoll und im Dashboard erscheint. Praktisch, sobald es mehr als ein paar Konten sind."
     },
     "Notes": {
       "label": "Notizen",
@@ -1666,11 +1677,11 @@
     },
     "WebRefreshSeconds": {
       "label": "Aktualisieren alle",
-      "tip": "Wie oft sich die Übersicht selbst aktualisiert, in Sekunden. Kleiner wirkt flotter und kostet nichts - es läuft alles lokal."
+      "tip": "Wie oft sich das Dashboard selbst aktualisiert, in Sekunden. Kleiner wirkt flotter und kostet nichts - es läuft alles lokal."
     },
     "WebSessionDays": {
       "label": "Angemeldet bleiben für",
-      "tip": "Wie viele Tage ein Browser angemeldet bleibt, bevor er das Passwort für die Übersicht erneut braucht."
+      "tip": "Wie viele Tage ein Browser angemeldet bleibt, bevor er das Passwort für das Dashboard erneut braucht."
     },
     "ExitWhenAllFinished": {
       "label": "Schließen, wenn alles fertig ist",

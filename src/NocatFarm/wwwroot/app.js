@@ -738,7 +738,7 @@ async function checkForAsf() {
   $('importBanner').classList.remove('hidden');
   const n = found.Accounts.length;
   $('importBanner').innerHTML = `
-    <div class="alert info" style="margin-bottom:18px;display:block">
+    <div class="alert accent" style="margin-bottom:18px;display:block">
       <b>${esc(n === 1 ? t('Found an ArchiSteamFarm install with one account.') : tf('Found an ArchiSteamFarm install with {0} accounts.', n))}</b>
       <div class="muted small" style="margin:4px 0 10px">
         ${esc(found.Path)}<br>
@@ -787,9 +787,14 @@ async function runImport() {
   }
 
   closeModal();
+  await afterImport(res);
+}
+
+/// After a successful import, from the import dialog or the walkthrough: say what came across and offer to start it.
+async function afterImport(res) {
   $('importBanner').classList.add('hidden');
   sessionStorage.setItem('skip-welcome', '1');
-  const done = res.Imported === 1 ? t('Imported one account') : tf('Imported {0} accounts', res.Imported);
+  const done = res.Imported === 1 ? t('Imported one account') : tf('Imported {0} accounts', res.Imported || 0);
   toast(done);
   await loadConfig();
   await refresh();
@@ -1021,6 +1026,12 @@ function setTheme(name, save) {
 // version. Replayable from the Overview page whenever you want it.
 let tutorialStep = 0;
 
+// Open right now - so Escape or a click outside counts as Skip, not as "close and show it again next time".
+let tutorialOpen = false;
+
+// ArchiSteamFarm was found, but they would rather type an account in than import.
+let tutorialManual = false;
+
 // Kept here rather than read from the settings schema: the tutorial runs before the schema is needed, and this
 // list is what the picker shows. It must stay in step with the Language setting's choices in Settings.cs.
 const LANGUAGES = [
@@ -1039,6 +1050,10 @@ async function pickTutorialLanguage(code) {
 
   await loadLanguage(code);
   translateChrome();
+
+  // The welcome screen's ArchiSteamFarm banner is built in script, not tagged for translateChrome - redraw it.
+  if (!$('importBanner').classList.contains('hidden')) checkForAsf();
+
   renderTutorial();
 }
 let tutorialAsf = null;
@@ -1051,12 +1066,66 @@ function shouldShowTutorial() {
 
 async function startTutorial() {
   tutorialStep = 0;
+  tutorialManual = false;
   tutorialAsf = await api('/api/import/asf').catch(() => null);
   renderTutorial();
 }
 
 function renderTutorial() {
+  tutorialOpen = true;
+
   const found = tutorialAsf && tutorialAsf.Found && (tutorialAsf.Accounts || []).length > 0;
+  const hasAccounts = !!(state && state.Bots && state.Bots.length);
+  const importing = found && !tutorialManual;
+
+  const tips = `<p class="muted small">${tf('Everything has an explanation attached - hover the {0} beside any setting.', '<i class="info" style="display:inline-flex"></i>')}
+      ${tf('The Console tab does anything the other tabs do, by typing. {0} lists it all.', '<code>help</code>')}</p>`;
+
+  // The account comes LAST. Adding one starts it signing in, and the password and Steam Guard questions appear
+  // in a bar at the top of the dashboard - behind this dialog, if the walkthrough were still open. So every
+  // explanation comes first, and the final button adds the account (or imports) and gets out of the way.
+  // It used to be step three, and "Add an account" there closed the walkthrough outright: nobody who took
+  // that path ever saw the rest of it.
+  let final;
+
+  if (hasAccounts) {
+    // Replayed from the Overview page on a machine that is already running accounts.
+    final = { title: t("That's it"), body: tips, next: t('Finish'), act: closeTutorial };
+  } else if (importing) {
+    final = {
+      title: t('Bring your ArchiSteamFarm accounts across'),
+      body: `<p>${tf('Found an ArchiSteamFarm setup at {0} with {1}.', `<code>${esc(tutorialAsf.Path)}</code>`,
+             `<b>${esc(tutorialAsf.Accounts.length === 1 ? t('one account') : tf('{0} accounts', tutorialAsf.Accounts.length))}</b>`)}</p>
+           <ul class="muted small">
+             ${tutorialAsf.Accounts.map((a) => `<li>${esc(a.Name)} - ${esc(a.SteamLogin)}${a.HasToken ? ' ' + esc(t('(login token comes across, so no password needed)')) : ''}</li>`).join('')}
+           </ul>
+           <p class="muted small">${esc(t('Importing copies the accounts and their login tokens. It changes nothing in ArchiSteamFarm.'))}
+             <a style="cursor:pointer" onclick="tutorialManual=true;renderTutorial()">${esc(t('Add one by hand instead'))}</a></p>
+           ${tips}`,
+      next: t('Import them'),
+      act: doTutorialImport,
+    };
+  } else {
+    final = {
+      title: t('Add your first account'),
+      body: `<p>${tf('Add the Steam account you want it to run. You will be asked for the password {0}, and for a Steam Guard code - after that it remembers a login token and never needs the password again.', `<b>${esc(t('once'))}</b>`)}</p>
+        <div class="form2">
+          <label for="tut-name">${esc(t('Name'))}${tipIcon(t("A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam."))}</label>
+          <input id="tut-name" type="text" placeholder="${esc(t('mybot'))}" autocomplete="off">
+          <label for="tut-login">${esc(t('Steam account name'))}${tipIcon(t("What you type into Steam's sign-in box. Not your display name, not your email."))}</label>
+          <input id="tut-login" type="text" placeholder="${esc(t('your steam login'))}" autocomplete="off">
+          <label for="tut-pass">${esc(t('Password'))}${tipIcon(t('Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.'))}</label>
+          <input id="tut-pass" type="password" placeholder="${esc(t("leave blank and it'll ask"))}" autocomplete="off">
+        </div>
+        <p id="tutError" class="error"></p>
+        ${found
+          ? `<p class="muted small"><a style="cursor:pointer" onclick="tutorialManual=false;renderTutorial()">${esc(t('Import from ArchiSteamFarm'))}</a></p>`
+          : `<p class="muted small">${esc(t('No ArchiSteamFarm install was found on this machine, so there is nothing to import.'))}</p>`}
+        ${tips}`,
+      next: t('Add account'),
+      act: tutorialAddAccount,
+    };
+  }
 
   const steps = [
     {
@@ -1077,22 +1146,8 @@ function renderTutorial() {
       next: t('Start'),
     },
     {
-      title: found ? t('Bring your ArchiSteamFarm accounts across') : t('Add your first account'),
-      body: found
-        ? `<p>${tf('Found an ArchiSteamFarm setup at {0} with {1}.', `<code>${esc(tutorialAsf.Path)}</code>`,
-             `<b>${esc(tutorialAsf.Accounts.length === 1 ? t('one account') : tf('{0} accounts', tutorialAsf.Accounts.length))}</b>`)}</p>
-           <ul class="muted small">
-             ${tutorialAsf.Accounts.map((a) => `<li>${esc(a.Name)} - ${esc(a.SteamLogin)}${a.HasToken ? ' ' + esc(t('(login token comes across, so no password needed)')) : ''}</li>`).join('')}
-           </ul>
-           <p class="muted small">${esc(t('Importing copies the accounts and their login tokens. It changes nothing in ArchiSteamFarm.'))}</p>`
-        : `<p>${tf('Add the Steam account you want it to run. You will be asked for the password {0}, and for a Steam Guard code - after that it remembers a login token and never needs the password again.', `<b>${esc(t('once'))}</b>`)}</p>
-           <p class="muted small">${esc(t('No ArchiSteamFarm install was found on this machine, so there is nothing to import.'))}</p>`,
-      next: found ? t('Import them') : t('Add an account'),
-      act: found ? doTutorialImport : () => { closeTutorial(); go('accounts'); showAddAccount(); },
-    },
-    {
       title: t('Tell it what to play'),
-      body: `<p>${esc(t('An account does nothing until it knows what to run. Two ways:'))}</p>
+      body: `<p>${esc(t('A new account starts farming trading cards straight away. There are two ways it can spend its time:'))}</p>
         <ul class="muted small">
           <li>${tf('{0} - it works through everything in your library that still has drops, then stops. Nothing to configure.', `<b>${esc(t('Trading cards'))}</b>`)}</li>
           <li>${tf('{0} - it keeps a believable daily routine: a few games, one at a time, with breaks, meals and a bedtime. Use this on an account you care about.', `<b>${esc(t('Human mode'))}</b>`)}</li>
@@ -1101,19 +1156,23 @@ function renderTutorial() {
       next: t('Next'),
     },
     {
-      title: t('rep4rep, if you want it'),
-      body: `<p>${esc(t("Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own."))}</p>
-        <p class="muted small">${tf('Needs a free account - {0} - and the API token pasted into Settings. Skip it entirely if you only want cards and playtime.',
-          '<a href="https://rep4rep.com/?r=reap" target="_blank" rel="noopener">rep4rep.com ↗</a>')}</p>`,
+      title: t('Free stuff, collected for you'),
+      body: `<p>${esc(t('Two things happen by themselves on every account:'))}</p>
+        <ul class="muted small">
+          <li>${tf('{0} - the daily sticker during a Steam sale, and anything in the Points Shop that costs 0 points.', `<b>${esc(t('Free event items'))}</b>`)}</li>
+          <li>${tf('{0} - Steam wallet gift cards and guest passes people send you.', `<b>${esc(t('Gifts'))}</b>`)}</li>
+        </ul>
+        <p class="muted small">${esc(t('Free games, booster packs from gems and fair card swaps are one switch each under Settings, per account.'))}</p>`,
       next: t('Next'),
     },
     {
-      title: t("That's it"),
-      body: `<p>${tf('Everything has an explanation attached - hover the {0} beside any setting.', '<i class="info" style="display:inline-flex"></i>')}</p>
-        <p class="muted small">${tf('The Console tab does anything the other tabs do, by typing. {0} lists it all.', '<code>help</code>')}</p>`,
-      next: t('Finish'),
-      act: closeTutorial,
+      title: t('rep4rep, if you want it'),
+      body: `<p>${esc(t("Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own."))}</p>
+        <p class="muted small">${tf('Needs a free account - {0}. Then switch on {1} under Settings, paste the API token, and choose which accounts comment. Skip it entirely if you only want cards and playtime.',
+          '<a href="https://rep4rep.com/?r=reap" target="_blank" rel="noopener">rep4rep.com ↗</a>', `<b>${esc(t('Use rep4rep at all'))}</b>`)}</p>`,
+      next: t('Next'),
     },
+    final,
   ];
 
   const st = steps[Math.min(tutorialStep, steps.length - 1)];
@@ -1125,11 +1184,41 @@ function renderTutorial() {
     ${st.body}
     <div class="actions">
       ${tutorialStep > 0 ? `<button class="ghost" onclick="tutorialStep--;renderTutorial()">${esc(t('Back'))}</button>` : ''}
-      <button class="ghost" onclick="closeTutorial()">${esc(last ? t('Close') : t('Skip'))}</button>
+      ${last && hasAccounts ? '' : `<button class="ghost" onclick="closeTutorial()">${esc(last ? t('Not yet') : t('Skip'))}</button>`}
       <button id="tutNext">${esc(st.next)}</button>
     </div>`);
 
   $('tutNext').onclick = st.act || (() => { tutorialStep++; renderTutorial(); });
+
+  // The form step: focus the first box, and Enter in any of them adds the account.
+  const first = $('tut-name');
+  if (first) {
+    ['tut-name', 'tut-login', 'tut-pass'].forEach((id) => {
+      $(id).onkeydown = (e) => { if (e.key === 'Enter') tutorialAddAccount(); };
+    });
+    setTimeout(() => first.focus(), 50);
+  }
+}
+
+async function tutorialAddAccount() {
+  const btn = $('tutNext');
+  if (btn.disabled) return;
+  btn.disabled = true;
+
+  const res = await post('/api/bots', { Name: $('tut-name').value.trim(), SteamLogin: $('tut-login').value.trim(), Password: $('tut-pass').value });
+
+  if (!res.ok) {
+    $('tutError').textContent = res.error || t("Couldn't add that account.");
+    btn.disabled = false;
+    return;
+  }
+
+  // Out of the way first: it is already signing in, and its questions appear in the bar at the top.
+  sessionStorage.setItem('skip-welcome', '1');
+  await closeTutorial();
+  await refresh();
+  go('accounts');
+  toast(t("Added. It's signing in now - answer the password and Steam Guard questions in the bar at the top."));
 }
 
 async function doTutorialImport() {
@@ -1146,14 +1235,12 @@ async function doTutorialImport() {
     return;
   }
 
-  toast(res.Imported === 1 ? t('Imported one account') : tf('Imported {0} accounts', res.Imported || 0));
-  await loadConfig();
-  refresh();
-  tutorialStep++;
-  renderTutorial();
+  await closeTutorial();
+  await afterImport(res);
 }
 
 async function closeTutorial() {
+  tutorialOpen = false;
   closeModal();
   // Marked done however it was dismissed - being shown it again after skipping is worse than never seeing it.
   await post('/api/tutorial/done', {}).catch(() => {});
@@ -1192,8 +1279,11 @@ function helpModal(filter) {
 
 function modal(html) { $('modalCard').innerHTML = html; $('modal').classList.remove('hidden'); }
 function closeModal() { $('modal').classList.add('hidden'); }
-$('modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+// Escape and a click outside close whatever is open - and for the walkthrough, that counts as Skip. Before, it
+// closed the dialog without marking it seen, so it came back on the next reload.
+function dismissModal() { if (tutorialOpen) closeTutorial(); else closeModal(); }
+$('modal').addEventListener('click', (e) => { if (e.target.id === 'modal') dismissModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') dismissModal(); });
 
 // One delegated listener instead of interpolating account names into inline onclick attributes. HTML-escaping
 // an apostrophe as &#39; does NOT help there: the parser decodes it back to ' before the JS is parsed, so a

@@ -294,7 +294,7 @@ nav { display: flex; flex-direction: row; gap: var(--s1); flex: 0 0 auto; }
 }
 .alert.warn { background: rgba(255,224,0,.05); border-color: rgba(255,224,0,.35); color: var(--warn); }
 .alert.bad  { background: rgba(255,49,49,.06); border-color: rgba(255,49,49,.40); color: var(--bad); }
-.alert.info { background: var(--accent-glow); border-color: var(--accent-dim); color: var(--text); }
+.alert.accent { background: var(--accent-glow); border-color: var(--accent-dim); color: var(--text); }
 .alert input { max-width: 190px; }
 .alert .spacer { flex: 1; }
 
