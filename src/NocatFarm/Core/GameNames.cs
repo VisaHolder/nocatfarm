@@ -18,7 +18,7 @@ namespace NocatFarm.Core;
 public static class GameNames {
 	private static readonly ConcurrentDictionary<uint, string> Known = new();
 	private static readonly SemaphoreSlim SaveLock = new(1, 1);
-	private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
+	private static readonly HttpClient Http = Browser.Anonymous(TimeSpan.FromSeconds(15));
 	private static bool _loaded;
 	private static bool _dirty;
 

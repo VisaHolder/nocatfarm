@@ -93,31 +93,23 @@ public static partial class Looting {
 	private static async Task<List<Item>> OneInventoryAsync(Bot bot, uint app, uint context, CancellationToken ct) {
 		List<Item> items = [];
 
-		string? body = await bot.Web.GetAsync(
-			new Uri(WebSession.Community, $"/inventory/{bot.SteamId}/{app}/{context}?l=english&count=2000"), ct).ConfigureAwait(false);
-
-		if (string.IsNullOrEmpty(body)) {
-			return items;
-		}
-
 		try {
-			using JsonDocument doc = JsonDocument.Parse(body);
+			InventoryContents? inventory = await Inventory.ReadAsync(bot, app, context.ToString(CultureInfo.InvariantCulture), ct).ConfigureAwait(false);
 
-			if (!doc.RootElement.TryGetProperty("assets", out JsonElement assets) || !doc.RootElement.TryGetProperty("descriptions", out JsonElement descriptions)) {
-				return items;   // an empty or private inventory answers without these
+			if (inventory == null) {
+				return items;
 			}
 
 			// class+instance is what ties an asset to its description; neither alone is unique.
 			Dictionary<string, (bool Tradable, string Type, string Name)> byClass = [];
 
-			foreach (JsonElement description in descriptions.EnumerateArray()) {
-				string key = Text(description, "classid") + "_" + Text(description, "instanceid");
+			foreach ((string key, JsonElement description) in inventory.Descriptions) {
 				bool tradable = description.TryGetProperty("tradable", out JsonElement t) && (t.ValueKind == JsonValueKind.Number ? t.GetInt32() == 1 : t.ValueKind == JsonValueKind.True);
 				byClass[key] = (tradable, Text(description, "type"), Text(description, "name"));
 			}
 
-			foreach (JsonElement asset in assets.EnumerateArray()) {
-				string key = Text(asset, "classid") + "_" + Text(asset, "instanceid");
+			foreach (JsonElement asset in inventory.Assets) {
+				string key = InventoryContents.KeyOf(asset);
 
 				if (!byClass.TryGetValue(key, out (bool Tradable, string Type, string Name) info) || !info.Tradable) {
 					continue;

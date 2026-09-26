@@ -51,7 +51,7 @@ public sealed class WebSession : IDisposable {
 		handler.AutomaticDecompression = DecompressionMethods.All;
 
 		_http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
-		_http.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36");
+		_http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", Browser.UserAgent);   // see Browser for why this matters
 	}
 
 	/// <summary>Build the cookies for an access token. Local only - no network call happens here.</summary>

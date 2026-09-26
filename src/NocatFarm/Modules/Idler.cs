@@ -48,8 +48,22 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 		while (!ct.IsCancellationRequested) {
 			Assert();
 
-			if (!await Sleep(Rng.Seconds(ReassertLowSeconds, ReassertHighSeconds), ct).ConfigureAwait(false)) {
-				return;
+			// Wait for the next re-assert in short steps, watching for a grind to finish. One that runs out ends
+			// between re-asserts - including one started halfway through a wait - and a 3-minute grind was seen
+			// handing back after 338 seconds. Checking a flag every 20 seconds costs nothing.
+			DateTime due = DateTime.UtcNow + Rng.Seconds(ReassertLowSeconds, ReassertHighSeconds);
+			bool sawGrind = Bot.Grinding;
+
+			while (DateTime.UtcNow < due) {
+				if (!await Sleep(TimeSpan.FromSeconds(20), ct).ConfigureAwait(false)) {
+					return;
+				}
+
+				if (Bot.Grinding) {
+					sawGrind = true;
+				} else if (sawGrind) {
+					break;   // it just ended - put the normal games back now
+				}
 			}
 		}
 	}

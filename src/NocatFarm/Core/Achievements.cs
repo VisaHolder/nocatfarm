@@ -95,8 +95,13 @@ public static class Achievements {
 		return type.AsInteger() == StatTypeBits;
 	}
 
-	private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
+	private static readonly HttpClient Http = Browser.Anonymous(TimeSpan.FromSeconds(20));
 	private static readonly Dictionary<uint, Dictionary<string, double>> GlobalCache = [];
+
+	/// <summary>Results that mean "ask again later", as opposed to an answer about the game itself.</summary>
+	private static bool NotNow(EResult result) => result is EResult.Busy or EResult.ServiceUnavailable
+		or EResult.TryAnotherCM or EResult.RateLimitExceeded or EResult.Timeout or EResult.NoConnection
+		or EResult.Pending or EResult.LimitExceeded;
 
 	public static async Task<AchievementSet?> GetAsync(Bot bot, uint appId, CancellationToken ct = default) {
 		if (!bot.IsOnline || (bot.SteamId == 0) || (bot.Stats == null)) {
@@ -105,8 +110,29 @@ public static class Achievements {
 
 		CMsgClientGetUserStatsResponse? response = await bot.Stats.GetUserStatsAsync(appId, bot.SteamId, ct).ConfigureAwait(false);
 
-		if ((response == null) || (response.eresult != (int) EResult.OK) || (response.schema == null)) {
+		// Two very different "no" answers, which used to be the same null.
+		//
+		// No reply at all, or a reply that says "not now", is worth asking again shortly. A reply that says
+		// there is nothing here - no stats, no schema - is final, and treating it as a hiccup meant a game with
+		// no achievements (s&box is one) was re-asked every half hour of play, forever, and every screen that
+		// showed it was stuck on "reading what it has so far". An empty set is what "has none" looks like to
+		// every caller: the pacer backs off for most of a day, unlock-everything skips it, cheevo says so.
+		// Steam answers Fail both for a game with no stats and for one the account doesn't own - the pacer only asks
+		// about games being played, so for it the two mean the same thing; cheevo tells them apart by ownership.
+		if (response == null) {
 			return null;
+		}
+
+		EResult result = (EResult) response.eresult;
+
+		if (NotNow(result)) {
+			return null;
+		}
+
+		if ((result != EResult.OK) || (response.schema == null) || (response.schema.Length == 0)) {
+			Log.Debug(new Said("Steam has no achievement stats for {0} ({1})", GameNames.Of(appId), result), bot.Name);
+
+			return new AchievementSet { AppId = appId, All = [], StatValues = [], CrcStats = 0 };
 		}
 
 		KeyValue schema = new();

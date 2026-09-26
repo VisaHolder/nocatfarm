@@ -276,7 +276,7 @@ have to be published. Writing a plugin never requires that.
 
 ## Not supported: ASF plugins
 
-An ArchiSteamFarm plugin can't run here, and it isn't close.
+An ArchiSteamFarm plugin can't run here.
 
 They're compiled against `ArchiSteamFarm.dll` and implement *ASF's* `IPlugin`, taking ASF's `Bot` type, its
 config model, its DI container and its specific SteamKit build. None of those types exist in nocat.farm. Running

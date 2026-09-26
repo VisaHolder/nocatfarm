@@ -107,6 +107,10 @@ public sealed class Bot : IAsyncDisposable {
 		GrindUntil = null;
 		GrindIsBoost = false;
 		SaveGrind();
+
+		// Put the normal games back now. Left to the idler's own schedule, "grind kylro off" answered "back to
+		// normal" and the account went on playing the one grind game for up to seven more minutes.
+		BotManager.ModuleOf<Modules.Idler>(this)?.Assert();
 	}
 
 	private string GrindPath => Path.Combine(ConfigStore.ConfigDir, "state", $"grind-{Name}.json");
@@ -1405,6 +1409,24 @@ public sealed class Bot : IAsyncDisposable {
 					_running = false;
 
 					return;
+				case EResult.TryAnotherCM: {
+					// Steam pointing us at a different server - the logon handler already calls this routine and says
+					// "not worth a line". It then fell through to the ordinary backoff, which printed a yellow
+					// "disconnected - reconnecting" warning on screen for something that is not a fault at all.
+					// Inside the weekly maintenance window it is part of the outage, so it keeps the stretching wait.
+					if (SteamMaintenance.LikelyNow) {
+						await BackOffAndWaitAsync().ConfigureAwait(false);
+
+						break;
+					}
+
+					int idle = Math.Max(1, Live.Global.ReconnectDelaySeconds);
+					TimeSpan hop = TimeSpan.FromSeconds(Rng.Next(idle, idle * 2));
+					Log.Debug(new Said("moving to another Steam server in ~{0}s", (int) hop.TotalSeconds), Name);
+					await Task.Delay(hop, _cts?.Token ?? CancellationToken.None).ConfigureAwait(false);
+
+					break;
+				}
 				case EResult.RateLimitExceeded:
 				case EResult.AccountLoginDeniedThrottle:
 				case EResult.AccessDenied:
@@ -2129,7 +2151,10 @@ public sealed class Bot : IAsyncDisposable {
 		// Log a change in what friends actually see - the custom name, a real game, or nothing - once per change.
 		// This makes "old/kylro should never leave 💀nocat.lol💀" checkable: if the custom name ever lapses to a
 		// real game or to nothing, there's a timestamped line for it instead of a silent flip nobody can trace.
-		string shown = !string.IsNullOrWhiteSpace(label) ? label : apps.Count > 0 ? GameNames.Of(apps[0]) : "nothing";
+		// The comparison stays on plain text; only what is SHOWN is a sentence. "nothing" passed as a value rode
+		// untranslated inside the translated line, so it is a sentence of its own.
+		string shown = !string.IsNullOrWhiteSpace(label) ? label : apps.Count > 0 ? GameNames.Of(apps[0]) : "";
+		Said showing = shown.Length > 0 ? new Said("now showing {0}", shown) : new Said("now showing nothing");
 		if (shown != _lastLoggedPlaying) {
 			if (_lastLoggedPlaying != null) {
 				// A human-mode account narrates every change itself - "short break - back in about 24m",
@@ -2137,9 +2162,9 @@ public sealed class Bot : IAsyncDisposable {
 				// noise on a clearer one. Keep it for the trace, at debug. Other accounts have no such narrator
 				// (and this is the line that proves their custom name never lapsed), so there it stays visible.
 				if (HumanOwned) {
-					Log.Debug(new Said("now showing {0}", shown), Name);
+					Log.Debug(showing, Name);
 				} else {
-					Log.Info(new Said("now showing {0}", shown), Name);
+					Log.Info(showing, Name);
 				}
 			}
 

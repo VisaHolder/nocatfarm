@@ -110,7 +110,24 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		public int Unlocked = -1;       // last known unlocked count; -1 means unknown, so treat as onboarding
 		public int Total;               // how many the game has at all, so progress reads as a fraction
 		public int BurstLeft;           // mid-burst: this many more pop quickly, bypassing the played-time gate
+		public Outcome Last;            // what the last real read of Steam concluded
+		public int CappedAt;            // the ceiling in force when it stopped, so raising it can release the game
 	}
+
+	/// <summary>
+	/// Why a game is or isn't earning, as of the last time Steam was actually read.
+	///
+	/// Without this every screen had one thing to say about a running game - "earning" - whether it had fifty
+	/// left or none at all. A finished game, a game at the ceiling and a game with no achievements whatsoever all
+	/// read "Earning in X", with a "next after" time that was only ever the back-off timer. It looked queued.
+	/// </summary>
+	/// <remarks>Numbered explicitly: these are written to the state file as numbers, and reordering the names
+	/// must never quietly change what a saved game means.</remarks>
+	public enum Outcome { Unknown = 0, Earning = 1, None = 2, Complete = 3, SteamOnly = 4, Capped = 5, NeedsHours = 6 }
+
+	/// <summary>The outcome as it stands NOW - a game capped under a ceiling that has since been raised is not capped.</summary>
+	private Outcome Current(GameState g) =>
+		(g.Last == Outcome.Capped) && (Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100) > g.CappedAt) ? Outcome.Unknown : g.Last;
 
 	private readonly Dictionary<uint, GameState> _games = [];
 	private readonly Random _rng = new();
@@ -188,12 +205,22 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			return;
 		}
 
+		int ceilingNow = Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100);
+
 		foreach (uint app in running) {
 			GameState g = StateFor(app);
 			Profile prof = ProfileFor(app);
 
 			lock (_gate) {
 				g.PlayedMins++;
+
+				// The ceiling was raised since this game stopped at it. A capped game backs off for most of a day,
+				// so without this, raising the setting did nothing visible for up to 25 hours - which is exactly
+				// what "broken" looks like from the outside.
+				if ((g.Last == Outcome.Capped) && (ceilingNow > g.CappedAt)) {
+					g.Last = Outcome.Unknown;
+					g.NextAllow = now;
+				}
 
 				// A deliberate grind engages the achievement schedule NOW. Otherwise a spacing gap set during
 				// ordinary play (NextAllow hours out) blocks the grind for its whole duration - it'd drop nothing.
@@ -298,6 +325,12 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		}
 
 		if (set.All.Count == 0) {
+			lock (_gate) {
+				g.Unlocked = 0;
+				g.Total = 0;
+				g.Last = Outcome.None;
+			}
+
 			Back(g, TimeSpan.FromHours(_rng.Next(8, 25)));      // it has none, and never will
 
 			return false;
@@ -325,11 +358,33 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		// actually be reasoned about. A grind ignores it, because that is the explicit "finish this" path.
 		int ceiling = grind ? 100 : Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100);
 
+		// Nothing left that a client may set. Either the game is finished, or everything still locked is awarded
+		// by Steam itself (Counter-Strike 2's are, bar the one for launching it). Asked before the ceiling, so a
+		// game in that state is described as what it is rather than as having hit a limit.
+		if (!set.All.Any(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a))) {
+			lock (_gate) {
+				g.Last = already >= total ? Outcome.Complete : Outcome.SteamOnly;
+			}
+
+			if (grind && (already < total)) {
+				Log.Info(new Said("can't unlock {0}'s achievements - Steam sets them server-side, so there's nothing to grind here", GameNames.Of(app)), Bot.Name);
+			}
+
+			Back(g, TimeSpan.FromHours(_rng.Next(8, 25)));
+
+			return false;
+		}
+
 		// Never below the onboarding cluster, or a short game with a big early burst (Portal onboards 5 of its
 		// 15) would be cut off mid-cluster by a percentage that was never meant to apply that finely.
 		int ceilingCount = Math.Min(total, Math.Max(prof.OnboardCount, total * ceiling / 100));
 
 		if (already >= ceilingCount) {
+			lock (_gate) {
+				g.Last = Outcome.Capped;
+				g.CappedAt = ceiling;
+			}
+
 			// Done with this game. Back off hard rather than re-reading Steam's stats every played minute.
 			Back(g, TimeSpan.FromHours(_rng.Next(8, 25)));
 
@@ -368,14 +423,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				g.BurstLeft = 0;
 			}
 
-			// When a grind can't unlock anything but the game still has locked achievements, the usual
-			// reason is Steam controls them server-side (Counter-Strike 2 is the classic case) - say so plainly
-			// and stop hammering Steam's stats for it, rather than looking silently stuck.
-			if (grind && set.All.Any(a => !a.Unlocked && !IsSpecialGlobal(a)) && !set.All.Any(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a))) {
-				Log.Info(new Said("can't unlock {0}'s achievements - Steam sets them server-side, so there's nothing to grind here", GameNames.Of(app)), Bot.Name);
-				Back(g, TimeSpan.FromHours(_rng.Next(8, 25)));
-
-				return false;
+			lock (_gate) {
+				g.Last = Outcome.NeedsHours;
 			}
 
 			// The gate is shut at this playtime, which is it working, not failing. Come back later rather than
@@ -408,6 +457,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		lock (_gate) {
 			g.MinsAtLastUnlock = g.PlayedMins;
 			g.Unlocked = nowUnlocked;
+			g.Last = Outcome.Earning;
 
 			// Cluster like a person: several within a couple of minutes as a level or campaign finishes, then
 			// nothing for a long stretch. A steady one-every-N-minutes drip is the thing to avoid.
@@ -444,7 +494,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			g.NextAllow = DateTime.UtcNow.AddMinutes(Paced(gap));
 		}
 
-		string rarity = pick.GlobalPercent is { } percent ? $" ({percent:0.#}% of owners have it)" : "";
+		Said rarity = pick.GlobalPercent is { } percent ? new Said(" ({0}% of owners have it)", percent.ToString("0.#")) : default;
 		Log.Reward(new Said("unlocked \"{0}\" in {1}{2}  ({3}/{4})", pick.Display, GameNames.Of(app), rarity, nowUnlocked, total), Bot.Name);
 		Remember(new Unlock(app, GameNames.Of(app), pick.Display, pick.GlobalPercent, DateTime.UtcNow, nowUnlocked, total));
 
@@ -685,7 +735,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		DateTime NextAllow,
 		bool Blocked,
 		string Why,
-		bool Running
+		bool Running,
+		string State
 	);
 
 	/// <summary>
@@ -731,7 +782,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						kv.Value.NextAllow,
 						why.Length > 0,
 						why,
-						live.Contains(kv.Key));
+						live.Contains(kv.Key),
+						Current(kv.Value).ToString());
 				})
 				.ToList();
 		}
@@ -754,6 +806,22 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				.First();
 
 			double hours = Math.Max(g.PlayedMins, Bot.Library.MinutesOn(app)) / 60.0;
+
+			// A finished, capped or achievement-less game has no "next". Its NextAllow is only the back-off timer,
+			// and printing it as "next after 21:38" dressed a game that will never earn again as one that is queued.
+			switch (Current(g)) {
+				case Outcome.None:
+					return new Said("{0} has no achievements", GameNames.Of(app));
+				case Outcome.Complete:
+					return new Said("{0}: every achievement done ({1}/{2})", GameNames.Of(app), g.Unlocked, g.Total);
+				case Outcome.SteamOnly:
+					return new Said("{0}: {1}/{2} - the rest can only be awarded by Steam", GameNames.Of(app), g.Unlocked, g.Total);
+				case Outcome.Capped:
+					return new Said("{0}: {1}/{2} - stopped at your {3}% ceiling", GameNames.Of(app), g.Unlocked, g.Total, g.CappedAt);
+				case Outcome.NeedsHours:
+					return new Said("{0}: {1}h in - the next ones need more hours in it", GameNames.Of(app), hours.ToString("0.#"));
+			}
+
 			Profile prof = ProfileFor(app);
 			bool onboarding = (g.Unlocked < 0) || (g.Unlocked < prof.OnboardCount);
 			int playedGate = onboarding ? prof.OnboardPlayedMins : prof.SteadyPlayedMins;
@@ -782,6 +850,11 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		public DateTime NextAllow { get; set; }
 		public int Unlocked { get; set; } = -1;
 		public int Total { get; set; }
+
+		// Absent from files written before outcomes existed; Unknown until the game is next read, apart from
+		// a finished game, which the counts alone can prove.
+		public Outcome Last { get; set; }
+		public int CappedAt { get; set; }
 	}
 
 	private static string PathFor(string bot) => Path.Combine(ConfigStore.ConfigDir, "state", $"cheevo-{bot}.json");
@@ -809,8 +882,27 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						MinsAtLastUnlock = s.MinsAtLastUnlock,
 						NextAllow = s.NextAllow,
 						Unlocked = s.Unlocked,
-						Total = s.Total
+						Total = s.Total,
+						Last = s.Last,
+						CappedAt = s.CappedAt
 					};
+
+					// A file written before outcomes existed says nothing about them, and a finished or capped game
+					// is only read again every 8-25 hours - so until then it would have been shown as "earning".
+					// Both can be worked out from the counts already saved.
+					GameState g = _games[s.App];
+
+					if ((g.Last == Outcome.Unknown) && (g.Total > 0) && (g.Unlocked >= 0)) {
+						int ceiling = Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100);
+						int ceilingCount = Math.Min(g.Total, Math.Max(ProfileFor(s.App).OnboardCount, g.Total * ceiling / 100));
+
+						if (g.Unlocked >= g.Total) {
+							g.Last = Outcome.Complete;
+						} else if (g.Unlocked >= ceilingCount) {
+							g.Last = Outcome.Capped;
+							g.CappedAt = ceiling;
+						}
+					}
 				}
 			}
 
@@ -906,7 +998,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 					MinsAtLastUnlock = kv.Value.MinsAtLastUnlock,
 					NextAllow = kv.Value.NextAllow,
 					Unlocked = kv.Value.Unlocked,
-					Total = kv.Value.Total
+					Total = kv.Value.Total,
+					Last = kv.Value.Last,
+					CappedAt = kv.Value.CappedAt
 				}).ToList();
 			}
 

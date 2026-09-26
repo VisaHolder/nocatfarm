@@ -78,8 +78,8 @@ public static partial class Commands {
 		new("plugins", "", GroupOther, "Which plugins are loaded, and where they came from."),
 		new("owns", "<appID|name>", GroupOther,
 			"Which accounts already own a game, and how long each has played it. Takes an appID, a store URL, or part of a name."),
-		new("addlicense", "<account|all> <subIDs>", GroupOther,
-			"Add free packages (subIDs) to an account's library. Only works for genuinely free licences - a paid one is refused by Steam."),
+		new("addlicense", "<account|all> <IDs>", GroupOther,
+			"Add free licences to an account's library - a subID, or a/<appID> for a free app. Only works for genuinely free licences - a paid one is refused by Steam, and it says why."),
 		new("report", "", GroupOther, "Write the daily summary - hours banked, cards, comments, totals - to the log now."),
 		new("answer", "<text>", GroupOther, "Answer whatever nocat.farm is waiting on - a Steam Guard code, or a password."),
 		new("tutorial", "[topic]", GroupOther, "Getting started, in order, ticking off what you have already done.", "guide|setup"),
@@ -355,9 +355,16 @@ public static partial class Commands {
 	/// giveaway that has not been picked up yet, or a free weekend. Steam refuses anything that is not actually
 	/// free, so the worst case is a "no".
 	/// </summary>
+	/// <summary>One free app, the same request the free-games watcher makes - so the two can never drift apart.</summary>
+	private static async Task<string> AddFreeAppAsync(Bot bot, uint appId) {
+		FreeGames.ClaimResult result = await FreeGames.AddAppAsync(bot, appId, CancellationToken.None).ConfigureAwait(false);
+
+		return result.Added ? $"added {GameNames.Of(appId)}" : $"not granted - {result.Reason}";
+	}
+
 	private static async Task<string> AddLicense(BotManager mgr, string[] args) {
 		if (args.Length < 2) {
-			return "addlicense <account|all> <subIDs>     comma or space separated";
+			return "addlicense <account|all> <IDs>     subIDs, or a/<appID> for a free app - comma or space separated";
 		}
 
 		List<Bot> targets = args[0].Equals("all", StringComparison.OrdinalIgnoreCase)
@@ -370,15 +377,22 @@ public static partial class Commands {
 				: NoSuchAccount(mgr, args[0]);
 		}
 
-		List<uint> subs = string.Join(' ', args[1..])
+		// ArchiSteamFarm's spelling: a bare number or s/123 is a package, a/123 is an app. Apps go over the Steam
+		// connection rather than the store, which is the only way a free-to-play app can be added at all.
+		List<(bool App, uint Id)> wanted = string.Join(' ', args[1..])
 			.Split([',', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-			.Select(static s => uint.TryParse(s, out uint n) ? n : 0)
-			.Where(static n => n > 0)
+			.Select(static s => {
+				bool app = s.StartsWith("a/", StringComparison.OrdinalIgnoreCase);
+				string digits = app || s.StartsWith("s/", StringComparison.OrdinalIgnoreCase) ? s[2..] : s;
+
+				return (App: app, Id: uint.TryParse(digits, out uint n) ? n : 0);
+			})
+			.Where(static w => w.Id > 0)
 			.Distinct()
 			.ToList();
 
-		if (subs.Count == 0) {
-			return "No subID in that. They are numbers - 12345, or several separated by commas.";
+		if (wanted.Count == 0) {
+			return "No ID in that. A subID is a number - 12345 - and a free app is a/12345. Several can be separated by commas.";
 		}
 
 		StringBuilder sb = new();
@@ -390,15 +404,21 @@ public static partial class Commands {
 				continue;
 			}
 
-			foreach (uint sub in subs) {
-				if (bot.OwnsPackage(sub)) {
-					sb.AppendLine($"{bot.Name}: {sub} - already has it");
+			foreach ((bool app, uint id) in wanted) {
+				if (app) {
+					sb.AppendLine($"{bot.Name}: a/{id} - {await AddFreeAppAsync(bot, id).ConfigureAwait(false)}");
 
 					continue;
 				}
 
-				bool ok = await FreeGames.AddPackageAsync(bot, sub, CancellationToken.None).ConfigureAwait(false);
-				sb.AppendLine($"{bot.Name}: {sub} - {(ok ? "added" : "refused (not free, region-locked, or already gone)")}");
+				if (bot.OwnsPackage(id)) {
+					sb.AppendLine($"{bot.Name}: {id} - already has it");
+
+					continue;
+				}
+
+				FreeGames.ClaimResult result = await FreeGames.AddPackageAsync(bot, id, CancellationToken.None).ConfigureAwait(false);
+				sb.AppendLine($"{bot.Name}: {id} - {(result.Added ? "added" : $"refused - {result.Reason}")}");
 			}
 		}
 
@@ -1341,7 +1361,7 @@ public static partial class Commands {
 			}
 
 			started.Add(bot);
-			string lead = delay > TimeSpan.Zero ? $" (finishing up first, starts in ~{Fmt.Hm((int) Math.Ceiling(delay.TotalMinutes))})" : "";
+			Said lead = delay > TimeSpan.Zero ? new Said(" (finishing up first, starts in ~{0})", Fmt.Hm((int) Math.Ceiling(delay.TotalMinutes))) : default;
 			Log.Info(new Said("grinding {0} for {1}{2} - normal schedule resumes after", GameNames.Of(appId), Fmt.Hm((int) how.TotalMinutes), lead), bot.Name);
 		}
 
@@ -1435,6 +1455,17 @@ public static partial class Commands {
 	}
 
 	private static string DescribeAchievements(Bot bot, AchievementSet set) {
+		// Steam's answer for a game with no stats at all - "0/0 unlocked" and a legend for an empty list said the
+		// same thing far less clearly.
+		//
+		// Steam gives the same answer, Fail, when the account doesn't own the game - asked about ARC Raiders on an
+		// account without it, this said "ARC Raiders has no achievements" of a game that has fifty.
+		if (set.Total == 0) {
+			return bot.Library.Find(set.AppId) is null
+				? $"{bot.Name} doesn't own {GameNames.Of(set.AppId)}, and Steam only shows achievements for games in the library."
+				: $"{GameNames.Of(set.AppId)} has no achievements - there is nothing to see or unlock.";
+		}
+
 		StringBuilder sb = new();
 		int blocked = set.All.Count(static a => !a.Settable && !a.Unlocked);
 

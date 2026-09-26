@@ -37,7 +37,7 @@ public static class GameCatalog {
 
 	private static readonly Dictionary<uint, Entry> Cache = [];
 	private static readonly SemaphoreSlim FileGate = new(1, 1);
-	private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
+	private static readonly HttpClient Http = Browser.Anonymous(TimeSpan.FromSeconds(20));
 	private static DateTime _lastCall = DateTime.MinValue;
 	private static DateTime _coolUntil = DateTime.MinValue;
 	private static DateTime _lastSave = DateTime.MinValue;

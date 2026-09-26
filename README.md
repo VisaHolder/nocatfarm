@@ -68,6 +68,7 @@ nothing but Steam is ever contacted.
 | **Stays out of your way** | Launch a game yourself and every account stands down, then quietly picks back up after a delay you choose. |
 | **Achievement hunter** | Optional. Picks single-player games out of the library itself — never DLC, demos or bundle filler nobody plays — and works through them one at a time as occasional sessions, earning at the account's own legit pace. On a human account it stays weighted-first and comes out of the day's play budget rather than being stacked on top of it. |
 | **Inventory value** | What every account's items are worth at the market's median, per game, in your own currency, with how it has moved in the last 24 hours. Reads the account's OWN inventory, so a private profile makes no difference. |
+| **Free games** | Optional. Watches a public list of Steam giveaways and claims the paid games being given away free-to-keep, packages and apps alike — never free-to-play filler, DLC or demos. A giveaway that has already ended is tried a few more times, then left alone. |
 | **Refund protection** | A game bought in the last fortnight and under two hours played is left completely alone — by the idler, the schedule, grinds and the hunter alike — until it can no longer be refunded. |
 | **Steam Families** | Games shared into the account can be hunted too, and are handed straight back the moment the person who owns them starts playing. |
 | **Plugins** | Optional and off by default. One DLL in `plugins/` extends the app: react to card drops and trade offers, read every account, run any command, add your own commands, and declare settings that get a real UI. See [PLUGINS.md](PLUGINS.md). |
@@ -251,7 +252,7 @@ the auto-reply instead, so ordinary chat is never mistaken for a command.
 | `grind <account\|all> <appID> <hours>` &nbsp;·&nbsp; `grind <account> off` | Play one game hard for N hours, then back to normal. Earns achievements while it runs. On a legit account it eases in and out; on a boost account it's instant. |
 | `human [account] [week\|reroll]` | What human mode is doing today; add `week` for the next seven days, or `reroll` to throw today's plan away and roll a fresh one from the current settings. |
 | `owns <appID\|name>` | Which accounts already own a game, and how long each has played it. Takes an appID, a store URL, or part of a name. |
-| `addlicense <account\|all> <subIDs>` | Add free packages to a library. Steam refuses anything that is not actually free. |
+| `addlicense <account\|all> <IDs>` | Add free licences to a library: a subID, or `a/<appID>` for a free app. Steam refuses anything that isn't actually free, and the answer says why. |
 | `wake <account>` &nbsp;·&nbsp; `wakeup` `skipsleep` | Wake a sleeping human-mode account and start its day now. Bed time is unchanged. |
 | `name <account> [text]` | Custom non-Steam game name shown instead of the real game. No text clears it. |
 | `persona <account> <state>` | online \| offline \| busy \| away \| snooze \| invisible. |
@@ -384,8 +385,9 @@ value myaccount refresh  # read that account's inventory again
 Priced at the community market's **median**, in whatever currency the global `MarketCurrency` is set to — match
 it to your Steam store or the totals won't agree with what you see on the market. Everything in the inventory is
 counted at what it is worth, whether or not this particular copy could be sold today: a trade hold doesn't make
-a knife worthless. Prices are cached for a day and shared between accounts, and looked up slowly, because
-everything the app does on steamcommunity.com shares one rate limit — a big inventory takes an hour to settle
+a knife worthless. Prices are shared between accounts and re-checked by what they're worth: anything worth 2 or
+more as often as `PriceCacheHours` says, cheaper items less often, and items with no market listing once a week.
+They're looked up slowly, because everything the app does on steamcommunity.com shares one rate limit — a big inventory takes an hour to settle
 the first time and is instant afterwards.
 
 Games the account is **banned** in go in `InventoryIgnoreGames`. Steam doesn't publish which game a ban is in and

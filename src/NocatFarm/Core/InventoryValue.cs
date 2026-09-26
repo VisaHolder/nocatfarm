@@ -121,16 +121,9 @@ public sealed partial class InventoryValue(Bot bot) {
 	}
 
 	private async Task ReadOneAsync(uint app, string game, string context, CancellationToken ct) {
-		string? json = await bot.Web.GetAsync(new Uri(WebSession.Community, $"/inventory/{bot.SteamId}/{app}/{context}?l=english&count=2000"), ct).ConfigureAwait(false);
+		InventoryContents? inventory = await Inventory.ReadAsync(bot, app, context, ct).ConfigureAwait(false);
 
-		if (string.IsNullOrEmpty(json)) {
-			return;
-		}
-
-		using JsonDocument doc = JsonDocument.Parse(json);
-
-		if (!doc.RootElement.TryGetProperty("descriptions", out JsonElement descriptions)
-			|| !doc.RootElement.TryGetProperty("assets", out JsonElement assets)) {
+		if (inventory == null) {
 			return;
 		}
 
@@ -143,7 +136,7 @@ public sealed partial class InventoryValue(Bot bot) {
 		// all price at zero on their own, which is the correct answer for them.
 		Dictionary<string, (string Hash, int Rank)> named = [];
 
-		foreach (JsonElement d in descriptions.EnumerateArray()) {
+		foreach (JsonElement d in inventory.Descriptions.Values) {
 			string? hash = d.TryGetProperty("market_hash_name", out JsonElement h) ? h.GetString() : null;
 			string? classId = d.TryGetProperty("classid", out JsonElement c) ? c.GetString() : null;
 
@@ -166,7 +159,7 @@ public sealed partial class InventoryValue(Bot bot) {
 
 		Dictionary<string, Held> counts = new(StringComparer.Ordinal);
 
-		foreach (JsonElement a in assets.EnumerateArray()) {
+		foreach (JsonElement a in inventory.Assets) {
 			string? classId = a.TryGetProperty("classid", out JsonElement c) ? c.GetString() : null;
 
 			if ((classId == null) || !named.TryGetValue(classId, out (string Hash, int Rank) item)) {

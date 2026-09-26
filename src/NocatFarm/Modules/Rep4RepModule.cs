@@ -39,6 +39,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	private string? _profileId;
 	private Said _status = new("off");
 	private int _rateLimitRun;   // consecutive Steam rate-limits, reset on a good post
+	private DateTime _capNoticed = DateTime.MinValue;   // when the cap was last announced on screen
 
 	public override string Name => "rep4rep";
 	public override string Status => _status;
@@ -450,8 +451,22 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		_status = new Said("{0}/{1} today", done, Cap);
 
 		if (done >= Cap) {
-			string frees = NextSlot is { } t ? $"until ~{t.ToLocalTime():HH:mm}" : "for now";
-			Log.Info(new Said("hit the {0}/24h cap - resting this account {1}, the others carry on", Cap, frees), Bot.Name);
+			// A Said, not a string. Built as English text it rode untranslated inside the translated sentence -
+			// "休息 until ~10:13" - and the clock is rendered lazily so "tomorrow" follows the language too.
+			Said frees = NextSlot is { } t
+				? new Said("until ~{0}", (Func<string>) (() => Fmt.Clock(t)))
+				: new Said("for now");
+			Said line = new("hit the {0}/24h cap - resting this account {1}, the others carry on", Cap, frees);
+
+			// The window is ROLLING, so once it is full every slot that frees gets one post and the cap is hit
+			// again - four or five times a day, each announced as news. The first one in a stretch is worth
+			// saying; the rest are the same fact again, so they go to the file only.
+			if ((DateTime.UtcNow - _capNoticed) > TimeSpan.FromHours(12)) {
+				_capNoticed = DateTime.UtcNow;
+				Log.Info(line, Bot.Name);
+			} else {
+				Log.Debug(line, Bot.Name);
+			}
 
 			return 20 * 60;
 		}

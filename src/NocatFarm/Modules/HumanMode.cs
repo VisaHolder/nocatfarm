@@ -745,9 +745,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return;
 		}
 
-		string mix = _otherBudget == 0
-			? $"{GameName(MainGame())} only today"
-			: $"{GameName(MainGame())} about {_mainSharePct}%, up to {Fmt.Hm(_otherBudget)} on the others";
+		Said mix = _otherBudget == 0
+			? new Said("{0} only today", GameName(MainGame()))
+			: new Said("{0} about {1}%, up to {2} on the others", GameName(MainGame()), _mainSharePct, Fmt.Hm(_otherBudget));
 
 		Log.Info(new Said("today: around {0} of play, on about {1}, bed about {2} - {3}", Fmt.Hm(_targetMinutes), (WakeTime()).ToString("HH:mm"), (BedTime()).ToString("HH:mm"), mix), Bot.Name);
 	}

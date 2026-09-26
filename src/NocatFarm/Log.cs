@@ -53,7 +53,11 @@ public static class Log {
 	private static readonly ConcurrentQueue<Entry> Ring = new();
 	private static readonly object ConsoleLock = new();
 	private static long _seq;
-	private static string? _logFile;
+	private static string? _logDir;
+	private static string? _logFile;     // today's file; recomputed when the day turns
+	private static DateTime _logFileDay;
+	private static int _retentionDays;
+	private static readonly object FileLock = new();
 	private static bool _debug;
 
 	/// <summary>
@@ -75,6 +79,7 @@ public static class Log {
 
 	public static void Configure(bool fileLogging, bool debug, string root, int retentionDays = 0) {
 		_debug = debug;
+		_retentionDays = retentionDays;
 
 		if (!fileLogging) {
 			_logFile = null;
@@ -86,24 +91,70 @@ public static class Log {
 			string dir = Path.Combine(root, "logs");
 			Directory.CreateDirectory(dir);
 
-			// One file per day, so retention is deleting old files rather than rewriting a live one.
-			_logFile = Path.Combine(dir, $"nocatFarm-{DateTime.Now:yyyy-MM-dd}.log");
-
-			if (retentionDays > 0) {
-				DateTime cutoff = DateTime.Now.AddDays(-retentionDays);
-
-				foreach (string old in Directory.GetFiles(dir, "nocatFarm-*.log")) {
-					if (File.GetLastWriteTime(old) < cutoff) {
-						File.Delete(old);
-					}
-				}
-			}
+			// The FOLDER is settled here; the filename is not. See TodaysFile.
+			_logDir = dir;
+			_logFile = null;
+			Sweep();
 		} catch {
+			_logDir = null;
 			_logFile = null;   // logging must never take the app down
 		}
 	}
 
-	public static string? FilePath => _logFile;
+	/// <summary>The file today's lines go to. Rolls at midnight.</summary>
+	/// <remarks>
+	/// Resolved per write rather than once in Configure. Frozen at startup it named the file after the day the
+	/// app STARTED, so a machine left running poured a fortnight into "nocatFarm-2026-09-08.log" - 14k lines in
+	/// one file, no way to open a given day, and the "one file per day" that retention is built around simply
+	/// was not true. Surfaced by a 17-day run.
+	/// </remarks>
+	private static string? TodaysFile() {
+		if (_logDir == null) {
+			return null;
+		}
+
+		DateTime today = DateTime.Now.Date;
+
+		if ((_logFile != null) && (_logFileDay == today)) {
+			return _logFile;
+		}
+
+		lock (FileLock) {
+			if ((_logFile != null) && (_logFileDay == today)) {
+				return _logFile;
+			}
+
+			_logFile = Path.Combine(_logDir, $"nocatFarm-{today:yyyy-MM-dd}.log");
+			_logFileDay = today;
+
+			// The day just turned. On a long run this is the only chance to clear old files - doing it once at
+			// startup only ever tidies up for a process that gets restarted.
+			Sweep();
+
+			return _logFile;
+		}
+	}
+
+	/// <summary>Delete logs older than the retention setting. By last-write time, so a live file is never taken.</summary>
+	private static void Sweep() {
+		if ((_logDir == null) || (_retentionDays <= 0)) {
+			return;
+		}
+
+		try {
+			DateTime cutoff = DateTime.Now.AddDays(-_retentionDays);
+
+			foreach (string old in Directory.GetFiles(_logDir, "nocatFarm-*.log")) {
+				if (File.GetLastWriteTime(old) < cutoff) {
+					File.Delete(old);
+				}
+			}
+		} catch {
+			// tidying up must never take the app down
+		}
+	}
+
+	public static string? FilePath => TodaysFile();
 	public static bool DebugEnabled => _debug;
 
 	public static IReadOnlyList<Entry> Recent(int max = 200) {
@@ -225,12 +276,14 @@ public static class Log {
 			// a subscriber must never break logging
 		}
 
-		if (_logFile == null) {
+		string? file = TodaysFile();
+
+		if (file == null) {
 			return;
 		}
 
 		try {
-			File.AppendAllText(_logFile, $"{now:yyyy-MM-dd HH:mm:ss}|{level}|{source}|{text}{Environment.NewLine}");
+			File.AppendAllText(file, $"{now:yyyy-MM-dd HH:mm:ss}|{level}|{source}|{text}{Environment.NewLine}");
 		} catch {
 			// logging must never take the app down
 		}

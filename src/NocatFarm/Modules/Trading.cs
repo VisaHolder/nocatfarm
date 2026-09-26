@@ -160,7 +160,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 					when = DateTime.UtcNow.Add(Rng.Minutes(lo, hi));
 					_actOn[offer.Id] = when;
 
-					string what = accept ? fromMaster ? "from one of your accounts" : "a donation" : "unwanted";
+					Said what = accept ? fromMaster ? new Said("from one of your accounts") : new Said("a donation") : new Said("unwanted");
 					Log.Info(new Said("trade offer #{0} ({1}: {2}) - handling it in {3}", offer.Id, what, offer.Describe, Fmt.Hm((int) Math.Max(1, (when - DateTime.UtcNow).TotalMinutes))), Bot.Name);
 				}
 			}

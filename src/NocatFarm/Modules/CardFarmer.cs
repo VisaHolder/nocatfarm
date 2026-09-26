@@ -278,9 +278,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				// is already finished text stays in whatever language it was built in - which is how the two lines
 				// ended up reading "keine Karten mehr zu farmen · 1h23m played in total".
 				Said been = lifetime > 0 ? new Said(" · {0} run by nocat.farm", Fmt.Hm(lifetime)) : default;
-				string idle = !string.IsNullOrWhiteSpace(Bot.CustomName)
-					? Bot.CustomName + (Bot.Cfg.IdleGames.Count > 0 ? $" (+{Bot.Cfg.IdleGames.Count})" : "")
-					: Bot.Cfg.IdleGames.Count > 0 ? $"{Bot.Cfg.IdleGames.Count} game(s)" : "your games";
+				Said idle = !string.IsNullOrWhiteSpace(Bot.CustomName)
+					? new Said("{0}", Bot.CustomName + (Bot.Cfg.IdleGames.Count > 0 ? $" (+{Bot.Cfg.IdleGames.Count})" : ""))
+					: Bot.Cfg.IdleGames.Count > 0 ? new Said("{0} game(s)", Bot.Cfg.IdleGames.Count) : new Said("your games");
 
 				Log.Info(Bot.HumanOwned
 					? new Said("no cards left - human mode carries on{0}", been)

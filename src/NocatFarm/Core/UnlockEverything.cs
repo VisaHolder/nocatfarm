@@ -122,7 +122,7 @@ public static class UnlockEverything {
 			await Breathe().ConfigureAwait(false);
 		}
 
-		string trouble = failed > 0 ? $", {failed} game(s) refused" : "";
+		Said trouble = failed > 0 ? new Said(", {0} game(s) refused", failed) : default;
 
 		// "done - 0 achievement(s) unlocked" is a true sentence that reads as a broken feature. On an account
 		// whose library is mostly multiplayer it is the ORDINARY answer: Steam awards those achievements

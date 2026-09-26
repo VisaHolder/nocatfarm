@@ -53,7 +53,24 @@ Copy-Item (Join-Path $root 'README.md') $stage -Force
 # --- zip -----------------------------------------------------------------------------------------------
 $zip = Join-Path $dist "nocat.farm-v$version.zip"
 if (Test-Path $zip) { Remove-Item $zip -Force }
-Compress-Archive -Path $stage -DestinationPath $zip -CompressionLevel Optimal
+
+# Every entry is named by hand. On Windows PowerShell 5.1 both Compress-Archive and ZipFile.CreateFromDirectory
+# write "nocat.farm\wwwroot\app.js" with backslashes, which the zip format doesn't allow - Windows copes, but
+# unzip warns and other tools can flatten the folders. Forward slashes, with nocat.farm/ at the top.
+Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+$stream = [System.IO.File]::Open($zip, [System.IO.FileMode]::CreateNew)
+$archive = New-Object System.IO.Compression.ZipArchive($stream, [System.IO.Compression.ZipArchiveMode]::Create)
+
+try {
+    Get-ChildItem $stage -Recurse -File | ForEach-Object {
+        $name = 'nocat.farm/' + $_.FullName.Substring($stage.Length + 1).Replace('\', '/')
+        [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $_.FullName, $name,
+            [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null
+    }
+} finally {
+    $archive.Dispose()
+    $stream.Dispose()
+}
 
 $size = [math]::Round((Get-Item $zip).Length / 1MB, 1)
 Write-Host "Done  ->  $zip  (${size} MB)" -ForegroundColor Green

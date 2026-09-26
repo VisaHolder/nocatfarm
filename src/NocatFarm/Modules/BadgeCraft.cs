@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using NocatFarm.Core;
 
 namespace NocatFarm.Modules;
@@ -90,45 +91,54 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 	/// so leaving them shut quietly weakens the crafting this module exists to do.
 	/// </summary>
 	private async Task<int> UnpackBoostersAsync(CancellationToken ct) {
-		string? inv = await Bot.Web.GetAsync(
-			new Uri(WebSession.Community, $"/inventory/{Bot.SteamId}/753/6?l=english&count=200"), ct).ConfigureAwait(false);
+		// All of it, not the first page. Asking for 200 items meant that on an account holding 914 Steam items -
+		// cards, backgrounds, emoticons - a booster pack anywhere past the two-hundredth was never seen at all.
+		InventoryContents? inventory = await Inventory.ReadAsync(Bot, 753, "6", ct).ConfigureAwait(false);
 
-		if (inv == null) {
+		if (inventory == null) {
 			return 0;
 		}
 
 		int opened = 0;
 
-		// Descriptions carry the type; assets carry the id. Match them up by classid.
-		foreach (string classId in BoosterClassIds(inv)) {
-			// market_fee_app depends only on classId, so read it once per class, not once per asset. Match the
-			// FULL "classid":"<id>" including the closing quote - without it, classid 123 also matches 1234, so we
-			// would read the appid from the wrong description, POST the wrong appid, and Steam refuses the unpack.
-			int at = inv.IndexOf("\"classid\":\"" + classId + "\"", StringComparison.Ordinal);
-			string? appId = at < 0 ? null : Json.Str(inv[at..], "market_fee_app");
-
-			if (appId == null) {
+		// Read as data rather than walked as text. The old version searched the raw JSON for a classid and walked
+		// backwards to the nearest "assetid" - but the same classid also appears in the descriptions section, and
+		// walking back from there landed on whichever asset happened to be listed last.
+		foreach (JsonElement asset in inventory.Assets) {
+			if (inventory.DescriptionOf(asset) is not { } description) {
 				continue;
 			}
 
-			foreach (ulong assetId in AssetIdsFor(inv, classId)) {
-				ct.ThrowIfCancellationRequested();
+			string type = InventoryContents.Text(description, "type");
+			string name = InventoryContents.Text(description, "name");
 
-				string? body = await Bot.Web.PostAsync(
-					new Uri(WebSession.Community, "/my/ajaxunpackbooster/"),
-					new Dictionary<string, string>(StringComparer.Ordinal) {
-						["appid"] = appId,
-						["communityitemid"] = assetId.ToString()
-					},
-					new Uri(WebSession.Community, "/my/inventory/"), ct).ConfigureAwait(false);
+			if (!type.Contains("Booster Pack", StringComparison.Ordinal) && !name.EndsWith("Booster Pack", StringComparison.Ordinal)) {
+				continue;
+			}
 
-				if (body != null && !body.Contains("\"success\":false", StringComparison.Ordinal)) {
-					opened++;
-				}
+			string appId = InventoryContents.Text(description, "market_fee_app");
+			string assetId = InventoryContents.Text(asset, "assetid");
 
-				if (!await Sleep(Rng.Seconds(UnpackGapLowSeconds, UnpackGapHighSeconds), ct).ConfigureAwait(false)) {
-					return opened;
-				}
+			if ((appId.Length == 0) || (assetId.Length == 0)) {
+				continue;
+			}
+
+			ct.ThrowIfCancellationRequested();
+
+			string? body = await Bot.Web.PostAsync(
+				new Uri(WebSession.Community, "/my/ajaxunpackbooster/"),
+				new Dictionary<string, string>(StringComparer.Ordinal) {
+					["appid"] = appId,
+					["communityitemid"] = assetId
+				},
+				new Uri(WebSession.Community, "/my/inventory/"), ct).ConfigureAwait(false);
+
+			if (body != null && !body.Contains("\"success\":false", StringComparison.Ordinal)) {
+				opened++;
+			}
+
+			if (!await Sleep(Rng.Seconds(UnpackGapLowSeconds, UnpackGapHighSeconds), ct).ConfigureAwait(false)) {
+				return opened;
 			}
 		}
 
@@ -137,62 +147,6 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		}
 
 		return opened;
-	}
-
-	private static IEnumerable<string> BoosterClassIds(string inventoryJson) {
-		HashSet<string> ids = [];
-		int i = 0;
-
-		while (true) {
-			int at = inventoryJson.IndexOf("Booster Pack", i, StringComparison.Ordinal);
-
-			if (at < 0) {
-				return ids;
-			}
-
-			i = at + 12;
-
-			// Walk back to this description's classid.
-			int classAt = inventoryJson.LastIndexOf("\"classid\":\"", at, StringComparison.Ordinal);
-
-			if (classAt < 0) {
-				continue;
-			}
-
-			int start = classAt + "\"classid\":\"".Length;
-			int end = inventoryJson.IndexOf('"', start);
-
-			if (end > start) {
-				ids.Add(inventoryJson[start..end]);
-			}
-		}
-	}
-
-	private static IEnumerable<ulong> AssetIdsFor(string inventoryJson, string classId) {
-		List<ulong> assets = [];
-		int i = 0;
-
-		while (true) {
-			int at = inventoryJson.IndexOf("\"classid\":\"" + classId + "\"", i, StringComparison.Ordinal);
-
-			if (at < 0) {
-				return assets;
-			}
-
-			i = at + classId.Length;
-			int idAt = inventoryJson.LastIndexOf("\"assetid\":\"", at, StringComparison.Ordinal);
-
-			if (idAt < 0) {
-				continue;
-			}
-
-			int start = idAt + "\"assetid\":\"".Length;
-			int end = inventoryJson.IndexOf('"', start);
-
-			if ((end > start) && ulong.TryParse(inventoryJson[start..end], out ulong asset) && !assets.Contains(asset)) {
-				assets.Add(asset);
-			}
-		}
 	}
 
 	/// <summary>

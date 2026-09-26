@@ -565,7 +565,7 @@ function renderAccounts() {
           `<div class="row"><span class="k">${esc(m.Name)}</span><span class="v" title="${esc(m.Status)}">${esc(m.Status)}</span></div>`).join('')}
       </div>
       <div class="actions">
-        ${b.InventoryValue > 0 || b.InventoryReady ? `<button data-tip="${esc(t("Read this account's inventory again. Prices are kept for a day, so only what changed is looked up."))}" onclick="refreshInventory('${esc(b.Name)}')">${esc(t('Value'))}</button>` : ''}
+        ${b.InventoryValue > 0 || b.InventoryReady ? `<button data-tip="${esc(t("Read this account's inventory again. Only prices that have gone stale are looked up, so it's quick."))}" onclick="refreshInventory('${esc(b.Name)}')">${esc(t('Value'))}</button>` : ''}
         ${b.Online
           ? (b.Paused
             ? `<button data-tip="${esc(t('Start playing, farming and commenting again.'))}" data-act="resume" data-bot="${esc(b.Name)}">${esc(t('Resume'))}</button>`
@@ -1786,6 +1786,15 @@ function recentUnlocks() {
   return `<ul class="unlocks">${rows}</ul>`;
 }
 
+// Why the pacer leaves a game out. These arrive from the server as data, so they are spelled out here as literal
+// t() calls - that keeps them translating live when the language changes, and lets the translation check see them.
+const pacerWhy = (why) => ({
+  'on your never list': t('on your never list'),
+  'the main game - left alone': t('the main game - left alone'),
+  'not on your allow list': t('not on your allow list'),
+  'not enough hours yet': t('not enough hours yet'),
+}[why] || t(why));
+
 function pacerTable() {
   if (pacerRows === null) return `<p class="muted small">${esc(t('Reading what it has done so far…'))}</p>`;
   if (!pacerRows.length) return `<p class="muted small empty">${esc(t('Nothing tracked yet. It starts counting the first minute a game is running.'))}</p>`;
@@ -1795,19 +1804,46 @@ function pacerTable() {
   // A game only ever earns while it is being PLAYED, so a table listing sixty-odd owned games was sixty-odd rows
   // of "not read yet / when it next plays" wrapped around the single row that meant anything. The one fact worth
   // stating is which game is earning right now and how far along it is; everything else is answered by `cheevo`.
-  const live = pacerRows.find((g) => g.Running && !g.Blocked);
+  const running = pacerRows.filter((g) => g.Running);
+  const live = running.find((g) => !g.Blocked);
 
   if (!live) {
-    return `<p class="muted small">${esc(t('Nothing is earning right now — a game only earns while this account is playing it.'))}</p>`;
+    // Playing something the settings leave out is not the same as playing nothing, and saying "nothing is
+    // earning - a game only earns while it is being played" to an account that is visibly playing reads as broken.
+    const out = running.find((g) => g.Blocked);
+
+    return out
+      ? `<p class="muted small">${tf('Playing {0} — left out: {1}.', `<b>${esc(GAME_NAMES[out.App] || out.Game)}</b>`, esc(pacerWhy(out.Why)))}</p>`
+      : `<p class="muted small">${esc(t('Nothing is earning right now — a game only earns while this account is playing it.'))}</p>`;
   }
 
-  const name = esc(GAME_NAMES[live.App] || live.Game);
+  const name = `<b>${esc(GAME_NAMES[live.App] || live.Game)}</b>`;
   const hrs = live.PlayedMinutes >= 60 ? (live.PlayedMinutes / 60).toFixed(1) + t('h') : live.PlayedMinutes + t('m');
-  const done = live.Total > 0
-    ? tf('{0} of {1} done', live.Unlocked, live.Total)
-    : t('reading what it has so far');
+  const done = esc(tf('{0} of {1} done', live.Unlocked, live.Total));
 
-  return `<p class="earning">${tf('Earning in {0} — {1} played, {2}.', `<b>${name}</b>`, hrs, done)}</p>`;
+  // "Earning" only when there is something left to earn.
+  //
+  // Every running game used to be "Earning in X", whether it had fifty to go, had hit the ceiling, was already
+  // finished, or had no achievements at all - so an account playing only finished games looked broken rather
+  // than done. The server says which of those it is, from the last time it actually read Steam.
+  switch (live.State) {
+    case 'None':
+      return `<p class="muted small">${tf('Playing {0} — it has no achievements to earn.', name)}</p>`;
+    case 'Complete':
+      return `<p class="muted small">${tf('Playing {0} — every achievement is already done ({1}).', name, `${live.Unlocked}/${live.Total}`)}</p>`;
+    case 'SteamOnly':
+      return `<p class="muted small">${tf('Playing {0} — {1}; the rest can only be awarded by Steam itself.', name, done)}</p>`;
+    case 'Capped': {
+      const setting = esc(tSetting({ Name: 'AchievementMaxCompletionPct', Label: 'Finish no more than' }, 'label'));
+      return `<p class="muted small">${tf('Playing {0} — {1}, which is your {2}% ceiling, so it has stopped here. Raise “{3}” to let it carry on.', name, done, live.CeilingPercent, setting)}</p>`;
+    }
+    case 'NeedsHours':
+      return `<p class="earning">${tf('Earning in {0} — {1} played, {2}. The next ones need more hours in it first.', name, hrs, done)}</p>`;
+  }
+
+  const progress = live.Total > 0 ? done : esc(t('reading what it has so far'));
+
+  return `<p class="earning">${tf('Earning in {0} — {1} played, {2}.', name, hrs, progress)}</p>`;
 }
 
 function sectionIntro(section, values) {
@@ -2557,11 +2593,23 @@ function syncWelcome() {
 
 // One timer, re-armed only when the interval actually changes.
 function armPolling(seconds) {
+  if (document.hidden) return;   // see the visibilitychange handler below
   if (pollTimer && pollSeconds === seconds) return;
   if (pollTimer) clearInterval(pollTimer);
   pollSeconds = seconds;
   pollTimer = setInterval(refresh, Math.max(1, seconds) * 1000);
 }
+
+// A tab nobody is looking at has no reason to ask every few seconds - left open in the background it was 17,000
+// requests a day that nobody read. Stop while hidden; catch up the moment it is looked at again (refresh re-arms).
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = null;
+  } else {
+    refresh();
+  }
+});
 
 async function refresh() {
   try {
