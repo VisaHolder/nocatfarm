@@ -110,7 +110,7 @@ public sealed class RefundGuard(Bot bot) {
 					continue;
 				}
 
-				if (owned.TryGetValue(game.AppId, out AppOwnership own) && own.Paid && ((DateTime.UtcNow - own.Since).TotalDays < days)) {
+				if (owned.TryGetValue(game.AppId, out AppOwnership own) && own.Refundable(bot.Cfg.ProtectGiftedGames) && ((DateTime.UtcNow - own.Since).TotalDays < days)) {
 					held.Add(game.AppId);
 				}
 			}

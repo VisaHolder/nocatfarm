@@ -51,7 +51,10 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 
 	/// <summary>What the store said each entry is. Shared by every account - the answer is the same for all of
 	/// them, and asking once per account per pass is how the store API gets rate-limited.</summary>
-	private static readonly Dictionary<string, (bool Worth, string Name)> Verdicts = new(StringComparer.Ordinal);
+	private static readonly Dictionary<string, (bool Worth, string Name, bool Dlc, uint Base)> Verdicts = new(StringComparer.Ordinal);
+
+	/// <summary>DLC giveaways left alone this run because "...free DLC too" is off - said once each, not every pass.</summary>
+	private readonly HashSet<string> _dlcNoted = [];
 
 	/// <summary>Store lookups, one at a time and a little apart, whichever account is asking.</summary>
 	private static readonly SemaphoreSlim StoreGate = new(1, 1);
@@ -87,7 +90,10 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				return;
 			}
 
-			_seen.UnionWith(saved.Seen ?? []);
+			// Store giveaways ("g/") are re-judged after every start rather than remembered as a no: they're a short
+			// list, they don't last, and a DLC turned down while "...free DLC too" was off has to be takeable the
+			// moment it's switched on.
+			_seen.UnionWith((saved.Seen ?? []).Where(static t => !t.StartsWith("g/", StringComparison.Ordinal)));
 
 			foreach ((string token, SavedFailure f) in saved.Failed ?? []) {
 				_failed[token] = (f.Tries, new DateTime(f.NotBeforeTicks, DateTimeKind.Utc));
@@ -113,6 +119,8 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			Log.Debug(new Said("couldn't save the free-game state: {0}", e.Message), Bot.Name);
 		}
 	}
+
+	private HumanGate? _gate;
 
 	protected override async Task RunAsync(CancellationToken ct) {
 		Load();
@@ -149,6 +157,17 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				continue;
 			}
 
+			// Nobody sees a game being added, so any time of day - just not the moment it signs in.
+			_gate ??= HumanGate.Quiet(Bot);
+
+			if (!_gate.Open) {
+				if (!await Sleep(TimeSpan.FromMinutes(2), ct).ConfigureAwait(false)) {
+					return;
+				}
+
+				continue;
+			}
+
 			try {
 				await PicsWatch.PollAsync(Bot, ct).ConfigureAwait(false);
 				int added = await CheckAsync(true, ct).ConfigureAwait(false);
@@ -175,7 +194,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 					return;
 				}
 
-				if (!Bot.IsOnline || !Bot.Web.Ready || Bot.Paused) {
+				if (!Bot.IsOnline || !Bot.Web.Ready || Bot.Paused || !_gate.Open) {
 					continue;
 				}
 
@@ -260,7 +279,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				break;
 			}
 
-			(bool Worth, string Name) verdict;
+			(bool Worth, string Name, bool Dlc, uint Base) verdict;
 			bool known;
 
 			lock (Verdicts) {
@@ -270,7 +289,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			if (!known) {
 				// Every find, from the list or the change feed, has to be a paid game on a 100% discount. Anything
 				// else free is a free-to-play game, a demo-like free edition of a paid one, or not being given away.
-				(bool? told, string called) = app ? await AppWorthwhileAsync(id, true, ct).ConfigureAwait(false)
+				(bool? told, string called, bool dlc, uint baseGame) = app ? await AppWorthwhileAsync(id, true, ct).ConfigureAwait(false)
 					: pics ? await AppWorthwhileAsync(picsApp[id], true, ct).ConfigureAwait(false)
 					: await WorthwhileAsync(id, ct).ConfigureAwait(false);
 
@@ -280,14 +299,61 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 					continue;
 				}
 
-				verdict = (told.Value, called);
+				verdict = (told.Value, called, dlc, baseGame);
 
 				lock (Verdicts) {
 					Verdicts[token] = verdict;
 				}
 			}
 
-			(bool worth, string name) = verdict;
+			(bool worth, string name, bool isDlc, uint baseApp) = verdict;
+
+			// A DLC given away is only taken when the account is set to - and it isn't written off when it's not,
+			// so switching the setting on picks it up on the next pass.
+			if (worth && isDlc && !Bot.Cfg.ClaimFreeDlc) {
+				if (_dlcNoted.Add(token)) {
+					Log.Debug(new Said("{0} is a free DLC - left alone (\"...free DLC too\" is off)", name), Bot.Name);
+				}
+
+				continue;
+			}
+
+			// Steam only hands a DLC to an account that owns its game ("Supporter Pack" free, the game itself not).
+			// Asking anyway just earns a refusal. If the game is free right now too - free to play, or itself given
+			// away - and the account is set to, it takes the game first and then the DLC. Otherwise it doesn't ask,
+			// and doesn't write the DLC off either, since owning the game later makes it takeable.
+			if (worth && isDlc && (baseApp != 0) && (Bot.Library.Find(baseApp) is not { SharedFrom: 0 })) {
+				bool gotBase = false;
+
+				if (Bot.Cfg.ClaimFreeDlcBase) {
+					(bool? baseFree, string baseName, bool baseGiveaway) = await FreeNowAsync(baseApp, ct).ConfigureAwait(false);
+
+					if (baseFree == true) {
+						_claims.Add(DateTime.UtcNow);
+						uint baseSub = baseGiveaway ? await FreeSubAsync(baseApp, ct).ConfigureAwait(false) : 0;
+						ClaimResult first = baseSub != 0 ? await AddPackageAsync(Bot, baseSub, ct).ConfigureAwait(false)
+							: await AddAppAsync(Bot, baseApp, ct).ConfigureAwait(false);
+
+						if (first.Added || (first.Detail == EPurchaseResultDetail.AlreadyPurchased)) {
+							gotBase = true;
+							Log.Good(new Said("claimed {0} (free right now) so its free DLC {1} can come too", baseName, name), Bot.Name);
+
+							// A person adds the game, then the DLC a moment later.
+							await Task.Delay(Rng.Seconds(4, 12), ct).ConfigureAwait(false);
+						} else {
+							Log.Debug(new Said("couldn't claim {0} for its DLC - {1}", baseName, first.Reason), Bot.Name);
+						}
+					}
+				}
+
+				if (!gotBase) {
+					if (_dlcNoted.Add(token)) {
+						Log.Debug(new Said("{0} is free, but only to owners of {1} - this account doesn't have it", name, GameNames.Of(baseApp)), Bot.Name);
+					}
+
+					continue;
+				}
+			}
 
 			if (!worth) {
 				_seen.Add(token);   // a permanent "no" - free-to-play, DLC, demo, unreleased
@@ -310,6 +376,13 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				added++;
 				_claimed++;
 				Log.Reward(new Said("claimed {0}", name), Bot.Name);
+
+				// A person adds a free game or two and gets on with their day; the rest wait for a later pass.
+				if (Bot.Cfg.LegitMode && (added >= 2)) {
+					_gate?.Space(20, 120);
+
+					break;
+				}
 			} else if (result.RateLimited) {
 				// Pressing on only lengthens it. Steam's own wording is "try again in an hour".
 				_quietUntil = DateTime.UtcNow.AddMinutes(Rng.Next(62, 80));
@@ -353,25 +426,25 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 	/// edition leaves the game at full price. DLC, demos and unreleased titles are still refused as before.
 	/// </remarks>
 	/// <returns>Worth null when the store couldn't be asked - which is not the same as a no.</returns>
-	private async Task<(bool? Worth, string Name)> WorthwhileAsync(uint subId, CancellationToken ct) {
+	private async Task<(bool? Worth, string Name, bool Dlc, uint Base)> WorthwhileAsync(uint subId, CancellationToken ct) {
 		string name = "sub " + subId.ToString(CultureInfo.InvariantCulture);
 		string? pkg = await StoreAsync($"https://store.steampowered.com/api/packagedetails?packageids={subId}", ct).ConfigureAwait(false);
 
 		if (pkg == null) {
-			return (null, name);
+			return (null, name, false, 0);
 		}
 
 		name = Json.Str(pkg, "name") ?? name;
 		uint appId = FirstAppId(pkg);
 
 		if (appId == 0) {
-			return (false, name);
+			return (false, name, false, 0);
 		}
 
-		(bool? worth, string game) = await AppWorthwhileAsync(appId, true, ct).ConfigureAwait(false);
+		(bool? worth, string game, bool dlc, uint baseGame) = await AppWorthwhileAsync(appId, true, ct).ConfigureAwait(false);
 
 		// The package's own name reads better in the log ("... Free Starter Edition") than the game's.
-		return (worth, name.StartsWith("sub ", StringComparison.Ordinal) ? game : name);
+		return (worth, name.StartsWith("sub ", StringComparison.Ordinal) ? game : name, dlc, baseGame);
 	}
 
 	/// <summary>
@@ -380,39 +453,82 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 	/// <remarks>
 	/// The store marks a permanently free game "is_free". A paid game given away free-to-keep is not "is_free" -
 	/// it shows its normal price, discounted 100%. That line is exactly what the setting promises: take the
-	/// giveaways, leave the free-to-play shovelware, which is most of the feed. DLC, demos, soundtracks and
-	/// unreleased games are left alone the same way they are for packages.
+	/// giveaways, leave the free-to-play shovelware, which is most of the feed. Demos, soundtracks and unreleased
+	/// games are left alone the same way they are for packages. A DLC on a 100% discount is a real giveaway too
+	/// (a supporter pack marked down from $1.99 to free), so it passes - flagged, and taken only when the account
+	/// has "...free DLC too" on.
 	/// </remarks>
 	/// <returns>Worth null when the store couldn't be asked - which is not the same as a no.</returns>
-	private async Task<(bool? Worth, string Name)> AppWorthwhileAsync(uint appId, bool mustBeGivenAway, CancellationToken ct) {
+	private async Task<(bool? Worth, string Name, bool Dlc, uint Base)> AppWorthwhileAsync(uint appId, bool mustBeGivenAway, CancellationToken ct) {
 		string name = GameNames.Of(appId);
 		string? details = await StoreAsync($"https://store.steampowered.com/api/appdetails?appids={appId}&filters=basic,price_overview", ct).ConfigureAwait(false);
 
 		if (details == null) {
-			return (null, name);
+			return (null, name, false, 0);
 		}
 
 		if (!details.Contains("\"success\":true", StringComparison.Ordinal)) {
-			return (false, name);   // delisted, or not sold here
+			return (false, name, false, 0);   // delisted, or not sold here
 		}
 
 		name = Json.Str(details, "name") ?? name;
 		GameNames.Learn(appId, name);
 
 		string? type = Json.Str(details, "type");
+		bool dlc = (type != null) && type.Equals("dlc", StringComparison.OrdinalIgnoreCase);
 
-		if ((type != null) && !type.Equals("game", StringComparison.OrdinalIgnoreCase)) {
-			return (false, name);
+		if ((type != null) && !dlc && !type.Equals("game", StringComparison.OrdinalIgnoreCase)) {
+			return (false, name, false, 0);
+		}
+
+		// A DLC names its game: "fullgame":{"appid":"3674980",...}.
+		uint baseGame = 0;
+		int full = dlc ? details.IndexOf("\"fullgame\"", StringComparison.Ordinal) : -1;
+
+		if (full >= 0) {
+			System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(details[full..], "\"appid\"\\s*:\\s*\"?(\\d+)");
+			_ = m.Success && uint.TryParse(m.Groups[1].Value, NumberStyles.None, CultureInfo.InvariantCulture, out baseGame);
 		}
 
 		if (details.Contains("\"coming_soon\":true", StringComparison.OrdinalIgnoreCase)) {
-			return (false, name);
+			return (false, name, dlc, baseGame);
 		}
 
 		bool freeToPlay = details.Contains("\"is_free\":true", StringComparison.Ordinal);
 		bool givenAway = details.Contains("\"discount_percent\":100", StringComparison.Ordinal);
 
-		return (mustBeGivenAway ? givenAway : !freeToPlay || givenAway, name);
+		// A DLC counts only as a marked-down giveaway - a permanently free one is a free add-on, not a giveaway.
+		return (dlc || mustBeGivenAway ? givenAway : !freeToPlay || givenAway, name, dlc, baseGame);
+	}
+
+	/// <summary>
+	/// Can this game be had for nothing right now - free to play, freeware, or a paid game on a 100% discount? For a
+	/// DLC's base game: the one case where a free-to-play game is taken on purpose, because the DLC needs it.
+	/// </summary>
+	/// <returns>Free null when the store couldn't be asked; Giveaway when it's a discount (claimed through its free
+	/// package) rather than free for good (asked for over the connection).</returns>
+	private async Task<(bool? Free, string Name, bool Giveaway)> FreeNowAsync(uint appId, CancellationToken ct) {
+		string name = GameNames.Of(appId);
+		string? details = await StoreAsync($"https://store.steampowered.com/api/appdetails?appids={appId}&filters=basic,price_overview", ct).ConfigureAwait(false);
+
+		if (details == null) {
+			return (null, name, false);
+		}
+
+		if (!details.Contains("\"success\":true", StringComparison.Ordinal)) {
+			return (false, name, false);
+		}
+
+		name = Json.Str(details, "name") ?? name;
+		GameNames.Learn(appId, name);
+
+		if (details.Contains("\"coming_soon\":true", StringComparison.OrdinalIgnoreCase)) {
+			return (false, name, false);
+		}
+
+		bool giveaway = details.Contains("\"discount_percent\":100", StringComparison.Ordinal);
+
+		return (giveaway || details.Contains("\"is_free\":true", StringComparison.Ordinal), name, giveaway);
 	}
 
 	/// <summary>
@@ -643,7 +759,8 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			new Uri(WebSession.Store, $"/freelicense/addfreelicense/{subId.ToString(CultureInfo.InvariantCulture)}"),
 			form,
 			new Uri(WebSession.Store, $"/app/{subId}"),
-			ct).ConfigureAwait(false);
+			ct,
+			errorVerdict: true).ConfigureAwait(false);
 
 		if (body == null) {
 			return new ClaimResult(false, EPurchaseResultDetail.Timeout, new Said("no usable answer from Steam"));

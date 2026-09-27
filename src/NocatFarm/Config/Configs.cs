@@ -244,9 +244,15 @@ public sealed class BotConfig {
 	public List<uint> BlacklistedGames { get; set; } = [];
 	public bool SkipUnplayedGames { get; set; }
 	public bool SkipRefundableGames { get; set; }
+
+	/// <summary>Refund protection covers games people gift this account too - the giver can still get their money back.</summary>
+	public bool ProtectGiftedGames { get; set; } = true;
 	public int RefundHoldDays { get; set; } = 14;
 	/// <summary>When a human-mode account farms cards - <see cref="Modules.FarmWhen"/>. The day's sittings by default.</summary>
 	public int FarmCardsWhen { get; set; }
+
+	/// <summary>FarmCardsWhen = mixed: roughly this share of the day's sittings farm cards.</summary>
+	public int CardSittingsPct { get; set; } = 40;
 
 	/// <summary>Retired: only read so an old "farm only while asleep" carries over to <see cref="FarmCardsWhen"/>.</summary>
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -307,6 +313,12 @@ public sealed class BotConfig {
 
 	// ── free games & badges ──
 	public bool ClaimFreeGames { get; set; }
+
+	/// <summary>Also take DLC that's on a 100% discount (a paid add-on given away), not just full games.</summary>
+	public bool ClaimFreeDlc { get; set; }
+
+	/// <summary>A free DLC whose game the account lacks: take the game first when it's free right now too.</summary>
+	public bool ClaimFreeDlcBase { get; set; } = true;
 	public bool CraftBadges { get; set; }
 	public bool UnpackBoosterPacks { get; set; }
 	public string BoosterGames { get; set; } = "";
@@ -421,8 +433,29 @@ public sealed class BotConfig {
 	/// <summary>Hold every reaction - trades, replies, friend requests - until human mode says it is awake.</summary>
 	public bool ActOnlyWhileAwake { get; set; } = true;
 
+	/// <summary>Human mode: things nobody watches (badges, free games, boosters...) also wait for the waking day.</summary>
+	public bool QuietThingsWaitForDay { get; set; }
+
+	/// <summary>Human mode: after waking or signing in, how long before things other people see.</summary>
+	public int WakeDelayMinMinutes { get; set; } = 10;
+	public int WakeDelayMaxMinutes { get; set; } = 90;
+
+	/// <summary>Human mode: after signing in, how long before things nobody watches.</summary>
+	public int QuietDelayMinMinutes { get; set; } = 5;
+	public int QuietDelayMaxMinutes { get; set; } = 60;
+
+	/// <summary>Human mode: how far into a break its Away / offline status kicks in.</summary>
+	public int BreakAwayAfterMinMinutes { get; set; } = 2;
+	public int BreakAwayAfterMaxMinutes { get; set; } = 10;
+
+	/// <summary>Human mode: answer one trade offer per look, the rest on later looks.</summary>
+	public bool OneTradeAtATime { get; set; } = true;
+
 	// ── trades ──
 	public bool AcceptDonations { get; set; } = true;
+
+	/// <summary>Human mode: donations still go through at night, while everything else waits for morning.</summary>
+	public bool DonationsWhileAsleep { get; set; }
 	public bool AcceptGifts { get; set; } = true;
 	public bool AcceptGiftedGames { get; set; } = true;
 	public int GiftDelayMinMinutes { get; set; } = 2;

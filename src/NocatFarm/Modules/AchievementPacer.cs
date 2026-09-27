@@ -161,6 +161,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		}
 	}
 
+	/// <summary>When each running game's current sitting may first unlock something (10-30 minutes in).</summary>
+	private readonly Dictionary<uint, DateTime> _sittingSince = [];
+
 	private async Task StepAsync(CancellationToken ct) {
 		if (!_loaded) {
 			_loaded = true;
@@ -207,7 +210,20 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 		int ceilingNow = Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100);
 
+		// Unlock times are public. A human-mode account that's asleep (a hunt or drops run into the night) keeps the
+		// minutes but unlocks nothing until morning.
+		bool mayUnlock = !Bot.Cfg.LegitMode || HumanMode.AwakeFor(Bot);
+
+		// Each game's current sitting: an achievement doesn't pop a minute after launching, whatever was played before.
+		foreach (uint gone in _sittingSince.Keys.Where(k => !running.Contains(k)).ToList()) {
+			_sittingSince.Remove(gone);
+		}
+
 		foreach (uint app in running) {
+			if (!_sittingSince.ContainsKey(app)) {
+				_sittingSince[app] = now + Rng.Minutes(10, 30);   // the earliest this sitting may unlock anything
+			}
+
 			GameState g = StateFor(app);
 			Profile prof = ProfileFor(app);
 
@@ -229,13 +245,16 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				if (Bot.Grinding && (Bot.GrindGame == app) && (_grindReset != app)) {
 					_grindReset = app;
 
-					if (g.NextAllow > now) {
-						g.NextAllow = now;
+					// Soon, but not the second it starts - a grind's first unlock lands 8-30 minutes in.
+					DateTime soon = now + Rng.Minutes(8, 30);
+
+					if (g.NextAllow > soon) {
+						g.NextAllow = soon;
 					}
 				}
 			}
 
-			if (!Due(g, prof)) {
+			if (!mayUnlock || (now < _sittingSince[app]) || !Due(g, prof)) {
 				continue;
 			}
 

@@ -34,6 +34,9 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 
 	public int CraftedThisRun => _crafted;
 
+	private DateTime _nextSweep = DateTime.MinValue;
+	private HumanGate? _gate;
+
 	protected override async Task RunAsync(CancellationToken ct) {
 		while (!ct.IsCancellationRequested) {
 			// Either switch runs the daily pass. Opening booster packs used to happen only inside a badge-crafting
@@ -69,13 +72,29 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 				continue;
 			}
 
+			// Not the moment it signs in, and not again on every reconnect - the due time lives on the module, not in
+			// this loop.
+			if (_nextSweep == DateTime.MinValue) {
+				_nextSweep = DateTime.UtcNow + Rng.Minutes(20, 90);
+			}
+
+			_gate ??= HumanGate.Quiet(Bot);
+
+			if ((DateTime.UtcNow < _nextSweep) || !_gate.Open) {
+				if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
+					return;
+				}
+
+				continue;
+			}
+
 			TimeSpan wait = Rng.Minutes(SweepLowHours * 60, SweepHighHours * 60);
 
 			try {
 				int made = await SweepAsync(ct).ConfigureAwait(false);
 
 				if (made < 0) {
-					wait = TimeSpan.FromHours(BackoffHours);   // Steam refused - back off rather than knock again
+					wait = Rng.Minutes(BackoffHours * 50, BackoffHours * 80);   // Steam refused - back off rather than knock again
 				}
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
@@ -86,6 +105,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			// A minute at a time, so switching either setting takes effect straight away rather than after the day's
 			// wait - turning badge crafting on in booster-only mode used to sit out the full 22-26 hours first.
 			DateTime due = DateTime.UtcNow + wait;
+			_nextSweep = due;
 			bool crafting = Bot.Cfg.CraftBadges;
 
 			while (DateTime.UtcNow < due) {
@@ -203,6 +223,8 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		int pages = Math.Min(MaxBadgePages, CardFarmer.ParseMaxPages(html));
 
 		for (int page = 2; page <= pages; page++) {
+			await Task.Delay(Rng.Seconds(3, 10), ct).ConfigureAwait(false);   // a person pages through, not all at once
+
 			string? more = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/badges/?l=english&p={page}"), ct).ConfigureAwait(false);
 
 			if (more == null) {

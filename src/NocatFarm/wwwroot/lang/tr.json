@@ -1160,477 +1160,565 @@
     "trade offer #{0} is no longer a fair card swap - {1}; left alone": "takas teklifi #{0} artık adil bir kart takası değil - {1}; bırakıldı",
     "trade offer #{0} was accepted but needs confirming from the email Steam sent": "takas teklifi #{0} kabul edildi ama Steam'in gönderdiği e-postadan onaylanması gerekiyor",
     "got the last card from {0} - playing on for about {1}, then a break": "{0} oyunundan son kart alındı - yaklaşık {1} daha oynayıp mola verecek",
-    "finished - logging out after this sitting": "bitti - bu oturumdan sonra çıkış yapacak"
+    "finished - logging out after this sitting": "bitti - bu oturumdan sonra çıkış yapacak",
+    "{0} market listing(s) are waiting - confirm them in the Steam app on your phone": "{0} pazar ilanı bekliyor - telefonundaki Steam uygulamasından onayla",
+    "waiting for the account's day": "hesabın gününü bekliyor",
+    "Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated.": "İnsan modu: inandırıcı bir gün yaşar - uyur, mola verir, oyunları tek tek oynar ve takas etmeden ya da yanıtlamadan önce bir insan kadar bekler. Daha yavaş, ama hiçbir yanı otomatik görünmez.",
+    "Tick the ones you play on yourself - they come across in human mode. The rest farm at full speed.": "Kendin oynadıklarını işaretle - insan modunda gelirler. Kalanlar tam hızda farm yapar.",
+    "Quick setup": "Hızlı kurulum",
+    "Add or import an account and go - the defaults are sensible. About a minute.": "Bir hesap ekle ya da içe aktar ve başla - varsayılanlar mantıklı. Yaklaşık bir dakika.",
+    "Full tour": "Tam tur",
+    "Every feature explained, and where the fine-tuning lives. A few minutes.": "Her özellik açıklamalı, ve ince ayarların yeri. Birkaç dakika.",
+    "You can skip this and come back from the Overview page.": "Bunu atlayıp Genel bakış sayfasından geri dönebilirsin.",
+    "Fine-tuning, when you want it": "İnce ayar, istediğinde",
+    "Settings starts with the everyday switches. Tick {0} at the top of Settings for the rest:": "Ayarlar önce günlük anahtarları gösterir. Kalanı için Ayarlar'ın üstündeki {0} kutusunu işaretle:",
+    "Show advanced": "Gelişmişleri göster",
+    "{0} - how long it waits after waking before it trades or replies, when a break turns it Away, whether behind-the-scenes things wait for its day, one trade at a time.": "{0} - uyandıktan sonra takas ya da yanıt öncesi ne kadar bekler, bir mola onu ne zaman Uzakta yapar, arka plan işleri onun gününü bekler mi, tek seferde bir takas.",
+    "Human mode timings": "İnsan modu zamanlamaları",
+    "{0} - the order it farms in, sittings, hours a day, how long it keeps playing after the last card.": "{0} - farm sırası, oturumlar, günlük saat, son karttan sonra ne kadar oynamaya devam eder.",
+    "Card farming detail": "Kart farm ayrıntıları",
+    "{0} - its port, a password, the tray, log files.": "{0} - portu, bir şifre, sistem tepsisi, günlük dosyaları.",
+    "The dashboard itself": "Panelin kendisi",
+    "Type {0} in the Console to read about any one setting. Plugins go in the {1} folder - PLUGINS.md on GitHub shows how to write one.": "Herhangi bir ayarı okumak için Konsol'a {0} yaz. Eklentiler {1} klasörüne gider - nasıl yazılacağı GitHub'daki PLUGINS.md'de.",
+    "What kind of account is it?": "Bu ne tür bir hesap?",
+    "This picks the right settings for it. Anything can be changed later, per account.": "Bu, ona uygun ayarları seçer. Her şey sonradan hesap başına değiştirilebilir.",
+    "My main - I play on it": "Ana hesabım - üzerinde oynuyorum",
+    "A spare or farm account": "Yedek ya da farm hesabı",
+    "Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.": "Robot modu: kart farmlar ve oyunları gece gündüz tam hızda açık tutar. Kimsenin bakmadığı hesaplar için en iyisi.",
+    "I also sign into it from my own Steam app": "Kendi Steam uygulamamdan da giriş yapıyorum",
+    "Then nocat.farm never changes its online status - if it did, Steam would sign your own client out of Friends and Chat.": "O zaman nocat.farm çevrimiçi durumunu asla değiştirmez - değiştirirse Steam kendi istemcini Arkadaşlar ve Sohbet'ten çıkarır.",
+    "Importing several? You pick which ones on the next step.": "Birden çok mu aktarıyorsun? Hangilerini bir sonraki adımda seçersin.",
+    "Pick one first": "Önce birini seç",
+    "Open its Steam store page": "Steam mağaza sayfasını aç",
+    "free items: {0}": "ücretsiz eşyalar: {0}",
+    "{0} card(s) - farmed in some of its sittings, between its usual games": "{0} kart - bazı oturumlarda, her zamanki oyunların arasında farmlanır",
+    "recent licence: package {0}, {1}, {2}": "yeni lisans: paket {0}, {1}, {2}",
+    "{0} is a free DLC - left alone (\"...free DLC too\" is off)": "{0} ücretsiz bir DLC - alınmadı (\"...ücretsiz DLC'leri de\" kapalı)",
+    "{0} is free, but only to owners of {1} - this account doesn't have it": "{0} ücretsiz, ama yalnızca {1} sahiplerine - bu hesapta yok",
+    "claimed {0} (free right now) so its free DLC {1} can come too": "{0} alındı (şu an ücretsiz), böylece ücretsiz DLC {1} de gelebilir",
+    "couldn't claim {0} for its DLC - {1}": "DLC'si için {0} alınamadı - {1}"
   },
   "settings": {
     "WebEnabled": {
       "label": "Web panosu",
-      "tip": "Web panosunu sunar. Kapatırsan nocat.farm yalnızca konsolda kalır - her şey yine çalışır, sadece yazarak yönetirsin."
+      "tip": "Web panosunu açar. Kapalıyken de her şey çalışır ve nocat.farm'ı konsola komut yazarak yönetirsin."
     },
     "WebHost": {
       "label": "Şurada dinle",
-      "tip": "Panonun hangi adreslerde yanıt vereceği. 127.0.0.1 yalnızca bu bilgisayar demektir; telefonundan ya da başka bir makineden erişmek için 0.0.0.0 kullan ve önce bir parola koy."
+      "tip": "Panonun hangi adreslerden açılacağı. 127.0.0.1 yalnızca bu bilgisayar demek. Telefonundan veya başka bir bilgisayardan açmak için 0.0.0.0 kullan, ama önce bir parola koy."
     },
     "WebPort": {
       "label": "Bağlantı noktası",
-      "tip": "Panonun bağlantı noktası. 7242'yi başka bir şey kullanıyorsa değiştir."
+      "tip": "Panonun çalıştığı bağlantı noktası. Yalnızca başka bir program bu noktayı zaten kullanıyorsa değiştir."
     },
     "WebPassword": {
       "label": "Pano parolası",
-      "tip": "Panonun parolası. Boş olduğu sürece pano, bu bilgisayardan gelmeyen her bağlantıyı reddeder; böylece Steam hesaplarını yanlışlıkla yayına açamazsın."
+      "tip": "Panonun parolası. Boş kaldığı sürece panoyu yalnızca bu bilgisayar açabilir, yani Steam hesaplarına başka kimse ulaşamaz."
     },
     "OpenDashboardAfterAdd": {
       "label": "Hesap ekledikten sonra panoyu aç",
-      "tip": "Yeni bir hesap eklendiğinde, ayarlayabilmen için paneli tarayıcıda açar. Yeni eklenen bir hesap, ne oynayacağı söylenene kadar kartlarını toplar ve başka hiçbir şey yapmaz; bunun formu uygulama penceresinde yok, yalnızca panelde var. Kapalıysa hatırlamak sana kalır."
+      "tip": "Bir hesap ekledikten sonra panoyu açar, böylece hesabı ayarlayabilirsin. Yeni bir hesap, ne oynayacağını söyleyene kadar yalnızca kart toplar. Bu da panodan yapılır."
     },
     "OpenBrowserOnStart": {
       "label": "Başlangıçta tarayıcıyı aç",
-      "tip": "nocat.farm başladığında panoyu tarayıcında otomatik açar."
+      "tip": "nocat.farm açılınca panoyu tarayıcında açar."
     },
     "Tray": {
       "label": "Tepsi simgesi",
-      "tip": "Bildirim alanına (sağ altta, saatin yanına) bir simge koyar, böylece nocat.farm arka planda çalışabilir. Menü için sağ tıkla."
+      "tip": "Saatin yanında bir simge gösterir, böylece nocat.farm arka planda çalışabilir. Menü için simgeye sağ tıkla."
     },
     "MinimizeToTray": {
       "label": "Tepsiye küçült",
-      "tip": "Konsol penceresini küçültmek onu görev çubuğunda bırakmak yerine tepsiye gizler."
+      "tip": "Pencereyi küçültünce görev çubuğu yerine tepsi simgesine gizlenir."
     },
     "StartMinimized": {
       "label": "Gizli başlat",
-      "tip": "Konsol penceresi gizli olarak, doğrudan tepsiye başlar. Simgeye çift tıklayınca geri gelir."
+      "tip": "Pencere tepside gizli olarak başlar. Geri getirmek için tepsi simgesine çift tıkla."
     },
     "MiniOnTop": {
       "label": "Mini modu üstte tut",
-      "tip": "Pencere mini moddayken - hesapların küçük paneli - diğer pencerelerin üstünde kalır. Varsayılan olarak kapalı; mini pencerenin başlık çubuğundaki raptiye de bunu değiştirir."
+      "tip": "Küçük mini mod penceresini diğer pencerelerinin üstünde tutar. Mini pencerenin başlık çubuğundaki raptiye de bunu açıp kapatır."
     },
     "StartWithWindows": {
       "label": "Windows ile başlat",
-      "tip": "Windows'a giriş yaptığında nocat.farm'ı çalıştırır. Yalnızca kendi kullanıcı hesabının altına tek bir kayıt ekler, başka hiçbir şeye dokunmaz."
+      "tip": "Windows'a giriş yapınca nocat.farm'ı başlatır. Yalnızca kendi Windows kullanıcın için bir başlangıç kaydı ekler."
     },
     "KeepAwake": {
       "label": "Bu bilgisayarı uyanık tut",
-      "tip": "nocat.farm açık olduğu sürece, oturum açmış bir hesap olsun ya da olmasın Windows'un uyku moduna geçmesini engeller. Ekran yine kapanabilir - yalnızca uyku engellenir."
+      "tip": "nocat.farm açıkken bilgisayarının uyku moduna geçmesini engeller. Ekran yine de kapanabilir."
     },
     "TrayNotifications": {
       "label": "Bildirim balonlarını göster",
-      "tip": "Balon bildirimlerinin ana anahtarı. Aşağıdaki üçü hangilerini gerçekten alacağına karar verir."
+      "tip": "Bildirim balonlarını açar veya kapatır. Aşağıdaki üç ayar hangi bildirimleri alacağını seçer."
     },
     "NotifyEarnings": {
       "label": "Kazanç olduğunda bildir",
-      "tip": "Bir kart düştüğünde ya da bir rep4rep yorumu hesaba geçtiğinde bildirir."
+      "tip": "Bir koleksiyon kartı düştüğünde veya bir rep4rep yorumu sayıldığında bildirim gösterir."
     },
     "NotifySocial": {
       "label": "Yorumları bildir",
-      "tip": "Biri profillerinden birine yorum yazdığında bildirir."
+      "tip": "Biri Steam profillerinden birine yorum yazdığında bildirim gösterir."
     },
     "NotifyProblems": {
       "label": "Sorunları bildir",
-      "tip": "Bir hesabın gerçekten sana ihtiyacı olduğunda bildirir: Steam Guard kodu, başarısız giriş ya da yorum yasağı."
+      "tip": "Bir hesabın sana ihtiyacı olduğunda bildirim gösterir. Örneğin bir Steam Guard kodu, başarısız bir giriş veya yorum yasağı."
     },
     "Rep4RepEnabled": {
       "label": "rep4rep'i hiç kullan(ma)",
-      "tip": "rep4rep, kullanıcılarının birbirine profil yorumu bıraktığı üçüncü taraf bir site. Tamamen isteğe bağlı. Kapatırsan nocat.farm her hesapta rep4rep'e dair her şeyi durdurur ve özelliğin tamamı kaybolur - sekmesi, puanları, hesap başına seçenekleri ve bu ayarlar sen yeniden açana kadar görünmez."
+      "tip": "rep4rep'i açar. rep4rep, kullanıcıların Steam profil yorumu takas ettiği isteğe bağlı, dışarıdan bir sitedir. Kapalıyken tüm rep4rep özellikleri ve ayarları her hesapta gizlenir."
     },
     "Rep4RepApiToken": {
       "label": "API anahtarı",
-      "tip": "rep4rep API anahtarın. Kaç Steam hesabı çalıştırırsan çalıştır, tek anahtar tüm rep4rep hesabını kapsar - rep4rep.com'da Settings altından al. Hesabın yok mu? rep4rep.com/?r=reap"
+      "tip": "rep4rep API anahtarın. rep4rep.com'da Settings altında bulunur. Tek anahtar tüm Steam hesaplarını kapsar. Henüz hesabın yok mu? rep4rep.com/?r=reap"
     },
     "Rep4RepAutoAddProfiles": {
       "label": "Hesapları otomatik kaydet",
-      "tip": "Her Steam hesabını ilk girişinde rep4rep'e kaydeder, böylece siteden elle eklemen gerekmez."
+      "tip": "Her Steam hesabını ilk giriş yaptığında rep4rep'e ekler, böylece onları sitede eklemen gerekmez."
     },
     "LoginStaggerSeconds": {
       "label": "Girişler arası boşluk",
-      "tip": "Başlangıçta bir hesabı giriş yaptırdıktan sonra bir sonrakine kadar geçen saniye. Steam IP adresine göre sınırlar, bu yüzden birkaç hesabın sınıra takılmasını önleyen tam da bu boşluktur."
+      "tip": "Başlangıçta her hesabın girişi arasında beklenecek saniye. Steam, internet bağlantısı başına girişleri sınırlar. Bu boşluk birkaç hesabın engellenmesini önler."
     },
     "StatusEveryMinutes": {
       "label": "Şu sıklıkta rapor ver",
-      "tip": "Bir oyun açıkken bu hesabın ne yaptığını ne sıklıkla söylediği. 0, Günlük altındaki genel ayarı izler; -1 susturur."
+      "tip": "Bir oyun açıkken bu hesabın ne yaptığını günlüğe ne sıklıkla yazdığı, dakika cinsinden. 0 ana Günlük ayarını kullanır, -1 sessiz tutar."
     },
     "StatusQuietEveryMinutes": {
       "label": "Dinlenirken ise",
-      "tip": "Aynısı; hesap uyurken, molada, duraklatılmışken veya çıkış yapmışken. 0 genel ayarı izler; -1 sessiz tutar."
+      "tip": "Aynısı, ama bu hesap uyurken, moladayken, duraklatılmışken veya çıkış yapmışken. 0 ana Günlük ayarını kullanır, -1 sessiz tutar."
     },
     "Language": {
       "label": "Dil",
-      "tip": "Panelin dili. Henüz çevrilmemiş olan boş kalmak yerine İngilizce görünür, yani yarım kalmış bir dil bile gayet kullanılabilir. Durum ve günlük satırları da bu dili kullanır; konsola yazılan komutlara verilen yanıtlar İngilizce kalır."
+      "tip": "Panonun, durum ve günlük satırlarının dili. Henüz çevrilmemiş her şey İngilizce görünür. Konsola yazılan komutların yanıtları İngilizce kalır."
     },
     "MarketCurrency": {
       "label": "Envanter fiyatları şu birimde",
-      "tip": "Envanter fiyatlarının para birimi. Steam mağazandakiyle aynı yap, yoksa toplamlar pazarda gördüğünle uyuşmaz.",
+      "tip": "Envanter değerlerinin gösterildiği para birimi. Toplamlar pazarla eşleşsin diye Steam mağazanın kullandığını seç. Değiştirmek tüm fiyatları yeniden kontrol ettirir.",
       "choices": "1 ABD doları | 20 Kanada doları | 21 Avustralya doları | 2 İngiliz sterlini | 3 euro | 5 Rus rublesi | 7 Brezilya reali | 8 Japon yeni | 23 Çin yuanı | 24 Hindistan rupisi"
     },
     "FileLogging": {
       "label": "Günlük dosyası yaz",
-      "tip": "Her şeyi ekranın yanı sıra logs/ klasörüne de yazar. Açık bıraksan iyi olur - sen uyurken ne olduğunu görmenin tek yolu bu."
+      "tip": "Her şeyi ekranda göstermenin yanı sıra günlük dosyalarına da kaydeder. Sen yokken ne olduğunu görmek için açık bırak."
     },
     "DailyReportEnabled": {
       "label": "Günlükte günlük özet",
-      "tip": "Günde bir kez, her hesabın son 24 saatte ne kazandığını tek bakışta gösteren bir özet yazar: oynanan saatler, kartlar, rep4rep yorumları ve toplam. \"Gece boyunca ne kazandım?\" sorusunu kaydırmadan yanıtlar; istediğin an `report` yazarak da görebilirsin."
+      "tip": "Her hesabın son 24 saatte ne kazandığını günlüğe günlük bir özet olarak yazar: oynanan saatler, kartlar ve rep4rep yorumları. İstediğin an görmek için report yaz."
     },
     "DailyReportHour": {
       "label": "Özet saati · saat",
-      "tip": "Günlük özetin yazılacağı saat, 0-23 (yerel saat). Varsayılan 9."
+      "tip": "Günlük özetin yazıldığı saat, yerel saatle. Yalnızca “Günlükte günlük özet” açıkken kullanılır."
     },
     "DailyReportMinute": {
       "label": "Özet saati · dakika",
-      "tip": "Günlük özet için o saatin dakikası, 0-59. Saat 9 + dakika 30 = 09:30."
+      "tip": "Günlük özetin saatin kaçıncı dakikasında yazılacağı. Saat 9 ve dakika 30, 09:30 demek."
     },
     "Enabled": {
       "label": "Etkin",
-      "tip": "Bu hesaba giriş yapar. Kapatırsan yapılandırması durur ama hesaba hiç dokunulmaz."
+      "tip": "Bu hesaba giriş yapar. Ayarlarını koruyup hesaba hiç dokunmamak için kapat."
     },
     "SteamLogin": {
       "label": "Steam hesap adı",
-      "tip": "Giriş yaparken yazdığın Steam hesap adı - görünen adın değil, e-postan da değil."
+      "tip": "Steam'e giriş yaparken yazdığın hesap adı. Görünen adın değil, e-postan da değil."
     },
     "SteamPassword": {
       "label": "Parola",
-      "tip": "İsteğe bağlı. Boş bırak; nocat.farm bir kez sorar, sonra hesabı bir giriş anahtarıyla hatırlar - iki seçenekten daha güvenli olanı."
+      "tip": "İsteğe bağlı. Boş bırakırsan bir kez sorulur, sonra hesap bir giriş anahtarıyla hatırlanır. Bu, kayıtlı bir paroladan daha güvenlidir."
     },
     "SignInWithQr": {
       "label": "QR koduyla giriş yap",
-      "tip": "Bu hesabın girişi gerektiğinde parola sormak yerine telefonundaki Steam uygulamasıyla okutulacak bir QR kodu göster - hesap adı Steam'den gelir, yani hiçbir şey yazılmaz. Kod panelde görünür."
+      "tip": "Bu hesabın girişi gerektiğinde panoda Steam telefon uygulamasıyla okutulacak bir QR kodu gösterir. Hiçbir şey yazılmaz, hesap adı bile."
     },
     "OnlineStatus": {
       "label": "Şöyle görün",
-      "tip": "Başkalarının seni nasıl gördüğü: çevrimiçi, uzakta, meşgul veya görünmez. Görünmez modda saatler birikmeye devam eder ve kimse bir şey görmez.",
+      "tip": "Bu hesabın arkadaşlarına nasıl göründüğü. Görünmez modda yine oynar ve kart toplar, sadece kimse görmez. “İnsan modu” açıkken bu yalnızca oynarkenki durumdur, o yüzden çevrimiçi bırak.",
       "choices": "0 çevrimdışı | 1 çevrimiçi | 2 meşgul | 3 uzakta | 4 uykuda | 5 takas arıyor | 6 oyun arıyor | 7 görünmez"
     },
     "IUseThisAccount": {
       "label": "Bu hesaba ben de giriyorum",
-      "tip": "Bu hesaba kendin de giriyorsan işaretle. Böylece nocat.farm durumuna dokunmaz - bunu ikinci bir oturumdan yapmak seni kendi Steam sohbetinden atar."
+      "tip": "Kendi Steam uygulamanda da kullandığın bir hesap için bunu aç. O zaman çevrimiçi durumunu asla değiştirmez, çünkü bu seni Arkadaşlar ve Sohbet'ten çıkarırdı. Geri kalan her şey çalışmaya devam eder."
     },
     "StartPaused": {
       "label": "Duraklatılmış başlat",
-      "tip": "Giriş yapar ama sen Devam'a basana kadar oynamaz, toplamaz, yorum yazmaz. Çevrimiçi olup hiçbir şey yapmasını istediğin bir hesap için."
+      "tip": "Giriş yapar ama sen Devam et'e basana kadar oynamaz, kart toplamaz, yorum yazmaz. Çevrimiçi olup hiçbir şey yapmasını istediğin bir hesap için iyidir."
     },
     "LogColour": {
       "label": "Günlükteki rengi",
-      "tip": "Bu hesabın adının günlükte ve panoda hangi renkle yazılacağı. Birkaç hesabı geçtiğinde işe yarar."
+      "tip": "Bu hesabın adının günlükte ve panoda görünen rengi, hesaplar kolayca ayırt edilsin diye. Otomatik, duruma göre renk verir: çıkış yapmışken gri, duraklatılmışken kehribar."
     },
     "Notes": {
       "label": "Notlar",
-      "tip": "Bu hesabın ne için olduğuna dair kendine bir not. Hesap kartında görünür ve Steam'in yanına bile yaklaşmaz.",
+      "tip": "Bu hesabın ne için olduğuna dair kendine bir not. Hesap kartında görünür ve asla Steam'e gönderilmez.",
       "placeholder": "ana idler, dokunma"
     },
     "LegitMode": {
       "label": "İnsan modu",
-      "tip": "Hesabı bir insan gibi oynatır: tek seferde tek oyun, uzunluğu değişen oturumlar ve molalar, gerçekçi yatma ve kalkma saatleri, ve hiç oynanmayan günler. Kapalıyken sadece saat biriktirir."
+      "tip": "Bir insan gibi oynar: tek seferde tek oyun, gerçekçi oturumlar, molalar, yemekler, izin günleri ve geceleri çevrimdışı. Açıkken bot gibi ayarlar gizlenir ve kapatınca değişmeden geri gelir."
+    },
+    "BreakAwayAfterMinMinutes": {
+      "label": "Molada en erken şu kadar sonra uzakta",
+      "tip": "Yalnızca insan modunda. Molaya girdikten kaç dakika sonra durumun Uzakta veya çevrimdışına geçtiği, gerçek bir boşta Steam istemcisi gibi. Daha kısa molalar çevrimiçi kalır."
+    },
+    "BreakAwayAfterMaxMinutes": {
+      "label": "...en fazla",
+      "tip": "Durum Uzakta veya çevrimdışına geçmeden önce molada geçen en fazla dakika."
     },
     "LegitStopMaxSeconds": {
       "label": "Durdurulunca en fazla şu kadar toparlan",
-      "tip": "Yalnızca insan modu: elle durdurduğunda, çıkmadan önce en fazla bu kadar rastgele saniye oynamaya devam eder (işini bitiren biri gibi), aniden yok olmak yerine."
+      "tip": "Hesabı durdurduğunda, oyunun ortasında kaybolmak yerine çıkış yapmadan önce en fazla bu kadar rastgele saniye oynamaya devam eder. 0 anında durdurur. Yalnızca “İnsan modu” açıkken kullanılır."
     },
     "GameWeights": {
       "label": "Oyunlar ve ne sıklıkta",
-      "tip": "Hangi oyunları oynadığı ve her birinin zamanının ne kadarını aldığı - toplamı yaklaşık 100 olması gereken yüzdeler halinde. İLK oyun ana oyundur (bu hesabın sevdiği varsayılan oyun) ve asıl geçerli sayı onunkidir: ana oyunun tuttuğu payı belirler, kaç oyun eklerseniz ekleyin korunur ve her gün bu değerin yaklaşık 10 puan çevresinde belirlenir. Sayı yazmazsanız o oyun kalanı eşit olarak paylaşır. Bir oyunu silmeden kenara almak için \"440:0\" yazın."
+      "tip": "Hangi oyunları oynadığı ve her birinin zamanının yüzde kaçını aldığı. Toplam yaklaşık 100 olmalı. İlk oyun ana oyundur. Kalanı paylaşması için bir oyuna sayı yazma. Bir oyunu kenara almak için 440:0 yaz."
     },
     "HourTargets": {
       "label": "Saat hedefleri",
-      "tip": "Bir oyunda ulaşılacak saat, isteğe bağlı olarak bir tarihe kadar: 730:100@2026-12-01 Counter-Strike 2'yi 1 Aralık'a kadar 100 saate, 440:50 TF2'yi ne zaman olursa 50 saate çıkarır. İnsan modu oturumlarını hedefe doğru kaydırır - tarihli bir hedef ne kadar gerideyse o kadar güçlü - molalar ve yatış saati her zamanki gibi kalır; gündüz oyunuyla yetişemeyecek tarihli bir hedef, 'Gece saat biriktir' açıksa gece oyunlarına katılır. Ulaşıldığında oyun artık öne çıkarılmaz. 'hours <hesap>' her birinin durumunu gösterir."
+      "tip": "Bir oyunda ulaşılacak saat, isteğe bağlı bir tarihle. 730:100@2026-12-01, 1 Aralık'a kadar 100 saat CS2 demek. Hedefe ulaşana kadar o oyunu daha çok oynar."
     },
     "WeekdayHours": {
       "label": "Hafta içi saat",
-      "tip": "Pazartesiden cumaya kabaca kaç saat oynadığı. Gerçek sayı her sabah bunun etrafında atılır - kimi gün kısa, kimi gün uzun - yani iki gün birbirine benzemez."
+      "tip": "Pazartesiden cumaya kabaca kaç saat oynadığı. Gerçek sayı her gün bunun çevresinde değişir."
     },
     "WeekendHours": {
       "label": "Hafta sonu saat",
-      "tip": "Cumartesi ve pazar için aynısı. Hafta sonlarının hafta içinden uzun sürmesi, bir haftanın gerçek görünmesinin büyük bölümüdür."
+      "tip": "Cumartesi ve pazar kabaca kaç saat oynadığı. Daha uzun hafta sonları haftayı daha gerçekçi gösterir."
     },
     "DayOffChancePct": {
       "label": "İzin günü olasılığı",
-      "tip": "100 üzerinden, o gün hiç oynamama olasılığı. İstisnasız her gün oynayan biri bottur; bunu engelleyen ayar budur."
+      "tip": "Herhangi bir gün hiç oynamama olasılığı, yüzde olarak. Gerçek insanlar her gün oyun oynamaz."
     },
     "DayStartHour": {
       "label": "Yaklaşık şu saatte girer",
-      "tip": "Genelde çevrimiçi olduğu saat, 0-23. Gerçek saat bunun çevresinde bir çan eğrisine düşer, hafta sonu daha erken başlar; yani asla aynı dakika iki kez olmaz."
+      "tip": "Genelde çevrimiçi olduğu saat, 24 saatlik düzende. Gerçek saat bunun çevresinde değişir ve hafta sonları daha erken başlar."
     },
     "BedHour": {
       "label": "Yaklaşık şu saatte yatar",
-      "tip": "Geceyi bitirdiği saat, 0-23. Gece yarısından sonrası da olur: 2, gece 02.00 demektir."
+      "tip": "Gece için bıraktığı saat, 24 saatlik düzende. Geç saatler de olur, 2 gece 2 demek."
     },
     "LateNightExtraHours": {
       "label": "Cuma/Cumartesi daha geç yatar",
-      "tip": "Ertesi gün bir işi olmadığı cuma ve cumartesi geceleri fazladan ayakta kaldığı saatler."
+      "tip": "Cuma ve cumartesi geceleri fazladan kaç saat ayakta kaldığı."
     },
     "PureMainDayChancePct": {
       "label": "Yalnızca ana oyun günleri",
-      "tip": "Bütün bir günün yalnızca ana oyuna gitme ihtimali (100 üzerinden). Diğer oyunların her gün aynı ince dilim halinde değil, öbekler hâlinde gelmesini sağlayan şey budur; her gün aynı dağılım, bir botun bıraktığı en bariz iz. Ayrıca bir haftayı yazdığınız yüzdelerden uzaklaştıran tek etken de budur: bu günlerde yan oyunlar hiçbir şey almaz, dolayısıyla bir hafta boyunca her biri kabaca kendi sayısı çarpı yalnızca-ana-oyun olmayan günlerin oranı kadar olur. Oyun kutusunun altındaki değer bu hesabı sizin için yapar."
+      "tip": "Bütün bir günün yalnızca ana oyunla geçme olasılığı, yüzde olarak. Böylece yan oyunlar her gün küçük bir dilim yerine dalgalar halinde görünür. Bu, onların haftalık payını düşürür. Pay, oyunlar kutusunun altında gösterilir."
     },
     "WarmUpMinMinutes": {
       "label": "En az şu kadar alışsın",
-      "tip": "Giriş yaptıktan sonra bir şeye başlamadan önceki en kısa bekleme, dakika. Hesap çevrimiçi olduğu saniye oyunun içinde olmak, olabilecek en makine işi şeydir."
+      "tip": "Giriş yaptıktan sonra bir oyunu başlatmadan önceki en kısa bekleme, dakika cinsinden. “İnsan modu”nu açtığında da geçerlidir, böylece hemen oyun başlatmaz."
     },
     "WarmUpMaxMinutes": {
       "label": "Ve en fazla",
-      "tip": "En uzun alışma süresi, dakika. Gerçeği ikisi arasında rastgele seçilir. Ne ayarlarsanız ayarlayın, girişten sonraki üç dakika içinde asla başlamaz."
+      "tip": "Giriş yaptıktan sonraki en uzun bekleme, dakika cinsinden. Girişten sonraki 3 dakika içinde asla başlamaz. Böylece bu hesapta zaten oynuyorsan araya giremez."
     },
     "SessionMinMinutes": {
       "label": "En kısa oturum",
-      "tip": "Başka bir şeye geçmeden önce bir oyunda kalacağı en kısa süre. Kimse beş dakikada bir oyun değiştirmez."
+      "tip": "Oyun değiştirmeden veya mola vermeden önce bir oyunda kaldığı en kısa süre, dakika cinsinden."
     },
     "SessionMaxMinutes": {
       "label": "En uzun oturum",
-      "tip": "Bir oyunda kalacağı en uzun süre. Oturumların çoğu ikisinin arasına düşer; yarım saatlik bir uğrama da bütün bir akşam da normaldir, o yüzden bol bırakın."
+      "tip": "Bir oyunda kaldığı en uzun süre, dakika cinsinden. Oturumlar değişsin diye en kısa ile en uzun arasında geniş bir fark bırak."
     },
     "MealBreaksPerDay": {
       "label": "Günde öğün sayısı",
-      "tip": "Günde masadan gerçekten kalktığı kaç mola verdiği. Rastgele değil, gerçek yemek saatlerinin çevresine düşerler; onları yemek gibi gösteren de budur."
+      "tip": "Günde kaç uzun yemek molası verdiği. Gerçek yemek saatlerine denk gelir. Hiç istemiyorsan 0."
     },
     "MealBreakMinutes": {
       "label": "Bir öğün ne kadar sürer",
-      "tip": "Böyle bir molada kabaca ne kadar uzak kaldığı, dakika. Bazen epey uzar: sohbete dalınır."
+      "tip": "Bir yemek molasının kabaca ne kadar sürdüğü, dakika cinsinden. Bazen biraz uzar."
     },
     "SignOutOnBreakChancePct": {
       "label": "Molada çıkış yapma olasılığı",
-      "tip": "100 üzerinden, bir molayı sadece Uzakta değil, çevrimdışı görünerek geçirme olasılığı - arkadaş listen için bu, Steam'i kapatmaktan ayırt edilemez."
+      "tip": "Bir molanın Uzakta yerine çevrimdışı görünme olasılığı, yüzde olarak. Arka planda bağlı kalır, yani hiçbir şeye mal olmaz. Yemeklerde çevrimdışı olma iki kat daha sıktır."
     },
     "OfflineIdleAtNight": {
       "label": "Gece saat biriktir",
-      "tip": "Uyurken görünmez olur ve yine de sessizce saat biriktirir. Arkadaş listen hesabı çevrimdışı görür, kimse bir şey görmez, saatler yine işler."
+      "tip": "Uyurken görünmez olur ve saat biriktirmeye devam eder. Böylece arkadaşlar onu çevrimdışı görürken saatler yine sayılır. “Kartlar ne zaman toplansın” kartları geceye veriyorsa önce onlar toplanır."
     },
     "OfflineIdleGames": {
       "label": "Gece için oyunlar",
-      "tip": "Gece çevrimdışıyken ve toplanacak kart kalmadığında ne çalıştırılacağı. İstediğin kadar: kaç tane olduğunu görecek kimse yok, o yüzden \"teker teker\" kuralı burada geçmez."
+      "tip": "Geceleri çevrimdışı görünürken saat biriktirilecek oyunlar. Birkaçı aynı anda çalışabilir. Yalnızca “Gece saat biriktir” açıkken kullanılır."
     },
     "IdleGames": {
       "label": "Saat biriktirilecek oyunlar",
-      "tip": "Saat biriktirmek için çalıştırılacak oyunlar. Steam aynı anda 32 tanesine izin verir."
+      "tip": "Toplanacak kart kalmadığında oynama süresi için saat biriktirilecek oyunlar. Oyun kimliğini (mağaza bağlantısındaki sayı) yaz veya bağlantının tamamını yapıştır, virgülle ayırarak."
     },
     "CustomGameNameEnabled": {
       "label": "Özel bir oyun adı göster",
-      "tip": "Arkadaş listende gerçek oyun yerine uydurma bir ad gösterir. Saatler yine gerçek oyuna işlemeye devam eder."
+      "tip": "Arkadaşlarına gerçek oyun yerine özel bir ad gösterir. Kapatınca aşağıya yazdığın ad bir dahaki sefere saklanır."
     },
     "CustomGameName": {
       "label": "Şöyle göster",
-      "tip": "Profilinde ve arkadaş listende gerçek oyun yerine bu adı gösterir. Gerçek oyunlar altta saat biriktirmeye devam eder - ikisi aynı anda olur."
+      "tip": "Profilinde ve arkadaş listesinde gerçek oyun yerine görünen ad. Gerçek oyunlar arka planda yine oynama süresi toplar."
     },
     "FarmCards": {
       "label": "Kart topla",
-      "tip": "Kütüphanende düşmeyi bekleyen kartları toplar ve hiçbiri kalmayınca durur. Ayarlanacak bir şey yok."
+      "tip": "Steam koleksiyon kartlarını toplar. Kartı kalan oyunlar, her şeyden önce kart düşmesi bitene kadar oynanır."
     },
     "HoursUntilCardDrops": {
       "label": "Kart düşene kadar saat",
-      "tip": "Steam'in bir oyun için kart vermesine kadar gereken saat. Çoğu hesap için 3 doğrudur; bu hesap Steam'de 5 dolardan fazla harcadıysa 0 yapın."
+      "tip": "Steam'in kartlarını düşürmesi için bir oyunun kaç saate ihtiyacı olduğu. Bu hesap Steam'de 5 dolardan fazla harcadıysa 0 yaz, böylece hiçbir oyun gerektiğinden uzun oynanmaz."
     },
     "FarmingOrder": {
       "label": "Bu sırayla topla",
-      "tip": "Önce hangi oyunun toplanacağı. \"En az kart kalan\" rozetleri en çabuk bitirir; \"en çok oynanan önce\" kütüphanene en az yeni süre ekler.",
+      "tip": "Önce hangi oyunun toplanacağı. “En az kart kalanlar” rozetleri en çabuk bitirir. “En çok oynananlar önce” kütüphanene en az yeni oynama süresi ekler.",
       "choices": "0 en çok oynananlar önce | 1 en az oynananlar önce | 2 en az kart kalanlar | 3 en çok kart kalanlar | 4 rastgele | 5 alfabetik"
     },
     "FarmOffline": {
       "label": "Çevrimdışı görünerek topla",
-      "tip": "Bu hesap toplarken arkadaşlarına çevrimdışı görünür. Steam yine her saati sayar ve kartlar yine düşer; değişen tek şey kimsenin görmemesidir."
+      "tip": "Kart toplarken bu hesabı çevrimdışı gösterir. Saatler yine sayılır ve kartlar yine düşer, sadece arkadaşlar görmez."
     },
     "UnlockAchievements": {
       "label": "Zamanla başarım kazan",
-      "tip": "Gerçek oynama süresinden yola çıkarak başarımları yavaş yavaş kazanır, en yaygın olanlardan başlayarak. Saatlerin haklı çıkarmadığı hiçbir şeyi açmaz ve bir oyunu asla %100 bitirmez."
+      "tip": "Bu hesabın oynadığı oyunlarda günde birkaç başarım açar, en kolayından başlayarak. Bütün listeyi bir anda açmak profilde sonsuza dek görünür. Bu ayar bunu önler."
     },
     "AchievementPace": {
       "label": "Ne hızda",
-      "tip": "İki açılış arasında ne kadar beklendiği. \"Dikkatli\" her aralığı ikiye katlar; birinin gerçekten bakmasına dayanması gereken bir hesapta istediğin de budur.",
+      "tip": "Açılışlar arasında ne kadar beklediği. Temkinli her beklemeyi ikiye katlar, hızlı yarıya indirir. Hiçbir hız, oynanan saatler izin vermeden bir başarım açmaz.",
       "choices": "0 temkinli (iki kat yavaş) | 1 normal | 2 hızlı (iki kat hızlı)"
     },
     "AchievementMaxCompletionPct": {
       "label": "Şundan fazlasını tamamlama",
-      "tip": "Tek bir oyunun yüzde kaçının tamamlanacağı. 0, her oyunu kendi ayarlanmış tavanına bırakır - 3 saatlik bir bulmaca ile 500 saatlik bir kampanya aynı rakamda durmamalı. Bir sayı girilirse o geçerlidir ve bir oyunun tavanını indirdiği kadar kolay yükseltir de; bir hesap bir oyunu gerçekten sonuna dek oynadıysa bitirebilmesi içindir. 95'in üstüne asla çıkmaz: boşta bekleyen bir hesapta %100 tamamlanmış bir oyun zaten ele veren şeydir."
+      "tip": "Herhangi bir oyunu en fazla yüzde kaç tamamlayacağı. Birkaçını kazanılmamış bırakmak gerçek bir kütüphane gibi görünür. grind komutu bunu yok sayar."
     },
     "ClaimFreeGames": {
       "label": "Ücretsiz oyunları al",
-      "tip": "Karşına çıkan ücretsiz oyunları alır, böylece kütüphane kendiliğinden büyür."
+      "tip": "Kalıcı olarak ücretsiz dağıtılan ücretli oyunları takip eder ve bu hesaba ekler. Oynaması ücretsiz çöp oyunlar atlanır."
+    },
+    "ClaimFreeDlc": {
+      "label": "...ücretsiz DLC'leri de",
+      "tip": "Ücretsize düşen ücretli DLC'leri de alır, örneğin bir destekçi paketi. Steam DLC'yi yalnızca ait olduğu oyuna sahip hesaplara verir, diğerleri atlanır. Yalnızca \"Ücretsiz oyunları al\" açıkken kullanılır."
+    },
+    "ClaimFreeDlcBase": {
+      "label": "...ve oyunu da ücretsizse onu da",
+      "tip": "Ücretsiz bir DLC bu hesapta olmayan bir oyun gerektiriyorsa ve o oyun da şu an ücretsizse, önce oyunu sonra DLC'yi alır. Yalnızca \"...ücretsiz DLC'leri de\" açıkken kullanılır."
     },
     "CraftBadges": {
       "label": "Kart setlerinden rozet üret",
-      "tip": "Tamamlanmış kart setlerini rozete çevirir; bu profil deneyimi ve bazen eşya verir."
+      "tip": "Tamamlanmış kart setlerini günde bir kez rozete çevirir. Steam seviyeni yükselten budur. Envanterde öylece duran kartlar hiçbir şey yükseltmez."
     },
     "Rep4Rep": {
       "label": "rep4rep yorumları gönder",
-      "tip": "rep4rep'in bu hesaba verdiği yorumları insan temposunda gönderir."
+      "tip": "Bu hesabın rep4rep'in dağıttığı profil yorumlarını göndermesine izin verir. Tüm hesaplar aynı rep4rep puanlarına kazandırır."
     },
     "Rep4RepDailyCap": {
       "label": "24 saatte en fazla",
-      "tip": "Bu hesabın 24 saat içinde yazacağı en fazla yorum sayısı. Steam'in arkadaşın olmayan kişiler için gerçek tavanı yaklaşık 10'dur ve bunu aşmak tam da bir hesaba yorum yasağı getiren şeydir."
+      "tip": "Bu hesabın herhangi bir 24 saatte gönderdiği en fazla yorum. Steam arkadaş olmayanlara yaklaşık 10 yoruma izin verir. Bunu aşmak hesaba yorum yasağı getirebilir."
     },
     "Rep4RepGapMinMinutes": {
       "label": "En kısa boşluk",
-      "tip": "Bu hesaptan iki yorumu asla bu dakikadan daha yakın aralıkla yazmaz."
+      "tip": "Bu hesabın iki yorumu arasındaki en kısa süre, dakika cinsinden."
     },
     "Rep4RepGapMaxMinutes": {
       "label": "En uzun boşluk",
-      "tip": "Yorumlar arasındaki en uzun boşluk, dakika. Gerçeği ikisi arasında rastgele seçilir, böylece zamanlama asla mekanik görünmez."
+      "tip": "Yorumlar arasındaki en uzun süre, dakika cinsinden. Her aralık ikisi arasında rastgele seçilir."
     },
     "Rep4RepStartHour": {
       "label": "Yalnızca şu saatten sonra yaz",
-      "tip": "Bu hesabın yorum yapacağı günün en erken saati, 0-23. Sabahın dördünde gelen yorumlar, olabilecek en bariz bot işaretidir."
+      "tip": "Bu hesabın yorum yazdığı günün en erken saati. Gece 4'te yazılan yorumlar botu kolayca ele verir."
     },
     "Rep4RepEndHour": {
       "label": "Şu saate kadar",
-      "tip": "Bu hesabın yorum yapacağı günün en geç saati, 1-24. Başlangıç saatiyle aynı yaparsan gün boyu yorum yapılabilir."
+      "tip": "Bu hesabın yorum yazdığı günün en geç saati. Gece gündüz yorum yazması için “Yalnızca şu saatten sonra yaz” ile aynı yap."
     },
     "AcceptFriendRequests": {
       "label": "Arkadaşlık isteklerini kabul et",
-      "tip": "Gelen arkadaşlık isteklerini otomatik kabul eder. rep4rep hesabında açık olması işe yarar: Steam, arkadaşının profilinde çok daha fazla yorumaizin verir."
+      "tip": "Gelen arkadaşlık isteklerini otomatik kabul eder. Bir rep4rep hesabında işe yarar, çünkü Steam arkadaşlara çok daha rahat yorum yazdırır."
     },
     "JoinGroup": {
       "label": "nocat.farm grubuna katıl",
-      "tip": "Bu hesabın girişte bir kez nocat.farm Steam grubuna katılmasını sağlar. Tamamen isteğe bağlı: kapatırsan katılmaz."
+      "tip": "Bu hesap giriş yapınca nocat.farm Steam grubuna bir kez katılır. İsteğe bağlı, hiçbir şey buna bağlı değil."
     },
     "AutoReplyEnabled": {
       "label": "Mesajlara yanıt ver",
-      "tip": "Bu hesaba yazan yabancılara cevap verir. Kapatmak aşağıya yazdığını korur, yani yeniden yazmadan tekrar açabilirsin."
+      "tip": "Bu hesaba mesaj atanlara yanıt verir. Kapatınca yanıt metnin sonrası için saklanır."
     },
     "AutoReply": {
       "label": "Şu yanıtı ver",
-      "tip": "Biri bu hesaba yazdığında bunu gönderir. Boş bırakırsan hiçbir şey söylemez. Günde sekiz saat oynayıp hiç cevap vermeyen bir hesap, \"şu an müsait değilim\" diyenden daha çok dikkat çeker.",
+      "tip": "Biri bu hesaba mesaj attığında geri gönderilen mesaj. Hiçbir şey göndermemek için boş bırak. Kısa bir afk satırı, hiç yanıt vermemekten daha normal görünür.",
       "placeholder": "şu an afk, sonra dönerim"
     },
     "AutoReplyOncePerDay": {
       "label": "Günde yalnızca bir kez yanıtla",
-      "tip": "Bu yanıtı aynı kişiye günde en fazla bir kez gönderir. Bu olmadan iki kez yazan biri birebir aynı satırı iki kez alır - bot gibi görünmenin en hızlı yolu."
+      "tip": "Yanıtı her kişiye günde en fazla bir kez gönderir, böylece kimse aynı satırı iki kez almaz."
     },
     "FriendRequestDelayMinMinutes": {
       "label": "En az bekle",
-      "tip": "Bir arkadaşlık isteğini kabul etmeden önceki en kısa bekleme, dakika. İstek geldiği saniye kabul etmek, bir hesabın yapabileceği en kolay fark edilen şeydir."
+      "tip": "Bir arkadaşlık isteğini kabul etmeden önceki en kısa bekleme, dakika cinsinden. Geldiği saniye kabul etmek botu kolayca ele verir."
     },
     "FriendRequestDelayMaxMinutes": {
       "label": "Ve en fazla",
-      "tip": "Bir arkadaşlık isteği kabul edilmeden önceki en uzun bekleme, dakika olarak. Her istek ikisi arasında kendi bekleme süresini alır, çoğunlukla kısa uca yakın - bir insanın bir bildirime dönmesi gibi."
+      "tip": "Bir arkadaşlık isteğini kabul etmeden önceki en uzun bekleme, dakika cinsinden. Her istek rastgele bir bekleme alır, genelde kısa uca daha yakın."
     },
     "ActOnlyWhileAwake": {
       "label": "Yalnızca uyanıkken tepki ver",
-      "tip": "İnsan modu hesabı uyuturken hesabın yanıt verdiği her şeyi - takas teklifleri, hediyeler, arkadaşlık istekleri, yanıtlar, etkinlik eşyaları, kart paketleri, zamanlanmış gönderimler - bekletir, uyanınca her birine yeni bir bekleme verir; böylece uyandığı dakika hiçbir şey birden olmaz. Kapatılırsa geceleri de aynı beklemelerle yanıt verir; arkadaş listesinde uyurken sabah 4'te kabul eden bir hesap daha kolay fark edilir. İnsan modu kapalıyken etkisizdir."
+      "tip": "Yalnızca insan modunda. Hesap uyurken başkalarının görebildiği her şeyi bekletir: takaslar, hediyeler, davetler, yanıtlar, yorumlar ve başarımlar. Geceleri de yanıt vermesi için kapat."
+    },
+    "QuietThingsWaitForDay": {
+      "label": "Arka plandaki işler de onun gününü bekler",
+      "tip": "Yalnızca insan modunda. Rozet üretme, ücretsiz oyun alma, kart paketleri ve kart satışı gibi arka plan işlerinin de hesabın uyanık saatlerini beklemesini sağlar. Kapalıyken her saatte çalışırlar."
+    },
+    "WakeDelayMinMinutes": {
+      "label": "Uyandıktan sonra en az bekle",
+      "tip": "Yalnızca insan modunda. Uyandıktan veya giriş yaptıktan ne kadar sonra takaslar, yorumlar veya yanıtlar gibi başkalarının görebildiği şeyleri yaptığı, dakika cinsinden. Her tür kendi rastgele beklemesini alır."
+    },
+    "WakeDelayMaxMinutes": {
+      "label": "...en fazla",
+      "tip": "Uyandıktan veya giriş yaptıktan sonraki en uzun bekleme, dakika cinsinden."
+    },
+    "QuietDelayMinMinutes": {
+      "label": "Girişten sonra arka plan işleri en az bekler",
+      "tip": "Yalnızca insan modunda. Girişten ne kadar sonra rozetler, ücretsiz oyunlar ve kart paketleri gibi arka plan işlerinin başladığı, dakika cinsinden. Her biri kendi rastgele beklemesini alır, böylece hepsi aynı anda başlamaz."
+    },
+    "QuietDelayMaxMinutes": {
+      "label": "...en fazla",
+      "tip": "Girişten sonra arka plan işleri başlamadan önceki en uzun bekleme, dakika cinsinden."
+    },
+    "OneTradeAtATime": {
+      "label": "Takas tekliflerine birer birer yanıt ver",
+      "tip": "Yalnızca insan modunda. Birkaç takas teklifinin aynı anda sırası geldiğinde, örneğin sabahları, hepsine birden değil birkaç dakika arayla yanıt verir."
     },
     "AcceptDonations": {
       "label": "Bağışları kabul et",
-      "tip": "Karşılığında hiçbir şey istemeyen teklifleri kabul eder. Sana hiçbir şeye mal olamazlar, dolayısıyla doğaları gereği güvenlidirler."
+      "tip": "Bu hesabın hiçbir şey vermediği takas tekliflerini kabul eder. Bunlar seni dolandıramaz, çünkü eşyalarından tek birini bile isteyen bir teklif burada asla kabul edilmez."
+    },
+    "DonationsWhileAsleep": {
+      "label": "Uyurken bağışları kabul et",
+      "tip": "Yalnızca insan modunda. “Yalnızca uyanıkken tepki ver” açıkken bile bağışların gece geçmesine izin verir. Diğer her şey yine sabahı bekler."
     },
     "AcceptGiftedGames": {
       "label": "Hediye edilen oyunları kabul et",
-      "tip": "Arkadaşların bu hesaba hediye ettiği oyunları, \"Kütüphaneme ekle\" düğmesi gibi doğrudan kütüphaneye ekler. Her hediyeye kendin karar vermek için kapat (reddetmek gönderene para iadesi yapar). Her hediye önce kendi süresini bekler ('Hediyeyi en az şu kadar sonra kabul et'), hesap uyurken de sabahı bekler ('Yalnızca uyanıkken tepki ver')."
+      "tip": "Arkadaşların bu hesaba hediye ettiği oyunları doğrudan kütüphanesine ekler. Her hediyeye kendin karar vermek için kapat. Her hediye önce bekler, bkz. “Hediyeyi en az şu kadar sonra kabul et”."
     },
     "AcceptFairCardSwaps": {
       "label": "Adil kart takaslarını kabul et",
-      "tip": "Aynı oyun içinde kartları bire bir takas eden teklifleri, takas bu hesabın setlerini yalnızca tamamlamaya yaklaştırıyorsa herkesten kabul eder - kart takas sitelerinin bütün gün gönderdiği türden. Verilen her kartın takastan sonra, gelen herhangi bir kartın takastan önceki sayısından daha fazla kopyası kalmalıdır; böylece hiçbir kart tükenmez ve tamamlanmış setler asla azalmaz. Teklifte başka bir şey ya da parlak kart varsa, olduğu gibi bırakılır. Kart vermek mobil doğrulayıcı onayı gerektirir."
+      "tip": "Aynı oyun içindeki bire bir kart takaslarını herkesten kabul eder, ama yalnızca setlerini tamamlamaya yaklaştırıyorlarsa. Parlak kart veya başka eşya içeren tekliflere dokunulmaz. Mobil doğrulayıcı gerekir."
     },
     "AcceptGifts": {
       "label": "Hediyeleri ve misafir kartlarını kabul et",
-      "tip": "Birinin bu hesaba gönderdiği Steam cüzdan hediye kartlarını ve misafir kartlarını (ücretsiz denemeler) kabul eder. İkisi de hesaba hiçbir şeye mal olamaz. Her hediye önce kendi süresini bekler ('Hediyeyi en az şu kadar sonra kabul et'), hesap uyurken de sabahı bekler ('Yalnızca uyanıkken tepki ver')."
+      "tip": "Bu hesaba gönderilen Steam cüzdan hediye kartlarını ve misafir kartlarını kabul eder. İkisi de hiçbir şeye mal olamaz. Her hediye önce bekler, bkz. “Hediyeyi en az şu kadar sonra kabul et”."
     },
     "AcceptFromMasters": {
       "label": "Kendi hesaplarından geleni koşulsuz kabul et",
-      "tip": "Aşağıda listelenen SteamID64'lerden gelen her teklifi kabul eder - eşya götürenler dahil. Boşta çalışan hesaplarındaki kartları tek hesapta toplamanı sağlayan şey budur ve tam bu yüzden listede yalnızca sana ait hesaplar olmalıdır."
+      "tip": "“Kendi hesapların” içindeki hesaplardan gelen her teklifi kabul eder, eşya alanları bile. Kartları tek hesapta toplamak için işe yarar, ama yalnızca sahip olduğun hesapları listele."
     },
     "TradeMasters": {
       "label": "Kendi hesapların",
-      "tip": "Kendi hesaplarının SteamID'leri. \"send\" eşyaları oraya gönderir ve oradan gelen teklifler sorgusuz kabul edilir."
+      "tip": "Kendi hesaplarının SteamID64'leri, virgülle ayrılmış. Burada listelenen herkes bu hesaptan eşya alabilir, o yüzden yalnızca sahip olduğun hesapları ekle."
     },
     "DeclineOtherTrades": {
       "label": "Diğer her şeyi reddet",
-      "tip": "Diğer tüm teklifleri öylece bırakmak yerine etkin biçimde reddeder. Kapatırsan kabul edilmeyen her şey, sen bakasın diye olduğu gibi kalır."
+      "tip": "Diğer tüm takas tekliflerini bırakmak yerine reddeder. Kapalıyken kabul edilmeyen teklifler sen kontrol edesin diye bekler."
     },
     "TradeDelayMinMinutes": {
       "label": "En az bekle",
-      "tip": "Bir teklife karşılık vermeden önceki en kısa bekleme, dakika. Teklif geldikten iki saniye sonra kabul etmek, bir insanın yapacağı şey değildir."
+      "tip": "Bir takas teklifine yanıt vermeden önceki en kısa bekleme, dakika cinsinden. Geldikten saniyeler sonra kabul etmek bot gibi görünür."
     },
     "TradeDelayMaxMinutes": {
       "label": "Ve en fazla",
-      "tip": "Bir teklife karşılık vermeden önceki en uzun bekleme, dakika olarak. Her teklif ikisi arasında kendi bekleme süresini alır, çoğunlukla kısa uca yakın - bir insanın bir bildirime dönmesi gibi."
+      "tip": "Bir takas teklifine yanıt vermeden önceki en uzun bekleme, dakika cinsinden. Her teklif rastgele bir bekleme alır, genelde kısa uca daha yakın."
     },
     "GiftDelayMinMinutes": {
       "label": "Hediyeyi en az şu kadar sonra kabul et",
-      "tip": "Bir hediye - arkadaşının gönderdiği bir oyun, bir hediye kartı ya da misafir kartı - kabul edilmeden önceki en kısa bekleme, dakika olarak. Geldiği saniye kabul etmek bir insanın yapacağı şey değil."
+      "tip": "Oyun, hediye kartı veya misafir kartı gibi bir hediyeyi kabul etmeden önceki en kısa bekleme, dakika cinsinden."
     },
     "GiftDelayMaxMinutes": {
       "label": "Ve en fazla",
-      "tip": "Bir hediye kabul edilmeden önceki en uzun bekleme, dakika olarak. Her hediye ikisi arasında kendi bekleme süresini alır, çoğunlukla kısa uca yakın - bir insanın bir bildirime dönmesi gibi."
+      "tip": "Bir hediyeyi kabul etmeden önceki en uzun bekleme, dakika cinsinden. Her hediye rastgele bir bekleme alır, genelde kısa uca daha yakın."
     },
     "PauseWhenYouPlay": {
       "label": "Sen oynarken çekil",
-      "tip": "Sen oynamaya başlarsan hesap hemen çekilir ve kendi işine dönmeden önce bekler."
+      "tip": "Bu hesapta kendin bir oyun başlattığın an saat biriktirmeyi durdurur, böylece kendi Steam istemcinle asla çakışmaz."
     },
     "ResumeDelayMinutes": {
       "label": "Devam etmeden önce bekle",
-      "tip": "Sen oynamayı bıraktıktan sonra, bu hesabın kaldığı yerden sessizce devam etmesi için beklenecek süre, dakika."
+      "tip": "Sen oynamayı bıraktıktan ne kadar sonra bu hesabın kaldığı yerden devam ettiği, dakika cinsinden."
     },
     "AchievementBoost": {
-      "tip": "Her oturumu elle başlatmana gerek kalmadan birkaç oyunda kendi başına başarım avlar. Varsayılan olarak kapalı. \"Tüm tek oyunculu\" kütüphanenden seçer: yalnızca gerçek oyunlar (asla DLC veya demo), başarımı olan ve yeterince değerlendirmesi bulunanlar.",
+      "tip": "Birkaç oyunda kendi başına başarım avlar, tek seferde tek oyun. “Seçtiğiniz oyunlar” aşağıdaki listeyi kullanır. “Tüm tek oyunculu oyunlar” kütüphanenden oynanmış ve başarımı olan tek oyunculu oyunları seçer.",
       "label": "Başarım hızlandırma",
       "choices": "0 kapalı | 1 seçtiğiniz oyunlar | 2 tüm tek oyunculu oyunlar"
     },
     "SkipRefundableGames": {
-      "tip": "Yeni alınmış bir oyuna, parasını geri alamayacak duruma gelene kadar dokunmaz: Steam iki saat oynanmışsa reddeder ve iki saat tek bir oturumdur. Sadece kart toplamada değil, her yerde geçerli. Ücretsiz oyunlar hiçbir zaman bekletilmez.",
+      "tip": "Yeni aldığın oyunlara dokunmaz, böylece onları hâlâ iade edebilirsin. Steam 2 saat oynandıktan sonra iadeyi reddeder. Bu yüzden iade süresi bitene kadar hiçbir şey o oyunlarda saat biriktirmez, kart toplamaz veya başarım kasmaz.",
       "label": "İade edilebilir oyunları koru"
     },
+    "ProtectGiftedGames": {
+      "label": "...hediye edilen oyunları da",
+      "tip": "Hediye edilen oyunlara da, onları veren arkadaşa hâlâ iade edilebildikleri sürece dokunmaz. Yalnızca “İade edilebilir oyunları koru” açıkken kullanılır."
+    },
     "ShowInventoryValue": {
-      "tip": "Bu hesabın envanterinin pazarın medyan fiyatıyla ne ettiğini hesaplar. KENDİ envanterini okur, dolayısıyla gizli profil fark etmez.",
+      "tip": "Bu hesabın envanterinin Steam pazar fiyatlarıyla ne ettiğini hesaplar ve panoda gösterir. Yalnızca birkaç kartı olan hesaplarda kapat.",
       "label": "Envanterinin ne ettiğini hesapla"
     },
     "CheckForUpdates": {
-      "tip": "Birkaç saatte bir daha yeni bir sürüm var mı diye bak ve günlükte belirt. Yalnızca haber verir - asla bir şey indirmez, değiştirmez ya da yeniden başlatmaz. Steam hesaplarının anahtarlarını tutan bir şey kendi programını bir zamanlamaya göre değiştirememeli; toplama sırasında gelen bir güncelleme oturumun kaybedilmesi demektir.",
+      "tip": "Birkaç saatte bir yeni sürüm var mı diye bakar ve günlükte haber verir. Asla kendiliğinden bir şey indirmez veya kurmaz.",
       "label": "Güncelleme varsa haber ver"
     },
     "UpdateReminders": {
       "label": "Her saat hatırlat",
-      "tip": "Daha yeni bir sürüm varken bunu günlükte bir kez değil, saatte bir söyle. 'update accept' kurup yeniden başlatır; 'update ignore' hatırlatmaları bir sonraki açılışa kadar durdurur."
+      "tip": "Yeni bir sürüm çıktığı sürece seni her saat günlükte uyarır. Kurmak için update accept, hatırlatmaları bir sonraki açılışa kadar durdurmak için update ignore yaz."
     },
     "BreakMinMinutes": {
       "label": "En kısa mola",
-      "tip": "İki oturum arasındaki en kısa boşluk, dakika. Molaların çoğu bu uçta olur: bir şey içmek, sekme değiştirmek."
+      "tip": "Oturumlar arasındaki en kısa mola, dakika cinsinden. Çoğu mola buna yakındır."
     },
     "BreakMaxMinutes": {
       "label": "En uzun mola",
-      "tip": "Olağan molaların en uzunu, dakika. Gerçek süreler eşit dağılmak yerine kısa uca yığılır, çünkü insanlar gerçekten öyle mola verir."
+      "tip": "En uzun normal mola, dakika cinsinden."
     },
     "MaxSignOutsPerDay": {
       "label": "En fazla şu kadar çevrimdışı ol",
-      "tip": "Bunu günde kaç kez yaptığının tavanı - hesap bütün akşam arkadaş listende yanıp sönmesin diye. 0 kapatır, o zaman her mola sadece Uzakta olur."
+      "tip": "Günde en fazla kaç kez molada çevrimdışı görüneceği, arkadaş listende yanıp sönmesin diye. 0 bunu kapatır ve her mola Uzakta görünür."
     },
     "PlayWhileFarming": {
       "label": "Kart toplarken adı koru",
-      "tip": "Kart toplanırken bile özel adı görünür tutar. Kapatırsan kart toplama gerçek oyunu gösterir."
+      "tip": "Kartlar toplanırken de özel adı gösterir. Kart toplarken gerçek oyunu göstermek için kapat."
     },
     "GameDevice": {
       "label": "Şu cihazda oynuyormuş gibi",
-      "tip": "Arkadaşlarının seni hangi tür cihazda oynuyor sandığı - adının yanındaki küçük Steam Deck veya telefon rozetini koyan budur.",
+      "tip": "Oynarken arkadaşların adının yanında hangi cihaz rozetini görecek. Steam Deck tutmaz, Steam onun yerine kumanda rozetini gösterir.",
       "choices": "0 bilgisayar | 512 telefon | 1024 Big Picture | 2048 VR | 4096 oyun kumandası | 12288 Steam Deck"
     },
     "PriorityGames": {
       "label": "Önce bunları topla",
-      "tip": "Sıralama ne derse desin, her şeyden önce toplanacak appID'ler."
+      "tip": "Sıralama ne derse desin, her şeyden önce toplanacak oyun kimlikleri."
     },
     "FarmPriorityOnly": {
       "label": "Yalnızca onları topla",
-      "tip": "Sadece öncelik listesindeki oyunları toplar, hâlâ kartı olan diğer her oyunu görmezden gelir."
+      "tip": "Yalnızca “Önce bunları topla” içindeki oyunları toplar ve kartı kalan diğer tüm oyunları yok sayar."
     },
     "BlacklistedGames": {
       "label": "Bunlara asla dokunma",
-      "tip": "Rozet sayfası ne derse desin asla toplanmayacak ve asla çalıştırılmayacak appID'ler."
+      "tip": "Asla kart toplanmayacak veya saat biriktirilmeyecek oyun kimlikleri."
     },
     "SkipUnplayedGames": {
       "label": "Hiç oynamadığın oyunları atla",
-      "tip": "Kendin hiç başlatmadığın oyunları atlar; böylece nocat.farm, kimsenin görmesini istemediğin oyunlara ilk kez süre yazmaz."
+      "tip": "Kendin hiç açmadığın oyunları atlar, böylece hiçbiri ilk oynama süresini buradan almaz."
     },
     "RefundHoldDays": {
       "label": "...şu kadar gün boyunca",
-      "tip": "Yeni alınmış bir oyunun kaç gün rahat bırakılacağı. Steam'in kendi iade penceresi 14 gündür, varsayılan da odur; karar vermen daha uzun sürüyorsa artır."
+      "tip": "Yeni alınmış bir oyuna kaç gün dokunulmayacağı. Steam'in iade süresi 14 gündür. Bunu yalnızca karar vermek için fazladan zaman istiyorsan artır."
     },
     "FarmCardsWhen": {
       "label": "Kartlar ne zaman toplansın",
-      "tip": "Yalnızca insan modunda. Gündüz (varsayılan): kart kaldıkça oturumlarda kart oyunu oynanır - aynı ısınma, molalar, yemekler ve yatma saatiyle - ve geceler gece oyunlarına kalır. Yalnızca gece: kartlar hesap uyuyup görünmez olana kadar bekler, gündüz her zamanki oyunlar oynanır. Her zaman: kart olduğu anda gece gündüz, aralıksız toplar.",
-      "choices": "0 gündüz | 1 yalnızca gece | 2 her zaman"
+      "tip": "Yalnızca insan modunda. Gündüz: kartlar normal oturumlarında toplanır. Gece: yalnızca uyurken. Her zaman: bitene kadar aralıksız. Karışık: bazı oturumlar kart toplar, kalanı her zamanki oyunlarını oynar.",
+      "choices": "0 gündüz | 1 yalnızca gece | 2 her zaman | 3 karışık, bazı oturumlar kart, kalanı kendi oyunları"
+    },
+    "CardSittingsPct": {
+      "label": "Kart farmlayan oturumların payı (karışık)",
+      "tip": "“Kartlar ne zaman toplansın” karışık olarak ayarlıyken oturumların kabaca yüzde kaçının kart topladığı. Yüksek değer kartları daha çabuk bitirir, düşük değer her zamanki oyunlarına daha çok zaman bırakır."
     },
     "FarmFromHour": {
       "label": "Kartları yalnızca şu saatten sonra topla",
-      "tip": "Kartları yalnızca bu saatten itibaren toplar, 24 saatlik gösterimle. Bunu ve \"kadar\" değerini 0 bırakırsan her saat toplar."
+      "tip": "Kartları yalnızca bu saatten itibaren toplar, 24 saatlik düzende. Her an toplamak için bunu ve “...şu saate kadar” ayarını 0'da bırak."
     },
     "FarmUntilHour": {
       "label": "...şu saate kadar",
-      "tip": "Kartları bu saate kadar toplar (24 saat). \"Şu saatten\" değerinden erken yaparsan pencere gece yarısını aşar - örneğin 22'den 6'ya gece boyu toplar."
+      "tip": "Kartları bu saate kadar toplar, 24 saatlik düzende. Gece yarısını geçmek için başlangıç saatinden erken bir saat yaz. Örneğin 22'den 6'ya gece boyunca toplar."
     },
     "PostFarmWindDownMinMinutes": {
       "label": "Son karttan sonra en az şu kadar devam et",
-      "tip": "Yalnızca insan modunda. Bir oyun son kartını verdiğinde o oyunu birkaç dakika daha oynar - bu iki sayı arasında bir süre - sonra normal bir oyun oturumundaki gibi mola verir. Sıradaki kartlı oyun moladan sonra başlar. (Kartlar gece ya da her zaman toplanıyorsa bu, en son karttan sonra bir kez olur.) Varsayılan 15 ile 20 dakika. Hemen durması için ikisini de 0 yap."
+      "tip": "Yalnızca insan modunda. Bir oyun son kartını düşürdükten sonra birkaç dakika oynamaya devam eder, sonra mola verir. Hemen durması için ikisini de 0 yap."
     },
     "PostFarmWindDownMaxMinutes": {
       "label": "...şu kadara kadar",
@@ -1638,138 +1726,138 @@
     },
     "FarmingDelayMinutes": {
       "label": "Şu sıklıkta yeniden bak",
-      "tip": "Bir oyunu toplarken ne sıklıkla yeniden kontrol edileceği, dakika. Steam kartları düştükleri anda bildirir, yani bu sadece bir emniyet ağıdır."
+      "tip": "Kart toplarken bir oyunu ne sıklıkla yeniden kontrol ettiği, dakika cinsinden. Steam kart düşüşlerini anında bildirir, yani bu sadece bir yedektir."
     },
     "MaxFarmingHoursPerGame": {
       "label": "Şu kadar saat sonra vazgeç",
-      "tip": "Bir oyundan bu kadar saat sonra vazgeçip sıradakine geçer. Bozuk tek bir oyunun kuyruğu sonsuza dek tıkamasını engeller."
+      "tip": "Bu kadar saatten sonra bir oyundan vazgeçer ve devam eder, böylece takılan bir oyun diğerlerini engelleyemez."
     },
     "StopWhenFarmingDone": {
       "label": "Bitince çıkış yap",
-      "tip": "Toplanacak kart kalmadığı anda bu hesabı çıkarır, saat biriktirmeye devam etmek yerine."
+      "tip": "Kart kalmayınca saat biriktirmek yerine bu hesabın çıkışını yapar."
     },
     "AchievementBoostGames": {
       "label": "Bu oyunları hızlandır",
-      "tip": "Hızlandırmanın sırayla ele alacağı oyunlar, virgülle ayrılmış (appID veya mağaza bağlantısı). Yalnızca hızlandırma \"seçtiğin oyunlar\" iken kullanılır."
+      "tip": "Hızlandırmanın üzerinden geçtiği oyunlar, virgülle ayrılmış oyun kimlikleri veya mağaza bağlantıları olarak. Yalnızca “Başarım hızlandırma” seçtiğin oyunlara ayarlıyken kullanılır."
     },
     "BoostSessionHours": {
       "label": "Her birini yaklaşık şu kadar oyna",
-      "tip": "Hızlandırmanın bir oyunda kalıp sıradakine geçmeden önceki süresi, saat."
+      "tip": "Hızlandırmanın bir sonrakine geçmeden önce bir oyunu ne kadar oynadığı, saat cinsinden."
     },
     "MaxBoostGamesInARow": {
       "label": "İnsan modu: art arda en fazla",
-      "tip": "Yalnızca insan modu: normal programın daha uzun bir bölümüne geçmeden önce üst üste kaç hızlandırma oturumu yapacağı - meşru bir hesapta önceliğin hep program kalması için."
+      "tip": "Yalnızca insan modunda. Bir süre normal oyun karışımına dönmeden önce art arda kaç başarım hızlandırması yaptığı."
     },
     "BoostRestMinutesHuman": {
       "label": "İnsan modu: hızlandırmalar arası program aralığı",
-      "tip": "Yalnızca insan modu: iki hızlandırma oturumu arasında geçen normal program dakikası - avlanmanın meşru bir hesabın gününe hâkim olmaması için."
+      "tip": "Yalnızca insan modunda. Başarım hızlandırmaları arasında kaç dakika normal oyun oynandığı, böylece başarım avı asla günü ele geçirmez."
     },
     "BoostMinReviews": {
       "label": "Yalnızca en az şu kadar değerlendirmesi olanları avla",
-      "tip": "\"Tüm tek oyunculu\" bir oyuna yönelmesi için gereken Steam değerlendirme sayısı. Bu, paket dolgusu filtresidir: on bir değerlendirmesi olan ve hiç açmadığı bir oyunda akşam geçirmiş olmanın kimseye açıklaması yoktur. 0 her şeyi avlar. Elle seçilen oyunlarda yok sayılır."
+      "tip": "“Tüm tek oyunculu oyunlar” bir oyunu avlamadan önce oyunun kaç Steam değerlendirmesine ihtiyacı olduğu. Kimsenin oynamadığı ucuz paket oyunlarından uzak tutar. 0 her şeyi avlar. Elle seçtiğin oyunlara her zaman izin verilir."
     },
     "BoostOnlyPlayedGames": {
       "label": "Yalnızca oynadığın oyunlarda avlan",
-      "tip": "\"Tüm tek oyunculu\"yu bu hesabın bir ara gerçekten başlattığı oyunlarla sınırlar. Varsayılan kapalı - bir avcının yeni bir oyuna başlaması gayet normaldir - ama hesabı kendi geçmişine uyan oyunlarda tutmanın en katı yolu budur."
+      "tip": "“Tüm tek oyunculu oyunlar”ın yalnızca bu hesabın daha önce açtığı oyunları avlamasına izin verir. Hesabın geçmişine uyan oyunlarla sınırlamanın en sıkı yolu."
     },
     "InventoryIgnoreGames": {
       "label": "...ama bu oyunlar hariç",
-      "tip": "Envanter değerinin dışında bırakılacak appID'ler, virgülle ayrılmış. Hesabın YASAKLI olduğu oyun buraya yazılır: eşyalar envanterde durur ama asla satılamaz, dolayısıyla saymak toplamı şişirir. Steam yasağın hangi oyunda olduğunu söylemez ve envanterde de bunu güvenilir biçimde gösteren bir şey yoktur - bu yüzden burası tahmin edilen değil, senin doldurduğun bir listedir."
+      "tip": "Envanter değerinin dışında bırakılacak oyun kimlikleri (mağaza bağlantısındaki sayı), virgülle ayrılmış. Hesabın yasaklı olduğu oyunları buraya koy, çünkü o eşyalar asla satılamaz."
     },
     "YieldToFamily": {
       "label": "Paylaşılan oyunu istediklerinde geri ver",
-      "tip": "Ailedeki biri bu hesabın ödünç aldığı bir oyunu başlatırsa, oyunu hemen geri verip sıradakine geçer. Steam paylaşılan bir oyunu aynı anda tek kişiye ödünç verir ve sahibi her zaman kazanır; alternatifi oturumun ortasında dışarı atılıp artık sahip olmadığı bir oyunu \"oynuyor\" görünmektir. Bıraktıktan sonra yirmi dakika daha rotasyonun dışında kalır, kapattıkları saniye kapılmaz."
+      "tip": "Ailedeki biri ödünç alınan bir aile oyununu başlatınca onu hemen geri verir ve devam eder. O kişi bıraktıktan sonra 20 dakika boyunca oyun sıraya girmez."
     },
     "HoldNewFamilyGames": {
       "label": "Yeni gelen aile oyunlarına dokunma",
-      "tip": "Paylaşılan bir oyunu aile kütüphanesindeki ilk iki hafta boyunca atlar (\"iade edilebilir oyunları koru\" ile aynı gün sayısı), satın alan kişi hâlâ karar veriyor olabilir diye. Yalnızca oyunun ne zaman GELDİĞİNE bakabilir, sahibinin ne kadar oynadığına asla - o sayı bu hesaptan görünmez. Bu yüzden bazen sahibinin çoktan saatler geçirdiği ve zaten iade edemeyeceği bir oyunu bekletir."
+      "tip": "Aileyle paylaşılan bir oyun kütüphanede yeniyken onu atlar, satın alan kişi iade isterse diye. “İade edilebilir oyunları koru” ile aynı gün sayısını kullanır."
     },
     "IncludeFamilyLibrary": {
       "label": "Aileyle paylaşılan oyunları dahil et",
-      "tip": "Steam Ailesi üzerinden bu hesapla paylaşılan oyunları da avlar. Ödünç alınan bir oyunda kazanılan başarımlar, tıpkı sahip olunan bir oyundaki gibi BU hesaba işlenir. Ailenin paylaşımdan çıkardığı oyunlar atlanır, oyun olmayanlar da öyle. Sahip olunan oyunlar ödünç alınanlardan hep önce gelir, çünkü sahibi kendininkini her an geri isteyebilir."
+      "tip": "Bu hesapla Steam Ailesi üzerinden paylaşılan oyunlarda da başarım avlar. Bunlar bu hesapta sahip olunan oyunlar gibi sayılır. Sahip olunan oyunlar her zaman önce gelir."
     },
     "AchievementGrindGapMinMinutes": {
       "label": "Sıkı çalışırken, şu sıklıkta bir başarım",
-      "tip": "Bir GRIND'in başarımları ne kadar aralıkla açtığı, dakika (dalgalı aralığın alt ucu). Grind, bir oyunun başında etkin biçimde oturmak demektir; yani bu, gerçekten avlanan birinin temposudur, arka plandaki damla damla akış değil. Yine kolaydan zora ve yine oyundaki saatlerle sınırlı."
+      "tip": "Başarım kasarken başarımların kaç dakika arayla açıldığı. Kasma tek bir oyunda kalır, yani bu daha hızlı, aktif bir tempodur. En kolaylar önce gelir."
     },
     "AchievementGrindGapMaxMinutes": {
       "label": "...şu kadara kadar",
-      "tip": "Grind sırasındaki aralığın üst ucu, dakika."
+      "tip": "Kasma sırasında açılışlar arasındaki en uzun aralık, dakika cinsinden."
     },
     "AchievementNeverGames": {
       "label": "Bu oyunlarda asla",
-      "tip": "Tamamen rahat bırakılacak oyunlar: buradaki hiçbir şey için başarım yazılmaz ve hızlandırma asla birini seçmez. İnsan modunda hesabın amiral oyunu da atlanır. (Not: Counter-Strike 2 gibi bazı oyunlar başarımlarını sunucuda tutar, dolayısıyla zaten hiçbir şey onları açamaz.)"
+      "tip": "Tamamen dokunulmayacak oyunlar. Bunlarda hiç başarım açılmaz ve hızlandırmalar onları asla seçmez. İnsan modunda hesabın ana oyunu da atlanır."
     },
     "AchievementGames": {
       "label": "Yalnızca bu oyunlar",
-      "tip": "Bu appID'lerle sınırlar. Boş bırakırsan hesabın o sırada oynadığı her oyun geçerli olur."
+      "tip": "Başarımların sınırlanacağı oyun kimlikleri. Hesap ne oynuyorsa onu kullanmak için boş bırak."
     },
     "UnpackBoosterPacks": {
       "label": "Destek paketlerini aç",
-      "tip": "Envanterine düşen destek paketlerini otomatik açar, böylece içindeki kartlar rozet üretilen setlere sayılır."
+      "tip": "Envantere düşen kart paketlerini açar, böylece kartları rozetlere sayılır."
     },
     "ClaimEventItems": {
       "label": "Ücretsiz etkinlik eşyalarını al",
-      "tip": "Steam'in indirim sırasında her gün dağıttığı ücretsiz çıkartmayı ve puan dükkânında 0 puan olan her şeyi alır. Hiçbiri bir şeye mal olmaz ve kimse almazsa kaybolur. İnsan modu hesabı uyuturken sabahı bekler; 'Yalnızca uyanıkken tepki ver' kapalıysa beklemez."
+      "tip": "Steam indirimleri sırasında günlük ücretsiz çıkartmayı ve Puan Dükkânı'nda 0 puan tutan her şeyi alır."
     },
     "DiscoveryQueue": {
       "label": "Keşif kuyruğuna göz at",
-      "tip": "Her Steam gününde bir kez, mağazanın keşif kuyruğuna bir insan gibi göz atar - her oyunda birkaç saniye, sonra sıradaki. İndirim sırasında etkinlik eşyalarını ve rozet ilerlemesini kazandıran budur; dışında ise insanların yaptığı sıradan bir şeydir. İnsan modu hesabı uyuttuğu sürece sabahı bekler.",
+      "tip": "Mağazanın keşif kuyruğunu günde bir kez bir insan gibi gezer. İndirimlerde bu, etkinlik eşyaları ve rozet ilerlemesi kazandırır.",
       "choices": "0 kapalı | 1 indirimlerde | 2 her gün"
     },
     "SellDuplicates": {
       "label": "Kopya kartları sat",
-      "tip": "Hesap uyanıkken her 8-14 saatte bir, birkaç fazla koleksiyon kartını en ucuz ilanın bir kuruş altına pazara koyar - Steam ücretleri hesaba katılır, yani gösterilen fiyat eline geçendir. Fazla demek: bir oyunun setinin tamamı varsa hâlâ üretebileceği rozet seviyesi kadar kopya tutar; setin bir kısmı varsa her birinden bir tane; rozet maksimumsa hiç. Parlak kartlar asla satılmaz. Pazarın altına indiği bir haftalık ilanlar kaldırılır ve günün fiyatından yeniden konur. Bu hesabın doğrulayıcı sırları yüklü değilse telefondan onaylanmaları gerekir. 'sell <hesap>' önizleme gösterir."
+      "tip": "Her 8 ila 14 saatte bir birkaç fazla kartı pazarda en ucuz ilanın bir kuruş altına koyar. Rozetler için gerekenleri tutar ve parlak kartları asla satmaz. Doğrulayıcı eklenmemişse telefon onayı gerekir."
     },
     "SellPerRun": {
       "label": "Seferde kart sayısı",
-      "tip": "Bir seferde kaç fazla kartın konacağı, en değerliler önce. Birkaç tane bir anda toparlanan birine benzer; bir dakikada yüz tane benzemez."
+      "tip": "Her turda kaç fazla kartın ilana konduğu, en değerlisinden başlayarak. Birkaçar birkaçar koymak doğal görünür."
     },
     "BoosterGames": {
       "label": "Kart paketi oluşturulacak oyunlar",
-      "tip": "Değerli taşların kart paketine çevrileceği AppID'ler, virgülle ayrılmış. Steam oyun başına günde bir pakete, yalnızca bu hesabın hâlâ kart düşürebildiği oyunlar için izin verir ve bir sonrakinin ne zaman yapılabileceğini söyler - mümkün olur olmaz oluşturulur; insan modu hesabı uyuturken sabahı bekler, 'Yalnızca uyanıkken tepki ver' kapalıysa beklemez. Boş bırakmak kapatır. 'booster <hesap>' değerli taşları ve uygun oyunları gösterir."
+      "tip": "Mücevherlerin kart paketine çevrileceği oyun kimlikleri, virgülle ayrılmış. Steam her oyun için günde bir pakete izin verir, yalnızca hâlâ kart düşüren oyunlarda. Kapatmak için boş bırak."
     },
     "BoosterGems": {
       "label": "Kart paketleri şunu kullansın",
-      "tip": "Hesapta iki tür mücevher de varken kart paketinin hangi mücevherlerden yapılacağı. Önce takas edilebilir (varsayılan) takas edebileceğin veya satabileceğin paketler yapar; önce takas edilemez başka hiçbir yere gidemeyen mücevherleri harcar. Tercih edilen tür fiyatı karşılamazsa diğeri kullanılır.",
+      "tip": "Hesapta iki tür de varken kart paketlerinin hangi mücevherleri kullandığı. Önce takas edilebilir, takas edebileceğin veya satabileceğin paketler yapar. Önce takas edilemez, başka hiçbir yere gidemeyen mücevherleri harcar.",
       "choices": "0 önce takas edilebilir mücevherler | 1 önce takas edilemez mücevherler"
     },
     "ClearInventoryNotifications": {
       "label": "Yeni eşya rozetini temizle",
-      "tip": "Her kart düştüğünde Steam'in yeşil \"yeni eşya\" sayacını temizler, böylece envanterin sürekli okunmamış görünmez."
+      "tip": "Her kart düştüğünde Steam'in yeşil yeni eşya sayacını temizler."
     },
     "UIMode": {
       "label": "Şöyle giriş yap",
-      "tip": "Steam'e hangi tür istemci olduğunu söylediği. \"Masaüstü\" doğru cevaptır ve varsayılandır - gerçek istemcinin bildirdiği de budur.",
+      "tip": "Giriş yaparken kendini ne tür bir Steam uygulaması olarak tanıttığı. Masaüstü'nde bırak, çünkü gerçek Steam uygulamasıyla eşleşir. Diğerleri yalnızca sorun gidermek içindir.",
       "choices": "7 masaüstü (varsayılan) | 3 web | 2 mobil | 1 Big Picture | 0 masaüstü, eski"
     },
     "SteamParentalCode": {
       "label": "Aile Görünümü PIN'i",
-      "tip": "Bu hesapta Aile Görünümü açıksa onun PIN'i. Onsuz Steam, kart toplamanın okuması gereken sayfaları engeller."
+      "tip": "Bu hesapta Aile Görünümü açıksa onun PIN'i. Bu olmadan Steam, kart toplamanın ihtiyaç duyduğu sayfaları engeller."
     },
     "MachineName": {
       "label": "Cihaz adı",
-      "tip": "Bu hesabın Steam'in yetkili cihazlar listesinde gösterdiği cihaz adı. Boş bırakırsan bu bilgisayarın gerçek adı kullanılır."
+      "tip": "Bu hesabın Steam'in yetkili cihazlar listesinde gösterdiği cihaz adı. Bu bilgisayarın gerçek adını kullanmak için boş bırak."
     },
     "SharedSecret": {
       "label": "Doğrulayıcı kod anahtarı",
-      "tip": "Bu hesabın mobil doğrulayıcısının paylaşılan anahtarı. Bununla nocat.farm kendi Steam Guard isteklerini yanıtlar, telefona gerek kalmaz."
+      "tip": "Steam Guard kodlarını kendisinin girmesini sağlayan doğrulayıcı anahtarı. Böylece hesap yeniden başlatmadan sonra kendi kendine tekrar giriş yapar. maFile'ını authenticators klasörüne koymak da aynı işi görür. Gizli tut."
     },
     "IdentitySecret": {
       "label": "Doğrulayıcı onay anahtarı",
-      "tip": "Aynı doğrulayıcının diğer yarısı; \"telefonundan onayla\" uyarısını halleden parça. Yalnızca bu hesap takas gönderdiğinde önemlidir."
+      "tip": "“Telefonundan onayla” isteklerini kabul etmek için kullanılan ikinci doğrulayıcı anahtarı. Yalnızca bu hesap eşya verecekse gerekir, çünkü eşya almak asla onay istemez."
     },
     "AccountProxy": {
       "label": "Bu hesap için vekil sunucu",
-      "tip": "Yalnızca bu hesabın Steam trafiğini kendi vekil sunucusundan geçirir, örneğin http://sunucu:port. Boş bırakırsan genel olan kullanılır."
+      "tip": "Bu hesabın Steam trafiğini kendi vekil sunucusu üzerinden gönderir, örneğin http://host:port. Genel vekil sunucuyu kullanmak veya hiç kullanmamak için boş bırak. Hesapları farklı IP'lere dağıtmak Steam'in hız sınırlarından kaçınmaya yardım eder."
     },
     "AccountProxyUsername": {
       "label": "Vekil sunucu kullanıcı adı",
-      "tip": "Bu hesabın kendi vekil sunucusu istiyorsa kullanıcı adı."
+      "tip": "Bu hesabın vekil sunucusu için kullanıcı adı, gerekiyorsa."
     },
     "AccountProxyPassword": {
       "label": "Vekil sunucu parolası",
-      "tip": "Bu hesabın kendi vekil sunucusu istiyorsa parola."
+      "tip": "Bu hesabın vekil sunucusu için parola, gerekiyorsa."
     },
     "AcceptGroupInvites": {
       "label": "Grup davetlerini kabul et",
@@ -1777,141 +1865,141 @@
     },
     "IgnoreSuspiciousInvites": {
       "label": "Bariz spam'i yok say",
-      "tip": "Yepyeni, gizli, seviye 0 profillerden gelen arkadaşlık isteklerini sessizce yok sayar - her dolandırıcı botun biçimi budur."
+      "tip": "Yeni, 0 seviye, gizli profillerden gelen arkadaşlık isteklerini sessizce yok sayar. Dolandırıcı botlar böyle görünür. Yalnızca “Arkadaşlık isteklerini kabul et” açıkken çalışır."
     },
     "RejectInvalidFriendInvites": {
       "label": "Kabul etmediklerini reddet",
-      "tip": "Bir arkadaşlık isteğini listede öylece bırakmak yerine etkin biçimde reddeder. Kapalıyken kabul edilmeyen her şey sadece bekler."
+      "tip": "Kabul etmediği arkadaşlık isteklerini listede bırakmak yerine reddeder. Kapalıyken sen bakasın diye listede kalırlar."
     },
     "AutoReplyDelaySeconds": {
       "label": "Yanıtlamadan önce bekle",
-      "tip": "Yanıt gitmeden önce beklenecek saniye. Anında cevap, cevap veren bir robottur; gerçek bekleme bu değere kadar rastgele seçilir."
+      "tip": "Yanıtlamadan önce beklenecek saniye, anında yanıt vermesin diye. Gerçek bekleme rastgeledir, bunun iki katına kadar."
     },
     "CommandMasters": {
       "label": "Şunlardan komut kabul et",
-      "tip": "Steam'de bu hesaba mesaj atarak nocat.farm'ı yönetmesine izin verilen SteamID64'ler, virgülle ayrılmış. Komutlar ! ile başlamalıdır."
+      "tip": "Bu hesaba mesaj atarak nocat.farm'ı yönetmesine izin verilen SteamID64'ler, virgülle ayrılmış. Komutlar eğik çizgiyle başlar, başlamak için /help gönder. Kimse yönetemesin diye boş bırak."
     },
     "WebRefreshSeconds": {
       "label": "Şu sıklıkta yenile",
-      "tip": "Panonun kaç saniyede bir kendini yenileyeceği. Düşük değer daha canlı hissettirir ve hiçbir maliyeti yok - hepsi yerel."
+      "tip": "Panonun kendini ne sıklıkla güncellediği, saniye cinsinden. Düşük değer daha akıcı hissettirir ve hiçbir şeye mal olmaz, çünkü her şey senin bilgisayarında çalışır."
     },
     "WebSessionDays": {
       "label": "Şu kadar süre oturum açık kalsın",
-      "tip": "Bir tarayıcının pano parolasını yeniden girmesi gerekmeden kaç gün oturumunun açık kalacağı."
+      "tip": "Bir tarayıcının pano parolasını yeniden sormadan önce kaç gün oturum açık kalacağı."
     },
     "ExitWhenAllFinished": {
       "label": "Her şey bitince kapat",
-      "tip": "Bütün hesaplar toplamayı bitirip çıkış yapar yapmaz nocat.farm'ı tamamen kapatır; tepside boş boş beklemesine gerek kalmaz."
+      "tip": "Her hesap kart toplamayı bitirip çıkış yapınca nocat.farm'ı tepside boşta bırakmak yerine kapatır."
     },
     "Debug": {
       "label": "Hata ayıklama ayrıntılarını ekranda göster",
-      "tip": "Hata ayıklama ayrıntıları - her web isteği, her yeniden denetim, hepsi - bu ayar ne olursa olsun DAİMA günlük dosyasına yazılır. Günlüğün amacı zaten budur: bir şey ters gittiğinde, hatayı bir düğme açıkken yeniden üretmek yerine cevap çoktan kayıt altındadır. Bu ayar yalnızca o satırların pencerede ve konsolda da gösterilip gösterilmeyeceğine karar verir; varsayılan olarak kapalıdır, çünkü gerçekten görmek istediğin birkaç satırı yukarı kaydırıp götürürler."
+      "tip": "Pencerede ve konsolda ek hata ayıklama ayrıntıları gösterir. Bu ayrıntılar zaten her zaman günlük dosyasına kaydedilir. Canlı izlemek istemiyorsan kapalı bırak."
     },
     "LogRetentionDays": {
       "label": "Günlükleri şu kadar sakla",
-      "tip": "Bu kadar günden eski günlük dosyalarını siler. 0 sonsuza dek saklar."
+      "tip": "Bu kadar günden eski günlük dosyalarını siler. 0 onları sonsuza dek saklar."
     },
     "Rep4RepPointsRefreshMinutes": {
       "label": "Puanları şu sıklıkta kontrol et",
-      "tip": "rep4rep'e puan toplamını kaç dakikada bir soracağı. rep4rep herhangi bir istek sınırı yayımlamıyor, o yüzden 1 yapıp bir ay boyunca açık bırakma."
+      "tip": "rep4rep puan toplamının ne sıklıkla kontrol edileceği, dakika cinsinden. Uzun süre çok düşük değerler kullanma, çünkü rep4rep'in açıklanmış bir sınırı yok."
     },
     "ReconnectDelaySeconds": {
       "label": "Şu süre sonra yeniden bağlan",
-      "tip": "Steam bağlantıyı düşürdükten sonra yeniden bağlanmadan önce beklenecek saniye."
+      "tip": "Steam bağlantıyı kopardıktan sonra yeniden bağlanmadan önce ne kadar bekleneceği, saniye cinsinden."
     },
     "ConnectionTimeoutSeconds": {
       "label": "Bağlantı zaman aşımı",
-      "tip": "Vazgeçip yeniden bağlanmadan önce Steam'in yanıtı için beklenecek saniye."
+      "tip": "Vazgeçip yeniden bağlanmadan önce Steam'in yanıtı için ne kadar bekleneceği, saniye cinsinden."
     },
     "MaxConcurrentFarming": {
       "label": "En fazla şu kadar topla",
-      "tip": "Aynı anda kaç hesabın kart toplayabileceği. 0 sınırsız demektir."
+      "tip": "Aynı anda kaç hesabın koleksiyon kartı toplayabileceği. 0 sınır yok demek."
     },
     "LoginCooldownMinutes": {
       "label": "Hız sınırı bekleme süresi",
-      "tip": "Steam bir girişi sınırladığında bütün hesaplar bu kadar dakika bekler - sırayla engellenmek için kuyruğa girmek yerine hep birlikte atlatırlar."
+      "tip": "Steam çok sık denendiği için bir girişi engellediğinde her hesabın kaç dakika bekleyeceği. Hepsi birlikte bekler, böylece art arda engellenmezler."
     },
     "WebRequestGapMs": {
       "label": "Web istekleri arası boşluk",
-      "tip": "Aynı Steam sitesine iki istek arasındaki en küçük boşluk, milisaniye. Rozet okumayı Steam'in radarının altında tutan en büyük etken budur - hız sınırı uyarıları görürsen artır, asla 200'ün altına inme."
+      "tip": "Aynı Steam sitesine yapılan iki istek arasındaki en kısa bekleme, milisaniye cinsinden. Hız sınırı uyarıları görürsen artır. Asla 200'ün altına indirme."
     },
     "SteamProtocol": {
       "label": "Şununla bağlan",
-      "tip": "Steam'e nasıl ulaşılacağı. Bir güvenlik duvarı ya da servis sağlayıcın bir şeyi engellemiyorsa otomatikte bırak - yalnızca-websocket sıradan HTTPS trafiği gibi görünür ve genelde geçer.",
+      "tip": "Steam'e nasıl bağlanılacağı. Bir güvenlik duvarı veya internet sağlayıcın engellemiyorsa otomatikte bırak. Yalnızca websocket sıradan web trafiği gibi görünür ve genelde geçer.",
       "choices": "0 otomatik | 1 yalnızca websocket | 2 yalnızca tcp"
     },
     "WebProxy": {
       "label": "Vekil sunucu",
-      "tip": "Steam trafiğini bu vekil sunucudan geçirir, örneğin http://127.0.0.1:8080. Doğrudan bağlanmak için boş bırak."
+      "tip": "Steam trafiğini bu vekil sunucu üzerinden gönderir, örneğin http://127.0.0.1:8080. Doğrudan bağlanmak için boş bırak."
     },
     "WebProxyUsername": {
       "label": "Vekil sunucu kullanıcı adı",
-      "tip": "Yukarıdaki vekil sunucu istiyorsa kullanıcı adı."
+      "tip": "Yukarıdaki vekil sunucu için kullanıcı adı, gerekiyorsa."
     },
     "WebProxyPassword": {
       "label": "Vekil sunucu parolası",
-      "tip": "Yukarıdaki vekil sunucu istiyorsa parola."
+      "tip": "Yukarıdaki vekil sunucu için parola, gerekiyorsa."
     },
     "GlobalBlacklistedGames": {
       "label": "Bunlara asla dokunma (tüm hesaplar)",
-      "tip": "Hiçbir hesabın toplamayacağı ya da boşta çalıştırmayacağı AppID'ler; böylece eklediğin her hesapta aynı listeyi tekrarlamazsın. Her hesap yine de üstüne kendi listesini ekleyebilir."
+      "tip": "Hiçbir hesabın asla kart toplamayacağı veya saat biriktirmeyeceği oyunlar, oyun kimliğiyle (mağaza bağlantısındaki sayı). Her hesap bunlara kendi oyunlarını da ekleyebilir."
     },
     "Rep4RepLearnCap": {
       "label": "Gerçek sınırı öğren",
-      "tip": "Steam, yukarıda ayarlanan üst sınırın ÖTESİNDE bir yorumu reddederse o sayıyı bu hesabın gerçek tavanı olarak hatırla. Sıradan bir \"çok sık yorum yapıyorsun\" reddi yüzünden sınırı asla düşürmez - o mesaj iki yorum arasındaki boşlukla ilgilidir ve normalde 10 olan günlük sınır hakkında hiçbir şey söylemez."
+      "tip": "Bu hesabın gerçek günlük yorum sınırını Steam'in retlerinden öğrenmesine izin verir. “Çok sık yorum yapıyorsun” reddi sınırı asla düşürmez."
     },
     "Rep4RepRetryRefused": {
       "label": "Reddedilen yorumu yeniden dene",
-      "tip": "Reddedilen bir yoruma, o profili bir günlüğüne rafa kaldırmadan önce bir şans daha verir."
+      "tip": "Reddedilen bir yoruma, o profili bir gün atlamadan önce bir şans daha verir."
     },
     "SendOnFarmingFinished": {
       "label": "Toplama bitince eşyaları gönder",
-      "tip": "Toplanacak kart kalmadığında, bu hesabın topladıklarını yukarıda listelenen ilk hesaba gönderir. Birden fazla boşta hesap çalıştırmanın bütün amacı budur: kartlar altı ayrı envanter yerine tek bir envanterde toplanır."
+      "tip": "Toplanacak kart kalmadığında bu hesabın topladıklarını “Kendi hesapların” içindeki ilk hesaba gönderir."
     },
     "SendEveryHours": {
       "label": "Eşyaları şu aralıkla gönder",
-      "tip": "Bu kadar saatte bir, bu hesabın eşyalarını yukarıda yazan ilk hesaba gönderir - 'send' komutunun aynısı, ama zamanlanmış, böylece toplama arasında kartlar birikmez. 0 kapalı demek. İlk gönderim açtıktan bir tam süre sonra olur, biraz rastgele pay her seferinde aynı dakikaya denk gelmesini önler ve insan modu hesabı uyuturken sabahı bekler; 'Yalnızca uyanıkken tepki ver' kapalıysa beklemez."
+      "tip": "Bu hesabın eşyalarını bu kadar saatte bir “Kendi hesapların” içindeki ilk hesaba gönderir, kartlar birikmesin diye. 0 bunu kapatır."
     },
     "SendItemTypes": {
       "label": "Ne gönderilecek",
-      "tip": "Bu hesaptan çıkmasına izin verilen eşya türleri, virgülle ayrılmış: cards, foils, backgrounds, emoticons, boosters, gems - ya da \"all\". Burada yazmayan hiçbir şey, başka ne ayarlanmış olursa olsun asla gönderilmez.",
+      "tip": "Bu hesaptan çıkabilecek eşya türleri, virgülle ayrılmış: cards, foils, backgrounds, emoticons, boosters, gems veya all. Listelenmeyen hiçbir şey asla gönderilmez.",
       "placeholder": "kartlar"
     },
     "TradeMasterToken": {
       "label": "Onun takas bağlantısı anahtarı",
-      "tip": "Diğer hesabın takas bağlantısındaki anahtar (&token= sonrasındaki kısım). Yalnızca iki hesap arkadaş değilse gerekir - arkadaşsanız boş bırakabilirsin."
+      "tip": "Diğer hesabın takas bağlantısındaki anahtar, &token= sonrasındaki kısım. Yalnızca iki hesap arkadaş değilse gerekir."
     },
     "ClearNotifications": {
       "label": "Steam bildirimlerini temizle",
-      "tip": "Steam'in bildirim tepsisindeki her şeyi okundu olarak işaretler - yorumlar, hediyeler, yardım talepleri, arkadaşlık istekleri - böylece sayaçlar hesabın ömrü boyunca artmak yerine sıfıra döner. Hiçbiri kendiliğinden düşmez: biri sayfayı açana kadar yanık kalırlar ve elle giriş yapmadığın bir hesapta bunu kimse yapmaz."
+      "tip": "Steam'in bildirim tepsisindeki yorumlar, hediyeler ve davetler gibi her şeyi okundu olarak işaretler, böylece sayaçlar artmaya devam etmez."
     },
     "AchievementIncludeMainGame": {
       "label": "Ana oyunda da kazan",
-      "tip": "İnsan modunun ana oyununun da diğer oyunlar gibi başarım kazanıp kazanmayacağı. Açık ve öyle de olmalı: saatler ana oyunda birikir, dolayısıyla başarım görmek için hesabın en şaşırtıcı olmayan yeridir. Kapatmak onu tamamen rahat bırakır; böylece amiral gemisi oyununda yüzlerce saati olan bir hesap orada hiçbir şey göstermez - genelde ikisinin daha tuhafı budur. Her hâlükârda nadirlik eşiği ve tamamlama tavanı geçerliliğini korur."
+      "tip": "“İnsan modu”ndaki ana oyunun da diğer oyunlar gibi başarım kazanmasına izin verir. Açık bırakmak en iyisi, çünkü yüzlerce saat oynanıp hiç başarım olmaması tuhaf görünür."
     },
     "PluginsEnabled": {
       "label": "Eklentileri yükle",
-      "tip": "\"plugins\" klasörüne konan her .dll dosyasını yükler. VARSAYILAN OLARAK KAPALI ve eklentiyi kendiniz yazmadıysanız ya da yazana güvenmiyorsanız kapalı kalması iyidir: bir eklenti bu sürecin içinde çalışan başkasının kodudur ve bu sürecin eriştiği her şeye - config altındaki Steam oturum jetonları dahil - erişebilir. Eklentilere bilerek dar bir API verilir (salt okunur hesap bilgisi ve sizin yazacağınız gibi çalışan komutlar), ama bu bir korkuluktur, kafes değil: aşmak isteyen bir DLL aşabilir."
+      "tip": "Eklentileri plugins klasöründen yükler. Bunu yalnızca kendi yazdığın veya tamamen güvendiğin eklentiler için aç. Bir eklenti, Steam girişlerin dahil nocat.farm'ın ulaştığı her şeye ulaşabilir."
     },
     "FarmInSittings": {
       "label": "Aralıksız değil, oturumlar halinde topla",
-      "tip": "Kartlar bitene kadar çalışmak yerine günde birkaç blok halinde, aralarında boşluklarla ve her gün farklı saatlerde toplar. ÖNCE ŞUNU BİLİN: gerçek bir boşluk yalnızca boşta bekletilecek oyunu olmayan hesapta oluşur. Hesap ayrıca boşta bekliyorsa - özel bir ad, bir oyun listesi - aralarda bekletici devralır ve hesap yine saat biriktirir; yalnızca saatlerin hangi oyuna yazıldığı değişir. Yalnızca kart toplayan bir hesapta işe yarar, boşta bekleten bir hesapta neredeyse anlamsızdır."
+      "tip": "Kartları aralıksız değil, günde birkaç blok halinde ve aralarında molalarla toplar. Yalnızca saat biriktirecek başka bir şeyi olmayan bir hesapta gerçek bir fark yaratır."
     },
     "FarmHoursPerDay": {
       "label": "Günde kaç saat toplansın",
-      "tip": "Oturumların toplamının günün ne kadarını tuttuğu. Her gün bu değerin çevresinde yeniden belirlenir ve hafta sonu daha uzundur, böylece hiçbir gün diğerine benzemez. Yalnızca \"Oturumlar halinde topla\" açıkken kullanılır."
+      "tip": "Toplama bloklarının günde kabaca kaç saat ettiği. Her gün değişir ve hafta sonları daha uzun sürer. Yalnızca “Aralıksız değil, oturumlar halinde topla” açıkken kullanılır."
     },
     "MarketGapSeconds": {
       "label": "Fiyat sorguları arası saniye",
-      "tip": "Bir eşyanın fiyatını Steam pazarına sormak arasında ne kadar bekleneceği. Steam'in sorguları kısıtlayıp kısıtlamayacağını belirleyen sayı budur: çok hızlı olursa reddetmeye başlar, uygulama geri çekilir ve tekrar izin verilene kadar envanter değerleri eskir. Yüksek olan daha yavaş ama daha istikrarlıdır. 10 rahattır; yalnızca envanterleriniz küçükse düşürün."
+      "tip": "Her Steam pazarı fiyat sorgusu arasında beklenecek saniye. Çok hızlı olursa Steam reddetmeye başlar ve envanter değerleri güncelliğini yitirir. Yüksek değer daha yavaş ama daha istikrarlıdır."
     },
     "PriceCacheHours": {
       "label": "Bir fiyata şu kadar güven",
-      "tip": "Değerli her şeyin - pazar para biriminde 2 veya daha fazla eden - fiyatına yeniden sorulmadan önce ne kadar güvenileceği. Daha ucuz eşyalar daha seyrek kontrol edilir: 2'nin altında iki kat, 0,25'in altında altı kat daha uzun, pazarda hiç ilanı olmayanlar için bir hafta. Toplamı neredeyse hiç etkilemezler ve yüzlercesini sormak, pazarın reddetmeye başlamasının asıl sebebidir. Daha uzun, daha az istek demektir; karşılığında değerler daha yavaş güncellenir."
+      "tip": "Bir fiyatın yeniden kontrol edilmeden önce kaç saat kullanılacağı. Ucuz eşyalar daha seyrek kontrol edilir. Uzun süre daha az istek demek, ama değerler daha yavaş güncellenir."
     },
     "Rep4RepPauseHours": {
       "label": "Yorumları şu kadar beklet (saat)",
-      "tip": "Tüm hesaplarda yorum yapmayı bu kadar saat boyunca tamamen durdurur, sonra kendiliğinden devam eder. 24 bir gün, 48 iki gündür - arasındaki her değer de çalışır, 27 saatlik bir bekletme sadece 27'dir. Ayarla ve unut: geri sayım yeniden başlatmayı atlatır, son kaydetmeden değil ayarladığın andan itibaren sayar ve süresi dolunca kendini temizler. 0, hiçbir şeyin bekletilmediği anlamına gelir. Günlük sınır ve program dokunulmaz; bu yalnızca bekletir ve her hesap tertemiz 0/10 ile döner."
+      "tip": "rep4rep yorumlarını her hesapta bu kadar saat duraklatır, sonra kendiliğinden yeniden başlar. Geri sayım yeniden başlatmalarda da devam eder. Duraklatma istemiyorsan 0 yaz."
     }
   }
 }

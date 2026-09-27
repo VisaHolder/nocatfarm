@@ -284,6 +284,16 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			return 2 * 60;
 		}
 
+		// Human mode: comments come from an account that's up and about - not asleep, not in a break it's spending
+		// offline, not in the first minutes after signing in or waking - and the first of the day a while into it.
+		_gate ??= new HumanGate(Bot);
+
+		if (!force && !_gate.Open) {
+			_status = new Said("waiting for the account's day");
+
+			return Rng.Next(4 * 60, 10 * 60);
+		}
+
 		// A state file we couldn't read means we don't know today's count. Retry the read; never guess zero.
 		_state ??= await Rep4RepState.LoadAsync(Bot.Name).ConfigureAwait(false);
 
@@ -326,7 +336,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 			if (last != null) {
 				int sinceSeconds = (int) (DateTime.UtcNow - last.Value).TotalSeconds;
-				int gapSeconds = Bot.Cfg.Rep4RepGapMinMinutes * 60;
+				int gapSeconds = Math.Max(Bot.Cfg.Rep4RepGapMinMinutes, Bot.Cfg.LegitMode ? HumanGapMinMinutes : 0) * 60;
 
 				if (sinceSeconds < gapSeconds) {
 					_status = new Said("{0}/{1} today - next in {2}", posted, Cap, Fmt.Hm((gapSeconds - sinceSeconds) / 60));
@@ -590,11 +600,29 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 	/// <summary>Gap before the next comment. Tolerates a max below the min rather than throwing on every post.</summary>
 	private int NextGapSeconds() {
+		// Human mode spreads the day's comments over the day rather than packing all ten into its first few hours.
+		if (Bot.Cfg.LegitMode) {
+			int min = Math.Max(Bot.Cfg.Rep4RepGapMinMinutes, HumanGapMinMinutes);
+
+			return (int) Rng.HumanMinutes(min, Math.Max(min + 10, Math.Max(Bot.Cfg.Rep4RepGapMaxMinutes, HumanGapMaxMinutes))).TotalSeconds;
+		}
+
 		int lo = Math.Max(60, Bot.Cfg.Rep4RepGapMinMinutes * 60);
 		int hi = Math.Max(lo, Bot.Cfg.Rep4RepGapMaxMinutes * 60);
 
 		return Rng.Next(lo, hi + 1);
 	}
+
+	/// <summary>A human-mode account's gap between comments: ten of them across a day of 12 or so waking hours.</summary>
+	private const int HumanGapMinMinutes = 35;
+	private const int HumanGapMaxMinutes = 110;
+
+	private HumanGate? _gate;
+
+	/// <summary>Today's window edges, rolled once a day - not a formula that marches seven minutes a day.</summary>
+	private int _windowDay = -1;
+	private int _openStagger;
+	private int _closeEarly;
 
 	private async Task<Rep4RepTask?> NextTaskAsync(string profileId, CancellationToken ct) {
 		foreach (Rep4RepTask task in await _api.GetTasksAsync(profileId, ct).ConfigureAwait(false)) {
@@ -730,18 +758,17 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 		DateTime now = DateTime.Now;
 
-		// A different minute per account per day. Keyed off the whole NAME, not its length - "old" and "new"
-		// are both three characters, so a length-based stagger had them opening the window on the same minute
-		// and posting in lockstep, which is the pattern this whole module exists to avoid.
-		int hash = 17;
-
-		foreach (char c in Bot.Name) {
-			hash = ((hash * 31) + c) & 0x7FFFFFF;
+		// A random opening minute and a random earlier close, per account, rolled fresh each day. It used to be a
+		// formula (a hash of the name plus seven minutes a day) and closed on the hour exactly - both predictable.
+		if (_windowDay != now.DayOfYear) {
+			_windowDay = now.DayOfYear;
+			_openStagger = Rng.Next(0, 56);
+			_closeEarly = Rng.Next(0, 41);
 		}
 
-		int stagger = Math.Abs(hash + (now.DayOfYear * 7)) % 55;
+		int stagger = _openStagger;
 		DateTime open = now.Date.AddHours(startHour).AddMinutes(stagger);
-		DateTime close = now.Date.AddHours(endHour);
+		DateTime close = now.Date.AddHours(endHour).AddMinutes(-_closeEarly);
 
 		if (now < open) {
 			return (int) (open - now).TotalSeconds;

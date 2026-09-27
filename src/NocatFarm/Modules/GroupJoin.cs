@@ -38,6 +38,15 @@ public sealed class GroupJoin(Bot bot) : BotModule(bot) {
 			return;
 		}
 
+		// Nobody watches for this, so it isn't held for the account's day - just not the second it signs in.
+		HumanGate gate = HumanGate.Quiet(Bot);
+
+		while (!gate.Open) {
+			if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
+				return;
+			}
+		}
+
 		Uri url = new(WebSession.Community, $"/groups/{GroupVanity}");
 		Dictionary<string, string> form = new(StringComparer.Ordinal) { ["action"] = "join" };
 
@@ -54,7 +63,7 @@ public sealed class GroupJoin(Bot bot) : BotModule(bot) {
 				return;
 			}
 
-			if (!await Sleep(TimeSpan.FromSeconds(20 * attempt), ct).ConfigureAwait(false)) {
+			if (!await Sleep(Bot.Cfg.LegitMode ? Rng.Minutes(5, 30) : Rng.Seconds(15 * attempt, 30 * attempt), ct).ConfigureAwait(false)) {
 				return;
 			}
 		}

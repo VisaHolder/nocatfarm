@@ -158,16 +158,37 @@ document.addEventListener('mouseover', (e) => {
   const el = e.target.closest('[data-tip]');
   if (!el) return;
   const tip = $('tip');
-  tip.textContent = el.dataset.tip;
+  tip.innerHTML = tipHtml(el.dataset.tip);
   tip.classList.remove('hidden');
   const r = el.getBoundingClientRect();
-  const w = Math.min(340, tip.offsetWidth);
+  const w = tip.offsetWidth;
   tip.style.left = Math.max(8, Math.min(window.innerWidth - w - 12, r.left)) + 'px';
   tip.style.top = (r.bottom + 8 + tip.offsetHeight > window.innerHeight ? r.top - tip.offsetHeight - 8 : r.bottom + 8) + 'px';
 });
 document.addEventListener('mouseout', (e) => {
   if (e.target.closest('[data-tip]')) $('tip').classList.add('hidden');
 });
+
+/// A long explanation read as one block is a wall. Its first sentence becomes a bold headline - usually the
+/// whole answer ("Human mode only.", "Leave a newly bought game alone...") - and the rest is cut into short
+/// paragraphs at sentence ends. Short tips and ones with their own line breaks are shown exactly as written.
+function tipHtml(text) {
+  if (!text || text.length < 140 || text.includes(String.fromCharCode(10))) return esc(text || '');
+
+  // A sentence ends at . ! ? followed by a space and something that starts a sentence (so "2.5 GB", "e.g. this"
+  // and "730:70, 440:20" don't split), or right after a CJK full stop, which has no space after it.
+  const parts = text.split(/(?<=[.!?](?:["'»”)])?)\s+(?=[\p{Lu}\d"'«“(*])|(?<=[。！？])/u).map((s) => s.trim()).filter(Boolean);
+  if (parts.length < 2) return esc(text);
+
+  const paras = [];
+  let cur = '';
+  for (const s of parts.slice(1)) {
+    if (cur && (cur.length + s.length > 230)) { paras.push(cur); cur = s; } else cur = cur ? cur + ' ' + s : s;
+  }
+  if (cur) paras.push(cur);
+
+  return `<span class="lead">${esc(parts[0])}</span>${paras.map((p) => `<p>${esc(p)}</p>`).join('')}`;
+}
 document.addEventListener('focusin', (e) => {
   const el = e.target.closest('[data-tip]');
   if (el) el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
@@ -727,6 +748,8 @@ function showAddAccount() {
       <input id="a-pass" type="password" placeholder="${esc(t("leave blank and it'll ask"))}" autocomplete="off">
       <label for="a-qr">${esc(t('Sign in with a QR code'))}${tipIcon(t("Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty."))}</label>
       <input id="a-qr" type="checkbox" onchange="['a-login','a-pass'].forEach((id) => { $(id).disabled = this.checked; })">
+      <label for="a-human">${esc(t('Human mode'))}${tipIcon(t("Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated."))}</label>
+      <input id="a-human" type="checkbox">
     </div>
     <p id="addError" class="error"></p>
     <div class="actions"><button onclick="createBot()">${esc(t('Add account'))}</button><button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button></div>`);
@@ -734,7 +757,7 @@ function showAddAccount() {
 }
 
 async function createBot() {
-  const res = await post('/api/bots', { Name: $('a-name').value.trim(), SteamLogin: $('a-login').value.trim(), Password: $('a-pass').value, Qr: $('a-qr').checked });
+  const res = await post('/api/bots', { Name: $('a-name').value.trim(), SteamLogin: $('a-login').value.trim(), Password: $('a-pass').value, Qr: $('a-qr').checked, Human: $('a-human').checked });
   if (!res.ok) { $('addError').textContent = res.error; return; }
   closeModal();
   refresh();
@@ -1045,6 +1068,32 @@ let tutorialOpen = false;
 // ArchiSteamFarm was found, but they would rather type an account in than import.
 let tutorialManual = false;
 
+// 'quick' goes straight from the welcome to the account; 'full' explains every feature and where the fine-tuning
+// lives on the way. Quick is the default - somebody new wants their account running, not a lecture.
+let tutorialMode = 'quick';
+
+// What the account is for: true = your main, human mode; false = a spare, robot defaults; null = not picked yet.
+let tutorialHuman = null;
+
+// Human mode, and you also sign into it from your own Steam client.
+let tutorialSelf = false;
+
+// Importing: which ArchiSteamFarm accounts to bring across in human mode.
+let tutorialImportHuman = new Set();
+
+/// The account-type step: remembers the choice, and for a one-account import ticks that account to match.
+function tutorialPickType(human) {
+  tutorialHuman = human;
+  tutorialImportHuman = new Set();
+  const accts = (tutorialAsf && tutorialAsf.Accounts) || [];
+  if (human && accts.length === 1) tutorialImportHuman.add(accts[0].Name);
+  renderTutorial();
+}
+
+function tutorialToggleImportHuman(name, on) {
+  if (on) tutorialImportHuman.add(name); else tutorialImportHuman.delete(name);
+}
+
 // Kept here rather than read from the settings schema: the tutorial runs before the schema is needed, and this
 // list is what the picker shows. It must stay in step with the Language setting's choices in Settings.cs.
 const LANGUAGES = [
@@ -1080,6 +1129,10 @@ function shouldShowTutorial() {
 async function startTutorial() {
   tutorialStep = 0;
   tutorialManual = false;
+  tutorialMode = 'quick';
+  tutorialHuman = null;
+  tutorialSelf = false;
+  tutorialImportHuman = new Set();
   tutorialAsf = await api('/api/import/asf').catch(() => null);
   renderTutorial();
 }
@@ -1109,9 +1162,14 @@ function renderTutorial() {
       title: t('Bring your ArchiSteamFarm accounts across'),
       body: `<p>${tf('Found an ArchiSteamFarm setup at {0} with {1}.', `<code>${esc(tutorialAsf.Path)}</code>`,
              `<b>${esc(tutorialAsf.Accounts.length === 1 ? t('one account') : tf('{0} accounts', tutorialAsf.Accounts.length))}</b>`)}</p>
-           <ul class="muted small">
-             ${tutorialAsf.Accounts.map((a) => `<li>${esc(a.Name)} - ${esc(a.SteamLogin)}${a.HasToken ? ' ' + esc(t('(login token comes across, so no password needed)')) : ''}</li>`).join('')}
-           </ul>
+           <p class="muted small">${esc(t('Tick the ones you play on yourself - they come across in human mode. The rest farm at full speed.'))}</p>
+           <div class="pickrows">
+             ${tutorialAsf.Accounts.map((a) => `<label class="pickrow">
+               <input type="checkbox" ${tutorialImportHuman.has(a.Name) ? 'checked' : ''} onchange="tutorialToggleImportHuman(${esc(JSON.stringify(a.Name))}, this.checked)">
+               <span><b>${esc(a.Name)}</b> <span class="muted">- ${esc(a.SteamLogin)}</span>${a.HasToken ? `<br><span class="muted small">${esc(t('(login token comes across, so no password needed)'))}</span>` : ''}</span>
+               <span class="pill">${esc(t('Human mode'))}</span>
+             </label>`).join('')}
+           </div>
            <p class="muted small">${esc(t('Importing copies the accounts and their login tokens. It changes nothing in ArchiSteamFarm.'))}
              <a style="cursor:pointer" onclick="tutorialManual=true;renderTutorial()">${esc(t('Add one by hand instead'))}</a></p>
            ${tips}`,
@@ -1129,6 +1187,10 @@ function renderTutorial() {
           <input id="tut-login" type="text" placeholder="${esc(t('your steam login'))}" autocomplete="off">
           <label for="tut-pass">${esc(t('Password'))}${tipIcon(t('Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.'))}</label>
           <input id="tut-pass" type="password" placeholder="${esc(t("leave blank and it'll ask"))}" autocomplete="off">
+          ${tutorialMode === 'full' ? `<label for="tut-qr">${esc(t('Sign in with a QR code'))}${tipIcon(t("Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty."))}</label>
+          <input id="tut-qr" type="checkbox" onchange="['tut-login','tut-pass'].forEach((id) => { $(id).disabled = this.checked; })">` : ''}
+          ${tutorialHuman === true ? `<label for="tut-self">${esc(t('I also sign into it from my own Steam app'))}${tipIcon(t('Then nocat.farm never changes its online status - if it did, Steam would sign your own client out of Friends and Chat.'))}</label>
+          <input id="tut-self" type="checkbox" ${tutorialSelf ? 'checked' : ''} onchange="tutorialSelf=this.checked">` : ''}
         </div>
         <p id="tutError" class="error"></p>
         ${found
@@ -1155,10 +1217,21 @@ function renderTutorial() {
     {
       title: t('Welcome to nocat.farm'),
       body: `<p>${esc(t('It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts rep4rep comments - all from this machine. Your accounts never leave it.'))}</p>
-        <p class="muted small">${esc(t('This takes about a minute. You can skip it and come back from the Overview page.'))}</p>`,
+        <div class="pickcards">
+          <div class="pickcard ${tutorialMode === 'quick' ? 'on' : ''}" onclick="tutorialMode='quick';renderTutorial()">
+            <b>${esc(t('Quick setup'))}</b>
+            <span>${esc(t('Add or import an account and go - the defaults are sensible. About a minute.'))}</span>
+          </div>
+          <div class="pickcard ${tutorialMode === 'full' ? 'on' : ''}" onclick="tutorialMode='full';renderTutorial()">
+            <b>${esc(t('Full tour'))}</b>
+            <span>${esc(t('Every feature explained, and where the fine-tuning lives. A few minutes.'))}</span>
+          </div>
+        </div>
+        <p class="muted small">${esc(t('You can skip this and come back from the Overview page.'))}</p>`,
       next: t('Start'),
     },
     {
+      full: true,
       title: t('Tell it what to play'),
       body: `<p>${esc(t('A new account starts farming trading cards straight away. There are two ways it can spend its time:'))}</p>
         <ul class="muted small">
@@ -1169,6 +1242,7 @@ function renderTutorial() {
       next: t('Next'),
     },
     {
+      full: true,
       title: t('Free stuff, collected for you'),
       body: `<p>${esc(t('Two things happen by themselves on every account:'))}</p>
         <ul class="muted small">
@@ -1179,14 +1253,51 @@ function renderTutorial() {
       next: t('Next'),
     },
     {
+      full: true,
       title: t('rep4rep, if you want it'),
       body: `<p>${esc(t("Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own."))}</p>
         <p class="muted small">${tf('Needs a free account - {0}. Then switch on {1} under Settings, paste the API token, and choose which accounts comment. Skip it entirely if you only want cards and playtime.',
           '<a href="https://rep4rep.com/?r=reap" target="_blank" rel="noopener">rep4rep.com ↗</a>', `<b>${esc(t('Use rep4rep at all'))}</b>`)}</p>`,
       next: t('Next'),
     },
+    {
+      // Only in the full tour: the quick path is for people who want the defaults, and this is all about what
+      // they can change once the defaults aren't enough.
+      full: true,
+      title: t('Fine-tuning, when you want it'),
+      body: `<p>${tf('Settings starts with the everyday switches. Tick {0} at the top of Settings for the rest:', `<b>${esc(t('Show advanced'))}</b>`)}</p>
+        <ul class="muted small">
+          <li>${tf('{0} - how long it waits after waking before it trades or replies, when a break turns it Away, whether behind-the-scenes things wait for its day, one trade at a time.', `<b>${esc(t('Human mode timings'))}</b>`)}</li>
+          <li>${tf('{0} - the order it farms in, sittings, hours a day, how long it keeps playing after the last card.', `<b>${esc(t('Card farming detail'))}</b>`)}</li>
+          <li>${tf('{0} - its port, a password, the tray, log files.', `<b>${esc(t('The dashboard itself'))}</b>`)}</li>
+        </ul>
+        <p class="muted small">${tf('Type {0} in the Console to read about any one setting. Plugins go in the {1} folder - PLUGINS.md on GitHub shows how to write one.', '<code>help &lt;setting&gt;</code>', '<code>plugins</code>')}</p>`,
+      next: t('Next'),
+    },
+    // What the account is for - asked once there is no account yet, and turned into its settings when it's added.
+    hasAccounts ? null : {
+      title: t('What kind of account is it?'),
+      body: `<p>${esc(t('This picks the right settings for it. Anything can be changed later, per account.'))}</p>
+        <div class="pickcards">
+          <div class="pickcard ${tutorialHuman === true ? 'on' : ''}" onclick="tutorialPickType(true)">
+            <b>${esc(t('My main - I play on it'))}</b>
+            <span>${esc(t("Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated."))}</span>
+          </div>
+          <div class="pickcard ${tutorialHuman === false ? 'on' : ''}" onclick="tutorialPickType(false)">
+            <b>${esc(t('A spare or farm account'))}</b>
+            <span>${esc(t('Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.'))}</span>
+          </div>
+        </div>
+        ${importing && tutorialAsf.Accounts.length > 1 ? `<p class="muted small">${esc(t('Importing several? You pick which ones on the next step.'))}</p>` : ''}`,
+      next: t('Next'),
+      act: () => {
+        if (tutorialHuman === null) { toast(t('Pick one first'), true); return; }
+        tutorialStep++;
+        renderTutorial();
+      },
+    },
     final,
-  ];
+  ].filter((s) => s && (!s.full || tutorialMode === 'full'));
 
   const st = steps[Math.min(tutorialStep, steps.length - 1)];
   const last = tutorialStep >= steps.length - 1;
@@ -1218,7 +1329,11 @@ async function tutorialAddAccount() {
   if (btn.disabled) return;
   btn.disabled = true;
 
-  const res = await post('/api/bots', { Name: $('tut-name').value.trim(), SteamLogin: $('tut-login').value.trim(), Password: $('tut-pass').value });
+  const qr = !!($('tut-qr') && $('tut-qr').checked);
+  const res = await post('/api/bots', {
+    Name: $('tut-name').value.trim(), SteamLogin: $('tut-login').value.trim(), Password: $('tut-pass').value, Qr: qr,
+    Human: tutorialHuman === true, SelfSignIn: tutorialHuman === true && tutorialSelf,
+  });
 
   if (!res.ok) {
     $('tutError').textContent = res.error || t("Couldn't add that account.");
@@ -1239,7 +1354,7 @@ async function doTutorialImport() {
   btn.disabled = true;
   btn.textContent = t('Importing…');
 
-  const res = await post('/api/import/asf', { Path: tutorialAsf.Path });
+  const res = await post('/api/import/asf', { Path: tutorialAsf.Path, Human: [...tutorialImportHuman] });
 
   if (!res.ok) {
     toast(res.error || t('Import failed'), true);
@@ -2542,8 +2657,11 @@ function fieldHtml(def, values, defaults) {
     }
     case 'AppIds': {
       const list = cur || [];
+      // A bare "2767030" means nothing to anybody - each game shows its name, with the appID beside it linking to
+      // its store page. Names arrive from Steam after the first draw (learnNames redraws once they're in).
+      learnNames(list);
       ctl = `<div class="tags" data-setting="${def.Name}">
-        ${list.map((a, i) => `<span class="tag">${a}<b onclick="removeApp('${def.Name}',${i})">×</b></span>`).join('')}
+        ${list.map((a, i) => `<span class="tag">${GAME_NAMES[a] ? `<span>${esc(GAME_NAMES[a])}</span>` : ''}<a class="tagid" href="https://store.steampowered.com/app/${a}" target="_blank" rel="noopener" data-tip="${esc(t('Open its Steam store page'))}">${a}</a><b onclick="removeApp('${def.Name}',${i})">×</b></span>`).join('')}
         <input type="text" style="max-width:150px" placeholder="${esc(t('appID or store URL'))}" onkeydown="if(event.key==='Enter'||event.key===','){addApp('${def.Name}',this);event.preventDefault();}" onblur="addApp('${def.Name}',this)">
       </div>`;
       break;

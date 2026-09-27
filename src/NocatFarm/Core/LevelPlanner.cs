@@ -273,11 +273,14 @@ public static class LevelPlanner {
 
 	// ── the market ───────────────────────────────────────────────────────────
 	/// <summary>A game's normal card set: its size, each card's lowest listing in cents (0 = none listed), and the total.</summary>
-	internal sealed record SetPrice(uint App, string Game, int Size, Dictionary<string, int> Cards, long At) {
+	/// <param name="Currency">Steam's currency id the prices are in (1 = US dollar). Older cache entries default to 1.</param>
+	internal sealed record SetPrice(uint App, string Game, int Size, Dictionary<string, int> Cards, long At, int Currency = 1) {
 		public int Cents => Cards.Values.Sum();
 	}
 
-	private static Dictionary<uint, SetPrice>? _sets;
+	private static Dictionary<string, SetPrice>? _sets;
+
+	private static string Key(uint app, int currency) => $"{app}:{currency}";
 	private static readonly object SetsGate = new();
 
 	private static string SetsPath => Path.Combine(ConfigStore.ConfigDir, "state", "cardsets.json");
@@ -285,11 +288,15 @@ public static class LevelPlanner {
 	private const string Search = "/market/search/render/?norender=1&appid=753&category_753_item_class[]=tag_item_class_2&category_753_cardborder[]=tag_cardborder_0&l=english";
 
 	/// <summary>A game's set price from the cache, or from the market if it's older than a day. Asked = a request was made.</summary>
-	internal static async Task<(SetPrice? Set, bool Asked)> PriceAsync(Bot bot, uint app, CancellationToken ct) {
+	/// <param name="currency">Steam's currency id to price in; the global display currency when not given. Selling
+	/// passes the account's own wallet currency - Steam reads a listing's price in that.</param>
+	internal static async Task<(SetPrice? Set, bool Asked)> PriceAsync(Bot bot, uint app, CancellationToken ct, int? currency = null) {
+		int cur = Math.Max(1, currency ?? Live.Global.MarketCurrency);
+
 		lock (SetsGate) {
 			_sets ??= LoadSets();
 
-			if (_sets.TryGetValue(app, out SetPrice? known) && (DateTime.UtcNow - new DateTime(known.At, DateTimeKind.Utc) < PriceLife)) {
+			if (_sets.TryGetValue(Key(app, cur), out SetPrice? known) && (DateTime.UtcNow - new DateTime(known.At, DateTimeKind.Utc) < PriceLife)) {
 				return (known, false);
 			}
 		}
@@ -303,7 +310,7 @@ public static class LevelPlanner {
 			await Task.Delay(Rng.Seconds(3, 5), ct).ConfigureAwait(false);
 
 			string? json = await bot.Web.GetAsync(new Uri(WebSession.Community,
-				$"{Search}&category_753_Game[]=tag_app_{app}&start={start}&count=100&currency={Math.Max(1, Live.Global.MarketCurrency)}"), ct).ConfigureAwait(false);
+				$"{Search}&category_753_Game[]=tag_app_{app}&start={start}&count=100&currency={cur}"), ct).ConfigureAwait(false);
 
 			if (string.IsNullOrEmpty(json)) {
 				return (null, true);
@@ -336,10 +343,10 @@ public static class LevelPlanner {
 			}
 		}
 
-		SetPrice set = new(app, game, cards.Count == total ? total : 0, cards, DateTime.UtcNow.Ticks);
+		SetPrice set = new(app, game, cards.Count == total ? total : 0, cards, DateTime.UtcNow.Ticks, cur);
 
 		lock (SetsGate) {
-			_sets![app] = set;
+			_sets![Key(app, cur)] = set;
 			SaveSets();
 		}
 
@@ -387,10 +394,16 @@ public static class LevelPlanner {
 		return games;
 	}
 
-	private static Dictionary<uint, SetPrice> LoadSets() {
+	private static Dictionary<string, SetPrice> LoadSets() {
 		try {
 			if (File.Exists(SetsPath) && JsonSerializer.Deserialize<List<SetPrice>>(File.ReadAllText(SetsPath)) is { } list) {
-				return list.ToDictionary(static s => s.App);
+				Dictionary<string, SetPrice> sets = [];
+
+				foreach (SetPrice s in list) {
+					sets[Key(s.App, s.Currency)] = s;
+				}
+
+				return sets;
 			}
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) {
 			// Start over; prices are only a day's worth anyway.

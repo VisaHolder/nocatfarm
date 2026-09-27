@@ -22,6 +22,12 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 	private static List<(uint DefId, uint AppId)> _freeInShop = [];
 	private static DateTime _shopReadAt = DateTime.MinValue;
 
+	/// <summary>
+	/// Whether the Points Shop has been read recently. The first read after a start walks the whole shop - well
+	/// over a hundred pages, a second or so apart - and takes minutes; after that it's instant for six hours.
+	/// </summary>
+	public static bool ShopKnown => DateTime.UtcNow - _shopReadAt < TimeSpan.FromHours(6);
+
 	private DateTime _nextSticker = DateTime.MinValue;
 	private DateTime _nextShop = DateTime.MinValue;
 
@@ -31,6 +37,8 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 	/// <summary>The Steam day the queue was last gone through (Steam's day turns over at 10:00 Pacific).</summary>
 	private string? _queueDay;
 	private DateTime _queueAt = DateTime.MinValue;
+	private string? _queueScheduledFor;
+	private HumanGate? _gate;
 	private HashSet<uint>? _taken;
 	private Said _status = new("");
 
@@ -50,19 +58,29 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 		while (!ct.IsCancellationRequested) {
 			bool wanted = Bot.Cfg.ClaimEventItems || (Bot.Cfg.DiscoveryQueue > 0);
 
-			if (wanted && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && HumanMode.AwakeFor(Bot)) {
+			// Nobody watches these, so any time of day - just not the moment it signs in, and one kind of thing at a
+			// time rather than sticker, shop and queue all in the same minute.
+			_gate ??= HumanGate.Quiet(Bot);
+
+			if (wanted && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && _gate.Open) {
 				try {
+					bool acted = false;
+
 					// The sticker check also tells us whether a sale is on, which the queue needs to know.
 					if (DateTime.UtcNow >= _nextSticker) {
-						await StickerAsync(ct, claim: Bot.Cfg.ClaimEventItems).ConfigureAwait(false);
+						acted = await StickerAsync(ct, claim: Bot.Cfg.ClaimEventItems).ConfigureAwait(false);
 					}
 
-					if (Bot.Cfg.ClaimEventItems && (DateTime.UtcNow >= _nextShop)) {
-						await ShopAsync(ct).ConfigureAwait(false);
+					if (!(acted && Bot.Cfg.LegitMode) && Bot.Cfg.ClaimEventItems && (DateTime.UtcNow >= _nextShop)) {
+						acted |= await ShopAsync(ct).ConfigureAwait(false) > 0;
 					}
 
-					if (QueueDue()) {
-						await QueueAsync(ct).ConfigureAwait(false);
+					if (!(acted && Bot.Cfg.LegitMode) && QueueDue()) {
+						acted |= await QueueAsync(ct).ConfigureAwait(false) > 0;
+					}
+
+					if (acted) {
+						_gate.Space(10, 60);
 					}
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
@@ -143,7 +161,7 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 		return true;
 	}
 
-	private static DateTime? NextClaim(JsonElement body) {
+	private DateTime? NextClaim(JsonElement body) {
 		if ((body.ValueKind != JsonValueKind.Object) || !body.TryGetProperty("next_claim_time", out JsonElement next)) {
 			return null;
 		}
@@ -154,7 +172,8 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 			return null;
 		}
 
-		DateTime at = DateTimeOffset.FromUnixTimeSeconds(unix).UtcDateTime.AddMinutes(Rng.Next(2, 40));
+		// Human mode gets round to it some time in the day, not in the same 40 minutes after it opens every day.
+		DateTime at = DateTimeOffset.FromUnixTimeSeconds(unix).UtcDateTime + (Bot.Cfg.LegitMode ? Rng.HumanMinutes(15, 360) : TimeSpan.FromMinutes(Rng.Next(2, 40)));
 
 		return at > DateTime.UtcNow ? at : DateTime.UtcNow.AddMinutes(Rng.Next(5, 20));
 	}
@@ -172,7 +191,7 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 			_ => false
 		};
 
-		if (!on || (DateTime.UtcNow < _queueAt)) {
+		if (!on) {
 			return false;
 		}
 
@@ -184,7 +203,22 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 			}
 		}
 
-		return _queueDay != SteamDay();
+		string today = SteamDay();
+
+		if (_queueDay == today) {
+			return false;
+		}
+
+		// A new Steam day: pick a time for it somewhere in the day rather than going the minute the day turns over
+		// (10:00 Pacific) or the minute the account wakes - which would be the same time every day.
+		if (_queueScheduledFor != today) {
+			_queueScheduledFor = today;
+			_queueAt = DateTime.UtcNow + (Bot.Cfg.LegitMode ? Rng.HumanMinutes(30, 300) : Rng.Minutes(5, 45));
+
+			return false;
+		}
+
+		return DateTime.UtcNow >= _queueAt;
 	}
 
 	/// <summary>
@@ -261,7 +295,8 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 		int got = 0;
 
 		foreach ((uint defId, uint appId) in free.Where(f => !_taken.Contains(f.DefId))) {
-			await Task.Delay(Rng.Seconds(3, 9), ct).ConfigureAwait(false);
+			// A person clicking through the shop, not a list being emptied - slower still on a human-mode account.
+			await Task.Delay(Bot.Cfg.LegitMode ? Rng.Seconds(8, 30) : Rng.Seconds(3, 9), ct).ConfigureAwait(false);
 
 			SteamUnifiedMessages.ServiceMethodResponse<CLoyaltyRewards_RedeemPoints_Response> answer = await shop
 				.RedeemPoints(new CLoyaltyRewards_RedeemPoints_Request { defid = defId, expected_points_cost = 0 })

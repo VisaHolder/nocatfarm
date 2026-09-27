@@ -353,6 +353,11 @@ public sealed class Bot : IAsyncDisposable {
 			string device = MobileAuth.DeviceId(SteamId);
 			MobileAuth.Pending match = default;
 
+			// Nobody confirms on their phone in the same second they accepted.
+			if (Cfg.LegitMode) {
+				await Task.Delay(Rng.Seconds(8, 60), ct).ConfigureAwait(false);
+			}
+
 			// Steam can take a few seconds to list a confirmation it has only just created, so an empty first look
 			// is asked again rather than reported as "confirm it on your phone".
 			for (int attempt = 0; (attempt < 3) && (match.Id == 0); attempt++) {
@@ -497,11 +502,11 @@ public sealed class Bot : IAsyncDisposable {
 	/// </summary>
 	public bool OwnsPackage(uint packageId) {
 		lock (_licenses) {
-			return _licenses.TryGetValue(packageId, out (DateTime Created, ulong Token, bool Paid, bool Own) license) && license.Own;
+			return _licenses.TryGetValue(packageId, out (DateTime Created, ulong Token, bool Paid, bool Own, bool Gift) license) && license.Own;
 		}
 	}
 
-	private readonly Dictionary<uint, (DateTime Created, ulong Token, bool Paid, bool Own)> _licenses = [];
+	private readonly Dictionary<uint, (DateTime Created, ulong Token, bool Paid, bool Own, bool Gift)> _licenses = [];
 	private Dictionary<uint, AppOwnership>? _appOwnedSince;
 	private int _licenseGeneration;
 	private DateTime _resumeAt = DateTime.MinValue;
@@ -549,6 +554,7 @@ public sealed class Bot : IAsyncDisposable {
 
 	// Last time the schedule's persona was re-asserted, so the heartbeat can keep it true without spamming.
 	private DateTime _lastPersonaAssert;
+	private DateTime _nextPersonaAssert;
 	private DateTime _lastNameHeal;
 
 	// Last appear-as status and displayed game actually announced, so a CHANGE can be logged (and only a change -
@@ -1525,6 +1531,14 @@ public sealed class Bot : IAsyncDisposable {
 			// session across every occurrence and why a whole afternoon of changes to the LOGON did nothing.
 			//
 			// Announcing the persona on every logon is what a normal client does, and it's what fixed this.
+			//
+			// A human-mode account just started (nothing set yet) comes up invisible: announced Online, a restart at
+			// 3am told the friends list it was up. Human mode shows it once its own day says so - moments later if
+			// it's awake.
+			if (Cfg.LegitMode && !Cfg.IUseThisAccount && (_personaOverride == null) && NocatFarm.Modules.HumanMode.DarkAtLogon(this)) {
+				_personaOverride = PersonaDark;
+			}
+
 			ApplyPersona();
 		} catch {
 			// persona state is cosmetic - never let it stop the login
@@ -1625,6 +1639,7 @@ public sealed class Bot : IAsyncDisposable {
 	private async Task OnDisconnectedAsync(SteamClient.DisconnectedCallback cb) {
 		OnlineSince = null;
 		Playing = "";
+		PlayingApps = [];   // nothing is playing on a session that's gone - or a grind thinks its game is still on
 		IsFarming = false;
 		Web.Invalidate();
 
@@ -1767,6 +1782,9 @@ public sealed class Bot : IAsyncDisposable {
 	/// A dropped TCP connection doesn't always raise a disconnect - the socket can just go quiet. Poking Steam once
 	/// a minute turns that silence into a real reconnect instead of an account that looks online and does nothing.
 	/// </summary>
+	/// <summary>The longest gap between two persona re-asserts. The liveness check below is measured against it.</summary>
+	private const int PersonaAssertMaxSeconds = 600;
+
 	private void StartHeartbeat() {
 		_heartbeat?.Dispose();
 		_heartbeat = new Timer(_ => _ = HeartbeatAsync(), null, TimeSpan.FromSeconds(HeartbeatSeconds), TimeSpan.FromSeconds(HeartbeatSeconds));
@@ -1802,8 +1820,11 @@ public sealed class Bot : IAsyncDisposable {
 		// Skipped while the owner is actually on the account (PlayingBlocked) - when they are using it, their
 		// client owns the status and we do not fight it. Every ~60s is plenty; the heartbeat itself is far
 		// tighter, hence the timestamp gate.
-		if (!PlayingBlocked && (DateTime.UtcNow.Subtract(_lastPersonaAssert).TotalSeconds >= 60)) {
+		bool drifted = (PersonaAsSeen is int seen) && (seen != EffectivePersona) && (DateTime.UtcNow.Subtract(_lastPersonaAssert).TotalSeconds >= 60);
+
+		if (!PlayingBlocked && (drifted || (DateTime.UtcNow >= _nextPersonaAssert))) {
 			_lastPersonaAssert = DateTime.UtcNow;
+			_nextPersonaAssert = DateTime.UtcNow + Rng.Seconds(180, PersonaAssertMaxSeconds);
 
 			try {
 				ApplyPersona();
@@ -1868,8 +1889,11 @@ public sealed class Bot : IAsyncDisposable {
 		// This used to PROBE by requesting our own account's profile info and awaiting the reply - a self-directed
 		// friends/profile call, the same family of request that signed the owner out of Friends & Chat - so it is
 		// gone for good. Watching traffic we already have detects the same dead connection without touching friends.
+		// The re-assert runs every 3-10 minutes, not every minute as this was written for - so it only counts as
+		// silent once it has missed its longest gap by the timeout. Comparing it to the bare timeout reconnected a
+		// quiet (warming-up or invisible) account a few minutes after every sign-in, for nothing.
 		if ((DateTime.UtcNow.Subtract(_lastPacket).TotalSeconds >= ConnectionTimeoutSeconds)
-			&& (DateTime.UtcNow.Subtract(_lastPersonaAssert).TotalSeconds >= ConnectionTimeoutSeconds)) {
+			&& (DateTime.UtcNow.Subtract(_lastPersonaAssert).TotalSeconds >= PersonaAssertMaxSeconds + ConnectionTimeoutSeconds)) {
 			Log.Warn("connection went quiet - reconnecting", Name);
 
 			try {
@@ -1931,7 +1955,9 @@ public sealed class Bot : IAsyncDisposable {
 			_blockWarnDue = null;
 			// A courtesy pause: coming straight back the instant Steam frees the session is what makes an idler
 			// feel like it's fighting you for your own account.
-			_resumeAt = DateTime.UtcNow.AddMinutes(Math.Max(0, Cfg.ResumeDelayMinutes));
+			// Human mode takes its time about it - somewhere from the delay to three times it, not the same minute count every time.
+			int delay = Math.Max(0, Cfg.ResumeDelayMinutes);
+			_resumeAt = DateTime.UtcNow + (Cfg.LegitMode && (delay > 0) ? Rng.HumanMinutes(delay, delay * 3) : TimeSpan.FromMinutes(delay));
 
 			if (Cfg.ResumeDelayMinutes > 0) {
 				Log.Info(new Said("the account is free again - picking back up in {0}m", Cfg.ResumeDelayMinutes), Name);
@@ -1959,7 +1985,14 @@ public sealed class Bot : IAsyncDisposable {
 			foreach (SteamApps.LicenseListCallback.License license in cb.LicenseList) {
 				// A family member's licence carries their account ID; ours carries ours (or 0 on older licences).
 				bool own = (license.OwnerAccountID == 0) || (license.OwnerAccountID == (uint) (SteamId & 0xFFFFFFFF));
-				_licenses[license.PackageID] = (license.TimeCreated, license.AccessToken, IsPaid(license.PaymentMethod), own);
+				// A game somebody GIFTED arrives marked "guest pass" - not paid for by this account, but paid for by
+				// the giver, who can still have it refunded under Steam's usual two hours / fourteen days. A real guest
+				// pass (a timed trial) carries the same payment method, so what tells them apart is the licence
+				// itself: a gift is a permanent single purchase with no time limit, a trial is not. Seen on real
+				// gifts (Riders Republic, Steep): GuestPass, SinglePurchase, flags None, minute limit 0.
+				_licenses[license.PackageID] = (license.TimeCreated, license.AccessToken, IsPaid(license.PaymentMethod), own,
+					(license.PaymentMethod == EPaymentMethod.GuestPass) && (license.LicenseType == ELicenseType.SinglePurchase)
+						&& (license.MinuteLimit == 0) && !license.LicenseFlags.HasFlag(ELicenseFlags.Expired));
 			}
 
 			_appOwnedSince = null;   // the mapping is stale now
@@ -1967,6 +2000,12 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		Log.Debug(new Said("{0} licence(s) known", cb.LicenseList.Count), Name);
+
+		// What the last fortnight's licences were, by how Steam says they were paid for - refund protection
+		// decides from exactly this, so when it holds (or doesn't hold) a game the reason is in the log.
+		foreach (SteamApps.LicenseListCallback.License license in cb.LicenseList.Where(static l => DateTime.UtcNow - l.TimeCreated < TimeSpan.FromDays(14))) {
+			Log.Debug(new Said("recent licence: package {0}, {1}, {2}", license.PackageID, license.PaymentMethod, license.TimeCreated.ToString("d")) + $" · type {license.LicenseType}, flags {license.LicenseFlags}, minute limit {license.MinuteLimit}, used {license.MinutesUsed}", Name);
+		}
 	}
 
 	/// <summary>
@@ -1989,7 +2028,7 @@ public sealed class Bot : IAsyncDisposable {
 	/// Returns empty on any failure, which means "don't skip anything" rather than "skip everything".
 	/// </summary>
 	internal async Task<IReadOnlyDictionary<uint, AppOwnership>> GetAppOwnershipAsync() {
-		Dictionary<uint, (DateTime Created, ulong Token, bool Paid, bool Own)> snapshot;
+		Dictionary<uint, (DateTime Created, ulong Token, bool Paid, bool Own, bool Gift)> snapshot;
 		int generation;
 
 		lock (_licenses) {
@@ -1997,7 +2036,7 @@ public sealed class Bot : IAsyncDisposable {
 				return _appOwnedSince;
 			}
 
-			snapshot = new Dictionary<uint, (DateTime, ulong, bool, bool)>(_licenses);
+			snapshot = new Dictionary<uint, (DateTime Created, ulong Token, bool Paid, bool Own, bool Gift)>(_licenses);
 			generation = _licenseGeneration;
 		}
 
@@ -2020,7 +2059,7 @@ public sealed class Bot : IAsyncDisposable {
 
 			foreach (SteamApps.PICSProductInfoCallback page in pages) {
 				foreach (SteamApps.PICSProductInfoCallback.PICSProductInfo package in page.Packages.Values) {
-					if (!snapshot.TryGetValue(package.ID, out (DateTime Created, ulong Token, bool Paid, bool Own) license)) {
+					if (!snapshot.TryGetValue(package.ID, out (DateTime Created, ulong Token, bool Paid, bool Own, bool Gift) license)) {
 						continue;
 					}
 
@@ -2036,12 +2075,13 @@ public sealed class Bot : IAsyncDisposable {
 						// Earliest licence wins - that's when you really got it. A game can also arrive twice (a free
 						// weekend, then the purchase), and if EITHER licence was paid for the refund clock is real.
 						if (!map.TryGetValue(appId, out AppOwnership existing)) {
-							map[appId] = new AppOwnership(license.Created, license.Paid, license.Own);
+							map[appId] = new AppOwnership(license.Created, license.Paid, license.Own, license.Gift);
 						} else {
 							map[appId] = new AppOwnership(
 								license.Created < existing.Since ? license.Created : existing.Since,
 								existing.Paid || license.Paid,
-								existing.Own || license.Own);
+								existing.Own || license.Own,
+								existing.Gift || license.Gift);
 						}
 					}
 				}
@@ -2080,11 +2120,18 @@ public sealed class Bot : IAsyncDisposable {
 		if (Cfg.ClearInventoryNotifications && (Interlocked.Exchange(ref _inventoryVisitQueued, 1) == 0)) {
 			_ = Task.Run(async () => {
 				try {
-					TimeSpan wait = _inventoryVisitedAt.AddMinutes(45) - DateTime.UtcNow;
+					// Human mode: an uneven 30-120 minutes apart, and a few minutes after the drop at the earliest.
+					TimeSpan gap = Cfg.LegitMode ? TimeSpan.FromMinutes(Rng.Next(30, 121)) : TimeSpan.FromMinutes(45);
+					TimeSpan wait = _inventoryVisitedAt + gap - DateTime.UtcNow;
+
+					if (Cfg.LegitMode && (wait < TimeSpan.FromMinutes(3))) {
+						wait = Rng.Minutes(3, 15);
+					}
 
 					if (wait > TimeSpan.Zero) {
 						await Task.Delay(wait).ConfigureAwait(false);
 					}
+
 
 					_inventoryVisitedAt = DateTime.UtcNow;
 					await Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{SteamId}/inventory/")).ConfigureAwait(false);
@@ -2098,6 +2145,7 @@ public sealed class Bot : IAsyncDisposable {
 	}
 
 	private int _inventoryVisitQueued;
+	private int _notificationSweepQueued;
 	private DateTime _inventoryVisitedAt = DateTime.MinValue;
 
 	/// <summary>
@@ -2239,7 +2287,27 @@ public sealed class Bot : IAsyncDisposable {
 			return;
 		}
 
+		// On a human-mode account one sweep waits a little first - not within a second of signing in or of a comment
+		// landing. Nobody sees notifications being read, so it isn't held for the account's day.
+		bool human = Cfg.LegitMode;
+
+		if (human && (Interlocked.Exchange(ref _notificationSweepQueued, 1) == 1)) {
+			return;
+		}
+
 		_ = Task.Run(async () => {
+			if (human) {
+				try {
+					await Task.Delay(Rng.HumanMinutes(2, 30)).ConfigureAwait(false);
+				} finally {
+					Interlocked.Exchange(ref _notificationSweepQueued, 0);
+				}
+
+				if (!_running || (State != BotState.Online)) {
+					return;
+				}
+			}
+
 			try {
 				// The modern tray, in one shot.
 				Unified?.CreateService<SteamKit2.WebUI.Internal.SteamNotification>()?.MarkNotificationsRead(new SteamKit2.WebUI.Internal.CSteamNotification_MarkNotificationsRead_Notification {
@@ -2641,8 +2709,8 @@ public sealed class Bot : IAsyncDisposable {
 
 		_ = Task.Run(async () => {
 			try {
-				foreach (int wait in (int[]) [2, 6]) {
-					await Task.Delay(TimeSpan.FromSeconds(wait)).ConfigureAwait(false);
+				foreach (TimeSpan wait in (TimeSpan[]) [Rng.Seconds(2, 4), Rng.Seconds(3, 6)]) {
+					await Task.Delay(wait).ConfigureAwait(false);
 
 					// Something newer took the session - it will apply its own.
 					if ((Volatile.Read(ref _playSequence) != mine) || (State != BotState.Online)) {
@@ -2764,7 +2832,10 @@ public sealed class Bot : IAsyncDisposable {
 
 /// <summary>When an app first appeared on the account, and whether it was actually bought.</summary>
 /// <param name="Own">At least one of the licences is the account's own, not a family member's.</param>
-public readonly record struct AppOwnership(DateTime Since, bool Paid, bool Own);
+public readonly record struct AppOwnership(DateTime Since, bool Paid, bool Own, bool Gift = false) {
+	/// <summary>Somebody could lose money if it's played: bought by this account, or gifted and still refundable to the giver.</summary>
+	public bool Refundable(bool gifts) => Paid || (Gift && gifts);
+}
 
 public static class SteamIds {
 	/// <summary>GameID layout: bits 0-23 appID, 24-31 type, 32-63 modID. Type 2 = Shortcut, i.e. a non-Steam game.</summary>

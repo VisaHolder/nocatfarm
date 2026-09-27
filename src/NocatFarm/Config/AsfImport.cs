@@ -86,7 +86,8 @@ public static class AsfImport {
 	/// Import every bot from an ASF config folder. Existing nocatFarm accounts of the same name are left alone
 	/// unless <paramref name="overwrite"/> is set - importing twice should not clobber settings you've changed.
 	/// </summary>
-	public static Result Run(string dir, GlobalConfig global, bool overwrite = false) {
+	/// <param name="human">Accounts to bring across in human mode (by name); the rest keep the robot defaults.</param>
+	public static Result Run(string dir, GlobalConfig global, bool overwrite = false, IReadOnlyCollection<string>? human = null) {
 		List<string> notes = [];
 		int imported = 0;
 		int skipped = 0;
@@ -126,6 +127,13 @@ public static class AsfImport {
 			}
 
 			BotConfig bot = Translate(cfg, name, global, notes, ReadDatabase(dir, name));
+
+			if (human?.Contains(name, StringComparer.OrdinalIgnoreCase) == true) {
+				bot.LegitMode = true;
+				Settings.ApplyLegitMode(bot, false);
+				notes.Add($"{name}: set to human mode");
+			}
+
 			ConfigStore.SaveBot(name, bot);
 
 			// The token is the reason to do this at all.

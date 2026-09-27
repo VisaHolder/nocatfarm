@@ -56,7 +56,7 @@ public static partial class Commands {
 			"Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs."),
 		new("human", "[account] [week|reroll]", GroupPlaying, "What human mode is doing today, and what it played. Add 'week' to see the next seven days, or 'reroll' to throw today's plan away and roll a fresh one from the current settings."),
 		new("wake", "<account>", GroupPlaying, "Wake a sleeping human-mode account and start its day now. Bed time is unchanged."),
-		new("name", "<account> [text]", GroupPlaying, "Custom non-Steam game name shown instead of the real game. No text clears it."),
+		new("name", "<account> [text|off]", GroupPlaying, "Custom non-Steam game name shown instead of the real game. No text shows the current one; 'off' clears it."),
 		new("persona", "<account> <state>", GroupPlaying, "online | offline | busy | away | snooze | invisible."),
 		new("nickname", "<account> <profile name>", GroupPlaying, "Change the name everybody sees on the profile and friends list. Not the custom game name - that's 'name'."),
 
@@ -1826,7 +1826,7 @@ public static partial class Commands {
 
 	private static string Name(BotManager mgr, string[] args) {
 		if (args.Length == 0) {
-			return "name <account> [text]   (no text clears it)";
+			return "name <account> [text|off]   (no text shows the current one, 'off' clears it)";
 		}
 
 		Bot? bot = mgr.Get(args[0]);
@@ -1835,7 +1835,16 @@ public static partial class Commands {
 			return NoSuchAccount(mgr, args[0]);
 		}
 
-		bot.Cfg.CustomGameName = string.Join(' ', args[1..]);
+		// Just the account: say what it shows. This used to clear the name - typing 'name kylro' to look at it
+		// wiped it, which is exactly what anybody would try first.
+		if (args.Length == 1) {
+			return string.IsNullOrEmpty(bot.Cfg.CustomGameName)
+				? $"{bot.Name}: no custom name - it shows the real game. 'name {bot.Name} <text>' sets one."
+				: $"{bot.Name}: shows \"{bot.Cfg.CustomGameName}\"{(bot.Cfg.CustomGameNameEnabled ? "" : " (switched off under Settings)")} · 'name {bot.Name} off' clears it";
+		}
+
+		string text = string.Join(' ', args[1..]);
+		bot.Cfg.CustomGameName = text.Equals("off", StringComparison.OrdinalIgnoreCase) || text.Equals("clear", StringComparison.OrdinalIgnoreCase) ? "" : text;
 		ConfigStore.SaveBot(bot.Name, bot.Cfg);
 		BotManager.ModuleOf<Idler>(bot)?.Assert();
 
@@ -1975,17 +1984,43 @@ public static partial class Commands {
 		}
 
 		List<string> lines = [];
+		List<(Bot Bot, EventItems Events)> ready = [];
 
 		foreach (Bot b in bots) {
 			if (!b.IsOnline || !b.Web.Ready || (BotManager.ModuleOf<EventItems>(b) is not { } events)) {
 				lines.Add($"{b.Name}: not logged in");
-
-				continue;
+			} else {
+				ready.Add((b, events));
 			}
+		}
 
+		async Task<string> Look(Bot b, EventItems events) {
 			bool sticker = await events.StickerAsync(CancellationToken.None).ConfigureAwait(false);
 			int shop = await events.ShopAsync(CancellationToken.None).ConfigureAwait(false);
-			lines.Add($"{b.Name}: {(sticker ? "claimed the sale item" : "no sale item to claim right now")} · {shop} free Points Shop item(s) taken");
+
+			return $"{b.Name}: {(sticker ? "claimed the sale item" : "no sale item to claim right now")} · {shop} free Points Shop item(s) taken";
+		}
+
+		// The first look after a start reads the whole Points Shop, which takes minutes - long enough that a
+		// console just sitting there looks hung. So that one goes on in the background and says so; the answer
+		// lands in the log.
+		if ((ready.Count > 0) && !EventItems.ShopKnown) {
+			_ = Task.Run(async () => {
+				foreach ((Bot b, EventItems events) in ready) {
+					try {
+						Log.Info(await Look(b, events).ConfigureAwait(false), b.Name);
+					} catch (Exception e) {
+						Log.Debug(new Said("free items: {0}", e.Message), b.Name);
+					}
+				}
+			});
+			lines.Add($"Reading the Points Shop first - it's big, so the first look after a start takes a few minutes. {(ready.Count == 1 ? ready[0].Bot.Name : $"{ready.Count} accounts")}: the answer goes to the log when it's done.");
+
+			return string.Join(Environment.NewLine, lines);
+		}
+
+		foreach ((Bot b, EventItems events) in ready) {
+			lines.Add(await Look(b, events).ConfigureAwait(false));
 		}
 
 		return string.Join(Environment.NewLine, lines);
@@ -2032,7 +2067,7 @@ public static partial class Commands {
 
 		foreach (Seller.Offer o in plan.Offers) {
 			string game = o.Game.Length > 24 ? o.Game[..23] + "…" : o.Game;
-			sb.AppendLine($"  {game,-24} {o.Card,-24} lowest {Seller.Money(o.LowestCents)} -> list at {Seller.Money(o.BuyerCents)}, you get {Seller.Money(o.YouGetCents)}");
+			sb.AppendLine($"  {game,-24} {o.Card,-24} lowest {Seller.Money(o.LowestCents, bot)} -> list at {Seller.Money(o.BuyerCents, bot)}, you get {Seller.Money(o.YouGetCents, bot)}");
 		}
 
 		List<Seller.Listing>? up = await Seller.ListingsAsync(bot, CancellationToken.None).ConfigureAwait(false);

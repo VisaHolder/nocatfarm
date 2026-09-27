@@ -533,6 +533,11 @@ table.today tr.fleet td:first-child { color: var(--muted); }
 .tags { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
 .tag { background: var(--panel2); border: 1px solid var(--line); border-radius: 0; padding: 2px 6px; font-size: 12px; display: inline-flex; gap: 5px; align-items: center; }
 .tag b { cursor: pointer; color: var(--muted); font-weight: 400; }
+/* The appID beside a game's name: quieter than the name, and a link to its store page. On its own (name not
+   known yet) it's the whole label, so it keeps the normal text colour until a name sits in front of it. */
+.tag .tagid { color: inherit; text-decoration: none; }
+.tag span + .tagid { color: var(--muted); font-size: 11px; }
+.tag .tagid:hover { text-decoration: underline; color: var(--text); }
 .tag b:hover { color: var(--bad); }
 
 .pills { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -621,20 +626,23 @@ button.ghost:hover:not(:disabled) { background: var(--line); }
 .info::after { content: "i"; font-family: Georgia, serif; }
 .info:hover { border-color: var(--accent); color: var(--accent); }
 
-/* Explicitly inverted rather than inherited: the tip is a dark chip in BOTH themes, so its text has to be
-   light in both. Reading var(--text) made it black text on a near-black box the moment the light theme was
-   switched on - every tooltip in the app, unreadable. */
-/* Multi-line tips (the inventory breakdown) keep their line breaks; single-line ones are unaffected. */
-.tip { white-space: pre-line; }
-
-.tip { background: #111 !important; color: #e8e8e8 !important; border-color: #333 !important; }
-
+/* A dark chip in BOTH themes, with fixed light text - reading var(--text) once made it black on near-black in the
+   light theme. It reads in a proportional face, not the app's monospace: a tip is a paragraph of prose, and
+   five sentences of 12px mono in a 340px box on a background the same black as the page was a grey wall.
+   Lighter than the page so it stands off it, a brighter left edge, and room to breathe. */
 .tip {
-  position: fixed; z-index: 100; max-width: 340px;
-  background: #000; border: 1px solid var(--accent-dim); border-radius: 0;
-  padding: 9px 12px; font-size: 12.5px; line-height: 1.5; color: var(--text);
-  box-shadow: 0 8px 30px rgba(0,0,0,.6); pointer-events: none;
+  position: fixed; z-index: 100; width: max-content; max-width: 440px;
+  background: #1c1c1c; border: 1px solid #4a4a4a; border-left: 3px solid #a0a0a0; border-radius: 0;
+  padding: 10px 14px 11px; color: #e4e4e4; letter-spacing: normal;
+  font: 400 13.5px/1.55 "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  white-space: pre-line;   /* multi-line tips (the inventory breakdown) keep their line breaks */
+  box-shadow: 0 10px 34px rgba(0,0,0,.75); pointer-events: none;
 }
+/* A long explanation: its first sentence as a headline, the rest in short paragraphs. */
+.tip .lead { display: block; color: #fff; font-weight: 600; margin-bottom: 5px; }
+.tip p { margin: 0; color: #d2d2d2; }
+.tip p + p { margin-top: 6px; }
+@media (max-width: 480px) { .tip { max-width: calc(100% - 24px); } }
 
 /* ── modal ─────────────────────────────────────────────────────────── */
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,.72); display: grid; place-items: center; z-index: 90; padding: 24px; }
@@ -842,6 +850,28 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 }
 .langpick .p:hover { border-color: var(--muted); }
 .langpick .p.on { border-color: var(--text); color: var(--text); background: var(--panel); }
+
+/* The walkthrough's either-or choices (quick or full tour, main or spare). Two cards side by side, one column
+   on a phone; the picked one gets the same bright border as a picked language. */
+.pickcards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: var(--s3) 0; }
+.pickcard {
+  display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; cursor: pointer; user-select: none;
+  border: 1px solid var(--line); background: var(--panel2);
+}
+.pickcard span { font-size: 12px; color: var(--muted); line-height: 1.45; }
+.pickcard:hover { border-color: var(--muted); }
+.pickcard.on { border-color: var(--text); background: var(--panel); }
+@media (max-width: 560px) { .pickcards { grid-template-columns: 1fr; } }
+
+/* The import step's per-account list: tick the ones you play on. */
+.pickrows { display: flex; flex-direction: column; gap: 4px; margin: var(--s2) 0 var(--s3); max-height: 240px; overflow-y: auto; }
+.pickrow {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px;
+  padding: 6px 10px; border: 1px solid var(--line); background: var(--panel2); cursor: pointer;
+}
+.pickrow .pill { opacity: .35; }
+.pickrow:has(input:checked) { border-color: var(--text); }
+.pickrow:has(input:checked) .pill { opacity: 1; }
 
 /* The version, which doubles as the link to the repo. Underlined only on hover so the footer stays quiet. */
 .ghlink { text-decoration: none; }

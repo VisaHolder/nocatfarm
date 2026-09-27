@@ -136,10 +136,12 @@ public sealed class WebSession : IDisposable {
 	/// POST a form. The sessionid is injected from the cookie jar per request rather than cached, so if Steam ever
 	/// replaces the cookie the body and the cookie stay in agreement automatically.
 	/// </summary>
-	public async Task<string?> PostAsync(Uri url, Dictionary<string, string> form, Uri? referer = null, CancellationToken ct = default) =>
-		await SendAsync(url, form, referer, true, ct).ConfigureAwait(false);
+	/// <param name="errorVerdict">Hand back a JSON body that came with an error status instead of null. The free
+	/// licence endpoint answers a refusal with HTTP 500 and {"purchaseresultdetail":24} - the reason is the reply.</param>
+	public async Task<string?> PostAsync(Uri url, Dictionary<string, string> form, Uri? referer = null, CancellationToken ct = default, bool errorVerdict = false) =>
+		await SendAsync(url, form, referer, true, ct, errorVerdict: errorVerdict).ConfigureAwait(false);
 
-	private async Task<string?> SendAsync(Uri url, Dictionary<string, string>? form, Uri? referer, bool allowRetry, CancellationToken ct, bool skipReadyCheck = false) {
+	private async Task<string?> SendAsync(Uri url, Dictionary<string, string>? form, Uri? referer, bool allowRetry, CancellationToken ct, bool skipReadyCheck = false, bool errorVerdict = false) {
 		if (!skipReadyCheck && !Ready && !await RefreshAsync(true, ct).ConfigureAwait(false)) {
 			return null;
 		}
@@ -197,7 +199,7 @@ public sealed class WebSession : IDisposable {
 					return null;
 				}
 
-				return await SendAsync(url, form, referer, false, ct).ConfigureAwait(false);
+				return await SendAsync(url, form, referer, false, ct, errorVerdict: errorVerdict).ConfigureAwait(false);
 			}
 
 			if (!response.IsSuccessStatusCode) {
@@ -233,7 +235,7 @@ public sealed class WebSession : IDisposable {
 				Log.Debug(new Said("{0} {1} -> {2}", (form == null ? "GET" : "POST"), Loggable(url), (int) response.StatusCode)
 					+ (failure.Length > 0 ? $"  {failure[..Math.Min(300, failure.Length)]}" : ""), _bot.Name);
 
-				return null;
+				return errorVerdict && failure.StartsWith('{') ? failure : null;
 			}
 
 			Limiters.NoteWebOk(url.Host);

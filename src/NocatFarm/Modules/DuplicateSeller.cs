@@ -13,6 +13,8 @@ public sealed class DuplicateSeller(Bot bot) : BotModule(bot) {
 	public override string Name => "seller";
 	public override string Status => Bot.Cfg.SellDuplicates ? _status : "";
 
+	private HumanGate? _gate;
+
 	protected override async Task RunAsync(CancellationToken ct) {
 		// Well clear of everything a sign-in does.
 		if (!await Sleep(Rng.Minutes(15, 40), ct).ConfigureAwait(false)) {
@@ -22,7 +24,10 @@ public sealed class DuplicateSeller(Bot bot) : BotModule(bot) {
 		while (!ct.IsCancellationRequested) {
 			TimeSpan wait = TimeSpan.FromMinutes(10);
 
-			if (Bot.Cfg.SellDuplicates && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && HumanMode.AwakeFor(Bot)
+			// Nobody sees who listed a card or when, so any time of day - just not the moment it signs in.
+			_gate ??= HumanGate.Quiet(Bot);
+
+			if (Bot.Cfg.SellDuplicates && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && _gate.Open
 				&& (Limiters.RateLimitedFor(WebSession.Community.Host) == TimeSpan.Zero)) {
 				try {
 					await Seller.RelistAsync(Bot, ct).ConfigureAwait(false);

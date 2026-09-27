@@ -342,18 +342,25 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 	private async Task AnswerAsync(CancellationToken ct) {
 		// Accepting a gift is something a person does - not at 4am on an account that is asleep. Everything goes
 		// back on hold, and gets a fresh wait once the account is up.
-		if (!HumanMode.AwakeFor(Bot)) {
+		if (!HumanMode.ReadyFor(Bot)) {
 			_queue.Hold();
 
 			return;
 		}
 
-		foreach (((Kind kind, ulong id) key, DateTime due) in _queue.Arm(DateTime.UtcNow, GiftWait)) {
+		// Gifts that waited out the night get their wait from a while after waking, not all in its first quarter hour.
+		foreach (((Kind kind, ulong id) key, DateTime due) in _queue.Arm(DateTime.UtcNow, () => GiftWait() + (Bot.Cfg.LegitMode ? Rng.HumanMinutes(10, 60) : TimeSpan.Zero))) {
 			Announce(key, due);
 		}
 
 		foreach ((Kind, ulong) key in _queue.Due(DateTime.UtcNow)) {
 			await TakeAsync(key, ct).ConfigureAwait(false);
+
+			// Human mode takes one per pass; the next waits for a later one.
+			if (Bot.Cfg.LegitMode) {
+				break;
+			}
+
 			await Task.Delay(Rng.Seconds(3, 8), ct).ConfigureAwait(false);
 		}
 	}

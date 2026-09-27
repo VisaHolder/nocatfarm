@@ -39,6 +39,8 @@ public sealed class Boosters(Bot bot) : BotModule(bot) {
 
 	private static DateTime Later(int minHours, int maxHours) => DateTime.UtcNow.AddMinutes(Rng.Next(minHours * 60, (maxHours * 60) + 1));
 
+	private HumanGate? _gate;
+
 	protected override async Task RunAsync(CancellationToken ct) {
 		while (!ct.IsCancellationRequested) {
 			List<uint> games = Games(Bot);
@@ -51,9 +53,14 @@ public sealed class Boosters(Bot bot) : BotModule(bot) {
 			DateTime now = DateTime.UtcNow;
 			bool due = games.Any(id => !_next.TryGetValue(id, out DateTime at) || (at <= now));
 
-			if (due && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && HumanMode.AwakeFor(Bot)) {
+			// Nobody sees a pack being made, so any time of day - one at a time with a gap, not the moment it signs in.
+			_gate ??= HumanGate.Quiet(Bot);
+
+			if (due && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && _gate.Open) {
 				try {
-					await MakeDueAsync(games, ct).ConfigureAwait(false);
+					List<uint> batch = Bot.Cfg.LegitMode ? [games.First(id => !_next.TryGetValue(id, out DateTime at) || (at <= now))] : games;
+					await MakeDueAsync(batch, ct).ConfigureAwait(false);
+					_gate.Space(15, 90);
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
 				} catch (Exception e) {

@@ -189,9 +189,17 @@ public static class Redeeming {
 		}
 
 		KeyQueue.Spent();   // whatever happens below, the next one waits its own jittered gap
+		bool first = true;
 
 		foreach (Bot bot in online) {
 			ct.ThrowIfCancellationRequested();
+
+			// Not straight on to the next account the second one refuses.
+			if (!first) {
+				await Task.Delay(Rng.Seconds(3, 8), ct).ConfigureAwait(false);
+			}
+
+			first = false;
 
 			RedeemResult result = await RedeemAsync(bot, key, ct).ConfigureAwait(false);
 

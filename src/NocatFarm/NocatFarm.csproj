@@ -13,7 +13,7 @@
     <InvariantGlobalization>true</InvariantGlobalization>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <NoWarn>$(NoWarn);CA1416</NoWarn>
-    <Version>1.3.2</Version>
+    <Version>1.3.3</Version>
     <!-- A background app, not a server: the web SDK turns on the server collector, which keeps a heap per CPU core.
          The workstation collector is the right fit and holds far less memory for the same work. -->
     <ServerGarbageCollection>false</ServerGarbageCollection>

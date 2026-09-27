@@ -93,9 +93,12 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 				_waiting.Hold();
 			}
 
-			if (Wanted && Bot.IsOnline && Bot.Web.Ready && awake && ShouldLook()) {
+			// Asleep, only donations may still go through - and only when that's switched on.
+			bool nightDonations = !awake && Bot.Cfg.AcceptDonations && Bot.Cfg.DonationsWhileAsleep;
+
+			if (Wanted && Bot.IsOnline && Bot.Web.Ready && (awake || nightDonations) && ShouldLook()) {
 				try {
-					await CheckAsync(ct).ConfigureAwait(false);
+					await CheckAsync(awake, ct).ConfigureAwait(false);
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
 				} catch (Exception e) {
@@ -148,7 +151,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		return (Bot.TradeOffersWaiting > 0) && (_fruitless < FruitlessBeforeBackingOff) ? Rng.Minutes(4, 9) : Rng.Minutes(45, 90);
 	}
 
-	private async Task CheckAsync(CancellationToken ct) {
+	private async Task CheckAsync(bool awake, CancellationToken ct) {
 		// Steam's own list of this account's live incoming offers. Null is "Steam didn't answer" - try again later,
 		// never read as "nothing waiting".
 		if (await TradeOffers.ActiveAsync(Bot, received: true, sent: true, ct).ConfigureAwait(false) is not { } live) {
@@ -187,19 +190,37 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			}
 		}
 
+		lock (_nightDue) {
+			foreach (ulong gone in _nightDue.Keys.Where(k => !ids.Contains(k)).ToList()) {
+				_nightDue.Remove(gone);
+			}
+		}
+
 		// Offers held while the account slept get their wait now, from the moment it's up - not all at once.
-		foreach ((ulong id, DateTime due) in _waiting.Arm(DateTime.UtcNow, TradeWait)) {
+		foreach ((ulong id, DateTime due) in awake ? _waiting.Arm(DateTime.UtcNow, TradeWait) : []) {
 			Log.Debug(new Said("trade offer #{0} waited for the account to wake - handling it around {1}", id, (Func<string>) (() => Fmt.Clock(due))), Bot.Name);
 		}
 
 		bool actedOnSomething = false;
 		bool swappedThisLook = false;
+		_answeredThisLook = false;
 		HashSet<ulong> masters = Social.ParseIds(Bot.Cfg.TradeMasters);
 		HashSet<ulong> fleet = [.. (BotManager.Instance?.All ?? []).Where(b => (b != Bot) && (b.SteamId != 0)).Select(static b => b.SteamId)];
 
 		foreach (TradeOffers.Offer offer in offers) {
 			// One offer that can't be read or judged must not stop the rest - donations and your own accounts included.
+			// Asleep: donations only; everything else stays put for the morning.
+			if (!awake && !offer.IsPureDonation) {
+				continue;
+			}
+
 			try {
+				if (!awake) {
+					actedOnSomething |= await NightDonationAsync(offer, ct).ConfigureAwait(false);
+
+					continue;
+				}
+
 				(bool acted, bool swapped) = await HandleAsync(offer, masters, fleet, swappedThisLook, ct).ConfigureAwait(false);
 				actedOnSomething |= acted;
 				swappedThisLook |= swapped;
@@ -252,6 +273,12 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			return (true, false);
 		}
 
+		// Human mode answers one offer per look - the rest wait for the next one, minutes later. Several that came
+		// due together (the morning after a night on hold, typically) were all accepted seconds apart.
+		if (Bot.Cfg.LegitMode && Bot.Cfg.OneTradeAtATime && _answeredThisLook) {
+			return (true, false);
+		}
+
 		if (fair && !fromMaster && !donation) {
 			// One swap per look: the next is judged against the cards as they are after this one.
 			if (swappedThisLook) {
@@ -291,6 +318,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		}
 
 		bool swapped = false;
+		_answeredThisLook = true;
 
 		if (accept) {
 			Accepted result = await AcceptAsync(offer, ct).ConfigureAwait(false);
@@ -339,6 +367,54 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		lock (_fair) {
 			_fair.Remove(id);
 		}
+	}
+
+	/// <summary>Set once an offer has been answered this look - a human-mode account answers one per look.</summary>
+	private bool _answeredThisLook;
+
+	/// <summary>When each donation that arrived at night is due - its own short wait, like in the day.</summary>
+	private readonly Dictionary<ulong, DateTime> _nightDue = [];
+
+	/// <summary>A donation while the account sleeps: the same short wait, then accepted. Returns whether it's being handled.</summary>
+	private async Task<bool> NightDonationAsync(TradeOffers.Offer offer, CancellationToken ct) {
+		lock (_done) {
+			if (_done.Contains(offer.Id)) {
+				return false;
+			}
+		}
+
+		DateTime due;
+
+		lock (_nightDue) {
+			if (!_nightDue.TryGetValue(offer.Id, out due)) {
+				due = DateTime.UtcNow + TradeWait();
+				_nightDue[offer.Id] = due;
+				Log.Info(new Said("trade offer #{0} ({1}: {2}) - handling it in {3}", offer.Id, new Said("a donation"), offer.Describe,
+					Fmt.Hm((int) Math.Max(1, (due - DateTime.UtcNow).TotalMinutes))), Bot.Name);
+
+				return true;
+			}
+		}
+
+		if ((DateTime.UtcNow < due) || (Bot.Cfg.OneTradeAtATime && _answeredThisLook)) {
+			return true;
+		}
+
+		_answeredThisLook = true;
+
+		if (await AcceptAsync(offer, ct).ConfigureAwait(false) == Accepted.Failed) {
+			return true;
+		}
+
+		lock (_nightDue) {
+			_nightDue.Remove(offer.Id);
+		}
+
+		Finish(offer.Id);
+		_accepted++;
+		Log.Reward(new Said("accepted trade offer #{0} - {1} item(s) in", offer.Id, offer.Receiving.Sum(static i => i.Amount)), Bot.Name);
+
+		return true;
 	}
 
 	private void Finish(ulong id) {

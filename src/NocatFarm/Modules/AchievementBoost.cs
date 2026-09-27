@@ -39,6 +39,9 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 	private const int LookupsPerTick = 40;
 	private readonly Random _rng = new();
 	private DateTime _lastEnded = DateTime.MinValue;
+
+	/// <summary>The account was ready to hunt on the last look - so a fresh sign-in or wake-up can start a rest first.</summary>
+	private bool _wasReady;
 	private int _restNeeded;                      // this gap's own jittered length, rolled when the gap starts
 	private Said _status = new("");
 
@@ -458,11 +461,22 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 
 		// Human accounts hunt only while awake, and stay weighted-first: a stretch of the normal schedule sits
 		// between boost sessions, and a longer one after a run of them.
-		if (Bot.HumanOwned) {
-			if (!HumanMode.AwakeFor(Bot)) {
+		// The setting, not the runtime flag: HumanOwned is only set once human mode has ticked, so a hunt could slip
+		// in right after a start with no sleep check and no rest.
+		if (Bot.Cfg.LegitMode) {
+			if (!HumanMode.ReadyFor(Bot)) {
 				_status = new Said("resting until the account is awake");
+				_wasReady = false;
 
 				return;
+			}
+
+			// Just signed in or just woke: a stretch of the ordinary day comes first, the same as between hunts -
+			// not a hunt a minute after getting up.
+			if (!_wasReady) {
+				_wasReady = true;
+				_lastEnded = DateTime.UtcNow;
+				_restNeeded = 0;
 			}
 
 			// Hunting comes out of the day's budget, not on top of it.
@@ -512,10 +526,30 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		// Nobody plays for exactly two hours, twice. The setting is the middle of a range, not a stopwatch.
 		int hours = Math.Clamp(Bot.Cfg.BoostSessionHours, 1, 24);
 		int minutes = _rng.Next(hours * 60 * 70 / 100, (hours * 60 * 130 / 100) + 1);
+		TimeSpan handOver = default;
+
+		if (Bot.Cfg.LegitMode) {
+			// Finished before bed, with a little to spare - a hunt that ran on past bedtime became an invisible night
+			// session that went on unlocking achievements at 3am.
+			if (BotManager.ModuleOf<HumanMode>(Bot)?.MinutesToBed is int toBed) {
+				int room = toBed - _rng.Next(15, 46);
+
+				if (room < 30) {
+					_status = new Said("done for today - hunting again tomorrow");
+
+					return;
+				}
+
+				minutes = Math.Min(minutes, room);
+			}
+
+			// The current game is finished off first, the way a person closes one game before opening another.
+			handOver = TimeSpan.FromSeconds(_rng.Next(45, 211));
+		}
 
 		// Targets are already filtered, so a refusal here means the guard changed its mind between the two - fine,
 		// leave it, the next tick picks the game after it.
-		if (!Bot.StartGrind(target, TimeSpan.FromMinutes(minutes), boost: true)) {
+		if (!Bot.StartGrind(target, TimeSpan.FromMinutes(minutes), handOver, boost: true)) {
 			return;
 		}
 

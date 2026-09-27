@@ -122,7 +122,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	private bool NightGrind => _wasGrinding && (_phase == Phase.Playing) && (_game == 0) && !InWakingHours(DateTime.Now);
 
 	/// <summary>Cards farm in this day's sittings (the default for a human-mode account), not flat out.</summary>
-	private bool FarmInDay => Bot.Cfg.FarmCards && (Bot.Cfg.FarmCardsWhen == FarmWhen.Day);
+	private bool FarmInDay => Bot.Cfg.FarmCards && FarmWhen.InSittings(Bot.Cfg.FarmCardsWhen);
 
 	/// <summary>
 	/// A card-farming sitting is open, so the farmer may play. It closes for every break, meal, bedtime and stand-down,
@@ -131,8 +131,18 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	public bool FarmSittingOpen => Bot.Cfg.LegitMode && (_phase == Phase.Playing) && _farmSession;
 
 	/// <summary>The game the next sitting farms, or 0 when this sitting should play the usual games.</summary>
-	private uint FarmGameNow() =>
-		FarmInDay && (Bot.CardsRemaining > 0) && (BotManager.ModuleOf<CardFarmer>(Bot) is { InFarmWindowNow: true } farmer) ? farmer.NextGame : 0;
+	/// Mixed rolls this per sitting: CardSittingsPct of them farm, the rest play the usual games.
+	private uint FarmGameNow() {
+		if (!FarmInDay || (Bot.CardsRemaining <= 0) || (BotManager.ModuleOf<CardFarmer>(Bot) is not { InFarmWindowNow: true } farmer)) {
+			return 0;
+		}
+
+		if ((Bot.Cfg.FarmCardsWhen == FarmWhen.Mixed) && !Chance(Math.Clamp(Bot.Cfg.CardSittingsPct, 5, 95) / 100.0)) {
+			return 0;
+		}
+
+		return farmer.NextGame;
+	}
 
 	private bool _wasFarming;
 	private bool _wokeUp;
@@ -191,12 +201,32 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// </summary>
 	public bool InBed => _phase is Phase.Asleep or Phase.NightIdle;
 
+	/// <summary>Minutes until tonight's bedtime while it's awake; null outside waking hours.</summary>
+	public int? MinutesToBed {
+		get {
+			if (!InWakingHours(DateTime.Now)) {
+				return null;
+			}
+
+			// After midnight BedTime() (built from today's date) can land a day late - bring it back into range.
+			int minutes = (int) (BedTime() - DateTime.Now).TotalMinutes;
+
+			return minutes > 20 * 60 ? minutes - (24 * 60) : minutes;
+		}
+	}
+
 	/// <summary>
 	/// True once the post-login warm-up has finished - the card farmer waits on this so a human-mode account
 	/// settles in first (gets online for a bit) and only then starts farming, exactly like it would before
 	/// playing. Falls back to a time check for days it never enters the play warm-up (a day off), so the farmer
 	/// is never stuck waiting.
 	/// </summary>
+	/// <summary>Human mode has run at least once since starting, so its phase says something (not the Off it starts in).</summary>
+	private bool _ticked;
+
+	/// <summary>A break it's spending offline: to the friends list the account is signed out, so it does nothing visible.</summary>
+	private bool _offlineBreak;
+
 	public bool WarmedUp => _warmedUp
 		|| (Bot.OnlineSince is { } on && DateTime.UtcNow >= on.AddSeconds(SafetyGateSeconds).AddMinutes(Math.Max(1, Bot.Cfg.WarmUpMaxMinutes)));
 
@@ -348,6 +378,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		Bot.HumanOwned = true;
 		RollNewDayIfNeeded();
+		_ticked = true;
 
 		// The human always yields to the actual human - and stays out of the way for the courtesy delay it
 		// promised, rather than reappearing on the next twenty-second tick after saying "picking back up in 8m".
@@ -376,7 +407,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// A grind outranks the schedule. On a legit account it doesn't slam over instantly: for the first short
 		// beat (GrindStartsAt) the current game keeps playing and the day carries on normally, so it looks like a
 		// person finishing up and then switching games. On a non-human account it starts immediately.
-		if (Bot.Grinding && (!Bot.HumanOwned || (DateTime.UtcNow >= Bot.GrindStartsAt))) {
+		if (Bot.Grinding && (!Bot.HumanOwned || (DateTime.UtcNow >= Bot.GrindStartsAt)) && SettledIn()) {
 			if (!_wasGrinding) {
 				_wasGrinding = true;
 
@@ -414,8 +445,15 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			// Put the grind game on directly (idempotent - only re-sends when it isn't already the one running).
 			// ReassertPlaying is keyed once-per-logon and would no-op mid-session, so the grind game would never
 			// actually start except by the idler's slow backstop; this makes the switch happen on the next tick.
+			// Another game still running is closed first, and the grind game follows a minute or few later -
+			// closing one game and opening another isn't instant.
 			if (!PlayingExactly([Bot.GrindGame])) {
-				Bot.SetPlaying([Bot.GrindGame]);
+				if ((Bot.PlayingApps.Count > 0) && !Bot.PlayingApps.Contains(Bot.GrindGame)) {
+					Bot.StopPlaying();
+					_grindLaunchAt = DateTime.UtcNow.AddSeconds(Rng(60, 240));
+				} else if (DateTime.UtcNow >= _grindLaunchAt) {
+					Bot.SetPlaying([Bot.GrindGame]);
+				}
 			}
 
 			return;
@@ -492,10 +530,31 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		}
 
 		if (_phase is Phase.ShortBreak or Phase.MealBreak or Phase.SwitchingGame) {
+			// A real client only turns Away after a few idle minutes - not in the second the game closes.
+			if ((_breakPersona is int persona) && (DateTime.UtcNow >= _breakPersonaAt)) {
+				_breakPersona = null;
+				_breakPersonaSet = true;
+				_offlineBreak = persona == Bot.PersonaDark;
+				Bot.SetPersonaOverride(persona);
+			}
+
 			if (DateTime.UtcNow < _phaseEnds) {
 				return;
 			}
 
+			// Back from a break it spent Away or offline: back online first, and the game a little after - not
+			// both in the same second.
+			if (_breakPersonaSet) {
+				_breakPersonaSet = false;
+				_offlineBreak = false;
+				_breakPersona = null;
+				Bot.ClearPersonaOverride();
+				_phaseEnds = DateTime.UtcNow.AddSeconds(Rng(20, 180));
+
+				return;
+			}
+
+			_breakPersona = null;
 			_phase = Phase.Off;   // fall through into the next session
 		}
 
@@ -736,7 +795,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// hours get counted into THIS morning's total, so the account reads "4h played" at noon having woken at 11.
 		// Roll when it actually reaches its wake time instead, so each day is one clean wake->bed cycle. (_dayStamp
 		// < 0 means a fresh start with no plan yet - that must still roll immediately, even before wake.)
-		if ((_dayStamp >= 0) && (DateTime.Now < WakeTime())) {
+		// Rolled once it's past the EARLIEST today's wake could possibly be, never yesterday's wake minute: keyed to
+		// yesterday's, a day that rolled an earlier wake was already "awake" the moment it rolled, so on about half
+		// of all days the account got up at exactly the same minute as the day before.
+		if ((_dayStamp >= 0) && (DateTime.Now < EarliestWakeToday())) {
 			return;
 		}
 
@@ -903,6 +965,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	}
 
 	private DateTime WakeTime() => DateTime.Now.Date.AddMinutes(_wakeMinuteOfDay);
+
+	/// <summary>The earliest today's wake roll can land: an hour before the day-start hour, less the weekend's head start.</summary>
+	private DateTime EarliestWakeToday() => DateTime.Now.Date.AddMinutes(Math.Max(0, (Math.Clamp(Bot.Cfg.DayStartHour, 0, 23) - 1) * 60 - 150));
 
 	/// <summary>
 	/// The next time this account gets up, which is tomorrow once today's has been and gone.
@@ -1115,7 +1180,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		}
 
 		// A card-farming sitting runs like a main-game one - real sittings, not the short dips side games get.
-		_farmSession = (farm != 0) && ((game == farm)
+		_farmSession = FarmInDay && (Bot.CardsRemaining > 0) && ((game == farm)
 			|| (BotManager.ModuleOf<CardFarmer>(Bot)?.Queue.Any(g => (g.AppId == game) && (g.CardsRemaining > 0)) ?? false));
 		int minutes = SessionLength(game, _farmSession || IsTargetGame(game) ? game : main);
 
@@ -1276,9 +1341,21 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	private void StepAway(int minutes, int awayPersona, Said what, double weight = 1.0) {
 		int pct = Math.Clamp((int) (Bot.Cfg.SignOutOnBreakChancePct * weight), 0, 100);
 
+		// The status changes a few minutes in, the way a client goes Away once nobody's touched it for a bit - and a
+		// break too short for that just stays online.
+		int after = Rng(Math.Max(0, Bot.Cfg.BreakAwayAfterMinMinutes), Math.Max(Bot.Cfg.BreakAwayAfterMinMinutes, Bot.Cfg.BreakAwayAfterMaxMinutes));
+
+		if (minutes <= after + 2) {
+			Log.Info(new Said("{0} - back in about {1}", what, Fmt.Hm(minutes)), Bot.Name);
+
+			return;
+		}
+
+		_breakPersonaAt = DateTime.UtcNow.AddMinutes(after);
+
 		if (Percent(pct) && (_signOutsUsed < _signOutCap)) {
 			_signOutsUsed++;
-			Bot.SetPersonaOverride(Bot.PersonaDark);
+			_breakPersona = Bot.PersonaDark;
 
 			// "Dropped offline", not "signed out" - it stays connected and simply stops being visible, which to
 			// everyone on the friends list is the same thing and costs nothing in login rate limit.
@@ -1287,9 +1364,17 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return;
 		}
 
-		Bot.SetPersonaOverride(awayPersona);
+		_breakPersona = awayPersona;
 		Log.Info(new Said("{0} - back in about {1}", what, Fmt.Hm(minutes)), Bot.Name);
 	}
+
+	/// <summary>When a grind's game may go on, after the game before it was closed.</summary>
+	private DateTime _grindLaunchAt = DateTime.MinValue;
+
+	/// <summary>The Away / Snooze / offline status a break is about to switch to, and when.</summary>
+	private int? _breakPersona;
+	private DateTime _breakPersonaAt;
+	private bool _breakPersonaSet;
 
 	/// <summary>Credit the running session's real elapsed time, once, and never a minute more than it played.</summary>
 	private void BankSession() {
@@ -1716,6 +1801,19 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	///
 	/// Always true when human mode is off, or when the account was told to react around the clock.
 	/// </summary>
+	/// <summary>
+	/// Should a sign-in come up invisible? Yes on a fresh start (human mode hasn't looked at the clock yet - a
+	/// restart at 3am mustn't announce the account), while it's asleep or banking the night, and on a break it's
+	/// spending offline. NOT on an ordinary daytime reconnect: that came up invisible too, and nothing turned it
+	/// back until the next sitting started - an hour of looking signed out in the middle of its day.
+	/// </summary>
+	public static bool DarkAtLogon(Bot bot) {
+		HumanMode? human = bot.Modules.OfType<HumanMode>().FirstOrDefault();
+
+		return (human == null) || !human._ticked || !human.InWakingHours(DateTime.Now) || human._offlineBreak || human.NightGrind
+			|| (human.Current is Phase.Asleep or Phase.NightIdle);
+	}
+
 	public static bool AwakeFor(Bot bot) {
 		if (!bot.Cfg.LegitMode || !bot.Cfg.ActOnlyWhileAwake) {
 			return true;
@@ -1723,7 +1821,23 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		HumanMode? human = bot.Modules.OfType<HumanMode>().FirstOrDefault();
 
-		return (human == null) || ((human.Current is not (Phase.Asleep or Phase.NightIdle)) && !human.NightGrind);
+		// Right after a start (a restart at 3am, say) the phase is still the Off it starts in - which read as awake.
+		return (human == null) || (human._ticked && (human.Current is not (Phase.Asleep or Phase.NightIdle)) && !human.NightGrind);
+	}
+
+	/// <summary>
+	/// Ready to do something other people can see: awake, settled in after signing in or waking, and not in a break
+	/// it's spending offline. Every visible action on a human-mode account waits for this - and then its own
+	/// random delay on top (<see cref="HumanGate"/>). Always true without human mode.
+	/// </summary>
+	public static bool ReadyFor(Bot bot) {
+		if (!bot.Cfg.LegitMode) {
+			return true;
+		}
+
+		HumanMode? human = bot.Modules.OfType<HumanMode>().FirstOrDefault();
+
+		return AwakeFor(bot) && ((human == null) || (human.WarmedUp && !human._offlineBreak));
 	}
 
 	// ═══ showing your work ══════════════════════════════════════════════════

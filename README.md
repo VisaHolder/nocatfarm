@@ -50,9 +50,13 @@
 
 1. **Download** `nocat.farm-v….zip` from the [latest release](https://github.com/VisaHolder/nocatfarm/releases/latest).
 2. **Right-click it → Extract All…** (give it its own folder).
-3. **Run `nocatFarm.exe`.** The dashboard opens in your browser.
-4. **Add your Steam account.** Type your password once, or tick *Sign in with a QR code* and scan it with the
-   Steam app on your phone - no password at all.
+3. **Run `nocatFarm.exe`.** The dashboard opens in your browser with a short setup: pick your language, then
+   *Quick setup* (straight to your account) or *Full tour* (every feature explained on the way).
+4. **Say what the account is for.** *My main - I play on it* turns on human mode, so it acts like a person.
+   *A spare or farm account* farms at full speed. You can change this any time.
+5. **Add your Steam account.** Type your password once, or tick *Sign in with a QR code* and scan it with the
+   Steam app on your phone - no password at all. Already using ArchiSteamFarm? The setup finds it and brings
+   your bots across instead.
 
 That's it. It starts farming your cards straight away. Nothing else to install - no .NET, no setup.
 
@@ -82,9 +86,7 @@ a start/stop button. An account that's farming opens up to show cards left, time
 keeps it on top of your other windows (off by default), and the arrow brings the full window back.
 
 <p align="center">
-  <img src="assets/mini.png" alt="Mini mode - one line per account, and the farming one shows its progress" width="440">
-  &nbsp;&nbsp;
-  <img src="assets/mini-human.png" alt="Mini mode - a human-mode account farming, one paused, one stopped" width="440">
+  <img src="assets/mini-mode.png" alt="Mini mode - one line per account, and a farming account shows its progress" width="680">
   <br><sub>Left: one account farming, one playing, one idling. Right: a human-mode account farming its cards, one paused, one stopped - pinned on top.</sub>
 </p>
 
@@ -150,8 +152,12 @@ few minutes after you stop.
 
 **Do I have to type my password every time?** No - only once, or never if you use the QR code.
 
-**I'm coming from ArchiSteamFarm.** Type `import asf`. Your bots come across with their logins, games and
-settings - no passwords needed.
+**I'm coming from ArchiSteamFarm.** The first-run setup finds it for you: tick the bots you play on yourself
+(they come across in human mode) and import. Or type `import asf` any time. Logins, games and settings all come
+across - no passwords needed.
+
+**The settings page looks short.** On purpose. It shows the everyday switches; tick **Show advanced** for the
+rest - timings, farming order, the dashboard's port and password, and so on.
 
 **It says Steam is rate-limiting it.** Steam slows everyone down if a PC asks too much at once (usually after a
 lot of restarts). nocat.farm waits it out by itself - nothing to do.

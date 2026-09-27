@@ -14,6 +14,8 @@ namespace NocatFarm.Modules;
 /// The next send time is kept on disk, so frequent restarts don't keep pushing it back.
 /// </remarks>
 public sealed class Sender(Bot bot) : BotModule(bot) {
+	private HumanGate? _gate;
+
 	private Said _status = new("off");
 	private DateTime? _nextDue;
 	private int _periodSeen;
@@ -86,7 +88,10 @@ public sealed class Sender(Bot bot) : BotModule(bot) {
 			}
 
 			// A trade offer from an account that is asleep on the friends list is the same tell as accepting one.
-			if (!HumanMode.AwakeFor(Bot)) {
+			// Between your own accounts nobody sees it, so any time of day - just not the moment it signs in.
+			_gate ??= HumanGate.Quiet(Bot);
+
+			if (!_gate.Open) {
 				_status = new Said("send due - waiting until the account is awake");
 
 				if (!await Sleep(TimeSpan.FromMinutes(10), ct).ConfigureAwait(false)) {

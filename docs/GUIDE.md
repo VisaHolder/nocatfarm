@@ -32,16 +32,16 @@ setting away.
 | **Stays out of your way** | Launch a game yourself on one of the accounts and that account stands down (`PauseWhenYouPlay`, on by default), then quietly picks back up after a delay you choose (`ResumeDelayMinutes`, default 5). |
 | **Achievement hunter** | Optional (`AchievementBoost`, plus `UnlockAchievements`). Hunts a list you pick, or finds single-player games in the library itself — never DLC, demos or bundle filler nobody plays — and works through them one at a time. On a human account the sessions are occasional and weighted-first, coming out of the day's play budget; on a non-human account it moves from one game straight to the next. |
 | **Inventory value** | What each account's items are worth at the market's median, per game (up to 12 inventories per account), in the currency you pick (`MarketCurrency`, default US dollar), with how it has moved in the last 24 hours. Reads the account's OWN inventory, so a private profile makes no difference. |
-| **Free games** | Optional (`ClaimFreeGames`). Finds giveaways from Steam alone — **the store's own list of games at 100% off, and Steam's change feed** — and claims free-to-keep giveaways, packages and apps alike. Whatever it finds has to be a released, paid game showing 100% off, so free-to-play games, a paid game's free edition, DLC and demos are left alone. The change feed usually sees a giveaway within half an hour of Steam publishing it. A giveaway that has already ended is tried a few more times, then left alone, and that is remembered across restarts. |
+| **Free games** | Optional (`ClaimFreeGames`). Finds giveaways from Steam alone — **the store's own list of games at 100% off, and Steam's change feed** — and claims free-to-keep giveaways, packages and apps alike. Whatever it finds has to be a released, paid game showing 100% off, so free-to-play games, a paid game's free edition and demos are left alone. DLC marked down to free is taken too with `ClaimFreeDlc` (off by default) - Steam only gives a DLC to owners of its game, so when the game is missing it checks whether the game is free right now as well and, if so, claims the game first and then the DLC (`ClaimFreeDlcBase`, on); if the game costs money the DLC is skipped. The change feed usually sees a giveaway within half an hour of Steam publishing it. A giveaway that has already ended is tried a few more times, then left alone, and that is remembered across restarts. |
 | **Free event items** | The daily sticker during a Steam sale, and anything in the Points Shop at 0 points, collected by themselves (`ClaimEventItems`, on by default). |
 | **Gifts** | Steam wallet gift cards and guest passes sent to an account are accepted (`AcceptGifts`, on by default), and so are games friends gift it — added straight to the library (`AcceptGiftedGames`, on by default; turn it off to decide each one yourself). Each gift waits a person's time first (`GiftDelayMinMinutes` / `GiftDelayMaxMinutes`), and a gift is never declined. |
 | **Booster packs** | Turns gems into booster packs for the games you list, one per game per day as Steam allows, on Steam's own schedule (`BoosterGames`). |
 | **Fair card swaps** | Optional. Accepts the one-for-one card swaps card-swapping sites send, only when the swap can never set the account's sets back: every card given away must still have more copies afterwards than any card coming in had before (`AcceptFairCardSwaps`). |
-| **Refund protection** | Optional (`SkipRefundableGames`, off by default). When on, a game bought in the last 14 days (`RefundHoldDays`) with under two hours played is left alone — by the card farmer, the idler, the schedule, grinds and the hunter alike — until it can no longer be refunded. |
+| **Refund protection** | Optional (`SkipRefundableGames`, off by default). When on, a game bought in the last 14 days (`RefundHoldDays`) with under two hours played is left alone — by the card farmer, the idler, the schedule, grinds and the hunter alike — until it can no longer be refunded. Games friends gift the account count too (`ProtectGiftedGames`, on by default) — the giver can still get their money back. |
 | **Steam Families** | Optional (`IncludeFamilyLibrary`, off by default). Games shared into the account can be hunted too, and are handed back as soon as anyone else in the family starts playing them (`YieldToFamily`, on by default). |
 | **Plugins** | Optional and off by default. One DLL in `plugins/` extends the app: react to card drops and trade offers, read every account, run any command, add your own commands, and declare settings that get a real UI. See [PLUGINS.md](../PLUGINS.md). |
 | **Daily report** | Once a day (default 09:30) it writes a one-look summary to the log: hours banked since the previous report, cards in the last 24h, rep4rep comments (when rep4rep is on) and a running total, per account plus a line for the whole fleet. `report` shows the same figures on demand. |
-| **Eleven languages** | The dashboard's pages, labels and setting explanations — all 186 settings — are in Spanish, Portuguese (BR), Russian, German, French, Simplified Chinese, Turkish, Polish, Japanese and Korean, and so are account status lines and the log. Replies to typed commands stay in English. The walkthrough asks which language you want before it says anything else. |
+| **Eleven languages** | The dashboard's pages, labels and setting explanations — all 199 settings — are in Spanish, Portuguese (BR), Russian, German, French, Simplified Chinese, Turkish, Polish, Japanese and Korean, and so are account status lines and the log. Replies to typed commands stay in English. The walkthrough asks which language you want before it says anything else. |
 
 <p align="center">
   <img src="../assets/accounts.png" alt="The per-account view — state, custom name, and what your friends actually see" width="880">
@@ -63,9 +63,7 @@ windows (`MiniOnTop`, off by default) and the way back to the full window. It re
 in mini next time if you left it that way.
 
 <p align="center">
-  <img src="../assets/mini.png" alt="Mini mode" width="440">
-  &nbsp;&nbsp;
-  <img src="../assets/mini-human.png" alt="Mini mode, pinned, with a human-mode account farming" width="440">
+  <img src="../assets/mini-mode.png" alt="Mini mode" width="680">
 </p>
 
 <p align="center">
@@ -105,8 +103,20 @@ enough to guess. Turn the dashboard off with `set WebEnabled false` and restart,
 
 Type `tutorial`. It walks the six steps in order and ticks off the ones this machine has already done, so the
 next thing to do is always the first unticked line. `tutorial cards`, `tutorial human`, `tutorial free`, `tutorial rep4rep`,
-`tutorial trades`, `tutorial achievements` and `tutorial tray` go deeper on one thing each. The dashboard has its
-own first-run walkthrough too, and it adds your first account at the end.
+`tutorial trades`, `tutorial achievements` and `tutorial tray` go deeper on one thing each.
+
+The dashboard has its own first-run setup, and it adds your first account at the end:
+
+1. **Language** — before anything else is said.
+2. **Quick setup or Full tour** — quick goes straight to the account; the full tour explains playing, free
+   stuff, rep4rep and where the fine-tuning lives (*Show advanced*) on the way.
+3. **What kind of account is it?** — *My main, I play on it* adds it in human mode (and, if you tick it, with
+   *I sign into this one myself*); *A spare or farm account* keeps the full-speed defaults.
+4. **Add it, or import from ArchiSteamFarm** — when an ASF install is found, every bot is listed with a tick
+   box: the ones you tick come across in human mode, the rest as farm accounts.
+
+The Accounts page's own *+ add account* has the same *Human mode* tick. The setup shows once, on a machine with no
+accounts; replay it from the Overview page.
 
 The short version:
 
@@ -172,7 +182,8 @@ a person instead of a bot:
   it for another 15-20 minutes, then takes a break, and the next card game starts after that (*After the last
   card, keep playing* - `PostFarmWindDownMin`/`MaxMinutes`). A `drops` run at night stays invisible. *When to farm cards* (`FarmCardsWhen`) changes
   that: *only at night* holds cards until it's asleep and invisible and plays the usual games by day; *any time*
-  farms the moment there are cards, day and night, straight through
+  farms the moment there are cards, day and night, straight through; *mixed* farms in only some of its sittings
+  (`CardSittingsPct`, 40% by default) and plays its usual games in the rest, so cards drop in between them
 * **grind fits it too** — `grind` on a legit account eases in (it keeps its current game for a minute or three
   before switching) and earns achievements at that account's normal pace when `UnlockAchievements` is on; on a
   boost account it just starts instantly
@@ -182,6 +193,17 @@ a person instead of a bot:
   gives. While the account sleeps they wait for morning, and each gets a fresh wait once it's up, so nothing
   fires the minute it wakes. Turn off *Only react while awake* (`ActOnlyWhileAwake`) and it answers at night
   too, after the same waits
+* **only what people can see is held for its day** — trades, gifts, friend and group invites, replies,
+  rep4rep comments and achievement unlocks wait until it's awake and settled in. Things nobody sees — crafting
+  badges, free games, booster packs, event items, the discovery queue, selling cards, sends between your own
+  accounts, joining the nocat.farm group, reading notifications — happen at any hour, just not the moment it
+  signs in, each after its own random wait
+* **every wait is a setting** (all under *Show advanced*, human-mode accounts only): *After waking, wait at
+  least … up to* (`WakeDelayMin`/`MaxMinutes`, 10-90) for things people see; *After signing in, behind-the-scenes
+  things wait at least … up to* (`QuietDelayMin`/`MaxMinutes`, 5-60); *Behind-the-scenes things wait for its day
+  too* (`QuietThingsWaitForDay`, off) to hold those for its waking day as well; *On a break, go Away after at
+  least … up to* (`BreakAwayAfterMin`/`MaxMinutes`, 2-10); and *Answer one trade offer at a time*
+  (`OneTradeAtATime`, on) so a morning's worth of offers is answered a few minutes apart, not all at once
 * stopping it doesn't blink the account out mid-game — it finishes up for a few seconds, then logs off
 
 ```
@@ -321,7 +343,7 @@ ignored, and replies are cut at 1,900 characters.
 | `owns <appID\|name>` | Which accounts already own a game, and how long each has played it. Takes an appID, a store URL, or part of a name. Steam's owned-games list quietly leaves some played games out (TF2 picked up after it went free, for one), so the library also reads the play history the Steam client uses and adds any game the account holds its own licence for. |
 | `addlicense <account\|all> <IDs>` | Add free licences to a library: a subID, or `a/<appID>` for a free app. Steam refuses anything that isn't actually free, and the answer says why. |
 | `wake <account>` &nbsp;·&nbsp; `wakeup` `skipsleep` | Wake a sleeping human-mode account and start its day now. Bed time is unchanged. |
-| `name <account> [text]` | Custom non-Steam game name shown instead of the real game. No text clears it. |
+| `name <account> [text\|off]` | Custom non-Steam game name shown instead of the real game. No text shows the current one; `off` clears it. |
 | `nickname <account> <profile name>` | Change the name everybody sees on the profile and friends list. |
 | `persona <account> <state>` | online \| offline \| busy \| away \| snooze \| invisible. |
 | `cheevo <account> <appID> [list\|unlock\|lock] [name\|all]` &nbsp;·&nbsp; `ach` | Achievements: see them, unlock them, or put them back. |
@@ -612,9 +634,10 @@ soon as Steam allows, using tradable gems first so the pack is tradable too. `Un
 pack in the inventory, and `CraftBadges` turns finished sets into badges; both run in one pass about once a day,
 either works without the other, and both are off by default.
 
-Event items, gifts and making booster packs all wait until human mode has the account awake, while its
-`ActOnlyWhileAwake` setting is on (it is by default), and a gift gets a fresh wait once it's up — collecting a
-sticker at 4am on an account that's asleep on the friends list is the same tell as accepting a trade then.
+On a human-mode account, gifts wait until it's awake while `ActOnlyWhileAwake` is on (it is by default), and get
+a fresh wait once it's up — accepting at 4am on an account that's asleep on the friends list is a tell. Event
+items and booster packs are things nobody else sees, so they happen at any hour, just not the moment it signs in
+(`QuietThingsWaitForDay` holds them for its day too).
 
 ## Plugins
 
@@ -642,7 +665,7 @@ why, and porting is usually easier than it sounds.
 
 ## Settings
 
-**50 global, 136 per account** — of which **69 sit in front of Show advanced** (16 global, 53 per account); what a
+**50 global, 149 per account** — of which **44 sit in front of Show advanced** (8 global, 36 per account); what a
 page actually shows also depends on whether rep4rep and human mode are on. Every one has a short plain-English
 explanation attached, which the dashboard shows on hover and the console prints for `help <setting>` along with
 its default and range — written once, in `Config/Settings.cs`, and translated with the setting's name into the
@@ -792,7 +815,7 @@ run\nocatFarm.exe
 none of that belongs in version control. The publish step creates it.
 
 First run creates `config/`, shows the dashboard address in the window's status bar and log, and opens the
-dashboard in your browser, where a walkthrough takes you through adding your first account. From the app window,
+dashboard in your browser, where a short setup takes you through adding (or importing) your first account. From the app window,
 click *accounts* → *+ add account*, or type `add <name> <steamLogin>` — or `add <name> qr` to sign in by scanning a
 code on the dashboard with the Steam app, with no password at all.
 

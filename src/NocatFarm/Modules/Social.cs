@@ -80,12 +80,18 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 					}
 				}
 
-				try {
-					Bot.Friends?.RemoveFriend(new SteamID(steamId));
-					Log.Info(new Said("turned down a friend request from {0}", steamId), Bot.Name);
-				} catch (Exception e) {
-					Log.Debug(new Said("couldn't turn down the request from {0}: {1}", steamId, e.Message), Bot.Name);
-				}
+				// Turned down after a person's delay too, and not at 4am - an instant refusal is as robotic as an
+				// instant yes.
+				_ = Task.Run(async () => {
+					try {
+						await Task.Delay(FriendWait()).ConfigureAwait(false);
+						await WaitUntilAwakeAsync(FriendWait).ConfigureAwait(false);
+						Bot.Friends?.RemoveFriend(new SteamID(steamId));
+						Log.Info(new Said("turned down a friend request from {0}", steamId), Bot.Name);
+					} catch (Exception e) {
+						Log.Debug(new Said("couldn't turn down the request from {0}: {1}", steamId, e.Message), Bot.Name);
+					}
+				});
 			}
 
 			return;
@@ -100,6 +106,8 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 		_ = Task.Run(async () => {
 			try {
 				if (Bot.Cfg.IgnoreSuspiciousInvites && await LooksLikeSpamAsync(steamId).ConfigureAwait(false)) {
+					await Task.Delay(FriendWait()).ConfigureAwait(false);
+					await WaitUntilAwakeAsync(FriendWait).ConfigureAwait(false);
 					Log.Info(new Said("ignoring a friend request from {0} - brand new private profile", steamId), Bot.Name);
 					Bot.Friends?.RemoveFriend(new SteamID(steamId));
 
@@ -164,12 +172,17 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 			}
 		}
 
-		try {
-			Bot.Notifications?.AcknowledgeClanInvite(clanId, true);
-			Log.Event(new Said("joined group {0}", clanId), Bot.Name);
-		} catch (Exception e) {
-			Log.Debug(new Said("couldn't join group {0}: {1}", clanId, e.Message), Bot.Name);
-		}
+		// Joined after a person's delay, and not while asleep - the same as a friend request.
+		_ = Task.Run(async () => {
+			try {
+				await Task.Delay(FriendWait()).ConfigureAwait(false);
+				await WaitUntilAwakeAsync(FriendWait).ConfigureAwait(false);
+				Bot.Notifications?.AcknowledgeClanInvite(clanId, true);
+				Log.Event(new Said("joined group {0}", clanId), Bot.Name);
+			} catch (Exception e) {
+				Log.Debug(new Said("couldn't join group {0}: {1}", clanId, e.Message), Bot.Name);
+			}
+		});
 	}
 
 	// ── messages ────────────────────────────────────────────────────────────
@@ -218,7 +231,8 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 
 		string reply = Bot.Cfg.AutoReply;
 
-		if (!Bot.Cfg.AutoReplyEnabled || string.IsNullOrWhiteSpace(reply)) {
+		// You're on the account yourself: you'll answer - an "away" reply sent in your name while you play is wrong.
+		if (!Bot.Cfg.AutoReplyEnabled || string.IsNullOrWhiteSpace(reply) || Bot.PlayingBlocked) {
 			return;
 		}
 
@@ -243,7 +257,8 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 
 				// If the account is meant to be asleep, the reply waits until morning - exactly what a person
 				// who was asleep when you messaged them would do.
-				await WaitUntilAwakeAsync(() => seconds > 0 ? Rng.Seconds(seconds, seconds * 2) : TimeSpan.Zero).ConfigureAwait(false);
+				// Once up, overnight messages get answered over the morning, not all in its first minute.
+				await WaitUntilAwakeAsync(() => Rng.HumanMinutes(5, 60) + (seconds > 0 ? Rng.Seconds(seconds, seconds * 2) : TimeSpan.Zero)).ConfigureAwait(false);
 
 				Bot.SendChatMessage(from, reply);
 				_replied++;
@@ -276,7 +291,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 		CancellationToken ct = Cts?.Token ?? CancellationToken.None;
 		bool held = false;
 
-		while (!ct.IsCancellationRequested && !HumanMode.AwakeFor(Bot)) {
+		while (!ct.IsCancellationRequested && !HumanMode.ReadyFor(Bot)) {
 			held = true;
 			await Task.Delay(TimeSpan.FromMinutes(5), ct).ConfigureAwait(false);
 		}

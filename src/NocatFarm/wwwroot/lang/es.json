@@ -1160,668 +1160,756 @@
     "trade offer #{0} is no longer a fair card swap - {1}; left alone": "la oferta de intercambio #{0} ya no es un intercambio justo de cartas - {1}; se deja como está",
     "trade offer #{0} was accepted but needs confirming from the email Steam sent": "la oferta de intercambio #{0} se aceptó pero hay que confirmarla desde el correo que envió Steam",
     "got the last card from {0} - playing on for about {1}, then a break": "conseguida la última carta de {0}: sigue jugando unos {1} y luego un descanso",
-    "finished - logging out after this sitting": "terminado: cierra sesión después de esta sesión de juego"
+    "finished - logging out after this sitting": "terminado: cierra sesión después de esta sesión de juego",
+    "{0} market listing(s) are waiting - confirm them in the Steam app on your phone": "{0} anuncio(s) del mercado esperando: confírmalos en la app de Steam del móvil",
+    "waiting for the account's day": "esperando al día de la cuenta",
+    "Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated.": "Modo humano: lleva un día creíble - duerme, hace descansos, juega a un juego cada vez y espera lo que esperaría una persona antes de intercambiar o responder. Más lento, pero nada en él parece automático.",
+    "Tick the ones you play on yourself - they come across in human mode. The rest farm at full speed.": "Marca las que juegas tú - pasan en modo humano. El resto farmea a toda velocidad.",
+    "Quick setup": "Configuración rápida",
+    "Add or import an account and go - the defaults are sensible. About a minute.": "Añade o importa una cuenta y listo - los valores por defecto son sensatos. Un minuto, más o menos.",
+    "Full tour": "Recorrido completo",
+    "Every feature explained, and where the fine-tuning lives. A few minutes.": "Cada función explicada, y dónde está el ajuste fino. Unos minutos.",
+    "You can skip this and come back from the Overview page.": "Puedes saltarlo y volver desde la página Resumen.",
+    "Fine-tuning, when you want it": "Ajuste fino, cuando lo quieras",
+    "Settings starts with the everyday switches. Tick {0} at the top of Settings for the rest:": "Ajustes empieza con los interruptores del día a día. Marca {0} arriba en Ajustes para el resto:",
+    "Show advanced": "Mostrar avanzados",
+    "{0} - how long it waits after waking before it trades or replies, when a break turns it Away, whether behind-the-scenes things wait for its day, one trade at a time.": "{0} - cuánto espera tras despertar antes de intercambiar o responder, cuándo un descanso la pone en Ausente, si lo de segundo plano espera a su día, un intercambio cada vez.",
+    "Human mode timings": "Tiempos del modo humano",
+    "{0} - the order it farms in, sittings, hours a day, how long it keeps playing after the last card.": "{0} - el orden en que farmea, sesiones, horas al día, cuánto sigue jugando tras la última carta.",
+    "Card farming detail": "Detalles del farmeo de cartas",
+    "{0} - its port, a password, the tray, log files.": "{0} - su puerto, una contraseña, la bandeja, los archivos de registro.",
+    "The dashboard itself": "El propio panel",
+    "Type {0} in the Console to read about any one setting. Plugins go in the {1} folder - PLUGINS.md on GitHub shows how to write one.": "Escribe {0} en la Consola para leer sobre un ajuste. Los plugins van en la carpeta {1} - PLUGINS.md en GitHub explica cómo escribir uno.",
+    "What kind of account is it?": "¿Qué tipo de cuenta es?",
+    "This picks the right settings for it. Anything can be changed later, per account.": "Esto elige los ajustes adecuados. Todo se puede cambiar después, por cuenta.",
+    "My main - I play on it": "Mi principal - juego en ella",
+    "A spare or farm account": "Una cuenta secundaria o de farmeo",
+    "Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.": "Modo robot: farmea cartas y deja juegos en marcha día y noche a toda velocidad. Lo mejor para cuentas que nadie mira.",
+    "I also sign into it from my own Steam app": "También inicio sesión en ella desde mi propia app de Steam",
+    "Then nocat.farm never changes its online status - if it did, Steam would sign your own client out of Friends and Chat.": "Así nocat.farm nunca cambia su estado en línea - si lo hiciera, Steam desconectaría tu propio cliente de Amigos y Chat.",
+    "Importing several? You pick which ones on the next step.": "¿Importas varias? Eliges cuáles en el siguiente paso.",
+    "Pick one first": "Elige una primero",
+    "Open its Steam store page": "Abrir su página de la tienda de Steam",
+    "free items: {0}": "objetos gratis: {0}",
+    "{0} card(s) - farmed in some of its sittings, between its usual games": "{0} carta(s) - se farmean en algunas de sus sesiones, entre sus juegos habituales",
+    "recent licence: package {0}, {1}, {2}": "licencia reciente: paquete {0}, {1}, {2}",
+    "{0} is a free DLC - left alone (\"...free DLC too\" is off)": "{0} es un DLC gratis - se deja («...también DLC gratis» está desactivado)",
+    "{0} is free, but only to owners of {1} - this account doesn't have it": "{0} es gratis, pero solo para quien tenga {1} - esta cuenta no lo tiene",
+    "claimed {0} (free right now) so its free DLC {1} can come too": "reclamado {0} (gratis ahora) para que pueda venir su DLC gratis {1}",
+    "couldn't claim {0} for its DLC - {1}": "no se pudo reclamar {0} para su DLC - {1}"
   },
   "settings": {
     "WebEnabled": {
       "label": "Panel web",
-      "tip": "Sirve el panel web. Desactívalo y nocat.farm queda solo en consola: todo sigue funcionando, solo que lo manejas escribiendo."
+      "tip": "Activa el panel web. Si lo desactivas, todo sigue funcionando y controlas nocat.farm escribiendo comandos en la consola."
     },
     "WebHost": {
       "label": "Escuchar en",
-      "tip": "En qué direcciones responde el panel. 127.0.0.1 significa solo este PC; usa 0.0.0.0 para llegar desde el móvil u otra máquina, y pon antes una contraseña."
+      "tip": "En qué direcciones responde el panel. 127.0.0.1 significa solo este PC. Usa 0.0.0.0 para abrirlo desde el móvil u otro PC, pero pon antes una contraseña."
     },
     "WebPort": {
       "label": "Puerto",
-      "tip": "Puerto del panel. Cámbialo si algo ya usa el 7242."
+      "tip": "El puerto en el que funciona el panel. Cámbialo solo si otro programa ya usa este puerto."
     },
     "WebPassword": {
       "label": "Contraseña del panel",
-      "tip": "Contraseña del panel. Mientras esté vacía, el panel rechaza toda conexión que no venga de este PC, así que no puedes publicar tus cuentas de Steam sin querer."
+      "tip": "Contraseña del panel. Mientras esté vacía, solo este PC puede abrir el panel, así que nadie más puede llegar a tus cuentas de Steam."
     },
     "OpenDashboardAfterAdd": {
       "label": "Abrir el panel al añadir una cuenta",
-      "tip": "Abre el panel en el navegador en cuanto se añade una cuenta nueva, para que la configures. Una cuenta recién añadida farmea sus cromos y nada más hasta que se le dice a qué jugar, y la ventana de la app no tiene ese formulario: solo el panel. Si lo desactivas, tendrás que acordarte tú."
+      "tip": "Abre el panel después de añadir una cuenta, para que la configures. Una cuenta nueva solo farmea cromos hasta que le digas a qué jugar, y eso se hace en el panel."
     },
     "OpenBrowserOnStart": {
       "label": "Abrir el navegador al arrancar",
-      "tip": "Abre el panel en el navegador automáticamente cuando arranca nocat.farm."
+      "tip": "Abre el panel en tu navegador cuando arranca nocat.farm."
     },
     "Tray": {
       "label": "Icono en la bandeja",
-      "tip": "Pone un icono en el área de notificación (abajo a la derecha, junto al reloj) para que nocat.farm pueda correr en segundo plano. Haz clic derecho para el menú."
+      "tip": "Muestra un icono junto al reloj para que nocat.farm funcione en segundo plano. Haz clic derecho en el icono para ver el menú."
     },
     "MinimizeToTray": {
       "label": "Minimizar a la bandeja",
-      "tip": "Al minimizar la ventana de consola, se esconde en la bandeja en vez de quedarse en la barra de tareas."
+      "tip": "Al minimizar, la ventana se oculta en el icono de la bandeja en vez de en la barra de tareas."
     },
     "StartMinimized": {
       "label": "Arrancar oculto",
-      "tip": "Arranca con la ventana de consola escondida, directo a la bandeja. Doble clic en el icono para recuperarla."
+      "tip": "Arranca con la ventana oculta en la bandeja. Haz doble clic en el icono de la bandeja para recuperarla."
     },
     "MiniOnTop": {
       "label": "Mantener el modo mini encima",
-      "tip": "Mientras la ventana esté en modo mini - el panel pequeño de cuentas -, se mantiene por encima de las demás ventanas. Desactivado por defecto; el alfiler de la barra de título de la ventana mini también lo cambia."
+      "tip": "Mantiene la ventana pequeña del modo mini encima de tus otras ventanas. La chincheta de la barra de título de la ventana mini también lo cambia."
     },
     "StartWithWindows": {
       "label": "Iniciar con Windows",
-      "tip": "Lanza nocat.farm al iniciar sesión en Windows. Añade una sola entrada bajo tu propio usuario y no toca nada más."
+      "tip": "Inicia nocat.farm cuando inicias sesión en Windows. Solo añade una entrada de inicio para tu propio usuario de Windows."
     },
     "KeepAwake": {
       "label": "Mantener este PC despierto",
-      "tip": "Impide que Windows se suspenda mientras nocat.farm esté abierto, haya o no cuentas conectadas. La pantalla sí puede apagarse: solo se bloquea la suspensión."
+      "tip": "Evita que tu PC entre en suspensión mientras nocat.farm está abierto. La pantalla se puede apagar igualmente."
     },
     "TrayNotifications": {
       "label": "Mostrar avisos emergentes",
-      "tip": "Interruptor general de los globos de aviso. Los tres de abajo deciden cuáles recibes de verdad."
+      "tip": "Activa o desactiva los avisos emergentes. Los tres ajustes de abajo eligen qué avisos recibes."
     },
     "NotifyEarnings": {
       "label": "Avisar cuando ganes algo",
-      "tip": "Avisa cuando cae un cromo o se acredita un comentario de rep4rep."
+      "tip": "Muestra un aviso cuando cae un cromo o se abona un comentario de rep4rep."
     },
     "NotifySocial": {
       "label": "Avisar de comentarios",
-      "tip": "Avisa cuando alguien comenta en uno de tus perfiles."
+      "tip": "Muestra un aviso cuando alguien comenta en uno de tus perfiles de Steam."
     },
     "NotifyProblems": {
       "label": "Avisar de problemas",
-      "tip": "Avisa cuando una cuenta te necesita de verdad: un código de Steam Guard, un inicio de sesión fallido o un baneo de comentarios."
+      "tip": "Muestra un aviso cuando una cuenta te necesita, como un código de Steam Guard, un inicio de sesión fallido o un bloqueo de comentarios."
     },
     "Rep4RepEnabled": {
       "label": "Usar rep4rep en absoluto",
-      "tip": "rep4rep es una web de terceros que intercambia comentarios de perfil entre sus usuarios. Es totalmente opcional. Desactívalo y nocat.farm detiene todo lo relacionado con rep4rep en todas las cuentas, y la función entera desaparece: su pestaña, sus puntos, sus opciones por cuenta y estos ajustes se van hasta que la vuelvas a activar."
+      "tip": "Activa rep4rep, una web externa y opcional donde los usuarios intercambian comentarios de perfil de Steam. Desactivado, todas las funciones y ajustes de rep4rep se ocultan en todas las cuentas."
     },
     "Rep4RepApiToken": {
       "label": "Token de API",
-      "tip": "Tu token de API de rep4rep. Un solo token cubre toda tu cuenta de rep4rep por muchas cuentas de Steam que lleves; lo sacas de rep4rep.com en Settings. ¿Aún no tienes cuenta? rep4rep.com/?r=reap"
+      "tip": "Tu token de API de rep4rep, que está en rep4rep.com en Settings. Un solo token sirve para todas tus cuentas de Steam. ¿Aún no tienes cuenta? rep4rep.com/?r=reap"
     },
     "Rep4RepAutoAddProfiles": {
       "label": "Registrar las cuentas automáticamente",
-      "tip": "Registra cada cuenta de Steam en rep4rep la primera vez que inicia sesión, para que no tengas que añadirlas a mano en la web."
+      "tip": "Añade cada cuenta de Steam a rep4rep la primera vez que inicia sesión, para que no tengas que añadirlas en la web."
     },
     "LoginStaggerSeconds": {
       "label": "Separación entre inicios de sesión",
-      "tip": "Segundos entre iniciar sesión en una cuenta y la siguiente al arrancar. Steam limita por dirección IP, así que este hueco es justo lo que evita que varias cuentas lo activen."
+      "tip": "Segundos de espera entre el inicio de sesión de cada cuenta al arrancar. Steam limita los inicios de sesión por conexión a internet, así que una pausa evita que se bloqueen varias cuentas."
     },
     "StatusEveryMinutes": {
       "label": "Informar cada",
-      "tip": "Cada cuánto dice esta cuenta lo que está haciendo mientras tiene un juego abierto. 0 sigue el ajuste global de Registro; -1 la silencia."
+      "tip": "Cada cuántos minutos esta cuenta anota en el registro lo que hace mientras tiene un juego abierto. 0 usa el ajuste general de registro y -1 la deja en silencio."
     },
     "StatusQuietEveryMinutes": {
       "label": "Y mientras descansa, cada",
-      "tip": "Lo mismo, para cuando esta cuenta está dormida, en un descanso, en pausa o desconectada. 0 sigue el ajuste global; -1 la mantiene callada."
+      "tip": "Lo mismo, pero para cuando esta cuenta duerme, descansa, está en pausa o desconectada. 0 usa el ajuste general de registro y -1 la deja en silencio."
     },
     "Language": {
       "label": "Idioma",
-      "tip": "El idioma del panel. Lo que aún no esté traducido se muestra en inglés en lugar de quedarse en blanco, así que un idioma a medias sigue siendo perfectamente usable. Las líneas de estado y del registro también lo siguen; las respuestas a los comandos escritos en la consola se quedan en inglés."
+      "tip": "El idioma del panel, del estado y de las líneas del registro. Lo que aún no está traducido sale en inglés. Las respuestas a comandos escritos en la consola siguen en inglés."
     },
     "MarketCurrency": {
       "label": "Precios del inventario en",
-      "tip": "La moneda de los precios del inventario. Ponla igual que la de tu tienda de Steam o los totales no coincidirán con lo que ves en el mercado.",
+      "tip": "La moneda en la que se muestran los valores del inventario. Elige la de tu tienda de Steam para que los totales coincidan con el mercado. Cambiarla vuelve a comprobar todos los precios.",
       "choices": "1 dólar estadounidense | 20 dólar canadiense | 21 dólar australiano | 2 libra esterlina | 3 euro | 5 rublo ruso | 7 real brasileño | 8 yen japonés | 23 yuan chino | 24 rupia india"
     },
     "FileLogging": {
       "label": "Escribir un archivo de registro",
-      "tip": "Escribe todo en logs/ además de en pantalla. Déjalo activado: es la única forma de ver qué pasó mientras dormías."
+      "tip": "Guarda todo en archivos de registro además de mostrarlo en pantalla. Déjalo activado para ver qué pasó mientras no estabas."
     },
     "DailyReportEnabled": {
       "label": "Resumen diario en el registro",
-      "tip": "Una vez al día, escribe un resumen de un vistazo de lo que ha ingresado cada cuenta en las últimas 24 horas: horas jugadas, cromos, comentarios de rep4rep y un total acumulado. Responde a «¿qué saqué esta noche?» sin desplazarte; escribe `report` para verlo cuando quieras."
+      "tip": "Escribe en el registro un resumen diario de lo que ganó cada cuenta en las últimas 24 horas: horas jugadas, cromos y comentarios de rep4rep. Escribe report para verlo cuando quieras."
     },
     "DailyReportHour": {
       "label": "Hora del resumen · hora",
-      "tip": "Hora del día a la que se escribe el resumen diario, de 0 a 23 (hora local). Por defecto 9."
+      "tip": "La hora a la que se escribe el resumen diario, en hora local. Solo se usa si «Resumen diario en el registro» está activado."
     },
     "DailyReportMinute": {
       "label": "Hora del resumen · minuto",
-      "tip": "Minuto de esa hora para el resumen diario, de 0 a 59. Hora 9 + minuto 30 = 09:30."
+      "tip": "El minuto de la hora en que se escribe el resumen diario. Hora 9 y minuto 30 significa las 09:30."
     },
     "Enabled": {
       "label": "Activada",
-      "tip": "Inicia sesión con esta cuenta. Desactívalo para mantenerla configurada pero dejarla completamente en paz."
+      "tip": "Inicia sesión en esta cuenta. Desactívalo para conservar sus ajustes pero dejar la cuenta totalmente en paz."
     },
     "SteamLogin": {
       "label": "Nombre de cuenta de Steam",
-      "tip": "El nombre de cuenta de Steam que escribes al iniciar sesión, no tu nombre visible ni tu correo."
+      "tip": "El nombre de cuenta que escribes al iniciar sesión en Steam. No es tu nombre visible ni tu correo."
     },
     "SteamPassword": {
       "label": "Contraseña",
-      "tip": "Opcional. Déjala vacía y nocat.farm la pedirá una vez y luego recordará la cuenta con un token de inicio de sesión, que es lo más seguro de las dos opciones."
+      "tip": "Opcional. Déjala vacía y se te pedirá una vez; después la cuenta se recuerda con un token de inicio de sesión, que es más seguro que una contraseña guardada."
     },
     "SignInWithQr": {
       "label": "Iniciar sesión con un código QR",
-      "tip": "Cuando haya que iniciar sesión en esta cuenta, mostrar un código QR para escanear con la app de Steam en tu móvil en vez de pedir una contraseña - el nombre de la cuenta lo da Steam, así que no se escribe nada. El código aparece en el panel."
+      "tip": "Muestra en el panel un código QR para escanear con la app de Steam del móvil cuando esta cuenta necesita iniciar sesión. No se escribe nada, ni siquiera el nombre de cuenta."
     },
     "OnlineStatus": {
       "label": "Aparecer como",
-      "tip": "Cómo te ven los demás: conectado, ausente, ocupado o invisible. Invisible sigue acumulando horas sin que nadie vea nada.",
+      "tip": "Cómo ven tus amigos esta cuenta. Invisible sigue jugando y farmeando, solo que nadie lo ve. Con «Modo humano» activado, esto es solo el estado mientras juega, así que déjalo en conectado.",
       "choices": "0 desconectado | 1 conectado | 2 ocupado | 3 ausente | 4 inactivo | 5 busca intercambio | 6 busca jugar | 7 invisible"
     },
     "IUseThisAccount": {
       "label": "Yo uso esta cuenta",
-      "tip": "Marca esto si tú también entras en esta cuenta. Evita que nocat.farm toque su estado, porque hacerlo desde una segunda sesión te expulsa de tu propio chat de Steam."
+      "tip": "Actívalo en una cuenta que también usas en tu propia app de Steam. Así nunca cambia el estado de conexión, porque eso te sacaría de Amigos y chat. Todo lo demás sigue funcionando."
     },
     "StartPaused": {
       "label": "Iniciar en pausa",
-      "tip": "Inicia sesión pero no juega, no farmea ni comenta hasta que pulses Reanudar. Para una cuenta que quieres conectada y sin hacer nada."
+      "tip": "Inicia sesión pero no juega, no farmea ni comenta hasta que pulses Reanudar. Útil para una cuenta que quieres conectada y sin hacer nada."
     },
     "LogColour": {
       "label": "Color en el registro",
-      "tip": "De qué color pintar el nombre de esta cuenta en el registro y en el panel. Útil en cuanto tienes más de unas pocas cuentas."
+      "tip": "El color del nombre de esta cuenta en el registro y en el tablero, para distinguir mejor las cuentas. Automático colorea según el estado: gris si está desconectada, ámbar si está en pausa."
     },
     "Notes": {
       "label": "Notas",
-      "tip": "Una nota para ti sobre para qué es esta cuenta. Se muestra en la tarjeta de la cuenta y no se acerca a Steam en ningún momento.",
+      "tip": "Una nota para ti sobre para qué sirve esta cuenta. Aparece en la tarjeta de la cuenta y nunca se envía a Steam.",
       "placeholder": "idler principal, no tocar"
     },
     "LegitMode": {
       "label": "Modo humano",
-      "tip": "Hace que la cuenta juegue como una persona: un juego a la vez, sesiones y descansos de duración variable, se acuesta y se levanta a horas realistas, y algunos días no juega nada. Desactivado, simplemente acumula horas."
+      "tip": "Juega como una persona: un juego a la vez, sesiones realistas, descansos, comidas, días libres y desconectada de noche. Los ajustes de bot se ocultan mientras está activado y vuelven sin cambios al desactivarlo."
+    },
+    "BreakAwayAfterMinMinutes": {
+      "label": "En un descanso, ausente tras al menos",
+      "tip": "Solo en modo humano. Cuántos minutos de descanso pasan antes de que su estado cambie a ausente o desconectado, como un cliente de Steam real inactivo. Los descansos más cortos siguen conectados."
+    },
+    "BreakAwayAfterMaxMinutes": {
+      "label": "...hasta",
+      "tip": "Los minutos máximos de descanso antes de que su estado cambie a ausente o desconectado."
     },
     "LegitStopMaxSeconds": {
       "label": "Al parar, terminar durante hasta",
-      "tip": "Solo en modo humano: al pararla a mano, sigue jugando unos segundos al azar hasta este máximo (alguien que termina lo que estaba haciendo) antes de desconectarse, en vez de desaparecer de golpe."
+      "tip": "Cuando paras la cuenta, sigue jugando unos segundos al azar, hasta este máximo, antes de desconectarse, en vez de desaparecer en mitad de la partida. 0 para al instante. Solo se usa con «Modo humano» activado."
     },
     "GameWeights": {
       "label": "Juegos y con qué frecuencia",
-      "tip": "Qué juegos juega y qué parte de su tiempo se lleva cada uno, como porcentajes que deberían sumar unos 100. El PRIMER juego es el principal - aquel que se supone que le gusta a esta cuenta - y su número es el que cuenta de verdad: fija la parte que mantiene el juego principal, sorteada cada día dentro de unos 10 puntos, por muchos juegos que añadas. Si omites un número, ese juego se lleva una parte igual de lo que quede. Escribe «440:0» para dejar un juego en el banquillo sin borrarlo."
+      "tip": "A qué juegos juega y qué porcentaje de su tiempo recibe cada uno, sumando unos 100. El primero es el juego principal. Deja uno sin número para que comparta lo que sobra, o escribe 440:0 para apartar un juego."
     },
     "HourTargets": {
       "label": "Objetivos de horas",
-      "tip": "Horas que debe alcanzar un juego, opcionalmente para una fecha: 730:100@2026-12-01 lleva Counter-Strike 2 a 100 horas para el 1 de diciembre, 440:50 lleva TF2 a 50 cuando sea. El modo humano inclina sus sesiones hacia un objetivo - más cuanto más retrasado va uno con fecha - con los mismos descansos y hora de dormir de siempre, y un objetivo con fecha que el día no puede cumplir solo se une a los juegos nocturnos si 'Acumular horas de noche' está activado. Al alcanzarlo, el juego deja de tener preferencia. 'hours <cuenta>' muestra cómo va cada uno."
+      "tip": "Horas a alcanzar en un juego, con fecha opcional. 730:100@2026-12-01 significa 100 horas de CS2 para el 1 de diciembre. Juega más a ese juego hasta llegar al objetivo."
     },
     "WeekdayHours": {
       "label": "Horas entre semana",
-      "tip": "Aproximadamente cuántas horas juega de lunes a viernes. El número real se sortea cada mañana alrededor de este, unos días menos y otros más, así que no hay dos días iguales."
+      "tip": "Más o menos cuántas horas juega de lunes a viernes. La cifra real cambia cada día alrededor de esta."
     },
     "WeekendHours": {
       "label": "Horas el fin de semana",
-      "tip": "Lo mismo para sábado y domingo. Que los fines de semana duren más que los días laborables es buena parte de lo que hace que una semana parezca real."
+      "tip": "Más o menos cuántas horas juega el sábado y el domingo. Fines de semana más largos hacen que la semana parezca más real."
     },
     "DayOffChancePct": {
       "label": "Probabilidad de día libre",
-      "tip": "La probabilidad, sobre 100, de que un día no juegue nada. Quien juega absolutamente todos los días es un bot; esto es lo que lo evita."
+      "tip": "El porcentaje de probabilidad de que un día no juegue nada. La gente real no juega todos los días."
     },
     "DayStartHour": {
       "label": "Se conecta sobre las",
-      "tip": "La hora a la que suele conectarse, 0-23. La hora real cae en una campana alrededor de esta y los fines de semana empieza antes, así que nunca es el mismo minuto dos veces."
+      "tip": "La hora a la que suele conectarse, en formato de 24 horas. La hora real varía alrededor de esta y los fines de semana empieza antes."
     },
     "BedHour": {
       "label": "Se acuesta sobre las",
-      "tip": "La hora a la que lo deja por la noche, 0-23. La madrugada vale: 2 significa las 2 de la mañana."
+      "tip": "La hora a la que para por la noche, en formato de 24 horas. Las horas tardías valen, 2 significa las 2 de la madrugada."
     },
     "LateNightExtraHours": {
       "label": "Se queda hasta más tarde vie/sáb",
-      "tip": "Horas de más que se queda despierto un viernes y un sábado por la noche, cuando al día siguiente no hay nada."
+      "tip": "Horas extra que se queda despierta el viernes y el sábado por la noche."
     },
     "PureMainDayChancePct": {
       "label": "Días solo con el juego principal",
-      "tip": "La probabilidad, sobre 100, de que un día entero vaya solo al juego principal. Es lo que hace que los demás juegos lleguen a rachas en vez de la misma rodajita cada día, que es el patrón más obvio que deja un bot. También es lo único que aleja una semana de los porcentajes que escribiste: esos días los juegos secundarios no reciben nada, así que a lo largo de una semana cada uno queda en torno a su número por la proporción de días que no son solo del principal. La cifra bajo el cuadro de juegos hace esa cuenta por ti."
+      "tip": "El porcentaje de probabilidad de que un día entero sea solo para el juego principal, así los juegos secundarios aparecen en rachas en vez de un poco cada día. Esto baja su parte semanal, que se muestra bajo la casilla de juegos."
     },
     "WarmUpMinMinutes": {
       "label": "Aclimatarse al menos",
-      "tip": "Espera mínima tras conectarse antes de empezar nada, en minutos. Estar dentro de un juego en el mismo segundo en que la cuenta se conecta es lo más mecánico que puede hacer."
+      "tip": "La espera más corta tras iniciar sesión antes de empezar un juego, en minutos. También se aplica al activar «Modo humano», para que no lance un juego al instante."
     },
     "WarmUpMaxMinutes": {
       "label": "Y como mucho",
-      "tip": "Espera máxima de aclimatación, en minutos. La real se elige al azar entre ambas. Pongas lo que pongas, nunca empieza en los tres minutos siguientes a conectarse."
+      "tip": "La espera más larga tras iniciar sesión, en minutos. Nunca empieza en los 3 primeros minutos tras iniciar sesión, así no puede quitarte la cuenta si ya estás jugando en ella."
     },
     "SessionMinMinutes": {
       "label": "Sesión más corta",
-      "tip": "Lo mínimo que se queda en un juego antes de hacer otra cosa. Nadie cambia de juego cada cinco minutos."
+      "tip": "El tiempo más corto que se queda en un juego antes de cambiar o descansar, en minutos."
     },
     "SessionMaxMinutes": {
       "label": "Sesión más larga",
-      "tip": "Lo máximo que se queda en un juego. La mayoría de las sesiones cae entre ambos valores; media hora rápida y una tarde entera son igual de normales, así que deja margen."
+      "tip": "El tiempo más largo que se queda en un juego, en minutos. Deja bastante diferencia entre el más corto y el más largo para que las sesiones varíen."
     },
     "MealBreaksPerDay": {
       "label": "Comidas al día",
-      "tip": "Cuántas pausas de verdad, lejos del escritorio, se toma al día. Caen alrededor de horas de comida reales y no al azar, que es lo que hace que parezcan comidas."
+      "tip": "Cuántos descansos largos para comer hace al día. Caen cerca de las horas reales de comida. 0 para ninguno."
     },
     "MealBreakMinutes": {
       "label": "Cuánto dura una comida",
-      "tip": "Aproximadamente cuánto tiempo está fuera en una de ellas, en minutos. A veces se alarga bastante: la gente se pone a hablar."
+      "tip": "Más o menos cuánto dura un descanso para comer, en minutos. A veces se alarga un poco."
     },
     "SignOutOnBreakChancePct": {
       "label": "Probabilidad de desconectarse en un descanso",
-      "tip": "La probabilidad, sobre 100, de pasar un descanso apareciendo desconectado en vez de solo Ausente, que para tu lista de amigos es indistinguible de cerrar Steam."
+      "tip": "El porcentaje de probabilidad de que un descanso se vea como desconectado en vez de ausente. Por debajo sigue conectada, así que no cuesta nada. En las comidas se desconecta el doble de veces."
     },
     "OfflineIdleAtNight": {
       "label": "Acumular horas de noche",
-      "tip": "Mientras duerme, se pone invisible y sigue acumulando horas igualmente. Tu lista de amigos ve la cuenta desconectada, nadie ve nada, y las horas siguen contando."
+      "tip": "Mientras duerme, se pone invisible y sigue en segundo plano, así las horas siguen contando mientras tus amigos la ven desconectada. Si «Cuándo farmear cromos» manda los cromos a la noche, esos se farmean primero."
     },
     "OfflineIdleGames": {
       "label": "Juegos para la noche",
-      "tip": "Qué ejecutar mientras está desconectada por la noche, una vez no quedan cromos que farmear. Tantos como quieras: no hay nadie para ver cuántos son, así que la regla de «uno a la vez» aquí no aplica."
+      "tip": "Juegos para dejar en segundo plano mientras se ve desconectada de noche. Pueden ir varios a la vez. Solo se usa si «Acumular horas de noche» está activado."
     },
     "IdleGames": {
       "label": "Juegos en segundo plano",
-      "tip": "Los juegos que se ejecutan para acumular horas. Steam permite 32 a la vez."
+      "tip": "Juegos para dejar en segundo plano sumando horas cuando no quedan cromos que farmear. Usa el ID del juego (el número de su enlace de la tienda) o pega el enlace entero, separados por comas."
     },
     "CustomGameNameEnabled": {
       "label": "Mostrar un nombre de juego propio",
-      "tip": "Muestra un nombre inventado en lugar del juego real en tu lista de amigos. Las horas siguen contando en el juego de verdad."
+      "tip": "Muestra a tus amigos un nombre propio en vez del juego real. Desactivarlo conserva el nombre que escribiste abajo para la próxima vez."
     },
     "CustomGameName": {
       "label": "Mostrar como",
-      "tip": "Muestra este nombre en tu perfil y tu lista de amigos en lugar del juego real. Los juegos de verdad siguen acumulando horas por debajo: pasan las dos cosas a la vez."
+      "tip": "El nombre que muestran tu perfil y tu lista de amigos en vez del juego real. Los juegos reales siguen sumando horas por debajo."
     },
     "FarmCards": {
       "label": "Farmear cromos",
-      "tip": "Consigue los cromos que aún quedan por caer en tu biblioteca, y para cuando no queda ninguno. No hay nada que configurar."
+      "tip": "Farmea cromos de Steam. Los juegos a los que les quedan cromos se juegan hasta que dejan de caer, antes que nada."
     },
     "HoursUntilCardDrops": {
       "label": "Horas antes de que caigan cromos",
-      "tip": "Horas que necesita un juego para que Steam le suelte cromos. 3 va bien para casi todas las cuentas; pon 0 si esta cuenta ha gastado más de 5 $ en Steam."
+      "tip": "Cuántas horas necesita un juego antes de que Steam suelte sus cromos. Pon 0 si esta cuenta ha gastado más de 5 $ en Steam, para que nada se juegue más de lo necesario."
     },
     "FarmingOrder": {
       "label": "Farmear en este orden",
-      "tip": "Qué juego farmear primero. «Menos cromos restantes» termina insignias antes; «más jugado primero» añade la menor cantidad de horas nuevas a tu biblioteca.",
+      "tip": "Qué juego farmear primero. «Menos cromos restantes» completa insignias antes. «Más jugados primero» añade menos horas nuevas a tu biblioteca.",
       "choices": "0 más jugados primero | 1 menos jugados primero | 2 menos cromos restantes | 3 más cromos restantes | 4 aleatorio | 5 alfabético"
     },
     "FarmOffline": {
       "label": "Farmear apareciendo desconectado",
-      "tip": "Aparece desconectado para tus amigos mientras esta cuenta farmea. Steam sigue contando cada hora y cada cromo cae igual; lo único que cambia es que nadie lo ve."
+      "tip": "Muestra esta cuenta como desconectada mientras farmea. Las horas siguen contando y los cromos siguen cayendo, solo que tus amigos no la ven."
     },
     "UnlockAchievements": {
       "label": "Ganar logros con el tiempo",
-      "tip": "Consigue logros poco a poco a partir del tiempo real de juego, empezando por los más comunes. Nunca desbloquea nada que las horas jugadas no justifiquen, y nunca completa un juego al 100%."
+      "tip": "Desbloquea unos pocos logros al día en los juegos a los que juega esta cuenta, empezando por los más fáciles. Desbloquear una lista entera de golpe queda en el perfil para siempre, y esto lo evita."
     },
     "AchievementPace": {
       "label": "A qué ritmo",
-      "tip": "Cuánto esperar entre desbloqueos. «Con calma» dobla cada intervalo, que es lo que quieres en una cuenta pensada para aguantar que alguien la mire de verdad.",
+      "tip": "Cuánto espera entre desbloqueos. Prudente dobla cada espera y rápido la reduce a la mitad. Ningún ritmo desbloquea nada antes de que las horas jugadas lo permitan.",
       "choices": "0 prudente (el doble de lento) | 1 normal | 2 rápido (el doble de rápido)"
     },
     "AchievementMaxCompletionPct": {
       "label": "No completar más de",
-      "tip": "Cuánto se completa de un mismo juego, en porcentaje. 0 deja a cada juego su propio techo ajustado: un puzle de 3 horas y una campaña de 500 horas no deberían pararse en la misma cifra. Si pones un número, ese manda, y sube el techo de un juego con la misma facilidad con que lo baja, para cuando una cuenta ha jugado algo de verdad hasta el final y debería poder terminarlo. Nunca pasa de 95: un juego al 100% en una cuenta en idle es la señal delatora."
+      "tip": "Lo máximo que completará de un juego, en porcentaje. Dejar unos cuantos sin conseguir parece una biblioteca real. El comando grind lo ignora."
     },
     "ClaimFreeGames": {
       "label": "Reclamar juegos gratis",
-      "tip": "Reclama los juegos gratuitos que aparezcan, para que la biblioteca crezca sola."
+      "tip": "Vigila los juegos de pago que se regalan para quedárselos y los añade a esta cuenta. Se saltan los free-to-play basura."
+    },
+    "ClaimFreeDlc": {
+      "label": "...también DLC gratis",
+      "tip": "También reclama DLC de pago rebajados a gratis, como un pack de apoyo. Steam solo da un DLC a las cuentas que tienen su juego, así que las demás se saltan. Solo funciona si «Reclamar juegos gratis» está activado."
+    },
+    "ClaimFreeDlcBase": {
+      "label": "...y su juego, si también es gratis",
+      "tip": "Cuando un DLC gratis necesita un juego que esta cuenta no tiene y ese juego también es gratis ahora, primero reclama el juego y después el DLC. Solo funciona si «...también DLC gratis» está activado."
     },
     "CraftBadges": {
       "label": "Crear insignias con los cromos",
-      "tip": "Convierte los cromos completos en insignias, lo que da experiencia de perfil y a veces objetos."
+      "tip": "Convierte los sets de cromos completos en insignias una vez al día, que es lo que sube tu nivel de Steam. Los cromos guardados en el inventario no suben nada."
     },
     "Rep4Rep": {
       "label": "Publicar comentarios de rep4rep",
-      "tip": "Publica los comentarios que rep4rep asigna a esta cuenta, con un ritmo humano."
+      "tip": "Deja que esta cuenta publique los comentarios de perfil que reparte rep4rep. Todas las cuentas suman a los mismos puntos de rep4rep."
     },
     "Rep4RepDailyCap": {
       "label": "Máximo por 24 horas",
-      "tip": "Máximo de comentarios que esta cuenta publicará en 24 horas. El techo real de Steam con gente que no es tu amiga ronda los 10, y pasarse de ahí es justo lo que hace que baneen los comentarios de una cuenta."
+      "tip": "El máximo de comentarios que publica esta cuenta en 24 horas. Steam permite unos 10 a quien no es amigo, y pasarse puede hacer que bloqueen los comentarios de la cuenta."
     },
     "Rep4RepGapMinMinutes": {
       "label": "Separación mínima",
-      "tip": "Nunca publica dos comentarios desde esta cuenta con menos de estos minutos entre uno y otro."
+      "tip": "El tiempo más corto entre dos comentarios de esta cuenta, en minutos."
     },
     "Rep4RepGapMaxMinutes": {
       "label": "Separación máxima",
-      "tip": "Hueco máximo entre comentarios, en minutos. El real se elige al azar entre ambos, así que el ritmo nunca parece mecánico."
+      "tip": "El tiempo más largo entre comentarios, en minutos. Cada separación se elige al azar entre los dos."
     },
     "Rep4RepStartHour": {
       "label": "Publicar solo desde",
-      "tip": "Hora más temprana del día a la que esta cuenta comentará, de 0 a 23. Comentarios llegando a las 4 de la mañana es la señal de bot más evidente que existe."
+      "tip": "La hora más temprana del día a la que comenta esta cuenta. Comentar a las 4 de la madrugada delata a un bot."
     },
     "Rep4RepEndHour": {
       "label": "Hasta",
-      "tip": "Hora más tardía del día a la que esta cuenta comentará, de 1 a 24. Ponla igual que la de inicio para permitir comentar a cualquier hora."
+      "tip": "La hora más tardía del día a la que comenta esta cuenta. Ponla igual que «Publicar solo desde» para comentar a todas horas."
     },
     "AcceptFriendRequests": {
       "label": "Aceptar solicitudes de amistad",
-      "tip": "Acepta automáticamente las solicitudes de amistad entrantes. Conviene tenerlo activado en una cuenta de rep4rep: Steam permite comentar mucho más en el perfil de un amigo."
+      "tip": "Acepta automáticamente las solicitudes de amistad que llegan. Útil en una cuenta de rep4rep, porque Steam te deja comentar mucho más a tus amigos."
     },
     "JoinGroup": {
       "label": "Unirse al grupo nocat.farm",
-      "tip": "Hace que esta cuenta se una una vez al grupo de Steam nocat.farm al iniciar sesión. Totalmente opcional: desactívalo y no lo hará."
+      "tip": "Se une al grupo de Steam de nocat.farm una vez, cuando esta cuenta inicia sesión. Opcional, nada depende de ello."
     },
     "AutoReplyEnabled": {
       "label": "Responder a los mensajes",
-      "tip": "Contesta a los desconocidos que escriban a esta cuenta. Desactivarlo conserva lo que hayas escrito abajo, así que puedes volver a activarlo sin reescribirlo."
+      "tip": "Responde a quien envía mensajes a esta cuenta. Desactivarlo conserva tu texto de respuesta para más adelante."
     },
     "AutoReply": {
       "label": "Responder con",
-      "tip": "Envía esto cuando alguien escriba a esta cuenta. Déjalo vacío para no decir nada. Una cuenta que juega ocho horas al día y jamás contesta llama más la atención que una que dice «ahora no puedo».",
+      "tip": "El mensaje que se envía cuando alguien escribe a esta cuenta. Déjalo vacío para no enviar nada. Una frase corta de afk parece más normal que no contestar nunca.",
       "placeholder": "ahora mismo afk, te contesto luego"
     },
     "AutoReplyOncePerDay": {
       "label": "Responder solo una vez al día",
-      "tip": "Envía esa respuesta como mucho una vez al día a cada persona. Sin esto, quien escriba dos veces recibe la misma línea idéntica dos veces, que es la forma más rápida de parecer un bot."
+      "tip": "Envía la respuesta como mucho una vez al día a cada persona, para que nadie reciba la misma frase dos veces."
     },
     "FriendRequestDelayMinMinutes": {
       "label": "Esperar al menos",
-      "tip": "Espera mínima antes de aceptar una solicitud de amistad, en minutos. Aceptar en el segundo en que llega es lo más fácil de detectar que puede hacer una cuenta."
+      "tip": "La espera más corta antes de aceptar una solicitud de amistad, en minutos. Aceptar en el mismo segundo en que llega delata a un bot."
     },
     "FriendRequestDelayMaxMinutes": {
       "label": "Y como mucho",
-      "tip": "Espera máxima antes de aceptar una solicitud de amistad, en minutos. Cada solicitud tiene su propia espera entre las dos, casi siempre más cerca del mínimo, como tarda una persona en atender una notificación."
+      "tip": "La espera más larga antes de aceptar una solicitud de amistad, en minutos. Cada solicitud recibe una espera al azar, normalmente más cerca de la corta."
     },
     "ActOnlyWhileAwake": {
       "label": "Reaccionar solo cuando esté despierta",
-      "tip": "Retiene todo lo que responde esta cuenta (ofertas, regalos, solicitudes de amistad, respuestas, objetos de eventos, sobres, envíos programados) mientras el modo humano la tiene dormida, y luego le da a cada cosa una espera nueva al despertar, para que nada ocurra en el mismo minuto en que se levanta. Desactivado, también responde de noche, con las mismas esperas; una cuenta dormida en la lista de amigos que acepta a las 4 de la mañana es más fácil de detectar. No tiene efecto sin el modo humano."
+      "tip": "Solo en modo humano. Retiene todo lo que otros pueden ver, como intercambios, regalos, invitaciones, respuestas, comentarios y logros, mientras la cuenta duerme. Desactívalo para responder también de noche."
+    },
+    "QuietThingsWaitForDay": {
+      "label": "Las cosas en segundo plano también esperan a su día",
+      "tip": "Solo en modo humano. Hace que las tareas en segundo plano, como crear insignias, reclamar juegos gratis, sobres de refuerzo y vender cromos, también esperen a las horas de vigilia de la cuenta. Desactivado, funcionan a cualquier hora."
+    },
+    "WakeDelayMinMinutes": {
+      "label": "Al despertar, esperar al menos",
+      "tip": "Solo en modo humano. Cuántos minutos tras despertarse o iniciar sesión pasan antes de hacer cosas que otros pueden ver, como intercambios, comentarios o respuestas. Cada tipo tiene su propia espera al azar."
+    },
+    "WakeDelayMaxMinutes": {
+      "label": "...hasta",
+      "tip": "La espera más larga tras despertarse o iniciar sesión, en minutos."
+    },
+    "QuietDelayMinMinutes": {
+      "label": "Tras iniciar sesión, lo de segundo plano espera al menos",
+      "tip": "Solo en modo humano. Cuántos minutos tras iniciar sesión pasan antes de que empiecen las tareas en segundo plano, como insignias, juegos gratis y sobres de refuerzo. Cada una tiene su propia espera al azar para que no arranquen todas a la vez."
+    },
+    "QuietDelayMaxMinutes": {
+      "label": "...hasta",
+      "tip": "La espera más larga tras iniciar sesión antes de que empiecen las tareas en segundo plano, en minutos."
+    },
+    "OneTradeAtATime": {
+      "label": "Responder una oferta de intercambio cada vez",
+      "tip": "Solo en modo humano. Cuando varias ofertas de intercambio tocan a la vez, como por la mañana, las responde con unos minutos de separación en vez de todas juntas."
     },
     "AcceptDonations": {
       "label": "Aceptar donaciones",
-      "tip": "Acepta ofertas que no piden nada a cambio. No pueden costarte nada, así que son seguras por definición."
+      "tip": "Acepta ofertas de intercambio en las que esta cuenta no da nada. No te pueden estafar, porque aquí nunca se acepta una oferta que pida aunque sea uno de tus objetos."
+    },
+    "DonationsWhileAsleep": {
+      "label": "Aceptar donaciones mientras duerme",
+      "tip": "Solo en modo humano. Deja pasar las donaciones de noche aunque «Reaccionar solo cuando esté despierta» esté activado. Todo lo demás sigue esperando a la mañana."
     },
     "AcceptGiftedGames": {
       "label": "Aceptar juegos regalados",
-      "tip": "Añade directamente a la biblioteca los juegos que los amigos regalen a esta cuenta, como el botón \"Añadir a mi biblioteca\". Desactívalo para decidir cada regalo tú (rechazarlo le devuelve el dinero a quien lo envió). Cada regalo espera primero su propio tiempo ('Aceptar un regalo tras al menos') y, mientras la cuenta duerme, hasta la mañana ('Reaccionar solo cuando esté despierta')."
+      "tip": "Añade directamente a la biblioteca los juegos que los amigos regalan a esta cuenta. Desactívalo para decidir tú cada regalo. Cada regalo espera antes, mira «Aceptar un regalo tras»."
     },
     "AcceptFairCardSwaps": {
       "label": "Aceptar intercambios justos de cromos",
-      "tip": "Acepta ofertas de cualquiera que cambien cromos uno por uno dentro del mismo juego, cuando el cambio solo puede acercar las colecciones de esta cuenta - las que envían todo el día las webs de intercambio de cromos. Cada cromo que se da debe seguir teniendo más copias después que cualquier cromo que entra antes, así que ningún cromo se acaba y las colecciones completas nunca bajan. Cualquier otra cosa en la oferta, o un cromo brillante, y se deja. Dar cromos necesita el autenticador móvil para confirmar."
+      "tip": "Acepta intercambios de cromos uno por uno de cualquiera dentro del mismo juego, pero solo si acercan tus sets a completarse. Las ofertas con brillantes u otros objetos se dejan en paz. Necesita el autenticador móvil."
     },
     "AcceptGifts": {
       "label": "Aceptar regalos y pases de invitado",
-      "tip": "Acepta las tarjetas regalo de Steam y los pases de invitado (pruebas gratuitas) que alguien envíe a esta cuenta. Ninguno puede costarle nada. Cada regalo espera primero su propio tiempo ('Aceptar un regalo tras al menos') y, mientras la cuenta duerme, hasta la mañana ('Reaccionar solo cuando esté despierta')."
+      "tip": "Acepta tarjetas regalo del monedero de Steam y pases de invitado enviados a esta cuenta. Ninguno puede costar nada. Cada regalo espera antes, mira «Aceptar un regalo tras»."
     },
     "AcceptFromMasters": {
       "label": "Aceptar cualquier cosa de tus propias cuentas",
-      "tip": "Acepta absolutamente cualquier oferta de los SteamID64 listados abajo, incluidas las que se llevan objetos. Eso es lo que te permite barrer los cromos de tus idlers a una sola cuenta, y exactamente por eso la lista solo debe contener cuentas que sean tuyas."
+      "tip": "Acepta cualquier oferta de las cuentas de «Tus propias cuentas», incluso las que se llevan objetos. Útil para mover cromos a una cuenta, pero pon solo cuentas que sean tuyas."
     },
     "TradeMasters": {
       "label": "Tus propias cuentas",
-      "tip": "Los SteamID de tus propias cuentas. Es a donde van los objetos con «send», y de donde se aceptan intercambios sin preguntar."
+      "tip": "SteamID64 de tus propias cuentas, separados por comas. Cualquiera de esta lista puede llevarse objetos de esta cuenta, así que añade solo cuentas que sean tuyas."
     },
     "DeclineOtherTrades": {
       "label": "Rechazar todo lo demás",
-      "tip": "Rechaza activamente cualquier otra oferta en vez de dejarla ahí parada. Desactívalo y todo lo que no se acepte simplemente se deja tal cual para que lo mires tú."
+      "tip": "Rechaza todas las demás ofertas de intercambio en vez de dejarlas. Desactivado, deja las ofertas no aceptadas para que las revises tú."
     },
     "TradeDelayMinMinutes": {
       "label": "Esperar al menos",
-      "tip": "Espera mínima antes de actuar sobre una oferta, en minutos. Aceptar dos segundos después de que llegue no es algo que haga una persona."
+      "tip": "La espera más corta antes de responder a una oferta de intercambio, en minutos. Aceptar segundos después de que llegue parece un bot."
     },
     "TradeDelayMaxMinutes": {
       "label": "Y como mucho",
-      "tip": "Espera máxima antes de actuar sobre una oferta, en minutos. Cada oferta tiene su propia espera entre las dos, casi siempre más cerca del mínimo, como tarda una persona en atender una notificación."
+      "tip": "La espera más larga antes de responder a una oferta de intercambio, en minutos. Cada oferta recibe una espera al azar, normalmente más cerca de la corta."
     },
     "GiftDelayMinMinutes": {
       "label": "Aceptar un regalo tras al menos",
-      "tip": "Espera mínima antes de aceptar un regalo (un juego que envía un amigo, una tarjeta regalo o un pase de invitado), en minutos. Aceptarlo en el segundo en que llega no es algo que haga una persona."
+      "tip": "La espera más corta antes de aceptar un regalo, como un juego, una tarjeta regalo o un pase de invitado, en minutos."
     },
     "GiftDelayMaxMinutes": {
       "label": "Y como mucho",
-      "tip": "Espera máxima antes de aceptar un regalo, en minutos. Cada regalo tiene su propia espera entre las dos, casi siempre más cerca del mínimo, como tarda una persona en atender una notificación."
+      "tip": "La espera más larga antes de aceptar un regalo, en minutos. Cada regalo recibe una espera al azar, normalmente más cerca de la corta."
     },
     "PauseWhenYouPlay": {
       "label": "Apartarse cuando juegues",
-      "tip": "Si empiezas a jugar tú, la cuenta se aparta al instante y espera antes de retomar lo suyo."
+      "tip": "Deja de jugar en segundo plano en cuanto abres tú un juego en esta cuenta, para no pelearse nunca con tu propio cliente de Steam."
     },
     "ResumeDelayMinutes": {
       "label": "Esperar antes de reanudar",
-      "tip": "Cuánto espera después de que dejes de jugar antes de que esta cuenta retome discretamente lo que estaba haciendo, en minutos."
+      "tip": "Cuántos minutos después de que dejes de jugar retoma esta cuenta lo que estaba haciendo."
     },
     "AchievementBoost": {
-      "tip": "Busca logros por sí mismo en varios juegos, sin que tengas que iniciar cada sesión a mano. Desactivado por defecto. «Todos los de un jugador» elige de tu biblioteca: solo juegos de verdad (nunca DLC ni demos), con logros y con reseñas suficientes.",
+      "tip": "Caza logros en varios juegos por sí mismo, un juego a la vez. «Juegos que elijas» usa la lista de abajo. «Todos los de un jugador» elige de tu biblioteca juegos de un jugador ya jugados y con logros.",
       "label": "Impulso de logros",
       "choices": "0 desactivado | 1 juegos que elijas | 2 todos los de un jugador"
     },
     "SkipRefundableGames": {
-      "tip": "Deja en paz un juego recién comprado hasta que ya no puedas pedir el reembolso: Steam lo niega en cuanto tiene dos horas jugadas, y dos horas es una sola sesión. Vale para todo, no solo para los cromos. Los juegos gratis nunca se retienen.",
+      "tip": "Deja en paz los juegos que acabas de comprar para que aún puedas reembolsarlos. Steam rechaza reembolsos tras 2 horas jugadas, así que nada los deja en segundo plano, los farmea ni los machaca hasta que acaba el plazo de reembolso.",
       "label": "Proteger los juegos reembolsables"
     },
+    "ProtectGiftedGames": {
+      "label": "...también los juegos regalados",
+      "tip": "También deja en paz los juegos regalados mientras aún se puedan reembolsar al amigo que los regaló. Solo se usa si «Proteger los juegos reembolsables» está activado."
+    },
     "ShowInventoryValue": {
-      "tip": "Calcula lo que vale el inventario de esta cuenta al precio medio del mercado. Lee su propio inventario, así que un perfil privado da igual.",
+      "tip": "Calcula cuánto vale el inventario de esta cuenta a precios del mercado de Steam y lo muestra en el panel. Desactívalo en cuentas que solo tienen unos pocos cromos.",
       "label": "Calcular cuánto vale su inventario"
     },
     "CheckForUpdates": {
-      "tip": "Buscar cada pocas horas una versión más nueva y mencionarla en el registro. Solo avisa: nunca descarga, reemplaza ni reinicia nada. Algo que tiene las llaves de tus cuentas de Steam no debería poder cambiar su propio ejecutable según un horario, y una actualización a mitad de farmeo es como se pierde una sesión.",
+      "tip": "Busca una versión nueva cada pocas horas y te avisa en el registro. Nunca descarga ni instala nada por sí mismo.",
       "label": "Avisar si hay una actualización"
     },
     "UpdateReminders": {
       "label": "Recordármelo cada hora",
-      "tip": "Mientras haya una versión más nueva, avisarlo en el registro una vez por hora, no solo una vez. 'update accept' la instala y reinicia; 'update ignore' detiene los recordatorios hasta el próximo inicio."
+      "tip": "Te lo recuerda en el registro cada hora mientras haya una versión nueva. Escribe update accept para instalarla, o update ignore para dejar de recordártelo hasta el próximo arranque."
     },
     "BreakMinMinutes": {
       "label": "Descanso más corto",
-      "tip": "El hueco más corto entre sesiones, en minutos. La mayoría de los descansos se queda en este extremo: beber algo, mirar otra cosa un momento."
+      "tip": "El descanso más corto entre sesiones, en minutos. La mayoría de descansos se acercan a este."
     },
     "BreakMaxMinutes": {
       "label": "Descanso más largo",
-      "tip": "El descanso normal más largo, en minutos. Las duraciones reales se inclinan hacia el extremo corto en vez de repartirse por igual, porque así es como descansa la gente."
+      "tip": "El descanso normal más largo, en minutos."
     },
     "MaxSignOutsPerDay": {
       "label": "Desconectarse como mucho",
-      "tip": "Un tope de cuántas veces al día hace eso, para que la cuenta no esté parpadeando en tu lista de amigos toda la tarde. 0 lo desactiva y entonces cada descanso es solo Ausente."
+      "tip": "Las veces máximas al día que se ve desconectada en un descanso, para que no parpadee en tu lista de amigos. 0 lo desactiva y todos los descansos se ven como ausente."
     },
     "PlayWhileFarming": {
       "label": "Mantener el nombre al farmear",
-      "tip": "Mantiene el nombre personalizado visible incluso mientras se farmean cromos. Desactívalo y el farmeo mostrará el juego real."
+      "tip": "Mantiene el nombre propio visible mientras se farmean cromos. Desactívalo para mostrar el juego real durante el farmeo de cromos."
     },
     "GameDevice": {
       "label": "Jugar como si fuera en",
-      "tip": "En qué tipo de máquina creen tus amigos que estás jugando: esto es lo que pone la insignia de Steam Deck o de móvil junto a tu nombre.",
+      "tip": "Qué insignia de dispositivo ven tus amigos junto a tu nombre mientras juega. Steam Deck no se mantiene, Steam muestra en su lugar la insignia de mando.",
       "choices": "0 un PC | 512 un móvil | 1024 Big Picture | 2048 RV | 4096 un mando | 12288 una Steam Deck"
     },
     "PriorityGames": {
       "label": "Farmear estos primero",
-      "tip": "AppIDs que farmear antes que nada, diga lo que diga el orden."
+      "tip": "IDs de juegos que farmear antes que nada, diga lo que diga el orden."
     },
     "FarmPriorityOnly": {
       "label": "Farmear solo esos",
-      "tip": "Farmea únicamente los juegos de la lista de prioridad e ignora todos los demás que aún tengan cromos."
+      "tip": "Solo farmea los juegos de «Farmear estos primero» e ignora todos los demás juegos a los que les quedan cromos."
     },
     "BlacklistedGames": {
       "label": "No tocar nunca estos",
-      "tip": "AppIDs que nunca se farmean ni se ejecutan, diga lo que diga la página de insignias."
+      "tip": "IDs de juegos que nunca se farmean ni se dejan en segundo plano."
     },
     "SkipUnplayedGames": {
       "label": "Saltar juegos que nunca has jugado",
-      "tip": "Se salta los juegos que nunca has abierto tú, para que nocat.farm no ponga las primeras horas de tu vida en juegos que preferirías que nadie viera."
+      "tip": "Salta los juegos que nunca has abierto tú, para que ninguno reciba aquí sus primeras horas."
     },
     "RefundHoldDays": {
       "label": "...durante estos días",
-      "tip": "Cuántos días se deja en paz un juego recién comprado. La ventana de reembolso de Steam son 14 días, que es el valor por defecto; súbelo si tardas más en decidirte."
+      "tip": "Cuántos días se deja en paz un juego recién comprado. El plazo de reembolso de Steam es de 14 días, así que súbelo solo si quieres más tiempo para decidir."
     },
     "FarmCardsWhen": {
       "label": "Cuándo farmear cromos",
-      "tip": "Solo en modo humano. De día (por defecto): mientras haya cromos, el juego de cromos es lo que se juega en las sesiones - con el mismo calentamiento, descansos, comidas y hora de dormir - y las noches quedan para los juegos nocturnos. Solo de noche: los cromos esperan a que la cuenta duerma y esté invisible, y de día se juegan los juegos de siempre. En cualquier momento: farmea en cuanto hay cromos, de día y de noche, sin parar.",
-      "choices": "0 de día | 1 solo de noche | 2 en cualquier momento"
+      "tip": "Solo en modo humano. De día: los cromos se farmean en sus sesiones normales. De noche: solo mientras duerme. En cualquier momento: sin parar hasta terminar. Mixto: algunas sesiones farmean cromos y el resto juega sus juegos de siempre.",
+      "choices": "0 de día | 1 solo de noche | 2 en cualquier momento | 3 mixto, algunas sesiones cartas, el resto sus juegos"
+    },
+    "CardSittingsPct": {
+      "label": "Parte de sesiones que farmean cartas (mixto)",
+      "tip": "Más o menos qué porcentaje de sesiones farmea cromos cuando «Cuándo farmear cromos» está en mixto. Más alto termina los cromos antes, más bajo deja más tiempo para sus juegos de siempre."
     },
     "FarmFromHour": {
       "label": "Farmear cromos solo desde",
-      "tip": "Farmea cromos solo a partir de esta hora, en formato de 24 horas. Deja esta y «hasta» en 0 para farmear a cualquier hora."
+      "tip": "Farmea cromos solo a partir de esta hora, en formato de 24 horas. Deja esto y «...hasta» los dos en 0 para farmear a cualquier hora."
     },
     "FarmUntilHour": {
       "label": "...hasta",
-      "tip": "Farmea cromos hasta esta hora (24 horas). Ponla antes que «desde» y la ventana cruza la medianoche: por ejemplo, de 22 a 6 farmea de noche."
+      "tip": "Farmea cromos hasta esta hora, en formato de 24 horas. Ponla antes que la hora de inicio para pasar de medianoche, así de 22 a 6 farmea de noche."
     },
     "PostFarmWindDownMinMinutes": {
       "label": "Tras el último cromo, seguir jugando al menos",
-      "tip": "Solo en modo humano. Cuando un juego da su última carta, sigue jugando a ese juego unos minutos más - entre estos dos números - y luego descansa, como en una sesión de juego normal. El siguiente juego de cartas empieza después del descanso. (Cuando las cartas se farmean de noche o en cualquier momento, esto pasa una vez, después de la última carta de todas.) Por defecto de 15 a 20 minutos. Pon ambos a 0 para parar en el acto."
+      "tip": "Solo en modo humano. Cuando un juego suelta su último cromo, sigue jugándolo unos minutos y luego descansa. Pon los dos en 0 para parar al momento."
     },
     "PostFarmWindDownMaxMinutes": {
       "label": "...hasta",
-      "tip": "Los minutos máximos que sigue jugando después de la última carta."
+      "tip": "Los minutos máximos que sigue jugando tras el último cromo."
     },
     "FarmingDelayMinutes": {
       "label": "Volver a comprobar cada",
-      "tip": "Cada cuánto vuelve a comprobar un juego mientras lo farmea, en minutos. Steam avisa de los cromos en el momento en que caen, así que esto es solo una red de seguridad."
+      "tip": "Cada cuántos minutos vuelve a comprobar un juego mientras farmea. Steam avisa de los cromos en cuanto caen, así que esto es solo un respaldo."
     },
     "MaxFarmingHoursPerGame": {
       "label": "Rendirse tras",
-      "tip": "Se rinde con un juego tras estas horas y pasa al siguiente. Evita que un juego roto bloquee la cola para siempre."
+      "tip": "Se rinde con un juego tras estas horas y pasa al siguiente, para que un juego atascado no bloquee al resto."
     },
     "StopWhenFarmingDone": {
       "label": "Desconectarse al terminar",
-      "tip": "Desconecta esta cuenta en cuanto no quedan cromos por farmear, en lugar de quedarse acumulando horas."
+      "tip": "Cierra la sesión de esta cuenta cuando no quedan cromos, en vez de dejarla en segundo plano."
     },
     "AchievementBoostGames": {
       "label": "Impulsar estos juegos",
-      "tip": "Los juegos por los que pasa el impulso, separados por comas (appIDs o URLs de la tienda). Solo se usa cuando el impulso está en «juegos que elijas»."
+      "tip": "Los juegos que recorre el impulso, como IDs de juego o enlaces de la tienda separados por comas. Solo se usa si «Impulso de logros» está en juegos que elijas."
     },
     "BoostSessionHours": {
       "label": "Jugar cada uno unas",
-      "tip": "Cuánto se queda el impulso en un juego antes de pasar al siguiente, en horas."
+      "tip": "Cuántas horas juega el impulso a un juego antes de pasar al siguiente."
     },
     "MaxBoostGamesInARow": {
       "label": "Modo humano: impulsos seguidos como máximo",
-      "tip": "Solo en modo humano: cuántas sesiones de impulso hace seguidas antes de un tramo más largo del horario normal, para que una cuenta legítima siga siendo ante todo su horario."
+      "tip": "Solo en modo humano. Cuántos impulsos de logros hace seguidos antes de volver un rato a su mezcla normal de juegos."
     },
     "BoostRestMinutesHuman": {
       "label": "Modo humano: hueco de horario entre impulsos",
-      "tip": "Solo en modo humano: minutos de horario normal entre sesiones de impulso, para que la caza nunca domine el día de una cuenta legítima."
+      "tip": "Solo en modo humano. Cuántos minutos de juego normal hay entre impulsos de logros, para que la caza nunca se coma el día."
     },
     "BoostMinReviews": {
       "label": "Solo cazar juegos con al menos",
-      "tip": "Reseñas de Steam que necesita un juego para que «todos los de un jugador» lo cace. Este es el filtro contra el relleno de packs: nadie tiene explicación para haber pasado una tarde en un juego con once reseñas que jamás ha abierto. 0 caza de todo. Se ignora en los juegos que eliges a mano."
+      "tip": "Cuántas reseñas de Steam necesita un juego antes de que «todos los de un jugador» lo cace. Lo mantiene lejos de juegos baratos de packs que nadie juega. 0 caza todo, y los juegos que eliges a mano siempre se permiten."
     },
     "BoostOnlyPlayedGames": {
       "label": "Cazar solo en juegos que has jugado",
-      "tip": "Limita «todos los de un jugador» a juegos que esta cuenta haya abierto alguna vez. Desactivado por defecto: que un cazador empiece un juego nuevo es perfectamente normal, pero es la forma más estricta de ceñirlo a juegos que encajan con su historial."
+      "tip": "Solo deja que «todos los de un jugador» cace juegos que esta cuenta ya ha abierto. La forma más estricta de limitarlo a juegos que encajen con el historial de la cuenta."
     },
     "InventoryIgnoreGames": {
       "label": "...pero no estos juegos",
-      "tip": "AppIDs que dejar fuera del valor del inventario, separados por comas. Aquí es donde va un juego en el que la cuenta está BANEADA: sus objetos siguen en el inventario pero no se pueden vender nunca, así que contarlos infla el total. Steam no dice en qué juego está baneada una cuenta, y nada del inventario lo indica de forma fiable, así que esta es una lista que rellenas tú en vez de algo adivinado."
+      "tip": "IDs de juegos (el número del enlace de la tienda) que dejar fuera del valor del inventario, separados por comas. Pon aquí los juegos en los que la cuenta está baneada, porque esos objetos nunca se pueden vender."
     },
     "YieldToFamily": {
       "label": "Devolver un juego compartido cuando lo quieran",
-      "tip": "Si alguien de la familia abre un juego que esta cuenta tiene prestado, se lo devuelve al momento y pasa al siguiente. Steam presta un juego compartido a una sola persona a la vez y el dueño siempre gana, así que la alternativa es que la echen a mitad de sesión y se quede «jugando» a algo que ya no tiene. Queda fuera de la rotación veinte minutos después de que lo dejen, en vez de arrebatárselo en cuanto lo cierran."
+      "tip": "Devuelve al momento un juego prestado de la familia cuando alguien de la familia lo abre, y pasa a otro. Queda fuera de la rotación durante 20 minutos después de que dejen de jugar."
     },
     "HoldNewFamilyGames": {
       "label": "Dejar en paz los juegos de familia recién llegados",
-      "tip": "Se salta un juego compartido durante sus dos primeras semanas en la biblioteca familiar (los mismos días que «proteger juegos reembolsables»), por si quien lo compró todavía se lo está pensando. Solo puede fijarse en cuándo LLEGÓ el juego, nunca en cuánto lo ha jugado su dueño (ese dato no se ve desde esta cuenta), así que a veces retendrá un juego en el que el dueño ya lleva horas y que ya no puede devolver."
+      "tip": "Salta un juego compartido en familia mientras es nuevo en la biblioteca, por si quien lo compró quiere un reembolso. Usa los mismos días que «Proteger los juegos reembolsables»."
     },
     "IncludeFamilyLibrary": {
       "label": "Incluir juegos compartidos en familia",
-      "tip": "Caza también los juegos compartidos con esta cuenta a través de una Familia de Steam. Los logros conseguidos en un juego prestado se registran en ESTA cuenta igual que en uno propio. Los juegos que la familia haya excluido del préstamo se saltan, igual que lo que no son juegos. Los juegos propios siempre se cazan antes que los prestados, porque el dueño puede reclamar el suyo en cualquier momento."
+      "tip": "También caza logros en juegos compartidos con esta cuenta a través de Steam Family. Cuentan en esta cuenta como los juegos propios, y los propios siempre van primero."
     },
     "AchievementGrindGapMinMinutes": {
       "label": "Al machacar, un logro cada",
-      "tip": "Cada cuánto desbloquea logros un MACHAQUE, en minutos (el extremo bajo de un rango con variación). Machacar significa estar sentado activamente en un juego, así que este es el ritmo de alguien cazando en serio, no el goteo de fondo. Sigue siendo del más fácil al más difícil y sigue limitado por las horas dentro del juego."
+      "tip": "Cada cuántos minutos se desbloquean logros durante un machaque. Un machaque se queda en un solo juego, así que es un ritmo más rápido y activo. Los más fáciles van primero."
     },
     "AchievementGrindGapMaxMinutes": {
       "label": "...hasta",
-      "tip": "El extremo alto del espaciado durante un machaque, en minutos."
+      "tip": "La separación más larga entre desbloqueos del machaque, en minutos."
     },
     "AchievementNeverGames": {
       "label": "Nunca en estos juegos",
-      "tip": "Juegos que dejar completamente en paz: no se escribe ningún logro en nada de esta lista, y el impulso de logros nunca elige uno. En modo humano también se salta el juego insignia de la cuenta. (Nota: algunos juegos, como Counter-Strike 2, guardan sus logros en el servidor, así que nada puede desbloquearlos de todos modos.)"
+      "tip": "Juegos que dejar totalmente en paz. No se desbloquean logros en ellos y los impulsos nunca los eligen. En modo humano también se salta el juego principal de la cuenta."
     },
     "AchievementGames": {
       "label": "Solo estos juegos",
-      "tip": "Lo limita a estos appIDs. Déjalo vacío para que valga cualquier juego que la cuenta esté jugando."
+      "tip": "IDs de juegos a los que limitar los logros. Déjalo vacío para usar lo que esté jugando la cuenta."
     },
     "UnpackBoosterPacks": {
       "label": "Abrir sobres de refuerzo",
-      "tip": "Abre automáticamente los sobres de refuerzo que caigan en tu inventario, para que los cromos de dentro cuenten para los sets con los que se fabrican insignias."
+      "tip": "Abre los sobres de refuerzo que llegan al inventario, para que sus cromos cuenten para las insignias."
     },
     "ClaimEventItems": {
       "label": "Reclamar objetos gratis de eventos",
-      "tip": "Recoge el sticker gratis que Steam reparte cada día durante unas rebajas y cualquier cosa de la tienda de puntos que cueste 0 puntos. Nada de eso cuesta nada y se pierde si nadie lo recoge. Mientras el modo humano tenga la cuenta dormida, espera a la mañana, salvo que 'Reaccionar solo cuando esté despierta' esté desactivado."
+      "tip": "Recoge la pegatina diaria gratis durante las rebajas de Steam y todo lo que cueste 0 puntos en la Tienda de puntos."
     },
     "DiscoveryQueue": {
       "label": "Revisar la lista de descubrimientos",
-      "tip": "Una vez por día de Steam, revisa la lista de descubrimientos de la tienda como lo haría una persona: unos segundos en cada juego y luego el siguiente. Durante una rebaja es lo que da los objetos del evento y el progreso de la insignia; fuera de ella es simplemente algo que la gente hace. Mientras el modo humano tiene la cuenta dormida, espera a la mañana.",
+      "tip": "Recorre la lista de descubrimientos de la tienda una vez al día como lo haría una persona. Durante las rebajas esto da objetos de evento y progreso de insignias.",
       "choices": "0 desactivado | 1 durante rebajas | 2 todos los días"
     },
     "SellDuplicates": {
       "label": "Vender cartas duplicadas",
-      "tip": "Cada 8-14 horas, mientras la cuenta está despierta, pone a la venta unos cuantos cromos sobrantes un céntimo por debajo del anuncio más barato, con las comisiones de Steam calculadas, así que el precio que ves es lo que recibes. Sobrante significa: con la colección completa de un juego guarda tantas copias como niveles de insignia pueda fabricar aún; con parte de la colección guarda una de cada; con la insignia al máximo no guarda ninguna. Los foil nunca se venden. Los anuncios de hace una semana que el mercado ha rebajado se retiran y se vuelven a poner al precio del día. Hay que confirmarlos en el móvil salvo que estén cargados los secretos del autenticador de esta cuenta. 'sell <cuenta>' muestra una vista previa."
+      "tip": "Pone a la venta unos pocos cromos sobrantes en el mercado cada 8 a 14 horas, un céntimo por debajo del anuncio más barato. Guarda lo que necesitas para insignias y nunca vende brillantes. Necesita confirmación en el móvil salvo que añadas el autenticador."
     },
     "SellPerRun": {
       "label": "Cartas por ronda",
-      "tip": "Cuántas cartas sobrantes pone a la venta cada ronda, las más valiosas primero. Unas pocas a la vez parece alguien ordenando; cien en un minuto no."
+      "tip": "Cuántos cromos sobrantes pone a la venta cada ronda, los más valiosos primero. Unos pocos cada vez parece natural."
     },
     "BoosterGames": {
       "label": "Crear sobres de",
-      "tip": "AppIDs para convertir gemas en sobres, separados por comas. Steam permite un sobre por juego al día, solo de juegos en los que esta cuenta aún puede conseguir cromos, y dice cuándo se puede volver a crear: se crea en cuanto se puede; mientras el modo humano tenga la cuenta dormida, espera a la mañana, salvo que 'Reaccionar solo cuando esté despierta' esté desactivado. Vacío lo desactiva. 'booster <cuenta>' muestra las gemas y qué juegos califican."
+      "tip": "IDs de juegos para los que convertir gemas en sobres de refuerzo, separados por comas. Steam permite un sobre por juego al día, solo en juegos a los que aún les caen cromos. Déjalo vacío para desactivarlo."
     },
     "BoosterGems": {
       "label": "Los sobres usan",
-      "tip": "De qué gemas se hace un sobre cuando la cuenta tiene de los dos tipos. Primero las intercambiables (por defecto) da sobres que puedes intercambiar o vender; primero las no intercambiables gasta gemas que no pueden ir a otro sitio. Si el tipo preferido no cubre el precio, se usa el otro.",
+      "tip": "Qué gemas usan los sobres cuando la cuenta tiene de los dos tipos. Primero las intercambiables da sobres que puedes intercambiar o vender. Primero las no intercambiables gasta gemas que no pueden ir a otro sitio.",
       "choices": "0 primero gemas intercambiables | 1 primero gemas no intercambiables"
     },
     "ClearInventoryNotifications": {
       "label": "Quitar el aviso de objetos nuevos",
-      "tip": "Borra el contador verde de «objetos nuevos» de Steam cada vez que cae un cromo, para que tu inventario no quede marcado como sin leer para siempre."
+      "tip": "Borra el contador verde de objetos nuevos de Steam cada vez que cae un cromo."
     },
     "UIMode": {
       "label": "Iniciar sesión como",
-      "tip": "Qué tipo de cliente de Steam le dice a Steam que es. «Escritorio» es la respuesta correcta y la predeterminada: es lo que informa el cliente real.",
+      "tip": "Qué tipo de app de Steam dice ser al iniciar sesión. Deja escritorio, porque coincide con la app de Steam real. Las demás son solo para diagnosticar problemas.",
       "choices": "7 escritorio (predeterminado) | 3 web | 2 móvil | 1 Big Picture | 0 escritorio, antiguo"
     },
     "SteamParentalCode": {
       "label": "PIN de Vista Familiar",
-      "tip": "El PIN de Vista Familiar, si esta cuenta la tiene activada. Sin él, Steam bloquea las páginas que el farmeo de cromos necesita leer."
+      "tip": "El PIN de Vista Familiar, si esta cuenta la tiene activada. Sin él, Steam bloquea las páginas que necesita el farmeo de cromos."
     },
     "MachineName": {
       "label": "Nombre del dispositivo",
-      "tip": "El nombre de dispositivo que esta cuenta muestra en la lista de dispositivos autorizados de Steam. Déjalo vacío para usar el nombre real de este PC."
+      "tip": "El nombre de dispositivo que muestra esta cuenta en la lista de dispositivos autorizados de Steam. Déjalo vacío para usar el nombre real de este PC."
     },
     "SharedSecret": {
       "label": "Secreto de códigos del autenticador",
-      "tip": "El secreto compartido del autenticador móvil de esta cuenta. Con él, nocat.farm responde sus propias peticiones de Steam Guard y no necesitas el teléfono."
+      "tip": "El secreto del autenticador que le permite introducir los códigos de Steam Guard por sí misma, así la cuenta vuelve a iniciar sesión sola tras reiniciar. Poner su maFile en la carpeta authenticators hace lo mismo. Mantenlo en privado."
     },
     "IdentitySecret": {
       "label": "Secreto de confirmación del autenticador",
-      "tip": "La otra mitad del mismo autenticador, la que sirve para resolver el aviso de «confirma en tu teléfono». Solo importa cuando esta cuenta envía intercambios."
+      "tip": "El segundo secreto del autenticador, para aceptar los avisos de «confirma en tu móvil». Solo hace falta si esta cuenta da objetos, porque recibir nunca necesita confirmación."
     },
     "AccountProxy": {
       "label": "Proxy para esta cuenta",
-      "tip": "Envía solo el tráfico de Steam de esta cuenta por su propio proxy, por ejemplo http://host:puerto. Déjalo vacío para usar el global."
+      "tip": "Envía el tráfico de Steam de esta cuenta por su propio proxy, como http://host:port. Déjalo vacío para usar el proxy global o ninguno. Repartir las cuentas entre varias IP ayuda a evitar los límites de peticiones de Steam."
     },
     "AccountProxyUsername": {
       "label": "Usuario del proxy",
-      "tip": "Nombre de usuario del proxy propio de esta cuenta, si lo pide."
+      "tip": "Nombre de usuario del proxy de esta cuenta, si lo necesita."
     },
     "AccountProxyPassword": {
       "label": "Contraseña del proxy",
-      "tip": "Contraseña del proxy propio de esta cuenta, si la pide."
+      "tip": "Contraseña del proxy de esta cuenta, si la necesita."
     },
     "AcceptGroupInvites": {
       "label": "Aceptar invitaciones a grupos",
-      "tip": "Se une a los grupos de Steam a los que inviten a esta cuenta."
+      "tip": "Se une a los grupos de Steam a los que invitan a esta cuenta."
     },
     "IgnoreSuspiciousInvites": {
       "label": "Ignorar el spam evidente",
-      "tip": "Ignora sin más las solicitudes de amistad de perfiles privados recién creados de nivel 0, que es la forma que tiene todo bot estafador."
+      "tip": "Ignora en silencio las solicitudes de amistad de perfiles privados nuevos de nivel 0, que es el aspecto de los bots de estafa. Solo funciona si «Aceptar solicitudes de amistad» está activado."
     },
     "RejectInvalidFriendInvites": {
       "label": "Rechazar lo que no aceptas",
-      "tip": "Rechaza activamente una solicitud de amistad en vez de dejarla ahí en la lista. Desactivado, todo lo no aceptado simplemente se queda esperando."
+      "tip": "Rechaza las solicitudes de amistad que no acepta en vez de dejarlas en la lista. Desactivado, las deja ahí para que las mires tú."
     },
     "AutoReplyDelaySeconds": {
       "label": "Esperar antes de responder",
-      "tip": "Segundos que espera antes de enviar la respuesta. Contestar al instante es un robot contestando; la espera real se aleatoriza hasta este valor."
+      "tip": "Segundos de espera antes de responder, para que no conteste al instante. La espera real es al azar, hasta el doble de esto."
     },
     "CommandMasters": {
       "label": "Aceptar comandos de",
-      "tip": "SteamID64 autorizados a manejar nocat.farm escribiendo a esta cuenta por Steam, separados por comas. Los comandos deben empezar por !"
+      "tip": "SteamID64 que pueden controlar nocat.farm enviando mensajes a esta cuenta, separados por comas. Los comandos empiezan con una barra, así que envía /help para empezar. Déjalo vacío para que nadie pueda."
     },
     "WebRefreshSeconds": {
       "label": "Refrescar cada",
-      "tip": "Cada cuántos segundos se refresca el panel. Menos se siente más ágil y no cuesta nada: todo es local."
+      "tip": "Cada cuántos segundos se actualiza el panel. Un valor más bajo se nota más ágil y no cuesta nada, porque todo funciona en tu PC."
     },
     "WebSessionDays": {
       "label": "Mantener la sesión iniciada",
-      "tip": "Cuántos días sigue iniciada la sesión de un navegador antes de tener que volver a escribir la contraseña del panel."
+      "tip": "Cuántos días sigue un navegador con la sesión iniciada antes de volver a pedir la contraseña del panel."
     },
     "ExitWhenAllFinished": {
       "label": "Cerrar cuando todo esté hecho",
-      "tip": "Cierra nocat.farm del todo en cuanto todas las cuentas han terminado de farmear y han cerrado sesión, en vez de dejarlo en la bandeja sin hacer nada."
+      "tip": "Cierra nocat.farm cuando todas las cuentas han terminado de farmear y se han desconectado, en vez de dejarlo inactivo en la bandeja."
     },
     "Debug": {
       "label": "Mostrar detalle de depuración en pantalla",
-      "tip": "El detalle de depuración - cada petición web, cada recomprobación, todo - se escribe SIEMPRE en el archivo de registro, esté esto como esté. Para eso sirve un registro: si algo falla, la respuesta ya está guardada en lugar de tener que reproducir el fallo con un interruptor activado. Esto solo decide si esas líneas se muestran además en la ventana y en la consola, y está desactivado por defecto porque desplazan hacia arriba las pocas líneas que de verdad querías ver."
+      "tip": "Muestra detalle de depuración extra en la ventana y la consola. Ese detalle se guarda siempre en el archivo de registro, así que déjalo desactivado salvo que quieras verlo en directo."
     },
     "LogRetentionDays": {
       "label": "Conservar los registros",
-      "tip": "Borra los archivos de registro con más días que este número. 0 los conserva para siempre."
+      "tip": "Borra los archivos de registro con más de estos días. 0 los conserva para siempre."
     },
     "Rep4RepPointsRefreshMinutes": {
       "label": "Consultar los puntos cada",
-      "tip": "Cada cuántos minutos se le pregunta a rep4rep por tu total de puntos. rep4rep no publica ningún límite de peticiones, así que no lo pongas a 1 y lo dejes corriendo un mes."
+      "tip": "Cada cuántos minutos se consulta tu total de puntos de rep4rep. Evita valores muy bajos durante mucho tiempo, porque rep4rep no publica ningún límite."
     },
     "ReconnectDelaySeconds": {
       "label": "Reconectar tras",
-      "tip": "Cuánto esperar antes de reconectar después de que Steam corte la conexión, en segundos."
+      "tip": "Cuántos segundos esperar antes de reconectar cuando Steam corta la conexión."
     },
     "ConnectionTimeoutSeconds": {
       "label": "Tiempo de espera de conexión",
-      "tip": "Cuánto esperar a que Steam responda antes de rendirse y reconectar, en segundos."
+      "tip": "Cuántos segundos esperar a que Steam responda antes de rendirse y reconectar."
     },
     "MaxConcurrentFarming": {
       "label": "Farmear como mucho",
@@ -1829,89 +1917,89 @@
     },
     "LoginCooldownMinutes": {
       "label": "Enfriamiento por límite de peticiones",
-      "tip": "Cuando Steam limita un inicio de sesión, todas las cuentas esperan estos minutos: aguantan juntas en vez de hacer cola para que las bloqueen una a una."
+      "tip": "Cuántos minutos espera cada cuenta cuando Steam bloquea un inicio de sesión por intentarlo demasiado. Todas esperan juntas para que no se bloqueen una tras otra."
     },
     "WebRequestGapMs": {
       "label": "Separación entre peticiones web",
-      "tip": "Hueco mínimo entre dos peticiones a la misma web de Steam, en milisegundos. Esto es lo que más mantiene la lectura de insignias fuera del radar de Steam: súbelo si ves avisos de límite y nunca bajes de 200."
+      "tip": "Espera mínima entre dos peticiones a la misma web de Steam, en milisegundos. Súbela si ves avisos de límite de peticiones, y nunca bajes de 200."
     },
     "SteamProtocol": {
       "label": "Conectar mediante",
-      "tip": "Cómo llegar a Steam. Déjalo en automático salvo que un cortafuegos o tu proveedor bloqueen algo: solo-websocket parece tráfico HTTPS normal y suele pasar.",
+      "tip": "Cómo conectarse a Steam. Déjalo en automático salvo que un cortafuegos o tu proveedor de internet lo bloquee. Solo websocket parece tráfico web normal y suele pasar.",
       "choices": "0 automático | 1 solo websocket | 2 solo tcp"
     },
     "WebProxy": {
       "label": "Proxy",
-      "tip": "Envía el tráfico de Steam por este proxy, por ejemplo http://127.0.0.1:8080. Déjalo vacío para conectar directamente."
+      "tip": "Envía el tráfico de Steam a través de este proxy, por ejemplo http://127.0.0.1:8080. Déjalo vacío para conectarte directamente."
     },
     "WebProxyUsername": {
       "label": "Usuario del proxy",
-      "tip": "Nombre de usuario del proxy de arriba, si lo pide."
+      "tip": "Nombre de usuario del proxy de arriba, si lo necesita."
     },
     "WebProxyPassword": {
       "label": "Contraseña del proxy",
-      "tip": "Contraseña del proxy de arriba, si la pide."
+      "tip": "Contraseña del proxy de arriba, si la necesita."
     },
     "GlobalBlacklistedGames": {
       "label": "No tocar nunca (todas las cuentas)",
-      "tip": "AppIDs que ninguna cuenta farmeará ni idleará jamás, para no repetir la misma lista en cada cuenta que añadas. Cada cuenta puede seguir añadiendo las suyas encima."
+      "tip": "Juegos que ninguna cuenta farmeará ni dejará en segundo plano nunca, por ID de juego (el número de su enlace de la tienda). Cada cuenta puede añadir los suyos además de estos."
     },
     "Rep4RepLearnCap": {
       "label": "Aprender el límite real",
-      "tip": "Si Steam llega a rechazar un comentario MÁS ALLÁ del máximo de arriba, recuerda ese número como el techo real de esta cuenta. Nunca bajará el máximo por un simple «estás comentando demasiado a menudo»: ese mensaje habla del hueco entre dos comentarios y no dice nada del límite diario, que normalmente es 10."
+      "tip": "Le deja aprender el límite diario real de comentarios de esta cuenta a partir de los rechazos de Steam. Un rechazo por «comentas con demasiada frecuencia» nunca baja el límite."
     },
     "Rep4RepRetryRefused": {
       "label": "Reintentar un comentario rechazado",
-      "tip": "Da una segunda oportunidad a un comentario rechazado antes de descartar ese perfil durante un día."
+      "tip": "Da una oportunidad más a un comentario rechazado antes de saltarse ese perfil durante un día."
     },
     "SendOnFarmingFinished": {
       "label": "Enviar los objetos al terminar de farmear",
-      "tip": "Cuando ya no quedan cromos por farmear, envía lo que esta cuenta ha recogido a la primera cuenta de la lista de arriba. Ese es todo el sentido de tener varios idlers: los cromos acaban en un inventario y no en seis."
+      "tip": "Cuando no quedan cromos que farmear, envía lo que ha reunido esta cuenta a la primera cuenta de «Tus propias cuentas»."
     },
     "SendEveryHours": {
       "label": "Enviar los objetos cada",
-      "tip": "Cada tantas horas, envía los objetos de esta cuenta a la primera cuenta de arriba: lo mismo que el comando 'send', pero con horario, para que los cromos no se acumulen entre una tanda de farmeo y otra. 0 lo desactiva. El primer envío llega un periodo completo después de activarlo, un poco de margen aleatorio evita que caiga siempre en el mismo minuto y, mientras el modo humano tenga la cuenta dormida, espera a la mañana, salvo que 'Reaccionar solo cuando esté despierta' esté desactivado."
+      "tip": "Envía los objetos de esta cuenta a la primera cuenta de «Tus propias cuentas» cada tantas horas, para que no se acumulen los cromos. 0 lo desactiva."
     },
     "SendItemTypes": {
       "label": "Qué enviar",
-      "tip": "Qué tipos de objetos pueden salir de esta cuenta, separados por comas: cards, foils, backgrounds, emoticons, boosters, gems, o bien «all». Lo que no aparezca aquí no se envía nunca, esté como esté el resto.",
+      "tip": "Qué tipos de objeto pueden salir de esta cuenta, separados por comas: cards, foils, backgrounds, emoticons, boosters, gems o all. Lo que no esté en la lista nunca se envía.",
       "placeholder": "cromos"
     },
     "TradeMasterToken": {
       "label": "Su token de enlace de intercambio",
-      "tip": "El token de la URL de intercambio de la otra cuenta (la parte después de &token=). Solo hace falta cuando las dos cuentas no son amigas; entre amigos puedes dejarlo vacío."
+      "tip": "El token del enlace de intercambio de la otra cuenta, la parte después de &token=. Solo hace falta si las dos cuentas no son amigas."
     },
     "ClearNotifications": {
       "label": "Borrar las notificaciones de Steam",
-      "tip": "Marca como leído todo lo que hay en la bandeja de notificaciones de Steam - comentarios, regalos, peticiones de ayuda, solicitudes de amistad - para que los contadores vuelvan a cero en lugar de subir durante toda la vida de la cuenta. Ninguno baja por sí solo: se quedan encendidos hasta que alguien abre la página, cosa que nadie hace en una cuenta en la que no entra a mano."
+      "tip": "Marca como leído todo lo de la bandeja de notificaciones de Steam, como comentarios, regalos e invitaciones, para que los contadores no sigan subiendo."
     },
     "AchievementIncludeMainGame": {
       "label": "Conseguirlos también en el juego principal",
-      "tip": "Si el juego principal del modo humano consigue logros como cualquier otro. Activado, y así debería estar: el juego principal es donde están las horas, así que es el sitio menos sorprendente de la cuenta para verlos. Desactivado lo deja completamente en paz, con lo que una cuenta con cientos de horas en su juego insignia no muestra ninguno - normalmente lo más raro de los dos. En cualquier caso siguen aplicándose el filtro de rareza y el techo de finalización."
+      "tip": "Deja que el juego principal de «Modo humano» gane logros como cualquier otro juego. Mejor dejarlo activado, porque cientos de horas sin logros resulta raro."
     },
     "PluginsEnabled": {
       "label": "Cargar plugins",
-      "tip": "Carga cualquier .dll de la carpeta «plugins». DESACTIVADO por defecto, y conviene dejarlo así salvo que hayas escrito tú el plugin o confíes en quien lo hizo: un plugin es código ajeno ejecutándose dentro de este proceso, con acceso a todo lo que este proceso alcanza, incluidos los tokens de inicio de sesión de Steam en config. Los plugins reciben una API deliberadamente estrecha (información de cuentas de solo lectura, y comandos que se ejecutan igual que si los escribieras tú), pero eso es una barandilla, no una jaula: una DLL que quiera saltársela puede hacerlo."
+      "tip": "Carga plugins de la carpeta plugins. Actívalo solo para plugins que hayas escrito tú o en los que confíes del todo. Un plugin puede llegar a todo lo que llega nocat.farm, incluidos tus inicios de sesión de Steam."
     },
     "FarmInSittings": {
       "label": "Farmear en sesiones, no sin parar",
-      "tip": "Farmea en unos cuantos bloques al día con huecos entre ellos, a horas distintas cada día, en vez de seguir hasta que se acaben los cromos. CONVIENE SABERLO ANTES: solo deja un hueco real en una cuenta sin juegos en idle. Si además hace idle - un nombre personalizado, una lista de idle - el idler simplemente toma el relevo en los huecos y la cuenta acumula horas igual, así que lo único que cambia es en qué juego caen. Útil en una cuenta que solo farmea, casi inútil en una que hace idle."
+      "tip": "Farmea cromos en unos pocos bloques al día con descansos entre ellos, en vez de sin parar. Solo cambia algo de verdad en una cuenta que no tiene nada más que dejar en segundo plano."
     },
     "FarmHoursPerDay": {
       "label": "Horas al día farmeando",
-      "tip": "Aproximadamente cuánto del día suman las sesiones. Se sortea de nuevo cada día dentro de un margen alrededor de este valor, y es más largo el fin de semana, para que no haya dos días iguales. Solo se usa si «Farmear en sesiones» está activado."
+      "tip": "Más o menos cuántas horas al día suman los bloques de farmeo. Varía cada día y dura más los fines de semana. Solo se usa si «Farmear en sesiones, no sin parar» está activado."
     },
     "MarketGapSeconds": {
       "label": "Segundos entre consultas de precio",
-      "tip": "Cuánto esperar entre preguntas al mercado de Steam por el precio de un objeto. Este número decide si Steam limita las consultas: demasiado rápido y empieza a rechazarlas, la app se retira y los valores del inventario se quedan viejos hasta que la dejan volver. Más alto es más lento pero más estable. 10 va cómodo; bájalo solo si tus inventarios son pequeños."
+      "tip": "Segundos de espera entre cada consulta de precio en el mercado de Steam. Si va demasiado rápido, Steam empieza a rechazarlas y los valores del inventario se quedan desfasados. Más alto es más lento pero más estable."
     },
     "PriceCacheHours": {
       "label": "Confiar en un precio durante",
-      "tip": "Cuánto tiempo se da por bueno el precio de cualquier cosa valiosa - 2 o más en tu moneda del mercado - antes de volver a preguntar. Los objetos más baratos se revisan con menos frecuencia: el doble de tiempo por debajo de 2, seis veces más por debajo de 0,25, y una semana para lo que no tiene ninguna oferta en el mercado. Apenas mueven el total, y preguntar por cientos de ellos es lo que hace que el mercado empiece a rechazar. Más tiempo significa menos peticiones, a cambio de que los valores se muevan más despacio."
+      "tip": "Cuántas horas se reutiliza un precio antes de volver a comprobarlo. Los objetos baratos se comprueban menos. Más tiempo significa menos peticiones, pero los valores se actualizan más despacio."
     },
     "Rep4RepPauseHours": {
       "label": "Pausar comentarios durante (horas)",
-      "tip": "Detiene por completo los comentarios en todas las cuentas durante estas horas y luego continúa solo. 24 es un día, 48 son dos, y cualquier valor intermedio vale: una pausa de 27 horas es simplemente 27. Ponlo y olvídate: la cuenta atrás sobrevive a un reinicio, se mide desde que lo pones y no desde el último guardado, y se borra al terminar. 0 significa que no hay pausa. El tope diario y el horario no se tocan; esto solo lo deja pasar, y cada cuenta vuelve limpia a 0/10."
+      "tip": "Pausa los comentarios de rep4rep en todas las cuentas durante estas horas, y luego vuelven solos. La cuenta atrás sigue aunque reinicies. Pon 0 para no pausar."
     }
   }
 }

@@ -46,7 +46,22 @@ public static class Seller {
 	public static int UndercutFor(int lowest) => lowest > MinBuyerCents ? lowest - 1 : MinBuyerCents;
 
 	// ── deciding what to sell ────────────────────────────────────────────────
+	/// <summary>
+	/// The account's wallet currency, as Steam's currency id - a listing's price is read in it, so prices have to be
+	/// looked up in it too. Null until Steam has said (just after signing in).
+	/// </summary>
+	private static int? WalletCurrency(Bot bot) => bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? null : (int) bot.WalletCurrency;
+
+	/// <summary>Cents in the account's own wallet currency, e.g. "0.05 CAD".</summary>
+	public static string Money(int cents, Bot bot) => (cents / 100m).ToString("0.00", CultureInfo.InvariantCulture)
+		+ (bot.WalletCurrency == SteamKit2.ECurrencyCode.Invalid ? "" : " " + bot.WalletCurrency);
+
 	public static async Task<Plan> PlanAsync(Bot bot, int max, CancellationToken ct) {
+		// Priced in US dollars and listed on a Canadian wallet, a card went up about a quarter cheaper than meant.
+		if (WalletCurrency(bot) is not int currency) {
+			return new Plan([], 0, 0, "Steam hasn't said this account's wallet currency yet - try again in a minute");
+		}
+
 		if (await LevelPlanner.BadgesAsync(bot, ct).ConfigureAwait(false) is not { } badges) {
 			return new Plan([], 0, 0, "Steam wouldn't say what its badges are");
 		}
@@ -107,7 +122,7 @@ public static class Seller {
 				continue;
 			}
 
-			(LevelPlanner.SetPrice? set, bool asked) = await LevelPlanner.PriceAsync(bot, game, ct).ConfigureAwait(false);
+			(LevelPlanner.SetPrice? set, bool asked) = await LevelPlanner.PriceAsync(bot, game, ct, currency).ConfigureAwait(false);
 			lookups += asked ? 1 : 0;
 
 			if (set == null) {
@@ -190,10 +205,10 @@ public static class Seller {
 		}
 
 		if (listed > 0) {
-			Log.Info(new Said("listed {0} duplicate card(s) on the market - {1} to you if they all sell", listed, Money(earned)), bot.Name);
+			Log.Info(new Said("listed {0} duplicate card(s) on the market - {1} to you if they all sell", listed, Money(earned, bot)), bot.Name);
 		}
 
-		StringBuilder sb = new($"{bot.Name}: listed {listed} of {offers.Count}, {Money(earned)} to you if they all sell");
+		StringBuilder sb = new($"{bot.Name}: listed {listed} of {offers.Count}, {Money(earned, bot)} to you if they all sell");
 
 		if (refusal != null) {
 			sb.Append($" - Steam refused one: {refusal}");
@@ -204,6 +219,9 @@ public static class Seller {
 		}
 
 		if (!bot.CanConfirmTrades) {
+			// Said where it can't be missed - the log line alone scrolled past while the phone sat waiting.
+			Log.Attention(new Said("{0} market listing(s) are waiting - confirm them in the Steam app on your phone", listed), bot.Name);
+
 			return sb.Append(". They need confirming in the Steam app on your phone (or load this account's authenticator secrets and it'll do that itself).").ToString();
 		}
 
@@ -287,7 +305,7 @@ public static class Seller {
 	/// the inventory and the next sell lists them again at that day's price.
 	/// </summary>
 	public static async Task<(int Removed, int Stale)> RelistAsync(Bot bot, CancellationToken ct) {
-		if (await ListingsAsync(bot, ct).ConfigureAwait(false) is not { } listings) {
+		if ((WalletCurrency(bot) is not int currency) || (await ListingsAsync(bot, ct).ConfigureAwait(false) is not { } listings)) {
 			return (0, 0);
 		}
 
@@ -301,7 +319,7 @@ public static class Seller {
 				break;
 			}
 
-			(LevelPlanner.SetPrice? set, bool asked) = await LevelPlanner.PriceAsync(bot, l.Game, ct).ConfigureAwait(false);
+			(LevelPlanner.SetPrice? set, bool asked) = await LevelPlanner.PriceAsync(bot, l.Game, ct, currency).ConfigureAwait(false);
 			lookups += asked ? 1 : 0;
 			int lowest = set?.Cards.GetValueOrDefault(l.Hash) ?? 0;
 

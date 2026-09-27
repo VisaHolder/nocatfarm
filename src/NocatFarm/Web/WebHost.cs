@@ -239,7 +239,7 @@ public sealed class WebHost : IAsyncDisposable {
 				return Results.Json(new { ok = false, error = "Couldn't find an ArchiSteamFarm config folder there." });
 			}
 
-			AsfImport.Result result = AsfImport.Run(dir, _mgr.Global, body?.Overwrite ?? false);
+			AsfImport.Result result = AsfImport.Run(dir, _mgr.Global, body?.Overwrite ?? false, body?.Human);
 			await _mgr.SyncFromDiskAsync().ConfigureAwait(false);
 			Log.Good(new Said("imported {0} account(s) from ArchiSteamFarm", result.Imported));
 
@@ -661,6 +661,15 @@ public sealed class WebHost : IAsyncDisposable {
 			BotConfig cfg = body.Qr
 				? new() { SteamLogin = body.Name, SignInWithQr = true }
 				: new() { SteamLogin = body.SteamLogin!, SteamPassword = body.Password ?? "" };
+
+			// Set before it's added, so its very first sign-in already behaves the way it was asked to - an
+			// account switched to human mode a minute after a robot-style sign-in has already signed in like one.
+			if (body.Human) {
+				cfg.LegitMode = true;
+				Settings.ApplyLegitMode(cfg, false);
+			}
+
+			cfg.IUseThisAccount = body.SelfSignIn;
 			Bot? bot = await _mgr.AddAsync(body.Name, cfg).ConfigureAwait(false);
 
 			return bot == null
@@ -1274,6 +1283,9 @@ public sealed class WebHost : IAsyncDisposable {
 	private sealed class ImportRequest {
 		public string? Path { get; set; }
 		public bool Overwrite { get; set; }
+
+		/// <summary>Accounts to bring across in human mode - the ones the walkthrough was told you play on.</summary>
+		public List<string>? Human { get; set; }
 	}
 
 	private sealed class ThemeRequest {
@@ -1289,6 +1301,12 @@ public sealed class WebHost : IAsyncDisposable {
 		public string? SteamLogin { get; set; }
 		public string? Password { get; set; }
 		public bool Qr { get; set; }
+
+		/// <summary>Start it in human mode - the walkthrough's "my main, I play on it".</summary>
+		public bool Human { get; set; }
+
+		/// <summary>You sign into it from your own Steam client as well (<see cref="BotConfig.IUseThisAccount"/>).</summary>
+		public bool SelfSignIn { get; set; }
 	}
 
 	public async ValueTask DisposeAsync() {
