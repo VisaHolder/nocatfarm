@@ -46,7 +46,9 @@ public readonly record struct BotStatus(
 		bool playing = false;
 
 		if (bot.Grinding) {
-			doing = new Said("grinding {0}", GameNames.Of(bot.GrindGame));
+			doing = bot.GrindDropsLeft > 0
+				? new Said("going for {0} card drop(s) in {1}", bot.GrindDropsLeft, GameNames.Of(bot.GrindGame))
+				: new Said("grinding {0}", GameNames.Of(bot.GrindGame));
 			playing = true;
 
 			if (bot.GrindUntil is { } until) {

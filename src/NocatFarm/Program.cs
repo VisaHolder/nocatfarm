@@ -296,6 +296,9 @@ if (OperatingSystem.IsWindows()) {
 
 tray?.Dispose();
 
+// Where the window was left - it's never told it is closing on the way out, so it wouldn't save that itself.
+window?.SavePlace();
+
 if (web != null) {
 	await web.DisposeAsync().ConfigureAwait(false);
 }

@@ -4,6 +4,18 @@ using NocatFarm.Core;
 
 namespace NocatFarm.Modules;
 
+/// <summary>When a human-mode account farms cards - the FarmCardsWhen setting.</summary>
+public static class FarmWhen {
+	/// <summary>In human mode's sittings: the card game is what the day plays; nights are for the overnight games.</summary>
+	public const int Day = 0;
+
+	/// <summary>Only while it's asleep and invisible; the day plays the usual games.</summary>
+	public const int Night = 1;
+
+	/// <summary>The moment there are cards, day and night.</summary>
+	public const int Any = 2;
+}
+
 /// <summary>One game with cards still to drop.</summary>
 public sealed class FarmTarget {
 	public uint AppId { get; init; }
@@ -87,6 +99,56 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 	public override string Name => "cards";
 	public override string Status => _status;
+
+	private CardPace? _pace;
+	private CardPace Pace => _pace ??= new CardPace(Bot.Name);
+
+	/// <summary>About how many minutes of farming are left for everything queued - a rough figure, see <see cref="CardPace"/>.</summary>
+	public int EstimateMinutes => Pace.EstimateMinutes(Queue, Bot.Cfg.HoursUntilCardDrops);
+
+	/// <summary>Minutes per card behind the estimate, and whether that's this account's own pace or Steam's usual 30.</summary>
+	public (double Minutes, bool Learned) MinutesPerCard => (Pace.Minutes, Pace.Learned);
+
+	private string AllDoneIn => Fmt.Rough(EstimateMinutes);
+
+	/// <summary>
+	/// The game it will farm next - what human mode plays in its next sitting when cards farm in the day. 0 with
+	/// nothing to farm.
+	/// </summary>
+	public uint NextGame => Bot.CardsRemaining > 0 ? _nextGame : 0;
+
+	private uint _nextGame;
+
+	/// <summary>Inside the "farm cards only from ... until" hours (always, when they're both 0).</summary>
+	public bool InFarmWindowNow => InFarmWindow();
+
+	/// <summary>Farming happens inside human mode's sittings, and waits between them.</summary>
+	private bool FarmsInHumanDay => Bot.HumanOwned && (Bot.Cfg.FarmCardsWhen == FarmWhen.Day);
+
+	/// <summary>
+	/// Whether the schedule wants the account back: in the day's sittings, when a sitting ends; only at night, when
+	/// it wakes up. Checked often while farming, so a break or bedtime takes the game off within seconds.
+	/// </summary>
+	private bool ScheduleWantsItBack() {
+		if (!Bot.HumanOwned || (BotManager.ModuleOf<HumanMode>(Bot) is not { } human)) {
+			return false;
+		}
+
+		return Bot.Cfg.FarmCardsWhen switch {
+			FarmWhen.Day => !human.FarmSittingOpen,
+			FarmWhen.Night => !human.InBed,
+			_ => false
+		};
+	}
+
+	private Said WaitingForSitting(HumanMode human) => human.InBed
+		? new Said("{0} card(s) - farmed in the day's sittings, from morning", Bot.CardsRemaining)
+		: new Said("{0} card(s) - farmed in human mode's next sitting", Bot.CardsRemaining);
+
+	/// <summary>The most cards this farming run has had left - the whole of the run, for a progress bar.</summary>
+	public int RunCards => Math.Max(_runCards, Bot.CardsRemaining);
+
+	private int _runCards;
 
 	public IReadOnlyList<FarmTarget> Queue {
 		get {
@@ -204,9 +266,16 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 	private async Task<int> CycleAsync(CancellationToken ct) {
 		if (Bot.Grinding) {
+			// A drop run is a grind the farmer watches: it counts the drops and ends it once they're in.
+			if ((Bot.GrindDropsLeft > 0) && (DateTime.UtcNow >= Bot.GrindStartsAt)) {
+				await DropRunAsync(ct).ConfigureAwait(false);
+
+				return 1;
+			}
+
 			_status = new Said("standing by - grinding {0}", GameNames.Of(Bot.GrindGame));
 
-			return 5;
+			return Bot.GrindDropsLeft > 0 ? 1 : 5;
 		}
 
 		if (!Bot.CanPlay) {
@@ -220,9 +289,22 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		// warm-up ends instead of up to a full rescan interval later.
 		HumanMode? warmup = BotManager.ModuleOf<HumanMode>(Bot);
 
-		if (Bot.HumanOwned && (warmup != null) && !warmup.WarmedUp) {
+		// Not while it's asleep: the warm-up is about how the account looks when it comes online, and at night it's
+		// invisible - waiting then only left it banking hours on the night list while cards were waiting.
+		if (Bot.HumanOwned && (warmup != null) && !warmup.WarmedUp && !warmup.InBed) {
 			int mins = warmup.WarmUpMinutesLeft;
 			_status = mins > 0 ? new Said("settling in first (~{0}m), then farming", mins) : new Said("settling in first, then farming");
+
+			return 1;
+		}
+
+		// Waiting for human mode's next sitting: a look at the badge pages from the last half hour is good enough, so
+		// they aren't read every minute through a break, or all night, just to wait. A sitting can open any minute,
+		// so the wait itself stays short.
+		if (FarmsInHumanDay && (warmup != null) && !warmup.FarmSittingOpen && (Queue.Count > 0)
+			&& (Bot.CardsCheckedAt is { } looked) && (DateTime.UtcNow - looked < TimeSpan.FromMinutes(30))) {
+			HoldingBack = true;
+			_status = WaitingForSitting(warmup);
 
 			return 1;
 		}
@@ -243,6 +325,12 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 		Bot.GamesRemaining = found.Count;
 		Bot.CardsRemaining = found.Sum(static g => g.CardsRemaining);
+		Bot.CardsCheckedAt = DateTime.UtcNow;
+		_runCards = found.Count == 0 ? 0 : Math.Max(_runCards, Bot.CardsRemaining);
+
+		if (found.Count == 0) {
+			_nextGame = 0;
+		}
 
 		if (found.Count == 0) {
 			// Everything is farmed, so this is the moment the cards are worth moving. Doing it here rather than on
@@ -312,7 +400,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 		// One game is already spelled out by the "farming X - N to go" line below; only summarise a batch.
 		if (found.Count > 1) {
-			Log.Good(new Said("{0} games with {1} cards left to farm", found.Count, Bot.CardsRemaining), Bot.Name);
+			Log.Good(new Said("{0} games with {1} cards left to farm - about {2} of farming", found.Count, Bot.CardsRemaining, AllDoneIn), Bot.Name);
 		}
 
 		float threshold = Bot.Cfg.HoursUntilCardDrops;
@@ -334,22 +422,32 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			ready = live;
 		}
 
+		_nextGame = ready.Count > 0 ? ready[0].AppId : (Order(underThreshold).FirstOrDefault()?.AppId ?? 0);
+
 		if (ready.Count == 0 && (threshold <= 0 || underThreshold.Count == 0)) {
 			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
 		}
 
-		// Cards are the point: farm the moment there are any. In human mode the schedule decides only WHEN the
-		// account is up; whenever it is, the farmer takes priority over the weighted games and hands back the
-		// instant the drops are gone. It farms while asleep too. "Card farming on but not farming" is not a thing.
-
-		// Two opt-in limits on WHEN to farm - both off by default.
+		// On a human-mode account the schedule decides WHEN cards farm (FarmCardsWhen). In the day (the default)
+		// the card game is what human mode plays in its sittings, and the farmer works only while one is open -
+		// breaks, meals and bedtime included - so nights stay for the overnight games. Only at night, it waits for
+		// bed. Any time, it farms the moment there are cards.
 		HumanMode? human = BotManager.ModuleOf<HumanMode>(Bot);
 
-		if (Bot.HumanOwned && Bot.Cfg.FarmOnlyWhileAsleep && human?.InBed != true) {
-			HoldingBack = true;
-			_status = new Said("{0} card(s) - farming tonight, once it's asleep", Bot.CardsRemaining);
+		if (Bot.HumanOwned && (human != null)) {
+			if ((Bot.Cfg.FarmCardsWhen == FarmWhen.Night) && !human.InBed) {
+				HoldingBack = true;
+				_status = new Said("{0} card(s) - farming tonight, once it's asleep", Bot.CardsRemaining);
 
-			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
+				return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
+			}
+
+			if ((Bot.Cfg.FarmCardsWhen == FarmWhen.Day) && !human.FarmSittingOpen) {
+				HoldingBack = true;
+				_status = WaitingForSitting(human);
+
+				return 1;   // the badge pages aren't read again for half an hour meanwhile - see the top
+			}
 		}
 
 		if (!InFarmWindow()) {
@@ -359,7 +457,8 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
 		}
 
-		if (Bot.Cfg.FarmInSittings && !InSittingNow(out DateTime next)) {
+		// Human mode's own sittings already shape a day-farming account; its separate farming sittings don't apply.
+		if (Bot.Cfg.FarmInSittings && !FarmsInHumanDay && !InSittingNow(out DateTime next)) {
 			HoldingBack = true;
 			_status = next > DateTime.Now
 				? new Said("{0} card(s) - next sitting around {1}", Bot.CardsRemaining, next.ToString("HH:mm"))
@@ -387,7 +486,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			if (ready.Count > 0) {
 				await FarmSoloAsync(ready[0], ct).ConfigureAwait(false);
 			} else {
-				await BumpHoursAsync(underThreshold, threshold, ct).ConfigureAwait(false);
+				// Building playtime runs up to 32 games at once - fine at night, invisible, but in a visible day's
+				// sitting that's the loudest tell there is. One game at a time there.
+				await BumpHoursAsync(FarmsInHumanDay ? [.. Order(underThreshold).Take(1)] : underThreshold, threshold, ct).ConfigureAwait(false);
 			}
 		} finally {
 			slots?.Release();
@@ -473,6 +574,11 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	/// PostFarmWindDown min/max setting; 0/0 switches it off.
 	/// </summary>
 	private async Task WindDownAsync(FarmTarget game, CancellationToken ct) {
+		// Farming in human mode's sittings: the sitting ends with human mode's own break, so there's nothing to wind down.
+		if (FarmsInHumanDay) {
+			return;
+		}
+
 		int lo = Math.Max(0, Bot.Cfg.PostFarmWindDownMinMinutes);
 		int hi = Math.Max(lo, Bot.Cfg.PostFarmWindDownMaxMinutes);
 
@@ -522,8 +628,14 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 		Claim();
 		Bot.SetPlaying([game.AppId], Bot.Cfg.PlayWhileFarming ? null : "");
-		_status = new Said("farming {0} ({1} left)", game.GameName, game.CardsRemaining);
-		Log.Info(new Said("farming {0} - {1} card(s) to go", game.GameName, game.CardsRemaining), Bot.Name);
+		_status = new Said("farming {0} ({1} left · ~{2} in all)", game.GameName, game.CardsRemaining, AllDoneIn);
+		Log.Info(new Said("farming {0} - {1} card(s) to go · all done in ~{2} of farming", game.GameName, game.CardsRemaining, AllDoneIn), Bot.Name);
+
+		// Farming time since the last drop - the measure of this game's pace. Restarts with every call, so a pause,
+		// a break or the owner playing is never counted as waiting for a card. The first drop of a call isn't
+		// measured: Steam's timer may have been partway through from earlier play, which would read as a fast game.
+		DateTime sinceDrop = started;
+		bool measuring = false;
 
 		while (!ct.IsCancellationRequested) {
 			if (!Bot.CanPlay) {
@@ -541,6 +653,15 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				return;
 			}
 
+			// The schedule wants the account back - a sitting ended, bedtime, morning. Checked before the claim and the
+			// game go back on below, or they'd go straight back over human mode's break.
+			if (ScheduleWantsItBack()) {
+				_status = new Said("between sittings - {0} card(s) left", game.CardsRemaining);
+				Release();
+
+				return;
+			}
+
 			// Re-assert the claim every round. Pause() and a PlayingBlocked flap both clear IsFarming while this
 			// loop is still running, and the idler would then treat the account as free and take the session.
 			Claim();
@@ -551,8 +672,19 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				Bot.SetPlaying([game.AppId], Bot.Cfg.PlayWhileFarming ? null : "");
 			}
 
-			// Armed BEFORE the re-check so a drop landing mid-check still wakes us.
-			bool pushed = await Bot.WaitForItemDropAsync(check, ct).ConfigureAwait(false);
+			// Armed BEFORE the re-check so a drop landing mid-check still wakes us. Waited in short slices, so a break,
+			// bedtime, the owner or a grind is noticed within seconds rather than at the next badge-page read.
+			bool pushed = false;
+			DateTime recheckAt = DateTime.UtcNow + check;
+
+			while (!pushed && !ct.IsCancellationRequested && (DateTime.UtcNow < recheckAt) && Bot.CanPlay && !Bot.Grinding && !ScheduleWantsItBack()) {
+				TimeSpan left = recheckAt - DateTime.UtcNow;
+				pushed = await Bot.WaitForItemDropAsync(left < TimeSpan.FromSeconds(20) ? left : TimeSpan.FromSeconds(20), ct).ConfigureAwait(false);
+			}
+
+			if (!pushed && (DateTime.UtcNow < recheckAt)) {
+				continue;   // cut short by one of those - the top of the loop deals with it, no page read needed
+			}
 
 			if (pushed) {
 				// Steam batches the announcement slightly ahead of the badge page updating.
@@ -577,7 +709,16 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			game.CardsRemaining = fresh.CardsRemaining;
 			game.HoursPlayed = fresh.HoursPlayed;
 			Bot.CardsRemaining = Queue.Sum(static g => g.CardsRemaining);
-			_status = new Said("farming {0} ({1} left)", game.GameName, game.CardsRemaining);
+			if (before > game.CardsRemaining) {
+				if (measuring) {
+					Pace.Dropped(game.AppId, DateTime.UtcNow - sinceDrop, before - game.CardsRemaining);
+				}
+
+				sinceDrop = DateTime.UtcNow;
+				measuring = true;
+			}
+
+			_status = new Said("farming {0} ({1} left · ~{2} in all)", game.GameName, game.CardsRemaining, AllDoneIn);
 
 			if (game.CardsRemaining == 0) {
 				ClearStall(game.AppId);
@@ -622,9 +763,116 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 					Stats.Record(Stats.KindCard, Bot.Name);
 				}
 
-				Log.Reward(new Said("card dropped in {0} - {1} to go", game.GameName, game.CardsRemaining), Bot.Name);
+				Log.Reward(new Said("card dropped in {0} - {1} to go · all done in ~{2} of farming", game.GameName, game.CardsRemaining, AllDoneIn), Bot.Name);
 				Plugins.PluginHost.RaiseCardDropped(Bot, game.AppId, game.CardsRemaining);
 			}
+		}
+	}
+
+	// ── drop runs ───────────────────────────────────────────────────────────
+	/// <summary>The badge page for one game - what the <c>drops</c> command checks before it starts a run.</summary>
+	public Task<FarmTarget?> CardsForAsync(uint appId, CancellationToken ct = default) => GetGameCardsAsync(appId, ct);
+
+	/// <summary>About how long <paramref name="drops"/> cards take in one game, at its pace or the account's.</summary>
+	public int MinutesForDrops(uint appId, int drops) => (int) Math.Ceiling(Math.Max(1, drops) * Pace.MinutesFor(appId));
+
+	/// <summary>
+	/// A drop run - the <c>drops</c> command: the grind plays the game, whatever the schedule says; this counts the
+	/// drops off the badge page and ends the grind once they're in, or once the game has none left. The grind's
+	/// time is only the cap for a game that stops dropping.
+	/// </summary>
+	private async Task DropRunAsync(CancellationToken ct) {
+		uint app = Bot.GrindGame;
+		FarmTarget? start = await GetGameCardsAsync(app, ct).ConfigureAwait(false);
+
+		if (start == null) {
+			_status = new Said("badge pages unavailable");
+
+			return;   // looked at again in a minute
+		}
+
+		// The catalogue's name, not the page's: on some games' card pages that header reads "Badges".
+		string name = GameNames.Of(app);
+
+		if (start.CardsRemaining == 0) {
+			Log.Good(new Said("drop run over - {0} has no card drops left, back to the usual day", name), Bot.Name);
+			Bot.StopGrind();
+
+			return;
+		}
+
+		int cards = start.CardsRemaining;
+		TimeSpan check = TimeSpan.FromMinutes(Math.Max(2, Bot.Cfg.FarmingDelayMinutes));
+
+		// Pace from full intervals only, as in ordinary farming: the first drop may come off a timer that was partway.
+		DateTime sinceDrop = DateTime.UtcNow;
+		bool measuring = false;
+
+		while (!ct.IsCancellationRequested && Bot.Grinding && (Bot.GrindGame == app) && (Bot.GrindDropsLeft > 0)) {
+			_status = new Said("drop run on {0} - {1} to go", name, Bot.GrindDropsLeft);
+
+			bool pushed = false;
+			DateTime recheckAt = DateTime.UtcNow + check;
+
+			while (!pushed && !ct.IsCancellationRequested && (DateTime.UtcNow < recheckAt) && Bot.Grinding && (Bot.GrindGame == app)) {
+				TimeSpan left = recheckAt - DateTime.UtcNow;
+				pushed = await Bot.WaitForItemDropAsync(left < TimeSpan.FromSeconds(20) ? left : TimeSpan.FromSeconds(20), ct).ConfigureAwait(false);
+			}
+
+			if (ct.IsCancellationRequested || !Bot.Grinding || (Bot.GrindGame != app)) {
+				break;
+			}
+
+			if (pushed) {
+				await Task.Delay(TimeSpan.FromSeconds(5), ct).ConfigureAwait(false);   // the badge page lags the push a little
+			}
+
+			FarmTarget? now = await GetGameCardsAsync(app, ct).ConfigureAwait(false);
+
+			if ((now == null) || (now.CardsRemaining >= cards)) {
+				continue;
+			}
+
+			int dropped = cards - now.CardsRemaining;
+			cards = now.CardsRemaining;
+
+			if (measuring) {
+				Pace.Dropped(app, DateTime.UtcNow - sinceDrop, dropped);
+			}
+
+			sinceDrop = DateTime.UtcNow;
+			measuring = true;
+
+			for (int i = 0; i < dropped; i++) {
+				Stats.Record(Stats.KindCard, Bot.Name);
+			}
+
+			lock (_queue) {
+				if (_queue.FirstOrDefault(g => g.AppId == app) is { } queued) {
+					queued.CardsRemaining = cards;
+				}
+			}
+
+			Bot.CardsRemaining = Queue.Sum(static g => g.CardsRemaining);
+			Bot.CountGrindDrops(dropped);
+			Plugins.PluginHost.RaiseCardDropped(Bot, app, cards);
+			Log.Reward(new Said("card dropped in {0} - {1} more on this drop run", name, Bot.GrindDropsLeft), Bot.Name);
+
+			if ((cards == 0) || (Bot.GrindDropsLeft == 0)) {
+				Log.Good(cards == 0
+					? new Said("drop run done - {0} has no card drops left, back to the usual day", name)
+					: new Said("drop run done - back to the usual day"), Bot.Name);
+				Bot.StopGrind();
+
+				return;
+			}
+		}
+
+		// Ran out of time before the drops came - said, and cleared, rather than left looking like a run. Not on the
+		// way out of the app: a run still going then is picked back up after the restart.
+		if (!ct.IsCancellationRequested && !Bot.Grinding && (Bot.GrindGame == app) && (Bot.GrindDropsLeft > 0)) {
+			Log.Info(new Said("drop run on {0} ran out of time with {1} still to come - back to the usual day", name, Bot.GrindDropsLeft), Bot.Name);
+			Bot.StopGrind();
 		}
 	}
 
@@ -659,6 +907,12 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				return;
 			}
 
+			if (ScheduleWantsItBack()) {
+				Release();
+
+				return;
+			}
+
 			Bot.IsFarming = true;   // same reason as FarmSoloAsync
 
 			// Same again: put the batch back if something else got its games onto Steam in the hand-over.
@@ -667,7 +921,8 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			}
 
 			TimeSpan left = until - DateTime.UtcNow;
-			TimeSpan slice = left < TimeSpan.FromMinutes(10) ? left : TimeSpan.FromMinutes(10);
+			TimeSpan most = Bot.HumanOwned && (Bot.Cfg.FarmCardsWhen != FarmWhen.Any) ? TimeSpan.FromSeconds(20) : TimeSpan.FromMinutes(10);
+			TimeSpan slice = left < most ? left : most;
 
 			// A drop here means Steam disagreed with our threshold - stop bumping and go farm properly.
 			if (await Bot.WaitForItemDropAsync(slice, ct).ConfigureAwait(false)) {

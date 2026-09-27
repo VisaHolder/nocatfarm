@@ -122,6 +122,17 @@ public sealed class GlobalConfig {
 	public int WindowWidth { get; set; }
 	public int WindowHeight { get; set; }
 
+	// Where the window was left. int.MinValue = never moved - it opens in the middle of the main screen.
+	public int WindowX { get; set; } = int.MinValue;
+	public int WindowY { get; set; } = int.MinValue;
+
+	// Mini mode: the window shrunk to a small always-on-top panel of the accounts. Where it was left is kept apart
+	// from the full window's size, so switching back and forth puts each where it belongs. int.MinValue = not moved yet.
+	public bool MiniMode { get; set; }
+	public bool MiniOnTop { get; set; }
+	public int MiniX { get; set; } = int.MinValue;
+	public int MiniY { get; set; } = int.MinValue;
+
 	public int StatusEveryMinutes { get; set; } = 5;
 	public int StatusQuietEveryMinutes { get; set; } = 30;
 
@@ -228,6 +239,11 @@ public sealed class BotConfig {
 	public bool SkipUnplayedGames { get; set; }
 	public bool SkipRefundableGames { get; set; }
 	public int RefundHoldDays { get; set; } = 14;
+	/// <summary>When a human-mode account farms cards - <see cref="Modules.FarmWhen"/>. The day's sittings by default.</summary>
+	public int FarmCardsWhen { get; set; }
+
+	/// <summary>Retired: only read so an old "farm only while asleep" carries over to <see cref="FarmCardsWhen"/>.</summary>
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 	public bool FarmOnlyWhileAsleep { get; set; }
 	public int FarmFromHour { get; set; }
 	public int FarmUntilHour { get; set; }
@@ -512,6 +528,23 @@ public static class ConfigStore {
 		return true;
 	}
 
+	/// <summary>
+	/// Carries "only farm cards while asleep" over to the three-way "when to farm cards". Everyone else takes the new
+	/// default - the day's sittings - which is the point of the change: nights belong to the overnight games.
+	/// </summary>
+	/// <returns>true when the config changed and should be written back.</returns>
+	public static bool MigrateFarmWhen(BotConfig cfg, string name) {
+		if (!cfg.FarmOnlyWhileAsleep) {
+			return false;
+		}
+
+		cfg.FarmOnlyWhileAsleep = false;
+		cfg.FarmCardsWhen = Modules.FarmWhen.Night;
+		Log.Info("\"only farm cards while asleep\" is now \"when to farm cards: only at night\"", name);
+
+		return true;
+	}
+
 	public static bool MigrateGameShares(BotConfig cfg, string name) {
 		if (cfg.MainGameSharePct <= 0) {
 			return false;   // already migrated, or written by a version that never had it
@@ -583,9 +616,10 @@ public static class ConfigStore {
 				cfg.IdentitySecret = Secrets.Unprotect(cfg.IdentitySecret);
 				cfg.AccountProxyPassword = Secrets.Unprotect(cfg.AccountProxyPassword);
 
-				// Both migrations run, then one write - a config can need either, and neither is worth two saves.
+				// Every migration runs, then one write - a config can need any of them, and none is worth two saves.
 				bool migrated = MigrateGameShares(cfg, name);
 				migrated |= MigrateAchievementCeiling(cfg, name);
+				migrated |= MigrateFarmWhen(cfg, name);
 
 				if (migrated) {
 					SaveBot(name, cfg);

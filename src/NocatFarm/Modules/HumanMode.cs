@@ -105,6 +105,26 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	private DateTime _gateArmedFor = DateTime.MinValue;
 	private bool _announcedWarmUp;
 	private bool _warmedUp;
+
+	/// <summary>The card farmer has the account for the night - what the night status says instead of banking hours.</summary>
+	private bool _nightFarming;
+
+	/// <summary>The sitting in progress is a card-farming one: the farmer plays, this keeps the day's shape around it.</summary>
+	private bool _farmSession;
+
+	/// <summary>Cards farm in this day's sittings (the default for a human-mode account), not flat out.</summary>
+	private bool FarmInDay => Bot.Cfg.FarmCards && (Bot.Cfg.FarmCardsWhen == FarmWhen.Day);
+
+	/// <summary>
+	/// A card-farming sitting is open, so the farmer may play. It closes for every break, meal, bedtime and stand-down,
+	/// and the farmer hands the account back within seconds when it does.
+	/// </summary>
+	public bool FarmSittingOpen => Bot.Cfg.LegitMode && (_phase == Phase.Playing) && _farmSession;
+
+	/// <summary>The game the next sitting farms, or 0 when this sitting should play the usual games.</summary>
+	private uint FarmGameNow() =>
+		FarmInDay && (Bot.CardsRemaining > 0) && (BotManager.ModuleOf<CardFarmer>(Bot) is { InFarmWindowNow: true } farmer) ? farmer.NextGame : 0;
+
 	private bool _wasFarming;
 	private bool _wokeUp;
 	private bool _wasGrinding;
@@ -128,11 +148,13 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				// Keyed on the grind human mode is still handling rather than on Bot.Grinding, which goes false the
 				// moment the timer runs out - up to a tick before the "done grinding" step below takes over.
 				Phase.Playing when (_game == 0) && _wasGrinding && (Bot.GrindGame != 0) =>Loc.T("grinding {0} · {1} left · {2}/{3} today", GameName(Bot.GrindGame), Left(_sessionEnds), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)),
+				Phase.Playing when _farmSession => Loc.T("farming cards on {0} · {1} left · {2}/{3} today", GameName(_game), Left(_sessionEnds), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)),
 				Phase.Playing => Loc.T("{0} · {1} left · {2}/{3} today", GameName(_game), Left(_sessionEnds), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)),
 				Phase.SwitchingGame => _switchingTo != 0 ? Loc.T("closing the game, then {0}", GameName(_switchingTo)) : Loc.T("closing the game"),
 				Phase.ShortBreak => Loc.T("short break · back in {0}", Left(_phaseEnds)),
 				Phase.MealBreak => Loc.T("meal break · back in {0}", Left(_phaseEnds)),
-				Phase.NightIdle => Loc.T("asleep, banking hours quietly · up {0}", (NextWakeTime()).ToString("HH:mm")),
+				Phase.NightIdle or Phase.Asleep when _nightFarming => Loc.T("asleep, the card farmer is working · up {0}", (NextWakeTime()).ToString("HH:mm")),
+				Phase.NightIdle => Loc.T("asleep, banking hours quietly on {0} game(s) · up {1}", Bot.Cfg.OfflineIdleGames.Count, (NextWakeTime()).ToString("HH:mm")),
 				Phase.Asleep => Loc.T("asleep · up {0}", (NextWakeTime()).ToString("HH:mm")),
 				Phase.DoneForToday => Loc.T("done for today ({0}) · back {1}", Fmt.Hm(_playedMinutesToday), (NextWakeTime()).ToString("HH:mm")),
 				Phase.DayOff => Loc.T("not playing today · back {0}", (NextWakeTime()).ToString("HH:mm")),
@@ -226,11 +248,12 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// </remarks>
 	public Said Doing => _phase switch {
 		Phase.WarmingUp => new Said("settling in"),
+		Phase.Playing when _farmSession => new Said("farming cards on {0}", GameName(_game)),
 		Phase.Playing => new Said("playing {0}", GameName(_game)),
 		Phase.SwitchingGame => _switchingTo != 0 ? new Said("closing, then {0}", GameName(_switchingTo)) : new Said("closing the game"),
 		Phase.ShortBreak => new Said("on a break"),
 		Phase.MealBreak => new Said("meal break"),
-		Phase.NightIdle => new Said("asleep, banking hours"),
+		Phase.NightIdle => new Said("asleep, banking hours on {0} game(s)", Bot.Cfg.OfflineIdleGames.Count),
 		Phase.Asleep => new Said("asleep"),
 		Phase.DoneForToday => new Said("done for today"),
 		Phase.DayOff => new Said("not playing today"),
@@ -377,6 +400,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		if (Bot.Paused || Bot.PlayingBlocked) {
 			if (_phase != Phase.StoodDown) {
 				BankSession();
+				_farmSession = false;
 				_phase = Phase.StoodDown;
 				_game = 0;
 				_switchingTo = 0;
@@ -392,10 +416,17 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return;
 		}
 
-		// The card farmer owns the session while it has work - stand off completely. Human mode plays exactly
-		// ONE game at a time; a second one on top of the farmer is the loudest bot tell there is. Resume the
-		// day when the cards are done.
-		if (Bot.IsFarming) {
+		// Cards farming in the day's sittings: the farmer plays inside one of ours, and the day goes on around it
+		// (the Playing branch below). Farming outside an open sitting is the farmer still letting go at a boundary -
+		// wait for it rather than start a second game over the top.
+		if (Bot.IsFarming && FarmInDay) {
+			if (!FarmSittingOpen) {
+				return;
+			}
+		} else if (Bot.IsFarming) {
+			// Cards farming flat out owns the session while it has work - stand off completely. Human mode plays
+			// exactly ONE game at a time; a second one on top of the farmer is the loudest bot tell there is. Resume
+			// the day when the cards are done.
 			_wasFarming = true;
 			BankSession();
 			_game = 0;
@@ -423,6 +454,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			if (_phase != Phase.DoneForToday) {
 				BankSession();
 				_phase = Phase.DoneForToday;
+				_farmSession = false;
 				_game = 0;
 				_switchingTo = 0;
 				Bot.StopPlaying();
@@ -465,6 +497,22 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			// partly spent - which is the exact double-day the saved plan exists to prevent.
 			BankSession();
 
+			// A card-farming sitting: the farmer puts the game on and watches the drops; this keeps the clock. Follows
+			// the game it's actually on, and ends the sitting early once the cards run out - with a break, like any
+			// other sitting, before the usual games take over.
+			if (_farmSession) {
+				if (Bot.IsFarming && (Bot.PlayingApps.Count == 1)) {
+					_game = Bot.PlayingApps[0];
+					_lastGame = _game;
+				}
+
+				if ((DateTime.UtcNow >= _sessionEnds) || ((Bot.CardsRemaining == 0) && CardsCheckedThisLogin())) {
+					EndSession();
+				}
+
+				return;
+			}
+
 			// Re-assert after a reconnect. What an account is "playing" is per-session state that Steam throws
 			// away the instant the connection drops, and modules are not rebuilt on reconnect - so without this
 			// the phase stays Playing, BankSession keeps crediting the minutes, the status keeps saying
@@ -482,12 +530,20 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return;
 		}
 
+		// The farmer reads the badge pages only once the warm-up is done, so at this moment "no cards" usually just
+		// means it hasn't looked yet. Starting a game here played it for a minute until the farmer found cards and
+		// switched to one of them - a game swap nobody makes. Wait for that first look, which is a minute or so,
+		// but not for ever: badge pages that won't load mustn't keep the account idle.
+		if (Bot.Cfg.FarmCards && !CardsCheckedThisLogin() && (DateTime.UtcNow < _readyAt.AddMinutes(5))) {
+			return;
+		}
+
 		// Warmed up. If there are cards, hand off to the farmer (it takes priority) rather than starting a
 		// weighted game on top of it - it will claim on its next tick now that the warm-up is done. But only when
 		// it is actually going to farm: with farming switched off, or the farmer waiting for bedtime, its window or
 		// its next sitting, standing aside left the account online and idle until then. The day carries on
 		// instead, and the farmer takes the session over the moment it starts (the IsFarming check above).
-		if ((Bot.CardsRemaining > 0) && Bot.Cfg.FarmCards && (BotManager.ModuleOf<CardFarmer>(Bot)?.HoldingBack != true)) {
+		if (!FarmInDay && (Bot.CardsRemaining > 0) && Bot.Cfg.FarmCards && (BotManager.ModuleOf<CardFarmer>(Bot)?.HoldingBack != true)) {
 			_phase = Phase.Off;
 			Bot.ClearPersonaOverride();
 
@@ -520,6 +576,8 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	///     mechanical thing an account can do, and it is what you see the moment you switch human mode on.
 	///     A person opens Steam, looks at something, and gets round to it.
 	/// </summary>
+	private bool CardsCheckedThisLogin() => (Bot.CardsCheckedAt is { } at) && (Bot.OnlineSince is { } on) && (at >= on);
+
 	private bool SettledIn() {
 		DateTime loggedOn = Bot.OnlineSince ?? DateTime.UtcNow;
 
@@ -826,6 +884,15 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// with no settle. Cleared here (only reached when asleep), it re-arms on the first waking tick.
 		_gateArmedFor = DateTime.MinValue;
 		BankSession();
+		_farmSession = false;
+
+		// Cards farm in the day, so bedtime ends the sitting. The farmer lets go within seconds of it closing; the
+		// overnight games go on once it has, rather than both fighting over what's playing.
+		if (FarmInDay && Bot.IsFarming) {
+			Bot.SetPersonaOverride(Bot.PersonaDark);
+
+			return;
+		}
 		bool banking = Bot.Cfg.OfflineIdleAtNight && (Bot.Cfg.OfflineIdleGames.Count > 0);
 		Phase want = banking ? Phase.NightIdle : Phase.Asleep;
 
@@ -841,16 +908,23 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		//
 		// It knows which games still have drops; the overnight list is whatever was typed into a settings box
 		// once. Asserting over the top of it would take the session straight back off it every tick.
+		//
+		// Said on the farmer taking over, not only on the way into bed: an account that went to bed a minute before
+		// the farmer started was already in its night phase, so the handover went unsaid and the status went on
+		// reading "banking hours" while the farmer was the one playing.
 		if (Bot.IsFarming) {
-			if (_phase != want) {
+			if ((_phase != want) || !_nightFarming) {
 				_phase = want;
 				_game = 0;
 				_switchingTo = 0;
+				_nightFarming = true;
 				Log.Info(new Said("asleep until {0} - the card farmer keeps working through the night", (WakeTime()).ToString("HH:mm")), Bot.Name);
 			}
 
 			return;
 		}
+
+		_nightFarming = false;
 
 		if (banking) {
 			ReassertPlaying(Bot.Cfg.OfflineIdleGames);
@@ -928,6 +1002,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		}
 
 		uint game;
+		uint farm = FarmGameNow();
 
 		if (_switchingTo != 0) {
 			// The gap that just finished was for THIS game, so launch it rather than deciding all over again.
@@ -938,6 +1013,20 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			// would have kept going round until a pick happened to match.
 			game = _switchingTo;
 			_switchingTo = 0;
+		} else if (farm != 0) {
+			// Cards first: while there are any, the card game is what the day plays - and going to it from another
+			// game still takes the moment it takes to close one and launch the other.
+			game = farm;
+
+			if ((game != _lastGame) && (_lastGame != 0)) {
+				_switchingTo = game;
+				_phase = Phase.SwitchingGame;
+				_phaseEnds = DateTime.UtcNow.AddMinutes(Rng(1, 4));
+				_game = 0;
+				Bot.StopPlaying();
+
+				return;
+			}
 		} else {
 			// A real player does not change game every time they sit down. Often they carry straight on.
 			game = (_lastGame != 0) && Chance(0.40) ? _lastGame : PickGame();
@@ -959,7 +1048,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			}
 		}
 
-		int minutes = SessionLength(game, main);
+		// A card-farming sitting runs like a main-game one - real sittings, not the short dips side games get.
+		_farmSession = (farm != 0) && (game == farm);
+		int minutes = SessionLength(game, _farmSession ? game : main);
 
 		_game = game;
 		_lastGame = game;
@@ -974,7 +1065,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		Bot.SetPlaying([game]);   // ONE game. Six at once is the tell.
 		_playingAssertedFor = Bot.OnlineSince ?? DateTime.UtcNow;
 
-		Log.Good(new Said("playing {0} for about {1}  ({2}/{3} today)", GameName(game), Fmt.Hm(minutes), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)), Bot.Name);
+		Log.Good(_farmSession
+			? new Said("farming cards on {0} for about {1}  ({2}/{3} today)", GameName(game), Fmt.Hm(minutes), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes))
+			: new Said("playing {0} for about {1}  ({2}/{3} today)", GameName(game), Fmt.Hm(minutes), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)), Bot.Name);
 	}
 
 	/// <summary>
@@ -1035,6 +1128,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	private void EndSession() {
 		BankSession();
 		_game = 0;
+		_farmSession = false;
 
 		// Meals land at real meal times - dinner, and a lunch - rather than at a flat chance any hour of the day.
 		// Not near zero off-hours either: this is a night gamer, late snacks are normal.

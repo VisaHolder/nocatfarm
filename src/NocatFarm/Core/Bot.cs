@@ -75,7 +75,20 @@ public sealed class Bot : IAsyncDisposable {
 	/// </summary>
 	public bool GrindIsBoost { get; internal set; }
 
-	public bool StartGrind(uint app, TimeSpan how, TimeSpan delay = default, bool boost = false) {
+	/// <summary>
+	/// Card drops still wanted from the grind game - a drop run (the <c>drops</c> command). The card farmer counts them
+	/// down and ends the grind once they're in; the grind's own time is only the cap for a game that stops dropping.
+	/// 0 for an ordinary grind.
+	/// </summary>
+	public int GrindDropsLeft { get; private set; }
+
+	/// <summary>Knock drops off the running drop run, and keep that across a restart.</summary>
+	public void CountGrindDrops(int drops) {
+		GrindDropsLeft = Math.Max(0, GrindDropsLeft - drops);
+		SaveGrind();
+	}
+
+	public bool StartGrind(uint app, TimeSpan how, TimeSpan delay = default, bool boost = false, int drops = 0) {
 		if (Refunds.Holds(app)) {
 			Log.Warn(new Said("not grinding {0} - it's still inside its refund window (turn off \"Protect refundable games\" to override)", GameNames.Of(app)), Name);
 
@@ -86,6 +99,7 @@ public sealed class Bot : IAsyncDisposable {
 		GrindStartsAt = DateTime.UtcNow.Add(delay);
 		GrindUntil = GrindStartsAt.Add(how);   // the hours run from when it actually starts, not the command
 		GrindIsBoost = boost;
+		GrindDropsLeft = Math.Max(0, drops);
 		SaveGrind();
 
 		// A grind with no delay should start with NO DELAY.
@@ -106,6 +120,7 @@ public sealed class Bot : IAsyncDisposable {
 		GrindGame = 0;
 		GrindUntil = null;
 		GrindIsBoost = false;
+		GrindDropsLeft = 0;
 		SaveGrind();
 
 		// Put the normal games back now. Left to the idler's own schedule, "grind kylro off" answered "back to
@@ -127,7 +142,7 @@ public sealed class Bot : IAsyncDisposable {
 			}
 
 			Directory.CreateDirectory(Path.GetDirectoryName(GrindPath)!);
-			AtomicFile.Write(GrindPath, JsonSerializer.Serialize(new GrindSave(GrindGame, GrindUntil.Value.Ticks, GrindIsBoost)));
+			AtomicFile.Write(GrindPath, JsonSerializer.Serialize(new GrindSave(GrindGame, GrindUntil.Value.Ticks, GrindIsBoost, GrindDropsLeft)));
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't save the grind: {0}", e.Message), Name);
 		}
@@ -157,6 +172,7 @@ public sealed class Bot : IAsyncDisposable {
 			GrindGame = saved.Game;
 			GrindUntil = until;
 			GrindIsBoost = saved.Boost;
+			GrindDropsLeft = Math.Max(0, saved.DropsLeft);
 			GrindStartsAt = DateTime.UtcNow;   // resume now - no fresh switch-in delay on a resume
 			Log.Info(new Said("resuming the grind of {0} - {1} left", GameNames.Of(GrindGame), Fmt.Hm((int) (until - DateTime.UtcNow).TotalMinutes)), Name);
 		} catch (Exception e) {
@@ -166,7 +182,7 @@ public sealed class Bot : IAsyncDisposable {
 
 	// Boost defaults to false, so a file written by an older build reads back as a manual grind - which is
 	// the safe way round: the boost declines to touch it rather than ending something you started by hand.
-	private sealed record GrindSave(uint Game, long UntilTicks, bool Boost = false);
+	private sealed record GrindSave(uint Game, long UntilTicks, bool Boost = false, int DropsLeft = 0);
 
 	/// <summary>
 	/// The custom name actually in effect - empty when the feature is switched off.
@@ -449,6 +465,9 @@ public sealed class Bot : IAsyncDisposable {
 
 	public int CardsRemaining { get; internal set; }
 	public int GamesRemaining { get; internal set; }
+
+	/// <summary>When the card farmer last read the badge pages - until then, CardsRemaining is 0 because nobody has looked.</summary>
+	public DateTime? CardsCheckedAt { get; internal set; }
 
 	/// <summary>Steam says this account can't play right now - the human is using it, or the library is locked.</summary>
 	public bool PlayingBlocked { get; private set; }

@@ -46,6 +46,7 @@ public sealed class TrayIcon : IDisposable {
 
 	private const int IdOpenWeb = 1;
 	private const int IdToggleConsole = 2;
+	private const int IdMini = 10;
 	private const int IdStartAll = 3;
 	private const int IdStopAll = 4;
 	private const int IdExit = 9;
@@ -353,6 +354,7 @@ public sealed class TrayIcon : IDisposable {
 			// Only offer it when there is a REAL console window to show or hide.
 			if (Commands.Window != null) {
 				AppendMenu(menu, MfString, IdToggleConsole, Commands.Window.Visible ? "Hide the window" : "Show the window");
+				AppendMenu(menu, MfString, IdMini, Commands.Window.Mini ? "Full window" : "Mini mode");
 			} else if (HasRealConsole()) {
 				AppendMenu(menu, MfString, IdToggleConsole, _consoleVisible ? "Hide the window" : "Show the window");
 			}
@@ -392,6 +394,12 @@ public sealed class TrayIcon : IDisposable {
 				}
 
 				ShowConsole(!_consoleVisible);
+
+				break;
+			case IdMini:
+				if (Commands.Window is { } mini) {
+					mini.SetMiniMode(!mini.Mini);
+				}
 
 				break;
 			case IdStartAll:

@@ -48,6 +48,8 @@ public static partial class Commands {
 		new("disable", "<account>", GroupAccounts, "Keep the account configured but never log it in."),
 
 		new("play", "<account> <appIDs|none>", GroupPlaying, "Set the games this account idles for playtime."),
+		new("drops", "<account> [appID|next] [count|all] | <account> off", GroupCards,
+			"Go for card drops now, whatever the schedule says: one game until it has dropped that many (all it has left by default), then back to the usual day. Without an appID, the next game with cards."),
 		new("grind", "<account|all> <appID> <hours> | <account> off", GroupPlaying,
 			"Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs."),
 		new("human", "[account] [week|reroll]", GroupPlaying, "What human mode is doing today, and what it played. Add 'week' to see the next seven days, or 'reroll' to throw today's plan away and roll a fresh one from the current settings."),
@@ -56,7 +58,7 @@ public static partial class Commands {
 		new("persona", "<account> <state>", GroupPlaying, "online | offline | busy | away | snooze | invisible."),
 		new("nickname", "<account> <profile name>", GroupPlaying, "Change the name everybody sees on the profile and friends list. Not the custom game name - that's 'name'."),
 
-		new("cards", "[account]", GroupCards, "What is still left to farm."),
+		new("cards", "[account]", GroupCards, "What is still left to farm, and about how long it will take."),
 		new("farm", "<account> on|off", GroupCards, "Turn trading-card farming on or off."),
 
 		new("rep4rep", "status|points|profiles|tasks|on|off|now|pause|resume|clear|rest", GroupRep4Rep, "Everything rep4rep. Run it bare for a summary.", "r4r"),
@@ -97,6 +99,7 @@ public static partial class Commands {
 		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does.", "?|h"),
 		new("theme", "[dark|light]", GroupOther, "Switch the dashboard between the dark and light themes. Without an argument it says which is on.", "dark|light"),
 		new("version", "", GroupOther, "Which version this is.", "about"),
+		new("mini", "[on|off]", GroupOther, "Shrink the window to a small panel of your accounts - what each is doing, start and stop, the dashboard - or back to the full window."),
 		new("update", "[now]", GroupOther, "Check for a newer release. 'update now' downloads it and restarts into it - nothing updates on its own, ever."),
 		new("exit", "", GroupOther, "Shut nocat.farm down.", "quit|q")
 	];
@@ -218,6 +221,7 @@ public static partial class Commands {
 				"restart" => await RestartAsync(mgr, rest).ConfigureAwait(false),
 				"play" => Play(mgr, rest),
 				"grind" => Grind(mgr, rest),
+				"drops" => await DropsAsync(mgr, rest).ConfigureAwait(false),
 				"human" => Human(mgr, rest),
 				"wake" or "wakeup" or "skipsleep" => Wake(mgr, rest),
 				"redeem" or "key" => await RedeemAsync(mgr, rest).ConfigureAwait(false),
@@ -256,6 +260,7 @@ public static partial class Commands {
 				"answer" => Prompt.Answer(string.Join(' ', rest)) ? "answered" : "nothing is waiting for an answer",
 				"theme" or "dark" or "light" => Theme(cmd, rest),
 				"version" or "about" => About(),
+				"mini" => Mini(rest),
 				"plugins" => PluginList(),
 				"owns" => Owns(mgr, rest),
 				"addlicense" => await AddLicense(mgr, rest).ConfigureAwait(false),
@@ -1407,6 +1412,98 @@ public static partial class Commands {
 			: no.TrimStart();
 	}
 
+	private static async Task<string> DropsAsync(BotManager mgr, string[] args) {
+		if (args.Length < 1) {
+			return string.Join(Environment.NewLine, [
+				"drops <account> [appID|next] [count|all]   go for card drops now, whatever the schedule says",
+				"drops <account> off                        stop early and go back to normal",
+				"  drops new                every card left in the next game with cards",
+				"  drops new 460920 2       two drops from Steep, then back to the usual day",
+				"  drops new next 1         one drop from whatever has cards next"
+			]);
+		}
+
+		if (mgr.Get(args[0]) is not { } bot) {
+			return NoSuchAccount(mgr, args[0]);
+		}
+
+		if ((args.Length > 1) && args[1].Equals("off", StringComparison.OrdinalIgnoreCase)) {
+			if (!bot.Grinding || (bot.GrindDropsLeft == 0)) {
+				return $"{bot.Name} isn't on a drop run.";
+			}
+
+			bot.StopGrind();
+			Log.Info("drop run stopped - back to the usual day", bot.Name);
+
+			return $"{bot.Name}: drop run stopped - back to normal.";
+		}
+
+		if (BotManager.ModuleOf<CardFarmer>(bot) is not { } farmer) {
+			return $"{bot.Name} has no card farmer running.";
+		}
+
+		// [appID|next] then [count|all], both optional. Two bare numbers read as appID then count.
+		uint app = 0;
+		int? count = null;
+		string[] rest = args[1..];
+
+		if ((rest.Length > 0) && !rest[0].Equals("next", StringComparison.OrdinalIgnoreCase) && !rest[0].Equals("all", StringComparison.OrdinalIgnoreCase)) {
+			if (!uint.TryParse(rest[0], out app) || (app == 0)) {
+				return $"'{rest[0]}' is not an appID - it's the number in a game's store URL. 'next' means the next game with cards.";
+			}
+		}
+
+		string? countArg = rest.Length > 1 ? rest[1] : (rest.Length == 1) && rest[0].Equals("all", StringComparison.OrdinalIgnoreCase) ? "all" : null;
+
+		if ((countArg != null) && !countArg.Equals("all", StringComparison.OrdinalIgnoreCase)) {
+			if (!int.TryParse(countArg, out int n) || (n <= 0)) {
+				return $"'{countArg}' isn't a number of drops - try 2, or 'all'.";
+			}
+
+			count = n;
+		}
+
+		if (app == 0) {
+			app = farmer.NextGame != 0 ? farmer.NextGame : farmer.Queue.FirstOrDefault(static g => g.CardsRemaining > 0)?.AppId ?? 0;
+		}
+
+		if (app == 0) {
+			return $"{bot.Name}: no game with card drops left, as of its last look at the badge pages.";
+		}
+
+		FarmTarget? target = await farmer.CardsForAsync(app).ConfigureAwait(false);
+
+		if (target == null) {
+			return $"Couldn't read the badge page for {GameNames.Of(app)} on {bot.Name} - try again in a minute.";
+		}
+
+		// The catalogue's name, not the page's: on some games' card pages that header reads "Badges".
+		string game = GameNames.Of(app);
+
+		if (target.CardsRemaining == 0) {
+			return $"{game} has no card drops left on {bot.Name}.";
+		}
+
+		int want = Math.Min(count ?? target.CardsRemaining, target.CardsRemaining);
+		int estimate = farmer.MinutesForDrops(app, want);
+
+		// The grind's time is only a cap, for a game that stops dropping: twice the estimate and a half hour, two hours
+		// at the least and a day at the most.
+		TimeSpan cap = TimeSpan.FromMinutes(Math.Clamp((estimate * 2) + 30, 120, 24 * 60));
+		TimeSpan delay = bot.HumanOwned ? TimeSpan.FromSeconds(Rng.Next(45, 210)) : TimeSpan.Zero;
+
+		if (!bot.StartGrind(app, cap, delay, drops: want)) {
+			return $"{bot.Name}: {game} is still refundable, and a drop run would spend that.";
+		}
+
+		Said lead = delay > TimeSpan.Zero ? new Said(" (finishing up first, starts in ~{0})", Fmt.Hm((int) Math.Ceiling(delay.TotalMinutes))) : default;
+		Log.Info(new Said("going for {0} card drop(s) in {1} - about {2}{3}, then back to the usual day", want, game, Fmt.Rough(estimate), lead), bot.Name);
+
+		return $"{bot.Name}: {game} until {want} card(s) drop - about {Fmt.Rough(estimate)}"
+			+ (delay > TimeSpan.Zero ? $", starting in ~{Fmt.Hm((int) Math.Ceiling(delay.TotalMinutes))}" : "")
+			+ $". It stops by itself after {Fmt.Rough((int) cap.TotalMinutes)} if the drops don't come; 'drops {bot.Name} off' stops it now.";
+	}
+
 	private static async Task<string> CheevoAsync(BotManager mgr, string[] args) {
 		if (args.Length < 2) {
 			return string.Join(Environment.NewLine, [
@@ -1954,12 +2051,31 @@ public static partial class Commands {
 
 			sb.AppendLine($"{bot.Name}: {farmer.Status}");
 
+			if (farmer.Queue.Count > 0) {
+				// Farming time, not a clock time: sittings, a farming window or waiting for the night stretch it.
+				(double pace, bool learned) = farmer.MinutesPerCard;
+				sb.AppendLine($"    about {Fmt.Rough(farmer.EstimateMinutes)} of farming left - {pace:0}m a card, "
+					+ (learned ? "this account's pace so far" : "Steam's usual rate until a drop has been timed"));
+			}
+
 			foreach (FarmTarget g in farmer.Queue.Take(15)) {
 				sb.AppendLine($"    {g.CardsRemaining,3} card(s)  {g.HoursPlayed,6:0.0}h  {g.GameName}");
 			}
 		}
 
 		return sb.Length == 0 ? "Nothing is farming." : sb.ToString().TrimEnd();
+	}
+
+	private static string Mini(string[] args) {
+		if (Window == null) {
+			return "There's no app window in this run - mini mode is part of it.";
+		}
+
+		string arg = args.Length > 0 ? args[0].ToLowerInvariant() : "";
+		bool on = arg switch { "on" => true, "off" => false, _ => !Window.Mini };
+		Window.SetMiniMode(on);
+
+		return on ? "Mini mode on - 'mini off' or its full-window button brings the full window back." : "Back to the full window.";
 	}
 
 	// ── rep4rep ─────────────────────────────────────────────────────────────
@@ -2325,6 +2441,10 @@ public static partial class Commands {
 
 	public static void ApplyGlobalSideEffects(BotManager mgr, SettingDef def) {
 		switch (def.Name) {
+			case "MiniOnTop":
+				Window?.RefreshOnTop();
+
+				break;
 			// The status text this program writes about itself is translated too, so a language change has to
 			// reach the pack the modules read from - not only the one the browser fetches.
 			// "Hold for N days" is turned into a deadline exactly once, here, when the number changes.

@@ -124,6 +124,34 @@ public sealed class MainWindow : IDisposable {
 	/// <summary>The command reference, shown as a panel rather than sixty lines dumped into the log.</summary>
 	private bool _helpSheet;
 
+	/// <summary>
+	/// Mini mode: the same window shrunk to a small always-on-top panel - a line per account, start/stop, the
+	/// dashboard. One window in two layouts rather than a second window, so it shares the message pump, the
+	/// fonts and the hit-testing, and the two can't disagree about what an account is doing.
+	/// </summary>
+	private bool _mini;
+
+	private IntPtr _fontIcon;
+
+	private const int MiniW = 300;
+	private const int MiniTitleH = 30;
+	private const int MiniRowH = 30;
+
+	/// <summary>A farming account's row: the line, then cards left and time left, then its progress bar.</summary>
+	private const int MiniFocusH = 58;
+
+	/// <summary>Past this many accounts the rest are summed up in one line - mini is for a glance, not eighty rows.</summary>
+	private const int MiniMaxRows = 10;
+
+	// Segoe MDL2 Assets, which every Windows 10 and 11 has: drawn as text, so they take the palette like any label.
+	private const string GlyphPlay = "\uE768";
+	private const string GlyphStop = "\uE71A";
+	private const string GlyphDashboard = "\uECA5";
+	private const string GlyphFullWindow = "\uE740";
+	private const string GlyphPin = "\uE718";
+
+	public bool Mini => _mini;
+
 	private int _helpScroll;
 
 	/// <summary>Clickable areas worked out during the paint, so hit-testing always matches what is on screen.</summary>
@@ -277,8 +305,7 @@ public sealed class MainWindow : IDisposable {
 		_w = openW;
 		_h = openH;
 
-		int x = Math.Max(0, (GetSystemMetrics(SmCxScreen) - openW) / 2);
-		int y = Math.Max(0, (GetSystemMetrics(SmCyScreen) - openH) / 2);
+		(int x, int y) = FullSpot(openW, openH);
 
 		// WS_THICKFRAME is what gives the edges a grab handle. The caption is still drawn by hand - this only
 		// adds the sizing border, which Windows keeps outside the client area we paint.
@@ -307,6 +334,12 @@ public sealed class MainWindow : IDisposable {
 		int border = Border;
 		DwmSetWindowAttribute(_hwnd, DwmBorderColor, ref border, sizeof(int));
 
+		// Rounded corners in both layouts. Windows 11 rounds a window that has a sizing border on its own, which the
+		// full window has and mini mode doesn't - so mini came out square next to the full one. Asked for outright
+		// here; Windows 10 doesn't know the attribute and just ignores it.
+		int round = DwmCornerRound;
+		DwmSetWindowAttribute(_hwnd, DwmWindowCornerPreference, ref round, sizeof(int));
+
 		// Also set the icon on the window itself. The class icon above covers a fresh start; this covers the case
 		// where the class was already registered (a second window in the same process) and makes the taskbar pick
 		// the icon up immediately.
@@ -321,6 +354,11 @@ public sealed class MainWindow : IDisposable {
 		MakeFonts();
 		MakeInput();
 		SetTimer(_hwnd, 1, 1000, IntPtr.Zero);
+
+		// Left in mini mode last time: come back as it was left.
+		if (Live.Global.MiniMode) {
+			ApplyMini(true, remember: false);
+		}
 
 		if (_showOnCreate) {
 			ShowWindow(_hwnd, SwShow);
@@ -342,6 +380,7 @@ public sealed class MainWindow : IDisposable {
 		_fontBold = CreateFont(15, 0, 0, 0, 700, 0, 0, 0, 1, 0, 0, 5, 0, "Segoe UI");
 		_fontSmall = CreateFont(13, 0, 0, 0, 400, 0, 0, 0, 1, 0, 0, 5, 0, "Segoe UI");
 		_fontMono = CreateFont(13, 0, 0, 0, 400, 0, 0, 0, 1, 0, 0, 5, 0, "Consolas");
+		_fontIcon = CreateFont(14, 0, 0, 0, 400, 0, 0, 0, 1, 0, 0, 5, 0, "Segoe MDL2 Assets");
 	}
 
 	private void MakeInput() {
@@ -455,13 +494,28 @@ public sealed class MainWindow : IDisposable {
 				return new IntPtr(1);   // everything is painted into a back buffer; erasing here only flickers
 
 			case WmTimer:
+				if (_mini) {
+					FitMini();
+				}
+
 				Invalidate();
 
 				return IntPtr.Zero;
 
+			case WmSetMini:
+				ApplyMini(wParam != IntPtr.Zero, remember: true);
+
+				return IntPtr.Zero;
+
+			case WmRefreshOnTop:
+				ApplyOnTop();
+
+				return IntPtr.Zero;
+
 			case WmSize: {
-				_w = Math.Max(MinW, LoWord(lParam));
-				_h = Math.Max(MinH, HiWord(lParam));
+				// Mini mode sizes itself to its rows, well under the full layout's floor.
+				_w = _mini ? Math.Max(1, LoWord(lParam)) : Math.Max(MinW, LoWord(lParam));
+				_h = _mini ? Math.Max(1, HiWord(lParam)) : Math.Max(MinH, HiWord(lParam));
 
 				// The input is a real control, so it has to be moved by hand - everything else is repainted from
 				// the new figures on the next frame.
@@ -486,7 +540,7 @@ public sealed class MainWindow : IDisposable {
 				}
 
 				MinMaxInfo info = Marshal.PtrToStructure<MinMaxInfo>(lParam);
-				info.MinTrackSize = new Point { X = MinW + frameW, Y = MinH + frameH };
+				info.MinTrackSize = _mini ? new Point { X = 100 + frameW, Y = MiniTitleH + frameH } : new Point { X = MinW + frameW, Y = MinH + frameH };
 				Marshal.StructureToPtr(info, lParam, false);
 
 				return IntPtr.Zero;
@@ -495,7 +549,11 @@ public sealed class MainWindow : IDisposable {
 			case WmExitSizeMove:
 				// Saved when the drag FINISHES, not on every WM_SIZE - resizing fires that continuously and
 				// would rewrite the config file dozens of times a second.
-				RememberSize();
+				if (_mini) {
+					RememberMiniSpot();
+				} else {
+					RememberSize();
+				}
 
 				return IntPtr.Zero;
 
@@ -527,7 +585,7 @@ public sealed class MainWindow : IDisposable {
 				}
 
 				// Anywhere else on the title bar drags the window, since there is no system caption to grab.
-				if (my < TitleH) {
+				if (my < (_mini ? MiniTitleH : TitleH)) {
 					ReleaseCapture();
 					SendMessage(hwnd, WmNcLButtonDown, new IntPtr(HtCaption), IntPtr.Zero);
 				}
@@ -606,7 +664,10 @@ public sealed class MainWindow : IDisposable {
 				return IntPtr.Zero;
 
 			case WmDestroy:
-				RememberSize();
+				if (!_mini) {
+					RememberSize();
+				}
+
 				_running = false;
 				PostQuitMessage(0);
 
@@ -617,7 +678,7 @@ public sealed class MainWindow : IDisposable {
 	}
 
 	/// <summary>
-	/// Remember how big the window was left, so it opens that size next time.
+	/// Remember where the window was left and how big, so it opens there next time.
 	///
 	/// Written to config/nocatFarm.json beside the exe - the same file as every other setting, and nothing is
 	/// kept in AppData. Failing to save a window size must never take the program down with it, hence the catch.
@@ -636,12 +697,17 @@ public sealed class MainWindow : IDisposable {
 			int w = outer.Right - outer.Left;
 			int h = outer.Bottom - outer.Top;
 
-			if ((w < MinW) || (h < MinH) || ((Live.Global.WindowWidth == w) && (Live.Global.WindowHeight == h))) {
+			// Where it is as well as how big. Only the size was kept, so every launch put the window back in the
+			// middle of the screen however carefully it had been parked.
+			if ((w < MinW) || (h < MinH)
+				|| ((Live.Global.WindowWidth == w) && (Live.Global.WindowHeight == h) && (Live.Global.WindowX == outer.Left) && (Live.Global.WindowY == outer.Top))) {
 				return;   // unchanged, or nonsense - do not churn the file
 			}
 
 			Live.Global.WindowWidth = w;
 			Live.Global.WindowHeight = h;
+			Live.Global.WindowX = outer.Left;
+			Live.Global.WindowY = outer.Top;
 			ConfigStore.SaveGlobal(Live.Global);
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't save the window size: {0}: {1}", e.GetType().Name, e.Message));
@@ -869,6 +935,21 @@ public sealed class MainWindow : IDisposable {
 				StartAddAccount();
 
 				break;
+
+			case IdMini:
+				ApplyMini(true, remember: true);
+
+				break;
+
+			case IdFullWindow:
+				ApplyMini(false, remember: true);
+
+				break;
+
+			case IdPin:
+				ToggleOnTop();
+
+				break;
 		}
 
 		Invalidate();
@@ -895,21 +976,25 @@ public sealed class MainWindow : IDisposable {
 		_buttons.Clear();
 		_hits.Clear();
 
-		PaintTitle(mem);
-
-		if (_helpSheet) {
-			PaintHelp(mem);
-		} else if (_sheet) {
-			// The sheet owns the window while it is open, so nothing underneath registers a click.
-			PaintSheet(mem);
+		if (_mini) {
+			PaintMini(mem);
 		} else {
-			PaintToolbar(mem);
+			PaintTitle(mem);
 
-			// No account list here any more. It lived in two places, which meant two layouts to keep right and
-			// a main window that grew with the number of accounts; the sheet owns them now and the log gets
-			// every pixel that frees up.
-			PaintLog(mem, TitleH + BarH);
-			PaintStatus(mem);
+			if (_helpSheet) {
+				PaintHelp(mem);
+			} else if (_sheet) {
+				// The sheet owns the window while it is open, so nothing underneath registers a click.
+				PaintSheet(mem);
+			} else {
+				PaintToolbar(mem);
+
+				// No account list here any more. It lived in two places, which meant two layouts to keep right and
+				// a main window that grew with the number of accounts; the sheet owns them now and the log gets
+				// every pixel that frees up.
+				PaintLog(mem, TitleH + BarH);
+				PaintStatus(mem);
+			}
 		}
 
 			BitBlt(dc, 0, 0, _w, _h, mem, 0, 0, SrcCopy);
@@ -940,8 +1025,9 @@ public sealed class MainWindow : IDisposable {
 		int w = TextWidth(dc, "nocat.", _fontBold);
 		Text(dc, "farm", Pad + w, 9, _fontBold, Wordmark);
 
-		Text(dc, DateTime.Now.ToString("HH:mm:ss"), _w - 150, 10, _fontSmall, TextDim);
+		Text(dc, DateTime.Now.ToString("HH:mm:ss"), _w - 190, 10, _fontSmall, TextDim);
 
+		AddButton(dc, "mini", IdMini, _w - 128, 7, 34, 20, TextMid);
 		AddButton(dc, "hide", IdHide, _w - 88, 7, 34, 20, TextMid);
 		AddButton(dc, "quit", IdQuit, _w - 48, 7, 34, 20, Red);
 	}
@@ -1307,6 +1393,276 @@ public sealed class MainWindow : IDisposable {
 		return (bots.Count(static b => b.IsOnline), bots.Count);
 	}
 
+	// ── mini mode ───────────────────────────────────────────────────────────
+	/// <summary>Switch mini mode on or off from any thread - the tray, a typed command. Shows the window too.</summary>
+	public void SetMiniMode(bool on) {
+		if (_hwnd != IntPtr.Zero) {
+			PostMessage(_hwnd, WmSetMini, new IntPtr(on ? 1 : 0), IntPtr.Zero);
+		}
+	}
+
+	/// <summary>Put the "keep on top" setting into effect, from any thread - after it's changed on the dashboard.</summary>
+	public void RefreshOnTop() {
+		if (_hwnd != IntPtr.Zero) {
+			PostMessage(_hwnd, WmRefreshOnTop, IntPtr.Zero, IntPtr.Zero);
+		}
+	}
+
+	/// <summary>
+	/// Change layout. Only ever runs on the window's own thread: the style, the size and the child input all
+	/// belong to it.
+	/// </summary>
+	private void ApplyMini(bool on, bool remember) {
+		if ((_hwnd == IntPtr.Zero) || (on == _mini)) {
+			if (on && remember) {
+				ShowWindow(_hwnd, SwShow);
+				Visible = true;
+			}
+
+			return;
+		}
+
+		if (on && !_mini) {
+			RememberSize();   // where the full window was, so coming back puts it there
+		} else if (!on && _mini) {
+			RememberMiniSpot();
+		}
+
+		_mini = on;
+		_sheet = false;
+		_helpSheet = false;
+		_hoverId = -1;
+
+		// The command line has no place in a panel this size, and it's a real child window, so it has to go by hand.
+		ShowWindow(_input, on ? SwHide : SwShow);
+
+		// No sizing border in mini: it sizes itself to its rows.
+		long style = GetWindowLongPtr(_hwnd, GwlStyle).ToInt64();
+		style = on ? style & ~(long) WsThickFrame : style | WsThickFrame;
+		SetWindowLongPtr(_hwnd, GwlStyle, new IntPtr(style));
+
+		if (on) {
+			int h = MiniHeight();
+			(int x, int y) = MiniSpot(h);
+			SetWindowPos(_hwnd, Live.Global.MiniOnTop ? HwndTopmost : HwndNoTopmost, x, y, MiniW, h, SwpFrameChanged);
+		} else {
+			int w = Live.Global.WindowWidth > 0 ? Math.Clamp(Live.Global.WindowWidth, MinW, GetSystemMetrics(SmCxScreen)) : StartW;
+			int h = Live.Global.WindowHeight > 0 ? Math.Clamp(Live.Global.WindowHeight, MinH, GetSystemMetrics(SmCyScreen)) : StartH;
+			(int x, int y) = FullSpot(w, h);
+			SetWindowPos(_hwnd, HwndNoTopmost, x, y, w, h, SwpFrameChanged);
+		}
+
+		// Asked for now (a click, the tray, a command): show it. Opening in mini at startup leaves showing to the
+		// usual startup path, so "Start hidden" still starts hidden.
+		if (remember) {
+			ShowWindow(_hwnd, SwShow);
+			Visible = true;
+		}
+
+		if (remember && (Live.Global.MiniMode != on)) {
+			try {
+				Live.Global.MiniMode = on;
+				ConfigStore.SaveGlobal(Live.Global);
+			} catch (Exception e) {
+				Log.Debug(new Said("couldn't save mini mode: {0}", e.Message));
+			}
+		}
+
+		Invalidate();
+	}
+
+	/// <summary>
+	/// Where the full window goes: where it was left, or the middle of the main screen the first time. Clamped to the
+	/// desktop as it is now, so a monitor that has since been unplugged can't leave it somewhere nobody can see.
+	/// </summary>
+	private static (int X, int Y) FullSpot(int width, int height) {
+		if ((Live.Global.WindowX == int.MinValue) || (Live.Global.WindowY == int.MinValue)) {
+			return (Math.Max(0, (GetSystemMetrics(SmCxScreen) - width) / 2), Math.Max(0, (GetSystemMetrics(SmCyScreen) - height) / 2));
+		}
+
+		int vx = GetSystemMetrics(SmXVirtualScreen), vy = GetSystemMetrics(SmYVirtualScreen);
+		int vw = GetSystemMetrics(SmCxVirtualScreen), vh = GetSystemMetrics(SmCyVirtualScreen);
+
+		return (Math.Clamp(Live.Global.WindowX, vx, Math.Max(vx, vx + vw - width)), Math.Clamp(Live.Global.WindowY, vy, Math.Max(vy, vy + vh - height)));
+	}
+
+	/// <summary>Where mini mode goes: where it was left, or the bottom-right corner above the taskbar the first time.</summary>
+	private static (int X, int Y) MiniSpot(int height) {
+		int vx = GetSystemMetrics(SmXVirtualScreen), vy = GetSystemMetrics(SmYVirtualScreen);
+		int vw = GetSystemMetrics(SmCxVirtualScreen), vh = GetSystemMetrics(SmCyVirtualScreen);
+
+		if ((Live.Global.MiniX != int.MinValue) && (Live.Global.MiniY != int.MinValue)) {
+			// Clamped to the desktop as it is now, so a monitor that has since been unplugged can't strand it.
+			return (Math.Clamp(Live.Global.MiniX, vx, Math.Max(vx, vx + vw - MiniW)), Math.Clamp(Live.Global.MiniY, vy, Math.Max(vy, vy + vh - height)));
+		}
+
+		if (!SystemParametersInfo(SpiGetWorkArea, 0, out Rect work, 0)) {
+			work = new Rect { Left = 0, Top = 0, Right = GetSystemMetrics(SmCxScreen), Bottom = GetSystemMetrics(SmCyScreen) };
+		}
+
+		return (work.Right - MiniW - 16, work.Bottom - height - 16);
+	}
+
+	private void RememberMiniSpot() {
+		try {
+			if ((_hwnd == IntPtr.Zero) || !GetWindowRect(_hwnd, out Rect r) || ((Live.Global.MiniX == r.Left) && (Live.Global.MiniY == r.Top))) {
+				return;
+			}
+
+			Live.Global.MiniX = r.Left;
+			Live.Global.MiniY = r.Top;
+			ConfigStore.SaveGlobal(Live.Global);
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't save where mini mode was: {0}", e.Message));
+		}
+	}
+
+	/// <summary>
+	/// Grow or shrink to the rows as they are now - a row opens up while its account farms. A panel in the lower
+	/// half of the screen grows upwards, so one parked above the taskbar never slides underneath it.
+	/// </summary>
+	private void FitMini() {
+		if (!GetWindowRect(_hwnd, out Rect r)) {
+			return;
+		}
+
+		int want = MiniHeight();
+		int now = r.Bottom - r.Top;
+
+		if (want == now) {
+			return;
+		}
+
+		bool lowerHalf = (r.Top + (now / 2)) > (GetSystemMetrics(SmYVirtualScreen) + (GetSystemMetrics(SmCyVirtualScreen) / 2));
+		int top = lowerHalf ? r.Bottom - want : r.Top;
+		SetWindowPos(_hwnd, IntPtr.Zero, r.Left, top, MiniW, want, SwpNoZOrder | SwpNoActivate);
+	}
+
+	/// <summary>Accounts in mini mode, and whether each gets the open, farming layout.</summary>
+	private List<(Bot Bot, bool Farming)> MiniRows() =>
+		[.. _mgr.All.Take(MiniMaxRows).Select(static b => (b, b.IsOnline && b.IsFarming && (b.CardsRemaining > 0)))];
+
+	private int MiniHeight() {
+		List<(Bot Bot, bool Farming)> rows = MiniRows();
+		int more = _mgr.All.Count > MiniMaxRows ? MiniRowH : 0;
+
+		return MiniTitleH + Math.Max(MiniRowH, rows.Sum(static r => r.Farming ? MiniFocusH : MiniRowH)) + more;
+	}
+
+	/// <summary>
+	/// One line per account, and a farming account opened up with its cards left, time left and a progress bar -
+	/// the question you'd otherwise open the full window to answer.
+	/// </summary>
+	private void PaintMini(IntPtr dc) {
+		Fill(dc, 0, 0, _w, MiniTitleH, Panel);
+		Fill(dc, 0, MiniTitleH - 1, _w, 1, Border);
+
+		Text(dc, "nocat.", 10, 7, _fontBold, TextBright);
+		Text(dc, "farm", 10 + TextWidth(dc, "nocat.", _fontBold), 7, _fontBold, Wordmark);
+
+		int bx = _w - 6 - 24;
+		AddIconButton(dc, GlyphFullWindow, IdFullWindow, bx, 4, 24, 22, TextMid);
+		bx -= 26;
+		AddIconButton(dc, GlyphDashboard, IdDashboard, bx, 4, 24, 22, Accent);
+		bx -= 26;
+		AddIconButton(dc, GlyphPin, IdPin, bx, 4, 24, 22, Live.Global.MiniOnTop ? Accent : TextDim);
+
+		(int cards, _) = Stats.Totals(24);
+		string today = cards == 1 ? "1 card today" : $"{cards} cards today";
+		Text(dc, today, bx - 8 - TextWidth(dc, today, _fontSmall), 8, _fontSmall, TextDim);
+
+		int y = MiniTitleH;
+		List<(Bot Bot, bool Farming)> rows = MiniRows();
+
+		if (rows.Count == 0) {
+			Text(dc, "no accounts yet - 'full window' to add one", 12, y + 8, _fontSmall, TextMid);
+
+			return;
+		}
+
+		foreach ((Bot bot, bool farming) in rows) {
+			int h = farming ? MiniFocusH : MiniRowH;
+
+			if (farming) {
+				Fill(dc, 0, y, _w, h, Surface);
+			}
+
+			int dot = bot.IsOnline ? (bot.Paused || bot.PlayingBlocked ? Amber : Green) : TextDim;
+			Fill(dc, 10, y + 12, 6, 6, dot);
+
+			int nameColour = bot.IsOnline ? NameColour.Of(bot.Cfg.LogColour)?.Win32 ?? TextBright : TextDim;
+			int nameW = TextWidth(dc, bot.Name, _fontBold);
+			Clipped(dc, bot.Name, 24, y + 6, 96, _fontBold, nameColour);
+			_hits.Add((24, y + 4, Math.Min(96, nameW) + 4, 20, bot.Name, 'n'));
+
+			int textX = 24 + Math.Clamp(nameW, 36, 96) + 10;
+			int buttonX = _w - 6 - 24;
+			string doing = farming && (bot.PlayingApps.Count > 0) ? $"farming {GameNames.Of(bot.PlayingApps[0])}" : BotStatus.Of(bot).Doing;
+			Clipped(dc, doing, textX, y + 8, buttonX - textX - 6, _fontSmall, farming ? TextNormal : TextMid);
+
+			MiniRowButton(dc, bot.IsOnline ? GlyphStop : GlyphPlay, buttonX, y + 4, 24, 22, bot.Name, bot.IsOnline ? Red : Green);
+
+			if (farming && (BotManager.ModuleOf<CardFarmer>(bot) is { } farmer)) {
+				string left = (bot.CardsRemaining == 1 ? "1 card left" : $"{bot.CardsRemaining} cards left") + (bot.HumanOwned ? " · human mode" : "");
+				string eta = "~" + Fmt.Rough(farmer.EstimateMinutes);
+
+				Clipped(dc, left, 24, y + 28, _w - 24 - 70, _fontSmall, TextMid);
+				Text(dc, eta, _w - 12 - TextWidth(dc, eta, _fontSmall), y + 28, _fontSmall, TextNormal);
+
+				int total = farmer.RunCards;
+				ProgressBar(dc, 24, y + 47, _w - 24 - 12, total - bot.CardsRemaining, total, Green);
+			}
+
+			y += h;
+			Fill(dc, 0, y - 1, _w, 1, Rgb(28, 28, 28));
+		}
+
+		if (_mgr.All.Count > MiniMaxRows) {
+			Text(dc, $"+{_mgr.All.Count - MiniMaxRows} more - 'full window' for all of them", 12, y + 8, _fontSmall, TextDim);
+		}
+	}
+
+	/// <summary>A title-bar button drawn with an icon rather than a word - there's no room for words up there.</summary>
+	private void AddIconButton(IntPtr dc, string glyph, int id, int x, int y, int w, int h, int colour) {
+		_buttons.Add(new Button(glyph, id, x, y, w, h, colour));
+
+		bool hover = _hoverId == id;
+
+		if (hover) {
+			Fill(dc, x, y, w, h, Rgb(32, 32, 32));
+			Outline(dc, x, y, w, h, Border);
+		}
+
+		Text(dc, glyph, x + ((w - TextWidth(dc, glyph, _fontIcon)) / 2), y + ((h - 14) / 2), _fontIcon, colour);
+	}
+
+	/// <summary>An account's start/stop button in mini mode: the same 'x' action as the accounts sheet's.</summary>
+	private void MiniRowButton(IntPtr dc, string glyph, int x, int y, int w, int h, string bot, int colour) {
+		Outline(dc, x, y, w, h, Border);
+		Text(dc, glyph, x + ((w - TextWidth(dc, glyph, _fontIcon)) / 2), y + ((h - 14) / 2), _fontIcon, colour);
+		_hits.Add((x, y, w, h, bot, 'x'));
+	}
+
+	/// <summary>Flip "keep mini mode on top", save it, and put it into effect.</summary>
+	private void ToggleOnTop() {
+		try {
+			Live.Global.MiniOnTop = !Live.Global.MiniOnTop;
+			ConfigStore.SaveGlobal(Live.Global);
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't save the keep-on-top choice: {0}", e.Message));
+		}
+
+		ApplyOnTop();
+	}
+
+	private void ApplyOnTop() {
+		if (_hwnd != IntPtr.Zero) {
+			SetWindowPos(_hwnd, _mini && Live.Global.MiniOnTop ? HwndTopmost : HwndNoTopmost, 0, 0, 0, 0, SwpNoMove | SwpNoSize | SwpNoActivate);
+		}
+
+		Invalidate();
+	}
+
 	// ── drawing helpers ─────────────────────────────────────────────────────
 	private void AddButton(IntPtr dc, string text, int id, int x, int y, int w, int h, int colour) {
 		_buttons.Add(new Button(text, id, x, y, w, h, colour));
@@ -1320,13 +1676,13 @@ public sealed class MainWindow : IDisposable {
 		Text(dc, text, x + ((w - textWidth) / 2), y + ((h - 14) / 2), _fontSmall, hover ? Bg : colour);
 	}
 
-	private void ProgressBar(IntPtr dc, int x, int y, int w, int done, int total) {
+	private static void ProgressBar(IntPtr dc, int x, int y, int w, int done, int total, int colour) {
 		int filled = total <= 0 ? 0 : Math.Clamp((int) ((double) done / total * w), 0, w);
 
-		Fill(dc, x, y, w, 4, Rgb(32, 32, 32));
+		Fill(dc, x, y, w, 3, Rgb(32, 32, 32));
 
 		if (filled > 0) {
-			Fill(dc, x, y, filled, 4, Accent);
+			Fill(dc, x, y, filled, 3, colour);
 		}
 	}
 
@@ -1383,15 +1739,34 @@ public sealed class MainWindow : IDisposable {
 	private static int LoWord(IntPtr value) => (short) (value.ToInt64() & 0xFFFF);
 	private static int HiWord(IntPtr value) => (short) ((value.ToInt64() >> 16) & 0xFFFF);
 
+	/// <summary>
+	/// Write down where the window is, in whichever layout it's in. Called on the way out: the window is never told it
+	/// is closing when the app shuts down (DestroyWindow from another thread does nothing), so without this a window
+	/// moved any way but a finished drag opened back where it was before.
+	/// </summary>
+	public void SavePlace() {
+		if (_hwnd == IntPtr.Zero) {
+			return;
+		}
+
+		if (_mini) {
+			RememberMiniSpot();
+		} else {
+			RememberSize();
+		}
+	}
+
 	public void Dispose() {
 		_running = false;
+
+		SavePlace();
 
 		if (_hwnd != IntPtr.Zero) {
 			DestroyWindow(_hwnd);
 			_hwnd = IntPtr.Zero;
 		}
 
-		foreach (IntPtr font in new[] { _fontUi, _fontBold, _fontSmall, _fontMono, _inputBrush }) {
+		foreach (IntPtr font in new[] { _fontUi, _fontBold, _fontSmall, _fontMono, _fontIcon, _inputBrush }) {
 			if (font != IntPtr.Zero) {
 				DeleteObject(font);
 			}
@@ -1465,6 +1840,8 @@ public sealed class MainWindow : IDisposable {
 	private const int IconBig = 1;
 	private const int DwmUseImmersiveDarkMode = 20;
 	private const int DwmBorderColor = 34;   // DWMWA_BORDER_COLOR, Windows 11 22000+
+	private const int DwmWindowCornerPreference = 33;   // DWMWA_WINDOW_CORNER_PREFERENCE, Windows 11 22000+
+	private const int DwmCornerRound = 2;   // DWMWCP_ROUND
 
 	private const int IdStartAll = 1;
 	private const int IdStopAll = 2;
@@ -1476,7 +1853,29 @@ public sealed class MainWindow : IDisposable {
 	private const int IdCloseSheet = 7;
 	private const int IdCloseHelp = 14;
 	private const int IdAddAccount = 8;
+	private const int IdMini = 16;
+	private const int IdFullWindow = 17;
+	private const int IdPin = 18;
 	private const int IdInput = 100;
+
+	/// <summary>WM_APP + 1: mini mode on (wParam 1) or off, posted so the switch always runs on the window's own thread.</summary>
+	private const int WmSetMini = 0x8001;
+
+	/// <summary>WM_APP + 2: put the keep-on-top setting into effect after it was changed somewhere else.</summary>
+	private const int WmRefreshOnTop = 0x8002;
+	private const uint SwpNoSize = 0x0001;
+	private const int GwlStyle = -16;
+	private const uint SwpNoMove = 0x0002;
+	private const uint SwpNoZOrder = 0x0004;
+	private const uint SwpNoActivate = 0x0010;
+	private const uint SwpFrameChanged = 0x0020;
+	private static readonly IntPtr HwndTopmost = new(-1);
+	private static readonly IntPtr HwndNoTopmost = new(-2);
+	private const int SpiGetWorkArea = 0x0030;
+	private const int SmXVirtualScreen = 76;
+	private const int SmYVirtualScreen = 77;
+	private const int SmCxVirtualScreen = 78;
+	private const int SmCyVirtualScreen = 79;
 
 	private delegate IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam);
 
@@ -1542,6 +1941,10 @@ public sealed class MainWindow : IDisposable {
 	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(IntPtr hwnd, StringBuilder text, int max);
 	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool SetWindowText(IntPtr hwnd, string text);
 	[DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")] private static extern IntPtr SetWindowLongPtr(IntPtr hwnd, int index, IntPtr value);
+	[DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")] private static extern IntPtr GetWindowLongPtr(IntPtr hwnd, int index);
+	[DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int w, int h, uint flags);
+	[DllImport("user32.dll")] private static extern bool PostMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam);
+	[DllImport("user32.dll", EntryPoint = "SystemParametersInfoW")] private static extern bool SystemParametersInfo(int action, int param, out Rect rect, int winIni);
 	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr CallWindowProc(IntPtr prev, IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam);
 
 	[DllImport("gdi32.dll")] private static extern IntPtr CreateSolidBrush(int colour);

@@ -73,7 +73,7 @@ setting away.
 | **Idling** | Plays any set of appIDs for playtime, and re-asserts them, so a network hiccup doesn't silently stop it. |
 | **Custom game name** | Shows a non-Steam name (e.g. `nocat.lol`) on your profile and friends list **while the real games keep banking playtime**. Both at once. If Steam starts showing the real game instead, the account row warns "Steam shows …" and the name is put back. |
 | **Device badge** | Friends can see the account playing on a phone, Big Picture, VR or a controller (`GameDevice`). |
-| **Card farming** | On by default. Reads your own badge pages, bumps playtime on under-threshold games up to 32 at a time (31 with a custom name), then farms them solo. Drops are detected mainly from Steam's item-announcement **push**, with a periodic re-check as a backstop, so a finished game is noticed in seconds. |
+| **Card farming** | On by default. Reads your own badge pages, bumps playtime on under-threshold games up to 32 at a time (31 with a custom name), then farms them solo. Drops are detected mainly from Steam's item-announcement **push**, with a periodic re-check as a backstop, so a finished game is noticed in seconds. It says roughly how long is left — Steam's usual 30 minutes a card at first, then this account's own pace, learned from the drops it times — in the log, the status and `cards`. |
 | **rep4rep** | Optional. Posts the comments rep4rep assigns, on a human schedule, from every opted-in account — all into one points pool. |
 | **Comment alerts** | Steam pushes the moment somebody comments on one of your profiles; it hits the log and a tray balloon. |
 | **Tray pop-ups** | Three kinds, each with its own switch: earnings (cards, accepted trades, claimed games, event items, booster packs, activated keys, credited comments), social (friends, groups, comments) and problems (Steam Guard needed, failed logins, comment blocks, gifted games, banned games learned, updates). |
@@ -104,11 +104,17 @@ does, its default and range, and whether it needs a restart. The accounts sheet 
 start/stop, pause/resume, cards and profile buttons, plus *+ add account*. `--no-gui` (or `--console`) swaps the
 window for a live console board with up-arrow history, which is also what you get on another OS.
 
+**Mini mode** — the window's *mini* button (or `mini`, or the tray menu) shrinks it to a small panel: one line per
+account with what it's doing and a start/stop button, and an account that's farming opens up to show its cards left,
+about how long until it's done, and a progress bar. The title bar has the dashboard, a pin to keep it on top of other
+windows (`MiniOnTop`, off by default) and the way back to the full window. It remembers where you put it, and opens
+in mini next time if you left it that way.
+
 <p align="center">
   <img src="assets/console.png" alt="The console — every action is also a command" width="880">
 </p>
 
-**Tray** — right-click (or left-click) for Open dashboard · Hide/Show the window · Start all / Stop all accounts ·
+**Tray** — right-click (or left-click) for Open dashboard · Hide/Show the window · Mini mode · Start all / Stop all accounts ·
 Exit. The window's *hide* button, or closing it while the tray icon is there, sends it to the tray; in `--no-gui`
 mode, minimising the console hides it (`MinimizeToTray`, on by default). `--minimized` boots straight to the tray
 with no window at all, and *Start with Windows* wires that up for you.
@@ -199,12 +205,12 @@ a person instead of a bot:
   checks that you aren't playing on the account yourself — Steam takes a couple of minutes to report that — and
   the same checks run again after every reconnect
 * offline overnight. It banks hours invisibly while it sleeps only if you list games under *Games to idle
-  overnight* (`OfflineIdleGames`, empty by default) — or farms cards, if any are left
-* **cards come first** — while cards are left, the card farmer takes the session, even on a day off or after the
-  day's hours are met, and it plays the game on a little longer afterwards before stepping away for a break and
-  picking the schedule back up. When the farmer is deliberately waiting — for bedtime (`FarmOnlyWhileAsleep`),
-  its clock window, its next sitting or a free farming slot — the day carries on as normal meanwhile, leaning
-  towards games that still have drops
+  overnight* (`OfflineIdleGames`, empty by default)
+* **cards come first, inside its day** — while cards are left, the card game is what it plays in its sittings,
+  with the same warm-up, breaks, meals and bedtime, one game at a time; nights stay for the overnight games, and
+  once the cards are done the day goes back to its usual games. *When to farm cards* (`FarmCardsWhen`) changes
+  that: *only at night* holds cards until it's asleep and invisible and plays the usual games by day; *any time*
+  farms the moment there are cards, day and night, straight through
 * **grind fits it too** — `grind` on a legit account eases in (it keeps its current game for a minute or three
   before switching) and earns achievements at that account's normal pace when `UnlockAchievements` is on; on a
   boost account it just starts instantly
@@ -353,7 +359,8 @@ ignored, and replies are cut at 1,900 characters.
 
 | Command | What it does |
 |---|---|
-| `cards [account]` | What is still left to farm. |
+| `cards [account]` | What is still left to farm, and about how long it will take. |
+| `drops <account> [appID\|next] [count\|all]` &nbsp;·&nbsp; `drops <account> off` | Go for card drops now, whatever the schedule says: one game until it has dropped that many (all it has left by default), then back to the usual day — like `grind`, but it stops when the drops are in. Without an appID, the next game with cards. It gives up on its own if the drops stop coming (twice the expected time). |
 | `farm <account> on\|off` | Turn trading-card farming on or off. |
 | `match [do]` | Swap duplicate trading cards between your own accounts so sets finish. `match do` sends the offers. |
 | `value [account\|all] [refresh]` &nbsp;·&nbsp; `inv` `inventory` | What each inventory is worth at the market's median, by game, with how it has moved in the last 24 hours. `refresh` reads the inventories again. |
@@ -398,6 +405,7 @@ ignored, and replies are cut at 1,900 characters.
 | `help [command\|setting]` &nbsp;·&nbsp; `?` `h` | This list, or what one command or setting does. |
 | `theme [dark\|light]` | Switch the dashboard theme. |
 | `version` &nbsp;·&nbsp; `about` | Which version this is. |
+| `mini [on\|off]` | Shrink the window to a small panel of your accounts, or back to the full window. |
 | `update [now]` | Check for a newer release (it also checks by itself once a day, `CheckForUpdates`). `update now` downloads it and restarts into it — nothing ever installs on its own. |
 | `plugins` | Which plugins are loaded, and where they came from. |
 | `exit` &nbsp;·&nbsp; `quit` `q` | Shut nocat.farm down (local only — never over Steam chat). |
@@ -646,7 +654,7 @@ why, and porting is usually easier than it sounds.
 
 ## Settings
 
-**48 global, 127 per account** — of which **63 sit in front of Show advanced** (15 global, 48 per account); what a
+**49 global, 130 per account** — of which **65 sit in front of Show advanced** (16 global, 49 per account); what a
 page actually shows also depends on whether rep4rep and human mode are on. Every one has a short plain-English
 explanation attached, which the dashboard shows on hover and the console prints for `help <setting>` along with
 its default and range — written once, in `Config/Settings.cs`, and translated with the setting's name into the
@@ -662,7 +670,7 @@ list, and previews things like "a day looks like…" live; `GameWeights` gets a 
 `config [account]` lists the front-page settings and `config [account] all` lists every one.
 
 Global: the dashboard (host/port/password/auto-open, **language and the currency prices are shown in**),
-background behaviour (tray, minimise-to-tray, start with Windows, keep-awake, close the app once every account is
+background behaviour (tray, minimise-to-tray, start with Windows, keep-awake, mini mode on top, close the app once every account is
 done — `ExitWhenAllFinished` — and three pop-up categories: earnings, social and problems), the rep4rep account,
 a blacklist of games no account ever farms, idles, plays or hunts (`GlobalBlacklistedGames`), the Steam
 connection (login stagger, reconnect, timeout, farming concurrency, rate-limit cooldown, web request spacing,
@@ -680,8 +688,9 @@ Per account: identity and appearance (persona, the device badge friends see — 
 Family View PIN, device name, its colour in the log — `LogColour`, and its own proxy — `AccountProxy`), what it
 plays, trading cards (order, priority list, blacklist, refund protection — `SkipRefundableGames`, off by default —
 skip-unplayed, give-up time, log out when done, appear offline while farming — `FarmOffline`, plus *when* to farm:
-only while asleep, inside a set clock window, or in a few sittings a day adding up to about `FarmHoursPerDay` —
-`FarmInSittings` — and how long to wind down on the last game after finishing), human mode (the whole daily
+on a human-mode account in its day, only at night or any time — `FarmCardsWhen` — inside a set clock window, or in
+a few sittings a day adding up to about `FarmHoursPerDay` — `FarmInSittings` — and how long to wind down on the
+last game after finishing), human mode (the whole daily
 shape, and how long it finishes up for on a manual stop), achievements (earn over time, pace, completion
 ceiling, the hunter, family-shared games, grind spacing), rep4rep pacing, friends & messages (accept friend
 requests after a random delay, ignore obvious spam invites — on by default, accept group invites, auto-reply,

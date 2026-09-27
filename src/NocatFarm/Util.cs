@@ -220,6 +220,16 @@ public static class Fmt {
 		return $"{minutes / 60}h{minutes % 60:00}m";
 	}
 
+	/// <summary>A length of time for an estimate: minutes stop mattering past a few hours, and hours past a day.</summary>
+	public static string Rough(int minutes) {
+		minutes = Math.Max(1, minutes);
+
+		return minutes < 60 ? minutes + "m"
+			: minutes < 6 * 60 ? $"{minutes / 60}h{minutes % 60:00}m"
+			: minutes < 48 * 60 ? $"{(int) Math.Round(minutes / 60.0)}h"
+			: $"{minutes / (24 * 60)}d{(minutes % (24 * 60)) / 60}h";
+	}
+
 	/// <summary>
 	/// Round a set of exact percentages to whole numbers that still add up to <paramref name="total"/>.
 	///
