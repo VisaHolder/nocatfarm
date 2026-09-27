@@ -56,14 +56,19 @@ if (Test-Path $zip) { Remove-Item $zip -Force }
 
 # Every entry is named by hand. On Windows PowerShell 5.1 both Compress-Archive and ZipFile.CreateFromDirectory
 # write "nocat.farm\wwwroot\app.js" with backslashes, which the zip format doesn't allow - Windows copes, but
-# unzip warns and other tools can flatten the folders. Forward slashes, with nocat.farm/ at the top.
+# unzip warns and other tools can flatten the folders. Forward slashes.
+#
+# And FLAT - nocatFarm.exe at the top of the zip, not inside a nocat.farm/ folder. The in-app updater looks for
+# the exe at the top, and every copy already installed runs that check, so a foldered zip is one nobody can update
+# to. Unzipping by hand still gives a folder of its own (Windows names it after the zip), and updating by hand is
+# unzipping over the install folder.
 Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
 $stream = [System.IO.File]::Open($zip, [System.IO.FileMode]::CreateNew)
 $archive = New-Object System.IO.Compression.ZipArchive($stream, [System.IO.Compression.ZipArchiveMode]::Create)
 
 try {
     Get-ChildItem $stage -Recurse -File | ForEach-Object {
-        $name = 'nocat.farm/' + $_.FullName.Substring($stage.Length + 1).Replace('\', '/')
+        $name = $_.FullName.Substring($stage.Length + 1).Replace('\', '/')
         [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $_.FullName, $name,
             [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null
     }

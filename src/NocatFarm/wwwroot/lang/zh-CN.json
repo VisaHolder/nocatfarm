@@ -127,7 +127,6 @@
     "none": "无",
     "not set": "未设置",
     "saved": "已保存",
-    "nothing at all": "什么都不做",
     "nothing left to farm": "没有可挂的卡了",
     "nothing queued": "队列为空",
     "no accounts yet": "还没有账户",
@@ -312,7 +311,6 @@
     "STEP {0} OF {1}": "第 {0} 步，共 {1} 步",
     "Welcome to nocat.farm": "欢迎使用 nocat.farm",
     "Pick the language for this dashboard. You can change it later under Settings › Global.": "选择这个面板的语言。之后可以在「设置 › 全局」里更改。",
-    "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. The console and the log stay in English.": "翻译还没覆盖到的地方会保持英文而不是留空，所以译到一半的语言照样完全可用。控制台和日志保持英文。",
     "It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts rep4rep comments - all from this machine. Your accounts never leave it.": "它会登录你的 Steam 账户、玩游戏让时长计入、刷集换式卡牌、发 rep4rep 评论——全都在这台机器上完成。你的账户从不离开这里。",
     "This takes about a minute. You can skip it and come back from the Overview page.": "这大概要一分钟。你可以跳过，之后从「概览」页面再回来。",
     "Bring your ArchiSteamFarm accounts across": "把你的 ArchiSteamFarm 账户搬过来",
@@ -393,8 +391,6 @@
     "Adding it back needs the password and a fresh Steam Guard code.": "重新加回来需要密码和一个新的 Steam 令牌验证码。",
     "Anything it was farming stops.": "它正在刷的一切都会停下。",
     "Turn off opening the dashboard?": "要关掉自动打开面板吗？",
-    "A newly added account does {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "刚添加的账户在被告知要玩什么之前{0}，而应用窗口里并没有那个表单——只有面板才有。",
-    "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "关掉之后，添加账户只会把你留在命令行里，而那个账户会一直闲着，直到你想起来去配置它。这是给已经清楚这一点的人用的。",
     "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "这个面板可以从你的网络访问，而它的密码短到能被猜出来。你的 Steam 账户就在它后面。",
     "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "这个面板设置成在网络上监听，但没有密码时它会拒绝一切非本机的连接——所以只有在这里能访问。",
     "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "这个账户玩了这款游戏多久。在超过该账户设置里的阈值之前，Steam 什么都不会掉。",
@@ -521,6 +517,13 @@
     "waiting for a farming slot": "等待挂卡名额",
     "waiting for the account": "等待账号",
     "sending items to your main account every {0} - the first send is around {1}": "每 {0} 把物品寄到你的主账号 —— 第一次大约在 {1}",
+    "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. Status and log lines follow it too; replies to commands typed in the console stay in English.": "翻译尚未覆盖的内容会显示英文而不是留空，所以翻译到一半的语言也完全能用。状态行和日志行也会使用该语言；在控制台输入的命令，其回复仍为英文。",
+    "A newly added account farms its trading cards and {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "新添加的账号在被告知要玩什么之前，只会刷它的集换式卡牌，{0}；而应用窗口里没有这个表单，只有仪表盘有。",
+    "With this off, adding an account leaves you at a command line with an account that farms its cards and then sits idle until you remember to go and configure it. This is for people who already know that.": "关闭后，添加账号后你会停留在命令行，账号刷完卡牌后就一直闲着，直到你想起去设置它。这是给已经了解这一点的人准备的。",
+    "nocat.farm on GitHub - source, releases and issues.": "GitHub 上的 nocat.farm —— 源代码、版本和问题反馈。",
+    "nothing more": "别的什么也不做",
+    "opens booster packs once a day - badge crafting is off": "每天开一次补充包——徽章合成已关闭",
+    "plugin {0} took too long to unload - closing without it": "插件 {0} 卸载耗时过长——不等它直接关闭",
     "Added. It's signing in now - answer the password and Steam Guard questions in the bar at the top.": "已添加。正在登录——请在顶部的栏里回答密码和 Steam 令牌验证码的提问。",
     "Couldn't add that account.": "无法添加该账号。",
     "A new account starts farming trading cards straight away. There are two ways it can spend its time:": "新账号会立刻开始刷集换式卡牌。它可以用两种方式打发时间：",
@@ -1112,7 +1115,7 @@
     },
     "OpenDashboardAfterAdd": {
       "label": "添加账户后打开面板",
-      "tip": "新账户一添加好，就在浏览器里打开面板让你配置它。全新账户在被告知要玩什么之前什么都不会做，而应用窗口里并没有那个表单——只有面板才有。关掉的话，就得你自己记着了。"
+      "tip": "新账号添加后立即在浏览器中打开仪表盘，方便你进行设置。新添加的账号在被告知要玩什么之前，只会刷它的集换式卡牌，别的什么也不做；而应用窗口里没有这个表单，只有仪表盘有。关闭后，你得自己记着。"
     },
     "OpenBrowserOnStart": {
       "label": "启动时打开浏览器",
@@ -1136,7 +1139,7 @@
     },
     "KeepAwake": {
       "label": "保持电脑不休眠",
-      "tip": "有账户在运行时阻止 Windows 进入睡眠。屏幕依然可以关闭——被拦住的只是睡眠。"
+      "tip": "只要 nocat.farm 开着，无论有没有账号登录，都阻止 Windows 进入睡眠。屏幕仍然可以关闭——只阻止睡眠。"
     },
     "TrayNotifications": {
       "label": "显示气泡提示",
@@ -1180,7 +1183,7 @@
     },
     "Language": {
       "label": "语言",
-      "tip": "面板语言。尚未翻译的内容会显示英文而不是留空，所以翻译到一半的语言依然完全可用。"
+      "tip": "面板语言。尚未翻译的内容会显示英文而不是留空，所以翻译到一半的语言依然完全可用。状态行和日志行也会使用该语言；在控制台输入的命令，其回复仍为英文。"
     },
     "MarketCurrency": {
       "label": "库存价格使用",

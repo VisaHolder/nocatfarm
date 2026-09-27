@@ -135,13 +135,14 @@ if (OperatingSystem.IsWindows()) {
 	NativeConsole.SetWindowIcon(Path.Combine(AppContext.BaseDirectory, "nocatFarm.ico"));
 }
 
+// Told once, so anything that wants the dashboard asks Commands rather than carrying its own copy of the URL and
+// its own Process.Start. Outside the tray block: it used to be set only when there was a tray icon, so with the
+// tray off, 'add' never opened the dashboard however OpenDashboardAfterAdd was set.
+Commands.DashboardUrl = () => web?.Url ?? "";
+
 TrayIcon? tray = null;
 
 if (global.Tray && !forceNoTray && OperatingSystem.IsWindows()) {
-	// Told once, so anything that wants the dashboard asks Commands rather than carrying its own copy of
-	// the URL and its own Process.Start.
-	Commands.DashboardUrl = () => web?.Url ?? "";
-
 	tray = StartTray(manager, () => web?.Url ?? "", shutdown);
 	Commands.TrayPresent = tray != null;
 }
@@ -284,6 +285,10 @@ try {
 }
 
 Log.Info("shutting down...");
+
+// Plugins first, while the accounts, commands and their saved state still work - OnUnloadAsync is documented as
+// "called on shutdown" and was never called at all.
+await NocatFarm.Plugins.PluginHost.UnloadAllAsync().ConfigureAwait(false);
 
 if (OperatingSystem.IsWindows()) {
 	WindowsIntegration.KeepAwake(false);

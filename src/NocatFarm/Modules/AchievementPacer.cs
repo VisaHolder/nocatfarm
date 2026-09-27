@@ -262,7 +262,13 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		HumanMode? human = BotManager.ModuleOf<HumanMode>(Bot);
 		List<uint> running = [];
 
-		if (human is { Current: not HumanMode.Phase.Off }) {
+		// A grind (or a hunter session, which is one) first. On a human account the grind has no game of human
+		// mode's own - PlayingNow is 0 while it runs - so reading human mode alone credited nothing, and a grind
+		// there never earned a single achievement. Only once Steam has actually been told it is running, so the
+		// minutes credited are minutes really played.
+		if (Bot.Grinding && Bot.PlayingApps.Contains(Bot.GrindGame)) {
+			running.Add(Bot.GrindGame);
+		} else if (human is { Current: not HumanMode.Phase.Off }) {
 			uint playing = human.PlayingNow;
 
 			// The main game used to be skipped outright, on the theory that the one game an account is known for

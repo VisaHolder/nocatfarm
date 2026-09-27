@@ -127,7 +127,6 @@
     "none": "yok",
     "not set": "ayarlanmadı",
     "saved": "kaydedildi",
-    "nothing at all": "hiçbir şey",
     "nothing left to farm": "toplanacak bir şey kalmadı",
     "nothing queued": "kuyrukta bir şey yok",
     "no accounts yet": "henüz hesap yok",
@@ -312,7 +311,6 @@
     "STEP {0} OF {1}": "ADIM {0} / {1}",
     "Welcome to nocat.farm": "nocat.farm'a hoş geldin",
     "Pick the language for this dashboard. You can change it later under Settings › Global.": "Bu panonun dilini seç. Sonradan Ayarlar › Genel altından değiştirebilirsin.",
-    "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. The console and the log stay in English.": "Çevirinin henüz kapsamadığı her şey boş görünmek yerine İngilizce kalır, yani yarım kalmış bir dil bile gayet kullanışlıdır. Konsol ve günlük İngilizce kalır.",
     "It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts rep4rep comments - all from this machine. Your accounts never leave it.": "Steam hesaplarına giriş yapar, saatler saysın diye oyun oynar, takas kartı toplar ve rep4rep yorumları yazar - hepsi bu makineden. Hesapların buradan hiç çıkmaz.",
     "This takes about a minute. You can skip it and come back from the Overview page.": "Bu yaklaşık bir dakika sürer. Atlayıp Genel Bakış sayfasından geri dönebilirsin.",
     "Bring your ArchiSteamFarm accounts across": "ArchiSteamFarm hesaplarını buraya taşı",
@@ -393,8 +391,6 @@
     "Adding it back needs the password and a fresh Steam Guard code.": "Geri eklemek için parola ve yeni bir Steam Guard kodu gerekir.",
     "Anything it was farming stops.": "Ne topluyorsa durur.",
     "Turn off opening the dashboard?": "Panoyu açma kapatılsın mı?",
-    "A newly added account does {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "Yeni eklenen bir hesap, neyi oynayacağı söylenene kadar {0} yapmaz ve o form uygulama penceresinde yok - yalnızca panoda var.",
-    "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "Bu kapalıyken bir hesap eklemek seni komut satırında bırakır ve hesap, sen gidip yapılandırmayı hatırlayana kadar boş boş bekler. Bu, bunu zaten bilenler içindir.",
     "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "Bu panoya ağından erişilebiliyor ve parolası tahmin edilebilecek kadar kısa. Steam hesapların bunun arkasında.",
     "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "Bu pano ağı dinleyecek şekilde ayarlı, ama parola olmadan bu bilgisayardan gelmeyen her bağlantıyı reddediyor - yani yalnızca buradan erişilebilir.",
     "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "Bu hesabın bu oyunu ne kadar oynadığı. Bu hesabın ayarlarındaki eşik aşılmadan Steam hiçbir şey düşürmez.",
@@ -521,6 +517,13 @@
     "waiting for a farming slot": "toplama sırası bekleniyor",
     "waiting for the account": "hesap bekleniyor",
     "sending items to your main account every {0} - the first send is around {1}": "eşyalar her {0} ana hesabına gönderiliyor - ilk gönderim {1} civarı",
+    "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. Status and log lines follow it too; replies to commands typed in the console stay in English.": "Bir çevirinin henüz kapsamadığı şeyler boş görünmek yerine İngilizce kalır, yani yarım kalmış bir dil de gayet kullanılabilir. Durum ve günlük satırları da bu dili kullanır; konsola yazılan komutlara verilen yanıtlar İngilizce kalır.",
+    "A newly added account farms its trading cards and {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "Yeni eklenen bir hesap, ne oynayacağı söylenene kadar kartlarını toplar ve {0}; bunun formu uygulama penceresinde yok, yalnızca panelde var.",
+    "With this off, adding an account leaves you at a command line with an account that farms its cards and then sits idle until you remember to go and configure it. This is for people who already know that.": "Bu kapalıyken, hesap ekledikten sonra bir komut satırında kalırsın; hesap kartlarını toplar, sonra sen ayarlamayı hatırlayana kadar boşta bekler. Bunu zaten bilenler içindir.",
+    "nocat.farm on GitHub - source, releases and issues.": "GitHub'da nocat.farm - kaynak kodu, sürümler ve sorunlar.",
+    "nothing more": "başka hiçbir şey yapmaz",
+    "opens booster packs once a day - badge crafting is off": "kart paketlerini günde bir kez açar - rozet üretimi kapalı",
+    "plugin {0} took too long to unload - closing without it": "{0} eklentisinin kaldırılması çok uzun sürdü - onsuz kapatılıyor",
     "Added. It's signing in now - answer the password and Steam Guard questions in the bar at the top.": "Eklendi. Şimdi giriş yapıyor - şifre ve Steam Guard sorularını üstteki çubukta yanıtla.",
     "Couldn't add that account.": "Bu hesap eklenemedi.",
     "A new account starts farming trading cards straight away. There are two ways it can spend its time:": "Yeni bir hesap hemen kart toplamaya başlar. Zamanını iki şekilde geçirebilir:",
@@ -1112,7 +1115,7 @@
     },
     "OpenDashboardAfterAdd": {
       "label": "Hesap ekledikten sonra panoyu aç",
-      "tip": "Yeni bir hesap eklenir eklenmez panoyu tarayıcında açar ki ayarlayabilesin. Yepyeni bir hesap, neyi oynayacağı söylenene kadar hiçbir şey yapmaz ve o form uygulama penceresinde yok - yalnızca panoda var. Kapatırsan hatırlamak sana kalır."
+      "tip": "Yeni bir hesap eklendiğinde, ayarlayabilmen için paneli tarayıcıda açar. Yeni eklenen bir hesap, ne oynayacağı söylenene kadar kartlarını toplar ve başka hiçbir şey yapmaz; bunun formu uygulama penceresinde yok, yalnızca panelde var. Kapalıysa hatırlamak sana kalır."
     },
     "OpenBrowserOnStart": {
       "label": "Başlangıçta tarayıcıyı aç",
@@ -1136,7 +1139,7 @@
     },
     "KeepAwake": {
       "label": "Bu bilgisayarı uyanık tut",
-      "tip": "Hesaplar çalışırken Windows'un uyku moduna geçmesini engeller. Ekran yine kapanabilir - yalnızca uyku engellenir."
+      "tip": "nocat.farm açık olduğu sürece, oturum açmış bir hesap olsun ya da olmasın Windows'un uyku moduna geçmesini engeller. Ekran yine kapanabilir - yalnızca uyku engellenir."
     },
     "TrayNotifications": {
       "label": "Bildirim balonlarını göster",
@@ -1180,7 +1183,7 @@
     },
     "Language": {
       "label": "Dil",
-      "tip": "Panelin dili. Henüz çevrilmemiş olan boş kalmak yerine İngilizce görünür, yani yarım kalmış bir dil bile gayet kullanılabilir."
+      "tip": "Panelin dili. Henüz çevrilmemiş olan boş kalmak yerine İngilizce görünür, yani yarım kalmış bir dil bile gayet kullanılabilir. Durum ve günlük satırları da bu dili kullanır; konsola yazılan komutlara verilen yanıtlar İngilizce kalır."
     },
     "MarketCurrency": {
       "label": "Envanter fiyatları şu birimde",

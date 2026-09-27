@@ -127,7 +127,6 @@
     "none": "aucun",
     "not set": "non défini",
     "saved": "enregistré",
-    "nothing at all": "strictement rien",
     "nothing left to farm": "plus rien à farmer",
     "nothing queued": "rien en file",
     "no accounts yet": "pas encore de comptes",
@@ -312,7 +311,6 @@
     "STEP {0} OF {1}": "ÉTAPE {0} SUR {1}",
     "Welcome to nocat.farm": "Bienvenue sur nocat.farm",
     "Pick the language for this dashboard. You can change it later under Settings › Global.": "Choisissez la langue de ce tableau de bord. Vous pourrez la changer plus tard sous Réglages › Global.",
-    "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. The console and the log stay in English.": "Ce qu'une traduction ne couvre pas encore reste en anglais plutôt que d'apparaître vide : une langue à moitié faite reste donc parfaitement utilisable. La console et le journal restent en anglais.",
     "It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts rep4rep comments - all from this machine. Your accounts never leave it.": "Il connecte vos comptes Steam, joue pour que les heures comptent, farme des cartes et publie des commentaires rep4rep - tout depuis cette machine. Vos comptes n'en sortent jamais.",
     "This takes about a minute. You can skip it and come back from the Overview page.": "Cela prend environ une minute. Vous pouvez passer et y revenir depuis la page Aperçu.",
     "Bring your ArchiSteamFarm accounts across": "Faites venir vos comptes ArchiSteamFarm",
@@ -393,8 +391,6 @@
     "Adding it back needs the password and a fresh Steam Guard code.": "Le rajouter nécessite le mot de passe et un nouveau code Steam Guard.",
     "Anything it was farming stops.": "Tout ce qu'il farmait s'arrête.",
     "Turn off opening the dashboard?": "Désactiver l'ouverture du tableau de bord ?",
-    "A newly added account does {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "Un compte fraîchement ajouté ne fait {0} tant qu'on ne lui a pas dit à quoi jouer, et la fenêtre de l'app n'a pas ce formulaire - seul le tableau de bord l'a.",
-    "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "Avec ceci désactivé, ajouter un compte vous laisse sur une ligne de commande avec un compte qui restera inactif jusqu'à ce que vous pensiez à aller le configurer. C'est pour les gens qui le savent déjà.",
     "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "Ce tableau de bord est joignable depuis votre réseau et son mot de passe est assez court pour être deviné. Vos comptes Steam sont derrière.",
     "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "Ce tableau de bord est réglé pour écouter sur le réseau, mais sans mot de passe il refuse toute connexion qui ne vient pas de ce PC - il n'est donc joignable qu'ici.",
     "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "Combien de temps ce compte a joué à ce jeu. Steam ne lâche rien tant que le seuil défini dans les réglages de ce compte n'est pas franchi.",
@@ -521,6 +517,13 @@
     "waiting for a farming slot": "attend une place de farm",
     "waiting for the account": "attend le compte",
     "sending items to your main account every {0} - the first send is around {1}": "envoie les objets à ton compte principal toutes les {0} - premier envoi vers {1}",
+    "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. Status and log lines follow it too; replies to commands typed in the console stay in English.": "Ce qu'une traduction ne couvre pas encore reste en anglais plutôt que de s'afficher vide, donc une langue à moitié traduite reste tout à fait utilisable. Les lignes d'état et du journal la suivent aussi ; les réponses aux commandes tapées dans la console restent en anglais.",
+    "A newly added account farms its trading cards and {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "Un compte tout juste ajouté farme ses cartes et {0} tant qu'on ne lui dit pas à quoi jouer, et la fenêtre de l'app n'a pas ce formulaire - seul le tableau de bord l'a.",
+    "With this off, adding an account leaves you at a command line with an account that farms its cards and then sits idle until you remember to go and configure it. This is for people who already know that.": "Désactivé, ajouter un compte te laisse devant une ligne de commande avec un compte qui farme ses cartes puis reste inactif jusqu'à ce que tu penses à le configurer. C'est pour ceux qui le savent déjà.",
+    "nocat.farm on GitHub - source, releases and issues.": "nocat.farm sur GitHub - code source, versions et tickets.",
+    "nothing more": "rien de plus",
+    "opens booster packs once a day - badge crafting is off": "ouvre les boosters une fois par jour - la fabrication de badges est désactivée",
+    "plugin {0} took too long to unload - closing without it": "le plugin {0} a mis trop de temps à se décharger - fermeture sans lui",
     "Added. It's signing in now - answer the password and Steam Guard questions in the bar at the top.": "Ajouté. Il se connecte maintenant - réponds aux demandes de mot de passe et de code Steam Guard dans la barre en haut.",
     "Couldn't add that account.": "Impossible d'ajouter ce compte.",
     "A new account starts farming trading cards straight away. There are two ways it can spend its time:": "Un nouveau compte commence tout de suite à farmer des cartes. Il peut passer son temps de deux façons :",
@@ -1112,7 +1115,7 @@
     },
     "OpenDashboardAfterAdd": {
       "label": "Ouvrir le tableau après l'ajout d'un compte",
-      "tip": "Ouvre le tableau dans le navigateur dès qu'un nouveau compte est ajouté, pour que vous le configuriez. Un compte tout neuf ne fait strictement rien tant qu'on ne lui a pas dit à quoi jouer, et ce formulaire n'existe que dans le tableau, pas dans la fenêtre de l'app. Désactivé, c'est à vous d'y penser."
+      "tip": "Ouvre le tableau de bord dans le navigateur dès qu'un nouveau compte est ajouté, pour que tu le configures. Un compte tout juste ajouté farme ses cartes et rien de plus tant qu'on ne lui dit pas à quoi jouer, et la fenêtre de l'app n'a pas ce formulaire - seul le tableau de bord l'a. Désactivé, c'est à toi d'y penser."
     },
     "OpenBrowserOnStart": {
       "label": "Ouvrir le navigateur au démarrage",
@@ -1136,7 +1139,7 @@
     },
     "KeepAwake": {
       "label": "Garder ce PC éveillé",
-      "tip": "Empêche Windows de se mettre en veille tant que des comptes tournent. L'écran peut toujours s'éteindre : seule la mise en veille est bloquée."
+      "tip": "Empêche Windows de se mettre en veille tant que nocat.farm est ouvert, qu'un compte soit connecté ou non. L'écran peut toujours s'éteindre - seule la veille est bloquée."
     },
     "TrayNotifications": {
       "label": "Afficher les bulles",
@@ -1180,7 +1183,7 @@
     },
     "Language": {
       "label": "Langue",
-      "tip": "La langue de l'interface. Ce qui n'est pas encore traduit s'affiche en anglais plutôt que vide, donc une langue à moitié faite reste parfaitement utilisable."
+      "tip": "La langue de l'interface. Ce qui n'est pas encore traduit s'affiche en anglais plutôt que vide, donc une langue à moitié faite reste parfaitement utilisable. Les lignes d'état et du journal la suivent aussi ; les réponses aux commandes tapées dans la console restent en anglais."
     },
     "MarketCurrency": {
       "label": "Prix de l'inventaire en",

@@ -127,7 +127,6 @@
     "none": "нет",
     "not set": "не задано",
     "saved": "сохранено",
-    "nothing at all": "ровным счётом ничего",
     "nothing left to farm": "фармить больше нечего",
     "nothing queued": "очередь пуста",
     "no accounts yet": "аккаунтов пока нет",
@@ -312,7 +311,6 @@
     "STEP {0} OF {1}": "ШАГ {0} ИЗ {1}",
     "Welcome to nocat.farm": "Добро пожаловать в nocat.farm",
     "Pick the language for this dashboard. You can change it later under Settings › Global.": "Выберите язык этой панели. Позже его можно сменить в «Настройки › Общие».",
-    "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. The console and the log stay in English.": "Всё, что перевод ещё не покрыл, остаётся на английском, а не показывается пустым, поэтому недоделанным языком вполне можно пользоваться. Консоль и журнал остаются на английском.",
     "It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts rep4rep comments - all from this machine. Your accounts never leave it.": "Он входит в ваши аккаунты Steam, играет, чтобы шли часы, фармит карточки и публикует комментарии rep4rep — всё с этой машины. Ваши аккаунты её не покидают.",
     "This takes about a minute. You can skip it and come back from the Overview page.": "Это займёт около минуты. Можно пропустить и вернуться со страницы «Обзор».",
     "Bring your ArchiSteamFarm accounts across": "Перенесите аккаунты из ArchiSteamFarm",
@@ -393,8 +391,6 @@
     "Adding it back needs the password and a fresh Steam Guard code.": "Чтобы добавить его обратно, понадобятся пароль и свежий код Steam Guard.",
     "Anything it was farming stops.": "Всё, что он фармил, останавливается.",
     "Turn off opening the dashboard?": "Отключить открытие панели?",
-    "A newly added account does {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "Только что добавленный аккаунт не делает {0}, пока ему не скажут, во что играть, а в окне приложения такой формы нет — только в панели.",
-    "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "С выключенной опцией добавление аккаунта оставит вас в командной строке с аккаунтом, который будет простаивать, пока вы не вспомните его настроить. Это для тех, кто уже это знает.",
     "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "Эта панель доступна из вашей сети, а пароль к ней достаточно короткий, чтобы его угадали. За ней — ваши аккаунты Steam.",
     "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "Эта панель настроена слушать сеть, но без пароля она отклоняет любое подключение не с этого ПК — так что доступна она только здесь.",
     "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "Сколько этот аккаунт наиграл в эту игру. Steam ничего не выдаёт, пока не пройден порог из настроек этого аккаунта.",
@@ -521,6 +517,13 @@
     "waiting for a farming slot": "ждёт свободный слот для фарма",
     "waiting for the account": "ждёт аккаунт",
     "sending items to your main account every {0} - the first send is around {1}": "отправляет вещи на основной аккаунт каждые {0} - первая отправка около {1}",
+    "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. Status and log lines follow it too; replies to commands typed in the console stay in English.": "То, что перевод ещё не охватывает, остаётся на английском, а не пустым, так что переведённый наполовину язык вполне пригоден. Строки состояния и журнала тоже на этом языке; ответы на команды, набранные в консоли, остаются на английском.",
+    "A newly added account farms its trading cards and {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "Только что добавленный аккаунт фармит свои карточки и {0}, пока ему не скажут, во что играть, а в окне приложения такой формы нет - только в панели.",
+    "With this off, adding an account leaves you at a command line with an account that farms its cards and then sits idle until you remember to go and configure it. This is for people who already know that.": "Если это выключено, после добавления аккаунта вы остаётесь в командной строке с аккаунтом, который нафармит карточки и потом простаивает, пока вы не вспомните его настроить. Это для тех, кто уже это знает.",
+    "nocat.farm on GitHub - source, releases and issues.": "nocat.farm на GitHub - исходный код, релизы и задачи.",
+    "nothing more": "больше ничего",
+    "opens booster packs once a day - badge crafting is off": "открывает наборы карточек раз в день - создание значков выключено",
+    "plugin {0} took too long to unload - closing without it": "плагин {0} слишком долго выгружался - закрываемся без него",
     "Added. It's signing in now - answer the password and Steam Guard questions in the bar at the top.": "Добавлено. Аккаунт уже входит - ответьте на вопросы о пароле и коде Steam Guard в строке вверху.",
     "Couldn't add that account.": "Не удалось добавить этот аккаунт.",
     "A new account starts farming trading cards straight away. There are two ways it can spend its time:": "Новый аккаунт сразу начинает фармить карточки. Проводить время он может двумя способами:",
@@ -1112,7 +1115,7 @@
     },
     "OpenDashboardAfterAdd": {
       "label": "Открывать панель после добавления аккаунта",
-      "tip": "Открывает панель в браузере, как только добавлен новый аккаунт, чтобы вы его настроили. Свежий аккаунт не делает ровно ничего, пока ему не скажут, во что играть, а в окне приложения такой формы нет — только в панели. Выключите — придётся помнить самому."
+      "tip": "Открывает панель в браузере, как только добавлен новый аккаунт, чтобы его можно было настроить. Только что добавленный аккаунт фармит свои карточки и больше ничего, пока ему не скажут, во что играть, а в окне приложения такой формы нет - только в панели. Если выключить, придётся помнить об этом самому."
     },
     "OpenBrowserOnStart": {
       "label": "Открывать браузер при запуске",
@@ -1136,7 +1139,7 @@
     },
     "KeepAwake": {
       "label": "Не давать ПК засыпать",
-      "tip": "Не даёт Windows уйти в спящий режим, пока работают аккаунты. Экран гаснуть может — блокируется только сон."
+      "tip": "Не даёт Windows уйти в сон, пока nocat.farm открыт, независимо от того, вошёл ли какой-нибудь аккаунт. Экран может гаснуть - блокируется только сон."
     },
     "TrayNotifications": {
       "label": "Показывать всплывающие уведомления",
@@ -1180,7 +1183,7 @@
     },
     "Language": {
       "label": "Язык",
-      "tip": "Язык панели. Непереведённое показывается по-английски, а не пустотой, так что наполовину переведённый язык всё равно полностью пригоден."
+      "tip": "Язык панели. Непереведённое показывается по-английски, а не пустотой, так что наполовину переведённый язык всё равно полностью пригоден. Строки состояния и журнала тоже на этом языке; ответы на команды, набранные в консоли, остаются на английском."
     },
     "MarketCurrency": {
       "label": "Цены инвентаря в",

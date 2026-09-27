@@ -219,7 +219,7 @@ public static class Tutorial {
 			"",
 			"  set StartWithWindows true     launch when you sign in to Windows",
 			"  set StartMinimized true       start straight to the tray",
-			"  set KeepAwake true            stop the PC sleeping while accounts are running",
+			"  set KeepAwake true            stop the PC sleeping while nocat.farm is open",
 			"",
 			"The dashboard is the same product with a mouse, and it switches off:",
 			"  set WebEnabled false          console only (restart to apply)"

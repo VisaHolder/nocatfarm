@@ -20,7 +20,7 @@ public sealed class GlobalConfig {
 	public string WebHost { get; set; } = "127.0.0.1";
 	public int WebPort { get; set; } = 7242;
 	public string WebPassword { get; set; } = "";
-	// On by default. A brand new account does nothing at all until it is told what to play, and the dashboard
+	// On by default. A brand new account only farms its cards until it is told what to play, and the dashboard
 	// is the only place with a form for that - so starting up and showing nothing but a console was the wrong
 	// first impression for the one screen people actually need.
 	public bool OpenBrowserOnStart { get; set; } = true;

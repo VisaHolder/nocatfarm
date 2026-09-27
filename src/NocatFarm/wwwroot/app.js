@@ -315,6 +315,42 @@ function render() {
     ${r4rOn() && state.Rep4RepToken ? `<dt data-tip="${esc(t("Points you can spend on rep4rep. Pending ones are comments rep4rep hasn't verified yet."))}">${esc(t('Points'))}</dt><dd>${state.Points}${state.PendingPoints ? ' <span class="muted">+' + state.PendingPoints + '</span>' : ''}</dd>` : ''}
     <dt data-tip="${esc(t('How long nocat.farm has been running.'))}">${esc(t('Up'))}</dt><dd>${hm(state.UptimeMinutes)}</dd>`);
 
+  // Kept with the rail rather than in renderOverview, for the same reason as the Plugins tag above: that only
+  // runs on the Overview tab, so a dashboard opened on any other tab showed the placeholder version from the
+  // page and never offered the update until you happened to visit Overview.
+  // Version, and whether there's a newer one. The link always goes to the repo; when an update exists it says
+  // so and points at that release instead.
+  const ver = $('version');
+  if (ver) {
+    if (state.UpdateAvailable) {
+      ver.textContent = `v${state.Version} → ${state.UpdateAvailable}`;
+      ver.href = state.UpdateUrl || 'https://github.com/VisaHolder/nocatfarm/releases';
+      ver.classList.add('update');
+      ver.dataset.tip = tf('{0} is out - you have {1}. Click to see what changed.', state.UpdateAvailable, state.Version);
+    } else {
+      ver.textContent = 'v' + state.Version;
+      ver.href = 'https://github.com/VisaHolder/nocatfarm';
+      ver.classList.remove('update');
+      ver.dataset.tip = t('nocat.farm on GitHub - source, releases and issues.');
+    }
+  }
+
+  // The button that installs it, beside the chip that announces it.
+  //
+  // Separate from the link on purpose: the link is "what changed", this is "do it". Nothing updates on its
+  // own and there is no setting to make it - plenty of people would rather keep a build that works than take
+  // whatever is newest, and an update that lands unasked mid-session costs them a night's farming.
+  const upd = $('updateBtn');
+  if (upd) {
+    const busy = state.UpdateBusy;
+    upd.classList.toggle('hidden', !state.UpdateAvailable);
+    upd.disabled = !!busy;
+    upd.textContent = busy ? (state.UpdateProgress || t('working…')) : tf('Update to {0}', state.UpdateAvailable || '');
+    upd.dataset.tip = busy
+      ? t('Downloading. It restarts by itself when it lands.')
+      : tf('Download {0} and restart into it. Your accounts, tokens, settings and logs are left exactly as they are.', state.UpdateAvailable || '');
+  }
+
   renderAlerts();
 
   if (view === 'overview') renderOverview();
@@ -426,37 +462,6 @@ function renderOverview() {
         ? tile(state.Points, 'rep4rep points', "Points you can spend. Pending points are comments rep4rep hasn't verified yet - they turn into real points on their own, usually within a few hours. Nothing is lost.",
             state.PendingPoints ? tf('{0} pending', state.PendingPoints) : '')
         : tile(state.CommentsToday, 'Comments today', 'rep4rep comments posted in the last 24 hours.')));
-
-  // Version, and whether there's a newer one. The link always goes to the repo; when an update exists it says
-  // so and points at that release instead.
-  const ver = $('version');
-  if (ver) {
-    if (state.UpdateAvailable) {
-      ver.textContent = `v${state.Version} → ${state.UpdateAvailable}`;
-      ver.href = state.UpdateUrl || 'https://github.com/VisaHolder/nocatfarm/releases';
-      ver.classList.add('update');
-      ver.dataset.tip = tf('{0} is out - you have {1}. Click to see what changed.', state.UpdateAvailable, state.Version);
-    } else {
-      ver.textContent = 'v' + state.Version;
-      ver.classList.remove('update');
-    }
-  }
-
-  // The button that installs it, beside the chip that announces it.
-  //
-  // Separate from the link on purpose: the link is "what changed", this is "do it". Nothing updates on its
-  // own and there is no setting to make it - plenty of people would rather keep a build that works than take
-  // whatever is newest, and an update that lands unasked mid-session costs them a night's farming.
-  const upd = $('updateBtn');
-  if (upd) {
-    const busy = state.UpdateBusy;
-    upd.classList.toggle('hidden', !state.UpdateAvailable);
-    upd.disabled = !!busy;
-    upd.textContent = busy ? (state.UpdateProgress || t('working…')) : tf('Update to {0}', state.UpdateAvailable || '');
-    upd.dataset.tip = busy
-      ? t('Downloading. It restarts by itself when it lands.')
-      : tf('Download {0} and restart into it. Your accounts, tokens, settings and logs are left exactly as they are.', state.UpdateAvailable || '');
-  }
 
   paint('glance', bots.length ? `<div class="tablewrap"><table>
     <tr><th>${esc(t('Account'))}</th><th>${esc(t('State'))}</th><th>${esc(t('Playing'))}</th><th>${esc(t('Cards'))}</th><th data-tip="${esc(t("What everything in this account's inventory would fetch at the market's median price. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth."))}">${esc(t('Value'))}</th>${r4rOn() ? `<th>${esc(t('rep4rep'))}</th>` : ''}<th>${esc(t('Up'))}</th></tr>
@@ -1136,7 +1141,7 @@ function renderTutorial() {
         <div class="langpick">${LANGUAGES.map((l) =>
           `<span class="p ${(config && config.Global && config.Global.Language || 'en') === l.code ? 'on' : ''}"
             onclick="pickTutorialLanguage('${l.code}')">${esc(l.name)}</span>`).join('')}</div>
-        <p class="muted small">${esc(t("Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. The console and the log stay in English."))}</p>`,
+        <p class="muted small">${esc(t("Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. Status and log lines follow it too; replies to commands typed in the console stay in English."))}</p>`,
       next: t('Continue'),
     },
     {
@@ -1602,12 +1607,33 @@ async function run(line) {
   // help is a reference, not output. /? and /help work too, because both are what people try.
   const asHelp = line.trim().replace(/^\//, '').toLowerCase();
 
-  if (asHelp === 'help' || asHelp === '?' || asHelp.startsWith('help ')) {
-    helpModal(asHelp.startsWith('help ') ? asHelp.slice(5) : '');
+  if (asHelp === 'help' || asHelp === '?' || asHelp === 'h') {
+    helpModal('');
     return '';
   }
 
-  const res = await post('/api/command', { Line: line });
+  // 'help <word>' opens the reference filtered to matching commands - unless the word is a setting, or matches
+  // no command, and then it goes to the server, which explains settings. It used to always filter, so
+  // 'help HoursUntilCardDrops' - what the tutorial tells people to type - answered "Nothing matches."
+  if (asHelp.startsWith('help ')) {
+    const q = asHelp.slice(5).trim();
+
+    // The settings list is only fetched once the Settings tab has been opened - fetch it here if it hasn't been,
+    // or a setting whose name happens to appear in some command's help text would be filtered instead.
+    if (!schema) schema = await api('/api/settings/schema').catch(() => null);
+
+    const defs = schema ? [...(schema.Global || []), ...(schema.Bot || [])] : [];
+    const isSetting = defs.some((d) => d.Name.toLowerCase() === q);
+    const isCommand = (commands || []).some((c) => (c.Name + ' ' + c.Args + ' ' + c.Help).toLowerCase().includes(q));
+
+    if (!isSetting && isCommand) {
+      helpModal(q);
+      return '';
+    }
+  }
+
+  // '/help x' is the same request as 'help x'; the server doesn't strip the slash, so send it without one.
+  const res = await post('/api/command', { Line: asHelp.startsWith('help ') ? line.trim().replace(/^\//, '') : line });
   if (res.output) pushLocal(`<div class="reply">${esc(res.output)}</div>`);
   refresh();
   return res.output;
@@ -1750,7 +1776,7 @@ function renderSettings() {
   const q = ($('setSearch').value || '').toLowerCase();
 
   $('settingsHeader').innerHTML = settingsTarget === GLOBAL
-    ? `<p class="muted small">${esc(t('These apply to nocat.farm as a whole.'))} <code>config/nocat.farm.json</code></p>`
+    ? `<p class="muted small">${esc(t('These apply to nocat.farm as a whole.'))} <code>config/nocatFarm.json</code></p>`
     : `<div class="toolbar"><b>${esc(settingsTarget)}</b>
         <span class="muted small">config/${esc(settingsTarget)}.json</span>
         <span class="spacer"></span>
@@ -2400,8 +2426,8 @@ async function doUnlockAll(name) {
 const GUARDED_OFF = {
   OpenDashboardAfterAdd: {
     title: () => t('Turn off opening the dashboard?'),
-    body: () => `<p>${tf('A newly added account does {0} until it is told what to play, and the app window has no form for that - only the dashboard does.', `<b>${esc(t('nothing at all'))}</b>`)}</p>
-      <p class="muted small">${esc(t('With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.'))}</p>`,
+    body: () => `<p>${tf('A newly added account farms its trading cards and {0} until it is told what to play, and the app window has no form for that - only the dashboard does.', `<b>${esc(t('nothing more'))}</b>`)}</p>
+      <p class="muted small">${esc(t('With this off, adding an account leaves you at a command line with an account that farms its cards and then sits idle until you remember to go and configure it. This is for people who already know that.'))}</p>`,
   },
 };
 

@@ -127,7 +127,6 @@
     "none": "なし",
     "not set": "未設定",
     "saved": "保存済み",
-    "nothing at all": "何ひとつ",
     "nothing left to farm": "収集するものはありません",
     "nothing queued": "予定なし",
     "no accounts yet": "アカウントはまだありません",
@@ -312,7 +311,6 @@
     "STEP {0} OF {1}": "ステップ {0} / {1}",
     "Welcome to nocat.farm": "nocat.farm へようこそ",
     "Pick the language for this dashboard. You can change it later under Settings › Global.": "このダッシュボードの言語を選んでください。あとから「設定 › 全体」で変更できます。",
-    "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. The console and the log stay in English.": "翻訳がまだ及んでいない箇所は空白ではなく英語のまま残るので、途中の言語でも問題なく使えます。コンソールとログは英語のままです。",
     "It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts rep4rep comments - all from this machine. Your accounts never leave it.": "Steam アカウントにサインインし、時間が加算されるようゲームを動かし、トレーディングカードを集め、rep4rep のコメントを投稿します - すべてこのマシン上で。アカウントがここから出ることはありません。",
     "This takes about a minute. You can skip it and come back from the Overview page.": "1 分ほどで終わります。スキップして、あとで「概要」ページから戻ってこられます。",
     "Bring your ArchiSteamFarm accounts across": "ArchiSteamFarm のアカウントを移す",
@@ -393,8 +391,6 @@
     "Adding it back needs the password and a fresh Steam Guard code.": "戻すにはパスワードと新しい Steam Guard のコードが必要です。",
     "Anything it was farming stops.": "収集中だったものはすべて止まります。",
     "Turn off opening the dashboard?": "ダッシュボードを開く動作をオフにしますか？",
-    "A newly added account does {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "追加したてのアカウントは、何を遊ぶか指示されるまで{0}しません。そしてその入力欄はアプリのウィンドウにはなく、ダッシュボードにしかありません。",
-    "With this off, adding an account leaves you at a command line with an account that will sit there idle until you remember to go and configure it. This is for people who already know that.": "これをオフにすると、アカウントを追加してもコマンドラインに残されるだけで、そのアカウントは設定しに行くのを思い出すまで何もせず放置されます。それを承知の人向けです。",
     "This dashboard is reachable from your network and its password is short enough to guess. Your Steam accounts are behind it.": "このダッシュボードはネットワークから到達でき、パスワードは推測できるほど短いです。その裏にはあなたの Steam アカウントがあります。",
     "This dashboard is set to listen on the network, but with no password it refuses every connection that isn't from this PC — so it's only reachable here.": "このダッシュボードはネットワークで待ち受ける設定ですが、パスワードがないため、この PC 以外からの接続をすべて拒否します - つまりここからしか開けません。",
     "How long this account has played this game. Steam drops nothing until it passes the threshold in this account's settings.": "このアカウントがこのゲームをどれだけ遊んだか。このアカウントの設定にあるしきい値を超えるまで、Steam は何もドロップしません。",
@@ -521,6 +517,13 @@
     "waiting for a farming slot": "収集の空き枠を待っています",
     "waiting for the account": "アカウントを待っています",
     "sending items to your main account every {0} - the first send is around {1}": "{0}ごとにメインアカウントへアイテムを送ります - 初回は{1}頃",
+    "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. Status and log lines follow it too; replies to commands typed in the console stay in English.": "翻訳がまだ済んでいない箇所は空欄ではなく英語で表示されるので、途中までの言語でも問題なく使えます。ステータスとログの行もこの言語になります。コンソールで入力したコマンドへの返答は英語のままです。",
+    "A newly added account farms its trading cards and {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "追加したてのアカウントは、何を遊ぶか指示されるまでトレーディングカードを集めるだけで{0}。その入力欄はアプリのウィンドウにはなく、ダッシュボードにしかありません。",
+    "With this off, adding an account leaves you at a command line with an account that farms its cards and then sits idle until you remember to go and configure it. This is for people who already know that.": "オフにすると、アカウントを追加したあとはコマンドラインに取り残され、アカウントはカードを集めたあと、設定し忘れている間ずっと何もしません。わかっている人向けです。",
+    "nocat.farm on GitHub - source, releases and issues.": "GitHub の nocat.farm - ソースコード、リリース、Issue。",
+    "nothing more": "ほかには何もしません",
+    "opens booster packs once a day - badge crafting is off": "1日1回ブースターパックを開けます - バッジ作成はオフです",
+    "plugin {0} took too long to unload - closing without it": "プラグイン {0} のアンロードに時間がかかりすぎました - 待たずに終了します",
     "Added. It's signing in now - answer the password and Steam Guard questions in the bar at the top.": "追加しました。今サインイン中です - パスワードと Steam Guard の質問には上のバーで答えてください。",
     "Couldn't add that account.": "そのアカウントを追加できませんでした。",
     "A new account starts farming trading cards straight away. There are two ways it can spend its time:": "新しいアカウントはすぐにトレーディングカードを集め始めます。時間の使い方は2つあります:",
@@ -1112,7 +1115,7 @@
     },
     "OpenDashboardAfterAdd": {
       "label": "アカウント追加後にダッシュボードを開く",
-      "tip": "新しいアカウントを追加したら、設定できるようにブラウザでダッシュボードを開きます。追加したてのアカウントは、何を遊ぶか指示されるまで何もしません。そしてその入力欄はアプリのウィンドウにはなく、ダッシュボードにしかありません。オフにすると、自分で覚えておく必要があります。"
+      "tip": "新しいアカウントを追加したら、設定できるようにブラウザでダッシュボードを開きます。追加したてのアカウントは、何を遊ぶか指示されるまでトレーディングカードを集めるだけで、ほかには何もしません。そしてその入力欄はアプリのウィンドウにはなく、ダッシュボードにしかありません。オフにすると、自分で覚えておく必要があります。"
     },
     "OpenBrowserOnStart": {
       "label": "起動時にブラウザを開く",
@@ -1136,7 +1139,7 @@
     },
     "KeepAwake": {
       "label": "この PC をスリープさせない",
-      "tip": "アカウントが動いているあいだ、Windows のスリープを止めます。画面は消えても構いません - 止めるのはスリープだけです。"
+      "tip": "nocat.farm を開いているあいだ、アカウントがサインインしているかどうかに関係なく Windows のスリープを止めます。画面は消えても構いません - 止めるのはスリープだけです。"
     },
     "TrayNotifications": {
       "label": "ポップアップを表示",
@@ -1180,7 +1183,7 @@
     },
     "Language": {
       "label": "言語",
-      "tip": "ダッシュボードの言語。未翻訳の箇所は空欄ではなく英語で出るので、途中まででも問題なく使えます。"
+      "tip": "ダッシュボードの言語。未翻訳の箇所は空欄ではなく英語で出るので、途中まででも問題なく使えます。ステータスとログの行もこの言語になります。コンソールで入力したコマンドへの返答は英語のままです。"
     },
     "MarketCurrency": {
       "label": "インベントリの通貨",

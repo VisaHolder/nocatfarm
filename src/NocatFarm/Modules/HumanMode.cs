@@ -483,8 +483,11 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		}
 
 		// Warmed up. If there are cards, hand off to the farmer (it takes priority) rather than starting a
-		// weighted game on top of it - it will claim on its next tick now that the warm-up is done.
-		if (Bot.CardsRemaining > 0) {
+		// weighted game on top of it - it will claim on its next tick now that the warm-up is done. But only when
+		// it is actually going to farm: with farming switched off, or the farmer waiting for bedtime, its window or
+		// its next sitting, standing aside left the account online and idle until then. The day carries on
+		// instead, and the farmer takes the session over the moment it starts (the IsFarming check above).
+		if ((Bot.CardsRemaining > 0) && Bot.Cfg.FarmCards && (BotManager.ModuleOf<CardFarmer>(Bot)?.HoldingBack != true)) {
 			_phase = Phase.Off;
 			Bot.ClearPersonaOverride();
 

@@ -24,6 +24,7 @@ namespace NocatFarm.Plugins;
 public static class PluginHost {
 	private static readonly List<Loaded> Plugins = [];
 	private static readonly List<Host> Hosts = [];
+	private static readonly Lock HostsGate = new();
 	private static BotManager? _mgr;
 
 	private sealed record Loaded(INocatPlugin Plugin, string File, Host Host);
@@ -93,7 +94,10 @@ public static class PluginHost {
 					Host host = new(_mgr!, plugin.Name);
 
 					await plugin.OnLoadAsync(host, ct).ConfigureAwait(false);
-					Hosts.Add(host);
+					lock (HostsGate) {
+						Hosts.Add(host);
+					}
+
 					Plugins.Add(new Loaded(plugin, file, host));
 					NocatFarm.Log.Good(new Said("plugin loaded: {0} {1}", plugin.Name, plugin.Version));
 				} catch (Exception e) {
@@ -110,16 +114,27 @@ public static class PluginHost {
 	}
 
 	public static async Task UnloadAllAsync() {
-		foreach (Loaded loaded in Plugins) {
+		// Detach first, then tell each plugin. Accounts are still running at this point and keep raising events;
+		// a plugin that has been told to unload must not get another one mid-teardown.
+		Loaded[] unloading;
+
+		lock (HostsGate) {
+			unloading = [.. Plugins];
+			Hosts.Clear();
+		}
+
+		foreach (Loaded loaded in unloading) {
 			try {
-				await loaded.Plugin.OnUnloadAsync().ConfigureAwait(false);
+				// Bounded: a plugin that hangs on the way out must not keep the whole app from closing.
+				await loaded.Plugin.OnUnloadAsync().WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+			} catch (TimeoutException) {
+				NocatFarm.Log.Debug(new Said("plugin {0} took too long to unload - closing without it", loaded.Plugin.Name));
 			} catch (Exception e) {
 				NocatFarm.Log.Debug(new Said("plugin {0} threw on unload: {1}", loaded.Plugin.Name, e.Message));
 			}
 		}
 
 		Plugins.Clear();
-		Hosts.Clear();
 	}
 
 	// ── the events, raised by the app ─────────────────────────────────────────
@@ -132,7 +147,13 @@ public static class PluginHost {
 
 	private static void Each(Action<Host> raise) {
 		// Snapshot: a handler is free to do anything, including something that ends up unloading a plugin.
-		foreach (Host host in Hosts.ToArray()) {
+		Host[] hosts;
+
+		lock (HostsGate) {
+			hosts = [.. Hosts];
+		}
+
+		foreach (Host host in hosts) {
 			raise(host);
 		}
 	}
@@ -142,7 +163,13 @@ public static class PluginHost {
 		get {
 			Dictionary<string, (string Usage, string Help, Func<string[], Task<string>> Run)> all = new(StringComparer.OrdinalIgnoreCase);
 
-			foreach (Host host in Hosts) {
+			Host[] hosts;
+
+			lock (HostsGate) {
+				hosts = [.. Hosts];
+			}
+
+			foreach (Host host in hosts) {
 				foreach ((string verb, (string Usage, string Help, Func<string[], Task<string>> Run) command) in host.Commands) {
 					all.TryAdd(verb, command);
 				}

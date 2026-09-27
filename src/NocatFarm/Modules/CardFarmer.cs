@@ -195,6 +195,13 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>One discovery + farming pass. Returns how many minutes to wait before looking again.</summary>
+	/// <summary>
+	/// Cards are left, but the farmer is deliberately waiting - for bedtime, its clock window or its next sitting.
+	/// Human mode reads this: stepping aside for a farmer that isn't going to farm left the account sitting online
+	/// doing nothing for hours, which is exactly the look human mode exists to avoid.
+	/// </summary>
+	public bool HoldingBack { get; private set; }
+
 	private async Task<int> CycleAsync(CancellationToken ct) {
 		if (Bot.Grinding) {
 			_status = new Said("standing by - grinding {0}", GameNames.Of(Bot.GrindGame));
@@ -339,18 +346,21 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		HumanMode? human = BotManager.ModuleOf<HumanMode>(Bot);
 
 		if (Bot.HumanOwned && Bot.Cfg.FarmOnlyWhileAsleep && human?.InBed != true) {
+			HoldingBack = true;
 			_status = new Said("{0} card(s) - farming tonight, once it's asleep", Bot.CardsRemaining);
 
 			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
 		}
 
 		if (!InFarmWindow()) {
+			HoldingBack = true;
 			_status = new Said("{0} card(s) - waiting for the {1}:00-{2}:00 farming window", Bot.CardsRemaining, (Bot.Cfg.FarmFromHour).ToString("00"), (Bot.Cfg.FarmUntilHour).ToString("00"));
 
 			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
 		}
 
 		if (Bot.Cfg.FarmInSittings && !InSittingNow(out DateTime next)) {
+			HoldingBack = true;
 			_status = next > DateTime.Now
 				? new Said("{0} card(s) - next sitting around {1}", Bot.CardsRemaining, next.ToString("HH:mm"))
 				: new Said("{0} card(s) - done farming for today", Bot.CardsRemaining);
@@ -358,13 +368,19 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			return Rng.Next(5, 20);   // short, so a sitting starts near its time rather than up to an hour late
 		}
 
-		// Only hold a farming slot while actually farming, never while sleeping between rounds.
+		// Only hold a farming slot while actually farming, never while sleeping between rounds. Waiting for one is
+		// holding back too - it can take hours with several accounts farming - so human mode keeps its day meanwhile.
+		// The flag is cleared only here, once every gate has passed: clearing it at the top of each cycle dropped it
+		// for any cycle that ended early (a badge page that didn't load), and human mode went idle again.
 		SemaphoreSlim? slots = _slots;
 
 		if (slots != null) {
 			_status = new Said("waiting for a farming slot");
+			HoldingBack = true;
 			await slots.WaitAsync(ct).ConfigureAwait(false);
 		}
+
+		HoldingBack = false;
 
 		try {
 			// Ready games first: they actually produce cards. Bumping hours produces nothing until it finishes.
@@ -529,6 +545,12 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			// loop is still running, and the idler would then treat the account as free and take the session.
 			Claim();
 
+			// And the game itself. Human mode now plays while the farmer waits, so a claim can land in the same
+			// instant human mode sends its own game - and nothing here would ever put the farm game back.
+			if (!Bot.PlayingApps.Contains(game.AppId)) {
+				Bot.SetPlaying([game.AppId], Bot.Cfg.PlayWhileFarming ? null : "");
+			}
+
 			// Armed BEFORE the re-check so a drop landing mid-check still wakes us.
 			bool pushed = await Bot.WaitForItemDropAsync(check, ct).ConfigureAwait(false);
 
@@ -638,6 +660,12 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			}
 
 			Bot.IsFarming = true;   // same reason as FarmSoloAsync
+
+			// Same again: put the batch back if something else got its games onto Steam in the hand-over.
+			if (batch.Any(g => !Bot.PlayingApps.Contains(g.AppId))) {
+				Bot.SetPlaying(batch.Select(static g => g.AppId).ToArray(), Bot.Cfg.PlayWhileFarming ? null : "");
+			}
+
 			TimeSpan left = until - DateTime.UtcNow;
 			TimeSpan slice = left < TimeSpan.FromMinutes(10) ? left : TimeSpan.FromMinutes(10);
 

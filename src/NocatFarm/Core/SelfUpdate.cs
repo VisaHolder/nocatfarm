@@ -122,7 +122,17 @@ public static class SelfUpdate {
 			string staged = Path.Combine(work, "staged");
 			ZipFile.ExtractToDirectory(zip, staged, true);
 
-			string exe = Path.Combine(staged, "nocatFarm.exe");
+			// Releases up to 1.2.6 put everything inside one nocat.farm/ folder; later ones are flat. Take either:
+			// looking only at the top level refused every foldered release outright, so the update button could
+			// never install one.
+			string payload = staged;
+
+			if (!File.Exists(Path.Combine(payload, "nocatFarm.exe")) && (Directory.GetFiles(staged).Length == 0)
+				&& (Directory.GetDirectories(staged) is [string only]) && File.Exists(Path.Combine(only, "nocatFarm.exe"))) {
+				payload = only;
+			}
+
+			string exe = Path.Combine(payload, "nocatFarm.exe");
 
 			if (!File.Exists(exe)) {
 				return "update: that archive has no nocatFarm.exe in it - nothing has been changed";
@@ -131,7 +141,7 @@ public static class SelfUpdate {
 			string here = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
 			string script = Path.Combine(work, "swap.cmd");
 
-			await File.WriteAllTextAsync(script, SwapScript(Environment.ProcessId, staged, here, work), ct).ConfigureAwait(false);
+			await File.WriteAllTextAsync(script, SwapScript(Environment.ProcessId, payload, here, work), ct).ConfigureAwait(false);
 
 			Progress = "restarting into " + tag;
 			Log.Attention(new Said("update: {0} is ready - restarting into it now", tag));

@@ -15,15 +15,35 @@ public static class WindowsIntegration {
 	private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
 	private const string ValueName = "nocatFarm";
 
-	[Flags]
-	private enum ExecutionState : uint {
-		Continuous = 0x80000000,
-		SystemRequired = 0x00000001,
-		AwayModeRequired = 0x00000040
+	// A power request, not SetThreadExecutionState. That one belongs to the calling THREAD: set it from a pool
+	// thread (startup runs on one, and so does every settings change) and it lapses when that thread is recycled,
+	// and clearing it from a different thread clears nothing - so switching it off could keep the PC awake until
+	// a restart. A power request is a handle the process owns, and any thread can set or clear it.
+	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+	private struct ReasonContext {
+		public uint Version;
+		public uint Flags;
+		[MarshalAs(UnmanagedType.LPWStr)] public string SimpleReasonString;
 	}
 
-	[DllImport("kernel32.dll")]
-	private static extern uint SetThreadExecutionState(ExecutionState flags);
+	private enum PowerRequestType {
+		SystemRequired = 1,
+		AwayModeRequired = 2
+	}
+
+	private const uint PowerRequestContextVersion = 0;
+	private const uint PowerRequestContextSimpleString = 0x1;
+
+	[DllImport("kernel32.dll", SetLastError = true)]
+	private static extern IntPtr PowerCreateRequest(ref ReasonContext context);
+
+	[DllImport("kernel32.dll", SetLastError = true)]
+	[return: MarshalAs(UnmanagedType.Bool)]
+	private static extern bool PowerSetRequest(IntPtr request, PowerRequestType type);
+
+	[DllImport("kernel32.dll", SetLastError = true)]
+	[return: MarshalAs(UnmanagedType.Bool)]
+	private static extern bool PowerClearRequest(IntPtr request, PowerRequestType type);
 
 	/// <summary>Is nocatFarm registered to start when this user signs in?</summary>
 	public static bool StartsWithWindows() {
@@ -67,26 +87,60 @@ public static class WindowsIntegration {
 		}
 	}
 
+	private static readonly Lock AwakeGate = new();
+	private static IntPtr _request = IntPtr.Zero;
 	private static bool _awake;
+	private static bool _awayMode;
 
-	/// <summary>
-	/// Hold the machine awake, or let it sleep again. The flag is per-thread, so this is called from a thread
-	/// that lives as long as the process - the timer callback would set it on a pool thread that then dies.
-	/// </summary>
+	/// <summary>Hold the machine awake while nocat.farm is open, or let it sleep again. Safe from any thread.</summary>
 	public static void KeepAwake(bool keep) {
-		if (keep == _awake) {
-			return;
-		}
+		lock (AwakeGate) {
+			if (keep == _awake) {
+				return;
+			}
 
-		try {
-			// AwayModeRequired keeps work going with the screen off rather than only deferring the sleep timer.
-			SetThreadExecutionState(keep
-				? ExecutionState.Continuous | ExecutionState.SystemRequired | ExecutionState.AwayModeRequired
-				: ExecutionState.Continuous);
+			try {
+				if (_request == IntPtr.Zero) {
+					ReasonContext reason = new() {
+						Version = PowerRequestContextVersion,
+						Flags = PowerRequestContextSimpleString,
+						SimpleReasonString = "nocat.farm is running your Steam accounts"
+					};
 
-			_awake = keep;
-		} catch (Exception e) {
-			Log.Debug(new Said("keep-awake: {0}", e.Message));
+					IntPtr handle = PowerCreateRequest(ref reason);
+
+					if ((handle == IntPtr.Zero) || (handle == new IntPtr(-1))) {
+						Log.Debug(new Said("keep-awake: {0}", Marshal.GetLastPInvokeErrorMessage()));
+
+						return;
+					}
+
+					_request = handle;
+				}
+
+				if (keep) {
+					if (!PowerSetRequest(_request, PowerRequestType.SystemRequired)) {
+						Log.Debug(new Said("keep-awake: {0}", Marshal.GetLastPInvokeErrorMessage()));
+
+						return;
+					}
+
+					// Away mode keeps work going with the screen off rather than only deferring the sleep timer. Not
+					// every PC allows it, and that's fine - SystemRequired alone still stops the sleep.
+					_awayMode = PowerSetRequest(_request, PowerRequestType.AwayModeRequired);
+				} else {
+					PowerClearRequest(_request, PowerRequestType.SystemRequired);
+
+					if (_awayMode) {
+						PowerClearRequest(_request, PowerRequestType.AwayModeRequired);
+						_awayMode = false;
+					}
+				}
+
+				_awake = keep;
+			} catch (Exception e) {
+				Log.Debug(new Said("keep-awake: {0}", e.Message));
+			}
 		}
 	}
 }

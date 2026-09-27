@@ -125,7 +125,7 @@ public static class AsfImport {
 				continue;
 			}
 
-			BotConfig bot = Translate(cfg, name, global, notes);
+			BotConfig bot = Translate(cfg, name, global, notes, ReadDatabase(dir, name));
 			ConfigStore.SaveBot(name, bot);
 
 			// The token is the reason to do this at all.
@@ -186,7 +186,7 @@ public static class AsfImport {
 	}
 
 	// ── translation ─────────────────────────────────────────────────────────
-	private static BotConfig Translate(JsonElement cfg, string name, GlobalConfig global, List<string> notes) {
+	private static BotConfig Translate(JsonElement cfg, string name, GlobalConfig global, List<string> notes, JsonElement db) {
 		BotConfig bot = new() {
 			Enabled = Bool(cfg, "Enabled") ?? true,
 			SteamLogin = Str(cfg, "SteamLogin") ?? name,
@@ -223,8 +223,14 @@ public static class AsfImport {
 			bot.AcceptGifts = gifts;
 		}
 
-		if (Int(cfg, "FarmingOrder") is int order) {
+		// ASF's current key is a list, FarmingOrders, tried in turn; ours is one choice, so the first one wins.
+		// The single-number FarmingOrder is what older ASF configs used. Reading only that missed every order
+		// set on a current install.
+		if (cfg.TryGetProperty("FarmingOrders", out JsonElement orders) && (orders.ValueKind == JsonValueKind.Array)
+			&& (orders.EnumerateArray().FirstOrDefault() is { ValueKind: JsonValueKind.Number } firstOrder) && firstOrder.TryGetInt32(out int order)) {
 			bot.FarmingOrder = MapFarmingOrder(order);
+		} else if (Int(cfg, "FarmingOrder") is int legacyOrder) {
+			bot.FarmingOrder = MapFarmingOrder(legacyOrder);
 		}
 
 		bot.IdleGames = Apps(cfg, "GamesPlayedWhileIdle");
@@ -254,8 +260,16 @@ public static class AsfImport {
 			notes.Add($"{name}: brought its rep4rep API token across too");
 		}
 
-		if (Apps(cfg, "IdlePriorityQueue") is { Count: > 0 } priority) {
+		// The farming priority queue and blacklist aren't in the config at all - ASF keeps them in the bot's
+		// database, next to the login token, because they're edited by command rather than by hand.
+		if (Apps(db, "FarmingPriorityQueueAppIDs") is { Count: > 0 } priority) {
 			bot.PriorityGames = priority;
+		} else if (Apps(cfg, "IdlePriorityQueue") is { Count: > 0 } legacyPriority) {
+			bot.PriorityGames = legacyPriority;
+		}
+
+		if (Apps(db, "FarmingBlacklistAppIDs") is { Count: > 0 } blacklist) {
+			bot.BlacklistedGames = blacklist;
 		}
 
 		TranslateFarming(cfg, bot);
@@ -271,24 +285,30 @@ public static class AsfImport {
 			return;
 		}
 
-		bot.StopWhenFarmingDone = (flags & 1) != 0;      // ShutdownOnFarmingFinished
-		bot.FarmPriorityOnly = (flags & 4) != 0;         // FarmPriorityQueueOnly
-		bot.SkipRefundableGames = (flags & 8) != 0;      // SkipRefundableGames
-		bot.FarmOffline = (flags & 16) != 0;             // FarmOffline
+		// ASF's EFarmingPreferences values. These were read one bit off, so FarmingPausedByDefault (1) arrived as
+		// "log out when finished" and nothing arrived where it belonged. FarmingPausedByDefault itself has no
+		// equivalent here, and ASF has no farm-offline flag at all.
+		bot.StopWhenFarmingDone = (flags & 2) != 0;      // ShutdownOnFarmingFinished
+		bot.SendOnFarmingFinished = (flags & 4) != 0;    // SendOnFarmingFinished
+		bot.FarmPriorityOnly = (flags & 8) != 0;         // FarmPriorityQueueOnly
+		bot.SkipRefundableGames = (flags & 16) != 0;     // SkipRefundableGames
+		bot.SkipUnplayedGames = (flags & 32) != 0;       // SkipUnplayedGames
+		bot.UnpackBoosterPacks = (flags & 256) != 0;     // AutoUnpackBoosterPacks
 	}
 
 	/// <summary>
-	/// The same again for BotBehaviour. Two of these are inverted: ASF's flags say what to switch OFF, so
-	/// "RejectInvalidFriendInvites" set means don't accept them, and the absence of a flag is the permissive case.
+	/// The same again for BotBehaviour. ASF never accepts group invites whatever its flags say, so ours stay at
+	/// their defaults (not accepted, suspicious ones ignored). Reading bit 2 - RejectInvalidTrades - as "don't
+	/// accept group invites" meant a bot with BotBehaviour 0 arrived accepting every group invite with the spam
+	/// filter off.
 	/// </summary>
 	private static void TranslateBehaviour(JsonElement cfg, BotConfig bot) {
 		if (Int(cfg, "BotBehaviour") is not int flags) {
 			return;
 		}
 
-		bot.RejectInvalidFriendInvites = (flags & 1) != 0;
-		bot.AcceptGroupInvites = (flags & 2) == 0;
-		bot.IgnoreSuspiciousInvites = (flags & 1) != 0;
+		bot.RejectInvalidFriendInvites = (flags & 1) != 0;       // RejectInvalidFriendInvites
+		bot.ClearInventoryNotifications = (flags & 8) != 0;      // DismissInventoryNotifications
 	}
 
 	/// <summary>
@@ -347,6 +367,17 @@ public static class AsfImport {
 		&& !name.Equals("ASF", StringComparison.OrdinalIgnoreCase)
 		&& !name.Equals("IPC", StringComparison.OrdinalIgnoreCase)
 		&& !name.EndsWith(".config", StringComparison.OrdinalIgnoreCase);
+
+	/// <summary>ASF's per-bot database (bot.db), or an empty element when there isn't one.</summary>
+	private static JsonElement ReadDatabase(string dir, string bot) {
+		try {
+			string path = Path.Combine(dir, bot + ".db");
+
+			return File.Exists(path) ? JsonDocument.Parse(File.ReadAllText(path)).RootElement : default;
+		} catch {
+			return default;
+		}
+	}
 
 	/// <summary>The Steam refresh token out of ASF's per-bot database.</summary>
 	private static string? ReadRefreshToken(string dir, string bot) {

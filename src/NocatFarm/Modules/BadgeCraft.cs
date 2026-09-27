@@ -36,7 +36,10 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 
 	protected override async Task RunAsync(CancellationToken ct) {
 		while (!ct.IsCancellationRequested) {
-			if (!Bot.Cfg.CraftBadges) {
+			// Either switch runs the daily pass. Opening booster packs used to happen only inside a badge-crafting
+			// pass, so turning on "Open booster packs" by itself - which is what its own description invites -
+			// never opened a thing.
+			if (!Bot.Cfg.CraftBadges && !Bot.Cfg.UnpackBoosterPacks) {
 				_status = new Said("off");
 
 				if (!await Sleep(TimeSpan.FromSeconds(20), ct).ConfigureAwait(false)) {
@@ -80,8 +83,21 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 				Log.Warn(new Said("badge sweep failed: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
 			}
 
-			if (!await Sleep(wait, ct).ConfigureAwait(false)) {
-				return;
+			// A minute at a time, so switching either setting takes effect straight away rather than after the day's
+			// wait - turning badge crafting on in booster-only mode used to sit out the full 22-26 hours first.
+			DateTime due = DateTime.UtcNow + wait;
+			bool crafting = Bot.Cfg.CraftBadges;
+
+			while (DateTime.UtcNow < due) {
+				TimeSpan left = due - DateTime.UtcNow;
+
+				if (!await Sleep(left < TimeSpan.FromMinutes(1) ? left : TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
+					return;
+				}
+
+				if ((Bot.Cfg.CraftBadges != crafting) || (!Bot.Cfg.CraftBadges && !Bot.Cfg.UnpackBoosterPacks)) {
+					break;
+				}
 			}
 		}
 	}
@@ -163,6 +179,12 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			} catch (Exception e) {
 				Log.Debug(new Said("booster unpack: {0}", e.Message), Bot.Name);
 			}
+		}
+
+		if (!Bot.Cfg.CraftBadges) {
+			_status = new Said("opens booster packs once a day - badge crafting is off");
+
+			return 0;
 		}
 
 		_status = new Said("checking for completed sets");
