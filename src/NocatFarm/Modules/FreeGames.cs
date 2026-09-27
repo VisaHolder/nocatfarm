@@ -159,14 +159,14 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				Log.Warn(new Said("free-game check failed: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
 			}
 
-			// Between passes over the list, Steam's own change feed every ten minutes or so - a giveaway found there
+			// Between passes over the list, Steam's own change feed every half hour or so - a giveaway found there
 			// is claimed straight away rather than when the list next catches up.
 			DateTime nextList = DateTime.UtcNow + Rng.Minutes(PollLowMinutes, PollHighMinutes);
 
 			while ((DateTime.UtcNow < nextList) && Bot.Cfg.ClaimFreeGames) {
 				TimeSpan left = nextList - DateTime.UtcNow;
 
-				if (!await Sleep(left < TimeSpan.FromMinutes(12) ? left : Rng.Minutes(9, 12), ct).ConfigureAwait(false)) {
+				if (!await Sleep(left < TimeSpan.FromMinutes(40) ? left : Rng.Minutes(30, 40), ct).ConfigureAwait(false)) {
 					return;
 				}
 
@@ -261,9 +261,9 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			}
 
 			if (!known) {
-				// A change-feed find has to be a paid game on a 100% discount: free-on-demand packages are mostly
-				// free-to-play games being updated, and a paid game that isn't discounted isn't being given away.
-				(bool? told, string called) = app ? await AppWorthwhileAsync(id, false, ct).ConfigureAwait(false)
+				// Every find, from the list or the change feed, has to be a paid game on a 100% discount. Anything
+				// else free is a free-to-play game, a demo-like free edition of a paid one, or not being given away.
+				(bool? told, string called) = app ? await AppWorthwhileAsync(id, true, ct).ConfigureAwait(false)
 					: pics ? await AppWorthwhileAsync(picsApp[id], true, ct).ConfigureAwait(false)
 					: await WorthwhileAsync(id, ct).ConfigureAwait(false);
 
@@ -332,10 +332,15 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>
-	/// A free-to-keep promo of a normally-paid game is worth taking whether or not it has cards. So the only
-	/// things rejected are the ones that aren't a game you can actually play: DLC (useless without the base
-	/// game), demos (Steam mass-removes those), and unreleased titles.
+	/// A free-to-keep promo of a normally-paid game is worth taking whether or not it has cards. The game in the
+	/// package has to be showing 100% off - the same test a change-feed find gets.
 	/// </summary>
+	/// <remarks>
+	/// This used to check only that the package held a released game. A game's permanently free edition passes
+	/// that too - "Train Sim World 7: Free Starter Edition" is a free package whose first app is the $49.99 game -
+	/// so it was claimed as if the game had been given away. A real giveaway shows the game discounted 100%; a free
+	/// edition leaves the game at full price. DLC, demos and unreleased titles are still refused as before.
+	/// </remarks>
 	/// <returns>Worth null when the store couldn't be asked - which is not the same as a no.</returns>
 	private async Task<(bool? Worth, string Name)> WorthwhileAsync(uint subId, CancellationToken ct) {
 		string name = "sub " + subId.ToString(CultureInfo.InvariantCulture);
@@ -352,24 +357,10 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			return (false, name);
 		}
 
-		string? details = await StoreAsync($"https://store.steampowered.com/api/appdetails?appids={appId}&filters=basic", ct).ConfigureAwait(false);
+		(bool? worth, string game) = await AppWorthwhileAsync(appId, true, ct).ConfigureAwait(false);
 
-		if (details == null) {
-			return (true, name);   // can't tell - a free paid game is still worth the activation
-		}
-
-		name = Json.Str(details, "name") ?? name;
-		string? type = Json.Str(details, "type");
-
-		if (type != null && !type.Equals("game", StringComparison.OrdinalIgnoreCase)) {
-			return (false, name);
-		}
-
-		if (details.Contains("\"coming_soon\":true", StringComparison.OrdinalIgnoreCase)) {
-			return (false, name);
-		}
-
-		return (true, name);
+		// The package's own name reads better in the log ("... Free Starter Edition") than the game's.
+		return (worth, name.StartsWith("sub ", StringComparison.Ordinal) ? game : name);
 	}
 
 	/// <summary>

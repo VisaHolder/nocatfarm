@@ -51,7 +51,9 @@ internal static class PicsWatch {
 		}
 
 		try {
-			_nextPoll = DateTime.UtcNow + Rng.Minutes(8, 14);
+			// Every half hour or so. A giveaway runs for days, so asking more often gains nothing, and every poll that
+			// finds changes is followed by product-info lookups for all of them - hundreds, on a busy day.
+			_nextPoll = DateTime.UtcNow + Rng.Minutes(30, 40);
 
 			SteamApps.PICSChangesCallback changes = await apps.PICSGetChangesSince(_lastChange, false, true).ToTask().WaitAsync(TimeSpan.FromSeconds(60), ct).ConfigureAwait(false);
 

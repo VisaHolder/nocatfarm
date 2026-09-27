@@ -80,7 +80,7 @@ setting away.
 | **Stays out of your way** | Launch a game yourself on one of the accounts and that account stands down (`PauseWhenYouPlay`, on by default), then quietly picks back up after a delay you choose (`ResumeDelayMinutes`, default 5). |
 | **Achievement hunter** | Optional (`AchievementBoost`, plus `UnlockAchievements`). Hunts a list you pick, or finds single-player games in the library itself — never DLC, demos or bundle filler nobody plays — and works through them one at a time. On a human account the sessions are occasional and weighted-first, coming out of the day's play budget; on a non-human account it moves from one game straight to the next. |
 | **Inventory value** | What each account's items are worth at the market's median, per game (up to 12 inventories per account), in the currency you pick (`MarketCurrency`, default US dollar), with how it has moved in the last 24 hours. Reads the account's OWN inventory, so a private profile makes no difference. |
-| **Free games** | Optional (`ClaimFreeGames`). Watches a public list of Steam giveaways **and Steam's own change feed**, and claims free-to-keep giveaways, packages and apps alike. DLC, demos and unreleased titles are skipped, and an app or a change-feed find has to be a paid game showing 100% off, so free-to-play filler is left alone. The change feed sees a giveaway within minutes of Steam publishing it. A giveaway that has already ended is tried a few more times, then left alone, and that is remembered across restarts. |
+| **Free games** | Optional (`ClaimFreeGames`). Watches a public list of Steam giveaways **and Steam's own change feed**, and claims free-to-keep giveaways, packages and apps alike. Whatever it finds has to be a released, paid game showing 100% off, so free-to-play games, a paid game's free edition, DLC and demos are left alone. The change feed usually sees a giveaway within half an hour of Steam publishing it. A giveaway that has already ended is tried a few more times, then left alone, and that is remembered across restarts. |
 | **Free event items** | The daily sticker during a Steam sale, and anything in the Points Shop at 0 points, collected by themselves (`ClaimEventItems`, on by default). |
 | **Gifts** | Steam wallet gift cards and guest passes sent to an account are accepted (`AcceptGifts`, on by default). A game sent as a gift is pointed out rather than accepted — that one is the owner's call. |
 | **Booster packs** | Turns gems into booster packs for the games you list, one per game per day as Steam allows, on Steam's own schedule (`BoosterGames`). |
@@ -580,13 +580,12 @@ freeitems all                          # look for free event items now
 ```
 
 **Free games** come from two places. A public list of Steam giveaways is read about once an hour, and Steam's
-own change feed is read every ten minutes or so — every package Steam edits shows up there within seconds, and a
-paid game being given away is a package edit. Either way, the store is asked before anything is taken, and DLC,
-demos and unreleased titles are never taken. A change-feed find must also be a game showing 100% off, and an app
-from the list must not be permanently free-to-play. A package from the list is only checked for being a released
-game — and if the store names the package but can't say what the game in it is, it's taken anyway, since a free
-paid game is still worth the activation. When the store doesn't answer at all, nothing is decided and it's looked
-at again on the next pass. A game only borrowed through Steam Family doesn't count as owned, so a giveaway of it is
+own change feed is read about every half hour — every package Steam edits shows up there within seconds, and a
+paid game being given away is a package edit. Either way, the store is asked before anything is taken, and the
+game has to be a released, paid game showing 100% off. That leaves out free-to-play games, DLC, demos,
+unreleased titles, and the permanently free editions some paid games have (a "Free Starter Edition" is free, but
+the game itself isn't being given away). When the store doesn't answer, nothing is decided and it's looked at
+again on the next pass. A game only borrowed through Steam Family doesn't count as owned, so a giveaway of it is
 claimed for real. Steam allows about 30 activations per 90 minutes, so this stops at 20 to leave room for
 anything you redeem yourself; if Steam says slow down it waits the hour out, and what it has already decided is
 kept across restarts.
