@@ -45,15 +45,15 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	private const int RescanMinutesLow = 45;
 	private const int RescanMinutesHigh = 90;
 
-	/// <summary>Steam sale and event "games". They have badges, they never drop cards.</summary>
-	private static readonly HashSet<uint> SalesBlacklist = [
-		267420, 303700, 335590, 368020, 425280, 480730, 566020, 639900, 762800, 876740, 991980, 1195670,
-		1343890, 1465680, 1658760, 1797760, 2021850, 2243720, 2459330, 2640280, 2861690, 2861720, 3558920,
-		3558940, 4761370
-	];
+	/// <summary>How many apps the store is asked about per badge read, at most - the rest wait for the next read.</summary>
+	private const int StoreChecksPerRead = 8;
 
-	/// <summary>These three lie on the badge list. If they claim zero, the per-game page is asked instead.</summary>
-	private static readonly HashSet<uint> UntrustedAppIds = [440, 570, 730];
+	/// <summary>
+	/// Badge rows that said "no drops" but whose game has been played since, and when each was last looked at on its
+	/// own card page. Kept on disk so the weekly pace survives restarts.
+	/// </summary>
+	private readonly Dictionary<uint, (float Hours, DateTime Checked)> _zeroRows = [];
+	private bool _zeroRowsLoaded;
 
 	// Optional cap on how many accounts farm at once. Farming is the only thing here that hammers the community
 	// site, so on a machine running a lot of accounts this is the knob that keeps Steam happy.
@@ -136,7 +136,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 		return Bot.Cfg.FarmCardsWhen switch {
 			FarmWhen.Day => !human.FarmSittingOpen,
-			FarmWhen.Night => !human.InBed,
+			FarmWhen.Night => !human.InBed || human.AwakeHoursNow,   // asleep ends at wake time, whatever the phase says
 			_ => false
 		};
 	}
@@ -188,7 +188,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 			try {
 				waitMinutes = await CycleAsync(ct).ConfigureAwait(false);
-			} catch (OperationCanceledException) {
+			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
 				// Never silent. A farmer that dies quietly looks exactly like a farmer with nothing to do.
@@ -207,11 +207,56 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 					return;
 				}
 
-				if (!Bot.Cfg.FarmCards) {
+				// Farming switched off, or a game just added to the account (it may have cards) - look now, not in hours.
+				if (!Bot.Cfg.FarmCards || (Bot.LicenseGeneration != _licensesSeen)) {
 					break;
 				}
 			}
 		}
+	}
+
+	/// <summary>The licence list the last badge read saw - a newer one means a game may have been added.</summary>
+	private int _licensesSeen = -1;
+
+	/// <summary>
+	/// Farming time on each game since its card count last moved, carried across sittings, pauses and restarts of the
+	/// loop - so "gave up nothing in N hours" means N hours of farming, not N hours of one uninterrupted run, which a
+	/// day of short sittings never reached.
+	/// </summary>
+	private readonly Dictionary<uint, (int Cards, TimeSpan Farmed)> _farmedSinceDrop = [];
+
+	private TimeSpan FarmedSinceDrop(FarmTarget game) {
+		lock (_farmedSinceDrop) {
+			return _farmedSinceDrop.TryGetValue(game.AppId, out (int Cards, TimeSpan Farmed) was) && (was.Cards == game.CardsRemaining)
+				? was.Farmed
+				: TimeSpan.Zero;
+		}
+	}
+
+	private void NoteFarmed(FarmTarget game, TimeSpan farmed) {
+		lock (_farmedSinceDrop) {
+			_farmedSinceDrop[game.AppId] = (game.CardsRemaining, farmed);
+		}
+	}
+
+	/// <summary>Whether this module may put a farming game on right now - asked again after any long wait.</summary>
+	private bool MayFarmNow() => Bot.Cfg.FarmCards && Bot.CanPlay && !Bot.Grinding && !ScheduleWantsItBack() && InFarmWindow();
+
+	/// <summary>
+	/// Handing the account back: the claim goes, and so does the farm game if it's still the only thing on and human
+	/// mode isn't the one playing it. Letting go of the claim alone left the game running over a break.
+	/// </summary>
+	private void HandBack(uint appId) {
+		Release();
+
+		IReadOnlyList<uint> playing = Bot.PlayingApps;
+		uint humanGame = BotManager.ModuleOf<HumanMode>(Bot)?.PlayingNow ?? 0;
+
+		if ((playing.Count == 1) && (playing[0] == appId) && (humanGame != appId)) {
+			Bot.StopPlaying();
+		}
+
+		BotManager.ModuleOf<Idler>(Bot)?.Assert();   // a non-human account's own games go straight back on
 	}
 
 	/// <summary>Set once the cards have been swept, so a later re-scan that finds nothing doesn't re-send.</summary>
@@ -298,24 +343,31 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			return 1;
 		}
 
-		// Waiting for human mode's next sitting: a look at the badge pages from the last half hour is good enough, so
-		// they aren't read every minute through a break, or all night, just to wait. A sitting can open any minute,
-		// so the wait itself stays short.
-		if (FarmsInHumanDay && (warmup != null) && !warmup.FarmSittingOpen && (Queue.Count > 0)
-			&& (Bot.CardsCheckedAt is { } looked) && (DateTime.UtcNow - looked < TimeSpan.FromMinutes(30))) {
-			HoldingBack = true;
-			_status = WaitingForSitting(warmup);
+		// A recent read of the badge pages is reused rather than every page read again: after each game, between
+		// sittings, all night while cards wait for the day. The queue's counts are kept current by the farming itself.
+		// Read again when it's an hour old (three while waiting), when a game has been added to the account, or when
+		// the queue has run dry - the last to confirm it really is finished.
+		int licenses = Bot.LicenseGeneration;
+		TimeSpan maxAge = HoldingBack ? TimeSpan.FromHours(3) : TimeSpan.FromHours(1);
+		bool reuse = (licenses == _licensesSeen) && (Bot.CardsCheckedAt is { } looked) && (DateTime.UtcNow - looked < maxAge)
+			&& Queue.Any(static g => g.CardsRemaining > 0);
 
-			return 1;
-		}
+		List<FarmTarget>? found;
 
-		_status = new Said("checking badges");
-		List<FarmTarget>? found = await DiscoverAsync(ct).ConfigureAwait(false);
+		if (reuse) {
+			found = [.. Queue.Where(static g => g.CardsRemaining > 0)];
+		} else {
+			_status = new Said("checking badges");
+			found = await DiscoverAsync(ct).ConfigureAwait(false);
 
-		if (found == null) {
-			_status = new Said("badge pages unavailable");
+			if (found == null) {
+				_status = new Said("badge pages unavailable");
 
-			return 10;
+				return 10;
+			}
+
+			Bot.CardsCheckedAt = DateTime.UtcNow;
+			_licensesSeen = licenses;
 		}
 
 		lock (_queue) {
@@ -325,7 +377,6 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 		Bot.GamesRemaining = found.Count;
 		Bot.CardsRemaining = found.Sum(static g => g.CardsRemaining);
-		Bot.CardsCheckedAt = DateTime.UtcNow;
 		_runCards = found.Count == 0 ? 0 : Math.Max(_runCards, Bot.CardsRemaining);
 
 		if (found.Count == 0) {
@@ -342,6 +393,14 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			}
 
 			if (Bot.Cfg.StopWhenFarmingDone) {
+				// Human mode is still playing on after the last card: log out once that sitting is over, not a
+				// minute into it.
+				if (FarmsInHumanDay && (BotManager.ModuleOf<HumanMode>(Bot) is { PlayingNow: > 0, NextChange: { } ends })) {
+					_status = new Said("finished - logging out after this sitting");
+
+					return Math.Max(1, (int) Math.Ceiling((ends - DateTime.UtcNow).TotalMinutes));
+				}
+
 				_status = new Said("finished - logging out");
 				Log.Good("nothing left to farm - logging this account out as configured", Bot.Name);
 				_ = Bot.StopAsync();
@@ -390,7 +449,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			// idempotent and no-ops for human-mode accounts, so this is safe to call on every idle rescan.
 			BotManager.ModuleOf<Idler>(Bot)?.Assert();
 
-			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
+			// Nothing to farm changes only when a game is added, and that cuts this wait short (see RunAsync) - so the
+			// slow look is only a backstop.
+			return Rng.Next(180, 361);
 		}
 
 		// New games to farm means a new run, so the next time it empties out it sweeps again - and it is
@@ -404,7 +465,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		}
 
 		float threshold = Bot.Cfg.HoursUntilCardDrops;
-		List<FarmTarget> underThreshold = found.Where(g => g.HoursPlayed < threshold).ToList();
+		List<FarmTarget> underThreshold = [.. Order(found.Where(g => g.HoursPlayed < threshold))];   // ordered once: a random order must not change its mind
 		List<FarmTarget> ready = Order(found.Where(g => g.HoursPlayed >= threshold)).ToList();
 
 		// Prefer games that are not set aside - but if EVERY one is, carry on with them anyway.
@@ -422,7 +483,26 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			ready = live;
 		}
 
-		_nextGame = ready.Count > 0 ? ready[0].AppId : (Order(underThreshold).FirstOrDefault()?.AppId ?? 0);
+		HumanMode? human = BotManager.ModuleOf<HumanMode>(Bot);
+
+		// Farming in human mode's sittings: the sitting already has a game on - the one this said was next. Farm that
+		// one while it still has cards, rather than let a fresh (possibly random) order swap it a minute in.
+		if (FarmsInHumanDay && (human?.PlayingNow is > 0 and var sat) && (ready.FindIndex(g => g.AppId == sat) is > 0 and var at)) {
+			FarmTarget keep = ready[at];
+			ready.RemoveAt(at);
+			ready.Insert(0, keep);
+		}
+
+		_nextGame = ready.Count > 0 ? ready[0].AppId : (underThreshold.FirstOrDefault()?.AppId ?? 0);
+
+		// One card game per human-mode sitting. When the sitting's game has just run out, the next one waits for the
+		// next sitting (human mode plays on for a few minutes, then takes a break) instead of starting a minute later.
+		if (FarmsInHumanDay && (human?.PlayingNow is > 0 and var onNow) && (ready.Count > 0) && !found.Any(g => g.AppId == onNow)) {
+			HoldingBack = true;
+			_status = WaitingForSitting(human!);
+
+			return 1;
+		}
 
 		if (ready.Count == 0 && (threshold <= 0 || underThreshold.Count == 0)) {
 			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
@@ -431,22 +511,21 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		// On a human-mode account the schedule decides WHEN cards farm (FarmCardsWhen). In the day (the default)
 		// the card game is what human mode plays in its sittings, and the farmer works only while one is open -
 		// breaks, meals and bedtime included - so nights stay for the overnight games. Only at night, it waits for
-		// bed. Any time, it farms the moment there are cards.
-		HumanMode? human = BotManager.ModuleOf<HumanMode>(Bot);
-
+		// bed. Any time, it farms the moment there are cards. Waiting costs no badge reads now (see the top), so it
+		// checks back every few minutes and starts close to the moment it may.
 		if (Bot.HumanOwned && (human != null)) {
-			if ((Bot.Cfg.FarmCardsWhen == FarmWhen.Night) && !human.InBed) {
+			if ((Bot.Cfg.FarmCardsWhen == FarmWhen.Night) && (!human.InBed || human.AwakeHoursNow)) {
 				HoldingBack = true;
 				_status = new Said("{0} card(s) - farming tonight, once it's asleep", Bot.CardsRemaining);
 
-				return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
+				return 5;
 			}
 
 			if ((Bot.Cfg.FarmCardsWhen == FarmWhen.Day) && !human.FarmSittingOpen) {
 				HoldingBack = true;
 				_status = WaitingForSitting(human);
 
-				return 1;   // the badge pages aren't read again for half an hour meanwhile - see the top
+				return 1;   // a sitting can open any minute
 			}
 		}
 
@@ -454,7 +533,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			HoldingBack = true;
 			_status = new Said("{0} card(s) - waiting for the {1}:00-{2}:00 farming window", Bot.CardsRemaining, (Bot.Cfg.FarmFromHour).ToString("00"), (Bot.Cfg.FarmUntilHour).ToString("00"));
 
-			return Rng.Next(RescanMinutesLow, RescanMinutesHigh);
+			return 5;
 		}
 
 		// Human mode's own sittings already shape a day-farming account; its separate farming sittings don't apply.
@@ -477,6 +556,14 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			_status = new Said("waiting for a farming slot");
 			HoldingBack = true;
 			await slots.WaitAsync(ct).ConfigureAwait(false);
+
+			// That wait can be hours. Whatever the account is doing by now - a break, bedtime, you, a grind - wins over
+			// a slot that finally came free.
+			if (!MayFarmNow()) {
+				slots.Release();
+
+				return 1;
+			}
 		}
 
 		HoldingBack = false;
@@ -488,7 +575,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			} else {
 				// Building playtime runs up to 32 games at once - fine at night, invisible, but in a visible day's
 				// sitting that's the loudest tell there is. One game at a time there.
-				await BumpHoursAsync(FarmsInHumanDay ? [.. Order(underThreshold).Take(1)] : underThreshold, threshold, ct).ConfigureAwait(false);
+				await BumpHoursAsync(FarmsInHumanDay ? [.. underThreshold.Take(1)] : underThreshold, threshold, ct).ConfigureAwait(false);
 			}
 		} finally {
 			slots?.Release();
@@ -573,6 +660,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	/// stood off; it takes the session back (and steps away for a break) once this releases. Length is the
 	/// PostFarmWindDown min/max setting; 0/0 switches it off.
 	/// </summary>
+	/// <summary>The game this account last saw give its last card - so human mode can play on after exactly that.</summary>
+	public uint FinishedGame { get; private set; }
+
 	private async Task WindDownAsync(FarmTarget game, CancellationToken ct) {
 		// Farming in human mode's sittings: the sitting ends with human mode's own break, so there's nothing to wind down.
 		if (FarmsInHumanDay) {
@@ -608,6 +698,13 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				return;
 			}
 
+			// Farmed at night and it's morning now: the day takes over rather than the game running on into it.
+			if (ScheduleWantsItBack()) {
+				Bot.StopPlaying();
+
+				return;
+			}
+
 			Claim();
 			Bot.SetPlaying([game.AppId], Bot.Cfg.PlayWhileFarming ? null : "");
 			int left = (int) Math.Ceiling((until - DateTime.UtcNow).TotalMinutes);
@@ -622,9 +719,31 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	}
 
 	private async Task FarmSoloAsync(FarmTarget game, CancellationToken ct) {
+		if (!MayFarmNow()) {
+			return;   // checked before anything goes on, not only at the top of the loop
+		}
+
 		DateTime started = DateTime.UtcNow;
+		TimeSpan before = FarmedSinceDrop(game);
 		TimeSpan limit = TimeSpan.FromHours(Math.Max(1, Bot.Cfg.MaxFarmingHoursPerGame));
 		TimeSpan check = TimeSpan.FromMinutes(Math.Max(2, Bot.Cfg.FarmingDelayMinutes));
+
+		try {
+			await FarmSoloLoopAsync(game, limit, check, () => before + (DateTime.UtcNow - started), () => {
+				before = TimeSpan.Zero;
+				started = DateTime.UtcNow;
+			}, ct).ConfigureAwait(false);
+		} finally {
+			if (game.CardsRemaining > 0) {
+				NoteFarmed(game, before + (DateTime.UtcNow - started));
+			}
+		}
+	}
+
+	/// <param name="farmed">Farming time on this game since its card count last moved.</param>
+	/// <param name="dropped">Called when a card drops, which starts that count again.</param>
+	private async Task FarmSoloLoopAsync(FarmTarget game, TimeSpan limit, TimeSpan check, Func<TimeSpan> farmed, Action dropped, CancellationToken ct) {
+		DateTime started = DateTime.UtcNow;
 
 		Claim();
 		Bot.SetPlaying([game.AppId], Bot.Cfg.PlayWhileFarming ? null : "");
@@ -653,11 +772,11 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				return;
 			}
 
-			// The schedule wants the account back - a sitting ended, bedtime, morning. Checked before the claim and the
-			// game go back on below, or they'd go straight back over human mode's break.
-			if (ScheduleWantsItBack()) {
-				_status = new Said("between sittings - {0} card(s) left", game.CardsRemaining);
-				Release();
+			// The schedule wants the account back - a sitting ended, bedtime, morning - or farming was switched off.
+			// Checked before the claim and the game go back on below, or they'd go straight back over human mode's break.
+			if (ScheduleWantsItBack() || !Bot.Cfg.FarmCards) {
+				_status = Bot.Cfg.FarmCards ? new Said("between sittings - {0} card(s) left", game.CardsRemaining) : new Said("off");
+				HandBack(game.AppId);
 
 				return;
 			}
@@ -691,7 +810,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				await Task.Delay(TimeSpan.FromSeconds(5), ct).ConfigureAwait(false);
 			}
 
-			if (DateTime.UtcNow - started > limit) {
+			if (farmed() > limit) {
 				NoteStall(game, limit);
 
 				return;
@@ -740,7 +859,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 					_queue.RemoveAll(g => g.AppId == game.AppId);
 				}
 
+				FinishedGame = game.AppId;
 				Bot.CardsRemaining = Queue.Sum(static g => g.CardsRemaining);
+				_nextGame = Queue.FirstOrDefault(static g => g.CardsRemaining > 0)?.AppId ?? 0;   // or the next sitting opens on a finished game
 
 				// That was the last game with cards: on a human-mode account, wind down on it a little longer
 				// like a person who just finished, instead of snapping off the second the drop lands. Human mode
@@ -756,6 +877,8 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			// a trade, a market buy, a gift - so trusting the announcement inflated the daily card tally with
 			// things that were never card drops.
 			if (game.CardsRemaining < before) {
+				dropped();
+
 				// It is producing, so whatever made it look stuck before is over.
 				ClearStall(game.AppId);
 
@@ -815,6 +938,12 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			DateTime recheckAt = DateTime.UtcNow + check;
 
 			while (!pushed && !ct.IsCancellationRequested && (DateTime.UtcNow < recheckAt) && Bot.Grinding && (Bot.GrindGame == app)) {
+				// You playing, or a pause: the game isn't running, so this stretch doesn't count towards a card's pace.
+				if (!Bot.CanPlay) {
+					sinceDrop = DateTime.UtcNow;
+					measuring = false;
+				}
+
 				TimeSpan left = recheckAt - DateTime.UtcNow;
 				pushed = await Bot.WaitForItemDropAsync(left < TimeSpan.FromSeconds(20) ? left : TimeSpan.FromSeconds(20), ct).ConfigureAwait(false);
 			}
@@ -851,6 +980,14 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				if (_queue.FirstOrDefault(g => g.AppId == app) is { } queued) {
 					queued.CardsRemaining = cards;
 				}
+
+				if (cards == 0) {
+					_queue.RemoveAll(g => g.AppId == app);
+				}
+			}
+
+			if (cards == 0) {
+				_nextGame = Queue.FirstOrDefault(static g => g.CardsRemaining > 0)?.AppId ?? 0;
 			}
 
 			Bot.CardsRemaining = Queue.Sum(static g => g.CardsRemaining);
@@ -880,7 +1017,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	private async Task BumpHoursAsync(List<FarmTarget> games, float threshold, CancellationToken ct) {
 		// Priority games lead here too - they're the ones you actually want over the line first.
 		List<FarmTarget> batch = Order(games)
-			.Take(SteamIds.MaxGamesPlayedConcurrently - (string.IsNullOrWhiteSpace(Bot.CustomName) ? 0 : 1))
+			.Take(SteamIds.GamesAtOnce - (string.IsNullOrWhiteSpace(Bot.CustomName) ? 0 : 1))
 			.ToList();
 
 		float best = batch.Max(static g => g.HoursPlayed);
@@ -907,8 +1044,8 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				return;
 			}
 
-			if (ScheduleWantsItBack()) {
-				Release();
+			if (ScheduleWantsItBack() || !Bot.Cfg.FarmCards) {
+				HandBack(batch.Count == 1 ? batch[0].AppId : 0);
 
 				return;
 			}
@@ -938,35 +1075,60 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	// ── discovery ───────────────────────────────────────────────────────────
 	/// <summary>Read the badge pages and return everything still worth playing. Null means "couldn't check".</summary>
 	private async Task<List<FarmTarget>?> DiscoverAsync(CancellationToken ct) {
-		string? first = await Bot.Web.GetAsync(new Uri(WebSession.Community, "/my/badges?l=english&p=1"), ct).ConfigureAwait(false);
+		string? first = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/badges?l=english&p=1"), ct).ConfigureAwait(false);
 
-		if (first == null) {
+		// A page without the profile header isn't a badge page at all - Steam serves its error pages with a 200 too,
+		// and read as "no badges" that finished every game, swept the cards and could log the account out.
+		if ((first == null) || !IsProfilePage(first)) {
 			return null;
 		}
 
 		Dictionary<uint, FarmTarget> byApp = [];
-		List<FarmTarget> suspect = [];
+		List<FarmTarget> zero = [];
 
-		CollectPage(first, byApp, suspect);
+		CollectPage(first, byApp, zero);
 
 		int pages = Math.Min(MaxBadgePages, ParseMaxPages(first));
 
 		for (int p = 2; p <= pages; p++) {
-			string? page = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/my/badges?l=english&p={p}"), ct).ConfigureAwait(false);
+			string? page = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/badges?l=english&p={p}"), ct).ConfigureAwait(false);
 
-			if (page == null) {
+			if ((page == null) || !IsProfilePage(page)) {
 				break;   // partial results still beat none - the next cycle picks up the rest
 			}
 
-			CollectPage(page, byApp, suspect);
+			CollectPage(page, byApp, zero);
 		}
 
-		// The three known liars claimed zero. Ask the per-game page, which tells the truth.
-		foreach (FarmTarget doubtful in suspect) {
-			FarmTarget? real = await GetGameCardsAsync(doubtful.AppId, ct).ConfigureAwait(false);
+		// A row that says "no drops left" isn't always the last word: a free-to-play game can earn drops again, a game
+		// can get a new card set. So a game that has been PLAYED since it last said zero is looked at on its own card
+		// page - at most once a week, and only for games that are actually being played, so finished games that just
+		// sit in the library never cost a request.
+		foreach (FarmTarget played in PlayedSinceZero(zero)) {
+			FarmTarget? real = await GetGameCardsAsync(played.AppId, ct).ConfigureAwait(false);
 
 			if (real is { CardsRemaining: > 0 }) {
-				byApp[doubtful.AppId] = real;
+				byApp[played.AppId] = real;
+			}
+		}
+
+		// Only games. Steam's sale and event badges sit on the badge page with "drops remaining" too, but they're not
+		// games and playing them earns nothing - the store's own description of each app says which is which. Known
+		// answers cost nothing; a few unknown apps are asked about per read, and anything still unknown is farmed
+		// (the give-up rule parks it if it really never drops).
+		int asked = 0;
+
+		foreach (uint app in byApp.Keys.ToArray()) {
+			GameCatalog.Facts? facts = GameCatalog.Known(app);
+
+			if ((facts == null) && (asked < StoreChecksPerRead)) {
+				asked++;
+				facts = await GameCatalog.LookUpAsync(app, ct).ConfigureAwait(false);
+			}
+
+			if (facts is { IsGame: false }) {
+				Log.Debug(new Said("{0} has card drops listed but isn't a game (a sale or event badge) - not farmed", GameNames.Of(app)), Bot.Name);
+				byApp.Remove(app);
 			}
 		}
 
@@ -998,10 +1160,10 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	/// probably wasn't going to claim; failing closed would silently farm nothing at all.
 	/// </summary>
 	private async Task DropRefundableAsync(Dictionary<uint, FarmTarget> byApp) {
-		const float HoursForRefund = 2.0f;
-		int DaysForRefund = Math.Max(1, Bot.Cfg.RefundHoldDays);
+		const float RefundableUnderHours = 2.0f;
+		int RefundableForDays = Math.Max(1, Bot.Cfg.RefundHoldDays);
 
-		if (byApp.Values.All(static g => g.HoursPlayed >= HoursForRefund)) {
+		if (byApp.Values.All(static g => g.HoursPlayed >= RefundableUnderHours)) {
 			return;   // nothing is refundable on playtime alone - no need to ask Steam anything
 		}
 
@@ -1012,19 +1174,19 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		}
 
 		foreach ((uint appId, FarmTarget game) in byApp.ToArray()) {
-			if (game.HoursPlayed >= HoursForRefund) {
+			if (game.HoursPlayed >= RefundableUnderHours) {
 				continue;
 			}
 
 			// Free games carry today's date too, and no amount of playing one costs anybody a refund.
-			if (owned.TryGetValue(appId, out AppOwnership own) && own.Paid && ((DateTime.UtcNow - own.Since).TotalDays < DaysForRefund)) {
-				Log.Debug(new Said("leaving {0} alone - still refundable until {1}", game.GameName, (own.Since.AddDays(DaysForRefund)).ToString("d")), Bot.Name);
+			if (owned.TryGetValue(appId, out AppOwnership own) && own.Paid && ((DateTime.UtcNow - own.Since).TotalDays < RefundableForDays)) {
+				Log.Debug(new Said("leaving {0} alone - still refundable until {1}", game.GameName, (own.Since.AddDays(RefundableForDays)).ToString("d")), Bot.Name);
 				byApp.Remove(appId);
 			}
 		}
 	}
 
-	private void CollectPage(string html, Dictionary<uint, FarmTarget> byApp, List<FarmTarget> suspect) {
+	private void CollectPage(string html, Dictionary<uint, FarmTarget> byApp, List<FarmTarget> zero) {
 		foreach (FarmTarget game in ParseBadgePage(html)) {
 			if (byApp.ContainsKey(game.AppId) || !ShouldIdle(game.AppId)) {
 				continue;
@@ -1036,9 +1198,76 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 			if (game.CardsRemaining > 0) {
 				byApp[game.AppId] = game;
-			} else if (UntrustedAppIds.Contains(game.AppId)) {
-				suspect.Add(game);
+			} else if (game.HoursPlayed > 0) {
+				zero.Add(game);
 			}
+		}
+	}
+
+	private string ZeroRowsPath => Path.Combine(ConfigStore.ConfigDir, "state", $"cardcheck-{Bot.Name}.json");
+
+	/// <summary>
+	/// The "no drops" rows worth a second look now: played since they were last seen (or last checked), and not checked
+	/// in the past week. The first sighting of a game only notes its hours, so a fresh start doesn't check the whole
+	/// library at once.
+	/// </summary>
+	private List<FarmTarget> PlayedSinceZero(List<FarmTarget> zero) {
+		LoadZeroRows();
+
+		List<FarmTarget> due = [];
+		DateTime now = DateTime.UtcNow;
+		bool changed = false;
+
+		foreach (FarmTarget game in zero) {
+			if (!_zeroRows.TryGetValue(game.AppId, out (float Hours, DateTime Checked) seen)) {
+				_zeroRows[game.AppId] = (game.HoursPlayed, now);
+				changed = true;
+
+				continue;
+			}
+
+			if ((game.HoursPlayed > seen.Hours + 0.05f) && (now - seen.Checked > TimeSpan.FromDays(7))) {
+				due.Add(game);
+				_zeroRows[game.AppId] = (game.HoursPlayed, now);
+				changed = true;
+			}
+		}
+
+		if (changed) {
+			SaveZeroRows();
+		}
+
+		return due;
+	}
+
+	private void LoadZeroRows() {
+		if (_zeroRowsLoaded) {
+			return;
+		}
+
+		_zeroRowsLoaded = true;
+
+		try {
+			if (File.Exists(ZeroRowsPath)
+				&& System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, double[]>>(File.ReadAllText(ZeroRowsPath)) is { } saved) {
+				foreach ((string app, double[] v) in saved) {
+					if (uint.TryParse(app, out uint id) && (v.Length == 2)) {
+						_zeroRows[id] = ((float) v[0], new DateTime((long) v[1], DateTimeKind.Utc));
+					}
+				}
+			}
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't read the card-page check list: {0}", e.Message), Bot.Name);
+		}
+	}
+
+	private void SaveZeroRows() {
+		try {
+			Directory.CreateDirectory(Path.GetDirectoryName(ZeroRowsPath)!);
+			AtomicFile.Write(ZeroRowsPath, System.Text.Json.JsonSerializer.Serialize(
+				_zeroRows.ToDictionary(static kv => kv.Key.ToString(CultureInfo.InvariantCulture), static kv => new[] { kv.Value.Hours, (double) kv.Value.Checked.Ticks })));
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't save the card-page check list: {0}", e.Message), Bot.Name);
 		}
 	}
 
@@ -1147,15 +1376,15 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 	private bool ShouldIdle(uint appId) =>
 		appId > 0
-		&& !SalesBlacklist.Contains(appId)
 		&& !Bot.Cfg.BlacklistedGames.Contains(appId)
 		&& !Live.Global.GlobalBlacklistedGames.Contains(appId);
 
 	/// <summary>Authoritative per-game read. The badge list is a summary; this page is the real state.</summary>
 	private async Task<FarmTarget?> GetGameCardsAsync(uint appId, CancellationToken ct) {
-		string? html = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/my/gamecards/{appId}?l=english"), ct).ConfigureAwait(false);
+		string? html = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/gamecards/{appId}?l=english"), ct).ConfigureAwait(false);
 
-		if (html == null) {
+		// Same as the badge list: an error page is "couldn't read", never "0 cards left".
+		if ((html == null) || !IsProfilePage(html)) {
 			return null;
 		}
 
@@ -1166,6 +1395,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			CardsRemaining = ReadInt(TagText(html, "progress_info_bold"))
 		};
 	}
+
+	/// <summary>Steam's own profile pages - badges, a game's cards - carry the profile header; its error pages don't.</summary>
+	private static bool IsProfilePage(string html) => html.Contains("profile_small_header", StringComparison.Ordinal);
 
 	// ── parsing ─────────────────────────────────────────────────────────────
 	// Steam's badge markup is stable and narrow enough to read with string scanning; a full HTML parser would be a

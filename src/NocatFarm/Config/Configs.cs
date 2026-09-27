@@ -96,9 +96,11 @@ public sealed class GlobalConfig {
 	// ── steam connection ──
 	public int LoginStaggerSeconds { get; set; } = 12;
 	public int ReconnectDelaySeconds { get; set; } = 10;
-	public int ConnectionTimeoutSeconds { get; set; } = 90;
+	// Two minutes: long enough that a slow Steam answer isn't taken for a dead connection.
+	public int ConnectionTimeoutSeconds { get; set; } = 120;
 	public int MaxConcurrentFarming { get; set; }
-	public int LoginCooldownMinutes { get; set; } = 25;
+	// Half an hour: a login rate limit lifted early is cheaper than one hit again.
+	public int LoginCooldownMinutes { get; set; } = 30;
 	public int WebRequestGapMs { get; set; } = 400;
 	public int SteamProtocol { get; set; }
 	public string WebProxy { get; set; } = "";
@@ -155,6 +157,7 @@ public sealed class GlobalConfig {
 	public int PriceCacheHours { get; set; } = 24;
 
 	public bool CheckForUpdates { get; set; } = true;
+	public bool UpdateReminders { get; set; } = true;
 
 	/// <summary>Whether to load DLLs from plugins/. Off until somebody decides otherwise - see PluginHost.</summary>
 	public bool PluginsEnabled { get; set; }
@@ -187,14 +190,17 @@ public sealed class BotConfig {
 	public bool Enabled { get; set; } = true;
 	public string SteamLogin { get; set; } = "";
 	public string SteamPassword { get; set; } = "";
+
+	/// <summary>Sign in by scanning a QR code with the Steam app instead of a password.</summary>
+	public bool SignInWithQr { get; set; }
 	public int OnlineStatus { get; set; } = 1;
 
 	/// <summary>
 	/// Which kind of Steam client this pretends to be when it signs in.
 	///
-	/// Defaults to 7 (DesktopUI), which is what the real Steam client reports and what a working ArchiSteamFarm
-	/// setup uses. The old default was Unknown (-1) - an unidentified session, which Steam then has to make its
-	/// own mind up about. See the logon in Bot.cs for why that mattered.
+	/// Defaults to 7 (DesktopUI), which is what the real Steam client reports. The old default was Unknown (-1) - an
+	/// unidentified session, which Steam then has to make its own mind up about. See the logon in Bot.cs for why that
+	/// mattered.
 	/// </summary>
 	public int UIMode { get; set; } = 7;
 
@@ -247,11 +253,14 @@ public sealed class BotConfig {
 	public bool FarmOnlyWhileAsleep { get; set; }
 	public int FarmFromHour { get; set; }
 	public int FarmUntilHour { get; set; }
-	public int PostFarmWindDownMinMinutes { get; set; } = 5;
-	public int PostFarmWindDownMaxMinutes { get; set; } = 12;
+	public int PostFarmWindDownMinMinutes { get; set; } = 15;
+	public int PostFarmWindDownMaxMinutes { get; set; } = 20;
 	public int LegitStopMaxSeconds { get; set; } = 30;
-	public int FarmingDelayMinutes { get; set; } = 15;
-	public int MaxFarmingHoursPerGame { get; set; } = 10;
+	// Drops arrive as a push, so the badge-page re-check is only a backstop - every 20 minutes is plenty.
+	public int FarmingDelayMinutes { get; set; } = 20;
+
+	// A game that hasn't dropped a card in 8 hours of farming isn't going to; it's set aside and retried later.
+	public int MaxFarmingHoursPerGame { get; set; } = 8;
 	public bool StopWhenFarmingDone { get; set; }
 	public bool FarmOffline { get; set; }
 
@@ -301,7 +310,16 @@ public sealed class BotConfig {
 	public bool CraftBadges { get; set; }
 	public bool UnpackBoosterPacks { get; set; }
 	public string BoosterGames { get; set; } = "";
+
+	/// <summary>Which gems booster packs are made from when there are both kinds: 0 tradable first, 1 untradable first.</summary>
+	public int BoosterGems { get; set; }
 	public bool ClaimEventItems { get; set; } = true;
+
+	/// <summary>0 off, 1 during sales, 2 every day.</summary>
+	public int DiscoveryQueue { get; set; } = 1;
+
+	public bool SellDuplicates { get; set; }
+	public int SellPerRun { get; set; } = 5;
 	public bool ClearInventoryNotifications { get; set; } = true;
 
 	// Everything else in Steam's notification tray - comments, gifts, help requests, friend invites. None of
@@ -326,6 +344,9 @@ public sealed class BotConfig {
 	// ── human mode ──
 	public bool LegitMode { get; set; }
 	public string GameWeights { get; set; } = "";
+
+	/// <summary>Hours to reach in given games, optionally by a date: "730:100@2026-12-01, 440:50".</summary>
+	public string HourTargets { get; set; } = "";
 
 	// how the day is shaped
 	public int WeekdayHours { get; set; } = 6;
@@ -483,14 +504,35 @@ public static class ConfigStore {
 			Log.Error(new Said("config: {0} is not valid JSON ({1})", Path.GetFileName(GlobalPath), e.Message));
 			Log.Warn(new Said("a copy was kept as {0}; running on defaults until you fix it", Path.GetFileName(kept)));
 
+			// And nothing is written over it while running like this - not a setting, not the window's position on
+			// the way out - or a copy fixed by hand in the meantime would be replaced with these defaults.
+			_globalBroken = true;
+
 			return new GlobalConfig();
 		}
 	}
 
+	/// <summary>The global config didn't load, so the app is on defaults and must not save them over the file.</summary>
+	private static bool _globalBroken;
+
+	/// <summary>
+	/// Saves come from the window, the dashboard, the console and the modules, on their own threads. One at a time,
+	/// and whole-or-nothing: a crash half way through a plain write left a truncated file that didn't load next time.
+	/// </summary>
+	private static readonly Lock SaveGate = new();
+
 	public static void SaveGlobal(GlobalConfig cfg) {
+		if (_globalBroken) {
+			Log.Debug("config: not saving nocatFarm.json - it didn't load, and saving now would put defaults over it");
+
+			return;
+		}
+
 		try {
-			Directory.CreateDirectory(ConfigDir);
-			File.WriteAllText(GlobalPath, JsonSerializer.Serialize(cfg, Json));
+			lock (SaveGate) {
+				Directory.CreateDirectory(ConfigDir);
+				AtomicFile.Write(GlobalPath, JsonSerializer.Serialize(cfg, Json));
+			}
 		} catch (Exception e) {
 			Log.Warn(new Said("config: couldn't save global config: {0}", e.Message));
 		}
@@ -541,6 +583,21 @@ public static class ConfigStore {
 		cfg.FarmOnlyWhileAsleep = false;
 		cfg.FarmCardsWhen = Modules.FarmWhen.Night;
 		Log.Info("\"only farm cards while asleep\" is now \"when to farm cards: only at night\"", name);
+
+		return true;
+	}
+
+	/// <summary>
+	/// "Keep playing after the last card" went from 5-12 minutes to 15-20. A config still holding the old default
+	/// pair gets the new one; a value somebody chose on purpose is left alone.
+	/// </summary>
+	public static bool MigrateWindDown(BotConfig cfg) {
+		if ((cfg.PostFarmWindDownMinMinutes != 5) || (cfg.PostFarmWindDownMaxMinutes != 12)) {
+			return false;
+		}
+
+		cfg.PostFarmWindDownMinMinutes = 15;
+		cfg.PostFarmWindDownMaxMinutes = 20;
 
 		return true;
 	}
@@ -620,6 +677,7 @@ public static class ConfigStore {
 				bool migrated = MigrateGameShares(cfg, name);
 				migrated |= MigrateAchievementCeiling(cfg, name);
 				migrated |= MigrateFarmWhen(cfg, name);
+				migrated |= MigrateWindDown(cfg);
 
 				if (migrated) {
 					SaveBot(name, cfg);
@@ -643,7 +701,9 @@ public static class ConfigStore {
 			// holding ciphertext where it expects a password.
 			BotConfig onDisk = Secrets.Available ? Sealed(cfg) : cfg;
 
-			File.WriteAllText(Path.Combine(ConfigDir, name + ".json"), JsonSerializer.Serialize(onDisk, Json));
+			lock (SaveGate) {
+				AtomicFile.Write(Path.Combine(ConfigDir, name + ".json"), JsonSerializer.Serialize(onDisk, Json));
+			}
 		} catch (Exception e) {
 			Log.Warn(new Said("config: couldn't save {0}: {1}", name, e.Message));
 		}

@@ -4,7 +4,7 @@ using NocatFarm.Core;
 namespace NocatFarm.Modules;
 
 /// <summary>
-/// Joins the nocat.farm Steam group once per session - the way ArchiSteamFarm joins its own. Opt out per account
+/// Joins the nocat.farm Steam group once per session, so announcements reach everyone running it. Opt out per account
 /// with <c>JoinGroup = false</c>.
 ///
 /// Joining is a community web POST. Steam answers a join it didn't accept with the same 200 it answers a real one

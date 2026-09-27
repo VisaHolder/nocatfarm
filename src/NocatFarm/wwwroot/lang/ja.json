@@ -611,6 +611,12 @@
     "{0} card(s) - farming tonight, once it's asleep": "カード {0} 枚 - 就寝後、今夜収集します",
     "{0} card(s) - farmed in the day's sittings, from morning": "カード{0}枚 - 朝から日中のセッションで収集",
     "{0} card(s) - farmed in human mode's next sitting": "カード{0}枚 - 人間モードの次のセッションで収集",
+    "{0} has card drops listed but isn't a game (a sale or event badge) - not farmed": "{0}はカードドロップが残っていますがゲームではありません(セールまたはイベントのバッジ) - 収集しません",
+    "couldn't read the card-page check list: {0}": "カードページ確認リストを読み込めませんでした: {0}",
+    "couldn't save the card-page check list: {0}": "カードページ確認リストを保存できませんでした: {0}",
+    "asleep, the card farmer is working": "就寝中、カード収集が稼働中",
+    "last night's plan restored - {0}/{1} played, up about {2}": "昨夜のプランを復元しました - {0}/{1} プレイ済み、{2}頃に起床",
+    "trade offer #{0}: couldn't check it as a card swap yet - {1}": "トレードオファー #{0}: まだカード交換として確認できていません - {1}",
     "between sittings - {0} card(s) left": "セッションの合間 - 残りカード{0}枚",
     "farming cards on {0} · {1} left · {2}/{3} today": "{0}でカード収集中 · 残り{1} · 今日 {2}/{3}",
     "farming cards on {0}": "{0}でカード収集中",
@@ -1034,7 +1040,8 @@
     "dropping a queued key - {0}  ({1} left)": "キューのキーを破棄します - {0}  (残り{1})",
     "giving up on a key after {0} tries - no account could activate it": "{0}回試してキーを諦めます - どのアカウントも有効化できませんでした",
     "hit {0} activations in {1}m - pausing so Steam doesn't start refusing": "{1}分で{0}件の有効化に達しました - Steamが拒否し始めないよう一時停止します",
-    "nocat.farm {0} is out - you have {1}. {2}": "nocat.farm {0}が公開されました - お使いのバージョンは{1}です。{2}",
+    "nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update ignore' stops the hourly reminders until the next launch": "nocat.farm {0} が公開されました - 現在は {1} です。{2}  -  'update accept' でインストールして再起動、'update ignore' で次回起動まで毎時のリマインダーを止めます",
+    "reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update ignore' stops these reminders until the next launch": "リマインダー: nocat.farm {0} が公開されています - 現在は {1} です。'update accept' でインストールして再起動、'update ignore' で次回起動までこのリマインダーを止めます",
     "update: downloading {0} ({1}MB)": "更新: {0}をダウンロード中 ({1}MB)",
     "update: {0} is ready - restarting into it now": "更新: {0}の準備ができました - 今すぐ再起動します",
     "update failed: {0}: {1} - nothing has been changed": "更新に失敗しました: {0}: {1} - 何も変更されていません",
@@ -1058,6 +1065,12 @@
     "answered Steam Guard from this account's own authenticator": "このアカウント自身の認証情報でSteam Guardに応答しました",
     "approve this login in the Steam mobile app (or type the code below)": "Steamモバイルアプリでこのログインを承認してください (または下にコードを入力)",
     "authenticated - token stored, the password won't be asked for again": "認証しました - トークンを保存したのでパスワードは再度尋ねません",
+    "nobody scanned the QR code within 5 minutes - stopping. 'start {0}' shows a fresh one": "5分以内にQRコードがスキャンされなかったため停止します。'start {0}' で新しいコードを表示します",
+    "Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty.": "パスワードを入力する代わりに、スマホのSteamアプリでコードをスキャンします - アカウント名はSteamから届くので、上の2つの欄は空のままで構いません。",
+    "Scan this with the Steam app on your phone to sign {0} in - the Steam Guard tab has the QR scanner.": "スマホのSteamアプリでこれをスキャンして {0} にサインインします - Steamガードのタブに QRスキャナーがあります。",
+    "Sign in with a QR code": "QRコードでサインイン",
+    "{0} is waiting to be signed in: open the dashboard and scan the QR code there with the Steam app on your phone (Steam Guard tab)": "{0} はサインイン待ちです: ダッシュボードを開き、そこにあるQRコードをスマホのSteamアプリ(Steamガードのタブ)でスキャンしてください",
+    "signed in with the QR code as {0} - the login token is stored, nothing to type next time": "QRコードで {0} としてサインインしました - ログイントークンは保存済みで、次回は何も入力しなくて済みます",
     "config removed - stopping": "設定が削除されました - 停止します",
     "connection went quiet - reconnecting": "接続が無反応になりました - 再接続します",
     "couldn't add the notification-area icon - nocatFarm still runs, it just won't show in the tray": "通知領域のアイコンを追加できませんでした - nocatFarmは動作し続けますが、通知領域には表示されません",
@@ -1128,7 +1141,26 @@
     "{0} are past the refund window - free to play again": "{0} は返金期間を過ぎました - 再びプレイ可能です",
     "{0} is past the refund window - free to play again": "{0} は返金期間を過ぎました - 再びプレイ可能です",
     "── daily report · last 24h ──": "── 日次レポート · 直近24時間 ──",
-    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── 日次レポート · 直近24時間 · 初回、ここから「記録」を数えます ──"
+    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── 日次レポート · 直近24時間 · 初回、ここから「記録」を数えます ──",
+    "reached {0}h in {1} - that hour target is done": "{1} で {0} 時間に到達 - この時間目標は達成です",
+    "couldn't read the play history: {0}": "プレイ履歴を読み込めませんでした: {0}",
+    "library: {0} played game(s) Steam's owned list left out, added from the play history ({1})": "ライブラリ: Steamの所有リストから漏れていたプレイ済みゲーム {0} 本をプレイ履歴から追加 ({1})",
+    "level plan for {0} is ready - type 'levelup {0} {1}' to see it": "{0} のレベルアッププランができました - 'levelup {0} {1}' と入力して確認してください",
+    "the discovery queue wasn't available - Steam said {0}": "ディスカバリーキューを取得できませんでした - Steamの応答: {0}",
+    "went through the discovery queue ({0} game(s))": "ディスカバリーキューを見終えました ({0} 本)",
+    "listed {0} duplicate card(s) on the market - {1} to you if they all sell": "重複カード {0} 枚をマーケットに出品しました - 全部売れれば {1} が手元に",
+    "couldn't sell duplicate cards: {0}": "重複カードを売れませんでした: {0}",
+    "next look for spare cards to sell around {0}": "次の余りカード確認は {0} ごろ",
+    "it isn't an active offer any more": "もうアクティブなオファーではありません",
+    "the cards would sit in a trade hold": "カードがトレード保留に入ってしまいます",
+    "Steam didn't say what every item is": "Steamがすべてのアイテムの種類を返しませんでした",
+    "that's an offer this account sent": "このアカウントが送ったオファーです",
+    "{0} to confirm on your phone": "スマホでの確認待ち {0} 件",
+    "couldn't handle trade offer #{0}: {1}: {2}": "トレードオファー #{0} を処理できませんでした: {1}: {2}",
+    "trade offer #{0} is no longer a fair card swap - {1}; left alone": "トレードオファー #{0} はもう公平なカード交換ではありません - {1}; そのままにします",
+    "trade offer #{0} was accepted but needs confirming from the email Steam sent": "トレードオファー #{0} を承諾しましたが、Steamから届いたメールで確認が必要です",
+    "got the last card from {0} - playing on for about {1}, then a break": "{0} の最後のカードを入手 - あと約 {1} 遊んでから休憩",
+    "finished - logging out after this sitting": "完了 - このセッションの後にログアウト"
   },
   "settings": {
     "WebEnabled": {
@@ -1256,6 +1288,10 @@
       "label": "パスワード",
       "tip": "任意です。空にしておくと nocat.farm が一度だけ尋ね、以後はログイントークンでこのアカウントを覚えます - 二つのうち安全なほうです。"
     },
+    "SignInWithQr": {
+      "label": "QRコードでサインイン",
+      "tip": "このアカウントのサインインが必要なとき、パスワードを尋ねる代わりに、スマホのSteamアプリでスキャンするQRコードを表示します。アカウント名はSteamから届くので、何も入力しません。コードはダッシュボードに表示されます。"
+    },
     "OnlineStatus": {
       "label": "表示ステータス",
       "tip": "他人からの見え方：オンライン、離席中、取り込み中、オフライン表示。オフライン表示でも時間は貯まり、誰にも見えません。",
@@ -1289,6 +1325,10 @@
     "GameWeights": {
       "label": "遊ぶゲームと頻度",
       "tip": "どのゲームをどれくらいの割合で遊ぶかを、合計およそ100になるパーセントで指定します。最初のゲームがメインゲーム（このアカウントが好きだとされる作品）で、その数値が実際に効きます。ほかに何本追加してもメインゲームはこの割合に保たれ、毎日その前後10ポイントほどの幅で決まります。数値を省くと、残りを均等に分け合います。消さずに一時的に外すには「440:0」と書いてください。"
+    },
+    "HourTargets": {
+      "label": "時間目標",
+      "tip": "ゲームで到達したい時間。日付も指定できます: 730:100@2026-12-01 は12月1日までにCounter-Strike 2を100時間に、440:50 はいつかTF2を50時間にします。人間モードはセッションを目標のゲームに寄せます(日付付きの目標が遅れているほど強く)。休憩や就寝はいつも通りで、日中だけでは間に合わない日付付きの目標は「夜間に時間を稼ぐ」がオンなら夜のゲームにも加わります。達成するとそのゲームは優先されなくなります。'hours <アカウント>' で進み具合を確認できます。"
     },
     "WeekdayHours": {
       "label": "平日の時間",
@@ -1471,7 +1511,7 @@
     },
     "AcceptFairCardSwaps": {
       "label": "公平なカード交換を受け入れる",
-      "tip": "同じゲーム内でトレーディングカードを1対1で交換し、このアカウントのセット完成に近づくだけのオファーを誰からでも受け入れます。Steam Trade Matcher の利用者が送るもので、ArchiSteamFarm の SteamTradeMatcher 設定が受け入れるものと同じです。他のものが含まれる、フォイルがある、カードの最後の1枚を取られる交換は、そのままにします。カードを渡すにはモバイル認証での確認が必要です。"
+      "tip": "同じゲーム内でカードを1対1で交換するオファーを、このアカウントのセットを進めるだけの場合に受け入れます - カード交換サイトから一日中届くものです。渡すカードはどれも、交換後も、受け取るどのカードの交換前の枚数より多く残っていなければならないので、カードがなくなることはなく、完成したセットの数が減ることもありません。オファーにほかのものやフォイルカードが含まれていれば、そのままにします。カードを渡すにはモバイル認証での確認が必要です。"
     },
     "AcceptGifts": {
       "label": "ギフトとゲストパスを受け取る",
@@ -1527,8 +1567,12 @@
       "label": "インベントリの価値を算出する"
     },
     "CheckForUpdates": {
-      "tip": "一日一度、新しいバージョンがないか確認してログに書きます。知らせるだけで、ダウンロードも置き換えも再起動もしません。",
+      "tip": "数時間ごとに新しいバージョンを確認し、ログで知らせます。知らせるだけで、ダウンロード・置き換え・再起動は一切しません。Steamアカウントの鍵を持つものが、スケジュールで自分の実行ファイルを入れ替えられるべきではありませんし、収集の途中の更新はセッションを失う原因になります。",
       "label": "更新があれば知らせる"
+    },
+    "UpdateReminders": {
+      "label": "1時間ごとに知らせる",
+      "tip": "新しいバージョンがある間は、1回だけでなく1時間に1回ログで知らせます。'update accept' でインストールして再起動、'update ignore' で次回起動までリマインダーを止めます。"
     },
     "BreakMinMinutes": {
       "label": "最短の休憩",
@@ -1586,11 +1630,11 @@
     },
     "PostFarmWindDownMinMinutes": {
       "label": "最後のカードのあと、少なくとも",
-      "tip": "人間モードのみ。カード集めが終わったとき、同じ秒に閉じるのではなく、この範囲（分）のランダムな時間だけそのゲームを開いたままにしてから離れます。"
+      "tip": "人間モードのみ。ゲームが最後のカードを落とすと、そのゲームをもう数分(この2つの数字の間)遊んでから休憩します。普通のゲームセッションと同じです。次のカードゲームは休憩の後に始まります。(カードを夜間またはいつでも集める設定の場合は、最後のカードの後に1回だけです。)初期値は15〜20分。両方0にするとすぐにやめます。"
     },
     "PostFarmWindDownMaxMinutes": {
       "label": "...最大",
-      "tip": "カード集め後のこの余韻の上限（分）。"
+      "tip": "最後のカードの後に遊び続ける最大の分数。"
     },
     "FarmingDelayMinutes": {
       "label": "再確認の間隔",
@@ -1668,9 +1712,27 @@
       "label": "無料イベントアイテムを受け取る",
       "tip": "セール中に Steam が毎日配る無料ステッカーと、ポイントショップで 0 ポイントのアイテムを受け取ります。どちらも無料で、受け取らなければなくなります。人間モードでアカウントが眠っている間は、「起きている間だけ反応する」がオフでない限り朝まで待ちます。"
     },
+    "DiscoveryQueue": {
+      "label": "ディスカバリーキューを見る",
+      "tip": "Steamの1日に1回、人と同じようにストアのディスカバリーキューを見ます - 各ゲームに数秒、そして次へ。セール中はイベントアイテムとバッジの進捗がもらえ、セール以外ではただの普通の行動です。人間モードでアカウントが寝ている間は朝まで待ちます。",
+      "choices": "0 オフ | 1 セール中 | 2 毎日"
+    },
+    "SellDuplicates": {
+      "label": "重複カードを売る",
+      "tip": "アカウントが起きている間、8〜14時間ごとに余ったトレーディングカードを数枚、最安値より1セント安く出品します。Steamの手数料込みで計算するので、表示額がそのまま受け取り額です。余りの定義: ゲームのセットが揃っていれば、まだ作れるバッジレベルの数だけ各カードを残し、一部だけなら各1枚、バッジが最大なら何も残しません。フォイルは売りません。1週間売れず相場が下がった出品は取り下げ、その日の価格で出し直します。このアカウントの認証システムの秘密鍵が読み込まれていなければ、スマホでの確認が必要です。'sell <アカウント>' でプレビューできます。"
+    },
+    "SellPerRun": {
+      "label": "1回の出品枚数",
+      "tip": "1回で出品する余りカードの枚数(高いものから)。数枚ずつなら整理している人に見えますが、1分で100枚はそう見えません。"
+    },
     "BoosterGames": {
       "label": "ブースターパックを作るゲーム",
       "tip": "ジェムをブースターパックに変える AppID をカンマ区切りで。Steam は1ゲームにつき1日1パック、このアカウントがまだカードドロップを得られるゲームだけに許可し、次に作れる時刻も教えてくれます。作れるようになり次第作成します。人間モードでアカウントが眠っている間は、「起きている間だけ反応する」がオフでない限り朝まで待ちます。空欄でオフ。'booster <アカウント>' でジェムと対象ゲームを表示します。"
+    },
+    "BoosterGems": {
+      "label": "ブースターパックに使う",
+      "tip": "両方の種類のジェムがあるとき、ブースターパックをどちらのジェムで作るか。トレード可能を先に(既定)使うとトレードや販売ができるパックになり、トレード不可を先に使うとほかに使い道のないジェムを消費します。優先した種類で価格に足りない場合は、もう一方を使います。",
+      "choices": "0 トレード可能なジェムを先に | 1 トレード不可のジェムを先に"
     },
     "ClearInventoryNotifications": {
       "label": "新着アイテムのバッジを消す",

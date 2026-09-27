@@ -44,7 +44,7 @@ public sealed class Rep4RepApi : IDisposable {
 			using HttpResponseMessage r = await _http.GetAsync(Url(path), ct).ConfigureAwait(false);
 
 			return r.IsSuccessStatusCode ? await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false) : null;
-		} catch (OperationCanceledException) {
+		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch {
 			return null;
@@ -63,7 +63,7 @@ public sealed class Rep4RepApi : IDisposable {
 			using HttpResponseMessage r = await _http.PostAsync(Url(path), content, ct).ConfigureAwait(false);
 
 			return r.IsSuccessStatusCode ? await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false) : null;
-		} catch (OperationCanceledException) {
+		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch {
 			return null;

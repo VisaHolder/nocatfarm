@@ -64,6 +64,13 @@ public static class Inventory {
 			using JsonDocument doc = JsonDocument.Parse(body);
 			JsonElement root = doc.RootElement;
 
+			// A refusal still parses as JSON - {"success":false} or plain null - and read as "no assets, no more
+			// pages" it became a complete, EMPTY inventory: every card judged as not held.
+			if ((root.ValueKind != JsonValueKind.Object)
+				|| (root.TryGetProperty("success", out JsonElement ok) && (ok.ValueKind is JsonValueKind.False || ((ok.ValueKind == JsonValueKind.Number) && (ok.GetInt32() != 1))))) {
+				return page == 0 ? null : found;
+			}
+
 			if (root.TryGetProperty("assets", out JsonElement assets)) {
 				foreach (JsonElement a in assets.EnumerateArray()) {
 					found.Assets.Add(a.Clone());

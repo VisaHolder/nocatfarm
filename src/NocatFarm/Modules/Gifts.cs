@@ -5,7 +5,7 @@ using SteamKit2;
 namespace NocatFarm.Modules;
 
 /// <summary>
-/// Accepts the gifts people send this account - ArchiSteamFarm's AcceptGifts, and games friends gift it.
+/// Accepts the gifts people send this account - wallet gift cards, guest passes, and games friends gift it.
 /// </summary>
 /// <remarks>
 /// Three kinds reach an account. A game a friend gifts and a free-trial guest pass both arrive on Steam's guest-pass
@@ -440,13 +440,18 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 			["giftcardid"] = id.ToString(System.Globalization.CultureInfo.InvariantCulture)
 		}, new Uri(WebSession.Store, "/gifts"), ct).ConfigureAwait(false);
 
-		if ((answer != null) && SuccessOne().IsMatch(answer)) {
-			Log.Good(new Said("accepted a Steam wallet gift card"), Bot.Name);
-		} else {
-			Log.Info(new Said("couldn't accept a Steam wallet gift card: {0}", answer ?? "-"), Bot.Name);
+		// No answer at all - a timeout, a rate limit, a session that needed renewing - is tried again at the next look.
+		if (answer == null) {
+			return false;
 		}
 
-		return true;   // a refusal isn't retried - it would be refused again
+		if (SuccessOne().IsMatch(answer)) {
+			Log.Good(new Said("accepted a Steam wallet gift card"), Bot.Name);
+		} else {
+			Log.Info(new Said("couldn't accept a Steam wallet gift card: {0}", answer.Length > 200 ? answer[..200] : answer), Bot.Name);
+		}
+
+		return true;   // Steam's own no isn't retried - it would say no again
 	}
 
 	/// <summary>

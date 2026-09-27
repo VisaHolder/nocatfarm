@@ -152,6 +152,45 @@ public sealed class MainWindow : IDisposable {
 
 	public bool Mini => _mini;
 
+	/// <summary>Wheel movement not yet a whole notch.</summary>
+	private int _wheel;
+
+	/// <summary>The question the window last surfaced itself for, so hiding it again isn't undone every second.</summary>
+	private string? _surfacedFor;
+
+	private bool _masked;
+
+	/// <summary>
+	/// Something is waiting for an answer - a Steam Guard code, a password. That can only be typed in the full window,
+	/// so a hidden or mini window comes up for it (once per question), and a password is masked while it's typed.
+	/// </summary>
+	private void WatchPrompt() {
+		string? question = Prompt.Pending;
+
+		if ((question != null) && (question != _surfacedFor)) {
+			_surfacedFor = question;
+
+			if (_mini) {
+				ApplyMini(false, remember: false);
+			}
+
+			ShowWindow(_hwnd, IsIconic(_hwnd) ? SwRestore : SwShow);
+			SetForegroundWindow(_hwnd);
+			SetFocus(_input);
+			Visible = true;
+		} else if (question == null) {
+			_surfacedFor = null;
+		}
+
+		bool secret = (question != null) && Prompt.PendingSecret;
+
+		if ((secret != _masked) && (_input != IntPtr.Zero)) {
+			_masked = secret;
+			SendMessage(_input, EmSetPasswordChar, new IntPtr(secret ? 0x25CF : 0), IntPtr.Zero);
+			InvalidateRect(_input, IntPtr.Zero, true);
+		}
+	}
+
 	private int _helpScroll;
 
 	/// <summary>Clickable areas worked out during the paint, so hit-testing always matches what is on screen.</summary>
@@ -203,7 +242,8 @@ public sealed class MainWindow : IDisposable {
 
 	public void Show() {
 		if (_hwnd != IntPtr.Zero) {
-			ShowWindow(_hwnd, SwShow);
+			// Restored if it was minimised (Win+Down does that, and with no taskbar button there was no getting it back).
+			ShowWindow(_hwnd, IsIconic(_hwnd) ? SwRestore : SwShow);
 			SetForegroundWindow(_hwnd);
 			Visible = true;
 		}
@@ -406,11 +446,18 @@ public sealed class MainWindow : IDisposable {
 			return IntPtr.Zero;
 		}
 
+		// The Enter (and Escape) that follow as characters would reach the text box too, which answers a key it has
+		// no use for with the error beep - on every command typed.
+		if ((msg == WmChar) && (wParam.ToInt32() is 13 or 27)) {
+			return IntPtr.Zero;
+		}
+
 		return CallWindowProc(_originalInputProc, hwnd, msg, wParam, lParam);
 	}
 
 	private void RunTypedCommand() {
-		StringBuilder buffer = new(512);
+		// As long as what's there: a fixed 512 cut a pasted batch of keys for 'redeem' off in the middle of one.
+		StringBuilder buffer = new(Math.Max(1, GetWindowTextLength(_input)) + 1);
 		GetWindowText(_input, buffer, buffer.Capacity);
 		string line = buffer.ToString().Trim();
 
@@ -494,11 +541,27 @@ public sealed class MainWindow : IDisposable {
 				return new IntPtr(1);   // everything is painted into a back buffer; erasing here only flickers
 
 			case WmTimer:
+				WatchPrompt();
+
 				if (_mini) {
 					FitMini();
 				}
 
 				Invalidate();
+
+				return IntPtr.Zero;
+
+			case WmQueryEndSession:
+				return new IntPtr(1);   // fine by us - WM_ENDSESSION below does the tidying
+
+			case WmEndSession:
+				// Windows is shutting down or signing out. The process is ended soon after this returns, so what the
+				// clean exit would save is saved here: where the window was, and the running totals.
+				if (wParam != IntPtr.Zero) {
+					SavePlace();
+					BotManager.Flush();
+					_exit();
+				}
 
 				return IntPtr.Zero;
 
@@ -594,8 +657,11 @@ public sealed class MainWindow : IDisposable {
 			}
 
 			case WmMouseWheel: {
-				// Positive delta is a scroll UP, which means going BACK through the log.
-				int notches = (short) ((wParam.ToInt64() >> 16) & 0xFFFF) / 120;
+				// Positive delta is a scroll UP, which means going BACK through the log. Added up rather than divided
+				// on the spot: touchpads and smooth wheels send steps far smaller than one notch, which came out as 0.
+				_wheel += (short) ((wParam.ToInt64() >> 16) & 0xFFFF);
+				int notches = _wheel / 120;
+				_wheel %= 120;
 
 				// The sheet takes the wheel while it is open; otherwise it belongs to the log, which is now the
 				// only scrollable thing on the main window.
@@ -779,7 +845,9 @@ public sealed class MainWindow : IDisposable {
 				break;
 
 			case 'x':
-				if (bot.IsOnline) {
+				// Running, not online: a reconnecting account, or one sitting out a cooldown, showed "start" and
+				// couldn't be stopped from here at all.
+				if (bot.Running) {
 					_ = bot.StopAsync(graceful: true);
 				} else {
 					_ = bot.StartAsync();
@@ -1234,7 +1302,7 @@ public sealed class MainWindow : IDisposable {
 			const int Gap = 5;
 			int bx = (x + w) - ButtonBlock;
 
-			RowButton(dc, bot.IsOnline ? "stop" : "start", bx, y + 4, BtnW, BtnH, bot.Name, 'x', bot.IsOnline ? Red : Green);
+			RowButton(dc, bot.Running ? "stop" : "start", bx, y + 4, BtnW, BtnH, bot.Name, 'x', bot.Running ? Red : Green);
 			RowButton(dc, bot.Paused ? "resume" : "pause", bx + BtnW + Gap, y + 4, BtnW, BtnH, bot.Name, 'p', Amber);
 			RowButton(dc, "cards", bx, y + 4 + BtnH + Gap, BtnW, BtnH, bot.Name, 'c', TextMid);
 			RowButton(dc, "profile", bx + BtnW + Gap, y + 4 + BtnH + Gap, BtnW, BtnH, bot.Name, 'n', TextMid);
@@ -1414,7 +1482,7 @@ public sealed class MainWindow : IDisposable {
 	/// </summary>
 	private void ApplyMini(bool on, bool remember) {
 		if ((_hwnd == IntPtr.Zero) || (on == _mini)) {
-			if (on && remember) {
+			if (remember) {   // asked for - so shown, whichever layout it already was in
 				ShowWindow(_hwnd, SwShow);
 				Visible = true;
 			}
@@ -1480,20 +1548,36 @@ public sealed class MainWindow : IDisposable {
 			return (Math.Max(0, (GetSystemMetrics(SmCxScreen) - width) / 2), Math.Max(0, (GetSystemMetrics(SmCyScreen) - height) / 2));
 		}
 
-		int vx = GetSystemMetrics(SmXVirtualScreen), vy = GetSystemMetrics(SmYVirtualScreen);
-		int vw = GetSystemMetrics(SmCxVirtualScreen), vh = GetSystemMetrics(SmCyVirtualScreen);
+		return OnScreen(Live.Global.WindowX, Live.Global.WindowY, width, height);
+	}
 
-		return (Math.Clamp(Live.Global.WindowX, vx, Math.Max(vx, vx + vw - width)), Math.Clamp(Live.Global.WindowY, vy, Math.Max(vy, vy + vh - height)));
+	/// <summary>
+	/// Keep a window of this size inside the usable part (taskbar excluded) of the monitor nearest to where it was
+	/// left. Clamping to the rectangle around every monitor put it in the gaps no screen covers when the monitors
+	/// weren't lined up, or behind a taskbar.
+	/// </summary>
+	private static (int X, int Y) OnScreen(int x, int y, int width, int height) {
+		Rect work = WorkAreaAt(x + (width / 2), y + (height / 2));
+
+		return (Math.Clamp(x, work.Left, Math.Max(work.Left, work.Right - width)), Math.Clamp(y, work.Top, Math.Max(work.Top, work.Bottom - height)));
+	}
+
+	private static Rect WorkAreaAt(int x, int y) {
+		IntPtr monitor = MonitorFromPoint(new Point { X = x, Y = y }, MonitorDefaultToNearest);
+		MonitorInfo info = new() { Size = Marshal.SizeOf<MonitorInfo>() };
+
+		if ((monitor != IntPtr.Zero) && GetMonitorInfo(monitor, ref info)) {
+			return info.Work;
+		}
+
+		return new Rect { Left = 0, Top = 0, Right = GetSystemMetrics(SmCxScreen), Bottom = GetSystemMetrics(SmCyScreen) };
 	}
 
 	/// <summary>Where mini mode goes: where it was left, or the bottom-right corner above the taskbar the first time.</summary>
 	private static (int X, int Y) MiniSpot(int height) {
-		int vx = GetSystemMetrics(SmXVirtualScreen), vy = GetSystemMetrics(SmYVirtualScreen);
-		int vw = GetSystemMetrics(SmCxVirtualScreen), vh = GetSystemMetrics(SmCyVirtualScreen);
-
 		if ((Live.Global.MiniX != int.MinValue) && (Live.Global.MiniY != int.MinValue)) {
-			// Clamped to the desktop as it is now, so a monitor that has since been unplugged can't strand it.
-			return (Math.Clamp(Live.Global.MiniX, vx, Math.Max(vx, vx + vw - MiniW)), Math.Clamp(Live.Global.MiniY, vy, Math.Max(vy, vy + vh - height)));
+			// On a screen as the screens are now, so a monitor that has since been unplugged can't strand it.
+			return OnScreen(Live.Global.MiniX, Live.Global.MiniY, MiniW, height);
 		}
 
 		if (!SystemParametersInfo(SpiGetWorkArea, 0, out Rect work, 0)) {
@@ -1533,7 +1617,8 @@ public sealed class MainWindow : IDisposable {
 			return;
 		}
 
-		bool lowerHalf = (r.Top + (now / 2)) > (GetSystemMetrics(SmYVirtualScreen) + (GetSystemMetrics(SmCyVirtualScreen) / 2));
+		Rect work = WorkAreaAt(r.Left + (MiniW / 2), r.Top + (now / 2));
+		bool lowerHalf = (r.Top + (now / 2)) > (work.Top + ((work.Bottom - work.Top) / 2));
 		int top = lowerHalf ? r.Bottom - want : r.Top;
 		SetWindowPos(_hwnd, IntPtr.Zero, r.Left, top, MiniW, want, SwpNoZOrder | SwpNoActivate);
 	}
@@ -1600,7 +1685,7 @@ public sealed class MainWindow : IDisposable {
 			string doing = farming && (bot.PlayingApps.Count > 0) ? $"farming {GameNames.Of(bot.PlayingApps[0])}" : BotStatus.Of(bot).Doing;
 			Clipped(dc, doing, textX, y + 8, buttonX - textX - 6, _fontSmall, farming ? TextNormal : TextMid);
 
-			MiniRowButton(dc, bot.IsOnline ? GlyphStop : GlyphPlay, buttonX, y + 4, 24, 22, bot.Name, bot.IsOnline ? Red : Green);
+			MiniRowButton(dc, bot.Running ? GlyphStop : GlyphPlay, buttonX, y + 4, 24, 22, bot.Name, bot.Running ? Red : Green);
 
 			if (farming && (BotManager.ModuleOf<CardFarmer>(bot) is { } farmer)) {
 				string left = (bot.CardsRemaining == 1 ? "1 card left" : $"{bot.CardsRemaining} cards left") + (bot.HumanOwned ? " · human mode" : "");
@@ -1860,6 +1945,12 @@ public sealed class MainWindow : IDisposable {
 
 	/// <summary>WM_APP + 1: mini mode on (wParam 1) or off, posted so the switch always runs on the window's own thread.</summary>
 	private const int WmSetMini = 0x8001;
+	private const int WmChar = 0x0102;
+	private const int WmQueryEndSession = 0x0011;
+	private const int WmEndSession = 0x0016;
+	private const int EmSetPasswordChar = 0x00CC;
+	private const int SwRestore = 9;
+	private const uint MonitorDefaultToNearest = 2;
 
 	/// <summary>WM_APP + 2: put the keep-on-top setting into effect after it was changed somewhere else.</summary>
 	private const int WmRefreshOnTop = 0x8002;
@@ -1942,6 +2033,13 @@ public sealed class MainWindow : IDisposable {
 	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool SetWindowText(IntPtr hwnd, string text);
 	[DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")] private static extern IntPtr SetWindowLongPtr(IntPtr hwnd, int index, IntPtr value);
 	[DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")] private static extern IntPtr GetWindowLongPtr(IntPtr hwnd, int index);
+	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowTextLength(IntPtr hwnd);
+	[DllImport("user32.dll")] private static extern bool IsIconic(IntPtr hwnd);
+	[DllImport("user32.dll")] private static extern IntPtr MonitorFromPoint(Point pt, uint flags);
+	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
+
+	[StructLayout(LayoutKind.Sequential)]
+	private struct MonitorInfo { public int Size; public Rect Monitor; public Rect Work; public uint Flags; }
 	[DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int w, int h, uint flags);
 	[DllImport("user32.dll")] private static extern bool PostMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam);
 	[DllImport("user32.dll", EntryPoint = "SystemParametersInfoW")] private static extern bool SystemParametersInfo(int action, int param, out Rect rect, int winIni);

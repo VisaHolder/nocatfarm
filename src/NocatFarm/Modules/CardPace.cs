@@ -8,8 +8,8 @@ namespace NocatFarm.Modules;
 /// How long a card takes to drop on this account, for "about how long until it's all farmed".
 /// </summary>
 /// <remarks>
-/// Steam's own base rate is a card per 30 minutes of play: that's the default when a game's developer sets none,
-/// and what ArchiSteamFarm counts too. Some games are set slower - an hour is common. So the estimate starts at
+/// Steam's own base rate is a card per 30 minutes of play: that's the default when a game's developer sets none.
+/// Some games are set slower - an hour is common. So the estimate starts at
 /// 30 minutes and learns from the drops it actually sees: each game farmed gets its own pace, and the account's
 /// running average (kept across restarts) stands in for the games not farmed yet.
 /// </remarks>

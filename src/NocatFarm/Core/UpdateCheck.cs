@@ -24,13 +24,32 @@ public static class UpdateCheck {
 
 	private static DateTime _lastLooked = DateTime.MinValue;
 
+	/// <summary>'update ignore' was typed: no more reminders until the next launch.</summary>
+	public static bool Ignored { get; set; }
+
+	private static DateTime _remindedAt = DateTime.MinValue;
+
+	/// <summary>
+	/// Say it again, once an hour, while a newer release is out - unless 'update ignore' was typed this launch or the
+	/// reminders are switched off. A notice said once at three in the morning is a notice nobody saw.
+	/// </summary>
+	public static void RemindIfDue() {
+		if ((Available == null) || Ignored || !Live.Global.CheckForUpdates || !Live.Global.UpdateReminders
+			|| (DateTime.UtcNow - _remindedAt < TimeSpan.FromHours(1))) {
+			return;
+		}
+
+		_remindedAt = DateTime.UtcNow;
+		Log.Attention(new Said("reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update ignore' stops these reminders until the next launch", Available, Build.Version));
+	}
+
 	static UpdateCheck() {
 		// GitHub refuses anonymous requests without one.
 		Http.DefaultRequestHeaders.Add("User-Agent", "nocat.farm/" + Build.Version);
 	}
 
 	/// <summary>
-	/// Look, at most once a day. Safe to call whenever.
+	/// Look, at most every six hours. Safe to call whenever.
 	///
 	/// <paramref name="force"/> skips both gates, for when somebody has actually asked - the daily timer is
 	/// there to keep the background check quiet, not to make "check now" mean "check tomorrow". A release
@@ -38,7 +57,7 @@ public static class UpdateCheck {
 	/// goes looking for it.
 	/// </summary>
 	public static async Task LookAsync(CancellationToken ct = default, bool force = false) {
-		if (!force && (!Live.Global.CheckForUpdates || (DateTime.UtcNow - _lastLooked < TimeSpan.FromHours(24)))) {
+		if (!force && (!Live.Global.CheckForUpdates || (DateTime.UtcNow - _lastLooked < TimeSpan.FromHours(6)))) {
 			return;
 		}
 
@@ -57,9 +76,14 @@ public static class UpdateCheck {
 				return;
 			}
 
+			// Said once when it's first seen; after that the hourly reminder carries it.
+			if (Available != tag) {
+				Log.Attention(new Said("nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update ignore' stops the hourly reminders until the next launch", tag, Build.Version, page));
+				_remindedAt = DateTime.UtcNow;
+			}
+
 			Available = tag;
 			Url = page;
-			Log.Attention(new Said("nocat.farm {0} is out - you have {1}. {2}", tag, Build.Version, page));
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {

@@ -123,10 +123,25 @@ public static class GameCatalog {
 			string body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 			using JsonDocument doc = JsonDocument.Parse(body);
 
-			if (!doc.RootElement.TryGetProperty(app.ToString(), out JsonElement node)
-				|| !node.TryGetProperty("success", out JsonElement ok) || !ok.GetBoolean()
-				|| !node.TryGetProperty("data", out JsonElement data)) {
+			if (!doc.RootElement.TryGetProperty(app.ToString(), out JsonElement node) || !node.TryGetProperty("success", out JsonElement ok)) {
 				return null;
+			}
+
+			// The store's clear "no such app" - delisted, private, a sale or event badge. That's an answer too, and
+			// remembering it is what stops the same app being asked about on every sweep.
+			if ((ok.ValueKind == JsonValueKind.False) || !node.TryGetProperty("data", out JsonElement data)) {
+				Entry none = new() { V = CurrentVersion };
+
+				lock (Cache) {
+					Cache[app] = none;
+				}
+
+				if (DateTime.UtcNow - _lastSave > TimeSpan.FromSeconds(30)) {
+					_lastSave = DateTime.UtcNow;
+					await SaveAsync().ConfigureAwait(false);
+				}
+
+				return new Facts(false, false, false, 0);
 			}
 
 			Entry entry = new() {
@@ -164,8 +179,8 @@ public static class GameCatalog {
 			}
 
 			return new Facts(entry.Game, entry.Single, entry.Achievements, entry.Reviews);
-		} catch (OperationCanceledException) {
-			throw;
+		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+			throw;   // only ours - a request timing out is one too, and letting that through stopped the caller's module
 		} catch (Exception e) {
 			Log.Debug(new Said("store lookup for {0} failed: {1}", app, e.Message));
 

@@ -1,37 +1,34 @@
 using System.Globalization;
+using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using NocatFarm.Core;
 
 namespace NocatFarm.Modules;
 
 /// <summary>
-/// Turns gems into booster packs for the games you list - the BoosterCreator plugin for ArchiSteamFarm.
+/// Turns gems into booster packs for the games you list.
 /// </summary>
 /// <remarks>
-/// Steam lets an account make one booster pack per game a day, for gems, for games it has card drops in. The
-/// booster creator page says which games qualify, what each costs, how many gems there are, and when a game
-/// made recently can be made again - so the schedule comes from Steam's own answer, and nothing has to be
-/// kept on disk. A pack made here is opened by "Open booster packs" if that's on, like any other.
+/// Steam lets an account make one booster pack per game a day, for gems, for games it can still get card drops in.
+/// The booster creator page lists the games that qualify, what each costs and how many gems the account holds, so
+/// that page is read and nothing about Steam's rules is hard-coded here. When a pack is made the next one for that
+/// game is simply due a day later; a game that isn't ready yet is looked at again in a few hours rather than trying
+/// to read the "available again" wording Steam writes for people. A pack made here is opened by "Open booster packs"
+/// if that's on, like any other.
 /// </remarks>
-public sealed partial class Boosters(Bot bot) : BotModule(bot) {
+public sealed class Boosters(Bot bot) : BotModule(bot) {
 	/// <summary>One game on the booster creator page.</summary>
 	public sealed record Offer(uint AppId, string Name, uint Series, uint Price, bool Unavailable, string AvailableAt);
 
 	/// <summary>What the booster creator page says: gems in total, tradable and not, and the games on offer.</summary>
 	public sealed record Page(uint Gems, uint TradableGems, uint UntradableGems, IReadOnlyDictionary<uint, Offer> Offers);
 
+	/// <summary>When each listed game is next worth trying.</summary>
 	private readonly Dictionary<uint, DateTime> _next = [];
 	private Said _status = new("");
 
 	public override string Name => "boosters";
 	public override string Status => Games(Bot).Count > 0 ? _status : "";
-
-	[GeneratedRegex("(?<=parseFloat\\( \")[0-9]+")]
-	private static partial Regex GemAmounts();
-
-	[GeneratedRegex("\\[\\{\"[\\s\\S]*\"}]")]
-	private static partial Regex OfferList();
 
 	/// <summary>The appIDs in this account's BoosterGames setting.</summary>
 	public static List<uint> Games(Bot bot) => [.. bot.Cfg.BoosterGames
@@ -39,6 +36,8 @@ public sealed partial class Boosters(Bot bot) : BotModule(bot) {
 		.Select(static s => uint.TryParse(s, NumberStyles.None, CultureInfo.InvariantCulture, out uint id) ? id : 0)
 		.Where(static id => id != 0)
 		.Distinct()];
+
+	private static DateTime Later(int minHours, int maxHours) => DateTime.UtcNow.AddMinutes(Rng.Next(minHours * 60, (maxHours * 60) + 1));
 
 	protected override async Task RunAsync(CancellationToken ct) {
 		while (!ct.IsCancellationRequested) {
@@ -54,19 +53,19 @@ public sealed partial class Boosters(Bot bot) : BotModule(bot) {
 
 			if (due && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && HumanMode.AwakeFor(Bot)) {
 				try {
-					await RunDueAsync(games, ct).ConfigureAwait(false);
-				} catch (OperationCanceledException) {
+					await MakeDueAsync(games, ct).ConfigureAwait(false);
+				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
 				} catch (Exception e) {
 					Log.Debug(new Said("couldn't make booster packs: {0}", e.Message), Bot.Name);
 
 					foreach (uint id in games) {
-						_next[id] = DateTime.UtcNow.AddHours(1);
+						_next[id] = Later(1, 2);
 					}
 				}
 			}
 
-			if (games.Count > 0 && _next.Count > 0) {
+			if ((games.Count > 0) && (_next.Count > 0)) {
 				DateTime soonest = _next.Values.Min();
 				_status = new Said("next booster pack around {0}", (Func<string>) (() => Fmt.Clock(soonest)));
 			}
@@ -78,12 +77,12 @@ public sealed partial class Boosters(Bot bot) : BotModule(bot) {
 		}
 	}
 
-	private async Task RunDueAsync(List<uint> games, CancellationToken ct) {
+	private async Task MakeDueAsync(List<uint> games, CancellationToken ct) {
 		Page? page = await ReadAsync(Bot, ct).ConfigureAwait(false);
 
 		if (page == null) {
 			foreach (uint id in games) {
-				_next[id] = DateTime.UtcNow.AddHours(1);
+				_next[id] = Later(1, 2);
 			}
 
 			return;
@@ -96,24 +95,26 @@ public sealed partial class Boosters(Bot bot) : BotModule(bot) {
 				continue;
 			}
 
+			// Not on the page: no drops left in it, not owned, or no cards at all. A game bought today shows up once it
+			// has drops, so it's looked at again later rather than given up on.
 			if (!page.Offers.TryGetValue(id, out Offer? offer)) {
-				// No card drops left in it, not owned, or no cards at all. Worth another look later - a game
-				// bought today appears once it has drops.
 				Log.Debug(new Said("{0} isn't on the booster creator - no booster packs can be made for it right now", GameNames.Of(id)), Bot.Name);
-				_next[id] = DateTime.UtcNow.AddHours(8);
+				_next[id] = Later(6, 10);
 
 				continue;
 			}
 
+			// Made in the last day - by us or by hand. Looked at again in a few hours, which a page read a few times a
+			// day costs nothing to find out.
 			if (offer.Unavailable) {
-				_next[id] = AvailableAt(offer.AvailableAt);
+				_next[id] = Later(2, 4);
 
 				continue;
 			}
 
 			if (gems < offer.Price) {
 				Log.Debug(new Said("not enough gems for a {0} booster pack - {1} needed, {2} here", offer.Name, offer.Price, gems), Bot.Name);
-				_next[id] = DateTime.UtcNow.AddHours(8);
+				_next[id] = Later(6, 10);
 
 				continue;
 			}
@@ -126,83 +127,155 @@ public sealed partial class Boosters(Bot bot) : BotModule(bot) {
 				tradable = leftTradable;
 				untradable = leftUntradable;
 				Log.Reward(new Said("made a {0} booster pack for {1} gems - {2} gems left", offer.Name, offer.Price, gems), Bot.Name);
-				_next[id] = DateTime.UtcNow.AddHours(24).AddMinutes(Rng.Next(1, 30));
+
+				// One a day per game, counted from now - with a little slack so it doesn't land on the same minute daily.
+				_next[id] = DateTime.UtcNow.AddHours(24).AddMinutes(Rng.Next(5, 45));
 			} else {
 				Log.Info(new Said("couldn't make a {0} booster pack: {1}", offer.Name, why ?? "-"), Bot.Name);
-				_next[id] = DateTime.UtcNow.AddHours(8);
+				_next[id] = Later(6, 10);
 			}
 		}
 	}
 
-	/// <summary>
-	/// Steam writes "available again" in words, e.g. "27 Sep @ 3:45pm", in a time zone of its choosing. Anything
-	/// that doesn't read as a sensible time in the next day falls back to trying again in a few hours.
-	/// </summary>
-	private static DateTime AvailableAt(string text) {
-		string[] formats = ["d MMM @ h:mmtt", "MMM d @ h:mmtt", "d MMM, yyyy @ h:mmtt", "MMM d, yyyy @ h:mmtt"];
-
-		if (DateTime.TryParseExact(text.Trim(), formats, CultureInfo.GetCultureInfo("en-US"), DateTimeStyles.AssumeLocal, out DateTime local)) {
-			DateTime utc = local.ToUniversalTime().AddMinutes(Rng.Next(1, 15));
-
-			if ((utc > DateTime.UtcNow) && (utc < DateTime.UtcNow.AddHours(25))) {
-				return utc;
-			}
-		}
-
-		return DateTime.UtcNow.AddHours(3);
-	}
-
+	// ── reading the page ────────────────────────────────────────────────────
 	/// <summary>Read the booster creator page. Null when it couldn't be read or didn't look as expected.</summary>
 	public static async Task<Page?> ReadAsync(Bot bot, CancellationToken ct = default) {
 		string? html = await bot.Web.GetAsync(new Uri(WebSession.Community, "/tradingcards/boostercreator?l=english"), ct).ConfigureAwait(false);
 
-		if (html == null) {
+		return html == null ? null : ParsePage(html);
+	}
+
+	/// <summary>
+	/// The page hands everything to its own script in one call - the games as a JSON array, then the gem counts in
+	/// total, tradable and untradable. That call's arguments are read here as they are written, rather than
+	/// fishing numbers out of the markup around them.
+	/// </summary>
+	internal static Page? ParsePage(string html) {
+		const string Call = "CBoosterCreatorPage.Init(";
+		int at = html.IndexOf(Call, StringComparison.Ordinal);
+
+		if (at < 0) {
 			return null;
 		}
 
-		MatchCollection amounts = GemAmounts().Matches(html);
+		List<string> args = Arguments(html, at + Call.Length);
 
-		if (amounts.Count < 3) {
+		if (args.Count < 4) {
 			return null;
 		}
 
 		Dictionary<uint, Offer> offers = [];
-		Match list = OfferList().Match(html);
 
-		if (list.Success) {
-			using JsonDocument doc = JsonDocument.Parse(list.Value);
+		try {
+			using JsonDocument doc = JsonDocument.Parse(args[0]);
 
-			foreach (JsonElement e in doc.RootElement.EnumerateArray()) {
-				uint appId = Num(e, "appid");
+			if (doc.RootElement.ValueKind == JsonValueKind.Array) {
+				foreach (JsonElement e in doc.RootElement.EnumerateArray()) {
+					uint appId = Num(e, "appid");
 
-				if (appId == 0) {
-					continue;
+					if (appId == 0) {
+						continue;
+					}
+
+					offers[appId] = new Offer(appId,
+						e.TryGetProperty("name", out JsonElement n) ? n.GetString() ?? GameNames.Of(appId) : GameNames.Of(appId),
+						Num(e, "series"),
+						Num(e, "price"),
+						e.TryGetProperty("unavailable", out JsonElement u) && (u.ValueKind == JsonValueKind.True),
+						e.TryGetProperty("available_at_time", out JsonElement t) ? t.GetString() ?? "" : "");
+				}
+			}
+		} catch (JsonException) {
+			return null;
+		}
+
+		return new Page(Digits(args[1]), Digits(args[2]), Digits(args[3]), offers);
+	}
+
+	/// <summary>
+	/// The top-level arguments of a script call starting just after its "(", up to the matching ")". Commas inside
+	/// strings, brackets and nested calls belong to the argument they sit in.
+	/// </summary>
+	private static List<string> Arguments(string text, int start) {
+		List<string> args = [];
+		StringBuilder current = new();
+		int depth = 0;
+		char quote = '\0';
+
+		for (int i = start; i < text.Length; i++) {
+			char c = text[i];
+
+			if (quote != '\0') {
+				current.Append(c);
+
+				if (c == '\\' && (i + 1 < text.Length)) {
+					current.Append(text[++i]);
+				} else if (c == quote) {
+					quote = '\0';
 				}
 
-				offers[appId] = new Offer(appId,
-					e.TryGetProperty("name", out JsonElement n) ? n.GetString() ?? GameNames.Of(appId) : GameNames.Of(appId),
-					Num(e, "series"),
-					Num(e, "price"),
-					e.TryGetProperty("unavailable", out JsonElement u) && (u.ValueKind == JsonValueKind.True),
-					e.TryGetProperty("available_at_time", out JsonElement t) ? t.GetString() ?? "" : "");
+				continue;
+			}
+
+			switch (c) {
+				case '"' or '\'':
+					quote = c;
+					current.Append(c);
+
+					break;
+				case '(' or '[' or '{':
+					depth++;
+					current.Append(c);
+
+					break;
+				case ')' or ']' or '}' when depth > 0:
+					depth--;
+					current.Append(c);
+
+					break;
+				case ')':
+					args.Add(current.ToString().Trim());
+
+					return args;
+				case ',' when depth == 0:
+					args.Add(current.ToString().Trim());
+					current.Clear();
+
+					break;
+				default:
+					current.Append(c);
+
+					break;
 			}
 		}
 
-		return new Page(Parse(amounts[0].Value), Parse(amounts[1].Value), Parse(amounts[2].Value), offers);
+		return [];   // never closed - not the page we expected
 	}
 
+	/// <summary>The whole number in an argument like <c>parseFloat( "1234" )</c>.</summary>
+	private static uint Digits(string arg) {
+		StringBuilder digits = new();
+
+		foreach (char c in arg) {
+			if (char.IsAsciiDigit(c)) {
+				digits.Append(c);
+			} else if ((c == '.') && (digits.Length > 0)) {
+				break;   // gems are whole numbers; anything after a point is not
+			}
+		}
+
+		return Parse(digits.ToString());
+	}
+
+	// ── making one ──────────────────────────────────────────────────────────
 	/// <summary>Make one booster pack.</summary>
 	/// <returns>Whether it was made, the gems left afterwards, and Steam's words when it wasn't.</returns>
 	public static async Task<(bool Made, uint Gems, uint Tradable, uint Untradable, string? Why)> CreateAsync(
 		Bot bot, Offer offer, uint tradable, uint untradable, CancellationToken ct = default) {
-		// Spend tradable gems where possible - a pack made from them is tradable too. 1 = tradable gems first,
-		// 2 = tradable only (no other kind here), 3 = untradable first. The same choice BoosterCreator makes.
-		string preference = untradable > 0 ? (tradable > offer.Price ? "1" : "3") : "2";
-
 		string? answer = await bot.Web.PostAsync(new Uri(WebSession.Community, "/tradingcards/ajaxcreatebooster/"), new Dictionary<string, string> {
 			["appid"] = offer.AppId.ToString(CultureInfo.InvariantCulture),
 			["series"] = offer.Series.ToString(CultureInfo.InvariantCulture),
-			["tradability_preference"] = preference
+			["tradability_preference"] = GemsToSpend(bot, offer.Price, tradable, untradable)
 		}, new Uri(WebSession.Community, "/tradingcards/boostercreator/"), ct).ConfigureAwait(false);
 
 		if (answer == null) {
@@ -221,6 +294,24 @@ public sealed partial class Boosters(Bot bot) : BotModule(bot) {
 		} catch (JsonException) {
 			return (false, 0, 0, 0, answer.Length > 200 ? answer[..200] : answer);
 		}
+	}
+
+	/// <summary>
+	/// Which gems Steam should take, in its own terms: 1 tradable ones first, 3 untradable ones first, 2 when there's
+	/// only one kind anyway. A pack made from tradable gems is tradable itself - worth keeping them for that unless
+	/// the account's BoosterGems setting says to use the untradable ones up first. If the preferred kind can't cover
+	/// the price, the other is used rather than failing.
+	/// </summary>
+	private static string GemsToSpend(Bot bot, uint price, uint tradable, uint untradable) {
+		if ((tradable == 0) || (untradable == 0)) {
+			return "2";
+		}
+
+		bool untradableFirst = bot.Cfg.BoosterGems == 1;
+
+		return untradableFirst
+			? (untradable >= price ? "3" : "1")
+			: (tradable >= price ? "1" : "3");
 	}
 
 	/// <summary>Steam writes these numbers sometimes as numbers and sometimes as strings.</summary>

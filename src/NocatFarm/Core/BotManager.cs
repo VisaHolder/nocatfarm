@@ -71,7 +71,9 @@ public sealed class BotManager : IAsyncDisposable {
 	public async Task SyncFromDiskAsync() {
 		Dictionary<string, BotConfig> onDisk = ConfigStore.LoadBots();
 
-		foreach (string gone in _bots.Keys.Where(k => !onDisk.ContainsKey(k)).ToArray()) {
+		// Only accounts whose file is really gone. A file that is there but didn't parse was skipped by LoadBots with a
+		// warning; removing the account for that would stop it over one stray comma.
+		foreach (string gone in _bots.Keys.Where(k => !onDisk.ContainsKey(k) && !File.Exists(Path.Combine(ConfigStore.ConfigDir, k + ".json"))).ToArray()) {
 			if (_bots.TryRemove(gone, out Bot? b)) {
 				Log.Info("config removed - stopping", gone);
 				await b.DisposeAsync().ConfigureAwait(false);   // dispose, not just stop - frees its HttpClient/locks
@@ -107,6 +109,7 @@ public sealed class BotManager : IAsyncDisposable {
 		bot.AddModule(new Gifts(bot));
 		bot.AddModule(new Boosters(bot));
 		bot.AddModule(new EventItems(bot));
+		bot.AddModule(new DuplicateSeller(bot));
 		bot.AddModule(new AchievementPacer(bot));
 		bot.AddModule(new AchievementBoost(bot));
 		bot.AddModule(new Upkeep(bot));

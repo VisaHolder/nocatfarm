@@ -86,7 +86,10 @@ public sealed class WebSession : IDisposable {
 	/// already minted for the web session, so this costs no extra login.
 	/// </summary>
 	public async Task<string?> ApiGetAsync(string service, string method, Dictionary<string, string>? args, CancellationToken ct = default) {
-		if (!Ready && !await RefreshAsync(false, ct).ConfigureAwait(false)) {
+		// Always asked, not only when the session is marked broken: an API call carries the token in the URL, so an
+		// expired one just fails - there's no login redirect to notice, the way the community site has. RefreshAsync
+		// is a no-op while the token has life left and renews it when it's nearly spent.
+		if (!await RefreshAsync(false, ct).ConfigureAwait(false)) {
 			return null;
 		}
 
@@ -105,7 +108,7 @@ public sealed class WebSession : IDisposable {
 
 	/// <summary>The same as <see cref="ApiGetAsync"/>, for the Web API methods that only take a POST.</summary>
 	public async Task<string?> ApiPostAsync(string service, string method, Dictionary<string, string>? form, CancellationToken ct = default) {
-		if (!Ready && !await RefreshAsync(false, ct).ConfigureAwait(false)) {
+		if (!await RefreshAsync(false, ct).ConfigureAwait(false)) {
 			return null;
 		}
 
@@ -118,6 +121,13 @@ public sealed class WebSession : IDisposable {
 	}
 
 	public void Invalidate() => Ready = false;
+
+	/// <summary>
+	/// A request's path and query, safe to write down: the API calls carry this account's access token in the query,
+	/// and every failed or timed-out request used to log it in full to a file that is kept for weeks.
+	/// </summary>
+	private static string Loggable(Uri url) =>
+		System.Text.RegularExpressions.Regex.Replace(url.PathAndQuery, "(?i)((?:access_token|key|token|password|webapi_token)=)[^&]*", "$1[hidden]");
 
 	// ── requests ────────────────────────────────────────────────────────────
 	public async Task<string?> GetAsync(Uri url, CancellationToken ct = default) => await SendAsync(url, null, null, true, ct).ConfigureAwait(false);
@@ -204,6 +214,11 @@ public sealed class WebSession : IDisposable {
 					return null;
 				}
 
+				// The Web API says a token is no good with a 401 - the next call renews it rather than failing forever.
+				if ((response.StatusCode == System.Net.HttpStatusCode.Unauthorized) && (url.Host == Api.Host)) {
+					Ready = false;
+				}
+
 				// Steam puts the REASON in the body of a failed POST - "you cannot trade because...", "this
 				// account is trade banned" - and throwing it away left every failure looking like a network
 				// fault. The first couple of hundred characters is always enough to say what went wrong.
@@ -215,7 +230,7 @@ public sealed class WebSession : IDisposable {
 					// the status code on its own will have to do
 				}
 
-				Log.Debug(new Said("{0} {1} -> {2}", (form == null ? "GET" : "POST"), url.PathAndQuery, (int) response.StatusCode)
+				Log.Debug(new Said("{0} {1} -> {2}", (form == null ? "GET" : "POST"), Loggable(url), (int) response.StatusCode)
 					+ (failure.Length > 0 ? $"  {failure[..Math.Min(300, failure.Length)]}" : ""), _bot.Name);
 
 				return null;
@@ -228,11 +243,11 @@ public sealed class WebSession : IDisposable {
 		} catch (OperationCanceledException e) {
 			// HttpClient reports its own 30s timeout as a cancellation with nobody having cancelled anything.
 			// Rethrowing that killed the calling module's loop outright and looked exactly like a clean shutdown.
-			Log.Debug(new Said("{0} {1} timed out: {2}", (form == null ? "GET" : "POST"), url.PathAndQuery, e.Message), _bot.Name);
+			Log.Debug(new Said("{0} {1} timed out: {2}", (form == null ? "GET" : "POST"), Loggable(url), e.Message), _bot.Name);
 
 			return null;
 		} catch (Exception e) {
-			Log.Debug(new Said("{0} {1} failed: {2}", (form == null ? "GET" : "POST"), url.PathAndQuery, e.Message), _bot.Name);
+			Log.Debug(new Said("{0} {1} failed: {2}", (form == null ? "GET" : "POST"), Loggable(url), e.Message), _bot.Name);
 
 			return null;
 		} finally {
@@ -302,7 +317,7 @@ public sealed class WebSession : IDisposable {
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
-			Log.Debug(new Said("POST {0} failed: {1}", url.PathAndQuery, e.Message), _bot.Name);
+			Log.Debug(new Said("POST {0} failed: {1}", Loggable(url), e.Message), _bot.Name);
 
 			return null;
 		}
@@ -372,7 +387,7 @@ public sealed class WebSession : IDisposable {
 				if (body == null || body.Contains("\"success\":false", StringComparison.Ordinal)) {
 					Log.Warn(new Said("Family View PIN wasn't accepted by {0} - card farming may see nothing", service.Host), _bot.Name);
 				}
-			} catch (OperationCanceledException) {
+			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
 				Log.Debug(new Said("parental unlock on {0}: {1}", service.Host, e.Message), _bot.Name);

@@ -611,6 +611,12 @@
     "{0} card(s) - farming tonight, once it's asleep": "카드 {0}장 - 오늘 밤 잠든 뒤 수집",
     "{0} card(s) - farmed in the day's sittings, from morning": "카드 {0}장 - 아침부터 낮 세션에서 파밍",
     "{0} card(s) - farmed in human mode's next sitting": "카드 {0}장 - 인간 모드의 다음 세션에서 파밍",
+    "{0} has card drops listed but isn't a game (a sale or event badge) - not farmed": "{0}에는 드롭할 카드가 있지만 게임이 아닙니다(할인 또는 이벤트 배지) - 파밍하지 않음",
+    "couldn't read the card-page check list: {0}": "카드 페이지 확인 목록을 읽지 못했습니다: {0}",
+    "couldn't save the card-page check list: {0}": "카드 페이지 확인 목록을 저장하지 못했습니다: {0}",
+    "asleep, the card farmer is working": "취침 중, 카드 파밍 진행 중",
+    "last night's plan restored - {0}/{1} played, up about {2}": "어젯밤 계획 복원 - {0}/{1} 플레이, 약 {2}에 기상",
+    "trade offer #{0}: couldn't check it as a card swap yet - {1}": "거래 제안 #{0}: 아직 카드 교환으로 확인하지 못했습니다 - {1}",
     "between sittings - {0} card(s) left": "세션 사이 - 카드 {0}장 남음",
     "farming cards on {0} · {1} left · {2}/{3} today": "{0}에서 카드 파밍 중 · {1} 남음 · 오늘 {2}/{3}",
     "farming cards on {0}": "{0}에서 카드 파밍 중",
@@ -1034,7 +1040,8 @@
     "dropping a queued key - {0}  ({1} left)": "대기열의 키를 버립니다 - {0}  ({1}개 남음)",
     "giving up on a key after {0} tries - no account could activate it": "{0}번 시도 후 키를 포기합니다 - 어떤 계정도 활성화하지 못했습니다",
     "hit {0} activations in {1}m - pausing so Steam doesn't start refusing": "{1}분 만에 활성화 {0}건에 도달했습니다 - Steam이 거부하기 시작하지 않도록 일시 중지합니다",
-    "nocat.farm {0} is out - you have {1}. {2}": "nocat.farm {0}이(가) 나왔습니다 - 현재 {1}을(를) 쓰고 있습니다. {2}",
+    "nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update ignore' stops the hourly reminders until the next launch": "nocat.farm {0} 출시 - 현재 {1}입니다. {2}  -  'update accept'로 설치하고 재시작, 'update ignore'로 다음 실행까지 매시간 알림을 멈춥니다",
+    "reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update ignore' stops these reminders until the next launch": "알림: nocat.farm {0} 출시 - 현재 {1}입니다. 'update accept'로 설치하고 재시작, 'update ignore'로 다음 실행까지 이 알림을 멈춥니다",
     "update: downloading {0} ({1}MB)": "업데이트: {0} 다운로드 중 ({1}MB)",
     "update: {0} is ready - restarting into it now": "업데이트: {0} 준비 완료 - 지금 재시작합니다",
     "update failed: {0}: {1} - nothing has been changed": "업데이트에 실패했습니다: {0}: {1} - 아무것도 변경되지 않았습니다",
@@ -1058,6 +1065,12 @@
     "answered Steam Guard from this account's own authenticator": "이 계정 자체의 인증기로 Steam Guard에 응답했습니다",
     "approve this login in the Steam mobile app (or type the code below)": "Steam 모바일 앱에서 이 로그인을 승인하세요 (또는 아래에 코드를 입력)",
     "authenticated - token stored, the password won't be asked for again": "인증되었습니다 - 토큰을 저장했으므로 비밀번호를 다시 묻지 않습니다",
+    "nobody scanned the QR code within 5 minutes - stopping. 'start {0}' shows a fresh one": "5분 안에 아무도 QR 코드를 스캔하지 않아 중지합니다. 'start {0}'로 새 코드를 표시합니다",
+    "Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty.": "비밀번호를 입력하는 대신 휴대폰의 Steam 앱으로 코드를 스캔합니다 - 계정 이름은 Steam에서 오므로 위의 두 칸은 비워 둬도 됩니다.",
+    "Scan this with the Steam app on your phone to sign {0} in - the Steam Guard tab has the QR scanner.": "휴대폰의 Steam 앱으로 이것을 스캔해 {0}에 로그인하세요 - Steam Guard 탭에 QR 스캐너가 있습니다.",
+    "Sign in with a QR code": "QR 코드로 로그인",
+    "{0} is waiting to be signed in: open the dashboard and scan the QR code there with the Steam app on your phone (Steam Guard tab)": "{0}이(가) 로그인을 기다리고 있습니다: 대시보드를 열고 거기 있는 QR 코드를 휴대폰의 Steam 앱(Steam Guard 탭)으로 스캔하세요",
+    "signed in with the QR code as {0} - the login token is stored, nothing to type next time": "QR 코드로 {0}(으)로 로그인했습니다 - 로그인 토큰이 저장되어 다음에는 아무것도 입력하지 않아도 됩니다",
     "config removed - stopping": "설정이 제거되었습니다 - 중지합니다",
     "connection went quiet - reconnecting": "연결이 조용해졌습니다 - 재연결합니다",
     "couldn't add the notification-area icon - nocatFarm still runs, it just won't show in the tray": "알림 영역 아이콘을 추가하지 못했습니다 - nocatFarm은 계속 실행되지만 트레이에는 표시되지 않습니다",
@@ -1128,7 +1141,26 @@
     "{0} are past the refund window - free to play again": "{0}은(는) 환불 기간이 지났습니다 - 다시 플레이할 수 있습니다",
     "{0} is past the refund window - free to play again": "{0}은(는) 환불 기간이 지났습니다 - 다시 플레이할 수 있습니다",
     "── daily report · last 24h ──": "── 일일 보고서 · 최근 24시간 ──",
-    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── 일일 보고서 · 최근 24시간 · 첫 보고서, 여기서부터 \"적립\"을 셉니다 ──"
+    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── 일일 보고서 · 최근 24시간 · 첫 보고서, 여기서부터 \"적립\"을 셉니다 ──",
+    "reached {0}h in {1} - that hour target is done": "{1}에서 {0}시간 달성 - 이 시간 목표는 완료되었습니다",
+    "couldn't read the play history: {0}": "플레이 기록을 읽지 못했습니다: {0}",
+    "library: {0} played game(s) Steam's owned list left out, added from the play history ({1})": "라이브러리: Steam 보유 목록에서 빠진 플레이한 게임 {0}개를 플레이 기록에서 추가 ({1})",
+    "level plan for {0} is ready - type 'levelup {0} {1}' to see it": "{0}의 레벨 계획이 준비되었습니다 - 'levelup {0} {1}'을(를) 입력해 확인하세요",
+    "the discovery queue wasn't available - Steam said {0}": "탐색 대기열을 받을 수 없었습니다 - Steam 응답: {0}",
+    "went through the discovery queue ({0} game(s))": "탐색 대기열을 둘러봤습니다 ({0}개 게임)",
+    "listed {0} duplicate card(s) on the market - {1} to you if they all sell": "중복 카드 {0}장을 장터에 올렸습니다 - 모두 팔리면 {1}을(를) 받습니다",
+    "couldn't sell duplicate cards: {0}": "중복 카드를 팔지 못했습니다: {0}",
+    "next look for spare cards to sell around {0}": "다음 남는 카드 확인은 {0}쯤",
+    "it isn't an active offer any more": "더 이상 활성 제안이 아닙니다",
+    "the cards would sit in a trade hold": "카드가 거래 보류에 묶이게 됩니다",
+    "Steam didn't say what every item is": "Steam이 모든 아이템의 종류를 알려주지 않았습니다",
+    "that's an offer this account sent": "이 계정이 보낸 제안입니다",
+    "{0} to confirm on your phone": "휴대폰에서 확인할 것 {0}개",
+    "couldn't handle trade offer #{0}: {1}: {2}": "거래 제안 #{0}을(를) 처리하지 못했습니다: {1}: {2}",
+    "trade offer #{0} is no longer a fair card swap - {1}; left alone": "거래 제안 #{0}은(는) 더 이상 공정한 카드 교환이 아닙니다 - {1}; 그대로 둡니다",
+    "trade offer #{0} was accepted but needs confirming from the email Steam sent": "거래 제안 #{0}을(를) 수락했지만 Steam이 보낸 이메일에서 확인해야 합니다",
+    "got the last card from {0} - playing on for about {1}, then a break": "{0}의 마지막 카드 획득 - 약 {1} 더 플레이한 뒤 휴식",
+    "finished - logging out after this sitting": "완료 - 이번 세션이 끝나면 로그아웃"
   },
   "settings": {
     "WebEnabled": {
@@ -1256,6 +1288,10 @@
       "label": "비밀번호",
       "tip": "선택 사항. 비워 두면 nocat.farm이 한 번만 묻고, 이후에는 로그인 토큰으로 계정을 기억합니다 - 둘 중 더 안전한 방식입니다."
     },
+    "SignInWithQr": {
+      "label": "QR 코드로 로그인",
+      "tip": "이 계정에 로그인이 필요할 때 비밀번호를 묻는 대신 휴대폰의 Steam 앱으로 스캔할 QR 코드를 보여 줍니다. 계정 이름은 Steam에서 오므로 아무것도 입력하지 않습니다. 코드는 대시보드에 표시됩니다."
+    },
     "OnlineStatus": {
       "label": "표시 상태",
       "tip": "다른 사람에게 보이는 상태: 온라인, 자리 비움, 다른 용무 중, 오프라인 표시. 오프라인 표시로도 시간은 계속 쌓이고 아무도 보지 못합니다.",
@@ -1289,6 +1325,10 @@
     "GameWeights": {
       "label": "플레이할 게임과 빈도",
       "tip": "어떤 게임을 얼마나 할지 백분율로 적습니다. 합계가 대략 100이 되게 하세요. 첫 번째 게임이 메인 게임(이 계정이 좋아한다고 설정된 게임)이며, 그 숫자가 실제로 적용됩니다. 게임을 몇 개 더 추가해도 메인 게임은 이 비율로 유지되고, 매일 아침 이 값의 약 ±10 범위에서 정해집니다. 숫자를 생략하면 남은 몫을 균등하게 나눠 갖습니다. 삭제하지 않고 잠시 빼두려면 '440:0'이라고 쓰세요."
+    },
+    "HourTargets": {
+      "label": "시간 목표",
+      "tip": "게임에서 도달할 시간, 선택적으로 날짜까지: 730:100@2026-12-01은 12월 1일까지 Counter-Strike 2를 100시간으로, 440:50은 언젠가 TF2를 50시간으로 만듭니다. 사람 모드는 세션을 목표 게임 쪽으로 기울입니다 - 날짜가 있는 목표가 뒤처질수록 더 강하게 - 휴식과 취침은 평소와 같고, 낮 플레이만으로 끝낼 수 없는 날짜 목표는 '밤에 시간 쌓기'가 켜져 있으면 밤 게임에 합류합니다. 달성하면 더 이상 우선되지 않습니다. 'hours <계정>'으로 진행 상황을 볼 수 있습니다."
     },
     "WeekdayHours": {
       "label": "평일 시간",
@@ -1471,7 +1511,7 @@
     },
     "AcceptFairCardSwaps": {
       "label": "공정한 카드 교환 받기",
-      "tip": "같은 게임 안에서 트레이딩 카드를 1대1로 바꾸고, 이 계정의 세트 완성에 도움만 되는 제안을 누구에게서든 받습니다. Steam Trade Matcher 사용자가 보내는 것이며, ArchiSteamFarm의 SteamTradeMatcher 설정이 받는 것과 같습니다. 다른 물건이 섞였거나, 포일이 있거나, 카드의 마지막 한 장을 가져가는 교환이면 그대로 둡니다. 카드를 내주려면 모바일 인증기로 확인해야 합니다."
+      "tip": "같은 게임 안에서 카드를 1대1로 바꾸는 제안을, 이 계정의 세트를 완성에 더 가깝게만 만들 때 누구에게서든 수락합니다 - 카드 교환 사이트들이 하루 종일 보내는 제안입니다. 내주는 카드는 교환 후에도 받는 어떤 카드의 교환 전 장수보다 더 많이 남아 있어야 하므로, 어떤 카드도 바닥나지 않고 완성된 세트 수도 줄지 않습니다. 제안에 다른 것이 있거나 포일 카드가 있으면 그대로 둡니다. 카드를 내주려면 모바일 인증기로 확인해야 합니다."
     },
     "AcceptGifts": {
       "label": "선물과 게스트 패스 받기",
@@ -1527,8 +1567,12 @@
       "label": "인벤토리 가치 계산"
     },
     "CheckForUpdates": {
-      "tip": "하루에 한 번 새 버전이 있는지 확인하고 로그에 알립니다. 알리기만 할 뿐, 내려받거나 교체하거나 재시작하지 않습니다.",
+      "tip": "몇 시간마다 새 버전을 확인하고 로그에 알립니다. 알려 주기만 할 뿐, 다운로드·교체·재시작은 절대 하지 않습니다. Steam 계정의 열쇠를 가진 프로그램이 일정에 따라 자기 실행 파일을 바꿀 수 있어서는 안 되며, 파밍 도중의 업데이트는 세션을 잃는 원인이 됩니다.",
       "label": "업데이트가 있으면 알림"
+    },
+    "UpdateReminders": {
+      "label": "매시간 알려 주기",
+      "tip": "새 버전이 있는 동안 한 번만이 아니라 한 시간에 한 번 로그에 알립니다. 'update accept'로 설치하고 재시작하며, 'update ignore'로 다음 실행까지 알림을 멈춥니다."
     },
     "BreakMinMinutes": {
       "label": "가장 짧은 휴식",
@@ -1586,11 +1630,11 @@
     },
     "PostFarmWindDownMinMinutes": {
       "label": "마지막 카드 후 최소 이만큼 더",
-      "tip": "사람 모드 전용. 파밍이 끝나면 같은 초에 바로 닫지 않고, 이 범위(분)에서 무작위 시간만큼 그 게임을 더 켜둔 뒤 자리를 뜹니다."
+      "tip": "사람 모드 전용. 게임이 마지막 카드를 주면 그 게임을 몇 분 더(이 두 숫자 사이) 플레이한 뒤 쉽니다. 보통의 게임 세션처럼요. 다음 카드 게임은 휴식 후에 시작합니다. (카드를 밤이나 아무 때나 모으는 경우에는 맨 마지막 카드 후에 한 번만 이렇게 합니다.) 기본값 15~20분. 둘 다 0이면 바로 멈춥니다."
     },
     "PostFarmWindDownMaxMinutes": {
       "label": "...최대",
-      "tip": "파밍 후 이 여유 시간의 상한(분)."
+      "tip": "마지막 카드 후 계속 플레이하는 최대 분."
     },
     "FarmingDelayMinutes": {
       "label": "다시 확인하는 주기",
@@ -1668,9 +1712,27 @@
       "label": "무료 이벤트 아이템 받기",
       "tip": "세일 기간 동안 Steam이 매일 주는 무료 스티커와, 포인트 상점에서 0포인트인 아이템을 받습니다. 둘 다 비용이 없고 아무도 받지 않으면 사라집니다. 사람 모드에서 계정이 자는 동안에는 '깨어 있을 때만 반응'이(가) 꺼져 있지 않은 한 아침까지 기다립니다."
     },
+    "DiscoveryQueue": {
+      "label": "탐색 대기열 둘러보기",
+      "tip": "Steam 하루에 한 번, 사람처럼 상점의 탐색 대기열을 둘러봅니다 - 게임마다 몇 초씩 보고 다음으로. 할인 행사 중에는 이벤트 아이템과 배지 진행도를 얻고, 그 외에는 그냥 사람들이 하는 일입니다. 사람 모드에서 계정이 자는 동안에는 아침까지 기다립니다.",
+      "choices": "0 끔 | 1 할인 행사 중 | 2 매일"
+    },
+    "SellDuplicates": {
+      "label": "중복 카드 팔기",
+      "tip": "계정이 깨어 있는 동안 8-14시간마다 남는 트레이딩 카드 몇 장을 최저가보다 1센트 싸게 장터에 올립니다. Steam 수수료를 계산하므로 표시된 가격이 받는 금액입니다. 남는 카드란: 게임 세트를 다 갖췄으면 아직 만들 수 있는 배지 레벨 수만큼 각 카드를 남기고, 일부만 있으면 하나씩, 배지가 최대면 하나도 남기지 않습니다. 포일은 팔지 않습니다. 일주일 된 판매 중 시세가 내려간 것은 내리고 그날 가격으로 다시 올립니다. 이 계정의 인증기 비밀값이 없으면 휴대폰에서 확인해야 합니다. 'sell <계정>'으로 미리 볼 수 있습니다."
+    },
+    "SellPerRun": {
+      "label": "한 번에 올릴 카드 수",
+      "tip": "한 번에 올리는 남는 카드 수(비싼 것부터). 몇 장씩이면 정리하는 사람 같지만, 1분에 100장은 아닙니다."
+    },
     "BoosterGames": {
       "label": "부스터 팩을 만들 게임",
       "tip": "보석을 부스터 팩으로 바꿀 AppID, 쉼표로 구분. Steam은 게임당 하루 한 팩, 이 계정이 아직 카드 드롭을 받을 수 있는 게임에만 허용하고 다음에 만들 수 있는 시간을 알려 줍니다 - 만들 수 있게 되는 즉시 만듭니다. 사람 모드에서 계정이 자는 동안에는 '깨어 있을 때만 반응'이(가) 꺼져 있지 않은 한 아침까지 기다립니다. 비우면 끔. 'booster <계정>'은 보석과 대상 게임을 보여 줍니다."
+    },
+    "BoosterGems": {
+      "label": "부스터 팩에 사용할 보석",
+      "tip": "계정에 두 종류의 보석이 모두 있을 때 부스터 팩을 어떤 보석으로 만들지 정합니다. 거래 가능한 보석 먼저(기본값)는 거래하거나 팔 수 있는 팩을 만들고, 거래 불가 보석 먼저는 다른 데 쓸 수 없는 보석을 소모합니다. 선호하는 종류로 가격이 모자라면 다른 종류를 씁니다.",
+      "choices": "0 거래 가능한 보석 먼저 | 1 거래 불가 보석 먼저"
     },
     "ClearInventoryNotifications": {
       "label": "새 아이템 배지 지우기",

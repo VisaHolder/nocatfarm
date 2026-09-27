@@ -282,10 +282,16 @@ public static class Log {
 			return;
 		}
 
-		try {
-			File.AppendAllText(file, $"{now:yyyy-MM-dd HH:mm:ss}|{level}|{source}|{text}{Environment.NewLine}");
-		} catch {
-			// logging must never take the app down
+		// One writer at a time. Two threads appending together collided on the file and the loser's line was
+		// dropped without a word - the log is the one place that must not quietly lose things.
+		lock (FileGate) {
+			try {
+				File.AppendAllText(file, $"{now:yyyy-MM-dd HH:mm:ss}|{level}|{source}|{text}{Environment.NewLine}");
+			} catch {
+				// logging must never take the app down
+			}
 		}
 	}
+
+	private static readonly Lock FileGate = new();
 }

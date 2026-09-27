@@ -1,27 +1,27 @@
-# Writing a nocat.farm plugin
+# nocat.farm plugins
 
-A plugin is one DLL. You drop it in `plugins/`, turn plugins on, restart, and it's running.
+**A plugin is one DLL file that adds your own commands and features to nocat.farm.** You write a small C# class,
+build it, drop the DLL in the `plugins` folder, and it runs.
 
-There's no manifest, no registration, no build step beyond `dotnet build`. If you can write a C# class, you can
-write a plugin.
-
-**Contents** · [The 5-minute version](#the-5-minute-version) · [What a plugin can do](#what-a-plugin-can-do) ·
-[Settings](#giving-your-plugin-settings) · [Saving state](#saving-state) · [Events](#events) ·
-[Commands](#adding-commands) · [Doing things](#doing-things) · [Ideas](#things-worth-building) ·
-[Rules & limits](#rules-and-limits) · [Shipping it](#shipping-it) · [Licensing](#licensing-your-plugin)
+**Contents** · [Your first plugin](#your-first-plugin-5-minutes) · [A bigger example](#a-bigger-example-card-tally) ·
+[What a plugin can do](#what-a-plugin-can-do) · [Cheat sheet](#cheat-sheet) · [Rules](#rules) ·
+[Is it safe?](#is-it-safe) · [Sharing it](#sharing-your-plugin) · [ASF plugins](#not-supported-asf-plugins)
 
 ---
 
-## The 5-minute version
+## Your first plugin (5 minutes)
 
-**1. Make a class library**
+This one does two things: it says something in the log whenever a card drops, and it adds a `hello` command.
+
+**1. Make a project.** You need the [.NET 10 SDK](https://dotnet.microsoft.com/download).
 
 ```
-dotnet new classlib -n MyPlugin
-cd MyPlugin
+dotnet new classlib -n HelloPlugin
+cd HelloPlugin
 ```
 
-**2. Point it at nocatFarm.dll** — edit `MyPlugin.csproj`:
+**2. Point it at nocat.farm.** Replace everything in `HelloPlugin.csproj` with this, and change the path to
+wherever your `nocatFarm.exe` is:
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -40,44 +40,137 @@ cd MyPlugin
 </Project>
 ```
 
-`<Private>false</Private>` matters — it stops your build copying nocatFarm.dll next to your plugin, which would
-give you a *second* copy of every type and make every cast fail in ways that look like sorcery.
+> Keep `<Private>false</Private>`. Without it your build copies `nocatFarm.dll` next to your plugin, and you end up
+> with two copies of everything that don't recognise each other.
 
-**3. Write it**
+**3. Write it.** Delete `Class1.cs` and make `HelloPlugin.cs`:
 
 ```csharp
 using NocatFarm.Plugins;
 
-public sealed class MyPlugin : INocatPlugin {
-    public string Name => "MyPlugin";
+public sealed class HelloPlugin : INocatPlugin {
+    public string Name => "Hello";
     public string Version => "1.0.0";
 
     public Task OnLoadAsync(IPluginHost host, CancellationToken ct) {
-        host.Log($"up and running on nocat.farm {host.AppVersion}");
+        // 1. Say something in the log whenever a card drops.
+        host.CardDropped += (account, appId, cardsLeft) =>
+            host.Log($"{account.Name} got a card! {cardsLeft} left in that game.");
 
-        host.CardDropped += (account, appId, left) =>
-            host.Log($"{account.Name} got a card from {appId} — {left} to go");
+        // 2. Add a command. Type "hello" in the console to run it.
+        host.AddCommand("hello", "", "Says hi and counts your accounts.", args => {
+            int online = host.Accounts.Count(a => a.IsOnline);
+            return Task.FromResult($"Hi! {online} of your {host.Accounts.Count} accounts are online.");
+        });
 
         return Task.CompletedTask;
     }
 }
 ```
 
-**4. Install it**
+**4. Build it and drop it in.**
 
 ```
 dotnet build -c Release
-copy bin\Release\net10.0\MyPlugin.dll  <nocat.farm folder>\plugins\
+copy bin\Release\net10.0\HelloPlugin.dll C:\path\to\nocat.farm\plugins\
 ```
 
-Then `set PluginsEnabled true`, restart, and type `plugins`.
+**5. Turn plugins on.** In the dashboard go to **Settings → Show advanced → Dashboard** and switch on
+**Load plugins** (or type `set PluginsEnabled true`), then restart nocat.farm.
+
+**6. Try it.** Type `plugins` to see it loaded, then `hello`:
 
 ```
-1 plugin(s) loaded:
-  MyPlugin                 1.0.0      MyPlugin.dll
+> hello
+Hi! 2 of your 3 accounts are online.
 ```
 
-That's the whole loop.
+The next time a card drops, the log says `main got a card! 3 left in that game.` That's the whole loop:
+**write → build → copy → restart.**
+
+---
+
+## A bigger example: card tally
+
+This one counts every card each account drops, **remembers the count after a restart**, has a **setting** on the
+dashboard, and adds a `tally` command.
+
+```csharp
+using System.Text.Json;
+using NocatFarm.Plugins;
+
+public sealed class CardTally : INocatPlugin {
+    public string Name => "CardTally";
+    public string Version => "1.0.0";
+
+    private IPluginHost _host = null!;
+    private Dictionary<string, int> _cards = new();
+
+    public async Task OnLoadAsync(IPluginHost host, CancellationToken ct) {
+        _host = host;
+
+        // A setting. It shows up on the dashboard's Plugins page with a number box.
+        host.AddSetting(new PluginSetting(
+            "Every", "Shout every", "Write a line in the log every this many cards.",
+            PluginSettingKind.Int, Default: "5"));
+
+        // Pick up the count from last time.
+        string? saved = await host.LoadStateAsync();
+        if (saved != null) {
+            _cards = JsonSerializer.Deserialize<Dictionary<string, int>>(saved) ?? new();
+        }
+
+        // Count every card that drops.
+        host.CardDropped += (account, appId, cardsLeft) => _ = CountAsync(account.Name);
+
+        // "tally" shows the count, "tally reset" starts again.
+        host.AddCommand("tally", "[reset]", "Cards counted per account.", async args => {
+            if (args.Length > 0 && args[0] == "reset") {
+                lock (_cards) { _cards.Clear(); }
+                await SaveAsync();
+                return "Tally reset.";
+            }
+
+            lock (_cards) {
+                if (_cards.Count == 0) {
+                    return "No cards counted yet.";
+                }
+
+                return string.Join("\n", _cards.OrderByDescending(c => c.Value)
+                    .Select(c => $"{c.Key}: {c.Value} {(c.Value == 1 ? "card" : "cards")}"));
+            }
+        });
+    }
+
+    private async Task CountAsync(string account) {
+        int total;
+        lock (_cards) {
+            total = _cards[account] = _cards.GetValueOrDefault(account) + 1;
+        }
+
+        int every = int.TryParse(_host.Setting("Every"), out int n) && n > 0 ? n : 5;
+        if (total % every == 0) {
+            _host.Log($"{account} has dropped {total} cards!");
+        }
+
+        await SaveAsync();
+    }
+
+    private Task SaveAsync() {
+        string json;
+        lock (_cards) { json = JsonSerializer.Serialize(_cards); }
+        return _host.SaveStateAsync(json);
+    }
+}
+```
+
+```
+> tally
+farmer: 5 cards
+main: 1 card
+```
+
+Both examples on this page are built and tested against nocat.farm as it is.
 
 ---
 
@@ -85,203 +178,75 @@ That's the whole loop.
 
 | | |
 |---|---|
-| **Watch** | React to accounts coming online, cards dropping, trade offers arriving |
-| **Read** | Every account's state, library, playtime, inventory value, settings |
-| **Act** | Run any command the app has — the same ones you type |
-| **Extend** | Add your own commands, and your own settings with a real UI |
-| **Remember** | Save state that survives restarts and updates |
+| **Watch** | Know when an account signs in or out, when a card drops, when trade offers are waiting. |
+| **Read** | Every account: online or not, what it's playing, cards left, its games and playtime, what its items are worth, any of its settings. |
+| **Do** | Run any of the app's commands - the same ones you type, like `pause main` or `grind main 730 2`. |
+| **Add** | New commands, and settings that get real controls on the dashboard's Plugins page. |
+| **Remember** | Save its own data so it survives restarts and updates. |
 
-### What it deliberately can't do
-
-A plugin **never gets the `Bot` object**, the Steam client, the web session, or the config object.
-
-This isn't security theatre — a plugin runs in the same process, so a determined DLL can do whatever the app can,
-including reading your Steam tokens off disk. Nothing in an API can stop that; only not running the plugin can.
-What the narrow API *does* do is make the honest path the easy one. You get facts about accounts and a way to ask
-for things. Anything that changes state goes through the command line, so it is validated the same way, logged
-the same way, and can't reach a state you couldn't have reached by typing.
-
-**Which is why the plugin switch says what it says.** Run plugins you wrote or whose author you trust.
+What it **can't** do: get at the Steam connection, the login tokens or the config files directly. Anything that
+changes something goes through a command, so it's checked and logged exactly like a command you typed.
 
 ---
 
-## Giving your plugin settings
+## Cheat sheet
 
-Declare them in `OnLoadAsync` and they appear on the **Plugins** page, under your plugin, with real controls.
-No UI work, and the operator edits them where they edit everything else.
+Everything your plugin gets is on `host`, the `IPluginHost` handed to `OnLoadAsync`:
 
-```csharp
-public Task OnLoadAsync(IPluginHost host, CancellationToken ct) {
-    host.AddSetting(new PluginSetting(
-        "MinValue",
-        "Only tell me about items over",
-        "In cents. Anything cheaper is ignored.",
-        PluginSettingKind.Int,
-        Default: "50"));
+| On `host` | What it's for |
+|---|---|
+| `Accounts` · `Account("main")` | Every account, or one by name. Each has `Name`, `SteamId`, `IsOnline`, `Persona`, `Status`, `Playing`, `CardsRemaining`, `Library` and `InventoryByGame`. |
+| `Log("text")` | Write a line to the log, tagged with your plugin's name. |
+| `RunCommandAsync("pause main")` | Run a command, and get back what it would have printed. |
+| `AddCommand(verb, usage, help, handler)` | Add a command. It appears in `help` and works in the console, the dashboard and Steam chat. |
+| `AddSetting(new PluginSetting(...))` · `Setting("name")` | Declare a setting (Text, Int, Bool or Choice) and read its current value, always as text. |
+| `GetSetting("main", "FarmCards")` | Read one of an account's own settings. To change one, run a `set` command. |
+| `SaveStateAsync(json)` · `LoadStateAsync()` | Keep your own data between restarts (saved as `config/plugins/<YourPlugin>.json`). |
+| `AppVersion` | Which nocat.farm version you're running on. |
 
-    host.AddSetting(new PluginSetting(
-        "Loud", "Log every single one", "Off keeps it to a daily summary.",
-        PluginSettingKind.Bool, Default: "false"));
+| Events | When they fire |
+|---|---|
+| `AccountOnline` · `AccountOffline` | An account finished signing in, or went offline. |
+| `CardDropped` | A card dropped: the account, the game's appID, and how many cards that game has left. |
+| `TradeOffersWaiting` | Steam says trade offers are waiting on an account, and how many. |
 
-    host.AddSetting(new PluginSetting(
-        "Mode", "What to do", "Pick one.",
-        PluginSettingKind.Choice, Default: "watch",
-        Choices: ["watch Watch only", "notify Notify me", "act Do something"]));
+Subscribe to events in `OnLoadAsync` - it runs **before any account signs in**, so you won't miss the first ones.
+Handlers run on Steam's threads: keep them quick, and start a task if you need to do something slow.
 
-    return Task.CompletedTask;
-}
-```
-
-Read them back whenever you need them — always current, never cached by you:
-
-```csharp
-int min = int.TryParse(host.Setting("MinValue"), out int v) ? v : 50;
-bool loud = host.Setting("Loud") == "true";
-```
-
-Values are text, because that's what a form returns. You declared the kind, so you know what it should be — and
-you still have to cope with someone typing nonsense into it.
-
-Stored in `config/plugins/<YourPlugin>.settings.json`. Survives updates.
+The full, commented contract is one file: [`src/NocatFarm/Plugins/IPlugin.cs`](src/NocatFarm/Plugins/IPlugin.cs).
+All 61 commands are in [the full guide](docs/GUIDE.md#commands).
 
 ---
 
-## Saving state
+## Rules
 
-```csharp
-await host.SaveStateAsync(JsonSerializer.Serialize(myThing));
+- **Plugins live in `plugins/`**, next to `nocatFarm.exe` - top level only, no subfolders.
+- **Plugins load once, when the app starts.** Changed or added one? Restart.
+- **Each plugin has its own on/off switch** on the dashboard's Plugins page.
+- **You can't take a command that already exists.** A plugin redefining `stop` would be a nasty surprise, so it's
+  refused with a warning.
+- **A broken plugin only breaks itself.** If it fails to load or throws, it's logged and switched off, and the rest
+  of nocat.farm carries on - your farm doesn't stop at 3am because of one DLL.
+- **Several plugins in one DLL** is fine - every `INocatPlugin` class in it loads.
 
-string? json = await host.LoadStateAsync();
-MyThing thing = json == null ? new MyThing() : JsonSerializer.Deserialize<MyThing>(json)!;
-```
+## Is it safe?
 
-Goes to `config/plugins/<YourPlugin>.json`. Use this rather than writing files next to the app — it survives an
-update, and it's obvious to whoever's running it what belongs to whom.
+A plugin runs **inside nocat.farm**, where your Steam sessions are. The API is kept narrow on purpose, but a
+determined DLL could still read anything the app can - so **only run plugins you wrote yourself, or from someone you
+trust.** That's why plugins are off until you switch them on.
 
----
+## Sharing your plugin
 
-## Events
-
-```csharp
-host.AccountOnline      += account => { };                       // finished signing in
-host.AccountOffline     += account => { };                       // dropped, deliberately or not
-host.CardDropped        += (account, appId, cardsLeft) => { };   // a trading card dropped
-host.TradeOffersWaiting += (account, count) => { };              // Steam says offers are waiting
-```
-
-Subscribe in `OnLoadAsync` — it runs **before any account signs in**, so you see the first one rather than
-missing the whole fleet by a second.
-
-`TradeOffersWaiting` gives you a **count, not an offer**. That's all Steam's push carries. If you want the detail,
-react by going and looking.
-
-Handlers fire on Steam callback threads. Throwing is caught and logged rather than taking anything down, but
-don't block in one — start a task if you need to do something slow.
-
----
-
-## Adding commands
-
-```csharp
-host.AddCommand("worth", "[account]", "What an account's inventory is worth.", args => {
-    if (args.Length == 0) {
-        decimal all = host.Accounts.Sum(a => a.InventoryByGame.Sum(g => g.Value));
-        return Task.FromResult($"the lot: ${all:N2}");
-    }
-
-    IPluginAccount? one = host.Account(args[0]);
-    return Task.FromResult(one == null
-        ? "no such account"
-        : $"{one.Name}: ${one.InventoryByGame.Sum(g => g.Value):N2}");
-});
-```
-
-Shows up in `help` and works in the console, the dashboard and Steam chat like any built-in.
-
-**You cannot take a verb that already exists.** Try it and the registration is refused with a warning — a plugin
-quietly redefining `stop` would be the worst possible surprise.
-
----
-
-## Doing things
-
-Everything the app can do already has a command, so that's the door:
-
-```csharp
-await host.RunCommandAsync("pause kylro");
-await host.RunCommandAsync("set kylro FarmCards false");
-await host.RunCommandAsync("grind main 730 4");
-await host.RunCommandAsync("send kylro main");
-```
-
-You get back exactly what would have been printed. Every call is validated and logged like a typed one.
-
-`plugins`, `help` and the [README's command table](README.md#commands) are the full list — 44 of them.
-
----
-
-## Things worth building
-
-Ideas that fit this API well:
-
-- **A Discord webhook** — post card drops, trade offers and problems to a channel
-- **A better daily report** — your own format, your own schedule, your own numbers
-- **Inventory watch** — tell you when an account's value moves more than X%
-- **Auto-responder** — react to `TradeOffersWaiting` with your own rules on top of the built-in ones
-- **A rotation manager** — `RunCommandAsync` to move accounts between grinding, farming and idling on your own logic
-- **An exporter** — dump playtime, cards and value to CSV or a database on a timer
-- **Anything with a schedule** — the API gives you the facts and the commands; the policy is yours
-
----
-
-## Rules and limits
-
-- **One folder, no recursion.** `plugins/*.dll`, top level only.
-- **One class, one plugin.** Several `INocatPlugin` types in one DLL all load.
-- **Plugins load once, at startup.** There's no hot reload — a plugin wires itself up as the app starts, so
-  toggling one takes a restart. The Plugins page says so.
-- **Individually switchable.** The toggle on the Plugins page disables one plugin without turning the feature off.
-- **A broken plugin costs you the plugin.** Failure to load, failure to construct, a throw in `OnLoadAsync` or in
-  a handler — each is caught and logged, and everything else carries on. A farm shouldn't stop at 3am because
-  somebody's DLL threw.
-- **Built against a different version?** You'll get a plain warning saying so rather than a wall of loader errors.
-  The API is young; expect it to move.
-
----
-
-## Shipping it
-
-Ship the one DLL. Don't ship `nocatFarm.dll` with it — `<Private>false</Private>` keeps it out.
-
-If your plugin has NuGet dependencies, ship those DLLs alongside it; each plugin is loaded into its own context,
-so two plugins can use different versions of the same library without a fight.
-
-Tell people what it does, what settings it has, and — since they're being asked to run your code inside the
-process holding their Steam sessions — why they should trust it.
-
----
-
-## Licensing your plugin
-
-nocat.farm is [MPL-2.0](LICENSE), which is file-level copyleft — and that is deliberate, because of what it
-means for you:
-
-**Your plugin is your own files, so your plugin is yours.** Licence it however you want, including closed
-source, including commercially. Nothing about MPL reaches into new files.
-
-The only obligation is the obvious one: if you modify **nocat.farm's own** source files, those modifications
-have to be published. Writing a plugin never requires that.
-
----
+- Ship **just your DLL** (plus any NuGet libraries it uses). Never ship `nocatFarm.dll` with it -
+  `<Private>false</Private>` keeps it out.
+- Each plugin loads on its own, so two plugins can use different versions of the same library.
+- Tell people what it does, what settings it has, and why they can trust it - they're running your code next to
+  their Steam accounts.
+- **Licence it however you like**, even closed-source or commercial. nocat.farm is [MPL-2.0](LICENSE), which only
+  asks you to share changes to nocat.farm's *own* files - your plugin is your own files.
 
 ## Not supported: ASF plugins
 
-An ArchiSteamFarm plugin can't run here.
-
-They're compiled against `ArchiSteamFarm.dll` and implement *ASF's* `IPlugin`, taking ASF's `Bot` type, its
-config model, its DI container and its specific SteamKit build. None of those types exist in nocat.farm. Running
-one would mean shipping ASF and reimplementing enough of its internals to satisfy whatever the plugin reaches
-for — which is "embed ASF inside nocat.farm", and any plugin doing something interesting would break anyway.
-
-**Port it instead.** The ASF plugins worth having are a few hundred lines, and against this API they usually come
-out simpler than the original.
+ArchiSteamFarm plugins can't run in nocat.farm. They're built against ASF's own code (its `Bot` type, its config and
+its internals), and none of that exists here. **Port it instead** - most ASF plugins are a few hundred lines, and
+against this API they usually come out shorter.

@@ -87,6 +87,7 @@ public static partial class PriceBook {
 	private static DateTime _lastCall = DateTime.MinValue;
 	private static DateTime _coolUntil = DateTime.MinValue;
 	private static int _coolMinutes;
+	private static bool _coolLoaded;
 	private static DateTime _lastSave = DateTime.MinValue;
 	private static bool _loaded;
 
@@ -136,6 +137,11 @@ public static partial class PriceBook {
 	/// about for ever.
 	/// </summary>
 	public static async Task<decimal?> FetchAsync(uint app, string marketHashName, CancellationToken ct) {
+		if (!_coolLoaded) {
+			_coolLoaded = true;
+			(_coolUntil, _coolMinutes) = Limiters.Remembered("market");   // a restart doesn't lift the market's limit
+		}
+
 		if (DateTime.UtcNow < _coolUntil) {
 			return null;   // the market told us to slow down; everyone waits it out together
 		}
@@ -166,12 +172,16 @@ public static partial class PriceBook {
 					_coolUntil = DateTime.UtcNow.AddMinutes(2);
 				}
 
+				Limiters.Remember("market", _coolUntil, _coolMinutes);
 				Log.Debug(new Said("the market answered {0} - pausing price lookups until {1}", (int) response.StatusCode, (_coolUntil.ToLocalTime()).ToString("HH:mm")));
 
 				return null;
 			}
 
-			_coolMinutes = 0;
+			if (_coolMinutes != 0) {
+				_coolMinutes = 0;
+				Limiters.Remember("market", _coolUntil, 0);
+			}
 
 			string json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
@@ -193,7 +203,7 @@ public static partial class PriceBook {
 			Remember(app, marketHashName, price);
 
 			return price;
-		} catch (OperationCanceledException) {
+		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
 			Log.Debug(new Said("market lookup for {0} failed: {1}", marketHashName, e.Message));

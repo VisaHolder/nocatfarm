@@ -124,7 +124,16 @@ public static class GameNames {
 
 		Known[appId] = name;
 		_dirty = true;
+
+		// Written every few minutes, not only when the store gets asked: names read off badge pages and the library
+		// used to wait for a store lookup to be saved at all, and a restart asked the store for all of them again.
+		if (DateTime.UtcNow - _learnedSavedAt > TimeSpan.FromMinutes(5)) {
+			_learnedSavedAt = DateTime.UtcNow;
+			_ = SaveAsync();
+		}
 	}
+
+	private static DateTime _learnedSavedAt = DateTime.MinValue;
 
 	/// <summary>
 	/// Fill in whatever we don't already know, from Steam's public store endpoint. Best effort: this is only ever

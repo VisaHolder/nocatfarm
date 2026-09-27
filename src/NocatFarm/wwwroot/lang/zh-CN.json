@@ -611,6 +611,12 @@
     "{0} card(s) - farming tonight, once it's asleep": "{0} 张卡——今晚睡下后开挂",
     "{0} card(s) - farmed in the day's sittings, from morning": "{0} 张卡 —— 从早上起在白天的时段里挂",
     "{0} card(s) - farmed in human mode's next sitting": "{0} 张卡 —— 在真人模式的下一个时段里挂",
+    "{0} has card drops listed but isn't a game (a sale or event badge) - not farmed": "{0} 列有可掉的卡，但不是游戏（促销或活动徽章）——不挂",
+    "couldn't read the card-page check list: {0}": "无法读取卡牌页面检查列表：{0}",
+    "couldn't save the card-page check list: {0}": "无法保存卡牌页面检查列表：{0}",
+    "asleep, the card farmer is working": "睡眠中，正在挂卡",
+    "last night's plan restored - {0}/{1} played, up about {2}": "已恢复昨晚的计划——已玩 {0}/{1}，约 {2} 起床",
+    "trade offer #{0}: couldn't check it as a card swap yet - {1}": "交易报价 #{0}：暂时还无法按换卡检查——{1}",
     "between sittings - {0} card(s) left": "时段之间 —— 还剩 {0} 张卡",
     "farming cards on {0} · {1} left · {2}/{3} today": "正在 {0} 挂卡 · 还剩 {1} · 今天 {2}/{3}",
     "farming cards on {0}": "正在 {0} 挂卡",
@@ -1034,7 +1040,8 @@
     "dropping a queued key - {0}  ({1} left)": "丢弃队列中的一个密钥 —— {0}（还剩 {1} 个）",
     "giving up on a key after {0} tries - no account could activate it": "在 {0} 次尝试后放弃某密钥 —— 没有账号能激活它",
     "hit {0} activations in {1}m - pausing so Steam doesn't start refusing": "在 {1} 分钟内完成 {0} 次激活 —— 暂停以免 Steam 开始拒绝",
-    "nocat.farm {0} is out - you have {1}. {2}": "nocat.farm {0} 已发布 —— 你的版本是 {1}。{2}",
+    "nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update ignore' stops the hourly reminders until the next launch": "nocat.farm {0} 已发布——你当前是 {1}。{2}  -  'update accept' 会安装并重启；'update ignore' 会停止每小时提醒，直到下次启动",
+    "reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update ignore' stops these reminders until the next launch": "提醒：nocat.farm {0} 已发布——你当前是 {1}。'update accept' 会安装并重启；'update ignore' 会停止这些提醒，直到下次启动",
     "update: downloading {0} ({1}MB)": "更新：正在下载 {0}（{1}MB）",
     "update: {0} is ready - restarting into it now": "更新：{0} 已就绪 —— 正在重启进入",
     "update failed: {0}: {1} - nothing has been changed": "更新失败：{0}：{1} —— 未做任何更改",
@@ -1058,6 +1065,12 @@
     "answered Steam Guard from this account's own authenticator": "已用该账号自己的验证器应答 Steam Guard",
     "approve this login in the Steam mobile app (or type the code below)": "请在 Steam 手机应用中批准此次登录（或在下方输入验证码）",
     "authenticated - token stored, the password won't be asked for again": "已认证 —— 令牌已保存，不会再询问密码",
+    "nobody scanned the QR code within 5 minutes - stopping. 'start {0}' shows a fresh one": "5 分钟内没人扫描二维码——已停止。'start {0}' 会显示一个新的",
+    "Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty.": "用手机上的 Steam 应用扫码，而不是输入密码——账号名由 Steam 提供，所以上面两个框都可以留空。",
+    "Scan this with the Steam app on your phone to sign {0} in - the Steam Guard tab has the QR scanner.": "用手机上的 Steam 应用扫描这个来登录 {0}——Steam 令牌标签页里有二维码扫描器。",
+    "Sign in with a QR code": "用二维码登录",
+    "{0} is waiting to be signed in: open the dashboard and scan the QR code there with the Steam app on your phone (Steam Guard tab)": "{0} 正在等待登录：打开控制面板，用手机上的 Steam 应用（Steam 令牌标签页）扫描那里的二维码",
+    "signed in with the QR code as {0} - the login token is stored, nothing to type next time": "已用二维码以 {0} 登录——登录令牌已保存，下次无需输入任何内容",
     "config removed - stopping": "配置已删除 —— 正在停止",
     "connection went quiet - reconnecting": "连接陷入沉寂 —— 正在重连",
     "couldn't add the notification-area icon - nocatFarm still runs, it just won't show in the tray": "无法添加通知区域图标 —— nocatFarm 仍在运行，只是不会出现在托盘中",
@@ -1128,7 +1141,26 @@
     "{0} are past the refund window - free to play again": "{0} 已过退款期 —— 可以再玩了",
     "{0} is past the refund window - free to play again": "{0} 已过退款期 —— 可以再玩了",
     "── daily report · last 24h ──": "── 每日报告 · 最近 24 小时 ──",
-    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── 每日报告 · 最近 24 小时 · 第一份，从此开始计算\"累计\" ──"
+    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── 每日报告 · 最近 24 小时 · 第一份，从此开始计算\"累计\" ──",
+    "reached {0}h in {1} - that hour target is done": "{1} 已达到 {0} 小时 - 这个时长目标已完成",
+    "couldn't read the play history: {0}": "无法读取游玩记录：{0}",
+    "library: {0} played game(s) Steam's owned list left out, added from the play history ({1})": "库：从游玩记录中补上了 Steam 拥有列表漏掉的 {0} 个玩过的游戏（{1}）",
+    "level plan for {0} is ready - type 'levelup {0} {1}' to see it": "{0} 的升级方案已算好 - 输入 'levelup {0} {1}' 查看",
+    "the discovery queue wasn't available - Steam said {0}": "探索队列不可用 - Steam 返回 {0}",
+    "went through the discovery queue ({0} game(s))": "看完了探索队列（{0} 个游戏）",
+    "listed {0} duplicate card(s) on the market - {1} to you if they all sell": "在市场上架了 {0} 张重复卡牌 - 全部卖出你能拿到 {1}",
+    "couldn't sell duplicate cards: {0}": "无法出售重复卡牌：{0}",
+    "next look for spare cards to sell around {0}": "下次查看多余卡牌大约在 {0}",
+    "it isn't an active offer any more": "它已经不是有效的报价了",
+    "the cards would sit in a trade hold": "卡牌会被交易暂挂卡住",
+    "Steam didn't say what every item is": "Steam 没有说明每件物品是什么",
+    "that's an offer this account sent": "这是本账号发出的报价",
+    "{0} to confirm on your phone": "{0} 个待在手机上确认",
+    "couldn't handle trade offer #{0}: {1}: {2}": "无法处理交易报价 #{0}：{1}：{2}",
+    "trade offer #{0} is no longer a fair card swap - {1}; left alone": "交易报价 #{0} 已不再是公平的卡牌交换 - {1}；不予处理",
+    "trade offer #{0} was accepted but needs confirming from the email Steam sent": "交易报价 #{0} 已接受，但需要通过 Steam 发来的邮件确认",
+    "got the last card from {0} - playing on for about {1}, then a break": "拿到了 {0} 的最后一张卡 - 再玩大约 {1}，然后休息",
+    "finished - logging out after this sitting": "已完成 - 这段游玩结束后退出登录"
   },
   "settings": {
     "WebEnabled": {
@@ -1256,6 +1288,10 @@
       "label": "密码",
       "tip": "可选。留空的话 nocat.farm 会问你一次，之后用登录令牌记住这个账户——两种方式里更安全的一种。"
     },
+    "SignInWithQr": {
+      "label": "用二维码登录",
+      "tip": "这个账号需要登录时，显示一个用手机 Steam 应用扫描的二维码，而不是询问密码——账号名由 Steam 提供，所以完全不用输入。二维码会显示在控制面板中。"
+    },
     "OnlineStatus": {
       "label": "显示状态为",
       "tip": "别人看到的状态：在线、离开、忙碌或隐身。隐身时照样累积时长，而且谁也看不到。",
@@ -1289,6 +1325,10 @@
     "GameWeights": {
       "label": "游戏与频率",
       "tip": "玩哪些游戏、各占多少时间，用加起来约为 100 的百分比表示。第一个游戏是主玩游戏（这个账号设定上喜欢的那款），它的数字才是真正生效的：它决定主玩游戏所占的比例，无论你再添加多少游戏都保持不变，并且每天会在该数值上下约 10 个百分点内随机。省略数字的游戏平分剩下的份额。想暂时停用某个游戏而不删除，写成“440:0”。"
+    },
+    "HourTargets": {
+      "label": "时长目标",
+      "tip": "某个游戏要达到的小时数，可选截止日期：730:100@2026-12-01 在 12 月 1 日前把 Counter-Strike 2 刷到 100 小时，440:50 不限时间把 TF2 刷到 50 小时。拟人模式会把游玩时段偏向目标游戏——有日期的目标落后越多偏得越重——休息和睡觉照旧；如果开启了“夜间累积时长”，白天来不及完成的带日期目标也会加入夜间游戏。达成后就不再偏向该游戏。用 'hours <账号>' 查看进度。"
     },
     "WeekdayHours": {
       "label": "工作日时长",
@@ -1471,7 +1511,7 @@
     },
     "AcceptFairCardSwaps": {
       "label": "接受公平的卡牌交换",
-      "tip": "接受任何人发来的、在同一游戏内一换一交换集换式卡牌的报价，前提是交换只会让此账号的卡组更接近集齐——这正是 Steam Trade Matcher 用户会发的报价，也是 ArchiSteamFarm 的 SteamTradeMatcher 设置会接受的。报价里有其他东西、有闪卡，或者会拿走某张卡的最后一张，就不作处理。送出卡牌需要用手机令牌确认。"
+      "tip": "接受任何人在同一款游戏内一换一交换卡牌的报价，前提是交换只会让这个账号的卡组更接近完成——就是换卡网站整天发来的那种。每张换出去的卡，换完后剩下的张数都必须比任何换进来的卡换之前的张数多，所以没有卡会用完，完整卡组也永远不会减少。报价里有其他东西或闪卡，就不理会。送出卡牌需要手机令牌确认。"
     },
     "AcceptGifts": {
       "label": "接受礼物和访客通行证",
@@ -1527,8 +1567,12 @@
       "label": "算出它的库存值多少钱"
     },
     "CheckForUpdates": {
-      "tip": "每天查看一次是否有新版本，并在日志里说明。它只会告知：绝不下载、替换或重启任何东西。",
+      "tip": "每隔几小时检查一次是否有新版本，并在日志里提一下。它只会告诉你——从不下载、替换或重启任何东西。掌握着你 Steam 账号钥匙的程序，不应该能按计划替换自己的程序文件；挂卡中途更新就会丢掉一次会话。",
       "label": "有更新时告知"
+    },
+    "UpdateReminders": {
+      "label": "每小时提醒我",
+      "tip": "有新版本时，每小时在日志里提一次，而不只是提一次。'update accept' 会安装并重启；'update ignore' 会停止提醒，直到下次启动。"
     },
     "BreakMinMinutes": {
       "label": "最短休息",
@@ -1586,11 +1630,11 @@
     },
     "PostFarmWindDownMinMinutes": {
       "label": "最后一张卡之后，至少再玩",
-      "tip": "仅拟人模式：一轮刷卡结束后，把那个游戏再开着一段随机时长（在此区间内，分钟），然后才离开，而不是在同一秒关掉。"
+      "tip": "仅限拟人模式。某个游戏掉完最后一张卡后，会继续玩这个游戏几分钟（在这两个数字之间），然后休息，就像正常的游戏时段一样。下一个刷卡游戏在休息后开始。（如果设置为夜间或随时刷卡，这只会在全部最后一张卡之后发生一次。）默认 15 到 20 分钟。两个都设为 0 则立刻停止。"
     },
     "PostFarmWindDownMaxMinutes": {
       "label": "...最多",
-      "tip": "刷卡结束后这段缓冲的上限（分钟）。"
+      "tip": "掉完最后一张卡后最多继续玩的分钟数。"
     },
     "FarmingDelayMinutes": {
       "label": "每隔多久重新检查",
@@ -1668,9 +1712,27 @@
       "label": "领取免费活动物品",
       "tip": "领取促销期间 Steam 每天发放的免费贴纸，以及点数商店里 0 点的物品。这些都不花钱，没人领就没了。拟人模式下账号睡着时会等到早上再领，除非关闭了“仅在「清醒」时响应”。"
     },
+    "DiscoveryQueue": {
+      "label": "浏览探索队列",
+      "tip": "每个 Steam 日浏览一次商店的探索队列，就像真人一样——每个游戏看几秒，然后下一个。促销期间这会带来活动物品和徽章进度；平时这只是普通人会做的事。拟人模式让账号睡觉时，会等到早上。",
+      "choices": "0 关闭 | 1 促销期间 | 2 每天"
+    },
+    "SellDuplicates": {
+      "label": "出售重复卡牌",
+      "tip": "账号醒着时每 8-14 小时，把几张多余的集换式卡牌以比最低价低 1 美分的价格上架——已算好 Steam 手续费，所以显示的价格就是你到手的钱。多余的意思是：集齐一套时，每张保留的数量等于还能合成的徽章等级；只有部分时每张留一张；徽章满级时一张不留。闪亮卡牌从不出售。挂了一周、市场价已低于它的上架会被撤下，按当天价格重新上架。除非载入了该账号的令牌密钥，否则需要在手机上确认。用 'sell <账号>' 预览。"
+    },
+    "SellPerRun": {
+      "label": "每次上架数量",
+      "tip": "每轮上架多少张多余卡牌，价值高的优先。一次几张像是有人在整理库存；一分钟一百张就不像了。"
+    },
     "BoosterGames": {
       "label": "为这些游戏制作补充包",
       "tip": "要把宝石换成补充包的 AppID，用逗号分隔。Steam 每个游戏每天只允许做一个，而且只限此账号还能掉卡的游戏，并会告诉你下次何时可做——一到时间就做；拟人模式下账号睡着时会等到早上，除非关闭了“仅在「清醒」时响应”。留空表示关闭。'booster <账号>' 会显示宝石数量和符合条件的游戏。"
+    },
+    "BoosterGems": {
+      "label": "补充包使用",
+      "tip": "账号两种宝石都有时，补充包用哪种宝石制作。先用可交易的（默认）做出的补充包可以交易或出售；先用不可交易的会用掉那些没有别的用处的宝石。如果首选的那种不够付价格，就用另一种。",
+      "choices": "0 先用可交易宝石 | 1 先用不可交易宝石"
     },
     "ClearInventoryNotifications": {
       "label": "清除新物品提示",

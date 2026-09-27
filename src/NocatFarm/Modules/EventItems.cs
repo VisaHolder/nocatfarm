@@ -2,13 +2,14 @@ using System.Text.Json;
 using NocatFarm.Config;
 using NocatFarm.Core;
 using SteamKit2;
+using SteamKit2.Internal;
 using SteamKit2.WebUI.Internal;
 
 namespace NocatFarm.Modules;
 
 /// <summary>
-/// Picks up the free things Steam hands out: the daily sticker during a sale, and anything in the Points Shop
-/// that costs no points. Neither costs anything, and both are gone if nobody collects them.
+/// Picks up the free things Steam hands out: the daily sticker during a sale, anything in the Points Shop that
+/// costs no points, and the daily discovery queue - which during a sale is what earns the event's items and badge.
 /// </summary>
 /// <remarks>
 /// The sale sticker is one claim a day while a sale is on, and Steam says exactly when the next one opens - so
@@ -23,11 +24,18 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 
 	private DateTime _nextSticker = DateTime.MinValue;
 	private DateTime _nextShop = DateTime.MinValue;
+
+	/// <summary>When Steam last said a sale was on - the sticker check is how it knows.</summary>
+	private DateTime _saleSeen = DateTime.MinValue;
+
+	/// <summary>The Steam day the queue was last gone through (Steam's day turns over at 10:00 Pacific).</summary>
+	private string? _queueDay;
+	private DateTime _queueAt = DateTime.MinValue;
 	private HashSet<uint>? _taken;
 	private Said _status = new("");
 
 	public override string Name => "event items";
-	public override string Status => Bot.Cfg.ClaimEventItems ? _status : "";
+	public override string Status => Bot.Cfg.ClaimEventItems || (Bot.Cfg.DiscoveryQueue > 0) ? _status : "";
 
 	private string StatePath => Path.Combine(ConfigStore.ConfigDir, "state", $"freeitems-{Bot.Name}.json");
 
@@ -40,16 +48,23 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 		}
 
 		while (!ct.IsCancellationRequested) {
-			if (Bot.Cfg.ClaimEventItems && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && HumanMode.AwakeFor(Bot)) {
+			bool wanted = Bot.Cfg.ClaimEventItems || (Bot.Cfg.DiscoveryQueue > 0);
+
+			if (wanted && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && HumanMode.AwakeFor(Bot)) {
 				try {
+					// The sticker check also tells us whether a sale is on, which the queue needs to know.
 					if (DateTime.UtcNow >= _nextSticker) {
-						await StickerAsync(ct).ConfigureAwait(false);
+						await StickerAsync(ct, claim: Bot.Cfg.ClaimEventItems).ConfigureAwait(false);
 					}
 
-					if (DateTime.UtcNow >= _nextShop) {
+					if (Bot.Cfg.ClaimEventItems && (DateTime.UtcNow >= _nextShop)) {
 						await ShopAsync(ct).ConfigureAwait(false);
 					}
-				} catch (OperationCanceledException) {
+
+					if (QueueDue()) {
+						await QueueAsync(ct).ConfigureAwait(false);
+					}
+				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
 				} catch (Exception e) {
 					Log.Debug(new Said("couldn't check for free event items: {0}", e.Message), Bot.Name);
@@ -66,7 +81,8 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>The daily sale sticker. Returns whether one was claimed.</summary>
-	public async Task<bool> StickerAsync(CancellationToken ct) {
+	/// <param name="claim">False only looks - to learn whether a sale is on - without taking anything.</param>
+	public async Task<bool> StickerAsync(CancellationToken ct, bool claim = true) {
 		string? can = await Bot.Web.ApiGetAsync("ISaleItemRewardsService", "CanClaimItem", new Dictionary<string, string> { ["language"] = "english" }, ct).ConfigureAwait(false);
 
 		if (can == null) {
@@ -78,6 +94,17 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 		using JsonDocument canDoc = JsonDocument.Parse(can);
 		JsonElement canBody = canDoc.RootElement.TryGetProperty("response", out JsonElement r) ? r : default;
 		bool claimable = (canBody.ValueKind == JsonValueKind.Object) && canBody.TryGetProperty("can_claim", out JsonElement c) && (c.ValueKind == JsonValueKind.True);
+
+		// Outside a sale Steam gives neither a claim nor a time for the next one.
+		if (claimable || (NextClaim(canBody) != null)) {
+			_saleSeen = DateTime.UtcNow;
+		}
+
+		if (!claim) {
+			_nextSticker = NextClaim(canBody) ?? DateTime.UtcNow + Rng.Minutes(180, 300);
+
+			return false;
+		}
 
 		if (!claimable) {
 			// During a sale Steam says when the next one opens; outside one it says nothing, and a sale starting
@@ -130,6 +157,95 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 		DateTime at = DateTimeOffset.FromUnixTimeSeconds(unix).UtcDateTime.AddMinutes(Rng.Next(2, 40));
 
 		return at > DateTime.UtcNow ? at : DateTime.UtcNow.AddMinutes(Rng.Next(5, 20));
+	}
+
+	// ── the discovery queue ──────────────────────────────────────────────────
+	/// <summary>Steam's day, which turns over at 10:00 Pacific - 17:00 UTC is close enough all year round.</summary>
+	private static string SteamDay() => DateTime.UtcNow.AddHours(-17).ToString("yyyy-MM-dd");
+
+	private string QueuePath => Path.Combine(ConfigStore.ConfigDir, "state", $"queue-{Bot.Name}.txt");
+
+	private bool QueueDue() {
+		bool on = Bot.Cfg.DiscoveryQueue switch {
+			1 => DateTime.UtcNow - _saleSeen < TimeSpan.FromHours(30),
+			2 => true,
+			_ => false
+		};
+
+		if (!on || (DateTime.UtcNow < _queueAt)) {
+			return false;
+		}
+
+		if (_queueDay == null) {
+			try {
+				_queueDay = File.Exists(QueuePath) ? File.ReadAllText(QueuePath).Trim() : "";
+			} catch (IOException) {
+				_queueDay = "";
+			}
+		}
+
+		return _queueDay != SteamDay();
+	}
+
+	/// <summary>
+	/// Go through today's discovery queue: each game looked at for a few seconds, the way somebody clicking "next in
+	/// queue" does, never the dozen at once a script would. Returns how many were seen, or -1 if Steam wouldn't answer.
+	/// </summary>
+	public async Task<int> QueueAsync(CancellationToken ct) {
+		// Somewhere in the day rather than on the stroke of waking: a person gets to it when they get to it.
+		_queueAt = DateTime.UtcNow + Rng.Minutes(20, 90);
+
+		if (Bot.Unified?.CreateService<Store>() is not { } store) {
+			return -1;
+		}
+
+		// The store's own page always says which country it's asking for; without one Steam just answers Fail. A
+		// refusal gets one more try with a freshly built queue, the store's "start a new queue" button.
+		string country = Bot.Country.Length == 2 ? Bot.Country : "US";
+		SteamUnifiedMessages.ServiceMethodResponse<CStore_GetDiscoveryQueue_Response> queue = await store
+			.GetDiscoveryQueue(new CStore_GetDiscoveryQueue_Request { queue_type = EStoreDiscoveryQueueType.k_EStoreDiscoveryQueueTypeNew, country_code = country, rebuild_queue_if_stale = true })
+			.ToTask().WaitAsync(TimeSpan.FromSeconds(30), ct).ConfigureAwait(false);
+
+		if (queue.Result != EResult.OK) {
+			await Task.Delay(Rng.Seconds(3, 8), ct).ConfigureAwait(false);
+			queue = await store
+				.GetDiscoveryQueue(new CStore_GetDiscoveryQueue_Request { queue_type = EStoreDiscoveryQueueType.k_EStoreDiscoveryQueueTypeNew, country_code = country, rebuild_queue = true })
+				.ToTask().WaitAsync(TimeSpan.FromSeconds(30), ct).ConfigureAwait(false);
+		}
+
+		if (queue.Result != EResult.OK) {
+			Log.Debug(new Said("the discovery queue wasn't available - Steam said {0}", queue.Result), Bot.Name);
+
+			return -1;
+		}
+
+		int seen = 0;
+
+		foreach (uint app in queue.Body.appids) {
+			await Task.Delay(Rng.Seconds(6, 25), ct).ConfigureAwait(false);
+
+			SteamUnifiedMessages.ServiceMethodResponse<CStore_SkipDiscoveryQueueItem_Response> skip = await store
+				.SkipDiscoveryQueueItem(new CStore_SkipDiscoveryQueueItem_Request { queue_type = EStoreDiscoveryQueueType.k_EStoreDiscoveryQueueTypeNew, appid = app })
+				.ToTask().WaitAsync(TimeSpan.FromSeconds(30), ct).ConfigureAwait(false);
+
+			if (skip.Result == EResult.OK) {
+				seen++;
+			}
+		}
+
+		if ((seen > 0) || (queue.Body.appids.Count == 0)) {
+			_queueDay = SteamDay();
+
+			try {
+				AtomicFile.Write(QueuePath, _queueDay);
+			} catch (IOException) {
+				// Worst case it goes through the queue again after a restart.
+			}
+
+			Log.Info(new Said("went through the discovery queue ({0} game(s))", seen), Bot.Name);
+		}
+
+		return seen;
 	}
 
 	/// <summary>Take whatever the Points Shop has at 0 points. Returns how many were taken.</summary>

@@ -70,7 +70,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 					_sawGrind = false;
 					_status = new Said("off");
 				}
-			} catch (OperationCanceledException) {
+			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
 				Log.Warn(new Said("achievement boost hiccup: {0}", e.Message), Bot.Name);

@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using NocatFarm.Config;
+using SteamKit2;
 
 namespace NocatFarm.Core;
 
@@ -89,8 +90,99 @@ public sealed class Library(Bot bot) {
 
 	public Entry? Find(uint app) => _byApp.GetValueOrDefault(app);
 
+	private Dictionary<uint, int> _twoWeeks = [];
+
+	/// <summary>Minutes on each game in the last two weeks, as Steam counts them - what a profile shows as "past 2 weeks".</summary>
+	public IReadOnlyDictionary<uint, int> LastTwoWeeks => _twoWeeks;
+
 	/// <summary>Minutes on record for a game, or 0 if we've never heard of it.</summary>
 	public int MinutesOn(uint app) => Find(app)?.MinutesPlayed ?? 0;
+
+	/// <summary>
+	/// GetOwnedGames doesn't always list everything the account plays. It left out 2,757 hours of Team Fortress 2 on
+	/// an account that picked TF2 up after it went free - while listing Warframe and other free games just fine. The
+	/// Steam client itself works from <c>ClientGetLastPlayedTimes</c>, which has every game with time on it, so that
+	/// fills the gaps: a game there but missing here joins the library if the account still holds a licence for it
+	/// (so a refund, a free weekend or a family member's game doesn't) and Steam calls it a game - the play history
+	/// also carries SDKs, dedicated servers and SteamVR, which have "playtime" too. The higher playtime of the two wins.
+	/// </summary>
+	private async Task AddPlayedAsync(List<Entry> found, CancellationToken ct) {
+		string? json = await bot.Web.ApiGetAsync("IPlayerService", "ClientGetLastPlayedTimes", new Dictionary<string, string> {
+			["min_last_played"] = "0"
+		}, ct).ConfigureAwait(false);
+
+		if (string.IsNullOrEmpty(json)) {
+			return;
+		}
+
+		Dictionary<uint, (int Forever, int TwoWeeks)> played = [];
+
+		using (JsonDocument doc = JsonDocument.Parse(json)) {
+			if (!doc.RootElement.TryGetProperty("response", out JsonElement res) || !res.TryGetProperty("games", out JsonElement games)) {
+				return;
+			}
+
+			foreach (JsonElement g in games.EnumerateArray()) {
+				if (g.TryGetProperty("appid", out JsonElement id) && id.TryGetUInt32(out uint app) && (app != 0)) {
+					int forever = g.TryGetProperty("playtime_forever", out JsonElement f) && f.TryGetInt32(out int fm) ? fm : 0;
+					int twoWeeks = g.TryGetProperty("playtime_2weeks", out JsonElement t) && t.TryGetInt32(out int tm) ? tm : 0;
+					played[app] = (Math.Max(0, forever), Math.Max(0, twoWeeks));
+				}
+			}
+		}
+
+		_twoWeeks = played.Where(static p => p.Value.TwoWeeks > 0).ToDictionary(static p => p.Key, static p => p.Value.TwoWeeks);
+
+		for (int i = 0; i < found.Count; i++) {
+			if (played.TryGetValue(found[i].AppId, out (int Forever, int TwoWeeks) time) && (time.Forever > found[i].MinutesPlayed)) {
+				found[i] = found[i] with { MinutesPlayed = time.Forever };
+			}
+		}
+
+		HashSet<uint> have = [.. found.Select(static g => g.AppId)];
+		List<uint> missing = played.Where(p => (p.Value.Forever > 0) && !have.Contains(p.Key)).Select(static p => p.Key).ToList();
+
+		if (missing.Count == 0) {
+			return;
+		}
+
+		IReadOnlyDictionary<uint, AppOwnership> licensed = await bot.GetAppOwnershipAsync().ConfigureAwait(false);
+		// Its own licence, not a family member's (those are the family library's business, marked as borrowed), and
+		// never Spacewar - Valve's test app, which other games borrow, and whose "achievements" are test entries.
+		missing = [.. missing.Where(app => (app != 480) && licensed.TryGetValue(app, out AppOwnership o) && o.Own)];
+
+		if ((missing.Count == 0) || (bot.Apps is not { } apps)) {
+			return;
+		}
+
+		// What each one is, from Steam's own app info. Nothing is added if that can't be read: guessing would put
+		// tools in front of the achievement hunter.
+		SteamApps.PICSTokensCallback tokens = await apps.PICSGetAccessTokens(missing, []).ToTask().WaitAsync(TimeSpan.FromSeconds(60), ct).ConfigureAwait(false);
+		AsyncJobMultiple<SteamApps.PICSProductInfoCallback>.ResultSet info = await apps
+			.PICSGetProductInfo(missing.Select(id => new SteamApps.PICSRequest(id, tokens.AppTokens.GetValueOrDefault(id))), [], false)
+			.ToTask().WaitAsync(TimeSpan.FromSeconds(60), ct).ConfigureAwait(false);
+
+		List<uint> added = [];
+
+		foreach (SteamApps.PICSProductInfoCallback page in info.Results ?? []) {
+			foreach (SteamApps.PICSProductInfoCallback.PICSProductInfo app in page.Apps.Values) {
+				KeyValue common = app.KeyValues["common"];
+
+				if (!string.Equals(common["type"].AsString(), "game", StringComparison.OrdinalIgnoreCase) || added.Contains(app.ID)) {
+					continue;
+				}
+
+				GameNames.Learn(app.ID, common["name"].AsString());
+				found.Add(new Entry(app.ID, GameNames.Of(app.ID), played[app.ID].Forever, DateTime.MinValue, 0));
+				added.Add(app.ID);
+			}
+		}
+
+		if ((added.Count > 0) && !Ready) {
+			Log.Debug(new Said("library: {0} played game(s) Steam's owned list left out, added from the play history ({1})", added.Count,
+				string.Join(", ", added.Take(6).Select(GameNames.Of)) + (added.Count > 6 ? ", ..." : "")), bot.Name);
+		}
+	}
 
 	/// <summary>Ask Steam again, but only if what we have has gone stale.</summary>
 	public async Task<bool> RefreshIfStaleAsync(TimeSpan maxAge, CancellationToken ct) =>
@@ -144,6 +236,14 @@ public sealed class Library(Bot bot) {
 
 		if (found.Count == 0) {
 			return false;   // a blip, not an empty library - keep whatever we already had
+		}
+
+		try {
+			await AddPlayedAsync(found, ct).ConfigureAwait(false);
+		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+			throw;
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't read the play history: {0}", e.Message), bot.Name);
 		}
 
 		if (bot.Cfg.IncludeFamilyLibrary) {

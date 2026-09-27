@@ -165,7 +165,7 @@ public sealed class RefundGuard(Bot bot) {
 				Log.Warn(new Said("stopping the {0} grind - that game is inside its refund window", Name(bot.GrindGame)), bot.Name);
 				bot.StopGrind();
 			}
-		} catch (OperationCanceledException) {
+		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't check refund windows: {0}", e.Message), bot.Name);

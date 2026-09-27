@@ -9,20 +9,25 @@ namespace NocatFarm.Modules;
 /// Claims genuinely free Steam games as they appear, so the library - and therefore the card-farming income -
 /// grows on its own.
 ///
-/// WHAT IT TAKES: packages only ("s/" entries) - limited-time free-to-KEEP promos, i.e. normally-PAID games
-/// being given away permanently. Those are worth having whether or not they drop cards: it's a real game for
-/// nothing, and it counts on the profile.
-/// WHAT IT LEAVES: every "a/" entry (permanently free-to-play apps - no farmable cards, they don't even show
-/// in your game count until played), plus DLC, demos, unreleased titles, and anything already owned.
+/// WHAT IT TAKES: limited-time free-to-KEEP promos - normally-PAID games being given away permanently. Those are
+/// worth having whether or not they drop cards: it's a real game for nothing, and it counts on the profile.
+/// WHAT IT LEAVES: permanently free-to-play games (no farmable cards, and they don't even show in your game count
+/// until played), free editions of paid games, DLC, demos, unreleased titles, and anything already owned.
 ///
-/// Source is the ASFinfo gist: plain text, one token per line. Reddit's own feed 403s datacenter IPs; the gist
-/// is a GitHub CDN and doesn't.
+/// Where it finds them is Steam itself, nothing else. A giveaway is a paid game on a 100% discount, and the store's
+/// own search lists exactly those ("free" + "specials") - read about hourly, once for every account. Steam's change
+/// feed, watched every half hour or so, catches a package the moment it turns free, before the store has caught up.
 ///
 /// Steam allows roughly 30 package activations per 90 minutes. This stays at 20, leaving room for anything you
 /// redeem by hand without tripping the limit.
 /// </summary>
 public sealed class FreeGames(Bot bot) : BotModule(bot) {
-	private const string FeedUrl = "https://gist.githubusercontent.com/C4illin/77a4bcb9a9a7a95e5f291badc93ec6cd/raw/Latest%2520Steam%2520Games";
+	/// <summary>The store's own search, filtered to what costs nothing because it's on a discount - giveaways.</summary>
+	private const string GiveawaySearch = "https://store.steampowered.com/search/results/?maxprice=free&specials=1&infinite=1&count=50&l=english";
+
+	/// <summary>The store search's answer, shared by every account for a few minutes - it's the same for all of them.</summary>
+	private static (DateTime At, List<string> Tokens) _giveaways = (DateTime.MinValue, []);
+	private static readonly SemaphoreSlim GiveawayGate = new(1, 1);
 	private const int PollLowMinutes = 55;
 	private const int PollHighMinutes = 75;
 	private const int ClaimGapLowSeconds = 6;
@@ -153,7 +158,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				if (added > 0) {
 					Log.Reward(new Said("claimed {0} free game(s) - the card farmer will pick them up", added), Bot.Name);
 				}
-			} catch (OperationCanceledException) {
+			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
 				Log.Warn(new Said("free-game check failed: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
@@ -181,7 +186,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 					if (added > 0) {
 						Log.Reward(new Said("claimed {0} free game(s) - the card farmer will pick them up", added), Bot.Name);
 					}
-				} catch (OperationCanceledException) {
+				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
 				} catch (Exception e) {
 					Log.Debug(new Said("free-game check failed: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
@@ -201,8 +206,8 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 
 		List<string> tokens = [];
 
-		if (readList && (await GetAsync(FeedUrl, ct).ConfigureAwait(false) is { } feed)) {
-			tokens.AddRange(feed.Split('\n'));
+		if (readList) {
+			tokens.AddRange(await StoreGiveawaysAsync(ct).ConfigureAwait(false));
 		}
 
 		// "p/" is a package the change feed found free. Its first app is what the store is asked about.
@@ -224,7 +229,9 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			// Apps used to be skipped outright on the theory that they are all permanently free-to-play, and most
 			// are - but paid games given away turn up as apps too. A check of the live feed found three of them,
 			// promos already over, that were never so much as looked at. The store says which is which.
-			bool app = token.StartsWith("a/", StringComparison.Ordinal);
+			// "g/" is a game the store search showed at 100% off: judged like an app, claimed through its free package.
+			bool giveaway = token.StartsWith("g/", StringComparison.Ordinal);
+			bool app = token.StartsWith("a/", StringComparison.Ordinal) || giveaway;
 			bool pics = token.StartsWith("p/", StringComparison.Ordinal);
 
 			if ((!app && !pics && !token.StartsWith("s/", StringComparison.Ordinal))
@@ -289,8 +296,12 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			}
 
 			_claims.Add(DateTime.UtcNow);
-			ClaimResult result = app
-				? await AddAppAsync(Bot, id, ct).ConfigureAwait(false)
+
+			// A store giveaway is claimed the way the store's own "Add to account" button does it - through the package
+			// that's free right now. Only if the store names none is the app asked for over the connection instead.
+			uint freeSub = giveaway ? await FreeSubAsync(id, ct).ConfigureAwait(false) : 0;
+			ClaimResult result = freeSub != 0 ? await AddPackageAsync(Bot, freeSub, ct).ConfigureAwait(false)
+				: app ? await AddAppAsync(Bot, id, ct).ConfigureAwait(false)
 				: await AddPackageAsync(Bot, id, ct).ConfigureAwait(false);
 
 			if (result.Added) {
@@ -405,8 +416,8 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>
-	/// Ask Steam for a free app's licence over the connection - the only way an app can be added at all, and the
-	/// same request ArchiSteamFarm makes for "a/" entries. Shared with the addlicense command.
+	/// Ask Steam for a free app's licence over the connection - the only way an app can be added at all. Shared with
+	/// the addlicense command.
 	/// </summary>
 	public static async Task<ClaimResult> AddAppAsync(Bot bot, uint appId, CancellationToken ct) {
 		if (bot.Apps == null) {
@@ -457,6 +468,112 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 		} finally {
 			StoreGate.Release();
 		}
+	}
+
+	/// <summary>
+	/// What the store is giving away right now, from its own search - "g/" for a game, "s/" when a row is a package.
+	/// Read at most every ten minutes, whichever account asks; up to two pages, since giveaways run to a handful.
+	/// </summary>
+	private static async Task<List<string>> StoreGiveawaysAsync(CancellationToken ct) {
+		await GiveawayGate.WaitAsync(ct).ConfigureAwait(false);
+
+		try {
+			if (DateTime.UtcNow - _giveaways.At < TimeSpan.FromMinutes(10)) {
+				return _giveaways.Tokens;
+			}
+
+			List<string> tokens = [];
+
+			for (int page = 0; page < 2; page++) {
+				string? json = await StoreAsync(GiveawaySearch + $"&start={page * 50}", ct).ConfigureAwait(false);
+
+				if (json == null) {
+					return _giveaways.Tokens;   // keep the last good answer rather than none
+				}
+
+				string html = JsonUnescape(Json.Str(json, "results_html") ?? "");
+				int rows = 0;
+
+				foreach (string row in html.Split("<a ", StringSplitOptions.RemoveEmptyEntries)) {
+					string? package = Attribute(row, "data-ds-packageid");
+					string? apps = Attribute(row, "data-ds-appid");
+
+					if ((package != null) && uint.TryParse(package, NumberStyles.None, CultureInfo.InvariantCulture, out uint sub) && (sub != 0)) {
+						tokens.Add("s/" + sub.ToString(CultureInfo.InvariantCulture));
+						rows++;
+					} else if ((apps != null) && uint.TryParse(apps.Split(',')[0], NumberStyles.None, CultureInfo.InvariantCulture, out uint appId) && (appId != 0)) {
+						tokens.Add("g/" + appId.ToString(CultureInfo.InvariantCulture));
+						rows++;
+					}
+				}
+
+				if (rows < 50) {
+					break;   // that was the last page
+				}
+			}
+
+			_giveaways = (DateTime.UtcNow, tokens);
+
+			return tokens;
+		} finally {
+			GiveawayGate.Release();
+		}
+	}
+
+	/// <summary>The value of one HTML attribute in a row of markup, or null.</summary>
+	private static string? Attribute(string html, string name) {
+		int at = html.IndexOf(name + "=\"", StringComparison.Ordinal);
+
+		if (at < 0) {
+			return null;
+		}
+
+		int start = at + name.Length + 2;
+		int end = html.IndexOf('"', start);
+
+		return end > start ? html[start..end] : null;
+	}
+
+	/// <summary>The store search wraps its markup in a JSON string; only the escapes that matter here are undone.</summary>
+	private static string JsonUnescape(string text) => text.Replace("\\/", "/", StringComparison.Ordinal).Replace("\\\"", "\"", StringComparison.Ordinal);
+
+	/// <summary>
+	/// The package a game is being given away through: the purchase option the store prices at nothing right now.
+	/// 0 when there isn't one (or the store didn't answer).
+	/// </summary>
+	private static async Task<uint> FreeSubAsync(uint appId, CancellationToken ct) {
+		string? details = await StoreAsync($"https://store.steampowered.com/api/appdetails?appids={appId}&filters=packages", ct).ConfigureAwait(false);
+
+		if (details == null) {
+			return 0;
+		}
+
+		try {
+			using JsonDocument doc = JsonDocument.Parse(details);
+
+			if (!doc.RootElement.TryGetProperty(appId.ToString(CultureInfo.InvariantCulture), out JsonElement node) || !node.TryGetProperty("data", out JsonElement data)
+				|| !data.TryGetProperty("package_groups", out JsonElement groups) || (groups.ValueKind != JsonValueKind.Array)) {
+				return 0;
+			}
+
+			foreach (JsonElement group in groups.EnumerateArray()) {
+				if (!group.TryGetProperty("subs", out JsonElement subs) || (subs.ValueKind != JsonValueKind.Array)) {
+					continue;
+				}
+
+				foreach (JsonElement sub in subs.EnumerateArray()) {
+					bool free = sub.TryGetProperty("price_in_cents_with_discount", out JsonElement price) && (price.ValueKind == JsonValueKind.Number) && (price.GetInt64() == 0);
+
+					if (free && sub.TryGetProperty("packageid", out JsonElement id) && id.TryGetUInt32(out uint subId) && (subId != 0)) {
+						return subId;
+					}
+				}
+			}
+		} catch (JsonException) {
+			// read as "no free package named" - the app is asked for over the connection instead
+		}
+
+		return 0;
 	}
 
 	/// <summary>The first appID inside a package, so the store lookup has something to describe.</summary>
@@ -510,7 +627,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 	/// somebody typed the subID - and duplicating a Steam POST is how the two drift apart.
 	/// </summary>
 	/// <remarks>
-	/// Posted to /freelicense/addfreelicense/{sub}, the endpoint ArchiSteamFarm uses. The old
+	/// Posted to /freelicense/addfreelicense/{sub}, the store's own endpoint for it. The old
 	/// /checkout/addfreelicense answered HTTP 200 to every request and granted nothing: in one 17-day run the three
 	/// accounts asked for the same eight packages about four thousand times between them - a Free Starter Edition
 	/// among them - without a single licence arriving, and without a single line saying why, because the reply

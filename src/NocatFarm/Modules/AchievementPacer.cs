@@ -10,7 +10,7 @@ namespace NocatFarm.Modules;
 /// Earning achievements at a rate a real player would.
 /// </summary>
 /// <remarks>
-/// A faithful port of the pacer from the ArchiSteamFarm HumanIdler plugin, which was tuned against live Steam
+/// Brought across from our own earlier HumanIdler plugin, where it was tuned against live Steam
 /// rarity data and how-long-to-beat figures over a long period. The old drip here - a few a day, easiest first
 /// - was a reasonable first approximation and is not in the same league: it had no notion of a game's shape, no
 /// completion ceiling, no rarity gate tied to playtime, and it spaced unlocks evenly, which is the one thing
@@ -149,7 +149,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				} else {
 					_status = new Said("off");
 				}
-			} catch (OperationCanceledException) {
+			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
 				Log.Warn(new Said("achievement pacer hiccup: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
@@ -254,8 +254,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// <summary>
 	/// Which games are eligible for a minute of credit right now.
 	///
-	/// The main game is deliberately excluded during normal play (a grind still earns it), plus anything on the account's AchievementNeverGames list. This came across from the
-	/// ArchiSteamFarm version, where they were arrived at deliberately rather than by accident.
+	/// The main game is deliberately excluded during normal play (a grind still earns it), plus anything on the account's AchievementNeverGames list. This came across from
+	/// the earlier plugin, where it was arrived at deliberately rather than by accident.
 	/// </summary>
 	private List<uint> CurrentGames() {
 		List<uint> allowed = Bot.Cfg.AchievementGames;

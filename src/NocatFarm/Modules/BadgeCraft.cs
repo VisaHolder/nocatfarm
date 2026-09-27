@@ -77,7 +77,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 				if (made < 0) {
 					wait = TimeSpan.FromHours(BackoffHours);   // Steam refused - back off rather than knock again
 				}
-			} catch (OperationCanceledException) {
+			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
 				Log.Warn(new Said("badge sweep failed: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
@@ -142,12 +142,12 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			ct.ThrowIfCancellationRequested();
 
 			string? body = await Bot.Web.PostAsync(
-				new Uri(WebSession.Community, "/my/ajaxunpackbooster/"),
+				new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/ajaxunpackbooster/"),
 				new Dictionary<string, string>(StringComparer.Ordinal) {
 					["appid"] = appId,
 					["communityitemid"] = assetId
 				},
-				new Uri(WebSession.Community, "/my/inventory/"), ct).ConfigureAwait(false);
+				new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/inventory/"), ct).ConfigureAwait(false);
 
 			if (body != null && !body.Contains("\"success\":false", StringComparison.Ordinal)) {
 				opened++;
@@ -174,7 +174,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 
 			try {
 				await UnpackBoostersAsync(ct).ConfigureAwait(false);
-			} catch (OperationCanceledException) {
+			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
 				Log.Debug(new Said("booster unpack: {0}", e.Message), Bot.Name);
@@ -189,7 +189,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 
 		_status = new Said("checking for completed sets");
 
-		string? html = await Bot.Web.GetAsync(new Uri(WebSession.Community, "/my/badges/?l=english&p=1"), ct).ConfigureAwait(false);
+		string? html = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/badges/?l=english&p=1"), ct).ConfigureAwait(false);
 
 		if (html == null) {
 			_status = new Said("couldn't read the badges page");
@@ -203,7 +203,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		int pages = Math.Min(MaxBadgePages, CardFarmer.ParseMaxPages(html));
 
 		for (int page = 2; page <= pages; page++) {
-			string? more = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/my/badges/?l=english&p={page}"), ct).ConfigureAwait(false);
+			string? more = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/badges/?l=english&p={page}"), ct).ConfigureAwait(false);
 
 			if (more == null) {
 				break;
@@ -266,9 +266,9 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		};
 
 		string? body = await Bot.Web.PostAsync(
-			new Uri(WebSession.Community, "/my/ajaxcraftbadge/"),
+			new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/ajaxcraftbadge/"),
 			form,
-			new Uri(WebSession.Community, "/my/badges/"),
+			new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/badges/"),
 			ct).ConfigureAwait(false);
 
 		if (body == null) {

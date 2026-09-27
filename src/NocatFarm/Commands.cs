@@ -42,12 +42,14 @@ public static partial class Commands {
 		new("restart", "<account|all>", GroupAccounts, "Stop then start again."),
 		new("pause", "<account|all> [minutes]", GroupAccounts, "Stay logged in but stop playing, farming and commenting. Give it minutes and it picks back up by itself."),
 		new("resume", "<account|all>", GroupAccounts, "Undo a pause."),
-		new("add", "<name> <steamLogin>", GroupAccounts, "Add an account. It asks for the password once, then remembers a login token."),
+		new("add", "<name> <steamLogin|qr>", GroupAccounts, "Add an account. It asks for the password once, then remembers a login token - or 'qr' signs it in by scanning a code on the dashboard with the Steam app, no password at all."),
 		new("remove", "<account>", GroupAccounts, "Delete an account and its stored login token.", "delete"),
 		new("enable", "<account>", GroupAccounts, "Let this account log in again."),
 		new("disable", "<account>", GroupAccounts, "Keep the account configured but never log it in."),
 
 		new("play", "<account> <appIDs|none>", GroupPlaying, "Set the games this account idles for playtime."),
+		new("selfcheck", "[account]", GroupAccounts, "Does a human-mode account look like a bot? A score out of 100 from what other people can see - hours on the profile, what its status shows, comments - with the setting that fixes each tell. Boost accounts are left out unless you name one.", "tells"),
+		new("hours", "<account>", GroupPlaying, "How the account's hour targets are going - hours so far, what's left, and the pace needed to make a date."),
 		new("drops", "<account> [appID|next] [count|all] | <account> off", GroupCards,
 			"Go for card drops now, whatever the schedule says: one game until it has dropped that many (all it has left by default), then back to the usual day. Without an appID, the next game with cards."),
 		new("grind", "<account|all> <appID> <hours> | <account> off", GroupPlaying,
@@ -69,7 +71,9 @@ public static partial class Commands {
 		new("2fa", "<account>", GroupAccounts, "Show this account's Steam Guard code, if its authenticator is set up here.", "guard"),
 		new("cheevo", "<account> <appID> [list|unlock|lock] [name|all]", GroupPlaying, "Achievements: see them, unlock them all, or put them back.", "ach|achievements"),
 		new("hunt", "[account]", GroupPlaying, "What the achievement hunter would play, in order - and what it ruled out and why.", "boost"),
-		new("match", "[do]", GroupCards, "Swap duplicate trading cards between your own accounts so sets finish. Shows what it would trade; 'match do' sends the offers."),
+		new("levelup", "<account> <level>", GroupCards, "What reaching a Steam level would cost: the XP missing, badges it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest - priced gently in the background.", "lvlup"),
+		new("match", "[do]", GroupCards, "Swap duplicate trading cards between your own accounts so sets finish - only swaps that help both sides, never a card already on an offer. Shows what it would trade; 'match do' sends the offers, and the other account accepts them by itself."),
+		new("offers", "[account|all]", GroupCards, "Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold."),
 		new("keys", "[list|clear]", GroupAccounts, "Product keys waiting to be activated. A big batch queues itself rather than burning Steam's per-account activation allowance all at once."),
 		new("value", "[account|all] [refresh]", GroupCards, "What each inventory is worth, by game, and how it has moved in the last day. Add 'refresh' to read the inventories again.", "inv|inventory"),
 
@@ -85,6 +89,8 @@ public static partial class Commands {
 		new("balance", "[account|all]", GroupAccounts, "Steam wallet balance, and anything still pending.", "wallet"),
 		new("points", "[account|all]", GroupAccounts, "Steam points each account can spend in the Points Shop."),
 		new("fairswap", "<account> <offerID>", GroupCards, "Whether a trade offer is a fair card swap that AcceptFairCardSwaps would accept, and if not, why. Only looks - never accepts or declines."),
+		new("sell", "<account> [preview|do|relist] [count]", GroupCards, "Spare trading cards on the market: 'preview' (the default) shows what it would list and what you'd get after Steam's fees, 'do' lists them (5 by default), 'relist' takes down week-old listings the market has gone under. SellDuplicates does it by itself."),
+		new("queue", "[account|all]", GroupCards, "Go through today's discovery queue now, a few seconds on each game. The DiscoveryQueue setting does it by itself once a day (during sales, by default)."),
 		new("freeitems", "[account|all]", GroupCards, "Look for free event items now: the daily sale sticker, and anything in the Points Shop at 0 points. The ClaimEventItems setting does it by itself."),
 		new("booster", "[account|all] | <account> <appIDs>", GroupCards, "Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the BoosterGames setting does it by itself every day.", "boosters"),
 		new("privacy", "<account> [public|friends|private|part=level ...]", GroupAccounts,
@@ -100,7 +106,7 @@ public static partial class Commands {
 		new("theme", "[dark|light]", GroupOther, "Switch the dashboard between the dark and light themes. Without an argument it says which is on.", "dark|light"),
 		new("version", "", GroupOther, "Which version this is.", "about"),
 		new("mini", "[on|off]", GroupOther, "Shrink the window to a small panel of your accounts - what each is doing, start and stop, the dashboard - or back to the full window."),
-		new("update", "[now]", GroupOther, "Check for a newer release. 'update now' downloads it and restarts into it - nothing updates on its own, ever."),
+		new("update", "[accept|ignore]", GroupOther, "Check for a newer release. 'update accept' downloads it and restarts into it; 'update ignore' stops the hourly reminders until the next launch. Nothing updates on its own, ever."),
 		new("exit", "", GroupOther, "Shut nocat.farm down.", "quit|q")
 	];
 
@@ -222,6 +228,10 @@ public static partial class Commands {
 				"play" => Play(mgr, rest),
 				"grind" => Grind(mgr, rest),
 				"drops" => await DropsAsync(mgr, rest).ConfigureAwait(false),
+				"hours" => Hours(mgr, rest),
+				"offers" => await OffersAsync(mgr, rest).ConfigureAwait(false),
+				"levelup" or "lvlup" => LevelUp(mgr, rest),
+				"selfcheck" or "tells" => await SelfCheckAsync(mgr, rest).ConfigureAwait(false),
 				"human" => Human(mgr, rest),
 				"wake" or "wakeup" or "skipsleep" => Wake(mgr, rest),
 				"redeem" or "key" => await RedeemAsync(mgr, rest).ConfigureAwait(false),
@@ -240,6 +250,8 @@ public static partial class Commands {
 				"points" => await PointsAsync(mgr, rest).ConfigureAwait(false),
 				"booster" or "boosters" => await BoosterAsync(mgr, rest).ConfigureAwait(false),
 				"freeitems" => await FreeItemsAsync(mgr, rest).ConfigureAwait(false),
+				"queue" => await QueueAsync(mgr, rest).ConfigureAwait(false),
+				"sell" => await SellAsync(mgr, rest).ConfigureAwait(false),
 				"fairswap" => await FairSwapCheckAsync(mgr, rest).ConfigureAwait(false),
 				"privacy" => await PrivacyAsync(mgr, rest).ConfigureAwait(false),
 				"transfer" => await TransferAsync(mgr, rest).ConfigureAwait(false),
@@ -294,7 +306,15 @@ public static partial class Commands {
 	/// ever happens on a schedule.
 	/// </summary>
 	private static async Task<string> Update(string[] args) {
-		bool now = args.Any(static a => a.Equals("now", StringComparison.OrdinalIgnoreCase));
+		string what = args.Length > 0 ? args[0].ToLowerInvariant() : "";
+
+		if (what == "ignore") {
+			UpdateCheck.Ignored = true;
+
+			return "No more update reminders until the next launch. 'update' still checks, and 'update accept' still installs.";
+		}
+
+		bool accept = what is "accept" or "now" or "install";
 
 		await UpdateCheck.LookAsync(force: true).ConfigureAwait(false);
 
@@ -302,10 +322,10 @@ public static partial class Commands {
 			return $"You're on the newest release ({Build.Version}).";
 		}
 
-		if (!now) {
+		if (!accept) {
 			return $"{UpdateCheck.Available} is out - you have {Build.Version}."
 				+ Environment.NewLine + $"  {UpdateCheck.Url}"
-				+ Environment.NewLine + "  'update now' downloads it and restarts into it. Nothing updates on its own.";
+				+ Environment.NewLine + "  'update accept' downloads it and restarts into it; 'update ignore' stops the reminders until the next launch.";
 		}
 
 		return await SelfUpdate.ApplyAsync(CancellationToken.None).ConfigureAwait(false)
@@ -402,7 +422,7 @@ public static partial class Commands {
 				: NoSuchAccount(mgr, args[0]);
 		}
 
-		// ArchiSteamFarm's spelling: a bare number or s/123 is a package, a/123 is an app. Apps go over the Steam
+		// A bare number or s/123 is a package, a/123 is an app. Apps go over the Steam
 		// connection rather than the store, which is the only way a free-to-play app can be added at all.
 		List<(bool App, uint Id)> wanted = string.Join(' ', args[1..])
 			.Split([',', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -790,7 +810,7 @@ public static partial class Commands {
 
 	private static async Task<string> AddAsync(BotManager mgr, string[] args) {
 		if (args.Length < 2) {
-			return "add <name> <steamLogin>\n  name       a nickname just for you - it names the config file\n  steamLogin what you type into Steam's sign-in box";
+			return "add <name> <steamLogin|qr>\n  name       a nickname just for you - it names the config file\n  steamLogin what you type into Steam's sign-in box\n  qr         sign in by scanning a code with the Steam app instead - no password";
 		}
 
 		string name = args[0];
@@ -803,7 +823,8 @@ public static partial class Commands {
 			return $"'{name}' already exists.";
 		}
 
-		Bot? bot = await mgr.AddAsync(name, new BotConfig { SteamLogin = args[1] }).ConfigureAwait(false);
+		bool qr = args[1].Equals("qr", StringComparison.OrdinalIgnoreCase);
+		Bot? bot = await mgr.AddAsync(name, qr ? new BotConfig { SteamLogin = name, SignInWithQr = true } : new BotConfig { SteamLogin = args[1] }).ConfigureAwait(false);
 
 		if (bot == null) {
 			return $"Couldn't add '{name}'.";
@@ -819,7 +840,9 @@ public static partial class Commands {
 			andThen = " Opening the dashboard so you can set it up.";
 		}
 
-		return $"Added '{name}' ({args[1]}). It will ask for the password and a Steam Guard code once, then remember this account.{andThen}";
+		return qr
+			? $"Added '{name}'. Its QR code appears on the dashboard in a moment - scan it with the Steam app on your phone (Steam Guard tab) and approve, and that's it: no password, nothing else to type.{andThen}"
+			: $"Added '{name}' ({args[1]}). It will ask for the password and a Steam Guard code once, then remember this account.{andThen}";
 	}
 
 	private static async Task<string> RemoveAsync(BotManager mgr, string[] args) {
@@ -1092,18 +1115,48 @@ public static partial class Commands {
 		}
 
 		Dictionary<Bot, List<Looting.Item>> inventories = [];
+		HashSet<ulong> busy = [];
+		HashSet<(Bot, Bot)> busyPairs = [];
+		List<string> lines = [];
 
 		foreach (Bot bot in bots) {
-			inventories[bot] = await Looting.InventoryAsync(bot).ConfigureAwait(false);
+			// What's already on a live offer has to be known first: planning around an offer we can't see could send
+			// the same card twice. An account whose offers can't be read sits this run out.
+			if (await TradeOffers.ActiveAsync(bot, received: true, sent: true).ConfigureAwait(false) is not { } live) {
+				lines.Add($"{bot.Name}: couldn't check its trade offers - left out this time");
+
+				continue;
+			}
+
+			// Just the cards - reading every game's inventory to throw all but these away was the heaviest thing this did.
+			if (await Matching.CardsAsync(bot).ConfigureAwait(false) is not { } cards) {
+				lines.Add($"{bot.Name}: couldn't read its cards in full - left out this time");
+
+				continue;
+			}
+
+			inventories[bot] = cards;
+			busy.UnionWith(TradeOffers.Committed(live));
+
+			// A pair that already has an offer waiting between them waits for it to be settled.
+			foreach (TradeOffers.Offer o in live) {
+				if (mgr.All.FirstOrDefault(b => b.SteamId == o.Partner) is { } partner) {
+					busyPairs.Add((bot, partner));
+					busyPairs.Add((partner, bot));
+				}
+			}
 		}
 
-		List<Matching.Swap> swaps = Matching.Plan(inventories);
+		Matching.MatchPlan plan = inventories.Count < 2 ? new Matching.MatchPlan([], 0) : Matching.PlanAll(inventories, busy, busyPairs);
+		List<Matching.Swap> swaps = plan.Swaps;
 
 		if (swaps.Count == 0) {
-			return "No swaps to make - no account has a spare card that another one is missing.";
-		}
+			lines.Add(busyPairs.Count > 0
+				? "Nothing new to swap right now - wait for the offers already out between your accounts to go through."
+				: "No swaps to make - no two accounts have cards that would help each other.");
 
-		List<string> lines = [];
+			return string.Join(Environment.NewLine, lines);
+		}
 
 		foreach (Matching.Swap swap in swaps) {
 			int pairs = swap.Cards;
@@ -1130,7 +1183,11 @@ public static partial class Commands {
 				[.. swap.Give.Take(pairs).Select(static m => m.Item)],
 				[.. swap.Take.Take(pairs).Select(static m => m.Item)]).ConfigureAwait(false);
 
-			lines.Add(ok ? $"      offer sent - {swap.To.Name} needs to accept it" : $"      couldn't send - {message}");
+			lines.Add(ok ? $"      {message} - {swap.To.Name} checks it's fair and accepts it by itself" : $"      couldn't send - {message}");
+		}
+
+		if (plan.Deferred > 0) {
+			lines.Add($"(Each account swaps with one other at a time - {plan.Deferred} more pair(s) can swap once these are done. Run 'match' again then.)");
 		}
 
 		if (!send) {
@@ -1410,6 +1467,135 @@ public static partial class Commands {
 		return started.Count > 0
 			? $"{string.Join(", ", started.Select(static b => b.Name))}: {GameNames.Of(appId)} for {Fmt.Hm((int) how.TotalMinutes)}.{no}"
 			: no.TrimStart();
+	}
+
+	private static async Task<string> SelfCheckAsync(BotManager mgr, string[] args) {
+		// Only the accounts that are trying to pass as a person. A boost account is a robot on purpose - telling it to
+		// take breaks or drop its idle games is advice nobody wants - so it's only scored when asked for by name.
+		List<Bot> online = [.. mgr.All.Where(static b => b.IsOnline)];
+		List<Bot> bots = args.Length > 0 && mgr.Get(args[0]) is { } one ? [one] : args.Length > 0 ? [] : [.. online.Where(static b => b.Cfg.LegitMode)];
+		List<Bot> skipped = args.Length > 0 ? [] : [.. online.Where(static b => !b.Cfg.LegitMode)];
+
+		if (bots.Count == 0) {
+			return args.Length > 0 ? NoSuchAccount(mgr, args[0])
+				: skipped.Count > 0 ? $"No signed-in account runs human mode - {string.Join(", ", skipped.Select(static b => b.Name))} are boost accounts. 'selfcheck <name>' scores one anyway."
+				: "No account is signed in to check.";
+		}
+
+		StringBuilder sb = new();
+
+		foreach (Bot bot in bots) {
+			if (!bot.Library.Ready) {
+				sb.AppendLine($"{bot.Name}: hasn't read its library yet - give it a moment after signing in.");
+
+				continue;
+			}
+
+			SelfCheck.Report report = await SelfCheck.RunAsync(bot).ConfigureAwait(false);
+
+			bool boost = !bot.Cfg.LegitMode;
+
+			sb.AppendLine($"{bot.Name}: {report.Score}/100 - {report.Verdict}   ({report.Visibility})"
+				+ (boost ? Environment.NewLine + "  a boost account - these are what it's for, nothing here needs changing" : ""));
+
+			foreach (SelfCheck.Tell tell in report.Tells) {
+				sb.AppendLine($"  -{tell.Points,-3} {tell.What}");
+
+				if (!boost) {
+					sb.AppendLine($"        fix: {tell.Fix}");
+				}
+			}
+
+			if (report.Tells.Count == 0) {
+				sb.AppendLine("  nothing an outsider could pick out");
+			}
+		}
+
+		if (skipped.Count > 0) {
+			sb.AppendLine($"({string.Join(", ", skipped.Select(static b => b.Name))}: boost account(s), not meant to look human - left out. 'selfcheck <name>' scores one anyway.)");
+		}
+
+		return sb.ToString().TrimEnd();
+	}
+
+	private static string LevelUp(BotManager mgr, string[] args) {
+		if ((args.Length < 2) || !int.TryParse(args[1], NumberStyles.None, CultureInfo.InvariantCulture, out int target) || (target < 1)) {
+			return "levelup <account> <level>      what reaching that Steam level would cost";
+		}
+
+		if (mgr.Get(args[0]) is not { } bot) {
+			return NoSuchAccount(mgr, args[0]);
+		}
+
+		if (!bot.IsOnline || !bot.Web.Ready) {
+			return $"{bot.Name}: not logged in";
+		}
+
+		return LevelPlanner.Ask(bot, Math.Min(target, 5000));
+	}
+
+	private static async Task<string> OffersAsync(BotManager mgr, string[] args) {
+		if (Pick(mgr, args, out string? problem) is not { } bots) {
+			return problem!;
+		}
+
+		List<string> lines = [];
+
+		foreach (Bot bot in bots) {
+			if (!bot.IsOnline || !bot.Web.Ready) {
+				lines.Add($"{bot.Name}: not logged in");
+
+				continue;
+			}
+
+			if (await TradeOffers.ActiveAsync(bot, received: true, sent: true).ConfigureAwait(false) is not { } live) {
+				lines.Add($"{bot.Name}: Steam didn't answer");
+
+				continue;
+			}
+
+			if (live.Count == 0) {
+				lines.Add($"{bot.Name}: no live trade offers");
+
+				continue;
+			}
+
+			lines.Add($"{bot.Name}:");
+
+			foreach (TradeOffers.Offer o in live.OrderBy(static o => o.Ours)) {
+				string who = mgr.All.FirstOrDefault(b => b.SteamId == o.Partner)?.Name ?? o.Partner.ToString(CultureInfo.InvariantCulture);
+				string state = o.State switch {
+					TradeOffers.Active => "waiting",
+					TradeOffers.NeedsConfirmation => "needs confirming on your phone",
+					TradeOffers.InEscrow => "in a trade hold",
+					_ => $"state {o.State}"
+				};
+				string hold = o.HoldUntil is { } until ? $", hold until {until.ToLocalTime():d MMM HH:mm}" : "";
+
+				lines.Add($"  #{o.Id}  {(o.Ours ? "sent to" : "from")} {who}  {o.Describe}  {state}{hold}");
+			}
+		}
+
+		return string.Join(Environment.NewLine, lines);
+	}
+
+	private static string Hours(BotManager mgr, string[] args) {
+		if ((args.Length < 1) || (mgr.Get(args[0]) is not { } bot)) {
+			return args.Length < 1 ? "hours <account>        how its hour targets are going" : NoSuchAccount(mgr, args[0]);
+		}
+
+		if (string.IsNullOrWhiteSpace(bot.Cfg.HourTargets)) {
+			return $"{bot.Name} has no hour targets. Set some, e.g.:  set {bot.Name} HourTargets \"730:100@2026-12-01, 440:50\"";
+		}
+
+		if (!bot.Library.Ready) {
+			return $"{bot.Name} hasn't read its library yet - give it a moment after signing in.";
+		}
+
+		List<string> lines = BotManager.ModuleOf<HumanMode>(bot)?.TargetReport() ?? [];
+		string note = bot.Cfg.LegitMode ? "" : Environment.NewLine + "  (human mode is off, so nothing is working towards these right now)";
+
+		return $"{bot.Name}:" + Environment.NewLine + string.Join(Environment.NewLine, lines.Select(static l => "  " + l)) + note;
 	}
 
 	private static async Task<string> DropsAsync(BotManager mgr, string[] args) {
@@ -1774,9 +1960,13 @@ public static partial class Commands {
 			return $"{bot.Name}: not logged in";
 		}
 
-		(bool fair, Said why) = await FairSwap.CheckAsync(bot, offerId, CancellationToken.None).ConfigureAwait(false);
+		(bool? fair, Said why) = await FairSwap.CheckAsync(bot, offerId, CancellationToken.None).ConfigureAwait(false);
 
-		return fair ? $"{bot.Name}: offer {offerId} is a fair card swap" : $"{bot.Name}: offer {offerId} is not a fair card swap - {why}";
+		return fair switch {
+			true => $"{bot.Name}: offer {offerId} is a fair card swap",
+			false => $"{bot.Name}: offer {offerId} is not a fair card swap - {why}",
+			null => $"{bot.Name}: couldn't check offer {offerId} - {why}; try again in a minute"
+		};
 	}
 
 	private static async Task<string> FreeItemsAsync(BotManager mgr, string[] args) {
@@ -1797,6 +1987,79 @@ public static partial class Commands {
 			int shop = await events.ShopAsync(CancellationToken.None).ConfigureAwait(false);
 			lines.Add($"{b.Name}: {(sticker ? "claimed the sale item" : "no sale item to claim right now")} · {shop} free Points Shop item(s) taken");
 		}
+
+		return string.Join(Environment.NewLine, lines);
+	}
+
+	private static async Task<string> SellAsync(BotManager mgr, string[] args) {
+		if (args.Length < 1) {
+			return "sell <account> [preview|do|relist] [count]";
+		}
+
+		if (mgr.Get(args[0]) is not { } bot) {
+			return NoSuchAccount(mgr, args[0]);
+		}
+
+		if (!bot.IsOnline || !bot.Web.Ready) {
+			return $"{bot.Name}: not logged in";
+		}
+
+		string what = args.Length > 1 ? args[1].ToLowerInvariant() : "preview";
+		int count = (args.Length > 2) && int.TryParse(args[2], NumberStyles.None, CultureInfo.InvariantCulture, out int n) ? Math.Clamp(n, 1, 25) : Math.Clamp(bot.Cfg.SellPerRun, 1, 25);
+
+		if (what == "relist") {
+			(int removed, int stale) = await Seller.RelistAsync(bot, CancellationToken.None).ConfigureAwait(false);
+
+			return stale == 0 ? $"{bot.Name}: no week-old listing the market has gone under." : $"{bot.Name}: took down {removed} of {stale} stale listing(s) - the next sell lists them again at today's price.";
+		}
+
+		Seller.Plan plan = await Seller.PlanAsync(bot, count, CancellationToken.None).ConfigureAwait(false);
+
+		if (plan.Problem != null) {
+			return $"{bot.Name}: {plan.Problem}";
+		}
+
+		if (plan.Offers.Count == 0) {
+			return plan.Duplicates == 0 ? $"{bot.Name}: no spare cards - every copy is still useful for a badge." : $"{bot.Name}: {plan.Duplicates} spare card(s), but none with a price to go under yet.";
+		}
+
+		if (what == "do") {
+			return await Seller.SellAsync(bot, plan.Offers, CancellationToken.None).ConfigureAwait(false);
+		}
+
+		StringBuilder sb = new();
+		sb.AppendLine($"{bot.Name}: {plan.Duplicates} spare card(s){(plan.Unpriced > 0 ? $" ({plan.Unpriced} not priced yet)" : "")} - the {plan.Offers.Count} it would list next:");
+
+		foreach (Seller.Offer o in plan.Offers) {
+			string game = o.Game.Length > 24 ? o.Game[..23] + "…" : o.Game;
+			sb.AppendLine($"  {game,-24} {o.Card,-24} lowest {Seller.Money(o.LowestCents)} -> list at {Seller.Money(o.BuyerCents)}, you get {Seller.Money(o.YouGetCents)}");
+		}
+
+		List<Seller.Listing>? up = await Seller.ListingsAsync(bot, CancellationToken.None).ConfigureAwait(false);
+
+		if (up != null) {
+			sb.AppendLine($"  already on the market: {up.Count(static l => !l.AwaitingConfirmation)} listing(s), {up.Count(static l => l.AwaitingConfirmation)} waiting on a confirmation");
+		}
+
+		sb.Append($"  'sell {bot.Name} do' lists them{(bot.CanConfirmTrades ? " and confirms them on its authenticator" : " - then confirm them in the Steam app")}.");
+
+		return sb.ToString();
+	}
+
+	private static async Task<string> QueueAsync(BotManager mgr, string[] args) {
+		if (Pick(mgr, args, out string? problem) is not { } bots) {
+			return problem!;
+		}
+
+		string[] lines = await Task.WhenAll(bots.Select(static async b => {
+			if (!b.IsOnline || (BotManager.ModuleOf<EventItems>(b) is not { } events)) {
+				return $"{b.Name}: not logged in";
+			}
+
+			int seen = await events.QueueAsync(CancellationToken.None).ConfigureAwait(false);
+
+			return seen < 0 ? $"{b.Name}: Steam wouldn't hand out the queue right now" : $"{b.Name}: looked through {seen} game(s) in the discovery queue";
+		})).ConfigureAwait(false);
 
 		return string.Join(Environment.NewLine, lines);
 	}

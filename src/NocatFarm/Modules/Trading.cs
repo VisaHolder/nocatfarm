@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using System.Text.RegularExpressions;
 using NocatFarm.Core;
 
 namespace NocatFarm.Modules;
@@ -16,9 +15,13 @@ namespace NocatFarm.Modules;
 /// possible to sweep the cards off six idlers onto one account without touching a mouse - and exactly why the
 /// list has to be accounts you personally own.
 ///
+/// And card swaps: one for one, judged by <see cref="FairSwap"/> against the cards held at the moment of accepting.
+/// Offers from the other accounts in this nocat.farm are always judged that way, so the matcher's offers between
+/// them go through without anybody having to turn swaps on for strangers.
+///
 /// Nothing is acted on the instant it lands. A trade accepted two seconds after it was sent is a bot accepting.
 /// </summary>
-public sealed partial class Trading(Bot bot) : BotModule(bot) {
+public sealed class Trading(Bot bot) : BotModule(bot) {
 	/// <summary>How many looks that turn up nothing to do before Steam's waiting count stops meaning "hurry".</summary>
 	private const int FruitlessBeforeBackingOff = 3;
 
@@ -28,6 +31,15 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 	private int _accepted;
 	private int _declined;
 	private int _fruitless;
+
+	/// <summary>
+	/// Cards on the giving side of swaps accepted but still waiting on a phone or email confirmation. Rebuilt from
+	/// Steam's own list on every look, so a restart can't forget them and let two swaps spend one card.
+	/// </summary>
+	private readonly Dictionary<ulong, List<FairSwap.Card>> _promised = [];
+
+	/// <summary>Offers accepted here (of any kind) still waiting on a confirmation, for the status line.</summary>
+	private int _awaitingConfirmation;
 
 	public override string Name => "trades";
 
@@ -47,6 +59,10 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 				bits.Add(Loc.T("{0} waiting", _waiting.Count));
 			}
 
+			if (_awaitingConfirmation > 0) {
+				bits.Add(Loc.T("{0} to confirm on your phone", _awaitingConfirmation));
+			}
+
 			return bits.Count > 0 ? string.Join(" · ", bits) : "";
 		}
 	}
@@ -54,10 +70,17 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 	/// <summary>How long an offer waits before it's answered - a person's time, not a flat random pick.</summary>
 	private TimeSpan TradeWait() => Rng.HumanMinutes(Bot.Cfg.TradeDelayMinMinutes, Bot.Cfg.TradeDelayMaxMinutes);
 
-	private bool Wanted => Bot.Cfg.AcceptDonations || Bot.Cfg.AcceptFromMasters || Bot.Cfg.AcceptFairCardSwaps || Bot.Cfg.DeclineOtherTrades;
+	// Another account in this nocat.farm counts too: swaps between your own accounts are always looked at.
+	private bool Wanted => Bot.Cfg.AcceptDonations || Bot.Cfg.AcceptFromMasters || Bot.Cfg.AcceptFairCardSwaps || Bot.Cfg.DeclineOtherTrades
+		|| ((BotManager.Instance?.All.Count ?? 0) > 1);
 
-	/// <summary>What the fair-swap test said about each offer, so an offer is read in full once.</summary>
-	private readonly Dictionary<ulong, bool> _fair = [];
+	/// <summary>
+	/// What the fair-swap test said about each offer. A "no" is kept only for a while: cards move, and an offer
+	/// that wasn't fair an hour ago - one of your own accounts' swaps, especially - may be now.
+	/// </summary>
+	private readonly Dictionary<ulong, (bool Fair, DateTime At)> _fair = [];
+
+	private static readonly TimeSpan NotFairFor = TimeSpan.FromMinutes(30);
 
 	protected override async Task RunAsync(CancellationToken ct) {
 		while (!ct.IsCancellationRequested) {
@@ -73,7 +96,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 			if (Wanted && Bot.IsOnline && Bot.Web.Ready && awake && ShouldLook()) {
 				try {
 					await CheckAsync(ct).ConfigureAwait(false);
-				} catch (OperationCanceledException) {
+				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
 				} catch (Exception e) {
 					Log.Debug(new Said("couldn't check trade offers: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
@@ -126,119 +149,254 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 	}
 
 	private async Task CheckAsync(CancellationToken ct) {
-		string? html = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/tradeoffers/"), ct).ConfigureAwait(false);
-
-		if (string.IsNullOrEmpty(html)) {
+		// Steam's own list of this account's live incoming offers. Null is "Steam didn't answer" - try again later,
+		// never read as "nothing waiting".
+		if (await TradeOffers.ActiveAsync(Bot, received: true, sent: true, ct).ConfigureAwait(false) is not { } live) {
 			return;
 		}
 
-		bool actedOnSomething = false;
-		int seen = 0;
-		HashSet<ulong> masters = Social.ParseIds(Bot.Cfg.TradeMasters);
-		List<Offer> offers = Parse(html);
+		// Accepted already and waiting on a confirmation: not ours to accept again, and its cards are spoken for.
+		List<TradeOffers.Offer> awaiting = [.. live.Where(static o => o.AwaitingConfirmation)];
+		List<TradeOffers.Offer> offers = [.. live.Where(static o => !o.Ours && (o.State == TradeOffers.Active) && (o.ConfirmationMethod == 0))];
+		HashSet<ulong> ids = [.. live.Select(static o => o.Id)];
 
-		// An offer no longer on the page was accepted, declined or withdrawn somewhere else. Keeping it counted
-		// "1 waiting" for ever, and kept this page being read every few minutes for nothing.
+		// Cards on their way out: accepted swaps waiting on a confirmation, and this account's own offers (a 'match'
+		// swap it sent, for one) that are still out. They're in the inventory, but they're going.
+		lock (_promised) {
+			_promised.Clear();
+
+			foreach (TradeOffers.Offer o in awaiting.Concat(live.Where(static o => o.Ours && (o.State is TradeOffers.Active or TradeOffers.NeedsConfirmation)))) {
+				if (FairSwap.CardsLeaving(o) is { Count: > 0 } leaving) {
+					_promised[o.Id] = leaving;
+				}
+			}
+		}
+
+		_awaitingConfirmation = awaiting.Count;
+
+		// Anything no longer live was accepted, declined or withdrawn somewhere else - forget it.
 		_waiting.RetainOnly(offers.Select(static o => o.Id));
+
+		lock (_done) {
+			_done.IntersectWith(ids);
+		}
+
+		lock (_fair) {
+			foreach (ulong gone in _fair.Keys.Where(k => !ids.Contains(k)).ToList()) {
+				_fair.Remove(gone);
+			}
+		}
 
 		// Offers held while the account slept get their wait now, from the moment it's up - not all at once.
 		foreach ((ulong id, DateTime due) in _waiting.Arm(DateTime.UtcNow, TradeWait)) {
 			Log.Debug(new Said("trade offer #{0} waited for the account to wake - handling it around {1}", id, (Func<string>) (() => Fmt.Clock(due))), Bot.Name);
 		}
 
-		foreach (Offer offer in offers) {
-			seen++;
+		bool actedOnSomething = false;
+		bool swappedThisLook = false;
+		HashSet<ulong> masters = Social.ParseIds(Bot.Cfg.TradeMasters);
+		HashSet<ulong> fleet = [.. (BotManager.Instance?.All ?? []).Where(b => (b != Bot) && (b.SteamId != 0)).Select(static b => b.SteamId)];
 
-			lock (_done) {
-				if (_done.Contains(offer.Id)) {
-					continue;
-				}
+		foreach (TradeOffers.Offer offer in offers) {
+			// One offer that can't be read or judged must not stop the rest - donations and your own accounts included.
+			try {
+				(bool acted, bool swapped) = await HandleAsync(offer, masters, fleet, swappedThisLook, ct).ConfigureAwait(false);
+				actedOnSomething |= acted;
+				swappedThisLook |= swapped;
+			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+				throw;
+			} catch (Exception e) {
+				Log.Debug(new Said("couldn't handle trade offer #{0}: {1}: {2}", offer.Id, e.GetType().Name, e.Message), Bot.Name);
 			}
-
-			bool fromMaster = Bot.Cfg.AcceptFromMasters && masters.Contains(offer.Partner);
-			bool donation = Bot.Cfg.AcceptDonations && offer.IsPureDonation;
-			bool fair = !fromMaster && !donation && await FairSwapAsync(offer, ct).ConfigureAwait(false);
-			bool accept = fromMaster || donation || fair;
-
-			if (!accept && Bot.Cfg.AcceptDonations && (offer.GivingCount == null)) {
-				Log.Warn(new Said("trade offer #{0}: couldn't tell what it asks for, so it has been left alone - look at it yourself", offer.Id), Bot.Name);
-			}
-
-			if (!accept && !Bot.Cfg.DeclineOtherTrades) {
-				continue;   // leave it sitting there for the user to look at
-			}
-
-			// Everything waits its turn. The wait is per offer, so two arriving together are not handled together.
-			actedOnSomething = true;
-
-			if (_waiting.Add(offer.Id, DateTime.UtcNow + TradeWait()) && (_waiting.DueOf(offer.Id) is { } due)) {
-				Said what = !accept ? new Said("unwanted") : fromMaster ? new Said("from one of your accounts") : fair ? new Said("a fair card swap") : new Said("a donation");
-				Log.Info(new Said("trade offer #{0} ({1}: {2}) - handling it in {3}", offer.Id, what, offer.Describe, Fmt.Hm((int) Math.Max(1, (due - DateTime.UtcNow).TotalMinutes))), Bot.Name);
-			}
-
-			if ((_waiting.DueOf(offer.Id) is not { } when) || (DateTime.UtcNow < when)) {
-				continue;
-			}
-
-			bool ok = accept ? await AcceptAsync(offer, ct).ConfigureAwait(false) : await DeclineAsync(offer, ct).ConfigureAwait(false);
-
-			if (ok) {
-				lock (_done) {
-					_done.Add(offer.Id);
-				}
-
-				_waiting.Remove(offer.Id);
-
-				if (accept) {
-					_accepted++;
-					Log.Reward(new Said("accepted trade offer #{0} - {1} item(s) in", offer.Id, offer.ReceivingCount), Bot.Name);
-				} else {
-					_declined++;
-					Log.Info(new Said("declined trade offer #{0}", offer.Id), Bot.Name);
-				}
-			}
-
-			await Task.Delay(Rng.Seconds(3, 12), ct).ConfigureAwait(false);
 		}
 
 		_fruitless = actedOnSomething ? 0 : _fruitless + 1;
 
-		// We have just read the page, so we know better than the notification counter does - tell it. Without
+		// We have just read the list, so we know better than the notification counter does - tell it. Without
 		// this a count left at "don't know" (which is what the notification sweep deliberately does) stayed that
-		// way for ever, and the account went on opening this page every hour or so with nothing to find. Now the
-		// first look after a sweep settles it, and a genuinely new offer still arrives as its own push.
-		Bot.NoteTradeOffersSeen(seen);
+		// way for ever, and the account went on looking every hour or so with nothing to find.
+		Bot.NoteTradeOffersSeen(offers.Count);
+	}
+
+	/// <returns>Whether it's being dealt with (queued or acted on), and whether a card swap was accepted just now.</returns>
+	private async Task<(bool Acted, bool Swapped)> HandleAsync(TradeOffers.Offer offer, HashSet<ulong> masters, HashSet<ulong> fleet, bool swappedThisLook, CancellationToken ct) {
+		lock (_done) {
+			if (_done.Contains(offer.Id)) {
+				return (false, false);
+			}
+		}
+
+		bool fromMaster = Bot.Cfg.AcceptFromMasters && masters.Contains(offer.Partner);
+		bool donation = Bot.Cfg.AcceptDonations && offer.IsPureDonation;
+		bool swapWanted = Bot.Cfg.AcceptFairCardSwaps || fleet.Contains(offer.Partner);
+		bool? swap = !fromMaster && !donation && swapWanted ? await FairSwapAsync(offer, ct).ConfigureAwait(false) : false;
+		bool fair = swap == true;
+		bool accept = fromMaster || donation || fair;
+
+		// The swap test couldn't finish: never declined on a guess. Left alone, and judged again at the next look.
+		if (!accept && (swap == null)) {
+			return (false, false);
+		}
+
+		if (!accept && !Bot.Cfg.DeclineOtherTrades) {
+			return (false, false);   // leave it sitting there for the user to look at
+		}
+
+		// Everything waits its turn. The wait is per offer, so two arriving together are not handled together.
+		if (_waiting.Add(offer.Id, DateTime.UtcNow + TradeWait()) && (_waiting.DueOf(offer.Id) is { } due)) {
+			Said what = !accept ? new Said("unwanted") : fromMaster ? new Said("from one of your accounts") : fair ? new Said("a fair card swap") : new Said("a donation");
+			Log.Info(new Said("trade offer #{0} ({1}: {2}) - handling it in {3}", offer.Id, what, offer.Describe, Fmt.Hm((int) Math.Max(1, (due - DateTime.UtcNow).TotalMinutes))), Bot.Name);
+		}
+
+		if ((_waiting.DueOf(offer.Id) is not { } when) || (DateTime.UtcNow < when)) {
+			return (true, false);
+		}
+
+		if (fair && !fromMaster && !donation) {
+			// One swap per look: the next is judged against the cards as they are after this one.
+			if (swappedThisLook) {
+				return (true, false);
+			}
+
+			// Would it sit in a trade hold? Steam only says so up front through its hold lookup - an offer's own
+			// hold date appears once it's already held. A held swap can be cancelled and leaves cards in limbo.
+			TimeSpan? hold = await TradeOffers.HoldAsync(Bot, offer.Partner, ct).ConfigureAwait(false);
+
+			if (hold == null) {
+				return (true, false);   // Steam didn't say - ask again at the next look
+			}
+
+			if (hold > TimeSpan.Zero) {
+				ForgetVerdict(offer.Id);
+				_waiting.Remove(offer.Id);
+				Log.Info(new Said("trade offer #{0} is no longer a fair card swap - {1}; left alone", offer.Id, new Said("the cards would sit in a trade hold")), Bot.Name);
+
+				return (true, false);
+			}
+
+			// Judged again NOW, against the cards held now. The first verdict is minutes old - hours, if it waited
+			// out the night - and other swaps may have moved cards since.
+			(bool? still, Said why) = await FairSwap.JudgeAsync(Bot, offer, Promised(), ct).ConfigureAwait(false);
+
+			if (still != true) {
+				ForgetVerdict(offer.Id);
+				_waiting.Remove(offer.Id);
+
+				if (still == false) {
+					Log.Info(new Said("trade offer #{0} is no longer a fair card swap - {1}; left alone", offer.Id, why), Bot.Name);
+				}
+
+				return (true, false);
+			}
+		}
+
+		bool swapped = false;
+
+		if (accept) {
+			Accepted result = await AcceptAsync(offer, ct).ConfigureAwait(false);
+
+			if (result == Accepted.Failed) {
+				return (true, false);
+			}
+
+			Finish(offer.Id);
+			swapped = fair && !fromMaster && !donation;
+
+			if (swapped) {
+				lock (_fair) {
+					_fair.Clear();   // every other verdict was made against cards that have now changed
+				}
+			}
+
+			if (result == Accepted.Done) {
+				_accepted++;
+				Log.Reward(new Said("accepted trade offer #{0} - {1} item(s) in", offer.Id, offer.Receiving.Sum(static i => i.Amount)), Bot.Name);
+			} else {
+				// Accepted, but nothing moves until it's confirmed. Not a reward yet - and its cards stay promised,
+				// so another swap can't be judged as if they were still here.
+				if (swapped && (FairSwap.CardsOf(offer) is { } cards)) {
+					lock (_promised) {
+						_promised[offer.Id] = cards.Giving;
+					}
+				}
+
+				Log.Warn(result == Accepted.NeedsEmail
+					? new Said("trade offer #{0} was accepted but needs confirming from the email Steam sent", offer.Id)
+					: new Said("trade offer #{0} was accepted but needs confirming on your phone - add this account's mobile authenticator secrets to do that here", offer.Id), Bot.Name);
+			}
+		} else if (await DeclineAsync(offer, ct).ConfigureAwait(false)) {
+			Finish(offer.Id);
+			_declined++;
+			Log.Info(new Said("declined trade offer #{0}", offer.Id), Bot.Name);
+		}
+
+		await Task.Delay(Rng.Seconds(3, 12), ct).ConfigureAwait(false);
+
+		return (true, swapped);
+	}
+
+	private void ForgetVerdict(ulong id) {
+		lock (_fair) {
+			_fair.Remove(id);
+		}
+	}
+
+	private void Finish(ulong id) {
+		lock (_done) {
+			_done.Add(id);
+		}
+
+		_waiting.Remove(id);
+	}
+
+	private List<FairSwap.Card> Promised() {
+		lock (_promised) {
+			return [.. _promised.Values.SelectMany(static c => c)];
+		}
 	}
 
 	/// <summary>
 	/// Whether this is a one-for-one card swap that only helps the sets. Offers whose counts don't even match are
-	/// passed over without reading anything; the rest are read once and the answer kept.
+	/// passed over without reading anything; the rest are judged once here and again at the moment of accepting.
 	/// </summary>
-	private async Task<bool> FairSwapAsync(Offer offer, CancellationToken ct) {
-		if (!Bot.Cfg.AcceptFairCardSwaps || !(offer.GivingCount > 0) || (offer.GivingCount != offer.ReceivingCount)) {
+	/// <returns>Whether it's a fair swap - null when that couldn't be worked out this time.</returns>
+	private async Task<bool?> FairSwapAsync(TradeOffers.Offer offer, CancellationToken ct) {
+		if ((offer.Giving.Count == 0) || (offer.Giving.Count != offer.Receiving.Count)) {
 			return false;
 		}
 
 		lock (_fair) {
-			if (_fair.TryGetValue(offer.Id, out bool known)) {
-				return known;
+			if (_fair.TryGetValue(offer.Id, out (bool Fair, DateTime At) known) && (known.Fair || (DateTime.UtcNow - known.At < NotFairFor))) {
+				return known.Fair;
 			}
 		}
 
-		(bool fair, Said why) = await FairSwap.CheckAsync(Bot, offer.Id, ct).ConfigureAwait(false);
+		(bool? fair, Said why) = await FairSwap.JudgeAsync(Bot, offer, Promised(), ct).ConfigureAwait(false);
 
-		if (!fair) {
+		// Couldn't tell - Steam didn't answer, the inventory didn't read. Not remembered, so the next look tries again.
+		if (fair is not bool verdict) {
+			Log.Debug(new Said("trade offer #{0}: couldn't check it as a card swap yet - {1}", offer.Id, why), Bot.Name);
+
+			return null;
+		}
+
+		bool firstTime;
+
+		lock (_fair) {
+			firstTime = !_fair.ContainsKey(offer.Id);
+			_fair[offer.Id] = (verdict, DateTime.UtcNow);
+		}
+
+		if (!verdict && firstTime) {
 			Log.Info(new Said("trade offer #{0} isn't a fair card swap - {1}; left alone", offer.Id, why), Bot.Name);
 		}
 
-		lock (_fair) {
-			_fair[offer.Id] = fair;
-		}
-
-		return fair;
+		return verdict;
 	}
 
-	private async Task<bool> AcceptAsync(Offer offer, CancellationToken ct) {
+	private enum Accepted { Failed, Done, NeedsPhone, NeedsEmail }
+
+	private async Task<Accepted> AcceptAsync(TradeOffers.Offer offer, CancellationToken ct) {
 		Dictionary<string, string> form = new() {
 			["sessionid"] = Bot.Web.SessionId,
 			["serverid"] = "1",
@@ -251,121 +409,45 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		string? body = await Bot.Web.PostAsync(new Uri(WebSession.Community, $"/tradeoffer/{offer.Id}/accept"), form, referer, ct).ConfigureAwait(false);
 
 		if (body == null) {
-			return false;
+			return Accepted.Failed;
 		}
 
-		// Steam answers with needs_mobile_confirmation when the account has the mobile authenticator on. If we
-		// hold its secrets we can confirm it ourselves; if not, the offer is accepted but sits pending on Steam.
-		if (body.Contains("needs_mobile_confirmation", StringComparison.OrdinalIgnoreCase)) {
-			if (await Bot.ConfirmMobileAsync(offer.Id, true, ct).ConfigureAwait(false)) {
-				return true;
-			}
-
-			Log.Warn(new Said("trade offer #{0} was accepted but needs confirming on your phone - add this account's mobile authenticator secrets to do that here", offer.Id), Bot.Name);
-
-			return true;
+		// Steam says what the accept still needs as true/false flags - reading the key alone called an email
+		// confirmation a phone one.
+		if (Flag(body, "needs_mobile_confirmation")) {
+			return await Bot.ConfirmMobileAsync(offer.Id, true, ct).ConfigureAwait(false) ? Accepted.Done : Accepted.NeedsPhone;
 		}
 
-		// A trade offer accepted successfully answers with JSON carrying the offer id. Treating "any 200 without
+		if (Flag(body, "needs_email_confirmation")) {
+			return Accepted.NeedsEmail;
+		}
+
+		// A trade offer accepted successfully answers with JSON carrying the trade id. Treating "any 200 without
 		// strError" as success meant an HTML refusal page - which is what Steam serves for an expired session or
 		// a rate limit - was logged as a reward for items that never arrived, and never retried.
 		return body.Contains("tradeid", StringComparison.OrdinalIgnoreCase)
-			|| body.Contains("needs_mobile_confirmation", StringComparison.OrdinalIgnoreCase)
 			|| body.Contains("\"success\":1", StringComparison.Ordinal)
-			|| body.Contains("\"success\":true", StringComparison.OrdinalIgnoreCase);
+			|| body.Contains("\"success\":true", StringComparison.OrdinalIgnoreCase)
+			? Accepted.Done
+			: Accepted.Failed;
 	}
 
-	private async Task<bool> DeclineAsync(Offer offer, CancellationToken ct) {
+	/// <summary>A true/1 JSON flag in Steam's answer.</summary>
+	private static bool Flag(string body, string name) {
+		try {
+			using System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(body);
+
+			return doc.RootElement.TryGetProperty(name, out System.Text.Json.JsonElement v)
+				&& ((v.ValueKind == System.Text.Json.JsonValueKind.True) || ((v.ValueKind == System.Text.Json.JsonValueKind.Number) && (v.GetInt32() == 1)));
+		} catch (System.Text.Json.JsonException) {
+			return false;
+		}
+	}
+
+	private async Task<bool> DeclineAsync(TradeOffers.Offer offer, CancellationToken ct) {
 		Dictionary<string, string> form = new() { ["sessionid"] = Bot.Web.SessionId };
 		string? body = await Bot.Web.PostAsync(new Uri(WebSession.Community, $"/tradeoffer/{offer.Id}/decline"), form, new Uri(WebSession.Community, "/profiles/" + Bot.SteamId + "/tradeoffers/"), ct).ConfigureAwait(false);
 
 		return body != null;
 	}
-
-	// ── reading the page ────────────────────────────────────────────────────
-	/// <summary>
-	/// One incoming offer. The counts are nullable on purpose: null means "that side of the page could not be
-	/// read", which must never be mistaken for "that side is empty".
-	/// </summary>
-	private readonly record struct Offer(ulong Id, ulong Partner, int? ReceivingCount, int? GivingCount) {
-		/// <summary>
-		/// Gives up nothing whatsoever - the only shape that can be accepted from a stranger without risk.
-		///
-		/// Both sides must have been positively read. An unreadable giving side is not a donation, and an offer
-		/// that appears to contain nothing at all is not one either.
-		/// </summary>
-		public bool IsPureDonation => (GivingCount == 0) && (ReceivingCount > 0);
-
-		public string Describe => $"+{ReceivingCount?.ToString() ?? "?"} / -{GivingCount?.ToString() ?? "?"}";
-	}
-
-	/// <summary>
-	/// Pull the incoming offers out of the trade offers page.
-	///
-	/// This reads the page a person would look at rather than going through the IEconService API, because that
-	/// API needs a Steam Web API key registered against the account - one more thing to set up, one more thing to
-	/// leak, and one more thing to go stale. The page is already reachable with the session we hold.
-	/// </summary>
-	private static List<Offer> Parse(string html) {
-		List<Offer> offers = [];
-
-		foreach (Match block in OfferBlock().Matches(html)) {
-			if (!ulong.TryParse(block.Groups[1].Value, out ulong id)) {
-				continue;
-			}
-
-			string body = block.Groups[2].Value;
-
-			// An offer that has already been dealt with is still on the page, greyed out.
-			if (body.Contains("tradeoffer_items_banner", StringComparison.Ordinal)) {
-				continue;
-			}
-
-			Match partner = PartnerId().Match(body);
-
-			if (!partner.Success || !ulong.TryParse(partner.Groups[1].Value, out ulong partnerId)) {
-				continue;
-			}
-
-			offers.Add(new Offer(id, partnerId, CountItems(body, "primary"), CountItems(body, "secondary")));
-		}
-
-		return offers;
-	}
-
-	/// <summary>
-	/// Items on one side of the offer, or NULL when that side could not be found at all.
-	///
-	/// The distinction is the whole safety of this module. "You give nothing" and "I could not read the giving
-	/// side" both used to come back as 0, so a single change to Steam's markup would have turned every
-	/// take-my-items offer into something that looked like a donation and got accepted. A side we cannot read is
-	/// now unknown, and unknown is never a donation.
-	/// </summary>
-	private static int? CountItems(string body, string side) {
-		Match section = Regex.Match(body, $"tradeoffer_items {side}(.*?)tradeoffer_items_ctn_end", RegexOptions.Singleline);
-		string text = section.Success ? section.Groups[1].Value : "";
-
-		if (text.Length == 0) {
-			// Fall back to slicing the block at the other side's marker, for the layout without the end marker.
-			int start = body.IndexOf("tradeoffer_items " + side, StringComparison.Ordinal);
-
-			if (start < 0) {
-				return null;   // the side is not on the page in any shape we recognise
-			}
-
-			int end = body.IndexOf("tradeoffer_items ", start + 20, StringComparison.Ordinal);
-			text = end > start ? body[start..end] : body[start..];
-		}
-
-		return TradeItem().Matches(text).Count;
-	}
-
-	[GeneratedRegex("""id="tradeofferid_(\d+)"(.*?)(?=id="tradeofferid_|<div class="pagebtn|\z)""", RegexOptions.Singleline)]
-	private static partial Regex OfferBlock();
-
-	[GeneratedRegex("""steamcommunity\.com/profiles/(\d{17})""")]
-	private static partial Regex PartnerId();
-
-	[GeneratedRegex("""class="trade_item[\s"]""")]
-	private static partial Regex TradeItem();
 }

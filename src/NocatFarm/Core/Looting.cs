@@ -20,7 +20,10 @@ public static partial class Looting {
 	private const uint SteamAppId = 753;
 	private const uint CommunityContext = 6;
 
-	public readonly record struct Item(ulong AssetId, ulong ClassId, ulong InstanceId, uint Amount, string Type, string Name, uint App, uint Context);
+	/// <param name="App">The INVENTORY it sits in - 753 for every card, background and emoticon.</param>
+	/// <param name="Game">The game it belongs to (Steam's market_fee_app): a card's own game, not 753. 0 if Steam didn't say.</param>
+	/// <param name="Tradable">False for a copy that can't be traded yet - it still counts as held, it just can't be offered.</param>
+	public readonly record struct Item(ulong AssetId, ulong ClassId, ulong InstanceId, uint Amount, string Type, string Name, uint App, uint Context, uint Game = 0, bool Tradable = true);
 
 	/// <summary>
 	/// This account's tradable Steam community items: cards, backgrounds, emoticons, boosters.
@@ -101,17 +104,18 @@ public static partial class Looting {
 			}
 
 			// class+instance is what ties an asset to its description; neither alone is unique.
-			Dictionary<string, (bool Tradable, string Type, string Name)> byClass = [];
+			Dictionary<string, (bool Tradable, string Type, string Name, uint Game)> byClass = [];
 
 			foreach ((string key, JsonElement description) in inventory.Descriptions) {
 				bool tradable = description.TryGetProperty("tradable", out JsonElement t) && (t.ValueKind == JsonValueKind.Number ? t.GetInt32() == 1 : t.ValueKind == JsonValueKind.True);
-				byClass[key] = (tradable, Text(description, "type"), Text(description, "name"));
+				uint.TryParse(Text(description, "market_fee_app"), out uint game);
+				byClass[key] = (tradable, Text(description, "type"), Text(description, "name"), game);
 			}
 
 			foreach (JsonElement asset in inventory.Assets) {
 				string key = InventoryContents.KeyOf(asset);
 
-				if (!byClass.TryGetValue(key, out (bool Tradable, string Type, string Name) info) || !info.Tradable) {
+				if (!byClass.TryGetValue(key, out (bool Tradable, string Type, string Name, uint Game) info) || !info.Tradable) {
 					continue;
 				}
 
@@ -123,7 +127,7 @@ public static partial class Looting {
 				ulong.TryParse(Text(asset, "instanceid"), out ulong instanceId);
 				uint.TryParse(Text(asset, "amount"), out uint amount);
 
-				items.Add(new Item(assetId, classId, instanceId, Math.Max(1, amount), info.Type, info.Name, app, context));
+				items.Add(new Item(assetId, classId, instanceId, Math.Max(1, amount), info.Type, info.Name, app, context, info.Game));
 			}
 		} catch (Exception e) {
 			Log.Warn(new Said("couldn't read the inventory: {0}", e.Message), bot.Name);
@@ -402,17 +406,38 @@ public static partial class Looting {
 	/// Steam wants both halves in the same message, so this is the same endpoint as a plain send with the "them"
 	/// side filled in as well.
 	/// </summary>
-	public static async Task<(bool Ok, string Message)> SwapAsync(Bot bot, Bot partner, IReadOnlyCollection<Item> giving, IReadOnlyCollection<Item> taking, CancellationToken ct = default) {
-		if ((giving.Count == 0) || (taking.Count == 0)) {
-			return (false, "a swap needs items on both sides");
+	/// <param name="giving">Paired with <paramref name="taking"/> by position, each pair from the same game - so any run
+	/// of pairs is still one for one within every game, which is how a big swap can be split into several offers.</param>
+	public static async Task<(bool Ok, string Message)> SwapAsync(Bot bot, Bot partner, IReadOnlyList<Item> giving, IReadOnlyList<Item> taking, CancellationToken ct = default) {
+		if ((giving.Count == 0) || (giving.Count != taking.Count)) {
+			return (false, "a swap needs the same number of items on both sides");
 		}
 
 		if (!bot.IsOnline || !bot.Web.Ready) {
 			return (false, $"{bot.Name} isn't logged in");
 		}
 
-		return await SendOfferAsync(bot, partner.SteamId, giving, bot.Cfg.TradeMasterToken, ct, taking).ConfigureAwait(false);
+		// The PARTNER's trade token, read from its own session - this used to send the sender's own "trade master"
+		// token, which belongs to somebody else entirely, so swaps only ever worked between Steam friends.
+		string token = await TradeTokenOfAsync(partner.SteamId, ct).ConfigureAwait(false) ?? "";
+		List<string> results = [];
+		bool anySent = false;
+
+		for (int at = 0; at < giving.Count; at += SwapChunk) {
+			if (at > 0) {
+				await Task.Delay(Rng.Seconds(4, 10), ct).ConfigureAwait(false);
+			}
+
+			(bool ok, string message) = await SendOfferAsync(bot, partner.SteamId, [.. giving.Skip(at).Take(SwapChunk)], token, ct, [.. taking.Skip(at).Take(SwapChunk)]).ConfigureAwait(false);
+			anySent |= ok;
+			results.Add(message);
+		}
+
+		return (anySent, string.Join("; ", results.Distinct()));
 	}
+
+	/// <summary>Card pairs per offer. Steam copes with a few hundred items, but a smaller offer is easier to confirm and less to lose to one refusal.</summary>
+	private const int SwapChunk = 100;
 
 	private static async Task<(bool Ok, string Message)> SendOfferAsync(Bot bot, ulong master, IReadOnlyCollection<Item> items, string accessToken, CancellationToken ct, IReadOnlyCollection<Item>? wanted = null) {
 		StringBuilder assets = new();
@@ -482,10 +507,18 @@ public static partial class Looting {
 				bool needsConfirming = doc.RootElement.TryGetProperty("needs_mobile_confirmation", out JsonElement confirm)
 					&& (confirm.ValueKind == JsonValueKind.True || (confirm.ValueKind == JsonValueKind.Number && confirm.GetInt32() == 1));
 
+				bool needsEmail = doc.RootElement.TryGetProperty("needs_email_confirmation", out JsonElement email)
+					&& (email.ValueKind == JsonValueKind.True || (email.ValueKind == JsonValueKind.Number && email.GetInt32() == 1));
+
+				// Steam doesn't show the offer to anybody until it's confirmed - so "sent" is only the truth once it is.
 				if (needsConfirming && ulong.TryParse(id.GetString() ?? id.ToString(), out ulong offerId)) {
 					if (!await bot.ConfirmMobileAsync(offerId, true, ct).ConfigureAwait(false)) {
 						Log.Warn(new Said("the offer went out but needs confirming on your phone - add this account's authenticator secrets to do that here"), bot.Name);
+
+						return (true, "sent - waiting for you to confirm it in the Steam app on your phone");
 					}
+				} else if (needsEmail) {
+					return (true, "sent - waiting for you to confirm it from the email Steam sent");
 				}
 
 				return (true, "sent");

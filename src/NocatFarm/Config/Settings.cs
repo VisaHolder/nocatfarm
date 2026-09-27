@@ -28,8 +28,8 @@ public enum SettingKind {
 /// read from this list, so a setting has exactly one name and exactly one explanation everywhere it appears.
 /// Adding a knob is a property on the config class plus one line here - nothing else has to know about it.
 ///
-/// The tooltips are compiled into the binary on purpose. ASF-ui scrapes its help text off GitHub's rendered
-/// wiki HTML and has broken twice doing it; these work offline and can't rot.
+/// The tooltips are compiled into the binary on purpose: help text fetched from a web page at runtime breaks the day
+/// that page changes, and these work offline and can't rot.
 /// </summary>
 public sealed record SettingDef(
 	string Name,
@@ -264,8 +264,8 @@ public static class Settings {
 				// Steam's limit is on games played SIMULTANEOUSLY, so it applies to the lists that get played and
 				// to nothing else. Capping a blacklist at 32 rejected a perfectly sensible "never touch these
 				// forty games" - a list whose whole purpose is that they are never played.
-				if (def.Name is "IdleGames" or "OfflineIdleGames" && (apps.Count > Core.SteamIds.MaxGamesPlayedConcurrently)) {
-					return $"Steam only lets an account play {Core.SteamIds.MaxGamesPlayedConcurrently} games at once";
+				if (def.Name is "IdleGames" or "OfflineIdleGames" && (apps.Count > Core.SteamIds.GamesAtOnce)) {
+					return $"Steam only lets an account play {Core.SteamIds.GamesAtOnce} games at once";
 				}
 
 				p.SetValue(config, apps);
@@ -560,7 +560,10 @@ new("PluginsEnabled", "Load plugins", SecDashboard, SettingKind.Bool,
 			"How long the price of anything valuable - worth 2 or more in your market currency - is trusted before it is asked about again. Cheaper items are re-checked less often: twice as long under 2, six times as long under 0.25, and a week for anything with no market listing. They barely move the total, and asking about hundreds of them is what makes the market start refusing. Longer means fewer requests, at the cost of values moving more slowly.",
 			Advanced: true, Min: 1, Max: 168),
 				new("CheckForUpdates", "Notify if an update is available", SecDashboard, SettingKind.Bool,
-			"Look once a day for a newer release and mention it in the log. It only ever tells you - it never downloads, replaces or restarts anything. Something holding the keys to your Steam accounts should not be able to swap its own binary out on a schedule, and an update landing mid-farm is how a session gets lost.",
+			"Look every few hours for a newer release and mention it in the log. It only ever tells you - it never downloads, replaces or restarts anything. Something holding the keys to your Steam accounts should not be able to swap its own binary out on a schedule, and an update landing mid-farm is how a session gets lost.",
+			Advanced: true),
+		new("UpdateReminders", "Remind me every hour", SecDashboard, SettingKind.Bool,
+			"While a newer release is out, say so in the log once an hour, not just once. 'update accept' installs it and restarts; 'update ignore' stops the reminders until the next launch.",
 			Advanced: true),
 		new("MarketCurrency", "Inventory prices in", SecDashboard, SettingKind.Choice,
 			"Which currency inventory values are shown in. Use the same one your Steam store is set to, or the totals will not match what you see on the market. Changing it re-prices everything from scratch.",
@@ -593,6 +596,9 @@ new("PluginsEnabled", "Load plugins", SecDashboard, SettingKind.Bool,
 			"The Steam account name you type when signing in - not your display name and not your email."),
 		new("SteamPassword", "Password", SecAccount, SettingKind.Secret,
 			"Optional. Leave it empty and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password sitting in a file."),
+		new("SignInWithQr", "Sign in with a QR code", SecAccount, SettingKind.Bool,
+			"When this account needs signing in, show a QR code to scan with the Steam app on your phone instead of asking for a password - the account name comes from Steam, so nothing is typed at all. The code shows on the dashboard.",
+			Advanced: true),
 		new("OnlineStatus", "Appear as", SecAccount, SettingKind.Choice,
 			"How this account looks to your friends while nocat.farm runs. Invisible still plays and still farms - nobody just sees it happening. While human mode is on, this is what it shows WHILE PLAYING; human mode takes the rest over by itself - Away on a quick break, Snooze over a meal, offline overnight - so leaving this on Online is the right answer there.",
 			Choices: "0 offline | 1 online | 2 busy | 3 away | 4 snooze | 5 looking to trade | 6 looking to play | 7 invisible"),
@@ -638,6 +644,9 @@ new("PluginsEnabled", "Load plugins", SecDashboard, SettingKind.Bool,
 		new("GameWeights", "Games and how often", SecHuman, SettingKind.Text,
 			"Which games it plays and what share of its time each one gets, as percentages that should add up to about 100. The FIRST game is the main game - the one this account is meant to be into - and its number is the real one: it sets the share the main game holds, rolled within about 10 points of it each day, however many other games you add. Leave a number off and that game takes an even cut of whatever is left. Write \"440:0\" to bench a game without deleting it.",
 			Placeholder: "730:70, 440:20, 550:10", Mode: "legit"),
+		new("HourTargets", "Hour targets", SecHuman, SettingKind.Text,
+			"Hours to reach in a game, optionally by a date: 730:100@2026-12-01 gets Counter-Strike 2 to 100 hours by the 1st of December, 440:50 gets TF2 to 50 whenever. Human mode leans its sittings towards a target - harder the further a dated one falls behind - with the same breaks and bedtime as ever, and a dated target the day alone can't finish joins the overnight games if 'Bank hours overnight' is on. Once reached, the game stops being favoured. 'hours <account>' shows how each is going.",
+			Advanced: true, Placeholder: "730:100@2026-12-01, 440:50", Mode: "legit"),
 
 		// how the day is shaped
 		new("WeekdayHours", "Hours on a weekday", SecHuman, SettingKind.Int,
@@ -760,11 +769,11 @@ new("PluginsEnabled", "Load plugins", SecDashboard, SettingKind.Bool,
 			"Farm cards up to this hour (24-hour clock). Set it earlier than \"from\" and the window wraps past midnight - e.g. 22 to 6 farms overnight only.",
 			Advanced: true, Min: 0, Max: 24),
 		new("PostFarmWindDownMinMinutes", "After the last card, keep playing at least", SecCards, SettingKind.Int,
-			"Human mode only: when a card-farming run finishes, keep that game on for a random time in this range (minutes) before it steps away, instead of quitting the instant the last card drops. Set both to 0 to switch off instantly.",
-			Advanced: true, Min: 0, Max: 120),
+			"Human mode only. When a game gives its last card, it keeps playing that game for a few more minutes - somewhere between these two numbers - then takes a break, like a normal gaming session. The next card game starts after the break. (When cards farm at night or at any time, this happens once, after the very last card.) Default 15 to 20 minutes. Set both to 0 to stop right away.",
+			Min: 0, Max: 120, Mode: "legit"),
 		new("PostFarmWindDownMaxMinutes", "...up to", SecCards, SettingKind.Int,
-			"The top of the post-farming wind-down range, in minutes.",
-			Advanced: true, Min: 0, Max: 240),
+			"The most minutes it keeps playing after the last card.",
+			Min: 0, Max: 240, Mode: "legit"),
 		new("FarmingDelayMinutes", "Re-check every", SecCards, SettingKind.Int,
 			"How often to re-check a game while farming it, in minutes. Drops are pushed by Steam the moment they happen, so this is only a safety net.",
 			Advanced: true, Min: 1, Max: 240),
@@ -845,9 +854,20 @@ new("PluginsEnabled", "Load plugins", SecDashboard, SettingKind.Bool,
 			Advanced: true),
 		new("ClaimEventItems", "Claim free event items", SecExtras, SettingKind.Bool,
 			"Pick up the free sticker Steam gives out every day during a sale, and anything in the Points Shop that costs 0 points. Neither costs anything, and both are gone if nobody collects them. While human mode has the account asleep it waits for morning, unless 'Only react while awake' is off."),
+		new("DiscoveryQueue", "Go through the discovery queue", SecExtras, SettingKind.Choice,
+			"Once a Steam day, look through the store's discovery queue the way a person does - a few seconds on each game, then the next. During a sale that's what earns the event's items and badge progress; outside one it's just something people do. While human mode has the account asleep it waits for morning.",
+			Choices: "0 off | 1 during sales | 2 every day"),
+		new("SellDuplicates", "Sell duplicate cards", SecCards, SettingKind.Bool,
+			"Every 8-14 hours, while the account is awake, list a few spare trading cards on the market a cent under the cheapest listing - with Steam's fees worked out, so the price shown is what you get. Spare means: with a game's whole set it keeps as many copies as badge levels it can still craft, with part of a set it keeps one of each, and once the badge is maxed it keeps none. Foils are never sold. Listings a week old that the market has gone under are taken down and sold again at that day's price. They need confirming on your phone unless this account's authenticator secrets are loaded. 'sell <account>' previews it."),
+		new("SellPerRun", "Cards to list at a time", SecCards, SettingKind.Int,
+			"How many spare cards one round lists, the most valuable first. A few at a time looks like somebody tidying up; a hundred in a minute doesn't.",
+			Advanced: true, Min: 1, Max: 25),
 		new("BoosterGames", "Make booster packs for", SecExtras, SettingKind.Text,
 			"AppIDs to turn gems into booster packs for, comma separated. Steam allows one pack per game a day, only for games this account can still get card drops in, and says when each can be made again - it's made as soon as it can be, though while human mode has the account asleep it waits for morning, unless 'Only react while awake' is off. Empty is off. 'booster <account>' shows the gems and which games qualify.",
 			Advanced: true, Placeholder: "730, 440"),
+		new("BoosterGems", "Booster packs use", SecExtras, SettingKind.Choice,
+			"Which gems a booster pack is made from when the account has both kinds. Tradable first (the default) makes packs you can trade or sell; untradable first uses up gems that can't go anywhere else. If the preferred kind can't cover the price, the other kind is used.",
+			Advanced: true, Choices: "0 tradable gems first | 1 untradable gems first"),
 		new("ClearInventoryNotifications", "Clear the new-items badge", SecExtras, SettingKind.Bool,
 			"Clear Steam's green \"new items\" counter each time a card drops, so your inventory isn't permanently flagged as unread.",
 			Advanced: true),
@@ -931,7 +951,7 @@ new("PluginsEnabled", "Load plugins", SecDashboard, SettingKind.Bool,
 		new("AcceptDonations", "Accept donations", SecTrading, SettingKind.Bool,
 			"Accept trades where this account gives up nothing at all. A donation can only ever gain items and never lose them, so it cannot be used to scam the account - an offer asking for even one item of yours is not a donation and is never accepted here."),
 		new("AcceptFairCardSwaps", "Accept fair card swaps", SecTrading, SettingKind.Bool,
-			"Accept offers from anyone that swap trading cards one for one within the same game, when the swap can only bring this account's sets closer to done - what Steam Trade Matcher users send, and what ArchiSteamFarm's SteamTradeMatcher setting accepts. Anything else in the offer, a foil, or a swap that would take the last copy of a card, and it's left alone. Giving cards away needs the mobile authenticator to confirm."),
+			"Accept offers from anyone that swap trading cards one for one within the same game, when the swap can only bring this account's sets closer to done - the kind card-swapping sites send all day. Every card given away must still have more copies afterwards than any card coming in had before, so no card ever runs out and complete sets never go down. Anything else in the offer, or a foil, and it's left alone. Giving cards away needs the mobile authenticator to confirm."),
 		new("AcceptGiftedGames", "Accept gifted games", SecTrading, SettingKind.Bool,
 			"Add games that friends send this account as gifts straight to its library - what the 'Add to my library' button does. Turn it off to decide each gift yourself (declining one refunds the sender). Each gift waits its own time first ('Accept a gift after'), and for morning while the account sleeps ('Only react while awake')."),
 		new("AcceptGifts", "Accept gifts and guest passes", SecTrading, SettingKind.Bool,

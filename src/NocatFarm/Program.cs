@@ -215,7 +215,8 @@ if (wantWindow) {
 	Log.Suppressed = true;
 	Commands.Window = window;
 
-	window.Start(!global.StartMinimized && !startMinimized);
+	// Hidden at start only with a tray icon to bring it back - without one it was an app with no way to be seen.
+	window.Start(!((global.StartMinimized || startMinimized) && (tray != null)));
 } else {
 	board = new LiveConsole(manager);
 	board.Start();

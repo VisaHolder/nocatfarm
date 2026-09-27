@@ -158,7 +158,7 @@ public static class SelfUpdate {
 			Commands.RequestExit();
 
 			return null;
-		} catch (OperationCanceledException) {
+		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
 			Log.Warn(new Said("update failed: {0}: {1} - nothing has been changed", e.GetType().Name, e.Message));

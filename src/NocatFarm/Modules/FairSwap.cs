@@ -8,12 +8,12 @@ namespace NocatFarm.Modules;
 /// Is this trade offer a fair swap of trading cards - one that can only bring this account's sets closer to done?
 /// </summary>
 /// <remarks>
-/// Steam Trade Matcher users send offers like this all day: your duplicate of card A for their duplicate of card
-/// B, same game, one for one. ArchiSteamFarm accepts them under its SteamTradeMatcher setting, and this is the same
-/// test. Every item on both sides must be an ordinary trading card; each game must get back exactly as many cards
-/// as it gives; and, game by game, the card counts sorted lowest first must never go down at any point along the
-/// way - so a trade can even out duplicates (3 of A and 0 of B becoming 2 and 1) but never take away the last copy
-/// of a card to give you a third of another.
+/// Card-swapping sites send offers like this all day: a spare copy of one card for a card you lack, same game, one
+/// for one. The rule here is our own and deliberately simple to check by hand. Every item on both sides must be an
+/// ordinary trading card, each game must get back as many cards as it gives, and - game by game - every card given
+/// away must still have MORE copies afterwards than any card coming in had before. Copies only ever move from a
+/// bigger pile to a smaller one, which means no card can drop to nothing, the number of different cards held never
+/// shrinks, and the number of complete sets (the smallest pile) can never go down.
 /// </remarks>
 internal static class FairSwap {
 	/// <summary>One trading card: the game it's from and which card it is.</summary>
@@ -26,44 +26,44 @@ internal static class FairSwap {
 			return (false, new Said("one side is empty"));
 		}
 
-		Dictionary<uint, int> given = giving.GroupBy(static c => c.Game).ToDictionary(static g => g.Key, static g => g.Count());
-		Dictionary<uint, int> got = receiving.GroupBy(static c => c.Game).ToDictionary(static g => g.Key, static g => g.Count());
+		foreach (uint game in giving.Select(static c => c.Game).Union(receiving.Select(static c => c.Game))) {
+			// What the trade does to each card of this game: positive comes in, negative goes out.
+			Dictionary<ulong, int> change = [];
 
-		if ((given.Count != got.Count) || given.Any(g => !got.TryGetValue(g.Key, out int n) || (n != g.Value))) {
-			return (false, new Said("not one for one within each game"));
-		}
-
-		foreach (uint game in given.Keys) {
-			HashSet<ulong> cards = [.. ours.Keys.Where(c => c.Game == game).Select(static c => c.ClassId)];
-			cards.UnionWith(giving.Where(c => c.Game == game).Select(static c => c.ClassId));
-			cards.UnionWith(receiving.Where(c => c.Game == game).Select(static c => c.ClassId));
-
-			List<int> before = [];
-			List<int> after = [];
-
-			foreach (ulong card in cards) {
-				int have = ours.TryGetValue(new Card(game, card), out int n) ? n : 0;
-				int now = have - giving.Count(c => (c.Game == game) && (c.ClassId == card)) + receiving.Count(c => (c.Game == game) && (c.ClassId == card));
-
-				if (now < 0) {
-					return (false, new Said("asks for cards this account doesn't have"));
-				}
-
-				before.Add(have);
-				after.Add(now);
+			foreach (Card c in giving.Where(c => c.Game == game)) {
+				change[c.ClassId] = (change.TryGetValue(c.ClassId, out int n) ? n : 0) - 1;
 			}
 
-			before.Sort();
-			after.Sort();
+			foreach (Card c in receiving.Where(c => c.Game == game)) {
+				change[c.ClassId] = (change.TryGetValue(c.ClassId, out int n) ? n : 0) + 1;
+			}
 
-			int ahead = 0;
+			if (change.Values.Sum() != 0) {
+				return (false, new Said("not one for one within each game"));
+			}
 
-			for (int i = 0; i < before.Count; i++) {
-				ahead += after[i] - before[i];
+			int Have(ulong card) => ours.TryGetValue(new Card(game, card), out int n) ? n : 0;
 
-				if (ahead < 0) {
-					return (false, new Said("it would set back the {0} set", GameNames.Of(game)));
+			List<int> goingAfter = [];
+			List<int> comingBefore = [];
+
+			foreach ((ulong card, int delta) in change) {
+				if (delta < 0) {
+					int after = Have(card) + delta;
+
+					if (after < 0) {
+						return (false, new Said("asks for cards this account doesn't have"));
+					}
+
+					goingAfter.Add(after);
+				} else if (delta > 0) {
+					comingBefore.Add(Have(card));
 				}
+			}
+
+			// Copies only from a bigger pile to a smaller one.
+			if ((goingAfter.Count > 0) && (comingBefore.Count > 0) && (goingAfter.Min() <= comingBefore.Max())) {
+				return (false, new Said("it would set back the {0} set", GameNames.Of(game)));
 			}
 		}
 
@@ -71,77 +71,55 @@ internal static class FairSwap {
 	}
 
 	/// <summary>
-	/// Read the offer and this account's cards, and judge it. Anything that can't be read, or isn't all ordinary
-	/// trading cards, is not fair - an offer this can't account for is never accepted on this rule.
+	/// The offer's two sides as cards, or null when anything on it is not an ordinary (non-foil) trading card with a
+	/// known game - a background, an emoticon, a foil, gems, a CS2 skin.
 	/// </summary>
-	internal static async Task<(bool Fair, Said Why)> CheckAsync(Bot bot, ulong offerId, CancellationToken ct) {
-		string? json = await bot.Web.ApiGetAsync("IEconService", "GetTradeOffer", new Dictionary<string, string> {
-			["tradeofferid"] = offerId.ToString(CultureInfo.InvariantCulture),
-			["get_descriptions"] = "1",
-			["language"] = "english"
-		}, ct).ConfigureAwait(false);
+	internal static (List<Card> Giving, List<Card> Receiving)? CardsOf(TradeOffers.Offer offer) {
+		static bool IsCard(TradeOffers.Item i) => (i.App == 753) && (i.Context == "6") && (i.Amount == 1) && (i.Game != 0)
+			&& i.Type.EndsWith("Trading Card", StringComparison.Ordinal) && !i.Type.Contains("Foil", StringComparison.Ordinal);
 
-		if (json == null) {
-			return (false, new Said("Steam didn't answer"));
+		if (!offer.Giving.All(IsCard) || !offer.Receiving.All(IsCard)) {
+			return null;
 		}
 
-		List<Card> giving;
-		List<Card> receiving;
+		return ([.. offer.Giving.Select(static i => new Card(i.Game, i.ClassId))], [.. offer.Receiving.Select(static i => new Card(i.Game, i.ClassId))]);
+	}
 
-		using (JsonDocument doc = JsonDocument.Parse(json)) {
-			if (!doc.RootElement.TryGetProperty("response", out JsonElement response) || !response.TryGetProperty("offer", out JsonElement offer)) {
-				return (false, new Said("Steam has no such offer for this account"));
-			}
+	/// <summary>The ordinary trading cards an offer would take out of this account - whatever else is on it.</summary>
+	internal static List<Card> CardsLeaving(TradeOffers.Offer offer) => [.. offer.Giving
+		.Where(static i => (i.App == 753) && (i.Context == "6") && (i.Game != 0)
+			&& i.Type.EndsWith("Trading Card", StringComparison.Ordinal) && !i.Type.Contains("Foil", StringComparison.Ordinal))
+		.Select(static i => new Card(i.Game, i.ClassId))];
 
-			// What each item is, by class and instance.
-			Dictionary<string, (bool Card, uint Game)> kinds = [];
+	/// <summary>
+	/// Judge an offer against this account's cards as they are right now. Null when that couldn't be worked out -
+	/// looked at again rather than decided on.
+	/// </summary>
+	/// <param name="alsoLeaving">Cards already promised to offers accepted but still waiting on a confirmation. They
+	/// are still in the inventory, but they are going - counting them as held would let two swaps spend one card.</param>
+	internal static async Task<(bool? Fair, Said Why)> JudgeAsync(Bot bot, TradeOffers.Offer offer, IReadOnlyCollection<Card> alsoLeaving, CancellationToken ct) {
+		if (offer.State != TradeOffers.Active) {
+			return (false, new Said("it isn't an active offer any more"));
+		}
 
-			if (response.TryGetProperty("descriptions", out JsonElement descriptions)) {
-				foreach (JsonElement d in descriptions.EnumerateArray()) {
-					string type = Text(d, "type");
-					bool card = type.EndsWith("Trading Card", StringComparison.Ordinal) && !type.Contains("Foil", StringComparison.Ordinal);
-					kinds[$"{Text(d, "classid")}_{Text(d, "instanceid")}"] = (card, Num(Text(d, "market_fee_app")));
-				}
-			}
+		// Steam sometimes leaves descriptions out. That is not "not a card", it's "don't know yet".
+		if (offer.Giving.Concat(offer.Receiving).Any(static i => !i.Described)) {
+			return (null, new Said("Steam didn't say what every item is"));
+		}
 
-			List<Card>? Side(string name) {
-				List<Card> side = [];
-
-				if (!offer.TryGetProperty(name, out JsonElement items)) {
-					return side;   // a side with nothing on it is left out of the answer entirely
-				}
-
-				foreach (JsonElement item in items.EnumerateArray()) {
-					bool community = (Num(Text(item, "appid")) == 753) && (Text(item, "contextid") == "6");
-					string key = $"{Text(item, "classid")}_{Text(item, "instanceid")}";
-
-					if (!community || (Num(Text(item, "amount")) != 1) || !kinds.TryGetValue(key, out (bool Card, uint Game) kind) || !kind.Card || (kind.Game == 0)) {
-						return null;
-					}
-
-					side.Add(new Card(kind.Game, ulong.Parse(Text(item, "classid"), CultureInfo.InvariantCulture)));
-				}
-
-				return side;
-			}
-
-			if ((Side("items_to_give") is not { } give) || (Side("items_to_receive") is not { } receive)) {
-				return (false, new Said("not all ordinary trading cards"));
-			}
-
-			giving = give;
-			receiving = receive;
+		if (CardsOf(offer) is not { } cards) {
+			return (false, new Said("not all ordinary trading cards"));
 		}
 
 		// Quick no before reading the whole inventory.
-		if ((giving.Count == 0) || (giving.Count != receiving.Count)) {
+		if ((cards.Giving.Count == 0) || (cards.Giving.Count != cards.Receiving.Count)) {
 			return (false, new Said("not one for one"));
 		}
 
 		InventoryContents? inventory = await Inventory.ReadAsync(bot, 753, "6", ct).ConfigureAwait(false);
 
 		if (inventory is not { Complete: true }) {
-			return (false, new Said("couldn't read this account's cards"));
+			return (null, new Said("couldn't read this account's cards"));
 		}
 
 		Dictionary<Card, int> ours = [];
@@ -162,7 +140,32 @@ internal static class FairSwap {
 			ours[card] = (ours.TryGetValue(card, out int n) ? n : 0) + amount;
 		}
 
-		return Judge(giving, receiving, ours);
+		foreach (Card leaving in alsoLeaving) {
+			if (ours.TryGetValue(leaving, out int n)) {
+				ours[leaving] = Math.Max(0, n - 1);
+			}
+		}
+
+		return Judge(cards.Giving, cards.Receiving, ours);
+	}
+
+	/// <summary>The same test by offer id - what the 'fairswap' command asks.</summary>
+	internal static async Task<(bool? Fair, Said Why)> CheckAsync(Bot bot, ulong offerId, CancellationToken ct) {
+		(bool answered, TradeOffers.Offer? found) = await TradeOffers.OneAsync(bot, offerId, ct).ConfigureAwait(false);
+
+		if (!answered) {
+			return (null, new Said("Steam didn't answer"));
+		}
+
+		if (found is not { } offer) {
+			return (false, new Said("Steam has no such offer for this account"));
+		}
+
+		if (offer.Ours) {
+			return (false, new Said("that's an offer this account sent"));
+		}
+
+		return await JudgeAsync(bot, offer, [], ct).ConfigureAwait(false);
 	}
 
 	private static string Text(JsonElement e, string name) => InventoryContents.Text(e, name);

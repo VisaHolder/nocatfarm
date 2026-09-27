@@ -66,6 +66,11 @@ public sealed partial class InventoryValue(Bot bot) {
 			return;
 		}
 
+		if (!_snapshotTried) {
+			_snapshotTried = true;
+			LoadSnapshot(maxAge);
+		}
+
 		// The inventory itself changes slowly; prices change daily and are fetched a few at a time, so the two
 		// are on separate clocks - a sweep that only prices things doesn't re-download every inventory.
 		if (DateTime.UtcNow - _readAt > maxAge) {
@@ -104,12 +109,22 @@ public sealed partial class InventoryValue(Bot bot) {
 			return;
 		}
 
+		bool first = true;
+
 		foreach ((uint app, string name, string context) in inventories.Take(MaxInventories)) {
 			ct.ThrowIfCancellationRequested();
 
+			// A gap between games, not only between pages: a dozen inventories fired back to back - times three
+			// accounts starting together - is exactly what got steamcommunity.com shut for everybody.
+			if (!first) {
+				await Task.Delay(Rng.Seconds(3, 6), ct).ConfigureAwait(false);
+			}
+
+			first = false;
+
 			try {
 				await ReadOneAsync(app, name, context, ct).ConfigureAwait(false);
-			} catch (OperationCanceledException) {
+			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
 				Log.Debug(new Said("couldn't read the {0} inventory: {1}", name, e.Message), bot.Name);
@@ -118,6 +133,63 @@ public sealed partial class InventoryValue(Bot bot) {
 
 		_readAt = DateTime.UtcNow;
 		Ready = true;
+		SaveSnapshot();
+	}
+
+	// ── the last read, kept across restarts ─────────────────────────────────
+	// Without it every start re-downloaded every inventory, however recently it had been read - the single biggest
+	// burst of requests a start makes. Holdings only; prices have their own day-long cache.
+	private bool _snapshotTried;
+
+	private sealed record Snapshot(long ReadAt, List<GameSnapshot> Games);
+
+	private sealed record GameSnapshot(uint App, string Game, Dictionary<string, int[]> Items);
+
+	private string SnapshotPath => Path.Combine(Config.ConfigStore.ConfigDir, "state", $"invvalue-{bot.Name}.json");
+
+	private void SaveSnapshot() {
+		try {
+			List<GameSnapshot> games;
+
+			lock (_holdings) {
+				games = [.. _holdings.Select(static h => new GameSnapshot(h.Key, h.Value.Game,
+					h.Value.Items.ToDictionary(static i => i.Key, static i => new[] { i.Value.Count, i.Value.Rank })))];
+			}
+
+			AtomicFile.Write(SnapshotPath, JsonSerializer.Serialize(new Snapshot(_readAt.Ticks, games)));
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			// Next start just reads the inventories again.
+		}
+	}
+
+	private void LoadSnapshot(TimeSpan maxAge) {
+		try {
+			if (!File.Exists(SnapshotPath) || (JsonSerializer.Deserialize<Snapshot>(File.ReadAllText(SnapshotPath)) is not { } snap)) {
+				return;
+			}
+
+			DateTime readAt = new(snap.ReadAt, DateTimeKind.Utc);
+
+			if ((DateTime.UtcNow - readAt > maxAge) || (readAt > DateTime.UtcNow)) {
+				return;
+			}
+
+			lock (_holdings) {
+				_holdings.Clear();
+
+				foreach (GameSnapshot g in snap.Games) {
+					// Whether a game is skipped comes from the settings as they are NOW, not as they were then.
+					_holdings[g.App] = (g.Game, g.Items.Where(static i => i.Value.Length == 2)
+						.ToDictionary(static i => i.Key, static i => new Held(i.Value[0], i.Value[1]), StringComparer.Ordinal),
+						bot.Cfg.InventoryIgnoreGames.Contains(g.App));
+				}
+			}
+
+			_readAt = readAt;
+			Ready = true;
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) {
+			// A bad file is the same as none.
+		}
 	}
 
 	private async Task ReadOneAsync(uint app, string game, string context, CancellationToken ct) {

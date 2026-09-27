@@ -611,6 +611,12 @@
     "{0} card(s) - farming tonight, once it's asleep": "{0} kart - bu gece, uyuduğunda toplanacak",
     "{0} card(s) - farmed in the day's sittings, from morning": "{0} kart - günün oturumlarında, sabahtan itibaren toplanacak",
     "{0} card(s) - farmed in human mode's next sitting": "{0} kart - insan modunun bir sonraki oturumunda toplanacak",
+    "{0} has card drops listed but isn't a game (a sale or event badge) - not farmed": "{0} oyununda düşecek kart görünüyor ama bir oyun değil (indirim veya etkinlik rozeti) - toplanmıyor",
+    "couldn't read the card-page check list: {0}": "kart sayfası kontrol listesi okunamadı: {0}",
+    "couldn't save the card-page check list: {0}": "kart sayfası kontrol listesi kaydedilemedi: {0}",
+    "asleep, the card farmer is working": "uyuyor, kart toplama sürüyor",
+    "last night's plan restored - {0}/{1} played, up about {2}": "dün geceki plan geri yüklendi - {0}/{1} oynandı, yaklaşık {2} kalkacak",
+    "trade offer #{0}: couldn't check it as a card swap yet - {1}": "takas teklifi #{0}: henüz kart takası olarak kontrol edilemedi - {1}",
     "between sittings - {0} card(s) left": "oturumlar arası - {0} kart kaldı",
     "farming cards on {0} · {1} left · {2}/{3} today": "{0} için kart toplanıyor · {1} kaldı · bugün {2}/{3}",
     "farming cards on {0}": "{0} için kart toplanıyor",
@@ -1034,7 +1040,8 @@
     "dropping a queued key - {0}  ({1} left)": "kuyruktaki bir anahtar atılıyor - {0}  ({1} kaldı)",
     "giving up on a key after {0} tries - no account could activate it": "{0} denemeden sonra bir anahtardan vazgeçiliyor - hiçbir hesap etkinleştiremedi",
     "hit {0} activations in {1}m - pausing so Steam doesn't start refusing": "{1}dk içinde {0} etkinleştirmeye ulaşıldı - Steam reddetmeye başlamasın diye duraklatılıyor",
-    "nocat.farm {0} is out - you have {1}. {2}": "nocat.farm {0} çıktı - sende {1} var. {2}",
+    "nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update ignore' stops the hourly reminders until the next launch": "nocat.farm {0} çıktı - sende {1} var. {2}  -  'update accept' kurup yeniden başlatır; 'update ignore' saatlik hatırlatmaları bir sonraki açılışa kadar durdurur",
+    "reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update ignore' stops these reminders until the next launch": "hatırlatma: nocat.farm {0} çıktı - sende {1} var. 'update accept' kurup yeniden başlatır; 'update ignore' bu hatırlatmaları bir sonraki açılışa kadar durdurur",
     "update: downloading {0} ({1}MB)": "güncelleme: {0} indiriliyor ({1}MB)",
     "update: {0} is ready - restarting into it now": "güncelleme: {0} hazır - şimdi yeniden başlatılıyor",
     "update failed: {0}: {1} - nothing has been changed": "güncelleme başarısız: {0}: {1} - hiçbir şey değişmedi",
@@ -1058,6 +1065,12 @@
     "answered Steam Guard from this account's own authenticator": "Steam Guard bu hesabın kendi kimlik doğrulayıcısıyla yanıtlandı",
     "approve this login in the Steam mobile app (or type the code below)": "bu girişi Steam mobil uygulamasında onayla (ya da aşağıya kodu yaz)",
     "authenticated - token stored, the password won't be asked for again": "kimlik doğrulandı - jeton saklandı, parola bir daha sorulmayacak",
+    "nobody scanned the QR code within 5 minutes - stopping. 'start {0}' shows a fresh one": "5 dakika içinde kimse QR kodunu okutmadı - durduruluyor. 'start {0}' yeni bir tane gösterir",
+    "Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty.": "Parola yazmak yerine telefonundaki Steam uygulamasıyla bir kod okut - hesap adı Steam'den gelir, yani yukarıdaki iki kutu boş kalabilir.",
+    "Scan this with the Steam app on your phone to sign {0} in - the Steam Guard tab has the QR scanner.": "{0} oturumunu açmak için bunu telefonundaki Steam uygulamasıyla okut - QR okuyucu Steam Guard sekmesinde.",
+    "Sign in with a QR code": "QR koduyla giriş yap",
+    "{0} is waiting to be signed in: open the dashboard and scan the QR code there with the Steam app on your phone (Steam Guard tab)": "{0} giriş yapılmayı bekliyor: paneli aç ve oradaki QR kodunu telefonundaki Steam uygulamasıyla (Steam Guard sekmesi) okut",
+    "signed in with the QR code as {0} - the login token is stored, nothing to type next time": "QR koduyla {0} olarak giriş yapıldı - giriş belirteci kaydedildi, bir dahaki sefere bir şey yazmak gerekmiyor",
     "config removed - stopping": "yapılandırma kaldırıldı - durduruluyor",
     "connection went quiet - reconnecting": "bağlantı sessizleşti - yeniden bağlanılıyor",
     "couldn't add the notification-area icon - nocatFarm still runs, it just won't show in the tray": "bildirim alanı simgesi eklenemedi - nocatFarm çalışmaya devam ediyor, sadece tepside görünmeyecek",
@@ -1128,7 +1141,26 @@
     "{0} are past the refund window - free to play again": "{0} iade süresini geçti - yeniden oynanabilir",
     "{0} is past the refund window - free to play again": "{0} iade süresini geçti - yeniden oynanabilir",
     "── daily report · last 24h ──": "── günlük rapor · son 24 saat ──",
-    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── günlük rapor · son 24 saat · ilki, \"biriktirildi\" buradan itibaren sayılıyor ──"
+    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── günlük rapor · son 24 saat · ilki, \"biriktirildi\" buradan itibaren sayılıyor ──",
+    "reached {0}h in {1} - that hour target is done": "{1} içinde {0} saate ulaşıldı - bu saat hedefi tamam",
+    "couldn't read the play history: {0}": "oyun geçmişi okunamadı: {0}",
+    "library: {0} played game(s) Steam's owned list left out, added from the play history ({1})": "kütüphane: Steam'in sahip listesinin atladığı {0} oynanmış oyun geçmişten eklendi ({1})",
+    "level plan for {0} is ready - type 'levelup {0} {1}' to see it": "{0} için seviye planı hazır - görmek için 'levelup {0} {1}' yaz",
+    "the discovery queue wasn't available - Steam said {0}": "keşif kuyruğu alınamadı - Steam şunu dedi: {0}",
+    "went through the discovery queue ({0} game(s))": "keşif kuyruğuna göz atıldı ({0} oyun)",
+    "listed {0} duplicate card(s) on the market - {1} to you if they all sell": "{0} kopya kart pazara kondu - hepsi satılırsa sana {1}",
+    "couldn't sell duplicate cards: {0}": "kopya kartlar satılamadı: {0}",
+    "next look for spare cards to sell around {0}": "sıradaki fazla kart bakışı {0} civarı",
+    "it isn't an active offer any more": "artık etkin bir teklif değil",
+    "the cards would sit in a trade hold": "kartlar bir takas bekletmesinde kalırdı",
+    "Steam didn't say what every item is": "Steam her eşyanın ne olduğunu söylemedi",
+    "that's an offer this account sent": "bu hesabın gönderdiği bir teklif",
+    "{0} to confirm on your phone": "telefonda onaylanacak {0}",
+    "couldn't handle trade offer #{0}: {1}: {2}": "takas teklifi #{0} işlenemedi: {1}: {2}",
+    "trade offer #{0} is no longer a fair card swap - {1}; left alone": "takas teklifi #{0} artık adil bir kart takası değil - {1}; bırakıldı",
+    "trade offer #{0} was accepted but needs confirming from the email Steam sent": "takas teklifi #{0} kabul edildi ama Steam'in gönderdiği e-postadan onaylanması gerekiyor",
+    "got the last card from {0} - playing on for about {1}, then a break": "{0} oyunundan son kart alındı - yaklaşık {1} daha oynayıp mola verecek",
+    "finished - logging out after this sitting": "bitti - bu oturumdan sonra çıkış yapacak"
   },
   "settings": {
     "WebEnabled": {
@@ -1256,6 +1288,10 @@
       "label": "Parola",
       "tip": "İsteğe bağlı. Boş bırak; nocat.farm bir kez sorar, sonra hesabı bir giriş anahtarıyla hatırlar - iki seçenekten daha güvenli olanı."
     },
+    "SignInWithQr": {
+      "label": "QR koduyla giriş yap",
+      "tip": "Bu hesabın girişi gerektiğinde parola sormak yerine telefonundaki Steam uygulamasıyla okutulacak bir QR kodu göster - hesap adı Steam'den gelir, yani hiçbir şey yazılmaz. Kod panelde görünür."
+    },
     "OnlineStatus": {
       "label": "Şöyle görün",
       "tip": "Başkalarının seni nasıl gördüğü: çevrimiçi, uzakta, meşgul veya görünmez. Görünmez modda saatler birikmeye devam eder ve kimse bir şey görmez.",
@@ -1289,6 +1325,10 @@
     "GameWeights": {
       "label": "Oyunlar ve ne sıklıkta",
       "tip": "Hangi oyunları oynadığı ve her birinin zamanının ne kadarını aldığı - toplamı yaklaşık 100 olması gereken yüzdeler halinde. İLK oyun ana oyundur (bu hesabın sevdiği varsayılan oyun) ve asıl geçerli sayı onunkidir: ana oyunun tuttuğu payı belirler, kaç oyun eklerseniz ekleyin korunur ve her gün bu değerin yaklaşık 10 puan çevresinde belirlenir. Sayı yazmazsanız o oyun kalanı eşit olarak paylaşır. Bir oyunu silmeden kenara almak için \"440:0\" yazın."
+    },
+    "HourTargets": {
+      "label": "Saat hedefleri",
+      "tip": "Bir oyunda ulaşılacak saat, isteğe bağlı olarak bir tarihe kadar: 730:100@2026-12-01 Counter-Strike 2'yi 1 Aralık'a kadar 100 saate, 440:50 TF2'yi ne zaman olursa 50 saate çıkarır. İnsan modu oturumlarını hedefe doğru kaydırır - tarihli bir hedef ne kadar gerideyse o kadar güçlü - molalar ve yatış saati her zamanki gibi kalır; gündüz oyunuyla yetişemeyecek tarihli bir hedef, 'Gece saat biriktir' açıksa gece oyunlarına katılır. Ulaşıldığında oyun artık öne çıkarılmaz. 'hours <hesap>' her birinin durumunu gösterir."
     },
     "WeekdayHours": {
       "label": "Hafta içi saat",
@@ -1471,7 +1511,7 @@
     },
     "AcceptFairCardSwaps": {
       "label": "Adil kart takaslarını kabul et",
-      "tip": "Aynı oyun içinde koleksiyon kartlarını bire bir değiştiren ve bu hesabın setlerini yalnızca tamamlanmaya yaklaştırabilen teklifleri herkesten kabul eder - Steam Trade Matcher kullanıcılarının gönderdiği ve ArchiSteamFarm'ın SteamTradeMatcher ayarının kabul ettiği şey. Teklifte başka bir şey, parlak bir kart ya da bir kartın son kopyasını alacak bir takas varsa dokunulmaz. Kart vermek mobil doğrulayıcıyla onaylanmalıdır."
+      "tip": "Aynı oyun içinde kartları bire bir takas eden teklifleri, takas bu hesabın setlerini yalnızca tamamlamaya yaklaştırıyorsa herkesten kabul eder - kart takas sitelerinin bütün gün gönderdiği türden. Verilen her kartın takastan sonra, gelen herhangi bir kartın takastan önceki sayısından daha fazla kopyası kalmalıdır; böylece hiçbir kart tükenmez ve tamamlanmış setler asla azalmaz. Teklifte başka bir şey ya da parlak kart varsa, olduğu gibi bırakılır. Kart vermek mobil doğrulayıcı onayı gerektirir."
     },
     "AcceptGifts": {
       "label": "Hediyeleri ve misafir kartlarını kabul et",
@@ -1527,8 +1567,12 @@
       "label": "Envanterinin ne ettiğini hesapla"
     },
     "CheckForUpdates": {
-      "tip": "Günde bir kez daha yeni bir sürüm var mı diye bakar ve günlükte söyler. Yalnızca söyler: hiçbir şeyi indirmez, değiştirmez, yeniden başlatmaz.",
+      "tip": "Birkaç saatte bir daha yeni bir sürüm var mı diye bak ve günlükte belirt. Yalnızca haber verir - asla bir şey indirmez, değiştirmez ya da yeniden başlatmaz. Steam hesaplarının anahtarlarını tutan bir şey kendi programını bir zamanlamaya göre değiştirememeli; toplama sırasında gelen bir güncelleme oturumun kaybedilmesi demektir.",
       "label": "Güncelleme varsa haber ver"
+    },
+    "UpdateReminders": {
+      "label": "Her saat hatırlat",
+      "tip": "Daha yeni bir sürüm varken bunu günlükte bir kez değil, saatte bir söyle. 'update accept' kurup yeniden başlatır; 'update ignore' hatırlatmaları bir sonraki açılışa kadar durdurur."
     },
     "BreakMinMinutes": {
       "label": "En kısa mola",
@@ -1586,11 +1630,11 @@
     },
     "PostFarmWindDownMinMinutes": {
       "label": "Son karttan sonra en az şu kadar devam et",
-      "tip": "Yalnızca insan modu: bir toplama turu bittiğinde, aynı saniye kapatmak yerine o oyunu bu aralıkta rastgele bir süre (dakika) açık tutar."
+      "tip": "Yalnızca insan modunda. Bir oyun son kartını verdiğinde o oyunu birkaç dakika daha oynar - bu iki sayı arasında bir süre - sonra normal bir oyun oturumundaki gibi mola verir. Sıradaki kartlı oyun moladan sonra başlar. (Kartlar gece ya da her zaman toplanıyorsa bu, en son karttan sonra bir kez olur.) Varsayılan 15 ile 20 dakika. Hemen durması için ikisini de 0 yap."
     },
     "PostFarmWindDownMaxMinutes": {
       "label": "...şu kadara kadar",
-      "tip": "Toplama sonrası bu yavaşlama süresinin üst sınırı, dakika."
+      "tip": "Son karttan sonra oynamaya devam ettiği en fazla dakika."
     },
     "FarmingDelayMinutes": {
       "label": "Şu sıklıkta yeniden bak",
@@ -1668,9 +1712,27 @@
       "label": "Ücretsiz etkinlik eşyalarını al",
       "tip": "Steam'in indirim sırasında her gün dağıttığı ücretsiz çıkartmayı ve puan dükkânında 0 puan olan her şeyi alır. Hiçbiri bir şeye mal olmaz ve kimse almazsa kaybolur. İnsan modu hesabı uyuturken sabahı bekler; 'Yalnızca uyanıkken tepki ver' kapalıysa beklemez."
     },
+    "DiscoveryQueue": {
+      "label": "Keşif kuyruğuna göz at",
+      "tip": "Her Steam gününde bir kez, mağazanın keşif kuyruğuna bir insan gibi göz atar - her oyunda birkaç saniye, sonra sıradaki. İndirim sırasında etkinlik eşyalarını ve rozet ilerlemesini kazandıran budur; dışında ise insanların yaptığı sıradan bir şeydir. İnsan modu hesabı uyuttuğu sürece sabahı bekler.",
+      "choices": "0 kapalı | 1 indirimlerde | 2 her gün"
+    },
+    "SellDuplicates": {
+      "label": "Kopya kartları sat",
+      "tip": "Hesap uyanıkken her 8-14 saatte bir, birkaç fazla koleksiyon kartını en ucuz ilanın bir kuruş altına pazara koyar - Steam ücretleri hesaba katılır, yani gösterilen fiyat eline geçendir. Fazla demek: bir oyunun setinin tamamı varsa hâlâ üretebileceği rozet seviyesi kadar kopya tutar; setin bir kısmı varsa her birinden bir tane; rozet maksimumsa hiç. Parlak kartlar asla satılmaz. Pazarın altına indiği bir haftalık ilanlar kaldırılır ve günün fiyatından yeniden konur. Bu hesabın doğrulayıcı sırları yüklü değilse telefondan onaylanmaları gerekir. 'sell <hesap>' önizleme gösterir."
+    },
+    "SellPerRun": {
+      "label": "Seferde kart sayısı",
+      "tip": "Bir seferde kaç fazla kartın konacağı, en değerliler önce. Birkaç tane bir anda toparlanan birine benzer; bir dakikada yüz tane benzemez."
+    },
     "BoosterGames": {
       "label": "Kart paketi oluşturulacak oyunlar",
       "tip": "Değerli taşların kart paketine çevrileceği AppID'ler, virgülle ayrılmış. Steam oyun başına günde bir pakete, yalnızca bu hesabın hâlâ kart düşürebildiği oyunlar için izin verir ve bir sonrakinin ne zaman yapılabileceğini söyler - mümkün olur olmaz oluşturulur; insan modu hesabı uyuturken sabahı bekler, 'Yalnızca uyanıkken tepki ver' kapalıysa beklemez. Boş bırakmak kapatır. 'booster <hesap>' değerli taşları ve uygun oyunları gösterir."
+    },
+    "BoosterGems": {
+      "label": "Kart paketleri şunu kullansın",
+      "tip": "Hesapta iki tür mücevher de varken kart paketinin hangi mücevherlerden yapılacağı. Önce takas edilebilir (varsayılan) takas edebileceğin veya satabileceğin paketler yapar; önce takas edilemez başka hiçbir yere gidemeyen mücevherleri harcar. Tercih edilen tür fiyatı karşılamazsa diğeri kullanılır.",
+      "choices": "0 önce takas edilebilir mücevherler | 1 önce takas edilemez mücevherler"
     },
     "ClearInventoryNotifications": {
       "label": "Yeni eşya rozetini temizle",

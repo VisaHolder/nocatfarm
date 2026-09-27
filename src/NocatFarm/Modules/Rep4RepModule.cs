@@ -253,7 +253,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 				// The whole module can sit silent for a day when there is nothing to do, which is
 				// indistinguishable from a module that has stopped running. One Debug line per pass says which.
 				Log.Debug(new Said("rep4rep: {0} - next look in {1}", _status, Fmt.Hm(Math.Max(60, waitSeconds) / 60)), Bot.Name);
-			} catch (OperationCanceledException) {
+			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
 				// NEVER silent: a throwing step is indistinguishable from "nothing to do" - no post, no log, forever.

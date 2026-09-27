@@ -297,6 +297,9 @@ nav { display: flex; flex-direction: row; gap: var(--s1); flex: 0 0 auto; }
 .alert.accent { background: var(--accent-glow); border-color: var(--accent-dim); color: var(--text); }
 .alert input { max-width: 190px; }
 .alert .spacer { flex: 1; }
+/* A QR code to scan: on white whatever the theme, since that's what phone cameras read best. */
+.alert.qr { align-items: center; gap: 14px; }
+.alert.qr img { background: #fff; padding: 6px; border-radius: 6px; flex: none; }
 
 /* ── cards & layout ────────────────────────────────────────────────── */
 .card {

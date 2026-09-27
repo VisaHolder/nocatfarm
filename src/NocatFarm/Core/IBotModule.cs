@@ -46,8 +46,9 @@ public abstract class BotModule(Bot bot) : IBotModule {
 		_ = Task.Run(async () => {
 			try {
 				await RunAsync(ct).ConfigureAwait(false);
-			} catch (OperationCanceledException) {
-				// normal shutdown
+			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+				// normal shutdown - and only that: a request that timed out is an OperationCanceledException too, and
+				// taking one of those for a shutdown is how a module used to stop without a single word in the log
 			} catch (Exception e) {
 				// never silent: a module dying quietly is the worst failure mode there is
 				Log.Error(new Said("module '{0}' stopped: {1}: {2}", Name, e.GetType().Name, e.Message), Bot.Name);

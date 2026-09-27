@@ -242,12 +242,11 @@ public sealed class Bot : IAsyncDisposable {
 	///
 	/// Defaults to the PC's own name rather than nothing. Steam shows this in Settings > Security > Authorised
 	/// Devices, so an account with several sessions on it is a list a person has to make sense of - and a blank
-	/// entry there tells them nothing at all. ArchiSteamFarm sends the machine name too, and a session that
-	/// identifies itself the way every other client does is the one least likely to be mistaken for something
-	/// that needs displacing.
+	/// entry there tells them nothing at all. A session that identifies itself the way every other client does is the
+	/// one least likely to be mistaken for something that needs displacing.
 	///
-	/// Both places get the SAME value, which ASF also does. Handing Steam one name while authorising and a
-	/// different one while logging on describes two devices, and there is only ever one.
+	/// Both places get the SAME value. Handing Steam one name while authorising and a different one while logging on
+	/// describes two devices, and there is only ever one.
 	/// </summary>
 	public string DeviceName => string.IsNullOrWhiteSpace(Cfg.MachineName) ? Environment.MachineName : Cfg.MachineName;
 
@@ -351,16 +350,23 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		try {
-			long time = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 			string device = MobileAuth.DeviceId(SteamId);
+			MobileAuth.Pending match = default;
 
-			string? html = await Web.GetAsync(BuildConfirmationUri("getlist", identity, time, device), ct).ConfigureAwait(false);
+			// Steam can take a few seconds to list a confirmation it has only just created, so an empty first look
+			// is asked again rather than reported as "confirm it on your phone".
+			for (int attempt = 0; (attempt < 3) && (match.Id == 0); attempt++) {
+				if (attempt > 0) {
+					await Task.Delay(Rng.Seconds(3, 6), ct).ConfigureAwait(false);
+				}
 
-			if (string.IsNullOrEmpty(html)) {
-				return false;
+				long time = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+				string? html = await Web.GetAsync(BuildConfirmationUri("getlist", identity, time, device), ct).ConfigureAwait(false);
+
+				if (!string.IsNullOrEmpty(html)) {
+					match = MobileAuth.ParseConfirmations(html).FirstOrDefault(p => p.CreatorId == tradeOfferId);
+				}
 			}
-
-			MobileAuth.Pending match = MobileAuth.ParseConfirmations(html).FirstOrDefault(p => p.CreatorId == tradeOfferId);
 
 			if (match.Id == 0) {
 				return false;   // nothing pending for this offer - it may already have gone through
@@ -484,14 +490,18 @@ public sealed class Bot : IAsyncDisposable {
 	/// </summary>
 	public bool InResumeGrace => IsOnline && !Paused && !PlayingBlocked && (DateTime.UtcNow < _resumeAt);
 
-	/// <summary>Does this account already have that package? Stops free-game claiming wasting an activation.</summary>
+	/// <summary>
+	/// Does this account already have that package? Stops free-game claiming wasting an activation. Only its OWN
+	/// licences count: Steam Families put the family's licences in the list too, and taking a borrowed free game
+	/// for real is exactly the point.
+	/// </summary>
 	public bool OwnsPackage(uint packageId) {
 		lock (_licenses) {
-			return _licenses.ContainsKey(packageId);
+			return _licenses.TryGetValue(packageId, out (DateTime Created, ulong Token, bool Paid, bool Own) license) && license.Own;
 		}
 	}
 
-	private readonly Dictionary<uint, (DateTime Created, ulong Token, bool Paid)> _licenses = [];
+	private readonly Dictionary<uint, (DateTime Created, ulong Token, bool Paid, bool Own)> _licenses = [];
 	private Dictionary<uint, AppOwnership>? _appOwnedSince;
 	private int _licenseGeneration;
 	private DateTime _resumeAt = DateTime.MinValue;
@@ -526,6 +536,9 @@ public sealed class Bot : IAsyncDisposable {
 	private Task? _pump;
 	private Timer? _heartbeat;
 	private volatile bool _running;
+
+	/// <summary>Started and not stopped - signed in, signing in, reconnecting or sitting out a cooldown alike.</summary>
+	public bool Running => _running;
 	private string? _guardPrompt;
 	private string? _refreshToken;
 
@@ -685,6 +698,9 @@ public sealed class Bot : IAsyncDisposable {
 	public long WalletPendingCents { get; private set; }
 
 	public ECurrencyCode WalletCurrency { get; private set; } = ECurrencyCode.Invalid;
+
+	/// <summary>The country Steam placed this sign-in in ("US", "CA"...) - what the store's own requests send. Empty until signed in.</summary>
+	public string Country { get; private set; } = "";
 
 	private void OnWalletInfo(SteamUser.WalletInfoCallback cb) {
 		if (!cb.HasWallet) {
@@ -1205,6 +1221,83 @@ public sealed class Bot : IAsyncDisposable {
 		}
 	}
 
+	/// <summary>The link a QR sign-in is waiting on (what the code encodes), or null. The dashboard draws it.</summary>
+	public string? QrChallenge { get; private set; }
+
+	/// <summary>Goes up each time Steam hands out a fresh code, so the dashboard knows to redraw it.</summary>
+	public int QrVersion { get; private set; }
+
+	/// <summary>
+	/// Sign in by QR: Steam gives a code, the owner scans it with the Steam mobile app and approves, and Steam hands
+	/// back this account's login token - and its real account name, so nothing has to be typed at all. Steam
+	/// refreshes the code now and then; each one is shown as it comes. Nobody scanning within five minutes stops the
+	/// account rather than keeping a sign-in open indefinitely.
+	/// </summary>
+	/// <returns>Whether it signed in.</returns>
+	private async Task<bool> SignInWithQrAsync() {
+		State = BotState.NeedsGuard;
+		_guardPrompt = "scan the QR code with the Steam app";
+		StatusText = "waiting for the QR code to be scanned";
+
+		using CancellationTokenSource giveUp = new(TimeSpan.FromMinutes(5));
+
+		try {
+			QrAuthSession session = await Client.Authentication.BeginAuthSessionViaQRAsync(new AuthSessionDetails {
+				IsPersistentSession = true,
+				DeviceFriendlyName = DeviceName
+			}).ConfigureAwait(false);
+
+			// Shown on the dashboard only - it's a picture to point a phone at, and Steam swaps it for a fresh one every
+			// half minute or so, which drawn into the log was a wall of blocks. Said once here where to find it.
+			ShowQr(session.ChallengeURL);
+			session.ChallengeURLChanged = () => ShowQr(session.ChallengeURL);
+			Log.Attention(new Said("{0} is waiting to be signed in: open the dashboard and scan the QR code there with the Steam app on your phone (Steam Guard tab)", Name), Name);
+
+			AuthPollResult poll = await session.PollingWaitForResultAsync(giveUp.Token).ConfigureAwait(false);
+			QrChallenge = null;
+
+			// The account name comes from Steam - "add <name> qr" never asked for one.
+			if (!string.IsNullOrEmpty(poll.AccountName) && !string.Equals(Cfg.SteamLogin, poll.AccountName, StringComparison.OrdinalIgnoreCase)) {
+				Cfg.SteamLogin = poll.AccountName;
+				ConfigStore.SaveBot(Name, Cfg);
+			}
+
+			_refreshToken = poll.RefreshToken;
+			TokenStore.Save(Name, _refreshToken);
+
+			if (!string.IsNullOrEmpty(poll.AccessToken)) {
+				SetAccessToken(poll.AccessToken);
+				TokenStore.SaveAccess(Name, poll.AccessToken);
+			}
+
+			Log.Good(new Said("signed in with the QR code as {0} - the login token is stored, nothing to type next time", poll.AccountName), Name);
+
+			return true;
+		} catch (OperationCanceledException) when (giveUp.IsCancellationRequested) {
+			QrChallenge = null;
+			_running = false;
+			State = BotState.Failed;
+			StatusText = "QR code not scanned";
+			Log.Attention(new Said("nobody scanned the QR code within 5 minutes - stopping. 'start {0}' shows a fresh one", Name), Name);
+
+			return false;
+		} catch when (!_running) {
+			// Stopped or removed while the code was up - that ends the sign-in, it isn't a failure.
+			QrChallenge = null;
+
+			return false;
+		} catch {
+			QrChallenge = null;
+
+			throw;   // like a failed password sign-in: the caller logs it and the reconnect tries again
+		}
+	}
+
+	private void ShowQr(string url) {
+		QrChallenge = url;
+		QrVersion++;
+	}
+
 	private async Task LogInAsync() {
 		// Steam can drop an idle pre-login connection (TryAnotherCM) while somebody is still typing a password,
 		// which reconnects and would otherwise queue a SECOND prompt behind the first. One attempt at a time.
@@ -1219,6 +1312,11 @@ public sealed class Bot : IAsyncDisposable {
 			// new web session on the spot. Nulls out silently if it is already past its life.
 			if ((_accessToken == null) && TokenStore.LoadAccess(Name) is { } stored) {
 				SetAccessToken(stored);
+			}
+
+			// Signed in by scanning a QR code with the Steam app instead - no password at all.
+			if (string.IsNullOrEmpty(_refreshToken) && Cfg.SignInWithQr && !await SignInWithQrAsync().ConfigureAwait(false)) {
+				return;
 			}
 
 			if (string.IsNullOrEmpty(_refreshToken)) {
@@ -1286,8 +1384,8 @@ public sealed class Bot : IAsyncDisposable {
 				TokenStore.Save(Name, _refreshToken);
 
 				// The login just handed us a web access token as well. Keep it. Using the token that came WITH the
-				// session - exactly as ArchiSteamFarm does - means we never have to mint a separate one, and a
-				// separately minted web token is what was evicting the owner's Friends & Chat.
+				// session means we never have to mint a separate one, and a separately minted web token is what was
+				// evicting the owner's Friends & Chat.
 				if (!string.IsNullOrEmpty(poll.AccessToken)) {
 					SetAccessToken(poll.AccessToken);
 					TokenStore.SaveAccess(Name, poll.AccessToken);
@@ -1329,9 +1427,9 @@ public sealed class Bot : IAsyncDisposable {
 				// DesktopUI. Named only from SteamKit 3.4 on - we are on 3.3, where the enum stops at 6 - but
 				// the cast serialises as 7 regardless, which is all Steam sees.
 				//
-				// Verified rather than reasoned: ArchiSteamFarm sets both of these, and running it against the
-				// same account did NOT evict the client, even while farming with the owner manually invisible.
-				// Ours set neither and evicted every time. Those were the only two differences in the logon.
+				// Verified rather than reasoned: a logon with both of these set, against the same account, did NOT
+				// evict the owner's client, even while farming with the owner manually invisible. Ours set neither and
+				// evicted every time. Those were the only two differences in the logon.
 				ChatMode = SteamUser.ChatMode.NewSteamChat,
 				UIMode = (EUIMode) Math.Clamp(Cfg.UIMode, 0, 7),
 
@@ -1372,6 +1470,10 @@ public sealed class Bot : IAsyncDisposable {
 	private async Task OnLoggedOnAsync(SteamUser.LoggedOnCallback cb) {
 		_lastPacket = DateTime.UtcNow;
 		_lastLogOnResult = cb.Result > EResult.OK ? cb.Result : EResult.Invalid;
+
+		if (!string.IsNullOrEmpty(cb.IPCountryCode)) {
+			Country = cb.IPCountryCode;
+		}
 
 		if (cb.Result != EResult.OK) {
 			if (cb.Result == EResult.TryAnotherCM) {
@@ -1422,7 +1524,7 @@ public sealed class Bot : IAsyncDisposable {
 			// offline". Nothing was ever evicted, which is why the client's connection log showed one unbroken
 			// session across every occurrence and why a whole afternoon of changes to the LOGON did nothing.
 			//
-			// ArchiSteamFarm announces its persona on every logon and has never had this problem. So do we now.
+			// Announcing the persona on every logon is what a normal client does, and it's what fixed this.
 			ApplyPersona();
 		} catch {
 			// persona state is cosmetic - never let it stop the login
@@ -1431,8 +1533,8 @@ public sealed class Bot : IAsyncDisposable {
 		// NOT forced. A forced refresh mints a brand-new web token on every single logon, and a new web token is a
 		// new web session that shoves the account's own Steam client out of Friends & Chat. Passing false lets an
 		// access token that is still good - the one from this very login, or the one a previous run persisted -
-		// be reused as-is, so most logons create no new web session at all. This is the ArchiSteamFarm behaviour
-		// and it is the difference between coexisting with the owner's client and evicting it.
+		// be reused as-is, so most logons create no new web session at all. That is the difference between coexisting
+		// with the owner's client and evicting it.
 		if (!await Web.RefreshAsync(false).ConfigureAwait(false)) {
 			Log.Warn("couldn't establish a Steam web session - card farming and commenting will retry", Name);
 		}
@@ -1694,8 +1796,8 @@ public sealed class Bot : IAsyncDisposable {
 		//
 		// This was removed once, on the belief that re-asserting the persona was what signed the owner out of
 		// Friends & Chat. That belief was wrong. The eviction came from the friend-data SELF-POLL (see the
-		// disabled block below), not from setting a persona - ArchiSteamFarm sets personas freely and never
-		// evicts anyone. Setting our own status is safe; asking the friends service about ourselves was not.
+		// disabled block below), not from setting a persona - a session can set its persona freely without evicting
+		// anyone. Setting our own status is safe; asking the friends service about ourselves was not.
 		//
 		// Skipped while the owner is actually on the account (PlayingBlocked) - when they are using it, their
 		// client owns the status and we do not fight it. Every ~60s is plenty; the heartbeat itself is far
@@ -1736,11 +1838,11 @@ public sealed class Bot : IAsyncDisposable {
 		//
 		// It asked Steam, once a minute, for this account's OWN friend/persona data, to keep the "what your
 		// friends see" readout fresh. No real Steam client ever asks the friends service about ITSELF - you are
-		// not your own friend - and ArchiSteamFarm never does it either. Requesting it from a second session
+		// not your own friend. Requesting it from a second session
 		// appears to make Steam treat that session as the account's active friends session and drop the real
 		// client's, which is the eviction: the CM connection survives (only this friends request is involved),
 		// the client's friends websocket goes quiet, and the panel shows "signed out". It was the only periodic,
-		// account-specific, friends-subsystem message we sent that ASF does not - proven by capturing both.
+		// account-specific, friends-subsystem message we sent - proven by packet capture with and without it.
 		//
 		// The readout it fed is cosmetic. Steam still pushes this account's persona on a real change (game start,
 		// status change), and OnPersonaState already handles those, so the readback degrades to "updates when it
@@ -1839,6 +1941,15 @@ public sealed class Bot : IAsyncDisposable {
 		}
 	}
 
+	/// <summary>Goes up every time Steam sends the licence list - on sign-in, and whenever a game is added.</summary>
+	public int LicenseGeneration {
+		get {
+			lock (_licenses) {
+				return _licenseGeneration;
+			}
+		}
+	}
+
 	private void OnLicenseList(SteamApps.LicenseListCallback cb) {
 		if (cb.Result != EResult.OK) {
 			return;
@@ -1846,7 +1957,9 @@ public sealed class Bot : IAsyncDisposable {
 
 		lock (_licenses) {
 			foreach (SteamApps.LicenseListCallback.License license in cb.LicenseList) {
-				_licenses[license.PackageID] = (license.TimeCreated, license.AccessToken, IsPaid(license.PaymentMethod));
+				// A family member's licence carries their account ID; ours carries ours (or 0 on older licences).
+				bool own = (license.OwnerAccountID == 0) || (license.OwnerAccountID == (uint) (SteamId & 0xFFFFFFFF));
+				_licenses[license.PackageID] = (license.TimeCreated, license.AccessToken, IsPaid(license.PaymentMethod), own);
 			}
 
 			_appOwnedSince = null;   // the mapping is stale now
@@ -1876,7 +1989,7 @@ public sealed class Bot : IAsyncDisposable {
 	/// Returns empty on any failure, which means "don't skip anything" rather than "skip everything".
 	/// </summary>
 	internal async Task<IReadOnlyDictionary<uint, AppOwnership>> GetAppOwnershipAsync() {
-		Dictionary<uint, (DateTime Created, ulong Token, bool Paid)> snapshot;
+		Dictionary<uint, (DateTime Created, ulong Token, bool Paid, bool Own)> snapshot;
 		int generation;
 
 		lock (_licenses) {
@@ -1884,7 +1997,7 @@ public sealed class Bot : IAsyncDisposable {
 				return _appOwnedSince;
 			}
 
-			snapshot = new Dictionary<uint, (DateTime, ulong, bool)>(_licenses);
+			snapshot = new Dictionary<uint, (DateTime, ulong, bool, bool)>(_licenses);
 			generation = _licenseGeneration;
 		}
 
@@ -1907,7 +2020,7 @@ public sealed class Bot : IAsyncDisposable {
 
 			foreach (SteamApps.PICSProductInfoCallback page in pages) {
 				foreach (SteamApps.PICSProductInfoCallback.PICSProductInfo package in page.Packages.Values) {
-					if (!snapshot.TryGetValue(package.ID, out (DateTime Created, ulong Token, bool Paid) license)) {
+					if (!snapshot.TryGetValue(package.ID, out (DateTime Created, ulong Token, bool Paid, bool Own) license)) {
 						continue;
 					}
 
@@ -1923,11 +2036,12 @@ public sealed class Bot : IAsyncDisposable {
 						// Earliest licence wins - that's when you really got it. A game can also arrive twice (a free
 						// weekend, then the purchase), and if EITHER licence was paid for the refund clock is real.
 						if (!map.TryGetValue(appId, out AppOwnership existing)) {
-							map[appId] = new AppOwnership(license.Created, license.Paid);
+							map[appId] = new AppOwnership(license.Created, license.Paid, license.Own);
 						} else {
 							map[appId] = new AppOwnership(
 								license.Created < existing.Since ? license.Created : existing.Since,
-								existing.Paid || license.Paid);
+								existing.Paid || license.Paid,
+								existing.Own || license.Own);
 						}
 					}
 				}
@@ -1960,17 +2074,31 @@ public sealed class Bot : IAsyncDisposable {
 		SignalItemDrop();
 
 		// A farming account trips Steam's green "new items" counter dozens of times a day and it stays lit
-		// forever, which is both irritating and an obvious tell. Marking the inventory viewed clears it.
-		if (Cfg.ClearInventoryNotifications) {
+		// forever, which is both irritating and an obvious tell. Marking the inventory viewed clears it - at most
+		// every 45 minutes: the inventory page is heavy, and loading it on every single card drop cost far more
+		// than a counter that reads 3 for a while.
+		if (Cfg.ClearInventoryNotifications && (Interlocked.Exchange(ref _inventoryVisitQueued, 1) == 0)) {
 			_ = Task.Run(async () => {
 				try {
-					await Web.GetAsync(new Uri(WebSession.Community, "/my/inventory/")).ConfigureAwait(false);
+					TimeSpan wait = _inventoryVisitedAt.AddMinutes(45) - DateTime.UtcNow;
+
+					if (wait > TimeSpan.Zero) {
+						await Task.Delay(wait).ConfigureAwait(false);
+					}
+
+					_inventoryVisitedAt = DateTime.UtcNow;
+					await Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{SteamId}/inventory/")).ConfigureAwait(false);
 				} catch {
 					// cosmetic - never let it matter
+				} finally {
+					Interlocked.Exchange(ref _inventoryVisitQueued, 0);
 				}
 			});
 		}
 	}
+
+	private int _inventoryVisitQueued;
+	private DateTime _inventoryVisitedAt = DateTime.MinValue;
 
 	/// <summary>
 	/// How many trade offers Steam says are waiting, or -1 if it has not told us yet.
@@ -2122,7 +2250,7 @@ public sealed class Bot : IAsyncDisposable {
 			}
 
 			// The two older counters, which the tray message does not touch. Loading the page is what clears them.
-			foreach (string page in (string[]) ["/my/commentnotifications/", "/my/inventory/"]) {
+			foreach (string page in (string[]) [$"/profiles/{SteamId}/commentnotifications/", $"/profiles/{SteamId}/inventory/"]) {
 				try {
 					await Web.GetAsync(new Uri(WebSession.Community, page)).ConfigureAwait(false);
 				} catch {
@@ -2202,8 +2330,8 @@ public sealed class Bot : IAsyncDisposable {
 	///
 	/// This is the fix for the Friends & Chat sign-outs, and the reasoning is worth keeping. A minted web token
 	/// is a fresh web SESSION as far as Steam is concerned, and creating one on every connect is what kept
-	/// throwing the account's owner off his own friends list. ArchiSteamFarm mints at most once a day and reuses
-	/// the token in between; running it on the same account did not evict the owner, and this now does the same.
+	/// throwing the account's owner off his own friends list. Minting at most once a day and reusing the token in
+	/// between does not evict the owner, so that is what this does.
 	/// The token that arrives with the login is preferred over minting at all (see the auth flow), and whatever
 	/// we end up with is persisted so a restart reuses it rather than minting afresh.
 	/// </summary>
@@ -2230,8 +2358,8 @@ public sealed class Bot : IAsyncDisposable {
 
 			Log.Info("minting a new web token (the old one is spent) - this is the once-a-day web refresh", Name);
 
-			// Genuinely spent (or never had one). Mint a replacement. allowRenewal: true matches ArchiSteamFarm and
-			// lets Steam rotate the long-lived refresh token before it ages out, so an unattended farmer keeps
+			// Genuinely spent (or never had one). Mint a replacement. allowRenewal: true lets Steam rotate the
+			// long-lived refresh token before it ages out, so an unattended farmer keeps
 			// running for months without the password.
 			AccessTokenGenerateResult result = await Client.Authentication.GenerateAccessTokenForAppAsync(SteamId, _refreshToken, true).ConfigureAwait(false);
 
@@ -2444,7 +2572,7 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		foreach (uint app in apps) {
-			if (msg.Body.games_played.Count >= SteamIds.MaxGamesPlayedConcurrently) {
+			if (msg.Body.games_played.Count >= SteamIds.GamesAtOnce) {
 				break;   // Steam ignores the whole message past this, so truncate rather than lose everything
 			}
 
@@ -2589,21 +2717,21 @@ public sealed class Bot : IAsyncDisposable {
 			_lastLoggedPersona = state;
 		}
 
-		// Matched to what ArchiSteamFarm sends, after this cost somebody most of a day of being thrown off his
-		// own friends list. Two differences, both of them ours being more assertive than it needed to be:
+		// Worked out the hard way, after this cost somebody most of a day of being thrown off his own friends list.
+		// Two things were more assertive than they needed to be:
 		//
 		//   1. persona_set_by_user = true. This says "the HUMAN set this, on THIS session" - a claim to be the
-		//      account's real client, which Steam honours by demoting the actual one. ASF has never sent it.
+		//      account's real client, which Steam honours by demoting the actual one. It's never sent now.
 		//
 		//   2. Both calls, every time. SteamFriends.SetPersonaState already sets the state; the raw message
-		//      exists only to carry device flags (the Steam Deck / phone badge) that the former cannot express.
-		//      ASF sends the raw one only when there are flags to carry, so now so do we.
+		//      exists only to carry device flags (the Steam Deck / phone badge) that the former cannot express, so
+		//      it's sent only when there are flags to carry.
 		//
 		// Offline is NOT filtered out here, and the reasoning that used to filter it was backwards. It said
 		// announcing offline from a second session was the most aggressive form of the claim. The opposite is
-		// true, and it is the single thing that was causing the sign-outs: ASF's idler goes dark with plain
-		// Offline (0) and sits alongside its owner's own client for hours without disturbing it, while this
-		// program used Invisible (7) and evicted him within two minutes of every start. Invisible is the state a
+		// true, and it is the single thing that was causing the sign-outs: a session that goes dark with plain
+		// Offline (0) sits alongside its owner's own client for hours without disturbing it, while this program
+		// used Invisible (7) and evicted him within two minutes of every start. Invisible is the state a
 		// present user hides behind, so setting it is a claim to BE the session; Offline claims nothing. To
 		// everyone on the friends list the two look the same, which is why the difference went unnoticed for so
 		// long. See PersonaDark.
@@ -2635,7 +2763,8 @@ public sealed class Bot : IAsyncDisposable {
 }
 
 /// <summary>When an app first appeared on the account, and whether it was actually bought.</summary>
-public readonly record struct AppOwnership(DateTime Since, bool Paid);
+/// <param name="Own">At least one of the licences is the account's own, not a family member's.</param>
+public readonly record struct AppOwnership(DateTime Since, bool Paid, bool Own);
 
 public static class SteamIds {
 	/// <summary>GameID layout: bits 0-23 appID, 24-31 type, 32-63 modID. Type 2 = Shortcut, i.e. a non-Steam game.</summary>
@@ -2651,7 +2780,7 @@ public static class SteamIds {
 	/// <summary>ESteamInputType for the Deck's own built-in controller.</summary>
 	public const int ControllerTypeSteamDeck = 13;
 
-	public const int MaxGamesPlayedConcurrently = 32;
+	public const int GamesAtOnce = 32;
 }
 
 /// <summary>
@@ -2712,8 +2841,8 @@ public static class TokenStore {
 	//
 	// Not an afterthought: it is the difference between minting one web token a day and minting one on every
 	// single connect. A freshly minted web token is a new web session in Steam's eyes, and minting one on every
-	// login is what threw the account's owner out of his own Friends & Chat. ArchiSteamFarm persists this exact
-	// token for the same reason - so it can reuse it for its full ~24h life and leave the owner's session alone.
+	// login is what threw the account's owner out of his own Friends & Chat. Kept on disk so it can be reused for its
+	// full ~24h life and leave the owner's session alone.
 	private static string AccessPathFor(string bot) => Path.Combine(Dir, bot + ".access");
 
 	// These files hold credentials, so they are encrypted at rest - see Secrets. Reading stays tolerant of the

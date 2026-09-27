@@ -519,6 +519,10 @@ public sealed class WebHost : IAsyncDisposable {
 			return Results.Json(new { ok = true });
 		}));
 
+		// The QR code an account is waiting to have scanned, as a picture.
+		app.MapGet("/api/bots/{name}/qr.svg", (HttpContext ctx, string name) => Guard(ctx, () =>
+			_mgr.Get(name)?.QrChallenge is { } link ? Results.Text(Core.QrPicture.Svg(link), "image/svg+xml") : Results.NotFound()));
+
 		app.MapGet("/api/bots/{name}/achievements", (HttpContext ctx, string name) => Guard(ctx, () => {
 			Bot? bot = _mgr.Get(name);
 			Modules.AchievementPacer? pacer = bot == null ? null : BotManager.ModuleOf<Modules.AchievementPacer>(bot);
@@ -641,7 +645,7 @@ public sealed class WebHost : IAsyncDisposable {
 
 			AddBotRequest? body = await ReadJsonAsync<AddBotRequest>(ctx).ConfigureAwait(false);
 
-			if (body == null || string.IsNullOrWhiteSpace(body.Name) || string.IsNullOrWhiteSpace(body.SteamLogin)) {
+			if (body == null || string.IsNullOrWhiteSpace(body.Name) || (!body.Qr && string.IsNullOrWhiteSpace(body.SteamLogin))) {
 				return Results.Json(new { ok = false, error = "A name and a Steam account name are both needed." }, statusCode: 400);
 			}
 
@@ -653,7 +657,10 @@ public sealed class WebHost : IAsyncDisposable {
 				return Results.Json(new { ok = false, error = $"'{body.Name}' already exists." }, statusCode: 400);
 			}
 
-			BotConfig cfg = new() { SteamLogin = body.SteamLogin, SteamPassword = body.Password ?? "" };
+			// Signing in by QR needs no account name - Steam says which account it was once the code is scanned.
+			BotConfig cfg = body.Qr
+				? new() { SteamLogin = body.Name, SignInWithQr = true }
+				: new() { SteamLogin = body.SteamLogin!, SteamPassword = body.Password ?? "" };
 			Bot? bot = await _mgr.AddAsync(body.Name, cfg).ConfigureAwait(false);
 
 			return bot == null
@@ -1104,6 +1111,7 @@ public sealed class WebHost : IAsyncDisposable {
 			Rep4RepEnabled = _mgr.Global.Rep4RepEnabled,
 			Rep4RepToken = _mgr.Rep4Rep.HasToken,
 			Rep4RepWanted = _mgr.Global.Rep4RepEnabled ? bots.Count(static b => b.Cfg.Rep4Rep) : 0,
+			QrWaiting = bots.Where(static b => b.QrChallenge != null).Select(static b => new { b.Name, b.QrVersion }).ToList(),
 			// Genuinely reachable from the network AND unprotected. With no password the server already refuses
 			// everything that isn't loopback, so warning about that case was crying wolf.
 			Exposed = _mgr.Global.WebHost is not ("127.0.0.1" or "localhost") && !string.IsNullOrEmpty(_mgr.Global.WebPassword) && (_mgr.Global.WebPassword.Length < 8),
@@ -1280,6 +1288,7 @@ public sealed class WebHost : IAsyncDisposable {
 		public string? Name { get; set; }
 		public string? SteamLogin { get; set; }
 		public string? Password { get; set; }
+		public bool Qr { get; set; }
 	}
 
 	public async ValueTask DisposeAsync() {

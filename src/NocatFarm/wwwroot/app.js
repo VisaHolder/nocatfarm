@@ -363,6 +363,12 @@ function filterTo(group) { acctFilter = acctFilter === group ? '' : group; go('a
 function renderAlerts() {
   const out = [];
 
+  // An account signing in by QR: the code to scan, big enough for a phone camera.
+  (state.QrWaiting || []).forEach((q) => {
+    out.push(`<div class="alert warn qr"><img src="/api/bots/${encodeURIComponent(q.Name)}/qr.svg?v=${q.QrVersion}" alt="QR code" width="168" height="168">
+      <span>${esc(tf('Scan this with the Steam app on your phone to sign {0} in - the Steam Guard tab has the QR scanner.', q.Name))}</span></div>`);
+  });
+
   if (state.Prompt) {
     out.push(`<div class="alert warn">
       <span data-tip="${esc(t("Type the code from the Steam app on your phone, or from your email. nocat.farm can't finish logging in until you do."))}">${esc(state.Prompt)}</span>
@@ -719,6 +725,8 @@ function showAddAccount() {
       <input id="a-login" type="text" autocomplete="off">
       <label for="a-pass">${esc(t('Password'))}${tipIcon(t('Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.'))}</label>
       <input id="a-pass" type="password" placeholder="${esc(t("leave blank and it'll ask"))}" autocomplete="off">
+      <label for="a-qr">${esc(t('Sign in with a QR code'))}${tipIcon(t("Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty."))}</label>
+      <input id="a-qr" type="checkbox" onchange="['a-login','a-pass'].forEach((id) => { $(id).disabled = this.checked; })">
     </div>
     <p id="addError" class="error"></p>
     <div class="actions"><button onclick="createBot()">${esc(t('Add account'))}</button><button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button></div>`);
@@ -726,7 +734,7 @@ function showAddAccount() {
 }
 
 async function createBot() {
-  const res = await post('/api/bots', { Name: $('a-name').value.trim(), SteamLogin: $('a-login').value.trim(), Password: $('a-pass').value });
+  const res = await post('/api/bots', { Name: $('a-name').value.trim(), SteamLogin: $('a-login').value.trim(), Password: $('a-pass').value, Qr: $('a-qr').checked });
   if (!res.ok) { $('addError').textContent = res.error; return; }
   closeModal();
   refresh();

@@ -5,7 +5,7 @@ using NocatFarm.Core;
 namespace NocatFarm.Modules;
 
 /// <summary>
-/// Sends this account's items to your main account every so many hours - ArchiSteamFarm's SendTradePeriod.
+/// Sends this account's items to your main account every so many hours, so cards don't pile up between runs.
 /// </summary>
 /// <remarks>
 /// "Send when farming finishes" only fires at the end of a farming run, and an account that idles for weeks between
@@ -52,8 +52,8 @@ public sealed class Sender(Bot bot) : BotModule(bot) {
 				continue;
 			}
 
-			// Switched on, or the period changed: the first send is one period from now, not immediately - the
-			// same as ArchiSteamFarm, and it means turning this on never fires a trade offer the same second.
+			// Switched on, or the period changed: the first send is one period from now, not immediately - so turning
+			// this on never fires a trade offer the same second.
 			if ((_nextDue == null) || (_periodSeen != 0 && _periodSeen != hours)) {
 				Schedule(hours);
 				DateTime first = _nextDue!.Value;

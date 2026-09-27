@@ -611,6 +611,12 @@
     "{0} card(s) - farming tonight, once it's asleep": "{0} carte(s) - farm cette nuit, une fois endormi",
     "{0} card(s) - farmed in the day's sittings, from morning": "{0} carte(s) - récoltées pendant les sessions de la journée, dès le matin",
     "{0} card(s) - farmed in human mode's next sitting": "{0} carte(s) - récoltées à la prochaine session du mode humain",
+    "{0} has card drops listed but isn't a game (a sale or event badge) - not farmed": "{0} affiche des cartes à récolter mais n'est pas un jeu (un badge de soldes ou d'événement) - pas récolté",
+    "couldn't read the card-page check list: {0}": "impossible de lire la liste des vérifications de pages de cartes : {0}",
+    "couldn't save the card-page check list: {0}": "impossible d'enregistrer la liste des vérifications de pages de cartes : {0}",
+    "asleep, the card farmer is working": "dort, la récolte de cartes continue",
+    "last night's plan restored - {0}/{1} played, up about {2}": "plan de la nuit dernière restauré - {0}/{1} joué, debout vers {2}",
+    "trade offer #{0}: couldn't check it as a card swap yet - {1}": "offre #{0} : pas encore pu la vérifier comme échange de cartes - {1}",
     "between sittings - {0} card(s) left": "entre deux sessions - encore {0} carte(s)",
     "farming cards on {0} · {1} left · {2}/{3} today": "récolte de cartes sur {0} · encore {1} · {2}/{3} aujourd'hui",
     "farming cards on {0}": "récolte de cartes sur {0}",
@@ -1034,7 +1040,8 @@
     "dropping a queued key - {0}  ({1} left)": "abandon d'une clé de la file - {0}  ({1} restantes)",
     "giving up on a key after {0} tries - no account could activate it": "abandon d'une clé après {0} tentatives - aucun compte n'a pu l'activer",
     "hit {0} activations in {1}m - pausing so Steam doesn't start refusing": "{0} activations en {1}m - pause pour que Steam ne commence pas à refuser",
-    "nocat.farm {0} is out - you have {1}. {2}": "nocat.farm {0} est sorti - tu as {1}. {2}",
+    "nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update ignore' stops the hourly reminders until the next launch": "nocat.farm {0} est sorti - tu as la {1}. {2}  -  'update accept' l'installe et redémarre ; 'update ignore' arrête les rappels horaires jusqu'au prochain lancement",
+    "reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update ignore' stops these reminders until the next launch": "rappel : nocat.farm {0} est sorti - tu as la {1}. 'update accept' l'installe et redémarre ; 'update ignore' arrête ces rappels jusqu'au prochain lancement",
     "update: downloading {0} ({1}MB)": "mise à jour : téléchargement de {0} ({1} Mo)",
     "update: {0} is ready - restarting into it now": "mise à jour : {0} est prête - redémarrage maintenant",
     "update failed: {0}: {1} - nothing has been changed": "la mise à jour a échoué : {0} : {1} - rien n'a été modifié",
@@ -1058,6 +1065,12 @@
     "answered Steam Guard from this account's own authenticator": "Steam Guard résolu avec l'authentificateur de ce compte",
     "approve this login in the Steam mobile app (or type the code below)": "approuve cette connexion dans l'app mobile Steam (ou saisis le code ci-dessous)",
     "authenticated - token stored, the password won't be asked for again": "authentifié - jeton stocké, le mot de passe ne sera plus demandé",
+    "nobody scanned the QR code within 5 minutes - stopping. 'start {0}' shows a fresh one": "personne n'a scanné le code QR en 5 minutes - arrêt. 'start {0}' en affiche un nouveau",
+    "Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty.": "Scanne un code avec l'appli Steam sur ton téléphone au lieu de taper un mot de passe - le nom du compte vient de Steam, les deux champs ci-dessus peuvent donc rester vides.",
+    "Scan this with the Steam app on your phone to sign {0} in - the Steam Guard tab has the QR scanner.": "Scanne ceci avec l'appli Steam sur ton téléphone pour connecter {0} - l'onglet Steam Guard contient le lecteur de QR.",
+    "Sign in with a QR code": "Se connecter avec un code QR",
+    "{0} is waiting to be signed in: open the dashboard and scan the QR code there with the Steam app on your phone (Steam Guard tab)": "{0} attend d'être connecté : ouvre le tableau de bord et scanne le code QR qui s'y trouve avec l'appli Steam sur ton téléphone (onglet Steam Guard)",
+    "signed in with the QR code as {0} - the login token is stored, nothing to type next time": "connecté avec le code QR en tant que {0} - le jeton de connexion est enregistré, rien à taper la prochaine fois",
     "config removed - stopping": "configuration supprimée - arrêt",
     "connection went quiet - reconnecting": "la connexion est devenue silencieuse - reconnexion",
     "couldn't add the notification-area icon - nocatFarm still runs, it just won't show in the tray": "impossible d'ajouter l'icône de la zone de notification - nocatFarm fonctionne toujours, il n'apparaîtra simplement pas dans la barre",
@@ -1128,7 +1141,26 @@
     "{0} are past the refund window - free to play again": "{0} sont hors du délai de remboursement - de nouveau jouables",
     "{0} is past the refund window - free to play again": "{0} est hors du délai de remboursement - de nouveau jouable",
     "── daily report · last 24h ──": "── rapport quotidien · dernières 24 h ──",
-    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── rapport quotidien · dernières 24 h · le premier, « accumulé » compte à partir d'ici ──"
+    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── rapport quotidien · dernières 24 h · le premier, « accumulé » compte à partir d'ici ──",
+    "reached {0}h in {1} - that hour target is done": "{0} h atteintes dans {1} - cet objectif d'heures est rempli",
+    "couldn't read the play history: {0}": "impossible de lire l'historique de jeu : {0}",
+    "library: {0} played game(s) Steam's owned list left out, added from the play history ({1})": "bibliothèque : {0} jeu(x) joué(s) absent(s) de la liste de Steam, ajouté(s) depuis l'historique ({1})",
+    "level plan for {0} is ready - type 'levelup {0} {1}' to see it": "le plan de niveau de {0} est prêt - tape 'levelup {0} {1}' pour le voir",
+    "the discovery queue wasn't available - Steam said {0}": "la liste de découvertes n'était pas disponible - Steam a répondu {0}",
+    "went through the discovery queue ({0} game(s))": "liste de découvertes parcourue ({0} jeu(x))",
+    "listed {0} duplicate card(s) on the market - {1} to you if they all sell": "{0} carte(s) en double mise(s) en vente - {1} pour toi si tout se vend",
+    "couldn't sell duplicate cards: {0}": "impossible de vendre les cartes en double : {0}",
+    "next look for spare cards to sell around {0}": "prochaine recherche de cartes en trop vers {0}",
+    "it isn't an active offer any more": "ce n'est plus une offre active",
+    "the cards would sit in a trade hold": "les cartes resteraient bloquées par une suspension d'échange",
+    "Steam didn't say what every item is": "Steam n'a pas dit ce qu'est chaque objet",
+    "that's an offer this account sent": "c'est une offre envoyée par ce compte",
+    "{0} to confirm on your phone": "{0} à confirmer sur le téléphone",
+    "couldn't handle trade offer #{0}: {1}: {2}": "impossible de traiter l'offre d'échange #{0} : {1} : {2}",
+    "trade offer #{0} is no longer a fair card swap - {1}; left alone": "l'offre d'échange #{0} n'est plus un échange de cartes équitable - {1} ; laissée de côté",
+    "trade offer #{0} was accepted but needs confirming from the email Steam sent": "l'offre d'échange #{0} a été acceptée mais doit être confirmée depuis l'e-mail envoyé par Steam",
+    "got the last card from {0} - playing on for about {1}, then a break": "dernière carte de {0} obtenue - continue encore environ {1}, puis une pause",
+    "finished - logging out after this sitting": "terminé - se déconnecte après cette session"
   },
   "settings": {
     "WebEnabled": {
@@ -1256,6 +1288,10 @@
       "label": "Mot de passe",
       "tip": "Facultatif. Laissez vide et nocat.farm le demande une fois, puis retient le compte via un jeton de connexion - la plus sûre des deux options."
     },
+    "SignInWithQr": {
+      "label": "Se connecter avec un code QR",
+      "tip": "Quand ce compte doit se connecter, afficher un code QR à scanner avec l'appli Steam sur ton téléphone au lieu de demander un mot de passe - le nom du compte vient de Steam, donc rien n'est tapé. Le code s'affiche dans le tableau de bord."
+    },
     "OnlineStatus": {
       "label": "Apparaître comme",
       "tip": "Comment les autres vous voient : en ligne, absent, occupé ou invisible. Invisible continue d'accumuler des heures sans que personne ne voie rien.",
@@ -1289,6 +1325,10 @@
     "GameWeights": {
       "label": "Jeux et à quelle fréquence",
       "tip": "Quels jeux il lance et quelle part de son temps chacun reçoit, en pourcentages qui devraient totaliser environ 100. Le PREMIER jeu est le jeu principal - celui dont ce compte est censé être fan - et son nombre est le vrai : il fixe la part que garde le jeu principal, tirée chaque jour à une dizaine de points près, quel que soit le nombre de jeux ajoutés. Sans nombre, un jeu prend une part égale de ce qui reste. Écris « 440:0 » pour mettre un jeu de côté sans le supprimer."
+    },
+    "HourTargets": {
+      "label": "Objectifs d'heures",
+      "tip": "Heures à atteindre dans un jeu, éventuellement avant une date : 730:100@2026-12-01 amène Counter-Strike 2 à 100 heures pour le 1er décembre, 440:50 amène TF2 à 50 sans échéance. Le mode humain oriente ses sessions vers un objectif - d'autant plus qu'un objectif daté prend du retard - avec les mêmes pauses et le même coucher que d'habitude, et un objectif daté que la journée seule ne peut tenir rejoint les jeux de nuit si 'Accumuler des heures la nuit' est activé. Une fois atteint, le jeu n'est plus favorisé. 'hours <compte>' montre où en est chacun."
     },
     "WeekdayHours": {
       "label": "Heures en semaine",
@@ -1471,7 +1511,7 @@
     },
     "AcceptFairCardSwaps": {
       "label": "Accepter les échanges de cartes équitables",
-      "tip": "Accepte les offres de n'importe qui qui échangent des cartes une contre une dans le même jeu, quand l'échange ne peut que rapprocher les collections de ce compte de leur fin - ce qu'envoient les utilisateurs de Steam Trade Matcher et ce qu'accepte le réglage SteamTradeMatcher d'ArchiSteamFarm. Autre chose dans l'offre, une carte brillante ou un échange qui prendrait le dernier exemplaire d'une carte, et elle est laissée telle quelle. Donner des cartes doit être confirmé avec l'authentificateur mobile."
+      "tip": "Accepte les offres de n'importe qui qui échangent des cartes une contre une dans le même jeu, quand l'échange ne peut que rapprocher les collections de ce compte - celles que les sites d'échange de cartes envoient toute la journée. Chaque carte donnée doit encore avoir plus d'exemplaires après que n'importe quelle carte reçue n'en avait avant, donc aucune carte ne s'épuise et les collections complètes ne baissent jamais. Tout autre objet dans l'offre, ou une carte brillante, et elle est laissée de côté. Donner des cartes demande l'authentificateur mobile pour confirmer."
     },
     "AcceptGifts": {
       "label": "Accepter les cadeaux et pass invités",
@@ -1527,8 +1567,12 @@
       "label": "Calculer ce que vaut son inventaire"
     },
     "CheckForUpdates": {
-      "tip": "Regarde une fois par jour s'il existe une version plus récente et le signale dans le journal. Il se contente de le dire : il ne télécharge, ne remplace et ne redémarre jamais rien.",
+      "tip": "Vérifier toutes les quelques heures s'il existe une version plus récente et le mentionner dans le journal. Il ne fait que te prévenir - il ne télécharge, ne remplace et ne redémarre jamais rien. Quelque chose qui détient les clés de tes comptes Steam ne devrait pas pouvoir remplacer son propre exécutable selon un planning, et une mise à jour en pleine récolte, c'est une session perdue.",
       "label": "Prévenir si une mise à jour est disponible"
+    },
+    "UpdateReminders": {
+      "label": "Me le rappeler toutes les heures",
+      "tip": "Tant qu'une version plus récente existe, le signaler dans le journal une fois par heure, pas une seule fois. 'update accept' l'installe et redémarre ; 'update ignore' arrête les rappels jusqu'au prochain lancement."
     },
     "BreakMinMinutes": {
       "label": "Pause la plus courte",
@@ -1586,11 +1630,11 @@
     },
     "PostFarmWindDownMinMinutes": {
       "label": "Après la dernière carte, continuer au moins",
-      "tip": "Mode humain seulement : quand une session de farm se termine, garde ce jeu ouvert un temps aléatoire dans cet intervalle (minutes) avant de s'en aller, au lieu de fermer à la seconde même."
+      "tip": "Mode humain uniquement. Quand un jeu donne sa dernière carte, il continue ce jeu quelques minutes de plus - entre ces deux nombres - puis fait une pause, comme une session de jeu normale. Le jeu à cartes suivant commence après la pause. (Quand les cartes sont farmées la nuit ou à tout moment, cela arrive une seule fois, après la toute dernière carte.) Par défaut 15 à 20 minutes. Mets les deux à 0 pour arrêter tout de suite."
     },
     "PostFarmWindDownMaxMinutes": {
       "label": "...jusqu'à",
-      "tip": "Le haut de cette marge après le farm, en minutes."
+      "tip": "Le maximum de minutes pendant lesquelles il continue après la dernière carte."
     },
     "FarmingDelayMinutes": {
       "label": "Revérifier toutes les",
@@ -1668,9 +1712,27 @@
       "label": "Récupérer les objets d'événement gratuits",
       "tip": "Récupère l'autocollant gratuit que Steam offre chaque jour pendant des soldes, et tout ce qui coûte 0 point dans la boutique des points. Rien de tout ça ne coûte quoi que ce soit, et c'est perdu si personne ne le récupère. Tant que le mode humain garde le compte endormi, il attend le matin, sauf si « Réagir seulement quand il est éveillé » est désactivé."
     },
+    "DiscoveryQueue": {
+      "label": "Parcourir la liste de découvertes",
+      "tip": "Une fois par jour Steam, parcourt la liste de découvertes de la boutique comme une personne - quelques secondes sur chaque jeu, puis le suivant. Pendant des soldes, c'est ce qui rapporte les objets de l'événement et la progression du badge ; en dehors, c'est juste quelque chose que les gens font. Tant que le mode humain fait dormir le compte, il attend le matin.",
+      "choices": "0 désactivé | 1 pendant les soldes | 2 tous les jours"
+    },
+    "SellDuplicates": {
+      "label": "Vendre les cartes en double",
+      "tip": "Toutes les 8 à 14 heures, tant que le compte est éveillé, met en vente quelques cartes en trop un centime sous l'offre la moins chère - frais Steam compris, donc le prix affiché est ce que tu touches. En trop signifie : avec la collection complète d'un jeu, il garde autant d'exemplaires que de niveaux de badge encore fabricables ; avec une collection partielle, un de chaque ; badge au maximum, aucun. Les cartes brillantes ne sont jamais vendues. Les offres d'une semaine que le marché a battues sont retirées et remises au prix du jour. Elles doivent être confirmées sur le téléphone, sauf si les secrets d'authentificateur de ce compte sont chargés. 'sell <compte>' en montre un aperçu."
+    },
+    "SellPerRun": {
+      "label": "Cartes par tournée",
+      "tip": "Combien de cartes en trop une tournée met en vente, les plus chères d'abord. Quelques-unes à la fois, c'est quelqu'un qui range ; cent en une minute, non."
+    },
     "BoosterGames": {
       "label": "Créer des boosters pour",
       "tip": "AppIDs pour lesquels transformer les gemmes en boosters, séparés par des virgules. Steam autorise un booster par jeu et par jour, seulement pour les jeux où ce compte peut encore obtenir des cartes, et indique quand le suivant est possible - il est créé dès que possible ; tant que le mode humain garde le compte endormi, il attend le matin, sauf si « Réagir seulement quand il est éveillé » est désactivé. Vide désactive. 'booster <compte>' affiche les gemmes et les jeux éligibles."
+    },
+    "BoosterGems": {
+      "label": "Les boosters utilisent",
+      "tip": "Avec quelles gemmes un booster est fabriqué quand le compte a les deux sortes. Échangeables d'abord (par défaut) donne des boosters que tu peux échanger ou vendre ; non échangeables d'abord utilise des gemmes qui ne peuvent aller nulle part ailleurs. Si la sorte préférée ne couvre pas le prix, l'autre est utilisée.",
+      "choices": "0 gemmes échangeables d'abord | 1 gemmes non échangeables d'abord"
     },
     "ClearInventoryNotifications": {
       "label": "Effacer le badge d'objets nouveaux",

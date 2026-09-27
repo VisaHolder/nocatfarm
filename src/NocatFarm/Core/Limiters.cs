@@ -6,13 +6,12 @@ namespace NocatFarm.Core;
 /// Process-wide pacing. Steam rate-limits per IP, not per account, so every bot has to queue behind the
 /// same gates or three accounts starting together look exactly like an attack.
 ///
-/// The pattern is ASF's and it is deliberate: the slot is taken immediately and RELEASED ON A TIMER from a
-/// detached task, so the caller proceeds now and the *next* caller is the one that waits. A plain
-/// "await Delay then act" would make every login pay the delay, including the first.
+/// Each gate remembers the next moment it may be used. Taking a turn books the later of "now" and that moment, and
+/// moves it on by the gap - so the first caller goes straight away and only the ones behind it wait, in order.
 /// </summary>
 public static class Limiters {
-	/// <summary>Minimum spacing between two logins from this machine.</summary>
-	public const int LoginDelaySeconds = 10;
+	/// <summary>Spacing between two logins from this machine: a few seconds, never the same twice.</summary>
+	private static TimeSpan LoginGap => TimeSpan.FromMilliseconds(Rng.Next(8_000, 15_001));
 
 	/// <summary>How long to sit out when Steam answers a login with a rate-limit. Configurable.</summary>
 	public static int LoginCooldownMinutes => Math.Max(1, Config.Live.Global.LoginCooldownMinutes);
@@ -24,14 +23,100 @@ public static class Limiters {
 	private const int BackoffMinMinutes = 5;
 	private const int BackoffMaxMinutes = 40;
 
-	private static readonly SemaphoreSlim LoginSlot = new(1, 1);
+	/// <summary>A gate's next free moment.</summary>
+	private sealed class Gate {
+		public DateTime Next = DateTime.MinValue;
+	}
+
+	private static readonly Gate LoginGate = new();
 	private static readonly SemaphoreSlim LoginCooldownLatch = new(1, 1);
-	private static readonly ConcurrentDictionary<string, SemaphoreSlim> WebSlots = new(StringComparer.OrdinalIgnoreCase);
+
+	/// <summary>Per host: one request at a time, and each one waits for the host's next free moment.</summary>
+	private static readonly ConcurrentDictionary<string, (SemaphoreSlim One, Gate Gate)> Hosts = new(StringComparer.OrdinalIgnoreCase);
+
+	/// <summary>Book a turn at <paramref name="gate"/>, <paramref name="gap"/> after the last one, and wait for it.</summary>
+	private static async Task TurnAsync(Gate gate, TimeSpan gap, CancellationToken ct) {
+		DateTime now = DateTime.UtcNow;
+		DateTime at;
+
+		lock (gate) {
+			at = gate.Next > now ? gate.Next : now;
+			gate.Next = at + gap;
+		}
+
+		if (at > now) {
+			await Task.Delay(at - now, ct).ConfigureAwait(false);
+		}
+	}
 	private static readonly ConcurrentDictionary<string, Backoff> WebBackoff = new(StringComparer.OrdinalIgnoreCase);
 
 	private sealed class Backoff {
 		public DateTime Until;
 		public int Minutes;
+	}
+
+	// ── remembered across restarts ──────────────────────────────────────────
+	// A rate limit is Steam's, not this process's: restarting didn't lift it, it just forgot it and walked straight
+	// back into it - a few restarts in a row were enough to get steamcommunity.com shut for everyone. So every
+	// backoff is written down (state/backoff.json) and a fresh start picks the wait up where the last one left it.
+	private static readonly object RememberGate = new();   // Monitor: Remember re-enters it through Remembered
+	private static Dictionary<string, (DateTime Until, int Minutes)>? _remembered;
+
+	private static string RememberPath => Path.Combine(Config.ConfigStore.ConfigDir, "state", "backoff.json");
+
+	/// <summary>The backoff last written for <paramref name="key"/> - a host, or "market" - or nothing.</summary>
+	public static (DateTime Until, int Minutes) Remembered(string key) {
+		lock (RememberGate) {
+			if (_remembered == null) {
+				_remembered = new Dictionary<string, (DateTime, int)>(StringComparer.OrdinalIgnoreCase);
+
+				try {
+					if (File.Exists(RememberPath)) {
+						foreach (string line in File.ReadAllLines(RememberPath)) {
+							string[] part = line.Split('|');
+
+							if ((part.Length == 3) && long.TryParse(part[1], out long ticks) && int.TryParse(part[2], out int minutes) && (ticks > 0)) {
+								_remembered[part[0]] = (new DateTime(ticks, DateTimeKind.Utc), minutes);
+							}
+						}
+					}
+				} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+					// Nothing remembered - the worst case is one early request.
+				}
+			}
+
+			return _remembered.GetValueOrDefault(key);
+		}
+	}
+
+	/// <summary>Write a backoff down so a restart keeps to it. Only called when it changes.</summary>
+	public static void Remember(string key, DateTime until, int minutes) {
+		lock (RememberGate) {
+			Remembered(key);   // loads the file once
+
+			if (_remembered!.TryGetValue(key, out (DateTime Until, int Minutes) old) && (old.Until == until) && (old.Minutes == minutes)) {
+				return;
+			}
+
+			_remembered[key] = (until, minutes);
+
+			// Anything long over and reset has nothing left to say.
+			DateTime stale = DateTime.UtcNow.AddDays(-1);
+
+			try {
+				AtomicFile.Write(RememberPath, string.Join(Environment.NewLine, _remembered
+					.Where(r => (r.Value.Minutes > 0) || (r.Value.Until > stale))
+					.Select(static r => $"{r.Key}|{r.Value.Until.Ticks}|{r.Value.Minutes}")));
+			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+				// Best effort: it only matters if the process restarts inside the wait.
+			}
+		}
+	}
+
+	private static Backoff NewBackoff(string host) {
+		(DateTime until, int minutes) = Remembered(host);
+
+		return new Backoff { Until = until, Minutes = minutes };
 	}
 
 	/// <summary>
@@ -42,7 +127,7 @@ public static class Limiters {
 	/// <returns>How long the host is now closed for, or <see cref="TimeSpan.Zero"/> if somebody just closed it.</returns>
 	public static TimeSpan NoteRateLimited(string host) {
 		DateTime now = DateTime.UtcNow;
-		Backoff state = WebBackoff.GetOrAdd(host, static _ => new Backoff());
+		Backoff state = WebBackoff.GetOrAdd(host, NewBackoff);
 
 		lock (state) {
 			// Three accounts in flight will each collect their own 429 off the same limit. Only the first one
@@ -53,6 +138,7 @@ public static class Limiters {
 
 			state.Minutes = state.Minutes <= 0 ? BackoffMinMinutes : Math.Min(BackoffMaxMinutes, state.Minutes * 2);
 			state.Until = now.AddMinutes(state.Minutes);
+			Remember(host, state.Until, state.Minutes);
 
 			return TimeSpan.FromMinutes(state.Minutes);
 		}
@@ -65,17 +151,16 @@ public static class Limiters {
 		}
 
 		lock (state) {
-			if (state.Until <= DateTime.UtcNow) {
+			if ((state.Until <= DateTime.UtcNow) && (state.Minutes != 0)) {
 				state.Minutes = 0;
+				Remember(host, state.Until, 0);
 			}
 		}
 	}
 
 	/// <summary>How much longer <paramref name="host"/> is closed for. Zero when it is open.</summary>
 	public static TimeSpan RateLimitedFor(string host) {
-		if (!WebBackoff.TryGetValue(host, out Backoff? state)) {
-			return TimeSpan.Zero;
-		}
+		Backoff state = WebBackoff.GetOrAdd(host, NewBackoff);
 
 		lock (state) {
 			TimeSpan left = state.Until - DateTime.UtcNow;
@@ -84,24 +169,13 @@ public static class Limiters {
 		}
 	}
 
-	/// <summary>Take a login slot. Returns as soon as it is this caller's turn.</summary>
+	/// <summary>Wait for this caller's turn to log in. The first login goes straight away.</summary>
 	public static async Task WaitForLoginSlotAsync(CancellationToken ct = default) {
-		await LoginSlot.WaitAsync(ct).ConfigureAwait(false);
+		await TurnAsync(LoginGate, LoginGap, ct).ConfigureAwait(false);
 
-		try {
-			// Blocks only while somebody is serving a rate-limit cooldown; otherwise it's a free pass through.
-			await LoginCooldownLatch.WaitAsync(ct).ConfigureAwait(false);
-			LoginCooldownLatch.Release();
-		} finally {
-			// Detached: this caller goes now, the next one waits LoginDelaySeconds.
-			_ = Task.Run(async () => {
-				try {
-					await Task.Delay(TimeSpan.FromSeconds(LoginDelaySeconds), CancellationToken.None).ConfigureAwait(false);
-				} finally {
-					LoginSlot.Release();
-				}
-			}, CancellationToken.None);
-		}
+		// Blocks only while somebody is serving a rate-limit cooldown; otherwise it's a free pass through.
+		await LoginCooldownLatch.WaitAsync(ct).ConfigureAwait(false);
+		LoginCooldownLatch.Release();
 	}
 
 	/// <summary>
@@ -134,25 +208,27 @@ public static class Limiters {
 			return default;
 		}
 
-		SemaphoreSlim slot = WebSlots.GetOrAdd(host, static _ => new SemaphoreSlim(1, 1));
-		int gap = WebDelayMs;
+		(SemaphoreSlim one, Gate gate) = Hosts.GetOrAdd(host, static _ => (new SemaphoreSlim(1, 1), new Gate()));
 
-		await slot.WaitAsync().ConfigureAwait(false);
+		await one.WaitAsync().ConfigureAwait(false);
 
 		try {
+			// Waits out the gap since the last request to this host FINISHED, then goes.
+			await TurnAsync(gate, TimeSpan.Zero, CancellationToken.None).ConfigureAwait(false);
+
+			// Asked again after the wait: a 429 can land while this request queues, and every queued request going
+			// out anyway is exactly what keeps the limit alive.
+			if (RateLimitedFor(host) > TimeSpan.Zero) {
+				return default;
+			}
+
 			return await request().ConfigureAwait(false);
 		} finally {
-			if (gap <= 0) {
-				slot.Release();
-			} else {
-				_ = Task.Run(async () => {
-					try {
-						await Task.Delay(gap, CancellationToken.None).ConfigureAwait(false);
-					} finally {
-						slot.Release();
-					}
-				}, CancellationToken.None);
+			lock (gate) {
+				gate.Next = DateTime.UtcNow.AddMilliseconds(WebDelayMs);
 			}
+
+			one.Release();
 		}
 	}
 }

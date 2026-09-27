@@ -116,6 +116,12 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 				Log.Event(new Said("accepted a friend request from {0}", steamId), Bot.Name);
 			} catch (Exception e) {
 				Log.Debug(new Said("couldn't handle the friend request from {0}: {1}", steamId, e.Message), Bot.Name);
+
+				// Forgotten again, so it's picked back up when Steam next sends the friends list - which it does on every
+				// reconnect. A disconnect while it waited for morning used to lose the request for as long as the app ran.
+				lock (_handledInvites) {
+					_handledInvites.Remove(steamId);
+				}
 			}
 		});
 	}

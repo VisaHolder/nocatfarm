@@ -18,6 +18,7 @@ namespace NocatFarm.Windows;
 [SupportedOSPlatform("windows")]
 public sealed class TrayIcon : IDisposable {
 	private const int WmDestroy = 0x0002;
+	private const int WsExToolWindow = 0x00000080;
 	private const int WmCommand = 0x0111;
 	private const int WmApp = 0x8000;
 	private const int WmTrayCallback = WmApp + 1;
@@ -116,6 +117,7 @@ public sealed class TrayIcon : IDisposable {
 	[DllImport("user32.dll")] private static extern void PostQuitMessage(int exitCode);
 	[DllImport("user32.dll")] private static extern IntPtr CreatePopupMenu();
 	[DllImport("user32.dll")] private static extern bool DestroyMenu(IntPtr menu);
+	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int RegisterWindowMessage(string name);
 	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool AppendMenu(IntPtr menu, uint flags, int id, string? item);
 	[DllImport("user32.dll")] private static extern int TrackPopupMenuEx(IntPtr menu, uint flags, int x, int y, IntPtr hWnd, IntPtr parameters);
 	[DllImport("user32.dll")] private static extern bool GetCursorPos(out Point point);
@@ -177,8 +179,11 @@ public sealed class TrayIcon : IDisposable {
 
 			RegisterClassEx(ref wc);
 
-			// A message-only window: never shown, exists purely to receive the tray callbacks.
-			_hwnd = CreateWindowEx(0, className, "nocatFarm", 0, 0, 0, 0, 0, new IntPtr(-3), IntPtr.Zero, instance, IntPtr.Zero);
+			// A window that is never shown and exists to receive the tray callbacks. An ordinary hidden one rather than
+			// message-only: message-only windows never get Windows' "the taskbar was re-created" broadcast, so after
+			// Explorer restarted the icon was simply gone, and a hidden app window had no way back.
+			_hwnd = CreateWindowEx(WsExToolWindow, className, "nocatFarm", 0, 0, 0, 0, 0, IntPtr.Zero, IntPtr.Zero, instance, IntPtr.Zero);
+			_taskbarCreated = RegisterWindowMessage("TaskbarCreated");
 
 			if (_hwnd == IntPtr.Zero) {
 				Log.Debug("tray: couldn't create the message window - running without a tray icon");
@@ -187,47 +192,7 @@ public sealed class TrayIcon : IDisposable {
 			}
 
 			_icon = LoadOwnIcon();
-
-			NotifyIconData data = NewData();
-			data.uFlags = NifMessage | NifIcon | NifTip | NifGuid;
-			data.uCallbackMessage = WmTrayCallback;
-			data.hIcon = _icon;
-			data.szTip = _tooltip;
-			_added = Shell_NotifyIcon(NimAdd, ref data);
-
-			if (!_added) {
-				// A GUID-identified icon is refused if Windows still has one registered from a process that was
-				// killed rather than closed - which is exactly the case that leaves a dead icon behind. Delete
-				// the stale registration and claim it again, so there is only ever one nocatFarm in the tray.
-				NotifyIconData stale = NewData();
-				stale.uFlags = NifGuid;
-				Shell_NotifyIcon(NimDelete, ref stale);
-
-				data = NewData();
-				data.uFlags = NifMessage | NifIcon | NifTip | NifGuid;
-				data.uCallbackMessage = WmTrayCallback;
-				data.hIcon = _icon;
-				data.szTip = _tooltip;
-				_added = Shell_NotifyIcon(NimAdd, ref data);
-			}
-
-			if (!_added) {
-				// Some setups refuse GUID icons outright (the exe was moved since it was registered). Fall back
-				// to a plain one rather than running with no tray at all.
-				data = NewData();
-				data.uFlags = NifMessage | NifIcon | NifTip;
-				data.uCallbackMessage = WmTrayCallback;
-				data.hIcon = _icon;
-				data.szTip = _tooltip;
-				_usingGuid = false;
-				_added = Shell_NotifyIcon(NimAdd, ref data);
-			}
-
-			if (!_added) {
-				Log.Warn("couldn't add the notification-area icon - nocatFarm still runs, it just won't show in the tray");
-			} else {
-				Log.Debug("tray icon added");
-			}
+			AddIcon();
 
 			if (startHidden) {
 				ShowConsole(false);
@@ -305,6 +270,60 @@ public sealed class TrayIcon : IDisposable {
 		szInfoTitle = ""
 	};
 
+	/// <summary>
+	/// Put the icon in the notification area - at start, and again whenever Explorer comes back, since a restarted
+	/// taskbar starts with no icons at all.
+	/// </summary>
+	private void AddIcon() {
+		NotifyIconData data = NewData();
+		data.uFlags = NifMessage | NifIcon | NifTip | NifGuid;
+		data.uCallbackMessage = WmTrayCallback;
+		data.hIcon = _icon;
+		data.szTip = _tooltip;
+		_added = Shell_NotifyIcon(NimAdd, ref data);
+
+		if (!_added) {
+			// A GUID-identified icon is refused if Windows still has one registered from a process that was
+			// killed rather than closed - which is exactly the case that leaves a dead icon behind. Delete
+			// the stale registration and claim it again, so there is only ever one nocatFarm in the tray.
+			NotifyIconData stale = NewData();
+			stale.uFlags = NifGuid;
+			Shell_NotifyIcon(NimDelete, ref stale);
+
+			data = NewData();
+			data.uFlags = NifMessage | NifIcon | NifTip | NifGuid;
+			data.uCallbackMessage = WmTrayCallback;
+			data.hIcon = _icon;
+			data.szTip = _tooltip;
+			_added = Shell_NotifyIcon(NimAdd, ref data);
+		}
+
+		if (!_added) {
+			// Some setups refuse GUID icons outright (the exe was moved since it was registered). Fall back
+			// to a plain one rather than running with no tray at all.
+			data = NewData();
+			data.uFlags = NifMessage | NifIcon | NifTip;
+			data.uCallbackMessage = WmTrayCallback;
+			data.hIcon = _icon;
+			data.szTip = _tooltip;
+			_usingGuid = false;
+			_added = Shell_NotifyIcon(NimAdd, ref data);
+		}
+
+		if (!_added) {
+			Log.Warn("couldn't add the notification-area icon - nocatFarm still runs, it just won't show in the tray");
+		} else {
+			Log.Debug("tray icon added");
+		}
+
+		// Only claim a tray once the icon is really there: "hide" with no icon to click was a window lost for good.
+		Commands.TrayPresent = _added;
+
+		if (!_added) {
+			Commands.Window?.Show();
+		}
+	}
+
 	private IntPtr HandleMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam) {
 		switch (msg) {
 			case WmTrayCallback:
@@ -337,9 +356,19 @@ public sealed class TrayIcon : IDisposable {
 
 				return IntPtr.Zero;
 			default:
+				if ((msg == _taskbarCreated) && (_taskbarCreated != 0)) {
+					_usingGuid = true;
+					AddIcon();
+
+					return IntPtr.Zero;
+				}
+
 				return DefWindowProc(hWnd, msg, wParam, lParam);
 		}
 	}
+
+	/// <summary>Windows' "the taskbar was re-created" message - Explorer restarted, and every tray icon went with it.</summary>
+	private int _taskbarCreated;
 
 	private void ShowMenu() {
 		IntPtr menu = CreatePopupMenu();

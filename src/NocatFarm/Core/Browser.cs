@@ -4,8 +4,8 @@ namespace NocatFarm.Core;
 
 /// <summary>How this app presents itself to Steam's web servers - one identity, kept in one place.</summary>
 /// <remarks>
-/// Steam put a web application firewall in front of the community site in July 2026, and ArchiSteamFarm had to
-/// start dressing up as a browser for inventories, trade offers and confirmations. Every account request here
+/// Steam put a web application firewall in front of the community site in July 2026, and anything that didn't look
+/// like a browser started failing on inventories, trade offers and confirmations. Every account request here
 /// already carried a browser User-Agent, which is why none of those broke. But five of the app's HTTP clients sent
 /// no User-Agent at all - the market price lookups among them, on the very domain behind that firewall - and the
 /// one browser string there was claimed a two-year-old Chrome, written the way no Chrome writes it: "Chrome/126.0",

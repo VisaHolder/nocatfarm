@@ -611,6 +611,12 @@
     "{0} card(s) - farming tonight, once it's asleep": "{0} kart - zafarmi w nocy, gdy zaśnie",
     "{0} card(s) - farmed in the day's sittings, from morning": "{0} kart(y) - farmione w sesjach dnia, od rana",
     "{0} card(s) - farmed in human mode's next sitting": "{0} kart(y) - farmione w następnej sesji trybu ludzkiego",
+    "{0} has card drops listed but isn't a game (a sale or event badge) - not farmed": "{0} ma karty do wydropienia, ale nie jest grą (odznaka wyprzedaży lub wydarzenia) - nie jest farmiona",
+    "couldn't read the card-page check list: {0}": "nie udało się odczytać listy sprawdzeń stron kart: {0}",
+    "couldn't save the card-page check list: {0}": "nie udało się zapisać listy sprawdzeń stron kart: {0}",
+    "asleep, the card farmer is working": "śpi, farmienie kart trwa",
+    "last night's plan restored - {0}/{1} played, up about {2}": "przywrócono plan z ostatniej nocy - {0}/{1} zagrane, wstaje około {2}",
+    "trade offer #{0}: couldn't check it as a card swap yet - {1}": "oferta wymiany #{0}: nie udało się jeszcze sprawdzić jej jako wymiany kart - {1}",
     "between sittings - {0} card(s) left": "między sesjami - zostało {0} kart(y)",
     "farming cards on {0} · {1} left · {2}/{3} today": "farmi karty w {0} · zostało {1} · {2}/{3} dziś",
     "farming cards on {0}": "farmi karty w {0}",
@@ -1034,7 +1040,8 @@
     "dropping a queued key - {0}  ({1} left)": "odrzucam klucz z kolejki - {0}  (zostało {1})",
     "giving up on a key after {0} tries - no account could activate it": "rezygnacja z klucza po {0} próbach - żadne konto nie zdołało go aktywować",
     "hit {0} activations in {1}m - pausing so Steam doesn't start refusing": "osiągnięto {0} aktywacji w {1}m - pauza, żeby Steam nie zaczął odmawiać",
-    "nocat.farm {0} is out - you have {1}. {2}": "nocat.farm {0} jest dostępny - masz {1}. {2}",
+    "nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update ignore' stops the hourly reminders until the next launch": "nocat.farm {0} jest już dostępny - masz {1}. {2}  -  'update accept' instaluje i uruchamia ponownie; 'update ignore' wyłącza cogodzinne przypomnienia do następnego uruchomienia",
+    "reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update ignore' stops these reminders until the next launch": "przypomnienie: nocat.farm {0} jest już dostępny - masz {1}. 'update accept' instaluje i uruchamia ponownie; 'update ignore' wyłącza te przypomnienia do następnego uruchomienia",
     "update: downloading {0} ({1}MB)": "aktualizacja: pobieranie {0} ({1}MB)",
     "update: {0} is ready - restarting into it now": "aktualizacja: {0} gotowa - restart teraz",
     "update failed: {0}: {1} - nothing has been changed": "aktualizacja nie powiodła się: {0}: {1} - nic nie zmieniono",
@@ -1058,6 +1065,12 @@
     "answered Steam Guard from this account's own authenticator": "odpowiedziano na Steam Guard własnym uwierzytelniaczem tego konta",
     "approve this login in the Steam mobile app (or type the code below)": "zatwierdź to logowanie w aplikacji mobilnej Steam (albo wpisz kod poniżej)",
     "authenticated - token stored, the password won't be asked for again": "uwierzytelniono - token zapisany, hasło nie będzie już potrzebne",
+    "nobody scanned the QR code within 5 minutes - stopping. 'start {0}' shows a fresh one": "nikt nie zeskanował kodu QR w ciągu 5 minut - zatrzymano. 'start {0}' pokaże nowy",
+    "Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty.": "Zeskanuj kod aplikacją Steam na telefonie zamiast wpisywać hasło - nazwa konta przyjdzie ze Steam, więc oba pola wyżej mogą zostać puste.",
+    "Scan this with the Steam app on your phone to sign {0} in - the Steam Guard tab has the QR scanner.": "Zeskanuj to aplikacją Steam na telefonie, aby zalogować {0} - skaner QR jest w zakładce Steam Guard.",
+    "Sign in with a QR code": "Zaloguj kodem QR",
+    "{0} is waiting to be signed in: open the dashboard and scan the QR code there with the Steam app on your phone (Steam Guard tab)": "{0} czeka na zalogowanie: otwórz panel i zeskanuj tam kod QR aplikacją Steam na telefonie (zakładka Steam Guard)",
+    "signed in with the QR code as {0} - the login token is stored, nothing to type next time": "zalogowano kodem QR jako {0} - token logowania jest zapisany, następnym razem nic nie trzeba wpisywać",
     "config removed - stopping": "usunięto konfigurację - zatrzymuję",
     "connection went quiet - reconnecting": "połączenie ucichło - łączę ponownie",
     "couldn't add the notification-area icon - nocatFarm still runs, it just won't show in the tray": "nie udało się dodać ikony w obszarze powiadomień - nocatFarm nadal działa, po prostu nie pokaże się w zasobniku",
@@ -1128,7 +1141,26 @@
     "{0} are past the refund window - free to play again": "{0} są po okresie zwrotu - znów można grać",
     "{0} is past the refund window - free to play again": "{0} jest po okresie zwrotu - znów można grać",
     "── daily report · last 24h ──": "── raport dzienny · ostatnie 24 h ──",
-    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── raport dzienny · ostatnie 24 h · pierwszy, od teraz liczy się \"zebrane\" ──"
+    "── daily report · last 24h · first one, 'banked' counts from here on ──": "── raport dzienny · ostatnie 24 h · pierwszy, od teraz liczy się \"zebrane\" ──",
+    "reached {0}h in {1} - that hour target is done": "osiągnięto {0} godz. w {1} - ten cel godzinowy jest wykonany",
+    "couldn't read the play history: {0}": "nie udało się odczytać historii gry: {0}",
+    "library: {0} played game(s) Steam's owned list left out, added from the play history ({1})": "biblioteka: {0} grana(-e) gra(-y) pominięta(-e) na liście Steam, dodana(-e) z historii ({1})",
+    "level plan for {0} is ready - type 'levelup {0} {1}' to see it": "plan poziomu dla {0} jest gotowy - wpisz 'levelup {0} {1}', aby go zobaczyć",
+    "the discovery queue wasn't available - Steam said {0}": "lista odkryć była niedostępna - Steam odpowiedział {0}",
+    "went through the discovery queue ({0} game(s))": "przejrzano listę odkryć ({0} gier)",
+    "listed {0} duplicate card(s) on the market - {1} to you if they all sell": "wystawiono {0} zduplikowanych kart na rynku - {1} dla ciebie, jeśli wszystkie się sprzedadzą",
+    "couldn't sell duplicate cards: {0}": "nie udało się sprzedać zduplikowanych kart: {0}",
+    "next look for spare cards to sell around {0}": "następne szukanie zbędnych kart około {0}",
+    "it isn't an active offer any more": "to już nie jest aktywna oferta",
+    "the cards would sit in a trade hold": "karty utknęłyby w blokadzie wymiany",
+    "Steam didn't say what every item is": "Steam nie podał, czym jest każdy przedmiot",
+    "that's an offer this account sent": "to oferta wysłana przez to konto",
+    "{0} to confirm on your phone": "{0} do potwierdzenia na telefonie",
+    "couldn't handle trade offer #{0}: {1}: {2}": "nie udało się obsłużyć oferty wymiany #{0}: {1}: {2}",
+    "trade offer #{0} is no longer a fair card swap - {1}; left alone": "oferta wymiany #{0} nie jest już uczciwą wymianą kart - {1}; zostawiona",
+    "trade offer #{0} was accepted but needs confirming from the email Steam sent": "oferta wymiany #{0} została przyjęta, ale trzeba ją potwierdzić z e-maila od Steam",
+    "got the last card from {0} - playing on for about {1}, then a break": "zdobyto ostatnią kartę z {0} - gra jeszcze około {1}, potem przerwa",
+    "finished - logging out after this sitting": "gotowe - wyloguje się po tej sesji"
   },
   "settings": {
     "WebEnabled": {
@@ -1256,6 +1288,10 @@
       "label": "Hasło",
       "tip": "Opcjonalne. Zostaw puste, a nocat.farm zapyta raz, a potem zapamięta konto tokenem logowania - bezpieczniejsza z dwóch opcji."
     },
+    "SignInWithQr": {
+      "label": "Zaloguj kodem QR",
+      "tip": "Gdy to konto trzeba zalogować, pokaż kod QR do zeskanowania aplikacją Steam na telefonie zamiast pytać o hasło - nazwa konta przychodzi ze Steam, więc nic nie trzeba wpisywać. Kod pojawia się w panelu."
+    },
     "OnlineStatus": {
       "label": "Pokazuj jako",
       "tip": "Jak widzą cię inni: dostępny, zaraz wracam, zajęty albo niewidoczny. Niewidoczny dalej zbiera godziny, a nikt nic nie widzi.",
@@ -1289,6 +1325,10 @@
     "GameWeights": {
       "label": "Gry i jak często",
       "tip": "W co gra i jaką część czasu dostaje każda gra, w procentach, które powinny sumować się do około 100. PIERWSZA gra to gra główna - ta, którą to konto rzekomo lubi - i jej liczba jest tą prawdziwą: ustala udział gry głównej, losowany co dnia w granicach około 10 punktów, niezależnie od liczby dodanych gier. Pominięcie liczby oznacza równy udział w tym, co zostało. Wpisz \"440:0\", aby odstawić grę bez usuwania jej."
+    },
+    "HourTargets": {
+      "label": "Cele godzinowe",
+      "tip": "Godziny do osiągnięcia w grze, opcjonalnie do daty: 730:100@2026-12-01 doprowadza Counter-Strike 2 do 100 godzin do 1 grudnia, 440:50 doprowadza TF2 do 50 kiedykolwiek. Tryb człowieka kieruje sesje ku celowi - tym mocniej, im bardziej cel z datą jest opóźniony - z tymi samymi przerwami i porą snu co zwykle, a cel z datą, którego sam dzień nie zdąży zrealizować, dołącza do gier nocnych, jeśli 'Zbieraj godziny w nocy' jest włączone. Po osiągnięciu gra przestaje być faworyzowana. 'hours <konto>' pokazuje postęp."
     },
     "WeekdayHours": {
       "label": "Godzin w dzień powszedni",
@@ -1471,7 +1511,7 @@
     },
     "AcceptFairCardSwaps": {
       "label": "Przyjmuj uczciwe wymiany kart",
-      "tip": "Przyjmuje od każdego oferty wymieniające karty jeden za jeden w obrębie tej samej gry, gdy wymiana może tylko przybliżyć zestawy tego konta do ukończenia - to, co wysyłają użytkownicy Steam Trade Matcher i co przyjmuje ustawienie SteamTradeMatcher w ArchiSteamFarm. Cokolwiek innego w ofercie, karta foliowa albo wymiana zabierająca ostatnią kopię karty - i oferta zostaje nietknięta. Oddanie kart wymaga potwierdzenia mobilnym uwierzytelniaczem."
+      "tip": "Przyjmuje od każdego oferty wymiany kart jeden za jeden w tej samej grze, gdy wymiana może tylko przybliżyć zestawy tego konta - takie, jakie strony do wymiany kart wysyłają cały dzień. Każda oddana karta musi mieć potem więcej kopii niż którakolwiek przychodząca karta miała wcześniej, więc żadna karta się nie kończy, a kompletnych zestawów nigdy nie ubywa. Cokolwiek innego w ofercie albo karta foliowa - i oferta zostaje. Oddanie kart wymaga potwierdzenia mobilnym uwierzytelniaczem."
     },
     "AcceptGifts": {
       "label": "Przyjmuj prezenty i przepustki gościa",
@@ -1527,8 +1567,12 @@
       "label": "Wylicz, ile wart jest jego ekwipunek"
     },
     "CheckForUpdates": {
-      "tip": "Raz dziennie sprawdza, czy jest nowsza wersja, i pisze o tym w dzienniku. Tylko informuje: nigdy nic nie pobiera, nie podmienia ani nie restartuje.",
+      "tip": "Co kilka godzin sprawdzaj, czy jest nowsza wersja, i wspominaj o niej w logu. Tylko informuje - nigdy niczego nie pobiera, nie podmienia ani nie uruchamia ponownie. Coś, co trzyma klucze do twoich kont Steam, nie powinno móc podmieniać własnego pliku według harmonogramu, a aktualizacja w trakcie farmienia to utracona sesja.",
       "label": "Powiadom, gdy jest aktualizacja"
+    },
+    "UpdateReminders": {
+      "label": "Przypominaj co godzinę",
+      "tip": "Dopóki jest nowsza wersja, wspominaj o niej w logu raz na godzinę, a nie tylko raz. 'update accept' instaluje ją i uruchamia ponownie; 'update ignore' wyłącza przypomnienia do następnego uruchomienia."
     },
     "BreakMinMinutes": {
       "label": "Najkrótsza przerwa",
@@ -1586,11 +1630,11 @@
     },
     "PostFarmWindDownMinMinutes": {
       "label": "Po ostatniej karcie graj jeszcze co najmniej",
-      "tip": "Tylko tryb ludzki: gdy runda farmienia się kończy, zostawia tę grę włączoną na losowy czas z tego zakresu (minuty), zanim odejdzie, zamiast zamykać w tej samej sekundzie."
+      "tip": "Tylko w trybie człowieka. Gdy gra da ostatnią kartę, gra w nią jeszcze kilka minut - gdzieś między tymi dwiema liczbami - a potem robi przerwę, jak w zwykłej sesji grania. Następna gra z kartami zaczyna się po przerwie. (Gdy karty są farmione w nocy lub o dowolnej porze, dzieje się to raz, po ostatniej karcie.) Domyślnie 15 do 20 minut. Ustaw obie na 0, żeby kończyć od razu."
     },
     "PostFarmWindDownMaxMinutes": {
       "label": "...do",
-      "tip": "Górna granica tego wyciszenia po farmieniu, w minutach."
+      "tip": "Najwięcej minut, przez które gra dalej po ostatniej karcie."
     },
     "FarmingDelayMinutes": {
       "label": "Sprawdzaj ponownie co",
@@ -1668,9 +1712,27 @@
       "label": "Odbieraj darmowe przedmioty z wydarzeń",
       "tip": "Odbiera darmową naklejkę, którą Steam rozdaje codziennie podczas wyprzedaży, i wszystko w sklepie z punktami, co kosztuje 0 punktów. Nic z tego nie kosztuje, a przepada, jeśli nikt tego nie odbierze. Gdy tryb ludzki ma konto uśpione, czeka do rana, chyba że 'Reaguj tylko, gdy nie śpi' jest wyłączone."
     },
+    "DiscoveryQueue": {
+      "label": "Przeglądaj listę odkryć",
+      "tip": "Raz na dzień Steam przegląda listę odkryć w sklepie jak człowiek - kilka sekund na każdą grę, potem następna. Podczas wyprzedaży daje to przedmioty z wydarzenia i postęp odznaki; poza nią to po prostu coś, co ludzie robią. Gdy tryb człowieka każe kontu spać, czeka do rana.",
+      "choices": "0 wył. | 1 podczas wyprzedaży | 2 codziennie"
+    },
+    "SellDuplicates": {
+      "label": "Sprzedawaj zduplikowane karty",
+      "tip": "Co 8-14 godzin, gdy konto nie śpi, wystawia kilka zbędnych kart kolekcjonerskich na rynku grosz poniżej najtańszej oferty - z policzonymi opłatami Steam, więc pokazana cena to to, co dostajesz. Zbędne znaczy: przy pełnym zestawie gry zostawia tyle kopii, ile poziomów odznaki może jeszcze stworzyć; przy części zestawu po jednej; przy maksymalnej odznace żadnej. Karty foliowe nigdy nie są sprzedawane. Tygodniowe oferty, pod które zszedł rynek, są zdejmowane i wystawiane ponownie po cenie z dnia. Trzeba je potwierdzić na telefonie, chyba że wczytano sekrety uwierzytelniacza tego konta. 'sell <konto>' pokazuje podgląd."
+    },
+    "SellPerRun": {
+      "label": "Kart na rundę",
+      "tip": "Ile zbędnych kart wystawia jedna runda, najcenniejsze najpierw. Kilka naraz wygląda jak sprzątanie; sto w minutę nie."
+    },
     "BoosterGames": {
       "label": "Twórz pakiety kart dla",
       "tip": "AppID, dla których klejnoty zamieniać na pakiety kart, oddzielone przecinkami. Steam pozwala na jeden pakiet na grę dziennie, tylko dla gier, w których to konto może jeszcze dostać karty, i mówi, kiedy da się zrobić następny - powstaje, gdy tylko można; gdy tryb ludzki ma konto uśpione, czeka do rana, chyba że 'Reaguj tylko, gdy nie śpi' jest wyłączone. Puste wyłącza. 'booster <konto>' pokazuje klejnoty i pasujące gry."
+    },
+    "BoosterGems": {
+      "label": "Paczki kart używają",
+      "tip": "Z jakich klejnotów robiona jest paczka kart, gdy konto ma oba rodzaje. Najpierw wymienialne (domyślnie) daje paczki, które można wymienić lub sprzedać; najpierw niewymienialne zużywa klejnoty, z którymi nic innego nie da się zrobić. Jeśli preferowany rodzaj nie pokrywa ceny, używany jest drugi.",
+      "choices": "0 najpierw klejnoty wymienialne | 1 najpierw klejnoty niewymienialne"
     },
     "ClearInventoryNotifications": {
       "label": "Czyść plakietkę nowych przedmiotów",

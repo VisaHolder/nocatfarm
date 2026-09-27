@@ -9,8 +9,8 @@ namespace NocatFarm.Modules;
 /// Everything else in here only writes to the log when something HAPPENS - a session starts, a card drops, a
 /// comment lands. That reads fine while you are watching, and tells you nothing at all when you come back six
 /// hours later: a long quiet stretch looks identical whether the account played all night or silently stopped
-/// doing anything at three in the morning. ArchiSteamFarm printed a steady "still on it" line for exactly this
-/// reason, and its absence is why "is it actually still farming?" was unanswerable from the log alone.
+/// doing anything at three in the morning. A steady "still on it" line answers "is it actually still farming?"
+/// from the log alone.
 ///
 /// Two intervals, because one does not fit: a line every five minutes is right while a game is open and is
 /// pure noise across an eight-hour night. Asleep, on a break, paused or offline all use the slower one.
@@ -33,7 +33,7 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 		while (!ct.IsCancellationRequested) {
 			try {
 				Beat();
-			} catch (OperationCanceledException) {
+			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
 				Log.Debug(new Said("heartbeat hiccup: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
