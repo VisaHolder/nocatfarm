@@ -517,6 +517,13 @@
     "waiting for a farming slot": "等待挂卡名额",
     "waiting for the account": "等待账号",
     "sending items to your main account every {0} - the first send is around {1}": "每 {0} 把物品寄到你的主账号 —— 第一次大约在 {1}",
+    "couldn't add the gifted game {0} to the library - Steam said {1}": "无法把收到的礼物游戏 {0} 加入库中——Steam 回复 {1}",
+    "accepted a guest pass: {0}": "已接受访客通行证：{0}",
+    "waiting gift or guest pass: {0}": "待处理的礼物或访客通行证：{0}",
+    "{0} was gifted to this account - accept or decline it in Steam (AcceptGiftedGames is off)": "有人把 {0} 作为礼物送给了此账号——请在 Steam 中接受或拒绝（AcceptGiftedGames 已关闭）",
+    "couldn't add a gifted game to the library: {0}": "无法把收到的礼物游戏加入库中：{0}",
+    "added a gifted game to the library": "已把收到的礼物游戏加入库中",
+    "added a gifted game to the library: {0}": "已把收到的礼物游戏加入库中：{0}",
     "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. Status and log lines follow it too; replies to commands typed in the console stay in English.": "翻译尚未覆盖的内容会显示英文而不是留空，所以翻译到一半的语言也完全能用。状态行和日志行也会使用该语言；在控制台输入的命令，其回复仍为英文。",
     "A newly added account farms its trading cards and {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "新添加的账号在被告知要玩什么之前，只会刷它的集换式卡牌，{0}；而应用窗口里没有这个表单，只有仪表盘有。",
     "With this off, adding an account leaves you at a command line with an account that farms its cards and then sits idle until you remember to go and configure it. This is for people who already know that.": "关闭后，添加账号后你会停留在命令行，账号刷完卡牌后就一直闲着，直到你想起去设置它。这是给已经了解这一点的人准备的。",
@@ -1426,6 +1433,10 @@
     "AcceptDonations": {
       "label": "接受赠送",
       "tip": "接受不索取任何回报的报价。它们不可能让你有任何损失，因此天然安全。"
+    },
+    "AcceptGiftedGames": {
+      "label": "接受好友赠送的游戏",
+      "tip": "把好友送给此账号的游戏直接加入库中，和“添加至我的库”按钮一样。关闭后，每份礼物由你自己决定（拒绝会给赠送者退款）。开启拟人模式时，礼物会等账号醒来再接受。"
     },
     "AcceptFairCardSwaps": {
       "label": "接受公平的卡牌交换",

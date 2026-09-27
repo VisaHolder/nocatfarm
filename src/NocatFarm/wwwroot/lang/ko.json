@@ -517,6 +517,13 @@
     "waiting for a farming slot": "수집 자리를 기다리는 중",
     "waiting for the account": "계정을 기다리는 중",
     "sending items to your main account every {0} - the first send is around {1}": "{0}마다 메인 계정으로 아이템을 보냅니다 - 첫 전송은 {1}쯤",
+    "couldn't add the gifted game {0} to the library - Steam said {1}": "선물받은 게임 {0}을(를) 라이브러리에 추가하지 못했습니다 - Steam 응답: {1}",
+    "accepted a guest pass: {0}": "게스트 패스를 받았습니다: {0}",
+    "waiting gift or guest pass: {0}": "대기 중인 선물 또는 게스트 패스: {0}",
+    "{0} was gifted to this account - accept or decline it in Steam (AcceptGiftedGames is off)": "{0}이(가) 이 계정에 선물로 왔습니다 - Steam에서 받거나 거절하세요 (AcceptGiftedGames 꺼짐)",
+    "couldn't add a gifted game to the library: {0}": "선물받은 게임을 라이브러리에 추가하지 못했습니다: {0}",
+    "added a gifted game to the library": "선물받은 게임을 라이브러리에 추가했습니다",
+    "added a gifted game to the library: {0}": "선물받은 게임을 라이브러리에 추가했습니다: {0}",
     "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. Status and log lines follow it too; replies to commands typed in the console stay in English.": "번역이 아직 안 된 부분은 빈칸이 아니라 영어로 나오므로, 반쯤 번역된 언어도 충분히 쓸 수 있습니다. 상태 줄과 로그 줄도 이 언어를 따릅니다. 콘솔에 입력한 명령에 대한 답은 영어로 나옵니다.",
     "A newly added account farms its trading cards and {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "새로 추가한 계정은 무엇을 플레이할지 정해 주기 전까지 트레이딩 카드를 파밍하고 {0}. 그 입력 양식은 앱 창에는 없고 대시보드에만 있습니다.",
     "With this off, adding an account leaves you at a command line with an account that farms its cards and then sits idle until you remember to go and configure it. This is for people who already know that.": "이 옵션을 끄면 계정을 추가한 뒤 명령줄에 남게 되고, 계정은 카드를 파밍한 다음 설정해 줄 때까지 가만히 있습니다. 이미 아는 사람을 위한 옵션입니다.",
@@ -1426,6 +1433,10 @@
     "AcceptDonations": {
       "label": "기부 수락",
       "tip": "대가를 요구하지 않는 제안만 수락합니다. 손해를 볼 수가 없으니 본질적으로 안전합니다."
+    },
+    "AcceptGiftedGames": {
+      "label": "선물받은 게임 받기",
+      "tip": "친구가 이 계정에 선물한 게임을 '내 라이브러리에 추가' 버튼처럼 바로 라이브러리에 추가합니다. 끄면 선물마다 직접 정할 수 있습니다(거절하면 보낸 사람에게 환불됩니다). 사람 모드에서는 계정이 깨어날 때까지 선물이 기다립니다."
     },
     "AcceptFairCardSwaps": {
       "label": "공정한 카드 교환 받기",

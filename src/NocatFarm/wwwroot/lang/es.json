@@ -517,6 +517,13 @@
     "waiting for a farming slot": "esperando un hueco de farmeo",
     "waiting for the account": "esperando a la cuenta",
     "sending items to your main account every {0} - the first send is around {1}": "enviando los objetos a tu cuenta principal cada {0} - el primer envío hacia las {1}",
+    "couldn't add the gifted game {0} to the library - Steam said {1}": "no se pudo añadir el juego regalado {0} a la biblioteca - Steam dijo {1}",
+    "accepted a guest pass: {0}": "pase de invitado aceptado: {0}",
+    "waiting gift or guest pass: {0}": "regalo o pase de invitado pendiente: {0}",
+    "{0} was gifted to this account - accept or decline it in Steam (AcceptGiftedGames is off)": "le han regalado {0} a esta cuenta - acéptalo o recházalo en Steam (AcceptGiftedGames está desactivado)",
+    "couldn't add a gifted game to the library: {0}": "no se pudo añadir un juego regalado a la biblioteca: {0}",
+    "added a gifted game to the library": "juego regalado añadido a la biblioteca",
+    "added a gifted game to the library: {0}": "juego regalado añadido a la biblioteca: {0}",
     "Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. Status and log lines follow it too; replies to commands typed in the console stay in English.": "Lo que una traducción aún no cubra se queda en inglés en vez de salir en blanco, así que un idioma a medias sigue siendo perfectamente usable. Las líneas de estado y del registro también lo siguen; las respuestas a los comandos escritos en la consola se quedan en inglés.",
     "A newly added account farms its trading cards and {0} until it is told what to play, and the app window has no form for that - only the dashboard does.": "Una cuenta recién añadida farmea sus cromos y {0} hasta que se le dice a qué jugar, y la ventana de la app no tiene ese formulario: solo el panel.",
     "With this off, adding an account leaves you at a command line with an account that farms its cards and then sits idle until you remember to go and configure it. This is for people who already know that.": "Con esto desactivado, al añadir una cuenta te quedas en una línea de comandos con una cuenta que farmea sus cromos y luego se queda parada hasta que te acuerdes de configurarla. Es para quien ya lo sabe.",
@@ -1426,6 +1433,10 @@
     "AcceptDonations": {
       "label": "Aceptar donaciones",
       "tip": "Acepta ofertas que no piden nada a cambio. No pueden costarte nada, así que son seguras por definición."
+    },
+    "AcceptGiftedGames": {
+      "label": "Aceptar juegos regalados",
+      "tip": "Añade directamente a la biblioteca los juegos que los amigos regalen a esta cuenta, como el botón \"Añadir a mi biblioteca\". Desactívalo para decidir cada regalo tú (rechazarlo le devuelve el dinero a quien lo envió). Con el modo humano, un regalo espera a que la cuenta esté despierta."
     },
     "AcceptFairCardSwaps": {
       "label": "Aceptar intercambios justos de cromos",

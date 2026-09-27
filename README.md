@@ -64,7 +64,7 @@ asks). With all three off, nothing but Steam is ever contacted.
 ## What it does
 
 What an account does out of the box: it farms its trading cards, then idles the games you give it, collects free
-event items, gift cards and guest passes, accepts offers that ask for nothing, clears its Steam notifications and
+event items, gift cards, guest passes and games friends gift it, accepts offers that ask for nothing, clears its Steam notifications and
 joins the nocat.farm Steam group. Each of those has its own switch. Everything else below is optional and one
 setting away.
 
@@ -82,7 +82,7 @@ setting away.
 | **Inventory value** | What each account's items are worth at the market's median, per game (up to 12 inventories per account), in the currency you pick (`MarketCurrency`, default US dollar), with how it has moved in the last 24 hours. Reads the account's OWN inventory, so a private profile makes no difference. |
 | **Free games** | Optional (`ClaimFreeGames`). Watches a public list of Steam giveaways **and Steam's own change feed**, and claims free-to-keep giveaways, packages and apps alike. Whatever it finds has to be a released, paid game showing 100% off, so free-to-play games, a paid game's free edition, DLC and demos are left alone. The change feed usually sees a giveaway within half an hour of Steam publishing it. A giveaway that has already ended is tried a few more times, then left alone, and that is remembered across restarts. |
 | **Free event items** | The daily sticker during a Steam sale, and anything in the Points Shop at 0 points, collected by themselves (`ClaimEventItems`, on by default). |
-| **Gifts** | Steam wallet gift cards and guest passes sent to an account are accepted (`AcceptGifts`, on by default). A game sent as a gift is pointed out rather than accepted — that one is the owner's call. |
+| **Gifts** | Steam wallet gift cards and guest passes sent to an account are accepted (`AcceptGifts`, on by default), and so are games friends gift it — added straight to the library (`AcceptGiftedGames`, on by default; turn it off to decide each one yourself). A gift is never declined. |
 | **Booster packs** | Turns gems into booster packs for the games you list, one per game per day as Steam allows, on Steam's own schedule (`BoosterGames`). |
 | **Fair card swaps** | Optional. Accepts the one-for-one card swaps Steam Trade Matcher users send, only when the swap can never set the account's sets back — ArchiSteamFarm's SteamTradeMatcher rule (`AcceptFairCardSwaps`). |
 | **Refund protection** | Optional (`SkipRefundableGames`, off by default). When on, a game bought in the last 14 days (`RefundHoldDays`) with under two hours played is left alone — by the card farmer, the idler, the schedule, grinds and the hunter alike — until it can no longer be refunded. |
@@ -596,8 +596,9 @@ accounts, since the shop is the same for everyone — and anything at 0 points i
 account already has.
 
 **Gifts.** Steam wallet gift cards and guest passes somebody sends are accepted. Steam pushes the number of
-waiting gifts over the connection, so the gifts page is only read when there's something on it. A game sent as a gift is only pointed out
-in the log — accepting it or turning it down so the sender gets a refund is the owner's decision.
+waiting gifts over the connection, so the gifts page is only read when there's something on it. Games friends gift the account are added to its library, the same as pressing *Add to my library* (`AcceptGiftedGames`, on by default).
+Nothing here ever declines a gift — turn the setting off and each one waits for you to take or turn down yourself
+(turning one down refunds the sender).
 
 **Booster packs.** Steam lets an account make one booster pack per game a day, for gems, for the games its
 booster creator page lists — `booster` shows which. List the games in `BoosterGames` and each pack is made as

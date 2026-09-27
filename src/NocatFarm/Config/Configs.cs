@@ -387,6 +387,7 @@ public sealed class BotConfig {
 	// ── trades ──
 	public bool AcceptDonations { get; set; } = true;
 	public bool AcceptGifts { get; set; } = true;
+	public bool AcceptGiftedGames { get; set; } = true;
 	public bool AcceptFairCardSwaps { get; set; }
 	public bool AcceptFromMasters { get; set; }
 	public string TradeMasters { get; set; } = "";

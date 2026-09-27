@@ -142,6 +142,7 @@ public static class Tutorial {
 			"On by default, on every account:",
 			"  ClaimEventItems    the daily sticker during a Steam sale, and anything in the Points Shop at 0 points",
 			"  AcceptGifts        Steam wallet gift cards and guest passes people send you",
+			"  AcceptGiftedGames  games friends gift the account, added straight to its library",
 			"",
 			"One switch each, per account:",
 			"  set <name> ClaimFreeGames true        paid games given away free-to-keep, never free-to-play filler",
@@ -151,7 +152,7 @@ public static class Tutorial {
 			"  booster <name>                        gems, and which games can be made into packs",
 			"  freeitems all                         look for free event items now",
 			"",
-			"A game sent as a gift is only pointed out in the log - keeping it or turning it down is your call.",
+			"A gift is never declined. Turn AcceptGiftedGames off to decide each gifted game yourself.",
 			"With human mode on, gifts, event items and booster packs wait until the account is awake."
 		]),
 

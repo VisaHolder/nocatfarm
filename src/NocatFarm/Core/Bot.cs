@@ -613,6 +613,9 @@ public sealed class Bot : IAsyncDisposable {
 	/// <summary>Guest passes Steam last said this account can redeem.</summary>
 	public IReadOnlyList<ulong> GuestPasses { get; private set; } = [];
 
+	/// <summary>The package on each waiting guest pass (0 when Steam didn't say) - a trial, or a gifted game.</summary>
+	public IReadOnlyDictionary<ulong, uint> GuestPassPackages { get; private set; } = new Dictionary<ulong, uint>();
+
 	private void OnGiftNotification(GiftNotificationCallback cb) {
 		int previous = GiftsWaitingCount;
 		GiftsWaitingCount = (int) cb.Waiting;
@@ -631,6 +634,24 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		GuestPasses = [.. cb.GuestPasses.Select(static p => p["gid"].AsUnsignedLong()).Where(static gid => gid != 0)];
+
+		// A game a friend gifts arrives on this same list as a free-trial guest pass - they are one mechanism on
+		// Steam's side. The package on each entry is what tells them apart, so keep it, and write down everything
+		// Steam said about each one: that record is how the two kinds get told apart more precisely later.
+		Dictionary<ulong, uint> packages = [];
+
+		foreach (KeyValue pass in cb.GuestPasses) {
+			ulong gid = pass["gid"].AsUnsignedLong();
+
+			if (gid == 0) {
+				continue;
+			}
+
+			packages[gid] = pass["packageid"].AsUnsignedInteger();
+			Log.Debug(new Said("waiting gift or guest pass: {0}", string.Join(", ", pass.Children.Select(static c => c.Name + "=" + c.Value))), Name);
+		}
+
+		GuestPassPackages = packages;
 
 		if (GuestPasses.Count > 0) {
 			Log.Debug(new Said("Steam says {0} guest pass(es) are waiting", GuestPasses.Count), Name);
