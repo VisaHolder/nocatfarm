@@ -108,10 +108,8 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 
 				// Not instant, and not while it is meant to be asleep. Accepting the same second the request
 				// lands is a robot accepting; doing it at 4am while the friends list shows offline is worse.
-				int lo = Math.Max(0, Bot.Cfg.FriendRequestDelayMinMinutes);
-				int hi = Math.Max(lo, Bot.Cfg.FriendRequestDelayMaxMinutes);
-				await Task.Delay(Rng.Minutes(lo, hi)).ConfigureAwait(false);
-				await WaitUntilAwakeAsync().ConfigureAwait(false);
+				await Task.Delay(FriendWait()).ConfigureAwait(false);
+				await WaitUntilAwakeAsync(FriendWait).ConfigureAwait(false);
 
 				Bot.Friends?.AddFriend(new SteamID(steamId));
 				_accepted++;
@@ -239,7 +237,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 
 				// If the account is meant to be asleep, the reply waits until morning - exactly what a person
 				// who was asleep when you messaged them would do.
-				await WaitUntilAwakeAsync().ConfigureAwait(false);
+				await WaitUntilAwakeAsync(() => seconds > 0 ? Rng.Seconds(seconds, seconds * 2) : TimeSpan.Zero).ConfigureAwait(false);
 
 				Bot.SendChatMessage(from, reply);
 				_replied++;
@@ -260,12 +258,25 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 		}
 	}
 
-	/// <summary>Hold here until human mode says the account is up. Returns straight away when it already is.</summary>
-	private async Task WaitUntilAwakeAsync() {
+	/// <summary>How long a friend request waits before it's accepted - a person's time, not a flat random pick.</summary>
+	private TimeSpan FriendWait() => Rng.HumanMinutes(Bot.Cfg.FriendRequestDelayMinMinutes, Bot.Cfg.FriendRequestDelayMaxMinutes);
+
+	/// <summary>
+	/// Hold on while human mode has the account asleep. If it had to hold, wait <paramref name="afterWaking"/> once
+	/// the account is up too: going straight ahead the moment it woke answered everything from the night in the
+	/// same minute, which is a burst no person produces.
+	/// </summary>
+	private async Task WaitUntilAwakeAsync(Func<TimeSpan> afterWaking) {
 		CancellationToken ct = Cts?.Token ?? CancellationToken.None;
+		bool held = false;
 
 		while (!ct.IsCancellationRequested && !HumanMode.AwakeFor(Bot)) {
+			held = true;
 			await Task.Delay(TimeSpan.FromMinutes(5), ct).ConfigureAwait(false);
+		}
+
+		if (held && !ct.IsCancellationRequested) {
+			await Task.Delay(afterWaking(), ct).ConfigureAwait(false);
 		}
 	}
 

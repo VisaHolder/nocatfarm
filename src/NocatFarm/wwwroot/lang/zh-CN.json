@@ -517,6 +517,14 @@
     "waiting for a farming slot": "等待挂卡名额",
     "waiting for the account": "等待账号",
     "sending items to your main account every {0} - the first send is around {1}": "每 {0} 把物品寄到你的主账号 —— 第一次大约在 {1}",
+    "a Steam wallet gift card is waiting - accepting it around {0}": "有一张 Steam 钱包礼品卡在等待——大约 {0} 接受",
+    "a game": "一款游戏",
+    "a guest pass is waiting ({0}) - accepting it around {1}": "有一张访客通行证在等待（{0}）——大约 {1} 接受",
+    "a guest pass is waiting - accepting it around {0}": "有一张访客通行证在等待——大约 {0} 接受",
+    "a waiting gift was already taken care of before its turn came": "一份等待中的礼物在轮到它之前已被处理",
+    "accepting a gift around {0}": "大约 {0} 接受一份礼物",
+    "trade offer #{0} waited for the account to wake - handling it around {1}": "交易报价 #{0} 等到账号醒来——大约 {1} 处理",
+    "{0} was gifted to this account - adding it to the library around {1}": "有人把 {0} 作为礼物送给了此账号——大约 {1} 加入库中",
     "couldn't add the gifted game {0} to the library - Steam said {1}": "无法把收到的礼物游戏 {0} 加入库中——Steam 回复 {1}",
     "accepted a guest pass: {0}": "已接受访客通行证：{0}",
     "waiting gift or guest pass: {0}": "待处理的礼物或访客通行证：{0}",
@@ -575,7 +583,6 @@
     "not enough gems for a {0} booster pack - {1} needed, {2} here": "宝石不够制作 {0} 的补充包——需要 {1}，现有 {2}",
     "Steam's change feed: {0} package(s) changed, {1} newly free - checking them": "Steam 变更源：{0} 个包有变动，{1} 个新变为免费——正在检查",
     "couldn't read Steam's change feed: {0}": "无法读取 Steam 变更源：{0}",
-    "a game was sent to this account as a gift - accept or decline it on the store's gifts page": "有人把一款游戏作为礼物送给了此账号——请在商店的礼物页面接受或拒绝",
     "couldn't accept a Steam wallet gift card: {0}": "无法接受 Steam 钱包礼品卡：{0}",
     "couldn't accept a guest pass - Steam said {0}": "无法接受访客通行证——Steam 回复 {0}",
     "couldn't check for gifts: {0}": "无法检查礼物：{0}",
@@ -1424,11 +1431,11 @@
     },
     "FriendRequestDelayMaxMinutes": {
       "label": "最多等待",
-      "tip": "接受前的最长等待（分钟）。实际值在两者之间随机取。"
+      "tip": "接受好友请求之前的最长等待时间，单位为分钟。每个请求都在两者之间有各自的等待时间，多数偏向较短的一端——就像人看到通知后才去处理。"
     },
     "ActOnlyWhileAwake": {
       "label": "仅在「清醒」时响应",
-      "tip": "把交易、回复和好友请求压住，直到拟人模式说这个账户已经起床。否则账户明明在「睡觉」，却还是在凌晨四点回你消息。"
+      "tip": "拟人模式让账号睡着时，暂缓它要回应的一切——交易报价、礼物、好友请求、回复、活动物品、补充包、定时寄送——醒来后再给每一项重新等待一段时间，免得一醒就同时处理。关闭后夜里也会回应，等待时间相同；好友列表里显示在睡觉、却在凌晨 4 点接受东西的账号更容易被发现。未开启拟人模式时无效。"
     },
     "AcceptDonations": {
       "label": "接受赠送",
@@ -1436,7 +1443,7 @@
     },
     "AcceptGiftedGames": {
       "label": "接受好友赠送的游戏",
-      "tip": "把好友送给此账号的游戏直接加入库中，和“添加至我的库”按钮一样。关闭后，每份礼物由你自己决定（拒绝会给赠送者退款）。开启拟人模式时，礼物会等账号醒来再接受。"
+      "tip": "把好友送给此账号的游戏直接加入库中，和“添加至我的库”按钮一样。关闭后，每份礼物由你自己决定（拒绝会给赠送者退款）。每份礼物先等它自己的时间（“接受礼物前至少等待”），账号睡着时再等到早上（“仅在「清醒」时响应”）。"
     },
     "AcceptFairCardSwaps": {
       "label": "接受公平的卡牌交换",
@@ -1444,7 +1451,7 @@
     },
     "AcceptGifts": {
       "label": "接受礼物和访客通行证",
-      "tip": "接受别人寄给此账号的 Steam 钱包礼品卡和访客通行证（免费试玩）。两者都不会让账号有任何损失。开启拟人模式时，礼物会等账号醒来再接受。"
+      "tip": "接受别人寄给此账号的 Steam 钱包礼品卡和访客通行证（免费试玩）。两者都不会让账号有任何损失。每份礼物先等它自己的时间（“接受礼物前至少等待”），账号睡着时再等到早上（“仅在「清醒」时响应”）。"
     },
     "AcceptFromMasters": {
       "label": "接受来自你自己账户的任何交易",
@@ -1464,7 +1471,15 @@
     },
     "TradeDelayMaxMinutes": {
       "label": "最多等待",
-      "tip": "处理一份报价前的最长等待（分钟）。实际值在两者之间随机取。"
+      "tip": "处理报价之前的最长等待时间，单位为分钟。每个报价都在两者之间有各自的等待时间，多数偏向较短的一端——就像人看到通知后才去处理。"
+    },
+    "GiftDelayMinMinutes": {
+      "label": "接受礼物前至少等待",
+      "tip": "接受礼物（好友送的游戏、礼品卡或访客通行证）之前的最短等待时间，单位为分钟。礼物一到就接受，不是人会做的事。"
+    },
+    "GiftDelayMaxMinutes": {
+      "label": "最多等待",
+      "tip": "接受礼物之前的最长等待时间，单位为分钟。每份礼物都在两者之间有各自的等待时间，多数偏向较短的一端——就像人看到通知后才去处理。"
     },
     "PauseWhenYouPlay": {
       "label": "你玩游戏时自动让位",
@@ -1626,11 +1641,11 @@
     },
     "ClaimEventItems": {
       "label": "领取免费活动物品",
-      "tip": "领取促销期间 Steam 每天发放的免费贴纸，以及点数商店里 0 点的物品。这些都不花钱，没人领就没了。开启拟人模式时，会等账号醒来再领。"
+      "tip": "领取促销期间 Steam 每天发放的免费贴纸，以及点数商店里 0 点的物品。这些都不花钱，没人领就没了。拟人模式下账号睡着时会等到早上再领，除非关闭了“仅在「清醒」时响应”。"
     },
     "BoosterGames": {
       "label": "为这些游戏制作补充包",
-      "tip": "要把宝石换成补充包的 AppID，用逗号分隔。Steam 每个游戏每天只允许做一个，而且只限此账号还能掉卡的游戏，并会告诉你下次何时可做——一到时间就做，前提是拟人模式让账号醒着。留空表示关闭。'booster <账号>' 会显示宝石数量和符合条件的游戏。"
+      "tip": "要把宝石换成补充包的 AppID，用逗号分隔。Steam 每个游戏每天只允许做一个，而且只限此账号还能掉卡的游戏，并会告诉你下次何时可做——一到时间就做；拟人模式下账号睡着时会等到早上，除非关闭了“仅在「清醒」时响应”。留空表示关闭。'booster <账号>' 会显示宝石数量和符合条件的游戏。"
     },
     "ClearInventoryNotifications": {
       "label": "清除新物品提示",
@@ -1768,7 +1783,7 @@
     },
     "SendEveryHours": {
       "label": "每隔多久寄出物品",
-      "tip": "每隔这么多小时，把此账号的物品寄到上面列出的第一个账号——和 'send' 命令一样，只是按时进行，免得两次刷卡之间卡牌越积越多。0 表示关闭。第一次寄送在开启后整整一个周期，另加一点随机余量，不会每次都落在同一分钟；开启拟人模式时会等账号醒来再寄。"
+      "tip": "每隔这么多小时，把此账号的物品寄到上面列出的第一个账号——和 'send' 命令一样，只是按时进行，免得两次刷卡之间卡牌越积越多。0 表示关闭。第一次寄送在开启后整整一个周期，另加一点随机余量，不会每次都落在同一分钟；拟人模式下账号睡着时会等到早上再寄，除非关闭了“仅在「清醒」时响应”。"
     },
     "SendItemTypes": {
       "label": "寄什么",

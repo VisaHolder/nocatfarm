@@ -22,7 +22,8 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 	/// <summary>How many looks that turn up nothing to do before Steam's waiting count stops meaning "hurry".</summary>
 	private const int FruitlessBeforeBackingOff = 3;
 
-	private readonly Dictionary<ulong, DateTime> _actOn = [];
+	/// <summary>Offers sitting out their wait before being accepted or declined.</summary>
+	private readonly ReactionQueue<ulong> _waiting = new();
 	private readonly HashSet<ulong> _done = [];
 	private int _accepted;
 	private int _declined;
@@ -42,15 +43,16 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 				bits.Add(Loc.T("{0} declined", _declined));
 			}
 
-			lock (_actOn) {
-				if (_actOn.Count > 0) {
-					bits.Add(Loc.T("{0} waiting", _actOn.Count));
-				}
+			if (_waiting.Count > 0) {
+				bits.Add(Loc.T("{0} waiting", _waiting.Count));
 			}
 
 			return bits.Count > 0 ? string.Join(" · ", bits) : "";
 		}
 	}
+
+	/// <summary>How long an offer waits before it's answered - a person's time, not a flat random pick.</summary>
+	private TimeSpan TradeWait() => Rng.HumanMinutes(Bot.Cfg.TradeDelayMinMinutes, Bot.Cfg.TradeDelayMaxMinutes);
 
 	private bool Wanted => Bot.Cfg.AcceptDonations || Bot.Cfg.AcceptFromMasters || Bot.Cfg.AcceptFairCardSwaps || Bot.Cfg.DeclineOtherTrades;
 
@@ -60,8 +62,15 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 	protected override async Task RunAsync(CancellationToken ct) {
 		while (!ct.IsCancellationRequested) {
 			// A trade accepted at 4am by an account whose friends list says it is offline is not a person. When
-			// human mode owns the account, offers simply sit until morning - which is what would really happen.
-			if (Wanted && Bot.IsOnline && Bot.Web.Ready && HumanMode.AwakeFor(Bot) && ShouldLook()) {
+			// human mode owns the account, offers simply sit until morning - which is what would really happen -
+			// and anything already waiting goes back on hold, to get a fresh wait once the account is up.
+			bool awake = HumanMode.AwakeFor(Bot);
+
+			if (!awake) {
+				_waiting.Hold();
+			}
+
+			if (Wanted && Bot.IsOnline && Bot.Web.Ready && awake && ShouldLook()) {
 				try {
 					await CheckAsync(ct).ConfigureAwait(false);
 				} catch (OperationCanceledException) {
@@ -90,10 +99,8 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 	/// nothing like what a person does. When Steam hasn't told us yet, or something is mid-flight, we still look.
 	/// </summary>
 	private bool ShouldLook() {
-		lock (_actOn) {
-			if (_actOn.Count > 0) {
-				return true;   // an offer is sitting out its delay and has to be re-read to be acted on
-			}
+		if (_waiting.Count > 0) {
+			return true;   // an offer is sitting out its wait and has to be re-read to be acted on
 		}
 
 		// A zero here is Steam's word that nothing is waiting, and it is trustworthy: the notification sweep
@@ -107,10 +114,8 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 	/// an hour otherwise - the slow pass exists only to catch an offer Steam never pushed a notification for.
 	/// </summary>
 	private TimeSpan NextGap() {
-		lock (_actOn) {
-			if (_actOn.Count > 0) {
-				return Rng.Minutes(4, 9);
-			}
+		if (_waiting.Count > 0) {
+			return Rng.Minutes(4, 9);
 		}
 
 		// Steam's counter can stand at one for something we are never going to touch - an offer held in escrow,
@@ -130,8 +135,18 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 		bool actedOnSomething = false;
 		int seen = 0;
 		HashSet<ulong> masters = Social.ParseIds(Bot.Cfg.TradeMasters);
+		List<Offer> offers = Parse(html);
 
-		foreach (Offer offer in Parse(html)) {
+		// An offer no longer on the page was accepted, declined or withdrawn somewhere else. Keeping it counted
+		// "1 waiting" for ever, and kept this page being read every few minutes for nothing.
+		_waiting.RetainOnly(offers.Select(static o => o.Id));
+
+		// Offers held while the account slept get their wait now, from the moment it's up - not all at once.
+		foreach ((ulong id, DateTime due) in _waiting.Arm(DateTime.UtcNow, TradeWait)) {
+			Log.Debug(new Said("trade offer #{0} waited for the account to wake - handling it around {1}", id, (Func<string>) (() => Fmt.Clock(due))), Bot.Name);
+		}
+
+		foreach (Offer offer in offers) {
 			seen++;
 
 			lock (_done) {
@@ -155,21 +170,13 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 
 			// Everything waits its turn. The wait is per offer, so two arriving together are not handled together.
 			actedOnSomething = true;
-			DateTime when;
 
-			lock (_actOn) {
-				if (!_actOn.TryGetValue(offer.Id, out when)) {
-					int lo = Math.Max(0, Bot.Cfg.TradeDelayMinMinutes);
-					int hi = Math.Max(lo, Bot.Cfg.TradeDelayMaxMinutes);
-					when = DateTime.UtcNow.Add(Rng.Minutes(lo, hi));
-					_actOn[offer.Id] = when;
-
-					Said what = !accept ? new Said("unwanted") : fromMaster ? new Said("from one of your accounts") : fair ? new Said("a fair card swap") : new Said("a donation");
-					Log.Info(new Said("trade offer #{0} ({1}: {2}) - handling it in {3}", offer.Id, what, offer.Describe, Fmt.Hm((int) Math.Max(1, (when - DateTime.UtcNow).TotalMinutes))), Bot.Name);
-				}
+			if (_waiting.Add(offer.Id, DateTime.UtcNow + TradeWait()) && (_waiting.DueOf(offer.Id) is { } due)) {
+				Said what = !accept ? new Said("unwanted") : fromMaster ? new Said("from one of your accounts") : fair ? new Said("a fair card swap") : new Said("a donation");
+				Log.Info(new Said("trade offer #{0} ({1}: {2}) - handling it in {3}", offer.Id, what, offer.Describe, Fmt.Hm((int) Math.Max(1, (due - DateTime.UtcNow).TotalMinutes))), Bot.Name);
 			}
 
-			if (DateTime.UtcNow < when) {
+			if ((_waiting.DueOf(offer.Id) is not { } when) || (DateTime.UtcNow < when)) {
 				continue;
 			}
 
@@ -180,9 +187,7 @@ public sealed partial class Trading(Bot bot) : BotModule(bot) {
 					_done.Add(offer.Id);
 				}
 
-				lock (_actOn) {
-					_actOn.Remove(offer.Id);
-				}
+				_waiting.Remove(offer.Id);
 
 				if (accept) {
 					_accepted++;

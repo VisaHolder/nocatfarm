@@ -388,6 +388,8 @@ public sealed class BotConfig {
 	public bool AcceptDonations { get; set; } = true;
 	public bool AcceptGifts { get; set; } = true;
 	public bool AcceptGiftedGames { get; set; } = true;
+	public int GiftDelayMinMinutes { get; set; } = 2;
+	public int GiftDelayMaxMinutes { get; set; } = 15;
 	public bool AcceptFairCardSwaps { get; set; }
 	public bool AcceptFromMasters { get; set; }
 	public string TradeMasters { get; set; } = "";

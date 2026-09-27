@@ -2173,6 +2173,9 @@ public static partial class Commands {
 		sb.AppendLine(title);
 		int hidden = 0;
 
+		// As wide as the longest name: a fixed 28 ran FriendRequestDelayMinMinutes straight into its value.
+		int width = defs.Max(static d => d.Name.Length) + 2;
+
 		foreach (string section in defs.Select(static d => d.Section).Distinct()) {
 			List<SettingDef> shown = defs.Where(d => (d.Section == section) && (showAdvanced || !d.Advanced)).ToList();
 			hidden += defs.Count(d => (d.Section == section) && d.Advanced && !showAdvanced);
@@ -2185,7 +2188,7 @@ public static partial class Commands {
 			sb.AppendLine($"  {section.ToUpperInvariant()}");
 
 			foreach (SettingDef def in shown) {
-				sb.AppendLine($"    {def.Name,-28}{Settings.Show(config, def)}");
+				sb.AppendLine($"    {def.Name.PadRight(width)}{Settings.Show(config, def)}");
 			}
 		}
 
@@ -2298,6 +2301,13 @@ public static partial class Commands {
 			case "OnlineStatus":
 			case "GameDevice":
 				bot.ApplyPersona();
+
+				break;
+			// A gift left for the owner while its switch was off is taken once the switch is on - now, not at the
+			// gifts module's next slow pass hours later.
+			case "AcceptGifts":
+			case "AcceptGiftedGames":
+				BotManager.ModuleOf<Gifts>(bot)?.LookAgain();
 
 				break;
 			case "Enabled":

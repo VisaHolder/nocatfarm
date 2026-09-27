@@ -132,8 +132,12 @@ public static class Tutorial {
 			"  human <name>                                        what it's doing and what it played today",
 			"  human <name> week                                   the week it rolled, as a sample",
 			"",
-			"The settings that would give an account away are hidden AND cleared while this is on, and put back",
-			"exactly as they were if you turn it off."
+			"Trade offers, gifts and friend requests each wait a person's time before they're answered, and while the",
+			"account sleeps they wait for morning - each with a fresh wait once it's up. To answer at night too:",
+			"  set <name> ActOnlyWhileAwake false",
+			"",
+			"While this is on, the idle list is set aside (and put back exactly as it was if you turn it off), and",
+			"farming while appearing offline is ignored."
 		]),
 
 		"free" or "gifts" or "boosters" => string.Join(Environment.NewLine, [
@@ -143,6 +147,7 @@ public static class Tutorial {
 			"  ClaimEventItems    the daily sticker during a Steam sale, and anything in the Points Shop at 0 points",
 			"  AcceptGifts        Steam wallet gift cards and guest passes people send you",
 			"  AcceptGiftedGames  games friends gift the account, added straight to its library",
+			"Each gift waits its own 2-15 minutes first, most often nearer 2 (GiftDelayMinMinutes / GiftDelayMaxMinutes).",
 			"",
 			"One switch each, per account:",
 			"  set <name> ClaimFreeGames true        paid games given away free-to-keep, never free-to-play filler",
@@ -153,7 +158,8 @@ public static class Tutorial {
 			"  freeitems all                         look for free event items now",
 			"",
 			"A gift is never declined. Turn AcceptGiftedGames off to decide each gifted game yourself.",
-			"With human mode on, gifts, event items and booster packs wait until the account is awake."
+			"While human mode has the account asleep, gifts, event items and booster packs wait for morning -",
+			"'set <name> ActOnlyWhileAwake false' answers at night too."
 		]),
 
 		"trades" or "trading" => string.Join(Environment.NewLine, [
@@ -165,6 +171,7 @@ public static class Tutorial {
 			"  send <name>                           sweep this account's cards to the first master",
 			"  set <name> SendEveryHours 24          ...or do that by itself once a day",
 			"  transfer <from> <to> [types]          send items between any two of your accounts",
+			"  set <name> TradeDelayMaxMinutes 30    each offer waits 2-30 minutes, most often nearer 2",
 			"",
 			"A donation is an offer where you give up nothing at all, so accepting one can never cost the account",
 			"anything. Anything that asks for even one of your items is not a donation and is never auto-accepted",

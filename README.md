@@ -82,7 +82,7 @@ setting away.
 | **Inventory value** | What each account's items are worth at the market's median, per game (up to 12 inventories per account), in the currency you pick (`MarketCurrency`, default US dollar), with how it has moved in the last 24 hours. Reads the account's OWN inventory, so a private profile makes no difference. |
 | **Free games** | Optional (`ClaimFreeGames`). Watches a public list of Steam giveaways **and Steam's own change feed**, and claims free-to-keep giveaways, packages and apps alike. Whatever it finds has to be a released, paid game showing 100% off, so free-to-play games, a paid game's free edition, DLC and demos are left alone. The change feed usually sees a giveaway within half an hour of Steam publishing it. A giveaway that has already ended is tried a few more times, then left alone, and that is remembered across restarts. |
 | **Free event items** | The daily sticker during a Steam sale, and anything in the Points Shop at 0 points, collected by themselves (`ClaimEventItems`, on by default). |
-| **Gifts** | Steam wallet gift cards and guest passes sent to an account are accepted (`AcceptGifts`, on by default), and so are games friends gift it — added straight to the library (`AcceptGiftedGames`, on by default; turn it off to decide each one yourself). A gift is never declined. |
+| **Gifts** | Steam wallet gift cards and guest passes sent to an account are accepted (`AcceptGifts`, on by default), and so are games friends gift it — added straight to the library (`AcceptGiftedGames`, on by default; turn it off to decide each one yourself). Each gift waits a person's time first (`GiftDelayMinMinutes` / `GiftDelayMaxMinutes`), and a gift is never declined. |
 | **Booster packs** | Turns gems into booster packs for the games you list, one per game per day as Steam allows, on Steam's own schedule (`BoosterGames`). |
 | **Fair card swaps** | Optional. Accepts the one-for-one card swaps Steam Trade Matcher users send, only when the swap can never set the account's sets back — ArchiSteamFarm's SteamTradeMatcher rule (`AcceptFairCardSwaps`). |
 | **Refund protection** | Optional (`SkipRefundableGames`, off by default). When on, a game bought in the last 14 days (`RefundHoldDays`) with under two hours played is left alone — by the card farmer, the idler, the schedule, grinds and the hunter alike — until it can no longer be refunded. |
@@ -208,6 +208,12 @@ a person instead of a bot:
 * **grind fits it too** — `grind` on a legit account eases in (it keeps its current game for a minute or three
   before switching) and earns achievements at that account's normal pace when `UnlockAchievements` is on; on a
   boost account it just starts instantly
+* **it answers like a person** — trade offers, gifts and friend requests each wait their own time before
+  they're answered (`TradeDelay…`, `GiftDelay…` and `FriendRequestDelay…` — `Min`/`MaxMinutes` pairs). The wait
+  mostly lands nearer the short end and now and then much later, never the flat, even spread a plain random pick
+  gives. While the account sleeps they wait for morning, and each gets a fresh wait once it's up, so nothing
+  fires the minute it wakes. Turn off *Only react while awake* (`ActOnlyWhileAwake`) and it answers at night
+  too, after the same waits
 * stopping it doesn't blink the account out mid-game — it finishes up for a few seconds, then logs off
 
 ```
@@ -523,8 +529,10 @@ is never accepted on that rule: only accounts on your own masters list (with `Ac
 anything, apart from one-for-one fair card swaps if you turn those on. If a side of the trade page can't be read,
 the offer is never taken for a donation — it's left alone with a warning for you to look at, or declined if
 `DeclineOtherTrades` is on. Offers are read from the account's own trade-offers page, so there's no Steam Web API
-key to set up. Each one waits its own random 2–15 minutes before it's accepted or declined (`TradeDelayMinMinutes`
-/ `TradeDelayMaxMinutes`), and on a human-mode account it waits until the account is awake.
+key to set up. Each one waits its own time before it's accepted or declined — 2–15 minutes by default, most often
+nearer 2 (`TradeDelayMinMinutes` / `TradeDelayMaxMinutes`) — and on a human-mode account it waits for morning while
+the account sleeps, then gets a fresh wait once it's up. An offer you accept or cancel yourself in Steam simply
+drops off the list.
 
 What may leave an account is `SendItemTypes` (*What to send*: cards, foils, backgrounds, emoticons, boosters, gems,
 or `all`) — trading cards by default. `all` means everything tradable in every game inventory the account has,
@@ -597,6 +605,8 @@ account already has.
 
 **Gifts.** Steam wallet gift cards and guest passes somebody sends are accepted. Steam pushes the number of
 waiting gifts over the connection, so the gifts page is only read when there's something on it. Games friends gift the account are added to its library, the same as pressing *Add to my library* (`AcceptGiftedGames`, on by default).
+Each gift waits its own time before it's taken — 2–15 minutes by default, most often nearer 2 (`GiftDelayMinMinutes` /
+`GiftDelayMaxMinutes`) — and if you take it yourself in the meantime, the app just finds nothing left to do.
 Nothing here ever declines a gift — turn the setting off and each one waits for you to take or turn down yourself
 (turning one down refunds the sender).
 
@@ -607,8 +617,8 @@ pack in the inventory, and `CraftBadges` turns finished sets into badges; both r
 either works without the other, and both are off by default.
 
 Event items, gifts and making booster packs all wait until human mode has the account awake, while its
-`ActOnlyWhileAwake` setting is on (it is by default) — collecting a sticker at 4am on an account that's asleep
-on the friends list is the same tell as accepting a trade then.
+`ActOnlyWhileAwake` setting is on (it is by default), and a gift gets a fresh wait once it's up — collecting a
+sticker at 4am on an account that's asleep on the friends list is the same tell as accepting a trade then.
 
 ## Plugins
 
@@ -676,7 +686,8 @@ shape, and how long it finishes up for on a manual stop), achievements (earn ove
 ceiling, the hunter, family-shared games, grind spacing), rep4rep pacing, friends & messages (accept friend
 requests after a random delay, ignore obvious spam invites — on by default, accept group invites, auto-reply,
 command masters, and joining the nocat.farm Steam group — on by default, `set <account> JoinGroup false` to opt
-out), trades (donations, fair card swaps, your own accounts, gifts, what may be sent and how often), free games
+out), trades (donations, fair card swaps, your own accounts, gifts, how long offers and gifts wait, what may be sent and
+how often), free games
 and badges (free games, event items, booster packs, badge crafting, and clearing Steam's notifications —
 `ClearNotifications` marks the whole notification tray read on every sign-in, on by default, and
 `ClearInventoryNotifications` clears the new-items badge after each drop — worth knowing if you also use the

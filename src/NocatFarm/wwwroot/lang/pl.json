@@ -517,6 +517,14 @@
     "waiting for a farming slot": "czeka na miejsce do farmienia",
     "waiting for the account": "czeka na konto",
     "sending items to your main account every {0} - the first send is around {1}": "wysyła przedmioty na główne konto co {0} - pierwsza wysyłka około {1}",
+    "a Steam wallet gift card is waiting - accepting it around {0}": "czeka karta podarunkowa Steam - przyjęcie około {0}",
+    "a game": "gra",
+    "a guest pass is waiting ({0}) - accepting it around {1}": "czeka przepustka gościa ({0}) - przyjęcie około {1}",
+    "a guest pass is waiting - accepting it around {0}": "czeka przepustka gościa - przyjęcie około {0}",
+    "a waiting gift was already taken care of before its turn came": "czekający prezent został załatwiony, zanim przyszła jego kolej",
+    "accepting a gift around {0}": "przyjmuje prezent około {0}",
+    "trade offer #{0} waited for the account to wake - handling it around {1}": "oferta #{0} czekała, aż konto się obudzi - obsługa około {1}",
+    "{0} was gifted to this account - adding it to the library around {1}": "to konto dostało w prezencie {0} - trafi do biblioteki około {1}",
     "couldn't add the gifted game {0} to the library - Steam said {1}": "nie udało się dodać podarowanej gry {0} do biblioteki - Steam odpowiedział {1}",
     "accepted a guest pass: {0}": "przyjęto przepustkę gościa: {0}",
     "waiting gift or guest pass: {0}": "czekający prezent lub przepustka gościa: {0}",
@@ -575,7 +583,6 @@
     "not enough gems for a {0} booster pack - {1} needed, {2} here": "za mało klejnotów na pakiet kart {0} - potrzeba {1}, jest {2}",
     "Steam's change feed: {0} package(s) changed, {1} newly free - checking them": "kanał zmian Steam: zmieniono {0} pakiet(ów), {1} nowo darmowych - sprawdzanie",
     "couldn't read Steam's change feed: {0}": "nie udało się odczytać kanału zmian Steam: {0}",
-    "a game was sent to this account as a gift - accept or decline it on the store's gifts page": "to konto dostało grę w prezencie - przyjmij ją lub odrzuć na stronie prezentów w sklepie",
     "couldn't accept a Steam wallet gift card: {0}": "nie udało się przyjąć karty podarunkowej Steam: {0}",
     "couldn't accept a guest pass - Steam said {0}": "nie udało się przyjąć przepustki gościa - Steam odpowiedział {0}",
     "couldn't check for gifts: {0}": "nie udało się sprawdzić prezentów: {0}",
@@ -1424,11 +1431,11 @@
     },
     "FriendRequestDelayMaxMinutes": {
       "label": "I najwyżej",
-      "tip": "Najdłuższe oczekiwanie przed przyjęciem, w minutach. Prawdziwe losuje się między tymi dwoma."
+      "tip": "Najdłuższe czekanie przed przyjęciem zaproszenia do znajomych, w minutach. Każde zaproszenie dostaje własne czekanie między tymi dwiema wartościami, najczęściej bliżej krótszej - tak, jak człowiek zabiera się do powiadomienia."
     },
     "ActOnlyWhileAwake": {
       "label": "Reaguj tylko, gdy nie śpi",
-      "tip": "Wstrzymuje wymiany, odpowiedzi i zaproszenia, dopóki tryb ludzki nie powie, że konto wstało. Bez tego konto śpi, a mimo to odpisuje o czwartej nad ranem."
+      "tip": "Wstrzymuje wszystko, na co to konto odpowiada - oferty wymiany, prezenty, zaproszenia do znajomych, odpowiedzi, przedmioty z wydarzeń, pakiety kart, wysyłki według harmonogramu - dopóki tryb ludzki trzyma je we śnie, a potem daje każdej rzeczy nowe czekanie po przebudzeniu, żeby nic nie działo się w minucie wstania. Wyłączone - odpowiada też w nocy, po tych samych czekaniach; konto śpiące na liście znajomych, które i tak przyjmuje o 4 rano, łatwiej wypatrzyć. Bez trybu ludzkiego nie działa."
     },
     "AcceptDonations": {
       "label": "Przyjmuj darowizny",
@@ -1436,7 +1443,7 @@
     },
     "AcceptGiftedGames": {
       "label": "Przyjmuj podarowane gry",
-      "tip": "Dodaje od razu do biblioteki gry, które znajomi podarują temu kontu - jak przycisk \"Dodaj do mojej biblioteki\". Wyłącz, żeby decydować o każdym prezencie samemu (odrzucenie zwraca pieniądze nadawcy). W trybie ludzkim prezent czeka, aż konto się obudzi."
+      "tip": "Dodaje od razu do biblioteki gry, które znajomi podarują temu kontu - jak przycisk \"Dodaj do mojej biblioteki\". Wyłącz, żeby decydować o każdym prezencie samemu (odrzucenie zwraca pieniądze nadawcy). Każdy prezent najpierw czeka swój czas ('Przyjmij prezent po co najmniej'), a gdy konto śpi - do rana ('Reaguj tylko, gdy nie śpi')."
     },
     "AcceptFairCardSwaps": {
       "label": "Przyjmuj uczciwe wymiany kart",
@@ -1444,7 +1451,7 @@
     },
     "AcceptGifts": {
       "label": "Przyjmuj prezenty i przepustki gościa",
-      "tip": "Przyjmuje karty podarunkowe Steam i przepustki gościa (darmowe wersje próbne), które ktoś wyśle na to konto. Żadne z nich nie może go nic kosztować. W trybie ludzkim prezent czeka, aż konto się obudzi."
+      "tip": "Przyjmuje karty podarunkowe Steam i przepustki gościa (darmowe wersje próbne), które ktoś wyśle na to konto. Żadne z nich nie może go nic kosztować. Każdy prezent najpierw czeka swój czas ('Przyjmij prezent po co najmniej'), a gdy konto śpi - do rana ('Reaguj tylko, gdy nie śpi')."
     },
     "AcceptFromMasters": {
       "label": "Przyjmuj wszystko z własnych kont",
@@ -1464,7 +1471,15 @@
     },
     "TradeDelayMaxMinutes": {
       "label": "I najwyżej",
-      "tip": "Najdłuższe oczekiwanie przed zajęciem się ofertą, w minutach. Prawdziwe losuje się między tymi dwoma."
+      "tip": "Najdłuższe czekanie przed zajęciem się ofertą, w minutach. Każda oferta dostaje własne czekanie między tymi dwiema wartościami, najczęściej bliżej krótszej - tak, jak człowiek zabiera się do powiadomienia."
+    },
+    "GiftDelayMinMinutes": {
+      "label": "Przyjmij prezent po co najmniej",
+      "tip": "Najkrótsze czekanie przed przyjęciem prezentu - gry od znajomego, karty podarunkowej lub przepustki gościa - w minutach. Przyjęcie go w sekundzie, w której przyszedł, to nie coś, co robi człowiek."
+    },
+    "GiftDelayMaxMinutes": {
+      "label": "I najwyżej",
+      "tip": "Najdłuższe czekanie przed przyjęciem prezentu, w minutach. Każdy prezent dostaje własne czekanie między tymi dwiema wartościami, najczęściej bliżej krótszej - tak, jak człowiek zabiera się do powiadomienia."
     },
     "PauseWhenYouPlay": {
       "label": "Ustąp, gdy grasz",
@@ -1626,11 +1641,11 @@
     },
     "ClaimEventItems": {
       "label": "Odbieraj darmowe przedmioty z wydarzeń",
-      "tip": "Odbiera darmową naklejkę, którą Steam rozdaje codziennie podczas wyprzedaży, i wszystko w sklepie z punktami, co kosztuje 0 punktów. Nic z tego nie kosztuje, a przepada, jeśli nikt tego nie odbierze. W trybie ludzkim czeka, aż konto się obudzi."
+      "tip": "Odbiera darmową naklejkę, którą Steam rozdaje codziennie podczas wyprzedaży, i wszystko w sklepie z punktami, co kosztuje 0 punktów. Nic z tego nie kosztuje, a przepada, jeśli nikt tego nie odbierze. Gdy tryb ludzki ma konto uśpione, czeka do rana, chyba że 'Reaguj tylko, gdy nie śpi' jest wyłączone."
     },
     "BoosterGames": {
       "label": "Twórz pakiety kart dla",
-      "tip": "AppID, dla których klejnoty zamieniać na pakiety kart, oddzielone przecinkami. Steam pozwala na jeden pakiet na grę dziennie, tylko dla gier, w których to konto może jeszcze dostać karty, i mówi, kiedy da się zrobić następny - powstaje, gdy tylko można, i gdy tryb ludzki ma konto obudzone. Puste wyłącza. 'booster <konto>' pokazuje klejnoty i pasujące gry."
+      "tip": "AppID, dla których klejnoty zamieniać na pakiety kart, oddzielone przecinkami. Steam pozwala na jeden pakiet na grę dziennie, tylko dla gier, w których to konto może jeszcze dostać karty, i mówi, kiedy da się zrobić następny - powstaje, gdy tylko można; gdy tryb ludzki ma konto uśpione, czeka do rana, chyba że 'Reaguj tylko, gdy nie śpi' jest wyłączone. Puste wyłącza. 'booster <konto>' pokazuje klejnoty i pasujące gry."
     },
     "ClearInventoryNotifications": {
       "label": "Czyść plakietkę nowych przedmiotów",
@@ -1768,7 +1783,7 @@
     },
     "SendEveryHours": {
       "label": "Wysyłaj przedmioty co",
-      "tip": "Co tyle godzin wysyła przedmioty z tego konta na pierwsze konto podane wyżej - to samo co polecenie 'send', tylko według harmonogramu, żeby karty nie zbierały się między farmieniami. 0 wyłącza. Pierwsza wysyłka następuje pełny okres po włączeniu, trochę losowego zapasu sprawia, że nie wypada zawsze w tej samej minucie, a w trybie ludzkim czeka, aż konto się obudzi."
+      "tip": "Co tyle godzin wysyła przedmioty z tego konta na pierwsze konto podane wyżej - to samo co polecenie 'send', tylko według harmonogramu, żeby karty nie zbierały się między farmieniami. 0 wyłącza. Pierwsza wysyłka następuje pełny okres po włączeniu, trochę losowego zapasu sprawia, że nie wypada zawsze w tej samej minucie, a gdy tryb ludzki ma konto uśpione, czeka do rana, chyba że 'Reaguj tylko, gdy nie śpi' jest wyłączone."
     },
     "SendItemTypes": {
       "label": "Co wysyłać",

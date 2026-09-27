@@ -175,6 +175,39 @@ public static class Rng {
 
 	public static TimeSpan Minutes(int lo, int hi) => TimeSpan.FromSeconds(Next(lo * 60, (hi * 60) + 1));
 	public static TimeSpan Seconds(int lo, int hi) => TimeSpan.FromSeconds(Next(lo, hi + 1));
+
+	/// <summary>
+	/// How long a person takes to get round to something - a trade offer, a gift, a friend request - somewhere
+	/// between <paramref name="lo"/> and <paramref name="hi"/> minutes.
+	/// </summary>
+	/// <remarks>
+	/// Not a flat pick. Spread enough answers evenly across a window and the even smear is itself a shape no
+	/// person makes: people mostly see a notification fairly soon and now and then only much later. So this leans
+	/// towards the early part of the window - a triangle peaking a quarter of the way in - while still using all of
+	/// it, and it never lands outside it.
+	/// </remarks>
+	public static TimeSpan HumanMinutes(int lo, int hi) {
+		lo = Math.Max(0, lo);
+		hi = Math.Max(lo, hi);
+
+		if (hi == lo) {
+			return TimeSpan.FromMinutes(lo);
+		}
+
+		double a = lo, b = hi, peak = lo + ((hi - lo) * 0.25);
+		double u;
+
+		lock (R) {
+			u = R.NextDouble();
+		}
+
+		double split = (peak - a) / (b - a);
+		double minutes = u < split
+			? a + Math.Sqrt(u * (b - a) * (peak - a))
+			: b - Math.Sqrt((1 - u) * (b - a) * (b - peak));
+
+		return TimeSpan.FromSeconds(Math.Round(Math.Clamp(minutes, a, b) * 60));
+	}
 }
 
 public static class Fmt {

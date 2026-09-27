@@ -517,6 +517,14 @@
     "waiting for a farming slot": "esperando un hueco de farmeo",
     "waiting for the account": "esperando a la cuenta",
     "sending items to your main account every {0} - the first send is around {1}": "enviando los objetos a tu cuenta principal cada {0} - el primer envío hacia las {1}",
+    "a Steam wallet gift card is waiting - accepting it around {0}": "hay una tarjeta regalo de Steam esperando - se acepta hacia las {0}",
+    "a game": "un juego",
+    "a guest pass is waiting ({0}) - accepting it around {1}": "hay un pase de invitado esperando ({0}) - se acepta hacia las {1}",
+    "a guest pass is waiting - accepting it around {0}": "hay un pase de invitado esperando - se acepta hacia las {0}",
+    "a waiting gift was already taken care of before its turn came": "un regalo pendiente ya estaba resuelto antes de que le tocara",
+    "accepting a gift around {0}": "aceptando un regalo hacia las {0}",
+    "trade offer #{0} waited for the account to wake - handling it around {1}": "la oferta #{0} esperó a que la cuenta despertara - se gestiona hacia las {1}",
+    "{0} was gifted to this account - adding it to the library around {1}": "le han regalado {0} a esta cuenta - se añade a la biblioteca hacia las {1}",
     "couldn't add the gifted game {0} to the library - Steam said {1}": "no se pudo añadir el juego regalado {0} a la biblioteca - Steam dijo {1}",
     "accepted a guest pass: {0}": "pase de invitado aceptado: {0}",
     "waiting gift or guest pass: {0}": "regalo o pase de invitado pendiente: {0}",
@@ -575,7 +583,6 @@
     "not enough gems for a {0} booster pack - {1} needed, {2} here": "no hay gemas suficientes para un sobre de {0} - hacen falta {1}, hay {2}",
     "Steam's change feed: {0} package(s) changed, {1} newly free - checking them": "feed de cambios de Steam: {0} paquete(s) cambiado(s), {1} nuevo(s) gratis - comprobándolos",
     "couldn't read Steam's change feed: {0}": "no se pudo leer el feed de cambios de Steam: {0}",
-    "a game was sent to this account as a gift - accept or decline it on the store's gifts page": "le han regalado un juego a esta cuenta: acéptalo o recházalo en la página de regalos de la tienda",
     "couldn't accept a Steam wallet gift card: {0}": "no se pudo aceptar una tarjeta regalo de Steam: {0}",
     "couldn't accept a guest pass - Steam said {0}": "no se pudo aceptar un pase de invitado: Steam dijo {0}",
     "couldn't check for gifts: {0}": "no se pudieron comprobar los regalos: {0}",
@@ -1424,11 +1431,11 @@
     },
     "FriendRequestDelayMaxMinutes": {
       "label": "Y como mucho",
-      "tip": "Espera máxima antes de aceptar, en minutos. La real se elige al azar entre ambas."
+      "tip": "Espera máxima antes de aceptar una solicitud de amistad, en minutos. Cada solicitud tiene su propia espera entre las dos, casi siempre más cerca del mínimo, como tarda una persona en atender una notificación."
     },
     "ActOnlyWhileAwake": {
       "label": "Reaccionar solo cuando esté despierta",
-      "tip": "Retiene intercambios, respuestas y solicitudes de amistad hasta que el modo humano diga que esta cuenta está levantada. Sin esto, la cuenta está dormida y aun así contesta a las 4 de la mañana."
+      "tip": "Retiene todo lo que responde esta cuenta (ofertas, regalos, solicitudes de amistad, respuestas, objetos de eventos, sobres, envíos programados) mientras el modo humano la tiene dormida, y luego le da a cada cosa una espera nueva al despertar, para que nada ocurra en el mismo minuto en que se levanta. Desactivado, también responde de noche, con las mismas esperas; una cuenta dormida en la lista de amigos que acepta a las 4 de la mañana es más fácil de detectar. No tiene efecto sin el modo humano."
     },
     "AcceptDonations": {
       "label": "Aceptar donaciones",
@@ -1436,7 +1443,7 @@
     },
     "AcceptGiftedGames": {
       "label": "Aceptar juegos regalados",
-      "tip": "Añade directamente a la biblioteca los juegos que los amigos regalen a esta cuenta, como el botón \"Añadir a mi biblioteca\". Desactívalo para decidir cada regalo tú (rechazarlo le devuelve el dinero a quien lo envió). Con el modo humano, un regalo espera a que la cuenta esté despierta."
+      "tip": "Añade directamente a la biblioteca los juegos que los amigos regalen a esta cuenta, como el botón \"Añadir a mi biblioteca\". Desactívalo para decidir cada regalo tú (rechazarlo le devuelve el dinero a quien lo envió). Cada regalo espera primero su propio tiempo ('Aceptar un regalo tras al menos') y, mientras la cuenta duerme, hasta la mañana ('Reaccionar solo cuando esté despierta')."
     },
     "AcceptFairCardSwaps": {
       "label": "Aceptar intercambios justos de cromos",
@@ -1444,7 +1451,7 @@
     },
     "AcceptGifts": {
       "label": "Aceptar regalos y pases de invitado",
-      "tip": "Acepta las tarjetas regalo de Steam y los pases de invitado (pruebas gratuitas) que alguien envíe a esta cuenta. Ninguno puede costarle nada. Con el modo humano, un regalo espera a que la cuenta esté despierta."
+      "tip": "Acepta las tarjetas regalo de Steam y los pases de invitado (pruebas gratuitas) que alguien envíe a esta cuenta. Ninguno puede costarle nada. Cada regalo espera primero su propio tiempo ('Aceptar un regalo tras al menos') y, mientras la cuenta duerme, hasta la mañana ('Reaccionar solo cuando esté despierta')."
     },
     "AcceptFromMasters": {
       "label": "Aceptar cualquier cosa de tus propias cuentas",
@@ -1464,7 +1471,15 @@
     },
     "TradeDelayMaxMinutes": {
       "label": "Y como mucho",
-      "tip": "Espera máxima antes de actuar sobre una oferta, en minutos. La real se elige al azar entre ambas."
+      "tip": "Espera máxima antes de actuar sobre una oferta, en minutos. Cada oferta tiene su propia espera entre las dos, casi siempre más cerca del mínimo, como tarda una persona en atender una notificación."
+    },
+    "GiftDelayMinMinutes": {
+      "label": "Aceptar un regalo tras al menos",
+      "tip": "Espera mínima antes de aceptar un regalo (un juego que envía un amigo, una tarjeta regalo o un pase de invitado), en minutos. Aceptarlo en el segundo en que llega no es algo que haga una persona."
+    },
+    "GiftDelayMaxMinutes": {
+      "label": "Y como mucho",
+      "tip": "Espera máxima antes de aceptar un regalo, en minutos. Cada regalo tiene su propia espera entre las dos, casi siempre más cerca del mínimo, como tarda una persona en atender una notificación."
     },
     "PauseWhenYouPlay": {
       "label": "Apartarse cuando juegues",
@@ -1626,11 +1641,11 @@
     },
     "ClaimEventItems": {
       "label": "Reclamar objetos gratis de eventos",
-      "tip": "Recoge el sticker gratis que Steam reparte cada día durante unas rebajas y cualquier cosa de la tienda de puntos que cueste 0 puntos. Nada de eso cuesta nada y se pierde si nadie lo recoge. Con el modo humano, espera a que la cuenta esté despierta."
+      "tip": "Recoge el sticker gratis que Steam reparte cada día durante unas rebajas y cualquier cosa de la tienda de puntos que cueste 0 puntos. Nada de eso cuesta nada y se pierde si nadie lo recoge. Mientras el modo humano tenga la cuenta dormida, espera a la mañana, salvo que 'Reaccionar solo cuando esté despierta' esté desactivado."
     },
     "BoosterGames": {
       "label": "Crear sobres de",
-      "tip": "AppIDs para convertir gemas en sobres, separados por comas. Steam permite un sobre por juego al día, solo de juegos en los que esta cuenta aún puede conseguir cromos, y dice cuándo se puede volver a crear: se crea en cuanto se puede y mientras el modo humano tenga la cuenta despierta. Vacío lo desactiva. 'booster <cuenta>' muestra las gemas y qué juegos califican."
+      "tip": "AppIDs para convertir gemas en sobres, separados por comas. Steam permite un sobre por juego al día, solo de juegos en los que esta cuenta aún puede conseguir cromos, y dice cuándo se puede volver a crear: se crea en cuanto se puede; mientras el modo humano tenga la cuenta dormida, espera a la mañana, salvo que 'Reaccionar solo cuando esté despierta' esté desactivado. Vacío lo desactiva. 'booster <cuenta>' muestra las gemas y qué juegos califican."
     },
     "ClearInventoryNotifications": {
       "label": "Quitar el aviso de objetos nuevos",
@@ -1768,7 +1783,7 @@
     },
     "SendEveryHours": {
       "label": "Enviar los objetos cada",
-      "tip": "Cada tantas horas, envía los objetos de esta cuenta a la primera cuenta de arriba: lo mismo que el comando 'send', pero con horario, para que los cromos no se acumulen entre una tanda de farmeo y otra. 0 lo desactiva. El primer envío llega un periodo completo después de activarlo, un poco de margen aleatorio evita que caiga siempre en el mismo minuto y, con el modo humano, espera a que la cuenta esté despierta."
+      "tip": "Cada tantas horas, envía los objetos de esta cuenta a la primera cuenta de arriba: lo mismo que el comando 'send', pero con horario, para que los cromos no se acumulen entre una tanda de farmeo y otra. 0 lo desactiva. El primer envío llega un periodo completo después de activarlo, un poco de margen aleatorio evita que caiga siempre en el mismo minuto y, mientras el modo humano tenga la cuenta dormida, espera a la mañana, salvo que 'Reaccionar solo cuando esté despierta' esté desactivado."
     },
     "SendItemTypes": {
       "label": "Qué enviar",
