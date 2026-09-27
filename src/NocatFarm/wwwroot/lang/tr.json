@@ -1196,7 +1196,67 @@
     "{0} is a free DLC - left alone (\"...free DLC too\" is off)": "{0} ücretsiz bir DLC - alınmadı (\"...ücretsiz DLC'leri de\" kapalı)",
     "{0} is free, but only to owners of {1} - this account doesn't have it": "{0} ücretsiz, ama yalnızca {1} sahiplerine - bu hesapta yok",
     "claimed {0} (free right now) so its free DLC {1} can come too": "{0} alındı (şu an ücretsiz), böylece ücretsiz DLC {1} de gelebilir",
-    "couldn't claim {0} for its DLC - {1}": "DLC'si için {0} alınamadı - {1}"
+    "couldn't claim {0} for its DLC - {1}": "DLC'si için {0} alınamadı - {1}",
+    "joined the Steam group {0}": "{0} Steam grubuna katıldı",
+    "didn't join {0} - it needs an admin to approve new members": "{0} grubuna katılmadı - yeni üyeleri bir yönetici onaylamalı",
+    "didn't join {0} - it's invite only": "{0} grubuna katılmadı - yalnızca davetle",
+    "there's no Steam group at \"{0}\" - check the link in its settings": "\"{0}\" adresinde Steam grubu yok - ayarlardaki bağlantıyı kontrol et",
+    "couldn't join {0} this session - will try again next start": "bu oturumda {0} grubuna katılamadı - bir sonraki açılışta tekrar dener",
+    "Couldn't sign in": "Giriş yapılamadı",
+    "You're all set": "Her şey hazır",
+    "Asked once. After this it remembers the account with a login token, not the password.": "Yalnızca bir kez sorulur. Bundan sonra hesabı parolayla değil, bir giriş anahtarıyla hatırlar.",
+    "Check the account name and password on the Accounts page, then press Start on it to try again.": "Hesaplar sayfasında hesap adını ve parolayı kontrol et, ardından tekrar denemek için o hesapta Başlat'a bas.",
+    "Go to Accounts": "Hesaplar'a git",
+    "Hide this": "Bunu gizle",
+    "Human mode is on: it settles in for a few minutes first, like somebody who just opened Steam, then starts its day - games, breaks and a bedtime.": "İnsan modu açık: önce Steam'i yeni açmış biri gibi birkaç dakika ortama alışır, sonra gününe başlar - oyunlar, molalar ve bir yatma saati.",
+    "It is checking which of your games still have cards to drop - that takes a minute. Then it farms them, and idles your games after that.": "Hangi oyunlarında hâlâ düşecek kart kaldığını kontrol ediyor - bu bir dakika sürer. Sonra onları toplar, ardından oyunlarını boşta çalıştırır.",
+    "It is farming trading cards: {0} to go across {1} games. When they are done it idles your games.": "Takas kartları toplanıyor: {1} oyunda {0} kart kaldı. Bitince oyunlarını boşta çalıştırır.",
+    "Nickname (optional)": "Takma ad (isteğe bağlı)",
+    "Open the Steam app on your phone (Steam Guard tab), or check your email, and type the code here.": "Telefonundaki Steam uygulamasını aç (Steam Guard sekmesi) ya da e-postanı kontrol et ve kodu buraya yaz.",
+    "Open the Steam app on your phone, tap the Steam Guard tab and scan this.": "Telefonundaki Steam uygulamasını aç, Steam Guard sekmesine dokun ve bunu tara.",
+    "Scan the code": "Kodu tara",
+    "Show me my account": "Hesabımı göster",
+    "Signing in to Steam": "Steam'e giriş yapılıyor",
+    "Steam Guard code": "Steam Guard kodu",
+    "This takes a few seconds...": "Bu birkaç saniye sürer...",
+    "What this account is called in nocat.farm. Leave it empty and it uses the Steam account name.": "Bu hesabın nocat.farm'daki adı. Boş bırakırsan Steam hesap adı kullanılır.",
+    "You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.": "Bu pencereyi kapatabilirsin - nocat.farm saatine göre çalışmaya devam eder (tepside). Hesaplar sayfası her hesabın ne yaptığını gösterir; yeni bir hesabı da oradan eklersin.",
+    "Your Steam password": "Steam parolan",
+    "same as the Steam account name": "Steam hesap adıyla aynı",
+    "{0} is signed in.": "{0} giriş yaptı.",
+    "Couldn't save those settings": "Bu ayarlar kaydedilemedi",
+    "Its game list didn't load - add games by their store link below.": "Oyun listesi yüklenmedi - aşağıdan mağaza bağlantısıyla oyun ekle.",
+    ", and {0} now and then": " ve arada bir {0}",
+    "About {0}h on weekdays and {1}h at weekends, from around {2}:00 until about {3}:00, with a day off {4}% of the time.": "Hafta içi yaklaşık {0} saat, hafta sonu {1} saat; aşağı yukarı {2}:00'dan {3}:00 civarına kadar. %{4} ihtimalle izin günü yapar.",
+    "Add": "Ekle",
+    "It farms trading cards first. Once they are done, it plays these games to add hours. Tap any you like - or none.": "Önce takas kartlarını toplar. Bitince saat eklemek için bu oyunları oynar. İstediklerine dokun - ya da hiçbirine.",
+    "It will mostly play {0}{1}, with breaks, meals and a bedtime. First it settles in for a few minutes, like somebody who just opened Steam.": "Molalar, yemekler ve bir yatma saatiyle çoğunlukla {0}{1} oynayacak. Önce, Steam'i yeni açmış biri gibi birkaç dakika ortama alışır.",
+    "Its daily routine": "Günlük rutini",
+    "Looking at its games...": "Oyunlarına bakılıyor...",
+    "Main game": "Ana oyun",
+    "Not in the list? Paste a store link or game ID": "Listede yok mu? Bir mağaza bağlantısı ya da oyun kimliği yapıştır",
+    "Roughly how a person would use this account. Every day comes out a bit different around these numbers.": "Bir insanın bu hesabı aşağı yukarı nasıl kullanacağı. Her gün bu sayıların etrafında biraz farklı geçer.",
+    "SETTING UP {0}": "{0} AYARLANIYOR",
+    "Show friends a custom game name (optional)": "Arkadaşlara özel bir oyun adı göster (isteğe bağlı)",
+    "Side games": "Yan oyunlar",
+    "Skip - use the defaults": "Atla - varsayılanları kullan",
+    "Tap its main game first.": "Önce ana oyununa dokun.",
+    "Tap the game it plays the most - its main game. Then tap a few others it plays now and then.": "En çok oynadığı oyuna, yani ana oyununa dokun. Sonra arada bir oynadığı birkaç oyuna daha dokun.",
+    "The side games share the rest. You can fine-tune all of this later under Settings.": "Kalan süreyi yan oyunlar paylaşır. Bunların hepsini sonra Ayarlar'dan ince ayarlayabilirsin.",
+    "Time on the main game: {0}%": "Ana oyunda geçen süre: %{0}",
+    "What does it play?": "Ne oynuyor?",
+    "What should it idle?": "Neyi boşta çalıştırsın?",
+    "leave empty to show the real game": "gerçek oyunu göstermek için boş bırak",
+    "none - that is fine": "yok - sorun değil",
+    "tap one above": "yukarıdan birine dokun",
+    "It's closed - sign them in": "Kapattım - giriş yap",
+    "Close ArchiSteamFarm first": "Önce ArchiSteamFarm'ı kapat",
+    "If ArchiSteamFarm is still running, close it now - two programs on one account keep signing each other out.": "ArchiSteamFarm hâlâ açıksa şimdi kapat - aynı hesapta iki program birbirinin oturumunu sürekli kapatır.",
+    "Next account": "Sonraki hesap",
+    "Next it signs in the {0} you play on, so it can set them up from their own games.": "Şimdi oynadığın {0} ile giriş yapıp onları kendi oyunlarına göre ayarlayacak.",
+    "Start the others too": "Diğerlerini de başlat",
+    "Starting {0} more account(s) - they sign in one after another.": "{0} hesap daha başlatılıyor - sırayla giriş yapacaklar.",
+    "The other {0} imported account(s) are added but not started yet.": "İçe aktarılan diğer {0} hesap eklendi ama henüz başlatılmadı."
   },
   "settings": {
     "WebEnabled": {
@@ -1262,6 +1322,10 @@
     "NotifyProblems": {
       "label": "Sorunları bildir",
       "tip": "Bir hesabın sana ihtiyacı olduğunda bildirim gösterir. Örneğin bir Steam Guard kodu, başarısız bir giriş veya yorum yasağı."
+    },
+    "GroupsToJoin": {
+      "label": "Her hesabın katılacağı gruplar",
+      "tip": "Tüm hesaplarının sırayla katılacağı Steam grupları. Başta nocat.farm grubu var, değiştirebilir ya da silebilirsin. Bir grubun bağlantısını ya da kısa adını virgülle ayırarak yapıştır. Yalnızca açık gruplara katılır, onay ya da davet isteyenler atlanır."
     },
     "Rep4RepEnabled": {
       "label": "rep4rep'i hiç kullan(ma)",
@@ -1525,8 +1589,12 @@
       "tip": "Gelen arkadaşlık isteklerini otomatik kabul eder. Bir rep4rep hesabında işe yarar, çünkü Steam arkadaşlara çok daha rahat yorum yazdırır."
     },
     "JoinGroup": {
-      "label": "nocat.farm grubuna katıl",
-      "tip": "Bu hesap giriş yapınca nocat.farm Steam grubuna bir kez katılır. İsteğe bağlı, hiçbir şey buna bağlı değil."
+      "label": "Ortak gruplara katıl",
+      "tip": "\"Her hesabın katılacağı gruplar\" listesindeki gruplara katılır. Yalnızca bu hesabı dışarıda tutmak için kapat."
+    },
+    "ExtraGroupsToJoin": {
+      "label": "Bu gruplara da katıl",
+      "tip": "Yalnızca bu hesabın katılacağı Steam grupları, virgülle ayrılmış bağlantılar ya da kısa adlar olarak. \"Her hesabın katılacağı gruplar\" listesindekilere de katılır."
     },
     "AutoReplyEnabled": {
       "label": "Mesajlara yanıt ver",

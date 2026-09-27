@@ -390,7 +390,8 @@ function renderAlerts() {
       <span>${esc(tf('Scan this with the Steam app on your phone to sign {0} in - the Steam Guard tab has the QR scanner.', q.Name))}</span></div>`);
   });
 
-  if (state.Prompt) {
+  // Not while the first-run setup is asking it itself - two boxes for one code, and this one would take the focus.
+  if (state.Prompt && !tutorialSignin) {
     out.push(`<div class="alert warn">
       <span data-tip="${esc(t("Type the code from the Steam app on your phone, or from your email. nocat.farm can't finish logging in until you do."))}">${esc(state.Prompt)}</span>
       <input id="promptInput" type="${state.PromptSecret ? 'password' : 'text'}" autocomplete="off">
@@ -1181,12 +1182,12 @@ function renderTutorial() {
       title: t('Add your first account'),
       body: `<p>${tf('Add the Steam account you want it to run. You will be asked for the password {0}, and for a Steam Guard code - after that it remembers a login token and never needs the password again.', `<b>${esc(t('once'))}</b>`)}</p>
         <div class="form2">
-          <label for="tut-name">${esc(t('Name'))}${tipIcon(t("A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam."))}</label>
-          <input id="tut-name" type="text" placeholder="${esc(t('mybot'))}" autocomplete="off">
           <label for="tut-login">${esc(t('Steam account name'))}${tipIcon(t("What you type into Steam's sign-in box. Not your display name, not your email."))}</label>
           <input id="tut-login" type="text" placeholder="${esc(t('your steam login'))}" autocomplete="off">
           <label for="tut-pass">${esc(t('Password'))}${tipIcon(t('Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.'))}</label>
           <input id="tut-pass" type="password" placeholder="${esc(t("leave blank and it'll ask"))}" autocomplete="off">
+          <label for="tut-name">${esc(t('Nickname (optional)'))}${tipIcon(t("What this account is called in nocat.farm. Leave it empty and it uses the Steam account name."))}</label>
+          <input id="tut-name" type="text" placeholder="${esc(t('same as the Steam account name'))}" autocomplete="off">
           ${tutorialMode === 'full' ? `<label for="tut-qr">${esc(t('Sign in with a QR code'))}${tipIcon(t("Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty."))}</label>
           <input id="tut-qr" type="checkbox" onchange="['tut-login','tut-pass'].forEach((id) => { $(id).disabled = this.checked; })">` : ''}
           ${tutorialHuman === true ? `<label for="tut-self">${esc(t('I also sign into it from my own Steam app'))}${tipIcon(t('Then nocat.farm never changes its online status - if it did, Steam would sign your own client out of Friends and Chat.'))}</label>
@@ -1315,7 +1316,7 @@ function renderTutorial() {
   $('tutNext').onclick = st.act || (() => { tutorialStep++; renderTutorial(); });
 
   // The form step: focus the first box, and Enter in any of them adds the account.
-  const first = $('tut-name');
+  const first = $('tut-login');
   if (first) {
     ['tut-name', 'tut-login', 'tut-pass'].forEach((id) => {
       $(id).onkeydown = (e) => { if (e.key === 'Enter') tutorialAddAccount(); };
@@ -1330,8 +1331,10 @@ async function tutorialAddAccount() {
   btn.disabled = true;
 
   const qr = !!($('tut-qr') && $('tut-qr').checked);
+  const login = $('tut-login').value.trim();
+  const name = $('tut-name').value.trim() || nameFromLogin(login);
   const res = await post('/api/bots', {
-    Name: $('tut-name').value.trim(), SteamLogin: $('tut-login').value.trim(), Password: $('tut-pass').value, Qr: qr,
+    Name: name, SteamLogin: login, Password: $('tut-pass').value, Qr: qr,
     Human: tutorialHuman === true, SelfSignIn: tutorialHuman === true && tutorialSelf,
   });
 
@@ -1341,12 +1344,342 @@ async function tutorialAddAccount() {
     return;
   }
 
-  // Out of the way first: it is already signing in, and its questions appear in the bar at the top.
+  // Stay open. Signing in is exactly where somebody new gets lost - the password and Steam Guard questions used
+  // to appear in a bar at the top of the dashboard after this closed, easy to miss behind the page. Now they're
+  // asked right here, and the last screen says what happens next.
   sessionStorage.setItem('skip-welcome', '1');
-  await closeTutorial();
+  post('/api/tutorial/done', {}).catch(() => {});
+  if (config && config.Global) config.Global.TutorialDone = true;
+  tutorialSignin = name;
+  tutorialSigninHtml = '';
+  tutorialSetupDone = false;
   await refresh();
+  renderSignin();
+}
+
+// ── setting the account up, once it's signed in ───────────────────────────
+// Plain choices, not settings: tap its games, drag a slider, type a few numbers. Everything is written to the
+// account's real settings on the last step, and all of it can be changed later under Settings.
+let tutorialSetupDone = false;
+let tutSetup = null;   // { name, steps, at, lib, main, sides, pct, idle, routine, customName }
+
+async function startTutorialSetup(name, steps) {
+  tutorialSignin = null;   // the poll-driven sign-in screen is finished; these steps draw themselves
+  tutorialOpen = true;
+  if (!schema) schema = await api('/api/settings/schema').catch(() => null);
+  const d = (schema && schema.BotDefaults) || {};
+  tutSetup = {
+    name, steps, at: 0, lib: null, main: 0, sides: new Set(), pct: 70, idle: new Set(), customName: '',
+    routine: {
+      WeekdayHours: d.WeekdayHours ?? 6, WeekendHours: d.WeekendHours ?? 9, DayStartHour: d.DayStartHour ?? 11,
+      BedHour: d.BedHour ?? 1, DayOffChancePct: d.DayOffChancePct ?? 10,
+    },
+  };
+  modal(`<h2>${esc(t('Looking at its games...'))}</h2><p class="muted small">${esc(t('This takes a few seconds...'))}</p>`);
+
+  // The library lands a few seconds after signing in.
+  for (let i = 0; i < 15; i++) {
+    const lib = await api('/api/bots/' + encodeURIComponent(name) + '/library').catch(() => null);
+    if (lib && lib.Ready) { tutSetup.lib = lib.Games || []; break; }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  tutSetup.lib = tutSetup.lib || [];
+  tutSetup.lib.forEach((g) => { if (g.Name) GAME_NAMES[g.AppId] = g.Name; });
+
+  // Already has games (brought across from ArchiSteamFarm, say): start from those, so it's a tweak, not a redo.
+  if (!config || !config.Bots) await loadConfig().catch(() => {});
+  const have = parseWeights((config && config.Bots && config.Bots[name] && config.Bots[name].GameWeights) || '');
+  if (have.length) {
+    tutSetup.main = +have[0].game;
+    have.slice(1).forEach((r) => tutSetup.sides.add(+r.game));
+    const total = have.reduce((sum, r) => sum + (r.weight || 0), 0);
+    if (have[0].weight && total) tutSetup.pct = Math.max(40, Math.min(100, Math.round(have[0].weight * 100 / total / 5) * 5));
+    learnNames(have.map((r) => +r.game));
+  }
+  renderTutorialSetup();
+}
+
+const tutHours = (m) => m >= 60 ? Math.round(m / 60) + 'h' : (m > 0 ? m + 'm' : '');
+
+function tutGameChips(selected, onclick, extra) {
+  const games = tutSetup.lib.slice(0, 18);
+  const ids = new Set(games.map((g) => g.AppId));
+  // Anything picked by hand that isn't in the top list still shows, so it can be seen and un-picked.
+  const added = [...extra].filter((id) => !ids.has(id)).map((id) => ({ AppId: id, Name: gameLabel(id), Minutes: 0 }));
+  return `<div class="langpick">${[...games, ...added].map((g) =>
+    `<span class="p ${selected(g.AppId)}" onclick="${onclick}(${g.AppId})">${esc(g.Name || gameLabel(g.AppId))}${g.Minutes ? ` <span class="muted">${tutHours(g.Minutes)}</span>` : ''}</span>`).join('')}</div>`;
+}
+
+function renderTutorialSetup() {
+  const s = tutSetup;
+  const step = s.steps[s.at];
+  const last = s.at === s.steps.length - 1;
+  let title;
+  let body;
+
+  if (step === 'games') {
+    title = t('What does it play?');
+    const sides = [...s.sides];
+    body = `<p>${esc(t('Tap the game it plays the most - its main game. Then tap a few others it plays now and then.'))}</p>
+      ${s.lib.length ? tutGameChips((id) => id === s.main ? 'on' : (s.sides.has(id) ? 'side' : ''), 'tutPickGame', [s.main, ...sides].filter(Boolean))
+        : `<p class="muted small">${esc(t("Its game list didn't load - add games by their store link below."))}</p>`}
+      <div style="display:flex;gap:6px;margin:6px 0 12px"><input id="tutAddGame" type="text" placeholder="${esc(t('Not in the list? Paste a store link or game ID'))}" style="flex:1">
+        <button class="ghost" onclick="tutAddGame()">${esc(t('Add'))}</button></div>
+      <div class="rows small">
+        <div class="row"><span class="muted">${esc(t('Main game'))}</span><b>${esc(s.main ? gameLabel(s.main) : t('tap one above'))}</b></div>
+        <div class="row"><span class="muted">${esc(t('Side games'))}</span><span>${esc(sides.length ? sides.map(gameLabel).join(', ') : t('none - that is fine'))}</span></div>
+      </div>
+      <label style="display:block;margin-top:12px">${esc(tf('Time on the main game: {0}%', s.pct))}
+        <input type="range" min="40" max="100" step="5" value="${s.pct}" style="width:100%" oninput="tutSetup.pct=+this.value;this.previousSibling.textContent=tf('Time on the main game: {0}%', this.value)"></label>
+      <p class="muted small">${esc(t('The side games share the rest. You can fine-tune all of this later under Settings.'))}</p>
+      <p id="tutError" class="error"></p>`;
+  } else if (step === 'routine') {
+    title = t('Its daily routine');
+    const def = (n) => (schema && schema.Bot || []).find((d) => d.Name === n);
+    const field = (n, min, max) => {
+      const d = def(n);
+      return `<label for="tut-${n}">${esc(d ? tSetting(d, 'label') : n)}${d ? tipIcon(tSetting(d, 'tip')) : ''}</label>
+        <input id="tut-${n}" type="number" min="${min}" max="${max}" value="${s.routine[n]}" oninput="tutSetup.routine['${n}']=+this.value;tutRoutinePreview()">`;
+    };
+    body = `<p>${esc(t('Roughly how a person would use this account. Every day comes out a bit different around these numbers.'))}</p>
+      <div class="form2">
+        ${field('WeekdayHours', 0, 20)}${field('WeekendHours', 0, 20)}${field('DayStartHour', 0, 23)}${field('BedHour', 0, 23)}${field('DayOffChancePct', 0, 90)}
+      </div>
+      <p id="tutRoutinePreview" class="muted small" style="margin-top:12px"></p>`;
+  } else {
+    title = t('What should it idle?');
+    body = `<p>${esc(t('It farms trading cards first. Once they are done, it plays these games to add hours. Tap any you like - or none.'))}</p>
+      ${s.lib.length ? tutGameChips((id) => s.idle.has(id) ? 'on' : '', 'tutPickIdle', [...s.idle]) : ''}
+      <div style="display:flex;gap:6px;margin:6px 0 12px"><input id="tutAddGame" type="text" placeholder="${esc(t('Not in the list? Paste a store link or game ID'))}" style="flex:1">
+        <button class="ghost" onclick="tutAddGame()">${esc(t('Add'))}</button></div>
+      <label for="tut-custom">${esc(t('Show friends a custom game name (optional)'))}</label>
+      <input id="tut-custom" type="text" style="width:100%" value="${esc(s.customName)}" placeholder="${esc(t('leave empty to show the real game'))}" oninput="tutSetup.customName=this.value">`;
+  }
+
+  modal(`<div class="muted small" style="letter-spacing:1px">${esc(tf('SETTING UP {0}', s.name.toUpperCase()))}</div>
+    <h2>${esc(title)}</h2>${body}
+    <div class="actions">
+      ${s.at > 0 ? `<button class="ghost" onclick="tutSetup.at--;renderTutorialSetup()">${esc(t('Back'))}</button>` : ''}
+      <button class="ghost" onclick="tutSkipSetup()">${esc(t('Skip - use the defaults'))}</button>
+      <button id="tutNext" onclick="tutSetupNext()">${esc(last ? t('Save') : t('Next'))}</button>
+    </div>`);
+
+  if (step === 'routine') tutRoutinePreview();
+  const add = $('tutAddGame');
+  if (add) add.onkeydown = (e) => { if (e.key === 'Enter') tutAddGame(); };
+}
+
+function tutRoutinePreview() {
+  const r = tutSetup.routine;
+  const el = $('tutRoutinePreview');
+  if (el) el.textContent = tf('About {0}h on weekdays and {1}h at weekends, from around {2}:00 until about {3}:00, with a day off {4}% of the time.',
+    r.WeekdayHours, r.WeekendHours, String(r.DayStartHour).padStart(2, '0'), String(r.BedHour).padStart(2, '0'), r.DayOffChancePct);
+}
+
+/// First tap is the main game; tapping the main again clears it; any other tap adds or removes a side game.
+function tutPickGame(id) {
+  const s = tutSetup;
+  if (s.main === id) { s.main = 0; } else if (!s.main && !s.sides.has(id)) { s.main = id; } else if (s.sides.has(id)) { s.sides.delete(id); } else { s.sides.add(id); }
+  renderTutorialSetup();
+}
+
+function tutPickIdle(id) {
+  if (tutSetup.idle.has(id)) tutSetup.idle.delete(id); else tutSetup.idle.add(id);
+  renderTutorialSetup();
+}
+
+/// A store link or a bare number, added as if tapped in the list - and its name looked up from Steam.
+async function tutAddGame() {
+  const input = $('tutAddGame');
+  const m = input && input.value.match(/(?:app\/)?(\d{2,8})/);
+  if (!m) return;
+  const id = +m[1];
+  if (tutSetup.steps[tutSetup.at] === 'idle') tutSetup.idle.add(id); else tutPickGame(id);
+  await learnNames([id]);
+  renderTutorialSetup();
+}
+
+async function tutSetupNext() {
+  const s = tutSetup;
+  if (s.steps[s.at] === 'games' && !s.main) {
+    $('tutError').textContent = t('Tap its main game first.');
+    return;
+  }
+  if (s.at < s.steps.length - 1) { s.at++; renderTutorialSetup(); return; }
+  await tutSaveSetup();
+}
+
+async function tutSaveSetup() {
+  const s = tutSetup;
+  const btn = $('tutNext');
+  if (btn) btn.disabled = true;
+  await loadConfig();   // a partial body resets the whole account, so start from what it has
+  const base = config.Bots[s.name];
+  if (!base) { tutSkipSetup(); return; }
+  const changes = {};
+
+  if (s.steps.includes('games')) {
+    // "730:70, 440, 570" - the main game's share, the side games splitting what's left.
+    changes.GameWeights = [`${s.main}:${s.pct}`, ...[...s.sides]].join(', ');
+  }
+  if (s.steps.includes('routine')) Object.assign(changes, s.routine);
+  if (s.steps.includes('idle')) {
+    changes.IdleGames = [...s.idle];
+    if (s.customName.trim()) { changes.CustomGameName = s.customName.trim(); changes.CustomGameNameEnabled = true; }
+  }
+
+  const res = await post('/api/bots/' + encodeURIComponent(s.name) + '/config', { ...base, ...changes });
+  if (!res.ok) toast(res.error || t("Couldn't save those settings"), true);
+  tutShowDone();
+}
+
+function tutSkipSetup() { tutShowDone(); }
+
+/// The last screen: what it's going to do now, in a sentence or two.
+function tutShowDone() {
+  if (tutImportQueue.length) {
+    tutSetup = null;
+    tutNextImported();
+    return;
+  }
+
+  const s = tutSetup;
+  const b = (state && state.Bots || []).find((x) => x.Name === (s && s.name));
+  tutSetup = null;
+  let what;
+
+  if (b && b.Legit) {
+    what = s && s.main
+      ? tf('It will mostly play {0}{1}, with breaks, meals and a bedtime. First it settles in for a few minutes, like somebody who just opened Steam.',
+        gameLabel(s.main), s.sides.size ? tf(', and {0} now and then', [...s.sides].map(gameLabel).join(', ')) : '')
+      : t('Human mode is on: it settles in for a few minutes first, like somebody who just opened Steam, then starts its day - games, breaks and a bedtime.');
+  } else {
+    what = b && b.Cards > 0
+      ? tf('It is farming trading cards: {0} to go across {1} games. When they are done it idles your games.', b.Cards, b.Games)
+      : t('It is checking which of your games still have cards to drop - that takes a minute. Then it farms them, and idles your games after that.');
+  }
+
+  tutorialOpen = true;
+  modal(`<h2>${esc(t("You're all set"))}</h2>
+    <p>${esc(tf('{0} is signed in.', b ? b.Name : ''))} ${esc(what)}</p>
+    <p class="muted small">${esc(t('You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.'))}</p>
+    ${tutImportOthers.length ? `<p class="muted small">${esc(tf('The other {0} imported account(s) are added but not started yet.', tutImportOthers.length))}</p>` : ''}
+    <div class="actions">
+      ${tutImportOthers.length ? `<button class="ghost" onclick="tutStartOthers()">${esc(t('Start the others too'))}</button>` : ''}
+      <button id="tutNext" onclick="finishSignin()">${esc(t('Show me my account'))}</button></div>`);
+}
+
+async function tutStartOthers() {
+  const names = tutImportOthers;
+  tutImportOthers = [];
+  for (const n of names) await post('/api/bots/' + encodeURIComponent(n) + '/start', {}).catch(() => {});
+  toast(tf('Starting {0} more account(s) - they sign in one after another.', names.length));
+  finishSignin();
+}
+
+/// A config name from a Steam login - letters, numbers, dashes and underscores - that isn't taken yet.
+function nameFromLogin(login) {
+  let base = (login || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 32) || 'account';
+  if (base.toLowerCase() === 'nocatfarm') base += '1';
+  const taken = new Set(Object.keys((config && config.Bots) || {}).map((n) => n.toLowerCase()));
+  let name = base;
+  for (let i = 2; taken.has(name.toLowerCase()); i++) name = base + i;
+  return name;
+}
+
+// The account the setup is walking through signing in, and what it last drew - redrawn only when something
+// changed, so a half-typed Steam Guard code isn't wiped by the next poll.
+let tutorialSignin = null;
+let tutorialSigninHtml = '';
+
+function renderSignin() {
+  if (!tutorialSignin || !state) return;
+
+  const b = (state.Bots || []).find((x) => x.Name === tutorialSignin);
+  const qr = (state.QrWaiting || []).find((q) => q.Name === tutorialSignin);
+  let title;
+  let body;
+  let buttons;
+
+  // Signed in: now its library is known, so the setup can offer the account's own games instead of asking for IDs.
+  // A human-mode account always gets the games step - without games it has nothing to play. The routine, and a
+  // robot's idle list, are the full tour's.
+  if (b && b.Online && !tutorialSetupDone) {
+    tutorialSetupDone = true;
+    const steps = b.Legit ? (tutorialMode === 'full' ? ['games', 'routine'] : ['games']) : (tutorialMode === 'full' ? ['idle'] : []);
+    if (steps.length) {
+      startTutorialSetup(b.Name, steps);
+      return;
+    }
+  }
+
+  if (b && b.Online) {
+    title = t("You're all set");
+    const what = b.Legit
+      ? t('Human mode is on: it settles in for a few minutes first, like somebody who just opened Steam, then starts its day - games, breaks and a bedtime.')
+      : (b.Cards > 0
+        ? tf('It is farming trading cards: {0} to go across {1} games. When they are done it idles your games.', b.Cards, b.Games)
+        : t('It is checking which of your games still have cards to drop - that takes a minute. Then it farms them, and idles your games after that.'));
+    body = `<p>${esc(tf('{0} is signed in.', b.Name))} ${esc(what)}</p>
+      <p class="muted small">${esc(t('You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.'))}</p>`;
+    buttons = `<button id="tutNext" onclick="finishSignin()">${esc(t('Show me my account'))}</button>`;
+  } else if (b && b.Group === 'problem') {
+    title = t("Couldn't sign in");
+    body = `<p>${esc(b.Detail || '')}</p>
+      <p class="muted small">${esc(t('Check the account name and password on the Accounts page, then press Start on it to try again.'))}</p>`;
+    // One imported account failing mustn't strand the rest of them.
+    buttons = tutImportQueue.length
+      ? `<button id="tutNext" onclick="tutNextImported()">${esc(t('Next account'))}</button>`
+      : `<button id="tutNext" onclick="finishSignin()">${esc(t('Go to Accounts'))}</button>`;
+  } else if (qr) {
+    title = t('Scan the code');
+    body = `<p>${esc(t('Open the Steam app on your phone, tap the Steam Guard tab and scan this.'))}</p>
+      <div style="text-align:center;margin:12px 0"><img src="/api/bots/${encodeURIComponent(qr.Name)}/qr.svg?v=${qr.QrVersion}" alt="QR code" width="200" height="200"></div>`;
+    buttons = `<button class="ghost" onclick="finishSignin()">${esc(t('Hide this'))}</button>`;
+  } else if (state.Prompt) {
+    title = state.PromptSecret ? t('Your Steam password') : t('Steam Guard code');
+    body = `<p>${esc(state.Prompt)}</p>
+      <p class="muted small">${esc(state.PromptSecret
+        ? t('Asked once. After this it remembers the account with a login token, not the password.')
+        : t('Open the Steam app on your phone (Steam Guard tab), or check your email, and type the code here.'))}</p>
+      <input id="tutPrompt" type="${state.PromptSecret ? 'password' : 'text'}" autocomplete="off" style="width:100%">`;
+    buttons = `<button id="tutNext" onclick="sendTutorialPrompt()">${esc(t('Continue'))}</button>`;
+  } else {
+    title = t('Signing in to Steam');
+    body = `<p>${esc(t('This takes a few seconds...'))}</p>`;
+    buttons = `<button class="ghost" onclick="finishSignin()">${esc(t('Hide this'))}</button>`;
+  }
+
+  const html = `<h2>${esc(title)}</h2>${body}<div class="actions">${buttons}</div>`;
+  if (html === tutorialSigninHtml) return;
+  tutorialSigninHtml = html;
+  tutorialOpen = true;
+  modal(html);
+
+  const input = $('tutPrompt');
+  if (input) {
+    input.onkeydown = (e) => { if (e.key === 'Enter') sendTutorialPrompt(); };
+    setTimeout(() => input.focus(), 50);
+  }
+}
+
+function sendTutorialPrompt() {
+  const input = $('tutPrompt');
+  if (!input || !input.value) return;
+  const value = input.value;
+  input.value = '';
+  tutorialSigninHtml = '';   // redraw on the next poll even if the question looks the same
+  post('/api/prompt', { Value: value }).then((res) => {
+    if (!res.ok) toast(t('Nothing was waiting for that answer'), true);
+    refresh();
+  });
+}
+
+async function finishSignin() {
+  tutorialSignin = null;
+  tutorialSigninHtml = '';
+  await closeTutorial();
   go('accounts');
-  toast(t("Added. It's signing in now - answer the password and Steam Guard questions in the bar at the top."));
 }
 
 async function doTutorialImport() {
@@ -1363,12 +1696,58 @@ async function doTutorialImport() {
     return;
   }
 
-  await closeTutorial();
-  await afterImport(res);
+  const human = [...tutorialImportHuman].filter((n) => (res.Imported || 0) > 0);
+
+  // Nothing ticked as human mode: nothing to set up, the import summary is the end of it.
+  if (!human.length) {
+    await closeTutorial();
+    await afterImport(res);
+    return;
+  }
+
+  // The human-mode ones need games before human mode has anything to play, and games are picked from the
+  // account's own library - which needs it signed in. So: check ASF is out of the way, sign those in, and walk
+  // each through the same steps as an account added by hand.
+  sessionStorage.setItem('skip-welcome', '1');
+  post('/api/tutorial/done', {}).catch(() => {});
+  if (config && config.Global) config.Global.TutorialDone = true;
+  $('importBanner').classList.add('hidden');
+  await loadConfig();
+  tutImportQueue = human.filter((n) => config.Bots[n]);
+  tutImportOthers = Object.keys(config.Bots).filter((n) => !tutImportQueue.includes(n));
+  tutorialOpen = true;
+  modal(`<h2>${esc(t('Close ArchiSteamFarm first'))}</h2>
+    <p>${esc(tf('Next it signs in the {0} you play on, so it can set them up from their own games.', tutImportQueue.length === 1 ? t('one account') : tf('{0} accounts', tutImportQueue.length)))}</p>
+    <p class="muted small">${esc(t("If ArchiSteamFarm is still running, close it now - two programs on one account keep signing each other out."))}</p>
+    <div class="actions"><button class="ghost" onclick="tutImportQueue=[];closeTutorial();afterImport(${esc(JSON.stringify({ Imported: res.Imported, Notes: res.Notes || [] }))})">${esc(t('Not now'))}</button>
+      <button id="tutNext" onclick="tutImportSignIn()">${esc(t("It's closed - sign them in"))}</button></div>`);
+}
+
+// Imported accounts ticked as human mode, still to set up; and the rest, added but not started.
+let tutImportQueue = [];
+let tutImportOthers = [];
+
+async function tutImportSignIn() {
+  const btn = $('tutNext');
+  if (btn) btn.disabled = true;
+  for (const n of tutImportQueue) await post('/api/bots/' + encodeURIComponent(n) + '/start', {}).catch(() => {});
+  tutNextImported();
+}
+
+/// The next imported account through sign-in and set-up - or, when none are left, the last screen.
+function tutNextImported() {
+  const next = tutImportQueue.shift();
+  if (!next) return false;
+  tutorialSignin = next;
+  tutorialSigninHtml = '';
+  tutorialSetupDone = false;
+  refresh().then(renderSignin);
+  return true;
 }
 
 async function closeTutorial() {
   tutorialOpen = false;
+  tutorialSignin = null;
   closeModal();
   // Marked done however it was dismissed - being shown it again after skipping is worse than never seeing it.
   await post('/api/tutorial/done', {}).catch(() => {});
@@ -2859,6 +3238,7 @@ async function refresh() {
     refreshSeconds = state.RefreshSeconds || refreshSeconds;
     armPolling(refreshSeconds);
     syncWelcome();
+    if (tutorialSignin) renderSignin();
 
     // nocat.farm restarting resets its sequence numbers. Without noticing that, "everything after seq 812"
     // matches nothing forever and the log tab silently freezes.

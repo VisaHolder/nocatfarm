@@ -1196,7 +1196,67 @@
     "{0} is a free DLC - left alone (\"...free DLC too\" is off)": "{0} - бесплатное DLC, пропущено («...и бесплатные DLC» выключено)",
     "{0} is free, but only to owners of {1} - this account doesn't have it": "{0} бесплатно, но только для владельцев {1} - у этого аккаунта её нет",
     "claimed {0} (free right now) so its free DLC {1} can come too": "забрана {0} (сейчас бесплатно), чтобы досталось и бесплатное DLC {1}",
-    "couldn't claim {0} for its DLC - {1}": "не удалось забрать {0} ради его DLC - {1}"
+    "couldn't claim {0} for its DLC - {1}": "не удалось забрать {0} ради его DLC - {1}",
+    "joined the Steam group {0}": "вступил в группу Steam {0}",
+    "didn't join {0} - it needs an admin to approve new members": "не вступил в {0} - новых участников должен одобрить админ",
+    "didn't join {0} - it's invite only": "не вступил в {0} - только по приглашению",
+    "there's no Steam group at \"{0}\" - check the link in its settings": "по адресу «{0}» нет группы Steam - проверь ссылку в настройках",
+    "couldn't join {0} this session - will try again next start": "не удалось вступить в {0} в этот сеанс - попробует при следующем запуске",
+    "Couldn't sign in": "Не удалось войти",
+    "You're all set": "Всё готово",
+    "Asked once. After this it remembers the account with a login token, not the password.": "Спрашиваем один раз. Дальше аккаунт запоминается по токену входа, а не по паролю.",
+    "Check the account name and password on the Accounts page, then press Start on it to try again.": "Проверьте имя аккаунта и пароль на странице «Аккаунты», затем нажмите «Запустить» у этого аккаунта, чтобы попробовать снова.",
+    "Go to Accounts": "Перейти в «Аккаунты»",
+    "Hide this": "Скрыть",
+    "Human mode is on: it settles in for a few minutes first, like somebody who just opened Steam, then starts its day - games, breaks and a bedtime.": "Человеческий режим включён: сначала он несколько минут осваивается, как человек, который только что открыл Steam, а потом начинает свой день - игры, перерывы и отбой.",
+    "It is checking which of your games still have cards to drop - that takes a minute. Then it farms them, and idles your games after that.": "Идёт проверка, в каких ваших играх ещё могут выпасть карточки - это займёт минуту. Затем начнётся фарм, а после него - простой ваших игр.",
+    "It is farming trading cards: {0} to go across {1} games. When they are done it idles your games.": "Идёт фарм карточек: осталось {0} в {1} играх. Потом - простой ваших игр.",
+    "Nickname (optional)": "Никнейм (необязательно)",
+    "Open the Steam app on your phone (Steam Guard tab), or check your email, and type the code here.": "Откройте приложение Steam на телефоне (вкладка Steam Guard) или проверьте почту и введите код здесь.",
+    "Open the Steam app on your phone, tap the Steam Guard tab and scan this.": "Откройте приложение Steam на телефоне, нажмите вкладку Steam Guard и отсканируйте это.",
+    "Scan the code": "Отсканируйте код",
+    "Show me my account": "Показать мой аккаунт",
+    "Signing in to Steam": "Вход в Steam",
+    "Steam Guard code": "Код Steam Guard",
+    "This takes a few seconds...": "Это займёт несколько секунд...",
+    "What this account is called in nocat.farm. Leave it empty and it uses the Steam account name.": "Как этот аккаунт будет называться в nocat.farm. Оставьте пустым, и будет использовано имя аккаунта Steam.",
+    "You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.": "Это окно можно закрыть - nocat.farm продолжит работать по расписанию (в трее). На странице «Аккаунты» видно, что делает каждый аккаунт, и там же добавляется новый.",
+    "Your Steam password": "Ваш пароль Steam",
+    "same as the Steam account name": "как имя аккаунта Steam",
+    "{0} is signed in.": "{0}: вход выполнен.",
+    "Couldn't save those settings": "Не удалось сохранить эти настройки",
+    "Its game list didn't load - add games by their store link below.": "Список его игр не загрузился — добавьте игры ниже по ссылке из магазина.",
+    ", and {0} now and then": ", а иногда в {0}",
+    "About {0}h on weekdays and {1}h at weekends, from around {2}:00 until about {3}:00, with a day off {4}% of the time.": "Около {0} ч в будни и {1} ч в выходные, примерно с {2}:00 до {3}:00, с выходным днём в {4}% случаев.",
+    "Add": "Добавить",
+    "It farms trading cards first. Once they are done, it plays these games to add hours. Tap any you like - or none.": "Сначала он фармит карточки. Когда они закончатся, он играет в эти игры, чтобы набить часы. Нажмите на те, что нравятся, — или ни на одну.",
+    "It will mostly play {0}{1}, with breaks, meals and a bedtime. First it settles in for a few minutes, like somebody who just opened Steam.": "В основном он будет играть в {0}{1}, с перерывами, едой и отходом ко сну. Сначала он несколько минут осваивается, как человек, который только что открыл Steam.",
+    "Its daily routine": "Его распорядок дня",
+    "Looking at its games...": "Смотрим его игры...",
+    "Main game": "Основная игра",
+    "Not in the list? Paste a store link or game ID": "Нет в списке? Вставьте ссылку из магазина или ID игры",
+    "Roughly how a person would use this account. Every day comes out a bit different around these numbers.": "Примерно так, как этим аккаунтом пользовался бы человек. Каждый день получается немного другим вокруг этих цифр.",
+    "SETTING UP {0}": "НАСТРОЙКА {0}",
+    "Show friends a custom game name (optional)": "Показывать друзьям своё название игры (необязательно)",
+    "Side games": "Дополнительные игры",
+    "Skip - use the defaults": "Пропустить — оставить по умолчанию",
+    "Tap its main game first.": "Сначала нажмите на его основную игру.",
+    "Tap the game it plays the most - its main game. Then tap a few others it plays now and then.": "Нажмите на игру, в которую он играет больше всего, — его основную игру. Затем нажмите на несколько других, в которые он иногда играет.",
+    "The side games share the rest. You can fine-tune all of this later under Settings.": "Дополнительные игры делят остальное время. Всё это можно потом точнее настроить в «Настройках».",
+    "Time on the main game: {0}%": "Время в основной игре: {0}%",
+    "What does it play?": "Во что он играет?",
+    "What should it idle?": "Что запускать в простое?",
+    "leave empty to show the real game": "оставьте пустым, чтобы показывать настоящую игру",
+    "none - that is fine": "ни одной — это нормально",
+    "tap one above": "нажмите на одну выше",
+    "It's closed - sign them in": "Закрыл - войти",
+    "Close ArchiSteamFarm first": "Сначала закрой ArchiSteamFarm",
+    "If ArchiSteamFarm is still running, close it now - two programs on one account keep signing each other out.": "Если ArchiSteamFarm ещё работает, закрой его сейчас - две программы на одном аккаунте постоянно выкидывают друг друга.",
+    "Next account": "Следующий аккаунт",
+    "Next it signs in the {0} you play on, so it can set them up from their own games.": "Теперь он войдёт в {0}, на которых ты играешь, чтобы настроить их по их собственным играм.",
+    "Start the others too": "Запустить и остальные",
+    "Starting {0} more account(s) - they sign in one after another.": "Запускаю ещё {0} аккаунт(ов) - они входят по очереди.",
+    "The other {0} imported account(s) are added but not started yet.": "Остальные {0} импортированных аккаунта добавлены, но ещё не запущены."
   },
   "settings": {
     "WebEnabled": {
@@ -1262,6 +1322,10 @@
     "NotifyProblems": {
       "label": "Уведомлять о проблемах",
       "tip": "Показывает уведомление, когда аккаунту нужны вы: код Steam Guard, неудачный вход или бан комментариев."
+    },
+    "GroupsToJoin": {
+      "label": "Группы, куда вступают все аккаунты",
+      "tip": "Группы Steam, в которые по очереди вступают все твои аккаунты. Сначала там группа nocat.farm, её можно изменить или убрать. Вставь ссылку на группу или её короткое имя, через запятую. Вступает только в открытые группы, с одобрением или по приглашению пропускает."
     },
     "Rep4RepEnabled": {
       "label": "Пользоваться rep4rep вообще",
@@ -1525,8 +1589,12 @@
       "tip": "Автоматически принимает входящие заявки в друзья. Удобно на аккаунте для rep4rep: друзьям Steam позволяет комментировать гораздо свободнее."
     },
     "JoinGroup": {
-      "label": "Вступить в группу nocat.farm",
-      "tip": "Один раз вступает в группу Steam nocat.farm при входе этого аккаунта. Необязательно, от этого ничего не зависит."
+      "label": "Вступать в общие группы",
+      "tip": "Вступает в группы из «Группы, куда вступают все аккаунты». Выключи, чтобы оставить в стороне только этот аккаунт."
+    },
+    "ExtraGroupsToJoin": {
+      "label": "Также вступить в эти группы",
+      "tip": "Группы Steam только для этого аккаунта, ссылками или короткими именами через запятую. В группы из «Группы, куда вступают все аккаунты» он тоже вступает."
     },
     "AutoReplyEnabled": {
       "label": "Отвечать на сообщения",

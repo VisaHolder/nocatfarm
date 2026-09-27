@@ -93,6 +93,7 @@ public static partial class Commands {
 		new("queue", "[account|all]", GroupCards, "Go through today's discovery queue now, a few seconds on each game. The DiscoveryQueue setting does it by itself once a day (during sales, by default)."),
 		new("freeitems", "[account|all]", GroupCards, "Look for free event items now: the daily sale sticker, and anything in the Points Shop at 0 points. The ClaimEventItems setting does it by itself."),
 		new("booster", "[account|all] | <account> <appIDs>", GroupCards, "Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the BoosterGames setting does it by itself every day.", "boosters"),
+		new("joingroup", "<account|all> <group link or name>", GroupAccounts, "Join a Steam group now, if it's open - one account or all of them. For a group every account should always be in, put it in the \"Groups every account joins\" setting instead."),
 		new("privacy", "<account> [public|friends|private|part=level ...]", GroupAccounts,
 			"See an account's profile privacy, or set it - one word for everything, or parts such as inventory=public comments=friends. Parts: profile, games, playtime, friends, inventory, gifts, comments."),
 		new("owns", "<appID|name>", GroupOther,
@@ -254,6 +255,7 @@ public static partial class Commands {
 				"sell" => await SellAsync(mgr, rest).ConfigureAwait(false),
 				"fairswap" => await FairSwapCheckAsync(mgr, rest).ConfigureAwait(false),
 				"privacy" => await PrivacyAsync(mgr, rest).ConfigureAwait(false),
+				"joingroup" => await JoinGroupAsync(mgr, rest).ConfigureAwait(false),
 				"transfer" => await TransferAsync(mgr, rest).ConfigureAwait(false),
 				"farm" => Farm(mgr, rest),
 				"cards" => Cards(mgr, rest),
@@ -545,7 +547,11 @@ public static partial class Commands {
 		if (args.Length > 0) {
 			// 'help set <key>' and 'help <key>' both explain a setting - the same sentence the dashboard shows.
 			string wanted = args[^1];
-			SettingDef? def = Settings.Find(wanted);
+
+			// A command typed in lower case ("help joingroup") is the command, even when a setting shares the word
+			// (JoinGroup) - settings are written in their own CamelCase, and 'help set <key>' always means the setting.
+			bool command = (args.Length == 1) && !wanted.Any(char.IsUpper) && All.Any(c => c.Matches(wanted));
+			SettingDef? def = command ? null : Settings.Find(wanted);
 
 			if (def != null) {
 				StringBuilder sb = new();
@@ -1878,6 +1884,70 @@ public static partial class Commands {
 	}
 
 	/// <summary>The accounts a read-only command answers for: the one named, or every account for "all" or nothing.</summary>
+	private static async Task<string> JoinGroupAsync(BotManager mgr, string[] args) {
+		if (args.Length < 2) {
+			return "joingroup <account|all> <group link or name>   e.g. joingroup all steamcommunity.com/groups/nocatfarm";
+		}
+
+		if (GroupJoin.Normalise(args[1]) is not { } path) {
+			return $"\"{args[1]}\" doesn't look like a Steam group - paste its link, like steamcommunity.com/groups/name";
+		}
+
+		if (Pick(mgr, [args[0]], out string? problem) is not { } bots) {
+			return problem!;
+		}
+
+		List<string> lines = [];
+		List<Bot> ready = [];
+
+		foreach (Bot b in bots) {
+			if (!b.IsOnline || !b.Web.Ready || (BotManager.ModuleOf<GroupJoin>(b) is null)) {
+				lines.Add($"{b.Name}: not logged in");
+			} else {
+				ready.Add(b);
+			}
+		}
+
+		string typed = args[1];
+		string Say(Bot b, GroupJoin.Outcome outcome, string name) => outcome switch {
+			GroupJoin.Outcome.Joined => $"{b.Name}: joined {name}",
+			GroupJoin.Outcome.AlreadyIn => $"{b.Name}: already in {name}",
+			GroupJoin.Outcome.NeedsApproval => $"{b.Name}: {name} needs an admin to approve new members - not joined",
+			GroupJoin.Outcome.InviteOnly => $"{b.Name}: {name} is invite only - not joined",
+			GroupJoin.Outcome.NotFound => $"{b.Name}: there's no Steam group at \"{typed}\"",
+			_ => $"{b.Name}: Steam didn't answer - try again in a minute"
+		};
+
+		if (ready.Count == 0) {
+			return string.Join(Environment.NewLine, lines);
+		}
+
+		// The first account now, so you see straight away whether the group can be joined at all.
+		(GroupJoin.Outcome first, string groupName) = await BotManager.ModuleOf<GroupJoin>(ready[0])!.JoinAsync(path, null, CancellationToken.None).ConfigureAwait(false);
+		lines.Add(Say(ready[0], first, groupName));
+
+		// The rest a minute or three apart, in the background: several accounts landing in one group's member list
+		// in the same few seconds is a giveaway. Not worth doing at all when the group can't be joined.
+		if ((ready.Count > 1) && first is GroupJoin.Outcome.Joined or GroupJoin.Outcome.AlreadyIn) {
+			List<Bot> rest = [.. ready.Skip(1)];
+
+			_ = Task.Run(async () => {
+				foreach (Bot b in rest) {
+					await Task.Delay(Rng.Seconds(60, 180)).ConfigureAwait(false);
+
+					if ((BotManager.ModuleOf<GroupJoin>(b) is { } g) && b.IsOnline) {
+						(GroupJoin.Outcome o, string n) = await g.JoinAsync(path, null, CancellationToken.None).ConfigureAwait(false);
+						Log.Info(Say(b, o, n), b.Name);
+					}
+				}
+			});
+
+			lines.Add($"the other {rest.Count} account(s) follow one every minute or three - the log says how each went");
+		}
+
+		return string.Join(Environment.NewLine, lines);
+	}
+
 	private static List<Bot>? Pick(BotManager mgr, string[] args, out string? problem) {
 		problem = null;
 

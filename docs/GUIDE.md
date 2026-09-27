@@ -17,7 +17,7 @@ Everything nocat.farm does, every command and setting, and how it works under th
 
 What an account does out of the box: it farms its trading cards, then idles the games you give it, collects free
 event items, gift cards, guest passes and games friends gift it, accepts offers that ask for nothing, clears its Steam notifications and
-joins the nocat.farm Steam group. Each of those has its own switch. Everything else below is optional and one
+joins the shared Steam groups (the nocat.farm group, until you change the list). Each of those has its own switch. Everything else below is optional and one
 setting away.
 
 | | |
@@ -41,7 +41,7 @@ setting away.
 | **Steam Families** | Optional (`IncludeFamilyLibrary`, off by default). Games shared into the account can be hunted too, and are handed back as soon as anyone else in the family starts playing them (`YieldToFamily`, on by default). |
 | **Plugins** | Optional and off by default. One DLL in `plugins/` extends the app: react to card drops and trade offers, read every account, run any command, add your own commands, and declare settings that get a real UI. See [PLUGINS.md](../PLUGINS.md). |
 | **Daily report** | Once a day (default 09:30) it writes a one-look summary to the log: hours banked since the previous report, cards in the last 24h, rep4rep comments (when rep4rep is on) and a running total, per account plus a line for the whole fleet. `report` shows the same figures on demand. |
-| **Eleven languages** | The dashboard's pages, labels and setting explanations — all 199 settings — are in Spanish, Portuguese (BR), Russian, German, French, Simplified Chinese, Turkish, Polish, Japanese and Korean, and so are account status lines and the log. Replies to typed commands stay in English. The walkthrough asks which language you want before it says anything else. |
+| **Eleven languages** | The dashboard's pages, labels and setting explanations — all 201 settings — are in Spanish, Portuguese (BR), Russian, German, French, Simplified Chinese, Turkish, Polish, Japanese and Korean, and so are account status lines and the log. Replies to typed commands stay in English. The walkthrough asks which language you want before it says anything else. |
 
 <p align="center">
   <img src="../assets/accounts.png" alt="The per-account view — state, custom name, and what your friends actually see" width="880">
@@ -114,6 +114,13 @@ The dashboard has its own first-run setup, and it adds your first account at the
    *I sign into this one myself*); *A spare or farm account* keeps the full-speed defaults.
 4. **Add it, or import from ArchiSteamFarm** — when an ASF install is found, every bot is listed with a tick
    box: the ones you tick come across in human mode, the rest as farm accounts.
+5. **Sign in, right there** — the password, Steam Guard code or QR code are asked inside the setup window, not
+   in a bar behind it. Only the Steam account name is needed; the nickname is optional.
+6. **Set it up from its own games** — once it's signed in, a human-mode account's most-played games are shown to
+   tap: its main game, a few side games, and a slider for how much of its time the main game gets. The full tour
+   adds its daily routine (hours on a weekday and at the weekend, when it gets on, bedtime, chance of a day off)
+   with a live one-line preview, or for a farm account which games to idle and an optional custom game name.
+   *Skip - use the defaults* is always there. The last screen says what it's going to do now.
 
 The Accounts page's own *+ add account* has the same *Human mode* tick. The setup shows once, on a machine with no
 accounts; replay it from the Overview page.
@@ -345,6 +352,7 @@ ignored, and replies are cut at 1,900 characters.
 | `wake <account>` &nbsp;·&nbsp; `wakeup` `skipsleep` | Wake a sleeping human-mode account and start its day now. Bed time is unchanged. |
 | `name <account> [text\|off]` | Custom non-Steam game name shown instead of the real game. No text shows the current one; `off` clears it. |
 | `nickname <account> <profile name>` | Change the name everybody sees on the profile and friends list. |
+| `joingroup <account\|all> <group link or name>` | Join a Steam group now, if it's open. Says so when a group needs approval, is invite only, or doesn't exist. |
 | `persona <account> <state>` | online \| offline \| busy \| away \| snooze \| invisible. |
 | `cheevo <account> <appID> [list\|unlock\|lock] [name\|all]` &nbsp;·&nbsp; `ach` | Achievements: see them, unlock them, or put them back. |
 | `hunt [account]` &nbsp;·&nbsp; `boost` | What the achievement hunter would play next, in order - and what it ruled out, with the reason for each. |
@@ -665,7 +673,7 @@ why, and porting is usually easier than it sounds.
 
 ## Settings
 
-**50 global, 149 per account** — of which **44 sit in front of Show advanced** (8 global, 36 per account); what a
+**51 global, 150 per account** — of which **45 sit in front of Show advanced** (9 global, 36 per account); what a
 page actually shows also depends on whether rep4rep and human mode are on. Every one has a short plain-English
 explanation attached, which the dashboard shows on hover and the console prints for `help <setting>` along with
 its default and range — written once, in `Config/Settings.cs`, and translated with the setting's name into the
@@ -705,8 +713,11 @@ last game after finishing), human mode (the whole daily
 shape, and how long it finishes up for on a manual stop), achievements (earn over time, pace, completion
 ceiling, the hunter, family-shared games, grind spacing), rep4rep pacing, friends & messages (accept friend
 requests after a random delay, ignore obvious spam invites — on by default, accept group invites, auto-reply,
-command masters, and joining the nocat.farm Steam group — on by default, `set <account> JoinGroup false` to opt
-out), trades (donations, fair card swaps, your own accounts, gifts, how long offers and gifts wait, what may be sent and
+command masters, *Join the shared groups* — on by default, `set <account> JoinGroup false` keeps one account out —
+and *Also join these groups*, `ExtraGroupsToJoin`), and under *All accounts* in the global settings, *Groups every
+account joins* (`GroupsToJoin`, starting with the nocat.farm group): paste group links or short names
+and every account joins them, each account at its own random time and minutes apart (tens of minutes on a human-mode
+account); only open groups are joined, ones needing approval or an invite are skipped with a line in the log, trades (donations, fair card swaps, your own accounts, gifts, how long offers and gifts wait, what may be sent and
 how often), free games
 and badges (free games, event items, booster packs, badge crafting, and clearing Steam's notifications —
 `ClearNotifications` marks the whole notification tray read on every sign-in, on by default, and

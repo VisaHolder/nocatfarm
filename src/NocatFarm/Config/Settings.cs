@@ -55,6 +55,7 @@ public static class Settings {
 	public const string SecRep4RepAccount = "rep4rep account";
 	public const string SecConnection = "Steam connection";
 	public const string SecLogging = "Logging";
+	public const string SecAllAccounts = "All accounts";
 
 	// ── per-account sections, in display order ──────────────────────────────
 	public const string SecAccount = "Account";
@@ -490,6 +491,9 @@ public static class Settings {
 			"Shows a pop-up when an account needs you, like a Steam Guard code, a failed login or a comment ban.", Advanced: true),
 
 		// ── rep4rep account ──
+		new("GroupsToJoin", "Groups every account joins", SecAllAccounts, SettingKind.Text,
+			"Steam groups all your accounts join, one after another. It starts with the nocat.farm group, and you can change or clear it. Paste a group's link or its short name, separated by commas. Only open groups are joined, ones that need approval or an invite are skipped.",
+			Placeholder: "steamcommunity.com/groups/yourgroup"),
 		new("Rep4RepEnabled", "Use rep4rep at all", SecRep4RepAccount, SettingKind.Bool,
 			"Turns on rep4rep, an optional outside site where users trade Steam profile comments. With it off, all rep4rep features and settings are hidden on every account."),
 		new("Rep4RepApiToken", "API token", SecRep4RepAccount, SettingKind.Secret,
@@ -938,9 +942,12 @@ new("PluginsEnabled", "Load plugins", SecDashboard, SettingKind.Bool,
 		new("AcceptGroupInvites", "Accept group invites", SecSocial, SettingKind.Bool,
 			"Joins Steam groups this account gets invited to.",
 			Advanced: true),
-		new("JoinGroup", "Join the nocat.farm group", SecSocial, SettingKind.Bool,
-			"Joins the nocat.farm Steam group once when this account signs in. Optional, nothing depends on it.",
+		new("JoinGroup", "Join the shared groups", SecSocial, SettingKind.Bool,
+			"Joins the groups in \"Groups every account joins\". Turn it off to keep just this account out of them.",
 			Advanced: true),
+		new("ExtraGroupsToJoin", "Also join these groups", SecSocial, SettingKind.Text,
+			"Steam groups only this account joins, as links or short names separated by commas. Groups in \"Groups every account joins\" are joined too.",
+			Advanced: true, Placeholder: "steamcommunity.com/groups/yourgroup"),
 		new("IgnoreSuspiciousInvites", "Ignore obvious spam", SecSocial, SettingKind.Bool,
 			"Quietly ignores friend requests from new level 0 private profiles, which is what scam bots look like. Only works when \"Accept friend requests\" is on.",
 			Advanced: true),

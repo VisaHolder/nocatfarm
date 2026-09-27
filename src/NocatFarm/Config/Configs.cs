@@ -110,6 +110,10 @@ public sealed class GlobalConfig {
 	/// <summary>AppIDs no account ever touches, on top of each account's own list.</summary>
 	public List<uint> GlobalBlacklistedGames { get; set; } = [];
 
+	/// <summary>Steam groups every account joins - links or short names, comma separated. Open groups only. Starts
+	/// with the nocat.farm group; anyone can change or clear it.</summary>
+	public string GroupsToJoin { get; set; } = "steamcommunity.com/groups/nocatfarm";
+
 	public bool ExitWhenAllFinished { get; set; }
 
 	// ── logging ──
@@ -412,7 +416,11 @@ public sealed class BotConfig {
 	// ── friends & messages ──
 	public bool AcceptFriendRequests { get; set; }
 	public bool AcceptGroupInvites { get; set; }
+	/// <summary>This account joins the groups in the global "Groups every account joins" list.</summary>
 	public bool JoinGroup { get; set; } = true;
+
+	/// <summary>Steam groups only this account joins, on top of the global list.</summary>
+	public string ExtraGroupsToJoin { get; set; } = "";
 	public bool IgnoreSuspiciousInvites { get; set; } = true;
 	public bool RejectInvalidFriendInvites { get; set; }
 	/// <summary>

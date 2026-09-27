@@ -1196,7 +1196,67 @@
     "{0} is a free DLC - left alone (\"...free DLC too\" is off)": "{0} は無料DLC - 受け取らない(「…無料DLCも」がオフ)",
     "{0} is free, but only to owners of {1} - this account doesn't have it": "{0} は無料だが {1} の所有者のみ - このアカウントは持っていない",
     "claimed {0} (free right now) so its free DLC {1} can come too": "{0} を受け取りました(今だけ無料)。無料DLC {1} も受け取れます",
-    "couldn't claim {0} for its DLC - {1}": "DLCのための {0} を受け取れませんでした - {1}"
+    "couldn't claim {0} for its DLC - {1}": "DLCのための {0} を受け取れませんでした - {1}",
+    "joined the Steam group {0}": "Steamグループ {0} に参加しました",
+    "didn't join {0} - it needs an admin to approve new members": "{0} には参加しませんでした - 新メンバーには管理者の承認が必要です",
+    "didn't join {0} - it's invite only": "{0} には参加しませんでした - 招待制です",
+    "there's no Steam group at \"{0}\" - check the link in its settings": "「{0}」にSteamグループがありません - 設定のリンクを確認してください",
+    "couldn't join {0} this session - will try again next start": "このセッションでは {0} に参加できませんでした - 次の起動で再挑戦します",
+    "Couldn't sign in": "サインインできませんでした",
+    "You're all set": "準備完了です",
+    "Asked once. After this it remembers the account with a login token, not the password.": "入力は一度だけです。以降はパスワードではなくログイントークンでアカウントを記憶します。",
+    "Check the account name and password on the Accounts page, then press Start on it to try again.": "アカウントページでアカウント名とパスワードを確認し、そのアカウントの「開始」を押してもう一度お試しください。",
+    "Go to Accounts": "アカウントへ移動",
+    "Hide this": "非表示にする",
+    "Human mode is on: it settles in for a few minutes first, like somebody who just opened Steam, then starts its day - games, breaks and a bedtime.": "人間モードがオンです。Steamを開いたばかりの人のように最初の数分は落ち着いてから、一日を始めます - ゲーム、休憩、そして就寝時間。",
+    "It is checking which of your games still have cards to drop - that takes a minute. Then it farms them, and idles your games after that.": "どのゲームにまだドロップするカードが残っているか確認しています - 1分ほどかかります。その後カードを集め、終わったらゲームを放置します。",
+    "It is farming trading cards: {0} to go across {1} games. When they are done it idles your games.": "トレーディングカードを集めています: {1}本のゲームで残り{0}枚。終わったらゲームを放置します。",
+    "Nickname (optional)": "ニックネーム (任意)",
+    "Open the Steam app on your phone (Steam Guard tab), or check your email, and type the code here.": "スマホのSteamアプリ (Steam Guardタブ) を開くか、メールを確認して、ここにコードを入力してください。",
+    "Open the Steam app on your phone, tap the Steam Guard tab and scan this.": "スマホのSteamアプリを開き、Steam Guardタブをタップしてこれをスキャンしてください。",
+    "Scan the code": "コードをスキャン",
+    "Show me my account": "アカウントを見る",
+    "Signing in to Steam": "Steamにサインイン中",
+    "Steam Guard code": "Steam Guardコード",
+    "This takes a few seconds...": "数秒かかります...",
+    "What this account is called in nocat.farm. Leave it empty and it uses the Steam account name.": "nocat.farmでのこのアカウントの呼び名です。空欄の場合はSteamアカウント名を使います。",
+    "You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.": "このウィンドウは閉じても大丈夫です - nocat.farmは時間どおりに動き続けます (通知領域にあります)。アカウントページで各アカウントの状況を確認でき、別のアカウントもそこで追加できます。",
+    "Your Steam password": "Steamのパスワード",
+    "same as the Steam account name": "Steamアカウント名と同じ",
+    "{0} is signed in.": "{0} がサインインしました。",
+    "Couldn't save those settings": "設定を保存できませんでした",
+    "Its game list didn't load - add games by their store link below.": "ゲーム一覧を読み込めませんでした - 下からストアのリンクでゲームを追加してください。",
+    ", and {0} now and then": "、ときどき {0}",
+    "About {0}h on weekdays and {1}h at weekends, from around {2}:00 until about {3}:00, with a day off {4}% of the time.": "平日は約 {0} 時間、週末は約 {1} 時間。だいたい {2}:00 から {3}:00 ごろまでで、{4}% の確率で休む日があります。",
+    "Add": "追加",
+    "It farms trading cards first. Once they are done, it plays these games to add hours. Tap any you like - or none.": "まずトレーディングカードを集めます。それが終わったら、時間を稼ぐためにこれらのゲームを遊びます。好きなものをタップしてください（なしでもOK）。",
+    "It will mostly play {0}{1}, with breaks, meals and a bedtime. First it settles in for a few minutes, like somebody who just opened Steam.": "主に {0}{1} を遊び、休憩や食事、就寝もはさみます。最初は Steam を開いたばかりの人のように、数分かけて落ち着きます。",
+    "Its daily routine": "毎日の過ごし方",
+    "Looking at its games...": "ゲームを確認しています...",
+    "Main game": "メインゲーム",
+    "Not in the list? Paste a store link or game ID": "一覧にありませんか？ストアのリンクかゲーム ID を貼り付けてください",
+    "Roughly how a person would use this account. Every day comes out a bit different around these numbers.": "このアカウントを人が使うとしたら、だいたいこんな感じです。毎日この数字を中心に少しずつ変わります。",
+    "SETTING UP {0}": "{0} を設定中",
+    "Show friends a custom game name (optional)": "フレンドにカスタムのゲーム名を表示（任意）",
+    "Side games": "サブゲーム",
+    "Skip - use the defaults": "スキップ - 既定値を使う",
+    "Tap its main game first.": "まずメインゲームをタップしてください。",
+    "Tap the game it plays the most - its main game. Then tap a few others it plays now and then.": "いちばんよく遊ぶゲーム（メインゲーム）をタップしてください。次に、ときどき遊ぶゲームをいくつかタップします。",
+    "The side games share the rest. You can fine-tune all of this later under Settings.": "残りの時間はサブゲームで分け合います。これらはすべて、あとから「設定」で細かく調整できます。",
+    "Time on the main game: {0}%": "メインゲームの時間: {0}%",
+    "What does it play?": "何を遊びますか？",
+    "What should it idle?": "何を放置しますか？",
+    "leave empty to show the real game": "空欄なら実際のゲームを表示",
+    "none - that is fine": "なし - それでも大丈夫",
+    "tap one above": "上から1つタップ",
+    "It's closed - sign them in": "閉じたのでサインイン",
+    "Close ArchiSteamFarm first": "先にArchiSteamFarmを閉じてください",
+    "If ArchiSteamFarm is still running, close it now - two programs on one account keep signing each other out.": "ArchiSteamFarmがまだ動いているなら今閉じてください。1つのアカウントで2つのプログラムが動くと、お互いをサインアウトさせ続けます。",
+    "Next account": "次のアカウント",
+    "Next it signs in the {0} you play on, so it can set them up from their own games.": "次に、あなたがプレイする{0}にサインインして、それぞれのゲームから設定します。",
+    "Start the others too": "ほかのアカウントも開始",
+    "Starting {0} more account(s) - they sign in one after another.": "さらに{0}個のアカウントを開始します。順番にサインインします。",
+    "The other {0} imported account(s) are added but not started yet.": "ほかの{0}個のインポートしたアカウントは追加済みですが、まだ開始していません。"
   },
   "settings": {
     "WebEnabled": {
@@ -1262,6 +1322,10 @@
     "NotifyProblems": {
       "label": "問題を通知",
       "tip": "Steam Guard コード、ログイン失敗、コメント禁止など、アカウントがあなたの対応を必要とするときにポップアップを出します。"
+    },
+    "GroupsToJoin": {
+      "label": "全アカウントが参加するグループ",
+      "tip": "すべてのアカウントが順番に参加するSteamグループです。最初は nocat.farm のグループが入っていて、変更も削除もできます。グループのリンクか短い名前をカンマ区切りで貼ってください。参加できるのは公開グループだけで、承認制や招待制のグループは飛ばします。"
     },
     "Rep4RepEnabled": {
       "label": "そもそも rep4rep を使うか",
@@ -1525,8 +1589,12 @@
       "tip": "届いたフレンド申請を自動で承認します。Steam ではフレンドにはずっと自由にコメントできるので、rep4rep 用のアカウントで便利です。"
     },
     "JoinGroup": {
-      "label": "nocat.farm グループに参加",
-      "tip": "このアカウントがサインインしたときに、nocat.farm の Steam グループに一度だけ参加します。任意で、これに依存するものはありません。"
+      "label": "共通のグループに参加",
+      "tip": "「全アカウントが参加するグループ」のグループに参加します。このアカウントだけ外したいときはオフにします。"
+    },
+    "ExtraGroupsToJoin": {
+      "label": "このグループにも参加",
+      "tip": "このアカウントだけが参加するSteamグループを、リンクか短い名前でカンマ区切りで指定します。「全アカウントが参加するグループ」のグループにも参加します。"
     },
     "AutoReplyEnabled": {
       "label": "メッセージに返信",

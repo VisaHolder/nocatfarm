@@ -850,6 +850,8 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 }
 .langpick .p:hover { border-color: var(--muted); }
 .langpick .p.on { border-color: var(--text); color: var(--text); background: var(--panel); }
+/* The setup's game picker: a side game is picked too, just quieter than the main one. */
+.langpick .p.side { border-color: var(--muted); border-style: dashed; color: var(--text); }
 
 /* The walkthrough's either-or choices (quick or full tour, main or spare). Two cards side by side, one column
    on a phone; the picked one gets the same bright border as a picked language. */

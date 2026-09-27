@@ -150,6 +150,11 @@ few minutes after you stop.
 
 **How many accounts can it run?** As many as you like. They sign in one after another so Steam doesn't mind.
 
+**Can all my accounts join my Steam group?** Yes. Paste the group's link into **Groups every account joins** (Settings →
+Global → All accounts); it starts with the nocat.farm group, and you can change or clear it. Each
+account joins at its own random time, minutes apart, so they don't all turn up at once. Or type `joingroup all <link>` to do it right now.
+Only open groups work; ones that need approval or an invite are skipped, and the log says why.
+
 **Do I have to type my password every time?** No - only once, or never if you use the QR code.
 
 **I'm coming from ArchiSteamFarm.** The first-run setup finds it for you: tick the bots you play on yourself

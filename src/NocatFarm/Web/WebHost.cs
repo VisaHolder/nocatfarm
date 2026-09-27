@@ -732,6 +732,22 @@ public sealed class WebHost : IAsyncDisposable {
 			return Results.Json(new { ok = true });
 		});
 
+		// The account's own games, most played first - what the first-run setup offers as its main and side games.
+		// Family-shared ones are left out: playing a borrowed game locks its owner out of it.
+		app.MapGet("/api/bots/{name}/library", (HttpContext ctx, string name) => Guard(ctx, () => {
+			Bot? bot = _mgr.Get(name);
+
+			if (bot == null) {
+				return Results.Json(new { Ready = false, Games = Array.Empty<object>() });
+			}
+
+			return Results.Json(new {
+				bot.Library.Ready,
+				Games = bot.Library.Games.Where(static g => !g.Shared).OrderByDescending(static g => g.MinutesPlayed).Take(40)
+					.Select(static g => new { g.AppId, g.Name, Minutes = g.MinutesPlayed }).ToList()
+			});
+		}));
+
 		app.MapGet("/api/bots/{name}/cards", (HttpContext ctx, string name) => Guard(ctx, () => {
 			Bot? bot = _mgr.Get(name);
 			CardFarmer? farmer = bot == null ? null : BotManager.ModuleOf<CardFarmer>(bot);

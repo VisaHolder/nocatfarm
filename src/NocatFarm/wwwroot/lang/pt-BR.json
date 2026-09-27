@@ -1196,7 +1196,67 @@
     "{0} is a free DLC - left alone (\"...free DLC too\" is off)": "{0} é um DLC grátis - deixado de lado (\"...DLC grátis também\" está desligado)",
     "{0} is free, but only to owners of {1} - this account doesn't have it": "{0} está grátis, mas só para quem tem {1} - esta conta não tem",
     "claimed {0} (free right now) so its free DLC {1} can come too": "resgatado {0} (grátis agora) para o DLC grátis {1} vir junto",
-    "couldn't claim {0} for its DLC - {1}": "não deu para resgatar {0} para o DLC dele - {1}"
+    "couldn't claim {0} for its DLC - {1}": "não deu para resgatar {0} para o DLC dele - {1}",
+    "joined the Steam group {0}": "entrou no grupo Steam {0}",
+    "didn't join {0} - it needs an admin to approve new members": "não entrou em {0} - um admin precisa aprovar novos membros",
+    "didn't join {0} - it's invite only": "não entrou em {0} - só por convite",
+    "there's no Steam group at \"{0}\" - check the link in its settings": "não existe grupo Steam em \"{0}\" - confira o link nas configurações",
+    "couldn't join {0} this session - will try again next start": "não deu para entrar em {0} nesta sessão - tenta de novo na próxima inicialização",
+    "Couldn't sign in": "Não foi possível entrar",
+    "You're all set": "Tudo pronto",
+    "Asked once. After this it remembers the account with a login token, not the password.": "Pedida só uma vez. Depois disso, a conta é lembrada com um token de login, não com a senha.",
+    "Check the account name and password on the Accounts page, then press Start on it to try again.": "Confira o nome da conta e a senha na página Contas e depois clique em Iniciar nela para tentar de novo.",
+    "Go to Accounts": "Ir para Contas",
+    "Hide this": "Ocultar",
+    "Human mode is on: it settles in for a few minutes first, like somebody who just opened Steam, then starts its day - games, breaks and a bedtime.": "O modo humano está ligado: primeiro ele se ajeita por alguns minutos, como alguém que acabou de abrir a Steam, e depois começa o dia - jogos, pausas e hora de dormir.",
+    "It is checking which of your games still have cards to drop - that takes a minute. Then it farms them, and idles your games after that.": "Ele está verificando quais dos seus jogos ainda têm cartas para cair - isso leva um minuto. Depois ele as farma e, em seguida, idla seus jogos.",
+    "It is farming trading cards: {0} to go across {1} games. When they are done it idles your games.": "Ele está farmando cartas colecionáveis: faltam {0} em {1} jogos. Quando terminar, ele idla seus jogos.",
+    "Nickname (optional)": "Apelido (opcional)",
+    "Open the Steam app on your phone (Steam Guard tab), or check your email, and type the code here.": "Abra o app da Steam no celular (aba Steam Guard) ou confira seu e-mail e digite o código aqui.",
+    "Open the Steam app on your phone, tap the Steam Guard tab and scan this.": "Abra o app da Steam no celular, toque na aba Steam Guard e escaneie isto.",
+    "Scan the code": "Escaneie o código",
+    "Show me my account": "Mostrar minha conta",
+    "Signing in to Steam": "Entrando na Steam",
+    "Steam Guard code": "Código do Steam Guard",
+    "This takes a few seconds...": "Isso leva alguns segundos...",
+    "What this account is called in nocat.farm. Leave it empty and it uses the Steam account name.": "Como esta conta se chama no nocat.farm. Deixe vazio para usar o nome da conta Steam.",
+    "You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.": "Você pode fechar esta janela - o nocat.farm continua rodando no horário (na bandeja). A página Contas mostra o que cada conta está fazendo, e é lá que você adiciona outra.",
+    "Your Steam password": "Sua senha da Steam",
+    "same as the Steam account name": "igual ao nome da conta Steam",
+    "{0} is signed in.": "{0} entrou.",
+    "Couldn't save those settings": "Não deu para salvar essas configurações",
+    "Its game list didn't load - add games by their store link below.": "A lista de jogos dela não carregou - adicione jogos pelo link da loja abaixo.",
+    ", and {0} now and then": " e, de vez em quando, {0}",
+    "About {0}h on weekdays and {1}h at weekends, from around {2}:00 until about {3}:00, with a day off {4}% of the time.": "Cerca de {0}h nos dias de semana e {1}h nos fins de semana, mais ou menos das {2}:00 até umas {3}:00, com um dia de folga em {4}% das vezes.",
+    "Add": "Adicionar",
+    "It farms trading cards first. Once they are done, it plays these games to add hours. Tap any you like - or none.": "Ela farma cartas colecionáveis primeiro. Quando terminar, joga estes jogos para somar horas. Toque nos que quiser - ou em nenhum.",
+    "It will mostly play {0}{1}, with breaks, meals and a bedtime. First it settles in for a few minutes, like somebody who just opened Steam.": "Ela vai jogar principalmente {0}{1}, com pausas, refeições e hora de dormir. Primeiro ela se acomoda por alguns minutos, como alguém que acabou de abrir a Steam.",
+    "Its daily routine": "A rotina diária dela",
+    "Looking at its games...": "Olhando os jogos dela...",
+    "Main game": "Jogo principal",
+    "Not in the list? Paste a store link or game ID": "Não está na lista? Cole um link da loja ou o ID do jogo",
+    "Roughly how a person would use this account. Every day comes out a bit different around these numbers.": "Mais ou menos como uma pessoa usaria esta conta. Cada dia sai um pouco diferente em torno desses números.",
+    "SETTING UP {0}": "CONFIGURANDO {0}",
+    "Show friends a custom game name (optional)": "Mostrar aos amigos um nome de jogo próprio (opcional)",
+    "Side games": "Jogos secundários",
+    "Skip - use the defaults": "Pular - usar o padrão",
+    "Tap its main game first.": "Toque primeiro no jogo principal dela.",
+    "Tap the game it plays the most - its main game. Then tap a few others it plays now and then.": "Toque no jogo que ela mais joga - o jogo principal. Depois toque em alguns outros que ela joga de vez em quando.",
+    "The side games share the rest. You can fine-tune all of this later under Settings.": "Os jogos secundários dividem o resto. Dá para ajustar tudo isso depois em Configurações.",
+    "Time on the main game: {0}%": "Tempo no jogo principal: {0}%",
+    "What does it play?": "O que ela joga?",
+    "What should it idle?": "O que ela deve idlar?",
+    "leave empty to show the real game": "deixe vazio para mostrar o jogo real",
+    "none - that is fine": "nenhum - tudo bem",
+    "tap one above": "toque em um acima",
+    "It's closed - sign them in": "Já fechei - entrar nelas",
+    "Close ArchiSteamFarm first": "Feche o ArchiSteamFarm primeiro",
+    "If ArchiSteamFarm is still running, close it now - two programs on one account keep signing each other out.": "Se o ArchiSteamFarm ainda estiver aberto, feche agora - dois programas na mesma conta ficam derrubando um ao outro.",
+    "Next account": "Próxima conta",
+    "Next it signs in the {0} you play on, so it can set them up from their own games.": "Agora ele entra em {0} em que você joga, para configurá-las com os próprios jogos.",
+    "Start the others too": "Iniciar as outras também",
+    "Starting {0} more account(s) - they sign in one after another.": "Iniciando mais {0} conta(s) - elas entram uma depois da outra.",
+    "The other {0} imported account(s) are added but not started yet.": "As outras {0} contas importadas foram adicionadas mas ainda não iniciadas."
   },
   "settings": {
     "WebEnabled": {
@@ -1262,6 +1322,10 @@
     "NotifyProblems": {
       "label": "Avisar sobre problemas",
       "tip": "Mostra um pop-up quando uma conta precisa de você, como um código do Steam Guard, um login que falhou ou um banimento de comentários."
+    },
+    "GroupsToJoin": {
+      "label": "Grupos que todas as contas entram",
+      "tip": "Grupos Steam em que todas as suas contas entram, uma depois da outra. Começa com o grupo nocat.farm, e você pode mudar ou apagar. Cole o link de um grupo ou o nome curto, separados por vírgulas. Só entra em grupos abertos, os que pedem aprovação ou convite são pulados."
     },
     "Rep4RepEnabled": {
       "label": "Usar rep4rep, sim ou não",
@@ -1525,8 +1589,12 @@
       "tip": "Aceita pedidos de amizade automaticamente. Útil numa conta de rep4rep, já que a Steam deixa comentar muito mais à vontade em amigos."
     },
     "JoinGroup": {
-      "label": "Entrar no grupo nocat.farm",
-      "tip": "Entra no grupo Steam do nocat.farm uma vez, quando esta conta se conecta. Opcional, nada depende disso."
+      "label": "Entrar nos grupos compartilhados",
+      "tip": "Entra nos grupos de \"Grupos que todas as contas entram\". Desligue para deixar só esta conta de fora."
+    },
+    "ExtraGroupsToJoin": {
+      "label": "Entrar também nestes grupos",
+      "tip": "Grupos Steam em que só esta conta entra, como links ou nomes curtos separados por vírgulas. Também entra nos de \"Grupos que todas as contas entram\"."
     },
     "AutoReplyEnabled": {
       "label": "Responder às mensagens",
