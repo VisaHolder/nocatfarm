@@ -16,8 +16,6 @@
   --bad: #ff3131;
   --info: #8a8a8a;
   --on-accent: #000;      /* text on an accent-filled surface - inverts in the light theme */
-  --radius: 0px;          /* sharp corners */
-  --rail: 224px;
   --railh: 52px;          /* the top bar's height - everything sticky measures from this */
 
   /* One 4px scale, so spacing stops being invented per rule. */
@@ -106,7 +104,11 @@ h2 a:hover { color: var(--text); }
 /* ── gates ─────────────────────────────────────────────────────────── */
 .gate { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
 .gate-card { width: 330px; display: grid; gap: 12px; }
-.welcome-card { width: 520px; }
+/* min(), not a fixed 520px: on a phone the card was wider than the screen and the page scrolled sideways. */
+.welcome-card { width: min(520px, 100%); }
+/* On its own on the welcome card the wordmark is a title, not a bar item: no divider line after it, and room below. */
+.welcome-card h1.wordmark { display: block; width: max-content; border-right: 0; padding-right: 0; margin-bottom: var(--s4); }
+.welcome-card h1.wordmark::after { inset: -2px; }
 .welcome-card .lead { font-size: 18px; margin: 6px 0 20px; }
 .welcome-card .foot { margin-top: 18px; }
 .error { color: var(--bad); min-height: 18px; margin: 8px 0; font-size: 13px; }
@@ -132,12 +134,15 @@ h2 a:hover { color: var(--text); }
   padding-right: var(--s6);
 }
 
-/* flex: 0 0 auto - the tabs never give up space.
-   Without it the nav is the flexible item in the rail, so on a window that is merely narrowish it gets
-   squeezed and the last tab is CLIPPED: at 1435px the nav wanted 674px and was handed 600, which cut
-   "Settings" in half with no scrollbar to reach it. The stats and chips beside it are decoration and can
-   go; navigation cannot. Below 900px the rail scrolls, which is where a genuinely small screen is handled. */
-nav { display: flex; flex-direction: row; gap: var(--s1); flex: 0 0 auto; }
+/* The wordmark keeps its width, always. ".rail > *" below lets the bar's children shrink, and the wordmark was
+   one of them: on a narrower window it was squeezed to a sliver while its text carried on underneath the tabs,
+   so it read "nocat" with "Overview" drawn over ".farm". */
+.rail > h1.wordmark { flex: 0 0 auto; min-width: max-content; }
+
+/* The tabs are next in line after the wordmark: the status readout beside them gives way first (see .rail-foot),
+   and only when there is truly no room left - a window under ~960px - do the tabs scroll sideways rather than
+   clip or slide under anything. Clipping was the old failure: "Settings" cut in half with no way to reach it. */
+nav { display: flex; flex-direction: row; gap: var(--s1); flex: 0 1 auto; overflow-x: auto; scrollbar-width: thin; }
 
 .navitem {
   display: flex; align-items: center; gap: var(--s2);
@@ -196,27 +201,34 @@ nav { display: flex; flex-direction: row; gap: var(--s1); flex: 0 0 auto; }
 }
 .themetoggle:hover { border-color: var(--line2); color: var(--text); }
 
-/* The right-hand end of the bar: status, then totals, then the theme control and version. One calm row that
-   never wraps - fenced off from the tabs by a divider, with generous gaps BETWEEN the groups and tighter ones
-   inside each, so the eye reads three things, not eight. */
-.rail-foot { margin-left: auto; display: flex; align-items: center; gap: var(--s5); flex-wrap: nowrap;
-  padding-left: var(--s5); border-left: 1px solid var(--line); }
+/* The right-hand end of the bar: status, then totals, and after them (outside this box) the theme control and
+   version. It takes whatever room the wordmark and the tabs leave - flex-basis 0, grow 1 - and is a size
+   container, so what it shows is decided by the room it actually HAS rather than by guessing at window widths.
+   Guessing is how it broke: every breakpoint was measured with one set of chips, in English, and at 1280px the
+   chips were cut off mid-word ("Play") while the stats beside them still showed. */
+.rail-foot { flex: 1 1 0; display: flex; align-items: center; justify-content: flex-end; gap: var(--s5);
+  flex-wrap: nowrap; container-type: inline-size; }
 
 /* A flex item defaults to min-width:auto, which means "never shrink below your content" - so the bar could not
    give way and pushed the whole PAGE sideways instead. At 1265px it overflowed by 245px and the entire
-   dashboard scrolled horizontally, which is never the right answer for a top bar. These three let it shrink,
-   and clip as a last resort, so the body cannot scroll sideways however many status chips there are. */
+   dashboard scrolled horizontally, which is never the right answer for a top bar. These let it shrink, and
+   clip as a last resort, so the body cannot scroll sideways however many status chips there are. */
 .rail > * { min-width: 0; }
 .rail-foot { overflow: hidden; }
-.rail-foot .chips { overflow: hidden; }
 
 /* In the top bar the status chips are a glanceable readout, not the heavy filter boxes they are on the
-   Accounts page: no border, no fill, no wrapping - just the coloured status dot, a muted label and a bright
-   count. This is the single biggest change; the bordered boxes stacking two-high were the whole problem. */
-.rail-foot .chips { flex-wrap: nowrap; gap: var(--s4); }
+   Accounts page: no border, no fill - just the coloured status dot, a muted label and a bright count.
+
+   They drop out WHOLE, from the right, when there isn't room: the row may wrap, but the box is exactly one chip
+   tall and clips, so a chip that doesn't fit falls onto a second line nobody sees instead of being cut in half.
+   The divider fencing the readout off from the tabs lives here, on the chips, so it stays beside them. */
+.rail-foot .chips {
+  flex: 0 1 auto; flex-wrap: wrap; gap: 0 var(--s4); height: 19px; overflow: hidden; align-content: flex-start;
+  padding-left: var(--s5); border-left: 1px solid var(--line);
+}
 .rail-foot .chip {
   background: none; border: 0; padding: 0; color: var(--muted); font-size: 12px; gap: var(--s2);
-  white-space: nowrap;
+  white-space: nowrap; line-height: 19px;
 }
 .rail-foot .chip:hover { color: var(--text); }
 .rail-foot .chip b { color: var(--text); font-weight: 600; }
@@ -227,17 +239,27 @@ nav { display: flex; flex-direction: row; gap: var(--s1); flex: 0 0 auto; }
 .railstats dd { margin: 0 0 0 var(--s1); display: inline; color: var(--text); font-weight: 600; }
 .railstats dd .muted { font-weight: 400; }
 
-.railfoot-meta { display: flex; align-items: center; gap: var(--s3); }
+/* The theme control and version never give way - they are how you switch back and how you find an update. */
+.railfoot-meta { display: flex; align-items: center; gap: var(--s3); flex: 0 0 auto; min-width: max-content; }
 
-/* Below these widths the bar can't hold everything on one row, so the least important parts step aside in
-   order rather than wrapping the whole thing onto three lines. */
-/* 1500, not 1360. The stats are ~275px and the nav needs ~674: at 1435px everything technically fit to
-   within about a dozen pixels, which is another way of saying it did not. Drop them before it is tight. */
-@media (max-width: 1500px) { .railstats { display: none; } }
-/* The 900px block below hides the chips (and stats and version), leaving just the theme control. */
-@media (max-width: 760px) {
-  .rail { height: auto; flex-wrap: wrap; padding-block: var(--s2); }
-  .rail-foot { margin-left: 0; padding-left: 0; border-left: 0; }
+/* What the readout shows for the room it has. The totals go first - the Overview's tiles carry the same
+   numbers - once chips and totals together (~570px in English) no longer fit; then the chips too, before the
+   first one would have to be cut. */
+@container (max-width: 620px) { .railstats { display: none; } }
+@container (max-width: 130px) { .rail-foot .chips { display: none; } }
+
+/* Tighter tabs and gaps on a laptop-width window: all eight tabs still fit whole from ~1000px up, and at 1280px
+   there is room left for the status chips (with the roomy spacing there was space for none). */
+@media (max-width: 1400px) {
+  .rail { gap: var(--s4); padding-left: var(--s4); padding-right: var(--s4); }
+  .navitem { padding: var(--s2); font-size: 13px; }
+}
+/* The 900px block below hides the readout and the version, leaving just the theme control. From there down the
+   tabs get a full-width row of their own under the wordmark - all eight fit whole on a tablet that way, where
+   beside the wordmark a third of them were scrolled out of sight. On a phone that row scrolls sideways. */
+@media (max-width: 900px) {
+  .rail { height: auto; flex-wrap: wrap; padding-block: var(--s2); row-gap: var(--s1); }
+  nav { flex-basis: 100%; order: 3; }
 }
 
 /* margin: 0 auto is the whole difference between this and nocat.lol's own .app-content. Without it the
@@ -414,7 +436,6 @@ tr.click:hover td { background: var(--panel2); }
 table.today td, table.today th { font-variant-numeric: tabular-nums; }
 table.today tr.fleet td { border-top: 1px solid var(--line); }
 table.today tr.fleet td:first-child { color: var(--muted); }
-.today h2 span { margin-left: auto; }
 
 /* ── history ───────────────────────────────────────────────────────── */
 /* Day-by-day charts under the Today table, in the page's own greys: the accent for the data, the divider grey for
@@ -784,10 +805,8 @@ button.ghost:hover:not(:disabled) { background: var(--line); }
   .navitem { flex: 0 0 auto; }
   .toolbar.sticky { top: 0 !important; }
   .settingsnav { position: static; }
-  /* The stats go; the theme control does NOT - hiding it left no way to switch back, and the 760px rule
-     written to reflow it could never match because this 900px block had already removed its parent. */
-  .rail-foot { display: flex; margin-left: auto; }
-  .rail-foot .chips, .rail-foot .railstats, .rail-foot .muted { display: none; }
+  /* The readout and version go; the theme control does NOT - hiding it left no way to switch back. */
+  .rail-foot .chips, .rail-foot .railstats, .railfoot-meta .ghlink { display: none; }
   .main { padding: 16px; }
   /* minmax(0, 1fr), not 1fr. Plain 1fr is minmax(AUTO, 1fr), so the column can never be narrower than its
      widest content - the jump links here - and the settings pane pushed 86px off the side of a phone. */
@@ -974,7 +993,6 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 .huntrow .chips { display: flex; flex-wrap: wrap; align-items: flex-start; align-content: flex-start; gap: 4px; min-width: 0; }
 .hchip { display: inline-block; align-self: flex-start; font-size: 11px; line-height: 1.6; padding: 1px 7px; border: 1px solid var(--line); background: var(--panel); color: var(--text); white-space: nowrap; max-width: 24ch; overflow: hidden; text-overflow: ellipsis; }
 .hchip.shared { border-style: dashed; }
-.hchip.out { color: var(--muted); background: transparent; }
 .hchip.ghost { color: var(--muted); border-style: dotted; }
 
 /* Recently earned. Deliberately a plain list - it is a feed, and it reads better as one. */
@@ -1002,7 +1020,7 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 
 /* The walkthrough's either-or choices (quick or full tour, main or spare). Two cards side by side, one column
    on a phone; the picked one gets the same bright border as a picked language. */
-.pickcards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: var(--s3) 0; }
+.pickcards { display: grid; grid-template-columns: 1fr; gap: 8px; margin: var(--s3) 0; }
 .pickcard {
   display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; cursor: pointer; user-select: none;
   border: 1px solid var(--line); background: var(--panel2);
@@ -1010,7 +1028,6 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 .pickcard span { font-size: 12px; color: var(--muted); line-height: 1.45; }
 .pickcard:hover { border-color: var(--muted); }
 .pickcard.on { border-color: var(--text); background: var(--panel); }
-@media (max-width: 560px) { .pickcards { grid-template-columns: 1fr; } }
 
 /* The import step's per-account list: tick the ones you play on. */
 .pickrows { display: flex; flex-direction: column; gap: 4px; margin: var(--s2) 0 var(--s3); max-height: 240px; overflow-y: auto; }

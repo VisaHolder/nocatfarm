@@ -38,18 +38,27 @@ public static class DailyReport {
 		_timer = new Timer(static _ => Tick(), null, TimeSpan.FromSeconds(20), TimeSpan.FromMinutes(1));
 	}
 
-	/// <summary>Write the report now regardless of the clock (the `report` command). Does not consume the day's
-	/// scheduled report or move the 24h baseline - it just shows where things stand right now.</summary>
-	public static string RunNow() {
+	/// <summary>
+	/// The same per-account rows the daily report writes, as text for the 'stats' command - empty when there is
+	/// nothing to report on. Does not log anything, consume the day's scheduled report or move the 24h baseline.
+	/// </summary>
+	public static string Summary() {
 		if (_mgr is not { } mgr) {
-			return "not ready yet";
+			return "";
 		}
 
 		Load();
+		(List<Said> lines, Said fleet, bool first, _) = Build(mgr);
 
-		return Fire(mgr, DateTime.Now.ToString("yyyy-MM-dd"), commit: false)
-			? "daily report written to the log"
-			: "no accounts to report on";
+		if (lines.Count == 0) {
+			return "";
+		}
+
+		Said header = first
+			? new Said("── daily report · last 24h · first one, 'banked' counts from here on ──")
+			: new Said("── daily report · last 24h ──");
+
+		return string.Join(Environment.NewLine, lines.Prepend(header).Append(fleet).Select(static l => l.ToString()));
 	}
 
 	private static void Tick() {
@@ -77,11 +86,40 @@ public static class DailyReport {
 	}
 
 	private static bool Fire(BotManager mgr, string today, bool commit) {
-		List<Bot> bots = mgr.All.OrderBy(static b => b.Name, StringComparer.OrdinalIgnoreCase).ToList();
+		(List<Said> lines, Said fleet, bool first, Dictionary<string, double> snapshot) = Build(mgr);
 
-		if (bots.Count == 0) {
+		if (lines.Count == 0) {
 			return false;
 		}
+
+		Log.Good(first
+			? new Said("── daily report · last 24h · first one, 'banked' counts from here on ──")
+			: new Said("── daily report · last 24h ──"), "report");
+		foreach (Said line in lines) {
+			Log.Info(line, "report");
+		}
+
+		Log.Good(fleet, "report");
+
+		// The same summary as one message for Discord / Telegram, when that's switched on - only for the real
+		// daily one.
+		if (commit) {
+			Log.Publish(Topic.Summary, "report", new Said(string.Join("\n", lines.Select(static l => l.ToString().TrimStart()).Append(fleet.ToString().TrimStart()))));
+
+			lock (Gate) {
+				_state.Lifetime = snapshot;
+				_state.LastFired = today;
+			}
+
+			Save();
+		}
+
+		return true;
+	}
+
+	/// <summary>One row per account plus the fleet line, and the lifetime snapshot the next report counts from.</summary>
+	private static (List<Said> Lines, Said Fleet, bool First, Dictionary<string, double> Snapshot) Build(BotManager mgr) {
+		List<Bot> bots = mgr.All.OrderBy(static b => b.Name, StringComparer.OrdinalIgnoreCase).ToList();
 
 		bool r4r = mgr.Global.Rep4RepEnabled;
 		Dictionary<string, int> cards = Count(Stats.KindCard);
@@ -123,36 +161,13 @@ public static class DailyReport {
 			lines.Add(row);
 		}
 
-		Log.Good(first
-			? new Said("── daily report · last 24h · first one, 'banked' counts from here on ──")
-			: new Said("── daily report · last 24h ──"), "report");
-		foreach (Said line in lines) {
-			Log.Info(line, "report");
-		}
-
 		Said fleet = r4r
 			? new Said("  fleet: banked {0} · {1} card(s) · {2} comment(s) · {3} total",
 				Fmt.Hm(totBanked), totCards, totComments, Fmt.Hm(totLife))
 			: new Said("  fleet: banked {0} · {1} card(s) · {2} total",
 				Fmt.Hm(totBanked), totCards, Fmt.Hm(totLife));
-		Log.Good(fleet, "report");
 
-		// The same summary as one message for Discord / Telegram, when that's switched on - only for the real
-		// daily one, not every time somebody types 'report'.
-		if (commit) {
-			Log.Publish(Topic.Summary, "report", new Said(string.Join("\n", lines.Select(static l => l.ToString().TrimStart()).Append(fleet.ToString().TrimStart()))));
-		}
-
-		if (commit) {
-			lock (Gate) {
-				_state.Lifetime = snapshot;
-				_state.LastFired = today;
-			}
-
-			Save();
-		}
-
-		return true;
+		return (lines, fleet, first, snapshot);
 
 		static Dictionary<string, int> Count(string kind) =>
 			Stats.Recent(24)
@@ -188,7 +203,7 @@ public static class DailyReport {
 
 			string path = Path;
 			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
-			File.WriteAllText(path, JsonSerializer.Serialize(snap, new JsonSerializerOptions { WriteIndented = true }));
+			AtomicFile.Write(path, JsonSerializer.Serialize(snap, new JsonSerializerOptions { WriteIndented = true }));
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't save the daily-report state: {0}: {1}", e.GetType().Name, e.Message));
 		}

@@ -34,13 +34,13 @@
     <p class="lead" data-t="Let's add your first Steam account.">Let's add your first Steam account.</p>
 
     <div class="form2">
-      <label for="w-name"><span data-t="Name">Name</span><i class="info" data-tip="A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam."></i></label>
+      <label for="w-name"><span data-t="Name">Name</span><i class="info" data-tip="A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam." data-t-tip="A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam."></i></label>
       <input id="w-name" type="text" placeholder="mybot" data-t-ph="mybot" autocomplete="off">
 
-      <label for="w-login"><span data-t="Steam account name">Steam account name</span><i class="info" data-tip="What you type into Steam's sign-in box. Not your display name, not your email."></i></label>
+      <label for="w-login"><span data-t="Steam account name">Steam account name</span><i class="info" data-tip="What you type into Steam's sign-in box. Not your display name, not your email." data-t-tip="What you type into Steam's sign-in box. Not your display name, not your email."></i></label>
       <input id="w-login" type="text" placeholder="your steam login" data-t-ph="your steam login" autocomplete="off">
 
-      <label for="w-pass"><span data-t="Password">Password</span> <span class="muted" data-t="(optional)">(optional)</span><i class="info" data-tip="nocat.farm signs in once and then keeps a login token, so this doesn't have to be stored at all. Leave it blank and it'll ask you when it needs it."></i></label>
+      <label for="w-pass"><span data-t="Password">Password</span> <span class="muted" data-t="(optional)">(optional)</span><i class="info" data-tip="nocat.farm signs in once and then keeps a login token, so this doesn't have to be stored at all. Leave it blank and it'll ask you when it needs it." data-t-tip="nocat.farm signs in once and then keeps a login token, so this doesn't have to be stored at all. Leave it blank and it'll ask you when it needs it."></i></label>
       <input id="w-pass" type="password" placeholder="leave blank and it'll ask" data-t-ph="leave blank and it'll ask" autocomplete="off">
     </div>
 
@@ -56,7 +56,7 @@
   <header class="rail">
     <h1 class="wordmark">nocat.<span>farm</span></h1>
 
-    <nav id="nav">
+    <nav>
       <a class="navitem" tabindex="0" role="button" data-view="overview"><span data-t="Overview">Overview</span></a>
       <a class="navitem" tabindex="0" role="button" data-view="accounts"><span data-t="Accounts">Accounts</span><b id="navAccounts"></b></a>
       <a class="navitem" tabindex="0" role="button" data-view="rep4rep"><span>rep4rep</span><b id="navPoints"></b></a>
@@ -67,17 +67,19 @@
       <a class="navitem" tabindex="0" role="button" data-view="settings"><span data-t="Settings">Settings</span></a>
     </nav>
 
+    <!-- The status readout, then (outside it) the theme control and version: the readout gives way as the window
+         narrows, the controls never do. -->
     <div class="rail-foot">
       <div id="railChips" class="chips"></div>
       <dl id="railStats" class="railstats"></dl>
-      <div class="railfoot-meta">
-        <button class="themetoggle" id="themeToggle" onclick="toggleTheme()"
-                data-tip="Switch between the dark and light themes.">theme</button>
-        <button class="updatebtn hidden" id="updateBtn" onclick="doUpdate()" data-t="Update"></button>
-        <a class="muted small ghlink" id="version" href="https://github.com/VisaHolder/nocatfarm"
-           target="_blank" rel="noopener noreferrer"
-           data-tip="nocat.farm on GitHub - source, releases and issues."></a>
-      </div>
+    </div>
+    <div class="railfoot-meta">
+      <button class="themetoggle" id="themeToggle" onclick="toggleTheme()"
+              data-tip="Switch between the dark and light themes." data-t-tip="Switch between the dark and light themes.">theme</button>
+      <button class="updatebtn hidden" id="updateBtn" onclick="doUpdate()" data-t="Update"></button>
+      <a class="muted small ghlink" id="version" href="https://github.com/VisaHolder/nocatfarm"
+         target="_blank" rel="noopener noreferrer"
+         data-tip="nocat.farm on GitHub - source, releases and issues." data-t-tip="nocat.farm on GitHub - source, releases and issues."></a>
     </div>
   </header>
 
@@ -93,7 +95,7 @@
         <div id="glance"><p class="muted empty" data-t="Loading…">Loading…</p></div>
       </div>
       <div class="card">
-        <h2><span data-t="Today">Today</span><span class="muted small" style="text-transform:none;letter-spacing:0" data-t="last 24 hours">last 24 hours</span><i class="info" data-tip="Trading cards that dropped and rep4rep comments posted in the last 24 hours, per account."></i></h2>
+        <h2><span data-t="Today">Today</span><span class="muted small" style="text-transform:none;letter-spacing:0" data-t="last 24 hours">last 24 hours</span><i class="info" data-tip="Trading cards that dropped and rep4rep comments posted in the last 24 hours, per account." data-t-tip="Trading cards that dropped and rep4rep comments posted in the last 24 hours, per account."></i></h2>
         <div id="today"><p class="muted empty" data-t="Loading…">Loading…</p></div>
       </div>
       <div class="card">
@@ -139,14 +141,12 @@
       <div class="card">
         <h2 data-t="Pacing">Pacing</h2>
         <p class="explain"><b data-t="Steam lets an account leave about 10 comments a day on people who aren't its friends.">Steam lets an account leave about 10 comments a day on people who aren't its friends.</b>
-          Go past that and Steam quietly stops accepting comments from that account for around a day. It isn't a ban and
-          nothing is broken, but nothing you post gets through either — and rep4rep will never credit it. nocat.farm keeps
-          every account under the line, spaces the comments out at random, and only posts during the hours you allow.</p>
+          <span data-t="Go past that and Steam quietly stops accepting comments from that account for around a day. It isn't a ban and nothing is broken, but nothing you post gets through either — and rep4rep will never credit it. nocat.farm keeps every account under the line, spaces the comments out at random, and only posts during the hours you allow.">Go past that and Steam quietly stops accepting comments from that account for around a day. It isn't a ban and nothing is broken, but nothing you post gets through either — and rep4rep will never credit it. nocat.farm keeps every account under the line, spaces the comments out at random, and only posts during the hours you allow.</span></p>
         <div id="r4rPacing"></div>
       </div>
       <div class="card muted small">
         <b data-t="These live on rep4rep.com, because their API can't do them:">These live on rep4rep.com, because their API can't do them:</b>
-        removing a Steam profile · editing your custom comment list · task history · buying points · referrals.
+        <span data-t="removing a Steam profile · editing your custom comment list · task history · buying points · referrals.">removing a Steam profile · editing your custom comment list · task history · buying points · referrals.</span>
         <a href="https://rep4rep.com/dashboard/" target="_blank" rel="noopener" data-t="Open rep4rep.com ↗">Open rep4rep.com ↗</a>
       </div>
     </section>
@@ -158,7 +158,7 @@
           <input id="logSearch" type="text" placeholder="Search the log…" data-t-ph="Search the log…" oninput="renderLog()">
           <div id="logLevels" class="chips"></div>
           <select id="logBot" onchange="renderLog()"></select>
-          <label class="inline"><input type="checkbox" id="logFollow" checked> Follow</label>
+          <label class="inline"><input type="checkbox" id="logFollow" checked> <span data-t="Follow">Follow</span></label>
           <button class="ghost" onclick="copyLog()" data-t="Copy">Copy</button>
         </div>
         <div id="logBody" class="out"><p class="muted empty" data-t="Loading…">Loading…</p></div>
@@ -210,8 +210,8 @@
         <div class="card settingsform">
           <div class="toolbar sticky">
             <input id="setSearch" type="text" placeholder="Search settings…" data-t-ph="Search settings…" oninput="renderSettings()">
-            <label class="inline"><input type="checkbox" id="setAdvanced" onchange="renderSettings()"> Show advanced<i class="info" data-tip="Settings most people never need. Nothing here is dangerous, it's just detail."></i></label>
-            <label class="inline"><input type="checkbox" id="setChanged" onchange="renderSettings()"> Only changed<i class="info" data-tip="Show only the settings that differ from their defaults."></i></label>
+            <label class="inline"><input type="checkbox" id="setAdvanced" onchange="renderSettings()"> <span data-t="Show advanced">Show advanced</span><i class="info" data-tip="Settings most people never need. Nothing here is dangerous, it's just detail." data-t-tip="Settings most people never need. Nothing here is dangerous, it's just detail."></i></label>
+            <label class="inline"><input type="checkbox" id="setChanged" onchange="renderSettings()"> <span data-t="Only changed">Only changed</span><i class="info" data-tip="Show only the settings that differ from their defaults." data-t-tip="Show only the settings that differ from their defaults."></i></label>
             <span class="spacer"></span>
             <button id="saveBtn" onclick="saveSettings()" disabled data-t="Save">Save</button>
           </div>

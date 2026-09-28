@@ -434,7 +434,9 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 			}
 
 			return true;
-		} catch (TimeoutException) {
+		} catch (Exception e) when ((e is TimeoutException) || ((e is OperationCanceledException) && !ct.IsCancellationRequested)) {
+			// Steam's own job gives up by cancelling rather than timing out, so that comes through as a cancel - not
+			// the app shutting down, and not a reason to lose the rest of this look.
 			Log.Debug(new Said("no answer from Steam to a guest pass - trying again next login"), Bot.Name);
 
 			return false;

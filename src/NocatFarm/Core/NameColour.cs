@@ -34,6 +34,16 @@ public static class NameColour {
 		new("white", 225, 230, 238)
 	];
 
+	/// <summary>
+	/// The colour choice for a line's source: an account's own, or Telegram's and Discord's from the global settings.
+	/// Anything else - the program's own lines - is 0, automatic.
+	/// </summary>
+	public static int ChoiceFor(string source, BotManager? mgr) =>
+		mgr?.Get(source) is { } bot ? bot.Cfg.LogColour
+			: source == "telegram" ? Config.Live.Global.TelegramLogColour
+			: source == "discord" ? Config.Live.Global.DiscordLogColour
+			: 0;
+
 	/// <summary>The chosen swatch, or null for "automatic" and for anything out of range.</summary>
 	public static Swatch? Of(int choice) => (choice > 0) && (choice < All.Length) ? All[choice] : null;
 

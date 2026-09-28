@@ -58,9 +58,10 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 		while (!ct.IsCancellationRequested) {
 			bool wanted = Bot.Cfg.ClaimEventItems || (Bot.Cfg.DiscoveryQueue > 0);
 
-			// Nobody watches these, so any time of day - just not the moment it signs in, and one kind of thing at a
-			// time rather than sticker, shop and queue all in the same minute.
-			_gate ??= HumanGate.Quiet(Bot);
+			// A sticker claimed or an item taken shows on the profile, and a queue gone through counts as activity - so
+			// a human-mode account does these in its own day, one kind of thing at a time rather than sticker, shop
+			// and queue all in the same minute.
+			_gate ??= HumanGate.OwnDay(Bot);
 
 			if (wanted && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && _gate.Open) {
 				try {
@@ -88,8 +89,17 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 					Log.Debug(new Said("couldn't check for free event items: {0}", e.Message), Bot.Name);
 				}
 
-				DateTime next = _nextSticker < _nextShop ? _nextSticker : _nextShop;
-				_status = new Said("next look for free items around {0}", (Func<string>) (() => Fmt.Clock(next)));
+				// The free-items time only when free items are on. With just the discovery queue, the shop's time was
+				// never set and the status read "next look ... 1 Jan 00:00".
+				if (Bot.Cfg.ClaimEventItems) {
+					DateTime next = (_nextShop == DateTime.MinValue) || (_nextSticker < _nextShop) ? _nextSticker : _nextShop;
+					_status = new Said("next look for free items around {0}", (Func<string>) (() => Fmt.Clock(next)));
+				} else if ((_queueScheduledFor == SteamDay()) && (_queueDay != _queueScheduledFor) && (_queueAt > DateTime.UtcNow)) {
+					DateTime queueAt = _queueAt;
+					_status = new Said("going through the discovery queue around {0}", (Func<string>) (() => Fmt.Clock(queueAt)));
+				} else {
+					_status = new Said("");
+				}
 			}
 
 			if (!await Sleep(TimeSpan.FromMinutes(2), ct).ConfigureAwait(false)) {

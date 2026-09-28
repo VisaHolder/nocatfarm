@@ -1,334 +1,837 @@
-# nocat.farm - the full guide
+# nocat.farm - the guide
 
-Everything nocat.farm does, every command and setting, and how it works under the hood. New here? The
-[front page](../README.md) is the short version - download, run, done.
+nocat.farm runs your Steam accounts in the background. It farms their trading cards, idles games for playtime, and
+can make an account play like a real person. It runs on your own PC - no sign-up, no server.
 
-**Contents** ·
-[What it does](#what-it-does) · [Ways to drive it](#three-ways-to-drive-it) · [Getting started](#getting-started) ·
-[Human mode](#human-mode) · [rep4rep](#rep4rep) · [Commands](#commands) · [Achievements](#achievements) ·
-[The hunter](#the-hunter) · [Inventory value](#what-the-inventories-are-worth) ·
-[Trades, keys & items](#trades-keys-and-items) · [Fair card swaps](#fair-card-swaps) · [Free stuff](#free-stuff) ·
-[Plugins](#plugins) · [Settings](#settings) · [Command line](#command-line) · [Linux and Docker](#linux-and-docker) ·
-[Privacy & safety](#privacy-and-safety) · [How it works](#notes-on-how-it-works) · [Building it](#building-it)
+This guide has two parts:
+
+- **[Start here](#part-1-start-here)** - for everyone. Install it, add an account, and learn the few things most
+  people change. No experience needed.
+- **[Advanced](#part-2-advanced)** - for when you want more: tuning human mode, trades, phone notifications, every
+  command and setting, Linux and Docker, plugins.
+
+The app works the same way. The first-run setup offers **Quick setup**, a **Full tour** or **Advanced setup**, and the Settings page
+shows the everyday switches first, with a **Show advanced** box for the rest.
+
+The [front page](../README.md) is the one-minute version.
+
+**Contents**
+
+- Part 1 - Start here: [Words to know](#words-to-know) · [Install and run](#1-install-and-run) ·
+  [The first-run setup](#2-the-first-run-setup) · [What it does by itself](#3-what-it-does-by-itself) ·
+  [Finding your way around](#4-finding-your-way-around) · [Things most people change](#5-things-most-people-change) ·
+  [Everyday commands](#6-everyday-commands) · [Updating](#7-updating) ·
+  [If something looks wrong](#8-if-something-looks-wrong)
+- Part 2 - Advanced: [Dashboard and window](#the-dashboard-and-the-app-window) · [Accounts and signing in](#accounts-and-signing-in) ·
+  [Card farming](#card-farming) · [Idling and a custom game name](#idling-and-a-custom-game-name) ·
+  [Human mode](#human-mode) · [Staying out of your way](#staying-out-of-your-way) · [Free stuff](#free-stuff) ·
+  [Trades](#trades) · [Authenticator page](#the-authenticator-page) · [Ban watch](#ban-watch) ·
+  [Inventory value](#inventory-value) · [History charts](#history-charts) ·
+  [Achievements](#achievements-and-the-hunter) · [Booster packs, badges, selling, level-up](#booster-packs-badges-selling-and-level-up) ·
+  [Product keys](#product-keys) · [Steam groups](#steam-groups) · [Discord and Telegram](#discord-and-telegram) ·
+  [Daily summary](#daily-summary) · [rep4rep](#rep4rep) · [Commands](#commands) · [Settings](#settings) ·
+  [Command line](#command-line-options) · [Linux and Docker](#linux-and-docker) · [Plugins](#plugins) ·
+  [Privacy and safety](#privacy-and-safety) · [FAQ](#faq) · [Building from source](#building-from-source)
 
 ---
 
-## What it does
+# Part 1: Start here
 
-What an account does out of the box: it farms its trading cards, then idles the games you give it, collects free
-event items, gift cards, guest passes and games friends gift it, accepts offers that ask for nothing, clears its Steam notifications and
-joins the shared Steam groups (the nocat.farm group, until you change the list). Each of those has its own switch. Everything else below is optional and one
-setting away.
+## Words to know
 
-| | |
+| Word | What it means |
 |---|---|
-| **Idling** | Plays any set of appIDs for playtime, and re-asserts them, so a network hiccup doesn't silently stop it. |
-| **Custom game name** | Shows a non-Steam name (e.g. `nocat.lol`) on your profile and friends list **while the real games keep banking playtime**. Both at once. If Steam starts showing the real game instead, the account row warns "Steam shows …" and the name is put back. |
-| **Device badge** | Friends can see the account playing on a phone, Big Picture, VR or a controller (`GameDevice`). |
-| **Card farming** | On by default. Reads your own badge pages, bumps playtime on under-threshold games up to 32 at a time (31 with a custom name), then farms them solo. Drops are detected mainly from Steam's item-announcement **push**, with a periodic re-check as a backstop, so a finished game is noticed in seconds. It says roughly how long is left — Steam's usual 30 minutes a card at first, then this account's own pace, learned from the drops it times — in the log, the status and `cards`. |
-| **rep4rep** | Optional. Posts the comments rep4rep assigns, on a human schedule, from every opted-in account — all into one points pool. |
-| **Comment alerts** | Steam pushes the moment somebody comments on one of your profiles; it hits the log and a tray balloon. |
-| **Tray pop-ups** | Three kinds, each with its own switch: earnings (cards, accepted trades, claimed games, event items, booster packs, activated keys, credited comments), social (friends, groups, comments) and problems (Steam Guard needed, failed logins, comment blocks, gifted games, banned games learned, updates). |
-| **Stays out of your way** | Launch a game yourself on one of the accounts and that account stands down (`PauseWhenYouPlay`, on by default), then quietly picks back up after a delay you choose (`ResumeDelayMinutes`, default 5). |
-| **Achievement hunter** | Optional (`AchievementBoost`, plus `UnlockAchievements`). Hunts a list you pick, or finds single-player games in the library itself — never DLC, demos or bundle filler nobody plays — and works through them one at a time. On a human account the sessions are occasional and weighted-first, coming out of the day's play budget; on a non-human account it moves from one game straight to the next. |
-| **Inventory value** | What each account's items are worth at the market's median, per game (up to 12 inventories per account), in the currency you pick (`MarketCurrency`, default US dollar), with how it has moved in the last 24 hours. Reads the account's OWN inventory, so a private profile makes no difference. |
-| **Free games** | Optional (`ClaimFreeGames`). Finds giveaways from Steam alone — **the store's own list of games at 100% off, and Steam's change feed** — and claims free-to-keep giveaways, packages and apps alike. Whatever it finds has to be a released, paid game showing 100% off, so free-to-play games, a paid game's free edition and demos are left alone. DLC marked down to free is taken too with `ClaimFreeDlc` (off by default) - Steam only gives a DLC to owners of its game, so when the game is missing it checks whether the game is free right now as well and, if so, claims the game first and then the DLC (`ClaimFreeDlcBase`, on); if the game costs money the DLC is skipped. The change feed usually sees a giveaway within half an hour of Steam publishing it. A giveaway that has already ended is tried a few more times, then left alone, and that is remembered across restarts. |
-| **Free event items** | The daily sticker during a Steam sale, and anything in the Points Shop at 0 points, collected by themselves (`ClaimEventItems`, on by default). |
-| **Gifts** | Steam wallet gift cards and guest passes sent to an account are accepted (`AcceptGifts`, on by default), and so are games friends gift it — added straight to the library (`AcceptGiftedGames`, on by default; turn it off to decide each one yourself). Each gift waits a person's time first (`GiftDelayMinMinutes` / `GiftDelayMaxMinutes`), and a gift is never declined. |
-| **Booster packs** | Turns gems into booster packs for the games you list, one per game per day as Steam allows, on Steam's own schedule (`BoosterGames`). |
-| **Fair card swaps** | Optional. Accepts the one-for-one card swaps card-swapping sites send, only when the swap can never set the account's sets back: every card given away must still have more copies afterwards than any card coming in had before (`AcceptFairCardSwaps`). |
-| **Ban watch** | On by default (`WatchBans`). Looks at each account's bans every few hours - VAC, game bans, a trade ban, a community ban - and says so straight away when a new one appears: a red log line, a pop-up, and Discord/Telegram. It only looks. Games an account is banned in are read from Steam's help site and left out of every trade by themselves; trading cards keep trading. `bans` looks now. |
-| **Trade alerts** | Every new trade offer is announced in the log, as a pop-up and on Discord/Telegram: who it's from, what you'd give and get, and what happens next. Each gets a short number, so `trade accept new 3` or `trade decline new 3` answers it from the console or your phone. |
-| **Authenticator page** | For accounts whose authenticator is in nocat.farm (a maFile, or its secrets in the settings): the Steam Guard code with a countdown, and the list of things waiting to be confirmed - trades with pictures of both sides, market listings, account changes - each with Confirm and Deny, like the Steam app. `confirmations`, `confirm` and `deny` do the same in the console and on Telegram. |
-| **Refund protection** | Optional (`SkipRefundableGames`, off by default). When on, a game bought in the last 14 days (`RefundHoldDays`) with under two hours played is left alone — by the card farmer, the idler, the schedule, grinds and the hunter alike — until it can no longer be refunded. Games friends gift the account count too (`ProtectGiftedGames`, on by default) — the giver can still get their money back. |
-| **Steam Families** | Optional (`IncludeFamilyLibrary`, off by default). Games shared into the account can be hunted too, and are handed back as soon as anyone else in the family starts playing them (`YieldToFamily`, on by default). |
-| **Plugins** | Optional and off by default. One DLL in `plugins/` extends the app: react to card drops and trade offers, read every account, run any command, add your own commands, and declare settings that get a real UI. See [PLUGINS.md](../PLUGINS.md). |
-| **Daily report** | Once a day (default 09:30) it writes a one-look summary to the log: hours banked since the previous report, cards in the last 24h, rep4rep comments (when rep4rep is on) and a running total, per account plus a line for the whole fleet. `report` shows the same figures on demand. |
-| **Eleven languages** | The dashboard's pages, labels and setting explanations — all 201 settings — are in Spanish, Portuguese (BR), Russian, German, French, Simplified Chinese, Turkish, Polish, Japanese and Korean, and so are account status lines and the log. Replies to typed commands stay in English. The walkthrough asks which language you want before it says anything else. |
+| **Trading cards** | Many Steam games drop a few collectible cards while you play them - usually about half the full set. You can sell them, trade them, or turn a full set into a badge. |
+| **Farming cards** | Letting a game "play" until all its free cards have dropped. |
+| **Idling** | Telling Steam you're playing a game when nobody is. The game doesn't really run, but the playtime counts. |
+| **appID** | A game's number. It's in the game's Steam store link: `store.steampowered.com/app/`**`730`**`/...` is Counter-Strike 2. You can paste the whole link wherever an appID is asked for. |
+| **Human mode** | Makes an account play like a person - one game at a time, breaks, bedtime - instead of running around the clock. |
+| **Badge** | What a full set of cards turns into. Badges raise your Steam level. |
+| **Steam Guard** | The extra code Steam asks for when you sign in, from your email or the Steam app on your phone. |
+| **Authenticator / maFile** | The Steam app's Steam Guard, stored as a file. A `.maFile` comes from tools like Steam Desktop Authenticator or ArchiSteamFarm. With it, nocat.farm can type Steam Guard codes and confirm trades by itself. You don't need one. |
+| **SteamID64** | A long number that identifies a Steam account, like `76561198000000000`. Some trade settings ask for it. |
+| **Dashboard** | nocat.farm's web page. It runs on your own PC and opens in your browser. |
+| **Console** | Where you type commands. It's in the app window and on the dashboard's Console tab. |
+| **ArchiSteamFarm (ASF)** | Another card farming program. nocat.farm can bring your accounts across from it. |
 
-<p align="center">
-  <img src="../assets/accounts.png" alt="The per-account view — state, custom name, and what your friends actually see" width="880">
-</p>
+## 1. Install and run
 
-## Three ways to drive it
+**On Windows:**
 
-**App window** — the default on Windows. A small panel with a toolbar (start all · stop all · dashboard ·
-accounts · commands), a live log, a status bar with today's cards and comments, and a command line where every
-action is also a command. Type `help` to open the command sheet. `help <setting>` explains any setting: what it
-does, its default and range, and whether it needs a restart. The accounts sheet lists every account with its own
-start/stop, pause/resume, cards and profile buttons, plus *+ add account*. `--no-gui` (or `--console`) swaps the
-window for a live console board with up-arrow history, which is also what you get on another OS.
+1. Download `nocat.farm-v….zip` from the [latest release](https://github.com/VisaHolder/nocatfarm/releases/latest).
+   (The files ending `_linux-x64` and `_linux-arm64` are for Linux.)
+2. Right-click the zip and pick **Extract All…**. This gives it a folder of its own.
+3. Open the folder and run **`nocatFarm.exe`**.
 
-**Mini mode** — the window's *mini* button (or `mini`, or the tray menu) shrinks it to a small panel: one line per
-account with what it's doing and a start/stop button, and an account that's farming opens up to show its cards left,
-about how long until it's done, and a progress bar. The title bar has the dashboard, a pin to keep it on top of other
-windows (`MiniOnTop`, off by default) and the way back to the full window. It remembers where you put it, and opens
-in mini next time if you left it that way.
+Nothing else to install. A small window opens, and the dashboard opens in your browser at
+`http://127.0.0.1:7242/`.
+
+On Linux or a server, see [Linux and Docker](#linux-and-docker).
+
+## 2. The first-run setup
+
+The first time, the dashboard walks you through a short setup. You can skip it any time, and replay it later from
+the Overview page (**Show the walkthrough again**).
+
+1. **Language.** Pick yours. It changes straight away.
+2. **Quick setup, Full tour or Advanced setup.**
+   - *Quick setup* goes straight to adding your account. About a minute.
+   - *Full tour* explains each feature on the way. A few minutes.
+   - *Advanced setup* is for people who've used ArchiSteamFarm or another idler: add the account, and it opens
+     all of that account's settings with the advanced ones showing.
+3. **What kind of account is it?**
+   - **My main - I play on it.** It's added in human mode, so it acts like a person. You can also tick
+     *I also sign into it from my own Steam app* - then nocat.farm never changes your online status, so it never
+     kicks you off Friends & Chat.
+   - **A spare or farm account.** Robot mode: it farms cards and idles games around the clock, at full speed.
+
+   You can change this later with the **Human mode** switch in the account's settings.
+4. **Add the account.**
+   - Type the **Steam account name** (what you type to sign in to Steam - not your display name or email).
+   - The **password** is optional. Leave it empty and you're asked once when it signs in.
+   - In the full tour and advanced setup you can tick **Sign in with a QR code** instead. You scan a code with the Steam app on your
+     phone, and nothing is typed at all.
+   - **Using ArchiSteamFarm?** If the setup finds it, it lists your ASF accounts instead. Tick the ones you play on
+     yourself (they come across in human mode) and press **Import them**. Close ASF first, so two programs aren't
+     signed in to the same account.
+5. **Sign in.** The Steam Guard code, password or QR code is asked for right there in the setup.
+6. **Pick its games** (optional). A human-mode account shows its most-played games: tap a main game and a few side
+   games. The full tour also asks for its daily routine (hours a day, when it gets on, bedtime). A farm account can
+   pick games to idle and a custom game name. **Skip - use the defaults** is always there.
+
+After the first sign-in, nocat.farm keeps a Steam login token, so it signs itself in from then on. No password is
+stored unless you type one into the settings.
+
+## 3. What it does by itself
+
+With no setup at all, every account:
+
+- **farms its trading cards**, one game after another, and tells you roughly how long is left
+- **idles the games you gave it** once the cards are done (if you gave it any)
+- **stands down when you play.** Start a game yourself on that account and it stops. It carries on a few minutes
+  after you finish.
+- **accepts gifts** - Steam wallet gift cards, guest passes, and games friends gift it
+- **accepts donations** - trade offers where you give nothing away
+- **collects free event items** - the daily sticker during a Steam sale, and anything free in the Points Shop
+- **goes through the discovery queue during Steam sales**, which earns sale items and badge progress
+- **watches for bans** and tells you straight away if one appears
+- **joins the nocat.farm Steam group** (you can change or clear this - see [Steam groups](#steam-groups))
+- **clears Steam's notification counters**
+- **writes a daily summary** in the log at 09:30
+- **checks for updates** every few hours, and tells you. It never installs anything by itself.
+
+These are **off** until you turn them on: human mode (unless you picked "My main"), claiming free games, earning
+achievements, selling cards, crafting badges, fair card swaps, Discord and Telegram, rep4rep and plugins.
+
+## 4. Finding your way around
+
+**The dashboard** is where you do almost everything. Its tabs:
+
+- **Overview** - every account at a glance, today's cards, and history charts.
+- **Accounts** - one card per account: what it's doing, and Start, Pause, Stop, Cards and Settings buttons.
+  **+ Add account** is here.
+- **rep4rep** - only there if you turn rep4rep on. Most people never see it.
+- **Authenticator** - Steam Guard codes and trade confirmations, for accounts with an authenticator.
+- **Log** - what happened, in plain words.
+- **Console** - type commands.
+- **Plugins** - add-ons (off unless you turn them on).
+- **Settings** - every switch. Pick **Global settings** or an account on the left.
+
+**The app window** (Windows) shows the log, a command line, and buttons to start or stop everything, open the
+dashboard and list your accounts. Click **mini** to shrink it to a small panel with one line per account.
+
+**The tray icon** by the clock has a menu: open the dashboard, show or hide the window, mini mode, start or stop
+all accounts, and exit. Closing the window keeps nocat.farm running in the tray.
+
+## 5. Things most people change
+
+All of these are in **Settings** - pick the account on the left. Or type the command shown.
+
+1. **Games to idle** (farm accounts). *What it plays → Games to idle*, or type `play myaccount 730, 440`. These play
+   after the cards are done.
+2. **A custom game name** (farm accounts). *What it plays → Show as*, or `name myaccount nocat.lol`. Your friends see
+   that name instead of the real game, while the real games still count playtime.
+3. **Human mode.** *Human mode → Human mode*. Then set **Games and how often** - for example `730:70, 440:30` means
+   70% Counter-Strike 2, 30% Team Fortress 2 - and the hours it plays and its bedtime.
+4. **Claim free games.** *Free games & badges → Claim free games*. Paid games that Steam gives away free-to-keep
+   are added to the account.
+5. **I sign into this one myself.** *Account → I sign into this one myself*. Turn it on for any account you also
+   use in your own Steam app.
+6. **Notifications on your phone.** *Global settings → Notifications*: paste a Discord webhook, or connect a
+   Telegram bot. See [Discord and Telegram](#discord-and-telegram).
+7. **Start with Windows.** *Global settings → Running in the background → Start with Windows*.
+
+Everyday switches show first. Tick **Show advanced** at the top of Settings for timings, limits and the rest.
+Hover over any setting (or type `help <setting>`) to see what it does.
+
+## 6. Everyday commands
+
+Type these in the app window or the dashboard's Console tab. Use the name you gave the account.
+
+| Command | What it does |
+|---|---|
+| `status` | What every account is doing right now. |
+| `start myaccount` · `stop myaccount` | Sign an account in or out. `all` works too. |
+| `pause myaccount 60` | Stop playing for 60 minutes, then carry on by itself. `resume myaccount` ends it early. |
+| `cards` | Cards left to farm, and about how long it'll take. |
+| `play myaccount 730, 440` | Idle these games. |
+| `name myaccount nocat.lol` | Show this name instead of the real game. `name myaccount off` removes it. |
+| `offers` | Trade offers waiting on your accounts. |
+| `update` | Check for a new version. |
+| `help` | Every command. `help <command>` or `help <setting>` explains one. |
+
+`tutorial` shows a getting-started checklist that ticks off what you've done.
+
+## 7. Updating
+
+**Windows:** when a new version is out, the dashboard shows an **Update** button. Click it (or type
+`update accept`). nocat.farm downloads the new version, signs your accounts out one by one, swaps the files and
+restarts. Your accounts, settings, logs and plugins are kept.
+
+**Linux and Docker:** it tells you when a new version is out, but you update it yourself. See
+[Updating on Linux](#from-the-zip) and [Updating in Docker](#docker).
+
+## 8. If something looks wrong
+
+- **Check the Log tab first.** It says what happened in plain words.
+- **"Steam Guard code needed" / it asks for a password.** Type the answer in the bar at the top of the dashboard,
+  or at the `?` prompt in the app window. `answer <text>` works too.
+- **An account stopped trying to sign in.** After 3 failed sign-ins in a row it stops, to protect your internet
+  connection from Steam's limits. Check the password, then `start myaccount`.
+- **"Rate-limited" or "too many logins".** Steam slows down a PC that asks too much (usually after lots of
+  restarts). It waits it out by itself.
+- **Steam kicks you off Friends & Chat.** Turn on *I sign into this one myself* for that account.
+- **Friends see the real game, not your custom name.** The account card warns "Steam shows …" and nocat.farm puts
+  the name back by itself. On a human-mode account there is no custom name - that's on purpose.
+- **Nothing is farming.** Type `cards myaccount`. If there are no cards left, it idles its games (if any).
+  If it says it's waiting, human mode may have it asleep or on a break - `human myaccount` shows its day.
+- **The settings page looks short.** Tick **Show advanced**.
+- **Still stuck?** Open an [issue](https://github.com/VisaHolder/nocatfarm/issues) and paste the log lines.
+
+---
+
+# Part 2: Advanced
+
+Everything below is optional. Each section starts with who it's for.
+
+## The dashboard and the app window
+
+*For: anyone who wants the details of the interface.*
+
+### Dashboard tabs
+
+The dashboard is at `http://127.0.0.1:7242/`. Its tabs, in order:
+
+- **Overview** - tiles for cards left, games left, cards today and inventory value; an accounts table; **Today**
+  (the last 24 hours per account, with a total for all of them); **History** charts; and recent activity. The
+  **Show the walkthrough again** link is here.
+- **Accounts** - search by name, login, notes or game; filter chips by state; drag cards to change the order (the
+  app window and console use the same order). **Import from ASF** and **+ Add account** are here. Removing an
+  account asks you to type its name first.
+- **rep4rep** - only shown when rep4rep is switched on.
+- **Authenticator** - see [the Authenticator page](#the-authenticator-page).
+- **Log** - live, with search, level chips (Debug is hidden by default), an account filter, Follow and Copy.
+- **Console** - the same commands as the app window, with Tab completion (commands, then account names) and
+  up/down history. A bare `help` opens a searchable command list.
+- **Plugins** - always there; says "off" until plugins are turned on. See [Plugins](#plugins).
+- **Settings** - search, **Show advanced**, **Only changed**, a "default" link to reset any changed field, and a
+  **Save N changes** button. Settings marked ⟳ need a restart.
+
+You can open a tab by address, like `http://127.0.0.1:7242/#settings` (also `#overview`, `#accounts`,
+`#rep4rep`, `#auth`, `#log`, `#console`, `#plugins`).
+
+**Keyboard shortcuts** (not while you're typing in a box):
+
+| Key | Goes to |
+|---|---|
+| `1` | Overview |
+| `2` | Accounts |
+| `3` | rep4rep (Overview when rep4rep is off) |
+| `4` | Log |
+| `5` | Console |
+| `6` | Settings |
+| `` ` `` | Console |
+| `Esc` | Closes a dialog |
+
+Authenticator and Plugins have no number key.
+
+### The app window (Windows)
+
+- **Title bar:** *mini*, *hide*, *quit*.
+- **Toolbar:** *start all*, *stop all*, *dashboard*, *accounts*, *commands*, and how many accounts are signed in.
+- **Accounts panel:** each account with start/stop, pause/resume, cards and profile, plus *+ add account*.
+- **Command line:** type a command and press Enter. `help` opens the command list.
+
+Closing the window (or *hide*) sends it to the tray when there's a tray icon; without one, closing quits. The
+window remembers its size and position.
+
+### Mini mode
+
+Click *mini* (or type `mini`, or use the tray menu). The window shrinks to a small panel: one line per account with
+what it's doing and a start/stop button. A farming account also shows cards left, time left and a progress bar.
+
+The title bar has a **pin** to keep it above other windows (the *Keep mini mode on top* setting, off by default),
+a button for the dashboard, and one back to the full window. It remembers where you put it, and opens in mini mode
+next time if you left it that way.
 
 <p align="center">
   <img src="../assets/mini-mode.png" alt="Mini mode" width="680">
 </p>
 
-<p align="center">
-  <img src="../assets/console.png" alt="The console — every action is also a command" width="880">
-</p>
+### Tray
 
-**Tray** — right-click (or left-click) for Open dashboard · Hide/Show the window · Mini mode · Start all / Stop all accounts ·
-Exit. The window's *hide* button, or closing it while the tray icon is there, sends it to the tray; in `--no-gui`
-mode, minimising the console hides it (`MinimizeToTray`, on by default). `--minimized` boots straight to the tray
-with no window at all, and *Start with Windows* wires that up for you.
+Left- or right-click the icon for the menu: **Open dashboard · Hide/Show the window · Mini mode/Full window ·
+Start all accounts · Stop all accounts · Exit nocatFarm**. Double-click shows the window.
 
-**Dashboard** — `http://127.0.0.1:7242/`. Overview · Accounts · Log · Console · Plugins · Settings, plus a rep4rep
-tab once you switch rep4rep on (`set Rep4RepEnabled true`, off by default). The Plugins tab is always there and
-says "off" until you turn plugins on (`PluginsEnabled`, off by default). Keys `1`–`6` jump between tabs, `` ` ``
-jumps to Console and Escape closes dialogs; `#settings` and the like open a tab by URL.
+*Start hidden* (setting) or `--minimized` starts straight to the tray. *Start with Windows* adds a start-up entry
+for your Windows user.
 
-- **Accounts** — search by name, login, notes or game, click the status chips to filter, and drag cards into the
-  order the app window and console board use too. Add accounts here (a welcome screen offers it when there are
-  none); removing one asks you to type its name first.
-- **Log** — live, with highlighted search, level chips (Debug hidden by default), a per-account filter, Follow and Copy.
-- **Console** — the same commands with tab completion and up-arrow history saved in the browser. `help <setting>`
-  (or `? <setting>`) explains a setting; `help <word>` that matches commands opens the filtered reference.
-- **Overview** — replays the first-run walkthrough whenever you want it. Under the Today table, **History** charts
-  cards per day, hours banked (per day and per game), inventory value and rep4rep comments (when it's on) over 7, 30
-  or 90 days, for the whole fleet or one account, with this week against last in words. Daily totals are kept for
-  about 400 days in `config/state/history/` (one file per month); on its first start it fills in what the last 90
-  days of card and comment records and the last month of inventory values still know.
+### Console mode
 
-To use it from a phone or another PC, set `WebHost` to `0.0.0.0` and a `WebPassword`; the layout works on a
-phone. Without a password it still refuses anything but this PC. Five wrong passwords lock an IP out for 60
-minutes, a browser stays signed in for `WebSessionDays` (default 7), and a banner warns if the password is short
-enough to guess. Turn the dashboard off with `set WebEnabled false` and restart, and nothing is lost.
+`--no-gui` (or `--console`) runs without the window: a live board with a row per account and the last log lines
+under it. Up/down arrows go through your last commands, and Esc clears the line. On Linux this is what you get.
 
-<p align="center">
-  <img src="../assets/dashboard.png" alt="The web dashboard — overview" width="880">
-</p>
+### Using the dashboard from another device
 
----
-
-## Getting started
-
-Type `tutorial`. It walks the six steps in order and ticks off the ones this machine has already done, so the
-next thing to do is always the first unticked line. `tutorial cards`, `tutorial human`, `tutorial free`, `tutorial rep4rep`,
-`tutorial trades`, `tutorial achievements` and `tutorial tray` go deeper on one thing each.
-
-The dashboard has its own first-run setup, and it adds your first account at the end:
-
-1. **Language** — before anything else is said.
-2. **Quick setup or Full tour** — quick goes straight to the account; the full tour explains playing, free
-   stuff, rep4rep and where the fine-tuning lives (*Show advanced*) on the way.
-3. **What kind of account is it?** — *My main, I play on it* adds it in human mode (and, if you tick it, with
-   *I sign into this one myself*); *A spare or farm account* keeps the full-speed defaults.
-4. **Add it, or import from ArchiSteamFarm** — when an ASF install is found, every bot is listed with a tick
-   box: the ones you tick come across in human mode, the rest as farm accounts.
-5. **Sign in, right there** — the password, Steam Guard code or QR code are asked inside the setup window, not
-   in a bar behind it. Only the Steam account name is needed; the nickname is optional.
-6. **Set it up from its own games** — once it's signed in, a human-mode account's most-played games are shown to
-   tap: its main game, a few side games, and a slider for how much of its time the main game gets. The full tour
-   adds its daily routine (hours on a weekday and at the weekend, when it gets on, bedtime, chance of a day off)
-   with a live one-line preview, or for a farm account which games to idle and an optional custom game name.
-   *Skip - use the defaults* is always there. The last screen says what it's going to do now.
-
-The Accounts page's own *+ add account* has the same *Human mode* tick. The setup shows once, on a machine with no
-accounts; replay it from the Overview page.
-
-The short version:
+By default the dashboard only answers this PC. To use it from your phone or another PC:
 
 ```
-add myaccount steamlogin      # starts signing in straight away
-play myaccount 730, 440       # idle CS2 and TF2
-name myaccount nocat.lol      # show this instead of the real game
+set WebPassword something-long-and-your-own
+set WebHost 0.0.0.0
 ```
 
-Card farming is already on, and cards come first: it works through everything with cards left, then falls back
-to idling that list. `cards myaccount` shows what's outstanding.
+Then restart. Without a password it still refuses everything that isn't this PC. Five wrong passwords lock an
+address out for 60 minutes. A browser stays signed in for 7 days (*Stay signed in for*). A banner warns you if the
+password is short enough to guess. The layout works on a phone.
 
-The password is asked for **once per account**, then a Steam Guard code (approving the sign-in in the Steam
-mobile app works too). Or skip the password entirely: tick *Sign in with a QR code* when adding the account (or
-`add <name> qr`), and scan the code the dashboard shows with the Steam app — the account name comes from Steam, so
-nothing is typed at all (`SignInWithQr`). The question shows up as a bar at the top of the dashboard and as a `?` prompt in the app
-window — just type the answer; `answer <text>` does the same from anywhere. After that a Steam refresh token in
-`config/tokens/` does the logging in — restarts are silent, no Guard code, no password. You never have to store a
-password in a file. If a token is revoked (a password change, or "sign out everywhere") it is thrown away and the
-password is asked for again, and after 3 failed sign-ins in a row an account stops trying, rather than risk the IP.
-Steam's weekly Tuesday maintenance is recognised and waited out quietly.
+To turn the dashboard off completely: `set WebEnabled false` and restart. Everything keeps working from the
+console.
 
-Drop an account's `maFile` into `config/authenticators/`, named `<name>.maFile` after the name you gave it in
-`add`, and it answers its own Steam Guard prompts. Or paste its secrets into the account's settings instead
-(`SharedSecret` for Guard codes, `IdentitySecret` for trade confirmations — stored encrypted, and used ahead of a
-maFile). With the identity secret, the offers it sends (`send`, `transfer`, `match`, fair swaps) confirm
-themselves; without it, you confirm them on your phone.
+<p align="center">
+  <img src="../assets/overview.png" alt="The web dashboard" width="880">
+</p>
 
-Signing in on an account you also play on yourself? Turn on *I sign into this one myself* (`IUseThisAccount`).
-It then never imposes Away, Snooze or Invisible and never re-sends its status while you're on, so your own
-client keeps Friends & Chat.
+## Accounts and signing in
 
-**Coming from ArchiSteamFarm?** `import asf` brings every bot across *with its login token* — no passwords, no
-Guard codes — plus its games, custom name, farming order, priority queue, blacklist and rep4rep settings. With no
-path it looks in the usual ASF folders, and the dashboard offers the same import from a dialog (and a banner on
-the welcome screen when it finds one). ASF's `FarmingPreferences`, `BotBehaviour`, `TradingPreferences` and
-`SteamUserPermissions` are unpacked into the individual settings here, and `SendTradePeriod`, `AcceptGifts` and
-the BoosterCreator plugin's `GamesToBooster` come across as their equivalents; HumanIdler plugin settings carry
-over too. An authenticator comes across when ASF's folder still holds the bot's `<bot>.maFile`; one ASF has
-already folded into its database needs its maFile dropped in by hand. Imported accounts are added but not
-started.
+*For: adding accounts by command, authenticators, and moving from ArchiSteamFarm.*
+
+```
+add myaccount mysteamlogin     # add an account and start signing in
+add farm1 qr                   # sign in by scanning a QR code with the Steam app
+```
+
+- **Password.** Asked for once. Then a Steam Guard code (approving the sign-in in the Steam app works too). After
+  that a login token in `config/tokens/` signs it in - restarts need no password and no code.
+- **QR code.** `add <name> qr`, or tick *Sign in with a QR code*. Scan the code on the dashboard with the Steam
+  app. The account name comes from Steam.
+- **Answering prompts.** Questions show as a bar at the top of the dashboard and a `?` prompt in the app window.
+  `answer <text>` answers from anywhere.
+- **If the token stops working** (you changed the password, or signed out everywhere), it's thrown away and the
+  password is asked for again.
+- **3 failed sign-ins in a row** and the account stops trying, rather than risk Steam blocking your IP.
+- **Steam's weekly maintenance** (Tuesdays) is recognised and waited out.
+
+**Authenticator.** Put an account's maFile in `config/authenticators/`, named after the account's name in
+nocat.farm - `config/authenticators/myaccount.maFile`. Then it enters its own Steam Guard codes and can confirm
+trades. Or paste the two secrets into the account's settings (*Authenticator code secret* and *Authenticator confirm
+secret*, under Show advanced). They're stored encrypted. nocat.farm does not create or move authenticators.
+
+**I sign into this one myself** (`IUseThisAccount`). For an account you also use in your own Steam app. It then
+never changes the online status, so your own app keeps Friends & Chat.
+
+**Enable, disable, remove.** `disable myaccount` keeps the settings but never signs in; `enable myaccount` undoes
+it. `remove myaccount` deletes the account and its login token.
+
+**Coming from ArchiSteamFarm.** `import asf` (or **Import from ASF** on the Accounts page) looks for an ASF install
+nearby, or give it ASF's config folder: `import asf C:\ASF\config`. Each bot comes across with its login token (no passwords, no Guard
+codes), its games, custom name, farming order, priority list, blacklist, trade and gift settings, booster games and
+rep4rep settings. A bot's maFile is copied if it's still in ASF's `config` folder. Imported accounts are added but
+not started. Close ASF before starting them. Add `force` to overwrite accounts that already exist here.
+
+## Card farming
+
+*For: controlling which cards farm and when.*
+
+On by default (*Farm trading cards*). It reads the account's badge pages, then:
+
+1. Games that need more playtime before cards drop are played together, up to 32 at once (31 with a custom game
+   name).
+2. Then each game is played on its own until its cards stop dropping.
+3. When no cards are left, it idles its games, or signs out if *Log out when finished* is on.
+
+Drops are noticed the moment Steam announces them. `cards myaccount` shows what's left per game and about how long
+it will take - Steam's usual 30 minutes a card at first, then the account's own pace.
+
+Turn it off for one account: *Farm trading cards*, or `set myaccount FarmCards false`.
+
+**Useful settings** (most under Show advanced): *Farm in this order*, *Farm these first*, *Only farm those*,
+*Never touch these*, *Skip games you've never played*, *Hours before cards drop* (set 0 if the account has spent over
+$5 on Steam), *Give up after* (8 hours per game), *Farm cards only from … until* (a clock window), *Farm while
+appearing offline*, *Log out when finished*, and *Farm in sittings, not flat out* with *Hours a day to farm*.
+
+**Farming on a human-mode account.** *When to farm cards* decides:
+
+| Choice | What happens |
+|---|---|
+| **day, in its sittings** (default) | Cards farm in its normal sittings, with breaks, meals and bedtime. |
+| **night, while it's asleep** | Cards farm only while it's asleep and invisible. By day it plays its usual games. |
+| **any time** | Non-stop until the cards are done. |
+| **mixed** | Some sittings farm cards (*Share of sittings that farm cards*, 40%), the rest play its usual games. |
+
+After a game's last card it keeps playing it for 15-20 minutes before a break (*After the last card, keep
+playing*).
+
+**The `drops` command - you pick the game:**
+
+```
+drops myaccount 460920 2    # get 2 cards from game 460920 first
+drops myaccount             # the next game with cards
+drops myaccount off         # stop early
+```
+
+On a human-mode account the game plays in its normal sittings until those cards drop. On other accounts it plays
+non-stop, and gives up if drops stop coming.
+
+**Refund protection** (off by default, *Protect refundable games*). Games bought in the last 14 days with under
+2 hours played are left alone by everything - farming, idling, grinds and the hunter - so you can still refund
+them. Gifted games count too (*...gifted games too*, on).
+
+## Idling and a custom game name
+
+*For: farm accounts. Not available on human-mode accounts.*
+
+- **Games to idle** (`play myaccount 730, 440`, or `play myaccount none`) - up to 32 games, played for playtime once
+  the cards are done. You can paste store links.
+- **Show as** (`name myaccount nocat.lol`) - friends see this name instead of the real game, while the real games
+  still count playtime. `name myaccount off` removes it. *Keep the name while farming* (on) keeps it during card
+  farming too.
+- If Steam starts showing the real game instead, the account card warns "Steam shows …" and the name is put back.
+- **Play as if on** - the device badge friends see: PC, phone, Big Picture, VR or controller.
+- **Appear as** (`persona myaccount invisible`) - online, offline, busy, away, snooze, looking to trade, looking to
+  play or invisible. Invisible still plays and farms.
+
+Human mode hides the idle list and the custom game name, because an account showing a made-up game or playing 30
+games at once doesn't look like a person. The idle list is set aside and put back exactly as it was if you turn
+human mode off.
 
 ## Human mode
 
-The part that separates this from an idler. Turn it on per account (`LegitMode`, off by default) and it plays like
-a person instead of a bot:
+*For: accounts you want to look like a real player - usually your main.*
 
-* weekdays and weekends have different shapes, and roughly one day in twenty it doesn't play at all
-* one game at a time, in sittings of believable length, with a main game that takes most of the week (the one
-  exception: the card farmer building playtime on games too new to drop runs them together)
-* other games arrive in **bursts** rather than the same slice every single day — an even daily drip is the
-  loudest pattern a farming account leaves
-* short breaks, proper meal breaks around real meal times, and some of those spent appearing offline
-* a settling-in gap after signing in, because nobody launches a game the second Steam opens. Underneath it is a
-  hard safety gate no setting shortens: no game starts until at least 3 minutes after sign-in and several clear
-  checks that you aren't playing on the account yourself — Steam takes a couple of minutes to report that — and
-  the same checks run again after every reconnect
-* offline overnight. It banks hours invisibly while it sleeps only if you list games under *Games to idle
-  overnight* (`OfflineIdleGames`, empty by default)
-* **cards come first, inside its day** — while cards are left, the card game is what it plays in its sittings,
-  with the same warm-up, breaks, meals and bedtime, one game at a time; nights stay for the overnight games, and
-  once the cards are done the day goes back to its usual games. When a game gives its last card it keeps playing
-  it for another 15-20 minutes, then takes a break, and the next card game starts after that (*After the last
-  card, keep playing* - `PostFarmWindDownMin`/`MaxMinutes`). A `drops` run at night stays invisible. *When to farm cards* (`FarmCardsWhen`) changes
-  that: *only at night* holds cards until it's asleep and invisible and plays the usual games by day; *any time*
-  farms the moment there are cards, day and night, straight through; *mixed* farms in only some of its sittings
-  (`CardSittingsPct`, 40% by default) and plays its usual games in the rest, so cards drop in between them
+Turn it on per account: *Human mode*, or `set myaccount LegitMode true`. Then the account:
 
-> **Mixed mode vs `drops`, in one line each**
->
-> * **Mixed mode is automatic.** nocat.farm picks the card games and mixes a few card sittings into the normal
->   day. You do nothing; cards trickle in over days.
-> * **`drops` is you picking.** `drops new 460920 2` means "2 cards from Steep, first". On a human-mode account
->   Steep then plays in the normal sittings - the main game's share of them, with breaks, meals and bedtime -
->   until the 2 cards are in, then it's back to the usual mix. On a robot account it plays non-stop until then.
->   `drops new off` stops it early.
-* **grind fits it too** — `grind` on a legit account eases in (it keeps its current game for a minute or three
-  before switching) and earns achievements at that account's normal pace when `UnlockAchievements` is on; on a
-  boost account it just starts instantly
-* **it answers like a person** — trade offers, gifts and friend requests each wait their own time before
-  they're answered (`TradeDelay…`, `GiftDelay…` and `FriendRequestDelay…` — `Min`/`MaxMinutes` pairs). The wait
-  mostly lands nearer the short end and now and then much later, never the flat, even spread a plain random pick
-  gives. While the account sleeps they wait for morning, and each gets a fresh wait once it's up, so nothing
-  fires the minute it wakes. Turn off *Only react while awake* (`ActOnlyWhileAwake`) and it answers at night
-  too, after the same waits
-* **only what people can see is held for its day** — trades, gifts, friend and group invites, replies,
-  rep4rep comments and achievement unlocks wait until it's awake and settled in. Things nobody sees — crafting
-  badges, free games, booster packs, event items, the discovery queue, selling cards, sends between your own
-  accounts, joining the nocat.farm group, reading notifications — happen at any hour, just not the moment it
-  signs in, each after its own random wait
-* **every wait is a setting** (all under *Show advanced*, human-mode accounts only): *After waking, wait at
-  least … up to* (`WakeDelayMin`/`MaxMinutes`, 10-90) for things people see; *After signing in, behind-the-scenes
-  things wait at least … up to* (`QuietDelayMin`/`MaxMinutes`, 5-60); *Behind-the-scenes things wait for its day
-  too* (`QuietThingsWaitForDay`, off) to hold those for its waking day as well; *On a break, go Away after at
-  least … up to* (`BreakAwayAfterMin`/`MaxMinutes`, 2-10); and *Answer one trade offer at a time*
-  (`OneTradeAtATime`, on) so a morning's worth of offers is answered a few minutes apart, not all at once
-* stopping it doesn't blink the account out mid-game — it finishes up for a few seconds, then logs off
+- plays **one game at a time**, in sittings of believable length, with a main game and a few side games
+- has **different weekdays and weekends**, and now and then a **day off**
+- takes **short breaks and meal breaks**, sometimes showing Away or offline
+- **settles in** after signing in before starting a game. No game starts until at least 3 minutes after sign-in and
+  several checks that you aren't playing on the account yourself - no setting shortens that.
+- **goes to bed** at night, and can bank hours invisibly overnight (*Bank hours overnight* with *Games to idle
+  overnight*)
+- **answers like a person** - trades, gifts and friend requests each wait their own time, and while it sleeps they
+  wait for morning (*Only react while awake*, on)
+- does behind-the-scenes things (badges, free games, booster packs, selling) at any hour, but not the moment it
+  signs in
+- when you stop it, **finishes up for a few seconds** instead of vanishing mid-game
+
+**What it switches off on that account:** games to idle, the custom game name, keep-name-while-farming, farm in
+sittings, hours a day to farm, farm while appearing offline, and log out when finished. They're hidden while human
+mode is on and come back when you turn it off.
+
+**Setting it up.** The main settings are in front; the fine detail is behind Show advanced.
 
 ```
-set myaccount LegitMode true
-set myaccount GameWeights "730:70, 440:20, 550:10"    # first game is the main one
-human myaccount week                                   # a freshly simulated sample week
-human myaccount reroll                                 # apply changed hours/weights to TODAY
+set myaccount GameWeights "730:70, 440:20, 550:10"   # games and their share - the first is the main game
+set myaccount WeekdayHours 6                         # about 6 hours Monday to Friday
+set myaccount WeekendHours 9
+set myaccount DayStartHour 13                        # gets on around 1pm
+set myaccount BedHour 2                              # goes to bed around 2am
 ```
 
-The first game's number is today's target share for the main game, rolled within about ten points of it each
-morning. The side games share a time budget built from what's left, so the main game ends up at its number or a
-little above it. That describes a **mixed** day, though, and `PureMainDayChancePct` (25 by default) is the share of
-days that go on the main game alone — such a day can still open with one short sitting on something else. So each
-side game is worth roughly its number times the days that aren't main-only: 20% written is about 15% of a real
-week. Both the dashboard and `human` print the weekly figure next to the one you set, so you never have to work
-that out.
+Some days go on the main game alone (*Days on the main game only*, 25%), so side games show up in bursts. That
+lowers their weekly share - the dashboard and `human` show the real weekly figure next to the one you set.
 
-A day is rolled once, at wake time, and then persisted so restarts don't hand out a fresh target every time —
-which means changing the hours or the main game's share does nothing visible until tomorrow (the game list and
-the side games' weights apply from the next sitting). `human <account> reroll` throws today's plan away and rolls
-a new one from the settings as they stand.
+**Checking on it.**
 
-**Hour targets** (`HourTargets`) get a game to a number of hours, optionally by a date, inside that ordinary
-day — no booster running one game flat out. `730:100@2026-12-01, 440:50` means Counter-Strike 2 to 100 hours by
-the end of the 1st of December, TF2 to 50 whenever. Cards still come first; after that each sitting may go to a
-target game, harder the further behind schedule a dated target is (never every sitting). A dated target that day
-play alone can't finish also joins the overnight games, but only if `OfflineIdleAtNight` is already on. Reaching
-a target is logged once and the game stops being favoured. `hours <account>` shows each one: hours so far, what's
-left, and the daily pace a date needs.
+```
+human myaccount          # what it's doing today and what it played
+human myaccount week     # a sample of the next seven days
+human myaccount reroll   # throw today's plan away and roll a new one from the current settings
+wake myaccount           # wake it up and start its day now (bedtime stays the same)
+```
 
-While it's on, the settings that would give an account away are hidden: the idle-games list is set aside (and put
-back exactly as it was if you turn human mode off), and farming while appearing offline is ignored.
+A day is planned once, when it wakes, so changes to its hours or main game show from tomorrow - or straight away
+with `reroll`.
+
+**Hour targets** (*Hour targets*, Show advanced). Get a game to a number of hours, optionally by a date:
+`730:100@2026-12-01, 440:50` means Counter-Strike 2 to 100 hours by 1 December, TF2 to 50 whenever. Cards still
+come first; after that sittings lean toward games that are behind. `hours myaccount` shows progress and the daily
+pace a date needs.
+
+**selfcheck.** `selfcheck myaccount` gives a human-mode account a score out of 100 for how real it looks from
+outside - hours on the profile, games at once, a made-up game name, no daily rhythm, rep4rep comments - and names
+the setting that fixes each problem. Without a name it checks every human-mode account.
+
+**grind overrides it.** `grind myaccount 730 3` puts the account on one game for 3 hours, then back to normal. On a
+human-mode account it eases in. With *Earn achievements over time* on, a grind earns achievements at the grind
+spacing (*While grinding, one achievement every*, 12-24 minutes).
+
+**Every wait is a setting** (Show advanced, human-mode accounts): *After waking, wait at least … up to* (10-90
+minutes) for things people can see; *After signing in, behind-the-scenes things wait at least … up to* (5-60);
+*Behind-the-scenes things wait for its day too* (off); *On a break, go Away after at least … up to* (2-10);
+*Answer one trade offer at a time* (on).
+
+## Staying out of your way
+
+*For: accounts you also play on.*
+
+- **Stand down when you play** (on). Start a game on the account yourself and nocat.farm stops playing on it.
+- **Wait before resuming** (5 minutes). How long after you stop before it carries on. A human-mode account waits a
+  random time, up to three times this.
+- **I sign into this one myself** (off). Never changes the online status, so your own Steam app keeps Friends & Chat.
+- **Clear Steam's notifications** (on) marks the notification tray read on every sign-in, and *Clear the new-items
+  badge* (on) clears the green counter after each drop. Turn these off if you also use the account and want to see
+  them.
+
+## Free stuff
+
+*For: collecting everything Steam gives away.*
+
+| What | Setting | Default |
+|---|---|---|
+| Wallet gift cards and guest passes | *Accept gifts and guest passes* | on |
+| Games friends gift the account | *Accept gifted games* | on |
+| Daily sale sticker, 0-point Points Shop items | *Claim free event items* | on |
+| Discovery queue (earns sale items) | *Go through the discovery queue*: off / during sales / every day | during sales |
+| Paid games given away free-to-keep | *Claim free games* | off |
+| Paid DLC marked down to free | *...free DLC too* | off |
+| The DLC's game, if that's free too | *...and its game, if that's free too* | on |
+
+- **Gifts** wait 2-15 minutes first (*Accept a gift after*). A gift is never declined. Turn *Accept gifted games*
+  off to decide each gifted game yourself.
+- **Free games** are found from Steam itself: the store's list of games at 100% off, and Steam's change feed. Only
+  released, paid games showing 100% off are claimed - never free-to-play games, demos or "free editions".
+  Steam allows about 30 activations per 90 minutes, so it stops at 20 to leave room for you.
+- **Free DLC** needs the game. If the game is missing but free right now, it claims the game first, then the DLC.
+- Commands: `freeitems [account|all]` looks for event items now; `queue [account|all]` does the discovery queue
+  now.
+
+## Trades
+
+*For: moving items between your accounts and answering offers.*
+
+**What happens by itself:**
+
+- **Donations** - offers where the account gives nothing - are accepted (*Accept donations*, on).
+- **Your own accounts** can trade with it by themselves, if you set that up (below).
+- **Fair card swaps** are accepted only if you turn them on (*Accept fair card swaps*, off).
+- **Everything else waits for you.** With *Decline everything else* (off) it's declined instead.
+
+Each offer waits 2-15 minutes before it's answered (*Wait at least / And at most*). No Steam Web API key is needed.
+
+**Trade alerts.** Every new offer is announced once - in the log, as a pop-up (*Pop up for trade offers*) and on
+Discord/Telegram - with a short number:
+
+```
+new trade offer 4 from SomeGuy: you get 1 item(s): ..., you give 3 item(s): ... - waiting for you - trade accept myaccount 4 or trade decline myaccount 4
+```
+
+Accepted, declined, needs-confirming and gone (cancelled, answered elsewhere or expired) are announced too.
+
+```
+offers myaccount                  # every live offer, with the same numbers
+trade accept myaccount 4          # accept offer 4
+trade decline myaccount 4         # decline it (or: all)
+trade cancel myaccount <offer id> # take back an offer this account sent that hasn't gone through (or: all)
+```
+
+Accepting one that sends items out also confirms it, when the account's authenticator is in nocat.farm.
+
+**Trade by itself with** (`AutoTradeWith`). Which accounts it trades with without asking you, and which way. Account
+names or SteamID64s, separated by commas:
+
+- `farm1` or `farm1:both` - both ways (the default)
+- `farm1:from` - only accept what farm1 sends
+- `farm1:to` - let farm1 take items
+
+Example: `farm1, alt:to`. Left empty, it means the accounts in *Your own accounts*, both ways, when *Accept anything
+from your own accounts* is on.
+
+**Sending items.**
+
+```
+send farm1                       # farm1's items to the first account in "Your own accounts"
+send farm1 to myaccount          # farm1's trading cards to myaccount
+send all to myaccount cards foils
+```
+
+Types: `cards`, `foils`, `backgrounds`, `emoticons`, `boosters`, `gems`, `all`. Without types, `send` uses the
+account's *What to send* setting (trading cards by default), and `send … to` sends trading cards. `all` means
+everything tradable, including game items like CS2 skins. Types you type in the command are sent as asked; the
+automatic sends below always use *What to send*.
+
+- *Send items every* (0 = off) sends on a timer. *Send items when farming finishes* sends once when the cards run
+  out.
+- Between accounts that aren't Steam friends, Steam needs the other account's trade link token. It's read by itself
+  when that account is signed in here; otherwise set *Their trade link token*.
+- Offers the account sends confirm themselves when its authenticator is here. Otherwise confirm them in the Steam
+  app.
+
+**Matching cards between your accounts.** `match` shows swaps of spare cards between your own accounts that help
+both finish sets. `match do` sends them, and the other account accepts them by itself.
+
+**Fair card swaps** (*Accept fair card swaps*, off). One-for-one card swaps from anyone, like the ones card-swapping
+sites send. Accepted only when every item is an ordinary trading card from the same game, one for one, and the swap
+never sets your sets back: every card given away must still have more copies afterwards than any card coming in had
+before. Swaps that would sit in a trade hold are left alone. A swap with someone else is accepted, but its
+confirmation waits for you in the Steam app (or the Authenticator page). Swaps between accounts in your nocat.farm
+(the ones `match` sends) are always judged this way and accepted by themselves, even with the setting off.
+`fairswap myaccount <offer id>` tells you whether an offer passes, and why not - it never accepts or declines.
+
+**Banned games.** Items from games the account is banned in can't be traded. Ban watch adds those games to
+*...but not these games* by itself; you can add them too.
+
+## The Authenticator page
+
+*For: accounts whose maFile is in `config/authenticators`, or whose secrets are in their settings.*
+
+The dashboard's **Authenticator** tab shows, per account:
+
+- the **Steam Guard code**, with a ring counting down its 30 seconds, and a Copy button
+- **confirmations** waiting - trades (with the items on both sides), market listings, account changes - each with
+  **Confirm** and **Deny**. *Select all* then *Confirm* or *Deny* does several at once. It refreshes every 30 seconds.
+
+The same from the console or Telegram:
+
+```
+2fa myaccount           # its Steam Guard code (2fa alone lists every account's)
+confirmations myaccount # what's waiting, numbered
+confirm myaccount 2     # confirm number 2 (or: all)
+deny myaccount 1        # deny number 1
+```
+
+An account with no authenticator here shows a note saying where to put its maFile.
+
+## Ban watch
+
+*For: everyone - it's on by default.*
+
+*Watch for bans* (on) checks each account's bans every few hours - VAC, game bans, trade ban, community ban - and
+tells you straight away when a new one appears: a log line, a pop-up and Discord/Telegram. It only looks; it never
+changes anything. Games the account is banned in are left out of trades by themselves. `bans [account|all]` checks
+now.
+
+## Inventory value
+
+*For: seeing what your items are worth.*
+
+```
+value                    # every account, by game, and the change in the last 24 hours
+value myaccount refresh  # read that account's inventory again
+```
+
+Priced at the Steam market's median, in *Inventory prices in* (US dollar by default - match it to your Steam store).
+Inventories are re-read every 6 hours; prices are looked up slowly so Steam doesn't refuse, so the first valuation of
+a big inventory can take hours. Turn *Work out what its inventory is worth* off on accounts that only hold a few
+cards. Games listed in *...but not these games* are left out.
+
+## History charts
+
+*For: seeing how things went over time.*
+
+On the Overview page, under Today: **Cards dropped**, **Hours banked**, **Hours by game**, **Inventory value**, and
+**rep4rep comments** (when rep4rep is on). Pick 7, 30 or 90 days, and all accounts (*Whole fleet*) or one. A line
+compares this week with last week. Daily totals are kept for about 400 days in `config/state/history/`.
+
+## Achievements and the hunter
+
+*For: earning achievements slowly and believably.*
+
+```
+cheevo myaccount 440                  # its achievements, easiest first, with how rare each is
+cheevo myaccount 440 unlock all       # all the ones that can be set, now
+cheevo myaccount 440 unlock ACH_NAME  # just one
+cheevo myaccount 440 lock ACH_NAME    # put one back
+```
+
+Unlocking a whole list at once shows on the profile forever, with one timestamp. **Earn achievements over time**
+(`UnlockAchievements`, off) is the gentle way: easiest first, only in a game the account is actually playing,
+roughly one per hour of play. It never finishes more than 90% of a game (*Finish no more than*), rare achievements
+only open up as playtime builds, and milestones wait for the achievements they depend on. *How fast* makes the gaps
+longer or shorter. *Never in these games* keeps it out of games you pick.
+
+Some games' achievements are set by Steam's servers, not the client (Counter-Strike 2 is one) - nothing can unlock
+those, and the log says so.
+
+**The hunter** (*Achievement boost*, off) picks games to play so there's something to earn. It needs *Earn
+achievements over time* on too.
+
+- *games you pick* - works through *Boost these games*
+- *all single-player* - finds single-player games with achievements in the library (never DLC, demos or games with
+  few reviews)
+
+One game at a time, about 2 hours each (*Play each for about*). On a human-mode account it only takes some sittings,
+with normal play in between. `hunt myaccount` shows what it would play next and why other games were ruled out.
+
+**Steam Families** (*Include family-shared games*, off) lets the hunter use games shared with the account, and
+hands a game back when someone in the family starts it (*Give a shared game back when they want it*, on).
+
+## Booster packs, badges, selling and level-up
+
+*For: turning cards and gems into levels or money.*
+
+- **Booster packs.** List games in *Make booster packs for*, and each gets a pack a day as Steam allows, using
+  tradable gems first. `booster myaccount` shows gems and which games can be made now; `booster myaccount 730, 440`
+  makes those packs now. *Open booster packs* (off) opens packs that land in the inventory.
+- **Badges.** *Craft badges from card sets* (off) turns full sets into badges once a day. That's what raises your
+  Steam level.
+- **Selling.** `sell myaccount` shows which spare cards it would list and what you'd get after Steam's fees.
+  `sell myaccount do` lists them (5 by default); `sell myaccount relist` takes down week-old listings the market has
+  gone under. *Sell duplicate cards* (off) does it by itself every 8-14 hours. It keeps what you need for badges and
+  never sells foils. Listings need confirming in the Steam app, unless the authenticator is here.
+- **Level-up planning.** `levelup myaccount 50` says what reaching level 50 would cost: badges it can craft now, sets
+  it has nearly finished, and the cheapest full sets on the market for the rest. Prices are looked up in the
+  background - wait for "level plan … is ready" in the log, then run it again.
+- `level`, `balance` and `points` show each account's Steam level, wallet and Points Shop points.
+
+## Product keys
+
+*For: activating Steam keys.*
+
+```
+redeem AAAAA-BBBBB-CCCCC            # tries each account until one can use it
+redeem myaccount AAAAA-BBBBB-CCCCC  # only myaccount
+redeem keys.txt                     # a text file full of keys
+keys                                # keys still waiting
+```
+
+More than five keys queue up and activate slowly, because Steam limits activations. Keys given to a named account
+only ever go to that account, queued ones too. `keys clear` empties the queue.
+
+## Steam groups
+
+*For: getting all your accounts into a group - or keeping them out.*
+
+- **Groups every account joins** (*Global settings → All accounts*). It starts with the nocat.farm group. Paste group
+  links or short names, separated by commas. **Clear the box to stop joining it.**
+- **Join the shared groups** (per account, Show advanced, on). Turn it off to keep one account out.
+- **Also join these groups** (per account) - groups only that account joins.
+- **Accept group invites** (off) - join groups the account is invited to.
+
+Each account joins at its own random time, minutes apart. Only open groups work; ones that need approval or an
+invite are skipped, and the log says why. `joingroup <account|all> <link>` joins one now.
+
+## Discord and Telegram
+
+*For: notifications on your phone and control from anywhere.*
+
+Set up under **Settings → Global settings → Notifications**. The dashboard has step-by-step guides for both.
+
+In the log, lines from Telegram and Discord are marked `telegram` and `discord`. Their colours are under the
+same section with **Show advanced** ticked (*Telegram's colour in the log*, *Discord's colour in the log*), from the
+same palette as each account's *Colour in the log*.
+
+**Discord** (notifications only):
+
+1. In Discord: Server Settings → Integrations → Webhooks → New Webhook → Copy Webhook URL.
+2. Paste it into **Discord webhook** and save.
+
+**Telegram** (notifications and commands):
+
+1. In Telegram, message **@BotFather**, send `/newbot`, and copy the token it gives you.
+2. Paste it into **Telegram bot token** and press **Save**.
+3. Press **Connect Telegram**. It opens your bot with a private link - press **Start** there. The dashboard then says
+   "Telegram is connected."
+
+Only your own connected chat is listened to. Type `notify test` (or press *Send a test message*) to check both.
+`notify` shows what's set up and what gets sent.
+
+**What gets sent** - nine switches (Show advanced):
+
+| Switch | Default |
+|---|---|
+| Send card drops and badges | on |
+| Send free games, items and gifts | on |
+| Send trades | on |
+| Send problems that need you | on |
+| Send updates | on |
+| Send the daily summary | on |
+| Send profile comments | off |
+| Send achievements | off |
+| Send rep4rep comments | off |
+
+**Telegram commands** (*Take commands from Telegram*, on):
+
+- `/status` - a summary of every account, the last 24 hours, and the version
+- `/help` - the command list
+- `/console` - console mode: type commands without the `/`. Send `/console` again to leave.
+- Any other command with `/` in front, like `/cards`, `/offers`, `/trade accept myaccount 4`, `/2fa myaccount`.
+- `/remove <account>` and `/exit` need `confirm` on the end - `/remove farm1 confirm`, `/exit confirm` - because
+  nocat.farm can't be started again from Telegram.
+
+**Pop-ups on Windows.** *Show pop-ups* turns them on or off. Four kinds, each with its own switch (Show advanced):
+*Pop up when you earn* (cards, credited comments), *Pop up for comments* (on your profiles), *Pop up for problems*
+(Steam Guard needed, failed sign-ins, comment bans, bans) and *Pop up for trade offers*.
+
+**Discord profile card** (*Show on my Discord profile*, **off**). While nocat.farm is open, your Discord profile
+shows *Playing nocat.farm*, with what it's doing and today's cards. It needs the Discord app open on the same PC,
+and Discord's Activity Privacy letting it share what you play. Nothing goes over the internet for this. Options
+(Show advanced):
+
+- *Accounts it shows* - empty means every account not in human mode; `all`, or names separated by commas
+- *Featured account* - whose Steam avatar sits on the logo
+- *Show account names*, *Show accounts online*, *Show an account's avatar*, *Show how long it's been running* (all on)
+- *Button 1* and *Button 2* - `github` (a Get nocat.farm button), an account name (a link to its Steam profile),
+  `Label | https://link`, or empty. Discord doesn't show your own buttons to you; other people see them.
+
+## Daily summary
+
+*For: a once-a-day look at what every account did.*
+
+*Daily summary in the log* (on) writes a summary at 09:30 (*Summary time · hour* and *· minute*): per account, hours
+banked, cards and rep4rep comments in the last 24 hours, plus a running total and a line for all accounts together.
+If the PC was off at that time, it's written on the next start. With *Send the daily summary* on, it goes to
+Discord/Telegram too. `stats` shows the same 24-hour figures any time, then cards and comments by hour.
 
 ## rep4rep
 
-rep4rep is a third-party site where users trade profile comments. It's **entirely optional and off by
-default** — the dashboard hides its tab, its points and its per-account options until you switch it on under
-**Settings → rep4rep account → "Use rep4rep at all"** (`Rep4RepEnabled`). Most people won't want it; leave it off
-and no commenting ever runs.
+*For: people who use rep4rep.com. Most people won't want it.*
 
-If you do want it: turn it on, open the **rep4rep** tab and paste your API token (from rep4rep.com → Settings).
-It's validated before it's saved, so a typo can't silently stop every account commenting. Then switch it on per
-account — or use the tab's *Turn it on for all* button. Each Steam account is registered with your rep4rep
-account the first time it's needed (`Rep4RepAutoAddProfiles`, on by default), and the tab has a per-account
-*Register* button if that ever fails.
+rep4rep is an outside site where users trade Steam profile comments for points. It's **off by default** - its tab,
+points and settings stay hidden until you turn on *Use rep4rep at all* (*Global settings → rep4rep account*).
 
-Steam's ceiling for comments on people who aren't your friends is about **10 per rolling 24 hours, per
-account**. A per-account cap enforces it — *Most per 24 hours* (`Rep4RepDailyCap`, default 10, 1–25) — and the
-count is **persisted**, so a restart can't reset it, which is the mistake that actually gets accounts
-comment-banned. If Steam refuses an account below the cap you set, it learns that account's real limit and uses
-it from then on, shown as "(Steam's)" (`Rep4RepLearnCap`, on by default); an ordinary "too frequently" refusal
-never lowers it. If an account's state file can't be read, that account doesn't comment until it can: fail safe,
-not fail open.
+1. Turn it on, open the **rep4rep** tab and paste your API token (from rep4rep.com → Settings). It's checked before
+   it's saved.
+2. Turn it on per account: *Post rep4rep comments*, `set myaccount Rep4Rep true`, or the tab's **Turn it on for
+   all** button.
 
-The pacing, all per account (the rep4rep tab has an editable grid for the cap, gaps and hours):
+Steam allows about **10 comments per 24 hours** on people who aren't your friends. *Most per 24 hours* (10) enforces
+that, and the count survives restarts. Comments are spaced 10-25 minutes apart, only between 10:00 and 23:00. If
+Steam refuses an account below the cap, it learns that account's real limit (*Learn the real limit*, on).
 
-* a commenting window (default 10:00–23:00), staggered per account per day
-* 10–25 minutes between one account's comments, jittered
-* a refused post gets **one** retry, then that *profile* is marked a dud and skipped for 26h, and a different one
-  is tried
-* three different dud profiles in a row bench the *account* for 24h, while the other accounts carry on. A refusal
-  Steam words as an account restriction, or Steam's own daily-limit message, rests the account for about 24h
-  straight away
-* an unknown outcome is counted and never retried (Steam may have posted it; a retry would double-comment)
-* after two rate-limit refusals in a row it stops chasing and rests until 24h after the account's last post,
-  then starts fresh — rather than retrying into the same wall all day
-* `rep4rep rest <account|all>` forces exactly that: a full day off, then back at a clean baseline
+```
+rep4rep                     # summary
+rep4rep points              # points to spend, and points still being checked
+rep4rep tasks myaccount     # comments waiting for one account
+rep4rep now myaccount       # post now (never past the daily cap)
+rep4rep pause myaccount     # hold it; rep4rep resume to carry on
+rep4rep rest myaccount      # a full day off, then a clean start
+```
 
-**Taking a few days off.** *Settings → rep4rep account → "Hold commenting for (hours)"* (`Rep4RepPauseHours`)
-stops all scheduled commenting for that many hours and then carries on by itself. 24 is a day, 48 is two, and
-anything in between works — a 27-hour pause is just 27. The countdown is anchored to when you set it, so it
-survives restarts and saving other settings doesn't push it back. When it runs out each account comes back with
-its rolling 24h count wiped, its strikes, blocks and skipped profiles cleared, and the setting puts itself back to
-0 — so keep holds to 24 hours or more, or a short one can let an account go past Steam's ~10 a day. Nothing else
-is touched. A task you post by hand with the tab's *Post now* still goes out during a hold, up to the daily cap.
-
-> **Every task is worth the same.** rep4rep's API returns a task id, the comment text, its template id and the
-> profile it's for — there is no value or credit field to sort or filter on, so there's nothing to pick between
-> and no setting here pretends otherwise.
-
-Points appear as **pending** first — that's rep4rep verifying the comment really landed, usually within a few
-hours. Nothing is lost. The tab shows both, with a *Refresh* button.
-
-Removing a profile, editing your comment list, task history, buying points and referrals have no API. The
-dashboard links out to rep4rep.com for those rather than pretending.
+*Hold commenting for (hours)* (Show advanced) pauses every account for that many hours, then carries on by itself.
+Points show as pending first while rep4rep checks the comment landed.
 
 ---
 
 ## Commands
 
-`help` lists every built-in command (plugin commands are listed by `plugins`); `help <command>` or
-`help <setting>` explains one. The dashboard's Console tab runs the same commands with the same output — there a
-bare `help` opens a searchable reference. Commands shown with `<account|all>` also take `all`.
+*For: doing anything by typing.*
 
-You can also drive an account by **Steam chat**: message it from a master (a SteamID64 in that account's
-`CommandMasters`), prefixed with `/` or `!` — e.g. `/help`, `!status new`. A plain message with no prefix gets
-the auto-reply instead, so ordinary chat is never mistaken for a command. Bare verbs such as `/pause` or
-`/status` act on the account that received the message, prefixed commands from anyone who isn't a master are
-ignored, and replies are cut at 1,900 characters.
+`help` lists every built-in command, and `help <command>` or `help <setting>` explains one. Plugin commands are
+listed by `plugins`. The dashboard's Console tab runs the same commands with the same output. Commands that show
+`<account|all>` also take `all`. Aliases are shown after the name.
 
 <details>
-<summary><b>Every command</b> — click to expand</summary>
+<summary><b>Every command</b> - click to open</summary>
 
 <br>
 
@@ -336,509 +839,238 @@ ignored, and replies are cut at 1,900 characters.
 
 | Command | What it does |
 |---|---|
-| `status [account]` &nbsp;·&nbsp; `s` `bots` | What everything is doing right now. |
-| `start <account\|all>` | Log an account in. |
-| `stop <account\|all>` | Log an account out (stays configured). A human-mode account finishes up for a few seconds first. |
-| `restart <account\|all>` | Stop then start again. |
-| `pause <account\|all> [minutes]` | Stay logged in but stop playing, farming and commenting. Give it minutes and it picks back up by itself. |
+| `status [account]` · `s` `bots` | What everything is doing right now. |
+| `start <account\|all>` | Sign an account in. |
+| `stop <account\|all>` | Sign an account out. It stays configured. |
+| `restart <account\|all>` | Stop, then start again. |
+| `pause <account\|all> [minutes]` | Stay signed in but stop playing, farming and commenting. With minutes, it carries on by itself. |
 | `resume <account\|all>` | Undo a pause. |
-| `add <name> <steamLogin\|qr>` | Add an account. Asks for the password once, then remembers a login token — or `qr` shows a code on the dashboard to scan with the Steam app, no password at all. |
-| `remove <account>` &nbsp;·&nbsp; `delete` | Delete an account and its stored login token. |
-| `enable <account>` | Let this account log in again. |
-| `disable <account>` | Keep it configured but never log it in. |
-| `redeem [account] <key…\|file.txt>` &nbsp;·&nbsp; `key` | Activate product keys, or point it at a text file full of them. More than five queues itself. |
-| `keys [list\|clear]` | Product keys still waiting to be activated. |
-| `2fa <account>` &nbsp;·&nbsp; `guard` | Show this account's Steam Guard code, if its authenticator is set up here. |
-| `level [account\|all]` | Each account's Steam level. |
-| `balance [account\|all]` &nbsp;·&nbsp; `wallet` | Steam wallet balance, and anything still pending. |
-| `points [account\|all]` | Steam points each account can spend in the Points Shop. |
-| `privacy <account> [public\|friends\|private\|part=level …]` | See the profile privacy, or set it: one word for everything, or parts such as `inventory=public comments=friends`. |
-| `selfcheck [account]` &nbsp;·&nbsp; `tells` | Does it look like a bot? A score out of 100 from what other people can actually see — hours in the past two weeks on the profile, games running at once, the non-Steam name in its status, no human rhythm, rep4rep comments, a long tail of 1-5 hour games — each tell with the setting that fixes it. Hour tells count less when game details are friends-only or private. Only human-mode accounts are checked; a boost account is a robot on purpose, so it's scored only when you name it, and without the "fix" advice. |
+| `add <name> <steamLogin\|qr>` | Add an account. Asks for the password once - or `qr` signs in by scanning a code with the Steam app. |
+| `remove <account>` · `delete` | Delete an account and its login token. |
+| `enable <account>` · `disable <account>` | Let it sign in again, or keep it configured but never sign in. |
+| `selfcheck [account]` · `tells` | How real a human-mode account looks from outside, out of 100, with the setting that fixes each problem. |
+| `redeem [account] <key\|file.txt> [key...]` | Activate product keys. More than five queue up. With an account, only that account gets them. |
+| `keys [list\|clear]` | Keys still waiting to be activated. |
+| `2fa [account]` · `guard` | An account's Steam Guard code - or every account's. Needs its authenticator here. |
+| `confirmations [account]` | What's waiting to be confirmed (trades, listings, account changes), numbered. |
+| `confirm <account> <number\|all>` · `deny <account> <number\|all>` | Confirm or deny what `confirmations` listed. |
+| `bans [account\|all]` | Look up bans now. |
+| `level [account\|all]` | Steam level. |
+| `balance [account\|all]` · `wallet` | Wallet balance, and anything pending. |
+| `points [account\|all]` | Points Shop points. |
+| `joingroup <account\|all> <group link or name>` | Join an open Steam group now. |
+| `privacy <account> [public\|friends\|private\|part=level ...]` | See or set profile privacy. Parts: profile, games, playtime, friends, inventory, gifts, comments. |
 
 **Playing**
 
 | Command | What it does |
 |---|---|
-| `play <account> <appIDs\|none>` | Set the games this account idles for playtime (multiple allowed). |
-| `grind <account\|all> <appID> <hours>` &nbsp;·&nbsp; `grind <account> off` | Play one game hard for N hours, then back to normal. With `UnlockAchievements` on it earns achievements while it runs. On a human-mode account it eases in and out; on any other account it starts instantly. |
-| `human [account] [week\|reroll]` | What human mode is doing today; add `week` for the next seven days, or `reroll` to throw today's plan away and roll a fresh one from the current settings. |
-| `hours <account>` | How its hour targets are going — hours so far, what's left, and the daily pace needed to make a date. |
-| `owns <appID\|name>` | Which accounts already own a game, and how long each has played it. Takes an appID, a store URL, or part of a name. Steam's owned-games list quietly leaves some played games out (TF2 picked up after it went free, for one), so the library also reads the play history the Steam client uses and adds any game the account holds its own licence for. |
-| `addlicense <account\|all> <IDs>` | Add free licences to a library: a subID, or `a/<appID>` for a free app. Steam refuses anything that isn't actually free, and the answer says why. |
-| `wake <account>` &nbsp;·&nbsp; `wakeup` `skipsleep` | Wake a sleeping human-mode account and start its day now. Bed time is unchanged. |
-| `name <account> [text\|off]` | Custom non-Steam game name shown instead of the real game. No text shows the current one; `off` clears it. |
-| `nickname <account> <profile name>` | Change the name everybody sees on the profile and friends list. |
-| `joingroup <account\|all> <group link or name>` | Join a Steam group now, if it's open. Says so when a group needs approval, is invite only, or doesn't exist. |
-| `persona <account> <state>` | online \| offline \| busy \| away \| snooze \| invisible. |
-| `cheevo <account> <appID> [list\|unlock\|lock] [name\|all]` &nbsp;·&nbsp; `ach` | Achievements: see them, unlock them, or put them back. |
-| `hunt [account]` &nbsp;·&nbsp; `boost` | What the achievement hunter would play next, in order - and what it ruled out, with the reason for each. |
+| `play <account> <appIDs\|none>` | Set the games it idles. |
+| `hours <account>` | How its hour targets are going. |
+| `grind <account\|all> <appID> <hours>` · `grind <account> off` | One game for a set number of hours, then back to normal. Outranks human mode while it runs. |
+| `human [account] [week\|reroll]` | What human mode is doing today; `week` for the next seven days; `reroll` for a fresh plan today. |
+| `wake <account>` · `wakeup` `skipsleep` | Wake a sleeping human-mode account and start its day now. |
+| `name <account> [text\|off]` | Custom game name. No text shows the current one. |
+| `persona <account> <state>` | What friends see: online, offline, busy, away, snooze, looking to trade, looking to play, invisible - or its number, 0-7. |
+| `nickname <account> <profile name>` | Change the profile name everybody sees. |
+| `cheevo <account> <appID> [list\|unlock\|lock] [name\|all]` · `ach` `achievements` | See, unlock or re-lock achievements. |
+| `hunt [account]` | What the achievement hunter would play next, and what it ruled out. |
 
-**Trading cards**
+**Trading cards and items**
 
 | Command | What it does |
 |---|---|
-| `cards [account]` | What is still left to farm, and about how long it will take. |
-| `drops <account> [appID\|next] [count\|all]` &nbsp;·&nbsp; `drops <account> off` | You pick a game and how many cards, and it goes first (all it has left by default; without an appID, the next game with cards). **Human-mode account:** it plays in the normal sittings with the main game's share of them, keeping breaks, meals and bedtime, until that many have dropped — it never grinds over the schedule. **Robot account:** it plays non-stop until then, like `grind`, and gives up on its own if the drops stop coming (twice the expected time). Automatic farming ("When to farm cards") needs no command. |
-| `farm <account> on\|off` | Turn trading-card farming on or off. |
-| `sell <account> [preview\|do\|relist] [count]` | Spare trading cards on the market. `preview` (the default) shows what it would list: a cent under the cheapest listing, with Steam's 5% + 10% fees worked out so "you get" is what you get. `do` lists them (5 by default, 20-60 s apart) and confirms them on the account's authenticator if its secrets are loaded - otherwise confirm in the Steam app. `relist` takes down week-old listings the market has gone under. Spare = with a game's whole set, as many copies as badge levels it can still craft; with part of a set, one of each; badge maxed, none. Foils are never sold. `SellDuplicates` does it by itself every 8-14 hours while awake. |
-| `queue [account\|all]` | Go through today's discovery queue now, 6-25 s on each game. `DiscoveryQueue` does it by itself once a Steam day - during sales by default, when it earns the event's items and badge progress. |
-| `levelup <account> <level>` &nbsp;·&nbsp; `lvlup` | What reaching a Steam level would cost: the XP missing, badge levels it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest (up to five levels per game). Priced in the background a few seconds per request and cached for a day, so run it, wait for "level plan … is ready" in the log, and run it again. |
-| `match [do]` | Swap duplicate trading cards between your own accounts so sets finish - only swaps that help both accounts, never a card that's already on an offer. `match do` sends the offers, and the other account checks each one and accepts it by itself. Each account swaps with one other per run - run it again once those have gone through. |
-| `trade accept\|decline <account> <number\|all>` | Answer a waiting trade offer by the number `offers` and the announcements give it. |
-| `confirmations [account]` &nbsp;·&nbsp; `confirm <account> <number\|all>` &nbsp;·&nbsp; `deny <account> <number\|all>` | What's waiting to be confirmed on the account (trades, market listings, account changes), and confirming or denying it - like the Steam app. Needs the account's authenticator in nocat.farm. |
-| `bans [account\|all]` | Look up the account's bans now - VAC, game, trade, community - and which games it's banned in when Steam shows that. |
-| `offers [account\|all]` | Every live trade offer, straight from Steam: waiting, sent, stuck on a phone confirmation or in a trade hold. |
-| `value [account\|all] [refresh]` &nbsp;·&nbsp; `inv` `inventory` | What each inventory is worth at the market's median, by game, with how it has moved in the last 24 hours. `refresh` reads the inventories again. |
-| `send <account\|all>` &nbsp;·&nbsp; `loot` | Send an account's items — trading cards by default, or whatever its `SendItemTypes` allows — to the first of your own accounts listed under Trades. |
-| `booster [account\|all]` &nbsp;·&nbsp; `booster <account> <appIDs>` | Gems, and which games can be made into booster packs; with appIDs, make those packs now. |
-| `freeitems [account\|all]` | Look for the daily sale sticker and 0-point Points Shop items now. |
-| `fairswap <account> <offerID>` | Whether a trade offer is a fair card swap, and why not if it isn't. Only looks. |
-| `transfer <from> <to> [types]` | Send items from one of your accounts to another: cards, foils, backgrounds, emoticons, boosters, gems or all. Trading cards if left off. |
+| `cards [account]` | Cards left to farm, and about how long it'll take. |
+| `drops <account> [appID\|next] [count\|all]` · `drops <account> off` | Farm this game's cards first. |
+| `send <account\|all> [to <account>] [types]` · `loot` | Send items to the account under Trades, or `to` another of your accounts. Types: cards, foils, backgrounds, emoticons, boosters, gems, all. |
+| `trade accept\|decline <account> <number\|all>` | Answer a trade offer by its number. |
+| `trade cancel <account> <offer id\|all>` | Take back offers this account sent that haven't gone through. |
+| `offers [account\|all]` | Live trade offers: waiting, sent, stuck on a confirmation or trade hold. |
+| `match [do]` | Card swaps between your own accounts that help both finish sets. `do` sends them. |
+| `fairswap <account> <offerID>` | Is this offer a fair card swap? Only looks. |
+| `value [account\|all] [refresh]` · `inv` `inventory` | What each inventory is worth. |
+| `sell <account> [preview\|do\|relist] [count]` | Sell spare cards on the market. |
+| `levelup <account> <level>` · `lvlup` | What reaching a Steam level would cost. |
+| `booster [account\|all]` · `booster <account> <appIDs>` · `boosters` | Gems and booster packs; with appIDs, make them now. |
+| `queue [account\|all]` | Go through today's discovery queue now. |
+| `freeitems [account\|all]` | Look for free event items now. |
 
-**rep4rep** &nbsp;(alias `r4r`; run bare for a summary)
+**rep4rep** (alias `r4r`; bare for a summary)
 
 | Command | What it does |
 |---|---|
-| `rep4rep status` | Per-account count, cap, last post and current state. |
-| `rep4rep points` | Points you can spend, and points still being verified. |
-| `rep4rep profiles` | The Steam profiles registered with rep4rep. |
-| `rep4rep tasks <account>` | The comment tasks waiting for one account. |
-| `rep4rep on\|off <account\|all>` | Turn commenting on or off. |
-| `rep4rep now <account\|all>` | Post now, skipping the wait (never the daily cap). |
+| `rep4rep status` | Per account: count, cap, last post, state. |
+| `rep4rep points` | Points to spend, and points being checked. |
+| `rep4rep profiles` | Steam profiles registered with rep4rep. |
+| `rep4rep tasks <account>` | Comments waiting for one account. |
+| `rep4rep now <account\|all>` | Post now (never past the cap). |
 | `rep4rep pause\|resume <account\|all>` | Hold commenting, or let it go again. |
-| `rep4rep clear <account\|all>` | Release a 24h block early. |
-| `rep4rep rest <account\|all>` | Pause a full 24h and come back at a clean baseline. |
+| `rep4rep clear <account\|all>` | Release a 24-hour block early. |
+| `rep4rep rest <account\|all>` | A full day off, then a clean start. |
 
-**Settings & data**
+To turn rep4rep on or off for an account: `set <account> Rep4Rep true|false`.
+
+**Settings**
 
 | Command | What it does |
 |---|---|
-| `config [account] [all]` | Show the settings and their current values; the advanced ones only with `all`. |
-| `set [account] <key> <value>` | Change a setting; without an account name it changes a global one. |
-| `import asf [path] [force]` | Bring accounts across from ArchiSteamFarm, login tokens and all. |
-| `reload` | Re-read every config file from disk. |
+| `config [account] [all]` | Show settings and their values. `all` includes the advanced ones. |
+| `set [account] <setting> <value>` | Change a setting. Without an account it changes a global one. |
+| `import asf [path] [force]` | Bring accounts across from ArchiSteamFarm. |
+| `reload` | Re-read the config files from disk. |
 
 **Everything else**
 
 | Command | What it does |
 |---|---|
-| `log [count]` &nbsp;·&nbsp; `logs` | The last few log lines. |
-| `stats [hours]` | Cards dropped and comments posted, by hour. |
-| `report` | Write the daily summary to the log now. |
-| `answer <text>` | Answer whatever nocat.farm is waiting on — a Steam Guard code, or a password. |
-| `tutorial [topic]` &nbsp;·&nbsp; `guide` `setup` | Getting started, in order, ticking off what's done. |
-| `help [command\|setting]` &nbsp;·&nbsp; `?` `h` | This list, or what one command or setting does. |
-| `theme [dark\|light]` | Switch the dashboard theme. |
-| `version` &nbsp;·&nbsp; `about` | Which version this is. |
-| `mini [on\|off]` | Shrink the window to a small panel of your accounts, or back to the full window. |
-| `update [accept\|ignore]` | Check for a newer release (it also checks by itself every few hours, `CheckForUpdates`, and while one is out it reminds you hourly, `UpdateReminders`). `update accept` downloads it and restarts into it; `update ignore` stops the reminders until the next launch — nothing ever installs on its own. |
-| `plugins` | Which plugins are loaded, and where they came from. |
-| `exit` &nbsp;·&nbsp; `quit` `q` | Shut nocat.farm down (local only — never over Steam chat). |
+| `log [count]` · `logs` | The last few log lines. |
+| `stats [hours]` | Each account's last 24 hours, then cards and comments by hour. |
+| `notify [test]` | What Discord and Telegram are set up to send; `test` sends a test message. |
+| `owns <appID\|name>` | Which accounts own a game, and their playtime. |
+| `addlicense <account\|all> <IDs>` | Add free licences: a subID, or `a/<appID>` for a free app. |
+| `answer <text>` | Answer a Steam Guard code or password prompt. |
+| `plugins` | Loaded plugins and the commands they added. |
+| `tutorial [topic]` · `guide` `setup` | Getting started, ticking off what's done. Topics: cards, human, free, trades, rep4rep, achievements, tray. |
+| `help [command\|setting]` · `?` `h` | This list, or what one command or setting does. |
+| `theme [dark\|light]` · `dark` `light` | Dashboard theme. |
+| `version` · `about` | Which version this is. |
+| `mini [on\|off]` | Mini mode on or off. |
+| `update [accept\|ignore]` | Check for a new version; `accept` installs it (Windows); `ignore` stops reminders until next launch. |
+| `exit` · `quit` `q` | Close nocat.farm. |
 
 </details>
 
-## Achievements
+### Commands by Steam chat
 
-```
-cheevo myaccount 440                  # what it has, easiest first, with how rare each one is
-cheevo myaccount 440 unlock all       # every one the client is allowed to set, now
-cheevo myaccount 440 unlock ACH_NAME  # just one
-cheevo myaccount 440 lock ACH_NAME    # put one back
-```
-
-Unlocking a whole list at once is permanent, stamped with one shared timestamp, and visible on the profile
-forever — so for an account meant to look real there's a drip instead: `set myaccount UnlockAchievements true`
-(off by default) earns them **easiest first** (the ones most owners have are the ones you get by simply playing),
-only in a game the account actually has open. Each game is paced on its own — roughly one per hour of real play,
-a little faster in a game's opening cluster and sometimes two or three together — and *How fast*
-(`AchievementPace`: careful, normal, brisk) doubles or halves the gaps. Pace only stretches the waiting; it never
-opens the rarity gate early.
-
-Four rules keep the result believable, and all four are things a profile would otherwise give away:
-
-* **It stops short.** `AchievementMaxCompletionPct` (90 by default) is the most of any one game that will ever
-  be completed. One figure, yours, applied to every game the same way — a game sitting at exactly 100% on an
-  account that idles is what somebody notices. The one exception is a game's opening cluster (usually 3, up to
-  10 for some games), which is always allowed, so a very small game can go past the figure. A deliberate `grind`
-  ignores the cap; that's the explicit finish-it path.
-* **Rarity opens with the hours.** An achievement 3% of owners have isn't eligible two hours in. Nothing is
-  eligible for the first half hour; then the floor starts at "40%+ only" and steps down as the playtime builds
-  (scaled per game), bottoming at 1% — never 0%, because a sub-1% achievement on an idled account is the actual
-  tell. It reads Steam's own total for the game, not just the hours this tool put on it, so a library you already
-  played counts.
-* **Milestones wait for what they're milestones of.** `TF_SNIPER_ACHIEVE_PROGRESS2` is granted for holding
-  eleven other `TF_SNIPER_*` achievements. Nothing in its display name says so, and "Sniper Milestone 2" on a
-  profile showing three Sniper achievements isn't rare, it's impossible. Tiers are held until their group is
-  earned, and a numbered ladder is always climbed in order.
-* **It clusters.** Real unlocks come two or three together and then nothing for a day, so bursts are modelled
-  rather than a steady one-every-N-minutes metronome.
-
-`AchievementNeverGames` keeps the drip and the hunter out of those games (a manual `cheevo` still works there),
-and `AchievementIncludeMainGame` (on) decides whether human mode's main game earns like any other — it's where
-the hours are, so leaving it out is usually the stranger of the two.
-
-`grind` earns them too, on whatever game you point it at, when `UnlockAchievements` is on — on any account, at
-the grind's own shorter spacing, and never in a game on the never-list or outside the allow-list. The catch is
-that **some games' achievements are set by Steam's servers, not the client — Counter-Strike 2 is the classic
-case — and nothing can unlock those**; the log says so for such a game. `cheevo … unlock all` skips them too.
-
-For a library you really do want finished, each account's advanced settings have a *Careful* box that unlocks
-every settable achievement in every game it owns. You have to type `confirm`, the account has to be signed in,
-and it is permanent — there is deliberately no command for it.
-
-### The hunter
-
-`UnlockAchievements` decides *how* achievements come out of games the account was going to play anyway. It never
-starts a game. The **achievement hunter** is the other half: it decides *which games get played at all*, so there
-is something to earn in. It needs both switches:
-
-```
-set myaccount UnlockAchievements true
-set myaccount AchievementBoost 2      # 0 off (default) · 1 games you pick · 2 every single-player game it owns
-```
-
-Mode 2 works the library out for itself. A game has to be a **game** (never DLC, a demo, a soundtrack or a
-tool), be single-player, have achievements, and have enough Steam reviews that a person might plausibly own it —
-which is what keeps bundle filler out. Blacklists, the never-list and the achievement allow-list are stripped out
-on top, and so is anything inside its refund window when refund protection (`SkipRefundableGames`) is on. Games
-shared through Steam Families only count with `IncludeFamilyLibrary` on (off by default).
-
-One game at a time, about two hours each (`BoostSessionHours`), then it rotates to the next. On a **human**
-account it stays weighted-first: a session, then a long stretch of the normal schedule (`BoostRestMinutesHuman`),
-capped at `MaxBoostGamesInARow` before a longer one. It never *starts* a session while the account is asleep
-(with *Only react while awake* on, the default — a session already running isn't cut at bedtime), never while
-cards are being farmed, never over a grind you started, and it won't start a new one once the day's play target
-is met. On a non-human account it moves from one game straight to the next. `hunt` prints exactly what it would
-play next and why everything else was ruled out.
-
-Without it, the only automatic way to earn across a library on a human-mode account is to put every
-single-player game into `GameWeights` — which destroys the thing human mode exists for, because a weighted
-schedule is supposed to look like one game somebody mains and a couple they dip into, not two hundred at equal
-weight.
-
-## What the inventories are worth
-
-```
-value                    # every account, by game, and how it moved in the last 24h
-value myaccount refresh  # read that account's inventory again (prices stay cached)
-```
-
-Priced at the community market's **median**, in whatever currency the global `MarketCurrency` is set to. Match
-it to your Steam store or the totals won't agree with what you see on the market. Items count whatever their trade
-status, because a trade hold doesn't make a knife worthless. Only the first 12 inventory contexts on the account
-are read, though, in the order Steam lists them, so an account holding items in more games than that leaves some
-out of the total. Inventories are re-read every 6 hours. Prices are shared between accounts and re-checked
-according to what they're worth: anything worth 2 or more as often as `PriceCacheHours` says (24 by default),
-cheaper items less often, and items with no market listing once a week. They're looked up slowly, about one every
-`MarketGapSeconds` (10 by default) in one queue shared by every account, because everything the app does on
-steamcommunity.com shares one rate limit. The first valuation of a big inventory can take several hours to
-settle. After that, cached prices make the total show up straight away.
-
-Accounts that hold nothing worth pricing can have `ShowInventoryValue` turned off (on by default). That account
-is skipped entirely, with no market lookups and no value on the dashboard.
-
-Games the account is **banned** in go in `InventoryIgnoreGames`. Their items are listed as skipped and left out
-of the total. Steam doesn't publish which game a ban is in and nothing in the inventory reliably shows it, so you
-can fill the list in yourself. Sending items also learns it. Steam refuses a whole offer if one game in it is
-banned, so when an offer is refused that way it's sent again one game at a time. A game refused while the others
-go through is added to the list, and the cards still arrive. If every game is refused the problem is the trade
-itself, and nothing is added.
-
-## Trades, keys and items
-
-```
-set myaccount TradeMasters 7656119...   # accounts you own
-set myaccount AcceptFromMasters true    # let those take items
-send myaccount                          # sweep its cards to the first master
-set myaccount SendEveryHours 24         # ...or do it by itself once a day
-set myaccount AcceptDonations false     # donations are accepted by default - this turns that off
-redeem AAAAA-BBBBB-CCCCC                # tries each account until one can use the key
-2fa myaccount                           # its current Steam Guard code
-```
-
-A donation is an offer where you give up nothing at all, so accepting one can never cost the account anything —
-which is why `AcceptDonations` is on by default. An offer asking for even one of your items is not a donation and
-is never accepted on that rule: only accounts on your own masters list (with `AcceptFromMasters` on) can take
-anything, apart from one-for-one fair card swaps. Offers are read straight from Steam's trade-offer API with the
-account's own login, so there's no Steam Web API key to set up - and an offer Steam can't fully describe is never
-taken for a donation. Each one waits its own time before it's accepted or declined — 2–15 minutes by default, most often
-nearer 2 (`TradeDelayMinMinutes` / `TradeDelayMaxMinutes`) — and on a human-mode account it waits for morning while
-the account sleeps, then gets a fresh wait once it's up. An offer you accept or cancel yourself in Steam simply
-drops off the list.
-
-What may leave an account is `SendItemTypes` (*What to send*: cards, foils, backgrounds, emoticons, boosters, gems,
-or `all`) — trading cards by default. `all` means everything tradable in every game inventory the account has,
-CS2 skins included, not just Steam community items. `send` goes to the first account under `TradeMasters`;
-`transfer <from> <to> [types]` moves items between any two of your accounts; `SendOnFarmingFinished` sends once
-when farming runs out of cards (after a few minutes for the last drop to land). Between accounts that aren't
-Steam friends, Steam wants the recipient's trade-link token — read automatically when the recipient is one of your
-own signed-in accounts, or set `TradeMasterToken`.
-
-`SendEveryHours` is `send` on a timer, so cards don't pile up between farming runs. The first send is one full
-period after you switch it on, a little random slack keeps it off the same minute every time, and on a
-human-mode account it waits until the account is awake.
-
-Offers the account sends confirm themselves when its authenticator's identity secret is here (a maFile, or
-`IdentitySecret` in its settings); otherwise they wait for you to confirm them on your phone.
-
-### Who it trades with by itself
-
-`AutoTradeWith` (*Trade by itself with*) lists the accounts an account trades with without asking you, and which
-way: `old, kylro:to` means old both ways, and kylro may take items. `:from` only accepts what they send, `:to` lets
-them take items (confirmed by itself when the authenticator is here), `:both` is the default. Left empty it means
-*Your own accounts* both ways, when *Accept anything from your own accounts* is on - which is what those two
-settings always did. Donations follow their own switch. A fair card swap with anyone else is accepted, but its
-confirmation waits for you. Everything else waits for you too.
-
-### Trade alerts and answering by hand
-
-Every new offer is announced once - log, pop-up (*Pop up for trade offers*), Discord/Telegram's Trades topic - with a
-short number:
-
-```
-new trade offer 3 from kylro (one of your accounts): you get 4 item(s): ..., you give no items - a donation, accepting it in a few minutes
-new trade offer 4 from SomeGuy: you get 1 item(s): ..., you give 3 item(s): ... - waiting for you - trade accept new 4 or trade decline new 4
-```
-
-Accepted, declined, "needs confirming" and "gone" (cancelled, answered somewhere else, or expired) are announced too.
-`offers new` lists them with the same numbers; `trade accept new 4` / `trade decline new 4` (or `all`) answers them.
-Accepting one by hand that sends items out also confirms it when the authenticator is here - you asked for it.
-
-### The Authenticator page
-
-The dashboard's **Authenticator** tab shows, per account, the Steam Guard code with a ring counting down its 30
-seconds, and the list of everything waiting to be confirmed - exactly what the Steam app lists: trades (with the
-items on both sides), market listings (with the price), account changes. Each has Confirm and Deny; tick several
-for Confirm all / Deny all. It refreshes by itself while it's open. The same from the console or Telegram:
-
-```
-confirmations new        # what's waiting, numbered
-confirm new 2            # confirm number 2 (or: all)
-deny new 1               # deny number 1
-```
-
-It needs the account's authenticator secrets in nocat.farm - a maFile in `config/authenticators/<account>.maFile`
-(from Steam Desktop Authenticator or ArchiSteamFarm), or `SharedSecret` / `IdentitySecret` in its settings. Codes
-use Steam's own clock (asked from Steam), so a PC clock that's a little off doesn't matter.
-
-### Fair card swaps
-
-```
-set myaccount AcceptFairCardSwaps true   # accept one-for-one swaps that never hurt your sets
-fairswap myaccount 7812345678           # is this offer a fair card swap - and if not, why not
-```
-
-This is what Steam Trade Matcher users send all day: your duplicate of one card for their copy of another, same
-game, one for one. With `AcceptFairCardSwaps` on, an offer like that is accepted from anyone, but only when:
-
-* every item on both sides is an ordinary trading card — no foils, backgrounds, emoticons or anything else
-* each game gets back exactly as many cards as it gives
-* the swap never sets the account's sets back. Three of card A and none of card B becoming two and one is fine,
-  and so is a swap that changes nothing either way; giving away the last copy of a card to get a third of another
-  is not
-
-An offer with a different number of items on each side is passed over without being
-read, so it leaves no line in the log. An offer with matching counts that fails the test is left alone with the
-reason in the log, once. Either way it is declined instead if `DeclineOtherTrades` is on. `fairswap` runs the same
-test on any offer and only looks — it answers whether or not `AcceptFairCardSwaps` is on, and never accepts or
-declines.
-
-The set test is our own, and simple enough to check by hand: per game, every card given away must still have MORE
-copies afterwards than any card coming in had before. Copies only move from a bigger pile to a smaller one, so no
-card can run out, the number of different cards never shrinks and complete sets never go down. It's exactly one for
-one per game — an offer with extra cards thrown in is not accepted — and a swap that would sit in a trade hold is
-left alone. It's off by default because it gives cards away. With the account's mobile authenticator here the swap is
-confirmed by itself; without it, it waits for you on your phone, and the status says so.
-
-Swaps between your **own** accounts (the ones `match` sends) are always judged this way and accepted by themselves,
-even with `AcceptFairCardSwaps` off. Every swap is judged again at the moment it's accepted, one at a time, and cards
-already promised to an offer waiting on a phone confirmation count as gone - so two offers can never spend the same
-card.
-
-## Free stuff
-
-```
-set myaccount ClaimFreeGames true      # paid games given away free-to-keep (off by default)
-set myaccount ClaimEventItems true     # sale stickers and 0-point Points Shop items (on by default)
-set myaccount AcceptGifts true         # wallet gift cards and guest passes (on by default)
-set myaccount BoosterGames "730, 440"  # turn gems into booster packs for these games
-booster myaccount                      # gems, and which games can be made into packs
-freeitems all                          # look for free event items now
-```
-
-**Free games** come from Steam itself, two ways. A giveaway is a paid game on a 100% discount, and the store's own
-search lists exactly those — it's read about once an hour, once for every account — and Steam's own change feed is
-read about every half hour — every package Steam edits shows up there within seconds, and a
-paid game being given away is a package edit. Either way, the store is asked before anything is taken, and the
-game has to be a released, paid game showing 100% off. That leaves out free-to-play games, DLC, demos,
-unreleased titles, and the permanently free editions some paid games have (a "Free Starter Edition" is free, but
-the game itself isn't being given away). When the store doesn't answer, nothing is decided and it's looked at
-again on the next pass. A game only borrowed through Steam Family doesn't count as owned, so a giveaway of it is
-claimed for real. Steam allows about 30 activations per 90 minutes, so this stops at 20 to leave room for
-anything you redeem yourself; if Steam says slow down it waits the hour out, and what it has already decided is
-kept across restarts.
-
-**Event items.** During a Steam sale there is a free sticker to claim every day, and it's claimed shortly after
-the next one opens. The Points Shop has no "free" list of its own, so every item in it is read — once for all
-accounts, since the shop is the same for everyone — and anything at 0 points is taken, remembering what each
-account already has.
-
-**Discovery queue.** During a Steam sale, going through the store's discovery queue each day earns the sale's
-event items and badge progress. With `DiscoveryQueue` on its default (*during sales*) each account does it once a
-Steam day while it's awake, a few seconds on each game like a person clicking *Next*; *every day* does it all year,
-and `queue` does it now.
-
-**Gifts.** Steam wallet gift cards and guest passes somebody sends are accepted. Steam pushes the number of
-waiting gifts over the connection, so the gifts page is only read when there's something on it. Games friends gift the account are added to its library, the same as pressing *Add to my library* (`AcceptGiftedGames`, on by default).
-Each gift waits its own time before it's taken — 2–15 minutes by default, most often nearer 2 (`GiftDelayMinMinutes` /
-`GiftDelayMaxMinutes`) — and if you take it yourself in the meantime, the app just finds nothing left to do.
-Nothing here ever declines a gift — turn the setting off and each one waits for you to take or turn down yourself
-(turning one down refunds the sender).
-
-**Booster packs.** Steam lets an account make one booster pack per game a day, for gems, for the games its
-booster creator page lists — `booster` shows which. List the games in `BoosterGames` and each pack is made as
-soon as Steam allows, using tradable gems first so the pack is tradable too. `UnpackBoosterPacks` opens every
-pack in the inventory, and `CraftBadges` turns finished sets into badges; both run in one pass about once a day,
-either works without the other, and both are off by default.
-
-On a human-mode account, gifts wait until it's awake while `ActOnlyWhileAwake` is on (it is by default), and get
-a fresh wait once it's up — accepting at 4am on an account that's asleep on the friends list is a tell. Event
-items and booster packs are things nobody else sees, so they happen at any hour, just not the moment it signs in
-(`QuietThingsWaitForDay` holds them for its day too).
-
-## Plugins
-
-Optional and off by default. A plugin is a DLL (plus any DLLs it depends on) dropped in `plugins/`; then
-`set PluginsEnabled true` and restart.
-
-```
-plugins                  # what's loaded, and the commands they added
-```
-
-A plugin can watch what happens (accounts online, cards dropping, trade offers), read every account's state and
-library, run any of the 61 commands, add commands of its own, and declare **its own settings** — which appear on
-the dashboard's Plugins page with real controls, no UI work needed. Each plugin has its own on/off switch there.
-
-**Read the plugin switch's warning before turning it on.** A plugin is somebody else's code running inside the
-process that holds your Steam sessions. The API is deliberately narrow — read-only account views, and changes go
-through the same command line you type, so they're validated and logged identically — but that's a guard rail,
-not a cage. Run plugins you wrote or whose author you trust.
-
-**→ [How to write one](../PLUGINS.md)** — a working plugin in five minutes, plus settings, events, state and
-commands. The complete contract is [`src/NocatFarm/Plugins/IPlugin.cs`](../src/NocatFarm/Plugins/IPlugin.cs).
-
-ASF plugins do not work here and can't be made to; [PLUGINS.md](../PLUGINS.md#not-supported-asf-plugins) explains
-why, and porting is usually easier than it sounds.
+You can message an account from Steam with commands. Put your SteamID64 in that account's *Accept commands from*
+(`CommandMasters`), then send a message starting with `/` or `!` - like `/help` or `!status`. A bare command such as
+`/pause` or `/status` acts on the account you messaged. Messages without `/` or `!` get the normal auto-reply.
+Commands from anyone not on the list are ignored. Replies are cut at 1,900 characters. `exit` and `remove` can't be
+run this way - they have to be done at the PC (or from Telegram, with `confirm`).
 
 ## Settings
 
-**51 global, 150 per account** — of which **45 sit in front of Show advanced** (9 global, 36 per account); what a
-page actually shows also depends on whether rep4rep and human mode are on. Every one has a short plain-English
-explanation attached, which the dashboard shows on hover and the console prints for `help <setting>` along with
-its default and range — written once, in `Config/Settings.cs`, and translated with the setting's name into the
-ten other languages.
+*For: fine-tuning.*
 
-The split is a rule of thumb: most features' main switches stay in front, and their timings, ranges, gaps and
-infrastructure go behind **Show advanced**. So the default page is the decisions that make an account what it
-is, and the Steam connection section — pure plumbing — is advanced in its entirety.
+**The Settings page.** Pick **Global settings** (things for the whole app) or an account (things for that account)
+on the left. Everyday switches show first; tick **Show advanced** for the rest. Search finds settings by name or
+explanation, **Only changed** shows what you've changed, and each changed field has a link back to its default.
+Hover over a setting for a plain explanation. Settings marked ⟳ need a restart.
 
-The Settings page searches labels, names and explanations in your language, has an *Only changed* filter, a
-revert-to-default link on every changed field and a *Save N changes* button, takes pasted store URLs in any appID
-list, and previews things like "a day looks like…" live; `GameWeights` gets a visual editor. From the console,
-`config [account]` lists the front-page settings and `config [account] all` lists every one.
+**From the console.**
 
-Global: the dashboard (host/port/password/auto-open, **language and the currency prices are shown in**),
-background behaviour (tray, minimise-to-tray, start with Windows, keep-awake, mini mode on top, close the app once every account is
-done — `ExitWhenAllFinished` — and three pop-up categories: earnings, social and problems), the rep4rep account,
-a blacklist of games no account ever farms, idles, plays or hunts (`GlobalBlacklistedGames`), the Steam
-connection (login stagger, reconnect, timeout, farming concurrency, rate-limit cooldown, web request spacing,
-protocol, proxy), update checks, and logging with retention.
+```
+config myaccount            # its everyday settings and their values
+config myaccount all        # every setting
+set myaccount FarmCards false
+set WebPort 8080            # no account = a global setting
+help FarmCardsWhen          # what a setting does, its default and range
+```
 
-Two of those are worth calling out. **Show debug detail on screen** only decides whether debug lines are also
-*displayed* — the log file always keeps them, whatever it's set to, so when something goes wrong the answer is
-already recorded instead of needing the fault reproduced with a switch flipped. And **Hold commenting for**
-sits rep4rep out for a few days and then resumes on its own; see [rep4rep](#rep4rep). The log also carries a
-"still playing …" line for each account every few minutes while it plays (`StatusEveryMinutes`, default 5) and
-less often while it rests (`StatusQuietEveryMinutes`, default 30), so a quiet log is easy to tell from a stalled
-one; `-1` turns them off.
+On/off settings take `true`/`false` (or `on`/`off`). Game lists take appIDs or store links separated by commas, or
+`none`.
 
-Per account: identity and appearance (persona, the device badge friends see — `GameDevice`, notes, start-paused,
-Family View PIN, device name, its colour in the log — `LogColour`, and its own proxy — `AccountProxy`), what it
-plays, trading cards (order, priority list, blacklist, refund protection — `SkipRefundableGames`, off by default —
-skip-unplayed, give-up time, log out when done, appear offline while farming — `FarmOffline`, plus *when* to farm:
-on a human-mode account in its day, only at night or any time — `FarmCardsWhen` — inside a set clock window, or in
-a few sittings a day adding up to about `FarmHoursPerDay` — `FarmInSittings` — and how long to wind down on the
-last game after finishing), human mode (the whole daily
-shape, and how long it finishes up for on a manual stop), achievements (earn over time, pace, completion
-ceiling, the hunter, family-shared games, grind spacing), rep4rep pacing, friends & messages (accept friend
-requests after a random delay, ignore obvious spam invites — on by default, accept group invites, auto-reply,
-command masters, *Join the shared groups* — on by default, `set <account> JoinGroup false` keeps one account out —
-and *Also join these groups*, `ExtraGroupsToJoin`), and under *All accounts* in the global settings, *Groups every
-account joins* (`GroupsToJoin`, starting with the nocat.farm group): paste group links or short names
-and every account joins them, each account at its own random time and minutes apart (tens of minutes on a human-mode
-account); only open groups are joined, ones needing approval or an invite are skipped with a line in the log, trades (donations, fair card swaps, your own accounts, gifts, how long offers and gifts wait, what may be sent and
-how often), free games
-and badges (free games, event items, booster packs, badge crafting, and clearing Steam's notifications —
-`ClearNotifications` marks the whole notification tray read on every sign-in, on by default, and
-`ClearInventoryNotifications` clears the new-items badge after each drop — worth knowing if you also use the
-account yourself), and *Staying out of the way*.
+**The files.** Settings live in `config/nocatFarm.json` (global) and `config/<account>.json`, as plain JSON with the
+same names. Edit them by hand and type `reload` if you like. Back up the `config` folder and you've backed up
+everything.
 
-`config/nocatFarm.json` and `config/<account>.json` are plain JSON with exactly these names. Edit by hand and
-run `reload` if you prefer.
+### Global settings
 
-## Command line
+- **Dashboard** - *Web dashboard*, *Language*, *Inventory prices in*; advanced: *Listen on*, *Port*, *Dashboard
+  password*, *Stay signed in for*, *Load plugins*, *Notify if an update is available*, *Remind me every hour*,
+  price lookup speed.
+- **Running in the background** (Windows) - *Tray icon*, *Start with Windows*; advanced: *Start hidden*, *Minimise
+  to the tray*, *Keep mini mode on top*, *Keep this PC awake*, *Close when everything's done*.
+- **All accounts** - *Groups every account joins*.
+- **Notifications** - Discord webhook, Telegram bot, the nine *Send…* switches, pop-ups, and the Discord profile
+  card. See [Discord and Telegram](#discord-and-telegram).
+- **rep4rep account** - *Use rep4rep at all*, *API token*; advanced: *Hold commenting for (hours)*, *Register
+  accounts automatically*.
+- **Steam connection** (all advanced) - gap between logins, reconnect, timeout, *Farm at most* (accounts farming at
+  once), rate-limit cooldown, web request gap, *Connect using*, proxy, and *Never touch these (all accounts)*.
+- **Logging** (all advanced) - *Write a log file*, *Show debug detail on screen* (the log file always has it),
+  *Keep logs for* (14 days), the daily summary time, and *Say what it's doing every* (5 minutes while playing) /
+  *And while it's resting, every* (30 minutes). Set either to 0 to turn those status lines off.
+
+### Account settings
+
+- **Account** - *Enabled*, *Steam account name*, *Password*, *Appear as*, *I sign into this one myself*; advanced:
+  QR sign-in, *Start paused*, notes, colour in the log, Family View PIN, device name, authenticator secrets, its own
+  proxy, and *Report in every* / *And while resting, every* (0 = follow the global setting, -1 = keep this account
+  quiet).
+- **Human mode** - *Human mode*, *Games and how often*, hours on weekdays and weekends, when it gets on and goes to
+  bed, *Bank hours overnight*; advanced: day-off chance, sittings, breaks, meals, going offline on breaks, hour
+  targets, overnight games.
+- **What it plays** (not on human-mode accounts) - *Games to idle*, *Show a custom game name*, *Show as*; advanced:
+  *Keep the name while farming*, *Play as if on*.
+- **Trading cards** - *Farm trading cards*, *When to farm cards* (human mode), *Sell duplicate cards*; advanced:
+  order, priority list, blacklist, refund protection, clock window, give-up time, and more.
+- **Achievements** - *Earn achievements over time*; advanced: pace, completion limit, the hunter, family games,
+  grind spacing, never/only lists.
+- **Free games & badges** - free games, free DLC, event items, discovery queue, badge crafting, *Watch for bans*;
+  advanced: booster packs, opening packs, notification clearing, *...but not these games*.
+- **rep4rep commenting** (only when rep4rep is on) - *Post rep4rep comments*; advanced: cap, gaps, hours.
+- **Friends & messages** - *Accept friend requests*, *Reply to messages* and its text; advanced: delays, spam
+  filter, group invites and joining, *Accept commands from*, and human-mode timings.
+- **Trades** - donations, fair card swaps, gifts, your own accounts, *Trade by itself with*; advanced: *Decline
+  everything else*, sending, *What to send*, trade link token, waits, inventory value.
+- **Staying out of the way** (advanced) - *Stand down when you play*, *Wait before resuming*.
+
+Human mode hides *Games to idle*, the custom game name, *Keep the name while farming*, *Farm in sittings*, *Hours a
+day to farm*, *Log out when finished* and *Farm while appearing offline* on that account, and shows human-only
+settings instead. rep4rep settings only show when rep4rep is on.
+
+## Command line options
+
+*For: shortcuts, scripts and running several copies.*
 
 ```
 --path <dir>    where config/ and logs/ live (default: next to the exe)
 --no-web        don't start the dashboard
 --no-tray       no notification-area icon
---minimized     start hidden, straight to the tray (also --background) - needs the tray icon to bring it back
---no-gui        no app window; run the live console board instead (also --console)
+--no-gui        no window - the console board instead (also --console)
+--minimized     start hidden, straight to the tray (also --background)
 --help          list these (also -h)
 ```
 
-One copy runs per config folder — a second launch says so and exits — so separate fleets simply use separate
-`--path` folders side by side. For diagnosing Steam trouble, setting the environment variable
-`NOCATFARM_NETLOG=1` writes every Steam message to `netlog-<account>.txt`. The dashboard's address, port and
-password can also come from environment variables — see [Linux and Docker](#linux-and-docker).
+One copy runs per config folder - a second one says so and exits. To run separate sets of accounts, use separate
+`--path` folders.
 
----
+Environment variables (any install, not just Docker) - when set, they win at every start and are written into
+`config/nocatFarm.json`:
+
+| Variable | What it sets |
+|---|---|
+| `NOCATFARM_WEB_HOST` | *Listen on* (`WebHost`). |
+| `NOCATFARM_WEB_PORT` | *Port* (`WebPort`, 7242 by default). |
+| `NOCATFARM_WEB_PASSWORD` | *Dashboard password*. |
+| `NOCATFARM_WEB_PASSWORD_FILE` | A file to read the password from (how Docker secrets arrive). Wins over the one above. |
+| `NOCATFARM_NETLOG=1` | For troubleshooting: writes every Steam message to `netlog-<account>.txt`. |
 
 ## Linux and Docker
 
-nocat.farm runs on Linux too — a home server, a NAS, a Raspberry Pi 4 or 5 on a 64-bit OS, a VPS — straight from
-a zip or in Docker. There's no app window or tray icon there: you get the console and the web dashboard, and
-everything else (farming, human mode, trades, notifications, plugins) is the same program.
+*For: running it on a home server, NAS, Raspberry Pi 4/5 (64-bit) or VPS.*
+
+There's no window or tray icon on Linux. You get the console and the web dashboard; everything else is the same.
 
 ### From the zip
 
-1. Download `nocat.farm-v…_linux-x64.zip` (Intel/AMD) or `nocat.farm-v…_linux-arm64.zip` (Raspberry Pi, ARM
-   servers) from [Releases](https://github.com/VisaHolder/nocatfarm/releases/latest). The plain
-   `nocat.farm-v….zip` is the Windows one.
-2. Unzip it into a folder of its own and start it:
+1. Download `nocat.farm-v<version>_linux-x64.zip` (Intel/AMD) or `nocat.farm-v<version>_linux-arm64.zip` (Raspberry
+   Pi, ARM servers) from [Releases](https://github.com/VisaHolder/nocatfarm/releases/latest).
+2. Unzip it into its own folder and start it:
 
    ```
-   unzip nocat.farm-v1.3.9_linux-x64.zip -d nocatfarm
+   unzip nocat.farm-v<version>_linux-x64.zip -d nocatfarm
    cd nocatfarm
    ./nocatFarm
    ```
 
-   If it says *permission denied*, run `chmod +x nocatFarm` once — the zip carries the executable bit, but some
-   unzip tools drop it.
+   If it says *permission denied*, run `chmod +x nocatFarm` once.
 
-It's self-contained, so there's no .NET to install. It prints the dashboard address (`http://127.0.0.1:7242/`) and
-opens it in your browser if there's a desktop. To use the dashboard from another device, give it a password and
-open it up, then restart:
+No .NET to install. It prints the dashboard address. To use the dashboard from another device, set a password and
+open it up (see [Using the dashboard from another device](#using-the-dashboard-from-another-device)).
 
-```
-set WebPassword something-long-and-your-own
-set WebHost 0.0.0.0
-```
-
-With no password it only lets in the machine it runs on, whatever `WebHost` says — and on Linux it says so in
-the log.
-
-**As a service.** A systemd unit, with the folder at `/opt/nocatfarm`:
+**As a service** (systemd, with the folder at `/opt/nocatfarm`):
 
 ```ini
 [Unit]
@@ -857,24 +1089,18 @@ TimeoutStopSec=60
 WantedBy=multi-user.target
 ```
 
-`systemctl stop nocatfarm` signs every account out cleanly before it exits (that's what the 60 seconds are for).
-The log goes to the journal (`journalctl -u nocatfarm -f`); type commands in the dashboard's *Console* tab, where
-Steam Guard prompts appear too.
+`systemctl stop nocatfarm` signs every account out cleanly first. The log is in the journal
+(`journalctl -u nocatfarm -f`). Type commands in the dashboard's Console tab, where Steam Guard prompts appear too.
 
-**Updating.** It doesn't update itself on Linux. It still tells you when a new version is out, and `update` says
-exactly which file to get: stop it, unzip the new zip over the folder (`unzip -o`), start it again. `config/` and
-`logs/` are never in the zip, so they're kept. (Why not by itself: on Linux it's normally run by systemd or
-Docker, and both kill whatever it leaves behind the moment it exits — a swap script would die half way through
-copying. Doing it by hand is one step and can't half-happen.)
+**Updating.** It tells you when a new version is out, but doesn't update itself on Linux. Stop it, unzip the new zip
+over the folder (`unzip -o`), and start it again. `config/` and `logs/` aren't in the zip, so they're kept.
 
-**Saved logins.** Login tokens and saved passwords are encrypted with AES-256-GCM. The key is
-`config/state/secret.key`, made on first use and readable only by your user. Back up the whole `config` folder
-together: without that key the saved logins can't be read, and each account just signs in once more. A config
-folder brought over from Windows works too — apart from its saved logins, which Windows ties to your Windows
-user, so each account signs in once more there as well.
+**Saved logins** are encrypted with a key in `config/state/secret.key`, readable only by your user. Back up the whole
+`config` folder together. A config folder from Windows works, but each account signs in once more, because Windows
+ties saved logins to your Windows user.
 
-**Discord profile card.** Works with the Discord desktop app on the same desktop (the normal build, Flatpak or
-Snap). On a server or in Docker there's no Discord to talk to, so it stays quiet.
+**Discord profile card** works with the Discord desktop app on the same desktop. On a server or in Docker there's no
+Discord app, so it stays off.
 
 ### Docker
 
@@ -887,125 +1113,101 @@ echo 'NOCATFARM_WEB_PASSWORD=something-long-and-your-own' > .env
 docker compose up -d --build
 ```
 
-Then open `http://localhost:7242` and sign in with that password. Add accounts there — the Steam Guard code or QR
-scan is asked for right on the page.
+Open `http://localhost:7242` and sign in with that password. Add accounts there - the Steam Guard code or QR scan
+is asked for on the page.
 
-What the example compose file sets up (it's commented line by line):
+The example compose file is commented line by line. The main points:
 
-* **Your data** in `./config` and `./logs` next to it — accounts, login tokens, settings, logs. Rebuilding or
-  re-creating the container keeps them.
-* **A password is required.** Compose refuses to start without `NOCATFARM_WEB_PASSWORD`. Without one the
-  dashboard only lets in requests from inside the container itself — through Docker's port, that's nobody.
-* **Port 7242 on this machine only.** Change `"127.0.0.1:7242:7242"` to `"7242:7242"` to reach it from your phone
-  or another PC.
-* **`TZ`** — set your time zone. Human mode's day, its bedtime and the daily report all follow it.
-* **`hostname`** — the device name Steam shows for these sign-ins. Without it, it changes on every re-create.
-* **`user: "1000:1000"`** — the owner of `./config` and `./logs` (`id -u`, `id -g`). If the log says *can't write
-  to /data/config*, that's the thing to fix: match it to the folders' owner, or remove the line and
-  `sudo chown -R 1654:1654 config logs` (the image's own user).
-* **`restart: unless-stopped`** and **`stop_grace_period: 1m`** — `docker compose down` signs every account out
-  cleanly first.
+- **Your data** is in `./config` and `./logs` (inside the container, `/data/config` and `/data/logs`). Rebuilding
+  keeps them.
+- **A password is required.** Compose won't start without `NOCATFARM_WEB_PASSWORD`.
+- **Port 7242 on this machine only.** Change `"127.0.0.1:7242:7242"` to `"7242:7242"` to reach it from other
+  devices.
+- **`TZ`** - your time zone. Human mode's day and the daily summary follow it.
+- **`hostname`** - the device name Steam shows. Without it, it changes on every re-create.
+- **`user: "1000:1000"`** - must match the owner of `./config` and `./logs` (`id -u`, `id -g`). If the log says it
+  can't write to `/data/config`, fix this - or remove the line and run `sudo chown -R 1654:1654 config logs`.
+- **`stop_grace_period: 1m`** - `docker compose down` signs every account out cleanly first.
 
-Commands: the dashboard's *Console* tab, or `docker attach nocatfarm` and type (Ctrl+P then Ctrl+Q to detach
-again). The log: `docker compose logs -f`. Plugins: uncomment the `./plugins` line.
+Commands: the dashboard's Console tab, or `docker attach nocatfarm` (Ctrl+P then Ctrl+Q to detach). Log:
+`docker compose logs -f`. Plugins: uncomment the `./plugins:/data/plugins` line.
 
-**Updating:** `git pull`, then `docker compose up -d --build`. The app doesn't update itself in Docker — the
-image is rebuilt instead.
+**Updating:** `git pull`, then `docker compose up -d --build`. It doesn't update itself in Docker.
 
 **Other CPUs:** the image builds for amd64 and arm64 from the same Dockerfile:
 `docker buildx build --platform linux/amd64,linux/arm64 -t nocatfarm .`
 
-About the image: it's built on Microsoft's ASP.NET Core runtime image (`mcr.microsoft.com/dotnet/aspnet:10.0`)
-rather than bundling its own .NET, so a rebuild picks up Microsoft's .NET security fixes and the same build runs
-on every CPU. It runs as an ordinary user, not root; the program sits read-only in `/app` and everything it
-writes goes to `/data`.
+## Plugins
 
-### Environment variables
+*For: people who write C#.*
 
-These work on any install, not only Docker. When one is set it wins at every start, and it's written into
-`config/nocatFarm.json` so the settings page shows what's really in use.
+A plugin is a DLL that adds commands and features. Plugins are off by default: put the DLL in the `plugins` folder
+next to `nocatFarm.exe`, turn on **Load plugins** (Settings → Global settings → Dashboard, under Show advanced, or
+`set PluginsEnabled true`), and restart. `plugins` and the dashboard's Plugins page list what's loaded and the
+commands they added; each plugin has its own on/off switch there.
 
-| Variable | What it sets |
-|---|---|
-| `NOCATFARM_WEB_HOST` | `WebHost`, the address the dashboard listens on. The Docker image sets `0.0.0.0`. |
-| `NOCATFARM_WEB_PORT` | `WebPort` (7242 by default). |
-| `NOCATFARM_WEB_PASSWORD` | `WebPassword`, the dashboard password. |
-| `NOCATFARM_WEB_PASSWORD_FILE` | A file to read the password from instead — how Docker secrets arrive. Wins over the one above. |
+A plugin runs inside nocat.farm, next to your Steam logins. **Only run plugins you wrote or fully trust.**
 
----
+**→ [How to write one](../PLUGINS.md)** - a working plugin in five minutes.
+
+ArchiSteamFarm plugins don't work in nocat.farm; [PLUGINS.md](../PLUGINS.md#not-supported-asf-plugins) explains why.
 
 ## Privacy and safety
 
-* **Local only.** Your accounts, passwords, login tokens and logs live on your machine and are never uploaded
-  anywhere. `run/` (config, tokens, logs) is git-ignored and is not in this repository.
-* **Passwords are optional.** Leave the password empty and you type it once at the prompt; after that a Steam
-  refresh token does the logging in — restarts need no password and no Guard code. Login tokens, a saved password
-  (if you give one, or import one from ASF), authenticator secrets and proxy passwords are encrypted on disk with
-  Windows DPAPI, tied to your Windows user — a config copied to another PC or user can't be read, and those
-  accounts simply ask for their password again. On Linux and in Docker they're encrypted with AES-256-GCM, with
-  the key in `config/state/secret.key` (readable only by your user) — see [Linux and Docker](#linux-and-docker). Drop an account's `maFile` into `config/authenticators/` as
-  `<name>.maFile` and it answers its own Steam Guard prompts.
-* **What it contacts.** Steam, and GitHub every few hours to see whether a newer release is out (`CheckForUpdates`,
-  on by default — it only tells you; `update accept` or the dashboard's *Update* button downloads it when you ask).
-  rep4rep is the only other feature that contacts anything, and it's off by default (see [rep4rep](#rep4rep)
-  above). *Claim free games* talks only to Steam.
-* **It never fights you for your account.** Launch a game yourself on one of its accounts and that account stands
-  down, then picks back up on its own after a short delay (`PauseWhenYouPlay`, on by default; `ResumeDelayMinutes`).
-  On a human-mode account no game starts until a few minutes after sign-in and several clear checks that you
-  aren't playing, whatever the settings say. And for an account you also sign into yourself, turn on *I sign into
-  this one myself* (`IUseThisAccount`) and it will not throw you off Friends & Chat. Worth knowing on such an
-  account: Steam's notifications are marked read on every sign-in (`ClearNotifications`, on by default).
-* **The dashboard is yours.** By default it only listens on this PC, and with no password set it refuses every
-  request that doesn't come from this PC even if you open it to the network. To reach it from a phone or another
-  PC, set `WebHost` to `0.0.0.0` and a `WebPassword`: five wrong passwords lock an address out for an hour, and a
-  banner warns if the password is short enough to guess. Secrets are never sent to the browser, and an empty
-  field means "leave unchanged", never "erase it".
-* **Steam's rules.** This automates your own Steam accounts; that's against Steam's Subscriber Agreement and
-  can get an account limited or banned. It's built to be gentle (human pacing, shared rate-limit cooldowns),
-  but you run it at your own risk on accounts you're willing to lose.
+*For: knowing what it does with your data.*
 
-## Notes on how it works
+- **Everything stays on your PC.** Accounts, login tokens and logs are never uploaded.
+- **Passwords are optional.** After the first sign-in a Steam login token does the work. Login tokens, saved
+  passwords, authenticator secrets and proxy passwords are encrypted on disk - on Windows tied to your Windows user,
+  on Linux and Docker with a key only your user can read.
+- **What it contacts:**
+  - **Steam** - always.
+  - **GitHub** - every few hours to check for a new version, and to download one when you say so. Turn the check off
+    with *Notify if an update is available*.
+  - **Discord, Telegram and rep4rep** - only if you set them up. The Discord profile card talks only to the Discord
+    app on your PC.
+- **The dashboard is yours.** It only listens on this PC by default. With no password it refuses anything that isn't
+  from this PC, even if you open it to the network. Secrets are never sent to the browser. An empty secret box
+  means "leave it as it is" - use its **Clear** button to erase one.
+- **It never fights you** for your account - see [Staying out of your way](#staying-out-of-your-way).
+- **Steam's rules.** Automating your accounts is against Steam's Subscriber Agreement and can get an account limited
+  or banned. nocat.farm is built to be gentle, but run it only on accounts you're willing to risk.
 
-* **Web session.** There is no "log in to the website" step. Steam accepts a cookie built locally from the
-  access token the Steam connection already handed us: `steamLoginSecure = <steamID64>||<accessToken>`, plus a
-  client-chosen `sessionid` that must also be echoed in the body of every POST. An expired token shows up as a
-  redirect to `/login` rather than an error, so that redirect is what triggers a re-mint and one retry. Trade
-  offers are read through Steam's own API with the same login token, so no Steam Web API key is ever needed.
-* **Rate limits.** Logins from one machine are serialised with a gap, and everyone shares one cooldown when
-  Steam pushes back — three accounts each waiting half an hour in series helps nobody. Requests made as an account
-  are spaced per host, and a 429 shuts that host for *every* account: the limit is per IP, so one account
-  collecting one is everybody's problem, and each further request while it stands is what keeps it alive. The
-  wait doubles from 5 minutes to 40 and resets on the next answer that works. (Public market price lookups run
-  separately, with their own spacing and their own longer backoff.)
-* **Notifications, not polling.** Card drops, profile comments, waiting trade offers and gifts all arrive as
-  pushes over the Steam connection. Trade offers and gifts are only looked at when Steam's count says something
-  is waiting (or right after a sign-in, before the count has arrived); the slow timers never open those pages
-  while the count is zero. Card farming still re-reads the badge page every `FarmingDelayMinutes` (20 by
-  default), in case a drop push went missing.
-* **Occupation.** If you sit down and launch a game, Steam says so, and — by default (`PauseWhenYouPlay`) —
-  everything that plays a game stands down, then waits `ResumeDelayMinutes` (5) after you stop before picking
-  back up. It never fights you for your own session.
-* **Security.** By default the dashboard only listens on this PC, and with no password set every request that
-  isn't from this PC is refused. Secrets are never sent to the browser and an empty field means "unchanged",
-  never "erase it".
+## FAQ
 
-Built on [SteamKit2](https://github.com/SteamRE/SteamKit). Everything else here is written from scratch for
-nocat.farm; the only thing it shares with other tools is Steam itself, and the ability to import accounts from
-ArchiSteamFarm so moving over is painless.
+**Will I get banned?** Card idlers have been used for years and bans for idling alone are rare - but it is against
+Steam's rules, so there's always some risk. Human mode makes an account look far more normal.
 
----
+**Can I still play on my account?** Yes. Start a game and that account stands down, then carries on a few minutes
+after you stop.
 
-## Building it
+**How many accounts can it run?** As many as you like. They sign in one after another so Steam doesn't mind.
 
-**Just want to run it?** Grab the latest `nocat.farm-v*.zip` from
-[Releases](https://github.com/VisaHolder/nocatfarm/releases), extract it into a folder of its own (Explorer's
-*Extract All…* makes one named after the zip), and run `nocatFarm.exe`. The release build is self-contained — no
-.NET install, nothing else to set up. To update by hand, close the app and extract the new zip over that folder;
-or let the app do it — `update accept`, or the *Update* button on the dashboard. On Linux, take the
-`_linux-x64` or `_linux-arm64` zip instead — see [Linux and Docker](#linux-and-docker).
+**Do I have to type my password every time?** No - once, or never with the QR code.
 
-To build from source instead, you need the [.NET 10 SDK](https://dotnet.microsoft.com/download). Nothing else —
-there is no npm step, no bundler, and the dashboard is plain static files.
+**Can all my accounts join my Steam group?** Yes - put its link in *Groups every account joins*. See
+[Steam groups](#steam-groups).
+
+**I don't want the nocat.farm group.** Clear *Groups every account joins* (Global settings → All accounts).
+
+**Where are my settings?** In the `config` folder next to `nocatFarm.exe`. Back it up and you've backed up
+everything.
+
+**Why don't my custom name and games-to-idle settings show?** The account is in human mode, which hides them on
+purpose. Pick its games under *Human mode → Games and how often*.
+
+**Why is a human-mode account offline?** It's asleep, on a break, or taking a day off. `human myaccount` shows its
+day, and `wake myaccount` starts it now.
+
+**Replies to commands are in English.** The dashboard, status lines and log are translated into 11 languages;
+replies to typed commands stay in English.
+
+## Building from source
+
+*For: developers.*
+
+You need the [.NET 10 SDK](https://dotnet.microsoft.com/download). No npm, no bundler - the dashboard is plain
+static files.
 
 ```
 git clone https://github.com/VisaHolder/nocatfarm.git
@@ -1014,18 +1216,9 @@ dotnet publish src/NocatFarm -c Release -o run
 run\nocatFarm.exe
 ```
 
-On Linux the same publish gives a plain console program: `dotnet publish src/NocatFarm -c Release -r linux-x64 -o run`
-(or `linux-arm64`), then `run/nocatFarm`. `tools/package-release.ps1` builds all three release zips.
+On Linux: `dotnet publish src/NocatFarm -c Release -r linux-x64 -o run` (or `linux-arm64`), then `run/nocatFarm`.
+`tools/package-release.ps1` builds all three release zips.
 
-`run/` is deliberately not in the repository — it is where your accounts, login tokens and logs end up, and
-none of that belongs in version control. The publish step creates it.
+`run/` isn't in the repository - it's where your accounts, tokens and logs end up.
 
-First run creates `config/`, shows the dashboard address in the window's status bar and log, and opens the
-dashboard in your browser, where a short setup takes you through adding (or importing) your first account. From the app window,
-click *accounts* → *+ add account*, or type `add <name> <steamLogin>` — or `add <name> qr` to sign in by scanning a
-code on the dashboard with the Steam app, with no password at all.
-
-Everything is local. Accounts never leave the machine. Two things ever talk to anyone but Steam: **rep4rep**
-(a comment-exchange site — off by default, and hidden in the dashboard until you switch it on) and the **update
-check**, which asks GitHub every few hours whether a newer release is out (`CheckForUpdates`, on by default — turn
-it off and it never asks). With both off, nothing but Steam is ever contacted.
+Built on [SteamKit2](https://github.com/SteamRE/SteamKit). Everything else is written from scratch for nocat.farm.

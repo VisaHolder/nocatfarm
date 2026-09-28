@@ -72,6 +72,12 @@ public static class Seller {
 			return new Plan([], 0, 0, "couldn't read its inventory");
 		}
 
+		// Half an inventory is worse than none. With a page missing, the cards on it don't count towards a set, so
+		// a set it could finish looks hopeless and its cards get listed as spares. Matching refuses the same way.
+		if (!inventory.Complete) {
+			return new Plan([], 0, 0, "couldn't read all of its inventory - Steam stopped part way; try again in a while");
+		}
+
 		// game -> card -> the copies held (asset ids), marketable normal cards only
 		Dictionary<uint, Dictionary<string, List<ulong>>> cards = [];
 

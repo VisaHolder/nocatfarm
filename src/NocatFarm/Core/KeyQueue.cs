@@ -25,12 +25,23 @@ public static class KeyQueue {
 		public long AddedAt { get; set; }
 		public int Tries { get; set; }
 		public long NotBefore { get; set; }   // unix seconds; 0 means "any time"
+
+		// The one account this key is for, when 'redeem <account> ...' named one. Null means whichever account can
+		// use it. A file written before this existed has no such field and reads back as null - the old behaviour.
+		public string? Account { get; set; }
 	}
 
 	private static readonly List<Entry> Pending = [];
 	private static readonly Lock Gate = new();
 	private static readonly Random Rng = new();
 	private static bool _loaded;
+
+	/// <summary>
+	/// Set when keys.json existed but could not be read. Saving then would write the in-memory queue - missing
+	/// every key in the file - over the only copy of them, so Save refuses until the next run reads it cleanly.
+	/// </summary>
+	private static bool _loadFailed;
+	private static bool _saveRefusedSaid;
 
 	/// <summary>Earliest moment the next activation may go out - jittered, so the queue doesn't tick like a clock.</summary>
 	private static DateTime _nextAllowed = DateTime.MinValue;
@@ -59,8 +70,12 @@ public static class KeyQueue {
 		}
 	}
 
-	/// <summary>Queue keys for the background worker. Duplicates are ignored rather than tried twice.</summary>
-	public static int Add(IEnumerable<string> keys) {
+	/// <summary>
+	/// Queue keys for the background worker. Duplicates are ignored rather than tried twice. With
+	/// <paramref name="account"/> they are only ever tried on that account - an activation cannot be undone, so a
+	/// key meant for one account must never land on another just because it was part of a big batch.
+	/// </summary>
+	public static int Add(IEnumerable<string> keys, string? account = null) {
 		Load();
 		int added = 0;
 
@@ -68,11 +83,20 @@ public static class KeyQueue {
 			foreach (string key in keys) {
 				string trimmed = key.Trim();
 
-				if ((trimmed.Length == 0) || Pending.Exists(e => string.Equals(e.Key, trimmed, StringComparison.OrdinalIgnoreCase))) {
+				if (trimmed.Length == 0) {
 					continue;
 				}
 
-				Pending.Add(new Entry { Key = trimmed, AddedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds() });
+				// Already queued: a named account now pins it, or the key could still go to another account.
+				if (Pending.Find(e => string.Equals(e.Key, trimmed, StringComparison.OrdinalIgnoreCase)) is { } queued) {
+					if (account != null) {
+						queued.Account = account;
+					}
+
+					continue;
+				}
+
+				Pending.Add(new Entry { Key = trimmed, AddedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(), Account = account });
 				added++;
 			}
 		}
@@ -82,13 +106,17 @@ public static class KeyQueue {
 		return added;
 	}
 
-	/// <summary>The next key that is allowed to be tried right now, or null.</summary>
-	public static string? Next() {
+	/// <summary>
+	/// The next key that is allowed to be tried right now, and the account it is for (null = any), or null.
+	/// <paramref name="usable"/> says whether a key for that account can be tried at all right now - so a key for
+	/// an account that is offline waits without holding up the keys behind it.
+	/// </summary>
+	public static (string Key, string? Account)? Next(Func<string?, bool> usable) {
 		Load();
 		long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
 		lock (Gate) {
-			return Pending.Find(e => e.NotBefore <= now)?.Key;
+			return Pending.Find(e => (e.NotBefore <= now) && usable(e.Account)) is { } next ? (next.Key, next.Account) : null;
 		}
 	}
 
@@ -131,14 +159,15 @@ public static class KeyQueue {
 	}
 
 	/// <summary>Everything still waiting, newest last, for the 'keys' command.</summary>
-	public static List<(string Key, int Tries, DateTime NotBefore)> Snapshot() {
+	public static List<(string Key, int Tries, DateTime NotBefore, string? Account)> Snapshot() {
 		Load();
 
 		lock (Gate) {
 			return [.. Pending.Select(static e => (
 				e.Key,
 				e.Tries,
-				e.NotBefore > 0 ? DateTimeOffset.FromUnixTimeSeconds(e.NotBefore).UtcDateTime : DateTime.MinValue))];
+				e.NotBefore > 0 ? DateTimeOffset.FromUnixTimeSeconds(e.NotBefore).UtcDateTime : DateTime.MinValue,
+				e.Account))];
 		}
 	}
 
@@ -176,11 +205,22 @@ public static class KeyQueue {
 				}
 			}
 		} catch (Exception e) {
-			Log.Warn(new Said("couldn't read the key queue: {0}", e.Message));
+			_loadFailed = true;
+			Log.Warn(new Said("couldn't read the key queue ({0}) - the file will not be overwritten this run", e.Message));
 		}
 	}
 
 	public static void Save() {
+		if (_loadFailed) {
+			// Said once per run, not on every key the worker touches.
+			if (!_saveRefusedSaid) {
+				_saveRefusedSaid = true;
+				Log.Warn(new Said("the key queue file couldn't be read at startup, so changes to the queue are not being saved - fix or move keys.json and restart"));
+			}
+
+			return;
+		}
+
 		try {
 			List<Entry> snapshot;
 

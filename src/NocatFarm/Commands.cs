@@ -55,25 +55,23 @@ public static partial class Commands {
 		new("grind", "<account|all> <appID> <hours> | <account> off", GroupPlaying,
 			"Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs."),
 		new("human", "[account] [week|reroll]", GroupPlaying, "What human mode is doing today, and what it played. Add 'week' to see the next seven days, or 'reroll' to throw today's plan away and roll a fresh one from the current settings."),
-		new("wake", "<account>", GroupPlaying, "Wake a sleeping human-mode account and start its day now. Bed time is unchanged."),
+		new("wake", "<account>", GroupPlaying, "Wake a sleeping human-mode account and start its day now. Bed time is unchanged.", "wakeup|skipsleep"),
 		new("name", "<account> [text|off]", GroupPlaying, "Custom non-Steam game name shown instead of the real game. No text shows the current one; 'off' clears it."),
-		new("persona", "<account> <state>", GroupPlaying, "online | offline | busy | away | snooze | invisible."),
+		new("persona", "<account> <state>", GroupPlaying, "What the account shows your friends: online | offline | busy | away | snooze | looking to trade | looking to play | invisible - or its number, 0-7. Same as the OnlineStatus setting."),
 		new("nickname", "<account> <profile name>", GroupPlaying, "Change the name everybody sees on the profile and friends list. Not the custom game name - that's 'name'."),
 
 		new("cards", "[account]", GroupCards, "What is still left to farm, and about how long it will take."),
-		new("farm", "<account> on|off", GroupCards, "Turn trading-card farming on or off."),
 
-		new("rep4rep", "status|points|profiles|tasks|on|off|now|pause|resume|clear|rest", GroupRep4Rep, "Everything rep4rep. Run it bare for a summary.", "r4r"),
+		new("rep4rep", "status|points|profiles|tasks|now|pause|resume|clear|rest", GroupRep4Rep, "Everything rep4rep. Run it bare for a summary. To switch it on or off for an account: set <account> Rep4Rep on|off.", "r4r"),
 
-		new("redeem", "[account] <key|file.txt> [key...]", GroupAccounts, "Activate product keys - or point it at a text file full of them. More than five queues itself and activates them slowly. Without an account it tries each in turn until one can use it.", "key"),
-		new("send", "<account|all>", GroupCards, "Send an account's tradable items to the account listed under Trades.", "loot"),
-		new("transfer", "<from> <to> [types]", GroupCards, "Send items from one of your accounts to another. Types as in the send setting (cards, foils, backgrounds, emoticons, boosters, gems, all); leave it off for trading cards."),
-		new("2fa", "<account>", GroupAccounts, "Show this account's Steam Guard code, if its authenticator is set up here.", "guard"),
+		new("redeem", "[account] <key|file.txt> [key...]", GroupAccounts, "Activate product keys - or point it at a text file full of them. More than five queues itself and activates them slowly. With an account, only that account ever gets them, queued ones too. Without one it tries each account in turn until one can use it."),
+		new("send", "<account|all> [to <account>] [types]", GroupCards, "Send an account's tradable items to the account listed under Trades - or 'to' another of your accounts. Types as in the send setting (cards, foils, backgrounds, emoticons, boosters, gems, all); leave them off for what the send setting says, or trading cards when sending 'to' an account.", "loot"),
+		new("2fa", "[account]", GroupAccounts, "Show this account's Steam Guard code, if its authenticator is set up here. Without an account, every account's code.", "guard"),
 		new("confirmations", "[account]", GroupAccounts, "What's waiting to be confirmed on this account, like the Steam app's list: trades, market listings, account changes - numbered for confirm and deny. Needs the account's authenticator in nocat.farm."),
 		new("confirm", "<account> <number|all>", GroupAccounts, "Confirm what 'confirmations' listed under that number, or all of it."),
 		new("deny", "<account> <number|all>", GroupAccounts, "Deny (cancel) what 'confirmations' listed under that number, or all of it."),
 		new("cheevo", "<account> <appID> [list|unlock|lock] [name|all]", GroupPlaying, "Achievements: see them, unlock them all, or put them back.", "ach|achievements"),
-		new("hunt", "[account]", GroupPlaying, "What the achievement hunter would play, in order - and what it ruled out and why.", "boost"),
+		new("hunt", "[account]", GroupPlaying, "What the achievement hunter would play, in order - and what it ruled out and why."),
 		new("levelup", "<account> <level>", GroupCards, "What reaching a Steam level would cost: the XP missing, badges it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest - priced gently in the background.", "lvlup"),
 		new("match", "[do]", GroupCards, "Swap duplicate trading cards between your own accounts so sets finish - only swaps that help both sides, never a card already on an offer. Shows what it would trade; 'match do' sends the offers, and the other account accepts them by itself."),
 		new("bans", "[account|all]", GroupAccounts, "Look up the account's bans now: VAC, game bans, a trade ban, a community ban, and which games it's banned in when Steam shows that. Read-only. It also checks by itself every few hours."),
@@ -83,12 +81,12 @@ public static partial class Commands {
 		new("value", "[account|all] [refresh]", GroupCards, "What each inventory is worth, by game, and how it has moved in the last day. Add 'refresh' to read the inventories again.", "inv|inventory"),
 
 		new("import", "asf [path] [force]", GroupSettings, "Bring accounts across from ArchiSteamFarm, login tokens and all."),
-		new("config", "[account]", GroupSettings, "Show every setting and its current value."),
+		new("config", "[account] [all]", GroupSettings, "Show the settings and their current values. Add 'all' to include the advanced ones."),
 		new("set", "[account] <key> <value>", GroupSettings, "Change a setting. Without an account name it changes a global one."),
 		new("reload", "", GroupSettings, "Re-read every config file from disk."),
 
 		new("log", "[count]", GroupOther, "The last few log lines.", "logs"),
-		new("stats", "[hours]", GroupOther, "Cards dropped and comments posted, by hour."),
+		new("stats", "[hours]", GroupOther, "Each account's last 24 hours - hours banked, cards, comments, totals - then cards dropped and comments posted, by hour."),
 		new("plugins", "", GroupOther, "Which plugins are loaded, and where they came from."),
 		new("level", "[account|all]", GroupAccounts, "Each account's Steam level."),
 		new("balance", "[account|all]", GroupAccounts, "Steam wallet balance, and anything still pending.", "wallet"),
@@ -106,7 +104,6 @@ public static partial class Commands {
 			"Which accounts already own a game, and how long each has played it. Takes an appID, a store URL, or part of a name."),
 		new("addlicense", "<account|all> <IDs>", GroupOther,
 			"Add free licences to an account's library - a subID, or a/<appID> for a free app. Only works for genuinely free licences - a paid one is refused by Steam, and it says why."),
-		new("report", "", GroupOther, "Write the daily summary - hours banked, cards, comments, totals - to the log now."),
 		new("answer", "<text>", GroupOther, "Answer whatever nocat.farm is waiting on - a Steam Guard code, or a password."),
 		new("tutorial", "[topic]", GroupOther, "Getting started, in order, ticking off what you have already done.", "guide|setup"),
 		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does.", "?|h"),
@@ -142,8 +139,10 @@ public static partial class Commands {
 		string verb = line.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.ToLowerInvariant() ?? "";
 
 		// Never let a remote command shut the whole thing down - it is one mis-sent word from taking every
-		// account offline, and there is no way to start it again from Steam.
-		if (verb is "exit" or "quit" or "q") {
+		// account offline, and there is no way to start it again from Steam. Deleting an account is the same kind
+		// of thing: it can't be undone, and Steam chat has no way to ask "are you sure". Checked by what the word
+		// REACHES, not the word itself - 'delete' is 'remove' under another name, and it used to get straight through.
+		if (Resolve(verb)?.Name is "exit" or "remove") {
 			return "that one has to be done at the PC";
 		}
 
@@ -152,6 +151,42 @@ public static partial class Commands {
 		}
 
 		return await RunAsync(mgr, line).ConfigureAwait(false);
+	}
+
+	/// <summary>The command a typed word reaches - its name or any alias - or null when it reaches none.</summary>
+	public static CommandDef? Resolve(string typed) => All.FirstOrDefault(c => c.Matches(typed));
+
+	/// <summary>
+	/// A command line as it may be written to the log: the value of a secret setting ('set new SteamPassword x')
+	/// and whatever is typed after 'answer' (a password, a Steam Guard code) are masked. Everything else is left
+	/// as typed, so what was done from a phone or a chat is still visible at the PC.
+	/// </summary>
+	public static string ForLog(string line) {
+		string[] parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+		if (parts.Length < 2) {
+			return line;
+		}
+
+		// Telegram addresses a command to a bot as /set@yourbot - the part after @ isn't the command.
+		string verb = parts[0].TrimStart('/').Split('@')[0].ToLowerInvariant();
+
+		if (Resolve(verb)?.Name == "answer") {
+			return $"{parts[0]} ***";
+		}
+
+		if ((Resolve(verb)?.Name != "set") || (parts.Length < 3)) {
+			return line;
+		}
+
+		// 'set <key> <value>' or 'set <account> <key> <value>' - whichever word names a secret, what follows it goes.
+		for (int i = 1; i < Math.Min(3, parts.Length - 1); i++) {
+			if (Settings.Find(parts[i]) is { Kind: SettingKind.Secret }) {
+				return string.Join(' ', parts[..(i + 1)]) + " ***";
+			}
+		}
+
+		return line;
 	}
 
 	/// <summary>Commands where a bare verb sensibly means "this account", rather than "all of them".</summary>
@@ -226,8 +261,7 @@ public static partial class Commands {
 			return cmd switch {
 				"help" or "?" or "h" => Help(rest),
 				"tutorial" or "guide" or "setup" => Tutorial.Render(mgr, rest.FirstOrDefault()),
-				"status" or "s" => Status(mgr, rest.FirstOrDefault()),
-				"bots" => Status(mgr, null),
+				"status" or "s" or "bots" => Status(mgr, rest.FirstOrDefault()),
 				"start" => await LifecycleAsync(mgr, rest, "start").ConfigureAwait(false),
 				"stop" => await LifecycleAsync(mgr, rest, "stop", graceful: true).ConfigureAwait(false),
 				"pause" => await LifecycleAsync(mgr, rest, "pause").ConfigureAwait(false),
@@ -244,14 +278,14 @@ public static partial class Commands {
 				"selfcheck" or "tells" => await SelfCheckAsync(mgr, rest).ConfigureAwait(false),
 				"human" => Human(mgr, rest),
 				"wake" or "wakeup" or "skipsleep" => Wake(mgr, rest),
-				"redeem" or "key" => await RedeemAsync(mgr, rest).ConfigureAwait(false),
+				"redeem" => await RedeemAsync(mgr, rest).ConfigureAwait(false),
 				"send" or "loot" => await SendAsync(mgr, rest).ConfigureAwait(false),
 				"2fa" or "guard" => TwoFactor(mgr, rest),
 				"confirmations" => await ConfirmationsAsync(mgr, rest).ConfigureAwait(false),
 				"confirm" => await AnswerConfirmationsAsync(mgr, rest, true).ConfigureAwait(false),
 				"deny" => await AnswerConfirmationsAsync(mgr, rest, false).ConfigureAwait(false),
 				"cheevo" or "ach" or "achievements" => await CheevoAsync(mgr, rest).ConfigureAwait(false),
-				"hunt" or "boost" => await HuntAsync(mgr, rest).ConfigureAwait(false),
+				"hunt" => await HuntAsync(mgr, rest).ConfigureAwait(false),
 				"value" or "inv" or "inventory" => InventoryText(mgr, rest),
 				"keys" => KeysText(rest),
 				"match" => await MatchAsync(mgr, rest).ConfigureAwait(false),
@@ -269,8 +303,6 @@ public static partial class Commands {
 				"privacy" => await PrivacyAsync(mgr, rest).ConfigureAwait(false),
 				"joingroup" => await JoinGroupAsync(mgr, rest).ConfigureAwait(false),
 				"notify" => await NotifyAsync(rest).ConfigureAwait(false),
-				"transfer" => await TransferAsync(mgr, rest).ConfigureAwait(false),
-				"farm" => Farm(mgr, rest),
 				"cards" => Cards(mgr, rest),
 				"rep4rep" or "r4r" => await Rep4RepAsync(mgr, rest).ConfigureAwait(false),
 				"add" => await AddAsync(mgr, rest).ConfigureAwait(false),
@@ -283,7 +315,6 @@ public static partial class Commands {
 				"reload" => await ReloadAsync(mgr).ConfigureAwait(false),
 				"log" or "logs" => Logs(rest),
 				"stats" => StatsText(rest),
-				"report" => DailyReport.RunNow(),
 				"answer" => Prompt.Answer(string.Join(' ', rest)) ? "answered" : "nothing is waiting for an answer",
 				"theme" or "dark" or "light" => Theme(cmd, rest),
 				"version" or "about" => About(),
@@ -790,11 +821,14 @@ public static partial class Commands {
 		}
 
 		List<Task> stops = [];
+		int disabled = 0;
 
 		foreach (Bot bot in targets.ToArray()) {
 			switch (verb) {
 				case "start":
 					if (!bot.Cfg.Enabled) {
+						disabled++;
+
 						continue;
 					}
 
@@ -835,7 +869,13 @@ public static partial class Commands {
 			_ => verb
 		};
 
-		return all ? $"{what}: {count} account(s)" : $"{args[0]}: {what}";
+		// A disabled account is skipped, and the reply has to say so - "signing in" about an account that never
+		// will left people waiting on it.
+		if (!all && (disabled > 0)) {
+			return $"{args[0]} is disabled, so it won't sign in. 'enable {args[0]}' lets it sign in again.";
+		}
+
+		return all ? $"{what}: {count} account(s)" + (disabled > 0 ? $" ({disabled} disabled, left alone)" : "") : $"{args[0]}: {what}";
 	}
 
 	private static async Task<string> RestartAsync(BotManager mgr, string[] args) {
@@ -1076,6 +1116,13 @@ public static partial class Commands {
 		Bot? only = mgr.Get(args[0]);
 		string[] keys = only == null ? args : args[1..];
 
+		// A first word that is neither an account nor a key nor a file is a mistyped account - "redeem kylr0 KEY".
+		// Carrying on treated it as a bad key and then walked the REAL key across every account, and an activation
+		// on the wrong account can't be undone. So it stops here and says so.
+		if ((only == null) && !Redeeming.LooksLikeKey(args[0]) && !LooksLikePath(args[0])) {
+			return $"There's no account called '{args[0]}', and it isn't a key either - nothing was activated. 'status' lists the accounts.";
+		}
+
 		// Point it at a text file and it reads the keys out of it.
 		//
 		// A batch of keys arrives as a file far more often than as something anybody would type, and pasting two
@@ -1122,9 +1169,10 @@ public static partial class Commands {
 		const int StraightAway = 5;
 
 		if (keys.Length > StraightAway) {
-			int queued = KeyQueue.Add(keys);
+			// The named account goes on every key, so the queue tries them there and nowhere else.
+			int queued = KeyQueue.Add(keys, only?.Name);
 
-			return $"{queued} key(s) queued - they'll be activated a few at a time, because Steam limits how many "
+			return $"{queued} key(s) queued{(only != null ? $" for {only.Name}" : "")} - they'll be activated a few at a time, because Steam limits how many "
 				+ $"an account may try per hour. 'keys' shows what's left.{(queued < keys.Length ? $" ({keys.Length - queued} were already in the queue.)" : "")}";
 		}
 
@@ -1256,7 +1304,7 @@ public static partial class Commands {
 			return had == 0 ? "The queue was already empty." : $"Dropped {had} queued key(s).";
 		}
 
-		List<(string Key, int Tries, DateTime NotBefore)> pending = KeyQueue.Snapshot();
+		List<(string Key, int Tries, DateTime NotBefore, string? Account)> pending = KeyQueue.Snapshot();
 
 		if (pending.Count == 0) {
 			return "No keys are waiting. Paste more than five at once and they'll queue automatically.";
@@ -1264,10 +1312,10 @@ public static partial class Commands {
 
 		List<string> lines = [$"{pending.Count} key(s) waiting:"];
 
-		foreach ((string key, int tries, DateTime notBefore) in pending.Take(15)) {
+		foreach ((string key, int tries, DateTime notBefore, string? account) in pending.Take(15)) {
 			string when = notBefore > DateTime.UtcNow ? $"not before {notBefore.ToLocalTime():HH:mm}" : "ready";
 
-			lines.Add($"   {Mask(key),-24} {when}{(tries > 0 ? $"   {tries} try/tries so far" : "")}");
+			lines.Add($"   {Mask(key),-24} {(account != null ? $"for {account,-12} " : "")}{when}{(tries > 0 ? $"   {tries} try/tries so far" : "")}");
 		}
 
 		if (pending.Count > 15) {
@@ -1280,26 +1328,64 @@ public static partial class Commands {
 	/// <summary>A key is worth money - show enough to recognise it, not enough to use it over somebody's shoulder.</summary>
 	private static string Mask(string key) => key.Length <= 5 ? key : key[..5] + new string('-', Math.Min(12, key.Length - 5));
 
-	/// <summary>Send an account's items to its trade master. Never anywhere else - see Looting for why.</summary>
+	/// <summary>
+	/// Send an account's items to its trade master, or 'to' another of your own accounts. Never anywhere else -
+	/// see Looting for why. This used to be two commands, 'send' and 'transfer', that did the same thing with a
+	/// different recipient.
+	/// </summary>
 	private static async Task<string> SendAsync(BotManager mgr, string[] args) {
 		string target = args.FirstOrDefault() ?? "";
 
 		if (target.Length == 0) {
-			return "send <account>, or send all.";
+			return "send <account|all> [to <account>] [types]";
 		}
 
-		List<Bot> bots = target.Equals("all", StringComparison.OrdinalIgnoreCase)
-			? mgr.All.Where(static b => b.IsOnline).ToList()
+		bool all = target.Equals("all", StringComparison.OrdinalIgnoreCase);
+		string[] more = args[1..];
+		Bot? to = null;
+
+		if ((more.Length > 0) && more[0].Equals("to", StringComparison.OrdinalIgnoreCase)) {
+			if (more.Length < 2) {
+				return "send <account|all> to <account> [types]";
+			}
+
+			if (mgr.Get(more[1]) is not { } recipient) {
+				return NoSuchAccount(mgr, more[1]);
+			}
+
+			if (recipient.SteamId == 0) {
+				return $"{recipient.Name} hasn't signed in yet this run, so its Steam ID isn't known - start it first.";
+			}
+
+			to = recipient;
+			more = more[2..];
+		} else if ((more.Length > 0) && (mgr.Get(more[0]) is { } named)) {
+			// The old 'transfer <from> <to>' shape. Taking the account name as an item type would send the wrong
+			// things to the wrong place, so it asks instead.
+			return $"To send to {named.Name}, put 'to' in front of it:  send {target} to {named.Name}";
+		}
+
+		// Leave the types off and the account's own send setting decides - or trading cards, going 'to' an account.
+		string? types = more.Length > 0 ? string.Join(',', more) : null;
+
+		List<Bot> bots = all
+			? mgr.All.Where(b => b.IsOnline && (b != to)).ToList()
 			: mgr.Get(target) is { } one ? [one] : [];
 
 		if (bots.Count == 0) {
-			return target.Equals("all", StringComparison.OrdinalIgnoreCase) ? "No account is logged in." : NoSuchAccount(mgr, target);
+			return all ? "No account is logged in." : NoSuchAccount(mgr, target);
+		}
+
+		if (!all && (bots[0] == to)) {
+			return "That's the same account both ways.";
 		}
 
 		List<string> lines = [];
 
 		foreach (Bot bot in bots) {
-			lines.Add(await Looting.SendToMasterAsync(bot).ConfigureAwait(false));
+			lines.Add(to != null
+				? await Looting.SendItemsAsync(bot, to.SteamId, null, types ?? "").ConfigureAwait(false)
+				: await Looting.SendToMasterAsync(bot, types).ConfigureAwait(false));
 		}
 
 		return string.Join(Environment.NewLine, lines);
@@ -1770,7 +1856,7 @@ public static partial class Commands {
 				string hold = o.HoldUntil is { } until ? $", hold until {until.ToLocalTime():d MMM HH:mm}" : "";
 
 				// Offers it received get their short number - the one 'trade accept' and the announcements use.
-				string num = !o.Ours && (o.State == TradeOffers.Active) && (BotManager.ModuleOf<Trading>(bot) is { } tr) ? $"[{tr.NumberOf(o.Id)}]" : "   ";
+				string num = !o.Ours && (o.State == TradeOffers.Active) && !o.AwaitingConfirmation && (BotManager.ModuleOf<Trading>(bot) is { } tr) ? $"[{tr.NumberOf(o.Id)}]" : "   ";
 				lines.Add($"  {num} #{o.Id}  {(o.Ours ? "sent to" : "from")} {who}  {o.Describe}  {state}{hold}");
 			}
 
@@ -2086,7 +2172,7 @@ public static partial class Commands {
 
 	private static string Persona(BotManager mgr, string[] args) {
 		if (args.Length < 2) {
-			return "persona <account> online|offline|busy|away|snooze|invisible";
+			return "persona <account> online|offline|busy|away|snooze|looking to trade|looking to play|invisible (or 0-7)";
 		}
 
 		Bot? bot = mgr.Get(args[0]);
@@ -2096,7 +2182,9 @@ public static partial class Commands {
 		}
 
 		SettingDef def = Settings.FindBot("OnlineStatus")!;
-		string? error = Settings.Apply(bot.Cfg, def, args[1]);
+
+		// Everything after the account: "looking to trade" is three words, and only the first used to reach here.
+		string? error = Settings.Apply(bot.Cfg, def, string.Join(' ', args[1..]));
 
 		if (error != null) {
 			return error;
@@ -2118,7 +2206,7 @@ public static partial class Commands {
 		List<string> sent = [.. Enum.GetValues<Topic>().Where(Notifier.Wanted).Select(static t => t.ToString())];
 
 		return $"Discord: {(g.DiscordWebhookUrl.Length > 0 ? "set up" : "not set up")}"
-			+ Environment.NewLine + $"Telegram: {(g.TelegramBotToken.Length == 0 ? "not set up" : g.TelegramChatId.Length == 0 ? "bot set - send it a message on Telegram to connect" : "connected")}"
+			+ Environment.NewLine + $"Telegram: {(g.TelegramBotToken.Length == 0 ? "not set up" : g.TelegramChatId.Length == 0 ? "bot set - press Connect Telegram in Settings, Notifications to link it" : "connected")}"
 			+ Environment.NewLine + $"Sends: {(sent.Count > 0 ? string.Join(", ", sent) : "nothing")}"
 			+ Environment.NewLine + "'notify test' sends a test message now. Set it up under Settings, Notifications.";
 	}
@@ -2409,6 +2497,12 @@ public static partial class Commands {
 	}
 
 	private static async Task<string> BoosterAsync(BotManager mgr, string[] args) {
+		// "booster all 730" used to list every account and quietly drop the appIDs - so it looked like it had
+		// done something it never tried. Packs cost gems per account, so making them is one account at a time.
+		if ((args.Length > 1) && args[0].Equals("all", StringComparison.OrdinalIgnoreCase)) {
+			return "Booster packs are made one account at a time:  booster <account> <appIDs>. 'booster all' on its own lists every account's gems and games.";
+		}
+
 		// booster <account> <appIDs> - make them now
 		if ((args.Length > 1) && (mgr.Get(args[0]) is { } maker)) {
 			if (!maker.IsOnline || !maker.Web.Ready) {
@@ -2585,53 +2679,6 @@ public static partial class Commands {
 		return saved == next ? $"{bot.Name}: {Show(saved)}" : $"{bot.Name}: sent, but Steam now shows {(saved == null ? "nothing readable" : Show(saved))}";
 	}
 
-	private static async Task<string> TransferAsync(BotManager mgr, string[] args) {
-		if (args.Length < 2) {
-			return "transfer <from> <to> [types]";
-		}
-
-		if (mgr.Get(args[0]) is not { } from) {
-			return NoSuchAccount(mgr, args[0]);
-		}
-
-		if (mgr.Get(args[1]) is not { } to) {
-			return NoSuchAccount(mgr, args[1]);
-		}
-
-		if (from == to) {
-			return "That's the same account both ways.";
-		}
-
-		if (to.SteamId == 0) {
-			return $"{to.Name} hasn't signed in yet this run, so its Steam ID isn't known - start it first.";
-		}
-
-		string types = args.Length > 2 ? string.Join(',', args[2..]) : "";
-
-		return await Looting.SendItemsAsync(from, to.SteamId, null, types).ConfigureAwait(false);
-	}
-
-	private static string Farm(BotManager mgr, string[] args) {
-		if (args.Length < 2) {
-			return "farm <account> on|off";
-		}
-
-		Bot? bot = mgr.Get(args[0]);
-
-		if (bot == null) {
-			return NoSuchAccount(mgr, args[0]);
-		}
-
-		bool on = Settings.IsTrue(args[1]);
-		bot.Cfg.FarmCards = on;
-		ConfigStore.SaveBot(bot.Name, bot.Cfg);
-
-		// The farmer's loop stays alive while it is off, so both directions take effect on its next pass - a
-		// minute at most. The old message promised a restart was needed, which stopped being true when the loop
-		// was made to survive being switched off.
-		return $"{bot.Name}: card farming {(on ? "on" : "off")}";
-	}
-
 	private static string Cards(BotManager mgr, string[] args) {
 		IEnumerable<Bot> bots;
 
@@ -2780,33 +2827,49 @@ public static partial class Commands {
 
 		// Fan a per-account action out over every account with one word.
 		if ((who != null) && who.Equals("all", StringComparison.OrdinalIgnoreCase)
-			&& sub is "rest" or "clear" or "pause" or "resume" or "now" or "on" or "off") {
+			&& sub is "rest" or "clear" or "pause" or "resume" or "now") {
 			int n = 0;
 
 			foreach (Bot b in mgr.All) {
 				Rep4RepModule? mm = BotManager.ModuleOf<Rep4RepModule>(b);
 
-				if (mm == null) {
+				// Only accounts that comment at all - resting one with rep4rep off would block it for a day the
+				// moment it was switched on.
+				if ((mm == null) || !b.Cfg.Rep4Rep) {
 					continue;
 				}
 
+				// Counted only where it actually happened - clear and rest do nothing on an account whose rep4rep
+				// state never loaded, and counting those anyway was a lie.
+				bool did = true;
+
 				switch (sub) {
-					case "rest": await mm.RestFullDayAsync("manual reset").ConfigureAwait(false); break;
-					case "clear": await mm.ClearHoldAsync().ConfigureAwait(false); break;
+					case "rest": did = await mm.RestFullDayAsync("manual reset").ConfigureAwait(false); break;
+					case "clear": did = await mm.ClearHoldAsync().ConfigureAwait(false); break;
 					case "pause": mm.Paused = true; break;
 					case "resume": mm.Paused = false; break;
 					case "now": mm.RunNow(); break;
-					case "on": case "off": b.Cfg.Rep4Rep = sub == "on"; ConfigStore.SaveBot(b.Name, b.Cfg); if (sub == "on") await mm.StartAsync().ConfigureAwait(false); break;
 				}
 
-				n++;
+				if (did) {
+					n++;
+				}
 			}
 
 			return $"rep4rep {sub}: {n} account(s)";
 		}
 
+		// A word that isn't one of these is a typo, not a subcommand waiting for an account - answering
+		// "rep4rep typo <account>" presented the typo as if it were real.
+		const string Usage = "rep4rep status | points | profiles | tasks <account> | now/pause/resume/clear/rest <account|all>\n"
+			+ "  to switch it on or off for an account:  set <account> Rep4Rep on|off";
+
+		if (sub is not ("now" or "pause" or "resume" or "clear" or "rest")) {
+			return Usage;
+		}
+
 		if (who == null) {
-			return $"rep4rep {sub} <account>";
+			return $"rep4rep {sub} <account|all>";
 		}
 
 		Bot? target = mgr.Get(who);
@@ -2818,18 +2881,6 @@ public static partial class Commands {
 		Rep4RepModule? mod = BotManager.ModuleOf<Rep4RepModule>(target);
 
 		switch (sub) {
-			case "on":
-			case "off":
-				target.Cfg.Rep4Rep = sub == "on";
-				ConfigStore.SaveBot(target.Name, target.Cfg);
-
-				// Only ever START. The module's loop stays alive and reads the flag itself, so stopping it here
-				// would kill the very loop that has to notice the flag being turned back on later.
-				if (mod != null && sub == "on") {
-					await mod.StartAsync().ConfigureAwait(false);
-				}
-
-				return $"{target.Name}: rep4rep {sub}";
 			case "now":
 				mod?.RunNow();
 
@@ -2851,19 +2902,15 @@ public static partial class Commands {
 
 				return $"{target.Name}: rep4rep resumed";
 			case "clear":
-				if (mod != null) {
-					await mod.ClearHoldAsync().ConfigureAwait(false);
-				}
-
-				return $"{target.Name}: hold cleared, refused profiles forgotten";
+				return (mod != null) && await mod.ClearHoldAsync().ConfigureAwait(false)
+					? $"{target.Name}: hold cleared, refused profiles forgotten"
+					: $"{target.Name}: nothing to clear - rep4rep isn't running on this account";
 			case "rest":
-				if (mod != null) {
-					await mod.RestFullDayAsync("manual reset").ConfigureAwait(false);
-				}
-
-				return $"{target.Name}: rep4rep resting a full day, back at baseline after";
+				return (mod != null) && await mod.RestFullDayAsync("manual reset").ConfigureAwait(false)
+					? $"{target.Name}: rep4rep resting a full day, back at baseline after"
+					: $"{target.Name}: rep4rep isn't running on this account, so there's nothing to rest";
 			default:
-				return "rep4rep status | points | profiles | tasks <account> | on/off/now/pause/resume/clear/rest <account|all>";
+				return Usage;
 		}
 	}
 
@@ -3002,7 +3049,7 @@ public static partial class Commands {
 		ApplyGlobalSideEffects(mgr, globalDef);
 
 		return $"{globalDef.Name} = {Settings.Show(mgr.Global, globalDef)}"
-			+ (globalDef.NeedsRestart ? "   (applies after a restart)" : "");
+			+ (globalDef.NeedsRestart && (globalDef.Name != "WebPassword") ? "   (applies after a restart)" : "");
 	}
 
 	/// <summary>Make a changed setting take effect now, where it can.</summary>
@@ -3024,6 +3071,14 @@ public static partial class Commands {
 			case "OnlineStatus":
 			case "GameDevice":
 				bot.ApplyPersona();
+
+				break;
+			// Only ever START. The module's loop stays alive while it is off and reads the flag itself, so stopping
+			// it here would kill the very loop that has to notice the flag being turned back on later.
+			case "Rep4Rep":
+				if (bot.Cfg.Rep4Rep && bot.IsOnline) {
+					_ = BotManager.ModuleOf<Rep4RepModule>(bot)?.StartAsync();
+				}
 
 				break;
 			// A gift left for the owner while its switch was off is taken once the switch is on - now, not at the
@@ -3048,6 +3103,11 @@ public static partial class Commands {
 
 	public static void ApplyGlobalSideEffects(BotManager mgr, SettingDef def) {
 		switch (def.Name) {
+			case "WebPassword":
+				// Live straight away, like the dashboard's own save: old sessions end, the new password is needed.
+				Web.WebHost.Current?.SignOutAll();
+
+				break;
 			case "MiniOnTop":
 				if (OperatingSystem.IsWindows()) {
 					Window?.RefreshOnTop();
@@ -3193,11 +3253,19 @@ public static partial class Commands {
 		List<(DateTime Hour, int Cards, int Comments)> buckets = Stats.ByHour(hours);
 		(int cards, int comments) = Stats.Totals(hours);
 
-		if (cards + comments == 0) {
-			return $"Nothing earned in the last {hours}h yet.";
+		// Each account's last day first - the daily report's table, which used to need a command of its own.
+		string summary = DailyReport.Summary();
+		StringBuilder sb = new();
+
+		if (summary.Length > 0) {
+			sb.AppendLine(summary);
+			sb.AppendLine();
 		}
 
-		StringBuilder sb = new();
+		if (cards + comments == 0) {
+			return sb.Append($"Nothing earned in the last {hours}h yet.").ToString();
+		}
+
 		sb.AppendLine($"Last {hours}h:  {cards} card(s)   {comments} comment(s)");
 		int peak = Math.Max(1, buckets.Max(static b => b.Cards + b.Comments));
 

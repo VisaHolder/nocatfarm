@@ -175,7 +175,7 @@ public static class Tutorial {
 			"  set <name> AcceptFromMasters true     let those take items",
 			"  send <name>                           sweep this account's cards to the first master",
 			"  set <name> SendEveryHours 24          ...or do that by itself once a day",
-			"  transfer <from> <to> [types]          send items between any two of your accounts",
+			"  send <name> to <other> [types]        send items to any of your other accounts",
 			"  set <name> TradeDelayMaxMinutes 30    each offer waits 2-30 minutes, most often nearer 2",
 			"",
 			"A donation is an offer where you give up nothing at all, so accepting one can never cost the account",

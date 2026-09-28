@@ -28,9 +28,6 @@ public readonly record struct BotStatus(
 	/// <summary>True when the account is actually running a game right now, as opposed to asleep or resting.</summary>
 	public bool AtTheKeyboard { get; private init; }
 
-	/// <summary>Total minutes this account has ever spent with a game running.</summary>
-	public int LifetimeMinutes { get; private init; }
-
 	public static BotStatus Of(Bot bot) {
 		if (!bot.IsOnline) {
 			return new BotStatus(new Said(bot.StatusText), default, default, default, "", default, 0, 0, 0, 0);
@@ -133,8 +130,7 @@ public readonly record struct BotStatus(
 		string said = (comments != null) && bot.Cfg.Rep4Rep ? $"{comments.PostsToday}/{comments.Cap}" : "";
 
 		return new BotStatus(doing, persona, sitting, today, said, warning, done, total, dayDone, dayTotal) {
-			AtTheKeyboard = playing,
-			LifetimeMinutes = Lifetime.For(bot.Name)
+			AtTheKeyboard = playing
 		};
 	}
 

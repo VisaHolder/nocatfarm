@@ -70,8 +70,6 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 	public override string Name => "free games";
 	public override string Status => _status;
 
-	public int ClaimedThisRun => _claimed;
-
 	private string StatePath => Path.Combine(Config.ConfigStore.ConfigDir, "state", $"freegames-{Bot.Name}.json");
 
 	/// <summary>What has been decided, kept across restarts.</summary>
@@ -157,8 +155,9 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				continue;
 			}
 
-			// Nobody sees a game being added, so any time of day - just not the moment it signs in.
-			_gate ??= HumanGate.Quiet(Bot);
+			// A game added shows in the account's recent activity with the time, so a human-mode account claims in its
+			// own day - not in the small hours while it's asleep.
+			_gate ??= HumanGate.OwnDay(Bot);
 
 			if (!_gate.Open) {
 				if (!await Sleep(TimeSpan.FromMinutes(2), ct).ConfigureAwait(false)) {

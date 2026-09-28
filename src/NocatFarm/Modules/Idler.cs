@@ -73,6 +73,17 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 
 	/// <summary>Re-send what this account should be playing, unless something with a stronger claim owns it.</summary>
 	public void Assert() {
+		// Human mode runs its own grinds, after the owner-safety wait at logon. Playing the grind game from here
+		// skipped that wait: a reconnect mid-grind put the game on seconds after logon, over the owner if he had
+		// sat down in the meantime.
+		if (Bot.HumanOwned || Bot.Cfg.LegitMode) {
+			return;
+		}
+
+		if (!Bot.CanPlay) {
+			return;
+		}
+
 		if (Bot.Grinding) {
 			if (DateTime.UtcNow < Bot.GrindStartsAt) {
 				return;   // grind is queued but not started - let whatever's playing keep running (legit switch-over)
@@ -86,14 +97,6 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 
 		if (Bot.IsFarming) {
 			return;   // the card farmer decides what plays while it is working
-		}
-
-		if (Bot.HumanOwned) {
-			return;   // human mode is running the day - it decides what plays and when
-		}
-
-		if (!Bot.CanPlay) {
-			return;
 		}
 
 		// "Never touch these" has to mean never, not just never farm - the card farmer honoured the blacklist

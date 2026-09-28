@@ -304,7 +304,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 	/// <summary>Run a console command sent by Steam message and send the answer straight back.</summary>
 	private async Task RunCommandAsync(ulong from, string command, DateTime received) {
 		try {
-			Log.Info(new Said("command from {0}: {1}", from, command), Bot.Name);
+			Log.Info(new Said("command from {0}: {1}", from, Commands.ForLog(command)), Bot.Name);   // a secret typed in chat stays out of the log
 			string answer = await Commands.RunAsync(command, Bot.Name).ConfigureAwait(false);
 
 			if (string.IsNullOrWhiteSpace(answer)) {

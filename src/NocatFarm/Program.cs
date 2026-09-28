@@ -76,10 +76,35 @@ try {
 bool wantWindow = OperatingSystem.IsWindows() && !forceNoGui;
 
 if (!wantWindow && OperatingSystem.IsWindows()) {
-	NativeConsole.Attach();
+	NativeConsole.Attach(interactive: true);
 }
 
-ConfigStore.UseRoot(root);
+try {
+	ConfigStore.UseRoot(root);
+} catch (Exception e) when (e is UnauthorizedAccessException or IOException) {
+	// Extracted somewhere Windows won't let a program write, like Program Files. A windowed exe has nowhere to say
+	// that yet, so a double-click used to do nothing at all.
+	if (OperatingSystem.IsWindows()) {
+		NativeConsole.Attach();
+	}
+
+	Console.WriteLine();
+	Console.WriteLine($"  nocat.farm can't write its settings next to itself: {e.Message}");
+	Console.WriteLine("  Move the folder somewhere you can write to - Desktop, Documents or its own folder on another drive.");
+	Console.WriteLine();
+	await Task.Delay(8000).ConfigureAwait(false);
+
+	return 1;
+}
+
+// A crash on any thread lands in the log, not nowhere. Only the ones that end the process get here.
+AppDomain.CurrentDomain.UnhandledException += static (_, e) => {
+	try {
+		File.AppendAllText(Path.Combine(ConfigStore.Root, "logs", "crash.log"), $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {e.ExceptionObject}{Environment.NewLine}");
+	} catch {
+		// nothing more can be done from here
+	}
+};
 
 // One instance per config folder. Two copies running the same accounts share a Steam login ID, so they take
 // turns kicking each other off - and they put two icons in the tray, which is how you notice.
@@ -120,7 +145,8 @@ Commands.Host = manager;   // so a command sent by Steam message can reach the s
 await manager.SyncFromDiskAsync().ConfigureAwait(false);
 
 // Keep the registry entry in step with the setting, in case the exe moved since it was last written.
-if (OperatingSystem.IsWindows() && (global.StartWithWindows != WindowsIntegration.StartsWithWindows())) {
+if (OperatingSystem.IsWindows() && ((global.StartWithWindows != WindowsIntegration.StartsWithWindows())
+	|| (global.StartWithWindows && !WindowsIntegration.StartupPointsHere()))) {
 	WindowsIntegration.SetStartWithWindows(global.StartWithWindows);
 }
 
@@ -201,7 +227,7 @@ if (wantWindow && OperatingSystem.IsWindows()) {
 
 		// There is no console to fall back into - the exe is windowed - so make one, or the app is invisible.
 		if (OperatingSystem.IsWindows()) {
-			NativeConsole.Attach();
+			NativeConsole.Attach(interactive: true);
 		}
 	};
 

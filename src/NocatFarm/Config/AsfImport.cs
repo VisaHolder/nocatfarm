@@ -198,9 +198,20 @@ public static class AsfImport {
 		BotConfig bot = new() {
 			Enabled = Bool(cfg, "Enabled") ?? true,
 			SteamLogin = Str(cfg, "SteamLogin") ?? name,
-			SteamPassword = Str(cfg, "SteamPassword") ?? "",
 			SteamParentalCode = Str(cfg, "SteamParentalCode") ?? ""
 		};
+
+		// Only a plain-text password is a password. With PasswordFormat set, ASF stored it encrypted (AES with its own
+		// key, or Windows protection for its own user), and copying that across made nocat.farm sign in with the
+		// scrambled text - a failed logon that counts against the account. Left empty, the login token that usually
+		// comes across with it signs in, and failing that the password is asked for once.
+		int format = Int(cfg, "PasswordFormat") ?? 0;
+
+		if (format == 0) {
+			bot.SteamPassword = Str(cfg, "SteamPassword") ?? "";
+		} else if (!string.IsNullOrEmpty(Str(cfg, "SteamPassword"))) {
+			notes.Add($"{name}: its ASF password is stored encrypted, so it wasn't copied - the login token signs in, or it asks for the password once");
+		}
 
 		// ASF writes "{0}" here as a template placeholder, which is not a device name.
 		string? machine = Str(cfg, "MachineName");

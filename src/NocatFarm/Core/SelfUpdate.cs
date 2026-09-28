@@ -52,7 +52,7 @@ public static class SelfUpdate {
 	/// </summary>
 	public static Said ByHand(string? tag) {
 		if (Platform.InContainer) {
-			return new Said("nocat.farm doesn't update itself inside Docker - pull the new image and recreate the container (docker compose pull, then docker compose up -d). config/ and logs/ are kept");
+			return new Said("nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept");
 		}
 
 		return new Said("nocat.farm only updates itself on Windows - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again", ReleaseZipName(tag), ReleasesPage);
@@ -321,7 +321,11 @@ public static class SelfUpdate {
 				int lastTenth = 0;
 				int read;
 
-				while ((read = await from.ReadAsync(buffer, ct).ConfigureAwait(false)) > 0) {
+				// A connection that dies without closing sends nothing, ever - and the read waited for ever with it,
+				// the update stuck "busy" until a restart. Each read gets a minute; the clock restarts on every one.
+				using CancellationTokenSource stall = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+				while ((read = await ReadWithin(from, buffer, stall).ConfigureAwait(false)) > 0) {
 					await to.WriteAsync(buffer.AsMemory(0, read), ct).ConfigureAwait(false);
 					done += read;
 
@@ -345,7 +349,9 @@ public static class SelfUpdate {
 					}
 				}
 			}
-			} catch (Exception e) when (e is HttpRequestException or IOException or TaskCanceledException && !ct.IsCancellationRequested) {
+			} catch (OperationCanceledException) when (!ct.IsCancellationRequested) {
+				return Fail(new Said("update failed: the download stalled - nothing arrived for a minute or more. Check the connection and try again. Nothing was changed"));
+			} catch (Exception e) when (e is HttpRequestException or IOException && !ct.IsCancellationRequested) {
 				return Fail(new Said("update failed: the download broke off ({0}) - check the connection and try again. Nothing was changed", e.Message));
 			}
 
@@ -395,8 +401,26 @@ public static class SelfUpdate {
 
 			string here = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
 			string script = Path.Combine(work, "swap.cmd");
+			string backup = Path.Combine(work, "backup");
 
-			await File.WriteAllTextAsync(script, SwapScript(Environment.ProcessId, payload, here, work, SwapFailedPath), ct).ConfigureAwait(false);
+			// The safety copy: only the files the update is about to replace. Copying the whole install folder
+			// meant, for somebody who unpacked the zip into Downloads, copying all of Downloads. Done here rather
+			// than in the script, so a copy that can't be made stops the update while nothing has changed yet.
+			try {
+				foreach (string file in Directory.EnumerateFiles(payload, "*", SearchOption.AllDirectories)) {
+					string rel = Path.GetRelativePath(payload, file);
+					string current = Path.Combine(here, rel);
+
+					if (File.Exists(current)) {
+						Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(backup, rel))!);
+						File.Copy(current, Path.Combine(backup, rel), true);
+					}
+				}
+			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+				return Fail(new Said("update failed: couldn't make a safety copy of the current version ({0}). Nothing was changed", e.Message));
+			}
+
+			await File.WriteAllTextAsync(script, SwapScript(Environment.ProcessId), ct).ConfigureAwait(false);
 
 			await SignOutOneByOneAsync(tag, ct).ConfigureAwait(false);
 
@@ -404,13 +428,25 @@ public static class SelfUpdate {
 			Log.Good(new Said("update: all accounts signed out - restarting into {0} now, back in a few seconds", tag));
 
 			// Detached, and in its own window-less shell, so killing this process doesn't take it with us.
-			Process.Start(new ProcessStartInfo {
+			//
+			// The folders and the way it was started go in as environment variables, not written into the script.
+			// cmd.exe reads a script in the old OEM code page, so a user folder like "José" came out as garbage and
+			// the copy and the restart both missed; a "%" in a path was worse. A variable arrives exactly as it is.
+			ProcessStartInfo swap = new() {
 				FileName = "cmd.exe",
 				Arguments = $"/c \"{script}\"",
 				UseShellExecute = false,
 				CreateNoWindow = true,
 				WorkingDirectory = Path.GetTempPath()
-			});
+			};
+
+			swap.Environment["NF_HERE"] = here;
+			swap.Environment["NF_WORK"] = work;
+			swap.Environment["NF_STAGED"] = payload;
+			swap.Environment["NF_BACKUP"] = backup;
+			swap.Environment["NF_FAIL"] = SwapFailedPath;
+			swap.Environment["NF_ARGS"] = RelaunchArgs();
+			Process.Start(swap);
 
 			Commands.RequestExit();
 
@@ -437,7 +473,13 @@ public static class SelfUpdate {
 	/// ones don't all go in. Either way nocat.farm is started again: the window running this is hidden, so the only
 	/// place a failure can be SEEN is the app itself, whose first line then says, in red, what went wrong.
 	/// </summary>
-	private static string SwapScript(int pid, string staged, string here, string work, string failFile) =>
+	/// <remarks>
+	/// Every path comes from an environment variable set on the process (NF_HERE, NF_WORK, NF_STAGED, NF_BACKUP,
+	/// NF_FAIL), and NF_ARGS carries the command line nocat.farm was started with, so every restart - the new version
+	/// or the old one put back - comes up with the same --path, --no-gui and so on. The script itself is plain ASCII.
+	/// The safety copy is made by the app before this runs (see ApplyAsync).
+	/// </remarks>
+	private static string SwapScript(int pid) =>
 		$"""
 		@echo off
 		rem nocat.farm self-update. Written by the app, run once, deletes itself.
@@ -448,29 +490,46 @@ public static class SelfUpdate {
 			timeout /t 1 /nobreak >nul
 			goto wait
 		)
-		echo Making a safety copy...
-		robocopy "{here}" "{work}\backup" /E /XD "{here}\config" "{here}\logs" "{here}\plugins" /R:1 /W:1 /NFL /NDL /NJH /NJS >nul
-		set brc=%errorlevel%
-		if %brc% GEQ 8 (
-			echo backup %brc%>"{failFile}"
-			start "" /D "{here}" "{here}\nocatFarm.exe"
-			exit /b 1
-		)
 		echo Updating...
-		robocopy "{staged}" "{here}" /E /R:3 /W:2 /NFL /NDL /NJH /NJS >nul
+		robocopy "%NF_STAGED%" "%NF_HERE%" /E /R:3 /W:2 /NFL /NDL /NJH /NJS >nul
 		set rc=%errorlevel%
 		rem This window is hidden, so a "press a key" here waited for ever and nocat.farm never came back. On a
 		rem failed copy: put every file back, leave the reason for the app to say, and start it again as it was.
 		if %rc% GEQ 8 (
-			robocopy "{work}\backup" "{here}" /E /R:3 /W:2 /NFL /NDL /NJH /NJS >nul
-			echo %rc%>"{failFile}"
-			start "" /D "{here}" "{here}\nocatFarm.exe"
+			robocopy "%NF_BACKUP%" "%NF_HERE%" /E /R:3 /W:2 /NFL /NDL /NJH /NJS >nul
+			echo %rc%>"%NF_FAIL%"
+			start "" /D "%NF_HERE%" "%NF_HERE%\nocatFarm.exe" %NF_ARGS%
 			exit /b 1
 		)
 		echo Starting the new version...
-		start "" /D "{here}" "{here}\\nocatFarm.exe"
+		start "" /D "%NF_HERE%" "%NF_HERE%\nocatFarm.exe" %NF_ARGS%
 		rem Remove the staging folder, then this script, from a directory we are not standing in.
 		cd /d "%TEMP%"
-		rmdir /s /q "{work}" >nul 2>&1
+		rmdir /s /q "%NF_WORK%" >nul 2>&1
 		""";
+
+	/// <summary>One read of the download, given a minute. The clock is restarted every call, so a slow line is fine - only silence isn't.</summary>
+	private static ValueTask<int> ReadWithin(Stream from, byte[] buffer, CancellationTokenSource stall) {
+		stall.CancelAfter(TimeSpan.FromSeconds(60));
+
+		return from.ReadAsync(buffer, stall.Token);
+	}
+
+	/// <summary>
+	/// The arguments this run was started with, quoted for cmd, to hand to the restarted copy. Every start line used
+	/// to run a bare nocatFarm.exe, so an install started with --path, --no-gui or --minimized came back up as a
+	/// different setup - on the wrong config folder, or with a window on a machine meant to run headless.
+	/// </summary>
+	internal static string RelaunchArgs() => string.Join(' ', Environment.GetCommandLineArgs().Skip(1).Select(QuoteArg));
+
+	/// <summary>One argument, quoted when it has to be. A trailing backslash is doubled so it can't escape the closing quote.</summary>
+	internal static string QuoteArg(string arg) {
+		if ((arg.Length > 0) && (arg.IndexOfAny([' ', '\t', '"', '&', '|', '<', '>', '^', '(', ')']) < 0)) {
+			return arg;
+		}
+
+		string inner = arg.Replace("\"", "\\\"");
+
+		return "\"" + (inner.EndsWith('\\') ? inner + "\\" : inner) + "\"";
+	}
 }

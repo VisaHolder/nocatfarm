@@ -110,7 +110,7 @@ public interface IPluginHost {
 	IPluginAccount? Account(string name);
 
 	/// <summary>
-	/// Write to the log, tagged with your plugin's name so it is obvious where a line came from.
+	/// Write to the log. Lines are tagged [plugin], so it is obvious they didn't come from nocat.farm itself.
 	/// </summary>
 	void Log(string message);
 
@@ -127,7 +127,7 @@ public interface IPluginHost {
 	/// <summary>
 	/// Add a command of your own. The verb must not already exist.
 	///
-	/// It shows up in `help` alongside the built-ins, prefixed so nobody wonders where it came from.
+	/// It works everywhere a command can be typed, and is listed by the `plugins` command and on the dashboard's Plugins page.
 	/// </summary>
 	void AddCommand(string verb, string usage, string help, Func<string[], Task<string>> handler);
 

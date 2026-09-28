@@ -27,7 +27,6 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 	private sealed record Saved(int Vac, int Game, bool Community, string Economy, int DaysSinceLast, long CheckedTicks, List<uint>? Games);
 
 	private Saved? _seen;
-	private Said _status = new("");
 
 	public override string Name => "bans";
 
@@ -47,7 +46,6 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 
 	protected override async Task RunAsync(CancellationToken ct) {
 		_seen ??= Load();
-		_status = Summary(Last);
 
 		// Not in the first minutes after signing in, with everything else.
 		if (!await Sleep(Rng.Minutes(3, 9), ct).ConfigureAwait(false)) {
@@ -84,7 +82,6 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 		Saved? before = _seen;
 		_seen = new Saved(now.Vac, now.Game, now.Community, now.Economy, now.DaysSinceLast, DateTime.UtcNow.Ticks, games ?? before?.Games);
 		Save();
-		_status = Summary(now);
 
 		if (before == null) {
 			// The first look: whatever is there was there before nocat.farm was watching - say it once, calmly.

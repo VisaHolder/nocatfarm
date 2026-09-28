@@ -172,7 +172,10 @@ public static partial class Looting {
 	///
 	/// Returns a line to show the user either way. It refuses rather than guesses: no master, no send.
 	/// </summary>
-	public static async Task<string> SendToMasterAsync(Bot bot, CancellationToken ct = default) {
+	public static Task<string> SendToMasterAsync(Bot bot, CancellationToken ct = default) => SendToMasterAsync(bot, null, ct);
+
+	/// <summary>The same, with the item types given rather than read from the account's send setting (null = the setting).</summary>
+	public static async Task<string> SendToMasterAsync(Bot bot, string? types, CancellationToken ct = default) {
 		BotConfig cfg = bot.Cfg;
 		ulong master = Modules.Social.ParseIds(cfg.TradeMasters).FirstOrDefault();
 
@@ -184,11 +187,11 @@ public static partial class Looting {
 			return $"{bot.Name}: it is the trade master, so there is nothing to send anywhere";
 		}
 
-		return await SendItemsAsync(bot, master, cfg.TradeMasterToken, cfg.SendItemTypes, ct).ConfigureAwait(false);
+		return await SendItemsAsync(bot, master, cfg.TradeMasterToken, types ?? cfg.SendItemTypes, ct).ConfigureAwait(false);
 	}
 
 	/// <summary>
-	/// Send this account's items of the given types to another account. What "send" and "transfer" both come down to.
+	/// Send this account's items of the given types to another account. What every form of "send" comes down to.
 	/// </summary>
 	/// <param name="token">The recipient's trade-link token, if known. Read automatically when it's one of your accounts.</param>
 	/// <param name="types">Item types, as in the "Which items to send" setting - blank means trading cards.</param>

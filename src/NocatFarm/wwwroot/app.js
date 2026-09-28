@@ -29,7 +29,9 @@ let acctFilter = '';
 // A symbol, not the string "global" - an account legitimately called "global" would otherwise hijack the pane
 // and post its edits into the global config file.
 const GLOBAL = Symbol('global');
-const CLEAR_SECRET = ' clear';   // matches WebHost.ClearSecret
+// Matches WebHost.ClearSecret exactly. It was ' clear' with a space, which the server didn't recognise - so
+// clearing the dashboard password SET it to the word " clear" instead and locked people out.
+const CLEAR_SECRET = '\u0000clear';
 let settingsTarget = GLOBAL;
 let pollTimer = null;
 let pollSeconds = 0;
@@ -150,6 +152,9 @@ function translateChrome(root) {
   (root || document).querySelectorAll('[data-t]').forEach((el) => { el.textContent = t(el.dataset.t); });
   (root || document).querySelectorAll('[data-t-ph]').forEach((el) => { el.placeholder = t(el.dataset.tPh); });
   (root || document).querySelectorAll('[data-t-tip]').forEach((el) => { el.dataset.tip = t(el.dataset.tTip); });
+  // Its text is set from code, not tagged, because it depends on which theme is showing.
+  const theme = $('themeToggle');
+  if (theme && !root) theme.textContent = themeLabel();
 }
 
 // ── tooltips ─────────────────────────────────────────────────────────
@@ -213,6 +218,26 @@ function valueDelta(b) {
   return `<span class="delta ${up ? 'up' : 'down'}" data-tip="${esc(tip)}">${up ? '+' : '-'}${Math.abs(b.InventoryChangePct).toFixed(1)}%</span>`;
 }
 
+// Copy text, over plain http too. navigator.clipboard only exists in a secure context - over http://<lan-ip>
+// (which this app supports) it's undefined, so fall back to a hidden textarea instead of throwing and copying
+// nothing.
+function copyText(text, done) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => toast(done)).catch(() => toast(t('Copy failed - select it manually'), true));
+      return;
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast(ok ? done : t('Copy failed - select it manually'), !ok);
+  } catch {
+    toast(t('Copy failed - select it manually'), true);
+  }
+}
+
 async function refreshInventory(name) {
   await post(`/api/bots/${encodeURIComponent(name)}/inventory/refresh`, {});
   toast(tf('Reading {0}’s inventory again…', name));
@@ -266,13 +291,17 @@ const r4rOn = () => !state || state.Rep4RepEnabled !== false;
 function go(name) {
   // rep4rep is switched off - there is no tab to land on, so send them to the overview instead.
   if (name === 'rep4rep' && !r4rOn()) name = 'overview';
+  // An old bookmark or a typo in the address bar (#setings) hid every view and left a blank page.
+  if (!$('view-' + name)) name = 'overview';
 
   view = name;
   location.hash = name;
   document.querySelectorAll('.navitem').forEach((n) => n.classList.toggle('active', n.dataset.view === name));
   document.querySelectorAll('.view').forEach((v) => v.classList.toggle('hidden', v.id !== 'view-' + name));
 
-  if (name === 'settings') { loadConfig().then(renderSettings); }
+  // Returned so a caller can wait for the settings form to be drawn before reaching into it.
+  let ready = Promise.resolve();
+  if (name === 'settings') { ready = loadConfig().then(renderSettings); }
   if (name === 'rep4rep') { loadRep4Rep(); }
   if (name === 'console') { $('cmd').focus(); renderCommandList(); }
   if (name === 'log') renderLog();
@@ -280,6 +309,7 @@ function go(name) {
   if (name === 'auth') openAuth();
   if (name !== 'auth') closeAuth();
   render();
+  return ready;
 }
 
 document.querySelectorAll('.navitem').forEach((n) => {
@@ -444,13 +474,25 @@ function renderAlerts() {
   }
 }
 
-function goSetting(name) {
-  settingsTarget = GLOBAL;
-  go('settings');
-  setTimeout(() => {
-    const el = document.querySelector(`[data-setting="${name}"]`);
-    if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); }
-  }, 200);
+// Jump to one global setting. Through selectSettings, so edits pending on an account's page get the usual "discard
+// them?" question instead of vanishing; with Show advanced ticked when the setting is an advanced one (the password
+// and the plugin switch both are - the jump used to land on a form that didn't draw them); and after the form is
+// actually drawn, not after a 200ms guess that a slow load overran.
+async function goSetting(name) {
+  if (settingsTarget !== GLOBAL && !selectSettings(null)) return;
+  try { await go('settings'); } catch { return; }
+
+  const def = schema && schema.Global.find((d) => d.Name === name);
+  const hidden = def && ((def.Advanced && !$('setAdvanced').checked) || $('setChanged').checked || $('setSearch').value);
+  if (hidden) {
+    if (def.Advanced) $('setAdvanced').checked = true;
+    $('setChanged').checked = false;
+    $('setSearch').value = '';
+    renderSettings();
+  }
+
+  const el = document.querySelector(`#settingsBody [data-setting="${CSS.escape(name)}"]`);
+  if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); }
 }
 
 function sendPrompt() {
@@ -469,7 +511,9 @@ function renderOverview() {
   const bots = state.Bots;
   const need = bots.filter((b) => b.Group === 'needsyou');
   const bad = bots.filter((b) => b.Group === 'problem');
-  const busy = bots.filter((b) => b.Group === 'farming' || b.Group === 'idling');
+  // Playing (human mode in a game, or a grind) and night idle bank hours too - leaving them out read
+  // "3 accounts · 2 working" while all three were busy.
+  const busy = bots.filter((b) => ['farming', 'idling', 'playing', 'nightidle'].includes(b.Group));
 
   let verdict;
   if (!bots.length) verdict = t('No accounts yet.');
@@ -969,9 +1013,9 @@ function renderAccounts() {
       ${b.Guard ? `<div class="bot-guard">${esc(tf('Waiting on you: {0}', b.Guard))}</div>` : ''}
       <div class="bot-playing" title="${esc(b.Playing || '')}">${b.Playing ? esc(b.Playing) : `<span class="real">${esc(t('not playing anything'))}</span>`}</div>
       ${b.Online ? `<div class="bot-persona ${b.PersonaHidden ? 'hidden-persona' : ''}"
-        data-tip="${esc(t("What your friends list shows for this account. The GAME comes straight back from Steam, so it's what other people genuinely see; the status is what nocat.farm set it to. Human mode changes the status by itself: invisible overnight, away on a break, Snooze over a meal."))}">${esc(t('your friends see:'))} <b>${esc(b.Persona)}</b>${b.Seen ? ` · <b>${esc(b.Seen)}</b>` : ''}</div>` : ''}
+        data-tip="${esc(t("What your friends list shows for this account. The status is what nocat.farm set it to, and the game comes straight back from Steam. While it is invisible, friends see it as offline with no game - the hours still count. Human mode changes the status by itself: invisible overnight, away on a break, Snooze over a meal."))}">${esc(t('your friends see:'))} <b>${esc(b.PersonaHidden ? t('offline') : b.Persona)}</b>${b.Seen && !b.PersonaHidden ? ` · <b>${esc(b.Seen)}</b>` : ''}</div>` : ''}
       ${b.Bans ? `<div class="bot-bans" data-tip="${esc(t('What Steam shows about this account\'s bans. nocat.farm checks every few hours and tells you when a new one appears. Games it is banned in are left out of trades; trading cards still trade.'))}">${esc(tf('bans: {0}', b.Bans))}</div>` : ''}
-      ${b.NameNotShowing
+      ${b.NameNotShowing && !b.PersonaHidden
         ? `<div class="bot-mismatch" data-tip="${esc(t("Steam decides what to display when a custom name is sent alongside real games, and it has settled on the real one. Idling fewer games, or only the custom name, makes it show yours. A brief mismatch right after signing in is normal and isn't reported here."))}">${esc(tf('Steam is showing {0}, not your custom name', b.Seen))}</div>`
         : ''}
       <div class="statline">
@@ -986,7 +1030,7 @@ function renderAccounts() {
           `<div class="row"><span class="k">${esc(m.Name)}</span><span class="v" title="${esc(m.Status)}">${esc(m.Status)}</span></div>`).join('')}
       </div>
       <div class="actions">
-        ${b.InventoryValue > 0 || b.InventoryReady ? `<button data-tip="${esc(t("Read this account's inventory again. Only prices that have gone stale are looked up, so it's quick."))}" onclick="refreshInventory('${esc(b.Name)}')">${esc(t('Value'))}</button>` : ''}
+        ${b.InventoryValue > 0 || b.InventoryReady ? `<button data-tip="${esc(t("Read this account's inventory again. Only prices that have gone stale are looked up, so it's quick."))}" data-act="inventory" data-bot="${esc(b.Name)}">${esc(t('Value'))}</button>` : ''}
         ${b.Online
           ? (b.Paused
             ? `<button data-tip="${esc(t('Start playing, farming and commenting again.'))}" data-act="resume" data-bot="${esc(b.Name)}">${esc(t('Resume'))}</button>`
@@ -1088,7 +1132,7 @@ async function dragEnd() {
   const hidden = known.filter((n) => !visible.includes(n));
 
   // Hidden accounts keep their existing relative order, which is what config already holds.
-  const saved = (config && config.AccountOrder) || [];
+  const saved = (config && config.Global && config.Global.AccountOrder) || [];   // lives in the global config
   hidden.sort((a, b) => {
     const ia = saved.indexOf(a), ib = saved.indexOf(b);
     return (ia < 0 ? 1e9 : ia) - (ib < 0 ? 1e9 : ib);
@@ -1380,7 +1424,7 @@ function renderAuth() {
       <div class="auth-top">
         <h2>${esc(t('Authenticator'))}</h2>
         <div class="langpick auth-accounts">${accts.map((a) =>
-          `<span class="p ${a.Name === authPick ? 'on' : ''} ${a.HasCode ? '' : 'dim'}" onclick="authPickAccount('${esc(a.Name)}')">${esc(a.Name)}</span>`).join('')}</div>
+          `<span class="p ${a.Name === authPick ? 'on' : ''} ${a.HasCode ? '' : 'dim'}" data-auth-pick="${esc(a.Name)}">${esc(a.Name)}</span>`).join('')}</div>
       </div>
       <div id="authCode"></div>
     </div>
@@ -1426,7 +1470,7 @@ function renderAuthCode() {
 function copyAuthCode() {
   const a = (authAccounts || []).find((x) => x.Name === authPick);
   if (!a || !a.Code) return;
-  navigator.clipboard.writeText(a.Code).then(() => toast(t('Code copied')), () => toast(a.Code));
+  copyText(a.Code, t('Code copied'));
 }
 
 function authAgo(unix) {
@@ -1615,8 +1659,10 @@ async function setPluginSetting(plugin, name, el) {
   const value = el.type === 'checkbox' ? String(el.checked) : String(el.value);
 
   try {
-    await api('/api/plugins/setting', { method: 'POST', body: JSON.stringify({ Plugin: plugin, Name: name, Value: value }) });
-    toast(tf('{0} saved', name));
+    // What the server said, not a "saved" regardless - a setting the plugin no longer has used to report success.
+    const r = await api('/api/plugins/setting', { method: 'POST', body: JSON.stringify({ Plugin: plugin, Name: name, Value: value }) });
+    if (r && r.Ok) toast(tf('{0} saved', name));
+    else toast(tf('Could not save that: {0}', (r && r.Message) || '?'), true);
   } catch (e) {
     toast(tf('Could not save that: {0}', e.message || e), true);
   }
@@ -1677,11 +1723,16 @@ function toggleTheme() {
   setTheme(light ? 'dark' : 'light');
 }
 
+/// The toggle names the theme it switches TO. Translated, and redrawn when the language changes (translateChrome).
+function themeLabel() {
+  return document.documentElement.getAttribute('data-theme') === 'light' ? t('dark') : t('light');
+}
+
 function setTheme(name, save) {
   document.documentElement.setAttribute('data-theme', name);
   try { localStorage.setItem('nocatfarm-theme', name); } catch (_) { /* private mode - it just will not stick */ }
   const btn = $('themeToggle');
-  if (btn) btn.textContent = name === 'light' ? 'dark' : 'light';
+  if (btn) btn.textContent = themeLabel();
 
   // Also stored server-side, so the 'theme' command and this toggle cannot disagree, and so the choice
   // follows you to another browser. localStorage stays the fast path that paints before the first request.
@@ -1823,7 +1874,7 @@ function renderTutorial() {
           <input id="tut-pass" type="password" placeholder="${esc(t("leave blank and it'll ask"))}" autocomplete="off">
           <label for="tut-name">${esc(t('Nickname (optional)'))}${tipIcon(t("What this account is called in nocat.farm. Leave it empty and it uses the Steam account name."))}</label>
           <input id="tut-name" type="text" placeholder="${esc(t('same as the Steam account name'))}" autocomplete="off">
-          ${tutorialMode === 'full' ? `<label for="tut-qr">${esc(t('Sign in with a QR code'))}${tipIcon(t("Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty."))}</label>
+          ${tutorialMode !== 'quick' ? `<label for="tut-qr">${esc(t('Sign in with a QR code'))}${tipIcon(t("Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty."))}</label>
           <input id="tut-qr" type="checkbox" onchange="['tut-login','tut-pass'].forEach((id) => { $(id).disabled = this.checked; })">` : ''}
           ${tutorialHuman === true ? `<label for="tut-self">${esc(t('I also sign into it from my own Steam app'))}${tipIcon(t('Then nocat.farm never changes its online status - if it did, Steam would sign your own client out of Friends and Chat.'))}</label>
           <input id="tut-self" type="checkbox" ${tutorialSelf ? 'checked' : ''} onchange="tutorialSelf=this.checked">` : ''}
@@ -1852,7 +1903,7 @@ function renderTutorial() {
     },
     {
       title: t('Welcome to nocat.farm'),
-      body: `<p>${esc(t('It signs your Steam accounts in, plays games so the hours count, farms trading cards and posts rep4rep comments - all from this machine. Your accounts never leave it.'))}</p>
+      body: `<p>${esc(t('It signs your Steam accounts in, farms their trading cards, plays games so the hours count and picks up free stuff - all from this machine. Your accounts never leave it.'))}</p>
         <div class="pickcards">
           <div class="pickcard ${tutorialMode === 'quick' ? 'on' : ''}" onclick="tutorialMode='quick';renderTutorial()">
             <b>${esc(t('Quick setup'))}</b>
@@ -1861,6 +1912,10 @@ function renderTutorial() {
           <div class="pickcard ${tutorialMode === 'full' ? 'on' : ''}" onclick="tutorialMode='full';renderTutorial()">
             <b>${esc(t('Full tour'))}</b>
             <span>${esc(t('Every feature explained, and where the fine-tuning lives. A few minutes.'))}</span>
+          </div>
+          <div class="pickcard ${tutorialMode === 'advanced' ? 'on' : ''}" onclick="tutorialMode='advanced';renderTutorial()">
+            <b>${esc(t('Advanced setup'))}</b>
+            <span>${esc(t("Used ArchiSteamFarm or another idler before? Add the account, then go straight to all of its settings, advanced ones included."))}</span>
           </div>
         </div>
         <p class="muted small">${esc(t('You can skip this and come back from the Overview page.'))}</p>`,
@@ -1967,7 +2022,17 @@ async function tutorialAddAccount() {
 
   const qr = !!($('tut-qr') && $('tut-qr').checked);
   const login = $('tut-login').value.trim();
-  const name = $('tut-name').value.trim() || nameFromLogin(login);
+  const typed = $('tut-name').value.trim();
+
+  // Said here, before anything is sent, in the same words the server uses: the nickname becomes a file name and
+  // what you type in commands, so a space or an apostrophe in it would only come back as a refusal anyway.
+  if (typed && !/^[A-Za-z0-9_-]+$/.test(typed)) {
+    $('tutError').textContent = t("Letters, numbers, dashes and underscores. 'nocatFarm' is taken by the global config.");
+    btn.disabled = false;
+    return;
+  }
+
+  const name = typed || nameFromLogin(login);
   const res = await post('/api/bots', {
     Name: name, SteamLogin: login, Password: $('tut-pass').value, Qr: qr,
     Human: tutorialHuman === true, SelfSignIn: tutorialHuman === true && tutorialSelf,
@@ -1986,6 +2051,7 @@ async function tutorialAddAccount() {
   post('/api/tutorial/done', {}).catch(() => {});
   if (config && config.Global) config.Global.TutorialDone = true;
   tutorialSignin = name;
+  tutorialAdded = name;
   tutorialSigninHtml = '';
   tutorialSetupDone = false;
   await refresh();
@@ -2235,6 +2301,8 @@ function nameFromLogin(login) {
 // The account the setup is walking through signing in, and what it last drew - redrawn only when something
 // changed, so a half-typed Steam Guard code isn't wiped by the next poll.
 let tutorialSignin = null;
+// The account the walkthrough added, kept past the sign-in screens - Advanced setup opens its settings at the end.
+let tutorialAdded = null;
 let tutorialSigninHtml = '';
 
 function renderSignin() {
@@ -2321,9 +2389,21 @@ function sendTutorialPrompt() {
 }
 
 async function finishSignin() {
+  const name = tutorialSignin || tutorialAdded;
   tutorialSignin = null;
   tutorialSigninHtml = '';
   await closeTutorial();
+
+  // Advanced setup ends where somebody who knows idlers wants to be: every setting of the new account, the
+  // advanced ones showing.
+  if (tutorialMode === 'advanced') await loadConfig().catch(() => {});
+  if ((tutorialMode === 'advanced') && name && config && config.Bots && config.Bots[name]) {
+    try { await go('settings'); } catch { go('accounts'); return; }
+    $('setAdvanced').checked = true;
+    selectSettings(name);
+    return;
+  }
+
   go('accounts');
 }
 
@@ -2402,6 +2482,25 @@ async function closeTutorial() {
 // help, /help and /? open the reference rather than dumping 60 lines into the output pane, where it pushes
 // everything you were reading off the top and cannot be scrolled independently.
 function helpModal(filter) {
+  modal(`
+    <h2>${esc(t('Commands'))}</h2>
+    <input type="text" id="helpFilter" autocomplete="off" spellcheck="false" placeholder="${esc(t('filter…'))}"
+           oninput="helpFilterList(this.value)" value="${esc(filter || '')}">
+    <div class="helplist" id="helpList">${helpListHtml(filter)}</div>
+    <div class="actions"><button class="ghost" onclick="closeModal()">${esc(t('Close'))}</button></div>`);
+
+  const f = $('helpFilter');
+  if (f) { f.focus(); f.setSelectionRange(f.value.length, f.value.length); }
+}
+
+// Typing in the filter redraws the list and nothing else. Rebuilding the whole modal per keystroke replaced the box
+// being typed in: the caret jumped to the end and a Japanese or Chinese input method lost the word mid-compose.
+function helpFilterList(filter) {
+  const list = $('helpList');
+  if (list) list.innerHTML = helpListHtml(filter);
+}
+
+function helpListHtml(filter) {
   const q = (filter || '').trim().toLowerCase();
   const groups = {};
 
@@ -2410,23 +2509,13 @@ function helpModal(filter) {
     (groups[c.Group] = groups[c.Group] || []).push(c);
   });
 
-  const body = Object.keys(groups).length
+  return Object.keys(groups).length
     ? Object.keys(groups).map((g) => `<div class="grp">${esc(g)}</div>${groups[g].map((c) => `
         <div class="c" onclick="useCommand('${esc(c.Name)}')">
           <code>${esc(c.Display || c.Name)}${c.Args ? ' ' + esc(c.Args) : ''}</code>
           <span class="h">${esc(c.Help)}</span>
         </div>`).join('')}`).join('')
     : `<p class="muted">${esc(t('Nothing matches.'))}</p>`;
-
-  modal(`
-    <h2>${esc(t('Commands'))}</h2>
-    <input type="text" id="helpFilter" autocomplete="off" spellcheck="false" placeholder="${esc(t('filter…'))}"
-           oninput="helpModal(this.value)" value="${esc(filter || '')}">
-    <div class="helplist">${body}</div>
-    <div class="actions"><button class="ghost" onclick="closeModal()">${esc(t('Close'))}</button></div>`);
-
-  const f = $('helpFilter');
-  if (f) { f.focus(); f.setSelectionRange(f.value.length, f.value.length); }
 }
 
 function modal(html) { $('modalCard').innerHTML = html; $('modal').classList.remove('hidden'); }
@@ -2451,7 +2540,16 @@ document.addEventListener('click', (e) => {
     case 'remove': removeBot(name); break;
     case 'postnow': postNow(name); break;
     case 'register': registerProfile(name); break;
+    case 'inventory': refreshInventory(name); break;
   }
+});
+
+// Same reason as above, for the Authenticator's account picker and the log's click-a-name-to-filter.
+document.addEventListener('click', (e) => {
+  const pick = e.target.closest('[data-auth-pick]');
+  if (pick) { authPickAccount(pick.dataset.authPick); return; }
+  const source = e.target.closest('[data-log-source]');
+  if (source) { $('logBot').value = source.dataset.logSource; renderLog(); }
 });
 
 document.addEventListener('click', (e) => {
@@ -2639,12 +2737,21 @@ async function loadTasks() {
     : `<p class="muted">${esc(t('No tasks for this account right now. rep4rep hands them out in batches — check back later.'))}</p>`;
 }
 
+// The markup the pacing table was last built from. Compared against rather than the element's innerHTML, which the
+// browser re-serialises and so never matches what was generated.
+let r4rPacingHtml = '';
+
 function renderRep4RepPacing() {
   if (!state) return;
+  const box = $('r4rPacing');
+  // This runs on every poll, and rebuilding the table threw away a number half-typed into it - the box reset under
+  // your fingers every few seconds. Leave it alone while one of its boxes has the focus; the next poll catches up.
+  if (box.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;
+
   const keys = ['Rep4RepDailyCap', 'Rep4RepGapMinMinutes', 'Rep4RepGapMaxMinutes', 'Rep4RepStartHour', 'Rep4RepEndHour'];
   const defs = keys.map((k) => (schema ? schema.Bot.find((d) => d.Name === k) : null));
 
-  $('r4rPacing').innerHTML = `<div class="tablewrap"><table>
+  const html = `<div class="tablewrap"><table>
     <tr><th>${esc(t('Account'))}</th>${defs.map((d, i) => `<th${d ? ` data-tip="${esc(tSetting(d, 'tip'))}"` : ''}>${esc(d ? tSetting(d, 'label') : keys[i])}</th>`).join('')}</tr>
     ${state.Bots.map((b) => `<tr>
       <td><b>${esc(b.Name)}</b></td>
@@ -2652,6 +2759,10 @@ function renderRep4RepPacing() {
         data-qs="${k}" data-bot="${esc(b.Name)}"></td>`).join('')}
       </tr>`).join('')}
     </table></div>`;
+
+  if (html === r4rPacingHtml && box.innerHTML) return;
+  r4rPacingHtml = html;
+  box.innerHTML = html;
 }
 
 // Goes through the typed endpoint rather than the command line, so an account name with a space in it can't
@@ -2666,9 +2777,13 @@ async function quickSet(bot, key, value) {
   const cfg = { ...base };
   cfg[key] = Number(value) || 0;
   const res = await post('/api/bots/' + encodeURIComponent(bot) + '/config', cfg);
-  if (!res.ok) { toast(res.error || t('Could not save that'), true); return; }
+  // Refused: put the saved number back in the box rather than leave the rejected one looking accepted.
+  if (!res.ok) { toast(res.error || t('Could not save that'), true); r4rPacingHtml = ''; renderRep4RepPacing(); return; }
   toast((res.Adjusted && res.Adjusted.length) ? res.Adjusted[0] : tf('{0}: saved', bot), !!(res.Adjusted && res.Adjusted.length));
   await loadConfig();
+  // Forced: a number the server pulled back into range can leave the saved config - and so the markup - unchanged,
+  // and the box would keep showing what was typed.
+  r4rPacingHtml = '';
   renderRep4RepPacing();
 }
 
@@ -2693,7 +2808,7 @@ function renderLog() {
   const atBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 60;
 
   body.innerHTML = rows.length
-    ? rows.map((l) => `<div class="l ${esc(l.Level)}"><span class="t">${esc(l.Time)}</span><span class="s"${sourceStyle(l.Source)} onclick="$('logBot').value='${esc(l.Source)}';renderLog()">${esc(l.Source)}</span><span class="m">${highlight(l.Text, q)}</span></div>`).join('')
+    ? rows.map((l) => `<div class="l ${esc(l.Level)}"><span class="t">${esc(l.Time)}</span><span class="s"${sourceStyle(l.Source)} data-log-source="${esc(l.Source)}">${esc(l.Source)}</span><span class="m">${highlight(l.Text, q)}</span></div>`).join('')
     : `<p class="muted">${esc(t('Nothing matches.'))}</p>`;
 
   if (atBottom && $('logFollow').checked) body.scrollTop = body.scrollHeight;
@@ -2702,7 +2817,11 @@ function renderLog() {
 // The colour an account chose for itself, straight from the palette the server sent. Index 0 is "automatic",
 // which means leave the stylesheet alone.
 function sourceStyle(source) {
-  const choice = config && config.Bots && config.Bots[source] ? config.Bots[source].LogColour : 0;
+  const g = (config && config.Global) || {};
+  const choice = config && config.Bots && config.Bots[source] ? config.Bots[source].LogColour
+    : source === 'telegram' ? g.TelegramLogColour
+    : source === 'discord' ? g.DiscordLogColour
+    : 0;
   const css = choice > 0 && schema && schema.NameColours ? schema.NameColours[choice] : null;
   return css ? ` style="color:${css}"` : '';
 }
@@ -2715,23 +2834,7 @@ function highlight(text, q) {
 }
 
 function copyLog() {
-  const text = logLines.map((l) => `${l.Time} ${l.Source} ${l.Text}`).join('\n');
-  // navigator.clipboard only exists in a secure context - over http://<lan-ip> (which this app supports) it's
-  // undefined, so guard and fall back to a hidden textarea instead of throwing and copying nothing.
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(text).then(() => toast(t('Log copied'))).catch(() => toast(t('Copy failed - select it manually'), true));
-      return;
-    }
-    const ta = document.createElement('textarea');
-    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.select();
-    const ok = document.execCommand('copy');
-    document.body.removeChild(ta);
-    toast(ok ? t('Log copied') : t('Copy failed - select it manually'), !ok);
-  } catch {
-    toast(t('Copy failed - select it manually'), true);
-  }
+  copyText(logLines.map((l) => `${l.Time} ${l.Source} ${l.Text}`).join('\n'), t('Log copied'));
 }
 
 // ── render: console ──────────────────────────────────────────────────
@@ -2847,20 +2950,37 @@ async function loadConfig() {
   config = await api('/api/config');
 }
 
+/// Switch the settings pane to an account (or null for Global). Returns false when the user chose to keep their
+/// unsaved edits instead.
 function selectSettings(name) {
-  // Kick off the pacer read for this account; it re-renders itself when it lands.
+  if (Object.keys(pending).length && !confirm(t('You have unsaved changes here. Discard them?'))) return false;
+
+  // Only once the switch is certain. Started before the question, a "no, keep them" still pointed the pacer at
+  // the account that wasn't opened, and the pane that stayed open lost its own.
   if (name) loadPacer(name); else { pacerFor = null; pacerRows = null; }
 
-  if (Object.keys(pending).length && !confirm(t('You have unsaved changes here. Discard them?'))) return;
   settingsTarget = name == null ? GLOBAL : name;
   pending = {};
   renderSettings();
+  return true;
 }
 
 // Matched on the data-section attribute, not the heading text: the heading is translated and the jump link
 // carries the English name, so comparing what is on screen stopped finding anything in every language but one.
 function jumpTo(section) {
-  const target = document.querySelector(`#settingsBody .section h3[data-section="${CSS.escape(section)}"]`);
+  const find = () => document.querySelector(`#settingsBody .section h3[data-section="${CSS.escape(section)}"]`);
+  let target = find();
+
+  // A section made only of advanced settings isn't drawn while Show advanced is off (and a search or "only
+  // changed" can hide one too), so the link used to do nothing. Show everything, then jump.
+  if (!target) {
+    $('setAdvanced').checked = true;
+    $('setChanged').checked = false;
+    $('setSearch').value = '';
+    renderSettings();
+    target = find();
+  }
+
   if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -2996,12 +3116,6 @@ async function loadPacer(name) {
 
   if (view === 'settings' && settingsTarget === name) renderSettings();
 }
-
-// The rarity ladder, drawn as the thing it is: a set of gates that open as the hours build.
-const RARITY_TIERS = [
-  { h: 0.5, floor: 40 }, { h: 2, floor: 25 }, { h: 6, floor: 15 }, { h: 12, floor: 9 },
-  { h: 22, floor: 5 }, { h: 35, floor: 3 }, { h: 50, floor: 2 }, { h: 80, floor: 1 },
-];
 
 // What the hunter is doing and what it will do next. This is the part that was missing: the table below says
 // how the PACE works, and said nothing at all about which games are actually queued up.
@@ -3166,9 +3280,7 @@ function sectionIntro(section, values) {
 
       return `<div class="preview"><span class="k">${esc(t('Right now'))}</span>
         ${tf('Human mode picks what it plays — mostly {0}, one game at a time.', `<b>${esc(main)}</b>`)}
-        ${name
-          ? tf('Your friends see {0} instead of the real game; the hours still count.', `<b>${esc(name)}</b>`)
-          : esc(t('Your friends see the real game.'))}
+        ${esc(t('Your friends see the real game.'))}
         </div>`;
     }
 
@@ -3882,8 +3994,10 @@ async function notifyTest(btn) {
   const r = await post('/api/notify/test', {}).catch(() => null);
   btn.disabled = false;
   btn.textContent = old;
-  const lines = (r && r.Results) || [t("Couldn't reach nocat.farm")];
-  toast(lines.join(' · '), lines.some((l) => /didn't work|nobody|nothing/.test(l)));
+  // Each line comes with whether it worked. Matching the words instead only ever worked in English - the lines
+  // arrive translated, so a failed test showed as a green toast in every other language.
+  const lines = (r && r.Results) || [{ Ok: false, Text: t("Couldn't reach nocat.farm") }];
+  toast(lines.map((l) => l.Text).join(' · '), lines.some((l) => !l.Ok));
 }
 
 function editAndRender(name, value) {
@@ -3970,6 +4084,16 @@ async function saveSettings() {
     : await post('/api/bots/' + encodeURIComponent(target) + '/config', body);
 
   if (!res.ok) { toast(res.error || t('Save failed'), true); return; }
+
+  // A new dashboard password signs every browser out, this one included - the server hands back a fresh session
+  // for whoever saved it, so keep that or the very next poll would bounce us to the sign-in box.
+  if (res.Token) {
+    token = res.Token;
+    localStorage.setItem('nocatfarm-token', token);
+  }
+
+  // The pacer panel is "refreshed whenever settings are saved" - forget the cached read so it really is.
+  if (target !== GLOBAL) { pacerFor = null; loadPacer(target); }
 
   // Changing the language has to take effect NOW, not on the next reload. The walkthrough's picker has always
   // applied it immediately; saving the same setting from this page saved it and then carried on in the old

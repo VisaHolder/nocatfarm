@@ -32,10 +32,11 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 	public override string Name => "badges";
 	public override string Status => _status;
 
-	public int CraftedThisRun => _crafted;
-
 	private DateTime _nextSweep = DateTime.MinValue;
 	private HumanGate? _gate;
+
+	/// <summary>The last sweep left sets uncrafted on purpose (human mode crafts a few at a time) - look again sooner.</summary>
+	private bool _moreToCraft;
 
 	protected override async Task RunAsync(CancellationToken ct) {
 		while (!ct.IsCancellationRequested) {
@@ -78,7 +79,9 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 				_nextSweep = DateTime.UtcNow + Rng.Minutes(20, 90);
 			}
 
-			_gate ??= HumanGate.Quiet(Bot);
+			// A badge crafted shows on the profile and in its activity with the time, so a human-mode account crafts in
+			// its own day - not at 4am while it's asleep.
+			_gate ??= HumanGate.OwnDay(Bot);
 
 			if ((DateTime.UtcNow < _nextSweep) || !_gate.Open) {
 				if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
@@ -95,6 +98,8 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 
 				if (made < 0) {
 					wait = Rng.Minutes(BackoffHours * 50, BackoffHours * 80);   // Steam refused - back off rather than knock again
+				} else if (_moreToCraft) {
+					wait = Rng.HumanMinutes(2 * 60, 6 * 60);   // the rest of the sets later on, not tomorrow
 				}
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
@@ -116,6 +121,10 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 				}
 
 				if ((Bot.Cfg.CraftBadges != crafting) || (!Bot.Cfg.CraftBadges && !Bot.Cfg.UnpackBoosterPacks)) {
+					// A fresh short wait from here. The day's wait was already set, so breaking out alone went straight
+					// back to sleeping it out at the top of the loop.
+					_nextSweep = DateTime.MinValue;
+
 					break;
 				}
 			}
@@ -246,6 +255,12 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 
 		Log.Info(new Said("{0} completed card set(s) ready to craft", ready.Count), Bot.Name);
 		int made = 0;
+
+		// A human-mode account crafts a few and gets on with its day - the rest wait for a later sweep. Twenty badges
+		// a few seconds apart is a burst nobody makes by hand.
+		int most = Bot.Cfg.LegitMode ? Rng.Next(1, 4) : ready.Count;
+		_moreToCraft = ready.Count > most;
+		ready = [.. ready.Take(most)];
 
 		// Deliberately NOT re-reading the page between crafts: the list we already have is accurate, and every
 		// extra request during a craft run is what pushes Steam into extending the rate limit.

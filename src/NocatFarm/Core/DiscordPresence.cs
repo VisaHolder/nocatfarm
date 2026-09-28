@@ -39,6 +39,9 @@ public static class DiscordPresence {
 		_ => false
 	};
 	private static string _lastSent = "";
+
+	// Whether the log has said the card is up, so it says so once per connection and once when it comes down.
+	private static bool _shown;
 	private static DateTime _sentAt = DateTime.MinValue;
 	private static readonly long StartedUnix = new DateTimeOffset(Process.GetCurrentProcess().StartTime.ToUniversalTime()).ToUnixTimeSeconds();
 
@@ -80,12 +83,17 @@ public static class DiscordPresence {
 					await ReadAsync().ConfigureAwait(false);
 					_lastSent = json;
 					_sentAt = DateTime.UtcNow;
+
+					if (!_shown && (activity != null)) {
+						_shown = true;
+						Log.Info(new Said("showing nocat.farm on your Discord profile"), "discord");
+					}
 				}
 
 				await Task.Delay(15_000).ConfigureAwait(false);
 			} catch (Exception e) {
 				// Discord closed or restarted: start over on the next pass.
-				Log.Debug(new Said("discord: {0}", e.Message));
+				Log.Debug(new Said("discord: {0}", e.Message), "discord");
 				Disconnect();
 				await Task.Delay(60_000).ConfigureAwait(false);
 			}
@@ -322,7 +330,7 @@ public static class DiscordPresence {
 			_lastSent = "";
 
 			return true;
-		} catch (Exception e) when (e is SocketException or IOException or OperationCanceledException) {
+		} catch (Exception e) when (e is SocketException or IOException or OperationCanceledException or TimeoutException) {
 			// a stale socket left by a Discord that has since closed, or one that isn't Discord's
 			if (_pipe != null) {
 				await _pipe.DisposeAsync().ConfigureAwait(false);
@@ -338,6 +346,11 @@ public static class DiscordPresence {
 	private static void Disconnect() {
 		if (_pipe == null) {
 			return;
+		}
+
+		if (_shown) {
+			_shown = false;
+			Log.Info(new Said("taken off your Discord profile"), "discord");
 		}
 
 		try {
@@ -369,11 +382,22 @@ public static class DiscordPresence {
 	}
 
 	private static async Task<string> ReadAsync() {
+		// Five seconds, then give up. Discord answers in milliseconds; a pipe that never answers - a hung Discord, or
+		// something else sitting on the name - used to hold the whole card loop on this read forever. A timeout
+		// is reported as one, so the connect loop moves on to the next pipe and the card loop starts over.
+		using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(5));
 		byte[] header = new byte[8];
-		await _pipe!.ReadExactlyAsync(header).ConfigureAwait(false);
+		byte[] body;
+
+		try {
+			await _pipe!.ReadExactlyAsync(header, timeout.Token).ConfigureAwait(false);
+			body = new byte[BinaryPrimitives.ReadInt32LittleEndian(header.AsSpan(4))];
+			await _pipe.ReadExactlyAsync(body, timeout.Token).ConfigureAwait(false);
+		} catch (OperationCanceledException) when (timeout.IsCancellationRequested) {
+			throw new TimeoutException("Discord didn't answer within 5s");
+		}
+
 		int op = BinaryPrimitives.ReadInt32LittleEndian(header);
-		byte[] body = new byte[BinaryPrimitives.ReadInt32LittleEndian(header.AsSpan(4))];
-		await _pipe.ReadExactlyAsync(body).ConfigureAwait(false);
 		string json = Encoding.UTF8.GetString(body);
 
 		// 2 = Discord closing the connection, usually a bad application ID.

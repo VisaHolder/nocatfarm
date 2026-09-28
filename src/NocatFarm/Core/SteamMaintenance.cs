@@ -37,12 +37,18 @@ public static class SteamMaintenance {
 	/// How long to wait before trying again, given how many attempts have already failed.
 	///
 	/// During maintenance the connection managers are not merely refusing - they are gone, so a ten-second
-	/// retry loop achieves nothing except a hundred log lines. Outside the window the ordinary backoff stands,
-	/// because an ordinary disconnect usually clears in seconds.
+	/// retry loop achieves nothing except a hundred log lines. Outside the window an ordinary disconnect usually
+	/// clears in seconds, so the first try comes quickly - but a failure that KEEPS failing doubles the wait each
+	/// time, up to about five minutes. A flat 10-20s forever was a warning every quarter-minute for as long as
+	/// Steam stayed unreachable, and every account hammering it together.
 	/// </summary>
 	public static TimeSpan Backoff(int attempt, TimeSpan ordinary) {
 		if (!LikelyNow) {
-			return ordinary;
+			TimeSpan grown = Grown(attempt, ordinary);
+
+			// Once at the ceiling, spread the fleet across the last minute of it so the accounts don't all come
+			// back in the same second.
+			return grown >= MaxOrdinary ? TimeSpan.FromSeconds(Rng.Next((int) MaxOrdinary.TotalSeconds - 60, (int) MaxOrdinary.TotalSeconds + 1)) : grown;
 		}
 
 		// 2, 4, 8 minutes, capped. Long enough to stop hammering, short enough to be back within a minute or
@@ -50,6 +56,20 @@ public static class SteamMaintenance {
 		int minutes = Math.Min(8, 2 << Math.Clamp(attempt - 1, 0, 2));
 
 		return TimeSpan.FromMinutes(minutes);
+	}
+
+	/// <summary>The longest an ordinary (outside the weekly window) reconnect ever waits.</summary>
+	internal static readonly TimeSpan MaxOrdinary = TimeSpan.FromMinutes(5);
+
+	/// <summary>
+	/// The ordinary wait before try number <paramref name="attempt"/>: the first try's wait, doubled for every
+	/// failure since, never more than <see cref="MaxOrdinary"/>. Pure, so it can be checked on its own.
+	/// </summary>
+	internal static TimeSpan Grown(int attempt, TimeSpan first) {
+		int doublings = Math.Clamp(attempt - 1, 0, 16);
+		double secs = Math.Max(1, first.TotalSeconds) * Math.Pow(2, doublings);
+
+		return TimeSpan.FromSeconds(Math.Min(secs, MaxOrdinary.TotalSeconds));
 	}
 
 	/// <summary>The line to log when an account drops, so a weekly restart does not read like a fault.</summary>

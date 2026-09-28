@@ -54,11 +54,15 @@ public static class NativeConsole {
 	/// cost is that the handful of paths that genuinely need one (--no-gui, --help, a window that refused to
 	/// open) have to ask, and stdout has to be re-pointed at it afterwards or every Write goes nowhere.
 	/// </summary>
-	public static bool Attach() {
+	public static bool Attach(bool interactive = false) {
 		try {
 			// Inherit a console if we were launched from one - running nocatFarm --help from a terminal should
 			// print into THAT terminal, not pop a new black box next to it.
-			if (!AttachConsole(AttachParentProcess) && !AllocConsole()) {
+			//
+			// Not for a console that takes typing, though. The exe is windowed, so the shell that launched it has
+			// already gone back to its prompt: sharing its console meant two readers on one keyboard, with half of
+			// a Steam Guard code going to the shell. That one gets a console of its own.
+			if (interactive ? !AllocConsole() : !AttachConsole(AttachParentProcess) && !AllocConsole()) {
 				return false;
 			}
 
@@ -80,41 +84,6 @@ public static class NativeConsole {
 	private static extern bool AttachConsole(uint processId);
 
 	private const uint AttachParentProcess = 0xFFFFFFFF;
-
-	/// <summary>
-	/// Let the console window go.
-	///
-	/// This program is a console app that grew a window. Once the window is up the console is pure clutter: a
-	/// second window on screen, a second entry in the taskbar, and on some hosts a second tray icon - for a
-	/// surface nobody is reading any more, since the window has its own log and its own command line.
-	///
-	/// Only ever called AFTER the window reports itself open, so a window that failed to start still leaves a
-	/// usable console behind.
-	/// </summary>
-	public static void Detach() {
-		try {
-			IntPtr console = GetConsoleWindow();
-
-			if (console != IntPtr.Zero) {
-				// Hide the host window first. FreeConsole alone can leave an empty frame on screen for a moment
-				// when something else owns the host, which looks exactly like a crash.
-				IntPtr root = GetAncestor(console, GaRoot);
-				ShowWindow(root != IntPtr.Zero ? root : console, SwHide);
-			}
-
-			FreeConsole();
-		} catch {
-			// Nothing here is worth failing a start over; the worst case is an extra window.
-		}
-	}
-
-	[DllImport("kernel32.dll", SetLastError = true)]
-	private static extern bool FreeConsole();
-
-	[DllImport("user32.dll")]
-	private static extern bool ShowWindow(IntPtr window, int command);
-
-	private const int SwHide = 0;
 
 	/// <summary>Ask the console to interpret ANSI escapes. False when it can't, so the caller can fall back.</summary>
 	public static bool EnableVirtualTerminal() {

@@ -318,7 +318,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		if (posted >= Cap) {
 			_status = new Said("{0}/{1} today - done", posted, Cap);
 
-			return 20 * 60;
+			return CapWaitSeconds();
 		}
 
 		if (!force) {
@@ -377,7 +377,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		if (_state.PostsInLast24h() >= Cap) {
 			_status = new Said("{0}/{1} today - done", Cap, Cap);
 
-			return 20 * 60;
+			return CapWaitSeconds();
 		}
 
 		_status = new Said("commenting on {0}", task.TargetName);
@@ -478,10 +478,26 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 				Log.Debug(line, Bot.Name);
 			}
 
-			return 20 * 60;
+			return CapWaitSeconds();
 		}
 
 		return NextGapSeconds();
+	}
+
+	/// <summary>
+	/// At the cap: wait for the oldest comment to age out of the 24 hours, then an ordinary gap on top.
+	/// </summary>
+	/// <remarks>
+	/// It used to look again every flat 20 minutes and post the moment a slot freed - so each comment landed within
+	/// minutes of the same time as the one it replaced, and the day's comments came out on yesterday's clock.
+	/// 'rep4rep now' still cuts this short.
+	/// </remarks>
+	private int CapWaitSeconds() {
+		if (NextSlot is not { } frees) {
+			return 20 * 60;
+		}
+
+		return (int) Math.Max(60, (frees - DateTime.UtcNow).TotalSeconds) + NextGapSeconds();
 	}
 
 	private async Task CountPostAsync(Rep4RepTask task) {
@@ -867,6 +883,14 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			return "Steam is rate-limiting this account right now.";
 		}
 
+		// Nothing was posted, so nothing is claimed - and the account rests the day, exactly as when the scheduled
+		// path meets it. Falling through claimed the credit for a comment that never went up and carried on posting.
+		if (outcome == Outcome.DailyLimit) {
+			await OnDailyLimitAsync().ConfigureAwait(false);
+
+			return new Said("Steam's daily limit on comments to non-friends is reached - nothing was posted, and this account rests ~24h").ToString();
+		}
+
 		// The scheduled path deliberately counts an unconfirmed post but never credits it, because Steam may
 		// well have posted it and claiming the credit for something that might not exist is how an account's
 		// numbers drift out of step with rep4rep's. The button has to behave the same way, not report success.
@@ -882,9 +906,14 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	}
 
 	/// <summary>Release a cooldown / strike streak and let this account try again immediately.</summary>
-	public async Task ClearHoldAsync() {
+	/// <returns>Whether anything was cleared - false when this account's commenting history can't be read.</returns>
+	public async Task<bool> ClearHoldAsync() {
+		// Read from disk if the loop hasn't yet (it waits for settling in first). Returning on an unloaded state did
+		// nothing at all while the command still said the hold was cleared.
+		_state ??= await Rep4RepState.LoadAsync(Bot.Name).ConfigureAwait(false);
+
 		if (_state == null) {
-			return;
+			return false;
 		}
 
 		_state.BlockedUntil = 0;
@@ -893,14 +922,22 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		_state.ClearDeadTargets();
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 		_status = new Said("hold cleared");
-		_forceNext = true;
+
+		// A human-mode account still waits for its day and its spacing: clearing a cooldown isn't the owner asking
+		// for a comment at 4am. Otherwise it tries straight away, as it always did.
+		_forceNext = !Bot.Cfg.LegitMode;
 		Wake();
+
+		return true;
 	}
 
 	/// <summary>Pause commenting for a full 24h and come back at a clean baseline (rolling window emptied).</summary>
-	public async Task RestFullDayAsync(string reason) {
+	/// <returns>Whether the rest was set - false when this account's commenting history can't be read.</returns>
+	public async Task<bool> RestFullDayAsync(string reason) {
+		_state ??= await Rep4RepState.LoadAsync(Bot.Name).ConfigureAwait(false);
+
 		if (_state == null) {
-			return;
+			return false;
 		}
 
 		_state.BlockedUntil = DateTime.UtcNow.AddHours(24).Ticks;
@@ -910,5 +947,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 		_rateLimitRun = 0;
 		_status = new Said("resting a day ({0})", new Said(reason));
+
+		return true;
 	}
 }

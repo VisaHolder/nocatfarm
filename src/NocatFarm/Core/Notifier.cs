@@ -255,7 +255,7 @@ public static partial class Notifier {
 
 			if (_discordWarnedFor != url) {
 				_discordWarnedFor = url;
-				Log.Warn(new Said("notifications: {0}", why));
+				Log.Warn(new Said("notifications: {0}", why), "discord");
 			}
 
 			return (false, why);
@@ -335,7 +335,7 @@ public static partial class Notifier {
 
 			if (_telegramWarnedFor != token + G.TelegramChatId) {
 				_telegramWarnedFor = token + G.TelegramChatId;
-				Log.Warn(new Said("notifications: {0}", why));
+				Log.Warn(new Said("notifications: {0}", why), "telegram");
 			}
 
 			return (false, why);
@@ -349,7 +349,7 @@ public static partial class Notifier {
 		using HttpResponseMessage r = await Http.GetAsync($"https://api.telegram.org/bot{G.TelegramBotToken}/getMe", ct).ConfigureAwait(false);
 
 		if (r.StatusCode == HttpStatusCode.Unauthorized) {
-			Log.Warn("notifications: the Telegram bot token doesn't work - copy it again from @BotFather");
+			Log.Warn("notifications: the Telegram bot token doesn't work - copy it again from @BotFather", "telegram");
 
 			return;
 		}
@@ -363,7 +363,7 @@ public static partial class Notifier {
 			}
 
 			if (TelegramConnectLink is { } link) {
-				Log.Info(new Said("notifications: Telegram bot {0} found - to connect, open {1} and press Start (or press Connect Telegram in Settings, Notifications)", _botName, link));
+				Log.Info(new Said("notifications: Telegram bot {0} found - to connect, open {1} and press Start (or press Connect Telegram in Settings, Notifications)", _botName, link), "telegram");
 			}
 		}
 	}

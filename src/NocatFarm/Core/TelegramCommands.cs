@@ -82,7 +82,7 @@ public static partial class Notifier {
 					if (body.Contains("getUpdates request", StringComparison.OrdinalIgnoreCase)) {
 						if (_pollerWarnedFor != token) {
 							_pollerWarnedFor = token;
-							Log.Warn(new Said("notifications: another program is reading this Telegram bot's messages right now (maybe a second copy of nocat.farm) - only one can, so commands may not arrive until it stops"));
+							Log.Warn(new Said("notifications: another program is reading this Telegram bot's messages right now (maybe a second copy of nocat.farm) - only one can, so commands may not arrive until it stops"), "telegram");
 						}
 
 						await Task.Delay(30_000, ct).ConfigureAwait(false);
@@ -95,7 +95,7 @@ public static partial class Notifier {
 
 					if (_webhookWarnedFor != token) {
 						_webhookWarnedFor = token;
-						Log.Warn(new Said("notifications: this Telegram bot is already connected to something else (a webhook), so nocat.farm can't read its messages - make a new bot with @BotFather just for nocat.farm, or put your chat ID in \"Telegram chat\""));
+						Log.Warn(new Said("notifications: this Telegram bot is already connected to something else (a webhook), so nocat.farm can't read its messages - make a new bot with @BotFather just for nocat.farm, or put your chat ID in \"Telegram chat\""), "telegram");
 					}
 
 					continue;
@@ -141,7 +141,7 @@ public static partial class Notifier {
 					}
 
 					if (chatId != G.TelegramChatId) {
-						Log.Debug("telegram: ignored a message from a chat that isn't the connected one");
+						Log.Debug("telegram: ignored a message from a chat that isn't the connected one", "telegram");
 
 						continue;
 					}
@@ -153,7 +153,7 @@ public static partial class Notifier {
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				return;
 			} catch (Exception e) {
-				Log.Debug(new Said("telegram: {0}", e.Message));
+				Log.Debug(new Said("telegram: {0}", e.Message), "telegram");
 
 				try {
 					await Task.Delay(5000, ct).ConfigureAwait(false);
@@ -186,7 +186,7 @@ public static partial class Notifier {
 
 		G.TelegramChatId = chatId;
 		ConfigStore.SaveGlobal(G);
-		Log.Good(new Said("notifications: Telegram connected - they'll go to {0}", name.Length > 0 ? name : chatId));
+		Log.Good(new Said("notifications: Telegram connected - they'll go to {0}", name.Length > 0 ? name : chatId), "telegram");
 
 		await PostTelegramAsync($"{Header()}\n<b>{Html(new Said("Connected.").ToString())}</b> "
 			+ Html(new Said("Notifications you picked will arrive here. Change what gets sent under Settings, Notifications.").ToString())
@@ -224,8 +224,9 @@ public static partial class Notifier {
 		string trimmed = text.Trim();
 
 		// Everything the chat sends shows in the log (the window, the dashboard and the log file), the way a command
-		// typed in the window does - so what was done from a phone is never invisible at the PC.
-		Log.Info(new Said("> " + trimmed), "telegram");
+		// typed in the window does - so what was done from a phone is never invisible at the PC. A secret's value
+		// ('/set new SteamPassword ...') is masked, or the log file would hold the password in plain text.
+		Log.Info(new Said("> " + Commands.ForLog(trimmed)), "telegram");
 		bool slash = trimmed.StartsWith('/');
 		string line = slash ? trimmed[1..] : trimmed;
 		int space = line.IndexOf(' ');
@@ -267,11 +268,14 @@ public static partial class Notifier {
 		}
 
 		// The two that can't be undone from a phone: shutting nocat.farm down (nothing can start it again from here)
-		// and deleting an account. Both need "confirm" on the end.
-		if (first is "exit" or "quit" or "q" or "remove") {
+		// and deleting an account. Both need "confirm" on the end. Guarded by the command the word REACHES, so an
+		// alias ('delete') can't walk past a check written for one spelling ('remove').
+		string canonical = Commands.Resolve(first)?.Name ?? first;
+
+		if (canonical is "exit" or "remove") {
 			if (!rest.EndsWith("confirm", StringComparison.OrdinalIgnoreCase)) {
 				string typed = $"/{first} {rest}".Trim();
-				await PostTelegramAsync(Html(first == "remove"
+				await PostTelegramAsync(Html(canonical == "remove"
 					? new Said("That deletes the account and its saved login. Send {0} confirm to really do it.", typed).ToString()
 					: new Said("That closes nocat.farm, and it can't be started again from Telegram. Send {0} confirm to really do it.", typed).ToString()), ct).ConfigureAwait(false);
 

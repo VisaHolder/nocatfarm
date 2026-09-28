@@ -176,16 +176,23 @@ public static class Redeeming {
 			return;
 		}
 
-		string? key = KeyQueue.Next();
-
-		if (key == null) {
-			return;
-		}
-
-		List<Bot> online = [.. bots.Where(static b => b.IsOnline)];
+		// Only accounts that are signed in AND, on a human-mode account, awake and warmed up. Activating a key on an
+		// account that is asleep - invisible, logged off for the night - is a person redeeming in his sleep.
+		List<Bot> online = [.. bots.Where(static b => b.IsOnline && NocatFarm.Modules.HumanMode.ReadyFor(b))];
 
 		if (online.Count == 0) {
 			return;
+		}
+
+		// A key queued for one named account goes to that account and no other, however long it has to wait for it.
+		if (KeyQueue.Next(account => (account == null) || online.Exists(b => b.Name.Equals(account, StringComparison.OrdinalIgnoreCase))) is not { } next) {
+			return;
+		}
+
+		string key = next.Key;
+
+		if (next.Account != null) {
+			online = [.. online.Where(b => b.Name.Equals(next.Account, StringComparison.OrdinalIgnoreCase))];
 		}
 
 		KeyQueue.Spent();   // whatever happens below, the next one waits its own jittered gap
@@ -218,7 +225,12 @@ public static class Redeeming {
 				continue;
 			}
 
-			if (!result.WorthAnotherAccount) {
+			// A key meant for one account has no other account to move on to. "Already owned" or "wrong region" on
+			// it will say the same thing every time, and each retry spends one of that account's failed-activation
+			// allowance - so only "Steam didn't answer" is worth another go later.
+			bool pinned = (next.Account != null) && (result.Detail != EPurchaseResultDetail.Timeout);
+
+			if (!result.WorthAnotherAccount || pinned) {
 				Log.Info(new Said("dropping a queued key - {0}  ({1} left)", result.Message, KeyQueue.Count - 1), bot.Name);
 				KeyQueue.Done(key);   // the key is dead, not the account
 
