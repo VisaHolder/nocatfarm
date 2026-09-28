@@ -18,12 +18,6 @@ public static class UnlockEverything {
 	/// <summary>One run per account at a time. A second click while one is going would double every request.</summary>
 	private static readonly HashSet<string> Running = [];
 
-	public static bool IsRunning(string bot) {
-		lock (Running) {
-			return Running.Contains(bot);
-		}
-	}
-
 	/// <summary>Kick it off in the background. Returns false when one is already going for this account.</summary>
 	public static bool Start(Bot bot) {
 		lock (Running) {

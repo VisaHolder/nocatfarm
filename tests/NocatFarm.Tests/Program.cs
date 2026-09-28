@@ -349,7 +349,82 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 	Check("trades: items read plainly", NocatFarm.Modules.Trading.Items([TCard("Alpha", 2), TCard("Beta")]).ToString() == "3 item(s): Alpha x2, Beta", NocatFarm.Modules.Trading.Items([TCard("Alpha", 2), TCard("Beta")]));
 	Check("trades: nothing is 'no items'", NocatFarm.Modules.Trading.Items([]).ToString() == "no items");
-	Check("trades: a long list is cut short", NocatFarm.Modules.Trading.Items([TCard("A"), TCard("B"), TCard("C"), TCard("D"), TCard("E")]).ToString() == "5 item(s): A, B, C and 2 more", NocatFarm.Modules.Trading.Items([TCard("A"), TCard("B"), TCard("C"), TCard("D"), TCard("E")]));
+	// Short numbers: a number is never handed to a second offer, so a stale 'trade accept new 1' finds nothing.
+	var numbering = Trades("");
+	var keepM = typeof(NocatFarm.Modules.Trading).GetMethod("KeepNumbers", BindingFlags.NonPublic | BindingFlags.Instance)!;
+	NocatFarm.Core.TradeOffers.Offer Live(ulong id) => new(id, Stranger, NocatFarm.Core.TradeOffers.Active, false, null, [], [TCard("A")]);
+	void KeepLive(params ulong[] ids) => keepM.Invoke(numbering, [ids.Select(Live).ToList()]);
+	KeepLive(9001);
+	int first = numbering.NumberOf(9001);
+	KeepLive();                 // it went - accepted in the Steam client, say
+	KeepLive(9002);             // and a new one arrived
+	int second = numbering.NumberOf(9002);
+	Check("trades: the first offer is number 1", first == 1, $"{first}");
+	Check("trades: a number is never reused after the list empties", second == 2, $"{second}");
+	KeepLive(9004, 9003);
+	Check("trades: live offers are numbered oldest first, carrying on from the last", numbering.NumberOf(9003) == 3 && numbering.NumberOf(9004) == 4,
+		$"{numbering.NumberOf(9003)}, {numbering.NumberOf(9004)}");
+
+	Check("trades: a long list is cut short",NocatFarm.Modules.Trading.Items([TCard("A"), TCard("B"), TCard("C"), TCard("D"), TCard("E")]).ToString() == "5 item(s): A, B, C and 2 more", NocatFarm.Modules.Trading.Items([TCard("A"), TCard("B"), TCard("C"), TCard("D"), TCard("E")]));
+}
+
+// ── market prices: which separator is the decimal point ───────────────────────────────────────────────────
+{
+	var moneyM = typeof(NocatFarm.PriceBook).GetMethod("Money", BindingFlags.NonPublic | BindingFlags.Static, [typeof(string)])!;
+	decimal? Money(string text) => (decimal?) moneyM.Invoke(null, [text]);
+
+	Check("money: $1,234.56", Money("$1,234.56") == 1234.56m, $"{Money("$1,234.56")}");
+	Check("money: 1.234,56€", Money("1.234,56€") == 1234.56m, $"{Money("1.234,56€")}");
+	Check("money: ¥ 1,234 has no cents - a thousands separator, not 1.234", Money("¥ 1,234") == 1234m, $"{Money("¥ 1,234")}");
+	Check("money: 1.234 ₫ likewise", Money("1.234 ₫") == 1234m, $"{Money("1.234 ₫")}");
+	Check("money: 0,03€", Money("0,03€") == 0.03m, $"{Money("0,03€")}");
+	Check("money: $0.5 (one digit after)", Money("$0.5") == 0.5m, $"{Money("$0.5")}");
+	Check("money: 12 345,67 руб.", Money("12 345,67 руб.") == 12345.67m, $"{Money("12 345,67 руб.")}");
+	Check("money: 1,234,567 ₩", Money("1,234,567 ₩") == 1234567m, $"{Money("1,234,567 ₩")}");
+	Check("money: plain 5", Money("5") == 5m);
+	Check("money: nothing is null", Money("") == null && Money("--") == null);
+}
+
+// ── commands: aliases reach the right command, nothing claims a word twice ─────────────────────────────────
+{
+	string? Canon(string w) => NocatFarm.Commands.Resolve(w)?.Name;
+	Check("commands: 'delete' is remove (so the confirm guards catch it)", Canon("delete") == "remove");
+	Check("commands: 'quit' and 'q' are exit", Canon("quit") == "exit" && Canon("q") == "exit");
+	Check("commands: 'wakeup' and 'skipsleep' are wake", Canon("wakeup") == "wake" && Canon("skipsleep") == "wake");
+	Check("commands: 'bots' is status", Canon("bots") == "status");
+	Check("commands: 'boost' and 'key' no longer reach hunt/redeem", Canon("boost") == null && Canon("key") == null);
+	Check("commands: farm, transfer and report are gone", Canon("farm") == null && Canon("transfer") == null && Canon("report") == null);
+
+	List<string> words = [.. NocatFarm.Commands.All.SelectMany(static c => c.Aliases.Split('|', StringSplitOptions.RemoveEmptyEntries).Prepend(c.Name)).Select(static w => w.ToLowerInvariant())];
+	List<string> twice = [.. words.GroupBy(static w => w).Where(static g => g.Count() > 1).Select(static g => g.Key)];
+	Check("commands: no word reaches two commands", twice.Count == 0, string.Join(", ", twice));
+
+	Check("log: a secret setting's value is masked", NocatFarm.Commands.ForLog("set new SteamPassword hunter2") == "set new SteamPassword ***");
+	Check("log: a global secret too", NocatFarm.Commands.ForLog("/set WebPassword abc def") == "/set WebPassword ***");
+	Check("log: 'answer' is masked", NocatFarm.Commands.ForLog("answer hunter2") == "answer ***");
+	Check("log: an ordinary setting is left alone", NocatFarm.Commands.ForLog("set new FarmCards on") == "set new FarmCards on");
+	Check("log: other commands are left alone", NocatFarm.Commands.ForLog("status new") == "status new");
+}
+
+// ── reconnects: the wait grows, and stops at five minutes ─────────────────────────────────────────────────
+{
+	var grownM = typeof(NocatFarm.Core.SteamMaintenance).GetMethod("Grown", BindingFlags.NonPublic | BindingFlags.Static)!;
+	TimeSpan Grown(int attempt, int firstSecs) => (TimeSpan) grownM.Invoke(null, [attempt, TimeSpan.FromSeconds(firstSecs)])!;
+
+	Check("backoff: the first try waits the ordinary wait", Grown(1, 15) == TimeSpan.FromSeconds(15));
+	Check("backoff: doubles each failure", Grown(2, 15) == TimeSpan.FromSeconds(30) && Grown(4, 15) == TimeSpan.FromSeconds(120));
+	Check("backoff: never past five minutes", Grown(9, 15) == TimeSpan.FromMinutes(5) && Grown(500, 15) == TimeSpan.FromMinutes(5));
+}
+
+// ── self-update: the restarted copy gets the same arguments ───────────────────────────────────────────────
+{
+	var quoteM = typeof(NocatFarm.Core.SelfUpdate).GetMethod("QuoteArg", BindingFlags.NonPublic | BindingFlags.Static)!;
+	string Q(string a) => (string) quoteM.Invoke(null, [a])!;
+
+	Check("relaunch: a plain flag stays as it is", Q("--no-gui") == "--no-gui");
+	Check("relaunch: a path with spaces is quoted", Q(@"C:\My Files\data") == "\"C:\\My Files\\data\"", Q(@"C:\My Files\data"));
+	Check("relaunch: a trailing backslash can't eat the closing quote", Q(@"C:\My Files\") == "\"C:\\My Files\\\\\"", Q(@"C:\My Files\"));
+	Check("relaunch: an empty argument survives", Q("") == "\"\"");
 }
 
 // SETTINGSCOUNT

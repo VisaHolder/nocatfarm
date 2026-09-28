@@ -149,6 +149,11 @@ public sealed class GlobalConfig {
 
 	public bool DiscordShowTimer { get; set; } = true;
 
+	/// <summary>The colour of "telegram" and "discord" in the log, from the same palette as the accounts'.</summary>
+	public int TelegramLogColour { get; set; } = 6;
+
+	public int DiscordLogColour { get; set; } = 5;
+
 	public bool SendCardDrops { get; set; } = true;
 	public bool SendFreeStuff { get; set; } = true;
 	public bool SendTrades { get; set; } = true;
@@ -567,7 +572,10 @@ public static class ConfigStore {
 	};
 
 	public static void UseRoot(string root) {
-		Root = root;
+		// One spelling per folder. "--path data", "--path .\data\" and the full path are the same place, and the
+		// single-instance lock is named after Root - left as typed, each spelling got its own lock and two copies
+		// could run on one config at once.
+		Root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(root));
 		Directory.CreateDirectory(ConfigDir);
 	}
 
@@ -593,6 +601,12 @@ public static class ConfigStore {
 			GlobalConfig loaded = JsonSerializer.Deserialize<GlobalConfig>(File.ReadAllText(GlobalPath), Json) ?? new GlobalConfig();
 			loaded.DiscordWebhookUrl = Secrets.Unprotect(loaded.DiscordWebhookUrl);
 			loaded.TelegramBotToken = Secrets.Unprotect(loaded.TelegramBotToken);
+
+			// Unprotect hands plain text straight back, so a file from before these were encrypted - or one typed
+			// in by hand - reads exactly as it always did, and is encrypted on the next save.
+			loaded.WebPassword = Secrets.Unprotect(loaded.WebPassword);
+			loaded.Rep4RepApiToken = Secrets.Unprotect(loaded.Rep4RepApiToken);
+			loaded.WebProxyPassword = Secrets.Unprotect(loaded.WebProxyPassword);
 
 			return loaded;
 		} catch (Exception e) {
@@ -642,6 +656,12 @@ public static class ConfigStore {
 				GlobalConfig onDisk = JsonSerializer.Deserialize<GlobalConfig>(JsonSerializer.Serialize(cfg, Json), Json)!;
 				onDisk.DiscordWebhookUrl = Secrets.Protect(cfg.DiscordWebhookUrl, "global");
 				onDisk.TelegramBotToken = Secrets.Protect(cfg.TelegramBotToken, "global");
+
+				// The same for the dashboard password, the rep4rep token and the proxy password - all three are
+				// secrets settings, and they were the only ones still written out in the clear.
+				onDisk.WebPassword = Secrets.Protect(cfg.WebPassword, "global");
+				onDisk.Rep4RepApiToken = Secrets.Protect(cfg.Rep4RepApiToken, "global");
+				onDisk.WebProxyPassword = Secrets.Protect(cfg.WebProxyPassword, "global");
 				AtomicFile.Write(GlobalPath, JsonSerializer.Serialize(onDisk, Json));
 			}
 		} catch (Exception e) {

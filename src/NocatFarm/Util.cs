@@ -105,33 +105,6 @@ public static class Html {
 		return b > a ? s[a..b] : null;
 	}
 
-	/// <summary>Every occurrence of the digits following <paramref name="marker"/>, e.g. "gamecards/" -> appIDs.</summary>
-	public static List<uint> UIntsAfter(string s, string marker) {
-		List<uint> found = new();
-		int i = 0;
-
-		while (true) {
-			int at = s.IndexOf(marker, i, StringComparison.Ordinal);
-
-			if (at < 0) {
-				return found;
-			}
-
-			int p = at + marker.Length;
-			int start = p;
-
-			while ((p < s.Length) && char.IsAsciiDigit(s[p])) {
-				p++;
-			}
-
-			if ((p > start) && uint.TryParse(s.AsSpan(start, p - start), out uint v) && !found.Contains(v)) {
-				found.Add(v);
-			}
-
-			i = at + marker.Length;
-		}
-	}
-
 	/// <summary>Strip tags, decode the entities Steam actually emits, and collapse whitespace.</summary>
 	public static string Text(string html) {
 		StringBuilder sb = new();

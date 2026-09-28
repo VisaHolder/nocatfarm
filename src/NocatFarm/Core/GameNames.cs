@@ -229,7 +229,7 @@ public static class GameNames {
 			_dirty = false;
 			Dictionary<string, string> map = Known.ToDictionary(static kv => kv.Key.ToString(CultureInfo.InvariantCulture), static kv => kv.Value);
 			Directory.CreateDirectory(ConfigStore.ConfigDir);
-			await File.WriteAllTextAsync(CachePath, JsonSerializer.Serialize(map, new JsonSerializerOptions { WriteIndented = true })).ConfigureAwait(false);
+			await AtomicFile.WriteAsync(CachePath, JsonSerializer.Serialize(map, new JsonSerializerOptions { WriteIndented = true })).ConfigureAwait(false);
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't save the game-name cache: {0}", e.Message));
 		} finally {

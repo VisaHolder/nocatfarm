@@ -24,8 +24,9 @@ public sealed class DuplicateSeller(Bot bot) : BotModule(bot) {
 		while (!ct.IsCancellationRequested) {
 			TimeSpan wait = TimeSpan.FromMinutes(10);
 
-			// Nobody sees who listed a card or when, so any time of day - just not the moment it signs in.
-			_gate ??= HumanGate.Quiet(Bot);
+			// A listing carries the account's name and the time on the market, so a human-mode account lists in its own
+			// day - not while it's asleep.
+			_gate ??= HumanGate.OwnDay(Bot);
 
 			if (Bot.Cfg.SellDuplicates && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && _gate.Open
 				&& (Limiters.RateLimitedFor(WebSession.Community.Host) == TimeSpan.Zero)) {

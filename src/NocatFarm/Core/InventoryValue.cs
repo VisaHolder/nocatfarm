@@ -53,6 +53,13 @@ public sealed partial class InventoryValue(Bot bot) {
 	private DateTime _readAt = DateTime.MinValue;
 
 	/// <summary>
+	/// False while the last read is missing a game Steam didn't answer for, and there was no earlier read of it to
+	/// fall back on. Such a total is short by that whole game - CS2's skins, say - so it is shown but never banked:
+	/// banked, it read as a 96% crash one day and a full recovery the next.
+	/// </summary>
+	private bool _complete = true;
+
+	/// <summary>
 	/// Read the inventories again on the next pass, whatever the timer says.
 	///
 	/// Prices are untouched - they are cached for a day and shared, and re-fetching hundreds of them because
@@ -97,19 +104,23 @@ public sealed partial class InventoryValue(Bot bot) {
 		}
 
 		List<(uint App, string Name, string Context)> inventories = ParseContexts(page);
+		Dictionary<uint, (string Game, Dictionary<string, Held> Items, bool Blocked)> previous;
 
 		lock (_holdings) {
+			previous = new(_holdings);
 			_holdings.Clear();   // a fresh read replaces the old picture; contexts merge into THIS one, not the last
 		}
 
 		if (inventories.Count == 0) {
 			_readAt = DateTime.UtcNow;   // nothing held anywhere: a real answer, not a failure
+			_complete = true;
 			Ready = true;
 
 			return;
 		}
 
 		bool first = true;
+		HashSet<uint> failed = [];
 
 		foreach ((uint app, string name, string context) in inventories.Take(MaxInventories)) {
 			ct.ThrowIfCancellationRequested();
@@ -123,17 +134,38 @@ public sealed partial class InventoryValue(Bot bot) {
 			first = false;
 
 			try {
-				await ReadOneAsync(app, name, context, ct).ConfigureAwait(false);
+				if (!await ReadOneAsync(app, name, context, ct).ConfigureAwait(false)) {
+					failed.Add(app);
+				}
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
+				failed.Add(app);
 				Log.Debug(new Said("couldn't read the {0} inventory: {1}", name, e.Message), bot.Name);
 			}
 		}
 
+		// A game Steam didn't answer for keeps what the last read found, whole - not dropped from the total, and not
+		// half-merged with whichever of its contexts did come back. Only one never read before leaves a gap.
+		bool complete = true;
+
+		lock (_holdings) {
+			foreach (uint app in failed) {
+				if (previous.TryGetValue(app, out (string Game, Dictionary<string, Held> Items, bool Blocked) old)) {
+					_holdings[app] = old;
+				} else {
+					complete = false;
+				}
+			}
+		}
+
 		_readAt = DateTime.UtcNow;
+		_complete = complete;
 		Ready = true;
-		SaveSnapshot();
+
+		if (complete) {
+			SaveSnapshot();
+		}
 	}
 
 	// ── the last read, kept across restarts ─────────────────────────────────
@@ -192,11 +224,12 @@ public sealed partial class InventoryValue(Bot bot) {
 		}
 	}
 
-	private async Task ReadOneAsync(uint app, string game, string context, CancellationToken ct) {
+	/// <summary>Read one game's inventory into the holdings. False when Steam gave no answer - an empty inventory is true.</summary>
+	private async Task<bool> ReadOneAsync(uint app, string game, string context, CancellationToken ct) {
 		InventoryContents? inventory = await Inventory.ReadAsync(bot, app, context, ct).ConfigureAwait(false);
 
 		if (inventory == null) {
-			return;
+			return false;
 		}
 
 		// classid identifies the KIND of item; the assets list is the actual copies held.
@@ -244,7 +277,7 @@ public sealed partial class InventoryValue(Bot bot) {
 
 		lock (_holdings) {
 			if (counts.Count == 0) {
-				return;
+				return true;
 			}
 
 			// MERGED, not replaced: one game can have several inventory contexts - Steam's own has three, for
@@ -258,6 +291,8 @@ public sealed partial class InventoryValue(Bot bot) {
 				_holdings[app] = (game, counts, blocked);
 			}
 		}
+
+		return true;
 	}
 
 	/// <summary>Pull the appIDs and context IDs out of the inventory page's g_rgAppContextData blob.</summary>
@@ -435,7 +470,7 @@ public sealed partial class InventoryValue(Bot bot) {
 
 		// Only banked once the whole thing has a price. A total that is still filling in would otherwise be
 		// recorded as a genuine drop and then a genuine rise, and the day's percentage would be fiction.
-		if (Pending == 0) {
+		if ((Pending == 0) && _complete) {
 			InventoryHistory.Note(bot.Name, Total);
 		}
 

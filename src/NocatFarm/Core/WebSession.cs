@@ -203,7 +203,9 @@ public sealed class WebSession : IDisposable {
 
 				Log.Debug("web session expired - re-minting the access token", _bot.Name);
 
-				if (!await RefreshAsync(true, ct).ConfigureAwait(false)) {
+				// remint: the cached token is the one Steam just turned away. Without it the "re-mint" rebuilt the
+				// same rejected token into cookies and the retry bounced exactly as before.
+				if (!await RefreshAsync(true, ct, remint: true).ConfigureAwait(false)) {
 					return null;
 				}
 
@@ -265,13 +267,6 @@ public sealed class WebSession : IDisposable {
 		}
 
 		return body;
-	}
-
-	/// <summary>Same as <see cref="PostAsync"/> but reports the transport outcome separately from the body.</summary>
-	public async Task<(bool Reached, string? Body)> PostRawAsync(Uri url, Dictionary<string, string> form, Uri? referer = null, CancellationToken ct = default) {
-		string? body = await PostAsync(url, form, referer, ct).ConfigureAwait(false);
-
-		return (body != null, body);
 	}
 
 	/// <summary>
@@ -352,7 +347,13 @@ public sealed class WebSession : IDisposable {
 	/// Make sure there is a usable access token and cookies built from it. Cheap and idempotent when the current
 	/// token still has life left in it.
 	/// </summary>
-	public async Task<bool> RefreshAsync(bool force = false, CancellationToken ct = default) {
+	/// <param name="remint">
+	/// Steam rejected the current token, so a new one has to be minted rather than the cached one rebuilt into
+	/// cookies again. Kept apart from <paramref name="force"/> on purpose: force also runs after every reconnect
+	/// (the session is marked not-ready), and minting there would be a new web session per reconnect - the exact
+	/// thing that signs the owner out of Friends &amp; Chat.
+	/// </param>
+	public async Task<bool> RefreshAsync(bool force = false, CancellationToken ct = default, bool remint = false) {
 		bool parentalNeeded;
 
 		await _refreshLock.WaitAsync(ct).ConfigureAwait(false);
@@ -362,7 +363,7 @@ public sealed class WebSession : IDisposable {
 				return true;
 			}
 
-			string? token = await _bot.GetAccessTokenAsync().ConfigureAwait(false);
+			string? token = await _bot.GetAccessTokenAsync(remint).ConfigureAwait(false);
 
 			if (string.IsNullOrEmpty(token)) {
 				Ready = false;

@@ -93,7 +93,11 @@ public static class PluginHost {
 				try {
 					Host host = new(_mgr!, plugin.Name);
 
-					await plugin.OnLoadAsync(host, ct).ConfigureAwait(false);
+					// A time limit, because start-up waits on this: a plugin whose load hangs on a network call held
+					// every account back from signing in, behind a window that looked perfectly fine.
+					using CancellationTokenSource limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
+					limit.CancelAfter(TimeSpan.FromSeconds(15));
+					await plugin.OnLoadAsync(host, limit.Token).WaitAsync(TimeSpan.FromSeconds(15), ct).ConfigureAwait(false);
 					lock (HostsGate) {
 						Hosts.Add(host);
 					}

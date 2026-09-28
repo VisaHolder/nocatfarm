@@ -109,7 +109,9 @@ public sealed class Bot : IAsyncDisposable {
 		// minutes", while the log had already announced the grind as running - which reads as broken, and on a
 		// short grind wastes a noticeable slice of it. Human-mode accounts are untouched: they get a deliberate
 		// jittered hand-over so the switch doesn't look like a machine, and their own scheduler performs it.
-		if ((delay == TimeSpan.Zero) && !HumanOwned && CanPlay) {
+		// The setting, not just the running flag: human mode only claims the account on its first tick, and a grind
+		// in the seconds before that would otherwise skip the owner-safety wait - the idler checks the same way.
+		if ((delay == TimeSpan.Zero) && !HumanOwned && !Cfg.LegitMode && CanPlay) {
 			SetPlaying([app]);
 		}
 
@@ -295,8 +297,11 @@ public sealed class Bot : IAsyncDisposable {
 	/// would have nagged "Steam shows Rust" about a name deliberately turned off, and the card farmer reserves
 	/// one of Steam's concurrent-game slots for the shortcut - so with the toggle off but that site unpatched it
 	/// would silently farm one game fewer, forever, for no reason anybody could see.
+	///
+	/// Always empty on a human-mode account. A person plays one real game at a time; a made-up non-Steam name on
+	/// top of it is the idler signature human mode exists to avoid, and the health check already scores it that way.
 	/// </summary>
-	public string CustomName => Cfg.CustomGameNameEnabled ? Cfg.CustomGameName : "";
+	public string CustomName => Cfg.CustomGameNameEnabled && !Cfg.LegitMode ? Cfg.CustomGameName : "";
 
 	// ── things the social module listens for ────────────────────────────────
 	/// <summary>Somebody sent this account a friend request. The SteamID64 of whoever it was.</summary>
@@ -359,7 +364,12 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		_personaOverride = state;
-		ApplyPersona();
+
+		// An account its owner signs into always shows plain Online whatever the override says, so re-sending
+		// it changes nothing we want and undoes whatever he picked in his own client.
+		if (!Cfg.IUseThisAccount) {
+			ApplyPersona();
+		}
 	}
 
 	public void ClearPersonaOverride() {
@@ -368,7 +378,12 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		_personaOverride = null;
-		ApplyPersona();
+
+		// An account its owner signs into always shows plain Online whatever the override says, so re-sending
+		// it changes nothing we want and undoes whatever he picked in his own client.
+		if (!Cfg.IUseThisAccount) {
+			ApplyPersona();
+		}
 	}
 
 	/// <summary>
@@ -619,11 +634,15 @@ public sealed class Bot : IAsyncDisposable {
 	// GetAccessTokenAsync and TokenStore for why that distinction is the whole ballgame for Friends & Chat.
 	private string? _accessToken;
 	private DateTime? _accessTokenValidUntil;
+	private DateTime _lastRemint = DateTime.MinValue;
 
 	// Last time the schedule's persona was re-asserted, so the heartbeat can keep it true without spamming.
 	private DateTime _lastPersonaAssert;
 	private DateTime _nextPersonaAssert;
 	private DateTime _lastNameHeal;
+
+	// The one re-send allowed while something else holds the persona has been spent. Cleared when it is ours again.
+	private bool _contestRetried;
 
 	// Last appear-as status and displayed game actually announced, so a CHANGE can be logged (and only a change -
 	// the re-asserts that keep them steady stay silent). -1 / null means nothing announced yet this run.
@@ -894,6 +913,7 @@ public sealed class Bot : IAsyncDisposable {
 		if (PersonaAsSeen == EffectivePersona) {
 			if (_personaFightSince != null) {
 				_personaFightSince = null;
+				_contestRetried = false;
 				Log.Debug("the persona is ours again - resuming the periodic re-assert", Name);
 			}
 		} else if (_personaFightSince == null) {
@@ -922,7 +942,11 @@ public sealed class Bot : IAsyncDisposable {
 		// The first persona echo lands a second after logon, before the shortcut has been processed, and it
 		// reports whichever real game it saw first. Warning on that is crying wolf about something that corrects
 		// itself moments later - which is exactly what it did. So the mismatch has to PERSIST to count.
-		string wanted = CustomName;
+		//
+		// Measured against the label actually ANNOUNCED, not the configured name. The card farmer can deliberately
+		// announce no label (PlayWhileFarming off); comparing against the setting then called that "slipped", the
+		// heal put the name back, the farmer took it off again, and round it went.
+		string wanted = _announcedLabel ?? "";
 		bool mismatched = !string.IsNullOrWhiteSpace(wanted) && (seen.Length > 0) && (seen != wanted);
 
 		if (!mismatched) {
@@ -1174,7 +1198,10 @@ public sealed class Bot : IAsyncDisposable {
 			int max = Math.Max(0, Cfg.LegitStopMaxSeconds);
 
 			if (max > 0) {
-				int secs = Rng.Next(Math.Max(3, max * 2 / 5), max + 1);
+				// Clamped: with the setting at 1 or 2 the three-second floor sat above the ceiling, Rng.Next threw,
+				// and the stop - and any self-update waiting on it - failed.
+				int lo = Math.Min(max, Math.Max(3, max * 2 / 5));
+				int secs = Rng.Next(lo, max + 1);
 				// The only StatusText with a value baked into it, so it cannot be looked up at render time like
 				// the rest. Translated here instead; Loc.T on an already-translated string returns it untouched.
 				StatusText = Loc.T("finishing up - logging off in ~{0}s", secs);
@@ -1729,6 +1756,8 @@ public sealed class Bot : IAsyncDisposable {
 		_announcedLabel = null;
 		PlayingAsSeen = "";
 		_mismatchedSince = null;
+		_personaFightSince = null;   // the next session's own echo decides whether anybody else is writing it
+		_contestRetried = false;
 
 		_heartbeat?.Dispose();
 		_heartbeat = null;
@@ -1776,7 +1805,6 @@ public sealed class Bot : IAsyncDisposable {
 				}
 				case EResult.RateLimitExceeded:
 				case EResult.AccountLoginDeniedThrottle:
-				case EResult.AccessDenied:
 				case EResult.ServiceUnavailable:
 					// ServiceUnavailable is Steam telling the whole IP "too many logins, back off" - the exact
 					// throttle a burst of restarts/reconnects trips. Left in the default case it retried every ~15s
@@ -1787,8 +1815,12 @@ public sealed class Bot : IAsyncDisposable {
 					// "Steam is switched off", and every account gets it at once. Serving a fleet-wide 25m cooldown
 					// for a restart that is usually over inside five keeps a perfectly healthy fleet down long after
 					// Steam is back - and logs "Steam is rate-limiting logins" when no throttle exists, which is
-					// exactly the wrong thing to read at 3am. The other three name the throttle outright, so they
+					// exactly the wrong thing to read at 3am. The other two name the throttle outright, so they
 					// are never reinterpreted.
+					//
+					// AccessDenied is NOT here. The logon handler reads it as a revoked token for this one account and
+					// deletes it; treating the same result as a Steam-wide throttle as well sat every other account out
+					// for half an hour, with a "rate-limiting" warning, because one account's password was changed.
 					if (reason == EResult.ServiceUnavailable && SteamMaintenance.LikelyNow) {
 						await BackOffAndWaitAsync().ConfigureAwait(false);
 
@@ -1851,7 +1883,14 @@ public sealed class Bot : IAsyncDisposable {
 			_reconnectAttempts++;
 			TimeSpan back = SteamMaintenance.Backoff(_reconnectAttempts, TimeSpan.FromSeconds(Rng.Next(wait, wait * 2)));
 
-			Log.Warn(SteamMaintenance.Explain(back), Name);
+			// The first couple of failures are worth seeing; after that the same line every few minutes only buries
+			// the log, and the board already says "reconnecting". The trace stays at debug.
+			if (SteamMaintenance.LikelyNow || (_reconnectAttempts <= 2)) {
+				Log.Warn(SteamMaintenance.Explain(back), Name);
+			} else {
+				Log.Debug(SteamMaintenance.Explain(back), Name);
+			}
+
 			await Task.Delay(back, _cts?.Token ?? CancellationToken.None).ConfigureAwait(false);
 		}
 	}
@@ -1899,9 +1938,28 @@ public sealed class Bot : IAsyncDisposable {
 		// Skipped while the owner is actually on the account (PlayingBlocked) - when they are using it, their
 		// client owns the status and we do not fight it. Every ~60s is plenty; the heartbeat itself is far
 		// tighter, hence the timestamp gate.
+		//
+		// Never on an account its owner signs into himself. The logon already announced plain Online once, which is
+		// all that account needs; re-sending it every few minutes put him back to Online within a minute of picking
+		// Invisible or Away in his own client.
+		//
+		// And not in a loop while something else is winning the persona (PersonaContested). One re-send is allowed,
+		// because Steam itself flips the persona when a game starts and that one should be undone; if the other
+		// writer still wins after it, we stop until the persona is ours again - that is the "backing off" the log
+		// line promises. Like PlayingBlocked, that leaves liveness to inbound traffic alone, and an account with a
+		// second writer on it is never quiet.
 		bool drifted = (PersonaAsSeen is int seen) && (seen != EffectivePersona) && (DateTime.UtcNow.Subtract(_lastPersonaAssert).TotalSeconds >= 60);
+		bool backedOff = Cfg.IUseThisAccount || (PersonaContested && _contestRetried);
 
-		if (!PlayingBlocked && (drifted || (DateTime.UtcNow >= _nextPersonaAssert))) {
+		// Backing off still counts as the heartbeat getting here. The keepalive's "gone quiet" test pairs inbound
+		// traffic with this stamp, and an account that never re-sends would be called dead after two quiet minutes -
+		// the invisible-overnight false reconnect all over again. SteamKit's own heartbeat still catches a dead socket.
+		if (backedOff) {
+			_lastPersonaAssert = DateTime.UtcNow;
+		}
+
+		if (!PlayingBlocked && !backedOff && (drifted || (DateTime.UtcNow >= _nextPersonaAssert))) {
+			_contestRetried = PersonaContested;
 			_lastPersonaAssert = DateTime.UtcNow;
 			_nextPersonaAssert = DateTime.UtcNow + Rng.Seconds(180, PersonaAssertMaxSeconds);
 
@@ -1921,13 +1979,14 @@ public sealed class Bot : IAsyncDisposable {
 		// relaunches when the GAME LIST changes, and an idling account's list doesn't, so a slipped name stayed
 		// slipped forever. Throttled, and only for an account that should be showing a custom name at all.
 		if (CustomNameNotShowing && !PlayingBlocked && !Paused && !HumanOwned
-			&& !string.IsNullOrWhiteSpace(CustomName)
+			&& _announcedLabel is { Length: > 0 } announced && !string.IsNullOrWhiteSpace(announced)
 			&& (DateTime.UtcNow.Subtract(_lastNameHeal).TotalSeconds >= 120)) {
 			_lastNameHeal = DateTime.UtcNow;
 			Log.Info(new Said("custom name slipped (Steam shows {0}) - re-asserting it", PlayingAsSeen), Name);
 
 			try {
-				SetPlaying(PlayingApps, force: true);
+				// The same label that was announced - never the configured name over a farmer that chose none.
+				SetPlaying(PlayingApps, announced, force: true);
 			} catch {
 				// next heartbeat tries again
 			}
@@ -2315,8 +2374,12 @@ public sealed class Bot : IAsyncDisposable {
 		// Steam replays the STANDING unread count when asked at login, so the first answer is a running total,
 		// not news. Only an INCREASE means somebody actually just commented - otherwise every restart announced
 		// "5 unread" for comments left weeks ago.
+		//
+		// The OWNER count, not the total: the total also rises when somebody posts in a thread this account merely
+		// commented in - every profile rep4rep had it comment on - which announced "somebody commented on this
+		// profile" for comments that were on somebody else's.
 		uint previous = _knownComments;
-		_knownComments = cb.NewComments;
+		_knownComments = cb.NewOwnerComments;
 
 		if (!_commentBaselineSet) {
 			_commentBaselineSet = true;
@@ -2336,7 +2399,7 @@ public sealed class Bot : IAsyncDisposable {
 			return;
 		}
 
-		if (cb.NewComments <= previous) {
+		if (cb.NewOwnerComments <= previous) {
 			return;
 		}
 
@@ -2482,7 +2545,12 @@ public sealed class Bot : IAsyncDisposable {
 	/// The token that arrives with the login is preferred over minting at all (see the auth flow), and whatever
 	/// we end up with is persisted so a restart reuses it rather than minting afresh.
 	/// </summary>
-	internal async Task<string?> GetAccessTokenAsync() {
+	/// <param name="remint">
+	/// Steam has just REJECTED the cached token (the web session bounced to the login page), so handing it back again
+	/// only fails the retry the same way. Mints a new one even though its clock says it has life left - at most
+	/// once every ten minutes, so a page that keeps bouncing for some other reason can't mint a session a minute.
+	/// </param>
+	internal async Task<string?> GetAccessTokenAsync(bool remint = false) {
 		if (State != BotState.Online || SteamId == 0) {
 			return null;
 		}
@@ -2490,9 +2558,15 @@ public sealed class Bot : IAsyncDisposable {
 		await _tokenLock.WaitAsync().ConfigureAwait(false);
 
 		try {
+			bool rejected = remint && (DateTime.UtcNow - _lastRemint > TimeSpan.FromMinutes(10));
+
+			if (rejected) {
+				_lastRemint = DateTime.UtcNow;
+			}
+
 			// Still good for more than the slack window - hand back exactly what we already have. No network call,
 			// no new session, nothing for Steam to arbitrate against the owner's client.
-			if (!string.IsNullOrEmpty(_accessToken) && _accessTokenValidUntil.HasValue
+			if (!rejected && !string.IsNullOrEmpty(_accessToken) && _accessTokenValidUntil.HasValue
 				&& (_accessTokenValidUntil.Value > DateTime.UtcNow.AddMinutes(AccessTokenSlackMinutes))) {
 				Log.Debug(new Said("reusing web token (good for {0}h) - no new web session", ((_accessTokenValidUntil.Value - DateTime.UtcNow).TotalHours).ToString("0.#")), Name);
 
@@ -2647,6 +2721,10 @@ public sealed class Bot : IAsyncDisposable {
 		_announcedApps = apps;
 		_announcedLabel = label;
 
+		if (string.IsNullOrWhiteSpace(label)) {
+			_mismatchedSince = null;   // nothing to slip when no name is being shown
+		}
+
 		if (relaunch) {
 			Client.Send(BuildGamesPlayed(null, []));
 			Log.Debug("game list changed - restarting the session so the custom name stays on top", Name);
@@ -2692,7 +2770,8 @@ public sealed class Bot : IAsyncDisposable {
 		//
 		// A re-assert of the SAME games changes nothing on Steam s side, so there is no reset to undo and no
 		// reason to send anything. Only a genuine change needs it.
-		if (gamesChanged && !PlayingBlocked) {
+		// Not on an account its owner signs into himself: its status is his, announced once at logon and then left alone.
+		if (gamesChanged && !PlayingBlocked && !Cfg.IUseThisAccount) {
 			ApplyPersona();
 			RePersonaShortly();
 		}
@@ -3044,16 +3123,6 @@ public static class TokenStore {
 			} catch {
 				// nothing to do
 			}
-		}
-	}
-
-	public static void ClearAccess(string bot) {
-		try {
-			if (File.Exists(AccessPathFor(bot))) {
-				File.Delete(AccessPathFor(bot));
-			}
-		} catch {
-			// nothing to do
 		}
 	}
 }

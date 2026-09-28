@@ -226,18 +226,17 @@ public static partial class PriceBook {
 			return null;
 		}
 
-		string digits = MoneyChars().Replace(text, "");
+		// Trimmed of separators at either end: "12 345,67 руб." and "1,--€" leave one behind that is no part of the number.
+		string digits = MoneyChars().Replace(text, "").Trim(',', '.');
 
-		// Whichever separator comes LAST is the decimal point - that is the only rule that works for both
-		// "1,234.56" and "1.234,56".
-		int comma = digits.LastIndexOf(',');
-		int dot = digits.LastIndexOf('.');
+		// The LAST separator is the decimal point - the only rule that works for both "1,234.56" and "1.234,56" -
+		// but only when one or two digits follow it. Currencies with no cents ("¥ 1,234", "1.234 ₫") have a
+		// thousands separator last, and reading that as a decimal point priced a 1,234 yen card at 1.234.
+		int last = Math.Max(digits.LastIndexOf(','), digits.LastIndexOf('.'));
+		bool hasDecimals = (last >= 0) && (digits.Length - last - 1) is 1 or 2;
+		string whole = (hasDecimals ? digits[..last] : digits).Replace(",", "").Replace(".", "");
 
-		if ((comma >= 0) && (comma > dot)) {
-			digits = digits.Replace(".", "").Replace(',', '.');
-		} else {
-			digits = digits.Replace(",", "");
-		}
+		digits = hasDecimals ? whole + "." + digits[(last + 1)..] : whole;
 
 		return decimal.TryParse(digits, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal value) ? value : null;
 	}

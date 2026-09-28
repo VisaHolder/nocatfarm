@@ -6,18 +6,24 @@ namespace NocatFarm.Modules;
 /// When a human-mode account may do one kind of thing. Without human mode it's always open.
 /// </summary>
 /// <remarks>
-/// Two kinds. A gate that follows the day (the default) is for things other people see as they happen - a trade
+/// Three kinds. A gate that follows the day (the default) is for things other people see as they happen - a trade
 /// accepted, a comment posted, an achievement unlocked: it waits until the account is awake and settled in (see
-/// <see cref="HumanMode.ReadyFor"/>), then a random human delay of its own. A <see cref="Quiet"/> gate is for things
-/// nobody watches - a badge crafted, a free game added, a notification read: it ignores sleep entirely and only
-/// waits a short random while after signing in, so a sign-in isn't ten things hitting Steam in the same second.
+/// <see cref="HumanMode.ReadyFor"/>), then a random human delay of its own. An <see cref="OwnDay"/> gate is for
+/// things the account starts itself that show up on it afterwards - a group joined, a badge crafted, a card listed,
+/// a free game added: the same, but it keeps to the account's day even where "act only while awake" is off, because
+/// that switch is about answering other people, not about joining a group at 4am. A <see cref="Quiet"/> gate is for
+/// things nobody sees at all - cards sent to your own account, a notification read: it ignores sleep entirely and
+/// only waits a short random while after signing in, so a sign-in isn't ten things hitting Steam in the same second.
 /// </remarks>
-public sealed class HumanGate(Bot bot, bool followsDay = true) {
+public sealed class HumanGate(Bot bot, bool followsDay = true, bool ownDay = false) {
 	private bool _ready;
 	private DateTime _openAt = DateTime.MaxValue;
 
 	/// <summary>For things nobody watches: any time of day, just not the moment it signs in.</summary>
 	public static HumanGate Quiet(Bot bot) => new(bot, followsDay: false);
+
+	/// <summary>For things the account does by itself that show on it afterwards: only in its own day, settled in.</summary>
+	public static HumanGate OwnDay(Bot bot) => new(bot, followsDay: true, ownDay: true);
 
 	/// <summary>Whether it may act now. Each time the account becomes ready again (signed in, woke up), a fresh wait starts.</summary>
 	public bool Open {
@@ -29,7 +35,7 @@ public sealed class HumanGate(Bot bot, bool followsDay = true) {
 			// Behind-the-scenes things follow the day too when the account is set up that way.
 			bool day = followsDay || bot.Cfg.QuietThingsWaitForDay;
 
-			if (day ? !HumanMode.ReadyFor(bot) : !bot.IsOnline) {
+			if (ownDay ? !HumanMode.UpFor(bot) : day ? !HumanMode.ReadyFor(bot) : !bot.IsOnline) {
 				_ready = false;
 
 				return false;

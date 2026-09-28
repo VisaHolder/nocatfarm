@@ -62,7 +62,6 @@ public sealed class MainWindow : IDisposable {
 	private int _h = StartH;
 	private const int TitleH = 34;
 	private const int BarH = 38;
-	private const int RowH = 44;
 	private const int StatusH = 24;
 	private const int InputH = 28;
 	private const int Pad = 14;
@@ -492,7 +491,8 @@ public sealed class MainWindow : IDisposable {
 			return;
 		}
 
-		Append(new Log.Entry(0, DateTime.Now, "INFO", "you", new Core.Said("> " + line)));
+		// Masked like Telegram and Steam chat: 'set myaccount SteamPassword ...' must not sit on screen in plain text.
+		Append(new Log.Entry(0, DateTime.Now, "INFO", "you", new Core.Said("> " + Commands.ForLog(line))));
 
 		_ = Task.Run(async () => {
 			try {
@@ -791,9 +791,7 @@ public sealed class MainWindow : IDisposable {
 			return TextDim;
 		}
 
-		Bot? bot = _mgr.All.FirstOrDefault(b => b.Name == source);
-
-		return NameColour.Of(bot?.Cfg.LogColour ?? 0)?.Win32 ?? TextMid;
+		return NameColour.Of(NameColour.ChoiceFor(source, _mgr))?.Win32 ?? TextMid;
 	}
 
 	private int ButtonAt(int x, int y) {
@@ -1963,10 +1961,6 @@ public sealed class MainWindow : IDisposable {
 	private static readonly IntPtr HwndTopmost = new(-1);
 	private static readonly IntPtr HwndNoTopmost = new(-2);
 	private const int SpiGetWorkArea = 0x0030;
-	private const int SmXVirtualScreen = 76;
-	private const int SmYVirtualScreen = 77;
-	private const int SmCxVirtualScreen = 78;
-	private const int SmCyVirtualScreen = 79;
 
 	private delegate IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam);
 

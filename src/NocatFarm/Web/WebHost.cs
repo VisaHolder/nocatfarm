@@ -3,6 +3,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -54,7 +55,14 @@ public sealed class WebHost : IAsyncDisposable {
 	public WebHost(BotManager mgr, GlobalConfig cfg) {
 		_mgr = mgr;
 		_ = cfg;   // the bind address is read from the live config at StartAsync
+		Current = this;
 	}
+
+	/// <summary>The running dashboard, for the console's 'set WebPassword' - which has to sign browsers out too.</summary>
+	public static WebHost? Current { get; private set; }
+
+	/// <summary>Every browser signs in again. For a changed password, from wherever it was changed.</summary>
+	public void SignOutAll() => _sessions.Clear();
 
 	public async Task<bool> StartAsync() {
 		try {
@@ -81,6 +89,20 @@ public sealed class WebHost : IAsyncDisposable {
 			});
 
 			_app = builder.Build();
+
+			// Before anything else, static files included - see Refusal for what this turns away and why.
+			_app.Use(async (HttpContext ctx, RequestDelegate next) => {
+				if (Refusal(ctx) is { } why) {
+					ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+					ctx.Response.ContentType = "text/plain; charset=utf-8";
+					await ctx.Response.WriteAsync(Loc.T(why)).ConfigureAwait(false);
+
+					return;
+				}
+
+				await next(ctx).ConfigureAwait(false);
+			});
+
 			_app.UseDefaultFiles();
 
 			// Revalidate every time rather than letting the browser guess.
@@ -128,6 +150,65 @@ public sealed class WebHost : IAsyncDisposable {
 	}
 
 	// ── auth ────────────────────────────────────────────────────────────────
+	/// <summary>
+	/// Why a request isn't even allowed to reach the dashboard, before any password question - or null when it is.
+	///
+	/// "No password" trusts anything that arrives from this PC - and a web page open in this PC's browser arrives
+	/// from this PC. Two tricks use that. DNS rebinding: some other site points its own name at 127.0.0.1, and its
+	/// page can then READ this dashboard (Steam Guard codes on the Authenticator page included) as if it were that
+	/// site. The browser still sends that site's name as the Host, so only names that can't be pointed anywhere
+	/// else are let in. And a plain cross-site POST: a page anywhere can submit to localhost and press Stop, Confirm
+	/// or Remove without reading the answer. The browser always says where such a request came from, so anything
+	/// that changes something has to come from this page itself.
+	/// </summary>
+	private string? Refusal(HttpContext ctx) {
+		HttpRequest request = ctx.Request;
+
+		// With a password, somebody who bound it to 0.0.0.0 opens it by the PC's LAN address or name, so any Host is
+		// fine there - the password is what guards it. Without one, or while it only listens on this PC, it can only
+		// honestly be called localhost.
+		bool thisPcOnly = string.IsNullOrEmpty(_cfg.WebPassword) || Platform.IsLoopback(_cfg.WebHost);
+
+		if (thisPcOnly && !IsLoopbackName(request.Host.Host)) {
+			return "This dashboard only opens as http://localhost on the PC it runs on. To open it from another device, set a dashboard password and listen on 0.0.0.0.";
+		}
+
+		if (HttpMethods.IsGet(request.Method) || HttpMethods.IsHead(request.Method)) {
+			return null;
+		}
+
+		string? origin = request.Headers.Origin.FirstOrDefault();
+
+		// No Origin at all is a script or an old browser on this PC, not a web page - pages always send one on a POST.
+		bool fromHere = string.IsNullOrEmpty(origin)
+			|| SameOrigin(origin, request.Host)
+			|| (request.Headers["X-Forwarded-Host"].FirstOrDefault() is { Length: > 0 } forwarded && SameOrigin(origin, new HostString(forwarded)));
+
+		return fromHere ? null : "Refused: that came from another website, not from this dashboard.";
+	}
+
+	/// <summary>localhost, or any loopback address written as one (127.0.0.1, [::1]) - nothing a website can own.</summary>
+	private static bool IsLoopbackName(string host) =>
+		host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+		|| (IPAddress.TryParse(host.Trim('[', ']'), out IPAddress? ip) && IPAddress.IsLoopback(ip));
+
+	/// <summary>
+	/// Whether the page that sent a request is this dashboard: same name, same port.
+	///
+	/// The X-Forwarded-Host fallback is for a reverse proxy that rewrites Host to its own upstream name (nginx does by
+	/// default). A page on another site can't forge that header - a custom header makes the browser ask first, and
+	/// this server never says yes. A Host with no port means the default port of the Origin's scheme, so an https
+	/// proxy that passes "farm.example.com" through still matches "https://farm.example.com".
+	/// </summary>
+	private static bool SameOrigin(string origin, HostString host) {
+		if (!Uri.TryCreate(origin, UriKind.Absolute, out Uri? from) || !host.HasValue) {
+			return false;   // "null" (a sandboxed frame, a file on disk) is never this page
+		}
+
+		return string.Equals(from.Host.Trim('[', ']'), host.Host.Trim('[', ']'), StringComparison.OrdinalIgnoreCase)
+			&& (from.Port == (host.Port ?? (from.Scheme == Uri.UriSchemeHttps ? 443 : 80)));
+	}
+
 	private bool Authorised(HttpContext ctx) {
 		IPAddress ip = ctx.Connection.RemoteIpAddress ?? IPAddress.None;
 
@@ -167,14 +248,28 @@ public sealed class WebHost : IAsyncDisposable {
 		}
 
 		_failures.TryRemove(ip, out _);
-		token = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(24));
-		_sessions[token] = DateTime.UtcNow.AddDays(Math.Clamp(_cfg.WebSessionDays, 1, 90));
+		token = NewSession(ctx);
 
 		foreach (string stale in _sessions.Where(static kv => kv.Value < DateTime.UtcNow).Select(static kv => kv.Key).ToArray()) {
 			_sessions.TryRemove(stale, out _);
 		}
 
 		return true;
+	}
+
+	/// <summary>A fresh signed-in session for whoever sent this request: remembered here, and handed back as the cookie.</summary>
+	private string NewSession(HttpContext ctx) {
+		string token = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(24));
+		DateTime expires = DateTime.UtcNow.AddDays(Math.Clamp(_cfg.WebSessionDays, 1, 90));
+		_sessions[token] = expires;
+
+		ctx.Response.Cookies.Append("nocatfarm", token, new CookieOptions {
+			HttpOnly = true,
+			SameSite = SameSiteMode.Strict,
+			Expires = expires
+		});
+
+		return token;
 	}
 
 	// ── endpoints ───────────────────────────────────────────────────────────
@@ -192,12 +287,6 @@ public sealed class WebHost : IAsyncDisposable {
 				return Results.Json(new { ok = false, error = "wrong password" }, statusCode: 401);
 			}
 
-			ctx.Response.Cookies.Append("nocatfarm", token, new CookieOptions {
-				HttpOnly = true,
-				SameSite = SameSiteMode.Strict,
-				Expires = DateTimeOffset.UtcNow.AddDays(Math.Clamp(_cfg.WebSessionDays, 1, 90))
-			});
-
 			return Results.Json(new { ok = true, token });
 		});
 
@@ -213,18 +302,6 @@ public sealed class WebHost : IAsyncDisposable {
 				Source = e.Source,
 				Text = e.Text
 			}))));
-
-		app.MapGet("/api/stats", (HttpContext ctx, int? hours) => Guard(ctx, () => {
-			int window = Math.Clamp(hours ?? 24, 1, 168);
-			(int cards, int comments) = Stats.Totals(window);
-
-			return Results.Json(new {
-				Hours = window,
-				Cards = cards,
-				Comments = comments,
-				Buckets = Stats.ByHour(window).Select(static b => new { Hour = b.Hour.ToString("HH:mm"), b.Cards, b.Comments })
-			});
-		}));
 
 		// Day-by-day totals for the Overview's history charts: one slot per day, oldest first, ending today. Game names
 		// come along for every appID in it; any not known yet are looked up in the background for the next poll.
@@ -351,12 +428,13 @@ public sealed class WebHost : IAsyncDisposable {
 			PluginSettingChange? body = await ReadJsonAsync<PluginSettingChange>(ctx).ConfigureAwait(false);
 
 			if (string.IsNullOrWhiteSpace(body?.Plugin) || string.IsNullOrWhiteSpace(body.Name)) {
-				return Results.Json(new { Message = "which plugin, and which setting?" });
+				return Results.Json(new { Ok = false, Message = Loc.T("which plugin, and which setting?") });
 			}
 
 			bool ok = Plugins.PluginHost.SetSetting(body.Plugin, body.Name, body.Value ?? "");
 
-			return Results.Json(new { Message = ok ? "saved" : "no such plugin setting" });
+			// Ok says whether it took; the page used to toast "saved" whatever came back.
+			return Results.Json(new { Ok = ok, Message = ok ? Loc.T("saved") : Loc.T("no such plugin setting") });
 		});
 
 		app.MapPost("/api/plugins/toggle", async (HttpContext ctx) => {
@@ -415,7 +493,16 @@ public sealed class WebHost : IAsyncDisposable {
 				return Unauthorised();
 			}
 
-			return Results.Json(new { Results = await Notifier.TestAsync(ctx.RequestAborted).ConfigureAwait(false) });
+			// Each line with whether it worked. The page used to decide that with an English regex over text that is
+			// translated by the time it gets there, so in any other language a failure came up as a green toast.
+			List<string> lines = await Notifier.TestAsync(ctx.RequestAborted).ConfigureAwait(false);
+
+			return Results.Json(new {
+				Results = lines.Select(static line => new {
+					Ok = Loc.Is(line, "Discord: sent - check the channel") || Loc.Is(line, "Telegram: sent - check the chat"),
+					Text = line
+				})
+			});
 		});
 
 		app.MapPost("/api/prompt", async (HttpContext ctx) => {
@@ -459,21 +546,31 @@ public sealed class WebHost : IAsyncDisposable {
 				return Unauthorised();
 			}
 
-			GlobalConfig? body = await ReadJsonAsync<GlobalConfig>(ctx).ConfigureAwait(false);
+			GlobalConfig current = _mgr.Global;
+			GlobalConfig? body = await ReadMergedAsync(ctx, current).ConfigureAwait(false);
 
 			if (body == null) {
 				return Results.Json(new { ok = false, error = "bad request" }, statusCode: 400);
 			}
 
 			// An empty secret means "unchanged", never "erase it". Every Secret in the registry, not a list here.
-			KeepSecrets(body, _mgr.Global, Settings.Global);
+			KeepSecrets(body, current, Settings.Global);
+
+			if (Invalid(body, current, Settings.Global) is { } error) {
+				return Results.Json(new { ok = false, error }, statusCode: 400);
+			}
 
 			List<string> adjusted = Clamp(body, Settings.Global);
 
+			// The password is left out: the check reads the live config, so a new one is in force the moment it is
+			// saved - telling people it waits for a restart had them leaving the old one "active" that wasn't.
 			List<string> restartNeeded = Settings.Global
-				.Where(d => d.NeedsRestart && !Equals(Settings.Read(body, d.Name)?.ToString(), Settings.Read(_mgr.Global, d.Name)?.ToString()))
+				.Where(d => d.NeedsRestart && (d.Name != nameof(GlobalConfig.WebPassword))
+					&& !Equals(Settings.Read(body, d.Name)?.ToString(), Settings.Read(current, d.Name)?.ToString()))
 				.Select(static d => d.Label)
 				.ToList();
+
+			bool passwordChanged = !string.Equals(body.WebPassword, current.WebPassword, StringComparison.Ordinal);
 
 			ConfigStore.SaveGlobal(body);
 			_mgr.ApplyGlobal(body);
@@ -484,7 +581,18 @@ public sealed class WebHost : IAsyncDisposable {
 
 			Log.Info("global settings saved from the dashboard");
 
-			return Results.Json(new { ok = true, RestartNeeded = restartNeeded, Adjusted = adjusted });
+			// A changed password signs everybody out. Whoever knew the old one - or stole a session under it - kept
+			// right on using the dashboard after it was changed, which is the one thing changing it is meant to stop.
+			// The browser that made the change gets a fresh session, so saving doesn't lock out the person saving.
+			string? fresh = null;
+
+			if (passwordChanged) {
+				_sessions.Clear();
+				fresh = string.IsNullOrEmpty(body.WebPassword) ? null : NewSession(ctx);
+				Log.Info(new Said("dashboard password changed - every other browser has to sign in again"));
+			}
+
+			return Results.Json(new { ok = true, RestartNeeded = restartNeeded, Adjusted = adjusted, Token = fresh });
 		});
 
 		app.MapPost("/api/bots/{name}/config", async (HttpContext ctx, string name) => {
@@ -498,13 +606,17 @@ public sealed class WebHost : IAsyncDisposable {
 				return Results.Json(new { ok = false, error = "no such account" }, statusCode: 404);
 			}
 
-			BotConfig? body = await ReadJsonAsync<BotConfig>(ctx).ConfigureAwait(false);
+			BotConfig? body = await ReadMergedAsync(ctx, bot.Cfg).ConfigureAwait(false);
 
 			if (body == null) {
 				return Results.Json(new { ok = false, error = "bad request" }, statusCode: 400);
 			}
 
 			KeepSecrets(body, bot.Cfg, Settings.Bot);
+
+			if (Invalid(body, bot.Cfg, Settings.Bot) is { } error) {
+				return Results.Json(new { ok = false, error }, statusCode: 400);
+			}
 
 			// Legit mode rewrites the config itself, so this has to happen before the diff and the save.
 			Settings.ApplyLegitMode(body, bot.Cfg.LegitMode);
@@ -684,8 +796,12 @@ public sealed class WebHost : IAsyncDisposable {
 				return Results.Json(new { ok = false, error = "A name and a Steam account name are both needed." }, statusCode: 400);
 			}
 
-			if (!ConfigStore.IsValidBotName(body.Name)) {
-				return Results.Json(new { ok = false, error = "Letters, numbers, dashes and underscores. 'nocatFarm' is taken by the global config." }, statusCode: 400);
+			// The rule the message states, enforced here: the file-name check alone lets in spaces, quotes and
+			// apostrophes, and a name like that turns into a different command the moment it's typed in the console.
+			bool plain = body.Name.All(static c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_');
+
+			if (!plain || !ConfigStore.IsValidBotName(body.Name)) {
+				return Results.Json(new { ok = false, error = Loc.T("Letters, numbers, dashes and underscores. 'nocatFarm' is taken by the global config.") }, statusCode: 400);
 			}
 
 			if (_mgr.Get(body.Name) != null) {
@@ -774,7 +890,7 @@ public sealed class WebHost : IAsyncDisposable {
 			Accounts = _mgr.All.Select(static b => {
 				(string? code, int left) = Confirmations.Code(b);
 
-				return new { b.Name, HasCode = b.HasAuthenticator, b.CanConfirmTrades, CanConfirm = b.CanConfirmTrades, Code = code, SecondsLeft = left };
+				return new { b.Name, HasCode = b.HasAuthenticator, CanConfirm = b.CanConfirmTrades, Code = code, SecondsLeft = left };
 			})
 		})));
 
@@ -1097,8 +1213,12 @@ public sealed class WebHost : IAsyncDisposable {
 	/// <summary>Empty means "unchanged"; the explicit sentinel the UI's Clear button sends means "erase it".</summary>
 	private const string ClearSecret = "\0clear";
 
+	/// <summary>What older pages sent for Clear. It was saved as the literal secret " clear" - a dashboard password
+	/// nobody knew they had set - so it still means "erase it" for a page cached from before the fix.</summary>
+	private const string OldClearSecret = " clear";
+
 	private static string Keep(string incoming, string existing) =>
-		incoming == ClearSecret ? "" : string.IsNullOrEmpty(incoming) ? existing : incoming;
+		incoming is ClearSecret or OldClearSecret ? "" : string.IsNullOrEmpty(incoming) ? existing : incoming;
 
 	/// <summary>
 	/// Clamp every numeric setting to the range the registry declares, so a hand-crafted POST (or a browser
@@ -1109,7 +1229,8 @@ public sealed class WebHost : IAsyncDisposable {
 		List<string> adjusted = [];
 
 		foreach (SettingDef def in defs) {
-			if (def.Kind is not (SettingKind.Int or SettingKind.Float or SettingKind.Choice)) {
+			// Pick too (the language): an unknown code falls back to the default like a bad choice does.
+			if (def.Kind is not (SettingKind.Int or SettingKind.Float or SettingKind.Choice or SettingKind.Pick)) {
 				continue;
 			}
 
@@ -1131,6 +1252,61 @@ public sealed class WebHost : IAsyncDisposable {
 		}
 
 		return adjusted;
+	}
+
+	/// <summary>
+	/// Run every game list that was changed through the same check the console uses, and say why the first bad one
+	/// was refused - or null when they're all fine.
+	///
+	/// Refused rather than reset like Clamp does: resetting a list means emptying it, and throwing away somebody's
+	/// forty games because one too many was added is worse than telling them. Only lists that CHANGED are checked,
+	/// so one saved before this check existed can't block every other save on that account. Plain text is left
+	/// alone - the console accepts any text too, so there is nothing to check it against.
+	/// </summary>
+	private static string? Invalid(object config, object current, IReadOnlyList<SettingDef> defs) {
+		foreach (SettingDef def in defs) {
+			if ((def.Kind != SettingKind.AppIds) || (Settings.Read(config, def.Name) is not IEnumerable<uint> apps)
+				|| (Settings.Show(config, def) == Settings.Show(current, def))) {
+				continue;
+			}
+
+			if (Settings.Apply(config, def, string.Join(',', apps)) is { } error) {
+				return error;
+			}
+		}
+
+		return null;
+	}
+
+	/// <summary>
+	/// Read a settings POST as changes to the config it is saving, not as a whole new config.
+	///
+	/// Deserialising straight into a fresh object gave every field the page left out its default, so a POST with one
+	/// key in it blanked the Steam login, the games and everything else. Now the current config is the starting
+	/// point and only what was actually sent is written over it.
+	/// </summary>
+	private static async Task<T?> ReadMergedAsync<T>(HttpContext ctx, T current) where T : class {
+		JsonSerializerOptions options = ctx.RequestServices
+			.GetRequiredService<Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>>().Value.SerializerOptions;
+
+		try {
+			if (await JsonNode.ParseAsync(ctx.Request.Body, cancellationToken: ctx.RequestAborted).ConfigureAwait(false) is not JsonObject sent) {
+				return null;
+			}
+
+			JsonObject merged = JsonSerializer.SerializeToNode(current, options)!.AsObject();
+
+			foreach ((string key, JsonNode? value) in sent) {
+				// Names are matched the way the endpoint always read them - ignoring case - so "steamlogin" replaces
+				// SteamLogin instead of sitting beside it and losing.
+				string name = merged.Select(static kv => kv.Key).FirstOrDefault(k => k.Equals(key, StringComparison.OrdinalIgnoreCase)) ?? key;
+				merged[name] = value?.DeepClone();
+			}
+
+			return merged.Deserialize<T>(options);
+		} catch {
+			return null;
+		}
 	}
 
 	/// <summary>How often a "forced" refresh may actually reach rep4rep. See below for why this exists.</summary>
@@ -1278,7 +1454,6 @@ public sealed class WebHost : IAsyncDisposable {
 			// everything that isn't loopback, so warning about that case was crying wolf.
 			Exposed = _mgr.Global.WebHost is not ("127.0.0.1" or "localhost") && !string.IsNullOrEmpty(_mgr.Global.WebPassword) && (_mgr.Global.WebPassword.Length < 8),
 			LockedToThisPc = _mgr.Global.WebHost is not ("127.0.0.1" or "localhost") && string.IsNullOrEmpty(_mgr.Global.WebPassword),
-			DebugOn = Log.DebugEnabled,
 			Points = _pointsCache?.Points ?? 0,
 			PendingPoints = _pointsCache?.Pending ?? 0,
 			CardsToday = cards,
@@ -1305,7 +1480,6 @@ public sealed class WebHost : IAsyncDisposable {
 					Name = b.Name,
 					Login = b.Cfg.SteamLogin,
 					Notes = b.Cfg.Notes,
-					Enabled = b.Cfg.Enabled,
 					State = b.State.ToString(),
 					Group = GroupOf(b),
 					Status = Loc.T(Commands.StateWord(b)),
@@ -1320,7 +1494,6 @@ public sealed class WebHost : IAsyncDisposable {
 					Bans = BotManager.ModuleOf<BanWatch>(b)?.Last is { Any: true } bans ? BanWatch.Summary(bans).ToString() : "",
 					Online = b.IsOnline,
 					Paused = b.Paused,
-					Blocked = b.PlayingBlocked,
 					SteamId = b.SteamId.ToString(),
 					SteamName = b.SteamName,
 					Avatar = b.AvatarUrl,
@@ -1329,12 +1502,8 @@ public sealed class WebHost : IAsyncDisposable {
 					Guard = b.GuardPrompt,
 					Cards = b.CardsRemaining,
 					Games = b.GamesRemaining,
-					CustomName = b.Cfg.CustomGameName,
 					Rep4Rep = b.Cfg.Rep4Rep,
-				Legit = b.Cfg.LegitMode,
-				HumanPhase = BotManager.ModuleOf<HumanMode>(b)?.Current.ToString() ?? "Off",
-				HumanPlayedMinutes = BotManager.ModuleOf<HumanMode>(b)?.PlayedMinutesToday ?? 0,
-				HumanTargetMinutes = BotManager.ModuleOf<HumanMode>(b)?.TargetMinutesToday ?? 0,
+					Legit = b.Cfg.LegitMode,
 					InventoryValue = b.Inventory.Total,
 					InventoryChange = InventoryHistory.Since(b.Name, TimeSpan.FromHours(24))?.Change,
 					InventoryChangePct = InventoryHistory.Since(b.Name, TimeSpan.FromHours(24))?.Percent,

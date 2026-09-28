@@ -156,6 +156,13 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		return farmer.NextGame;
 	}
 
+	/// <summary>How many clear reads in a row, one per tick, before a game may go on.</summary>
+	private const int SafetyReadsNeeded = 4;
+
+	/// <summary>The sign-in the owner-safety reads belong to, and how many clear ones it has had in a row.</summary>
+	private DateTime _safetyArmedFor = DateTime.MinValue;
+	private int _safetyReads;
+
 	private bool _wasFarming;
 	private bool _wokeUp;
 	private bool _wasGrinding;
@@ -239,8 +246,22 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// <summary>A break it's spending offline: to the friends list the account is signed out, so it does nothing visible.</summary>
 	private bool _offlineBreak;
 
-	public bool WarmedUp => _warmedUp
-		|| (Bot.OnlineSince is { } on && DateTime.UtcNow >= on.AddSeconds(SafetyGateSeconds).AddMinutes(Math.Max(1, Bot.Cfg.WarmUpMaxMinutes)));
+	/// <remarks>
+	/// Only counts for the sign-in it was earned on. A day off or a finished day never runs the warm-up, so the flag
+	/// set that morning survived a reconnect and the farmer started the moment the account came back - inside the
+	/// window where Steam may not yet have said the owner is playing. The time fallback needs the owner-safety
+	/// check to have passed on this sign-in too.
+	/// </remarks>
+	public bool WarmedUp => (_warmedUp && (Bot.OnlineSince is { } armed) && (_gateArmedFor == armed))
+		|| (SafeToPlay && (Bot.OnlineSince is { } on) && (DateTime.UtcNow >= on.AddSeconds(SafetyGateSeconds).AddMinutes(Math.Max(1, Bot.Cfg.WarmUpMaxMinutes))));
+
+	/// <summary>
+	/// The owner-safety half of settling in on its own: three minutes past this sign-in and several clear reads in a
+	/// row that the owner isn't playing. Nothing about how it looks - the night uses this, because at night nobody
+	/// sees the account, but a game started there can still take the session off somebody who just sat down.
+	/// </summary>
+	public bool SafeToPlay => (Bot.OnlineSince is { } on) && (_safetyArmedFor == on) && (_safetyReads >= SafetyReadsNeeded)
+		&& (DateTime.UtcNow >= on.AddSeconds(SafetyGateSeconds));
 
 	/// <summary>Rough minutes until the post-login warm-up finishes, for status display (0 once it's done).</summary>
 	public int WarmUpMinutesLeft {
@@ -269,12 +290,30 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		_wokeUp = true;
 		_phase = Phase.Off;
+		ClearBreakState();
+
+		// The overnight games off first. Made visible with them still running, the friends list showed the whole
+		// night's list for up to a tick before the wake-up settle put them down.
+		if (!Bot.IsFarming) {
+			Bot.StopPlaying();
+		}
+
 		Bot.ClearPersonaOverride();
 
 		// It's a manual "start now", so skip the random settle - but NOT the owner-safety check. Clearing the
 		// timed part of the warm-up lets it start as soon as the clear-reads confirm the owner isn't mid-game,
 		// rather than sitting through a fresh ~15-minute settle.
-		_readyAt = DateTime.UtcNow;
+		//
+		// Armed here for this sign-in, or SettledIn re-arms (bedtime clears the stamp) and rolls a full settle
+		// anyway - which is what 'wake' always quietly did.
+		DateTime loggedOn = Bot.OnlineSince ?? DateTime.UtcNow;
+		DateTime safety = loggedOn.AddSeconds(SafetyGateSeconds);
+
+		_gateArmedFor = loggedOn;
+		_clearReads = 0;
+		_announcedWarmUp = false;
+		_warmedUp = false;
+		_readyAt = safety > DateTime.UtcNow ? safety : DateTime.UtcNow;
 	}
 
 	/// <summary>How long the current sitting has been running, and how long it is meant to run.</summary>
@@ -392,6 +431,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		RollNewDayIfNeeded();
 		_ticked = true;
 
+		// Every tick, whatever the phase, so the owner-safety reads are already counted when the night needs them.
+		SafetyClear();
+
 		// The human always yields to the actual human - and stays out of the way for the courtesy delay it
 		// promised, rather than reappearing on the next twenty-second tick after saying "picking back up in 8m".
 		if (!Bot.CanPlay && !Bot.Paused && !Bot.PlayingBlocked) {
@@ -408,6 +450,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_phase = Phase.StoodDown;
 				_game = 0;
 				_switchingTo = 0;
+				ClearBreakState();
 				Bot.ClearPersonaOverride();
 			}
 
@@ -419,9 +462,18 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// A grind outranks the schedule. On a legit account it doesn't slam over instantly: for the first short
 		// beat (GrindStartsAt) the current game keeps playing and the day carries on normally, so it looks like a
 		// person finishing up and then switching games. On a non-human account it starts immediately.
-		if (Bot.Grinding && (!Bot.HumanOwned || (DateTime.UtcNow >= Bot.GrindStartsAt)) && SettledIn()) {
-			if (!_wasGrinding) {
+		if (Bot.Grinding && (!Bot.HumanOwned || (DateTime.UtcNow >= Bot.GrindStartsAt))) {
+			// Not settled in (a reconnect mid-grind, say): wait for it here. Falling through took the "grind just
+			// finished" branch below, which said "done grinding" and re-rolled the day while the grind was still on.
+			if (!SettledIn()) {
+				return;
+			}
+
+			// The settle after a reconnect puts the phase to warming up, so the grind's playing phase is set up again
+			// once it's done - or its hours stopped counting and the status read "settling" for the rest of it.
+			if (!_wasGrinding || (_phase != Phase.Playing)) {
 				_wasGrinding = true;
+				ClearBreakState();
 
 				if (_phase != Phase.Off) {
 					BankSession();
@@ -508,6 +560,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			_game = 0;
 			_switchingTo = 0;
 			_phase = Phase.Off;
+			ClearBreakState();
 			Bot.ClearPersonaOverride();   // daytime farming/stand-off looks online, never carrying a night-dark or break-away persona
 
 			return;
@@ -518,6 +571,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_phase = Phase.DayOff;
 				_game = 0;
 				_switchingTo = 0;
+				ClearBreakState();
 				Bot.StopPlaying();
 				Bot.ClearPersonaOverride();
 				Log.Info(new Said("not playing today - online but idle until bed about {0}", (BedTime()).ToString("HH:mm")), Bot.Name);
@@ -533,6 +587,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_farmSession = false;
 				_game = 0;
 				_switchingTo = 0;
+				ClearBreakState();
 				Bot.StopPlaying();
 				Bot.ClearPersonaOverride();
 				Log.Info(new Said("done for the day - {0} played, back around {1}", Fmt.Hm(_playedMinutesToday), (WakeTime()).ToString("HH:mm")), Bot.Name);
@@ -743,6 +798,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			_phase = Phase.WarmingUp;
 			_game = 0;
 			_switchingTo = 0;
+			ClearBreakState();
 
 			// Put down whatever was running before settling in.
 			//
@@ -750,7 +806,12 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			// board said "settling for 12m", and the friends list said "In-Game: Counter-Strike 2" the whole time.
 			// Somebody who has just signed in is not in a game yet - that is the entire point of the settle.
 			Bot.StopPlaying();
-			Bot.ClearPersonaOverride();
+
+			// Only in the day. A settle at night (a grind asked for at 3am) keeps the night's invisible look rather
+			// than popping the account up online on everybody's friends list while it waits.
+			if (InWakingHours(DateTime.Now)) {
+				Bot.ClearPersonaOverride();
+			}
 		}
 
 		if (!_announcedWarmUp) {
@@ -762,6 +823,37 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		}
 
 		return false;
+	}
+
+	/// <summary>
+	/// Count one owner-safety read for this sign-in: re-armed on every new sign-in, and back to none whenever Steam
+	/// says the owner is playing. Changes nothing else - no phase, no persona, no games.
+	/// </summary>
+	private bool SafetyClear() {
+		if (Bot.OnlineSince is not { } loggedOn) {
+			return false;
+		}
+
+		if (_safetyArmedFor != loggedOn) {
+			_safetyArmedFor = loggedOn;
+			_safetyReads = 0;
+		}
+
+		_safetyReads = Bot.PlayingBlocked ? 0 : _safetyReads + 1;
+
+		return SafeToPlay;
+	}
+
+	/// <summary>
+	/// Forget the break in progress. A break cut short - by you, a grind, bedtime, the farmer, a day off - used to
+	/// leave this behind: an "offline" break still set kept every visible thing waiting and brought a daytime
+	/// reconnect up invisible, and an Away still pending went straight on at the start of the next break. Whoever
+	/// calls this sets the persona it wants next.
+	/// </summary>
+	private void ClearBreakState() {
+		_offlineBreak = false;
+		_breakPersonaSet = false;
+		_breakPersona = null;
 	}
 
 	// ═══ the day ════════════════════════════════════════════════════════════
@@ -785,6 +877,11 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		HumanDay.Forget(Bot.Name);
 
+		if (_breakPersonaSet) {
+			Bot.ClearPersonaOverride();
+		}
+
+		ClearBreakState();
 		_phase = Phase.Off;
 		_dayStamp = -1;         // < 0 rolls immediately, even before wake time
 		_game = 0;
@@ -1026,6 +1123,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_gateArmedFor = DateTime.MinValue;
 		BankSession();
 		_farmSession = false;
+		ClearBreakState();   // bedtime ends a break too; the night's invisible look goes on just below
 
 		// Cards farm in the day, so bedtime ends the sitting. The farmer lets go within seconds of it closing; the
 		// overnight games go on once it has, rather than both fighting over what's playing.
@@ -1068,7 +1166,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		_nightFarming = false;
 
-		if (banking) {
+		// Nobody sees the account at night, but the owner can still sit down at it. Right after a sign-in Steam's
+		// "the owner is playing" can be minutes late, so the overnight games wait for the same safety check the day
+		// does - three minutes and several clear reads - rather than going on the first tick after logging on.
+		if (banking && SafeToPlay) {
 			ReassertPlaying(night);
 
 			// Keep the overnight games actually on. After a night farming run ends, the farmer has left the
@@ -1351,6 +1452,8 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// translated, the words inside it not.
 	/// </remarks>
 	private void StepAway(int minutes, int awayPersona, Said what, double weight = 1.0) {
+		ClearBreakState();   // nothing left over from an earlier break may land on this one
+
 		int pct = Math.Clamp((int) (Bot.Cfg.SignOutOnBreakChancePct * weight), 0, 100);
 
 		// The status changes a few minutes in, the way a client goes Away once nobody's touched it for a bit - and a
@@ -1850,6 +1953,23 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		HumanMode? human = bot.Modules.OfType<HumanMode>().FirstOrDefault();
 
 		return AwakeFor(bot) && ((human == null) || (human.WarmedUp && !human._offlineBreak));
+	}
+
+	/// <summary>
+	/// Up and about in its own day: awake, settled in, and not on a break it's spending offline - whatever "act only
+	/// while awake" says. For what the account starts by itself (<see cref="HumanGate.OwnDay"/>); that switch is about
+	/// answering other people while asleep, and joining a group or listing cards at 4am is neither. Always true
+	/// without human mode.
+	/// </summary>
+	public static bool UpFor(Bot bot) {
+		if (!bot.Cfg.LegitMode) {
+			return true;
+		}
+
+		HumanMode? human = bot.Modules.OfType<HumanMode>().FirstOrDefault();
+
+		return (human == null) || (human._ticked && (human.Current is not (Phase.Asleep or Phase.NightIdle)) && !human.NightGrind
+			&& human.WarmedUp && !human._offlineBreak);
 	}
 
 	// ═══ showing your work ══════════════════════════════════════════════════

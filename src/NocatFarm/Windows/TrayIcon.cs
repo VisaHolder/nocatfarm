@@ -123,8 +123,6 @@ public sealed class TrayIcon : IDisposable {
 	[DllImport("user32.dll")] private static extern bool GetCursorPos(out Point point);
 	[DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr hWnd);
 	[DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr hWnd, int cmdShow);
-	[DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr hWnd);
-	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(IntPtr hWnd, StringBuilder name, int max);
 	[DllImport("user32.dll")] private static extern bool IsIconic(IntPtr hWnd);
 	[DllImport("kernel32.dll")] private static extern IntPtr GetConsoleWindow();
 	[DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr hWnd, uint flags);
@@ -503,8 +501,6 @@ public sealed class TrayIcon : IDisposable {
 
 		_consoleVisible = show;
 	}
-
-	public bool ConsoleVisible => IsWindowVisible(ConsoleHostWindow());
 
 	/// <summary>Balloon notification. Silently does nothing if the icon never got created.</summary>
 	public void Notify(string title, string text) {

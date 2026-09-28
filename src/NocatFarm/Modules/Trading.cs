@@ -44,12 +44,16 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 	// ── numbers and announcements ──
 
 	/// <summary>A short number per live incoming offer - "trade accept new 3" - instead of Steam's 11-digit ids.</summary>
-	private readonly Dictionary<ulong, int> _numbers = [];
-
-	private int _nextNumber = 1;
+	private readonly OfferNumbers _numbers = new();
 
 	/// <summary>Offers already announced, and who they were from - kept on disk so a restart doesn't announce them again.</summary>
+	/// <remarks>
+	/// Only touched under <see cref="_announceLock"/>: the module's own look and the 'trade accept/decline' commands
+	/// both change it, from different threads.
+	/// </remarks>
 	private Dictionary<ulong, string>? _announced;
+
+	private readonly object _announceLock = new();
 
 	private string AnnouncedPath => Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", $"trades-announced-{Bot.Name}.json");
 
@@ -99,14 +103,18 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			// A trade accepted at 4am by an account whose friends list says it is offline is not a person. When
 			// human mode owns the account, offers simply sit until morning - which is what would really happen -
 			// and anything already waiting goes back on hold, to get a fresh wait once the account is up.
-			bool awake = HumanMode.AwakeFor(Bot);
+			// Ready, not just awake: settled in after signing in or waking, and not on a break it's spending offline -
+			// the same as gifts. Awake alone answered a trade a minute after signing in, or while it looked signed out.
+			// "Only react while awake" switched off means exactly that - trades answered whenever, as before.
+			bool awake = !Bot.Cfg.ActOnlyWhileAwake || HumanMode.ReadyFor(Bot);
 
 			if (!awake) {
 				_waiting.Hold();
 			}
 
-			// Asleep, only donations may still go through - and only when that's switched on.
-			bool nightDonations = !awake && Bot.Cfg.AcceptDonations && Bot.Cfg.DonationsWhileAsleep;
+			// Asleep, only donations may still go through - and only when that's switched on. Merely settling in isn't
+			// asleep: that waits the few minutes for the account to be ready.
+			bool nightDonations = !HumanMode.AwakeFor(Bot) && Bot.Cfg.AcceptDonations && Bot.Cfg.DonationsWhileAsleep;
 
 			if (Wanted && Bot.IsOnline && Bot.Web.Ready && (awake || nightDonations) && ShouldLook()) {
 				try {
@@ -208,8 +216,9 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			}
 		}
 
-		// Offers held while the account slept get their wait now, from the moment it's up - not all at once.
-		foreach ((ulong id, DateTime due) in awake ? _waiting.Arm(DateTime.UtcNow, TradeWait) : []) {
+		// Offers held while the account slept get their wait now, from a while after it's up - not all in its first
+		// few minutes. The same extra wait gifts get, so a morning doesn't open with everything answered at once.
+		foreach ((ulong id, DateTime due) in awake ? _waiting.Arm(DateTime.UtcNow, () => TradeWait() + (Bot.Cfg.LegitMode ? Rng.HumanMinutes(10, 60) : TimeSpan.Zero)) : []) {
 			Log.Debug(new Said("trade offer #{0} waited for the account to wake - handling it around {1}", id, (Func<string>) (() => Fmt.Clock(due))), Bot.Name);
 		}
 
@@ -487,70 +496,65 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 	// ── numbers ──
 
 	/// <summary>The short number an offer goes by - the same in the log, on Telegram, in 'offers' and for 'trade accept'.</summary>
-	public int NumberOf(ulong id) {
-		lock (_numbers) {
-			if (!_numbers.TryGetValue(id, out int n)) {
-				n = _nextNumber++;
-				_numbers[id] = n;
-			}
+	public int NumberOf(ulong id) => _numbers.Of(id);
 
-			return n;
-		}
-	}
-
-	/// <summary>Numbers for every live offer, oldest first; the counter starts over once nothing is waiting.</summary>
-	private void KeepNumbers(List<TradeOffers.Offer> live) {
-		lock (_numbers) {
-			HashSet<ulong> ids = [.. live.Select(static o => o.Id)];
-
-			foreach (ulong gone in _numbers.Keys.Where(k => !ids.Contains(k)).ToList()) {
-				_numbers.Remove(gone);
-			}
-
-			if (_numbers.Count == 0) {
-				_nextNumber = 1;
-			}
-		}
-
-		foreach (TradeOffers.Offer o in live.OrderBy(static o => o.Id)) {
-			NumberOf(o.Id);
-		}
-	}
+	/// <summary>Numbers for every live offer, oldest first. Numbers only ever go up - see <see cref="OfferNumbers"/>.</summary>
+	private void KeepNumbers(List<TradeOffers.Offer> live) => _numbers.Keep(live.Select(static o => o.Id));
 
 	// ── announcements ──
 
 	/// <summary>Who an offer is from, as it was announced - the SteamID when it wasn't.</summary>
 	private string Who(TradeOffers.Offer offer) {
-		lock (_numbers) {
+		lock (_announceLock) {
 			return (_announced ?? []).TryGetValue(offer.Id, out string? who) ? who : offer.Partner.ToString(System.Globalization.CultureInfo.InvariantCulture);
 		}
 	}
+
+	/// <summary>The announced offers, read from disk the first time. Call under <see cref="_announceLock"/>.</summary>
+	private Dictionary<ulong, string> Announced() => _announced ??= LoadAnnounced();
 
 	/// <summary>
 	/// Every new offer is announced once - log, pop-up, Discord/Telegram - saying who it's from, what would come and go,
 	/// and what happens next. Offers that went away without being answered here are announced too.
 	/// </summary>
 	private async Task AnnounceAsync(List<TradeOffers.Offer> offers, HashSet<ulong> live, Dictionary<ulong, Way> allowed, HashSet<ulong> fleet, bool awake, CancellationToken ct) {
-		_announced ??= LoadAnnounced();
-		bool changed = false;
+		List<KeyValuePair<ulong, string>> gone;
+		List<TradeOffers.Offer> fresh;
 
-		foreach ((ulong id, string who) in _announced.Where(a => !live.Contains(a.Key)).ToList()) {
+		lock (_announceLock) {
+			Dictionary<ulong, string> announced = Announced();
+			gone = [.. announced.Where(a => !live.Contains(a.Key))];
+
+			foreach ((ulong id, _) in gone) {
+				announced.Remove(id);
+			}
+
+			fresh = [.. offers.Where(o => !announced.ContainsKey(o.Id))];
+		}
+
+		bool changed = gone.Count > 0;
+
+		foreach ((ulong id, string who) in gone) {
 			lock (_done) {
 				if (!_done.Contains(id)) {
 					Log.Trade(new Said("an offer from {0} is gone - cancelled, answered somewhere else, or it expired", who), Bot.Name);
 				}
 			}
-
-			_announced.Remove(id);
-			changed = true;
 		}
 
-		foreach (TradeOffers.Offer offer in offers.Where(o => !_announced.ContainsKey(o.Id))) {
+		foreach (TradeOffers.Offer offer in fresh) {
+			// The name is looked up outside the lock; a 'trade accept' that got there first has already named it.
 			string name = await SteamNames.OfAsync(Bot, offer.Partner, ct).ConfigureAwait(false);
 			bool own = fleet.Contains(offer.Partner) || allowed.ContainsKey(offer.Partner);
 			string who = own ? new Said("{0} (one of your accounts)", name).ToString() : name;
 			int n = NumberOf(offer.Id);
-			_announced[offer.Id] = who;
+
+			lock (_announceLock) {
+				if (!Announced().TryAdd(offer.Id, who)) {
+					continue;
+				}
+			}
+
 			changed = true;
 
 			Log.Trade(new Said("new trade offer {0} from {1}: you get {2}, you give {3} - {4}", n, who, Items(offer.Receiving), Items(offer.Giving), Plan(offer, allowed, fleet, awake, n)), Bot.Name);
@@ -578,7 +582,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		}
 
 		return Bot.Cfg.DeclineOtherTrades
-			? new Said("declining it in a few minutes (\"Decline everything else\" is on) - trade accept {0} {1} keeps it", Bot.Name, n)
+			? new Said("declining it in a few minutes (\"Decline everything else\" is on) - trade accept {0} {1} accepts it instead", Bot.Name, n)
 			: new Said("waiting for you - trade accept {0} {1} or trade decline {0} {1}", Bot.Name, n);
 	}
 
@@ -608,8 +612,10 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			: new Said("offer {0} from {1} is accepted but needs confirming on your phone", NumberOf(offer.Id), Who(offer));
 
 	private void Forget(ulong id) {
-		if ((_announced != null) && _announced.Remove(id)) {
-			SaveAnnounced();
+		lock (_announceLock) {
+			if ((_announced != null) && _announced.Remove(id)) {
+				SaveAnnounced();
+			}
 		}
 	}
 
@@ -627,8 +633,11 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 	private void SaveAnnounced() {
 		try {
-			Directory.CreateDirectory(Path.GetDirectoryName(AnnouncedPath)!);
-			AtomicFile.Write(AnnouncedPath, System.Text.Json.JsonSerializer.Serialize(_announced));
+			// Written under the lock, so two threads saving at once can't write an older copy over a newer one.
+			lock (_announceLock) {
+				Directory.CreateDirectory(Path.GetDirectoryName(AnnouncedPath)!);
+				AtomicFile.Write(AnnouncedPath, System.Text.Json.JsonSerializer.Serialize(_announced));
+			}
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't save the announced offers: {0}", e.Message), Bot.Name);
 		}
@@ -649,9 +658,10 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			return new Said("Steam didn't answer - try again in a minute").ToString();
 		}
 
-		List<TradeOffers.Offer> incoming = [.. live.Where(static o => !o.Ours && (o.State == TradeOffers.Active))];
+		// Not the ones already accepted and waiting on the phone: the module's own look leaves those unnumbered, so
+		// numbering them here gave the same offer a fresh number on every look.
+		List<TradeOffers.Offer> incoming = [.. live.Where(static o => !o.Ours && (o.State == TradeOffers.Active) && !o.AwaitingConfirmation)];
 		KeepNumbers(incoming);
-		_announced ??= LoadAnnounced();
 
 		List<TradeOffers.Offer> picked = which.Equals("all", StringComparison.OrdinalIgnoreCase) ? incoming
 			: int.TryParse(which.TrimStart('#'), out int n) ? [.. incoming.Where(o => NumberOf(o.Id) == n)]
@@ -668,8 +678,18 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		foreach (TradeOffers.Offer offer in picked) {
 			int num = NumberOf(offer.Id);
 
-			if (!_announced.ContainsKey(offer.Id)) {
-				_announced[offer.Id] = await SteamNames.OfAsync(Bot, offer.Partner, ct).ConfigureAwait(false);
+			bool named;
+
+			lock (_announceLock) {
+				named = Announced().ContainsKey(offer.Id);
+			}
+
+			if (!named) {
+				string name = await SteamNames.OfAsync(Bot, offer.Partner, ct).ConfigureAwait(false);
+
+				lock (_announceLock) {
+					Announced().TryAdd(offer.Id, name);
+				}
 			}
 
 			if (!accept) {
@@ -858,5 +878,46 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		string? body = await Bot.Web.PostAsync(new Uri(WebSession.Community, $"/tradeoffer/{offer.Id}/decline"), form, new Uri(WebSession.Community, "/profiles/" + Bot.SteamId + "/tradeoffers/"), ct).ConfigureAwait(false);
 
 		return body != null;
+	}
+}
+
+/// <summary>
+/// The short numbers offers go by. A number is never handed out twice while the app runs.
+/// </summary>
+/// <remarks>
+/// It used to start over at 1 whenever nothing was waiting. Then a 'trade accept new 1' typed for an offer that has
+/// since gone - accepted in the Steam client, say - landed on a newer offer that also got 1, and accepted (and with
+/// the authenticator here, confirmed) a trade nobody had looked at. Going up for good means a stale number finds
+/// nothing instead.
+/// </remarks>
+internal sealed class OfferNumbers {
+	private readonly Dictionary<ulong, int> _numbers = [];
+	private int _next = 1;
+
+	/// <summary>This offer's number, giving it the next one if it hasn't got one yet.</summary>
+	public int Of(ulong id) {
+		lock (_numbers) {
+			if (!_numbers.TryGetValue(id, out int n)) {
+				n = _next++;
+				_numbers[id] = n;
+			}
+
+			return n;
+		}
+	}
+
+	/// <summary>Forget offers that are gone and number the live ones, oldest first.</summary>
+	public void Keep(IEnumerable<ulong> live) {
+		lock (_numbers) {
+			HashSet<ulong> ids = [.. live];
+
+			foreach (ulong gone in _numbers.Keys.Where(k => !ids.Contains(k)).ToList()) {
+				_numbers.Remove(gone);
+			}
+
+			foreach (ulong id in ids.Order()) {
+				Of(id);
+			}
+		}
 	}
 }

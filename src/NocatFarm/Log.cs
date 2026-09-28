@@ -104,6 +104,7 @@ public static class Log {
 
 		if (!fileLogging) {
 			_logFile = null;
+			_logDir = null;   // TodaysFile rebuilds the path from the folder, so the folder has to go too
 
 			return;
 		}
@@ -175,7 +176,6 @@ public static class Log {
 		}
 	}
 
-	public static string? FilePath => TodaysFile();
 	public static bool DebugEnabled => _debug;
 
 	public static IReadOnlyList<Entry> Recent(int max = 200) {

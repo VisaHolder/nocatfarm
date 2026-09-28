@@ -487,7 +487,10 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			// sessions to an account that was supposed to be done for the night.
 			HumanMode? human = BotManager.ModuleOf<HumanMode>(Bot);
 
-			if ((human != null) && (human.TargetMinutesToday > 0) && (human.PlayedMinutesToday >= human.TargetMinutesToday)) {
+			// A day off counts too: its target is 0, and "0 played of 0" was skipped as if there were no plan, so the
+			// hunter went on playing all through a day the account was meant to spend not playing at all.
+			if ((human != null) && ((human.Current is HumanMode.Phase.DayOff or HumanMode.Phase.DoneForToday)
+				|| (human.TargetMinutesToday == 0) || (human.PlayedMinutesToday >= human.TargetMinutesToday))) {
 				_status = new Said("done for today - hunting again tomorrow");
 
 				return;

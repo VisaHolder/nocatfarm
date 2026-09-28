@@ -56,6 +56,20 @@ public static class WindowsIntegration {
 		}
 	}
 
+	/// <summary>Whether the startup entry starts THIS exe - a moved or copied folder leaves it pointing at the old one.</summary>
+	public static bool StartupPointsHere() {
+		try {
+			using RegistryKey? key = Registry.CurrentUser.OpenSubKey(RunKey);
+
+			return string.Equals(key?.GetValue(ValueName) as string, StartupCommand(), StringComparison.OrdinalIgnoreCase);
+		} catch {
+			return false;
+		}
+	}
+
+	// --minimized, because something launched at sign-in should not throw a console window in your face.
+	private static string? StartupCommand() => string.IsNullOrEmpty(Environment.ProcessPath) ? null : $"\"{Environment.ProcessPath}\" --minimized";
+
 	/// <summary>
 	/// Add or remove the startup entry. HKEY_CURRENT_USER only - it needs no administrator rights and it
 	/// affects nobody else who uses this PC.
@@ -70,14 +84,11 @@ public static class WindowsIntegration {
 				return true;
 			}
 
-			string? exe = Environment.ProcessPath;
-
-			if (string.IsNullOrEmpty(exe)) {
+			if (StartupCommand() is not { } command) {
 				return false;
 			}
 
-			// --minimized, because something launched at sign-in should not throw a console window in your face.
-			key.SetValue(ValueName, $"\"{exe}\" --minimized");
+			key.SetValue(ValueName, command);
 
 			return true;
 		} catch (Exception e) {

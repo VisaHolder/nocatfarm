@@ -316,7 +316,10 @@ public static class Achievements {
 				using HttpResponseMessage response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
 				if (response.IsSuccessStatusCode) {
-					fetched = [];
+					// Read into a local and only hand it over once the whole answer has parsed. Assigning first meant
+					// a 200 that didn't parse (a truncated body, an HTML error page) cached an empty list for the rest
+					// of the run - the very thing the comment above says must never happen.
+					Dictionary<string, double> read = [];
 					using JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
 
 					if (doc.RootElement.TryGetProperty("achievementpercentages", out JsonElement wrapper)
@@ -328,9 +331,11 @@ public static class Achievements {
 								continue;
 							}
 
-							fetched[name] = p.ValueKind == JsonValueKind.Number ? p.GetDouble()
+							read[name] = p.ValueKind == JsonValueKind.Number ? p.GetDouble()
 								: double.TryParse(p.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed) ? parsed : 0;
 						}
+
+						fetched = read;
 					}
 				}
 			} catch (Exception e) {

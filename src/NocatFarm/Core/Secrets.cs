@@ -113,10 +113,6 @@ public static class Secrets {
 		}
 	}
 
-	/// <summary>True when this string is already encrypted, so a re-save can be skipped.</summary>
-	public static bool IsProtected(string stored) =>
-		stored.StartsWith(Marker, StringComparison.Ordinal) || stored.StartsWith(AesMarker, StringComparison.Ordinal);
-
 	private static string UnprotectAes(string stored) {
 		// Never made here on Windows - only read, for a config folder brought over from Linux with its key.
 		byte[]? key = Key(create: false);

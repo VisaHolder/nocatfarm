@@ -62,7 +62,9 @@ public sealed partial class GroupJoin(Bot bot) : BotModule(bot) {
 				continue;
 			}
 
-			_gate ??= HumanGate.Quiet(Bot);
+			// A group joined shows on the profile and in the group's member list with the time, so a human-mode
+			// account joins in its own day - not at 4am while its friends list says it's asleep.
+			_gate ??= HumanGate.OwnDay(Bot);
 
 			if (!_gate.Open) {
 				if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
