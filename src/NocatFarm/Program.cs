@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using NocatFarm;
@@ -108,6 +109,12 @@ Log.Configure(global.FileLogging, global.Debug, root, global.LogRetentionDays);
 
 Banner();
 
+// NOCATFARM_WEB_HOST / _PORT / _PASSWORD(_FILE), for Docker. Nothing happens unless one is set.
+Platform.ApplyEnvironment(global);
+
+// Off Windows: a data folder that can't be written (a Docker bind mount made by root) is said now, with the fix.
+Platform.CheckWritable(ConfigStore.ConfigDir, Path.Combine(ConfigStore.Root, "logs"));
+
 BotManager manager = new(global);
 Commands.Host = manager;   // so a command sent by Steam message can reach the same engine the console does
 await manager.SyncFromDiskAsync().ConfigureAwait(false);
@@ -133,6 +140,15 @@ if (global.WebEnabled && !forceNoWeb) {
 
 CancellationTokenSource shutdown = new();
 Commands.ExitHandler = () => shutdown.Cancel();
+
+// Docker and systemd stop a program with SIGTERM. Left alone, .NET ends the process on it (and the dashboard's own
+// host takes it as its cue to stop and leave the rest running), so the orderly sign-out below never happened and a
+// `docker stop` waited out its timeout and killed it. Taken here, SIGTERM is the same clean shutdown as 'exit'.
+// Not on Windows, where nothing sends it and closing works the way it always has.
+using PosixSignalRegistration? sigterm = OperatingSystem.IsWindows() ? null : PosixSignalRegistration.Create(PosixSignal.SIGTERM, ctx => {
+	ctx.Cancel = true;
+	shutdown.Cancel();
+});
 
 if (OperatingSystem.IsWindows()) {
 	NativeConsole.SetWindowIcon(Path.Combine(AppContext.BaseDirectory, "nocatFarm.ico"));
@@ -166,7 +182,7 @@ MainWindow? window = null;
 LiveConsole? board = null;
 bool windowFailed = false;
 
-if (wantWindow) {
+if (wantWindow && OperatingSystem.IsWindows()) {
 	window = new MainWindow(manager, () => web?.Url ?? "", () => {
 		Commands.RequestExit();
 		shutdown.Cancel();
@@ -176,7 +192,11 @@ if (wantWindow) {
 	window.Failed += () => {
 		windowFailed = true;
 		Commands.Window = null;
-		Log.Written -= Show;
+
+		if (OperatingSystem.IsWindows()) {
+			Log.Written -= Show;
+		}
+
 		Log.Suppressed = false;
 
 		// There is no console to fall back into - the exe is windowed - so make one, or the app is invisible.
@@ -191,6 +211,7 @@ if (wantWindow) {
 	// window showed a wall of "reusing web token" and "243 licence(s) known" that buried the six lines actually
 	// worth reading - the console and the dashboard's Log tab both already filtered it; this was the one surface
 	// still showing it unasked.
+	[SupportedOSPlatform("windows")]
 	void Show(Log.Entry entry) {
 		if ((entry.Level != "DEBUG") || Log.DebugEnabled) {
 			window.Append(entry);
@@ -238,6 +259,10 @@ NocatFarm.Core.Notifier.Start(manager);
 NocatFarm.Core.DiscordPresence.Start(manager);
 NocatFarm.Core.SelfUpdate.Fleet = () => manager.All;
 
+// The day-by-day totals behind the dashboard's history charts. Before the accounts start, so the first card of the
+// run is counted once, after what the short-term records already know has been filled in.
+NocatFarm.Core.History.Start(manager);
+
 if (manager.All.Count == 0) {
 	FirstRunHint(web?.Url);
 } else {
@@ -249,7 +274,8 @@ if (manager.All.Count == 0) {
 NocatFarm.Core.DailyReport.Start(manager);
 
 
-if (global.OpenBrowserOnStart && (web != null)) {
+// Only where there's a desktop: a server or a container has no browser, and the attempt is just a baffling error.
+if (global.OpenBrowserOnStart && (web != null) && Platform.HasDesktop) {
 	OpenBrowser(web.Url);
 }
 
@@ -263,7 +289,7 @@ List<string> consoleHistory = [];
 // The window creates itself on another thread, so whether it succeeded is not known yet. Give it a moment
 // before deciding who owns the keyboard - otherwise a window that failed left a console nobody was reading,
 // where typing did nothing at all.
-if (window != null) {
+if ((window != null) && OperatingSystem.IsWindows()) {
 	for (int i = 0; (i < 40) && !windowFailed && !window.Visible; i++) {
 		await Task.Delay(50).ConfigureAwait(false);
 	}
@@ -307,12 +333,11 @@ await NocatFarm.Plugins.PluginHost.UnloadAllAsync().ConfigureAwait(false);
 
 if (OperatingSystem.IsWindows()) {
 	WindowsIntegration.KeepAwake(false);
+	tray?.Dispose();
+
+	// Where the window was left - it's never told it is closing on the way out, so it wouldn't save that itself.
+	window?.SavePlace();
 }
-
-tray?.Dispose();
-
-// Where the window was left - it's never told it is closing on the way out, so it wouldn't save that itself.
-window?.SavePlace();
 
 if (web != null) {
 	await web.DisposeAsync().ConfigureAwait(false);
@@ -436,10 +461,18 @@ TrayIcon StartTray(BotManager mgr, Func<string> url, CancellationTokenSource cts
 	};
 
 	icon.Start(startMinimized || mgr.Global.StartMinimized);
-	Commands.TrayHook = value => icon.MinimizeToTray = value;
+	Commands.TrayHook = value => {
+		if (OperatingSystem.IsWindows()) {
+			icon.MinimizeToTray = value;
+		}
+	};
 
 	// Which pop-ups actually appear is read live, so the settings apply the moment they're saved.
 	Log.Notify = (kind, source, text) => {
+		if (!OperatingSystem.IsWindows()) {
+			return;   // never: there is no tray icon anywhere else. Said so the platform check can see it.
+		}
+
 		GlobalConfig g = mgr.Global;
 		icon.MinimizeToTray = g.MinimizeToTray;
 
@@ -451,6 +484,7 @@ TrayIcon StartTray(BotManager mgr, Func<string> url, CancellationTokenSource cts
 			NotifyKind.Earning => g.NotifyEarnings,
 			NotifyKind.Social => g.NotifySocial,
 			NotifyKind.Problem => g.NotifyProblems,
+			NotifyKind.Trade => g.NotifyTrades,
 			_ => false
 		};
 

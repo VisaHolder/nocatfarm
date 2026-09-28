@@ -37,6 +37,10 @@ public static class InventoryHistory {
 			return;
 		}
 
+		// The day's closing value, for the history charts. Outside this class's lock, which History takes when it
+		// fills itself in from DailyCloses.
+		History.NoteValue(bot, value);
+
 		Load();
 
 		lock (Gate) {
@@ -91,6 +95,24 @@ public static class InventoryHistory {
 			decimal change = latest - baseline.Value;
 
 			return (change, (double) (change / baseline.Value) * 100);
+		}
+	}
+
+	/// <summary>The last reading of each local day, per account - what the day-by-day history starts from the first
+	/// time it runs, so the value chart has a month behind it rather than a single point.</summary>
+	public static List<(string Bot, DateTime Day, decimal Value)> DailyCloses() {
+		Load();
+
+		lock (Gate) {
+			List<(string, DateTime, decimal)> closes = [];
+
+			foreach ((string bot, List<Point> points) in Points) {
+				foreach (IGrouping<DateTime, Point> day in points.Where(static p => p.Value > 0).GroupBy(static p => DateTimeOffset.FromUnixTimeSeconds(p.At).LocalDateTime.Date)) {
+					closes.Add((bot, day.Key, day.MaxBy(static p => p.At)!.Value));
+				}
+			}
+
+			return closes;
 		}
 	}
 

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- Plain console checks: dotnet run -c Release (in this folder) prints PASS/FAIL per check and
+       exits with the number of failures. Web SDK because the app it references is an ASP.NET app. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\NocatFarm\NocatFarm.csproj" />
+  </ItemGroup>
+</Project>

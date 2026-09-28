@@ -1,0 +1,57 @@
+# nocat.farm with Docker Compose.
+#
+#   1. Copy this file to docker-compose.yml.
+#   2. Make the data folders, and put the dashboard password in a file called .env next to this one:
+#        mkdir -p config logs
+#        echo 'NOCATFARM_WEB_PASSWORD=something-long-and-your-own' > .env
+#   3. docker compose up -d --build
+#   4. Open http://localhost:7242 and sign in with that password. Add accounts there (the Steam Guard code or
+#      QR scan is asked for right on the page), or see the log with: docker compose logs -f
+#
+# Accounts, login tokens and settings live in ./config, logs in ./logs - both survive rebuilds and re-creates.
+# Updating: get the new source (git pull), then run step 3 again. nocat.farm doesn't update itself in Docker.
+# Stopping: docker compose down - every account signs out cleanly first.
+
+services:
+  nocatfarm:
+    build: .
+    image: nocatfarm:latest
+    container_name: nocatfarm
+    # The device name Steam shows for these logins. Without it, it's a random container id that changes on
+    # every re-create.
+    hostname: nocatfarm
+    restart: unless-stopped
+    init: true
+    # Time to sign every account out before Docker gives up and kills it.
+    stop_grace_period: 1m
+    # The owner of ./config and ./logs on this machine (run: id -u; id -g). Remove the line to use the image's
+    # own user (uid 1654) - then those folders have to belong to it: sudo chown -R 1654:1654 config logs
+    user: "1000:1000"
+    environment:
+      # Your time zone. Human mode's day, the night-time rules and the daily report all follow it.
+      TZ: Europe/London
+      # REQUIRED - compose won't start without it (it's read from .env). With no password the dashboard only
+      # lets in requests from inside the container itself, which through a published port is nobody.
+      NOCATFARM_WEB_PASSWORD: ${NOCATFARM_WEB_PASSWORD:?put NOCATFARM_WEB_PASSWORD=yourpassword in a .env file next to docker-compose.yml}
+      # Or keep it out of the environment with a Docker secret: delete the line above, uncomment the two
+      # "secrets" blocks below, and put the password in ./nocatfarm_password.txt
+      # NOCATFARM_WEB_PASSWORD_FILE: /run/secrets/nocatfarm_password
+    ports:
+      # This machine only. To reach it from your phone or another PC, make it "7242:7242".
+      - "127.0.0.1:7242:7242"
+    volumes:
+      - ./config:/data/config
+      - ./logs:/data/logs
+      # Optional: plugin DLLs (see PLUGINS.md).
+      # - ./plugins:/data/plugins
+      # Optional: the same Steam machine id across re-creates, instead of a new one made up each time.
+      # - /etc/machine-id:/etc/machine-id:ro
+    # Lets `docker attach nocatfarm` type commands into it (detach again with Ctrl+P then Ctrl+Q). No tty on
+    # purpose: with one, the live board's screen redraws fill `docker logs`.
+    stdin_open: true
+    # secrets:
+    #   - nocatfarm_password
+
+# secrets:
+#   nocatfarm_password:
+#     file: ./nocatfarm_password.txt

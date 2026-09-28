@@ -109,6 +109,7 @@ public sealed class BotManager : IAsyncDisposable {
 		bot.AddModule(new Gifts(bot));
 		bot.AddModule(new Boosters(bot));
 		bot.AddModule(new EventItems(bot));
+		bot.AddModule(new BanWatch(bot));
 		bot.AddModule(new DuplicateSeller(bot));
 		bot.AddModule(new AchievementPacer(bot));
 		bot.AddModule(new AchievementBoost(bot));
@@ -122,6 +123,7 @@ public sealed class BotManager : IAsyncDisposable {
 		GameCatalog.Flush();   // the store catalogue saves on a timer, so a clean exit shouldn't drop the tail of it
 		PriceBook.Save();      // ditto the market prices, which are slow and rate-limited to re-fetch
 		InventoryHistory.Save();
+		History.Save();        // the day-by-day totals write once a minute; this keeps the last minute of them
 	}
 
 	/// <summary>Start every enabled bot, staggered so several logins don't hit Steam at once.</summary>

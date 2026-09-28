@@ -96,6 +96,9 @@ public static partial class PriceBook {
 	/// <summary>Steam's currency id for everything here. Changing it makes every cached price a different key.</summary>
 	private static int Currency => Math.Max(1, Live.Global.MarketCurrency);
 
+	/// <summary>The same, for anything that keeps values over time and has to know which currency they were in.</summary>
+	public static int CurrencyId => Currency;
+
 	/// <summary>The symbol to print. Steam uses "$" for several of these, which is exactly what people expect.</summary>
 	public static string Symbol => Currency switch {
 		2 => "£",

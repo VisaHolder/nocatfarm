@@ -141,7 +141,14 @@ public sealed class WebSession : IDisposable {
 	public async Task<string?> PostAsync(Uri url, Dictionary<string, string> form, Uri? referer = null, CancellationToken ct = default, bool errorVerdict = false) =>
 		await SendAsync(url, form, referer, true, ct, errorVerdict: errorVerdict).ConfigureAwait(false);
 
-	private async Task<string?> SendAsync(Uri url, Dictionary<string, string>? form, Uri? referer, bool allowRetry, CancellationToken ct, bool skipReadyCheck = false, bool errorVerdict = false) {
+	/// <summary>
+	/// POST a form whose fields may repeat - Steam's "cid[]=1&amp;cid[]=2" lists. The sessionid is added the same way as
+	/// <see cref="PostAsync"/> adds it.
+	/// </summary>
+	public async Task<string?> PostPairsAsync(Uri url, IEnumerable<KeyValuePair<string, string>> form, Uri? referer = null, CancellationToken ct = default) =>
+		await SendAsync(url, form, referer, true, ct).ConfigureAwait(false);
+
+	private async Task<string?> SendAsync(Uri url, IEnumerable<KeyValuePair<string, string>>? form, Uri? referer, bool allowRetry, CancellationToken ct, bool skipReadyCheck = false, bool errorVerdict = false) {
 		if (!skipReadyCheck && !Ready && !await RefreshAsync(true, ct).ConfigureAwait(false)) {
 			return null;
 		}
@@ -165,10 +172,11 @@ public sealed class WebSession : IDisposable {
 					// only "sessionID" and answers a lowercase-only POST with a 200 "invalid form session key" error
 					// page that looks just like success. Sending both - the same value - satisfies either, so a caller
 					// never has to know which a given endpoint wants.
-					Dictionary<string, string> payload = new(form, StringComparer.Ordinal) {
-						["sessionid"] = cookieSession,
-						["sessionID"] = cookieSession
-					};
+					List<KeyValuePair<string, string>> payload = [
+						.. form.Where(static f => f.Key is not ("sessionid" or "sessionID")),
+						new("sessionid", cookieSession),
+						new("sessionID", cookieSession)
+					];
 					request.Content = new FormUrlEncodedContent(payload);
 				}
 

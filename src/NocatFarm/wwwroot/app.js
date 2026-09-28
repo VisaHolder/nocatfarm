@@ -277,6 +277,8 @@ function go(name) {
   if (name === 'console') { $('cmd').focus(); renderCommandList(); }
   if (name === 'log') renderLog();
   if (name === 'plugins') loadPlugins();
+  if (name === 'auth') openAuth();
+  if (name !== 'auth') closeAuth();
   render();
 }
 
@@ -364,7 +366,7 @@ function render() {
   const upd = $('updateBtn');
   if (upd) {
     const busy = state.UpdateBusy;
-    upd.classList.toggle('hidden', !state.UpdateAvailable);
+    upd.classList.toggle('hidden', !state.UpdateAvailable || state.CanSelfUpdate === false);
     upd.disabled = !!busy;
     upd.textContent = busy ? (state.UpdateProgress || t('working…')) : tf('Update to {0}', state.UpdateAvailable || '');
     upd.dataset.tip = busy
@@ -512,6 +514,8 @@ function renderOverview() {
     : `<p class="muted">${esc(t('No accounts yet.'))} <a href="#console" onclick="go('console')">${esc(t('Add one'))}</a> ${esc(t('or type'))} <code>add mybot mysteamlogin</code>.</p>`);
 
   renderToday();
+  renderHistory();
+  loadHistory();
 
   const interesting = logLines.filter((l) => l.Level !== 'INFO' && l.Level !== 'DEBUG').slice(-8).reverse();
   paint('recent', interesting.length
@@ -545,6 +549,382 @@ function renderToday() {
     <tr class="fleet"><td>${esc(t('fleet'))}</td><td>${totCards}</td>${r4r ? `<td>${totComments}</td>` : ''}</tr>
     </table></div>`);
 }
+
+// ── render: history ──────────────────────────────────────────────────
+// The Today table answers "what did it do in the last 24 hours"; this asks the same question over days and weeks.
+// Fetched once a minute while the Overview is open - all 90 days in one go, so flipping between 7, 30 and 90 is
+// instant - and drawn as plain inline SVG in the page's own greys. One series per chart, so there's no legend and
+// no colour to decode: the account picker changes what is added up, not what is drawn. The server does the per-day
+// bookkeeping; the page only sums accounts and picks the window.
+let histData = null;       // /api/history
+let histAt = 0;            // when it was last asked for, answered or not
+let histBusy = false;
+let histScope = '';        // '' = the whole fleet, otherwise one account's name
+let histRange = 30;
+try {
+  const saved = Number(localStorage.getItem('nocatfarm-histrange'));
+  if ([7, 30, 90].includes(saved)) histRange = saved;
+} catch { /* a private window - 30 days it is */ }
+const HIST_DAYS = 90;
+
+async function loadHistory(force) {
+  if (histBusy || (!force && Date.now() - histAt < 60000)) return;
+  histBusy = true;
+  try {
+    histData = await api('/api/history?days=' + HIST_DAYS);
+  } catch { /* keep the last frame; the next minute tries again */ }
+  finally { histBusy = false; histAt = Date.now(); }
+  if (view === 'overview') renderHistory();
+}
+
+function setHistRange(n) {
+  histRange = n;
+  try { localStorage.setItem('nocatfarm-histrange', String(n)); } catch { /* remembered for this visit only */ }
+  renderHistory();
+}
+
+function setHistScope(name) { histScope = name; renderHistory(); }
+
+/// paint(), but compared against the markup we generated rather than innerHTML. A browser writes SVG back out
+/// differently from how it went in, so paint() would see a change on every poll and rebuild the charts under the
+/// pointer every three seconds - the hover highlight and the tooltip with them.
+function histPaint(el, html) {
+  if (!el || el._histHtml === html) return;
+  el._histHtml = html;
+  el.innerHTML = html;
+}
+
+// 2026-09-28 -> "28 Sep", or "Mon 28 Sep" with long, in the dashboard's own language.
+function histDate(key, long) {
+  const [y, m, d] = key.split('-').map(Number);
+  const code = config && config.Global && config.Global.Language;
+  try {
+    return new Date(y, m - 1, d).toLocaleDateString(code && code !== 'en' ? code : undefined,
+      long ? { weekday: 'short', day: 'numeric', month: 'short' } : { day: 'numeric', month: 'short' });
+  } catch { return key.slice(5); }
+}
+
+const histR = (x) => Math.round(x * 10) / 10;
+const histSum = (arr) => (arr || []).reduce((s, v) => s + (v || 0), 0);
+const histSigned = (n, fmt) => (n > 0 ? '+' : n < 0 ? '-' : '±') + fmt(Math.abs(n));
+const histCards = (n) => (n === 1 ? t('1 card') : tf('{0} cards', n));
+const histComments = (n) => (n === 1 ? t('1 comment') : tf('{0} comments', n));
+const histName = (app) => (histData.Names && histData.Names[app]) || ('app ' + app);
+
+/// A translated sentence with some blanks filled by markup (a bold number). The sentence is escaped first and the
+/// values go in after, so a translation can move the numbers about but can never inject anything.
+const histFill = (template, ...html) => esc(template).replace(/\{(\d+)\}/g, (whole, i) => (html[i] === undefined ? whole : html[i]));
+const histB = (s) => `<b>${esc(s)}</b>`;
+
+/// Everything the charts need for the chosen account (or the whole fleet), over all the days fetched. Each chart
+/// takes the last 7, 30 or 90 of it; the week-on-week sentences always use the last 14.
+function histModel() {
+  const d = histData;
+  const all = d.Days.length;
+  const n = Math.min(histRange, all);
+  const accts = histScope ? d.Accounts.filter((a) => a.Name === histScope) : d.Accounts;
+  const total = (field) => {
+    const out = new Array(all).fill(0);
+    accts.forEach((a) => (a[field] || []).forEach((v, i) => { out[i] += v || 0; }));
+    return out;
+  };
+
+  // An inventory isn't re-priced every day. A day with no reading carries the last one over - otherwise the fleet
+  // total would plunge every time one account simply wasn't re-read that day.
+  const carried = accts.map((a) => {
+    let last = a.ValueBefore == null ? null : a.ValueBefore;
+    return (a.Value || []).map((v) => {
+      if (v != null) { last = v; return { v, real: true }; }
+      return last == null ? null : { v: last, real: false };
+    });
+  });
+  const value = Array.from({ length: all }, (_, i) => {
+    let sum = null, real = true;
+    carried.forEach((c) => { if (c[i]) { sum = (sum || 0) + c[i].v; real = real && c[i].real; } });
+    return sum == null ? null : { v: sum, real };
+  });
+
+  const games = Array.from({ length: all }, () => ({}));
+  accts.forEach((a) => (a.Games || []).forEach(([i, app, mins]) => {
+    if (i >= 0 && i < all) games[i][app] = (games[i][app] || 0) + mins;
+  }));
+
+  return { all, n, off: all - n, accts, carried, value, games, cards: total('Cards'), comments: total('Comments'), minutes: total('Minutes') };
+}
+
+// The first line of every day's tooltip.
+const histDay = (m, i) => histDate(histData.Days[i], true) + (i === m.all - 1 ? ' · ' + t('today so far') : '');
+
+/// Who contributed what on one day, biggest first - only when the chart is the whole fleet and there is more than
+/// one account to split it between.
+function histSplit(m, i, get, fmt) {
+  if (histScope || m.accts.length < 2) return '';
+  const rows = m.accts.map((a, k) => [a.Name, get(a, k)]).filter((r) => r[1] > 0).sort((x, y) => y[1] - x[1]);
+  if (!rows.length) return '';
+  return nlChar + rows.slice(0, 10).map(([name, v]) => `${name}: ${fmt(v)}`).join(nlChar) + (rows.length > 10 ? nlChar + '…' : '');
+}
+
+// A 1-2-5 step that covers span in about count steps.
+function histStep(span, count) {
+  const raw = span / count;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const f = raw / mag;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * mag;
+}
+
+// y-axis ticks for whole numbers (cards, comments) and for minutes, which read as hours past three of them.
+const histCountAxis = (max) => ({ step: Math.max(1, Math.round(histStep(max, 3))), label: (v) => String(v) });
+const histMinuteAxis = (max) => ({
+  step: max <= 180 ? ([5, 10, 15, 30, 60].find((s) => s * 3 >= max) || 60) : histStep(max / 60, 3) * 60,
+  label: (v) => (v === 0 ? '0' : v % 60 === 0 ? (v / 60) + t('h') : v + t('m'))
+});
+
+// Day labels along the bottom, as many as fit without touching, always ending on today.
+function histXLabels(m, padL, pw, slot, h) {
+  const every = Math.max(1, Math.ceil(m.n / Math.max(1, Math.floor(pw / 64))));
+  let s = '';
+  for (let j = m.n - 1; j >= 0; j -= every) {
+    const text = j === m.n - 1 ? t('today') : histDate(histData.Days[m.off + j]);
+    const half = text.length * 3.1;
+    const x = Math.min(padL + pw - half, Math.max(padL + half, padL + j * slot + slot / 2));
+    s += `<text class="xl" x="${histR(x)}" y="${h - 3}" text-anchor="middle">${esc(text)}</text>`;
+  }
+  return s;
+}
+
+/// One column per day, square-cornered like everything else here. Each day is a hover target the full height of
+/// the chart, so a day with nothing in it still answers when you point at it. Today is drawn lighter: it isn't over.
+/// The class is hbar, not bar: the progress bars own .bar, and a CSS height on it squashed every rect to 4px.
+function histBars(w, h, m, vals, axis, tipFor, label) {
+  const slice = vals.slice(m.off);
+  const max = Math.max(1, ...slice);
+  const { step, label: tick } = axis(max);
+  const top = Math.max(step, Math.ceil(max / step) * step);
+  const ticks = [];
+  for (let v = 0; v <= top + step / 2; v += step) ticks.push(v);
+  const padL = 8 + 6.2 * Math.max(...ticks.map((v) => tick(v).length));
+  const padR = 2, padT = 6, padB = 18;
+  const pw = w - padL - padR, ph = h - padT - padB;
+  const slot = pw / m.n;
+  const bw = Math.max(1, Math.min(24, slot * 0.7, slot - 1));
+
+  let s = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${esc(label)}">`;
+  ticks.forEach((v) => {
+    const y = Math.round(padT + ph - (v / top) * ph) + 0.5;
+    if (v > 0) s += `<line class="grid" x1="${histR(padL)}" x2="${w - padR}" y1="${y}" y2="${y}"/>`;
+    s += `<text class="yl" x="${histR(padL - 6)}" y="${y + 3.5}" text-anchor="end">${esc(tick(v))}</text>`;
+  });
+  slice.forEach((v, j) => {
+    const x0 = padL + j * slot;
+    const bh = v > 0 ? Math.max(1.5, (v / top) * ph) : 0;
+    s += `<g class="col" data-tip="${esc(tipFor(m.off + j))}"><rect class="hit" x="${histR(x0)}" y="${padT}" width="${histR(slot)}" height="${ph}"/>`
+      + (bh ? `<rect class="hbar${j === m.n - 1 ? ' today' : ''}" x="${histR(x0 + (slot - bw) / 2)}" y="${histR(padT + ph - bh)}" width="${histR(bw)}" height="${histR(bh)}"/>` : '')
+      + '</g>';
+  });
+  const base = Math.round(padT + ph) + 0.5;
+  s += `<line class="base" x1="${histR(padL)}" x2="${w - padR}" y1="${base}" y2="${base}"/>`;
+  return s + histXLabels(m, padL, pw, slot, h) + '</svg>';
+}
+
+/// The inventory's value as a line, with a faint wash under it. Not from zero: an inventory moves a few percent in
+/// a month, and a zero baseline would flatten that into a ruler. Hovering a day shows a hairline and the value.
+function histLine(w, h, m, tipFor, label) {
+  const pts = m.value.slice(m.off);
+  const vals = pts.filter(Boolean).map((p) => p.v);
+  const lo = Math.min(...vals), hi = Math.max(...vals);
+  const step = histStep((hi - lo) || Math.max(1, hi * 0.1), 3);
+  let bottom = Math.max(0, Math.floor(lo / step) * step);
+  let top = Math.ceil(hi / step) * step;
+  if (top <= bottom) { top = bottom + step; bottom = Math.max(0, bottom - step); }
+  const ticks = [];
+  for (let v = bottom; v <= top + step / 2; v += step) ticks.push(v);
+  const money = (v) => (step < 1 ? usdExact(v) : v >= 10000 ? cur() + v.toLocaleString('en-US', { notation: 'compact', maximumFractionDigits: 1 }) : usd(v));
+  const padL = 8 + 6.2 * Math.max(...ticks.map((v) => money(v).length));
+  const padR = 6, padT = 8, padB = 18;
+  const pw = w - padL - padR, ph = h - padT - padB;
+  const slot = pw / m.n;
+  const x = (j) => padL + j * slot + slot / 2;
+  const y = (v) => padT + ph - ((v - bottom) / (top - bottom)) * ph;
+
+  let s = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${esc(label)}">`;
+  ticks.forEach((v, k) => {
+    const yy = Math.round(y(v)) + 0.5;
+    s += `<line class="${k === 0 ? 'base' : 'grid'}" x1="${histR(padL)}" x2="${w - padR}" y1="${yy}" y2="${yy}"/>`
+      + `<text class="yl" x="${histR(padL - 6)}" y="${yy + 3.5}" text-anchor="end">${esc(money(v))}</text>`;
+  });
+
+  const drawn = pts.map((p, j) => (p ? [histR(x(j)), histR(y(p.v))] : null)).filter(Boolean);
+  if (drawn.length > 1) {
+    const line = drawn.map((p, k) => (k ? 'L' : 'M') + p[0] + ',' + p[1]).join('');
+    const floor = histR(padT + ph);
+    s += `<path class="area" d="${line}L${drawn[drawn.length - 1][0]},${floor}L${drawn[0][0]},${floor}Z"/><path class="line" d="${line}"/>`;
+  }
+  if (drawn.length) {
+    const last = drawn[drawn.length - 1];
+    s += `<circle class="dot" cx="${last[0]}" cy="${last[1]}" r="4"/>`;
+  }
+  pts.forEach((p, j) => {
+    const cx = histR(x(j));
+    s += `<g class="col" data-tip="${esc(tipFor(m.off + j))}"><rect class="hit" x="${histR(padL + j * slot)}" y="${padT}" width="${histR(slot)}" height="${ph}"/>`
+      + `<line class="xh" x1="${cx}" x2="${cx}" y1="${padT}" y2="${histR(padT + ph)}"/>`
+      + (p ? `<circle class="hd" cx="${cx}" cy="${histR(y(p.v))}" r="4"/>` : '')
+      + '</g>';
+  });
+  return s + histXLabels(m, padL, pw, slot, h) + '</svg>';
+}
+
+/// Hours per game over the window: the eight biggest, then everything else as one row, so a card-farming week
+/// across forty games still fits in a panel.
+function histGames(m) {
+  const sums = {};
+  for (let i = m.off; i < m.all; i++) {
+    Object.entries(m.games[i]).forEach(([app, mins]) => { sums[app] = (sums[app] || 0) + mins; });
+  }
+  const ranked = Object.entries(sums).filter((g) => g[1] > 0).sort((a, b) => b[1] - a[1]);
+  if (!ranked.length) return null;
+
+  const total = histSum(ranked.map((g) => g[1]));
+  const pct = (mins) => Math.max(1, Math.round((mins / total) * 100));
+  const rows = ranked.slice(0, 8).map(([app, mins]) => ({
+    name: histName(app), mins,
+    tip: histName(app) + nlChar + tf('{0} in {1} days, {2}% of all the game time', hm(mins), m.n, pct(mins))
+  }));
+  const rest = ranked.slice(8);
+  if (rest.length) {
+    const mins = histSum(rest.map((g) => g[1]));
+    rows.push({
+      other: true, name: t('Other'), mins,
+      tip: tf('{0} more games', rest.length) + nlChar + rest.slice(0, 12).map(([app, v]) => `${histName(app)}: ${hm(v)}`).join(nlChar) + (rest.length > 12 ? nlChar + '…' : '')
+    });
+  }
+  const max = Math.max(...rows.map((r) => r.mins));
+
+  return {
+    count: ranked.length,
+    html: `<div class="hgames">${rows.map((r) => `<div class="hg${r.other ? ' other' : ''}" data-tip="${esc(r.tip)}">
+      <span class="gn">${esc(r.name)}</span><span class="gb"><i style="width:${Math.max(1, (r.mins / max) * 100).toFixed(1)}%"></i></span><span class="gv">${esc(hm(r.mins))}</span></div>`).join('')}</div>`
+  };
+}
+
+function renderHistory() {
+  const box = $('history'), bar = $('histBar');
+  if (!box || !bar || !histData || !Array.isArray(histData.Days) || !histData.Days.length || !Array.isArray(histData.Accounts)) return;
+  const d = histData;
+  if (histScope && !d.Accounts.some((a) => a.Name === histScope)) histScope = '';
+
+  const anything = d.Accounts.some((a) => histSum(a.Cards) || histSum(a.Comments) || histSum(a.Minutes)
+    || a.ValueBefore != null || (a.Value || []).some((v) => v != null));
+  if (!anything) {
+    histPaint(bar, '');
+    histPaint(box, `<p class="muted empty">${esc(t('No history yet - it fills in day by day.'))}</p>`);
+    return;
+  }
+
+  histPaint(bar, `<div class="pills">${[7, 30, 90].map((n) =>
+    `<span class="p${histRange === n ? ' on' : ''}" onclick="setHistRange(${n})">${esc(tf('{0} days', n))}</span>`).join('')}</div>`
+    + (d.Accounts.length > 1
+      ? `<select onchange="setHistScope(this.value)" aria-label="${esc(t('Show the history of'))}"><option value="">${esc(t('Whole fleet'))}</option>${d.Accounts.map((a) =>
+        `<option value="${esc(a.Name)}"${a.Name === histScope ? ' selected' : ''}>${esc(a.Name)}</option>`).join('')}</select>`
+      : ''));
+
+  const m = histModel();
+  const r4r = r4rOn();
+  const inDays = tf('in {0} days', m.n);
+  const week = (arr) => [histSum(arr.slice(-7)), histSum(arr.slice(-14, -7))];
+
+  // This week against last, in words - the one line that says whether things are going up or down.
+  const said = [];
+  const [c1, c0] = week(m.cards);
+  said.push(histFill(t('{0} this week, {1} vs last week'), histB(histCards(c1)), histB(histSigned(c1 - c0, String))));
+  const [h1, h0] = week(m.minutes);
+  said.push(histFill(t('{0} banked this week, {1} vs last week'), histB(hm(h1)), histB(histSigned(h1 - h0, hm))));
+  if (r4r) {
+    const [r1, r0] = week(m.comments);
+    said.push(histFill(t('{0} this week, {1} vs last week'), histB(histComments(r1)), histB(histSigned(r1 - r0, String))));
+  }
+  const vNow = m.value[m.all - 1], vThen = m.value[m.all - 8];
+  if (vNow && vThen) {
+    said.push(histFill(t('Inventory {0}, {1} this week'), histB(usd(vNow.v)), histB(histSigned(Math.round(vNow.v - vThen.v), usd))));
+  }
+
+  const panels = [];
+  const draws = {};
+  const panel = (title, tip, big, sub, body) => `<div class="hpanel"><div class="hhead"><span class="t">${esc(title)}${tipIcon(tip)}</span>`
+    + `<span class="n">${big}${sub ? ` <small>${sub}</small>` : ''}</span></div>${body}</div>`;
+  const chart = (id) => `<div class="hchart" id="hc-${id}"></div>`;
+  const empty = (text) => `<div class="hempty">${esc(text)}</div>`;
+
+  // cards
+  const cardsIn = histSum(m.cards.slice(m.off));
+  panels.push(panel(t('Cards dropped'), '', esc(cardsIn), esc(inDays),
+    cardsIn ? chart('cards') : empty(tf('No cards dropped in the last {0} days.', m.n))));
+  draws.cards = (w, h) => histBars(w, h, m, m.cards, histCountAxis,
+    (i) => histDay(m, i) + nlChar + histCards(m.cards[i]) + histSplit(m, i, (a) => a.Cards[i] || 0, String), t('Cards dropped'));
+
+  // comments - only while rep4rep is on at all, the same as everywhere else on the page
+  if (r4r) {
+    const commentsIn = histSum(m.comments.slice(m.off));
+    panels.push(panel(t('rep4rep comments'), '', esc(commentsIn), esc(inDays),
+      commentsIn ? chart('comments') : empty(tf('No comments posted in the last {0} days.', m.n))));
+    draws.comments = (w, h) => histBars(w, h, m, m.comments, histCountAxis,
+      (i) => histDay(m, i) + nlChar + histComments(m.comments[i]) + histSplit(m, i, (a) => a.Comments[i] || 0, String), t('rep4rep comments'));
+  }
+
+  // hours banked, per day
+  const minutesIn = histSum(m.minutes.slice(m.off));
+  panels.push(panel(t('Hours banked'), t('Time with a game running, however many games were running at once.'), esc(hm(minutesIn)), esc(inDays),
+    minutesIn ? chart('hours') : empty(tf('Nothing played in the last {0} days.', m.n))));
+  draws.hours = (w, h) => histBars(w, h, m, m.minutes, histMinuteAxis, (i) => {
+    const top = Object.entries(m.games[i]).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    return histDay(m, i) + nlChar + hm(m.minutes[i]) + (top.length ? nlChar + top.map(([app, v]) => `${histName(app)}: ${hm(v)}`).join(nlChar) : '');
+  }, t('Hours banked'));
+
+  // hours per game
+  const games = histGames(m);
+  panels.push(panel(t('Hours by game'), t('Steam counts the time for every game that is running, so several at once add up to more than the hours banked.'),
+    games ? esc(games.count === 1 ? t('one game') : tf('{0} games', games.count)) : '', games ? esc(inDays) : '',
+    games ? games.html : empty(tf('Nothing played in the last {0} days.', m.n))));
+
+  // inventory value
+  const inRange = m.value.slice(m.off);
+  const firstAt = inRange.findIndex(Boolean);
+  const last = m.value[m.all - 1];
+  let valueSub = '';
+  if (firstAt >= 0 && last && firstAt < m.n - 1 && inRange[firstAt].v > 0) {
+    const change = last.v - inRange[firstAt].v;
+    const up = change >= 0;
+    // "since" the first closing value in the window, which is exactly what the change is measured from - "in 30
+    // days" would be a day out, because the first day's close is already the end of that day.
+    valueSub = `<span class="delta ${up ? 'up' : 'down'}">${esc(histSigned(Math.round(change), usd))} (${up ? '+' : '-'}${Math.abs((change / inRange[firstAt].v) * 100).toFixed(1)}%)</span> `
+      + esc(tf('since {0}', histDate(histData.Days[m.off + firstAt])));
+  }
+  panels.push(panel(t('Inventory value'), t('What the inventory was worth at the end of each day, at the market median. A day with no new reading carries the last one over.'),
+    last ? esc(usd(last.v)) : '', valueSub,
+    firstAt >= 0 ? chart('value') : empty(t('No inventory readings yet.'))));
+  draws.value = (w, h) => histLine(w, h, m, (i) => {
+    const p = m.value[i];
+    if (!p) return histDay(m, i) + nlChar + t('No inventory readings yet.');
+    return histDay(m, i) + nlChar + usdExact(p.v) + (p.real ? '' : nlChar + t('no new reading that day - carried over'))
+      + histSplit(m, i, (a, k) => (m.carried[k][i] ? m.carried[k][i].v : 0), usdExact);
+  }, t('Inventory value'));
+
+  histPaint(box, `<p class="histsum" data-tip="${esc(t('This week is the last 7 days, today included. Last week is the 7 days before that.'))}">${said.map((x) => `<span>${x}</span>`).join('')}</p>`
+    + `<div class="histgrid">${panels.join('')}</div>`);
+
+  // Measured after the panels are in, so each chart is drawn at its real width - text in an SVG that is scaled to
+  // fit goes blurry and changes size with the window.
+  Object.keys(draws).forEach((id) => {
+    const el = $('hc-' + id);
+    if (!el || el.clientWidth < 80) return;
+    histPaint(el, draws[id](el.clientWidth, el.clientHeight || 160));
+  });
+}
+
+let histResize = null;
+window.addEventListener('resize', () => {
+  clearTimeout(histResize);
+  histResize = setTimeout(() => { if (view === 'overview') renderHistory(); }, 150);
+});
 
 // ── render: accounts ─────────────────────────────────────────────────
 function renderAccounts() {
@@ -590,6 +970,7 @@ function renderAccounts() {
       <div class="bot-playing" title="${esc(b.Playing || '')}">${b.Playing ? esc(b.Playing) : `<span class="real">${esc(t('not playing anything'))}</span>`}</div>
       ${b.Online ? `<div class="bot-persona ${b.PersonaHidden ? 'hidden-persona' : ''}"
         data-tip="${esc(t("What your friends list shows for this account. The GAME comes straight back from Steam, so it's what other people genuinely see; the status is what nocat.farm set it to. Human mode changes the status by itself: invisible overnight, away on a break, Snooze over a meal."))}">${esc(t('your friends see:'))} <b>${esc(b.Persona)}</b>${b.Seen ? ` · <b>${esc(b.Seen)}</b>` : ''}</div>` : ''}
+      ${b.Bans ? `<div class="bot-bans" data-tip="${esc(t('What Steam shows about this account\'s bans. nocat.farm checks every few hours and tells you when a new one appears. Games it is banned in are left out of trades; trading cards still trade.'))}">${esc(tf('bans: {0}', b.Bans))}</div>` : ''}
       ${b.NameNotShowing
         ? `<div class="bot-mismatch" data-tip="${esc(t("Steam decides what to display when a custom name is sent alongside real games, and it has settled on the real one. Idling fewer games, or only the custom name, makes it show yours. A brief mismatch right after signing in is normal and isn't reported here."))}">${esc(tf('Steam is showing {0}, not your custom name', b.Seen))}</div>`
         : ''}
@@ -896,6 +1277,253 @@ async function doRemoveBot(name) {
   await loadConfig();
   if (view === 'settings') renderSettings();
   refresh();
+}
+
+// ── authenticator ─────────────────────────────────────────────────────────
+// The Steam app's two jobs, per account: the sign-in code, and the list of things waiting to be confirmed - trades,
+// market listings, account changes - each with Confirm and Deny. The code is worked out here every second from
+// what the server sent (the code and how long it has left), so the ring moves smoothly without asking the server.
+let authAccounts = null;      // [{Name, HasCode, CanConfirm, Code, SecondsLeft, At}]
+let authPick = null;          // the account on screen
+let authConfs = null;         // the last confirmations answer for authPick
+let authSelected = new Set();
+let authTimer = null, authListTimer = null;
+let authBusy = false;
+
+async function openAuth() {
+  await loadAuth();
+  clearInterval(authTimer);
+  authTimer = setInterval(tickAuth, 1000);
+  clearInterval(authListTimer);
+  authListTimer = setInterval(() => { if (!authBusy) loadConfirmations(false); }, 30000);
+}
+
+function closeAuth() {
+  clearInterval(authTimer); authTimer = null;
+  clearInterval(authListTimer); authListTimer = null;
+}
+
+async function loadAuth() {
+  try {
+    const r = await api('/api/auth');
+    const now = Date.now();
+    authAccounts = (r.Accounts || []).map((a) => ({ ...a, At: now }));
+  } catch (e) {
+    authAccounts = [];
+  }
+  if (!authPick || !authAccounts.some((a) => a.Name === authPick)) {
+    const first = authAccounts.find((a) => a.CanConfirm) || authAccounts.find((a) => a.HasCode) || authAccounts[0];
+    authPick = first ? first.Name : null;
+  }
+  renderAuth();
+  loadConfirmations(true);
+}
+
+function authPickAccount(name) {
+  authPick = name;
+  authConfs = null;
+  authSelected = new Set();
+  renderAuth();
+  loadConfirmations(true);
+}
+
+async function loadConfirmations(show) {
+  const a = (authAccounts || []).find((x) => x.Name === authPick);
+  if (!a || !a.CanConfirm) return;
+  if (show) { authConfs = { Loading: true }; renderAuthList(); }
+  try {
+    authConfs = await api('/api/auth/' + encodeURIComponent(authPick) + '/confirmations');
+  } catch (e) {
+    authConfs = { Ok: false, Error: e.message || String(e) };
+  }
+  const live = new Set(((authConfs && authConfs.Items) || []).map((c) => String(c.Id)));
+  authSelected = new Set([...authSelected].filter((id) => live.has(id)));
+  const nav = $('navAuth');
+  if (nav) nav.textContent = authConfs && authConfs.Items && authConfs.Items.length ? String(authConfs.Items.length) : '';
+  renderAuthList();
+}
+
+// The code, re-counted every second; a new one is fetched as the old one runs out.
+function tickAuth() {
+  if (view !== 'auth' || !authAccounts) return;
+  let stale = false;
+  for (const a of authAccounts) {
+    if (!a.HasCode) continue;
+    const left = a.SecondsLeft - Math.floor((Date.now() - a.At) / 1000);
+    if (left <= 0) stale = true;
+  }
+  if (stale) { loadAuthCodes(); return; }
+  renderAuthCode();
+}
+
+async function loadAuthCodes() {
+  try {
+    const r = await api('/api/auth');
+    const now = Date.now();
+    authAccounts = (r.Accounts || []).map((a) => ({ ...a, At: now }));
+  } catch (e) { /* the next tick tries again */ }
+  renderAuthCode();
+}
+
+function renderAuth() {
+  const body = $('authBody');
+  if (!body) return;
+  const accts = authAccounts || [];
+
+  if (!accts.length) {
+    body.innerHTML = `<div class="card"><h2>${esc(t('Authenticator'))}</h2><p class="muted">${esc(t('No accounts yet.'))}</p></div>`;
+    return;
+  }
+
+  body.innerHTML = `
+    <div class="card auth-card">
+      <div class="auth-top">
+        <h2>${esc(t('Authenticator'))}</h2>
+        <div class="langpick auth-accounts">${accts.map((a) =>
+          `<span class="p ${a.Name === authPick ? 'on' : ''} ${a.HasCode ? '' : 'dim'}" onclick="authPickAccount('${esc(a.Name)}')">${esc(a.Name)}</span>`).join('')}</div>
+      </div>
+      <div id="authCode"></div>
+    </div>
+    <div class="card auth-card">
+      <div class="auth-listhead">
+        <h2>${esc(t('Confirmations'))}</h2>
+        <div class="auth-tools" id="authTools"></div>
+      </div>
+      <div id="authList"></div>
+      <div id="authRules"></div>
+    </div>`;
+  renderAuthCode();
+  renderAuthList();
+}
+
+function renderAuthCode() {
+  const box = $('authCode');
+  if (!box) return;
+  const a = (authAccounts || []).find((x) => x.Name === authPick);
+
+  if (!a) { box.innerHTML = ''; return; }
+  if (!a.HasCode) {
+    box.innerHTML = `<p class="muted auth-none">${tf('{0} has no authenticator in nocat.farm. Put its maFile in {1} (or paste its secrets in the account settings) and its codes and confirmations show up here.',
+      esc(a.Name), '<code>config/authenticators</code>')}</p>`;
+    return;
+  }
+
+  const left = Math.max(0, a.SecondsLeft - Math.floor((Date.now() - a.At) / 1000));
+  const r = 26, c = 2 * Math.PI * r;
+  const dash = (c * left / 30).toFixed(2);
+  box.innerHTML = `
+    <div class="auth-code">
+      <svg class="auth-ring ${left <= 5 ? 'low' : ''}" viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="32" r="${r}" class="track"></circle>
+        <circle cx="32" cy="32" r="${r}" class="left" stroke-dasharray="${dash} ${c.toFixed(2)}" transform="rotate(-90 32 32)"></circle>
+        <text x="32" y="37" text-anchor="middle">${left}</text>
+      </svg>
+      <span class="auth-digits" title="${esc(t('The Steam Guard code for signing in.'))}">${esc(a.Code || '-----')}</span>
+      <button class="ghost" onclick="copyAuthCode()">${esc(t('Copy'))}</button>
+    </div>`;
+}
+
+function copyAuthCode() {
+  const a = (authAccounts || []).find((x) => x.Name === authPick);
+  if (!a || !a.Code) return;
+  navigator.clipboard.writeText(a.Code).then(() => toast(t('Code copied')), () => toast(a.Code));
+}
+
+function authAgo(unix) {
+  if (!unix) return '';
+  const mins = Math.max(0, Math.round((Date.now() / 1000 - unix) / 60));
+  return mins < 1 ? t('just now') : mins < 60 ? tf('{0}m ago', mins) : mins < 1440 ? tf('{0}h ago', Math.floor(mins / 60)) : tf('{0}d ago', Math.floor(mins / 1440));
+}
+
+function authItems(list) {
+  return (list || []).map((i) =>
+    `<span class="auth-item" title="${esc(i.Name + (i.Amount > 1 ? ' x' + i.Amount : ''))}">${i.Icon
+      ? `<img src="https://community.cloudflare.steamstatic.com/economy/image/${esc(i.Icon)}/64fx64f" alt="" loading="lazy">`
+      : '<i></i>'}${i.Amount > 1 ? `<b>${i.Amount}</b>` : ''}</span>`).join('');
+}
+
+function renderAuthList() {
+  const box = $('authList'), tools = $('authTools'), rules = $('authRules');
+  if (!box) return;
+  const a = (authAccounts || []).find((x) => x.Name === authPick);
+
+  if (tools) tools.innerHTML = '';
+  if (rules) rules.innerHTML = '';
+  if (!a) { box.innerHTML = ''; return; }
+  if (!a.CanConfirm) {
+    box.innerHTML = `<p class="muted">${esc(t('Confirmations need this account\'s authenticator in nocat.farm (its identity secret). Until then they are confirmed on your phone.'))}</p>`;
+    return;
+  }
+
+  const d = authConfs;
+  if (!d || d.Loading) { box.innerHTML = `<p class="muted">${esc(t('Asking Steam...'))}</p>`; return; }
+  if (d.Ok === false) { box.innerHTML = `<p class="muted">${esc(tf('Steam didn\'t give the list: {0}', d.Error || '?'))}</p>`; return; }
+
+  const items = d.Items || [];
+  if (tools) {
+    const some = authSelected.size > 0;
+    tools.innerHTML = items.length ? `
+      <button class="ghost" onclick="authSelectAll()">${esc(authSelected.size === items.length ? t('Select none') : t('Select all'))}</button>
+      <button ${some ? '' : 'disabled'} onclick="authAct(true, [...authSelected])">${esc(some ? tf('Confirm {0}', authSelected.size) : t('Confirm'))}</button>
+      <button class="danger" ${some ? '' : 'disabled'} onclick="authAct(false, [...authSelected])">${esc(some ? tf('Deny {0}', authSelected.size) : t('Deny'))}</button>
+      <button class="ghost" onclick="loadConfirmations(true)">${esc(t('Refresh'))}</button>`
+      : `<button class="ghost" onclick="loadConfirmations(true)">${esc(t('Refresh'))}</button>`;
+  }
+
+  box.innerHTML = !items.length
+    ? `<p class="muted auth-empty">${esc(t('Nothing waiting to be confirmed.'))}</p>`
+    : items.map((c) => {
+      const id = String(c.Id);
+      const trade = c.Offer ? `
+        <div class="auth-trade">
+          <div><span class="muted small">${esc(t('you give'))}</span>${authItems(c.Offer.Give) || `<span class="muted small">${esc(t('no items'))}</span>`}</div>
+          <div><span class="muted small">${esc(t('you get'))}</span>${authItems(c.Offer.Get) || `<span class="muted small">${esc(t('no items'))}</span>`}</div>
+        </div>` : '';
+      return `<div class="auth-conf ${authSelected.has(id) ? 'sel' : ''}">
+        <label class="auth-check"><input type="checkbox" ${authSelected.has(id) ? 'checked' : ''} onchange="authToggle('${id}', this.checked)"></label>
+        ${c.Icon ? `<img class="auth-icon" src="${esc(c.Icon)}" alt="" loading="lazy">` : '<span class="auth-icon"></span>'}
+        <div class="auth-main">
+          <div class="auth-line"><span class="chip">${esc(c.TypeName || t('Confirmation'))}</span> <b>${esc(c.Headline || '')}</b> <span class="muted small">${esc(authAgo(c.Created))}</span></div>
+          ${(c.Summary || []).map((s) => `<div class="small">${esc(s)}</div>`).join('')}
+          ${trade}
+        </div>
+        <div class="auth-buttons">
+          <button onclick="authAct(true, ['${id}'])">${esc(t('Confirm'))}</button>
+          <button class="danger" onclick="authAct(false, ['${id}'])">${esc(t('Deny'))}</button>
+        </div>
+      </div>`;
+    }).join('');
+
+  if (rules && d.Rules) {
+    rules.innerHTML = `<p class="muted small auth-rules">${d.Rules.length
+      ? tf('Confirmed by itself: trades with {0}. Everything else waits here. Change it under Settings, Trades ("Trade by itself with").', d.Rules.map((r) => `<b>${esc(r.Who)}</b> (${esc(t(r.Way))})`).join(', '))
+      : esc(t('Nothing is confirmed by itself - everything waits here for you. Change it under Settings, Trades ("Trade by itself with").'))}</p>`;
+  }
+}
+
+function authToggle(id, on) {
+  if (on) authSelected.add(id); else authSelected.delete(id);
+  renderAuthList();
+}
+
+function authSelectAll() {
+  const items = (authConfs && authConfs.Items) || [];
+  authSelected = authSelected.size === items.length ? new Set() : new Set(items.map((c) => String(c.Id)));
+  renderAuthList();
+}
+
+async function authAct(accept, ids) {
+  if (!ids.length || authBusy) return;
+  authBusy = true;
+  try {
+    const r = await post('/api/auth/' + encodeURIComponent(authPick) + '/confirmations', { Ids: ids, Accept: accept });
+    if (r.ok === false || r.Ok === false) toast(r.error || r.Error || t('Steam didn\'t take that'), true);
+    else toast(accept ? tf('Confirmed {0}', r.Done || ids.length) : tf('Denied {0}', r.Done || ids.length));
+  } finally {
+    authBusy = false;
+    authSelected = new Set();
+    loadConfirmations(false);
+  }
 }
 
 // ── plugins ───────────────────────────────────────────────────────────────

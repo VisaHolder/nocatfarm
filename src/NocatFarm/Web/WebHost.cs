@@ -106,6 +106,18 @@ public sealed class WebHost : IAsyncDisposable {
 			Log.Good(new Said("dashboard: {0}{1}", Url,
 				string.IsNullOrEmpty(_cfg.WebPassword) ? new Said("  (this PC only - no password set)") : default));
 
+			// Headless runs (Linux, Docker) are reached from another machine by definition, so a setup that can't
+			// be is worth more than the one-line hint above. Nothing is exposed either way - with no password the
+			// server lets in loopback only (see Authorised) - but Docker's port mapping arrives from the container's
+			// gateway, not from loopback, so that dashboard turns everybody away and needs saying why.
+			if (!OperatingSystem.IsWindows()) {
+				if (!Platform.IsLoopback(_cfg.WebHost) && string.IsNullOrEmpty(_cfg.WebPassword)) {
+					Log.Warn(new Said("dashboard: listening on {0} with NO password, so it only lets this machine itself in - nobody on another device (or outside Docker) can sign in. Set WebPassword, or NOCATFARM_WEB_PASSWORD in Docker", _cfg.WebHost));
+				} else if (Platform.InContainer && Platform.IsLoopback(_cfg.WebHost)) {
+					Log.Warn(new Said("dashboard: listening on {0} inside a container, where nothing outside it can reach it - set NOCATFARM_WEB_HOST=0.0.0.0", _cfg.WebHost));
+				}
+			}
+
 			return true;
 		} catch (Exception e) {
 			Log.Error(new Said("couldn't start the dashboard on {0}:{1} - {2}", _cfg.WebHost, _cfg.WebPort, e.Message));
@@ -212,6 +224,15 @@ public sealed class WebHost : IAsyncDisposable {
 				Comments = comments,
 				Buckets = Stats.ByHour(window).Select(static b => new { Hour = b.Hour.ToString("HH:mm"), b.Cards, b.Comments })
 			});
+		}));
+
+		// Day-by-day totals for the Overview's history charts: one slot per day, oldest first, ending today. Game names
+		// come along for every appID in it; any not known yet are looked up in the background for the next poll.
+		app.MapGet("/api/history", (HttpContext ctx, int? days) => Guard(ctx, () => {
+			History.View history = History.Query(days ?? 30, _mgr.All.Select(static b => b.Name));
+			ResolveNamesLater(history.Unknown);
+
+			return Results.Json(history);
 		}));
 
 		app.MapGet("/api/commands", (HttpContext ctx) => Guard(ctx, () => Results.Json(Commands.All)));
@@ -748,6 +769,88 @@ public sealed class WebHost : IAsyncDisposable {
 
 		// The account's own games, most played first - what the first-run setup offers as its main and side games.
 		// Family-shared ones are left out: playing a borrowed game locks its owner out of it.
+		// ── the authenticator page: codes and confirmations, like the Steam app ──
+		app.MapGet("/api/auth", (HttpContext ctx) => Guard(ctx, () => Results.Json(new {
+			Accounts = _mgr.All.Select(static b => {
+				(string? code, int left) = Confirmations.Code(b);
+
+				return new { b.Name, HasCode = b.HasAuthenticator, b.CanConfirmTrades, CanConfirm = b.CanConfirmTrades, Code = code, SecondsLeft = left };
+			})
+		})));
+
+		app.MapGet("/api/auth/{name}/confirmations", async (HttpContext ctx, string name) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			if (_mgr.Get(name) is not { } bot) {
+				return Results.Json(new { Ok = false, Error = "no such account" });
+			}
+
+			(bool ok, string error, List<Confirmations.Item> items) = await Confirmations.ListAsync(bot, ctx.RequestAborted).ConfigureAwait(false);
+			List<object> rows = [];
+
+			foreach (Confirmations.Item c in items) {
+				object? offer = null;
+
+				// A trade shows what goes and comes, with Steam's pictures - read from the offer the confirmation is for.
+				if ((c.Type == Confirmations.Trade) && (c.CreatorId != 0)) {
+					(bool answered, TradeOffers.Offer? o) = await TradeOffers.OneAsync(bot, c.CreatorId, ctx.RequestAborted).ConfigureAwait(false);
+
+					if (answered && (o != null)) {
+						offer = new {
+							Give = o.Giving.Select(static i => new { i.Name, i.Icon, Amount = i.Amount }),
+							Get = o.Receiving.Select(static i => new { i.Name, i.Icon, Amount = i.Amount })
+						};
+					}
+				}
+
+				rows.Add(new { Id = c.Id.ToString(System.Globalization.CultureInfo.InvariantCulture), c.Type, c.TypeName, c.Headline, c.Summary, c.Icon, c.Created, Offer = offer });
+			}
+
+			Trading? trading = BotManager.ModuleOf<Trading>(bot);
+			var rules = (trading?.Allowed() ?? []).Select(r => new {
+				Who = _mgr.All.FirstOrDefault(b => b.SteamId == r.Key)?.Name ?? r.Key.ToString(System.Globalization.CultureInfo.InvariantCulture),
+				Way = r.Value switch { Trading.Way.From => "only what they send", Trading.Way.To => "they can take items", _ => "both ways" }
+			});
+
+			return Results.Json(new { Ok = ok, Error = error, Items = rows, Rules = rules });
+		});
+
+		app.MapPost("/api/auth/{name}/confirmations", async (HttpContext ctx, string name) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			AuthActRequest? body = await ReadJsonAsync<AuthActRequest>(ctx).ConfigureAwait(false);
+
+			if ((_mgr.Get(name) is not { } bot) || (body?.Ids is not { Count: > 0 } ids)) {
+				return Results.Json(new { Ok = false, Error = "bad request" }, statusCode: 400);
+			}
+
+			(bool ok, string error, List<Confirmations.Item> items) = await Confirmations.ListAsync(bot, ctx.RequestAborted, fresh: true).ConfigureAwait(false);
+
+			if (!ok) {
+				return Results.Json(new { Ok = false, Error = error });
+			}
+
+			List<Confirmations.Item> picked = [.. items.Where(c => ids.Contains(c.Id.ToString(System.Globalization.CultureInfo.InvariantCulture)))];
+
+			if (picked.Count == 0) {
+				return Results.Json(new { Ok = false, Error = "already gone - the list has changed" });
+			}
+
+			bool done = await Confirmations.ActAsync(bot, picked, body.Accept, ctx.RequestAborted).ConfigureAwait(false);
+
+			if (done) {
+				Log.Trade(body.Accept
+					? new Said("confirmed {0} from the Authenticator page: {1}", picked.Count, string.Join(", ", picked.Select(static c => $"{c.TypeName} {c.Headline}".Trim())))
+					: new Said("denied {0} from the Authenticator page: {1}", picked.Count, string.Join(", ", picked.Select(static c => $"{c.TypeName} {c.Headline}".Trim()))), bot.Name, good: body.Accept);
+			}
+
+			return Results.Json(new { Ok = done, Done = done ? picked.Count : 0, Error = done ? "" : "Steam didn't take it - try again" });
+		});
+
 		app.MapGet("/api/bots/{name}/library", (HttpContext ctx, string name) => Guard(ctx, () => {
 			Bot? bot = _mgr.Get(name);
 
@@ -1110,6 +1213,26 @@ public sealed class WebHost : IAsyncDisposable {
 
 	private IResult Guard(HttpContext ctx, Func<IResult> action) => Authorised(ctx) ? action() : Unauthorised();
 
+	private int _resolvingNames;
+
+	/// <summary>Look up game names off the request, one batch at a time - the history is polled every minute, and a
+	/// second lookup of the same names while the first is still running would only ask Steam twice.</summary>
+	private void ResolveNamesLater(List<uint> appIds) {
+		if ((appIds.Count == 0) || (Interlocked.Exchange(ref _resolvingNames, 1) == 1)) {
+			return;
+		}
+
+		_ = Task.Run(async () => {
+			try {
+				await GameNames.ResolveAsync(appIds).ConfigureAwait(false);
+			} catch (Exception e) {
+				Log.Debug(new Said("couldn't look up game names for the history: {0}", e.Message));
+			} finally {
+				Volatile.Write(ref _resolvingNames, 0);
+			}
+		});
+	}
+
 	private static IResult Unauthorised() => Results.Json(new { ok = false, error = "unauthorised" }, statusCode: 401);
 
 	private static async Task<T?> ReadJsonAsync<T>(HttpContext ctx) {
@@ -1165,6 +1288,8 @@ public sealed class WebHost : IAsyncDisposable {
 			Currency = PriceBook.Symbol,
 			UpdateAvailable = UpdateCheck.Available,
 			UpdateUrl = UpdateCheck.Url,
+			// False on Linux and in Docker, where it can't swap itself: the page drops its update button then.
+			CanSelfUpdate = SelfUpdate.Supported,
 			PluginsOn = Live.Global.PluginsEnabled,
 			UpdateBusy = SelfUpdate.Busy,
 			UpdateFailed = SelfUpdate.LastFailure,
@@ -1192,6 +1317,7 @@ public sealed class WebHost : IAsyncDisposable {
 					PersonaHidden = b.PersonaWord is "invisible" or "offline",
 					Seen = b.PlayingAsSeen,
 					NameNotShowing = b.CustomNameNotShowing,
+					Bans = BotManager.ModuleOf<BanWatch>(b)?.Last is { Any: true } bans ? BanWatch.Summary(bans).ToString() : "",
 					Online = b.IsOnline,
 					Paused = b.Paused,
 					Blocked = b.PlayingBlocked,
@@ -1301,6 +1427,11 @@ public sealed class WebHost : IAsyncDisposable {
 	private sealed class PluginToggle {
 		public string Name { get; set; } = "";
 		public bool Enabled { get; set; }
+	}
+
+	private sealed class AuthActRequest {
+		public List<string>? Ids { get; set; }
+		public bool Accept { get; set; }
 	}
 
 	private sealed class CommandRequest {

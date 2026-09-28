@@ -6,3 +6,4 @@ dist/
 *.zip
 tools/apiscan/
 __pycache__/
+.claude/

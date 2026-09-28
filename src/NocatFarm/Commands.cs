@@ -51,7 +51,7 @@ public static partial class Commands {
 		new("selfcheck", "[account]", GroupAccounts, "Does a human-mode account look like a bot? A score out of 100 from what other people can see - hours on the profile, what its status shows, comments - with the setting that fixes each tell. Boost accounts are left out unless you name one.", "tells"),
 		new("hours", "<account>", GroupPlaying, "How the account's hour targets are going - hours so far, what's left, and the pace needed to make a date."),
 		new("drops", "<account> [appID|next] [count|all] | <account> off", GroupCards,
-			"Go for card drops now, whatever the schedule says: one game until it has dropped that many (all it has left by default), then back to the usual day. Without an appID, the next game with cards."),
+			"You pick a game and how many cards, and it goes first. On a human-mode account it's played in the normal sittings - the main game's share of them, with breaks and bedtime - until that many have dropped. On other accounts it's played non-stop until then. Without an appID, the next game with cards. Automatic card farming (\"When to farm cards\") needs no command."),
 		new("grind", "<account|all> <appID> <hours> | <account> off", GroupPlaying,
 			"Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs."),
 		new("human", "[account] [week|reroll]", GroupPlaying, "What human mode is doing today, and what it played. Add 'week' to see the next seven days, or 'reroll' to throw today's plan away and roll a fresh one from the current settings."),
@@ -69,10 +69,15 @@ public static partial class Commands {
 		new("send", "<account|all>", GroupCards, "Send an account's tradable items to the account listed under Trades.", "loot"),
 		new("transfer", "<from> <to> [types]", GroupCards, "Send items from one of your accounts to another. Types as in the send setting (cards, foils, backgrounds, emoticons, boosters, gems, all); leave it off for trading cards."),
 		new("2fa", "<account>", GroupAccounts, "Show this account's Steam Guard code, if its authenticator is set up here.", "guard"),
+		new("confirmations", "[account]", GroupAccounts, "What's waiting to be confirmed on this account, like the Steam app's list: trades, market listings, account changes - numbered for confirm and deny. Needs the account's authenticator in nocat.farm."),
+		new("confirm", "<account> <number|all>", GroupAccounts, "Confirm what 'confirmations' listed under that number, or all of it."),
+		new("deny", "<account> <number|all>", GroupAccounts, "Deny (cancel) what 'confirmations' listed under that number, or all of it."),
 		new("cheevo", "<account> <appID> [list|unlock|lock] [name|all]", GroupPlaying, "Achievements: see them, unlock them all, or put them back.", "ach|achievements"),
 		new("hunt", "[account]", GroupPlaying, "What the achievement hunter would play, in order - and what it ruled out and why.", "boost"),
 		new("levelup", "<account> <level>", GroupCards, "What reaching a Steam level would cost: the XP missing, badges it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest - priced gently in the background.", "lvlup"),
 		new("match", "[do]", GroupCards, "Swap duplicate trading cards between your own accounts so sets finish - only swaps that help both sides, never a card already on an offer. Shows what it would trade; 'match do' sends the offers, and the other account accepts them by itself."),
+		new("bans", "[account|all]", GroupAccounts, "Look up the account's bans now: VAC, game bans, a trade ban, a community ban, and which games it's banned in when Steam shows that. Read-only. It also checks by itself every few hours."),
+		new("trade", "accept|decline <account> <number|all>", GroupCards, "Answer a trade offer yourself, by the number 'offers' and the announcements give it. Accepting one that sends items out confirms it too when this account's authenticator is in nocat.farm - you asked, so that is the confirmation."),
 		new("offers", "[account|all]", GroupCards, "Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold."),
 		new("keys", "[list|clear]", GroupAccounts, "Product keys waiting to be activated. A big batch queues itself rather than burning Steam's per-account activation allowance all at once."),
 		new("value", "[account|all] [refresh]", GroupCards, "What each inventory is worth, by game, and how it has moved in the last day. Add 'refresh' to read the inventories again.", "inv|inventory"),
@@ -174,7 +179,8 @@ public static partial class Commands {
 	public static bool OpenDashboard() {
 		string url = DashboardUrl?.Invoke() ?? "";
 
-		if (string.IsNullOrEmpty(url)) {
+		// A server or a container has no browser to open - trying only logs a confusing "no such file".
+		if (string.IsNullOrEmpty(url) || !Core.Platform.HasDesktop) {
 			return false;
 		}
 
@@ -232,6 +238,8 @@ public static partial class Commands {
 				"drops" => await DropsAsync(mgr, rest).ConfigureAwait(false),
 				"hours" => Hours(mgr, rest),
 				"offers" => await OffersAsync(mgr, rest).ConfigureAwait(false),
+				"bans" => await BansAsync(mgr, rest).ConfigureAwait(false),
+				"trade" => await TradeAsync(mgr, rest).ConfigureAwait(false),
 				"levelup" or "lvlup" => LevelUp(mgr, rest),
 				"selfcheck" or "tells" => await SelfCheckAsync(mgr, rest).ConfigureAwait(false),
 				"human" => Human(mgr, rest),
@@ -239,6 +247,9 @@ public static partial class Commands {
 				"redeem" or "key" => await RedeemAsync(mgr, rest).ConfigureAwait(false),
 				"send" or "loot" => await SendAsync(mgr, rest).ConfigureAwait(false),
 				"2fa" or "guard" => TwoFactor(mgr, rest),
+				"confirmations" => await ConfirmationsAsync(mgr, rest).ConfigureAwait(false),
+				"confirm" => await AnswerConfirmationsAsync(mgr, rest, true).ConfigureAwait(false),
+				"deny" => await AnswerConfirmationsAsync(mgr, rest, false).ConfigureAwait(false),
 				"cheevo" or "ach" or "achievements" => await CheevoAsync(mgr, rest).ConfigureAwait(false),
 				"hunt" or "boost" => await HuntAsync(mgr, rest).ConfigureAwait(false),
 				"value" or "inv" or "inventory" => InventoryText(mgr, rest),
@@ -315,7 +326,9 @@ public static partial class Commands {
 		if (what == "ignore") {
 			UpdateCheck.Ignored = true;
 
-			return "No more update reminders until the next launch. 'update' still checks, and 'update accept' still installs.";
+			return SelfUpdate.Supported
+				? "No more update reminders until the next launch. 'update' still checks, and 'update accept' still installs."
+				: new Said("No more update reminders until the next launch. 'update' still checks.").ToString();
 		}
 
 		bool accept = what is "accept" or "now" or "install";
@@ -324,6 +337,13 @@ public static partial class Commands {
 
 		if (UpdateCheck.Available == null) {
 			return $"You're on the newest release ({Build.Version}).";
+		}
+
+		// Off Windows there is nothing to accept - it can't swap itself (see SelfUpdate) - so both answers say how.
+		if (!SelfUpdate.Supported) {
+			return $"{UpdateCheck.Available} is out - you have {Build.Version}."
+				+ Environment.NewLine + $"  {UpdateCheck.Url}"
+				+ Environment.NewLine + "  " + SelfUpdate.ByHand(UpdateCheck.Available);
 		}
 
 		if (!accept) {
@@ -1298,7 +1318,8 @@ public static partial class Commands {
 			List<string> lines = [];
 
 			foreach (Bot b in mgr.All.Where(static b => b.HasAuthenticator)) {
-				lines.Add($"  {b.Name,-12} {Core.MobileAuth.GenerateCode(b.Secrets.Shared)}");
+				(string? c, int left) = Confirmations.Code(b);
+				lines.Add($"  {b.Name,-12} {c}   ({left}s left)");
 			}
 
 			return lines.Count == 0
@@ -1312,11 +1333,114 @@ public static partial class Commands {
 			return NoSuchAccount(mgr, name);
 		}
 
-		string? code = Core.MobileAuth.GenerateCode(bot.Secrets.Shared);
+		(string? code, int secondsLeft) = Confirmations.Code(bot);
 
 		return code == null
 			? $"{bot.Name} has no authenticator set up here. Drop {bot.Name}.maFile into config/authenticators/, or paste its shared secret into the account's settings."
-			: $"{bot.Name}: {code}   (changes every 30 seconds)";
+			: $"{bot.Name}: {code}   ({secondsLeft}s left)";
+	}
+
+	/// <summary>The numbers 'confirm' and 'deny' go by: the order of the last list shown for each account.</summary>
+	private static readonly Dictionary<string, List<ulong>> ListedConfirmations = new(StringComparer.OrdinalIgnoreCase);
+
+	private static async Task<string> ConfirmationsAsync(BotManager mgr, string[] args) {
+		// No account: every account whose authenticator is here - the one-tap version for Telegram's menu.
+		if (args.Length < 1) {
+			List<Bot> able = [.. mgr.All.Where(static b => b.CanConfirmTrades)];
+
+			if (able.Count == 0) {
+				return new Said("No account has its authenticator in nocat.farm - add its maFile under config/authenticators to confirm from here.").ToString();
+			}
+
+			List<string> all = [];
+
+			foreach (Bot each in able) {
+				all.Add(await ConfirmationsAsync(mgr, [each.Name]).ConfigureAwait(false));
+			}
+
+			return string.Join(Environment.NewLine, all);
+		}
+
+		if (mgr.Get(args[0]) is not { } bot) {
+			return NoSuchAccount(mgr, args[0]);
+		}
+
+		(bool ok, string error, List<Confirmations.Item> items) = await Confirmations.ListAsync(bot, fresh: true).ConfigureAwait(false);
+
+		if (!ok) {
+			return new Said("{0}: couldn't read the confirmations - {1}", bot.Name, error).ToString();
+		}
+
+		lock (ListedConfirmations) {
+			ListedConfirmations[bot.Name] = [.. items.Select(static i => i.Id)];
+		}
+
+		if (items.Count == 0) {
+			return new Said("{0}: nothing waiting to be confirmed", bot.Name).ToString();
+		}
+
+		List<string> lines = [new Said("{0} - waiting to be confirmed:", bot.Name).ToString()];
+
+		for (int n = 0; n < items.Count; n++) {
+			Confirmations.Item c = items[n];
+			string ago = c.Created > 0 ? " · " + Fmt.Hm((int) Math.Max(0, (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - c.Created) / 60)) : "";
+			lines.Add($"  {n + 1}  {c.TypeName}  {c.Headline}{ago}");
+
+			foreach (string line in c.Summary.Where(static l => l.Length > 0)) {
+				lines.Add($"       {line}");
+			}
+		}
+
+		lines.Add($"  confirm {bot.Name} <number|all>  /  deny {bot.Name} <number|all>");
+
+		return string.Join(Environment.NewLine, lines);
+	}
+
+	private static async Task<string> AnswerConfirmationsAsync(BotManager mgr, string[] args, bool accept) {
+		string verb = accept ? "confirm" : "deny";
+
+		if ((args.Length < 2) || (mgr.Get(args[0]) is not { } bot)) {
+			return args.Length < 2 ? $"{verb} <account> <number|all>    after 'confirmations <account>' shows the numbers" : NoSuchAccount(mgr, args[0]);
+		}
+
+		(bool ok, string error, List<Confirmations.Item> items) = await Confirmations.ListAsync(bot, fresh: true).ConfigureAwait(false);
+
+		if (!ok) {
+			return new Said("{0}: couldn't read the confirmations - {1}", bot.Name, error).ToString();
+		}
+
+		List<ulong>? listed;
+
+		lock (ListedConfirmations) {
+			ListedConfirmations.TryGetValue(bot.Name, out listed);
+		}
+
+		List<Confirmations.Item> picked;
+
+		if (args[1].Equals("all", StringComparison.OrdinalIgnoreCase)) {
+			picked = items;
+		} else if (int.TryParse(args[1].TrimStart('#'), out int n) && (n >= 1)) {
+			// By the list that was shown - so a new confirmation arriving in between can't shift what "2" means.
+			ulong? id = listed != null ? (n <= listed.Count ? listed[n - 1] : null) : (n <= items.Count ? items[n - 1].Id : null);
+			picked = [.. items.Where(c => c.Id == id)];
+		} else {
+			return $"'{args[1]}' isn't a number from 'confirmations {bot.Name}' - or say all.";
+		}
+
+		if (picked.Count == 0) {
+			return items.Count == 0
+				? new Said("{0}: nothing waiting to be confirmed", bot.Name).ToString()
+				: new Said("{0}: that one is gone - 'confirmations {0}' shows what's waiting now", bot.Name).ToString();
+		}
+
+		if (!await Confirmations.ActAsync(bot, picked, accept).ConfigureAwait(false)) {
+			return new Said("{0}: Steam didn't take it - try again", bot.Name).ToString();
+		}
+
+		string what = string.Join(", ", picked.Select(static c => $"{c.TypeName} {c.Headline}".Trim()));
+		Log.Trade(accept ? new Said("confirmed: {0}", what) : new Said("denied: {0}", what), bot.Name, good: accept);
+
+		return accept ? new Said("{0}: confirmed {1}", bot.Name, what).ToString() : new Said("{0}: denied {1}", bot.Name, what).ToString();
 	}
 
 	/// <summary>
@@ -1551,6 +1675,56 @@ public static partial class Commands {
 		return LevelPlanner.Ask(bot, Math.Min(target, 5000));
 	}
 
+	private static async Task<string> BansAsync(BotManager mgr, string[] args) {
+		if (Pick(mgr, args, out string? problem) is not { } bots) {
+			return problem!;
+		}
+
+		List<string> lines = [];
+
+		foreach (Bot bot in bots) {
+			if (BotManager.ModuleOf<BanWatch>(bot) is not { } watch) {
+				continue;
+			}
+
+			BanWatch.Bans? now = bot.IsOnline && bot.Web.Ready ? await watch.CheckAsync().ConfigureAwait(false) : null;
+			BanWatch.Bans? shown = now ?? watch.Last;
+
+			if (shown == null) {
+				lines.Add(new Said("{0}: couldn't look - it needs to be logged in", bot.Name).ToString());
+
+				continue;
+			}
+
+			string when = now != null ? "" : watch.CheckedAt is { } at ? " " + new Said("(as of {0})", Fmt.Clock(at)) : "";
+			string games = watch.BannedGames.Count > 0 ? " - " + new Said("banned in {0}", string.Join(", ", watch.BannedGames.Select(GameNames.Of))) : "";
+			lines.Add($"{bot.Name}: {BanWatch.Summary(shown)}{games}{when}");
+		}
+
+		return lines.Count > 0 ? string.Join(Environment.NewLine, lines) : new Said("nothing to look up").ToString();
+	}
+
+	private static async Task<string> TradeAsync(BotManager mgr, string[] args) {
+		if ((args.Length < 3) || !(args[0].Equals("accept", StringComparison.OrdinalIgnoreCase) || args[0].Equals("decline", StringComparison.OrdinalIgnoreCase))) {
+			return string.Join(Environment.NewLine, [
+				"trade accept <account> <number|all>    accept a waiting offer",
+				"trade decline <account> <number|all>   decline one",
+				"  trade accept new 3      the offer numbered 3 in 'offers new' and the announcement",
+				"  trade decline old all   every offer waiting on old"
+			]);
+		}
+
+		if (mgr.Get(args[1]) is not { } bot) {
+			return NoSuchAccount(mgr, args[1]);
+		}
+
+		if (BotManager.ModuleOf<Trading>(bot) is not { } trading) {
+			return $"{bot.Name} has no trade module running.";
+		}
+
+		return await trading.AnswerAsync(args[0].Equals("accept", StringComparison.OrdinalIgnoreCase), args[2]).ConfigureAwait(false);
+	}
+
 	private static async Task<string> OffersAsync(BotManager mgr, string[] args) {
 		if (Pick(mgr, args, out string? problem) is not { } bots) {
 			return problem!;
@@ -1589,7 +1763,13 @@ public static partial class Commands {
 				};
 				string hold = o.HoldUntil is { } until ? $", hold until {until.ToLocalTime():d MMM HH:mm}" : "";
 
-				lines.Add($"  #{o.Id}  {(o.Ours ? "sent to" : "from")} {who}  {o.Describe}  {state}{hold}");
+				// Offers it received get their short number - the one 'trade accept' and the announcements use.
+				string num = !o.Ours && (o.State == TradeOffers.Active) && (BotManager.ModuleOf<Trading>(bot) is { } tr) ? $"[{tr.NumberOf(o.Id)}]" : "   ";
+				lines.Add($"  {num} #{o.Id}  {(o.Ours ? "sent to" : "from")} {who}  {o.Describe}  {state}{hold}");
+			}
+
+			if (live.Any(static o => !o.Ours && (o.State == TradeOffers.Active))) {
+				lines.Add($"  trade accept {bot.Name} <number>  /  trade decline {bot.Name} <number>");
 			}
 		}
 
@@ -1618,11 +1798,16 @@ public static partial class Commands {
 	private static async Task<string> DropsAsync(BotManager mgr, string[] args) {
 		if (args.Length < 1) {
 			return string.Join(Environment.NewLine, [
-				"drops <account> [appID|next] [count|all]   go for card drops now, whatever the schedule says",
+				"drops <account> [appID|next] [count|all]   you pick the game and how many cards - it goes first",
 				"drops <account> off                        stop early and go back to normal",
+				"  drops new 460920 2       2 cards from Steep first, then back to the usual mix",
 				"  drops new                every card left in the next game with cards",
-				"  drops new 460920 2       two drops from Steep, then back to the usual day",
-				"  drops new next 1         one drop from whatever has cards next"
+				"  drops new next 1         1 card from whatever has cards next",
+				"",
+				"Human-mode account: the game plays in its normal sittings - the main game's share of them, with breaks,",
+				"meals and bedtime - so it still looks like a person playing it a lot that day.",
+				"Other accounts: it plays non-stop until the cards are in.",
+				"Automatic farming (\"When to farm cards\", e.g. mixed) needs no command: it picks the games itself."
 			]);
 		}
 
@@ -1631,6 +1816,14 @@ public static partial class Commands {
 		}
 
 		if ((args.Length > 1) && args[1].Equals("off", StringComparison.OrdinalIgnoreCase)) {
+			if (bot.DropsFirstActive) {
+				string was = GameNames.Of(bot.DropsFirstApp);
+				bot.StopDropsFirst();
+				Log.Info(new Said("drop run on {0} stopped - back to its usual mix of games", was), bot.Name);
+
+				return $"{bot.Name}: drop run stopped - back to normal.";
+			}
+
 			if (!bot.Grinding || (bot.GrindDropsLeft == 0)) {
 				return $"{bot.Name} isn't on a drop run.";
 			}
@@ -1689,6 +1882,17 @@ public static partial class Commands {
 
 		int want = Math.Min(count ?? target.CardsRemaining, target.CardsRemaining);
 		int estimate = farmer.MinutesForDrops(app, want);
+
+		// Human mode: no grind over the schedule - the game goes first in the day's normal sittings, with real weight.
+		if (bot.Cfg.LegitMode) {
+			if (!bot.StartDropsFirst(app, want)) {
+				return $"{bot.Name}: {game} is still refundable, and a drop run would spend that.";
+			}
+
+			Log.Info(new Said("going for {0} card drop(s) in {1} - it goes first in the normal sittings, with breaks and bedtime, until they're in", want, game), bot.Name);
+
+			return $"{bot.Name}: {game} goes first until {want} card(s) drop. It plays in the normal sittings - the main game's share of them, with its usual breaks and bedtime - so it looks like a person playing it a lot. About {Fmt.Rough(estimate)} of play, spread over the day. 'drops {bot.Name} off' stops it.";
+		}
 
 		// The grind's time is only a cap, for a game that stops dropping: twice the estimate and a half hour, two hours
 		// at the least and a day at the most.
@@ -2460,7 +2664,7 @@ public static partial class Commands {
 	}
 
 	private static string Mini(string[] args) {
-		if (Window == null) {
+		if ((Window == null) || !OperatingSystem.IsWindows()) {
 			return "There's no app window in this run - mini mode is part of it.";
 		}
 
@@ -2835,7 +3039,9 @@ public static partial class Commands {
 	public static void ApplyGlobalSideEffects(BotManager mgr, SettingDef def) {
 		switch (def.Name) {
 			case "MiniOnTop":
-				Window?.RefreshOnTop();
+				if (OperatingSystem.IsWindows()) {
+					Window?.RefreshOnTop();
+				}
 
 				break;
 			// The status text this program writes about itself is translated too, so a language change has to
@@ -2884,7 +3090,10 @@ public static partial class Commands {
 				// And repaint. Every row on screen can now render in the new language, but neither surface
 				// redraws on its own - so without this the change did not appear until the next log line
 				// happened to arrive, which on a quiet night is minutes of a window that looks broken.
-				Window?.Invalidate();
+				if (OperatingSystem.IsWindows()) {
+					Window?.Invalidate();
+				}
+
 				Board?.Repaint();
 
 				break;

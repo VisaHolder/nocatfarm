@@ -8,8 +8,8 @@ Everything nocat.farm does, every command and setting, and how it works under th
 [Human mode](#human-mode) · [rep4rep](#rep4rep) · [Commands](#commands) · [Achievements](#achievements) ·
 [The hunter](#the-hunter) · [Inventory value](#what-the-inventories-are-worth) ·
 [Trades, keys & items](#trades-keys-and-items) · [Fair card swaps](#fair-card-swaps) · [Free stuff](#free-stuff) ·
-[Plugins](#plugins) · [Settings](#settings) · [Command line](#command-line) · [Privacy & safety](#privacy-and-safety) ·
-[How it works](#notes-on-how-it-works) · [Building it](#building-it)
+[Plugins](#plugins) · [Settings](#settings) · [Command line](#command-line) · [Linux and Docker](#linux-and-docker) ·
+[Privacy & safety](#privacy-and-safety) · [How it works](#notes-on-how-it-works) · [Building it](#building-it)
 
 ---
 
@@ -37,6 +37,9 @@ setting away.
 | **Gifts** | Steam wallet gift cards and guest passes sent to an account are accepted (`AcceptGifts`, on by default), and so are games friends gift it — added straight to the library (`AcceptGiftedGames`, on by default; turn it off to decide each one yourself). Each gift waits a person's time first (`GiftDelayMinMinutes` / `GiftDelayMaxMinutes`), and a gift is never declined. |
 | **Booster packs** | Turns gems into booster packs for the games you list, one per game per day as Steam allows, on Steam's own schedule (`BoosterGames`). |
 | **Fair card swaps** | Optional. Accepts the one-for-one card swaps card-swapping sites send, only when the swap can never set the account's sets back: every card given away must still have more copies afterwards than any card coming in had before (`AcceptFairCardSwaps`). |
+| **Ban watch** | On by default (`WatchBans`). Looks at each account's bans every few hours - VAC, game bans, a trade ban, a community ban - and says so straight away when a new one appears: a red log line, a pop-up, and Discord/Telegram. It only looks. Games an account is banned in are read from Steam's help site and left out of every trade by themselves; trading cards keep trading. `bans` looks now. |
+| **Trade alerts** | Every new trade offer is announced in the log, as a pop-up and on Discord/Telegram: who it's from, what you'd give and get, and what happens next. Each gets a short number, so `trade accept new 3` or `trade decline new 3` answers it from the console or your phone. |
+| **Authenticator page** | For accounts whose authenticator is in nocat.farm (a maFile, or its secrets in the settings): the Steam Guard code with a countdown, and the list of things waiting to be confirmed - trades with pictures of both sides, market listings, account changes - each with Confirm and Deny, like the Steam app. `confirmations`, `confirm` and `deny` do the same in the console and on Telegram. |
 | **Refund protection** | Optional (`SkipRefundableGames`, off by default). When on, a game bought in the last 14 days (`RefundHoldDays`) with under two hours played is left alone — by the card farmer, the idler, the schedule, grinds and the hunter alike — until it can no longer be refunded. Games friends gift the account count too (`ProtectGiftedGames`, on by default) — the giver can still get their money back. |
 | **Steam Families** | Optional (`IncludeFamilyLibrary`, off by default). Games shared into the account can be hunted too, and are handed back as soon as anyone else in the family starts playing them (`YieldToFamily`, on by default). |
 | **Plugins** | Optional and off by default. One DLL in `plugins/` extends the app: react to card drops and trade offers, read every account, run any command, add your own commands, and declare settings that get a real UI. See [PLUGINS.md](../PLUGINS.md). |
@@ -86,7 +89,11 @@ jumps to Console and Escape closes dialogs; `#settings` and the like open a tab 
 - **Log** — live, with highlighted search, level chips (Debug hidden by default), a per-account filter, Follow and Copy.
 - **Console** — the same commands with tab completion and up-arrow history saved in the browser. `help <setting>`
   (or `? <setting>`) explains a setting; `help <word>` that matches commands opens the filtered reference.
-- **Overview** — replays the first-run walkthrough whenever you want it.
+- **Overview** — replays the first-run walkthrough whenever you want it. Under the Today table, **History** charts
+  cards per day, hours banked (per day and per game), inventory value and rep4rep comments (when it's on) over 7, 30
+  or 90 days, for the whole fleet or one account, with this week against last in words. Daily totals are kept for
+  about 400 days in `config/state/history/` (one file per month); on its first start it fills in what the last 90
+  days of card and comment records and the last month of inventory values still know.
 
 To use it from a phone or another PC, set `WebHost` to `0.0.0.0` and a `WebPassword`; the layout works on a
 phone. Without a password it still refuses anything but this PC. Five wrong passwords lock an IP out for 60
@@ -191,6 +198,15 @@ a person instead of a bot:
   that: *only at night* holds cards until it's asleep and invisible and plays the usual games by day; *any time*
   farms the moment there are cards, day and night, straight through; *mixed* farms in only some of its sittings
   (`CardSittingsPct`, 40% by default) and plays its usual games in the rest, so cards drop in between them
+
+> **Mixed mode vs `drops`, in one line each**
+>
+> * **Mixed mode is automatic.** nocat.farm picks the card games and mixes a few card sittings into the normal
+>   day. You do nothing; cards trickle in over days.
+> * **`drops` is you picking.** `drops new 460920 2` means "2 cards from Steep, first". On a human-mode account
+>   Steep then plays in the normal sittings - the main game's share of them, with breaks, meals and bedtime -
+>   until the 2 cards are in, then it's back to the usual mix. On a robot account it plays non-stop until then.
+>   `drops new off` stops it early.
 * **grind fits it too** — `grind` on a legit account eases in (it keeps its current game for a minute or three
   before switching) and earns achievements at that account's normal pace when `UnlockAchievements` is on; on a
   boost account it just starts instantly
@@ -362,12 +378,15 @@ ignored, and replies are cut at 1,900 characters.
 | Command | What it does |
 |---|---|
 | `cards [account]` | What is still left to farm, and about how long it will take. |
-| `drops <account> [appID\|next] [count\|all]` &nbsp;·&nbsp; `drops <account> off` | Go for card drops now, whatever the schedule says: one game until it has dropped that many (all it has left by default), then back to the usual day — like `grind`, but it stops when the drops are in. Without an appID, the next game with cards. It gives up on its own if the drops stop coming (twice the expected time). |
+| `drops <account> [appID\|next] [count\|all]` &nbsp;·&nbsp; `drops <account> off` | You pick a game and how many cards, and it goes first (all it has left by default; without an appID, the next game with cards). **Human-mode account:** it plays in the normal sittings with the main game's share of them, keeping breaks, meals and bedtime, until that many have dropped — it never grinds over the schedule. **Robot account:** it plays non-stop until then, like `grind`, and gives up on its own if the drops stop coming (twice the expected time). Automatic farming ("When to farm cards") needs no command. |
 | `farm <account> on\|off` | Turn trading-card farming on or off. |
 | `sell <account> [preview\|do\|relist] [count]` | Spare trading cards on the market. `preview` (the default) shows what it would list: a cent under the cheapest listing, with Steam's 5% + 10% fees worked out so "you get" is what you get. `do` lists them (5 by default, 20-60 s apart) and confirms them on the account's authenticator if its secrets are loaded - otherwise confirm in the Steam app. `relist` takes down week-old listings the market has gone under. Spare = with a game's whole set, as many copies as badge levels it can still craft; with part of a set, one of each; badge maxed, none. Foils are never sold. `SellDuplicates` does it by itself every 8-14 hours while awake. |
 | `queue [account\|all]` | Go through today's discovery queue now, 6-25 s on each game. `DiscoveryQueue` does it by itself once a Steam day - during sales by default, when it earns the event's items and badge progress. |
 | `levelup <account> <level>` &nbsp;·&nbsp; `lvlup` | What reaching a Steam level would cost: the XP missing, badge levels it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest (up to five levels per game). Priced in the background a few seconds per request and cached for a day, so run it, wait for "level plan … is ready" in the log, and run it again. |
 | `match [do]` | Swap duplicate trading cards between your own accounts so sets finish - only swaps that help both accounts, never a card that's already on an offer. `match do` sends the offers, and the other account checks each one and accepts it by itself. Each account swaps with one other per run - run it again once those have gone through. |
+| `trade accept\|decline <account> <number\|all>` | Answer a waiting trade offer by the number `offers` and the announcements give it. |
+| `confirmations [account]` &nbsp;·&nbsp; `confirm <account> <number\|all>` &nbsp;·&nbsp; `deny <account> <number\|all>` | What's waiting to be confirmed on the account (trades, market listings, account changes), and confirming or denying it - like the Steam app. Needs the account's authenticator in nocat.farm. |
+| `bans [account\|all]` | Look up the account's bans now - VAC, game, trade, community - and which games it's banned in when Steam shows that. |
 | `offers [account\|all]` | Every live trade offer, straight from Steam: waiting, sent, stuck on a phone confirmation or in a trade hold. |
 | `value [account\|all] [refresh]` &nbsp;·&nbsp; `inv` `inventory` | What each inventory is worth at the market's median, by game, with how it has moved in the last 24 hours. `refresh` reads the inventories again. |
 | `send <account\|all>` &nbsp;·&nbsp; `loot` | Send an account's items — trading cards by default, or whatever its `SendItemTypes` allows — to the first of your own accounts listed under Trades. |
@@ -562,6 +581,46 @@ human-mode account it waits until the account is awake.
 Offers the account sends confirm themselves when its authenticator's identity secret is here (a maFile, or
 `IdentitySecret` in its settings); otherwise they wait for you to confirm them on your phone.
 
+### Who it trades with by itself
+
+`AutoTradeWith` (*Trade by itself with*) lists the accounts an account trades with without asking you, and which
+way: `old, kylro:to` means old both ways, and kylro may take items. `:from` only accepts what they send, `:to` lets
+them take items (confirmed by itself when the authenticator is here), `:both` is the default. Left empty it means
+*Your own accounts* both ways, when *Accept anything from your own accounts* is on - which is what those two
+settings always did. Donations follow their own switch. A fair card swap with anyone else is accepted, but its
+confirmation waits for you. Everything else waits for you too.
+
+### Trade alerts and answering by hand
+
+Every new offer is announced once - log, pop-up (*Pop up for trade offers*), Discord/Telegram's Trades topic - with a
+short number:
+
+```
+new trade offer 3 from kylro (one of your accounts): you get 4 item(s): ..., you give no items - a donation, accepting it in a few minutes
+new trade offer 4 from SomeGuy: you get 1 item(s): ..., you give 3 item(s): ... - waiting for you - trade accept new 4 or trade decline new 4
+```
+
+Accepted, declined, "needs confirming" and "gone" (cancelled, answered somewhere else, or expired) are announced too.
+`offers new` lists them with the same numbers; `trade accept new 4` / `trade decline new 4` (or `all`) answers them.
+Accepting one by hand that sends items out also confirms it when the authenticator is here - you asked for it.
+
+### The Authenticator page
+
+The dashboard's **Authenticator** tab shows, per account, the Steam Guard code with a ring counting down its 30
+seconds, and the list of everything waiting to be confirmed - exactly what the Steam app lists: trades (with the
+items on both sides), market listings (with the price), account changes. Each has Confirm and Deny; tick several
+for Confirm all / Deny all. It refreshes by itself while it's open. The same from the console or Telegram:
+
+```
+confirmations new        # what's waiting, numbered
+confirm new 2            # confirm number 2 (or: all)
+deny new 1               # deny number 1
+```
+
+It needs the account's authenticator secrets in nocat.farm - a maFile in `config/authenticators/<account>.maFile`
+(from Steam Desktop Authenticator or ArchiSteamFarm), or `SharedSecret` / `IdentitySecret` in its settings. Codes
+use Steam's own clock (asked from Steam), so a PC clock that's a little off doesn't matter.
+
 ### Fair card swaps
 
 ```
@@ -740,7 +799,138 @@ run `reload` if you prefer.
 
 One copy runs per config folder — a second launch says so and exits — so separate fleets simply use separate
 `--path` folders side by side. For diagnosing Steam trouble, setting the environment variable
-`NOCATFARM_NETLOG=1` writes every Steam message to `netlog-<account>.txt`.
+`NOCATFARM_NETLOG=1` writes every Steam message to `netlog-<account>.txt`. The dashboard's address, port and
+password can also come from environment variables — see [Linux and Docker](#linux-and-docker).
+
+---
+
+## Linux and Docker
+
+nocat.farm runs on Linux too — a home server, a NAS, a Raspberry Pi 4 or 5 on a 64-bit OS, a VPS — straight from
+a zip or in Docker. There's no app window or tray icon there: you get the console and the web dashboard, and
+everything else (farming, human mode, trades, notifications, plugins) is the same program.
+
+### From the zip
+
+1. Download `nocat.farm-v…_linux-x64.zip` (Intel/AMD) or `nocat.farm-v…_linux-arm64.zip` (Raspberry Pi, ARM
+   servers) from [Releases](https://github.com/VisaHolder/nocatfarm/releases/latest). The plain
+   `nocat.farm-v….zip` is the Windows one.
+2. Unzip it into a folder of its own and start it:
+
+   ```
+   unzip nocat.farm-v1.3.9_linux-x64.zip -d nocatfarm
+   cd nocatfarm
+   ./nocatFarm
+   ```
+
+   If it says *permission denied*, run `chmod +x nocatFarm` once — the zip carries the executable bit, but some
+   unzip tools drop it.
+
+It's self-contained, so there's no .NET to install. It prints the dashboard address (`http://127.0.0.1:7242/`) and
+opens it in your browser if there's a desktop. To use the dashboard from another device, give it a password and
+open it up, then restart:
+
+```
+set WebPassword something-long-and-your-own
+set WebHost 0.0.0.0
+```
+
+With no password it only lets in the machine it runs on, whatever `WebHost` says — and on Linux it says so in
+the log.
+
+**As a service.** A systemd unit, with the folder at `/opt/nocatfarm`:
+
+```ini
+[Unit]
+Description=nocat.farm
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=youruser
+WorkingDirectory=/opt/nocatfarm
+ExecStart=/opt/nocatfarm/nocatFarm
+Restart=on-failure
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target
+```
+
+`systemctl stop nocatfarm` signs every account out cleanly before it exits (that's what the 60 seconds are for).
+The log goes to the journal (`journalctl -u nocatfarm -f`); type commands in the dashboard's *Console* tab, where
+Steam Guard prompts appear too.
+
+**Updating.** It doesn't update itself on Linux. It still tells you when a new version is out, and `update` says
+exactly which file to get: stop it, unzip the new zip over the folder (`unzip -o`), start it again. `config/` and
+`logs/` are never in the zip, so they're kept. (Why not by itself: on Linux it's normally run by systemd or
+Docker, and both kill whatever it leaves behind the moment it exits — a swap script would die half way through
+copying. Doing it by hand is one step and can't half-happen.)
+
+**Saved logins.** Login tokens and saved passwords are encrypted with AES-256-GCM. The key is
+`config/state/secret.key`, made on first use and readable only by your user. Back up the whole `config` folder
+together: without that key the saved logins can't be read, and each account just signs in once more. A config
+folder brought over from Windows works too — apart from its saved logins, which Windows ties to your Windows
+user, so each account signs in once more there as well.
+
+**Discord profile card.** Works with the Discord desktop app on the same desktop (the normal build, Flatpak or
+Snap). On a server or in Docker there's no Discord to talk to, so it stays quiet.
+
+### Docker
+
+```
+git clone https://github.com/VisaHolder/nocatfarm.git
+cd nocatfarm
+cp docker-compose.example.yml docker-compose.yml
+mkdir -p config logs
+echo 'NOCATFARM_WEB_PASSWORD=something-long-and-your-own' > .env
+docker compose up -d --build
+```
+
+Then open `http://localhost:7242` and sign in with that password. Add accounts there — the Steam Guard code or QR
+scan is asked for right on the page.
+
+What the example compose file sets up (it's commented line by line):
+
+* **Your data** in `./config` and `./logs` next to it — accounts, login tokens, settings, logs. Rebuilding or
+  re-creating the container keeps them.
+* **A password is required.** Compose refuses to start without `NOCATFARM_WEB_PASSWORD`. Without one the
+  dashboard only lets in requests from inside the container itself — through Docker's port, that's nobody.
+* **Port 7242 on this machine only.** Change `"127.0.0.1:7242:7242"` to `"7242:7242"` to reach it from your phone
+  or another PC.
+* **`TZ`** — set your time zone. Human mode's day, its bedtime and the daily report all follow it.
+* **`hostname`** — the device name Steam shows for these sign-ins. Without it, it changes on every re-create.
+* **`user: "1000:1000"`** — the owner of `./config` and `./logs` (`id -u`, `id -g`). If the log says *can't write
+  to /data/config*, that's the thing to fix: match it to the folders' owner, or remove the line and
+  `sudo chown -R 1654:1654 config logs` (the image's own user).
+* **`restart: unless-stopped`** and **`stop_grace_period: 1m`** — `docker compose down` signs every account out
+  cleanly first.
+
+Commands: the dashboard's *Console* tab, or `docker attach nocatfarm` and type (Ctrl+P then Ctrl+Q to detach
+again). The log: `docker compose logs -f`. Plugins: uncomment the `./plugins` line.
+
+**Updating:** `git pull`, then `docker compose up -d --build`. The app doesn't update itself in Docker — the
+image is rebuilt instead.
+
+**Other CPUs:** the image builds for amd64 and arm64 from the same Dockerfile:
+`docker buildx build --platform linux/amd64,linux/arm64 -t nocatfarm .`
+
+About the image: it's built on Microsoft's ASP.NET Core runtime image (`mcr.microsoft.com/dotnet/aspnet:10.0`)
+rather than bundling its own .NET, so a rebuild picks up Microsoft's .NET security fixes and the same build runs
+on every CPU. It runs as an ordinary user, not root; the program sits read-only in `/app` and everything it
+writes goes to `/data`.
+
+### Environment variables
+
+These work on any install, not only Docker. When one is set it wins at every start, and it's written into
+`config/nocatFarm.json` so the settings page shows what's really in use.
+
+| Variable | What it sets |
+|---|---|
+| `NOCATFARM_WEB_HOST` | `WebHost`, the address the dashboard listens on. The Docker image sets `0.0.0.0`. |
+| `NOCATFARM_WEB_PORT` | `WebPort` (7242 by default). |
+| `NOCATFARM_WEB_PASSWORD` | `WebPassword`, the dashboard password. |
+| `NOCATFARM_WEB_PASSWORD_FILE` | A file to read the password from instead — how Docker secrets arrive. Wins over the one above. |
 
 ---
 
@@ -752,7 +942,8 @@ One copy runs per config folder — a second launch says so and exits — so sep
   refresh token does the logging in — restarts need no password and no Guard code. Login tokens, a saved password
   (if you give one, or import one from ASF), authenticator secrets and proxy passwords are encrypted on disk with
   Windows DPAPI, tied to your Windows user — a config copied to another PC or user can't be read, and those
-  accounts simply ask for their password again. Drop an account's `maFile` into `config/authenticators/` as
+  accounts simply ask for their password again. On Linux and in Docker they're encrypted with AES-256-GCM, with
+  the key in `config/state/secret.key` (readable only by your user) — see [Linux and Docker](#linux-and-docker). Drop an account's `maFile` into `config/authenticators/` as
   `<name>.maFile` and it answers its own Steam Guard prompts.
 * **What it contacts.** Steam, and GitHub every few hours to see whether a newer release is out (`CheckForUpdates`,
   on by default — it only tells you; `update accept` or the dashboard's *Update* button downloads it when you ask).
@@ -810,7 +1001,8 @@ ArchiSteamFarm so moving over is painless.
 [Releases](https://github.com/VisaHolder/nocatfarm/releases), extract it into a folder of its own (Explorer's
 *Extract All…* makes one named after the zip), and run `nocatFarm.exe`. The release build is self-contained — no
 .NET install, nothing else to set up. To update by hand, close the app and extract the new zip over that folder;
-or let the app do it — `update accept`, or the *Update* button on the dashboard.
+or let the app do it — `update accept`, or the *Update* button on the dashboard. On Linux, take the
+`_linux-x64` or `_linux-arm64` zip instead — see [Linux and Docker](#linux-and-docker).
 
 To build from source instead, you need the [.NET 10 SDK](https://dotnet.microsoft.com/download). Nothing else —
 there is no npm step, no bundler, and the dashboard is plain static files.
@@ -821,6 +1013,9 @@ cd nocatfarm
 dotnet publish src/NocatFarm -c Release -o run
 run\nocatFarm.exe
 ```
+
+On Linux the same publish gives a plain console program: `dotnet publish src/NocatFarm -c Release -r linux-x64 -o run`
+(or `linux-arm64`), then `run/nocatFarm`. `tools/package-release.ps1` builds all three release zips.
 
 `run/` is deliberately not in the repository — it is where your accounts, login tokens and logs end up, and
 none of that belongs in version control. The publish step creates it.

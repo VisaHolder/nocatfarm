@@ -60,6 +60,7 @@
       <a class="navitem" tabindex="0" role="button" data-view="overview"><span data-t="Overview">Overview</span></a>
       <a class="navitem" tabindex="0" role="button" data-view="accounts"><span data-t="Accounts">Accounts</span><b id="navAccounts"></b></a>
       <a class="navitem" tabindex="0" role="button" data-view="rep4rep"><span>rep4rep</span><b id="navPoints"></b></a>
+      <a class="navitem" tabindex="0" role="button" data-view="auth"><span data-t="Authenticator">Authenticator</span><b id="navAuth"></b></a>
       <a class="navitem" tabindex="0" role="button" data-view="log"><span data-t="Log">Log</span></a>
       <a class="navitem" tabindex="0" role="button" data-view="console"><span data-t="Console">Console</span></a>
       <a class="navitem" id="navPlugins" tabindex="0" role="button" data-view="plugins"><span data-t="Plugins">Plugins</span><i class="navtag"></i></a>
@@ -94,6 +95,11 @@
       <div class="card">
         <h2><span data-t="Today">Today</span><span class="muted small" style="text-transform:none;letter-spacing:0" data-t="last 24 hours">last 24 hours</span><i class="info" data-tip="Trading cards that dropped and rep4rep comments posted in the last 24 hours, per account."></i></h2>
         <div id="today"><p class="muted empty" data-t="Loading…">Loading…</p></div>
+      </div>
+      <div class="card">
+        <h2><span data-t="History">History</span><i class="info" data-tip="Day by day: cards dropped, hours banked, what the inventory was worth at the end of each day, and rep4rep comments if you use it. Kept for about a year." data-t-tip="Day by day: cards dropped, hours banked, what the inventory was worth at the end of each day, and rep4rep comments if you use it. Kept for about a year."></i></h2>
+        <div id="histBar" class="toolbar histbar"></div>
+        <div id="history"><p class="muted empty" data-t="Loading…">Loading…</p></div>
       </div>
       <div class="card">
         <h2><span data-t="Recent activity">Recent activity</span><a class="muted small" style="margin-left:auto;cursor:pointer" onclick="startTutorial()" data-t="Show the walkthrough again">Show the walkthrough again</a></h2>
@@ -157,6 +163,11 @@
         </div>
         <div id="logBody" class="out"><p class="muted empty" data-t="Loading…">Loading…</p></div>
       </div>
+    </section>
+
+    <!-- Authenticator: codes and confirmations, like the Steam app -->
+    <section id="view-auth" class="view hidden">
+      <div id="authBody"></div>
     </section>
 
     <!-- Console -->

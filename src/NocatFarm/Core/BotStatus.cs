@@ -54,6 +54,9 @@ public readonly record struct BotStatus(
 			if (bot.GrindUntil is { } until) {
 				sitting = new Said("{0} left", Fmt.Hm((int) Math.Max(0, (until - DateTime.UtcNow).TotalMinutes)));
 			}
+		} else if (bot.DropsFirstActive && !bot.Paused) {
+			doing = new Said("going for {0}: {1} of {2} card drop(s), in its normal sittings", GameNames.Of(bot.DropsFirstApp), bot.DropsFirstGot, bot.DropsFirstWant);
+			playing = bot.IsFarming;
 		} else if (bot.Paused) {
 			doing = new Said("paused");
 		} else if (bot.PlayingBlocked) {

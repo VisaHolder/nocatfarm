@@ -56,6 +56,9 @@ public sealed class GlobalConfig {
 	public bool NotifySocial { get; set; } = true;
 	public bool NotifyProblems { get; set; } = true;
 
+	/// <summary>A pop-up for every new trade offer, and when one is accepted, declined or needs confirming.</summary>
+	public bool NotifyTrades { get; set; } = true;
+
 	// ── rep4rep ──
 	// Master switch for the whole rep4rep feature. Off = nothing rep4rep-related runs on any account, and the
 	// dashboard hides its tab, points, per-account options and settings entirely.
@@ -357,6 +360,9 @@ public sealed class BotConfig {
 	/// <summary>Hard cap on how much of any one game will ever be completed. 0 uses each game's own ceiling.</summary>
 	public int AchievementMaxCompletionPct { get; set; } = 90;
 
+	/// <summary>Look for VAC, game, trade and community bans every few hours, and say so when a new one appears.</summary>
+	public bool WatchBans { get; set; } = true;
+
 	// ── inventory ──
 	public bool ShowInventoryValue { get; set; } = true;
 	public List<uint> InventoryIgnoreGames { get; set; } = [];
@@ -517,6 +523,14 @@ public sealed class BotConfig {
 	public bool AcceptFairCardSwaps { get; set; }
 	public bool AcceptFromMasters { get; set; }
 	public string TradeMasters { get; set; } = "";
+
+	/// <summary>
+	/// Who this account trades with by itself, and which way: names or SteamID64s, each optionally ":from" (accept what
+	/// they send), ":to" (let them take items - confirmed by itself when the authenticator is here) or ":both" (the
+	/// default). Empty = "Your own accounts" both ways, when "Accept anything from your own accounts" is on.
+	/// Everything else waits for you: trade accept / trade decline.
+	/// </summary>
+	public string AutoTradeWith { get; set; } = "";
 	public bool DeclineOtherTrades { get; set; }
 	public int TradeDelayMinMinutes { get; set; } = 2;
 	public int TradeDelayMaxMinutes { get; set; } = 15;

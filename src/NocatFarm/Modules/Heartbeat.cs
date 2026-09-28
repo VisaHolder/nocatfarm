@@ -67,6 +67,9 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 
 		if ((since > 0) && (Bot.PlayingApps.Count > 0)) {
 			Lifetime.Add(Bot.Name, since);
+
+			// And the same minutes by day and by game, for the dashboard's history charts.
+			History.AddPlay(Bot.Name, since, Bot.PlayingApps);
 		}
 
 		// Note when the current activity actually began, checked on every 20-second tick rather than only when a

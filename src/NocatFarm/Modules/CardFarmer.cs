@@ -132,7 +132,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	public bool InFarmWindowNow => InFarmWindow();
 
 	/// <summary>Farming happens inside human mode's sittings, and waits between them.</summary>
-	private bool FarmsInHumanDay => Bot.HumanOwned && FarmWhen.InSittings(Bot.Cfg.FarmCardsWhen);
+	private bool FarmsInHumanDay => Bot.HumanOwned && FarmWhen.InSittings(Bot.EffectiveFarmWhen);
 
 	/// <summary>
 	/// Whether the schedule wants the account back: in the day's sittings, when a sitting ends; only at night, when
@@ -143,7 +143,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			return false;
 		}
 
-		return Bot.Cfg.FarmCardsWhen switch {
+		return Bot.EffectiveFarmWhen switch {
 			FarmWhen.Day or FarmWhen.Mixed => !human.FarmSittingOpen,
 			FarmWhen.Night => !human.InBed || human.AwakeHoursNow,   // asleep ends at wake time, whatever the phase says
 			_ => false
@@ -152,7 +152,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 	private Said WaitingForSitting(HumanMode human) => human.InBed
 		? new Said("{0} card(s) - farmed in the day's sittings, from morning", Bot.CardsRemaining)
-		: Bot.Cfg.FarmCardsWhen == FarmWhen.Mixed
+		: Bot.DropsFirstActive
+			? new Said("going for {0}: {1} of {2} card drop(s), in its sittings", GameNames.Of(Bot.DropsFirstApp), Bot.DropsFirstGot, Bot.DropsFirstWant)
+		: Bot.EffectiveFarmWhen == FarmWhen.Mixed
 			? new Said("{0} card(s) - farmed in some of its sittings, between its usual games", Bot.CardsRemaining)
 			: new Said("{0} card(s) - farmed in human mode's next sitting", Bot.CardsRemaining);
 
@@ -184,7 +186,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 			// The loop stays alive when farming is off, so switching it back on takes effect straight away
 			// instead of needing a restart.
-			if (!Bot.Cfg.FarmCards) {
+			if (!Bot.EffectiveFarmCards) {
 				_status = new Said("off");
 				Release();
 
@@ -219,7 +221,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				}
 
 				// Farming switched off, or a game just added to the account (it may have cards) - look now, not in hours.
-				if (!Bot.Cfg.FarmCards || (Bot.LicenseGeneration != _licensesSeen)) {
+				if (!Bot.EffectiveFarmCards || (Bot.LicenseGeneration != _licensesSeen)) {
 					break;
 				}
 			}
@@ -251,7 +253,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>Whether this module may put a farming game on right now - asked again after any long wait.</summary>
-	private bool MayFarmNow() => Bot.Cfg.FarmCards && Bot.CanPlay && !Bot.Grinding && !ScheduleWantsItBack() && InFarmWindow();
+	private bool MayFarmNow() => Bot.EffectiveFarmCards && Bot.CanPlay && !Bot.Grinding && !ScheduleWantsItBack() && InFarmWindow();
 
 	/// <summary>
 	/// Handing the account back: the claim goes, and so does the farm game if it's still the only thing on and human
@@ -537,14 +539,14 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		// bed. Any time, it farms the moment there are cards. Waiting costs no badge reads now (see the top), so it
 		// checks back every few minutes and starts close to the moment it may.
 		if (Bot.HumanOwned && (human != null)) {
-			if ((Bot.Cfg.FarmCardsWhen == FarmWhen.Night) && (!human.InBed || human.AwakeHoursNow)) {
+			if ((Bot.EffectiveFarmWhen == FarmWhen.Night) && (!human.InBed || human.AwakeHoursNow)) {
 				HoldingBack = true;
 				_status = new Said("{0} card(s) - farming tonight, once it's asleep", Bot.CardsRemaining);
 
 				return 5;
 			}
 
-			if (FarmWhen.InSittings(Bot.Cfg.FarmCardsWhen) && !human.FarmSittingOpen) {
+			if (FarmWhen.InSittings(Bot.EffectiveFarmWhen) && !human.FarmSittingOpen) {
 				HoldingBack = true;
 				_status = WaitingForSitting(human);
 
@@ -670,6 +672,13 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			5 => games.OrderBy(static g => g.GameName, StringComparer.OrdinalIgnoreCase),
 			_ => games.OrderByDescending(static g => g.HoursPlayed)
 		};
+
+		// A drop run's game ('drops' on a human-mode account) leads everything, priority games included.
+		if (Bot.DropsFirstActive) {
+			sorted = sorted.OrderByDescending(g => Bot.Cfg.PriorityGames.Contains(g.AppId));
+
+			return sorted.OrderByDescending(g => g.AppId == Bot.DropsFirstApp);
+		}
 
 		if (Bot.Cfg.PriorityGames.Count == 0) {
 			return sorted;
@@ -799,8 +808,8 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 			// The schedule wants the account back - a sitting ended, bedtime, morning - or farming was switched off.
 			// Checked before the claim and the game go back on below, or they'd go straight back over human mode's break.
-			if (ScheduleWantsItBack() || !Bot.Cfg.FarmCards) {
-				_status = Bot.Cfg.FarmCards ? new Said("between sittings - {0} card(s) left", game.CardsRemaining) : new Said("off");
+			if (ScheduleWantsItBack() || !Bot.EffectiveFarmCards) {
+				_status = Bot.EffectiveFarmCards ? new Said("between sittings - {0} card(s) left", game.CardsRemaining) : new Said("off");
 				HandBack(game.AppId);
 
 				return;
@@ -876,6 +885,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 						_farmedThisRun = true;
 					}
 
+					Bot.CountDropsFirst(game.AppId, before - game.CardsRemaining);
 					Log.Reward(new Said("last card dropped in {0} - that game's done", game.GameName), Bot.Name);
 					Plugins.PluginHost.RaiseCardDropped(Bot, game.AppId, 0);
 				} else {
@@ -914,6 +924,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 					_farmedThisRun = true;
 				}
 
+				Bot.CountDropsFirst(game.AppId, before - game.CardsRemaining);
 				Log.Reward(new Said("card dropped in {0} - {1} to go · all done in ~{2} of farming", game.GameName, game.CardsRemaining, AllDoneIn), Bot.Name);
 				Plugins.PluginHost.RaiseCardDropped(Bot, game.AppId, game.CardsRemaining);
 			}
@@ -1073,7 +1084,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				return;
 			}
 
-			if (ScheduleWantsItBack() || !Bot.Cfg.FarmCards) {
+			if (ScheduleWantsItBack() || !Bot.EffectiveFarmCards) {
 				HandBack(batch.Count == 1 ? batch[0].AppId : 0);
 
 				return;

@@ -1,5 +1,6 @@
 using System.Globalization;
 using NocatFarm.Config;
+using NocatFarm.Core;
 
 namespace NocatFarm;
 
@@ -26,6 +27,11 @@ public static class Stats {
 
 	public static void Record(string kind, string bot) {
 		DateTime now = DateTime.UtcNow;
+
+		// The day-by-day totals behind the dashboard's history charts. Before this event joins the cache, and outside
+		// the lock: History fills itself in from this cache the first time it loads, so the other order could count
+		// this one card twice, and it takes this lock while it does.
+		History.Record(kind, bot, now);
 
 		lock (Gate) {
 			EnsureLoaded();

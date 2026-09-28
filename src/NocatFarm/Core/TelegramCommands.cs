@@ -203,6 +203,8 @@ public static partial class Notifier {
 			("cards", new Said("Cards left to farm")),
 			("human", new Said("What human mode is doing today")),
 			("offers", new Said("Live trade offers")),
+			("confirmations", new Said("What's waiting to be confirmed")),
+			("2fa", new Said("Steam Guard codes")),
 			("stats", new Said("Cards and comments by hour")),
 			("update", new Said("Check for an update")),
 			("help", new Said("Every command"))
@@ -368,7 +370,9 @@ public static partial class Notifier {
 		sb.AppendLine();
 		sb.AppendLine(Section(new Said("System")));
 		sb.AppendLine(Row(new Said("Uptime"), up.TotalDays >= 1 ? $"{(int) up.TotalDays}d {up.Hours}h {up.Minutes}m" : $"{up.Hours}h {up.Minutes}m"));
-		sb.AppendLine(Row(new Said("Version"), UpdateCheck.Available is { } v ? new Said("{0} - {1} is out, send /update accept", Build.Version, v).ToString() : Build.Version));
+		sb.AppendLine(Row(new Said("Version"), UpdateCheck.Available is { } v
+			? (SelfUpdate.Supported ? new Said("{0} - {1} is out, send /update accept", Build.Version, v) : new Said("{0} - {1} is out, send /update to see how to install it", Build.Version, v)).ToString()
+			: Build.Version));
 
 		return sb.ToString().TrimEnd();
 	}
