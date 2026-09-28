@@ -120,6 +120,9 @@ public sealed class GlobalConfig {
 	/// <summary>Where the bot posts - found by itself from the first message sent to the bot.</summary>
 	public string TelegramChatId { get; set; } = "";
 
+	/// <summary>Take commands from the connected Telegram chat - /status, /console and every console command.</summary>
+	public bool TelegramCommands { get; set; } = true;
+
 	public bool SendCardDrops { get; set; } = true;
 	public bool SendFreeStuff { get; set; } = true;
 	public bool SendTrades { get; set; } = true;

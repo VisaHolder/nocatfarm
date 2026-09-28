@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -20,7 +20,7 @@ namespace NocatFarm.Core;
 /// Its own problems (a dead webhook, a bad token) are said once in the log as warnings - never as published
 /// events, which would feed straight back into this and loop.
 /// </summary>
-public static class Notifier {
+public static partial class Notifier {
 	private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
 
 	/// <summary>Where the bot's picture comes from - the app icon, from the repo.</summary>
@@ -32,6 +32,7 @@ public static class Notifier {
 	private static readonly ConcurrentQueue<(Topic Topic, string Source, string Text, DateTime At)> Queue = new();
 	private static CancellationTokenSource? _stop;
 	private static Task? _loop;
+	private static Task? _poll;
 
 	// Each problem said once, and again only after the setting changes.
 	private static string _discordWarnedFor = "";
@@ -39,15 +40,27 @@ public static class Notifier {
 	private static DateTime _nextDiscover = DateTime.MinValue;
 	private static string _checkedToken = "";
 
+	/// <summary>The bot's @name, from getMe - so "open @yourbot and press Start" can name it.</summary>
+	private static string _botName = "";
+
+	/// <summary>
+	/// The bot already hands its messages to a webhook (another program - a website, another bot framework), so
+	/// Telegram won't let anything else read them and the chat can't be found by itself. Said once per token.
+	/// </summary>
+	private static bool _webhookBusy;
+	private static string _webhookWarnedFor = "";
+
 	private static GlobalConfig G => Live.Global;
 	private static bool HasDiscord => G.DiscordWebhookUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
 	private static bool HasTelegramToken => G.TelegramBotToken.Contains(':', StringComparison.Ordinal);
 	private static bool HasTelegram => HasTelegramToken && (G.TelegramChatId.Length > 0);
 
-	public static void Start() {
+	public static void Start(BotManager mgr) {
+		_mgr = mgr;
 		Log.Published += OnPublished;
 		_stop = new CancellationTokenSource();
 		_loop = Task.Run(() => LoopAsync(_stop.Token));
+		_poll = Task.Run(() => PollLoopAsync(_stop.Token));
 	}
 
 	/// <summary>On the way out: whatever is still waiting goes now (a few seconds at most), so the last events aren't lost.</summary>
@@ -100,11 +113,6 @@ public static class Notifier {
 					await CheckTelegramTokenAsync(ct).ConfigureAwait(false);
 				}
 
-				if (HasTelegramToken && (G.TelegramChatId.Length == 0) && (DateTime.UtcNow >= _nextDiscover)) {
-					_nextDiscover = DateTime.UtcNow.AddSeconds(5);
-					await DiscoverChatAsync(ct).ConfigureAwait(false);
-				}
-
 				await FlushAsync(force: false, ct).ConfigureAwait(false);
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				return;
@@ -141,25 +149,28 @@ public static class Notifier {
 
 	private sealed record Block(Topic Topic, string Source, List<string> Lines);
 
-	private static (string Emoji, Said Label, int Colour) Look(Topic topic) => topic switch {
-		Topic.Cards => ("🃏", new Said("Cards"), 0xE0A800),
-		Topic.FreeStuff => ("🎁", new Said("Free stuff"), 0x2ECC71),
-		Topic.Trades => ("🔁", new Said("Trades"), 0x3498DB),
-		Topic.Problems => ("⚠️", new Said("Needs you"), 0xE74C3C),
-		Topic.Updates => ("⬆️", new Said("Update"), 0x8B5CF6),
-		Topic.Summary => ("📊", new Said("Daily summary"), 0xC8C8C8),
-		Topic.Social => ("💬", new Said("Profile comment"), 0x1ABC9C),
-		Topic.Achievements => ("🏆", new Said("Achievements"), 0xF1C40F),
-		Topic.Rep4Rep => ("📝", new Said("rep4rep"), 0x95A5A6),
-		_ => ("•", new Said("nocat.farm"), 0xC8C8C8)
+	private static (Said Label, int Colour) Look(Topic topic) => topic switch {
+		Topic.Cards => (new Said("Cards"), 0xE0A800),
+		Topic.FreeStuff => (new Said("Free stuff"), 0x2ECC71),
+		Topic.Trades => (new Said("Trades"), 0x3498DB),
+		Topic.Problems => (new Said("Needs you"), 0xE74C3C),
+		Topic.Updates => (new Said("Update"), 0x8B5CF6),
+		Topic.Summary => (new Said("Daily summary"), 0xC8C8C8),
+		Topic.Social => (new Said("Profile comment"), 0x1ABC9C),
+		Topic.Achievements => (new Said("Achievements"), 0xF1C40F),
+		Topic.Rep4Rep => (new Said("rep4rep"), 0x95A5A6),
+		_ => (new Said("nocat.farm"), 0xC8C8C8)
 	};
 
-	/// <summary>"🃏 Cards · kylro" - the account where there is one; the app's own events just say what they are.</summary>
-	private static string Title(Block b) {
-		(string emoji, Said label, _) = Look(b.Topic);
-		bool account = (b.Source.Length > 0) && (b.Source != "nocat.farm") && (b.Source != "report");
+	/// <summary>The account an event came from - none for the app's own events.</summary>
+	private static string? Account(Block b) =>
+		(b.Source.Length > 0) && (b.Source != "nocat.farm") && (b.Source != "report") ? b.Source : null;
 
-		return account ? $"{emoji} {label} · {b.Source}" : $"{emoji} {label}";
+	/// <summary>"Cards · kylro" - the account where there is one; the app's own events just say what they are.</summary>
+	private static string Title(Block b) {
+		(Said label, _) = Look(b.Topic);
+
+		return Account(b) is { } a ? $"{label} · {a}" : label.ToString();
 	}
 
 	/// <summary>The lines, capped so one runaway burst stays one readable message.</summary>
@@ -179,10 +190,10 @@ public static class Notifier {
 				username = "nocat.farm",
 				avatar_url = Avatar,
 				embeds = chunk.Select(static b => {
-					(_, _, int colour) = Look(b.Topic);
+					(_, int colour) = Look(b.Topic);
 					string body = b.Topic == Topic.Summary
 						? "```\n" + string.Join('\n', b.Lines) + "\n```"
-						: string.Join('\n', Capped(b, 15).Select(static l => "• " + l));
+						: string.Join('\n', Capped(b, 15).Select(static l => "◆ " + l));
 
 					return new {
 						title = Title(b),
@@ -257,9 +268,11 @@ public static class Notifier {
 	private static string Html(string s) => WebUtility.HtmlEncode(s);
 
 	private static async Task<(bool Ok, string Why)> SendTelegramAsync(List<Block> blocks, CancellationToken ct) {
+		// "// CARDS · kylro" then "◆ card dropped in Rust - 2 to go" - the owner's site bot's look, no emoji.
 		List<string> parts = [.. blocks.Select(static b => b.Topic == Topic.Summary
-			? $"<b>{Html(Title(b))}</b>\n<pre>{Html(string.Join('\n', b.Lines))}</pre>"
-			: $"<b>{Html(Title(b))}</b>\n" + string.Join('\n', Capped(b, 15).Select(static l => "• " + Html(l))))];
+			? $"<code>// {Html(Look(b.Topic).Label.ToString().ToUpperInvariant())}</code>\n<pre>{Html(string.Join('\n', b.Lines))}</pre>"
+			: $"<code>// {Html(Look(b.Topic).Label.ToString().ToUpperInvariant())}</code>{(Account(b) is { } a ? " · <b>" + Html(a) + "</b>" : "")}\n"
+				+ string.Join('\n', Capped(b, 15).Select(static l => "◆ " + Html(l))))];
 
 		// A Telegram message holds 4096 characters; several blocks share one until it's full.
 		StringBuilder message = new();
@@ -337,43 +350,22 @@ public static class Notifier {
 
 		if (r.StatusCode == HttpStatusCode.Unauthorized) {
 			Log.Warn("notifications: the Telegram bot token doesn't work - copy it again from @BotFather");
-		} else if (r.IsSuccessStatusCode && (G.TelegramChatId.Length == 0)) {
-			Log.Info("notifications: Telegram bot found - send it any message on Telegram and notifications will go to that chat");
-		}
-	}
 
-	/// <summary>The first chat that messages the bot becomes where notifications go - no chat ID to look up.</summary>
-	private static async Task DiscoverChatAsync(CancellationToken ct) {
-		using HttpResponseMessage r = await Http.GetAsync($"https://api.telegram.org/bot{G.TelegramBotToken}/getUpdates?limit=20", ct).ConfigureAwait(false);
-
-		if (!r.IsSuccessStatusCode) {
 			return;
 		}
 
-		using JsonDocument d = JsonDocument.Parse(await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
+		if (r.IsSuccessStatusCode) {
+			try {
+				using JsonDocument d = JsonDocument.Parse(await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
+				_botName = d.RootElement.GetProperty("result").TryGetProperty("username", out JsonElement u) ? "@" + u.GetString() : "";
+			} catch {
+				_botName = "";
+			}
 
-		if (!d.RootElement.TryGetProperty("result", out JsonElement results) || (results.GetArrayLength() == 0)) {
-			return;
+			if (TelegramConnectLink is { } link) {
+				Log.Info(new Said("notifications: Telegram bot {0} found - to connect, open {1} and press Start (or press Connect Telegram in Settings, Notifications)", _botName, link));
+			}
 		}
-
-		JsonElement last = results[results.GetArrayLength() - 1];
-
-		if (!last.TryGetProperty("message", out JsonElement msg) && !last.TryGetProperty("channel_post", out msg)) {
-			return;
-		}
-
-		if (!msg.TryGetProperty("chat", out JsonElement chat) || !chat.TryGetProperty("id", out JsonElement id)) {
-			return;
-		}
-
-		string name = chat.TryGetProperty("title", out JsonElement t) ? t.GetString() ?? ""
-			: chat.TryGetProperty("first_name", out JsonElement f) ? f.GetString() ?? "" : "";
-
-		G.TelegramChatId = id.GetRawText();
-		ConfigStore.SaveGlobal(G);
-		Log.Good(new Said("notifications: Telegram connected - they'll go to {0}", name.Length > 0 ? name : G.TelegramChatId));
-
-		await PostTelegramAsync("✅ <b>nocat.farm is connected</b>\n" + Html(new Said("Notifications you picked will arrive here. Change what gets sent under Settings, Notifications.").ToString()), ct).ConfigureAwait(false);
 	}
 
 	/// <summary>
@@ -382,7 +374,7 @@ public static class Notifier {
 	/// </summary>
 	public static async Task<List<string>> TestAsync(CancellationToken ct = default) {
 		List<string> result = [];
-		List<string> picked = [.. Enum.GetValues<Topic>().Where(Wanted).Select(t => { (string e, Said l, _) = Look(t); return $"{e} {l}"; })];
+		List<string> picked = [.. Enum.GetValues<Topic>().Where(Wanted).Select(static t => Look(t).Label.ToString())];
 		string chosen = picked.Count > 0 ? string.Join(", ", picked) : new Said("nothing yet - pick below").ToString();
 		string hello = new Said("This is what nocat.farm notifications look like. You'll get: {0}", chosen).ToString();
 
@@ -397,7 +389,7 @@ public static class Notifier {
 				username = "nocat.farm",
 				avatar_url = Avatar,
 				embeds = new[] {
-					new { title = "✅ " + new Said("nocat.farm is connected"), description = hello, color = 0x8B5CF6,
+					new { title = new Said("nocat.farm is connected").ToString(), description = hello, color = 0x8B5CF6,
 						footer = new { text = "nocat.farm " + Build.Version }, timestamp = DateTime.UtcNow.ToString("o") }
 				}
 			}, ct).ConfigureAwait(false);
@@ -405,14 +397,13 @@ public static class Notifier {
 		}
 
 		if (HasTelegramToken) {
-			if (G.TelegramChatId.Length == 0) {
-				await DiscoverChatAsync(ct).ConfigureAwait(false);
-			}
 
 			if (G.TelegramChatId.Length == 0) {
-				result.Add(new Said("Telegram: the bot works, but nobody has messaged it yet - open it on Telegram, send it anything, then test again").ToString());
+				result.Add(_webhookBusy
+					? new Said("Telegram: this bot is already connected to something else (a webhook), so its messages can't be read - make a new bot with @BotFather just for nocat.farm, or put your chat ID in \"Telegram chat\" (Show advanced)").ToString()
+					: new Said("Telegram: {0} works but isn't connected yet - press Connect Telegram, press Start in Telegram, then test again", _botName.Length > 0 ? _botName : new Said("your bot").ToString()).ToString());
 			} else {
-				(bool ok, string why) = await PostTelegramAsync($"✅ <b>{Html(new Said("nocat.farm is connected").ToString())}</b>\n{Html(hello)}", ct).ConfigureAwait(false);
+				(bool ok, string why) = await PostTelegramAsync($"{Header()}\n<b>{Html(new Said("nocat.farm is connected").ToString())}</b>\n{Html(hello)}", ct).ConfigureAwait(false);
 				result.Add(ok ? new Said("Telegram: sent - check the chat").ToString() : new Said("Telegram: didn't work - {0}", why).ToString());
 			}
 		}

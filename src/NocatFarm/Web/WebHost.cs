@@ -1168,6 +1168,8 @@ public sealed class WebHost : IAsyncDisposable {
 			PluginsOn = Live.Global.PluginsEnabled,
 			UpdateBusy = SelfUpdate.Busy,
 			UpdateFailed = SelfUpdate.LastFailure,
+			TelegramConnectLink = Notifier.TelegramConnectLink,
+			TelegramConnected = Notifier.TelegramConnected,
 			UpdateProgress = SelfUpdate.Progress,
 			InventoryPending = bots.Sum(static b => b.Inventory.Pending),
 			GamesLeft = bots.Sum(static b => b.GamesRemaining),

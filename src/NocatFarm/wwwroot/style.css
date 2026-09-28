@@ -554,6 +554,21 @@ table.today tr.fleet td:first-child { color: var(--muted); }
   line-height: 1.6; margin: 0 0 var(--s3); max-width: 90ch;
 }
 
+/* The notification set-up walkthroughs: folded until clicked, numbered, nothing else. */
+.tgconnect { margin-top: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tgconnect .btn { background: var(--accent); color: var(--on-accent); letter-spacing: .5px; padding: 8px 14px; text-decoration: none; white-space: nowrap; }
+.tgconnect .btn:hover { filter: brightness(1.1); }
+.guides { margin-top: var(--s3); border-top: 1px solid var(--line); }
+.guide { border-bottom: 1px solid var(--line); }
+.guide summary { cursor: pointer; padding: 9px 0; color: var(--text); list-style: none; user-select: none; }
+.guide summary::-webkit-details-marker { display: none; }
+.guide summary::before { content: "+"; display: inline-block; width: 16px; color: var(--muted); }
+.guide[open] summary::before { content: "−"; }
+.guide ol { margin: 0 0 8px 0; padding-left: 38px; }
+.guide li { margin: 0 0 5px; }
+.guide li code, .guide li b { color: var(--text); }
+.guide p { margin: 0 0 10px 16px; }
+
 /* live "here is what this actually does" panel above a group of settings */
 .preview {
   background: var(--panel2); border: 1px dashed var(--line2); border-radius: 0;

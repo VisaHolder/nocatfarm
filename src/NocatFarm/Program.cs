@@ -243,7 +243,7 @@ if (manager.All.Count == 0) {
 NocatFarm.Core.DailyReport.Start(manager);
 
 // Discord / Telegram notifications for the events picked under Settings, Notifications.
-NocatFarm.Core.Notifier.Start();
+NocatFarm.Core.Notifier.Start(manager);
 
 // An update signs the accounts out one at a time before it restarts, so it needs to know them.
 NocatFarm.Core.SelfUpdate.Fleet = () => manager.All;

@@ -2477,17 +2477,19 @@ function sectionIntro(section, values) {
   // What gets sent to Discord / Telegram, as chips to tap rather than nine more rows - and a test button, so you
   // know it works before the first card drops.
   if (section === 'Notifications' && settingsTarget === GLOBAL) {
-    const kinds = [['SendCardDrops', '🃏', 'Card drops'], ['SendFreeStuff', '🎁', 'Free stuff'], ['SendTrades', '🔁', 'Trades'],
-      ['SendProblems', '⚠️', 'Needs you'], ['SendUpdates', '⬆️', 'Updates'], ['SendDailySummary', '📊', 'Daily summary'],
-      ['SendComments', '💬', 'Profile comments'], ['SendAchievements', '🏆', 'Achievements'], ['SendRep4Rep', '📝', 'rep4rep']];
+    const kinds = [['SendCardDrops', 'Card drops'], ['SendFreeStuff', 'Free stuff'], ['SendTrades', 'Trades'],
+      ['SendProblems', 'Needs you'], ['SendUpdates', 'Updates'], ['SendDailySummary', 'Daily summary'],
+      ['SendComments', 'Profile comments'], ['SendAchievements', 'Achievements'], ['SendRep4Rep', 'rep4rep']];
     const setUp = (config.GlobalSecretsSet || []).includes('DiscordWebhookUrl') || (config.GlobalSecretsSet || []).includes('TelegramBotToken');
     return `<div class="explain">
       <b>${esc(t('Get notified on Discord or Telegram'))}</b>
       <p style="margin:6px 0 10px">${esc(t('Paste a Discord webhook link or a Telegram bot token below, save, then pick what gets sent. Busy moments are bundled into one message.'))}</p>
-      <div class="langpick">${kinds.map(([k, icon, label]) =>
-        `<span class="p ${val(k) ? 'on' : ''}" onclick="editAndRender('${k}', ${!val(k)})">${icon} ${esc(t(label))}</span>`).join('')}</div>
+      <div class="langpick">${kinds.map(([k, label]) =>
+        `<span class="p ${val(k) ? 'on' : ''}" onclick="editAndRender('${k}', ${!val(k)})">${esc(t(label))}</span>`).join('')}</div>
       <button class="ghost" ${setUp ? '' : 'disabled'} onclick="notifyTest(this)">${esc(t('Send a test message'))}</button>
       ${setUp ? '' : `<span class="muted small" style="margin-left:8px">${esc(t('Save a webhook link or bot token first.'))}</span>`}
+      ${telegramConnect()}
+      ${notifyGuides()}
     </div>`;
   }
 
@@ -3111,6 +3113,61 @@ function edit(name, value) {
 
 // Discrete controls (switches, choice pills, tag lists, the revert link) have no caret to lose, and they do
 // need the form redrawn so the control reflects the new value.
+/// The two "how do I get one of those" walkthroughs, folded away until clicked. Everyone makes their own Telegram
+/// bot: Telegram lets only one program read a bot's messages, so a shared bot can't work - and its token would be
+/// the key to everybody's notifications.
+// Connecting goes through a private link (t.me/yourbot?start=secret), never "whoever messages the bot first" - with
+// commands on, that chat controls every account.
+// Wrapped in a fixed spot that refresh() updates on its own: the link only exists a few seconds after the token is
+// saved (once Telegram has confirmed the bot), and "connected" arrives when Start is pressed - neither should need
+// a page reload.
+function telegramConnect() {
+  const html = telegramConnectInner();
+  return `<div id="tgConnect" data-html="${esc(html)}">${html}</div>`;
+}
+
+function syncTelegramConnect() {
+  const el = document.getElementById('tgConnect');
+  if (!el) return;
+  const html = telegramConnectInner();
+  if (el.dataset.html === html) return;
+  el.dataset.html = html;
+  el.innerHTML = html;
+}
+
+function telegramConnectInner() {
+  const link = state && state.TelegramConnectLink;
+  if (link) {
+    return `<div class="tgconnect"><a class="btn" href="${esc(link)}" target="_blank" rel="noopener">${esc(t('Connect Telegram'))}</a>
+      <span class="muted small">${esc(t('Opens your bot - press Start there and it connects.'))}</span></div>`;
+  }
+  if (state && state.TelegramConnected) {
+    return `<div class="tgconnect"><span class="muted small">${esc(t('Telegram is connected.'))}</span></div>`;
+  }
+  return '';
+}
+
+function notifyGuides() {
+  const step = (html) => `<li>${html}</li>`;
+  const b = (s) => `<b>${esc(s)}</b>`;
+  return `<div class="guides">
+    <details class="guide"><summary>${esc(t('How to set up Telegram (2 minutes)'))}</summary><ol>
+      ${step(tf('Open Telegram, search for {0} (the one with the blue check) and press {1}.', b('@BotFather'), b(t('Start'))))}
+      ${step(tf('Send {0}. Give it a name, like {1}, then a username that ends in "bot", like {2}.', '<code>/newbot</code>', b('nocat.farm'), b('myname_farm_bot')))}
+      ${step(tf('BotFather sends you a token that looks like {0}. Copy it.', '<code>123456789:AAH...</code>'))}
+      ${step(tf('Paste it into {0} below and press {1}.', b(t('Telegram bot token')), b(t('Save'))))}
+      ${step(tf('Press {0} here (it shows up once the token is saved), then press {1} in Telegram. nocat.farm connects and says hello.', b(t('Connect Telegram')), b(t('Start'))))}
+      ${step(tf('Optional: send BotFather {0} and give your bot the {1}.', '<code>/setuserpic</code>',
+        `<a href="https://raw.githubusercontent.com/VisaHolder/nocatfarm/main/assets/logo.png" target="_blank" rel="noopener">${esc(t('nocat.farm logo'))}</a>`))}
+    </ol><p class="muted small">${esc(t('Keep the token private - anyone who has it can control your bot. Everyone makes their own bot: Telegram only lets one program read each bot.'))}</p></details>
+    <details class="guide"><summary>${esc(t('How to set up Discord (1 minute)'))}</summary><ol>
+      ${step(tf('In your Discord server, open {0}.', b(t('Server Settings → Integrations → Webhooks'))))}
+      ${step(tf('Press {0}, pick the channel notifications should go to, and name it {1} if you like.', b(t('New Webhook')), b('nocat.farm')))}
+      ${step(tf('Press {0}, paste it into {1} below and press {2}.', b(t('Copy Webhook URL')), b(t('Discord webhook')), b(t('Save'))))}
+    </ol><p class="muted small">${esc(t('Anyone with the webhook link can post in that channel, so keep it private.'))}</p></details>
+  </div>`;
+}
+
 async function notifyTest(btn) {
   btn.disabled = true;
   const old = btn.textContent;
@@ -3273,6 +3330,7 @@ async function refresh() {
     refreshSeconds = state.RefreshSeconds || refreshSeconds;
     armPolling(refreshSeconds);
     syncWelcome();
+    syncTelegramConnect();
     if (tutorialSignin) renderSignin();
 
     // nocat.farm restarting resets its sequence numbers. Without noticing that, "everything after seq 812"
