@@ -245,6 +245,9 @@ NocatFarm.Core.DailyReport.Start(manager);
 // Discord / Telegram notifications for the events picked under Settings, Notifications.
 NocatFarm.Core.Notifier.Start();
 
+// An update signs the accounts out one at a time before it restarts, so it needs to know them.
+NocatFarm.Core.SelfUpdate.Fleet = () => manager.All;
+
 if (global.OpenBrowserOnStart && (web != null)) {
 	OpenBrowser(web.Url);
 }

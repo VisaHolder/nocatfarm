@@ -1313,7 +1313,10 @@
     "Send a test message": "Enviar uma mensagem de teste",
     "Save a webhook link or bot token first.": "Salve primeiro um link de webhook ou um token de bot.",
     "Sending...": "Enviando...",
-    "Couldn't reach nocat.farm": "Não deu para alcançar o nocat.farm"
+    "Couldn't reach nocat.farm": "Não deu para alcançar o nocat.farm",
+    "update: all accounts signed out - restarting into {0} now, back in a few seconds": "atualização: todas as contas desconectadas - reiniciando na {0} agora, volta em alguns segundos",
+    "update: {0} downloaded - restarting in {1}s": "atualização: {0} baixada - reiniciando em {1} s",
+    "update: {0} downloaded - restarting in {1}s, signing the accounts out one at a time first": "atualização: {0} baixada - reiniciando em {1} s, antes as contas saem uma de cada vez"
   },
   "settings": {
     "WebEnabled": {

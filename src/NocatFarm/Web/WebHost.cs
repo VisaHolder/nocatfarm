@@ -58,7 +58,12 @@ public sealed class WebHost : IAsyncDisposable {
 
 	public async Task<bool> StartAsync() {
 		try {
-			WebApplicationBuilder builder = WebApplication.CreateBuilder();
+			// The pages live next to the exe, not wherever it was started from. Left to the default (the working
+			// directory), a restart by the updater - which runs from the temp folder - served a 404 for everything.
+			WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions {
+				ContentRootPath = AppContext.BaseDirectory,
+				WebRootPath = Path.Combine(AppContext.BaseDirectory, "wwwroot")
+			});
 			builder.Logging.ClearProviders();   // our own log is the log; Kestrel's chatter would drown it
 			builder.WebHost.UseUrls($"http://{_cfg.WebHost}:{_cfg.WebPort}");
 			builder.WebHost.ConfigureKestrel(static o => o.AddServerHeader = false);

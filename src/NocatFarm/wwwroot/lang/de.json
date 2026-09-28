@@ -1313,7 +1313,10 @@
     "Send a test message": "Testnachricht senden",
     "Save a webhook link or bot token first.": "Speichere zuerst einen Webhook-Link oder Bot-Token.",
     "Sending...": "Wird gesendet...",
-    "Couldn't reach nocat.farm": "nocat.farm war nicht erreichbar"
+    "Couldn't reach nocat.farm": "nocat.farm war nicht erreichbar",
+    "update: all accounts signed out - restarting into {0} now, back in a few seconds": "Update: alle Konten abgemeldet - starte jetzt {0}, gleich wieder da",
+    "update: {0} downloaded - restarting in {1}s": "Update: {0} geladen - Neustart in {1} s",
+    "update: {0} downloaded - restarting in {1}s, signing the accounts out one at a time first": "Update: {0} geladen - Neustart in {1} s, die Konten werden vorher einzeln abgemeldet"
   },
   "settings": {
     "WebEnabled": {

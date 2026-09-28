@@ -1313,7 +1313,10 @@
     "Send a test message": "发送测试消息",
     "Save a webhook link or bot token first.": "请先保存 Webhook 链接或机器人令牌。",
     "Sending...": "正在发送...",
-    "Couldn't reach nocat.farm": "无法连接到 nocat.farm"
+    "Couldn't reach nocat.farm": "无法连接到 nocat.farm",
+    "update: all accounts signed out - restarting into {0} now, back in a few seconds": "更新：所有账号已登出 - 现在重启到 {0}，几秒后回来",
+    "update: {0} downloaded - restarting in {1}s": "更新：{0} 已下载 - {1} 秒后重启",
+    "update: {0} downloaded - restarting in {1}s, signing the accounts out one at a time first": "更新：{0} 已下载 - {1} 秒后重启，先逐个登出账号"
   },
   "settings": {
     "WebEnabled": {

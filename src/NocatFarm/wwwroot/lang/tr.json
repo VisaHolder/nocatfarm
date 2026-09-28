@@ -1313,7 +1313,10 @@
     "Send a test message": "Test mesajı gönder",
     "Save a webhook link or bot token first.": "Önce bir webhook bağlantısı ya da bot token'ı kaydet.",
     "Sending...": "Gönderiliyor...",
-    "Couldn't reach nocat.farm": "nocat.farm'a ulaşılamadı"
+    "Couldn't reach nocat.farm": "nocat.farm'a ulaşılamadı",
+    "update: all accounts signed out - restarting into {0} now, back in a few seconds": "güncelleme: tüm hesapların oturumu kapatıldı - şimdi {0} ile yeniden başlatılıyor, birkaç saniyede döner",
+    "update: {0} downloaded - restarting in {1}s": "güncelleme: {0} indirildi - {1} sn içinde yeniden başlatılacak",
+    "update: {0} downloaded - restarting in {1}s, signing the accounts out one at a time first": "güncelleme: {0} indirildi - {1} sn içinde yeniden başlatılacak, önce hesaplar tek tek çıkış yapacak"
   },
   "settings": {
     "WebEnabled": {

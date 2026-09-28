@@ -112,6 +112,63 @@ public static class SelfUpdate {
 		}
 	}
 
+	/// <summary>The accounts, so an update can sign them out one at a time before restarting. Set at startup.</summary>
+	public static Func<IEnumerable<Bot>>? Fleet { get; set; }
+
+	/// <summary>
+	/// Before the restart: every signed-in account logs out at its own random moment, a few seconds apart and in a
+	/// random order, over a countdown - not all in the same second. Several accounts dropping off Steam at once from
+	/// one PC is a pattern of its own, and human mode exists to avoid exactly that. Human-mode accounts finish up
+	/// the way they do when stopped by hand.
+	/// </summary>
+	private static async Task SignOutOneByOneAsync(string tag, CancellationToken ct) {
+		List<Bot> online = [.. (Fleet?.Invoke() ?? []).Where(static b => b.State is not (BotState.Stopped or BotState.Failed))];
+		int secs = online.Count == 0 ? 3 : Math.Clamp(12 + (online.Count * 7) + Rng.Next(0, 10), 15, 120);
+
+		Log.Good(online.Count > 0
+			? new Said("update: {0} downloaded - restarting in {1}s, signing the accounts out one at a time first", tag, secs)
+			: new Said("update: {0} downloaded - restarting in {1}s", tag, secs));
+
+		// Random moments, at least 3s apart, all done 3s before the restart.
+		List<int> at = [];
+		foreach (Bot _ in online) {
+			at.Add(Rng.Next(2, Math.Max(3, secs - 3)));
+		}
+
+		at.Sort();
+
+		for (int i = 1; i < at.Count; i++) {
+			at[i] = Math.Max(at[i], at[i - 1] + 3);
+		}
+
+		Bot[] order = [.. online.OrderBy(static _ => Rng.Next(0, 1_000_000))];
+		List<Task> stopping = [];
+		DateTime start = DateTime.UtcNow;
+		int next = 0;
+
+		for (int left = secs; left > 0; left--) {
+			Progress = $"restarting in {left}s";
+
+			while ((next < order.Length) && ((DateTime.UtcNow - start).TotalSeconds >= at[next])) {
+				Bot b = order[next++];
+				stopping.Add(b.StopAsync(graceful: b.Cfg.LegitMode));
+			}
+
+			await Task.Delay(1000, ct).ConfigureAwait(false);
+		}
+
+		// Anything the countdown didn't reach (a crowded window), and every graceful finish-up, before going down.
+		while (next < order.Length) {
+			stopping.Add(order[next++].StopAsync());
+		}
+
+		try {
+			await Task.WhenAll(stopping).WaitAsync(TimeSpan.FromSeconds(30), ct).ConfigureAwait(false);
+		} catch (TimeoutException) {
+			// the shutdown that follows stops whatever is left
+		}
+	}
+
 	/// <summary>Where it got to, for the dashboard to show.</summary>
 	public static string Progress { get; private set; } = "";
 
@@ -282,8 +339,10 @@ public static class SelfUpdate {
 
 			await File.WriteAllTextAsync(script, SwapScript(Environment.ProcessId, payload, here, work, SwapFailedPath), ct).ConfigureAwait(false);
 
+			await SignOutOneByOneAsync(tag, ct).ConfigureAwait(false);
+
 			Progress = "restarting into " + tag;
-			Log.Good(new Said("update: {0} is ready - restarting into it now, back in a few seconds", tag));
+			Log.Good(new Said("update: all accounts signed out - restarting into {0} now, back in a few seconds", tag));
 
 			// Detached, and in its own window-less shell, so killing this process doesn't take it with us.
 			Process.Start(new ProcessStartInfo {
@@ -335,7 +394,7 @@ public static class SelfUpdate {
 		set brc=%errorlevel%
 		if %brc% GEQ 8 (
 			echo backup %brc%>"{failFile}"
-			start "" "{here}\nocatFarm.exe"
+			start "" /D "{here}" "{here}\nocatFarm.exe"
 			exit /b 1
 		)
 		echo Updating...
@@ -346,11 +405,11 @@ public static class SelfUpdate {
 		if %rc% GEQ 8 (
 			robocopy "{work}\backup" "{here}" /E /R:3 /W:2 /NFL /NDL /NJH /NJS >nul
 			echo %rc%>"{failFile}"
-			start "" "{here}\nocatFarm.exe"
+			start "" /D "{here}" "{here}\nocatFarm.exe"
 			exit /b 1
 		)
 		echo Starting the new version...
-		start "" "{here}\\nocatFarm.exe"
+		start "" /D "{here}" "{here}\\nocatFarm.exe"
 		rem Remove the staging folder, then this script, from a directory we are not standing in.
 		cd /d "%TEMP%"
 		rmdir /s /q "{work}" >nul 2>&1

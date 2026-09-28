@@ -1313,7 +1313,10 @@
     "Send a test message": "テストメッセージを送る",
     "Save a webhook link or bot token first.": "先にウェブフックのリンクかボットのトークンを保存してください。",
     "Sending...": "送信中...",
-    "Couldn't reach nocat.farm": "nocat.farm に接続できませんでした"
+    "Couldn't reach nocat.farm": "nocat.farm に接続できませんでした",
+    "update: all accounts signed out - restarting into {0} now, back in a few seconds": "アップデート: 全アカウントをサインアウトしました - {0} で再起動します。数秒で戻ります",
+    "update: {0} downloaded - restarting in {1}s": "アップデート: {0} をダウンロードしました - {1} 秒後に再起動",
+    "update: {0} downloaded - restarting in {1}s, signing the accounts out one at a time first": "アップデート: {0} をダウンロードしました - {1} 秒後に再起動。先にアカウントを1つずつサインアウトします"
   },
   "settings": {
     "WebEnabled": {

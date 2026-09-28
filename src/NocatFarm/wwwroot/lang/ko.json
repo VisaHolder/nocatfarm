@@ -1313,7 +1313,10 @@
     "Send a test message": "테스트 메시지 보내기",
     "Save a webhook link or bot token first.": "먼저 웹후크 링크나 봇 토큰을 저장하세요.",
     "Sending...": "보내는 중...",
-    "Couldn't reach nocat.farm": "nocat.farm에 연결할 수 없었습니다"
+    "Couldn't reach nocat.farm": "nocat.farm에 연결할 수 없었습니다",
+    "update: all accounts signed out - restarting into {0} now, back in a few seconds": "업데이트: 모든 계정 로그아웃 완료 - 지금 {0}(으)로 재시작, 몇 초 뒤 돌아옵니다",
+    "update: {0} downloaded - restarting in {1}s": "업데이트: {0} 다운로드 완료 - {1}초 후 재시작",
+    "update: {0} downloaded - restarting in {1}s, signing the accounts out one at a time first": "업데이트: {0} 다운로드 완료 - {1}초 후 재시작, 먼저 계정을 하나씩 로그아웃합니다"
   },
   "settings": {
     "WebEnabled": {
