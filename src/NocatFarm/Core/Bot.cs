@@ -130,6 +130,109 @@ public sealed class Bot : IAsyncDisposable {
 
 	private string GrindPath => Path.Combine(ConfigStore.ConfigDir, "state", $"grind-{Name}.json");
 
+	// ── drops first (the 'drops' command on a human-mode account) ──
+
+	/// <summary>
+	/// A drop run on a human-mode account. Where a robot account grinds the game flat out, a human-mode one puts it
+	/// at the front of the card queue and plays it in the day's normal sittings - with the main game's share of
+	/// them - so breaks, meals, bedtime and days off all stay. It ends once <see cref="DropsFirstWant"/> cards have
+	/// dropped, or with 'drops &lt;account&gt; off'. 0 when none is running.
+	/// </summary>
+	public uint DropsFirstApp { get; private set; }
+
+	public int DropsFirstWant { get; private set; }
+
+	public int DropsFirstGot { get; private set; }
+
+	public bool DropsFirstActive => (DropsFirstApp != 0) && (DropsFirstGot < DropsFirstWant);
+
+	/// <summary>
+	/// How card farming is scheduled right now. A drop run needs sittings to farm, so an account set to farm only
+	/// at night - or not at all - farms in some of its sittings until the run is done.
+	/// </summary>
+	public int EffectiveFarmWhen => DropsFirstActive && !global::NocatFarm.Modules.FarmWhen.InSittings(Cfg.FarmCardsWhen) ? global::NocatFarm.Modules.FarmWhen.Mixed : Cfg.FarmCardsWhen;
+
+	public bool EffectiveFarmCards => Cfg.FarmCards || DropsFirstActive;
+
+	public bool StartDropsFirst(uint app, int want) {
+		if (Refunds.Holds(app)) {
+			Log.Warn(new Said("not putting {0} first - it's still inside its refund window (turn off \"Protect refundable games\" to override)", GameNames.Of(app)), Name);
+
+			return false;
+		}
+
+		DropsFirstApp = app;
+		DropsFirstWant = Math.Max(1, want);
+		DropsFirstGot = 0;
+		SaveDropsFirst();
+
+		return true;
+	}
+
+	public void StopDropsFirst() {
+		DropsFirstApp = 0;
+		DropsFirstWant = 0;
+		DropsFirstGot = 0;
+		SaveDropsFirst();
+	}
+
+	/// <summary>Cards that just dropped in <paramref name="app"/> - counted toward a drop run on it, if there is one.</summary>
+	public void CountDropsFirst(uint app, int drops) {
+		if ((drops <= 0) || (app != DropsFirstApp) || !DropsFirstActive) {
+			return;
+		}
+
+		DropsFirstGot = Math.Min(DropsFirstWant, DropsFirstGot + drops);
+
+		if (DropsFirstActive) {
+			SaveDropsFirst();
+
+			return;
+		}
+
+		Log.Good(new Said("{0}: all {1} card drop(s) in - back to its usual mix of games", GameNames.Of(app), DropsFirstWant), Name);
+		StopDropsFirst();
+	}
+
+	private string DropsFirstPath => Path.Combine(ConfigStore.ConfigDir, "state", $"dropsfirst-{Name}.json");
+
+	private void SaveDropsFirst() {
+		try {
+			if (!DropsFirstActive) {
+				if (File.Exists(DropsFirstPath)) {
+					File.Delete(DropsFirstPath);
+				}
+
+				return;
+			}
+
+			Directory.CreateDirectory(Path.GetDirectoryName(DropsFirstPath)!);
+			AtomicFile.Write(DropsFirstPath, JsonSerializer.Serialize(new DropsFirstSave(DropsFirstApp, DropsFirstWant, DropsFirstGot)));
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't save the drop run: {0}", e.Message), Name);
+		}
+	}
+
+	private void LoadDropsFirst() {
+		try {
+			if (!File.Exists(DropsFirstPath) || (JsonSerializer.Deserialize<DropsFirstSave>(File.ReadAllText(DropsFirstPath)) is not { } saved)) {
+				return;
+			}
+
+			DropsFirstApp = saved.App;
+			DropsFirstWant = saved.Want;
+			DropsFirstGot = saved.Got;
+
+			if (DropsFirstActive) {
+				Log.Info(new Said("still going for {0}: {1} of {2} card drop(s) so far, in its sittings", GameNames.Of(DropsFirstApp), DropsFirstGot, DropsFirstWant), Name);
+			}
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't resume the drop run: {0}", e.Message), Name);
+		}
+	}
+
+	private sealed record DropsFirstSave(uint App, int Want, int Got);
+
 	/// <summary>Persist the current grind so it survives a restart, a crash, or the owner playing for a while.</summary>
 	private void SaveGrind() {
 		try {
@@ -348,16 +451,11 @@ public sealed class Bot : IAsyncDisposable {
 	/// and acts on nothing else. An offer somebody else is waiting on is never touched by accident.
 	/// </summary>
 	public async Task<bool> ConfirmMobileAsync(ulong tradeOfferId, bool accept, CancellationToken ct = default) {
-		string? identity = Secrets.Identity;
-
-		if (string.IsNullOrWhiteSpace(identity) || (SteamId == 0) || !Web.Ready) {
+		if (!CanConfirmTrades || (SteamId == 0) || !Web.Ready) {
 			return false;
 		}
 
 		try {
-			string device = MobileAuth.DeviceId(SteamId);
-			MobileAuth.Pending match = default;
-
 			// Nobody confirms on their phone in the same second they accepted.
 			if (Cfg.LegitMode) {
 				await Task.Delay(Rng.Seconds(8, 60), ct).ConfigureAwait(false);
@@ -365,71 +463,36 @@ public sealed class Bot : IAsyncDisposable {
 
 			// Steam can take a few seconds to list a confirmation it has only just created, so an empty first look
 			// is asked again rather than reported as "confirm it on your phone".
-			for (int attempt = 0; (attempt < 3) && (match.Id == 0); attempt++) {
+			Confirmations.Item? match = null;
+
+			for (int attempt = 0; (attempt < 3) && (match == null); attempt++) {
 				if (attempt > 0) {
 					await Task.Delay(Rng.Seconds(3, 6), ct).ConfigureAwait(false);
 				}
 
-				long time = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-				string? html = await Web.GetAsync(BuildConfirmationUri("getlist", identity, time, device), ct).ConfigureAwait(false);
+				(bool ok, _, List<Confirmations.Item> items) = await Confirmations.ListAsync(this, ct, fresh: true).ConfigureAwait(false);
 
-				if (!string.IsNullOrEmpty(html)) {
-					match = MobileAuth.ParseConfirmations(html).FirstOrDefault(p => p.CreatorId == tradeOfferId);
+				if (ok) {
+					match = items.FirstOrDefault(i => i.CreatorId == tradeOfferId);
 				}
 			}
 
-			if (match.Id == 0) {
+			if (match == null) {
 				return false;   // nothing pending for this offer - it may already have gone through
 			}
 
-			long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-			// "allow" / "cancel" - NOT "accept" / "reject".
-			//
-			// /mobileconf/ajaxop dispatches on those two words and silently does nothing for anything else, so
-			// every self-confirmation this account ever attempted failed. Worse, it failed quietly: the offer was
-			// reported as accepted and the item sweep as sent, while both actually sat waiting on a phone
-			// confirmation that never came. The same string is signed and sent, so it has to be right in one place.
-			string tag = accept ? "allow" : "cancel";
-			string? key = MobileAuth.Confirmation(identity, now, tag);
-
-			if (key == null) {
-				return false;
-			}
-
-			Dictionary<string, string> form = new() {
-				["p"] = device,
-				["a"] = SteamId.ToString(System.Globalization.CultureInfo.InvariantCulture),
-				["k"] = key,
-				["t"] = now.ToString(System.Globalization.CultureInfo.InvariantCulture),
-				["m"] = "react",
-				["tag"] = tag,
-				["op"] = tag,
-				["cid"] = match.Id.ToString(System.Globalization.CultureInfo.InvariantCulture),
-				["ck"] = match.Key.ToString(System.Globalization.CultureInfo.InvariantCulture)
-			};
-
-			string? body = await Web.PostAsync(new Uri(WebSession.Community, "/mobileconf/ajaxop"), form, new Uri(WebSession.Community, "/mobileconf/conf"), ct).ConfigureAwait(false);
-
-			if (body?.Contains("\"success\":true", StringComparison.OrdinalIgnoreCase) == true) {
+			if (await Confirmations.ActAsync(this, [match], accept, ct).ConfigureAwait(false)) {
 				Log.Good(new Said("confirmed trade offer #{0} on this account's own authenticator", tradeOfferId), Name);
 
 				return true;
 			}
 
 			return false;
-		} catch (Exception e) {
+		} catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested) {
 			Log.Debug(new Said("couldn't confirm trade offer #{0}: {1}", tradeOfferId, e.Message), Name);
 
 			return false;
 		}
-	}
-
-	private Uri BuildConfirmationUri(string tag, string identity, long time, string device) {
-		string key = MobileAuth.Confirmation(identity, time, tag) ?? "";
-
-		return new Uri(WebSession.Community,
-			$"/mobileconf/{(tag == "getlist" ? "getlist" : "conf")}?p={Uri.EscapeDataString(device)}&a={SteamId}&k={Uri.EscapeDataString(key)}&t={time}&m=react&tag={tag}");
 	}
 
 	/// <summary>
@@ -1068,6 +1131,7 @@ public sealed class Bot : IAsyncDisposable {
 
 		if (GrindGame == 0) {
 			LoadGrind();   // pick a still-running grind back up after a restart or crash
+			LoadDropsFirst();
 		}
 		Paused = Cfg.StartPaused;   // re-applied per start, so 'restart' doesn't quietly un-pause the account
 		PlayingBlocked = false;

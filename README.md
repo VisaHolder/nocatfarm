@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/VisaHolder/nocatfarm/releases/latest"><img src="https://img.shields.io/github/v/release/VisaHolder/nocatfarm?label=download&color=8b5cf6" alt="Download"></a>
-  <img src="https://img.shields.io/badge/platform-Windows-0078D6?logo=windows&logoColor=white" alt="Windows">
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20Docker-0078D6" alt="Windows | Linux | Docker">
   <img src="https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white" alt=".NET 10">
   <img src="https://img.shields.io/badge/languages-11-8b5cf6" alt="11 languages">
   <img src="https://img.shields.io/badge/licence-MPL--2.0-blue" alt="MPL-2.0">
@@ -42,6 +42,15 @@
   after you stop.
 - **Grabs free stuff** - free-to-keep games, sale stickers, gifts and guest passes - straight from Steam.
 - **Handles trades** - accepts gifts and fair one-for-one card swaps, and moves items between your own accounts.
+  Every new offer is announced (log, pop-up, Discord/Telegram) with a number you can `trade accept` or
+  `trade decline`, and only the accounts you pick trade by themselves.
+- **An authenticator page** - the Steam Guard code and the list of confirmations (trades with pictures, market
+  listings) with Confirm and Deny, like the Steam app, for accounts whose authenticator is in nocat.farm.
+- **Watches for bans** - tells you straight away if an account gets a VAC, game, trade or community ban, and keeps
+  banned games' items out of trades.
+- **History charts** - cards per day, hours banked, inventory value, week against week.
+- **Discord and Telegram** - notifications, control from your phone, and a *Playing nocat.farm* card on your
+  Discord profile.
 - **Extras, if you want them** - earn achievements slowly, sell spare cards, see what your next Steam level costs,
   post rep4rep comments.
 - **Everything stays on your PC.** No sign-up, no server, no cloud. Your accounts never leave your machine.
@@ -61,6 +70,10 @@
 That's it. It starts farming your cards straight away. Nothing else to install - no .NET, no setup.
 
 **Updating:** click **Update** on the dashboard, or type `update accept`. Your accounts, settings and logs are kept.
+
+**On Linux or a server?** There's a Linux zip for x64 and for arm64 (Raspberry Pi), and a Dockerfile with an
+example compose file. No window there - the console and the web dashboard. See
+[Linux and Docker](docs/GUIDE.md#linux-and-docker).
 
 ## What it looks like
 
@@ -131,7 +144,8 @@ what to change. Accounts that don't use human mode just farm and idle as hard as
 ## Is it safe?
 
 - **Your stuff stays on your PC.** Accounts, login tokens and logs are never uploaded. Passwords are optional:
-  after the first sign-in a Steam login token does the work, stored encrypted and tied to your Windows user.
+  after the first sign-in a Steam login token does the work, stored encrypted and tied to your Windows user
+  (on Linux, encrypted with a key only your user can read).
 - **It only talks to Steam** - plus GitHub every few hours to see if there's a new version (you can turn that
   off). rep4rep is the only other thing, and it's off unless you switch it on.
 - **It never fights you.** Launch a game on one of its accounts and that account steps back. For an account you

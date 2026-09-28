@@ -41,6 +41,18 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 	/// <summary>Offers accepted here (of any kind) still waiting on a confirmation, for the status line.</summary>
 	private int _awaitingConfirmation;
 
+	// ── numbers and announcements ──
+
+	/// <summary>A short number per live incoming offer - "trade accept new 3" - instead of Steam's 11-digit ids.</summary>
+	private readonly Dictionary<ulong, int> _numbers = [];
+
+	private int _nextNumber = 1;
+
+	/// <summary>Offers already announced, and who they were from - kept on disk so a restart doesn't announce them again.</summary>
+	private Dictionary<ulong, string>? _announced;
+
+	private string AnnouncedPath => Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", $"trades-announced-{Bot.Name}.json");
+
 	public override string Name => "trades";
 
 	public override string Status {
@@ -204,8 +216,11 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		bool actedOnSomething = false;
 		bool swappedThisLook = false;
 		_answeredThisLook = false;
-		HashSet<ulong> masters = Social.ParseIds(Bot.Cfg.TradeMasters);
 		HashSet<ulong> fleet = [.. (BotManager.Instance?.All ?? []).Where(b => (b != Bot) && (b.SteamId != 0)).Select(static b => b.SteamId)];
+		Dictionary<ulong, Way> allowed = Allowed();
+
+		KeepNumbers(offers);
+		await AnnounceAsync(offers, ids, allowed, fleet, awake, ct).ConfigureAwait(false);
 
 		foreach (TradeOffers.Offer offer in offers) {
 			// One offer that can't be read or judged must not stop the rest - donations and your own accounts included.
@@ -221,7 +236,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 					continue;
 				}
 
-				(bool acted, bool swapped) = await HandleAsync(offer, masters, fleet, swappedThisLook, ct).ConfigureAwait(false);
+				(bool acted, bool swapped) = await HandleAsync(offer, allowed, fleet, swappedThisLook, ct).ConfigureAwait(false);
 				actedOnSomething |= acted;
 				swappedThisLook |= swapped;
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
@@ -240,14 +255,14 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 	}
 
 	/// <returns>Whether it's being dealt with (queued or acted on), and whether a card swap was accepted just now.</returns>
-	private async Task<(bool Acted, bool Swapped)> HandleAsync(TradeOffers.Offer offer, HashSet<ulong> masters, HashSet<ulong> fleet, bool swappedThisLook, CancellationToken ct) {
+	private async Task<(bool Acted, bool Swapped)> HandleAsync(TradeOffers.Offer offer, Dictionary<ulong, Way> allowed, HashSet<ulong> fleet, bool swappedThisLook, CancellationToken ct) {
 		lock (_done) {
 			if (_done.Contains(offer.Id)) {
 				return (false, false);
 			}
 		}
 
-		bool fromMaster = Bot.Cfg.AcceptFromMasters && masters.Contains(offer.Partner);
+		bool fromMaster = Auto(offer, allowed);
 		bool donation = Bot.Cfg.AcceptDonations && offer.IsPureDonation;
 		bool swapWanted = Bot.Cfg.AcceptFairCardSwaps || fleet.Contains(offer.Partner);
 		bool? swap = !fromMaster && !donation && swapWanted ? await FairSwapAsync(offer, ct).ConfigureAwait(false) : false;
@@ -266,7 +281,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		// Everything waits its turn. The wait is per offer, so two arriving together are not handled together.
 		if (_waiting.Add(offer.Id, DateTime.UtcNow + TradeWait()) && (_waiting.DueOf(offer.Id) is { } due)) {
 			Said what = !accept ? new Said("unwanted") : fromMaster ? new Said("from one of your accounts") : fair ? new Said("a fair card swap") : new Said("a donation");
-			Log.Info(new Said("trade offer #{0} ({1}: {2}) - handling it in {3}", offer.Id, what, offer.Describe, Fmt.Hm((int) Math.Max(1, (due - DateTime.UtcNow).TotalMinutes))), Bot.Name);
+			Log.Info(new Said("offer {0} ({1}: {2}) - handling it in {3}", NumberOf(offer.Id), what, offer.Describe, Fmt.Hm((int) Math.Max(1, (due - DateTime.UtcNow).TotalMinutes))), Bot.Name);
 		}
 
 		if ((_waiting.DueOf(offer.Id) is not { } when) || (DateTime.UtcNow < when)) {
@@ -321,7 +336,9 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		_answeredThisLook = true;
 
 		if (accept) {
-			Accepted result = await AcceptAsync(offer, ct).ConfigureAwait(false);
+			// A fair swap with a stranger is accepted, but the confirmation waits for you - only accounts you allowed (and
+			// your own) are confirmed without asking.
+			Accepted result = await AcceptAsync(offer, ct, mayConfirm: fromMaster || fleet.Contains(offer.Partner)).ConfigureAwait(false);
 
 			if (result == Accepted.Failed) {
 				return (true, false);
@@ -338,7 +355,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 			if (result == Accepted.Done) {
 				_accepted++;
-				Log.Reward(new Said("accepted trade offer #{0} - {1} item(s) in", offer.Id, offer.Receiving.Sum(static i => i.Amount)), Bot.Name, topic: Topic.Trades);
+				Log.Trade(new Said("accepted offer {0} from {1} - {2} item(s) in, {3} out", NumberOf(offer.Id), Who(offer), offer.Receiving.Sum(static i => i.Amount), offer.Giving.Sum(static i => i.Amount)), Bot.Name, good: true);
 			} else {
 				// Accepted, but nothing moves until it's confirmed. Not a reward yet - and its cards stay promised,
 				// so another swap can't be judged as if they were still here.
@@ -348,14 +365,12 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 					}
 				}
 
-				Log.Warn(result == Accepted.NeedsEmail
-					? new Said("trade offer #{0} was accepted but needs confirming from the email Steam sent", offer.Id)
-					: new Said("trade offer #{0} was accepted but needs confirming on your phone - add this account's mobile authenticator secrets to do that here", offer.Id), Bot.Name);
+				Log.Trade(NeedsConfirming(offer, result), Bot.Name);
 			}
 		} else if (await DeclineAsync(offer, ct).ConfigureAwait(false)) {
-			Finish(offer.Id);
 			_declined++;
-			Log.Info(new Said("declined trade offer #{0}", offer.Id), Bot.Name);
+			Log.Trade(new Said("declined offer {0} from {1}", NumberOf(offer.Id), Who(offer)), Bot.Name);
+			Finish(offer.Id);
 		}
 
 		await Task.Delay(Rng.Seconds(3, 12), ct).ConfigureAwait(false);
@@ -410,9 +425,9 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			_nightDue.Remove(offer.Id);
 		}
 
-		Finish(offer.Id);
 		_accepted++;
-		Log.Reward(new Said("accepted trade offer #{0} - {1} item(s) in", offer.Id, offer.Receiving.Sum(static i => i.Amount)), Bot.Name, topic: Topic.Trades);
+		Log.Trade(new Said("accepted offer {0} from {1} - {2} item(s) in, {3} out", NumberOf(offer.Id), Who(offer), offer.Receiving.Sum(static i => i.Amount), 0), Bot.Name, good: true);
+		Finish(offer.Id);
 
 		return true;
 	}
@@ -423,6 +438,279 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		}
 
 		_waiting.Remove(id);
+		Forget(id);
+	}
+
+	// ── who it trades with by itself ──
+
+	/// <summary>Which way an account may trade with this one by itself.</summary>
+	[Flags]
+	public enum Way { None = 0, From = 1, To = 2, Both = From | To }
+
+	/// <summary>
+	/// The "Trade by itself with" list, as SteamIDs. Empty falls back to "Your own accounts" both ways - but only with
+	/// "Accept anything from your own accounts" on, which is what that setting always meant.
+	/// </summary>
+	public Dictionary<ulong, Way> Allowed() {
+		Dictionary<ulong, Way> allowed = [];
+		string list = Bot.Cfg.AutoTradeWith.Trim();
+
+		if (list.Length == 0) {
+			if (Bot.Cfg.AcceptFromMasters) {
+				foreach (ulong id in Social.ParseIds(Bot.Cfg.TradeMasters)) {
+					allowed[id] = Way.Both;
+				}
+			}
+
+			return allowed;
+		}
+
+		foreach (string entry in list.Split([',', ';', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) {
+			int colon = entry.IndexOf(':');
+			string who = colon < 0 ? entry : entry[..colon];
+			string way = colon < 0 ? "both" : entry[(colon + 1)..].ToLowerInvariant();
+			ulong id = ulong.TryParse(who, out ulong n) && (n > 76561197960265728UL) ? n
+				: BotManager.Instance?.Get(who)?.SteamId ?? 0;
+
+			if (id != 0) {
+				allowed[id] = way switch { "from" => Way.From, "to" => Way.To, _ => Way.Both };
+			}
+		}
+
+		return allowed;
+	}
+
+	/// <summary>Whether this offer is one to take without asking: nothing leaves and they're allowed "from", or items leave and they're allowed "to".</summary>
+	private static bool Auto(TradeOffers.Offer offer, Dictionary<ulong, Way> allowed) =>
+		allowed.TryGetValue(offer.Partner, out Way way) && (offer.Giving.Count == 0 ? way.HasFlag(Way.From) : way.HasFlag(Way.To));
+
+	// ── numbers ──
+
+	/// <summary>The short number an offer goes by - the same in the log, on Telegram, in 'offers' and for 'trade accept'.</summary>
+	public int NumberOf(ulong id) {
+		lock (_numbers) {
+			if (!_numbers.TryGetValue(id, out int n)) {
+				n = _nextNumber++;
+				_numbers[id] = n;
+			}
+
+			return n;
+		}
+	}
+
+	/// <summary>Numbers for every live offer, oldest first; the counter starts over once nothing is waiting.</summary>
+	private void KeepNumbers(List<TradeOffers.Offer> live) {
+		lock (_numbers) {
+			HashSet<ulong> ids = [.. live.Select(static o => o.Id)];
+
+			foreach (ulong gone in _numbers.Keys.Where(k => !ids.Contains(k)).ToList()) {
+				_numbers.Remove(gone);
+			}
+
+			if (_numbers.Count == 0) {
+				_nextNumber = 1;
+			}
+		}
+
+		foreach (TradeOffers.Offer o in live.OrderBy(static o => o.Id)) {
+			NumberOf(o.Id);
+		}
+	}
+
+	// ── announcements ──
+
+	/// <summary>Who an offer is from, as it was announced - the SteamID when it wasn't.</summary>
+	private string Who(TradeOffers.Offer offer) {
+		lock (_numbers) {
+			return (_announced ?? []).TryGetValue(offer.Id, out string? who) ? who : offer.Partner.ToString(System.Globalization.CultureInfo.InvariantCulture);
+		}
+	}
+
+	/// <summary>
+	/// Every new offer is announced once - log, pop-up, Discord/Telegram - saying who it's from, what would come and go,
+	/// and what happens next. Offers that went away without being answered here are announced too.
+	/// </summary>
+	private async Task AnnounceAsync(List<TradeOffers.Offer> offers, HashSet<ulong> live, Dictionary<ulong, Way> allowed, HashSet<ulong> fleet, bool awake, CancellationToken ct) {
+		_announced ??= LoadAnnounced();
+		bool changed = false;
+
+		foreach ((ulong id, string who) in _announced.Where(a => !live.Contains(a.Key)).ToList()) {
+			lock (_done) {
+				if (!_done.Contains(id)) {
+					Log.Trade(new Said("an offer from {0} is gone - cancelled, answered somewhere else, or it expired", who), Bot.Name);
+				}
+			}
+
+			_announced.Remove(id);
+			changed = true;
+		}
+
+		foreach (TradeOffers.Offer offer in offers.Where(o => !_announced.ContainsKey(o.Id))) {
+			string name = await SteamNames.OfAsync(Bot, offer.Partner, ct).ConfigureAwait(false);
+			bool own = fleet.Contains(offer.Partner) || allowed.ContainsKey(offer.Partner);
+			string who = own ? new Said("{0} (one of your accounts)", name).ToString() : name;
+			int n = NumberOf(offer.Id);
+			_announced[offer.Id] = who;
+			changed = true;
+
+			Log.Trade(new Said("new trade offer {0} from {1}: you get {2}, you give {3} - {4}", n, who, Items(offer.Receiving), Items(offer.Giving), Plan(offer, allowed, fleet, awake, n)), Bot.Name);
+		}
+
+		if (changed) {
+			SaveAnnounced();
+		}
+	}
+
+	/// <summary>What nocat.farm is going to do with it, in words.</summary>
+	private Said Plan(TradeOffers.Offer offer, Dictionary<ulong, Way> allowed, HashSet<ulong> fleet, bool awake, int n) {
+		bool later = !awake;
+
+		if (Bot.Cfg.AcceptDonations && offer.IsPureDonation) {
+			return later && !Bot.Cfg.DonationsWhileAsleep ? new Said("a donation - accepting it once the account is up") : new Said("a donation - accepting it in a few minutes");
+		}
+
+		if (Auto(offer, allowed)) {
+			return later ? new Said("you allowed this account - accepting it once the account is up") : new Said("you allowed this account - accepting it in a few minutes");
+		}
+
+		if ((Bot.Cfg.AcceptFairCardSwaps || fleet.Contains(offer.Partner)) && (offer.Giving.Count > 0) && (offer.Giving.Count == offer.Receiving.Count)) {
+			return new Said("checking whether it's a fair card swap - accepted only if it is, otherwise it waits for you (trade accept {0} {1})", Bot.Name, n);
+		}
+
+		return Bot.Cfg.DeclineOtherTrades
+			? new Said("declining it in a few minutes (\"Decline everything else\" is on) - trade accept {0} {1} keeps it", Bot.Name, n)
+			: new Said("waiting for you - trade accept {0} {1} or trade decline {0} {1}", Bot.Name, n);
+	}
+
+	/// <summary>"3 items: Alpha x2, Beta" - or "nothing".</summary>
+	public static Said Items(List<TradeOffers.Item> items) {
+		uint total = (uint) items.Sum(static i => i.Amount);
+
+		if (total == 0) {
+			return new Said("no items");
+		}
+
+		var names = items.GroupBy(static i => i.Described && (i.Name.Length > 0) ? i.Name : "?")
+			.Select(static g => (Name: g.Key, Count: g.Sum(static i => i.Amount)))
+			.OrderByDescending(static g => g.Count)
+			.ToList();
+		string shown = string.Join(", ", names.Take(3).Select(static g => g.Count > 1 ? $"{g.Name} x{g.Count}" : g.Name));
+
+		return names.Count > 3
+			? new Said("{0} item(s): {1} and {2} more", total, shown, names.Count - 3)
+			: new Said("{0} item(s): {1}", total, shown);
+	}
+
+	private Said NeedsConfirming(TradeOffers.Offer offer, Accepted result) => result == Accepted.NeedsEmail
+		? new Said("offer {0} from {1} is accepted but needs confirming from the email Steam sent", NumberOf(offer.Id), Who(offer))
+		: Bot.CanConfirmTrades
+			? new Said("offer {0} from {1} is accepted and waiting for you to confirm it - 'confirmations {2}' or the Authenticator page", NumberOf(offer.Id), Who(offer), Bot.Name)
+			: new Said("offer {0} from {1} is accepted but needs confirming on your phone", NumberOf(offer.Id), Who(offer));
+
+	private void Forget(ulong id) {
+		if ((_announced != null) && _announced.Remove(id)) {
+			SaveAnnounced();
+		}
+	}
+
+	private Dictionary<ulong, string> LoadAnnounced() {
+		try {
+			return File.Exists(AnnouncedPath)
+				? System.Text.Json.JsonSerializer.Deserialize<Dictionary<ulong, string>>(File.ReadAllText(AnnouncedPath)) ?? []
+				: [];
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't read the announced offers: {0}", e.Message), Bot.Name);
+
+			return [];
+		}
+	}
+
+	private void SaveAnnounced() {
+		try {
+			Directory.CreateDirectory(Path.GetDirectoryName(AnnouncedPath)!);
+			AtomicFile.Write(AnnouncedPath, System.Text.Json.JsonSerializer.Serialize(_announced));
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't save the announced offers: {0}", e.Message), Bot.Name);
+		}
+	}
+
+	// ── answering by hand ──
+
+	/// <summary>
+	/// 'trade accept|decline &lt;account&gt; &lt;number|all&gt;' - answering by hand. An accepted offer that sends items out
+	/// is confirmed by itself when the authenticator is here: you asked for it, so that IS the confirmation.
+	/// </summary>
+	public async Task<string> AnswerAsync(bool accept, string which, CancellationToken ct = default) {
+		if (!Bot.IsOnline || !Bot.Web.Ready) {
+			return new Said("{0} isn't logged in", Bot.Name).ToString();
+		}
+
+		if (await TradeOffers.ActiveAsync(Bot, received: true, sent: false, ct).ConfigureAwait(false) is not { } live) {
+			return new Said("Steam didn't answer - try again in a minute").ToString();
+		}
+
+		List<TradeOffers.Offer> incoming = [.. live.Where(static o => !o.Ours && (o.State == TradeOffers.Active))];
+		KeepNumbers(incoming);
+		_announced ??= LoadAnnounced();
+
+		List<TradeOffers.Offer> picked = which.Equals("all", StringComparison.OrdinalIgnoreCase) ? incoming
+			: int.TryParse(which.TrimStart('#'), out int n) ? [.. incoming.Where(o => NumberOf(o.Id) == n)]
+			: [];
+
+		if (picked.Count == 0) {
+			return incoming.Count == 0
+				? new Said("{0} has no trade offers waiting", Bot.Name).ToString()
+				: new Said("{0} has no offer {1} - 'offers {0}' lists them with their numbers", Bot.Name, which).ToString();
+		}
+
+		List<string> lines = [];
+
+		foreach (TradeOffers.Offer offer in picked) {
+			int num = NumberOf(offer.Id);
+
+			if (!_announced.ContainsKey(offer.Id)) {
+				_announced[offer.Id] = await SteamNames.OfAsync(Bot, offer.Partner, ct).ConfigureAwait(false);
+			}
+
+			if (!accept) {
+				if (await DeclineAsync(offer, ct).ConfigureAwait(false)) {
+					_declined++;
+					Log.Trade(new Said("declined offer {0} from {1}", num, Who(offer)), Bot.Name);
+					Finish(offer.Id);
+					lines.Add(new Said("declined offer {0}", num).ToString());
+				} else {
+					lines.Add(new Said("offer {0}: Steam didn't take the decline - try again", num).ToString());
+				}
+
+				continue;
+			}
+
+			Accepted result = await AcceptAsync(offer, ct).ConfigureAwait(false);
+
+			switch (result) {
+				case Accepted.Done:
+					_accepted++;
+					Log.Trade(new Said("accepted offer {0} from {1} - {2} item(s) in, {3} out", num, Who(offer), offer.Receiving.Sum(static i => i.Amount), offer.Giving.Sum(static i => i.Amount)), Bot.Name, good: true);
+					Finish(offer.Id);
+					lines.Add(new Said("accepted offer {0}", num).ToString());
+
+					break;
+				case Accepted.Failed:
+					lines.Add(new Said("offer {0}: Steam didn't take the accept - try again", num).ToString());
+
+					break;
+				default:
+					Log.Trade(NeedsConfirming(offer, result), Bot.Name);
+					Finish(offer.Id);
+					lines.Add(NeedsConfirming(offer, result).ToString());
+
+					break;
+			}
+
+			await Task.Delay(Rng.Seconds(1, 3), ct).ConfigureAwait(false);
+		}
+
+		return string.Join(Environment.NewLine, lines);
 	}
 
 	private List<FairSwap.Card> Promised() {
@@ -472,7 +760,9 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 	private enum Accepted { Failed, Done, NeedsPhone, NeedsEmail }
 
-	private async Task<Accepted> AcceptAsync(TradeOffers.Offer offer, CancellationToken ct) {
+	/// <param name="mayConfirm">Whether an accept that needs a mobile confirmation may be confirmed here without asking:
+	/// yes for accounts on the "trade by itself with" list, your own accounts, and anything you accepted by hand.</param>
+	private async Task<Accepted> AcceptAsync(TradeOffers.Offer offer, CancellationToken ct, bool mayConfirm = true) {
 		Dictionary<string, string> form = new() {
 			["sessionid"] = Bot.Web.SessionId,
 			["serverid"] = "1",
@@ -491,7 +781,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		// Steam says what the accept still needs as true/false flags - reading the key alone called an email
 		// confirmation a phone one.
 		if (Flag(body, "needs_mobile_confirmation")) {
-			return await Bot.ConfirmMobileAsync(offer.Id, true, ct).ConfigureAwait(false) ? Accepted.Done : Accepted.NeedsPhone;
+			return mayConfirm && await Bot.ConfirmMobileAsync(offer.Id, true, ct).ConfigureAwait(false) ? Accepted.Done : Accepted.NeedsPhone;
 		}
 
 		if (Flag(body, "needs_email_confirmation")) {

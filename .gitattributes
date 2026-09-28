@@ -1,0 +1,5 @@
+# The Docker files are read on Linux: keep them LF even in a Windows checkout, where core.autocrlf would
+# otherwise hand them CRLF.
+Dockerfile text eol=lf
+.dockerignore text eol=lf
+docker-compose*.yml text eol=lf

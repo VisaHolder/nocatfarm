@@ -70,11 +70,27 @@ public static class Settings {
 	public const string SecTrading = "Trades";
 	public const string SecCourtesy = "Staying out of the way";
 
-	public static readonly IReadOnlyList<SettingDef> Global = BuildGlobal();
+	public static readonly IReadOnlyList<SettingDef> Global = ForThisPlatform(BuildGlobal());
 	public static readonly IReadOnlyList<SettingDef> Bot = BuildBot();
 
 	public static readonly GlobalConfig GlobalDefaults = new();
 	public static readonly BotConfig BotDefaults = new();
+
+	/// <summary>
+	/// Without the Windows desktop there is no window, tray icon, pop-up or Windows start-up entry, so on Linux and
+	/// in Docker their settings are left off the list (and the settings page) rather than shown doing nothing.
+	/// The values stay in the config file untouched, so a config carried back to Windows keeps them.
+	/// </summary>
+	private static List<SettingDef> ForThisPlatform(List<SettingDef> all) {
+		if (OperatingSystem.IsWindows()) {
+			return all;
+		}
+
+		string[] windowsOnly = ["Tray", "MinimizeToTray", "StartMinimized", "MiniOnTop", "StartWithWindows", "KeepAwake",
+			"TrayNotifications", "NotifyEarnings", "NotifySocial", "NotifyProblems"];
+
+		return [.. all.Where(d => !windowsOnly.Contains(d.Name, StringComparer.OrdinalIgnoreCase))];
+	}
 
 	public static SettingDef? FindGlobal(string name) => Global.FirstOrDefault(d => d.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 	public static SettingDef? FindBot(string name) => Bot.FirstOrDefault(d => d.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
@@ -551,6 +567,8 @@ public static class Settings {
 			"Shows a pop-up when someone comments on one of your Steam profiles.", Advanced: true),
 		new("NotifyProblems", "Pop up for problems", SecNotifications, SettingKind.Bool,
 			"Shows a pop-up when an account needs you, like a Steam Guard code, a failed login or a comment ban.", Advanced: true),
+		new("NotifyTrades", "Pop up for trade offers", SecNotifications, SettingKind.Bool,
+			"Shows a pop-up for every new trade offer - who it's from, what you'd give and get, and what nocat.farm will do - and when one is accepted, declined or needs confirming.", Advanced: true),
 		new("Rep4RepEnabled", "Use rep4rep at all", SecRep4RepAccount, SettingKind.Bool,
 			"Turns on rep4rep, an optional outside site where users trade Steam profile comments. With it off, all rep4rep features and settings are hidden on every account."),
 		new("Rep4RepApiToken", "API token", SecRep4RepAccount, SettingKind.Secret,
@@ -832,10 +850,10 @@ new("PluginsEnabled", "Load plugins", SecDashboard, SettingKind.Bool,
 			"Roughly how many hours a day the farming blocks add up to. It varies each day and runs longer at weekends. Only used when \"Farm in sittings, not flat out\" is on.",
 			Advanced: true, Min: 1, Max: 20),
 		new("FarmCardsWhen", "When to farm cards", SecCards, SettingKind.Choice,
-			"Human mode only. Day: cards farm in its normal sittings. Night: only while it's asleep. Any time: nonstop until done. Mixed: some sittings farm cards, the rest play its usual games.",
+			"Human mode only - this is AUTOMATIC farming: nocat.farm picks the card games itself. Day: cards farm in its normal sittings. Night: only while it's asleep. Any time: nonstop until done. Mixed: some sittings farm cards, the rest play its usual games, so cards trickle in over days. Want one game's cards first? Type drops <account> <appID> <count> (e.g. drops new 460920 2 = 2 cards from Steep first) - on a human-mode account that still plays in normal sittings, with breaks and bedtime.",
 			Choices: "0 day, in its sittings | 1 night, while it's asleep | 2 any time | 3 mixed, some sittings cards, the rest its games"),
 		new("CardSittingsPct", "Share of sittings that farm cards (mixed)", SecCards, SettingKind.Int,
-			"Roughly what percent of sittings farm cards when \"When to farm cards\" is set to mixed. Higher finishes cards sooner, lower keeps more time on its usual games.",
+			"Roughly what percent of sittings farm cards when \"When to farm cards\" is set to mixed. Higher finishes cards sooner, lower keeps more time on its usual games. A drops run (the drops command) gets at least the main game's share, so the game you picked comes sooner.",
 			Min: 5, Max: 95, Mode: "legit"),
 		new("FarmFromHour", "Farm cards only from", SecCards, SettingKind.Int,
 			"Farms cards only from this hour, on a 24-hour clock. Leave this and \"...until\" both at 0 to farm any time.",
@@ -894,8 +912,10 @@ new("PluginsEnabled", "Load plugins", SecDashboard, SettingKind.Bool,
 		new("BoostOnlyPlayedGames", "Only hunt games you've played", SecAchievements, SettingKind.Bool,
 			"Only lets \"all single-player\" hunt games this account has launched before. The strictest way to keep it to games that fit the account's history.",
 			Advanced: true),
+		new("WatchBans", "Watch for bans", SecExtras, SettingKind.Bool,
+			"Looks at this account's bans every few hours - VAC, game bans, a trade ban, a community ban - and tells you straight away (log, pop-up, Discord/Telegram) when a new one appears. It only looks; it never changes anything. Games it finds the account banned in are left out of trades by themselves; trading cards keep trading."),
 		new("InventoryIgnoreGames", "...but not these games", SecExtras, SettingKind.AppIds,
-			"Game IDs (the number in the store link) to leave out of the inventory value, separated by commas. Put games the account is banned in here, since those items can never be sold.",
+			"Game IDs (the number in the store link) to leave out of the inventory value and out of every trade, separated by commas. Games the account is banned in can never trade - the ban watch adds those by itself when it can see them, and you can add them here too.",
 			Advanced: true, Placeholder: "730"),
 		new("ShowInventoryValue", "Work out what its inventory is worth", SecTrading, SettingKind.Bool,
 			"Works out what this account's inventory is worth at Steam market prices and shows it on the dashboard. Turn it off on accounts that only hold a few cards.",
@@ -1075,6 +1095,9 @@ new("PluginsEnabled", "Load plugins", SecDashboard, SettingKind.Bool,
 		new("TradeMasters", "Your own accounts", SecTrading, SettingKind.Text,
 			"SteamID64s of your own accounts, separated by commas. Anyone listed here can take items from this account, so only add accounts you own.",
 			Placeholder: "76561198000000000"),
+		new("AutoTradeWith", "Trade by itself with", SecTrading, SettingKind.Text,
+			"Who this account trades with without asking you, and which way. Account names or SteamID64s, separated by commas, each with :from (accept what they send), :to (let them take items) or :both - both is the default. Example: old, kylro:to. Empty = the accounts in \"Your own accounts\", both ways, when \"Accept anything from your own accounts\" is on. Donations follow their own switch. Anything else waits for you: trade accept or trade decline, in the console or on Telegram.",
+			Placeholder: "old, kylro:to"),
 		new("DeclineOtherTrades", "Decline everything else", SecTrading, SettingKind.Bool,
 			"Declines every other trade offer instead of leaving it. Off leaves unaccepted offers for you to check yourself.",
 			Advanced: true),

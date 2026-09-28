@@ -122,7 +122,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	private bool NightGrind => _wasGrinding && (_phase == Phase.Playing) && (_game == 0) && !InWakingHours(DateTime.Now);
 
 	/// <summary>Cards farm in this day's sittings (the default for a human-mode account), not flat out.</summary>
-	private bool FarmInDay => Bot.Cfg.FarmCards && FarmWhen.InSittings(Bot.Cfg.FarmCardsWhen);
+	private bool FarmInDay => Bot.EffectiveFarmCards && FarmWhen.InSittings(Bot.EffectiveFarmWhen);
 
 	/// <summary>
 	/// A card-farming sitting is open, so the farmer may play. It closes for every break, meal, bedtime and stand-down,
@@ -137,8 +137,20 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return 0;
 		}
 
-		if ((Bot.Cfg.FarmCardsWhen == FarmWhen.Mixed) && !Chance(Math.Clamp(Bot.Cfg.CardSittingsPct, 5, 95) / 100.0)) {
+		// A drop run ('drops' on this account) gets real weight: the main game's share of the sittings, or the
+		// card-sittings share if that's higher - still one sitting at a time, with every break and bedtime.
+		int share = Math.Clamp(Bot.Cfg.CardSittingsPct, 5, 95);
+
+		if (Bot.DropsFirstActive) {
+			share = Math.Max(share, Math.Clamp(_mainSharePct > 0 ? _mainSharePct : 65, 5, 95));
+		}
+
+		if ((Bot.EffectiveFarmWhen == FarmWhen.Mixed) && !Chance(share / 100.0)) {
 			return 0;
+		}
+
+		if (Bot.DropsFirstActive && farmer.Queue.Any(g => (g.AppId == Bot.DropsFirstApp) && (g.CardsRemaining > 0))) {
+			return Bot.DropsFirstApp;
 		}
 
 		return farmer.NextGame;
@@ -482,7 +494,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			if (!FarmSittingOpen) {
 				return;
 			}
-		} else if (Bot.IsFarming && Bot.Cfg.FarmCards && (Bot.Cfg.FarmCardsWhen == FarmWhen.Night)) {
+		} else if (Bot.IsFarming && Bot.EffectiveFarmCards && (Bot.EffectiveFarmWhen == FarmWhen.Night)) {
 			// Farming only at night, and it's morning: the farmer hands the account back within seconds. Waited for,
 			// rather than treated as a farming run that just ended - that took a break first thing and showed the
 			// farm game with the night's invisible look already dropped.

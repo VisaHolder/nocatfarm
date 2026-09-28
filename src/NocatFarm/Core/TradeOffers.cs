@@ -21,7 +21,8 @@ public static class TradeOffers {
 
 	/// <summary>One item in an offer, with what Steam says it is.</summary>
 	/// <param name="Game">The game a community item belongs to (market_fee_app); 0 when Steam didn't say.</param>
-	public sealed record Item(uint App, string Context, ulong AssetId, ulong ClassId, ulong InstanceId, uint Amount, string Type, string Name, uint Game, bool Described);
+	/// <param name="Icon">Steam's picture for it - https://community.cloudflare.steamstatic.com/economy/image/&lt;Icon&gt;/96fx96f.</param>
+	public sealed record Item(uint App, string Context, ulong AssetId, ulong ClassId, ulong InstanceId, uint Amount, string Type, string Name, uint Game, bool Described, string Icon = "");
 
 	/// <param name="Giving">What this account would hand over.</param>
 	/// <param name="Receiving">What this account would get.</param>
@@ -212,7 +213,7 @@ public static class TradeOffers {
 			uint game = described && uint.TryParse(Text(d, "market_fee_app"), out uint g) ? g : 0;
 
 			items.Add(new Item(app, Text(i, "contextid"), asset, classId, instanceId, Math.Max(1, amount),
-				described ? Text(d, "type") : "", described ? Text(d, "name") : "", game, described));
+				described ? Text(d, "type") : "", described ? Text(d, "name") : "", game, described, described ? Text(d, "icon_url") : ""));
 		}
 
 		return items;

@@ -41,14 +41,20 @@ public static class UpdateCheck {
 
 		_remindedAt = DateTime.UtcNow;
 		// The log only: an hourly pop-up (or Telegram message) would be spam - the first one already said it there.
-		Log.Attention(new Said("reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update ignore' stops these reminders until the next launch", Available, Build.Version),
+		Log.Attention(SelfUpdate.Supported
+				? new Said("reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update ignore' stops these reminders until the next launch", Available, Build.Version)
+				: new Said("reminder: nocat.farm {0} is out - you have {1}. 'update' says how to install it here; 'update ignore' stops these reminders until the next launch", Available, Build.Version),
 			UpdateBrief(Available), UpdateTitle(Available), Topic.Updates, loud: false);
 	}
 
 	/// <summary>The pop-up: short, no links, one thing to do.</summary>
 	private static Said UpdateTitle(string tag) => new("nocat.farm {0} is ready", tag);
 
-	private static Said UpdateBrief(string tag) => new("You have {0}. Type update accept in the nocat.farm window to install it.", Build.Version);
+	// Off Windows it can't install itself (see SelfUpdate), so the one thing to do is the manual step.
+	private static Said UpdateBrief(string tag) =>
+		SelfUpdate.Supported ? new("You have {0}. Type update accept in the nocat.farm window to install it.", Build.Version)
+		: Platform.InContainer ? new("You have {0}. Pull the new image and recreate the container to update.", Build.Version)
+		: new("You have {0}. Download the new Linux zip from the releases page to update.", Build.Version);
 
 	static UpdateCheck() {
 		// GitHub refuses anonymous requests without one.
@@ -85,7 +91,9 @@ public static class UpdateCheck {
 
 			// Said once when it's first seen; after that the hourly reminder carries it.
 			if (Available != tag) {
-				Log.Attention(new Said("nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update ignore' stops the hourly reminders until the next launch", tag, Build.Version, page),
+				Log.Attention(SelfUpdate.Supported
+						? new Said("nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update ignore' stops the hourly reminders until the next launch", tag, Build.Version, page)
+						: new Said("nocat.farm {0} is out - you have {1}. {2}  -  'update' says how to install it here; 'update ignore' stops the hourly reminders until the next launch", tag, Build.Version, page),
 					UpdateBrief(tag), UpdateTitle(tag), Topic.Updates);
 				_remindedAt = DateTime.UtcNow;
 			}

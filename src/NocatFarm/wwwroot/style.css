@@ -416,6 +416,83 @@ table.today tr.fleet td { border-top: 1px solid var(--line); }
 table.today tr.fleet td:first-child { color: var(--muted); }
 .today h2 span { margin-left: auto; }
 
+/* ── history ───────────────────────────────────────────────────────── */
+/* Day-by-day charts under the Today table, in the page's own greys: the accent for the data, the divider grey for
+   the grid, square corners like every other box here. One series per chart, so there is no legend and no colour to
+   decode - the account picker changes what is added up, not what is drawn. */
+.histbar { margin-bottom: var(--s3); }
+.histbar .pills .p { padding: 3px 10px; }
+.histbar select { width: auto; max-width: 200px; padding: 4px 8px; font-size: 12.5px; }
+.histsum { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s5); margin: 0 0 var(--s4); font-size: 13px; color: var(--muted); cursor: help; }
+.histsum b { color: var(--text); font-weight: 400; letter-spacing: .3px; }
+
+/* Two across, one on a phone. An odd one out at the end takes the whole row rather than leaving a hole. */
+.histgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s3); }
+.histgrid > .hpanel:last-child:nth-child(odd) { grid-column: 1 / -1; }
+/* A column, so a chart can take whatever height its row has - beside the games list, the hours chart grows to
+   match instead of leaving a hole under itself. */
+.hpanel { border: 1px solid var(--line); padding: var(--s3); min-width: 0; display: flex; flex-direction: column; }
+.hhead { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--s1) var(--s3); margin-bottom: var(--s2); min-height: 27px; }
+.hhead .t { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.hhead .n { margin-left: auto; font-size: 18px; letter-spacing: .3px; color: var(--text); white-space: nowrap; }
+.hhead .n small { font-size: 11.5px; color: var(--muted); letter-spacing: 0; }
+.hhead .n .delta { font-size: 11.5px; margin: 0; }
+
+.hchart, .hempty { flex: 1 0 160px; min-height: 160px; }
+
+/* Out of the flow, so the drawing never props its own box open: it is drawn at the size the box already is, and
+   a row that gets shorter can shrink rather than being held tall by last time's picture. */
+.hchart { position: relative; }
+.hchart svg { position: absolute; top: 0; left: 0; display: block; overflow: visible; }
+.hchart text { fill: var(--muted); font-size: 10px; font-family: inherit; font-variant-numeric: tabular-nums; }
+.hchart .grid { stroke: var(--line); stroke-width: 1; }
+.hchart .base { stroke: var(--line2); stroke-width: 1; }
+.hchart .hit { fill: transparent; }
+.hchart .col:hover .hit { fill: var(--accent-glow); }
+.hchart .hbar { fill: var(--accent); transition: opacity .12s; }
+.hchart .hbar.today { opacity: .6; }                    /* today isn't over yet */
+.hchart svg:hover .hbar { opacity: .4; }                 /* pointing at one day steps the others back */
+.hchart svg .col:hover .hbar { opacity: 1; }
+.hchart .area { fill: var(--accent); opacity: .06; }
+.hchart .line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.hchart .dot, .hchart .hd { fill: var(--accent); stroke: var(--panel); stroke-width: 2; }
+.hchart .xh { stroke: var(--line2); stroke-width: 1; }
+.hchart .xh, .hchart .hd { opacity: 0; }
+.hchart .col:hover .xh, .hchart .col:hover .hd { opacity: 1; }
+.hempty {
+  display: grid; place-items: center; padding: 0 var(--s4); text-align: center;
+  font-size: 12.5px; color: var(--muted); border: 1px dashed var(--line);
+}
+
+/* Hours per game: a ranked list, not a chart - names need room, and eight bars across would have none. The rows
+   share the list's columns (subgrid), so every bar starts on the same line however long its hours figure is. */
+.hgames {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(56px, 44%) auto;
+  gap: 7px var(--s3); align-content: start; min-height: 160px;
+}
+.hg { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; font-size: 12.5px; }
+.hg .gn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hg .gb { height: 6px; background: var(--panel2); }
+.hg .gb i { display: block; height: 100%; background: var(--accent); }
+.hg .gv { min-width: 6ch; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hg.other .gn { color: var(--muted); }
+.hg.other .gb i { background: var(--line2); }
+.hg:hover .gn, .hg:hover .gv { color: var(--text); }
+
+@media (max-width: 760px) {
+  .histgrid { grid-template-columns: minmax(0, 1fr); }
+  .hchart, .hempty { flex-basis: 140px; min-height: 140px; }
+  .histsum { flex-direction: column; gap: 2px; }
+
+  /* A phone has no room for name, bar and hours side by side - "Counter-Str..." helps nobody. Name and hours on
+     one line, the bar full width under them. */
+  .hgames { grid-template-columns: minmax(0, 1fr) auto; row-gap: 9px; }
+  .hg { grid-template-areas: "n v" "b b"; row-gap: 3px; }
+  .hg .gn { grid-area: n; }
+  .hg .gv { grid-area: v; }
+  .hg .gb { grid-area: b; }
+}
+
 .recent .line { display: flex; gap: 10px; font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--line); }
 .recent .line:last-child { border-bottom: 0; }
 .recent .who { color: var(--info); min-width: 90px; }
@@ -840,6 +917,43 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 .bot-persona b { color: var(--text); letter-spacing: .5px; }
 .bot-persona.hidden-persona b { color: var(--muted); }
 .bot-mismatch { font-size: 11px; color: var(--warn); margin-top: 2px; }
+.bot-bans { font-size: 11px; color: var(--bad); margin-top: 2px; }
+
+/* ── authenticator ── */
+.auth-card { margin-bottom: var(--s3); }
+.auth-top, .auth-listhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.auth-accounts { margin: 0; }
+.auth-accounts .p.dim { opacity: .55; }
+.auth-code { display: flex; align-items: center; gap: 18px; margin-top: 14px; flex-wrap: wrap; }
+.auth-digits { font-size: 40px; font-weight: 600; line-height: 1; letter-spacing: 10px; color: var(--text); user-select: all; }
+.auth-ring { width: 56px; height: 56px; flex: 0 0 56px; }
+.auth-ring circle { fill: none; stroke-width: 5; }
+.auth-ring .track { stroke: var(--line); }
+.auth-ring .left { stroke: var(--accent); transition: stroke-dasharray .9s linear; }
+.auth-ring.low .left { stroke: var(--bad); }
+.auth-ring text { fill: var(--muted); font-size: 16px; font-family: inherit; }
+.auth-none, .auth-empty { margin: 14px 0 4px; }
+.auth-tools { display: flex; gap: 6px; flex-wrap: wrap; }
+.auth-conf { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--line); }
+.auth-conf.sel { background: var(--panel2); }
+.auth-check { padding-top: 2px; }
+.auth-icon { width: 40px; height: 40px; flex: 0 0 40px; object-fit: cover; background: var(--panel2); }
+.auth-main { flex: 1; min-width: 0; }
+.auth-line { margin-bottom: 4px; overflow-wrap: anywhere; }
+.auth-buttons { display: flex; flex-direction: column; gap: 6px; }
+.auth-trade { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; }
+.auth-trade > div { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.auth-trade .muted { margin-right: 4px; }
+.auth-item { position: relative; width: 44px; height: 44px; background: var(--panel2); border: 1px solid var(--line); display: inline-flex; align-items: center; justify-content: center; }
+.auth-item img { width: 40px; height: 40px; object-fit: contain; }
+.auth-item b { position: absolute; right: 1px; bottom: 0; font-size: 10px; background: var(--bg); padding: 0 2px; }
+.auth-rules { margin-top: 12px; }
+@media (max-width: 640px) {
+  .auth-digits { font-size: 32px; letter-spacing: 6px; }
+  .auth-conf { flex-wrap: wrap; }
+  .auth-buttons { flex-direction: row; width: 100%; }
+  .auth-buttons button { flex: 1; }
+}
 /* What a row is worth across a whole week, beside the mixed-day share you type. Quiet and narrow: it is a
    sanity check on the number to its left, not a second figure competing with it for attention. */
 .field .ctl .wweek {

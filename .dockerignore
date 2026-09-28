@@ -1,0 +1,6 @@
+# Only the project's source goes into the build - never run/, config/, login tokens, logs, dist/ or .git.
+# Allow-list rather than deny-list, so nothing personal can slip in by being named something unexpected.
+*
+!src/NocatFarm/
+src/NocatFarm/bin/
+src/NocatFarm/obj/

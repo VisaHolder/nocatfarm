@@ -1,6 +1,7 @@
 ﻿using System.Buffers.Binary;
 using System.Diagnostics;
 using System.IO.Pipes;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using NocatFarm.Config;
@@ -15,6 +16,10 @@ namespace NocatFarm.Core;
 /// internet from here, and there is no token - Discord shows it for whoever is signed into the Discord app.
 /// With Discord closed it quietly tries again every minute.
 ///
+/// On Windows that is a named pipe; on Linux Discord listens on a unix socket of the same name in the runtime
+/// folder ($XDG_RUNTIME_DIR, or the temp folder), with the Flatpak and Snap builds each in a folder of their own.
+/// A server or a container simply has none of them, so there it finds nothing and keeps quiet.
+///
 /// What it shows is built only from the accounts picked in "Show these accounts" - by default the robot
 /// accounts, never a human-mode account, whose whole point is looking like a person.
 /// </summary>
@@ -25,7 +30,14 @@ public static class DiscordPresence {
 	private const string Site = "https://github.com/VisaHolder/nocatfarm";
 
 	private static BotManager? _mgr;
-	private static NamedPipeClientStream? _pipe;
+	/// <summary>The connection: a named pipe on Windows, a unix socket elsewhere. Both speak the same frames.</summary>
+	private static Stream? _pipe;
+
+	private static bool Connected => _pipe switch {
+		NamedPipeClientStream p => p.IsConnected,
+		NetworkStream s => s.Socket.Connected,
+		_ => false
+	};
 	private static string _lastSent = "";
 	private static DateTime _sentAt = DateTime.MinValue;
 	private static readonly long StartedUnix = new DateTimeOffset(Process.GetCurrentProcess().StartTime.ToUniversalTime()).ToUnixTimeSeconds();
@@ -52,7 +64,7 @@ public static class DiscordPresence {
 					continue;
 				}
 
-				if ((_pipe is not { IsConnected: true }) && !await ConnectAsync().ConfigureAwait(false)) {
+				if (!Connected && !await ConnectAsync().ConfigureAwait(false)) {
 					await Task.Delay(60_000).ConfigureAwait(false);
 
 					continue;
@@ -225,6 +237,10 @@ public static class DiscordPresence {
 	}
 
 	private static async Task<bool> ConnectAsync() {
+		if (!OperatingSystem.IsWindows()) {
+			return await ConnectUnixAsync().ConfigureAwait(false);
+		}
+
 		for (int i = 0; i < 10; i++) {
 			NamedPipeClientStream pipe = new(".", $"discord-ipc-{i}", PipeDirection.InOut, PipeOptions.Asynchronous);
 
@@ -245,6 +261,80 @@ public static class DiscordPresence {
 		return false;
 	}
 
+	/// <summary>
+	/// Where the Linux Discord apps put their socket: the runtime folder first (where every current build puts it),
+	/// then the temp folders, each plain and then under the Flatpak and Snap sub-folders.
+	/// </summary>
+	internal static IEnumerable<string> UnixSocketFolders() {
+		string?[] roots = [
+			Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR"),
+			Environment.GetEnvironmentVariable("TMPDIR"),
+			Environment.GetEnvironmentVariable("TMP"),
+			Environment.GetEnvironmentVariable("TEMP"),
+			"/tmp"
+		];
+
+		HashSet<string> seen = new(StringComparer.Ordinal);
+
+		foreach (string? root in roots) {
+			if (string.IsNullOrWhiteSpace(root)) {
+				continue;
+			}
+
+			foreach (string dir in new[] { root, Path.Combine(root, "app", "com.discordapp.Discord"), Path.Combine(root, "snap.discord") }) {
+				if (seen.Add(dir)) {
+					yield return dir;
+				}
+			}
+		}
+	}
+
+	private static async Task<bool> ConnectUnixAsync() {
+		foreach (string dir in UnixSocketFolders()) {
+			for (int i = 0; i < 10; i++) {
+				string path = Path.Combine(dir, $"discord-ipc-{i}");
+
+				if (!File.Exists(path)) {
+					continue;   // a socket shows up as a file; no point dialling what isn't there
+				}
+
+				if (await ConnectSocketAsync(path).ConfigureAwait(false)) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/// <summary>One socket: connect, handshake, READY. Separate so it can be pointed at any path.</summary>
+	internal static async Task<bool> ConnectSocketAsync(string path) {
+		Socket socket = new(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+
+		try {
+			using (CancellationTokenSource timeout = new(500)) {
+				await socket.ConnectAsync(new UnixDomainSocketEndPoint(path), timeout.Token).ConfigureAwait(false);
+			}
+
+			_pipe = new NetworkStream(socket, ownsSocket: true);
+			await SendAsync(0, new { v = 1, client_id = AppId }).ConfigureAwait(false);
+			await ReadAsync().ConfigureAwait(false);   // READY
+			_lastSent = "";
+
+			return true;
+		} catch (Exception e) when (e is SocketException or IOException or OperationCanceledException) {
+			// a stale socket left by a Discord that has since closed, or one that isn't Discord's
+			if (_pipe != null) {
+				await _pipe.DisposeAsync().ConfigureAwait(false);
+				_pipe = null;
+			} else {
+				socket.Dispose();
+			}
+
+			return false;
+		}
+	}
+
 	private static void Disconnect() {
 		if (_pipe == null) {
 			return;
@@ -252,7 +342,7 @@ public static class DiscordPresence {
 
 		try {
 			// Take the card down straight away rather than when Discord notices the pipe is gone.
-			if (_pipe.IsConnected) {
+			if (Connected) {
 				SendAsync(1, new { cmd = "SET_ACTIVITY", args = new { pid = Environment.ProcessId, activity = (object?) null }, nonce = Guid.NewGuid().ToString() }).Wait(2000);
 			}
 		} catch {

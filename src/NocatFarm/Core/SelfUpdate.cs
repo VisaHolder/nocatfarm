@@ -20,6 +20,13 @@ namespace NocatFarm.Core;
 /// outlives us: wait for this PID to go, copy the staged files over the top, start the new one, delete itself.
 /// Everything is staged and checked BEFORE anything is touched, so a download that fails or arrives truncated
 /// leaves the installation exactly as it was. config/ and logs/ are never in the archive and never copied over.
+///
+/// Windows only, on purpose. On Linux the app is usually run by something that restarts it - Docker, where the
+/// app is the container and a swap script dies with it (and the next pull replaces the files anyway), or
+/// systemd, which kills everything the service started the moment it exits. A script that outlived us there
+/// would either be killed half way through a copy or start a second copy nobody supervises. Updating by hand
+/// (a new image, or the new zip extracted over the folder) is one step and can't half-happen, so off Windows
+/// this says how and changes nothing.
 /// </remarks>
 public static class SelfUpdate {
 	private const string Releases = "https://api.github.com/repos/VisaHolder/nocatfarm/releases/latest";
@@ -35,6 +42,46 @@ public static class SelfUpdate {
 
 	/// <summary>True while a download is in flight, so a second press doesn't start a second one.</summary>
 	public static bool Busy { get; private set; }
+
+	/// <summary>Whether this copy can replace itself. Windows only - see the remarks above for why.</summary>
+	public static bool Supported => OperatingSystem.IsWindows();
+
+	/// <summary>
+	/// How to update where updating itself isn't possible: pull the new image in Docker, or extract the new Linux zip.
+	/// <paramref name="tag"/> is the release, to name the exact file to download.
+	/// </summary>
+	public static Said ByHand(string? tag) {
+		if (Platform.InContainer) {
+			return new Said("nocat.farm doesn't update itself inside Docker - pull the new image and recreate the container (docker compose pull, then docker compose up -d). config/ and logs/ are kept");
+		}
+
+		return new Said("nocat.farm only updates itself on Windows - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again", ReleaseZipName(tag), ReleasesPage);
+	}
+
+	/// <summary>The release file for this machine off Windows: nocat.farm-v1.3.9_linux-x64.zip. A file name, not prose.</summary>
+	private static string ReleaseZipName(string? tag) =>
+		$"nocat.farm-{(string.IsNullOrEmpty(tag) ? "v*" : "v" + tag.TrimStart('v', 'V'))}_{Platform.ReleaseRid}.zip";
+
+	/// <summary>
+	/// Is this release asset the zip for this machine?
+	///
+	/// The Windows zip keeps the plain name it has always had (nocat.farm-v1.3.9.zip); the Linux ones carry their
+	/// platform after an underscore (nocat.farm-v1.3.9_linux-x64.zip). The underscore is load-bearing: GitHub lists
+	/// a release's files alphabetically, and every copy up to 1.3.8 installs simply the FIRST .zip in that list.
+	/// "_" sorts after the "." of ".zip", so the Windows zip stays first and those copies keep updating properly -
+	/// with "-linux" it would sort first and every one of them would download the Linux build and refuse it.
+	/// </summary>
+	internal static bool IsZipForThisMachine(string asset) {
+		if (!asset.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) {
+			return false;
+		}
+
+		if (OperatingSystem.IsWindows()) {
+			return !asset.Contains("linux", StringComparison.OrdinalIgnoreCase) && !asset.Contains("osx", StringComparison.OrdinalIgnoreCase);
+		}
+
+		return asset.EndsWith("_" + Platform.ReleaseRid + ".zip", StringComparison.OrdinalIgnoreCase);
+	}
 
 	/// <summary>"from|to|MB|seconds|ticks", written just before the restart and read back by the new version.</summary>
 	private static string NotePath => Path.Combine(ConfigStore.ConfigDir, "state", "updated.txt");
@@ -190,8 +237,12 @@ public static class SelfUpdate {
 			return "an update is already downloading - give it a minute";
 		}
 
-		if (!OperatingSystem.IsWindows()) {
-			return Fail(new Said("update failed: updating itself only works on Windows - get the new release from {0}", ReleasesPage));
+		// Not a failure - there is simply another way to do it here, and nothing was attempted.
+		if (!Supported) {
+			Said how = ByHand(UpdateCheck.Available);
+			Log.Info(how);
+
+			return how.ToString();
 		}
 
 		Busy = true;
@@ -222,7 +273,8 @@ public static class SelfUpdate {
 				return $"already on the newest release ({Build.Version}) - nothing to do";
 			}
 
-			// The zip, not the source tarballs GitHub adds to every release by itself.
+			// The zip for this machine - not the source tarballs GitHub adds to every release by itself, and not
+			// the Linux builds that sit beside the Windows one.
 			string? url = null;
 			long size = 0;
 
@@ -230,7 +282,7 @@ public static class SelfUpdate {
 				foreach (JsonElement asset in assets.EnumerateArray()) {
 					string assetName = asset.TryGetProperty("name", out JsonElement n) ? n.GetString() ?? "" : "";
 
-					if (assetName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) {
+					if (IsZipForThisMachine(assetName)) {
 						url = asset.TryGetProperty("browser_download_url", out JsonElement u) ? u.GetString() : null;
 						size = asset.TryGetProperty("size", out JsonElement s) ? s.GetInt64() : 0;
 

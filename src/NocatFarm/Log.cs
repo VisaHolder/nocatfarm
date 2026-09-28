@@ -3,7 +3,7 @@
 namespace NocatFarm;
 
 /// <summary>What a notification is about, so the user can switch off the kinds they don't care for.</summary>
-public enum NotifyKind { Earning, Social, Problem }
+public enum NotifyKind { Earning, Social, Problem, Trade }
 
 /// <summary>
 /// What an event is about, finer than <see cref="NotifyKind"/>: the Discord and Telegram notifications let people
@@ -193,6 +193,13 @@ public static class Log {
 	public static void Good(Core.Said text, string source = "nocat.farm") => Write("GOOD", source, text, ConsoleColor.Green);
 	public static void Warn(string text, string source = "nocat.farm") => Warn(new Core.Said(text), source);
 	public static void Warn(Core.Said text, string source = "nocat.farm") => Write("WARN", source, text, ConsoleColor.DarkYellow);
+
+	/// <summary>A trade offer event: the log, the trades pop-up, and Discord/Telegram's Trades topic.</summary>
+	public static void Trade(Core.Said text, string source, bool good = false) {
+		Write(good ? "GOOD" : "INFO", source, text, good ? ConsoleColor.Yellow : ConsoleColor.Cyan);
+		Notify?.Invoke(NotifyKind.Trade, source, text.ToString());
+		Publish(Topic.Trades, source, text);
+	}
 
 	public static void Error(string text, string source = "nocat.farm", Topic topic = Topic.Problems) => Error(new Core.Said(text), source, topic);
 
