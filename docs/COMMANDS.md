@@ -1,6 +1,6 @@
 # nocat.farm commands
 
-Every command nocat.farm has, and what it does. You can type them in the app window, in the dashboard's **Console** tab, on **Telegram** (start with `/`), or send them to one of your accounts in **Steam chat** (start with `/` or `!`, from an account listed under *Accept commands from*).
+Every command nocat.farm has, and what it does. You can type them in the app window, in the dashboard's **Console** tab, on **Telegram** (start with `/`), on **Discord** (`/nocat command:` runs any of them), or send them to one of your accounts in **Steam chat** (start with `/` or `!`, from an account listed under *Accept commands from*).
 
 In the app, `help` lists them all and `help <command>` explains one - it also explains any setting: `help FarmCards`.
 
@@ -135,15 +135,15 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 |---|---|
 | `log [count]` <br>also `logs` | The last few log lines. |
 | `stats [hours]` | Each account's last 24 hours - hours banked, cards, comments, totals - then cards dropped and comments posted, by hour. |
-| `notify [test]` | Discord and Telegram notifications: says what's set up and what gets sent. 'notify test' sends a test message to each right now. |
+| `notify [test]` | Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now. |
 | `plugins` | Which plugins are loaded, and where they came from. |
 | `tutorial [topic]` <br>also `guide`, `setup` | Getting started, in order, ticking off what you have already done. |
 | `help [command\|setting]` <br>also `?`, `h` | This list, or what one command or setting does. |
 | `theme [dark\|light]` <br>also `dark`, `light` | Switch the dashboard between the dark and light themes. Without an argument it says which is on. |
 | `mini [on\|off]` | Shrink the window to a small panel of your accounts - what each is doing, start and stop, the dashboard - or back to the full window. |
-| `dashboard [send]` <br>also `web`, `link` | The dashboard's address - on this PC, on your phone over the same wifi, and from outside your home if you've set that up. 'dashboard send' posts the links to your Discord channel and Telegram. |
+| `dashboard` <br>also `web`, `link` | The dashboard's address - on this PC, on your phone over the same wifi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. |
 | `version` <br>also `about` | Which version this is. |
-| `update [accept\|ignore]` | Check for a newer release. 'update accept' downloads it and restarts into it; 'update ignore' stops the hourly reminders until the next launch. Nothing updates on its own, ever. |
+| `update [accept\|skip]` | Check for a newer release. 'update accept' downloads it and restarts into it; 'update skip' skips that version - no more reminders about it and it never installs by itself - until a newer one comes out. Nothing installs by itself unless 'Update by itself' is set to install at night. |
 | `answer <text>` | Answer whatever nocat.farm is waiting on - a Steam Guard code, or a password. |
 | `exit` <br>also `quit`, `q` | Shut nocat.farm down. |
 

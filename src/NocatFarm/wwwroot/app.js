@@ -2529,7 +2529,11 @@ async function phoneModal() {
   const body = p.OpenAtHome && p.Qr
     ? `<p>${esc(t('Scan this with your phone\'s camera while it is on the same wifi, then sign in with the dashboard password.'))}</p>
        <div class="phoneqr">${p.Qr}</div>
-       <p class="muted small">${link(p.Home[0])}${p.Home.length > 1 ? ' · ' + p.Home.slice(1).map(link).join(' · ') : ''}</p>`
+       <p class="muted small">${link(p.Home[0])}${p.Home.length > 1 ? ' · ' + p.Home.slice(1).map(link).join(' · ') : ''}</p>
+       ${p.FirewallBlocks ? `<div class="explain"><b>${esc(t('Windows Firewall is blocking your phone'))}</b>
+         <p class="small" style="margin:6px 0 10px">${esc(t('Your phone will just keep loading until Windows lets it in. This allows the dashboard only, only on home networks - Windows asks you to confirm.'))}</p>
+         ${p.OnThisPc ? `<button onclick="allowFirewall(this)">${esc(t('Allow through Windows Firewall'))}</button>`
+           : `<span class="muted small">${esc(t('Press it on the PC nocat.farm runs on.'))}</span>`}</div>` : ''}`
     : `<p>${esc(t('Your phone can\'t open it yet - only this PC can. Two settings open it to your other devices:'))}</p>
        <ol class="small">
          <li>${p.HasPassword ? '✓ ' : ''}${esc(t('Set a Dashboard password, so nobody else on your wifi can control your accounts.'))}</li>
@@ -2539,9 +2543,15 @@ async function phoneModal() {
        ${p.Home.length ? `<p class="muted small">${esc(t('Then your phone opens:'))} ${esc(p.Home[0])}</p>` : ''}`;
   modal(`<h2>${esc(t('Open on your phone'))}</h2>${body}
     <p class="muted small">${p.Outside
-      ? `${esc(t('From outside your home:'))} ${link(p.Outside)} - ${esc(t('anyone with it and the password controls every account.'))}`
+      ? `${esc(t('From outside your home:'))} ${link(p.Outside)} - ${esc(p.OpenAtHome ? t('anyone with it and the password controls every account.') : t("(works once it's open to other devices)"))}`
       : esc(t('From outside your home, forward the port on your router to this PC and put your address in Public address.'))}</p>
     <div class="actions">${p.OpenAtHome ? '' : `<button onclick="closeModal();goSetting('WebPassword')">${esc(t('Take me there'))}</button>`}<button class="ghost" onclick="closeModal()">${esc(t('Close'))}</button></div>`);
+}
+async function allowFirewall(btn) {
+  btn.disabled = true; btn.textContent = t('Check the Windows prompt…');
+  const r = await api('/api/phone/firewall', { method: 'POST' }).catch(() => null);
+  if (r && r.Ok) { toast(t('Done - your phone can open it now.')); phoneModal(); }
+  else { toast((r && r.Error) || t('That didn\'t work'), true); btn.disabled = false; btn.textContent = t('Allow through Windows Firewall'); }
 }
 function closeModal() { $('modal').classList.add('hidden'); }
 // Escape and a click outside close whatever is open - and for the walkthrough, that counts as Skip. Before, it
@@ -3267,7 +3277,7 @@ function sectionIntro(section, values) {
   // know it works before the first card drops.
   if (section === 'Notifications' && settingsTarget === GLOBAL) {
     const kinds = [['SendCardDrops', 'Card drops'], ['SendFreeStuff', 'Free stuff'], ['SendTrades', 'Trades'],
-      ['SendProblems', 'Needs you'], ['SendUpdates', 'Updates'], ['SendDailySummary', 'Daily summary'],
+      ['SendProblems', 'Needs you'], ['SendUpdates', 'Updates'], ['SendInstalls', 'Install progress'], ['SendDailySummary', 'Daily summary'],
       ['SendComments', 'Profile comments'], ['SendAchievements', 'Achievements'], ['SendRep4Rep', 'rep4rep']];
     const setUp = (config.GlobalSecretsSet || []).includes('DiscordWebhookUrl') || (config.GlobalSecretsSet || []).includes('TelegramBotToken');
     return `<div class="explain">
@@ -3278,6 +3288,7 @@ function sectionIntro(section, values) {
       <button class="ghost" ${setUp ? '' : 'disabled'} onclick="notifyTest(this)">${esc(t('Send a test message'))}</button>
       ${setUp ? '' : `<span class="muted small" style="margin-left:8px">${esc(t('Save a webhook link or bot token first.'))}</span>`}
       ${telegramConnect()}
+      ${discordConnect()}
       ${notifyGuides()}
     </div>`;
   }
@@ -3920,7 +3931,7 @@ const PANEL_SECTIONS = new Set(['Discord profile']);
 
 // Settings drawn by a section's own panel (chips and switches) instead of as rows.
 const PANEL_ROWS = new Set(['DiscordPresence', 'DiscordShowNames', 'DiscordShowCounter', 'DiscordShowAvatar', 'DiscordShowTimer',
-  'SendCardDrops', 'SendFreeStuff', 'SendTrades', 'SendProblems', 'SendUpdates', 'SendDailySummary', 'SendComments',
+  'SendCardDrops', 'SendFreeStuff', 'SendTrades', 'SendProblems', 'SendUpdates', 'SendInstalls', 'SendDailySummary', 'SendComments',
   'SendAchievements', 'SendRep4Rep']);
 
 function discordCardIntro(val) {
@@ -4019,6 +4030,57 @@ function telegramConnectInner() {
   return '';
 }
 
+// The Discord bot's corner: is it online, the link that adds it to a server, and Connect Discord. The one-time code
+// is kept here rather than in the page, so the next refresh doesn't wipe it off the screen before it's typed - and
+// dropped once someone has connected with it.
+let discordCode = null;
+
+function discordConnect() {
+  const html = discordConnectInner();
+  return `<div id="dcConnect" data-html="${esc(html)}">${html}</div>`;
+}
+
+function syncDiscordConnect() {
+  const el = document.getElementById('dcConnect');
+  if (!el) return;
+  const html = discordConnectInner();
+  if (el.dataset.html === html) return;
+  el.dataset.html = html;
+  el.innerHTML = html;
+}
+
+function discordConnectInner() {
+  if (!state || !state.DiscordBotSet) return '';
+  if (!state.DiscordBotOn) {
+    return `<div class="tgconnect"><span class="muted small">${esc(t('The Discord bot is off - turn on "Take commands from Discord" to use it.'))}</span></div>`;
+  }
+  if (!state.DiscordBotOnline) {
+    return `<div class="tgconnect"><span class="muted small">${esc(state.DiscordBotProblem ? tf('Discord bot: {0}', state.DiscordBotProblem) : t('Discord bot: connecting...'))}</span></div>`;
+  }
+  if (discordCode && (discordCode.until < Date.now() || (state.DiscordOwnerId && state.DiscordOwnerId !== discordCode.owner))) discordCode = null;
+  const who = state.DiscordConnected ? tf('Discord bot: online as {0}, connected to {1}', state.DiscordBotName, state.DiscordOwner)
+    : tf('Discord bot online as {0}', state.DiscordBotName);
+  return `<div class="tgconnect">
+    ${state.DiscordInviteUrl ? `<a class="btn" href="${esc(state.DiscordInviteUrl)}" target="_blank" rel="noopener">${esc(t('Add the bot to your server'))}</a>` : ''}
+    <button class="ghost" onclick="discordConnectCode(this)">${esc(t('Connect Discord'))}</button>
+    <span class="muted small">${esc(who)}</span>
+    ${discordCode ? `<span class="small" style="flex-basis:100%">${tf('Send {0} to your bot in Discord - the code works once, for {1} minutes.',
+      `<code>/connect code: ${esc(discordCode.code)}</code>`, discordCode.minutes)}</span>` : ''}
+  </div>`;
+}
+
+async function discordConnectCode(btn) {
+  btn.disabled = true;
+  const r = await post('/api/discord/connect', {}).catch(() => null);
+  btn.disabled = false;
+  if (!r || !r.Code) {
+    toast(t("Couldn't reach nocat.farm"), true);
+    return;
+  }
+  discordCode = { code: r.Code, minutes: r.Minutes || 10, until: Date.now() + (r.Minutes || 10) * 60000, owner: r.OwnerId || '' };
+  syncDiscordConnect();
+}
+
 function notifyGuides() {
   const step = (html) => `<li>${html}</li>`;
   const b = (s) => `<b>${esc(s)}</b>`;
@@ -4037,6 +4099,16 @@ function notifyGuides() {
       ${step(tf('Press {0}, pick the channel notifications should go to, and name it {1} if you like.', b(t('New Webhook')), b('nocat.farm')))}
       ${step(tf('Press {0}, paste it into {1} below and press {2}.', b(t('Copy Webhook URL')), b(t('Discord webhook')), b(t('Save'))))}
     </ol><p class="muted small">${esc(t('Anyone with the webhook link can post in that channel, so keep it private.'))}</p></details>
+    <details class="guide"><summary>${esc(t('How to set up Discord commands (3 minutes)'))}</summary><ol>
+      ${step(tf('Open the {0} and sign in with your Discord account.',
+        `<a href="https://discord.com/developers/applications" target="_blank" rel="noopener">Discord Developer Portal</a>`))}
+      ${step(tf('Press {0}, name it {1}, tick the box and press {2}.', b('New Application'), b('nocat.farm'), b('Create')))}
+      ${step(tf('Open {0} on the left, press {1} and copy the token it shows.', b('Bot'), b('Reset Token')))}
+      ${step(tf('Paste it into {0} below and press {1}.', b(t('Discord bot token')), b(t('Save'))))}
+      ${step(tf('A few seconds later {0} shows up here. Open it and add the bot to a server you own - a new, empty one is fine.', b(t('Add the bot to your server'))))}
+      ${step(tf('Press {0} here. In Discord, type {1} and the code it shows - in the server, or in a private chat with the bot (click the bot in the member list and send it a message).', b(t('Connect Discord')), '<code>/connect</code>'))}
+      ${step(tf('Done. Type {0} for a summary, {1} for every command, or {2} to run any console command.', '<code>/status</code>', '<code>/help</code>', '<code>/nocat</code>'))}
+    </ol><p class="muted small">${esc(t('Keep the token private - anyone who has it can control your bot. Only your connected Discord account can use the commands, and in a server only you see the answers.'))}</p></details>
   </div>`;
 }
 
@@ -4215,6 +4287,7 @@ async function refresh() {
     armPolling(refreshSeconds);
     syncWelcome();
     syncTelegramConnect();
+    syncDiscordConnect();
     if (tutorialSignin) renderSignin();
 
     // nocat.farm restarting resets its sequence numbers. Without noticing that, "everything after seq 812"

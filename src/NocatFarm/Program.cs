@@ -104,6 +104,9 @@ AppDomain.CurrentDomain.UnhandledException += static (_, e) => {
 	} catch {
 		// nothing more can be done from here
 	}
+
+	// A new version that crashes while it's being tried out goes straight back to the old one.
+	NocatFarm.Core.SelfUpdate.ReportCrashed();
 };
 
 // One instance per config folder. Two copies running the same accounts share a Steam login ID, so they take
@@ -299,6 +302,10 @@ if (manager.All.Count == 0) {
 // with no accounts. Type `report` to see it on demand.
 NocatFarm.Core.DailyReport.Start(manager);
 
+// Looking for a new version, the hourly reminder and "Update by itself" - for the app, not for an account, so it
+// happens with no account signed in too.
+NocatFarm.Core.UpdateCheck.Start(manager);
+
 
 // Only where there's a desktop: a server or a container has no browser, and the attempt is just a baffling error.
 if (global.OpenBrowserOnStart && (web != null) && Platform.HasDesktop) {
@@ -348,6 +355,9 @@ try {
 }
 
 Log.Info("shutting down...");
+
+// Closed straight after an update: that's somebody closing it, not the new version failing to start.
+NocatFarm.Core.SelfUpdate.ConfirmStarted();
 
 // Whatever notifications are still waiting go out first (a few seconds at most).
 await NocatFarm.Core.Notifier.StopAsync().ConfigureAwait(false);

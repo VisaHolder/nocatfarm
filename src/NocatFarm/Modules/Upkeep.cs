@@ -26,9 +26,6 @@ public sealed class Upkeep(Bot bot) : BotModule(bot) {
 					await Bot.Library.RefreshIfStaleAsync(TimeSpan.FromHours(6), ct).ConfigureAwait(false);
 					await Bot.Refunds.RefreshAsync(ct).ConfigureAwait(false);
 					await Bot.Inventory.RefreshIfStaleAsync(TimeSpan.FromHours(6), ct).ConfigureAwait(false);
-					await UpdateCheck.LookAsync(ct).ConfigureAwait(false);   // every few hours, whichever account gets there first
-					UpdateCheck.RemindIfDue();
-
 					// One queued key at a time, and only ONE account drives it - the queue is shared, so every
 					// account running this would be several accounts racing each other for the same key. The first
 					// account that's actually signed in: the first in the list being offline stalled the whole queue.

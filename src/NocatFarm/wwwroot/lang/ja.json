@@ -1020,8 +1020,6 @@
     "dropping a queued key - {0}  ({1} left)": "キューのキーを破棄します - {0}  (残り{1})",
     "giving up on a key after {0} tries - no account could activate it": "{0}回試してキーを諦めます - どのアカウントも有効化できませんでした",
     "hit {0} activations in {1}m - pausing so Steam doesn't start refusing": "{1}分で{0}件の有効化に達しました - Steamが拒否し始めないよう一時停止します",
-    "nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update ignore' stops the hourly reminders until the next launch": "nocat.farm {0} が公開されました - 現在は {1} です。{2}  -  'update accept' でインストールして再起動、'update ignore' で次回起動まで毎時のリマインダーを止めます",
-    "reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update ignore' stops these reminders until the next launch": "リマインダー: nocat.farm {0} が公開されています - 現在は {1} です。'update accept' でインストールして再起動、'update ignore' で次回起動までこのリマインダーを止めます",
     "update: downloading {0} ({1}MB)": "更新: {0}をダウンロード中 ({1}MB)",
     "proxy '{0}' isn't a usable address ({1}) - connecting directly instead": "プロキシ'{0}'は使用できないアドレスです ({1}) - 代わりに直接接続します",
     "game shares moved into the games list - now \"{0}\"": "ゲームの配分をゲーム一覧に移しました - 現在は\"{0}\"",
@@ -1342,7 +1340,6 @@
     "update: signing out {0} ({1} of {2}) - updating in {3}s": "アップデート: {0} をサインアウト中 ({2}件中{1}件目) - {3}秒後に更新します",
     "update: updating in {0}s": "アップデート: {0}秒後に更新します",
     "nocat.farm {0} is ready": "nocat.farm {0} が使えます",
-    "You have {0}. Type update accept in the nocat.farm window to install it.": "今は {0} です。nocat.farm のウィンドウで update accept と入力するとインストールします。",
     "discord: {0}": "discord: {0}",
     "Resting": "休憩中",
     "Farming cards · {0} left": "カード収集中 · 残り {0} 枚",
@@ -1421,7 +1418,6 @@
     "What Steam shows about this account's bans. nocat.farm checks every few hours and tells you when a new one appears. Games it is banned in are left out of trades; trading cards still trade.": "Steam に表示されているこのアカウントの BAN 情報。nocat.farm は数時間ごとに確認し、新しい BAN が出たらお知らせします。BAN されているゲームはトレードから除外されます。トレーディングカードは引き続きトレードされます。",
     "bans: {0}": "BAN: {0}",
     "no items": "なし",
-    "No more update reminders until the next launch. 'update' still checks.": "次回起動までアップデートのリマインダーは表示しません。'update' での確認は引き続きできます。",
     "No account has its authenticator in nocat.farm - add its maFile under config/authenticators to confirm from here.": "nocat.farm に認証アプリが入っているアカウントがありません - ここから承認するには、そのアカウントの maFile を config/authenticators に追加してください。",
     "{0}: couldn't read the confirmations - {1}": "{0}: 確認の一覧を読み込めませんでした - {1}",
     "{0}: nothing waiting to be confirmed": "{0}: 確認待ちのものはありません",
@@ -1456,8 +1452,6 @@
     "What's waiting to be confirmed": "確認待ちのもの",
     "Steam Guard codes": "Steam Guard コード",
     "{0} - {1} is out, send /update to see how to install it": "{0} - {1} が公開されました。/update を送るとインストール方法がわかります",
-    "reminder: nocat.farm {0} is out - you have {1}. 'update' says how to install it here; 'update ignore' stops these reminders until the next launch": "リマインダー: nocat.farm {0} が公開されています - 現在は {1} です。'update' でここでのインストール方法を表示、'update ignore' で次回起動までこのリマインダーを止めます",
-    "nocat.farm {0} is out - you have {1}. {2}  -  'update' says how to install it here; 'update ignore' stops the hourly reminders until the next launch": "nocat.farm {0} が公開されました - 現在は {1} です。{2}  -  'update' でここでのインストール方法を表示、'update ignore' で次回起動まで毎時のリマインダーを止めます",
     "dashboard: listening on {0} with NO password, so it only lets this machine itself in - nobody on another device (or outside Docker) can sign in. Set WebPassword, or NOCATFARM_WEB_PASSWORD in Docker": "ダッシュボード: {0} でパスワード「なし」で待ち受けているため、このマシン自身しか入れません - ほかのデバイス (または Docker の外) からは誰もサインインできません。WebPassword を設定するか、Docker なら NOCATFARM_WEB_PASSWORD を設定してください",
     "dashboard: listening on {0} inside a container, where nothing outside it can reach it - set NOCATFARM_WEB_HOST=0.0.0.0": "ダッシュボード: コンテナー内の {0} で待ち受けていますが、そこには外から何も届きません - NOCATFARM_WEB_HOST=0.0.0.0 を設定してください",
     "confirmed {0} from the Authenticator page: {1}": "認証アプリのページで {0} 件を承認しました: {1}",
@@ -1594,7 +1588,85 @@
     "achievement boost - {0} joins the games it plays, for about {1}": "実績狙い - {0} を遊ぶゲームに追加、約 {1}",
     "{0} is in its games - {1} of about {2} played": "{0} を遊ぶゲームに入れています - 約 {2} のうち {1} プレイ済み",
     "Discord closed the connection ({0}) - trying again in a minute": "Discord が接続を閉じました（{0}）- 1 分後に再試行します",
-    "Discord didn't show the card: {0}": "Discord がカードを表示しませんでした: {0}"
+    "Discord didn't show the card: {0}": "Discord がカードを表示しませんでした: {0}",
+    "installing nocat.farm {0} by itself - it's a quiet time (Update by itself)": "nocat.farm {0} を自動でインストール中 - 静かな時間帯です（自動アップデート）",
+    "{0} is out - you have {1}. It installs by itself tonight, or type update accept (on Telegram: /update accept) to install it now.": "{0} が出ました - 今は {1} です。今夜自動でインストールされます。今すぐなら update accept（Telegram では /update accept）と入力してください。",
+    "{0} is out - you have {1}. Type update accept in the nocat.farm window, or /update accept here, to install it.": "{0} が出ました - 今は {1} です。インストールするには nocat.farm のウィンドウで update accept、またはここで /update accept と入力してください。",
+    "{0} is out - you have {1}. Pull the new image and recreate the container to update.": "{0} が出ました - 今は {1} です。更新するには新しいイメージを取得してコンテナを作り直してください。",
+    "{0} is out - you have {1}. Download the new Linux zip from the releases page to update.": "{0} が出ました - 今は {1} です。更新するにはリリースページから新しい Linux 版の zip をダウンロードしてください。",
+    "Discord bot: not set up": "Discord ボット: 未設定",
+    "Discord bot: off (Take commands from Discord)": "Discord ボット: オフ(Discord からコマンドを受け付ける)",
+    "Discord bot: connecting...": "Discord ボット: 接続中...",
+    "Discord bot: {0}": "Discord ボット: {0}",
+    "Discord bot: online as {0}, connected to {1}": "Discord ボット: {0} としてオンライン、{1} に接続済み",
+    "Discord bot: online as {0} - press Connect Discord in Settings, Notifications to link your Discord account": "Discord ボット: {0} としてオンライン - Discord アカウントをつなぐには、設定の「通知」で「Discord を接続」を押してください",
+    "Run any console command, like pause kylro 30": "コンソールのコマンドを何でも実行(例: pause kylro 30)",
+    "The command, typed like in the window": "コマンド。ウィンドウと同じように入力",
+    "Connect your Discord account to nocat.farm": "Discord アカウントを nocat.farm に接続",
+    "The code Connect Discord shows in nocat.farm": "nocat.farm の「Discord を接続」に表示されるコード",
+    "discord bot: Discord asked for a reconnect": "Discord ボット: Discord から再接続を求められました",
+    "the token doesn't work - copy a new one from the Developer Portal (Bot, Reset Token)": "トークンが使えません - Developer Portal(Bot、Reset Token)で新しいトークンをコピーしてください",
+    "Discord refused the bot (code {0}) - check it in the Developer Portal": "Discord がボットを拒否しました(コード {0}) - Developer Portal で確認してください",
+    "discord bot: Discord closed the connection ({0})": "Discord ボット: Discord が接続を閉じました({0})",
+    "discord bot: Discord answered HTTP {0}": "Discord ボット: Discord の応答は HTTP {0}",
+    "Discord says the bot has connected too often today - it tries again in {0} minutes": "Discord によると、今日はボットの接続回数が多すぎます - {0} 分後にもう一度試します",
+    "discord bot: no answer to the last heartbeat - reconnecting": "Discord ボット: 前回のハートビートに応答がありません - 再接続します",
+    "Discord bot online as {0}": "Discord ボットが {0} としてオンライン",
+    "Discord bot: to connect it, press Connect Discord in Settings, Notifications and send /connect with the code to {0}": "Discord ボット: 接続するには、設定の「通知」で「Discord を接続」を押し、表示されたコードを付けて /connect を {0} に送信してください",
+    "Discord bot: couldn't add the / commands to a server - add the bot to it again with the invite link in Settings, Notifications": "Discord ボット: サーバーに / コマンドを追加できませんでした - 設定の「通知」にある招待リンクでボットをもう一度追加してください",
+    "discord bot: couldn't add the / commands (HTTP {0}): {1}": "Discord ボット: / コマンドを追加できませんでした(HTTP {0}): {1}",
+    "Not connected yet. In nocat.farm, open Settings, Notifications, press Connect Discord and send /connect with the code it shows.": "まだ接続されていません。nocat.farm で設定の「通知」を開き、「Discord を接続」を押して、表示されたコードを付けて /connect を送信してください。",
+    "discord bot: {0} isn't the connected Discord account - ignored": "Discord ボット: {0} は接続済みの Discord アカウントではありません - 無視しました",
+    "Only the owner of this nocat.farm can use its commands.": "この nocat.farm のコマンドを使えるのは持ち主だけです。",
+    "discord bot: a /connect with a wrong or old code from {0}": "Discord ボット: {0} から間違ったコードまたは古いコードで /connect がありました",
+    "That code doesn't match. In nocat.farm, press Connect Discord for a new one - each code works once, for {0} minutes.": "コードが一致しません。nocat.farm で「Discord を接続」を押して新しいコードを出してください - 各コードは {0} 分間、1回だけ使えます。",
+    "notifications: Discord connected - only {0} can use the bot's commands": "通知: Discord に接続しました - ボットのコマンドを使えるのは {0} だけです",
+    "Send /status for a summary, /help for the commands, or /nocat to run any console command.": "/status で概要、/help でコマンド一覧、/nocat でコンソールのコマンドを何でも実行できます。",
+    "That deletes the account and its saved login. Run {0} confirm to really do it.": "アカウントと保存されたログインが削除されます。本当に実行するには {0} confirm を実行してください。",
+    "That closes nocat.farm, and it can't be started again from Discord. Run {0} confirm to really do it.": "nocat.farm が終了し、Discord から再起動することはできません。本当に実行するには {0} confirm を実行してください。",
+    "{0} - {1} is out, run /update with accept": "{0} - {1} が公開されました。/update を accept 付きで実行してください",
+    "{0} - {1} is out, run /update to see how to install it": "{0} - {1} が公開されました。インストール方法は /update を実行して確認してください",
+    "Discord": "Discord",
+    "run any console command, like pause kylro 30": "コンソールのコマンドを何でも実行(例: pause kylro 30)",
+    "The others take what goes after them in args - /human args: week, /offers args: kylro.": "ほかのコマンドは、後に続く内容を args に入れます - /human args: week、/offers args: kylro。",
+    "Run any of these with /nocat. Only your connected Discord account is obeyed. exit and remove ask you to confirm first.": "どれも /nocat で実行できます。接続した自分の Discord アカウントだけを受け付けます。exit と remove は先に確認を求めます。",
+    "The Discord bot is off - turn on \"Take commands from Discord\" to use it.": "Discord ボットはオフです - 使うには「Discord からコマンドを受け付ける」をオンにしてください。",
+    "Add the bot to your server": "ボットをサーバーに追加",
+    "Connect Discord": "Discord を接続",
+    "Send {0} to your bot in Discord - the code works once, for {1} minutes.": "Discord でボットに {0} を送信してください - コードは {1} 分間、1回だけ使えます。",
+    "How to set up Discord commands (3 minutes)": "Discord コマンドの設定方法(3分)",
+    "Open the {0} and sign in with your Discord account.": "{0} を開き、Discord アカウントでログインします。",
+    "Press {0}, name it {1}, tick the box and press {2}.": "{0} を押し、名前を {1} にして、チェックボックスにチェックを入れて {2} を押します。",
+    "Open {0} on the left, press {1} and copy the token it shows.": "左の {0} を開き、{1} を押して表示されたトークンをコピーします。",
+    "Discord bot token": "Discord ボットのトークン",
+    "A few seconds later {0} shows up here. Open it and add the bot to a server you own - a new, empty one is fine.": "数秒後、ここに {0} が表示されます。開いて、自分が持っているサーバーにボットを追加します - 新しい空のサーバーでも大丈夫です。",
+    "Press {0} here. In Discord, type {1} and the code it shows - in the server, or in a private chat with the bot (click the bot in the member list and send it a message).": "ここで {0} を押します。Discord で {1} と表示されたコードを入力します - サーバーでも、ボットとの個人チャットでも使えます(メンバー一覧でボットをクリックしてメッセージを送ります)。",
+    "Done. Type {0} for a summary, {1} for every command, or {2} to run any console command.": "完了です。{0} で概要、{1} でコマンド一覧、{2} でコンソールのコマンドを何でも実行できます。",
+    "Keep the token private - anyone who has it can control your bot. Only your connected Discord account can use the commands, and in a server only you see the answers.": "トークンは他人に教えないでください。持っている人は誰でもボットを操作できます。コマンドを使えるのは接続した自分の Discord アカウントだけで、サーバーでは返事は自分にしか見えません。",
+    "update by itself: waiting - {0} has {1} trade offer(s) and {2} gift(s) still waiting their turn": "自動アップデート: 待機中 - {0} に順番待ちのトレードオファーが {1} 件、ギフトが {2} 件あります",
+    "Installing": "インストール",
+    "Install progress": "インストールの進み具合",
+    "Downloaded {0} ({1}MB) - installing it now. The accounts sign out one at a time; back in about a minute.": "{0} をダウンロードしました（{1}MB）- 今からインストールします。アカウントは 1 つずつサインアウトします。1 分ほどで戻ります。",
+    "Downloaded {0} ({1}MB) - installing it now, by itself. The accounts sign out one at a time; back in about a minute.": "{0} をダウンロードしました（{1}MB）- 今から自動でインストールします。アカウントは 1 つずつサインアウトします。1 分ほどで戻ります。",
+    "Install complete - now on {0} (was {1}).": "インストール完了 - 現在 {0}（以前は {1}）。",
+    "What's new:\n{0}": "新機能:\n{0}",
+    "update undone: {0} didn't start properly, so {1} was put back - nothing else was changed. {0} is skipped now; 'update accept' tries it again": "アップデートを元に戻しました: {0} が正しく起動しなかったため {1} に戻しました - ほかは何も変わっていません。{0} は今後スキップします。'update accept' で再試行できます",
+    "reminder: nocat.farm {0} is out - you have {1}. 'update' says how to install it here; 'update skip' skips this version": "リマインダー: nocat.farm {0} が出ました - 今は {1} です。ここでのインストール方法は 'update'、このバージョンを飛ばすなら 'update skip'",
+    "reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update skip' skips this version": "リマインダー: nocat.farm {0} が出ました - 今は {1} です。'update accept' でインストールして再起動、'update skip' でこのバージョンを飛ばします",
+    "nocat.farm {0} is out - you have {1}. {2}  -  'update' says how to install it here; 'update skip' skips this version": "nocat.farm {0} が出ました - 今は {1} です。{2}  -  ここでのインストール方法は 'update'、このバージョンを飛ばすなら 'update skip'",
+    "nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update skip' skips this version": "nocat.farm {0} が出ました - 今は {1} です。{2}  -  'update accept' でインストールして再起動、'update skip' でこのバージョンを飛ばします",
+    "Skipping {0} - no more reminders about it, and it won't install by itself. The next version after it is announced as usual; 'update accept' still installs {0}.": "{0} をスキップします - リマインダーは出ず、自動でもインストールされません。次のバージョンはいつも通りお知らせします。'update accept' なら {0} をインストールできます。",
+    "what's new in {0}: {1}": "{0} の新機能: {1}",
+    "(works once it's open to other devices)": "（ほかの機器に開放すると使えます）",
+    "Windows Firewall is blocking other devices - on the PC, open the dashboard's Open on your phone and press Allow through Windows Firewall.": "Windows ファイアウォールがほかの機器をブロックしています - PC でダッシュボードの「スマホで開く」を開き、「Windows ファイアウォールで許可」を押してください。",
+    "only from the PC nocat.farm runs on": "nocat.farm が動いている PC からのみ",
+    "Windows Firewall now lets other devices on your home network open the dashboard (port {0})": "Windows ファイアウォールが、家のネットワークのほかの機器からダッシュボードを開けるようにしました（ポート {0}）",
+    "Windows Firewall is blocking your phone": "Windows ファイアウォールがスマホをブロックしています",
+    "Your phone will just keep loading until Windows lets it in. This allows the dashboard only, only on home networks - Windows asks you to confirm.": "Windows が許可するまでスマホは読み込み中のままです。許可するのはダッシュボードだけ、家のネットワークだけです - Windows が確認を求めます。",
+    "Allow through Windows Firewall": "Windows ファイアウォールで許可",
+    "Press it on the PC nocat.farm runs on.": "nocat.farm が動いている PC で押してください。",
+    "Check the Windows prompt…": "Windows の確認画面を見てください…",
+    "Done - your phone can open it now.": "完了 - スマホで開けるようになりました。"
   },
   "settings": {
     "WebEnabled": {
@@ -1695,7 +1767,7 @@
     },
     "SendUpdates": {
       "label": "更新を送る",
-      "tip": "新しいバージョンが出たとき、更新が終わったとき、更新に失敗したときとその理由。"
+      "tip": "新しいバージョンが出たことと、その新機能。"
     },
     "SendDailySummary": {
       "label": "日次まとめを送る",
@@ -2109,12 +2181,12 @@
       "label": "インベントリの価値を算出する"
     },
     "CheckForUpdates": {
-      "tip": "数時間ごとに新しいバージョンを確認し、ログで知らせます。自分で何かをダウンロードしたりインストールしたりすることはありません。",
+      "tip": "新しいバージョンを確認し、ログ・Telegram・Discord で知らせます。オフにすると自動アップデートも止まります。",
       "label": "更新があれば知らせる"
     },
     "UpdateReminders": {
       "label": "1時間ごとに知らせる",
-      "tip": "新しいバージョンが出ているあいだ、1 時間ごとにログで知らせます。update accept と入力するとインストールし、update ignore と入力すると次の起動までリマインドを止めます。"
+      "tip": "新しいバージョンがある間、毎時ログで知らせます。update accept でインストール、update skip でそのバージョンを飛ばします。"
     },
     "BreakMinMinutes": {
       "label": "最短の休憩",
@@ -2514,6 +2586,43 @@
     "BoostWeight": {
       "label": "人間モード: 狙うゲームの重み",
       "tip": "人間モードのみ。実績を狙うゲームが遊ぶゲームに加わり、これはその出る頻度です。「ゲームと頻度」と同じ重みです。休憩や就寝のある普通のセッションで遊び、他のゲームを途中で打ち切ることはありません。"
+    },
+    "AutoUpdate": {
+      "label": "自動アップデート",
+      "tip": "新しいバージョンが出たときの動き。知らせる: ログ・Telegram・Discord で知らせ、update accept で入れます。夜にインストール: 下の時間帯に自動で入れます。人間モードのアカウントが起きておらず、誰もアカウントでプレイしていないときだけで、前後に知らせます。Windows のみ。",
+      "choices": "0 知らせる | 1 夜にインストール"
+    },
+    "AutoUpdateFromHour": {
+      "label": "...の間（開始）",
+      "tip": "自動でインストールしてよい最も早い時刻（24 時間表記）。"
+    },
+    "AutoUpdateUntilHour": {
+      "label": "...の間（終了）",
+      "tip": "その夜の試行をやめる時刻。開始より早い時刻にすると日付をまたぐので、23 から 5 も使えます。"
+    },
+    "AutoUpdateWaitHours": {
+      "label": "リリース後の待ち時間",
+      "tip": "新しいバージョンが出てから自動でインストールするまで待つ時間。問題のあるリリースを先に直せるようにするためです。"
+    },
+    "UpdateCheckHours": {
+      "label": "アップデートを確認する間隔",
+      "tip": "新しいバージョンを確認する間隔（時間）。nocat.farm の起動時と、update と入力したときにも確認します。"
+    },
+    "DiscordBotToken": {
+      "label": "Discord ボットのトークン",
+      "tip": "/status など Discord からのコマンド用です。Discord ボットのトークンを貼り付けて(ボットの作り方は上のガイドにあります)「保存」を押し、「Discord を接続」を押して、表示されたコードを付けて /connect をボットに送信してください。通知には不要です - 通知は Webhook を使います。"
+    },
+    "DiscordCommands": {
+      "label": "Discord からコマンドを受け付ける",
+      "tip": "Discord から / コマンドで nocat.farm を操作できます。/status で概要、/nocat でコンソールのコマンドを何でも実行、/cards などの普段使うコマンドも使えます。ボットとの個人チャットでも自分のサーバーでも使えます。接続した自分の Discord アカウントだけを受け付けます。オフにするとボットはオフラインのままです。"
+    },
+    "DiscordOwnerId": {
+      "label": "Discord の持ち主",
+      "tip": "ボットが従う唯一の Discord アカウントです。「Discord を接続」のコードを付けて /connect を送信すると自動で入ります。別のアカウントをつなぐには空にしてください。"
+    },
+    "SendInstalls": {
+      "label": "インストールの進み具合を送る",
+      "tip": "アップデートのインストール時: ダウンロード完了とインストール開始、次に新しいバージョンと新機能つきで完了 - または失敗・取り消しとその理由。オンにしない限りオフです。"
     }
   }
 }

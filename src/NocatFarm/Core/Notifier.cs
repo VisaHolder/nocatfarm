@@ -7,7 +7,8 @@ using NocatFarm.Config;
 namespace NocatFarm.Core;
 
 /// <summary>
-/// Sends the events you picked to a Discord channel (a webhook) and/or a Telegram chat (your own bot).
+/// Sends the events you picked to a Discord channel (a webhook) and/or a Telegram chat (your own bot). Commands come
+/// in from Telegram (TelegramCommands.cs) and from your own Discord bot (DiscordBot.cs).
 ///
 /// It listens to the same events the tray pop-ups do (<see cref="Log.Published"/>), each tagged with what it's
 /// about, and keeps only the kinds switched on under Settings, Notifications. Busy moments are bundled: events land
@@ -61,6 +62,7 @@ public static partial class Notifier {
 		_stop = new CancellationTokenSource();
 		_loop = Task.Run(() => LoopAsync(_stop.Token));
 		_poll = Task.Run(() => PollLoopAsync(_stop.Token));
+		_discord = Task.Run(() => DiscordLoopAsync(_stop.Token));
 	}
 
 	/// <summary>On the way out: whatever is still waiting goes now (a few seconds at most), so the last events aren't lost.</summary>
@@ -83,6 +85,7 @@ public static partial class Notifier {
 		Topic.Trades => G.SendTrades,
 		Topic.Problems => G.SendProblems,
 		Topic.Updates => G.SendUpdates,
+		Topic.Installs => G.SendInstalls,
 		Topic.Summary => G.SendDailySummary,
 		Topic.Social => G.SendComments,
 		Topic.Achievements => G.SendAchievements,
@@ -155,6 +158,7 @@ public static partial class Notifier {
 		Topic.Trades => (new Said("Trades"), 0x3498DB),
 		Topic.Problems => (new Said("Needs you"), 0xE74C3C),
 		Topic.Updates => (new Said("Update"), 0x8B5CF6),
+		Topic.Installs => (new Said("Installing"), 0x8B5CF6),
 		Topic.Summary => (new Said("Daily summary"), 0xC8C8C8),
 		Topic.Social => (new Said("Profile comment"), 0x1ABC9C),
 		Topic.Achievements => (new Said("Achievements"), 0xF1C40F),
@@ -366,49 +370,6 @@ public static partial class Notifier {
 				Log.Info(new Said("notifications: Telegram bot {0} found - to connect, open {1} and press Start (or press Connect Telegram in Settings, Notifications)", _botName, link), "telegram");
 			}
 		}
-	}
-
-	/// <summary>
-	/// 'dashboard send': the dashboard's links to Discord and Telegram. A Discord webhook only posts - it can't be asked
-	/// for anything - so this is how the links reach a Discord channel.
-	/// </summary>
-	public static async Task<List<string>> SendDashboardLinksAsync(CancellationToken ct = default) {
-		List<string> result = [];
-
-		if (!HasDiscord && !HasTelegramToken) {
-			result.Add(new Said("nothing is set up yet - paste a Discord webhook link or a Telegram bot token first").ToString());
-
-			return result;
-		}
-
-		DashboardLinks.Links l = DashboardLinks.For(G);
-
-		if (HasDiscord) {
-			List<string> lines = [
-				l.OpenAtHome && (l.Home.Count > 0)
-					? $"{new Said("On your phone, on the same wifi:")} {l.Home[0]}"
-					: new Said("Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.").ToString(),
-				l.Outside != null ? $"{new Said("From anywhere:")} {l.Outside}" : new Said("From outside your home: not set up (Public address, in the same place).").ToString(),
-				$"{new Said("On the PC itself:")} {l.Local}"
-			];
-
-			(bool ok, string why) = await PostDiscordAsync(new {
-				username = "nocat.farm",
-				avatar_url = Avatar,
-				embeds = new[] {
-					new { title = new Said("Open the dashboard on your phone").ToString(), description = string.Join("\n", lines), color = 0x8B5CF6,
-						footer = new { text = "nocat.farm " + Build.Version }, timestamp = DateTime.UtcNow.ToString("o") }
-				}
-			}, ct).ConfigureAwait(false);
-			result.Add(ok ? new Said("Discord: sent - check the channel").ToString() : new Said("Discord: didn't work - {0}", why).ToString());
-		}
-
-		if (HasTelegramToken && (G.TelegramChatId.Length > 0)) {
-			(bool ok, string why) = await PostTelegramAsync(DashboardHtml(), ct).ConfigureAwait(false);
-			result.Add(ok ? new Said("Telegram: sent - check the chat").ToString() : new Said("Telegram: didn't work - {0}", why).ToString());
-		}
-
-		return result;
 	}
 
 	/// <summary>

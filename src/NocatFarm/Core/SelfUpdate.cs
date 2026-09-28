@@ -6,15 +6,19 @@ using NocatFarm.Config;
 namespace NocatFarm.Core;
 
 /// <summary>
-/// Replacing this build with the newest release, only ever because somebody asked.
+/// Replacing this build with the newest release - when somebody asks, or at night if "Update by itself" says so.
 /// </summary>
 /// <remarks>
 /// <see cref="UpdateCheck"/> looks and tells; this one acts. Deliberately two separate things, because the
 /// decision to swap the binary belongs to whoever runs it. Plenty of people never want to update at all - a
 /// working setup that farms all night is worth more to them than whatever is in the release notes, and an
-/// update that lands unasked mid-session is how a night gets lost. So there is no schedule, no prompt that
-/// updates if you ignore it, and no setting that turns updating on: it happens when the command is typed or
-/// the button is pressed, and never otherwise.
+/// update that lands unasked mid-session is how a night gets lost. So it happens when the command is typed or
+/// the button is pressed - or, only if "Update by itself" is set to install at night, while every account is
+/// asleep (see UpdateCheck.AutoInstallIfDue). There is no prompt that updates if you ignore it.
+///
+/// A new version that won't start is put back: the swap script waits for the new copy to say it came up fine
+/// (NF_OK), and if that doesn't happen within three minutes - or it crashes first - the old files go back, the old
+/// version starts again, and it says so and skips that version.
 ///
 /// Windows will not let a running process overwrite its own exe, so the swap is done by a small script that
 /// outlives us: wait for this PID to go, copy the staged files over the top, start the new one, delete itself.
@@ -94,7 +98,7 @@ public static class SelfUpdate {
 	/// update can go wrong goes through here, so none of them is a yellow line that looks like a note, or silence.
 	/// </summary>
 	private static string Fail(Said why) {
-		Log.Error(why, topic: Topic.Updates);
+		Log.Error(why, topic: Topic.Installs);
 		LastFailure = why.ToString();
 
 		return LastFailure;
@@ -116,15 +120,9 @@ public static class SelfUpdate {
 	/// </summary>
 	public static void AnnounceIfJustUpdated() {
 		try {
-			if (!File.Exists(NotePath)) {
-				return;
-			}
-
-			string[] p = File.ReadAllText(NotePath).Split('|');
-			File.Delete(NotePath);
-
 			// The swap script leaves robocopy's exit code behind when it couldn't copy the new files in (and then
-			// starts this old version back up), so the reason can be said rather than guessed.
+			// starts this old version back up), so the reason can be said rather than guessed - or "crashed <tag>"
+			// when the new version was put back because it didn't start.
 			string? swapCode = null;
 
 			if (File.Exists(SwapFailedPath)) {
@@ -132,15 +130,56 @@ public static class SelfUpdate {
 				File.Delete(SwapFailedPath);
 			}
 
+			if (swapCode?.StartsWith("crashed", StringComparison.Ordinal) == true) {
+				string bad = swapCode[7..].Trim();
+				TryDelete(NotePath);
+				TryDelete(NotesPath);
+
+				// Skipped, or "Update by itself" would install the same broken version again the next night.
+				if (bad.Length > 0) {
+					UpdateCheck.Skipped = bad;
+				}
+
+				Fail(new Said("update undone: {0} didn't start properly, so {1} was put back - nothing else was changed. {0} is skipped now; 'update accept' tries it again", bad, Build.Version));
+
+				return;
+			}
+
+			// Started by the swap script to be tried out: say "ok" once it has run half a minute, whatever the note says.
+			// Tied to the note, a note that couldn't be written would have had a good update put back.
+			VerifyIfAsked();
+
+			if (!File.Exists(NotePath)) {
+				return;
+			}
+
+			string[] p = File.ReadAllText(NotePath).Split('|');
+			File.Delete(NotePath);
+
 			// A note from long ago is some other start's business (an update that was interrupted, say).
 			if ((p.Length < 5) || !long.TryParse(p[4], out long ticks) || (DateTime.UtcNow - new DateTime(ticks, DateTimeKind.Utc) > TimeSpan.FromHours(1))) {
 				return;
 			}
 
 			if (p[1] == Build.Version) {
-				Said done = new("update: done - now on {1} (was {0}) · downloaded {2}MB in {3}s", p[0], p[1], p[2], p[3]);
-				Log.Good(done);
-				Log.Publish(Topic.Updates, "nocat.farm", done);
+				Log.Good(new Said("update: done - now on {1} (was {0}) · downloaded {2}MB in {3}s", p[0], p[1], p[2], p[3]));
+
+				string notes = "";
+
+				try {
+					notes = File.Exists(NotesPath) ? File.ReadAllText(NotesPath).Trim() : "";
+				} catch {
+					// the message goes without them
+				}
+
+				TryDelete(NotesPath);
+
+				if (notes.Length > 0) {
+					// One line in the log: "what's new in 1.4.6: Discord commands · Update by itself".
+					Log.Info(new Said("what's new in {0}: {1}", p[1], string.Join(" · ", notes.Split('\n').Select(static l => l.TrimStart('-', ' ')).Where(static l => l.Length > 0))));
+				}
+
+				ConfirmWhenSettled(p[0], p[1], notes);
 			} else if (swapCode != null) {
 				// The swap put every file back the way it was before starting this version again, so "nothing was
 				// changed" is true - see SwapScript.
@@ -156,6 +195,74 @@ public static class SelfUpdate {
 			}
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't read the update note: {0}", e.Message));
+		}
+	}
+
+	/// <summary>The first lines of the new version's release notes, left by the old version for the new one to say.</summary>
+	private static string NotesPath => Path.Combine(ConfigStore.ConfigDir, "state", "update-notes.txt");
+
+	/// <summary>The file the swap script is waiting for, while this start is the new version being tried out.</summary>
+	private static string? _okFile;
+
+	private static void TryDelete(string path) {
+		try {
+			File.Delete(path);
+		} catch {
+			// gone or not, nothing depends on it
+		}
+	}
+
+	/// <summary>
+	/// The new version tells the swap script it came up fine - after half a minute of running, so a crash on the
+	/// way up is caught - and only then is "install complete" sent. If this process dies first, the script puts the
+	/// old version back (see SwapScript). Also called on a normal exit, so closing it straight after an update
+	/// isn't mistaken for a crash.
+	/// </summary>
+	private static void VerifyIfAsked() {
+		string? ok = Environment.GetEnvironmentVariable("NF_OK");
+
+		if (string.IsNullOrEmpty(ok) || !Directory.Exists(Path.GetDirectoryName(ok))) {
+			return;
+		}
+
+		_okFile = ok;
+
+		_ = Task.Run(async () => {
+			await Task.Delay(Settle).ConfigureAwait(false);
+			ConfirmStarted();
+		});
+	}
+
+	/// <summary>How long the new version runs before it says it's fine.</summary>
+	private static readonly TimeSpan Settle = TimeSpan.FromSeconds(30);
+
+	/// <summary>"Install complete", once the new version has run long enough to count as started.</summary>
+	private static void ConfirmWhenSettled(string from, string to, string notes) {
+		_ = Task.Run(async () => {
+			await Task.Delay(Settle).ConfigureAwait(false);
+
+			Said done = new Said("Install complete - now on {0} (was {1}).", to, from);
+			Log.Publish(Topic.Installs, "nocat.farm", notes.Length > 0 ? new Said("{0}\n\n{1}", done, new Said("What's new:\n{0}", notes)) : done);
+		});
+	}
+
+	/// <summary>Tell the swap script this version is fine. Once; nothing to do when this start wasn't an update.</summary>
+	public static void ConfirmStarted() => Mark("ok");
+
+	/// <summary>A crash while the new version is being tried out: the swap script puts the old one back straight away.</summary>
+	public static void ReportCrashed() => Mark("crashed");
+
+	private static void Mark(string what) {
+		string? ok = Interlocked.Exchange(ref _okFile, null);
+
+		if (ok == null) {
+			return;
+		}
+
+		try {
+			File.WriteAllText(ok, what);
+		} catch {
+			// the script's own time limit covers it
 		}
 	}
 
@@ -232,7 +339,8 @@ public static class SelfUpdate {
 	/// Returns a message to print. On success it does not return in any meaningful sense - the app is asked to
 	/// shut down and the script takes over - so the caller should treat a null return as "we're going down".
 	/// </summary>
-	public static async Task<string?> ApplyAsync(CancellationToken ct) {
+	/// <param name="byItself">"Update by itself" started it, at night - the message says so.</param>
+	public static async Task<string?> ApplyAsync(CancellationToken ct, bool byItself = false) {
 		if (Busy) {
 			return "an update is already downloading - give it a minute";
 		}
@@ -264,6 +372,7 @@ public static class SelfUpdate {
 			JsonElement root = doc.RootElement;
 
 			string tag = root.TryGetProperty("tag_name", out JsonElement t) ? t.GetString() ?? "" : "";
+			string body = root.TryGetProperty("body", out JsonElement nb) ? nb.GetString() ?? "" : "";
 
 			if (tag.Length == 0) {
 				return Fail(new Said("update failed: GitHub didn't say which release is newest - try again in a few minutes. Nothing was changed"));
@@ -395,6 +504,7 @@ public static class SelfUpdate {
 				Directory.CreateDirectory(Path.GetDirectoryName(NotePath)!);
 				AtomicFile.Write(NotePath, string.Join('|', Build.Version, tag.TrimStart('v', 'V'), got / 1048576,
 					(int) Math.Max(1, (DateTime.UtcNow - started).TotalSeconds), DateTime.UtcNow.Ticks));
+				AtomicFile.Write(NotesPath, UpdateCheck.Highlights(body));
 			} catch {
 				// only the announcement is lost
 			}
@@ -406,7 +516,12 @@ public static class SelfUpdate {
 			// The safety copy: only the files the update is about to replace. Copying the whole install folder
 			// meant, for somebody who unpacked the zip into Downloads, copying all of Downloads. Done here rather
 			// than in the script, so a copy that can't be made stops the update while nothing has changed yet.
+			//
+			// And the list of files the new version ADDS, so putting the old version back can take them away again: left
+			// behind, a new release's files can break the old one (an extra runtime file makes it look for the wrong .NET).
 			try {
+				List<string> added = [];
+
 				foreach (string file in Directory.EnumerateFiles(payload, "*", SearchOption.AllDirectories)) {
 					string rel = Path.GetRelativePath(payload, file);
 					string current = Path.Combine(here, rel);
@@ -414,13 +529,22 @@ public static class SelfUpdate {
 					if (File.Exists(current)) {
 						Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(backup, rel))!);
 						File.Copy(current, Path.Combine(backup, rel), true);
+					} else {
+						added.Add(rel);
 					}
 				}
+
+				// Plain ASCII for cmd - the release's own file names, which are ASCII.
+				File.WriteAllLines(Path.Combine(work, "added.txt"), added.Where(static r => r.All(static c => c < 128) && !r.Contains('"')));
 			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 				return Fail(new Said("update failed: couldn't make a safety copy of the current version ({0}). Nothing was changed", e.Message));
 			}
 
 			await File.WriteAllTextAsync(script, SwapScript(Environment.ProcessId), ct).ConfigureAwait(false);
+
+			Log.Publish(Topic.Installs, "nocat.farm", byItself
+				? new Said("Downloaded {0} ({1}MB) - installing it now, by itself. The accounts sign out one at a time; back in about a minute.", tag, got / 1048576)
+				: new Said("Downloaded {0} ({1}MB) - installing it now. The accounts sign out one at a time; back in about a minute.", tag, got / 1048576));
 
 			await SignOutOneByOneAsync(tag, ct).ConfigureAwait(false);
 
@@ -446,6 +570,8 @@ public static class SelfUpdate {
 			swap.Environment["NF_BACKUP"] = backup;
 			swap.Environment["NF_FAIL"] = SwapFailedPath;
 			swap.Environment["NF_ARGS"] = RelaunchArgs();
+			swap.Environment["NF_OK"] = Path.Combine(work, "started.txt");
+			swap.Environment["NF_TAG"] = tag.TrimStart('v', 'V');
 			Process.Start(swap);
 
 			Commands.RequestExit();
@@ -478,6 +604,12 @@ public static class SelfUpdate {
 	/// NF_FAIL), and NF_ARGS carries the command line nocat.farm was started with, so every restart - the new version
 	/// or the old one put back - comes up with the same --path, --no-gui and so on. The script itself is plain ASCII.
 	/// The safety copy is made by the app before this runs (see ApplyAsync).
+	///
+	/// After starting the new version it waits up to three minutes for it to write "ok" to NF_OK (it does, half a
+	/// minute after starting - see ConfirmWhenSettled). "crashed" there, or nothing by then, and the new copy is
+	/// stopped, the safety copy goes back, the files the new version added are deleted (added.txt), "crashed &lt;tag&gt;"
+	/// is left in NF_FAIL, and the old version starts.
+	/// NF_OK lives in the work folder, which is removed once it's all over - so a later crash has nowhere to write.
 	/// </remarks>
 	private static string SwapScript(int pid) =>
 		$"""
@@ -503,6 +635,27 @@ public static class SelfUpdate {
 		)
 		echo Starting the new version...
 		start "" /D "%NF_HERE%" "%NF_HERE%\nocatFarm.exe" %NF_ARGS%
+		rem Wait for the new version to say it came up fine: "ok" within three minutes, or it goes back.
+		set /a waited=0
+		:verify
+		if exist "%NF_OK%" goto verified
+		if %waited% GEQ 180 goto undo
+		rem ping, not timeout: timeout refuses to run without a console to read keys from, and the wait would be zero.
+		ping -n 3 127.0.0.1 >nul
+		set /a waited+=2
+		goto verify
+		:verified
+		findstr /b "crashed" "%NF_OK%" >nul && goto undo
+		goto finish
+		:undo
+		echo The new version didn't start properly - putting the old one back...
+		powershell -NoProfile -Command "Get-Process nocatFarm -ErrorAction SilentlyContinue | Where-Object Path -eq (Join-Path $env:NF_HERE 'nocatFarm.exe') | Stop-Process -Force" >nul 2>&1
+		ping -n 4 127.0.0.1 >nul
+		robocopy "%NF_BACKUP%" "%NF_HERE%" /E /R:5 /W:2 /NFL /NDL /NJH /NJS >nul
+		if exist "%NF_WORK%\added.txt" for /f "usebackq delims=" %%f in ("%NF_WORK%\added.txt") do del /f /q "%NF_HERE%\%%f" >nul 2>&1
+		echo crashed %NF_TAG%>"%NF_FAIL%"
+		start "" /D "%NF_HERE%" "%NF_HERE%\nocatFarm.exe" %NF_ARGS%
+		:finish
 		rem Remove the staging folder, then this script, from a directory we are not standing in.
 		cd /d "%TEMP%"
 		rmdir /s /q "%NF_WORK%" >nul 2>&1

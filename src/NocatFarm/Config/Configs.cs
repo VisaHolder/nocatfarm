@@ -129,6 +129,15 @@ public sealed class GlobalConfig {
 	/// <summary>Take commands from the connected Telegram chat - /status, /console and every console command.</summary>
 	public bool TelegramCommands { get; set; } = true;
 
+	/// <summary>A Discord bot token from the Developer Portal, for slash commands (Core/DiscordBot.cs). Encrypted on disk.</summary>
+	public string DiscordBotToken { get; set; } = "";
+
+	/// <summary>Take slash commands from Discord - in a private chat with the bot or in a server it's in.</summary>
+	public bool DiscordCommands { get; set; } = true;
+
+	/// <summary>The one Discord user the bot obeys - filled in by /connect with the code the dashboard shows.</summary>
+	public string DiscordOwnerId { get; set; } = "";
+
 	/// <summary>"Playing nocat.farm" on your Discord profile while it's open.</summary>
 	public bool DiscordPresence { get; set; }
 
@@ -162,6 +171,9 @@ public sealed class GlobalConfig {
 	public bool SendTrades { get; set; } = true;
 	public bool SendProblems { get; set; } = true;
 	public bool SendUpdates { get; set; } = true;
+
+	/// <summary>Off by default: downloaded and installing, installed, failed or undone.</summary>
+	public bool SendInstalls { get; set; }
 	public bool SendDailySummary { get; set; } = true;
 	public bool SendComments { get; set; }
 	public bool SendAchievements { get; set; }
@@ -219,6 +231,17 @@ public sealed class GlobalConfig {
 
 	public bool CheckForUpdates { get; set; } = true;
 	public bool UpdateReminders { get; set; } = true;
+
+	public int UpdateCheckHours { get; set; } = 2;
+
+	/// <summary>0 = say a new version is out; 1 = install it by itself at a quiet time (see UpdateCheck.AutoInstallIfDue).</summary>
+	public int AutoUpdate { get; set; }
+
+	public int AutoUpdateFromHour { get; set; } = 3;
+
+	public int AutoUpdateUntilHour { get; set; } = 6;
+
+	public int AutoUpdateWaitHours { get; set; } = 2;
 
 	/// <summary>Whether to load DLLs from plugins/. Off until somebody decides otherwise - see PluginHost.</summary>
 	public bool PluginsEnabled { get; set; }
@@ -603,6 +626,7 @@ public static class ConfigStore {
 			GlobalConfig loaded = JsonSerializer.Deserialize<GlobalConfig>(File.ReadAllText(GlobalPath), Json) ?? new GlobalConfig();
 			loaded.DiscordWebhookUrl = Secrets.Unprotect(loaded.DiscordWebhookUrl);
 			loaded.TelegramBotToken = Secrets.Unprotect(loaded.TelegramBotToken);
+			loaded.DiscordBotToken = Secrets.Unprotect(loaded.DiscordBotToken);
 
 			// Unprotect hands plain text straight back, so a file from before these were encrypted - or one typed
 			// in by hand - reads exactly as it always did, and is encrypted on the next save.
@@ -654,10 +678,11 @@ public static class ConfigStore {
 				Directory.CreateDirectory(ConfigDir);
 
 				// A copy with the notification secrets encrypted - the live config keeps them readable. Either one
-				// can post as you (the webhook) or run your bot (the token), so neither sits in the file in the clear.
+				// can post as you (the webhook) or run your bot (the tokens), so none sits in the file in the clear.
 				GlobalConfig onDisk = JsonSerializer.Deserialize<GlobalConfig>(JsonSerializer.Serialize(cfg, Json), Json)!;
 				onDisk.DiscordWebhookUrl = Secrets.Protect(cfg.DiscordWebhookUrl, "global");
 				onDisk.TelegramBotToken = Secrets.Protect(cfg.TelegramBotToken, "global");
+				onDisk.DiscordBotToken = Secrets.Protect(cfg.DiscordBotToken, "global");
 
 				// The same for the dashboard password, the rep4rep token and the proxy password - all three are
 				// secrets settings, and they were the only ones still written out in the clear.

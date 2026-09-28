@@ -9,7 +9,7 @@ public enum NotifyKind { Earning, Social, Problem, Trade }
 /// What an event is about, finer than <see cref="NotifyKind"/>: the Discord and Telegram notifications let people
 /// pick exactly which of these they want sent.
 /// </summary>
-public enum Topic { Cards, FreeStuff, Trades, Achievements, Rep4Rep, Social, Problems, Updates, Summary }
+public enum Topic { Cards, FreeStuff, Trades, Achievements, Rep4Rep, Social, Problems, Updates, Summary, Installs }
 
 /// <summary>
 /// Console + file logging, and a ring buffer the dashboard reads so the browser shows the same stream you see
@@ -30,8 +30,12 @@ public static class Log {
 	/// its own past would be worth less than one that did not.
 	/// </remarks>
 	public sealed record Entry(long Seq, DateTime When, string Level, string Source, Core.Said Said) {
-		/// <summary>The line in whatever language is selected right now.</summary>
-		public string Text => Said.ToString();
+		/// <summary>
+		/// The line in whatever language is selected right now - always ONE line. A line break inside it took more
+		/// rows than the live board had counted, so every redraw scrolled and the header repeated down the screen,
+		/// and the log file (one entry per line) read it as two entries.
+		/// </summary>
+		public string Text => Said.ToString().ReplaceLineEndings(" ");
 	}
 
 	private const int RingSize = 1000;

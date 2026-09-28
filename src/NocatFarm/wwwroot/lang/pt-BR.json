@@ -1020,8 +1020,6 @@
     "dropping a queued key - {0}  ({1} left)": "descartando uma chave da fila - {0}  ({1} restantes)",
     "giving up on a key after {0} tries - no account could activate it": "desistindo de uma chave após {0} tentativas - nenhuma conta conseguiu ativá-la",
     "hit {0} activations in {1}m - pausing so Steam doesn't start refusing": "atingidas {0} ativações em {1}m - pausando para a Steam não começar a recusar",
-    "nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update ignore' stops the hourly reminders until the next launch": "nocat.farm {0} saiu - você tem a {1}. {2}  -  'update accept' instala e reinicia; 'update ignore' para os lembretes de hora em hora até a próxima vez que abrir",
-    "reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update ignore' stops these reminders until the next launch": "lembrete: nocat.farm {0} saiu - você tem a {1}. 'update accept' instala e reinicia; 'update ignore' para estes lembretes até a próxima vez que abrir",
     "update: downloading {0} ({1}MB)": "atualização: baixando {0} ({1}MB)",
     "proxy '{0}' isn't a usable address ({1}) - connecting directly instead": "o proxy '{0}' não é um endereço utilizável ({1}) - conectando diretamente",
     "game shares moved into the games list - now \"{0}\"": "as parcelas de jogos foram para a lista de jogos - agora \"{0}\"",
@@ -1342,7 +1340,6 @@
     "update: signing out {0} ({1} of {2}) - updating in {3}s": "atualização: saindo de {0} ({1} de {2}) - atualizando em {3}s",
     "update: updating in {0}s": "atualização: atualizando em {0}s",
     "nocat.farm {0} is ready": "nocat.farm {0} está pronto",
-    "You have {0}. Type update accept in the nocat.farm window to install it.": "Você tem a {0}. Digite update accept na janela do nocat.farm para instalar.",
     "discord: {0}": "discord: {0}",
     "Resting": "Descansando",
     "Farming cards · {0} left": "Farmando cartas · faltam {0}",
@@ -1421,7 +1418,6 @@
     "What Steam shows about this account's bans. nocat.farm checks every few hours and tells you when a new one appears. Games it is banned in are left out of trades; trading cards still trade.": "O que a Steam mostra sobre os banimentos desta conta. O nocat.farm verifica a cada algumas horas e te avisa quando aparece um novo. Jogos em que ela está banida ficam de fora das trocas; as cartas colecionáveis continuam sendo trocadas.",
     "bans: {0}": "banimentos: {0}",
     "no items": "nada",
-    "No more update reminders until the next launch. 'update' still checks.": "Sem mais lembretes de atualização até a próxima vez que abrir. 'update' continua verificando.",
     "No account has its authenticator in nocat.farm - add its maFile under config/authenticators to confirm from here.": "Nenhuma conta tem o autenticador no nocat.farm - adicione o maFile dela em config/authenticators para confirmar daqui.",
     "{0}: couldn't read the confirmations - {1}": "{0}: não foi possível ler as confirmações - {1}",
     "{0}: nothing waiting to be confirmed": "{0}: nada esperando confirmação",
@@ -1456,8 +1452,6 @@
     "What's waiting to be confirmed": "O que está esperando confirmação",
     "Steam Guard codes": "Códigos do Steam Guard",
     "{0} - {1} is out, send /update to see how to install it": "{0} - saiu a {1}, envie /update para ver como instalar",
-    "reminder: nocat.farm {0} is out - you have {1}. 'update' says how to install it here; 'update ignore' stops these reminders until the next launch": "lembrete: nocat.farm {0} saiu - você tem a {1}. 'update' diz como instalar aqui; 'update ignore' para estes lembretes até a próxima vez que abrir",
-    "nocat.farm {0} is out - you have {1}. {2}  -  'update' says how to install it here; 'update ignore' stops the hourly reminders until the next launch": "nocat.farm {0} saiu - você tem a {1}. {2}  -  'update' diz como instalar aqui; 'update ignore' para os lembretes de hora em hora até a próxima vez que abrir",
     "dashboard: listening on {0} with NO password, so it only lets this machine itself in - nobody on another device (or outside Docker) can sign in. Set WebPassword, or NOCATFARM_WEB_PASSWORD in Docker": "painel: escutando em {0} SEM senha, então só deixa entrar esta própria máquina - ninguém em outro dispositivo (ou fora do Docker) consegue entrar. Defina WebPassword, ou NOCATFARM_WEB_PASSWORD no Docker",
     "dashboard: listening on {0} inside a container, where nothing outside it can reach it - set NOCATFARM_WEB_HOST=0.0.0.0": "painel: escutando em {0} dentro de um contêiner, onde nada de fora consegue alcançá-lo - defina NOCATFARM_WEB_HOST=0.0.0.0",
     "confirmed {0} from the Authenticator page: {1}": "{0} confirmada(s) na página do Autenticador: {1}",
@@ -1594,7 +1588,85 @@
     "achievement boost - {0} joins the games it plays, for about {1}": "caça de conquistas - {0} entra nos jogos que ele joga, por cerca de {1}",
     "{0} is in its games - {1} of about {2} played": "{0} está entre os jogos dele - {1} de cerca de {2} jogadas",
     "Discord closed the connection ({0}) - trying again in a minute": "O Discord fechou a conexão ({0}) - tentando de novo em um minuto",
-    "Discord didn't show the card: {0}": "O Discord não mostrou o card: {0}"
+    "Discord didn't show the card: {0}": "O Discord não mostrou o card: {0}",
+    "installing nocat.farm {0} by itself - it's a quiet time (Update by itself)": "instalando o nocat.farm {0} sozinho - é um horário tranquilo (Atualizar sozinho)",
+    "{0} is out - you have {1}. It installs by itself tonight, or type update accept (on Telegram: /update accept) to install it now.": "Saiu a {0} - você tem a {1}. Ela se instala sozinha hoje à noite, ou digite update accept (no Telegram: /update accept) para instalar agora.",
+    "{0} is out - you have {1}. Type update accept in the nocat.farm window, or /update accept here, to install it.": "Saiu a {0} - você tem a {1}. Digite update accept na janela do nocat.farm, ou /update accept aqui, para instalar.",
+    "{0} is out - you have {1}. Pull the new image and recreate the container to update.": "Saiu a {0} - você tem a {1}. Baixe a nova imagem e recrie o contêiner para atualizar.",
+    "{0} is out - you have {1}. Download the new Linux zip from the releases page to update.": "Saiu a {0} - você tem a {1}. Baixe o novo zip para Linux na página de versões para atualizar.",
+    "Discord bot: not set up": "Bot do Discord: não configurado",
+    "Discord bot: off (Take commands from Discord)": "Bot do Discord: desligado (Aceitar comandos pelo Discord)",
+    "Discord bot: connecting...": "Bot do Discord: conectando...",
+    "Discord bot: {0}": "Bot do Discord: {0}",
+    "Discord bot: online as {0}, connected to {1}": "Bot do Discord: online como {0}, conectado a {1}",
+    "Discord bot: online as {0} - press Connect Discord in Settings, Notifications to link your Discord account": "Bot do Discord: online como {0} - clique em Conectar Discord em Configurações, Notificações para vincular sua conta do Discord",
+    "Run any console command, like pause kylro 30": "Executa qualquer comando do console, como pause kylro 30",
+    "The command, typed like in the window": "O comando, digitado como na janela",
+    "Connect your Discord account to nocat.farm": "Conecta sua conta do Discord ao nocat.farm",
+    "The code Connect Discord shows in nocat.farm": "O código que o Conectar Discord mostra no nocat.farm",
+    "discord bot: Discord asked for a reconnect": "bot do Discord: o Discord pediu para reconectar",
+    "the token doesn't work - copy a new one from the Developer Portal (Bot, Reset Token)": "o token não funciona - copie um novo no Developer Portal (Bot, Reset Token)",
+    "Discord refused the bot (code {0}) - check it in the Developer Portal": "O Discord recusou o bot (código {0}) - confira no Developer Portal",
+    "discord bot: Discord closed the connection ({0})": "bot do Discord: o Discord fechou a conexão ({0})",
+    "discord bot: Discord answered HTTP {0}": "bot do Discord: o Discord respondeu HTTP {0}",
+    "Discord says the bot has connected too often today - it tries again in {0} minutes": "O Discord diz que o bot se conectou vezes demais hoje - ele tenta de novo em {0} minutos",
+    "discord bot: no answer to the last heartbeat - reconnecting": "bot do Discord: sem resposta ao último heartbeat - reconectando",
+    "Discord bot online as {0}": "Bot do Discord online como {0}",
+    "Discord bot: to connect it, press Connect Discord in Settings, Notifications and send /connect with the code to {0}": "Bot do Discord: para conectar, clique em Conectar Discord em Configurações, Notificações e envie /connect com o código para {0}",
+    "Discord bot: couldn't add the / commands to a server - add the bot to it again with the invite link in Settings, Notifications": "Bot do Discord: não foi possível adicionar os comandos / a um servidor - adicione o bot de novo com o link de convite em Configurações, Notificações",
+    "discord bot: couldn't add the / commands (HTTP {0}): {1}": "bot do Discord: não foi possível adicionar os comandos / (HTTP {0}): {1}",
+    "Not connected yet. In nocat.farm, open Settings, Notifications, press Connect Discord and send /connect with the code it shows.": "Ainda não conectado. No nocat.farm, abra Configurações, “Notificações”, clique em “Conectar Discord” e envie /connect com o código que aparece.",
+    "discord bot: {0} isn't the connected Discord account - ignored": "bot do Discord: {0} não é a conta do Discord conectada - ignorado",
+    "Only the owner of this nocat.farm can use its commands.": "Só o dono deste nocat.farm pode usar os comandos dele.",
+    "discord bot: a /connect with a wrong or old code from {0}": "bot do Discord: um /connect com código errado ou antigo de {0}",
+    "That code doesn't match. In nocat.farm, press Connect Discord for a new one - each code works once, for {0} minutes.": "Esse código não confere. No nocat.farm, clique em Conectar Discord para gerar um novo - cada código funciona uma vez, por {0} minutos.",
+    "notifications: Discord connected - only {0} can use the bot's commands": "notificações: Discord conectado - só {0} pode usar os comandos do bot",
+    "Send /status for a summary, /help for the commands, or /nocat to run any console command.": "Envie /status para um resumo, /help para os comandos ou /nocat para executar qualquer comando do console.",
+    "That deletes the account and its saved login. Run {0} confirm to really do it.": "Isso apaga a conta e o login salvo dela. Execute {0} confirm para fazer isso de verdade.",
+    "That closes nocat.farm, and it can't be started again from Discord. Run {0} confirm to really do it.": "Isso fecha o nocat.farm, e ele não poderá ser iniciado de novo pelo Discord. Execute {0} confirm para fazer isso de verdade.",
+    "{0} - {1} is out, run /update with accept": "{0} - saiu a {1}, execute /update com accept",
+    "{0} - {1} is out, run /update to see how to install it": "{0} - saiu a {1}, execute /update para ver como instalar",
+    "Discord": "Discord",
+    "run any console command, like pause kylro 30": "executa qualquer comando do console, como pause kylro 30",
+    "The others take what goes after them in args - /human args: week, /offers args: kylro.": "Os outros recebem o que vem depois em args - /human args: week, /offers args: kylro.",
+    "Run any of these with /nocat. Only your connected Discord account is obeyed. exit and remove ask you to confirm first.": "Execute qualquer um deles com /nocat. Só a sua conta do Discord conectada é obedecida. exit e remove pedem confirmação antes.",
+    "The Discord bot is off - turn on \"Take commands from Discord\" to use it.": "O bot do Discord está desligado - ative “Aceitar comandos pelo Discord” para usá-lo.",
+    "Add the bot to your server": "Adicionar o bot ao seu servidor",
+    "Connect Discord": "Conectar Discord",
+    "Send {0} to your bot in Discord - the code works once, for {1} minutes.": "Envie {0} para o seu bot no Discord - o código funciona uma vez, por {1} minutos.",
+    "How to set up Discord commands (3 minutes)": "Como configurar os comandos do Discord (3 minutos)",
+    "Open the {0} and sign in with your Discord account.": "Abra o {0} e entre com sua conta do Discord.",
+    "Press {0}, name it {1}, tick the box and press {2}.": "Clique em {0}, dê o nome {1}, marque a caixa e clique em {2}.",
+    "Open {0} on the left, press {1} and copy the token it shows.": "Abra {0} à esquerda, clique em {1} e copie o token que aparece.",
+    "Discord bot token": "Token do bot do Discord",
+    "A few seconds later {0} shows up here. Open it and add the bot to a server you own - a new, empty one is fine.": "Alguns segundos depois, {0} aparece aqui. Abra e adicione o bot a um servidor seu - um novo e vazio serve.",
+    "Press {0} here. In Discord, type {1} and the code it shows - in the server, or in a private chat with the bot (click the bot in the member list and send it a message).": "Clique em {0} aqui. No Discord, digite {1} e o código que aparece - no servidor ou num chat privado com o bot (clique no bot na lista de membros e mande uma mensagem).",
+    "Done. Type {0} for a summary, {1} for every command, or {2} to run any console command.": "Pronto. Digite {0} para um resumo, {1} para todos os comandos ou {2} para executar qualquer comando do console.",
+    "Keep the token private - anyone who has it can control your bot. Only your connected Discord account can use the commands, and in a server only you see the answers.": "Não compartilhe o token - quem tiver ele pode controlar seu bot. Só a sua conta do Discord conectada pode usar os comandos, e num servidor só você vê as respostas.",
+    "update by itself: waiting - {0} has {1} trade offer(s) and {2} gift(s) still waiting their turn": "atualizar sozinho: esperando - {0} tem {1} oferta(s) de troca e {2} presente(s) ainda na fila",
+    "Installing": "Instalando",
+    "Install progress": "Progresso da instalação",
+    "Downloaded {0} ({1}MB) - installing it now. The accounts sign out one at a time; back in about a minute.": "{0} baixado ({1} MB) - instalando agora. As contas saem uma de cada vez; volta em cerca de um minuto.",
+    "Downloaded {0} ({1}MB) - installing it now, by itself. The accounts sign out one at a time; back in about a minute.": "{0} baixado ({1} MB) - instalando agora, sozinho. As contas saem uma de cada vez; volta em cerca de um minuto.",
+    "Install complete - now on {0} (was {1}).": "Instalação concluída - agora na {0} (era {1}).",
+    "What's new:\n{0}": "Novidades:\n{0}",
+    "update undone: {0} didn't start properly, so {1} was put back - nothing else was changed. {0} is skipped now; 'update accept' tries it again": "atualização desfeita: a {0} não iniciou direito, então a {1} foi restaurada - nada mais mudou. A {0} agora é pulada; 'update accept' tenta de novo",
+    "reminder: nocat.farm {0} is out - you have {1}. 'update' says how to install it here; 'update skip' skips this version": "lembrete: saiu o nocat.farm {0} - você tem a {1}. 'update' diz como instalar aqui; 'update skip' pula esta versão",
+    "reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update skip' skips this version": "lembrete: saiu o nocat.farm {0} - você tem a {1}. 'update accept' instala e reinicia; 'update skip' pula esta versão",
+    "nocat.farm {0} is out - you have {1}. {2}  -  'update' says how to install it here; 'update skip' skips this version": "saiu o nocat.farm {0} - você tem a {1}. {2}  -  'update' diz como instalar aqui; 'update skip' pula esta versão",
+    "nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update skip' skips this version": "saiu o nocat.farm {0} - você tem a {1}. {2}  -  'update accept' instala e reinicia; 'update skip' pula esta versão",
+    "Skipping {0} - no more reminders about it, and it won't install by itself. The next version after it is announced as usual; 'update accept' still installs {0}.": "Pulando a {0} - sem mais lembretes, e ela não se instala sozinha. A próxima versão será anunciada normalmente; 'update accept' ainda instala a {0}.",
+    "what's new in {0}: {1}": "novidades da {0}: {1}",
+    "(works once it's open to other devices)": "(funciona quando estiver aberto para outros aparelhos)",
+    "Windows Firewall is blocking other devices - on the PC, open the dashboard's Open on your phone and press Allow through Windows Firewall.": "O Firewall do Windows está bloqueando outros aparelhos - no PC, abra \"Abrir no celular\" no painel e toque em \"Permitir no Firewall do Windows\".",
+    "only from the PC nocat.farm runs on": "só no PC onde o nocat.farm roda",
+    "Windows Firewall now lets other devices on your home network open the dashboard (port {0})": "O Firewall do Windows agora deixa outros aparelhos da sua rede de casa abrirem o painel (porta {0})",
+    "Windows Firewall is blocking your phone": "O Firewall do Windows está bloqueando seu celular",
+    "Your phone will just keep loading until Windows lets it in. This allows the dashboard only, only on home networks - Windows asks you to confirm.": "Seu celular vai ficar carregando até o Windows deixá-lo entrar. Isso libera só o painel, só em redes de casa - o Windows pede para você confirmar.",
+    "Allow through Windows Firewall": "Permitir no Firewall do Windows",
+    "Press it on the PC nocat.farm runs on.": "Toque nele no PC onde o nocat.farm roda.",
+    "Check the Windows prompt…": "Veja o aviso do Windows…",
+    "Done - your phone can open it now.": "Pronto - seu celular já consegue abrir."
   },
   "settings": {
     "WebEnabled": {
@@ -1695,7 +1767,7 @@
     },
     "SendUpdates": {
       "label": "Enviar atualizações",
-      "tip": "Saiu uma versão nova, uma atualização terminou, ou uma atualização falhou e por quê."
+      "tip": "Saiu uma versão nova, e as novidades dela."
     },
     "SendDailySummary": {
       "label": "Enviar o resumo diário",
@@ -2109,12 +2181,12 @@
       "label": "Calcular quanto vale o inventário dela"
     },
     "CheckForUpdates": {
-      "tip": "Procura uma versão nova a cada poucas horas e avisa no log. Nunca baixa nem instala nada sozinho.",
+      "tip": "Procura uma versão nova e avisa no log, no Telegram e no Discord. Desligar também para o Atualizar sozinho.",
       "label": "Avisar se houver atualização"
     },
     "UpdateReminders": {
       "label": "Lembrar a cada hora",
-      "tip": "Lembra você no log a cada hora enquanto houver uma versão nova. Digite update accept para instalar, ou update ignore para parar os lembretes até a próxima abertura."
+      "tip": "Lembra você a cada hora no log enquanto houver uma versão nova. Digite update accept para instalar, ou update skip para pular essa versão."
     },
     "BreakMinMinutes": {
       "label": "Pausa mais curta",
@@ -2514,6 +2586,43 @@
     "BoostWeight": {
       "label": "Modo humano: peso do jogo caçado",
       "tip": "Só no modo humano. O jogo que está sendo caçado entra nos jogos que ele joga, e isto é a frequência com que aparece - um peso como os de \"Jogos e com que frequência\". Ele é jogado em sessões normais, com pausas e hora de dormir, sem nunca cortar outro jogo."
+    },
+    "AutoUpdate": {
+      "label": "Atualizar sozinho",
+      "tip": "O que acontece quando sai uma versão nova. Me avisar: diz no log, no Telegram e no Discord, e você digita update accept. Instalar à noite: instala sozinho nos horários abaixo, só quando nenhuma conta em modo humano está acordada e ninguém está jogando numa conta, e avisa antes e depois. Só Windows.",
+      "choices": "0 me avisar | 1 instalar à noite"
+    },
+    "AutoUpdateFromHour": {
+      "label": "...entre",
+      "tip": "O horário mais cedo em que pode instalar sozinho, no formato 24 horas."
+    },
+    "AutoUpdateUntilHour": {
+      "label": "...e",
+      "tip": "O horário em que para de tentar naquela noite. Antes do horário de início passa da meia-noite, então 23 a 5 funciona."
+    },
+    "AutoUpdateWaitHours": {
+      "label": "Esperar depois de uma versão",
+      "tip": "Horas de espera depois que sai uma versão nova antes de instalar sozinho, para que uma versão com problema possa ser corrigida antes."
+    },
+    "UpdateCheckHours": {
+      "label": "Procurar atualizações a cada",
+      "tip": "Horas entre duas buscas por uma versão nova. Também procura uma vez quando o nocat.farm inicia, e sempre que você digita update."
+    },
+    "DiscordBotToken": {
+      "label": "Token do bot do Discord",
+      "tip": "Para comandos pelo Discord, como /status. Cole o token do seu bot do Discord (o guia acima mostra como criar um bot), toque em Salvar, depois em Conectar Discord e envie /connect com o código para o seu bot. Não é preciso para as notificações - elas usam o webhook."
+    },
+    "DiscordCommands": {
+      "label": "Aceitar comandos pelo Discord",
+      "tip": "Permite controlar o nocat.farm pelo Discord com comandos /: /status para um resumo, /nocat para executar qualquer comando do console, e os do dia a dia como /cards. Funciona num chat privado com o seu bot e no seu servidor. Só a sua própria conta do Discord conectada é obedecida. Desligado, o bot fica offline."
+    },
+    "DiscordOwnerId": {
+      "label": "Dono no Discord",
+      "tip": "A única conta do Discord que o seu bot obedece - preenchida sozinha quando você envia /connect com o código do Conectar Discord. Apague para conectar outra conta."
+    },
+    "SendInstalls": {
+      "label": "Enviar progresso da instalação",
+      "tip": "Quando uma atualização é instalada: baixada e instalando, depois instalada com a nova versão e as novidades - ou que falhou ou foi desfeita, e por quê. Desligado a menos que você ligue."
     }
   }
 }

@@ -1020,8 +1020,6 @@
     "dropping a queued key - {0}  ({1} left)": "kuyruktaki bir anahtar atılıyor - {0}  ({1} kaldı)",
     "giving up on a key after {0} tries - no account could activate it": "{0} denemeden sonra bir anahtardan vazgeçiliyor - hiçbir hesap etkinleştiremedi",
     "hit {0} activations in {1}m - pausing so Steam doesn't start refusing": "{1}dk içinde {0} etkinleştirmeye ulaşıldı - Steam reddetmeye başlamasın diye duraklatılıyor",
-    "nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update ignore' stops the hourly reminders until the next launch": "nocat.farm {0} çıktı - sende {1} var. {2}  -  'update accept' kurup yeniden başlatır; 'update ignore' saatlik hatırlatmaları bir sonraki açılışa kadar durdurur",
-    "reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update ignore' stops these reminders until the next launch": "hatırlatma: nocat.farm {0} çıktı - sende {1} var. 'update accept' kurup yeniden başlatır; 'update ignore' bu hatırlatmaları bir sonraki açılışa kadar durdurur",
     "update: downloading {0} ({1}MB)": "güncelleme: {0} indiriliyor ({1}MB)",
     "proxy '{0}' isn't a usable address ({1}) - connecting directly instead": "'{0}' proxy'si kullanılabilir bir adres değil ({1}) - bunun yerine doğrudan bağlanılıyor",
     "game shares moved into the games list - now \"{0}\"": "oyun payları oyun listesine taşındı - şimdi \"{0}\"",
@@ -1342,7 +1340,6 @@
     "update: signing out {0} ({1} of {2}) - updating in {3}s": "güncelleme: {0} hesabından çıkılıyor ({2} hesaptan {1}.) - {3} sn sonra güncelleniyor",
     "update: updating in {0}s": "güncelleme: {0} sn sonra güncelleniyor",
     "nocat.farm {0} is ready": "nocat.farm {0} hazır",
-    "You have {0}. Type update accept in the nocat.farm window to install it.": "Sende {0} var. Kurmak için nocat.farm penceresine update accept yaz.",
     "discord: {0}": "discord: {0}",
     "Resting": "Dinleniyor",
     "Farming cards · {0} left": "Kart topluyor · {0} kaldı",
@@ -1421,7 +1418,6 @@
     "What Steam shows about this account's bans. nocat.farm checks every few hours and tells you when a new one appears. Games it is banned in are left out of trades; trading cards still trade.": "Steam'in bu hesabın yasakları hakkında gösterdikleri. nocat.farm birkaç saatte bir bakar ve yeni bir yasak çıktığında sana haber verir. Yasaklı olduğu oyunlar takasların dışında bırakılır; koleksiyon kartları takas edilmeye devam eder.",
     "bans: {0}": "yasaklar: {0}",
     "no items": "hiçbir şey",
-    "No more update reminders until the next launch. 'update' still checks.": "Bir sonraki açılışa kadar güncelleme hatırlatması yok. 'update' yine de denetler.",
     "No account has its authenticator in nocat.farm - add its maFile under config/authenticators to confirm from here.": "Hiçbir hesabın kimlik doğrulayıcısı nocat.farm'da değil - buradan onaylamak için maFile'ını config/authenticators altına ekle.",
     "{0}: couldn't read the confirmations - {1}": "{0}: onaylar okunamadı - {1}",
     "{0}: nothing waiting to be confirmed": "{0}: onay bekleyen bir şey yok",
@@ -1456,8 +1452,6 @@
     "What's waiting to be confirmed": "Onay bekleyenler",
     "Steam Guard codes": "Steam Guard kodları",
     "{0} - {1} is out, send /update to see how to install it": "{0} - {1} çıktı, nasıl kurulacağını görmek için /update gönder",
-    "reminder: nocat.farm {0} is out - you have {1}. 'update' says how to install it here; 'update ignore' stops these reminders until the next launch": "hatırlatma: nocat.farm {0} çıktı - sende {1} var. 'update' burada nasıl kurulacağını söyler; 'update ignore' bu hatırlatmaları bir sonraki açılışa kadar durdurur",
-    "nocat.farm {0} is out - you have {1}. {2}  -  'update' says how to install it here; 'update ignore' stops the hourly reminders until the next launch": "nocat.farm {0} çıktı - sende {1} var. {2}  -  'update' burada nasıl kurulacağını söyler; 'update ignore' saatlik hatırlatmaları bir sonraki açılışa kadar durdurur",
     "dashboard: listening on {0} with NO password, so it only lets this machine itself in - nobody on another device (or outside Docker) can sign in. Set WebPassword, or NOCATFARM_WEB_PASSWORD in Docker": "panel: {0} üzerinde parola OLMADAN dinliyor, bu yüzden yalnızca bu makinenin kendisini içeri alıyor - başka bir cihazdan (ya da Docker dışından) kimse giriş yapamaz. WebPassword ayarını yap ya da Docker'da NOCATFARM_WEB_PASSWORD değişkenini ayarla",
     "dashboard: listening on {0} inside a container, where nothing outside it can reach it - set NOCATFARM_WEB_HOST=0.0.0.0": "panel: {0} üzerinde bir konteynerin içinde dinliyor, dışarıdan hiçbir şey ona ulaşamaz - NOCATFARM_WEB_HOST=0.0.0.0 ayarla",
     "confirmed {0} from the Authenticator page: {1}": "kimlik doğrulayıcı sayfasından {0} onaylandı: {1}",
@@ -1594,7 +1588,85 @@
     "achievement boost - {0} joins the games it plays, for about {1}": "başarım avı - {0}, oynadığı oyunlara katılıyor, yaklaşık {1}",
     "{0} is in its games - {1} of about {2} played": "{0} oyunları arasında - yaklaşık {2} sürenin {1} kadarı oynandı",
     "Discord closed the connection ({0}) - trying again in a minute": "Discord bağlantıyı kapattı ({0}) - bir dakika sonra tekrar denenecek",
-    "Discord didn't show the card: {0}": "Discord kartı göstermedi: {0}"
+    "Discord didn't show the card: {0}": "Discord kartı göstermedi: {0}",
+    "installing nocat.farm {0} by itself - it's a quiet time (Update by itself)": "nocat.farm {0} kendiliğinden kuruluyor - sakin bir saat (Kendini güncelle)",
+    "{0} is out - you have {1}. It installs by itself tonight, or type update accept (on Telegram: /update accept) to install it now.": "{0} çıktı - sende {1} var. Bu gece kendiliğinden kurulacak, şimdi kurmak için update accept yaz (Telegram'da: /update accept).",
+    "{0} is out - you have {1}. Type update accept in the nocat.farm window, or /update accept here, to install it.": "{0} çıktı - sende {1} var. Kurmak için nocat.farm penceresinde update accept ya da burada /update accept yaz.",
+    "{0} is out - you have {1}. Pull the new image and recreate the container to update.": "{0} çıktı - sende {1} var. Güncellemek için yeni imajı çekip konteyneri yeniden oluştur.",
+    "{0} is out - you have {1}. Download the new Linux zip from the releases page to update.": "{0} çıktı - sende {1} var. Güncellemek için sürümler sayfasından yeni Linux zip'ini indir.",
+    "Discord bot: not set up": "Discord botu: kurulmadı",
+    "Discord bot: off (Take commands from Discord)": "Discord botu: kapalı (Discord'dan komut al)",
+    "Discord bot: connecting...": "Discord botu: bağlanıyor...",
+    "Discord bot: {0}": "Discord botu: {0}",
+    "Discord bot: online as {0}, connected to {1}": "Discord botu: {0} olarak çevrimiçi, {1} hesabına bağlı",
+    "Discord bot: online as {0} - press Connect Discord in Settings, Notifications to link your Discord account": "Discord botu: {0} olarak çevrimiçi - Discord hesabını bağlamak için Ayarlar, Bildirimler'de Discord'u bağla'ya bas",
+    "Run any console command, like pause kylro 30": "Herhangi bir konsol komutunu çalıştır, örneğin pause kylro 30",
+    "The command, typed like in the window": "Komut, pencerede yazıldığı gibi",
+    "Connect your Discord account to nocat.farm": "Discord hesabını nocat.farm'a bağla",
+    "The code Connect Discord shows in nocat.farm": "nocat.farm'da Discord'u bağla'nın gösterdiği kod",
+    "discord bot: Discord asked for a reconnect": "Discord botu: Discord yeniden bağlanmayı istedi",
+    "the token doesn't work - copy a new one from the Developer Portal (Bot, Reset Token)": "token çalışmıyor - Developer Portal'dan yenisini kopyala (Bot, Reset Token)",
+    "Discord refused the bot (code {0}) - check it in the Developer Portal": "Discord botu reddetti (kod {0}) - Developer Portal'da kontrol et",
+    "discord bot: Discord closed the connection ({0})": "Discord botu: Discord bağlantıyı kapattı ({0})",
+    "discord bot: Discord answered HTTP {0}": "Discord botu: Discord HTTP {0} ile yanıt verdi",
+    "Discord says the bot has connected too often today - it tries again in {0} minutes": "Discord, botun bugün çok sık bağlandığını söylüyor - {0} dakika sonra yeniden dener",
+    "discord bot: no answer to the last heartbeat - reconnecting": "Discord botu: son heartbeat'e yanıt yok - yeniden bağlanıyor",
+    "Discord bot online as {0}": "Discord botu {0} olarak çevrimiçi",
+    "Discord bot: to connect it, press Connect Discord in Settings, Notifications and send /connect with the code to {0}": "Discord botu: bağlamak için Ayarlar, Bildirimler'de Discord'u bağla'ya bas ve kodla birlikte /connect'i {0} botuna gönder",
+    "Discord bot: couldn't add the / commands to a server - add the bot to it again with the invite link in Settings, Notifications": "Discord botu: / komutları bir sunucuya eklenemedi - botu Ayarlar, Bildirimler'deki davet bağlantısıyla yeniden ekle",
+    "discord bot: couldn't add the / commands (HTTP {0}): {1}": "Discord botu: / komutları eklenemedi (HTTP {0}): {1}",
+    "Not connected yet. In nocat.farm, open Settings, Notifications, press Connect Discord and send /connect with the code it shows.": "Henüz bağlı değil. nocat.farm'da Ayarlar'ı aç, “Bildirimler” bölümüne gel, “Discord'u bağla” düğmesine bas ve gösterilen kodla /connect gönder.",
+    "discord bot: {0} isn't the connected Discord account - ignored": "Discord botu: {0} bağlı Discord hesabı değil - yok sayıldı",
+    "Only the owner of this nocat.farm can use its commands.": "Bu nocat.farm'ın komutlarını yalnızca sahibi kullanabilir.",
+    "discord bot: a /connect with a wrong or old code from {0}": "Discord botu: {0} yanlış ya da eski bir kodla /connect gönderdi",
+    "That code doesn't match. In nocat.farm, press Connect Discord for a new one - each code works once, for {0} minutes.": "Bu kod eşleşmiyor. Yeni bir kod için nocat.farm'da Discord'u bağla'ya bas - her kod bir kez, {0} dakika boyunca çalışır.",
+    "notifications: Discord connected - only {0} can use the bot's commands": "bildirimler: Discord bağlandı - botun komutlarını yalnızca {0} kullanabilir",
+    "Send /status for a summary, /help for the commands, or /nocat to run any console command.": "Özet için /status, komutlar için /help, herhangi bir konsol komutunu çalıştırmak için /nocat gönder.",
+    "That deletes the account and its saved login. Run {0} confirm to really do it.": "Bu, hesabı ve kayıtlı girişini siler. Gerçekten yapmak için {0} confirm çalıştır.",
+    "That closes nocat.farm, and it can't be started again from Discord. Run {0} confirm to really do it.": "Bu, nocat.farm'ı kapatır ve Discord'dan yeniden başlatılamaz. Gerçekten yapmak için {0} confirm çalıştır.",
+    "{0} - {1} is out, run /update with accept": "{0} - {1} çıktı, /update'i accept ile çalıştır",
+    "{0} - {1} is out, run /update to see how to install it": "{0} - {1} çıktı, nasıl kurulacağını görmek için /update çalıştır",
+    "Discord": "Discord",
+    "run any console command, like pause kylro 30": "herhangi bir konsol komutunu çalıştır, örneğin pause kylro 30",
+    "The others take what goes after them in args - /human args: week, /offers args: kylro.": "Diğerleri arkalarından geleni args içinde alır - /human args: week, /offers args: kylro.",
+    "Run any of these with /nocat. Only your connected Discord account is obeyed. exit and remove ask you to confirm first.": "Bunların hepsini /nocat ile çalıştırabilirsin. Yalnızca bağlı Discord hesabın dinlenir. exit ve remove önce onay ister.",
+    "The Discord bot is off - turn on \"Take commands from Discord\" to use it.": "Discord botu kapalı - kullanmak için “Discord'dan komut al” ayarını aç.",
+    "Add the bot to your server": "Botu sunucuna ekle",
+    "Connect Discord": "Discord'u bağla",
+    "Send {0} to your bot in Discord - the code works once, for {1} minutes.": "Discord'da botuna {0} gönder - kod bir kez, {1} dakika boyunca çalışır.",
+    "How to set up Discord commands (3 minutes)": "Discord komutları nasıl kurulur (3 dakika)",
+    "Open the {0} and sign in with your Discord account.": "{0} sayfasını aç ve Discord hesabınla giriş yap.",
+    "Press {0}, name it {1}, tick the box and press {2}.": "{0} düğmesine bas, adını {1} koy, kutuyu işaretle ve {2} düğmesine bas.",
+    "Open {0} on the left, press {1} and copy the token it shows.": "Soldan {0} bölümünü aç, {1} düğmesine bas ve gösterilen token'ı kopyala.",
+    "Discord bot token": "Discord bot token'ı",
+    "A few seconds later {0} shows up here. Open it and add the bot to a server you own - a new, empty one is fine.": "Birkaç saniye sonra burada {0} görünür. Onu aç ve botu sahibi olduğun bir sunucuya ekle - yeni ve boş bir sunucu da olur.",
+    "Press {0} here. In Discord, type {1} and the code it shows - in the server, or in a private chat with the bot (click the bot in the member list and send it a message).": "Burada {0} düğmesine bas. Discord'da {1} ve gösterilen kodu yaz - sunucuda ya da botla özel sohbette (üye listesinde bota tıkla ve ona mesaj gönder).",
+    "Done. Type {0} for a summary, {1} for every command, or {2} to run any console command.": "Bitti. Özet için {0}, tüm komutlar için {1}, herhangi bir konsol komutunu çalıştırmak için {2} yaz.",
+    "Keep the token private - anyone who has it can control your bot. Only your connected Discord account can use the commands, and in a server only you see the answers.": "Token'ı kimseyle paylaşma - ona sahip olan herkes botunu kontrol edebilir. Komutları yalnızca bağlı Discord hesabın kullanabilir ve bir sunucuda yanıtları yalnızca sen görürsün.",
+    "update by itself: waiting - {0} has {1} trade offer(s) and {2} gift(s) still waiting their turn": "kendini güncelle: bekliyor - {0} hesabında sırasını bekleyen {1} takas teklifi ve {2} hediye var",
+    "Installing": "Kuruluyor",
+    "Install progress": "Kurulum durumu",
+    "Downloaded {0} ({1}MB) - installing it now. The accounts sign out one at a time; back in about a minute.": "{0} indirildi ({1} MB) - şimdi kuruluyor. Hesaplar tek tek çıkış yapıyor; yaklaşık bir dakikada geri döner.",
+    "Downloaded {0} ({1}MB) - installing it now, by itself. The accounts sign out one at a time; back in about a minute.": "{0} indirildi ({1} MB) - şimdi kendiliğinden kuruluyor. Hesaplar tek tek çıkış yapıyor; yaklaşık bir dakikada geri döner.",
+    "Install complete - now on {0} (was {1}).": "Kurulum tamam - artık {0} (önce {1}).",
+    "What's new:\n{0}": "Yenilikler:\n{0}",
+    "update undone: {0} didn't start properly, so {1} was put back - nothing else was changed. {0} is skipped now; 'update accept' tries it again": "güncelleme geri alındı: {0} düzgün başlamadı, bu yüzden {1} geri yüklendi - başka hiçbir şey değişmedi. {0} artık atlanıyor; 'update accept' yeniden dener",
+    "reminder: nocat.farm {0} is out - you have {1}. 'update' says how to install it here; 'update skip' skips this version": "hatırlatma: nocat.farm {0} çıktı - sende {1} var. 'update' burada nasıl kurulacağını söyler; 'update skip' bu sürümü atlar",
+    "reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update skip' skips this version": "hatırlatma: nocat.farm {0} çıktı - sende {1} var. 'update accept' kurar ve yeniden başlatır; 'update skip' bu sürümü atlar",
+    "nocat.farm {0} is out - you have {1}. {2}  -  'update' says how to install it here; 'update skip' skips this version": "nocat.farm {0} çıktı - sende {1} var. {2}  -  'update' burada nasıl kurulacağını söyler; 'update skip' bu sürümü atlar",
+    "nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update skip' skips this version": "nocat.farm {0} çıktı - sende {1} var. {2}  -  'update accept' kurar ve yeniden başlatır; 'update skip' bu sürümü atlar",
+    "Skipping {0} - no more reminders about it, and it won't install by itself. The next version after it is announced as usual; 'update accept' still installs {0}.": "{0} atlanıyor - artık hatırlatma yok ve kendiliğinden kurulmayacak. Sonraki sürüm her zamanki gibi duyurulur; 'update accept' yine de {0} sürümünü kurar.",
+    "what's new in {0}: {1}": "{0} sürümündeki yenilikler: {1}",
+    "(works once it's open to other devices)": "(diğer cihazlara açıldığında çalışır)",
+    "Windows Firewall is blocking other devices - on the PC, open the dashboard's Open on your phone and press Allow through Windows Firewall.": "Windows Güvenlik Duvarı diğer cihazları engelliyor - bilgisayarda panelin \"Telefonda aç\" kısmını açıp \"Windows Güvenlik Duvarı'nda izin ver\"e bas.",
+    "only from the PC nocat.farm runs on": "yalnızca nocat.farm'ın çalıştığı bilgisayardan",
+    "Windows Firewall now lets other devices on your home network open the dashboard (port {0})": "Windows Güvenlik Duvarı artık ev ağındaki diğer cihazların paneli açmasına izin veriyor (port {0})",
+    "Windows Firewall is blocking your phone": "Windows Güvenlik Duvarı telefonunu engelliyor",
+    "Your phone will just keep loading until Windows lets it in. This allows the dashboard only, only on home networks - Windows asks you to confirm.": "Windows izin verene kadar telefonun yüklenip durur. Bu yalnızca panele, yalnızca ev ağlarında izin verir - Windows onaylamanı ister.",
+    "Allow through Windows Firewall": "Windows Güvenlik Duvarı'nda izin ver",
+    "Press it on the PC nocat.farm runs on.": "nocat.farm'ın çalıştığı bilgisayarda bas.",
+    "Check the Windows prompt…": "Windows onay penceresine bak…",
+    "Done - your phone can open it now.": "Tamam - telefonun artık açabilir."
   },
   "settings": {
     "WebEnabled": {
@@ -1695,7 +1767,7 @@
     },
     "SendUpdates": {
       "label": "Güncellemeleri gönder",
-      "tip": "Yeni bir sürüm çıktı, bir güncelleme bitti ya da bir güncelleme başarısız oldu ve nedeni."
+      "tip": "Yeni bir sürüm çıktı ve içindeki yenilikler."
     },
     "SendDailySummary": {
       "label": "Günlük özeti gönder",
@@ -2109,12 +2181,12 @@
       "label": "Envanterinin ne ettiğini hesapla"
     },
     "CheckForUpdates": {
-      "tip": "Birkaç saatte bir yeni sürüm var mı diye bakar ve günlükte haber verir. Asla kendiliğinden bir şey indirmez veya kurmaz.",
+      "tip": "Yeni sürümü kontrol eder ve günlükte, Telegram'da ve Discord'da söyler. Kapatmak Kendini güncelle'yi de durdurur.",
       "label": "Güncelleme varsa haber ver"
     },
     "UpdateReminders": {
       "label": "Her saat hatırlat",
-      "tip": "Yeni bir sürüm çıktığı sürece seni her saat günlükte uyarır. Kurmak için update accept, hatırlatmaları bir sonraki açılışa kadar durdurmak için update ignore yaz."
+      "tip": "Yeni bir sürüm varken her saat günlükte hatırlatır. Kurmak için update accept, o sürümü atlamak için update skip yaz."
     },
     "BreakMinMinutes": {
       "label": "En kısa mola",
@@ -2514,6 +2586,43 @@
     "BoostWeight": {
       "label": "İnsan modu: av oyununun ağırlığı",
       "tip": "Yalnızca insan modunda. Avlanan oyun, oynadığı oyunlara katılır ve bu, ne sıklıkla geldiğidir - \"Oyunlar ve sıklığı\"ndaki gibi bir ağırlık. Molalar ve uyku saatiyle normal oturumlarda oynanır, başka bir oyunu asla yarıda kesmez."
+    },
+    "AutoUpdate": {
+      "label": "Kendini güncelle",
+      "tip": "Yeni sürüm çıkınca ne olacağı. Bana söyle: günlükte, Telegram'da ve Discord'da söyler, sen update accept yazarsın. Gece kur: aşağıdaki saatlerde kendiliğinden kurar, sadece insan modundaki hiçbir hesap uyanık değilken ve kimse bir hesapta oynamıyorken, öncesinde ve sonrasında haber verir. Yalnızca Windows.",
+      "choices": "0 bana söyle | 1 gece kur"
+    },
+    "AutoUpdateFromHour": {
+      "label": "...arasında (başlangıç)",
+      "tip": "Kendiliğinden kurabileceği en erken saat, 24 saat biçiminde."
+    },
+    "AutoUpdateUntilHour": {
+      "label": "...arasında (bitiş)",
+      "tip": "O gece denemeyi bıraktığı saat. Başlangıçtan erken bir saat gece yarısını geçer, yani 23 ile 5 olur."
+    },
+    "AutoUpdateWaitHours": {
+      "label": "Sürümden sonra bekle",
+      "tip": "Yeni sürüm çıktıktan sonra kendiliğinden kurmadan önce beklenecek saat, sorunlu bir sürüm önce düzeltilebilsin diye."
+    },
+    "UpdateCheckHours": {
+      "label": "Güncellemeleri şu sıklıkla ara",
+      "tip": "Yeni sürüm için iki arama arasındaki saat. nocat.farm açılırken bir kez ve update yazdığında da arar."
+    },
+    "DiscordBotToken": {
+      "label": "Discord bot token'ı",
+      "tip": "/status gibi Discord komutları için. Discord botunun token'ını yapıştır (bot oluşturmanın yolu yukarıdaki rehberde), Kaydet'e bas, sonra Discord'u bağla'ya bas ve kodla birlikte /connect'i botuna gönder. Bildirimler için gerekmez - onlar webhook'u kullanır."
+    },
+    "DiscordCommands": {
+      "label": "Discord'dan komut al",
+      "tip": "nocat.farm'ı Discord'dan / komutlarıyla yönetmeni sağlar: özet için /status, herhangi bir konsol komutunu çalıştırmak için /nocat ve /cards gibi günlük komutlar. Botla özel sohbette ve kendi sunucunda çalışır. Yalnızca kendi bağlı Discord hesabın dinlenir. Kapalıyken bot çevrimdışı kalır."
+    },
+    "DiscordOwnerId": {
+      "label": "Discord sahibi",
+      "tip": "Botunun dinlediği tek Discord hesabı - Discord'u bağla'daki kodla /connect gönderdiğinde kendiliğinden dolar. Başka bir hesap bağlamak için temizle."
+    },
+    "SendInstalls": {
+      "label": "Kurulum durumunu gönder",
+      "tip": "Bir güncelleme kurulurken: indirildi ve kuruluyor, sonra yeni sürüm ve yenilikleriyle kuruldu - ya da başarısız oldu veya geri alındı ve nedeni. Sen açmadıkça kapalı."
     }
   }
 }
