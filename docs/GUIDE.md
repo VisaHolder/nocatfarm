@@ -334,6 +334,14 @@ phone* says so, with an **Allow through Windows Firewall** button: Windows asks 
 the dashboard's port, only on home networks. The rule is called "nocat.farm dashboard" if you ever want to remove it
 in Windows' firewall settings.
 
+**From anywhere (away from home):** turn on *Open from anywhere* (Settings → Dashboard, Show advanced). Like Jellyfin,
+it asks your router to forward the dashboard's port to this PC (UPnP), finds your internet address, and gives you a
+link and a QR code that work from anywhere - in *Open on your phone*, and from `/dashboard` on Telegram and Discord.
+It needs a dashboard password of at least 12 characters, because anyone on the internet can reach the sign-in page
+(five wrong passwords lock them out for an hour). The forward is taken away when you turn it off or close nocat.farm,
+and put back when it starts. If your router has UPnP switched off, it says so - forward the port by hand and put your
+address in *Public address* instead.
+
 To turn the dashboard off completely: `set WebEnabled false` and restart. Everything keeps working from the
 console.
 

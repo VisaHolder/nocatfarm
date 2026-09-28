@@ -306,6 +306,9 @@ NocatFarm.Core.DailyReport.Start(manager);
 // happens with no account signed in too.
 NocatFarm.Core.UpdateCheck.Start(manager);
 
+// "Open from anywhere": the router forwards the dashboard's port, while the switch is on.
+NocatFarm.Core.RemoteAccess.Start();
+
 
 // Only where there's a desktop: a server or a container has no browser, and the attempt is just a baffling error.
 if (global.OpenBrowserOnStart && (web != null) && Platform.HasDesktop) {
@@ -358,6 +361,9 @@ Log.Info("shutting down...");
 
 // Closed straight after an update: that's somebody closing it, not the new version failing to start.
 NocatFarm.Core.SelfUpdate.ConfirmStarted();
+
+// Nothing left forwarded to a PC where nothing is listening.
+await NocatFarm.Core.RemoteAccess.StopAsync().ConfigureAwait(false);
 
 // Whatever notifications are still waiting go out first (a few seconds at most).
 await NocatFarm.Core.Notifier.StopAsync().ConfigureAwait(false);

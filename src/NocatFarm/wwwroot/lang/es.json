@@ -1574,13 +1574,11 @@
     "Then your phone opens:": "Luego tu móvil abre:",
     "From outside your home:": "Desde fuera de casa:",
     "anyone with it and the password controls every account.": "quien la tenga junto con la contraseña controla todas las cuentas.",
-    "From outside your home, forward the port on your router to this PC and put your address in Public address.": "Para entrar desde fuera de casa, redirige el puerto en tu router a este PC y pon tu dirección en Dirección pública.",
     "Take me there": "Llévame allí",
     "Open the dashboard on your phone": "Abrir el panel en el móvil",
     "On your phone, on the same wifi:": "En el móvil, en la misma wifi:",
     "Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.": "Aún no está abierto a otros dispositivos. En el PC: Ajustes, Panel, Mostrar avanzados - pon una contraseña del panel y 0.0.0.0 en Escuchar en, y reinicia.",
     "From anywhere:": "Desde cualquier sitio:",
-    "From outside your home: not set up (Public address, in the same place).": "Desde fuera de casa: sin configurar (Dirección pública, en el mismo sitio).",
     "On the PC itself:": "En el propio PC:",
     "Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.": "Usa el panel desde el móvil u otro PC en la misma wifi: un código QR para escanear, o los dos ajustes que lo abren.",
     "done with {0}'s achievements for now - moving on": "terminado con los logros de {0} por ahora - pasando al siguiente",
@@ -1666,7 +1664,22 @@
     "Allow through Windows Firewall": "Permitir en el Firewall de Windows",
     "Press it on the PC nocat.farm runs on.": "Púlsalo en el PC donde corre nocat.farm.",
     "Check the Windows prompt…": "Mira el aviso de Windows…",
-    "Done - your phone can open it now.": "Listo - tu móvil ya puede abrirlo."
+    "Done - your phone can open it now.": "Listo - tu móvil ya puede abrirlo.",
+    "From anywhere: not set up - on the PC, turn on Open from anywhere (Settings, Dashboard, Show advanced).": "Desde cualquier sitio: sin configurar - en el PC, activa «Abrir desde cualquier sitio» (Ajustes, Panel, Mostrar avanzado).",
+    "From anywhere: asking your router to forward the port...": "Desde cualquier sitio: pidiendo al router que redirija el puerto...",
+    "From anywhere: turn on Open from anywhere - your router forwards the port, like Jellyfin.": "Desde cualquier sitio: activa «Abrir desde cualquier sitio» - tu router redirige el puerto, como con Jellyfin.",
+    "needs a dashboard password of at least {0} characters first - anyone on the internet can try it": "necesita antes una contraseña del panel de al menos {0} caracteres - cualquiera en internet puede probarla",
+    "needs 0.0.0.0 in Listen on (and a restart) first": "necesita antes 0.0.0.0 en «Escuchar en» (y reiniciar)",
+    "open from anywhere: {0}": "abrir desde cualquier sitio: {0}",
+    "your router didn't answer - turn on UPnP in its settings, or forward port {0} to this PC by hand": "tu router no respondió - activa UPnP en sus ajustes o redirige el puerto {0} a este PC a mano",
+    "your router refused to forward port {0} ({1}) - forward it to this PC by hand in the router's settings": "tu router se negó a redirigir el puerto {0} ({1}) - redirígelo a este PC a mano en los ajustes del router",
+    "your internet connection is shared with other homes (the provider's address {0}), so nothing from outside can reach this PC": "tu conexión a internet se comparte con otros hogares (dirección del proveedor {0}), así que nada de fuera puede llegar a este PC",
+    "your router didn't say its internet address": "tu router no dijo su dirección de internet",
+    "open from anywhere: your router forwards port {0} to this PC - the dashboard opens at {1} from anywhere (sign in with the dashboard password)": "abrir desde cualquier sitio: tu router redirige el puerto {0} a este PC - el panel se abre en {1} desde cualquier sitio (entra con la contraseña del panel)",
+    "open from anywhere: off - your router no longer forwards port {0}": "abrir desde cualquier sitio: apagado - tu router ya no redirige el puerto {0}",
+    "open from anywhere: off, but the router didn't take the forward away ({0}) - remove it in the router's settings": "abrir desde cualquier sitio: apagado, pero el router no quitó la redirección ({0}) - quítala en sus ajustes",
+    "your router is behind another router ({0}) - forward port {1} on that one too, or ask whoever runs it": "tu router está detrás de otro router ({0}) - redirige el puerto {1} también en ese, o pregunta a quien lo gestione",
+    "From anywhere - scan this on mobile data, away from your wifi:": "Desde cualquier sitio - escanéalo con datos móviles, fuera de tu wifi:"
   },
   "settings": {
     "WebEnabled": {
@@ -2581,7 +2594,7 @@
     },
     "WebPublicAddress": {
       "label": "Dirección pública",
-      "tip": "Tu dirección desde fuera de casa - tu IP de internet o un nombre como minombre.duckdns.org - una vez redirigido el puerto del panel en tu router a este PC. El comando dashboard y /dashboard en Telegram la muestran. Quien la tenga junto con la contraseña controla todas las cuentas, así que compártela solo con gente de confianza."
+      "tip": "Solo si redirigiste el puerto a mano o usas un nombre como myname.duckdns.org: la dirección que se da para el panel desde fuera de casa. Déjala vacía con «Abrir desde cualquier sitio» activado - encuentra tu dirección solo."
     },
     "BoostWeight": {
       "label": "Modo humano: peso del juego de caza",
@@ -2623,6 +2636,10 @@
     "SendInstalls": {
       "label": "Enviar progreso de instalación",
       "tip": "Cuando se instala una actualización: descargada e instalándose, luego instalada con la nueva versión y sus novedades, o que falló o se deshizo, y por qué. Apagado salvo que lo actives."
+    },
+    "WebRemoteAccess": {
+      "label": "Abrir desde cualquier sitio",
+      "tip": "Como Jellyfin: pide a tu router que redirija el puerto del panel a este PC (UPnP), para que se abra desde cualquier sitio en tu dirección de internet - /dashboard en Telegram y Discord da el enlace. Necesita una contraseña del panel de al menos 12 caracteres y 0.0.0.0 en «Escuchar en». Cualquiera en internet puede llegar a la página de acceso, y cinco contraseñas erróneas lo bloquean una hora. Apagarlo quita la redirección."
     }
   }
 }

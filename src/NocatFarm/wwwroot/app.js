@@ -2542,9 +2542,12 @@ async function phoneModal() {
        </ol>
        ${p.Home.length ? `<p class="muted small">${esc(t('Then your phone opens:'))} ${esc(p.Home[0])}</p>` : ''}`;
   modal(`<h2>${esc(t('Open on your phone'))}</h2>${body}
+    ${p.QrOutside ? `<p class="small" style="margin-top:14px">${esc(t('From anywhere - scan this on mobile data, away from your wifi:'))}</p><div class="phoneqr">${p.QrOutside}</div>` : ''}
     <p class="muted small">${p.Outside
       ? `${esc(t('From outside your home:'))} ${link(p.Outside)} - ${esc(p.OpenAtHome ? t('anyone with it and the password controls every account.') : t("(works once it's open to other devices)"))}`
-      : esc(t('From outside your home, forward the port on your router to this PC and put your address in Public address.'))}</p>
+      : p.RemoteOn && p.RemoteProblem ? `${esc(t('From anywhere:'))} ${esc(p.RemoteProblem)}`
+      : p.RemoteOn ? esc(t('From anywhere: asking your router to forward the port...'))
+      : `${esc(t('From anywhere: turn on Open from anywhere - your router forwards the port, like Jellyfin.'))} <a href="#" onclick="closeModal();goSetting('WebRemoteAccess');return false">${esc(t('Take me there'))}</a>`}</p>
     <div class="actions">${p.OpenAtHome ? '' : `<button onclick="closeModal();goSetting('WebPassword')">${esc(t('Take me there'))}</button>`}<button class="ghost" onclick="closeModal()">${esc(t('Close'))}</button></div>`);
 }
 async function allowFirewall(btn) {

@@ -1574,13 +1574,11 @@
     "Then your phone opens:": "Wtedy telefon otwiera:",
     "From outside your home:": "Spoza domu:",
     "anyone with it and the password controls every account.": "każdy, kto ma to i hasło, steruje wszystkimi kontami.",
-    "From outside your home, forward the port on your router to this PC and put your address in Public address.": "Żeby wejść spoza domu, przekieruj port w routerze na ten komputer i wpisz swój adres w Adres publiczny.",
     "Take me there": "Zabierz mnie tam",
     "Open the dashboard on your phone": "Otwórz panel na telefonie",
     "On your phone, on the same wifi:": "Na telefonie, w tej samej sieci wifi:",
     "Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.": "Jeszcze nie jest otwarty dla innych urządzeń. Na komputerze: Ustawienia, Panel, Pokaż zaawansowane - ustaw hasło panelu i wpisz 0.0.0.0 w Nasłuchuj na, potem uruchom ponownie.",
-    "From anywhere:": "Skądkolwiek:",
-    "From outside your home: not set up (Public address, in the same place).": "Spoza domu: nieustawione (Adres publiczny, w tym samym miejscu).",
+    "From anywhere:": "Z każdego miejsca:",
     "On the PC itself:": "Na samym komputerze:",
     "Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.": "Korzystaj z panelu na telefonie albo innym komputerze w tej samej sieci wifi - kod QR do zeskanowania albo dwa ustawienia, które go otwierają.",
     "done with {0}'s achievements for now - moving on": "na razie koniec z osiągnięciami w {0} - dalej",
@@ -1666,7 +1664,22 @@
     "Allow through Windows Firewall": "Zezwól w Zaporze Windows",
     "Press it on the PC nocat.farm runs on.": "Naciśnij to na komputerze, na którym działa nocat.farm.",
     "Check the Windows prompt…": "Sprawdź okno Windows…",
-    "Done - your phone can open it now.": "Gotowe - telefon może go teraz otworzyć."
+    "Done - your phone can open it now.": "Gotowe - telefon może go teraz otworzyć.",
+    "From anywhere: not set up - on the PC, turn on Open from anywhere (Settings, Dashboard, Show advanced).": "Z każdego miejsca: nie ustawione - na komputerze włącz „Otwieraj z każdego miejsca” (Ustawienia, Panel, Pokaż zaawansowane).",
+    "From anywhere: asking your router to forward the port...": "Z każdego miejsca: proszę router o przekierowanie portu...",
+    "From anywhere: turn on Open from anywhere - your router forwards the port, like Jellyfin.": "Z każdego miejsca: włącz „Otwieraj z każdego miejsca” - router przekieruje port, jak przy Jellyfin.",
+    "needs a dashboard password of at least {0} characters first - anyone on the internet can try it": "najpierw potrzebne jest hasło do panelu o długości co najmniej {0} znaków - każdy w internecie może je próbować",
+    "needs 0.0.0.0 in Listen on (and a restart) first": "najpierw potrzebne 0.0.0.0 w „Nasłuchuj na” (i restart)",
+    "open from anywhere: {0}": "otwieranie z każdego miejsca: {0}",
+    "your router didn't answer - turn on UPnP in its settings, or forward port {0} to this PC by hand": "router nie odpowiedział - włącz UPnP w jego ustawieniach albo przekieruj port {0} na ten komputer ręcznie",
+    "your router refused to forward port {0} ({1}) - forward it to this PC by hand in the router's settings": "router odmówił przekierowania portu {0} ({1}) - przekieruj go na ten komputer ręcznie w ustawieniach routera",
+    "your internet connection is shared with other homes (the provider's address {0}), so nothing from outside can reach this PC": "twoje łącze jest współdzielone z innymi domami (adres dostawcy {0}), więc nic z zewnątrz nie dotrze do tego komputera",
+    "your router didn't say its internet address": "router nie podał swojego adresu internetowego",
+    "open from anywhere: your router forwards port {0} to this PC - the dashboard opens at {1} from anywhere (sign in with the dashboard password)": "otwieranie z każdego miejsca: router przekierowuje port {0} na ten komputer - panel otwiera się pod {1} z każdego miejsca (zaloguj się hasłem do panelu)",
+    "open from anywhere: off - your router no longer forwards port {0}": "otwieranie z każdego miejsca: wyłączone - router już nie przekierowuje portu {0}",
+    "open from anywhere: off, but the router didn't take the forward away ({0}) - remove it in the router's settings": "otwieranie z każdego miejsca: wyłączone, ale router nie usunął przekierowania ({0}) - usuń je w jego ustawieniach",
+    "your router is behind another router ({0}) - forward port {1} on that one too, or ask whoever runs it": "twój router jest za innym routerem ({0}) - przekieruj port {1} także na tamtym albo poproś osobę, która nim zarządza",
+    "From anywhere - scan this on mobile data, away from your wifi:": "Z każdego miejsca - zeskanuj na danych komórkowych, poza wifi:"
   },
   "settings": {
     "WebEnabled": {
@@ -2581,7 +2594,7 @@
     },
     "WebPublicAddress": {
       "label": "Adres publiczny",
-      "tip": "Twój adres spoza domu - adres internetowy albo nazwa w stylu mojanazwa.duckdns.org - po przekierowaniu portu panelu w routerze na ten komputer. Pokazuje go polecenie dashboard i /dashboard na Telegramie. Każdy, kto ma go razem z hasłem, steruje wszystkimi kontami, więc udostępniaj go tylko zaufanym osobom."
+      "tip": "Tylko jeśli przekierowałeś port ręcznie albo używasz nazwy jak myname.duckdns.org: adres podawany dla panelu spoza domu. Zostaw puste przy włączonym „Otwieraj z każdego miejsca” - sam znajdzie twój adres."
     },
     "BoostWeight": {
       "label": "Tryb ludzki: waga gry do polowania",
@@ -2623,6 +2636,10 @@
     "SendInstalls": {
       "label": "Wysyłaj postęp instalacji",
       "tip": "Gdy instaluje się aktualizacja: pobrana i instaluje się, potem zainstalowana z nową wersją i nowościami - albo że się nie udała lub została cofnięta, i dlaczego. Wyłączone, dopóki nie włączysz."
+    },
+    "WebRemoteAccess": {
+      "label": "Otwieraj z każdego miejsca",
+      "tip": "Jak Jellyfin: prosi router o przekierowanie portu panelu na ten komputer (UPnP), żeby otwierał się z każdego miejsca pod twoim adresem internetowym - /dashboard na Telegramie i Discordzie daje link. Wymaga hasła do panelu o długości co najmniej 12 znaków i 0.0.0.0 w „Nasłuchuj na”. Każdy w internecie dotrze do strony logowania, a pięć złych haseł blokuje go na godzinę. Wyłączenie usuwa przekierowanie."
     }
   }
 }

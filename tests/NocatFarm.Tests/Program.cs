@@ -529,6 +529,125 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("firewall: other ports don't count", !Ports("7243", 7242) && !Ports("80,443", 7242) && !Ports("8000-9000", 7242));
 }
 
+// ── open from anywhere: UPnP against a stand-in router (the real one is never touched) ─────────────────────────
+{
+	Type ra = typeof(Rng).Assembly.GetType("NocatFarm.Core.RemoteAccess")!;
+	const BindingFlags S = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
+	System.Net.Sockets.TcpListener fake = new(System.Net.IPAddress.Loopback, 0);
+	fake.Start();
+	int fport = ((System.Net.IPEndPoint) fake.LocalEndpoint).Port;
+	List<string> soap = [];
+	string external = "203.0.113.7";
+	bool refuseLease = false;
+	CancellationTokenSource stopFake = new();
+
+	_ = Task.Run(async () => {
+		while (!stopFake.IsCancellationRequested) {
+			System.Net.Sockets.TcpClient client;
+
+			try {
+				client = await fake.AcceptTcpClientAsync(stopFake.Token);
+			} catch {
+				break;
+			}
+
+			using (client) {
+				System.Net.Sockets.NetworkStream ns = client.GetStream();
+				List<byte> head = [];
+				byte[] one = new byte[1];
+
+				while (!((head.Count >= 4) && (head[^4] == 13) && (head[^3] == 10) && (head[^2] == 13) && (head[^1] == 10))) {
+					if (await ns.ReadAsync(one) == 0) {
+						break;
+					}
+
+					head.Add(one[0]);
+				}
+
+				string headers = System.Text.Encoding.ASCII.GetString([.. head]);
+				System.Text.RegularExpressions.Match lenMatch = System.Text.RegularExpressions.Regex.Match(headers, @"(?im)^Content-Length:\s*(\d+)");
+				byte[] body = new byte[lenMatch.Success ? int.Parse(lenMatch.Groups[1].Value) : 0];
+				int got = 0;
+
+				while (got < body.Length) {
+					int n = await ns.ReadAsync(body.AsMemory(got));
+
+					if (n == 0) {
+						break;
+					}
+
+					got += n;
+				}
+
+				string request = System.Text.Encoding.UTF8.GetString(body);
+				string path = headers.Split(' ')[1];
+				string status = "200 OK";
+				string reply;
+
+				if (path == "/desc.xml") {
+					reply = "<?xml version=\"1.0\"?><root xmlns=\"urn:schemas-upnp-org:device-1-0\"><device><deviceList><device><deviceList><device><serviceList>"
+						+ "<service><serviceType>urn:schemas-upnp-org:service:WANIPConnection:1</serviceType><controlURL>/ctl</controlURL></service>"
+						+ "</serviceList></device></deviceList></device></deviceList></device></root>";
+				} else {
+					lock (soap) {
+						soap.Add(headers + request);
+					}
+
+					if (refuseLease && request.Contains("AddPortMapping") && request.Contains("<NewLeaseDuration>3600<")) {
+						status = "500 Internal Server Error";
+						reply = "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body><s:Fault><detail><UPnPError xmlns=\"urn:schemas-upnp-org:control-1-0\">"
+							+ "<errorCode>725</errorCode><errorDescription>OnlyPermanentLeasesSupported</errorDescription></UPnPError></detail></s:Fault></s:Body></s:Envelope>";
+					} else if (request.Contains("GetExternalIPAddress")) {
+						reply = "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body><u:GetExternalIPAddressResponse xmlns:u=\"urn:schemas-upnp-org:service:WANIPConnection:1\">"
+							+ $"<NewExternalIPAddress>{external}</NewExternalIPAddress></u:GetExternalIPAddressResponse></s:Body></s:Envelope>";
+					} else {
+						reply = "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body/></s:Envelope>";
+					}
+				}
+
+				byte[] replyBytes = System.Text.Encoding.UTF8.GetBytes(reply);
+				await ns.WriteAsync(System.Text.Encoding.ASCII.GetBytes($"HTTP/1.1 {status}\r\nContent-Type: text/xml\r\nContent-Length: {replyBytes.Length}\r\nConnection: close\r\n\r\n"));
+				await ns.WriteAsync(replyBytes);
+			}
+		}
+	});
+
+	ra.GetProperty("GatewayForTests", S)!.SetValue(null, new Uri($"http://127.0.0.1:{fport}/desc.xml"));
+	async Task Map(int port) => await (Task) ra.GetMethod("MapAsync", S)!.Invoke(null, [port])!;
+	async Task Unmap() => await (Task) ra.GetMethod("RemoveAsync", S)!.Invoke(null, [false])!;
+	string? Link() => (string?) ra.GetProperty("Link", S)!.GetValue(null);
+	string? Problem() => (string?) ra.GetProperty("Problem", S)!.GetValue(null);
+	List<string> Sent() { lock (soap) { return [.. soap]; } }
+
+	await Map(7242);
+	Check("upnp: asks the router to forward the port to this PC, for an hour", Sent().Any(r => r.Contains("#AddPortMapping\"") && r.Contains("<NewExternalPort>7242<")
+		&& r.Contains("<NewInternalPort>7242<") && r.Contains("<NewInternalClient>127.0.0.1<") && r.Contains("<NewLeaseDuration>3600<") && r.Contains("<NewProtocol>TCP<")));
+	Check("upnp: the link is the router's internet address", Link() == "http://203.0.113.7:7242/", Link() ?? "null");
+	await Unmap();
+	Check("upnp: switched off, the forward is taken away", Sent()[^1].Contains("#DeletePortMapping\"") && Sent()[^1].Contains("<NewExternalPort>7242<") && (Link() == null));
+
+	lock (soap) { soap.Clear(); }
+	refuseLease = true;
+	await Map(7242);
+	Check("upnp: a router that only takes permanent forwards gets one", (Sent().Count(r => r.Contains("#AddPortMapping\"")) == 2) && Sent().Any(r => r.Contains("<NewLeaseDuration>0<")) && (Link() != null));
+	await Unmap();
+	refuseLease = false;
+
+	lock (soap) { soap.Clear(); }
+	external = "100.72.1.9";
+	await Map(7242);
+	Check("upnp: an address the provider shares is said, and the forward undone", (Link() == null) && (Problem() ?? "").Contains("shared") && Sent()[^1].Contains("#DeletePortMapping\""), Problem() ?? "no problem said");
+
+	lock (soap) { soap.Clear(); }
+	external = "192.168.1.20";
+	await Map(7242);
+	Check("upnp: a router behind another router is said", (Link() == null) && (Problem() ?? "").Contains("behind another router"), Problem() ?? "no problem said");
+
+	stopFake.Cancel();
+	fake.Stop();
+	ra.GetProperty("GatewayForTests", S)!.SetValue(null, null);
+}
+
 // SETTINGSCOUNT
 Console.WriteLine($"settings: {NocatFarm.Config.Settings.Global.Count} global ({NocatFarm.Config.Settings.Global.Count(d => !d.Advanced)} basic), {NocatFarm.Config.Settings.Bot.Count} per account ({NocatFarm.Config.Settings.Bot.Count(d => !d.Advanced)} basic)");
 Console.WriteLine(fails == 0 ? "all passed" : $"{fails} failed");

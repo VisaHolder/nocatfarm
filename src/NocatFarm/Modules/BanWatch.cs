@@ -27,6 +27,23 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 	private sealed record Saved(int Vac, int Game, bool Community, string Economy, int DaysSinceLast, long CheckedTicks, List<uint>? Games);
 
 	private Saved? _seen;
+	private bool _loaded;
+
+	/// <summary>
+	/// The last reading - from disk the first time it's asked for. It used to be read when the module started, which is
+	/// only once the account has signed in: an account waiting for its turn to sign in (the last one, with the gap
+	/// between logins) or stopped showed no bans on its card at all, though they were saved.
+	/// </summary>
+	private Saved? Seen {
+		get {
+			if (!_loaded) {
+				_loaded = true;
+				_seen ??= Load();
+			}
+
+			return _seen;
+		}
+	}
 
 	public override string Name => "bans";
 
@@ -34,19 +51,17 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 	public override string Status => "";
 
 	/// <summary>The last reading, for the dashboard and the 'bans' command. Null until the first look.</summary>
-	public Bans? Last => _seen is { } s ? new Bans(s.Vac, s.Game, s.Community, s.Economy, s.DaysSinceLast) : null;
+	public Bans? Last => Seen is { } s ? new Bans(s.Vac, s.Game, s.Community, s.Economy, s.DaysSinceLast) : null;
 
 	/// <summary>When it last looked.</summary>
-	public DateTime? CheckedAt => _seen is { CheckedTicks: > 0 } s ? new DateTime(s.CheckedTicks, DateTimeKind.Utc) : null;
+	public DateTime? CheckedAt => Seen is { CheckedTicks: > 0 } s ? new DateTime(s.CheckedTicks, DateTimeKind.Utc) : null;
 
 	/// <summary>The games Steam lists this account as banned in, when it could read them.</summary>
-	public IReadOnlyList<uint> BannedGames => _seen?.Games ?? [];
+	public IReadOnlyList<uint> BannedGames => Seen?.Games ?? [];
 
 	private string StatePath => Path.Combine(ConfigStore.ConfigDir, "state", $"bans-{Bot.Name}.json");
 
 	protected override async Task RunAsync(CancellationToken ct) {
-		_seen ??= Load();
-
 		// Not in the first minutes after signing in, with everything else.
 		if (!await Sleep(Rng.Minutes(3, 9), ct).ConfigureAwait(false)) {
 			return;
@@ -79,7 +94,7 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 		}
 
 		List<uint>? games = now.Any ? await BanGames.ReadAsync(Bot, ct).ConfigureAwait(false) : [];
-		Saved? before = _seen;
+		Saved? before = Seen;
 		_seen = new Saved(now.Vac, now.Game, now.Community, now.Economy, now.DaysSinceLast, DateTime.UtcNow.Ticks, games ?? before?.Games);
 		Save();
 

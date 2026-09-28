@@ -374,7 +374,7 @@ public static partial class Notifier {
 
 		sb.AppendLine(l.Outside != null
 			? $"◆ {Html(new Said("From anywhere:").ToString())} {A(l.Outside)}{(l.OpenAtHome ? "" : " " + Html(new Said("(works once it's open to other devices)").ToString()))}"
-			: $"◆ {Html(new Said("From outside your home: not set up (Public address, in the same place).").ToString())}");
+			: $"◆ {Html(new Said("From anywhere: not set up - on the PC, turn on Open from anywhere (Settings, Dashboard, Show advanced).").ToString())}");
 		sb.AppendLine($"◆ {Html(new Said("On the PC itself:").ToString())} {A(l.Local)}");
 
 		return sb.ToString();

@@ -490,8 +490,11 @@ public static class Settings {
 		new("WebSessionDays", "Stay signed in for", SecDashboard, SettingKind.Int,
 			"How many days a browser stays signed in before it asks for the dashboard password again.",
 			Advanced: true, Min: 1, Max: 90),
+		new("WebRemoteAccess", "Open from anywhere", SecDashboard, SettingKind.Bool,
+			"Like Jellyfin: asks your router to forward the dashboard's port to this PC (UPnP), so it opens from anywhere at your internet address - /dashboard on Telegram and Discord gives the link. Needs a dashboard password of at least 12 characters and 0.0.0.0 in Listen on. Anyone on the internet can reach the sign-in page, and five wrong passwords lock them out for an hour. Turning it off takes the forward away again.",
+			Advanced: true),
 		new("WebPublicAddress", "Public address", SecDashboard, SettingKind.Text,
-			"Your address from outside your home - your internet address or a name like myname.duckdns.org - once you've forwarded the dashboard's port on your router to this PC. The dashboard command and Telegram's /dashboard show it. Anyone who has it and the password controls every account, so only share it with people you trust.",
+			"Only if you forwarded the port by hand or use a name like myname.duckdns.org: the address to give out for the dashboard from outside your home. Leave it empty with Open from anywhere on - it finds your address by itself.",
 			Advanced: true, Placeholder: "myname.duckdns.org"),
 		// ── Running in the background ──
 		new("Tray", "Tray icon", SecBackground, SettingKind.Bool,
