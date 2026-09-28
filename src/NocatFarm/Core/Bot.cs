@@ -287,6 +287,11 @@ public sealed class Bot : IAsyncDisposable {
 	/// </summary>
 	public int? PersonaAsSeen { get; private set; }
 
+	/// <summary>The account's Steam name and full-size avatar, as Steam tells its friends - for the Discord card.</summary>
+	public string SteamName { get; private set; } = "";
+
+	public string AvatarUrl { get; private set; } = "";
+
 	/// <summary>
 	/// What the friends list shows. This is the persona WE set, deliberately.
 	///
@@ -788,6 +793,16 @@ public sealed class Bot : IAsyncDisposable {
 
 		// Steam's own word for the persona, which beats ours whenever another session is also setting it.
 		PersonaAsSeen = (int) cb.State;
+
+		if (!string.IsNullOrWhiteSpace(cb.Name)) {
+			SteamName = cb.Name;
+		}
+
+		// An all-zero hash is Steam's "no avatar" - its default question-mark picture.
+		if (cb.AvatarHash is { Length: > 0 } hash) {
+			string hex = hash.All(static x => x == 0) ? "fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb" : Convert.ToHexString(hash).ToLowerInvariant();
+			AvatarUrl = $"https://avatars.fastly.steamstatic.com/{hex}_full.jpg";
+		}
 
 		// And its own word for the DEVICE flags, which is the only way to know the Deck badge was accepted.
 		//

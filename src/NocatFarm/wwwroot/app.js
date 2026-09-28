@@ -1571,9 +1571,19 @@ function tutShowDone() {
     <p>${esc(tf('{0} is signed in.', b ? b.Name : ''))} ${esc(what)}</p>
     <p class="muted small">${esc(t('You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.'))}</p>
     ${tutImportOthers.length ? `<p class="muted small">${esc(tf('The other {0} imported account(s) are added but not started yet.', tutImportOthers.length))}</p>` : ''}
+    <label class="tutdiscord"><input type="checkbox" ${config && config.Global && config.Global.DiscordPresence ? 'checked' : ''} onchange="tutDiscordPresence(this.checked)">
+      <span><b>${esc(t('Show on my Discord profile'))}</b><br><span class="muted small">${esc(t('Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Notifications.'))}</span></span></label>
     <div class="actions">
       ${tutImportOthers.length ? `<button class="ghost" onclick="tutStartOthers()">${esc(t('Start the others too'))}</button>` : ''}
       <button id="tutNext" onclick="finishSignin()">${esc(t('Show me my account'))}</button></div>`);
+}
+
+// The first-run question for the Discord card: saved the moment it's ticked, nothing else to press.
+async function tutDiscordPresence(on) {
+  await loadConfig();
+  if (!config || !config.Global) return;
+  config.Global.DiscordPresence = on;
+  await post('/api/config', config.Global).catch(() => {});
 }
 
 async function tutStartOthers() {
@@ -2490,7 +2500,8 @@ function sectionIntro(section, values) {
       ${setUp ? '' : `<span class="muted small" style="margin-left:8px">${esc(t('Save a webhook link or bot token first.'))}</span>`}
       ${telegramConnect()}
       ${notifyGuides()}
-    </div>`;
+    </div>
+    ${discordCardIntro(val)}`;
   }
 
   // Achievements are the one area where the settings alone tell you nothing useful. Three dials and an
@@ -3116,6 +3127,74 @@ function edit(name, value) {
 /// The two "how do I get one of those" walkthroughs, folded away until clicked. Everyone makes their own Telegram
 /// bot: Telegram lets only one program read a bot's messages, so a shared bot can't work - and its token would be
 /// the key to everybody's notifications.
+// The Discord profile card: one switch, a chip per part, and a preview drawn the way Discord draws it - so what
+// each chip does is obvious before saving. Same data the app sends: the picked accounts, their Steam names and
+// avatars, and the two buttons.
+function discordCardIntro(val) {
+  const on = !!val('DiscordPresence');
+  const parts = [['DiscordShowNames', 'Account names'], ['DiscordShowCounter', 'Accounts online'],
+    ['DiscordShowAvatar', 'Avatar'], ['DiscordShowTimer', 'Timer']];
+  return `<div class="explain dcard-intro">
+    <div class="dhead"><b>${esc(t('Discord profile'))}</b>
+      <label class="switch"><input type="checkbox" ${on ? 'checked' : ''} onchange="editAndRender('DiscordPresence', this.checked)"><span></span></label></div>
+    <p style="margin:6px 0 0">${esc(t('While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.'))}</p>
+    <div class="langpick">${parts.map(([k, label]) =>
+      `<span class="p ${val(k) ? 'on' : ''}" onclick="editAndRender('${k}', ${!val(k)})">${esc(t(label))}</span>`).join('')}</div>
+    ${discordPreview(val)}
+    <p class="muted small" style="margin:8px 0 0">${esc(t('Buttons and which accounts it shows are under Show advanced. Discord shows your buttons to everyone but you.'))}</p>
+  </div>`;
+}
+
+function discordPreview(val) {
+  const bots = (state && state.Bots) || [];
+  const list = String(val('DiscordPresenceAccounts') || '').trim();
+  const names = list.toLowerCase() === 'all' ? null : list.split(/[, ]+/).filter(Boolean).map((n) => n.toLowerCase());
+  const featName = String(val('DiscordFeatured') || '').trim().toLowerCase();
+  const featured = bots.find((b) => b.Name.toLowerCase() === featName) || null;
+  const shown = bots.filter((b) => (names ? names.includes(b.Name.toLowerCase()) : list === '' ? !b.Legit : true));
+  const online = shown.filter((b) => b.Online);
+  const cardsLeft = online.reduce((n, b) => n + (b.Cards || 0), 0);
+  const today = shown.reduce((n, b) => n + (b.CardsToday || 0), 0);
+  const display = (b) => b.SteamName || b.Name;
+  const ordered = [...online, ...shown.filter((b) => !b.Online)];
+
+  const details = !shown.length && !featured ? t('No accounts picked') : !online.length ? t('Resting')
+    : cardsLeft > 0 ? tf('Farming cards · {0} left', cardsLeft) : t('Idling games');
+  const who = ordered.filter((b) => b !== featured).map(display);
+  const stateLine = val('DiscordShowNames') && who.length
+    ? (who.length <= 3 ? who.join(' · ') : who.slice(0, 2).join(' · ') + ' · +' + (who.length - 2))
+    : tf('{0} cards today', today);
+  const lead = featured || ordered.find((b) => b.Avatar) || ordered[0];
+  const face = val('DiscordShowAvatar') && lead && lead.Avatar ? lead : null;
+  const up = Math.max(0, (state && state.UptimeMinutes) || 0);
+  const timer = `${Math.floor(up / 60)}:${String(up % 60).padStart(2, '0')}:00`;
+
+  const button = (v) => {
+    v = String(v || '').trim();
+    if (!v) return null;
+    if (v.toLowerCase() === 'github') return t('Get nocat.farm');
+    const bar = v.indexOf('|');
+    if (bar > 0) return v.slice(0, bar).trim();
+    const b = bots.find((x) => x.Name.toLowerCase() === v.toLowerCase());
+    return b ? tf('{0} on Steam', display(b)) : null;
+  };
+  const buttons = [button(val('DiscordButton1')), button(val('DiscordButton2'))].filter(Boolean);
+
+  return `<div class="dcard ${val('DiscordPresence') ? '' : 'off'}">
+    <div class="dlabel">${esc(t('Playing'))}</div>
+    <div class="drow">
+      <div class="dart"><img src="logo.png" alt="">${face ? `<img class="dface" src="${esc(face.Avatar)}" alt="">` : ''}</div>
+      <div class="dtext">
+        <div class="dname">nocat.farm</div>
+        <div>${esc(details)}</div>
+        ${shown.length ? `<div>${esc(stateLine)}${val('DiscordShowCounter') ? ` <span class="dparty">(${esc(tf('{0} of {1}', online.length, shown.length))})</span>` : ''}</div>` : ''}
+        ${val('DiscordShowTimer') ? `<div class="dtime">${esc(timer)}</div>` : ''}
+      </div>
+    </div>
+    ${buttons.map((l) => `<div class="dbtn">${esc(l)}</div>`).join('')}
+  </div>`;
+}
+
 // Connecting goes through a private link (t.me/yourbot?start=secret), never "whoever messages the bot first" - with
 // commands on, that chat controls every account.
 // Wrapped in a fixed spot that refresh() updates on its own: the link only exists a few seconds after the token is

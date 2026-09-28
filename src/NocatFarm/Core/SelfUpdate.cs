@@ -123,11 +123,12 @@ public static class SelfUpdate {
 	/// </summary>
 	private static async Task SignOutOneByOneAsync(string tag, CancellationToken ct) {
 		List<Bot> online = [.. (Fleet?.Invoke() ?? []).Where(static b => b.State is not (BotState.Stopped or BotState.Failed))];
-		int secs = online.Count == 0 ? 3 : Math.Clamp(12 + (online.Count * 7) + Rng.Next(0, 10), 15, 120);
+		// Long enough to read the line and see it happen, even with nothing to sign out.
+		int secs = online.Count == 0 ? 10 : Math.Clamp(12 + (online.Count * 7) + Rng.Next(0, 10), 15, 120);
 
 		Log.Good(online.Count > 0
-			? new Said("update: {0} downloaded - restarting in {1}s, signing the accounts out one at a time first", tag, secs)
-			: new Said("update: {0} downloaded - restarting in {1}s", tag, secs));
+			? new Said("update: {0} is downloaded and ready - updating in {1}s, signing the accounts out one at a time first", tag, secs)
+			: new Said("update: {0} is downloaded and ready - updating in {1}s", tag, secs));
 
 		// Random moments, at least 3s apart, all done 3s before the restart.
 		List<int> at = [];
@@ -151,7 +152,13 @@ public static class SelfUpdate {
 
 			while ((next < order.Length) && ((DateTime.UtcNow - start).TotalSeconds >= at[next])) {
 				Bot b = order[next++];
+				Log.Good(new Said("update: signing out {0} ({1} of {2}) - updating in {3}s", b.Name, next, order.Length, left));
 				stopping.Add(b.StopAsync(graceful: b.Cfg.LegitMode));
+			}
+
+			// The countdown in the log too, not only on the dashboard: every 10s, then the last 5.
+			if ((left < secs) && (((left % 10) == 0) || (left <= 5))) {
+				Log.Info(new Said("update: updating in {0}s", left));
 			}
 
 			await Task.Delay(1000, ct).ConfigureAwait(false);

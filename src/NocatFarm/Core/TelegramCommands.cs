@@ -59,16 +59,9 @@ public static partial class Notifier {
 
 				string token = G.TelegramBotToken;
 
-				// A new token (or a fresh start): don't replay whatever was sent while nocat.farm wasn't running - a
-				// "/stop all" from yesterday must not fire this morning. Only an unconnected bot reads its backlog,
-				// because the message that connects it may have been sent a moment before.
 				if (_pollingToken != token) {
 					_pollingToken = token;
 					_offset = 0;
-
-					if (!finding) {
-						await SkipBacklogAsync(token, ct).ConfigureAwait(false);
-					}
 				}
 
 				if (!finding && (_menuSetFor != token)) {
@@ -128,6 +121,12 @@ public static partial class Notifier {
 					string chatId = chat.GetProperty("id").GetRawText();
 					string text = msg.TryGetProperty("text", out JsonElement t) ? t.GetString() ?? "" : "";
 
+					// Sent while nocat.farm was closed: skipped, so a "/stop all" from yesterday doesn't fire this
+					// morning. Anything sent since it opened - even while the accounts are still starting - counts.
+					if (msg.TryGetProperty("date", out JsonElement sent) && (DateTimeOffset.FromUnixTimeSeconds(sent.GetInt64()) < StartedAt)) {
+						continue;
+					}
+
 					if (G.TelegramChatId.Length == 0) {
 						bool isPrivate = chat.TryGetProperty("type", out JsonElement ty) && (ty.GetString() == "private");
 
@@ -165,20 +164,8 @@ public static partial class Notifier {
 		}
 	}
 
-	private static async Task SkipBacklogAsync(string token, CancellationToken ct) {
-		using HttpResponseMessage r = await Http.GetAsync($"https://api.telegram.org/bot{token}/getUpdates?offset=-1&timeout=0", ct).ConfigureAwait(false);
-
-		if (!r.IsSuccessStatusCode) {
-			return;
-		}
-
-		using JsonDocument d = JsonDocument.Parse(await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
-		JsonElement results = d.RootElement.GetProperty("result");
-
-		if (results.GetArrayLength() > 0) {
-			_offset = results[results.GetArrayLength() - 1].GetProperty("update_id").GetInt64() + 1;
-		}
-	}
+	/// <summary>When nocat.farm opened, give or take a few seconds for Telegram's clock.</summary>
+	private static readonly DateTimeOffset StartedAt = Process.GetCurrentProcess().StartTime.ToUniversalTime().AddSeconds(-5);
 
 	/// <summary>A one-off answer to a chat that isn't the connected one (so PostTelegramAsync, which goes there, won't do).</summary>
 	private static async Task ReplyAsync(string chatId, string html, CancellationToken ct) {

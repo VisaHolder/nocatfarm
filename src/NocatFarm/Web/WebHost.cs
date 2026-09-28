@@ -1196,6 +1196,8 @@ public sealed class WebHost : IAsyncDisposable {
 					Paused = b.Paused,
 					Blocked = b.PlayingBlocked,
 					SteamId = b.SteamId.ToString(),
+					SteamName = b.SteamName,
+					Avatar = b.AvatarUrl,
 					UptimeMinutes = b.OnlineSince == null ? 0 : (int) (DateTime.UtcNow - b.OnlineSince.Value).TotalMinutes,
 					Playing = b.Playing,
 					Guard = b.GuardPrompt,

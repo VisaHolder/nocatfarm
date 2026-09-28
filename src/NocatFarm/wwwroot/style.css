@@ -555,6 +555,24 @@ table.today tr.fleet td:first-child { color: var(--muted); }
 }
 
 /* The notification set-up walkthroughs: folded until clicked, numbered, nothing else. */
+/* The Discord card preview - drawn in Discord's own colours, not ours, so it looks like what people will see. */
+.dcard-intro { margin-top: var(--s3); }
+.dcard-intro .dhead { display: flex; align-items: center; justify-content: space-between; }
+.dcard { background: #111214; color: #dbdee1; border-radius: 8px; padding: 12px; max-width: 300px; font: 13px/1.35 "gg sans", "Segoe UI", system-ui, sans-serif; transition: opacity .15s; }
+.dcard.off { opacity: .45; }
+.dcard .dlabel { font-size: 12px; font-weight: 600; color: #b5bac1; margin-bottom: 8px; }
+.dcard .drow { display: flex; gap: 12px; align-items: center; }
+.dcard .dart { position: relative; width: 64px; height: 64px; flex: 0 0 64px; }
+.dcard .dart img:first-child { width: 64px; height: 64px; border-radius: 8px; display: block; }
+.dcard .dface { position: absolute; right: -5px; bottom: -5px; width: 24px; height: 24px; border-radius: 50%; border: 3px solid #111214; }
+.dcard .dtext { min-width: 0; }
+.dcard .dtext > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dcard .dname { font-weight: 600; color: #f2f3f5; }
+.dcard .dparty { color: #b5bac1; }
+.dcard .dtime { color: #23a55a; font-variant-numeric: tabular-nums; }
+.dcard .dbtn { margin-top: 8px; background: #4e5058; color: #fff; border-radius: 4px; padding: 6px 0; text-align: center; font-weight: 500; }
+.tutdiscord { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0 4px; cursor: pointer; }
+.tutdiscord input { margin-top: 3px; }
 .tgconnect { margin-top: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .tgconnect .btn { background: var(--accent); color: var(--on-accent); letter-spacing: .5px; padding: 8px 14px; text-decoration: none; white-space: nowrap; }
 .tgconnect .btn:hover { filter: brightness(1.1); }

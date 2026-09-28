@@ -1378,7 +1378,34 @@
     "Telegram is connected.": "Telegram jest połączony.",
     "Press {0} here (it shows up once the token is saved), then press {1} in Telegram. nocat.farm connects and says hello.": "Naciśnij tutaj {0} (pojawia się po zapisaniu tokena), a potem {1} w Telegramie. nocat.farm połączy się i się przywita.",
     "notifications: another program is reading this Telegram bot's messages right now (maybe a second copy of nocat.farm) - only one can, so commands may not arrive until it stops": "powiadomienia: inny program czyta teraz wiadomości tego bota Telegram (może druga kopia nocat.farm) - może to robić tylko jeden, więc komendy mogą nie docierać, dopóki się nie zatrzyma",
-    "Already connected. Send /status for a summary, /help for the commands, or /console to type commands like in the window.": "Już połączono. Wyślij /status po podsumowanie, /help po listę komend albo /console, żeby wpisywać komendy jak w oknie."
+    "Already connected. Send /status for a summary, /help for the commands, or /console to type commands like in the window.": "Już połączono. Wyślij /status po podsumowanie, /help po listę komend albo /console, żeby wpisywać komendy jak w oknie.",
+    "update: {0} is downloaded and ready - updating in {1}s, signing the accounts out one at a time first": "aktualizacja: {0} jest pobrana i gotowa - aktualizacja za {1}s, najpierw konta wylogowują się po kolei",
+    "update: {0} is downloaded and ready - updating in {1}s": "aktualizacja: {0} jest pobrana i gotowa - aktualizacja za {1}s",
+    "update: signing out {0} ({1} of {2}) - updating in {3}s": "aktualizacja: wylogowywanie {0} ({1} z {2}) - aktualizacja za {3}s",
+    "update: updating in {0}s": "aktualizacja: aktualizacja za {0}s",
+    "nocat.farm {0} is ready": "nocat.farm {0} jest gotowy",
+    "You have {0}. Type update accept in the nocat.farm window to install it.": "Masz {0}. Wpisz update accept w oknie nocat.farm, żeby zainstalować.",
+    "discord: {0}": "discord: {0}",
+    "Resting": "Odpoczywa",
+    "Farming cards · {0} left": "Farmi karty · zostało {0}",
+    "Idling games": "Idluje gry",
+    "Idling on {0} accounts": "Idluje na {0} kontach",
+    "{0} cards today": "Karty dzisiaj: {0}",
+    "{0} cards today · {1} of {2} online": "Karty dzisiaj: {0} · online {1} z {2}",
+    "Get nocat.farm": "Pobierz nocat.farm",
+    "Show on my Discord profile": "Pokazuj na moim profilu Discord",
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Notifications.": "Twój Discord pokazuje Playing nocat.farm, gdy aplikacja jest otwarta, jak przy grze. Możesz to zmienić w każdej chwili w Ustawienia, Powiadomienia.",
+    "{0} on Steam": "{0} na Steamie",
+    "Discord profile": "Profil Discord",
+    "While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.": "Gdy nocat.farm jest otwarte, twój profil Discord pokazuje je jak grę. Wybierz, co pokazuje karta - podgląd to to, co widzą inni.",
+    "Buttons and which accounts it shows are under Show advanced. Discord shows your buttons to everyone but you.": "Przyciski i to, które konta są pokazywane, znajdziesz w Pokaż zaawansowane. Discord pokazuje twoje przyciski wszystkim oprócz ciebie.",
+    "No accounts picked": "Nie wybrano kont",
+    "Account names": "Nazwy kont",
+    "Accounts online": "Konta online",
+    "Avatar": "Awatar",
+    "Timer": "Licznik czasu",
+    "nocat.farm {0} · {1} · click to open it on GitHub": "nocat.farm {0} · {1} · kliknij, żeby otworzyć na GitHubie",
+    "{0} · click for the Steam profile": "{0} · kliknij, żeby otworzyć profil Steam"
   },
   "settings": {
     "WebEnabled": {
@@ -2242,6 +2269,42 @@
     "Rep4RepPauseHours": {
       "label": "Wstrzymaj komentowanie na (godziny)",
       "tip": "Wstrzymuje komentowanie rep4rep na każdym koncie na tyle godzin, a potem samo rusza dalej. Odliczanie trwa także po restartach. Ustaw 0, żeby nie wstrzymywać."
+    },
+    "DiscordPresence": {
+      "label": "Pokazuj na moim profilu Discord",
+      "tip": "Gdy nocat.farm jest otwarte, twój profil Discord pokazuje Playing nocat.farm - jak przy grze - razem z tym, co robi, i kartami zdobytymi dzisiaj. Wymaga otwartej aplikacji Discord na tym PC i prywatności aktywności w Discordzie, która pozwala udostępniać, w co grasz."
+    },
+    "DiscordPresenceAccounts": {
+      "label": "Pokazywane konta",
+      "tip": "Które konta liczy karta Discorda. Zostaw puste dla każdego konta, które nie jest w trybie ludzkim, wpisz all dla wszystkich kont albo podaj nazwy oddzielone przecinkami."
+    },
+    "DiscordShowNames": {
+      "label": "Pokazuj nazwy kont",
+      "tip": "Druga linia karty Discorda wymienia konta po ich nazwach ze Steama, np. kylro · old. Wyłączone pokazuje zamiast tego karty zdobyte dzisiaj."
+    },
+    "DiscordShowCounter": {
+      "label": "Pokazuj konta online",
+      "tip": "Dodaje do karty Discorda licznik (2 z 3): ile z pokazywanych kont jest zalogowanych."
+    },
+    "DiscordShowAvatar": {
+      "label": "Pokazuj awatar konta",
+      "tip": "Umieszcza awatar ze Steama pierwszego pokazywanego konta w rogu logo nocat.farm. Po najechaniu widać nazwę, kliknięcie otwiera profil Steam."
+    },
+    "DiscordShowTimer": {
+      "label": "Pokazuj, jak długo już działa",
+      "tip": "Karta Discorda liczy czas od otwarcia nocat.farm, jak czas gry w grze."
+    },
+    "DiscordButton1": {
+      "label": "Przycisk 1",
+      "tip": "Pierwszy z dwóch przycisków, na które Discord pozwala na karcie. github dla przycisku „Pobierz nocat.farm”, nazwa konta dla linku do jego profilu Steam, własny jako Label | https://link, albo puste, żeby nie było żadnego. Inni widzą przyciski - Discord nie pokazuje ci twoich własnych."
+    },
+    "DiscordButton2": {
+      "label": "Przycisk 2",
+      "tip": "Drugi przycisk, tak samo: github, nazwa konta, Label | https://link albo puste, żeby nie było żadnego."
+    },
+    "DiscordFeatured": {
+      "label": "Wyróżnione konto",
+      "tip": "Konto, którego awatar Steam jest w rogu logo nocat.farm na twojej karcie Discord - kliknięcie otwiera jego profil Steam. Pasuje każde konto, także w trybie człowieka. Puste bierze pierwsze pokazane konto."
     }
   }
 }

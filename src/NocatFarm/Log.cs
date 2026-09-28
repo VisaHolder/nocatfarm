@@ -230,6 +230,20 @@ public static class Log {
 	}
 
 	/// <summary>
+	/// The same, when the log line is too much for a pop-up: the log gets <paramref name="text"/> in full (commands,
+	/// links), while the pop-up and Discord/Telegram get <paramref name="brief"/> under <paramref name="title"/>.
+	/// With <paramref name="loud"/> false it's the log only - for reminders, which would be spam as pop-ups.
+	/// </summary>
+	public static void Attention(Core.Said text, Core.Said brief, Core.Said title, Topic topic, bool loud = true) {
+		Write("WARN", "nocat.farm", text, ConsoleColor.Magenta);
+
+		if (loud) {
+			Notify?.Invoke(NotifyKind.Problem, title.ToString(), brief.ToString());
+			Publish(topic, "nocat.farm", brief);
+		}
+	}
+
+	/// <summary>
 	/// Detail for diagnosing something. Always written to the log FILE; on screen only if asked for.
 	///
 	/// The switch used to decide whether the line existed at all, which is backwards: the one moment you want

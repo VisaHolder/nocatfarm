@@ -232,6 +232,12 @@ Ready(web?.Url, manager.All.Count);
 // the first one rather than missing the whole fleet by a second.
 await NocatFarm.Plugins.PluginHost.LoadAllAsync(manager, CancellationToken.None).ConfigureAwait(false);
 
+// Before the accounts start, not after: they start spread out over a minute or more, and Telegram commands, the
+// notifications of that startup, and an update's one-by-one sign-out all need to work from the first second.
+NocatFarm.Core.Notifier.Start(manager);
+NocatFarm.Core.DiscordPresence.Start(manager);
+NocatFarm.Core.SelfUpdate.Fleet = () => manager.All;
+
 if (manager.All.Count == 0) {
 	FirstRunHint(web?.Url);
 } else {
@@ -242,11 +248,6 @@ if (manager.All.Count == 0) {
 // with no accounts. Type `report` to see it on demand.
 NocatFarm.Core.DailyReport.Start(manager);
 
-// Discord / Telegram notifications for the events picked under Settings, Notifications.
-NocatFarm.Core.Notifier.Start(manager);
-
-// An update signs the accounts out one at a time before it restarts, so it needs to know them.
-NocatFarm.Core.SelfUpdate.Fleet = () => manager.All;
 
 if (global.OpenBrowserOnStart && (web != null)) {
 	OpenBrowser(web.Url);
@@ -298,6 +299,7 @@ Log.Info("shutting down...");
 
 // Whatever notifications are still waiting go out first (a few seconds at most).
 await NocatFarm.Core.Notifier.StopAsync().ConfigureAwait(false);
+NocatFarm.Core.DiscordPresence.Stop();
 
 // Plugins first, while the accounts, commands and their saved state still work - OnUnloadAsync is documented as
 // "called on shutdown" and was never called at all.

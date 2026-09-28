@@ -1378,7 +1378,34 @@
     "Telegram is connected.": "Telegram bağlı.",
     "Press {0} here (it shows up once the token is saved), then press {1} in Telegram. nocat.farm connects and says hello.": "Burada {0} düğmesine bas (token kaydedilince görünür), sonra Telegram'da {1} düğmesine bas. nocat.farm bağlanır ve merhaba der.",
     "notifications: another program is reading this Telegram bot's messages right now (maybe a second copy of nocat.farm) - only one can, so commands may not arrive until it stops": "bildirimler: şu anda başka bir program bu Telegram botunun mesajlarını okuyor (belki nocat.farm'ın ikinci bir kopyası) - yalnızca biri okuyabilir, o durana kadar komutlar gelmeyebilir",
-    "Already connected. Send /status for a summary, /help for the commands, or /console to type commands like in the window.": "Zaten bağlı. Özet için /status, komutlar için /help, penceredeki gibi komut yazmak için /console gönder."
+    "Already connected. Send /status for a summary, /help for the commands, or /console to type commands like in the window.": "Zaten bağlı. Özet için /status, komutlar için /help, penceredeki gibi komut yazmak için /console gönder.",
+    "update: {0} is downloaded and ready - updating in {1}s, signing the accounts out one at a time first": "güncelleme: {0} indirildi ve hazır - {1} sn sonra güncelleniyor, önce hesaplardan tek tek çıkış yapılıyor",
+    "update: {0} is downloaded and ready - updating in {1}s": "güncelleme: {0} indirildi ve hazır - {1} sn sonra güncelleniyor",
+    "update: signing out {0} ({1} of {2}) - updating in {3}s": "güncelleme: {0} hesabından çıkılıyor ({2} hesaptan {1}.) - {3} sn sonra güncelleniyor",
+    "update: updating in {0}s": "güncelleme: {0} sn sonra güncelleniyor",
+    "nocat.farm {0} is ready": "nocat.farm {0} hazır",
+    "You have {0}. Type update accept in the nocat.farm window to install it.": "Sende {0} var. Kurmak için nocat.farm penceresine update accept yaz.",
+    "discord: {0}": "discord: {0}",
+    "Resting": "Dinleniyor",
+    "Farming cards · {0} left": "Kart topluyor · {0} kaldı",
+    "Idling games": "Oyunları boşta çalıştırıyor",
+    "Idling on {0} accounts": "{0} hesapta boşta",
+    "{0} cards today": "Bugün {0} kart",
+    "{0} cards today · {1} of {2} online": "Bugün {0} kart · {1}/{2} çevrimiçi",
+    "Get nocat.farm": "nocat.farm'ı indir",
+    "Show on my Discord profile": "Discord profilimde göster",
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Notifications.": "nocat.farm açıkken Discord'un onu bir oyun gibi Playing nocat.farm olarak gösterir. Bunu istediğin zaman Ayarlar, Bildirimler altından değiştirebilirsin.",
+    "{0} on Steam": "Steam'de {0}",
+    "Discord profile": "Discord profili",
+    "While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.": "nocat.farm açıkken Discord profilin onu bir oyun gibi gösterir. Kartta ne görüneceğini seç - önizleme, başkalarının gördüğü şeydir.",
+    "Buttons and which accounts it shows are under Show advanced. Discord shows your buttons to everyone but you.": "Düğmeler ve hangi hesapların gösterileceği Gelişmişleri göster altında. Discord düğmelerini senin dışında herkese gösterir.",
+    "No accounts picked": "Hiç hesap seçilmedi",
+    "Account names": "Hesap adları",
+    "Accounts online": "Çevrimiçi hesaplar",
+    "Avatar": "Avatar",
+    "Timer": "Sayaç",
+    "nocat.farm {0} · {1} · click to open it on GitHub": "nocat.farm {0} · {1} · GitHub'da açmak için tıkla",
+    "{0} · click for the Steam profile": "{0} · Steam profili için tıkla"
   },
   "settings": {
     "WebEnabled": {
@@ -2242,6 +2269,42 @@
     "Rep4RepPauseHours": {
       "label": "Yorumları şu kadar beklet (saat)",
       "tip": "rep4rep yorumlarını her hesapta bu kadar saat duraklatır, sonra kendiliğinden yeniden başlar. Geri sayım yeniden başlatmalarda da devam eder. Duraklatma istemiyorsan 0 yaz."
+    },
+    "DiscordPresence": {
+      "label": "Discord profilimde göster",
+      "tip": "nocat.farm açıkken Discord profilin onu bir oyun gibi Playing nocat.farm olarak gösterir; ne yaptığını ve bugün aldığı kartları da. Bu PC'de Discord uygulamasının açık olması ve Discord'daki Etkinlik Gizliliği ayarının oynadığın şeyi paylaşmaya izin vermesi gerekir."
+    },
+    "DiscordPresenceAccounts": {
+      "label": "Gösterilen hesaplar",
+      "tip": "Discord kartının hangi hesapları saydığı. İnsan modunda olmayan her hesap için boş bırak, tüm hesaplar için all yaz ya da adları virgülle ayırarak listele."
+    },
+    "DiscordShowNames": {
+      "label": "Hesap adlarını göster",
+      "tip": "Discord kartının ikinci satırı hesapları Steam adlarıyla listeler, örneğin kylro · old. Kapalıyken bunun yerine bugün düşen kartları gösterir."
+    },
+    "DiscordShowCounter": {
+      "label": "Çevrimiçi hesapları göster",
+      "tip": "Discord kartına bir (3 / 2) sayacı ekler: gösterilen hesaplardan kaçının oturum açtığı."
+    },
+    "DiscordShowAvatar": {
+      "label": "Bir hesabın avatarını göster",
+      "tip": "Gösterilen ilk hesabın Steam avatarını nocat.farm logosunun köşesine koyar. Üzerine gelince adı görünür, tıklayınca Steam profili açılır."
+    },
+    "DiscordShowTimer": {
+      "label": "Ne kadar süredir çalıştığını göster",
+      "tip": "Discord kartı, nocat.farm açıldığından beri bir oyunun oynama süresi gibi ileri sayar."
+    },
+    "DiscordButton1": {
+      "label": "Düğme 1",
+      "tip": "Discord'un kartta izin verdiği iki düğmeden ilki. \"nocat.farm'ı indir\" düğmesi için github, Steam profiline bağlantı için bir hesap adı, kendi düğmen için Label | https://link, hiç düğme olmaması için boş. Başkaları düğmeleri görür - Discord kendi düğmelerini sana göstermez."
+    },
+    "DiscordButton2": {
+      "label": "Düğme 2",
+      "tip": "İkinci düğme, aynı şekilde: github, bir hesap adı, Label | https://link ya da hiç düğme için boş."
+    },
+    "DiscordFeatured": {
+      "label": "Öne çıkan hesap",
+      "tip": "Discord kartında nocat.farm logosunun köşesinde Steam avatarı görünen hesap - tıklayınca o hesabın Steam profili açılır. İnsan modundakiler dahil her hesap olur. Boş bırakılırsa gösterilen ilk hesap kullanılır."
     }
   }
 }

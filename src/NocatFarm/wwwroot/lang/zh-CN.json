@@ -1378,7 +1378,34 @@
     "Telegram is connected.": "Telegram 已连接。",
     "Press {0} here (it shows up once the token is saved), then press {1} in Telegram. nocat.farm connects and says hello.": "点这里的 {0}（保存令牌后才会出现），然后在 Telegram 里点 {1}。nocat.farm 会连接并打个招呼。",
     "notifications: another program is reading this Telegram bot's messages right now (maybe a second copy of nocat.farm) - only one can, so commands may not arrive until it stops": "通知：另一个程序正在读取这个 Telegram 机器人的消息（可能是第二个 nocat.farm）- 只能有一个在读，所以在它停下之前命令可能收不到",
-    "Already connected. Send /status for a summary, /help for the commands, or /console to type commands like in the window.": "已经连接。发送 /status 查看概况，/help 查看命令，/console 像在窗口里一样输入命令。"
+    "Already connected. Send /status for a summary, /help for the commands, or /console to type commands like in the window.": "已经连接。发送 /status 查看概况，/help 查看命令，/console 像在窗口里一样输入命令。",
+    "update: {0} is downloaded and ready - updating in {1}s, signing the accounts out one at a time first": "更新：{0} 已下载完成 - {1} 秒后更新，先逐个登出账号",
+    "update: {0} is downloaded and ready - updating in {1}s": "更新：{0} 已下载完成 - {1} 秒后更新",
+    "update: signing out {0} ({1} of {2}) - updating in {3}s": "更新：正在登出 {0}（第 {1} 个，共 {2} 个）- {3} 秒后更新",
+    "update: updating in {0}s": "更新：{0} 秒后更新",
+    "nocat.farm {0} is ready": "nocat.farm {0} 已就绪",
+    "You have {0}. Type update accept in the nocat.farm window to install it.": "你现在是 {0}。在 nocat.farm 窗口输入 update accept 即可安装。",
+    "discord: {0}": "discord：{0}",
+    "Resting": "休息中",
+    "Farming cards · {0} left": "刷卡中 · 剩余 {0} 张",
+    "Idling games": "挂机游戏中",
+    "Idling on {0} accounts": "在 {0} 个账户上挂机",
+    "{0} cards today": "今日 {0} 张卡牌",
+    "{0} cards today · {1} of {2} online": "今日 {0} 张卡牌 · {1}/{2} 在线",
+    "Get nocat.farm": "获取 nocat.farm",
+    "Show on my Discord profile": "在我的 Discord 资料上显示",
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Notifications.": "nocat.farm 打开时，你的 Discord 会像玩游戏一样显示 Playing nocat.farm。你随时可以在“设置”→“通知”里更改。",
+    "{0} on Steam": "{0} 的 Steam",
+    "Discord profile": "Discord 资料",
+    "While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.": "nocat.farm 打开时，你的 Discord 资料会像玩游戏一样显示它。选择卡片上显示什么——预览就是别人看到的样子。",
+    "Buttons and which accounts it shows are under Show advanced. Discord shows your buttons to everyone but you.": "按钮和显示哪些账户在“显示高级”里。Discord 会把你的按钮显示给除你以外的所有人。",
+    "No accounts picked": "没有选择账户",
+    "Account names": "账户名",
+    "Accounts online": "在线账户",
+    "Avatar": "头像",
+    "Timer": "计时器",
+    "nocat.farm {0} · {1} · click to open it on GitHub": "nocat.farm {0} · {1} · 点击在 GitHub 打开",
+    "{0} · click for the Steam profile": "{0} · 点击查看 Steam 资料"
   },
   "settings": {
     "WebEnabled": {
@@ -2242,6 +2269,42 @@
     "Rep4RepPauseHours": {
       "label": "暂停评论（小时）",
       "tip": "在所有账户上暂停 rep4rep 评论这么多小时，之后自动恢复。重启后倒计时照样继续。设为 0 表示不暂停。"
+    },
+    "DiscordPresence": {
+      "label": "在我的 Discord 资料上显示",
+      "tip": "nocat.farm 打开时，你的 Discord 资料会像玩游戏一样显示 Playing nocat.farm，并附上它正在做什么和今天拿到的卡牌。需要这台电脑上开着 Discord 应用，并且 Discord 的活动隐私设置允许分享你在玩什么。"
+    },
+    "DiscordPresenceAccounts": {
+      "label": "显示哪些账户",
+      "tip": "Discord 卡片统计哪些账户。留空表示所有不在拟人模式的账户，输入 all 表示所有账户，或者用逗号分隔列出名字。"
+    },
+    "DiscordShowNames": {
+      "label": "显示账户名",
+      "tip": "Discord 卡片的第二行按 Steam 名字列出账户，比如 kylro · old。关闭后改为显示今天掉落的卡牌。"
+    },
+    "DiscordShowCounter": {
+      "label": "显示在线账户",
+      "tip": "在 Discord 卡片上加一个（3 中的 2）计数：显示的账户里有几个已登录。"
+    },
+    "DiscordShowAvatar": {
+      "label": "显示账户头像",
+      "tip": "把第一个显示的账户的 Steam 头像放在 nocat.farm 标志的角落。鼠标悬停显示名字，点击打开 Steam 资料。"
+    },
+    "DiscordShowTimer": {
+      "label": "显示已运行多久",
+      "tip": "Discord 卡片从 nocat.farm 打开时开始计时，就像游戏的游玩时间。"
+    },
+    "DiscordButton1": {
+      "label": "按钮 1",
+      "tip": "Discord 允许卡片上放两个按钮，这是第一个。填 github 显示“获取 nocat.farm”按钮，填账户名链接到它的 Steam 资料，自定义的写成 Label | https://link，留空则不显示。别人能看到这些按钮——Discord 不会向你显示你自己的按钮。"
+    },
+    "DiscordButton2": {
+      "label": "按钮 2",
+      "tip": "第二个按钮，用法一样：github、账户名、Label | https://link，或留空不显示。"
+    },
+    "DiscordFeatured": {
+      "label": "主打账号",
+      "tip": "在你的 Discord 卡片上，这个账号的 Steam 头像会显示在 nocat.farm 标志的角落，点击会打开它的 Steam 个人资料。任何账号都可以，人类模式的也行。留空则用显示的第一个账号。"
     }
   }
 }

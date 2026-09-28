@@ -123,6 +123,29 @@ public sealed class GlobalConfig {
 	/// <summary>Take commands from the connected Telegram chat - /status, /console and every console command.</summary>
 	public bool TelegramCommands { get; set; } = true;
 
+	/// <summary>"Playing nocat.farm" on your Discord profile while it's open.</summary>
+	public bool DiscordPresence { get; set; }
+
+	/// <summary>Which accounts the Discord card is about: names, or "all". Empty = every account not in human mode.</summary>
+	public string DiscordPresenceAccounts { get; set; } = "";
+
+	/// <summary>The account the Discord card is about first: its avatar, its name leading, its Steam profile linked.</summary>
+	public string DiscordFeatured { get; set; } = "";
+
+	/// <summary>The two buttons Discord allows: "github", an account name (its Steam profile), "Label | https://...", or empty.</summary>
+	public string DiscordButton1 { get; set; } = "github";
+
+	public string DiscordButton2 { get; set; } = "";
+
+	/// <summary>What else the Discord card shows.</summary>
+	public bool DiscordShowNames { get; set; } = true;
+
+	public bool DiscordShowCounter { get; set; } = true;
+
+	public bool DiscordShowAvatar { get; set; } = true;
+
+	public bool DiscordShowTimer { get; set; } = true;
+
 	public bool SendCardDrops { get; set; } = true;
 	public bool SendFreeStuff { get; set; } = true;
 	public bool SendTrades { get; set; } = true;

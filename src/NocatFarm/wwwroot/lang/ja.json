@@ -1378,7 +1378,34 @@
     "Telegram is connected.": "Telegram は接続済みです。",
     "Press {0} here (it shows up once the token is saved), then press {1} in Telegram. nocat.farm connects and says hello.": "ここで {0} を押し（トークンを保存すると表示されます）、Telegram で {1} を押します。nocat.farm が接続して、あいさつします。",
     "notifications: another program is reading this Telegram bot's messages right now (maybe a second copy of nocat.farm) - only one can, so commands may not arrive until it stops": "通知: 別のプログラムが今この Telegram ボットのメッセージを読んでいます(nocat.farm の2つ目のコピーかもしれません) - 読めるのは1つだけなので、それが止まるまでコマンドが届かないことがあります",
-    "Already connected. Send /status for a summary, /help for the commands, or /console to type commands like in the window.": "接続済みです。/status で概要、/help でコマンド一覧、/console でウィンドウと同じようにコマンドを入力できます。"
+    "Already connected. Send /status for a summary, /help for the commands, or /console to type commands like in the window.": "接続済みです。/status で概要、/help でコマンド一覧、/console でウィンドウと同じようにコマンドを入力できます。",
+    "update: {0} is downloaded and ready - updating in {1}s, signing the accounts out one at a time first": "アップデート: {0} のダウンロードが完了し準備できました - {1}秒後に更新します。先にアカウントを1つずつサインアウトします",
+    "update: {0} is downloaded and ready - updating in {1}s": "アップデート: {0} のダウンロードが完了し準備できました - {1}秒後に更新します",
+    "update: signing out {0} ({1} of {2}) - updating in {3}s": "アップデート: {0} をサインアウト中 ({2}件中{1}件目) - {3}秒後に更新します",
+    "update: updating in {0}s": "アップデート: {0}秒後に更新します",
+    "nocat.farm {0} is ready": "nocat.farm {0} が使えます",
+    "You have {0}. Type update accept in the nocat.farm window to install it.": "今は {0} です。nocat.farm のウィンドウで update accept と入力するとインストールします。",
+    "discord: {0}": "discord: {0}",
+    "Resting": "休憩中",
+    "Farming cards · {0} left": "カード収集中 · 残り {0} 枚",
+    "Idling games": "ゲームを放置中",
+    "Idling on {0} accounts": "{0} アカウントで放置中",
+    "{0} cards today": "今日のカード {0} 枚",
+    "{0} cards today · {1} of {2} online": "今日のカード {0} 枚 · {2}中{1}がオンライン",
+    "Get nocat.farm": "nocat.farm を入手",
+    "Show on my Discord profile": "Discord プロフィールに表示",
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Notifications.": "nocat.farm を開いている間、Discord にゲームのように Playing nocat.farm と表示されます。「設定」→「通知」でいつでも変更できます。",
+    "{0} on Steam": "Steam の {0}",
+    "Discord profile": "Discord プロフィール",
+    "While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.": "nocat.farm を開いている間、Discord プロフィールにゲームのように表示されます。カードに出す内容を選んでください。プレビューがほかの人に見える姿です。",
+    "Buttons and which accounts it shows are under Show advanced. Discord shows your buttons to everyone but you.": "ボタンと表示するアカウントは「詳細を表示」にあります。Discord はあなたのボタンを、あなた以外の全員に表示します。",
+    "No accounts picked": "アカウントが選ばれていません",
+    "Account names": "アカウント名",
+    "Accounts online": "オンラインのアカウント",
+    "Avatar": "アバター",
+    "Timer": "タイマー",
+    "nocat.farm {0} · {1} · click to open it on GitHub": "nocat.farm {0} · {1} · クリックで GitHub を開く",
+    "{0} · click for the Steam profile": "{0} · クリックで Steam プロフィール"
   },
   "settings": {
     "WebEnabled": {
@@ -2242,6 +2269,42 @@
     "Rep4RepPauseHours": {
       "label": "コメントを保留する時間数",
       "tip": "すべてのアカウントで rep4rep のコメントをこの時間数だけ止め、そのあと自動で再開します。カウントダウンは再起動しても続きます。止めないなら 0 にします。"
+    },
+    "DiscordPresence": {
+      "label": "Discord プロフィールに表示",
+      "tip": "nocat.farm を開いている間、Discord プロフィールにゲームのように Playing nocat.farm と表示され、今やっていることと今日手に入れたカードも出ます。この PC で Discord アプリが開いていて、Discord のアクティビティのプライバシー設定でプレイ中のゲームの共有が許可されている必要があります。"
+    },
+    "DiscordPresenceAccounts": {
+      "label": "表示するアカウント",
+      "tip": "Discord カードで数えるアカウント。空欄なら人間モードでないすべてのアカウント、all と入力するとすべてのアカウント、またはカンマ区切りで名前を並べます。"
+    },
+    "DiscordShowNames": {
+      "label": "アカウント名を表示",
+      "tip": "Discord カードの 2 行目に、アカウントを Steam の名前で並べます（例: kylro · old）。オフにすると、代わりに今日手に入れたカードを表示します。"
+    },
+    "DiscordShowCounter": {
+      "label": "オンラインのアカウントを表示",
+      "tip": "Discord カードに (3中2) のカウンターを追加します。表示しているアカウントのうち何個がサインインしているかです。"
+    },
+    "DiscordShowAvatar": {
+      "label": "アカウントのアバターを表示",
+      "tip": "最初に表示するアカウントの Steam アバターを nocat.farm ロゴの隅に置きます。カーソルを合わせると名前が出て、クリックすると Steam プロフィールが開きます。"
+    },
+    "DiscordShowTimer": {
+      "label": "起動してからの時間を表示",
+      "tip": "Discord カードが nocat.farm を開いた時からカウントアップします。ゲームのプレイ時間と同じです。"
+    },
+    "DiscordButton1": {
+      "label": "ボタン 1",
+      "tip": "Discord がカードに置ける 2 つのボタンの 1 つ目。github で「nocat.farm を入手」ボタン、アカウント名でその Steam プロフィールへのリンク、自分のボタンは Label | https://link、空欄ならボタンなし。ボタンはほかの人に見えます。Discord は自分のボタンを自分には表示しません。"
+    },
+    "DiscordButton2": {
+      "label": "ボタン 2",
+      "tip": "2 つ目のボタンも同じです: github、アカウント名、Label | https://link、または空欄でボタンなし。"
+    },
+    "DiscordFeatured": {
+      "label": "注目のアカウント",
+      "tip": "Discord カードの nocat.farm ロゴの角に Steam アバターを表示するアカウントです。クリックするとそのアカウントの Steam プロフィールが開きます。どのアカウントでも、ヒューマンモードでも使えます。空なら最初に表示されるアカウントを使います。"
     }
   }
 }
