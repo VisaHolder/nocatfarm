@@ -1350,7 +1350,6 @@
     "{0} cards today": "오늘 카드 {0}장",
     "Get nocat.farm": "nocat.farm 받기",
     "Show on my Discord profile": "내 Discord 프로필에 표시",
-    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Notifications.": "nocat.farm이 열려 있는 동안 Discord에 게임처럼 Playing nocat.farm이 표시됩니다. 설정의 알림에서 언제든 바꿀 수 있습니다.",
     "{0} on Steam": "Steam의 {0}",
     "Discord profile": "Discord 프로필",
     "While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.": "nocat.farm이 열려 있는 동안 Discord 프로필에 게임처럼 표시됩니다. 카드에 보일 내용을 고르세요 - 미리보기가 다른 사람에게 보이는 모습입니다.",
@@ -1559,7 +1558,13 @@
     "Used ArchiSteamFarm or another idler before? Add the account, then go straight to all of its settings, advanced ones included.": "ArchiSteamFarm이나 다른 아이들러를 써 봤나요? 계정을 추가한 뒤 고급 설정까지 포함한 모든 설정으로 바로 갑니다.",
     "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept": "nocat.farm는 Docker 안에서는 스스로 업데이트하지 않습니다 - nocatfarm 폴더에서 git pull을 실행한 뒤 docker compose up -d --build. config/와 logs/는 유지됩니다",
     "Discord Rich Presence on - your profile shows Playing nocat.farm": "Discord Rich Presence 켜짐 - 프로필에 nocat.farm 플레이 중으로 표시됩니다",
-    "Discord Rich Presence off": "Discord Rich Presence 꺼짐"
+    "Discord Rich Presence off": "Discord Rich Presence 꺼짐",
+    "Pop-ups": "팝업",
+    "Inventory prices": "인벤토리 가격",
+    "Updates & plugins": "업데이트와 플러그인",
+    "Badges, boosters & selling": "배지, 부스터, 판매",
+    "Inventory & bans": "인벤토리와 밴",
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "nocat.farm이 열려 있는 동안 Discord에 게임처럼 Playing nocat.farm이 표시됩니다. 설정의 Discord 프로필에서 언제든 바꿀 수 있습니다."
   },
   "settings": {
     "WebEnabled": {
@@ -1696,7 +1701,7 @@
     },
     "LoginStaggerSeconds": {
       "label": "로그인 사이 간격",
-      "tip": "시작할 때 계정마다 로그인 사이에 기다리는 시간(초)입니다. Steam은 인터넷 연결 하나당 로그인을 제한하므로, 간격을 두면 여러 계정이 한꺼번에 막히지 않습니다."
+      "tip": "두 계정이 로그인하는 사이의 간격(초)입니다. 시작할 때, 모두 시작, 재연결 모두 같으며 약간의 오차가 있고 5초보다 짧아지지 않습니다. Steam은 인터넷 연결당 로그인 수를 제한하므로 간격을 두면 여러 계정이 막히는 것을 막을 수 있습니다."
     },
     "StatusEveryMinutes": {
       "label": "보고 주기",
@@ -2057,7 +2062,7 @@
       "tip": "플레이를 그만둔 뒤 이 계정이 하던 일을 이어서 하기까지의 시간(분)입니다."
     },
     "AchievementBoost": {
-      "tip": "여러 게임에서 알아서 한 번에 한 게임씩 도전 과제를 노립니다. “직접 고른 게임”은 아래 목록을 씁니다. “모든 싱글플레이 게임”은 라이브러리에서 해본 적 있고 도전 과제가 있는 싱글플레이 게임을 고릅니다.",
+      "tip": "여러 게임에서 업적을 알아서 노립니다. 한 번에 한 게임씩. \"고른 게임\"은 아래 목록을 씁니다. \"모든 싱글플레이\"는 라이브러리에서 업적이 있는 싱글플레이 게임을 고릅니다. 해 본 게임이든 아니든 상관없습니다(\"해본 게임만 노림\"를 켜면 나머지는 빠집니다). 사람 모드 계정에서는 가끔 평소 하루 중 한 세션이 업적 사냥이 될 뿐, 플레이 시간이 늘지는 않습니다.",
       "label": "도전 과제 부스트",
       "choices": "0 끄기 | 1 직접 고른 게임 | 2 모든 싱글플레이 게임"
     },

@@ -88,7 +88,7 @@ copy bin\Release\net10.0\HelloPlugin.dll C:\path\to\nocat.farm\plugins\
 ### Step 5 - turn plugins on
 
 Plugins are off until you switch them on. In the dashboard, go to **Settings**, tick **Show advanced**, and under
-**Dashboard** switch on **Load plugins**. Or type `set PluginsEnabled true`. Then restart nocat.farm.
+**Updates & plugins** switch on **Load plugins**. Or type `set PluginsEnabled true`. Then restart nocat.farm.
 
 ### Step 6 - try it
 

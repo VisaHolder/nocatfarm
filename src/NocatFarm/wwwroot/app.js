@@ -2266,7 +2266,7 @@ function tutShowDone() {
     <p class="muted small">${esc(t('You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.'))}</p>
     ${tutImportOthers.length ? `<p class="muted small">${esc(tf('The other {0} imported account(s) are added but not started yet.', tutImportOthers.length))}</p>` : ''}
     <label class="tutdiscord"><input type="checkbox" ${config && config.Global && config.Global.DiscordPresence ? 'checked' : ''} onchange="tutDiscordPresence(this.checked)">
-      <span><b>${esc(t('Show on my Discord profile'))}</b><br><span class="muted small">${esc(t('Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Notifications.'))}</span></span></label>
+      <span><b>${esc(t('Show on my Discord profile'))}</b><br><span class="muted small">${esc(t('Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.'))}</span></span></label>
     <div class="actions">
       ${tutImportOthers.length ? `<button class="ghost" onclick="tutStartOthers()">${esc(t('Start the others too'))}</button>` : ''}
       <button id="tutNext" onclick="finishSignin()">${esc(t('Show me my account'))}</button></div>`);
@@ -2549,7 +2549,9 @@ document.addEventListener('click', (e) => {
   const pick = e.target.closest('[data-auth-pick]');
   if (pick) { authPickAccount(pick.dataset.authPick); return; }
   const source = e.target.closest('[data-log-source]');
-  if (source) { $('logBot').value = source.dataset.logSource; renderLog(); }
+  if (source) { $('logBot').value = source.dataset.logSource; renderLog(); return; }
+  const jump = e.target.closest('[data-jump]');
+  if (jump) jumpTo(jump.dataset.jump);
 });
 
 document.addEventListener('click', (e) => {
@@ -3024,9 +3026,15 @@ function renderSettings() {
   $('settingsNavGlobal').innerHTML =
     `<div class="s ${settingsTarget === GLOBAL ? 'active' : ''}" onclick="selectSettings(null)">${esc(t('Global settings'))}</div>`;
   // Section jump-list for whatever pane is open. A 40-setting page without one is a scroll hunt.
-  const sectionNames = [...new Set(settingsDefs().map((d) => d.Section))];
+  // Only sections this account can show at all: human mode hides the robot-only ones and the other way round,
+  // and a link to a section that never appears is a link that does nothing.
+  const jumpLegit = settingsTarget !== GLOBAL && !!liveValue('LegitMode', settingsValues());
+  const sectionNames = [...new Set(settingsDefs()
+    .filter((d) => !(d.Mode === 'rage' && jumpLegit) && !(d.Mode === 'legit' && !jumpLegit)
+      && !(settingsTarget === GLOBAL && PANEL_ROWS.has(d.Name) && !PANEL_SECTIONS.has(d.Section)))
+    .map((d) => d.Section))];
   const jump = `<div class="jump">${sectionNames.map((n) =>
-    `<a class="j" onclick="jumpTo('${esc(n)}')">${esc(t(n))}</a>`).join('')}</div>`;
+    `<a class="j" data-jump="${esc(n)}">${esc(t(n))}</a>`).join('')}</div>`;
 
   $('settingsNavBots').innerHTML = Object.keys(config.Bots).length
     ? Object.keys(config.Bots).map((n) =>
@@ -3063,9 +3071,9 @@ function renderSettings() {
       // of the way until it's switched on.
       if (d.Mode === 'rage' && legitOn) return false;
       if (d.Mode === 'legit' && !legitOn) return false;
-      // The Discord profile panel at the top of Notifications has its own switch and chips for these - a second
-      // row for each was the same setting twice.
-      if (settingsTarget === GLOBAL && DISCORD_PANEL.has(d.Name)) return false;
+      // The Discord profile panel and the Notifications chips have their own switch and chips for these - a
+      // second row for each was the same setting twice.
+      if (settingsTarget === GLOBAL && PANEL_ROWS.has(d.Name)) return false;
       if (!advanced && d.Advanced) { hiddenAdvanced++; return false; }
       if (q && !(tSetting(d, 'label').toLowerCase().includes(q) || d.Label.toLowerCase().includes(q)
         || d.Name.toLowerCase().includes(q) || tSetting(d, 'tip').toLowerCase().includes(q))) return false;
@@ -3073,8 +3081,10 @@ function renderSettings() {
       return true;
     });
 
-    if (!fields.length) continue;
-    html += `<div class="section"><h3 data-section="${esc(section)}">${esc(t(section))}</h3>${sectionIntro(section, values)}${fields.map((d) => fieldHtml(d, values, defaults)).join('')}</div>`;
+    // A section whose rows are all drawn by its own panel (Discord profile) still shows, panel and all.
+    const intro = sectionIntro(section, values);
+    if (!fields.length && !(intro && PANEL_SECTIONS.has(section) && !q && !onlyChanged)) continue;
+    html += `<div class="section"><h3 data-section="${esc(section)}">${esc(t(section))}</h3>${intro}${fields.map((d) => fieldHtml(d, values, defaults)).join('')}</div>`;
   }
 
   // Only on a real account, and only when nothing is being searched or filtered - it is not a setting and
@@ -3245,8 +3255,11 @@ function sectionIntro(section, values) {
       ${setUp ? '' : `<span class="muted small" style="margin-left:8px">${esc(t('Save a webhook link or bot token first.'))}</span>`}
       ${telegramConnect()}
       ${notifyGuides()}
-    </div>
-    ${discordCardIntro(val)}`;
+    </div>`;
+  }
+
+  if (section === 'Discord profile' && settingsTarget === GLOBAL) {
+    return discordCardIntro(val);
   }
 
   // Achievements are the one area where the settings alone tell you nothing useful. Three dials and an
@@ -3873,14 +3886,19 @@ function edit(name, value) {
 // The Discord profile card: one switch, a chip per part, and a preview drawn the way Discord draws it - so what
 // each chip does is obvious before saving. Same data the app sends: the picked accounts, their Steam names and
 // avatars, and the two buttons.
-const DISCORD_PANEL = new Set(['DiscordPresence', 'DiscordShowNames', 'DiscordShowCounter', 'DiscordShowAvatar', 'DiscordShowTimer']);
+const PANEL_SECTIONS = new Set(['Discord profile']);
+
+// Settings drawn by a section's own panel (chips and switches) instead of as rows.
+const PANEL_ROWS = new Set(['DiscordPresence', 'DiscordShowNames', 'DiscordShowCounter', 'DiscordShowAvatar', 'DiscordShowTimer',
+  'SendCardDrops', 'SendFreeStuff', 'SendTrades', 'SendProblems', 'SendUpdates', 'SendDailySummary', 'SendComments',
+  'SendAchievements', 'SendRep4Rep']);
 
 function discordCardIntro(val) {
   const on = !!val('DiscordPresence');
   const parts = [['DiscordShowNames', 'Account names'], ['DiscordShowCounter', 'Accounts online'],
     ['DiscordShowAvatar', 'Avatar'], ['DiscordShowTimer', 'Timer']];
   return `<div class="explain dcard-intro">
-    <div class="dhead"><b>${esc(t('Discord profile'))}</b>
+    <div class="dhead"><b>${esc(t('Show on my Discord profile'))}</b>
       <label class="switch"><input type="checkbox" ${on ? 'checked' : ''} onchange="editAndRender('DiscordPresence', this.checked)"><span></span></label></div>
     <p style="margin:6px 0 0">${esc(t('While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.'))}</p>
     <div class="langpick">${parts.map(([k, label]) =>

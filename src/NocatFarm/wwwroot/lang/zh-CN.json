@@ -1350,7 +1350,6 @@
     "{0} cards today": "今日 {0} 张卡牌",
     "Get nocat.farm": "获取 nocat.farm",
     "Show on my Discord profile": "在我的 Discord 资料上显示",
-    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Notifications.": "nocat.farm 打开时，你的 Discord 会像玩游戏一样显示 Playing nocat.farm。你随时可以在“设置”→“通知”里更改。",
     "{0} on Steam": "{0} 的 Steam",
     "Discord profile": "Discord 资料",
     "While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.": "nocat.farm 打开时，你的 Discord 资料会像玩游戏一样显示它。选择卡片上显示什么——预览就是别人看到的样子。",
@@ -1559,7 +1558,13 @@
     "Used ArchiSteamFarm or another idler before? Add the account, then go straight to all of its settings, advanced ones included.": "用过 ArchiSteamFarm 或其他挂卡工具？添加账户后直接进入它的全部设置，包括高级设置。",
     "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept": "nocat.farm 在 Docker 里不会自己更新 - 在 nocatfarm 文件夹里运行 git pull，然后 docker compose up -d --build。config/ 和 logs/ 会保留",
     "Discord Rich Presence on - your profile shows Playing nocat.farm": "Discord 丰富状态已开启 - 你的资料显示正在玩 nocat.farm",
-    "Discord Rich Presence off": "Discord 丰富状态已关闭"
+    "Discord Rich Presence off": "Discord 丰富状态已关闭",
+    "Pop-ups": "弹窗",
+    "Inventory prices": "库存价格",
+    "Updates & plugins": "更新与插件",
+    "Badges, boosters & selling": "徽章、补充包与出售",
+    "Inventory & bans": "库存与封禁",
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "nocat.farm 打开时，你的 Discord 会像玩游戏一样显示 Playing nocat.farm。你随时可以在“设置”→“Discord 资料”里更改。"
   },
   "settings": {
     "WebEnabled": {
@@ -1696,7 +1701,7 @@
     },
     "LoginStaggerSeconds": {
       "label": "登录之间的间隔",
-      "tip": "启动时每登录一个账户之间等待多少秒。Steam 会限制每个网络连接的登录次数，留出间隔能避免多个账户被一起挡住。"
+      "tip": "两个账户登录之间的秒数 - 启动、全部启动或重新连接时都一样 - 会略有浮动，且不少于 5 秒。Steam 会限制每个网络连接的登录次数，留出间隔可以避免多个账户被封锁。"
     },
     "StatusEveryMinutes": {
       "label": "汇报间隔",
@@ -2057,7 +2062,7 @@
       "tip": "你停止游戏后，这个账户要等多久才接着做原来的事（分钟）。"
     },
     "AchievementBoost": {
-      "tip": "自动在多个游戏里刷成就，一次一个游戏。「你挑选的游戏」使用下面的列表。「所有单人游戏」会从你的库里挑玩过的、有成就的单人游戏。",
+      "tip": "自动在多款游戏里刷成就，一次一款。“你挑的游戏”用下面的列表。“所有单人游戏”从你的库里挑有成就的单人游戏，玩没玩过都算（打开“只刷你玩过的游戏”可以跳过其余的）。在拟人模式账户上，刷成就只是偶尔占用它平常一天里的一段游戏时间，不会额外增加时长。",
       "label": "成就冲刺",
       "choices": "0 关闭 | 1 你挑选的游戏 | 2 所有单人游戏"
     },

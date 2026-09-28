@@ -1350,7 +1350,6 @@
     "{0} cards today": "{0} cartes aujourd'hui",
     "Get nocat.farm": "Obtenir nocat.farm",
     "Show on my Discord profile": "Afficher sur mon profil Discord",
-    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Notifications.": "Votre Discord affiche Playing nocat.farm tant qu'il est ouvert, comme un jeu. Vous pouvez changer ça à tout moment dans Paramètres, Notifications.",
     "{0} on Steam": "{0} sur Steam",
     "Discord profile": "Profil Discord",
     "While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.": "Tant que nocat.farm est ouvert, votre profil Discord l'affiche comme un jeu. Choisissez ce que la carte affiche - l'aperçu est ce que les gens voient.",
@@ -1559,7 +1558,13 @@
     "Used ArchiSteamFarm or another idler before? Add the account, then go straight to all of its settings, advanced ones included.": "Déjà utilisé ArchiSteamFarm ou un autre idler ? Ajoutez le compte, puis allez directement à tous ses réglages, avancés compris.",
     "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept": "nocat.farm ne se met pas à jour tout seul dans Docker - dans le dossier nocatfarm, lancez git pull, puis docker compose up -d --build. config/ et logs/ sont conservés",
     "Discord Rich Presence on - your profile shows Playing nocat.farm": "Discord Rich Presence activé - votre profil affiche Joue à nocat.farm",
-    "Discord Rich Presence off": "Discord Rich Presence désactivé"
+    "Discord Rich Presence off": "Discord Rich Presence désactivé",
+    "Pop-ups": "Bulles de notification",
+    "Inventory prices": "Prix de l'inventaire",
+    "Updates & plugins": "Mises à jour et plugins",
+    "Badges, boosters & selling": "Badges, boosters et ventes",
+    "Inventory & bans": "Inventaire et bannissements",
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "Votre Discord affiche Playing nocat.farm tant qu'il est ouvert, comme un jeu. Vous pouvez changer ça à tout moment dans Paramètres, Profil Discord."
   },
   "settings": {
     "WebEnabled": {
@@ -1696,7 +1701,7 @@
     },
     "LoginStaggerSeconds": {
       "label": "Écart entre les connexions",
-      "tip": "Secondes d'attente entre la connexion de chaque compte au démarrage. Steam limite les connexions par connexion internet, donc un écart évite que plusieurs comptes soient bloqués."
+      "tip": "Secondes entre les connexions de deux comptes - au démarrage, avec Tout démarrer ou lors d'une reconnexion - à peu près, et jamais moins de 5. Steam limite les connexions par accès Internet, un écart évite que plusieurs comptes soient bloqués."
     },
     "StatusEveryMinutes": {
       "label": "Faire le point toutes les",
@@ -2057,7 +2062,7 @@
       "tip": "Combien de temps après que vous avez arrêté de jouer avant que ce compte reprenne là où il s'était arrêté, en minutes."
     },
     "AchievementBoost": {
-      "tip": "Chasse les succès tout seul sur plusieurs jeux, un jeu à la fois. « les jeux que tu choisis » utilise la liste en dessous. « tous les jeux solo » prend dans votre bibliothèque les jeux solo déjà joués qui ont des succès.",
+      "tip": "Chasse les succès dans plusieurs jeux tout seul, un jeu à la fois. « Jeux que vous choisissez » utilise la liste ci-dessous. « Tous les jeux solo » prend les jeux solo avec succès de votre bibliothèque, joués ou non (activez « Ne chasser que des jeux déjà lancés » pour ignorer le reste). Sur un compte en mode humain, une chasse est de temps en temps une session de sa journée normale, pas du jeu en plus.",
       "label": "Coup de pouce aux succès",
       "choices": "0 désactivé | 1 les jeux que tu choisis | 2 tous les jeux solo"
     },

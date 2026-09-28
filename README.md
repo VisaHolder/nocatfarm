@@ -51,7 +51,8 @@
   banned games' items out of trades.
 - **History charts** - cards per day, hours banked, inventory value, week against week.
 - **Discord and Telegram** - notifications, control from your phone, and (optional) a *Playing nocat.farm* card on
-  your Discord profile. Set them up under **Settings → Global settings → Notifications**, then type `notify test`.
+  your Discord profile. Set them up under **Settings → Global settings → Notifications** (and **Discord profile** for
+  the card), then type `notify test`.
 - **Extras, if you want them** - earn achievements slowly, sell spare cards, see what your next Steam level costs,
   post rep4rep comments.
 - **Everything stays on your PC.** No sign-up, no server, no cloud. Your accounts never leave your machine.

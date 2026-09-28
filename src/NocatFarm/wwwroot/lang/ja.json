@@ -1350,7 +1350,6 @@
     "{0} cards today": "今日のカード {0} 枚",
     "Get nocat.farm": "nocat.farm を入手",
     "Show on my Discord profile": "Discord プロフィールに表示",
-    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Notifications.": "nocat.farm を開いている間、Discord にゲームのように Playing nocat.farm と表示されます。「設定」→「通知」でいつでも変更できます。",
     "{0} on Steam": "Steam の {0}",
     "Discord profile": "Discord プロフィール",
     "While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.": "nocat.farm を開いている間、Discord プロフィールにゲームのように表示されます。カードに出す内容を選んでください。プレビューがほかの人に見える姿です。",
@@ -1559,7 +1558,13 @@
     "Used ArchiSteamFarm or another idler before? Add the account, then go straight to all of its settings, advanced ones included.": "ArchiSteamFarm や他のアイドラーを使ったことがある方へ。アカウントを追加したら、詳細設定を含むすべての設定へ直接進みます。",
     "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept": "nocat.farm は Docker 内では自動更新しません - nocatfarm フォルダーで git pull を実行し、続けて docker compose up -d --build。config/ と logs/ はそのまま残ります",
     "Discord Rich Presence on - your profile shows Playing nocat.farm": "Discord リッチプレゼンス オン - プロフィールに「nocat.farm をプレイ中」と表示中",
-    "Discord Rich Presence off": "Discord リッチプレゼンス オフ"
+    "Discord Rich Presence off": "Discord リッチプレゼンス オフ",
+    "Pop-ups": "ポップアップ",
+    "Inventory prices": "インベントリの価格",
+    "Updates & plugins": "アップデートとプラグイン",
+    "Badges, boosters & selling": "バッジ・ブースター・販売",
+    "Inventory & bans": "インベントリと BAN",
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "nocat.farm を開いている間、Discord にゲームのように Playing nocat.farm と表示されます。「設定」→「Discord プロフィール」でいつでも変更できます。"
   },
   "settings": {
     "WebEnabled": {
@@ -1696,7 +1701,7 @@
     },
     "LoginStaggerSeconds": {
       "label": "ログインの間隔",
-      "tip": "起動時に各アカウントをログインさせる間隔（秒）です。Steam はネット回線ごとにログイン数を制限しているので、間を空けると複数のアカウントがまとめてブロックされるのを防げます。"
+      "tip": "2 つのアカウントがサインインする間隔（秒）。起動時、すべて開始、再接続のどれでも同じで、少しだけ揺らぎがあり、5 秒未満にはなりません。Steam はインターネット接続ごとのログイン数を制限しているので、間隔を空けると複数アカウントのブロックを防げます。"
     },
     "StatusEveryMinutes": {
       "label": "報告の間隔",
@@ -2057,7 +2062,7 @@
       "tip": "あなたが遊ぶのをやめてから、このアカウントが続きを再開するまでの時間（分）です。"
     },
     "AchievementBoost": {
-      "tip": "複数のゲームで、1 本ずつ自動で実績を狙います。「選んだゲーム」は下の一覧を使います。「シングルプレイ全部」は、ライブラリから遊んだことがあり実績のあるシングルプレイのゲームを選びます。",
+      "tip": "複数のゲームで実績を自動で狙います。一度に 1 ゲームずつ。「選んだゲーム」は下のリストを使います。「すべてのシングルプレイヤー」はライブラリから実績のあるシングルプレイヤーゲームを選びます（プレイ済みかどうかは問いません。残りを除くには「遊んだことのあるゲームだけ狙う」をオンに）。人間モードのアカウントでは、狙う時間はときどき普段の一日のセッションの 1 つになるだけで、プレイ時間は増えません。",
       "label": "実績ブースト",
       "choices": "0 オフ | 1 選んだゲーム | 2 シングルプレイ全部"
     },

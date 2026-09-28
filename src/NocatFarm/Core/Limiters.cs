@@ -10,8 +10,18 @@ namespace NocatFarm.Core;
 /// moves it on by the gap - so the first caller goes straight away and only the ones behind it wait, in order.
 /// </summary>
 public static class Limiters {
-	/// <summary>Spacing between two logins from this machine: a few seconds, never the same twice.</summary>
-	private static TimeSpan LoginGap => TimeSpan.FromMilliseconds(Rng.Next(8_000, 15_001));
+	/// <summary>
+	/// Spacing between two logins from this machine: the "Gap between logins" setting, give or take a little so it's
+	/// never the same twice, and never under five seconds. The one gap every start takes - start all, a single start,
+	/// a reconnect - where "start all" used to add the setting on top of a separate hidden 8-15 seconds.
+	/// </summary>
+	private static TimeSpan LoginGap {
+		get {
+			int seconds = Math.Max(5, Config.Live.Global.LoginStaggerSeconds);
+
+			return TimeSpan.FromMilliseconds(Rng.Next(seconds * 800, (seconds * 1250) + 1));
+		}
+	}
 
 	/// <summary>How long to sit out when Steam answers a login with a rate-limit. Configurable.</summary>
 	public static int LoginCooldownMinutes => Math.Max(1, Config.Live.Global.LoginCooldownMinutes);

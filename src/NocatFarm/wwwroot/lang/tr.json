@@ -1350,7 +1350,6 @@
     "{0} cards today": "Bugün {0} kart",
     "Get nocat.farm": "nocat.farm'ı indir",
     "Show on my Discord profile": "Discord profilimde göster",
-    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Notifications.": "nocat.farm açıkken Discord'un onu bir oyun gibi Playing nocat.farm olarak gösterir. Bunu istediğin zaman Ayarlar, Bildirimler altından değiştirebilirsin.",
     "{0} on Steam": "Steam'de {0}",
     "Discord profile": "Discord profili",
     "While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.": "nocat.farm açıkken Discord profilin onu bir oyun gibi gösterir. Kartta ne görüneceğini seç - önizleme, başkalarının gördüğü şeydir.",
@@ -1559,7 +1558,13 @@
     "Used ArchiSteamFarm or another idler before? Add the account, then go straight to all of its settings, advanced ones included.": "Daha önce ArchiSteamFarm ya da başka bir idler kullandın mı? Hesabı ekle, sonra gelişmişler dahil tüm ayarlarına doğrudan geç.",
     "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept": "nocat.farm Docker içinde kendini güncellemez - nocatfarm klasöründe git pull çalıştır, sonra docker compose up -d --build. config/ ve logs/ korunur",
     "Discord Rich Presence on - your profile shows Playing nocat.farm": "Discord Rich Presence açık - profilinde nocat.farm oynuyor görünüyor",
-    "Discord Rich Presence off": "Discord Rich Presence kapalı"
+    "Discord Rich Presence off": "Discord Rich Presence kapalı",
+    "Pop-ups": "Bildirim balonları",
+    "Inventory prices": "Envanter fiyatları",
+    "Updates & plugins": "Güncellemeler ve eklentiler",
+    "Badges, boosters & selling": "Rozetler, paketler ve satış",
+    "Inventory & bans": "Envanter ve yasaklar",
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "nocat.farm açıkken Discord'un onu bir oyun gibi Playing nocat.farm olarak gösterir. Bunu istediğin zaman Ayarlar, Discord profili altından değiştirebilirsin."
   },
   "settings": {
     "WebEnabled": {
@@ -1696,7 +1701,7 @@
     },
     "LoginStaggerSeconds": {
       "label": "Girişler arası boşluk",
-      "tip": "Başlangıçta her hesabın girişi arasında beklenecek saniye. Steam, internet bağlantısı başına girişleri sınırlar. Bu boşluk birkaç hesabın engellenmesini önler."
+      "tip": "İki hesabın giriş yapması arasındaki saniye - açılışta, Tümünü başlat'ta ya da yeniden bağlanırken - biraz oynayarak ve asla 5'in altında değil. Steam internet bağlantısı başına girişleri sınırlar, aradaki boşluk birkaç hesabın engellenmesini önler."
     },
     "StatusEveryMinutes": {
       "label": "Şu sıklıkta rapor ver",
@@ -2057,7 +2062,7 @@
       "tip": "Sen oynamayı bıraktıktan ne kadar sonra bu hesabın kaldığı yerden devam ettiği, dakika cinsinden."
     },
     "AchievementBoost": {
-      "tip": "Birkaç oyunda kendi başına başarım avlar, tek seferde tek oyun. “Seçtiğiniz oyunlar” aşağıdaki listeyi kullanır. “Tüm tek oyunculu oyunlar” kütüphanenden oynanmış ve başarımı olan tek oyunculu oyunları seçer.",
+      "tip": "Birkaç oyunda başarımları kendi kendine avlar, her seferinde tek oyun. \"Seçtiğin oyunlar\" aşağıdaki listeyi kullanır. \"Tüm tek oyunculu\" kütüphanendeki başarımlı tek oyunculu oyunları seçer, oynanmış olsun olmasın (gerisini atlamak için \"Yalnızca oynadığın oyunlarda avlan\"yı aç). İnsan modundaki bir hesapta av, arada bir normal gününün oturumlarından biri olur, fazladan oyun değil.",
       "label": "Başarım hızlandırma",
       "choices": "0 kapalı | 1 seçtiğiniz oyunlar | 2 tüm tek oyunculu oyunlar"
     },
