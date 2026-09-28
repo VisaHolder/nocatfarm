@@ -1557,9 +1557,9 @@
     "It signs your Steam accounts in, farms their trading cards, plays games so the hours count and picks up free stuff - all from this machine. Your accounts never leave it.": "它登录你的 Steam 账户，挂取集换式卡牌，运行游戏累积时长，并领取免费物品 - 全部在这台电脑上完成。你的账户永远不会离开它。",
     "Advanced setup": "高级设置",
     "Used ArchiSteamFarm or another idler before? Add the account, then go straight to all of its settings, advanced ones included.": "用过 ArchiSteamFarm 或其他挂卡工具？添加账户后直接进入它的全部设置，包括高级设置。",
-    "showing nocat.farm on your Discord profile": "正在你的 Discord 个人资料上显示 nocat.farm",
-    "taken off your Discord profile": "已从你的 Discord 个人资料上移除",
-    "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept": "nocat.farm 在 Docker 里不会自己更新 - 在 nocatfarm 文件夹里运行 git pull，然后 docker compose up -d --build。config/ 和 logs/ 会保留"
+    "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept": "nocat.farm 在 Docker 里不会自己更新 - 在 nocatfarm 文件夹里运行 git pull，然后 docker compose up -d --build。config/ 和 logs/ 会保留",
+    "Discord Rich Presence on - your profile shows Playing nocat.farm": "Discord 丰富状态已开启 - 你的资料显示正在玩 nocat.farm",
+    "Discord Rich Presence off": "Discord 丰富状态已关闭"
   },
   "settings": {
     "WebEnabled": {

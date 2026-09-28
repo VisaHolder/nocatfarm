@@ -86,7 +86,7 @@ public static class DiscordPresence {
 
 					if (!_shown && (activity != null)) {
 						_shown = true;
-						Log.Info(new Said("showing nocat.farm on your Discord profile"), "discord");
+						Log.Info(new Said("Discord Rich Presence on - your profile shows Playing nocat.farm"), "discord");
 					}
 				}
 
@@ -350,7 +350,7 @@ public static class DiscordPresence {
 
 		if (_shown) {
 			_shown = false;
-			Log.Info(new Said("taken off your Discord profile"), "discord");
+			Log.Info(new Said("Discord Rich Presence off"), "discord");
 		}
 
 		try {

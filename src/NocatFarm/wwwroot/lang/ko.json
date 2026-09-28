@@ -1557,9 +1557,9 @@
     "It signs your Steam accounts in, farms their trading cards, plays games so the hours count and picks up free stuff - all from this machine. Your accounts never leave it.": "Steam 계정에 로그인하고, 트레이딩 카드를 파밍하고, 시간이 쌓이도록 게임을 돌리고, 무료 아이템을 챙깁니다 - 모두 이 PC에서. 계정은 절대 이 PC를 떠나지 않습니다.",
     "Advanced setup": "고급 설정",
     "Used ArchiSteamFarm or another idler before? Add the account, then go straight to all of its settings, advanced ones included.": "ArchiSteamFarm이나 다른 아이들러를 써 봤나요? 계정을 추가한 뒤 고급 설정까지 포함한 모든 설정으로 바로 갑니다.",
-    "showing nocat.farm on your Discord profile": "Discord 프로필에 nocat.farm 표시 중",
-    "taken off your Discord profile": "Discord 프로필에서 내렸습니다",
-    "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept": "nocat.farm는 Docker 안에서는 스스로 업데이트하지 않습니다 - nocatfarm 폴더에서 git pull을 실행한 뒤 docker compose up -d --build. config/와 logs/는 유지됩니다"
+    "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept": "nocat.farm는 Docker 안에서는 스스로 업데이트하지 않습니다 - nocatfarm 폴더에서 git pull을 실행한 뒤 docker compose up -d --build. config/와 logs/는 유지됩니다",
+    "Discord Rich Presence on - your profile shows Playing nocat.farm": "Discord Rich Presence 켜짐 - 프로필에 nocat.farm 플레이 중으로 표시됩니다",
+    "Discord Rich Presence off": "Discord Rich Presence 꺼짐"
   },
   "settings": {
     "WebEnabled": {
