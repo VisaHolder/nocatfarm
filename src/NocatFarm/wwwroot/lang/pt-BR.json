@@ -1568,7 +1568,12 @@
     "Confirmed {0}": "{0} confirmada(s)",
     "Denied {0}": "{0} recusada(s)",
     "History": "Histórico",
-    "Day by day: cards dropped, hours banked, what the inventory was worth at the end of each day, and rep4rep comments if you use it. Kept for about a year.": "Dia a dia: cartas que caíram, horas acumuladas, quanto o inventário valia no fim de cada dia e comentários do rep4rep, se você usa. Guardado por cerca de um ano."
+    "Day by day: cards dropped, hours banked, what the inventory was worth at the end of each day, and rep4rep comments if you use it. Kept for about a year.": "Dia a dia: cartas que caíram, horas acumuladas, quanto o inventário valia no fim de cada dia e comentários do rep4rep, se você usa. Guardado por cerca de um ano.",
+    "{0} has no sent offers waiting": "{0} não tem ofertas enviadas pendentes",
+    "{0} has no sent offer {1} - 'offers {0}' lists them": "{0} não tem a oferta enviada {1} - 'offers {0}' lista as ofertas",
+    "cancelled the offer it sent to {0} (#{1})": "cancelou a oferta que enviou para {0} (#{1})",
+    "cancelled #{0} to {1}": "#{0} para {1} cancelada",
+    "#{0}: Steam didn't take the cancel - try again": "#{0}: a Steam não aceitou o cancelamento - tente de novo"
   },
   "settings": {
     "WebEnabled": {

@@ -31,8 +31,8 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 
 	public override string Name => "bans";
 
-	// Only a ban is worth a line on the account card; a clean account says nothing.
-	public override string Status => Bot.Cfg.WatchBans && (Last is { Any: true }) ? _status : "";
+	// The account card already shows bans in red (the Bans field of the status), so the module row stays quiet.
+	public override string Status => "";
 
 	/// <summary>The last reading, for the dashboard and the 'bans' command. Null until the first look.</summary>
 	public Bans? Last => _seen is { } s ? new Bans(s.Vac, s.Game, s.Community, s.Economy, s.DaysSinceLast) : null;

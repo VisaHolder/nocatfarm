@@ -1568,7 +1568,12 @@
     "Confirmed {0}": "{0}개 확인함",
     "Denied {0}": "{0}개 거절함",
     "History": "기록",
-    "Day by day: cards dropped, hours banked, what the inventory was worth at the end of each day, and rep4rep comments if you use it. Kept for about a year.": "날마다: 드롭된 카드, 적립한 시간, 매일 마감 시점의 인벤토리 가치, 그리고 rep4rep을 쓴다면 그 댓글. 약 1년간 보관합니다."
+    "Day by day: cards dropped, hours banked, what the inventory was worth at the end of each day, and rep4rep comments if you use it. Kept for about a year.": "날마다: 드롭된 카드, 적립한 시간, 매일 마감 시점의 인벤토리 가치, 그리고 rep4rep을 쓴다면 그 댓글. 약 1년간 보관합니다.",
+    "{0} has no sent offers waiting": "{0}에는 보낸 뒤 대기 중인 제안이 없습니다",
+    "{0} has no sent offer {1} - 'offers {0}' lists them": "{0}에 보낸 제안 {1}이(가) 없습니다 - 'offers {0}'로 목록을 볼 수 있습니다",
+    "cancelled the offer it sent to {0} (#{1})": "{0}에게 보낸 제안을 취소했습니다 (#{1})",
+    "cancelled #{0} to {1}": "{1}에게 보낸 #{0} 취소됨",
+    "#{0}: Steam didn't take the cancel - try again": "#{0}: Steam이 취소를 받아들이지 않았습니다 - 다시 시도하세요"
   },
   "settings": {
     "WebEnabled": {

@@ -1568,7 +1568,12 @@
     "Confirmed {0}": "已确认 {0} 项",
     "Denied {0}": "已拒绝 {0} 项",
     "History": "历史",
-    "Day by day: cards dropped, hours banked, what the inventory was worth at the end of each day, and rep4rep comments if you use it. Kept for about a year.": "逐日记录：掉落的卡牌、累计时长、每天结束时的库存价值，以及 rep4rep 评论（如果你在用）。保留约一年。"
+    "Day by day: cards dropped, hours banked, what the inventory was worth at the end of each day, and rep4rep comments if you use it. Kept for about a year.": "逐日记录：掉落的卡牌、累计时长、每天结束时的库存价值，以及 rep4rep 评论（如果你在用）。保留约一年。",
+    "{0} has no sent offers waiting": "{0} 没有待处理的已发送报价",
+    "{0} has no sent offer {1} - 'offers {0}' lists them": "{0} 没有已发送的报价 {1} - 用 'offers {0}' 查看列表",
+    "cancelled the offer it sent to {0} (#{1})": "已撤回发给 {0} 的报价 (#{1})",
+    "cancelled #{0} to {1}": "已撤回发给 {1} 的 #{0}",
+    "#{0}: Steam didn't take the cancel - try again": "#{0}：Steam 没有接受撤回 - 请重试"
   },
   "settings": {
     "WebEnabled": {

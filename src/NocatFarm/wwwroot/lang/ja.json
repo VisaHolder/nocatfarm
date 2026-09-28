@@ -1568,7 +1568,12 @@
     "Confirmed {0}": "{0} 件を承認しました",
     "Denied {0}": "{0} 件を拒否しました",
     "History": "履歴",
-    "Day by day: cards dropped, hours banked, what the inventory was worth at the end of each day, and rep4rep comments if you use it. Kept for about a year.": "日ごとの記録: ドロップしたカード、記録した時間、各日の終わりのインベントリの価値、使っていれば rep4rep のコメント。約 1 年分を保存します。"
+    "Day by day: cards dropped, hours banked, what the inventory was worth at the end of each day, and rep4rep comments if you use it. Kept for about a year.": "日ごとの記録: ドロップしたカード、記録した時間、各日の終わりのインベントリの価値、使っていれば rep4rep のコメント。約 1 年分を保存します。",
+    "{0} has no sent offers waiting": "{0} には送ったまま保留中のオファーはありません",
+    "{0} has no sent offer {1} - 'offers {0}' lists them": "{0} には送信済みオファー {1} がありません - 'offers {0}' で一覧できます",
+    "cancelled the offer it sent to {0} (#{1})": "{0} に送ったオファーを取り消しました (#{1})",
+    "cancelled #{0} to {1}": "{1} への #{0} を取り消しました",
+    "#{0}: Steam didn't take the cancel - try again": "#{0}: Steam が取り消しを受け付けませんでした - もう一度試してください"
   },
   "settings": {
     "WebEnabled": {
