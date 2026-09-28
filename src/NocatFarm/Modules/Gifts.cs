@@ -27,6 +27,9 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 
 	private readonly SemaphoreSlim _poke = new(0);
 	private readonly ReactionQueue<(Kind, ulong)> _queue = new();
+
+	/// <summary>Gifts still waiting their turn - 'Update by itself' holds off while there are any.</summary>
+	public int WaitingCount => _queue.Count;
 	private readonly Dictionary<(Kind, ulong), Waiting> _waiting = [];
 	private readonly HashSet<(Kind, ulong)> _handled = [];
 

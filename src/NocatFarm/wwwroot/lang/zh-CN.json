@@ -1020,8 +1020,6 @@
     "dropping a queued key - {0}  ({1} left)": "丢弃队列中的一个密钥 —— {0}（还剩 {1} 个）",
     "giving up on a key after {0} tries - no account could activate it": "在 {0} 次尝试后放弃某密钥 —— 没有账号能激活它",
     "hit {0} activations in {1}m - pausing so Steam doesn't start refusing": "在 {1} 分钟内完成 {0} 次激活 —— 暂停以免 Steam 开始拒绝",
-    "nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update ignore' stops the hourly reminders until the next launch": "nocat.farm {0} 已发布——你当前是 {1}。{2}  -  'update accept' 会安装并重启；'update ignore' 会停止每小时提醒，直到下次启动",
-    "reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update ignore' stops these reminders until the next launch": "提醒：nocat.farm {0} 已发布——你当前是 {1}。'update accept' 会安装并重启；'update ignore' 会停止这些提醒，直到下次启动",
     "update: downloading {0} ({1}MB)": "更新：正在下载 {0}（{1}MB）",
     "proxy '{0}' isn't a usable address ({1}) - connecting directly instead": "代理 '{0}' 不是可用地址（{1}）—— 改为直连",
     "game shares moved into the games list - now \"{0}\"": "游戏占比已移入游戏列表 —— 现为\"{0}\"",
@@ -1342,7 +1340,6 @@
     "update: signing out {0} ({1} of {2}) - updating in {3}s": "更新：正在登出 {0}（第 {1} 个，共 {2} 个）- {3} 秒后更新",
     "update: updating in {0}s": "更新：{0} 秒后更新",
     "nocat.farm {0} is ready": "nocat.farm {0} 已就绪",
-    "You have {0}. Type update accept in the nocat.farm window to install it.": "你现在是 {0}。在 nocat.farm 窗口输入 update accept 即可安装。",
     "discord: {0}": "discord：{0}",
     "Resting": "休息中",
     "Farming cards · {0} left": "刷卡中 · 剩余 {0} 张",
@@ -1421,7 +1418,6 @@
     "What Steam shows about this account's bans. nocat.farm checks every few hours and tells you when a new one appears. Games it is banned in are left out of trades; trading cards still trade.": "Steam 上显示的这个账户的封禁情况。nocat.farm 每隔几小时检查一次，出现新的封禁时会告诉你。被封禁的游戏不参与交易；集换式卡牌照常交易。",
     "bans: {0}": "封禁：{0}",
     "no items": "无",
-    "No more update reminders until the next launch. 'update' still checks.": "下次启动前不再提醒更新。'update' 仍会检查。",
     "No account has its authenticator in nocat.farm - add its maFile under config/authenticators to confirm from here.": "没有账户的验证器在 nocat.farm 里 - 把它的 maFile 放进 config/authenticators，就能在这里确认。",
     "{0}: couldn't read the confirmations - {1}": "{0}：无法读取待确认列表 - {1}",
     "{0}: nothing waiting to be confirmed": "{0}：没有等待确认的内容",
@@ -1456,8 +1452,6 @@
     "What's waiting to be confirmed": "等待确认的内容",
     "Steam Guard codes": "Steam Guard 验证码",
     "{0} - {1} is out, send /update to see how to install it": "{0} - {1} 已发布，发送 /update 查看如何安装",
-    "reminder: nocat.farm {0} is out - you have {1}. 'update' says how to install it here; 'update ignore' stops these reminders until the next launch": "提醒：nocat.farm {0} 已发布 - 你当前是 {1}。'update' 会说明在这里如何安装；'update ignore' 会停止这些提醒，直到下次启动",
-    "nocat.farm {0} is out - you have {1}. {2}  -  'update' says how to install it here; 'update ignore' stops the hourly reminders until the next launch": "nocat.farm {0} 已发布 - 你当前是 {1}。{2}  -  'update' 会说明在这里如何安装；'update ignore' 会停止每小时提醒，直到下次启动",
     "dashboard: listening on {0} with NO password, so it only lets this machine itself in - nobody on another device (or outside Docker) can sign in. Set WebPassword, or NOCATFARM_WEB_PASSWORD in Docker": "面板：在 {0} 上监听且没有密码，所以只允许本机访问 - 其他设备（或 Docker 外部）的任何人都无法登录。请设置 WebPassword，在 Docker 中则设置 NOCATFARM_WEB_PASSWORD",
     "dashboard: listening on {0} inside a container, where nothing outside it can reach it - set NOCATFARM_WEB_HOST=0.0.0.0": "面板：在容器内的 {0} 上监听，容器外部无法访问 - 请设置 NOCATFARM_WEB_HOST=0.0.0.0",
     "confirmed {0} from the Authenticator page: {1}": "在验证器页面确认了 {0} 项：{1}",
@@ -1594,7 +1588,85 @@
     "achievement boost - {0} joins the games it plays, for about {1}": "刷成就 - {0} 加入它玩的游戏，大约 {1}",
     "{0} is in its games - {1} of about {2} played": "{0} 在它玩的游戏里 - 约 {2} 中已玩 {1}",
     "Discord closed the connection ({0}) - trying again in a minute": "Discord 关闭了连接（{0}）- 一分钟后重试",
-    "Discord didn't show the card: {0}": "Discord 没有显示卡片：{0}"
+    "Discord didn't show the card: {0}": "Discord 没有显示卡片：{0}",
+    "installing nocat.farm {0} by itself - it's a quiet time (Update by itself)": "正在自动安装 nocat.farm {0} - 现在是安静时段（自动更新）",
+    "{0} is out - you have {1}. It installs by itself tonight, or type update accept (on Telegram: /update accept) to install it now.": "{0} 已发布 - 你现在是 {1}。今晚会自动安装，想现在装就输入 update accept（在 Telegram 里：/update accept）。",
+    "{0} is out - you have {1}. Type update accept in the nocat.farm window, or /update accept here, to install it.": "{0} 已发布 - 你现在是 {1}。要安装，在 nocat.farm 窗口里输入 update accept，或在这里发 /update accept。",
+    "{0} is out - you have {1}. Pull the new image and recreate the container to update.": "{0} 已发布 - 你现在是 {1}。拉取新镜像并重建容器即可更新。",
+    "{0} is out - you have {1}. Download the new Linux zip from the releases page to update.": "{0} 已发布 - 你现在是 {1}。到发布页下载新的 Linux zip 即可更新。",
+    "Discord bot: not set up": "Discord 机器人：未设置",
+    "Discord bot: off (Take commands from Discord)": "Discord 机器人：已关闭（接受 Discord 命令）",
+    "Discord bot: connecting...": "Discord 机器人：正在连接...",
+    "Discord bot: {0}": "Discord 机器人：{0}",
+    "Discord bot: online as {0}, connected to {1}": "Discord 机器人：以 {0} 在线，已连接到 {1}",
+    "Discord bot: online as {0} - press Connect Discord in Settings, Notifications to link your Discord account": "Discord 机器人：以 {0} 在线 - 在设置的「通知」里点“连接 Discord”来关联你的 Discord 账号",
+    "Run any console command, like pause kylro 30": "运行任意控制台命令，例如 pause kylro 30",
+    "The command, typed like in the window": "命令，像在窗口中一样输入",
+    "Connect your Discord account to nocat.farm": "把你的 Discord 账号连接到 nocat.farm",
+    "The code Connect Discord shows in nocat.farm": "nocat.farm 中“连接 Discord”显示的代码",
+    "discord bot: Discord asked for a reconnect": "Discord 机器人：Discord 要求重新连接",
+    "the token doesn't work - copy a new one from the Developer Portal (Bot, Reset Token)": "令牌无效 - 请到 Developer Portal（Bot、Reset Token）复制一个新的",
+    "Discord refused the bot (code {0}) - check it in the Developer Portal": "Discord 拒绝了机器人（代码 {0}）- 请在 Developer Portal 中检查",
+    "discord bot: Discord closed the connection ({0})": "Discord 机器人：Discord 关闭了连接（{0}）",
+    "discord bot: Discord answered HTTP {0}": "Discord 机器人：Discord 返回 HTTP {0}",
+    "Discord says the bot has connected too often today - it tries again in {0} minutes": "Discord 表示机器人今天连接次数过多 - 将在 {0} 分钟后重试",
+    "discord bot: no answer to the last heartbeat - reconnecting": "Discord 机器人：上一次心跳没有回应 - 正在重新连接",
+    "Discord bot online as {0}": "Discord 机器人以 {0} 在线",
+    "Discord bot: to connect it, press Connect Discord in Settings, Notifications and send /connect with the code to {0}": "Discord 机器人：要连接它，请在设置的「通知」里点“连接 Discord”，然后把 /connect 和代码发给 {0}",
+    "Discord bot: couldn't add the / commands to a server - add the bot to it again with the invite link in Settings, Notifications": "Discord 机器人：无法把 / 命令添加到某个服务器 - 请用设置「通知」中的邀请链接重新添加机器人",
+    "discord bot: couldn't add the / commands (HTTP {0}): {1}": "Discord 机器人：无法添加 / 命令（HTTP {0}）：{1}",
+    "Not connected yet. In nocat.farm, open Settings, Notifications, press Connect Discord and send /connect with the code it shows.": "还没连接。在 nocat.farm 里打开设置的「通知」，点“连接 Discord”，然后发送 /connect 和显示的代码。",
+    "discord bot: {0} isn't the connected Discord account - ignored": "Discord 机器人：{0} 不是已连接的 Discord 账号 - 已忽略",
+    "Only the owner of this nocat.farm can use its commands.": "只有这个 nocat.farm 的主人才能使用它的命令。",
+    "discord bot: a /connect with a wrong or old code from {0}": "Discord 机器人：{0} 用错误或过期的代码发送了 /connect",
+    "That code doesn't match. In nocat.farm, press Connect Discord for a new one - each code works once, for {0} minutes.": "代码不匹配。在 nocat.farm 里点“连接 Discord”获取新代码 - 每个代码只能用一次，有效 {0} 分钟。",
+    "notifications: Discord connected - only {0} can use the bot's commands": "通知：Discord 已连接——只有 {0} 能使用机器人的命令",
+    "Send /status for a summary, /help for the commands, or /nocat to run any console command.": "发送 /status 查看概况，/help 查看命令，或 /nocat 运行任意控制台命令。",
+    "That deletes the account and its saved login. Run {0} confirm to really do it.": "这会删除该账号及其保存的登录。运行 {0} confirm 以确认执行。",
+    "That closes nocat.farm, and it can't be started again from Discord. Run {0} confirm to really do it.": "这会关闭 nocat.farm，且无法再通过 Discord 启动。运行 {0} confirm 以确认执行。",
+    "{0} - {1} is out, run /update with accept": "{0} - {1} 已发布，运行 /update 并加上 accept",
+    "{0} - {1} is out, run /update to see how to install it": "{0} - {1} 已发布，运行 /update 查看如何安装",
+    "Discord": "Discord",
+    "run any console command, like pause kylro 30": "运行任意控制台命令，例如 pause kylro 30",
+    "The others take what goes after them in args - /human args: week, /offers args: kylro.": "其他命令把后面的内容放在 args 里 - /human args: week、/offers args: kylro。",
+    "Run any of these with /nocat. Only your connected Discord account is obeyed. exit and remove ask you to confirm first.": "这些命令都可以用 /nocat 运行。只接受你已连接的 Discord 账号。exit 和 remove 会先要求确认。",
+    "The Discord bot is off - turn on \"Take commands from Discord\" to use it.": "Discord 机器人已关闭 - 要使用它，请打开“接受 Discord 命令”。",
+    "Add the bot to your server": "把机器人添加到你的服务器",
+    "Connect Discord": "连接 Discord",
+    "Send {0} to your bot in Discord - the code works once, for {1} minutes.": "在 Discord 中把 {0} 发给你的机器人 - 代码只能用一次，有效 {1} 分钟。",
+    "How to set up Discord commands (3 minutes)": "如何设置 Discord 命令（3 分钟）",
+    "Open the {0} and sign in with your Discord account.": "打开 {0}，用你的 Discord 账号登录。",
+    "Press {0}, name it {1}, tick the box and press {2}.": "点 {0}，命名为 {1}，勾选复选框，然后点 {2}。",
+    "Open {0} on the left, press {1} and copy the token it shows.": "打开左侧的 {0}，点 {1}，复制显示的令牌。",
+    "Discord bot token": "Discord 机器人令牌",
+    "A few seconds later {0} shows up here. Open it and add the bot to a server you own - a new, empty one is fine.": "几秒钟后这里会出现 {0}。打开它，把机器人添加到你自己的服务器 - 新建一个空服务器也可以。",
+    "Press {0} here. In Discord, type {1} and the code it shows - in the server, or in a private chat with the bot (click the bot in the member list and send it a message).": "在这里点 {0}。在 Discord 中输入 {1} 和显示的代码 - 在服务器里，或在与机器人的私聊中（在成员列表里点机器人，给它发消息）。",
+    "Done. Type {0} for a summary, {1} for every command, or {2} to run any console command.": "完成。输入 {0} 查看概况，{1} 查看所有命令，或 {2} 运行任意控制台命令。",
+    "Keep the token private - anyone who has it can control your bot. Only your connected Discord account can use the commands, and in a server only you see the answers.": "请保管好令牌，任何拿到它的人都能控制你的机器人。只有你已连接的 Discord 账号能使用这些命令，在服务器中只有你能看到回复。",
+    "update by itself: waiting - {0} has {1} trade offer(s) and {2} gift(s) still waiting their turn": "自动更新：等待中 - {0} 还有 {1} 个交易报价和 {2} 个礼物在排队",
+    "Installing": "正在安装",
+    "Install progress": "安装进度",
+    "Downloaded {0} ({1}MB) - installing it now. The accounts sign out one at a time; back in about a minute.": "{0} 已下载（{1}MB）- 正在安装。账户会逐个退出，大约一分钟后回来。",
+    "Downloaded {0} ({1}MB) - installing it now, by itself. The accounts sign out one at a time; back in about a minute.": "{0} 已下载（{1}MB）- 正在自动安装。账户会逐个退出，大约一分钟后回来。",
+    "Install complete - now on {0} (was {1}).": "安装完成 - 现在是 {0}（之前是 {1}）。",
+    "What's new:\n{0}": "新内容：\n{0}",
+    "update undone: {0} didn't start properly, so {1} was put back - nothing else was changed. {0} is skipped now; 'update accept' tries it again": "更新已撤销：{0} 没能正常启动，所以恢复了 {1} - 其他都没变。现在会跳过 {0}；'update accept' 可以再试一次",
+    "reminder: nocat.farm {0} is out - you have {1}. 'update' says how to install it here; 'update skip' skips this version": "提醒：nocat.farm {0} 已发布 - 你现在是 {1}。'update' 会告诉你这里怎么安装；'update skip' 跳过这个版本",
+    "reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update skip' skips this version": "提醒：nocat.farm {0} 已发布 - 你现在是 {1}。'update accept' 安装并重启；'update skip' 跳过这个版本",
+    "nocat.farm {0} is out - you have {1}. {2}  -  'update' says how to install it here; 'update skip' skips this version": "nocat.farm {0} 已发布 - 你现在是 {1}。{2}  -  'update' 会告诉你这里怎么安装；'update skip' 跳过这个版本",
+    "nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update skip' skips this version": "nocat.farm {0} 已发布 - 你现在是 {1}。{2}  -  'update accept' 安装并重启；'update skip' 跳过这个版本",
+    "Skipping {0} - no more reminders about it, and it won't install by itself. The next version after it is announced as usual; 'update accept' still installs {0}.": "跳过 {0} - 不再提醒，也不会自动安装。之后的新版本照常通知；'update accept' 仍然可以安装 {0}。",
+    "what's new in {0}: {1}": "{0} 的新内容：{1}",
+    "(works once it's open to other devices)": "（对其他设备开放后才能用）",
+    "Windows Firewall is blocking other devices - on the PC, open the dashboard's Open on your phone and press Allow through Windows Firewall.": "Windows 防火墙正在拦截其他设备 - 在电脑上打开面板的“在手机上打开”，然后点“允许通过 Windows 防火墙”。",
+    "only from the PC nocat.farm runs on": "只能在运行 nocat.farm 的电脑上操作",
+    "Windows Firewall now lets other devices on your home network open the dashboard (port {0})": "Windows 防火墙现在允许家庭网络里的其他设备打开面板（端口 {0}）",
+    "Windows Firewall is blocking your phone": "Windows 防火墙正在拦截你的手机",
+    "Your phone will just keep loading until Windows lets it in. This allows the dashboard only, only on home networks - Windows asks you to confirm.": "在 Windows 放行之前，手机会一直转圈。这只放行面板，而且只在家庭网络 - Windows 会请你确认。",
+    "Allow through Windows Firewall": "允许通过 Windows 防火墙",
+    "Press it on the PC nocat.farm runs on.": "请在运行 nocat.farm 的电脑上点。",
+    "Check the Windows prompt…": "请看 Windows 的确认窗口…",
+    "Done - your phone can open it now.": "好了 - 现在手机可以打开了。"
   },
   "settings": {
     "WebEnabled": {
@@ -1695,7 +1767,7 @@
     },
     "SendUpdates": {
       "label": "发送更新",
-      "tip": "新版本发布、更新完成，或更新失败及原因。"
+      "tip": "新版本发布了，以及它的新内容。"
     },
     "SendDailySummary": {
       "label": "发送每日总结",
@@ -2109,12 +2181,12 @@
       "label": "算出它的库存值多少钱"
     },
     "CheckForUpdates": {
-      "tip": "每隔几小时检查一次新版本，并在日志里告诉你。它从不自行下载或安装任何东西。",
+      "tip": "检查新版本，并在日志、Telegram 和 Discord 里提醒。关掉它也会停止自动更新。",
       "label": "有更新时告知"
     },
     "UpdateReminders": {
       "label": "每小时提醒我",
-      "tip": "有新版本时，每小时在日志里提醒你一次。输入 update accept 安装，或输入 update ignore 停止提醒直到下次启动。"
+      "tip": "有新版本时每小时在日志里提醒一次。输入 update accept 安装，或 update skip 跳过这个版本。"
     },
     "BreakMinMinutes": {
       "label": "最短休息",
@@ -2514,6 +2586,43 @@
     "BoostWeight": {
       "label": "拟人模式：刷成就游戏的权重",
       "tip": "仅限拟人模式。正在刷成就的游戏会加入它玩的游戏，这个值决定它出现的频率 - 和“游戏与频率”里的权重一样。它按正常时段玩，有休息和睡觉时间，绝不会打断别的游戏。"
+    },
+    "AutoUpdate": {
+      "label": "自动更新",
+      "tip": "新版本发布时怎么做。告诉我：在日志、Telegram 和 Discord 里提醒，由你输入 update accept。夜里安装：在下面的时段自动安装，只在没有拟人模式账户醒着、也没人在账户上玩的时候进行，并在前后通知你。仅限 Windows。",
+      "choices": "0 告诉我 | 1 夜里安装"
+    },
+    "AutoUpdateFromHour": {
+      "label": "...之间（开始）",
+      "tip": "允许自动安装的最早时间，24 小时制。"
+    },
+    "AutoUpdateUntilHour": {
+      "label": "...之间（结束）",
+      "tip": "当晚停止尝试的时间。比开始时间早就会跨过午夜，所以 23 到 5 也可以。"
+    },
+    "AutoUpdateWaitHours": {
+      "label": "发布后等待",
+      "tip": "新版本发布后等待多少小时再自动安装，好让有问题的版本先被修好。"
+    },
+    "UpdateCheckHours": {
+      "label": "检查更新间隔",
+      "tip": "两次检查新版本之间的小时数。nocat.farm 启动时和你输入 update 时也会检查一次。"
+    },
+    "DiscordBotToken": {
+      "label": "Discord 机器人令牌",
+      "tip": "用于来自 Discord 的命令，比如 /status。粘贴你的 Discord 机器人令牌（上面的指南有创建机器人的步骤），点“保存”，再点“连接 Discord”，然后把 /connect 和代码发给你的机器人。通知不需要它 - 通知用的是 Webhook。"
+    },
+    "DiscordCommands": {
+      "label": "接受 Discord 命令",
+      "tip": "让你在 Discord 中用 / 命令控制 nocat.farm：/status 查看概况，/nocat 运行任意控制台命令，还有 /cards 等常用命令。可在与机器人的私聊和你的服务器中使用。只接受你自己已连接的 Discord 账号。关闭后机器人保持离线。"
+    },
+    "DiscordOwnerId": {
+      "label": "Discord 主人",
+      "tip": "你的机器人唯一服从的 Discord 账号 - 用“连接 Discord”的代码发送 /connect 后会自动填好。清空它就能连接别的账号。"
+    },
+    "SendInstalls": {
+      "label": "发送安装进度",
+      "tip": "安装更新时：已下载并开始安装，然后安装完成并附上新版本和新内容 - 或者失败、被撤销以及原因。除非你打开，否则是关闭的。"
     }
   }
 }

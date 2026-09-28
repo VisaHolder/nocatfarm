@@ -27,6 +27,9 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 	/// <summary>Offers sitting out their wait before being accepted or declined.</summary>
 	private readonly ReactionQueue<ulong> _waiting = new();
+
+	/// <summary>Offers still waiting their turn - 'Update by itself' holds off while there are any.</summary>
+	public int WaitingCount => _waiting.Count;
 	private readonly HashSet<ulong> _done = [];
 	private int _accepted;
 	private int _declined;

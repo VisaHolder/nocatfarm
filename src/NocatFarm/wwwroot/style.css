@@ -355,6 +355,9 @@ label.inline { display: inline-flex; align-items: center; gap: 6px; font-size: 1
   display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 200px));
   justify-content: start; gap: var(--s3); margin-bottom: var(--s4);
 }
+/* On a phone, two across: the track count is worked out from the 200px maximum, which left one 200px tile per
+   row with a third of the screen empty beside it. */
+@media (max-width: 520px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 0; padding: 14px 16px; }
 .tile .n { font-size: 26px; letter-spacing: .5px; line-height: 1.15; }
 .tile .k { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
@@ -779,8 +782,9 @@ button.ghost:hover:not(:disabled) { background: var(--line); }
 @media (max-width: 480px) { .tip { max-width: calc(100% - 24px); } }
 
 /* ── modal ─────────────────────────────────────────────────────────── */
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,.72); display: grid; place-items: center; z-index: 90; padding: 24px; }
-.modal .card { width: 460px; max-width: 100%; max-height: 86vh; overflow-y: auto; margin: 0; }
+/* minmax(0, 1fr): an auto track grew to the card's 460px, so on a phone every pop-up ran off the right edge. */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.72); display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; z-index: 90; padding: 24px 16px; }
+.modal .card { width: 460px; max-width: 100%; min-width: 0; max-height: 86vh; overflow-y: auto; overflow-wrap: anywhere; margin: 0; }
 
 .form2 { display: grid; grid-template-columns: 190px 1fr; gap: 10px 14px; align-items: center; }
 .form2 label { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 5px; }

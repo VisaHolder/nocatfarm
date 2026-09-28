@@ -1020,8 +1020,6 @@
     "dropping a queued key - {0}  ({1} left)": "대기열의 키를 버립니다 - {0}  ({1}개 남음)",
     "giving up on a key after {0} tries - no account could activate it": "{0}번 시도 후 키를 포기합니다 - 어떤 계정도 활성화하지 못했습니다",
     "hit {0} activations in {1}m - pausing so Steam doesn't start refusing": "{1}분 만에 활성화 {0}건에 도달했습니다 - Steam이 거부하기 시작하지 않도록 일시 중지합니다",
-    "nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update ignore' stops the hourly reminders until the next launch": "nocat.farm {0} 출시 - 현재 {1}입니다. {2}  -  'update accept'로 설치하고 재시작, 'update ignore'로 다음 실행까지 매시간 알림을 멈춥니다",
-    "reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update ignore' stops these reminders until the next launch": "알림: nocat.farm {0} 출시 - 현재 {1}입니다. 'update accept'로 설치하고 재시작, 'update ignore'로 다음 실행까지 이 알림을 멈춥니다",
     "update: downloading {0} ({1}MB)": "업데이트: {0} 다운로드 중 ({1}MB)",
     "proxy '{0}' isn't a usable address ({1}) - connecting directly instead": "프록시 '{0}'은(는) 사용할 수 없는 주소입니다 ({1}) - 대신 직접 연결합니다",
     "game shares moved into the games list - now \"{0}\"": "게임 배분이 게임 목록으로 옮겨졌습니다 - 이제 \"{0}\"",
@@ -1342,7 +1340,6 @@
     "update: signing out {0} ({1} of {2}) - updating in {3}s": "업데이트: {0} 로그아웃 중 ({2}개 중 {1}번째) - {3}초 후 업데이트",
     "update: updating in {0}s": "업데이트: {0}초 후 업데이트",
     "nocat.farm {0} is ready": "nocat.farm {0} 준비됨",
-    "You have {0}. Type update accept in the nocat.farm window to install it.": "현재 {0}입니다. nocat.farm 창에 update accept를 입력하면 설치됩니다.",
     "discord: {0}": "discord: {0}",
     "Resting": "휴식 중",
     "Farming cards · {0} left": "카드 파밍 중 · {0}장 남음",
@@ -1421,7 +1418,6 @@
     "What Steam shows about this account's bans. nocat.farm checks every few hours and tells you when a new one appears. Games it is banned in are left out of trades; trading cards still trade.": "Steam에 표시된 이 계정의 차단 기록. nocat.farm이 몇 시간마다 확인하고 새 차단이 생기면 알려 줍니다. 차단된 게임은 거래에서 제외되며, 트레이딩 카드는 계속 거래됩니다.",
     "bans: {0}": "차단: {0}",
     "no items": "없음",
-    "No more update reminders until the next launch. 'update' still checks.": "다음 실행까지 업데이트 알림을 더 보내지 않습니다. 'update'로는 계속 확인할 수 있습니다.",
     "No account has its authenticator in nocat.farm - add its maFile under config/authenticators to confirm from here.": "nocat.farm에 인증기가 있는 계정이 없습니다 - 여기서 확인하려면 계정의 maFile을 config/authenticators에 추가하세요.",
     "{0}: couldn't read the confirmations - {1}": "{0}: 확인 요청을 읽지 못했습니다 - {1}",
     "{0}: nothing waiting to be confirmed": "{0}: 확인을 기다리는 항목이 없습니다",
@@ -1456,8 +1452,6 @@
     "What's waiting to be confirmed": "확인을 기다리는 항목",
     "Steam Guard codes": "Steam Guard 코드",
     "{0} - {1} is out, send /update to see how to install it": "{0} - {1} 출시됨, 설치 방법은 /update를 보내 확인하세요",
-    "reminder: nocat.farm {0} is out - you have {1}. 'update' says how to install it here; 'update ignore' stops these reminders until the next launch": "알림: nocat.farm {0} 출시 - 현재 {1}입니다. 'update'로 여기서의 설치 방법을 보고, 'update ignore'로 다음 실행까지 이 알림을 멈춥니다",
-    "nocat.farm {0} is out - you have {1}. {2}  -  'update' says how to install it here; 'update ignore' stops the hourly reminders until the next launch": "nocat.farm {0} 출시 - 현재 {1}입니다. {2}  -  'update'로 여기서의 설치 방법을 보고, 'update ignore'로 다음 실행까지 매시간 알림을 멈춥니다",
     "dashboard: listening on {0} with NO password, so it only lets this machine itself in - nobody on another device (or outside Docker) can sign in. Set WebPassword, or NOCATFARM_WEB_PASSWORD in Docker": "대시보드: {0}에서 비밀번호 없이 수신 중이라 이 기기 자신만 들어올 수 있습니다 - 다른 기기(또는 Docker 밖)에서는 아무도 로그인할 수 없습니다. WebPassword를 설정하거나, Docker에서는 NOCATFARM_WEB_PASSWORD를 설정하세요",
     "dashboard: listening on {0} inside a container, where nothing outside it can reach it - set NOCATFARM_WEB_HOST=0.0.0.0": "대시보드: 컨테이너 안의 {0}에서 수신 중이라 밖에서는 아무것도 닿지 않습니다 - NOCATFARM_WEB_HOST=0.0.0.0을 설정하세요",
     "confirmed {0} from the Authenticator page: {1}": "인증기 페이지에서 {0}건 확인함: {1}",
@@ -1594,7 +1588,85 @@
     "achievement boost - {0} joins the games it plays, for about {1}": "업적 사냥 - {0}이(가) 플레이하는 게임에 추가됨, 약 {1}",
     "{0} is in its games - {1} of about {2} played": "{0}이(가) 플레이 게임에 들어 있음 - 약 {2} 중 {1} 플레이",
     "Discord closed the connection ({0}) - trying again in a minute": "Discord가 연결을 닫았습니다({0}) - 1분 뒤에 다시 시도합니다",
-    "Discord didn't show the card: {0}": "Discord가 카드를 표시하지 않았습니다: {0}"
+    "Discord didn't show the card: {0}": "Discord가 카드를 표시하지 않았습니다: {0}",
+    "installing nocat.farm {0} by itself - it's a quiet time (Update by itself)": "nocat.farm {0}을(를) 자동으로 설치 중 - 조용한 시간입니다(자동 업데이트)",
+    "{0} is out - you have {1}. It installs by itself tonight, or type update accept (on Telegram: /update accept) to install it now.": "{0}이(가) 나왔습니다 - 지금은 {1}입니다. 오늘 밤 자동으로 설치되며, 지금 설치하려면 update accept(Telegram에서는 /update accept)를 입력하세요.",
+    "{0} is out - you have {1}. Type update accept in the nocat.farm window, or /update accept here, to install it.": "{0}이(가) 나왔습니다 - 지금은 {1}입니다. 설치하려면 nocat.farm 창에서 update accept, 또는 여기서 /update accept를 입력하세요.",
+    "{0} is out - you have {1}. Pull the new image and recreate the container to update.": "{0}이(가) 나왔습니다 - 지금은 {1}입니다. 업데이트하려면 새 이미지를 받고 컨테이너를 다시 만드세요.",
+    "{0} is out - you have {1}. Download the new Linux zip from the releases page to update.": "{0}이(가) 나왔습니다 - 지금은 {1}입니다. 업데이트하려면 릴리스 페이지에서 새 Linux zip을 받으세요.",
+    "Discord bot: not set up": "Discord 봇: 설정 안 됨",
+    "Discord bot: off (Take commands from Discord)": "Discord 봇: 꺼짐 (Discord에서 명령어 받기)",
+    "Discord bot: connecting...": "Discord 봇: 연결 중...",
+    "Discord bot: {0}": "Discord 봇: {0}",
+    "Discord bot: online as {0}, connected to {1}": "Discord 봇: {0}(으)로 온라인, {1}에 연결됨",
+    "Discord bot: online as {0} - press Connect Discord in Settings, Notifications to link your Discord account": "Discord 봇: {0}(으)로 온라인 - Discord 계정을 연결하려면 설정의 알림에서 Discord 연결을 누르세요",
+    "Run any console command, like pause kylro 30": "콘솔 명령어를 무엇이든 실행 (예: pause kylro 30)",
+    "The command, typed like in the window": "창에서처럼 입력하는 명령어",
+    "Connect your Discord account to nocat.farm": "Discord 계정을 nocat.farm에 연결",
+    "The code Connect Discord shows in nocat.farm": "nocat.farm의 Discord 연결에 표시되는 코드",
+    "discord bot: Discord asked for a reconnect": "Discord 봇: Discord가 재연결을 요청했습니다",
+    "the token doesn't work - copy a new one from the Developer Portal (Bot, Reset Token)": "토큰이 작동하지 않습니다 - Developer Portal(Bot, Reset Token)에서 새 토큰을 복사하세요",
+    "Discord refused the bot (code {0}) - check it in the Developer Portal": "Discord가 봇을 거부했습니다 (코드 {0}) - Developer Portal에서 확인하세요",
+    "discord bot: Discord closed the connection ({0})": "Discord 봇: Discord가 연결을 닫았습니다 ({0})",
+    "discord bot: Discord answered HTTP {0}": "Discord 봇: Discord 응답 HTTP {0}",
+    "Discord says the bot has connected too often today - it tries again in {0} minutes": "Discord에 따르면 봇이 오늘 너무 자주 연결했습니다 - {0}분 후에 다시 시도합니다",
+    "discord bot: no answer to the last heartbeat - reconnecting": "Discord 봇: 마지막 하트비트에 응답이 없습니다 - 다시 연결합니다",
+    "Discord bot online as {0}": "Discord 봇이 {0}(으)로 온라인",
+    "Discord bot: to connect it, press Connect Discord in Settings, Notifications and send /connect with the code to {0}": "Discord 봇: 연결하려면 설정의 알림에서 Discord 연결을 누르고, 표시된 코드와 함께 /connect를 {0}에게 보내세요",
+    "Discord bot: couldn't add the / commands to a server - add the bot to it again with the invite link in Settings, Notifications": "Discord 봇: 서버에 / 명령어를 추가하지 못했습니다 - 설정의 알림에 있는 초대 링크로 봇을 다시 추가하세요",
+    "discord bot: couldn't add the / commands (HTTP {0}): {1}": "Discord 봇: / 명령어를 추가하지 못했습니다 (HTTP {0}): {1}",
+    "Not connected yet. In nocat.farm, open Settings, Notifications, press Connect Discord and send /connect with the code it shows.": "아직 연결되지 않았습니다. nocat.farm에서 설정의 “알림”을 열고 “Discord 연결”을 누른 뒤, 표시된 코드와 함께 /connect를 보내세요.",
+    "discord bot: {0} isn't the connected Discord account - ignored": "Discord 봇: {0}은(는) 연결된 Discord 계정이 아닙니다 - 무시함",
+    "Only the owner of this nocat.farm can use its commands.": "이 nocat.farm의 명령어는 주인만 사용할 수 있습니다.",
+    "discord bot: a /connect with a wrong or old code from {0}": "Discord 봇: {0}이(가) 틀리거나 오래된 코드로 /connect를 보냈습니다",
+    "That code doesn't match. In nocat.farm, press Connect Discord for a new one - each code works once, for {0} minutes.": "코드가 맞지 않습니다. nocat.farm에서 Discord 연결을 눌러 새 코드를 받으세요 - 각 코드는 {0}분 동안 한 번만 쓸 수 있습니다.",
+    "notifications: Discord connected - only {0} can use the bot's commands": "알림: Discord 연결됨 - 봇 명령어는 {0}만 사용할 수 있습니다",
+    "Send /status for a summary, /help for the commands, or /nocat to run any console command.": "/status로 요약, /help로 명령어 목록, /nocat으로 콘솔 명령어를 무엇이든 실행할 수 있습니다.",
+    "That deletes the account and its saved login. Run {0} confirm to really do it.": "계정과 저장된 로그인이 삭제됩니다. 정말 하려면 {0} confirm을 실행하세요.",
+    "That closes nocat.farm, and it can't be started again from Discord. Run {0} confirm to really do it.": "nocat.farm이 종료되며 Discord에서 다시 시작할 수 없습니다. 정말 하려면 {0} confirm을 실행하세요.",
+    "{0} - {1} is out, run /update with accept": "{0} - {1} 출시됨, /update를 accept와 함께 실행하세요",
+    "{0} - {1} is out, run /update to see how to install it": "{0} - {1} 출시됨, 설치 방법은 /update를 실행해 확인하세요",
+    "Discord": "Discord",
+    "run any console command, like pause kylro 30": "콘솔 명령어를 무엇이든 실행 (예: pause kylro 30)",
+    "The others take what goes after them in args - /human args: week, /offers args: kylro.": "나머지는 뒤에 오는 내용을 args에 넣습니다 - /human args: week, /offers args: kylro.",
+    "Run any of these with /nocat. Only your connected Discord account is obeyed. exit and remove ask you to confirm first.": "이 명령어는 모두 /nocat으로 실행할 수 있습니다. 연결된 본인 Discord 계정만 받습니다. exit와 remove는 먼저 확인을 요청합니다.",
+    "The Discord bot is off - turn on \"Take commands from Discord\" to use it.": "Discord 봇이 꺼져 있습니다 - 사용하려면 “Discord에서 명령어 받기”를 켜세요.",
+    "Add the bot to your server": "봇을 내 서버에 추가",
+    "Connect Discord": "Discord 연결",
+    "Send {0} to your bot in Discord - the code works once, for {1} minutes.": "Discord에서 봇에게 {0}을(를) 보내세요 - 코드는 {1}분 동안 한 번만 쓸 수 있습니다.",
+    "How to set up Discord commands (3 minutes)": "Discord 명령어 설정 방법 (3분)",
+    "Open the {0} and sign in with your Discord account.": "{0}을(를) 열고 Discord 계정으로 로그인하세요.",
+    "Press {0}, name it {1}, tick the box and press {2}.": "{0}을(를) 누르고 이름을 {1}(으)로 정한 뒤 체크박스를 선택하고 {2}을(를) 누르세요.",
+    "Open {0} on the left, press {1} and copy the token it shows.": "왼쪽에서 {0}을(를) 열고 {1}을(를) 눌러 표시된 토큰을 복사하세요.",
+    "Discord bot token": "Discord 봇 토큰",
+    "A few seconds later {0} shows up here. Open it and add the bot to a server you own - a new, empty one is fine.": "몇 초 뒤 여기에 {0}이(가) 나타납니다. 열어서 내가 가진 서버에 봇을 추가하세요 - 새로 만든 빈 서버도 괜찮습니다.",
+    "Press {0} here. In Discord, type {1} and the code it shows - in the server, or in a private chat with the bot (click the bot in the member list and send it a message).": "여기서 {0}을(를) 누르세요. Discord에서 {1}와(과) 표시된 코드를 입력하세요 - 서버에서도, 봇과의 개인 채팅에서도 됩니다(멤버 목록에서 봇을 클릭하고 메시지를 보내세요).",
+    "Done. Type {0} for a summary, {1} for every command, or {2} to run any console command.": "끝났습니다. {0}로 요약, {1}로 모든 명령어, {2}로 콘솔 명령어를 무엇이든 실행할 수 있습니다.",
+    "Keep the token private - anyone who has it can control your bot. Only your connected Discord account can use the commands, and in a server only you see the answers.": "토큰은 비공개로 유지하세요. 토큰을 가진 사람은 누구나 봇을 조종할 수 있습니다. 명령어는 연결된 본인 Discord 계정만 쓸 수 있고, 서버에서는 답변이 본인에게만 보입니다.",
+    "update by itself: waiting - {0} has {1} trade offer(s) and {2} gift(s) still waiting their turn": "자동 업데이트: 대기 중 - {0}에 차례를 기다리는 거래 제안 {1}개와 선물 {2}개가 있습니다",
+    "Installing": "설치 중",
+    "Install progress": "설치 진행",
+    "Downloaded {0} ({1}MB) - installing it now. The accounts sign out one at a time; back in about a minute.": "{0} 다운로드 완료({1}MB) - 지금 설치합니다. 계정이 하나씩 로그아웃하며, 1분쯤 뒤에 돌아옵니다.",
+    "Downloaded {0} ({1}MB) - installing it now, by itself. The accounts sign out one at a time; back in about a minute.": "{0} 다운로드 완료({1}MB) - 지금 자동으로 설치합니다. 계정이 하나씩 로그아웃하며, 1분쯤 뒤에 돌아옵니다.",
+    "Install complete - now on {0} (was {1}).": "설치 완료 - 이제 {0}입니다(이전 {1}).",
+    "What's new:\n{0}": "새로운 점:\n{0}",
+    "update undone: {0} didn't start properly, so {1} was put back - nothing else was changed. {0} is skipped now; 'update accept' tries it again": "업데이트 되돌림: {0}이(가) 제대로 시작되지 않아 {1}(으)로 되돌렸습니다 - 다른 것은 바뀌지 않았습니다. 이제 {0}은(는) 건너뜁니다. 'update accept'로 다시 시도할 수 있습니다",
+    "reminder: nocat.farm {0} is out - you have {1}. 'update' says how to install it here; 'update skip' skips this version": "알림: nocat.farm {0}이(가) 나왔습니다 - 지금은 {1}입니다. 여기서 설치하는 방법은 'update', 이 버전을 건너뛰려면 'update skip'",
+    "reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update skip' skips this version": "알림: nocat.farm {0}이(가) 나왔습니다 - 지금은 {1}입니다. 'update accept'로 설치 후 재시작, 'update skip'으로 이 버전을 건너뜁니다",
+    "nocat.farm {0} is out - you have {1}. {2}  -  'update' says how to install it here; 'update skip' skips this version": "nocat.farm {0}이(가) 나왔습니다 - 지금은 {1}입니다. {2}  -  여기서 설치하는 방법은 'update', 이 버전을 건너뛰려면 'update skip'",
+    "nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update skip' skips this version": "nocat.farm {0}이(가) 나왔습니다 - 지금은 {1}입니다. {2}  -  'update accept'로 설치 후 재시작, 'update skip'으로 이 버전을 건너뜁니다",
+    "Skipping {0} - no more reminders about it, and it won't install by itself. The next version after it is announced as usual; 'update accept' still installs {0}.": "{0}을(를) 건너뜁니다 - 더 이상 알림이 없고 자동으로 설치되지도 않습니다. 다음 버전은 평소처럼 알려드립니다. 'update accept'로 {0}을(를) 설치할 수는 있습니다.",
+    "what's new in {0}: {1}": "{0}의 새로운 점: {1}",
+    "(works once it's open to other devices)": "(다른 기기에 열리면 작동합니다)",
+    "Windows Firewall is blocking other devices - on the PC, open the dashboard's Open on your phone and press Allow through Windows Firewall.": "Windows 방화벽이 다른 기기를 막고 있습니다 - PC에서 대시보드의 '휴대폰에서 열기'를 열고 'Windows 방화벽에서 허용'을 누르세요.",
+    "only from the PC nocat.farm runs on": "nocat.farm이 실행 중인 PC에서만",
+    "Windows Firewall now lets other devices on your home network open the dashboard (port {0})": "이제 Windows 방화벽이 집 네트워크의 다른 기기에서 대시보드를 열 수 있게 합니다(포트 {0})",
+    "Windows Firewall is blocking your phone": "Windows 방화벽이 휴대폰을 막고 있습니다",
+    "Your phone will just keep loading until Windows lets it in. This allows the dashboard only, only on home networks - Windows asks you to confirm.": "Windows가 허용할 때까지 휴대폰은 계속 로딩만 합니다. 대시보드만, 집 네트워크에서만 허용합니다 - Windows가 확인을 묻습니다.",
+    "Allow through Windows Firewall": "Windows 방화벽에서 허용",
+    "Press it on the PC nocat.farm runs on.": "nocat.farm이 실행 중인 PC에서 누르세요.",
+    "Check the Windows prompt…": "Windows 확인 창을 보세요…",
+    "Done - your phone can open it now.": "완료 - 이제 휴대폰에서 열 수 있습니다."
   },
   "settings": {
     "WebEnabled": {
@@ -1695,7 +1767,7 @@
     },
     "SendUpdates": {
       "label": "업데이트 보내기",
-      "tip": "새 버전 출시, 업데이트 완료, 또는 업데이트 실패와 그 이유."
+      "tip": "새 버전이 나왔다는 것과 새로운 점."
     },
     "SendDailySummary": {
       "label": "일일 요약 보내기",
@@ -2109,12 +2181,12 @@
       "label": "인벤토리 가치 계산"
     },
     "CheckForUpdates": {
-      "tip": "몇 시간마다 새 버전을 확인하고 로그로 알려 줍니다. 스스로 무언가를 내려받거나 설치하지는 않습니다.",
+      "tip": "새 버전을 확인해 로그, Telegram, Discord로 알려줍니다. 끄면 자동 업데이트도 멈춥니다.",
       "label": "업데이트가 있으면 알림"
     },
     "UpdateReminders": {
       "label": "매시간 알려 주기",
-      "tip": "새 버전이 나와 있는 동안 매시간 로그로 알려 줍니다. 설치하려면 update accept를, 다음 실행까지 알림을 끄려면 update ignore를 입력하세요."
+      "tip": "새 버전이 있는 동안 매시간 로그로 알려줍니다. update accept로 설치하거나 update skip으로 그 버전을 건너뛰세요."
     },
     "BreakMinMinutes": {
       "label": "가장 짧은 휴식",
@@ -2514,6 +2586,43 @@
     "BoostWeight": {
       "label": "사람 모드: 사냥 게임 가중치",
       "tip": "사람 모드 전용. 업적을 노리는 게임이 플레이하는 게임에 추가되고, 이 값은 얼마나 자주 나오는지입니다. \"게임과 빈도\"의 가중치와 같습니다. 휴식과 취침이 있는 평소 세션으로 플레이하며 다른 게임을 중간에 끊지 않습니다."
+    },
+    "AutoUpdate": {
+      "label": "자동 업데이트",
+      "tip": "새 버전이 나왔을 때 하는 일. 알려주기: 로그, Telegram, Discord로 알려주고 update accept를 입력해 설치합니다. 밤에 설치: 아래 시간대에 자동으로 설치하며, 사람 모드 계정이 깨어 있지 않고 아무도 계정으로 플레이하지 않을 때만 설치하고 전후로 알려줍니다. Windows 전용.",
+      "choices": "0 알려주기 | 1 밤에 설치"
+    },
+    "AutoUpdateFromHour": {
+      "label": "...사이(시작)",
+      "tip": "자동으로 설치해도 되는 가장 이른 시각(24시간제)."
+    },
+    "AutoUpdateUntilHour": {
+      "label": "...사이(끝)",
+      "tip": "그날 밤 시도를 멈추는 시각. 시작 시각보다 이르면 자정을 넘기므로 23부터 5도 됩니다."
+    },
+    "AutoUpdateWaitHours": {
+      "label": "출시 후 기다리기",
+      "tip": "새 버전이 나온 뒤 자동으로 설치하기 전까지 기다리는 시간입니다. 문제가 있는 버전을 먼저 고칠 수 있게요."
+    },
+    "UpdateCheckHours": {
+      "label": "업데이트 확인 간격",
+      "tip": "새 버전을 확인하는 간격(시간)입니다. nocat.farm을 시작할 때와 update를 입력할 때도 확인합니다."
+    },
+    "DiscordBotToken": {
+      "label": "Discord 봇 토큰",
+      "tip": "/status 같은 Discord 명령어용입니다. Discord 봇의 토큰을 붙여넣고(봇 만드는 방법은 위 가이드에 있어요) 저장을 누른 뒤 Discord 연결을 누르고, 표시된 코드와 함께 /connect를 봇에게 보내세요. 알림에는 필요 없습니다 - 알림은 웹후크를 씁니다."
+    },
+    "DiscordCommands": {
+      "label": "Discord에서 명령어 받기",
+      "tip": "Discord에서 / 명령어로 nocat.farm을 조작할 수 있습니다. /status로 요약, /nocat으로 콘솔 명령어를 무엇이든 실행, /cards 같은 자주 쓰는 명령어도 있습니다. 봇과의 개인 채팅과 내 서버에서 작동합니다. 연결된 본인 Discord 계정만 받습니다. 끄면 봇이 오프라인으로 남습니다."
+    },
+    "DiscordOwnerId": {
+      "label": "Discord 주인",
+      "tip": "봇이 따르는 단 하나의 Discord 계정입니다. Discord 연결의 코드와 함께 /connect를 보내면 자동으로 채워집니다. 다른 계정을 연결하려면 비우세요."
+    },
+    "SendInstalls": {
+      "label": "설치 진행 보내기",
+      "tip": "업데이트를 설치할 때: 다운로드 완료와 설치 시작, 그다음 새 버전과 새로운 점과 함께 설치 완료 - 또는 실패했거나 되돌렸다는 것과 그 이유. 직접 켜기 전까지는 꺼져 있습니다."
     }
   }
 }

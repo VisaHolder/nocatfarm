@@ -66,6 +66,12 @@ public static class NativeConsole {
 				return false;
 			}
 
+			// UTF-8 on the console that now exists. Program sets Console.OutputEncoding before there is a console, so a
+			// brand-new one (the update script starting the new version, say) stayed on the old code page and every
+			// column rule came out as garbage.
+			SetConsoleOutputCP(65001);
+			SetConsoleCP(65001);
+
 			StreamWriter output = new(Console.OpenStandardOutput()) { AutoFlush = true };
 			Console.SetOut(output);
 			Console.SetError(output);
@@ -79,6 +85,12 @@ public static class NativeConsole {
 
 	[DllImport("kernel32.dll", SetLastError = true)]
 	private static extern bool AllocConsole();
+
+	[DllImport("kernel32.dll", SetLastError = true)]
+	private static extern bool SetConsoleOutputCP(uint codePage);
+
+	[DllImport("kernel32.dll", SetLastError = true)]
+	private static extern bool SetConsoleCP(uint codePage);
 
 	[DllImport("kernel32.dll", SetLastError = true)]
 	private static extern bool AttachConsole(uint processId);

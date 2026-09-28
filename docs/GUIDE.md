@@ -118,7 +118,8 @@ With no setup at all, every account:
 - **joins the nocat.farm Steam group** (you can change or clear this - see [Steam groups](#steam-groups))
 - **clears Steam's notification counters**
 - **writes a daily summary** in the log at 09:30
-- **checks for updates** every few hours, and tells you. It never installs anything by itself.
+- **checks for updates** every 2 hours, and tells you what's new. It only installs one by itself if you turn on
+  *Update by itself*.
 
 These are **off** until you turn them on: human mode (unless you picked "My main"), claiming free games, earning
 achievements, selling cards, crafting badges, fair card swaps, Discord and Telegram, rep4rep and plugins.
@@ -187,6 +188,27 @@ Type these in the app window or the dashboard's Console tab. Use the name you ga
 **Windows:** when a new version is out, the dashboard shows an **Update** button. Click it (or type
 `update accept`). nocat.farm downloads the new version, signs your accounts out one by one, swaps the files and
 restarts. Your accounts, settings, logs and plugins are kept.
+
+**Update by itself (Windows):** set *Update by itself* to **install at night** (Settings → Global settings → Updates &
+plugins). It then installs a new version on its own:
+- only between the hours you pick (3 to 6 in the morning unless you change it),
+- only after the version has been out for a while (2 hours unless you change it), so a bad release can be fixed first,
+- only while no human-mode account is awake and nobody is playing on any of your accounts,
+- not while a trade offer or a gift is still waiting its turn - it waits for those first.
+
+*Look for updates every* sets how often it checks (2 hours unless you change it).
+
+**Skip a version:** `update skip` - no more reminders about that version, and it never installs by itself. The next
+version after it is announced as usual, and `update accept` still installs the skipped one.
+
+**If a new version won't start**, it's put back by itself: the new version has to run for half a minute first. If it
+crashes, or hasn't started after three minutes, the old files go back, the old version starts again, it says so in the
+log, and that version is skipped.
+
+**What's new:** the message that a new version is out lists what changed, and so does the log after updating.
+
+**Install messages on Telegram and Discord** (*Send install progress*, off unless you turn it on): "Downloaded 1.4.6 -
+installing it now", then "Install complete - now on 1.4.6" with what's new - or that it failed or was undone, and why.
 
 **Linux and Docker:** it tells you when a new version is out, but you update it yourself. See
 [Updating on Linux](#from-the-zip) and [Updating in Docker](#docker).
@@ -303,6 +325,14 @@ set WebHost 0.0.0.0
 Then restart. Without a password it still refuses everything that isn't this PC. Five wrong passwords lock an
 address out for 60 minutes. A browser stays signed in for 7 days (*Stay signed in for*). A banner warns you if the
 password is short enough to guess. The layout works on a phone.
+
+**The easy way:** press **Open on your phone** on the Overview page. It shows a QR code to scan, or tells you which
+of the two settings is still missing. `dashboard` (or `/dashboard` on Telegram and Discord) gives the same links.
+
+**If your phone just keeps loading:** Windows Firewall is blocking it - many PCs are set not to ask. *Open on your
+phone* says so, with an **Allow through Windows Firewall** button: Windows asks you to confirm, and it lets in only
+the dashboard's port, only on home networks. The rule is called "nocat.farm dashboard" if you ever want to remove it
+in Windows' firewall settings.
 
 To turn the dashboard off completely: `set WebEnabled false` and restart. Everything keeps working from the
 console.
@@ -739,10 +769,27 @@ In the log, lines from Telegram and Discord are marked `telegram` and `discord`.
 same section with **Show advanced** ticked (*Telegram's colour in the log*, *Discord's colour in the log*), from the
 same palette as each account's *Colour in the log*.
 
-**Discord** (notifications only):
+**Discord notifications** (a webhook - it only posts):
 
 1. In Discord: Server Settings → Integrations → Webhooks → New Webhook → Copy Webhook URL.
 2. Paste it into **Discord webhook** and save.
+
+**Discord commands** (your own bot - optional, separate from the webhook):
+
+1. Open the [Discord Developer Portal](https://discord.com/developers/applications) and sign in.
+2. Press **New Application**, name it `nocat.farm`, tick the box and press **Create**.
+3. Open **Bot** on the left, press **Reset Token** and copy the token.
+4. Paste it into **Discord bot token** and press **Save**. A few seconds later the dashboard says the bot is online and
+   shows **Add the bot to your server**.
+5. Open that link and add the bot to a server you own (a new, empty one is fine).
+6. Press **Connect Discord**. It shows a one-time code (it works once, for 10 minutes). In Discord, type
+   `/connect` and the code - in the server, or in a private chat with the bot (click the bot in the member list and
+   send it a message). The bot answers "Connected."
+
+From then on only your Discord account is obeyed; anyone else gets a private "not allowed". In a server the answers
+are only shown to you (they can hold Steam Guard codes). To connect a different Discord account, press
+**Connect Discord** again, or clear *Discord owner* (Show advanced). *Take commands from Discord* (on) switches the bot
+off without removing the token.
 
 **Telegram** (notifications and commands):
 
@@ -754,7 +801,7 @@ same palette as each account's *Colour in the log*.
 Only your own connected chat is listened to. Type `notify test` (or press *Send a test message*) to check both.
 `notify` shows what's set up and what gets sent.
 
-**What gets sent** - nine switches (Show advanced):
+**What gets sent** - ten switches (Show advanced):
 
 | Switch | Default |
 |---|---|
@@ -762,7 +809,8 @@ Only your own connected chat is listened to. Type `notify test` (or press *Send 
 | Send free games, items and gifts | on |
 | Send trades | on |
 | Send problems that need you | on |
-| Send updates | on |
+| Send updates (a new version is out) | on |
+| Send install progress (installing, installed, failed) | off |
 | Send the daily summary | on |
 | Send profile comments | off |
 | Send achievements | off |
@@ -776,6 +824,20 @@ Only your own connected chat is listened to. Type `notify test` (or press *Send 
 - Any other command with `/` in front, like `/cards`, `/offers`, `/trade accept myaccount 4`, `/2fa myaccount`.
 - `/remove <account>` and `/exit` need `confirm` on the end - `/remove farm1 confirm`, `/exit confirm` - because
   nocat.farm can't be started again from Telegram.
+
+**Discord commands** (*Take commands from Discord*, on) - pick them from the `/` menu:
+
+- `/status` - a summary of every account, the last 24 hours, and the version
+- `/dashboard` - the dashboard's links (this PC, same wifi, from anywhere)
+- `/cards`, `/human`, `/offers`, `/confirmations`, `/2fa`, `/stats`, `/update` - the everyday ones. Each has an
+  optional `args` box for what goes after it: `/human args: week`, `/offers args: kylro`, `/update args: accept`.
+- `/nocat command: ...` - any console command, like `/nocat command: pause kylro 30` or
+  `/nocat command: trade accept myaccount 4`
+- `/help` - the command list
+- `/connect code: ...` - connect your Discord account (see above)
+- `remove` and `exit` need `confirm` on the end, as on Telegram: `/nocat command: remove farm1 confirm`.
+
+`notify` says whether the bot is online, under which name, and which Discord account it's connected to.
 
 **Pop-ups on Windows.** *Show pop-ups* turns them on or off. Four kinds, each with its own switch (Show advanced):
 *Pop up when you earn* (cards, credited comments), *Pop up for comments* (on your profiles), *Pop up for problems*
@@ -885,7 +947,7 @@ everything.
 - **Running in the background** (Windows) - *Tray icon*, *Start with Windows*; advanced: *Start hidden*, *Minimise
   to the tray*, *Keep mini mode on top*, *Keep this PC awake*, *Close when everything's done*.
 - **All accounts** - *Groups every account joins*; advanced: *Never touch these (all accounts)*.
-- **Notifications** - Discord webhook and Telegram bot, with chips for what gets sent and a test button. See
+- **Notifications** - Discord webhook, Telegram bot and Discord bot, with chips for what gets sent and a test button. See
   [Discord and Telegram](#discord-and-telegram).
 - **Discord profile** - the *Playing nocat.farm* card on your Discord profile: its switch, what it shows and a
   preview; advanced: which accounts, the featured account, the two buttons.
@@ -894,7 +956,9 @@ everything.
   trusted.
 - **rep4rep account** - *Use rep4rep at all*, *API token*; advanced: *Hold commenting for (hours)*, *Register
   accounts automatically*.
-- **Updates & plugins** (all advanced) - *Notify if an update is available*, *Remind me every hour*, *Load plugins*.
+- **Updates & plugins** - *Update by itself* (tell me, or install at night), and under advanced: the hours it may
+  install in, *Wait after a release for*, *Notify if an update is available*, *Look for updates every*, *Remind me
+  every hour*, *Load plugins*.
 - **Steam connection** (all advanced) - gap between logins, reconnect, timeout, *Farm at most* (accounts farming at
   once), rate-limit cooldown, web request gap, *Connect using*, proxy.
 - **Logging** (all advanced) - *Say what it's doing every* (5 minutes while playing) / *And while it's resting,
@@ -1076,7 +1140,7 @@ ArchiSteamFarm plugins don't work in nocat.farm; [PLUGINS.md](../PLUGINS.md#not-
   on Linux and Docker with a key only your user can read.
 - **What it contacts:**
   - **Steam** - always.
-  - **GitHub** - every few hours to check for a new version, and to download one when you say so. Turn the check off
+  - **GitHub** - every 2 hours (*Look for updates every*) to check for a new version, and to download one when you say so. Turn the check off
     with *Notify if an update is available*.
   - **Discord, Telegram and rep4rep** - only if you set them up. The Discord profile card talks only to the Discord
     app on your PC.

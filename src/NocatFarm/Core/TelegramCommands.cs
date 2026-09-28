@@ -276,19 +276,15 @@ public static partial class Notifier {
 		// The two that can't be undone from a phone: shutting nocat.farm down (nothing can start it again from here)
 		// and deleting an account. Both need "confirm" on the end. Guarded by the command the word REACHES, so an
 		// alias ('delete') can't walk past a check written for one spelling ('remove').
-		string canonical = Commands.Resolve(first)?.Name ?? first;
+		(string? needs, rest) = ConfirmGuard(first, rest);
 
-		if (canonical is "exit" or "remove") {
-			if (!rest.EndsWith("confirm", StringComparison.OrdinalIgnoreCase)) {
-				string typed = $"/{first} {rest}".Trim();
-				await PostTelegramAsync(Html(canonical == "remove"
-					? new Said("That deletes the account and its saved login. Send {0} confirm to really do it.", typed).ToString()
-					: new Said("That closes nocat.farm, and it can't be started again from Telegram. Send {0} confirm to really do it.", typed).ToString()), ct).ConfigureAwait(false);
+		if (needs != null) {
+			string typed = $"/{first} {rest}".Trim();
+			await PostTelegramAsync(Html(needs == "remove"
+				? new Said("That deletes the account and its saved login. Send {0} confirm to really do it.", typed).ToString()
+				: new Said("That closes nocat.farm, and it can't be started again from Telegram. Send {0} confirm to really do it.", typed).ToString()), ct).ConfigureAwait(false);
 
-				return;
-			}
-
-			rest = rest[..^"confirm".Length].Trim();
+			return;
 		}
 
 		if (_mgr == null) {
@@ -319,6 +315,21 @@ public static partial class Notifier {
 		}
 	}
 
+	/// <summary>
+	/// The confirm guard, shared by Telegram and Discord. Says which command still needs "confirm" on the end (exit or
+	/// remove - null when it may run), and what's left once a "confirm" on the end is taken off. Checked on the
+	/// command the word REACHES, so an alias ('delete', 'quit') can't walk past it.
+	/// </summary>
+	internal static (string? Needs, string Args) ConfirmGuard(string first, string rest) {
+		string canonical = Commands.Resolve(first)?.Name ?? first;
+
+		if (canonical is not ("exit" or "remove")) {
+			return (null, rest);
+		}
+
+		return rest.EndsWith("confirm", StringComparison.OrdinalIgnoreCase) ? (null, rest[..^"confirm".Length].Trim()) : (canonical, rest);
+	}
+
 	private static IEnumerable<string> Chunks(string text, int size) {
 		StringBuilder part = new();
 
@@ -343,7 +354,6 @@ public static partial class Notifier {
 
 	private static string Section(Said name) => $"<code>// {Html(name.ToString().ToUpperInvariant())}</code>";
 
-	/// <summary>/status: every account in a line, the last 24 hours, and the app itself - no emoji, the site bot's look.</summary>
 	/// <summary>The dashboard's links, tappable: on the same wifi, from anywhere, and on the PC itself.</summary>
 	private static string DashboardHtml() {
 		DashboardLinks.Links l = DashboardLinks.For(G);
@@ -358,22 +368,23 @@ public static partial class Notifier {
 			sb.AppendLine($"◆ {Html(new Said("Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.").ToString())}");
 		}
 
+		if (l.FirewallBlocks) {
+			sb.AppendLine($"◆ {Html(new Said("Windows Firewall is blocking other devices - on the PC, open the dashboard's Open on your phone and press Allow through Windows Firewall.").ToString())}");
+		}
+
 		sb.AppendLine(l.Outside != null
-			? $"◆ {Html(new Said("From anywhere:").ToString())} {A(l.Outside)}"
+			? $"◆ {Html(new Said("From anywhere:").ToString())} {A(l.Outside)}{(l.OpenAtHome ? "" : " " + Html(new Said("(works once it's open to other devices)").ToString()))}"
 			: $"◆ {Html(new Said("From outside your home: not set up (Public address, in the same place).").ToString())}");
 		sb.AppendLine($"◆ {Html(new Said("On the PC itself:").ToString())} {A(l.Local)}");
 
 		return sb.ToString();
 	}
 
-	private static string StatusHtml() {
-		StringBuilder sb = new();
-		DateTime now = DateTime.Now;
+	/// <summary>What /status says, as plain values - Telegram and Discord each dress it in their own look.</summary>
+	private sealed record StatusView(DateTime Now, List<(string Name, string State)> Accounts, int Cards, int Comments, bool ShowComments, string Uptime, string? NewVersion);
 
-		sb.AppendLine(Header());
-		sb.AppendLine($"▸ <b>{now:yyyy-MM-dd} · {now:HH:mm}</b>");
-		sb.AppendLine();
-		sb.AppendLine(Section(new Said("Accounts")));
+	private static StatusView StatusData() {
+		List<(string Name, string State)> accounts = [];
 
 		foreach (Bot b in _mgr?.All ?? []) {
 			List<string> bits = [Loc.T(Commands.StateWord(b))];
@@ -386,24 +397,43 @@ public static partial class Notifier {
 				bits.Add(new Said("{0} cards left", b.CardsRemaining).ToString());
 			}
 
-			sb.AppendLine($"◆ {Html(b.Name)}: <b>{Html(string.Join(" · ", bits))}</b>");
+			accounts.Add((b.Name, string.Join(" · ", bits)));
 		}
 
 		(int cards, int comments) = Stats.Totals(24);
-		sb.AppendLine();
-		sb.AppendLine(Section(new Said("Last 24h")));
-		sb.AppendLine(Row(new Said("Cards"), cards.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+		TimeSpan up = DateTime.Now - Process.GetCurrentProcess().StartTime;
+		string uptime = up.TotalDays >= 1 ? $"{(int) up.TotalDays}d {up.Hours}h {up.Minutes}m" : $"{up.Hours}h {up.Minutes}m";
 
-		if (G.Rep4RepEnabled) {
-			sb.AppendLine(Row(new Said("Comments"), comments.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+		return new StatusView(DateTime.Now, accounts, cards, comments, G.Rep4RepEnabled, uptime, UpdateCheck.Available);
+	}
+
+	/// <summary>/status: every account in a line, the last 24 hours, and the app itself - no emoji, the site bot's look.</summary>
+	private static string StatusHtml() {
+		StatusView v = StatusData();
+		StringBuilder sb = new();
+
+		sb.AppendLine(Header());
+		sb.AppendLine($"▸ <b>{v.Now:yyyy-MM-dd} · {v.Now:HH:mm}</b>");
+		sb.AppendLine();
+		sb.AppendLine(Section(new Said("Accounts")));
+
+		foreach ((string name, string state) in v.Accounts) {
+			sb.AppendLine($"◆ {Html(name)}: <b>{Html(state)}</b>");
 		}
 
-		TimeSpan up = DateTime.Now - Process.GetCurrentProcess().StartTime;
+		sb.AppendLine();
+		sb.AppendLine(Section(new Said("Last 24h")));
+		sb.AppendLine(Row(new Said("Cards"), v.Cards.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+
+		if (v.ShowComments) {
+			sb.AppendLine(Row(new Said("Comments"), v.Comments.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+		}
+
 		sb.AppendLine();
 		sb.AppendLine(Section(new Said("System")));
-		sb.AppendLine(Row(new Said("Uptime"), up.TotalDays >= 1 ? $"{(int) up.TotalDays}d {up.Hours}h {up.Minutes}m" : $"{up.Hours}h {up.Minutes}m"));
-		sb.AppendLine(Row(new Said("Version"), UpdateCheck.Available is { } v
-			? (SelfUpdate.Supported ? new Said("{0} - {1} is out, send /update accept", Build.Version, v) : new Said("{0} - {1} is out, send /update to see how to install it", Build.Version, v)).ToString()
+		sb.AppendLine(Row(new Said("Uptime"), v.Uptime));
+		sb.AppendLine(Row(new Said("Version"), v.NewVersion is { } nv
+			? (SelfUpdate.Supported ? new Said("{0} - {1} is out, send /update accept", Build.Version, nv) : new Said("{0} - {1} is out, send /update to see how to install it", Build.Version, nv)).ToString()
 			: Build.Version));
 
 		return sb.ToString().TrimEnd();

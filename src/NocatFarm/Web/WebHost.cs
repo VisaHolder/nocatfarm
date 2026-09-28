@@ -474,7 +474,7 @@ public sealed class WebHost : IAsyncDisposable {
 				return Unauthorised();
 			}
 
-			await UpdateCheck.LookAsync(force: true).ConfigureAwait(false);
+			await UpdateCheck.LookAsync(force: true, quiet: true).ConfigureAwait(false);
 
 			if (UpdateCheck.Available == null) {
 				return Results.Json(new { Message = $"You're on the newest release ({Build.Version})." });
@@ -504,6 +504,19 @@ public sealed class WebHost : IAsyncDisposable {
 				})
 			});
 		});
+
+		// The Connect Discord button: a fresh one-time code to send the bot with /connect, and where the bot stands. A
+		// POST, as it changes something - the code before it stops working.
+		app.MapPost("/api/discord/connect", (HttpContext ctx) => Guard(ctx, () => Results.Json(new {
+			Online = Notifier.DiscordBotOnline,
+			BotName = Notifier.DiscordBotName,
+			Connected = Notifier.DiscordConnected,
+			OwnerId = _mgr.Global.DiscordOwnerId,
+			Owner = Notifier.DiscordConnected ? Notifier.DiscordOwner : "",
+			InviteUrl = Notifier.DiscordInviteUrl,
+			Code = Notifier.HasDiscordBot ? Notifier.NewDiscordCode() : null,
+			Minutes = Notifier.DiscordCodeMinutes
+		})));
 
 		app.MapPost("/api/prompt", async (HttpContext ctx) => {
 			if (!Authorised(ctx)) {
@@ -891,8 +904,31 @@ public sealed class WebHost : IAsyncDisposable {
 			Core.DashboardLinks.Links l = Core.DashboardLinks.For(Live.Global);
 			string? scan = l.OpenAtHome && (l.Home.Count > 0) ? l.Home[0] : null;
 
-			return Results.Json(new { l.Local, l.Home, l.OpenAtHome, l.HasPassword, l.ListensBeyondThisPc, l.Outside, Qr = scan == null ? null : Core.QrPicture.Svg(scan) });
+			return Results.Json(new {
+				l.Local, l.Home, l.OpenAtHome, l.HasPassword, l.ListensBeyondThisPc, l.Outside, l.FirewallBlocks,
+				OnThisPc = ctx.Connection.RemoteIpAddress is { } ip && System.Net.IPAddress.IsLoopback(ip),
+				Qr = scan == null ? null : Core.QrPicture.Svg(scan)
+			});
 		}));
+
+		// "Allow through Windows Firewall": Windows' own prompt appears on this PC, so only this PC may ask for it.
+		app.MapPost("/api/phone/firewall", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			if (!OperatingSystem.IsWindows() || (ctx.Connection.RemoteIpAddress is not { } ip) || !System.Net.IPAddress.IsLoopback(ip)) {
+				return Results.Json(new { Ok = false, Error = new Said("only from the PC nocat.farm runs on").ToString() });
+			}
+
+			(bool ok, string why) = await NocatFarm.Windows.Firewall.AllowAsync(Live.Global.WebPort).ConfigureAwait(false);
+
+			if (ok) {
+				Log.Good(new Said("Windows Firewall now lets other devices on your home network open the dashboard (port {0})", Live.Global.WebPort));
+			}
+
+			return Results.Json(new { Ok = ok, Error = why });
+		});
 
 		app.MapGet("/api/auth", (HttpContext ctx) => Guard(ctx, () => Results.Json(new {
 			Accounts = _mgr.All.Select(static b => {
@@ -1478,6 +1514,15 @@ public sealed class WebHost : IAsyncDisposable {
 			UpdateFailed = SelfUpdate.LastFailure,
 			TelegramConnectLink = Notifier.TelegramConnectLink,
 			TelegramConnected = Notifier.TelegramConnected,
+			DiscordBotSet = Notifier.HasDiscordBot,
+			DiscordBotOn = _mgr.Global.DiscordCommands,
+			DiscordBotOnline = Notifier.DiscordBotOnline,
+			DiscordBotName = Notifier.DiscordBotName,
+			DiscordBotProblem = Notifier.DiscordBotProblem,
+			DiscordInviteUrl = Notifier.DiscordInviteUrl,
+			DiscordConnected = Notifier.DiscordConnected,
+			DiscordOwner = Notifier.DiscordConnected ? Notifier.DiscordOwner : "",
+			DiscordOwnerId = _mgr.Global.DiscordOwnerId,
 			UpdateProgress = SelfUpdate.Progress,
 			InventoryPending = bots.Sum(static b => b.Inventory.Pending),
 			GamesLeft = bots.Sum(static b => b.GamesRemaining),

@@ -112,15 +112,15 @@ public static partial class Commands {
 
 		new("log", "[count]", GroupOther, "The last few log lines.", "logs"),
 		new("stats", "[hours]", GroupOther, "Each account's last 24 hours - hours banked, cards, comments, totals - then cards dropped and comments posted, by hour."),
-		new("notify", "[test]", GroupOther, "Discord and Telegram notifications: says what's set up and what gets sent. 'notify test' sends a test message to each right now."),
+		new("notify", "[test]", GroupOther, "Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now."),
 		new("plugins", "", GroupOther, "Which plugins are loaded, and where they came from."),
 		new("tutorial", "[topic]", GroupOther, "Getting started, in order, ticking off what you have already done.", "guide|setup"),
 		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does.", "?|h"),
 		new("theme", "[dark|light]", GroupOther, "Switch the dashboard between the dark and light themes. Without an argument it says which is on.", "dark|light"),
 		new("mini", "[on|off]", GroupOther, "Shrink the window to a small panel of your accounts - what each is doing, start and stop, the dashboard - or back to the full window."),
-		new("dashboard", "[send]", GroupOther, "The dashboard's address - on this PC, on your phone over the same wifi, and from outside your home if you've set that up. 'dashboard send' posts the links to your Discord channel and Telegram.", "web|link"),
+		new("dashboard", "", GroupOther, "The dashboard's address - on this PC, on your phone over the same wifi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there.", "web|link"),
 		new("version", "", GroupOther, "Which version this is.", "about"),
-		new("update", "[accept|ignore]", GroupOther, "Check for a newer release. 'update accept' downloads it and restarts into it; 'update ignore' stops the hourly reminders until the next launch. Nothing updates on its own, ever."),
+		new("update", "[accept|skip]", GroupOther, "Check for a newer release. 'update accept' downloads it and restarts into it; 'update skip' skips that version - no more reminders about it and it never installs by itself - until a newer one comes out. Nothing installs by itself unless 'Update by itself' is set to install at night."),
 		new("answer", "<text>", GroupOther, "Answer whatever nocat.farm is waiting on - a Steam Guard code, or a password."),
 		new("exit", "", GroupOther, "Shut nocat.farm down.", "quit|q")
 	];
@@ -328,9 +328,7 @@ public static partial class Commands {
 				"stats" => StatsText(rest),
 				"answer" => Prompt.Answer(string.Join(' ', rest)) ? "answered" : "nothing is waiting for an answer",
 				"theme" or "dark" or "light" => Theme(cmd, rest),
-				"dashboard" or "web" or "link" => rest.FirstOrDefault()?.Equals("send", StringComparison.OrdinalIgnoreCase) == true
-					? string.Join(Environment.NewLine, await Notifier.SendDashboardLinksAsync().ConfigureAwait(false))
-					: DashboardLinks.Text(mgr.Global),
+				"dashboard" or "web" or "link" => DashboardLinks.Text(mgr.Global),
 				"version" or "about" => About(),
 				"mini" => Mini(rest),
 				"plugins" => PluginList(),
@@ -368,20 +366,23 @@ public static partial class Commands {
 	private static async Task<string> Update(string[] args) {
 		string what = args.Length > 0 ? args[0].ToLowerInvariant() : "";
 
-		if (what == "ignore") {
-			UpdateCheck.Ignored = true;
-
-			return SelfUpdate.Supported
-				? "No more update reminders until the next launch. 'update' still checks, and 'update accept' still installs."
-				: new Said("No more update reminders until the next launch. 'update' still checks.").ToString();
-		}
-
 		bool accept = what is "accept" or "now" or "install";
 
-		await UpdateCheck.LookAsync(force: true).ConfigureAwait(false);
+		await UpdateCheck.LookAsync(force: true, quiet: true).ConfigureAwait(false);
 
 		if (UpdateCheck.Available == null) {
 			return $"You're on the newest release ({Build.Version}).";
+		}
+
+		if (what is "skip" or "ignore") {
+			UpdateCheck.Skipped = UpdateCheck.Available;
+
+			return new Said("Skipping {0} - no more reminders about it, and it won't install by itself. The next version after it is announced as usual; 'update accept' still installs {0}.", UpdateCheck.Available).ToString();
+		}
+
+		// Installing by hand is choosing it after all.
+		if (accept && (UpdateCheck.Skipped != null)) {
+			UpdateCheck.Skipped = null;
 		}
 
 		// Off Windows there is nothing to accept - it can't swap itself (see SelfUpdate) - so both answers say how.
@@ -394,7 +395,7 @@ public static partial class Commands {
 		if (!accept) {
 			return $"{UpdateCheck.Available} is out - you have {Build.Version}."
 				+ Environment.NewLine + $"  {UpdateCheck.Url}"
-				+ Environment.NewLine + "  'update accept' downloads it and restarts into it; 'update ignore' stops the reminders until the next launch.";
+				+ Environment.NewLine + "  'update accept' downloads it and restarts into it; 'update skip' skips this version.";
 		}
 
 		// In the background: a 50MB download can take minutes, and the console used to sit frozen for all of them.
@@ -2221,6 +2222,7 @@ public static partial class Commands {
 
 		return $"Discord: {(g.DiscordWebhookUrl.Length > 0 ? "set up" : "not set up")}"
 			+ Environment.NewLine + $"Telegram: {(g.TelegramBotToken.Length == 0 ? "not set up" : g.TelegramChatId.Length == 0 ? "bot set - press Connect Telegram in Settings, Notifications to link it" : "connected")}"
+			+ Environment.NewLine + Notifier.DiscordBotState()
 			+ Environment.NewLine + $"Sends: {(sent.Count > 0 ? string.Join(", ", sent) : "nothing")}"
 			+ Environment.NewLine + "'notify test' sends a test message now. Set it up under Settings, Notifications.";
 	}

@@ -48,7 +48,7 @@ lines = [
     "# nocat.farm commands",
     "",
     "Every command nocat.farm has, and what it does. You can type them in the app window, in the dashboard's "
-    "**Console** tab, on **Telegram** (start with `/`), or send them to one of your accounts in **Steam chat** "
+    "**Console** tab, on **Telegram** (start with `/`), on **Discord** (`/nocat command:` runs any of them), or send them to one of your accounts in **Steam chat** "
     "(start with `/` or `!`, from an account listed under *Accept commands from*).",
     "",
     "In the app, `help` lists them all and `help <command>` explains one - it also explains any setting: "

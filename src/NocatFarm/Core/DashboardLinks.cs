@@ -14,7 +14,9 @@ public static class DashboardLinks {
 	/// <param name="Home">On the home network - this PC's addresses there. Only reachable when <paramref name="OpenAtHome"/>.</param>
 	/// <param name="OpenAtHome">Listening beyond this PC, with a password - both are needed for another device to get in.</param>
 	/// <param name="Outside">The public address typed into "Public address", or null.</param>
-	public sealed record Links(string Local, IReadOnlyList<string> Home, bool OpenAtHome, bool HasPassword, bool ListensBeyondThisPc, string? Outside);
+	/// <param name="FirewallBlocks">Windows Firewall has no rule letting other devices in - they'd load for ever.
+	/// Only ever true on Windows, listening beyond this PC, when it could be read.</param>
+	public sealed record Links(string Local, IReadOnlyList<string> Home, bool OpenAtHome, bool HasPassword, bool ListensBeyondThisPc, string? Outside, bool FirewallBlocks = false);
 
 	public static Links For(GlobalConfig g) {
 		int port = g.WebPort;
@@ -27,7 +29,8 @@ public static class DashboardLinks {
 		List<string> home = oneAddress ? [$"http://{host}:{port}/"] : [.. HomeAddresses().Select(ip => $"http://{ip}:{port}/")];
 
 		return new Links($"http://127.0.0.1:{port}/", home, hasPassword && (anyAddress || oneAddress), hasPassword, anyAddress || oneAddress,
-			Outside(g.WebPublicAddress, port));
+			Outside(g.WebPublicAddress, port),
+			OperatingSystem.IsWindows() && !Platform.IsLoopback(g.WebHost ?? "") && (Windows.Firewall.AllowsPort(port) == false));
 	}
 
 	/// <summary>
@@ -100,8 +103,16 @@ public static class DashboardLinks {
 			lines.Add($"                   (Settings > Dashboard, Show advanced), restart, then open {phone}");
 		}
 
+		if (l.FirewallBlocks) {
+			lines.Add("  Windows Firewall is blocking other devices - on this PC, open the dashboard's 'Open on your phone' and press");
+			lines.Add("                   'Allow through Windows Firewall' (Windows asks you to confirm)");
+		}
+
+		// A public address only works once the dashboard is open beyond this PC - until then, saying so.
 		lines.Add(l.Outside != null
-			? $"  from anywhere:   {l.Outside}   (anyone with this and the password controls every account)"
+			? l.OpenAtHome
+				? $"  from anywhere:   {l.Outside}   (anyone with this and the password controls every account)"
+				: $"  from anywhere:   {l.Outside}   (works once it's open to other devices - see above)"
 			: "  from anywhere:   not set up - forward the port on your router to this PC and put your address in Public address");
 
 		return string.Join(Environment.NewLine, lines);

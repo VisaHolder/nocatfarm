@@ -427,6 +427,108 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("relaunch: an empty argument survives", Q("") == "\"\"");
 }
 
+// ── Discord bot: the / menu, the replies, who may run what ────────────────────────────────────────────────
+{
+	Type notifier = typeof(NocatFarm.Core.Notifier);
+	const BindingFlags Any = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+	object? Invoke(string name, params object?[] args) => notifier.GetMethod(name, Any)!.Invoke(null, args);
+
+	foreach (bool global in new[] { true, false }) {
+		string where = global ? "global" : "server";
+		string json = System.Text.Json.JsonSerializer.Serialize(Invoke("DiscordCommandSet", global));
+		using System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(json);
+		List<System.Text.Json.JsonElement> cmds = [.. doc.RootElement.EnumerateArray()];
+		List<string> names = [.. cmds.Select(static c => c.GetProperty("name").GetString()!)];
+
+		Check($"discord {where}: every name is 1-32 lowercase letters, digits, - or _",
+			names.All(static n => System.Text.RegularExpressions.Regex.IsMatch(n, "^[a-z0-9_-]{1,32}$")), string.Join(", ", names));
+		Check($"discord {where}: no name twice", names.Distinct().Count() == names.Count);
+		Check($"discord {where}: Telegram's menu plus nocat and connect",
+			new[] { "status", "dashboard", "cards", "human", "offers", "confirmations", "2fa", "stats", "update", "help", "nocat", "connect" }.All(names.Contains));
+		Check($"discord {where}: descriptions 1-100 characters, options too", cmds.All(static c =>
+			c.GetProperty("description").GetString()!.Length is > 0 and <= 100
+			&& c.GetProperty("options").EnumerateArray().All(static o => o.GetProperty("description").GetString()!.Length is > 0 and <= 100
+				&& System.Text.RegularExpressions.Regex.IsMatch(o.GetProperty("name").GetString()!, "^[a-z0-9_-]{1,32}$"))));
+		Check($"discord {where}: nocat needs a command, connect needs a code", cmds.Any(static c => c.GetProperty("name").GetString() == "nocat"
+				&& c.GetProperty("options")[0].GetProperty("name").GetString() == "command" && c.GetProperty("options")[0].GetProperty("required").GetBoolean())
+			&& cmds.Any(static c => c.GetProperty("name").GetString() == "connect" && c.GetProperty("options")[0].GetProperty("required").GetBoolean()));
+		Check($"discord {where}: the everyday ones take optional args", cmds.Where(static c => c.GetProperty("name").GetString() is not ("nocat" or "connect"))
+			.All(static c => c.GetProperty("options")[0].GetProperty("name").GetString() == "args" && !c.GetProperty("options")[0].GetProperty("required").GetBoolean()));
+
+		if (global) {
+			Check("discord global: contexts for private chats and integration type, on every command", cmds.All(static c =>
+				c.TryGetProperty("contexts", out var ctx) && ctx.EnumerateArray().Select(static x => x.GetInt32()).Contains(1)
+				&& c.TryGetProperty("integration_types", out var it) && it.EnumerateArray().Select(static x => x.GetInt32()).SequenceEqual([0])));
+		} else {
+			Check("discord server: no contexts (servers get their own copy, so nothing shows twice)", cmds.All(static c => !c.TryGetProperty("contexts", out _)));
+		}
+	}
+
+	List<string> Blocks(string text) => (List<string>) Invoke("DiscordBlocks", text)!;
+	string big = string.Join("\n", Enumerable.Range(1, 900).Select(static i => $"line {i} " + new string('x', i % 70)));
+	List<string> parts = Blocks(big);
+	Check("discord replies: long output is split, every message within 2000", parts.Count > 1 && parts.All(static p => p.Length <= 2000), $"{parts.Count} parts, longest {parts.Max(static p => p.Length)}");
+	Check("discord replies: each part is a whole code block", parts.All(static p => p.StartsWith("```text\n", StringComparison.Ordinal) && p.EndsWith("\n```", StringComparison.Ordinal)));
+	Check("discord replies: nothing lost", string.Join("\n", parts.Select(static p => p[8..^4])) == big);
+	List<string> oneLong = Blocks(new string('y', 5000));
+	Check("discord replies: one huge line still fits", oneLong.All(static p => p.Length <= 2000));
+	List<string> fence = Blocks("a ``` b");
+	Check("discord replies: ``` in the output can't close the block early", fence.Count == 1 && fence[0].IndexOf("```", 8, StringComparison.Ordinal) == fence[0].Length - 3);
+
+	string Gate(string cmd, string user, string owner) => Invoke("DiscordGate", cmd, user, owner)!.ToString()!;
+	Check("discord gate: no owner yet - only /connect", Gate("status", "111", "") == "NotConnected" && Gate("connect", "111", "") == "Connect");
+	Check("discord gate: the owner runs commands", Gate("status", "111", "111") == "Run" && Gate("nocat", "111", "111") == "Run");
+	Check("discord gate: anyone else is refused", Gate("status", "222", "111") == "NotAllowed" && Gate("nocat", "", "111") == "NotAllowed");
+	Check("discord gate: /connect is open to anyone (the code guards it)", Gate("connect", "222", "111") == "Connect");
+
+	string code = (string) Invoke("NewDiscordCode")!;
+	bool Use(string typed) => (bool) Invoke("UseDiscordCode", typed)!;
+	Check("discord code: 8 characters, easy to read", code.Length == 8 && code.All(static c => "ABCDEFGHJKMNPQRSTUVWXYZ23456789".Contains(c)), code);
+	Check("discord code: a wrong one fails", !Use("WRONG123"));
+	Check("discord code: the right one works, typed in lower case", Use(code.ToLowerInvariant()));
+	Check("discord code: and only once", !Use(code));
+	string code2 = (string) Invoke("NewDiscordCode")!;
+	for (int i = 0; i < 5; i++) {
+		Use("NOPE" + i);
+	}
+	Check("discord code: five misses throw it away", !Use(code2));
+
+	(string? Needs, string Args) Guard(string first, string rest) => ((string?, string)) Invoke("ConfirmGuard", first, rest)!;
+	Check("confirm: remove without confirm is held", Guard("remove", "farm1") == ("remove", "farm1"));
+	Check("confirm: 'delete' is held too (it's remove)", Guard("delete", "farm1").Needs == "remove");
+	Check("confirm: exit and quit are held", Guard("exit", "").Needs == "exit" && Guard("quit", "").Needs == "exit");
+	Check("confirm: with confirm it runs, confirm taken off", Guard("remove", "farm1 confirm") == (null, "farm1") && Guard("exit", "confirm") == (null, ""));
+	Check("confirm: everything else runs as typed", Guard("pause", "kylro 30") == (null, "kylro 30"));
+
+	TimeSpan Retry(string body, TimeSpan? header) => (TimeSpan) Invoke("DiscordRetryAfter", body, header)!;
+	Check("discord 429: waits what Discord says", Retry("{\"retry_after\": 1.5}", null) == TimeSpan.FromSeconds(1.5));
+	Check("discord 429: the header when the body has none", Retry("", TimeSpan.FromSeconds(4)) == TimeSpan.FromSeconds(4));
+	Check("discord 429: never silly", Retry("{\"retry_after\": 9000}", null) == TimeSpan.FromSeconds(60) && Retry("{\"retry_after\": 0}", null) == TimeSpan.FromSeconds(0.5));
+}
+
+// ── updates: skip matching, release highlights, firewall ports ──────────────────────────────────────────────
+{
+	Type uc = typeof(Rng).Assembly.GetType("NocatFarm.Core.UpdateCheck")!;
+	const BindingFlags S = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
+	// Set the skipped version in memory only - no file is written.
+	void SkipOnly(string? v) { uc.GetField("_skipped", S)!.SetValue(null, v); uc.GetField("_skipRead", S)!.SetValue(null, true); }
+	bool Skipped(string tag) => (bool) uc.GetMethod("IsSkipped", S)!.Invoke(null, [tag])!;
+	SkipOnly("1.4.5");
+	Check("skip: the swap script's 1.4.5 matches GitHub's v1.4.5", Skipped("v1.4.5") && Skipped("1.4.5") && Skipped("V1.4.5"));
+	Check("skip: a newer version isn't skipped", !Skipped("v1.4.6"));
+	SkipOnly(null);
+	Check("skip: nothing skipped, nothing matches", !Skipped("v1.4.5"));
+
+	string Highlights(string body) => (string) uc.GetMethod("Highlights", S)!.Invoke(null, [body])!;
+	string h = Highlights("**Discord**\r\n- A **bot** with `/status`\n- Two\n- Three\n- Four\n- Five\nnot a bullet");
+	Check("highlights: first four bullets, bold and code marks gone", h == "- A bot with /status\n- Two\n- Three\n- Four", h.Replace("\n", " | "));
+
+	Type fw = typeof(Rng).Assembly.GetType("NocatFarm.Windows.Firewall")!;
+	bool Ports(string ports, int port) => (bool) fw.GetMethod("PortMatches", S)!.Invoke(null, [ports, port])!;
+	Check("firewall: one port, a list, a range", Ports("7242", 7242) && Ports("80, 7242", 7242) && Ports("7000-8000", 7242));
+	Check("firewall: other ports don't count", !Ports("7243", 7242) && !Ports("80,443", 7242) && !Ports("8000-9000", 7242));
+}
+
 // SETTINGSCOUNT
 Console.WriteLine($"settings: {NocatFarm.Config.Settings.Global.Count} global ({NocatFarm.Config.Settings.Global.Count(d => !d.Advanced)} basic), {NocatFarm.Config.Settings.Bot.Count} per account ({NocatFarm.Config.Settings.Bot.Count(d => !d.Advanced)} basic)");
 Console.WriteLine(fails == 0 ? "all passed" : $"{fails} failed");

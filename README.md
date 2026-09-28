@@ -51,7 +51,8 @@
 - **Watches for bans** - tells you straight away if an account gets a VAC, game, trade or community ban, and keeps
   banned games' items out of trades.
 - **History charts** - cards per day, hours banked, inventory value, week against week.
-- **Discord and Telegram** - notifications, control from your phone, and (optional) a *Playing nocat.farm* card on
+- **Discord and Telegram** - notifications, control from your phone (Telegram commands, or / commands from your own
+  Discord bot, in a private chat or your server), and (optional) a *Playing nocat.farm* card on
   your Discord profile. Set them up under **Settings → Global settings → Notifications** (and **Discord profile** for
   the card), then type `notify test`.
 - **Extras, if you want them** - earn achievements slowly, sell spare cards, see what your next Steam level costs,
@@ -73,6 +74,7 @@
 That's it. It starts farming your cards straight away. Nothing else to install - no .NET, no setup.
 
 **Updating:** click **Update** on the dashboard, or type `update accept`. Your accounts, settings and logs are kept.
+Or set *Update by itself* to install at night, while your accounts are asleep.
 (On Linux and Docker you update by hand - see the guide.)
 
 **On Linux or a server?** There's a Linux zip for x64 and for arm64 (Raspberry Pi), and a Dockerfile with an
