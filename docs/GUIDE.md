@@ -153,7 +153,7 @@ All of these are in **Settings** - pick the account on the left. Or type the com
    that name instead of the real game, while the real games still count playtime.
 3. **Human mode.** *Human mode → Human mode*. Then set **Games and how often** - for example `730:70, 440:30` means
    70% Counter-Strike 2, 30% Team Fortress 2 - and the hours it plays and its bedtime.
-4. **Claim free games.** *Free games & badges → Claim free games*. Paid games that Steam gives away free-to-keep
+4. **Claim free games.** *Free stuff → Claim free games*. Paid games that Steam gives away free-to-keep
    are added to the account.
 5. **I sign into this one myself.** *Account → I sign into this one myself*. Turn it on for any account you also
    use in your own Steam app.
@@ -666,11 +666,13 @@ those, and the log says so.
 achievements over time* on too.
 
 - *games you pick* - works through *Boost these games*
-- *all single-player* - finds single-player games with achievements in the library (never DLC, demos or games with
-  few reviews)
+- *all single-player* - finds single-player games with achievements in the library, played or not (never DLC, demos
+  or games with few reviews). Turn on *Only hunt games you've played* to skip the ones the account never launched.
 
-One game at a time, about 2 hours each (*Play each for about*). On a human-mode account it only takes some sittings,
-with normal play in between. `hunt myaccount` shows what it would play next and why other games were ruled out.
+One game at a time, about 2 hours each (*Play each for about*). On a human-mode account a hunt is one of its normal
+sittings, not extra play: it counts toward the day's hours, and between hunts it rests (*Human mode: weighted gap between boosts*, about
+2 hours) and plays its weighted games as usual. At first it may say "the store hasn't answered yet" for many games -
+it looks each one up slowly so Steam doesn't block it, and starts hunting as soon as it has some. `hunt myaccount` shows what it would play next and why other games were ruled out.
 
 **Steam Families** (*Include family-shared games*, off) lets the hunter use games shared with the account, and
 hands a game back when someone in the family starts it (*Give a shared game back when they want it*, on).
@@ -772,7 +774,7 @@ Only your own connected chat is listened to. Type `notify test` (or press *Send 
 *Pop up when you earn* (cards, credited comments), *Pop up for comments* (on your profiles), *Pop up for problems*
 (Steam Guard needed, failed sign-ins, comment bans, bans) and *Pop up for trade offers*.
 
-**Discord profile card** (*Show on my Discord profile*, **off**). While nocat.farm is open, your Discord profile
+**Discord profile card** (*Global settings → Discord profile*, **off**). While nocat.farm is open, your Discord profile
 shows *Playing nocat.farm*, with what it's doing and today's cards. It needs the Discord app open on the same PC,
 and Discord's Activity Privacy letting it share what you play. Nothing goes over the internet for this. Options
 (Show advanced):
@@ -976,45 +978,55 @@ everything.
 
 ### Global settings
 
-- **Dashboard** - *Web dashboard*, *Language*, *Inventory prices in*; advanced: *Listen on*, *Port*, *Dashboard
-  password*, *Stay signed in for*, *Load plugins*, *Notify if an update is available*, *Remind me every hour*,
-  price lookup speed.
+- **Dashboard** - *Web dashboard*, *Language*; advanced: *Listen on*, *Port*, *Dashboard password*, *Stay signed in
+  for*, opening the browser, refresh speed.
 - **Running in the background** (Windows) - *Tray icon*, *Start with Windows*; advanced: *Start hidden*, *Minimise
   to the tray*, *Keep mini mode on top*, *Keep this PC awake*, *Close when everything's done*.
-- **All accounts** - *Groups every account joins*.
-- **Notifications** - Discord webhook, Telegram bot, the nine *Send…* switches, pop-ups, and the Discord profile
-  card. See [Discord and Telegram](#discord-and-telegram).
+- **All accounts** - *Groups every account joins*; advanced: *Never touch these (all accounts)*.
+- **Notifications** - Discord webhook and Telegram bot, with chips for what gets sent and a test button. See
+  [Discord and Telegram](#discord-and-telegram).
+- **Discord profile** - the *Playing nocat.farm* card on your Discord profile: its switch, what it shows and a
+  preview; advanced: which accounts, the featured account, the two buttons.
+- **Pop-ups** (Windows) - *Show pop-ups*; advanced: which kinds (earnings, comments, problems, trade offers).
+- **Inventory prices** - *Inventory prices in* (the currency); advanced: price lookup speed and how long a price is
+  trusted.
 - **rep4rep account** - *Use rep4rep at all*, *API token*; advanced: *Hold commenting for (hours)*, *Register
   accounts automatically*.
+- **Updates & plugins** (all advanced) - *Notify if an update is available*, *Remind me every hour*, *Load plugins*.
 - **Steam connection** (all advanced) - gap between logins, reconnect, timeout, *Farm at most* (accounts farming at
-  once), rate-limit cooldown, web request gap, *Connect using*, proxy, and *Never touch these (all accounts)*.
-- **Logging** (all advanced) - *Write a log file*, *Show debug detail on screen* (the log file always has it),
-  *Keep logs for* (14 days), the daily summary time, and *Say what it's doing every* (5 minutes while playing) /
-  *And while it's resting, every* (30 minutes). Set either to 0 to turn those status lines off.
+  once), rate-limit cooldown, web request gap, *Connect using*, proxy.
+- **Logging** (all advanced) - *Say what it's doing every* (5 minutes while playing) / *And while it's resting,
+  every* (30 minutes) - 0 turns them off - *Write a log file*, *Show debug detail on screen* (the log file always
+  has it), *Keep logs for* (14 days), the daily summary and its time, and the colours of `telegram` and `discord` in
+  the log.
 
 ### Account settings
 
 - **Account** - *Enabled*, *Steam account name*, *Password*, *Appear as*, *I sign into this one myself*; advanced:
-  QR sign-in, *Start paused*, notes, colour in the log, Family View PIN, device name, authenticator secrets, its own
-  proxy, and *Report in every* / *And while resting, every* (0 = follow the global setting, -1 = keep this account
-  quiet).
+  QR sign-in, *Sign in as*, *Start paused*, notes, Family View PIN, device name, authenticator secrets, its own
+  proxy, clearing Steam's notifications.
 - **Human mode** - *Human mode*, *Games and how often*, hours on weekdays and weekends, when it gets on and goes to
-  bed, *Bank hours overnight*; advanced: day-off chance, sittings, breaks, meals, going offline on breaks, hour
-  targets, overnight games.
+  bed, *Bank hours overnight*; advanced: hour targets, day-off chance, sittings, breaks, meals, going Away or offline
+  on breaks, overnight games, how long it waits after waking or signing in before it reacts, finishing up when
+  stopped.
 - **What it plays** (not on human-mode accounts) - *Games to idle*, *Show a custom game name*, *Show as*; advanced:
   *Keep the name while farming*, *Play as if on*.
-- **Trading cards** - *Farm trading cards*, *When to farm cards* (human mode), *Sell duplicate cards*; advanced:
-  order, priority list, blacklist, refund protection, clock window, give-up time, and more.
-- **Achievements** - *Earn achievements over time*; advanced: pace, completion limit, the hunter, family games,
-  grind spacing, never/only lists.
-- **Free games & badges** - free games, free DLC, event items, discovery queue, badge crafting, *Watch for bans*;
-  advanced: booster packs, opening packs, notification clearing, *...but not these games*.
+- **Trading cards** - *Farm trading cards*, *When to farm cards* (human mode); advanced: order, priority list,
+  blacklist, refund protection, sittings, clock window, give-up time, and more.
+- **Badges, boosters & selling** - *Craft badges from card sets*, *Sell duplicate cards*; advanced: booster packs,
+  opening packs, how many cards to list at a time.
+- **Achievements** - *Earn achievements over time*; advanced: pace, completion limit, only/never lists, grind
+  spacing, the hunter, family-shared games.
+- **Free stuff** - free games, free DLC, event items, the discovery queue.
+- **Inventory & bans** - *Watch for bans*; advanced: *Work out what its inventory is worth* and games to leave out.
+- **Trades** - donations, gifts, fair card swaps, your own accounts, *Trade by itself with*; advanced: *Decline
+  everything else*, waits, sending items, *What to send*, trade link token.
 - **rep4rep commenting** (only when rep4rep is on) - *Post rep4rep comments*; advanced: cap, gaps, hours.
 - **Friends & messages** - *Accept friend requests*, *Reply to messages* and its text; advanced: delays, spam
-  filter, group invites and joining, *Accept commands from*, and human-mode timings.
-- **Trades** - donations, fair card swaps, gifts, your own accounts, *Trade by itself with*; advanced: *Decline
-  everything else*, sending, *What to send*, trade link token, waits, inventory value.
+  filter, group invites and joining, *Accept commands from*.
 - **Staying out of the way** (advanced) - *Stand down when you play*, *Wait before resuming*.
+- **Logging** (advanced) - *Report in every* / *And while resting, every* (0 = follow the global setting, -1 = keep
+  this account quiet), and its colour in the log.
 
 Human mode hides *Games to idle*, the custom game name, *Keep the name while farming*, *Farm in sittings*, *Hours a
 day to farm*, *Log out when finished* and *Farm while appearing offline* on that account, and shows human-only
@@ -1142,7 +1154,7 @@ Commands: the dashboard's Console tab, or `docker attach nocatfarm` (Ctrl+P then
 *For: people who write C#.*
 
 A plugin is a DLL that adds commands and features. Plugins are off by default: put the DLL in the `plugins` folder
-next to `nocatFarm.exe`, turn on **Load plugins** (Settings → Global settings → Dashboard, under Show advanced, or
+next to `nocatFarm.exe`, turn on **Load plugins** (Settings → Global settings → Updates & plugins, under Show advanced, or
 `set PluginsEnabled true`), and restart. `plugins` and the dashboard's Plugins page list what's loaded and the
 commands they added; each plugin has its own on/off switch there.
 

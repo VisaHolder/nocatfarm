@@ -1045,3 +1045,6 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 
 /* An update is the one thing down here worth noticing, so it borrows the wordmark's purple. */
 .ghlink.update { color: #8b5cf6; }
+
+/* Jump to lands a section's heading below the sticky top bar, not under it. */
+#settingsBody .section h3 { scroll-margin-top: 76px; }

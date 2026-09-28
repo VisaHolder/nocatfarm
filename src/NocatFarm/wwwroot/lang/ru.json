@@ -1350,7 +1350,6 @@
     "{0} cards today": "Карточек сегодня: {0}",
     "Get nocat.farm": "Скачать nocat.farm",
     "Show on my Discord profile": "Показывать в моём профиле Discord",
-    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Notifications.": "Пока nocat.farm открыт, ваш Discord показывает Playing nocat.farm, как игру. Это можно изменить в любой момент в разделе Настройки, Уведомления.",
     "{0} on Steam": "{0} в Steam",
     "Discord profile": "Профиль Discord",
     "While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.": "Пока nocat.farm открыт, ваш профиль Discord показывает его как игру. Выберите, что показывает статус - превью это то, что видят другие.",
@@ -1559,7 +1558,13 @@
     "Used ArchiSteamFarm or another idler before? Add the account, then go straight to all of its settings, advanced ones included.": "Уже пользовались ArchiSteamFarm или другим айдлером? Добавьте аккаунт и сразу переходите ко всем его настройкам, включая расширенные.",
     "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept": "Внутри Docker nocat.farm сам не обновляется - в папке nocatfarm выполните git pull, затем docker compose up -d --build. config/ и logs/ сохраняются",
     "Discord Rich Presence on - your profile shows Playing nocat.farm": "Discord Rich Presence включён - в профиле видно «Играет в nocat.farm»",
-    "Discord Rich Presence off": "Discord Rich Presence выключен"
+    "Discord Rich Presence off": "Discord Rich Presence выключен",
+    "Pop-ups": "Всплывающие уведомления",
+    "Inventory prices": "Цены инвентаря",
+    "Updates & plugins": "Обновления и плагины",
+    "Badges, boosters & selling": "Значки, наборы и продажа",
+    "Inventory & bans": "Инвентарь и баны",
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "Пока nocat.farm открыт, ваш Discord показывает Playing nocat.farm, как игру. Это можно изменить в любой момент в разделе Настройки, Профиль Discord."
   },
   "settings": {
     "WebEnabled": {
@@ -1696,7 +1701,7 @@
     },
     "LoginStaggerSeconds": {
       "label": "Пауза между входами",
-      "tip": "Сколько секунд ждать между входами аккаунтов при запуске. Steam ограничивает входы с одного подключения к интернету, и пауза не даёт заблокировать сразу несколько аккаунтов."
+      "tip": "Секунды между входами двух аккаунтов - при запуске, по «Запустить все» или при переподключении - с небольшим разбросом и не меньше 5. Steam ограничивает число входов с одного подключения, и пауза не даёт заблокировать сразу несколько аккаунтов."
     },
     "StatusEveryMinutes": {
       "label": "Отчитываться каждые",
@@ -2057,7 +2062,7 @@
       "tip": "Через сколько минут после того, как вы закончили играть, этот аккаунт продолжает с того же места."
     },
     "AchievementBoost": {
-      "tip": "Сам охотится за достижениями в нескольких играх, по одной за раз. «Выбранные игры» берёт список ниже. «Все одиночные» выбирает из вашей библиотеки одиночные игры с достижениями, в которые уже играли.",
+      "tip": "Сам охотится за достижениями в нескольких играх, по одной игре за раз. «Выбранные игры» берёт список ниже. «Все одиночные» выбирает из библиотеки одиночные игры с достижениями, запущенные или нет (включите «Охотиться только в играх, где уже играли», чтобы пропустить остальные). На аккаунте в человеческом режиме охота — это время от времени одна сессия его обычного дня, а не лишняя игра.",
       "label": "Разгон достижений",
       "choices": "0 выключено | 1 выбранные игры | 2 все одиночные"
     },
