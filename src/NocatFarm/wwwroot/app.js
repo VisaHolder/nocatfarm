@@ -3063,6 +3063,9 @@ function renderSettings() {
       // of the way until it's switched on.
       if (d.Mode === 'rage' && legitOn) return false;
       if (d.Mode === 'legit' && !legitOn) return false;
+      // The Discord profile panel at the top of Notifications has its own switch and chips for these - a second
+      // row for each was the same setting twice.
+      if (settingsTarget === GLOBAL && DISCORD_PANEL.has(d.Name)) return false;
       if (!advanced && d.Advanced) { hiddenAdvanced++; return false; }
       if (q && !(tSetting(d, 'label').toLowerCase().includes(q) || d.Label.toLowerCase().includes(q)
         || d.Name.toLowerCase().includes(q) || tSetting(d, 'tip').toLowerCase().includes(q))) return false;
@@ -3870,6 +3873,8 @@ function edit(name, value) {
 // The Discord profile card: one switch, a chip per part, and a preview drawn the way Discord draws it - so what
 // each chip does is obvious before saving. Same data the app sends: the picked accounts, their Steam names and
 // avatars, and the two buttons.
+const DISCORD_PANEL = new Set(['DiscordPresence', 'DiscordShowNames', 'DiscordShowCounter', 'DiscordShowAvatar', 'DiscordShowTimer']);
+
 function discordCardIntro(val) {
   const on = !!val('DiscordPresence');
   const parts = [['DiscordShowNames', 'Account names'], ['DiscordShowCounter', 'Accounts online'],
