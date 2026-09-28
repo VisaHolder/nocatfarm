@@ -40,7 +40,7 @@ public static class UpdateCheck {
 		}
 
 		_remindedAt = DateTime.UtcNow;
-		Log.Attention(new Said("reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update ignore' stops these reminders until the next launch", Available, Build.Version));
+		Log.Attention(new Said("reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update ignore' stops these reminders until the next launch", Available, Build.Version), topic: Topic.Updates);
 	}
 
 	static UpdateCheck() {
@@ -78,7 +78,7 @@ public static class UpdateCheck {
 
 			// Said once when it's first seen; after that the hourly reminder carries it.
 			if (Available != tag) {
-				Log.Attention(new Said("nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update ignore' stops the hourly reminders until the next launch", tag, Build.Version, page));
+				Log.Attention(new Said("nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update ignore' stops the hourly reminders until the next launch", tag, Build.Version, page), topic: Topic.Updates);
 				_remindedAt = DateTime.UtcNow;
 			}
 

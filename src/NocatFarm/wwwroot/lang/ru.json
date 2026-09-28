@@ -1256,7 +1256,64 @@
     "Next it signs in the {0} you play on, so it can set them up from their own games.": "Теперь он войдёт в {0}, на которых ты играешь, чтобы настроить их по их собственным играм.",
     "Start the others too": "Запустить и остальные",
     "Starting {0} more account(s) - they sign in one after another.": "Запускаю ещё {0} аккаунт(ов) - они входят по очереди.",
-    "The other {0} imported account(s) are added but not started yet.": "Остальные {0} импортированных аккаунта добавлены, но ещё не запущены."
+    "The other {0} imported account(s) are added but not started yet.": "Остальные {0} импортированных аккаунта добавлены, но ещё не запущены.",
+    "update failed: {0}": "обновление не удалось: {0}",
+    "update: {0}% - {1} of {2}MB, about {3}m left": "обновление: {0}% - {1} из {2} МБ, осталось около {3} мин",
+    "update: {0}% - {1} of {2}MB": "обновление: {0}% - {1} из {2} МБ",
+    "updated from {0} to {1} - downloaded {2}MB in {3}s": "обновлено с {0} до {1} - скачано {2} МБ за {3} с",
+    "the update to {0} didn't take - this is still {1}": "обновление до {0} не применилось - это всё ещё {1}",
+    "couldn't read the update note: {0}": "не удалось прочитать заметку об обновлении: {0}",
+    "update failed: {0} - nothing was changed": "обновление не удалось: {0} - ничего не изменено",
+    "update: done - now on {1} (was {0}) · downloaded {2}MB in {3}s": "обновление: готово - теперь {1} (было {0}) · скачано {2} MB за {3} с",
+    "update failed: couldn't make a safety copy of the current files first (copy error {0}) - is the disk full? Still on {1}, nothing was changed": "обновление не удалось: сначала не получилось сделать резервную копию текущих файлов (ошибка копирования {0}) - диск заполнен? По-прежнему {1}, ничего не изменено",
+    "update failed: the new files couldn't be copied in - some were in use (another copy of nocat.farm, or an antivirus scan?). Still on {0}, nothing was changed - try 'update accept' again": "обновление не удалось: не получилось скопировать новые файлы - некоторые были заняты (ещё одна копия nocat.farm или проверка антивирусом?). По-прежнему {0}, ничего не изменено - попробуйте 'update accept' ещё раз",
+    "update failed: the new files couldn't be copied into this folder (copy error {0}) - is it read-only or out of space? Still on {1}, nothing was changed": "обновление не удалось: не получилось скопировать новые файлы в эту папку (ошибка копирования {0}) - она только для чтения или закончилось место? По-прежнему {1}, ничего не изменено",
+    "update failed: {0} didn't start after the download - still on {1}. Try 'update accept' again, or get it from the releases page": "обновление не удалось: версия {0} не запустилась после загрузки - по-прежнему {1}. Попробуйте 'update accept' ещё раз или скачайте её со страницы релизов",
+    "update failed: updating itself only works on Windows - get the new release from {0}": "обновление не удалось: самообновление работает только в Windows - скачайте новый релиз с {0}",
+    "update failed: couldn't reach GitHub ({0}) - check the internet connection and try again. Nothing was changed": "обновление не удалось: нет связи с GitHub ({0}) - проверьте подключение к интернету и попробуйте снова. Ничего не изменено",
+    "update failed: GitHub didn't say which release is newest - try again in a few minutes. Nothing was changed": "обновление не удалось: GitHub не сообщил, какой релиз самый новый - попробуйте через несколько минут. Ничего не изменено",
+    "update failed: {0} has no download attached yet - try again later, or get it from {1}. Nothing was changed": "обновление не удалось: к {0} ещё не прикреплён файл для загрузки - попробуйте позже или скачайте с {1}. Ничего не изменено",
+    "update: {0} {1}% · {2} of {3}MB · about {4}m left": "обновление: {0} {1}% · {2} из {3} MB · осталось около {4} мин",
+    "update: {0} {1}% · {2} of {3}MB": "обновление: {0} {1}% · {2} из {3} MB",
+    "update failed: the download broke off ({0}) - check the connection and try again. Nothing was changed": "обновление не удалось: загрузка оборвалась ({0}) - проверьте подключение и попробуйте снова. Ничего не изменено",
+    "update failed: the download stopped at {0} of {1}MB - the connection probably dropped. Try again. Nothing was changed": "обновление не удалось: загрузка остановилась на {0} из {1} MB - видимо, пропало соединение. Попробуйте снова. Ничего не изменено",
+    "update: {0} 100% · {1}MB downloaded - unpacking": "обновление: {0} 100% · скачано {1} MB - распаковка",
+    "update failed: couldn't unpack the download ({0}) - is the disk full? Nothing was changed": "обновление не удалось: не получилось распаковать скачанный файл ({0}) - диск заполнен? Ничего не изменено",
+    "update failed: the download doesn't contain nocatFarm.exe - get it from {0}. Nothing was changed": "обновление не удалось: в скачанном файле нет nocatFarm.exe - скачайте его с {0}. Ничего не изменено",
+    "update: {0} is ready - restarting into it now, back in a few seconds": "обновление: {0} готово - перезапускаемся, вернёмся через несколько секунд",
+    "update failed: {0} - nothing was changed. The release page is {1}": "обновление не удалось: {0} - ничего не изменено. Страница релизов: {1}",
+    "Update failed": "Обновление не удалось",
+    "Try again": "Попробовать снова",
+    "notifications: {0}": "уведомления: {0}",
+    "Free stuff": "Бесплатное",
+    "Daily summary": "Ежедневная сводка",
+    "Profile comment": "Комментарий в профиле",
+    "nocat.farm": "nocat.farm",
+    "...and {0} more": "...и ещё {0}",
+    "the Discord webhook link doesn't work any more (HTTP {0}) - copy it again from the channel's Integrations settings": "ссылка на вебхук Discord больше не работает (HTTP {0}) - скопируйте её заново в настройках канала, раздел «Интеграция»",
+    "Discord refused the message (HTTP {0})": "Discord отклонил сообщение (HTTP {0})",
+    "Discord kept saying slow down": "Discord всё время просил притормозить",
+    "the Telegram bot token doesn't work - copy it again from @BotFather": "токен бота Telegram не работает - скопируйте его заново у @BotFather",
+    "Telegram can't find that chat - send your bot a message, clear \"Telegram chat\" in Settings and it finds it again": "Telegram не может найти этот чат - напишите боту, очистите «Чат Telegram» в Настройках, и он найдётся снова",
+    "Telegram refused the message (HTTP {0})": "Telegram отклонил сообщение (HTTP {0})",
+    "Telegram kept saying slow down": "Telegram всё время просил притормозить",
+    "notifications: Telegram connected - they'll go to {0}": "уведомления: Telegram подключён - они будут приходить в {0}",
+    "Notifications you picked will arrive here. Change what gets sent under Settings, Notifications.": "Выбранные уведомления будут приходить сюда. Что отправлять, можно изменить в Настройках, раздел «Уведомления».",
+    "nothing yet - pick below": "пока ничего - выберите ниже",
+    "This is what nocat.farm notifications look like. You'll get: {0}": "Так выглядят уведомления nocat.farm. Вы будете получать: {0}",
+    "nothing is set up yet - paste a Discord webhook link or a Telegram bot token first": "пока ничего не настроено - сначала вставьте ссылку на вебхук Discord или токен бота Telegram",
+    "nocat.farm is connected": "nocat.farm подключён",
+    "Discord: sent - check the channel": "Discord: отправлено - проверьте канал",
+    "Discord: didn't work - {0}": "Discord: не получилось - {0}",
+    "Telegram: the bot works, but nobody has messaged it yet - open it on Telegram, send it anything, then test again": "Telegram: бот работает, но ему ещё никто не писал - откройте его в Telegram, отправьте что угодно и проверьте снова",
+    "Telegram: sent - check the chat": "Telegram: отправлено - проверьте чат",
+    "Telegram: didn't work - {0}": "Telegram: не получилось - {0}",
+    "Get notified on Discord or Telegram": "Уведомления в Discord или Telegram",
+    "Paste a Discord webhook link or a Telegram bot token below, save, then pick what gets sent. Busy moments are bundled into one message.": "Вставьте ниже ссылку на вебхук Discord или токен бота Telegram, сохраните, затем выберите, что отправлять. Когда много всего происходит сразу, всё собирается в одно сообщение.",
+    "Send a test message": "Отправить тестовое сообщение",
+    "Save a webhook link or bot token first.": "Сначала сохраните ссылку на вебхук или токен бота.",
+    "Sending...": "Отправка...",
+    "Couldn't reach nocat.farm": "Не удалось связаться с nocat.farm"
   },
   "settings": {
     "WebEnabled": {
@@ -1322,6 +1379,54 @@
     "NotifyProblems": {
       "label": "Уведомлять о проблемах",
       "tip": "Показывает уведомление, когда аккаунту нужны вы: код Steam Guard, неудачный вход или бан комментариев."
+    },
+    "DiscordWebhookUrl": {
+      "label": "Вебхук Discord",
+      "tip": "Вставьте ссылку на вебхук канала Discord, и выбранные ниже уведомления будут приходить туда. В Discord: Настройки сервера, Интеграция, Вебхуки, Новый вебхук, Копировать URL вебхука."
+    },
+    "TelegramBotToken": {
+      "label": "Токен бота Telegram",
+      "tip": "Вставьте токен вашего бота Telegram (бота можно создать, написав @BotFather). Затем отправьте боту любое сообщение в Telegram, и nocat.farm сам найдёт ваш чат."
+    },
+    "TelegramChatId": {
+      "label": "Чат Telegram",
+      "tip": "Заполняется само, когда вы впервые пишете боту. Очистите, чтобы выбрать другой чат или группу - будет взят следующий, кто напишет боту."
+    },
+    "SendCardDrops": {
+      "label": "Отправлять выпавшие карточки и значки",
+      "tip": "Выпавшие карточки, игры, в которых карточки закончились, собранные значки и созданные бустеры."
+    },
+    "SendFreeStuff": {
+      "label": "Отправлять бесплатные игры, предметы и подарки",
+      "tip": "Полученные бесплатные игры, бесплатные предметы из магазина очков и распродаж, подаренные игры и активированные ключи."
+    },
+    "SendTrades": {
+      "label": "Отправлять обмены",
+      "tip": "Принятые предложения обмена и сколько предметов пришло."
+    },
+    "SendProblems": {
+      "label": "Отправлять проблемы, где нужны вы",
+      "tip": "Всё, где нужны вы: код Steam Guard, неудачный вход, бан комментариев, лоты, ждущие подтверждения на телефоне."
+    },
+    "SendUpdates": {
+      "label": "Отправлять обновления",
+      "tip": "Вышла новая версия, обновление завершилось или не удалось, и почему."
+    },
+    "SendDailySummary": {
+      "label": "Отправлять ежедневную сводку",
+      "tip": "Раз в день: что каждый аккаунт сделал за последние 24 часа - накопленные часы, карточки и комментарии. Отправляется во время, заданное для «Ежедневная сводка в журнале»."
+    },
+    "SendComments": {
+      "label": "Отправлять комментарии в профиле",
+      "tip": "Кто-то оставил комментарий в одном из ваших профилей Steam."
+    },
+    "SendAchievements": {
+      "label": "Отправлять достижения",
+      "tip": "Каждое открытое достижение. Их может быть много."
+    },
+    "SendRep4Rep": {
+      "label": "Отправлять комментарии rep4rep",
+      "tip": "Каждый опубликованный комментарий rep4rep. Их может быть много."
     },
     "GroupsToJoin": {
       "label": "Группы, куда вступают все аккаунты",

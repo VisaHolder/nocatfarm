@@ -130,11 +130,18 @@ public static class DailyReport {
 			Log.Info(line, "report");
 		}
 
-		Log.Good(r4r
+		Said fleet = r4r
 			? new Said("  fleet: banked {0} · {1} card(s) · {2} comment(s) · {3} total",
 				Fmt.Hm(totBanked), totCards, totComments, Fmt.Hm(totLife))
 			: new Said("  fleet: banked {0} · {1} card(s) · {2} total",
-				Fmt.Hm(totBanked), totCards, Fmt.Hm(totLife)), "report");
+				Fmt.Hm(totBanked), totCards, Fmt.Hm(totLife));
+		Log.Good(fleet, "report");
+
+		// The same summary as one message for Discord / Telegram, when that's switched on - only for the real
+		// daily one, not every time somebody types 'report'.
+		if (commit) {
+			Log.Publish(Topic.Summary, "report", new Said(string.Join("\n", lines.Select(static l => l.ToString().TrimStart()).Append(fleet.ToString().TrimStart()))));
+		}
 
 		if (commit) {
 			lock (Gate) {

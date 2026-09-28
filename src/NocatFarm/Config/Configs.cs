@@ -110,6 +110,26 @@ public sealed class GlobalConfig {
 	/// <summary>AppIDs no account ever touches, on top of each account's own list.</summary>
 	public List<uint> GlobalBlacklistedGames { get; set; } = [];
 
+	// ── notifications to Discord and Telegram (Core/Notifier.cs) ──
+	/// <summary>A Discord channel webhook link. Encrypted on disk.</summary>
+	public string DiscordWebhookUrl { get; set; } = "";
+
+	/// <summary>A Telegram bot token from @BotFather. Encrypted on disk.</summary>
+	public string TelegramBotToken { get; set; } = "";
+
+	/// <summary>Where the bot posts - found by itself from the first message sent to the bot.</summary>
+	public string TelegramChatId { get; set; } = "";
+
+	public bool SendCardDrops { get; set; } = true;
+	public bool SendFreeStuff { get; set; } = true;
+	public bool SendTrades { get; set; } = true;
+	public bool SendProblems { get; set; } = true;
+	public bool SendUpdates { get; set; } = true;
+	public bool SendDailySummary { get; set; } = true;
+	public bool SendComments { get; set; }
+	public bool SendAchievements { get; set; }
+	public bool SendRep4Rep { get; set; }
+
 	/// <summary>Steam groups every account joins - links or short names, comma separated. Open groups only. Starts
 	/// with the nocat.farm group; anyone can change or clear it.</summary>
 	public string GroupsToJoin { get; set; } = "steamcommunity.com/groups/nocatfarm";
@@ -530,7 +550,11 @@ public static class ConfigStore {
 		}
 
 		try {
-			return JsonSerializer.Deserialize<GlobalConfig>(File.ReadAllText(GlobalPath), Json) ?? new GlobalConfig();
+			GlobalConfig loaded = JsonSerializer.Deserialize<GlobalConfig>(File.ReadAllText(GlobalPath), Json) ?? new GlobalConfig();
+			loaded.DiscordWebhookUrl = Secrets.Unprotect(loaded.DiscordWebhookUrl);
+			loaded.TelegramBotToken = Secrets.Unprotect(loaded.TelegramBotToken);
+
+			return loaded;
 		} catch (Exception e) {
 			// Keep the broken file. Falling back to defaults and then saving over it would destroy the rep4rep
 			// token and the dashboard password because of one stray comma.
@@ -572,7 +596,13 @@ public static class ConfigStore {
 		try {
 			lock (SaveGate) {
 				Directory.CreateDirectory(ConfigDir);
-				AtomicFile.Write(GlobalPath, JsonSerializer.Serialize(cfg, Json));
+
+				// A copy with the notification secrets encrypted - the live config keeps them readable. Either one
+				// can post as you (the webhook) or run your bot (the token), so neither sits in the file in the clear.
+				GlobalConfig onDisk = JsonSerializer.Deserialize<GlobalConfig>(JsonSerializer.Serialize(cfg, Json), Json)!;
+				onDisk.DiscordWebhookUrl = Secrets.Protect(cfg.DiscordWebhookUrl, "global");
+				onDisk.TelegramBotToken = Secrets.Protect(cfg.TelegramBotToken, "global");
+				AtomicFile.Write(GlobalPath, JsonSerializer.Serialize(onDisk, Json));
 			}
 		} catch (Exception e) {
 			Log.Warn(new Said("config: couldn't save global config: {0}", e.Message));

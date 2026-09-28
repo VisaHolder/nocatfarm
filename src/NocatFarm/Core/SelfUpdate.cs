@@ -24,6 +24,9 @@ namespace NocatFarm.Core;
 public static class SelfUpdate {
 	private const string Releases = "https://api.github.com/repos/VisaHolder/nocatfarm/releases/latest";
 
+	/// <summary>Where a person gets it by hand when updating itself can't.</summary>
+	private const string ReleasesPage = "https://github.com/VisaHolder/nocatfarm/releases/latest";
+
 	private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromMinutes(10) };
 
 	static SelfUpdate() {
@@ -32,6 +35,82 @@ public static class SelfUpdate {
 
 	/// <summary>True while a download is in flight, so a second press doesn't start a second one.</summary>
 	public static bool Busy { get; private set; }
+
+	/// <summary>"from|to|MB|seconds|ticks", written just before the restart and read back by the new version.</summary>
+	private static string NotePath => Path.Combine(ConfigStore.ConfigDir, "state", "updated.txt");
+
+	/// <summary>Written by the swap script when copying the new files in failed: robocopy's exit code.</summary>
+	private static string SwapFailedPath => Path.Combine(ConfigStore.ConfigDir, "state", "update-failed.txt");
+
+	/// <summary>
+	/// A failure: in red, with the reason, and handed back for the command reply or the dashboard. Every way an
+	/// update can go wrong goes through here, so none of them is a yellow line that looks like a note, or silence.
+	/// </summary>
+	private static string Fail(Said why) {
+		Log.Error(why, topic: Topic.Updates);
+		LastFailure = why.ToString();
+
+		return LastFailure;
+	}
+
+	/// <summary>The last update that failed and why, for a red alert on the dashboard. Cleared by the next try.</summary>
+	public static string? LastFailure { get; private set; }
+
+	/// <summary>[██████░░░░] - ten blocks, drawn in the log's monospace font.</summary>
+	private static string Bar(int pct) {
+		int full = Math.Clamp(pct / 10, 0, 10);
+
+		return "[" + new string('█', full) + new string('░', 10 - full) + "]";
+	}
+
+	/// <summary>
+	/// First thing after starting: if this start is the end of an update, say so - "updated from 1.3.3 to 1.3.4" -
+	/// or that it didn't take. Once, then the note is gone.
+	/// </summary>
+	public static void AnnounceIfJustUpdated() {
+		try {
+			if (!File.Exists(NotePath)) {
+				return;
+			}
+
+			string[] p = File.ReadAllText(NotePath).Split('|');
+			File.Delete(NotePath);
+
+			// The swap script leaves robocopy's exit code behind when it couldn't copy the new files in (and then
+			// starts this old version back up), so the reason can be said rather than guessed.
+			string? swapCode = null;
+
+			if (File.Exists(SwapFailedPath)) {
+				swapCode = File.ReadAllText(SwapFailedPath).Trim();
+				File.Delete(SwapFailedPath);
+			}
+
+			// A note from long ago is some other start's business (an update that was interrupted, say).
+			if ((p.Length < 5) || !long.TryParse(p[4], out long ticks) || (DateTime.UtcNow - new DateTime(ticks, DateTimeKind.Utc) > TimeSpan.FromHours(1))) {
+				return;
+			}
+
+			if (p[1] == Build.Version) {
+				Said done = new("update: done - now on {1} (was {0}) · downloaded {2}MB in {3}s", p[0], p[1], p[2], p[3]);
+				Log.Good(done);
+				Log.Publish(Topic.Updates, "nocat.farm", done);
+			} else if (swapCode != null) {
+				// The swap put every file back the way it was before starting this version again, so "nothing was
+				// changed" is true - see SwapScript.
+				Fail(swapCode.StartsWith("backup", StringComparison.Ordinal)
+					? new Said("update failed: couldn't make a safety copy of the current files first (copy error {0}) - is the disk full? Still on {1}, nothing was changed", swapCode[6..].Trim(), Build.Version)
+					// robocopy adds flags together: 8 and up with 16 unset means some files failed (in use, access
+					// denied); 16 and up means it couldn't work in the folder at all. 11 = 8 + extra files + copied.
+					: int.TryParse(swapCode, out int rc) && (rc is >= 8 and < 16)
+						? new Said("update failed: the new files couldn't be copied in - some were in use (another copy of nocat.farm, or an antivirus scan?). Still on {0}, nothing was changed - try 'update accept' again", Build.Version)
+						: new Said("update failed: the new files couldn't be copied into this folder (copy error {0}) - is it read-only or out of space? Still on {1}, nothing was changed", swapCode, Build.Version));
+			} else {
+				Fail(new Said("update failed: {0} didn't start after the download - still on {1}. Try 'update accept' again, or get it from the releases page", p[1], Build.Version));
+			}
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't read the update note: {0}", e.Message));
+		}
+	}
 
 	/// <summary>Where it got to, for the dashboard to show.</summary>
 	public static string Progress { get; private set; } = "";
@@ -48,23 +127,31 @@ public static class SelfUpdate {
 		}
 
 		if (!OperatingSystem.IsWindows()) {
-			return "self-update only knows how to do this on Windows - grab the release by hand";
+			return Fail(new Said("update failed: updating itself only works on Windows - get the new release from {0}", ReleasesPage));
 		}
 
 		Busy = true;
+		LastFailure = null;
 
 		try {
 			Progress = "asking GitHub what's newest";
-			Log.Info("update: asking GitHub what's newest");
+			Log.Good("update: asking GitHub what's newest");
 
-			string json = await Http.GetStringAsync(Releases, ct).ConfigureAwait(false);
+			string json;
+
+			try {
+				json = await Http.GetStringAsync(Releases, ct).ConfigureAwait(false);
+			} catch (Exception e) when (e is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested) {
+				return Fail(new Said("update failed: couldn't reach GitHub ({0}) - check the internet connection and try again. Nothing was changed", e.Message));
+			}
+
 			using JsonDocument doc = JsonDocument.Parse(json);
 			JsonElement root = doc.RootElement;
 
 			string tag = root.TryGetProperty("tag_name", out JsonElement t) ? t.GetString() ?? "" : "";
 
 			if (tag.Length == 0) {
-				return "update: GitHub didn't name a release - try again later";
+				return Fail(new Said("update failed: GitHub didn't say which release is newest - try again in a few minutes. Nothing was changed"));
 			}
 
 			if (!UpdateCheck.IsNewerThanThisBuild(tag)) {
@@ -89,7 +176,7 @@ public static class SelfUpdate {
 			}
 
 			if (url == null) {
-				return $"update: {tag} has no download attached to it - grab it by hand from the releases page";
+				return Fail(new Said("update failed: {0} has no download attached yet - try again later, or get it from {1}. Nothing was changed", tag, ReleasesPage));
 			}
 
 			string work = Path.Combine(Path.GetTempPath(), "nocatfarm-update");
@@ -104,23 +191,64 @@ public static class SelfUpdate {
 			string zip = Path.Combine(work, "release.zip");
 
 			Progress = $"downloading {tag}";
-			Log.Info(new Said("update: downloading {0} ({1}MB)", tag, size / 1048576));
+			Log.Good(new Said("update: downloading {0} ({1}MB)", tag, size / 1048576));
 
+			// By hand rather than CopyToAsync, so it can say how far along it is. A 50MB download on a slow line
+			// takes minutes, and "downloading" followed by silence looked exactly like a hang.
+			DateTime started = DateTime.UtcNow;
+
+			try {
 			await using (Stream from = await Http.GetStreamAsync(url, ct).ConfigureAwait(false))
 			await using (FileStream to = File.Create(zip)) {
-				await from.CopyToAsync(to, ct).ConfigureAwait(false);
+				byte[] buffer = new byte[81920];
+				long done = 0;
+				int lastTenth = 0;
+				int read;
+
+				while ((read = await from.ReadAsync(buffer, ct).ConfigureAwait(false)) > 0) {
+					await to.WriteAsync(buffer.AsMemory(0, read), ct).ConfigureAwait(false);
+					done += read;
+
+					if (size <= 0) {
+						continue;
+					}
+
+					int pct = (int) (done * 100 / size);
+					double secs = (DateTime.UtcNow - started).TotalSeconds;
+					// Time left only once there's a minute or more of it - "about 1m left" a second before the end is noise.
+					double leftSecs = (secs > 2) && (done > 0) ? (size - done) * secs / done : 0;
+					int leftMin = leftSecs >= 60 ? (int) Math.Round(leftSecs / 60) : 0;
+					Progress = $"downloading {tag} - {pct}%";
+
+					// Into the log every tenth, so the window and the console show it moving too.
+					if ((pct / 10 > lastTenth) && (pct < 100)) {
+						lastTenth = pct / 10;
+						Log.Good(leftMin > 0
+							? new Said("update: {0} {1}% · {2} of {3}MB · about {4}m left", Bar(pct), pct, done / 1048576, size / 1048576, leftMin)
+							: new Said("update: {0} {1}% · {2} of {3}MB", Bar(pct), pct, done / 1048576, size / 1048576));
+					}
+				}
+			}
+			} catch (Exception e) when (e is HttpRequestException or IOException or TaskCanceledException && !ct.IsCancellationRequested) {
+				return Fail(new Said("update failed: the download broke off ({0}) - check the connection and try again. Nothing was changed", e.Message));
 			}
 
 			// A truncated download extracts to a broken install. Check before touching anything.
 			long got = new FileInfo(zip).Length;
 
 			if ((size > 0) && (got != size)) {
-				return $"update: the download came up short ({got / 1048576}MB of {size / 1048576}MB) - nothing has been changed";
+				return Fail(new Said("update failed: the download stopped at {0} of {1}MB - the connection probably dropped. Try again. Nothing was changed", got / 1048576, size / 1048576));
 			}
 
+			Log.Good(new Said("update: {0} 100% · {1}MB downloaded - unpacking", Bar(100), got / 1048576));
 			Progress = "unpacking";
 			string staged = Path.Combine(work, "staged");
-			ZipFile.ExtractToDirectory(zip, staged, true);
+
+			try {
+				ZipFile.ExtractToDirectory(zip, staged, true);
+			} catch (Exception e) when (e is IOException or InvalidDataException or UnauthorizedAccessException) {
+				return Fail(new Said("update failed: couldn't unpack the download ({0}) - is the disk full? Nothing was changed", e.Message));
+			}
 
 			// Releases up to 1.2.6 put everything inside one nocat.farm/ folder; later ones are flat. Take either:
 			// looking only at the top level refused every foldered release outright, so the update button could
@@ -135,16 +263,27 @@ public static class SelfUpdate {
 			string exe = Path.Combine(payload, "nocatFarm.exe");
 
 			if (!File.Exists(exe)) {
-				return "update: that archive has no nocatFarm.exe in it - nothing has been changed";
+				return Fail(new Said("update failed: the download doesn't contain nocatFarm.exe - get it from {0}. Nothing was changed", ReleasesPage));
+			}
+
+			// A note for the version that comes back up, so its first line can say what just happened. The window
+			// that showed the download closes a moment later and the new one starts empty - on a quick download
+			// the whole thing was over before anyone saw it, and nothing afterwards said an update had happened.
+			try {
+				Directory.CreateDirectory(Path.GetDirectoryName(NotePath)!);
+				AtomicFile.Write(NotePath, string.Join('|', Build.Version, tag.TrimStart('v', 'V'), got / 1048576,
+					(int) Math.Max(1, (DateTime.UtcNow - started).TotalSeconds), DateTime.UtcNow.Ticks));
+			} catch {
+				// only the announcement is lost
 			}
 
 			string here = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
 			string script = Path.Combine(work, "swap.cmd");
 
-			await File.WriteAllTextAsync(script, SwapScript(Environment.ProcessId, payload, here, work), ct).ConfigureAwait(false);
+			await File.WriteAllTextAsync(script, SwapScript(Environment.ProcessId, payload, here, work, SwapFailedPath), ct).ConfigureAwait(false);
 
 			Progress = "restarting into " + tag;
-			Log.Attention(new Said("update: {0} is ready - restarting into it now", tag));
+			Log.Good(new Said("update: {0} is ready - restarting into it now, back in a few seconds", tag));
 
 			// Detached, and in its own window-less shell, so killing this process doesn't take it with us.
 			Process.Start(new ProcessStartInfo {
@@ -161,9 +300,7 @@ public static class SelfUpdate {
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
-			Log.Warn(new Said("update failed: {0}: {1} - nothing has been changed", e.GetType().Name, e.Message));
-
-			return $"update failed: {e.Message}. Nothing has been changed - the release page is {Releases}";
+			return Fail(new Said("update failed: {0} - nothing was changed. The release page is {1}", e.Message, ReleasesPage));
 		} finally {
 			Busy = false;
 			Progress = "";
@@ -176,8 +313,13 @@ public static class SelfUpdate {
 	/// robocopy /E and NOT /MIR: mirroring would delete everything in the install folder that isn't in the
 	/// archive, which is config/, logs/ and the Steam login tokens - i.e. all of it. /E only adds and replaces.
 	/// Exit codes below 8 are robocopy's various flavours of success.
+	///
+	/// A copy that fails part-way leaves a mix of old and new files - a broken install that might even believe it
+	/// updated. So the program files (not config, logs or plugins) are copied aside first, and put back if the new
+	/// ones don't all go in. Either way nocat.farm is started again: the window running this is hidden, so the only
+	/// place a failure can be SEEN is the app itself, whose first line then says, in red, what went wrong.
 	/// </summary>
-	private static string SwapScript(int pid, string staged, string here, string work) =>
+	private static string SwapScript(int pid, string staged, string here, string work, string failFile) =>
 		$"""
 		@echo off
 		rem nocat.farm self-update. Written by the app, run once, deletes itself.
@@ -188,11 +330,23 @@ public static class SelfUpdate {
 			timeout /t 1 /nobreak >nul
 			goto wait
 		)
+		echo Making a safety copy...
+		robocopy "{here}" "{work}\backup" /E /XD "{here}\config" "{here}\logs" "{here}\plugins" /R:1 /W:1 /NFL /NDL /NJH /NJS >nul
+		set brc=%errorlevel%
+		if %brc% GEQ 8 (
+			echo backup %brc%>"{failFile}"
+			start "" "{here}\nocatFarm.exe"
+			exit /b 1
+		)
 		echo Updating...
 		robocopy "{staged}" "{here}" /E /R:3 /W:2 /NFL /NDL /NJH /NJS >nul
-		if errorlevel 8 (
-			echo Update failed. Your old version is untouched.
-			pause
+		set rc=%errorlevel%
+		rem This window is hidden, so a "press a key" here waited for ever and nocat.farm never came back. On a
+		rem failed copy: put every file back, leave the reason for the app to say, and start it again as it was.
+		if %rc% GEQ 8 (
+			robocopy "{work}\backup" "{here}" /E /R:3 /W:2 /NFL /NDL /NJH /NJS >nul
+			echo %rc%>"{failFile}"
+			start "" "{here}\nocatFarm.exe"
 			exit /b 1
 		)
 		echo Starting the new version...

@@ -520,7 +520,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		}
 
 		Said rarity = pick.GlobalPercent is { } percent ? new Said(" ({0}% of owners have it)", percent.ToString("0.#")) : default;
-		Log.Reward(new Said("unlocked \"{0}\" in {1}{2}  ({3}/{4})", pick.Display, GameNames.Of(app), rarity, nowUnlocked, total), Bot.Name);
+		Log.Reward(new Said("unlocked \"{0}\" in {1}{2}  ({3}/{4})", pick.Display, GameNames.Of(app), rarity, nowUnlocked, total), Bot.Name, topic: Topic.Achievements);
 		Remember(new Unlock(app, GameNames.Of(app), pick.Display, pick.GlobalPercent, DateTime.UtcNow, nowUnlocked, total));
 
 		return true;

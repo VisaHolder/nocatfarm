@@ -1256,7 +1256,64 @@
     "Next it signs in the {0} you play on, so it can set them up from their own games.": "接下来会登录你自己玩的{0}，根据它们自己的游戏来设置。",
     "Start the others too": "其他的也启动",
     "Starting {0} more account(s) - they sign in one after another.": "再启动 {0} 个账号——会一个接一个登录。",
-    "The other {0} imported account(s) are added but not started yet.": "导入的另外 {0} 个账号已添加，但还没有启动。"
+    "The other {0} imported account(s) are added but not started yet.": "导入的另外 {0} 个账号已添加，但还没有启动。",
+    "update failed: {0}": "更新失败：{0}",
+    "update: {0}% - {1} of {2}MB, about {3}m left": "更新：{0}% - {1}/{2}MB，大约还要 {3} 分钟",
+    "update: {0}% - {1} of {2}MB": "更新：{0}% - {1}/{2}MB",
+    "updated from {0} to {1} - downloaded {2}MB in {3}s": "已从 {0} 更新到 {1} - {3} 秒下载了 {2}MB",
+    "the update to {0} didn't take - this is still {1}": "更新到 {0} 没有成功 - 这还是 {1}",
+    "couldn't read the update note: {0}": "无法读取更新记录：{0}",
+    "update failed: {0} - nothing was changed": "更新失败：{0} —— 未做任何更改",
+    "update: done - now on {1} (was {0}) · downloaded {2}MB in {3}s": "更新：完成 - 现在是 {1}（原为 {0}） · {3} 秒下载了 {2}MB",
+    "update failed: couldn't make a safety copy of the current files first (copy error {0}) - is the disk full? Still on {1}, nothing was changed": "更新失败：无法先为当前文件做安全备份（复制错误 {0}）—— 磁盘满了吗？仍是 {1}，未做任何更改",
+    "update failed: the new files couldn't be copied in - some were in use (another copy of nocat.farm, or an antivirus scan?). Still on {0}, nothing was changed - try 'update accept' again": "更新失败：新文件无法复制进来 —— 有些文件正在使用中（另一个 nocat.farm 在运行，或杀毒软件在扫描？）。仍是 {0}，未做任何更改 —— 请再试一次 'update accept'",
+    "update failed: the new files couldn't be copied into this folder (copy error {0}) - is it read-only or out of space? Still on {1}, nothing was changed": "更新失败：新文件无法复制到此文件夹（复制错误 {0}）—— 它是只读的，还是空间不足？仍是 {1}，未做任何更改",
+    "update failed: {0} didn't start after the download - still on {1}. Try 'update accept' again, or get it from the releases page": "更新失败：{0} 下载后没有启动 —— 仍是 {1}。请再试一次 'update accept'，或从发布页面获取",
+    "update failed: updating itself only works on Windows - get the new release from {0}": "更新失败：自动更新只能在 Windows 上使用 —— 请从 {0} 获取新版本",
+    "update failed: couldn't reach GitHub ({0}) - check the internet connection and try again. Nothing was changed": "更新失败：无法连接 GitHub（{0}）—— 请检查网络连接后重试。未做任何更改",
+    "update failed: GitHub didn't say which release is newest - try again in a few minutes. Nothing was changed": "更新失败：GitHub 没有说明哪个版本是最新的 —— 请过几分钟再试。未做任何更改",
+    "update failed: {0} has no download attached yet - try again later, or get it from {1}. Nothing was changed": "更新失败：{0} 还没有附带下载文件 —— 请稍后再试，或从 {1} 获取。未做任何更改",
+    "update: {0} {1}% · {2} of {3}MB · about {4}m left": "更新：{0} {1}% · {2}/{3}MB · 大约还要 {4} 分钟",
+    "update: {0} {1}% · {2} of {3}MB": "更新：{0} {1}% · {2}/{3}MB",
+    "update failed: the download broke off ({0}) - check the connection and try again. Nothing was changed": "更新失败：下载中断了（{0}）—— 请检查网络连接后重试。未做任何更改",
+    "update failed: the download stopped at {0} of {1}MB - the connection probably dropped. Try again. Nothing was changed": "更新失败：下载停在了 {0}/{1}MB —— 可能是网络断了。请重试。未做任何更改",
+    "update: {0} 100% · {1}MB downloaded - unpacking": "更新：{0} 100% · 已下载 {1}MB - 正在解压",
+    "update failed: couldn't unpack the download ({0}) - is the disk full? Nothing was changed": "更新失败：无法解压下载的文件（{0}）—— 磁盘满了吗？未做任何更改",
+    "update failed: the download doesn't contain nocatFarm.exe - get it from {0}. Nothing was changed": "更新失败：下载的文件里没有 nocatFarm.exe —— 请从 {0} 获取。未做任何更改",
+    "update: {0} is ready - restarting into it now, back in a few seconds": "更新：{0} 已就绪 —— 正在重启进入，几秒钟后回来",
+    "update failed: {0} - nothing was changed. The release page is {1}": "更新失败：{0} —— 未做任何更改。发布页面是 {1}",
+    "Update failed": "更新失败",
+    "Try again": "重试",
+    "notifications: {0}": "通知：{0}",
+    "Free stuff": "免费福利",
+    "Daily summary": "每日总结",
+    "Profile comment": "个人资料评论",
+    "nocat.farm": "nocat.farm",
+    "...and {0} more": "…还有 {0} 条",
+    "the Discord webhook link doesn't work any more (HTTP {0}) - copy it again from the channel's Integrations settings": "Discord Webhook 链接已失效（HTTP {0}）——请到频道设置的「整合」里重新复制",
+    "Discord refused the message (HTTP {0})": "Discord 拒绝了这条消息（HTTP {0}）",
+    "Discord kept saying slow down": "Discord 一直要求放慢速度",
+    "the Telegram bot token doesn't work - copy it again from @BotFather": "Telegram 机器人令牌无效——请从 @BotFather 重新复制",
+    "Telegram can't find that chat - send your bot a message, clear \"Telegram chat\" in Settings and it finds it again": "Telegram 找不到那个聊天——给你的机器人发条消息，在设置里清空「Telegram 聊天」，它就会重新找到",
+    "Telegram refused the message (HTTP {0})": "Telegram 拒绝了这条消息（HTTP {0}）",
+    "Telegram kept saying slow down": "Telegram 一直要求放慢速度",
+    "notifications: Telegram connected - they'll go to {0}": "通知：Telegram 已连接——将发送到 {0}",
+    "Notifications you picked will arrive here. Change what gets sent under Settings, Notifications.": "你选的通知会发到这里。要改发送内容，请到设置里的「通知」。",
+    "nothing yet - pick below": "还没有——在下面选择",
+    "This is what nocat.farm notifications look like. You'll get: {0}": "nocat.farm 的通知就是这个样子。你会收到：{0}",
+    "nothing is set up yet - paste a Discord webhook link or a Telegram bot token first": "还什么都没设置——请先粘贴 Discord Webhook 链接或 Telegram 机器人令牌",
+    "nocat.farm is connected": "nocat.farm 已连接",
+    "Discord: sent - check the channel": "Discord：已发送——去频道看看",
+    "Discord: didn't work - {0}": "Discord：没成功——{0}",
+    "Telegram: the bot works, but nobody has messaged it yet - open it on Telegram, send it anything, then test again": "Telegram：机器人正常，但还没人给它发过消息——在 Telegram 上打开它，随便发点什么，然后再测试一次",
+    "Telegram: sent - check the chat": "Telegram：已发送——去聊天里看看",
+    "Telegram: didn't work - {0}": "Telegram：没成功——{0}",
+    "Get notified on Discord or Telegram": "在 Discord 或 Telegram 上接收通知",
+    "Paste a Discord webhook link or a Telegram bot token below, save, then pick what gets sent. Busy moments are bundled into one message.": "在下面粘贴 Discord Webhook 链接或 Telegram 机器人令牌，保存，然后选择要发送的内容。同一时间事情多时会合并成一条消息。",
+    "Send a test message": "发送测试消息",
+    "Save a webhook link or bot token first.": "请先保存 Webhook 链接或机器人令牌。",
+    "Sending...": "正在发送...",
+    "Couldn't reach nocat.farm": "无法连接到 nocat.farm"
   },
   "settings": {
     "WebEnabled": {
@@ -1322,6 +1379,54 @@
     "NotifyProblems": {
       "label": "出问题时提示",
       "tip": "账户需要你处理时弹出提示，比如要 Steam Guard 验证码、登录失败或被禁止评论。"
+    },
+    "DiscordWebhookUrl": {
+      "label": "Discord Webhook",
+      "tip": "粘贴某个 Discord 频道的 Webhook 链接，下面选中的通知就会发到那里。在 Discord 中：服务器设置 → 整合 → Webhook → 新 Webhook → 复制 Webhook URL。"
+    },
+    "TelegramBotToken": {
+      "label": "Telegram 机器人令牌",
+      "tip": "粘贴你的 Telegram 机器人令牌（给 @BotFather 发消息即可创建机器人）。然后在 Telegram 上给你的机器人随便发一条消息，nocat.farm 会自己找到你的聊天。"
+    },
+    "TelegramChatId": {
+      "label": "Telegram 聊天",
+      "tip": "你第一次给机器人发消息时会自动填入。清空它可以换成别的聊天或群组——会采用下一个给机器人发消息的聊天。"
+    },
+    "SendCardDrops": {
+      "label": "发送掉卡和徽章",
+      "tip": "掉卡、某个游戏的卡掉完了、合成徽章和制作补充包。"
+    },
+    "SendFreeStuff": {
+      "label": "发送免费游戏、物品和礼物",
+      "tip": "领取的免费游戏、点数商店和促销中的免费物品、收到的礼物游戏以及激活的密钥。"
+    },
+    "SendTrades": {
+      "label": "发送交易",
+      "tip": "已接受的交易报价，以及收到了几件物品。"
+    },
+    "SendProblems": {
+      "label": "发送需要你处理的问题",
+      "tip": "所有需要你处理的事：Steam Guard 验证码、登录失败、被禁止评论、等你在手机上确认的上架物品。"
+    },
+    "SendUpdates": {
+      "label": "发送更新",
+      "tip": "新版本发布、更新完成，或更新失败及原因。"
+    },
+    "SendDailySummary": {
+      "label": "发送每日总结",
+      "tip": "每天一次，列出每个账户过去 24 小时做了什么：累计时长、卡牌和评论。在「日志里的每日总结」设定的时间发送。"
+    },
+    "SendComments": {
+      "label": "发送个人资料评论",
+      "tip": "有人在你的某个 Steam 个人资料下留言。"
+    },
+    "SendAchievements": {
+      "label": "发送成就",
+      "tip": "每解锁一个成就都发。可能会很多。"
+    },
+    "SendRep4Rep": {
+      "label": "发送 rep4rep 评论",
+      "tip": "每发出一条 rep4rep 评论都发。可能会很多。"
     },
     "GroupsToJoin": {
       "label": "所有账号都加入的群组",

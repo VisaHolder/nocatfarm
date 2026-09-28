@@ -6,6 +6,12 @@ namespace NocatFarm;
 public enum NotifyKind { Earning, Social, Problem }
 
 /// <summary>
+/// What an event is about, finer than <see cref="NotifyKind"/>: the Discord and Telegram notifications let people
+/// pick exactly which of these they want sent.
+/// </summary>
+public enum Topic { Cards, FreeStuff, Trades, Achievements, Rep4Rep, Social, Problems, Updates, Summary }
+
+/// <summary>
 /// Console + file logging, and a ring buffer the dashboard reads so the browser shows the same stream you see
 /// in the terminal. Colours are per-category and foreground only - background colours fill the whole row and
 /// bleed across wrapped lines, which looks awful.
@@ -68,6 +74,21 @@ public static class Log {
 
 	/// <summary>Raised for every line, so the dashboard's live stream doesn't have to poll.</summary>
 	public static event Action<Entry>? Written;
+
+	/// <summary>
+	/// Raised for the events worth telling someone about - earnings, problems, comments, updates, the daily
+	/// summary - with what each is about. The Discord/Telegram notifier listens here.
+	/// </summary>
+	public static event Action<Topic, string, string>? Published;
+
+	/// <summary>Tell the notifier about something without writing a log line for it (the daily summary, say).</summary>
+	public static void Publish(Topic topic, string source, Core.Said text) {
+		try {
+			Published?.Invoke(topic, source, text.ToString());
+		} catch {
+			// a listener's problem is never the caller's
+		}
+	}
 
 	/// <summary>
 	/// Stop printing lines to the screen, while still filing them and still raising <see cref="Written"/>.
@@ -173,35 +194,39 @@ public static class Log {
 	public static void Warn(string text, string source = "nocat.farm") => Warn(new Core.Said(text), source);
 	public static void Warn(Core.Said text, string source = "nocat.farm") => Write("WARN", source, text, ConsoleColor.DarkYellow);
 
-	public static void Error(string text, string source = "nocat.farm") => Error(new Core.Said(text), source);
+	public static void Error(string text, string source = "nocat.farm", Topic topic = Topic.Problems) => Error(new Core.Said(text), source, topic);
 
-	public static void Error(Core.Said text, string source = "nocat.farm") {
+	public static void Error(Core.Said text, string source = "nocat.farm", Topic topic = Topic.Problems) {
 		Write("ERROR", source, text, ConsoleColor.Red);
 		Notify?.Invoke(NotifyKind.Problem, source, text.ToString());
+		Publish(topic, source, text);
 	}
 
 	/// <summary>Something social happened - somebody commented on a profile.</summary>
-	public static void Event(string text, string source = "nocat.farm") => Event(new Core.Said(text), source);
+	public static void Event(string text, string source = "nocat.farm", Topic topic = Topic.Social) => Event(new Core.Said(text), source, topic);
 
-	public static void Event(Core.Said text, string source = "nocat.farm") {
+	public static void Event(Core.Said text, string source = "nocat.farm", Topic topic = Topic.Social) {
 		Write("GOOD", source, text, ConsoleColor.Cyan);
 		Notify?.Invoke(NotifyKind.Social, source, text.ToString());
+		Publish(topic, source, text);
 	}
 
 	/// <summary>Something was earned - a card dropped, a comment was credited.</summary>
-	public static void Reward(string text, string source = "nocat.farm") => Reward(new Core.Said(text), source);
+	public static void Reward(string text, string source = "nocat.farm", Topic topic = Topic.Cards) => Reward(new Core.Said(text), source, topic);
 
-	public static void Reward(Core.Said text, string source = "nocat.farm") {
+	public static void Reward(Core.Said text, string source = "nocat.farm", Topic topic = Topic.Cards) {
 		Write("GOOD", source, text, ConsoleColor.Yellow);
 		Notify?.Invoke(NotifyKind.Earning, source, text.ToString());
+		Publish(topic, source, text);
 	}
 
 	/// <summary>Something needs a human: a Steam Guard code, a password, a decision.</summary>
-	public static void Attention(string text, string source = "nocat.farm") => Attention(new Core.Said(text), source);
+	public static void Attention(string text, string source = "nocat.farm", Topic topic = Topic.Problems) => Attention(new Core.Said(text), source, topic);
 
-	public static void Attention(Core.Said text, string source = "nocat.farm") {
+	public static void Attention(Core.Said text, string source = "nocat.farm", Topic topic = Topic.Problems) {
 		Write("WARN", source, text, ConsoleColor.Magenta);
 		Notify?.Invoke(NotifyKind.Problem, source, text.ToString());
+		Publish(topic, source, text);
 	}
 
 	/// <summary>

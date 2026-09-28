@@ -398,6 +398,13 @@ function renderAlerts() {
       <button onclick="sendPrompt()">${esc(t('Submit'))}</button></div>`);
   }
 
+  // An update that failed, and why - red, with the reason, and a way to try again. Said in the log as well; this
+  // is so it can't be missed after a restart that brought the old version back.
+  if (state.UpdateFailed) {
+    out.push(`<div class="alert bad"><span><b>${esc(t('Update failed'))}</b> - ${esc(state.UpdateFailed)}</span>
+      <span class="spacer"></span><button onclick="doUpdate(true)">${esc(t('Try again'))}</button></div>`);
+  }
+
   // Exposed only fires when a password IS set and is short — so "anyone can open this" was simply untrue, and
   // "set a password" pointed at a box that already had one in it. Say the thing that's actually wrong.
   if (state.Exposed) {
@@ -2467,6 +2474,23 @@ function pacerTable() {
 function sectionIntro(section, values) {
   const val = (k) => (pending[k] !== undefined ? pending[k] : values[k]);
 
+  // What gets sent to Discord / Telegram, as chips to tap rather than nine more rows - and a test button, so you
+  // know it works before the first card drops.
+  if (section === 'Notifications' && settingsTarget === GLOBAL) {
+    const kinds = [['SendCardDrops', '🃏', 'Card drops'], ['SendFreeStuff', '🎁', 'Free stuff'], ['SendTrades', '🔁', 'Trades'],
+      ['SendProblems', '⚠️', 'Needs you'], ['SendUpdates', '⬆️', 'Updates'], ['SendDailySummary', '📊', 'Daily summary'],
+      ['SendComments', '💬', 'Profile comments'], ['SendAchievements', '🏆', 'Achievements'], ['SendRep4Rep', '📝', 'rep4rep']];
+    const setUp = (config.GlobalSecretsSet || []).includes('DiscordWebhookUrl') || (config.GlobalSecretsSet || []).includes('TelegramBotToken');
+    return `<div class="explain">
+      <b>${esc(t('Get notified on Discord or Telegram'))}</b>
+      <p style="margin:6px 0 10px">${esc(t('Paste a Discord webhook link or a Telegram bot token below, save, then pick what gets sent. Busy moments are bundled into one message.'))}</p>
+      <div class="langpick">${kinds.map(([k, icon, label]) =>
+        `<span class="p ${val(k) ? 'on' : ''}" onclick="editAndRender('${k}', ${!val(k)})">${icon} ${esc(t(label))}</span>`).join('')}</div>
+      <button class="ghost" ${setUp ? '' : 'disabled'} onclick="notifyTest(this)">${esc(t('Send a test message'))}</button>
+      ${setUp ? '' : `<span class="muted small" style="margin-left:8px">${esc(t('Save a webhook link or bot token first.'))}</span>`}
+    </div>`;
+  }
+
   // Achievements are the one area where the settings alone tell you nothing useful. Three dials and an
   // appID list do not convey that this thing refuses to unlock anything the hours cannot justify - which is
   // the entire reason to trust it - so the section says so in words.
@@ -3087,6 +3111,17 @@ function edit(name, value) {
 
 // Discrete controls (switches, choice pills, tag lists, the revert link) have no caret to lose, and they do
 // need the form redrawn so the control reflects the new value.
+async function notifyTest(btn) {
+  btn.disabled = true;
+  const old = btn.textContent;
+  btn.textContent = t('Sending...');
+  const r = await post('/api/notify/test', {}).catch(() => null);
+  btn.disabled = false;
+  btn.textContent = old;
+  const lines = (r && r.Results) || [t("Couldn't reach nocat.farm")];
+  toast(lines.join(' · '), lines.some((l) => /didn't work|nobody|nothing/.test(l)));
+}
+
 function editAndRender(name, value) {
   pending[name] = value;
   renderSettings();

@@ -1256,7 +1256,64 @@
     "Next it signs in the {0} you play on, so it can set them up from their own games.": "Als Nächstes meldet es {0} an, auf denen du spielst, damit es sie mit ihren eigenen Spielen einrichten kann.",
     "Start the others too": "Die anderen auch starten",
     "Starting {0} more account(s) - they sign in one after another.": "Starte {0} weitere(s) Konto/Konten - sie melden sich nacheinander an.",
-    "The other {0} imported account(s) are added but not started yet.": "Die anderen {0} importierten Konten sind hinzugefügt, aber noch nicht gestartet."
+    "The other {0} imported account(s) are added but not started yet.": "Die anderen {0} importierten Konten sind hinzugefügt, aber noch nicht gestartet.",
+    "update failed: {0}": "Update fehlgeschlagen: {0}",
+    "update: {0}% - {1} of {2}MB, about {3}m left": "Update: {0}% - {1} von {2} MB, noch etwa {3} Min.",
+    "update: {0}% - {1} of {2}MB": "Update: {0}% - {1} von {2} MB",
+    "updated from {0} to {1} - downloaded {2}MB in {3}s": "aktualisiert von {0} auf {1} - {2} MB in {3} s geladen",
+    "the update to {0} didn't take - this is still {1}": "das Update auf {0} hat nicht geklappt - das hier ist noch {1}",
+    "couldn't read the update note: {0}": "konnte die Update-Notiz nicht lesen: {0}",
+    "update failed: {0} - nothing was changed": "Update fehlgeschlagen: {0} - nichts wurde geändert",
+    "update: done - now on {1} (was {0}) · downloaded {2}MB in {3}s": "Update: fertig - jetzt auf {1} (vorher {0}) · {2} MB in {3} s geladen",
+    "update failed: couldn't make a safety copy of the current files first (copy error {0}) - is the disk full? Still on {1}, nothing was changed": "Update fehlgeschlagen: konnte vorher keine Sicherheitskopie der aktuellen Dateien anlegen (Kopierfehler {0}) - ist die Festplatte voll? Weiterhin auf {1}, nichts wurde geändert",
+    "update failed: the new files couldn't be copied in - some were in use (another copy of nocat.farm, or an antivirus scan?). Still on {0}, nothing was changed - try 'update accept' again": "Update fehlgeschlagen: die neuen Dateien konnten nicht hineinkopiert werden - einige waren in Benutzung (eine zweite nocat.farm-Instanz oder ein Virenscan?). Weiterhin auf {0}, nichts wurde geändert - versuch 'update accept' noch mal",
+    "update failed: the new files couldn't be copied into this folder (copy error {0}) - is it read-only or out of space? Still on {1}, nothing was changed": "Update fehlgeschlagen: die neuen Dateien konnten nicht in diesen Ordner kopiert werden (Kopierfehler {0}) - ist er schreibgeschützt oder voll? Weiterhin auf {1}, nichts wurde geändert",
+    "update failed: {0} didn't start after the download - still on {1}. Try 'update accept' again, or get it from the releases page": "Update fehlgeschlagen: {0} ist nach dem Download nicht gestartet - weiterhin auf {1}. Versuch 'update accept' noch mal oder hol es dir von der Releases-Seite",
+    "update failed: updating itself only works on Windows - get the new release from {0}": "Update fehlgeschlagen: das Selbst-Update funktioniert nur unter Windows - hol dir das neue Release von {0}",
+    "update failed: couldn't reach GitHub ({0}) - check the internet connection and try again. Nothing was changed": "Update fehlgeschlagen: GitHub nicht erreichbar ({0}) - prüf die Internetverbindung und versuch es noch mal. Nichts wurde geändert",
+    "update failed: GitHub didn't say which release is newest - try again in a few minutes. Nothing was changed": "Update fehlgeschlagen: GitHub hat nicht gemeldet, welches Release das neueste ist - versuch es in ein paar Minuten noch mal. Nichts wurde geändert",
+    "update failed: {0} has no download attached yet - try again later, or get it from {1}. Nothing was changed": "Update fehlgeschlagen: {0} hat noch keinen Download - versuch es später noch mal oder hol es dir von {1}. Nichts wurde geändert",
+    "update: {0} {1}% · {2} of {3}MB · about {4}m left": "Update: {0} {1}% · {2} von {3} MB · noch etwa {4} Min.",
+    "update: {0} {1}% · {2} of {3}MB": "Update: {0} {1}% · {2} von {3} MB",
+    "update failed: the download broke off ({0}) - check the connection and try again. Nothing was changed": "Update fehlgeschlagen: der Download ist abgebrochen ({0}) - prüf die Verbindung und versuch es noch mal. Nichts wurde geändert",
+    "update failed: the download stopped at {0} of {1}MB - the connection probably dropped. Try again. Nothing was changed": "Update fehlgeschlagen: der Download blieb bei {0} von {1} MB stehen - vermutlich ist die Verbindung abgerissen. Versuch es noch mal. Nichts wurde geändert",
+    "update: {0} 100% · {1}MB downloaded - unpacking": "Update: {0} 100% · {1} MB geladen - wird entpackt",
+    "update failed: couldn't unpack the download ({0}) - is the disk full? Nothing was changed": "Update fehlgeschlagen: der Download konnte nicht entpackt werden ({0}) - ist die Festplatte voll? Nichts wurde geändert",
+    "update failed: the download doesn't contain nocatFarm.exe - get it from {0}. Nothing was changed": "Update fehlgeschlagen: der Download enthält keine nocatFarm.exe - hol sie dir von {0}. Nichts wurde geändert",
+    "update: {0} is ready - restarting into it now, back in a few seconds": "Update: {0} ist bereit - wird jetzt neu gestartet, in ein paar Sekunden wieder da",
+    "update failed: {0} - nothing was changed. The release page is {1}": "Update fehlgeschlagen: {0} - nichts wurde geändert. Die Release-Seite ist {1}",
+    "Update failed": "Aktualisierung fehlgeschlagen",
+    "Try again": "Erneut versuchen",
+    "notifications: {0}": "Benachrichtigungen: {0}",
+    "Free stuff": "Gratis-Sachen",
+    "Daily summary": "Tageszusammenfassung",
+    "Profile comment": "Profilkommentar",
+    "nocat.farm": "nocat.farm",
+    "...and {0} more": "...und {0} weitere",
+    "the Discord webhook link doesn't work any more (HTTP {0}) - copy it again from the channel's Integrations settings": "der Discord-Webhook-Link funktioniert nicht mehr (HTTP {0}) - kopier ihn neu aus den Integrationen in den Kanaleinstellungen",
+    "Discord refused the message (HTTP {0})": "Discord hat die Nachricht abgelehnt (HTTP {0})",
+    "Discord kept saying slow down": "Discord hat immer wieder gebremst",
+    "the Telegram bot token doesn't work - copy it again from @BotFather": "der Telegram-Bot-Token funktioniert nicht - kopier ihn neu von @BotFather",
+    "Telegram can't find that chat - send your bot a message, clear \"Telegram chat\" in Settings and it finds it again": "Telegram findet diesen Chat nicht - schreib deinem Bot, leere „Telegram-Chat“ in den Einstellungen, dann wird er neu gefunden",
+    "Telegram refused the message (HTTP {0})": "Telegram hat die Nachricht abgelehnt (HTTP {0})",
+    "Telegram kept saying slow down": "Telegram hat immer wieder gebremst",
+    "notifications: Telegram connected - they'll go to {0}": "Benachrichtigungen: Telegram verbunden - sie gehen an {0}",
+    "Notifications you picked will arrive here. Change what gets sent under Settings, Notifications.": "Die Benachrichtigungen, die du ausgewählt hast, kommen hier an. Was gesendet wird, änderst du in den Einstellungen unter „Benachrichtigungen“.",
+    "nothing yet - pick below": "noch nichts - unten auswählen",
+    "This is what nocat.farm notifications look like. You'll get: {0}": "So sehen Benachrichtigungen von nocat.farm aus. Du bekommst: {0}",
+    "nothing is set up yet - paste a Discord webhook link or a Telegram bot token first": "noch nichts eingerichtet - füge zuerst einen Discord-Webhook-Link oder einen Telegram-Bot-Token ein",
+    "nocat.farm is connected": "nocat.farm ist verbunden",
+    "Discord: sent - check the channel": "Discord: gesendet - schau in den Kanal",
+    "Discord: didn't work - {0}": "Discord: hat nicht geklappt - {0}",
+    "Telegram: the bot works, but nobody has messaged it yet - open it on Telegram, send it anything, then test again": "Telegram: der Bot funktioniert, aber noch niemand hat ihm geschrieben - öffne ihn auf Telegram, schick ihm irgendwas und teste dann noch einmal",
+    "Telegram: sent - check the chat": "Telegram: gesendet - schau in den Chat",
+    "Telegram: didn't work - {0}": "Telegram: hat nicht geklappt - {0}",
+    "Get notified on Discord or Telegram": "Benachrichtigungen auf Discord oder Telegram",
+    "Paste a Discord webhook link or a Telegram bot token below, save, then pick what gets sent. Busy moments are bundled into one message.": "Füge unten einen Discord-Webhook-Link oder einen Telegram-Bot-Token ein, speichere und wähle dann aus, was gesendet wird. Wenn viel auf einmal passiert, kommt alles in einer Nachricht.",
+    "Send a test message": "Testnachricht senden",
+    "Save a webhook link or bot token first.": "Speichere zuerst einen Webhook-Link oder Bot-Token.",
+    "Sending...": "Wird gesendet...",
+    "Couldn't reach nocat.farm": "nocat.farm war nicht erreichbar"
   },
   "settings": {
     "WebEnabled": {
@@ -1322,6 +1379,54 @@
     "NotifyProblems": {
       "label": "Bei Problemen melden",
       "tip": "Zeigt einen Hinweis, wenn ein Konto dich braucht, etwa für einen Steam Guard-Code, bei einer fehlgeschlagenen Anmeldung oder einer Kommentarsperre."
+    },
+    "DiscordWebhookUrl": {
+      "label": "Discord-Webhook",
+      "tip": "Füge den Webhook-Link eines Discord-Kanals ein, dann gehen die Benachrichtigungen, die du unten auswählst, dorthin. In Discord: Servereinstellungen, Integrationen, Webhooks, Neuer Webhook, Webhook-URL kopieren."
+    },
+    "TelegramBotToken": {
+      "label": "Telegram-Bot-Token",
+      "tip": "Füge den Token deines Telegram-Bots ein (einen Bot erstellst du, indem du @BotFather schreibst). Schick deinem Bot danach auf Telegram irgendeine Nachricht, und nocat.farm findet deinen Chat von selbst."
+    },
+    "TelegramChatId": {
+      "label": "Telegram-Chat",
+      "tip": "Wird von selbst ausgefüllt, wenn du deinem Bot zum ersten Mal schreibst. Leere das Feld, um einen anderen Chat oder eine Gruppe zu wählen - dann wird der nächste genommen, der dem Bot schreibt."
+    },
+    "SendCardDrops": {
+      "label": "Kartendrops und Abzeichen senden",
+      "tip": "Fallende Karten, Spiele, deren Karten alle gefallen sind, gefertigte Abzeichen und erstellte Boosterpacks."
+    },
+    "SendFreeStuff": {
+      "label": "Gratisspiele, Gegenstände und Geschenke senden",
+      "tip": "Geholte Gratisspiele, kostenlose Gegenstände aus dem Punkteshop und aus Sales, geschenkte Spiele und aktivierte Keys."
+    },
+    "SendTrades": {
+      "label": "Tauschangebote senden",
+      "tip": "Angenommene Tauschangebote, mit der Zahl der erhaltenen Gegenstände."
+    },
+    "SendProblems": {
+      "label": "Probleme senden, die dich brauchen",
+      "tip": "Alles, was dich braucht: ein Steam-Guard-Code, eine fehlgeschlagene Anmeldung, eine Kommentarsperre, Marktangebote, die auf dein Handy warten."
+    },
+    "SendUpdates": {
+      "label": "Updates senden",
+      "tip": "Eine neue Version ist da, ein Update ist fertig oder ein Update ist fehlgeschlagen, samt Grund."
+    },
+    "SendDailySummary": {
+      "label": "Die Tageszusammenfassung senden",
+      "tip": "Einmal am Tag, was jedes Konto in den letzten 24 Stunden gemacht hat: verbuchte Stunden, Karten und Kommentare. Wird zu der Zeit gesendet, die für „Tageszusammenfassung im Protokoll“ eingestellt ist."
+    },
+    "SendComments": {
+      "label": "Profilkommentare senden",
+      "tip": "Jemand hat auf einem deiner Steam-Profile kommentiert."
+    },
+    "SendAchievements": {
+      "label": "Erfolge senden",
+      "tip": "Jeder freigeschaltete Erfolg. Das können viele sein."
+    },
+    "SendRep4Rep": {
+      "label": "rep4rep-Kommentare senden",
+      "tip": "Jeder gepostete rep4rep-Kommentar. Das können viele sein."
     },
     "GroupsToJoin": {
       "label": "Gruppen, denen jedes Konto beitritt",

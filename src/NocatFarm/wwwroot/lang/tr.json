@@ -1256,7 +1256,64 @@
     "Next it signs in the {0} you play on, so it can set them up from their own games.": "Şimdi oynadığın {0} ile giriş yapıp onları kendi oyunlarına göre ayarlayacak.",
     "Start the others too": "Diğerlerini de başlat",
     "Starting {0} more account(s) - they sign in one after another.": "{0} hesap daha başlatılıyor - sırayla giriş yapacaklar.",
-    "The other {0} imported account(s) are added but not started yet.": "İçe aktarılan diğer {0} hesap eklendi ama henüz başlatılmadı."
+    "The other {0} imported account(s) are added but not started yet.": "İçe aktarılan diğer {0} hesap eklendi ama henüz başlatılmadı.",
+    "update failed: {0}": "güncelleme başarısız: {0}",
+    "update: {0}% - {1} of {2}MB, about {3}m left": "güncelleme: %{0} - {2} MB'ın {1} MB'ı, yaklaşık {3} dk kaldı",
+    "update: {0}% - {1} of {2}MB": "güncelleme: %{0} - {2} MB'ın {1} MB'ı",
+    "updated from {0} to {1} - downloaded {2}MB in {3}s": "{0} sürümünden {1} sürümüne güncellendi - {2} MB {3} sn'de indirildi",
+    "the update to {0} didn't take - this is still {1}": "{0} güncellemesi uygulanmadı - bu hâlâ {1}",
+    "couldn't read the update note: {0}": "güncelleme notu okunamadı: {0}",
+    "update failed: {0} - nothing was changed": "güncelleme başarısız: {0} - hiçbir şey değişmedi",
+    "update: done - now on {1} (was {0}) · downloaded {2}MB in {3}s": "güncelleme: tamam - artık {1} sürümünde ({0} idi) · {2} MB {3} sn'de indirildi",
+    "update failed: couldn't make a safety copy of the current files first (copy error {0}) - is the disk full? Still on {1}, nothing was changed": "güncelleme başarısız: önce mevcut dosyaların güvenlik kopyası alınamadı (kopyalama hatası {0}) - disk dolu mu? Hâlâ {1} sürümünde, hiçbir şey değişmedi",
+    "update failed: the new files couldn't be copied in - some were in use (another copy of nocat.farm, or an antivirus scan?). Still on {0}, nothing was changed - try 'update accept' again": "güncelleme başarısız: yeni dosyalar kopyalanamadı - bazıları kullanımdaydı (nocat.farm'ın başka bir kopyası mı, yoksa antivirüs taraması mı?). Hâlâ {0} sürümünde, hiçbir şey değişmedi - 'update accept' komutunu tekrar dene",
+    "update failed: the new files couldn't be copied into this folder (copy error {0}) - is it read-only or out of space? Still on {1}, nothing was changed": "güncelleme başarısız: yeni dosyalar bu klasöre kopyalanamadı (kopyalama hatası {0}) - salt okunur mu, yoksa yer mi kalmadı? Hâlâ {1} sürümünde, hiçbir şey değişmedi",
+    "update failed: {0} didn't start after the download - still on {1}. Try 'update accept' again, or get it from the releases page": "güncelleme başarısız: {0} indirmeden sonra başlamadı - hâlâ {1} sürümünde. 'update accept' komutunu tekrar dene ya da sürümler sayfasından indir",
+    "update failed: updating itself only works on Windows - get the new release from {0}": "güncelleme başarısız: kendini güncelleme yalnızca Windows'ta çalışır - yeni sürümü {0} adresinden indir",
+    "update failed: couldn't reach GitHub ({0}) - check the internet connection and try again. Nothing was changed": "güncelleme başarısız: GitHub'a ulaşılamadı ({0}) - internet bağlantısını kontrol et ve tekrar dene. Hiçbir şey değişmedi",
+    "update failed: GitHub didn't say which release is newest - try again in a few minutes. Nothing was changed": "güncelleme başarısız: GitHub hangi sürümün en yeni olduğunu söylemedi - birkaç dakika sonra tekrar dene. Hiçbir şey değişmedi",
+    "update failed: {0} has no download attached yet - try again later, or get it from {1}. Nothing was changed": "güncelleme başarısız: {0} için henüz eklenmiş bir indirme yok - daha sonra tekrar dene ya da {1} adresinden indir. Hiçbir şey değişmedi",
+    "update: {0} {1}% · {2} of {3}MB · about {4}m left": "güncelleme: {0} %{1} · {3} MB'ın {2} MB'ı · yaklaşık {4} dk kaldı",
+    "update: {0} {1}% · {2} of {3}MB": "güncelleme: {0} %{1} · {3} MB'ın {2} MB'ı",
+    "update failed: the download broke off ({0}) - check the connection and try again. Nothing was changed": "güncelleme başarısız: indirme yarıda kesildi ({0}) - bağlantıyı kontrol et ve tekrar dene. Hiçbir şey değişmedi",
+    "update failed: the download stopped at {0} of {1}MB - the connection probably dropped. Try again. Nothing was changed": "güncelleme başarısız: indirme {1} MB'ın {0} MB'ında durdu - muhtemelen bağlantı koptu. Tekrar dene. Hiçbir şey değişmedi",
+    "update: {0} 100% · {1}MB downloaded - unpacking": "güncelleme: {0} %100 · {1} MB indirildi - arşivden çıkarılıyor",
+    "update failed: couldn't unpack the download ({0}) - is the disk full? Nothing was changed": "güncelleme başarısız: indirilen dosya arşivden çıkarılamadı ({0}) - disk dolu mu? Hiçbir şey değişmedi",
+    "update failed: the download doesn't contain nocatFarm.exe - get it from {0}. Nothing was changed": "güncelleme başarısız: indirilen dosyada nocatFarm.exe yok - {0} adresinden indir. Hiçbir şey değişmedi",
+    "update: {0} is ready - restarting into it now, back in a few seconds": "güncelleme: {0} hazır - şimdi yeniden başlatılıyor, birkaç saniye içinde geri döner",
+    "update failed: {0} - nothing was changed. The release page is {1}": "güncelleme başarısız: {0} - hiçbir şey değişmedi. Sürümler sayfası: {1}",
+    "Update failed": "Güncelleme başarısız",
+    "Try again": "Tekrar dene",
+    "notifications: {0}": "bildirimler: {0}",
+    "Free stuff": "Ücretsiz şeyler",
+    "Daily summary": "Günlük özet",
+    "Profile comment": "Profil yorumu",
+    "nocat.farm": "nocat.farm",
+    "...and {0} more": "...ve {0} tane daha",
+    "the Discord webhook link doesn't work any more (HTTP {0}) - copy it again from the channel's Integrations settings": "Discord webhook bağlantısı artık çalışmıyor (HTTP {0}) - kanalın Entegrasyonlar ayarlarından yeniden kopyala",
+    "Discord refused the message (HTTP {0})": "Discord mesajı reddetti (HTTP {0})",
+    "Discord kept saying slow down": "Discord sürekli yavaşla dedi",
+    "the Telegram bot token doesn't work - copy it again from @BotFather": "Telegram bot token'ı çalışmıyor - @BotFather'dan yeniden kopyala",
+    "Telegram can't find that chat - send your bot a message, clear \"Telegram chat\" in Settings and it finds it again": "Telegram o sohbeti bulamıyor - botuna bir mesaj at, Ayarlar'da “Telegram sohbeti” alanını temizle, yeniden bulur",
+    "Telegram refused the message (HTTP {0})": "Telegram mesajı reddetti (HTTP {0})",
+    "Telegram kept saying slow down": "Telegram sürekli yavaşla dedi",
+    "notifications: Telegram connected - they'll go to {0}": "bildirimler: Telegram bağlandı - bildirimler {0} sohbetine gidecek",
+    "Notifications you picked will arrive here. Change what gets sent under Settings, Notifications.": "Seçtiğin bildirimler buraya gelecek. Nelerin gönderileceğini Ayarlar'da “Bildirimler” bölümünden değiştirebilirsin.",
+    "nothing yet - pick below": "henüz hiçbir şey - aşağıdan seç",
+    "This is what nocat.farm notifications look like. You'll get: {0}": "nocat.farm bildirimleri böyle görünür. Alacakların: {0}",
+    "nothing is set up yet - paste a Discord webhook link or a Telegram bot token first": "henüz hiçbir şey ayarlanmadı - önce bir Discord webhook bağlantısı ya da bir Telegram bot token'ı yapıştır",
+    "nocat.farm is connected": "nocat.farm bağlandı",
+    "Discord: sent - check the channel": "Discord: gönderildi - kanala bak",
+    "Discord: didn't work - {0}": "Discord: olmadı - {0}",
+    "Telegram: the bot works, but nobody has messaged it yet - open it on Telegram, send it anything, then test again": "Telegram: bot çalışıyor ama henüz kimse ona mesaj atmadı - Telegram'da aç, herhangi bir şey gönder, sonra yeniden test et",
+    "Telegram: sent - check the chat": "Telegram: gönderildi - sohbete bak",
+    "Telegram: didn't work - {0}": "Telegram: olmadı - {0}",
+    "Get notified on Discord or Telegram": "Discord'dan veya Telegram'dan bildirim al",
+    "Paste a Discord webhook link or a Telegram bot token below, save, then pick what gets sent. Busy moments are bundled into one message.": "Aşağıya bir Discord webhook bağlantısı ya da bir Telegram bot token'ı yapıştır, kaydet, sonra nelerin gönderileceğini seç. Aynı anda çok şey olunca hepsi tek mesajda toplanır.",
+    "Send a test message": "Test mesajı gönder",
+    "Save a webhook link or bot token first.": "Önce bir webhook bağlantısı ya da bot token'ı kaydet.",
+    "Sending...": "Gönderiliyor...",
+    "Couldn't reach nocat.farm": "nocat.farm'a ulaşılamadı"
   },
   "settings": {
     "WebEnabled": {
@@ -1322,6 +1379,54 @@
     "NotifyProblems": {
       "label": "Sorunları bildir",
       "tip": "Bir hesabın sana ihtiyacı olduğunda bildirim gösterir. Örneğin bir Steam Guard kodu, başarısız bir giriş veya yorum yasağı."
+    },
+    "DiscordWebhookUrl": {
+      "label": "Discord webhook'u",
+      "tip": "Bir Discord kanalının webhook bağlantısını yapıştır, aşağıda seçtiğin bildirimler oraya gider. Discord'da: Sunucu Ayarları, Entegrasyonlar, Webhook'lar, Yeni Webhook, Webhook URL'sini Kopyala."
+    },
+    "TelegramBotToken": {
+      "label": "Telegram bot token'ı",
+      "tip": "Telegram botunun token'ını yapıştır (bot oluşturmak için @BotFather'a mesaj at). Sonra Telegram'da botuna herhangi bir mesaj gönder, nocat.farm sohbetini kendisi bulur."
+    },
+    "TelegramChatId": {
+      "label": "Telegram sohbeti",
+      "tip": "Botuna ilk mesajı attığında kendiliğinden dolar. Başka bir sohbet veya grup seçmek için temizle - bota sonraki mesajı atan sohbet alınır."
+    },
+    "SendCardDrops": {
+      "label": "Kart düşüşlerini ve rozetleri gönder",
+      "tip": "Düşen kartlar, kartları biten oyunlar, üretilen rozetler ve yapılan booster paketleri."
+    },
+    "SendFreeStuff": {
+      "label": "Ücretsiz oyunları, eşyaları ve hediyeleri gönder",
+      "tip": "Alınan ücretsiz oyunlar, Puan Dükkânı'ndan ve indirimlerden ücretsiz eşyalar, hediye edilen oyunlar ve etkinleştirilen anahtarlar."
+    },
+    "SendTrades": {
+      "label": "Takasları gönder",
+      "tip": "Kabul edilen takas teklifleri ve kaç eşya geldiği."
+    },
+    "SendProblems": {
+      "label": "Sana ihtiyaç duyan sorunları gönder",
+      "tip": "Sana ihtiyaç duyan her şey: bir Steam Guard kodu, başarısız bir giriş, yorum yasağı, telefonundan onay bekleyen ilanlar."
+    },
+    "SendUpdates": {
+      "label": "Güncellemeleri gönder",
+      "tip": "Yeni bir sürüm çıktı, bir güncelleme bitti ya da bir güncelleme başarısız oldu ve nedeni."
+    },
+    "SendDailySummary": {
+      "label": "Günlük özeti gönder",
+      "tip": "Günde bir kez, her hesabın son 24 saatte ne yaptığı: biriken saatler, kartlar ve yorumlar. “Günlükte günlük özet” için ayarlanan saatte gönderilir."
+    },
+    "SendComments": {
+      "label": "Profil yorumlarını gönder",
+      "tip": "Biri Steam profillerinden birine yorum yazdı."
+    },
+    "SendAchievements": {
+      "label": "Başarımları gönder",
+      "tip": "Açılan her başarım. Çok fazla olabilir."
+    },
+    "SendRep4Rep": {
+      "label": "rep4rep yorumlarını gönder",
+      "tip": "Yazılan her rep4rep yorumu. Çok fazla olabilir."
     },
     "GroupsToJoin": {
       "label": "Her hesabın katılacağı gruplar",

@@ -338,7 +338,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 			if (result == Accepted.Done) {
 				_accepted++;
-				Log.Reward(new Said("accepted trade offer #{0} - {1} item(s) in", offer.Id, offer.Receiving.Sum(static i => i.Amount)), Bot.Name);
+				Log.Reward(new Said("accepted trade offer #{0} - {1} item(s) in", offer.Id, offer.Receiving.Sum(static i => i.Amount)), Bot.Name, topic: Topic.Trades);
 			} else {
 				// Accepted, but nothing moves until it's confirmed. Not a reward yet - and its cards stay promised,
 				// so another swap can't be judged as if they were still here.
@@ -412,7 +412,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 		Finish(offer.Id);
 		_accepted++;
-		Log.Reward(new Said("accepted trade offer #{0} - {1} item(s) in", offer.Id, offer.Receiving.Sum(static i => i.Amount)), Bot.Name);
+		Log.Reward(new Said("accepted trade offer #{0} - {1} item(s) in", offer.Id, offer.Receiving.Sum(static i => i.Amount)), Bot.Name, topic: Topic.Trades);
 
 		return true;
 	}

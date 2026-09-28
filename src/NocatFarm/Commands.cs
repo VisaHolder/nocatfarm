@@ -93,6 +93,7 @@ public static partial class Commands {
 		new("queue", "[account|all]", GroupCards, "Go through today's discovery queue now, a few seconds on each game. The DiscoveryQueue setting does it by itself once a day (during sales, by default)."),
 		new("freeitems", "[account|all]", GroupCards, "Look for free event items now: the daily sale sticker, and anything in the Points Shop at 0 points. The ClaimEventItems setting does it by itself."),
 		new("booster", "[account|all] | <account> <appIDs>", GroupCards, "Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the BoosterGames setting does it by itself every day.", "boosters"),
+		new("notify", "[test]", GroupOther, "Discord and Telegram notifications: says what's set up and what gets sent. 'notify test' sends a test message to each right now."),
 		new("joingroup", "<account|all> <group link or name>", GroupAccounts, "Join a Steam group now, if it's open - one account or all of them. For a group every account should always be in, put it in the \"Groups every account joins\" setting instead."),
 		new("privacy", "<account> [public|friends|private|part=level ...]", GroupAccounts,
 			"See an account's profile privacy, or set it - one word for everything, or parts such as inventory=public comments=friends. Parts: profile, games, playtime, friends, inventory, gifts, comments."),
@@ -256,6 +257,7 @@ public static partial class Commands {
 				"fairswap" => await FairSwapCheckAsync(mgr, rest).ConfigureAwait(false),
 				"privacy" => await PrivacyAsync(mgr, rest).ConfigureAwait(false),
 				"joingroup" => await JoinGroupAsync(mgr, rest).ConfigureAwait(false),
+				"notify" => await NotifyAsync(rest).ConfigureAwait(false),
 				"transfer" => await TransferAsync(mgr, rest).ConfigureAwait(false),
 				"farm" => Farm(mgr, rest),
 				"cards" => Cards(mgr, rest),
@@ -330,8 +332,17 @@ public static partial class Commands {
 				+ Environment.NewLine + "  'update accept' downloads it and restarts into it; 'update ignore' stops the reminders until the next launch.";
 		}
 
-		return await SelfUpdate.ApplyAsync(CancellationToken.None).ConfigureAwait(false)
-			?? "downloading and restarting - this window will come back on its own";
+		// In the background: a 50MB download can take minutes, and the console used to sit frozen for all of them.
+		// Progress goes to the log in green every 10%, and any failure is said there in red, with the reason.
+		_ = Task.Run(async () => {
+			try {
+				await SelfUpdate.ApplyAsync(CancellationToken.None).ConfigureAwait(false);
+			} catch (Exception e) {
+				Log.Error(new Said("update failed: {0} - nothing was changed", e.Message));
+			}
+		});
+
+		return $"downloading {UpdateCheck.Available} in the background - the log shows how far along it is, and it restarts into it by itself when it's done.";
 	}
 
 	/// <summary>
@@ -1771,7 +1782,7 @@ public static partial class Commands {
 			return $"{bot.Name}: {message}";
 		}
 
-		Log.Reward(new Said("{0} in {1}", message, GameNames.Of(appId)), bot.Name);
+		Log.Reward(new Said("{0} in {1}", message, GameNames.Of(appId)), bot.Name, topic: Topic.Achievements);
 
 		return $"{bot.Name}: {message} in {GameNames.Of(appId)}.";
 	}
@@ -1884,6 +1895,20 @@ public static partial class Commands {
 	}
 
 	/// <summary>The accounts a read-only command answers for: the one named, or every account for "all" or nothing.</summary>
+	private static async Task<string> NotifyAsync(string[] args) {
+		if ((args.Length > 0) && args[0].Equals("test", StringComparison.OrdinalIgnoreCase)) {
+			return string.Join(Environment.NewLine, await Notifier.TestAsync().ConfigureAwait(false));
+		}
+
+		GlobalConfig g = Live.Global;
+		List<string> sent = [.. Enum.GetValues<Topic>().Where(Notifier.Wanted).Select(static t => t.ToString())];
+
+		return $"Discord: {(g.DiscordWebhookUrl.Length > 0 ? "set up" : "not set up")}"
+			+ Environment.NewLine + $"Telegram: {(g.TelegramBotToken.Length == 0 ? "not set up" : g.TelegramChatId.Length == 0 ? "bot set - send it a message on Telegram to connect" : "connected")}"
+			+ Environment.NewLine + $"Sends: {(sent.Count > 0 ? string.Join(", ", sent) : "nothing")}"
+			+ Environment.NewLine + "'notify test' sends a test message now. Set it up under Settings, Notifications.";
+	}
+
 	private static async Task<string> JoinGroupAsync(BotManager mgr, string[] args) {
 		if (args.Length < 2) {
 			return "joingroup <account|all> <group link or name>   e.g. joingroup all steamcommunity.com/groups/nocatfarm";

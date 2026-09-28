@@ -56,6 +56,7 @@ public static class Settings {
 	public const string SecConnection = "Steam connection";
 	public const string SecLogging = "Logging";
 	public const string SecAllAccounts = "All accounts";
+	public const string SecNotifications = "Notifications";
 
 	// ── per-account sections, in display order ──────────────────────────────
 	public const string SecAccount = "Account";
@@ -481,19 +482,46 @@ public static class Settings {
 			"Starts nocat.farm when you sign in to Windows. It only adds a startup entry for your own Windows user."),
 		new("KeepAwake", "Keep this PC awake", SecBackground, SettingKind.Bool,
 			"Stops your PC from going to sleep while nocat.farm is open. The screen can still turn off.", Advanced: true),
-		new("TrayNotifications", "Show pop-ups", SecBackground, SettingKind.Bool,
+		new("TrayNotifications", "Show pop-ups", SecNotifications, SettingKind.Bool,
 			"Turns pop-up notifications on or off. The three settings below choose which pop-ups you get."),
-		new("NotifyEarnings", "Pop up when you earn", SecBackground, SettingKind.Bool,
+		new("NotifyEarnings", "Pop up when you earn", SecNotifications, SettingKind.Bool,
 			"Shows a pop-up when a trading card drops or a rep4rep comment is credited.", Advanced: true),
-		new("NotifySocial", "Pop up for comments", SecBackground, SettingKind.Bool,
+		new("NotifySocial", "Pop up for comments", SecNotifications, SettingKind.Bool,
 			"Shows a pop-up when someone comments on one of your Steam profiles.", Advanced: true),
-		new("NotifyProblems", "Pop up for problems", SecBackground, SettingKind.Bool,
+		new("NotifyProblems", "Pop up for problems", SecNotifications, SettingKind.Bool,
 			"Shows a pop-up when an account needs you, like a Steam Guard code, a failed login or a comment ban.", Advanced: true),
 
 		// ── rep4rep account ──
 		new("GroupsToJoin", "Groups every account joins", SecAllAccounts, SettingKind.Text,
 			"Steam groups all your accounts join, one after another. It starts with the nocat.farm group, and you can change or clear it. Paste a group's link or its short name, separated by commas. Only open groups are joined, ones that need approval or an invite are skipped.",
 			Placeholder: "steamcommunity.com/groups/yourgroup"),
+		new("DiscordWebhookUrl", "Discord webhook", SecNotifications, SettingKind.Secret,
+			"Paste a Discord channel's webhook link and the notifications you pick below go there. In Discord: Server Settings, Integrations, Webhooks, New Webhook, Copy Webhook URL.",
+			Placeholder: "https://discord.com/api/webhooks/..."),
+		new("TelegramBotToken", "Telegram bot token", SecNotifications, SettingKind.Secret,
+			"Paste your Telegram bot's token (make a bot by messaging @BotFather). Then send your bot any message on Telegram and nocat.farm finds your chat by itself.",
+			Placeholder: "123456789:ABC..."),
+		new("TelegramChatId", "Telegram chat", SecNotifications, SettingKind.Text,
+			"Filled in by itself when you first message your bot. Clear it to pick a different chat or group - it takes the next one that messages the bot.",
+			Advanced: true),
+		new("SendCardDrops", "Send card drops and badges", SecNotifications, SettingKind.Bool,
+			"Cards dropping, a game's cards finished, badges crafted and booster packs made.", Advanced: true),
+		new("SendFreeStuff", "Send free games, items and gifts", SecNotifications, SettingKind.Bool,
+			"Free games claimed, free Points Shop and sale items, gifted games and activated keys.", Advanced: true),
+		new("SendTrades", "Send trades", SecNotifications, SettingKind.Bool,
+			"Trade offers accepted, with how many items came in.", Advanced: true),
+		new("SendProblems", "Send problems that need you", SecNotifications, SettingKind.Bool,
+			"Anything that needs you: a Steam Guard code, a failed sign-in, a comment ban, listings waiting for your phone.", Advanced: true),
+		new("SendUpdates", "Send updates", SecNotifications, SettingKind.Bool,
+			"A new version is out, an update finished, or an update failed and why.", Advanced: true),
+		new("SendDailySummary", "Send the daily summary", SecNotifications, SettingKind.Bool,
+			"Once a day, what each account did in the last 24 hours: hours banked, cards and comments. Sent at the time set for \"Daily summary in the log\".", Advanced: true),
+		new("SendComments", "Send profile comments", SecNotifications, SettingKind.Bool,
+			"Someone commented on one of your Steam profiles.", Advanced: true),
+		new("SendAchievements", "Send achievements", SecNotifications, SettingKind.Bool,
+			"Every achievement unlocked. Can be a lot.", Advanced: true),
+		new("SendRep4Rep", "Send rep4rep comments", SecNotifications, SettingKind.Bool,
+			"Every rep4rep comment posted. Can be a lot.", Advanced: true),
 		new("Rep4RepEnabled", "Use rep4rep at all", SecRep4RepAccount, SettingKind.Bool,
 			"Turns on rep4rep, an optional outside site where users trade Steam profile comments. With it off, all rep4rep features and settings are hidden on every account."),
 		new("Rep4RepApiToken", "API token", SecRep4RepAccount, SettingKind.Secret,

@@ -117,6 +117,9 @@ if (OperatingSystem.IsWindows() && (global.StartWithWindows != WindowsIntegratio
 	WindowsIntegration.SetStartWithWindows(global.StartWithWindows);
 }
 
+// Before anything else is said: if this start finishes an update, that's the first line in the window.
+SelfUpdate.AnnounceIfJustUpdated();
+
 WebHost? web = null;
 
 if (global.WebEnabled && !forceNoWeb) {
@@ -239,6 +242,9 @@ if (manager.All.Count == 0) {
 // with no accounts. Type `report` to see it on demand.
 NocatFarm.Core.DailyReport.Start(manager);
 
+// Discord / Telegram notifications for the events picked under Settings, Notifications.
+NocatFarm.Core.Notifier.Start();
+
 if (global.OpenBrowserOnStart && (web != null)) {
 	OpenBrowser(web.Url);
 }
@@ -286,6 +292,9 @@ try {
 }
 
 Log.Info("shutting down...");
+
+// Whatever notifications are still waiting go out first (a few seconds at most).
+await NocatFarm.Core.Notifier.StopAsync().ConfigureAwait(false);
 
 // Plugins first, while the accounts, commands and their saved state still work - OnUnloadAsync is documented as
 // "called on shutdown" and was never called at all.

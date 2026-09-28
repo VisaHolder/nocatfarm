@@ -427,7 +427,7 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 			}
 
 			if (what.GiftedGame) {
-				Log.Reward(new Said("added a gifted game to the library: {0}", what.Name), Bot.Name);
+				Log.Reward(new Said("added a gifted game to the library: {0}", what.Name), Bot.Name, topic: Topic.FreeStuff);
 			} else {
 				Log.Good(what.Name.Length > 0 ? new Said("accepted a guest pass: {0}", what.Name)
 					: answer.PackageID != 0 ? new Said("accepted a guest pass (package {0})", answer.PackageID) : new Said("accepted a guest pass"), Bot.Name);
@@ -470,7 +470,7 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 			new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/inventory/#pending_gifts"), ct).ConfigureAwait(false);
 
 		if ((answer != null) && SuccessOne().IsMatch(answer)) {
-			Log.Reward(what.Name.Length > 0 ? new Said("added a gifted game to the library: {0}", what.Name) : new Said("added a gifted game to the library"), Bot.Name);
+			Log.Reward(what.Name.Length > 0 ? new Said("added a gifted game to the library: {0}", what.Name) : new Said("added a gifted game to the library"), Bot.Name, topic: Topic.FreeStuff);
 
 			return true;
 		}

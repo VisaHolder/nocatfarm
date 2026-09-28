@@ -151,7 +151,7 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 		}
 
 		if (item != null) {
-			Log.Reward(new Said("claimed the free sale item: {0}", item), Bot.Name);
+			Log.Reward(new Said("claimed the free sale item: {0}", item), Bot.Name, topic: Topic.FreeStuff);
 		} else {
 			Log.Info(new Said("claimed the free sale item"), Bot.Name);
 		}
@@ -304,7 +304,7 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 
 			if (answer.Result == EResult.OK) {
 				got++;
-				Log.Reward(new Said("took a free Points Shop item from {0}", GameNames.Of(appId)), Bot.Name);
+				Log.Reward(new Said("took a free Points Shop item from {0}", GameNames.Of(appId)), Bot.Name, topic: Topic.FreeStuff);
 			} else if (answer.Result is EResult.Timeout or EResult.ServiceUnavailable or EResult.Busy or EResult.TryAnotherCM or EResult.RateLimitExceeded) {
 				continue;   // try it again next time
 			} else {

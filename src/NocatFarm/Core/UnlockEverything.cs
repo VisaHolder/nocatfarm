@@ -113,7 +113,7 @@ public static class UnlockEverything {
 			if (ok) {
 				games++;
 				unlocked += locked.Count;
-				Log.Reward(new Said("unlocked all {0} in {1}", locked.Count, GameNames.Of(app)), bot.Name);
+				Log.Reward(new Said("unlocked all {0} in {1}", locked.Count, GameNames.Of(app)), bot.Name, topic: Topic.Achievements);
 			} else {
 				failed++;
 				Log.Debug(new Said("couldn't unlock {0} - {1}", GameNames.Of(app), message), bot.Name);

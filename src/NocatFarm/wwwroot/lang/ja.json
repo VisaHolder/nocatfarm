@@ -1256,7 +1256,64 @@
     "Next it signs in the {0} you play on, so it can set them up from their own games.": "次に、あなたがプレイする{0}にサインインして、それぞれのゲームから設定します。",
     "Start the others too": "ほかのアカウントも開始",
     "Starting {0} more account(s) - they sign in one after another.": "さらに{0}個のアカウントを開始します。順番にサインインします。",
-    "The other {0} imported account(s) are added but not started yet.": "ほかの{0}個のインポートしたアカウントは追加済みですが、まだ開始していません。"
+    "The other {0} imported account(s) are added but not started yet.": "ほかの{0}個のインポートしたアカウントは追加済みですが、まだ開始していません。",
+    "update failed: {0}": "アップデート失敗: {0}",
+    "update: {0}% - {1} of {2}MB, about {3}m left": "アップデート: {0}% - {2}MB中{1}MB、残り約{3}分",
+    "update: {0}% - {1} of {2}MB": "アップデート: {0}% - {2}MB中{1}MB",
+    "updated from {0} to {1} - downloaded {2}MB in {3}s": "{0} から {1} にアップデートしました - {2}MB を {3} 秒でダウンロード",
+    "the update to {0} didn't take - this is still {1}": "{0} へのアップデートは反映されませんでした - まだ {1} です",
+    "couldn't read the update note: {0}": "アップデートのメモを読めませんでした: {0}",
+    "update failed: {0} - nothing was changed": "更新失敗: {0} - 何も変更されていません",
+    "update: done - now on {1} (was {0}) · downloaded {2}MB in {3}s": "更新: 完了 - {1} になりました（以前は {0}） · {2}MB を {3} 秒でダウンロード",
+    "update failed: couldn't make a safety copy of the current files first (copy error {0}) - is the disk full? Still on {1}, nothing was changed": "更新失敗: 現在のファイルのバックアップを先に作成できませんでした（コピーエラー {0}） - ディスクがいっぱいではありませんか？ {1} のまま、何も変更されていません",
+    "update failed: the new files couldn't be copied in - some were in use (another copy of nocat.farm, or an antivirus scan?). Still on {0}, nothing was changed - try 'update accept' again": "更新失敗: 新しいファイルをコピーできませんでした - 一部が使用中でした（別の nocat.farm が起動中か、ウイルス対策ソフトがスキャン中？）。{0} のまま、何も変更されていません - もう一度 'update accept' を試してください",
+    "update failed: the new files couldn't be copied into this folder (copy error {0}) - is it read-only or out of space? Still on {1}, nothing was changed": "更新失敗: 新しいファイルをこのフォルダーにコピーできませんでした（コピーエラー {0}） - 読み取り専用か、空き容量が足りないのでは？ {1} のまま、何も変更されていません",
+    "update failed: {0} didn't start after the download - still on {1}. Try 'update accept' again, or get it from the releases page": "更新失敗: ダウンロード後に {0} が起動しませんでした - {1} のままです。もう一度 'update accept' を試すか、リリースページから入手してください",
+    "update failed: updating itself only works on Windows - get the new release from {0}": "更新失敗: 自動更新は Windows でのみ動作します - 新しいリリースは {0} から入手してください",
+    "update failed: couldn't reach GitHub ({0}) - check the internet connection and try again. Nothing was changed": "更新失敗: GitHub に接続できませんでした（{0}） - インターネット接続を確認して、もう一度お試しください。何も変更されていません",
+    "update failed: GitHub didn't say which release is newest - try again in a few minutes. Nothing was changed": "更新失敗: GitHub から最新のリリースがわかりませんでした - 数分後にもう一度お試しください。何も変更されていません",
+    "update failed: {0} has no download attached yet - try again later, or get it from {1}. Nothing was changed": "更新失敗: {0} にはまだダウンロードファイルが添付されていません - 後でもう一度試すか、{1} から入手してください。何も変更されていません",
+    "update: {0} {1}% · {2} of {3}MB · about {4}m left": "更新: {0} {1}% · {3}MB中{2}MB · 残り約{4}分",
+    "update: {0} {1}% · {2} of {3}MB": "更新: {0} {1}% · {3}MB中{2}MB",
+    "update failed: the download broke off ({0}) - check the connection and try again. Nothing was changed": "更新失敗: ダウンロードが途中で切れました（{0}） - 接続を確認して、もう一度お試しください。何も変更されていません",
+    "update failed: the download stopped at {0} of {1}MB - the connection probably dropped. Try again. Nothing was changed": "更新失敗: ダウンロードが {1}MB 中 {0}MB で止まりました - 接続が切れたようです。もう一度お試しください。何も変更されていません",
+    "update: {0} 100% · {1}MB downloaded - unpacking": "更新: {0} 100% · {1}MB ダウンロード完了 - 展開中",
+    "update failed: couldn't unpack the download ({0}) - is the disk full? Nothing was changed": "更新失敗: ダウンロードしたファイルを展開できませんでした（{0}） - ディスクがいっぱいではありませんか？ 何も変更されていません",
+    "update failed: the download doesn't contain nocatFarm.exe - get it from {0}. Nothing was changed": "更新失敗: ダウンロードしたファイルに nocatFarm.exe が含まれていません - {0} から入手してください。何も変更されていません",
+    "update: {0} is ready - restarting into it now, back in a few seconds": "更新: {0} の準備ができました - 今すぐ再起動します。数秒で戻ります",
+    "update failed: {0} - nothing was changed. The release page is {1}": "更新失敗: {0} - 何も変更されていません。リリースページは {1} です",
+    "Update failed": "更新に失敗しました",
+    "Try again": "再試行",
+    "notifications: {0}": "通知: {0}",
+    "Free stuff": "無料のもの",
+    "Daily summary": "日次まとめ",
+    "Profile comment": "プロフィールのコメント",
+    "nocat.farm": "nocat.farm",
+    "...and {0} more": "…ほか {0} 件",
+    "the Discord webhook link doesn't work any more (HTTP {0}) - copy it again from the channel's Integrations settings": "Discord のウェブフックのリンクが使えなくなりました (HTTP {0}) - チャンネル設定の「連携サービス」からもう一度コピーしてください",
+    "Discord refused the message (HTTP {0})": "Discord がメッセージを拒否しました (HTTP {0})",
+    "Discord kept saying slow down": "Discord から何度も送信ペースを落とすよう求められました",
+    "the Telegram bot token doesn't work - copy it again from @BotFather": "Telegram ボットのトークンが使えません - @BotFather からもう一度コピーしてください",
+    "Telegram can't find that chat - send your bot a message, clear \"Telegram chat\" in Settings and it finds it again": "Telegram がそのチャットを見つけられません - ボットにメッセージを送り、設定の「Telegram のチャット」を空にすると、また見つかります",
+    "Telegram refused the message (HTTP {0})": "Telegram がメッセージを拒否しました (HTTP {0})",
+    "Telegram kept saying slow down": "Telegram から何度も送信ペースを落とすよう求められました",
+    "notifications: Telegram connected - they'll go to {0}": "通知: Telegram に接続しました - {0} に届きます",
+    "Notifications you picked will arrive here. Change what gets sent under Settings, Notifications.": "選んだ通知はここに届きます。送る内容は設定の「通知」で変更できます。",
+    "nothing yet - pick below": "まだありません - 下で選んでください",
+    "This is what nocat.farm notifications look like. You'll get: {0}": "nocat.farm の通知はこのように届きます。受け取る通知: {0}",
+    "nothing is set up yet - paste a Discord webhook link or a Telegram bot token first": "まだ何も設定されていません - 先に Discord のウェブフックのリンクか Telegram ボットのトークンを貼り付けてください",
+    "nocat.farm is connected": "nocat.farm が接続されました",
+    "Discord: sent - check the channel": "Discord: 送信しました - チャンネルを確認してください",
+    "Discord: didn't work - {0}": "Discord: うまくいきませんでした - {0}",
+    "Telegram: the bot works, but nobody has messaged it yet - open it on Telegram, send it anything, then test again": "Telegram: ボットは動いていますが、まだ誰もメッセージを送っていません - Telegram でボットを開いて何か送ってから、もう一度テストしてください",
+    "Telegram: sent - check the chat": "Telegram: 送信しました - チャットを確認してください",
+    "Telegram: didn't work - {0}": "Telegram: うまくいきませんでした - {0}",
+    "Get notified on Discord or Telegram": "Discord や Telegram で通知を受け取る",
+    "Paste a Discord webhook link or a Telegram bot token below, save, then pick what gets sent. Busy moments are bundled into one message.": "下に Discord のウェブフックのリンクか Telegram ボットのトークンを貼り付けて保存し、送る内容を選んでください。一度にたくさん起きたときは 1 通のメッセージにまとめます。",
+    "Send a test message": "テストメッセージを送る",
+    "Save a webhook link or bot token first.": "先にウェブフックのリンクかボットのトークンを保存してください。",
+    "Sending...": "送信中...",
+    "Couldn't reach nocat.farm": "nocat.farm に接続できませんでした"
   },
   "settings": {
     "WebEnabled": {
@@ -1322,6 +1379,54 @@
     "NotifyProblems": {
       "label": "問題を通知",
       "tip": "Steam Guard コード、ログイン失敗、コメント禁止など、アカウントがあなたの対応を必要とするときにポップアップを出します。"
+    },
+    "DiscordWebhookUrl": {
+      "label": "Discord ウェブフック",
+      "tip": "Discord チャンネルのウェブフックのリンクを貼り付けると、下で選んだ通知がそこに届きます。Discord では「サーバー設定」→「連携サービス」→「ウェブフック」→「新しいウェブフック」→「ウェブフックURLをコピー」。"
+    },
+    "TelegramBotToken": {
+      "label": "Telegram ボットのトークン",
+      "tip": "Telegram ボットのトークンを貼り付けます（ボットは @BotFather にメッセージを送ると作れます）。そのあと Telegram でボットに何かメッセージを送れば、nocat.farm があなたのチャットを自動で見つけます。"
+    },
+    "TelegramChatId": {
+      "label": "Telegram のチャット",
+      "tip": "初めてボットにメッセージを送ったときに自動で入ります。別のチャットやグループにしたいときは空にしてください。次にボットへメッセージを送ったものが使われます。"
+    },
+    "SendCardDrops": {
+      "label": "カードドロップとバッジを送る",
+      "tip": "カードのドロップ、ゲームのカードを集め終えたとき、バッジの作成、ブースターパックの作成。"
+    },
+    "SendFreeStuff": {
+      "label": "無料ゲーム、アイテム、ギフトを送る",
+      "tip": "受け取った無料ゲーム、ポイントショップやセールの無料アイテム、ギフトのゲーム、有効化したキー。"
+    },
+    "SendTrades": {
+      "label": "トレードを送る",
+      "tip": "承認したトレードオファーと、受け取ったアイテムの数。"
+    },
+    "SendProblems": {
+      "label": "対応が必要な問題を送る",
+      "tip": "Steam Guard コード、サインインの失敗、コメント禁止、スマホでの確認を待つ出品など、あなたの対応が必要なものすべて。"
+    },
+    "SendUpdates": {
+      "label": "更新を送る",
+      "tip": "新しいバージョンが出たとき、更新が終わったとき、更新に失敗したときとその理由。"
+    },
+    "SendDailySummary": {
+      "label": "日次まとめを送る",
+      "tip": "1 日 1 回、各アカウントが直近 24 時間にしたこと（記録した時間、カード、コメント）。「ログへの日次まとめ」に設定した時刻に送ります。"
+    },
+    "SendComments": {
+      "label": "プロフィールのコメントを送る",
+      "tip": "誰かがあなたの Steam プロフィールにコメントしたとき。"
+    },
+    "SendAchievements": {
+      "label": "実績を送る",
+      "tip": "解除した実績すべて。かなりの数になることがあります。"
+    },
+    "SendRep4Rep": {
+      "label": "rep4rep のコメントを送る",
+      "tip": "投稿した rep4rep のコメントすべて。かなりの数になることがあります。"
     },
     "GroupsToJoin": {
       "label": "全アカウントが参加するグループ",

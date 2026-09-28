@@ -383,6 +383,15 @@ public sealed class WebHost : IAsyncDisposable {
 			});
 		});
 
+		// The Notifications section's test button: one message to each place that's set up, and what happened.
+		app.MapPost("/api/notify/test", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			return Results.Json(new { Results = await Notifier.TestAsync(ctx.RequestAborted).ConfigureAwait(false) });
+		});
+
 		app.MapPost("/api/prompt", async (HttpContext ctx) => {
 			if (!Authorised(ctx)) {
 				return Unauthorised();
@@ -1153,6 +1162,7 @@ public sealed class WebHost : IAsyncDisposable {
 			UpdateUrl = UpdateCheck.Url,
 			PluginsOn = Live.Global.PluginsEnabled,
 			UpdateBusy = SelfUpdate.Busy,
+			UpdateFailed = SelfUpdate.LastFailure,
 			UpdateProgress = SelfUpdate.Progress,
 			InventoryPending = bots.Sum(static b => b.Inventory.Pending),
 			GamesLeft = bots.Sum(static b => b.GamesRemaining),

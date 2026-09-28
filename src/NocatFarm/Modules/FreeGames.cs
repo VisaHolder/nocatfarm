@@ -175,7 +175,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				_status = _claimed == 0 ? new Said("watching for giveaways") : new Said("{0} claimed since start", _claimed);
 
 				if (added > 0) {
-					Log.Reward(new Said("claimed {0} free game(s) - the card farmer will pick them up", added), Bot.Name);
+					Log.Reward(new Said("claimed {0} free game(s) - the card farmer will pick them up", added), Bot.Name, topic: Topic.FreeStuff);
 				}
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
@@ -203,7 +203,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 					int added = await CheckAsync(false, ct).ConfigureAwait(false);
 
 					if (added > 0) {
-						Log.Reward(new Said("claimed {0} free game(s) - the card farmer will pick them up", added), Bot.Name);
+						Log.Reward(new Said("claimed {0} free game(s) - the card farmer will pick them up", added), Bot.Name, topic: Topic.FreeStuff);
 					}
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
@@ -375,7 +375,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				_failed.Remove(token);
 				added++;
 				_claimed++;
-				Log.Reward(new Said("claimed {0}", name), Bot.Name);
+				Log.Reward(new Said("claimed {0}", name), Bot.Name, topic: Topic.FreeStuff);
 
 				// A person adds a free game or two and gets on with their day; the rest wait for a later pass.
 				if (Bot.Cfg.LegitMode && (added >= 2)) {

@@ -453,7 +453,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		}
 
 		if (credited) {
-			Log.Reward(new Said("commented on {0} and credited ({1}/{2} today)", task.TargetName, done, Cap), Bot.Name);
+			Log.Reward(new Said("commented on {0} and credited ({1}/{2} today)", task.TargetName, done, Cap), Bot.Name, topic: Topic.Rep4Rep);
 		} else {
 			Log.Warn(new Said("commented on {0} but rep4rep didn't credit it ({1}/{2} today)", task.TargetName, done, Cap), Bot.Name);
 		}
