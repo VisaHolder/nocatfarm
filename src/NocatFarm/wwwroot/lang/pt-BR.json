@@ -1557,9 +1557,9 @@
     "It signs your Steam accounts in, farms their trading cards, plays games so the hours count and picks up free stuff - all from this machine. Your accounts never leave it.": "Ele entra nas suas contas Steam, farma as cartas colecionáveis, joga para as horas contarem e pega as coisas grátis - tudo deste computador. Suas contas nunca saem dele.",
     "Advanced setup": "Configuração avançada",
     "Used ArchiSteamFarm or another idler before? Add the account, then go straight to all of its settings, advanced ones included.": "Já usou o ArchiSteamFarm ou outro idler? Adicione a conta e vá direto para todas as configurações dela, inclusive as avançadas.",
-    "showing nocat.farm on your Discord profile": "mostrando o nocat.farm no seu perfil do Discord",
-    "taken off your Discord profile": "tirado do seu perfil do Discord",
-    "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept": "O nocat.farm não se atualiza sozinho no Docker - na pasta nocatfarm rode git pull e depois docker compose up -d --build. config/ e logs/ são mantidos"
+    "nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept": "O nocat.farm não se atualiza sozinho no Docker - na pasta nocatfarm rode git pull e depois docker compose up -d --build. config/ e logs/ são mantidos",
+    "Discord Rich Presence on - your profile shows Playing nocat.farm": "Discord Rich Presence ligado - seu perfil mostra Jogando nocat.farm",
+    "Discord Rich Presence off": "Discord Rich Presence desligado"
   },
   "settings": {
     "WebEnabled": {

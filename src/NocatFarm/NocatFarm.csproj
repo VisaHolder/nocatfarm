@@ -18,7 +18,7 @@
     <RootNamespace>NocatFarm</RootNamespace>
     <InvariantGlobalization>true</InvariantGlobalization>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <Version>1.4.1</Version>
+    <Version>1.4.2</Version>
     <!-- A background app, not a server: the web SDK turns on the server collector, which keeps a heap per CPU core.
          The workstation collector is the right fit and holds far less memory for the same work. -->
     <ServerGarbageCollection>false</ServerGarbageCollection>
