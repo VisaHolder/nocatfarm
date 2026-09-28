@@ -1574,13 +1574,11 @@
     "Then your phone opens:": "그다음 휴대폰에서 여는 주소:",
     "From outside your home:": "집 밖에서:",
     "anyone with it and the password controls every account.": "이 주소와 비밀번호를 가진 사람은 모든 계정을 조작할 수 있습니다.",
-    "From outside your home, forward the port on your router to this PC and put your address in Public address.": "집 밖에서 쓰려면 공유기에서 포트를 이 PC로 포워딩하고 공개 주소에 주소를 넣으세요.",
     "Take me there": "거기로 이동",
     "Open the dashboard on your phone": "휴대폰에서 대시보드 열기",
     "On your phone, on the same wifi:": "같은 와이파이의 휴대폰에서:",
     "Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.": "아직 다른 기기에 열려 있지 않습니다. PC에서: 설정, 대시보드, 고급 보기 - 대시보드 비밀번호를 정하고 수신 주소에 0.0.0.0을 넣은 뒤 다시 시작하세요.",
-    "From anywhere:": "어디서든:",
-    "From outside your home: not set up (Public address, in the same place).": "집 밖에서: 설정 안 됨(같은 곳의 공개 주소).",
+    "From anywhere:": "어디서나:",
     "On the PC itself:": "PC에서:",
     "Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.": "같은 와이파이의 휴대폰이나 다른 PC에서 대시보드를 쓰세요. 스캔할 QR 코드나 열기 위한 설정 두 개를 보여줍니다.",
     "done with {0}'s achievements for now - moving on": "{0}의 업적은 일단 끝 - 다음으로",
@@ -1666,7 +1664,22 @@
     "Allow through Windows Firewall": "Windows 방화벽에서 허용",
     "Press it on the PC nocat.farm runs on.": "nocat.farm이 실행 중인 PC에서 누르세요.",
     "Check the Windows prompt…": "Windows 확인 창을 보세요…",
-    "Done - your phone can open it now.": "완료 - 이제 휴대폰에서 열 수 있습니다."
+    "Done - your phone can open it now.": "완료 - 이제 휴대폰에서 열 수 있습니다.",
+    "From anywhere: not set up - on the PC, turn on Open from anywhere (Settings, Dashboard, Show advanced).": "어디서나: 설정 안 됨 - PC에서 '어디서나 열기'를 켜세요(설정, 대시보드, 고급 표시).",
+    "From anywhere: asking your router to forward the port...": "어디서나: 공유기에 포트 전달을 요청하는 중...",
+    "From anywhere: turn on Open from anywhere - your router forwards the port, like Jellyfin.": "어디서나: '어디서나 열기'를 켜세요 - Jellyfin처럼 공유기가 포트를 전달합니다.",
+    "needs a dashboard password of at least {0} characters first - anyone on the internet can try it": "먼저 {0}자 이상의 대시보드 비밀번호가 필요합니다 - 인터넷의 누구나 시도할 수 있습니다",
+    "needs 0.0.0.0 in Listen on (and a restart) first": "먼저 '수신 주소'에 0.0.0.0이 필요합니다(그리고 재시작)",
+    "open from anywhere: {0}": "어디서나 열기: {0}",
+    "your router didn't answer - turn on UPnP in its settings, or forward port {0} to this PC by hand": "공유기가 응답하지 않았습니다 - 설정에서 UPnP를 켜거나 포트 {0}을(를) 이 PC로 직접 전달하세요",
+    "your router refused to forward port {0} ({1}) - forward it to this PC by hand in the router's settings": "공유기가 포트 {0} 전달을 거부했습니다({1}) - 공유기 설정에서 이 PC로 직접 전달하세요",
+    "your internet connection is shared with other homes (the provider's address {0}), so nothing from outside can reach this PC": "인터넷 연결을 다른 가정과 함께 쓰고 있어서(통신사 주소 {0}) 밖에서 이 PC에 닿을 수 없습니다",
+    "your router didn't say its internet address": "공유기가 인터넷 주소를 알려주지 않았습니다",
+    "open from anywhere: your router forwards port {0} to this PC - the dashboard opens at {1} from anywhere (sign in with the dashboard password)": "어디서나 열기: 공유기가 포트 {0}을(를) 이 PC로 전달합니다 - 대시보드를 어디서나 {1}에서 열 수 있습니다(대시보드 비밀번호로 로그인)",
+    "open from anywhere: off - your router no longer forwards port {0}": "어디서나 열기: 꺼짐 - 공유기가 더 이상 포트 {0}을(를) 전달하지 않습니다",
+    "open from anywhere: off, but the router didn't take the forward away ({0}) - remove it in the router's settings": "어디서나 열기: 꺼졌지만 공유기가 전달을 지우지 않았습니다({0}) - 공유기 설정에서 지우세요",
+    "your router is behind another router ({0}) - forward port {1} on that one too, or ask whoever runs it": "공유기가 다른 공유기 뒤에 있습니다({0}) - 그쪽에서도 포트 {1}을(를) 전달하거나 관리하는 사람에게 부탁하세요",
+    "From anywhere - scan this on mobile data, away from your wifi:": "어디서나 - 와이파이가 아닌 모바일 데이터로 스캔하세요:"
   },
   "settings": {
     "WebEnabled": {
@@ -2581,7 +2594,7 @@
     },
     "WebPublicAddress": {
       "label": "공개 주소",
-      "tip": "집 밖에서 쓰는 주소입니다. 인터넷 주소나 myname.duckdns.org 같은 이름을 넣으세요. 공유기에서 대시보드 포트를 이 PC로 포워딩한 뒤에 씁니다. dashboard 명령과 Telegram의 /dashboard가 이 주소를 보여줍니다. 이 주소와 비밀번호를 가진 사람은 모든 계정을 조작할 수 있으니 믿을 수 있는 사람에게만 알려주세요."
+      "tip": "포트를 직접 전달했거나 myname.duckdns.org 같은 이름을 쓸 때만: 밖에서 대시보드에 쓸 주소입니다. '어디서나 열기'가 켜져 있으면 비워 두세요 - 주소를 알아서 찾습니다."
     },
     "BoostWeight": {
       "label": "사람 모드: 사냥 게임 가중치",
@@ -2623,6 +2636,10 @@
     "SendInstalls": {
       "label": "설치 진행 보내기",
       "tip": "업데이트를 설치할 때: 다운로드 완료와 설치 시작, 그다음 새 버전과 새로운 점과 함께 설치 완료 - 또는 실패했거나 되돌렸다는 것과 그 이유. 직접 켜기 전까지는 꺼져 있습니다."
+    },
+    "WebRemoteAccess": {
+      "label": "어디서나 열기",
+      "tip": "Jellyfin처럼: 공유기에 대시보드 포트를 이 PC로 전달해 달라고 요청해서(UPnP), 인터넷 주소로 어디서나 열리게 합니다 - Telegram과 Discord의 /dashboard가 링크를 줍니다. 12자 이상의 대시보드 비밀번호와 '수신 주소'의 0.0.0.0이 필요합니다. 로그인 화면에는 인터넷의 누구나 닿을 수 있고, 비밀번호를 다섯 번 틀리면 한 시간 동안 막힙니다. 끄면 전달을 다시 없앱니다."
     }
   }
 }

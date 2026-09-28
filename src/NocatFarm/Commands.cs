@@ -2211,14 +2211,14 @@ public static partial class Commands {
 		return $"{bot.Name}: {Settings.ChoiceLabel(def, bot.Cfg.OnlineStatus)}";
 	}
 
-	/// <summary>The accounts a read-only command answers for: the one named, or every account for "all" or nothing.</summary>
+	/// <summary>'notify': what's set up, and what gets sent - in words, not the code's names for them.</summary>
 	private static async Task<string> NotifyAsync(string[] args) {
 		if ((args.Length > 0) && args[0].Equals("test", StringComparison.OrdinalIgnoreCase)) {
 			return string.Join(Environment.NewLine, await Notifier.TestAsync().ConfigureAwait(false));
 		}
 
 		GlobalConfig g = Live.Global;
-		List<string> sent = [.. Enum.GetValues<Topic>().Where(Notifier.Wanted).Select(static t => t.ToString())];
+		List<string> sent = [.. Enum.GetValues<Topic>().Where(Notifier.Wanted).Select(Notifier.Label)];
 
 		return $"Discord: {(g.DiscordWebhookUrl.Length > 0 ? "set up" : "not set up")}"
 			+ Environment.NewLine + $"Telegram: {(g.TelegramBotToken.Length == 0 ? "not set up" : g.TelegramChatId.Length == 0 ? "bot set - press Connect Telegram in Settings, Notifications to link it" : "connected")}"
@@ -3054,6 +3054,7 @@ public static partial class Commands {
 				: $"There's no setting called '{args[0]}'. 'config' lists the global ones, 'config <account>' the per-account ones.";
 		}
 
+		string passwordBefore = mgr.Global.WebPassword;
 		string? failure = Settings.Apply(mgr.Global, globalDef, Unquote(string.Join(' ', args[1..])));
 
 		if (failure != null) {
@@ -3063,6 +3064,11 @@ public static partial class Commands {
 		ConfigStore.SaveGlobal(mgr.Global);
 		mgr.ApplyGlobal(mgr.Global);
 		ApplyGlobalSideEffects(mgr, globalDef);
+
+		// A new password ends every browser's session, like the dashboard's own save. Only when it really changed.
+		if (!string.Equals(passwordBefore, mgr.Global.WebPassword, StringComparison.Ordinal)) {
+			Web.WebHost.Current?.SignOutAll();
+		}
 
 		return $"{globalDef.Name} = {Settings.Show(mgr.Global, globalDef)}"
 			+ (globalDef.NeedsRestart && (globalDef.Name != "WebPassword") ? "   (applies after a restart)" : "");
@@ -3118,10 +3124,11 @@ public static partial class Commands {
 	}
 
 	public static void ApplyGlobalSideEffects(BotManager mgr, SettingDef def) {
+		// Not the password: the dashboard runs these for EVERY setting on every save, and signing everybody out here
+		// sent the person saving back to the password screen each time. A changed password is handled where it's set.
 		switch (def.Name) {
-			case "WebPassword":
-				// Live straight away, like the dashboard's own save: old sessions end, the new password is needed.
-				Web.WebHost.Current?.SignOutAll();
+			case "WebRemoteAccess":
+				RemoteAccess.Poke();
 
 				break;
 			case "MiniOnTop":

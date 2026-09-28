@@ -152,6 +152,9 @@ public static partial class Notifier {
 
 	private sealed record Block(Topic Topic, string Source, List<string> Lines);
 
+	/// <summary>What a kind of event is called: "Cards", "Needs you", "Daily summary".</summary>
+	public static string Label(Topic topic) => Look(topic).Label.ToString();
+
 	private static (Said Label, int Colour) Look(Topic topic) => topic switch {
 		Topic.Cards => (new Said("Cards"), 0xE0A800),
 		Topic.FreeStuff => (new Said("Free stuff"), 0x2ECC71),

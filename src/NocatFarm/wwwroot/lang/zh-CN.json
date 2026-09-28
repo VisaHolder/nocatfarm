@@ -1574,13 +1574,11 @@
     "Then your phone opens:": "之后手机打开：",
     "From outside your home:": "从家外面：",
     "anyone with it and the password controls every account.": "拿到这个地址和密码的人可以控制所有账户。",
-    "From outside your home, forward the port on your router to this PC and put your address in Public address.": "要从家外面访问，在路由器上把端口转发到这台电脑，并在“公网地址”里填上你的地址。",
     "Take me there": "带我过去",
     "Open the dashboard on your phone": "在手机上打开面板",
     "On your phone, on the same wifi:": "同一 wifi 的手机上：",
     "Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.": "还没对其他设备开放。在电脑上：设置 → 面板 → 显示高级设置 - 设置面板密码，并在“监听地址”里填 0.0.0.0，然后重启。",
-    "From anywhere:": "任何地方：",
-    "From outside your home: not set up (Public address, in the same place).": "从家外面：未设置（同一处的“公网地址”）。",
+    "From anywhere:": "随时随地：",
     "On the PC itself:": "电脑本机：",
     "Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.": "在同一 wifi 的手机或其他电脑上使用面板 - 扫一个二维码，或者改两个设置把它打开。",
     "done with {0}'s achievements for now - moving on": "{0} 的成就暂时刷完 - 换下一个",
@@ -1666,7 +1664,22 @@
     "Allow through Windows Firewall": "允许通过 Windows 防火墙",
     "Press it on the PC nocat.farm runs on.": "请在运行 nocat.farm 的电脑上点。",
     "Check the Windows prompt…": "请看 Windows 的确认窗口…",
-    "Done - your phone can open it now.": "好了 - 现在手机可以打开了。"
+    "Done - your phone can open it now.": "好了 - 现在手机可以打开了。",
+    "From anywhere: not set up - on the PC, turn on Open from anywhere (Settings, Dashboard, Show advanced).": "随时随地：未设置 - 在电脑上打开“从任何地方打开”（设置、面板、显示高级）。",
+    "From anywhere: asking your router to forward the port...": "随时随地：正在请路由器转发端口...",
+    "From anywhere: turn on Open from anywhere - your router forwards the port, like Jellyfin.": "随时随地：打开“从任何地方打开” - 路由器会像 Jellyfin 那样转发端口。",
+    "needs a dashboard password of at least {0} characters first - anyone on the internet can try it": "需要先设置至少 {0} 个字符的面板密码 - 互联网上任何人都能尝试",
+    "needs 0.0.0.0 in Listen on (and a restart) first": "需要先在“监听地址”填 0.0.0.0（并重启）",
+    "open from anywhere: {0}": "从任何地方打开：{0}",
+    "your router didn't answer - turn on UPnP in its settings, or forward port {0} to this PC by hand": "路由器没有回应 - 在路由器设置里打开 UPnP，或手动把端口 {0} 转发到这台电脑",
+    "your router refused to forward port {0} ({1}) - forward it to this PC by hand in the router's settings": "路由器拒绝转发端口 {0}（{1}）- 请在路由器设置里手动转发到这台电脑",
+    "your internet connection is shared with other homes (the provider's address {0}), so nothing from outside can reach this PC": "你的网络和其他家庭共用（运营商地址 {0}），外面无法连到这台电脑",
+    "your router didn't say its internet address": "路由器没有告诉它的公网地址",
+    "open from anywhere: your router forwards port {0} to this PC - the dashboard opens at {1} from anywhere (sign in with the dashboard password)": "从任何地方打开：路由器把端口 {0} 转发到这台电脑 - 在任何地方打开 {1} 即可（用面板密码登录）",
+    "open from anywhere: off - your router no longer forwards port {0}": "从任何地方打开：已关闭 - 路由器不再转发端口 {0}",
+    "open from anywhere: off, but the router didn't take the forward away ({0}) - remove it in the router's settings": "从任何地方打开：已关闭，但路由器没有删掉转发（{0}）- 请在路由器设置里删除",
+    "your router is behind another router ({0}) - forward port {1} on that one too, or ask whoever runs it": "你的路由器在另一台路由器后面（{0}）- 也要在那台上转发端口 {1}，或请管理它的人帮忙",
+    "From anywhere - scan this on mobile data, away from your wifi:": "随时随地 - 用移动数据扫描，不要连家里的 wifi："
   },
   "settings": {
     "WebEnabled": {
@@ -2581,7 +2594,7 @@
     },
     "WebPublicAddress": {
       "label": "公网地址",
-      "tip": "你在家外面访问用的地址 - 你的公网 IP，或者像 myname.duckdns.org 这样的名字 - 前提是已经在路由器上把面板端口转发到这台电脑。dashboard 命令和 Telegram 的 /dashboard 会显示它。拿到它和密码的人可以控制所有账户，只分享给你信任的人。"
+      "tip": "只有手动转发了端口，或使用 myname.duckdns.org 这类名字时才需要：在家外访问面板用的地址。打开“从任何地方打开”时留空即可 - 它会自己找到你的地址。"
     },
     "BoostWeight": {
       "label": "拟人模式：刷成就游戏的权重",
@@ -2623,6 +2636,10 @@
     "SendInstalls": {
       "label": "发送安装进度",
       "tip": "安装更新时：已下载并开始安装，然后安装完成并附上新版本和新内容 - 或者失败、被撤销以及原因。除非你打开，否则是关闭的。"
+    },
+    "WebRemoteAccess": {
+      "label": "从任何地方打开",
+      "tip": "和 Jellyfin 一样：请路由器把面板的端口转发到这台电脑（UPnP），这样用你的公网地址在任何地方都能打开 - Telegram 和 Discord 的 /dashboard 会给出链接。需要至少 12 个字符的面板密码，并在“监听地址”填 0.0.0.0。互联网上任何人都能到达登录页，输错五次密码会被锁一小时。关闭后会撤掉转发。"
     }
   }
 }

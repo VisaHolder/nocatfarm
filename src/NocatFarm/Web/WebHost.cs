@@ -38,6 +38,7 @@ public sealed class WebHost : IAsyncDisposable {
 	/// </summary>
 	private GlobalConfig _cfg => _mgr.Global;
 
+	/// <summary>Signed-in browsers: a hash of each one's token, and when it runs out. Kept on disk (see SaveSessions).</summary>
 	private readonly ConcurrentDictionary<string, DateTime> _sessions = new(StringComparer.Ordinal);
 	private readonly ConcurrentDictionary<string, (int Count, DateTime Until)> _failures = new(StringComparer.Ordinal);
 	private readonly DateTime _started = DateTime.UtcNow;
@@ -56,13 +57,65 @@ public sealed class WebHost : IAsyncDisposable {
 		_mgr = mgr;
 		_ = cfg;   // the bind address is read from the live config at StartAsync
 		Current = this;
+		LoadSessions();
 	}
 
 	/// <summary>The running dashboard, for the console's 'set WebPassword' - which has to sign browsers out too.</summary>
 	public static WebHost? Current { get; private set; }
 
 	/// <summary>Every browser signs in again. For a changed password, from wherever it was changed.</summary>
-	public void SignOutAll() => _sessions.Clear();
+	public void SignOutAll() {
+		_sessions.Clear();
+		SaveSessions();
+	}
+
+	// ── sessions that outlive a restart ──
+	//
+	// "Stay signed in for 7 days" meant until the next restart: sessions lived only in memory, so every restart, every
+	// update and every night's "Update by itself" sent every browser - a phone included - back to the password.
+	// Only a hash of each token is written, with a fingerprint of the password it was issued under: a password
+	// changed while the app was closed (in the config file) throws them all away.
+
+	private static string SessionsPath => Path.Combine(ConfigStore.ConfigDir, "state", "web-sessions.json");
+
+	private sealed record SavedSessions(string Key, Dictionary<string, long> Sessions);
+
+	private static string Hash(string text) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
+
+	private string PasswordKey => Hash("nocat.farm/" + _cfg.WebPassword);
+
+	private void LoadSessions() {
+		try {
+			if (string.IsNullOrEmpty(_cfg.WebPassword) || !File.Exists(SessionsPath)
+				|| (JsonSerializer.Deserialize<SavedSessions>(File.ReadAllText(SessionsPath)) is not { } saved) || (saved.Key != PasswordKey)) {
+				return;
+			}
+
+			foreach ((string hash, long ticks) in saved.Sessions) {
+				DateTime expires = new(ticks, DateTimeKind.Utc);
+
+				if (expires > DateTime.UtcNow) {
+					_sessions[hash] = expires;
+				}
+			}
+		} catch {
+			// everybody signs in again - nothing worse
+		}
+	}
+
+	private readonly Lock _sessionsFile = new();
+
+	private void SaveSessions() {
+		try {
+			lock (_sessionsFile) {
+				Directory.CreateDirectory(Path.GetDirectoryName(SessionsPath)!);
+				AtomicFile.Write(SessionsPath, JsonSerializer.Serialize(new SavedSessions(PasswordKey,
+					_sessions.Where(static kv => kv.Value > DateTime.UtcNow).ToDictionary(static kv => kv.Key, static kv => kv.Value.Ticks))));
+			}
+		} catch {
+			// they last until the next restart, then
+		}
+	}
 
 	public async Task<bool> StartAsync() {
 		try {
@@ -220,7 +273,7 @@ public sealed class WebHost : IAsyncDisposable {
 		string? token = ctx.Request.Headers.Authorization.FirstOrDefault()?.Replace("Bearer ", "", StringComparison.Ordinal)
 			?? ctx.Request.Cookies["nocatfarm"];
 
-		return !string.IsNullOrEmpty(token) && _sessions.TryGetValue(token, out DateTime expires) && (expires > DateTime.UtcNow);
+		return !string.IsNullOrEmpty(token) && _sessions.TryGetValue(Hash(token), out DateTime expires) && (expires > DateTime.UtcNow);
 	}
 
 	private bool TryLogin(HttpContext ctx, string password, out string token) {
@@ -261,7 +314,8 @@ public sealed class WebHost : IAsyncDisposable {
 	private string NewSession(HttpContext ctx) {
 		string token = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(24));
 		DateTime expires = DateTime.UtcNow.AddDays(Math.Clamp(_cfg.WebSessionDays, 1, 90));
-		_sessions[token] = expires;
+		_sessions[Hash(token)] = expires;
+		SaveSessions();
 
 		ctx.Response.Cookies.Append("nocatfarm", token, new CookieOptions {
 			HttpOnly = true,
@@ -600,7 +654,7 @@ public sealed class WebHost : IAsyncDisposable {
 			string? fresh = null;
 
 			if (passwordChanged) {
-				_sessions.Clear();
+				SignOutAll();
 				fresh = string.IsNullOrEmpty(body.WebPassword) ? null : NewSession(ctx);
 				Log.Info(new Said("dashboard password changed - every other browser has to sign in again"));
 			}
@@ -906,8 +960,10 @@ public sealed class WebHost : IAsyncDisposable {
 
 			return Results.Json(new {
 				l.Local, l.Home, l.OpenAtHome, l.HasPassword, l.ListensBeyondThisPc, l.Outside, l.FirewallBlocks,
+				RemoteOn = Live.Global.WebRemoteAccess, RemoteProblem = Core.RemoteAccess.Problem,
 				OnThisPc = ctx.Connection.RemoteIpAddress is { } ip && System.Net.IPAddress.IsLoopback(ip),
-				Qr = scan == null ? null : Core.QrPicture.Svg(scan)
+				Qr = scan == null ? null : Core.QrPicture.Svg(scan),
+				QrOutside = l.OpenAtHome && (l.Outside != null) ? Core.QrPicture.Svg(l.Outside) : null
 			});
 		}));
 

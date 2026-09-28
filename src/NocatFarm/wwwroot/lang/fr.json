@@ -1574,13 +1574,11 @@
     "Then your phone opens:": "Ensuite votre téléphone ouvre :",
     "From outside your home:": "Depuis l'extérieur :",
     "anyone with it and the password controls every account.": "quiconque l'a avec le mot de passe contrôle tous les comptes.",
-    "From outside your home, forward the port on your router to this PC and put your address in Public address.": "Depuis l'extérieur, redirigez le port de votre box vers ce PC et mettez votre adresse dans Adresse publique.",
     "Take me there": "M'y emmener",
     "Open the dashboard on your phone": "Ouvrir le tableau de bord sur le téléphone",
     "On your phone, on the same wifi:": "Sur le téléphone, sur le même wifi :",
     "Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.": "Pas encore ouvert aux autres appareils. Sur le PC : Paramètres, Tableau de bord, Afficher les options avancées - définissez un mot de passe et mettez 0.0.0.0 dans Écouter sur, puis redémarrez.",
     "From anywhere:": "De partout :",
-    "From outside your home: not set up (Public address, in the same place).": "Depuis l'extérieur : pas configuré (Adresse publique, au même endroit).",
     "On the PC itself:": "Sur le PC lui-même :",
     "Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.": "Utilisez le tableau de bord depuis votre téléphone ou un autre PC sur le même wifi - un QR code à scanner, ou les deux réglages qui l'ouvrent.",
     "done with {0}'s achievements for now - moving on": "fini avec les succès de {0} pour l'instant - au suivant",
@@ -1666,7 +1664,22 @@
     "Allow through Windows Firewall": "Autoriser dans le pare-feu Windows",
     "Press it on the PC nocat.farm runs on.": "Appuyez dessus sur le PC où tourne nocat.farm.",
     "Check the Windows prompt…": "Regardez la fenêtre de Windows…",
-    "Done - your phone can open it now.": "C'est fait - votre téléphone peut l'ouvrir maintenant."
+    "Done - your phone can open it now.": "C'est fait - votre téléphone peut l'ouvrir maintenant.",
+    "From anywhere: not set up - on the PC, turn on Open from anywhere (Settings, Dashboard, Show advanced).": "De partout : pas configuré - sur le PC, activez « Ouvrir de partout » (Paramètres, Tableau de bord, Afficher les avancés).",
+    "From anywhere: asking your router to forward the port...": "De partout : demande au routeur de rediriger le port...",
+    "From anywhere: turn on Open from anywhere - your router forwards the port, like Jellyfin.": "De partout : activez « Ouvrir de partout » - votre routeur redirige le port, comme pour Jellyfin.",
+    "needs a dashboard password of at least {0} characters first - anyone on the internet can try it": "il faut d'abord un mot de passe du tableau de bord d'au moins {0} caractères - n'importe qui sur internet peut l'essayer",
+    "needs 0.0.0.0 in Listen on (and a restart) first": "il faut d'abord 0.0.0.0 dans « Écouter sur » (et un redémarrage)",
+    "open from anywhere: {0}": "ouvrir de partout : {0}",
+    "your router didn't answer - turn on UPnP in its settings, or forward port {0} to this PC by hand": "votre routeur n'a pas répondu - activez l'UPnP dans ses paramètres, ou redirigez le port {0} vers ce PC à la main",
+    "your router refused to forward port {0} ({1}) - forward it to this PC by hand in the router's settings": "votre routeur a refusé de rediriger le port {0} ({1}) - redirigez-le vers ce PC à la main dans ses paramètres",
+    "your internet connection is shared with other homes (the provider's address {0}), so nothing from outside can reach this PC": "votre connexion internet est partagée avec d'autres foyers (adresse du fournisseur {0}), donc rien de l'extérieur ne peut atteindre ce PC",
+    "your router didn't say its internet address": "votre routeur n'a pas donné son adresse internet",
+    "open from anywhere: your router forwards port {0} to this PC - the dashboard opens at {1} from anywhere (sign in with the dashboard password)": "ouvrir de partout : votre routeur redirige le port {0} vers ce PC - le tableau de bord s'ouvre à {1} de partout (connectez-vous avec son mot de passe)",
+    "open from anywhere: off - your router no longer forwards port {0}": "ouvrir de partout : désactivé - votre routeur ne redirige plus le port {0}",
+    "open from anywhere: off, but the router didn't take the forward away ({0}) - remove it in the router's settings": "ouvrir de partout : désactivé, mais le routeur n'a pas retiré la redirection ({0}) - retirez-la dans ses paramètres",
+    "your router is behind another router ({0}) - forward port {1} on that one too, or ask whoever runs it": "votre routeur est derrière un autre routeur ({0}) - redirigez aussi le port {1} sur celui-là, ou demandez à qui le gère",
+    "From anywhere - scan this on mobile data, away from your wifi:": "De partout - scannez-le en données mobiles, hors de votre wifi :"
   },
   "settings": {
     "WebEnabled": {
@@ -2581,7 +2594,7 @@
     },
     "WebPublicAddress": {
       "label": "Adresse publique",
-      "tip": "Votre adresse depuis l'extérieur - votre adresse Internet ou un nom comme monnom.duckdns.org - une fois le port du tableau de bord redirigé vers ce PC sur votre box. La commande dashboard et /dashboard sur Telegram l'affichent. Quiconque l'a avec le mot de passe contrôle tous les comptes, ne la partagez qu'avec des gens de confiance."
+      "tip": "Seulement si vous avez redirigé le port à la main ou utilisez un nom comme myname.duckdns.org : l'adresse à donner pour le tableau de bord hors de chez vous. Laissez-la vide avec « Ouvrir de partout » activé - il trouve votre adresse tout seul."
     },
     "BoostWeight": {
       "label": "Mode humain : poids du jeu chassé",
@@ -2623,6 +2636,10 @@
     "SendInstalls": {
       "label": "Envoyer la progression de l'installation",
       "tip": "Quand une mise à jour s'installe : téléchargée et en cours d'installation, puis installée avec la nouvelle version et ses nouveautés - ou qu'elle a échoué ou a été annulée, et pourquoi. Désactivé tant que vous ne l'activez pas."
+    },
+    "WebRemoteAccess": {
+      "label": "Ouvrir de partout",
+      "tip": "Comme Jellyfin : demande à votre routeur de rediriger le port du tableau de bord vers ce PC (UPnP), pour qu'il s'ouvre de partout à votre adresse internet - /dashboard sur Telegram et Discord donne le lien. Il faut un mot de passe d'au moins 12 caractères et 0.0.0.0 dans « Écouter sur ». N'importe qui sur internet peut atteindre la page de connexion, et cinq mauvais mots de passe le bloquent une heure. Désactiver retire la redirection."
     }
   }
 }

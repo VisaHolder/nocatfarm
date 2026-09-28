@@ -29,7 +29,7 @@ public static class DashboardLinks {
 		List<string> home = oneAddress ? [$"http://{host}:{port}/"] : [.. HomeAddresses().Select(ip => $"http://{ip}:{port}/")];
 
 		return new Links($"http://127.0.0.1:{port}/", home, hasPassword && (anyAddress || oneAddress), hasPassword, anyAddress || oneAddress,
-			Outside(g.WebPublicAddress, port),
+			Outside(g.WebPublicAddress, port) ?? RemoteAccess.Link,
 			OperatingSystem.IsWindows() && !Platform.IsLoopback(g.WebHost ?? "") && (Windows.Firewall.AllowsPort(port) == false));
 	}
 
@@ -113,7 +113,7 @@ public static class DashboardLinks {
 			? l.OpenAtHome
 				? $"  from anywhere:   {l.Outside}   (anyone with this and the password controls every account)"
 				: $"  from anywhere:   {l.Outside}   (works once it's open to other devices - see above)"
-			: "  from anywhere:   not set up - forward the port on your router to this PC and put your address in Public address");
+			: $"  from anywhere:   {(RemoteAccess.Problem is { } why ? "not working - " + why : "not set up - turn on Open from anywhere (Settings > Dashboard, Show advanced)")}");
 
 		return string.Join(Environment.NewLine, lines);
 	}

@@ -1574,13 +1574,11 @@
     "Then your phone opens:": "Sonra telefonun şunu açar:",
     "From outside your home:": "Evin dışından:",
     "anyone with it and the password controls every account.": "bunu ve şifreyi bilen herkes tüm hesapları yönetir.",
-    "From outside your home, forward the port on your router to this PC and put your address in Public address.": "Evin dışından girmek için modemde portu bu bilgisayara yönlendir ve adresini Genel adres'e yaz.",
     "Take me there": "Beni oraya götür",
     "Open the dashboard on your phone": "Paneli telefonda aç",
     "On your phone, on the same wifi:": "Aynı wifi'deki telefonda:",
     "Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.": "Henüz diğer cihazlara açık değil. Bilgisayarda: Ayarlar, Panel, Gelişmişleri göster - panel şifresi belirle ve Dinleme adresine 0.0.0.0 yaz, sonra yeniden başlat.",
     "From anywhere:": "Her yerden:",
-    "From outside your home: not set up (Public address, in the same place).": "Evin dışından: ayarlanmamış (Genel adres, aynı yerde).",
     "On the PC itself:": "Bilgisayarın kendisinde:",
     "Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.": "Paneli aynı wifi'deki telefonundan ya da başka bir bilgisayardan kullan - taranacak bir QR kodu ya da onu açan iki ayar.",
     "done with {0}'s achievements for now - moving on": "{0} başarımları şimdilik bitti - sıradakine geçiliyor",
@@ -1666,7 +1664,22 @@
     "Allow through Windows Firewall": "Windows Güvenlik Duvarı'nda izin ver",
     "Press it on the PC nocat.farm runs on.": "nocat.farm'ın çalıştığı bilgisayarda bas.",
     "Check the Windows prompt…": "Windows onay penceresine bak…",
-    "Done - your phone can open it now.": "Tamam - telefonun artık açabilir."
+    "Done - your phone can open it now.": "Tamam - telefonun artık açabilir.",
+    "From anywhere: not set up - on the PC, turn on Open from anywhere (Settings, Dashboard, Show advanced).": "Her yerden: ayarlı değil - bilgisayarda \"Her yerden aç\"ı aç (Ayarlar, Panel, Gelişmişi göster).",
+    "From anywhere: asking your router to forward the port...": "Her yerden: yönlendiriciden portu yönlendirmesi isteniyor...",
+    "From anywhere: turn on Open from anywhere - your router forwards the port, like Jellyfin.": "Her yerden: \"Her yerden aç\"ı aç - yönlendiricin portu Jellyfin'deki gibi yönlendirir.",
+    "needs a dashboard password of at least {0} characters first - anyone on the internet can try it": "önce en az {0} karakterlik bir panel şifresi gerekiyor - internetteki herkes deneyebilir",
+    "needs 0.0.0.0 in Listen on (and a restart) first": "önce \"Dinlenen adres\"te 0.0.0.0 (ve yeniden başlatma) gerekiyor",
+    "open from anywhere: {0}": "her yerden aç: {0}",
+    "your router didn't answer - turn on UPnP in its settings, or forward port {0} to this PC by hand": "yönlendirici yanıt vermedi - ayarlarından UPnP'yi aç ya da {0} portunu bu bilgisayara elle yönlendir",
+    "your router refused to forward port {0} ({1}) - forward it to this PC by hand in the router's settings": "yönlendirici {0} portunu yönlendirmeyi reddetti ({1}) - yönlendirici ayarlarından bu bilgisayara elle yönlendir",
+    "your internet connection is shared with other homes (the provider's address {0}), so nothing from outside can reach this PC": "internet bağlantın başka evlerle paylaşılıyor (sağlayıcının adresi {0}), bu yüzden dışarıdan bu bilgisayara ulaşılamaz",
+    "your router didn't say its internet address": "yönlendirici internet adresini söylemedi",
+    "open from anywhere: your router forwards port {0} to this PC - the dashboard opens at {1} from anywhere (sign in with the dashboard password)": "her yerden aç: yönlendirici {0} portunu bu bilgisayara yönlendiriyor - panel her yerden {1} adresinde açılır (panel şifresiyle giriş yap)",
+    "open from anywhere: off - your router no longer forwards port {0}": "her yerden aç: kapalı - yönlendirici artık {0} portunu yönlendirmiyor",
+    "open from anywhere: off, but the router didn't take the forward away ({0}) - remove it in the router's settings": "her yerden aç: kapalı ama yönlendirici yönlendirmeyi kaldırmadı ({0}) - yönlendirici ayarlarından kaldır",
+    "your router is behind another router ({0}) - forward port {1} on that one too, or ask whoever runs it": "yönlendiricin başka bir yönlendiricinin arkasında ({0}) - {1} portunu onda da yönlendir ya da yöneten kişiye sor",
+    "From anywhere - scan this on mobile data, away from your wifi:": "Her yerden - bunu wifi yerine mobil veriyle tara:"
   },
   "settings": {
     "WebEnabled": {
@@ -2581,7 +2594,7 @@
     },
     "WebPublicAddress": {
       "label": "Genel adres",
-      "tip": "Evin dışından adresin - internet adresin ya da isim.duckdns.org gibi bir ad - panelin portunu modemde bu bilgisayara yönlendirdikten sonra. dashboard komutu ve Telegram'daki /dashboard bunu gösterir. Bunu ve şifreyi bilen herkes tüm hesapları yönetir, sadece güvendiğin kişilerle paylaş."
+      "tip": "Yalnızca portu elle yönlendirdiysen ya da myname.duckdns.org gibi bir ad kullanıyorsan: evin dışından panel için verilecek adres. \"Her yerden aç\" açıkken boş bırak - adresini kendisi bulur."
     },
     "BoostWeight": {
       "label": "İnsan modu: av oyununun ağırlığı",
@@ -2623,6 +2636,10 @@
     "SendInstalls": {
       "label": "Kurulum durumunu gönder",
       "tip": "Bir güncelleme kurulurken: indirildi ve kuruluyor, sonra yeni sürüm ve yenilikleriyle kuruldu - ya da başarısız oldu veya geri alındı ve nedeni. Sen açmadıkça kapalı."
+    },
+    "WebRemoteAccess": {
+      "label": "Her yerden aç",
+      "tip": "Jellyfin gibi: yönlendiriciden panelin portunu bu bilgisayara yönlendirmesini ister (UPnP), böylece internet adresinden her yerden açılır - bağlantıyı Telegram ve Discord'daki /dashboard verir. En az 12 karakterlik bir panel şifresi ve \"Dinlenen adres\"te 0.0.0.0 gerekir. Giriş sayfasına internetteki herkes ulaşabilir, beş yanlış şifre bir saat kilitler. Kapatmak yönlendirmeyi kaldırır."
     }
   }
 }

@@ -1574,13 +1574,11 @@
     "Then your phone opens:": "Потом телефон открывает:",
     "From outside your home:": "Снаружи дома:",
     "anyone with it and the password controls every account.": "у кого есть это и пароль, тот управляет всеми аккаунтами.",
-    "From outside your home, forward the port on your router to this PC and put your address in Public address.": "Чтобы заходить снаружи, пробросьте порт на роутере на этот компьютер и впишите адрес в «Публичный адрес».",
     "Take me there": "Перейти туда",
     "Open the dashboard on your phone": "Открыть панель на телефоне",
     "On your phone, on the same wifi:": "На телефоне в том же Wi-Fi:",
     "Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.": "Пока не открыта для других устройств. На компьютере: Настройки, Панель, Показать расширенные - задайте пароль панели и впишите 0.0.0.0 в «Слушать на», затем перезапустите.",
     "From anywhere:": "Откуда угодно:",
-    "From outside your home: not set up (Public address, in the same place).": "Снаружи дома: не настроено («Публичный адрес», там же).",
     "On the PC itself:": "На самом компьютере:",
     "Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.": "Пользуйтесь панелью с телефона или другого компьютера в том же Wi-Fi - QR-код для сканирования или две настройки, которые её открывают.",
     "done with {0}'s achievements for now - moving on": "с достижениями в {0} пока всё - дальше",
@@ -1666,7 +1664,22 @@
     "Allow through Windows Firewall": "Разрешить в брандмауэре Windows",
     "Press it on the PC nocat.farm runs on.": "Нажмите на ПК, где работает nocat.farm.",
     "Check the Windows prompt…": "Посмотрите на запрос Windows…",
-    "Done - your phone can open it now.": "Готово - теперь телефон может его открыть."
+    "Done - your phone can open it now.": "Готово - теперь телефон может его открыть.",
+    "From anywhere: not set up - on the PC, turn on Open from anywhere (Settings, Dashboard, Show advanced).": "Откуда угодно: не настроено - на ПК включите «Открывать откуда угодно» (Настройки, Панель, Показать дополнительные).",
+    "From anywhere: asking your router to forward the port...": "Откуда угодно: прошу роутер пробросить порт...",
+    "From anywhere: turn on Open from anywhere - your router forwards the port, like Jellyfin.": "Откуда угодно: включите «Открывать откуда угодно» - роутер пробросит порт, как для Jellyfin.",
+    "needs a dashboard password of at least {0} characters first - anyone on the internet can try it": "сначала нужен пароль панели не короче {0} символов - его может пробовать кто угодно в интернете",
+    "needs 0.0.0.0 in Listen on (and a restart) first": "сначала нужен 0.0.0.0 в «Слушать на» (и перезапуск)",
+    "open from anywhere: {0}": "открывать откуда угодно: {0}",
+    "your router didn't answer - turn on UPnP in its settings, or forward port {0} to this PC by hand": "роутер не ответил - включите UPnP в его настройках или пробросьте порт {0} на этот ПК вручную",
+    "your router refused to forward port {0} ({1}) - forward it to this PC by hand in the router's settings": "роутер отказался пробросить порт {0} ({1}) - пробросьте его на этот ПК вручную в настройках роутера",
+    "your internet connection is shared with other homes (the provider's address {0}), so nothing from outside can reach this PC": "ваше подключение делится с другими домами (адрес провайдера {0}), поэтому снаружи до этого ПК ничего не дойдёт",
+    "your router didn't say its internet address": "роутер не сообщил свой интернет-адрес",
+    "open from anywhere: your router forwards port {0} to this PC - the dashboard opens at {1} from anywhere (sign in with the dashboard password)": "открывать откуда угодно: роутер пробрасывает порт {0} на этот ПК - панель открывается откуда угодно по адресу {1} (войдите с паролем панели)",
+    "open from anywhere: off - your router no longer forwards port {0}": "открывать откуда угодно: выключено - роутер больше не пробрасывает порт {0}",
+    "open from anywhere: off, but the router didn't take the forward away ({0}) - remove it in the router's settings": "открывать откуда угодно: выключено, но роутер не убрал проброс ({0}) - удалите его в настройках роутера",
+    "your router is behind another router ({0}) - forward port {1} on that one too, or ask whoever runs it": "ваш роутер стоит за другим роутером ({0}) - пробросьте порт {1} и на нём или попросите того, кто им управляет",
+    "From anywhere - scan this on mobile data, away from your wifi:": "Откуда угодно - сканируйте через мобильный интернет, не по Wi-Fi:"
   },
   "settings": {
     "WebEnabled": {
@@ -2581,7 +2594,7 @@
     },
     "WebPublicAddress": {
       "label": "Публичный адрес",
-      "tip": "Ваш адрес снаружи дома - интернет-адрес или имя вроде myname.duckdns.org - после проброса порта панели на роутере на этот компьютер. Его показывают команда dashboard и /dashboard в Telegram. У кого есть он и пароль, тот управляет всеми аккаунтами, поэтому делитесь им только с теми, кому доверяете."
+      "tip": "Только если вы пробросили порт вручную или используете имя вроде myname.duckdns.org: адрес панели для доступа вне дома. С включённым «Открывать откуда угодно» оставьте пустым - адрес найдётся сам."
     },
     "BoostWeight": {
       "label": "Человеческий режим: вес игры для охоты",
@@ -2623,6 +2636,10 @@
     "SendInstalls": {
       "label": "Отправлять ход установки",
       "tip": "Когда ставится обновление: скачано и устанавливается, затем установлено - с новой версией и тем, что нового, - или что не получилось или было отменено, и почему. Выключено, пока вы не включите."
+    },
+    "WebRemoteAccess": {
+      "label": "Открывать откуда угодно",
+      "tip": "Как Jellyfin: просит роутер пробросить порт панели на этот ПК (UPnP), чтобы она открывалась откуда угодно по вашему интернет-адресу, - ссылку даёт /dashboard в Telegram и Discord. Нужен пароль панели не короче 12 символов и 0.0.0.0 в «Слушать на». Страница входа доступна любому в интернете, а пять неверных паролей блокируют на час. Выключение убирает проброс."
     }
   }
 }

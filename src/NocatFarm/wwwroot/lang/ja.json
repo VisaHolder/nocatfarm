@@ -1574,13 +1574,11 @@
     "Then your phone opens:": "そのあとスマホで開くのは:",
     "From outside your home:": "家の外から:",
     "anyone with it and the password controls every account.": "これとパスワードを知っている人は全アカウントを操作できます。",
-    "From outside your home, forward the port on your router to this PC and put your address in Public address.": "家の外から使うには、ルーターでポートをこの PC に転送し、「公開アドレス」にアドレスを入れてください。",
     "Take me there": "そこへ移動",
     "Open the dashboard on your phone": "ダッシュボードをスマホで開く",
     "On your phone, on the same wifi:": "同じ Wi-Fi のスマホで:",
     "Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.": "まだ他の端末には開いていません。PC で: 設定 → ダッシュボード → 詳細を表示 - パスワードを設定し、待ち受けアドレスに 0.0.0.0 を入れて再起動してください。",
     "From anywhere:": "どこからでも:",
-    "From outside your home: not set up (Public address, in the same place).": "家の外から: 未設定（同じ場所の「公開アドレス」）。",
     "On the PC itself:": "PC 本体で:",
     "Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.": "同じ Wi-Fi のスマホや別の PC からダッシュボードを使えます。読み取る QR コードか、開くための 2 つの設定を表示します。",
     "done with {0}'s achievements for now - moving on": "{0} の実績はいったん完了 - 次へ",
@@ -1666,7 +1664,22 @@
     "Allow through Windows Firewall": "Windows ファイアウォールで許可",
     "Press it on the PC nocat.farm runs on.": "nocat.farm が動いている PC で押してください。",
     "Check the Windows prompt…": "Windows の確認画面を見てください…",
-    "Done - your phone can open it now.": "完了 - スマホで開けるようになりました。"
+    "Done - your phone can open it now.": "完了 - スマホで開けるようになりました。",
+    "From anywhere: not set up - on the PC, turn on Open from anywhere (Settings, Dashboard, Show advanced).": "どこからでも: 未設定 - PC で「どこからでも開く」をオンに（設定、ダッシュボード、詳細を表示）。",
+    "From anywhere: asking your router to forward the port...": "どこからでも: ルーターにポート転送を依頼中...",
+    "From anywhere: turn on Open from anywhere - your router forwards the port, like Jellyfin.": "どこからでも: 「どこからでも開く」をオンに - Jellyfin と同じようにルーターがポートを転送します。",
+    "needs a dashboard password of at least {0} characters first - anyone on the internet can try it": "先に {0} 文字以上のダッシュボードのパスワードが必要です - インターネットの誰でも試せます",
+    "needs 0.0.0.0 in Listen on (and a restart) first": "先に「待ち受けアドレス」を 0.0.0.0 に（と再起動）",
+    "open from anywhere: {0}": "どこからでも開く: {0}",
+    "your router didn't answer - turn on UPnP in its settings, or forward port {0} to this PC by hand": "ルーターが応答しません - ルーターの設定で UPnP をオンにするか、ポート {0} を手動でこの PC に転送してください",
+    "your router refused to forward port {0} ({1}) - forward it to this PC by hand in the router's settings": "ルーターがポート {0} の転送を拒否しました（{1}）- ルーターの設定で手動でこの PC に転送してください",
+    "your internet connection is shared with other homes (the provider's address {0}), so nothing from outside can reach this PC": "インターネット接続がほかの家庭と共有されています（プロバイダーのアドレス {0}）。外からこの PC には届きません",
+    "your router didn't say its internet address": "ルーターがインターネットのアドレスを返しませんでした",
+    "open from anywhere: your router forwards port {0} to this PC - the dashboard opens at {1} from anywhere (sign in with the dashboard password)": "どこからでも開く: ルーターがポート {0} をこの PC に転送しています - ダッシュボードはどこからでも {1} で開けます（ダッシュボードのパスワードでサインイン）",
+    "open from anywhere: off - your router no longer forwards port {0}": "どこからでも開く: オフ - ルーターはもうポート {0} を転送しません",
+    "open from anywhere: off, but the router didn't take the forward away ({0}) - remove it in the router's settings": "どこからでも開く: オフ。ただしルーターが転送を消しませんでした（{0}）- ルーターの設定で削除してください",
+    "your router is behind another router ({0}) - forward port {1} on that one too, or ask whoever runs it": "ルーターが別のルーターの後ろにあります（{0}）- そちらでもポート {1} を転送するか、管理している人に頼んでください",
+    "From anywhere - scan this on mobile data, away from your wifi:": "どこからでも - Wi-Fi ではなくモバイル通信でスキャン:"
   },
   "settings": {
     "WebEnabled": {
@@ -2581,7 +2594,7 @@
     },
     "WebPublicAddress": {
       "label": "公開アドレス",
-      "tip": "家の外からのアドレス。インターネットのアドレスか myname.duckdns.org のような名前で、ルーターでダッシュボードのポートをこの PC に転送したあとに使います。dashboard コマンドと Telegram の /dashboard に表示されます。これとパスワードを知っている人は全アカウントを操作できるので、信頼できる人にだけ教えてください。"
+      "tip": "ポートを手動で転送した場合や myname.duckdns.org のような名前を使う場合のみ：外からダッシュボードに使うアドレス。「どこからでも開く」がオンなら空のままで、アドレスは自動で見つけます。"
     },
     "BoostWeight": {
       "label": "人間モード: 狙うゲームの重み",
@@ -2623,6 +2636,10 @@
     "SendInstalls": {
       "label": "インストールの進み具合を送る",
       "tip": "アップデートのインストール時: ダウンロード完了とインストール開始、次に新しいバージョンと新機能つきで完了 - または失敗・取り消しとその理由。オンにしない限りオフです。"
+    },
+    "WebRemoteAccess": {
+      "label": "どこからでも開く",
+      "tip": "Jellyfin と同じく、ルーターにダッシュボードのポートをこの PC へ転送してもらい（UPnP）、インターネットのアドレスでどこからでも開けるようにします。リンクは Telegram と Discord の /dashboard で。12 文字以上のダッシュボードのパスワードと「待ち受けアドレス」の 0.0.0.0 が必要です。サインイン画面にはインターネットの誰でも届き、5 回間違えると 1 時間締め出されます。オフにすると転送を消します。"
     }
   }
 }
