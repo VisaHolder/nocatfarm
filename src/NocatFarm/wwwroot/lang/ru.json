@@ -1564,7 +1564,37 @@
     "Updates & plugins": "Обновления и плагины",
     "Badges, boosters & selling": "Значки, наборы и продажа",
     "Inventory & bans": "Инвентарь и баны",
-    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "Пока nocat.farm открыт, ваш Discord показывает Playing nocat.farm, как игру. Это можно изменить в любой момент в разделе Настройки, Профиль Discord."
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "Пока nocat.farm открыт, ваш Discord показывает Playing nocat.farm, как игру. Это можно изменить в любой момент в разделе Настройки, Профиль Discord.",
+    "Trades & items": "Обмены и предметы",
+    "Steam Guard": "Steam Guard",
+    "Free stuff & keys": "Бесплатное и ключи",
+    "Profile & info": "Профиль и сведения",
+    "The app": "Приложение",
+    "Open on your phone": "Открыть на телефоне",
+    "Could not read the dashboard address": "Не удалось прочитать адрес панели",
+    "Scan this with your phone's camera while it is on the same wifi, then sign in with the dashboard password.": "Отсканируйте это камерой телефона, подключённого к тому же Wi-Fi, и войдите с паролем панели.",
+    "Your phone can't open it yet - only this PC can. Two settings open it to your other devices:": "Телефон пока не может её открыть - только этот компьютер. Две настройки откроют её для других устройств:",
+    "Set a Dashboard password, so nobody else on your wifi can control your accounts.": "Задайте пароль панели, чтобы никто другой в вашем Wi-Fi не управлял аккаунтами.",
+    "Put 0.0.0.0 in Listen on.": "Впишите 0.0.0.0 в «Слушать на».",
+    "Save, then restart nocat.farm (type restart, or quit and open it again).": "Сохраните и перезапустите nocat.farm (введите restart или закройте и откройте снова).",
+    "Then your phone opens:": "Потом телефон открывает:",
+    "From outside your home:": "Снаружи дома:",
+    "anyone with it and the password controls every account.": "у кого есть это и пароль, тот управляет всеми аккаунтами.",
+    "From outside your home, forward the port on your router to this PC and put your address in Public address.": "Чтобы заходить снаружи, пробросьте порт на роутере на этот компьютер и впишите адрес в «Публичный адрес».",
+    "Take me there": "Перейти туда",
+    "Open the dashboard on your phone": "Открыть панель на телефоне",
+    "On your phone, on the same wifi:": "На телефоне в том же Wi-Fi:",
+    "Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.": "Пока не открыта для других устройств. На компьютере: Настройки, Панель, Показать расширенные - задайте пароль панели и впишите 0.0.0.0 в «Слушать на», затем перезапустите.",
+    "From anywhere:": "Откуда угодно:",
+    "From outside your home: not set up (Public address, in the same place).": "Снаружи дома: не настроено («Публичный адрес», там же).",
+    "On the PC itself:": "На самом компьютере:",
+    "Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.": "Пользуйтесь панелью с телефона или другого компьютера в том же Wi-Fi - QR-код для сканирования или две настройки, которые её открывают.",
+    "done with {0}'s achievements for now - moving on": "с достижениями в {0} пока всё - дальше",
+    "achievement boost - {0} joins the games it plays, for about {1} ({2}/{3} through the list)": "охота за достижениями - {0} добавлена к играм, в которые он играет, примерно на {1} ({2}/{3} по списку)",
+    "achievement boost - {0} joins the games it plays, for about {1}": "охота за достижениями - {0} добавлена к играм, в которые он играет, примерно на {1}",
+    "{0} is in its games - {1} of about {2} played": "{0} среди его игр - сыграно {1} из примерно {2}",
+    "Discord closed the connection ({0}) - trying again in a minute": "Discord закрыл соединение ({0}) - новая попытка через минуту",
+    "Discord didn't show the card: {0}": "Discord не показал карточку: {0}"
   },
   "settings": {
     "WebEnabled": {
@@ -2062,7 +2092,7 @@
       "tip": "Через сколько минут после того, как вы закончили играть, этот аккаунт продолжает с того же места."
     },
     "AchievementBoost": {
-      "tip": "Сам охотится за достижениями в нескольких играх, по одной игре за раз. «Выбранные игры» берёт список ниже. «Все одиночные» выбирает из библиотеки одиночные игры с достижениями, запущенные или нет (включите «Охотиться только в играх, где уже играли», чтобы пропустить остальные). На аккаунте в человеческом режиме охота — это время от времени одна сессия его обычного дня, а не лишняя игра.",
+      "tip": "Сам охотится за достижениями в нескольких играх, по одной игре за раз. «Выбранные игры» берёт список ниже. «Все одиночные» выбирает из библиотеки одиночные игры с достижениями, запущенные или нет (включите «Охотиться только в играх, где уже играли», чтобы пропустить остальные). На аккаунте в человеческом режиме игра, в которой идёт охота, добавляется к его играм как побочная.",
       "label": "Разгон достижений",
       "choices": "0 выключено | 1 выбранные игры | 2 все одиночные"
     },
@@ -2170,15 +2200,7 @@
     },
     "BoostSessionHours": {
       "label": "Играть в каждую примерно",
-      "tip": "Сколько часов разгон играет в одну игру, прежде чем перейти к следующей."
-    },
-    "MaxBoostGamesInARow": {
-      "label": "Человеческий режим: подряд не больше",
-      "tip": "Только в человеческом режиме. Сколько разгонов достижений подряд он делает, прежде чем на время вернуться к обычному набору игр."
-    },
-    "BoostRestMinutesHuman": {
-      "label": "Человеческий режим: перерыв по расписанию между охотами",
-      "tip": "Только в человеческом режиме. Сколько минут обычной игры проходит между разгонами достижений, чтобы охота никогда не занимала весь день."
+      "tip": "Сколько часов разгон играет в одну игру, прежде чем перейти к следующей. На аккаунте в человеческом режиме это игровое время, распределённое по обычным сессиям."
     },
     "BoostMinReviews": {
       "label": "Охотиться только за играми, у которых не меньше",
@@ -2484,6 +2506,14 @@
     "DiscordLogColour": {
       "label": "Цвет Discord в журнале",
       "tip": "Цвет «discord» в журнале - карточка Discord и уведомления Discord - как цвет аккаунта."
+    },
+    "WebPublicAddress": {
+      "label": "Публичный адрес",
+      "tip": "Ваш адрес снаружи дома - интернет-адрес или имя вроде myname.duckdns.org - после проброса порта панели на роутере на этот компьютер. Его показывают команда dashboard и /dashboard в Telegram. У кого есть он и пароль, тот управляет всеми аккаунтами, поэтому делитесь им только с теми, кому доверяете."
+    },
+    "BoostWeight": {
+      "label": "Человеческий режим: вес игры для охоты",
+      "tip": "Только в человеческом режиме. Игра, в которой идёт охота, добавляется к играм, в которые он играет, и это - как часто она выпадает, вес как в «Игры и как часто». Играется обычными сессиями, с перерывами и сном, и никогда не обрывает другую игру."
     }
   }
 }

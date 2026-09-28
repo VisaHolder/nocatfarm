@@ -669,10 +669,17 @@ achievements over time* on too.
 - *all single-player* - finds single-player games with achievements in the library, played or not (never DLC, demos
   or games with few reviews). Turn on *Only hunt games you've played* to skip the ones the account never launched.
 
-One game at a time, about 2 hours each (*Play each for about*). On a human-mode account a hunt is one of its normal
-sittings, not extra play: it counts toward the day's hours, and between hunts it rests (*Human mode: weighted gap between boosts*, about
-2 hours) and plays its weighted games as usual. At first it may say "the store hasn't answered yet" for many games -
-it looks each one up slowly so Steam doesn't block it, and starts hunting as soon as it has some. `hunt myaccount` shows what it would play next and why other games were ruled out.
+One game at a time, about 2 hours each (*Play each for about*), and it stops at your *Finish no more than* limit
+(only a `grind` you type goes to 100%). Games with nothing left to earn are skipped, and it moves on once a game is
+done.
+
+On a **human-mode account** the hunter never takes the account over. The game it's hunting joins the games the
+account plays, like one more side game in *Games and how often*, at *Human mode: hunt game's weight*. It's played in
+ordinary sittings, with breaks and bedtime, and never cuts another game short. After about *Play each for about* of
+playing (spread over those sittings), the next game on the list takes its place.
+
+At first it may say "the store hasn't answered yet" for many games - it looks each one up slowly so Steam doesn't
+block it, and starts as soon as it has some. `hunt myaccount` shows what it would play next and why other games were ruled out.
 
 **Steam Families** (*Include family-shared games*, off) lets the hunter use games shared with the account, and
 hands a game back when someone in the family starts it (*Give a shared game back when they want it*, on).
@@ -832,115 +839,10 @@ Points show as pending first while rep4rep checks the comment landed.
 listed by `plugins`. The dashboard's Console tab runs the same commands with the same output. Commands that show
 `<account|all>` also take `all`. Aliases are shown after the name.
 
-<details>
-<summary><b>Every command</b> - click to open</summary>
-
-<br>
-
-**Accounts**
-
-| Command | What it does |
-|---|---|
-| `status [account]` · `s` `bots` | What everything is doing right now. |
-| `start <account\|all>` | Sign an account in. |
-| `stop <account\|all>` | Sign an account out. It stays configured. |
-| `restart <account\|all>` | Stop, then start again. |
-| `pause <account\|all> [minutes]` | Stay signed in but stop playing, farming and commenting. With minutes, it carries on by itself. |
-| `resume <account\|all>` | Undo a pause. |
-| `add <name> <steamLogin\|qr>` | Add an account. Asks for the password once - or `qr` signs in by scanning a code with the Steam app. |
-| `remove <account>` · `delete` | Delete an account and its login token. |
-| `enable <account>` · `disable <account>` | Let it sign in again, or keep it configured but never sign in. |
-| `selfcheck [account]` · `tells` | How real a human-mode account looks from outside, out of 100, with the setting that fixes each problem. |
-| `redeem [account] <key\|file.txt> [key...]` | Activate product keys. More than five queue up. With an account, only that account gets them. |
-| `keys [list\|clear]` | Keys still waiting to be activated. |
-| `2fa [account]` · `guard` | An account's Steam Guard code - or every account's. Needs its authenticator here. |
-| `confirmations [account]` | What's waiting to be confirmed (trades, listings, account changes), numbered. |
-| `confirm <account> <number\|all>` · `deny <account> <number\|all>` | Confirm or deny what `confirmations` listed. |
-| `bans [account\|all]` | Look up bans now. |
-| `level [account\|all]` | Steam level. |
-| `balance [account\|all]` · `wallet` | Wallet balance, and anything pending. |
-| `points [account\|all]` | Points Shop points. |
-| `joingroup <account\|all> <group link or name>` | Join an open Steam group now. |
-| `privacy <account> [public\|friends\|private\|part=level ...]` | See or set profile privacy. Parts: profile, games, playtime, friends, inventory, gifts, comments. |
-
-**Playing**
-
-| Command | What it does |
-|---|---|
-| `play <account> <appIDs\|none>` | Set the games it idles. |
-| `hours <account>` | How its hour targets are going. |
-| `grind <account\|all> <appID> <hours>` · `grind <account> off` | One game for a set number of hours, then back to normal. Outranks human mode while it runs. |
-| `human [account] [week\|reroll]` | What human mode is doing today; `week` for the next seven days; `reroll` for a fresh plan today. |
-| `wake <account>` · `wakeup` `skipsleep` | Wake a sleeping human-mode account and start its day now. |
-| `name <account> [text\|off]` | Custom game name. No text shows the current one. |
-| `persona <account> <state>` | What friends see: online, offline, busy, away, snooze, looking to trade, looking to play, invisible - or its number, 0-7. |
-| `nickname <account> <profile name>` | Change the profile name everybody sees. |
-| `cheevo <account> <appID> [list\|unlock\|lock] [name\|all]` · `ach` `achievements` | See, unlock or re-lock achievements. |
-| `hunt [account]` | What the achievement hunter would play next, and what it ruled out. |
-
-**Trading cards and items**
-
-| Command | What it does |
-|---|---|
-| `cards [account]` | Cards left to farm, and about how long it'll take. |
-| `drops <account> [appID\|next] [count\|all]` · `drops <account> off` | Farm this game's cards first. |
-| `send <account\|all> [to <account>] [types]` · `loot` | Send items to the account under Trades, or `to` another of your accounts. Types: cards, foils, backgrounds, emoticons, boosters, gems, all. |
-| `trade accept\|decline <account> <number\|all>` | Answer a trade offer by its number. |
-| `trade cancel <account> <offer id\|all>` | Take back offers this account sent that haven't gone through. |
-| `offers [account\|all]` | Live trade offers: waiting, sent, stuck on a confirmation or trade hold. |
-| `match [do]` | Card swaps between your own accounts that help both finish sets. `do` sends them. |
-| `fairswap <account> <offerID>` | Is this offer a fair card swap? Only looks. |
-| `value [account\|all] [refresh]` · `inv` `inventory` | What each inventory is worth. |
-| `sell <account> [preview\|do\|relist] [count]` | Sell spare cards on the market. |
-| `levelup <account> <level>` · `lvlup` | What reaching a Steam level would cost. |
-| `booster [account\|all]` · `booster <account> <appIDs>` · `boosters` | Gems and booster packs; with appIDs, make them now. |
-| `queue [account\|all]` | Go through today's discovery queue now. |
-| `freeitems [account\|all]` | Look for free event items now. |
-
-**rep4rep** (alias `r4r`; bare for a summary)
-
-| Command | What it does |
-|---|---|
-| `rep4rep status` | Per account: count, cap, last post, state. |
-| `rep4rep points` | Points to spend, and points being checked. |
-| `rep4rep profiles` | Steam profiles registered with rep4rep. |
-| `rep4rep tasks <account>` | Comments waiting for one account. |
-| `rep4rep now <account\|all>` | Post now (never past the cap). |
-| `rep4rep pause\|resume <account\|all>` | Hold commenting, or let it go again. |
-| `rep4rep clear <account\|all>` | Release a 24-hour block early. |
-| `rep4rep rest <account\|all>` | A full day off, then a clean start. |
-
-To turn rep4rep on or off for an account: `set <account> Rep4Rep true|false`.
-
-**Settings**
-
-| Command | What it does |
-|---|---|
-| `config [account] [all]` | Show settings and their values. `all` includes the advanced ones. |
-| `set [account] <setting> <value>` | Change a setting. Without an account it changes a global one. |
-| `import asf [path] [force]` | Bring accounts across from ArchiSteamFarm. |
-| `reload` | Re-read the config files from disk. |
-
-**Everything else**
-
-| Command | What it does |
-|---|---|
-| `log [count]` · `logs` | The last few log lines. |
-| `stats [hours]` | Each account's last 24 hours, then cards and comments by hour. |
-| `notify [test]` | What Discord and Telegram are set up to send; `test` sends a test message. |
-| `owns <appID\|name>` | Which accounts own a game, and their playtime. |
-| `addlicense <account\|all> <IDs>` | Add free licences: a subID, or `a/<appID>` for a free app. |
-| `answer <text>` | Answer a Steam Guard code or password prompt. |
-| `plugins` | Loaded plugins and the commands they added. |
-| `tutorial [topic]` · `guide` `setup` | Getting started, ticking off what's done. Topics: cards, human, free, trades, rep4rep, achievements, tray. |
-| `help [command\|setting]` · `?` `h` | This list, or what one command or setting does. |
-| `theme [dark\|light]` · `dark` `light` | Dashboard theme. |
-| `version` · `about` | Which version this is. |
-| `mini [on\|off]` | Mini mode on or off. |
-| `update [accept\|ignore]` | Check for a new version; `accept` installs it (Windows); `ignore` stops reminders until next launch. |
-| `exit` · `quit` `q` | Close nocat.farm. |
-
-</details>
+**[Every command, with what it does - one list](COMMANDS.md).** It's made from the app's own command list, so it
+always matches the version you have. It starts with every command at a glance, grouped: accounts, playing,
+trading cards, trades, Steam Guard, achievements, free stuff and keys, profile and info, rep4rep, settings and
+the app itself.
 
 ### Commands by Steam chat
 

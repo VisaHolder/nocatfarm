@@ -1797,7 +1797,18 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			.Where(w => !Bot.Cfg.BlacklistedGames.Contains(w.Game) && !Live.Global.GlobalBlacklistedGames.Contains(w.Game) && !Bot.Refunds.Holds(w.Game))
 			.ToList();
 
-		return playable.Count > 0 ? playable : weights;
+		List<(uint Game, int Weight)> list = playable.Count > 0 ? playable : weights;
+
+		// The game the achievement hunter is on joins the rotation as one more side game, at its own weight - played
+		// in ordinary sittings like any other, instead of the hunter taking the account over and cutting a sitting
+		// short. Last in the list, so it is never mistaken for the main game.
+		uint hunt = BotManager.ModuleOf<AchievementBoost>(Bot)?.HuntTarget ?? 0;
+
+		if ((hunt != 0) && (list.Count > 0) && !list.Exists(w => w.Game == hunt)) {
+			list = [.. list, (hunt, Math.Max(1, Bot.Cfg.BoostWeight))];
+		}
+
+		return list;
 	}
 
 	/// <summary>

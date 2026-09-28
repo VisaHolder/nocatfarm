@@ -20,6 +20,9 @@ public sealed class GlobalConfig {
 	public string WebHost { get; set; } = "127.0.0.1";
 	public int WebPort { get; set; } = 7242;
 	public string WebPassword { get; set; } = "";
+
+	/// <summary>The dashboard's address from outside the home (a forwarded port), for 'dashboard' and /dashboard to show.</summary>
+	public string WebPublicAddress { get; set; } = "";
 	// On by default. A brand new account only farms its cards until it is told what to play, and the dashboard
 	// is the only place with a form for that - so starting up and showing nothing but a console was the wrong
 	// first impression for the one screen people actually need.
@@ -341,8 +344,7 @@ public sealed class BotConfig {
 	public int AchievementBoost { get; set; }              // 0 off, 1 games you pick, 2 every single-player game
 	public List<uint> AchievementBoostGames { get; set; } = [];
 	public int BoostSessionHours { get; set; } = 2;
-	public int MaxBoostGamesInARow { get; set; } = 3;
-	public int BoostRestMinutesHuman { get; set; } = 120;
+	public int BoostWeight { get; set; } = 15;
 	public bool IncludeFamilyLibrary { get; set; }
 	public bool HoldNewFamilyGames { get; set; } = true;
 	public bool YieldToFamily { get; set; } = true;

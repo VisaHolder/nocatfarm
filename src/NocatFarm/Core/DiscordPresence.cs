@@ -42,6 +42,26 @@ public static class DiscordPresence {
 
 	// Whether the log has said the card is up, so it says so once per connection and once when it comes down.
 	private static bool _shown;
+
+	// The last reason Discord gave for not showing the card, so the same one isn't logged every few minutes.
+	private static string? _lastRefusal;
+
+	/// <summary>Discord's reason for refusing a SET_ACTIVITY, from its reply ({"evt":"ERROR","data":{"message":...}}), or null.</summary>
+	internal static string? Refusal(string reply) {
+		try {
+			using JsonDocument doc = JsonDocument.Parse(reply);
+
+			if (doc.RootElement.TryGetProperty("evt", out JsonElement evt) && (evt.GetString() == "ERROR")) {
+				return doc.RootElement.TryGetProperty("data", out JsonElement data) && data.TryGetProperty("message", out JsonElement m)
+					? m.GetString() ?? "no reason given"
+					: "no reason given";
+			}
+		} catch (JsonException) {
+			// Not an answer we can read - treat it as accepted, as before.
+		}
+
+		return null;
+	}
 	private static DateTime _sentAt = DateTime.MinValue;
 	private static readonly long StartedUnix = new DateTimeOffset(Process.GetCurrentProcess().StartTime.ToUniversalTime()).ToUnixTimeSeconds();
 
@@ -76,13 +96,31 @@ public static class DiscordPresence {
 				object? activity = Card();
 				string json = JsonSerializer.Serialize(activity);
 
-				// Discord allows a handful of updates a minute; only send what changed (and now and then anyway, so a
-				// Discord restart that kept the pipe picks it back up).
-				if ((json != _lastSent) || (DateTime.UtcNow - _sentAt > TimeSpan.FromMinutes(10))) {
+				// Discord allows a handful of updates a minute; only send what changed - and every few minutes anyway, so a
+				// card Discord dropped on its side (it can, after the PC sleeps or Discord reloads, with the pipe still
+				// open) comes back within minutes instead of staying gone.
+				if ((json != _lastSent) || (DateTime.UtcNow - _sentAt > TimeSpan.FromMinutes(3))) {
 					await SendAsync(1, new { cmd = "SET_ACTIVITY", args = new { pid = Environment.ProcessId, activity }, nonce = Guid.NewGuid().ToString() }).ConfigureAwait(false);
-					await ReadAsync().ConfigureAwait(false);
-					_lastSent = json;
+					string reply = await ReadAsync().ConfigureAwait(false);
 					_sentAt = DateTime.UtcNow;
+
+					// Discord answers every card - and says so when it won't show one. Ignoring that answer meant a
+					// refused card looked, from here, exactly like a card on your profile.
+					if (Refusal(reply) is { } why) {
+						if (why != _lastRefusal) {
+							_lastRefusal = why;
+							Log.Warn(new Said("Discord didn't show the card: {0}", why), "discord");
+						}
+
+						_lastSent = "";   // try again on a later pass, not every fifteen seconds (the 3-minute resend)
+
+						await Task.Delay(15_000).ConfigureAwait(false);
+
+						continue;
+					}
+
+					_lastRefusal = null;
+					_lastSent = json;
 
 					if (!_shown && (activity != null)) {
 						_shown = true;
@@ -92,9 +130,10 @@ public static class DiscordPresence {
 
 				await Task.Delay(15_000).ConfigureAwait(false);
 			} catch (Exception e) {
-				// Discord closed or restarted: start over on the next pass.
-				Log.Debug(new Said("discord: {0}", e.Message), "discord");
-				Disconnect();
+				// Discord closed or restarted (an update does it): start over on the next pass - quietly. "Rich Presence
+				// off/on" in the log is for when you switch it; Discord blinking isn't news, and it read as if you had.
+				Log.Debug(new Said("Discord closed the connection ({0}) - trying again in a minute", e.Message), "discord");
+				Disconnect(quietly: true);
 				await Task.Delay(60_000).ConfigureAwait(false);
 			}
 		}
@@ -343,12 +382,12 @@ public static class DiscordPresence {
 		}
 	}
 
-	private static void Disconnect() {
+	private static void Disconnect(bool quietly = false) {
 		if (_pipe == null) {
 			return;
 		}
 
-		if (_shown) {
+		if (_shown && !quietly) {
 			_shown = false;
 			Log.Info(new Said("Discord Rich Presence off"), "discord");
 		}

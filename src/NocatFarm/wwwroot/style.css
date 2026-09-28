@@ -106,6 +106,9 @@ h2 a:hover { color: var(--text); }
 .gate-card { width: 330px; display: grid; gap: 12px; }
 /* min(), not a fixed 520px: on a phone the card was wider than the screen and the page scrolled sideways. */
 .welcome-card { width: min(520px, 100%); }
+/* The phone QR code: white behind it, or phone cameras struggle with the dark theme. */
+.phoneqr { width: 220px; max-width: 100%; margin: var(--s3) auto; padding: var(--s2); background: #fff; border-radius: 6px; }
+.phoneqr svg { display: block; width: 100%; height: auto; }
 /* On its own on the welcome card the wordmark is a title, not a bar item: no divider line after it, and room below. */
 .welcome-card h1.wordmark { display: block; width: max-content; border-right: 0; padding-right: 0; margin-bottom: var(--s4); }
 .welcome-card h1.wordmark::after { inset: -2px; }

@@ -25,6 +25,7 @@
   <a href="#the-commands-youll-actually-use">Commands</a> ·
   <a href="#is-it-safe">Is it safe?</a> ·
   <a href="#faq">FAQ</a> ·
+  <a href="docs/COMMANDS.md">All commands</a> ·
   <a href="docs/GUIDE.md">Full guide</a>
 </p>
 
@@ -139,7 +140,8 @@ the [guide](docs/GUIDE.md#commands) shows how.)
 | `update accept` | Install the newest version and restart. |
 | `help` | Every command. `help <anything>` explains one command or setting. |
 
-Type `help` for every command - the [full guide](docs/GUIDE.md#commands) lists them all too.
+**[Every command, with what it does](docs/COMMANDS.md)** - all of them in one list. In the app, `help` shows the
+same list and `help <command>` explains one.
 
 ## Human mode
 
@@ -203,6 +205,7 @@ everything.
 ## More
 
 - **[The full guide](docs/GUIDE.md)** - a beginner's walkthrough, then every feature, command and setting.
+- **[Every command](docs/COMMANDS.md)** - all of them in one list, with what each does.
 - **[Write a plugin](PLUGINS.md)** - add your own commands and features in a few lines of C#.
 - **Build it yourself** - you need the [.NET 10 SDK](https://dotnet.microsoft.com/download), then:
 

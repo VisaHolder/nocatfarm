@@ -206,6 +206,7 @@ public static partial class Notifier {
 			("confirmations", new Said("What's waiting to be confirmed")),
 			("2fa", new Said("Steam Guard codes")),
 			("stats", new Said("Cards and comments by hour")),
+			("dashboard", new Said("Open the dashboard on your phone")),
 			("update", new Said("Check for an update")),
 			("help", new Said("Every command"))
 		];
@@ -251,6 +252,11 @@ public static partial class Notifier {
 					return;
 				case "status" when rest.Length == 0:
 					await PostTelegramAsync(StatusHtml(), ct).ConfigureAwait(false);
+
+					return;
+				// Links to tap, not a code block to copy from.
+				case "dashboard" or "web" or "link" when rest.Length == 0:
+					await PostTelegramAsync(DashboardHtml(), ct).ConfigureAwait(false);
 
 					return;
 				case "console":
@@ -338,6 +344,28 @@ public static partial class Notifier {
 	private static string Section(Said name) => $"<code>// {Html(name.ToString().ToUpperInvariant())}</code>";
 
 	/// <summary>/status: every account in a line, the last 24 hours, and the app itself - no emoji, the site bot's look.</summary>
+	/// <summary>The dashboard's links, tappable: on the same wifi, from anywhere, and on the PC itself.</summary>
+	private static string DashboardHtml() {
+		DashboardLinks.Links l = DashboardLinks.For(G);
+		StringBuilder sb = new();
+		static string A(string url) => $"<a href=\"{Html(url)}\">{Html(url)}</a>";
+
+		sb.AppendLine(Section(new Said("Dashboard")));
+
+		if (l.OpenAtHome && (l.Home.Count > 0)) {
+			sb.AppendLine($"◆ {Html(new Said("On your phone, on the same wifi:").ToString())} {A(l.Home[0])}");
+		} else {
+			sb.AppendLine($"◆ {Html(new Said("Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.").ToString())}");
+		}
+
+		sb.AppendLine(l.Outside != null
+			? $"◆ {Html(new Said("From anywhere:").ToString())} {A(l.Outside)}"
+			: $"◆ {Html(new Said("From outside your home: not set up (Public address, in the same place).").ToString())}");
+		sb.AppendLine($"◆ {Html(new Said("On the PC itself:").ToString())} {A(l.Local)}");
+
+		return sb.ToString();
+	}
+
 	private static string StatusHtml() {
 		StringBuilder sb = new();
 		DateTime now = DateTime.Now;
@@ -419,8 +447,13 @@ public static partial class Notifier {
 		Commands.GroupAccounts => new Said("Accounts"),
 		Commands.GroupPlaying => new Said("Playing"),
 		Commands.GroupCards => new Said("Trading cards"),
+		Commands.GroupTrades => new Said("Trades & items"),
+		Commands.GroupGuard => new Said("Steam Guard"),
+		Commands.GroupAchievements => new Said("Achievements"),
+		Commands.GroupFree => new Said("Free stuff & keys"),
+		Commands.GroupInfo => new Said("Profile & info"),
 		Commands.GroupRep4Rep => new Said("rep4rep"),
 		Commands.GroupSettings => new Said("Settings"),
-		_ => new Said("Other")
+		_ => new Said("The app")
 	};
 }

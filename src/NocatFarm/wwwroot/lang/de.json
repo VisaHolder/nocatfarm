@@ -1564,7 +1564,37 @@
     "Updates & plugins": "Updates & Plugins",
     "Badges, boosters & selling": "Abzeichen, Booster & Verkaufen",
     "Inventory & bans": "Inventar & Sperren",
-    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "Dein Discord zeigt Playing nocat.farm an, solange es offen ist, wie ein Spiel. Du kannst das jederzeit unter Einstellungen, Discord-Profil ändern."
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "Dein Discord zeigt Playing nocat.farm an, solange es offen ist, wie ein Spiel. Du kannst das jederzeit unter Einstellungen, Discord-Profil ändern.",
+    "Trades & items": "Handel & Gegenstände",
+    "Steam Guard": "Steam Guard",
+    "Free stuff & keys": "Gratis-Sachen & Keys",
+    "Profile & info": "Profil & Infos",
+    "The app": "Die App",
+    "Open on your phone": "Auf dem Handy öffnen",
+    "Could not read the dashboard address": "Die Adresse des Dashboards ließ sich nicht lesen",
+    "Scan this with your phone's camera while it is on the same wifi, then sign in with the dashboard password.": "Scanne das mit der Handykamera, während es im selben WLAN ist, und melde dich mit dem Dashboard-Passwort an.",
+    "Your phone can't open it yet - only this PC can. Two settings open it to your other devices:": "Dein Handy kann es noch nicht öffnen - nur dieser PC. Zwei Einstellungen öffnen es für deine anderen Geräte:",
+    "Set a Dashboard password, so nobody else on your wifi can control your accounts.": "Setz ein Dashboard-Passwort, damit niemand sonst in deinem WLAN deine Konten steuern kann.",
+    "Put 0.0.0.0 in Listen on.": "Trag 0.0.0.0 bei Lauscht auf ein.",
+    "Save, then restart nocat.farm (type restart, or quit and open it again).": "Speichern, dann nocat.farm neu starten (restart eintippen oder beenden und neu öffnen).",
+    "Then your phone opens:": "Dann öffnet dein Handy:",
+    "From outside your home:": "Von außerhalb deines Zuhauses:",
+    "anyone with it and the password controls every account.": "Wer das und das Passwort hat, steuert alle Konten.",
+    "From outside your home, forward the port on your router to this PC and put your address in Public address.": "Für den Zugriff von außerhalb leite den Port in deinem Router an diesen PC weiter und trag deine Adresse bei Öffentliche Adresse ein.",
+    "Take me there": "Hinbringen",
+    "Open the dashboard on your phone": "Das Dashboard auf dem Handy öffnen",
+    "On your phone, on the same wifi:": "Auf dem Handy, im selben WLAN:",
+    "Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.": "Noch nicht für andere Geräte offen. Am PC: Einstellungen, Dashboard, Erweitert anzeigen - Dashboard-Passwort setzen und 0.0.0.0 bei Lauscht auf eintragen, dann neu starten.",
+    "From anywhere:": "Von überall:",
+    "From outside your home: not set up (Public address, in the same place).": "Von außerhalb: nicht eingerichtet (Öffentliche Adresse, an derselben Stelle).",
+    "On the PC itself:": "Am PC selbst:",
+    "Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.": "Nutz das Dashboard vom Handy oder einem anderen PC im selben WLAN - ein QR-Code zum Scannen oder die zwei Einstellungen, die es öffnen.",
+    "done with {0}'s achievements for now - moving on": "mit den Erfolgen von {0} vorerst fertig - weiter zum nächsten",
+    "achievement boost - {0} joins the games it plays, for about {1} ({2}/{3} through the list)": "Erfolgsjagd - {0} kommt zu den Spielen, die es spielt, für etwa {1} ({2}/{3} der Liste)",
+    "achievement boost - {0} joins the games it plays, for about {1}": "Erfolgsjagd - {0} kommt zu den Spielen, die es spielt, für etwa {1}",
+    "{0} is in its games - {1} of about {2} played": "{0} ist bei seinen Spielen - {1} von etwa {2} gespielt",
+    "Discord closed the connection ({0}) - trying again in a minute": "Discord hat die Verbindung getrennt ({0}) - neuer Versuch in einer Minute",
+    "Discord didn't show the card: {0}": "Discord hat die Karte nicht angezeigt: {0}"
   },
   "settings": {
     "WebEnabled": {
@@ -2062,7 +2092,7 @@
       "tip": "Wie lange, nachdem du aufgehört hast zu spielen, bis dieses Konto dort weitermacht, wo es aufgehört hat, in Minuten."
     },
     "AchievementBoost": {
-      "tip": "Jagt selbstständig Erfolge in mehreren Spielen, immer ein Spiel nach dem anderen. „Spiele, die du auswählst“ nimmt die Liste unten. „Alle Einzelspieler“ nimmt Einzelspieler-Spiele mit Erfolgen aus deiner Bibliothek, gespielt oder nicht (schalte „Nur in gespielten Spielen jagen“ ein, um den Rest auszulassen). Auf einem Konto im menschlichen Modus ist eine Jagd ab und zu eine Sitzung seines normalen Tages, keine zusätzliche Spielzeit.",
+      "tip": "Jagt selbstständig Erfolge in mehreren Spielen, immer ein Spiel nach dem anderen. „Spiele, die du auswählst“ nimmt die Liste unten. „Alle Einzelspieler“ nimmt Einzelspieler-Spiele mit Erfolgen aus deiner Bibliothek, gespielt oder nicht (schalte „Nur in gespielten Spielen jagen“ ein, um den Rest auszulassen). Auf einem Konto im Menschen-Modus kommt das gejagte Spiel zu den Spielen, die es spielt, wie ein Nebenspiel.",
       "label": "Erfolgs-Schub",
       "choices": "0 aus | 1 Spiele deiner Wahl | 2 alle Einzelspieler-Titel"
     },
@@ -2170,15 +2200,7 @@
     },
     "BoostSessionHours": {
       "label": "Jedes etwa so lange spielen",
-      "tip": "Wie lange der Schub ein Spiel spielt, bevor er zum nächsten wechselt, in Stunden."
-    },
-    "MaxBoostGamesInARow": {
-      "label": "Menschen-Modus: höchstens am Stück",
-      "tip": "Nur im menschlichen Modus. Wie viele Erfolgs-Schübe es direkt hintereinander macht, bevor es eine Weile zu seiner normalen Spielmischung zurückkehrt."
-    },
-    "BoostRestMinutesHuman": {
-      "label": "Menschen-Modus: Planabschnitt zwischen Boosts",
-      "tip": "Nur im menschlichen Modus. Wie viele Minuten normales Spielen zwischen Erfolgs-Schüben liegen, damit die Jagd nie den ganzen Tag bestimmt."
+      "tip": "Wie lange der Schub ein Spiel spielt, bevor er zum nächsten wechselt, in Stunden. Auf einem Konto im Menschen-Modus ist das Spielzeit, verteilt auf seine normalen Sitzungen."
     },
     "BoostMinReviews": {
       "label": "Nur Spiele mit mindestens",
@@ -2484,6 +2506,14 @@
     "DiscordLogColour": {
       "label": "Farbe von Discord im Log",
       "tip": "Die Farbe von „discord“ im Log - die Discord-Karte und Discord-Benachrichtigungen - wie die Farbe eines Kontos."
+    },
+    "WebPublicAddress": {
+      "label": "Öffentliche Adresse",
+      "tip": "Deine Adresse von außerhalb deines Zuhauses - deine Internetadresse oder ein Name wie meinname.duckdns.org -, sobald du den Port des Dashboards im Router an diesen PC weitergeleitet hast. Der Befehl dashboard und /dashboard in Telegram zeigen sie. Wer sie und das Passwort hat, steuert alle Konten - teil sie nur mit Leuten, denen du vertraust."
+    },
+    "BoostWeight": {
+      "label": "Menschen-Modus: Gewicht des Jagdspiels",
+      "tip": "Nur im Menschen-Modus. Das gejagte Spiel kommt zu den Spielen, die es spielt, und das hier ist, wie oft es drankommt - ein Gewicht wie bei „Spiele und wie oft“. Es läuft in normalen Sitzungen, mit Pausen und Schlafenszeit, und bricht nie ein anderes Spiel ab."
     }
   }
 }

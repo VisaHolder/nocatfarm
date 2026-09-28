@@ -1564,7 +1564,37 @@
     "Updates & plugins": "更新与插件",
     "Badges, boosters & selling": "徽章、补充包与出售",
     "Inventory & bans": "库存与封禁",
-    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "nocat.farm 打开时，你的 Discord 会像玩游戏一样显示 Playing nocat.farm。你随时可以在“设置”→“Discord 资料”里更改。"
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "nocat.farm 打开时，你的 Discord 会像玩游戏一样显示 Playing nocat.farm。你随时可以在“设置”→“Discord 资料”里更改。",
+    "Trades & items": "交易与物品",
+    "Steam Guard": "Steam Guard",
+    "Free stuff & keys": "免费物品与激活码",
+    "Profile & info": "资料与信息",
+    "The app": "应用",
+    "Open on your phone": "在手机上打开",
+    "Could not read the dashboard address": "读不到面板的地址",
+    "Scan this with your phone's camera while it is on the same wifi, then sign in with the dashboard password.": "手机连同一个 wifi，用相机扫这个码，然后用面板密码登录。",
+    "Your phone can't open it yet - only this PC can. Two settings open it to your other devices:": "手机现在还打不开 - 只有这台电脑能打开。改两个设置就能让其他设备打开：",
+    "Set a Dashboard password, so nobody else on your wifi can control your accounts.": "设置一个面板密码，这样同一 wifi 里的其他人就控制不了你的账户。",
+    "Put 0.0.0.0 in Listen on.": "在“监听地址”里填 0.0.0.0。",
+    "Save, then restart nocat.farm (type restart, or quit and open it again).": "保存，然后重启 nocat.farm（输入 restart，或退出后重新打开）。",
+    "Then your phone opens:": "之后手机打开：",
+    "From outside your home:": "从家外面：",
+    "anyone with it and the password controls every account.": "拿到这个地址和密码的人可以控制所有账户。",
+    "From outside your home, forward the port on your router to this PC and put your address in Public address.": "要从家外面访问，在路由器上把端口转发到这台电脑，并在“公网地址”里填上你的地址。",
+    "Take me there": "带我过去",
+    "Open the dashboard on your phone": "在手机上打开面板",
+    "On your phone, on the same wifi:": "同一 wifi 的手机上：",
+    "Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.": "还没对其他设备开放。在电脑上：设置 → 面板 → 显示高级设置 - 设置面板密码，并在“监听地址”里填 0.0.0.0，然后重启。",
+    "From anywhere:": "任何地方：",
+    "From outside your home: not set up (Public address, in the same place).": "从家外面：未设置（同一处的“公网地址”）。",
+    "On the PC itself:": "电脑本机：",
+    "Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.": "在同一 wifi 的手机或其他电脑上使用面板 - 扫一个二维码，或者改两个设置把它打开。",
+    "done with {0}'s achievements for now - moving on": "{0} 的成就暂时刷完 - 换下一个",
+    "achievement boost - {0} joins the games it plays, for about {1} ({2}/{3} through the list)": "刷成就 - {0} 加入它玩的游戏，大约 {1}（列表第 {2}/{3} 个）",
+    "achievement boost - {0} joins the games it plays, for about {1}": "刷成就 - {0} 加入它玩的游戏，大约 {1}",
+    "{0} is in its games - {1} of about {2} played": "{0} 在它玩的游戏里 - 约 {2} 中已玩 {1}",
+    "Discord closed the connection ({0}) - trying again in a minute": "Discord 关闭了连接（{0}）- 一分钟后重试",
+    "Discord didn't show the card: {0}": "Discord 没有显示卡片：{0}"
   },
   "settings": {
     "WebEnabled": {
@@ -2062,7 +2092,7 @@
       "tip": "你停止游戏后，这个账户要等多久才接着做原来的事（分钟）。"
     },
     "AchievementBoost": {
-      "tip": "自动在多款游戏里刷成就，一次一款。“你挑的游戏”用下面的列表。“所有单人游戏”从你的库里挑有成就的单人游戏，玩没玩过都算（打开“只刷你玩过的游戏”可以跳过其余的）。在拟人模式账户上，刷成就只是偶尔占用它平常一天里的一段游戏时间，不会额外增加时长。",
+      "tip": "自动在多款游戏里刷成就，一次一款。“你挑的游戏”用下面的列表。“所有单人游戏”从你的库里挑有成就的单人游戏，玩没玩过都算（打开“只刷你玩过的游戏”可以跳过其余的）。在拟人模式账户上，正在刷成就的游戏会像副游戏一样加入它玩的游戏。",
       "label": "成就冲刺",
       "choices": "0 关闭 | 1 你挑选的游戏 | 2 所有单人游戏"
     },
@@ -2170,15 +2200,7 @@
     },
     "BoostSessionHours": {
       "label": "每个大约玩",
-      "tip": "冲刺在一个游戏上玩多久才换下一个（小时）。"
-    },
-    "MaxBoostGamesInARow": {
-      "label": "拟人模式：最多连续冲刺",
-      "tip": "仅拟人模式。连续做几次成就冲刺后，回到平常的游戏安排一段时间。"
-    },
-    "BoostRestMinutesHuman": {
-      "label": "拟人模式：两次冲刺之间的日程间隔",
-      "tip": "仅拟人模式。两次成就冲刺之间要有多少分钟的正常游玩，让刷成就永远不会占满一整天。"
+      "tip": "冲刺在一个游戏上玩多久才换下一个（小时）。 在拟人模式账户上，这是分散在平常各段游戏时间里的时长。"
     },
     "BoostMinReviews": {
       "label": "只刷至少有这么多评测的游戏",
@@ -2484,6 +2506,14 @@
     "DiscordLogColour": {
       "label": "日志中 Discord 的颜色",
       "tip": "日志里“discord”的颜色 - Discord 卡片和 Discord 通知 - 和账户颜色一样可选。"
+    },
+    "WebPublicAddress": {
+      "label": "公网地址",
+      "tip": "你在家外面访问用的地址 - 你的公网 IP，或者像 myname.duckdns.org 这样的名字 - 前提是已经在路由器上把面板端口转发到这台电脑。dashboard 命令和 Telegram 的 /dashboard 会显示它。拿到它和密码的人可以控制所有账户，只分享给你信任的人。"
+    },
+    "BoostWeight": {
+      "label": "拟人模式：刷成就游戏的权重",
+      "tip": "仅限拟人模式。正在刷成就的游戏会加入它玩的游戏，这个值决定它出现的频率 - 和“游戏与频率”里的权重一样。它按正常时段玩，有休息和睡觉时间，绝不会打断别的游戏。"
     }
   }
 }

@@ -2510,7 +2510,7 @@ function helpListHtml(filter) {
   });
 
   return Object.keys(groups).length
-    ? Object.keys(groups).map((g) => `<div class="grp">${esc(g)}</div>${groups[g].map((c) => `
+    ? Object.keys(groups).map((g) => `<div class="grp">${esc(t(g))}</div>${groups[g].map((c) => `
         <div class="c" onclick="useCommand('${esc(c.Name)}')">
           <code>${esc(c.Display || c.Name)}${c.Args ? ' ' + esc(c.Args) : ''}</code>
           <span class="h">${esc(c.Help)}</span>
@@ -2519,6 +2519,30 @@ function helpListHtml(filter) {
 }
 
 function modal(html) { $('modalCard').innerHTML = html; $('modal').classList.remove('hidden'); }
+
+// The dashboard on a phone: a QR code of the home-network link to scan, or - until the dashboard is open to other
+// devices - the two settings that open it. The same links the dashboard command and Telegram's /dashboard give.
+async function phoneModal() {
+  const p = await api('/api/phone').catch(() => null);
+  if (!p) { toast(t('Could not read the dashboard address'), true); return; }
+  const link = (url) => `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a>`;
+  const body = p.OpenAtHome && p.Qr
+    ? `<p>${esc(t('Scan this with your phone\'s camera while it is on the same wifi, then sign in with the dashboard password.'))}</p>
+       <div class="phoneqr">${p.Qr}</div>
+       <p class="muted small">${link(p.Home[0])}${p.Home.length > 1 ? ' · ' + p.Home.slice(1).map(link).join(' · ') : ''}</p>`
+    : `<p>${esc(t('Your phone can\'t open it yet - only this PC can. Two settings open it to your other devices:'))}</p>
+       <ol class="small">
+         <li>${p.HasPassword ? '✓ ' : ''}${esc(t('Set a Dashboard password, so nobody else on your wifi can control your accounts.'))}</li>
+         <li>${p.ListensBeyondThisPc ? '✓ ' : ''}${esc(t('Put 0.0.0.0 in Listen on.'))}</li>
+         <li>${esc(t('Save, then restart nocat.farm (type restart, or quit and open it again).'))}</li>
+       </ol>
+       ${p.Home.length ? `<p class="muted small">${esc(t('Then your phone opens:'))} ${esc(p.Home[0])}</p>` : ''}`;
+  modal(`<h2>${esc(t('Open on your phone'))}</h2>${body}
+    <p class="muted small">${p.Outside
+      ? `${esc(t('From outside your home:'))} ${link(p.Outside)} - ${esc(t('anyone with it and the password controls every account.'))}`
+      : esc(t('From outside your home, forward the port on your router to this PC and put your address in Public address.'))}</p>
+    <div class="actions">${p.OpenAtHome ? '' : `<button onclick="closeModal();goSetting('WebPassword')">${esc(t('Take me there'))}</button>`}<button class="ghost" onclick="closeModal()">${esc(t('Close'))}</button></div>`);
+}
 function closeModal() { $('modal').classList.add('hidden'); }
 // Escape and a click outside close whatever is open - and for the walkthrough, that counts as Skip. Before, it
 // closed the dialog without marking it seen, so it came back on the next reload.
@@ -2909,7 +2933,7 @@ function renderCommandList() {
   if (!commands.length) return;
   const groups = [...new Set(commands.map((c) => c.Group))];
   $('cmdList').innerHTML = groups.map((g) =>
-    `<div class="grp">${esc(g)}</div>` + commands.filter((c) => c.Group === g).map((c) =>
+    `<div class="grp">${esc(t(g))}</div>` + commands.filter((c) => c.Group === g).map((c) =>
       `<div class="c" onclick="useCommand('${esc(c.Name)}','${esc(c.Args)}')"><code>${esc(c.Name)} ${esc(c.Args)}</code><span class="h">${esc(c.Help)}</span></div>`).join('')).join('');
 }
 
@@ -3260,6 +3284,12 @@ function sectionIntro(section, values) {
 
   if (section === 'Discord profile' && settingsTarget === GLOBAL) {
     return discordCardIntro(val);
+  }
+
+  if (section === 'Dashboard' && settingsTarget === GLOBAL) {
+    return `<div class="explain"><b>${esc(t('Open on your phone'))}</b>
+      <p style="margin:6px 0 10px">${esc(t('Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.'))}</p>
+      <button class="ghost" onclick="phoneModal()">${esc(t('Open on your phone'))}</button></div>`;
   }
 
   // Achievements are the one area where the settings alone tell you nothing useful. Three dials and an
