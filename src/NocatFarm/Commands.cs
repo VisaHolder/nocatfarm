@@ -77,7 +77,7 @@ public static partial class Commands {
 		new("levelup", "<account> <level>", GroupCards, "What reaching a Steam level would cost: the XP missing, badges it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest - priced gently in the background.", "lvlup"),
 		new("match", "[do]", GroupCards, "Swap duplicate trading cards between your own accounts so sets finish - only swaps that help both sides, never a card already on an offer. Shows what it would trade; 'match do' sends the offers, and the other account accepts them by itself."),
 		new("bans", "[account|all]", GroupAccounts, "Look up the account's bans now: VAC, game bans, a trade ban, a community ban, and which games it's banned in when Steam shows that. Read-only. It also checks by itself every few hours."),
-		new("trade", "accept|decline <account> <number|all>", GroupCards, "Answer a trade offer yourself, by the number 'offers' and the announcements give it. Accepting one that sends items out confirms it too when this account's authenticator is in nocat.farm - you asked, so that is the confirmation."),
+		new("trade", "accept|decline <account> <number|all> | cancel <account> <offer id|all>", GroupCards, "Answer a trade offer yourself, by the number 'offers' and the announcements give it. Accepting one that sends items out confirms it too when this account's authenticator is in nocat.farm - you asked, so that is the confirmation. 'trade cancel' takes back offers the account sent that haven't gone through, such as one stuck waiting on a confirmation."),
 		new("offers", "[account|all]", GroupCards, "Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold."),
 		new("keys", "[list|clear]", GroupAccounts, "Product keys waiting to be activated. A big batch queues itself rather than burning Steam's per-account activation allowance all at once."),
 		new("value", "[account|all] [refresh]", GroupCards, "What each inventory is worth, by game, and how it has moved in the last day. Add 'refresh' to read the inventories again.", "inv|inventory"),
@@ -1705,12 +1705,14 @@ public static partial class Commands {
 	}
 
 	private static async Task<string> TradeAsync(BotManager mgr, string[] args) {
-		if ((args.Length < 3) || !(args[0].Equals("accept", StringComparison.OrdinalIgnoreCase) || args[0].Equals("decline", StringComparison.OrdinalIgnoreCase))) {
+		if ((args.Length < 3) || !(args[0].ToLowerInvariant() is "accept" or "decline" or "cancel")) {
 			return string.Join(Environment.NewLine, [
 				"trade accept <account> <number|all>    accept a waiting offer",
 				"trade decline <account> <number|all>   decline one",
+				"trade cancel <account> <offer id|all>  take back an offer the account sent",
 				"  trade accept new 3      the offer numbered 3 in 'offers new' and the announcement",
-				"  trade decline old all   every offer waiting on old"
+				"  trade decline old all   every offer waiting on old",
+				"  trade cancel kylro all  every offer kylro sent that hasn't gone through"
 			]);
 		}
 
@@ -1720,6 +1722,10 @@ public static partial class Commands {
 
 		if (BotManager.ModuleOf<Trading>(bot) is not { } trading) {
 			return $"{bot.Name} has no trade module running.";
+		}
+
+		if (args[0].Equals("cancel", StringComparison.OrdinalIgnoreCase)) {
+			return await trading.CancelSentAsync(args[2]).ConfigureAwait(false);
 		}
 
 		return await trading.AnswerAsync(args[0].Equals("accept", StringComparison.OrdinalIgnoreCase), args[2]).ConfigureAwait(false);
@@ -1770,6 +1776,10 @@ public static partial class Commands {
 
 			if (live.Any(static o => !o.Ours && (o.State == TradeOffers.Active))) {
 				lines.Add($"  trade accept {bot.Name} <number>  /  trade decline {bot.Name} <number>");
+			}
+
+			if (live.Any(static o => o.Ours && (o.State is TradeOffers.Active or TradeOffers.NeedsConfirmation))) {
+				lines.Add($"  trade cancel {bot.Name} <#id|all>  takes back an offer it sent");
 			}
 		}
 

@@ -1568,7 +1568,12 @@
     "Confirmed {0}": "Подтверждено: {0}",
     "Denied {0}": "Отклонено: {0}",
     "History": "История",
-    "Day by day: cards dropped, hours banked, what the inventory was worth at the end of each day, and rep4rep comments if you use it. Kept for about a year.": "День за днём: выпавшие карточки, накопленные часы, сколько стоил инвентарь в конце каждого дня и комментарии rep4rep, если вы им пользуетесь. Хранится около года."
+    "Day by day: cards dropped, hours banked, what the inventory was worth at the end of each day, and rep4rep comments if you use it. Kept for about a year.": "День за днём: выпавшие карточки, накопленные часы, сколько стоил инвентарь в конце каждого дня и комментарии rep4rep, если вы им пользуетесь. Хранится около года.",
+    "{0} has no sent offers waiting": "у {0} нет отправленных предложений в ожидании",
+    "{0} has no sent offer {1} - 'offers {0}' lists them": "у {0} нет отправленного предложения {1} - 'offers {0}' покажет их",
+    "cancelled the offer it sent to {0} (#{1})": "отменено предложение, отправленное {0} (#{1})",
+    "cancelled #{0} to {1}": "#{0} для {1} отменено",
+    "#{0}: Steam didn't take the cancel - try again": "#{0}: Steam не принял отмену - попробуйте ещё раз"
   },
   "settings": {
     "WebEnabled": {

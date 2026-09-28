@@ -810,6 +810,49 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		}
 	}
 
+	/// <summary>
+	/// 'trade cancel &lt;account&gt; &lt;offer id|all&gt;' - take back offers this account SENT that haven't gone through yet,
+	/// including ones stuck waiting on a confirmation that will never come (an account with no authenticator).
+	/// </summary>
+	public async Task<string> CancelSentAsync(string which, CancellationToken ct = default) {
+		if (!Bot.IsOnline || !Bot.Web.Ready) {
+			return new Said("{0} isn't logged in", Bot.Name).ToString();
+		}
+
+		if (await TradeOffers.ActiveAsync(Bot, received: false, sent: true, ct).ConfigureAwait(false) is not { } live) {
+			return new Said("Steam didn't answer - try again in a minute").ToString();
+		}
+
+		List<TradeOffers.Offer> sent = [.. live.Where(static o => o.Ours && (o.State is TradeOffers.Active or TradeOffers.NeedsConfirmation))];
+		List<TradeOffers.Offer> picked = which.Equals("all", StringComparison.OrdinalIgnoreCase) ? sent
+			: ulong.TryParse(which.TrimStart('#'), out ulong id) ? [.. sent.Where(o => o.Id == id)]
+			: [];
+
+		if (picked.Count == 0) {
+			return sent.Count == 0
+				? new Said("{0} has no sent offers waiting", Bot.Name).ToString()
+				: new Said("{0} has no sent offer {1} - 'offers {0}' lists them", Bot.Name, which).ToString();
+		}
+
+		List<string> lines = [];
+
+		foreach (TradeOffers.Offer offer in picked) {
+			Dictionary<string, string> form = new() { ["sessionid"] = Bot.Web.SessionId };
+			string? body = await Bot.Web.PostAsync(new Uri(WebSession.Community, $"/tradeoffer/{offer.Id}/cancel"), form,
+				new Uri(WebSession.Community, "/profiles/" + Bot.SteamId + "/tradeoffers/sent/"), ct).ConfigureAwait(false);
+			string who = await SteamNames.OfAsync(Bot, offer.Partner, ct).ConfigureAwait(false);
+
+			if (body != null) {
+				Log.Trade(new Said("cancelled the offer it sent to {0} (#{1})", who, offer.Id), Bot.Name);
+				lines.Add(new Said("cancelled #{0} to {1}", offer.Id, who).ToString());
+			} else {
+				lines.Add(new Said("#{0}: Steam didn't take the cancel - try again", offer.Id).ToString());
+			}
+		}
+
+		return string.Join(Environment.NewLine, lines);
+	}
+
 	private async Task<bool> DeclineAsync(TradeOffers.Offer offer, CancellationToken ct) {
 		Dictionary<string, string> form = new() { ["sessionid"] = Bot.Web.SessionId };
 		string? body = await Bot.Web.PostAsync(new Uri(WebSession.Community, $"/tradeoffer/{offer.Id}/decline"), form, new Uri(WebSession.Community, "/profiles/" + Bot.SteamId + "/tradeoffers/"), ct).ConfigureAwait(false);
