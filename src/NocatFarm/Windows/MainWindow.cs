@@ -1162,7 +1162,7 @@ public sealed class MainWindow : IDisposable {
 		List<(string Text, bool Header)> rows = [];
 
 		foreach (string group in Commands.All.Select(static c => c.Group).Distinct()) {
-			rows.Add((group, true));
+			rows.Add((group.ToUpperInvariant(), true));
 
 			foreach (CommandDef c in Commands.All.Where(c => c.Group == group)) {
 				rows.Add(((c.Display + " " + c.Args).TrimEnd() + "  —  " + c.Help, false));

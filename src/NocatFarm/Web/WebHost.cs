@@ -886,6 +886,14 @@ public sealed class WebHost : IAsyncDisposable {
 		// The account's own games, most played first - what the first-run setup offers as its main and side games.
 		// Family-shared ones are left out: playing a borrowed game locks its owner out of it.
 		// ── the authenticator page: codes and confirmations, like the Steam app ──
+		// Where the dashboard opens from elsewhere, with a QR code of the phone link - scan it instead of typing.
+		app.MapGet("/api/phone", (HttpContext ctx) => Guard(ctx, () => {
+			Core.DashboardLinks.Links l = Core.DashboardLinks.For(Live.Global);
+			string? scan = l.OpenAtHome && (l.Home.Count > 0) ? l.Home[0] : null;
+
+			return Results.Json(new { l.Local, l.Home, l.OpenAtHome, l.HasPassword, l.ListensBeyondThisPc, l.Outside, Qr = scan == null ? null : Core.QrPicture.Svg(scan) });
+		}));
+
 		app.MapGet("/api/auth", (HttpContext ctx) => Guard(ctx, () => Results.Json(new {
 			Accounts = _mgr.All.Select(static b => {
 				(string? code, int left) = Confirmations.Code(b);

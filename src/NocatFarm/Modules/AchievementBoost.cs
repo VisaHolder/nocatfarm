@@ -17,14 +17,24 @@ namespace NocatFarm.Modules;
 /// account's own games list and cached). Multiplayer games are left out - grinding a multiplayer game for
 /// achievements looks less like a person.
 ///
-/// A HUMAN account stays weighted-FIRST: a boost session is only an occasional grind slotted between long
-/// stretches of the normal weighted schedule (<c>BoostRestMinutesHuman</c> apart, capped at
-/// <c>MaxBoostGamesInARow</c> before a longer weighted rest), and never while asleep. A NON-human account rotates
-/// targets back-to-back. It never fights a manual grind: while one the operator started is running, it stays out.
+/// A HUMAN account never hands itself over to a hunt: the game being hunted joins its weighted games (see
+/// <see cref="HuntTarget"/>, at <c>BoostWeight</c>) and is played in ordinary sittings. A NON-human account rotates
+/// targets back-to-back as grinds. It never fights a manual grind: while one the operator started is running, it stays out.
 /// </summary>
 public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 	private int _index;                          // round-robin position in the target list
-	private int _inARow;                         // consecutive boost sessions (human weighted-first cap)
+
+	/// <summary>
+	/// On a human account, the game the hunter is on - human mode adds it to the games it plays. 0 when there isn't
+	/// one (off, nothing to hunt, or not a human account).
+	/// </summary>
+	public uint HuntTarget { get; private set; }
+
+	private double _huntMinutes;                  // minutes the hunt game has actually been played (human account)
+	private int _huntGoal;                        // about how long it plays one hunt game before moving on
+	private DateTime _lastHuntTick = DateTime.MinValue;
+	private DateTime _huntSavedAt = DateTime.MinValue;
+	private bool _huntLoaded;
 	// Was the grind currently running started by the boost? Backed by the flag the grind itself persists, so
 	// a session that outlived a restart is still recognised as ours - it used to come back disowned, which left
 	// it running with nothing able to stop it short of ending the grind by hand.
@@ -38,11 +48,6 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 	/// <summary>New store lookups per tick. Each is throttled, so this is about a minute's worth.</summary>
 	private const int LookupsPerTick = 40;
 	private readonly Random _rng = new();
-	private DateTime _lastEnded = DateTime.MinValue;
-
-	/// <summary>The account was ready to hunt on the last look - so a fresh sign-in or wake-up can start a rest first.</summary>
-	private bool _wasReady;
-	private int _restNeeded;                      // this gap's own jittered length, rolled when the gap starts
 	private Said _status = new("");
 
 	private List<uint> _singleplayer = [];       // discovered owned single-player games with achievements (mode 2)
@@ -71,6 +76,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 
 					_ours = false;
 					_sawGrind = false;
+					HuntTarget = 0;
 					_status = new Said("off");
 				}
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
@@ -117,7 +123,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			}
 		}
 
-		string now = Bot.Grinding && _ours ? GameNames.Of(Bot.GrindGame) : "";
+		string now = Bot.Grinding && _ours ? GameNames.Of(Bot.GrindGame) : HuntTarget != 0 ? GameNames.Of(HuntTarget) : "";
 
 		return (Bot.Cfg.AchievementBoost == 2 ? "all single-player" : "games you pick", now, next, left);
 	}
@@ -153,6 +159,8 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 
 		if (Bot.Grinding && _ours) {
 			lines.Add($"   now: {GameNames.Of(Bot.GrindGame)}{(Bot.GrindUntil is { } until ? $", {Fmt.Hm((int) (until - DateTime.UtcNow).TotalMinutes)} left" : "")}");
+		} else if (HuntTarget != 0) {
+			lines.Add($"   now: {GameNames.Of(HuntTarget)} is in its games - {Fmt.Hm((int) _huntMinutes)} of about {Fmt.Hm(_huntGoal)} played");
 		} else if (Bot.Grinding) {
 			lines.Add("   now: standing by - a grind you started is running");
 		} else {
@@ -392,8 +400,11 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		// spent earning nothing at all.
 		uint main = Bot.HumanOwned ? BotManager.ModuleOf<HumanMode>(Bot)?.MainGameId ?? 0 : 0;
 
+		AchievementPacer? pacer = BotManager.ModuleOf<AchievementPacer>(Bot);
+
 		return raw.Where(app =>
 			!(Bot.Cfg.YieldToFamily && Bot.Library.FamilyIsPlaying(app))
+			&& !(pacer?.NothingLeft(app) ?? false)   // finished, at the ceiling, or Steam-only - a sitting would earn nothing
 			&& !Bot.Refunds.Holds(app)
 			&& !Bot.Cfg.BlacklistedGames.Contains(app)
 			&& !Live.Global.GlobalBlacklistedGames.Contains(app)
@@ -404,6 +415,21 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 
 	// ── the boost decision ───────────────────────────────────────────────────
 	private void Tick() {
+		// A hunt running as a grind on a human account - from before hunts joined the day, or picked back up after a
+		// restart. Hand the account back to human mode and keep the game, now as one of the games it plays.
+		if (Bot.Cfg.LegitMode && Bot.Grinding && _ours) {
+			LoadHunt();
+			uint game = Bot.GrindGame;
+			Bot.StopGrind();
+			_ours = false;
+
+			if (HuntTarget != game) {
+				StartHunt(game);
+			}
+
+			return;
+		}
+
 		// A grind is running. If it's ours, let it run; if it's a manual grind, stay completely out of the way.
 		if (Bot.Grinding) {
 			// Unless the family has taken the game back. Steam lends a shared game to one person at a time and the
@@ -417,21 +443,26 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 				return;   // the next tick sees the grind gone and starts the rest before the following game
 			}
 
+			// Everything worth earning here is earned - up to the ceiling, or all that a client can set. The rest of
+			// the sitting would be hours on a game with nothing left in it; close it and move on, like a person would.
+			if (_ours && (BotManager.ModuleOf<AchievementPacer>(Bot)?.NothingLeft(Bot.GrindGame) == true)) {
+				Log.Info(new Said("done with {0}'s achievements for now - moving on", GameNames.Of(Bot.GrindGame)), Bot.Name);
+				Bot.StopGrind();
+
+				return;
+			}
+
 			_sawGrind = true;
 			_status = _ours ? new Said("hunting {0}", GameNames.Of(Bot.GrindGame)) : new Said("waiting - a manual grind is running");
 
 			return;
 		}
 
-		// A grind just finished. Ours counts toward the run-length cap; somebody else's doesn't - but either way
-		// the account has just spent hours on one game, so the rest before the next hunt starts now. (A boost
-		// session that outlived a restart comes back as "not ours", which is exactly why this is not keyed on
-		// _ours: the old code let a resumed session be followed immediately by a fresh one.)
+		// A grind just finished, ours or somebody else's: the account has just spent hours on one game, so the next
+		// hunt waits a tick rather than starting in the same breath.
 		if (_sawGrind) {
 			_sawGrind = false;
-			_inARow += _ours ? 1 : 0;
 			_ours = false;
-			_lastEnded = DateTime.UtcNow;
 			_status = new Said("between games");
 
 			return;
@@ -452,6 +483,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		List<uint> targets = Targets();
 
 		if (targets.Count == 0) {
+			HuntTarget = 0;
 			_status = _sweeping ? new Said("on - working out which games are worth hunting")
 				: Bot.Cfg.AchievementBoost == 2 ? new Said("on - no single-player games with achievements found")
 				: new Said("on - no games to hunt (pick some under \"Boost these games\")");
@@ -459,68 +491,11 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			return;
 		}
 
-		// Human accounts hunt only while awake, and stay weighted-first: a stretch of the normal schedule sits
-		// between boost sessions, and a longer one after a run of them.
-		// The setting, not the runtime flag: HumanOwned is only set once human mode has ticked, so a hunt could slip
-		// in right after a start with no sleep check and no rest.
+		// A human account: the hunt game joins the day instead of taking it over.
 		if (Bot.Cfg.LegitMode) {
-			if (!HumanMode.ReadyFor(Bot)) {
-				_status = new Said("resting until the account is awake");
-				_wasReady = false;
+			HumanTick(targets);
 
-				return;
-			}
-
-			// Just signed in or just woke: a stretch of the ordinary day comes first, the same as between hunts -
-			// not a hunt a minute after getting up.
-			if (!_wasReady) {
-				_wasReady = true;
-				_lastEnded = DateTime.UtcNow;
-				_restNeeded = 0;
-			}
-
-			// Hunting comes out of the day's budget, not on top of it.
-			//
-			// Human mode rolls a target for how long the account plays today; a hunt is playing, so once that
-			// target is met the day is over for hunting too. Without this the two settings quietly fought - the
-			// schedule would finish its six hours and stop, and the hunter would carry on adding two-hour
-			// sessions to an account that was supposed to be done for the night.
-			HumanMode? human = BotManager.ModuleOf<HumanMode>(Bot);
-
-			// A day off counts too: its target is 0, and "0 played of 0" was skipped as if there were no plan, so the
-			// hunter went on playing all through a day the account was meant to spend not playing at all.
-			if ((human != null) && ((human.Current is HumanMode.Phase.DayOff or HumanMode.Phase.DoneForToday)
-				|| (human.TargetMinutesToday == 0) || (human.PlayedMinutesToday >= human.TargetMinutesToday))) {
-				_status = new Said("done for today - hunting again tomorrow");
-
-				return;
-			}
-
-			// The gap is rolled ONCE per gap, not read from the setting each tick.
-			//
-			// A setting of 120 used literally means every gap between hunts is exactly two hours, for ever - and a
-			// perfectly regular rhythm is the thing human mode exists to avoid. This spreads it across roughly
-			// two-thirds to one-and-a-half times the setting, and holds that roll until the gap is served, so the
-			// countdown doesn't jump about while it waits.
-			int rest = Math.Max(15, Bot.Cfg.BoostRestMinutesHuman);
-			bool capped = _inARow >= Math.Max(1, Bot.Cfg.MaxBoostGamesInARow);
-
-			if (_restNeeded <= 0) {
-				int spread = _rng.Next(rest * 65 / 100, (rest * 150 / 100) + 1);
-				_restNeeded = capped ? spread * _rng.Next(25, 36) / 10 : spread;   // 2.5-3.5x after a run of them
-			}
-
-			if ((_lastEnded != DateTime.MinValue) && (DateTime.UtcNow - _lastEnded < TimeSpan.FromMinutes(_restNeeded))) {
-				_status = new Said("weighted schedule - next hunt in {0}", Fmt.Hm((int) (TimeSpan.FromMinutes(_restNeeded) - (DateTime.UtcNow - _lastEnded)).TotalMinutes));
-
-				return;
-			}
-
-			_restNeeded = 0;   // served - the next gap rolls its own
-
-			if (capped) {
-				_inARow = 0;   // the longer weighted rest has been served; start a fresh run of boost sessions
-			}
+			return;
 		}
 
 		uint target = targets[_index % targets.Count];
@@ -529,35 +504,96 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		// Nobody plays for exactly two hours, twice. The setting is the middle of a range, not a stopwatch.
 		int hours = Math.Clamp(Bot.Cfg.BoostSessionHours, 1, 24);
 		int minutes = _rng.Next(hours * 60 * 70 / 100, (hours * 60 * 130 / 100) + 1);
-		TimeSpan handOver = default;
-
-		if (Bot.Cfg.LegitMode) {
-			// Finished before bed, with a little to spare - a hunt that ran on past bedtime became an invisible night
-			// session that went on unlocking achievements at 3am.
-			if (BotManager.ModuleOf<HumanMode>(Bot)?.MinutesToBed is int toBed) {
-				int room = toBed - _rng.Next(15, 46);
-
-				if (room < 30) {
-					_status = new Said("done for today - hunting again tomorrow");
-
-					return;
-				}
-
-				minutes = Math.Min(minutes, room);
-			}
-
-			// The current game is finished off first, the way a person closes one game before opening another.
-			handOver = TimeSpan.FromSeconds(_rng.Next(45, 211));
-		}
 
 		// Targets are already filtered, so a refusal here means the guard changed its mind between the two - fine,
 		// leave it, the next tick picks the game after it.
-		if (!Bot.StartGrind(target, TimeSpan.FromMinutes(minutes), handOver, boost: true)) {
+		if (!Bot.StartGrind(target, TimeSpan.FromMinutes(minutes), boost: true)) {
 			return;
 		}
 
 		_ours = true;
 		_status = new Said("hunting {0}", GameNames.Of(target));
 		Log.Info(new Said("achievement boost - hunting {0} for {1} ({2}/{3} through the list)", GameNames.Of(target), Fmt.Hm(minutes), _index, targets.Count), Bot.Name);
+	}
+
+	/// <summary>
+	/// A human account: the game being hunted is one of the games it plays. Human mode picks it for some of its
+	/// ordinary sittings (at "hunt game's weight"), with breaks and bedtime as usual, and never cuts another game short.
+	/// Once it has had about "Play each for about" of playing, or has nothing left to earn, the next game on the list
+	/// takes its place. Where it is on the list is kept across restarts, so a restart doesn't go back to the top.
+	/// </summary>
+	private void HumanTick(List<uint> targets) {
+		LoadHunt();
+		DateTime now = DateTime.UtcNow;
+		double elapsed = _lastHuntTick == DateTime.MinValue ? 0 : (now - _lastHuntTick).TotalMinutes;
+		_lastHuntTick = now;
+
+		// Only minutes it really played the hunt game count - a tick that ran late is a gap, not play.
+		if ((HuntTarget != 0) && (BotManager.ModuleOf<HumanMode>(Bot)?.PlayingNow == HuntTarget) && (elapsed is > 0 and <= 3)) {
+			_huntMinutes += elapsed;
+		}
+
+		bool nothingLeft = (HuntTarget != 0) && (BotManager.ModuleOf<AchievementPacer>(Bot)?.NothingLeft(HuntTarget) ?? false);
+
+		if ((HuntTarget == 0) || !targets.Contains(HuntTarget) || nothingLeft || (_huntMinutes >= _huntGoal)) {
+			if (nothingLeft) {
+				Log.Info(new Said("done with {0}'s achievements for now - moving on", GameNames.Of(HuntTarget)), Bot.Name);
+			}
+
+			StartHunt(targets[_index % targets.Count], targets.Count);
+			_index++;
+			SaveHunt();
+		} else if (now - _huntSavedAt > TimeSpan.FromMinutes(10)) {
+			SaveHunt();
+		}
+
+		_status = new Said("{0} is in its games - {1} of about {2} played", GameNames.Of(HuntTarget), Fmt.Hm((int) _huntMinutes), Fmt.Hm(_huntGoal));
+	}
+
+	private void StartHunt(uint game, int listed = 0) {
+		HuntTarget = game;
+		_huntMinutes = 0;
+
+		// Nobody plays exactly two hours of a game, twice. The setting is the middle of a range, not a stopwatch.
+		int hours = Math.Clamp(Bot.Cfg.BoostSessionHours, 1, 24);
+		_huntGoal = _rng.Next(hours * 60 * 70 / 100, (hours * 60 * 130 / 100) + 1);
+
+		Log.Info(listed > 0
+			? new Said("achievement boost - {0} joins the games it plays, for about {1} ({2}/{3} through the list)", GameNames.Of(game), Fmt.Hm(_huntGoal), (_index % listed) + 1, listed)
+			: new Said("achievement boost - {0} joins the games it plays, for about {1}", GameNames.Of(game), Fmt.Hm(_huntGoal)), Bot.Name);
+		SaveHunt();
+	}
+
+	private sealed record HuntSave(int Index, uint Target, double Minutes, int Goal);
+
+	private string HuntPath => Path.Combine(Config.ConfigStore.ConfigDir, "state", $"hunt-{Bot.Name}.json");
+
+	private void LoadHunt() {
+		if (_huntLoaded) {
+			return;
+		}
+
+		_huntLoaded = true;
+
+		try {
+			if (File.Exists(HuntPath) && (JsonSerializer.Deserialize<HuntSave>(File.ReadAllText(HuntPath)) is { } saved)) {
+				_index = Math.Max(0, saved.Index);
+				HuntTarget = saved.Target;
+				_huntMinutes = Math.Max(0, saved.Minutes);
+				_huntGoal = Math.Max(30, saved.Goal);
+			}
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) {
+			// A bad file is the same as none: it starts again from the top of the list.
+		}
+	}
+
+	private void SaveHunt() {
+		_huntSavedAt = DateTime.UtcNow;
+
+		try {
+			AtomicFile.Write(HuntPath, JsonSerializer.Serialize(new HuntSave(_index, HuntTarget, _huntMinutes, _huntGoal)));
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			// Next time it simply doesn't remember where it was on the list.
+		}
 	}
 }

@@ -1564,7 +1564,37 @@
     "Updates & plugins": "Mises à jour et plugins",
     "Badges, boosters & selling": "Badges, boosters et ventes",
     "Inventory & bans": "Inventaire et bannissements",
-    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "Votre Discord affiche Playing nocat.farm tant qu'il est ouvert, comme un jeu. Vous pouvez changer ça à tout moment dans Paramètres, Profil Discord."
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "Votre Discord affiche Playing nocat.farm tant qu'il est ouvert, comme un jeu. Vous pouvez changer ça à tout moment dans Paramètres, Profil Discord.",
+    "Trades & items": "Échanges et objets",
+    "Steam Guard": "Steam Guard",
+    "Free stuff & keys": "Gratuit et clés",
+    "Profile & info": "Profil et infos",
+    "The app": "L'appli",
+    "Open on your phone": "Ouvrir sur le téléphone",
+    "Could not read the dashboard address": "Impossible de lire l'adresse du tableau de bord",
+    "Scan this with your phone's camera while it is on the same wifi, then sign in with the dashboard password.": "Scannez ceci avec l'appareil photo du téléphone sur le même wifi, puis connectez-vous avec le mot de passe du tableau de bord.",
+    "Your phone can't open it yet - only this PC can. Two settings open it to your other devices:": "Votre téléphone ne peut pas encore l'ouvrir - seul ce PC le peut. Deux réglages l'ouvrent à vos autres appareils :",
+    "Set a Dashboard password, so nobody else on your wifi can control your accounts.": "Définissez un mot de passe du tableau de bord, pour que personne d'autre sur votre wifi ne contrôle vos comptes.",
+    "Put 0.0.0.0 in Listen on.": "Mettez 0.0.0.0 dans Écouter sur.",
+    "Save, then restart nocat.farm (type restart, or quit and open it again).": "Enregistrez, puis redémarrez nocat.farm (tapez restart, ou quittez et rouvrez-le).",
+    "Then your phone opens:": "Ensuite votre téléphone ouvre :",
+    "From outside your home:": "Depuis l'extérieur :",
+    "anyone with it and the password controls every account.": "quiconque l'a avec le mot de passe contrôle tous les comptes.",
+    "From outside your home, forward the port on your router to this PC and put your address in Public address.": "Depuis l'extérieur, redirigez le port de votre box vers ce PC et mettez votre adresse dans Adresse publique.",
+    "Take me there": "M'y emmener",
+    "Open the dashboard on your phone": "Ouvrir le tableau de bord sur le téléphone",
+    "On your phone, on the same wifi:": "Sur le téléphone, sur le même wifi :",
+    "Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.": "Pas encore ouvert aux autres appareils. Sur le PC : Paramètres, Tableau de bord, Afficher les options avancées - définissez un mot de passe et mettez 0.0.0.0 dans Écouter sur, puis redémarrez.",
+    "From anywhere:": "De partout :",
+    "From outside your home: not set up (Public address, in the same place).": "Depuis l'extérieur : pas configuré (Adresse publique, au même endroit).",
+    "On the PC itself:": "Sur le PC lui-même :",
+    "Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.": "Utilisez le tableau de bord depuis votre téléphone ou un autre PC sur le même wifi - un QR code à scanner, ou les deux réglages qui l'ouvrent.",
+    "done with {0}'s achievements for now - moving on": "fini avec les succès de {0} pour l'instant - au suivant",
+    "achievement boost - {0} joins the games it plays, for about {1} ({2}/{3} through the list)": "chasse aux succès - {0} rejoint les jeux qu'il joue, pendant environ {1} ({2}/{3} de la liste)",
+    "achievement boost - {0} joins the games it plays, for about {1}": "chasse aux succès - {0} rejoint les jeux qu'il joue, pendant environ {1}",
+    "{0} is in its games - {1} of about {2} played": "{0} fait partie de ses jeux - {1} sur environ {2} joués",
+    "Discord closed the connection ({0}) - trying again in a minute": "Discord a fermé la connexion ({0}) - nouvel essai dans une minute",
+    "Discord didn't show the card: {0}": "Discord n'a pas affiché la carte : {0}"
   },
   "settings": {
     "WebEnabled": {
@@ -2062,7 +2092,7 @@
       "tip": "Combien de temps après que vous avez arrêté de jouer avant que ce compte reprenne là où il s'était arrêté, en minutes."
     },
     "AchievementBoost": {
-      "tip": "Chasse les succès dans plusieurs jeux tout seul, un jeu à la fois. « Jeux que vous choisissez » utilise la liste ci-dessous. « Tous les jeux solo » prend les jeux solo avec succès de votre bibliothèque, joués ou non (activez « Ne chasser que des jeux déjà lancés » pour ignorer le reste). Sur un compte en mode humain, une chasse est de temps en temps une session de sa journée normale, pas du jeu en plus.",
+      "tip": "Chasse les succès dans plusieurs jeux tout seul, un jeu à la fois. « Jeux que vous choisissez » utilise la liste ci-dessous. « Tous les jeux solo » prend les jeux solo avec succès de votre bibliothèque, joués ou non (activez « Ne chasser que des jeux déjà lancés » pour ignorer le reste). Sur un compte en mode humain, le jeu chassé rejoint les jeux qu'il joue, comme un jeu secondaire.",
       "label": "Coup de pouce aux succès",
       "choices": "0 désactivé | 1 les jeux que tu choisis | 2 tous les jeux solo"
     },
@@ -2170,15 +2200,7 @@
     },
     "BoostSessionHours": {
       "label": "Jouer chacun environ",
-      "tip": "Combien de temps le boost joue à un jeu avant de passer au suivant, en heures."
-    },
-    "MaxBoostGamesInARow": {
-      "label": "Mode humain : boosts d'affilée au plus",
-      "tip": "Mode humain uniquement. Combien de boosts de succès il enchaîne avant de revenir un moment à son mélange de jeux habituel."
-    },
-    "BoostRestMinutesHuman": {
-      "label": "Mode humain : intervalle de programme entre boosts",
-      "tip": "Mode humain uniquement. Combien de minutes de jeu normal séparent deux boosts de succès, pour que la chasse ne prenne jamais toute la journée."
+      "tip": "Combien de temps le boost joue à un jeu avant de passer au suivant, en heures. Sur un compte en mode humain, c'est du temps de jeu réparti sur ses sessions normales."
     },
     "BoostMinReviews": {
       "label": "Ne chasser que les jeux avec au moins",
@@ -2484,6 +2506,14 @@
     "DiscordLogColour": {
       "label": "Couleur de Discord dans le journal",
       "tip": "La couleur de « discord » dans le journal - la carte Discord et les notifications Discord - comme la couleur d'un compte."
+    },
+    "WebPublicAddress": {
+      "label": "Adresse publique",
+      "tip": "Votre adresse depuis l'extérieur - votre adresse Internet ou un nom comme monnom.duckdns.org - une fois le port du tableau de bord redirigé vers ce PC sur votre box. La commande dashboard et /dashboard sur Telegram l'affichent. Quiconque l'a avec le mot de passe contrôle tous les comptes, ne la partagez qu'avec des gens de confiance."
+    },
+    "BoostWeight": {
+      "label": "Mode humain : poids du jeu chassé",
+      "tip": "Mode humain uniquement. Le jeu chassé rejoint les jeux qu'il joue, et ceci règle sa fréquence - un poids comme ceux de « Jeux et fréquence ». Il se joue en sessions normales, avec pauses et coucher, sans jamais couper un autre jeu."
     }
   }
 }

@@ -1564,7 +1564,37 @@
     "Updates & plugins": "Actualizaciones y plugins",
     "Badges, boosters & selling": "Insignias, sobres y ventas",
     "Inventory & bans": "Inventario y baneos",
-    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "Tu Discord muestra Playing nocat.farm mientras está abierto, como un juego. Puedes cambiarlo cuando quieras en Ajustes, Perfil de Discord."
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "Tu Discord muestra Playing nocat.farm mientras está abierto, como un juego. Puedes cambiarlo cuando quieras en Ajustes, Perfil de Discord.",
+    "Trades & items": "Intercambios y objetos",
+    "Steam Guard": "Steam Guard",
+    "Free stuff & keys": "Cosas gratis y claves",
+    "Profile & info": "Perfil e información",
+    "The app": "La app",
+    "Open on your phone": "Abrir en el móvil",
+    "Could not read the dashboard address": "No se pudo leer la dirección del panel",
+    "Scan this with your phone's camera while it is on the same wifi, then sign in with the dashboard password.": "Escanéalo con la cámara del móvil mientras está en la misma wifi y entra con la contraseña del panel.",
+    "Your phone can't open it yet - only this PC can. Two settings open it to your other devices:": "Tu móvil aún no puede abrirlo, solo este PC. Dos ajustes lo abren a tus otros dispositivos:",
+    "Set a Dashboard password, so nobody else on your wifi can control your accounts.": "Pon una contraseña del panel, para que nadie más en tu wifi controle tus cuentas.",
+    "Put 0.0.0.0 in Listen on.": "Pon 0.0.0.0 en Escuchar en.",
+    "Save, then restart nocat.farm (type restart, or quit and open it again).": "Guarda y reinicia nocat.farm (escribe restart, o ciérralo y ábrelo de nuevo).",
+    "Then your phone opens:": "Luego tu móvil abre:",
+    "From outside your home:": "Desde fuera de casa:",
+    "anyone with it and the password controls every account.": "quien la tenga junto con la contraseña controla todas las cuentas.",
+    "From outside your home, forward the port on your router to this PC and put your address in Public address.": "Para entrar desde fuera de casa, redirige el puerto en tu router a este PC y pon tu dirección en Dirección pública.",
+    "Take me there": "Llévame allí",
+    "Open the dashboard on your phone": "Abrir el panel en el móvil",
+    "On your phone, on the same wifi:": "En el móvil, en la misma wifi:",
+    "Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.": "Aún no está abierto a otros dispositivos. En el PC: Ajustes, Panel, Mostrar avanzados - pon una contraseña del panel y 0.0.0.0 en Escuchar en, y reinicia.",
+    "From anywhere:": "Desde cualquier sitio:",
+    "From outside your home: not set up (Public address, in the same place).": "Desde fuera de casa: sin configurar (Dirección pública, en el mismo sitio).",
+    "On the PC itself:": "En el propio PC:",
+    "Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.": "Usa el panel desde el móvil u otro PC en la misma wifi: un código QR para escanear, o los dos ajustes que lo abren.",
+    "done with {0}'s achievements for now - moving on": "terminado con los logros de {0} por ahora - pasando al siguiente",
+    "achievement boost - {0} joins the games it plays, for about {1} ({2}/{3} through the list)": "caza de logros - {0} se suma a los juegos que juega, durante unas {1} ({2}/{3} de la lista)",
+    "achievement boost - {0} joins the games it plays, for about {1}": "caza de logros - {0} se suma a los juegos que juega, durante unas {1}",
+    "{0} is in its games - {1} of about {2} played": "{0} está entre sus juegos - {1} de unas {2} jugadas",
+    "Discord closed the connection ({0}) - trying again in a minute": "Discord cerró la conexión ({0}) - se reintenta en un minuto",
+    "Discord didn't show the card: {0}": "Discord no mostró la tarjeta: {0}"
   },
   "settings": {
     "WebEnabled": {
@@ -2062,7 +2092,7 @@
       "tip": "Cuántos minutos después de que dejes de jugar retoma esta cuenta lo que estaba haciendo."
     },
     "AchievementBoost": {
-      "tip": "Caza logros en varios juegos por su cuenta, un juego cada vez. «Juegos que eliges» usa la lista de abajo. «Todos los de un jugador» elige juegos de un jugador con logros de tu biblioteca, jugados o no (activa «Cazar solo en juegos que has jugado» para saltarte el resto). En una cuenta en modo humano, una caza es de vez en cuando una sesión de su día normal, no juego extra.",
+      "tip": "Caza logros en varios juegos por su cuenta, un juego cada vez. «Juegos que eliges» usa la lista de abajo. «Todos los de un jugador» elige juegos de un jugador con logros de tu biblioteca, jugados o no (activa «Cazar solo en juegos que has jugado» para saltarte el resto). En una cuenta en modo humano, el juego que se caza se suma a los juegos que juega, como un juego secundario.",
       "label": "Impulso de logros",
       "choices": "0 desactivado | 1 juegos que elijas | 2 todos los de un jugador"
     },
@@ -2170,15 +2200,7 @@
     },
     "BoostSessionHours": {
       "label": "Jugar cada uno unas",
-      "tip": "Cuántas horas juega el impulso a un juego antes de pasar al siguiente."
-    },
-    "MaxBoostGamesInARow": {
-      "label": "Modo humano: impulsos seguidos como máximo",
-      "tip": "Solo en modo humano. Cuántos impulsos de logros hace seguidos antes de volver un rato a su mezcla normal de juegos."
-    },
-    "BoostRestMinutesHuman": {
-      "label": "Modo humano: hueco de horario entre impulsos",
-      "tip": "Solo en modo humano. Cuántos minutos de juego normal hay entre impulsos de logros, para que la caza nunca se coma el día."
+      "tip": "Cuántas horas juega el impulso a un juego antes de pasar al siguiente. En una cuenta en modo humano es tiempo de juego repartido en sus sesiones normales."
     },
     "BoostMinReviews": {
       "label": "Solo cazar juegos con al menos",
@@ -2484,6 +2506,14 @@
     "DiscordLogColour": {
       "label": "Color de Discord en el registro",
       "tip": "El color de «discord» en el registro - la tarjeta de Discord y sus notificaciones - como el color de una cuenta."
+    },
+    "WebPublicAddress": {
+      "label": "Dirección pública",
+      "tip": "Tu dirección desde fuera de casa - tu IP de internet o un nombre como minombre.duckdns.org - una vez redirigido el puerto del panel en tu router a este PC. El comando dashboard y /dashboard en Telegram la muestran. Quien la tenga junto con la contraseña controla todas las cuentas, así que compártela solo con gente de confianza."
+    },
+    "BoostWeight": {
+      "label": "Modo humano: peso del juego de caza",
+      "tip": "Solo en modo humano. El juego que se caza se suma a los juegos que juega, y esto es cada cuánto sale: un peso como los de «Juegos y cada cuánto». Se juega en sesiones normales, con descansos y hora de dormir, y nunca corta otro juego."
     }
   }
 }

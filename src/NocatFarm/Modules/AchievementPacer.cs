@@ -381,7 +381,11 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		// set, or explained: the only honest thing the UI could say was "it stops at 23%", and the only answer
 		// to "why 23" was a dice roll. A single figure the account holder chooses does the same job and can
 		// actually be reasoned about. A grind ignores it, because that is the explicit "finish this" path.
-		int ceiling = grind ? 100 : Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100);
+		//
+		// Only a grind someone typed. The hunter works through the library on its own, hundreds of games, and taking
+		// every one of them to 100% is exactly the pattern the ceiling exists to prevent - it stops where the account
+		// holder said to stop, like normal play.
+		int ceiling = grind && !Bot.GrindIsBoost ? 100 : Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100);
 
 		// Nothing left that a client may set. Either the game is finished, or everything still locked is awarded
 		// by Steam itself (Counter-Strike 2's are, bar the one for launching it). Asked before the ceiling, so a
@@ -709,6 +713,16 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	private void Back(GameState g, TimeSpan wait) {
 		lock (_gate) {
 			g.NextAllow = DateTime.UtcNow.Add(wait);
+		}
+	}
+
+	/// <summary>
+	/// Nothing more this account will earn in <paramref name="app"/> right now: finished, up to the ceiling, or only
+	/// Steam-awarded achievements left. The hunter skips such a game rather than spend a sitting earning nothing.
+	/// </summary>
+	public bool NothingLeft(uint app) {
+		lock (_gate) {
+			return _games.TryGetValue(app, out GameState? g) && (Current(g) is Outcome.Complete or Outcome.SteamOnly or Outcome.Capped);
 		}
 	}
 

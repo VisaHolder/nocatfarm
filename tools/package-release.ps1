@@ -127,6 +127,10 @@ New-Item -ItemType Directory -Force -Path $stage | Out-Null
 # --- build ---------------------------------------------------------------------------------------------
 # Self-contained win-x64: the release zip runs on a clean Windows box with no .NET install. (Building from
 # source, per the README, stays framework-dependent - that path assumes you already have the SDK.)
+# docs/COMMANDS.md is made from the command list - regenerate it so a release never ships with a stale one.
+python (Join-Path $PSScriptRoot 'gen-commands.py')
+if ($LASTEXITCODE -ne 0) { throw 'gen-commands.py failed' }
+
 dotnet publish $proj -c Release -o $stage -r win-x64 --self-contained true `
     -p:PublishSingleFile=false -p:DebugType=none --nologo -v q
 if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed' }

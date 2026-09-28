@@ -27,12 +27,18 @@ public sealed record CommandDef(string Name, string Args, string Group, string H
 /// in the terminal you can also type in the browser, and both produce the same text back.
 /// </summary>
 public static partial class Commands {
-	public const string GroupAccounts = "ACCOUNTS";
-	public const string GroupPlaying = "PLAYING";
-	public const string GroupCards = "TRADING CARDS";
-	public const string GroupRep4Rep = "REP4REP";
-	public const string GroupSettings = "SETTINGS";
-	public const string GroupOther = "OTHER";
+	// The groups the command list is shown in - help, the dashboard, Telegram's /help and the docs - in this order.
+	public const string GroupAccounts = "Accounts";
+	public const string GroupPlaying = "Playing";
+	public const string GroupCards = "Trading cards";
+	public const string GroupTrades = "Trades & items";
+	public const string GroupGuard = "Steam Guard";
+	public const string GroupAchievements = "Achievements";
+	public const string GroupFree = "Free stuff & keys";
+	public const string GroupInfo = "Profile & info";
+	public const string GroupRep4Rep = "rep4rep";
+	public const string GroupSettings = "Settings";
+	public const string GroupOther = "The app";
 
 	/// <summary>Every command. This is the only list - <c>help</c> and /api/commands both render it.</summary>
 	public static readonly IReadOnlyList<CommandDef> All = [
@@ -48,69 +54,74 @@ public static partial class Commands {
 		new("disable", "<account>", GroupAccounts, "Keep the account configured but never log it in."),
 
 		new("play", "<account> <appIDs|none>", GroupPlaying, "Set the games this account idles for playtime."),
-		new("selfcheck", "[account]", GroupAccounts, "Does a human-mode account look like a bot? A score out of 100 from what other people can see - hours on the profile, what its status shows, comments - with the setting that fixes each tell. Boost accounts are left out unless you name one.", "tells"),
-		new("hours", "<account>", GroupPlaying, "How the account's hour targets are going - hours so far, what's left, and the pace needed to make a date."),
-		new("drops", "<account> [appID|next] [count|all] | <account> off", GroupCards,
-			"You pick a game and how many cards, and it goes first. On a human-mode account it's played in the normal sittings - the main game's share of them, with breaks and bedtime - until that many have dropped. On other accounts it's played non-stop until then. Without an appID, the next game with cards. Automatic card farming (\"When to farm cards\") needs no command."),
+		new("name", "<account> [text|off]", GroupPlaying, "Custom non-Steam game name shown instead of the real game. No text shows the current one; 'off' clears it."),
+		new("persona", "<account> <state>", GroupPlaying, "What the account shows your friends: online | offline | busy | away | snooze | looking to trade | looking to play | invisible - or its number, 0-7. Same as the OnlineStatus setting."),
+		new("nickname", "<account> <profile name>", GroupPlaying, "Change the name everybody sees on the profile and friends list. Not the custom game name - that's 'name'."),
 		new("grind", "<account|all> <appID> <hours> | <account> off", GroupPlaying,
 			"Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs."),
 		new("human", "[account] [week|reroll]", GroupPlaying, "What human mode is doing today, and what it played. Add 'week' to see the next seven days, or 'reroll' to throw today's plan away and roll a fresh one from the current settings."),
 		new("wake", "<account>", GroupPlaying, "Wake a sleeping human-mode account and start its day now. Bed time is unchanged.", "wakeup|skipsleep"),
-		new("name", "<account> [text|off]", GroupPlaying, "Custom non-Steam game name shown instead of the real game. No text shows the current one; 'off' clears it."),
-		new("persona", "<account> <state>", GroupPlaying, "What the account shows your friends: online | offline | busy | away | snooze | looking to trade | looking to play | invisible - or its number, 0-7. Same as the OnlineStatus setting."),
-		new("nickname", "<account> <profile name>", GroupPlaying, "Change the name everybody sees on the profile and friends list. Not the custom game name - that's 'name'."),
+		new("hours", "<account>", GroupPlaying, "How the account's hour targets are going - hours so far, what's left, and the pace needed to make a date."),
+		new("selfcheck", "[account]", GroupPlaying, "Does a human-mode account look like a bot? A score out of 100 from what other people can see - hours on the profile, what its status shows, comments - with the setting that fixes each tell. Boost accounts are left out unless you name one.", "tells"),
 
 		new("cards", "[account]", GroupCards, "What is still left to farm, and about how long it will take."),
+		new("drops", "<account> [appID|next] [count|all] | <account> off", GroupCards,
+			"You pick a game and how many cards, and it goes first. On a human-mode account it's played in the normal sittings - the main game's share of them, with breaks and bedtime - until that many have dropped. On other accounts it's played non-stop until then. Without an appID, the next game with cards. Automatic card farming (\"When to farm cards\") needs no command."),
+		new("match", "[do]", GroupCards, "Swap duplicate trading cards between your own accounts so sets finish - only swaps that help both sides, never a card already on an offer. Shows what it would trade; 'match do' sends the offers, and the other account accepts them by itself."),
+		new("sell", "<account> [preview|do|relist] [count]", GroupCards, "Spare trading cards on the market: 'preview' (the default) shows what it would list and what you'd get after Steam's fees, 'do' lists them (5 by default), 'relist' takes down week-old listings the market has gone under. SellDuplicates does it by itself."),
+		new("booster", "[account|all] | <account> <appIDs>", GroupCards, "Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the BoosterGames setting does it by itself every day.", "boosters"),
+		new("levelup", "<account> <level>", GroupCards, "What reaching a Steam level would cost: the XP missing, badges it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest - priced gently in the background.", "lvlup"),
+
+		new("offers", "[account|all]", GroupTrades, "Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold."),
+		new("trade", "accept|decline <account> <number|all> | cancel <account> <offer id|all>", GroupTrades, "Answer a trade offer yourself, by the number 'offers' and the announcements give it. Accepting one that sends items out confirms it too when this account's authenticator is in nocat.farm - you asked, so that is the confirmation. 'trade cancel' takes back offers the account sent that haven't gone through, such as one stuck waiting on a confirmation."),
+		new("fairswap", "<account> <offerID>", GroupTrades, "Whether a trade offer is a fair card swap that AcceptFairCardSwaps would accept, and if not, why. Only looks - never accepts or declines."),
+		new("send", "<account|all> [to <account>] [types]", GroupTrades, "Send an account's tradable items to the account listed under Trades - or 'to' another of your accounts. Types as in the send setting (cards, foils, backgrounds, emoticons, boosters, gems, all); leave them off for what the send setting says, or trading cards when sending 'to' an account.", "loot"),
+
+		new("2fa", "[account]", GroupGuard, "Show this account's Steam Guard code, if its authenticator is set up here. Without an account, every account's code.", "guard"),
+		new("confirmations", "[account]", GroupGuard, "What's waiting to be confirmed on this account, like the Steam app's list: trades, market listings, account changes - numbered for confirm and deny. Needs the account's authenticator in nocat.farm."),
+		new("confirm", "<account> <number|all>", GroupGuard, "Confirm what 'confirmations' listed under that number, or all of it."),
+		new("deny", "<account> <number|all>", GroupGuard, "Deny (cancel) what 'confirmations' listed under that number, or all of it."),
+
+		new("cheevo", "<account> <appID> [list|unlock|lock] [name|all]", GroupAchievements, "Achievements: see them, unlock them all, or put them back.", "ach|achievements"),
+		new("hunt", "[account]", GroupAchievements, "What the achievement hunter would play, in order - and what it ruled out and why."),
+
+		new("freeitems", "[account|all]", GroupFree, "Look for free event items now: the daily sale sticker, and anything in the Points Shop at 0 points. The ClaimEventItems setting does it by itself."),
+		new("queue", "[account|all]", GroupFree, "Go through today's discovery queue now, a few seconds on each game. The DiscoveryQueue setting does it by itself once a day (during sales, by default)."),
+		new("redeem", "[account] <key|file.txt> [key...]", GroupFree, "Activate product keys - or point it at a text file full of them. More than five queues itself and activates them slowly. With an account, only that account ever gets them, queued ones too. Without one it tries each account in turn until one can use it."),
+		new("keys", "[list|clear]", GroupFree, "Product keys waiting to be activated. A big batch queues itself rather than burning Steam's per-account activation allowance all at once."),
+		new("addlicense", "<account|all> <IDs>", GroupFree,
+			"Add free licences to an account's library - a subID, or a/<appID> for a free app. Only works for genuinely free licences - a paid one is refused by Steam, and it says why."),
+
+		new("value", "[account|all] [refresh]", GroupInfo, "What each inventory is worth, by game, and how it has moved in the last day. Add 'refresh' to read the inventories again.", "inv|inventory"),
+		new("level", "[account|all]", GroupInfo, "Each account's Steam level."),
+		new("balance", "[account|all]", GroupInfo, "Steam wallet balance, and anything still pending.", "wallet"),
+		new("points", "[account|all]", GroupInfo, "Steam points each account can spend in the Points Shop."),
+		new("bans", "[account|all]", GroupInfo, "Look up the account's bans now: VAC, game bans, a trade ban, a community ban, and which games it's banned in when Steam shows that. Read-only. It also checks by itself every few hours."),
+		new("owns", "<appID|name>", GroupInfo,
+			"Which accounts already own a game, and how long each has played it. Takes an appID, a store URL, or part of a name."),
+		new("privacy", "<account> [public|friends|private|part=level ...]", GroupInfo,
+			"See an account's profile privacy, or set it - one word for everything, or parts such as inventory=public comments=friends. Parts: profile, games, playtime, friends, inventory, gifts, comments."),
+		new("joingroup", "<account|all> <group link or name>", GroupInfo, "Join a Steam group now, if it's open - one account or all of them. For a group every account should always be in, put it in the \"Groups every account joins\" setting instead."),
 
 		new("rep4rep", "status|points|profiles|tasks|now|pause|resume|clear|rest", GroupRep4Rep, "Everything rep4rep. Run it bare for a summary. To switch it on or off for an account: set <account> Rep4Rep on|off.", "r4r"),
 
-		new("redeem", "[account] <key|file.txt> [key...]", GroupAccounts, "Activate product keys - or point it at a text file full of them. More than five queues itself and activates them slowly. With an account, only that account ever gets them, queued ones too. Without one it tries each account in turn until one can use it."),
-		new("send", "<account|all> [to <account>] [types]", GroupCards, "Send an account's tradable items to the account listed under Trades - or 'to' another of your accounts. Types as in the send setting (cards, foils, backgrounds, emoticons, boosters, gems, all); leave them off for what the send setting says, or trading cards when sending 'to' an account.", "loot"),
-		new("2fa", "[account]", GroupAccounts, "Show this account's Steam Guard code, if its authenticator is set up here. Without an account, every account's code.", "guard"),
-		new("confirmations", "[account]", GroupAccounts, "What's waiting to be confirmed on this account, like the Steam app's list: trades, market listings, account changes - numbered for confirm and deny. Needs the account's authenticator in nocat.farm."),
-		new("confirm", "<account> <number|all>", GroupAccounts, "Confirm what 'confirmations' listed under that number, or all of it."),
-		new("deny", "<account> <number|all>", GroupAccounts, "Deny (cancel) what 'confirmations' listed under that number, or all of it."),
-		new("cheevo", "<account> <appID> [list|unlock|lock] [name|all]", GroupPlaying, "Achievements: see them, unlock them all, or put them back.", "ach|achievements"),
-		new("hunt", "[account]", GroupPlaying, "What the achievement hunter would play, in order - and what it ruled out and why."),
-		new("levelup", "<account> <level>", GroupCards, "What reaching a Steam level would cost: the XP missing, badges it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest - priced gently in the background.", "lvlup"),
-		new("match", "[do]", GroupCards, "Swap duplicate trading cards between your own accounts so sets finish - only swaps that help both sides, never a card already on an offer. Shows what it would trade; 'match do' sends the offers, and the other account accepts them by itself."),
-		new("bans", "[account|all]", GroupAccounts, "Look up the account's bans now: VAC, game bans, a trade ban, a community ban, and which games it's banned in when Steam shows that. Read-only. It also checks by itself every few hours."),
-		new("trade", "accept|decline <account> <number|all> | cancel <account> <offer id|all>", GroupCards, "Answer a trade offer yourself, by the number 'offers' and the announcements give it. Accepting one that sends items out confirms it too when this account's authenticator is in nocat.farm - you asked, so that is the confirmation. 'trade cancel' takes back offers the account sent that haven't gone through, such as one stuck waiting on a confirmation."),
-		new("offers", "[account|all]", GroupCards, "Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold."),
-		new("keys", "[list|clear]", GroupAccounts, "Product keys waiting to be activated. A big batch queues itself rather than burning Steam's per-account activation allowance all at once."),
-		new("value", "[account|all] [refresh]", GroupCards, "What each inventory is worth, by game, and how it has moved in the last day. Add 'refresh' to read the inventories again.", "inv|inventory"),
-
-		new("import", "asf [path] [force]", GroupSettings, "Bring accounts across from ArchiSteamFarm, login tokens and all."),
 		new("config", "[account] [all]", GroupSettings, "Show the settings and their current values. Add 'all' to include the advanced ones."),
 		new("set", "[account] <key> <value>", GroupSettings, "Change a setting. Without an account name it changes a global one."),
 		new("reload", "", GroupSettings, "Re-read every config file from disk."),
+		new("import", "asf [path] [force]", GroupSettings, "Bring accounts across from ArchiSteamFarm, login tokens and all."),
 
 		new("log", "[count]", GroupOther, "The last few log lines.", "logs"),
 		new("stats", "[hours]", GroupOther, "Each account's last 24 hours - hours banked, cards, comments, totals - then cards dropped and comments posted, by hour."),
-		new("plugins", "", GroupOther, "Which plugins are loaded, and where they came from."),
-		new("level", "[account|all]", GroupAccounts, "Each account's Steam level."),
-		new("balance", "[account|all]", GroupAccounts, "Steam wallet balance, and anything still pending.", "wallet"),
-		new("points", "[account|all]", GroupAccounts, "Steam points each account can spend in the Points Shop."),
-		new("fairswap", "<account> <offerID>", GroupCards, "Whether a trade offer is a fair card swap that AcceptFairCardSwaps would accept, and if not, why. Only looks - never accepts or declines."),
-		new("sell", "<account> [preview|do|relist] [count]", GroupCards, "Spare trading cards on the market: 'preview' (the default) shows what it would list and what you'd get after Steam's fees, 'do' lists them (5 by default), 'relist' takes down week-old listings the market has gone under. SellDuplicates does it by itself."),
-		new("queue", "[account|all]", GroupCards, "Go through today's discovery queue now, a few seconds on each game. The DiscoveryQueue setting does it by itself once a day (during sales, by default)."),
-		new("freeitems", "[account|all]", GroupCards, "Look for free event items now: the daily sale sticker, and anything in the Points Shop at 0 points. The ClaimEventItems setting does it by itself."),
-		new("booster", "[account|all] | <account> <appIDs>", GroupCards, "Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the BoosterGames setting does it by itself every day.", "boosters"),
 		new("notify", "[test]", GroupOther, "Discord and Telegram notifications: says what's set up and what gets sent. 'notify test' sends a test message to each right now."),
-		new("joingroup", "<account|all> <group link or name>", GroupAccounts, "Join a Steam group now, if it's open - one account or all of them. For a group every account should always be in, put it in the \"Groups every account joins\" setting instead."),
-		new("privacy", "<account> [public|friends|private|part=level ...]", GroupAccounts,
-			"See an account's profile privacy, or set it - one word for everything, or parts such as inventory=public comments=friends. Parts: profile, games, playtime, friends, inventory, gifts, comments."),
-		new("owns", "<appID|name>", GroupOther,
-			"Which accounts already own a game, and how long each has played it. Takes an appID, a store URL, or part of a name."),
-		new("addlicense", "<account|all> <IDs>", GroupOther,
-			"Add free licences to an account's library - a subID, or a/<appID> for a free app. Only works for genuinely free licences - a paid one is refused by Steam, and it says why."),
-		new("answer", "<text>", GroupOther, "Answer whatever nocat.farm is waiting on - a Steam Guard code, or a password."),
+		new("plugins", "", GroupOther, "Which plugins are loaded, and where they came from."),
 		new("tutorial", "[topic]", GroupOther, "Getting started, in order, ticking off what you have already done.", "guide|setup"),
 		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does.", "?|h"),
 		new("theme", "[dark|light]", GroupOther, "Switch the dashboard between the dark and light themes. Without an argument it says which is on.", "dark|light"),
-		new("version", "", GroupOther, "Which version this is.", "about"),
 		new("mini", "[on|off]", GroupOther, "Shrink the window to a small panel of your accounts - what each is doing, start and stop, the dashboard - or back to the full window."),
+		new("dashboard", "[send]", GroupOther, "The dashboard's address - on this PC, on your phone over the same wifi, and from outside your home if you've set that up. 'dashboard send' posts the links to your Discord channel and Telegram.", "web|link"),
+		new("version", "", GroupOther, "Which version this is.", "about"),
 		new("update", "[accept|ignore]", GroupOther, "Check for a newer release. 'update accept' downloads it and restarts into it; 'update ignore' stops the hourly reminders until the next launch. Nothing updates on its own, ever."),
+		new("answer", "<text>", GroupOther, "Answer whatever nocat.farm is waiting on - a Steam Guard code, or a password."),
 		new("exit", "", GroupOther, "Shut nocat.farm down.", "quit|q")
 	];
 
@@ -317,6 +328,9 @@ public static partial class Commands {
 				"stats" => StatsText(rest),
 				"answer" => Prompt.Answer(string.Join(' ', rest)) ? "answered" : "nothing is waiting for an answer",
 				"theme" or "dark" or "light" => Theme(cmd, rest),
+				"dashboard" or "web" or "link" => rest.FirstOrDefault()?.Equals("send", StringComparison.OrdinalIgnoreCase) == true
+					? string.Join(Environment.NewLine, await Notifier.SendDashboardLinksAsync().ConfigureAwait(false))
+					: DashboardLinks.Text(mgr.Global),
 				"version" or "about" => About(),
 				"mini" => Mini(rest),
 				"plugins" => PluginList(),
@@ -650,7 +664,7 @@ public static partial class Commands {
 		StringBuilder help = new();
 
 		foreach (string group in All.Select(static c => c.Group).Distinct()) {
-			help.AppendLine(group);
+			help.AppendLine(group.ToUpperInvariant());
 
 			foreach (CommandDef c in All.Where(c => c.Group == group)) {
 				string left = (c.Display + " " + c.Args).TrimEnd();

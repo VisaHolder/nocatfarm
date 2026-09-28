@@ -1564,7 +1564,37 @@
     "Updates & plugins": "Güncellemeler ve eklentiler",
     "Badges, boosters & selling": "Rozetler, paketler ve satış",
     "Inventory & bans": "Envanter ve yasaklar",
-    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "nocat.farm açıkken Discord'un onu bir oyun gibi Playing nocat.farm olarak gösterir. Bunu istediğin zaman Ayarlar, Discord profili altından değiştirebilirsin."
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "nocat.farm açıkken Discord'un onu bir oyun gibi Playing nocat.farm olarak gösterir. Bunu istediğin zaman Ayarlar, Discord profili altından değiştirebilirsin.",
+    "Trades & items": "Takaslar ve eşyalar",
+    "Steam Guard": "Steam Guard",
+    "Free stuff & keys": "Bedava şeyler ve anahtarlar",
+    "Profile & info": "Profil ve bilgiler",
+    "The app": "Uygulama",
+    "Open on your phone": "Telefonda aç",
+    "Could not read the dashboard address": "Panelin adresi okunamadı",
+    "Scan this with your phone's camera while it is on the same wifi, then sign in with the dashboard password.": "Aynı wifi'deki telefonunun kamerasıyla bunu tara, sonra panel şifresiyle giriş yap.",
+    "Your phone can't open it yet - only this PC can. Two settings open it to your other devices:": "Telefonun henüz açamıyor - sadece bu bilgisayar açabiliyor. İki ayar onu diğer cihazlarına açar:",
+    "Set a Dashboard password, so nobody else on your wifi can control your accounts.": "Bir panel şifresi belirle, böylece wifi'deki başka kimse hesaplarını yönetemez.",
+    "Put 0.0.0.0 in Listen on.": "Dinleme adresine 0.0.0.0 yaz.",
+    "Save, then restart nocat.farm (type restart, or quit and open it again).": "Kaydet, sonra nocat.farm'ı yeniden başlat (restart yaz ya da kapatıp yeniden aç).",
+    "Then your phone opens:": "Sonra telefonun şunu açar:",
+    "From outside your home:": "Evin dışından:",
+    "anyone with it and the password controls every account.": "bunu ve şifreyi bilen herkes tüm hesapları yönetir.",
+    "From outside your home, forward the port on your router to this PC and put your address in Public address.": "Evin dışından girmek için modemde portu bu bilgisayara yönlendir ve adresini Genel adres'e yaz.",
+    "Take me there": "Beni oraya götür",
+    "Open the dashboard on your phone": "Paneli telefonda aç",
+    "On your phone, on the same wifi:": "Aynı wifi'deki telefonda:",
+    "Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.": "Henüz diğer cihazlara açık değil. Bilgisayarda: Ayarlar, Panel, Gelişmişleri göster - panel şifresi belirle ve Dinleme adresine 0.0.0.0 yaz, sonra yeniden başlat.",
+    "From anywhere:": "Her yerden:",
+    "From outside your home: not set up (Public address, in the same place).": "Evin dışından: ayarlanmamış (Genel adres, aynı yerde).",
+    "On the PC itself:": "Bilgisayarın kendisinde:",
+    "Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.": "Paneli aynı wifi'deki telefonundan ya da başka bir bilgisayardan kullan - taranacak bir QR kodu ya da onu açan iki ayar.",
+    "done with {0}'s achievements for now - moving on": "{0} başarımları şimdilik bitti - sıradakine geçiliyor",
+    "achievement boost - {0} joins the games it plays, for about {1} ({2}/{3} through the list)": "başarım avı - {0}, oynadığı oyunlara katılıyor, yaklaşık {1} (listenin {2}/{3})",
+    "achievement boost - {0} joins the games it plays, for about {1}": "başarım avı - {0}, oynadığı oyunlara katılıyor, yaklaşık {1}",
+    "{0} is in its games - {1} of about {2} played": "{0} oyunları arasında - yaklaşık {2} sürenin {1} kadarı oynandı",
+    "Discord closed the connection ({0}) - trying again in a minute": "Discord bağlantıyı kapattı ({0}) - bir dakika sonra tekrar denenecek",
+    "Discord didn't show the card: {0}": "Discord kartı göstermedi: {0}"
   },
   "settings": {
     "WebEnabled": {
@@ -2062,7 +2092,7 @@
       "tip": "Sen oynamayı bıraktıktan ne kadar sonra bu hesabın kaldığı yerden devam ettiği, dakika cinsinden."
     },
     "AchievementBoost": {
-      "tip": "Birkaç oyunda başarımları kendi kendine avlar, her seferinde tek oyun. \"Seçtiğin oyunlar\" aşağıdaki listeyi kullanır. \"Tüm tek oyunculu\" kütüphanendeki başarımlı tek oyunculu oyunları seçer, oynanmış olsun olmasın (gerisini atlamak için \"Yalnızca oynadığın oyunlarda avlan\"yı aç). İnsan modundaki bir hesapta av, arada bir normal gününün oturumlarından biri olur, fazladan oyun değil.",
+      "tip": "Birkaç oyunda başarımları kendi kendine avlar, her seferinde tek oyun. \"Seçtiğin oyunlar\" aşağıdaki listeyi kullanır. \"Tüm tek oyunculu\" kütüphanendeki başarımlı tek oyunculu oyunları seçer, oynanmış olsun olmasın (gerisini atlamak için \"Yalnızca oynadığın oyunlarda avlan\"yı aç). İnsan modundaki bir hesapta avlanan oyun, oynadığı oyunlara bir yan oyun gibi katılır.",
       "label": "Başarım hızlandırma",
       "choices": "0 kapalı | 1 seçtiğiniz oyunlar | 2 tüm tek oyunculu oyunlar"
     },
@@ -2170,15 +2200,7 @@
     },
     "BoostSessionHours": {
       "label": "Her birini yaklaşık şu kadar oyna",
-      "tip": "Hızlandırmanın bir sonrakine geçmeden önce bir oyunu ne kadar oynadığı, saat cinsinden."
-    },
-    "MaxBoostGamesInARow": {
-      "label": "İnsan modu: art arda en fazla",
-      "tip": "Yalnızca insan modunda. Bir süre normal oyun karışımına dönmeden önce art arda kaç başarım hızlandırması yaptığı."
-    },
-    "BoostRestMinutesHuman": {
-      "label": "İnsan modu: hızlandırmalar arası program aralığı",
-      "tip": "Yalnızca insan modunda. Başarım hızlandırmaları arasında kaç dakika normal oyun oynandığı, böylece başarım avı asla günü ele geçirmez."
+      "tip": "Hızlandırmanın bir sonrakine geçmeden önce bir oyunu ne kadar oynadığı, saat cinsinden. İnsan modundaki bir hesapta bu, normal oturumlarına yayılmış oyun süresidir."
     },
     "BoostMinReviews": {
       "label": "Yalnızca en az şu kadar değerlendirmesi olanları avla",
@@ -2484,6 +2506,14 @@
     "DiscordLogColour": {
       "label": "Günlükte Discord'un rengi",
       "tip": "Günlükte \"discord\" yazısının rengi - Discord kartı ve Discord bildirimleri - bir hesabın rengi gibi."
+    },
+    "WebPublicAddress": {
+      "label": "Genel adres",
+      "tip": "Evin dışından adresin - internet adresin ya da isim.duckdns.org gibi bir ad - panelin portunu modemde bu bilgisayara yönlendirdikten sonra. dashboard komutu ve Telegram'daki /dashboard bunu gösterir. Bunu ve şifreyi bilen herkes tüm hesapları yönetir, sadece güvendiğin kişilerle paylaş."
+    },
+    "BoostWeight": {
+      "label": "İnsan modu: av oyununun ağırlığı",
+      "tip": "Yalnızca insan modunda. Avlanan oyun, oynadığı oyunlara katılır ve bu, ne sıklıkla geldiğidir - \"Oyunlar ve sıklığı\"ndaki gibi bir ağırlık. Molalar ve uyku saatiyle normal oturumlarda oynanır, başka bir oyunu asla yarıda kesmez."
     }
   }
 }

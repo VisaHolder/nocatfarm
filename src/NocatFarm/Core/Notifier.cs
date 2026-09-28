@@ -369,6 +369,49 @@ public static partial class Notifier {
 	}
 
 	/// <summary>
+	/// 'dashboard send': the dashboard's links to Discord and Telegram. A Discord webhook only posts - it can't be asked
+	/// for anything - so this is how the links reach a Discord channel.
+	/// </summary>
+	public static async Task<List<string>> SendDashboardLinksAsync(CancellationToken ct = default) {
+		List<string> result = [];
+
+		if (!HasDiscord && !HasTelegramToken) {
+			result.Add(new Said("nothing is set up yet - paste a Discord webhook link or a Telegram bot token first").ToString());
+
+			return result;
+		}
+
+		DashboardLinks.Links l = DashboardLinks.For(G);
+
+		if (HasDiscord) {
+			List<string> lines = [
+				l.OpenAtHome && (l.Home.Count > 0)
+					? $"{new Said("On your phone, on the same wifi:")} {l.Home[0]}"
+					: new Said("Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.").ToString(),
+				l.Outside != null ? $"{new Said("From anywhere:")} {l.Outside}" : new Said("From outside your home: not set up (Public address, in the same place).").ToString(),
+				$"{new Said("On the PC itself:")} {l.Local}"
+			];
+
+			(bool ok, string why) = await PostDiscordAsync(new {
+				username = "nocat.farm",
+				avatar_url = Avatar,
+				embeds = new[] {
+					new { title = new Said("Open the dashboard on your phone").ToString(), description = string.Join("\n", lines), color = 0x8B5CF6,
+						footer = new { text = "nocat.farm " + Build.Version }, timestamp = DateTime.UtcNow.ToString("o") }
+				}
+			}, ct).ConfigureAwait(false);
+			result.Add(ok ? new Said("Discord: sent - check the channel").ToString() : new Said("Discord: didn't work - {0}", why).ToString());
+		}
+
+		if (HasTelegramToken && (G.TelegramChatId.Length > 0)) {
+			(bool ok, string why) = await PostTelegramAsync(DashboardHtml(), ct).ConfigureAwait(false);
+			result.Add(ok ? new Said("Telegram: sent - check the chat").ToString() : new Said("Telegram: didn't work - {0}", why).ToString());
+		}
+
+		return result;
+	}
+
+	/// <summary>
 	/// The test button: one message to each place that's set up, right now, whatever is switched on. Says per place
 	/// whether it worked, and if not, why.
 	/// </summary>

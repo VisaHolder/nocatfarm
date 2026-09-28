@@ -1564,7 +1564,37 @@
     "Updates & plugins": "Aktualizacje i wtyczki",
     "Badges, boosters & selling": "Odznaki, boostery i sprzedaż",
     "Inventory & bans": "Ekwipunek i bany",
-    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "Twój Discord pokazuje Playing nocat.farm, gdy aplikacja jest otwarta, jak przy grze. Możesz to zmienić w każdej chwili w Ustawienia, Profil Discord."
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "Twój Discord pokazuje Playing nocat.farm, gdy aplikacja jest otwarta, jak przy grze. Możesz to zmienić w każdej chwili w Ustawienia, Profil Discord.",
+    "Trades & items": "Wymiany i przedmioty",
+    "Steam Guard": "Steam Guard",
+    "Free stuff & keys": "Darmowe rzeczy i klucze",
+    "Profile & info": "Profil i informacje",
+    "The app": "Aplikacja",
+    "Open on your phone": "Otwórz na telefonie",
+    "Could not read the dashboard address": "Nie udało się odczytać adresu panelu",
+    "Scan this with your phone's camera while it is on the same wifi, then sign in with the dashboard password.": "Zeskanuj to aparatem telefonu w tej samej sieci wifi, potem zaloguj się hasłem panelu.",
+    "Your phone can't open it yet - only this PC can. Two settings open it to your other devices:": "Twój telefon jeszcze nie może go otworzyć - tylko ten komputer. Dwa ustawienia otwierają go dla innych urządzeń:",
+    "Set a Dashboard password, so nobody else on your wifi can control your accounts.": "Ustaw hasło panelu, żeby nikt inny w twojej sieci wifi nie sterował twoimi kontami.",
+    "Put 0.0.0.0 in Listen on.": "Wpisz 0.0.0.0 w Nasłuchuj na.",
+    "Save, then restart nocat.farm (type restart, or quit and open it again).": "Zapisz, potem uruchom nocat.farm ponownie (wpisz restart albo zamknij i otwórz go jeszcze raz).",
+    "Then your phone opens:": "Wtedy telefon otwiera:",
+    "From outside your home:": "Spoza domu:",
+    "anyone with it and the password controls every account.": "każdy, kto ma to i hasło, steruje wszystkimi kontami.",
+    "From outside your home, forward the port on your router to this PC and put your address in Public address.": "Żeby wejść spoza domu, przekieruj port w routerze na ten komputer i wpisz swój adres w Adres publiczny.",
+    "Take me there": "Zabierz mnie tam",
+    "Open the dashboard on your phone": "Otwórz panel na telefonie",
+    "On your phone, on the same wifi:": "Na telefonie, w tej samej sieci wifi:",
+    "Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.": "Jeszcze nie jest otwarty dla innych urządzeń. Na komputerze: Ustawienia, Panel, Pokaż zaawansowane - ustaw hasło panelu i wpisz 0.0.0.0 w Nasłuchuj na, potem uruchom ponownie.",
+    "From anywhere:": "Skądkolwiek:",
+    "From outside your home: not set up (Public address, in the same place).": "Spoza domu: nieustawione (Adres publiczny, w tym samym miejscu).",
+    "On the PC itself:": "Na samym komputerze:",
+    "Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.": "Korzystaj z panelu na telefonie albo innym komputerze w tej samej sieci wifi - kod QR do zeskanowania albo dwa ustawienia, które go otwierają.",
+    "done with {0}'s achievements for now - moving on": "na razie koniec z osiągnięciami w {0} - dalej",
+    "achievement boost - {0} joins the games it plays, for about {1} ({2}/{3} through the list)": "polowanie na osiągnięcia - {0} dołącza do gier, w które gra, na około {1} ({2}/{3} listy)",
+    "achievement boost - {0} joins the games it plays, for about {1}": "polowanie na osiągnięcia - {0} dołącza do gier, w które gra, na około {1}",
+    "{0} is in its games - {1} of about {2} played": "{0} jest wśród jego gier - {1} z około {2} zagrane",
+    "Discord closed the connection ({0}) - trying again in a minute": "Discord zamknął połączenie ({0}) - ponowna próba za minutę",
+    "Discord didn't show the card: {0}": "Discord nie pokazał karty: {0}"
   },
   "settings": {
     "WebEnabled": {
@@ -2062,7 +2092,7 @@
       "tip": "Ile czeka po tym, jak skończysz grać, zanim to konto wróci do tego, co robiło, w minutach."
     },
     "AchievementBoost": {
-      "tip": "Samo poluje na osiągnięcia w kilku grach, po jednej grze naraz. „Gry, które wybierzesz” korzysta z listy poniżej. „Wszystkie jednoosobowe” wybiera z twojej biblioteki gry jednoosobowe z osiągnięciami, grane lub nie (włącz „Poluj tylko w grach, w które grałeś”, żeby pominąć resztę). Na koncie w trybie ludzkim polowanie to od czasu do czasu jedna sesja jego zwykłego dnia, a nie dodatkowe granie.",
+      "tip": "Samo poluje na osiągnięcia w kilku grach, po jednej grze naraz. „Gry, które wybierzesz” korzysta z listy poniżej. „Wszystkie jednoosobowe” wybiera z twojej biblioteki gry jednoosobowe z osiągnięciami, grane lub nie (włącz „Poluj tylko w grach, w które grałeś”, żeby pominąć resztę). Na koncie w trybie ludzkim gra, na którą poluje, dołącza do gier, w które gra, jak gra poboczna.",
       "label": "Przyspieszenie osiągnięć",
       "choices": "0 wyłączone | 1 wybrane gry | 2 wszystkie dla jednego gracza"
     },
@@ -2170,15 +2200,7 @@
     },
     "BoostSessionHours": {
       "label": "Graj w każdą około",
-      "tip": "Jak długo przyspieszenie gra w jedną grę, zanim przejdzie do następnej, w godzinach."
-    },
-    "MaxBoostGamesInARow": {
-      "label": "Tryb ludzki: najwyżej pod rząd",
-      "tip": "Tylko w trybie ludzkim. Ile podbić osiągnięć robi pod rząd, zanim na jakiś czas wróci do zwykłego zestawu gier."
-    },
-    "BoostRestMinutesHuman": {
-      "label": "Tryb ludzki: odstęp planu między podbiciami",
-      "tip": "Tylko w trybie ludzkim. Ile minut zwykłej gry wypada między podbiciami osiągnięć, żeby polowanie nigdy nie zajęło całego dnia."
+      "tip": "Jak długo przyspieszenie gra w jedną grę, zanim przejdzie do następnej, w godzinach. Na koncie w trybie ludzkim to czas gry rozłożony na jego zwykłe sesje."
     },
     "BoostMinReviews": {
       "label": "Poluj tylko na gry z co najmniej",
@@ -2484,6 +2506,14 @@
     "DiscordLogColour": {
       "label": "Kolor Discorda w logu",
       "tip": "Kolor „discord” w logu - karta Discorda i powiadomienia Discorda - jak kolor konta."
+    },
+    "WebPublicAddress": {
+      "label": "Adres publiczny",
+      "tip": "Twój adres spoza domu - adres internetowy albo nazwa w stylu mojanazwa.duckdns.org - po przekierowaniu portu panelu w routerze na ten komputer. Pokazuje go polecenie dashboard i /dashboard na Telegramie. Każdy, kto ma go razem z hasłem, steruje wszystkimi kontami, więc udostępniaj go tylko zaufanym osobom."
+    },
+    "BoostWeight": {
+      "label": "Tryb ludzki: waga gry do polowania",
+      "tip": "Tylko w trybie ludzkim. Gra, na którą poluje, dołącza do gier, w które gra, a to ustawia, jak często się pojawia - waga jak w „Gry i jak często”. Gra się w nią w zwykłych sesjach, z przerwami i porą snu, nigdy nie przerywając innej gry."
     }
   }
 }

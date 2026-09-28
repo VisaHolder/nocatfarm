@@ -1564,7 +1564,37 @@
     "Updates & plugins": "업데이트와 플러그인",
     "Badges, boosters & selling": "배지, 부스터, 판매",
     "Inventory & bans": "인벤토리와 밴",
-    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "nocat.farm이 열려 있는 동안 Discord에 게임처럼 Playing nocat.farm이 표시됩니다. 설정의 Discord 프로필에서 언제든 바꿀 수 있습니다."
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "nocat.farm이 열려 있는 동안 Discord에 게임처럼 Playing nocat.farm이 표시됩니다. 설정의 Discord 프로필에서 언제든 바꿀 수 있습니다.",
+    "Trades & items": "거래와 아이템",
+    "Steam Guard": "Steam Guard",
+    "Free stuff & keys": "무료 아이템과 키",
+    "Profile & info": "프로필과 정보",
+    "The app": "앱",
+    "Open on your phone": "휴대폰에서 열기",
+    "Could not read the dashboard address": "대시보드 주소를 읽지 못했습니다",
+    "Scan this with your phone's camera while it is on the same wifi, then sign in with the dashboard password.": "같은 와이파이에 연결된 휴대폰 카메라로 이걸 스캔한 뒤, 대시보드 비밀번호로 로그인하세요.",
+    "Your phone can't open it yet - only this PC can. Two settings open it to your other devices:": "아직 휴대폰에서는 열 수 없습니다. 이 PC에서만 열립니다. 설정 두 개로 다른 기기에서도 열 수 있습니다:",
+    "Set a Dashboard password, so nobody else on your wifi can control your accounts.": "대시보드 비밀번호를 정하세요. 같은 와이파이의 다른 사람이 계정을 조작하지 못하게요.",
+    "Put 0.0.0.0 in Listen on.": "수신 주소에 0.0.0.0을 넣으세요.",
+    "Save, then restart nocat.farm (type restart, or quit and open it again).": "저장한 뒤 nocat.farm을 다시 시작하세요(restart 입력, 또는 종료 후 다시 열기).",
+    "Then your phone opens:": "그다음 휴대폰에서 여는 주소:",
+    "From outside your home:": "집 밖에서:",
+    "anyone with it and the password controls every account.": "이 주소와 비밀번호를 가진 사람은 모든 계정을 조작할 수 있습니다.",
+    "From outside your home, forward the port on your router to this PC and put your address in Public address.": "집 밖에서 쓰려면 공유기에서 포트를 이 PC로 포워딩하고 공개 주소에 주소를 넣으세요.",
+    "Take me there": "거기로 이동",
+    "Open the dashboard on your phone": "휴대폰에서 대시보드 열기",
+    "On your phone, on the same wifi:": "같은 와이파이의 휴대폰에서:",
+    "Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.": "아직 다른 기기에 열려 있지 않습니다. PC에서: 설정, 대시보드, 고급 보기 - 대시보드 비밀번호를 정하고 수신 주소에 0.0.0.0을 넣은 뒤 다시 시작하세요.",
+    "From anywhere:": "어디서든:",
+    "From outside your home: not set up (Public address, in the same place).": "집 밖에서: 설정 안 됨(같은 곳의 공개 주소).",
+    "On the PC itself:": "PC에서:",
+    "Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.": "같은 와이파이의 휴대폰이나 다른 PC에서 대시보드를 쓰세요. 스캔할 QR 코드나 열기 위한 설정 두 개를 보여줍니다.",
+    "done with {0}'s achievements for now - moving on": "{0}의 업적은 일단 끝 - 다음으로",
+    "achievement boost - {0} joins the games it plays, for about {1} ({2}/{3} through the list)": "업적 사냥 - {0}이(가) 플레이하는 게임에 추가됨, 약 {1} (목록 {2}/{3})",
+    "achievement boost - {0} joins the games it plays, for about {1}": "업적 사냥 - {0}이(가) 플레이하는 게임에 추가됨, 약 {1}",
+    "{0} is in its games - {1} of about {2} played": "{0}이(가) 플레이 게임에 들어 있음 - 약 {2} 중 {1} 플레이",
+    "Discord closed the connection ({0}) - trying again in a minute": "Discord가 연결을 닫았습니다({0}) - 1분 뒤에 다시 시도합니다",
+    "Discord didn't show the card: {0}": "Discord가 카드를 표시하지 않았습니다: {0}"
   },
   "settings": {
     "WebEnabled": {
@@ -2062,7 +2092,7 @@
       "tip": "플레이를 그만둔 뒤 이 계정이 하던 일을 이어서 하기까지의 시간(분)입니다."
     },
     "AchievementBoost": {
-      "tip": "여러 게임에서 업적을 알아서 노립니다. 한 번에 한 게임씩. \"고른 게임\"은 아래 목록을 씁니다. \"모든 싱글플레이\"는 라이브러리에서 업적이 있는 싱글플레이 게임을 고릅니다. 해 본 게임이든 아니든 상관없습니다(\"해본 게임만 노림\"를 켜면 나머지는 빠집니다). 사람 모드 계정에서는 가끔 평소 하루 중 한 세션이 업적 사냥이 될 뿐, 플레이 시간이 늘지는 않습니다.",
+      "tip": "여러 게임에서 업적을 알아서 노립니다. 한 번에 한 게임씩. \"고른 게임\"은 아래 목록을 씁니다. \"모든 싱글플레이\"는 라이브러리에서 업적이 있는 싱글플레이 게임을 고릅니다. 해 본 게임이든 아니든 상관없습니다(\"해본 게임만 노림\"를 켜면 나머지는 빠집니다). 사람 모드 계정에서는 업적을 노리는 게임이 보조 게임처럼 플레이하는 게임에 추가됩니다.",
       "label": "도전 과제 부스트",
       "choices": "0 끄기 | 1 직접 고른 게임 | 2 모든 싱글플레이 게임"
     },
@@ -2170,15 +2200,7 @@
     },
     "BoostSessionHours": {
       "label": "각각 대략",
-      "tip": "부스트가 한 게임을 플레이하고 다음으로 넘어가기까지의 시간입니다."
-    },
-    "MaxBoostGamesInARow": {
-      "label": "사람 모드: 연속 최대",
-      "tip": "사람 모드 전용. 연달아 하는 도전 과제 부스트 횟수입니다. 그 뒤에는 한동안 평소 게임 구성으로 돌아갑니다."
-    },
-    "BoostRestMinutesHuman": {
-      "label": "사람 모드: 부스트 사이의 일정 간격",
-      "tip": "사람 모드 전용. 도전 과제 부스트 사이에 끼는 평소 플레이 시간(분)입니다. 그래서 도전 과제 사냥이 하루를 다 차지하지 않습니다."
+      "tip": "부스트가 한 게임을 플레이하고 다음으로 넘어가기까지의 시간입니다. 사람 모드 계정에서는 평소 세션에 나눠서 플레이하는 시간입니다."
     },
     "BoostMinReviews": {
       "label": "리뷰가 최소 이만큼인 게임만",
@@ -2484,6 +2506,14 @@
     "DiscordLogColour": {
       "label": "로그에서 Discord 색",
       "tip": "로그의 \"discord\" 색입니다 - Discord 카드와 Discord 알림 - 계정 색처럼 고릅니다."
+    },
+    "WebPublicAddress": {
+      "label": "공개 주소",
+      "tip": "집 밖에서 쓰는 주소입니다. 인터넷 주소나 myname.duckdns.org 같은 이름을 넣으세요. 공유기에서 대시보드 포트를 이 PC로 포워딩한 뒤에 씁니다. dashboard 명령과 Telegram의 /dashboard가 이 주소를 보여줍니다. 이 주소와 비밀번호를 가진 사람은 모든 계정을 조작할 수 있으니 믿을 수 있는 사람에게만 알려주세요."
+    },
+    "BoostWeight": {
+      "label": "사람 모드: 사냥 게임 가중치",
+      "tip": "사람 모드 전용. 업적을 노리는 게임이 플레이하는 게임에 추가되고, 이 값은 얼마나 자주 나오는지입니다. \"게임과 빈도\"의 가중치와 같습니다. 휴식과 취침이 있는 평소 세션으로 플레이하며 다른 게임을 중간에 끊지 않습니다."
     }
   }
 }

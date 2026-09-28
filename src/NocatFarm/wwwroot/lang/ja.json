@@ -1564,7 +1564,37 @@
     "Updates & plugins": "アップデートとプラグイン",
     "Badges, boosters & selling": "バッジ・ブースター・販売",
     "Inventory & bans": "インベントリと BAN",
-    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "nocat.farm を開いている間、Discord にゲームのように Playing nocat.farm と表示されます。「設定」→「Discord プロフィール」でいつでも変更できます。"
+    "Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.": "nocat.farm を開いている間、Discord にゲームのように Playing nocat.farm と表示されます。「設定」→「Discord プロフィール」でいつでも変更できます。",
+    "Trades & items": "トレードとアイテム",
+    "Steam Guard": "Steam Guard",
+    "Free stuff & keys": "無料アイテムとキー",
+    "Profile & info": "プロフィールと情報",
+    "The app": "アプリ",
+    "Open on your phone": "スマホで開く",
+    "Could not read the dashboard address": "ダッシュボードのアドレスを読み取れませんでした",
+    "Scan this with your phone's camera while it is on the same wifi, then sign in with the dashboard password.": "同じ Wi-Fi に接続したスマホのカメラでこれを読み取り、ダッシュボードのパスワードでサインインしてください。",
+    "Your phone can't open it yet - only this PC can. Two settings open it to your other devices:": "まだスマホからは開けません。開けるのはこの PC だけです。2 つの設定で他の端末から開けるようになります:",
+    "Set a Dashboard password, so nobody else on your wifi can control your accounts.": "ダッシュボードのパスワードを設定する（同じ Wi-Fi の他人がアカウントを操作できないように）。",
+    "Put 0.0.0.0 in Listen on.": "「待ち受けアドレス」に 0.0.0.0 を入れる。",
+    "Save, then restart nocat.farm (type restart, or quit and open it again).": "保存して nocat.farm を再起動する（restart と入力するか、終了して開き直す）。",
+    "Then your phone opens:": "そのあとスマホで開くのは:",
+    "From outside your home:": "家の外から:",
+    "anyone with it and the password controls every account.": "これとパスワードを知っている人は全アカウントを操作できます。",
+    "From outside your home, forward the port on your router to this PC and put your address in Public address.": "家の外から使うには、ルーターでポートをこの PC に転送し、「公開アドレス」にアドレスを入れてください。",
+    "Take me there": "そこへ移動",
+    "Open the dashboard on your phone": "ダッシュボードをスマホで開く",
+    "On your phone, on the same wifi:": "同じ Wi-Fi のスマホで:",
+    "Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.": "まだ他の端末には開いていません。PC で: 設定 → ダッシュボード → 詳細を表示 - パスワードを設定し、待ち受けアドレスに 0.0.0.0 を入れて再起動してください。",
+    "From anywhere:": "どこからでも:",
+    "From outside your home: not set up (Public address, in the same place).": "家の外から: 未設定（同じ場所の「公開アドレス」）。",
+    "On the PC itself:": "PC 本体で:",
+    "Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.": "同じ Wi-Fi のスマホや別の PC からダッシュボードを使えます。読み取る QR コードか、開くための 2 つの設定を表示します。",
+    "done with {0}'s achievements for now - moving on": "{0} の実績はいったん完了 - 次へ",
+    "achievement boost - {0} joins the games it plays, for about {1} ({2}/{3} through the list)": "実績狙い - {0} を遊ぶゲームに追加、約 {1}（リストの {2}/{3}）",
+    "achievement boost - {0} joins the games it plays, for about {1}": "実績狙い - {0} を遊ぶゲームに追加、約 {1}",
+    "{0} is in its games - {1} of about {2} played": "{0} を遊ぶゲームに入れています - 約 {2} のうち {1} プレイ済み",
+    "Discord closed the connection ({0}) - trying again in a minute": "Discord が接続を閉じました（{0}）- 1 分後に再試行します",
+    "Discord didn't show the card: {0}": "Discord がカードを表示しませんでした: {0}"
   },
   "settings": {
     "WebEnabled": {
@@ -2062,7 +2092,7 @@
       "tip": "あなたが遊ぶのをやめてから、このアカウントが続きを再開するまでの時間（分）です。"
     },
     "AchievementBoost": {
-      "tip": "複数のゲームで実績を自動で狙います。一度に 1 ゲームずつ。「選んだゲーム」は下のリストを使います。「すべてのシングルプレイヤー」はライブラリから実績のあるシングルプレイヤーゲームを選びます（プレイ済みかどうかは問いません。残りを除くには「遊んだことのあるゲームだけ狙う」をオンに）。人間モードのアカウントでは、狙う時間はときどき普段の一日のセッションの 1 つになるだけで、プレイ時間は増えません。",
+      "tip": "複数のゲームで実績を自動で狙います。一度に 1 ゲームずつ。「選んだゲーム」は下のリストを使います。「すべてのシングルプレイヤー」はライブラリから実績のあるシングルプレイヤーゲームを選びます（プレイ済みかどうかは問いません。残りを除くには「遊んだことのあるゲームだけ狙う」をオンに）。人間モードのアカウントでは、実績を狙うゲームがサブのゲームとして遊ぶゲームに加わります。",
       "label": "実績ブースト",
       "choices": "0 オフ | 1 選んだゲーム | 2 シングルプレイ全部"
     },
@@ -2170,15 +2200,7 @@
     },
     "BoostSessionHours": {
       "label": "それぞれおよそ",
-      "tip": "ブーストが 1 本のゲームを遊んでから次へ移るまでの時間数です。"
-    },
-    "MaxBoostGamesInARow": {
-      "label": "人間モード：連続は最大",
-      "tip": "人間モードのみ。実績ブーストを続けて何回行うかです。そのあとしばらく、いつものゲームの組み合わせに戻ります。"
-    },
-    "BoostRestMinutesHuman": {
-      "label": "人間モード：稼ぎのあいだに挟む予定の長さ",
-      "tip": "人間モードのみ。実績ブーストのあいだに挟む通常プレイの時間（分）です。実績狙いが 1 日を占領しないようにします。"
+      "tip": "ブーストが 1 本のゲームを遊んでから次へ移るまでの時間数です。 人間モードのアカウントでは、普段のセッションに分けて遊ぶ時間です。"
     },
     "BoostMinReviews": {
       "label": "レビューが最低これだけある作品だけ狙う",
@@ -2484,6 +2506,14 @@
     "DiscordLogColour": {
       "label": "ログでの Discord の色",
       "tip": "ログの「discord」の色 - Discord カードと Discord 通知 - アカウントの色と同じように選べます。"
+    },
+    "WebPublicAddress": {
+      "label": "公開アドレス",
+      "tip": "家の外からのアドレス。インターネットのアドレスか myname.duckdns.org のような名前で、ルーターでダッシュボードのポートをこの PC に転送したあとに使います。dashboard コマンドと Telegram の /dashboard に表示されます。これとパスワードを知っている人は全アカウントを操作できるので、信頼できる人にだけ教えてください。"
+    },
+    "BoostWeight": {
+      "label": "人間モード: 狙うゲームの重み",
+      "tip": "人間モードのみ。実績を狙うゲームが遊ぶゲームに加わり、これはその出る頻度です。「ゲームと頻度」と同じ重みです。休憩や就寝のある普通のセッションで遊び、他のゲームを途中で打ち切ることはありません。"
     }
   }
 }
