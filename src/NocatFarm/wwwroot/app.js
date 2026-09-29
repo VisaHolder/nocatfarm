@@ -2704,12 +2704,12 @@ function tutStepUpdates() {
   const label = (n, fallback) => { const x = def(n); return x ? tSetting(x, 'label') : fallback; };
   const num = (key, min, max) => `<input type="number" min="${min}" max="${max}" value="${esc(d[key])}" oninput="tutDash.${key}=+this.value">`;
 
-  // Linux, a Mac and Docker can't swap themselves over: it says when a new version is out, and that's all it can do.
+  // Docker and a Linux service can't swap themselves over: it says when a new version is out, and that's all it can do.
   if (state && state.CanSelfUpdate === false) {
     return {
       title: t('Keep it up to date'),
       lead: esc(t('New versions fix things and add new ones.')),
-      body: `<p class="small">${esc(t('It tells you when a new version is out. Here it can\'t install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux or Mac zip, unzip the new one and keep your config folder. Your accounts and settings stay where they are.'))}</p>
+      body: `<p class="small">${esc(t('It tells you when a new version is out. Here it can\'t install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.'))}</p>
         ${adv ? `<div class="tut-grid">
           <label>${esc(label('UpdateCheckHours', 'Look for updates every'))}</label>
           <span class="tut-hours">${num('checkHours', 1, 24)}<span>${esc(t('hours'))}</span></span>

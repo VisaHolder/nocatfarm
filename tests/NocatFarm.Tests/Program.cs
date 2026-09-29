@@ -1615,6 +1615,23 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("craft: the card page's numbers are read after the profile address", c?.ToString() == "Craftable { AppId = 730, Series = 1, Border = 0, Levels = 1 }", c?.ToString() ?? "null");
 }
 
+// ── sign-in: only Steam refusing counts toward giving up, not a dropped connection ─────────────────────────────
+{
+	MethodInfo refusal = typeof(NocatFarm.Core.Bot).GetMethod("IsSignInRefusal", BindingFlags.NonPublic | BindingFlags.Static)!;
+	bool Refused(Exception e) => (bool) refusal.Invoke(null, [e])!;
+	Check("sign-in: a wrong password counts", Refused(new SteamKit2.Authentication.AuthenticationException("no", SteamKit2.EResult.InvalidPassword)));
+	Check("sign-in: a timeout or a dropped connection doesn't", !Refused(new TaskCanceledException()) && !Refused(new IOException("reset"))
+		&& !Refused(new SteamKit2.Authentication.AuthenticationException("gone", SteamKit2.EResult.ServiceUnavailable)));
+}
+
+// ── rep4rep: a daily-limit refusal below the cap is the account's real limit ──────────────────────────────────
+{
+	MethodInfo learns = typeof(NocatFarm.Modules.Rep4RepModule).GetMethod("LearnsDailyLimit", BindingFlags.NonPublic | BindingFlags.Static)!;
+	bool Learns(bool on, int posted, int cap) => (bool) learns.Invoke(null, [on, posted, cap])!;
+	Check("rep4rep learn: cut off at 10 with the cap at 15 - 10 is the limit", Learns(true, 10, 15));
+	Check("rep4rep learn: not when off, not below 5, not at or over the cap", !Learns(false, 10, 15) && !Learns(true, 3, 15) && !Learns(true, 15, 15));
+}
+
 // SETTINGSCOUNT
 Console.WriteLine($"settings: {NocatFarm.Config.Settings.Global.Count} global ({NocatFarm.Config.Settings.Global.Count(d => !d.Advanced)} basic), {NocatFarm.Config.Settings.Bot.Count} per account ({NocatFarm.Config.Settings.Bot.Count(d => !d.Advanced)} basic)");
 Console.WriteLine(fails == 0 ? "all passed" : $"{fails} failed");

@@ -100,6 +100,18 @@ public static class TradeOffers {
 
 	/// <summary>One offer by id. Answered is false when Steam didn't answer at all; Offer is null when it answered but
 	/// has no such offer for this account.</summary>
+	/// <summary>
+	/// The items this account has promised in a trade offer still waiting - one it sent, or one it was sent that asks
+	/// for them. Null when Steam wouldn't say. Selling or sending one of these breaks that trade: Steam quietly takes
+	/// the item out of the offer the moment it moves.
+	/// </summary>
+	public static async Task<HashSet<ulong>?> PromisedAsync(Bot bot, CancellationToken ct = default) {
+		List<Offer>? offers = await ActiveAsync(bot, received: true, sent: true, ct).ConfigureAwait(false);
+
+		return offers == null ? null
+			: [.. offers.Where(static o => o.State is Active or NeedsConfirmation).SelectMany(static o => o.Giving).Select(static i => i.AssetId)];
+	}
+
 	public static async Task<(bool Answered, Offer? Offer)> OneAsync(Bot bot, ulong id, CancellationToken ct = default) {
 		string? json = await bot.Web.ApiGetAsync("IEconService", "GetTradeOffer", new Dictionary<string, string> {
 			["tradeofferid"] = id.ToString(CultureInfo.InvariantCulture),

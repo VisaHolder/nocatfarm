@@ -670,6 +670,12 @@ public sealed class Bot : IAsyncDisposable {
 	private string? _password;
 	private int _loggingIn;
 
+	/// <summary>Steam said no to the sign-in itself - the password, the Steam Guard code, a locked account - as opposed to
+	/// the connection failing on the way.</summary>
+	internal static bool IsSignInRefusal(Exception e) => e is AuthenticationException { Result: EResult.InvalidPassword or EResult.InvalidLoginAuthCode
+		or EResult.ExpiredLoginAuthCode or EResult.TwoFactorCodeMismatch or EResult.AccountLogonDenied or EResult.AccessDenied or EResult.AccountDisabled
+		or EResult.AccountLockedDown or EResult.AccountNotFound };
+
 	/// <summary>Consecutive failed reconnects, so the wait can grow during Steam's weekly restart.</summary>
 	private int _reconnectAttempts;
 
@@ -1511,7 +1517,9 @@ public sealed class Bot : IAsyncDisposable {
 				} catch (Exception e) {
 					// A wrong password fails here every time. Retrying it every few seconds forever is both
 					// useless and exactly what makes Steam rate-limit the IP, so ask again after a few tries.
-					if (++_loginFailures >= 3) {
+					// Only Steam turning the sign-in down counts: a dropped connection or a timeout is no reason to give
+					// up on a password that's right - three of them in a bad minute stopped the account for good.
+					if (IsSignInRefusal(e) && (++_loginFailures >= 3)) {
 						// Clearing _password is not enough on its own: the next attempt reads it straight back out
 						// of the config. Stop, and say why, rather than retrying a wrong password every 15 seconds
 						// until Steam rate-limits the whole machine.

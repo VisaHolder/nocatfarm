@@ -13,8 +13,6 @@ namespace NocatFarm.Core;
 /// Off is a setting. Nothing here ever blocks startup: a check that fails is a debug line and nothing else.
 /// </summary>
 public static class UpdateCheck {
-	private const string Releases = "https://api.github.com/repos/VisaHolder/nocatfarm/releases/latest";
-
 	private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
 
 	/// <summary>The newest version seen, if it is newer than this build. Null when up to date or unchecked.</summary>
@@ -179,7 +177,7 @@ public static class UpdateCheck {
 		_lastLooked = DateTime.UtcNow;
 
 		try {
-			string json = await Http.GetStringAsync(Releases, ct).ConfigureAwait(false);
+			string json = await Http.GetStringAsync(SelfUpdate.Feed, ct).ConfigureAwait(false);
 			using JsonDocument doc = JsonDocument.Parse(json);
 
 			string tag = doc.RootElement.TryGetProperty("tag_name", out JsonElement t) ? t.GetString() ?? "" : "";

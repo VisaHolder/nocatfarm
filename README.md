@@ -116,7 +116,8 @@ the same app that update themselves.
 **Updating:** click **Update** on the dashboard or type `update accept`. Accounts, settings and logs are kept. Set
 *When I say update* to *when my accounts are asleep* and it holds the install until nobody's playing, or set
 *Update by itself* to install new versions at night with no click at all. `update now` always installs straight
-away. On Linux, a Mac and Docker you update by hand - see [Linux, Mac and Docker](https://github.com/VisaHolder/nocatfarm/wiki/Linux-Docker-and-VPS).
+away. The Linux and Mac zips update themselves the same way; in Docker, or run as a Linux service, you update by
+hand - see [Linux, Mac and Docker](https://github.com/VisaHolder/nocatfarm/wiki/Linux-Docker-and-VPS).
 
 **A Mac, Linux or a server?** There are Mac zips (Apple Silicon and Intel: unzip, double-click `start.command`), a
 Linux zip for x64 and arm64 (Raspberry Pi), and a Dockerfile with an example compose file. Every release is built and

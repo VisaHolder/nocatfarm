@@ -1447,7 +1447,6 @@
     "made the key that encrypts saved logins: {0} - keep it with the config folder, the saved logins can't be read without it": "kayıtlı girişleri şifreleyen anahtar oluşturuldu: {0} - onu yapılandırma klasörüyle birlikte sakla, o olmadan kayıtlı girişler okunamaz",
     "saved logins are kept as plain text - the key that encrypts them ({0}) couldn't be used: {1}. Keep the config folder somewhere private.": "kayıtlı girişler düz metin olarak saklanıyor - onları şifreleyen anahtar ({0}) kullanılamadı: {1}. Yapılandırma klasörünü kimsenin göremeyeceği bir yerde tut.",
     "saved logins are kept as plain text - this system has no AES-GCM to encrypt them with. Keep the config folder somewhere private.": "kayıtlı girişler düz metin olarak saklanıyor - bu sistemde onları şifreleyecek AES-GCM yok. Yapılandırma klasörünü kimsenin göremeyeceği bir yerde tut.",
-    "nocat.farm only updates itself on Windows - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "nocat.farm kendini yalnızca Windows'ta günceller - durdur, {1} adresinden {0} dosyasını bu klasörün üzerine çıkar (config/ ve logs/ korunur) ve yeniden başlat",
     "What's waiting to be confirmed": "Onay bekleyenler",
     "Steam Guard codes": "Steam Guard kodları",
     "{0} - {1} is out, send /update to see how to install it": "{0} - {1} çıktı, nasıl kurulacağını görmek için /update gönder",
@@ -2160,7 +2159,6 @@
     "update failed: download broke off ({0}) - try again": "güncelleme başarısız: indirme kesildi ({0}) - yeniden dene",
     "update failed: download stopped at {0} of {1}MB - try again": "güncelleme başarısız: indirme {1}MB'nin {0}'ında durdu - yeniden dene",
     "update failed: couldn't unpack ({0}) - disk full?": "güncelleme başarısız: açılamadı ({0}) - disk dolu mu?",
-    "update failed: the download has no nocatFarm.exe": "güncelleme başarısız: indirmede nocatFarm.exe yok",
     "update failed: couldn't back up the current version ({0})": "güncelleme başarısız: mevcut sürüm yedeklenemedi ({0})",
     "update: all signed out - restarting into {0}": "güncelleme: hepsinden çıkıldı - {0} ile yeniden başlıyor",
     "update failed: {0} - nothing changed": "güncelleme başarısız: {0} - hiçbir şey değişmedi",
@@ -2224,14 +2222,17 @@
     "File logging is off - turn on \"Write a log file\" below.": "Dosyaya günlük kapalı - aşağıdan \"Günlük dosyası yaz\"ı aç.",
     "Opened {0}": "{0} açıldı",
     "The log files are in {0} on the PC nocat.farm runs on.": "Günlük dosyaları nocat.farm'ın çalıştığı bilgisayarda, {0} içinde.",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux or Mac zip, unzip the new one and keep your config folder. Your accounts and settings stay where they are.": "Yeni sürüm çıkınca haber verir. Burada kendi kendine kuramaz - Docker'da yeni sürümü alıp docker compose up -d --build çalıştır; Linux ya da Mac zip'inde yenisini aç ve config klasörünü koru. Hesapların ve ayarların yerinde kalır.",
     "on": "açık",
     "Everything has an explanation attached - tap or hover the {0} beside any setting.": "Her şeyin bir açıklaması var - bir ayarın yanındaki {0} simgesine dokun ya da üzerine gel.",
     "the rep4rep hold has run out - back on at {0}/{1}": "rep4rep beklemesi doldu - {0}/{1} ile devam ediliyor",
     "this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it": "bu hesap {0} saatine kadar yorumlara ara verdi - 'rep4rep clear {1}' kaldırır",
     "nocatFarm.json didn't load - still on the settings in use; fix it and 'reload' again": "nocatFarm.json yüklenemedi - kullanılan ayarlar kalıyor; dosyayı düzeltip yine 'reload' yaz",
     "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0} insan modunda - bu listedeki değil \"Oyunlar ve ne sıklıkta\" (GameWeights) içindeki oyunları oynar",
-    "update stopped - nocat.farm was closed first; nothing changed": "güncelleme durduruldu - nocat.farm önce kapatıldı; hiçbir şey değişmedi"
+    "update stopped - nocat.farm was closed first; nothing changed": "güncelleme durduruldu - nocat.farm önce kapatıldı; hiçbir şey değişmedi",
+    "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "hizmet olarak çalışırken nocat.farm kendini güncellemez - durdur, {1} adresinden {0} dosyasını bu klasörün üstüne aç (config/ ve logs/ kalır) ve yeniden başlat",
+    "update failed: it was started with an option that has a space in it - update by hand this time": "güncelleme başarısız: boşluk içeren bir seçenekle başlatılmış - bu sefer elle güncelle",
+    "update failed: the download has no {0}": "güncelleme başarısız: indirilen dosyada {0} yok",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "Yeni sürüm çıkınca haber verir. Burada kendi kendine kuramaz - Docker'da yeni sürümü alıp docker compose up -d --build çalıştır; Linux hizmeti olarak çalışıyorsa durdur, yeni zip'i klasörün üstüne aç ve yeniden başlat. Hesapların ve ayarların yerinde kalır."
   },
   "settings": {
     "WebEnabled": {
@@ -3033,7 +3034,7 @@
     },
     "Rep4RepLearnCap": {
       "label": "Gerçek sınırı öğren",
-      "tip": "Bu hesabın gerçek günlük yorum sınırını Steam'in retlerinden öğrenmesine izin verir. “Çok sık yorum yapıyorsun” reddi sınırı asla düşürmez."
+      "tip": "Steam, hesabın yukarıda ayarlanan sayıdan önce günlük yorum sınırına ulaştığını söylerse bu, hesabın sınırı olur (asla 5'in altına inmez). \"Çok sık yorum yapıyorsun\" reddi yorumlar arasındaki aralıkla ilgilidir ve sınırı hiç değiştirmez."
     },
     "Rep4RepRetryRefused": {
       "label": "Reddedilen yorumu yeniden dene",
@@ -3154,7 +3155,7 @@
     },
     "AutoUpdate": {
       "label": "Kendini güncelle",
-      "tip": "Yeni sürüm çıkınca ne olacağı. Bana söyle: günlükte, Telegram'da ve Discord'da söyler, sen update accept yazarsın. Gece kur: aşağıdaki saatlerde kendiliğinden kurar, sadece insan modundaki hiçbir hesap uyanık değilken ve kimse bir hesapta oynamıyorken, öncesinde ve sonrasında haber verir. Yalnızca Windows.",
+      "tip": "Yeni sürüm çıkınca ne olacağı. Bana söyle: günlükte, Telegram'da ve Discord'da söyler, sen update accept yazarsın. Gece kur: aşağıdaki saatlerde kendiliğinden kurar, sadece insan modundaki hiçbir hesap uyanık değilken ve kimse bir hesapta oynamıyorken, öncesinde ve sonrasında haber verir. Docker'da ya da Linux hizmeti olarak değil; onlar elle güncellenir.",
       "choices": "0 bana söyle | 1 gece kur"
     },
     "AutoUpdateFromHour": {
@@ -3223,7 +3224,7 @@
     },
     "UpdateWhenAsked": {
       "label": "Güncelle dediğimde",
-      "tip": "update accept ve Güncelle düğmesinin yaptığı. Hemen: şimdi kurar. Hesaplarım uyuyunca: insan modundaki hiçbir hesap uyanık değilken, kimse bir hesapta oynamıyorken ve bekleyen takas ya da hediye yokken kurar - gece boyu açık robot hesaplar engel olmaz. İnsan modunda hesap yoksa aşağıdaki saatleri bekler. update now her zaman hemen kurar. Yalnızca Windows.",
+      "tip": "update accept ve Güncelle düğmesinin yaptığı. Hemen: şimdi kurar. Hesaplarım uyuyunca: insan modundaki hiçbir hesap uyanık değilken, kimse bir hesapta oynamıyorken ve bekleyen takas ya da hediye yokken kurar - gece boyu açık robot hesaplar engel olmaz. İnsan modunda hesap yoksa aşağıdaki saatleri bekler. update now her zaman hemen kurar. Docker'da ya da Linux hizmeti olarak değil; onlar elle güncellenir.",
       "choices": "0 hemen | 1 hesaplarım uyuyunca"
     },
     "DiscordSecondLine": {

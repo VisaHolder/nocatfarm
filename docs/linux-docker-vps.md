@@ -47,8 +47,12 @@ WantedBy=multi-user.target
 (`journalctl -u nocatfarm -f`). Type commands in the dashboard's Console tab, which is also where Steam Guard prompts
 appear.
 
-**Updating.** It tells you when a new version is out, but on Linux it doesn't update itself. Stop it, unzip the new
-zip over the folder (`unzip -o`), and start it again. `config/` and `logs/` aren't in the zip, so they're kept.
+**Updating.** Started from a terminal or a desktop, it updates itself like on Windows: **Update** on the dashboard,
+`update accept`, or *Update by itself* at night - a safety copy first, and a new version that won't start is put
+back. The new version starts in the background; the dashboard is where you see it. **Run as a service** (the systemd
+unit above) it doesn't, because systemd would stop the update half way: it tells you when a new version is out, and
+you stop it, unzip the new zip over the folder (`unzip -o`), and start it again. `config/` and `logs/` aren't in the
+zip, so they're kept.
 
 Saved logins are encrypted with a key in `config/state/secret.key` that only your user can read, so back up the
 whole `config` folder together. A config folder from Windows works too, but each account signs in once more,
@@ -72,9 +76,10 @@ Like on Linux there's no window or tray icon: you get the Terminal and the web d
 same. It's built and tested on real Apple Silicon and Intel Macs with every release. To have it start when you log
 in: **System Settings → General → Login Items**, press **+** and pick `start.command`.
 
-**Updating.** It tells you when a new version is out, but on a Mac it doesn't update itself. Type `quit` (or press
-Ctrl+C in its Terminal), unzip the new version, and move the `config` folder from the old folder into the new one -
-that's where your accounts and settings are. In Terminal, `unzip -o` of the new zip over the old folder does the same.
+**Updating.** It updates itself like on Windows: **Update** on the dashboard, `update accept`, or *Update by itself*
+at night. The old version closes, and the new one opens in a Terminal window of its own. A safety copy is made
+first, and a new version that won't start is put back. Tested on real Apple Silicon and Intel Macs with every
+release.
 
 Saved logins are encrypted with a key in `config/state/secret.key` that only your user can read, as on Linux.
 

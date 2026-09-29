@@ -8,4 +8,8 @@ cd "$(dirname "$0")" || exit 1
 xattr -dr com.apple.quarantine . 2>/dev/null
 chmod +x nocatFarm 2>/dev/null
 
-exec ./nocatFarm "$@"
+# So an update can open the new version the same way: in a Terminal window of its own.
+export NOCATFARM_STARTER=start.command
+
+# The full path, so the updater can tell whether the new version is running.
+exec "$PWD/nocatFarm" "$@"
