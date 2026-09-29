@@ -19,6 +19,14 @@ public sealed class Sender(Bot bot) : BotModule(bot) {
 	private Said _status = new("off");
 	private DateTime? _nextDue;
 	private int _periodSeen;
+	private int _hourSeen = -2;
+
+	/// <summary>
+	/// One account's send at a time, a few minutes apart. Several accounts set to the same hour would otherwise read
+	/// their inventories and post their offers in the same minute from the same IP - which is what Steam rate-limits.
+	/// </summary>
+	private static readonly SemaphoreSlim OneAtATime = new(1, 1);
+	private static DateTime _lastSendUtc = DateTime.MinValue;
 
 	public override string Name => "sending";
 	public override string Status => Bot.Cfg.SendEveryHours > 0 ? _status : "";
@@ -56,7 +64,9 @@ public sealed class Sender(Bot bot) : BotModule(bot) {
 
 			// Switched on, or the period changed: the first send is one period from now, not immediately - so turning
 			// this on never fires a trade offer the same second.
-			if ((_nextDue == null) || (_periodSeen != 0 && _periodSeen != hours)) {
+			int atHour = Bot.Cfg.SendAroundHour is >= 0 and <= 23 ? Bot.Cfg.SendAroundHour : -1;
+
+			if ((_nextDue == null) || (_periodSeen != 0 && _periodSeen != hours) || (_hourSeen != -2 && _hourSeen != atHour)) {
 				Schedule(hours);
 				DateTime first = _nextDue!.Value;
 				Log.Info(new Said("sending items to your main every {0}, first around {1}", Fmt.Hm(hours * 60),
@@ -64,6 +74,7 @@ public sealed class Sender(Bot bot) : BotModule(bot) {
 			}
 
 			_periodSeen = hours;
+			_hourSeen = atHour;
 			DateTime due = _nextDue!.Value;
 
 			if (DateTime.UtcNow < due) {
@@ -101,26 +112,57 @@ public sealed class Sender(Bot bot) : BotModule(bot) {
 				continue;
 			}
 
-			string result = await Looting.SendToMasterAsync(Bot, ct).ConfigureAwait(false);
+			await OneAtATime.WaitAsync(ct).ConfigureAwait(false);
 
-			// "Nothing to send" is the ordinary answer most of the time - worth a line in the file, not on screen.
-			if (result.Contains(": sent ", StringComparison.Ordinal)) {
-				Log.Info(result, Bot.Name);
-			} else {
-				Log.Debug(result, Bot.Name);
+			try {
+				TimeSpan gap = (_lastSendUtc + Rng.Minutes(3, 6)) - DateTime.UtcNow;
+
+				if (gap > TimeSpan.Zero) {
+					_status = new Said("send due - waiting a few minutes after another account's send");
+
+					if (!await Sleep(gap, ct).ConfigureAwait(false)) {
+						return;
+					}
+				}
+
+				Looting.Report(Bot, await Looting.SendToMasterAsync(Bot, ct).ConfigureAwait(false));
+			} finally {
+				_lastSendUtc = DateTime.UtcNow;
+				OneAtATime.Release();
 			}
 
 			Schedule(hours);
+			DateTime again = _nextDue!.Value;
+			Log.Debug(new Said("next send around {0}", (Func<string>) (() => Fmt.Clock(again))), Bot.Name);
 		}
 	}
 
 	private static TimeSpan Min(TimeSpan a, TimeSpan b) => a < b ? a : b;
 
-	/// <summary>Next send one period from now, plus up to a tenth of it again so it never lands on the same minute.</summary>
+	/// <summary>
+	/// The next send. With a set hour: a random minute in that hour, on the first day far enough off for the period -
+	/// every 24 hours is the next time that hour comes round, every 48 skips a day. Without one: one period from now,
+	/// plus up to a tenth of it again so it never lands on the same minute.
+	/// </summary>
 	private void Schedule(int hours) {
-		double slack = Rng.Next(0, 101) / 1000.0;
-		_nextDue = DateTime.UtcNow + TimeSpan.FromHours(hours * (1 + slack));
+		_nextDue = NextDue(DateTime.Now, hours, Bot.Cfg.SendAroundHour, Rng.Next(0, 60), Rng.Next(0, 101) / 1000.0).ToUniversalTime();
 		Save();
+	}
+
+	/// <summary>When the next send is due, in local time - separate so it can be tested.</summary>
+	internal static DateTime NextDue(DateTime nowLocal, int hours, int atHour, int minute, double slack) {
+		if (atHour is < 0 or > 23) {
+			return nowLocal + TimeSpan.FromHours(hours * (1 + slack));
+		}
+
+		DateTime due = nowLocal.Date.AddHours(atHour).AddMinutes(minute);
+
+		// At least the period less a day away: 24 hours is simply the next time the hour comes round.
+		while ((due <= nowLocal) || (due - nowLocal < TimeSpan.FromHours(Math.Max(0, hours - 24)))) {
+			due = due.AddDays(1);
+		}
+
+		return due;
 	}
 
 	private sealed record SendState(long NextDueTicks);

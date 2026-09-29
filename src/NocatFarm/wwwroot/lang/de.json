@@ -2200,7 +2200,11 @@
     "couldn't reach GitHub to check ({0}) - try again in a minute": "GitHub zum Prüfen nicht erreichbar ({0}) - in einer Minute nochmal versuchen",
     "in use now, but not saved to disk - see the Log": "jetzt aktiv, aber nicht auf der Festplatte gespeichert - siehe Protokoll",
     "settings not saved - {0} didn't load; fix it or delete it": "Einstellungen nicht gespeichert - {0} ließ sich nicht laden; reparieren oder löschen",
-    "couldn't read the saved sign-in: {0}": "gespeicherte Anmeldung nicht lesbar: {0}"
+    "couldn't read the saved sign-in: {0}": "gespeicherte Anmeldung nicht lesbar: {0}",
+    "listed {0} ({1}) for {2} - you get {3}": "{0} ({1}) für {2} eingestellt - du bekommst {3}",
+    "couldn't read the trade page: {0}": "konnte die Tauschseite nicht lesen: {0}",
+    "offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)": "Angebot gesendet - bestätige es über die E-Mail von Steam (kein Authenticator in der Steam-App, darum hält Steam es bis zu 15 Tage zurück)",
+    "send due - waiting a few minutes after another account's send": "Versand fällig - wartet ein paar Minuten nach dem Versand eines anderen Kontos"
   },
   "settings": {
     "WebEnabled": {
@@ -3014,11 +3018,11 @@
     },
     "SendEveryHours": {
       "label": "Gegenstände senden alle",
-      "tip": "Schickt die Gegenstände dieses Kontos alle so viele Stunden an das erste Konto in „Deine eigenen Konten“, damit sich keine Karten anhäufen. 0 schaltet es aus."
+      "tip": "Schickt die Gegenstände dieses Kontos alle so viele Stunden an das erste Konto in „Deine eigenen Konten“, damit sich keine Karten anhäufen. Der erste Versand ist einen Zeitraum nach dem Einschalten, die Karte des Kontos im Dashboard zeigt, wann der nächste kommt, und jeder Versand steht im Log. 0 schaltet es aus."
     },
     "SendItemTypes": {
       "label": "Was gesendet wird",
-      "tip": "Welche Gegenstandsarten dieses Konto verlassen dürfen, getrennt durch Kommas: cards, foils, backgrounds, emoticons, boosters, gems oder all. Was nicht aufgeführt ist, wird nie geschickt.",
+      "tip": "Welche Gegenstände dieses Konto verlassen dürfen, durch Kommas getrennt: cards, foils, backgrounds, emoticons, boosters, gems - oder all für alles Handelbare in jedem Spiel (auch TF2- und CS2-Gegenstände). Was nicht aufgeführt ist, wird nie gesendet.",
       "placeholder": "Karten"
     },
     "TradeMasterToken": {
@@ -3199,6 +3203,10 @@
       "label": "Zweite Zeile",
       "tip": "Was die zweite Zeile der Discord-Karte zählt, wenn die Kontonamen aus sind: die heute bekommenen Karten oder die gespielten Stunden der letzten Woche oder des letzten Monats - zusammengezählt über die Konten, die die Karte zeigt.",
       "choices": "0 Karten heute | 1 Stunden letzte Woche | 2 Stunden letzter Monat"
+    },
+    "SendAroundHour": {
+      "label": "...gegen",
+      "tip": "Die Stunde des Tages für den Versand, 0 bis 23 - etwa 4 für ungefähr 4 Uhr morgens. Er geht zu einer zufälligen Minute in dieser Stunde raus, an den Tagen, die „Gegenstände senden alle“ erlaubt. -1 = keine feste Zeit: alle so viele Stunden ab dem Einschalten."
     }
   }
 }

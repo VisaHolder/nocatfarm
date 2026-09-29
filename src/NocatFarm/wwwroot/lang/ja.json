@@ -2200,7 +2200,11 @@
     "couldn't reach GitHub to check ({0}) - try again in a minute": "確認のため GitHub に接続できませんでした ({0}) - 1分後にもう一度試してください",
     "in use now, but not saved to disk - see the Log": "今は反映されていますが、ディスクに保存できませんでした - ログを確認してください",
     "settings not saved - {0} didn't load; fix it or delete it": "設定は保存されていません - {0} を読み込めませんでした。修正するか削除してください",
-    "couldn't read the saved sign-in: {0}": "保存されたサインイン情報を読み込めません: {0}"
+    "couldn't read the saved sign-in: {0}": "保存されたサインイン情報を読み込めません: {0}",
+    "listed {0} ({1}) for {2} - you get {3}": "{0}（{1}）を {2} で出品しました - 受け取りは {3}",
+    "couldn't read the trade page: {0}": "トレードページを読めませんでした: {0}",
+    "offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)": "オファーを送りました - Steam から届いたメールで確認してください（Steam アプリの認証がないため、Steam が最大15日間保留します）",
+    "send due - waiting a few minutes after another account's send": "送信時刻 - 別のアカウントの送信から数分待っています"
   },
   "settings": {
     "WebEnabled": {
@@ -3014,11 +3018,11 @@
     },
     "SendEveryHours": {
       "label": "アイテムを送る間隔",
-      "tip": "この時間数ごとに、このアカウントのアイテムを「自分のアカウント」の最初のアカウントに送り、カードがたまらないようにします。0 でオフです。"
+      "tip": "この時間数ごとに、このアカウントのアイテムを「自分のアカウント」の最初のアカウントに送り、カードがたまらないようにします。最初の送信はオンにしてから1周期後です。次の送信時刻はダッシュボードのアカウントカードに出て、毎回の送信はログに残ります。0 でオフです。"
     },
     "SendItemTypes": {
       "label": "何を送るか",
-      "tip": "このアカウントから送り出せるアイテムの種類を、カンマ区切りで入力します: cards、foils、backgrounds、emoticons、boosters、gems、または all。書いていないものは決して送りません。",
+      "tip": "このアカウントから出してよいアイテムをカンマ区切りで: cards、foils、backgrounds、emoticons、boosters、gems - または all で、すべてのゲームのトレード可能なもの全部（TF2 や CS2 のアイテムも）。書かれていないものは送りません。",
       "placeholder": "カード"
     },
     "TradeMasterToken": {
@@ -3199,6 +3203,10 @@
       "label": "2行目",
       "tip": "アカウント名がオフのとき、Discord カードの2行目が数えるもの: 今日のカード、または過去1週間か過去1か月のプレイ時間 - カードに出るアカウントの合計です。",
       "choices": "0 今日のカード | 1 過去1週間の時間 | 2 過去1か月の時間"
+    },
+    "SendAroundHour": {
+      "label": "...頃に",
+      "tip": "送信する時刻（0〜23時）。たとえば 4 なら朝4時頃です。その時間内のランダムな分に、「アイテムを送る間隔」が許す日に送ります。-1 = 時刻を決めない: オンにした時から一定時間ごと。"
     }
   }
 }

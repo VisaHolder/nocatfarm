@@ -360,7 +360,9 @@ NocatFarm.Core.RemoteAccess.Start();
 
 
 // Only where there's a desktop: a server or a container has no browser, and the attempt is just a baffling error.
-if (global.OpenBrowserOnStart && (web != null) && Platform.HasDesktop) {
+// And not when it starts hidden (with Windows) or has just restarted itself into an update - a browser tab popping
+// up then is something nobody asked for.
+if (global.OpenBrowserOnStart && (web != null) && Platform.HasDesktop && !startMinimized && !NocatFarm.Core.SelfUpdate.OnTrial) {
 	OpenBrowser(web.Url);
 }
 

@@ -304,7 +304,9 @@ public static partial class Looting {
 			return $"{bot.Name}: couldn't send - {(problems.Count > 0 ? problems[0] : "Steam refused the offer")}";
 		}
 
-		string note = $"{bot.Name}: sent {sent} item(s) to {master}"
+		// By account name when it's one of yours - a SteamID64 says nothing at a glance.
+		string whom = BotManager.Instance?.All.FirstOrDefault(b => b.SteamId == master)?.Name ?? master.ToString(CultureInfo.InvariantCulture);
+		string note = $"{bot.Name}: sent {sent} item(s) to {whom}"
 			+ (blocked > 0 ? $" ({blocked} left out - banned in that game)" : "");
 
 		return problems.Count > 0 ? note + $" (then stopped: {problems[0]})" : note;
@@ -317,6 +319,21 @@ public static partial class Looting {
 	/// account this app is signed into - which is exactly the case that matters, because sweeping items between
 	/// your own accounts is what the token requirement gets in the way of.
 	/// </summary>
+	/// <summary>
+	/// A send's result, said at the right volume: items sent is a line on screen, "nothing to send" only goes in the
+	/// file, and a send Steam refused is a problem you're told about - it used to go in the file too, so an account
+	/// that could never send (no mobile authenticator) failed quietly every time.
+	/// </summary>
+	public static void Report(Bot bot, string result) {
+		if (result.Contains(": sent ", StringComparison.Ordinal)) {
+			Log.Good(result, bot.Name);
+		} else if (result.Contains(": couldn't send", StringComparison.Ordinal) || result.Contains(": nowhere to send", StringComparison.Ordinal)) {
+			Log.Attention(result, bot.Name);
+		} else {
+			Log.Debug(result, bot.Name);
+		}
+	}
+
 	private static async Task<string?> TradeTokenOfAsync(ulong steamId, CancellationToken ct) {
 		Bot? owner = BotManager.Instance?.All.FirstOrDefault(b => b.SteamId == steamId);
 
@@ -383,10 +400,36 @@ public static partial class Looting {
 		return sent > 0 ? (sent, refused, null) : (0, [], firstRefusal);
 	}
 
+	/// <summary>The reason Steam shows on the new-offer page when this account can't trade, or null when it shows none.</summary>
+	private static async Task<string?> TradePageReasonAsync(Bot bot, Uri page, CancellationToken ct) {
+		try {
+			string? html = await bot.Web.GetAsync(page, ct).ConfigureAwait(false);
+
+			if (html == null) {
+				return null;
+			}
+
+			Match box = Regex.Match(html, "id=\"error_msg\"[^>]*>(.*?)</div>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+
+			if (!box.Success) {
+				return null;
+			}
+
+			string text = System.Net.WebUtility.HtmlDecode(Regex.Replace(box.Groups[1].Value, "<[^>]+>", " "));
+			text = Regex.Replace(text, "\\s+", " ").Trim();
+
+			return text.Length > 0 ? text : null;
+		} catch (Exception e) when (e is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested) {
+			Log.Debug(new Said("couldn't read the trade page: {0}", e.Message), bot.Name);
+
+			return null;
+		}
+	}
+
 	private static string Explain(string steamError) {
 		string extra = steamError switch {
 			_ when steamError.Contains("(15)", StringComparison.Ordinal) =>
-				"  -  that's Steam's \"access denied\". Usually it means the SENDING account has no Steam Guard Mobile Authenticator: Steam won't let an account send trade offers without one. A trade ban or trade hold on either account does the same thing.",
+				"  -  that's Steam's \"access denied\": the sending account can't trade right now. Common reasons: a trade restriction after a new sign-in, a password or email change, or a recovered account; Steam Guard switched on less than 15 days ago; a trade ban; items that can't be traded yet; or the receiving account can't take them (a full or free-to-play game inventory). Open a new trade offer on that account in a browser and Steam says which.",
 			_ when steamError.Contains("(11)", StringComparison.Ordinal) =>
 				"  -  Steam won't let this offer through to that account. Between two accounts that are not Steam friends it needs the recipient's trade-link token, which is looked up automatically when the recipient is one of your own accounts - so this usually means the RECIPIENT has trading switched off, is trade banned, or has never set up the mobile authenticator.",
 			_ when steamError.Contains("(16)", StringComparison.Ordinal) => "  -  Steam timed out. Worth trying again.",
@@ -503,7 +546,15 @@ public static partial class Looting {
 						: new Said("we offered {0} item(s) to {1}, with no trade token: ", items.Count, master))
 					+ string.Join(", ", items.Take(6).Select(static i => $"{i.App}/{i.Context}/{i.AssetId} {i.Name}")), bot.Name);
 
-				return (false, Explain(error.GetString() ?? "refused"));
+				string said = error.GetString() ?? "refused";
+
+				// "Access denied" says nothing about why. The page for a new offer does: Steam writes the actual reason
+				// there (a trade restriction and until when, an item that can't be traded yet, a limited account ...).
+				if (said.Contains("(15)", StringComparison.Ordinal) && (await TradePageReasonAsync(bot, referer, ct).ConfigureAwait(false) is { } reason)) {
+					return (false, $"Steam won't let {bot.Name} send this trade: {reason}");
+				}
+
+				return (false, Explain(said));
 			}
 
 			if (doc.RootElement.TryGetProperty("tradeofferid", out JsonElement id)) {
@@ -516,11 +567,16 @@ public static partial class Looting {
 				// Steam doesn't show the offer to anybody until it's confirmed - so "sent" is only the truth once it is.
 				if (needsConfirming && ulong.TryParse(id.GetString() ?? id.ToString(), out ulong offerId)) {
 					if (!await bot.ConfirmMobileAsync(offerId, true, ct).ConfigureAwait(false)) {
-						Log.Warn(new Said("offer sent - confirm it on your phone (no authenticator here)"), bot.Name);
+						// To your phone too: nobody sees the offer until it's confirmed, and nothing else will say so.
+						Log.Attention(new Said("offer sent - confirm it on your phone (no authenticator here)"), bot.Name, Topic.Trades);
 
 						return (true, "sent - waiting for you to confirm it in the Steam app on your phone");
 					}
 				} else if (needsEmail) {
+					// Said, not just returned: the summary only counts what was sent, so this used to go unmentioned and
+					// the offer sat unconfirmed until it expired.
+					Log.Attention(new Said("offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)"), bot.Name, Topic.Trades);
+
 					return (true, "sent - waiting for you to confirm it from the email Steam sent");
 				}
 

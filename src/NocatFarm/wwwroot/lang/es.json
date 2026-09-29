@@ -2200,7 +2200,11 @@
     "couldn't reach GitHub to check ({0}) - try again in a minute": "no se pudo contactar con GitHub para comprobar ({0}) - inténtalo en un minuto",
     "in use now, but not saved to disk - see the Log": "ya está activo, pero no se guardó en el disco - mira el Registro",
     "settings not saved - {0} didn't load; fix it or delete it": "ajustes no guardados - {0} no se pudo cargar; arréglalo o bórralo",
-    "couldn't read the saved sign-in: {0}": "no se pudo leer el inicio de sesión guardado: {0}"
+    "couldn't read the saved sign-in: {0}": "no se pudo leer el inicio de sesión guardado: {0}",
+    "listed {0} ({1}) for {2} - you get {3}": "{0} ({1}) puesto a la venta por {2}; recibes {3}",
+    "couldn't read the trade page: {0}": "no se pudo leer la página de intercambio: {0}",
+    "offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)": "oferta enviada: confírmala desde el correo de Steam (sin autenticador de la app de Steam, así que Steam la retiene hasta 15 días)",
+    "send due - waiting a few minutes after another account's send": "envío pendiente: espera unos minutos tras el envío de otra cuenta"
   },
   "settings": {
     "WebEnabled": {
@@ -3014,11 +3018,11 @@
     },
     "SendEveryHours": {
       "label": "Enviar los objetos cada",
-      "tip": "Envía los objetos de esta cuenta a la primera cuenta de «Tus propias cuentas» cada tantas horas, para que no se acumulen los cromos. 0 lo desactiva."
+      "tip": "Envía los objetos de esta cuenta a la primera cuenta de «Tus propias cuentas» cada tantas horas, para que no se acumulen los cromos. El primer envío llega un periodo después de activarlo, la tarjeta de la cuenta en el panel muestra cuándo es el siguiente y cada envío queda en el registro. 0 lo desactiva."
     },
     "SendItemTypes": {
       "label": "Qué enviar",
-      "tip": "Qué tipos de objeto pueden salir de esta cuenta, separados por comas: cards, foils, backgrounds, emoticons, boosters, gems o all. Lo que no esté en la lista nunca se envía.",
+      "tip": "Qué objetos pueden salir de esta cuenta, separados por comas: cards, foils, backgrounds, emoticons, boosters, gems, o all para todo lo intercambiable de cualquier juego (también objetos de TF2 y CS2). Lo que no esté en la lista nunca se envía.",
       "placeholder": "cromos"
     },
     "TradeMasterToken": {
@@ -3199,6 +3203,10 @@
       "label": "Segunda línea",
       "tip": "Lo que cuenta la segunda línea de la tarjeta de Discord cuando los nombres de cuenta están desactivados: los cromos conseguidos hoy, o las horas jugadas la última semana o el último mes, sumadas entre las cuentas que muestra la tarjeta.",
       "choices": "0 cromos hoy | 1 horas la última semana | 2 horas el último mes"
+    },
+    "SendAroundHour": {
+      "label": "...hacia las",
+      "tip": "La hora del día para enviar, de 0 a 23: por ejemplo 4 para las 4 de la madrugada más o menos. Sale en un minuto al azar de esa hora, los días que permite «Enviar objetos cada». -1 = sin hora fija: cada tantas horas desde que se activó."
     }
   }
 }
