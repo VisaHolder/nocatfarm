@@ -174,8 +174,6 @@ public static class Seller {
 	/// <summary>"391540-Sans" is the card "Sans".</summary>
 	private static string CardName(string hash) => hash.IndexOf('-') is int dash and > 0 ? hash[(dash + 1)..] : hash;
 
-	public static string Money(int cents) => PriceBook.Symbol + (cents / 100m).ToString("0.00", CultureInfo.InvariantCulture);
-
 	// ── listing ──────────────────────────────────────────────────────────────
 	/// <summary>List them, a little apart, then confirm them if this account can. Returns a summary.</summary>
 	public static async Task<string> SellAsync(Bot bot, IReadOnlyList<Offer> offers, CancellationToken ct) {
@@ -231,6 +229,8 @@ public static class Seller {
 
 			// Steam says why in the body ("You have too many listings pending confirmation", a market ban, ...).
 			refusal = Message(body) ?? "no answer";
+			// The automatic seller drops the summary this ends up in, so the reason is written down here as well.
+			Log.Debug($"market listing of {offer.Card} ({offer.Game}, asset {offer.AssetId}) refused: {Log.Scrub(Message(body) ?? (body == null ? "no answer" : body[..Math.Min(150, body.Length)]))}", bot.Name);
 
 			if (listed == 0) {
 				break;   // the first one refused - the rest would be refused for the same reason
@@ -284,8 +284,6 @@ public static class Seller {
 
 	// ── listings already up ─────────────────────────────────────────────────
 	public sealed record Listing(ulong Id, ulong AssetId, string Hash, int YouGetCents, DateTime Created, bool AwaitingConfirmation) {
-		public string Card => CardName(Hash);
-
 		/// <summary>The card's game, from the "appid-Name" market name.</summary>
 		public uint Game => (Hash.IndexOf('-') is int dash and > 0) && uint.TryParse(Hash.AsSpan(0, dash), out uint app) ? app : 0;
 	}
@@ -300,6 +298,11 @@ public static class Seller {
 
 		using JsonDocument doc = JsonDocument.Parse(json);
 		List<Listing> found = [];
+
+		if ((doc.RootElement.ValueKind != JsonValueKind.Object)
+			|| (!doc.RootElement.TryGetProperty("listings", out _) && !doc.RootElement.TryGetProperty("listings_to_confirm", out _))) {
+			Log.Debug($"market listings: Steam's answer had no listings in it: {Log.Scrub(json[..Math.Min(150, json.Length)])}", bot.Name);
+		}
 
 		foreach ((string key, bool waiting) in new[] { ("listings", false), ("listings_to_confirm", true) }) {
 			if (!doc.RootElement.TryGetProperty(key, out JsonElement list) || (list.ValueKind != JsonValueKind.Array)) {
@@ -369,6 +372,8 @@ public static class Seller {
 
 			if (body != null) {
 				removed++;
+			} else {
+				Log.Debug($"couldn't take down stale market listing {listing.Id}", bot.Name);   // WebSession logged the why
 			}
 		}
 

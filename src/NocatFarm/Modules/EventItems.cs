@@ -86,7 +86,7 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
 				} catch (Exception e) {
-					Log.Debug(new Said("couldn't check for free event items: {0}", e.Message), Bot.Name);
+					Log.Debug(new Said("couldn't check for free event items: {0}", Log.Describe(e)), Bot.Name);
 				}
 
 				// The free-items time only when free items are on. With just the discovery queue, the shop's time was
@@ -164,6 +164,9 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 			Log.Reward(new Said("claimed the free sale item: {0}", item), Bot.Name, topic: Topic.FreeStuff);
 		} else {
 			Log.Info(new Said("claimed the free sale item"), Bot.Name);
+
+			// No item named - a claim that quietly didn't happen looks just like this, so keep what Steam said.
+			Log.Debug($"ClaimItem answered without a reward item: {Log.Scrub(claimed.Length > 150 ? claimed[..150] : claimed)}", Bot.Name);
 		}
 
 		_nextSticker = NextClaim(body) ?? DateTime.UtcNow + Rng.Minutes(180, 300);
@@ -208,7 +211,8 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 		if (_queueDay == null) {
 			try {
 				_queueDay = File.Exists(QueuePath) ? File.ReadAllText(QueuePath).Trim() : "";
-			} catch (IOException) {
+			} catch (IOException e) {
+				Log.Failed("couldn't read the discovery-queue day", e, Bot.Name);
 				_queueDay = "";
 			}
 		}
@@ -240,6 +244,8 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 		_queueAt = DateTime.UtcNow + Rng.Minutes(20, 90);
 
 		if (Bot.Unified?.CreateService<Store>() is not { } store) {
+			Log.Debug("discovery queue: not connected to Steam", Bot.Name);
+
 			return -1;
 		}
 
@@ -251,6 +257,7 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 			.ToTask().WaitAsync(TimeSpan.FromSeconds(30), ct).ConfigureAwait(false);
 
 		if (queue.Result != EResult.OK) {
+			Log.Debug($"discovery queue refused ({queue.Result}) - asking for a fresh one", Bot.Name);
 			await Task.Delay(Rng.Seconds(3, 8), ct).ConfigureAwait(false);
 			queue = await store
 				.GetDiscoveryQueue(new CStore_GetDiscoveryQueue_Request { queue_type = EStoreDiscoveryQueueType.k_EStoreDiscoveryQueueTypeNew, country_code = country, rebuild_queue = true })
@@ -274,6 +281,8 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 
 			if (skip.Result == EResult.OK) {
 				seen++;
+			} else {
+				Log.Debug($"discovery queue: moving past app {app} refused: {skip.Result}", Bot.Name);
 			}
 		}
 
@@ -282,8 +291,9 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 
 			try {
 				AtomicFile.Write(QueuePath, _queueDay);
-			} catch (IOException) {
+			} catch (IOException e) {
 				// Worst case it goes through the queue again after a restart.
+				Log.Failed("couldn't save the discovery-queue day", e, Bot.Name);
 			}
 
 			Log.Info(new Said("went through the discovery queue ({0} game(s))", seen), Bot.Name);
@@ -297,6 +307,8 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 		_nextShop = DateTime.UtcNow + Rng.Minutes(8 * 60, 12 * 60);
 
 		if (Bot.Unified?.CreateService<LoyaltyRewards>() is not { } shop) {
+			Log.Debug("Points Shop: not connected to Steam", Bot.Name);
+
 			return 0;
 		}
 
@@ -316,6 +328,8 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 				got++;
 				Log.Reward(new Said("took a free Points Shop item from {0}", GameNames.Of(appId)), Bot.Name, topic: Topic.FreeStuff);
 			} else if (answer.Result is EResult.Timeout or EResult.ServiceUnavailable or EResult.Busy or EResult.TryAnotherCM or EResult.RateLimitExceeded) {
+				Log.Debug($"Points Shop item {defId} not taken yet - Steam said {answer.Result}; trying again next time", Bot.Name);
+
 				continue;   // try it again next time
 			} else {
 				Log.Debug(new Said("Points Shop item {0} not taken - Steam said {1}", defId, answer.Result), Bot.Name);
@@ -357,6 +371,8 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 					.ToTask().WaitAsync(TimeSpan.FromSeconds(60), ct).ConfigureAwait(false);
 
 				if (answer.Result != EResult.OK) {
+					Log.Debug($"reading the Points Shop stopped at page {page + 1} - Steam said {answer.Result}; keeping the last good read");
+
 					return _freeInShop;   // keep the last good read rather than a partial one
 				}
 
@@ -393,7 +409,7 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 				return [.. saved];
 			}
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the free-item list: {0}", e.Message), Bot.Name);
+			Log.Debug(new Said("couldn't read the free-item list: {0}", Log.Describe(e)), Bot.Name);
 		}
 
 		return [];
@@ -404,7 +420,7 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 			Directory.CreateDirectory(Path.GetDirectoryName(StatePath)!);
 			AtomicFile.Write(StatePath, JsonSerializer.Serialize(_taken?.Order().ToList() ?? []));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the free-item list: {0}", e.Message), Bot.Name);
+			Log.Debug(new Said("couldn't save the free-item list: {0}", Log.Describe(e)), Bot.Name);
 		}
 	}
 }

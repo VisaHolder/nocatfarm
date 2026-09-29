@@ -42,6 +42,8 @@ public static class Platform {
 
 			return true;
 		} catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException) {
+			Log.Failed($"couldn't open the folder {dir}", e);
+
 			return false;
 		}
 	}
@@ -86,7 +88,7 @@ public static class Platform {
 					Log.Info(new Said("fix on the host: sudo chown -R {0}:{1} that folder", getuid(), getgid()));
 					Log.Info(new Said("or set user: in docker-compose.yml to its owner"));
 				} else {
-					Log.Error(new Said("can't write to {0} ({1}) - nothing is saved (uid {2})", dir, e.Message, getuid()));
+					Log.Error(new Said("can't write to {0} ({1}) - nothing is saved (uid {2})", dir, Log.Scrub(e.Message), getuid()));
 				}
 			}
 		}
@@ -158,7 +160,7 @@ public static class Platform {
 			try {
 				password = File.ReadAllText(file);
 			} catch (Exception e) {
-				Log.Warn(new Said("couldn't read the dashboard password from {0} ({1})", file, e.Message));
+				Log.Warn(new Said("couldn't read the dashboard password from {0} ({1})", file, Log.Scrub(e.Message)));
 			}
 		}
 

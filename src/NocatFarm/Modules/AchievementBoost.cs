@@ -64,8 +64,12 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 	}
 
 	private void RollDay() {
-		if (_today != DateTime.Today) {
-			_today = DateTime.Today;
+		// A human account's day runs from getting up to bed, not midnight to midnight. Reset at midnight, a sitting that
+		// ran past it started the count again halfway through the evening - an hour or so over the limit that night.
+		DateTime day = (Bot.HumanOwned ? BotManager.ModuleOf<HumanMode>(Bot)?.PlanDay : null) ?? DateTime.Today;
+
+		if (_today != day) {
+			_today = day;
 			_todayMinutes = 0;
 		}
 	}
@@ -218,7 +222,12 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
-				Log.Warn(new Said("achievement boost hiccup: {0}", e.Message), Bot.Name);
+				Log.Warn(new Said("achievement boost hiccup: {0}", Log.Describe(e)), Bot.Name);
+
+				// where it broke, once per new kind of failure - the message says what, only the stack says where
+				if (Log.DebugOnChange($"hiccup:{Name}:{Bot.Name}", $"{Name}: {Log.Describe(e)}", Bot.Name)) {
+					Log.StackToFile(e, Bot.Name);
+				}
 			}
 
 			if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
@@ -285,10 +294,10 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 	/// Every reason here is a setting or a fact about the game, so anything surprising in the "left out" list is
 	/// something the user can go and change.
 	/// </summary>
-	public Task<string> ExplainAsync(CancellationToken ct) {
+	public string Explain() {
 		if (!On) {
-			return Task.FromResult($"{Bot.Name}: achievement boost is off"
-				+ (Bot.Cfg is { AchievementBoost: not 0, UnlockAchievements: false } ? " (it needs \"Unlock achievements\" on too)" : ""));
+			return $"{Bot.Name}: achievement boost is off"
+				+ (Bot.Cfg is { AchievementBoost: not 0, UnlockAchievements: false } ? " (it needs \"Unlock achievements\" on too)" : "");
 		}
 
 		List<string> lines = [$"{Bot.Name}: achievement boost - {(Bot.Cfg.AchievementBoost == 2 ? "all single-player" : "games you pick")}, about {Math.Clamp(Bot.Cfg.BoostSessionHours, 1, 24)}h per game"];
@@ -354,7 +363,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			}
 		}
 
-		return Task.FromResult(string.Join(Environment.NewLine, lines));
+		return string.Join(Environment.NewLine, lines);
 	}
 
 	/// <summary>Reads only what the catalogue already knows - a typed command must not trigger a store sweep.</summary>
@@ -487,6 +496,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		// sweep doesn't briefly shrink the target list. A sweep that resolved NOTHING means the store is down, so
 		// back off for a while instead of re-asking for every game in the library once a minute.
 		if ((found.Count == 0) && (unknown > 0)) {
+			Log.Debug($"achievement boost: the store answered for none of {unknown} game(s) - asking again in about 30 minutes", Bot.Name);
 			_discoveredAt = DateTime.UtcNow - TimeSpan.FromHours(5.5);   // ~30 minutes before it tries again
 
 			return;
@@ -782,6 +792,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			}
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) {
 			// A bad file is the same as none: it starts again from the top of the list.
+			Log.Failed("couldn't read the saved achievement hunt", e, Bot.Name);
 		}
 	}
 
@@ -791,7 +802,9 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		try {
 			AtomicFile.Write(HuntPath, JsonSerializer.Serialize(new HuntSave(_index, HuntTarget, _huntMinutes, _huntGoal, _todayMinutes, _today, _plans)));
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
-			// Next time it simply doesn't remember where it was on the list.
+			// Next time it simply doesn't remember where it was on the list. Saved as often as every minute, so a
+			// file that can't be written is said once rather than every tick.
+			Log.DebugOnChange($"hunt-save:{Bot.Name}", $"couldn't save the achievement hunt: {Log.Describe(e)}", Bot.Name);
 		}
 	}
 }

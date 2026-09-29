@@ -30,7 +30,8 @@ public static class UnlockEverything {
 			try {
 				await RunAsync(bot).ConfigureAwait(false);
 			} catch (Exception e) {
-				Log.Error(new Said("unlocking everything stopped: {0}: {1}", e.GetType().Name, e.Message), bot.Name);
+				Log.Error(new Said("unlocking everything stopped: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), bot.Name);
+				Log.StackToFile(e, bot.Name);
 			} finally {
 				lock (Running) {
 					Running.Remove(bot.Name);
@@ -82,7 +83,8 @@ public static class UnlockEverything {
 
 			try {
 				set = await Achievements.GetAsync(bot, app).ConfigureAwait(false);
-			} catch (Exception) {
+			} catch (Exception e) {
+				Log.Failed($"couldn't read the achievements of {app}", e, bot.Name);
 				set = null;
 			}
 

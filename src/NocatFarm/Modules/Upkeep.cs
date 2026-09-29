@@ -22,6 +22,9 @@ public sealed class Upkeep(Bot bot) : BotModule(bot) {
 	protected override async Task RunAsync(CancellationToken ct) {
 		while (!ct.IsCancellationRequested) {
 			if (Bot.IsOnline) {
+				// Asked every 30 seconds, so a part that keeps failing the same way is said once an hour, not 120 times.
+				string key = $"hiccup:{Name}:{Bot.Name}";
+
 				try {
 					await Bot.Library.RefreshIfStaleAsync(TimeSpan.FromHours(6), ct).ConfigureAwait(false);
 					await Bot.Refunds.RefreshAsync(ct).ConfigureAwait(false);
@@ -32,10 +35,14 @@ public sealed class Upkeep(Bot bot) : BotModule(bot) {
 					if ((BotManager.Instance?.All.FirstOrDefault(static b => b.IsOnline && b.Web.Ready)?.Name == Bot.Name) && (KeyQueue.Count > 0)) {
 						await Redeeming.WorkQueueAsync(BotManager.Instance.All, ct).ConfigureAwait(false);
 					}
+
+					Log.Recovered(key);
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
 				} catch (Exception e) {
-					Log.Debug(new Said("upkeep hiccup: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
+					if (Log.DebugOnChange(key, $"upkeep hiccup: {Log.Describe(e)}", Bot.Name)) {
+						Log.StackToFile(e, Bot.Name);
+					}
 				}
 			}
 

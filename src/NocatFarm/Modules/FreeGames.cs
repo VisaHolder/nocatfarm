@@ -99,7 +99,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 
 			_quietUntil = new DateTime(saved.QuietUntilTicks, DateTimeKind.Utc);
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the free-game state: {0}", e.Message), Bot.Name);
+			Log.Debug(new Said("couldn't read the free-game state: {0}", Log.Describe(e)), Bot.Name);
 		}
 	}
 
@@ -114,7 +114,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			Directory.CreateDirectory(Path.GetDirectoryName(StatePath)!);
 			AtomicFile.Write(StatePath, JsonSerializer.Serialize(state));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the free-game state: {0}", e.Message), Bot.Name);
+			Log.Debug(new Said("couldn't save the free-game state: {0}", Log.Describe(e)), Bot.Name);
 		}
 	}
 
@@ -179,7 +179,12 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
-				Log.Warn(new Said("free-game check failed: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
+				Log.Warn(new Said("free-game check failed: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
+
+				// where it broke, once per new kind of failure - the message says what, only the stack says where
+				if (Log.DebugOnChange($"hiccup:{Name}:{Bot.Name}", $"{Name}: {Log.Describe(e)}", Bot.Name)) {
+					Log.StackToFile(e, Bot.Name);
+				}
 			}
 
 			// Between passes over the list, Steam's own change feed every half hour or so - a giveaway found there
@@ -207,7 +212,11 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
 				} catch (Exception e) {
-					Log.Debug(new Said("free-game check failed: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
+					Log.Debug(new Said("free-game check failed: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
+
+					if (Log.DebugOnChange($"hiccup:{Name}:{Bot.Name}", $"{Name}: {Log.Describe(e)}", Bot.Name)) {
+						Log.StackToFile(e, Bot.Name);
+					}
 				}
 			}
 		}
@@ -547,6 +556,9 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				return new ClaimResult(true, EPurchaseResultDetail.NoDetail, default);
 			}
 
+			// Steam's own code, whatever it was - the reason handed back is in words and loses it.
+			Log.Debug($"free licence for app {appId} not granted: {answer.Result}, {answer.GrantedApps.Count} app(s) / {answer.GrantedPackages.Count} package(s) granted", bot.Name);
+
 			// Steam answers OK and grants nothing when the game is not free right now - most often a giveaway
 			// that has already ended. Worth a later look, not a permanent no.
 			// Rate limiting is its own case: it pauses every claim for the hour, the same as a package refused
@@ -557,11 +569,15 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				_ => new ClaimResult(false, EPurchaseResultDetail.ContactSupport, new Said("Steam refused it ({0})", answer.Result))
 			};
 		} catch (TimeoutException) {
+			Log.Debug($"free licence for app {appId}: no answer from Steam in 30s", bot.Name);
+
 			return new ClaimResult(false, EPurchaseResultDetail.Timeout, new Said("no usable answer from Steam"));
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
 			// A dropped connection faults the job rather than timing it out.
+			Log.Failed($"free licence request for app {appId}", e, bot.Name);
+
 			return new ClaimResult(false, EPurchaseResultDetail.Timeout, new Said("the request failed ({0})", e.GetType().Name));
 		}
 	}
@@ -606,7 +622,14 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 					return _giveaways.Tokens;   // keep the last good answer rather than none
 				}
 
-				string html = JsonUnescape(Json.Str(json, "results_html") ?? "");
+				string? results = Json.Str(json, "results_html");
+
+				// An answer with no results in it reads as "nothing given away" - worth a line, since it looks the same.
+				if (results == null) {
+					Log.DebugOnChange("freegames:search", $"store giveaway search answered without results_html: {Log.Scrub(json.Length > 150 ? json[..150] : json)}");
+				}
+
+				string html = JsonUnescape(results ?? "");
 				int rows = 0;
 
 				foreach (string row in html.Split("<a ", StringSplitOptions.RemoveEmptyEntries)) {
@@ -684,8 +707,9 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 					}
 				}
 			}
-		} catch (JsonException) {
+		} catch (JsonException e) {
 			// read as "no free package named" - the app is asked for over the connection instead
+			Log.Failed($"store packages for app {appId} weren't readable", e);
 		}
 
 		return 0;
@@ -771,10 +795,14 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 		(EPurchaseResultDetail detail, string? error) = ReadVerdict(body);
 
 		if (detail != EPurchaseResultDetail.NoDetail) {
+			Log.Debug($"free licence for sub {subId} refused: purchaseresultdetail {(int) detail} ({detail})", bot.Name);
+
 			return new ClaimResult(false, detail, Explain(detail));
 		}
 
 		if (error != null) {
+			Log.Debug($"free licence for sub {subId} refused: {Log.Scrub(error)}", bot.Name);
+
 			return error.Contains("rate limit", StringComparison.OrdinalIgnoreCase)
 				? new ClaimResult(false, EPurchaseResultDetail.RateLimited, Explain(EPurchaseResultDetail.RateLimited))
 				: new ClaimResult(false, EPurchaseResultDetail.ContactSupport, new Said("Steam said: {0}", error));
@@ -795,7 +823,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 		}
 
 		Log.Debug(new Said("Steam took the request for sub {0} but no licence arrived - it answered: {1}", subId,
-			body.Length > 200 ? body[..200] : body), bot.Name);
+			Log.Scrub(body.Length > 200 ? body[..200] : body)), bot.Name);
 
 		return new ClaimResult(false, EPurchaseResultDetail.NoDetail, new Said("Steam took the request, but no licence arrived"));
 	}
@@ -844,13 +872,27 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 	}
 
 	private static async Task<string?> GetAsync(string url, CancellationToken ct) {
+		// Once per failing endpoint rather than per lookup: a store that is throttling refuses every app in the pass.
+		string where = Log.Where(new Uri(url));
+		string key = "freegames:store:" + where;
+
 		try {
 			using HttpResponseMessage r = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
-			return r.IsSuccessStatusCode ? await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false) : null;
+			if (!r.IsSuccessStatusCode) {
+				Log.DebugOnChange(key, $"store lookup {where} failed: HTTP {(int) r.StatusCode} {r.StatusCode}");
+
+				return null;
+			}
+
+			Log.Recovered(key);
+
+			return await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
-		} catch {
+		} catch (Exception e) {
+			Log.DebugOnChange(key, $"store lookup {where} failed: {Log.Describe(e)}");
+
 			return null;
 		}
 	}

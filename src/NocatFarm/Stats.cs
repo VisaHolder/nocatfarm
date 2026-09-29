@@ -40,8 +40,9 @@ public static class Stats {
 			try {
 				Directory.CreateDirectory(Path.GetDirectoryName(PathFor())!);
 				File.AppendAllText(PathFor(), $"{now.Ticks}|{kind}|{bot}{Environment.NewLine}");
-			} catch {
-				// the in-memory tally still works; a stats file is not worth an exception
+			} catch (Exception e) {
+				// the in-memory tally still works; a stats file is not worth an exception - but a line, said once
+				Log.DebugOnChange("stats:write", $"couldn't add a {kind} to stats.log: {Log.Describe(e)}", bot);
 			}
 		}
 	}
@@ -132,8 +133,9 @@ public static class Stats {
 			if (Cache.Count < lines.Length) {
 				AtomicFile.Write(PathFor(), string.Concat(Cache.Select(static e => $"{e.When.Ticks}|{e.Kind}|{e.Bot}{Environment.NewLine}")));
 			}
-		} catch {
+		} catch (Exception e) {
 			// an unreadable stats file means an empty chart, nothing worse
+			Log.Failed("couldn't read stats.log", e);
 		}
 	}
 }

@@ -41,6 +41,13 @@ public static class CredentialStore {
 
 		try {
 			if (!CredRead(target, CredTypeGeneric, 0, out handle) || (handle == IntPtr.Zero)) {
+				int error = Marshal.GetLastWin32Error();
+
+				// 1168 is "not found" - there simply isn't one. Anything else is a credential that is there and won't open.
+				if (error != 1168) {
+					Log.Debug($"import: couldn't read the Windows credential '{target}' (Windows error {error})");
+				}
+
 				return null;
 			}
 
@@ -54,7 +61,9 @@ public static class CredentialStore {
 			Marshal.Copy(cred.CredentialBlob, blob, 0, blob.Length);
 
 			return blob;
-		} catch {
+		} catch (Exception e) {
+			Log.Failed($"import: reading the Windows credential '{target}'", e);
+
 			return null;
 		} finally {
 			if (handle != IntPtr.Zero) {

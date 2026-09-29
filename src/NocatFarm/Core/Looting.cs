@@ -68,6 +68,8 @@ public static partial class Looting {
 			Match blob = Regex.Match(page, @"g_rgAppContextData\s*=\s*(\{.*?\})\s*;", RegexOptions.Singleline);
 
 			if (!blob.Success) {
+				Log.Debug("inventory page had no list of games - only Steam's own inventory will be read", bot.Name);
+
 				return found;
 			}
 
@@ -87,7 +89,7 @@ public static partial class Looting {
 				}
 			}
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't list the inventories: {0}", e.Message), bot.Name);
+			Log.Debug(new Said("couldn't list the inventories: {0}", Log.Describe(e)), bot.Name);
 		}
 
 		return found;
@@ -130,7 +132,7 @@ public static partial class Looting {
 				items.Add(new Item(assetId, classId, instanceId, Math.Max(1, amount), info.Type, info.Name, app, context, info.Game));
 			}
 		} catch (Exception e) {
-			Log.Warn(new Said("couldn't read the inventory: {0}", e.Message), bot.Name);
+			Log.Warn(new Said("couldn't read the inventory: {0}", Log.Describe(e)), bot.Name);
 		}
 
 		return items;
@@ -375,9 +377,15 @@ public static partial class Looting {
 
 			Match hit = TradeTokenPattern().Match(page);
 
-			return hit.Success ? hit.Groups[1].Value : null;
+			if (!hit.Success) {
+				Log.Debug($"no trade URL found on {steamId}'s trade privacy page - sending without a token", owner.Name);
+
+				return null;
+			}
+
+			return hit.Groups[1].Value;
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the trade token for {0}: {1}", steamId, e.Message), owner.Name);
+			Log.Debug(new Said("couldn't read the trade token for {0}: {1}", steamId, Log.Describe(e)), owner.Name);
 
 			return null;
 		}
@@ -445,7 +453,7 @@ public static partial class Looting {
 
 			return text.Length > 0 ? text : null;
 		} catch (Exception e) when (e is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested) {
-			Log.Debug(new Said("couldn't read the trade page: {0}", e.Message), bot.Name);
+			Log.Debug(new Said("couldn't read the trade page: {0}", Log.Describe(e)), bot.Name);
 
 			return null;
 		}
@@ -565,7 +573,7 @@ public static partial class Looting {
 			if (doc.RootElement.TryGetProperty("strError", out JsonElement error)) {
 				// The one-line strError is the polite half. Everything Steam actually said, plus what we asked it
 				// to move, so a refusal can be diagnosed from the log instead of guessed at.
-				Log.Debug(new Said("trade offer refused. Steam said: {0}", body), bot.Name);
+				Log.Debug(new Said("trade offer refused. Steam said: {0}", Log.Scrub(body)), bot.Name);
 				Log.Debug((token.Length > 0
 						? new Said("we offered {0} item(s) to {1}, with a trade token: ", items.Count, master)
 						: new Said("we offered {0} item(s) to {1}, with no trade token: ", items.Count, master))
@@ -608,10 +616,17 @@ public static partial class Looting {
 				return (true, "sent");
 			}
 		} catch (Exception e) {
-			return (false, e.Message);
+			// Mostly an HTML refusal page, which isn't JSON - the start of it is what says why.
+			if (!ct.IsCancellationRequested) {
+				Log.Debug($"trade offer to {master}: {Log.Describe(e)} - Steam's answer began: {Log.Scrub(body[..Math.Min(150, body.Length)])}", bot.Name);
+			}
+
+			return (false, Log.Scrub(e.Message));
 		}
 
 		// Steam answers a rejected offer as an HTML page, not JSON. Anything that isn't a trade id is a refusal.
+		Log.Debug($"trade offer to {master}: no offer id and no error in Steam's answer: {Log.Scrub(body[..Math.Min(150, body.Length)])}", bot.Name);
+
 		return (false, "Steam refused the offer - the other account may not be a friend, or its trade link may need a token");
 	}
 }

@@ -52,17 +52,6 @@ public static class Lifetime {
 		}
 	}
 
-	/// <summary>Every account added together.</summary>
-	public static int Total {
-		get {
-			Load();
-
-			lock (Gate) {
-				return (int) Minutes.Values.Sum();
-			}
-		}
-	}
-
 	/// <summary>Credit time actually spent playing. Anything longer than a few minutes is treated as a gap.</summary>
 	/// <remarks>
 	/// Written every minute, not every five.
@@ -127,7 +116,7 @@ public static class Lifetime {
 				// from zero after a failed read and then saving is how a transient problem - a file still being
 				// written, a lock, a bad sector - turns into permanent loss.
 				_loadFailed = true;
-				Log.Warn(new Said("couldn't read lifetime totals ({0}: {1}) - not overwriting", e.GetType().Name, e.Message));
+				Log.Warn(new Said("couldn't read lifetime totals ({0}: {1}) - not overwriting", e.GetType().Name, Log.Scrub(e.Message)));
 			}
 
 			try {
@@ -149,7 +138,7 @@ public static class Lifetime {
 				}
 			} catch (Exception e) {
 				_loadFailed = true;
-				Log.Warn(new Said("couldn't read lifetime totals ({0}: {1}) - not overwriting", e.GetType().Name, e.Message));
+				Log.Warn(new Said("couldn't read lifetime totals ({0}: {1}) - not overwriting", e.GetType().Name, Log.Scrub(e.Message)));
 			}
 		}
 	}
@@ -200,7 +189,7 @@ public static class Lifetime {
 				AtomicFile.Write(GamesPath, JsonSerializer.Serialize(games, new JsonSerializerOptions { WriteIndented = true }));
 			}
 		} catch (Exception e) {
-			Log.Warn(new Said("couldn't save the lifetime totals: {0}: {1}", e.GetType().Name, e.Message));
+			Log.Warn(new Said("couldn't save the lifetime totals: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)));
 		}
 	}
 }

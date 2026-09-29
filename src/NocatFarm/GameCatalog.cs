@@ -125,8 +125,12 @@ public static class GameCatalog {
 			using JsonDocument doc = JsonDocument.Parse(body);
 
 			if (!doc.RootElement.TryGetProperty(app.ToString(), out JsonElement node) || !node.TryGetProperty("success", out JsonElement ok)) {
+				Log.Debug($"store lookup for {app}: no entry or \"success\" for it in the answer from {Log.Where(response.RequestMessage?.RequestUri)}");
+
 				return null;
 			}
+
+			Log.Recovered("catalog:lookup");
 
 			// The store's clear "no such app" - delisted, private, a sale or event badge. That's an answer too, and
 			// remembering it is what stops the same app being asked about on every sweep.
@@ -183,7 +187,8 @@ public static class GameCatalog {
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;   // only ours - a request timing out is one too, and letting that through stopped the caller's module
 		} catch (Exception e) {
-			Log.Debug(new Said("store lookup for {0} failed: {1}", app, e.Message));
+			// A sweep asks about hundreds of apps in a row: with the store unreachable, one line - not one per app.
+			Log.DebugOnChange("catalog:lookup", $"store lookups failing: {Log.Describe(e)}");
 
 			return null;
 		} finally {
@@ -217,7 +222,7 @@ public static class GameCatalog {
 					}
 				}
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't read the game catalog: {0}", e.Message));
+				Log.Debug(new Said("couldn't read the game catalog: {0}", Log.Describe(e)));
 			}
 		}
 	}
@@ -244,7 +249,7 @@ public static class GameCatalog {
 			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
 			await AtomicFile.WriteAsync(Path, JsonSerializer.Serialize(snapshot)).ConfigureAwait(false);
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the game catalog: {0}", e.Message));
+			Log.Debug(new Said("couldn't save the game catalog: {0}", Log.Describe(e)));
 		}
 	}
 }

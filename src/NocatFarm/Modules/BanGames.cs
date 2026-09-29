@@ -21,7 +21,17 @@ public static partial class BanGames {
 	public static async Task<List<uint>?> ReadAsync(Bot bot, CancellationToken ct) {
 		string? html = await bot.Web.GetAsync(Page, ct).ConfigureAwait(false);
 
-		return html == null ? null : Parse(html);
+		if (html == null) {
+			return null;   // the web session already logged why
+		}
+
+		List<uint>? games = Parse(html);
+
+		if (games == null) {
+			Log.Debug($"couldn't read the banned games: {Log.Where(Page)} wasn't the bans page ({html.Length} chars)", bot.Name);
+		}
+
+		return games;
 	}
 
 	/// <summary>The games on the page; empty for a clean account; null when it isn't the bans page at all (a login page).</summary>

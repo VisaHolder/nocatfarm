@@ -190,6 +190,8 @@ public static partial class PriceBook {
 			string json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
 			if (string.IsNullOrEmpty(json)) {
+				Log.Debug($"market lookup for {marketHashName}: empty answer ({(int) response.StatusCode})");
+
 				return null;   // ask again next sweep, don't poison the cache
 			}
 
@@ -210,7 +212,7 @@ public static partial class PriceBook {
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
-			Log.Debug(new Said("market lookup for {0} failed: {1}", marketHashName, e.Message));
+			Log.Debug(new Said("market lookup for {0} failed: {1}", marketHashName, Log.Describe(e)));
 
 			return null;
 		} finally {
@@ -283,7 +285,7 @@ public static partial class PriceBook {
 					}
 				}
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't read the price book: {0}", e.Message));
+				Log.Debug(new Said("couldn't read the price book: {0}", Log.Describe(e)));
 			}
 		}
 	}
@@ -304,7 +306,7 @@ public static partial class PriceBook {
 			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
 			AtomicFile.Write(Path, JsonSerializer.Serialize(snapshot));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the price book: {0}", e.Message));
+			Log.Debug(new Said("couldn't save the price book: {0}", Log.Describe(e)));
 		}
 	}
 

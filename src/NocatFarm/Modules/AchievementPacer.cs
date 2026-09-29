@@ -202,7 +202,12 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
-				Log.Warn(new Said("achievement pacer hiccup: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
+				Log.Warn(new Said("achievement pacer hiccup: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
+
+				// where it broke, once per new kind of failure - the message says what, only the stack says where
+				if (Log.DebugOnChange($"hiccup:{Name}:{Bot.Name}", $"{Name}: {Log.Describe(e)}", Bot.Name)) {
+					Log.StackToFile(e, Bot.Name);
+				}
 			}
 
 			if (!await Sleep(TimeSpan.FromSeconds(60), ct).ConfigureAwait(false)) {
@@ -210,6 +215,16 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			}
 		}
 	}
+
+	/// <summary>
+	/// Whether an achievement may pop now: always without human mode; with it, only while the account is up.
+	///
+	/// Asked "may it react while asleep" (AwakeFor) before - which is always yes with "Only react while awake" off, so
+	/// on an account set that way a drops run or a hunt going on into the night unlocked achievements at 4am, with the
+	/// time on the profile for anybody to read. That switch is about answering other people; this is the account's own
+	/// record.
+	/// </summary>
+	internal static bool MayUnlockNow(Bot bot) => !bot.Cfg.LegitMode || HumanMode.UpAndAbout(bot);
 
 	/// <summary>When each running game's current sitting may first unlock something (10-30 minutes in).</summary>
 	private readonly Dictionary<uint, DateTime> _sittingSince = [];
@@ -262,7 +277,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 		// Unlock times are public. A human-mode account that's asleep (a hunt or drops run into the night) keeps the
 		// minutes but unlocks nothing until morning.
-		bool mayUnlock = !Bot.Cfg.LegitMode || HumanMode.AwakeFor(Bot);
+		bool mayUnlock = MayUnlockNow(Bot);
 
 		// Each game's current sitting: an achievement doesn't pop a minute after launching, whatever was played before.
 		foreach (uint gone in _sittingSince.Keys.Where(k => !running.Contains(k)).ToList()) {
@@ -1220,12 +1235,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		uint App,
 		string Game,
 		int PlayedMinutes,
-		double EffectiveHours,
-		int FloorPercent,
 		int CeilingPercent,
 		int Unlocked,
 		int Total,
-		DateTime NextAllow,
 		bool Blocked,
 		string Why,
 		bool Running,
@@ -1267,12 +1279,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						kv.Key,
 						GameNames.Of(kv.Key),
 						(int) kv.Value.PlayedMins,
-						eff,
-						Math.Min(floor, 100),
 						Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100),
 						kv.Value.Unlocked,
 						kv.Value.Total,
-						kv.Value.NextAllow,
 						why.Length > 0,
 						why,
 						live.Contains(kv.Key),
@@ -1401,7 +1410,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 			Log.Debug(new Said("achievement pacing restored for {0} game(s)", saved.Count), Bot.Name);
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the achievement state: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
+			Log.Debug(new Said("couldn't read the achievement state: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
 		}
 	}
 
@@ -1476,7 +1485,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				Save();
 			}
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't import the ArchiSteamFarm achievement state: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
+			Log.Debug(new Said("couldn't import the ArchiSteamFarm achievement state: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
 		}
 	}
 
@@ -1501,7 +1510,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 			AtomicFile.Write(path, JsonSerializer.Serialize(saved, new JsonSerializerOptions { WriteIndented = true }));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the achievement state: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
+			// Saved every minute's tick, so a file that can't be written is said once rather than every minute.
+			Log.DebugOnChange($"cheevo-save:{Bot.Name}", $"couldn't save the achievement state: {Log.Describe(e)}", Bot.Name);
 		}
 	}
 }

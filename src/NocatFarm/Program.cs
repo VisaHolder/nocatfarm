@@ -123,8 +123,20 @@ if (setupChoices != null) {
 
 // A crash on any thread lands in the log, not nowhere. Only the ones that end the process get here.
 AppDomain.CurrentDomain.UnhandledException += static (_, e) => {
+	// Into the day's log first, where the lines leading up to it are - crash.log alone left the crash in one file
+	// and everything that explains it in another. Then crash.log, which also catches one before logging is set up.
 	try {
-		File.AppendAllText(Path.Combine(ConfigStore.Root, "logs", "crash.log"), $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {e.ExceptionObject}{Environment.NewLine}");
+		if (e.ExceptionObject is Exception crash) {
+			Log.Crash(new Said("crashed: {0}", Log.Describe(crash)), crash);
+		}
+	} catch {
+		// on to crash.log
+	}
+
+	try {
+		string logs = Path.Combine(ConfigStore.Root, "logs");
+		Directory.CreateDirectory(logs);
+		File.AppendAllText(Path.Combine(logs, "crash.log"), $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {Log.Scrub(e.ExceptionObject?.ToString())}{Environment.NewLine}");
 	} catch {
 		// nothing more can be done from here
 	}
@@ -132,6 +144,11 @@ AppDomain.CurrentDomain.UnhandledException += static (_, e) => {
 	// A new version that crashes while it's being tried out goes straight back to the old one.
 	NocatFarm.Core.SelfUpdate.ReportCrashed();
 };
+
+// A fire-and-forget task that throws doesn't crash anything - its exception just waits, unseen, until the task is
+// garbage-collected and then vanishes. There are dozens of those (Task.Run from a click, a timer, a callback), so
+// this is the one place they can all be caught: written down with the stack, and marked seen.
+TaskScheduler.UnobservedTaskException += Log.OnUnobservedTask;
 
 // One instance per config folder. Two copies running the same accounts share a Steam login ID, so they take
 // turns kicking each other off - and they put two icons in the tray, which is how you notice.
@@ -163,6 +180,11 @@ if (!singleInstance.WaitOne(TimeSpan.Zero, false)) {
 GlobalConfig global = ConfigStore.LoadGlobal();
 Live.Global = global;
 Log.Configure(global.FileLogging, global.Debug, root, global.LogRetentionDays);
+
+// Said before there was a file to say it in - so written again, now that there is one.
+if (ConfigStore.GlobalLoadProblem is { } configProblem) {
+	Log.Debug(configProblem);
+}
 
 Banner();
 
@@ -384,7 +406,18 @@ if ((window != null) && OperatingSystem.IsWindows()) {
 
 Task console = (window != null) && !windowFailed
 	? Task.Delay(Timeout.Infinite, shutdown.Token)
-	: Task.Factory.StartNew(() => ConsoleLoop(manager, shutdown), CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default).Unwrap();
+	: Task.Factory.StartNew(async () => {
+		// Nothing awaits this until the very end, so a loop that threw left a console where typing did nothing,
+		// and not a word about why.
+		try {
+			await ConsoleLoop(manager, shutdown).ConfigureAwait(false);
+		} catch (OperationCanceledException) when (shutdown.IsCancellationRequested) {
+			// closing
+		} catch (Exception e) {
+			Log.Failed("the console's keyboard loop stopped - typed commands won't be read", e);
+			Log.StackToFile(e);
+		}
+	}, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default).Unwrap();
 
 Console.CancelKeyPress += (_, e) => {
 	e.Cancel = true;
@@ -538,7 +571,7 @@ void OpenBrowser(string url) {
 	try {
 		Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
 	} catch (Exception e) {
-		Log.Debug(new Said("couldn't open the browser: {0}", e.Message));
+		Log.Debug(new Said("couldn't open the browser: {0}", Log.Describe(e)));
 	}
 }
 

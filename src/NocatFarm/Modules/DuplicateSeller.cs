@@ -40,7 +40,7 @@ public sealed class DuplicateSeller(Bot bot) : BotModule(bot) {
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
 				} catch (Exception e) {
-					Log.Debug(new Said("couldn't sell duplicate cards: {0}", e.Message), Bot.Name);
+					Log.Debug(new Said("couldn't sell duplicate cards: {0}", Log.Describe(e)), Bot.Name);
 				}
 
 				wait = Rng.Minutes(8 * 60, 14 * 60);

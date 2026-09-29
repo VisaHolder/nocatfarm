@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using NocatFarm.Config;
+using NocatFarm.Modules;
 
 namespace NocatFarm.Core;
 
@@ -31,7 +32,7 @@ public static class DiscordPresence {
 	private const string Site = "https://github.com/VisaHolder/nocatfarm";
 
 	/// <summary>The logo with the n filling up with purple, as a GIF - Discord plays GIFs from a web address, not from the
-	/// app's uploaded pictures. Made by tools/make-logo-gif.py; the same file is assets/logo-liquid.gif.</summary>
+	/// app's uploaded pictures. Made by tools/make-logo-gif.py; the same file is wwwroot/logo-liquid.gif.</summary>
 	private const string AnimatedLogo = "https://nocat.lol/nocatfarm/logo.gif";
 
 	private static BotManager? _mgr;
@@ -79,7 +80,7 @@ public static class DiscordPresence {
 			return;
 		}
 
-		_ = Task.Run(LoopAsync);
+		Background.Loop(new Said("Discord Rich Presence"), LoopAsync, "discord");
 	}
 
 	private static async Task LoopAsync() {
@@ -128,6 +129,7 @@ public static class DiscordPresence {
 
 					_lastRefusal = null;
 					_lastSent = json;
+					Log.Recovered("discord:presence");
 
 					if (!_shown && (activity != null)) {
 						_shown = true;
@@ -139,7 +141,13 @@ public static class DiscordPresence {
 			} catch (Exception e) {
 				// Discord closed or restarted (an update does it): start over on the next pass - quietly. "Rich Presence
 				// off/on" in the log is for when you switch it; Discord blinking isn't news, and it read as if you had.
-				Log.Debug(new Said("Discord closed the connection ({0}) - trying again in a minute", e.Message), "discord");
+				// Once a minute while it lasts: the same reason is said once, and anything but the pipe going away (a bug
+				// building the card, say) gets its stack.
+				if (Log.DebugOnChange("discord:presence", $"Discord Rich Presence: connection lost ({Log.Describe(e)}) - trying again in a minute", "discord")
+					&& e is not (IOException or TimeoutException or ObjectDisposedException or InvalidOperationException)) {
+					Log.StackToFile(e, "discord");
+				}
+
 				Disconnect(quietly: true);
 				await Task.Delay(60_000).ConfigureAwait(false);
 			}
@@ -151,13 +159,29 @@ public static class DiscordPresence {
 	///
 	///   nocat.farm
 	///   Farming cards · 12 left          what the shown accounts are doing
-	///   kylro · old · 2 of 3 accounts connected   their Steam names, and how many are signed in
+	///   kylro · old · 2 of 3 accounts linked      their Steam names, and how many are signed in
 	///   5:12:00 elapsed                  since nocat.farm was opened
 	///   [ Get nocat.farm ] [ reap. on Steam ]
 	///
 	/// The logo links to GitHub and says the version and today's cards on hover; the first shown account's avatar
 	/// sits in its corner. Every part but the first two lines has its own switch.
 	/// </summary>
+	/// <summary>Discord cuts the second line off after about this many characters, with "..." - measured on the card.</summary>
+	public const int LineFits = 37;
+
+	/// <summary>
+	/// The line with how many accounts are signed in on the end: "3 accounts linked", or the short "3 linked" when
+	/// the long one would run past what Discord shows. "591 hrs past week · 3 accounts connect..." said nothing.
+	/// </summary>
+	public static string WithCounter(string line, int connected, int total) {
+		string full = line + " · " + (connected == total
+			? connected == 1 ? new Said("1 account linked") : new Said("{0} accounts linked", connected)
+			: new Said("{0} of {1} accounts linked", connected, total));
+
+		return full.Length <= LineFits ? full
+			: line + " · " + (connected == total ? new Said("{0} linked", connected) : new Said("{0} of {1} linked", connected, total));
+	}
+
 	private static object? Card() {
 		// The featured account is the face of the card (the avatar); the lines are about the farm.
 		Bot? featured = G.DiscordFeatured.Trim() is { Length: > 0 } f ? _mgr?.Get(f) : null;
@@ -168,18 +192,14 @@ public static class DiscordPresence {
 		}
 
 		Bot[] online = [.. shown.Where(static b => b.IsOnline)];
-		int cardsLeft = online.Sum(static b => b.CardsRemaining);
 
 		// The numbers are the whole farm's - every account it runs. Which accounts are shown only decides the names and
-		// what the top line says they're doing: "2 accounts connected" with three running read as a mistake.
+		// what the top line says they're doing: "2 accounts linked" with three running read as a mistake.
 		Bot[] farm = [.. _mgr?.All ?? []];
 		int connected = farm.Count(static b => b.IsOnline);
 		int cardsToday = Stats.Recent(24).Count(e => (e.Kind == Stats.KindCard) && farm.Any(b => string.Equals(b.Name, e.Bot, StringComparison.OrdinalIgnoreCase)));
 
-		string details = online.Length == 0 ? new Said("Resting").ToString()
-			: cardsLeft > 0 ? new Said("Farming cards · {0} left", cardsLeft).ToString()
-			: new Said("Idling games").ToString();
-
+		string details = Details(online).ToString();
 		string today = new Said("{0} cards today", cardsToday).ToString();
 
 		// With names off, the line counts what Second line picks - hours over every account, like Steam's "hrs past 2 weeks".
@@ -198,9 +218,7 @@ public static class DiscordPresence {
 		// How many are signed in, said in words. Discord's own party counter only ever reads "(2 of 2)", with nothing
 		// to say 2 of what - it looked like a player count.
 		if (G.DiscordShowCounter && (farm.Length > 0)) {
-			state += " · " + (connected == farm.Length
-				? connected == 1 ? new Said("1 account connected") : new Said("{0} accounts connected", connected)
-				: new Said("{0} of {1} accounts connected", connected, farm.Length));
+			state = WithCounter(state, connected, farm.Length);
 		}
 
 		// What clicking does is said on hover - Discord gives a picture no other hint that it's a link.
@@ -243,6 +261,31 @@ public static class DiscordPresence {
 		}
 
 		return card;
+	}
+
+	/// <summary>The card's top line: what the shown accounts that are signed in are doing.</summary>
+	internal static Said Details(Bot[] online) {
+		// Paused, or standing down while you play on it, it isn't farming or idling anything - with every shown account
+		// like that, "Farming cards · 12 left" was simply untrue. Nor is a human-mode account that's done for today, taking
+		// the day off or asleep: that read "Idling games" while every other screen said what it really was.
+		Bot[] working = [.. online.Where(static b => !b.Paused && !b.PlayingBlocked && (HumanMode.RestingPhase(b) == null))];
+		int cardsLeft = working.Sum(static b => Math.Max(0, b.CardsRemaining));
+
+		if (online.Length == 0) {
+			return new Said("Resting");
+		}
+
+		if (working.Length > 0) {
+			return cardsLeft > 0 ? new Said("Farming cards · {0} left", cardsLeft) : new Said("Idling games");
+		}
+
+		HumanMode.Phase?[] resting = [.. online.Where(static b => !b.Paused && !b.PlayingBlocked).Select(HumanMode.RestingPhase)];
+
+		return resting.Length == 0 ? new Said("Paused")
+			: resting.All(static p => p == HumanMode.Phase.DoneForToday) ? new Said("Done for today")
+			: resting.All(static p => p == HumanMode.Phase.DayOff) ? new Said("Day off")
+			: resting.All(static p => p == HumanMode.Phase.Asleep) ? new Said("Asleep")
+			: new Said("Resting");
 	}
 
 	/// <summary>"kylro · old", or "kylro · old · +2" for a long list - Discord cuts the line off anyway.</summary>

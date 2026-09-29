@@ -167,7 +167,7 @@ public sealed class RefundGuard(Bot bot) {
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't check refund windows: {0}", e.Message), bot.Name);
+			Log.Debug(new Said("couldn't check refund windows: {0}", Log.Describe(e)), bot.Name);
 		}
 	}
 }

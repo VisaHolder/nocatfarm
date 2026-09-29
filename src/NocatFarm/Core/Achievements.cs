@@ -119,15 +119,24 @@ public static class Achievements {
 		// every caller: the pacer backs off for most of a day, unlock-everything skips it, cheevo says so.
 		// Steam answers Fail both for a game with no stats and for one the account doesn't own - the pacer only asks
 		// about games being played, so for it the two mean the same thing; cheevo tells them apart by ownership.
+		// Asked again every so often while the game plays, so the same "no" is written once, not every round.
+		string askKey = $"achget:{bot.Name}:{appId}";
+
 		if (response == null) {
+			Log.DebugOnChange(askKey, $"achievement stats for {appId}: no answer from Steam in time", bot.Name);
+
 			return null;
 		}
 
 		EResult result = (EResult) response.eresult;
 
 		if (NotNow(result)) {
+			Log.DebugOnChange(askKey, $"achievement stats for {appId}: Steam said {result} - asking again later", bot.Name);
+
 			return null;
 		}
+
+		Log.Recovered(askKey);
 
 		if ((result != EResult.OK) || (response.schema == null) || (response.schema.Length == 0)) {
 			Log.Debug(new Said("Steam has no achievement stats for {0} ({1})", GameNames.Of(appId), result), bot.Name);
@@ -235,7 +244,7 @@ public static class Achievements {
 		}
 
 		AchievementSet set = new() { AppId = appId, All = all, StatValues = statValues, CrcStats = response.crc_stats };
-		await AddGlobalPercentagesAsync(set, ct).ConfigureAwait(false);
+		await AddGlobalPercentagesAsync(set, bot.Name, ct).ConfigureAwait(false);
 
 		return set;
 	}
@@ -285,6 +294,10 @@ public static class Achievements {
 
 		EResult result = await bot.Stats.StoreUserStatsAsync(set.AppId, bot.SteamId, changed, set.CrcStats, ct).ConfigureAwait(false);
 
+		if (result != EResult.OK) {
+			Log.Debug($"achievement write for {set.AppId} refused: {result} ({touched} achievement(s), {changed.Count} stat(s))", bot.Name);
+		}
+
 		return result == EResult.OK
 			? (true, $"{touched} achievement(s) {(unlock ? "unlocked" : "re-locked")}")
 			: (false, $"Steam refused it ({result})");
@@ -297,7 +310,7 @@ public static class Achievements {
 	/// kept. It is what lets the drip go easiest-first instead of alphabetically, which is the difference
 	/// between a plausible unlock history and an obviously generated one.
 	/// </summary>
-	private static async Task AddGlobalPercentagesAsync(AchievementSet set, CancellationToken ct) {
+	private static async Task AddGlobalPercentagesAsync(AchievementSet set, string source, CancellationToken ct) {
 		Dictionary<string, double>? percentages;
 
 		lock (GlobalCache) {
@@ -336,10 +349,15 @@ public static class Achievements {
 						}
 
 						fetched = read;
+					} else {
+						Log.DebugOnChange($"achrates:{source}:{set.AppId}", $"global achievement rates for {set.AppId}: the answer had no achievement list", source);
 					}
+				} else {
+					// Not cached, so asked again on every read of this game - the same answer is said once.
+					Log.DebugOnChange($"achrates:{source}:{set.AppId}", $"global achievement rates for {set.AppId}: HTTP {(int) response.StatusCode} from {Log.Where(response.RequestMessage?.RequestUri)}", source);
 				}
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't read global achievement rates for {0}: {1}", set.AppId, e.Message));
+				Log.Debug(new Said("couldn't read global achievement rates for {0}: {1}", set.AppId, Log.Describe(e)), source);
 			}
 
 			percentages = fetched ?? [];

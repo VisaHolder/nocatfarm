@@ -105,8 +105,12 @@ public sealed partial class InventoryValue(Bot bot) {
 
 		// Not the list at all (an error page, a layout change): the last picture stands rather than being wiped.
 		if (ParseContexts(page) is not { } inventories) {
+			Log.DebugOnChange($"invvalue:{bot.Name}", "inventory value: the inventory page had no readable list of games - kept the last picture", bot.Name);
+
 			return;
 		}
+
+		Log.Recovered($"invvalue:{bot.Name}");
 
 		Dictionary<uint, (string Game, Dictionary<string, Held> Items, bool Blocked)> previous;
 
@@ -145,7 +149,7 @@ public sealed partial class InventoryValue(Bot bot) {
 				throw;
 			} catch (Exception e) {
 				failed.Add(app);
-				Log.Debug(new Said("couldn't read the {0} inventory: {1}", name, e.Message), bot.Name);
+				Log.Debug(new Said("couldn't read the {0} inventory: {1}", name, Log.Describe(e)), bot.Name);
 			}
 		}
 
@@ -195,6 +199,7 @@ public sealed partial class InventoryValue(Bot bot) {
 			AtomicFile.Write(SnapshotPath, JsonSerializer.Serialize(new Snapshot(_readAt.Ticks, games)));
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 			// Next start just reads the inventories again.
+			Log.Failed("couldn't save the inventory value snapshot", e, bot.Name);
 		}
 	}
 
@@ -225,6 +230,7 @@ public sealed partial class InventoryValue(Bot bot) {
 			Ready = true;
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) {
 			// A bad file is the same as none.
+			Log.Failed("couldn't read the inventory value snapshot", e, bot.Name);
 		}
 	}
 
@@ -334,7 +340,7 @@ public sealed partial class InventoryValue(Bot bot) {
 				}
 			}
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the inventory list: {0}", e.Message));
+			Log.Debug(new Said("couldn't read the inventory list: {0}", Log.Describe(e)));
 
 			return null;
 		}

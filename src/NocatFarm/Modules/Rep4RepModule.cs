@@ -290,7 +290,8 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 				throw;
 			} catch (Exception e) {
 				// NEVER silent: a throwing step is indistinguishable from "nothing to do" - no post, no log, forever.
-				Log.Warn(new Said("rep4rep step failed: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
+				Log.Warn(new Said("rep4rep step failed: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
+				Log.StackToFile(e, Bot.Name);   // where it threw - a step isn't meant to throw at all
 				waitSeconds = 10 * 60;
 			}
 
@@ -720,9 +721,13 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 		try {
 			body = await Bot.Web.PostAsync(url, form, referer, ct).ConfigureAwait(false);
-		} catch (Exception) {
+		} catch (Exception e) {
 			// Including a shutdown mid-request. Steam may well have taken the comment, and an uncounted live
 			// comment is how an account quietly ends up at 11 in 24 hours.
+			if (!ct.IsCancellationRequested) {
+				Log.Failed($"posting the comment on {task.TargetSteamId}", e, Bot.Name);
+			}
+
 			return (Outcome.Unknown, null);
 		}
 
@@ -735,10 +740,15 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		}
 
 		if (!body.Contains("\"success\":false", StringComparison.Ordinal)) {
+			// The caller reports this as "no reply", but there was one - its start is what says what it was.
+			Log.Debug($"comment on {task.TargetSteamId}: Steam's answer wasn't the usual shape: {Log.Scrub(body[..Math.Min(150, body.Length)])}", Bot.Name);
+
 			return (Outcome.Unknown, null);   // unrecognised body - unknown, NOT a refusal
 		}
 
 		string? error = ReadJsonString(body, "error");
+		// Steam's exact words, every time - Classify matches keywords, and new wording can only be folded in if it's seen.
+		Log.Debug($"comment on {task.TargetSteamId} refused: {Log.Scrub(error ?? "no error given")}", Bot.Name);
 
 		return (Classify(error), error);
 	}

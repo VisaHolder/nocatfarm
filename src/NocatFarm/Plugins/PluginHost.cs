@@ -105,16 +105,18 @@ public static class PluginHost {
 					Plugins.Add(new Loaded(plugin, file, host));
 					NocatFarm.Log.Good(new Said("plugin loaded: {0} {1}", plugin.Name, plugin.Version));
 				} catch (Exception e) {
-					NocatFarm.Log.Warn(new Said("plugin {0} failed to load: {1}: {2}", plugin.Name, e.GetType().Name, e.Message));
+					NocatFarm.Log.Warn(new Said("plugin {0} failed to load: {1}: {2}", plugin.Name, e.GetType().Name, NocatFarm.Log.Scrub(e.Message)));
+					NocatFarm.Log.StackToFile(e);   // where in the plugin, for whoever wrote it
 				}
 			}
 		} catch (ReflectionTypeLoadException e) {
 			// The usual cause is a plugin built against a different nocat.farm. Say so rather than printing a
 			// wall of loader exceptions.
 			NocatFarm.Log.Warn(new Said("couldn't load plugin {0} - built for another version?", Path.GetFileName(file)));
-			NocatFarm.Log.Debug(new Said("plugin {0}: {1}", Path.GetFileName(file), e.LoaderExceptions.FirstOrDefault()?.Message));
+			NocatFarm.Log.Debug(new Said("plugin {0}: {1}", Path.GetFileName(file), NocatFarm.Log.Scrub(e.LoaderExceptions.FirstOrDefault()?.Message)));
 		} catch (Exception e) {
-			NocatFarm.Log.Warn(new Said("plugins: couldn't load {0}: {1}: {2}", Path.GetFileName(file), e.GetType().Name, e.Message));
+			NocatFarm.Log.Warn(new Said("plugins: couldn't load {0}: {1}: {2}", Path.GetFileName(file), e.GetType().Name, NocatFarm.Log.Scrub(e.Message)));
+			NocatFarm.Log.StackToFile(e);
 		}
 	}
 
@@ -135,7 +137,7 @@ public static class PluginHost {
 			} catch (TimeoutException) {
 				NocatFarm.Log.Debug(new Said("plugin {0} took too long to unload - closing without it", loaded.Plugin.Name));
 			} catch (Exception e) {
-				NocatFarm.Log.Debug(new Said("plugin {0} threw on unload: {1}", loaded.Plugin.Name, e.Message));
+				NocatFarm.Log.Debug(new Said("plugin {0} threw on unload: {1}", loaded.Plugin.Name, NocatFarm.Log.Describe(e)));
 			}
 		}
 

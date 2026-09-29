@@ -18,7 +18,7 @@
     <RootNamespace>NocatFarm</RootNamespace>
     <InvariantGlobalization>true</InvariantGlobalization>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <Version>1.5.5</Version>
+    <Version>1.5.6</Version>
     <!-- A background app, not a server: the web SDK turns on the server collector, which keeps a heap per CPU core.
          The workstation collector is the right fit and holds far less memory for the same work. -->
     <ServerGarbageCollection>false</ServerGarbageCollection>
@@ -31,8 +31,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- SteamKit2 only. Steam's HTML is hand-parsed (see CardFarmer) rather than pulling in a full parser,
-         which keeps the dependency surface at exactly one package. -->
+    <!-- Three packages and no more: Steam's HTML is hand-parsed (see CardFarmer) rather than pulling in a full parser. -->
+    <!-- The QR codes for signing in with the Steam app and for opening the dashboard on a phone. -->
     <PackageReference Include="Net.Codecrete.QrCodeGenerator" Version="3.2.1" />
     <PackageReference Include="SteamKit2" Version="3.3.0" />
     <!-- DPAPI. Windows-only by nature; elsewhere Secrets uses AES-GCM with a key file in config/state instead. -->

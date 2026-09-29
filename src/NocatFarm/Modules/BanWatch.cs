@@ -74,7 +74,7 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
 				} catch (Exception e) {
-					Log.Debug(new Said("couldn't check for bans: {0}", e.Message), Bot.Name);
+					Log.Debug(new Said("couldn't check for bans: {0}", Log.Describe(e)), Bot.Name);
 				}
 			}
 
@@ -163,7 +163,18 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 	private async Task<Bans?> FromProfileAsync(CancellationToken ct) {
 		string? html = await Bot.Web.GetAsync(new Uri($"https://steamcommunity.com/profiles/{Bot.SteamId}/"), ct).ConfigureAwait(false);
 
-		return html == null ? null : ParseProfile(html);
+		if (html == null) {
+			return null;   // the web session already logged why
+		}
+
+		Bans? bans = ParseProfile(html);
+
+		// A sign-in page or an error page reads as "can't tell" - say so, or a ban check that never works looks clean.
+		if (bans == null) {
+			Log.Debug($"couldn't read bans: the profile page wasn't a profile ({html.Length} chars)", Bot.Name);
+		}
+
+		return bans;
 	}
 
 	/// <summary>
@@ -242,7 +253,7 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 		try {
 			return File.Exists(StatePath) ? JsonSerializer.Deserialize<Saved>(File.ReadAllText(StatePath)) : null;
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the saved ban check: {0}", e.Message), Bot.Name);
+			Log.Debug(new Said("couldn't read the saved ban check: {0}", Log.Describe(e)), Bot.Name);
 
 			return null;
 		}
@@ -253,7 +264,7 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 			Directory.CreateDirectory(Path.GetDirectoryName(StatePath)!);
 			AtomicFile.Write(StatePath, JsonSerializer.Serialize(_seen));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the ban check: {0}", e.Message), Bot.Name);
+			Log.Debug(new Said("couldn't save the ban check: {0}", Log.Describe(e)), Bot.Name);
 		}
 	}
 }

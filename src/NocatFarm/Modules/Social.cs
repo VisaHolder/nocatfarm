@@ -96,7 +96,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 						Bot.Friends?.RemoveFriend(new SteamID(steamId));
 						Log.Info(new Said("turned down a friend request from {0}", await SteamNames.OfAsync(Bot, steamId).ConfigureAwait(false)), Bot.Name);
 					} catch (Exception e) {
-						Log.Debug(new Said("couldn't turn down the request from {0}: {1}", steamId, e.Message), Bot.Name);
+						Log.Debug(new Said("couldn't turn down the request from {0}: {1}", steamId, Log.Describe(e)), Bot.Name);
 						Forget(steamId);   // looked at again when Steam next sends the list, like an accept that failed
 					}
 				});
@@ -146,7 +146,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 				_accepted++;
 				Log.Event(new Said("accepted a friend request from {0}", await SteamNames.OfAsync(Bot, steamId).ConfigureAwait(false)), Bot.Name);
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't handle the friend request from {0}: {1}", steamId, e.Message), Bot.Name);
+				Log.Debug(new Said("couldn't handle the friend request from {0}: {1}", steamId, Log.Describe(e)), Bot.Name);
 
 				// Forgotten again, so it's picked back up when Steam next sends the friends list - which it does on every
 				// reconnect. A disconnect while it waited for morning used to lose the request for as long as the app ran.
@@ -217,7 +217,9 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 				|| html.Contains("<steamRating></steamRating>", StringComparison.Ordinal);
 
 			return priv && noLevel;
-		} catch {
+		} catch (Exception e) {
+			Log.Failed($"couldn't read the profile of {steamId} for the spam check - taking it as a real person", e, Bot.Name);
+
 			return false;
 		}
 	}
@@ -249,7 +251,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 				Bot.Notifications?.AcknowledgeClanInvite(clanId, true);
 				Log.Event(new Said("joined group {0}", clanId), Bot.Name);
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't join group {0}: {1}", clanId, e.Message), Bot.Name);
+				Log.Debug(new Said("couldn't join group {0}: {1}", clanId, Log.Describe(e)), Bot.Name);
 				Forget(clanId);   // a reconnect while it waited for morning cancels the wait - it's taken up again after
 			}
 		});
@@ -341,7 +343,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 				_replied++;
 				Log.Info(new Said("auto-replied to {0} after {1}s", from, (int) (DateTime.UtcNow - received).TotalSeconds), Bot.Name);
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't reply to {0}: {1}", from, e.Message), Bot.Name);
+				Log.Debug(new Said("couldn't reply to {0}: {1}", from, Log.Describe(e)), Bot.Name);
 				Unreplied(from);
 			}
 		});
@@ -353,7 +355,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 		try {
 			Bot.SendChatMessage(to, text);
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't message {0}: {1}", to, e.Message), Bot.Name);
+			Log.Debug(new Said("couldn't message {0}: {1}", to, Log.Describe(e)), Bot.Name);
 		}
 	}
 
@@ -397,12 +399,14 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 			Bot.SendChatMessage(from, answer);
 			Log.Info(new Said("answered {0} ({1}) in {2}s", from, command.Split(' ')[0], (int) (DateTime.UtcNow - received).TotalSeconds), Bot.Name);
 		} catch (Exception e) {
-			Log.Warn(new Said("the command from {0} failed: {1}", from, e.Message), Bot.Name);
+			Log.Warn(new Said("the command from {0} failed: {1}", from, Log.Describe(e)), Bot.Name);
+			Log.StackToFile(e, Bot.Name);
 
 			try {
 				Bot.SendChatMessage(from, "that didn't work: " + e.Message);
-			} catch {
+			} catch (Exception x) {
 				// nothing more to do
+				Log.Failed($"couldn't tell {from} the command failed", x, Bot.Name);
 			}
 		}
 	}

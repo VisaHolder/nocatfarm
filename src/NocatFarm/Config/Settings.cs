@@ -595,7 +595,7 @@ public static class Settings {
 			"What the second line of the Discord card counts when account names are off: the cards dropped today, or the hours played in the past week or the past month - added up over all your accounts.",
 			Advanced: true, Choices: "0 cards today | 1 hours past week | 2 hours past month"),
 		new("DiscordShowCounter", "Show accounts online", SecDiscordProfile, SettingKind.Bool,
-			"Adds how many of your accounts are signed in to the Discord card - all of them, including ones the card doesn't name - like \"3 accounts connected\" or \"2 of 3 accounts connected\".",
+			"Adds how many of your accounts are signed in to the Discord card - all of them, including ones the card doesn't name - like \"3 accounts linked\" or \"2 of 3 accounts linked\".",
 			Advanced: true),
 		new("DiscordShowAvatar", "Show an account's avatar", SecDiscordProfile, SettingKind.Bool,
 			"Puts the first shown account's Steam avatar in the corner of the nocat.farm logo. Hovering it shows the name, clicking it opens the Steam profile.",

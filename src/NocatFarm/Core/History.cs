@@ -305,12 +305,14 @@ public static class History {
 
 					Directory.CreateDirectory(Dir);
 					AtomicFile.Write(path, JsonSerializer.Serialize(data, Json));
+					Log.Recovered($"history:save:{month}");
 				} catch (Exception e) {
 					lock (Gate) {
 						Dirty.Add(month);   // try again next minute
 					}
 
-					Log.Debug(new Said("couldn't save the history: {0}", e.Message));
+					// Tried again every minute: the same failure is said once (an hour apart at most).
+					Log.DebugOnChange($"history:save:{month}", $"couldn't save the history for {month}: {Log.Describe(e)}");
 				}
 			}
 		}
@@ -329,7 +331,10 @@ public static class History {
 
 			Save();
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the history: {0}", e.Message));
+			// A timer callback: nothing above catches it. Save catches its own, so this is a bug - once, with its stack.
+			if (Log.DebugOnChange("history:tick", $"the history's minute tick failed: {Log.Describe(e)}")) {
+				Log.StackToFile(e);
+			}
 		}
 	}
 
@@ -423,7 +428,7 @@ public static class History {
 					}
 				}
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't read the history: {0}", e.Message));
+				Log.Failed("couldn't read the history folder", e);
 			}
 
 			Prune();
@@ -431,7 +436,8 @@ public static class History {
 			try {
 				Backfill();
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't read the history: {0}", e.Message));
+				Log.Failed("couldn't fill in the history from the recent records", e);
+				Log.StackToFile(e);
 			}
 		}
 	}
@@ -466,12 +472,13 @@ public static class History {
 		} catch (Exception e) {
 			// Moved aside rather than overwritten, so whatever is in it can still be looked at - and so it isn't
 			// read and failed on every start from now on. That month simply begins again from what's recorded now.
-			Log.Debug(new Said("couldn't read the history file {0}, starting that month afresh: {1}", Path.GetFileName(file), e.Message));
+			Log.Debug(new Said("couldn't read the history file {0}, starting that month afresh: {1}", Path.GetFileName(file), Log.Describe(e)));
 
 			try {
 				File.Move(file, file + ".bad", overwrite: true);
-			} catch {
+			} catch (Exception x) {
 				// still unreadable next start, and still harmless
+				Log.Failed($"couldn't move {Path.GetFileName(file)} aside", x);
 			}
 		}
 	}
@@ -581,7 +588,8 @@ public static class History {
 				}
 			}
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the history: {0}", e.Message));
+			Log.Failed("couldn't fill in today's playtime in the history", e);
+			Log.StackToFile(e);
 		}
 	}
 
@@ -609,7 +617,10 @@ public static class History {
 			}
 
 			return (fired, snapshot);
-		} catch {
+		} catch (Exception e) {
+			// read as "no snapshot" - today's playtime is then filled from human mode's plan alone
+			Log.Failed("couldn't read the daily report's snapshot for the history", e);
+
 			return ("", snapshot);
 		}
 	}

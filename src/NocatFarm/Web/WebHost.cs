@@ -5,11 +5,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using NocatFarm.Config;
 using NocatFarm.Core;
 using NocatFarm.Modules;
@@ -157,8 +152,9 @@ public sealed class WebHost : IAsyncDisposable {
 			if (Secrets.IsPlain(stored) && Secrets.Available) {
 				SaveSessions();
 			}
-		} catch {
+		} catch (Exception e) {
 			// everybody signs in again - nothing worse
+			Log.Failed("dashboard: reading the saved sign-ins", e);
 		}
 	}
 
@@ -171,8 +167,9 @@ public sealed class WebHost : IAsyncDisposable {
 				AtomicFile.Write(SessionsPath, Secrets.Protect(JsonSerializer.Serialize(new SavedSessions(PasswordKey,
 					_sessions.Where(static kv => kv.Value > DateTime.UtcNow).ToDictionary(static kv => kv.Key, static kv => kv.Value.Ticks))), "dashboard"));
 			}
-		} catch {
+		} catch (Exception e) {
 			// they last until the next restart, then
+			Log.Failed("dashboard: saving the sign-ins", e);
 		}
 	}
 
@@ -282,8 +279,10 @@ public sealed class WebHost : IAsyncDisposable {
 				try {
 					await next(ctx).ConfigureAwait(false);
 				} catch (Exception e) when (!ctx.RequestAborted.IsCancellationRequested && !ctx.Response.HasStarted) {
-					Log.Warn(new Said("dashboard: {0} failed: {1}", ctx.Request.Path.Value ?? "", e.Message));
-					Log.Debug($"dashboard: {e}");
+					Log.Warn(new Said("dashboard: {0} failed: {1}", ctx.Request.Path.Value ?? "", Log.Scrub(e.Message)));
+
+					// The whole exception, scrubbed: it used to go in as one unscrubbed Debug line.
+					Log.StackToFile(e);
 
 					string error = new Said("that didn't work: {0}", e.Message).ToString();
 					ctx.Response.Clear();
@@ -332,7 +331,7 @@ public sealed class WebHost : IAsyncDisposable {
 
 			return true;
 		} catch (Exception e) {
-			Log.Error(new Said("couldn't start the dashboard on {0}:{1} - {2}", listenHost, listenPort, e.Message));
+			Log.Error(new Said("couldn't start the dashboard on {0}:{1} - {2}", listenHost, listenPort, Log.Scrub(e.Message)));
 			Log.Info("the console still works - change WebPort or turn WebEnabled off");
 
 			return false;
@@ -854,44 +853,30 @@ public sealed class WebHost : IAsyncDisposable {
 				return Unauthorised();
 			}
 
-			GlobalConfig current = _mgr.Global;
-			GlobalConfig? body = await ReadMergedAsync(ctx, current).ConfigureAwait(false);
+			JsonObject? sent = await ReadSentAsync(ctx).ConfigureAwait(false);
+			GlobalSave? save = sent == null ? null : SaveFromPage(_mgr.Global, sent, JsonOptionsOf(ctx));
 
-			if (body == null) {
+			if (save == null) {
 				return Results.Json(new { ok = false, error = "bad request" }, statusCode: 400);
 			}
 
-			// An empty secret means "unchanged", never "erase it". Every Secret in the registry, not a list here.
-			KeepSecrets(body, current, Settings.Global);
-
-			// Only settings are changed here. The page posts its whole copy of the config, so the fields the app keeps
-			// for itself - the theme, the account order, the window's place, a rep4rep hold, the connected chat - came
-			// back as they were when the page loaded, undoing whatever had changed them since.
-			KeepServerFields(body, current);
-
-			if (Invalid(body, current, Settings.Global) is { } error) {
+			if (save.Error is { } error) {
 				return Results.Json(new { ok = false, error }, statusCode: 400);
 			}
 
-			List<string> adjusted = Clamp(body, Settings.Global);
-
-			// The password is left out: the check reads the live config, so a new one is in force the moment it is
-			// saved - telling people it waits for a restart had them leaving the old one "active" that wasn't.
-			List<string> restartNeeded = Settings.Global
-				.Where(d => d.NeedsRestart && (d.Name != nameof(GlobalConfig.WebPassword))
-					&& !Equals(Settings.Read(body, d.Name)?.ToString(), Settings.Read(current, d.Name)?.ToString()))
-				.Select(static d => d.Label)
-				.ToList();
-
-			bool passwordChanged = !string.Equals(body.WebPassword, current.WebPassword, StringComparison.Ordinal);
+			List<string> adjusted = save.Adjusted;
+			List<string> restartNeeded = save.RestartNeeded;
+			bool passwordChanged = save.PasswordChanged;
 
 			// Still put in force, but not called saved: a full disk or a damaged settings file used to come back "Saved."
 			// and the change was gone at the next start.
-			if (!ConfigStore.SaveGlobal(body)) {
+			if (!save.Saved) {
 				adjusted.Add(new Said("in use now, but not saved to disk - see the Log").ToString());
 			}
 
-			_mgr.ApplyGlobal(body);
+			// The same object, changed in place - this only puts the token and the farming limit in step with it.
+			_mgr.ApplyGlobal(_mgr.Global);
+			GlobalConfig body = _mgr.Global;
 
 			foreach (SettingDef def in Settings.Global) {
 				Commands.ApplyGlobalSideEffects(_mgr, def);   // all global side effects are idempotent
@@ -924,7 +909,11 @@ public sealed class WebHost : IAsyncDisposable {
 				return Results.Json(new { ok = false, error = "no such account" }, statusCode: 404);
 			}
 
-			BotConfig? body = await ReadMergedAsync(ctx, bot.Cfg).ConfigureAwait(false);
+			// Read first and merged onto the account's settings as they are once it has arrived, not as they were when the
+			// request came in - the same reason as the global save: a field the app wrote meanwhile (a game learned to be
+			// banned during a send) isn't put back from the older copy. A Base from the page works here too.
+			JsonObject? sent = await ReadSentAsync(ctx).ConfigureAwait(false);
+			BotConfig? body = sent == null ? null : Merge(bot.Cfg, sent, JsonOptionsOf(ctx));
 
 			if (body == null) {
 				return Results.Json(new { ok = false, error = "bad request" }, statusCode: 400);
@@ -1245,7 +1234,14 @@ public sealed class WebHost : IAsyncDisposable {
 			Log.Info(new Said("restarting the dashboard on {0}:{1} - accounts stay on", _cfg.WebHost, _cfg.WebPort));
 			_ = Task.Run(async () => {
 				await Task.Delay(500).ConfigureAwait(false);
-				await RelistenAsync().ConfigureAwait(false);
+
+				// Stopping the old listener can throw too, and nothing awaits this: the dashboard would be gone without a word.
+				try {
+					await RelistenAsync().ConfigureAwait(false);
+				} catch (Exception e) {
+					Log.Error(new Said("couldn't start the dashboard on {0}:{1} - {2}", _cfg.WebHost, _cfg.WebPort, Log.Scrub(e.Message)));
+					Log.StackToFile(e);
+				}
 			});
 
 			return Results.Json(new { Ok = true, Needed = true, Port = _cfg.WebPort });
@@ -1662,13 +1658,6 @@ public sealed class WebHost : IAsyncDisposable {
 		return null;
 	}
 
-	/// <summary>
-	/// Read a settings POST as changes to the config it is saving, not as a whole new config.
-	///
-	/// Deserialising straight into a fresh object gave every field the page left out its default, so a POST with one
-	/// key in it blanked the Steam login, the games and everything else. Now the current config is the starting
-	/// point and only what was actually sent is written over it.
-	/// </summary>
 	/// <summary>Every global field that isn't a setting, put back to what the app holds now.</summary>
 	internal static void KeepServerFields(GlobalConfig body, GlobalConfig current) {
 		foreach (PropertyInfo p in typeof(GlobalConfig).GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
@@ -1678,18 +1667,116 @@ public sealed class WebHost : IAsyncDisposable {
 		}
 	}
 
-	private static async Task<T?> ReadMergedAsync<T>(HttpContext ctx, T current) where T : class {
-		JsonSerializerOptions options = ctx.RequestServices
-			.GetRequiredService<Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>>().Value.SerializerOptions;
+	/// <summary>What a dashboard save of the global settings came to. Error set = refused, nothing changed.</summary>
+	internal sealed record GlobalSave(string? Error, List<string> Adjusted, List<string> RestartNeeded, bool PasswordChanged, bool Saved);
 
-		try {
-			if (await JsonNode.ParseAsync(ctx.Request.Body, cancellationToken: ctx.RequestAborted).ConfigureAwait(false) is not JsonObject sent) {
+	/// <summary>One dashboard save of the global settings at a time, from reading the live config to writing it back.</summary>
+	private static readonly Lock GlobalSaveGate = new();
+
+	/// <summary>
+	/// A dashboard save, put onto the live global config field by field: only what the page really changed is written.
+	/// </summary>
+	/// <remarks>
+	/// The page posts its whole copy of the config. The app writes some settings itself - the Telegram chat and the
+	/// Discord owner when you connect, the rep4rep hold when it runs out - and a copy taken before that, even
+	/// milliseconds before, put the old value back: the chat was connected and then quietly gone again. Two things
+	/// close that. The page sends the copy it loaded as "Base", and a field it sends back unchanged is left alone
+	/// (see <see cref="Merge{T}"/>). And the result is written into the live config one changed field at a time rather
+	/// than swapped in whole, so something the app writes while this runs isn't replaced by the copy this started from.
+	/// </remarks>
+	/// <returns>Null when the post couldn't be read as a config.</returns>
+	internal static GlobalSave? SaveFromPage(GlobalConfig live, JsonObject sent, JsonSerializerOptions options) {
+		lock (GlobalSaveGate) {
+			GlobalConfig current = Clone(live);
+
+			if (Merge(current, sent, options) is not { } body) {
 				return null;
 			}
 
+			// An empty secret means "unchanged", never "erase it". Every Secret in the registry, not a list here.
+			KeepSecrets(body, current, Settings.Global);
+
+			// Only settings are changed here. A page without a Base (an old one, a script) still posts every field, so the
+			// ones the app keeps for itself - the theme, the account order, the window's place - are put back regardless.
+			KeepServerFields(body, current);
+
+			if (Invalid(body, current, Settings.Global) is { } error) {
+				return new GlobalSave(error, [], [], false, false);
+			}
+
+			List<string> adjusted = Clamp(body, Settings.Global);
+
+			// The password is left out: the check reads the live config, so a new one is in force the moment it is
+			// saved - telling people it waits for a restart had them leaving the old one "active" that wasn't.
+			List<string> restartNeeded = Settings.Global
+				.Where(d => d.NeedsRestart && (d.Name != nameof(GlobalConfig.WebPassword))
+					&& !Equals(Settings.Read(body, d.Name)?.ToString(), Settings.Read(current, d.Name)?.ToString()))
+				.Select(static d => d.Label)
+				.ToList();
+
+			bool passwordChanged = !string.Equals(body.WebPassword, current.WebPassword, StringComparison.Ordinal);
+
+			CopyChanged(body, current, live);
+
+			return new GlobalSave(null, adjusted, restartNeeded, passwordChanged, ConfigStore.SaveGlobal(live));
+		}
+	}
+
+	/// <summary>Every field that differs between <paramref name="from"/> and <paramref name="before"/>, written onto <paramref name="onto"/>.</summary>
+	private static void CopyChanged<T>(T from, T before, T onto) where T : class {
+		foreach (PropertyInfo p in typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
+			if (!p.CanRead || !p.CanWrite || (p.GetIndexParameters().Length > 0)) {
+				continue;
+			}
+
+			// Compared as JSON, so a list with the same games in it counts as the same list.
+			object? value = p.GetValue(from);
+
+			if (JsonSerializer.Serialize(value, p.PropertyType) != JsonSerializer.Serialize(p.GetValue(before), p.PropertyType)) {
+				p.SetValue(onto, value);
+			}
+		}
+	}
+
+	private static JsonSerializerOptions JsonOptionsOf(HttpContext ctx) => ctx.RequestServices
+		.GetRequiredService<Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>>().Value.SerializerOptions;
+
+	/// <summary>A settings POST's body as JSON, or null when it isn't a JSON object.</summary>
+	private static async Task<JsonObject?> ReadSentAsync(HttpContext ctx) {
+		try {
+			return await JsonNode.ParseAsync(ctx.Request.Body, cancellationToken: ctx.RequestAborted).ConfigureAwait(false) as JsonObject;
+		} catch (Exception e) {
+			// the page is told it didn't save; the why is here
+			Log.Failed($"dashboard: reading the settings sent to {ctx.Request.Path.Value}", e);
+
+			return null;
+		}
+	}
+
+	/// <summary>The copy of the config the page loaded, sent along with a save so what it didn't change can be told apart.</summary>
+	private const string PageBase = "Base";
+
+	/// <summary>
+	/// Read a settings POST as changes to the config it is saving, not as a whole new config. Null when it doesn't
+	/// read as one.
+	///
+	/// Deserialising straight into a fresh object gave every field the page left out its default, so a POST with one
+	/// key in it blanked the Steam login, the games and everything else. Now the current config is the starting
+	/// point and only what was actually sent is written over it.
+	/// </summary>
+	internal static T? Merge<T>(T current, JsonObject sent, JsonSerializerOptions options) where T : class {
+		try {
 			JsonObject merged = JsonSerializer.SerializeToNode(current, options)!.AsObject();
 
+			// A field the page sends back exactly as it loaded it wasn't changed there. Its value is only as new as the
+			// page, so writing it would undo whatever the app has put there since - it is left as the app has it.
+			JsonObject? loaded = sent[PageBase] as JsonObject;
+
 			foreach ((string key, JsonNode? value) in sent) {
+				if ((key == PageBase) || ((loaded != null) && loaded.TryGetPropertyValue(key, out JsonNode? was) && JsonNode.DeepEquals(was, value))) {
+					continue;
+				}
+
 				// Names are matched the way the endpoint always read them - ignoring case - so "steamlogin" replaces
 				// SteamLogin instead of sitting beside it and losing.
 				string name = merged.Select(static kv => kv.Key).FirstOrDefault(k => k.Equals(key, StringComparison.OrdinalIgnoreCase)) ?? key;
@@ -1697,7 +1784,10 @@ public sealed class WebHost : IAsyncDisposable {
 			}
 
 			return merged.Deserialize<T>(options);
-		} catch {
+		} catch (Exception e) {
+			// A field of the wrong type (text where a number goes): the whole save is turned down - say which.
+			Log.Failed($"dashboard: the {typeof(T).Name} settings sent don't fit", e);
+
 			return null;
 		}
 	}
@@ -1795,7 +1885,7 @@ public sealed class WebHost : IAsyncDisposable {
 			try {
 				await GameNames.ResolveAsync(appIds).ConfigureAwait(false);
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't look up game names for the history: {0}", e.Message));
+				Log.Debug(new Said("couldn't look up game names for the history: {0}", Log.Describe(e)));
 			} finally {
 				Volatile.Write(ref _resolvingNames, 0);
 			}
@@ -1807,7 +1897,11 @@ public sealed class WebHost : IAsyncDisposable {
 	private static async Task<T?> ReadJsonAsync<T>(HttpContext ctx) {
 		try {
 			return await ctx.Request.ReadFromJsonAsync<T>().ConfigureAwait(false);
-		} catch {
+		} catch (Exception e) {
+			// The endpoint answers "bad request"; the why is here. The sign-in page reads this before any password, so
+			// the same junk sent again and again is said once.
+			Log.DebugOnChange($"web:read:{ctx.Request.Path.Value}", $"dashboard: reading the request to {ctx.Request.Path.Value}: {Log.Describe(e)}");
+
 			return default;
 		}
 	}
@@ -1855,6 +1949,7 @@ public sealed class WebHost : IAsyncDisposable {
 			InventoryValue = bots.Sum(static b => b.Inventory.Total),
 			Currency = PriceBook.Symbol,
 			UpdateAvailable = UpdateCheck.Available,
+			UpdateWaits = Live.Global.UpdateWhenAsked == 1,   // the Update button's dialog says which it will do
 			UpdateUrl = UpdateCheck.Url,
 			// False on Linux and in Docker, where it can't swap itself: the page drops its update button then.
 			CanSelfUpdate = SelfUpdate.Supported,
@@ -1897,6 +1992,7 @@ public sealed class WebHost : IAsyncDisposable {
 					Bans = BotManager.ModuleOf<BanWatch>(b)?.Last is { Any: true } bans ? BanWatch.Summary(bans).ToString() : "",
 					Online = b.IsOnline,
 					Paused = b.Paused,
+					Blocked = b.PlayingBlocked,
 					SteamId = b.SteamId.ToString(),
 					SteamName = b.SteamName,
 					Avatar = b.AvatarUrl,
@@ -1982,12 +2078,16 @@ public sealed class WebHost : IAsyncDisposable {
 				HumanMode.Phase.Playing => "playing",
 				HumanMode.Phase.ShortBreak or HumanMode.Phase.MealBreak => "break",
 				HumanMode.Phase.NightIdle => "nightidle",
-				HumanMode.Phase.Asleep or HumanMode.Phase.DoneForToday => "asleep",
+				HumanMode.Phase.Asleep => "asleep",
+
+				// Up and showing online to everybody, just not in a game - so not "asleep", which is what these used to
+				// be filed under while the friends list said otherwise.
+				HumanMode.Phase.DoneForToday => "done",
+				HumanMode.Phase.DayOff => "dayoff",
 
 				// Settling in and switching games are both "between things", which is what a break already means
 				// on the dashboard - and far more honest than the "online" they used to fall through to.
 				HumanMode.Phase.WarmingUp or HumanMode.Phase.SwitchingGame => "break",
-				HumanMode.Phase.DayOff => "asleep",
 				_ => "online"
 			};
 		}

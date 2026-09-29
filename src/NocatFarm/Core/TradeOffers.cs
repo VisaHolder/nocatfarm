@@ -72,6 +72,9 @@ public static class TradeOffers {
 
 			if ((doc.RootElement.ValueKind != JsonValueKind.Object) || !doc.RootElement.TryGetProperty("response", out JsonElement response)
 				|| (response.ValueKind != JsonValueKind.Object)) {
+				// Polled every few minutes by the trading loop - the same odd answer once is plenty.
+				Log.DebugOnChange($"offers:{bot.Name}", "trade offers: Steam's answer had no response object", bot.Name);
+
 				return null;
 			}
 
@@ -81,7 +84,9 @@ public static class TradeOffers {
 				if (response.TryGetProperty(list, out JsonElement items) && (items.ValueKind == JsonValueKind.Array)) {
 					foreach (JsonElement o in items.EnumerateArray()) {
 						// Only live ones, whatever else Steam includes.
-						if ((Read(o, descriptions) is { } offer) && (offer.State is Active or NeedsConfirmation or InEscrow)) {
+						if (Read(o, descriptions) is not { } offer) {
+							Log.DebugOnChange($"offerread:{bot.Name}", $"trade offers: skipped offer {Text(o, "tradeofferid")} - couldn't read its id, partner or items", bot.Name);
+						} else if (offer.State is Active or NeedsConfirmation or InEscrow) {
 							offers.Add(offer);
 						}
 					}
@@ -94,6 +99,8 @@ public static class TradeOffers {
 				break;
 			}
 		}
+
+		Log.Recovered($"offers:{bot.Name}");
 
 		return offers;
 	}
@@ -151,6 +158,8 @@ public static class TradeOffers {
 
 		if ((doc.RootElement.ValueKind != JsonValueKind.Object) || !doc.RootElement.TryGetProperty("response", out JsonElement response)
 			|| (response.ValueKind != JsonValueKind.Object)) {
+			Log.Debug($"trade hold check: Steam's answer had no response object (partner {partner})", bot.Name);
+
 			return null;
 		}
 
@@ -161,7 +170,13 @@ public static class TradeOffers {
 		long both = Seconds(response, "both_escrow");
 		long longest = both >= 0 ? both : Math.Max(Seconds(response, "my_escrow"), Seconds(response, "their_escrow"));
 
-		return longest < 0 ? null : TimeSpan.FromSeconds(longest);
+		if (longest < 0) {
+			Log.Debug($"trade hold check: Steam's answer had no hold durations (partner {partner})", bot.Name);
+
+			return null;
+		}
+
+		return TimeSpan.FromSeconds(longest);
 	}
 
 	/// <summary>

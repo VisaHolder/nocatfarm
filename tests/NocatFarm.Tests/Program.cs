@@ -68,7 +68,7 @@ Check("Remove empties it", Get<int>("Count") == 0 && qt.GetProperty("Next")!.Get
 Type gifts = typeof(Rng).Assembly.GetType("NocatFarm.Modules.Gifts")!;
 const BindingFlags Priv = BindingFlags.NonPublic | BindingFlags.Static;
 async Task<(bool? Game, string Name)> WhatIs(uint package, CancellationToken ct = default)
-	=> await (Task<(bool?, string)>) gifts.GetMethod("WhatIsAsync", Priv)!.Invoke(null, [package, ct])!;
+	=> await (Task<(bool?, string)>) gifts.GetMethod("WhatIsAsync", Priv)!.Invoke(null, [package, "tests", ct])!;
 
 var steep = await WhatIs(142186);
 Check("Steep (142186, priced) is a gifted game", steep == (true, "Steep"), $"{steep}");
@@ -143,7 +143,15 @@ Check("booster page: not the page -> null", Parse("<html>An error was encountere
 
 // ── Free games from Steam's own store search (live) ──────────────────────────
 Type fg = typeof(Rng).Assembly.GetType("NocatFarm.Modules.FreeGames")!;
-var giveaways = await (Task<List<string>>) fg.GetMethod("StoreGiveawaysAsync", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [CancellationToken.None])!;
+// Live, so up to three tries a few seconds apart: one blank answer from the store isn't a broken reader.
+List<string> giveaways = [];
+for (int attempt = 0; (attempt < 3) && (giveaways.Count == 0); attempt++) {
+	if (attempt > 0) {
+		await Task.Delay(5000);
+		fg.GetField("_giveaways", BindingFlags.NonPublic | BindingFlags.Static)!.SetValue(null, (DateTime.MinValue, new List<string>()));   // not the cached empty answer
+	}
+	giveaways = await (Task<List<string>>) fg.GetMethod("StoreGiveawaysAsync", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [CancellationToken.None])!;
+}
 Check("store search: reads giveaways (right now: the free Supporter Pack DLC)", giveaways.Count > 0 && giveaways.All(t => t.StartsWith("g/") || t.StartsWith("s/")), string.Join(", ", giveaways));
 uint steepFree = await (Task<uint>) fg.GetMethod("FreeSubAsync", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [460920u, CancellationToken.None])!;
 Check("store: a normal paid game has no free package", steepFree == 0, $"{steepFree}");
@@ -228,7 +236,6 @@ Check("undercut: a cent under, never below 3", NocatFarm.Core.Seller.UndercutFor
 	Check("offers: partner comes from the account id (vanity URLs don't matter)", o1.Partner == 76561198000000001UL, $"{o1.Partner}");
 	Check("offers: both sides, with each card's game", o1.Giving.Count == 1 && o1.Receiving.Count == 1 && o1.Giving[0].Game == 440 && o1.Receiving[0].Described && o1.Giving[0].AssetId == 77);
 	Check("offers: a trade hold is seen; an undescribed item is marked unknown", o2.HoldUntil != null && o2.IsPureDonation && !o2.Receiving[0].Described);
-	var cards = (ValueTuple<List<object>, List<object>>?) null;
 	var cardsOf = fs.GetMethod("CardsOf", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [o1]);
 	Check("offers: an all-card offer reads as cards for the swap check", cardsOf != null);
 }
@@ -1534,7 +1541,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 	// The main game's number is its share of the TIME: main sittings are longer, so it's picked less often to match.
 	MethodInfo mainWeight = ht.GetMethod("MainWeight", BindingFlags.NonPublic | BindingFlags.Static)!;
-	int w = (int) mainWeight.Invoke(null, [30, 70, 30, 150])!;
+	int w = (int) mainWeight.Invoke(null, [30, 70, 30, 150, int.MaxValue])!;
 	F("_wakeMinuteOfDay").SetValue(human, 0);
 	F("_bedHour").SetValue(human, 23);
 	F("_bedMinute").SetValue(human, 59);
@@ -2036,6 +2043,770 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			// temp - it goes when Windows tidies up
 		}
 	}
+}
+
+// ── 1.5.6: a late 'wake' sitting survives a restart, the hunt's day is human mode's day, the week preview has the hunt ──
+{
+	const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance;
+	Type ht = typeof(NocatFarm.Modules.HumanMode);
+	string name = "harness-stayup-" + Guid.NewGuid().ToString("N")[..6];
+	var cfg = new NocatFarm.Config.BotConfig { LegitMode = true };
+	var bot = new NocatFarm.Core.Bot(name, cfg);
+	var human = new NocatFarm.Modules.HumanMode(bot);
+	DateTime now = DateTime.Now;
+	ht.GetField("_dayStamp", Inst)!.SetValue(human, now.DayOfYear);
+	DateTime until = now.AddMinutes(40);
+	ht.GetField("_stayUpUntil", Inst)!.SetValue(human, until);
+	ht.GetMethod("Persist", Inst)!.Invoke(human, null);
+
+	var again = new NocatFarm.Modules.HumanMode(bot);
+	ht.GetMethod("Restore", Inst)!.Invoke(again, [NocatFarm.Modules.HumanDay.Load(name, now)!]);
+	DateTime back = (DateTime) ht.GetField("_stayUpUntil", Inst)!.GetValue(again)!;
+	Check("wake late: a restart during the extra sitting keeps it", Math.Abs((back - until).TotalSeconds) < 1, $"{back:HH:mm:ss} vs {until:HH:mm:ss}");
+
+	ht.GetField("_stayUpUntil", Inst)!.SetValue(human, now.AddMinutes(-5));
+	ht.GetMethod("Persist", Inst)!.Invoke(human, null);
+	ht.GetMethod("Restore", Inst)!.Invoke(again, [NocatFarm.Modules.HumanDay.Load(name, now)!]);
+	Check("wake late: a sitting that's already over isn't brought back", (DateTime) ht.GetField("_stayUpUntil", Inst)!.GetValue(again)! == DateTime.MinValue);
+	NocatFarm.Modules.HumanDay.Forget(name);
+
+	Check("plan day: today's day of the year is today", NocatFarm.Modules.HumanMode.PlanDate(272, new DateTime(2026, 9, 29, 15, 0, 0)) == new DateTime(2026, 9, 29));
+	Check("plan day: New Year's Eve's plan just after midnight is still 31 December", NocatFarm.Modules.HumanMode.PlanDate(365, new DateTime(2027, 1, 1, 0, 30, 0)) == new DateTime(2026, 12, 31));
+	ht.GetField("_dayStamp", Inst)!.SetValue(human, now.AddDays(-1).DayOfYear);
+	Check("plan day: in the small hours before bed it's still yesterday", human.PlanDay == now.Date.AddDays(-1), $"{human.PlanDay:yyyy-MM-dd}");
+	await bot.DisposeAsync();
+
+	var wcfg = new NocatFarm.Config.BotConfig { GameWeights = "730:80", DayOffChancePct = 0, PureMainDayChancePct = 0, WeekdayHours = 6, WeekendHours = 6 };
+	List<string> without = NocatFarm.Modules.HumanMode.PreviewWeek(wcfg);
+	List<string> with = NocatFarm.Modules.HumanMode.PreviewWeek(wcfg, [(730, 80), (4000, 20)]);
+	Check("human week: one game and no hunt is main-game-only days", without.All(static l => l.Contains(" only")), without.FirstOrDefault() ?? "");
+	Check("human week: with the hunt in the rotation, days aren't main-game-only", with.All(static l => !l.Contains(" only")), with.FirstOrDefault() ?? "");
+}
+
+// ── races: a dashboard save, 'update skip', badge crafting and human mode's banking each take their turn ─────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-races-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+
+	try {
+		// Dashboard save: Telegram connected between the page loading its copy and the page saving it.
+		var web = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = null, PropertyNameCaseInsensitive = true };
+		MethodInfo save = typeof(NocatFarm.Web.WebHost).GetMethod("SaveFromPage", BindingFlags.NonPublic | BindingFlags.Static)!;
+		var live = new NocatFarm.Config.GlobalConfig { Language = "en", WebPassword = "pw" };
+		System.Text.Json.Nodes.JsonObject Page() {
+			var copy = System.Text.Json.JsonSerializer.SerializeToNode(live, web)!.AsObject();
+			copy["WebPassword"] = "";   // secrets reach the page blank
+			return copy;
+		}
+		System.Text.Json.Nodes.JsonObject loaded = Page();
+		live.TelegramChatId = "12345";   // connected a moment after the page loaded
+		var sent = (System.Text.Json.Nodes.JsonObject) loaded.DeepClone();
+		sent["Language"] = "de";
+		sent["Base"] = loaded.DeepClone();
+		object? saved = save.Invoke(null, [live, sent, web]);
+		Check("dashboard save: a chat connected while the page was open stays connected", (saved != null) && (live.TelegramChatId == "12345"), live.TelegramChatId);
+		Check("dashboard save: what the page changed is saved, onto the live settings, and the password is kept", (live.Language == "de") && (live.WebPassword == "pw"), $"{live.Language} / {live.WebPassword.Length}");
+		System.Text.Json.Nodes.JsonObject old = Page();   // an old page: no Base, every field sent
+		old["Language"] = "fr";
+		Check("dashboard save: a page without a Base still saves", (save.Invoke(null, [live, old, web]) != null) && (live.Language == "fr") && (live.WebPassword == "pw"), live.Language);
+
+		// 'update skip': the install looks again once it has the busy flag, and the swap and a skip take turns.
+		PropertyInfo available = typeof(NocatFarm.Core.UpdateCheck).GetProperty("Available")!;
+		MethodInfo handOver = typeof(NocatFarm.Core.SelfUpdate).GetMethod("HandOver", BindingFlags.NonPublic | BindingFlags.Static)!;
+		FieldInfo handedOver = typeof(NocatFarm.Core.SelfUpdate).GetField("_handedOver", BindingFlags.NonPublic | BindingFlags.Static)!;
+		string? availableBefore = NocatFarm.Core.UpdateCheck.Available;
+		available.SetValue(null, "v9.9.9");
+		NocatFarm.Core.UpdateCheck.Skipped = "9.9.9";
+
+		if (NocatFarm.Core.SelfUpdate.Supported) {
+			string? stopped = await NocatFarm.Core.SelfUpdate.ApplyAsync(CancellationToken.None, byItself: true);
+			Check("update skip: an install started just before the skip stops at its turn, nothing downloaded",
+				(stopped?.Contains("was skipped", StringComparison.Ordinal) == true) && !NocatFarm.Core.SelfUpdate.Busy, stopped ?? "null");
+		}
+
+		bool swapStarted = false;
+		bool handed = (bool) handOver.Invoke(null, ["v9.9.9", (Action) (() => swapStarted = true)])!;
+		Check("update skip: skipped before the handover - the swap never starts", !handed && !swapStarted);
+		NocatFarm.Core.UpdateCheck.Skipped = null;
+		handed = (bool) handOver.Invoke(null, ["v9.9.9", (Action) (() => swapStarted = true)])!;
+		Check("update skip: after the handover it's too late, and says so", handed && swapStarted && !NocatFarm.Core.SelfUpdate.Skip("v9.9.9") && (NocatFarm.Core.UpdateCheck.Skipped == null));
+		handedOver.SetValue(null, false);
+		available.SetValue(null, availableBefore);
+
+		// Badge crafting: the set's cards are claimed like a send's, all or none.
+		var inv = new NocatFarm.Core.InventoryContents { Complete = true };
+		void AddCard(ulong id, string cls, string type, string app) {
+			inv.Assets.Add(System.Text.Json.JsonDocument.Parse($"{{\"assetid\":\"{id}\",\"classid\":\"{cls}\",\"instanceid\":\"0\"}}").RootElement);
+			inv.Descriptions[cls + "_0"] = System.Text.Json.JsonDocument.Parse($"{{\"type\":\"{type}\",\"market_fee_app\":\"{app}\"}}").RootElement;
+		}
+		AddCard(1, "a", "Dota 2 Trading Card", "570");
+		AddCard(2, "a", "Dota 2 Trading Card", "570");   // a second copy of the same card
+		AddCard(3, "b", "Dota 2 Trading Card", "570");
+		AddCard(4, "f", "Dota 2 Foil Trading Card", "570");
+		AddCard(5, "c", "Portal Trading Card", "400");
+		Type bc = typeof(NocatFarm.Modules.BadgeCraft);
+		var set = (List<ulong>) bc.GetMethod("SetCards", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [inv, 570u, false])!;
+		Check("craft: every copy of the set's cards, not the foils or another game's", set.Order().SequenceEqual([1ul, 2ul, 3ul]), string.Join(",", set));
+		var owner = new NocatFarm.Core.Bot("harness-craft", new NocatFarm.Config.BotConfig());
+		Type ob = typeof(NocatFarm.Core.Bot);
+		HashSet<ulong> Claim(params ulong[] ids) => (HashSet<ulong>) ob.GetMethod("ClaimItems", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(owner, [ids])!;
+		void Release(params ulong[] ids) => ob.GetMethod("ReleaseItems", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(owner, [ids]);
+		MethodInfo claimSet = bc.GetMethod("ClaimSet", BindingFlags.NonPublic | BindingFlags.Static)!;
+		Claim(2);   // a send has one copy
+		Check("craft: a set with a card a send is moving waits", claimSet.Invoke(null, [owner, set]) == null);
+		Check("craft: and holds none of the others meanwhile", Claim(1, 3).Count == 2);
+		Release(1, 2, 3);
+		var crafting = (HashSet<ulong>?) claimSet.Invoke(null, [owner, set]);
+		Check("craft: claimed first, a send or a listing leaves the set's cards out", (crafting?.Count == 3) && Claim(1, 2, 3, 5).SetEquals([5ul]));
+		await owner.DisposeAsync();
+
+		// Human mode: a stop banking at the same moment as a tick counts each minute once.
+		var player = new NocatFarm.Core.Bot("harness-bank-" + Guid.NewGuid().ToString("N")[..6], new NocatFarm.Config.BotConfig { LegitMode = true });
+		var mode = new NocatFarm.Modules.HumanMode(player);
+		Type hm = typeof(NocatFarm.Modules.HumanMode);
+		FieldInfo HF(string f) => hm.GetField(f, BindingFlags.NonPublic | BindingFlags.Instance)!;
+		DateTime logon = DateTime.UtcNow.AddHours(-1);
+		ob.GetProperty("OnlineSince")!.SetValue(player, logon);
+		HF("_phase").SetValue(mode, NocatFarm.Modules.HumanMode.Phase.Playing);
+		HF("_dayStamp").SetValue(mode, -1);   // nothing written to disk
+		HF("_bankedForLogon").SetValue(mode, logon);
+		HF("_bankedTo").SetValue(mode, DateTime.UtcNow.AddMinutes(-5).AddSeconds(-10));
+		HF("_lastBankAt").SetValue(mode, DateTime.UtcNow.AddSeconds(-10));
+		MethodInfo bank = hm.GetMethod("BankSession", BindingFlags.NonPublic | BindingFlags.Instance)!;
+		using (var together = new Barrier(8)) {
+			await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => Task.Factory.StartNew(() => { together.SignalAndWait(); bank.Invoke(mode, null); }, TaskCreationOptions.LongRunning)));
+		}
+		bank.Invoke(mode, null);
+		int banked = (int) HF("_playedMinutesToday").GetValue(mode)!;
+		Check("human bank: eight banks at once and one after - five minutes played is five banked", banked == 5, $"{banked}");
+		await player.DisposeAsync();
+	} finally {
+		NocatFarm.Core.UpdateCheck.Skipped = null;
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── human mode: farming sittings keep to themselves, a dead connection starts nothing, the day's edges, a finished day ──
+{
+	const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance;
+	const BindingFlags Stat = BindingFlags.NonPublic | BindingFlags.Static;
+	Type ht = typeof(NocatFarm.Modules.HumanMode);
+	Type bt = typeof(NocatFarm.Core.Bot);
+	FieldInfo HF(string f) => ht.GetField(f, Inst) ?? throw new MissingFieldException(f);
+	T HGet<T>(object h, string f) => (T) HF(f).GetValue(h)!;
+	void Set(object h, string f, object? v) => HF(f).SetValue(h, v);
+	object? HCall(object h, string m, params object?[] args) => ht.GetMethod(m, Inst)!.Invoke(h, args);
+	object? Static(string m, params object?[] args) => ht.GetMethod(m, Stat)!.Invoke(null, args);
+	void BotSet(NocatFarm.Core.Bot b, string p, object? v) => bt.GetProperty(p)!.SetValue(b, v);
+	NocatFarm.Modules.HumanMode.Phase PhaseOf(object h) => (NocatFarm.Modules.HumanMode.Phase) HF("_phase").GetValue(h)!;
+	const NocatFarm.Modules.HumanMode.Phase Off = NocatFarm.Modules.HumanMode.Phase.Off, Playing = NocatFarm.Modules.HumanMode.Phase.Playing;
+
+	// A plan in force right now, up from midnight until a day and more away - so the time of day the tests run at
+	// doesn't come into it.
+	void AwakeAllDay(object h) {
+		Set(h, "_dayStamp", DateTime.Now.DayOfYear);
+		Set(h, "_wakeMinuteOfDay", 0);
+		Set(h, "_bedHour", 23);
+		Set(h, "_bedMinute", 59);
+		Set(h, "_bedIsTomorrow", true);
+		Set(h, "_stayUpUntil", DateTime.MinValue);
+	}
+
+	// (a) Farming sittings are their own thing - they don't use up the side games' allowance.
+	Check("farming sittings: they come off the day the side share is of, not out of the side games' minutes",
+		((int) Static("SideBudgetNow", 240, 480, 0)! == 240) && ((int) Static("SideBudgetNow", 240, 480, 240)! == 120));
+	Check("farming sittings: a main-game-only day still has no side allowance", (int) Static("SideBudgetNow", 0, 480, 100)! == 0);
+
+	string fname = "harness-farm-" + Guid.NewGuid().ToString("N")[..6];
+	var fcfg = new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730:70, 440:30", FarmCardsWhen = NocatFarm.Modules.FarmWhen.Mixed };
+	var fbot = new NocatFarm.Core.Bot(fname, fcfg);
+	var fh = new NocatFarm.Modules.HumanMode(fbot);
+	fbot.AddModule(fh);
+	DateTime logon = DateTime.UtcNow.AddHours(-3);
+	BotSet(fbot, "OnlineSince", logon);
+	AwakeAllDay(fh);
+	Set(fh, "_targetMinutes", 600);
+
+	void Bank(object h, uint game, bool farming, int minutes, DateTime signedIn) {
+		Set(h, "_phase", Playing);
+		Set(h, "_game", game);
+		Set(h, "_farmSitting", farming);
+		Set(h, "_bankedForLogon", signedIn);
+		Set(h, "_bankedTo", DateTime.UtcNow.AddMinutes(-minutes));
+		Set(h, "_lastBankAt", DateTime.UtcNow.AddSeconds(-10));
+		HCall(h, "BankSession");
+	}
+
+	Bank(fh, 999, true, 40, logon);   // a farming sitting on a card game that isn't one of its games
+	Check("farming sittings: 40 minutes of farming are farming, not side-game time", (HGet<int>(fh, "_farmPlayed") == 40) && (HGet<int>(fh, "_otherPlayed") == 0),
+		$"farm {HGet<int>(fh, "_farmPlayed")}, side {HGet<int>(fh, "_otherPlayed")}");
+	Bank(fh, 440, false, 25, logon);
+	Check("farming sittings: an ordinary side-game sitting is still side-game time", HGet<int>(fh, "_otherPlayed") == 25);
+	NocatFarm.Modules.HumanDay? fsaved = NocatFarm.Modules.HumanDay.Load(fname, DateTime.Now);
+	Check("farming sittings: their minutes survive a restart", (fsaved?.FarmPlayed == 40) && (fsaved.OtherPlayed == 25));
+
+	// With cards about, the usual games keep their shares: no more two sittings in three to a game with drops.
+	var ffarmer = new NocatFarm.Modules.CardFarmer(fbot);
+	fbot.AddModule(ffarmer);
+	var fqueue = (List<NocatFarm.Modules.FarmTarget>) typeof(NocatFarm.Modules.CardFarmer).GetField("_queue", Inst)!.GetValue(ffarmer)!;
+	fqueue.Add(new NocatFarm.Modules.FarmTarget { AppId = 440, CardsRemaining = 5, HoursPlayed = 9 });
+	Set(fh, "_mainSharePct", 70);
+	Set(fh, "_firstSessionOfDay", false);   // an ordinary sitting, the day's first being short whatever it's on
+	int mw = (int) Static("MainWeight", 30, 70, 30, 150, int.MaxValue)!;
+	int picked440 = 0;
+	const int Picks = 20_000;
+
+	for (int i = 0; i < Picks; i++) {
+		picked440 += (uint) HCall(fh, "PickGame")! == 440 ? 1 : 0;
+	}
+
+	double share440 = (double) picked440 / Picks, want440 = 30.0 / (mw + 30);
+	Check("cards about: a usual game with drops gets its own share of the picks, not two in three", Math.Abs(share440 - want440) < 0.02, $"{share440:P1} vs {want440:P1}");
+
+	// Carrying on is with one of its own games, and after a break nothing is being "closed".
+	Set(fh, "_otherBudget", 1_000_000);
+	Set(fh, "_otherPlayed", 0);
+	Set(fh, "_farmPlayed", 0);
+	Set(fh, "_playedMinutesToday", 0);
+	Set(fh, "_targetMinutes", 1_000_000);
+	int carriedFarmGame = 0, closing = 0;
+	NocatFarm.Log.Suppressed = true;
+
+	for (int i = 0; i < 160; i++) {
+		Set(fh, "_phase", Off);
+		Set(fh, "_switchingTo", 0u);
+		Set(fh, "_lastGame", i % 2 == 0 ? 999u : 440u);   // last sitting: a farming one's card game, or a side game
+		HCall(fh, "StartSession");
+		carriedFarmGame += HGet<uint>(fh, "_game") == 999 ? 1 : 0;
+		closing += PhaseOf(fh) == NocatFarm.Modules.HumanMode.Phase.SwitchingGame ? 1 : 0;
+	}
+
+	NocatFarm.Log.Suppressed = false;
+	Check("carry on: never an ordinary sitting on the last farming sitting's card game", carriedFarmGame == 0, $"{carriedFarmGame} of 80");
+
+	// (c) After a break the next game starts - nothing is running, so there is nothing to be "closing".
+	Check("after a break: a different game goes straight on, no 'closing the game' over nothing", closing == 0, $"{closing} of 160");
+	Check("closing the game: only when something else is really running", !(bool) Static("NeedsSwitchGap", 440u, new List<uint>())!
+		&& (bool) Static("NeedsSwitchGap", 440u, new List<uint> { 730 })! && !(bool) Static("NeedsSwitchGap", 440u, new List<uint> { 440 })!);
+
+	// Audit: the first sitting of the day isn't thirty minutes on the dot every morning.
+	Check("first sitting: its cap sits above a 30-minute minimum, with room to vary", ((int) Static("FirstSittingCap", 30, 150)! == 48) && ((int) Static("FirstSittingCap", 5, 10)! == 10));
+	HashSet<int> firsts = [];
+
+	for (int i = 0; i < 300; i++) {
+		Set(fh, "_firstSessionOfDay", true);
+		firsts.Add((int) HCall(fh, "SessionLength", 730u, 730u)!);
+	}
+
+	Check("first sitting: a different length from day to day, inside 30-48m", (firsts.Count > 5) && (firsts.Min() >= 30) && (firsts.Max() <= 48), string.Join(",", firsts.Order()));
+
+	// Audit: the day's last sitting stays inside the longest sitting.
+	Set(fh, "_firstSessionOfDay", false);
+	Set(fh, "_targetMinutes", 1000);
+	int lastLongest = 0;
+
+	for (int i = 0; i < 2000; i++) {
+		Set(fh, "_playedMinutesToday", 1000 - 149);   // 149 left, and "what's left" gets a few minutes' slack
+		lastLongest = Math.Max(lastLongest, (int) HCall(fh, "SessionLength", 730u, 730u)!);
+	}
+
+	Check("the day's last sitting: never past 'longest sitting' (150m)", lastLongest <= 150, $"{lastLongest}m");
+
+	// Audit: the day's last sitting ends the day - not on a "short break - back in 12m" nobody comes back from.
+	NocatFarm.Log.Suppressed = true;
+	AwakeAllDay(fh);
+	Set(fh, "_targetMinutes", 60);
+	Set(fh, "_playedMinutesToday", 60);
+	Bank(fh, 730, false, 0, logon);
+	HCall(fh, "EndSession");
+	NocatFarm.Modules.HumanMode.Phase lastEnds = PhaseOf(fh);
+	Set(fh, "_playedMinutesToday", 10);
+	Bank(fh, 730, false, 0, logon);
+	HCall(fh, "EndSession");
+	NocatFarm.Modules.HumanMode.Phase otherEnds = PhaseOf(fh);
+	NocatFarm.Log.Suppressed = false;
+	Check("the day's last sitting ends the day, not on a break", lastEnds == Off, $"{lastEnds}");
+	Check("...and any other sitting still ends on a break", otherEnds is NocatFarm.Modules.HumanMode.Phase.ShortBreak or NocatFarm.Modules.HumanMode.Phase.MealBreak, $"{otherEnds}");
+
+	// Audit: a meal and an offline break are saved when they happen, so a restart can't hand them out again - and an
+	// offline break counts when it really goes offline, not when it was decided (bedtime can cut it short first).
+	Set(fh, "_mealCap", 3);
+	Set(fh, "_mealsUsed", 0);
+	NocatFarm.Log.Suppressed = true;
+	HCall(fh, "MealBreak");
+	NocatFarm.Log.Suppressed = false;
+	Check("a meal is saved as it starts, so a restart can't give the day another", NocatFarm.Modules.HumanDay.Load(fname, DateTime.Now)?.MealsUsed == 1);
+
+	fcfg.SignOutOnBreakChancePct = 100;
+	fcfg.BreakAwayAfterMinMinutes = 2;
+	fcfg.BreakAwayAfterMaxMinutes = 2;
+	Set(fh, "_signOutCap", 5);
+	Set(fh, "_signOutsUsed", 0);
+	NocatFarm.Log.Suppressed = true;
+	HCall(fh, "StepAway", 30, 3, new NocatFarm.Core.Said("short break"), 1.0);
+	NocatFarm.Log.Suppressed = false;
+	bool decidedDark = HF("_breakPersona").GetValue(fh) is int decided && (decided == NocatFarm.Core.Bot.PersonaDark);
+	Check("offline break: not counted when it's decided", decidedDark && (HGet<int>(fh, "_signOutsUsed") == 0));
+	BotSet(fbot, "State", NocatFarm.Core.BotState.Online);
+	Set(fh, "_phase", NocatFarm.Modules.HumanMode.Phase.ShortBreak);
+	Set(fh, "_breakPersonaAt", DateTime.UtcNow.AddSeconds(-1));
+	Set(fh, "_phaseEnds", DateTime.UtcNow.AddMinutes(20));
+	Set(fh, "_targetMinutes", 300);
+	Set(fh, "_lastStepAt", DateTime.UtcNow);
+	HCall(fh, "StepAsync");
+	Check("offline break: counted - and saved - the moment it really goes offline", (HGet<int>(fh, "_signOutsUsed") == 1) && HGet<bool>(fh, "_offlineBreak")
+		&& (NocatFarm.Modules.HumanDay.Load(fname, DateTime.Now)?.SignOutsUsed == 1));
+	BotSet(fbot, "State", NocatFarm.Core.BotState.Stopped);
+	NocatFarm.Modules.HumanDay.Forget(fname);
+	await fbot.DisposeAsync();
+
+	// (b) Back from the PC sleeping: nothing starts until Steam shows the connection is alive.
+	DateTime t = new(2026, 9, 29, 20, 0, 0, DateTimeKind.Utc);
+	DateTime on1 = t.AddHours(-5);
+	bool LiveAgain(DateTime? logonNow, DateTime inbound, DateTime at) => (bool) Static("LiveAgain", t, on1, logonNow, inbound, at)!;
+	Check("woke from sleep: same sign-in, nothing from Steam since - wait", !LiveAgain(on1, t.AddHours(-2), t.AddSeconds(20)));
+	Check("woke from sleep: Steam has sent something since - go on", LiveAgain(on1, t.AddSeconds(5), t.AddSeconds(20)));
+	Check("woke from sleep: signed in again - go on", LiveAgain(t.AddSeconds(30), t.AddHours(-2), t.AddSeconds(40)));
+	Check("woke from sleep: still connected three minutes on - taken as fine", LiveAgain(on1, t.AddHours(-2), t.AddMinutes(3)));
+
+	string sname = "harness-slept-" + Guid.NewGuid().ToString("N")[..6];
+	var sbot = new NocatFarm.Core.Bot(sname, new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730" });
+	var sh = new NocatFarm.Modules.HumanMode(sbot);
+	sbot.AddModule(sh);
+	BotSet(sbot, "State", NocatFarm.Core.BotState.Online);
+	BotSet(sbot, "OnlineSince", DateTime.UtcNow.AddHours(-6));
+	AwakeAllDay(sh);
+	Set(sh, "_targetMinutes", 300);
+	Set(sh, "_phase", NocatFarm.Modules.HumanMode.Phase.ShortBreak);
+	Set(sh, "_phaseEnds", DateTime.UtcNow.AddHours(-2));   // the break ran out while the PC slept...
+	Set(sh, "_lastStepAt", DateTime.UtcNow.AddHours(-3));  // ...and nothing ran for three hours
+	NocatFarm.Log.Suppressed = true;
+	HCall(sh, "StepAsync");
+	NocatFarm.Log.Suppressed = false;
+	Check("woke from sleep: no sitting 'started' on a connection nobody has heard from", (PhaseOf(sh) == NocatFarm.Modules.HumanMode.Phase.ShortBreak) && (HGet<uint>(sh, "_game") == 0),
+		$"{PhaseOf(sh)}");
+	Thread.Sleep(50);
+	bt.GetMethod("NoteIncomingPacket", Inst)!.Invoke(sbot, null);   // Steam says something...
+	Set(sh, "_clearReads", 9);
+	BotSet(sbot, "PlayingBlocked", true);                            // ...that you're on the account
+	NocatFarm.Log.Suppressed = true;
+	HCall(sh, "StepAsync");
+	NocatFarm.Log.Suppressed = false;
+	Check("woke from sleep: once Steam has spoken, the day carries on", (HGet<DateTime>(sh, "_proveSince") == DateTime.MinValue) && (PhaseOf(sh) == NocatFarm.Modules.HumanMode.Phase.StoodDown),
+		$"{PhaseOf(sh)}");
+	Check("standing down for you: the clear reads start again from none, so one read after you leave isn't enough", HGet<int>(sh, "_clearReads") == 0);
+	BotSet(sbot, "State", NocatFarm.Core.BotState.Stopped);
+	NocatFarm.Modules.HumanDay.Forget(sname);
+	await sbot.DisposeAsync();
+
+	// (d) The day's edges with the day starting at 2 or earlier, and bed after midnight.
+	DateTime fri = new(2026, 10, 2);   // a Friday: up at 03:00, bed Saturday 00:40
+	Check("day boundary: a plan rolled at midnight doesn't get the account back up at 00:10", !(bool) Static("InPlan", fri.AddMinutes(10), fri, 180, 0, 40, true)!);
+	Check("day boundary: up at its own wake time, and on to its own bedtime after midnight", (bool) Static("InPlan", fri.AddHours(3.5), fri, 180, 0, 40, true)!
+		&& (bool) Static("InPlan", fri.AddDays(1).AddMinutes(30), fri, 180, 0, 40, true)! && !(bool) Static("InPlan", fri.AddDays(1).AddMinutes(50), fri, 180, 0, 40, true)!);
+	Check("day boundary: Friday doesn't start while Thursday's 00:40 bedtime is still to come",
+		!(bool) Static("NewDayMayStart", fri.AddMinutes(10), fri, fri.AddMinutes(40))! && (bool) Static("NewDayMayStart", fri.AddMinutes(50), fri, fri.AddMinutes(40))!);
+	Check("day boundary: up at 4 with bed at 5 the next morning is a 25-hour window, not one hour",
+		((int) Static("WindowMinutes", 240, 5, 0, true)! == 25 * 60) && ((int) Static("WindowMinutes", 600, 22, 0, false)! == 12 * 60));
+
+	MethodInfo rollDay = ht.GetMethod("RollDay", Stat)!;
+	(int Wake, int BedHour, int BedMinute, bool BedTomorrow, int Target, int Share, int Budget, int SignOuts, int Meals) Roll(NocatFarm.Config.BotConfig c, DateTime date, DateTime lastBed, Random r) {
+		object d = rollDay.Invoke(null, [c, date, 70, true, lastBed, r])!;
+		int I(string n) => (int) d.GetType().GetProperty(n)!.GetValue(d)!;
+		return (I("WakeMinute"), I("BedHour"), I("BedMinute"), (bool) d.GetType().GetProperty("BedIsTomorrow")!.GetValue(d)!, I("Target"), I("MainSharePct"), I("OtherBudget"), I("SignOutCap"), I("MealCap"));
+	}
+
+	DateTime satDate = new(2026, 10, 3), friBed = satDate.AddMinutes(90);   // Friday went to bed at 01:30
+	var upAt1 = new NocatFarm.Config.BotConfig { DayStartHour = 1, BedHour = 23 };
+	Random rr = new(11);
+	int tooSoon = 0;
+
+	for (int i = 0; i < 2000; i++) {
+		tooSoon += satDate.AddMinutes(Roll(upAt1, satDate, friBed, rr).Wake) < friBed.AddHours(4) ? 1 : 0;
+	}
+
+	Check("day boundary: with the day starting at 1, Saturday never gets up before Friday's 01:30 bedtime and a night's sleep", tooSoon == 0, $"{tooSoon} of 2000");
+
+	string dname = "harness-boundary-" + Guid.NewGuid().ToString("N")[..6];
+	var dbot = new NocatFarm.Core.Bot(dname, new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730", DayStartHour = 0, BedHour = 20 });
+	var dh = new NocatFarm.Modules.HumanMode(dbot);
+	dbot.AddModule(dh);
+	NocatFarm.Modules.HumanDay.Forget(dname);
+	DateTime today = DateTime.Now.Date;
+	Set(dh, "_dayStamp", today.AddDays(-1).DayOfYear);   // last night's plan: bed 23:00 yesterday...
+	Set(dh, "_wakeMinuteOfDay", 60);
+	Set(dh, "_bedHour", 23);
+	Set(dh, "_bedMinute", 0);
+	Set(dh, "_bedIsTomorrow", false);
+	Set(dh, "_stayUpUntil", DateTime.Now.AddHours(1));   // ...and a 'wake' sitting after it, still going
+	NocatFarm.Log.Suppressed = true;
+	HCall(dh, "RollNewDayIfNeeded", false);
+	NocatFarm.Log.Suppressed = false;
+	Check("day boundary: last night's 'wake' sitting still going - the new day waits for it", HGet<int>(dh, "_dayStamp") == today.AddDays(-1).DayOfYear);
+	Set(dh, "_stayUpUntil", DateTime.MinValue);
+	NocatFarm.Log.Suppressed = true;
+	HCall(dh, "RollNewDayIfNeeded", false);
+	NocatFarm.Log.Suppressed = false;
+	int newWake = HGet<int>(dh, "_wakeMinuteOfDay");
+	Check("day boundary: once last night is over the day starts - up no sooner than a night's sleep after it, the 'wake' sitting gone",
+		(HGet<int>(dh, "_dayStamp") == today.DayOfYear) && (today.AddMinutes(newWake) >= today.AddHours(-1).AddHours(4)) && (HGet<DateTime>(dh, "_stayUpUntil") == DateTime.MinValue),
+		$"up {newWake / 60:00}:{newWake % 60:00}");
+	NocatFarm.Modules.HumanDay.Forget(dname);
+	await dbot.DisposeAsync();
+
+	// Audit: 'human reroll' on an account that's up keeps it up, whatever wake time the new plan rolled.
+	string rname = "harness-reroll-" + Guid.NewGuid().ToString("N")[..6];
+	var rbot = new NocatFarm.Core.Bot(rname, new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730", DayOffChancePct = 0 });
+	var rh = new NocatFarm.Modules.HumanMode(rbot);
+	rbot.AddModule(rh);
+	AwakeAllDay(rh);
+	NocatFarm.Log.Suppressed = true;
+	rh.RerollToday();
+	NocatFarm.Log.Suppressed = false;
+	Check("human reroll: an account that's up stays up", (bool) HCall(rh, "InWakingHours", DateTime.Now)!);
+	NocatFarm.Modules.HumanDay.Forget(rname);
+	await rbot.DisposeAsync();
+
+	// (e) Done for today and a day off are what they are - online, not asleep - on every screen.
+	string ename = "harness-done-" + Guid.NewGuid().ToString("N")[..6];
+	var ebot = new NocatFarm.Core.Bot(ename, new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730" });
+	var eh = new NocatFarm.Modules.HumanMode(ebot);
+	ebot.AddModule(eh);
+	BotSet(ebot, "State", NocatFarm.Core.BotState.Online);
+	BotSet(ebot, "OnlineSince", DateTime.UtcNow.AddHours(-2));
+	MethodInfo groupOf = typeof(NocatFarm.Web.WebHost).GetMethod("GroupOf", BindingFlags.NonPublic | BindingFlags.Static)!;
+	MethodInfo cardLine = typeof(NocatFarm.Core.DiscordPresence).GetMethod("Details", Stat)!;
+	(string Group, string State, string Card, string Doing) Shown(NocatFarm.Modules.HumanMode.Phase p) {
+		Set(eh, "_phase", p);
+		return ((string) groupOf.Invoke(null, [ebot])!, Commands.StateWord(ebot), cardLine.Invoke(null, [new[] { ebot }])!.ToString()!, NocatFarm.Core.BotStatus.Of(ebot).Doing.ToString());
+	}
+
+	var done = Shown(NocatFarm.Modules.HumanMode.Phase.DoneForToday);
+	var dayOff = Shown(NocatFarm.Modules.HumanMode.Phase.DayOff);
+	var asleep = Shown(NocatFarm.Modules.HumanMode.Phase.Asleep);
+	var sitting = Shown(Playing);
+	Check("done for today: its own group, not 'asleep' - the dashboard, status, the Discord card and the board agree",
+		done == ("done", "done today", "Done for today", "done for today"), $"{done}");
+	Check("day off: its own group, not 'asleep'", dayOff == ("dayoff", "day off", "Day off", "not playing today"), $"{dayOff}");
+	Check("asleep is still asleep, and a sitting still reads as working on the Discord card", (asleep.Group == "asleep") && (asleep.Card == "Asleep") && (sitting.Card == "Idling games"),
+		$"{asleep} / {sitting}");
+	BotSet(ebot, "State", NocatFarm.Core.BotState.Stopped);
+	await ebot.DisposeAsync();
+
+	// Every group the server can send has a chip on the dashboard - one without took the accounts page down with it.
+	string? appJs = null;
+
+	for (DirectoryInfo? dir = new(AppContext.BaseDirectory); (dir != null) && (appJs == null); dir = dir.Parent) {
+		string candidate = Path.Combine(dir.FullName, "src", "NocatFarm", "wwwroot", "app.js");
+		appJs = File.Exists(candidate) ? File.ReadAllText(candidate) : null;
+	}
+
+	int metaAt = appJs?.IndexOf("const STATUS_META", StringComparison.Ordinal) ?? -1;
+	string meta = (metaAt < 0) || (appJs == null) ? "" : appJs[metaAt..appJs.IndexOf("};", metaAt, StringComparison.Ordinal)];
+	Check("dashboard: 'done' and 'dayoff' have their own chips", meta.Contains("\n  done:", StringComparison.Ordinal) && meta.Contains("\n  dayoff:", StringComparison.Ordinal),
+		appJs == null ? "app.js not found" : "");
+
+	// Audit: achievements don't pop at 4am, whatever "Only react while awake" says - unlock times are public.
+	var pbot = new NocatFarm.Core.Bot("harness-pacer", new NocatFarm.Config.BotConfig { LegitMode = true, ActOnlyWhileAwake = false });
+	var ph = new NocatFarm.Modules.HumanMode(pbot);
+	pbot.AddModule(ph);
+	Set(ph, "_ticked", true);
+	MethodInfo mayUnlock = typeof(NocatFarm.Modules.AchievementPacer).GetMethod("MayUnlockNow", Stat)!;
+	Set(ph, "_phase", NocatFarm.Modules.HumanMode.Phase.Asleep);
+	bool unlocksAsleep = (bool) mayUnlock.Invoke(null, [pbot])!;
+	Set(ph, "_phase", Playing);
+	bool unlocksUp = (bool) mayUnlock.Invoke(null, [pbot])!;
+	Check("achievements: nothing unlocks while it's asleep, even with 'Only react while awake' off", !unlocksAsleep && unlocksUp);
+	await pbot.DisposeAsync();
+}
+
+// ── human mode, simulated: a year of days and months of sittings keep every promise the settings make ──────────
+{
+	const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance;
+	const BindingFlags Stat = BindingFlags.NonPublic | BindingFlags.Static;
+	Type ht = typeof(NocatFarm.Modules.HumanMode);
+	FieldInfo HF(string f) => ht.GetField(f, Inst) ?? throw new MissingFieldException(f);
+	T HGet<T>(object h, string f) => (T) HF(f).GetValue(h)!;
+	void Set(object h, string f, object? v) => HF(f).SetValue(h, v);
+	object? HCall(object h, string m, params object?[] args) => ht.GetMethod(m, Inst)!.Invoke(h, args);
+	MethodInfo rollDay = ht.GetMethod("RollDay", Stat)!;
+	(int Wake, int BedHour, int BedMinute, bool BedTomorrow, int Target, int Share, int Budget, int SignOuts, int Meals) Roll(NocatFarm.Config.BotConfig c, DateTime date, DateTime lastBed, Random r) {
+		object d = rollDay.Invoke(null, [c, date, 70, true, lastBed, r])!;
+		int I(string n) => (int) d.GetType().GetProperty(n)!.GetValue(d)!;
+		return (I("WakeMinute"), I("BedHour"), I("BedMinute"), (bool) d.GetType().GetProperty("BedIsTomorrow")!.GetValue(d)!, I("Target"), I("MainSharePct"), I("OtherBudget"), I("SignOutCap"), I("MealCap"));
+	}
+
+	// Days: every setting shape, a dozen seeds, a year and a bit each - both clock changes and a New Year included.
+	(string Name, NocatFarm.Config.BotConfig Cfg)[] shapes = [
+		("the defaults", new()),
+		("early bird, very late weekends", new() { DayStartHour = 6, BedHour = 22, LateNightExtraHours = 6 }),
+		("night shift", new() { DayStartHour = 1, BedHour = 17 }),
+		("up at 2, bed at 11", new() { DayStartHour = 2, BedHour = 23 }),
+		("up at midnight, long days", new() { DayStartHour = 0, BedHour = 20, WeekdayHours = 10, WeekendHours = 14 }),
+		("owl", new() { DayStartHour = 16, BedHour = 6 }),
+	];
+
+	foreach ((string name, NocatFarm.Config.BotConfig cfg) in shapes) {
+		int days = 0, offs = 0, backwards = 0, overlaps = 0, shortNights = 0, overWindow = 0, sameWake = 0, overCaps = 0, shareOut = 0;
+		double freeBed = 0, schoolBed = 0;
+		int freeNights = 0, schoolNights = 0;
+
+		for (int seed = 1; seed <= 12; seed++) {
+			Random r = new(seed * 7919);
+			DateTime lastBed = DateTime.MinValue;
+			int lastWake = -1;
+
+			for (DateTime date = new(2026, 1, 1); date < new DateTime(2027, 1, 12); date = date.AddDays(1)) {
+				var d = Roll(cfg, date, lastBed, r);
+				DateTime up = date.AddMinutes(d.Wake);
+				DateTime bed = date.AddDays(d.BedTomorrow ? 1 : 0).AddHours(d.BedHour).AddMinutes(d.BedMinute);
+				int window = (int) (bed - up).TotalMinutes;
+				days++;
+				offs += d.Target == 0 ? 1 : 0;
+				backwards += bed <= up ? 1 : 0;
+				overlaps += (lastBed != DateTime.MinValue) && (up < lastBed) ? 1 : 0;
+				shortNights += (lastBed != DateTime.MinValue) && (up < lastBed.AddHours(4)) ? 1 : 0;
+				overWindow += (d.Target > window) || (d.Target > Math.Max(30, window * 4 / 5)) ? 1 : 0;
+				sameWake += d.Wake == lastWake ? 1 : 0;
+				overCaps += (d.SignOuts > cfg.MaxSignOutsPerDay) || (d.Meals > cfg.MealBreaksPerDay) ? 1 : 0;
+				shareOut += (d.Share < 60) || (d.Share > 80) ? 1 : 0;
+
+				double bedAfter = (bed - date).TotalHours;
+
+				if (date.DayOfWeek is DayOfWeek.Friday or DayOfWeek.Saturday) {
+					freeBed += bedAfter;
+					freeNights++;
+				} else {
+					schoolBed += bedAfter;
+					schoolNights++;
+				}
+
+				lastBed = bed;
+				lastWake = d.Wake;
+			}
+		}
+
+		double offRate = (double) offs / days;
+		Check($"simulated year, {name}: bed always comes after getting up", backwards == 0, $"{backwards} of {days}");
+		Check($"simulated year, {name}: never up before last night's bedtime, and always a night's sleep (4h+) between", (overlaps == 0) && (shortNights == 0),
+			$"{overlaps} overlaps, {shortNights} short nights of {days}");
+		Check($"simulated year, {name}: the day's hours always fit its waking window", overWindow == 0, $"{overWindow} of {days}");
+		Check($"simulated year, {name}: a day off about one day in twenty (5%)", Math.Abs(offRate - 0.05) < 0.015, $"{offRate:P1}");
+		Check($"simulated year, {name}: never up at the same minute two days running more than now and then", sameWake < days / 50, $"{sameWake} of {days}");
+		Check($"simulated year, {name}: sign-outs and meals within 'at most', main game's share within 10 of its number",
+			(overCaps == 0) && (shareOut == 0), $"{overCaps} over caps, {shareOut} shares out");
+		Check($"simulated year, {name}: Friday and Saturday nights go later", freeBed / freeNights > schoolBed / schoolNights,
+			$"{freeBed / freeNights:0.0}h vs {schoolBed / schoolNights:0.0}h after the day's midnight");
+	}
+
+	// Sittings: twenty months of days through the real session picker and the real banking, cards farmed in some
+	// sittings every other day. The clock is kept out of it (up round the clock) - this is about the mix.
+	string simName = "harness-sim-" + Guid.NewGuid().ToString("N")[..6];
+	var simCfg = new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730:70, 440:20, 550:10", PureMainDayChancePct = 0,
+		FarmCardsWhen = NocatFarm.Modules.FarmWhen.Mixed, CardSittingsPct = 40, FarmFromHour = 0, FarmUntilHour = 0 };
+	var simBot = new NocatFarm.Core.Bot(simName, simCfg);
+	var sim = new NocatFarm.Modules.HumanMode(simBot);
+	var simFarmer = new NocatFarm.Modules.CardFarmer(simBot);
+	simBot.AddModule(sim);
+	HF("_rng").SetValue(sim, new Random(5));   // the same sittings every run
+	simBot.AddModule(simFarmer);
+	DateTime simLogon = DateTime.UtcNow.AddHours(-1);
+	typeof(NocatFarm.Core.Bot).GetProperty("OnlineSince")!.SetValue(simBot, simLogon);
+	typeof(NocatFarm.Modules.CardFarmer).GetField("_nextGame", Inst)!.SetValue(simFarmer, 999u);
+	Random dayRng = new(4242);
+	double[] mainMin = [0, 0], sideMin = [0, 0];   // [no cards, cards]
+	double farmMin = 0;
+	int sittings = 0, cardDaySittings = 0, farmSittings = 0, longest = 0, didntStart = 0, overDay = 0;
+	NocatFarm.Log.Suppressed = true;
+
+	for (int day = 0; day < 600; day++) {
+		int cards = day % 2;
+		typeof(NocatFarm.Core.Bot).GetProperty("CardsRemaining")!.SetValue(simBot, cards == 1 ? 50 : 0);
+		var plan = Roll(simCfg, new DateTime(2026, 3, 2).AddDays(day), DateTime.MinValue, dayRng);
+
+		if (plan.Target == 0) {
+			continue;
+		}
+
+		Set(sim, "_dayStamp", DateTime.Now.DayOfYear);
+		Set(sim, "_wakeMinuteOfDay", 0);
+		Set(sim, "_bedHour", 23);
+		Set(sim, "_bedMinute", 59);
+		Set(sim, "_bedIsTomorrow", true);
+		Set(sim, "_stayUpUntil", DateTime.MinValue);
+		Set(sim, "_targetMinutes", plan.Target);
+		Set(sim, "_mainSharePct", plan.Share);
+		Set(sim, "_otherBudget", plan.Budget);
+		Set(sim, "_playedMinutesToday", 0);
+		Set(sim, "_otherPlayed", 0);
+		Set(sim, "_farmPlayed", 0);
+		Set(sim, "_firstSessionOfDay", true);
+		Set(sim, "_lastGame", 0u);
+		Set(sim, "_switchingTo", 0u);
+
+		while (HGet<int>(sim, "_playedMinutesToday") < plan.Target) {
+			Set(sim, "_phase", NocatFarm.Modules.HumanMode.Phase.Off);
+			HCall(sim, "StartSession");
+
+			if ((NocatFarm.Modules.HumanMode.Phase) HF("_phase").GetValue(sim)! != NocatFarm.Modules.HumanMode.Phase.Playing) {
+				didntStart++;
+
+				break;
+			}
+
+			uint game = HGet<uint>(sim, "_game");
+			int m = (int) Math.Round((HGet<DateTime>(sim, "_sessionEnds") - HGet<DateTime>(sim, "_sessionStarted")).TotalMinutes);
+			bool farming = HGet<bool>(sim, "_farmSitting");
+			sittings++;
+			cardDaySittings += cards;
+			farmSittings += farming ? 1 : 0;
+			longest = Math.Max(longest, m);
+
+			// Banked by the real banking, as the day's ticks would.
+			Set(sim, "_bankedForLogon", simLogon);
+			Set(sim, "_bankedTo", DateTime.UtcNow.AddMinutes(-m));
+			Set(sim, "_lastBankAt", DateTime.UtcNow.AddSeconds(-10));
+			HCall(sim, "BankSession");
+
+			if (farming) {
+				farmMin += m;
+			} else if (game == 730) {
+				mainMin[cards] += m;
+			} else {
+				sideMin[cards] += m;
+			}
+		}
+
+		overDay += HGet<int>(sim, "_playedMinutesToday") > plan.Target + 15 ? 1 : 0;
+	}
+
+	NocatFarm.Log.Suppressed = false;
+	NocatFarm.Modules.HumanDay.Forget(simName);
+	await simBot.DisposeAsync();
+
+	double plainMain = mainMin[0] / (mainMin[0] + sideMin[0]), cardMain = mainMin[1] / (mainMin[1] + sideMin[1]);
+	double farmShare = (double) farmSittings / cardDaySittings;
+	Check("simulated sittings: every one starts, none longer than 'longest sitting' (150m)", (didntStart == 0) && (longest <= 150), $"{didntStart} didn't start, longest {longest}m");
+	Check("simulated sittings: a day never runs more than a few minutes past its hours", overDay == 0, $"{overDay} days over");
+	Check("simulated sittings: the main game gets about its 70% of the usual games' time", Math.Abs(plainMain - 0.70) < 0.05, $"{plainMain:P1}");
+	Check("simulated sittings: ...on days cards farm in some sittings too - farming doesn't eat the side games' share", Math.Abs(cardMain - 0.70) < 0.05, $"{cardMain:P1}");
+	Check("simulated sittings: about 40% of the sittings farm cards on a card day (CardSittingsPct)", Math.Abs(farmShare - 0.40) < 0.06, $"{farmShare:P1} of {cardDaySittings}");
+}
+
+// ── Discord card: the counter fits on the line Discord shows, or goes short ────────────────────────────────────
+{
+	string Line(string l, int c, int t) => NocatFarm.Core.DiscordPresence.WithCounter(l, c, t);
+	int fits = NocatFarm.Core.DiscordPresence.LineFits;
+	Check("discord counter: room for it - the long words", Line("12 hrs past week", 3, 3) == "12 hrs past week · 3 accounts linked" || Line("12 hrs past week", 3, 3).Length <= fits, Line("12 hrs past week", 3, 3));
+	Check("discord counter: 591 hrs past week · 3 accounts linked fits whole", Line("591 hrs past week", 3, 3) == "591 hrs past week · 3 accounts linked", Line("591 hrs past week", 3, 3));
+	Check("discord counter: a longer line goes short instead of being cut off", Line("1,591 hrs past month", 3, 3) == "1,591 hrs past month · 3 linked", Line("1,591 hrs past month", 3, 3));
+	Check("discord counter: 2 of 3, short when it has to be", Line("591 hrs past week", 2, 3) == "591 hrs past week · 2 of 3 linked", Line("591 hrs past week", 2, 3));
+	Check("discord counter: the long form is only used when it fits", new[] { ("a", 3, 3), ("kylro · old", 2, 3), ("8 cards today", 1, 1) }.All(x => { string r = Line(x.Item1, x.Item2, x.Item3); return !r.Contains("accounts") || r.Length <= fits; }));
+}
+
+// ── failures in the log: the reason is written down, the secrets never are ─────────────────────────────────────
+{
+	string api = NocatFarm.Log.Scrub("GET /IPlayerService/GetOwnedGames/v1/?access_token=eyJhbGciOiJFZERTQSJ9.eyJpc3MiOiJyOjE.c2ln&steamid=7656 -> 401");
+	Check("scrub: a Web API access_token is hidden", !api.Contains("eyJ") && api.Contains("access_token=[hidden]") && api.Contains("steamid=7656"), api);
+	string jwt = NocatFarm.Log.Scrub("token was eyJhbGciOiJFZERTQSJ9.eyJpc3MiOiJyOjE.c2lnbmF0dXJl, refused");
+	Check("scrub: a bare Steam JWT is hidden", !jwt.Contains("eyJpc3M") && jwt.Contains("[hidden]") && jwt.EndsWith(", refused"), jwt);
+	string cookie = NocatFarm.Log.Scrub("Cookie: steamLoginSecure=76561198000000000%7C%7CeyJabc; sessionid=0123456789abcdef01234567");
+	Check("scrub: cookies are hidden", !cookie.Contains("76561198000000000") && !cookie.Contains("0123456789abcdef"), cookie);
+	string auth = NocatFarm.Log.Scrub("Authorization: Bot MTIzNDU2Nzg5MDEyMzQ1Njc4OTA.GhIjKl.abcdefghijklmnopqrstuvwxyz");
+	Check("scrub: a Discord bot token in a header is hidden", !auth.Contains("MTIzNDU2") && auth.Contains("Bot [hidden]"), auth);
+	string form = NocatFarm.Log.Scrub("POST apiToken body key=ABCDEF0123456789&password=hunter2&steamid=1");
+	Check("scrub: key= and password= are hidden", !form.Contains("ABCDEF0123456789") && !form.Contains("hunter2") && form.Contains("steamid=1"), form);
+	string r4rKey = NocatFarm.Log.Scrub("rep4rep said no to /pub-api/tasks?apiToken=abcdef123456&steamProfile=7656");
+	Check("scrub: rep4rep's apiToken is hidden", !r4rKey.Contains("abcdef123456") && r4rKey.Contains("steamProfile=7656"), r4rKey);
+	string proxy = NocatFarm.Log.Scrub("bad proxy 'http://farmer:s3cret@10.0.0.2:8080' (UriFormatException)");
+	Check("scrub: a proxy's user and password are hidden, the address kept", !proxy.Contains("s3cret") && !proxy.Contains("farmer") && proxy.Contains("http://[hidden]@10.0.0.2:8080"), proxy);
+	string plain = "trade offer #123 refused: AccessDenied (15) on steamcommunity.com/tradeoffer/123/accept";
+	Check("scrub: an ordinary failure line is left alone", NocatFarm.Log.Scrub(plain) == plain, NocatFarm.Log.Scrub(plain));
+
+	string tg = NocatFarm.Log.Where(new Uri("https://api.telegram.org/bot123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw/getUpdates?offset=5&timeout=50"));
+	Check("where: a Telegram URL loses the bot token and the query", tg == "api.telegram.org/bot[hidden]/getUpdates", tg);
+	string hook = NocatFarm.Log.Where(new Uri("https://discord.com/api/webhooks/1234567890/abcDEF-ghi_jkl.mno"));
+	Check("where: a Discord webhook loses its secret", hook == "discord.com/api/webhooks/1234567890/[hidden]", hook);
+	string r4r = NocatFarm.Log.Where(new Uri("https://rep4rep.com/pub-api/tasks?apiToken=secret123&steamProfile=7656"));
+	Check("where: host and path, never the query", r4r == "rep4rep.com/pub-api/tasks", r4r);
+	Check("where: null says so rather than throwing", NocatFarm.Log.Where(null) == "?");
+
+	// The file itself: a caught failure, a crash with its stack, and a background task nobody awaited.
+	string logRoot = Path.Combine(Path.GetTempPath(), "nf-logfail-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(logRoot);
+	NocatFarm.Log.Suppressed = true;
+	NocatFarm.Log.Configure(fileLogging: true, debug: false, logRoot, retentionDays: 14);
+	string logFile = Path.Combine(logRoot, "logs", $"nocatFarm-{DateTime.Now:yyyy-MM-dd}.log");
+
+	NocatFarm.Log.Failed("couldn't save the drop run", new IOException("disk full, token=abc123def"), "acct1");
+	int written = 0;
+	for (int i = 0; i < 5; i++) {
+		written += NocatFarm.Log.DebugOnChange("test:acct1", "PICS asked too often: RateLimitExceeded", "acct1") ? 1 : 0;
+	}
+	int changed = NocatFarm.Log.DebugOnChange("test:acct1", "PICS asked too often: Timeout", "acct1") ? 1 : 0;
+	NocatFarm.Log.Recovered("test:acct1");
+	int afterRecover = NocatFarm.Log.DebugOnChange("test:acct1", "PICS asked too often: Timeout", "acct1") ? 1 : 0;
+
+	try {
+		throw new InvalidOperationException("boom from the crash test");
+	} catch (InvalidOperationException e) {
+		NocatFarm.Log.Crash(new NocatFarm.Core.Said("crashed: {0}", NocatFarm.Log.Describe(e)), e);
+	}
+
+	TaskScheduler.UnobservedTaskException += NocatFarm.Log.OnUnobservedTask;
+	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+	static void Abandon() {
+		Task t = Task.Run(static () => throw new FormatException("nobody awaited this"));
+		SpinWait.SpinUntil(() => t.IsCompleted, 5000);   // IsCompleted doesn't observe the exception - it is left for the GC
+	}
+	Abandon();
+	for (int i = 0; i < 3; i++) {
+		GC.Collect();
+		GC.WaitForPendingFinalizers();
+	}
+	TaskScheduler.UnobservedTaskException -= NocatFarm.Log.OnUnobservedTask;
+
+	NocatFarm.Log.Configure(fileLogging: false, debug: false, logRoot);
+	NocatFarm.Log.Suppressed = false;
+	string[] lines = File.Exists(logFile) ? File.ReadAllLines(logFile) : [];
+
+	Check("log file: a caught failure says what, whose, the type and the reason", lines.Any(l => l.Contains("|DEBUG|acct1|couldn't save the drop run: IOException: disk full, token=[hidden]")), string.Join(" / ", lines.Take(3)));
+	Check("log file: the same failure in a loop is written once", (written == 1) && (lines.Count(l => l.Contains("RateLimitExceeded")) == 1), $"{written} written");
+	Check("log file: a different failure, or the same one after a recovery, is written again", (changed == 1) && (afterRecover == 1) && (lines.Count(l => l.Contains("PICS asked too often: Timeout")) == 2));
+	Check("log file: a crash is an ERROR line with the reason", lines.Any(l => l.Contains("|ERROR|nocat.farm|crashed: InvalidOperationException: boom from the crash test")));
+	Check("log file: ...followed by its stack trace", lines.Any(l => l.Contains("|DEBUG|nocat.farm|   at ") && l.Contains("Program")));
+	Check("log file: a background task nobody awaited is written down with its stack", lines.Any(l => l.Contains("|ERROR|nocat.farm|a background task failed: FormatException: nobody awaited this"))
+		&& lines.Any(l => l.Contains("|DEBUG|nocat.farm|") && l.Contains("FormatException: nobody awaited this") && !l.Contains("|ERROR|")), $"{lines.Length} lines");
+
+	try {
+		Directory.Delete(logRoot, true);
+	} catch (IOException) {
+		// a temp folder - the OS clears it
+	}
+}
+
+// ── a new comment: who wrote it and what it says, read off Steam's comment list ──────────────────────────────────
+{
+	string html = "\t<div class=\"commentthread_comment responsive_body_text   \" id=\"comment_1\"><div class=\"commentthread_comment_author\">"
+		+ "<a class=\"hoverunderline commentthread_author_link\" href=\"https://steamcommunity.com/profiles/1\"><bdi>AEZAKMI</bdi></a>"
+		+ "<div class=\"commentthread_comment_timestamp\" title=\"x\" data-timestamp=\"1790720459\">12 minutes ago&nbsp;</div></div>"
+		+ "<div class=\"commentthread_comment_text\" id=\"comment_content_1\">\n\t\t\t\t+rep pretty good player &amp; nice\t\t\t</div></div>"
+		+ "<div class=\"commentthread_comment responsive_body_text   \" id=\"comment_2\"><div class=\"commentthread_comment_author\">"
+		+ "<a class=\"hoverunderline commentthread_author_link\" href=\"x\"><bdi>-thats cute</bdi></a>"
+		+ "<div class=\"commentthread_comment_timestamp\" data-timestamp=\"1790533206\">x</div></div>"
+		+ "<div class=\"commentthread_comment_text\" id=\"comment_content_2\">This comment is awaiting analysis by our automated content check system.</div></div>";
+	List<NocatFarm.Core.Bot.ProfileComment> c = NocatFarm.Core.Bot.ReadComments(html);
+	Check("comments: both read, newest first", c.Count == 2 && c[0].At == 1790720459 && c[1].At == 1790533206, string.Join(" | ", c));
+	Check("comments: who wrote it and what it says, as plain text", (c.Count > 0) && (c[0].Author == "AEZAKMI") && (c[0].Text == "+rep pretty good player & nice"), c.Count > 0 ? $"{c[0].Author}: {c[0].Text}" : "");
+	Check("comments: nothing there reads as none, not a crash", NocatFarm.Core.Bot.ReadComments("<div>no comments</div>").Count == 0);
 }
 
 // SETTINGSCOUNT

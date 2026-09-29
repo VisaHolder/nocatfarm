@@ -104,7 +104,7 @@ internal sealed class CardPace(string bot) {
 				return _saved = saved;
 			}
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the card pace: {0}", e.Message), bot);
+			Log.Debug(new Said("couldn't read the card pace: {0}", Log.Describe(e)), bot);
 		}
 
 		return _saved = new Saved(SteamDefaultMinutes, 0);
@@ -115,7 +115,7 @@ internal sealed class CardPace(string bot) {
 			Directory.CreateDirectory(Path.GetDirectoryName(PathFor)!);
 			AtomicFile.Write(PathFor, JsonSerializer.Serialize(saved));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the card pace: {0}", e.Message), bot);
+			Log.Debug(new Said("couldn't save the card pace: {0}", Log.Describe(e)), bot);
 		}
 	}
 }

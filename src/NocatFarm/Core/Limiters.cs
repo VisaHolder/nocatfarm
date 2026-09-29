@@ -93,6 +93,7 @@ public static class Limiters {
 					}
 				} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 					// Nothing remembered - the worst case is one early request.
+					Log.Failed("couldn't read the remembered rate-limit waits", e);
 				}
 			}
 
@@ -120,6 +121,7 @@ public static class Limiters {
 					.Select(static r => $"{r.Key}|{r.Value.Until.Ticks}|{r.Value.Minutes}")));
 			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 				// Best effort: it only matters if the process restarts inside the wait.
+				Log.Failed("couldn't write down the rate-limit wait", e);
 			}
 		}
 	}

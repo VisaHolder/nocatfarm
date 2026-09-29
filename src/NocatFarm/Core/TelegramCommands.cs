@@ -114,10 +114,15 @@ public static partial class Notifier {
 				_webhookBusy = false;
 
 				if (!r.IsSuccessStatusCode) {
+					// Tried every ten seconds: the same refusal is said once, not six times a minute.
+					string refused = await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+					Log.DebugOnChange("telegram:poll", $"telegram: listening for commands got HTTP {(int) r.StatusCode} from {TelegramWhere("getUpdates")}{ErrorField(refused, "description")}", "telegram");
 					await Task.Delay(10_000, ct).ConfigureAwait(false);
 
 					continue;
 				}
+
+				Log.Recovered("telegram:poll");
 
 				using JsonDocument d = JsonDocument.Parse(await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
 
@@ -163,7 +168,10 @@ public static partial class Notifier {
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				return;
 			} catch (Exception e) {
-				Log.Debug(new Said("telegram: {0}", e.Message), "telegram");
+				// Every five seconds through an outage: said once (an hour apart at most), and a real bug gets its stack.
+				if (Log.DebugOnChange("telegram:poll", $"telegram: listening for commands: {Log.Describe(e)}", "telegram") && e is not (HttpRequestException or TaskCanceledException)) {
+					Log.StackToFile(e, "telegram");
+				}
 
 				try {
 					await Task.Delay(5000, ct).ConfigureAwait(false);
@@ -189,8 +197,14 @@ public static partial class Notifier {
 
 		try {
 			using HttpResponseMessage r = await Http.PostAsync($"https://api.telegram.org/bot{G.TelegramBotToken}/sendMessage", content, ct).ConfigureAwait(false);
+
+			if (!r.IsSuccessStatusCode) {
+				string body = await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+				Log.Debug($"telegram: the not-connected hint got HTTP {(int) r.StatusCode} from {TelegramWhere("sendMessage")}{ErrorField(body, "description")}", "telegram");
+			}
 		} catch (Exception e) when (e is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested) {
 			// only a hint
+			Log.Failed("telegram: sending the not-connected hint", e, "telegram");
 		}
 	}
 
@@ -233,8 +247,14 @@ public static partial class Notifier {
 
 		try {
 			using HttpResponseMessage r = await Http.PostAsync($"https://api.telegram.org/bot{token}/setMyCommands", content, ct).ConfigureAwait(false);
+
+			if (!r.IsSuccessStatusCode) {
+				string body = await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+				Log.Debug($"telegram: putting up the / menu got HTTP {(int) r.StatusCode} from {TelegramWhere("setMyCommands")}{ErrorField(body, "description")}", "telegram");
+			}
 		} catch (Exception e) when (e is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested) {
 			// cosmetic - the commands work without the menu
+			Log.Failed("telegram: putting up the / menu", e, "telegram");
 		}
 	}
 
@@ -313,7 +333,10 @@ public static partial class Notifier {
 		try {
 			output = await Commands.RunAsync(_mgr, $"{first} {rest}".Trim()).ConfigureAwait(false);
 		} catch (Exception e) {
-			output = new Said("that command failed: {0}", e.Message).ToString();
+			// A command throwing is a bug: the stack goes in the file. Which command is the "> ..." line above (secrets masked).
+			Log.Failed("telegram: running the command", e, "telegram");
+			Log.StackToFile(e, "telegram");
+			output = new Said("that command failed: {0}", Log.Scrub(e.Message)).ToString();
 		}
 
 		if (string.IsNullOrWhiteSpace(output)) {

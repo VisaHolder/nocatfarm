@@ -94,7 +94,10 @@ internal static class ImportFiles {
 			using StreamReader reader = new(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
 
 			return reader.ReadToEnd();
-		} catch {
+		} catch (Exception e) {
+			// There, and it won't open - no permission, or held by something. Once per file: every look repeats it.
+			Log.DebugOnChange($"import:{path}", $"import: couldn't read {path}: {Log.Describe(e)}");
+
 			return null;
 		}
 	}
@@ -111,7 +114,10 @@ internal static class ImportFiles {
 			using JsonDocument doc = JsonDocument.Parse(text, Lenient);
 
 			return doc.RootElement.Clone();
-		} catch {
+		} catch (Exception e) {
+			// A file by the name it's looked for that won't parse - damaged, or half-written by the other program.
+			Log.DebugOnChange($"import:{path}", $"import: {path} isn't valid JSON: {Log.Describe(e)}");
+
 			return default;
 		}
 	}
@@ -405,7 +411,8 @@ internal static class DotNetUserConfig {
 					}
 				}
 			}
-		} catch {
+		} catch (Exception e) {
+			Log.DebugOnChange($"import:{path}", $"import: {path} isn't a readable settings file: {Log.Describe(e)}");
 			values.Clear();
 		}
 
@@ -476,7 +483,7 @@ internal static class DotNetUserConfig {
 
 /// <summary>The accounts this PC's Steam app has signed into, from its config/loginusers.vdf.</summary>
 internal static class SteamLogins {
-	public sealed record Login(string SteamId, string AccountName, string PersonaName, bool MostRecent);
+	public sealed record Login(string SteamId, string AccountName);
 
 	public static List<Login> Read() {
 		List<Login> logins = [];
@@ -491,13 +498,13 @@ internal static class SteamLogins {
 			if (Vdf.Parse(text).TryGetValue("users", out object? users) && (users is Dictionary<string, object> byId)) {
 				foreach ((string id, object entry) in byId) {
 					if (ImportFiles.IsSteamId(id) && (entry is Dictionary<string, object> fields) && (fields.GetValueOrDefault("AccountName") is string { Length: > 0 } account)) {
-						logins.Add(new Login(id, account, fields.GetValueOrDefault("PersonaName") as string ?? "",
-							(fields.GetValueOrDefault("MostRecent") as string) == "1"));
+						logins.Add(new Login(id, account));
 					}
 				}
 			}
-		} catch {
+		} catch (Exception e) {
 			// no Steam here, or a file it didn't expect
+			Log.DebugOnChange("import:loginusers", $"import: couldn't read Steam's loginusers.vdf: {Log.Describe(e)}");
 		}
 
 		return logins;

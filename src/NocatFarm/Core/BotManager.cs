@@ -177,30 +177,6 @@ public sealed class BotManager : IAsyncDisposable {
 		}
 	}
 
-	public async Task<bool> StartAsync(string name) {
-		Bot? b = Get(name);
-
-		if (b == null) {
-			return false;
-		}
-
-		await b.StartAsync().ConfigureAwait(false);
-
-		return true;
-	}
-
-	public async Task<bool> StopAsync(string name) {
-		Bot? b = Get(name);
-
-		if (b == null) {
-			return false;
-		}
-
-		await b.StopAsync().ConfigureAwait(false);
-
-		return true;
-	}
-
 	/// <summary>Add a brand new account: writes its config and brings it up.</summary>
 	public async Task<Bot?> AddAsync(string name, BotConfig cfg) {
 		Bot bot;

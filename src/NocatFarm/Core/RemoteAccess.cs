@@ -107,8 +107,13 @@ public static partial class RemoteAccess {
 			}
 
 			await MapAsync(g.WebPort).ConfigureAwait(false);
+			Log.Recovered("remote:tick");
 		} catch (Exception e) {
-			Log.Debug(new Said("open from anywhere: {0}", e.Message));
+			// Every half minute while it lasts: said once (an hour apart at most), and a real bug gets its stack.
+			if (Log.DebugOnChange("remote:tick", $"open from anywhere: {Log.Describe(e)}")
+				&& e is not (HttpRequestException or TaskCanceledException or SocketException)) {
+				Log.StackToFile(e);
+			}
 		} finally {
 			Volatile.Write(ref _busy, 0);
 		}
@@ -147,7 +152,12 @@ public static partial class RemoteAccess {
 
 		if (unreachable is { } why) {
 			Fail(why);
-			await SoapAsync(found.control, found.service, DeleteMapping, DeleteArgs(port)).ConfigureAwait(false);
+
+			// Otherwise a forward nobody uses stays on the router with nothing said.
+			if (await SoapAsync(found.control, found.service, DeleteMapping, DeleteArgs(port)).ConfigureAwait(false) is { } kept) {
+				Log.DebugOnChange("remote:undo", $"open from anywhere: the router kept port {port} forwarded ({kept})");
+			}
+
 			_mapped = null;
 
 			return;
@@ -155,7 +165,9 @@ public static partial class RemoteAccess {
 
 		// Closing while this was on its way: take it straight back off rather than leave it forwarded.
 		if (_stopped) {
-			await SoapAsync(found.control, found.service, DeleteMapping, DeleteArgs(port)).ConfigureAwait(false);
+			if (await SoapAsync(found.control, found.service, DeleteMapping, DeleteArgs(port)).ConfigureAwait(false) is { } kept) {
+				Log.Debug($"open from anywhere: closing, but the router kept port {port} forwarded ({kept})");
+			}
 
 			return;
 		}
@@ -217,8 +229,9 @@ public static partial class RemoteAccess {
 
 		try {
 			await RemoveAsync(quietly: true).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-		} catch {
+		} catch (Exception e) {
 			// the lease runs out by itself within the hour
+			Log.Failed("open from anywhere: removing the forward on the way out", e);
 		}
 	}
 
@@ -282,9 +295,10 @@ public static partial class RemoteAccess {
 					}
 
 					askers.Add(udp);
-				} catch (SocketException) {
+				} catch (SocketException e) {
 					// that card can't send - the others still ask. Its socket is closed, not left open: this runs every
 					// half minute while no forward is in place, and each failed card leaked one.
+					Log.DebugOnChange($"remote:card:{local}", $"open from anywhere: couldn't ask for the router through {local}: {Log.Describe(e)}");
 					udp?.Dispose();
 				}
 			}
@@ -350,8 +364,9 @@ public static partial class RemoteAccess {
 
 				found.AddRange(props.UnicastAddresses.Select(static a => a.Address).Where(IsPrivate).Select(a => (a, gateways)));
 			}
-		} catch (NetworkInformationException) {
+		} catch (NetworkInformationException e) {
 			// no list of cards - the default one still asks
+			Log.DebugOnChange("remote:cards", $"open from anywhere: couldn't list the network cards: {Log.Describe(e)}");
 		}
 
 		return found;
@@ -366,6 +381,9 @@ public static partial class RemoteAccess {
 				&& (t.Contains("WANIPConnection", StringComparison.Ordinal) || t.Contains("WANPPPConnection", StringComparison.Ordinal)));
 
 			if (svc == null) {
+				// Something on the network that answered but doesn't forward ports (a TV, a mesh node) - normal, said once.
+				Log.DebugOnChange($"remote:gateway:{descUrl.Host}", $"open from anywhere: {Log.Where(descUrl)} has no port-forwarding service");
+
 				return null;
 			}
 
@@ -379,6 +397,9 @@ public static partial class RemoteAccess {
 
 			return (new Uri(descUrl, control), type, lanIp);
 		} catch (Exception e) when (e is HttpRequestException or TaskCanceledException or System.Xml.XmlException or SocketException or UriFormatException or InvalidOperationException) {
+			// Asked every half minute while there's no forward: the same failure is said once.
+			Log.DebugOnChange($"remote:gateway:{descUrl.Host}", $"open from anywhere: reading the router's description at {Log.Where(descUrl)}: {Log.Describe(e)}");
+
 			return null;
 		}
 	}
@@ -398,7 +419,8 @@ public static partial class RemoteAccess {
 
 			return code.Success ? $"{code.Groups[1].Value} {text.Groups[1].Value}".Trim() : $"HTTP {(int) res.StatusCode}";
 		} catch (Exception e) when (e is HttpRequestException or TaskCanceledException) {
-			return e.Message;
+			// the callers say it, in a warning
+			return Log.Scrub(e.Message);
 		}
 	}
 
@@ -406,8 +428,17 @@ public static partial class RemoteAccess {
 		try {
 			using HttpResponseMessage res = await PostAsync(control, service, action, args).ConfigureAwait(false);
 
-			return res.IsSuccessStatusCode ? await res.Content.ReadAsStringAsync().ConfigureAwait(false) : null;
+			if (!res.IsSuccessStatusCode) {
+				// The caller only says "didn't say its internet address" - the why is here.
+				Log.DebugOnChange($"remote:{action}", $"open from anywhere: {action} at {Log.Where(control)} got HTTP {(int) res.StatusCode}");
+
+				return null;
+			}
+
+			return await res.Content.ReadAsStringAsync().ConfigureAwait(false);
 		} catch (Exception e) when (e is HttpRequestException or TaskCanceledException) {
+			Log.DebugOnChange($"remote:{action}", $"open from anywhere: {action} at {Log.Where(control)}: {Log.Describe(e)}");
+
 			return null;
 		}
 	}

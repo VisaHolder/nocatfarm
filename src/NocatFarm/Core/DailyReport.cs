@@ -26,6 +26,7 @@ public static class DailyReport {
 	}
 
 	private static readonly Lock Gate = new();
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0052", Justification = "Held, never read: a timer nothing holds on to is collected and stops firing.")]
 	private static Timer? _timer;
 	private static BotManager? _mgr;
 	private static State _state = new();
@@ -88,7 +89,10 @@ public static class DailyReport {
 
 			Fire(mgr, today, commit: true);
 		} catch (Exception e) {
-			Log.Debug(new Said("daily report tick failed: {0}: {1}", e.GetType().Name, e.Message));
+			// A timer callback, and a report that failed is tried again next minute: once (an hour apart at most), with its stack.
+			if (Log.DebugOnChange("report:tick", $"daily report tick failed: {Log.Describe(e)}", "report")) {
+				Log.StackToFile(e, "report");
+			}
 		}
 	}
 
@@ -216,7 +220,7 @@ public static class DailyReport {
 					_state = JsonSerializer.Deserialize<State>(File.ReadAllText(Path)) ?? new State();
 				}
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't read the daily-report state: {0}: {1}", e.GetType().Name, e.Message));
+				Log.Failed("couldn't read the daily-report state", e);
 			}
 		}
 	}
@@ -232,7 +236,7 @@ public static class DailyReport {
 			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
 			AtomicFile.Write(path, JsonSerializer.Serialize(snap, new JsonSerializerOptions { WriteIndented = true }));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the daily-report state: {0}: {1}", e.GetType().Name, e.Message));
+			Log.Failed("couldn't save the daily-report state", e);
 		}
 	}
 }

@@ -64,7 +64,7 @@ public sealed class Boosters(Bot bot) : BotModule(bot) {
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
 				} catch (Exception e) {
-					Log.Debug(new Said("couldn't make booster packs: {0}", e.Message), Bot.Name);
+					Log.Debug(new Said("couldn't make booster packs: {0}", Log.Describe(e)), Bot.Name);
 
 					foreach (uint id in games) {
 						_next[id] = Later(1, 2);
@@ -149,7 +149,18 @@ public sealed class Boosters(Bot bot) : BotModule(bot) {
 	public static async Task<Page?> ReadAsync(Bot bot, CancellationToken ct = default) {
 		string? html = await bot.Web.GetAsync(new Uri(WebSession.Community, "/tradingcards/boostercreator?l=english"), ct).ConfigureAwait(false);
 
-		return html == null ? null : ParsePage(html);
+		if (html == null) {
+			return null;   // the web session already logged why
+		}
+
+		Page? page = ParsePage(html);
+
+		// A sign-in page, or Steam changing the page's script, reads the same as "nothing to make" otherwise.
+		if (page == null) {
+			Log.Debug($"couldn't read the booster creator page: no CBoosterCreatorPage.Init data in it ({html.Length} chars)", bot.Name);
+		}
+
+		return page;
 	}
 
 	/// <summary>
@@ -297,9 +308,9 @@ public sealed class Boosters(Bot bot) : BotModule(bot) {
 				return (true, Num(root, "goo_amount"), Num(root, "tradable_goo_amount"), Num(root, "untradable_goo_amount"), null);
 			}
 
-			return (false, 0, 0, 0, root.TryGetProperty("purchase_eresult", out JsonElement er) ? $"({er})" : answer.Length > 200 ? answer[..200] : answer);
+			return (false, 0, 0, 0, root.TryGetProperty("purchase_eresult", out JsonElement er) ? $"({er})" : Log.Scrub(answer.Length > 200 ? answer[..200] : answer));
 		} catch (JsonException) {
-			return (false, 0, 0, 0, answer.Length > 200 ? answer[..200] : answer);
+			return (false, 0, 0, 0, Log.Scrub(answer.Length > 200 ? answer[..200] : answer));   // the caller logs it
 		}
 	}
 

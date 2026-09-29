@@ -64,7 +64,9 @@ public static class LevelPlanner {
 			try {
 				text = await BuildAsync(bot, target, CancellationToken.None).ConfigureAwait(false);
 			} catch (Exception e) {
-				text = $"{bot.Name}: couldn't work the plan out ({e.Message})";
+				// Only shown if somebody asks again - written down here so it isn't lost when nobody does.
+				Log.Failed("couldn't work the level plan out", e, bot.Name);
+				text = $"{bot.Name}: couldn't work the plan out ({Log.Scrub(e.Message)})";
 			}
 
 			lock (Plans) {
@@ -217,6 +219,8 @@ public static class LevelPlanner {
 		using JsonDocument doc = JsonDocument.Parse(json);
 
 		if (!doc.RootElement.TryGetProperty("response", out JsonElement res) || !res.TryGetProperty("player_xp", out JsonElement xp)) {
+			Log.Debug("badges: Steam's GetBadges answer had no player_xp", bot.Name);
+
 			return null;
 		}
 
@@ -322,6 +326,8 @@ public static class LevelPlanner {
 			int got = 0;
 
 			if (!root.TryGetProperty("results", out JsonElement results) || (results.ValueKind != JsonValueKind.Array)) {
+				Log.Debug($"card set prices for {app}: the market search had no results list: {Log.Scrub(json[..Math.Min(150, json.Length)])}", bot.Name);
+
 				break;
 			}
 
@@ -371,6 +377,8 @@ public static class LevelPlanner {
 			int got = 0;
 
 			if (!doc.RootElement.TryGetProperty("results", out JsonElement results) || (results.ValueKind != JsonValueKind.Array)) {
+				Log.Debug($"cheapest card sets: the market search had no results list: {Log.Scrub(json[..Math.Min(150, json.Length)])}", bot.Name);
+
 				break;
 			}
 
@@ -407,6 +415,7 @@ public static class LevelPlanner {
 			}
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) {
 			// Start over; prices are only a day's worth anyway.
+			Log.Failed("couldn't read the saved card set prices", e);
 		}
 
 		return [];
@@ -418,6 +427,7 @@ public static class LevelPlanner {
 			AtomicFile.Write(SetsPath, JsonSerializer.Serialize(_sets!.Values.Where(s => new DateTime(s.At, DateTimeKind.Utc) > cutoff).ToList()));
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 			// Best effort - it only saves asking the market again.
+			Log.Failed("couldn't save the card set prices", e);
 		}
 	}
 }

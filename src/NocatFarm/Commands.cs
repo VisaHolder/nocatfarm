@@ -240,7 +240,7 @@ public static partial class Commands {
 
 			return true;
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't open the dashboard: {0}: {1}", e.GetType().Name, e.Message));
+			Log.Debug(new Said("couldn't open the dashboard: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)));
 
 			return false;
 		}
@@ -310,7 +310,7 @@ public static partial class Commands {
 				"match" => await MatchAsync(mgr, rest).ConfigureAwait(false),
 				"name" => Name(mgr, rest),
 				"persona" => Persona(mgr, rest),
-				"nickname" => Nickname(mgr, rest),
+				"nickname" => await NicknameAsync(mgr, rest).ConfigureAwait(false),
 				"level" => await LevelAsync(mgr, rest).ConfigureAwait(false),
 				"balance" or "wallet" => Balance(mgr, rest),
 				"points" => await PointsAsync(mgr, rest).ConfigureAwait(false),
@@ -359,7 +359,11 @@ public static partial class Commands {
 					: Suggest(cmd)
 			};
 		} catch (Exception e) {
-			return $"'{cmd}' failed: {e.GetType().Name}: {e.Message}";
+			// A command that throws is a bug, not an answer - the reply scrolls away, so the file keeps the stack.
+			Log.Failed($"command '{cmd}' failed", e);
+			Log.StackToFile(e);
+
+			return $"'{cmd}' failed: {e.GetType().Name}: {Log.Scrub(e.Message)}";
 		}
 	}
 
@@ -468,7 +472,9 @@ public static partial class Commands {
 					System.Diagnostics.Process.Start(start)?.Dispose();
 				}
 			} catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException) {
-				Log.Warn(new Said("couldn't turn the screen off: {0}", e.Message));
+				Log.Warn(new Said("couldn't turn the screen off: {0}", Log.Scrub(e.Message)));
+			} catch (Exception e) {
+				Log.Failed("screen off", e);
 			}
 		});
 
@@ -504,7 +510,11 @@ public static partial class Commands {
 		}
 
 		if (what is "skip" or "ignore") {
-			UpdateCheck.Skipped = UpdateCheck.Available;
+			// Through the updater, which takes turns with an install about to swap: a skip that comes too late says so,
+			// rather than "won't install" a second before it restarts into that very version.
+			if (!SelfUpdate.Skip(UpdateCheck.Available)) {
+				return new Said("too late to skip {0} - it's already installing", UpdateCheck.Available).ToString();
+			}
 
 			return new Said("Skipping {0} - no more reminders about it, and it won't install by itself. The next version after it is announced as usual; 'update accept' still installs {0}.", UpdateCheck.Available).ToString();
 		}
@@ -540,7 +550,8 @@ public static partial class Commands {
 			try {
 				await SelfUpdate.ApplyAsync(CancellationToken.None).ConfigureAwait(false);
 			} catch (Exception e) {
-				Log.Error(new Said("update failed: {0} - nothing was changed", e.Message));
+				Log.Error(new Said("update failed: {0} - nothing was changed", Log.Scrub(e.Message)));
+				Log.Failed("update", e);
 			}
 		});
 
@@ -1256,7 +1267,7 @@ public static partial class Commands {
 			if (week) {
 				sb.AppendLine("  the week ahead (rolled the same way the real one is, so it's a sample - not a promise):");
 
-				foreach (string line in HumanMode.PreviewWeek(bot.Cfg)) {
+				foreach (string line in HumanMode.PreviewWeek(bot.Cfg, human.Rotation)) {
 					sb.AppendLine("                " + line);
 				}
 			}
@@ -1307,7 +1318,9 @@ public static partial class Commands {
 			try {
 				keys = [.. KeysIn(File.ReadAllText(path))];
 			} catch (Exception e) {
-				return $"Couldn't read '{path}': {e.Message}";
+				Log.Failed($"redeem: reading keys from {path}", e);
+
+				return $"Couldn't read '{path}': {Log.Scrub(e.Message)}";
 			}
 
 			if (keys.Length == 0) {
@@ -1788,7 +1801,7 @@ public static partial class Commands {
 
 		foreach (Bot bot in targets) {
 			if (BotManager.ModuleOf<AchievementBoost>(bot) is { } boost) {
-				blocks.Add(await boost.ExplainAsync(CancellationToken.None).ConfigureAwait(false));
+				blocks.Add(boost.Explain());
 			}
 		}
 
@@ -2452,9 +2465,14 @@ public static partial class Commands {
 				foreach (Bot b in rest) {
 					await Task.Delay(Rng.Seconds(60, 180)).ConfigureAwait(false);
 
-					if ((BotManager.ModuleOf<GroupJoin>(b) is { } g) && b.IsOnline) {
-						(GroupJoin.Outcome o, string n) = await g.JoinAsync(path, null, CancellationToken.None).ConfigureAwait(false);
-						Log.Info(Say(b, o, n), b.Name);
+					try {
+						if ((BotManager.ModuleOf<GroupJoin>(b) is { } g) && b.IsOnline) {
+							(GroupJoin.Outcome o, string n) = await g.JoinAsync(path, null, CancellationToken.None).ConfigureAwait(false);
+							Log.Info(Say(b, o, n), b.Name);
+						}
+					} catch (Exception e) {
+						// One account's failure mustn't stop the rest - nor vanish, in a task nobody awaits.
+						Log.Failed("joining the group", e, b.Name);
 					}
 				}
 			});
@@ -2481,7 +2499,7 @@ public static partial class Commands {
 		return null;
 	}
 
-	private static string Nickname(BotManager mgr, string[] args) {
+	private static async Task<string> NicknameAsync(BotManager mgr, string[] args) {
 		if (args.Length < 2) {
 			return "nickname <account> <profile name>";
 		}
@@ -2497,7 +2515,11 @@ public static partial class Commands {
 			return $"That's {name.Length} characters - Steam allows 32 at most.";
 		}
 
-		return bot.SetProfileName(name) ? $"{bot.Name}: profile name is now \"{name}\"" : $"{bot.Name}: not logged in";
+		return await bot.SetProfileNameAsync(name).ConfigureAwait(false) switch {
+			null => $"{bot.Name}: not logged in",
+			SteamKit2.EResult.OK => $"{bot.Name}: profile name is now \"{name}\"",
+			_ => $"{bot.Name}: sent - Steam hasn't shown \"{name}\" yet, so check the profile in a minute"
+		};
 	}
 
 	private static async Task<string> LevelAsync(BotManager mgr, string[] args) {
@@ -2597,7 +2619,7 @@ public static partial class Commands {
 					try {
 						Log.Info(await Look(b, events).ConfigureAwait(false), b.Name);
 					} catch (Exception e) {
-						Log.Debug(new Said("free items: {0}", e.Message), b.Name);
+						Log.Failed("free items", e, b.Name);
 					}
 				}
 			});
@@ -3296,9 +3318,9 @@ public static partial class Commands {
 				// Not running rather than Stopped: an account whose sign-in gave up (three wrong passwords, say) is Failed,
 				// and 'enable' answered "logging in" and left it there.
 				if (!bot.Cfg.Enabled) {
-					_ = bot.StopAsync();
+					Background.Run("couldn't stop", () => bot.StopAsync(), bot.Name);
 				} else if (!bot.Running) {
-					_ = bot.StartAsync();
+					Background.Run("couldn't start", bot.StartAsync, bot.Name);
 				}
 
 				break;

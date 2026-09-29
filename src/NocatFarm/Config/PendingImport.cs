@@ -19,7 +19,9 @@ public static class PendingImport {
 	public static Choice? Load() {
 		try {
 			return System.IO.File.Exists(File) ? JsonSerializer.Deserialize<Choice>(System.IO.File.ReadAllText(File)) : null;
-		} catch {
+		} catch (Exception e) {
+			Log.Failed($"reading {File}", e);
+
 			return null;
 		}
 	}
@@ -27,8 +29,9 @@ public static class PendingImport {
 	public static void Clear() {
 		try {
 			System.IO.File.Delete(File);
-		} catch {
-			// it's only a hint
+		} catch (Exception e) {
+			// it's only a hint - but one left behind opens the setup on an import again
+			Log.Failed($"deleting {File}", e);
 		}
 	}
 }

@@ -38,8 +38,6 @@ public static partial class Notifier {
 	/// <summary>A Discord message holds 2000 characters.</summary>
 	internal const int DiscordMessageLimit = 2000;
 
-	private static Task? _discord;
-
 	// The session, kept across reconnects so a dropped connection resumes instead of starting over (and doesn't
 	// use up one of the day's limited fresh starts).
 	private static string _dcToken = "";
@@ -284,13 +282,23 @@ public static partial class Notifier {
 
 				(bool wasOnline, TimeSpan? hold) = await DiscordSessionAsync(token, ct).ConfigureAwait(false);
 				failures = wasOnline ? 0 : failures + 1;
+
+				if (wasOnline) {
+					Log.Recovered("discord:bot");
+				}
+
 				wait = hold ?? (failures == 0 ? Rng.Seconds(1, 5) : SteamMaintenance.Grown(failures, TimeSpan.FromSeconds(2)));
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				return;
 			} catch (Exception e) {
 				failures++;
 				wait = SteamMaintenance.Grown(failures, TimeSpan.FromSeconds(2));
-				Log.Debug(new Said("Discord bot: {0}", e.Message), "discord");
+
+				// Retried through an outage: the same failure is said once (an hour apart at most), and a real bug gets its stack.
+				if (Log.DebugOnChange("discord:bot", $"Discord bot: connecting failed: {Log.Describe(e)}", "discord")
+					&& e is not (HttpRequestException or WebSocketException or TaskCanceledException or OperationCanceledException)) {
+					Log.StackToFile(e, "discord");
+				}
 			}
 
 			_dcOnline = false;
@@ -402,7 +410,7 @@ public static partial class Notifier {
 		} catch (OperationCanceledException) when (!ct.IsCancellationRequested) {
 			// the pump ended it: no answer to a heartbeat, or the token or the switch changed
 		} catch (WebSocketException e) {
-			Log.Debug(new Said("Discord bot: {0}", e.Message), "discord");
+			Log.Failed("Discord bot: connection dropped", e, "discord");
 		} finally {
 			_dcOnline = false;
 			await conn.CancelAsync().ConfigureAwait(false);
@@ -410,8 +418,9 @@ public static partial class Notifier {
 			if (pump != null) {
 				try {
 					await pump.ConfigureAwait(false);
-				} catch (Exception) {
-					// it only beats
+				} catch (Exception e) {
+					// it only beats - but anything it didn't expect is a bug worth a line
+					Log.Failed("Discord bot: heartbeat", e, "discord");
 				}
 			}
 		}
@@ -470,7 +479,8 @@ public static partial class Notifier {
 		}
 
 		if (status != HttpStatusCode.OK) {
-			Log.Debug(new Said("discord bot: Discord answered HTTP {0}", (int) status), "discord");
+			// Asked again with a growing wait: the same answer is said once.
+			Log.DebugOnChange("discord:bot", $"discord bot: finding the Gateway got HTTP {(int) status} from discord.com/api/v10/gateway/bot{ErrorField(body, "message")}", "discord");
 
 			return (null, null);
 		}
@@ -550,6 +560,7 @@ public static partial class Notifier {
 		} catch (OperationCanceledException) {
 			// the connection is over
 		} catch (Exception e) when (e is WebSocketException or ObjectDisposedException or InvalidOperationException) {
+			Log.Failed("Discord bot: sending a heartbeat - reconnecting", e, "discord");
 			await conn.CancelAsync().ConfigureAwait(false);
 		}
 	}
@@ -620,7 +631,7 @@ public static partial class Notifier {
 			case "INTERACTION_CREATE": {
 				// Off the read loop: a command can take a while, and the heartbeat answers must keep arriving.
 				JsonElement copy = d.Clone();
-				_ = Task.Run(() => OnDiscordInteractionAsync(copy, token, ct), CancellationToken.None);
+				_ = Task.Run(() => OnDiscordInteractionAsync(copy, ct), CancellationToken.None);
 
 				return false;
 			}
@@ -652,15 +663,19 @@ public static partial class Notifier {
 					// Added to the server without the commands permission (an older invite link).
 					Log.Warn(new Said("Discord bot: no / commands in a server - invite it again"), "discord");
 				} else {
-					Log.Debug(new Said("discord bot: couldn't add the / commands (HTTP {0}): {1}", (int) status, body), "discord");
+					Log.Debug($"discord bot: couldn't add the / commands (HTTP {(int) status} from discord.com/api/v10{path}){ErrorField(body, "message")}", "discord");
 				}
 			} finally {
 				DiscordRegisterGate.Release();
 			}
 		} catch (Exception e) when (e is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested) {
-			Log.Debug(new Said("Discord bot: {0}", e.Message), "discord");
+			Log.Failed("Discord bot: adding the / commands", e, "discord");
 		} catch (OperationCanceledException) {
 			// closing
+		} catch (Exception e) {
+			// Run as a fire-and-forget task: anything else would vanish unobserved.
+			Log.Failed("Discord bot: adding the / commands", e, "discord");
+			Log.StackToFile(e, "discord");
 		}
 	}
 
@@ -699,7 +714,7 @@ public static partial class Notifier {
 	}
 
 	// ── the commands ────────────────────────────────────────────────────────
-	private static async Task OnDiscordInteractionAsync(JsonElement d, string token, CancellationToken ct) {
+	private static async Task OnDiscordInteractionAsync(JsonElement d, CancellationToken ct) {
 		try {
 			// 2 = a / command. Nothing else is registered, so nothing else should come.
 			if (!d.TryGetProperty("type", out JsonElement type) || (type.GetInt32() != 2)) {
@@ -760,10 +775,11 @@ public static partial class Notifier {
 
 			// Discord wants an answer within three seconds and some commands take longer: "thinking..." now, the
 			// real answer in its place when it's ready.
-			(HttpStatusCode status, _) = await DiscordApiAsync(HttpMethod.Post, $"/interactions/{id}/{replyToken}/callback", new { type = 5, data = new { flags } }, null, ct).ConfigureAwait(false);
+			(HttpStatusCode status, string refused) = await DiscordApiAsync(HttpMethod.Post, $"/interactions/{id}/{replyToken}/callback", new { type = 5, data = new { flags } }, null, ct).ConfigureAwait(false);
 
+			// The address carries the reply's own token, so it isn't written down - only what was being done.
 			if ((int) status >= 300) {
-				Log.Debug(new Said("discord bot: Discord answered HTTP {0}", (int) status), "discord");
+				Log.Debug($"discord bot: answering /{name} got HTTP {(int) status}{ErrorField(refused, "message")}", "discord");
 
 				return;
 			}
@@ -772,16 +788,23 @@ public static partial class Notifier {
 
 			// A runaway answer (a long log) stops at fifteen messages rather than filling the chat.
 			for (int i = 0; i < Math.Min(messages.Count, 15); i++) {
-				if (i == 0) {
-					await DiscordApiAsync(HttpMethod.Patch, $"/webhooks/{appId}/{replyToken}/messages/@original", new { content = messages[0] }, null, ct).ConfigureAwait(false);
-				} else {
-					await DiscordApiAsync(HttpMethod.Post, $"/webhooks/{appId}/{replyToken}", new { content = messages[i], flags = flags | SuppressEmbeds }, null, ct).ConfigureAwait(false);
+				(HttpStatusCode sent, string body) = i == 0
+					? await DiscordApiAsync(HttpMethod.Patch, $"/webhooks/{appId}/{replyToken}/messages/@original", new { content = messages[0] }, null, ct).ConfigureAwait(false)
+					: await DiscordApiAsync(HttpMethod.Post, $"/webhooks/{appId}/{replyToken}", new { content = messages[i], flags = flags | SuppressEmbeds }, null, ct).ConfigureAwait(false);
+
+				// Otherwise the answer never shows and Discord is left "thinking..." with nothing in the log to say why.
+				if ((int) sent >= 300) {
+					Log.Debug($"discord bot: posting the answer to /{name} (part {i + 1}) got HTTP {(int) sent}{ErrorField(body, "message")}", "discord");
 				}
 			}
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			// closing
 		} catch (Exception e) {
-			Log.Debug(new Said("Discord bot: {0}", e.Message), "discord");
+			Log.Failed("Discord bot: a / command", e, "discord");
+
+			if (e is not (HttpRequestException or TaskCanceledException)) {
+				Log.StackToFile(e, "discord");
+			}
 		}
 
 		static string Text(JsonElement e, string name) =>
@@ -789,9 +812,15 @@ public static partial class Notifier {
 	}
 
 	/// <summary>An answer straight away, no "thinking..." first - for the quick ones.</summary>
-	private static async Task DiscordReplyAsync(string id, string replyToken, string content, int flags, CancellationToken ct) =>
-		await DiscordApiAsync(HttpMethod.Post, $"/interactions/{id}/{replyToken}/callback",
+	private static async Task DiscordReplyAsync(string id, string replyToken, string content, int flags, CancellationToken ct) {
+		(HttpStatusCode status, string body) = await DiscordApiAsync(HttpMethod.Post, $"/interactions/{id}/{replyToken}/callback",
 			new { type = 4, data = new { content, flags = flags | SuppressEmbeds } }, null, ct).ConfigureAwait(false);
+
+		// Not the address: it carries the reply's own token.
+		if ((int) status >= 300) {
+			Log.Debug($"discord bot: a quick reply got HTTP {(int) status}{ErrorField(body, "message")}", "discord");
+		}
+	}
 
 	/// <summary>/connect with the dashboard's code: whoever sends it becomes the one Discord account the bot obeys.</summary>
 	private static async Task DiscordConnectAsync(string id, string replyToken, string userId, string userName, string code, int flags, CancellationToken ct) {
@@ -859,7 +888,10 @@ public static partial class Notifier {
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
-			output = new Said("that command failed: {0}", e.Message).ToString();
+			// A command throwing is a bug: the stack goes in the file. Which command is the "> /..." line above (secrets masked).
+			Log.Failed("Discord bot: running the command", e, "discord");
+			Log.StackToFile(e, "discord");
+			output = new Said("that command failed: {0}", Log.Scrub(e.Message)).ToString();
 		}
 
 		if (string.IsNullOrWhiteSpace(output)) {

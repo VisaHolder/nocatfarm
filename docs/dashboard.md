@@ -78,7 +78,7 @@ mini mode next time if you left it that way.
 ## Tray
 
 Left- or right-click the icon for the menu: Open dashboard, Hide/Show the window, Mini mode/Full window, Start all
-accounts, Stop all accounts and Exit nocatFarm. Double-clicking shows the window.
+accounts, Stop all accounts and Exit nocat.farm, in the dashboard's language. Double-clicking shows the window.
 
 *Start hidden* (a setting) or `--minimized` starts straight to the tray. *Start with Windows* adds a start-up entry
 for your own Windows user.
