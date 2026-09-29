@@ -93,8 +93,9 @@ public static class Redeeming {
 						name = itemName;
 					}
 				}
-			} catch {
+			} catch (Exception e) {
 				// A receipt we can't read doesn't change whether it worked.
+				Log.Failed("couldn't read the key activation receipt", e, bot.Name);
 			}
 
 			answer.TrySetResult(new RedeemResult(cb.PurchaseResultDetail, Describe(cb.PurchaseResultDetail, name), packages));
@@ -108,10 +109,19 @@ public static class Redeeming {
 
 		try {
 			await using (timeout.Token.Register(() => answer.TrySetResult(new RedeemResult(EPurchaseResultDetail.Timeout, "Steam didn't answer", []))).ConfigureAwait(false)) {
-				return await answer.Task.ConfigureAwait(false);
+				RedeemResult result = await answer.Task.ConfigureAwait(false);
+
+				// Never the key itself - just what Steam said about it.
+				if (!result.Ok) {
+					Log.Debug($"key activation refused: {result.Detail} ({result.Message})", bot.Name);
+				}
+
+				return result;
 			}
 		} catch (Exception e) {
-			return new RedeemResult(EPurchaseResultDetail.Timeout, e.Message, []);
+			Log.Failed("key activation failed", e, bot.Name);
+
+			return new RedeemResult(EPurchaseResultDetail.Timeout, Log.Scrub(e.Message), []);
 		}
 	}
 

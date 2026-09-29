@@ -191,7 +191,7 @@ public sealed class TrayIcon : IDisposable {
 			_taskbarCreated = RegisterWindowMessage("TaskbarCreated");
 
 			if (_hwnd == IntPtr.Zero) {
-				Log.Debug("tray: couldn't create the message window - running without a tray icon");
+				Log.Debug($"tray: couldn't create the message window (Windows error {Marshal.GetLastWin32Error()}) - running without a tray icon");
 
 				return;
 			}
@@ -210,7 +210,9 @@ public sealed class TrayIcon : IDisposable {
 				DispatchMessage(ref msg);
 			}
 		} catch (Exception e) {
-			Log.Debug(new Said("tray: {0}", e.Message));
+			// The icon's thread is gone with it: no menu, no double-click back to the window.
+			Log.Failed("tray: the icon's thread stopped", e);
+			Log.StackToFile(e);
 		}
 	}
 
@@ -234,7 +236,9 @@ public sealed class TrayIcon : IDisposable {
 						ShowWindow(console, SwHide);
 						_consoleVisible = false;
 					}
-				} catch {
+				} catch (Exception e) {
+					Log.Failed("tray: minimise-to-tray stopped working", e);
+
 					return;
 				}
 			}
@@ -252,7 +256,9 @@ public sealed class TrayIcon : IDisposable {
 			string? exe = Environment.ProcessPath;
 
 			return string.IsNullOrEmpty(exe) ? IntPtr.Zero : ExtractIcon(GetModuleHandle(null), exe, 0);
-		} catch {
+		} catch (Exception e) {
+			Log.Failed("tray: loading the icon", e);
+
 			return IntPtr.Zero;
 		}
 	}
@@ -413,21 +419,21 @@ public sealed class TrayIcon : IDisposable {
 		}
 
 		try {
-			AppendMenu(menu, MfString, IdOpenWeb, "Open dashboard");
+			AppendMenu(menu, MfString, IdOpenWeb, Loc.T("Open dashboard"));
 
 			// Only offer it when there is a REAL console window to show or hide.
 			if (Commands.Window != null) {
-				AppendMenu(menu, MfString, IdToggleConsole, Commands.Window.Visible ? "Hide the window" : "Show the window");
-				AppendMenu(menu, MfString, IdMini, Commands.Window.Mini ? "Full window" : "Mini mode");
+				AppendMenu(menu, MfString, IdToggleConsole, Loc.T(Commands.Window.Visible ? "Hide the window" : "Show the window"));
+				AppendMenu(menu, MfString, IdMini, Loc.T(Commands.Window.Mini ? "Full window" : "Mini mode"));
 			} else if (HasRealConsole()) {
-				AppendMenu(menu, MfString, IdToggleConsole, _consoleVisible ? "Hide the window" : "Show the window");
+				AppendMenu(menu, MfString, IdToggleConsole, Loc.T(_consoleVisible ? "Hide the window" : "Show the window"));
 			}
 
 			AppendMenu(menu, MfSeparator, 0, null);
-			AppendMenu(menu, MfString, IdStartAll, "Start all accounts");
-			AppendMenu(menu, MfString, IdStopAll, "Stop all accounts");
+			AppendMenu(menu, MfString, IdStartAll, Loc.T("Start all accounts"));
+			AppendMenu(menu, MfString, IdStopAll, Loc.T("Stop all accounts"));
 			AppendMenu(menu, MfSeparator, 0, null);
-			AppendMenu(menu, MfString, IdExit, "Exit nocatFarm");
+			AppendMenu(menu, MfString, IdExit, Loc.T("Exit nocat.farm"));
 
 			GetCursorPos(out Point p);
 
@@ -493,7 +499,7 @@ public sealed class TrayIcon : IDisposable {
 		try {
 			Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
 		} catch (Exception e) {
-			Log.Warn(new Said("couldn't open {0}: {1}", url, e.Message));
+			Log.Warn(new Said("couldn't open {0}: {1}", url, Log.Scrub(e.Message)));
 		}
 	}
 
@@ -549,7 +555,12 @@ public sealed class TrayIcon : IDisposable {
 		data.uFlags = NifInfo | (_usingGuid ? NifGuid : 0);
 		data.szInfoTitle = title.Length > 60 ? title[..60] : title;
 		data.szInfo = text.Length > 250 ? text[..250] : text;
-		Shell_NotifyIcon(NimModify, ref data);
+
+		if (!Shell_NotifyIcon(NimModify, ref data)) {
+			Log.DebugOnChange("tray:notify", "tray: Windows refused a pop-up notification");
+		} else {
+			Log.Recovered("tray:notify");
+		}
 	}
 
 	public void Dispose() {

@@ -24,8 +24,6 @@ public sealed class Library(Bot bot) {
 	public sealed record Entry(uint AppId, string Name, int MinutesPlayed, DateTime Acquired, ulong SharedFrom) {
 		/// <summary>Borrowed through a Steam Family rather than owned outright.</summary>
 		public bool Shared => SharedFrom != 0;
-
-		public double HoursPlayed => MinutesPlayed / 60.0;
 	}
 
 	private List<Entry> _games = [];
@@ -124,6 +122,8 @@ public sealed class Library(Bot bot) {
 
 		using (JsonDocument doc = JsonDocument.Parse(json)) {
 			if (!doc.RootElement.TryGetProperty("response", out JsonElement res) || !res.TryGetProperty("games", out JsonElement games)) {
+				Log.Debug("play history: Steam's answer had no games list", bot.Name);
+
 				return;
 			}
 
@@ -166,6 +166,10 @@ public sealed class Library(Bot bot) {
 		AsyncJobMultiple<SteamApps.PICSProductInfoCallback>.ResultSet info = await apps
 			.PICSGetProductInfo(missing.Select(id => new SteamApps.PICSRequest(id, tokens.AppTokens.GetValueOrDefault(id))), [], false)
 			.ToTask().WaitAsync(TimeSpan.FromSeconds(60), ct).ConfigureAwait(false);
+
+		if (info.Failed) {
+			Log.Debug($"play history: Steam's app info request failed part-way ({info.Results?.Count ?? 0} page(s) back for {missing.Count} app(s))", bot.Name);
+		}
 
 		List<uint> added = [];
 
@@ -215,6 +219,9 @@ public sealed class Library(Bot bot) {
 			using JsonDocument doc = JsonDocument.Parse(json);
 
 			if (!doc.RootElement.TryGetProperty("response", out JsonElement res) || !res.TryGetProperty("games", out JsonElement games)) {
+				// Callers keep asking while the library isn't ready, so the same answer would be written every time.
+				Log.DebugOnChange($"library:{bot.Name}", "library: Steam's owned-games answer had no games list", bot.Name);
+
 				return false;
 			}
 
@@ -234,21 +241,25 @@ public sealed class Library(Bot bot) {
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;   // the account is stopping - not a failure to report
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the library: {0}", e.Message), bot.Name);
+			Log.Debug(new Said("couldn't read the library: {0}", Log.Describe(e)), bot.Name);
 
 			return false;
 		}
 
 		if (found.Count == 0) {
+			Log.DebugOnChange($"library:{bot.Name}", "library: Steam listed no owned games - kept what we had", bot.Name);
+
 			return false;   // a blip, not an empty library - keep whatever we already had
 		}
+
+		Log.Recovered($"library:{bot.Name}");
 
 		try {
 			await AddPlayedAsync(found, ct).ConfigureAwait(false);
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the play history: {0}", e.Message), bot.Name);
+			Log.Debug(new Said("couldn't read the play history: {0}", Log.Describe(e)), bot.Name);
 		}
 
 		if (bot.Cfg.IncludeFamilyLibrary) {
@@ -257,7 +268,7 @@ public sealed class Library(Bot bot) {
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't read the family library: {0}", e.Message), bot.Name);
+				Log.Debug(new Said("couldn't read the family library: {0}", Log.Describe(e)), bot.Name);
 			}
 		}
 
@@ -325,6 +336,8 @@ public sealed class Library(Bot bot) {
 		using JsonDocument doc = JsonDocument.Parse(json);
 
 		if (!doc.RootElement.TryGetProperty("response", out JsonElement res) || !res.TryGetProperty("apps", out JsonElement apps)) {
+			Log.Debug("family library: Steam's answer had no apps list", bot.Name);
+
 			return shared;
 		}
 

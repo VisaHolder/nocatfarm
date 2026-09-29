@@ -269,6 +269,8 @@ public static class AsfImport {
 				bot.SteamPassword = password;
 			} else {
 				account.Notes.Add(problem);
+				// Once per account: every preview of the folder reads it again.
+				Log.DebugOnChange($"import:asf-password:{name}", $"import: {name}'s ASF password (PasswordFormat {format}) wasn't copied: {problem}", name);
 			}
 		}
 
@@ -462,6 +464,8 @@ public static class AsfImport {
 		try {
 			return Readable(ProtectedData.Unprotect(Convert.FromBase64String(stored), DefaultCryptKey, DataProtectionScope.CurrentUser));
 		} catch (Exception e) when (e is CryptographicException or FormatException) {
+			Log.DebugOnChange("import:asf-dpapi", $"import: an ASF password protected by Windows didn't open: {Log.Describe(e)}");
+
 			return null;   // another Windows user, or a custom --cryptkey
 		}
 	}
@@ -554,7 +558,10 @@ public static class AsfImport {
 	private static IEnumerable<string> SafeFiles(string dir) {
 		try {
 			return Directory.GetFiles(dir, "*.json");
-		} catch {
+		} catch (Exception e) {
+			// The folder chosen to import from, and it won't list: every account in it would just be missing.
+			Log.DebugOnChange($"import:{dir}", $"import: couldn't list {dir}: {Log.Describe(e)}");
+
 			return [];
 		}
 	}

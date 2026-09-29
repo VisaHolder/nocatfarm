@@ -222,7 +222,7 @@ public static class KeyQueue {
 				_loadFailed = true;
 				// Not the error text: for an encrypted file it's the file itself, a screen of gibberish.
 				Log.Warn(new Said("key queue unreadable (newer version or damaged) - left as is"));
-				Log.Debug(new Said("key queue: {0}", e.Message));
+				Log.Debug(new Said("key queue: {0}", Log.Describe(e)));
 			}
 		}
 	}
@@ -249,7 +249,7 @@ public static class KeyQueue {
 			string json = JsonSerializer.Serialize(snapshot);
 			AtomicFile.Write(Path, SelfUpdate.OnTrial ? json : Secrets.Protect(json, "keys"));   // see SelfUpdate.OnTrial
 		} catch (Exception e) {
-			Log.Warn(new Said("couldn't save the key queue: {0}", e.Message));
+			Log.Warn(new Said("couldn't save the key queue: {0}", Log.Scrub(e.Message)));
 		}
 	}
 }

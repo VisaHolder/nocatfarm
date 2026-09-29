@@ -22,10 +22,10 @@ namespace NocatFarm.Core;
 public static class Confirmations {
 	/// <summary>One waiting confirmation, as /mobileconf/getlist describes it.</summary>
 	/// <param name="CreatorId">For a trade (type 2) this is the trade offer's id; for a market listing, the listing's.</param>
-	public sealed record Item(ulong Id, ulong Nonce, ulong CreatorId, int Type, string TypeName, string Headline, List<string> Summary, string Icon, long Created, bool Multi);
+	public sealed record Item(ulong Id, ulong Nonce, ulong CreatorId, int Type, string TypeName, string Headline, List<string> Summary, string Icon, long Created);
 
 	/// <summary>Steam's confirmation types.</summary>
-	public const int Trade = 2, MarketListing = 3;
+	public const int Trade = 2;
 
 	private static readonly HttpClient Plain = new() { Timeout = TimeSpan.FromSeconds(15) };
 	private static long _offset;
@@ -104,8 +104,13 @@ public static class Confirmations {
 				&& long.TryParse(t.ValueKind == JsonValueKind.String ? t.GetString() : t.GetRawText(), out long server)) {
 				_offset = server - DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 				_alignedAt = DateTime.UtcNow;
+				Log.Recovered("steamclock");
+			} else {
+				Log.DebugOnChange("steamclock", $"Steam's clock: QueryTime answered {(int) r.StatusCode} with no server_time - using this PC's clock", "nocat.farm");
 			}
 		} catch (Exception e) when (e is HttpRequestException or TaskCanceledException or JsonException && !ct.IsCancellationRequested) {
+			// Retried every five minutes while it fails - the same reason once an hour is plenty.
+			Log.DebugOnChange("steamclock", $"Steam's clock: couldn't ask api.steampowered.com/ITwoFactorService/QueryTime: {Log.Describe(e)}", "nocat.farm");
 			_alignedAt = DateTime.UtcNow - TimeSpan.FromMinutes(55);   // try again in five minutes, not every call
 		} finally {
 			AlignGate.Release();
@@ -164,9 +169,15 @@ public static class Confirmations {
 		(bool ok, string error, List<Item> items) = Parse(body);
 
 		if (ok) {
+			Log.Recovered($"conflist:{bot.Name}");
+
 			lock (Recent) {
 				Recent[bot.Name] = (DateTime.UtcNow, items);
 			}
+		} else {
+			// Not every caller shows the reason (the trade module's own confirm drops it), and the Authenticator page
+			// asks again every few seconds - so written here, once per change.
+			Log.DebugOnChange($"conflist:{bot.Name}", $"confirmations list refused: {Log.Scrub(error)}", bot.Name);
 		}
 
 		return (ok, error, items);
@@ -203,8 +214,7 @@ public static class Confirmations {
 						: [];
 
 					items.Add(new Item(id, nonce, Number(c, "creator_id") is > 0 and var creator ? creator : Number(c, "creatorid"),
-						(int) Number(c, "type"), Text(c, "type_name"), Text(c, "headline"), summary, Text(c, "icon"), (long) Number(c, "creation_time"),
-						c.TryGetProperty("multi", out JsonElement multi) && (multi.ValueKind == JsonValueKind.True)));
+						(int) Number(c, "type"), Text(c, "type_name"), Text(c, "headline"), summary, Text(c, "icon"), (long) Number(c, "creation_time")));
 				}
 			}
 
@@ -251,7 +261,16 @@ public static class Confirmations {
 			Recent.Remove(bot.Name);   // whatever was listed has changed
 		}
 
-		return body?.Contains("\"success\":true", StringComparison.OrdinalIgnoreCase) == true;
+		if (body?.Contains("\"success\":true", StringComparison.OrdinalIgnoreCase) == true) {
+			return true;
+		}
+
+		// A null body was already logged by WebSession; a refusal comes back as a 200 saying success:false.
+		if (body != null) {
+			Log.Debug($"confirmation {op} of {items.Count} refused: {Log.Scrub(body[..Math.Min(150, body.Length)])}", bot.Name);
+		}
+
+		return false;
 	}
 
 	/// <summary>The sign-in code for right now, on Steam's clock, and the seconds it has left.</summary>

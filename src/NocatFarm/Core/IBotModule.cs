@@ -67,10 +67,13 @@ public abstract class BotModule(Bot bot) : IBotModule {
 						// never silent: a module dying quietly is the worst failure mode there is. An error (and a pop-up,
 						// and a message to your phone) the first time; the same thing again is only a warning.
 						if (crashes == 1) {
-							Log.Error(new Said("module '{0}' stopped: {1}: {2}", Name, e.GetType().Name, e.Message), Bot.Name);
+							Log.Error(new Said("module '{0}' stopped: {1}: {2}", Name, e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
 						} else {
-							Log.Warn(new Said("module '{0}' stopped: {1}: {2}", Name, e.GetType().Name, e.Message), Bot.Name);
+							Log.Warn(new Said("module '{0}' stopped: {1}: {2}", Name, e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
 						}
+
+						// Where it broke, for the file: the message says what, only the stack says where.
+						Log.StackToFile(e, Bot.Name);
 					}
 
 					int minutes = Math.Min(30, 1 << Math.Min(crashes - 1, 5));
@@ -119,13 +122,6 @@ public abstract class BotModule(Bot bot) : IBotModule {
 		}
 
 		return Task.CompletedTask;
-	}
-
-	/// <summary>Stop and start again, for a setting that turns the whole module on or off.</summary>
-	public async Task RestartAsync() {
-		await StopAsync().ConfigureAwait(false);
-		await Task.Delay(50).ConfigureAwait(false);
-		await StartAsync().ConfigureAwait(false);
 	}
 
 	protected abstract Task RunAsync(CancellationToken ct);

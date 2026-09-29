@@ -25,6 +25,9 @@ public sealed class HumanDay {
 	public int MainSharePct { get; set; }
 	public int OtherBudget { get; set; }
 	public int OtherPlayed { get; set; }
+
+	/// <summary>Minutes the card-farming sittings have played - kept apart from the side games' (0 in older files).</summary>
+	public int FarmPlayed { get; set; }
 	public int SignOutCap { get; set; }
 	public int SignOutsUsed { get; set; }
 	public int MealCap { get; set; }
@@ -34,6 +37,10 @@ public sealed class HumanDay {
 	public int BedMinute { get; set; }
 	public bool BedIsTomorrow { get; set; }
 	public uint LastGame { get; set; }
+
+	/// <summary>The end of a 'wake' sitting after bedtime, local time - so a restart during it doesn't send the account
+	/// straight back to bed. Unset (MinValue) when there isn't one.</summary>
+	public DateTime StayUpUntil { get; set; }
 
 	/// <summary>Minutes per appID so far today, so the console's breakdown survives a restart too.</summary>
 	public Dictionary<string, int> ByGame { get; set; } = [];
@@ -55,7 +62,7 @@ public sealed class HumanDay {
 			// A plan from yesterday is not a plan, it is a leftover. Rolling a fresh one is correct.
 			return day?.IsFor(when) == true ? day : null;
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read today's plan: {0}", e.Message), bot);
+			Log.Debug(new Said("couldn't read today's plan: {0}", Log.Describe(e)), bot);
 
 			return null;
 		}
@@ -66,7 +73,7 @@ public sealed class HumanDay {
 		try {
 			File.Delete(PathFor(bot));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't clear today's plan: {0}", e.Message), bot);
+			Log.Debug(new Said("couldn't clear today's plan: {0}", Log.Describe(e)), bot);
 		}
 	}
 
@@ -76,7 +83,7 @@ public sealed class HumanDay {
 			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 			AtomicFile.Write(path, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true }));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save today's plan: {0}", e.Message), bot);
+			Log.Debug(new Said("couldn't save today's plan: {0}", Log.Describe(e)), bot);
 		}
 	}
 }

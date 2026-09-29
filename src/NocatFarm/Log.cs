@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using Said = NocatFarm.Core.Said;
 
 namespace NocatFarm;
 
@@ -89,8 +90,9 @@ public static class Log {
 	public static void Publish(Topic topic, string source, Core.Said text) {
 		try {
 			Published?.Invoke(topic, source, text.ToString());
-		} catch {
-			// a listener's problem is never the caller's
+		} catch (Exception e) {
+			// a listener's problem is never the caller's - but it is written down, once per different failure
+			FileOnlyOnChange("publish", source, $"a notification listener failed: {Describe(e)}");
 		}
 	}
 
@@ -113,17 +115,21 @@ public static class Log {
 			return;
 		}
 
+		string dir = Path.Combine(root, "logs");
+
 		try {
-			string dir = Path.Combine(root, "logs");
 			Directory.CreateDirectory(dir);
 
 			// The FOLDER is settled here; the filename is not. See TodaysFile.
 			_logDir = dir;
 			_logFile = null;
 			Sweep();
-		} catch {
+		} catch (Exception e) {
 			_logDir = null;
 			_logFile = null;   // logging must never take the app down
+
+			// Nowhere to file it, so at least the screen hears why there is no log file.
+			Warn(new Said("can't write log files in {0}: {1}", Path.GetFullPath(dir), Describe(e)));
 		}
 	}
 
@@ -175,8 +181,10 @@ public static class Log {
 					File.Delete(old);
 				}
 			}
-		} catch {
-			// tidying up must never take the app down
+		} catch (Exception e) {
+			// tidying up must never take the app down - but say so, or the folder just grows without anyone knowing why.
+			// Straight to the file: this runs inside the day roll, and a full Write from here would roll again.
+			FileOnly("nocat.farm", $"couldn't clear old log files: {Describe(e)}");
 		}
 	}
 
@@ -217,8 +225,6 @@ public static class Log {
 	}
 
 	/// <summary>Something social happened - somebody commented on a profile.</summary>
-	public static void Event(string text, string source = "nocat.farm", Topic topic = Topic.Social) => Event(new Core.Said(text), source, topic);
-
 	public static void Event(Core.Said text, string source = "nocat.farm", Topic topic = Topic.Social) {
 		Write("GOOD", source, text, ConsoleColor.Cyan);
 		Notify?.Invoke(NotifyKind.Social, source, text.ToString());
@@ -273,6 +279,142 @@ public static class Log {
 	public static void Debug(Core.Said text, string source = "nocat.farm") =>
 		Write("DEBUG", source, text, ConsoleColor.DarkGray, toConsole: _debug);
 
+	// ── when something goes wrong ─────────────────────────────────────────────
+	// A failure that leaves no line behind can only be found by reproducing it. These are the plain, untranslated
+	// DEBUG lines that say what failed, on which account, and why - always in the file, on screen only if asked.
+
+	/// <summary>"what: ExceptionType: message", as a DEBUG line - for a catch that carries on without the thing it tried.</summary>
+	public static void Failed(string what, Exception e, string source = "nocat.farm") => Debug($"{what}: {Describe(e)}", source);
+
+	/// <summary>An exception as "Type: message", with anything secret-looking in the message hidden.</summary>
+	public static string Describe(Exception e) => $"{e.GetType().Name}: {Scrub(e.Message)}";
+
+	/// <summary>
+	/// A web address safe to write down: host and path only, never the query (that is where the Web API's
+	/// access_token and the rep4rep key ride), and the secret path segments of a Telegram bot URL or a Discord
+	/// webhook masked - both carry the token in the path itself.
+	/// </summary>
+	public static string Where(Uri? url) {
+		if (url == null) {
+			return "?";
+		}
+
+		if (!url.IsAbsoluteUri) {
+			return Scrub(url.OriginalString.Split('?', '#')[0]);
+		}
+
+		return url.Host + Scrub(url.AbsolutePath);
+	}
+
+	private static readonly System.Text.RegularExpressions.Regex[] Secrets = [
+		// key=value pairs in a query, a form or a cookie header
+		new(@"(?i)\b((?:access_token|oauth_token|refresh_token|webapi_token|apitoken|apikey|api_key|key|token|password|pass|steamLoginSecure|sessionid|secret)=)[^&\s;""',]+",
+			System.Text.RegularExpressions.RegexOptions.Compiled),
+		// user:password@ in a proxy or any other address
+		new(@"(://)[^/\s:@]+:[^/\s@]+(?=@)",System.Text.RegularExpressions.RegexOptions.Compiled),
+		// Telegram: api.telegram.org/bot<id>:<secret>/method
+		new(@"(?i)(bot)\d{5,}:[A-Za-z0-9_-]{20,}", System.Text.RegularExpressions.RegexOptions.Compiled),
+		// Discord: /api/webhooks/<id>/<secret>
+		new(@"(?i)(webhooks/\d+/)[A-Za-z0-9_.-]+", System.Text.RegularExpressions.RegexOptions.Compiled),
+		// Authorization: Bot xxx / Bearer xxx
+		new(@"(?i)\b((?:Bot|Bearer)\s+)[A-Za-z0-9_.\-]{20,}", System.Text.RegularExpressions.RegexOptions.Compiled),
+		// a bare JWT (Steam's access and refresh tokens)
+		new(@"eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*", System.Text.RegularExpressions.RegexOptions.Compiled),
+	];
+
+	/// <summary>Hide tokens, keys, passwords, cookies and webhook secrets in text headed for the log.</summary>
+	public static string Scrub(string? text) {
+		if (string.IsNullOrEmpty(text)) {
+			return "";
+		}
+
+		string s = text;
+
+		for (int i = 0; i < Secrets.Length; i++) {
+			s = Secrets[i].Replace(s, i == Secrets.Length - 1 ? "[hidden]" : "$1[hidden]");   // the last, a bare JWT, has no prefix to keep
+		}
+
+		return s;
+	}
+
+	private static readonly ConcurrentDictionary<string, (string Text, DateTime At)> LastSaid = new(StringComparer.Ordinal);
+
+	/// <summary>
+	/// A DEBUG line only when it differs from the last one under <paramref name="key"/>, or the same one was last
+	/// written over an hour ago - for something that fails the same way every minute in a loop, where the first line
+	/// says it all and the next thousand bury the rest. Returns whether it was written. <see cref="Recovered"/>
+	/// clears it, so the next failure after a success is written straight away.
+	/// </summary>
+	public static bool DebugOnChange(string key, string text, string source = "nocat.farm") {
+		if (!OnChange(key, text)) {
+			return false;
+		}
+
+		Debug(text, source);
+
+		return true;
+	}
+
+	private static bool OnChange(string key, string text) {
+		DateTime now = DateTime.UtcNow;
+
+		if (LastSaid.TryGetValue(key, out (string Text, DateTime At) last)
+			&& string.Equals(last.Text, text, StringComparison.Ordinal) && (now - last.At < TimeSpan.FromHours(1))) {
+			return false;
+		}
+
+		LastSaid[key] = (text, now);
+
+		return true;
+	}
+
+	/// <summary>The thing under <paramref name="key"/> works again: its next failure is news.</summary>
+	public static void Recovered(string key) => LastSaid.TryRemove(key, out _);
+
+	/// <summary>
+	/// An exception nothing else caught - a crash, a background task nobody awaited, a loop that died. The line goes
+	/// to the screen and the file, then the whole stack trace to the file only, one line each, straight away: this
+	/// can run with the process on its way down, and anything slower than an append is not going to happen.
+	/// </summary>
+	public static void Crash(Core.Said what, Exception e, string source = "nocat.farm") {
+		Write("ERROR", source, what, ConsoleColor.Red);
+		StackToFile(e, source);
+	}
+
+	/// <summary>For <see cref="TaskScheduler.UnobservedTaskException"/>: a task nobody awaited threw. Written down and marked seen.</summary>
+	public static void OnUnobservedTask(object? sender, UnobservedTaskExceptionEventArgs e) {
+		try {
+			Exception inner = e.Exception.InnerExceptions.Count == 1 ? e.Exception.InnerExceptions[0] : e.Exception;
+			Crash(new Said("a background task failed: {0}", Describe(inner)), e.Exception);
+		} catch {
+			// logging must never take the app down
+		}
+
+		e.SetObserved();
+	}
+
+	/// <summary>The full exception - type, message, stack, inner exceptions - into the file only, one line each.</summary>
+	public static void StackToFile(Exception e, string source = "nocat.farm") {
+		string? file = TodaysFile();
+
+		if (file == null) {
+			return;
+		}
+
+		string when = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}";
+		System.Text.StringBuilder lines = new();
+
+		foreach (string line in Scrub(e.ToString()).Split('\n')) {
+			string trimmed = line.Trim();
+
+			if (trimmed.Length > 0) {
+				lines.Append(when).Append("|DEBUG|").Append(source).Append("|   ").Append(trimmed).Append(Environment.NewLine);
+			}
+		}
+
+		Append(file, lines.ToString(), debug: true);
+	}
+
 	private static void Write(string level, string source, Core.Said said, ConsoleColor colour, bool toConsole = true) {
 		DateTime now = DateTime.Now;
 		Entry e = new(Interlocked.Increment(ref _seq), now, level, source, said);
@@ -325,8 +467,9 @@ public static class Log {
 
 		try {
 			Written?.Invoke(e);
-		} catch {
-			// a subscriber must never break logging
+		} catch (Exception x) {
+			// a subscriber must never break logging - nor start a loop of lines about itself, so file only, once
+			FileOnlyOnChange("written", source, $"a log listener failed: {Describe(x)}");
 		}
 
 		string? file = TodaysFile();
@@ -335,16 +478,71 @@ public static class Log {
 			return;
 		}
 
-		// One writer at a time. Two threads appending together collided on the file and the loser's line was
-		// dropped without a word - the log is the one place that must not quietly lose things.
+		Append(file, $"{now:yyyy-MM-dd HH:mm:ss}|{level}|{source}|{text}{Environment.NewLine}", level == "DEBUG");
+	}
+
+	private static readonly Lock FileGate = new();
+
+	/// <summary>
+	/// How big one day's file may get before DEBUG detail stops going into it. Retention bounds the number of files,
+	/// but nothing bounded one file: a failure repeating every second on a machine left running for a day writes
+	/// hundreds of megabytes of the same line. Past this the day keeps everything that isn't DEBUG - the warnings,
+	/// errors and what happened - and a note says why the detail stopped. The next day starts clean.
+	/// </summary>
+	internal const long DebugCapBytes = 100L * 1024 * 1024;
+
+	private static string? _sizedFile;
+	private static long _fileBytes;
+	private static bool _capNoted;
+
+	/// <summary>
+	/// One writer at a time. Two threads appending together collided on the file and the loser's line was dropped
+	/// without a word - the log is the one place that must not quietly lose things.
+	/// </summary>
+	private static void Append(string file, string text, bool debug) {
 		lock (FileGate) {
 			try {
-				File.AppendAllText(file, $"{now:yyyy-MM-dd HH:mm:ss}|{level}|{source}|{text}{Environment.NewLine}");
+				if (!string.Equals(_sizedFile, file, StringComparison.Ordinal)) {
+					_sizedFile = file;
+					_fileBytes = File.Exists(file) ? new FileInfo(file).Length : 0;
+					_capNoted = false;
+				}
+
+				if (debug && (_fileBytes > DebugCapBytes)) {
+					if (_capNoted) {
+						return;
+					}
+
+					_capNoted = true;
+					text = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}|WARN|nocat.farm|this log passed {DebugCapBytes / (1024 * 1024)} MB today - debug detail stops here until tomorrow{Environment.NewLine}";
+				}
+
+				File.AppendAllText(file, text);
+				_fileBytes += System.Text.Encoding.UTF8.GetByteCount(text);
 			} catch {
 				// logging must never take the app down
 			}
 		}
 	}
 
-	private static readonly Lock FileGate = new();
+	/// <summary>
+	/// A DEBUG line for the file alone, not the screen or the listeners - for trouble inside logging itself, where
+	/// going through Write would call the very thing that just failed.
+	/// </summary>
+	private static void FileOnly(string source, string text) {
+		string? dir = _logDir;
+
+		if (dir == null) {
+			return;
+		}
+
+		string file = _logFile ?? Path.Combine(dir, $"nocatFarm-{DateTime.Now:yyyy-MM-dd}.log");
+		Append(file, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}|DEBUG|{source}|{text.ReplaceLineEndings(" ")}{Environment.NewLine}", debug: true);
+	}
+
+	private static void FileOnlyOnChange(string key, string source, string text) {
+		if (OnChange("log:" + key, text)) {
+			FileOnly(source, text);
+		}
+	}
 }

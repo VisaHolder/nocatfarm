@@ -14,9 +14,6 @@ public static class InstallRecord {
 
 	private const string Key = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\" + AppId + "_is1";
 
-	/// <summary>True when this copy is the installed one (not a portable folder).</summary>
-	public static bool IsInstalled => Here() is { } key && Close(key);
-
 	/// <summary>Bring the listed version up to this one, when this copy is the one that was installed.</summary>
 	public static void Refresh() {
 		try {
@@ -27,6 +24,7 @@ public static class InstallRecord {
 			}
 		} catch (Exception e) when (e is UnauthorizedAccessException or System.Security.SecurityException or IOException) {
 			// the list shows the old number - nothing else depends on it
+			Log.Failed("install record: updating the version Windows lists", e);
 		}
 	}
 
@@ -43,11 +41,5 @@ public static class InstallRecord {
 		key?.Dispose();
 
 		return null;
-	}
-
-	private static bool Close(RegistryKey key) {
-		key.Dispose();
-
-		return true;
 	}
 }

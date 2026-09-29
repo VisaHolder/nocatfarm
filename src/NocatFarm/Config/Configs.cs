@@ -677,6 +677,7 @@ public static class ConfigStore {
 			// the rest of the run: every change after that said it was saved and was gone at the next start.
 			_globalBroken = false;
 			_brokenSaveSaid = false;
+			GlobalLoadProblem = null;
 
 			if (plain && Secrets.Available) {
 				SaveGlobal(loaded);
@@ -688,13 +689,21 @@ public static class ConfigStore {
 			// token and the dashboard password because of one stray comma.
 			string kept = GlobalPath + ".broken";
 
+			// Not always bad JSON: a file it isn't allowed to read, or one another program holds, lands here too - the
+			// exception's type says which. Kept for Program to file once logging exists: at start this runs before it does.
+			string why = $"config: {GlobalPath} didn't load: {Log.Describe(e)}";
+			GlobalLoadProblem = why;
+			Log.Debug(why);
+
 			try {
 				File.Copy(GlobalPath, kept, true);
-			} catch {
+			} catch (Exception x) {
 				// best effort
+				GlobalLoadProblem += $" (and the copy to {Path.GetFileName(kept)} failed: {Log.Describe(x)})";
+				Log.Failed($"config: keeping a copy as {kept}", x);
 			}
 
-			Log.Error(new Said("config: {0} is not valid JSON ({1})", Path.GetFileName(GlobalPath), e.Message));
+			Log.Error(new Said("config: {0} is not valid JSON ({1})", Path.GetFileName(GlobalPath), Log.Scrub(e.Message)));
 			Log.Warn(new Said("a copy was kept as {0}; running on defaults until you fix it", Path.GetFileName(kept)));
 
 			// And nothing is written over it while running like this - not a setting, not the window's position on
@@ -710,6 +719,9 @@ public static class ConfigStore {
 
 	/// <summary>The last read of the global config failed - what it returned is defaults, not the settings.</summary>
 	public static bool GlobalBroken => _globalBroken;
+
+	/// <summary>Why the global config last failed to load, as a log line; null when it loaded.</summary>
+	public static string? GlobalLoadProblem { get; private set; }
 
 	private static bool _brokenSaveSaid;
 
@@ -754,7 +766,7 @@ public static class ConfigStore {
 
 			return true;
 		} catch (Exception e) {
-			Log.Warn(new Said("config: couldn't save global config: {0}", e.Message));
+			Log.Warn(new Said("config: couldn't save global config: {0}", Log.Describe(e)));
 
 			return false;
 		}
@@ -912,7 +924,10 @@ public static class ConfigStore {
 
 				bots[name] = cfg;
 			} catch (Exception e) {
-				Log.Warn(new Said("config: {0} is not valid JSON ({1}) - skipped", Path.GetFileName(file), e.Message));
+				Log.Warn(new Said("config: {0} is not valid JSON ({1}) - skipped", Path.GetFileName(file), Log.Scrub(e.Message)));
+
+				// Not always bad JSON - a file it may not read lands here too, and the type says which.
+				Log.Failed($"config: loading {file}", e, name);
 			}
 		}
 
@@ -937,7 +952,7 @@ public static class ConfigStore {
 
 			return true;
 		} catch (Exception e) {
-			Log.Warn(new Said("config: couldn't save {0}: {1}", name, e.Message));
+			Log.Warn(new Said("config: couldn't save {0}: {1}", name, Log.Describe(e)), name);
 
 			return false;
 		}
@@ -976,7 +991,9 @@ public static class ConfigStore {
 			File.Delete(p);
 
 			return true;
-		} catch {
+		} catch (Exception e) {
+			Log.Failed($"config: deleting {name}.json", e, name);
+
 			return false;
 		}
 	}

@@ -148,7 +148,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
 				} catch (Exception e) {
-					Log.Debug(new Said("couldn't check trade offers: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
+					Log.Debug(new Said("couldn't check trade offers: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
 				}
 			}
 
@@ -277,7 +277,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't handle trade offer #{0}: {1}: {2}", offer.Id, e.GetType().Name, e.Message), Bot.Name);
+				Log.Debug(new Said("couldn't handle trade offer #{0}: {1}: {2}", offer.Id, e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
 			}
 		}
 
@@ -668,7 +668,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 				? System.Text.Json.JsonSerializer.Deserialize<Dictionary<ulong, string>>(File.ReadAllText(AnnouncedPath)) ?? []
 				: [];
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the announced offers: {0}", e.Message), Bot.Name);
+			Log.Debug(new Said("couldn't read the announced offers: {0}", Log.Describe(e)), Bot.Name);
 
 			return [];
 		}
@@ -682,7 +682,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 				AtomicFile.Write(AnnouncedPath, System.Text.Json.JsonSerializer.Serialize(_announced));
 			}
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the announced offers: {0}", e.Message), Bot.Name);
+			Log.Debug(new Said("couldn't save the announced offers: {0}", Log.Describe(e)), Bot.Name);
 		}
 	}
 
@@ -865,11 +865,16 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		// A trade offer accepted successfully answers with JSON carrying the trade id. Treating "any 200 without
 		// strError" as success meant an HTML refusal page - which is what Steam serves for an expired session or
 		// a rate limit - was logged as a reward for items that never arrived, and never retried.
-		return body.Contains("tradeid", StringComparison.OrdinalIgnoreCase)
+		if (body.Contains("tradeid", StringComparison.OrdinalIgnoreCase)
 			|| body.Contains("\"success\":1", StringComparison.Ordinal)
-			|| body.Contains("\"success\":true", StringComparison.OrdinalIgnoreCase)
-			? Accepted.Done
-			: Accepted.Failed;
+			|| body.Contains("\"success\":true", StringComparison.OrdinalIgnoreCase)) {
+			return Accepted.Done;
+		}
+
+		// Tried again at every look while it keeps failing - the same answer once is enough.
+		Log.DebugOnChange($"accept:{Bot.Name}:{offer.Id}", $"accepting trade offer #{offer.Id} failed - Steam answered: {Log.Scrub(body[..Math.Min(150, body.Length)])}", Bot.Name);
+
+		return Accepted.Failed;
 	}
 
 	/// <summary>A true/1 JSON flag in Steam's answer.</summary>

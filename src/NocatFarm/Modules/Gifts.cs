@@ -102,7 +102,7 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 					} catch (Exception e) {
 						// A request timing out lands here too. Let through, it read as a normal shutdown and stopped
 						// the module without a word.
-						Log.Debug(new Said("couldn't check for gifts: {0}", e.Message), Bot.Name);
+						Log.Debug(new Said("couldn't check for gifts: {0}", Log.Describe(e)), Bot.Name);
 					}
 				}
 
@@ -185,7 +185,7 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 
 			if (!_kinds.TryGetValue(gid, out (bool Game, string Name) kind)) {
 				uint package = Bot.GuestPassPackages.TryGetValue(gid, out uint p) ? p : 0;
-				(bool? known, string name) = await WhatIsAsync(package, ct).ConfigureAwait(false);
+				(bool? known, string name) = await WhatIsAsync(package, Bot.Name, ct).ConfigureAwait(false);
 
 				// The store didn't answer. Deciding now would be a guess - and a wrong one could write a real gift
 				// off as a trial the account doesn't take. It stays unhandled, and the store is asked again later.
@@ -241,10 +241,13 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 	/// "... Free Weekend").
 	/// </summary>
 	/// <returns>Whether it's a gifted game - null when the store couldn't say - and the package's name.</returns>
-	private static async Task<(bool? Game, string Name)> WhatIsAsync(uint package, CancellationToken ct) {
+	private static async Task<(bool? Game, string Name)> WhatIsAsync(uint package, string account, CancellationToken ct) {
 		if (package == 0) {
 			return (false, "");   // Steam named no package: nothing to look up, so it's taken for what it arrived as
 		}
+
+		// Asked again on a backoff while the store won't say - the first line of each new failure is enough.
+		string key = $"gifts:store:{account}";
 
 		try {
 			string json = await Store.GetStringAsync($"https://store.steampowered.com/api/packagedetails?packageids={package}", ct).ConfigureAwait(false);
@@ -257,14 +260,21 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 			string name = Json.Str(json, "name") ?? "";
 
 			if (name.Length == 0) {
+				Log.DebugOnChange(key, $"store packagedetails for guest-pass package {package} named nothing: {Log.Scrub(json.Length > 150 ? json[..150] : json)}", account);
+
 				return (null, "");
 			}
+
+			Log.Recovered(key);
 
 			// No price means it isn't on sale right now (taken off the store since it was bought, say), and then the
 			// name is all there is to go on.
 			return (HasPrice().IsMatch(json) || !TrialName().IsMatch(name), name);
-		} catch (Exception) when (!ct.IsCancellationRequested) {
-			return (null, "");   // timed out or turned away - a request timing out is an OperationCanceledException too
+		} catch (Exception e) when (!ct.IsCancellationRequested) {
+			// timed out or turned away - a request timing out is an OperationCanceledException too
+			Log.DebugOnChange(key, $"couldn't ask the store what guest-pass package {package} is: {Log.Describe(e)}", account);
+
+			return (null, "");
 		}
 	}
 
@@ -416,6 +426,8 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 		AsyncJob<SteamApps.RedeemGuestPassResponseCallback>? job = Bot.Notifications?.RedeemGuestPass(gid);
 
 		if (job == null) {
+			Log.Debug("couldn't redeem a guest pass: not connected to Steam - trying again next login", Bot.Name);
+
 			return false;   // dropped off - the list is sent again on the next login
 		}
 
@@ -460,7 +472,7 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 		if (SuccessOne().IsMatch(answer)) {
 			Log.Good(new Said("accepted a Steam wallet gift card"), Bot.Name);
 		} else {
-			Log.Info(new Said("couldn't accept a Steam wallet gift card: {0}", answer.Length > 200 ? answer[..200] : answer), Bot.Name);
+			Log.Info(new Said("couldn't accept a Steam wallet gift card: {0}", Log.Scrub(answer.Length > 200 ? answer[..200] : answer)), Bot.Name);
 		}
 
 		return true;   // Steam's own no isn't retried - it would say no again
@@ -480,7 +492,8 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 			return true;
 		}
 
-		Log.Info(new Said("couldn't add a gifted game to the library: {0}", answer ?? "-"), Bot.Name);
+		// A null answer was already logged by the web session, with its status; Steam's own refusal is kept short.
+		Log.Info(new Said("couldn't add a gifted game to the library: {0}", answer == null ? "-" : Log.Scrub(answer.Length > 200 ? answer[..200] : answer)), Bot.Name);
 
 		return false;
 	}

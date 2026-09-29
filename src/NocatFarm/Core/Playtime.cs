@@ -90,6 +90,10 @@ public static class Playtime {
 
 					await Task.Delay(2000).ConfigureAwait(false);
 				}
+			} catch (Exception e) {
+				// The next ask starts it again, but the ones still waiting are dropped until then.
+				Log.Failed("the playtime lookups stopped", e);
+				Log.StackToFile(e);
 			} finally {
 				Volatile.Write(ref _fetching, 0);
 			}
@@ -104,7 +108,7 @@ public static class Playtime {
 
 			return FromMinutes(Number(doc.RootElement, "median_forever"), Number(doc.RootElement, "average_forever"));
 		} catch (Exception e) when (e is HttpRequestException or TaskCanceledException or JsonException) {
-			Log.Debug(new Said("couldn't look up how long {0} takes: {1}", app, e.Message));
+			Log.Debug(new Said("couldn't look up how long {0} takes: {1}", app, Log.Describe(e)));
 
 			return -1;
 		}
@@ -120,7 +124,8 @@ public static class Playtime {
 
 		try {
 			_cache = File.Exists(CachePath) ? JsonSerializer.Deserialize<Dictionary<uint, Entry>>(File.ReadAllText(CachePath)) ?? [] : [];
-		} catch {
+		} catch (Exception e) {
+			Log.Failed("couldn't read the playtime cache - asking again", e);
 			_cache = [];
 		}
 	}
@@ -129,8 +134,9 @@ public static class Playtime {
 		try {
 			Directory.CreateDirectory(Path.GetDirectoryName(CachePath)!);
 			AtomicFile.Write(CachePath, JsonSerializer.Serialize(_cache));
-		} catch {
+		} catch (Exception e) {
 			// asked again next start
+			Log.Failed("couldn't save the playtime cache", e);
 		}
 	}
 }

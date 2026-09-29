@@ -195,7 +195,7 @@ public sealed class MainWindow : IDisposable {
 	/// <summary>Clickable areas worked out during the paint, so hit-testing always matches what is on screen.</summary>
 	private readonly List<(int X, int Y, int W, int H, string Bot, char What)> _hits = [];
 
-	private sealed record Button(string Text, int Id, int X, int Y, int W, int H, int Colour);
+	private sealed record Button(int Id, int X, int Y, int W, int H);
 
 	/// <summary>
 	/// One row of the log pane.
@@ -308,7 +308,8 @@ public sealed class MainWindow : IDisposable {
 			// A window that dies quietly is the worst outcome here: the console log has already been suppressed
 			// in favour of this window, so the user is left with an app that shows them nothing at all.
 			Log.Suppressed = false;
-			Log.Error(new Said("window failed ({0}: {1}) - using the console", e.GetType().Name, e.Message));
+			Log.Error(new Said("window failed ({0}: {1}) - using the console", e.GetType().Name, Log.Scrub(e.Message)));
+			Log.StackToFile(e);
 			Failed?.Invoke();
 		}
 	}
@@ -522,7 +523,9 @@ public sealed class MainWindow : IDisposable {
 					}
 				}
 			} catch (Exception e) {
-				Append(new Log.Entry(0, DateTime.Now, "ERROR", "", new Core.Said("  " + e.Message)));
+				// On the window only, this was gone the moment it scrolled - and never reached the file at all.
+				Log.Failed("a command typed in the window", e);
+				Append(new Log.Entry(0, DateTime.Now, "ERROR", "", new Core.Said("  " + Log.Scrub(e.Message))));
 			}
 
 			Invalidate();
@@ -536,7 +539,23 @@ public sealed class MainWindow : IDisposable {
 		}
 	}
 
+	/// <summary>
+	/// Windows calls this from native code, where an exception doesn't come back to anything that can catch it - it ends
+	/// the whole process with no line in the log. So a message that goes wrong is logged, with its stack, and handed
+	/// to Windows' default handling instead.
+	/// </summary>
 	private IntPtr WindowProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam) {
+		try {
+			return HandleMessage(hwnd, msg, wParam, lParam);
+		} catch (Exception e) {
+			Log.DebugOnChange("window-message", $"the window couldn't handle a message ({msg:x}): {Log.Describe(e)}");
+			Log.StackToFile(e);
+
+			return DefWindowProc(hwnd, msg, wParam, lParam);
+		}
+	}
+
+	private IntPtr HandleMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam) {
 		switch (msg) {
 			case WmPaint:
 				Paint(hwnd);
@@ -794,7 +813,7 @@ public sealed class MainWindow : IDisposable {
 			Live.Global.WindowY = outer.Top;
 			ConfigStore.SaveGlobal(Live.Global);
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the window size: {0}: {1}", e.GetType().Name, e.Message));
+			Log.Debug(new Said("couldn't save the window size: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)));
 		}
 	}
 
@@ -864,9 +883,9 @@ public sealed class MainWindow : IDisposable {
 				// Running, not online: a reconnecting account, or one sitting out a cooldown, showed "start" and
 				// couldn't be stopped from here at all.
 				if (bot.Running) {
-					_ = bot.StopAsync(graceful: true);
+					Background.Run("couldn't stop", () => bot.StopAsync(graceful: true), bot.Name);
 				} else {
-					_ = bot.StartAsync();
+					Background.Run("couldn't start", bot.StartAsync, bot.Name);
 				}
 
 				break;
@@ -874,12 +893,16 @@ public sealed class MainWindow : IDisposable {
 			case 'c':
 				Append(new Log.Entry(0, DateTime.Now, "INFO", "you", new Core.Said("> cards " + name)));
 				_ = Task.Run(async () => {
-					string output = await Commands.RunAsync(_mgr, "cards " + name).ConfigureAwait(false);
+					try {
+						string output = await Commands.RunAsync(_mgr, "cards " + name).ConfigureAwait(false);
 
-					foreach (string line in output.Replace("\r\n", "\n").Split('\n')) {
-						if (line.Length > 0) {
-							Append(new Log.Entry(0, DateTime.Now, "INFO", "", new Core.Said("  " + line)));
+						foreach (string line in output.Replace("\r\n", "\n").Split('\n')) {
+							if (line.Length > 0) {
+								Append(new Log.Entry(0, DateTime.Now, "INFO", "", new Core.Said("  " + line)));
+							}
 						}
+					} catch (Exception e) {
+						Log.Failed("the cards button", e, name);
 					}
 
 					Invalidate();
@@ -949,7 +972,7 @@ public sealed class MainWindow : IDisposable {
 		try {
 			System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
 		} catch (Exception e) {
-			Log.Warn(new Said("couldn't open {0}: {1}", url, e.Message));
+			Log.Warn(new Said("couldn't open {0}: {1}", url, Log.Scrub(e.Message)));
 		}
 	}
 
@@ -972,7 +995,7 @@ public sealed class MainWindow : IDisposable {
 					try {
 						System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
 					} catch (Exception e) {
-						Log.Warn(new Said("couldn't open the browser: {0}", e.Message));
+						Log.Warn(new Said("couldn't open the browser: {0}", Log.Describe(e)));
 					}
 				} else {
 					Append(new Log.Entry(0, DateTime.Now, "WARN", "", new Core.Said("  the dashboard is switched off - 'set WebEnabled true' then restart")));
@@ -1089,9 +1112,9 @@ public sealed class MainWindow : IDisposable {
 			// at all unless you had debug detail switched on, so the window simply looked dead. Say it out
 			// loud once the failures stop being a blip, and say it only once so the log is not a wall.
 			if (++_paintFailures == 5) {
-				Log.Error(new Said("window can't draw ({0}: {1}) - dashboard still works", e.GetType().Name, e.Message));
+				Log.Error(new Said("window can't draw ({0}: {1}) - dashboard still works", e.GetType().Name, Log.Scrub(e.Message)));
 			} else if (_paintFailures < 5) {
-				Log.Debug(new Said("paint failed: {0}: {1}", e.GetType().Name, e.Message));
+				Log.Debug(new Said("paint failed: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)));
 			}
 		} finally {
 			SelectObject(mem, old);
@@ -1548,7 +1571,7 @@ public sealed class MainWindow : IDisposable {
 				Live.Global.MiniMode = on;
 				ConfigStore.SaveGlobal(Live.Global);
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't save mini mode: {0}", e.Message));
+				Log.Debug(new Said("couldn't save mini mode: {0}", Log.Describe(e)));
 			}
 		}
 
@@ -1613,7 +1636,7 @@ public sealed class MainWindow : IDisposable {
 			Live.Global.MiniY = r.Top;
 			ConfigStore.SaveGlobal(Live.Global);
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save where mini mode was: {0}", e.Message));
+			Log.Debug(new Said("couldn't save where mini mode was: {0}", Log.Describe(e)));
 		}
 	}
 
@@ -1726,7 +1749,7 @@ public sealed class MainWindow : IDisposable {
 
 	/// <summary>A title-bar button drawn with an icon rather than a word - there's no room for words up there.</summary>
 	private void AddIconButton(IntPtr dc, string glyph, int id, int x, int y, int w, int h, int colour) {
-		_buttons.Add(new Button(glyph, id, x, y, w, h, colour));
+		_buttons.Add(new Button(id, x, y, w, h));
 
 		bool hover = _hoverId == id;
 
@@ -1751,7 +1774,7 @@ public sealed class MainWindow : IDisposable {
 			Live.Global.MiniOnTop = !Live.Global.MiniOnTop;
 			ConfigStore.SaveGlobal(Live.Global);
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the keep-on-top choice: {0}", e.Message));
+			Log.Debug(new Said("couldn't save the keep-on-top choice: {0}", Log.Describe(e)));
 		}
 
 		ApplyOnTop();
@@ -1767,7 +1790,7 @@ public sealed class MainWindow : IDisposable {
 
 	// ── drawing helpers ─────────────────────────────────────────────────────
 	private void AddButton(IntPtr dc, string text, int id, int x, int y, int w, int h, int colour) {
-		_buttons.Add(new Button(text, id, x, y, w, h, colour));
+		_buttons.Add(new Button(id, x, y, w, h));
 
 		bool hover = _hoverId == id;
 

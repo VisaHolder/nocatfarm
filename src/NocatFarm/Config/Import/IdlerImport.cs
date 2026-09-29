@@ -434,7 +434,8 @@ public static class IdlerImport {
 
 		try {
 			blob = ImportPlaces.ReadCredential(target);
-		} catch {
+		} catch (Exception e) {
+			Log.Failed($"import: reading the Windows credential '{target}'", e);
 			blob = null;
 		}
 
@@ -469,7 +470,7 @@ public static class IdlerImport {
 
 			return true;
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't bring {0}'s authenticator across: {1}", name, e.Message));
+			Log.Debug(new Said("couldn't bring {0}'s authenticator across: {1}", name, Log.Describe(e)), name);
 
 			return false;
 		}
@@ -493,7 +494,7 @@ public static class IdlerImport {
 		try {
 			return importer.Resolve(path);
 		} catch (Exception e) {
-			Log.Debug(new Said("{0}: couldn't look at {1}: {2}", importer.Name, path, e.Message));
+			Log.Debug(new Said("{0}: couldn't look at {1}: {2}", importer.Name, path, Log.Describe(e)));
 
 			return null;
 		}
@@ -503,8 +504,12 @@ public static class IdlerImport {
 		try {
 			return importer.Read(resolved);
 		} catch (Exception e) {
+			// The note reaches the screen; the file gets the reason and, since a reader that throws is a bug, the stack.
+			Log.Failed($"import: {importer.Name} reading {resolved}", e);
+			Log.StackToFile(e);
+
 			ImportScan failed = new() { Tool = importer.Id, ToolName = importer.Name };
-			failed.Notes.Add(new Said("couldn't read {0}: {1}", resolved, e.Message));
+			failed.Notes.Add(new Said("couldn't read {0}: {1}", resolved, Log.Scrub(e.Message)));
 
 			return failed;
 		}

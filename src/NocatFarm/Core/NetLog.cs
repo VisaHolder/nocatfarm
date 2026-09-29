@@ -30,8 +30,9 @@ internal sealed class NetLog : IDebugNetworkListener {
 
 			try {
 				System.IO.File.WriteAllText(_path, $"# netlog for {bot.Name}\n");
-			} catch {
-				// diagnostic only
+			} catch (System.Exception e) {
+				// diagnostic only - but it was asked for, so say why there isn't one
+				Log.Failed($"couldn't start the packet log {System.IO.Path.GetFileName(_path)}", e, bot.Name);
 			}
 		}
 	}
@@ -55,8 +56,9 @@ internal sealed class NetLog : IDebugNetworkListener {
 			lock (_gate) {
 				System.IO.File.AppendAllText(_path!, $"{System.DateTime.Now:HH:mm:ss.fff} {dir} {msg} ({len}b)\n");
 			}
-		} catch {
-			// diagnostic only
+		} catch (System.Exception e) {
+			// diagnostic only - and this runs per packet, so each distinct failure is said once
+			Log.DebugOnChange($"netlog:{_bot.Name}", $"couldn't write the packet log: {Log.Describe(e)}", _bot.Name);
 		}
 	}
 }

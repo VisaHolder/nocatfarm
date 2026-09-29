@@ -125,6 +125,8 @@ public sealed partial class GroupJoin(Bot bot) : BotModule(bot) {
 						if (tries >= 4) {
 							Log.Info(new Said("couldn't join {0} - trying again next start", name), Bot.Name);
 							_done.Add(group);
+						} else {
+							Log.Debug($"couldn't join {group} (try {tries} of 4) - looking again in a few minutes", Bot.Name);
 						}
 
 						break;
@@ -228,11 +230,23 @@ public sealed partial class GroupJoin(Bot bot) : BotModule(bot) {
 		string? body = await Bot.Web.PostAsync(url, new Dictionary<string, string>(StringComparer.Ordinal) { ["action"] = "join" }, url, ct).ConfigureAwait(false);
 
 		// A real join returns the group page; a refused one returns Steam's error page (same 200).
-		return body != null
-			&& !body.Contains("Missing or invalid form session key", StringComparison.OrdinalIgnoreCase)
-			&& !body.Contains(":: Error", StringComparison.OrdinalIgnoreCase)
-				? (Outcome.Joined, name)
-				: (Outcome.Failed, name);
+		if (body == null) {
+			return (Outcome.Failed, name);   // the web session already logged why
+		}
+
+		if (body.Contains("Missing or invalid form session key", StringComparison.OrdinalIgnoreCase)) {
+			Log.Debug($"joining {path} refused: Steam said the form session key was missing or invalid", Bot.Name);
+
+			return (Outcome.Failed, name);
+		}
+
+		if (body.Contains(":: Error", StringComparison.OrdinalIgnoreCase)) {
+			Log.Debug($"joining {path} refused: Steam answered with its error page", Bot.Name);
+
+			return (Outcome.Failed, name);
+		}
+
+		return (Outcome.Joined, name);
 	}
 
 	/// <summary>

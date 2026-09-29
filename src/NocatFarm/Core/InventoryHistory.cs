@@ -143,13 +143,14 @@ public static class InventoryHistory {
 					}
 				}
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't read the inventory history: {0}", e.Message));
+				Log.Debug(new Said("couldn't read the inventory history: {0}", Log.Describe(e)));
 
 				// Moved aside, like the history files: the next save would write the new points over whatever it still held.
 				// If it can't even be moved, it isn't written over either.
 				try {
 					File.Move(Path, Path + ".bad", overwrite: true);
 				} catch (Exception move) when (move is IOException or UnauthorizedAccessException) {
+					Log.Failed("couldn't move the unreadable inventory history aside - it won't be saved over this run", move);
 					_loadFailed = true;
 				}
 			}
@@ -180,7 +181,7 @@ public static class InventoryHistory {
 			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
 			AtomicFile.Write(Path, JsonSerializer.Serialize(snapshot));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the inventory history: {0}", e.Message));
+			Log.Debug(new Said("couldn't save the inventory history: {0}", Log.Describe(e)));
 		}
 	}
 }

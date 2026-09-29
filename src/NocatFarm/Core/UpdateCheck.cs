@@ -46,7 +46,9 @@ public static class UpdateCheck {
 
 				try {
 					_skipped = File.Exists(SkipPath) ? File.ReadAllText(SkipPath).Trim() : null;
-				} catch {
+				} catch (Exception e) {
+					// a skipped version forgotten would be offered (or installed by itself) again
+					Log.Failed("update: reading the skipped version", e);
 					_skipped = null;
 				}
 			}
@@ -65,8 +67,9 @@ public static class UpdateCheck {
 				} else {
 					AtomicFile.Write(SkipPath, value);
 				}
-			} catch {
+			} catch (Exception e) {
 				// it only lasts until the next launch, then
+				Log.Failed("update: saving the skipped version", e);
 			}
 		}
 	}
@@ -80,13 +83,14 @@ public static class UpdateCheck {
 	/// <summary>Is the newest version one that was skipped?</summary>
 	/// <remarks>Without the "v": GitHub's tag is "v1.4.6", the swap script's is "1.4.6" - compared as they came, a version
 	/// that had just been put back didn't count as skipped, and "Update by itself" installed it again minutes later.</remarks>
-	private static bool IsSkipped(string? tag) => (tag != null) && (Skipped is { } s)
+	internal static bool IsSkipped(string? tag) => (tag != null) && (Skipped is { } s)
 		&& string.Equals(s.TrimStart('v', 'V'), tag.TrimStart('v', 'V'), StringComparison.OrdinalIgnoreCase);
 
 	private static DateTime _heldLoggedAt = DateTime.MinValue;
 
 	private static DateTime _remindedAt = DateTime.MinValue;
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0052", Justification = "Held, never read: a timer nothing holds on to is collected and stops firing.")]
 	private static Timer? _timer;
 	private static int _ticking;
 
@@ -110,7 +114,10 @@ public static class UpdateCheck {
 			AutoInstallIfDue(mgr);
 			QueuedInstallIfDue(mgr);
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't check for updates: {0}", e.Message));
+			// LookAsync catches its own - this is a bug in the rest, and it would come back every minute: once, with its stack.
+			if (Log.DebugOnChange("update:tick", $"update: the once-a-minute update tick failed: {Log.Describe(e)}")) {
+				Log.StackToFile(e);
+			}
 		} finally {
 			Volatile.Write(ref _ticking, 0);
 		}
@@ -184,6 +191,11 @@ public static class UpdateCheck {
 			string page = doc.RootElement.TryGetProperty("html_url", out JsonElement u) ? u.GetString() ?? "" : "";
 			string body = doc.RootElement.TryGetProperty("body", out JsonElement nb) ? nb.GetString() ?? "" : "";
 
+			// Otherwise it reads as "up to date" - a changed feed or an error object would hide every release.
+			if (tag.Length == 0) {
+				Log.Debug($"update check: no tag_name in the answer from {FeedWhere()}");
+			}
+
 			if (!IsNewer(tag.TrimStart('v', 'V'), Build.Version)) {
 				Available = null;
 
@@ -212,14 +224,18 @@ public static class UpdateCheck {
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't check for updates: {0}", e.Message));
+			// GitHub's refusal (a rate limit's 403) arrives as the HttpRequestException's message, status included.
+			Log.Debug($"couldn't check for updates at {FeedWhere()}: {Log.Describe(e)}");
 
 			// Asked again in 15 minutes, not after the full gap: a blip just after starting hid a new release for a day.
 			_lastLooked = DateTime.UtcNow - every + TimeSpan.FromMinutes(15);
 
-			return e.Message;
+			return Log.Scrub(e.Message);
 		}
 	}
+
+	/// <summary>The release feed for the log: host and path, no query.</summary>
+	internal static string FeedWhere() => Log.Where(Uri.TryCreate(SelfUpdate.Feed, UriKind.Absolute, out Uri? feed) ? feed : null);
 
 	/// <summary>The release notes' first few bullet points, plainly - enough to say what's new in one message.</summary>
 	internal static string Highlights(string body) {
@@ -287,7 +303,8 @@ public static class UpdateCheck {
 			try {
 				await SelfUpdate.ApplyAsync(CancellationToken.None, byItself: true).ConfigureAwait(false);
 			} catch (Exception e) {
-				Log.Error(new Said("update failed: {0} - nothing was changed", e.Message));
+				Log.Error(new Said("update failed: {0} - nothing was changed", Log.Scrub(e.Message)));
+				Log.StackToFile(e);
 			}
 		});
 	}
@@ -363,7 +380,8 @@ public static class UpdateCheck {
 			try {
 				await SelfUpdate.ApplyAsync(CancellationToken.None, byItself: true).ConfigureAwait(false);
 			} catch (Exception e) {
-				Log.Error(new Said("update failed: {0} - nothing was changed", e.Message));
+				Log.Error(new Said("update failed: {0} - nothing was changed", Log.Scrub(e.Message)));
+				Log.StackToFile(e);
 			}
 		});
 	}

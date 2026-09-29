@@ -107,6 +107,7 @@ jobs:
         with:
           name: ${{ env.ZIP }}
           path: ${{ env.ZIP }}
+          retention-days: 1   # the release keeps the real copy; these were piling up at 50MB each
 
       - name: add it to the release
         if: inputs.tag != ''

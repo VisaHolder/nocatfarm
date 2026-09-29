@@ -158,6 +158,9 @@ public static class GameNames {
 				using HttpResponseMessage response = await Http.GetAsync(url, ct).ConfigureAwait(false);
 
 				if (!response.IsSuccessStatusCode) {
+					// Up to forty of these a round, and a 429 answers every one the same - said once.
+					Log.DebugOnChange("gamenames:store", $"game name lookup: HTTP {(int) response.StatusCode} from {Log.Where(response.RequestMessage?.RequestUri)}");
+
 					continue;
 				}
 
@@ -174,7 +177,7 @@ public static class GameNames {
 					_dirty = true;
 				}
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't look up the name of app {0}: {1}", appId, e.Message));
+				Log.Debug(new Said("couldn't look up the name of app {0}: {1}", appId, Log.Describe(e)));
 			}
 
 			await Task.Delay(250, ct).ConfigureAwait(false);
@@ -215,7 +218,7 @@ public static class GameNames {
 					}
 				}
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't read the game-name cache: {0}", e.Message));
+				Log.Debug(new Said("couldn't read the game-name cache: {0}", Log.Describe(e)));
 			}
 		}
 	}
@@ -237,7 +240,7 @@ public static class GameNames {
 			Directory.CreateDirectory(ConfigStore.ConfigDir);
 			await AtomicFile.WriteAsync(CachePath, JsonSerializer.Serialize(map, new JsonSerializerOptions { WriteIndented = true })).ConfigureAwait(false);
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the game-name cache: {0}", e.Message));
+			Log.Debug(new Said("couldn't save the game-name cache: {0}", Log.Describe(e)));
 		} finally {
 			SaveLock.Release();
 		}

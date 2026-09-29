@@ -226,7 +226,7 @@ public sealed class Bot : IAsyncDisposable {
 			Directory.CreateDirectory(Path.GetDirectoryName(DropsFirstPath)!);
 			AtomicFile.Write(DropsFirstPath, JsonSerializer.Serialize(new DropsFirstSave(DropsFirstApp, DropsFirstWant, DropsFirstGot)));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the drop run: {0}", e.Message), Name);
+			Log.Debug(new Said("couldn't save the drop run: {0}", Log.Describe(e)), Name);
 		}
 	}
 
@@ -244,7 +244,7 @@ public sealed class Bot : IAsyncDisposable {
 				Log.Info(new Said("still going for {0}: {1} of {2} card drop(s)", GameNames.Of(DropsFirstApp), DropsFirstGot, DropsFirstWant), Name);
 			}
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't resume the drop run: {0}", e.Message), Name);
+			Log.Debug(new Said("couldn't resume the drop run: {0}", Log.Describe(e)), Name);
 		}
 	}
 
@@ -264,7 +264,7 @@ public sealed class Bot : IAsyncDisposable {
 			Directory.CreateDirectory(Path.GetDirectoryName(GrindPath)!);
 			AtomicFile.Write(GrindPath, JsonSerializer.Serialize(new GrindSave(GrindGame, GrindUntil.Value.Ticks, GrindIsBoost, GrindDropsLeft)));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the grind: {0}", e.Message), Name);
+			Log.Debug(new Said("couldn't save the grind: {0}", Log.Describe(e)), Name);
 		}
 	}
 
@@ -296,7 +296,7 @@ public sealed class Bot : IAsyncDisposable {
 			GrindStartsAt = DateTime.UtcNow;   // resume now - no fresh switch-in delay on a resume
 			Log.Info(new Said("resuming the grind of {0} - {1} left", GameNames.Of(GrindGame), Fmt.Hm((int) (until - DateTime.UtcNow).TotalMinutes)), Name);
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't resume the grind: {0}", e.Message), Name);
+			Log.Debug(new Said("couldn't resume the grind: {0}", Log.Describe(e)), Name);
 		}
 	}
 
@@ -519,7 +519,7 @@ public sealed class Bot : IAsyncDisposable {
 
 			return false;
 		} catch (Exception e) when (e is not OperationCanceledException || !ct.IsCancellationRequested) {
-			Log.Debug(new Said("couldn't confirm trade offer #{0}: {1}", tradeOfferId, e.Message), Name);
+			Log.Debug(new Said("couldn't confirm trade offer #{0}: {1}", tradeOfferId, Log.Describe(e)), Name);
 
 			return false;
 		}
@@ -671,6 +671,9 @@ public sealed class Bot : IAsyncDisposable {
 
 	/// <summary>Stamp connection liveness. Called by the network tap on every incoming packet.</summary>
 	internal void NoteIncomingPacket() => _lastPacket = DateTime.UtcNow;
+
+	/// <summary>When Steam last sent this session anything at all (UTC) - proof the connection is alive since then.</summary>
+	internal DateTime LastInbound => _lastPacket;
 
 	private string? _password;
 	private int _loggingIn;
@@ -843,8 +846,16 @@ public sealed class Bot : IAsyncDisposable {
 			SteamUnifiedMessages.ServiceMethodResponse<CPlayer_GetGameBadgeLevels_Response> answer =
 				await player.GetGameBadgeLevels(new CPlayer_GetGameBadgeLevels_Request()).ToTask().WaitAsync(TimeSpan.FromSeconds(20)).ConfigureAwait(false);
 
-			return answer.Result == EResult.OK ? answer.Body.player_level : null;
+			if (answer.Result != EResult.OK) {
+				Log.Debug($"Steam level refused: {answer.Result}", Name);
+
+				return null;
+			}
+
+			return answer.Body.player_level;
 		} catch (Exception e) when (e is TimeoutException or TaskCanceledException or AsyncJobFailedException) {
+			Log.Failed("couldn't read the Steam level", e, Name);
+
 			return null;
 		}
 	}
@@ -859,21 +870,44 @@ public sealed class Bot : IAsyncDisposable {
 			SteamUnifiedMessages.ServiceMethodResponse<SteamKit2.WebUI.Internal.CLoyaltyRewards_GetSummary_Response> answer =
 				await loyalty.GetSummary(new SteamKit2.WebUI.Internal.CLoyaltyRewards_GetSummary_Request { steamid = SteamId }).ToTask().WaitAsync(TimeSpan.FromSeconds(20)).ConfigureAwait(false);
 
-			return answer.Result == EResult.OK ? answer.Body.summary?.points : null;
+			if (answer.Result != EResult.OK) {
+				Log.Debug($"Steam points refused: {answer.Result}", Name);
+
+				return null;
+			}
+
+			return answer.Body.summary?.points;
 		} catch (Exception e) when (e is TimeoutException or TaskCanceledException or AsyncJobFailedException) {
+			Log.Failed("couldn't read the Steam points", e, Name);
+
 			return null;
 		}
 	}
 
 	/// <summary>Change the name everybody sees on the profile and friends list. Not the custom game name.</summary>
-	public bool SetProfileName(string name) {
+	/// <returns>OK once Steam shows the new name, Pending when it hasn't within ten seconds, or null when the account
+	/// isn't signed in. SteamKit sends the change with nothing to wait on, and it used to be taken as done - a name Steam
+	/// turned down still came back "profile name is now ...". Steam echoes this account's own persona back to it, so
+	/// that echo is the answer.</returns>
+	public async Task<EResult?> SetProfileNameAsync(string name) {
 		if ((Friends == null) || !IsOnline || string.IsNullOrWhiteSpace(name)) {
-			return false;
+			return null;
 		}
 
-		Friends.SetPersonaName(name.Trim());
+		string wanted = name.Trim();
+		Friends.SetPersonaName(wanted);
 
-		return true;
+		for (int i = 0; (i < 20) && !string.Equals(SteamName, wanted, StringComparison.Ordinal); i++) {
+			await Task.Delay(500).ConfigureAwait(false);
+		}
+
+		if (string.Equals(SteamName, wanted, StringComparison.Ordinal)) {
+			return EResult.OK;
+		}
+
+		Log.Debug($"Steam hasn't shown the new profile name yet - still \"{SteamName}\"", Name);
+
+		return EResult.Pending;
 	}
 
 	/// <summary>
@@ -890,7 +924,7 @@ public sealed class Bot : IAsyncDisposable {
 			Library.NoteFamilyRunning(cb.Body.running_apps
 				.Select(static a => (a.appid, a.playing_members.Select(static m => m.member_steamid))));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the family's running games: {0}", e.Message), Name);
+			Log.Debug(new Said("couldn't read the family's running games: {0}", Log.Describe(e)), Name);
 		}
 	}
 
@@ -1071,7 +1105,21 @@ public sealed class Bot : IAsyncDisposable {
 			message = message,
 		};
 
-		Unified.SendMessage<CFriendMessages_SendMessage_Request, CFriendMessages_SendMessage_Response>("FriendMessages.SendMessage#1", req);
+		AsyncJob<SteamUnifiedMessages.ServiceMethodResponse<CFriendMessages_SendMessage_Response>> job =
+			Unified.SendMessage<CFriendMessages_SendMessage_Request, CFriendMessages_SendMessage_Response>("FriendMessages.SendMessage#1", req);
+
+		// Nobody waits on the answer, so a refused message would otherwise vanish without a trace.
+		_ = Task.Run(async () => {
+			try {
+				SteamUnifiedMessages.ServiceMethodResponse<CFriendMessages_SendMessage_Response> answer = await job.ToTask().ConfigureAwait(false);
+
+				if (answer.Result != EResult.OK) {
+					Log.Debug($"chat message to {steamId} refused: {answer.Result}", Name);
+				}
+			} catch (Exception e) {
+				Log.Failed($"chat message to {steamId} not sent", e, Name);
+			}
+		});
 	}
 
 	/// <summary>
@@ -1127,7 +1175,7 @@ public sealed class Bot : IAsyncDisposable {
 			handler.Proxy = proxy;
 			handler.UseProxy = true;
 		} catch (Exception e) {
-			Log.Warn(new Said("bad proxy '{0}' ({1}) - connecting directly", address, e.Message));
+			Log.Warn(new Said("bad proxy '{0}' ({1}) - connecting directly", address, Log.Scrub(e.Message)));
 		}
 
 		return handler;
@@ -1161,7 +1209,7 @@ public sealed class Bot : IAsyncDisposable {
 		} catch (Exception e) {
 			State = BotState.Failed;
 			StatusText = "couldn't start";
-			Log.Error(new Said("couldn't start: {0}: {1}", e.GetType().Name, e.Message), Name);
+			Log.Error(new Said("couldn't start: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Name);
 		} finally {
 			_startGate.Release();
 		}
@@ -1345,8 +1393,9 @@ public sealed class Bot : IAsyncDisposable {
 		foreach (IBotModule m in _modules) {
 			try {
 				await m.StopAsync().ConfigureAwait(false);
-			} catch {
+			} catch (Exception e) {
 				// a module must never block shutdown
+				Log.Failed($"module {m.Name} didn't stop cleanly", e, Name);
 			}
 		}
 	}
@@ -1356,7 +1405,9 @@ public sealed class Bot : IAsyncDisposable {
 			try {
 				_cb.RunWaitCallbacks(TimeSpan.FromSeconds(1));
 			} catch (Exception e) {
-				Log.Debug(new Said("callback pump: {0}", e.Message), Name);
+				if (Log.DebugOnChange($"pump:{Name}", $"callback pump: {Log.Describe(e)}", Name)) {
+					Log.StackToFile(e, Name);
+				}
 			}
 		}
 	}
@@ -1371,7 +1422,8 @@ public sealed class Bot : IAsyncDisposable {
 		try {
 			await OnConnectedAsync(callback).ConfigureAwait(false);
 		} catch (Exception e) {
-			Log.Error(new Said("the connect handler failed: {0}: {1}", e.GetType().Name, e.Message), Name);
+			Log.Error(new Said("the connect handler failed: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Name);
+			Log.StackToFile(e, Name);
 		}
 	}
 
@@ -1394,7 +1446,7 @@ public sealed class Bot : IAsyncDisposable {
 				StatusText = "login failed";
 			}
 
-			Log.Error(new Said("login failed: {0}", e.Message), Name);
+			Log.Error(new Said("login failed: {0}", Log.Scrub(e.Message)), Name);
 
 			try {
 				Client.Disconnect();   // OnDisconnected drives the retry
@@ -1557,9 +1609,9 @@ public sealed class Bot : IAsyncDisposable {
 						_running = false;
 						State = BotState.Failed;
 						StatusText = "sign-in failed";
-						Log.Attention(new Said("sign-in failed 3 times ({0}) - fix SteamPassword, 'start {1}'", e.Message, Name), Name);
+						Log.Attention(new Said("sign-in failed 3 times ({0}) - fix SteamPassword, 'start {1}'", Log.Scrub(e.Message), Name), Name);
 					} else {
-						Log.Warn(new Said("sign-in attempt failed: {0}", e.Message), Name);
+						Log.Warn(new Said("sign-in attempt failed: {0}", Log.Scrub(e.Message)), Name);
 					}
 
 					throw;
@@ -1644,7 +1696,8 @@ public sealed class Bot : IAsyncDisposable {
 		try {
 			await OnLoggedOnAsync(callback).ConfigureAwait(false);
 		} catch (Exception e) {
-			Log.Error(new Said("the logon handler failed: {0}: {1}", e.GetType().Name, e.Message), Name);
+			Log.Error(new Said("the logon handler failed: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Name);
+			Log.StackToFile(e, Name);
 		}
 	}
 
@@ -1713,8 +1766,9 @@ public sealed class Bot : IAsyncDisposable {
 			}
 
 			ApplyPersona();
-		} catch {
+		} catch (Exception e) {
 			// persona state is cosmetic - never let it stop the login
+			Log.Failed("couldn't announce the persona at logon", e, Name);
 		}
 
 		// NOT forced. A forced refresh mints a brand-new web token on every single logon, and a new web token is a
@@ -1747,8 +1801,9 @@ public sealed class Bot : IAsyncDisposable {
 		try {
 			Notifications?.RequestItemAnnouncements();
 			Notifications?.RequestCommentNotifications();
-		} catch {
+		} catch (Exception e) {
 			// not fatal - the push arrives anyway once something happens
+			Log.Failed("couldn't ask Steam for the item and comment counts", e, Name);
 		}
 
 		// Sweep from HERE, not from the comment-notification callback. Steam only pushes that callback when it
@@ -1764,7 +1819,8 @@ public sealed class Bot : IAsyncDisposable {
 			try {
 				await m.StartAsync().ConfigureAwait(false);
 			} catch (Exception e) {
-				Log.Warn(new Said("module {0} failed to start: {1}", m.Name, e.Message), Name);
+				Log.Warn(new Said("module {0} failed to start: {1}", m.Name, Log.Scrub(e.Message)), Name);
+				Log.StackToFile(e, Name);
 			}
 		}
 
@@ -1809,14 +1865,20 @@ public sealed class Bot : IAsyncDisposable {
 	/// log line to say why. The body lives in a Task below so it can be wrapped.
 	/// </summary>
 	private async void OnDisconnected(SteamClient.DisconnectedCallback callback) {
+		// The on-screen line only says "reconnecting"; this is the why, for the file.
+		if (_running) {
+			Log.Debug($"disconnected - by us: {callback.UserInitiated}, Steam's last word: {_lastLogOnResult}", Name);
+		}
+
 		try {
-			await OnDisconnectedAsync(callback).ConfigureAwait(false);
+			await OnDisconnectedAsync().ConfigureAwait(false);
 		} catch (Exception e) {
-			Log.Error(new Said("the disconnect handler failed: {0}: {1}", e.GetType().Name, e.Message), Name);
+			Log.Error(new Said("the disconnect handler failed: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Name);
+			Log.StackToFile(e, Name);
 		}
 	}
 
-	private async Task OnDisconnectedAsync(SteamClient.DisconnectedCallback cb) {
+	private async Task OnDisconnectedAsync() {
 		OnlineSince = null;
 		Playing = "";
 		PlayingApps = [];   // nothing is playing on a session that's gone - or a grind thinks its game is still on
@@ -1991,7 +2053,10 @@ public sealed class Bot : IAsyncDisposable {
 		try {
 			await HeartbeatAsync().ConfigureAwait(false);
 		} catch (Exception e) {
-			Log.Debug($"heartbeat: {e.GetType().Name}: {e.Message}", Name);
+			// Every minute, so the same failure is written once - with its stack, since nothing in here should throw.
+			if (Log.DebugOnChange($"heartbeat:{Name}", $"heartbeat: {Log.Describe(e)}", Name)) {
+				Log.StackToFile(e, Name);
+			}
 		}
 	}
 
@@ -2052,8 +2117,10 @@ public sealed class Bot : IAsyncDisposable {
 
 			try {
 				ApplyPersona();
-			} catch {
+				Log.Recovered($"persona:{Name}");
+			} catch (Exception e) {
 				// cosmetic - never worth disturbing the heartbeat over
+				Log.DebugOnChange($"persona:{Name}", $"couldn't re-assert the persona: {Log.Describe(e)}", Name);
 			}
 		}
 
@@ -2074,8 +2141,9 @@ public sealed class Bot : IAsyncDisposable {
 			try {
 				// The same label that was announced - never the configured name over a farmer that chose none.
 				SetPlaying(PlayingApps, announced, force: true);
-			} catch {
+			} catch (Exception e) {
 				// next heartbeat tries again
+				Log.DebugOnChange($"nameheal:{Name}", $"couldn't set the custom name again: {Log.Describe(e)}", Name);
 			}
 		}
 
@@ -2210,6 +2278,8 @@ public sealed class Bot : IAsyncDisposable {
 
 	private void OnLicenseList(SteamApps.LicenseListCallback cb) {
 		if (cb.Result != EResult.OK) {
+			Log.Debug($"licence list refused: {cb.Result}", Name);
+
 			return;
 		}
 
@@ -2290,6 +2360,8 @@ public sealed class Bot : IAsyncDisposable {
 			IReadOnlyList<SteamApps.PICSProductInfoCallback>? pages = result.Results;
 
 			if (pages == null) {
+				Log.Debug($"Steam didn't answer the package lookup for refund protection ({(result.Failed ? "job failed" : "no results")}) - refund protection is off this round", Name);
+
 				return map;
 			}
 
@@ -2323,7 +2395,7 @@ public sealed class Bot : IAsyncDisposable {
 				}
 			}
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't work out when games were bought ({0}) - refund protection is off this round", e.Message), Name);
+			Log.Debug(new Said("couldn't work out when games were bought ({0}) - refund protection is off this round", Log.Describe(e)), Name);
 
 			return new Dictionary<uint, AppOwnership>();
 		}
@@ -2371,8 +2443,9 @@ public sealed class Bot : IAsyncDisposable {
 
 					_inventoryVisitedAt = DateTime.UtcNow;
 					await Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{SteamId}/inventory/")).ConfigureAwait(false);
-				} catch {
+				} catch (Exception e) {
 					// cosmetic - never let it matter
+					Log.Failed("couldn't load the inventory to clear its new-items counter", e, Name);
 				} finally {
 					Interlocked.Exchange(ref _inventoryVisitQueued, 0);
 				}
@@ -2501,10 +2574,80 @@ public sealed class Bot : IAsyncDisposable {
 			return;
 		}
 
-		Log.Event(new Said("new comment: steamcommunity.com/profiles/{0}", SteamId), Name);
+		// Steam only says THAT somebody commented, not who or what - the line used to be this profile's own address,
+		// which told you nothing. So the newest comments are read off the profile and each new one is said in full.
+		int arrived = (int) Math.Min(3, cb.NewOwnerComments - previous);
+		Background.Run("couldn't read the new comment", () => AnnounceCommentsAsync(arrived), Name);
 
 		// Read it, so the counter goes back to zero rather than climbing for the life of the account.
 		ClearAllNotifications();
+	}
+
+	/// <summary>Newest comment already announced, as Steam's own timestamp - so a comment is never said twice.</summary>
+	private long _lastCommentAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+	/// <summary>One comment on the profile: who wrote it, what it says, and when (Unix seconds).</summary>
+	public sealed record ProfileComment(string Author, string Text, long At);
+
+	/// <summary>Who commented and what they wrote, for each comment newer than the last one announced.</summary>
+	private async Task AnnounceCommentsAsync(int arrived) {
+		string? json = await Web.PostAsync(new Uri(WebSession.Community, $"/comment/Profile/render/{SteamId}/-1/"),
+			new Dictionary<string, string> { ["start"] = "0", ["count"] = "5" }).ConfigureAwait(false);
+		List<ProfileComment> comments = [];
+
+		if (json != null) {
+			try {
+				using JsonDocument doc = JsonDocument.Parse(json);
+
+				if (doc.RootElement.TryGetProperty("comments_html", out JsonElement html) && (html.GetString() is { } markup)) {
+					comments = ReadComments(markup);
+				}
+			} catch (JsonException e) {
+				Log.Failed("the profile's comments weren't readable", e, Name);
+			}
+		}
+
+		// Newer than the last one said; failing that (a clock off, a comment Steam dated oddly), the newest few.
+		List<ProfileComment> fresh = [.. comments.Where(c => c.At > _lastCommentAt)];
+
+		if (fresh.Count == 0) {
+			fresh = [.. comments.Take(arrived)];
+		}
+
+		if (fresh.Count == 0) {
+			Log.Event(new Said("new comment on the profile - Steam wouldn't show it, so look on the profile"), Name);
+
+			return;
+		}
+
+		_lastCommentAt = Math.Max(_lastCommentAt, fresh.Max(static c => c.At));
+
+		foreach (ProfileComment c in Enumerable.Reverse(fresh)) {
+			Log.Event(c.Text.StartsWith("This comment is awaiting analysis", StringComparison.Ordinal)
+				? new Said("new comment from {0} - Steam is still checking what it says", c.Author)
+				: new Said("new comment from {0}: \"{1}\"", c.Author, c.Text.Length > 200 ? c.Text[..197] + "..." : c.Text), Name);
+		}
+	}
+
+	/// <summary>The comments in Steam's comment-list markup, newest first, as the list gives them.</summary>
+	public static List<ProfileComment> ReadComments(string html) {
+		List<ProfileComment> found = [];
+
+		foreach (string block in html.Split("class=\"commentthread_comment ", StringSplitOptions.None).Skip(1)) {
+			int link = block.IndexOf("commentthread_author_link", StringComparison.Ordinal);
+			int body = block.IndexOf("class=\"commentthread_comment_text\"", StringComparison.Ordinal);
+			string? author = link < 0 ? null : Html.Between(block, "<bdi>", "</bdi>", link);
+			string? text = body < 0 ? null : Html.Between(block, ">", "</div>", body);
+
+			if ((author == null) || (text == null)) {
+				continue;
+			}
+
+			long at = long.TryParse(Html.Between(block, "data-timestamp=\"", "\""), out long t) ? t : 0;
+			found.Add(new ProfileComment(Html.Text(author), Html.Text(text), at));
+		}
+
+		return found;
 	}
 
 	/// <summary>
@@ -2554,15 +2697,16 @@ public sealed class Bot : IAsyncDisposable {
 					mark_all_read = true
 				});
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't mark notifications read: {0}", e.Message), Name);
+				Log.Debug(new Said("couldn't mark notifications read: {0}", Log.Describe(e)), Name);
 			}
 
 			// The two older counters, which the tray message does not touch. Loading the page is what clears them.
 			foreach (string page in (string[]) [$"/profiles/{SteamId}/commentnotifications/", $"/profiles/{SteamId}/inventory/"]) {
 				try {
 					await Web.GetAsync(new Uri(WebSession.Community, page)).ConfigureAwait(false);
-				} catch {
+				} catch (Exception e) {
 					// cosmetic - never let it matter
+					Log.Failed($"couldn't load {page} to clear its counter", e, Name);
 				}
 			}
 
@@ -2763,6 +2907,8 @@ public sealed class Bot : IAsyncDisposable {
 			}
 
 			if (string.IsNullOrEmpty(refresh)) {
+				Log.Debug("no web token: there is no login token to get one with", Name);
+
 				return null;
 			}
 
@@ -2775,7 +2921,7 @@ public sealed class Bot : IAsyncDisposable {
 
 			return AdoptMinted(generation, result.RefreshToken, result.AccessToken);
 		} catch (Exception e) {
-			Log.Warn(new Said("couldn't get a web token: {0}", e.Message), Name);
+			Log.Warn(new Said("couldn't get a web token: {0}", Log.Scrub(e.Message)), Name);
 
 			return null;
 		} finally {
@@ -2928,7 +3074,7 @@ public sealed class Bot : IAsyncDisposable {
 						ApplyPersona();
 					}
 				} catch (Exception e) {
-					Log.Debug(new Said("couldn't re-announce after the game list changed: {0}", e.Message), Name);
+					Log.Debug(new Said("couldn't re-announce after the game list changed: {0}", Log.Describe(e)), Name);
 				}
 			});
 
@@ -3063,7 +3209,7 @@ public sealed class Bot : IAsyncDisposable {
 					ApplyPersona();
 				}
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't re-apply the persona: {0}: {1}", e.GetType().Name, e.Message), Name);
+				Log.Debug(new Said("couldn't re-apply the persona: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Name);
 			}
 		});
 	}
@@ -3148,8 +3294,9 @@ public sealed class Bot : IAsyncDisposable {
 		// long. See PersonaDark.
 		try {
 			Friends?.SetPersonaState((EPersonaState) state);
-		} catch {
-			// non-fatal
+		} catch (Exception e) {
+			// non-fatal - but re-sent every few minutes, so said once rather than every time
+			Log.DebugOnChange($"setpersona:{Name}", $"couldn't set the persona: {Log.Describe(e)}", Name);
 		}
 
 		if (Cfg.GameDevice <= 0) {
@@ -3290,14 +3437,14 @@ public static class TokenStore {
 					AtomicFile.Write(path, Secrets.Protect(plain, bot));
 					Log.Info(new Said("login token encrypted - an older version saved it as plain text"), bot);
 				} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
-					Log.Debug(new Said("couldn't encrypt a login token in place: {0}", e.Message));
+					Log.Debug(new Said("couldn't encrypt a login token in place: {0}", Log.Describe(e)), Path.GetFileNameWithoutExtension(path));
 				}
 			}
 
 			return plain.Length > 0 ? plain : null;
 		} catch (Exception e) {
 			// Out loud: what follows is a sign-in with the password (or a Steam Guard code), and nothing else says why.
-			Log.Warn(new Said("couldn't read the saved sign-in: {0}", e.Message), Path.GetFileNameWithoutExtension(path));
+			Log.Warn(new Said("couldn't read the saved sign-in: {0}", Log.Scrub(e.Message)), Path.GetFileNameWithoutExtension(path));
 
 			return null;
 		}
@@ -3308,7 +3455,7 @@ public static class TokenStore {
 			Directory.CreateDirectory(Dir);
 			AtomicFile.Write(PathFor(bot), Secrets.Protect(token, bot));
 		} catch (Exception e) {
-			Log.Warn(new Said("couldn't store the login token: {0}", e.Message), bot);
+			Log.Warn(new Said("couldn't store the login token: {0}", Log.Scrub(e.Message)), bot);
 		}
 	}
 
@@ -3317,7 +3464,7 @@ public static class TokenStore {
 			Directory.CreateDirectory(Dir);
 			AtomicFile.Write(AccessPathFor(bot), Secrets.Protect(accessToken, bot));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't store the access token: {0}", e.Message), bot);
+			Log.Debug(new Said("couldn't store the access token: {0}", Log.Describe(e)), bot);
 		}
 	}
 
@@ -3327,8 +3474,9 @@ public static class TokenStore {
 				if (File.Exists(path)) {
 					File.Delete(path);
 				}
-			} catch {
-				// nothing to do
+			} catch (Exception e) {
+				// nothing to do - but a revoked token left on disk is tried again at the next start, so say so
+				Log.Failed($"couldn't delete {Path.GetFileName(path)}", e, bot);
 			}
 		}
 	}

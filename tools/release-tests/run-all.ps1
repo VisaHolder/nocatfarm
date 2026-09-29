@@ -11,11 +11,16 @@ $failed = @()
 function Step($name, [scriptblock]$run) {
   Write-Host "== $name" -ForegroundColor Cyan
   $out = & $run 2>&1 | Out-String
-  $bad = ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $null) -or ($out -match '(?m)^\s*FAIL\b') -or ($out -match '\b[1-9]\d* failed\b') -or ($out -match '[1-9]\d* Error\(s\)') -or ($out -match '[1-9]\d* Warning\(s\)') -or ($out -match '[1-9]\d* problem\(s\)') -or (($name -like '*GitHub*') -and ($out -match '(?m) (failure|cancelled)\s*$'))
+  $bad = ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $null) -or ($out -match '(?m)^\s*FAIL\b') -or ($out -match '\b[1-9]\d* failed\b') -or ($out -match '[1-9]\d* Error\(s\)') -or ($out -match '[1-9]\d* Warning\(s\)') -or ($out -match '[1-9]\d* problem\(s\)')
   $summary = ($out -split "`n" | Where-Object { $_ -match 'PASS|FAIL|all passed|all clear|Error\(s\)|Warning\(s\)|problem|Done  ->|success|failure' } | Select-Object -Last 12) -join "`n"
   Write-Host $summary
   if ($bad) { $script:failed += $name; Write-Host "!! $name FAILED" -ForegroundColor Red; Write-Host ($out -split "`n" | Select-Object -Last 30 | Out-String) }
 }
+
+# A run stopped part-way leaves things behind: a test copy the update swap restarted by itself (on the default port, where
+# it answered for the real dashboard) and the test download server. Clear them first, so they can't pass or fail this run.
+Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like "$env:TEMP\nocatfarm-tests\*" } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+Get-NetTCPConnection -LocalPort 8766 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
 
 Push-Location $Repo
 try {
@@ -37,12 +42,16 @@ try {
       Start-Sleep 15
       foreach ($w in 'linux.yml', 'macos.yml') {
         # Filtered here, not with gh's -q: Windows PowerShell mangles the quotes a jq filter needs on the way to gh.
-        $id = (gh run list --repo VisaHolder/nocatfarm --workflow $w --limit 5 --json databaseId,headSha | ConvertFrom-Json |
-          Where-Object { $_.headSha -eq $sha } | Select-Object -First 1).databaseId
+        # Into a variable first: Windows PowerShell's ConvertFrom-Json hands a JSON list down the pipe as ONE object, so
+        # piping it straight on matched every run at once.
+        $runs = gh run list --repo VisaHolder/nocatfarm --workflow $w --limit 5 --json databaseId,headSha | ConvertFrom-Json
+        $id = ($runs | Where-Object { $_.headSha -eq $sha } | Select-Object -First 1).databaseId
         if (-not $id) { Write-Output "FAIL: no $w run found for $sha"; continue }
         gh run watch $id --repo VisaHolder/nocatfarm --exit-status | Out-Null
-        (gh run view $id --repo VisaHolder/nocatfarm --json jobs | ConvertFrom-Json).jobs | ForEach-Object { "$($_.name) $($_.conclusion)" }
-        gh run view $id --repo VisaHolder/nocatfarm --log | Select-String 'PASS: |FAIL' | ForEach-Object { $_.Line.Substring([Math]::Max(0, $_.Line.IndexOf('PASS')), [Math]::Min(80, $_.Line.Length - [Math]::Max(0, $_.Line.IndexOf('PASS')))) }
+        # Judged by each job's own result. Matching words in the log flagged a pass, because two test names end in "failure".
+        foreach ($job in (gh run view $id --repo VisaHolder/nocatfarm --json jobs | ConvertFrom-Json).jobs) {
+          if ($job.conclusion -eq 'success') { "$($job.name) success" } else { "FAIL: $($job.name) $($job.conclusion)" }
+        }
       }
     }
   }

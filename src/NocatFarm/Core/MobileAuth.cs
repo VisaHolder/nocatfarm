@@ -106,6 +106,9 @@ public static partial class MobileAuth {
 		try {
 			return Convert.FromBase64String(secret);
 		} catch (FormatException) {
+			// Otherwise the account just quietly has "no authenticator" and asks for codes, with nothing saying why.
+			Log.DebugOnChange("mobileauth:badsecret", "an authenticator secret is neither base64 nor hex - ignoring it");
+
 			return null;
 		}
 	}
@@ -136,13 +139,13 @@ public static partial class MobileAuth {
 					Log.Debug(new Said("an encrypted maFile only opens in nocat.farm on this Windows user"));
 				} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 					// Still plain on disk, still read fine - the next read tries again.
-					Log.Debug(new Said("couldn't encrypt {0} in place: {1}", Path.GetFileName(path), e.Message));
+					Log.Debug(new Said("couldn't encrypt {0} in place: {1}", Path.GetFileName(path), Log.Describe(e)));
 				}
 			}
 
 			return (shared, identity, device);
 		} catch (Exception e) {
-			Log.Warn(new Said("couldn't read the authenticator file {0}: {1}", Path.GetFileName(path), e.Message));
+			Log.Warn(new Said("couldn't read the authenticator file {0}: {1}", Path.GetFileName(path), Log.Scrub(e.Message)));
 
 			return (null, null, null);
 		}

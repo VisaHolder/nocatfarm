@@ -20,7 +20,6 @@ public static class Firewall {
 	public const string RuleName = "nocat.farm dashboard";
 
 	private const int Inbound = 1;
-	private const int Allow = 1;
 	private const int DomainProfile = 1;
 	private const int PrivateProfile = 2;
 	private const int PublicProfile = 4;
@@ -85,8 +84,13 @@ public static class Firewall {
 				allowed = true;
 			}
 
+			Log.Recovered("firewall:read");
+
 			return allowed;
-		} catch {
+		} catch (Exception e) {
+			// The dashboard asks every few seconds - the reason once, not each time.
+			Log.DebugOnChange("firewall:read", $"firewall: couldn't read the rules: {Log.Describe(e)}");
+
 			return null;
 		}
 	}
@@ -182,16 +186,27 @@ public static class Firewall {
 			});
 
 			if (p == null) {
+				Log.Debug("firewall: Windows didn't start netsh for the dashboard rule");
+
 				return (false, new Said("Windows didn't start it").ToString());
 			}
 
 			await p.WaitForExitAsync().WaitAsync(TimeSpan.FromMinutes(2)).ConfigureAwait(false);
 
-			return AllowsPort(port) == false ? (false, new Said("the rule didn't take").ToString()) : (true, "");
+			if (AllowsPort(port) == false) {
+				Log.Debug($"firewall: netsh ran for port {port}, but the port still reads as blocked");
+
+				return (false, new Said("the rule didn't take").ToString());
+			}
+
+			return (true, "");
 		} catch (Win32Exception e) when (e.NativeErrorCode == 1223) {
 			return (false, new Said("you said no on the Windows prompt - nothing was changed").ToString());
 		} catch (Exception e) {
-			return (false, e.Message);
+			// The dashboard shows the reason to whoever pressed it; the file keeps it too.
+			Log.Failed("firewall: adding the dashboard rule", e);
+
+			return (false, Log.Scrub(e.Message));
 		}
 	}
 }

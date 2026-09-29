@@ -63,6 +63,9 @@ public static class NativeConsole {
 			// already gone back to its prompt: sharing its console meant two readers on one keyboard, with half of
 			// a Steam Guard code going to the shell. That one gets a console of its own.
 			if (interactive ? !AllocConsole() : !AttachConsole(AttachParentProcess) && !AllocConsole()) {
+				// Only asked for when there is no window to show instead - failing here is an app with no face at all.
+				Log.Debug($"console: couldn't make one (Windows error {Marshal.GetLastWin32Error()})");
+
 				return false;
 			}
 
@@ -78,7 +81,9 @@ public static class NativeConsole {
 			Console.SetIn(new StreamReader(Console.OpenStandardInput()));
 
 			return true;
-		} catch {
+		} catch (Exception e) {
+			Log.Failed("console: setting it up", e);
+
 			return false;
 		}
 	}

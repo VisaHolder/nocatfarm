@@ -50,8 +50,9 @@ public sealed class Sender(Bot bot) : BotModule(bot) {
 
 					try {
 						File.Delete(StatePath);
-					} catch (IOException) {
+					} catch (IOException e) {
 						// it will simply be overwritten next time
+						Log.Failed("couldn't delete the send schedule", e, Bot.Name);
 					}
 				}
 
@@ -173,7 +174,7 @@ public sealed class Sender(Bot bot) : BotModule(bot) {
 				return new DateTime(saved.NextDueTicks, DateTimeKind.Utc);
 			}
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the send schedule: {0}", e.Message), Bot.Name);
+			Log.Debug(new Said("couldn't read the send schedule: {0}", Log.Describe(e)), Bot.Name);
 		}
 
 		return null;
@@ -184,7 +185,7 @@ public sealed class Sender(Bot bot) : BotModule(bot) {
 			Directory.CreateDirectory(Path.GetDirectoryName(StatePath)!);
 			AtomicFile.Write(StatePath, JsonSerializer.Serialize(new SendState(_nextDue!.Value.Ticks)));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the send schedule: {0}", e.Message), Bot.Name);
+			Log.Debug(new Said("couldn't save the send schedule: {0}", Log.Describe(e)), Bot.Name);
 		}
 	}
 }

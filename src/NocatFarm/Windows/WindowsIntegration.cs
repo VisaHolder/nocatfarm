@@ -65,7 +65,9 @@ public static class WindowsIntegration {
 			using RegistryKey? key = Registry.CurrentUser.OpenSubKey(RunKey);
 
 			return key?.GetValue(ValueName) != null;
-		} catch {
+		} catch (Exception e) {
+			Log.Failed("reading the Windows startup entry", e);
+
 			return false;
 		}
 	}
@@ -76,7 +78,9 @@ public static class WindowsIntegration {
 			using RegistryKey? key = Registry.CurrentUser.OpenSubKey(RunKey);
 
 			return string.Equals(key?.GetValue(ValueName) as string, StartupCommand(), StringComparison.OrdinalIgnoreCase);
-		} catch {
+		} catch (Exception e) {
+			Log.Failed("reading the Windows startup entry", e);
+
 			return false;
 		}
 	}
@@ -129,7 +133,7 @@ public static class WindowsIntegration {
 
 			return true;
 		} catch (Exception e) {
-			Log.Warn(new Said("couldn't change the Windows startup entry: {0}", e.Message));
+			Log.Warn(new Said("couldn't change the Windows startup entry: {0}", Log.Describe(e)));
 
 			return false;
 		}
@@ -187,7 +191,7 @@ public static class WindowsIntegration {
 
 				_awake = keep;
 			} catch (Exception e) {
-				Log.Debug(new Said("keep-awake: {0}", e.Message));
+				Log.Debug(new Said("keep-awake: {0}", Log.Describe(e)));
 			}
 		}
 	}

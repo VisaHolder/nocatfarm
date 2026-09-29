@@ -39,7 +39,11 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
-				Log.Debug(new Said("heartbeat hiccup: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
+				// Every 20 seconds: the same failure once an hour rather than three times a minute - and its stack with
+				// it, since nothing in here talks to Steam and a throw is a bug.
+				if (Log.DebugOnChange($"hiccup:{Name}:{Bot.Name}", $"heartbeat hiccup: {Log.Describe(e)}", Bot.Name)) {
+					Log.StackToFile(e, Bot.Name);
+				}
 			}
 
 			// Checked far more often than it prints, so a change of phase is picked up promptly rather than

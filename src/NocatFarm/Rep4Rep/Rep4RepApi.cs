@@ -40,16 +40,43 @@ public sealed class Rep4RepApi : IDisposable {
 			return null;
 		}
 
-		try {
-			using HttpResponseMessage r = await _http.GetAsync(Url(path), ct).ConfigureAwait(false);
+		Uri url = Url(path);
 
-			return r.IsSuccessStatusCode ? await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false) : null;
+		try {
+			using HttpResponseMessage r = await _http.GetAsync(url, ct).ConfigureAwait(false);
+
+			return Answered("GET", url, r) ? await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false) : null;
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
-		} catch {
+		} catch (Exception e) {
+			Trouble(url, $"rep4rep GET {Log.Where(url)} failed: {Log.Describe(e)}");
+
 			return null;
 		}
 	}
+
+	// ── when rep4rep doesn't answer ─────────────────────────────────────────
+	// The API key rides in the query (and the form), so only ever Log.Where - host and path - goes in a line, never
+	// the address itself, and never a body: rep4rep could echo the key back. The task list is asked for by every
+	// account in a loop, so the same failure is written once per change (or hour), keyed by the path.
+
+	/// <summary>True for a 2xx; otherwise writes the status down.</summary>
+	private static bool Answered(string method, Uri url, HttpResponseMessage r) {
+		if (r.IsSuccessStatusCode) {
+			Log.Recovered($"r4r:{url.AbsolutePath}");
+
+			return true;
+		}
+
+		Trouble(url, $"rep4rep {method} {Log.Where(url)} -> {(int) r.StatusCode} {r.ReasonPhrase}");
+
+		return false;
+	}
+
+	private static void Trouble(Uri url, string text) => Log.DebugOnChange($"r4r:{url.AbsolutePath}", text, "rep4rep");
+
+	private static void Unreadable(string path, Exception e) =>
+		Log.DebugOnChange($"r4r:{path}:parse", $"rep4rep {path}: couldn't read the answer: {Log.Describe(e)}", "rep4rep");
 
 	private async Task<string?> PostAsync(string path, Dictionary<string, string> form, CancellationToken ct) {
 		if (!HasToken) {
@@ -58,14 +85,18 @@ public sealed class Rep4RepApi : IDisposable {
 
 		form["apiToken"] = Token;   // the docs put it in the query, the reference clients put it in the body - send both
 
+		Uri url = Url(path);
+
 		try {
 			using FormUrlEncodedContent content = new(form);
-			using HttpResponseMessage r = await _http.PostAsync(Url(path), content, ct).ConfigureAwait(false);
+			using HttpResponseMessage r = await _http.PostAsync(url, content, ct).ConfigureAwait(false);
 
-			return r.IsSuccessStatusCode ? await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false) : null;
+			return Answered("POST", url, r) ? await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false) : null;
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
-		} catch {
+		} catch (Exception e) {
+			Trouble(url, $"rep4rep POST {Log.Where(url)} failed: {Log.Describe(e)}");
+
 			return null;
 		}
 	}
@@ -91,7 +122,9 @@ public sealed class Rep4RepApi : IDisposable {
 			}
 
 			return (ReadInt(root, "points"), ReadInt(root, "pendingPoints"));
-		} catch {
+		} catch (Exception e) {
+			Unreadable("/user", e);
+
 			return null;
 		}
 	}
@@ -116,8 +149,9 @@ public sealed class Rep4RepApi : IDisposable {
 					profiles.Add((id, steam));
 				}
 			}
-		} catch {
+		} catch (Exception e) {
 			// unparsable - treated as none registered
+			Unreadable("/user/steamprofiles", e);
 		}
 
 		return profiles;
@@ -155,8 +189,9 @@ public sealed class Rep4RepApi : IDisposable {
 					return ReadString(profile, "id");
 				}
 			}
-		} catch {
+		} catch (Exception e) {
 			// unparsable response - treated as "not found", the caller retries later
+			Unreadable("/user/steamprofiles", e);
 		}
 
 		return null;
@@ -192,8 +227,9 @@ public sealed class Rep4RepApi : IDisposable {
 					RequiredCommentId = commentId
 				});
 			}
-		} catch {
+		} catch (Exception e) {
 			// leave the list empty; the module treats that as "nothing to do right now"
+			Unreadable("/tasks", e);
 		}
 
 		return tasks;
@@ -221,14 +257,42 @@ public sealed class Rep4RepApi : IDisposable {
 		// id is usually absent from the next batch whether or not anything was credited - and occasionally still
 		// present when it was. A check that is wrong in both directions is worse than no check.
 		if (sent.Contains("\"error\"", StringComparison.OrdinalIgnoreCase)) {
+			Log.Debug($"rep4rep didn't credit task {taskId}: {Reason(sent)}", "rep4rep");
+
 			return false;
 		}
 
 		// rep4rep answers a successful completion with a success flag or a bare ok; anything else is a refusal
 		// worth surfacing rather than silently counting.
-		return sent.Contains("success", StringComparison.OrdinalIgnoreCase)
+		bool ok = sent.Contains("success", StringComparison.OrdinalIgnoreCase)
 			|| sent.Contains("\"status\":\"ok\"", StringComparison.OrdinalIgnoreCase)
 			|| sent.Trim() is "true" or "[]" or "{}";
+
+		if (!ok) {
+			Log.Debug($"rep4rep didn't credit task {taskId}: {Reason(sent)}", "rep4rep");
+		}
+
+		return ok;
+	}
+
+	/// <summary>
+	/// rep4rep's own words for a refusal - the "error" or "info" field only, never the body itself, which could carry
+	/// the key back. "no reason given" when there's neither.
+	/// </summary>
+	private static string Reason(string body) {
+		try {
+			using JsonDocument doc = JsonDocument.Parse(body);
+
+			foreach (string field in new[] { "error", "info", "message" }) {
+				if ((doc.RootElement.ValueKind == JsonValueKind.Object) && (ReadString(doc.RootElement, field) is { Length: > 0 } said)) {
+					return Log.Scrub(said.Length > 150 ? said[..150] : said);
+				}
+			}
+		} catch (JsonException) {
+			return "an answer that isn't JSON";   // what it said can't be shown safely - only that it wasn't the usual shape
+		}
+
+		return "no reason given";
 	}
 
 	// ── json helpers ────────────────────────────────────────────────────────

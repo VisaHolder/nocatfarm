@@ -30,6 +30,7 @@ public static partial class SteamNames {
 			}
 		} catch (Exception e) when (e is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested) {
 			// the ID will do
+			Log.Failed($"couldn't look up the Steam name of {id}", e, via.Name);
 		}
 
 		return id.ToString();

@@ -36,7 +36,11 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 		try {
 			return await NocatFarm.Commands.RunAsync(mgr, line).ConfigureAwait(false);
 		} catch (Exception e) {
-			return $"failed: {e.GetType().Name}: {e.Message}";
+			// Handed back to the plugin, which may well not say it anywhere: a command throwing is a bug, so it goes in the file.
+			NocatFarm.Log.Failed($"plugin {_owner}: running a command", e);
+			NocatFarm.Log.StackToFile(e);
+
+			return $"failed: {NocatFarm.Log.Describe(e)}";
 		}
 	}
 
@@ -77,7 +81,7 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 			Directory.CreateDirectory(Path.GetDirectoryName(SettingsFile)!);
 			AtomicFile.Write(SettingsFile, System.Text.Json.JsonSerializer.Serialize(_values));
 		} catch (Exception e) {
-			NocatFarm.Log.Warn(new Said("couldn't save {0}'s settings: {1}", _owner, e.Message));
+			NocatFarm.Log.Warn(new Said("couldn't save {0}'s settings: {1}", _owner, NocatFarm.Log.Scrub(e.Message)));
 		}
 	}
 
@@ -96,13 +100,14 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 					?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 			}
 		} catch (Exception e) {
-			NocatFarm.Log.Warn(new Said("couldn't read {0}'s settings: {1}", _owner, e.Message));
+			NocatFarm.Log.Warn(new Said("couldn't read {0}'s settings: {1}", _owner, NocatFarm.Log.Scrub(e.Message)));
 
 			// Kept aside, because the next change saves over it - and would save only that one setting.
 			try {
 				File.Copy(SettingsFile, SettingsFile + ".broken", true);
 			} catch (Exception copy) when (copy is IOException or UnauthorizedAccessException) {
-				// the warning above still stands
+				// the warning above still stands - but the copy the next save would overwrite isn't kept
+				NocatFarm.Log.Failed($"plugin {_owner}: keeping the unreadable settings aside", copy);
 			}
 		}
 	}
@@ -121,7 +126,7 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 			Directory.CreateDirectory(Path.GetDirectoryName(StateFile)!);
 			await AtomicFile.WriteAsync(StateFile, json).ConfigureAwait(false);
 		} catch (Exception e) {
-			NocatFarm.Log.Warn(new Said("plugin {0} couldn't save its state: {1}", _owner, e.Message));
+			NocatFarm.Log.Warn(new Said("plugin {0} couldn't save its state: {1}", _owner, NocatFarm.Log.Scrub(e.Message)));
 		}
 	}
 
@@ -129,7 +134,7 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 		try {
 			return File.Exists(StateFile) ? await File.ReadAllTextAsync(StateFile).ConfigureAwait(false) : null;
 		} catch (Exception e) {
-			NocatFarm.Log.Warn(new Said("plugin {0} couldn't read its state: {1}", _owner, e.Message));
+			NocatFarm.Log.Warn(new Said("plugin {0} couldn't read its state: {1}", _owner, NocatFarm.Log.Scrub(e.Message)));
 
 			return null;
 		}
@@ -180,7 +185,10 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 		try {
 			raise();
 		} catch (Exception e) {
-			NocatFarm.Log.Warn(new Said("a plugin failed on {0}: {1}: {2}", which, e.GetType().Name, e.Message));
+			NocatFarm.Log.Warn(new Said("a plugin failed on {0}: {1}: {2}", which, e.GetType().Name, NocatFarm.Log.Scrub(e.Message)));
+
+			// Where in the plugin, for whoever wrote it.
+			NocatFarm.Log.StackToFile(e);
 		}
 	}
 

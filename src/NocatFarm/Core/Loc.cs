@@ -69,7 +69,7 @@ public static class Loc {
 				_map = map;
 			}
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the {0} language pack: {1}", code, e.Message));
+			Log.Debug(new Said("couldn't read the {0} language pack: {1}", code, Log.Describe(e)));
 		}
 	}
 
@@ -122,7 +122,7 @@ public static class Loc {
 					}
 				}
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't collect the translations of \"{0}\": {1}", english, e.Message));
+				Log.Debug(new Said("couldn't collect the translations of \"{0}\": {1}", english, Log.Describe(e)));
 			}
 
 			Known[english] = set;

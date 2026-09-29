@@ -32,8 +32,6 @@ public static partial class Notifier {
 
 	private static readonly ConcurrentQueue<(Topic Topic, string Source, string Text, DateTime At)> Queue = new();
 	private static CancellationTokenSource? _stop;
-	private static Task? _loop;
-	private static Task? _poll;
 
 	// Each problem said once, and again only after the setting changes.
 	private static string _discordWarnedFor = "";
@@ -61,9 +59,10 @@ public static partial class Notifier {
 		_mgr = mgr;
 		Log.Published += OnPublished;
 		_stop = new CancellationTokenSource();
-		_loop = Task.Run(() => LoopAsync(_stop.Token));
-		_poll = Task.Run(() => PollLoopAsync(_stop.Token));
-		_discord = Task.Run(() => DiscordLoopAsync(_stop.Token));
+		CancellationToken ct = _stop.Token;
+		Background.Loop(new Said("Notifications"), () => LoopAsync(ct));
+		Background.Loop(new Said("Telegram commands"), () => PollLoopAsync(ct), "telegram");
+		Background.Loop(new Said("Discord bot"), () => DiscordLoopAsync(ct), "discord");
 	}
 
 	/// <summary>On the way out: whatever is still waiting goes now (a few seconds at most), so the last events aren't lost.</summary>
@@ -72,8 +71,9 @@ public static partial class Notifier {
 
 		try {
 			await FlushAsync(force: true, CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(4)).ConfigureAwait(false);
-		} catch {
-			// best effort
+		} catch (Exception e) {
+			// best effort - but the last events never arriving is worth a line
+			Log.Failed("notifications: sending the last batch on the way out", e);
 		}
 
 		_stop?.Cancel();
@@ -125,10 +125,14 @@ public static partial class Notifier {
 				}
 
 				await FlushAsync(force: false, ct).ConfigureAwait(false);
+				Log.Recovered("notify:loop");
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				return;
 			} catch (Exception e) {
-				Log.Debug(new Said("notifications: {0}", e.Message));
+				// Once a second: the same failure is said once (an hour apart at most), and a real bug gets its stack.
+				if (Log.DebugOnChange("notify:loop", $"notifications: {Log.Describe(e)}") && e is not (HttpRequestException or TaskCanceledException)) {
+					Log.StackToFile(e);
+				}
 			}
 		}
 	}
@@ -284,11 +288,15 @@ public static partial class Notifier {
 
 			if (r.IsSuccessStatusCode) {
 				_discordWarnedFor = "";
+				Log.Recovered("notify:discord");
 
 				return (true, "");
 			}
 
 			string body = await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+
+			// The warning below is said once per webhook; the detail - every different refusal - goes in the file.
+			Log.DebugOnChange("notify:discord", $"discord webhook: HTTP {(int) r.StatusCode} from {Log.Where(r.RequestMessage?.RequestUri)}{ErrorField(body, "message")}", "discord");
 
 			// Too many too fast: Discord says how long to wait. Once, then give up on this batch.
 			if ((r.StatusCode == HttpStatusCode.TooManyRequests) && (attempt == 0)) {
@@ -333,9 +341,33 @@ public static partial class Notifier {
 		try {
 			return (await Http.PostAsync(url, content, ct).ConfigureAwait(false), "");
 		} catch (Exception e) when ((e is HttpRequestException or TaskCanceledException) && !ct.IsCancellationRequested) {
-			return (null, e.Message);
+			// The callers put this in a warning - scrubbed, as the address here can carry the bot token or webhook secret.
+			return (null, Log.Scrub(e.Message));
 		}
 	}
+
+	/// <summary>
+	/// For the log: the reason Telegram ("description") or Discord ("message") gave for turning something down,
+	/// scrubbed and short - never the raw body.
+	/// </summary>
+	private static string ErrorField(string body, string field) {
+		try {
+			using JsonDocument d = JsonDocument.Parse(body);
+
+			if ((d.RootElement.ValueKind == JsonValueKind.Object) && d.RootElement.TryGetProperty(field, out JsonElement v) && (v.ValueKind == JsonValueKind.String)) {
+				string said = Log.Scrub(v.GetString());
+
+				return ": " + (said.Length > 150 ? said[..150] : said);
+			}
+		} catch (JsonException) {
+			// not JSON (a proxy's error page) - nothing worth quoting
+		}
+
+		return "";
+	}
+
+	/// <summary>A Telegram call for the log: the method only, as the bot token rides in the address itself.</summary>
+	private static string TelegramWhere(string method) => "api.telegram.org/bot[hidden]/" + method;
 
 	/// <summary>Said once until a message gets through again, not once per batch.</summary>
 	private static (bool Ok, string Why) Unreachable(Said why, string key, ref string warnedFor, string source) {
@@ -400,9 +432,13 @@ public static partial class Notifier {
 
 			if (r.IsSuccessStatusCode) {
 				_telegramWarnedFor = "";
+				Log.Recovered("notify:telegram");
 
 				return (true, "");
 			}
+
+			// The warning below is said once per bot and chat; the detail - every different refusal - goes in the file.
+			Log.DebugOnChange("notify:telegram", $"telegram: HTTP {(int) r.StatusCode} from {TelegramWhere("sendMessage")}{ErrorField(body, "description")}", "telegram");
 
 			if ((r.StatusCode == HttpStatusCode.TooManyRequests) && (attempt == 0)) {
 				int wait = 3;
@@ -449,12 +485,14 @@ public static partial class Notifier {
 		try {
 			r = await Http.GetAsync($"https://api.telegram.org/bot{G.TelegramBotToken}/getMe", ct).ConfigureAwait(false);
 		} catch (Exception e) when ((e is HttpRequestException or TaskCanceledException) && !ct.IsCancellationRequested) {
-			Log.Debug(new Said("notifications: couldn't reach Telegram to check the bot ({0}) - trying again in a minute", e.Message), "telegram");
+			// Asked again every minute until it answers: an outage is said once, not sixty times an hour.
+			Log.DebugOnChange("telegram:getMe", $"notifications: couldn't reach Telegram to check the bot ({Log.Describe(e)}) - trying again in a minute", "telegram");
 
 			return false;
 		}
 
 		using HttpResponseMessage _ = r;
+		Log.Recovered("telegram:getMe");
 
 		if (r.StatusCode == HttpStatusCode.Unauthorized) {
 			Log.Warn("Telegram token rejected - copy it again from @BotFather", "telegram");
@@ -463,13 +501,18 @@ public static partial class Notifier {
 		}
 
 		if (!r.IsSuccessStatusCode) {
+			string body = await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+			Log.DebugOnChange("telegram:getMe", $"notifications: checking the bot got HTTP {(int) r.StatusCode} from {TelegramWhere("getMe")}{ErrorField(body, "description")} - trying again in a minute", "telegram");
+
 			return false;
 		}
 
 		try {
 			using JsonDocument d = JsonDocument.Parse(await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
 			_botName = d.RootElement.GetProperty("result").TryGetProperty("username", out JsonElement u) ? "@" + u.GetString() : "";
-		} catch {
+		} catch (Exception e) {
+			// no name: no Connect Telegram button - say why
+			Log.Failed("notifications: reading the bot's name from Telegram's getMe", e, "telegram");
 			_botName = "";
 		}
 

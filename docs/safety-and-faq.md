@@ -49,8 +49,9 @@ everything.
 **Why can't I find the custom name and games-to-idle settings?** The account is in human mode, which hides them on
 purpose. Pick its games under *Human mode → Games and how often*.
 
-**Why is a human-mode account offline?** It's asleep, on a break, or taking a day off. `human myaccount` shows its
-day, and `wake myaccount` starts it now.
+**Why is a human-mode account offline?** It's asleep, or on a break it spends offline. On a day off, or once the
+day's hours are played, it stays online without a game - the dashboard shows those as *Day off* and *Done for today*.
+`human myaccount` shows its day, and `wake myaccount` starts it now.
 
 **Why are replies to commands in English?** The dashboard, status lines and log are translated into 11 languages,
 but replies to typed commands stay in English.

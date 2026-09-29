@@ -83,7 +83,7 @@ public static class AppInstance {
 			showing = new EventWaitHandle(false, EventResetMode.AutoReset, EventName(root, "show"));
 			quitting = new EventWaitHandle(false, EventResetMode.AutoReset, EventName(root, "quit"));
 		} catch (Exception e) when (e is WaitHandleCannotBeOpenedException or UnauthorizedAccessException or IOException) {
-			Log.Debug(new Said("couldn't listen for a second launch: {0}", e.Message));
+			Log.Debug(new Said("couldn't listen for a second launch: {0}", Log.Describe(e)));
 
 			return;
 		}
@@ -101,7 +101,9 @@ public static class AppInstance {
 						quit();
 					}
 				} catch (Exception e) {
-					Log.Debug(new Said("couldn't answer another launch: {0}", e.Message));
+					// show and quit catch nothing themselves: whatever reaches here is a bug.
+					Log.Debug(new Said("couldn't answer another launch: {0}", Log.Describe(e)));
+					Log.StackToFile(e);
 				}
 			}
 		}) { IsBackground = true, Name = "nocat.farm instance" };

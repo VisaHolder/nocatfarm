@@ -67,6 +67,8 @@ public sealed class LiveConsole : IDisposable {
 					if (++_paintFailures >= 5) {
 						Dispose();
 						Log.Warn(new Said("live view failed ({0}) - back to the plain log", e.GetType().Name));
+						Log.Failed("live view: painting failed five times in a row", e);
+						Log.StackToFile(e);
 
 						return;
 					}

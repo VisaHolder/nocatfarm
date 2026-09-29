@@ -167,9 +167,7 @@ password of at least 12 characters. If you'd rather not open anything, Telegram 
 their setup is on the same page.
 
 <p align="center">
-  <img src="assets/phone.png" alt="The Phone page - home and away-from-home links as QR codes, and a checklist" width="640">
-  &nbsp;
-  <img src="assets/phone-mobile.png" alt="The Phone page on a phone" width="200">
+  <img src="assets/phone.png" alt="The Phone page on a PC and on a phone - home and away-from-home links as QR codes" width="880">
   <br><sub>The Phone page on a PC and on a phone (the addresses are examples).</sub>
 </p>
 

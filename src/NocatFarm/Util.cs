@@ -1,4 +1,5 @@
 using System.Text;
+using Said = NocatFarm.Core.Said;
 
 namespace NocatFarm;
 
@@ -265,4 +266,30 @@ public static class Fmt {
 			: d.TotalDays < 1 ? $"{(int) d.TotalHours}h"
 			: $"{(int) d.TotalDays}d";
 	}
+}
+
+/// <summary>Loops started in the background and never awaited.</summary>
+public static class Background {
+	/// <summary>
+	/// Starts a loop meant to run as long as the app, and says so if it ever ends by throwing - which loop, and why.
+	/// Each loop catches its own failures; one that got past that used to simply stop, the feature going quiet with
+	/// nothing in the log.
+	/// </summary>
+	public static void Loop(Said which, Func<Task> loop, string source = "nocat.farm") =>
+		_ = Task.Run(loop).ContinueWith(t => {
+			Exception e = t.Exception!.GetBaseException();
+			Log.Error(new Said("{0} stopped: {1} - restart nocat.farm to get it back", which, Log.Describe(e)), source);
+			Log.StackToFile(e, source);
+		}, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
+
+	/// <summary>
+	/// One job started and not waited for - an account's start or stop from a button - with a failure written down
+	/// under the account's name. Left to the lost-task handler, the line said what broke but not on which account.
+	/// </summary>
+	public static void Run(string what, Func<Task> job, string source) =>
+		_ = job().ContinueWith(t => {
+			Exception e = t.Exception!.GetBaseException();
+			Log.Failed(what, e, source);
+			Log.StackToFile(e, source);
+		}, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
 }

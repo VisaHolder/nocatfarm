@@ -37,14 +37,15 @@ public static class Inventory {
 	private const int MaxPages = 50;
 
 	public static Task<InventoryContents?> ReadAsync(Bot bot, uint app, string context, CancellationToken ct) =>
-		ReadAsync((uri, c) => bot.Web.GetAsync(uri, c), bot.SteamId, app, context, ct);
+		ReadAsync((uri, c) => bot.Web.GetAsync(uri, c), bot.SteamId, app, context, ct, source: bot.Name);
 
 	/// <param name="get">How to fetch one page. Passed in so the paging can be exercised against a public inventory
 	/// without an account.</param>
 	/// <param name="pageSize">Only ever changed by a test, to force paging on an inventory smaller than a page.</param>
+	/// <param name="source">The account, for the log.</param>
 	/// <returns>Null when even the first page couldn't be read.</returns>
 	public static async Task<InventoryContents?> ReadAsync(Func<Uri, CancellationToken, Task<string?>> get, ulong steamId, uint app,
-		string context, CancellationToken ct, int pageSize = PageSize) {
+		string context, CancellationToken ct, int pageSize = PageSize, string source = "nocat.farm") {
 		InventoryContents found = new();
 		string? start = null;
 
@@ -58,7 +59,11 @@ public static class Inventory {
 			string? body = await get(new Uri(WebSession.Community, path), ct).ConfigureAwait(false);
 
 			if (string.IsNullOrEmpty(body)) {
-				return page == 0 ? null : found;
+				if (page > 0) {
+					Log.Debug($"inventory {app}/{context}: page {page + 1} didn't come back - keeping {found.Assets.Count} item(s) as incomplete", source);
+				}
+
+				return page == 0 ? null : found;   // WebSession already wrote down why
 			}
 
 			using JsonDocument doc = JsonDocument.Parse(body);
@@ -68,6 +73,8 @@ public static class Inventory {
 			// pages" it became a complete, EMPTY inventory: every card judged as not held.
 			if ((root.ValueKind != JsonValueKind.Object)
 				|| (root.TryGetProperty("success", out JsonElement ok) && (ok.ValueKind is JsonValueKind.False || ((ok.ValueKind == JsonValueKind.Number) && (ok.GetInt32() != 1))))) {
+				Log.Debug($"inventory {app}/{context}: Steam refused page {page + 1}: {Log.Scrub(body[..Math.Min(150, body.Length)])}", source);
+
 				return page == 0 ? null : found;
 			}
 
@@ -94,6 +101,8 @@ public static class Inventory {
 				return found;
 			}
 		}
+
+		Log.Debug($"inventory {app}/{context}: stopped after {MaxPages} pages ({found.Assets.Count} item(s)) - kept as incomplete", source);
 
 		return found;
 	}

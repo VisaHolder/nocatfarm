@@ -80,6 +80,10 @@ internal static class PicsWatch {
 					.PICSGetProductInfo([], chunk.Select(static id => new SteamApps.PICSRequest(id)), false)
 					.ToTask().WaitAsync(TimeSpan.FromSeconds(60), ct).ConfigureAwait(false);
 
+				if (result.Results == null) {
+					Log.Debug($"Steam's change feed: no product info for {chunk.Length} changed package(s) ({(result.Failed ? "job failed" : "no results")})", bot.Name);
+				}
+
 				foreach (SteamApps.PICSProductInfoCallback page in result.Results ?? []) {
 					foreach (SteamApps.PICSProductInfoCallback.PICSProductInfo package in page.Packages.Values) {
 						if (FreeNow(package.KeyValues) is not uint appId) {
@@ -96,14 +100,19 @@ internal static class PicsWatch {
 			}
 
 			Log.Debug(new Said("Steam's change feed: {0} package(s) changed, {1} newly free - checking them", changed.Count, found), bot.Name);
+			Log.Recovered($"pics:{bot.Name}");
 
 			return found;
-		} catch (OperationCanceledException) when (!ct.IsCancellationRequested) {
+		} catch (OperationCanceledException e) when (!ct.IsCancellationRequested) {
+			Log.DebugOnChange($"pics:{bot.Name}", $"Steam's change feed didn't answer in time: {Log.Describe(e)}", bot.Name);
+
 			return 0;   // Steam didn't answer in time - next poll
-		} catch (TimeoutException) {
+		} catch (TimeoutException e) {
+			Log.DebugOnChange($"pics:{bot.Name}", $"Steam's change feed didn't answer in time: {Log.Describe(e)}", bot.Name);
+
 			return 0;
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read Steam's change feed: {0}", e.Message), bot.Name);
+			Log.DebugOnChange($"pics:{bot.Name}", $"couldn't read Steam's change feed: {Log.Describe(e)}", bot.Name);
 
 			return 0;
 		} finally {

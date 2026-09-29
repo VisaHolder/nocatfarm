@@ -206,7 +206,13 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				throw;
 			} catch (Exception e) {
 				// Never silent. A farmer that dies quietly looks exactly like a farmer with nothing to do.
-				Log.Warn(new Said("card farming hiccup: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
+				Log.Warn(new Said("card farming hiccup: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
+
+				// where it broke, once per new kind of failure - the message says what, only the stack says where
+				if (Log.DebugOnChange($"hiccup:{Name}:{Bot.Name}", $"{Name}: {Log.Describe(e)}", Bot.Name)) {
+					Log.StackToFile(e, Bot.Name);
+				}
+
 				waitMinutes = 15;
 			}
 
@@ -311,7 +317,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			// Shutting down while it waited - nothing was sent, and nothing needs saying.
 		} catch (Exception e) {
-			Log.Warn(new Said("couldn't send the cards on: {0}", e.Message), Bot.Name);
+			Log.Warn(new Said("couldn't send the cards on: {0}", Log.Describe(e)), Bot.Name);
 		}
 	}
 
@@ -455,7 +461,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			if (logOut) {
 				_status = new Said("finished - logging out");
 				Log.Good("nothing left to farm - logging out (as set)", Bot.Name);
-				_ = Bot.StopAsync();
+				Background.Run("couldn't stop", () => Bot.StopAsync(), Bot.Name);
 
 				return 60;
 			}
@@ -1211,9 +1217,18 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 		// A page without the profile header isn't a badge page at all - Steam serves its error pages with a 200 too,
 		// and read as "no badges" that finished every game, swept the cards and could log the account out.
-		if ((first == null) || !IsProfilePage(first)) {
+		if (first == null) {
+			return null;   // the web session already logged why
+		}
+
+		// Read again every ten minutes while it fails, so said once per new kind of answer.
+		if (!IsProfilePage(first)) {
+			Log.DebugOnChange($"badges:{Bot.Name}", $"badge page 1 wasn't a profile page ({first.Length} chars) - an error or sign-in page", Bot.Name);
+
 			return null;
 		}
+
+		Log.Recovered($"badges:{Bot.Name}");
 
 		Dictionary<uint, FarmTarget> byApp = [];
 		List<FarmTarget> zero = [];
@@ -1228,6 +1243,10 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			string? page = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/badges?l=english&p={p}"), ct).ConfigureAwait(false);
 
 			if ((page == null) || !IsProfilePage(page)) {
+				if (page != null) {
+					Log.Debug($"badge page {p} wasn't a profile page ({page.Length} chars) - an error or sign-in page", Bot.Name);
+				}
+
 				// Partial results still beat none - the next cycle picks up the rest. But not when the pages that did load
 				// had nothing to farm: that read as "all done", which swept the cards, could log the account out, and
 				// didn't look again for hours, with the games still waiting on the pages that failed.
@@ -1314,6 +1333,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		IReadOnlyDictionary<uint, AppOwnership> owned = await Bot.GetAppOwnershipAsync().ConfigureAwait(false);
 
 		if (owned.Count == 0) {
+			// Failing open - worth a line, since from outside it looks exactly like refund protection being off.
+			Log.Debug("couldn't read when this account's games were bought - refund protection skipped this pass", Bot.Name);
+
 			return;
 		}
 
@@ -1401,7 +1423,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				}
 			}
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the card-page check list: {0}", e.Message), Bot.Name);
+			Log.Debug(new Said("couldn't read the card-page check list: {0}", Log.Describe(e)), Bot.Name);
 		}
 	}
 
@@ -1411,7 +1433,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			AtomicFile.Write(ZeroRowsPath, System.Text.Json.JsonSerializer.Serialize(
 				_zeroRows.ToDictionary(static kv => kv.Key.ToString(CultureInfo.InvariantCulture), static kv => new[] { kv.Value.Hours, (double) kv.Value.Checked.Ticks })));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't save the card-page check list: {0}", e.Message), Bot.Name);
+			Log.Debug(new Said("couldn't save the card-page check list: {0}", Log.Describe(e)), Bot.Name);
 		}
 	}
 
@@ -1563,7 +1585,13 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		string? html = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/gamecards/{appId}?l=english"), ct).ConfigureAwait(false);
 
 		// Same as the badge list: an error page is "couldn't read", never "0 cards left".
-		if ((html == null) || !IsProfilePage(html)) {
+		if (html == null) {
+			return null;   // the web session already logged why
+		}
+
+		if (!IsProfilePage(html)) {
+			Log.Debug($"{GameNames.Of(appId)}: its card page wasn't a profile page ({html.Length} chars) - an error or sign-in page", Bot.Name);
+
 			return null;
 		}
 

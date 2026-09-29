@@ -127,7 +127,8 @@ public sealed class WebSession : IDisposable {
 	/// and every failed or timed-out request used to log it in full to a file that is kept for weeks.
 	/// </summary>
 	private static string Loggable(Uri url) =>
-		System.Text.RegularExpressions.Regex.Replace(url.PathAndQuery, "(?i)((?:access_token|key|token|password|webapi_token)=)[^&]*", "$1[hidden]");
+		// k and p too: a mobile confirmation request carries its signature and the authenticator's device id in them.
+		System.Text.RegularExpressions.Regex.Replace(url.PathAndQuery, "(?i)((?:access_token|key|token|password|webapi_token)=|[?&](?:k|p)=)[^&]*", "$1[hidden]");
 
 	// ── requests ────────────────────────────────────────────────────────────
 	public async Task<string?> GetAsync(Uri url, CancellationToken ct = default) => await SendAsync(url, null, null, true, ct).ConfigureAwait(false);
@@ -164,6 +165,8 @@ public sealed class WebSession : IDisposable {
 					string? cookieSession = CookieValue(url, "sessionid");
 
 					if (string.IsNullOrEmpty(cookieSession)) {
+						Log.Debug($"POST {Loggable(url)} not sent: no sessionid cookie for {url.Host}", _bot.Name);
+
 						return null;
 					}
 
@@ -188,6 +191,8 @@ public sealed class WebSession : IDisposable {
 			}).ConfigureAwait(false);
 
 			if (response == null) {
+				NoteSkippedForRateLimit(url);
+
 				return null;
 			}
 
@@ -198,6 +203,8 @@ public sealed class WebSession : IDisposable {
 				Ready = false;
 
 				if (!allowRetry) {
+					Log.Debug($"{(form == null ? "GET" : "POST")} {Loggable(url)}: sent to the login page again, even with a fresh token", _bot.Name);
+
 					return null;
 				}
 
@@ -221,6 +228,7 @@ public sealed class WebSession : IDisposable {
 
 					if (shut > TimeSpan.Zero) {
 						Log.Warn(new Said("{0} is rate-limiting - all accounts wait {1}", url.Host, Fmt.Hm((int) shut.TotalMinutes)), _bot.Name);
+						Log.Debug($"rate-limited on {url.AbsolutePath}", _bot.Name);   // which page tripped it, to see what to slow down
 					}
 
 					return null;
@@ -243,7 +251,7 @@ public sealed class WebSession : IDisposable {
 				}
 
 				Log.Debug(new Said("{0} {1} -> {2}", (form == null ? "GET" : "POST"), Loggable(url), (int) response.StatusCode)
-					+ (failure.Length > 0 ? $"  {failure[..Math.Min(300, failure.Length)]}" : ""), _bot.Name);
+					+ (failure.Length > 0 ? $"  {Log.Scrub(failure[..Math.Min(300, failure.Length)])}" : ""), _bot.Name);
 
 				return errorVerdict && failure.StartsWith('{') ? failure : null;
 			}
@@ -255,11 +263,11 @@ public sealed class WebSession : IDisposable {
 		} catch (OperationCanceledException e) {
 			// HttpClient reports its own 30s timeout as a cancellation with nobody having cancelled anything.
 			// Rethrowing that killed the calling module's loop outright and looked exactly like a clean shutdown.
-			Log.Debug(new Said("{0} {1} timed out: {2}", (form == null ? "GET" : "POST"), Loggable(url), e.Message), _bot.Name);
+			Log.Debug(new Said("{0} {1} timed out: {2}", (form == null ? "GET" : "POST"), Loggable(url), Log.Describe(e)), _bot.Name);
 
 			return null;
 		} catch (Exception e) {
-			Log.Debug(new Said("{0} {1} failed: {2}", (form == null ? "GET" : "POST"), Loggable(url), e.Message), _bot.Name);
+			Log.Debug(new Said("{0} {1} failed: {2}", (form == null ? "GET" : "POST"), Loggable(url), Log.Describe(e)), _bot.Name);
 
 			return null;
 		} finally {
@@ -282,11 +290,13 @@ public sealed class WebSession : IDisposable {
 		}
 
 		try {
-			return await Limiters.WebAsync(url.Host, async () => {
+			string? answer = await Limiters.WebAsync(url.Host, async () => {
 				using HttpRequestMessage request = new(HttpMethod.Post, url);
 				string? cookieSession = CookieValue(url, "sessionid");
 
 				if (string.IsNullOrEmpty(cookieSession)) {
+					Log.Debug($"POST {Loggable(url)} not sent: no sessionid cookie for {url.Host}", _bot.Name);
+
 					return null;
 				}
 
@@ -310,21 +320,47 @@ public sealed class WebSession : IDisposable {
 
 					if (shut > TimeSpan.Zero) {
 						Log.Warn(new Said("{0} is rate-limiting - all accounts wait {1}", url.Host, Fmt.Hm((int) shut.TotalMinutes)), _bot.Name);
+						Log.Debug($"rate-limited on {url.AbsolutePath}", _bot.Name);   // which page tripped it, to see what to slow down
 					}
 
 					return null;
+				}
+
+				// The body still goes back - the caller reads Steam's reason out of it - but the status itself was
+				// never written down, so a refusal whose body the caller couldn't make sense of left no trace.
+				if (!response.IsSuccessStatusCode) {
+					Log.Debug($"POST {Loggable(url)} -> {(int) response.StatusCode}", _bot.Name);
 				}
 
 				Limiters.NoteWebOk(url.Host);
 
 				return await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 			}).ConfigureAwait(false);
+
+			if (answer == null) {
+				NoteSkippedForRateLimit(url);
+			}
+
+			return answer;
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
-			Log.Debug(new Said("POST {0} failed: {1}", Loggable(url), e.Message), _bot.Name);
+			Log.Debug(new Said("POST {0} failed: {1}", Loggable(url), Log.Describe(e)), _bot.Name);
 
 			return null;
+		}
+	}
+
+	/// <summary>
+	/// A request that came back with nothing because its host is serving a 429 wait - the limiter turns it away without
+	/// asking, so nothing else says so. Once per host per account (an hour apart at most): while the wait lasts, every
+	/// request of every module ends up here.
+	/// </summary>
+	private void NoteSkippedForRateLimit(Uri url) {
+		if (Limiters.RateLimitedFor(url.Host) > TimeSpan.Zero) {
+			Log.DebugOnChange($"ratelimited:{_bot.Name}:{url.Host}", $"requests to {url.Host} held back while it is rate-limited", _bot.Name);
+		} else {
+			Log.Recovered($"ratelimited:{_bot.Name}:{url.Host}");
 		}
 	}
 
@@ -367,10 +403,13 @@ public sealed class WebSession : IDisposable {
 
 			if (string.IsNullOrEmpty(token)) {
 				Ready = false;
+				// Every web request asks, so this repeats for as long as the account is offline - once is enough.
+				Log.DebugOnChange($"webtoken:{_bot.Name}", "web session not refreshed: no access token (account offline, or getting one failed)", _bot.Name);
 
 				return false;
 			}
 
+			Log.Recovered($"webtoken:{_bot.Name}");
 			Init(_bot.SteamId, token);
 			parentalNeeded = !string.IsNullOrEmpty(_bot.Cfg.SteamParentalCode);
 		} finally {
@@ -401,7 +440,7 @@ public sealed class WebSession : IDisposable {
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
-				Log.Debug(new Said("parental unlock on {0}: {1}", service.Host, e.Message), _bot.Name);
+				Log.Debug(new Said("parental unlock on {0}: {1}", service.Host, Log.Describe(e)), _bot.Name);
 			}
 		}
 	}

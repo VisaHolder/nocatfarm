@@ -80,7 +80,7 @@ public static class Secrets {
 
 			return AesMarker + Convert.ToBase64String(Seal(key, Encoding.UTF8.GetBytes(plain)));
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't encrypt a stored secret ({0}) - keeping it as it is", e.Message), forBot);
+			Log.Debug(new Said("couldn't encrypt a stored secret ({0}) - keeping it as it is", Log.Describe(e)), forBot);
 
 			return plain;
 		}
@@ -115,7 +115,7 @@ public static class Secrets {
 		} catch (Exception e) {
 			// A different Windows user, a restored profile, or a corrupted file. Treat it as absent: the account
 			// signs in again with its password, which is a nuisance rather than a failure.
-			Log.Debug(new Said("a stored secret couldn't be decrypted ({0}) - it will be asked for again", e.Message));
+			Log.Debug(new Said("a stored secret couldn't be decrypted ({0}) - it will be asked for again", Log.Describe(e)));
 
 			return "";
 		}
@@ -135,7 +135,7 @@ public static class Secrets {
 			return Encoding.UTF8.GetString(Open(key, Convert.FromBase64String(stored[AesMarker.Length..])));
 		} catch (Exception e) {
 			// A key from another install, or a value damaged by hand. Same answer as DPAPI: ask again.
-			Log.Debug(new Said("a stored secret couldn't be decrypted ({0}) - it will be asked for again", e.Message));
+			Log.Debug(new Said("a stored secret couldn't be decrypted ({0}) - it will be asked for again", Log.Describe(e)));
 
 			return "";
 		}
@@ -231,7 +231,9 @@ public static class Secrets {
 
 				return _key;
 			} catch (Exception e) {
-				_keyProblem = e.Message;
+				// Asked whenever something is saved or read: the same problem is said once.
+				Log.DebugOnChange("secrets:key", $"login key {path} unusable: {Log.Describe(e)}");
+				_keyProblem = Log.Scrub(e.Message);
 
 				return null;
 			}
@@ -251,8 +253,9 @@ public static class Secrets {
 			if ((File.GetUnixFileMode(path) & Loose) != 0) {
 				File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
 			}
-		} catch {
+		} catch (Exception e) {
 			// owned by someone else (a bind mount) - it still works, it just isn't tightened
+			Log.Failed($"tightening {path} to owner-only", e);
 		}
 	}
 

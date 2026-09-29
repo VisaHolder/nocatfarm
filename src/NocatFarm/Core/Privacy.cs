@@ -10,12 +10,6 @@ public static partial class Privacy {
 	/// <summary>One account's privacy. Each part is Steam's own number: 1 private, 2 friends only, 3 public.</summary>
 	public sealed record Settings(int Profile, int Games, int Playtime, int Friends, int Inventory, int Gifts, int Comments);
 
-	/// <summary>The parts, in the order the command takes them, with the name Steam's JSON uses for each.</summary>
-	public static readonly (string Word, string Key)[] Parts = [
-		("profile", "PrivacyProfile"), ("games", "PrivacyOwnedGames"), ("playtime", "PrivacyPlaytime"),
-		("friends", "PrivacyFriendsList"), ("inventory", "PrivacyInventory"), ("gifts", "PrivacyInventoryGifts")
-	];
-
 	/// <summary>Read the current settings from the profile's settings page. Null if the page wouldn't say.</summary>
 	public static async Task<Settings?> ReadAsync(Bot bot, CancellationToken ct = default) {
 		string? page = await bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{bot.SteamId}/edit/settings"), ct).ConfigureAwait(false);
@@ -30,6 +24,8 @@ public static partial class Privacy {
 		Match block = PrivacyBlock().Match(text);
 
 		if (!block.Success) {
+			Log.Debug("privacy settings: the settings page had no privacy block in it", bot.Name);
+
 			return null;
 		}
 
@@ -38,6 +34,8 @@ public static partial class Privacy {
 			JsonElement root = doc.RootElement;
 
 			if (!root.TryGetProperty("PrivacySettings", out JsonElement p)) {
+				Log.Debug("privacy settings: the page's privacy block had no PrivacySettings", bot.Name);
+
 				return null;
 			}
 
@@ -46,7 +44,9 @@ public static partial class Privacy {
 
 			return new Settings(Get("PrivacyProfile"), Get("PrivacyOwnedGames"), Get("PrivacyPlaytime"), Get("PrivacyFriendsList"),
 				Get("PrivacyInventory"), Get("PrivacyInventoryGifts"), comments);
-		} catch (JsonException) {
+		} catch (JsonException e) {
+			Log.Failed("privacy settings: couldn't read the page's privacy block", e, bot.Name);
+
 			return null;
 		}
 	}
@@ -67,7 +67,14 @@ public static partial class Privacy {
 		string? body = await bot.Web.PostAsync(new Uri(WebSession.Community, $"/profiles/{bot.SteamId}/ajaxsetprivacy/"), form,
 			new Uri(WebSession.Community, $"/profiles/{bot.SteamId}/edit/settings"), ct).ConfigureAwait(false);
 
-		return (body != null) && SuccessOne().IsMatch(body);
+		// A null body is already logged by the web session; an answer that isn't success:1 is not.
+		if ((body != null) && !SuccessOne().IsMatch(body)) {
+			Log.Debug($"privacy settings not saved - Steam answered: {Log.Scrub(body.Length > 150 ? body[..150] : body)}", bot.Name);
+
+			return false;
+		}
+
+		return body != null;
 	}
 
 	[GeneratedRegex("\"Privacy\"\\s*:\\s*(\\{\"PrivacySettings\"\\s*:\\s*\\{[^}]*\\}[^}]*\\})")]

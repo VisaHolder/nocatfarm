@@ -64,6 +64,55 @@ public static class SelfUpdate {
 	// "not busy" before either set it - two downloads into one folder, and two sign-out countdowns.
 	private static int _busy;
 
+	/// <summary>
+	/// The handover to the swap script and 'update skip' take turns on this. An install decided on a moment before a
+	/// skip - the queued one at bedtime, the night's "Update by itself" - went ahead anyway: it had already looked.
+	/// </summary>
+	private static readonly Lock HandoverGate = new();
+
+	/// <summary>The swap script has been started: from here the new version goes in whatever is typed.</summary>
+	private static bool _handedOver;
+
+	/// <summary>
+	/// 'update skip': this version never installs by itself. False when it's too late - the swap script already has it.
+	/// </summary>
+	public static bool Skip(string tag) {
+		lock (HandoverGate) {
+			if (_handedOver) {
+				return false;
+			}
+
+			UpdateCheck.Skipped = tag;
+
+			return true;
+		}
+	}
+
+	/// <summary>
+	/// Start the swap - unless 'update skip' got there first. Under the same lock as <see cref="Skip"/>, so a skip either
+	/// lands before this and nothing is started, or finds the swap already going and is told it's too late.
+	/// </summary>
+	internal static bool HandOver(string tag, Action start) {
+		lock (HandoverGate) {
+			if (UpdateCheck.IsSkipped(tag)) {
+				return false;
+			}
+
+			start();
+			_handedOver = true;
+
+			return true;
+		}
+	}
+
+	/// <summary>An install that found its version skipped: not a failure, the skip simply won.</summary>
+	private static string SkippedStop(string tag) {
+		Said why = new Said("update stopped - {0} was skipped; nothing changed", tag);
+		Log.Info(why);
+
+		return why.ToString();
+	}
+
 	/// <summary>Whether this copy can replace itself: everywhere but Docker and a systemd service - see the remarks above.</summary>
 	public static bool Supported => OperatingSystem.IsWindows()
 		|| ((OperatingSystem.IsLinux() || OperatingSystem.IsMacOS()) && !Platform.InContainer && !RunAsService());
@@ -89,6 +138,9 @@ public static class SelfUpdate {
 
 			return parent == "systemd";
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			// Asked whenever Supported is: said once, not every time.
+			Log.DebugOnChange("update:service", $"update: couldn't tell whether this runs as a service, so it updates by hand: {Log.Describe(e)}");
+
 			return true;   // can't tell - the safe answer is "update by hand"
 		}
 	}
@@ -230,8 +282,9 @@ public static class SelfUpdate {
 
 				try {
 					notes = File.Exists(NotesPath) ? File.ReadAllText(NotesPath).Trim() : "";
-				} catch {
+				} catch (Exception e) {
 					// the message goes without them
+					Log.Failed("update: reading the new version's release notes", e);
 				}
 
 				TryDelete(NotesPath);
@@ -257,7 +310,7 @@ public static class SelfUpdate {
 				Fail(new Said("update failed: {0} didn't start - still on {1}, try again", p[1], Build.Version));
 			}
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the update note: {0}", e.Message));
+			Log.Failed("couldn't read the update note", e);
 		}
 	}
 
@@ -270,8 +323,11 @@ public static class SelfUpdate {
 	private static void TryDelete(string path) {
 		try {
 			File.Delete(path);
-		} catch {
-			// gone or not, nothing depends on it
+		} catch (Exception e) {
+			// gone or not, nothing depends on it - but one left behind can be read again by the next start
+			if (e is not DirectoryNotFoundException) {
+				Log.Failed($"update: deleting {Path.GetFileName(path)}", e);
+			}
 		}
 	}
 
@@ -348,6 +404,9 @@ public static class SelfUpdate {
 				ok = File.ReadAllText(VerifyPath).Trim();
 			}
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			// Unread, the new version never answers "ok" and the swap script puts the old one back.
+			Log.Failed("update: reading which file to answer the swap script in", e);
+
 			return null;
 		}
 
@@ -368,8 +427,9 @@ public static class SelfUpdate {
 
 		try {
 			File.WriteAllText(ok, what);
-		} catch {
-			// the script's own time limit covers it
+		} catch (Exception e) {
+			// the script's own time limit covers it - which for "ok" means putting the old version back
+			Log.Failed($"update: telling the swap script \"{what}\"", e);
 		}
 	}
 
@@ -438,6 +498,7 @@ public static class SelfUpdate {
 			await Task.WhenAll(stopping).WaitAsync(TimeSpan.FromSeconds(30), ct).ConfigureAwait(false);
 		} catch (TimeoutException) {
 			// the shutdown that follows stops whatever is left
+			Log.Debug($"update: {stopping.Count(static s => !s.IsCompleted)} of {stopping.Count} account(s) hadn't finished signing out after 30s - the shutdown stops them");
 		}
 	}
 
@@ -473,6 +534,12 @@ public static class SelfUpdate {
 		List<Bot> signedOut = [];
 
 		try {
+			// Looked at again now it's this install's turn. The bedtime queue and "Update by itself" check for a skip and
+			// then start this on another thread, so an 'update skip' typed in between used to be too late.
+			if ((UpdateCheck.Available is { } known) && UpdateCheck.IsSkipped(known)) {
+				return SkippedStop(known);
+			}
+
 			Progress = "asking GitHub what's newest";
 			Log.Good("update: asking GitHub what's newest");
 
@@ -481,7 +548,10 @@ public static class SelfUpdate {
 			try {
 				json = await Http.GetStringAsync(Feed, ct).ConfigureAwait(false);
 			} catch (Exception e) when (e is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested) {
-				return Fail(new Said("update failed: couldn't reach GitHub ({0}) - nothing changed", e.Message));
+				// Where it asked, for the file: GitHub's refusal (a rate limit's 403) is in the message, status included.
+				Log.Debug($"update: asking {UpdateCheck.FeedWhere()} failed: {Log.Describe(e)}");
+
+				return Fail(new Said("update failed: couldn't reach GitHub ({0}) - nothing changed", Log.Scrub(e.Message)));
 			}
 
 			using JsonDocument doc = JsonDocument.Parse(json);
@@ -496,6 +566,10 @@ public static class SelfUpdate {
 
 			if (!UpdateCheck.IsNewerThanThisBuild(tag)) {
 				return $"already on the newest release ({Build.Version}) - nothing to do";
+			}
+
+			if (UpdateCheck.IsSkipped(tag)) {
+				return SkippedStop(tag);
 			}
 
 			// The zip for this machine - not the source tarballs GitHub adds to every release by itself, and not
@@ -584,7 +658,10 @@ public static class SelfUpdate {
 			} catch (OperationCanceledException) when (!ct.IsCancellationRequested) {
 				return Fail(new Said("update failed: download stalled for a minute - try again"));
 			} catch (Exception e) when (e is HttpRequestException or IOException && !ct.IsCancellationRequested) {
-				return Fail(new Said("update failed: download broke off ({0}) - try again", e.Message));
+				// Which address, for the file: a refused download (a 404 for a release still uploading) says its status in the message.
+				Log.Debug($"update: downloading {Log.Where(Uri.TryCreate(url, UriKind.Absolute, out Uri? address) ? address : null)} failed: {Log.Describe(e)}");
+
+				return Fail(new Said("update failed: download broke off ({0}) - try again", Log.Scrub(e.Message)));
 			}
 
 			// A truncated download extracts to a broken install. Check before touching anything.
@@ -601,7 +678,7 @@ public static class SelfUpdate {
 			try {
 				ZipFile.ExtractToDirectory(zip, staged, true);
 			} catch (Exception e) when (e is IOException or InvalidDataException or UnauthorizedAccessException) {
-				return Fail(new Said("update failed: couldn't unpack ({0}) - disk full?", e.Message));
+				return Fail(new Said("update failed: couldn't unpack ({0}) - disk full?", Log.Scrub(e.Message)));
 			}
 
 			// Releases up to 1.2.6 put everything inside one nocat.farm/ folder; later ones are flat. Take either:
@@ -654,10 +731,15 @@ public static class SelfUpdate {
 				// Plain ASCII for cmd - the release's own file names, which are ASCII.
 				File.WriteAllLines(Path.Combine(work, "added.txt"), added.Where(static r => r.All(static c => c < 128) && !r.Contains('"')));
 			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
-				return Fail(new Said("update failed: couldn't back up the current version ({0})", e.Message));
+				return Fail(new Said("update failed: couldn't back up the current version ({0})", Log.Scrub(e.Message)));
 			}
 
 			await File.WriteAllTextAsync(script, OperatingSystem.IsWindows() ? SwapScript(Environment.ProcessId) : UnixSwapScript, ct).ConfigureAwait(false);
+
+			// Skipped while it downloaded: stopped here, before a single account is signed out for nothing.
+			if (UpdateCheck.IsSkipped(tag)) {
+				return SkippedStop(tag);
+			}
 
 			Log.Publish(Topic.Installs, "nocat.farm", byItself
 				? new Said("Downloaded {0} ({1}MB) - installing it now, by itself. The accounts sign out one at a time; back in about a minute.", tag, got / 1048576)
@@ -671,28 +753,7 @@ public static class SelfUpdate {
 				return Fail(new Said("update stopped - nocat.farm was closed first; nothing changed"));
 			}
 
-			// A note for the version that comes back up, so its first line can say what just happened. The window
-			// that showed the download closes a moment later and the new one starts empty - on a quick download
-			// the whole thing was over before anyone saw it, and nothing afterwards said an update had happened.
-			// Written only now the swap is really going ahead: written before the backup and the sign-outs, an update
-			// that stopped in either left it behind, and the next start said "update failed" about one never tried.
 			string okFile = Path.Combine(work, "started.txt");
-
-			try {
-				Directory.CreateDirectory(Path.GetDirectoryName(NotePath)!);
-
-				// Where the new version answers "ok", for when it can't be handed over in the environment: on a Mac
-				// started from start.command, the new version comes up in a fresh Terminal window, which starts clean.
-				AtomicFile.Write(VerifyPath, okFile);
-				AtomicFile.Write(NotePath, string.Join('|', Build.Version, tag.TrimStart('v', 'V'), got / 1048576,
-					(int) Math.Max(1, (DateTime.UtcNow - started).TotalSeconds), DateTime.UtcNow.Ticks));
-				AtomicFile.Write(NotesPath, UpdateCheck.Highlights(body));
-			} catch {
-				// only the announcement is lost
-			}
-
-			Progress = "restarting into " + tag;
-			Log.Good(new Said("update: all signed out - restarting into {0}", tag));
 
 			// Detached, and in its own window-less shell, so killing this process doesn't take it with us.
 			//
@@ -732,7 +793,41 @@ public static class SelfUpdate {
 			swap.Environment["NF_ARGS"] = OperatingSystem.IsWindows() ? RelaunchArgs() : string.Join(' ', Environment.GetCommandLineArgs().Skip(1));
 			swap.Environment["NF_OK"] = okFile;
 			swap.Environment["NF_TAG"] = tag.TrimStart('v', 'V');
-			Process.Start(swap);
+
+			// The last moment a skip can still win: the notes and the swap go under the same lock 'update skip' takes, so it
+			// lands either before them and nothing is started, or after and is told it's too late - never in between.
+			bool swapped = HandOver(tag, () => {
+				// A note for the version that comes back up, so its first line can say what just happened. The window
+				// that showed the download closes a moment later and the new one starts empty - on a quick download
+				// the whole thing was over before anyone saw it, and nothing afterwards said an update had happened.
+				// Written only now the swap is really going ahead: written before the backup and the sign-outs, an update
+				// that stopped in either left it behind, and the next start said "update failed" about one never tried.
+				try {
+					Directory.CreateDirectory(Path.GetDirectoryName(NotePath)!);
+
+					// Where the new version answers "ok", for when it can't be handed over in the environment: on a Mac
+					// started from start.command, the new version comes up in a fresh Terminal window, which starts clean.
+					AtomicFile.Write(VerifyPath, okFile);
+					AtomicFile.Write(NotePath, string.Join('|', Build.Version, tag.TrimStart('v', 'V'), got / 1048576,
+						(int) Math.Max(1, (DateTime.UtcNow - started).TotalSeconds), DateTime.UtcNow.Ticks));
+					AtomicFile.Write(NotesPath, UpdateCheck.Highlights(body));
+				} catch (Exception e) {
+					// only the announcement is lost
+					Log.Failed("update: writing the note for the new version", e);
+				}
+
+				Progress = "restarting into " + tag;
+				Log.Good(new Said("update: all signed out - restarting into {0}", tag));
+
+				Process.Start(swap);
+			});
+
+			if (!swapped) {
+				SignBackIn(signedOut);
+
+				return SkippedStop(tag);
+			}
+
 			handedOver = true;   // stays busy from here: the swap script owns the folder until this copy has gone
 
 			Commands.RequestExit();
@@ -741,9 +836,11 @@ public static class SelfUpdate {
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
+			// Everything expected has its own catch above: this one is a surprise, so its stack goes in the file.
+			Log.StackToFile(e);
 			SignBackIn(signedOut);
 
-			return Fail(new Said("update failed: {0} - nothing changed", e.Message));
+			return Fail(new Said("update failed: {0} - nothing changed", Log.Scrub(e.Message)));
 		} finally {
 			if (!handedOver) {
 				Volatile.Write(ref _busy, 0);
@@ -765,7 +862,7 @@ public static class SelfUpdate {
 		Log.Info(new Said("update: signing the accounts back in"));
 
 		foreach (Bot b in signedOut.Where(static b => b.Cfg.Enabled)) {
-			_ = b.StartAsync();
+			Background.Run("couldn't start", b.StartAsync, b.Name);
 		}
 	}
 

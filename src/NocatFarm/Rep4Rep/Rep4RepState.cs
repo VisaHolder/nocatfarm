@@ -121,7 +121,7 @@ public sealed class Rep4RepState {
 
 			return JsonSerializer.Deserialize<Rep4RepState>(body, Json) ?? new Rep4RepState();
 		} catch (Exception e) {
-			Log.Warn(new Said("can't read {0} ({1}) - no comments until it's fixed", Path.GetFileName(path), e.Message), bot);
+			Log.Warn(new Said("can't read {0} ({1}) - no comments until it's fixed", Path.GetFileName(path), Log.Describe(e)), bot);
 
 			return null;
 		} finally {
@@ -156,7 +156,7 @@ public sealed class Rep4RepState {
 			Directory.CreateDirectory(Dir);
 			await AtomicFile.WriteAsync(PathFor(bot), body).ConfigureAwait(false);
 		} catch (Exception e) {
-			Log.Warn(new Said("couldn't save commenting state: {0}", e.Message), bot);
+			Log.Warn(new Said("couldn't save commenting state: {0}", Log.Describe(e)), bot);
 		} finally {
 			Gate.Release();
 		}

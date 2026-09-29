@@ -18,6 +18,7 @@ let refreshSeconds = 3;
 let state = null;          // /api/status
 let schema = null;         // /api/settings/schema
 let config = null;         // /api/config
+let configLoaded = null;   // /api/config exactly as it came - a save sends its part back as the Base
 let commands = [];
 let logLines = [];
 // 'clear' in this dashboard hides everything up to here - in this browser only. The window and the file keep theirs.
@@ -53,6 +54,8 @@ const STATUS_META = {
   problem:    { label: 'Problem',   tip: 'Something is wrong - the login failed, or Steam is refusing this account.' },
   playing:    { label: 'Playing',   tip: 'Human mode: in a game right now, one at a time, like a person.' },
   break:      { label: 'On a break', tip: 'Human mode: stepped away for a few minutes.' },
+  done:       { label: 'Done for today', tip: "Human mode: today's hours are played. Still signed in and showing online, just not in a game - it plays again tomorrow." },
+  dayoff:     { label: 'Day off',    tip: 'Human mode: not playing today, the way people skip a day now and then. Still signed in and showing online.' },
   nightidle:  { label: 'Night idle', tip: 'Offline for the night but quietly banking hours - nobody can see it.' },
   asleep:     { label: 'Asleep',     tip: 'Done for the night. It comes back on its own in the morning.' },
   off:        { label: 'Off',       tip: "Disabled or stopped. It won't log in until you start it." }
@@ -394,6 +397,7 @@ function render() {
     .filter((k) => counts[k])
     .map((k) => `<span class="chip ${k}" data-tip="${esc(t(STATUS_META[k].tip))}" onclick="filterTo('${k}')"><i class="dot"></i>${esc(t(STATUS_META[k].label))}<b>${counts[k]}</b></span>`)
     .join('') || `<span class="muted small">${esc(t('no accounts yet'))}</span>`;
+  fitRailChips();
 
   paint('railStats', `
     <dt data-tip="${esc(t("Trading cards still to drop across every account that's farming."))}">${esc(t('Cards left'))}</dt><dd>${state.CardsLeft}</dd>
@@ -433,7 +437,9 @@ function render() {
     upd.textContent = busy ? (state.UpdateProgress || t('working…')) : tf('Update to {0}', state.UpdateAvailable || '');
     upd.dataset.tip = busy
       ? t('Downloading. It restarts by itself when it lands.')
-      : tf('Download {0} and restart into it. Your accounts, tokens, settings and logs are left exactly as they are.', state.UpdateAvailable || '');
+      : state.UpdateWaits
+        ? tf('Install {0} once your accounts are asleep. Your accounts, tokens, settings and logs are left exactly as they are.', state.UpdateAvailable || '')
+        : tf('Download {0} and restart into it. Your accounts, tokens, settings and logs are left exactly as they are.', state.UpdateAvailable || '');
   }
 
   renderAlerts();
@@ -998,9 +1004,46 @@ function renderHistory() {
 
 let histResize = null;
 window.addEventListener('resize', () => {
+  fitRailChips();
   clearTimeout(histResize);
   histResize = setTimeout(() => { if (view === 'overview') renderHistory(); }, 150);
 });
+
+// The top bar's status chips drop out whole, from the right, when there isn't room for them all. They used to just
+// vanish - an account on its day off was simply missing from the count. Now a "+N" takes their place, and its tip
+// says which.
+function fitRailChips() {
+  const box = $('railChips');
+  if (!box) return;
+  box.querySelector('.more')?.remove();
+  const chips = [...box.querySelectorAll('.chip')];
+  chips.forEach((c) => c.classList.remove('hidden'));
+  if (chips.length < 2 || !box.offsetParent) return;
+
+  const row = chips[0].offsetTop;
+  const out = chips.filter((c) => c.offsetTop > row);
+  if (!out.length) return;
+
+  const kept = chips.filter((c) => !out.includes(c));
+  out.forEach((c) => c.classList.add('hidden'));
+  const more = document.createElement('span');
+  more.className = 'chip more';
+  more.onclick = () => go('accounts');
+  box.appendChild(more);
+  const paint = () => {
+    more.innerHTML = `<b>+${out.length}</b>`;
+    more.dataset.tip = out.map((c) => `${c.textContent.slice(0, -c.querySelector('b').textContent.length).trim()} ${c.querySelector('b').textContent}`).join(' · ');
+  };
+  paint();
+
+  // The "+N" needs room of its own: give up chips from the right until it fits on the one line.
+  while (more.offsetTop > row && kept.length > 1) {
+    const c = kept.pop();
+    c.classList.add('hidden');
+    out.unshift(c);
+    paint();
+  }
+}
 
 // ── render: accounts ─────────────────────────────────────────────────
 function renderAccounts() {
@@ -1939,9 +1982,14 @@ async function togglePlugin(name, enabled) {
 // logs - lives in config/ and is never part of the archive, so it survives untouched.
 function askUpdate() {
   const to = (state && state.UpdateAvailable) || '';
+  // "When I say update" set to wait: the button queues it rather than installing now, and the dialog says so - it used
+  // to promise a download and restart that then didn't happen until the night.
+  const waits = !!(state && state.UpdateWaits);
   modal(`
     <h2>${esc(tf('Update to {0}?', to))}</h2>
-    <p>${tf('It downloads {0}, closes, swaps itself over and starts back up. Takes about a minute.', `<b>${esc(to)}</b>`)}</p>
+    <p>${waits
+      ? tf("It installs {0} once your accounts are asleep - no human-mode account awake, nobody playing, no trade or gift waiting. Then it closes, swaps itself over and starts back up.", `<b>${esc(to)}</b>`)
+      : tf('It downloads {0}, closes, swaps itself over and starts back up. Takes about a minute.', `<b>${esc(to)}</b>`)}</p>
     <ul class="muted small">
       <li>${esc(t('Your accounts, login tokens, settings and logs are left exactly as they are.'))}</li>
       <li>${esc(t('Every account signs out of Steam for a few seconds while it restarts.'))}</li>
@@ -1950,7 +1998,7 @@ function askUpdate() {
     </ul>
     <div class="actions">
       <button class="ghost" onclick="closeModal()">${esc(t('Not now'))}</button>
-      <button id="updateGo" onclick="doUpdate(true)">${esc(t('Download and restart'))}</button>
+      <button id="updateGo" onclick="doUpdate(true)">${esc(waits ? t("Install when they're asleep") : t('Download and restart'))}</button>
     </div>`);
 }
 
@@ -1964,6 +2012,7 @@ async function doUpdate(confirmed) {
   try {
     const r = await api('/api/update', { method: 'POST' });
     toast(r && r.Message ? r.Message : t('Downloading. It restarts by itself when it lands.'));
+    if (btn && state && state.UpdateWaits) btn.disabled = false;   // only queued - nothing is downloading yet
   } catch (e) {
     toast(tf('Update failed: {0}', e.message || e));
     if (btn) btn.disabled = false;
@@ -2056,7 +2105,7 @@ async function pickTutorialLanguage(code) {
   await loadConfig().catch(() => {});
   if (config && config.Global) {
     config.Global.Language = code;
-    await post('/api/config', config.Global).catch(() => {});
+    await postGlobal(config.Global).catch(() => {});
   }
 
   await loadLanguage(code);
@@ -2257,7 +2306,7 @@ function tutStepName(key) {
 async function tutSaveGlobal(changes) {
   await loadConfig().catch(() => {});
   if (!config || !config.Global) { toast(t('Save failed'), true); return null; }
-  const res = await post('/api/config', { ...config.Global, ...changes }).catch(() => null);
+  const res = await postGlobal({ ...config.Global, ...changes }).catch(() => null);
   if (!res || !res.ok) { toast((res && res.error) || t('Save failed'), true); return null; }
   if (res.Token) {
     token = res.Token;
@@ -3062,7 +3111,7 @@ async function tutSaveSetup() {
     if (s.customName.trim()) { changes.CustomGameName = s.customName.trim(); changes.CustomGameNameEnabled = true; }
   }
 
-  const res = await post('/api/bots/' + encodeURIComponent(s.name) + '/config', { ...base, ...changes });
+  const res = await postBot(s.name, { ...base, ...changes });
   if (!res.ok) toast(res.error || t("Couldn't save those settings"), true);
   tutShowDone();
 }
@@ -3114,7 +3163,7 @@ async function tutDiscordPresence(on) {
   await loadConfig();
   if (!config || !config.Global) return;
   config.Global.DiscordPresence = on;
-  await post('/api/config', config.Global).catch(() => {});
+  await postGlobal(config.Global).catch(() => {});
 }
 
 async function tutStartOthers() {
@@ -3377,9 +3426,6 @@ function modal(html) { $('modalCard').innerHTML = html; $('modal').classList.rem
 // to scan; a checklist that ticks itself as things get fixed, with the fix beside each; Telegram and Discord; and what
 // it means for safety. It reads /api/phone every few seconds while it's open, so a tick flips the moment a fix lands.
 let phone = { info: null, at: 0, loading: false, pw: '', pwShow: false, pwOpen: false, restarting: false, painted: {} };
-
-// The old "Open on your phone" dialog is this page now - every button that opened it lands here.
-function phoneModal() { closeModal(); go('phone'); }
 
 async function loadPhone(force) {
   if (phone.loading || (!force && Date.now() - phone.at < 4000)) return;
@@ -3846,7 +3892,7 @@ async function enableAllRep4Rep() {
     if (b.Rep4Rep) continue;
     const base = config.Bots[b.Name];
     if (!base) continue;
-    await post('/api/bots/' + encodeURIComponent(b.Name) + '/config', { ...base, Rep4Rep: true });
+    await postBot(b.Name, { ...base, Rep4Rep: true });
   }
   toast(t('rep4rep commenting switched on for every account'));
   await loadConfig();
@@ -3977,7 +4023,7 @@ async function quickSet(bot, key, value) {
 
   const cfg = { ...base };
   cfg[key] = Number(value) || 0;
-  const res = await post('/api/bots/' + encodeURIComponent(bot) + '/config', cfg);
+  const res = await postBot(bot, cfg);
   // Refused: put the saved number back in the box rather than leave the rejected one looking accepted.
   if (!res.ok) { toast(res.error || t('Could not save that'), true); r4rPacingHtml = ''; renderRep4RepPacing(); return; }
   toast((res.Adjusted && res.Adjusted.length) ? res.Adjusted[0] : tf('{0}: saved', bot), !!(res.Adjusted && res.Adjusted.length));
@@ -4160,6 +4206,22 @@ $('cmd').addEventListener('keydown', (e) => {
 async function loadConfig() {
   if (!schema) schema = await api('/api/settings/schema');
   config = await api('/api/config');
+  // Kept apart from config, which the page edits in place. A save sends it along, so the server can tell a field
+  // the page changed from one it merely had an old copy of - the Telegram chat connected a moment ago, say.
+  configLoaded = config ? JSON.parse(JSON.stringify(config)) : null;
+}
+
+/// Save the global settings: the page's whole copy with its edits, plus the copy it loaded, so a field it didn't touch
+/// can't put back an old value over one the app has written since.
+function postGlobal(body) {
+  const loaded = configLoaded && configLoaded.Global;
+  return post('/api/config', loaded ? { ...body, Base: loaded } : body);
+}
+
+/// The same for one account - a game learned to be banned during a send isn't put back by a save a moment later.
+function postBot(name, body) {
+  const loaded = configLoaded && configLoaded.Bots && configLoaded.Bots[name];
+  return post('/api/bots/' + encodeURIComponent(name) + '/config', loaded ? { ...body, Base: loaded } : body);
 }
 
 /// Switch the settings pane to an account (or null for Global). Returns false when the user chose to keep their
@@ -5306,7 +5368,9 @@ function discordPreview(val) {
   const featured = bots.find((b) => b.Name.toLowerCase() === featName) || null;
   const shown = bots.filter((b) => (names ? names.includes(b.Name.toLowerCase()) : list === '' ? !b.Legit : true));
   const online = shown.filter((b) => b.Online);
-  const cardsLeft = online.reduce((n, b) => n + (b.Cards || 0), 0);
+  // Paused, or standing down while you play on it: not farming or idling anything - as on the real card.
+  const working = online.filter((b) => !b.Paused && !b.Blocked);
+  const cardsLeft = working.reduce((n, b) => n + Math.max(0, b.Cards || 0), 0);
   // The numbers are the whole farm's; which accounts are shown only decides the names and the top line.
   const today = bots.reduce((n, b) => n + (b.CardsToday || 0), 0);
   const connected = bots.filter((b) => b.Online).length;
@@ -5314,6 +5378,7 @@ function discordPreview(val) {
   const ordered = [...online, ...shown.filter((b) => !b.Online)];
 
   const details = !shown.length && !featured ? t('No accounts picked') : !online.length ? t('Resting')
+    : !working.length ? t('Paused')
     : cardsLeft > 0 ? tf('Farming cards · {0} left', cardsLeft) : t('Idling games');
   // The featured account is left out of the names only while it's the picture - as on the real card.
   const featuredShown = !!(featured && val('DiscordShowAvatar') && featured.Avatar);
@@ -5349,7 +5414,12 @@ function discordPreview(val) {
   // The last line as Discord draws it: the state line by the party icon, then the timer by a controller.
   const pad = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 6h10a5 5 0 0 1 4.9 6l-.8 4a3 3 0 0 1-5 1.6L14 16h-4l-2.1 1.6a3 3 0 0 1-5-1.6l-.8-4A5 5 0 0 1 7 6Zm1 3v2H6v2h2v2h2v-2h2v-2h-2V9H8Zm7.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Zm3-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>';
   const party = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 19c0-3.3 3.1-6 7-6s7 2.7 7 6v1H2v-1Zm16 1v-1c0-1.9-.8-3.6-2.1-4.9 3.5.1 6.1 2.2 6.1 4.9v1h-4Z"/></svg>';
-  const meta = (shown.length ? `<span class="dstate">${party}${esc(stateLine)}${val('DiscordShowCounter') && bots.length ? esc(' · ' + (connected === bots.length ? (connected === 1 ? t('1 account connected') : tf('{0} accounts connected', connected)) : tf('{0} of {1} accounts connected', connected, bots.length))) : ''}</span>` : '')
+  // As on the real card: the short "3 linked" when the long one would run past what Discord shows (37 characters).
+  const all = connected === bots.length;
+  const long = all ? (connected === 1 ? t('1 account linked') : tf('{0} accounts linked', connected)) : tf('{0} of {1} accounts linked', connected, bots.length);
+  const short = all ? tf('{0} linked', connected) : tf('{0} of {1} linked', connected, bots.length);
+  const stateWithCounter = val('DiscordShowCounter') && bots.length ? `${stateLine} · ${(stateLine + ' · ' + long).length <= 37 ? long : short}` : stateLine;
+  const meta = (shown.length ? `<span class="dstate">${party}${esc(stateWithCounter)}</span>` : '')
     + (val('DiscordShowTimer') ? `<span class="dtime">${pad}${esc(timer)}</span>` : '');
 
   return `<div class="dcard ${val('DiscordPresence') ? '' : 'off'}">
@@ -5581,8 +5651,8 @@ async function saveSettings() {
 
   const body = { ...base, ...edits };
   const res = target === GLOBAL
-    ? await post('/api/config', body)
-    : await post('/api/bots/' + encodeURIComponent(target) + '/config', body);
+    ? await postGlobal(body)
+    : await postBot(target, body);
 
   if (!res.ok) { toast(res.error || t('Save failed'), true); return; }
 

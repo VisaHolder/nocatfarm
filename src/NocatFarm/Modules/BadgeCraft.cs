@@ -104,7 +104,12 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
-				Log.Warn(new Said("badge sweep failed: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
+				Log.Warn(new Said("badge sweep failed: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
+
+				// where it broke, once per new kind of failure - the message says what, only the stack says where
+				if (Log.DebugOnChange($"hiccup:{Name}:{Bot.Name}", $"{Name}: {Log.Describe(e)}", Bot.Name)) {
+					Log.StackToFile(e, Bot.Name);
+				}
 			}
 
 			// A minute at a time, so switching either setting takes effect straight away rather than after the day's
@@ -180,6 +185,8 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 
 			if (body != null && !body.Contains("\"success\":false", StringComparison.Ordinal)) {
 				opened++;
+			} else if (body != null) {
+				Log.Debug($"opening booster pack {assetId} (app {appId}) refused: {Log.Scrub(body.Length > 150 ? body[..150] : body)}", Bot.Name);
 			}
 
 			if (!await Sleep(Rng.Seconds(UnpackGapLowSeconds, UnpackGapHighSeconds), ct).ConfigureAwait(false)) {
@@ -206,7 +213,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
 			} catch (Exception e) {
-				Log.Debug(new Said("booster unpack: {0}", e.Message), Bot.Name);
+				Log.Debug(new Said("booster unpack: {0}", Log.Describe(e)), Bot.Name);
 			}
 		}
 
@@ -260,6 +267,9 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 
 			if ((cards != null) && (ParseCardsPage(cards) is { } c) && (c.AppId == app)) {
 				ready.Add(c);
+			} else if (cards != null) {
+				// The list said this set is ready; its page not offering the craft is worth knowing about.
+				Log.Debug($"{GameNames.Of(app)}: the card page has no craft button to read ({cards.Length} chars) - left for the next sweep", Bot.Name);
 			}
 		}
 
@@ -278,25 +288,102 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		_moreToCraft = ready.Count > most;
 		ready = [.. ready.Take(most)];
 
-		// Deliberately NOT re-reading the page between crafts: the list we already have is accurate, and every
-		// extra request during a craft run is what pushes Steam into extending the rate limit.
-		foreach (Craftable c in ready) {
-			ct.ThrowIfCancellationRequested();
-			_status = new Said("crafting ({0}/{1})", made, ready.Count);
+		// The cards first, claimed the way a send or a sale claims them (Bot.ClaimItems). A craft eats one of each card
+		// of the set, and a send or a listing running at the same moment picked from the same inventory: the offer
+		// went out with cards the craft had just used up, and Steam dropped the whole offer. Whoever claims first uses
+		// them; the other leaves them out.
+		InventoryContents? inventory = await Inventory.ReadAsync(Bot, 753, "6", ct).ConfigureAwait(false);
 
-			if (!await CraftAsync(c, ct).ConfigureAwait(false)) {
-				Log.Warn(new Said("craft refused - backing off {0}h rather than retrying", BackoffHours), Bot.Name);
-				_status = new Said("rate-limited, backing off");
+		// All of it or nothing: a copy on a page that didn't load can't be claimed, and could be the one the craft eats.
+		if (inventory is not { Complete: true }) {
+			_status = new Said("couldn't read the inventory - crafting later");
+			_moreToCraft = true;
 
-				return made > 0 ? made : -1;
+			return 0;
+		}
+
+		// By set, not by game: a game's foil set and its plain one can both be ready, and are different cards.
+		Dictionary<Craftable, HashSet<ulong>> held = [];
+
+		try {
+			foreach (Craftable c in ready) {
+				List<ulong> cards = SetCards(inventory, c.AppId, c.Border > 0);
+
+				// Steam can't be told which copy to use, so a set is crafted only with every copy of every card in it
+				// held - one it doesn't hold could be the one the craft eats.
+				if (cards.Count == 0) {
+					Log.Debug(new Said("{0}: its cards aren't in the inventory yet - crafted later", GameNames.Of(c.AppId)), Bot.Name);
+					_moreToCraft = true;
+
+					continue;
+				}
+
+				if (ClaimSet(Bot, cards) is not { } claimed) {
+					Log.Info(new Said("{0}: its cards are being sent or sold right now - crafted later", GameNames.Of(c.AppId)), Bot.Name);
+					_moreToCraft = true;
+
+					continue;
+				}
+
+				held[c] = claimed;
 			}
 
-			made++;
-			_crafted++;
-			Stats.Record(Stats.KindBadge, Bot.Name);
+			// Read after claiming, like a send: a send or a sale that already made its offer has let go of its claim by
+			// now, so its cards show up here as promised instead. Crafting one of them would break that trade. Not
+			// knowing is a reason to wait, as it is for a sale - a craft can always happen tomorrow.
+			if (held.Count > 0) {
+				HashSet<ulong>? promised = await TradeOffers.PromisedAsync(Bot, ct).ConfigureAwait(false);
 
-			if (!await Sleep(Rng.Seconds(CraftGapLowSeconds, CraftGapHighSeconds), ct).ConfigureAwait(false)) {
-				break;
+				foreach ((Craftable c, HashSet<ulong> cards) in held.Where(h => (promised == null) || h.Value.Overlaps(promised)).ToList()) {
+					Bot.ReleaseItems(cards);
+					held.Remove(c);
+					_moreToCraft = true;
+
+					if (promised != null) {
+						Log.Info(new Said("{0}: its cards are in a trade offer that's waiting - crafted later", GameNames.Of(c.AppId)), Bot.Name);
+					}
+				}
+
+				if (promised == null) {
+					Log.Debug(new Said("Steam wouldn't say which cards are in a waiting trade - crafting later"), Bot.Name);
+				}
+			}
+
+			ready = [.. ready.Where(held.ContainsKey)];
+
+			// Deliberately NOT re-reading the page between crafts: the list we already have is accurate, and every
+			// extra request during a craft run is what pushes Steam into extending the rate limit.
+			foreach (Craftable c in ready) {
+				ct.ThrowIfCancellationRequested();
+				_status = new Said("crafting ({0}/{1})", made, ready.Count);
+
+				if (!await CraftAsync(c, ct).ConfigureAwait(false)) {
+					Log.Warn(new Said("craft refused - backing off {0}h rather than retrying", BackoffHours), Bot.Name);
+					_status = new Said("rate-limited, backing off");
+
+					return made > 0 ? made : -1;
+				}
+
+				made++;
+				_crafted++;
+				Stats.Record(Stats.KindBadge, Bot.Name);
+
+				bool more = await Sleep(Rng.Seconds(CraftGapLowSeconds, CraftGapHighSeconds), ct).ConfigureAwait(false);
+
+				// Handed back after the gap, not the moment it's crafted: a send that read the inventory just before the
+				// craft still lists the copies it ate, and finding them claimed a few seconds longer keeps them out of its
+				// offer. Then straight back, so a send isn't kept from this set's spare copies for the rest of the run.
+				Bot.ReleaseItems(held[c]);
+				held.Remove(c);
+
+				if (!more) {
+					break;
+				}
+			}
+		} finally {
+			// Whatever way it ends - a refusal, a shutdown, an error - no card stays claimed by a craft that isn't running.
+			foreach (HashSet<ulong> cards in held.Values) {
+				Bot.ReleaseItems(cards);
 			}
 		}
 
@@ -325,14 +412,64 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			ct).ConfigureAwait(false);
 
 		if (body == null) {
+			return false;   // the web session already logged why
+		}
+
+		if (body.Contains("too many requests", StringComparison.OrdinalIgnoreCase) || body.Contains("\"success\":false", StringComparison.Ordinal)) {
+			// The caller only says "refused" - Steam's own answer is the why.
+			Log.Debug($"crafting the {GameNames.Of(c.AppId)} badge refused: {Log.Scrub(body.Length > 150 ? body[..150] : body)}", Bot.Name);
+
 			return false;
 		}
 
-		return !body.Contains("too many requests", StringComparison.OrdinalIgnoreCase)
-			&& !body.Contains("\"success\":false", StringComparison.Ordinal);
+		return true;
 	}
 
 	internal readonly record struct Craftable(uint AppId, int Series, int Border, int Levels);
+
+	/// <summary>
+	/// Every copy of this game's cards in the inventory - foil or plain, whichever the set is. Asset ids, as a send claims.
+	/// </summary>
+	internal static List<ulong> SetCards(InventoryContents inventory, uint app, bool foil) {
+		string game = app.ToString(CultureInfo.InvariantCulture);
+		List<ulong> cards = [];
+
+		foreach (JsonElement asset in inventory.Assets) {
+			if (inventory.DescriptionOf(asset) is not { } description) {
+				continue;
+			}
+
+			string type = InventoryContents.Text(description, "type");
+
+			// "Portal 2 Trading Card" or "Portal 2 Foil Trading Card" - the other kind is a different set.
+			if (!type.Contains("Trading Card", StringComparison.Ordinal) || (type.Contains("Foil Trading Card", StringComparison.Ordinal) != foil)
+				|| (InventoryContents.Text(description, "market_fee_app") != game)) {
+				continue;
+			}
+
+			if (ulong.TryParse(InventoryContents.Text(asset, "assetid"), NumberStyles.None, CultureInfo.InvariantCulture, out ulong id) && !cards.Contains(id)) {
+				cards.Add(id);
+			}
+		}
+
+		return cards;
+	}
+
+	/// <summary>
+	/// Claim all of a set's cards, or none: a send or a sale already holding one of them means this set waits. What was
+	/// claimed on the way is handed straight back, so it isn't kept from that send for nothing.
+	/// </summary>
+	internal static HashSet<ulong>? ClaimSet(Bot bot, IReadOnlyCollection<ulong> cards) {
+		HashSet<ulong> claimed = bot.ClaimItems(cards);
+
+		if (claimed.Count == cards.Count) {
+			return claimed;
+		}
+
+		bot.ReleaseItems(claimed);
+
+		return null;
+	}
 
 	/// <summary>
 	/// Every craftable set on the page. Steam renders a craft button whose onclick is

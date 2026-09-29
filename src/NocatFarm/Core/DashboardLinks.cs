@@ -143,8 +143,9 @@ public static class DashboardLinks {
 					}
 				}
 			}
-		} catch (NetworkInformationException) {
-			// No list of adapters - the local link still works.
+		} catch (NetworkInformationException e) {
+			// No list of adapters - the local link still works. The Phone page asks every few seconds: said once.
+			Log.DebugOnChange("links:cards", $"dashboard links: couldn't list the network cards: {Log.Describe(e)}");
 		}
 
 		return found.OrderByDescending(static f => f.Routed).Select(static f => f.Ip).Distinct();

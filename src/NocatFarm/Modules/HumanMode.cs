@@ -45,6 +45,15 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	private int _mainSharePct;           // the main game's share of today
 	private int _otherBudget;            // today's whole allowance for side games. 0 = a pure main-game day
 	private int _otherPlayed;
+
+	/// <summary>
+	/// Minutes today's card-farming sittings have played - their own thing, kept apart from the main and side games.
+	///
+	/// They used to count as side-game time whenever the card game wasn't the main one, so with cards farmed in
+	/// "some sittings" two or three of them used up the whole side allowance and the side games and the hunt all but
+	/// vanished for the rest of the day, while the cards lasted.
+	/// </summary>
+	private int _farmPlayed;
 	private int _signOutCap;
 	private int _signOutsUsed;
 	private int _mealCap;
@@ -124,6 +133,16 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// <summary>The sitting in progress is a card-farming one: the farmer plays, this keeps the day's shape around it.</summary>
 	private bool _farmSession;
 
+	/// <summary>
+	/// The sitting in progress was picked FOR its cards (a farming sitting), rather than being one of the usual games
+	/// that happens to have some. Decides how long it runs and whose minutes it is - and it stays set through the
+	/// play-on after the last card, which is the tail of the same sitting.
+	/// </summary>
+	private bool _farmSitting;
+
+	/// <summary>The "closing the game" gap in progress is for a farming sitting.</summary>
+	private bool _switchingFarm;
+
 	/// <summary>Playing on after the last card, and the game still has to be confirmed running once the farmer lets go.</summary>
 	private bool _playOnPending;
 
@@ -174,6 +193,21 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// <summary>The sign-in the owner-safety reads belong to, and how many clear ones it has had in a row.</summary>
 	private DateTime _safetyArmedFor = DateTime.MinValue;
 	private int _safetyReads;
+
+	/// <summary>
+	/// Ticks come every twenty seconds. A gap this long between two of them means the process wasn't running - the PC
+	/// was asleep - and the connection it had then may well be dead by now, without anything having noticed yet.
+	/// </summary>
+	private static readonly TimeSpan SleptGap = TimeSpan.FromMinutes(2);
+
+	/// <summary>After that, the longest it waits for Steam to prove the connection before taking it as fine.</summary>
+	private static readonly TimeSpan ProveWithin = TimeSpan.FromMinutes(3);
+
+	private DateTime _lastStepAt = DateTime.MinValue;
+
+	/// <summary>When a gap was noticed, and which sign-in it was on - MinValue when the connection needs no proving.</summary>
+	private DateTime _proveSince = DateTime.MinValue;
+	private DateTime? _proveLogon;
 
 	private bool _wasFarming;
 	private bool _wokeUp;
@@ -235,26 +269,18 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// </summary>
 	public bool InBed => _phase is Phase.Asleep or Phase.NightIdle;
 
-	/// <summary>Minutes until tonight's bedtime while it's awake; null outside waking hours.</summary>
-	public int? MinutesToBed {
-		get {
-			if (!InWakingHours(DateTime.Now)) {
-				return null;
-			}
+	/// <summary>The date of the day being lived - wake to bed, so still yesterday's in the small hours before bed.
+	/// Null before the first day is rolled.</summary>
+	public DateTime? PlanDay => _dayStamp < 0 ? null : PlanDate(_dayStamp, DateTime.Now);
 
-			// After midnight BedTime() (built from today's date) can land a day late - bring it back into range.
-			int minutes = (int) (BedTime() - DateTime.Now).TotalMinutes;
+	/// <summary>A day-of-year back to a date: one later in the year than today is last year's (New Year's Eve's plan
+	/// is still in force just after midnight).</summary>
+	public static DateTime PlanDate(int dayOfYear, DateTime now) {
+		int year = dayOfYear > now.DayOfYear ? now.Year - 1 : now.Year;
 
-			return minutes > 20 * 60 ? minutes - (24 * 60) : minutes;
-		}
+		return new DateTime(year, 1, 1).AddDays(Math.Min(dayOfYear, DateTime.IsLeapYear(year) ? 366 : 365) - 1);
 	}
 
-	/// <summary>
-	/// True once the post-login warm-up has finished - the card farmer waits on this so a human-mode account
-	/// settles in first (gets online for a bit) and only then starts farming, exactly like it would before
-	/// playing. Falls back to a time check for days it never enters the play warm-up (a day off), so the farmer
-	/// is never stuck waiting.
-	/// </summary>
 	/// <summary>Human mode has run at least once since starting, so its phase says something (not the Off it starts in).</summary>
 	private bool _ticked;
 
@@ -309,7 +335,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// is one more sitting on it. Rolling today there started a whole new day at 1am - hours of play through the
 		// night and "done for today" by breakfast - where 'wake' at 23:50 got the one sitting.
 		DateTime now = DateTime.Now;
-		bool lastNight = (_dayStamp >= 0) && (_dayStamp != now.DayOfYear) && StillLastNight(now, BedTime().AddDays(-1), EarliestWakeToday());
+		bool lastNight = (_dayStamp >= 0) && (_dayStamp != now.DayOfYear) && StillLastNight(now, PlanBed(), EarliestWakeToday());
 
 		if (!lastNight && (_dayStamp != now.DayOfYear)) {
 			RollNewDayIfNeeded(wakingNow: true);
@@ -332,6 +358,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			Log.Info(lastNight || !InPlannedHours(now)
 				? new Said("up late - one more sitting, then bed around {0}", _stayUpUntil.ToString("HH:mm"))
 				: new Said("up for one sitting until about {0}, then done for today", _stayUpUntil.ToString("HH:mm")), Bot.Name);
+			Persist();   // a restart during the sitting keeps it, rather than putting the account back to bed
 		}
 
 		_wokeUp = true;
@@ -434,15 +461,21 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		try {
 			BankSession();
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't bank the session on shutdown: {0}", e.Message), Bot.Name);
+			Log.Debug(new Said("couldn't bank the session on shutdown: {0}", Log.Describe(e)), Bot.Name);
+			Log.StackToFile(e, Bot.Name);   // nothing in here talks to Steam - a throw is a bug
 		}
 
 		await base.StopAsync().ConfigureAwait(false);
 	}
 
 	protected override async Task RunAsync(CancellationToken ct) {
+		// The gap watch starts with this run: the module sits stopped for as long as the account is signed out, and that
+		// time is not the PC asleep.
+		_lastStepAt = DateTime.UtcNow;
+
 		while (!ct.IsCancellationRequested) {
 			if (!Bot.Cfg.LegitMode) {
+				_lastStepAt = DateTime.UtcNow;   // nor is time spent with human mode switched off
 				// Release on the flag as well as the phase. Human mode sits in Off for as long as the card farmer
 				// works - hours, sometimes - and switching legit mode off during that left HumanOwned set for good:
 				// the idler kept standing aside, the farmer kept to one game at a time, and the account's own games
@@ -467,7 +500,12 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			try {
 				StepAsync();
 			} catch (Exception e) {
-				Log.Warn(new Said("human mode hiccup: {0}: {1}", e.GetType().Name, e.Message), Bot.Name);
+				Log.Warn(new Said("human mode hiccup: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
+
+				// where it broke, once per new kind of failure - the message says what, only the stack says where
+				if (Log.DebugOnChange($"hiccup:{Name}:{Bot.Name}", $"{Name}: {Log.Describe(e)}", Bot.Name)) {
+					Log.StackToFile(e, Bot.Name);
+				}
 			}
 
 			if (!await Sleep(TimeSpan.FromSeconds(20), ct).ConfigureAwait(false)) {
@@ -477,10 +515,32 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	}
 
 	private void StepAsync() {
+		// Back from the PC being asleep: the sign-in still reads as online until Steam's side of it is noticed gone, so
+		// the first tick after waking used to carry on as if nothing happened - "playing Counter-Strike 2 for ~1h40m" in
+		// the log, sent down a connection that was already dead, and then the reconnect a minute later. Nothing happens
+		// until the connection shows it's alive: something from Steam since, or a fresh sign-in.
+		DateTime tick = DateTime.UtcNow;
+
+		if ((_lastStepAt != DateTime.MinValue) && (tick - _lastStepAt > SleptGap)) {
+			_proveSince = tick;
+			_proveLogon = Bot.OnlineSince;
+			Log.Debug(new Said("nothing ran for {0} (the PC was asleep?) - waiting to hear from Steam before doing anything", Fmt.Hm((int) (tick - _lastStepAt).TotalMinutes)), Bot.Name);
+		}
+
+		_lastStepAt = tick;
+
 		// Finishing up before logging off: nothing new starts. It started a two-hour sitting two seconds before an
 		// update signed it out.
 		if (!Bot.IsOnline || Bot.Stopping) {
 			return;
+		}
+
+		if (_proveSince != DateTime.MinValue) {
+			if (!LiveAgain(_proveSince, _proveLogon, Bot.OnlineSince, Bot.LastInbound, tick)) {
+				return;
+			}
+
+			_proveSince = DateTime.MinValue;
 		}
 
 		Bot.HumanOwned = true;
@@ -507,6 +567,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_game = 0;
 				_switchingTo = 0;
 				ClearBreakState();
+
+				// Back to no clear reads. The count isn't kept while standing down, so the one from before you sat down
+				// was still there after you got up, and a single read then was enough to put a game on.
+				_clearReads = 0;
 			}
 
 			// Paused in the night, it keeps the night's invisible look (and gets up with the morning). Clearing it put a
@@ -648,7 +712,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				ClearBreakState();
 				Bot.StopPlaying();
 				Bot.ClearPersonaOverride();
-				Log.Info(new Said("day off - online, idle until bed ~{0}", (BedTime()).ToString("HH:mm")), Bot.Name);
+				Log.Info(new Said("day off - online, idle until bed ~{0}", (PlanBed()).ToString("HH:mm")), Bot.Name);
 			}
 
 			return;
@@ -664,7 +728,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				ClearBreakState();
 				Bot.StopPlaying();
 				Bot.ClearPersonaOverride();
-				Log.Info(new Said("done for the day - {0} played, back around {1}", Fmt.Hm(_playedMinutesToday), (WakeTime()).ToString("HH:mm")), Bot.Name);
+				Log.Info(new Said("done for the day - {0} played, back around {1}", Fmt.Hm(_playedMinutesToday), (NextWakeTime()).ToString("HH:mm")), Bot.Name);
 			}
 
 			return;
@@ -677,6 +741,12 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_breakPersonaSet = true;
 				_offlineBreak = persona == Bot.PersonaDark;
 				Bot.SetPersonaOverride(persona);
+
+				// Saved there and then, or a restart during the break gave the day that sign-out back.
+				if (_offlineBreak) {
+					_signOutsUsed++;
+					Persist();
+				}
 			}
 
 			if (DateTime.UtcNow < _phaseEnds) {
@@ -955,10 +1025,6 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 	// ═══ the day ════════════════════════════════════════════════════════════
 	/// <summary>
-	/// Roll today. A real week is not flat: weekday gaming is mostly evenings, weekends start earlier and run
-	/// longer, and Friday and Saturday nights go late because nothing is on tomorrow.
-	/// </summary>
-	/// <summary>
 	/// Throw today's plan away and roll a new one from the settings as they stand now.
 	///
 	/// A day is rolled once, at wake time, and then persisted so restarts don't hand out a fresh eight hours
@@ -967,6 +1033,17 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// rolled against the old numbers. This is the way to say "apply it now" without waiting a day.
 	/// </summary>
 	public void RerollToday() {
+		DateTime now = DateTime.Now;
+
+		// The day being lived is the one rolled again - which in the small hours before last night's bedtime is still
+		// last night. Rolled as today instead, the new plan's morning was hours away and the account went to bed in the
+		// middle of its evening.
+		DateTime date = (_dayStamp >= 0) && (_dayStamp != now.DayOfYear) && (now < PlanEnds()) ? PlanDate(_dayStamp, now) : now.Date;
+		DateTime lastBed = (_dayStamp >= 0) && (PlanDate(_dayStamp, now) < date) ? PlanEnds() : DateTime.MinValue;
+
+		// Up and about, it stays up: a new plan whose wake time happened to land later sent it back to bed at noon.
+		bool wasUp = (_dayStamp >= 0) && InWakingHours(now);
+
 		if (_phase == Phase.Playing) {
 			BankSession();
 			Bot.StopPlaying();
@@ -980,38 +1057,42 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		ClearBreakState();
 		_phase = Phase.Off;
-		_dayStamp = -1;         // < 0 rolls immediately, even before wake time
+		_dayStamp = -1;
 		_game = 0;
 		_lastGame = 0;
 		_switchingTo = 0;
 
 		Log.Info("new plan for today from the current settings", Bot.Name);
-		RollNewDayIfNeeded();
+		RollFor(date, lastBed);
+
+		if (wasUp && (now < PlanWake())) {
+			_wakeMinuteOfDay = Math.Clamp((int) (now - PlanDate(_dayStamp, now)).TotalMinutes, 0, (23 * 60) + 59);
+			Persist();
+		}
 	}
 
 	/// <param name="wakingNow">'wake': today starts now, so today's plan is wanted even before its earliest wake time.</param>
 	private void RollNewDayIfNeeded(bool wakingNow = false) {
-		int today = DateTime.Now.DayOfYear;
+		DateTime now = DateTime.Now;
 
-		if (_dayStamp == today) {
+		if (_dayStamp == now.DayOfYear) {
 			return;
 		}
 
-		// Don't roll a new day at calendar midnight while last night's session is still finishing. A wake->bed
-		// cycle routinely runs past midnight (e.g. bed 02:48), and rolling at 00:00 splits it - the post-midnight
-		// hours get counted into THIS morning's total, so the account reads "4h played" at noon having woken at 11.
-		// Roll when it actually reaches its wake time instead, so each day is one clean wake->bed cycle. (_dayStamp
-		// < 0 means a fresh start with no plan yet - that must still roll immediately, even before wake.)
-		// Rolled once it's past the EARLIEST today's wake could possibly be, never yesterday's wake minute: keyed to
-		// yesterday's, a day that rolled an earlier wake was already "awake" the moment it rolled, so on about half
-		// of all days the account got up at exactly the same minute as the day before.
-		if (!wakingNow && (_dayStamp >= 0) && (DateTime.Now < EarliestWakeToday())) {
+		// Not at calendar midnight. A wake->bed cycle routinely runs past it (e.g. bed 02:48), and rolling at 00:00 split
+		// it - the post-midnight hours got counted into THIS morning's total, so the account read "4h played" at noon
+		// having woken at 11. The new day starts once last night is over - its bedtime, or the 'wake' sitting after it -
+		// AND it's past the EARLIEST today's wake could be. Never yesterday's wake minute: keyed to that, a day that rolled
+		// an earlier wake was already "awake" the moment it rolled, so on about half of all days the account got up at
+		// exactly the same minute as the day before. And not the earliest wake alone: with the day starting at 2 or
+		// earlier that is midnight, and the new day took over while last night's bedtime was still to come.
+		// (_dayStamp < 0 means a fresh start with no plan yet - that must still roll immediately.)
+		if (!wakingNow && (_dayStamp >= 0) && !NewDayMayStart(now, EarliestWakeToday(), PlanEnds())) {
 			return;
 		}
 
-		// Close out whatever is in flight FIRST. The default day runs past midnight, so a session is usually
-		// still running when this fires; zeroing the counters underneath it lost the evening's time and left
-		// Steam playing a game the scheduler had already forgotten about.
+		// Close out whatever is in flight FIRST - a grind, or a 'wake' sitting ending right on the change of day. Zeroing
+		// the counters underneath it lost its time and left Steam playing a game the scheduler had already forgotten about.
 		if (_phase == Phase.Playing) {
 			BankSession();
 
@@ -1024,128 +1105,64 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			_phase = Phase.Off;
 		}
 
-		// Started after midnight but before getting up: last night is still going, and its plan is the one in force.
-		// Rolling a fresh day here counted the rest of last night against today - the split that waiting for the
-		// wake time above exists to prevent, lost on every restart in the small hours.
-		if (!wakingNow && (_dayStamp < 0) && (HumanDay.Load(Bot.Name, DateTime.Now.AddDays(-1)) is { } lastNight)) {
-			Restore(lastNight);
+		// When last night really ended. Today's wake is never before it, plus a night's sleep.
+		DateTime lastBed = _dayStamp >= 0 ? PlanEnds() : DateTime.MinValue;
 
-			if (DateTime.Now < WakeTime()) {
-				_dayStamp = DateTime.Now.AddDays(-1).DayOfYear;
-				Log.Info(new Said("last night's plan restored - {0}/{1} played, up about {2}", Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes), (WakeTime()).ToString("HH:mm")), Bot.Name);
+		// Started after midnight but before last night was over: its plan is the one in force. Rolling a fresh day here
+		// counted the rest of last night against today - the split that waiting above exists to prevent, lost on every
+		// restart in the small hours.
+		if (!wakingNow && (_dayStamp < 0) && (HumanDay.Load(Bot.Name, now.AddDays(-1)) is { } lastNight)) {
+			Restore(lastNight);
+			_dayStamp = now.AddDays(-1).DayOfYear;
+
+			if (!NewDayMayStart(now, EarliestWakeToday(), PlanEnds())) {
+				Log.Info(new Said("last night's plan restored - {0}/{1} played, up about {2}", Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes), (NextWakeTime()).ToString("HH:mm")), Bot.Name);
 
 				return;
 			}
+
+			lastBed = PlanEnds();
 		}
 
-		_dayStamp = today;
+		RollFor(now.Date, lastBed);
+	}
+
+	/// <summary>The plan for <paramref name="date"/>: the one already saved for it, or a fresh roll.</summary>
+	/// <param name="lastBed">When the night before really ended - MinValue when that isn't known.</param>
+	private void RollFor(DateTime date, DateTime lastBed) {
+		_dayStamp = date.DayOfYear;
 		_stayUpUntil = DateTime.MinValue;   // last night's 'wake' sitting doesn't carry into a new day's plan
-		BotConfig cfg = Bot.Cfg;
 
 		// A plan already rolled for today survives a restart. Without this, every restart handed the account a
 		// brand-new target AND reset the minutes it had already played, so three restarts meant three days of
 		// playing crammed into one - and a rolled day off could be restarted straight back into an eight-hour
 		// session.
-		if (HumanDay.Load(Bot.Name, DateTime.Now) is { } saved) {
+		if (HumanDay.Load(Bot.Name, date) is { } saved) {
 			Restore(saved);
-			Log.Info(new Said("today's plan restored - {0}/{1} played, bed about {2}", Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes), (BedTime()).ToString("HH:mm")), Bot.Name);
+			Log.Info(new Said("today's plan restored - {0}/{1} played, bed about {2}", Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes), (PlanBed()).ToString("HH:mm")), Bot.Name);
 
 			return;
-		}
-		DayOfWeek dow = DateTime.Now.DayOfWeek;
-		bool weekend = dow is DayOfWeek.Saturday or DayOfWeek.Sunday;
-		bool freeNight = dow is DayOfWeek.Friday or DayOfWeek.Saturday;   // no work or school tomorrow
-
-		// BED. Late on a free night; otherwise mostly the configured hour, sometimes an hour earlier.
-		int bed = Math.Clamp(cfg.BedHour, 0, 23);
-		int later = Math.Clamp(cfg.LateNightExtraHours, 0, 6);
-		// Roll first, THEN decide which day it lands on, and only then wrap it onto the clock.
-		//
-		// Deciding from the configured hour instead of the rolled one broke every late-evening bedtime: with
-		// BedHour 23 a free-night roll of 24-26 wrapped to 00-02, but the "is it tomorrow" answer still came
-		// from 23, so bedtime was read as TODAY just after midnight - and the whole day collapsed to a
-		// ~48-minute window. The mirror case (BedHour 0 rolling -1 to 23) never went to bed at all.
-		int rolled = freeNight ? Rng(bed + 1, bed + 1 + later) : Percent(40) ? Rng(bed, bed + 1) : Rng(bed - 1, bed);
-		_bedHour = ((rolled % 24) + 24) % 24;
-		_bedMinute = Rng(0, 59);
-
-		// GETTING ON. Averaging two rolls gives a natural bell around the configured hour instead of a flat pick,
-		// and the minute is always jittered so it is never 13:00:00 sharp two days running.
-		int wake = Math.Clamp(cfg.DayStartHour, 0, 23);
-		int lo = Math.Max(0, wake - 1) * 60;
-		int hi = Math.Min(23, wake + 3) * 60;
-		_wakeMinuteOfDay = (Rng(lo, hi) + Rng(lo, hi)) / 2;
-
-		if (weekend) {
-			_wakeMinuteOfDay -= Rng(45, 150);   // weekends start earlier
-		}
-
-		_wakeMinuteOfDay = Math.Clamp(_wakeMinuteOfDay, 0, (23 * 60) + 59);
-
-		// Whether bedtime belongs to tomorrow is a property of the SETTINGS, not of what the dice did. Deriving
-		// it from the rolled values meant that when the two rolls crossed - easy whenever bed and wake are within
-		// a few hours of each other - bedtime jumped a full day and the account counted itself awake round the
-		// clock, playing its whole target from midnight.
-		_bedIsTomorrow = (rolled >= 24) || (_bedHour <= wake);
-
-		if (!_bedIsTomorrow) {
-			_wakeMinuteOfDay = Math.Min(_wakeMinuteOfDay, Math.Max(0, ((_bedHour * 60) + _bedMinute) - 60));
-		}
-
-		// HOURS. Not a flat grind - an enthusiast who is around most days, has quiet days and the odd day off.
-		int hours = Math.Clamp(weekend ? cfg.WeekendHours : cfg.WeekdayHours, 0, 20);
-		int full = hours * 60;
-
-		if ((full <= 0) || Percent(Math.Clamp(cfg.DayOffChancePct, 0, 100))) {
-			_targetMinutes = 0;
-		} else {
-			int roll = Rng(0, 99);
-
-			// a quiet day · a normal day · a long one
-			_targetMinutes = roll < 20 ? Rng(full * 55 / 100, full * 80 / 100)
-				: roll < 65 ? Rng(full * 80 / 100, full * 105 / 100)
-				: Rng(full * 105 / 100, full * 125 / 100);
-		}
-
-		// A day cannot hold more play than the hours it is awake. Four fifths of the window leaves room for the
-		// breaks, the meals and the gaps between games.
-		if (_targetMinutes > 0) {
-			int fits = WindowMinutes() * 4 / 5;
-
-			if (_targetMinutes > fits) {
-				_targetMinutes = Math.Max(30, fits);
-			}
 		}
 
 		// The main game's own written share is the centre of today's roll. It used to be ignored outright in
 		// favour of a separate box, so the number typed beside the main game did nothing at all and only its
 		// position in the list carried meaning.
 		List<(uint Game, int Weight)> spread = Weights();
-		int mainCentre = Math.Clamp(spread.Count > 0 ? spread[0].Weight : 70, 5, 95);
-		_mainSharePct = Math.Clamp(Rng(mainCentre - 10, mainCentre + 10), 5, 95);
+		DayRoll roll = RollDay(Bot.Cfg, date, Math.Clamp(spread.Count > 0 ? spread[0].Weight : 70, 5, 95), spread.Count >= 2, lastBed, _rng);
 
-		// SIDE GAMES COME IN BURSTS. Most days are pure main game; sometimes there is a real sitting on something
-		// else. A guaranteed slice of every side game every single day is a pattern, not a person.
-		if (Percent(Math.Clamp(cfg.PureMainDayChancePct, 0, 100)) || (spread.Count < 2)) {
-			_otherBudget = 0;
-		} else {
-			// Derived from the very share the picker is rolling against, with a little slack on top. A budget
-			// set from its own independent number was a second limit on the same minutes: whichever happened to
-			// be tighter won, and the weights quietly became fiction whenever it was this one. Slack keeps it a
-			// backstop against a run of side-game rolls rather than the thing that decides the day.
-			int side = Math.Clamp(100 - _mainSharePct, 1, 95);
-			int budget = _targetMinutes * side / 100;
-			_otherBudget = Math.Max(20, budget + (budget / 8));
-		}
-
-		int signOuts = Math.Clamp(cfg.MaxSignOutsPerDay, 0, 40);
-		// Both at most what the setting says. Rng includes its top end, so "+ 3" let "Drop offline at most 1" drop offline
-		// four times, and "Meals a day 2" take three.
-		_signOutCap = signOuts == 0 ? 0 : Rng(Math.Max(1, signOuts - 3), signOuts);
-		_mealCap = cfg.MealBreaksPerDay <= 0 ? 0 : Rng(1, cfg.MealBreaksPerDay);
+		_wakeMinuteOfDay = roll.WakeMinute;
+		_bedHour = roll.BedHour;
+		_bedMinute = roll.BedMinute;
+		_bedIsTomorrow = roll.BedIsTomorrow;
+		_targetMinutes = roll.Target;
+		_mainSharePct = roll.MainSharePct;
+		_otherBudget = roll.OtherBudget;
+		_signOutCap = roll.SignOutCap;
+		_mealCap = roll.MealCap;
 
 		_playedMinutesToday = 0;
 		_otherPlayed = 0;
+		_farmPlayed = 0;
 		_signOutsUsed = 0;
 		_mealsUsed = 0;
 		_wasFarming = false;
@@ -1161,7 +1178,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		Persist();
 
 		if (_targetMinutes == 0) {
-			Log.Info(new Said("taking today off - back tomorrow around {0}", (WakeTime()).ToString("HH:mm")), Bot.Name);
+			Log.Info(new Said("taking today off - back tomorrow around {0}", (NextWakeTime()).ToString("HH:mm")), Bot.Name);
 
 			return;
 		}
@@ -1170,18 +1187,172 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			? new Said("{0} only today", GameName(MainGame()))
 			: new Said("{0} about {1}%, up to {2} on the others", GameName(MainGame()), _mainSharePct, Fmt.Hm(_otherBudget));
 
-		Log.Info(new Said("today: ~{0} of play, up {1}, bed {2}", Fmt.Hm(_targetMinutes), (WakeTime()).ToString("HH:mm"), (BedTime()).ToString("HH:mm")), Bot.Name);
+		Log.Info(new Said("today: ~{0} of play, up {1}, bed {2}", Fmt.Hm(_targetMinutes), (PlanWake()).ToString("HH:mm"), (PlanBed()).ToString("HH:mm")), Bot.Name);
 		Log.Debug(new Said("today's mix: {0}", mix), Bot.Name);
 	}
 
-	private int WindowMinutes() {
-		int start = _wakeMinuteOfDay;
-		int bed = (_bedHour * 60) + _bedMinute;
+	/// <summary>One day's plan as rolled: getting up and going to bed (on the plan's own date), how long it plays, and the caps.</summary>
+	internal readonly record struct DayRoll(int WakeMinute, int BedHour, int BedMinute, bool BedIsTomorrow, int Target, int MainSharePct, int OtherBudget,
+		int SignOutCap, int MealCap);
 
-		return bed > start ? bed - start : ((24 * 60) - start) + bed;
+	/// <summary>
+	/// Roll one day. A real week is not flat: weekday gaming is mostly evenings, weekends start earlier and run
+	/// longer, and Friday and Saturday nights go late because nothing is on tomorrow. The real day and 'human week'
+	/// both roll here, so the preview can't drift from what the day actually does, as it had before.
+	/// </summary>
+	/// <param name="date">The plan's own calendar day; its weekday sets the shape.</param>
+	/// <param name="mainCentre">The main game's written share, the centre of today's roll.</param>
+	/// <param name="hasSides">Whether there's anything to play besides the main game.</param>
+	/// <param name="lastBed">When the night before really ended - MinValue when that isn't known.</param>
+	internal static DayRoll RollDay(BotConfig cfg, DateTime date, int mainCentre, bool hasSides, DateTime lastBed, Random rng) {
+		int Roll(int lo, int hi) => hi <= lo ? lo : rng.Next(lo, hi + 1);   // inclusive, like the plugin's helper
+		bool Pct(int pct) => rng.Next(100) < pct;
+
+		DayOfWeek dow = date.DayOfWeek;
+		bool weekend = dow is DayOfWeek.Saturday or DayOfWeek.Sunday;
+		bool freeNight = dow is DayOfWeek.Friday or DayOfWeek.Saturday;   // no work or school tomorrow
+
+		// BED. Late on a free night; otherwise mostly the configured hour, sometimes an hour earlier.
+		int bed = Math.Clamp(cfg.BedHour, 0, 23);
+		int later = Math.Clamp(cfg.LateNightExtraHours, 0, 6);
+		// Roll first, THEN decide which day it lands on, and only then wrap it onto the clock.
+		//
+		// Deciding from the configured hour instead of the rolled one broke every late-evening bedtime: with
+		// BedHour 23 a free-night roll of 24-26 wrapped to 00-02, but the "is it tomorrow" answer still came
+		// from 23, so bedtime was read as TODAY just after midnight - and the whole day collapsed to a
+		// ~48-minute window. The mirror case (BedHour 0 rolling -1 to 23) never went to bed at all.
+		int rolled = freeNight ? Roll(bed + 1, bed + 1 + later) : Pct(40) ? Roll(bed, bed + 1) : Roll(bed - 1, bed);
+		int bedHour = ((rolled % 24) + 24) % 24;
+		int bedMinute = Roll(0, 59);
+
+		// GETTING ON. Averaging two rolls gives a natural bell around the configured hour instead of a flat pick,
+		// and the minute is always jittered so it is never 13:00:00 sharp two days running.
+		int start = Math.Clamp(cfg.DayStartHour, 0, 23);
+		int lo = Math.Max(0, start - 1) * 60;
+		int hi = Math.Min(23, start + 3) * 60;
+		int wake = (Roll(lo, hi) + Roll(lo, hi)) / 2;
+
+		// Weekends start earlier - by no more than two thirds of the way back to midnight, though. With the day starting at
+		// 2 or earlier the full head start went past midnight, and every one of those weekend days got up at 00:00 sharp.
+		if (weekend) {
+			wake -= Math.Min(Roll(45, 150), wake * 2 / 3);
+		}
+
+		// Never up before last night is over, nor straight after it: a night's sleep first, a different length every
+		// time. With the day starting at 2, a late Friday rolled a Saturday that got up before Friday had gone to bed.
+		if (lastBed != DateTime.MinValue) {
+			wake = Math.Max(wake, (int) Math.Ceiling((lastBed.AddMinutes(Roll(240, 360)) - date.Date).TotalMinutes));
+		}
+
+		wake = Math.Clamp(wake, 0, (23 * 60) + 59);
+
+		// Whether bedtime belongs to tomorrow is a property of the SETTINGS, not of what the dice did. Deriving
+		// it from the rolled values meant that when the two rolls crossed - easy whenever bed and wake are within
+		// a few hours of each other - bedtime jumped a full day and the account counted itself awake round the
+		// clock, playing its whole target from midnight.
+		bool bedIsTomorrow = (rolled >= 24) || (bedHour <= start);
+
+		if (!bedIsTomorrow) {
+			wake = Math.Min(wake, Math.Max(0, ((bedHour * 60) + bedMinute) - 60));
+		}
+
+		// HOURS. Not a flat grind - an enthusiast who is around most days, has quiet days and the odd day off.
+		int hours = Math.Clamp(weekend ? cfg.WeekendHours : cfg.WeekdayHours, 0, 20);
+		int full = hours * 60;
+		int target;
+
+		if ((full <= 0) || Pct(Math.Clamp(cfg.DayOffChancePct, 0, 100))) {
+			target = 0;
+		} else {
+			int roll = Roll(0, 99);
+
+			// a quiet day · a normal day · a long one
+			target = roll < 20 ? Roll(full * 55 / 100, full * 80 / 100)
+				: roll < 65 ? Roll(full * 80 / 100, full * 105 / 100)
+				: Roll(full * 105 / 100, full * 125 / 100);
+		}
+
+		// A day cannot hold more play than the hours it is awake. Four fifths of the window leaves room for the
+		// breaks, the meals and the gaps between games.
+		if (target > 0) {
+			int fits = WindowMinutes(wake, bedHour, bedMinute, bedIsTomorrow) * 4 / 5;
+
+			if (target > fits) {
+				target = Math.Max(30, fits);
+			}
+		}
+
+		int mainShare = Math.Clamp(Roll(mainCentre - 10, mainCentre + 10), 5, 95);
+		int otherBudget;
+
+		// SIDE GAMES COME IN BURSTS. Most days are pure main game; sometimes there is a real sitting on something
+		// else. A guaranteed slice of every side game every single day is a pattern, not a person.
+		if (Pct(Math.Clamp(cfg.PureMainDayChancePct, 0, 100)) || !hasSides) {
+			otherBudget = 0;
+		} else {
+			// Derived from the very share the picker is rolling against, with room on top. A budget set from its own
+			// independent number was a second limit on the same minutes: whichever happened to be tighter won, and the
+			// weights quietly became fiction whenever it was this one.
+			//
+			// Twice the side games' share, not an eighth over it. A day is only a handful of sittings, so its side-game
+			// time swings a lot either way; a cap that close cut off every day that swung up while nothing made up for
+			// the days that swung down, and a main game set to 70% played 76-79% of the time. At twice, it still stops a
+			// runaway day of side games and leaves the average where the number says.
+			int side = Math.Clamp(100 - mainShare, 1, 95);
+			otherBudget = Math.Max(20, target * side / 100 * 2);
+		}
+
+		int signOuts = Math.Clamp(cfg.MaxSignOutsPerDay, 0, 40);
+		// Both at most what the setting says. Rng includes its top end, so "+ 3" let "Drop offline at most 1" drop offline
+		// four times, and "Meals a day 2" take three.
+		int signOutCap = signOuts == 0 ? 0 : Roll(Math.Max(1, signOuts - 3), signOuts);
+		int mealCap = cfg.MealBreaksPerDay <= 0 ? 0 : Roll(1, cfg.MealBreaksPerDay);
+
+		return new DayRoll(wake, bedHour, bedMinute, bedIsTomorrow, target, mainShare, otherBudget, signOutCap, mealCap);
 	}
 
-	private DateTime WakeTime() => DateTime.Now.Date.AddMinutes(_wakeMinuteOfDay);
+	/// <summary>Minutes from getting up to going to bed.</summary>
+	/// <remarks>
+	/// Worked out from whether bed is tomorrow, not from which clock reading is bigger. A Friday up at 4am with bed at
+	/// 5am the next morning read as a one-hour day (5 comes after 4), and its target was cut to half an hour.
+	/// </remarks>
+	internal static int WindowMinutes(int wake, int bedHour, int bedMinute, bool bedIsTomorrow) {
+		int bed = (bedHour * 60) + bedMinute;
+
+		return bedIsTomorrow ? ((24 * 60) - wake) + bed : Math.Max(0, bed - wake);
+	}
+
+	/// <summary>A plan's wake time, on the plan's own date.</summary>
+	internal static DateTime WakeOn(DateTime planDate, int wakeMinute) => planDate.Date.AddMinutes(wakeMinute);
+
+	/// <summary>A plan's bedtime, on the plan's own date - the next day's small hours when bed is "tomorrow".</summary>
+	internal static DateTime BedOn(DateTime planDate, int bedHour, int bedMinute, bool bedIsTomorrow) =>
+		planDate.Date.AddDays(bedIsTomorrow ? 1 : 0).AddHours(bedHour).AddMinutes(bedMinute);
+
+	/// <summary>A new day may start once last night is over and it's past the earliest its wake could be.</summary>
+	internal static bool NewDayMayStart(DateTime now, DateTime earliestWake, DateTime lastNightEnds) => (now >= earliestWake) && (now >= lastNightEnds);
+
+	/// <summary>
+	/// Inside a plan's own hours: from its wake time to its bedtime, both on the plan's own date.
+	///
+	/// These were read off today's calendar date, with "before today's wake time, last night may still be up" patched
+	/// on top. Once a plan was rolled before its wake time, the patch took the NEW plan's bedtime for last night's - so
+	/// with the day starting at 2 and a plan rolled at midnight, an account that went to bed at 23:40 was back up at
+	/// 00:10. Last night's own plan stays in force until its own bedtime now, so there is nothing to patch.
+	/// </summary>
+	internal static bool InPlan(DateTime now, DateTime planDate, int wakeMinute, int bedHour, int bedMinute, bool bedIsTomorrow) =>
+		(now >= WakeOn(planDate, wakeMinute)) && (now < BedOn(planDate, bedHour, bedMinute, bedIsTomorrow));
+
+	private DateTime PlanWake() => WakeOn(PlanDate(_dayStamp, DateTime.Now), _wakeMinuteOfDay);
+
+	private DateTime PlanBed() => BedOn(PlanDate(_dayStamp, DateTime.Now), _bedHour, _bedMinute, _bedIsTomorrow);
+
+	/// <summary>When the plan in force is over: its bedtime, or the end of a 'wake' sitting after it.</summary>
+	private DateTime PlanEnds() {
+		DateTime bed = PlanBed();
+
+		return _stayUpUntil > bed ? _stayUpUntil : bed;
+	}
 
 	/// <summary>The earliest today's wake roll can land: an hour before the day-start hour, less the weekend's head start.</summary>
 	private DateTime EarliestWakeToday() => DateTime.Now.Date.AddMinutes(Math.Max(0, (Math.Clamp(Bot.Cfg.DayStartHour, 0, 23) - 1) * 60 - 150));
@@ -1189,21 +1360,22 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// <summary>
 	/// The next time this account gets up, which is tomorrow once today's has been and gone.
 	///
-	/// <see cref="WakeTime"/> is deliberately TODAY's - the waking-hours test needs that - but an account that
-	/// finished at half nine in the evening is not getting up at this morning's time. Reading it as "how long
-	/// until it wakes" clamped a negative eleven hours to zero and reported "any moment", all night.
+	/// Today's plan's own wake time while that is still ahead. Once it has been and gone - an account that finished at
+	/// half nine in the evening is not getting up at this morning's time - tomorrow's plan isn't rolled yet, so today's
+	/// time of day stands in for it. Reading this morning's as "how long until it wakes" clamped a negative eleven hours
+	/// to zero and reported "any moment", all night.
 	/// </summary>
 	private DateTime NextWakeTime() {
-		DateTime wake = WakeTime();
+		DateTime now = DateTime.Now;
+		DateTime planned = PlanWake();
 
-		return wake > DateTime.Now ? wake : wake.AddDays(1);
-	}
+		if (planned > now) {
+			return planned;
+		}
 
-	private DateTime BedTime() {
-		DateTime bed = DateTime.Now.Date.AddHours(_bedHour).AddMinutes(_bedMinute);
+		DateTime wake = now.Date.AddMinutes(_wakeMinuteOfDay);
 
-		// A configured bed hour at or before the configured wake hour means the small hours of the NEXT day.
-		return _bedIsTomorrow ? bed.AddDays(1) : bed;
+		return wake > now ? wake : wake.AddDays(1);
 	}
 
 	/// <summary>True when the games Steam is actually running are exactly this set (order-independent).</summary>
@@ -1216,14 +1388,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	private bool InWakingHours(DateTime now) => InPlannedHours(now) || (now < _stayUpUntil);
 
 	/// <summary>Today's plan alone: from the wake time to bedtime.</summary>
-	private bool InPlannedHours(DateTime now) {
-		if (now < WakeTime()) {
-			// Before today's start hour, last night's session may legitimately still be running.
-			return now < BedTime().AddDays(-1);
-		}
-
-		return now < BedTime();
-	}
+	private bool InPlannedHours(DateTime now) => (_dayStamp >= 0) && InPlan(now, PlanDate(_dayStamp, now), _wakeMinuteOfDay, _bedHour, _bedMinute, _bedIsTomorrow);
 
 	private int MinutesUntilBed() {
 		// Up late after a 'wake': bed is when that sitting ends.
@@ -1231,12 +1396,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return (int) (_stayUpUntil - DateTime.Now).TotalMinutes;
 		}
 
-		// Before today's wake time it's still last night, whose bedtime is a day earlier than BedTime() builds - the
-		// same correction InWakingHours makes. Without it a sitting started at 01:30 with bed at 02:30 read a day to go,
-		// wasn't shortened to fit, and was cut off by bedtime instead of ending with the usual break.
-		DateTime bed = DateTime.Now < WakeTime() ? BedTime().AddDays(-1) : BedTime();
-
-		return (int) Math.Max(0, (bed - DateTime.Now).TotalMinutes);
+		// The plan's own bedtime, on its own date - so a sitting started at 01:30 with bed at 02:30 reads an hour to go,
+		// is shortened to fit, and ends with the usual break rather than being cut off by bedtime.
+		return (int) Math.Max(0, (PlanBed() - DateTime.Now).TotalMinutes);
 	}
 
 	private void GoToBed() {
@@ -1288,7 +1450,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_game = 0;
 				_switchingTo = 0;
 				_nightFarming = true;
-				Log.Info(new Said("asleep until {0} - card farming through the night", (WakeTime()).ToString("HH:mm")), Bot.Name);
+				Log.Info(new Said("asleep until {0} - card farming through the night", (NextWakeTime()).ToString("HH:mm")), Bot.Name);
 			}
 
 			return;
@@ -1309,7 +1471,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				Bot.SetPlaying(night);
 
 				if (_phase == want) {
-					Log.Info(new Said("back to banking hours quietly until {0}", (WakeTime()).ToString("HH:mm")), Bot.Name);
+					Log.Info(new Said("back to banking hours quietly until {0}", (NextWakeTime()).ToString("HH:mm")), Bot.Name);
 				}
 			}
 		}
@@ -1323,10 +1485,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_switchingTo = 0;
 
 		if (banking) {
-			Log.Info(new Said("asleep - banking hours quietly until {0}", (WakeTime()).ToString("HH:mm")), Bot.Name);
+			Log.Info(new Said("asleep - banking hours quietly until {0}", (NextWakeTime()).ToString("HH:mm")), Bot.Name);
 		} else {
 			Bot.StopPlaying();
-			Log.Info(new Said("asleep - back around {0}", (WakeTime()).ToString("HH:mm")), Bot.Name);
+			Log.Info(new Said("asleep - back around {0}", (NextWakeTime()).ToString("HH:mm")), Bot.Name);
 		}
 	}
 
@@ -1375,6 +1537,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		}
 
 		uint game;
+		bool farmPick;
 		uint farm = FarmGameNow();
 
 		if (_switchingTo != 0) {
@@ -1385,47 +1548,50 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			// back into the gap. Watching it live, the account sat on "closing the game" for four minutes and
 			// would have kept going round until a pick happened to match.
 			game = _switchingTo;
+			farmPick = _switchingFarm;
 			_switchingTo = 0;
 		} else if (farm != 0) {
-			// Cards first: while there are any, the card game is what the day plays - and going to it from another
-			// game still takes the moment it takes to close one and launch the other.
+			// Cards first: in a farming sitting, the card game is what the sitting plays.
 			game = farm;
-
-			if ((game != _lastGame) && (_lastGame != 0)) {
-				_switchingTo = game;
-				_phase = Phase.SwitchingGame;
-				_phaseEnds = DateTime.UtcNow.AddMinutes(Rng(1, 4));
-				_game = 0;
-				Bot.StopPlaying();
-
-				return;
-			}
+			farmPick = true;
 		} else {
-			// A real player does not change game every time they sit down. Often they carry straight on.
-			game = (_lastGame != 0) && Chance(0.40) ? _lastGame : PickGame();
+			// A real player does not change game every time they sit down. Often they carry straight on - with one of the
+			// games it plays, though. Carrying on from a farming sitting gave an ordinary sitting to a card game that isn't
+			// one of them (and counted it as a side game), and a hunt game already moved on from got one more.
+			game = (_lastGame != 0) && InRotation(_lastGame) && Chance(0.40) ? _lastGame : PickGame();
+			farmPick = false;
 
 			// Once today's side-game allowance is spent it is the main game for the rest of the day - an hour target
 			// excepted, since reaching it is the point.
-			if ((game != main) && !SideGameAllowed(_otherPlayed, _otherBudget) && !IsTargetGame(game)) {
+			if ((game != main) && !SideGameAllowed(_otherPlayed, SideBudgetNow(_otherBudget, _targetMinutes, _farmPlayed)) && !IsTargetGame(game)) {
 				game = main;
-			}
-
-			// Closing one game and launching another is not instant.
-			if ((game != _lastGame) && (_lastGame != 0)) {
-				_switchingTo = game;
-				_phase = Phase.SwitchingGame;
-				_phaseEnds = DateTime.UtcNow.AddMinutes(Rng(1, 4));
-				_game = 0;
-				Bot.StopPlaying();
-
-				return;
 			}
 		}
 
-		// A card-farming sitting runs like a main-game one - real sittings, not the short dips side games get.
-		_farmSession = FarmInDay && (Bot.CardsRemaining > 0) && ((game == farm)
+		// Closing one game and launching another is not instant - when there is a game to close. After a break, a
+		// settle-in or a stand-down nothing is running (the break already put it down), and the board said "closing the
+		// game" for up to four minutes over nothing at all. The break was the gap.
+		if (NeedsSwitchGap(game, Bot.PlayingApps)) {
+			_switchingTo = game;
+			_switchingFarm = farmPick;
+			_phase = Phase.SwitchingGame;
+			_phaseEnds = DateTime.UtcNow.AddMinutes(Rng(1, 4));
+			_game = 0;
+			Bot.StopPlaying();
+
+			return;
+		}
+
+		// The farmer has the sitting whenever its game still has cards: a farming sitting, or one of the usual games that
+		// happens to have some, where it only keeps count of the drops.
+		_farmSession = FarmInDay && (Bot.CardsRemaining > 0) && (farmPick
 			|| (BotManager.ModuleOf<CardFarmer>(Bot)?.Queue.Any(g => (g.AppId == game) && (g.CardsRemaining > 0)) ?? false));
-		int minutes = SessionLength(game, _farmSession || IsTargetGame(game) ? game : main);
+
+		// A farming sitting runs like a main-game one - real sittings, not the short dips side games get. One of the
+		// usual games runs as what it is: a side game that happened to have cards used to get the main game's long
+		// sittings, and far more than its share of the day.
+		_farmSitting = farmPick;
+		int minutes = SessionLength(game, farmPick || IsTargetGame(game) ? game : main);
 
 		_game = game;
 		_lastGame = game;
@@ -1444,6 +1610,23 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			? new Said("farming cards on {0} for ~{1} ({2}/{3} today)", GameName(game), Fmt.Hm(minutes), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes))
 			: new Said("playing {0} for ~{1} ({2}/{3} today)", GameName(game), Fmt.Hm(minutes), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)), Bot.Name);
 	}
+
+	/// <summary>One of the games it plays: in the rotation (the hunt's game while it may be played today), or an hour target.</summary>
+	private bool InRotation(uint game) => Weights().Exists(w => w.Game == game) || IsTargetGame(game);
+
+	/// <summary>
+	/// Whether starting <paramref name="next"/> means closing another game first: only when something else is really
+	/// running. Nothing running is nothing to close.
+	/// </summary>
+	internal static bool NeedsSwitchGap(uint next, IReadOnlyCollection<uint> running) => (running.Count > 0) && !((running.Count == 1) && running.Contains(next));
+
+	/// <summary>
+	/// The side games' allowance for the part of the day that isn't card farming. The allowance is their share of the
+	/// day; farming sittings are their own thing, so what they take comes off the day that share is of - rather than out
+	/// of the side games' own minutes, which is what used to happen.
+	/// </summary>
+	internal static int SideBudgetNow(int otherBudget, int target, int farmPlayed) =>
+		(otherBudget <= 0) || (target <= 0) ? otherBudget : (int) ((long) otherBudget * Math.Max(0, target - farmPlayed) / target);
 
 	/// <summary>
 	/// Whether a side game may have this sitting: while today's side allowance lasts, and never on a main-game-only day.
@@ -1477,7 +1660,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				: Rng(min + (span * 71 / 100), max);
 		} else {
 			length = Rng(min, min + (span * 29 / 100));
-			int left = _otherBudget - _otherPlayed;
+			int left = SideBudgetNow(_otherBudget, _targetMinutes, _farmPlayed) - _otherPlayed;
 
 			if ((left > 0) && (length > left)) {
 				length = Math.Max(15, left);
@@ -1497,9 +1680,11 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// SessionMinMinutes completely, so an account told "at least 30 minutes" opened its day with a
 		// twelve-minute sitting - a minimum that was not a minimum. The floor wins; the cap only shortens
 		// what is above it.
+		//
+		// And no absolute 28 left in it either. Under a minimum of 30 (the default) the cap came out at exactly 30, so
+		// every single day opened with a sitting of exactly thirty minutes - the same number every morning is a pattern.
 		if (_firstSessionOfDay) {
-			int shortCap = Math.Max(min, Math.Min(28, min + (span * 15 / 100)));
-			length = Math.Min(length, Rng(min, shortCap));
+			length = Math.Min(length, Rng(min, FirstSittingCap(min, max)));
 		}
 
 		int remaining = _targetMinutes - _playedMinutesToday;
@@ -1511,6 +1696,11 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			length = Math.Max(Math.Min(min, remaining), remaining + Rng(-5, 15));
 		}
 
+		// The longest sitting is the longest sitting. The few minutes over what's left of the target (above), and the
+		// quarter-hour floors for a side game's or the hunt's last minutes, could take the day's last sitting up to a
+		// quarter of an hour past it.
+		length = Math.Min(length, max);
+
 		int untilBed = MinutesUntilBed();
 
 		if ((untilBed > 0) && (length > untilBed)) {
@@ -1519,6 +1709,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		return Math.Max(5, length);
 	}
+
+	/// <summary>The longest the day's first sitting runs: a little way above the shortest sitting, always with room to vary.</summary>
+	internal static int FirstSittingCap(int min, int max) => Math.Min(max, min + Math.Max(5, (max - min) * 15 / 100));
 
 	/// <summary>
 	/// Turn the card-farming sitting into an ordinary one on the same game, for the "keep playing after the last card"
@@ -1546,6 +1739,18 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		BankSession();
 		_game = 0;
 		_farmSession = false;
+
+		// The day's hours played (a day off's 'wake' sitting included), or bedtime here: that sitting was the last one,
+		// so it ends there rather than on a break nobody comes back from. The log said "short break - back in about
+		// 12m" and twenty seconds later "done for the day", or "asleep".
+		DateTime soon = DateTime.Now.AddMinutes(1);
+
+		if (((_playedMinutesToday >= _targetMinutes) && (soon >= _stayUpUntil)) || !InWakingHours(soon)) {
+			_phase = Phase.Off;
+			Bot.StopPlaying();
+
+			return;
+		}
 
 		// Meals land at real meal times - dinner, and a lunch - rather than at a flat chance any hour of the day.
 		// Not near zero off-hours either: this is a night gamer, late snacks are normal.
@@ -1583,6 +1788,8 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 	private void MealBreak() {
 		_mealsUsed++;
+		Persist();   // or a restart during it hands the day an extra meal - the count was only saved with the next minute played
+
 		int centre = Math.Max(10, Bot.Cfg.MealBreakMinutes);
 		int minutes = Chance(0.70) ? Rng(centre - 5, centre + 10) : Rng(centre + 10, centre + 40);
 
@@ -1618,8 +1825,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		_breakPersonaAt = DateTime.UtcNow.AddMinutes(after);
 
+		// Counted when it actually goes offline (see StepAsync), not here: a break cut short first by bedtime, you or a
+		// grind never went offline, yet used one up.
 		if (Percent(pct) && (_signOutsUsed < _signOutCap)) {
-			_signOutsUsed++;
 			_breakPersona = Bot.PersonaDark;
 
 			// "Dropped offline", not "signed out" - it stays connected and simply stops being visible, which to
@@ -1654,8 +1862,30 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		return now - since > TimeSpan.FromMinutes(3) ? now : bankedTo;
 	}
 
+	/// <summary>
+	/// One bank at a time. A stop banks from whatever thread stopped the account while the loop's tick may be banking
+	/// at that very moment: both read the same cursor before either moved it, and up to a minute went in twice.
+	/// </summary>
+	private readonly Lock _bankGate = new();
+
+	/// <summary>
+	/// Whether the connection has shown it's alive since a gap in the ticks: Steam sent something since, or it signed in
+	/// again. Failing both, a connection that is still up a few minutes on is taken as fine - by then a dead one has been
+	/// noticed and dropped (the keepalive goes after a long quiet at once).
+	/// </summary>
+	internal static bool LiveAgain(DateTime since, DateTime? logonThen, DateTime? logonNow, DateTime lastInbound, DateTime now) =>
+		((logonNow is { } on) && (on != logonThen)) || (lastInbound > since) || (now - since >= ProveWithin);
+
 	/// <summary>Credit the running session's real elapsed time, once, and never a minute more than it played.</summary>
 	private void BankSession() {
+		// Read, count and move the cursor as one step, so the second of two banks at once finds the cursor already
+		// moved and credits nothing.
+		lock (_bankGate) {
+			BankSessionLocked();
+		}
+	}
+
+	private void BankSessionLocked() {
 		if (_phase != Phase.Playing) {
 			return;
 		}
@@ -1705,7 +1935,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_minutesByGame[_game] = _minutesByGame.GetValueOrDefault(_game) + played;
 			}
 
-			if (_game != MainGame()) {
+			// A farming sitting's minutes are its own - side-game time would have used up the side games' allowance.
+			if (_farmSitting) {
+				_farmPlayed += played;
+			} else if (_game != MainGame()) {
 				_otherPlayed += played;
 			}
 		}
@@ -1730,6 +1963,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			MainSharePct = _mainSharePct,
 			OtherBudget = _otherBudget,
 			OtherPlayed = _otherPlayed,
+			FarmPlayed = _farmPlayed,
 			SignOutCap = _signOutCap,
 			SignOutsUsed = _signOutsUsed,
 			MealCap = _mealCap,
@@ -1739,6 +1973,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			BedMinute = _bedMinute,
 			BedIsTomorrow = _bedIsTomorrow,
 			LastGame = _lastGame,
+			StayUpUntil = _stayUpUntil > DateTime.Now ? _stayUpUntil : DateTime.MinValue,
 			ByGame = ByGameSnapshot()
 		}.Save(Bot.Name);
 	}
@@ -1755,6 +1990,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_mainSharePct = saved.MainSharePct;
 		_otherBudget = saved.OtherBudget;
 		_otherPlayed = saved.OtherPlayed;
+		_farmPlayed = saved.FarmPlayed;
 		_signOutCap = saved.SignOutCap;
 		_signOutsUsed = saved.SignOutsUsed;
 		_mealCap = saved.MealCap;
@@ -1764,6 +2000,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_bedMinute = saved.BedMinute;
 		_bedIsTomorrow = saved.BedIsTomorrow;
 		_lastGame = saved.LastGame;
+		_stayUpUntil = saved.StayUpUntil > DateTime.Now ? saved.StayUpUntil : DateTime.MinValue;
 
 		lock (_minutesByGame) {
 			_minutesByGame.Clear();
@@ -1784,41 +2021,6 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	}
 
 	// ═══ which game ═════════════════════════════════════════════════════════
-	/// <summary>
-	/// Nudge the pick toward a game that still has card drops waiting.
-	///
-	/// This is the humanised version of card farming: rather than a separate module seizing the account and
-	/// running games back to back, the day's ordinary sessions simply lean toward whatever still has drops in
-	/// it, and the cards arrive as a by-product of playing. Only a nudge - the weights still decide, or every
-	/// account would visibly play its farmable games in a block, which is the tell farming always was.
-	/// </summary>
-	private uint PreferDrops(List<(uint Game, int Weight)> candidates) {
-		if (candidates.Count < 2) {
-			return candidates.Count == 1 ? candidates[0].Game : 0;
-		}
-
-		CardFarmer? farmer = BotManager.ModuleOf<CardFarmer>(Bot);
-
-		if (farmer == null) {
-			return 0;
-		}
-
-		HashSet<uint> withDrops = farmer.Queue.Where(static g => g.CardsRemaining > 0).Select(static g => g.AppId).ToHashSet();
-		List<(uint Game, int Weight)> farmable = candidates.Where(c => withDrops.Contains(c.Game)).ToList();
-
-		// Two in three, not always. A player who owns four games does not play only the ones that happen to
-		// still be dropping cards, and an account that did would be reading as a farmer again.
-		if ((farmable.Count == 0) || (Rng(0, 100) >= 66)) {
-			return 0;
-		}
-
-		// Weighted, not uniform. Picking flat among whatever still has drops threw the weights away entirely for
-		// two sessions in three - a 5%-of-the-week game and the main game became equally likely the moment both
-		// had cards left, which is the opposite of what the list is for. The lean toward drops is preserved; it
-		// just happens in proportion now.
-		return WeightedPick(farmable);
-	}
-
 	// ── hour targets ────────────────────────────────────────────────────────
 	/// <summary>Targets already reached this run, so "done" is said once.</summary>
 	private readonly HashSet<uint> _targetsReached = [];
@@ -2023,18 +2225,12 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return 0;
 		}
 
-		// Lean toward something that still has card drops, before the weighted roll.
-		//
-		// This is what card farming looks like when it is humanised: no separate module seizing the account and
-		// running games back to back, just a day that spends slightly more of its time on whatever still has
-		// drops left. Returns 0 most of the time, and then the weights decide as normal.
-		uint prefer = weights.Count > 1 ? PreferDrops(weights) : 0;
+		// No lean toward games that still have card drops any more. That was card farming's humanised form from before
+		// "Farm cards" had its own when (FarmCardsWhen): two sittings in three went to a game with drops whenever one of
+		// these had any, so on top of the farming sittings the usual games' shares were fiction while cards lasted -
+		// and "only at night" farmed in the day after all. Cards are farmed when that setting says; this is the rest.
 
-		if (prefer != 0) {
-			return prefer;
-		}
-
-		// Then an hour target, if one wants this sitting.
+		// An hour target, if one wants this sitting.
 		uint target = PreferTarget();
 
 		if (target != 0) {
@@ -2055,7 +2251,19 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		}
 
 		int min = Math.Max(5, Bot.Cfg.SessionMinMinutes);
-		today[0] = (weights[0].Game, sideTotal > 0 ? MainWeight(sideTotal, _mainSharePct, min, Math.Max(min + 5, Bot.Cfg.SessionMaxMinutes)) : 100);
+		int max = Math.Max(min + 5, Bot.Cfg.SessionMaxMinutes);
+
+		// The day's first sitting is a short one whatever it's on, and its last is cut to what's left of the hours - and
+		// then a main-game sitting is no longer than a side game's, so there's nothing to make up for. Weighted as if it
+		// were, the main game lost those sittings to the side games and came in a few points under its share.
+		int cap = _firstSessionOfDay ? (min + FirstSittingCap(min, max)) / 2 : int.MaxValue;
+		int left = _targetMinutes - _playedMinutesToday;
+
+		if (left > 0) {
+			cap = Math.Min(cap, left);
+		}
+
+		today[0] = (weights[0].Game, sideTotal > 0 ? MainWeight(sideTotal, _mainSharePct, min, max, cap) : 100);
 
 		return WeightedPick(today);
 	}
@@ -2065,12 +2273,15 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// run far longer than a side game's short dips (about 80 minutes against 47 with the default 30-150), so picked
 	/// for 70% of the sittings it got about 80% of the day - not the number written beside it. Mirrors SessionLength.
 	/// </summary>
-	internal static int MainWeight(int sideTotal, int mainPct, int min, int max) {
+	/// <param name="cap">The most this sitting can run whatever it's on (the day's first, or what's left of the day).</param>
+	internal static int MainWeight(int sideTotal, int mainPct, int min, int max, int cap = int.MaxValue) {
 		int span = max - min;
 		double mainMean = (0.30 * (min + min + (span * 21 / 100)) / 2.0)
 			+ (0.50 * ((min + (span * 28 / 100)) + (min + (span * 64 / 100))) / 2.0)
 			+ (0.20 * ((min + (span * 71 / 100)) + max) / 2.0);
 		double sideMean = (min + min + (span * 29 / 100)) / 2.0;
+		mainMean = Math.Max(1, Math.Min(mainMean, cap));
+		sideMean = Math.Max(1, Math.Min(sideMean, cap));
 
 		return Math.Max(1, (int) Math.Round(sideTotal * mainPct / (double) Math.Max(1, 100 - mainPct) * sideMean / mainMean));
 	}
@@ -2166,6 +2377,18 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		return (human == null) || (human._ticked && (human.Current is not (Phase.Asleep or Phase.NightIdle)) && !human.NightGrind);
 	}
 
+	/// <summary>
+	/// Human mode has the account resting - asleep with nothing running, done for today, or taking the day off - and
+	/// which. Null while it's doing something, or on an account that isn't in human mode.
+	/// </summary>
+	public static Phase? RestingPhase(Bot bot) {
+		if (!bot.Cfg.LegitMode || bot.IsFarming || bot.Grinding || (bot.Modules.OfType<HumanMode>().FirstOrDefault() is not { } human)) {
+			return null;
+		}
+
+		return human.Current is Phase.Asleep or Phase.DoneForToday or Phase.DayOff ? human.Current : null;
+	}
+
 	public static bool AwakeFor(Bot bot) {
 		if (!bot.Cfg.LegitMode || !bot.Cfg.ActOnlyWhileAwake) {
 			return true;
@@ -2220,85 +2443,41 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	///
 	/// It is a sample, not a schedule: the real days are rolled on the day, so tomorrow will differ.
 	/// </summary>
-	public static List<string> PreviewWeek(BotConfig cfg) {
+	/// <param name="rotation">What the day really picks from - the hunt's game included (<see cref="Rotation"/>). Without
+	/// it the preview left the hunt out, so a main game plus a hunt read as main-game-only days.</param>
+	public static List<string> PreviewWeek(BotConfig cfg, List<(uint Game, int Weight)>? rotation = null) {
 		List<string> lines = [];
 		Random rng = new();
-		List<(uint Game, int Weight)> weights = ParseWeights(cfg.GameWeights);
+		List<(uint Game, int Weight)> weights = rotation is { Count: > 0 } ? rotation : ParseWeights(cfg.GameWeights);
 
 		if (weights.Count == 0) {
 			return ["no games set"];
 		}
 
-		int Roll(int lo, int hi) => hi <= lo ? lo : rng.Next(lo, hi + 1);
-		bool Pct(int pct) => rng.Next(100) < pct;
+		int mainCentre = Math.Clamp(weights[0].Weight, 5, 95);
+		DateTime lastBed = DateTime.MinValue;
 
 		for (int day = 0; day < 7; day++) {
+			// Rolled by the very roller the day uses, each night's bedtime feeding the next morning - so the preview is
+			// the real thing's shape, not a copy of it that had already drifted twice (no target cap, no hunt).
 			DateTime date = DateTime.Now.Date.AddDays(day);
-			bool weekend = date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
-			bool freeNight = date.DayOfWeek is DayOfWeek.Friday or DayOfWeek.Saturday;
-
-			int bed = Math.Clamp(cfg.BedHour, 0, 23);
-			int later = Math.Clamp(cfg.LateNightExtraHours, 0, 6);
-			int bedHour = freeNight ? Roll(bed + 1, bed + 1 + later) : Pct(40) ? Roll(bed, bed + 1) : Roll(bed - 1, bed);
-			bedHour = ((bedHour % 24) + 24) % 24;
-
-			int wake = Math.Clamp(cfg.DayStartHour, 0, 23);
-			int lo = Math.Max(0, wake - 1) * 60;
-			int hi = Math.Min(23, wake + 3) * 60;
-			int wakeAt = (Roll(lo, hi) + Roll(lo, hi)) / 2;
-
-			if (weekend) {
-				wakeAt -= Roll(45, 150);
-			}
-
-			wakeAt = Math.Clamp(wakeAt, 0, (23 * 60) + 59);
-
-			int hours = Math.Clamp(weekend ? cfg.WeekendHours : cfg.WeekdayHours, 0, 20);
-			int full = hours * 60;
-			int target;
-
-			if ((full <= 0) || Pct(Math.Clamp(cfg.DayOffChancePct, 0, 100))) {
-				target = 0;
-			} else {
-				int roll = Roll(0, 99);
-
-				target = roll < 20 ? Roll(full * 55 / 100, full * 80 / 100)
-					: roll < 65 ? Roll(full * 80 / 100, full * 105 / 100)
-					: Roll(full * 105 / 100, full * 125 / 100);
-			}
-
-			// The real roller caps the target at four fifths of the waking window. Leaving that out here meant
-			// `human week` could promise ten hours on a day the scheduler would hard-limit to six.
-			int windowMinutes = bedHour * 60 > wakeAt ? (bedHour * 60) - wakeAt : ((24 * 60) - wakeAt) + (bedHour * 60);
-			int fits = windowMinutes * 4 / 5;
-
-			if (target > fits) {
-				target = Math.Max(30, fits);
-			}
+			DayRoll roll = RollDay(cfg, date, mainCentre, weights.Count >= 2, lastBed, rng);
+			lastBed = BedOn(date, roll.BedHour, roll.BedMinute, roll.BedIsTomorrow);
 
 			string when = $"{date:ddd}";
 
-			if (target == 0) {
+			if (roll.Target == 0) {
 				lines.Add($"{when}  not playing");
 
 				continue;
 			}
 
-			bool pureMain = Pct(Math.Clamp(cfg.PureMainDayChancePct, 0, 100)) || (weights.Count < 2);
-			string mix;
+			// What the others can expect - their share of the day - rather than the cap on them, which is twice that.
+			string mix = roll.OtherBudget == 0
+				? GameName(weights[0].Game) + " only"
+				: $"mostly {GameName(weights[0].Game)}, about {Fmt.Hm(Math.Max(20, roll.Target * Math.Clamp(100 - roll.MainSharePct, 1, 95) / 100))} on the others";
 
-			if (pureMain) {
-				mix = GameName(weights[0].Game) + " only";
-			} else {
-				// Mirrors the real roller: the main game's own written share, jittered, decides how much is left
-				// for everything else. Reading a separate box here made the forecast disagree with the day.
-				int centre = Math.Clamp(weights[0].Weight, 5, 95);
-				int mainToday = Math.Clamp(Roll(centre - 10, centre + 10), 5, 95);
-				int budget = target * Math.Clamp(100 - mainToday, 1, 95) / 100;
-				mix = $"mostly {GameName(weights[0].Game)}, about {Fmt.Hm(Math.Max(20, budget + (budget / 8)))} on the others";
-			}
-
-			lines.Add($"{when}  {Fmt.Hm(target),-7} from {wakeAt / 60:00}:{wakeAt % 60:00} to {bedHour:00}:xx   {mix}");
+			lines.Add($"{when}  {Fmt.Hm(roll.Target),-7} from {roll.WakeMinute / 60:00}:{roll.WakeMinute % 60:00} to {roll.BedHour:00}:xx   {mix}");
 		}
 
 		return lines;
