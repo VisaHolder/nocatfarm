@@ -200,6 +200,11 @@ public static class Settings {
 
 		switch (def.Kind) {
 			case SettingKind.Bool:
+				// A word that is neither is refused, like a bad number - "set new Rep4Rep enabled" quietly switched it off.
+				if (!IsTrue(raw) && !IsFalse(raw)) {
+					return $"{def.Label} must be on or off";
+				}
+
 				p.SetValue(config, IsTrue(raw));
 
 				return null;
@@ -458,7 +463,10 @@ public static class Settings {
 		cfg.LegitBackup = "";
 	}
 
-	public static bool IsTrue(string v) => v is "1" or "on" or "yes" or "y" || v.Equals("true", StringComparison.OrdinalIgnoreCase);
+	/// <summary>On, in any casing - "ON" and "Yes" used to read as off.</summary>
+	public static bool IsTrue(string v) => v.ToLowerInvariant() is "1" or "on" or "yes" or "y" or "true";
+
+	private static bool IsFalse(string v) => v.ToLowerInvariant() is "0" or "off" or "no" or "n" or "false";
 
 	// ═════════════════════════════════════════════════════════════════════════
 	//  GLOBAL
@@ -579,7 +587,7 @@ public static class Settings {
 			"What the second line of the Discord card counts when account names are off: the cards dropped today, or the hours played in the past week or the past month - added up over the accounts the card shows.",
 			Advanced: true, Choices: "0 cards today | 1 hours past week | 2 hours past month"),
 		new("DiscordShowCounter", "Show accounts online", SecDiscordProfile, SettingKind.Bool,
-			"Adds a (2 of 3) counter to the Discord card: how many of the shown accounts are signed in.",
+			"Adds how many of the shown accounts are signed in to the Discord card, like \"2 accounts on\" or \"2 of 3 accounts on\".",
 			Advanced: true),
 		new("DiscordShowAvatar", "Show an account's avatar", SecDiscordProfile, SettingKind.Bool,
 			"Puts the first shown account's Steam avatar in the corner of the nocat.farm logo. Hovering it shows the name, clicking it opens the Steam profile.",

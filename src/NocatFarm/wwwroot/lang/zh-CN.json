@@ -319,7 +319,6 @@
     "rep4rep, if you want it": "rep4rep（可选）",
     "Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own.": "可选。你的账户在别人的 Steam 个人资料下留言，赚取积分，再用积分换取别人给你自己的资料留言。",
     "That's it": "就这些",
-    "Everything has an explanation attached - hover the {0} beside any setting.": "每一项都带说明——把鼠标移到任意设置旁边的 {0} 上。",
     "The Console tab does anything the other tabs do, by typing. {0} lists it all.": "「控制台」标签页靠打字就能做其他标签页能做的一切。{0} 会列出全部。",
     "Add a Steam account": "添加一个 Steam 账户",
     "A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam.": "只给你自己看的别名。它决定配置文件的名字，也是你在命令里输入的名称——不需要和 Steam 上的任何东西一致。",
@@ -1854,7 +1853,6 @@
     "Welcome": "欢迎",
     "Running in Docker": "在 Docker 中运行",
     "From inside Docker nocat.farm can't see this computer's address on your wifi. On your phone, open this computer's address with the port Docker publishes - or put it in NOCATFARM_HOME_ADDRESS in docker-compose.yml, and this shows the link and a code to scan.": "在 Docker 里，nocat.farm 看不到这台电脑在 wifi 上的地址。请在手机上打开这台电脑的地址加上 Docker 公开的端口，或者把地址填进 docker-compose.yml 的 NOCATFARM_HOME_ADDRESS，这里就会显示链接和可扫描的二维码。",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux zip, swap in the new zip. Your accounts and settings stay where they are.": "有新版本时会告诉你。这里它不能自己安装：Docker 里请获取新版本并运行 docker compose up -d --build；Linux zip 则换成新的 zip。你的账户和设置都会保留。",
     "notifications: couldn't reach Telegram to check the bot ({0}) - trying again in a minute": "通知：无法连接 Telegram 来检查机器人（{0}）- 一分钟后重试",
     "Running in Docker: on your phone, open this computer's address with the port Docker publishes. Set NOCATFARM_HOME_ADDRESS in docker-compose.yml and the link shows here.": "在 Docker 中运行：请在手机上打开这台电脑的地址加上 Docker 公开的端口。在 docker-compose.yml 里设置 NOCATFARM_HOME_ADDRESS，链接就会显示在这里。",
     "... and {0} more line(s) - the whole reply is in the dashboard's Console": "……还有 {0} 行 - 完整回复在控制面板的控制台里",
@@ -2213,7 +2211,27 @@
     "hours a day (0 = no limit)": "小时/天（0 = 不限）",
     "Which games it hunts is set under Achievements.": "狩猎哪些游戏在「成就」里设置。",
     "Change the main game": "更换主游戏",
-    "the new main game: appID or store URL": "新的主游戏：appID 或商店链接"
+    "the new main game: appID or store URL": "新的主游戏：appID 或商店链接",
+    "{0} accounts on": "{0} 个账户在线",
+    "{0} of {1} accounts on": "{1} 个账户中 {0} 个在线",
+    "clear works in the nocat.farm window and the dashboard - it clears that screen": "clear 只在 nocat.farm 窗口和面板里有用 - 清空那个画面",
+    "file logging is off - turn on Write a log file under Settings, Logging": "文件日志已关闭 - 在设置的日志里打开「写日志文件」",
+    "opened the log folder: {0}": "已打开日志文件夹：{0}",
+    "the log files are in {0}": "日志文件在 {0}",
+    "Log files": "日志文件",
+    "Every line goes in a file per day, kept for the days set below. clear (in the window or the Console) only clears that screen - the files keep everything.": "每一行都会写进按天分的文件，保留下面设置的天数。clear（在窗口或控制台里）只清空那个画面 - 文件里全都在。",
+    "Open the log folder": "打开日志文件夹",
+    "File logging is off - turn on \"Write a log file\" below.": "文件日志已关闭 - 在下面打开「写日志文件」。",
+    "Opened {0}": "已打开 {0}",
+    "The log files are in {0} on the PC nocat.farm runs on.": "日志文件在运行 nocat.farm 的电脑上的 {0}。",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux or Mac zip, unzip the new one and keep your config folder. Your accounts and settings stay where they are.": "有新版本时会告诉你。这里它不能自己安装：Docker 里请获取新版本并运行 docker compose up -d --build；Linux 或 Mac 的 zip 则解压新的并保留你的 config 文件夹。你的账户和设置都会保留。",
+    "on": "开启",
+    "Everything has an explanation attached - tap or hover the {0} beside any setting.": "每项都有说明 - 点按或把鼠标移到设置旁边的 {0} 上。",
+    "the rep4rep hold has run out - back on at {0}/{1}": "rep4rep 暂停已到期 —— 从 {0}/{1} 继续",
+    "this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it": "这个账号在 {0} 前暂停评论 —— 'rep4rep clear {1}' 可以解除",
+    "nocatFarm.json didn't load - still on the settings in use; fix it and 'reload' again": "nocatFarm.json 没能读取 —— 仍使用当前设置；改好后再 'reload' 一次",
+    "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0} 在真人模式 —— 它玩的是“游戏与频率”(GameWeights) 里的游戏，不是这个列表",
+    "update stopped - nocat.farm was closed first; nothing changed": "更新已停止 —— nocat.farm 先被关闭了；未做任何更改"
   },
   "settings": {
     "WebEnabled": {
@@ -3084,7 +3102,7 @@
     },
     "DiscordShowCounter": {
       "label": "显示在线账户",
-      "tip": "在 Discord 卡片上加一个（3 中的 2）计数：显示的账户里有几个已登录。"
+      "tip": "在 Discord 卡片上显示所列账户中有几个已登录，比如「2 个账户在线」或「3 个账户中 2 个在线」。"
     },
     "DiscordShowAvatar": {
       "label": "显示账户头像",

@@ -6,6 +6,8 @@
     nocat.farm-v<version>-portable.zip      Windows (win-x64) portable - also the one the in-app updater installs
     nocat.farm-v<version>_linux-x64.zip     Linux on 64-bit Intel/AMD
     nocat.farm-v<version>_linux-arm64.zip   Linux on 64-bit ARM (a Raspberry Pi 4/5 on a 64-bit OS, ARM servers)
+  The Mac zips (_osx-arm64, _osx-x64) are NOT made here: a Mac only runs a signed app, and it's only signed when
+  built on a Mac. After creating the release: gh workflow run macos.yml -f tag=v<version>
 
   Each contains ONLY the app: the program, its dlls, wwwroot, README. It publishes into empty staging folders,
   so there is never any of YOUR data in them - config, login tokens, logs and authenticators are all created at
@@ -188,4 +190,4 @@ foreach ($rid in 'linux-x64', 'linux-arm64') {
 }
 
 Write-Host 'Clean: no accounts, tokens, or logs included.' -ForegroundColor Green
-Write-Host 'Upload the setup and all three zips to the release. The Windows zip stays first among the zips by name - see the note at the top.' -ForegroundColor DarkGray
+Write-Host 'Upload the setup and all three zips to the release, then add the Mac zips: gh workflow run macos.yml -f tag=v<version>. The Windows zip stays first among the zips by name - see the note at the top.' -ForegroundColor DarkGray

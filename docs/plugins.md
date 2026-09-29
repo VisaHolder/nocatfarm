@@ -15,4 +15,4 @@ plugins don't work in nocat.farm; [PLUGINS.md](../PLUGINS.md#not-supported-asf-p
 
 ---
 
-[← Linux and Docker](linux-docker-vps.md) · [Safety and FAQ →](safety-and-faq.md)
+[← Linux, Mac and Docker](linux-docker-vps.md) · [Safety and FAQ →](safety-and-faq.md)

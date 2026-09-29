@@ -199,25 +199,11 @@ public static partial class Notifier {
 
 	// ── Discord ─────────────────────────────────────────────────────────────
 	private static async Task<(bool Ok, string Why)> SendDiscordAsync(List<Block> blocks, CancellationToken ct) {
-		// Ten embeds a message is Discord's limit.
-		foreach (Block[] chunk in blocks.Chunk(10)) {
+		foreach (List<object> chunk in EmbedChunks(blocks)) {
 			object payload = new {
 				username = "nocat.farm",
 				avatar_url = Avatar,
-				embeds = chunk.Select(static b => {
-					(_, int colour) = Look(b.Topic);
-					string body = b.Topic == Topic.Summary
-						? "```\n" + string.Join('\n', b.Lines) + "\n```"
-						: string.Join('\n', Capped(b, 15).Select(static l => "◆ " + l));
-
-					return new {
-						title = Title(b),
-						description = body.Length > 4000 ? body[..4000] + "…" : body,
-						color = colour,
-						footer = new { text = "nocat.farm " + Build.Version },
-						timestamp = DateTime.UtcNow.ToString("o")
-					};
-				}).ToArray()
+				embeds = chunk.ToArray()
 			};
 
 			(bool ok, string why) = await PostDiscordAsync(payload, ct).ConfigureAwait(false);
@@ -228,6 +214,53 @@ public static partial class Notifier {
 		}
 
 		return (true, "");
+	}
+
+	/// <summary>Discord's limits for one message: ten embeds, and 6000 characters across all of them.</summary>
+	private const int EmbedsPerMessage = 10;
+	private const int CharsPerMessage = 5800;   // under 6000, with room for Discord counting differently from us
+
+	/// <summary>
+	/// The blocks as embeds, split into messages Discord will take. Split on the count alone, a busy batch - several
+	/// accounts' blocks of fifteen lines, or the daily summary with a couple of others - went over the 6000 characters
+	/// Discord allows in one message, and the whole message and every one after it was refused.
+	/// </summary>
+	private static List<List<object>> EmbedChunks(IEnumerable<Block> blocks) {
+		List<List<object>> chunks = [];
+		List<object> current = [];
+		int size = 0;
+		string footer = "nocat.farm " + Build.Version;
+
+		foreach (Block b in blocks) {
+			(_, int colour) = Look(b.Topic);
+			string body = b.Topic == Topic.Summary
+				? "```\n" + string.Join('\n', b.Lines) + "\n```"
+				: string.Join('\n', Capped(b, 15).Select(static l => "◆ " + l));
+			string description = body.Length > 4000 ? body[..4000] + "…" : body;
+			string title = Title(b);
+			int length = title.Length + description.Length + footer.Length;
+
+			if ((current.Count > 0) && ((current.Count >= EmbedsPerMessage) || (size + length > CharsPerMessage))) {
+				chunks.Add(current);
+				current = [];
+				size = 0;
+			}
+
+			current.Add(new {
+				title,
+				description,
+				color = colour,
+				footer = new { text = footer },
+				timestamp = DateTime.UtcNow.ToString("o")
+			});
+			size += length;
+		}
+
+		if (current.Count > 0) {
+			chunks.Add(current);
+		}
+
+		return chunks;
 	}
 
 	private static async Task<(bool Ok, string Why)> PostDiscordAsync(object payload, CancellationToken ct) {

@@ -3,3 +3,5 @@
 Dockerfile text eol=lf
 .dockerignore text eol=lf
 docker-compose*.yml text eol=lf
+# Run on a Mac: must stay LF, or bash reads "" into every line.
+*.command text eol=lf

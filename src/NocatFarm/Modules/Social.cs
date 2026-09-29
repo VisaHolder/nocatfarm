@@ -86,6 +86,13 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 					try {
 						await Task.Delay(FriendWait()).ConfigureAwait(false);
 						await WaitUntilAwakeAsync(FriendWait).ConfigureAwait(false);
+
+						if (!StillAsking(steamId)) {
+							Forget(steamId);
+
+							return;
+						}
+
 						Bot.Friends?.RemoveFriend(new SteamID(steamId));
 						Log.Info(new Said("turned down a friend request from {0}", await SteamNames.OfAsync(Bot, steamId).ConfigureAwait(false)), Bot.Name);
 					} catch (Exception e) {
@@ -108,6 +115,13 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 				if (Bot.Cfg.IgnoreSuspiciousInvites && await LooksLikeSpamAsync(steamId).ConfigureAwait(false)) {
 					await Task.Delay(FriendWait()).ConfigureAwait(false);
 					await WaitUntilAwakeAsync(FriendWait).ConfigureAwait(false);
+
+					if (!StillAsking(steamId)) {
+						Forget(steamId);
+
+						return;
+					}
+
 					Log.Info(new Said("ignored a friend request from {0} - new private profile", await SteamNames.OfAsync(Bot, steamId).ConfigureAwait(false)), Bot.Name);
 					Bot.Friends?.RemoveFriend(new SteamID(steamId));
 
@@ -118,6 +132,14 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 				// lands is a robot accepting; doing it at 4am while the friends list shows offline is worse.
 				await Task.Delay(FriendWait()).ConfigureAwait(false);
 				await WaitUntilAwakeAsync(FriendWait).ConfigureAwait(false);
+
+				// Withdrawn, or already answered by hand, in the meantime: adding them now would send a friend request of
+				// our own in the owner's name.
+				if (!StillAsking(steamId)) {
+					Forget(steamId);
+
+					return;
+				}
 
 				Bot.Friends?.AddFriend(new SteamID(steamId));
 				_accepted++;
@@ -132,6 +154,19 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 				}
 			}
 		});
+	}
+
+	/// <summary>
+	/// Still a request waiting on this account. The answer goes out hours later on a human-mode account, and by then the
+	/// owner may have accepted them himself - turning the request down then unfriended a real friend.
+	/// </summary>
+	private bool StillAsking(ulong steamId) => Bot.Friends?.GetFriendRelationship(new SteamID(steamId)) == EFriendRelationship.RequestRecipient;
+
+	/// <summary>Not handled after all - so if it is still waiting when Steam next sends the list, it's looked at again.</summary>
+	private void Forget(ulong id) {
+		lock (_handledInvites) {
+			_handledInvites.Remove(id);
+		}
 	}
 
 	/// <summary>
@@ -177,6 +212,14 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 			try {
 				await Task.Delay(FriendWait()).ConfigureAwait(false);
 				await WaitUntilAwakeAsync(FriendWait).ConfigureAwait(false);
+
+				// Declined by hand while it waited - that answer stands.
+				if (Bot.Friends?.GetClanRelationship(new SteamID(clanId)) != EClanRelationship.Invited) {
+					Forget(clanId);
+
+					return;
+				}
+
 				Bot.Notifications?.AcknowledgeClanInvite(clanId, true);
 				Log.Event(new Said("joined group {0}", clanId), Bot.Name);
 			} catch (Exception e) {

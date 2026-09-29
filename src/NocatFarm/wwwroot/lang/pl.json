@@ -319,7 +319,6 @@
     "rep4rep, if you want it": "rep4rep, jeśli chcesz",
     "Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own.": "Opcjonalne. Twoje konta piszą komentarze na profilach Steam innych osób i zdobywają punkty, które możesz wydać na komentarze u siebie.",
     "That's it": "To wszystko",
-    "Everything has an explanation attached - hover the {0} beside any setting.": "Wszystko ma dołączone wyjaśnienie - najedź na {0} obok dowolnego ustawienia.",
     "The Console tab does anything the other tabs do, by typing. {0} lists it all.": "Zakładka Konsola robi wszystko to, co pozostałe, przez pisanie. {0} wypisuje całą listę.",
     "Add a Steam account": "Dodaj konto Steam",
     "A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam.": "Przezwisko tylko dla ciebie. Nadaje nazwę plikowi konfiguracji i to je wpisujesz w poleceniach - nie musi pasować do niczego na Steam.",
@@ -1854,7 +1853,6 @@
     "Welcome": "Witaj",
     "Running in Docker": "Działa w Dockerze",
     "From inside Docker nocat.farm can't see this computer's address on your wifi. On your phone, open this computer's address with the port Docker publishes - or put it in NOCATFARM_HOME_ADDRESS in docker-compose.yml, and this shows the link and a code to scan.": "Z wnętrza Dockera nocat.farm nie widzi adresu tego komputera w twoim wifi. Na telefonie otwórz adres tego komputera z portem, który udostępnia Docker - albo wpisz go w NOCATFARM_HOME_ADDRESS w docker-compose.yml, a tu pojawi się link i kod do zeskanowania.",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux zip, swap in the new zip. Your accounts and settings stay where they are.": "Daje znać, gdy wyjdzie nowa wersja. Tutaj nie zainstaluje jej sam - w Dockerze pobierz nową wersję i uruchom docker compose up -d --build; przy zipie dla Linuksa podmień go na nowy. Twoje konta i ustawienia zostają na miejscu.",
     "notifications: couldn't reach Telegram to check the bot ({0}) - trying again in a minute": "powiadomienia: nie udało się połączyć z Telegramem, by sprawdzić bota ({0}) - ponowna próba za minutę",
     "Running in Docker: on your phone, open this computer's address with the port Docker publishes. Set NOCATFARM_HOME_ADDRESS in docker-compose.yml and the link shows here.": "Działa w Dockerze: na telefonie otwórz adres tego komputera z portem, który udostępnia Docker. Wpisz NOCATFARM_HOME_ADDRESS w docker-compose.yml, a link pojawi się tutaj.",
     "... and {0} more line(s) - the whole reply is in the dashboard's Console": "... i jeszcze {0} wiersz(y) - cała odpowiedź jest w konsoli panelu",
@@ -2213,7 +2211,27 @@
     "hours a day (0 = no limit)": "godzin dziennie (0 = bez limitu)",
     "Which games it hunts is set under Achievements.": "Na które gry poluje, ustawia się w Osiągnięciach.",
     "Change the main game": "Zmień główną grę",
-    "the new main game: appID or store URL": "nowa główna gra: appID lub link do sklepu"
+    "the new main game: appID or store URL": "nowa główna gra: appID lub link do sklepu",
+    "{0} accounts on": "{0} kont włączonych",
+    "{0} of {1} accounts on": "{0} z {1} kont włączonych",
+    "clear works in the nocat.farm window and the dashboard - it clears that screen": "clear działa w oknie nocat.farm i w panelu - czyści ten ekran",
+    "file logging is off - turn on Write a log file under Settings, Logging": "zapis logu do pliku jest wyłączony - włącz Zapisuj plik dziennika w Ustawieniach, Dziennik",
+    "opened the log folder: {0}": "otwarto folder logów: {0}",
+    "the log files are in {0}": "pliki logów są w {0}",
+    "Log files": "Pliki logów",
+    "Every line goes in a file per day, kept for the days set below. clear (in the window or the Console) only clears that screen - the files keep everything.": "Każda linia trafia do pliku na dany dzień, trzymanego przez tyle dni, ile ustawiono niżej. clear (w oknie lub Konsoli) czyści tylko ten ekran - pliki trzymają wszystko.",
+    "Open the log folder": "Otwórz folder logów",
+    "File logging is off - turn on \"Write a log file\" below.": "Zapis logu do pliku jest wyłączony - włącz niżej „Zapisuj plik dziennika”.",
+    "Opened {0}": "Otwarto {0}",
+    "The log files are in {0} on the PC nocat.farm runs on.": "Pliki logów są w {0} na komputerze, na którym działa nocat.farm.",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux or Mac zip, unzip the new one and keep your config folder. Your accounts and settings stay where they are.": "Daje znać, gdy wyjdzie nowa wersja. Tutaj nie zainstaluje jej sam - w Dockerze pobierz nową wersję i uruchom docker compose up -d --build; przy zipie dla Linuksa lub Maca rozpakuj nowy i zachowaj folder config. Twoje konta i ustawienia zostają na miejscu.",
+    "on": "włączone",
+    "Everything has an explanation attached - tap or hover the {0} beside any setting.": "Wszystko ma objaśnienie - dotknij {0} przy ustawieniu albo najedź na nie myszą.",
+    "the rep4rep hold has run out - back on at {0}/{1}": "wstrzymanie rep4rep dobiegło końca - wracamy przy {0}/{1}",
+    "this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it": "to konto ma przerwę w komentowaniu do {0} - 'rep4rep clear {1}' ją znosi",
+    "nocatFarm.json didn't load - still on the settings in use; fix it and 'reload' again": "nie udało się wczytać nocatFarm.json - zostają obecne ustawienia; popraw plik i zrób 'reload' jeszcze raz",
+    "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0} jest w trybie ludzkim - gra w gry z \"Gry i jak często\" (GameWeights), nie z tej listy",
+    "update stopped - nocat.farm was closed first; nothing changed": "aktualizacja przerwana - nocat.farm został wcześniej zamknięty; nic nie zmieniono"
   },
   "settings": {
     "WebEnabled": {
@@ -3084,7 +3102,7 @@
     },
     "DiscordShowCounter": {
       "label": "Pokazuj konta online",
-      "tip": "Dodaje do karty Discorda licznik (2 z 3): ile z pokazywanych kont jest zalogowanych."
+      "tip": "Dodaje do karty Discorda, ile z pokazanych kont jest zalogowanych, np. „2 kont włączonych” albo „2 z 3 kont włączonych”."
     },
     "DiscordShowAvatar": {
       "label": "Pokazuj awatar konta",

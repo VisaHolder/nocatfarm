@@ -319,7 +319,6 @@
     "rep4rep, if you want it": "İstersen rep4rep",
     "Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own.": "İsteğe bağlı. Hesapların başkalarının Steam profillerine yorum yazar ve senin profiline yorum almak için harcayabileceğin puanlar kazanır.",
     "That's it": "Hepsi bu",
-    "Everything has an explanation attached - hover the {0} beside any setting.": "Her şeyin bir açıklaması var - herhangi bir ayarın yanındaki {0} üzerine gel.",
     "The Console tab does anything the other tabs do, by typing. {0} lists it all.": "Konsol sekmesi, diğer sekmelerin yaptığı her şeyi yazarak yapar. {0} hepsini listeler.",
     "Add a Steam account": "Bir Steam hesabı ekle",
     "A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam.": "Yalnızca sana ait bir takma ad. Yapılandırma dosyasına adını verir ve komutlarda yazdığın şeydir - Steam'deki hiçbir şeyle eşleşmesi gerekmez.",
@@ -1854,7 +1853,6 @@
     "Welcome": "Hoş geldin",
     "Running in Docker": "Docker'da çalışıyor",
     "From inside Docker nocat.farm can't see this computer's address on your wifi. On your phone, open this computer's address with the port Docker publishes - or put it in NOCATFARM_HOME_ADDRESS in docker-compose.yml, and this shows the link and a code to scan.": "Docker'ın içinden nocat.farm bu bilgisayarın wifi'deki adresini göremez. Telefonda bu bilgisayarın adresini Docker'ın yayınladığı portla aç - ya da docker-compose.yml içindeki NOCATFARM_HOME_ADDRESS'e yaz, burada bağlantı ve taranacak bir kod çıkar.",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux zip, swap in the new zip. Your accounts and settings stay where they are.": "Yeni sürüm çıkınca haber verir. Burada kendi kendine kuramaz - Docker'da yeni sürümü alıp docker compose up -d --build çalıştır; Linux zip'inde yeni zip'le değiştir. Hesapların ve ayarların yerinde kalır.",
     "notifications: couldn't reach Telegram to check the bot ({0}) - trying again in a minute": "bildirimler: botu denetlemek için Telegram'a ulaşılamadı ({0}) - bir dakika sonra yeniden denenecek",
     "Running in Docker: on your phone, open this computer's address with the port Docker publishes. Set NOCATFARM_HOME_ADDRESS in docker-compose.yml and the link shows here.": "Docker'da çalışıyor: telefonda bu bilgisayarın adresini Docker'ın yayınladığı portla aç. docker-compose.yml içine NOCATFARM_HOME_ADDRESS yaz, bağlantı burada görünür.",
     "... and {0} more line(s) - the whole reply is in the dashboard's Console": "... ve {0} satır daha - yanıtın tamamı panelin Konsol'unda",
@@ -2213,7 +2211,27 @@
     "hours a day (0 = no limit)": "saat/gün (0 = sınır yok)",
     "Which games it hunts is set under Achievements.": "Hangi oyunların avlanacağı Başarımlar altında ayarlanır.",
     "Change the main game": "Ana oyunu değiştir",
-    "the new main game: appID or store URL": "yeni ana oyun: appID ya da mağaza bağlantısı"
+    "the new main game: appID or store URL": "yeni ana oyun: appID ya da mağaza bağlantısı",
+    "{0} accounts on": "{0} hesap açık",
+    "{0} of {1} accounts on": "{1} hesaptan {0} tanesi açık",
+    "clear works in the nocat.farm window and the dashboard - it clears that screen": "clear, nocat.farm penceresinde ve panelde çalışır - o ekranı temizler",
+    "file logging is off - turn on Write a log file under Settings, Logging": "dosyaya günlük kapalı - Ayarlar, Günlük tutma altında Günlük dosyası yaz'ı aç",
+    "opened the log folder: {0}": "günlük klasörü açıldı: {0}",
+    "the log files are in {0}": "günlük dosyaları {0} içinde",
+    "Log files": "Günlük dosyaları",
+    "Every line goes in a file per day, kept for the days set below. clear (in the window or the Console) only clears that screen - the files keep everything.": "Her satır günlük bir dosyaya yazılır ve aşağıda ayarlanan gün kadar saklanır. clear (pencerede ya da Konsolda) yalnızca o ekranı temizler - dosyalarda her şey kalır.",
+    "Open the log folder": "Günlük klasörünü aç",
+    "File logging is off - turn on \"Write a log file\" below.": "Dosyaya günlük kapalı - aşağıdan \"Günlük dosyası yaz\"ı aç.",
+    "Opened {0}": "{0} açıldı",
+    "The log files are in {0} on the PC nocat.farm runs on.": "Günlük dosyaları nocat.farm'ın çalıştığı bilgisayarda, {0} içinde.",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux or Mac zip, unzip the new one and keep your config folder. Your accounts and settings stay where they are.": "Yeni sürüm çıkınca haber verir. Burada kendi kendine kuramaz - Docker'da yeni sürümü alıp docker compose up -d --build çalıştır; Linux ya da Mac zip'inde yenisini aç ve config klasörünü koru. Hesapların ve ayarların yerinde kalır.",
+    "on": "açık",
+    "Everything has an explanation attached - tap or hover the {0} beside any setting.": "Her şeyin bir açıklaması var - bir ayarın yanındaki {0} simgesine dokun ya da üzerine gel.",
+    "the rep4rep hold has run out - back on at {0}/{1}": "rep4rep beklemesi doldu - {0}/{1} ile devam ediliyor",
+    "this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it": "bu hesap {0} saatine kadar yorumlara ara verdi - 'rep4rep clear {1}' kaldırır",
+    "nocatFarm.json didn't load - still on the settings in use; fix it and 'reload' again": "nocatFarm.json yüklenemedi - kullanılan ayarlar kalıyor; dosyayı düzeltip yine 'reload' yaz",
+    "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0} insan modunda - bu listedeki değil \"Oyunlar ve ne sıklıkta\" (GameWeights) içindeki oyunları oynar",
+    "update stopped - nocat.farm was closed first; nothing changed": "güncelleme durduruldu - nocat.farm önce kapatıldı; hiçbir şey değişmedi"
   },
   "settings": {
     "WebEnabled": {
@@ -3084,7 +3102,7 @@
     },
     "DiscordShowCounter": {
       "label": "Çevrimiçi hesapları göster",
-      "tip": "Discord kartına bir (3 / 2) sayacı ekler: gösterilen hesaplardan kaçının oturum açtığı."
+      "tip": "Discord kartına, gösterilen hesaplardan kaçının oturum açtığını ekler; örneğin \"2 hesap açık\" ya da \"3 hesaptan 2 tanesi açık\"."
     },
     "DiscordShowAvatar": {
       "label": "Bir hesabın avatarını göster",

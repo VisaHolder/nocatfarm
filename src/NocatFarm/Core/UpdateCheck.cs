@@ -327,6 +327,13 @@ public static class UpdateCheck {
 			Queued = Available;
 		}
 
+		// 'update skip' after 'update accept' means don't: it answered "it won't install by itself", and then it did.
+		if (IsSkipped(Queued)) {
+			Queued = null;
+
+			return;
+		}
+
 		bool anyHuman = mgr.All.Any(static b => b.Cfg.Enabled && b.Cfg.LegitMode);
 		bool quietNow = mgr.All.All(static b => !b.IsOnline || (!b.PlayingBlocked && !(b.Cfg.LegitMode && Modules.HumanMode.UpAndAbout(b))));
 

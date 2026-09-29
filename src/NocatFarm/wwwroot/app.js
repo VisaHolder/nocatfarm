@@ -20,6 +20,8 @@ let schema = null;         // /api/settings/schema
 let config = null;         // /api/config
 let commands = [];
 let logLines = [];
+// 'clear' in this dashboard hides everything up to here - in this browser only. The window and the file keep theirs.
+let logClearedAt = 0;
 let localLines = [];
 let history = JSON.parse(localStorage.getItem('nocatfarm-history') || '[]');
 let historyAt = -1;
@@ -347,8 +349,10 @@ window.addEventListener('hashchange', () => { const h = location.hash.replace('#
 
 document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
-  const map = { '1': 'overview', '2': 'accounts', '3': 'rep4rep', '4': 'log', '5': 'console', '6': 'settings' };
-  if (map[e.key]) go(map[e.key]);
+  // 1-9 are the tabs as they're shown, left to right - so they still line up when one is hidden or a new one is added.
+  const tabs = [...document.querySelectorAll('.navitem')].filter((el) => el.offsetParent !== null);
+  const n = parseInt(e.key, 10);
+  if (n >= 1 && n <= tabs.length) go(tabs[n - 1].dataset.view);
   if (e.key === '`') { go('console'); e.preventDefault(); }
 });
 
@@ -573,15 +577,15 @@ function renderOverview() {
         : tile(state.CommentsToday, 'Comments today', 'rep4rep comments posted in the last 24 hours.')));
 
   paint('glance', bots.length ? `<div class="tablewrap"><table>
-    <tr><th>${esc(t('Account'))}</th><th>${esc(t('State'))}</th><th>${esc(t('Playing'))}</th><th>${esc(t('Cards'))}</th><th data-tip="${esc(t("What everything in this account's inventory would fetch at the market's median price. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth."))}">${esc(t('Value'))}</th>${r4rOn() ? `<th>${esc(t('rep4rep'))}</th>` : ''}<th>${esc(t('Up'))}</th></tr>
+    <tr><th>${esc(t('Account'))}</th><th>${esc(t('State'))}</th><th>${esc(t('Playing'))}</th><th>${esc(t('Cards'))}</th><th data-tip="${esc(t("What everything in this account's inventory would fetch at the market's median price. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth."))}">${esc(t('Value'))}</th>${r4rOn() ? `<th class="r4r">${esc(t('rep4rep'))}</th>` : ''}<th class="up">${esc(t('Up'))}</th></tr>
     ${bots.map((b) => `<tr class="click" data-act="cards" data-bot="${esc(b.Name)}">
       <td><b>${esc(b.Name)}</b></td>
       <td><span class="chip ${b.Group}"><i class="dot"></i>${esc(b.Status)}</span></td>
       <td>${esc(b.Playing || '—')}</td>
       <td>${b.Cards || '—'}</td>
       <td data-tip="${esc(valueTip(b))}">${b.InventoryValue > 0 ? usd(b.InventoryValue) + (b.InventoryPending > 0 ? '<span class="muted">+</span>' : '') + valueDelta(b) : (b.InventoryOn === false || b.InventoryReady ? '—' : '<span class="muted">…</span>')}</td>
-      ${r4rOn() ? `<td>${b.Rep4Rep ? b.Rep4RepToday + '/' + b.Rep4RepCap : '—'}</td>` : ''}
-      <td>${b.UptimeMinutes ? hm(b.UptimeMinutes) : '—'}</td></tr>`).join('')}
+      ${r4rOn() ? `<td class="r4r">${b.Rep4Rep ? b.Rep4RepToday + '/' + b.Rep4RepCap : '—'}</td>` : ''}
+      <td class="up">${b.UptimeMinutes ? hm(b.UptimeMinutes) : '—'}</td></tr>`).join('')}
     </table></div>`
     : `<p class="muted">${esc(t('No accounts yet.'))} <a href="#console" onclick="go('console')">${esc(t('Add one'))}</a> ${esc(t('or type'))} <code>add mybot mysteamlogin</code>.</p>`);
 
@@ -1325,7 +1329,7 @@ async function impPick(tool) {
   renderImport(true);
 }
 
-/// The example in the folder box, in the shape of the machine nocat.farm runs on (the only non-Windows ones are Linux and Docker).
+/// The example in the folder box, in the shape of the machine nocat.farm runs on (Windows, or a Mac/Linux/Docker path).
 function folderHint() { return state && state.CanSelfUpdate === false ? '/path/to/folder' : 'C:\\...\\folder'; }
 
 /// "Pick a folder", or "look in this folder" on a preview that found nothing: the path box decides.
@@ -2700,12 +2704,12 @@ function tutStepUpdates() {
   const label = (n, fallback) => { const x = def(n); return x ? tSetting(x, 'label') : fallback; };
   const num = (key, min, max) => `<input type="number" min="${min}" max="${max}" value="${esc(d[key])}" oninput="tutDash.${key}=+this.value">`;
 
-  // Linux and Docker can't swap themselves over: it says when a new version is out, and that's all it can do.
+  // Linux, a Mac and Docker can't swap themselves over: it says when a new version is out, and that's all it can do.
   if (state && state.CanSelfUpdate === false) {
     return {
       title: t('Keep it up to date'),
       lead: esc(t('New versions fix things and add new ones.')),
-      body: `<p class="small">${esc(t('It tells you when a new version is out. Here it can\'t install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux zip, swap in the new zip. Your accounts and settings stay where they are.'))}</p>
+      body: `<p class="small">${esc(t('It tells you when a new version is out. Here it can\'t install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux or Mac zip, unzip the new one and keep your config folder. Your accounts and settings stay where they are.'))}</p>
         ${adv ? `<div class="tut-grid">
           <label>${esc(label('UpdateCheckHours', 'Look for updates every'))}</label>
           <span class="tut-hours">${num('checkHours', 1, 24)}<span>${esc(t('hours'))}</span></span>
@@ -2787,7 +2791,7 @@ function tutStepFinal() {
   const hasAccounts = !!(state && state.Bots && state.Bots.length);
   const importing = !!(imp && imp.tutorial) && !tutorialManual;
 
-  const tips = `<p class="muted small">${tf('Everything has an explanation attached - hover the {0} beside any setting.', '<i class="info" style="display:inline-flex"></i>')}
+  const tips = `<p class="muted small">${tf('Everything has an explanation attached - tap or hover the {0} beside any setting.', '<i class="info" style="display:inline-flex"></i>')}
       ${tf('The Console tab does anything the other tabs do, by typing. {0} lists it all.', '<code>help</code>')}</p>`;
 
   // The account comes LAST. Adding one starts it signing in, and every question before it is best out of the way
@@ -4076,6 +4080,17 @@ async function run(line) {
   }
 
   // '/help x' is the same request as 'help x'; the server doesn't strip the slash, so send it without one.
+  // 'clear' is this screen's own business: the Log tab and this console empty here, and the nocat.farm window keeps
+  // its lines (and the other way round). Nothing goes to the server.
+  if (asHelp === 'clear' || asHelp === 'cls') {
+    logClearedAt = logLines.length ? logLines[logLines.length - 1].Seq : logClearedAt;
+    logLines = [];
+    localLines = [];
+    renderOut();
+    if (view === 'log') renderLog();
+    return '';
+  }
+
   const res = await post('/api/command', { Line: asHelp.startsWith('help ') ? line.trim().replace(/^\//, '') : line });
   if (res.output) pushLocal(`<div class="reply">${esc(res.output)}</div>`);
   refresh();
@@ -4430,6 +4445,12 @@ function pacerTable() {
   return `<p class="earning">${tf('Earning in {0} — {1} played, {2}.', name, hrs, progress)}</p>`;
 }
 
+async function openLogFolder() {
+  const r = await post('/api/logs/open', {}).catch(() => null);
+  if (!r || !r.Path) { toast(t('File logging is off - turn on "Write a log file" below.'), true); return; }
+  toast(r.Opened ? tf('Opened {0}', r.Path) : tf('The log files are in {0} on the PC nocat.farm runs on.', r.Path));
+}
+
 function sectionIntro(section, values) {
   const val = (k) => (pending[k] !== undefined ? pending[k] : values[k]);
 
@@ -4455,6 +4476,13 @@ function sectionIntro(section, values) {
 
   if (section === 'Discord profile' && settingsTarget === GLOBAL) {
     return discordCardIntro(val);
+  }
+
+  // Where the files are, one click away - the log on screen is only the last few hundred lines.
+  if (section === 'Logging' && settingsTarget === GLOBAL) {
+    return `<div class="explain"><b>${esc(t('Log files'))}</b>
+      <p style="margin:6px 0 10px">${esc(t('Every line goes in a file per day, kept for the days set below. clear (in the window or the Console) only clears that screen - the files keep everything.'))}</p>
+      <button class="ghost" onclick="openLogFolder()">${esc(t('Open the log folder'))}</button></div>`;
   }
 
   if (section === 'Dashboard' && settingsTarget === GLOBAL) {
@@ -5104,7 +5132,7 @@ function fieldHtml(def, values, defaults) {
       learnNames(list);
       ctl = `<div class="tags" data-setting="${def.Name}">
         ${list.map((a, i) => `<span class="tag">${GAME_NAMES[a] ? `<span>${esc(GAME_NAMES[a])}</span>` : ''}<a class="tagid" href="https://store.steampowered.com/app/${a}" target="_blank" rel="noopener" data-tip="${esc(t('Open its Steam store page'))}">${a}</a><b onclick="removeApp('${def.Name}',${i})">×</b></span>`).join('')}
-        <input type="text" style="max-width:150px" placeholder="${esc(t('appID or store URL'))}" onkeydown="if(event.key==='Enter'||event.key===','){addApp('${def.Name}',this);event.preventDefault();}" onblur="addApp('${def.Name}',this)">
+        <input type="text" class="appin" placeholder="${esc(t('appID or store URL'))}" onkeydown="if(event.key==='Enter'||event.key===','){addApp('${def.Name}',this);event.preventDefault();}" onblur="addApp('${def.Name}',this)">
       </div>`;
       break;
     }
@@ -5117,7 +5145,18 @@ function fieldHtml(def, values, defaults) {
   }
 
   const def0 = defaults[def.Name];
-  const defText = Array.isArray(def0) ? (def0.length ? def0.join(', ') : t('none')) : (def.Kind === 'Secret' ? '' : String(def0));
+  // A choice's default by its name, not its number - "default 1" under a list reading "online" meant nothing.
+  const choiceName = () => {
+    if (def.Kind === 'Choice') return (parseChoices(tSetting(def, 'choices')).find((o) => o.value === Number(def0)) || {}).label;
+    const pick = (tSetting(def, 'choices') || '').split('|').map((o) => o.trim()).find((o) => o.split(' ')[0] === String(def0));
+    // An option that already calls itself "(default)" would read "default desktop (default)".
+    return pick ? pick.slice(pick.indexOf(' ') + 1).replace(/\s*\([^)]*\)\s*$/, '').trim() : undefined;
+  };
+  const defText = Array.isArray(def0) ? (def0.length ? def0.join(', ') : t('none'))
+    : def.Kind === 'Secret' ? ''
+    : def.Kind === 'Bool' ? (def0 ? t('on') : t('off'))
+    : (def.Kind === 'Choice' || def.Kind === 'Pick') ? (choiceName() || String(def0))
+    : String(def0);
 
   return `<div class="field ${changed ? 'changed' : ''}">
     <label for="${id}">${esc(tSetting(def, 'label'))}${tipIcon(tSetting(def, 'tip'))}</label>
@@ -5232,7 +5271,7 @@ function discordPreview(val) {
   // The last line as Discord draws it: the state line by the party icon, then the timer by a controller.
   const pad = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 6h10a5 5 0 0 1 4.9 6l-.8 4a3 3 0 0 1-5 1.6L14 16h-4l-2.1 1.6a3 3 0 0 1-5-1.6l-.8-4A5 5 0 0 1 7 6Zm1 3v2H6v2h2v2h2v-2h2v-2h-2V9H8Zm7.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Zm3-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>';
   const party = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 19c0-3.3 3.1-6 7-6s7 2.7 7 6v1H2v-1Zm16 1v-1c0-1.9-.8-3.6-2.1-4.9 3.5.1 6.1 2.2 6.1 4.9v1h-4Z"/></svg>';
-  const meta = (shown.length ? `<span class="dstate">${party}${esc(stateLine)}${val('DiscordShowCounter') ? ' ' + esc('(' + tf('{0} of {1}', online.length, shown.length) + ')') : ''}</span>` : '')
+  const meta = (shown.length ? `<span class="dstate">${party}${esc(stateLine)}${val('DiscordShowCounter') ? esc(' · ' + (online.length === shown.length ? tf('{0} accounts on', online.length) : tf('{0} of {1} accounts on', online.length, shown.length))) : ''}</span>` : '')
     + (val('DiscordShowTimer') ? `<span class="dtime">${pad}${esc(timer)}</span>` : '');
 
   return `<div class="dcard ${val('DiscordPresence') ? '' : 'off'}">
@@ -5552,10 +5591,10 @@ async function refresh() {
 
     // nocat.farm restarting resets its sequence numbers. Without noticing that, "everything after seq 812"
     // matches nothing forever and the log tab silently freezes.
-    if (bootId !== null && state.BootId !== bootId) logLines = [];
+    if (bootId !== null && state.BootId !== bootId) { logLines = []; logClearedAt = 0; }
     bootId = state.BootId;
 
-    const since = logLines.length ? logLines[logLines.length - 1].Seq : 0;
+    const since = logLines.length ? logLines[logLines.length - 1].Seq : logClearedAt;
     const fresh = since ? await api('/api/log?since=' + since) : await api('/api/log?n=300');
     if (fresh.length) {
       logLines = logLines.concat(fresh).slice(-1000);

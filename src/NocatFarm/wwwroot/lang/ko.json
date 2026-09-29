@@ -319,7 +319,6 @@
     "rep4rep, if you want it": "원한다면 rep4rep",
     "Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own.": "선택 사항입니다. 당신의 계정이 다른 사람의 Steam 프로필에 댓글을 달아 포인트를 벌고, 그 포인트로 자기 프로필에 댓글을 받습니다.",
     "That's it": "끝입니다",
-    "Everything has an explanation attached - hover the {0} beside any setting.": "모든 항목에 설명이 붙어 있습니다 - 설정 옆의 {0}에 마우스를 올려 보세요.",
     "The Console tab does anything the other tabs do, by typing. {0} lists it all.": "'콘솔' 탭은 입력만으로 다른 탭이 하는 모든 것을 합니다. {0}을(를) 입력하면 전부 나옵니다.",
     "Add a Steam account": "Steam 계정 추가",
     "A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam.": "당신만을 위한 별칭입니다. 설정 파일 이름이 되고 명령에 입력하는 값이기도 합니다 - Steam의 어떤 것과도 일치할 필요가 없습니다.",
@@ -1854,7 +1853,6 @@
     "Welcome": "환영",
     "Running in Docker": "Docker에서 실행 중",
     "From inside Docker nocat.farm can't see this computer's address on your wifi. On your phone, open this computer's address with the port Docker publishes - or put it in NOCATFARM_HOME_ADDRESS in docker-compose.yml, and this shows the link and a code to scan.": "Docker 안에서는 nocat.farm이 와이파이에서 이 컴퓨터의 주소를 볼 수 없습니다. 휴대폰에서 이 컴퓨터의 주소와 Docker가 공개한 포트를 열거나, docker-compose.yml의 NOCATFARM_HOME_ADDRESS에 넣으면 여기에 링크와 스캔용 코드가 나옵니다.",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux zip, swap in the new zip. Your accounts and settings stay where they are.": "새 버전이 나오면 알려 줍니다. 여기서는 스스로 설치할 수 없습니다. Docker에서는 새 버전을 받아 docker compose up -d --build를 실행하고, Linux zip은 새 zip으로 바꾸세요. 계정과 설정은 그대로 남습니다.",
     "notifications: couldn't reach Telegram to check the bot ({0}) - trying again in a minute": "알림: 봇 확인을 위해 Telegram에 연결하지 못했습니다 ({0}) - 1분 뒤 다시 시도합니다",
     "Running in Docker: on your phone, open this computer's address with the port Docker publishes. Set NOCATFARM_HOME_ADDRESS in docker-compose.yml and the link shows here.": "Docker에서 실행 중: 휴대폰에서 이 컴퓨터의 주소와 Docker가 공개한 포트를 여세요. docker-compose.yml에 NOCATFARM_HOME_ADDRESS를 넣으면 여기에 링크가 나옵니다.",
     "... and {0} more line(s) - the whole reply is in the dashboard's Console": "... 외 {0}줄 - 전체 답은 대시보드 콘솔에 있습니다",
@@ -2213,7 +2211,27 @@
     "hours a day (0 = no limit)": "시간/일 (0 = 제한 없음)",
     "Which games it hunts is set under Achievements.": "어떤 게임을 사냥할지는 도전 과제에서 설정합니다.",
     "Change the main game": "주 게임 바꾸기",
-    "the new main game: appID or store URL": "새 주 게임: appID 또는 상점 URL"
+    "the new main game: appID or store URL": "새 주 게임: appID 또는 상점 URL",
+    "{0} accounts on": "계정 {0}개 켜짐",
+    "{0} of {1} accounts on": "계정 {1}개 중 {0}개 켜짐",
+    "clear works in the nocat.farm window and the dashboard - it clears that screen": "clear는 nocat.farm 창과 대시보드에서 됩니다 - 그 화면을 지웁니다",
+    "file logging is off - turn on Write a log file under Settings, Logging": "파일 로그가 꺼져 있습니다 - 설정의 로그에서 로그 파일 기록을 켜세요",
+    "opened the log folder: {0}": "로그 폴더를 열었습니다: {0}",
+    "the log files are in {0}": "로그 파일은 {0}에 있습니다",
+    "Log files": "로그 파일",
+    "Every line goes in a file per day, kept for the days set below. clear (in the window or the Console) only clears that screen - the files keep everything.": "모든 줄은 하루에 한 파일로 저장되고 아래에서 정한 기간 동안 남습니다. clear(창이나 콘솔)는 그 화면만 지우고, 파일에는 전부 남습니다.",
+    "Open the log folder": "로그 폴더 열기",
+    "File logging is off - turn on \"Write a log file\" below.": "파일 로그가 꺼져 있습니다 - 아래 \"로그 파일 기록\"을 켜세요.",
+    "Opened {0}": "{0}을(를) 열었습니다",
+    "The log files are in {0} on the PC nocat.farm runs on.": "로그 파일은 nocat.farm이 실행 중인 PC의 {0}에 있습니다.",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux or Mac zip, unzip the new one and keep your config folder. Your accounts and settings stay where they are.": "새 버전이 나오면 알려 줍니다. 여기서는 스스로 설치할 수 없습니다. Docker에서는 새 버전을 받아 docker compose up -d --build를 실행하고, Linux나 Mac zip은 새 것을 풀고 config 폴더를 그대로 옮기세요. 계정과 설정은 그대로 남습니다.",
+    "on": "켜짐",
+    "Everything has an explanation attached - tap or hover the {0} beside any setting.": "모든 설정에 설명이 있습니다 - 옆의 {0}을 탭하거나 마우스를 올려 보세요.",
+    "the rep4rep hold has run out - back on at {0}/{1}": "rep4rep 보류 기간이 끝났습니다 - {0}/{1}에서 다시 시작합니다",
+    "this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it": "이 계정은 {0}까지 댓글을 쉽니다 - 'rep4rep clear {1}'로 풀 수 있습니다",
+    "nocatFarm.json didn't load - still on the settings in use; fix it and 'reload' again": "nocatFarm.json을 불러오지 못했습니다 - 지금 설정을 그대로 씁니다. 파일을 고친 뒤 다시 'reload' 하세요",
+    "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0}은(는) 휴먼 모드입니다 - 이 목록이 아니라 \"플레이할 게임과 빈도\"(GameWeights)의 게임을 플레이합니다",
+    "update stopped - nocat.farm was closed first; nothing changed": "업데이트를 멈췄습니다 - 먼저 nocat.farm이 닫혔습니다. 아무것도 변경되지 않았습니다"
   },
   "settings": {
     "WebEnabled": {
@@ -3084,7 +3102,7 @@
     },
     "DiscordShowCounter": {
       "label": "온라인 계정 표시",
-      "tip": "Discord 카드에 (3 중 2) 카운터를 추가합니다: 표시되는 계정 중 몇 개가 로그인했는지입니다."
+      "tip": "표시된 계정 중 몇 개가 로그인했는지 Discord 카드에 보여 줍니다. 예: \"계정 2개 켜짐\", \"계정 3개 중 2개 켜짐\"."
     },
     "DiscordShowAvatar": {
       "label": "계정 아바타 표시",

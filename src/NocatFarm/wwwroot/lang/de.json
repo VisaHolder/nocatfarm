@@ -319,7 +319,6 @@
     "rep4rep, if you want it": "rep4rep, falls du magst",
     "Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own.": "Optional. Deine Konten schreiben Kommentare auf fremden Steam-Profilen und verdienen Punkte, die du für Kommentare auf deinem eigenen ausgeben kannst.",
     "That's it": "Das war's",
-    "Everything has an explanation attached - hover the {0} beside any setting.": "Zu allem gibt es eine Erklärung - fahr über das {0} neben einer beliebigen Einstellung.",
     "The Console tab does anything the other tabs do, by typing. {0} lists it all.": "Der Konsolen-Tab kann alles, was die anderen Tabs können - durch Tippen. {0} listet alles auf.",
     "Add a Steam account": "Ein Steam-Konto hinzufügen",
     "A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam.": "Ein Spitzname nur für dich. Er benennt die Konfigurationsdatei und ist das, was du in Befehlen tippst - er muss zu nichts auf Steam passen.",
@@ -1854,7 +1853,6 @@
     "Welcome": "Willkommen",
     "Running in Docker": "Läuft in Docker",
     "From inside Docker nocat.farm can't see this computer's address on your wifi. On your phone, open this computer's address with the port Docker publishes - or put it in NOCATFARM_HOME_ADDRESS in docker-compose.yml, and this shows the link and a code to scan.": "Aus Docker heraus sieht nocat.farm die Adresse dieses Computers im WLAN nicht. Öffne auf dem Handy die Adresse dieses Computers mit dem Port, den Docker freigibt - oder trag sie in NOCATFARM_HOME_ADDRESS in docker-compose.yml ein, dann steht hier der Link und ein Code zum Scannen.",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux zip, swap in the new zip. Your accounts and settings stay where they are.": "Es sagt Bescheid, wenn eine neue Version da ist. Selbst installieren kann es sie hier nicht - in Docker holst du die neue Version und führst docker compose up -d --build aus; beim Linux-Zip tauschst du das Zip aus. Deine Konten und Einstellungen bleiben, wo sie sind.",
     "notifications: couldn't reach Telegram to check the bot ({0}) - trying again in a minute": "Benachrichtigungen: Telegram war zum Prüfen des Bots nicht erreichbar ({0}) - nächster Versuch in einer Minute",
     "Running in Docker: on your phone, open this computer's address with the port Docker publishes. Set NOCATFARM_HOME_ADDRESS in docker-compose.yml and the link shows here.": "Läuft in Docker: Öffne auf dem Handy die Adresse dieses Computers mit dem Port, den Docker freigibt. Trag NOCATFARM_HOME_ADDRESS in docker-compose.yml ein, dann steht der Link hier.",
     "... and {0} more line(s) - the whole reply is in the dashboard's Console": "... und {0} weitere Zeile(n) - die ganze Antwort steht in der Konsole des Dashboards",
@@ -2213,7 +2211,27 @@
     "hours a day (0 = no limit)": "Stunden am Tag (0 = keine Grenze)",
     "Which games it hunts is set under Achievements.": "Welche Spiele gejagt werden, stellst du unter Erfolge ein.",
     "Change the main game": "Hauptspiel ändern",
-    "the new main game: appID or store URL": "das neue Hauptspiel: appID oder Store-Link"
+    "the new main game: appID or store URL": "das neue Hauptspiel: appID oder Store-Link",
+    "{0} accounts on": "{0} Konten an",
+    "{0} of {1} accounts on": "{0} von {1} Konten an",
+    "clear works in the nocat.farm window and the dashboard - it clears that screen": "clear funktioniert im nocat.farm-Fenster und im Dashboard - es leert diesen Bildschirm",
+    "file logging is off - turn on Write a log file under Settings, Logging": "Logdatei ist aus - schalte Protokolldatei schreiben unter Einstellungen, Protokollierung ein",
+    "opened the log folder: {0}": "Log-Ordner geöffnet: {0}",
+    "the log files are in {0}": "die Logdateien liegen in {0}",
+    "Log files": "Logdateien",
+    "Every line goes in a file per day, kept for the days set below. clear (in the window or the Console) only clears that screen - the files keep everything.": "Jede Zeile kommt in eine Datei pro Tag, aufbewahrt für die unten eingestellten Tage. clear (im Fenster oder in der Konsole) leert nur diesen Bildschirm - die Dateien behalten alles.",
+    "Open the log folder": "Log-Ordner öffnen",
+    "File logging is off - turn on \"Write a log file\" below.": "Logdatei ist aus - schalte unten „Protokolldatei schreiben“ ein.",
+    "Opened {0}": "{0} geöffnet",
+    "The log files are in {0} on the PC nocat.farm runs on.": "Die Logdateien liegen in {0} auf dem PC, auf dem nocat.farm läuft.",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux or Mac zip, unzip the new one and keep your config folder. Your accounts and settings stay where they are.": "Es sagt Bescheid, wenn eine neue Version da ist. Selbst installieren kann es sie hier nicht - in Docker holst du die neue Version und führst docker compose up -d --build aus; beim Linux- oder Mac-Zip entpackst du das neue und behältst deinen config-Ordner. Deine Konten und Einstellungen bleiben, wo sie sind.",
+    "on": "an",
+    "Everything has an explanation attached - tap or hover the {0} beside any setting.": "Zu allem gibt es eine Erklärung - tippe auf das {0} neben einer Einstellung oder fahr mit der Maus darüber.",
+    "the rep4rep hold has run out - back on at {0}/{1}": "die rep4rep-Pause ist abgelaufen - weiter bei {0}/{1}",
+    "this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it": "dieses Konto macht bis {0} eine Kommentarpause - 'rep4rep clear {1}' hebt sie auf",
+    "nocatFarm.json didn't load - still on the settings in use; fix it and 'reload' again": "nocatFarm.json ließ sich nicht laden - die aktuellen Einstellungen bleiben; Datei korrigieren und nochmal 'reload'",
+    "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0} ist im Menschmodus - es spielt die Spiele aus \"Spiele und wie oft\" (GameWeights), nicht diese Liste",
+    "update stopped - nocat.farm was closed first; nothing changed": "Update abgebrochen - nocat.farm wurde vorher geschlossen; nichts wurde geändert"
   },
   "settings": {
     "WebEnabled": {
@@ -3084,7 +3102,7 @@
     },
     "DiscordShowCounter": {
       "label": "Konten online anzeigen",
-      "tip": "Fügt der Discord-Karte einen Zähler (2 von 3) hinzu: wie viele der angezeigten Konten angemeldet sind."
+      "tip": "Zeigt auf der Discord-Karte, wie viele der gezeigten Konten angemeldet sind, etwa „2 Konten an“ oder „2 von 3 Konten an“."
     },
     "DiscordShowAvatar": {
       "label": "Avatar eines Kontos anzeigen",

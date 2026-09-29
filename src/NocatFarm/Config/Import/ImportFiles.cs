@@ -4,7 +4,6 @@ using System.Text.Json;
 using System.Xml;
 using System.Xml.Linq;
 
-using NocatFarm.Core;
 
 namespace NocatFarm.Config;
 

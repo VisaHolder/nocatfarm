@@ -29,7 +29,7 @@ Nothing past Start here is required reading. Open whichever page you need.
 
 ## Going further
 
-- [Linux and Docker](linux-docker-vps.md), including a rented server (VPS) that runs it around the clock
+- [Linux, Mac and Docker](linux-docker-vps.md), including a rented server (VPS) that runs it around the clock
 - [Plugins](plugins.md), for adding your own commands and features in C# - the full how-to is
   [PLUGINS.md](../PLUGINS.md)
 - [Safety and FAQ](safety-and-faq.md) - what happens to your data, Steam's rules, common questions, and building

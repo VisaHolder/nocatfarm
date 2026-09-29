@@ -83,7 +83,7 @@ for g in order:
 lines += [
     "## More",
     "",
-    "- [The wiki](README.md) - how everything works, every setting, Linux and Docker.",
+    "- [The wiki](README.md) - how everything works, every setting, Linux, Mac and Docker.",
     "- [Plugins](../PLUGINS.md) - add your own commands in a few lines of C#. A plugin's commands are listed by "
     "`plugins` and on the dashboard's Plugins page.",
     "",

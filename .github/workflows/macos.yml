@@ -1,0 +1,116 @@
+# macOS, built and tested on real Macs: Apple Silicon (M1 and later) and Intel.
+#
+# Built here and not with the other zips on Windows: an Apple Silicon Mac refuses to run a program that isn't signed,
+# and the .NET SDK only gives the app its (ad-hoc) signature when it's built on a Mac. Each job builds the
+# self-contained app, checks the signature, runs the unit tests, starts it headless through start.command and checks
+# the dashboard, commands, encrypted secrets and a clean shutdown - then zips it with its permissions kept.
+#
+# Run it from the Actions tab (or `gh workflow run macos.yml`). With a tag (`-f tag=v1.5.3`) the two zips are also
+# added to that release.
+name: macos
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release to add the zips to (like v1.5.3) - leave empty to only build and test"
+        required: false
+        default: ""
+
+permissions:
+  contents: write   # only used to add the zips to a release when a tag is given
+
+jobs:
+  mac:
+    name: mac - ${{ matrix.rid }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: osx-arm64
+            runner: macos-latest
+          - rid: osx-x64
+            runner: macos-15-intel
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: build the self-contained app
+        run: |
+          dotnet publish src/NocatFarm -c Release -o app -r ${{ matrix.rid }} --self-contained true \
+            -p:PublishSingleFile=false -p:DebugType=none --nologo -v q
+          cp tools/macos/start.command app/start.command
+          cp README.md app/README.md
+          chmod +x app/nocatFarm app/start.command
+          file app/nocatFarm
+          codesign --verify --verbose app/nocatFarm
+
+      - name: unit tests
+        run: cd tests/NocatFarm.Tests && dotnet run -c Release
+
+      - name: start it through start.command
+        run: |
+          mkdir -p app/config
+          echo '{"WebPort":7242,"CheckForUpdates":false,"JoinGroup":false,"OpenBrowserOnStart":false}' > app/config/nocatFarm.json
+          echo '{"Enabled":false,"SteamLogin":"not_a_real_account"}' > app/config/demo.json
+          # quarantined like a real download, so start.command's own fix is tested too
+          xattr -w com.apple.quarantine "0081;00000000;Safari;" app/nocatFarm || true
+          (./app/start.command --no-gui < /dev/null > run.log 2>&1 & echo $! > pid)
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:7242/api/status > /dev/null && break; sleep 1; done
+          curl -sf http://127.0.0.1:7242/api/status | tee status.json | head -c 300; echo
+          grep -q '"Version"' status.json
+          ! xattr -p com.apple.quarantine app/nocatFarm 2>/dev/null
+
+      - name: dashboard, commands and settings
+        run: |
+          cmd() { curl -sf -X POST http://127.0.0.1:7242/api/command -H 'Content-Type: application/json' -d "{\"line\":\"$1\"}"; echo; }
+          curl -sf http://127.0.0.1:7242/ | grep -qi '<html'
+          curl -sf http://127.0.0.1:7242/logo-liquid.gif -o /dev/null
+          cmd version | tee out.txt; grep -qi 'nocat' out.txt
+          cmd 'status' | tee out.txt; grep -q 'demo' out.txt
+          cmd 'dashboard' | tee out.txt; grep -q '127.0.0.1:7242' out.txt
+          cmd 'log folder' | tee out.txt; grep -q 'logs' out.txt
+          cmd 'set UpdateCheckHours 5' | tee out.txt; grep -q 'UpdateCheckHours = 5' out.txt
+          grep -q '"UpdateCheckHours": 5' app/config/nocatFarm.json
+
+      - name: secrets are encrypted on disk
+        run: |
+          curl -sf -X POST http://127.0.0.1:7242/api/command -H 'Content-Type: application/json' -d '{"line":"set TelegramBotToken 123456789:not-a-real-token"}' > /dev/null
+          grep -q 'nocat-aes1:' app/config/nocatFarm.json
+          ! grep -q 'not-a-real-token' app/config/nocatFarm.json
+          test -f app/config/state/secret.key
+          [ "$(stat -f %Lp app/config/state/secret.key)" = "600" ]
+
+      - name: clean shutdown
+        run: |
+          pkill -TERM -f 'app/nocatFarm' || kill -TERM $(cat pid)
+          for i in $(seq 1 30); do pgrep -f 'app/nocatFarm' > /dev/null || break; sleep 1; done
+          ! pgrep -f 'app/nocatFarm' > /dev/null
+          grep -q 'shutting down' run.log
+
+      - name: zip it (flat, permissions kept, nothing of the test run in it)
+        run: |
+          rm -rf app/config app/logs
+          version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/NocatFarm/NocatFarm.csproj)
+          name="nocat.farm-v${version}_${{ matrix.rid }}.zip"
+          (cd app && zip -qry -X "../$name" .)
+          unzip -l "$name" | grep -E ' (nocatFarm|start\.command)$'
+          echo "ZIP=$name" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ZIP }}
+          path: ${{ env.ZIP }}
+
+      - name: add it to the release
+        if: inputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ inputs.tag }}" "$ZIP" --clobber --repo "${{ github.repository }}"
+
+      - name: log
+        if: always()
+        run: tail -n 60 run.log || true

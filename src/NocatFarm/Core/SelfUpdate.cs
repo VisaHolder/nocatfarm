@@ -538,18 +538,6 @@ public static class SelfUpdate {
 				return Fail(new Said("update failed: the download has no nocatFarm.exe"));
 			}
 
-			// A note for the version that comes back up, so its first line can say what just happened. The window
-			// that showed the download closes a moment later and the new one starts empty - on a quick download
-			// the whole thing was over before anyone saw it, and nothing afterwards said an update had happened.
-			try {
-				Directory.CreateDirectory(Path.GetDirectoryName(NotePath)!);
-				AtomicFile.Write(NotePath, string.Join('|', Build.Version, tag.TrimStart('v', 'V'), got / 1048576,
-					(int) Math.Max(1, (DateTime.UtcNow - started).TotalSeconds), DateTime.UtcNow.Ticks));
-				AtomicFile.Write(NotesPath, UpdateCheck.Highlights(body));
-			} catch {
-				// only the announcement is lost
-			}
-
 			string here = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
 			string script = Path.Combine(work, "swap.cmd");
 			string backup = Path.Combine(work, "backup");
@@ -588,6 +576,26 @@ public static class SelfUpdate {
 				: new Said("Downloaded {0} ({1}MB) - installing it now. The accounts sign out one at a time; back in about a minute.", tag, got / 1048576));
 
 			await SignOutOneByOneAsync(tag, ct).ConfigureAwait(false);
+
+			// Closed while the accounts were signing out: the update stops there. Carried on, the swap went ahead as
+			// the app shut down, installed the new version and started nocat.farm again after it had been closed.
+			if (Commands.ExitRequested) {
+				return Fail(new Said("update stopped - nocat.farm was closed first; nothing changed"));
+			}
+
+			// A note for the version that comes back up, so its first line can say what just happened. The window
+			// that showed the download closes a moment later and the new one starts empty - on a quick download
+			// the whole thing was over before anyone saw it, and nothing afterwards said an update had happened.
+			// Written only now the swap is really going ahead: written before the backup and the sign-outs, an update
+			// that stopped in either left it behind, and the next start said "update failed" about one never tried.
+			try {
+				Directory.CreateDirectory(Path.GetDirectoryName(NotePath)!);
+				AtomicFile.Write(NotePath, string.Join('|', Build.Version, tag.TrimStart('v', 'V'), got / 1048576,
+					(int) Math.Max(1, (DateTime.UtcNow - started).TotalSeconds), DateTime.UtcNow.Ticks));
+				AtomicFile.Write(NotesPath, UpdateCheck.Highlights(body));
+			} catch {
+				// only the announcement is lost
+			}
 
 			Progress = "restarting into " + tag;
 			Log.Good(new Said("update: all signed out - restarting into {0}", tag));
@@ -671,7 +679,8 @@ public static class SelfUpdate {
 		if %rc% GEQ 8 (
 			robocopy "%NF_BACKUP%" "%NF_HERE%" /E /R:3 /W:2 /NFL /NDL /NJH /NJS >nul
 			if exist "%NF_WORK%\added.txt" for /f "usebackq delims=" %%f in ("%NF_WORK%\added.txt") do del /f /q "%NF_HERE%\%%f" >nul 2>&1
-			echo %rc%>"%NF_FAIL%"
+			rem The redirect first: "echo 8>file" is read as handle 8, and the file came out empty for codes 8 and 9.
+			>"%NF_FAIL%" echo %rc%
 			start "" /D "%NF_HERE%" "%NF_HERE%\nocatFarm.exe" %NF_ARGS%
 			exit /b 1
 		)

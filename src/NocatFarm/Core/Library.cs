@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using NocatFarm.Config;
 using SteamKit2;
 
 namespace NocatFarm.Core;
@@ -58,7 +57,11 @@ public sealed class Library(Bot bot) {
 
 		// A grace period after they stop. Somebody who just quit is quite likely to start it up again, and an
 		// account that grabs the game four seconds after they close it is not behaving like a housemate.
-		return _freeSince.TryGetValue(app, out DateTime free) && (DateTime.UtcNow - free < TimeSpan.FromMinutes(20));
+		// Locked: Steam's push writes this on its own thread while the modules read it, and a Dictionary read in the
+		// middle of a write can throw.
+		lock (_freeSince) {
+			return _freeSince.TryGetValue(app, out DateTime free) && (DateTime.UtcNow - free < TimeSpan.FromMinutes(20));
+		}
 	}
 
 	/// <summary>
@@ -77,12 +80,14 @@ public sealed class Library(Bot bot) {
 			}
 		}
 
-		foreach (uint app in _familyBusy.Except(busy)) {
-			_freeSince[app] = DateTime.UtcNow;   // they've just stopped - start the grace period
-		}
+		lock (_freeSince) {
+			foreach (uint app in _familyBusy.Except(busy)) {
+				_freeSince[app] = DateTime.UtcNow;   // they've just stopped - start the grace period
+			}
 
-		foreach (uint app in busy) {
-			_freeSince.Remove(app);
+			foreach (uint app in busy) {
+				_freeSince.Remove(app);
+			}
 		}
 
 		_familyBusy = busy;

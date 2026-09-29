@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using NocatFarm.Core;
-using NocatFarm.Modules;
 
 namespace NocatFarm.Windows;
 
@@ -46,7 +45,8 @@ public sealed class LiveConsole : IDisposable {
 		Log.Suppressed = true;
 		Log.Written += OnLogged;
 
-		foreach (Log.Entry entry in Log.Recent(LogLines)) {
+		// The lines it will show, not the last few entries of which most may be hidden debug detail.
+		foreach (Log.Entry entry in Log.Recent(200).Where(Shown).TakeLast(LogLines)) {
 			_recent.Add(entry);
 		}
 
@@ -116,13 +116,32 @@ public sealed class LiveConsole : IDisposable {
 		Paint();
 	}
 
+	/// <summary>
+	/// DEBUG only with "Show debug detail" on, like the window, the plain console and the dashboard. The board showed it
+	/// regardless, and its few log rows filled with "reusing web token" and pushed out the lines worth reading.
+	/// </summary>
+	private static bool Shown(Log.Entry entry) => (entry.Level != "DEBUG") || Log.DebugEnabled;
+
 	private void OnLogged(Log.Entry entry) {
+		if (!Shown(entry)) {
+			return;
+		}
+
 		lock (_recent) {
 			_recent.Add(entry);
 
 			while (_recent.Count > LogLines) {
 				_recent.RemoveAt(0);
 			}
+		}
+
+		Paint();
+	}
+
+	/// <summary>Empty the log part of the board - the 'clear' command typed here. The log file is untouched.</summary>
+	public void ClearLog() {
+		lock (_recent) {
+			_recent.Clear();
 		}
 
 		Paint();

@@ -1372,7 +1372,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("import: an ASF folder one level down is found", hits.Count == 1 && hits[0].EndsWith("asf", StringComparison.Ordinal), string.Join(", ", hits) + " attrs=" + File.GetAttributes(Path.Combine(root, "asf")));
 	// Linux: a lower-case "asf" next to the usual "ASF" guess must survive the de-duplication.
 	var cmp = (StringComparer) files.GetProperty("PathComparer")!.GetValue(null)!;
-	Check("import: paths differing only in case are different folders off Windows", OperatingSystem.IsWindows() ? cmp.Equals("/a/ASF", "/a/asf") : !cmp.Equals("/a/ASF", "/a/asf"));
+	Check("import: paths differing only in case are different folders on Linux (the same on Windows and macOS)",
+		OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() ? cmp.Equals("/a/ASF", "/a/asf") : !cmp.Equals("/a/ASF", "/a/asf"));
 	try { Directory.Delete(root, true); } catch { }
 }
 
@@ -1385,6 +1386,233 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("send: every 24h around 22 - at 21:00 it's in an hour, today", Due(nine, 24, 22) == new DateTime(2026, 9, 29, 22, 10, 0));
 	Check("send: every 48h around 4 - skips a day", Due(nine, 48, 4) == new DateTime(2026, 10, 1, 4, 10, 0));
 	Check("send: every 6h with no hour set - 6 hours from now", Due(nine, 6, -1) == nine.AddHours(6));
+}
+
+// ── card farming sittings: one that runs past midnight isn't cut off when the day turns over ──────────────────
+{
+	Type cf = typeof(NocatFarm.Modules.CardFarmer);
+	MethodInfo roll = cf.GetMethod("RollSittings", BindingFlags.NonPublic | BindingFlags.Static)!;
+	MethodInfo on = cf.GetMethod("SittingsOn", BindingFlags.NonPublic | BindingFlags.Static)!;
+	List<(DateTime From, DateTime To)> Roll(DateTime d) => (List<(DateTime From, DateTime To)>) roll.Invoke(null, ["kylro", d, 12])!;
+	List<(DateTime From, DateTime To)> On(DateTime d) => (List<(DateTime From, DateTime To)>) on.Invoke(null, ["kylro", d, 12])!;
+	DateTime day = new(2026, 9, 1);
+	(DateTime From, DateTime To) late = default;
+
+	for (int i = 0; (i < 400) && (late == default); i++) {
+		late = Roll(day).FirstOrDefault(w => w.To > day.AddDays(1));
+
+		if (late == default) {
+			day = day.AddDays(1);
+		}
+	}
+
+	Check("sittings: the same account and date roll the same day", Roll(day).SequenceEqual(Roll(day)));
+	Check("sittings: some days run past midnight", late != default, $"{late.From:MM-dd HH:mm}-{late.To:MM-dd HH:mm}");
+	List<(DateTime From, DateTime To)> next = On(day.AddDays(1));
+	Check("sittings: the next day keeps the rest of last night's sitting", next.Contains(late), string.Join(", ", next.Take(3).Select(w => $"{w.From:dd HH:mm}-{w.To:dd HH:mm}")));
+	Check("sittings: and nothing else of yesterday's", next.All(w => w.To > day.AddDays(1)) && (next.Count(w => w.From < day.AddDays(1)) == 1));
+}
+
+// ── lifetime/history minutes: a machine that slept doesn't wake up with the night credited as played ───────────
+{
+	MethodInfo credit = typeof(NocatFarm.Modules.Heartbeat).GetMethod("Creditable", BindingFlags.NonPublic | BindingFlags.Static)!;
+	double Credit(DateTime last, DateTime now) => (double) credit.Invoke(null, [last, now])!;
+	DateTime t = new(2026, 9, 29, 12, 0, 0, DateTimeKind.Utc);
+	Check("played minutes: a normal 20s tick counts", Math.Abs(Credit(t, t.AddSeconds(20)) - (1 / 3.0)) < 1e-9);
+	Check("played minutes: the first tick counts nothing", Credit(DateTime.MinValue, t) == 0);
+	Check("played minutes: six hours asleep count nothing", Credit(t, t.AddHours(6)) == 0);
+	Check("played minutes: a clock set back counts nothing", Credit(t, t.AddMinutes(-5)) == 0);
+}
+
+// ── human mode's day: a machine that slept doesn't bank the night as played ────────────────────────────────────
+{
+	MethodInfo skip = typeof(NocatFarm.Modules.HumanMode).GetMethod("SkipGap", BindingFlags.NonPublic | BindingFlags.Static)!;
+	DateTime Skip(DateTime bankedTo, DateTime last, DateTime now) => (DateTime) skip.Invoke(null, [bankedTo, last, now])!;
+	DateTime t = new(2026, 9, 29, 20, 0, 0, DateTimeKind.Utc);
+	Check("human bank: ticking along, the cursor stays", Skip(t, t.AddSeconds(40), t.AddSeconds(60)) == t);
+	Check("human bank: a session just started (cursor newer than the last bank) isn't a gap", Skip(t, t.AddHours(-2), t.AddSeconds(20)) == t);
+	Check("human bank: eight hours asleep since the last tick - none of it banked", Skip(t, t.AddSeconds(30), t.AddHours(8)) == t.AddHours(8));
+}
+
+// ── sign-in: an account whose authenticator secret is here answers with a code, not a wait for the phone ────────
+{
+	var guard = new NocatFarm.Core.ConsoleGuard("harness", "KDHC3rsY8+CmiswnXJcE5e5dRfd=");
+	Check("sign-in: with the secret here it asks for a code rather than waiting on the phone", !guard.AcceptDeviceConfirmationAsync().Result);
+}
+
+// ── gates: a reconnect starts a fresh wait, even if nothing asked while it was signed out ──────────────────────
+{
+	var cfg = new NocatFarm.Config.BotConfig { LegitMode = true, QuietDelayMinMinutes = 30, QuietDelayMaxMinutes = 30 };
+	var bot = new NocatFarm.Core.Bot("harness-gate", cfg);
+	void SetProp(string name, object? value) => typeof(NocatFarm.Core.Bot).GetProperty(name)!.SetValue(bot, value);
+	SetProp("State", NocatFarm.Core.BotState.Online);
+	SetProp("OnlineSince", DateTime.UtcNow.AddHours(-2));
+	var gate = NocatFarm.Modules.HumanGate.Quiet(bot);
+	FieldInfo openAt = typeof(NocatFarm.Modules.HumanGate).GetField("_openAt", BindingFlags.NonPublic | BindingFlags.Instance)!;
+	Check("gate: shut for its wait after signing in", !gate.Open);
+	openAt.SetValue(gate, DateTime.UtcNow.AddSeconds(-1));
+	Check("gate: open once the wait is over", gate.Open);
+	SetProp("OnlineSince", DateTime.UtcNow);   // dropped and signed back in, with nobody asking in between
+	Check("gate: shut again after a reconnect", !gate.Open);
+	await bot.DisposeAsync();
+}
+
+// ── human mode's day: "at most" means at most, and 'wake' in the morning starts today's plan ───────────────────
+{
+	var cfg = new NocatFarm.Config.BotConfig { LegitMode = true, MaxSignOutsPerDay = 1, MealBreaksPerDay = 2, WeekdayHours = 4, WeekendHours = 4, DayOffChancePct = 0 };
+	string name = "harness-human-" + Guid.NewGuid().ToString("N")[..6];
+	var bot = new NocatFarm.Core.Bot(name, cfg);
+	var human = new NocatFarm.Modules.HumanMode(bot);
+	Type ht = typeof(NocatFarm.Modules.HumanMode);
+	FieldInfo F(string f) => ht.GetField(f, BindingFlags.NonPublic | BindingFlags.Instance)!;
+	MethodInfo roll = ht.GetMethod("RollNewDayIfNeeded", BindingFlags.NonPublic | BindingFlags.Instance)!;
+	int worstSignOuts = 0, worstMeals = 0;
+
+	for (int i = 0; i < 40; i++) {
+		NocatFarm.Modules.HumanDay.Forget(name);
+		F("_dayStamp").SetValue(human, -1);
+		roll.Invoke(human, [false]);
+		worstSignOuts = Math.Max(worstSignOuts, (int) F("_signOutCap").GetValue(human)!);
+		worstMeals = Math.Max(worstMeals, (int) F("_mealCap").GetValue(human)!);
+	}
+
+	Check("human day: 'Drop offline at most 1' is at most 1", worstSignOuts == 1, $"{worstSignOuts}");
+	Check("human day: 'Meals a day 2' is at most 2", worstMeals <= 2, $"{worstMeals}");
+
+	// Last night's plan still in force (yesterday's stamp, wake time late in the day, target already met).
+	F("_dayStamp").SetValue(human, DateTime.Now.AddDays(-1).DayOfYear);
+	F("_wakeMinuteOfDay").SetValue(human, (23 * 60) + 59);
+	F("_playedMinutesToday").SetValue(human, 999);
+	F("_targetMinutes").SetValue(human, 60);
+	human.WakeNow();
+	int nowMin = (int) (DateTime.Now - DateTime.Now.Date).TotalMinutes;
+	Check("wake: today's plan is rolled, not last night's", ((int) F("_dayStamp").GetValue(human)! == DateTime.Now.DayOfYear) && ((int) F("_playedMinutesToday").GetValue(human)! == 0));
+	Check("wake: and it's up from now", (int) F("_wakeMinuteOfDay").GetValue(human)! <= nowMin);
+	NocatFarm.Modules.HumanDay.Forget(name);
+	await bot.DisposeAsync();
+}
+
+// ── login cooldown: it's everybody's, so stopping the account that hit it doesn't end it ───────────────────────
+{
+	Type lim = typeof(NocatFarm.Core.Limiters);
+	var latch = (SemaphoreSlim) lim.GetField("LoginCooldownLatch", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+	using CancellationTokenSource account = new();
+	Task serve = NocatFarm.Core.Limiters.ServeLoginCooldownAsync(account.Token);
+	bool returned = await Task.WhenAny(serve, Task.Delay(10_000)) == serve;
+	account.Cancel();   // that account is stopped
+	await Task.Delay(200);
+	Check("login cooldown: the account that hit it goes back to waiting its turn", returned);
+	Check("login cooldown: still in force after that account stops", latch.CurrentCount == 0);
+}
+
+// ── rep4rep: a hold that runs out doesn't wipe the last 24h's comments (a short hold would double the day) ────
+{
+	var state = new NocatFarm.Rep4Rep.Rep4RepState { Strikes = 2, BlockedUntil = DateTime.UtcNow.AddHours(1).Ticks };
+	state.RecordPost("task-1");
+	state.ResetForFreshStart();
+	Check("rep4rep hold: strikes and blocks go", (state.Strikes == 0) && !state.IsBlocked);
+	Check("rep4rep hold: the day's comments still count, and a posted task isn't posted again", (state.PostsInLast24h() == 1) && state.HasPostedTask("task-1"));
+}
+
+// ── settings: on/off in any casing, and a word that's neither is refused rather than read as off ──────────────
+{
+	var cfg = new NocatFarm.Config.BotConfig();
+	NocatFarm.Config.SettingDef def = NocatFarm.Config.Settings.FindBot("Rep4Rep")!;
+	Check("set: ON is on", (NocatFarm.Config.Settings.Apply(cfg, def, "ON") == null) && cfg.Rep4Rep);
+	Check("set: No is off", (NocatFarm.Config.Settings.Apply(cfg, def, "No") == null) && !cfg.Rep4Rep);
+	Check("set: true/false still work", (NocatFarm.Config.Settings.Apply(cfg, def, "true") == null) && cfg.Rep4Rep && (NocatFarm.Config.Settings.Apply(cfg, def, "False") == null) && !cfg.Rep4Rep);
+	cfg.Rep4Rep = true;
+	Check("set: 'enabled' is refused and changes nothing", (NocatFarm.Config.Settings.Apply(cfg, def, "enabled") != null) && cfg.Rep4Rep);
+}
+
+// ── updates: 'update skip' after 'update accept' stops the queued install ─────────────────────────────────────
+{
+	string? skippedBefore = NocatFarm.Core.UpdateCheck.Skipped;
+	NocatFarm.Core.UpdateCheck.Skipped = "v99.9.9";
+	typeof(NocatFarm.Core.UpdateCheck).GetProperty("Queued")!.SetValue(null, "v99.9.9");
+	NocatFarm.Core.UpdateCheck.QueuedInstallIfDue(null!);
+	// Only Windows updates itself; elsewhere nothing is ever queued, so there's nothing to drop.
+	Check("update skip: a skipped version waiting to install is dropped", !OperatingSystem.IsWindows() || (NocatFarm.Core.UpdateCheck.Queued == null));
+	NocatFarm.Core.UpdateCheck.Skipped = skippedBefore;
+}
+
+// ── settings file: fixed after a bad edit, it saves again ──────────────────────────────────────────────────────
+{
+	string path = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "nocatFarm.json");
+	string? before = File.Exists(path) ? File.ReadAllText(path) : null;
+	File.WriteAllText(path, "{ \"WebPort\": 7242, ");
+	NocatFarm.Config.ConfigStore.LoadGlobal();
+	bool brokenSeen = NocatFarm.Config.ConfigStore.GlobalBroken;
+	File.WriteAllText(path, "{ \"WebPort\": 7242 }");
+	NocatFarm.Config.GlobalConfig fixedCfg = NocatFarm.Config.ConfigStore.LoadGlobal();
+	Check("settings file: a broken one is noticed", brokenSeen);
+	Check("settings file: once it loads again, saving works again", !NocatFarm.Config.ConfigStore.GlobalBroken && NocatFarm.Config.ConfigStore.SaveGlobal(fixedCfg));
+
+	if (before != null) {
+		File.WriteAllText(path, before);
+	} else {
+		File.Delete(path);
+	}
+
+	try { File.Delete(path + ".broken"); } catch { }
+}
+
+// ── Discord notifications: a busy batch is split under Discord's 6000 characters a message ─────────────────────
+{
+	Type notifier = typeof(NocatFarm.Core.Notifier);
+	Type blockT = notifier.GetNestedType("Block", BindingFlags.NonPublic)!;
+	object cards = NocatFarm.Topic.Cards;
+	var blocks = (IList) Activator.CreateInstance(typeof(List<>).MakeGenericType(blockT))!;
+
+	for (int i = 0; i < 6; i++) {
+		blocks.Add(Activator.CreateInstance(blockT, [cards, $"acct{i}", Enumerable.Range(0, 15).Select(n => new string('x', 80)).ToList()])!);
+	}
+
+	var chunks = (IEnumerable) notifier.GetMethod("EmbedChunks", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [blocks])!;
+	List<int> sizes = [.. chunks.Cast<IList>().Select(static c => c.Count)];
+	Check("discord: six 15-line blocks go as more than one message", sizes.Count > 1 && sizes.Sum() == 6, string.Join("+", sizes));
+}
+
+// ── inventory value: an error page isn't read as "holds nothing", and the fullest inventories come first ───────
+{
+	MethodInfo parse = typeof(NocatFarm.Core.InventoryValue).GetMethod("ParseContexts", BindingFlags.NonPublic | BindingFlags.Static)!;
+	object? ParseInv(string html) => parse.Invoke(null, [html]);
+	Check("inventory: an error page is 'couldn't read', not an empty inventory", ParseInv("<html>Sorry! An error was encountered</html>") == null);
+	Check("inventory: an empty inventory is empty", ParseInv("var g_rgAppContextData = [];\n") is IList { Count: 0 });
+	string invPage = "var g_rgAppContextData = {\"440\":{\"name\":\"TF2\",\"rgContexts\":{\"2\":{\"asset_count\":3}}},\"730\":{\"name\":\"CS2\",\"rgContexts\":{\"2\":{\"asset_count\":900}}}};\n";
+	var list = ((IEnumerable) ParseInv(invPage)!).Cast<object>().Select(static t => t.ToString()!).ToList();
+	Check("inventory: the fullest first", list.Count == 2 && list[0].Contains("730", StringComparison.Ordinal), string.Join(" | ", list));
+}
+
+// ── dashboard: saving settings doesn't put back the app's own fields from the page's old copy ─────────────────
+{
+	var current = new NocatFarm.Config.GlobalConfig { Theme = "dark", TutorialDone = true, AccountOrder = ["b", "a"], Rep4RepHoldUntil = new DateTime(2030, 1, 1, 0, 0, 0, DateTimeKind.Utc) };
+	var sent = new NocatFarm.Config.GlobalConfig { Theme = "light", TutorialDone = false, AccountOrder = ["a", "b"], Rep4RepHoldUntil = null, Language = "de" };
+	typeof(NocatFarm.Web.WebHost).GetMethod("KeepServerFields", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [sent, current]);
+	Check("dashboard save: theme, tutorial, account order and a hold stay as the app has them",
+		sent.Theme == "dark" && sent.TutorialDone && sent.AccountOrder.SequenceEqual(["b", "a"]) && sent.Rep4RepHoldUntil == current.Rep4RepHoldUntil);
+	Check("dashboard save: a setting is still changed", sent.Language == "de");
+}
+
+// ── dashboard sign-in: behind a proxy, the address the proxy saw - not the one the visitor wrote ──────────────
+{
+	var ctx = new Microsoft.AspNetCore.Http.DefaultHttpContext();
+	ctx.Connection.RemoteIpAddress = System.Net.IPAddress.Loopback;
+	ctx.Request.Headers["X-Forwarded-For"] = "1.2.3.4, 203.0.113.9";
+	var signer = ((string Ip, bool ThisPc)) typeof(NocatFarm.Web.WebHost).GetMethod("WhoIsSigningIn", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [ctx])!;
+	Check("sign-in lockout: the proxy's own entry (the last) is who asked", signer.Ip == "203.0.113.9" && !signer.ThisPc, signer.Ip);
+}
+
+// ── badge crafting: the list links to each card page, and the card page has the numbers ───────────────────────
+{
+	Type bc = typeof(NocatFarm.Modules.BadgeCraft);
+	var links = ((IEnumerable) bc.GetMethod("ReadyLinks", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null,
+		["<div class=\"badge_row\"><a class=\"badge_row_overlay\" href=\"https://steamcommunity.com/id/me/gamecards/570/\"></a></div>"
+		+ "<div class=\"badge_row\"><div class=\"badge_craft_button\"><a href=\"https://steamcommunity.com/id/me/gamecards/730/?border=1\">Ready</a></div></div>"])!).Cast<object>().Select(static l => l.ToString()!).ToList();
+	Check("craft: a Ready button's card page is found, foil included, and a plain row isn't", links.Count == 1 && links[0] == "(730, True)", string.Join(" ", links));
+	object? c = bc.GetMethod("ParseCardsPage", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null,
+		["<a class=\"badge_craft_button\" href=\"javascript:void(0)\" onclick=\"Profile_CraftGameBadge( 'https://steamcommunity.com/profiles/76561198000000000/', 730, 1, 0, 1 );\">Craft Badge</a>"]);
+	Check("craft: the card page's numbers are read after the profile address", c?.ToString() == "Craftable { AppId = 730, Series = 1, Border = 0, Levels = 1 }", c?.ToString() ?? "null");
 }
 
 // SETTINGSCOUNT

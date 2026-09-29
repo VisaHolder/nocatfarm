@@ -538,6 +538,11 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 
 	// ── the boost decision ───────────────────────────────────────────────────
 	private void Tick() {
+		// Read the saved hunt before anything here can write it. A boost grind picked back up after a restart went
+		// straight to the grind branch below, which saves - so the file was overwritten with a blank hunt: today's
+		// minutes, each game's rest and stopping point, and the place on the list all gone.
+		LoadHunt();
+
 		// A hunt running as a grind on a human account - from before hunts joined the day, or picked back up after a
 		// restart. Hand the account back to human mode and keep the game, now as one of the games it plays.
 		if (Bot.Cfg.LegitMode && Bot.Grinding && _ours) {

@@ -30,6 +30,9 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 	public override string Name => "heartbeat";
 
 	protected override async Task RunAsync(CancellationToken ct) {
+		// A fresh start after a reconnect: the time the account was signed out is not time played.
+		_lastTick = DateTime.MinValue;
+
 		while (!ct.IsCancellationRequested) {
 			try {
 				Beat();
@@ -47,6 +50,18 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 		}
 	}
 
+	/// <summary>
+	/// Minutes since the last tick that can count as played. The tick is every 20 seconds, so a gap of more than a few
+	/// minutes is time this process wasn't running - the machine asleep, the clock moved - and none of it is played.
+	/// Counting the whole gap credited a night of sleep as a night of farming: the first tick after waking still saw
+	/// the games from before, because Steam hadn't dropped the connection yet.
+	/// </summary>
+	internal static double Creditable(DateTime last, DateTime now) {
+		double since = last == DateTime.MinValue ? 0 : (now - last).TotalMinutes;
+
+		return since is > 0 and <= 3 ? since : 0;
+	}
+
 	/// <summary>The account's own setting when it has one, otherwise the global. -1 means "never".</summary>
 	private static int Pick(int perAccount, int global) => perAccount switch {
 		< 0 => 0,            // explicitly silenced for this account
@@ -62,7 +77,7 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 		// signed in doing nothing accrues nothing, and only for time that genuinely elapsed - a machine that
 		// slept for six hours must not wake up and credit six hours of farming.
 		DateTime now = DateTime.UtcNow;
-		double since = _lastTick == DateTime.MinValue ? 0 : (now - _lastTick).TotalMinutes;
+		double since = Creditable(_lastTick, now);
 		_lastTick = now;
 
 		if ((since > 0) && (Bot.PlayingApps.Count > 0)) {

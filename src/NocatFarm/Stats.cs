@@ -110,8 +110,9 @@ public static class Stats {
 			}
 
 			DateTime cutoff = DateTime.UtcNow.AddDays(-90);
+			string[] lines = File.ReadAllLines(PathFor());
 
-			foreach (string line in File.ReadAllLines(PathFor())) {
+			foreach (string line in lines) {
 				string[] parts = line.Split('|');
 
 				if ((parts.Length < 3) || !long.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out long ticks)
@@ -124,6 +125,12 @@ public static class Stats {
 				if (when >= cutoff && when <= DateTime.UtcNow) {
 					Cache.Add(new Event(when, parts[1], parts[2]));
 				}
+			}
+
+			// Only the 90 days anything reads are kept. The file was appended to for ever and read whole at every start,
+			// and the log clean-up only looks at the daily log files.
+			if (Cache.Count < lines.Length) {
+				AtomicFile.Write(PathFor(), string.Concat(Cache.Select(static e => $"{e.When.Ticks}|{e.Kind}|{e.Bot}{Environment.NewLine}")));
 			}
 		} catch {
 			// an unreadable stats file means an empty chart, nothing worse

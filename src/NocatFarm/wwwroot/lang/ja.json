@@ -319,7 +319,6 @@
     "rep4rep, if you want it": "rep4rep（使いたければ）",
     "Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own.": "任意です。あなたのアカウントが他人の Steam プロフィールにコメントし、そのポイントを自分のプロフィールへのコメントに使えます。",
     "That's it": "以上です",
-    "Everything has an explanation attached - hover the {0} beside any setting.": "すべてに説明がついています - 各設定の横にある {0} にカーソルを合わせてください。",
     "The Console tab does anything the other tabs do, by typing. {0} lists it all.": "「コンソール」タブは、入力するだけで他のタブと同じことがすべてできます。{0} で一覧が出ます。",
     "Add a Steam account": "Steam アカウントを追加",
     "A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam.": "あなただけのための呼び名です。設定ファイルの名前になり、コマンドで入力するのもこれです - Steam 上の何かと一致させる必要はありません。",
@@ -1854,7 +1853,6 @@
     "Welcome": "ようこそ",
     "Running in Docker": "Docker で実行中",
     "From inside Docker nocat.farm can't see this computer's address on your wifi. On your phone, open this computer's address with the port Docker publishes - or put it in NOCATFARM_HOME_ADDRESS in docker-compose.yml, and this shows the link and a code to scan.": "Docker の中からは、Wi-Fi 上のこのコンピューターのアドレスが見えません。スマホでこのコンピューターのアドレスと Docker が公開するポートを開くか、docker-compose.yml の NOCATFARM_HOME_ADDRESS に書いてください。ここにリンクと読み取り用のコードが出ます。",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux zip, swap in the new zip. Your accounts and settings stay where they are.": "新しいバージョンが出たら知らせます。ここでは自動ではインストールできません。Docker では新しいバージョンを取得して docker compose up -d --build を実行、Linux の zip では新しい zip に入れ替えてください。アカウントと設定はそのまま残ります。",
     "notifications: couldn't reach Telegram to check the bot ({0}) - trying again in a minute": "通知: ボットの確認で Telegram に接続できませんでした ({0}) - 1 分後にもう一度試します",
     "Running in Docker: on your phone, open this computer's address with the port Docker publishes. Set NOCATFARM_HOME_ADDRESS in docker-compose.yml and the link shows here.": "Docker で実行中: スマホでこのコンピューターのアドレスと Docker が公開するポートを開いてください。docker-compose.yml に NOCATFARM_HOME_ADDRESS を書くとここにリンクが出ます。",
     "... and {0} more line(s) - the whole reply is in the dashboard's Console": "... ほか {0} 行 - 全文はダッシュボードのコンソールにあります",
@@ -2213,7 +2211,27 @@
     "hours a day (0 = no limit)": "時間/日（0 = 制限なし）",
     "Which games it hunts is set under Achievements.": "どのゲームをハントするかは「実績」で設定します。",
     "Change the main game": "メインゲームを変更",
-    "the new main game: appID or store URL": "新しいメインゲーム: appID かストアの URL"
+    "the new main game: appID or store URL": "新しいメインゲーム: appID かストアの URL",
+    "{0} accounts on": "{0} アカウント稼働中",
+    "{0} of {1} accounts on": "{1} 中 {0} アカウント稼働中",
+    "clear works in the nocat.farm window and the dashboard - it clears that screen": "clear は nocat.farm のウィンドウとダッシュボードで使えます - その画面を消します",
+    "file logging is off - turn on Write a log file under Settings, Logging": "ファイルへのログはオフです - 設定のログで「ログファイルを書く」をオンにしてください",
+    "opened the log folder: {0}": "ログフォルダを開きました: {0}",
+    "the log files are in {0}": "ログファイルは {0} にあります",
+    "Log files": "ログファイル",
+    "Every line goes in a file per day, kept for the days set below. clear (in the window or the Console) only clears that screen - the files keep everything.": "すべての行は1日ごとのファイルに入り、下で決めた日数だけ残ります。clear（ウィンドウかコンソール）はその画面を消すだけで、ファイルには全部残ります。",
+    "Open the log folder": "ログフォルダを開く",
+    "File logging is off - turn on \"Write a log file\" below.": "ファイルへのログはオフです - 下の「ログファイルを書く」をオンにしてください。",
+    "Opened {0}": "{0} を開きました",
+    "The log files are in {0} on the PC nocat.farm runs on.": "ログファイルは nocat.farm が動いている PC の {0} にあります。",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux or Mac zip, unzip the new one and keep your config folder. Your accounts and settings stay where they are.": "新しいバージョンが出たら知らせます。ここでは自動ではインストールできません。Docker では新しいバージョンを取得して docker compose up -d --build を実行、Linux か Mac の zip では新しいものを展開して config フォルダを引き継いでください。アカウントと設定はそのまま残ります。",
+    "on": "オン",
+    "Everything has an explanation attached - tap or hover the {0} beside any setting.": "どの設定にも説明があります - 横の {0} をタップするかマウスを乗せてください。",
+    "the rep4rep hold has run out - back on at {0}/{1}": "rep4repの保留期間が終了 - {0}/{1}から再開します",
+    "this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it": "このアカウントは {0} までコメントを休んでいます - 'rep4rep clear {1}' で解除できます",
+    "nocatFarm.json didn't load - still on the settings in use; fix it and 'reload' again": "nocatFarm.json を読み込めませんでした - 今の設定のままです。直してからもう一度 'reload' してください",
+    "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0} はヒューマンモードです - このリストではなく「遊ぶゲームと頻度」(GameWeights) のゲームを遊びます",
+    "update stopped - nocat.farm was closed first; nothing changed": "更新を中止しました - 先に nocat.farm が閉じられました。何も変更されていません"
   },
   "settings": {
     "WebEnabled": {
@@ -3084,7 +3102,7 @@
     },
     "DiscordShowCounter": {
       "label": "オンラインのアカウントを表示",
-      "tip": "Discord カードに (3中2) のカウンターを追加します。表示しているアカウントのうち何個がサインインしているかです。"
+      "tip": "表示中のアカウントのうち何個がサインインしているかを Discord カードに出します（例:「2 アカウント稼働中」「3 中 2 アカウント稼働中」）。"
     },
     "DiscordShowAvatar": {
       "label": "アカウントのアバターを表示",

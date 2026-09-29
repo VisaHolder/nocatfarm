@@ -24,9 +24,9 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 | **[Profile & info](#profile--info)** | `value` `level` `balance` `points` `bans` `owns` `privacy` `joingroup` |
 | **[rep4rep](#rep4rep)** | `rep4rep` |
 | **[Settings](#settings)** | `config` `set` `reload` `import` |
-| **[The app](#the-app)** | `log` `stats` `notify` `plugins` `tutorial` `help` `theme` `mini` `dashboard` `anywhere` `unlock` `version` `update` `answer` `exit` |
+| **[The app](#the-app)** | `log` `stats` `notify` `plugins` `tutorial` `help` `theme` `mini` `dashboard` `anywhere` `clear` `unlock` `version` `update` `answer` `exit` |
 
-68 commands in all.
+69 commands in all.
 
 ## Accounts
 
@@ -135,7 +135,7 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 
 | Command | What it does |
 |---|---|
-| `log [count]` <br>also `logs` | The last few log lines. |
+| `log [count\|folder]` <br>also `logs` | The last few log lines. 'log folder' opens the folder the log files are in, on this PC. |
 | `stats [hours]` | Each account's last 24 hours - hours banked, cards, comments, totals - then cards dropped and comments posted, by hour. |
 | `notify [test]` | Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now. |
 | `plugins` | Which plugins are loaded, and where they came from. |
@@ -145,6 +145,7 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 | `mini [on\|off]` | Shrink the window to a small panel of your accounts - what each is doing, start and stop, the dashboard - or back to the full window. |
 | `dashboard [anywhere on\|off]` <br>also `web`, `link` | The dashboard's address - on this PC, on your phone over the same wifi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. 'dashboard anywhere on' opens it from anywhere and answers with the link; 'dashboard anywhere off' closes it (the same as 'anywhere on\|off'). |
 | `anywhere [on\|off]` <br>also `remote` | Open the dashboard from anywhere, not just your wifi - your router forwards the port (UPnP), like Jellyfin. 'anywhere on' does all of it and answers with the link; 'anywhere off' closes it again; on its own it says whether it's on and the link. Works from Telegram and Discord too. |
+| `clear` <br>also `cls` | Clears the log off the screen you type it in - the nocat.farm window, or the dashboard's Log and Console. The other one keeps its lines, and nothing is deleted: the log file has every line (Settings, Logging, Open the log folder). |
 | `unlock` | Locked out of the dashboard after too many wrong passwords? This lets you (and anyone else locked out) sign in again straight away. |
 | `version` <br>also `about` | Which version this is. |
 | `update [accept\|now\|skip]` | Check for a newer release. 'update accept' downloads it and restarts into it - or, with 'When I say update' set to wait, installs it once your accounts are asleep; 'update now' always installs right away. 'update skip' skips that version - no more reminders about it and it never installs by itself - until a newer one comes out. Nothing installs by itself unless 'Update by itself' is set to install at night. |
@@ -153,5 +154,5 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 
 ## More
 
-- [The wiki](README.md) - how everything works, every setting, Linux and Docker.
+- [The wiki](README.md) - how everything works, every setting, Linux, Mac and Docker.
 - [Plugins](../PLUGINS.md) - add your own commands in a few lines of C#. A plugin's commands are listed by `plugins` and on the dashboard's Plugins page.

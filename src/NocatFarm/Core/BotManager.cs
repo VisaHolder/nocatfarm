@@ -219,9 +219,12 @@ public sealed class BotManager : IAsyncDisposable {
 		}
 
 		await bot.DisposeAsync().ConfigureAwait(false);   // dispose, not just stop - frees its HttpClient/locks
-		TokenStore.Clear(name);
 
-		return ConfigStore.DeleteBot(name);
+		// Its own name, not however it was typed: the lookup ignores case, and off Windows "MAIN" left main.json and its
+		// login token behind, so the account came back at the next start.
+		TokenStore.Clear(bot.Name);
+
+		return ConfigStore.DeleteBot(bot.Name);
 	}
 
 	public async ValueTask DisposeAsync() {

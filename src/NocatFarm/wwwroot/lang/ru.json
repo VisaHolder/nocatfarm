@@ -319,7 +319,6 @@
     "rep4rep, if you want it": "rep4rep, если он вам нужен",
     "Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own.": "Необязательно. Ваши аккаунты пишут комментарии в чужих профилях Steam и зарабатывают очки, которые можно потратить на комментарии в вашем.",
     "That's it": "Вот и всё",
-    "Everything has an explanation attached - hover the {0} beside any setting.": "У всего есть пояснение — наведите на {0} рядом с любой настройкой.",
     "The Console tab does anything the other tabs do, by typing. {0} lists it all.": "Вкладка «Консоль» умеет всё то же, что и остальные, только вводом команд. {0} покажет весь список.",
     "Add a Steam account": "Добавить аккаунт Steam",
     "A nickname just for you. It names the config file and it's what you type in commands - it doesn't have to match anything on Steam.": "Прозвище только для вас. Оно даёт имя файлу настроек и его вы вводите в командах — со Steam оно совпадать не обязано.",
@@ -1854,7 +1853,6 @@
     "Welcome": "Добро пожаловать",
     "Running in Docker": "Работает в Docker",
     "From inside Docker nocat.farm can't see this computer's address on your wifi. On your phone, open this computer's address with the port Docker publishes - or put it in NOCATFARM_HOME_ADDRESS in docker-compose.yml, and this shows the link and a code to scan.": "Изнутри Docker nocat.farm не видит адрес этого компьютера в вашем Wi-Fi. На телефоне откройте адрес этого компьютера с портом, который публикует Docker, - или впишите его в NOCATFARM_HOME_ADDRESS в docker-compose.yml, и здесь появятся ссылка и код для сканирования.",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux zip, swap in the new zip. Your accounts and settings stay where they are.": "Сообщает, когда выходит новая версия. Здесь он не может установить её сам: в Docker получите новую версию и выполните docker compose up -d --build; с zip для Linux замените его новым. Аккаунты и настройки остаются на месте.",
     "notifications: couldn't reach Telegram to check the bot ({0}) - trying again in a minute": "уведомления: не удалось связаться с Telegram для проверки бота ({0}) - повтор через минуту",
     "Running in Docker: on your phone, open this computer's address with the port Docker publishes. Set NOCATFARM_HOME_ADDRESS in docker-compose.yml and the link shows here.": "Работает в Docker: на телефоне откройте адрес этого компьютера с портом, который публикует Docker. Впишите NOCATFARM_HOME_ADDRESS в docker-compose.yml, и ссылка появится здесь.",
     "... and {0} more line(s) - the whole reply is in the dashboard's Console": "... и ещё {0} строк(и) - весь ответ в консоли панели",
@@ -2213,7 +2211,27 @@
     "hours a day (0 = no limit)": "часов в день (0 = без ограничений)",
     "Which games it hunts is set under Achievements.": "На какие игры охотиться, настраивается в разделе «Достижения».",
     "Change the main game": "Сменить основную игру",
-    "the new main game: appID or store URL": "новая основная игра: appID или ссылка на магазин"
+    "the new main game: appID or store URL": "новая основная игра: appID или ссылка на магазин",
+    "{0} accounts on": "аккаунтов в сети: {0}",
+    "{0} of {1} accounts on": "в сети {0} из {1} аккаунтов",
+    "clear works in the nocat.farm window and the dashboard - it clears that screen": "clear работает в окне nocat.farm и в панели - очищает тот экран",
+    "file logging is off - turn on Write a log file under Settings, Logging": "запись журнала в файл выключена - включите «Писать файл журнала» в Настройки, Журнал",
+    "opened the log folder: {0}": "папка журналов открыта: {0}",
+    "the log files are in {0}": "файлы журнала лежат в {0}",
+    "Log files": "Файлы журнала",
+    "Every line goes in a file per day, kept for the days set below. clear (in the window or the Console) only clears that screen - the files keep everything.": "Каждая строка попадает в файл за день, который хранится столько дней, сколько задано ниже. clear (в окне или консоли) очищает только тот экран - в файлах остаётся всё.",
+    "Open the log folder": "Открыть папку журналов",
+    "File logging is off - turn on \"Write a log file\" below.": "Запись журнала в файл выключена - включите ниже «Писать файл журнала».",
+    "Opened {0}": "Открыто: {0}",
+    "The log files are in {0} on the PC nocat.farm runs on.": "Файлы журнала лежат в {0} на компьютере, где работает nocat.farm.",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux or Mac zip, unzip the new one and keep your config folder. Your accounts and settings stay where they are.": "Сообщает, когда выходит новая версия. Здесь он не может установить её сам: в Docker получите новую версию и выполните docker compose up -d --build; с zip для Linux или Mac распакуйте новый и перенесите папку config. Аккаунты и настройки остаются на месте.",
+    "on": "включено",
+    "Everything has an explanation attached - tap or hover the {0} beside any setting.": "У всего есть пояснение - нажмите на {0} рядом с настройкой или наведите на него мышь.",
+    "the rep4rep hold has run out - back on at {0}/{1}": "приостановка rep4rep истекла - продолжаем с {0}/{1}",
+    "this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it": "этот аккаунт отдыхает от комментариев до {0} - 'rep4rep clear {1}' снимает паузу",
+    "nocatFarm.json didn't load - still on the settings in use; fix it and 'reload' again": "nocatFarm.json не загрузился - остаются текущие настройки; исправьте файл и снова выполните 'reload'",
+    "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0} в режиме «человек» - он играет в игры из «Игры и как часто» (GameWeights), а не из этого списка",
+    "update stopped - nocat.farm was closed first; nothing changed": "обновление остановлено - nocat.farm закрыли раньше; ничего не изменено"
   },
   "settings": {
     "WebEnabled": {
@@ -3084,7 +3102,7 @@
     },
     "DiscordShowCounter": {
       "label": "Показывать аккаунты в сети",
-      "tip": "Добавляет в статус Discord счётчик (2 из 3): сколько из показанных аккаунтов вошли в сеть."
+      "tip": "Показывает на карточке Discord, сколько из показанных аккаунтов вошли в сеть, например «аккаунтов в сети: 2» или «в сети 2 из 3 аккаунтов»."
     },
     "DiscordShowAvatar": {
       "label": "Показывать аватар аккаунта",

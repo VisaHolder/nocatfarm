@@ -1,6 +1,6 @@
 [Wiki home](README.md) · [Every command](COMMANDS.md) · [Front page](../README.md)
 
-# Linux and Docker
+# Linux, Mac and Docker
 
 nocat.farm runs on a home server, a NAS, a Raspberry Pi 4 or 5 (64-bit) or a VPS. There's no window or tray icon on
 Linux; you get the console and the web dashboard, and everything else is the same. The dashboard brings its own
@@ -56,6 +56,27 @@ because Windows ties saved logins to your Windows user.
 
 The Discord profile card needs the Discord desktop app on the same desktop. On a server or in Docker there's no
 Discord app, so it stays off.
+
+## Mac
+
+1. Download `nocat.farm-v<version>_osx-arm64.zip` for an M1 or newer Mac, or `nocat.farm-v<version>_osx-x64.zip` for
+   an Intel Mac, from [Releases](https://github.com/VisaHolder/nocatfarm/releases/latest) - or *mac* / *mac intel* on
+   [nocat.lol/nocatfarm](https://nocat.lol/nocatfarm).
+2. Unzip it (Safari does that by itself) and double-click `start.command`. It opens in Terminal, and the dashboard
+   opens in your browser. Keep that Terminal window open - minimise it; closing it stops nocat.farm.
+3. If the Mac says it can't be opened, go to **System Settings → Privacy & Security**, scroll down and press
+   **Open Anyway**, once. `start.command` then takes the same "downloaded from the internet" mark off everything else
+   in the folder by itself.
+
+Like on Linux there's no window or tray icon: you get the Terminal and the web dashboard, and everything else is the
+same. It's built and tested on real Apple Silicon and Intel Macs with every release. To have it start when you log
+in: **System Settings → General → Login Items**, press **+** and pick `start.command`.
+
+**Updating.** It tells you when a new version is out, but on a Mac it doesn't update itself. Type `quit` (or press
+Ctrl+C in its Terminal), unzip the new version, and move the `config` folder from the old folder into the new one -
+that's where your accounts and settings are. In Terminal, `unzip -o` of the new zip over the old folder does the same.
+
+Saved logins are encrypted with a key in `config/state/secret.key` that only your user can read, as on Linux.
 
 ## Docker
 

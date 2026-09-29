@@ -1349,8 +1349,12 @@ public sealed class Bot : IAsyncDisposable {
 		try {
 			await LogInAsync().ConfigureAwait(false);
 		} catch (Exception e) {
-			State = BotState.Failed;
-			StatusText = "login failed";
+			// Keep the more telling "sign-in failed" the sign-in set when it gave up.
+			if (State != BotState.Failed) {
+				State = BotState.Failed;
+				StatusText = "login failed";
+			}
+
 			Log.Error(new Said("login failed: {0}", e.Message), Name);
 
 			try {
@@ -1692,6 +1696,13 @@ public sealed class Bot : IAsyncDisposable {
 			Log.Warn("no Steam web session yet - farming and comments will retry", Name);
 		}
 
+		// That can take a while (a new token, the Family View unlock). Stopped, removed or dropped in the meantime, the
+		// heartbeat and every module used to be started anyway - on an account that was no longer running, with
+		// nothing left to ever stop them.
+		if (!_running || (State != BotState.Online)) {
+			return;
+		}
+
 		// Steam replays its standing unviewed-item count on request. That is not a drop that just happened, so
 		// the latch is cleared here or every login would look like a card landed.
 		Interlocked.Exchange(ref _dropPending, 0);
@@ -1798,8 +1809,12 @@ public sealed class Bot : IAsyncDisposable {
 		await StopModulesAsync().ConfigureAwait(false);
 
 		if (!_running) {
-			State = BotState.Stopped;
-			StatusText = "stopped";
+			// A sign-in that gave up (three wrong passwords, no password, a QR code nobody scanned) stops the account AND
+			// says why. Overwritten here, it read as a plain "stopped" and the dashboard filed it under off, not problems.
+			if (State != BotState.Failed) {
+				State = BotState.Stopped;
+				StatusText = "stopped";
+			}
 
 			return;
 		}
@@ -2110,6 +2125,13 @@ public sealed class Bot : IAsyncDisposable {
 			Playing = "";
 			IsFarming = false;
 
+			// Steam has taken our games off while you play, so nothing of ours is running. Left set, the lifetime total,
+			// the history charts and the daily report went on counting your own play as the account's farming, and the
+			// next announce once you'd finished was taken for a repeat rather than a fresh start.
+			PlayingApps = [];
+			_announcedApps = null;
+			_announcedLabel = null;
+
 			// Don't cry wolf on the report that arrives WITH the logon.
 			//
 			// Steam's first PlayingSessionState after signing in still describes the session that just ENDED -
@@ -2162,6 +2184,10 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		lock (_licenses) {
+			// Steam sends the whole list every time, so it replaces what we had. Only ever added to, a refunded or
+			// revoked package went on counting as owned until the next restart - and a free game was never claimed back.
+			_licenses.Clear();
+
 			foreach (SteamApps.LicenseListCallback.License license in cb.LicenseList) {
 				// A family member's licence carries their account ID; ours carries ours (or 0 on older licences).
 				bool own = (license.OwnerAccountID == 0) || (license.OwnerAccountID == (uint) (SteamId & 0xFFFFFFFF));
@@ -2783,7 +2809,13 @@ public sealed class Bot : IAsyncDisposable {
 					// ("desktop, legacy") on every re-announce, quietly discarding whatever the account was set
 					// to - and now that a login takes this path too, that was every session.
 					Client.Send(BuildGamesPlayed(label, apps, Cfg.GameDevice));
-					ApplyPersona();
+
+					// Same rule as the ordinary path below: on an account its owner signs into himself the status is his.
+					// Sent here regardless, every game-list change - and every custom-name heal, two minutes apart - put
+					// him back to Online after he had picked Invisible or Away in his own client.
+					if (!Cfg.IUseThisAccount) {
+						ApplyPersona();
+					}
 				} catch (Exception e) {
 					Log.Debug(new Said("couldn't re-announce after the game list changed: {0}", e.Message), Name);
 				}
@@ -3096,6 +3128,13 @@ public sealed class ConsoleGuard(string botName, string? sharedSecret = null) : 
 	}
 
 	public Task<bool> AcceptDeviceConfirmationAsync() {
+		// With the authenticator's secret here, answer with a code instead. True tells SteamKit to wait for somebody to
+		// tap Approve on the phone and never ask for a code at all - so an account whose secret we hold still sat
+		// waiting on the phone at every password sign-in, and the code above was never used.
+		if (MobileAuth.GenerateCode(sharedSecret) != null) {
+			return Task.FromResult(false);
+		}
+
 		Log.Attention("approve the login in the Steam app, or type the code below", botName);
 
 		return Task.FromResult(true);
