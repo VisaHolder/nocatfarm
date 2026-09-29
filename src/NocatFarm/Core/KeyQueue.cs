@@ -197,12 +197,20 @@ public static class KeyQueue {
 				return;
 			}
 
-			List<Entry>? saved = JsonSerializer.Deserialize<List<Entry>>(File.ReadAllText(Path));
+			// Steam keys are worth money, so the queue is encrypted like the other secrets. A plain file from before
+			// that is read as-is and written back encrypted.
+			string stored = File.ReadAllText(Path);
+			bool plain = Secrets.IsPlain(stored) && stored.TrimStart().StartsWith('[');
+			List<Entry>? saved = JsonSerializer.Deserialize<List<Entry>>(plain ? stored : Secrets.Unprotect(stored));
 
 			if (saved != null) {
 				lock (Gate) {
 					Pending.AddRange(saved);
 				}
+			}
+
+			if (plain && Secrets.Available && !SelfUpdate.OnTrial) {
+				Save();
 			}
 		} catch (Exception e) {
 			_loadFailed = true;
@@ -229,7 +237,8 @@ public static class KeyQueue {
 			}
 
 			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
-			AtomicFile.Write(Path, JsonSerializer.Serialize(snapshot));
+			string json = JsonSerializer.Serialize(snapshot);
+			AtomicFile.Write(Path, SelfUpdate.OnTrial ? json : Secrets.Protect(json, "keys"));   // see SelfUpdate.OnTrial
 		} catch (Exception e) {
 			Log.Warn(new Said("couldn't save the key queue: {0}", e.Message));
 		}

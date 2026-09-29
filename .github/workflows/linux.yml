@@ -1,0 +1,130 @@
+# Linux and Docker, tested on real machines: x64 and arm64 (a Raspberry Pi 4/5 class CPU).
+#
+# For each: builds the self-contained release the way the _linux-* zips are built, runs the unit tests, starts the
+# app headless and checks the dashboard, commands, encrypted secrets and a clean SIGTERM shutdown. Then builds the
+# Docker image natively on each CPU and checks it the way docker-compose.example.yml runs it: password required,
+# sign-in, the dashboard, a clean `docker stop`. Run it from the Actions tab (or `gh workflow run linux.yml`).
+name: linux
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zip:
+    name: zip - ${{ matrix.rid }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: linux-x64
+            runner: ubuntu-latest
+          - rid: linux-arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: build the self-contained release (as the zip)
+        run: |
+          dotnet publish src/NocatFarm -c Release -o app -r ${{ matrix.rid }} --self-contained true \
+            -p:PublishSingleFile=false -p:DebugType=none --nologo -v q
+          test -x app/nocatFarm
+          file app/nocatFarm
+
+      - name: unit tests
+        run: cd tests/NocatFarm.Tests && dotnet run -c Release
+
+      - name: start it headless
+        run: |
+          mkdir -p app/config
+          echo '{"WebPort":7242,"CheckForUpdates":false,"JoinGroup":false}' > app/config/nocatFarm.json
+          echo '{"Enabled":false,"SteamLogin":"not_a_real_account"}' > app/config/demo.json
+          cd app && (setsid ./nocatFarm --no-gui < /dev/null > ../run.log 2>&1 & echo $! > ../pid)
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:7242/api/status > /dev/null && break; sleep 1; done
+          curl -sf http://127.0.0.1:7242/api/status | tee status.json | head -c 300; echo
+          grep -q '"Version"' status.json
+
+      - name: dashboard, commands and settings
+        run: |
+          cmd() { curl -sf -X POST http://127.0.0.1:7242/api/command -H 'Content-Type: application/json' -d "{\"line\":\"$1\"}"; echo; }
+          curl -sf http://127.0.0.1:7242/ | grep -qi '<html'
+          curl -sf http://127.0.0.1:7242/app.js | head -c 50 > /dev/null
+          cmd version | tee out.txt; grep -qi 'nocat' out.txt
+          cmd 'status' | tee out.txt; grep -q 'demo' out.txt
+          cmd 'update' | tee out.txt; grep -Eqi 'newest|linux|zip|out' out.txt
+          cmd 'dashboard' | tee out.txt; grep -q '127.0.0.1:7242' out.txt
+          cmd 'set UpdateCheckHours 5' | tee out.txt; grep -q 'UpdateCheckHours = 5' out.txt
+          grep -q '"UpdateCheckHours": 5' app/config/nocatFarm.json
+
+      - name: secrets are encrypted on disk (AES key, owner-only)
+        run: |
+          curl -sf -X POST http://127.0.0.1:7242/api/command -H 'Content-Type: application/json' -d '{"line":"set TelegramBotToken 123456789:not-a-real-token"}' > /dev/null
+          grep -q 'nocat-aes1:' app/config/nocatFarm.json
+          ! grep -q 'not-a-real-token' app/config/nocatFarm.json
+          test -f app/config/state/secret.key
+          [ "$(stat -c %a app/config/state/secret.key)" = "600" ]
+
+      - name: clean shutdown on SIGTERM
+        run: |
+          kill -TERM $(cat pid)
+          for i in $(seq 1 30); do kill -0 $(cat pid) 2>/dev/null || break; sleep 1; done
+          ! kill -0 $(cat pid) 2>/dev/null
+          grep -q 'shutting down' run.log
+
+      - name: log
+        if: always()
+        run: tail -n 60 run.log || true
+
+  docker:
+    name: docker - ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: build the image
+        run: docker build -t nocatfarm:test .
+
+      - name: run it like docker-compose.example.yml
+        run: |
+          mkdir -p data/config data/logs && chmod 777 data/config data/logs
+          docker run -d --name nf --init -e NOCATFARM_WEB_PASSWORD=a-long-test-password-123 -e TZ=Europe/London \
+            -p 7242:7242 -v "$PWD/data/config:/data/config" -v "$PWD/data/logs:/data/logs" nocatfarm:test
+          for i in $(seq 1 60); do curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:7242/api/ping | grep -q 200 && break; sleep 1; done
+          docker logs nf | tail -n 20
+
+      - name: the password is required, and signing in works
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:7242/api/status)
+          echo "without signing in: $code"; [ "$code" = "401" ]
+          token=$(curl -sf -X POST http://127.0.0.1:7242/api/login -H 'Content-Type: application/json' -d '{"Password":"a-long-test-password-123"}' | sed -E 's/.*"token":"([^"]+)".*/\1/')
+          curl -sf http://127.0.0.1:7242/api/status -H "Authorization: Bearer $token" | head -c 200; echo
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:7242/api/login -H 'Content-Type: application/json' -d '{"Password":"wrong"}')
+          echo "wrong password: $code"; [ "$code" = "401" ]
+
+      - name: settings and logs land in the mounted folders
+        run: |
+          ls -la data/config data/logs
+          ls data/logs | grep -q .
+
+      - name: clean docker stop
+        run: |
+          docker stop -t 60 nf
+          docker logs nf 2>&1 | grep -q 'shutting down'
+
+      - name: log
+        if: always()
+        run: docker logs nf 2>&1 | tail -n 60 || true

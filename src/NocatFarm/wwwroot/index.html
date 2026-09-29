@@ -26,9 +26,13 @@
 
 <!-- ── first run ─────────────────────────────────────────────────────── -->
 <div id="welcome" class="gate hidden">
-  <div class="card welcome-card">
+  <div class="welcome-hero">
+    <img src="logo.png" alt="">
     <h1 class="wordmark">nocat.<span>farm</span></h1>
+    <p class="welcome-tag" data-t="Trading cards, hours and free stuff for your Steam accounts - running by itself, on this PC.">Trading cards, hours and free stuff for your Steam accounts - running by itself, on this PC.</p>
+  </div>
 
+  <div class="card welcome-card">
     <div id="importBanner" class="hidden"></div>
 
     <p class="lead" data-t="Let's add your first Steam account.">Let's add your first Steam account.</p>
@@ -44,8 +48,23 @@
       <input id="w-pass" type="password" placeholder="leave blank and it'll ask" data-t-ph="leave blank and it'll ask" autocomplete="off">
     </div>
 
+    <p class="welcome-ask"><b data-t="What kind of account is it?">What kind of account is it?</b></p>
+    <div class="pickcards">
+      <div class="pickcard" id="w-type-human" onclick="welcomePickType(true)">
+        <b data-t="My main - I play on it">My main - I play on it</b>
+        <span data-t="Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated.">Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated.</span>
+      </div>
+      <div class="pickcard" id="w-type-robot" onclick="welcomePickType(false)">
+        <b data-t="A spare or farm account">A spare or farm account</b>
+        <span data-t="Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.">Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.</span>
+      </div>
+    </div>
+
     <p id="welcomeError" class="error"></p>
-    <button onclick="createFirstBot()" data-t="Add account">Add account</button>
+    <div class="wbtns">
+      <button class="tut-go" onclick="createFirstBot()" data-t="Add account">Add account</button>
+      <button class="ghost" onclick="startTutorial()" data-t="Walk me through it">Walk me through it</button>
+    </div>
     <p class="muted small foot"><span data-t="Everything here is also a command. This step is">Everything here is also a command. This step is</span> <code>add mybot mysteamlogin</code>.</p>
   </div>
 </div>
@@ -61,6 +80,7 @@
       <a class="navitem" tabindex="0" role="button" data-view="accounts"><span data-t="Accounts">Accounts</span><b id="navAccounts"></b></a>
       <a class="navitem" tabindex="0" role="button" data-view="rep4rep"><span>rep4rep</span><b id="navPoints"></b></a>
       <a class="navitem" tabindex="0" role="button" data-view="auth"><span data-t="Authenticator">Authenticator</span><b id="navAuth"></b></a>
+      <a class="navitem" tabindex="0" role="button" data-view="phone"><span data-t="Phone">Phone</span></a>
       <a class="navitem" tabindex="0" role="button" data-view="log"><span data-t="Log">Log</span></a>
       <a class="navitem" tabindex="0" role="button" data-view="console"><span data-t="Console">Console</span></a>
       <a class="navitem" id="navPlugins" tabindex="0" role="button" data-view="plugins"><span data-t="Plugins">Plugins</span><i class="navtag"></i></a>
@@ -104,7 +124,7 @@
         <div id="history"><p class="muted empty" data-t="Loading…">Loading…</p></div>
       </div>
       <div class="card">
-        <h2><span data-t="Recent activity">Recent activity</span><a class="muted small" style="margin-left:auto;cursor:pointer" onclick="phoneModal()" data-t="Open on your phone">Open on your phone</a><a class="muted small" style="margin-left:14px;cursor:pointer" onclick="startTutorial()" data-t="Show the walkthrough again">Show the walkthrough again</a></h2>
+        <h2 class="h2links"><span data-t="Recent activity">Recent activity</span><span class="links"><a class="muted small" onclick="go('phone')" data-t="Open on your phone">Open on your phone</a><a class="muted small" onclick="startTutorial()" data-t="Show the walkthrough again">Show the walkthrough again</a></span></h2>
         <div id="recent" class="recent"><p class="muted empty" data-t="Loading…">Loading…</p></div>
       </div>
     </section>
@@ -115,7 +135,7 @@
         <input id="acctSearch" type="text" placeholder="Search accounts…" data-t-ph="Search accounts…" oninput="render()">
         <div id="acctFilters" class="chips"></div>
         <span class="spacer"></span>
-        <button class="ghost" onclick="showImport()" data-t="Import from ASF">Import from ASF</button>
+        <button class="ghost" onclick="openImport()" data-t="Import from another idler">Import from another idler</button>
         <button onclick="showAddAccount()" data-t="+ Add account">+ Add account</button>
       </div>
       <div id="bots" class="grid"><p class="muted empty" data-t="Loading…">Loading…</p></div>
@@ -170,7 +190,23 @@
       <div id="authBody"></div>
     </section>
 
-    <!-- Console -->
+    <!-- Phone: the dashboard at home and away, a checklist that ticks itself, Telegram and Discord -->
+    <section id="view-phone" class="view hidden">
+      <div id="phoneTop"></div>
+      <div class="ph-cards">
+        <div id="phoneHome" class="card ph-card"></div>
+        <div id="phoneAway" class="card ph-card"></div>
+      </div>
+      <div class="ph-cols">
+        <div id="phoneReady" class="card"></div>
+        <div class="ph-colside">
+          <div id="phoneChat" class="card"></div>
+          <div id="phoneSafe" class="card"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Plugins -->
     <section id="view-plugins" class="view hidden">
       <div class="card">
         <h2 data-t="Plugins">Plugins</h2>

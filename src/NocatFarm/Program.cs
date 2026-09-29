@@ -20,6 +20,8 @@ bool forceNoWeb = false;
 bool forceNoTray = false;
 bool startMinimized = false;
 bool forceNoGui = false;
+bool quitRunning = false;
+List<string>? setupChoices = null;
 
 for (int i = 0; i < args.Length; i++) {
 	switch (args[i].ToLowerInvariant()) {
@@ -43,6 +45,19 @@ for (int i = 0; i < args.Length; i++) {
 		case "--minimized":
 		case "--background":
 			startMinimized = true;
+
+			break;
+
+		// For the installer: close the copy running from this folder cleanly (before files are replaced, or on
+		// uninstall), or save the choices made in the setup wizard - Setting=value pairs, checked like 'set' checks
+		// them. Neither starts the app.
+		case "--quit":
+			quitRunning = true;
+
+			break;
+		case "--setup":
+			setupChoices = [.. args.Skip(i + 1).Where(static a => a.Contains('='))];
+			i = args.Length;
 
 			break;
 		case "--help":
@@ -97,6 +112,15 @@ try {
 	return 1;
 }
 
+if (quitRunning) {
+	// Nothing running (or a copy from before this existed): nothing to wait for.
+	return !AppInstance.Signal(ConfigStore.Root, "quit") || AppInstance.WaitUntilClosed(ConfigStore.Root, TimeSpan.FromSeconds(120)) ? 0 : 1;
+}
+
+if (setupChoices != null) {
+	return SetupChoices.Apply(setupChoices);
+}
+
 // A crash on any thread lands in the log, not nowhere. Only the ones that end the process get here.
 AppDomain.CurrentDomain.UnhandledException += static (_, e) => {
 	try {
@@ -111,10 +135,15 @@ AppDomain.CurrentDomain.UnhandledException += static (_, e) => {
 
 // One instance per config folder. Two copies running the same accounts share a Steam login ID, so they take
 // turns kicking each other off - and they put two icons in the tray, which is how you notice.
-using Mutex singleInstance = new(false, "nocatFarm-" + Convert.ToHexStringLower(
-	System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(ConfigStore.Root.ToLowerInvariant())))[..16]);
+using Mutex singleInstance = new(false, AppInstance.LockName(ConfigStore.Root));
 
 if (!singleInstance.WaitOne(TimeSpan.Zero, false)) {
+	// Opened again - from the Start menu, say - while it's running: the running one comes to the front, and this one
+	// goes quietly. Only a copy from before that existed gets the message below.
+	if (AppInstance.Signal(ConfigStore.Root, "show")) {
+		return 0;
+	}
+
 	// This runs before any window exists and, in a GUI launch, before any console does either - so without
 	// somewhere to say it, a second launch was a silent four-second no-op that looked like the exe was broken.
 	if (OperatingSystem.IsWindows()) {
@@ -155,6 +184,11 @@ if (OperatingSystem.IsWindows() && ((global.StartWithWindows != WindowsIntegrati
 
 // Before anything else is said: if this start finishes an update, that's the first line in the window.
 SelfUpdate.AnnounceIfJustUpdated();
+
+// Installed with the setup: Windows' list of installed apps shows the version actually running, updates included.
+if (OperatingSystem.IsWindows()) {
+	InstallRecord.Refresh();
+}
 
 WebHost? web = null;
 
@@ -278,6 +312,18 @@ if (wantWindow && OperatingSystem.IsWindows()) {
 
 Ready(web?.Url, manager.All.Count);
 
+// A second launch brings this one to the front - the window, or the dashboard when there is no window - and the
+// installer can ask it to close cleanly before it replaces files.
+AppInstance.Listen(ConfigStore.Root,
+	show: () => {
+		if (OperatingSystem.IsWindows() && (window != null) && !windowFailed) {
+			window.Show();
+		} else if ((web != null) && Platform.HasDesktop) {
+			OpenBrowser(web.Url);
+		}
+	},
+	quit: Commands.RequestExit);
+
 // Plugins load BEFORE any account signs in, so a plugin that subscribes to "account online" actually sees
 // the first one rather than missing the whole fleet by a second.
 await NocatFarm.Plugins.PluginHost.LoadAllAsync(manager, CancellationToken.None).ConfigureAwait(false);
@@ -285,6 +331,7 @@ await NocatFarm.Plugins.PluginHost.LoadAllAsync(manager, CancellationToken.None)
 // Before the accounts start, not after: they start spread out over a minute or more, and Telegram commands, the
 // notifications of that startup, and an update's one-by-one sign-out all need to work from the first second.
 NocatFarm.Core.Notifier.Start(manager);
+NocatFarm.Core.SelfUpdate.NotifierReady();
 NocatFarm.Core.DiscordPresence.Start(manager);
 NocatFarm.Core.SelfUpdate.Fleet = () => manager.All;
 
@@ -295,7 +342,9 @@ NocatFarm.Core.History.Start(manager);
 if (manager.All.Count == 0) {
 	FirstRunHint(web?.Url);
 } else {
-	await manager.StartAllAsync().ConfigureAwait(false);
+	// Not waited on past a quit: the installer's --quit (or exit) while accounts are still queueing to sign in has to
+	// close now, not after the last login slot.
+	await Task.WhenAny(manager.StartAllAsync(), Task.Delay(Timeout.Infinite, shutdown.Token)).ConfigureAwait(false);
 }
 
 // Once-a-day "what did the fleet bank overnight" summary to the log (default 09:30). Self-scheduling; no-ops

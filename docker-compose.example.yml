@@ -36,6 +36,9 @@ services:
       # Or keep it out of the environment with a Docker secret: delete the line above, uncomment the two
       # "secrets" blocks below, and put the password in ./nocatfarm_password.txt
       # NOCATFARM_WEB_PASSWORD_FILE: /run/secrets/nocatfarm_password
+      # For your phone: this computer's address on your wifi (e.g. 192.168.1.20). From inside Docker nocat.farm can't
+      # see it, so Open on your phone and /dashboard use this for the link and the QR code.
+      # NOCATFARM_HOME_ADDRESS: 192.168.1.20
     ports:
       # This machine only. To reach it from your phone or another PC, make it "7242:7242".
       - "127.0.0.1:7242:7242"

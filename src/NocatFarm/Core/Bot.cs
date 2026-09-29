@@ -1167,7 +1167,12 @@ public sealed class Bot : IAsyncDisposable {
 		State = BotState.Connecting;
 		StatusText = "waiting for a login slot";
 
-		await Limiters.WaitForLoginSlotAsync(_cts.Token).ConfigureAwait(false);
+		// In line behind another account's sign-in: said, so a quiet account doesn't look stuck.
+		await Limiters.WaitForLoginSlotAsync(_cts.Token, wait => {
+			if (wait >= TimeSpan.FromSeconds(3)) {
+				Log.Info(new Said("waiting its turn to sign in - about {0}s (Gap between logins)", (int) Math.Ceiling(wait.TotalSeconds)), Name);
+			}
+		}).ConfigureAwait(false);
 
 		if (!_running) {
 			return;
@@ -1439,6 +1444,11 @@ public sealed class Bot : IAsyncDisposable {
 					State = BotState.NeedsGuard;
 					_guardPrompt = "password required";
 					_password = await Prompt.SecretAsync($"[{Name}] Steam password", Name).ConfigureAwait(false);
+
+					// Stopped (or shutting down) while it asked: the question was cancelled, nobody left it empty.
+					if (!_running) {
+						return;
+					}
 				}
 
 				if (string.IsNullOrEmpty(_password)) {
@@ -3074,9 +3084,9 @@ public static class TokenStore {
 	// full ~24h life and leave the owner's session alone.
 	private static string AccessPathFor(string bot) => Path.Combine(Dir, bot + ".access");
 
-	// These files hold credentials, so they are encrypted at rest - see Secrets. Reading stays tolerant of the
-	// plain-text files older versions wrote: they are read as-is and quietly rewritten encrypted on the next save,
-	// so upgrading needs no migration and logs nobody out.
+	// These files hold credentials, so they are encrypted at rest - see Secrets. A plain-text file an older version
+	// wrote is read as-is and rewritten encrypted right then, so upgrading logs nobody out and leaves nothing in the
+	// clear.
 	public static string? Load(string bot) => Read(PathFor(bot));
 
 	public static string? LoadAccess(string bot) => Read(AccessPathFor(bot));
@@ -3089,6 +3099,18 @@ public static class TokenStore {
 
 			string stored = File.ReadAllText(path).Trim();
 			string plain = Secrets.Unprotect(stored);
+
+			if (Secrets.IsPlain(stored) && Secrets.Available && (plain.Length > 0)) {
+				// Its own try: a file that can't be written (read-only, locked, someone else's volume) still holds a
+				// good token - losing it would mean typing the password again.
+				try {
+					string bot = Path.GetFileNameWithoutExtension(path);
+					AtomicFile.Write(path, Secrets.Protect(plain, bot));
+					Log.Info(new Said("encrypted a login token that was stored as plain text by an older version"), bot);
+				} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+					Log.Debug(new Said("couldn't encrypt a login token in place: {0}", e.Message));
+				}
+			}
 
 			return plain.Length > 0 ? plain : null;
 		} catch {

@@ -469,7 +469,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	List<string> parts = Blocks(big);
 	Check("discord replies: long output is split, every message within 2000", parts.Count > 1 && parts.All(static p => p.Length <= 2000), $"{parts.Count} parts, longest {parts.Max(static p => p.Length)}");
 	Check("discord replies: each part is a whole code block", parts.All(static p => p.StartsWith("```text\n", StringComparison.Ordinal) && p.EndsWith("\n```", StringComparison.Ordinal)));
-	Check("discord replies: nothing lost", string.Join("\n", parts.Select(static p => p[8..^4])) == big);
+	string shown = string.Join("\n", parts.Select(static p => p[8..^4]));
+	Check("discord replies: two messages at most, the start of the reply word for word, then how much was left off",
+		(parts.Count == 2) && big.StartsWith(shown[..shown.LastIndexOf('\n')], StringComparison.Ordinal) && shown.EndsWith("the whole reply is in the dashboard's Console", StringComparison.Ordinal));
 	List<string> oneLong = Blocks(new string('y', 5000));
 	Check("discord replies: one huge line still fits", oneLong.All(static p => p.Length <= 2000));
 	List<string> fence = Blocks("a ``` b");
@@ -646,6 +648,602 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	stopFake.Cancel();
 	fake.Stop();
 	ra.GetProperty("GatewayForTests", S)!.SetValue(null, null);
+}
+
+// ── secrets at rest: nothing saved in plain text, and plain text left by older versions gets encrypted ──────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-secrets-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	string cfgDir = NocatFarm.Config.ConfigStore.ConfigDir;
+	bool Clear(string file, params string[] plain) { string text = File.ReadAllText(file); return plain.All(x => !text.Contains(x, StringComparison.Ordinal)); }
+
+	try {
+		File.WriteAllText(NocatFarm.Config.ConfigStore.GlobalPath, """
+			{ "WebPassword": "plain-dash-pass-123", "TelegramBotToken": "123456789:plain-telegram-token", "DiscordBotToken": "plain-discord-bot",
+			  "DiscordWebhookUrl": "https://discord.com/api/webhooks/1/plain-hook", "Rep4RepApiToken": "plain-r4r", "WebProxyPassword": "plain-proxy" }
+			""");
+		NocatFarm.Config.GlobalConfig g = NocatFarm.Config.ConfigStore.LoadGlobal();
+		Check("secrets: global values still read right", (g.WebPassword == "plain-dash-pass-123") && (g.TelegramBotToken == "123456789:plain-telegram-token") && (g.WebProxyPassword == "plain-proxy"));
+		Check("secrets: plain text in the global file is encrypted on reading", Clear(NocatFarm.Config.ConfigStore.GlobalPath,
+			"plain-dash-pass-123", "plain-telegram-token", "plain-discord-bot", "plain-hook", "plain-r4r", "plain-proxy"));
+
+		string botFile = Path.Combine(cfgDir, "alt.json");
+		File.WriteAllText(botFile, """
+			{ "SteamLogin": "altlogin", "SteamPassword": "plain-steam-pass", "SteamParentalCode": "7391", "SharedSecret": "plainShared=",
+			  "IdentitySecret": "plainIdentity=", "AccountProxyPassword": "plain-acct-proxy" }
+			""");
+		Dictionary<string, NocatFarm.Config.BotConfig> bots = NocatFarm.Config.ConfigStore.LoadBots();
+		Check("secrets: account values still read right", bots.TryGetValue("alt", out NocatFarm.Config.BotConfig? alt)
+			&& (alt.SteamPassword == "plain-steam-pass") && (alt.SteamParentalCode == "7391") && (alt.SharedSecret == "plainShared="));
+		Check("secrets: plain text in an account file is encrypted on reading (Family View PIN too)", Clear(botFile,
+			"plain-steam-pass", "\"7391\"", "plainShared=", "plainIdentity=", "plain-acct-proxy"));
+		NocatFarm.Config.ConfigStore.SaveBot("alt", bots["alt"]);
+		Check("secrets: saving an account keeps them encrypted", Clear(botFile, "plain-steam-pass", "\"7391\"", "plainShared="));
+
+		Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "tokens"));
+		string tokenFile = Path.Combine(tmpRoot, "config", "tokens", "alt.token");
+		File.WriteAllText(tokenFile, "eyAidHlwIjog-plain-refresh-token");
+		Check("secrets: an old plain login token still works", NocatFarm.Core.TokenStore.Load("alt") == "eyAidHlwIjog-plain-refresh-token");
+		Check("secrets: ...and is encrypted the moment it's read", Clear(tokenFile, "plain-refresh-token") && (NocatFarm.Core.TokenStore.Load("alt") == "eyAidHlwIjog-plain-refresh-token"));
+
+		Directory.CreateDirectory(NocatFarm.Core.MaFiles.Dir);
+		string maFile = NocatFarm.Core.MaFiles.PathFor("alt");
+		const string maJson = """{"shared_secret":"c2hhcmVkLXNlY3JldA==","identity_secret":"aWRlbnRpdHk=","device_id":"android:1234"}""";
+		File.WriteAllText(maFile, maJson);
+		var first = NocatFarm.Core.MobileAuth.ReadMaFile(maFile);
+		var again = NocatFarm.Core.MobileAuth.ReadMaFile(maFile);
+		Check("secrets: an authenticator file in nocat.farm's folder is encrypted and still reads", (first.Shared == "c2hhcmVkLXNlY3JldA==")
+			&& Clear(maFile, "c2hhcmVkLXNlY3JldA==", "aWRlbnRpdHk=") && (again.Shared == "c2hhcmVkLXNlY3JldA==") && (again.DeviceId == "android:1234"));
+
+		string elsewhere = Path.Combine(tmpRoot, "asf", "alt.maFile");
+		Directory.CreateDirectory(Path.GetDirectoryName(elsewhere)!);
+		File.WriteAllText(elsewhere, maJson);
+		NocatFarm.Core.MobileAuth.ReadMaFile(elsewhere);
+		Check("secrets: a maFile anywhere else (ASF's folder) is never touched", File.ReadAllText(elsewhere) == maJson);
+
+		string keysFile = Path.Combine(cfgDir, "state", "keys.json");
+		Directory.CreateDirectory(Path.GetDirectoryName(keysFile)!);
+		File.WriteAllText(keysFile, """[{"Key":"PLAIN-KEY12-ABCDE","AddedAt":1,"Tries":0,"NotBefore":0}]""");
+		Check("secrets: queued Steam keys still load, and the file is encrypted", (NocatFarm.Core.KeyQueue.Count == 1) && Clear(keysFile, "PLAIN-KEY12-ABCDE"));
+	} finally {
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch {
+			// the temp folder empties itself eventually
+		}
+	}
+}
+
+// ── achievement order: every game - tiers, written numbers, story order, difficulty ──────────────────────────
+{
+	Type pacer = typeof(Rng).Assembly.GetType("NocatFarm.Modules.AchievementPacer")!;
+	const BindingFlags S = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
+	NocatFarm.Core.Achievement A(string name, string display, string desc, bool unlocked = false) =>
+		new() { Name = name, Display = display, Description = desc, StatId = 1, Bit = 0, Unlocked = unlocked, Protected = false };
+	bool Held(string rule, NocatFarm.Core.Achievement a, List<NocatFarm.Core.Achievement> all) =>
+		(bool) pacer.GetMethod(rule, S)!.Invoke(null, [a, all])!;
+	bool AnyHeld(NocatFarm.Core.Achievement a, List<NocatFarm.Core.Achievement> all) =>
+		Held("TierBlocked", a, all) || Held("DifficultyBlocked", a, all) || Held("StoryEndBlocked", a, all);
+
+	var k5 = A("K5", "Sharpshooter", "Get 5 kills");
+	var k10 = A("K10", "Marksman", "Get 10 kills");
+	var k1000 = A("K1000", "Legend", "Get 1,000 kills");
+	var kills = new List<NocatFarm.Core.Achievement> { k5, k10, k1000 };
+	Check("order: 10 kills waits for 5 kills (numbers only in the description)", AnyHeld(k10, kills) && AnyHeld(k1000, kills) && !AnyHeld(k5, kills));
+	kills[0] = A("K5", "Sharpshooter", "Get 5 kills", unlocked: true);
+	Check("order: ...and goes once 5 kills is earned", !AnyHeld(k10, kills) && AnyHeld(k1000, kills));
+
+	var c1 = A("C1", "Chapter One", "Finish the first chapter");
+	var c2 = A("C2", "Chapter Two", "Finish the second chapter");
+	Check("order: 'Chapter Two' waits for 'Chapter One' (written numbers)", AnyHeld(c2, [c1, c2]) && !AnyHeld(c1, [c1, c2]));
+
+	var act1 = A("A1", "Act I", "Complete Act I");
+	var act2 = A("A2", "Act II", "Complete Act II");
+	Check("order: 'Act II' waits for 'Act I' (roman numerals)", AnyHeld(act2, [act1, act2]) && !AnyHeld(act1, [act1, act2]));
+
+	var ch3 = A("CH3", "Into the Dark", "Complete Chapter 3");
+	var end = A("END", "Credits", "Finish the game");
+	Check("order: 'finish the game' waits for the chapters before it", AnyHeld(end, [ch3, end]));
+	Check("order: ...and goes once they're done", !AnyHeld(end, [A("CH3", "Into the Dark", "Complete Chapter 3", unlocked: true), end]));
+	var lastMission = A("M9", "The End", "Complete the final mission");
+	Check("order: 'the final mission' waits for a locked 'Mission 4'", AnyHeld(lastMission, [A("M4", "Mission 4", "Complete mission 4"), lastMission]));
+
+	var normal = A("N", "Survivor", "Complete the game on Normal");
+	var hard = A("H", "Veteran Survivor", "Complete the game on Hard");
+	Check("order: 'on Hard' waits for 'on Normal'", Held("DifficultyBlocked", hard, [normal, hard]) && !Held("DifficultyBlocked", normal, [normal, hard]));
+
+	var pistol = A("P", "Gunslinger", "Kill 5 enemies with a pistol");
+	var shotgun = A("SG", "Boomstick", "Kill 10 enemies with a shotgun");
+	Check("order: different things with different numbers are NOT a ladder", !AnyHeld(shotgun, [pistol, shotgun]));
+
+	var w10 = A("W10", "Quick", "Win 10 matches in under 5 minutes");
+	var w20 = A("W20", "Quicker", "Win 20 matches in under 5 minutes");
+	Check("order: two numbers in a line still ladder (10 before 20)", AnyHeld(w20, [w10, w20]) && !AnyHeld(w10, [w10, w20]));
+	var p5k = A("P5", "Scorer", "Score 5,000 points");
+	var p10k = A("P10", "High Scorer", "Score 10k points");
+	Check("order: '10k' waits for '5,000'", AnyHeld(p10k, [p5k, p10k]));
+}
+
+// ── achievement hunter: rotation between games, real game length ─────────────────────────────────────────
+{
+	const BindingFlags S = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
+	MethodInfo rotate = typeof(NocatFarm.Modules.AchievementBoost).GetMethod("Rotate", S)!;
+	List<uint> list = [10, 20, 30, 40, 50];
+	(List<uint> Picks, int Index) Run(int size, int turns, Func<uint, bool> usable) {
+		object[] a = [list, size, usable, 0, 0u];
+		List<uint> picks = [];
+		for (int i = 0; i < turns; i++) {
+			picks.Add((uint) rotate.Invoke(null, a)!);
+			a[4] = picks[^1];
+		}
+		return (picks, (int) a[3]);
+	}
+	var rot3 = Run(3, 9, _ => true).Picks;
+	Check("hunter: 3 in rotation takes turns between the first 3 only", rot3.Distinct().OrderBy(x => x).SequenceEqual([10u, 20u, 30u]), string.Join(",", rot3));
+	Check("hunter: never the same game twice in a row", rot3.Zip(rot3.Skip(1)).All(p => p.First != p.Second), string.Join(",", rot3));
+	var resting = Run(3, 9, app => app != 20).Picks;
+	Check("hunter: a resting game makes room for the next on the list", resting.Distinct().OrderBy(x => x).SequenceEqual([10u, 30u, 40u]), string.Join(",", resting));
+	var one = Run(1, 4, _ => true).Picks;
+	Check("hunter: 1 in rotation stays on one game", one.All(x => x == 10), string.Join(",", one));
+	Check("hunter: every game resting picks nothing", Run(3, 2, _ => false).Picks.All(x => x == 0));
+
+	MethodInfo fromMin = typeof(NocatFarm.Core.Playtime).GetMethod("FromMinutes", S)!;
+	double H(long med, long avg) => (double) fromMin.Invoke(null, [med, avg])!;
+	Check("playtime: the median player's hours", H(600, 600) == 10, $"{H(600, 600)}");
+	Check("playtime: 60% of the average when the median undercounts a story game", H(60, 2000) == 20, $"{H(60, 2000)}");
+	Check("playtime: no figures is unknown, silly ones are capped", H(0, 0) == 0 && H(1, 1) == 0.5 && H(99999, 0) == 400);
+
+	Type pacer = typeof(Rng).Assembly.GetType("NocatFarm.Modules.AchievementPacer")!;
+	MethodInfo story = pacer.GetMethod("StoryTimeAllows", S)!;
+	NocatFarm.Core.Achievement A(string name, string display, string desc) =>
+		new() { Name = name, Display = display, Description = desc, StatId = 1, Bit = 0, Unlocked = false, Protected = false };
+	bool Ok(NocatFarm.Core.Achievement a, List<NocatFarm.Core.Achievement> all, double hours, double? typical) =>
+		(bool) story.Invoke(null, [a, all, hours, typical])!;
+	var end = A("END", "Credits", "Finish the game");
+	Check("real length: 'finish the game' never 3 hours into a 20 hour game", !Ok(end, [end], 3, 20) && Ok(end, [end], 17, 20));
+	var chapters = Enumerable.Range(1, 10).Select(i => A("C" + i, "Chapter " + i, "Complete chapter " + i)).ToList();
+	Check("real length: chapter 5 of 10 needs about 40% of a 20 hour game", !Ok(chapters[4], chapters, 7, 20) && Ok(chapters[4], chapters, 8.5, 20));
+	Check("real length: chapter 1 is fine early", Ok(chapters[0], chapters, 1.7, 20));
+	Check("real length: unknown length holds nothing back", Ok(end, [end], 0.5, null));
+	var kills = A("K", "Marksman", "Get 100 kills");
+	Check("real length: non-story achievements aren't held by it", Ok(kills, [kills], 0.5, 20));
+}
+
+// ── importing from other idlers: every reader fed realistic files in a temp folder, and the one writer ──────────
+// Nothing real is looked at: every place the importers search is pointed into the temp folder first, Steam's
+// loginusers.vdf is a sample, and the Windows credential store is a fake that records what was asked of it.
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmp = Path.Combine(Path.GetTempPath(), "nf-import-" + Guid.NewGuid().ToString("N"));
+	var places = (NocatFarm.Config.ImportPlaces.LocalAppData, NocatFarm.Config.ImportPlaces.AppData,
+		NocatFarm.Config.ImportPlaces.Desktop, NocatFarm.Config.ImportPlaces.Documents, NocatFarm.Config.ImportPlaces.Downloads,
+		NocatFarm.Config.ImportPlaces.SteamPath, NocatFarm.Config.ImportPlaces.ReadCredential);
+	List<string> credentialAsks = [];
+	string credentialJwt = "";
+
+	string Dir(params string[] parts) { string d = Path.Combine([tmp, .. parts]); Directory.CreateDirectory(d); return d; }
+	void Put(string path, string text) { Directory.CreateDirectory(Path.GetDirectoryName(path)!); File.WriteAllText(path, text); }
+	static string B64Url(string s) => Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(s)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+	static string Jwt(string sub, long exp) => B64Url("{\"alg\":\"EdDSA\",\"typ\":\"JWT\"}") + "." + B64Url($"{{\"iss\":\"steam\",\"sub\":\"{sub}\",\"aud\":[\"client\",\"web\"],\"exp\":{exp}}}") + ".c2ln";
+	long future = DateTimeOffset.UtcNow.AddDays(150).ToUnixTimeSeconds();
+	Dictionary<string, string> Hashes(string root) => Directory.GetFiles(root, "*", SearchOption.AllDirectories)
+		.ToDictionary(f => f, f => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(f))));
+	bool Clear(string file, params string[] plain) { string text = File.ReadAllText(file); return plain.All(x => !text.Contains(x, StringComparison.Ordinal)); }
+	NocatFarm.Config.ImportedAccount Acct(NocatFarm.Config.ImportScan s, string key) => s.Accounts.First(a => a.Key == key);
+
+	try {
+		NocatFarm.Config.ConfigStore.UseRoot(Dir("app"));
+		NocatFarm.Config.ImportPlaces.LocalAppData = Dir("local");
+		NocatFarm.Config.ImportPlaces.AppData = Dir("roaming");
+		NocatFarm.Config.ImportPlaces.Desktop = Dir("desktop");
+		NocatFarm.Config.ImportPlaces.Documents = Dir("documents");
+		NocatFarm.Config.ImportPlaces.Downloads = Dir("downloads");
+		NocatFarm.Config.ImportPlaces.SteamPath = () => Path.Combine(tmp, "steam");
+		NocatFarm.Config.ImportPlaces.ReadCredential = target => {
+			credentialAsks.Add(target);
+			return target == "sgiuser.com.zevnda.steam-game-idler.agent"
+				? System.Text.Encoding.Unicode.GetBytes(Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(credentialJwt)))
+				: null;
+		};
+		NocatFarm.Config.GlobalConfig global = NocatFarm.Config.ConfigStore.LoadGlobal();
+
+		Put(Path.Combine(tmp, "steam", "config", "loginusers.vdf"), """
+			"users"
+			{
+				"76561198000000009"
+				{
+					"AccountName"		"imelogin"
+					"PersonaName"		"ime person"
+					"MostRecent"		"1"
+				}
+				"76561198000000010"
+				{
+					"AccountName"		"someoneelse"
+				}
+			}
+			""");
+
+		// ── ArchiSteamFarm, pointed at its own folder (the installer and most people do) ──
+		string asfRoot = Dir("desktop", "ASF-win-x64");
+		string asf = Dir("desktop", "ASF-win-x64", "config");
+		string mainToken = Jwt("76561198000000001", future);
+		Put(Path.Combine(asf, "ASF.json"), """{ "Blacklist": [440, 570], "WebProxy": "http://127.0.0.1:8080", "WebProxyUsername": "pu", "WebProxyPassword": "pp", "SteamOwnerID": 0 }""");
+		Put(Path.Combine(asf, "IPC.config"), "{}");
+		Put(Path.Combine(asf, "main.json"), """
+			{ "SteamLogin": "mainlogin", "SteamPassword": "plain-asf-pass", "PasswordFormat": 0, "Enabled": true,
+			  "GamesPlayedWhileIdle": [730], "CustomGamePlayedWhileIdle": "nocat.lol", "FarmingOrders": [3], "FarmingPreferences": 32,
+			  "HumanIdlerRep4RepToken": "r4r-from-asf", "GamingDeviceType": 544, "SteamUserPermissions": { "76561198000000077": 3 } }
+			""");
+		Put(Path.Combine(asf, "main.db"), $$"""
+			{ "BackingRefreshToken": "{{mainToken}}", "FarmingBlacklistAppIDs": [10], "FarmingPriorityQueueAppIDs": [20, 30],
+			  "CachedSteamParentalCode": "4321",
+			  "_MobileAuthenticator": { "shared_secret": "bWFpbi1zaGFyZWQtc2VjcmV0MTI=", "identity_secret": "bWFpbi1pZGVudGl0eS1zZWNyZXQ=" } }
+			""");
+
+		// PasswordFormat 1: ASF's own AES - the IV encrypted with ECB, then CBC, under SHA-256("ArchiSteamFarm").
+		string AsfAes(string plain, string key) {
+			using System.Security.Cryptography.Aes aes = System.Security.Cryptography.Aes.Create();
+			aes.Key = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(key));
+			byte[] iv = System.Security.Cryptography.RandomNumberGenerator.GetBytes(16);
+			byte[] head = aes.EncryptEcb(iv, System.Security.Cryptography.PaddingMode.None);
+			byte[] body = aes.EncryptCbc(System.Text.Encoding.UTF8.GetBytes(plain), iv, System.Security.Cryptography.PaddingMode.PKCS7);
+			return Convert.ToBase64String([.. head, .. body]);
+		}
+
+		Put(Path.Combine(asf, "aes.json"), $$"""{ "SteamLogin": "aeslogin", "SteamPassword": "{{AsfAes("aes-pass-ü1", "ArchiSteamFarm")}}", "PasswordFormat": 1 }""");
+		Put(Path.Combine(asf, "customkey.json"), $$"""{ "SteamLogin": "customlogin", "SteamPassword": "{{AsfAes("secret-pass", "my own crypt key")}}", "PasswordFormat": 1 }""");
+		Environment.SetEnvironmentVariable("NF_IMPORT_TEST_PW", "env-pass");
+		Put(Path.Combine(asf, "env.json"), """{ "SteamLogin": "envlogin", "SteamPassword": "NF_IMPORT_TEST_PW", "PasswordFormat": 3 }""");
+		Put(Path.Combine(asf, "noenv.json"), """{ "SteamLogin": "noenvlogin", "SteamPassword": "NF_IMPORT_TEST_UNSET", "PasswordFormat": 3 }""");
+		Put(Path.Combine(asfRoot, "secrets", "pw.txt"), "file-pass\n");
+		Put(Path.Combine(asf, "file.json"), """{ "SteamLogin": "filelogin", "SteamPassword": "secrets/pw.txt", "PasswordFormat": 4 }""");
+
+		if (OperatingSystem.IsWindows()) {
+			string dp = Convert.ToBase64String(System.Security.Cryptography.ProtectedData.Protect(System.Text.Encoding.UTF8.GetBytes("dpapi-pass"),
+				System.Text.Encoding.UTF8.GetBytes("ArchiSteamFarm"), System.Security.Cryptography.DataProtectionScope.CurrentUser));
+			Put(Path.Combine(asf, "dpapi.json"), $$"""{ "SteamLogin": "dpapilogin", "SteamPassword": "{{dp}}", "PasswordFormat": 2 }""");
+		}
+
+		// A maFile named by SteamID the way Steam Desktop Authenticator names them, and one half-way through ASF's own setup.
+		string sdaToken = Jwt("76561198000000002", future);
+		const string sdaMa = """{"shared_secret":"c2RhLXNoYXJlZC1zZWNyZXQxMjM=","identity_secret":"c2RhLWlkZW50aXR5","device_id":"android:sda","account_name":"sdalogin"}""";
+		Put(Path.Combine(asf, "sda.json"), """{ "SteamLogin": "sdalogin" }""");
+		Put(Path.Combine(asf, "sda.db"), $$"""{ "BackingRefreshToken": "{{sdaToken}}" }""");
+		Put(Path.Combine(asf, "76561198000000002.maFile"), sdaMa);
+		Put(Path.Combine(asf, "fresh.json"), """{ "SteamLogin": "freshlogin" }""");
+		Put(Path.Combine(asf, "fresh.maFile.NEW"), """{"shared_secret":"ZnJlc2gtc2hhcmVkLXNlY3JldDE=","identity_secret":"ZnJlc2g=","account_name":"freshlogin"}""");
+
+		// ── Idle Master Extended: two versions of its user.config; the newer one is the one in use ──
+		string imeBase = Dir("local", "IdleMasterExtended", "IdleMasterExtended.exe_Url_4qdzmn3c1yj0mj4iuz0nqzqdm1r1cuxc");
+		string UserConfig(string section, string settings) => $"""
+			<?xml version="1.0" encoding="utf-8"?>
+			<configuration>
+			    <userSettings>
+			        <{section}>
+			{settings}
+			        </{section}>
+			    </userSettings>
+			</configuration>
+			""";
+		Put(Path.Combine(imeBase, "1.0.0.0", "user.config"), UserConfig("IdleMasterExtended.Properties.Settings", """
+			            <setting name="sort" serializeAs="String"><value>mostcards</value></setting>
+			"""));
+		Put(Path.Combine(imeBase, "1.2.0.0", "user.config"), UserConfig("IdleMasterExtended.Properties.Settings", """
+			            <setting name="blacklist" serializeAs="Xml">
+			                <value>
+			                    <ArrayOfString xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+			                        <string>440</string>
+			                        <string />
+			                        <string>570</string>
+			                    </ArrayOfString>
+			                </value>
+			            </setting>
+			            <setting name="whitelist" serializeAs="Xml">
+			                <value><ArrayOfString><string>730</string></ArrayOfString></value>
+			            </setting>
+			            <setting name="sort" serializeAs="String"><value>leastcards</value></setting>
+			            <setting name="IdleOnlyPlayed" serializeAs="String"><value>True</value></setting>
+			            <setting name="steamLoginSecure" serializeAs="String"><value>76561198000000009%7C%7CeyJhbGciOiJFZERTQSJ9.e30.sig</value></setting>
+			"""));
+		string imeExeDir = Dir("desktop", "IdleMasterExtended");
+		Put(Path.Combine(imeExeDir, "IdleMasterExtended.exe"), "MZ");
+
+		// ── the original Idle Master, installed by ClickOnce ──
+		Put(Path.Combine(tmp, "local", "Apps", "2.0", "Data", "AB12CD34.EF5", "GH67IJ89.KL0", "idle..tion_0000000000000000_0001.0000_abcdef0123456789",
+			"Data", "1.0.0.0", "user.config"), UserConfig("IdleMaster.Properties.Settings", """
+			            <setting name="sort" serializeAs="String"><value>mostcards</value></setting>
+			            <setting name="blacklist" serializeAs="Xml"><value><ArrayOfString><string>220</string></ArrayOfString></value></setting>
+			"""));
+
+		// ── HourBoostr, unzipped a folder down on the Desktop ──
+		Put(Path.Combine(tmp, "desktop", "tools", "HourBoostr", "Settings.json"), """
+			{ "Accounts": [
+			    { "Details": { "Username": "boostme", "Password": "hb-pass", "LoginKey": "old-login-key" }, "ShowOnlineStatus": false, "IgnoreAccount": false, "Games": [730, 440] },
+			    { "Details": { "Username": "resting", "Password": "", "LoginKey": "" }, "ShowOnlineStatus": true, "IgnoreAccount": true, "Games": [] } ],
+			  "CheckForUpdates": true }
+			""");
+		Put(Path.Combine(tmp, "desktop", "tools", "HourBoostr", "Sentryfiles", "boostme.sentry"), "binary");
+
+		// ── SingleBoostr ──
+		Put(Path.Combine(tmp, "documents", "SingleBoostr", "Settings.json"), """
+			{ "BlacklistedCardGames": [1000, 2000], "OnlyIdleGamesWithCertainMinutes": true, "NumOnlyIdleGamesWithCertainMinutes": 120, "WebSession": { "SessionID": "x" } }
+			""");
+
+		// ── Steam Game Idler 6.x ──
+		string sgi = Dir("roaming", "com.zevnda.steam-game-idler", "cache");
+		Put(Path.Combine(sgi, "settings.json"), """{ "agentAccounts": { "sgiuser": "SgiUser" }, "agentAccountSteamIds": { "sgiuser": "76561198000000003" }, "theme": "dark" }""");
+		string sgiAcct = Dir("roaming", "com.zevnda.steam-game-idler", "cache", "76561198000000003");
+		Put(Path.Combine(sgiAcct, "auto_idle.json"), """{ "games": [ { "appId": 730, "name": "CS2", "enabled": true }, { "appId": 440, "name": "TF2", "enabled": false } ] }""");
+		Put(Path.Combine(sgiAcct, "card_farming_blacklist.json"), """{ "blacklist": [ { "appId": 570, "name": "Dota 2" } ] }""");
+		Put(Path.Combine(sgiAcct, "card_farming_settings.json"), """{ "hoursUntilFarmable": 2, "skipNoPlaytime": true, "skipRefundableGames": true }""");
+		Put(Path.Combine(sgiAcct, "max_playtime_settings.json"), """{ "per_game_max_playtime": { "730": 90, "440": 600 } }""");
+		Put(Path.Combine(sgiAcct, "presence_settings.json"), """{ "customIdleStatus": "just vibing" }""");
+		credentialJwt = Jwt("76561198000000003", future);
+
+		// ── 3urobeat's steam-idler ──
+		string idlerDir = Dir("downloads", "steam-idler-main");
+		string secret20 = Convert.ToBase64String(Enumerable.Range(1, 20).Select(static i => (byte) i).ToArray());
+		Put(Path.Combine(idlerDir, "accounts.txt"), $"// username:password:shared_secret\nidle1:pw-one\nidle2:pass:with:colons:{secret20}\n\n");
+		Put(Path.Combine(idlerDir, "config.json"), """{ "playingGames": ["Idling for nocat", 730, 440], "onlinestatus": 7 }""");
+
+		Dictionary<string, string> before = Hashes(tmp).Where(p => !p.Key.StartsWith(Path.Combine(tmp, "app"), StringComparison.OrdinalIgnoreCase))
+			.ToDictionary(p => p.Key, p => p.Value);
+
+		// ── ASF ──
+		var asfScan = NocatFarm.Config.IdlerImport.Scan("asf", asfRoot);
+		Check("import asf: the exe folder leads to its config folder", asfScan.Found && (asfScan.Path == asf), asfScan.Path ?? "not found");
+		Check("import asf: every bot, not ASF.json or IPC.config", asfScan.Accounts.Count == (OperatingSystem.IsWindows() ? 9 : 8), string.Join(",", asfScan.Accounts.Select(a => a.Key)));
+		var main = Acct(asfScan, "main");
+		Check("import asf: login token, password and the authenticator ASF kept in its database", (main.Token == mainToken) && (main.Config.SteamPassword == "plain-asf-pass")
+			&& (main.Config.SharedSecret == "bWFpbi1zaGFyZWQtc2VjcmV0MTI=") && (main.Config.IdentitySecret == "bWFpbi1pZGVudGl0eS1zZWNyZXQ=") && (main.SteamId == "76561198000000001"));
+		Check("import asf: games, farming order, blacklist and priority from the database", main.Config.IdleGames.SequenceEqual([730u]) && (main.Config.FarmingOrder == 2)
+			&& main.Config.SkipUnplayedGames && main.Config.BlacklistedGames.SequenceEqual([10u]) && main.Config.PriorityGames.SequenceEqual([20u, 30u]));
+		Check("import asf: the Family View PIN ASF worked out itself", main.Config.SteamParentalCode == "4321");
+		Check("import asf: custom name kept, and like ASF the real game shows while farming", (main.Config.CustomGameName == "nocat.lol") && !main.Config.PlayWhileFarming);
+		Check("import asf: a device it can't map is said, not guessed", main.Notes.Any(n => n.ToString().Contains("Play as if on")) && (main.Config.GameDevice == 0));
+		Check("import asf: PasswordFormat 1 (ASF's AES) opens", Acct(asfScan, "aes").Config.SteamPassword == "aes-pass-ü1", Acct(asfScan, "aes").Config.SteamPassword);
+		var custom = Acct(asfScan, "customkey");
+		Check("import asf: a custom crypt key is refused gracefully, not copied scrambled", (custom.Config.SteamPassword == "") && custom.Notes.Any(n => n.ToString().Contains("key of its own")));
+		Check("import asf: PasswordFormat 3 reads the environment variable", Acct(asfScan, "env").Config.SteamPassword == "env-pass");
+		Check("import asf: ...and says so when it isn't set", (Acct(asfScan, "noenv").Config.SteamPassword == "") && Acct(asfScan, "noenv").Notes.Any(n => n.ToString().Contains("NF_IMPORT_TEST_UNSET")));
+		Check("import asf: PasswordFormat 4 reads the file, relative to ASF's folder", Acct(asfScan, "file").Config.SteamPassword == "file-pass");
+		if (OperatingSystem.IsWindows()) {
+			Check("import asf: PasswordFormat 2 (Windows protection with ASF's entropy) opens", Acct(asfScan, "dpapi").Config.SteamPassword == "dpapi-pass");
+		}
+		Check("import asf: a maFile named by SteamID (from the token) is found", Acct(asfScan, "sda").MaFile == sdaMa);
+		Check("import asf: a .maFile.NEW is found", Acct(asfScan, "fresh").MaFile?.Contains("ZnJlc2gtc2hhcmVkLXNlY3JldDE=") == true);
+		Check("import asf: global blacklist, proxy and the rep4rep token offered as settings",
+			asfScan.Settings.Select(s => s.Name).Order().SequenceEqual(["GlobalBlacklistedGames", "Rep4RepApiToken", "WebProxy"]), string.Join(",", asfScan.Settings.Select(s => s.Name)));
+		Check("import asf: the old preview still answers", NocatFarm.Config.AsfImport.Preview(asf).Any(c => (c.Name == "main") && c.HasToken && c.HasPassword));
+
+		var asfOut = NocatFarm.Config.IdlerImport.Apply(asfScan, [new("main", Human: true), new("sda"), new("aes")], global, settings: [0, 1, 2]);
+		string mainFile = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "main.json");
+		Check("import asf: only the ticked accounts are written", (asfOut.Imported == 3) && File.Exists(mainFile) && !File.Exists(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "env.json")));
+		Check("import asf: password, authenticator secrets and PIN are encrypted on disk", Clear(mainFile, "plain-asf-pass", "bWFpbi1zaGFyZWQtc2VjcmV0MTI=", "bWFpbi1pZGVudGl0eS1zZWNyZXQ=", "\"4321\""));
+		var loaded = NocatFarm.Config.ConfigStore.LoadBots();
+		Check("import asf: ...and read back right, in human mode as ticked", (loaded["main"].SteamPassword == "plain-asf-pass") && (loaded["main"].SharedSecret == "bWFpbi1zaGFyZWQtc2VjcmV0MTI=")
+			&& loaded["main"].LegitMode && (loaded["main"].GameWeights == "730:70") && (asfOut.Human.SequenceEqual(["main"])));
+		Check("import asf: the login token is stored (encrypted)", (NocatFarm.Core.TokenStore.Load("main") == mainToken)
+			&& Clear(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "tokens", "main.token"), mainToken));
+		Check("import asf: the SteamID-named maFile kept, encrypted", File.Exists(NocatFarm.Core.MaFiles.PathFor("sda"))
+			&& Clear(NocatFarm.Core.MaFiles.PathFor("sda"), "c2RhLXNoYXJlZC1zZWNyZXQxMjM=") && (NocatFarm.Core.MobileAuth.ReadMaFile(NocatFarm.Core.MaFiles.PathFor("sda")).DeviceId == "android:sda"));
+		Check("import asf: global settings merged in", global.GlobalBlacklistedGames.Contains(440u) && global.GlobalBlacklistedGames.Contains(570u)
+			&& (global.WebProxy == "http://127.0.0.1:8080") && (global.WebProxyPassword == "pp") && (global.Rep4RepApiToken == "r4r-from-asf"));
+		var again = NocatFarm.Config.IdlerImport.Apply(asfScan, [new("main")], global);
+		Check("import asf: importing twice leaves the account alone", (again.Imported == 0) && (again.Skipped == 1) && NocatFarm.Config.ConfigStore.LoadBots()["main"].LegitMode);
+		var legacy = NocatFarm.Config.AsfImport.Run(asf, global, overwrite: false);
+		Check("import asf: the old one-call import still works", (legacy.Imported == asfScan.Accounts.Count - 3) && (legacy.Skipped == 3), $"{legacy.Imported}/{legacy.Skipped}");
+
+		// ── Idle Master Extended ──
+		var ime = NocatFarm.Config.IdlerImport.Scan("ime", null);
+		Check("import ime: found in its profile folder, the newest version", ime.Found && ime.Path!.Contains("1.2.0.0"), ime.Path ?? string.Join(" | ", ime.Looked));
+		var imeAcct = ime.Accounts.Single();
+		Check("import ime: account name found through Steam's own list, from the cookie's SteamID only", (imeAcct.SteamLogin == "imelogin") && (imeAcct.SteamId == "76561198000000009")
+			&& (imeAcct.Token == null) && !imeAcct.HasPassword);
+		Check("import ime: blacklist (empty entries skipped), whitelist, order, played-only", imeAcct.Config.BlacklistedGames.SequenceEqual([440u, 570u])
+			&& imeAcct.Config.IdleGames.SequenceEqual([730u]) && (imeAcct.Config.FarmingOrder == 2) && imeAcct.Config.SkipUnplayedGames);
+		var fromInstaller = NocatFarm.Config.IdlerImport.FromPending(new NocatFarm.Config.PendingImport.Choice("idlemaster", imeExeDir));
+		Check("import ime: the installer's 'Idle Master' with the exe folder opens Idle Master Extended", fromInstaller?.Tool == "ime", fromInstaller?.Tool ?? "null");
+		Check("import ime: the exe folder still finds the settings in the profile", NocatFarm.Config.IdlerImport.Scan("ime", imeExeDir).Path == ime.Path);
+
+		// ── the original Idle Master ──
+		var im = NocatFarm.Config.IdlerImport.Scan("idlemaster", null);
+		Check("import idlemaster: found under ClickOnce's Apps\\2.0", im.Found && im.Path!.Contains("idle..tion"), im.Path ?? string.Join(" | ", im.Looked));
+		Check("import idlemaster: blacklist and order, no sign-in", im.Accounts.Single().Config.BlacklistedGames.SequenceEqual([220u])
+			&& (im.Accounts.Single().Config.FarmingOrder == 3) && (im.Accounts.Single().SteamLogin == ""));
+		var imOut = NocatFarm.Config.IdlerImport.Apply(im, [new(im.Accounts.Single().Key, SteamLogin: "typed_login")], global);
+		var typed = NocatFarm.Config.ConfigStore.LoadBots().GetValueOrDefault("typed_login");
+		Check("import idlemaster: a typed account name is used, and it asks for the password as usual", (imOut.Imported == 1) && (typed?.SteamLogin == "typed_login") && (typed?.SignInWithQr == false));
+		var imQr = NocatFarm.Config.IdlerImport.Apply(NocatFarm.Config.IdlerImport.Scan("idlemaster", null), [new("idlemaster")], global);
+		Check("import idlemaster: no name at all signs in with a QR code", (imQr.Imported == 1) && (NocatFarm.Config.ConfigStore.LoadBots().GetValueOrDefault("idlemaster")?.SignInWithQr == true));
+
+		// ── HourBoostr ──
+		var hb = NocatFarm.Config.IdlerImport.Scan("hourboostr", null);
+		Check("import hourboostr: found a folder down on the Desktop", hb.Found && (hb.Accounts.Count == 2), hb.Path ?? string.Join(" | ", hb.Looked));
+		var boostme = Acct(hb, "boostme");
+		Check("import hourboostr: login, password, games, hidden status", (boostme.Config.SteamPassword == "hb-pass") && boostme.Config.IdleGames.SequenceEqual([730u, 440u]) && (boostme.Config.OnlineStatus == 7));
+		Check("import hourboostr: an ignored account arrives switched off", !Acct(hb, "resting").Config.Enabled);
+		Check("import hourboostr: the dead login keys are left behind, and it says so", hb.Notes.Any(n => n.ToString().Contains("login keys")) && (boostme.Token == null));
+
+		// ── SingleBoostr ──
+		var sb = NocatFarm.Config.IdlerImport.Scan("singleboostr", null);
+		Check("import singleboostr: settings only, no account", sb.Found && (sb.Accounts.Count == 0) && (sb.Settings.Count == 2));
+		var sbOut = NocatFarm.Config.IdlerImport.Apply(sb, [], global);
+		Check("import singleboostr: blacklist into the global list, 120 minutes onto every account as 2 hours",
+			global.GlobalBlacklistedGames.Contains(1000u) && NocatFarm.Config.ConfigStore.LoadBots().Values.All(b => Math.Abs(b.HoursUntilCardDrops - 2) < 0.01));
+
+		// ── Steam Game Idler ──
+		credentialAsks.Clear();
+		var sg = NocatFarm.Config.IdlerImport.Scan("sgi", null);
+		var sgUser = sg.Accounts.Single();
+		Check("import sgi: account, games switched on only, blacklist, farming choices, caps, status", (sgUser.SteamLogin == "SgiUser") && sgUser.Config.IdleGames.SequenceEqual([730u])
+			&& sgUser.Config.BlacklistedGames.SequenceEqual([570u]) && (Math.Abs(sgUser.Config.HoursUntilCardDrops - 2) < 0.01) && sgUser.Config.SkipUnplayedGames
+			&& sgUser.Config.SkipRefundableGames && (sgUser.Config.HourTargets == "730:2, 440:10") && (sgUser.Config.CustomGameName == "just vibing"), sgUser.Config.HourTargets);
+		Check("import sgi: looking never touches the credential store", credentialAsks.Count == 0);
+		if (OperatingSystem.IsWindows()) {
+			var sgPlain = NocatFarm.Config.IdlerImport.Apply(sg, [new("sgiuser")], global);
+			Check("import sgi: not ticked - its sign-in is not read", (credentialAsks.Count == 0) && (NocatFarm.Core.TokenStore.Load("SgiUser") == null));
+			var sgSigned = NocatFarm.Config.IdlerImport.Apply(sg, [new("sgiuser", SignIn: true)], global, overwrite: true);
+			Check("import sgi: ticked - read once, from its own credential, and kept as the login token",
+				credentialAsks.SequenceEqual(["sgiuser.com.zevnda.steam-game-idler.agent"]) && (NocatFarm.Core.TokenStore.Load("SgiUser") == credentialJwt));
+		}
+
+		// ── steam-idler ──
+		var si = NocatFarm.Config.IdlerImport.Scan("steamidler", null);
+		Check("import steam-idler: every line but the comment", si.Found && (si.Accounts.Count == 2), si.Path ?? string.Join(" | ", si.Looked));
+		var idle2 = Acct(si, "idle2");
+		Check("import steam-idler: a password with colons and the shared secret after it", (idle2.Config.SteamPassword == "pass:with:colons") && (idle2.Config.SharedSecret == secret20)
+			&& (Acct(si, "idle1").Config.SteamPassword == "pw-one") && (Acct(si, "idle1").Config.SharedSecret == ""));
+		Check("import steam-idler: games and the custom status from config.json", idle2.Config.IdleGames.SequenceEqual([730u, 440u]) && (idle2.Config.CustomGameName == "Idling for nocat") && (idle2.Config.OnlineStatus == 7));
+		NocatFarm.Config.IdlerImport.Apply(si, NocatFarm.Config.IdlerImport.All(si), global);
+		Check("import steam-idler: password and secret encrypted on disk", Clear(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "idle2.json"), "pass:with:colons", secret20));
+
+		// ── a folder, whichever program it is ──
+		(string Folder, string Tool)[] folders = [(asfRoot, "asf"), (Path.Combine(tmp, "desktop", "tools", "HourBoostr"), "hourboostr"),
+			(Path.Combine(tmp, "documents", "SingleBoostr"), "singleboostr"), (Path.Combine(tmp, "roaming", "com.zevnda.steam-game-idler"), "sgi"),
+			(idlerDir, "steamidler"), (Path.Combine(tmp, "local", "IdleMasterExtended"), "ime")];
+		string wrong = string.Join(", ", folders.Where(f => NocatFarm.Config.IdlerImport.Scan("auto", f.Folder).Tool != f.Tool).Select(f => f.Tool));
+		Check("import auto: each folder is recognised as the right program", wrong.Length == 0, wrong);
+		var nothing = NocatFarm.Config.IdlerImport.Scan("auto", Dir("empty"));
+		Check("import auto: an unrelated folder finds nothing, and says where it looked", !nothing.Found && nothing.Looked.SequenceEqual([Path.Combine(tmp, "empty")]));
+		var notThere = NocatFarm.Config.IdlerImport.Scan("hourboostr", Dir("empty"));
+		Check("import: nothing found still lists where it looked", !notThere.Found && (notThere.Looked.Count == 1));
+
+		// ── and not one byte of any of the other programs' files changed ──
+		Dictionary<string, string> after = Hashes(tmp).Where(p => before.ContainsKey(p.Key)).ToDictionary(p => p.Key, p => p.Value);
+		Check("import: the other idlers' files are exactly as they were", (after.Count == before.Count) && before.All(p => after[p.Key] == p.Value)
+			&& Hashes(tmp).Keys.Where(k => !k.StartsWith(Path.Combine(tmp, "app"), StringComparison.OrdinalIgnoreCase)).Count() == before.Count);
+	} finally {
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+		(NocatFarm.Config.ImportPlaces.LocalAppData, NocatFarm.Config.ImportPlaces.AppData, NocatFarm.Config.ImportPlaces.Desktop,
+			NocatFarm.Config.ImportPlaces.Documents, NocatFarm.Config.ImportPlaces.Downloads, NocatFarm.Config.ImportPlaces.SteamPath,
+			NocatFarm.Config.ImportPlaces.ReadCredential) = places;
+		Environment.SetEnvironmentVariable("NF_IMPORT_TEST_PW", null);
+
+		try {
+			Directory.Delete(tmp, true);
+		} catch {
+			// the temp folder empties itself eventually
+		}
+	}
+}
+
+// ── start with Windows: a copy only ever removes its own entry ───────────────────────────────────────────
+{
+	MethodInfo exeOf = typeof(Rng).Assembly.GetType("NocatFarm.Windows.WindowsIntegration")!.GetMethod("ExeOf", BindingFlags.Static | BindingFlags.NonPublic)!;
+	string E(string c) => (string) exeOf.Invoke(null, [c])!;
+	Check("startup entry: the program in a quoted command", E("\"C:/Users/me/nocat farm/nocatFarm.exe\" --minimized") == "C:/Users/me/nocat farm/nocatFarm.exe");
+	Check("startup entry: and in an unquoted one", E("C:/nf/nocatFarm.exe --minimized") == "C:/nf/nocatFarm.exe");
+}
+
+// ── chat replies: a long answer is two messages and a note, not a wall ────────────────────────────────────
+{
+	MethodInfo chat = typeof(NocatFarm.Core.Notifier).GetMethod("ChatChunks", BindingFlags.Static | BindingFlags.NonPublic)!;
+	string longReply = string.Join(Environment.NewLine, Enumerable.Range(1, 520).Select(static i => $"  [x]  achievement number {i} with a long enough name"));
+	var parts = (List<string>) chat.Invoke(null, [longReply, 3500])!;
+	Check("chat: 520 lines arrive as 2 messages, not a dozen", parts.Count == 2, $"{parts.Count}");
+	Check("chat: ...and say how much was left off", parts[^1].Contains("more line(s)"), parts[^1][^80..]);
+	Check("chat: a short reply is untouched", ((List<string>) chat.Invoke(null, ["kylro: level 72", 3500])!).SequenceEqual(["kylro: level 72"]));
+}
+
+// ── review fixes: two endings, chat limits in any language ─────────────────────────────────────────────────
+{
+	const BindingFlags S = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
+	Type pacer = typeof(Rng).Assembly.GetType("NocatFarm.Modules.AchievementPacer")!;
+	NocatFarm.Core.Achievement A(string name, string display, string desc) =>
+		new() { Name = name, Display = display, Description = desc, StatId = 1, Bit = 0, Unlocked = false, Protected = false };
+	bool EndHeld(NocatFarm.Core.Achievement a, List<NocatFarm.Core.Achievement> all) => (bool) pacer.GetMethod("StoryEndBlocked", S)!.Invoke(null, [a, all])!;
+	var w1 = A("W1", "Boss One", "Defeat the final boss in World 1");
+	var w2 = A("W2", "Boss Two", "Defeat the final boss in World 2");
+	Check("order: two endings don't hold each other for ever", !EndHeld(w1, [w1, w2]) && !EndHeld(w2, [w1, w2]));
+
+	MethodInfo chat = typeof(NocatFarm.Core.Notifier).GetMethod("ChatChunks", S)!;
+	var rnd = new Random(7);
+	string noisy = string.Join(Environment.NewLine, Enumerable.Range(0, 900).Select(i => new string('x', rnd.Next(1, 120))));
+	var parts = (List<string>) chat.Invoke(null, [noisy, 1900])!;
+	Check("chat: the 'more lines' note still fits under Discord's limit", parts.All(static p => p.Length + 200 <= 2000 + 100), $"longest {parts.Max(static p => p.Length)}");
+}
+
+// ── the phone: what's missing, and the links in words - the Phone page, 'dashboard' and /dashboard say the same ───
+{
+	Type dl = typeof(NocatFarm.Core.DashboardLinks);
+	string[] Todo(NocatFarm.Core.DashboardLinks.Links l) => [.. NocatFarm.Core.DashboardLinks.Todo(l).Select(static s => s.English)];
+	string TextOf(NocatFarm.Core.DashboardLinks.Links l) => (string) dl.GetMethod("Text", BindingFlags.Static | BindingFlags.NonPublic, [typeof(NocatFarm.Core.DashboardLinks.Links)])!.Invoke(null, [l])!;
+	const string Home = "http://192.168.1.50:7242/";
+
+	NocatFarm.Core.DashboardLinks.Links fresh = new("http://127.0.0.1:7242/", [Home], false, false, false, null);
+	Check("phone: a fresh install needs a password and to open up, in that order",
+		Todo(fresh).SequenceEqual(["set a dashboard password", "turn on Open to other devices"]), string.Join(" | ", Todo(fresh)));
+	Check("phone: ...and isn't ready at home", !fresh.ReadyAtHome);
+
+	NocatFarm.Core.DashboardLinks.Links saved = new("http://127.0.0.1:7242/", [Home], true, true, true, null, NeedsRestart: true);
+	Check("phone: saved but not restarted - the restart is all that's left", Todo(saved).SequenceEqual(["restart the dashboard, so the change takes effect"]));
+	Check("phone: ...and it isn't ready until it has", !saved.ReadyAtHome);
+
+	NocatFarm.Core.DashboardLinks.Links walled = new("http://127.0.0.1:7242/", [Home], true, true, true, null, FirewallBlocks: true);
+	Check("phone: the firewall is the last thing in the way", Todo(walled).SequenceEqual(["let it through Windows Firewall"]) && !walled.ReadyAtHome);
+
+	NocatFarm.Core.DashboardLinks.Links docker = new("http://127.0.0.1:7242/", [], true, true, true, null, NeedsHomeAddress: true);
+	Check("phone: in Docker it asks for NOCATFARM_HOME_ADDRESS, never a wrong address",
+		Todo(docker).Count() == 1 && Todo(docker)[0].Contains("NOCATFARM_HOME_ADDRESS") && !docker.ReadyAtHome);
+
+	NocatFarm.Core.DashboardLinks.Links ready = new("http://127.0.0.1:7242/", [Home, "http://10.0.0.5:7242/"], true, true, true, "http://203.0.113.7:7242/", RemoteOn: true);
+	Check("phone: all done - nothing left, ready at home", Todo(ready).Length == 0 && ready.ReadyAtHome);
+
+	List<NocatFarm.Core.DashboardLinks.Row> rows = NocatFarm.Core.DashboardLinks.Rows(ready, 12);
+	Check("phone: rows are at home, away, this PC - with their links",
+		rows.Select(static r => r.Label.English).SequenceEqual(["At home (same Wi-Fi):", "Away from home:", "On the PC itself:"])
+		&& rows[0].Link == Home && rows[1].Link == "http://203.0.113.7:7242/" && rows[2].Link == "http://127.0.0.1:7242/");
+	Check("phone: a working away link says to test it on mobile data", rows[1].Note.English.Contains("mobile data") && rows[0].Note.IsEmpty);
+
+	string text = TextOf(ready);
+	Check("phone: the console lists the second home address under the first", text.Contains("http://10.0.0.5:7242/") && !text.Contains("Still to do"), text.Replace(Environment.NewLine, " | "));
+
+	NocatFarm.Core.DashboardLinks.Row awayOff = NocatFarm.Core.DashboardLinks.Rows(fresh, 12)[1];
+	Check("phone: away off says how to turn it on, with the password length",
+		awayOff.Link == null && awayOff.Note.ToEnglish().Contains("Open from anywhere") && awayOff.Note.ToEnglish().Contains("12+"), awayOff.Note.ToEnglish());
+	Check("phone: a home link that doesn't work yet says so", NocatFarm.Core.DashboardLinks.Rows(saved, 12)[0].Note.English == "not ready yet - see below");
+
+	NocatFarm.Core.DashboardLinks.Row asking = NocatFarm.Core.DashboardLinks.Rows(fresh with { RemoteOn = true }, 12)[1];
+	NocatFarm.Core.DashboardLinks.Row refused = NocatFarm.Core.DashboardLinks.Rows(fresh with { RemoteOn = true, RemoteProblem = "your router doesn't do UPnP" }, 12)[1];
+	Check("phone: away on - asking the router, then the router's answer",
+		asking.Note.English.StartsWith("asking your router", StringComparison.Ordinal) && refused.Note.ToEnglish() == "not working - your router doesn't do UPnP", refused.Note.ToEnglish());
+
+	string todoText = TextOf(fresh);
+	Check("phone: the console says what's missing, one line each",
+		todoText.Contains("Still to do") && todoText.Contains("- set a dashboard password") && todoText.Contains("- turn on Open to other devices"), todoText.Replace(Environment.NewLine, " | "));
+
+	Check("said: English with the values in, whatever the language", new NocatFarm.Core.Said("{0} of {1} - {{kept}}", 3, "x").ToEnglish() == "3 of x - {kept}");
+
+	NocatFarm.Config.GlobalConfig g = new() { WebHost = "127.0.0.1", WebPort = 7242 };
+	NocatFarm.Core.DashboardLinks.Links local = NocatFarm.Core.DashboardLinks.For(g);
+	Check("phone: listening on this PC only isn't open at home", !local.OpenAtHome && !local.ListensBeyondThisPc && local.Local == "http://127.0.0.1:7242/");
+	g.WebHost = "0.0.0.0";
+	g.WebPassword = "a-long-test-password";
+	g.WebPublicAddress = "myname.duckdns.org";
+	NocatFarm.Core.DashboardLinks.Links opened = NocatFarm.Core.DashboardLinks.For(g);
+	Check("phone: 0.0.0.0 with a password is open at home, and a typed public address gets the port",
+		opened.OpenAtHome && opened.ListensBeyondThisPc && opened.Outside == "http://myname.duckdns.org:7242/", opened.Outside ?? "null");
+
+	// /dashboard on Telegram and Discord: the same three rows and the same list, in their own dress.
+	MethodInfo tg = typeof(NocatFarm.Core.Notifier).GetMethod("DashboardHtml", BindingFlags.Static | BindingFlags.NonPublic)!;
+	MethodInfo dc = typeof(NocatFarm.Core.Notifier).GetMethod("DashboardMarkdown", BindingFlags.Static | BindingFlags.NonPublic)!;
+	string tgText = (string) tg.Invoke(null, null)!, dcText = (string) dc.Invoke(null, null)!;
+	Check("phone: Telegram's /dashboard gives home, away, this PC and a link to tap",
+		tgText.Contains("At home (same Wi-Fi):") && tgText.Contains("Away from home:") && tgText.Contains("On the PC itself:") && tgText.Contains("<a href=\"http://127.0.0.1:"), tgText.Replace("\n", " | "));
+	Check("phone: Discord's /dashboard says the same", dcText.Contains("At home") && dcText.Contains("Away from home:") && dcText.Contains("- set a dashboard password") && dcText.Contains("<http://127.0.0.1:"), dcText.Replace("\n", " | "));
+}
+
+// ── tray icon: one id per copy, so a second copy can't take the running one's icon ────────────────────────
+{
+	MethodInfo idFor = typeof(Rng).Assembly.GetType("NocatFarm.Windows.TrayIcon")!.GetMethod("IconIdFor", BindingFlags.Static | BindingFlags.NonPublic)!;
+	Guid Id(string exe) => (Guid) idFor.Invoke(null, [exe])!;
+	Check("tray: two copies in different folders get different icons", Id("C:/a/nocatFarm.exe") != Id("C:/b/nocatFarm.exe"));
+	Check("tray: the same copy always gets the same one (so its own leftover icon is cleaned up)", Id("C:/a/nocatFarm.exe") == Id("c:/A/NOCATFARM.EXE"));
 }
 
 // SETTINGSCOUNT

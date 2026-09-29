@@ -67,6 +67,24 @@ public static class WindowsIntegration {
 		}
 	}
 
+	private static bool StartsThisExe(string command) =>
+		!string.IsNullOrEmpty(Environment.ProcessPath) && string.Equals(ExeOf(command), Environment.ProcessPath, StringComparison.OrdinalIgnoreCase);
+
+	/// <summary>The program a startup command runs: the quoted path, or everything up to ".exe".</summary>
+	internal static string ExeOf(string command) {
+		command = command.Trim();
+
+		if (command.StartsWith('"')) {
+			int end = command.IndexOf('"', 1);
+
+			return end > 0 ? command[1..end] : command.Trim('"');
+		}
+
+		int exe = command.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
+
+		return exe >= 0 ? command[..(exe + 4)] : command;
+	}
+
 	// --minimized, because something launched at sign-in should not throw a console window in your face.
 	private static string? StartupCommand() => string.IsNullOrEmpty(Environment.ProcessPath) ? null : $"\"{Environment.ProcessPath}\" --minimized";
 
@@ -79,7 +97,12 @@ public static class WindowsIntegration {
 			using RegistryKey key = Registry.CurrentUser.CreateSubKey(RunKey, true);
 
 			if (!enabled) {
-				key.DeleteValue(ValueName, false);
+				// Only our own entry: a second copy (a portable one opened to check something, a test copy) with this
+				// switched off must not take the startup away from the copy that has it. One pointing at a program
+				// that's gone - the folder was moved or deleted - is fair game.
+				if (key.GetValue(ValueName) is string current && (StartsThisExe(current) || !File.Exists(ExeOf(current)))) {
+					key.DeleteValue(ValueName, false);
+				}
 
 				return true;
 			}

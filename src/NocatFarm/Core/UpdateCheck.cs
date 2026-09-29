@@ -73,6 +73,12 @@ public static class UpdateCheck {
 		}
 	}
 
+	/// <summary>
+	/// An install that failed just now, told by the copy that started back up - so "Update by itself" waits its hours
+	/// before trying again, instead of starting over the moment the restart forgot it had tried.
+	/// </summary>
+	internal static void NoteFailedInstall() => _autoTriedAt = DateTime.UtcNow;
+
 	/// <summary>Is the newest version one that was skipped?</summary>
 	/// <remarks>Without the "v": GitHub's tag is "v1.4.6", the swap script's is "1.4.6" - compared as they came, a version
 	/// that had just been put back didn't count as skipped, and "Update by itself" installed it again minutes later.</remarks>
@@ -116,7 +122,7 @@ public static class UpdateCheck {
 	/// reminders are switched off. A notice said once at three in the morning is a notice nobody saw.
 	/// </summary>
 	public static void RemindIfDue() {
-		if ((Available == null) || IsSkipped(Available) || !Live.Global.CheckForUpdates || !Live.Global.UpdateReminders
+		if ((Available == null) || IsSkipped(Available) || SelfUpdate.Busy || !Live.Global.CheckForUpdates || !Live.Global.UpdateReminders
 			|| (DateTime.UtcNow - _remindedAt < TimeSpan.FromHours(1))) {
 			return;
 		}
@@ -210,7 +216,7 @@ public static class UpdateCheck {
 		List<string> lines = [.. body.Replace("\r", "").Split('\n')
 			.Select(static l => l.Trim())
 			.Where(static l => l.StartsWith("- ", StringComparison.Ordinal))
-			.Select(static l => "- " + l[2..].Replace("**", "").Replace("`", ""))
+			.Select(static l => "- " + l[2..].Replace("*", "").Replace("`", ""))
 			.Take(4)];
 
 		string text = string.Join("\n", lines);
@@ -239,7 +245,7 @@ public static class UpdateCheck {
 
 		// Quiet means quiet for every account: nobody at the keyboard on one of them, and no human-mode account
 		// awake - an update signs everything out for a minute, which an awake account would notice.
-		bool quietNow = mgr.All.All(static b => !b.IsOnline || (!b.PlayingBlocked && !(b.Cfg.LegitMode && Modules.HumanMode.AwakeFor(b))));
+		bool quietNow = mgr.All.All(static b => !b.IsOnline || (!b.PlayingBlocked && !(b.Cfg.LegitMode && Modules.HumanMode.UpAndAbout(b))));
 
 		if (!inWindow || !quietNow) {
 			return;
@@ -249,6 +255,7 @@ public static class UpdateCheck {
 		// in a burst afterwards - so the update waits for them. Said once in a while, so a night without an update
 		// isn't a mystery.
 		(string Account, int Trades, int Gifts)? busy = mgr.All
+			.Where(static b => b.IsOnline)
 			.Select(static b => (b.Name, Trades: BotManager.ModuleOf<Modules.Trading>(b)?.WaitingCount ?? 0, Gifts: BotManager.ModuleOf<Modules.Gifts>(b)?.WaitingCount ?? 0))
 			.Where(static x => (x.Trades + x.Gifts) > 0)
 			.Select(static x => ((string, int, int)?) (x.Name, x.Trades, x.Gifts))

@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.WebSockets;
 using System.Security.Cryptography;
@@ -52,6 +52,7 @@ public static partial class Notifier {
 	private static string _dcBadToken = "";
 	private static string _dcGreetedFor = "";
 	private static string _dcOwnerName = "";
+	private static string _dcOwnerNameFor = "";   // the owner ID that name belongs to
 	private static Said _dcProblem;
 
 	/// <summary>The command set last registered per place (the app, or the app in one server), so an unchanged set isn't sent again.</summary>
@@ -78,7 +79,7 @@ public static partial class Notifier {
 	public static bool DiscordConnected => HasDiscordBot && (G.DiscordOwnerId.Length > 0);
 
 	/// <summary>Who the bot obeys: their name once they've used it this run, their Discord ID before that.</summary>
-	public static string DiscordOwner => _dcOwnerName.Length > 0 ? _dcOwnerName : G.DiscordOwnerId;
+	public static string DiscordOwner => (_dcOwnerName.Length > 0) && (_dcOwnerNameFor == G.DiscordOwnerId) ? _dcOwnerName : G.DiscordOwnerId;
 
 	/// <summary>Why the bot isn't online, when there's a reason worth showing (a bad token, say).</summary>
 	public static string DiscordBotProblem => HasDiscordBot && !_dcOnline ? _dcProblem.ToString() : "";
@@ -218,9 +219,10 @@ public static partial class Notifier {
 	/// <summary>Console output as Discord messages: a code block keeps the columns lined up, each one under Discord's limit.</summary>
 	internal static List<string> DiscordBlocks(string output) {
 		// ``` inside the output would end the block early; a zero-width space between the backticks keeps it whole.
-		string safe = output.Replace("```", "`​``", StringComparison.Ordinal);
+		// Every pair of backticks broken, so no run of any length can close the code block early.
+		string safe = output.Replace("``", "`​`", StringComparison.Ordinal);
 
-		return [.. Chunks(safe, DiscordMessageLimit - 100).Select(static c => "```text\n" + c + "\n```")];
+		return [.. ChatChunks(safe, DiscordMessageLimit - 100).Select(static c => "```text\n" + c + "\n```")];
 	}
 
 	/// <summary>How long Discord asked to wait after a "slow down": its retry_after, else the Retry-After header, never silly.</summary>
@@ -748,6 +750,8 @@ public static partial class Notifier {
 
 			_dcOwnerName = userName;
 
+			_dcOwnerNameFor = userId;
+
 			string extra = name == "nocat" ? "command" : "args";
 			string given = options.GetValueOrDefault(extra, "").Trim();
 			string line = name == "nocat" ? given.TrimStart('/') : $"{name} {given}".Trim();
@@ -799,6 +803,7 @@ public static partial class Notifier {
 		G.DiscordOwnerId = userId;
 		ConfigStore.SaveGlobal(G);
 		_dcOwnerName = userName;
+		_dcOwnerNameFor = userId;
 		Log.Good(new Said("notifications: Discord connected - only {0} can use the bot's commands", userName.Length > 0 ? userName : userId), "discord");
 
 		await DiscordReplyAsync(id, replyToken, $"**{new Said("Connected.")}** {new Said("Send /status for a summary, /help for the commands, or /nocat to run any console command.")}", flags, ct).ConfigureAwait(false);
@@ -859,11 +864,7 @@ public static partial class Notifier {
 			output = new Said("done").ToString();
 		}
 
-		foreach (string outLine in output.Replace("\r\n", "\n").Split('\n')) {
-			if (outLine.Length > 0) {
-				Log.Info(new Said("  " + outLine), "discord");
-			}
-		}
+		EchoToLog(output, "discord");
 
 		return DiscordBlocks(output);
 	}
@@ -928,20 +929,19 @@ public static partial class Notifier {
 
 		sb.AppendLine(MdSection(new Said("Dashboard")));
 
-		if (l.OpenAtHome && (l.Home.Count > 0)) {
-			sb.AppendLine($"◆ {Md(new Said("On your phone, on the same wifi:").ToString())} <{l.Home[0]}>");
-		} else {
-			sb.AppendLine($"◆ {Md(new Said("Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.").ToString())}");
+		foreach (DashboardLinks.Row r in DashboardLinks.Rows(l, RemoteAccess.MinPasswordLength)) {
+			string note = r.Note.IsEmpty ? "" : r.Link == null ? Md(r.Note.ToString()) : $"*({Md(r.Note.ToString())})*";
+			sb.AppendLine($"◆ {Md(r.Label.ToString())} {(r.Link == null ? "" : $"<{r.Link}> ")}{note}".TrimEnd());
 		}
 
-		if (l.FirewallBlocks) {
-			sb.AppendLine($"◆ {Md(new Said("Windows Firewall is blocking other devices - on the PC, open the dashboard's Open on your phone and press Allow through Windows Firewall.").ToString())}");
+		List<Said> todo = DashboardLinks.Todo(l);
+
+		if (todo.Count > 0) {
+			sb.AppendLine(Md(DashboardLinks.TodoHeading.ToString()));
+			todo.ForEach(t => sb.AppendLine($"- {Md(t.ToString())}"));
 		}
 
-		sb.AppendLine(l.Outside != null
-			? $"◆ {Md(new Said("From anywhere:").ToString())} <{l.Outside}>{(l.OpenAtHome ? "" : " " + Md(new Said("(works once it's open to other devices)").ToString()))}"
-			: $"◆ {Md(new Said("From anywhere: not set up - on the PC, turn on Open from anywhere (Settings, Dashboard, Show advanced).").ToString())}");
-		sb.AppendLine($"◆ {Md(new Said("On the PC itself:").ToString())} <{l.Local}>");
+		sb.AppendLine(Md(DashboardLinks.ScanHint.ToString()));
 
 		return sb.ToString().TrimEnd();
 	}

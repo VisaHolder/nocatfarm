@@ -34,6 +34,9 @@ public readonly struct Said(string english, params object?[] args) {
 	/// <summary>The sentence in whatever language is selected right now.</summary>
 	public override string ToString() => IsEmpty ? "" : Loc.T(English, Args ?? []);
 
+	/// <summary>The sentence in English, values filled in - for console replies, which stay English.</summary>
+	public string ToEnglish() => IsEmpty ? "" : Loc.Fill(English, Args ?? []);
+
 	/// <summary>So a status can be handed to anything expecting a plain string without ceremony.</summary>
 	public static implicit operator string(Said said) => said.ToString();
 }

@@ -12,13 +12,34 @@ namespace NocatFarm;
 public static class AtomicFile {
 	public static void Write(string path, string content) {
 		string tmp = $"{path}.{Guid.NewGuid():N}.tmp";
-		File.WriteAllText(tmp, content);
-		File.Move(tmp, path, overwrite: true);
+
+		try {
+			File.WriteAllText(tmp, content);
+			File.Move(tmp, path, overwrite: true);
+		} catch {
+			TryDelete(tmp);   // a half-written copy of a secret must not be left lying next to it
+
+			throw;
+		}
+	}
+
+	private static void TryDelete(string path) {
+		try {
+			File.Delete(path);
+		} catch {
+			// nothing more to do
+		}
 	}
 
 	public static async Task WriteAsync(string path, string content) {
 		string tmp = $"{path}.{Guid.NewGuid():N}.tmp";
-		await File.WriteAllTextAsync(tmp, content).ConfigureAwait(false);
-		File.Move(tmp, path, overwrite: true);
+		try {
+			await File.WriteAllTextAsync(tmp, content).ConfigureAwait(false);
+			File.Move(tmp, path, overwrite: true);
+		} catch {
+			TryDelete(tmp);
+
+			throw;
+		}
 	}
 }

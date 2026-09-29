@@ -22,6 +22,15 @@ internal sealed class ReactionQueue<TKey> where TKey : notnull {
 		}
 	}
 
+	/// <summary>Items whose wait is running now - not the ones on hold until the account is up.</summary>
+	public int ArmedCount {
+		get {
+			lock (_gate) {
+				return _due.Values.Count(static due => due != null);
+			}
+		}
+	}
+
 	/// <summary>Whether anything is on hold, waiting for the account to be up.</summary>
 	public bool AnyHeld {
 		get {

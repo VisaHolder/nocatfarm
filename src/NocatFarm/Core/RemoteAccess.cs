@@ -33,6 +33,7 @@ public static partial class RemoteAccess {
 
 	private static Timer? _timer;
 	private static int _busy;
+	private static volatile bool _stopped;
 
 	/// <summary>The forward in place: the router's control address, and the port forwarded.</summary>
 	private static (Uri Control, string Service, int Port, string LanIp)? _mapped;
@@ -138,13 +139,21 @@ public static partial class RemoteAccess {
 		string? reply = await SoapReplyAsync(found.control, found.service, AskExternalIp, "").ConfigureAwait(false);
 		string ip = reply == null ? "" : ExternalIpRegex().Match(reply).Groups[1].Value;
 		IPAddress.TryParse(ip, out IPAddress? ext);
-		Said? unreachable = ext == null ? new Said("your router didn't say its internet address")
+		Said? unreachable = (ext == null) || Unusable(ext) ? new Said("your router didn't say its internet address")
 			: IsProviderShared(ext) ? new Said("your internet connection is shared with other homes (the provider's address {0}), so nothing from outside can reach this PC", ip)
 			: IsPrivate(ext) ? new Said("your router is behind another router ({0}) - forward port {1} on that one too, or ask whoever runs it", ip, port)
 			: null;
 
 		if (unreachable is { } why) {
 			Fail(why);
+			await SoapAsync(found.control, found.service, DeleteMapping, DeleteArgs(port)).ConfigureAwait(false);
+			_mapped = null;
+
+			return;
+		}
+
+		// Closing while this was on its way: take it straight back off rather than leave it forwarded.
+		if (_stopped) {
 			await SoapAsync(found.control, found.service, DeleteMapping, DeleteArgs(port)).ConfigureAwait(false);
 
 			return;
@@ -166,6 +175,9 @@ public static partial class RemoteAccess {
 		}
 
 		Problem = why.ToString();
+
+		// No working link while it's failing - an old address must not keep being handed out as if it worked.
+		ExternalIp = null;
 	}
 
 	private static async Task RemoveAsync(bool quietly = false) {
@@ -192,7 +204,15 @@ public static partial class RemoteAccess {
 	/// puts it back (a few seconds in). Waits a few seconds for the router at most.
 	/// </summary>
 	public static async Task StopAsync() {
+		_stopped = true;
 		_timer?.Dispose();
+
+		// A look already under way finishes first (a few seconds at most), and nothing starts after it.
+		DateTime until = DateTime.UtcNow.AddSeconds(5);
+
+		while ((Interlocked.CompareExchange(ref _busy, 1, 0) != 0) && (DateTime.UtcNow < until)) {
+			await Task.Delay(100).ConfigureAwait(false);
+		}
 
 		try {
 			await RemoveAsync(quietly: true).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
@@ -208,6 +228,14 @@ public static partial class RemoteAccess {
 
 	private static string DeleteArgs(int port) =>
 		$"<NewRemoteHost></NewRemoteHost><NewExternalPort>{port}</NewExternalPort><NewProtocol>TCP</NewProtocol>";
+
+	/// <summary>Not an internet address at all: 0.0.0.0, loopback, link-local, 192.0.0.x, multicast and above.</summary>
+	private static bool Unusable(IPAddress ip) {
+		byte[] b = ip.GetAddressBytes();
+
+		return (ip.AddressFamily != AddressFamily.InterNetwork) || IPAddress.IsLoopback(ip) || (b[0] == 0) || (b[0] >= 224)
+			|| ((b[0] == 169) && (b[1] == 254)) || ((b[0] == 192) && (b[1] == 0) && (b[2] == 0));
+	}
 
 	/// <summary>100.64.0.0/10 - an address the provider shares between customers, where a forward on the router is useless.</summary>
 	private static bool IsProviderShared(IPAddress ip) {

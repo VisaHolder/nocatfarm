@@ -251,10 +251,20 @@ public sealed class TrayIcon : IDisposable {
 	}
 
 	/// <summary>
-	/// A fixed identity for the icon. Without it, a process that was killed rather than closed leaves its icon
-	/// registered and the next run adds a SECOND one - which is how you end up with two nocatFarms by the clock.
+	/// A fixed identity for the icon, one per copy. Without one, a process that was killed rather than closed leaves
+	/// its icon registered and the next run adds a SECOND one - which is how you end up with two nocatFarms by the
+	/// clock. Per copy (from the folder it runs from), not one for every copy: a single shared id meant any second
+	/// copy - a portable one opened to look at something, the installed one next to it - took the running copy's
+	/// "stale" icon away, and that copy was left with no tray icon at all. Windows also ties an icon id to the exe
+	/// that first used it.
 	/// </summary>
-	private static readonly Guid IconId = new("6ec0f3b2-2d47-4f0e-9a1c-7b5e0f2a11d4");
+	private static readonly Guid IconId = IconIdFor(Environment.ProcessPath);
+
+	internal static Guid IconIdFor(string? exe) {
+		byte[] hash = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes("nocat.farm tray|" + (exe ?? "").ToUpperInvariant()));
+
+		return new Guid(hash.AsSpan(0, 16));
+	}
 
 	private bool _usingGuid = true;
 

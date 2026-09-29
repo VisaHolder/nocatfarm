@@ -48,7 +48,7 @@ public static partial class Commands {
 		new("restart", "<account|all>", GroupAccounts, "Stop then start again."),
 		new("pause", "<account|all> [minutes]", GroupAccounts, "Stay logged in but stop playing, farming and commenting. Give it minutes and it picks back up by itself."),
 		new("resume", "<account|all>", GroupAccounts, "Undo a pause."),
-		new("add", "<name> <steamLogin|qr>", GroupAccounts, "Add an account. It asks for the password once, then remembers a login token - or 'qr' signs it in by scanning a code on the dashboard with the Steam app, no password at all."),
+		new("add", "<name> <steamLogin|qr> [human|robot]", GroupAccounts, "Add an account. It asks for the password once, then remembers a login token - or 'qr' signs it in by scanning a code on the dashboard with the Steam app, no password at all. End with 'human' for your main (human mode) or 'robot' for a farm account - it says which it made."),
 		new("remove", "<account>", GroupAccounts, "Delete an account and its stored login token.", "delete"),
 		new("enable", "<account>", GroupAccounts, "Let this account log in again."),
 		new("disable", "<account>", GroupAccounts, "Keep the account configured but never log it in."),
@@ -108,7 +108,7 @@ public static partial class Commands {
 		new("config", "[account] [all]", GroupSettings, "Show the settings and their current values. Add 'all' to include the advanced ones."),
 		new("set", "[account] <key> <value>", GroupSettings, "Change a setting. Without an account name it changes a global one."),
 		new("reload", "", GroupSettings, "Re-read every config file from disk."),
-		new("import", "asf [path] [force]", GroupSettings, "Bring accounts across from ArchiSteamFarm, login tokens and all."),
+		new("import", "<asf|ime|idlemaster|hourboostr|singleboostr|sgi|steamidler|auto> [path] [force]", GroupSettings, "Bring accounts and settings across from another idler - ArchiSteamFarm login tokens and all."),
 
 		new("log", "[count]", GroupOther, "The last few log lines.", "logs"),
 		new("stats", "[hours]", GroupOther, "Each account's last 24 hours - hours banked, cards, comments, totals - then cards dropped and comments posted, by hour."),
@@ -736,7 +736,7 @@ public static partial class Commands {
 				// English and printed a wall of resting modules in every other language. Compare against the
 				// same words in the same language.
 				if (!string.IsNullOrEmpty(m.Status) && !Core.Loc.Is(m.Status, "idle") && !Core.Loc.Is(m.Status, "off")) {
-					sb.AppendLine($"    {bar} {Log.Pad(m.Name, 8)} {m.Status}");
+					sb.AppendLine($"    {bar} {Log.Pad(m.Name, 12)} {m.Status}");
 				}
 			}
 		}
@@ -902,7 +902,7 @@ public static partial class Commands {
 
 	private static async Task<string> AddAsync(BotManager mgr, string[] args) {
 		if (args.Length < 2) {
-			return "add <name> <steamLogin|qr>\n  name       a nickname just for you - it names the config file\n  steamLogin what you type into Steam's sign-in box\n  qr         sign in by scanning a code with the Steam app instead - no password";
+			return "add <name> <steamLogin|qr> [human|robot]\n  name       a nickname just for you - it names the config file\n  steamLogin what you type into Steam's sign-in box\n  qr         sign in by scanning a code with the Steam app instead - no password\n  human      your main: human mode, it keeps a believable day\n  robot      a spare or farm account: full speed, around the clock (the default)";
 		}
 
 		string name = args[0];
@@ -916,7 +916,15 @@ public static partial class Commands {
 		}
 
 		bool qr = args[1].Equals("qr", StringComparison.OrdinalIgnoreCase);
-		Bot? bot = await mgr.AddAsync(name, qr ? new BotConfig { SteamLogin = name, SignInWithQr = true } : new BotConfig { SteamLogin = args[1] }).ConfigureAwait(false);
+		string? kind = args.Length > 2 ? args[2].ToLowerInvariant() : null;
+
+		if (kind is not (null or "human" or "robot")) {
+			return "The last word is 'human' (your main - human mode) or 'robot' (a farm account, full speed).";
+		}
+
+		BotConfig cfg = qr ? new BotConfig { SteamLogin = name, SignInWithQr = true } : new BotConfig { SteamLogin = args[1] };
+		cfg.LegitMode = kind == "human";
+		Bot? bot = await mgr.AddAsync(name, cfg).ConfigureAwait(false);
 
 		if (bot == null) {
 			return $"Couldn't add '{name}'.";
@@ -932,9 +940,13 @@ public static partial class Commands {
 			andThen = " Opening the dashboard so you can set it up.";
 		}
 
+		// Always say which it became: leaving the word off used to make a robot without a word about it.
+		string kindNote = kind == "human" ? " It's in human mode."
+			: $" It's a robot account (full speed). For your main, add 'human' at the end instead - or type: set {name} LegitMode true";
+
 		return qr
-			? $"Added '{name}'. Its QR code appears on the dashboard in a moment - scan it with the Steam app on your phone (Steam Guard tab) and approve, and that's it: no password, nothing else to type.{andThen}"
-			: $"Added '{name}' ({args[1]}). It will ask for the password and a Steam Guard code once, then remember this account.{andThen}";
+			? $"Added '{name}'. Its QR code appears on the dashboard in a moment - scan it with the Steam app on your phone (Steam Guard tab) and approve, and that's it: no password, nothing else to type.{kindNote}{andThen}"
+			: $"Added '{name}' ({args[1]}). It will ask for the password and a Steam Guard code once, then remember this account.{kindNote}{andThen}";
 	}
 
 	private static async Task<string> RemoveAsync(BotManager mgr, string[] args) {
@@ -3216,42 +3228,51 @@ public static partial class Commands {
 	}
 
 	private static async Task<string> ImportAsync(BotManager mgr, string[] args) {
-		if (args.Length == 0 || !args[0].Equals("asf", StringComparison.OrdinalIgnoreCase)) {
-			return "import asf [path to ASF's config folder] [force]\n  Leave the path out and nocat.farm looks for an ASF install nearby.\n  Add 'force' to overwrite accounts that already exist here.";
+		string tools = string.Join("|", IdlerImport.Tools.Select(static t => t.Id)) + "|" + IdlerImport.Auto;
+
+		if ((args.Length == 0) || ((IdlerImport.Find(args[0]) == null) && !args[0].Equals(IdlerImport.Auto, StringComparison.OrdinalIgnoreCase))) {
+			return $"import <{tools}> [path] [force]\n"
+				+ string.Join("\n", IdlerImport.Tools.Select(static t => $"  {t.Id,-13} {t.Name}")) + "\n"
+				+ $"  {IdlerImport.Auto,-13} work out which idler a folder belongs to (needs the path)\n"
+				+ "  Leave the path out and nocat.farm looks in that idler's usual places.\n"
+				+ "  Add 'force' to overwrite accounts that already exist here.\n"
+				+ "  The dashboard (Accounts > Import from another idler) shows what it found before anything is written.";
 		}
 
 		bool force = args.Any(static a => a.Equals("force", StringComparison.OrdinalIgnoreCase));
 		string[] rest = args[1..].Where(static a => !a.Equals("force", StringComparison.OrdinalIgnoreCase)).ToArray();
-		string? dir = rest.Length > 0 ? string.Join(' ', rest).Trim('"') : AsfImport.Detect();
+		string? path = rest.Length > 0 ? string.Join(' ', rest).Trim('"') : null;
 
-		if (dir == null) {
-			return "Couldn't find an ArchiSteamFarm install. Point at it directly:  import asf C:\\path\\to\\ArchiSteamFarm\\config";
+		if ((path != null) && !Directory.Exists(path) && !File.Exists(path)) {
+			return $"There's no folder at {path}";
 		}
 
-		if (!Directory.Exists(dir)) {
-			return $"There's no folder at {dir}";
+		ImportScan scan = IdlerImport.Scan(args[0], path);
+
+		if (!scan.Found) {
+			return $"Nothing to import was found. Looked in:\n  {string.Join("\n  ", scan.Looked)}"
+				+ string.Concat(scan.Notes.Select(static n => "\n  " + n))
+				+ $"\nPoint at it directly:  import {args[0]} C:\\path\\to\\it";
 		}
 
-		List<AsfImport.Candidate> preview = AsfImport.Preview(dir);
-
-		if (preview.Count == 0) {
-			return $"No ASF accounts found in {dir}";
+		if ((scan.Accounts.Count == 0) && (scan.Settings.Count == 0)) {
+			return $"Nothing to import in {scan.Path}";
 		}
 
-		AsfImport.Result result = AsfImport.Run(dir, mgr.Global, force);
+		IdlerImport.Outcome outcome = IdlerImport.Apply(scan, IdlerImport.All(scan), mgr.Global, force);
 		await mgr.SyncFromDiskAsync().ConfigureAwait(false);
 
 		StringBuilder sb = new();
-		sb.AppendLine($"Imported {result.Imported} account(s) from {dir}{(result.Skipped > 0 ? $", skipped {result.Skipped}" : "")}");
+		sb.AppendLine($"Imported {outcome.Imported} account(s) from {scan.ToolName} ({scan.Path}){(outcome.Skipped > 0 ? $", skipped {outcome.Skipped}" : "")}");
 
-		foreach (string note in result.Notes) {
+		foreach (Said note in outcome.Notes) {
 			sb.AppendLine("  " + note);
 		}
 
-		if (result.Imported > 0) {
+		if (outcome.Imported > 0) {
 			sb.AppendLine();
-			sb.AppendLine("  Heads up: an imported account shares its Steam login token with ASF. Don't run both at");
-			sb.AppendLine("  once on the same account - they'd take turns kicking each other off.");
+			sb.AppendLine($"  Heads up: close {scan.ToolName} before starting these here. Two programs on one Steam account");
+			sb.AppendLine("  take turns kicking each other off.");
 			sb.AppendLine("  Start them with:  start all");
 		}
 
@@ -3259,7 +3280,14 @@ public static partial class Commands {
 	}
 
 	private static async Task<string> ReloadAsync(BotManager mgr) {
+		string passwordBefore = mgr.Global.WebPassword;
 		mgr.ApplyGlobal(ConfigStore.LoadGlobal());
+
+		// A password changed in the file and reloaded ends every browser's session, like a change anywhere else.
+		if (!string.Equals(passwordBefore, mgr.Global.WebPassword, StringComparison.Ordinal)) {
+			Web.WebHost.Current?.SignOutAll();
+		}
+
 		await mgr.SyncFromDiskAsync().ConfigureAwait(false);
 
 		return "Configs reloaded.";

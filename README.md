@@ -20,7 +20,7 @@
 <p align="center">
   <a href="https://github.com/VisaHolder/nocatfarm/releases/latest"><b>Download</b></a> ·
   <a href="#what-it-does">What it does</a> ·
-  <a href="#get-started-in-2-minutes">Get started</a> ·
+  <a href="#get-started-in-2-minutes">Install</a> ·
   <a href="#mini-mode">Mini mode</a> ·
   <a href="#the-commands-youll-actually-use">Commands</a> ·
   <a href="#is-it-safe">Is it safe?</a> ·
@@ -51,35 +51,68 @@
 - **Watches for bans** - tells you straight away if an account gets a VAC, game, trade or community ban, and keeps
   banned games' items out of trades.
 - **History charts** - cards per day, hours banked, inventory value, week against week.
+- **On your phone, anywhere** - the dashboard works on a phone. *Open on your phone* gives a QR code for your wifi
+  (and an **Allow through Windows Firewall** button), and *Open from anywhere* has your router forward the port,
+  like Jellyfin, so it opens away from home too - behind the dashboard password.
+- **Updates itself** - click Update, or let it install new versions at night while your accounts sleep. A new
+  version that won't start is put back automatically, and you can skip a version.
 - **Discord and Telegram** - notifications, control from your phone (Telegram commands, or / commands from your own
   Discord bot, in a private chat or your server), and (optional) a *Playing nocat.farm* card on
   your Discord profile. Set them up under **Settings → Global settings → Notifications** (and **Discord profile** for
   the card), then type `notify test`.
-- **Extras, if you want them** - earn achievements slowly, sell spare cards, see what your next Steam level costs,
-  post rep4rep comments.
-- **Everything stays on your PC.** No sign-up, no server, no cloud. Your accounts never leave your machine.
+- **Achievements, earned like a real player would** (if you switch it on) - one at a time while it plays, in an
+  order that makes sense in every game: "10 kills" after "5 kills", chapter 2 after chapter 1, Hard after Normal,
+  the ending last. It knows how long each game really takes, so "finish the game" never comes 3 hours into a
+  20-hour game. The hunter keeps a few games on the go, moves on at about 65-75% and comes back days later.
+- **Extras, if you want them** - sell spare cards, see what your next Steam level costs, post rep4rep comments.
+- **Coming from another idler?** It brings your accounts and settings over from ArchiSteamFarm, Idle Master
+  Extended, Idle Master, HourBoostr, SingleBoostr, Steam Game Idler and steam-idler - and asks, for each account,
+  whether it's one you play on (human mode) or a spare.
+- **Everything stays on your PC.** No sign-up, no server, no cloud. Your accounts never leave your machine, and
+  every password, login token and authenticator it keeps is encrypted.
 
 ## Get started in 2 minutes
 
-1. **Download** `nocat.farm-v….zip` from the [latest release](https://github.com/VisaHolder/nocatfarm/releases/latest).
-2. **Right-click it → Extract All…** (give it its own folder).
-3. **Run `nocatFarm.exe`.** The dashboard opens in your browser with a short setup: pick your language, then
-   *Quick setup* (straight to your account) or *Full tour* (every feature explained on the way).
-4. **Say what the account is for.** *My main - I play on it* turns on human mode, so it acts like a person.
-   *A spare or farm account* farms at full speed. You can change this any time.
-5. **Add your Steam account.** Type your password once, or tick *Sign in with a QR code* and scan it with the
-   Steam app on your phone - no password at all. Already using ArchiSteamFarm? The setup finds it and brings
-   your bots across instead.
+<p align="center">
+  <img src="assets/setup.png" alt="The setup: one screen, then it opens nocat.farm" width="880">
+  <br><sub>The setup: one screen - where your accounts are coming from, start with Windows, a desktop shortcut - and it's installed.</sub>
+</p>
 
-That's it. It starts farming your cards straight away. Nothing else to install - no .NET, no setup.
+1. **Download** from the [latest release](https://github.com/VisaHolder/nocatfarm/releases/latest) - pick one:
+   - **`nocat.farm-v…-setup.exe`** (recommended) - installs it like any other app: Start menu, desktop shortcut,
+     start with Windows, and an uninstaller in *Settings → Apps*. Already using ArchiSteamFarm or Idle Master, or
+     an older portable nocat.farm? The setup finds it and offers to bring your accounts over.
+   - **`nocat.farm-v….zip`** (portable) - right-click it → *Extract All…*, then run `nocatFarm.exe`. Nothing is
+     installed; everything stays in that folder.
+2. **The dashboard opens in your browser** with a short walkthrough. Pick your language, then **Easy** (a few plain
+   questions, about two minutes) or **Advanced** (your phone, opening it from anywhere, notifications, the update
+   hours, then every setting of the account).
+3. **Say what the account is for.** *My main - I play on it* turns on human mode, so it acts like a person.
+   *A spare or farm account* farms at full speed. You can change this any time.
+4. **Add your Steam account.** Type your password once, or tick *Sign in with a QR code* and scan it with the
+   Steam app on your phone - no password at all. Already using another idler? The walkthrough finds it and brings
+   your accounts across instead.
+
+<p align="center">
+  <img src="assets/walkthrough.png" alt="The first-run walkthrough: Easy or Advanced, what the account is for, and bringing accounts over from ArchiSteamFarm" width="880">
+  <br><sub>The walkthrough: Easy or Advanced, what the account is for, and - if you had one - your old idler's accounts, ready to bring over.</sub>
+</p>
+
+<p align="center">
+  <img src="assets/setup-existing.png" alt="The setup when nocat.farm is already on the PC" width="880">
+  <br><sub>Already have it? It offers to move a portable copy into the install - or, once installed, to update or uninstall.</sub>
+</p>
+
+That's it. It starts farming your cards straight away. No .NET or anything else to install first. Both versions are
+the same app and both update themselves.
 
 **Updating:** click **Update** on the dashboard, or type `update accept`. Your accounts, settings and logs are kept.
 Or set *Update by itself* to install at night, while your accounts are asleep.
 (On Linux and Docker you update by hand - see the guide.)
 
 **On Linux or a server?** There's a Linux zip for x64 and for arm64 (Raspberry Pi), and a Dockerfile with an
-example compose file. No window there - the console and the web dashboard. See
-[Linux and Docker](docs/GUIDE.md#linux-and-docker).
+example compose file - both tested on real x64 and arm64 machines, and with real accounts in Docker. No window
+there - the console and the web dashboard. See [Linux and Docker](docs/GUIDE.md#linux-and-docker).
 
 ## What it looks like
 
@@ -127,6 +160,7 @@ the [guide](docs/GUIDE.md#commands) shows how.)
 | Command | What it does |
 |---|---|
 | `status` | What every account is doing right now. |
+| `add myaccount mylogin human` | Add an account - `human` for your main (human mode), `robot` for a farm account. |
 | `start myaccount` · `stop myaccount` | Sign an account in or out (`all` works too). |
 | `pause myaccount 60` | Take a break for 60 minutes, then carry on by itself. |
 | `cards` | Cards left to farm, and about how long it'll take. |
@@ -139,7 +173,8 @@ the [guide](docs/GUIDE.md#commands) shows how.)
 | `sell myaccount` | See which spare cards it would sell, and what you'd get. |
 | `levelup myaccount 50` | What it would cost to reach Steam level 50. |
 | `offers` | Every trade offer that's waiting. |
-| `update accept` | Install the newest version and restart. |
+| `dashboard` | The dashboard's address - on this PC, on your phone, and from anywhere if you've set that up. |
+| `update accept` | Install the newest version and restart (`update skip` skips that version). |
 | `help` | Every command. `help <anything>` explains one command or setting. |
 
 **[Every command, with what it does](docs/COMMANDS.md)** - all of them in one list. In the app, `help` shows the
@@ -163,8 +198,9 @@ what to change. Accounts that don't use human mode just farm and idle as hard as
 - **Your stuff stays on your PC.** Accounts, login tokens and logs are never uploaded. Passwords are optional:
   after the first sign-in a Steam login token does the work, stored encrypted and tied to your Windows user
   (on Linux, encrypted with a key only your user can read).
-- **It only talks to Steam** - plus GitHub every few hours to see if there's a new version (you can turn that
-  off), and Discord, Telegram or rep4rep only if you set them up.
+- **It only talks to Steam** - plus GitHub every 2 hours to see if there's a new version (you can change or turn
+  that off), and Discord, Telegram or rep4rep only if you set them up. *Open from anywhere* talks to your router,
+  only if you turn it on.
 - **It never fights you.** Launch a game on one of its accounts and that account steps back. For an account you
   also use yourself, turn on *I sign into this one myself* and it won't kick you off Friends & Chat.
 - **Be honest with yourself about Steam's rules.** Automating your accounts is against Steam's Subscriber
@@ -188,9 +224,12 @@ Only open groups work; ones that need approval or an invite are skipped, and the
 
 **Do I have to type my password every time?** No - only once, or never if you use the QR code.
 
-**I'm coming from ArchiSteamFarm.** The first-run setup finds it for you: tick the bots you play on yourself
-(they come across in human mode) and import. Or type `import asf` any time. Logins, games and settings all come
-across - no passwords needed.
+**I'm coming from another idler.** ArchiSteamFarm, Idle Master Extended, Idle Master, HourBoostr, SingleBoostr,
+Steam Game Idler and steam-idler can all be brought over: pick it under *coming from* in the setup, or the dashboard's
+first-run setup finds it for you, or use **Import from another idler** on the Accounts page any time. It shows what it
+found before anything is written, you pick human or robot for each account, and it never changes the other program's
+files. From ASF, logins and authenticators come across too - no passwords needed. More in
+[the guide](docs/GUIDE.md#coming-from-another-idler).
 
 **The settings page looks short.** On purpose. It shows the everyday switches; tick **Show advanced** for the
 rest - timings, farming order, the dashboard's port and password, and so on.
@@ -198,8 +237,17 @@ rest - timings, farming order, the dashboard's port and password, and so on.
 **It says Steam is rate-limiting it.** Steam slows everyone down if a PC asks too much at once (usually after a
 lot of restarts). nocat.farm waits it out by itself - nothing to do.
 
-**Where are my settings?** In the `config` folder next to `nocatFarm.exe`. Back that folder up and you've backed up
-everything.
+**Where are my settings?** In the `config` folder next to `nocatFarm.exe` - with the setup that's
+`%LOCALAPPDATA%\Programs\nocat.farm\config`, with the portable zip it's wherever you unzipped it. Back that folder
+up and you've backed up everything.
+
+**How do I uninstall it?** Windows *Settings → Apps → nocat.farm → Uninstall* (it asks whether to keep your accounts
+and settings). The portable zip: close it and delete the folder.
+
+**Can I run it on a VPS, so my PC doesn't have to stay on?** Yes - a small rented Linux server (1 CPU, 1 GB) is
+plenty. Install Docker, start it with the example compose file, and open the dashboard through an SSH tunnel, or
+from anywhere with a password (HTTPS with your own domain works too). Step by step, from renting the server to adding
+your accounts: [On a VPS](docs/GUIDE.md#on-a-vps-a-rented-server).
 
 **What if something breaks?** Check the dashboard's **Log** tab - it says what happened in plain words. Or open an
 [issue](https://github.com/VisaHolder/nocatfarm/issues).

@@ -371,6 +371,25 @@ public sealed class BotConfig {
 	public List<uint> AchievementBoostGames { get; set; } = [];
 	public int BoostSessionHours { get; set; } = 2;
 	public int BoostWeight { get; set; } = 15;
+
+	/// <summary>How many games the hunter has on the go at once, taking turns between them.</summary>
+	public int BoostGamesInRotation { get; set; } = 3;
+
+	/// <summary>The most it hunts in a day, in hours; 0 is no limit.</summary>
+	public int BoostHoursPerDay { get; set; }
+
+	/// <summary>Moves to another game somewhere between these, as a percentage of the game's achievements.</summary>
+	public int BoostSwitchFromPct { get; set; } = 65;
+
+	public int BoostSwitchToPct { get; set; } = 75;
+
+	/// <summary>Comes back to a game it moved on from after this many days, somewhere in the range.</summary>
+	public int BoostRestDaysMin { get; set; } = 3;
+
+	public int BoostRestDaysMax { get; set; } = 14;
+
+	/// <summary>Paces each game's achievements by how long that game really takes (see Core/Playtime).</summary>
+	public bool AchievementRealLength { get; set; } = true;
 	public bool IncludeFamilyLibrary { get; set; }
 	public bool HoldNewFamilyGames { get; set; } = true;
 	public bool YieldToFamily { get; set; } = true;
@@ -627,6 +646,12 @@ public static class ConfigStore {
 
 		try {
 			GlobalConfig loaded = JsonSerializer.Deserialize<GlobalConfig>(File.ReadAllText(GlobalPath), Json) ?? new GlobalConfig();
+
+			// Anything still in plain text - typed into the file by hand, or left by an older version - is written back
+			// encrypted as soon as it has been read, not whenever a setting next happens to be saved.
+			bool plain = new[] { loaded.DiscordWebhookUrl, loaded.TelegramBotToken, loaded.DiscordBotToken, loaded.WebPassword,
+				loaded.Rep4RepApiToken, loaded.WebProxyPassword }.Any(Secrets.IsPlain);
+
 			loaded.DiscordWebhookUrl = Secrets.Unprotect(loaded.DiscordWebhookUrl);
 			loaded.TelegramBotToken = Secrets.Unprotect(loaded.TelegramBotToken);
 			loaded.DiscordBotToken = Secrets.Unprotect(loaded.DiscordBotToken);
@@ -636,6 +661,10 @@ public static class ConfigStore {
 			loaded.WebPassword = Secrets.Unprotect(loaded.WebPassword);
 			loaded.Rep4RepApiToken = Secrets.Unprotect(loaded.Rep4RepApiToken);
 			loaded.WebProxyPassword = Secrets.Unprotect(loaded.WebProxyPassword);
+
+			if (plain && Secrets.Available) {
+				SaveGlobal(loaded);
+			}
 
 			return loaded;
 		} catch (Exception e) {
@@ -828,14 +857,19 @@ public static class ConfigStore {
 				}
 
 				// Decrypt whatever was sealed. Plain text passes straight through, so a hand-edited file and a
-				// config written by an older version both still work.
+				// config written by an older version both still work - and it's written back encrypted below.
+				bool plain = new[] { cfg.SteamPassword, cfg.SharedSecret, cfg.IdentitySecret, cfg.AccountProxyPassword, cfg.SteamParentalCode }
+					.Any(Secrets.IsPlain);
+
 				cfg.SteamPassword = Secrets.Unprotect(cfg.SteamPassword);
 				cfg.SharedSecret = Secrets.Unprotect(cfg.SharedSecret);
 				cfg.IdentitySecret = Secrets.Unprotect(cfg.IdentitySecret);
 				cfg.AccountProxyPassword = Secrets.Unprotect(cfg.AccountProxyPassword);
+				cfg.SteamParentalCode = Secrets.Unprotect(cfg.SteamParentalCode);
 
 				// Every migration runs, then one write - a config can need any of them, and none is worth two saves.
-				bool migrated = MigrateGameShares(cfg, name);
+				bool migrated = plain && Secrets.Available;
+				migrated |= MigrateGameShares(cfg, name);
 				migrated |= MigrateAchievementCeiling(cfg, name);
 				migrated |= MigrateFarmWhen(cfg, name);
 				migrated |= MigrateWindDown(cfg);
@@ -884,6 +918,10 @@ public static class ConfigStore {
 		copy.SharedSecret = Secrets.Protect(cfg.SharedSecret, cfg.SteamLogin);
 		copy.IdentitySecret = Secrets.Protect(cfg.IdentitySecret, cfg.SteamLogin);
 		copy.AccountProxyPassword = Secrets.Protect(cfg.AccountProxyPassword, cfg.SteamLogin);
+
+		// The Family View PIN is a secret setting too - it was the one still written out in the clear.
+		// Left as it is while an update is on trial - the version before reads it plain (see SelfUpdate.OnTrial).
+		copy.SteamParentalCode = Core.SelfUpdate.OnTrial ? cfg.SteamParentalCode : Secrets.Protect(cfg.SteamParentalCode, cfg.SteamLogin);
 
 		return copy;
 	}
