@@ -2204,7 +2204,14 @@
     "listed {0} ({1}) for {2} - you get {3}": "{0}（{1}）を {2} で出品しました - 受け取りは {3}",
     "couldn't read the trade page: {0}": "トレードページを読めませんでした: {0}",
     "offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)": "オファーを送りました - Steam から届いたメールで確認してください（Steam アプリの認証がないため、Steam が最大15日間保留します）",
-    "send due - waiting a few minutes after another account's send": "送信時刻 - 別のアカウントの送信から数分待っています"
+    "send due - waiting a few minutes after another account's send": "送信時刻 - 別のアカウントの送信から数分待っています",
+    "Achievement hunt": "実績ハント",
+    "hunt": "ハント",
+    "Hunt at most": "ハントは最大",
+    "Once it has hunted this long in a day, the hunt's game leaves the list until tomorrow. 0 is no limit.": "1日にこれだけハントしたら、ハント中のゲームは明日までリストから外れます。0 は制限なし。",
+    "The achievement hunt's share of a mixed day. It plays the game it's hunting like a side game, in normal sittings, and moves on to the next game by itself.": "混合日の中での実績ハントの割合。ハント中のゲームをサブゲームのように普通のプレイ時間で遊び、次のゲームへは自動で移ります。",
+    "hours a day (0 = no limit)": "時間/日（0 = 制限なし）",
+    "Which games it hunts is set under Achievements.": "どのゲームをハントするかは「実績」で設定します。"
   },
   "settings": {
     "WebEnabled": {

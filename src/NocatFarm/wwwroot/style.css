@@ -913,6 +913,8 @@ button.ghost:hover:not(:disabled) { background: var(--line); }
    out of the column and over the bar next to it. */
 .wgame { font-weight: 400; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wname .wid { font-style: normal; font-size: 11px; color: var(--muted); opacity: .6; flex: none; }
+.whours { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 2px 0 12px; }
+.whours input { width: 64px; flex: 0 0 64px; }
 .wtag { background: var(--accent); color: var(--on-accent); font-size: 10px; letter-spacing: .5px; letter-spacing: .3px;
         text-transform: uppercase; border-radius: 0; padding: 1px 5px; }
 .wbar { background: var(--panel2); border-radius: 0; height: 6px; overflow: hidden; }

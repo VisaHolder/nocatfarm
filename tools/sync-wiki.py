@@ -21,7 +21,7 @@ DOCS = os.path.join(REPO, "docs")
 BLOB = "https://github.com/VisaHolder/nocatfarm/blob/main/"
 RAW = "https://raw.githubusercontent.com/VisaHolder/nocatfarm/main/"
 
-# Wiki page names, in contents order. Pages not listed here aren't copied (GUIDE.md is only a signpost for old links).
+# Wiki page names, in contents order. Pages not listed here aren't copied.
 PAGES = [
     ("README.md", "Home"),
     ("start-here.md", "Start-Here"),
@@ -57,8 +57,6 @@ def link(target):
     if os.path.dirname(path) in ("", ".") and name in WIKI:
         return WIKI[name] + anchor
     full = os.path.normpath(os.path.join("docs", path)).replace("\\", "/")
-    if name in ("GUIDE.md",):
-        return "Home" + anchor
     if re.search(r"\.(png|jpe?g|gif|svg|webp)$", name, re.I):
         return RAW + full
     return BLOB + full + anchor
