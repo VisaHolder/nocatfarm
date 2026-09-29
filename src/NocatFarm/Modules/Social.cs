@@ -87,7 +87,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 						await Task.Delay(FriendWait()).ConfigureAwait(false);
 						await WaitUntilAwakeAsync(FriendWait).ConfigureAwait(false);
 						Bot.Friends?.RemoveFriend(new SteamID(steamId));
-						Log.Info(new Said("turned down a friend request from {0}", steamId), Bot.Name);
+						Log.Info(new Said("turned down a friend request from {0}", await SteamNames.OfAsync(Bot, steamId).ConfigureAwait(false)), Bot.Name);
 					} catch (Exception e) {
 						Log.Debug(new Said("couldn't turn down the request from {0}: {1}", steamId, e.Message), Bot.Name);
 					}
@@ -108,7 +108,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 				if (Bot.Cfg.IgnoreSuspiciousInvites && await LooksLikeSpamAsync(steamId).ConfigureAwait(false)) {
 					await Task.Delay(FriendWait()).ConfigureAwait(false);
 					await WaitUntilAwakeAsync(FriendWait).ConfigureAwait(false);
-					Log.Info(new Said("ignoring a friend request from {0} - brand new private profile", steamId), Bot.Name);
+					Log.Info(new Said("ignored a friend request from {0} - new private profile", await SteamNames.OfAsync(Bot, steamId).ConfigureAwait(false)), Bot.Name);
 					Bot.Friends?.RemoveFriend(new SteamID(steamId));
 
 					return;
@@ -121,7 +121,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 
 				Bot.Friends?.AddFriend(new SteamID(steamId));
 				_accepted++;
-				Log.Event(new Said("accepted a friend request from {0}", steamId), Bot.Name);
+				Log.Event(new Said("accepted a friend request from {0}", await SteamNames.OfAsync(Bot, steamId).ConfigureAwait(false)), Bot.Name);
 			} catch (Exception e) {
 				Log.Debug(new Said("couldn't handle the friend request from {0}: {1}", steamId, e.Message), Bot.Name);
 

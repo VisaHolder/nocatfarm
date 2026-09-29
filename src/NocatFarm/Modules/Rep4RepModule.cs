@@ -357,8 +357,8 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		if (_profileId == null) {
 			_status = new Said("not registered on rep4rep");
 			Log.Warn(Live.Global.Rep4RepAutoAddProfiles
-				? new Said("rep4rep couldn't register this Steam account - check the API token is right; retrying in 30m")
-				: new Said("this account isn't registered on rep4rep - add steamcommunity.com/profiles/{0} on rep4rep.com, or turn Rep4RepAutoAddProfiles on", Bot.SteamId), Bot.Name);
+				? new Said("rep4rep won't add this account - check the API token")
+				: new Said("not on rep4rep yet - add it there, or turn on Rep4RepAutoAddProfiles"), Bot.Name);
 
 			return 30 * 60;
 		}
@@ -394,7 +394,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 				// Steam may well have posted it. A retry would put a SECOND identical comment on the same profile,
 				// which is exactly the pattern being avoided - so count it, leave the task alone, carry on.
 				await CountPostAsync(task).ConfigureAwait(false);
-				Log.Warn(new Said("no reply from Steam for {0} - it may have posted, counting it (no retry)", task.TargetName), Bot.Name);
+				Log.Warn(new Said("no reply for {0} - counting it as posted", task.TargetName), Bot.Name);
 
 				return NextGapSeconds();
 			case Outcome.Refused:
@@ -408,7 +408,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 	private async Task<int> RetryOnceAsync(Rep4RepTask task, string? error, CancellationToken ct) {
 		int pause = Rng.Next(RetryLowSeconds, RetryHighSeconds + 1);
-		Log.Warn(new Said("comment on {0} didn't go through{1} - trying once more in ~{2}", task.TargetName, (string.IsNullOrEmpty(error) ? "" : $" (\"{error}\")"), Fmt.Hm(Math.Max(1, pause / 60))), Bot.Name);
+		Log.Warn(new Said("comment on {0} failed{1} - retrying in ~{2}", task.TargetName, (string.IsNullOrEmpty(error) ? "" : $" (\"{error}\")"), Fmt.Hm(Math.Max(1, pause / 60))), Bot.Name);
 
 		if (!await Sleep(TimeSpan.FromSeconds(pause), ct).ConfigureAwait(false)) {
 			return 60;
@@ -425,7 +425,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 				return await BlockAccountAsync("Steam refused", retryError).ConfigureAwait(false);
 			case Outcome.Unknown:
 				await CountPostAsync(task).ConfigureAwait(false);
-				Log.Warn(new Said("no reply on the retry for {0} - counting it, no further retry", task.TargetName), Bot.Name);
+				Log.Warn(new Said("no reply on retry for {0} - counting it", task.TargetName), Bot.Name);
 
 				return NextGapSeconds();
 			case Outcome.Refused:
@@ -455,7 +455,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		if (credited) {
 			Log.Reward(new Said("commented on {0} and credited ({1}/{2} today)", task.TargetName, done, Cap), Bot.Name, topic: Topic.Rep4Rep);
 		} else {
-			Log.Warn(new Said("commented on {0} but rep4rep didn't credit it ({1}/{2} today)", task.TargetName, done, Cap), Bot.Name);
+			Log.Warn(new Said("commented on {0}, not credited ({1}/{2} today)", task.TargetName, done, Cap), Bot.Name);
 		}
 
 		_status = new Said("{0}/{1} today", done, Cap);
@@ -466,7 +466,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			Said frees = NextSlot is { } t
 				? new Said("until ~{0}", (Func<string>) (() => Fmt.Clock(t)))
 				: new Said("for now");
-			Said line = new("hit the {0}/24h cap - resting this account {1}, the others carry on", Cap, frees);
+			Said line = new("hit the {0}/24h cap - resting {1}", Cap, frees);
 
 			// The window is ROLLING, so once it is full every slot that frees gets one post and the cap is hit
 			// again - four or five times a day, each announced as news. The first one in a stretch is worth
@@ -532,7 +532,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 
 		_status = new Said("resting 24h");
-		Log.Attention(new Said("Steam won't take comments from this account - sitting out 24h ({0})", new Said(reason)), Bot.Name);
+		Log.Attention(new Said("Steam blocks its comments - resting 24h ({0})", new Said(reason)), Bot.Name);
 
 		if (!string.IsNullOrWhiteSpace(detail)) {
 			Log.Debug(new Said("Steam's exact words: {0}", detail), Bot.Name);
@@ -560,7 +560,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 		_rateLimitRun = 0;
 		_status = new Said("Steam's daily comment limit - resting ~24h ({0} posted here today)", posted);
-		Log.Attention(new Said("Steam's daily non-friend comment limit reached ({0} posted via nocat.farm today; any others were posted outside it) - resting until it clears in ~24h", posted), Bot.Name);
+		Log.Attention(new Said("daily comment limit hit ({0} posted here) - resting ~24h", posted), Bot.Name);
 
 		return 10 * 60;
 	}
@@ -584,7 +584,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			_state.CapLearned = true;
 			Log.Info(new Said("daily limit found: {0}/24h", posted), Bot.Name);
 		} else {
-			Log.Info(new Said("rate-limited at {0}/{1} - that's the gap between comments, not the daily cap", posted, cap), Bot.Name);
+			Log.Info(new Said("rate-limited at {0}/{1} - comment gap, not the daily cap", posted, cap), Bot.Name);
 		}
 
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
@@ -602,7 +602,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 			_rateLimitRun = 0;
 			_status = new Said("rate-limited - resting {0}, back at baseline", Fmt.Hm(rest));
-			Log.Attention(new Said("Steam keeps rate-limiting comments at {0}/{1} - sitting out {2} until the window clears, then starting fresh", posted, cap, Fmt.Hm(rest)), Bot.Name);
+			Log.Attention(new Said("still rate-limited at {0}/{1} - resting {2}, then starting fresh", posted, cap, Fmt.Hm(rest)), Bot.Name);
 
 			return 10 * 60;
 		}

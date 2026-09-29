@@ -148,7 +148,7 @@ public static class KeyQueue {
 
 			if (entry.Tries >= 8) {
 				Pending.Remove(entry);
-				Log.Warn(new Said("giving up on a key after {0} tries - no account could activate it", entry.Tries));
+				Log.Warn(new Said("gave up on a key after {0} tries - no account could use it", entry.Tries));
 			} else {
 				Pending.Remove(entry);
 				Pending.Add(entry);   // to the back, so one stubborn key doesn't block the rest
@@ -214,7 +214,9 @@ public static class KeyQueue {
 			}
 		} catch (Exception e) {
 			_loadFailed = true;
-			Log.Warn(new Said("couldn't read the key queue ({0}) - the file will not be overwritten this run", e.Message));
+			// Not the error text: for an encrypted file it's the file itself, a screen of gibberish.
+			Log.Warn(new Said("key queue unreadable (newer version or damaged) - left as is"));
+			Log.Debug(new Said("key queue: {0}", e.Message));
 		}
 	}
 
@@ -223,7 +225,7 @@ public static class KeyQueue {
 			// Said once per run, not on every key the worker touches.
 			if (!_saveRefusedSaid) {
 				_saveRefusedSaid = true;
-				Log.Warn(new Said("the key queue file couldn't be read at startup, so changes to the queue are not being saved - fix or move keys.json and restart"));
+				Log.Warn(new Said("key queue changes aren't saved - fix or move keys.json, restart"));
 			}
 
 			return;

@@ -29,6 +29,46 @@ public sealed class WebHost : IAsyncDisposable {
 	private const int MaxFailedLogins = 5;
 	private const int LockoutMinutes = 60;
 
+	/// <summary>
+	/// From this PC itself: a minute, not an hour. Someone at this PC can already open the config folder, so an hour's
+	/// lockout only ever locked out the owner mistyping their own password.
+	/// </summary>
+	private const int LockoutMinutesThisPc = 1;
+
+	/// <summary>
+	/// Who is signing in, for the lockout: the address, and whether it's this PC itself. A reverse proxy on this PC (Caddy
+	/// in front for HTTPS) makes every visitor look like this PC - it says who really asked in X-Forwarded-For, so that
+	/// address is used instead, and it counts as outside: the internet gets the full hour, and one person's wrong guesses
+	/// don't lock everybody else out.
+	/// </summary>
+	private static (string Ip, bool ThisPc) WhoIsSigningIn(HttpContext ctx) {
+		IPAddress from = ctx.Connection.RemoteIpAddress ?? IPAddress.None;
+		string? forwarded = ctx.Request.Headers["X-Forwarded-For"].FirstOrDefault() ?? ctx.Request.Headers["X-Real-IP"].FirstOrDefault();
+
+		if (IPAddress.IsLoopback(from) && !string.IsNullOrWhiteSpace(forwarded)) {
+			return (forwarded.Split(',')[0].Trim(), false);
+		}
+
+		return (from.ToString(), IPAddress.IsLoopback(from));
+	}
+
+	/// <summary>Seconds this address is still locked out for after too many wrong passwords; 0 when it isn't.</summary>
+	private int LockedFor(HttpContext ctx) {
+		string ip = WhoIsSigningIn(ctx).Ip;
+
+		return _failures.TryGetValue(ip, out (int Count, DateTime Until) f) && (f.Count >= MaxFailedLogins) && (f.Until > DateTime.UtcNow)
+			? (int) Math.Ceiling((f.Until - DateTime.UtcNow).TotalSeconds)
+			: 0;
+	}
+
+	/// <summary>Every sign-in lockout lifted - the 'unlock' command, for whoever is at this PC.</summary>
+	public int ClearLockouts() {
+		int n = _failures.Count(static f => f.Value.Count >= MaxFailedLogins && f.Value.Until > DateTime.UtcNow);
+		_failures.Clear();
+
+		return n;
+	}
+
 	private readonly BotManager _mgr;
 
 	/// <summary>
@@ -234,6 +274,21 @@ public sealed class WebHost : IAsyncDisposable {
 				await next(ctx).ConfigureAwait(false);
 			});
 
+			// A request that throws answers with a reason the page can show. The bare 500 it used to get had no body,
+			// so the page failed reading it and the button just did nothing.
+			_app.Use(async (HttpContext ctx, RequestDelegate next) => {
+				try {
+					await next(ctx).ConfigureAwait(false);
+				} catch (Exception e) when (!ctx.RequestAborted.IsCancellationRequested && !ctx.Response.HasStarted) {
+					Log.Warn(new Said("dashboard: {0} failed: {1}", ctx.Request.Path.Value ?? "", e.Message));
+					Log.Debug($"dashboard: {e}");
+
+					string error = new Said("that didn't work: {0}", e.Message).ToString();
+					ctx.Response.Clear();
+					await Results.Json(new { ok = false, error, Message = error }, statusCode: StatusCodes.Status500InternalServerError).ExecuteAsync(ctx).ConfigureAwait(false);
+				}
+			});
+
 			_app.UseDefaultFiles();
 
 			// Revalidate every time rather than letting the browser guess.
@@ -257,7 +312,7 @@ public sealed class WebHost : IAsyncDisposable {
 			// sentence around it was translated, so a Chinese log read "仪表盘:http://... (this PC only - no
 			// password set)" - which is the whole class of bug this pass exists to remove.
 			Log.Good(new Said("dashboard: {0}{1}", Url,
-				string.IsNullOrEmpty(_cfg.WebPassword) ? new Said("  (this PC only - no password set)") : default));
+				string.IsNullOrEmpty(_cfg.WebPassword) ? new Said("  (this PC only, no password)") : default));
 
 			// Headless runs (Linux, Docker) are reached from another machine by definition, so a setup that can't
 			// be is worth more than the one-line hint above. Nothing is exposed either way - with no password the
@@ -265,16 +320,18 @@ public sealed class WebHost : IAsyncDisposable {
 			// gateway, not from loopback, so that dashboard turns everybody away and needs saying why.
 			if (!OperatingSystem.IsWindows()) {
 				if (!Platform.IsLoopback(listenHost) && string.IsNullOrEmpty(_cfg.WebPassword)) {
-					Log.Warn(new Said("dashboard: listening on {0} with NO password, so it only lets this machine itself in - nobody on another device (or outside Docker) can sign in. Set WebPassword, or NOCATFARM_WEB_PASSWORD in Docker", listenHost));
+					Log.Warn(new Said("dashboard on {0} has no password - only this machine gets in", listenHost));
+					Log.Info(new Said("set WebPassword (NOCATFARM_WEB_PASSWORD in Docker)"));
 				} else if (Platform.InContainer && Platform.IsLoopback(listenHost)) {
-					Log.Warn(new Said("dashboard: listening on {0} inside a container, where nothing outside it can reach it - set NOCATFARM_WEB_HOST=0.0.0.0", listenHost));
+					Log.Warn(new Said("dashboard on {0} can't be reached from outside Docker", listenHost));
+					Log.Info(new Said("set NOCATFARM_WEB_HOST=0.0.0.0 to open it"));
 				}
 			}
 
 			return true;
 		} catch (Exception e) {
 			Log.Error(new Said("couldn't start the dashboard on {0}:{1} - {2}", listenHost, listenPort, e.Message));
-			Log.Info("the console still works. Change WebPort in config/nocatFarm.json, or set WebEnabled false.");
+			Log.Info("the console still works - change WebPort or turn WebEnabled off");
 
 			return false;
 		}
@@ -356,7 +413,8 @@ public sealed class WebHost : IAsyncDisposable {
 
 	private bool TryLogin(HttpContext ctx, string password, out string token) {
 		token = "";
-		string ip = (ctx.Connection.RemoteIpAddress ?? IPAddress.None).ToString();
+		(string ip, bool thisPc) = WhoIsSigningIn(ctx);
+		int lockout = thisPc ? LockoutMinutesThisPc : LockoutMinutes;
 
 		if (_failures.TryGetValue(ip, out (int Count, DateTime Until) fail) && (fail.Count >= MaxFailedLogins) && (fail.Until > DateTime.UtcNow)) {
 			return false;
@@ -369,10 +427,10 @@ public sealed class WebHost : IAsyncDisposable {
 
 		if (!ok) {
 			int count = (_failures.TryGetValue(ip, out (int Count, DateTime Until) prev) ? prev.Count : 0) + 1;
-			_failures[ip] = (count, DateTime.UtcNow.AddMinutes(LockoutMinutes));
+			_failures[ip] = (count, DateTime.UtcNow.AddMinutes(lockout));
 
 			if (count >= MaxFailedLogins) {
-				Log.Warn(new Said("dashboard: {0} failed logins from {1} - locked out for {2}m", count, ip, LockoutMinutes));
+				Log.Warn(new Said("dashboard: {0} failed logins from {1} - locked out for {2}m", count, ip, lockout));
 			}
 
 			return false;
@@ -416,7 +474,13 @@ public sealed class WebHost : IAsyncDisposable {
 			LoginRequest? body = await ReadJsonAsync<LoginRequest>(ctx).ConfigureAwait(false);
 
 			if (body == null || !TryLogin(ctx, body.Password ?? "", out string token)) {
-				return Results.Json(new { ok = false, error = "wrong password" }, statusCode: 401);
+				// Locked out says so, with how long - "wrong password" for the right one while it waited was the most
+				// confusing thing the page could say.
+				int wait = LockedFor(ctx);
+
+				return wait > 0
+					? Results.Json(new { ok = false, error = "locked", seconds = wait, thisPc = WhoIsSigningIn(ctx).ThisPc }, statusCode: 429)
+					: Results.Json(new { ok = false, error = "wrong password" }, statusCode: 401);
 			}
 
 			return Results.Json(new { ok = true, token });
@@ -671,10 +735,19 @@ public sealed class WebHost : IAsyncDisposable {
 				return Unauthorised();
 			}
 
-			await UpdateCheck.LookAsync(force: true, quiet: true).ConfigureAwait(false);
+			string? problem = await UpdateCheck.LookAsync(force: true, quiet: true).ConfigureAwait(false);
+
+			if ((problem != null) && (UpdateCheck.Available == null)) {
+				return Results.Json(new { Message = new Said("couldn't reach GitHub to check ({0}) - try again in a minute", problem).ToString() });
+			}
 
 			if (UpdateCheck.Available == null) {
 				return Results.Json(new { Message = $"You're on the newest release ({Build.Version})." });
+			}
+
+			// "When I say update" set to wait: the button queues it for when the accounts are asleep, like 'update accept'.
+			if (Live.Global.UpdateWhenAsked == 1) {
+				return Results.Json(new { Message = UpdateCheck.Queue(UpdateCheck.Available).ToString() });
 			}
 
 			string? failure = await SelfUpdate.ApplyAsync(CancellationToken.None).ConfigureAwait(false);
@@ -782,7 +855,12 @@ public sealed class WebHost : IAsyncDisposable {
 
 			bool passwordChanged = !string.Equals(body.WebPassword, current.WebPassword, StringComparison.Ordinal);
 
-			ConfigStore.SaveGlobal(body);
+			// Still put in force, but not called saved: a full disk or a damaged settings file used to come back "Saved."
+			// and the change was gone at the next start.
+			if (!ConfigStore.SaveGlobal(body)) {
+				adjusted.Add(new Said("in use now, but not saved to disk - see the Log").ToString());
+			}
+
 			_mgr.ApplyGlobal(body);
 
 			foreach (SettingDef def in Settings.Global) {
@@ -799,7 +877,7 @@ public sealed class WebHost : IAsyncDisposable {
 			if (passwordChanged) {
 				SignOutAll();
 				fresh = string.IsNullOrEmpty(body.WebPassword) ? null : NewSession(ctx);
-				Log.Info(new Said("dashboard password changed - every other browser has to sign in again"));
+				Log.Info(new Said("dashboard password changed - other browsers sign in again"));
 			}
 
 			return Results.Json(new { ok = true, RestartNeeded = restartNeeded, Adjusted = adjusted, Token = fresh });
@@ -844,7 +922,10 @@ public sealed class WebHost : IAsyncDisposable {
 				.Where(d => !Equals(Settings.Show(body, d), Settings.Show(bot.Cfg, d)))
 				.ToList();
 
-			ConfigStore.SaveBot(name, body);
+			if (!ConfigStore.SaveBot(name, body)) {
+				adjusted.Add(new Said("in use now, but not saved to disk - see the Log").ToString());
+			}
+
 			bot.Reconfigure(body);
 
 			foreach (SettingDef def in changed) {
@@ -1126,7 +1207,7 @@ public sealed class WebHost : IAsyncDisposable {
 				return Results.Json(new { Ok = true, Needed = false, Port = _cfg.WebPort });
 			}
 
-			Log.Info(new Said("restarting the dashboard on {0}:{1} - the accounts stay signed in", _cfg.WebHost, _cfg.WebPort));
+			Log.Info(new Said("restarting the dashboard on {0}:{1} - accounts stay on", _cfg.WebHost, _cfg.WebPort));
 			_ = Task.Run(async () => {
 				await Task.Delay(500).ConfigureAwait(false);
 				await RelistenAsync().ConfigureAwait(false);
@@ -1148,7 +1229,7 @@ public sealed class WebHost : IAsyncDisposable {
 			(bool ok, string why) = await NocatFarm.Windows.Firewall.AllowAsync(Live.Global.WebPort).ConfigureAwait(false);
 
 			if (ok) {
-				Log.Good(new Said("Windows Firewall now lets other devices on your home network open the dashboard (port {0})", Live.Global.WebPort));
+				Log.Good(new Said("firewall opened port {0} for the dashboard on your network", Live.Global.WebPort));
 			}
 
 			return Results.Json(new { Ok = ok, Error = why });
@@ -1757,6 +1838,7 @@ public sealed class WebHost : IAsyncDisposable {
 					Name = b.Name,
 					Login = b.Cfg.SteamLogin,
 					Notes = b.Cfg.Notes,
+					HasAuthenticator = b.HasAuthenticator,
 					State = b.State.ToString(),
 					Group = GroupOf(b),
 					Status = Loc.T(Commands.StateWord(b)),
@@ -1795,6 +1877,9 @@ public sealed class WebHost : IAsyncDisposable {
 					Rep4RepToday = r4r?.PostsToday ?? 0,
 					Rep4RepCap = r4r?.Cap ?? b.Cfg.Rep4RepDailyCap,
 					CardsToday = cardsByBot.GetValueOrDefault(b.Name),
+					// For the Discord card's preview, which can count hours instead of cards.
+					MinutesWeek = (int) History.MinutesOver(7, [b.Name]),
+					MinutesMonth = (int) History.MinutesOver(30, [b.Name]),
 					// Quiet is worked out HERE, against the translated words, because Status is localised now.
 					// The dashboard used to filter these rows with m.Status !== 'off' && m.Status !== 'idle',
 					// which silently stopped matching in every language but English and put a wall of idle

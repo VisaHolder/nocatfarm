@@ -212,7 +212,7 @@ public static class Redeeming {
 
 			if (result.Ok) {
 				Log.Reward(result.Packages.Count > 0
-					? new Said("activated a queued key - package(s) {0}  ({1} left in the queue)", string.Join(", ", result.Packages), KeyQueue.Count - 1)
+					? new Said("activated a queued key - package(s) {0} ({1} left)", string.Join(", ", result.Packages), KeyQueue.Count - 1)
 					: new Said("activated a queued key  ({0} left in the queue)", KeyQueue.Count - 1), bot.Name, topic: Topic.FreeStuff);
 				KeyQueue.Done(key);
 

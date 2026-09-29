@@ -37,7 +37,7 @@ public sealed class LiveConsole : IDisposable {
 
 	public void Start() {
 		if (!TryEnableAnsi()) {
-			Log.Info("this terminal can't do live redrawing - keeping the plain scrolling log");
+			Log.Info("terminal can't redraw - using the plain scrolling log");
 
 			return;
 		}
@@ -66,7 +66,7 @@ public sealed class LiveConsole : IDisposable {
 					// than no board at all - so give up and hand the console back.
 					if (++_paintFailures >= 5) {
 						Dispose();
-						Log.Warn(new Said("the live view kept failing to draw ({0}) - back to the plain log", e.GetType().Name));
+						Log.Warn(new Said("live view failed ({0}) - back to the plain log", e.GetType().Name));
 
 						return;
 					}

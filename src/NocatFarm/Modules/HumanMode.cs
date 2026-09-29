@@ -344,7 +344,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		Phase.ShortBreak => new Said("on a break"),
 		Phase.MealBreak => new Said("meal break"),
 		Phase.NightIdle or Phase.Asleep when _nightFarming => new Said("asleep, the card farmer is working"),
-		Phase.NightIdle => new Said("asleep, banking hours on {0} game(s)", NightGames().Count),
+		Phase.NightIdle => new Said("asleep, idling {0} game(s)", NightGames().Count),
 		Phase.Asleep => new Said("asleep"),
 		Phase.DoneForToday => new Said("done for today"),
 		Phase.DayOff => new Said("not playing today"),
@@ -466,6 +466,11 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			// Not settled in (a reconnect mid-grind, say): wait for it here. Falling through took the "grind just
 			// finished" branch below, which said "done grinding" and re-rolled the day while the grind was still on.
 			if (!SettledIn()) {
+				// Not playing it yet, so the grind's clock waits too - the hours asked for are hours played.
+				if (!_wasGrinding) {
+					Bot.HoldGrindStart();
+				}
+
 				return;
 			}
 
@@ -574,7 +579,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				ClearBreakState();
 				Bot.StopPlaying();
 				Bot.ClearPersonaOverride();
-				Log.Info(new Said("not playing today - online but idle until bed about {0}", (BedTime()).ToString("HH:mm")), Bot.Name);
+				Log.Info(new Said("day off - online, idle until bed ~{0}", (BedTime()).ToString("HH:mm")), Bot.Name);
 			}
 
 			return;
@@ -754,6 +759,20 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// </summary>
 	private bool CardsCheckedThisLogin() => (Bot.CardsCheckedAt is { } at) && (Bot.OnlineSince is { } on) && (at >= on);
 
+	/// <summary>
+	/// How long until this sign-in's warm-up is over - what a grind asked for now waits for on top of finishing up.
+	/// Before the warm-up is rolled, the longest it could be.
+	/// </summary>
+	public TimeSpan SettleLeft {
+		get {
+			DateTime loggedOn = Bot.OnlineSince ?? DateTime.UtcNow;
+			DateTime ready = _gateArmedFor == loggedOn ? _readyAt : loggedOn.AddMinutes(Math.Max(0, Bot.Cfg.WarmUpMaxMinutes));
+			TimeSpan left = ready - DateTime.UtcNow;
+
+			return left > TimeSpan.Zero ? left : TimeSpan.Zero;
+		}
+	}
+
 	private bool SettledIn() {
 		DateTime loggedOn = Bot.OnlineSince ?? DateTime.UtcNow;
 
@@ -767,8 +786,11 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			int lo = Math.Max(0, Bot.Cfg.WarmUpMinMinutes);
 			int hi = Math.Max(lo, Bot.Cfg.WarmUpMaxMinutes);
 
+			// Counted from the sign-in itself, not from when human mode first looked: an account that has been online
+			// a while (done for the day, then a grind asked for) is long past its warm-up, and was made to sit through
+			// a fresh 3-20 minutes anyway.
 			DateTime safety = loggedOn.AddSeconds(SafetyGateSeconds);
-			DateTime settled = DateTime.UtcNow.AddMinutes(Rng(lo, hi));
+			DateTime settled = loggedOn.AddMinutes(Rng(lo, hi));
 			_readyAt = settled > safety ? settled : safety;
 		}
 
@@ -888,7 +910,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_lastGame = 0;
 		_switchingTo = 0;
 
-		Log.Info("today's plan thrown away - rolling a fresh one from the current settings", Bot.Name);
+		Log.Info("new plan for today from the current settings", Bot.Name);
 		RollNewDayIfNeeded();
 	}
 
@@ -943,7 +965,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// session.
 		if (HumanDay.Load(Bot.Name, DateTime.Now) is { } saved) {
 			Restore(saved);
-			Log.Info(new Said("today's plan restored - {0}/{1} played so far, bed about {2}", Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes), (BedTime()).ToString("HH:mm")), Bot.Name);
+			Log.Info(new Said("today's plan restored - {0}/{1} played, bed about {2}", Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes), (BedTime()).ToString("HH:mm")), Bot.Name);
 
 			return;
 		}
@@ -1063,7 +1085,8 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			? new Said("{0} only today", GameName(MainGame()))
 			: new Said("{0} about {1}%, up to {2} on the others", GameName(MainGame()), _mainSharePct, Fmt.Hm(_otherBudget));
 
-		Log.Info(new Said("today: around {0} of play, on about {1}, bed about {2} - {3}", Fmt.Hm(_targetMinutes), (WakeTime()).ToString("HH:mm"), (BedTime()).ToString("HH:mm"), mix), Bot.Name);
+		Log.Info(new Said("today: ~{0} of play, up {1}, bed {2}", Fmt.Hm(_targetMinutes), (WakeTime()).ToString("HH:mm"), (BedTime()).ToString("HH:mm")), Bot.Name);
+		Log.Debug(new Said("today's mix: {0}", mix), Bot.Name);
 	}
 
 	private int WindowMinutes() {
@@ -1158,7 +1181,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_game = 0;
 				_switchingTo = 0;
 				_nightFarming = true;
-				Log.Info(new Said("asleep until {0} - the card farmer keeps working through the night", (WakeTime()).ToString("HH:mm")), Bot.Name);
+				Log.Info(new Said("asleep until {0} - card farming through the night", (WakeTime()).ToString("HH:mm")), Bot.Name);
 			}
 
 			return;
@@ -1238,7 +1261,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			if (_phase != Phase.DoneForToday) {
 				_phase = Phase.DoneForToday;
 				Bot.ClearPersonaOverride();   // never leave a break's Away/Snooze stuck on for the rest of the day
-				Log.Warn("human mode is on but no games are set - fill in \"Games and how often\"", Bot.Name);
+				Log.Warn("human mode has no games - fill in \"Games and how often\"", Bot.Name);
 			}
 
 			return;
@@ -1311,8 +1334,8 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_playingAssertedFor = Bot.OnlineSince ?? DateTime.UtcNow;
 
 		Log.Good(_farmSession
-			? new Said("farming cards on {0} for about {1}  ({2}/{3} today)", GameName(game), Fmt.Hm(minutes), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes))
-			: new Said("playing {0} for about {1}  ({2}/{3} today)", GameName(game), Fmt.Hm(minutes), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)), Bot.Name);
+			? new Said("farming cards on {0} for ~{1} ({2}/{3} today)", GameName(game), Fmt.Hm(minutes), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes))
+			: new Said("playing {0} for ~{1} ({2}/{3} today)", GameName(game), Fmt.Hm(minutes), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)), Bot.Name);
 	}
 
 	/// <summary>
@@ -1389,7 +1412,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		_sessionEnds = DateTime.UtcNow.AddMinutes(minutes);
 		_playOnPending = true;   // the game is (re)put on once the farmer has let go
-		Log.Info(new Said("got the last card from {0} - playing on for about {1}, then a break", GameName(_game), Fmt.Hm(minutes)), Bot.Name);
+		Log.Info(new Said("last card from {0} - playing on ~{1}, then a break", GameName(_game), Fmt.Hm(minutes)), Bot.Name);
 	}
 
 	private void EndSession() {

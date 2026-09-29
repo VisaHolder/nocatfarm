@@ -3,7 +3,7 @@
 
   Produces, in dist/:
     nocat.farm-v<version>-setup.exe         Windows installer (the recommended download) - needs Inno Setup 7
-    nocat.farm-v<version>.zip               Windows (win-x64) portable - also the one the in-app updater installs
+    nocat.farm-v<version>-portable.zip      Windows (win-x64) portable - also the one the in-app updater installs
     nocat.farm-v<version>_linux-x64.zip     Linux on 64-bit Intel/AMD
     nocat.farm-v<version>_linux-arm64.zip   Linux on 64-bit ARM (a Raspberry Pi 4/5 on a 64-bit OS, ARM servers)
 
@@ -16,6 +16,7 @@
   updates itself with simply the FIRST .zip in that list. "-" sorts before the "." of ".zip", so a
   "-linux-..." zip would come first and every one of those copies would download the Linux build and refuse
   it. "_" sorts after, so the Windows zip stays first. (Newer copies pick the zip for their own platform.)
+  The Windows one is "-portable.zip" for the same reason: "-portable" sorts before "_linux", so it stays first.
 
   Usage:  powershell -ExecutionPolicy Bypass -File tools\package-release.ps1
 #>
@@ -141,7 +142,7 @@ Assert-Clean $stage
 # --- bundle the readme so the zip is self-explanatory --------------------------------------------------
 Copy-Item (Join-Path $root 'README.md') $stage -Force
 
-$zip = Join-Path $dist "nocat.farm-v$version.zip"
+$zip = Join-Path $dist "nocat.farm-v$version-portable.zip"
 New-FlatZip $stage $zip
 
 $size = [math]::Round((Get-Item $zip).Length / 1MB, 1)

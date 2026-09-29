@@ -55,7 +55,7 @@ public static class DailyReport {
 		}
 
 		Said header = first
-			? new Said("── daily report · last 24h · first one, 'banked' counts from here on ──")
+			? new Said("── daily report · 24h · 'banked' starts counting now ──")
 			: new Said("── daily report · last 24h ──");
 
 		return string.Join(Environment.NewLine, lines.Prepend(header).Append(fleet).Select(static l => l.ToString()));
@@ -93,7 +93,7 @@ public static class DailyReport {
 		}
 
 		Log.Good(first
-			? new Said("── daily report · last 24h · first one, 'banked' counts from here on ──")
+			? new Said("── daily report · 24h · 'banked' starts counting now ──")
 			: new Said("── daily report · last 24h ──"), "report");
 		foreach (Said line in lines) {
 			Log.Info(line, "report");

@@ -324,7 +324,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			if (hold > TimeSpan.Zero) {
 				ForgetVerdict(offer.Id);
 				_waiting.Remove(offer.Id);
-				Log.Info(new Said("trade offer #{0} is no longer a fair card swap - {1}; left alone", offer.Id, new Said("the cards would sit in a trade hold")), Bot.Name);
+				Log.Info(new Said("offer {0} no longer a fair swap ({1}) - left for you", NumberOf(offer.Id), new Said("the cards would sit in a trade hold")), Bot.Name);
 
 				return (true, false);
 			}
@@ -338,7 +338,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 				_waiting.Remove(offer.Id);
 
 				if (still == false) {
-					Log.Info(new Said("trade offer #{0} is no longer a fair card swap - {1}; left alone", offer.Id, why), Bot.Name);
+					Log.Info(new Said("offer {0} no longer a fair swap ({1}) - left for you", NumberOf(offer.Id), why), Bot.Name);
 				}
 
 				return (true, false);
@@ -417,7 +417,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			if (!_nightDue.TryGetValue(offer.Id, out due)) {
 				due = DateTime.UtcNow + TradeWait();
 				_nightDue[offer.Id] = due;
-				Log.Info(new Said("trade offer #{0} ({1}: {2}) - handling it in {3}", offer.Id, new Said("a donation"), offer.Describe,
+				Log.Info(new Said("offer {0} ({1}: {2}) - handling it in {3}", NumberOf(offer.Id), new Said("a donation"), offer.Describe,
 					Fmt.Hm((int) Math.Max(1, (due - DateTime.UtcNow).TotalMinutes))), Bot.Name);
 
 				return true;
@@ -541,7 +541,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		foreach ((ulong id, string who) in gone) {
 			lock (_done) {
 				if (!_done.Contains(id)) {
-					Log.Trade(new Said("an offer from {0} is gone - cancelled, answered somewhere else, or it expired", who), Bot.Name);
+					Log.Trade(new Said("offer from {0} is gone (cancelled, answered or expired)", who), Bot.Name);
 				}
 			}
 		}
@@ -561,7 +561,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 			changed = true;
 
-			Log.Trade(new Said("new trade offer {0} from {1}: you get {2}, you give {3} - {4}", n, who, Items(offer.Receiving), Items(offer.Giving), Plan(offer, allowed, fleet, awake, n)), Bot.Name);
+			Log.Trade(new Said("offer {0} from {1}: get {2}, give {3} - {4}", n, who, Items(offer.Receiving), Items(offer.Giving), Plan(offer, allowed, fleet, awake, n)), Bot.Name);
 		}
 
 		if (changed) {
@@ -574,20 +574,20 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		bool later = !awake;
 
 		if (Bot.Cfg.AcceptDonations && offer.IsPureDonation) {
-			return later && !Bot.Cfg.DonationsWhileAsleep ? new Said("a donation - accepting it once the account is up") : new Said("a donation - accepting it in a few minutes");
+			return later && !Bot.Cfg.DonationsWhileAsleep ? new Said("donation - accepting when awake") : new Said("donation - accepting in a few min");
 		}
 
 		if (Auto(offer, allowed)) {
-			return later ? new Said("you allowed this account - accepting it once the account is up") : new Said("you allowed this account - accepting it in a few minutes");
+			return later ? new Said("allowed sender - accepting when awake") : new Said("allowed sender - accepting in a few min");
 		}
 
 		if ((Bot.Cfg.AcceptFairCardSwaps || fleet.Contains(offer.Partner)) && (offer.Giving.Count > 0) && (offer.Giving.Count == offer.Receiving.Count)) {
-			return new Said("checking whether it's a fair card swap - accepted only if it is, otherwise it waits for you (trade accept {0} {1})", Bot.Name, n);
+			return new Said("accepted if it's a fair card swap, else trade accept {0} {1}", Bot.Name, n);
 		}
 
 		return Bot.Cfg.DeclineOtherTrades
-			? new Said("declining it in a few minutes (\"Decline everything else\" is on) - trade accept {0} {1} accepts it instead", Bot.Name, n)
-			: new Said("waiting for you - trade accept {0} {1} or trade decline {0} {1}", Bot.Name, n);
+			? new Said("declining soon - trade accept {0} {1} keeps it", Bot.Name, n)
+			: new Said("waiting for you - trade accept or decline {0} {1}", Bot.Name, n);
 	}
 
 	/// <summary>"3 items: Alpha x2, Beta" - or "nothing".</summary>
@@ -610,10 +610,10 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 	}
 
 	private Said NeedsConfirming(TradeOffers.Offer offer, Accepted result) => result == Accepted.NeedsEmail
-		? new Said("offer {0} from {1} is accepted but needs confirming from the email Steam sent", NumberOf(offer.Id), Who(offer))
+		? new Said("offer {0} from {1} accepted - confirm it in Steam's email", NumberOf(offer.Id), Who(offer))
 		: Bot.CanConfirmTrades
-			? new Said("offer {0} from {1} is accepted and waiting for you to confirm it - 'confirmations {2}' or the Authenticator page", NumberOf(offer.Id), Who(offer), Bot.Name)
-			: new Said("offer {0} from {1} is accepted but needs confirming on your phone", NumberOf(offer.Id), Who(offer));
+			? new Said("offer {0} from {1} accepted - confirm it ('confirmations {2}')", NumberOf(offer.Id), Who(offer), Bot.Name)
+			: new Said("offer {0} from {1} accepted - confirm it on your phone", NumberOf(offer.Id), Who(offer));
 
 	private void Forget(ulong id) {
 		lock (_announceLock) {
@@ -776,7 +776,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		}
 
 		if (!verdict && firstTime) {
-			Log.Info(new Said("trade offer #{0} isn't a fair card swap - {1}; left alone", offer.Id, why), Bot.Name);
+			Log.Info(new Said("offer {0} isn't a fair swap ({1}) - left for you", NumberOf(offer.Id), why), Bot.Name);
 		}
 
 		return verdict;

@@ -119,7 +119,7 @@ public sealed class Rep4RepState {
 
 			return JsonSerializer.Deserialize<Rep4RepState>(body, Json) ?? new Rep4RepState();
 		} catch (Exception e) {
-			Log.Warn(new Said("can't read {0} ({1}) - not commenting until it's readable, so the 24h limit stays honest", Path.GetFileName(path), e.Message), bot);
+			Log.Warn(new Said("can't read {0} ({1}) - no comments until it's fixed", Path.GetFileName(path), e.Message), bot);
 
 			return null;
 		} finally {

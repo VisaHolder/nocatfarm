@@ -171,7 +171,7 @@ public static partial class Notifier {
 		Topic.Updates => (new Said("Update"), 0x8B5CF6),
 		Topic.Installs => (new Said("Installing"), 0x8B5CF6),
 		Topic.Summary => (new Said("Daily summary"), 0xC8C8C8),
-		Topic.Social => (new Said("Profile comment"), 0x1ABC9C),
+		Topic.Social => (new Said("Friends & comments"), 0x1ABC9C),
 		Topic.Achievements => (new Said("Achievements"), 0xF1C40F),
 		Topic.Rep4Rep => (new Said("rep4rep"), 0x95A5A6),
 		_ => (new Said("nocat.farm"), 0xC8C8C8)
@@ -235,7 +235,19 @@ public static partial class Notifier {
 
 		for (int attempt = 0; attempt < 2; attempt++) {
 			using StringContent content = new(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-			using HttpResponseMessage r = await Http.PostAsync(url, content, ct).ConfigureAwait(false);
+			(HttpResponseMessage? sent, string error) = await TryPostAsync(url, content, ct).ConfigureAwait(false);
+
+			if (sent == null) {
+				if (attempt == 0) {
+					await Task.Delay(TimeSpan.FromSeconds(5), ct).ConfigureAwait(false);
+
+					continue;
+				}
+
+				return Unreachable(new Said("couldn't reach Discord ({0})", error), url, ref _discordWarnedFor, "discord");
+			}
+
+			using HttpResponseMessage r = sent;
 
 			if (r.IsSuccessStatusCode) {
 				_discordWarnedFor = "";
@@ -265,7 +277,7 @@ public static partial class Notifier {
 			}
 
 			string why = r.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Unauthorized
-				? new Said("the Discord webhook link doesn't work any more (HTTP {0}) - copy it again from the channel's Integrations settings", (int) r.StatusCode).ToString()
+				? new Said("webhook link dead (HTTP {0}) - copy it again from the channel", (int) r.StatusCode).ToString()
 				: new Said("Discord refused the message (HTTP {0})", (int) r.StatusCode).ToString();
 
 			if (_discordWarnedFor != url) {
@@ -277,6 +289,29 @@ public static partial class Notifier {
 		}
 
 		return (false, new Said("Discord kept saying slow down").ToString());
+	}
+
+	/// <summary>
+	/// One POST, or null and why when no answer came at all - no network, or nothing back within 20s. Thrown, that took
+	/// the whole batch with it (Telegram's copy too, when only Discord was down), said so only in Debug, and left the
+	/// test button blank.
+	/// </summary>
+	private static async Task<(HttpResponseMessage? Response, string Error)> TryPostAsync(string url, HttpContent content, CancellationToken ct) {
+		try {
+			return (await Http.PostAsync(url, content, ct).ConfigureAwait(false), "");
+		} catch (Exception e) when ((e is HttpRequestException or TaskCanceledException) && !ct.IsCancellationRequested) {
+			return (null, e.Message);
+		}
+	}
+
+	/// <summary>Said once until a message gets through again, not once per batch.</summary>
+	private static (bool Ok, string Why) Unreachable(Said why, string key, ref string warnedFor, string source) {
+		if (warnedFor != key) {
+			warnedFor = key;
+			Log.Warn(new Said("notifications: {0}", why), source);
+		}
+
+		return (false, why.ToString());
 	}
 
 	// ── Telegram ────────────────────────────────────────────────────────────
@@ -315,7 +350,19 @@ public static partial class Notifier {
 
 		for (int attempt = 0; attempt < 2; attempt++) {
 			using StringContent content = new(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-			using HttpResponseMessage r = await Http.PostAsync($"https://api.telegram.org/bot{token}/sendMessage", content, ct).ConfigureAwait(false);
+			(HttpResponseMessage? sent, string error) = await TryPostAsync($"https://api.telegram.org/bot{token}/sendMessage", content, ct).ConfigureAwait(false);
+
+			if (sent == null) {
+				if (attempt == 0) {
+					await Task.Delay(TimeSpan.FromSeconds(5), ct).ConfigureAwait(false);
+
+					continue;
+				}
+
+				return Unreachable(new Said("couldn't reach Telegram ({0})", error), token + G.TelegramChatId, ref _telegramWarnedFor, "telegram");
+			}
+
+			using HttpResponseMessage r = sent;
 			string body = await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
 			if (r.IsSuccessStatusCode) {
@@ -343,9 +390,9 @@ public static partial class Notifier {
 			}
 
 			string why = r.StatusCode == HttpStatusCode.Unauthorized
-				? new Said("the Telegram bot token doesn't work - copy it again from @BotFather").ToString()
+				? new Said("bot token rejected - copy it again from @BotFather").ToString()
 				: body.Contains("chat not found", StringComparison.OrdinalIgnoreCase)
-					? new Said("Telegram can't find that chat - send your bot a message, clear \"Telegram chat\" in Settings and it finds it again").ToString()
+					? new Said("chat not found - message your bot, then clear \"Telegram chat\"").ToString()
 					: new Said("Telegram refused the message (HTTP {0})", (int) r.StatusCode).ToString();
 
 			if (_telegramWarnedFor != token + G.TelegramChatId) {
@@ -377,7 +424,7 @@ public static partial class Notifier {
 		using HttpResponseMessage _ = r;
 
 		if (r.StatusCode == HttpStatusCode.Unauthorized) {
-			Log.Warn("notifications: the Telegram bot token doesn't work - copy it again from @BotFather", "telegram");
+			Log.Warn("Telegram token rejected - copy it again from @BotFather", "telegram");
 
 			return true;
 		}
@@ -394,7 +441,8 @@ public static partial class Notifier {
 		}
 
 		if (TelegramConnectLink is { } link) {
-			Log.Info(new Said("notifications: Telegram bot {0} found - to connect, open {1} and press Start (or press Connect Telegram in Settings, Notifications)", _botName, link), "telegram");
+			Log.Info(new Said("Telegram bot {0} found - press Connect Telegram in Settings", _botName), "telegram");
+			Log.Info(new Said("or open {0} and press Start", link), "telegram");
 		}
 
 		return true;

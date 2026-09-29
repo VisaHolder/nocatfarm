@@ -203,7 +203,7 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 			// whose switch is off is left for the owner - and taken after all if the switch is turned on later.
 			if (kind.Game ? !Bot.Cfg.AcceptGiftedGames : !Bot.Cfg.AcceptGifts) {
 				if (kind.Game && _pointedOut.Add(gid)) {
-					Log.Attention(new Said("{0} was gifted to this account - accept or decline it in Steam (AcceptGiftedGames is off)", Named(kind.Name)), Bot.Name);
+					Log.Attention(new Said("{0} was gifted - answer it in Steam (auto-accept is off)", Named(kind.Name)), Bot.Name);
 				}
 
 				continue;
@@ -372,10 +372,10 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 		Waiting what = _waiting.TryGetValue(key, out Waiting? w) ? w : new Waiting("", false);
 		Func<string> at = () => Fmt.Clock(due);
 
-		Log.Info(key.Kind == Kind.Card ? new Said("a Steam wallet gift card is waiting - accepting it around {0}", at)
-			: what.GiftedGame ? new Said("{0} was gifted to this account - adding it to the library around {1}", Named(what.Name), at)
-			: what.Name.Length > 0 ? new Said("a guest pass is waiting ({0}) - accepting it around {1}", what.Name, at)
-			: new Said("a guest pass is waiting - accepting it around {0}", at), Bot.Name);
+		Log.Info(key.Kind == Kind.Card ? new Said("wallet gift card waiting - accepting around {0}", at)
+			: what.GiftedGame ? new Said("{0} was gifted - adding it around {1}", Named(what.Name), at)
+			: what.Name.Length > 0 ? new Said("guest pass for {0} - accepting around {1}", what.Name, at)
+			: new Said("guest pass waiting - accepting around {0}", at), Bot.Name);
 	}
 
 	private static object Named(string name) => name.Length > 0 ? name : new Said("a game");
@@ -423,14 +423,14 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 			SteamApps.RedeemGuestPassResponseCallback answer = await job.ToTask().WaitAsync(TimeSpan.FromSeconds(30), ct).ConfigureAwait(false);
 
 			if (answer.Result != EResult.OK) {
-				Log.Info(what.GiftedGame ? new Said("couldn't add the gifted game {0} to the library - Steam said {1}", what.Name, answer.Result)
+				Log.Info(what.GiftedGame ? new Said("couldn't add gifted {0} - Steam said {1}", what.Name, answer.Result)
 					: new Said("couldn't accept a guest pass - Steam said {0}", answer.Result), Bot.Name);
 
 				return true;
 			}
 
 			if (what.GiftedGame) {
-				Log.Reward(new Said("added a gifted game to the library: {0}", what.Name), Bot.Name, topic: Topic.FreeStuff);
+				Log.Reward(new Said("gifted game added: {0}", what.Name), Bot.Name, topic: Topic.FreeStuff);
 			} else {
 				Log.Good(what.Name.Length > 0 ? new Said("accepted a guest pass: {0}", what.Name)
 					: answer.PackageID != 0 ? new Said("accepted a guest pass (package {0})", answer.PackageID) : new Said("accepted a guest pass"), Bot.Name);
@@ -475,7 +475,7 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 			new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/inventory/#pending_gifts"), ct).ConfigureAwait(false);
 
 		if ((answer != null) && SuccessOne().IsMatch(answer)) {
-			Log.Reward(what.Name.Length > 0 ? new Said("added a gifted game to the library: {0}", what.Name) : new Said("added a gifted game to the library"), Bot.Name, topic: Topic.FreeStuff);
+			Log.Reward(what.Name.Length > 0 ? new Said("gifted game added: {0}", what.Name) : new Said("added a gifted game to the library"), Bot.Name, topic: Topic.FreeStuff);
 
 			return true;
 		}

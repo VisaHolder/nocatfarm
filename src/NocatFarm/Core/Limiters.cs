@@ -210,7 +210,7 @@ public static class Limiters {
 		}
 
 		try {
-			Log.Warn(new Said("Steam is rate-limiting logins - every account waits {0}m", LoginCooldownMinutes));
+			Log.Warn(new Said("Steam is rate-limiting logins - all accounts wait {0}m", LoginCooldownMinutes));
 			await Task.Delay(TimeSpan.FromMinutes(LoginCooldownMinutes), ct).ConfigureAwait(false);
 		} catch (OperationCanceledException) {
 			// shutting down

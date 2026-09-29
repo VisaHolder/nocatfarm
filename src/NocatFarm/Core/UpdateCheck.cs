@@ -110,6 +110,7 @@ public static class UpdateCheck {
 			await LookAsync().ConfigureAwait(false);
 			RemindIfDue();
 			AutoInstallIfDue(mgr);
+			QueuedInstallIfDue(mgr);
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't check for updates: {0}", e.Message));
 		} finally {
@@ -130,8 +131,8 @@ public static class UpdateCheck {
 		_remindedAt = DateTime.UtcNow;
 		// The log only: an hourly pop-up (or Telegram message) would be spam - the first one already said it there.
 		Log.Attention(SelfUpdate.Supported
-				? new Said("reminder: nocat.farm {0} is out - you have {1}. 'update accept' installs it and restarts; 'update skip' skips this version", Available, Build.Version)
-				: new Said("reminder: nocat.farm {0} is out - you have {1}. 'update' says how to install it here; 'update skip' skips this version", Available, Build.Version),
+				? new Said("reminder: nocat.farm {0} is out - 'update accept' installs it", Available)
+				: new Said("reminder: nocat.farm {0} is out - 'update' shows how", Available),
 			UpdateBrief(Available), UpdateTitle(Available), Topic.Updates, loud: false);
 	}
 
@@ -167,9 +168,12 @@ public static class UpdateCheck {
 	/// <param name="quiet">Somebody asked - the 'update' command or the dashboard's button - and gets the answer right
 	/// there. Announcing "a new version is out" on top of that sent a Telegram message saying so at the very moment
 	/// 'update accept' was installing it.</param>
-	public static async Task LookAsync(CancellationToken ct = default, bool force = false, bool quiet = false) {
-		if (!force && (!Live.Global.CheckForUpdates || (DateTime.UtcNow - _lastLooked < TimeSpan.FromHours(Math.Clamp(Live.Global.UpdateCheckHours, 1, 24))))) {
-			return;
+	/// <returns>Null when GitHub answered (or it wasn't time to ask), otherwise why it couldn't be asked.</returns>
+	public static async Task<string?> LookAsync(CancellationToken ct = default, bool force = false, bool quiet = false) {
+		TimeSpan every = TimeSpan.FromHours(Math.Clamp(Live.Global.UpdateCheckHours, 1, 24));
+
+		if (!force && (!Live.Global.CheckForUpdates || (DateTime.UtcNow - _lastLooked < every))) {
+			return null;
 		}
 
 		_lastLooked = DateTime.UtcNow;
@@ -185,7 +189,7 @@ public static class UpdateCheck {
 			if (!IsNewer(tag.TrimStart('v', 'V'), Build.Version)) {
 				Available = null;
 
-				return;
+				return null;
 			}
 
 			if (Available != tag) {
@@ -196,18 +200,26 @@ public static class UpdateCheck {
 			// Said once when it's first seen; after that the hourly reminder carries it.
 			if ((Available != tag) && !quiet && !IsSkipped(tag)) {
 				Log.Attention(SelfUpdate.Supported
-						? new Said("nocat.farm {0} is out - you have {1}. {2}  -  'update accept' installs it and restarts; 'update skip' skips this version", tag, Build.Version, page)
-						: new Said("nocat.farm {0} is out - you have {1}. {2}  -  'update' says how to install it here; 'update skip' skips this version", tag, Build.Version, page),
+						? new Said("nocat.farm {0} is out - 'update accept' installs it", tag)
+						: new Said("nocat.farm {0} is out - 'update' shows how to install it", tag),
 					UpdateBrief(tag), UpdateTitle(tag), Topic.Updates);
+				Log.Info(new Said("'update skip' skips it · {0}", page));
 				_remindedAt = DateTime.UtcNow;
 			}
 
 			Available = tag;
 			Url = page;
+
+			return null;
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't check for updates: {0}", e.Message));
+
+			// Asked again in 15 minutes, not after the full gap: a blip just after starting hid a new release for a day.
+			_lastLooked = DateTime.UtcNow - every + TimeSpan.FromMinutes(15);
+
+			return e.Message;
 		}
 	}
 
@@ -264,14 +276,83 @@ public static class UpdateCheck {
 		if (busy is { } wait) {
 			if (DateTime.UtcNow - _heldLoggedAt > TimeSpan.FromHours(1)) {
 				_heldLoggedAt = DateTime.UtcNow;
-				Log.Info(new Said("update by itself: waiting - {0} has {1} trade offer(s) and {2} gift(s) still waiting their turn", wait.Account, wait.Trades, wait.Gifts));
+				Log.Info(new Said("auto-update waiting: {0} has {1} offer(s), {2} gift(s) queued", wait.Account, wait.Trades, wait.Gifts));
 			}
 
 			return;
 		}
 
 		_autoTriedAt = DateTime.UtcNow;
-		Log.Good(new Said("installing nocat.farm {0} by itself - it's a quiet time (Update by itself)", Available));
+		Log.Good(new Said("installing {0} by itself - quiet time (Update by itself)", Available));
+
+		_ = Task.Run(async () => {
+			try {
+				await SelfUpdate.ApplyAsync(CancellationToken.None, byItself: true).ConfigureAwait(false);
+			} catch (Exception e) {
+				Log.Error(new Said("update failed: {0} - nothing was changed", e.Message));
+			}
+		});
+	}
+
+	/// <summary>
+	/// A version 'update accept' was asked for, waiting for the accounts to be asleep ("When I say update"). Null when
+	/// nothing is waiting. Forgotten on restart - asking again is one command.
+	/// </summary>
+	public static string? Queued { get; private set; }
+
+	private static DateTime _queuedSaidAt = DateTime.MinValue;
+
+	/// <summary>'update accept' with "When I say update" set to wait: remember it, and say how it will go.</summary>
+	public static Said Queue(string tag) {
+		Queued = tag;
+		_queuedSaidAt = DateTime.UtcNow;
+
+		return new Said("{0} will install when your accounts are asleep (When I say update) - 'update now' installs it right away", tag);
+	}
+
+	/// <summary>
+	/// A queued update, installed at the first quiet moment: no human-mode account awake, nobody playing on an account,
+	/// no trade or gift waiting. Robot accounts that stay on all night don't count - with none in human mode at all,
+	/// "asleep" means the night hours of Update by itself.
+	/// </summary>
+	public static void QueuedInstallIfDue(BotManager mgr) {
+		GlobalConfig g = Live.Global;
+
+		if ((Queued == null) || !SelfUpdate.Supported || SelfUpdate.Busy) {
+			return;
+		}
+
+		// A newer version came out while it waited: that's the one to install.
+		if ((Available != null) && (Available != Queued)) {
+			Queued = Available;
+		}
+
+		bool anyHuman = mgr.All.Any(static b => b.Cfg.Enabled && b.Cfg.LegitMode);
+		bool quietNow = mgr.All.All(static b => !b.IsOnline || (!b.PlayingBlocked && !(b.Cfg.LegitMode && Modules.HumanMode.UpAndAbout(b))));
+
+		if (!anyHuman) {
+			int hour = DateTime.Now.Hour;
+			int from = Math.Clamp(g.AutoUpdateFromHour, 0, 23);
+			int until = Math.Clamp(g.AutoUpdateUntilHour, 0, 24);
+			quietNow &= from < until ? (hour >= from) && (hour < until) : (hour >= from) || (hour < until);
+		}
+
+		bool waitingTurn = mgr.All.Where(static b => b.IsOnline).Any(static b =>
+			((BotManager.ModuleOf<Modules.Trading>(b)?.WaitingCount ?? 0) + (BotManager.ModuleOf<Modules.Gifts>(b)?.WaitingCount ?? 0)) > 0);
+
+		if (!quietNow || waitingTurn) {
+			// Now and then, so a version that hasn't gone in yet isn't a mystery.
+			if (DateTime.UtcNow - _queuedSaidAt > TimeSpan.FromHours(3)) {
+				_queuedSaidAt = DateTime.UtcNow;
+				Log.Info(new Said("{0} waits for bedtime - 'update now' installs it now", Queued));
+			}
+
+			return;
+		}
+
+		string tag = Queued;
+		Queued = null;
+		Log.Good(new Said("installing {0} - the accounts are asleep", tag));
 
 		_ = Task.Run(async () => {
 			try {

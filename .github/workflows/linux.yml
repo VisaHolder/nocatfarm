@@ -101,8 +101,10 @@ jobs:
       - name: run it like docker-compose.example.yml
         run: |
           mkdir -p data/config data/logs && chmod 777 data/config data/logs
+          # a pretend ArchiSteamFarm folder, mounted read-only where the compose example puts one
+          mkdir -p asf/config && echo '{}' > asf/config/ASF.json && echo '{"SteamLogin":"not_a_real_login","Enabled":true}' > asf/config/pretend.json
           docker run -d --name nf --init -e NOCATFARM_WEB_PASSWORD=a-long-test-password-123 -e TZ=Europe/London \
-            -p 7242:7242 -v "$PWD/data/config:/data/config" -v "$PWD/data/logs:/data/logs" nocatfarm:test
+            -p 7242:7242 -v "$PWD/data/config:/data/config" -v "$PWD/data/logs:/data/logs" -v "$PWD/asf:/import/asf:ro" nocatfarm:test
           for i in $(seq 1 60); do curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:7242/api/ping | grep -q 200 && break; sleep 1; done
           docker logs nf | tail -n 20
 
@@ -114,6 +116,12 @@ jobs:
           curl -sf http://127.0.0.1:7242/api/status -H "Authorization: Bearer $token" | head -c 200; echo
           code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:7242/api/login -H 'Content-Type: application/json' -d '{"Password":"wrong"}')
           echo "wrong password: $code"; [ "$code" = "401" ]
+
+      - name: a mounted ArchiSteamFarm folder is found by the dashboard's import
+        run: |
+          token=$(curl -sf -X POST http://127.0.0.1:7242/api/login -H 'Content-Type: application/json' -d '{"Password":"a-long-test-password-123"}' | sed -E 's/.*"token":"([^"]+)".*/\1/')
+          curl -sf http://127.0.0.1:7242/api/import/tools -H "Authorization: Bearer $token" | tee tools.json | head -c 400; echo
+          python3 -c "import json; t=[x for x in json.load(open('tools.json'))['Tools'] if x['Id']=='asf'][0]; print(t); assert t['Found'] and t['Path'].startswith('/import/asf') and t['Accounts']==1"
 
       - name: settings and logs land in the mounted folders
         run: |

@@ -220,7 +220,7 @@ public sealed class WebSession : IDisposable {
 					TimeSpan shut = Limiters.NoteRateLimited(url.Host);
 
 					if (shut > TimeSpan.Zero) {
-						Log.Warn(new Said("Steam is rate-limiting {0} - every account stays off it for {1}", url.Host, Fmt.Hm((int) shut.TotalMinutes)), _bot.Name);
+						Log.Warn(new Said("{0} is rate-limiting - all accounts wait {1}", url.Host, Fmt.Hm((int) shut.TotalMinutes)), _bot.Name);
 					}
 
 					return null;
@@ -309,7 +309,7 @@ public sealed class WebSession : IDisposable {
 					TimeSpan shut = Limiters.NoteRateLimited(url.Host);
 
 					if (shut > TimeSpan.Zero) {
-						Log.Warn(new Said("Steam is rate-limiting {0} - every account stays off it for {1}", url.Host, Fmt.Hm((int) shut.TotalMinutes)), _bot.Name);
+						Log.Warn(new Said("{0} is rate-limiting - all accounts wait {1}", url.Host, Fmt.Hm((int) shut.TotalMinutes)), _bot.Name);
 					}
 
 					return null;
@@ -396,7 +396,7 @@ public sealed class WebSession : IDisposable {
 				string? body = await SendAsync(new Uri(service, "/parental/ajaxunlock"), form, service, false, ct, true).ConfigureAwait(false);
 
 				if (body == null || body.Contains("\"success\":false", StringComparison.Ordinal)) {
-					Log.Warn(new Said("Family View PIN wasn't accepted by {0} - card farming may see nothing", service.Host), _bot.Name);
+					Log.Warn(new Said("{0} rejected the Family View PIN - farming may see nothing", service.Host), _bot.Name);
 				}
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;

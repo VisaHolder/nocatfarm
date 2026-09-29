@@ -584,7 +584,7 @@ TrayIcon StartTray(BotManager mgr, Func<string> url, CancellationTokenSource cts
 		}
 	};
 
-	Log.Info("running in the notification area - right-click the icon for the menu");
+	Log.Info("running in the tray - right-click the icon for the menu");
 
 	return icon;
 }

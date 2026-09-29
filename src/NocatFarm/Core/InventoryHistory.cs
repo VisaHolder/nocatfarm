@@ -139,10 +139,25 @@ public static class InventoryHistory {
 			}
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't read the inventory history: {0}", e.Message));
+
+			// Moved aside, like the history files: the next save would write the new points over whatever it still held.
+			// If it can't even be moved, it isn't written over either.
+			try {
+				File.Move(Path, Path + ".bad", overwrite: true);
+			} catch (Exception move) when (move is IOException or UnauthorizedAccessException) {
+				_loadFailed = true;
+			}
 		}
 	}
 
+	/// <summary>The file is there but couldn't be read or moved aside - so it is never saved over this run.</summary>
+	private static bool _loadFailed;
+
 	public static void Save() {
+		if (_loadFailed) {
+			return;
+		}
+
 		try {
 			Dictionary<string, List<Point>> snapshot;
 

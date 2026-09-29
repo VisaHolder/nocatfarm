@@ -52,7 +52,7 @@ public readonly record struct BotStatus(
 				sitting = new Said("{0} left", Fmt.Hm((int) Math.Max(0, (until - DateTime.UtcNow).TotalMinutes)));
 			}
 		} else if (bot.DropsFirstActive && !bot.Paused) {
-			doing = new Said("going for {0}: {1} of {2} card drop(s), in its normal sittings", GameNames.Of(bot.DropsFirstApp), bot.DropsFirstGot, bot.DropsFirstWant);
+			doing = new Said("going for {0}: {1} of {2} card drop(s)", GameNames.Of(bot.DropsFirstApp), bot.DropsFirstGot, bot.DropsFirstWant);
 			playing = bot.IsFarming;
 		} else if (bot.Paused) {
 			doing = new Said("paused");
@@ -70,7 +70,7 @@ public readonly record struct BotStatus(
 			playing = human.PlayingNow != 0;
 
 			if (total > 0) {
-				sitting = new Said("{0} of {1}", Fmt.Hm(done), Fmt.Hm(total));
+				sitting = new Said("{0}/{1}", Fmt.Hm(done), Fmt.Hm(total));
 			} else if (human.NextChange is { } next) {
 				int left = (int) Math.Max(0, (next - DateTime.UtcNow).TotalMinutes);
 				sitting = left > 0 ? new Said("{0} to go", Fmt.Hm(left)) : new Said("any moment");
@@ -80,7 +80,7 @@ public readonly record struct BotStatus(
 			dayTotal = human.TargetMinutesToday;
 
 			if (dayTotal > 0) {
-				today = new Said("{0} of {1} today", Fmt.Hm(dayDone), Fmt.Hm(dayTotal));
+				today = new Said("{0}/{1} today", Fmt.Hm(dayDone), Fmt.Hm(dayTotal));
 			}
 		} else if (bot.IsFarming) {
 			doing = new Said("farming trading cards");

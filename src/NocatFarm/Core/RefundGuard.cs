@@ -147,7 +147,7 @@ public sealed class RefundGuard(Bot bot) {
 				}
 
 				if (borrowed.Count > 0) {
-					Log.Info(new Said("leaving {0} alone - only just shared into this account's library", Names(borrowed)), bot.Name);
+					Log.Info(new Said("leaving {0} alone - only just shared with this account", Names(borrowed)), bot.Name);
 				}
 
 				if (freed.Count > 0) {
@@ -162,7 +162,7 @@ public sealed class RefundGuard(Bot bot) {
 			// A grind started before the game was bought - or before protection was switched on - is the one way
 			// a held game can already be running. Hours is precisely what a grind puts on it, so it stops here.
 			if ((bot.GrindGame != 0) && Holds(bot.GrindGame)) {
-				Log.Warn(new Said("stopping the {0} grind - that game is inside its refund window", Name(bot.GrindGame)), bot.Name);
+				Log.Warn(new Said("stopping the {0} grind - it's still refundable", Name(bot.GrindGame)), bot.Name);
 				bot.StopGrind();
 			}
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {

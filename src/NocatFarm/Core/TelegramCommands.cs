@@ -82,7 +82,8 @@ public static partial class Notifier {
 					if (body.Contains("getUpdates request", StringComparison.OrdinalIgnoreCase)) {
 						if (_pollerWarnedFor != token) {
 							_pollerWarnedFor = token;
-							Log.Warn(new Said("notifications: another program is reading this Telegram bot's messages right now (maybe a second copy of nocat.farm) - only one can, so commands may not arrive until it stops"), "telegram");
+							Log.Warn(new Said("Telegram bot in use elsewhere - commands may not arrive"), "telegram");
+							Log.Debug(new Said("only one program can read a Telegram bot - a second nocat.farm?"), "telegram");
 						}
 
 						await Task.Delay(30_000, ct).ConfigureAwait(false);
@@ -95,7 +96,8 @@ public static partial class Notifier {
 
 					if (_webhookWarnedFor != token) {
 						_webhookWarnedFor = token;
-						Log.Warn(new Said("notifications: this Telegram bot is already connected to something else (a webhook), so nocat.farm can't read its messages - make a new bot with @BotFather just for nocat.farm, or put your chat ID in \"Telegram chat\""), "telegram");
+						Log.Warn(new Said("Telegram bot has a webhook - nocat.farm can't read it"), "telegram");
+						Log.Info(new Said("make a new bot with @BotFather, or fill in \"Telegram chat\""), "telegram");
 					}
 
 					continue;
@@ -186,7 +188,7 @@ public static partial class Notifier {
 
 		G.TelegramChatId = chatId;
 		ConfigStore.SaveGlobal(G);
-		Log.Good(new Said("notifications: Telegram connected - they'll go to {0}", name.Length > 0 ? name : chatId), "telegram");
+		Log.Good(new Said("Telegram connected - notifications go to {0}", name.Length > 0 ? name : chatId), "telegram");
 
 		await PostTelegramAsync($"{Header()}\n<b>{Html(new Said("Connected.").ToString())}</b> "
 			+ Html(new Said("Notifications you picked will arrive here. Change what gets sent under Settings, Notifications.").ToString())
@@ -207,6 +209,7 @@ public static partial class Notifier {
 			("2fa", new Said("Steam Guard codes")),
 			("stats", new Said("Cards and comments by hour")),
 			("dashboard", new Said("Open the dashboard on your phone")),
+			("anywhere", new Said("Open the dashboard from anywhere: on, off, or the link")),
 			("update", new Said("Check for an update")),
 			("help", new Said("Every command"))
 		];

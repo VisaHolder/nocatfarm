@@ -1,9 +1,9 @@
 # nocat.farm plugins
 
-**A plugin is one DLL file that adds your own commands and features to nocat.farm.** You write a small C# class,
-build it, drop the DLL in the `plugins` folder, and it runs.
+A plugin is one DLL that adds your own commands and features to nocat.farm. You write a small C# class, build it,
+drop the DLL in the `plugins` folder, and it runs.
 
-Plugins are for people who can write a little C#. If you just want to use nocat.farm, you don't need any of this.
+You need to be able to write a little C#. If you just want to use nocat.farm, you can skip this page.
 
 **Contents** · [Your first plugin](#your-first-plugin) · [A bigger example](#a-bigger-example-card-tally) ·
 [What a plugin can do](#what-a-plugin-can-do) · [Cheat sheet](#cheat-sheet) · [Rules](#rules) ·
@@ -101,14 +101,14 @@ Hi! 2 of your 3 accounts are online.
 
 The next time a card drops, the log shows `[plugin] farm1 got a card! 3 left in that game.`
 
-That's the whole loop: **write, build, copy, restart.**
+From here it's the same loop every time: write, build, copy, restart.
 
 ---
 
 ## A bigger example: card tally
 
-This one counts every card each account drops, **remembers the count after a restart**, has a **setting** on the
-dashboard, and adds a `tally` command.
+This one counts every card each account drops and remembers the count across restarts. It also has a setting on
+the dashboard and adds a `tally` command.
 
 ```csharp
 using System.Text.Json;
@@ -185,7 +185,7 @@ farm1: 5 cards
 myaccount: 1 card
 ```
 
-Both examples on this page build against nocat.farm as it is now.
+Both examples on this page build against the current nocat.farm.
 
 ---
 
@@ -199,7 +199,7 @@ Both examples on this page build against nocat.farm as it is now.
 | **Add** | New commands, and settings that get real controls on the dashboard's Plugins page. |
 | **Remember** | Save its own data so it survives restarts and updates. |
 
-What it **can't** do through the API: reach the Steam connection, the login tokens or the config files. Anything
+What it can't do through the API is reach the Steam connection, the login tokens or the config files. Anything
 that changes something goes through a command, so it's checked and logged exactly like a command you typed.
 
 ---
@@ -233,46 +233,52 @@ Everything your plugin gets is on `host`, the `IPluginHost` passed to `OnLoadAsy
 - `<Name>.settings.json` - the values of your settings, as changed on the Plugins page
 
 The full, commented contract is one file: [`src/NocatFarm/Plugins/IPlugin.cs`](src/NocatFarm/Plugins/IPlugin.cs).
-Every built-in command is in [the guide](docs/GUIDE.md#commands).
+Every built-in command is in [the command list](docs/COMMANDS.md).
 
 ---
 
 ## Rules
 
-- **Plugins live in the `plugins` folder**, next to `nocatFarm.exe` (or inside the `--path` folder if you use
-  one). Top level only - DLLs in subfolders are not loaded, but your plugin's own dependencies can sit next to it.
-- **Plugins load once, when the app starts,** before any account signs in - so subscribe to events in
-  `OnLoadAsync` and you won't miss the first ones. Added or changed a plugin? Restart.
-- **`OnLoadAsync` has 15 seconds.** Start-up waits for it, so a plugin that takes longer is left out and logged.
-  Don't wait on slow network calls there - start a task instead.
-- **Each plugin has its own on/off switch** on the dashboard's Plugins page.
-- **You can't take a command that already exists.** A plugin trying to add `stop` (or any built-in name or
-  alias) gets a warning in the log, and its version is ignored.
-- **A broken plugin only breaks itself.** A plugin that fails to load is left out, with the reason in the log. An
-  event handler that throws is logged and skipped - the plugin stays loaded and gets the next event.
-- **Event handlers run on nocat.farm's own threads.** Keep them quick, and start a task for anything slow.
-- **Several plugins in one DLL** is fine - every `INocatPlugin` class in it loads.
-- **Built against an older nocat.farm?** If the app can't read your DLL, the log says it was probably built
-  against a different version. Rebuild against the current `nocatFarm.dll`.
+Plugins live in the `plugins` folder next to `nocatFarm.exe`, or inside the `--path` folder if you use one. Only the
+top level is loaded, so DLLs in subfolders are ignored, but your plugin's own dependencies can sit next to it.
+Several plugins in one DLL is fine; every `INocatPlugin` class in it loads.
+
+Plugins load once, when the app starts, before any account signs in. Subscribe to events in `OnLoadAsync` and you
+won't miss the first ones. If you add or change a plugin, restart.
+
+`OnLoadAsync` gets 15 seconds. Start-up waits for it, so a plugin that takes longer is left out and logged. Don't
+wait on slow network calls there; start a task instead. The same goes for event handlers, which run on
+nocat.farm's own threads: keep them quick.
+
+A few more things worth knowing:
+
+- You can't take a command that already exists. A plugin that tries to add `stop`, or any built-in name or alias,
+  gets a warning in the log and its version is ignored.
+- A broken plugin only breaks itself. One that fails to load is left out with the reason in the log, and an event
+  handler that throws is logged and skipped while the plugin stays loaded.
+- Each plugin has its own on/off switch on the dashboard's Plugins page.
+- If the app can't read your DLL, the log says it was probably built against a different version. Rebuild against
+  the current `nocatFarm.dll`.
 
 ## Is it safe?
 
-A plugin runs **inside nocat.farm**, where your Steam sessions are. The API is kept narrow on purpose, but a
-determined DLL could still read anything the app can - so **only run plugins you wrote yourself, or from someone you
-trust.** That's why plugins are off until you switch them on.
+A plugin runs inside nocat.farm, where your Steam sessions are. The API is kept narrow on purpose, but a determined
+DLL could still read anything the app can. So only run plugins you wrote yourself or got from someone you trust.
+That's why plugins are off until you switch them on.
 
 ## Sharing your plugin
 
-- Ship **just your DLL** (plus any NuGet libraries it uses). Never ship `nocatFarm.dll` with it -
-  `<Private>false</Private>` keeps it out.
-- Each plugin loads on its own, so two plugins can use different versions of the same library.
-- Tell people what it does, what settings it has, and why they can trust it - they're running your code next to
-  their Steam accounts.
-- **Licence it however you like**, even closed-source or commercial. nocat.farm is [MPL-2.0](LICENSE), which only
-  asks you to share changes to nocat.farm's *own* files - your plugin is your own files.
+Ship just your DLL, plus any NuGet libraries it uses. Never ship `nocatFarm.dll` with it; `<Private>false</Private>`
+keeps it out. Each plugin loads on its own, so two plugins can use different versions of the same library.
+
+Tell people what it does, what settings it has, and why they can trust it. They're running your code next to their
+Steam accounts.
+
+Licence it however you like, closed-source or commercial included. nocat.farm is [MPL-2.0](LICENSE), which only asks
+you to share changes to nocat.farm's own files, and your plugin is your own files.
 
 ## Not supported: ASF plugins
 
 ArchiSteamFarm plugins can't run in nocat.farm. They're built against ASF's own code (its `Bot` type, its config and
-its internals), and none of that exists here. **Port it instead** - most ASF plugins are a few hundred lines, and
-against this API they usually come out shorter.
+its internals), and none of that exists here. Porting is usually easy, though. Most ASF plugins are a few hundred
+lines, and against this API they tend to come out shorter.

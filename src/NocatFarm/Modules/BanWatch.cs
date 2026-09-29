@@ -133,7 +133,7 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 		if ((now.Economy != before.Economy) && (now.Economy is "banned" or "probation")) {
 			yield return now.Economy == "banned"
 				? new Said("NEW trade ban - this account can't trade or use the market")
-				: new Said("trade probation - Steam has put this account on trade probation");
+				: new Said("NEW trade probation - trading is restricted");
 		}
 	}
 
@@ -151,7 +151,7 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 
 		Bot.Cfg.InventoryIgnoreGames.AddRange(added);
 		ConfigStore.SaveBot(Bot.Name, Bot.Cfg);
-		Log.Info(new Said("banned in {0} - its items are left out of trades and the inventory value from now on (cards still trade)",
+		Log.Info(new Said("banned in {0} - skipping its items (cards still trade)",
 			string.Join(", ", added.Select(GameNames.Of))), Bot.Name);
 	}
 

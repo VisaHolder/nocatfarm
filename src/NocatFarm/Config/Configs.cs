@@ -164,6 +164,10 @@ public sealed class GlobalConfig {
 
 	public bool DiscordShowTimer { get; set; } = true;
 
+	/// <summary>What the card's second line counts when account names are off: 0 cards today, 1 hours in the past
+	/// week, 2 hours in the past month.</summary>
+	public int DiscordSecondLine { get; set; } = 1;
+
 	/// <summary>The colour of "telegram" and "discord" in the log, from the same palette as the accounts'.</summary>
 	public int TelegramLogColour { get; set; } = 6;
 
@@ -239,6 +243,9 @@ public sealed class GlobalConfig {
 
 	/// <summary>0 = say a new version is out; 1 = install it by itself at a quiet time (see UpdateCheck.AutoInstallIfDue).</summary>
 	public int AutoUpdate { get; set; }
+
+	/// <summary>'update accept' and the Update button: 0 = install right away; 1 = wait until the accounts are asleep (see UpdateCheck.QueuedInstallIfDue).</summary>
+	public int UpdateWhenAsked { get; set; }
 
 	public int AutoUpdateFromHour { get; set; } = 3;
 
@@ -692,17 +699,26 @@ public static class ConfigStore {
 	/// <summary>The global config didn't load, so the app is on defaults and must not save them over the file.</summary>
 	private static bool _globalBroken;
 
+	private static bool _brokenSaveSaid;
+
 	/// <summary>
 	/// Saves come from the window, the dashboard, the console and the modules, on their own threads. One at a time,
 	/// and whole-or-nothing: a crash half way through a plain write left a truncated file that didn't load next time.
 	/// </summary>
 	private static readonly Lock SaveGate = new();
 
-	public static void SaveGlobal(GlobalConfig cfg) {
+	/// <returns>False when nothing reached the disk, so a caller that told somebody "saved" can say otherwise.</returns>
+	public static bool SaveGlobal(GlobalConfig cfg) {
 		if (_globalBroken) {
 			Log.Debug("config: not saving nocatFarm.json - it didn't load, and saving now would put defaults over it");
 
-			return;
+			// Once, in plain words, the first time a change is lost this way - the warning at start has long scrolled by.
+			if (!_brokenSaveSaid) {
+				_brokenSaveSaid = true;
+				Log.Warn(new Said("settings not saved - {0} didn't load; fix it or delete it", Path.GetFileName(GlobalPath)));
+			}
+
+			return false;
 		}
 
 		try {
@@ -723,8 +739,12 @@ public static class ConfigStore {
 				onDisk.WebProxyPassword = Secrets.Protect(cfg.WebProxyPassword, "global");
 				AtomicFile.Write(GlobalPath, JsonSerializer.Serialize(onDisk, Json));
 			}
+
+			return true;
 		} catch (Exception e) {
 			Log.Warn(new Said("config: couldn't save global config: {0}", e.Message));
+
+			return false;
 		}
 	}
 
@@ -755,7 +775,7 @@ public static class ConfigStore {
 		}
 
 		cfg.AchievementMaxCompletionPct = 90;
-		Log.Info("achievement ceiling is one figure now, not one per game - set to 90%", name);
+		Log.Info("achievement ceiling is one figure now: 90%", name);
 
 		return true;
 	}
@@ -772,7 +792,7 @@ public static class ConfigStore {
 
 		cfg.FarmOnlyWhileAsleep = false;
 		cfg.FarmCardsWhen = Modules.FarmWhen.Night;
-		Log.Info("\"only farm cards while asleep\" is now \"when to farm cards: only at night\"", name);
+		Log.Info("setting moved: when to farm cards = only at night", name);
 
 		return true;
 	}
@@ -887,7 +907,8 @@ public static class ConfigStore {
 		return bots;
 	}
 
-	public static void SaveBot(string name, BotConfig cfg) {
+	/// <returns>False when nothing reached the disk.</returns>
+	public static bool SaveBot(string name, BotConfig cfg) {
 		try {
 			Directory.CreateDirectory(ConfigDir);
 
@@ -899,8 +920,12 @@ public static class ConfigStore {
 			lock (SaveGate) {
 				AtomicFile.Write(Path.Combine(ConfigDir, name + ".json"), JsonSerializer.Serialize(onDisk, Json));
 			}
+
+			return true;
 		} catch (Exception e) {
 			Log.Warn(new Said("config: couldn't save {0}: {1}", name, e.Message));
+
+			return false;
 		}
 	}
 

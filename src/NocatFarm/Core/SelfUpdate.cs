@@ -69,7 +69,7 @@ public static class SelfUpdate {
 	/// <summary>
 	/// Is this release asset the zip for this machine?
 	///
-	/// The Windows zip keeps the plain name it has always had (nocat.farm-v1.3.9.zip); the Linux ones carry their
+	/// The Windows zip has no platform in its name (nocat.farm-v1.3.9.zip, nocat.farm-v1.4.9-portable.zip); the Linux ones carry their
 	/// platform after an underscore (nocat.farm-v1.3.9_linux-x64.zip). The underscore is load-bearing: GitHub lists
 	/// a release's files alphabetically, and every copy up to 1.3.8 installs simply the FIRST .zip in that list.
 	/// "_" sorts after the "." of ".zip", so the Windows zip stays first and those copies keep updating properly -
@@ -159,7 +159,7 @@ public static class SelfUpdate {
 					UpdateCheck.Skipped = bad;
 				}
 
-				Fail(new Said("update undone: {0} didn't start properly, so {1} was put back - nothing else was changed. {0} is skipped now; 'update accept' tries it again", bad, Build.Version));
+				Fail(new Said("update undone: {0} didn't start, back on {1} - 'update accept' retries", bad, Build.Version));
 
 				return;
 			}
@@ -181,7 +181,7 @@ public static class SelfUpdate {
 			}
 
 			if (p[1] == Build.Version) {
-				Log.Good(new Said("update: done - now on {1} (was {0}) · downloaded {2}MB in {3}s", p[0], p[1], p[2], p[3]));
+				Log.Good(new Said("updated {0} → {1} · {2}MB in {3}s", p[0], p[1], p[2], p[3]));
 
 				string notes = "";
 
@@ -204,14 +204,14 @@ public static class SelfUpdate {
 				// The swap put every file back the way it was before starting this version again, so "nothing was
 				// changed" is true - see SwapScript.
 				Fail(swapCode.StartsWith("backup", StringComparison.Ordinal)
-					? new Said("update failed: couldn't make a safety copy of the current files first (copy error {0}) - is the disk full? Still on {1}, nothing was changed", swapCode[6..].Trim(), Build.Version)
+					? new Said("update failed: backup copy error {0} - disk full? Nothing changed", swapCode[6..].Trim())
 					// robocopy adds flags together: 8 and up with 16 unset means some files failed (in use, access
 					// denied); 16 and up means it couldn't work in the folder at all. 11 = 8 + extra files + copied.
 					: int.TryParse(swapCode, out int rc) && (rc is >= 8 and < 16)
-						? new Said("update failed: the new files couldn't be copied in - some were in use (another copy of nocat.farm, or an antivirus scan?). Still on {0}, nothing was changed - try 'update accept' again", Build.Version)
-						: new Said("update failed: the new files couldn't be copied into this folder (copy error {0}) - is it read-only or out of space? Still on {1}, nothing was changed", swapCode, Build.Version));
+						? new Said("update failed: files in use (a 2nd copy? antivirus?) - try again")
+						: new Said("update failed: copy error {0} (read-only? disk full?) - nothing changed", swapCode));
 			} else {
-				Fail(new Said("update failed: {0} didn't start after the download - still on {1}. Try 'update accept' again, or get it from the releases page", p[1], Build.Version));
+				Fail(new Said("update failed: {0} didn't start - still on {1}, try again", p[1], Build.Version));
 			}
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't read the update note: {0}", e.Message));
@@ -314,8 +314,8 @@ public static class SelfUpdate {
 		int secs = online.Count == 0 ? 10 : Math.Clamp(12 + (online.Count * 7) + Rng.Next(0, 10), 15, 120);
 
 		Log.Good(online.Count > 0
-			? new Said("update: {0} is downloaded and ready - updating in {1}s, signing the accounts out one at a time first", tag, secs)
-			: new Said("update: {0} is downloaded and ready - updating in {1}s", tag, secs));
+			? new Said("update: {0} ready - signing accounts out, restart in {1}s", tag, secs)
+			: new Said("update: {0} ready - restarting in {1}s", tag, secs));
 
 		// Random moments, at least 3s apart, all done 3s before the restart.
 		List<int> at = [];
@@ -343,8 +343,9 @@ public static class SelfUpdate {
 				stopping.Add(b.StopAsync(graceful: b.Cfg.LegitMode));
 			}
 
-			// The countdown in the log too, not only on the dashboard: every 10s, then the last 5.
-			if ((left < secs) && (((left % 10) == 0) || (left <= 5))) {
+			// The countdown in the log too, not only on the dashboard: every 10s, and once at 5s. A line a second
+			// for the last five was a wall of near-identical lines right under the sign-out ones.
+			if ((left < secs) && (((left % 10) == 0) || (left == 5))) {
 				Log.Info(new Said("update: updating in {0}s", left));
 			}
 
@@ -398,7 +399,7 @@ public static class SelfUpdate {
 			try {
 				json = await Http.GetStringAsync(Releases, ct).ConfigureAwait(false);
 			} catch (Exception e) when (e is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested) {
-				return Fail(new Said("update failed: couldn't reach GitHub ({0}) - check the internet connection and try again. Nothing was changed", e.Message));
+				return Fail(new Said("update failed: couldn't reach GitHub ({0}) - nothing changed", e.Message));
 			}
 
 			using JsonDocument doc = JsonDocument.Parse(json);
@@ -408,7 +409,7 @@ public static class SelfUpdate {
 			string body = root.TryGetProperty("body", out JsonElement nb) ? nb.GetString() ?? "" : "";
 
 			if (tag.Length == 0) {
-				return Fail(new Said("update failed: GitHub didn't say which release is newest - try again in a few minutes. Nothing was changed"));
+				return Fail(new Said("update failed: GitHub gave no latest release - try again soon"));
 			}
 
 			if (!UpdateCheck.IsNewerThanThisBuild(tag)) {
@@ -434,7 +435,7 @@ public static class SelfUpdate {
 			}
 
 			if (url == null) {
-				return Fail(new Said("update failed: {0} has no download attached yet - try again later, or get it from {1}. Nothing was changed", tag, ReleasesPage));
+				return Fail(new Said("update failed: {0} has no download yet - try again later", tag));
 			}
 
 			// One folder per install: two copies updating at the same minute (both on "Update by itself") must never
@@ -464,6 +465,7 @@ public static class SelfUpdate {
 				byte[] buffer = new byte[81920];
 				long done = 0;
 				int lastTenth = 0;
+				DateTime lastSaid = DateTime.UtcNow;   // the first progress line only once it has taken 15 seconds
 				int read;
 
 				// A connection that dies without closing sends nothing, ever - and the read waited for ever with it,
@@ -485,9 +487,12 @@ public static class SelfUpdate {
 					int leftMin = leftSecs >= 60 ? (int) Math.Round(leftSecs / 60) : 0;
 					Progress = $"downloading {tag} - {pct}%";
 
-					// Into the log every tenth, so the window and the console show it moving too.
-					if ((pct / 10 > lastTenth) && (pct < 100)) {
-						lastTenth = pct / 10;
+					// Into the log on a slow download only - a quarter at a time, at least 15 seconds apart. Every tenth
+					// was eleven lines for a download that takes five seconds, most of a small window. The dashboard shows
+					// Progress live either way.
+					if ((pct / 25 > lastTenth) && (pct < 100) && (DateTime.UtcNow - lastSaid > TimeSpan.FromSeconds(15))) {
+						lastTenth = pct / 25;
+						lastSaid = DateTime.UtcNow;
 						Log.Good(leftMin > 0
 							? new Said("update: {0} {1}% · {2} of {3}MB · about {4}m left", Bar(pct), pct, done / 1048576, size / 1048576, leftMin)
 							: new Said("update: {0} {1}% · {2} of {3}MB", Bar(pct), pct, done / 1048576, size / 1048576));
@@ -495,26 +500,26 @@ public static class SelfUpdate {
 				}
 			}
 			} catch (OperationCanceledException) when (!ct.IsCancellationRequested) {
-				return Fail(new Said("update failed: the download stalled - nothing arrived for a minute or more. Check the connection and try again. Nothing was changed"));
+				return Fail(new Said("update failed: download stalled for a minute - try again"));
 			} catch (Exception e) when (e is HttpRequestException or IOException && !ct.IsCancellationRequested) {
-				return Fail(new Said("update failed: the download broke off ({0}) - check the connection and try again. Nothing was changed", e.Message));
+				return Fail(new Said("update failed: download broke off ({0}) - try again", e.Message));
 			}
 
 			// A truncated download extracts to a broken install. Check before touching anything.
 			long got = new FileInfo(zip).Length;
 
 			if ((size > 0) && (got != size)) {
-				return Fail(new Said("update failed: the download stopped at {0} of {1}MB - the connection probably dropped. Try again. Nothing was changed", got / 1048576, size / 1048576));
+				return Fail(new Said("update failed: download stopped at {0} of {1}MB - try again", got / 1048576, size / 1048576));
 			}
 
-			Log.Good(new Said("update: {0} 100% · {1}MB downloaded - unpacking", Bar(100), got / 1048576));
+			Log.Good(new Said("update: {0}MB downloaded - unpacking", got / 1048576));
 			Progress = "unpacking";
 			string staged = Path.Combine(work, "staged");
 
 			try {
 				ZipFile.ExtractToDirectory(zip, staged, true);
 			} catch (Exception e) when (e is IOException or InvalidDataException or UnauthorizedAccessException) {
-				return Fail(new Said("update failed: couldn't unpack the download ({0}) - is the disk full? Nothing was changed", e.Message));
+				return Fail(new Said("update failed: couldn't unpack ({0}) - disk full?", e.Message));
 			}
 
 			// Releases up to 1.2.6 put everything inside one nocat.farm/ folder; later ones are flat. Take either:
@@ -530,7 +535,7 @@ public static class SelfUpdate {
 			string exe = Path.Combine(payload, "nocatFarm.exe");
 
 			if (!File.Exists(exe)) {
-				return Fail(new Said("update failed: the download doesn't contain nocatFarm.exe - get it from {0}. Nothing was changed", ReleasesPage));
+				return Fail(new Said("update failed: the download has no nocatFarm.exe"));
 			}
 
 			// A note for the version that comes back up, so its first line can say what just happened. The window
@@ -573,7 +578,7 @@ public static class SelfUpdate {
 				// Plain ASCII for cmd - the release's own file names, which are ASCII.
 				File.WriteAllLines(Path.Combine(work, "added.txt"), added.Where(static r => r.All(static c => c < 128) && !r.Contains('"')));
 			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
-				return Fail(new Said("update failed: couldn't make a safety copy of the current version ({0}). Nothing was changed", e.Message));
+				return Fail(new Said("update failed: couldn't back up the current version ({0})", e.Message));
 			}
 
 			await File.WriteAllTextAsync(script, SwapScript(Environment.ProcessId), ct).ConfigureAwait(false);
@@ -585,7 +590,7 @@ public static class SelfUpdate {
 			await SignOutOneByOneAsync(tag, ct).ConfigureAwait(false);
 
 			Progress = "restarting into " + tag;
-			Log.Good(new Said("update: all accounts signed out - restarting into {0} now, back in a few seconds", tag));
+			Log.Good(new Said("update: all signed out - restarting into {0}", tag));
 
 			// Detached, and in its own window-less shell, so killing this process doesn't take it with us.
 			//
@@ -616,7 +621,7 @@ public static class SelfUpdate {
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
-			return Fail(new Said("update failed: {0} - nothing was changed. The release page is {1}", e.Message, ReleasesPage));
+			return Fail(new Said("update failed: {0} - nothing changed", e.Message));
 		} finally {
 			Busy = false;
 			Progress = "";

@@ -95,7 +95,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		int days = _rng.Next(lo, hi + 1);
 		int next = Math.Min(100, Math.Max(PlanFor(app).SwitchAtPct, pct) + _rng.Next(8, 16));
 		_plans[app] = new GamePlan(next, DateTime.UtcNow.AddDays(days).AddMinutes(_rng.Next(0, 24 * 60)).Ticks);
-		Log.Info(new Said("{0}: {1}% of its achievements - moving to another game, back to it in about {2} day(s)", GameNames.Of(app), pct, days), Bot.Name);
+		Log.Info(new Said("{0}: {1}% done - next game, back in ~{2} day(s)", GameNames.Of(app), pct, days), Bot.Name);
 	}
 
 	/// <summary>
@@ -488,8 +488,8 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			int shared = found.Count(a => Bot.Library.Find(a)?.Shared == true);
 
 			Log.Info(shared > 0
-				? new Said("achievement boost - {0} game(s) worth hunting ({1} shared with this account)", found.Count, shared)
-				: new Said("achievement boost - {0} game(s) worth hunting", found.Count), Bot.Name);
+				? new Said("achievement boost: {0} games to hunt ({1} shared)", found.Count, shared)
+				: new Said("achievement boost: {0} games to hunt", found.Count), Bot.Name);
 		}
 	}
 
@@ -560,7 +560,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			// earning nothing and looking like it is. Hand it back and move down the list; the twenty-minute grace
 			// in the library keeps it out of the rotation until they are actually finished with it.
 			if (_ours && Bot.Cfg.YieldToFamily && Bot.Library.FamilyIsPlaying(Bot.GrindGame)) {
-				Log.Info(new Said("someone in the family started {0} - leaving it to them and moving on", GameNames.Of(Bot.GrindGame)), Bot.Name);
+				Log.Info(new Said("family member started {0} - moving on", GameNames.Of(Bot.GrindGame)), Bot.Name);
 				Bot.StopGrind();
 
 				return;   // the next tick sees the grind gone and starts the rest before the following game
@@ -669,7 +669,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		_ours = true;
 		_grindTick = DateTime.UtcNow;
 		_status = new Said("hunting {0}", GameNames.Of(target));
-		Log.Info(new Said("achievement boost - hunting {0} for {1} ({2}/{3} through the list)", GameNames.Of(target), Fmt.Hm(minutes), _index, targets.Count), Bot.Name);
+		Log.Info(new Said("achievement boost: {0} for {1} ({2}/{3})", GameNames.Of(target), Fmt.Hm(minutes), _index, targets.Count), Bot.Name);
 	}
 
 	/// <summary>
@@ -732,8 +732,8 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		_huntGoal = _rng.Next(hours * 60 * 70 / 100, (hours * 60 * 130 / 100) + 1);
 
 		Log.Info(listed > 0
-			? new Said("achievement boost - {0} joins the games it plays, for about {1} ({2}/{3} through the list)", GameNames.Of(game), Fmt.Hm(_huntGoal), ((_index - 1 + listed) % listed) + 1, listed)
-			: new Said("achievement boost - {0} joins the games it plays, for about {1}", GameNames.Of(game), Fmt.Hm(_huntGoal)), Bot.Name);
+			? new Said("achievement boost: adding {0} for ~{1} ({2}/{3})", GameNames.Of(game), Fmt.Hm(_huntGoal), ((_index - 1 + listed) % listed) + 1, listed)
+			: new Said("achievement boost: adding {0} for ~{1}", GameNames.Of(game), Fmt.Hm(_huntGoal)), Bot.Name);
 		SaveHunt();
 	}
 

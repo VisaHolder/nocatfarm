@@ -139,7 +139,7 @@ public static class Achievements {
 
 		using (MemoryStream stream = new(response.schema)) {
 			if (!schema.TryReadAsBinary(stream)) {
-				Log.Warn(new Said("couldn't read the achievement schema for app {0}", appId), bot.Name);
+				Log.Warn(new Said("couldn't read the achievement list for {0}", GameNames.Of(appId)), bot.Name);
 
 				return null;
 			}

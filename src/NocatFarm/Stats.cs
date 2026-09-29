@@ -114,8 +114,9 @@ public static class Stats {
 			foreach (string line in File.ReadAllLines(PathFor())) {
 				string[] parts = line.Split('|');
 
-				if ((parts.Length < 3) || !long.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out long ticks)) {
-					continue;   // a torn line from a kill mid-write - skip it, don't fail the load
+				if ((parts.Length < 3) || !long.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out long ticks)
+					|| (ticks < DateTime.MinValue.Ticks) || (ticks > DateTime.MaxValue.Ticks)) {
+					continue;   // a torn line from a kill mid-write - skip it, don't fail the load (a garbled number threw, and emptied the chart)
 				}
 
 				DateTime when = new(ticks, DateTimeKind.Utc);

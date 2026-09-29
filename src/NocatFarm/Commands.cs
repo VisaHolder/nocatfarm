@@ -118,9 +118,11 @@ public static partial class Commands {
 		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does.", "?|h"),
 		new("theme", "[dark|light]", GroupOther, "Switch the dashboard between the dark and light themes. Without an argument it says which is on.", "dark|light"),
 		new("mini", "[on|off]", GroupOther, "Shrink the window to a small panel of your accounts - what each is doing, start and stop, the dashboard - or back to the full window."),
-		new("dashboard", "", GroupOther, "The dashboard's address - on this PC, on your phone over the same wifi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there.", "web|link"),
+		new("dashboard", "[anywhere on|off]", GroupOther, "The dashboard's address - on this PC, on your phone over the same wifi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. 'dashboard anywhere on' opens it from anywhere and answers with the link; 'dashboard anywhere off' closes it (the same as 'anywhere on|off').", "web|link"),
+		new("anywhere", "[on|off]", GroupOther, "Open the dashboard from anywhere, not just your wifi - your router forwards the port (UPnP), like Jellyfin. 'anywhere on' does all of it and answers with the link; 'anywhere off' closes it again; on its own it says whether it's on and the link. Works from Telegram and Discord too.", "remote"),
+		new("unlock", "", GroupOther, "Locked out of the dashboard after too many wrong passwords? This lets you (and anyone else locked out) sign in again straight away."),
 		new("version", "", GroupOther, "Which version this is.", "about"),
-		new("update", "[accept|skip]", GroupOther, "Check for a newer release. 'update accept' downloads it and restarts into it; 'update skip' skips that version - no more reminders about it and it never installs by itself - until a newer one comes out. Nothing installs by itself unless 'Update by itself' is set to install at night."),
+		new("update", "[accept|now|skip]", GroupOther, "Check for a newer release. 'update accept' downloads it and restarts into it - or, with 'When I say update' set to wait, installs it once your accounts are asleep; 'update now' always installs right away. 'update skip' skips that version - no more reminders about it and it never installs by itself - until a newer one comes out. Nothing installs by itself unless 'Update by itself' is set to install at night."),
 		new("answer", "<text>", GroupOther, "Answer whatever nocat.farm is waiting on - a Steam Guard code, or a password."),
 		new("exit", "", GroupOther, "Shut nocat.farm down.", "quit|q")
 	];
@@ -328,7 +330,13 @@ public static partial class Commands {
 				"stats" => StatsText(rest),
 				"answer" => Prompt.Answer(string.Join(' ', rest)) ? "answered" : "nothing is waiting for an answer",
 				"theme" or "dark" or "light" => Theme(cmd, rest),
-				"dashboard" or "web" or "link" => DashboardLinks.Text(mgr.Global),
+				"dashboard" or "web" or "link" => (rest.Length > 0) && rest[0].Equals("unlock", StringComparison.OrdinalIgnoreCase)
+					? Unlock()
+					: (rest.Length > 0) && rest[0].ToLowerInvariant() is "anywhere" or "remote"
+						? await Anywhere(mgr, rest[1..]).ConfigureAwait(false)   // 'dashboard anywhere on' - the same as 'anywhere on'
+						: DashboardLinks.Text(mgr.Global),
+				"unlock" => Unlock(),
+				"anywhere" or "remote" => await Anywhere(mgr, rest).ConfigureAwait(false),
 				"version" or "about" => About(),
 				"mini" => Mini(rest),
 				"plugins" => PluginList(),
@@ -363,12 +371,79 @@ public static partial class Commands {
 	/// this morning" is not an answer. Installing is always explicit - see SelfUpdate for why nothing here
 	/// ever happens on a schedule.
 	/// </summary>
+	/// <summary>
+	/// 'anywhere on|off': Open from anywhere in one go - the same as the Phone page. On opens the dashboard to other devices
+	/// if it isn't yet (restarting only the dashboard, so the accounts stay on), switches the router forward on, and waits a
+	/// few seconds for the router's answer so the reply can carry the link. From Telegram or Discord too, which is the point:
+	/// it can be switched on while away, from the only thing that already reaches you.
+	/// </summary>
+	private static async Task<string> Anywhere(BotManager mgr, string[] args) {
+		GlobalConfig g = mgr.Global;
+		string what = args.Length > 0 ? args[0].ToLowerInvariant() : "";
+
+		if (what is "off" or "stop" or "false") {
+			g.WebRemoteAccess = false;
+			ConfigStore.SaveGlobal(g);
+			RemoteAccess.Poke();
+
+			return new Said("Open from anywhere is off - the router forward is taken away, your wifi still works").ToString();
+		}
+
+		if (what is "on" or "start" or "true") {
+			if (string.IsNullOrEmpty(g.WebPassword) || (g.WebPassword.Length < RemoteAccess.MinPasswordLength)) {
+				return new Said("needs a dashboard password of at least {0} characters first - anyone on the internet can try it. Set one on the Phone page, or: set WebPassword <password>", RemoteAccess.MinPasswordLength).ToString();
+			}
+
+			bool relisten = Platform.IsLoopback(g.WebHost ?? "");
+
+			if (relisten) {
+				g.WebHost = "0.0.0.0";
+			}
+
+			g.WebRemoteAccess = true;
+			ConfigStore.SaveGlobal(g);
+
+			if (relisten && (Web.WebHost.Current is { } web)) {
+				await web.RelistenAsync().ConfigureAwait(false);
+			}
+
+			RemoteAccess.Poke();
+
+			// The router usually answers in a second or two; the reply waits for it, so it can carry the link.
+			for (int i = 0; (i < 30) && (RemoteAccess.Link == null) && (RemoteAccess.Problem == null); i++) {
+				await Task.Delay(500).ConfigureAwait(false);
+			}
+		}
+
+		if (!g.WebRemoteAccess) {
+			return RemoteAccess.Blocker(g) is { } why
+				? new Said("Open from anywhere is off - it {0}", why).ToString()
+				: new Said("Open from anywhere is off - 'anywhere on' opens it").ToString();
+		}
+
+		return RemoteAccess.Link is { } link ? new Said("Open from anywhere is on: {0} - sign in with the dashboard password", link).ToString()
+			: RemoteAccess.Problem is { } problem ? new Said("Open from anywhere is on, but {0}", problem).ToString()
+			: new Said("Open from anywhere is on - still asking your router; 'anywhere' shows the link in a moment").ToString();
+	}
+
+	/// <summary>'unlock': lifts every dashboard sign-in lockout, so whoever mistyped their password can try again now.</summary>
+	private static string Unlock() {
+		int n = Web.WebHost.Current?.ClearLockouts() ?? 0;
+
+		return n > 0 ? new Said("dashboard unlocked - you can sign in again").ToString() : new Said("nothing was locked - the dashboard sign-in works").ToString();
+	}
+
 	private static async Task<string> Update(string[] args) {
 		string what = args.Length > 0 ? args[0].ToLowerInvariant() : "";
 
 		bool accept = what is "accept" or "now" or "install";
 
-		await UpdateCheck.LookAsync(force: true, quiet: true).ConfigureAwait(false);
+		string? problem = await UpdateCheck.LookAsync(force: true, quiet: true).ConfigureAwait(false);
+
+		// Not "you're on the newest" when GitHub never answered - that's a guess, and a wrong one on the day it matters.
+		if ((problem != null) && (UpdateCheck.Available == null)) {
+			return new Said("couldn't reach GitHub to check ({0}) - try again in a minute", problem).ToString();
+		}
 
 		if (UpdateCheck.Available == null) {
 			return $"You're on the newest release ({Build.Version}).";
@@ -395,7 +470,14 @@ public static partial class Commands {
 		if (!accept) {
 			return $"{UpdateCheck.Available} is out - you have {Build.Version}."
 				+ Environment.NewLine + $"  {UpdateCheck.Url}"
-				+ Environment.NewLine + "  'update accept' downloads it and restarts into it; 'update skip' skips this version.";
+				+ Environment.NewLine + (UpdateCheck.Queued != null
+					? "  " + new Said("{0} is waiting for your accounts to go to sleep - 'update now' installs it right away", UpdateCheck.Queued)
+					: "  'update accept' downloads it and restarts into it; 'update skip' skips this version.");
+		}
+
+		// "When I say update" set to wait: 'accept' queues it for when the accounts are asleep; 'now' doesn't wait.
+		if ((what is not "now") && (Config.Live.Global.UpdateWhenAsked == 1)) {
+			return UpdateCheck.Queue(UpdateCheck.Available).ToString();
 		}
 
 		// In the background: a 50MB download can take minutes, and the console used to sit frozen for all of them.
@@ -1710,8 +1792,10 @@ public static partial class Commands {
 			}
 
 			started.Add(bot);
-			Said lead = delay > TimeSpan.Zero ? new Said(" (finishing up first, starts in ~{0})", Fmt.Hm((int) Math.Ceiling(delay.TotalMinutes))) : default;
-			Log.Info(new Said("grinding {0} for {1}{2} - normal schedule resumes after", GameNames.Of(appId), Fmt.Hm((int) how.TotalMinutes), lead), bot.Name);
+			// The start time it will really have: finishing up, and a warm-up still left from signing in.
+			TimeSpan wait = bot.HumanOwned && (BotManager.ModuleOf<Modules.HumanMode>(bot)?.SettleLeft is { } settle) && (settle > delay) ? settle : delay;
+			Said lead = wait > TimeSpan.Zero ? new Said(" (starts in ~{0})", Fmt.Hm((int) Math.Ceiling(wait.TotalMinutes))) : default;
+			Log.Info(new Said("grinding {0} for {1}{2}, then back to normal", GameNames.Of(appId), Fmt.Hm((int) how.TotalMinutes), lead), bot.Name);
 		}
 
 		string no = refused.Count > 0
@@ -1942,7 +2026,7 @@ public static partial class Commands {
 			if (bot.DropsFirstActive) {
 				string was = GameNames.Of(bot.DropsFirstApp);
 				bot.StopDropsFirst();
-				Log.Info(new Said("drop run on {0} stopped - back to its usual mix of games", was), bot.Name);
+				Log.Info(new Said("stopped the {0} drop run - back to normal", was), bot.Name);
 
 				return $"{bot.Name}: drop run stopped - back to normal.";
 			}
@@ -2012,7 +2096,7 @@ public static partial class Commands {
 				return $"{bot.Name}: {game} is still refundable, and a drop run would spend that.";
 			}
 
-			Log.Info(new Said("going for {0} card drop(s) in {1} - it goes first in the normal sittings, with breaks and bedtime, until they're in", want, game), bot.Name);
+			Log.Info(new Said("{1} first: {0} card drop(s), in normal sittings", want, game), bot.Name);
 
 			return $"{bot.Name}: {game} goes first until {want} card(s) drop. It plays in the normal sittings - the main game's share of them, with its usual breaks and bedtime - so it looks like a person playing it a lot. About {Fmt.Rough(estimate)} of play, spread over the day. 'drops {bot.Name} off' stops it.";
 		}
@@ -2026,8 +2110,10 @@ public static partial class Commands {
 			return $"{bot.Name}: {game} is still refundable, and a drop run would spend that.";
 		}
 
-		Said lead = delay > TimeSpan.Zero ? new Said(" (finishing up first, starts in ~{0})", Fmt.Hm((int) Math.Ceiling(delay.TotalMinutes))) : default;
-		Log.Info(new Said("going for {0} card drop(s) in {1} - about {2}{3}, then back to the usual day", want, game, Fmt.Rough(estimate), lead), bot.Name);
+		// The start time it will really have: finishing up, and a warm-up still left from signing in.
+		TimeSpan wait = bot.HumanOwned && (BotManager.ModuleOf<Modules.HumanMode>(bot)?.SettleLeft is { } settle) && (settle > delay) ? settle : delay;
+		Said lead = wait > TimeSpan.Zero ? new Said(" (starts in ~{0})", Fmt.Hm((int) Math.Ceiling(wait.TotalMinutes))) : default;
+		Log.Info(new Said("going for {0} card drop(s) in {1} - about {2}{3}", want, game, Fmt.Rough(estimate), lead), bot.Name);
 
 		return $"{bot.Name}: {game} until {want} card(s) drop - about {Fmt.Rough(estimate)}"
 			+ (delay > TimeSpan.Zero ? $", starting in ~{Fmt.Hm((int) Math.Ceiling(delay.TotalMinutes))}" : "")
@@ -3164,7 +3250,7 @@ public static partial class Commands {
 						Live.Global.Rep4RepHoldUntil = null;
 						Live.Global.Rep4RepHoldFrom = null;
 						ConfigStore.SaveGlobal(Live.Global);
-						Log.Info("rep4rep hold lifted - commenting resumes on its own schedule");
+						Log.Info("rep4rep hold lifted - commenting resumes");
 					}
 
 					break;
