@@ -2200,7 +2200,11 @@
     "couldn't reach GitHub to check ({0}) - try again in a minute": "확인하려고 GitHub에 연결하지 못했습니다 ({0}) - 1분 후 다시 시도하세요",
     "in use now, but not saved to disk - see the Log": "지금은 적용됐지만 디스크에 저장하지 못했습니다 - 로그를 확인하세요",
     "settings not saved - {0} didn't load; fix it or delete it": "설정이 저장되지 않았습니다 - {0}을(를) 불러오지 못했습니다. 고치거나 삭제하세요",
-    "couldn't read the saved sign-in: {0}": "저장된 로그인 정보를 읽을 수 없습니다: {0}"
+    "couldn't read the saved sign-in: {0}": "저장된 로그인 정보를 읽을 수 없습니다: {0}",
+    "listed {0} ({1}) for {2} - you get {3}": "{0}({1})을(를) {2}에 등록했습니다 - 받는 금액 {3}",
+    "couldn't read the trade page: {0}": "거래 페이지를 읽지 못했습니다: {0}",
+    "offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)": "제안을 보냈습니다 - Steam이 보낸 이메일에서 확인하세요 (Steam 앱 인증기가 없어 Steam이 최대 15일 동안 보류합니다)",
+    "send due - waiting a few minutes after another account's send": "전송 시각 - 다른 계정의 전송 후 몇 분 기다리는 중"
   },
   "settings": {
     "WebEnabled": {
@@ -3014,11 +3018,11 @@
     },
     "SendEveryHours": {
       "label": "아이템 보내는 주기",
-      "tip": "카드가 쌓이지 않도록 이 시간마다 이 계정의 아이템을 “내 계정”의 첫 번째 계정으로 보냅니다. 0이면 끕니다."
+      "tip": "카드가 쌓이지 않도록 이 시간마다 이 계정의 아이템을 “내 계정”의 첫 번째 계정으로 보냅니다. 첫 전송은 켠 뒤 한 주기 후이고, 다음 전송 시각은 대시보드의 계정 카드에 나오며, 전송할 때마다 로그에 남습니다. 0이면 끕니다."
     },
     "SendItemTypes": {
       "label": "무엇을 보낼지",
-      "tip": "이 계정에서 내보낼 수 있는 아이템 종류이며, 쉼표로 구분합니다: cards, foils, backgrounds, emoticons, boosters, gems, all. 목록에 없는 건 절대 보내지 않습니다.",
+      "tip": "이 계정에서 내보내도 되는 아이템을 쉼표로 구분해 적습니다: cards, foils, backgrounds, emoticons, boosters, gems - 또는 all로 모든 게임의 거래 가능한 모든 것(TF2, CS2 아이템 포함). 적히지 않은 것은 절대 보내지 않습니다.",
       "placeholder": "카드"
     },
     "TradeMasterToken": {
@@ -3199,6 +3203,10 @@
       "label": "두 번째 줄",
       "tip": "계정 이름이 꺼져 있을 때 Discord 카드 두 번째 줄이 세는 것: 오늘 얻은 카드, 또는 지난 1주나 지난 1달 동안 플레이한 시간 - 카드에 나오는 계정을 모두 더한 값입니다.",
       "choices": "0 오늘 카드 | 1 지난 1주 시간 | 2 지난 1달 시간"
+    },
+    "SendAroundHour": {
+      "label": "...쯤에",
+      "tip": "보낼 시각(0~23시). 예를 들어 4면 새벽 4시쯤입니다. 그 시간 안의 무작위 분에, \"아이템 보내기 주기\"가 허락하는 날에 보냅니다. -1 = 시각을 정하지 않음: 켠 때부터 몇 시간마다."
     }
   }
 }

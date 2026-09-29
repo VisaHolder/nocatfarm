@@ -45,10 +45,14 @@ send all to myaccount cards foils
 
 The types are `cards`, `foils`, `backgrounds`, `emoticons`, `boosters`, `gems` and `all`. `all` means everything
 tradable, game items like CS2 skins included. Types you name in the command are sent as asked. Without them, `send`
-uses the account's *What to send* setting (trading cards by default), and `send … to` sends trading cards.
+uses the account's *What to send* setting (trading cards by default; `all` sends everything tradable in every game,
+TF2 and CS2 items too), and `send … to` sends trading cards.
 
 To send on a schedule, *Send items every* (0 = off) sends on a timer and *Send items when farming finishes* sends
-once when the cards run out. Both always use *What to send*.
+once when the cards run out. Both always use *What to send*. *...around* picks the hour of the day for the timed
+send (like 4 for about 4 in the morning); left at -1 it goes every so many hours from when you turned it on. The
+account's card on the dashboard shows when the next send is, each send is in the log, and a send Steam refuses is
+sent to you as a problem with Steam's reason.
 
 Between accounts that aren't Steam friends, Steam needs the other account's trade link token. nocat.farm reads it
 by itself when that account is signed in here; otherwise set *Their trade link token*. Offers the account sends

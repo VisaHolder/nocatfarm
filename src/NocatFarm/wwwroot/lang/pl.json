@@ -2200,7 +2200,11 @@
     "couldn't reach GitHub to check ({0}) - try again in a minute": "brak połączenia z GitHub, żeby sprawdzić ({0}) - spróbuj za minutę",
     "in use now, but not saved to disk - see the Log": "działa teraz, ale nie zapisano na dysku - zajrzyj do Dziennika",
     "settings not saved - {0} didn't load; fix it or delete it": "ustawienia nie zapisane - nie udało się wczytać {0}; napraw go albo usuń",
-    "couldn't read the saved sign-in: {0}": "nie udało się odczytać zapisanego logowania: {0}"
+    "couldn't read the saved sign-in: {0}": "nie udało się odczytać zapisanego logowania: {0}",
+    "listed {0} ({1}) for {2} - you get {3}": "wystawiono {0} ({1}) za {2} - dostaniesz {3}",
+    "couldn't read the trade page: {0}": "nie udało się odczytać strony wymiany: {0}",
+    "offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)": "oferta wysłana - potwierdź ją z e-maila od Steama (bez uwierzytelniacza w aplikacji Steam, więc Steam wstrzymuje ją do 15 dni)",
+    "send due - waiting a few minutes after another account's send": "wysyłka zaplanowana - czeka kilka minut po wysyłce innego konta"
   },
   "settings": {
     "WebEnabled": {
@@ -3014,11 +3018,11 @@
     },
     "SendEveryHours": {
       "label": "Wysyłaj przedmioty co",
-      "tip": "Co tyle godzin wysyła przedmioty tego konta na pierwsze konto z „Twoje własne konta”, żeby karty się nie gromadziły. 0 to wyłącza."
+      "tip": "Co tyle godzin wysyła przedmioty tego konta na pierwsze konto z „Twoje własne konta”, żeby karty się nie gromadziły. Pierwsza wysyłka jest jeden okres po włączeniu, karta konta w panelu pokazuje, kiedy będzie następna, a każda wysyłka jest w logu. 0 to wyłącza."
     },
     "SendItemTypes": {
       "label": "Co wysyłać",
-      "tip": "Jakie typy przedmiotów mogą opuścić to konto, rozdzielone przecinkami: cards, foils, backgrounds, emoticons, boosters, gems albo all. Czego nie ma na liście, to nigdy nie zostaje wysłane.",
+      "tip": "Które przedmioty mogą opuścić to konto, po przecinku: cards, foils, backgrounds, emoticons, boosters, gems - albo all, czyli wszystko, czym da się handlować, w każdej grze (także przedmioty z TF2 i CS2). Czego nie ma na liście, nigdy nie jest wysyłane.",
       "placeholder": "karty"
     },
     "TradeMasterToken": {
@@ -3199,6 +3203,10 @@
       "label": "Druga linia",
       "tip": "Co liczy druga linia karty Discorda, gdy nazwy kont są wyłączone: karty zdobyte dziś albo godziny grania w ostatnim tygodniu lub miesiącu - zsumowane dla kont pokazanych na karcie.",
       "choices": "0 karty dziś | 1 godziny w ostatnim tygodniu | 2 godziny w ostatnim miesiącu"
+    },
+    "SendAroundHour": {
+      "label": "...około",
+      "tip": "Godzina wysyłki, od 0 do 23 - na przykład 4 to około 4 rano. Idzie w losowej minucie tej godziny, w dni, na które pozwala „Wysyłaj przedmioty co”. -1 = bez stałej pory: co tyle godzin od włączenia."
     }
   }
 }

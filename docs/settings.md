@@ -56,7 +56,7 @@ stay in the config file untouched, in case you take it back to Windows.
 | Achievements | *Earn achievements over time* | pace, completion limit, only/never lists, grind spacing, the hunter (rotation, when to move on, rest days, daily cap, game length), family-shared games |
 | Free stuff | free games, free DLC, event items, the discovery queue | |
 | Inventory & bans | *Watch for bans* | *Work out what its inventory is worth*, and games to leave out |
-| Trades | donations, gifts, fair card swaps, your own accounts, *Trade by itself with* | *Decline everything else*, waits, sending items, *What to send*, trade link token |
+| Trades | donations, gifts, fair card swaps, your own accounts, *Trade by itself with*, *What to send* | *Decline everything else*, waits, sending items, trade link token |
 | rep4rep commenting (only when rep4rep is on) | *Post rep4rep comments* | cap, gaps, hours |
 | Friends & messages | *Accept friend requests*, *Reply to messages* and its text | delays, spam filter, group invites and joining, *Accept commands from* |
 | Staying out of the way | | *Stand down when you play*, *Wait before resuming* |

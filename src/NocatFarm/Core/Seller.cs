@@ -199,6 +199,10 @@ public static class Seller {
 				earned += offer.YouGetCents;
 				assets.Add(offer.AssetId);
 
+				// Each one the moment it's up, by name and price - the summary only came once the whole batch was done,
+				// by which time the phone had been asking about listings nobody had been told of.
+				Log.Good(new Said("listed {0} ({1}) for {2} - you get {3}", offer.Card, offer.Game, Money(offer.BuyerCents, bot), Money(offer.YouGetCents, bot)), bot.Name);
+
 				continue;
 			}
 

@@ -291,7 +291,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				await Task.Delay(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false);
 			}
 
-			Log.Info(await Looting.SendToMasterAsync(Bot).ConfigureAwait(false), Bot.Name);
+			Looting.Report(Bot, await Looting.SendToMasterAsync(Bot).ConfigureAwait(false));
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			// Shutting down while it waited - nothing was sent, and nothing needs saying.
 		} catch (Exception e) {

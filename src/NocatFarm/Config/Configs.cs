@@ -600,6 +600,10 @@ public sealed class BotConfig {
 	/// <summary>Send items to the first trade master every this many hours. 0 is off.</summary>
 	public int SendEveryHours { get; set; }
 
+	/// <summary>The hour of the day (0-23) the timed send goes out around; -1 for no set time (every SendEveryHours
+	/// from when it was switched on).</summary>
+	public int SendAroundHour { get; set; } = -1;
+
 	// ── staying out of the way ──
 	public bool PauseWhenYouPlay { get; set; } = true;
 	public int ResumeDelayMinutes { get; set; } = 5;

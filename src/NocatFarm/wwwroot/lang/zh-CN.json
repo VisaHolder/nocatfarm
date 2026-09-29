@@ -2200,7 +2200,11 @@
     "couldn't reach GitHub to check ({0}) - try again in a minute": "无法连接 GitHub 检查更新（{0}）- 请一分钟后再试",
     "in use now, but not saved to disk - see the Log": "已生效，但未能保存到磁盘 - 请查看日志",
     "settings not saved - {0} didn't load; fix it or delete it": "设置未保存 - {0} 未能加载；请修复或删除它",
-    "couldn't read the saved sign-in: {0}": "无法读取保存的登录信息：{0}"
+    "couldn't read the saved sign-in: {0}": "无法读取保存的登录信息：{0}",
+    "listed {0} ({1}) for {2} - you get {3}": "已上架 {0}（{1}），售价 {2} - 你得到 {3}",
+    "couldn't read the trade page: {0}": "无法读取交易页面：{0}",
+    "offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)": "报价已发送 - 请在 Steam 发来的邮件里确认（没有 Steam 应用令牌，Steam 最多会暂扣 15 天）",
+    "send due - waiting a few minutes after another account's send": "该发送了 - 等另一个账户发送完几分钟后再发"
   },
   "settings": {
     "WebEnabled": {
@@ -3014,11 +3018,11 @@
     },
     "SendEveryHours": {
       "label": "每隔多久寄出物品",
-      "tip": "每隔这么多小时，把这个账户的物品发给「你自己的账户」里的第一个账户，免得卡牌越积越多。0 表示关闭。"
+      "tip": "每隔这么多小时，把这个账户的物品发给「你自己的账户」里的第一个账户，免得卡牌越积越多。第一次发送在开启后一个周期，面板上账户卡片会显示下一次的时间，每次发送都会记在日志里。0 表示关闭。"
     },
     "SendItemTypes": {
       "label": "寄什么",
-      "tip": "允许离开这个账户的物品类型，用逗号分隔：cards、foils、backgrounds、emoticons、boosters、gems，或 all。没列出的绝不会发出。",
+      "tip": "允许离开这个账户的物品，用逗号分隔：cards、foils、backgrounds、emoticons、boosters、gems - 或者 all，表示所有游戏里一切可交易的东西（TF2 和 CS2 物品也算）。没列出的永远不会发送。",
       "placeholder": "卡牌"
     },
     "TradeMasterToken": {
@@ -3199,6 +3203,10 @@
       "label": "第二行",
       "tip": "账户名称关闭时，Discord 卡片第二行统计的内容：今天掉落的卡牌，或过去一周、过去一个月的游戏小时数 - 按卡片显示的账户合计。",
       "choices": "0 今日卡牌 | 1 过去一周的小时数 | 2 过去一个月的小时数"
+    },
+    "SendAroundHour": {
+      "label": "...大约在",
+      "tip": "每天发送的钟点，0 到 23 - 比如 4 表示凌晨 4 点左右。在那个小时里的随机一分钟、在「每隔多久发送物品」允许的日子发出。-1 = 不定时：从开启时起每隔这么多小时。"
     }
   }
 }

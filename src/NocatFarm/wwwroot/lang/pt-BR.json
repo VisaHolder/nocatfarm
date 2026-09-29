@@ -2200,7 +2200,11 @@
     "couldn't reach GitHub to check ({0}) - try again in a minute": "GitHub fora de alcance para verificar ({0}) - tente de novo em um minuto",
     "in use now, but not saved to disk - see the Log": "em uso agora, mas não foi salvo no disco - veja o Log",
     "settings not saved - {0} didn't load; fix it or delete it": "configurações não salvas - {0} não carregou; corrija ou apague o arquivo",
-    "couldn't read the saved sign-in: {0}": "não foi possível ler o login salvo: {0}"
+    "couldn't read the saved sign-in: {0}": "não foi possível ler o login salvo: {0}",
+    "listed {0} ({1}) for {2} - you get {3}": "{0} ({1}) anunciado por {2} - você recebe {3}",
+    "couldn't read the trade page: {0}": "não deu para ler a página de troca: {0}",
+    "offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)": "oferta enviada - confirme pelo e-mail que a Steam mandou (sem autenticador no app da Steam, então a Steam segura por até 15 dias)",
+    "send due - waiting a few minutes after another account's send": "envio na hora - esperando alguns minutos depois do envio de outra conta"
   },
   "settings": {
     "WebEnabled": {
@@ -3014,11 +3018,11 @@
     },
     "SendEveryHours": {
       "label": "Enviar os itens a cada",
-      "tip": "Envia os itens desta conta para a primeira conta em “Suas próprias contas” a cada tantas horas, para as cartas não se acumularem. 0 desliga."
+      "tip": "Envia os itens desta conta para a primeira conta em “Suas próprias contas” a cada tantas horas, para as cartas não se acumularem. O primeiro envio acontece um período depois de ligar, o cartão da conta no painel mostra quando é o próximo e cada envio fica no log. 0 desliga."
     },
     "SendItemTypes": {
       "label": "O que enviar",
-      "tip": "Quais tipos de item podem sair desta conta, separados por vírgulas: cards, foils, backgrounds, emoticons, boosters, gems ou all. O que não estiver na lista nunca é enviado.",
+      "tip": "Quais itens podem sair desta conta, separados por vírgula: cards, foils, backgrounds, emoticons, boosters, gems - ou all, para tudo que é negociável em qualquer jogo (itens de TF2 e CS2 também). O que não estiver na lista nunca é enviado.",
       "placeholder": "cartas"
     },
     "TradeMasterToken": {
@@ -3199,6 +3203,10 @@
       "label": "Segunda linha",
       "tip": "O que a segunda linha do cartão do Discord conta quando os nomes das contas estão desligados: as cartas de hoje, ou as horas jogadas na última semana ou no último mês - somadas nas contas que o cartão mostra.",
       "choices": "0 cartas hoje | 1 horas na última semana | 2 horas no último mês"
+    },
+    "SendAroundHour": {
+      "label": "...por volta das",
+      "tip": "A hora do dia para enviar, de 0 a 23 - por exemplo 4 para mais ou menos 4 da manhã. Sai num minuto aleatório dessa hora, nos dias que \"Enviar itens a cada\" permite. -1 = sem hora fixa: a cada tantas horas desde que foi ligado."
     }
   }
 }
