@@ -2211,7 +2211,9 @@
     "Once it has hunted this long in a day, the hunt's game leaves the list until tomorrow. 0 is no limit.": "Gdy w ciągu dnia poluje już tyle, gra z polowania znika z listy do jutra. 0 to brak limitu.",
     "The achievement hunt's share of a mixed day. It plays the game it's hunting like a side game, in normal sittings, and moves on to the next game by itself.": "Udział polowania na osiągnięcia w mieszanym dniu. Gra w polowaną grę jak w grę poboczną, w zwykłych sesjach, i sama przechodzi do następnej gry.",
     "hours a day (0 = no limit)": "godzin dziennie (0 = bez limitu)",
-    "Which games it hunts is set under Achievements.": "Na które gry poluje, ustawia się w Osiągnięciach."
+    "Which games it hunts is set under Achievements.": "Na które gry poluje, ustawia się w Osiągnięciach.",
+    "Change the main game": "Zmień główną grę",
+    "the new main game: appID or store URL": "nowa główna gra: appID lub link do sklepu"
   },
   "settings": {
     "WebEnabled": {

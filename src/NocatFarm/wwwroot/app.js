@@ -4694,7 +4694,9 @@ function weightsEditor(spec) {
     // its `padding: 22px 26px 40px`. That is the whole reason the first row sat 26px to the right of every
     // other one and stood three times as tall - it was being laid out as if it were the page.
     return `<div class="wrow ${i === 0 ? 'wmain' : ''}">
-      <span class="wname"><b class="wgame" title="${esc(gameLabel(r.game))}">${esc(gameLabel(r.game))}</b>${i === 0 ? `<b class="wtag">${esc(t('main'))}</b>` : ''}<i class="wid">${r.game}</i></span>
+      <span class="wname">${i === 0 && changingMain
+        ? `<input class="wmainedit" type="text" placeholder="${esc(t('appID or store URL'))}" title="${esc(t('the new main game: appID or store URL'))}" onkeydown="if(event.key==='Enter'){setMainGame(this.value);event.preventDefault();}else if(event.key==='Escape'){setMainGame('');}" onblur="setMainGame(this.value)">`
+        : `<b class="wgame" title="${esc(gameLabel(r.game))}">${esc(gameLabel(r.game))}</b>${i === 0 ? `<b class="wtag">${esc(t('main'))}</b>` : ''}<i class="wid">${r.game}</i>`}</span>
       <span class="wbar"><i style="width:${share}%"></i></span>
       <input class="wpct" type="number" min="1" max="95" value="${share}" data-w-index="${i}"
              onchange="setShare(${i},parseInt(this.value)||1)" data-tip="${esc(
@@ -4704,7 +4706,7 @@ function weightsEditor(spec) {
                + (weeklyTip ? ' ' + weeklyTip : ''))}">
       <span class="wsign">%</span>
       <span class="wweek"${weeklyTip ? ` data-tip="${esc(weeklyTip)}"` : ''}>${weeklyTip ? `${weekly}%<i>${esc(t('/week'))}</i>` : ''}</span>
-      ${i === 0 ? '<span class="wact"></span>' : `<span class="wact"><b onclick="makeMain(${i})" data-tip="${esc(t('Make this the main game'))}">↑</b><b onclick="dropWeight(${i})" data-tip="${esc(t('Remove'))}">×</b></span>`}
+      ${i === 0 ? `<span class="wact"><b onclick="changingMain=true;renderSettings();setTimeout(()=>{const e=document.querySelector('.wmainedit');if(e)e.focus();},0)" data-tip="${esc(t('Change the main game'))}">⇄</b></span>` : `<span class="wact"><b onclick="makeMain(${i})" data-tip="${esc(t('Make this the main game'))}">↑</b><b onclick="dropWeight(${i})" data-tip="${esc(t('Remove'))}">×</b></span>`}
     </div>`;
   }).join('');
 
@@ -4888,6 +4890,25 @@ function dropWeight(index) {
 }
 
 /// Promote a game to main. Being first in the list is what makes it the main game, so this is a move, not a flag.
+// The main game swapped for another in place: it keeps the main game's share. A game already in the list moves up
+// instead, so it isn't listed twice. Before, the only way was to add the game, move it up, then remove the old one -
+// and with just one game listed there was no arrow to press at all.
+let changingMain = false;
+function setMainGame(raw) {
+  if (!changingMain) return;
+  changingMain = false;
+  const id = parseAppId(raw);
+  const rows = parseWeights(liveWeights());
+  if (!id || !rows.length || rows[0].game === id) { renderSettings(); return; }
+
+  const already = rows.findIndex((r) => r.game === id);
+  if (already > 0) { makeMain(already); return; }
+
+  rows[0].game = id;
+  learnNames([id]);
+  editAndRender('GameWeights', weightsSpec(rows));
+}
+
 function makeMain(index) {
   const rows = parseWeights(liveWeights());
   if (!rows[index]) return;

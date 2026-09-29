@@ -2211,7 +2211,9 @@
     "Once it has hunted this long in a day, the hunt's game leaves the list until tomorrow. 0 is no limit.": "1日にこれだけハントしたら、ハント中のゲームは明日までリストから外れます。0 は制限なし。",
     "The achievement hunt's share of a mixed day. It plays the game it's hunting like a side game, in normal sittings, and moves on to the next game by itself.": "混合日の中での実績ハントの割合。ハント中のゲームをサブゲームのように普通のプレイ時間で遊び、次のゲームへは自動で移ります。",
     "hours a day (0 = no limit)": "時間/日（0 = 制限なし）",
-    "Which games it hunts is set under Achievements.": "どのゲームをハントするかは「実績」で設定します。"
+    "Which games it hunts is set under Achievements.": "どのゲームをハントするかは「実績」で設定します。",
+    "Change the main game": "メインゲームを変更",
+    "the new main game: appID or store URL": "新しいメインゲーム: appID かストアの URL"
   },
   "settings": {
     "WebEnabled": {

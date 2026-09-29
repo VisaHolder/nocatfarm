@@ -2211,7 +2211,9 @@
     "Once it has hunted this long in a day, the hunt's game leaves the list until tomorrow. 0 is no limit.": "하루에 이만큼 사냥하면 사냥 중인 게임은 내일까지 목록에서 빠집니다. 0은 제한 없음.",
     "The achievement hunt's share of a mixed day. It plays the game it's hunting like a side game, in normal sittings, and moves on to the next game by itself.": "섞인 하루 중 도전 과제 사냥의 몫. 사냥하는 게임을 보조 게임처럼 평소 플레이 시간에 하고, 다음 게임으로는 알아서 넘어갑니다.",
     "hours a day (0 = no limit)": "시간/일 (0 = 제한 없음)",
-    "Which games it hunts is set under Achievements.": "어떤 게임을 사냥할지는 도전 과제에서 설정합니다."
+    "Which games it hunts is set under Achievements.": "어떤 게임을 사냥할지는 도전 과제에서 설정합니다.",
+    "Change the main game": "주 게임 바꾸기",
+    "the new main game: appID or store URL": "새 주 게임: appID 또는 상점 URL"
   },
   "settings": {
     "WebEnabled": {

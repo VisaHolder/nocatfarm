@@ -2211,7 +2211,9 @@
     "Once it has hunted this long in a day, the hunt's game leaves the list until tomorrow. 0 is no limit.": "一天狩猎到这么久后，狩猎的游戏会离开列表直到明天。0 表示不限。",
     "The achievement hunt's share of a mixed day. It plays the game it's hunting like a side game, in normal sittings, and moves on to the next game by itself.": "成就狩猎在混合日里的占比。它像副游戏一样在正常时段里玩正在狩猎的游戏，并会自己换到下一个游戏。",
     "hours a day (0 = no limit)": "小时/天（0 = 不限）",
-    "Which games it hunts is set under Achievements.": "狩猎哪些游戏在「成就」里设置。"
+    "Which games it hunts is set under Achievements.": "狩猎哪些游戏在「成就」里设置。",
+    "Change the main game": "更换主游戏",
+    "the new main game: appID or store URL": "新的主游戏：appID 或商店链接"
   },
   "settings": {
     "WebEnabled": {

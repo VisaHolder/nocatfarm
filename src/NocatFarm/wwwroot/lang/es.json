@@ -2211,7 +2211,9 @@
     "Once it has hunted this long in a day, the hunt's game leaves the list until tomorrow. 0 is no limit.": "Cuando ya ha cazado este tiempo en un día, el juego de la caza sale de la lista hasta mañana. 0 es sin límite.",
     "The achievement hunt's share of a mixed day. It plays the game it's hunting like a side game, in normal sittings, and moves on to the next game by itself.": "La parte de la caza de logros en un día mixto. Juega el juego que caza como un juego secundario, en sesiones normales, y pasa al siguiente juego por sí sola.",
     "hours a day (0 = no limit)": "horas al día (0 = sin límite)",
-    "Which games it hunts is set under Achievements.": "Qué juegos caza se configura en Logros."
+    "Which games it hunts is set under Achievements.": "Qué juegos caza se configura en Logros.",
+    "Change the main game": "Cambiar el juego principal",
+    "the new main game: appID or store URL": "el nuevo juego principal: appID o enlace de la tienda"
   },
   "settings": {
     "WebEnabled": {
