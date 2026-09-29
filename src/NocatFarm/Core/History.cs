@@ -33,7 +33,7 @@ public static class History {
 		public int Cards { get; set; }
 		public int Comments { get; set; }
 
-		/// <summary>Minutes with at least one game running - banked time, the same measure as <see cref="Lifetime"/>.</summary>
+		/// <summary>Minutes with at least one game running - clock time, whatever the number of games.</summary>
 		public double Minutes { get; set; }
 
 		/// <summary>Minutes per appID. Steam credits every game that is running, so several at once add up to more
@@ -224,7 +224,7 @@ public static class History {
 
 					a.Cards[i] = d.Cards;
 					a.Comments[i] = d.Comments;
-					a.Minutes[i] = (int) Math.Round(d.Minutes);
+					a.Minutes[i] = (int) Math.Round(Banked(d));
 
 					if (Usable(d, currency)) {
 						a.Value[i] = d.Value;
@@ -333,7 +333,12 @@ public static class History {
 		}
 	}
 
-	/// <summary>Minutes banked by these accounts over the last <paramref name="days"/> local days, today included.</summary>
+	/// <summary>Hours banked in a day, in minutes: every running game counts, the way Steam credits them - 32 games for
+	/// an hour is 32 hours. Never less than the clock time, for a day whose games weren't recorded one by one.</summary>
+	public static double Banked(Day d) => Math.Max(d.Minutes, d.Games.Values.Sum());
+
+	/// <summary>Minutes banked by these accounts over the last <paramref name="days"/> local days, today included -
+	/// every running game counted (<see cref="Banked"/>).</summary>
 	public static double MinutesOver(int days, IEnumerable<string> bots) {
 		Load();
 
@@ -344,12 +349,31 @@ public static class History {
 		lock (Gate) {
 			for (int i = 0; i < days; i++) {
 				if (Days.TryGetValue(Key(today.AddDays(-i)), out Dictionary<string, Day>? accounts)) {
-					sum += accounts.Where(a => want.Contains(a.Key)).Sum(static a => a.Value.Minutes);
+					sum += accounts.Where(a => want.Contains(a.Key)).Sum(static a => Banked(a.Value));
 				}
 			}
 		}
 
 		return sum;
+	}
+
+	/// <summary>This account's clock minutes and banked minutes over the last <paramref name="days"/> local days.</summary>
+	public static (double Clock, double Banked) Recent(int days, string bot) {
+		Load();
+
+		DateTime today = DateTime.Now.Date;
+		double clock = 0, banked = 0;
+
+		lock (Gate) {
+			for (int i = 0; i < days; i++) {
+				if (Days.TryGetValue(Key(today.AddDays(-i)), out Dictionary<string, Day>? accounts) && accounts.TryGetValue(bot, out Day? d)) {
+					clock += d.Minutes;
+					banked += Banked(d);
+				}
+			}
+		}
+
+		return (clock, banked);
 	}
 
 	private static Day Get(string day, string bot) {

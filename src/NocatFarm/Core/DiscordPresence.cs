@@ -151,7 +151,7 @@ public static class DiscordPresence {
 	///
 	///   nocat.farm
 	///   Farming cards · 12 left          what the shown accounts are doing
-	///   kylro · old · 2 of 3 accounts on their Steam names, and how many are signed in
+	///   kylro · old · 2 of 3 accounts connected   their Steam names, and how many are signed in
 	///   5:12:00 elapsed                  since nocat.farm was opened
 	///   [ Get nocat.farm ] [ reap. on Steam ]
 	///
@@ -169,7 +169,12 @@ public static class DiscordPresence {
 
 		Bot[] online = [.. shown.Where(static b => b.IsOnline)];
 		int cardsLeft = online.Sum(static b => b.CardsRemaining);
-		int cardsToday = Stats.Recent(24).Count(e => (e.Kind == Stats.KindCard) && shown.Any(b => string.Equals(b.Name, e.Bot, StringComparison.OrdinalIgnoreCase)));
+
+		// The numbers are the whole farm's - every account it runs. Which accounts are shown only decides the names and
+		// what the top line says they're doing: "2 accounts connected" with three running read as a mistake.
+		Bot[] farm = [.. _mgr?.All ?? []];
+		int connected = farm.Count(static b => b.IsOnline);
+		int cardsToday = Stats.Recent(24).Count(e => (e.Kind == Stats.KindCard) && farm.Any(b => string.Equals(b.Name, e.Bot, StringComparison.OrdinalIgnoreCase)));
 
 		string details = online.Length == 0 ? new Said("Resting").ToString()
 			: cardsLeft > 0 ? new Said("Farming cards · {0} left", cardsLeft).ToString()
@@ -177,24 +182,25 @@ public static class DiscordPresence {
 
 		string today = new Said("{0} cards today", cardsToday).ToString();
 
-		// With names off, the line counts what Second line picks - hours over every shown account, like Steam's
-		// "hrs past 2 weeks".
+		// With names off, the line counts what Second line picks - hours over every account, like Steam's "hrs past 2 weeks".
 		string counted = G.DiscordSecondLine switch {
-			1 => new Said("{0} hrs past week", Hours(History.MinutesOver(7, shown.Select(static b => b.Name)))).ToString(),
-			2 => new Said("{0} hrs past month", Hours(History.MinutesOver(30, shown.Select(static b => b.Name)))).ToString(),
+			1 => new Said("{0} hrs past week", Hours(History.MinutesOver(7, farm.Select(static b => b.Name)))).ToString(),
+			2 => new Said("{0} hrs past month", Hours(History.MinutesOver(30, farm.Select(static b => b.Name)))).ToString(),
 			_ => today
 		};
 
-		// The names line leaves out the featured account - it's already the picture.
-		Bot[] named = [.. shown.Where(b => b != featured)];
+		// The names line leaves out the featured account - it's already the picture. Only while it IS the picture: with
+		// the avatar off (or none to show) it was on the card nowhere at all.
+		bool featuredShown = (featured != null) && G.DiscordShowAvatar && (featured.AvatarUrl.Length > 0);
+		Bot[] named = [.. shown.Where(b => !featuredShown || (b != featured))];
 		string state = G.DiscordShowNames && (named.Length > 0) ? Names(named) : counted;
 
 		// How many are signed in, said in words. Discord's own party counter only ever reads "(2 of 2)", with nothing
 		// to say 2 of what - it looked like a player count.
-		if (G.DiscordShowCounter && (shown.Length > 0)) {
-			state += " · " + (online.Length == shown.Length
-				? new Said("{0} accounts on", online.Length)
-				: new Said("{0} of {1} accounts on", online.Length, shown.Length));
+		if (G.DiscordShowCounter && (farm.Length > 0)) {
+			state += " · " + (connected == farm.Length
+				? connected == 1 ? new Said("1 account connected") : new Said("{0} accounts connected", connected)
+				: new Said("{0} of {1} accounts connected", connected, farm.Length));
 		}
 
 		// What clicking does is said on hover - Discord gives a picture no other hint that it's a link.
@@ -427,8 +433,10 @@ public static class DiscordPresence {
 			// going anyway
 		}
 
-		_pipe.Dispose();
-		_pipe = null;
+		// Taken in one step. The loop (after Discord dropped it) and shutdown can both be in here at once - shutdown's
+		// clearing write takes up to two seconds - and the second to reach a Dispose on the pipe the first had just
+		// cleared threw out of shutdown: accounts not signed out properly, the last minute of totals not saved.
+		Interlocked.Exchange(ref _pipe, null)?.Dispose();
 		_lastSent = "";
 	}
 

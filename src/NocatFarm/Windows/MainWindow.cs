@@ -1641,7 +1641,8 @@ public sealed class MainWindow : IDisposable {
 
 	/// <summary>Accounts in mini mode, and whether each gets the open, farming layout.</summary>
 	private List<(Bot Bot, bool Farming)> MiniRows() =>
-		[.. _mgr.All.Take(MiniMaxRows).Select(static b => (b, b.IsOnline && b.IsFarming && (b.CardsRemaining > 0)))];
+		// Not while finishing up before it logs off: the row says that instead, like every other screen.
+		[.. _mgr.All.Take(MiniMaxRows).Select(static b => (b, b.IsOnline && b.IsFarming && !b.Stopping && (b.CardsRemaining > 0)))];
 
 	private int MiniHeight() {
 		List<(Bot Bot, bool Farming)> rows = MiniRows();

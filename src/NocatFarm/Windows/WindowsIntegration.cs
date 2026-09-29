@@ -34,6 +34,20 @@ public static class WindowsIntegration {
 	private const uint PowerRequestContextVersion = 0;
 	private const uint PowerRequestContextSimpleString = 0x1;
 
+	[DllImport("user32.dll")]
+	private static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
+	/// <summary>
+	/// Every monitor off, now - the 'screen off' command. What the power button's "turn off the display" does: moving
+	/// the mouse or pressing a key brings them back. Posted, not sent: a broadcast send waits on every window there is,
+	/// and one hung program would hang this with it.
+	/// </summary>
+	public static void ScreenOff() {
+		const uint WmSysCommand = 0x0112;
+		const int ScMonitorPower = 0xF170;
+		PostMessage(new IntPtr(0xFFFF), WmSysCommand, new IntPtr(ScMonitorPower), new IntPtr(2));
+	}
+
 	[DllImport("kernel32.dll", SetLastError = true)]
 	private static extern IntPtr PowerCreateRequest(ref ReasonContext context);
 

@@ -24,9 +24,9 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 | **[Profile & info](#profile--info)** | `value` `level` `balance` `points` `bans` `owns` `privacy` `joingroup` |
 | **[rep4rep](#rep4rep)** | `rep4rep` |
 | **[Settings](#settings)** | `config` `set` `reload` `import` |
-| **[The app](#the-app)** | `log` `stats` `notify` `plugins` `tutorial` `help` `theme` `mini` `dashboard` `anywhere` `clear` `unlock` `version` `update` `answer` `exit` |
+| **[The app](#the-app)** | `log` `stats` `notify` `plugins` `tutorial` `help` `screen` `theme` `mini` `dashboard` `anywhere` `clear` `unlock` `version` `update` `answer` `exit` |
 
-69 commands in all.
+70 commands in all.
 
 ## Accounts
 
@@ -141,6 +141,7 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 | `plugins` | Which plugins are loaded, and where they came from. |
 | `tutorial [topic]` <br>also `guide`, `setup` | Getting started, in order, ticking off what you have already done. |
 | `help [command\|setting]` <br>also `?`, `h` | This list, or what one command or setting does. |
+| `screen off` <br>also `monitor`, `display` | Turns this computer's screens off now, to save power - nocat.farm keeps running. Moving the mouse or pressing a key turns them back on. Works from Telegram and Discord too. |
 | `theme [dark\|light]` <br>also `dark`, `light` | Switch the dashboard between the dark and light themes. Without an argument it says which is on. |
 | `mini [on\|off]` | Shrink the window to a small panel of your accounts - what each is doing, start and stop, the dashboard - or back to the full window. |
 | `dashboard [anywhere on\|off]` <br>also `web`, `link` | The dashboard's address - on this PC, on your phone over the same wifi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. 'dashboard anywhere on' opens it from anywhere and answers with the link; 'dashboard anywhere off' closes it (the same as 'anywhere on\|off'). |

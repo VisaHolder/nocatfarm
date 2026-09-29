@@ -44,7 +44,8 @@ public sealed class HumanGate(Bot bot, bool followsDay = true, bool ownDay = fal
 			// Behind-the-scenes things follow the day too when the account is set up that way.
 			bool day = followsDay || bot.Cfg.QuietThingsWaitForDay;
 
-			if (ownDay ? !HumanMode.UpFor(bot) : day ? !HumanMode.ReadyFor(bot) : !bot.IsOnline) {
+			// Finishing up before it logs off: nothing new starts, quiet things included - they wait for the next sign-in.
+			if (bot.Stopping || (ownDay ? !HumanMode.UpFor(bot) : day ? !HumanMode.ReadyFor(bot) : !bot.IsOnline)) {
 				_ready = false;
 
 				return false;

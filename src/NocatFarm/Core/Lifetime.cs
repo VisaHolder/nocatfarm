@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using NocatFarm.Config;
 
 namespace NocatFarm.Core;
@@ -19,6 +19,11 @@ public static class Lifetime {
 	private static readonly Lock Gate = new();
 	private static readonly Dictionary<string, double> Minutes = new(StringComparer.OrdinalIgnoreCase);
 
+	/// <summary>Game-minutes: every game that was running counts, the way Steam credits playtime - 32 games for an
+	/// hour is 32 hours. The clock total above is an hour however many games were on, which made a robot running
+	/// 32 games around the clock look like it banked 20 hours a day.</summary>
+	private static readonly Dictionary<string, double> GameMinutes = new(StringComparer.OrdinalIgnoreCase);
+
 	private static DateTime _lastSave = DateTime.MinValue;
 	private static bool _loaded;
 
@@ -27,12 +32,23 @@ public static class Lifetime {
 
 	private static string Path => System.IO.Path.Combine(ConfigStore.ConfigDir, "state", "lifetime.json");
 
+	private static string GamesPath => System.IO.Path.Combine(ConfigStore.ConfigDir, "state", "lifetime-games.json");
+
 	/// <summary>Total minutes this account has spent with a game running.</summary>
 	public static int For(string bot) {
 		Load();
 
 		lock (Gate) {
 			return Minutes.TryGetValue(bot, out double m) ? (int) m : 0;
+		}
+	}
+
+	/// <summary>Total game-minutes for this account: every running game counted, the way Steam counts it.</summary>
+	public static int GamesFor(string bot) {
+		Load();
+
+		lock (Gate) {
+			return GameMinutes.TryGetValue(bot, out double m) ? (int) m : 0;
 		}
 	}
 
@@ -60,7 +76,7 @@ public static class Lifetime {
 	/// The cost of the shorter interval is one atomic write of a few hundred bytes a minute, which is nothing
 	/// next to a total that is wrong by a factor of thirty.
 	/// </remarks>
-	public static void Add(string bot, double minutes) {
+	public static void Add(string bot, double minutes, int games = 1) {
 		if ((minutes <= 0) || (minutes > 5)) {
 			return;
 		}
@@ -71,6 +87,11 @@ public static class Lifetime {
 
 		lock (Gate) {
 			Minutes[bot] = Minutes.GetValueOrDefault(bot) + minutes;
+
+			if (games > 0) {
+				GameMinutes[bot] = GameMinutes.GetValueOrDefault(bot, Minutes[bot] - minutes) + (minutes * games);
+			}
+
 			due = DateTime.UtcNow - _lastSave > TimeSpan.FromMinutes(1);
 
 			if (due) {
@@ -108,6 +129,28 @@ public static class Lifetime {
 				_loadFailed = true;
 				Log.Warn(new Said("couldn't read lifetime totals ({0}: {1}) - not overwriting", e.GetType().Name, e.Message));
 			}
+
+			try {
+				if (File.Exists(GamesPath)) {
+					Dictionary<string, double>? saved = JsonSerializer.Deserialize<Dictionary<string, double>>(File.ReadAllText(GamesPath));
+
+					if (saved != null) {
+						foreach ((string bot, double m) in saved) {
+							GameMinutes[bot] = m;
+						}
+					}
+				} else if (!_loadFailed) {
+					// First run with game-hours: the clock total times how many games this account had on at once,
+					// as the day-by-day history recorded it (never less than one - every clock minute had a game).
+					foreach ((string bot, double m) in Minutes) {
+						(double clock, double banked) = History.Recent(History.KeepDays, bot);
+						GameMinutes[bot] = m * (clock > 0 ? Math.Max(1, banked / clock) : 1);
+					}
+				}
+			} catch (Exception e) {
+				_loadFailed = true;
+				Log.Warn(new Said("couldn't read lifetime totals ({0}: {1}) - not overwriting", e.GetType().Name, e.Message));
+			}
 		}
 	}
 
@@ -129,9 +172,11 @@ public static class Lifetime {
 			Load();
 
 			Dictionary<string, double> snapshot;
+			Dictionary<string, double> games;
 
 			lock (Gate) {
 				snapshot = new Dictionary<string, double>(Minutes);
+				games = new Dictionary<string, double>(GameMinutes);
 			}
 
 			string path = Path;
@@ -150,6 +195,10 @@ public static class Lifetime {
 
 			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
 			AtomicFile.Write(path, JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true }));
+
+			if ((games.Count > 0) || !File.Exists(GamesPath)) {
+				AtomicFile.Write(GamesPath, JsonSerializer.Serialize(games, new JsonSerializerOptions { WriteIndented = true }));
+			}
 		} catch (Exception e) {
 			Log.Warn(new Said("couldn't save the lifetime totals: {0}: {1}", e.GetType().Name, e.Message));
 		}

@@ -1476,10 +1476,8 @@
     "rep4rep comments": "Komentarze rep4rep",
     "No comments posted in the last {0} days.": "Żadnych komentarzy w ciągu ostatnich {0} dni.",
     "Hours banked": "Zebrane godziny",
-    "Time with a game running, however many games were running at once.": "Czas z uruchomioną grą, niezależnie od tego, ile gier działało naraz.",
     "Nothing played in the last {0} days.": "Nic nie grano w ciągu ostatnich {0} dni.",
     "Hours by game": "Godziny według gry",
-    "Steam counts the time for every game that is running, so several at once add up to more than the hours banked.": "Steam liczy czas każdej uruchomionej gry, więc kilka naraz daje więcej niż zebrane godziny.",
     "since {0}": "od {0}",
     "Inventory value": "Wartość ekwipunku",
     "What the inventory was worth at the end of each day, at the market median. A day with no new reading carries the last one over.": "Ile był wart ekwipunek na koniec każdego dnia, po medianie ceny rynkowej. Dzień bez nowego odczytu przejmuje poprzedni.",
@@ -2161,6 +2159,7 @@
     "update failed: couldn't unpack ({0}) - disk full?": "aktualizacja nieudana: nie można rozpakować ({0}) - pełny dysk?",
     "update failed: couldn't back up the current version ({0})": "aktualizacja nieudana: nie można zabezpieczyć obecnej wersji ({0})",
     "update: all signed out - restarting into {0}": "aktualizacja: wszystkie wylogowane - restart do {0}",
+    "update: signing the accounts back in": "aktualizacja: ponowne logowanie kont",
     "update failed: {0} - nothing changed": "aktualizacja nieudana: {0} - nic nie zmieniono",
     " · {0} by nocat.farm": "· {0} przez nocat.farm",
     "no cards left - idling {0}{1}": "brak kart - idluję {0}{1}",
@@ -2210,8 +2209,6 @@
     "Which games it hunts is set under Achievements.": "Na które gry poluje, ustawia się w Osiągnięciach.",
     "Change the main game": "Zmień główną grę",
     "the new main game: appID or store URL": "nowa główna gra: appID lub link do sklepu",
-    "{0} accounts on": "{0} kont włączonych",
-    "{0} of {1} accounts on": "{0} z {1} kont włączonych",
     "clear works in the nocat.farm window and the dashboard - it clears that screen": "clear działa w oknie nocat.farm i w panelu - czyści ten ekran",
     "file logging is off - turn on Write a log file under Settings, Logging": "zapis logu do pliku jest wyłączony - włącz Zapisuj plik dziennika w Ustawieniach, Dziennik",
     "opened the log folder: {0}": "otwarto folder logów: {0}",
@@ -2232,7 +2229,33 @@
     "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "jako usługa nocat.farm nie aktualizuje się sam - zatrzymaj go, rozpakuj {0} z {1} na ten folder (config/ i logs/ zostają) i uruchom ponownie",
     "update failed: it was started with an option that has a space in it - update by hand this time": "aktualizacja nieudana: uruchomiono go z opcją zawierającą spację - tym razem zaktualizuj ręcznie",
     "update failed: the download has no {0}": "aktualizacja nieudana: w pobranym pliku nie ma {0}",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "Daje znać, gdy wyjdzie nowa wersja. Tutaj nie zainstaluje jej sam - w Dockerze pobierz nową wersję i uruchom docker compose up -d --build; jako usługę Linuksa zatrzymaj go, rozpakuj nowy zip na folder i uruchom ponownie. Twoje konta i ustawienia zostają na miejscu."
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "Daje znać, gdy wyjdzie nowa wersja. Tutaj nie zainstaluje jej sam - w Dockerze pobierz nową wersję i uruchom docker compose up -d --build; jako usługę Linuksa zatrzymaj go, rozpakuj nowy zip na folder i uruchom ponownie. Twoje konta i ustawienia zostają na miejscu.",
+    "finishing up": "kończy",
+    "screen off turns the screens off - moving the mouse turns them back on": "screen off wyłącza ekrany - ruch myszą włącza je z powrotem",
+    "there's no screen here to turn off": "tu nie ma ekranu do wyłączenia",
+    "couldn't turn the screen off: {0}": "nie udało się wyłączyć ekranu: {0}",
+    "screens off in a moment - move the mouse to turn them back on": "ekrany zaraz się wyłączą - rusz myszą, żeby je włączyć",
+    "Turn the PC's screens off: /screen off": "Wyłącz ekrany komputera: /screen off",
+    "up late - one more sitting, then bed around {0}": "nie śpi do późna - jeszcze jedna sesja, potem spać około {0}",
+    "{0} accounts connected": "{0} kont połączonych",
+    "{0} of {1} accounts connected": "{0} z {1} kont połączonych",
+    "the first account shown": "pierwsze pokazane konto",
+    "every account not in human mode": "każde konto bez trybu ludzkiego",
+    "Your own link": "Własny link",
+    "Button text": "Tekst przycisku",
+    "My link": "Mój link",
+    "Every running game counts, the way Steam counts it - 32 games for an hour is 32 hours.": "Liczy się każda uruchomiona gra, tak jak liczy Steam - 32 gry przez godzinę to 32 godziny.",
+    "How the hours banked split between the games.": "Jak zebrane godziny dzielą się między gry.",
+    "up for one sitting until about {0}, then done for today": "jeszcze jedna sesja do około {0}, potem koniec na dziś",
+    "this account is posting a comment right now - try again in a few minutes": "to konto właśnie publikuje komentarz - spróbuj ponownie za kilka minut",
+    "already commented for that task - pick another": "do tego zadania jest już komentarz - wybierz inne",
+    "{0}: its items are being sent or sold right now - try again in a few minutes": "{0}: jego przedmioty są właśnie wysyłane albo sprzedawane - spróbuj ponownie za kilka minut",
+    "{0}: Steam wouldn't say which cards are in a waiting trade - try again in a while": "{0}: Steam nie mówi, które karty są w oczekującej wymianie - spróbuj ponownie później",
+    "offer {0} is already being answered": "oferta {0} jest już obsługiwana",
+    "the dashboard is switched off (Web dashboard, in Settings) - turn it on and restart nocat.farm first": "panel jest wyłączony (Panel webowy, w Ustawieniach) - najpierw go włącz i uruchom nocat.farm ponownie",
+    "{0}: saved \"{1}\" - it shows once human mode is off; human mode always shows the real game": "{0}: zapisano „{1}” - pokaże się po wyłączeniu trybu ludzkiego; tryb ludzki zawsze pokazuje prawdziwą grę",
+    "set {0} {1} <value> - the value is missing. It's {2} now.": "set {0} {1} <wartość> - brakuje wartości. Teraz jest {2}.",
+    "1 account connected": "1 konto połączone"
   },
   "settings": {
     "WebEnabled": {
@@ -2394,11 +2417,11 @@
     },
     "DailyReportEnabled": {
       "label": "Dzienne podsumowanie w dzienniku",
-      "tip": "Zapisuje w dzienniku codzienne podsumowanie tego, co każde konto zyskało w ostatnich 24 godzinach: przegrane godziny, karty i komentarze rep4rep. Wpisz stats, żeby zobaczyć je w dowolnej chwili."
+      "tip": "Codziennie zapisuje w logu podsumowanie tego, co każde konto zarobiło w ostatnich 24 godzinach: zebrane godziny, karty i komentarze rep4rep oraz wszystko zebrane do tej pory. Liczy się każda uruchomiona gra, tak jak liczy Steam - 32 gry przez godzinę to 32 godziny. Wpisz stats, aby zobaczyć je w dowolnej chwili."
     },
     "DailyReportHour": {
       "label": "Godzina podsumowania · godzina",
-      "tip": "Godzina, o której zapisywane jest dzienne podsumowanie, według czasu lokalnego. Używane tylko, gdy „Dzienne podsumowanie w dzienniku” jest włączone."
+      "tip": "Godzina, o której zapisywane jest dzienne podsumowanie, według czasu lokalnego - i wysyłane, gdy „Wysyłaj dzienne podsumowanie” jest włączone."
     },
     "DailyReportMinute": {
       "label": "Godzina podsumowania · minuta",
@@ -3095,7 +3118,7 @@
     },
     "DiscordPresenceAccounts": {
       "label": "Pokazywane konta",
-      "tip": "Które konta liczy karta Discorda. Zostaw puste dla każdego konta, które nie jest w trybie ludzkim, wpisz all dla wszystkich kont albo podaj nazwy oddzielone przecinkami."
+      "tip": "Które konta karta wymienia i opisuje. Automatycznie to każde konto bez trybu ludzkiego, albo zaznacz te, które chcesz. Liczby na karcie zawsze liczą wszystkie konta."
     },
     "DiscordShowNames": {
       "label": "Pokazuj nazwy kont",
@@ -3103,7 +3126,7 @@
     },
     "DiscordShowCounter": {
       "label": "Pokazuj konta online",
-      "tip": "Dodaje do karty Discorda, ile z pokazanych kont jest zalogowanych, np. „2 kont włączonych” albo „2 z 3 kont włączonych”."
+      "tip": "Dodaje do karty Discorda, ile twoich kont jest zalogowanych - wszystkich, także tych, których karta nie wymienia - np. „3 kont połączonych” albo „2 z 3 kont połączonych”."
     },
     "DiscordShowAvatar": {
       "label": "Pokazuj awatar konta",
@@ -3115,11 +3138,11 @@
     },
     "DiscordButton1": {
       "label": "Przycisk 1",
-      "tip": "Pierwszy z dwóch przycisków, na które Discord pozwala na karcie. github dla przycisku „Pobierz nocat.farm”, nazwa konta dla linku do jego profilu Steam, własny jako Label | https://link, albo puste, żeby nie było żadnego. Inni widzą przyciski - Discord nie pokazuje ci twoich własnych."
+      "tip": "Pierwszy z dwóch przycisków, na które Discord pozwala na karcie: Pobierz nocat.farm, strona konta na Steamie albo własny link z własnym tekstem. Inni widzą przyciski - tobie Discord ich nie pokazuje."
     },
     "DiscordButton2": {
       "label": "Przycisk 2",
-      "tip": "Drugi przycisk, tak samo: github, nazwa konta, Label | https://link albo puste, żeby nie było żadnego."
+      "tip": "Drugi przycisk, tak samo: Pobierz nocat.farm, strona konta na Steamie, własny link albo brak."
     },
     "DiscordFeatured": {
       "label": "Wyróżnione konto",
@@ -3229,7 +3252,7 @@
     },
     "DiscordSecondLine": {
       "label": "Druga linia",
-      "tip": "Co liczy druga linia karty Discorda, gdy nazwy kont są wyłączone: karty zdobyte dziś albo godziny grania w ostatnim tygodniu lub miesiącu - zsumowane dla kont pokazanych na karcie.",
+      "tip": "Co liczy druga linia karty Discorda, gdy nazwy kont są wyłączone: karty zdobyte dziś albo godziny grania w ostatnim tygodniu lub miesiącu - zsumowane dla wszystkich twoich kont.",
       "choices": "0 karty dziś | 1 godziny w ostatnim tygodniu | 2 godziny w ostatnim miesiącu"
     },
     "SendAroundHour": {

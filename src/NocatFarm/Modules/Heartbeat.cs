@@ -81,7 +81,8 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 		_lastTick = now;
 
 		if ((since > 0) && (Bot.PlayingApps.Count > 0)) {
-			Lifetime.Add(Bot.Name, since);
+			// Every real game counts, the way Steam credits them - a custom name on its own (app 0) isn't one.
+			Lifetime.Add(Bot.Name, since, Bot.PlayingApps.Count(static a => a != 0));
 
 			// And the same minutes by day and by game, for the dashboard's history charts.
 			History.AddPlay(Bot.Name, since, Bot.PlayingApps);

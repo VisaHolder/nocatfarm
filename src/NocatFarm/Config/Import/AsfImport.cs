@@ -302,9 +302,12 @@ public static class AsfImport {
 			bot.BoosterGames = string.Join(", ", boosters.EnumerateArray().Where(static e => e.ValueKind == JsonValueKind.Number).Select(static e => e.GetRawText()));
 		}
 
-		if (Bool(cfg, "AcceptGifts") is bool gifts) {
-			bot.AcceptGifts = gifts;
-		}
+		// What the ASF account did, copied. Left out of its file means ASF's own default - off - and not nocat.farm's,
+		// which accepts gifts: an account that never took a gift under ASF started taking every one after the import.
+		// ASF's one switch covers every kind of gift, so it decides gifted games too.
+		bool gifts = Bool(cfg, "AcceptGifts") ?? false;
+		bot.AcceptGifts = gifts;
+		bot.AcceptGiftedGames = gifts;
 
 		// ASF's current key is a list, FarmingOrders, tried in turn; ours is one choice, so the first one wins.
 		// The single-number FarmingOrder is what older ASF configs used. Reading only that missed every order
@@ -513,10 +516,10 @@ public static class AsfImport {
 	/// or above. That is exactly what our trade-masters list means, so it comes straight across.
 	/// </summary>
 	private static void TranslateTrading(JsonElement cfg, BotConfig bot) {
-		if (Int(cfg, "TradingPreferences") is int flags) {
-			bot.AcceptDonations = (flags & 1) != 0;   // AcceptDonations
-			bot.AcceptFairCardSwaps = (flags & 2) != 0;   // SteamTradeMatcher
-		}
+		// Left out of the file means ASF's default, 0: no donations, no card swaps - not nocat.farm's defaults.
+		int flags = Int(cfg, "TradingPreferences") ?? 0;
+		bot.AcceptDonations = (flags & 1) != 0;   // AcceptDonations
+		bot.AcceptFairCardSwaps = (flags & 2) != 0;   // SteamTradeMatcher
 
 		List<string> masters = [];
 

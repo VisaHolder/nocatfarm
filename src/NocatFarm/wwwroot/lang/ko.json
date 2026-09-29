@@ -1476,10 +1476,8 @@
     "rep4rep comments": "rep4rep 댓글",
     "No comments posted in the last {0} days.": "최근 {0}일 동안 게시한 댓글이 없습니다.",
     "Hours banked": "적립한 시간",
-    "Time with a game running, however many games were running at once.": "게임이 실행 중이던 시간입니다. 동시에 몇 개가 실행 중이었든 한 번만 셉니다.",
     "Nothing played in the last {0} days.": "최근 {0}일 동안 플레이한 게임이 없습니다.",
     "Hours by game": "게임별 시간",
-    "Steam counts the time for every game that is running, so several at once add up to more than the hours banked.": "Steam은 실행 중인 게임마다 시간을 세므로, 여러 개를 동시에 돌리면 적립한 시간보다 많아집니다.",
     "since {0}": "{0} 이후",
     "Inventory value": "인벤토리 가치",
     "What the inventory was worth at the end of each day, at the market median. A day with no new reading carries the last one over.": "매일 마감 시점의 인벤토리 가치(시장 중앙값 기준). 새로 읽은 값이 없는 날은 마지막 값을 이어 씁니다.",
@@ -2161,6 +2159,7 @@
     "update failed: couldn't unpack ({0}) - disk full?": "업데이트 실패: 압축 해제 불가 ({0}) - 디스크 가득?",
     "update failed: couldn't back up the current version ({0})": "업데이트 실패: 현재 버전 백업 불가 ({0})",
     "update: all signed out - restarting into {0}": "업데이트: 모두 로그아웃 - {0}(으)로 재시작",
+    "update: signing the accounts back in": "업데이트: 계정에 다시 로그인하는 중",
     "update failed: {0} - nothing changed": "업데이트 실패: {0} - 변경 없음",
     " · {0} by nocat.farm": "· nocat.farm로 {0}",
     "no cards left - idling {0}{1}": "카드 없음 - {0} 대기 중{1}",
@@ -2210,8 +2209,6 @@
     "Which games it hunts is set under Achievements.": "어떤 게임을 사냥할지는 도전 과제에서 설정합니다.",
     "Change the main game": "주 게임 바꾸기",
     "the new main game: appID or store URL": "새 주 게임: appID 또는 상점 URL",
-    "{0} accounts on": "계정 {0}개 켜짐",
-    "{0} of {1} accounts on": "계정 {1}개 중 {0}개 켜짐",
     "clear works in the nocat.farm window and the dashboard - it clears that screen": "clear는 nocat.farm 창과 대시보드에서 됩니다 - 그 화면을 지웁니다",
     "file logging is off - turn on Write a log file under Settings, Logging": "파일 로그가 꺼져 있습니다 - 설정의 로그에서 로그 파일 기록을 켜세요",
     "opened the log folder: {0}": "로그 폴더를 열었습니다: {0}",
@@ -2232,7 +2229,33 @@
     "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "서비스로 실행 중이라 스스로 업데이트하지 않습니다 - 멈추고 {1}의 {0}을 이 폴더에 덮어 풀고(config/와 logs/는 유지) 다시 시작하세요",
     "update failed: it was started with an option that has a space in it - update by hand this time": "업데이트 실패: 공백이 들어간 옵션으로 시작되었습니다 - 이번에는 직접 업데이트하세요",
     "update failed: the download has no {0}": "업데이트 실패: 다운로드에 {0}이(가) 없습니다",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "새 버전이 나오면 알려 줍니다. 여기서는 스스로 설치할 수 없습니다. Docker에서는 새 버전을 받아 docker compose up -d --build를 실행하고, Linux 서비스로 실행 중이면 멈추고 새 zip을 폴더에 덮어 푼 뒤 다시 시작하세요. 계정과 설정은 그대로 남습니다."
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "새 버전이 나오면 알려 줍니다. 여기서는 스스로 설치할 수 없습니다. Docker에서는 새 버전을 받아 docker compose up -d --build를 실행하고, Linux 서비스로 실행 중이면 멈추고 새 zip을 폴더에 덮어 푼 뒤 다시 시작하세요. 계정과 설정은 그대로 남습니다.",
+    "finishing up": "마무리 중",
+    "screen off turns the screens off - moving the mouse turns them back on": "screen off는 화면을 끕니다 - 마우스를 움직이면 다시 켜집니다",
+    "there's no screen here to turn off": "여기에는 끌 화면이 없습니다",
+    "couldn't turn the screen off: {0}": "화면을 끄지 못했습니다: {0}",
+    "screens off in a moment - move the mouse to turn them back on": "곧 화면이 꺼집니다 - 마우스를 움직이면 다시 켜집니다",
+    "Turn the PC's screens off: /screen off": "PC 화면 끄기: /screen off",
+    "up late - one more sitting, then bed around {0}": "늦게까지 깨어 있음 - 한 판 더 하고 {0}쯤 잠자리에",
+    "{0} accounts connected": "계정 {0}개 연결됨",
+    "{0} of {1} accounts connected": "계정 {1}개 중 {0}개 연결됨",
+    "the first account shown": "처음 표시되는 계정",
+    "every account not in human mode": "사람 모드가 아닌 모든 계정",
+    "Your own link": "내 링크",
+    "Button text": "버튼 글자",
+    "My link": "내 링크",
+    "Every running game counts, the way Steam counts it - 32 games for an hour is 32 hours.": "실행 중인 게임은 모두 셉니다. Steam과 같아서 게임 32개를 1시간 돌리면 32시간입니다.",
+    "How the hours banked split between the games.": "쌓인 시간이 게임별로 어떻게 나뉘는지.",
+    "up for one sitting until about {0}, then done for today": "{0}쯤까지 한 판 더 하고, 오늘은 끝",
+    "this account is posting a comment right now - try again in a few minutes": "이 계정이 지금 댓글을 올리는 중입니다 - 몇 분 후 다시 시도하세요",
+    "already commented for that task - pick another": "그 작업에는 이미 댓글을 달았습니다 - 다른 것을 고르세요",
+    "{0}: its items are being sent or sold right now - try again in a few minutes": "{0}: 아이템을 지금 보내거나 판매하는 중입니다 - 몇 분 후 다시 시도하세요",
+    "{0}: Steam wouldn't say which cards are in a waiting trade - try again in a while": "{0}: 대기 중인 거래에 어떤 카드가 들어 있는지 Steam이 알려 주지 않습니다 - 잠시 후 다시 시도하세요",
+    "offer {0} is already being answered": "제안 {0}은(는) 이미 처리 중입니다",
+    "the dashboard is switched off (Web dashboard, in Settings) - turn it on and restart nocat.farm first": "대시보드가 꺼져 있습니다(설정의 웹 대시보드) - 먼저 켜고 nocat.farm을 다시 시작하세요",
+    "{0}: saved \"{1}\" - it shows once human mode is off; human mode always shows the real game": "{0}: “{1}” 저장됨 - 사람 모드를 끄면 표시됩니다. 사람 모드에서는 항상 실제 게임이 보입니다",
+    "set {0} {1} <value> - the value is missing. It's {2} now.": "set {0} {1} <값> - 값이 빠졌습니다. 지금은 {2}입니다.",
+    "1 account connected": "계정 1개 연결됨"
   },
   "settings": {
     "WebEnabled": {
@@ -2394,11 +2417,11 @@
     },
     "DailyReportEnabled": {
       "label": "로그에 일일 요약",
-      "tip": "각 계정이 지난 24시간 동안 얻은 것을 매일 로그에 요약합니다. 플레이 시간, 카드, rep4rep 댓글이 들어갑니다. 언제든 stats를 입력하면 볼 수 있습니다."
+      "tip": "각 계정이 지난 24시간 동안 얻은 것(쌓인 시간, 카드, rep4rep 댓글, 지금까지 쌓인 전체)을 매일 로그에 요약합니다. 실행 중인 게임은 모두 셉니다. Steam과 같아서 게임 32개를 1시간 돌리면 32시간입니다. 언제든 stats를 입력하면 볼 수 있습니다."
     },
     "DailyReportHour": {
       "label": "요약 시각 · 시",
-      "tip": "일일 요약을 쓰는 시(현지 시간)입니다. “로그에 일일 요약”이 켜져 있을 때만 쓰입니다."
+      "tip": "일일 요약을 쓰는 시(현지 시간)입니다. “일일 요약 보내기”가 켜져 있으면 이때 보내기도 합니다."
     },
     "DailyReportMinute": {
       "label": "요약 시각 · 분",
@@ -3095,7 +3118,7 @@
     },
     "DiscordPresenceAccounts": {
       "label": "표시할 계정",
-      "tip": "Discord 카드가 세는 계정입니다. 비워 두면 사람 모드가 아닌 모든 계정, all을 입력하면 모든 계정, 아니면 이름을 쉼표로 구분해 적으세요."
+      "tip": "카드가 이름을 보여 주고 설명할 계정입니다. 자동은 사람 모드가 아닌 모든 계정이고, 원하는 계정에 체크해도 됩니다. 카드의 숫자는 항상 모든 계정을 셉니다."
     },
     "DiscordShowNames": {
       "label": "계정 이름 표시",
@@ -3103,7 +3126,7 @@
     },
     "DiscordShowCounter": {
       "label": "온라인 계정 표시",
-      "tip": "표시된 계정 중 몇 개가 로그인했는지 Discord 카드에 보여 줍니다. 예: \"계정 2개 켜짐\", \"계정 3개 중 2개 켜짐\"."
+      "tip": "계정 중 몇 개가 로그인했는지 Discord 카드에 보여 줍니다(카드에 이름이 안 나오는 계정도 모두 포함). 예: \"계정 3개 연결됨\", \"계정 3개 중 2개 연결됨\"."
     },
     "DiscordShowAvatar": {
       "label": "계정 아바타 표시",
@@ -3115,11 +3138,11 @@
     },
     "DiscordButton1": {
       "label": "버튼 1",
-      "tip": "Discord가 카드에 허용하는 버튼 두 개 중 첫 번째입니다. github는 'nocat.farm 받기' 버튼, 계정 이름은 그 계정의 Steam 프로필 링크, 직접 만들려면 Label | https://link, 비우면 버튼 없음. 다른 사람에게는 버튼이 보이지만, Discord는 내 버튼을 나에게 보여 주지 않습니다."
+      "tip": "Discord가 카드에 허용하는 두 버튼 중 첫 번째: nocat.farm 받기, 계정의 Steam 페이지, 또는 내 글자와 내 링크. 다른 사람에게는 버튼이 보이지만 Discord는 내 버튼을 나에게는 보여 주지 않습니다."
     },
     "DiscordButton2": {
       "label": "버튼 2",
-      "tip": "두 번째 버튼도 같은 방식입니다: github, 계정 이름, Label | https://link, 또는 비우면 버튼 없음."
+      "tip": "두 번째 버튼도 같습니다: nocat.farm 받기, 계정의 Steam 페이지, 내 링크, 또는 없음."
     },
     "DiscordFeatured": {
       "label": "대표 계정",
@@ -3229,7 +3252,7 @@
     },
     "DiscordSecondLine": {
       "label": "두 번째 줄",
-      "tip": "계정 이름이 꺼져 있을 때 Discord 카드 두 번째 줄이 세는 것: 오늘 얻은 카드, 또는 지난 1주나 지난 1달 동안 플레이한 시간 - 카드에 나오는 계정을 모두 더한 값입니다.",
+      "tip": "계정 이름이 꺼져 있을 때 Discord 카드 두 번째 줄이 세는 것: 오늘 얻은 카드, 또는 지난 1주나 지난 1달 동안 플레이한 시간 - 모든 계정을 더한 값입니다.",
       "choices": "0 오늘 카드 | 1 지난 1주 시간 | 2 지난 1달 시간"
     },
     "SendAroundHour": {

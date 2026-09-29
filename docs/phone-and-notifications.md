@@ -104,7 +104,7 @@ are under Show advanced:
 - *Show account names*, *Show accounts online*, *Show an account's avatar* and *Show how long it's been running*,
   all on
 - *Second line*: with account names off, the card counts cards today, hours past week (the default) or hours past
-  month, added up over the accounts it shows
+  month, added up over all your accounts
 - Discord allows two pictures and two buttons on a card, no more. The big picture is the logo, the small one the
   featured account's avatar
 - *Button 1* and *Button 2*: `github` (a Get nocat.farm button), an account name (a link to its Steam profile),

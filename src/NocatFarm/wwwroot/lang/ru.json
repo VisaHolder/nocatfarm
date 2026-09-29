@@ -1476,10 +1476,8 @@
     "rep4rep comments": "Комментарии rep4rep",
     "No comments posted in the last {0} days.": "За последние {0} дн. комментариев не было.",
     "Hours banked": "Накопленные часы",
-    "Time with a game running, however many games were running at once.": "Время, когда была запущена игра, сколько бы игр ни работало одновременно.",
     "Nothing played in the last {0} days.": "За последние {0} дн. ничего не запускалось.",
     "Hours by game": "Часы по играм",
-    "Steam counts the time for every game that is running, so several at once add up to more than the hours banked.": "Steam считает время каждой запущенной игры, поэтому несколько сразу дают больше, чем накопленные часы.",
     "since {0}": "с {0}",
     "Inventory value": "Стоимость инвентаря",
     "What the inventory was worth at the end of each day, at the market median. A day with no new reading carries the last one over.": "Сколько стоил инвентарь в конце каждого дня, по медианной цене рынка. День без нового замера повторяет последний.",
@@ -2161,6 +2159,7 @@
     "update failed: couldn't unpack ({0}) - disk full?": "обновление не удалось: не распаковать ({0}) - диск полон?",
     "update failed: couldn't back up the current version ({0})": "обновление не удалось: не сделать копию текущей версии ({0})",
     "update: all signed out - restarting into {0}": "обновление: все вышли - перезапуск в {0}",
+    "update: signing the accounts back in": "обновление: снова входим в аккаунты",
     "update failed: {0} - nothing changed": "обновление не удалось: {0} - ничего не изменено",
     " · {0} by nocat.farm": "· {0} через nocat.farm",
     "no cards left - idling {0}{1}": "карт нет - простой в {0}{1}",
@@ -2210,8 +2209,6 @@
     "Which games it hunts is set under Achievements.": "На какие игры охотиться, настраивается в разделе «Достижения».",
     "Change the main game": "Сменить основную игру",
     "the new main game: appID or store URL": "новая основная игра: appID или ссылка на магазин",
-    "{0} accounts on": "аккаунтов в сети: {0}",
-    "{0} of {1} accounts on": "в сети {0} из {1} аккаунтов",
     "clear works in the nocat.farm window and the dashboard - it clears that screen": "clear работает в окне nocat.farm и в панели - очищает тот экран",
     "file logging is off - turn on Write a log file under Settings, Logging": "запись журнала в файл выключена - включите «Писать файл журнала» в Настройки, Журнал",
     "opened the log folder: {0}": "папка журналов открыта: {0}",
@@ -2232,7 +2229,33 @@
     "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "как служба nocat.farm не обновляется сам - остановите его, распакуйте {0} с {1} поверх этой папки (config/ и logs/ сохранятся) и запустите снова",
     "update failed: it was started with an option that has a space in it - update by hand this time": "обновление не удалось: он запущен с параметром, в котором есть пробел - в этот раз обновите вручную",
     "update failed: the download has no {0}": "обновление не удалось: в загрузке нет {0}",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "Сообщает, когда выходит новая версия. Здесь он не может установить её сам: в Docker получите новую версию и выполните docker compose up -d --build; как службу Linux остановите его, распакуйте новый zip поверх папки и запустите снова. Аккаунты и настройки остаются на месте."
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "Сообщает, когда выходит новая версия. Здесь он не может установить её сам: в Docker получите новую версию и выполните docker compose up -d --build; как службу Linux остановите его, распакуйте новый zip поверх папки и запустите снова. Аккаунты и настройки остаются на месте.",
+    "finishing up": "заканчивает",
+    "screen off turns the screens off - moving the mouse turns them back on": "screen off выключает экраны - движение мыши включает их обратно",
+    "there's no screen here to turn off": "здесь нет экрана, который можно выключить",
+    "couldn't turn the screen off: {0}": "не удалось выключить экран: {0}",
+    "screens off in a moment - move the mouse to turn them back on": "экраны сейчас выключатся - подвигайте мышью, чтобы включить",
+    "Turn the PC's screens off: /screen off": "Выключить экраны ПК: /screen off",
+    "up late - one more sitting, then bed around {0}": "не спит допоздна - ещё один сеанс, потом спать около {0}",
+    "{0} accounts connected": "подключено аккаунтов: {0}",
+    "{0} of {1} accounts connected": "подключено {0} из {1} аккаунтов",
+    "the first account shown": "первый показанный аккаунт",
+    "every account not in human mode": "все аккаунты не в человеческом режиме",
+    "Your own link": "Своя ссылка",
+    "Button text": "Текст кнопки",
+    "My link": "Моя ссылка",
+    "Every running game counts, the way Steam counts it - 32 games for an hour is 32 hours.": "Считается каждая запущенная игра, как считает Steam: 32 игры за час - это 32 часа.",
+    "How the hours banked split between the games.": "Как накопленные часы делятся между играми.",
+    "up for one sitting until about {0}, then done for today": "ещё один сеанс примерно до {0}, потом на сегодня всё",
+    "this account is posting a comment right now - try again in a few minutes": "этот аккаунт прямо сейчас публикует комментарий - попробуйте через несколько минут",
+    "already commented for that task - pick another": "к этому заданию уже есть комментарий - выберите другое",
+    "{0}: its items are being sent or sold right now - try again in a few minutes": "{0}: его предметы прямо сейчас отправляются или продаются - попробуйте через несколько минут",
+    "{0}: Steam wouldn't say which cards are in a waiting trade - try again in a while": "{0}: Steam не говорит, какие карточки лежат в ожидающем обмене - попробуйте позже",
+    "offer {0} is already being answered": "на предложение {0} уже отвечают",
+    "the dashboard is switched off (Web dashboard, in Settings) - turn it on and restart nocat.farm first": "панель выключена (Веб-панель, в Настройках) - сначала включите её и перезапустите nocat.farm",
+    "{0}: saved \"{1}\" - it shows once human mode is off; human mode always shows the real game": "{0}: «{1}» сохранено - появится, когда человеческий режим выключен; в человеческом режиме всегда видна настоящая игра",
+    "set {0} {1} <value> - the value is missing. It's {2} now.": "set {0} {1} <значение> - не указано значение. Сейчас: {2}.",
+    "1 account connected": "подключён 1 аккаунт"
   },
   "settings": {
     "WebEnabled": {
@@ -2394,11 +2417,11 @@
     },
     "DailyReportEnabled": {
       "label": "Ежедневная сводка в журнале",
-      "tip": "Пишет в журнал ежедневную сводку о том, что каждый аккаунт заработал за последние 24 часа: сыгранные часы, карточки и комментарии rep4rep. Введите stats, чтобы увидеть её в любое время."
+      "tip": "Раз в день пишет в журнал сводку того, что каждый аккаунт заработал за последние 24 часа: накопленные часы, карточки и комментарии rep4rep, и всё накопленное на сегодня. Считается каждая запущенная игра, как считает Steam: 32 игры за час - это 32 часа. Введите stats, чтобы посмотреть в любой момент."
     },
     "DailyReportHour": {
       "label": "Время сводки · час",
-      "tip": "Час, в который пишется ежедневная сводка, по местному времени. Используется, только когда включена «Ежедневная сводка в журнале»."
+      "tip": "Час, в который пишется ежедневная сводка, по местному времени, - и отправляется, когда включено «Отправлять ежедневную сводку»."
     },
     "DailyReportMinute": {
       "label": "Время сводки · минута",
@@ -3095,7 +3118,7 @@
     },
     "DiscordPresenceAccounts": {
       "label": "Какие аккаунты показывать",
-      "tip": "Какие аккаунты учитывает статус в Discord. Оставьте пустым для всех аккаунтов не в человеческом режиме, введите all для всех аккаунтов или перечислите имена через запятую."
+      "tip": "Какие аккаунты карточка называет и описывает. Автоматически - все аккаунты не в человеческом режиме, или отметьте нужные. Числа на карточке всегда считают все аккаунты."
     },
     "DiscordShowNames": {
       "label": "Показывать имена аккаунтов",
@@ -3103,7 +3126,7 @@
     },
     "DiscordShowCounter": {
       "label": "Показывать аккаунты в сети",
-      "tip": "Показывает на карточке Discord, сколько из показанных аккаунтов вошли в сеть, например «аккаунтов в сети: 2» или «в сети 2 из 3 аккаунтов»."
+      "tip": "Показывает на карточке Discord, сколько ваших аккаунтов в сети - всех, включая те, что карточка не называет, - например «подключено аккаунтов: 3» или «подключено 2 из 3 аккаунтов»."
     },
     "DiscordShowAvatar": {
       "label": "Показывать аватар аккаунта",
@@ -3115,11 +3138,11 @@
     },
     "DiscordButton1": {
       "label": "Кнопка 1",
-      "tip": "Первая из двух кнопок, которые Discord разрешает в статусе. github - кнопка «Скачать nocat.farm», имя аккаунта - ссылка на его профиль Steam, своя - в виде Label | https://link, пусто - без кнопки. Другие видят кнопки - Discord не показывает вам ваши собственные."
+      "tip": "Первая из двух кнопок, которые Discord разрешает на карточке: «Скачать nocat.farm», страница аккаунта в Steam или своя ссылка со своим текстом. Другие видят кнопки - свои Discord вам не показывает."
     },
     "DiscordButton2": {
       "label": "Кнопка 2",
-      "tip": "Вторая кнопка, так же: github, имя аккаунта, Label | https://link или пусто - без кнопки."
+      "tip": "Вторая кнопка, так же: «Скачать nocat.farm», страница аккаунта в Steam, своя ссылка или никакой."
     },
     "DiscordFeatured": {
       "label": "Главный аккаунт",
@@ -3229,7 +3252,7 @@
     },
     "DiscordSecondLine": {
       "label": "Вторая строка",
-      "tip": "Что считает вторая строка карточки Discord, когда имена аккаунтов выключены: карточки за сегодня или часы игры за последнюю неделю или месяц - в сумме по аккаунтам, которые показывает карточка.",
+      "tip": "Что считает вторая строка карточки Discord, когда имена аккаунтов выключены: карточки за сегодня или часы игры за последнюю неделю или месяц - в сумме по всем вашим аккаунтам.",
       "choices": "0 карточки за сегодня | 1 часы за неделю | 2 часы за месяц"
     },
     "SendAroundHour": {

@@ -8,6 +8,7 @@ namespace NocatFarm.Core;
 /// <summary>Owns every configured account and the wiring of their modules.</summary>
 public sealed class BotManager : IAsyncDisposable {
 	private readonly ConcurrentDictionary<string, Bot> _bots = new(StringComparer.OrdinalIgnoreCase);
+	private readonly Lock _adding = new();
 
 	public GlobalConfig Global { get; private set; }
 
@@ -87,9 +88,14 @@ public sealed class BotManager : IAsyncDisposable {
 				continue;
 			}
 
-			Bot bot = new(name, cfg);
-			Wire(bot);
-			_bots[name] = bot;
+			// Under the same lock as AddAsync, so an account being added right now isn't replaced by a second copy.
+			lock (_adding) {
+				if (!_bots.ContainsKey(name)) {
+					Bot bot = new(name, cfg);
+					Wire(bot);
+					_bots[name] = bot;
+				}
+			}
 		}
 	}
 
@@ -197,14 +203,21 @@ public sealed class BotManager : IAsyncDisposable {
 
 	/// <summary>Add a brand new account: writes its config and brings it up.</summary>
 	public async Task<Bot?> AddAsync(string name, BotConfig cfg) {
-		if (_bots.ContainsKey(name)) {
-			return null;
-		}
+		Bot bot;
 
-		ConfigStore.SaveBot(name, cfg);
-		Bot bot = new(name, cfg);
-		Wire(bot);
-		_bots[name] = bot;
+		// Check and add in one step. A double-click on "Add" (or the dashboard and a phone command together) both found
+		// the name free and both started an account: the second replaced the first in the list, and the first carried on
+		// signed in to the same Steam account with nothing left able to stop it.
+		lock (_adding) {
+			if (_bots.ContainsKey(name)) {
+				return null;
+			}
+
+			ConfigStore.SaveBot(name, cfg);
+			bot = new(name, cfg);
+			Wire(bot);
+			_bots[name] = bot;
+		}
 
 		if (cfg.Enabled) {
 			await bot.StartAsync().ConfigureAwait(false);

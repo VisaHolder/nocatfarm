@@ -90,6 +90,7 @@ public static partial class PriceBook {
 	private static bool _coolLoaded;
 	private static DateTime _lastSave = DateTime.MinValue;
 	private static bool _loaded;
+	private static readonly Lock LoadGate = new();
 
 	private static string Path => System.IO.Path.Combine(ConfigStore.ConfigDir, "state", "prices.json");
 
@@ -253,32 +254,37 @@ public static partial class PriceBook {
 	}
 
 	private static void Load() {
-		if (_loaded) {
-			return;
-		}
-
-		_loaded = true;
-
-		try {
-			if (!File.Exists(Path)) {
+		// The check and the read under one lock. Marked loaded first and read after, a second caller in the meantime went
+		// on as if it were loaded - two accounts pricing at once: the second found it loaded while the file was still being
+		// read, took every item for unpriced, and its save wrote a near-empty price book over the real one.
+		lock (LoadGate) {
+			if (_loaded) {
 				return;
 			}
 
-			Dictionary<string, Price>? saved = JsonSerializer.Deserialize<Dictionary<string, Price>>(File.ReadAllText(Path));
+			_loaded = true;
 
-			if (saved != null) {
-				lock (Cache) {
-					foreach ((string key, Price p) in saved) {
-						// Anything a month old is either an item nobody holds any more or a currency nobody uses
-						// any more - keeping either for ever is how a cache file quietly becomes a megabyte.
-						if (DateTime.UtcNow - p.When < TimeSpan.FromDays(30)) {
-							Cache[key] = p;
+			try {
+				if (!File.Exists(Path)) {
+					return;
+				}
+
+				Dictionary<string, Price>? saved = JsonSerializer.Deserialize<Dictionary<string, Price>>(File.ReadAllText(Path));
+
+				if (saved != null) {
+					lock (Cache) {
+						foreach ((string key, Price p) in saved) {
+							// Anything a month old is either an item nobody holds any more or a currency nobody uses
+							// any more - keeping either for ever is how a cache file quietly becomes a megabyte.
+							if (DateTime.UtcNow - p.When < TimeSpan.FromDays(30)) {
+								Cache[key] = p;
+							}
 						}
 					}
 				}
+			} catch (Exception e) {
+				Log.Debug(new Said("couldn't read the price book: {0}", e.Message));
 			}
-		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the price book: {0}", e.Message));
 		}
 	}
 

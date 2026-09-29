@@ -57,7 +57,12 @@ public static class SelfUpdate {
 	}
 
 	/// <summary>True while a download is in flight, so a second press doesn't start a second one.</summary>
-	public static bool Busy { get; private set; }
+	public static bool Busy => Volatile.Read(ref _busy) != 0;
+
+	// Claimed with one atomic step in ApplyAsync. A plain check-then-set let two installs through together: the timer
+	// starts "Update by itself" and a queued 'update accept' in the same tick, each on its own thread, and both read
+	// "not busy" before either set it - two downloads into one folder, and two sign-out countdowns.
+	private static int _busy;
 
 	/// <summary>Whether this copy can replace itself: everywhere but Docker and a systemd service - see the remarks above.</summary>
 	public static bool Supported => OperatingSystem.IsWindows()
@@ -377,7 +382,8 @@ public static class SelfUpdate {
 	/// one PC is a pattern of its own, and human mode exists to avoid exactly that. Human-mode accounts finish up
 	/// the way they do when stopped by hand.
 	/// </summary>
-	private static async Task SignOutOneByOneAsync(string tag, CancellationToken ct) {
+	/// <param name="signedOut">Filled with each account as it's signed out, so a failure after this can sign them back in.</param>
+	private static async Task SignOutOneByOneAsync(string tag, List<Bot> signedOut, CancellationToken ct) {
 		List<Bot> online = [.. (Fleet?.Invoke() ?? []).Where(static b => b.State is not (BotState.Stopped or BotState.Failed))];
 		// Long enough to read the line and see it happen, even with nothing to sign out.
 		int secs = online.Count == 0 ? 10 : Math.Clamp(12 + (online.Count * 7) + Rng.Next(0, 10), 15, 120);
@@ -409,6 +415,7 @@ public static class SelfUpdate {
 			while ((next < order.Length) && ((DateTime.UtcNow - start).TotalSeconds >= at[next])) {
 				Bot b = order[next++];
 				Log.Good(new Said("update: signing out {0} ({1} of {2}) - updating in {3}s", b.Name, next, order.Length, left));
+				signedOut.Add(b);
 				stopping.Add(b.StopAsync(graceful: b.Cfg.LegitMode));
 			}
 
@@ -423,6 +430,7 @@ public static class SelfUpdate {
 
 		// Anything the countdown didn't reach (a crowded window), and every graceful finish-up, before going down.
 		while (next < order.Length) {
+			signedOut.Add(order[next]);
 			stopping.Add(order[next++].StopAsync());
 		}
 
@@ -444,10 +452,6 @@ public static class SelfUpdate {
 	/// </summary>
 	/// <param name="byItself">"Update by itself" started it, at night - the message says so.</param>
 	public static async Task<string?> ApplyAsync(CancellationToken ct, bool byItself = false) {
-		if (Busy) {
-			return "an update is already downloading - give it a minute";
-		}
-
 		// Not a failure - there is simply another way to do it here, and nothing was attempted.
 		if (!Supported) {
 			Said how = ByHand(UpdateCheck.Available);
@@ -456,8 +460,17 @@ public static class SelfUpdate {
 			return how.ToString();
 		}
 
-		Busy = true;
+		// Closing counts as busy: after a handover the app takes a few seconds to shut down, and an install started in
+		// them (the timer, a click) deleted the folder the swap script was about to copy the new version from.
+		if (Commands.ExitRequested || (Interlocked.CompareExchange(ref _busy, 1, 0) != 0)) {
+			return "an update is already downloading - give it a minute";
+		}
+
+		bool handedOver = false;
 		LastFailure = null;
+
+		// Who the update signed out, so a failure after that can sign them back in.
+		List<Bot> signedOut = [];
 
 		try {
 			Progress = "asking GitHub what's newest";
@@ -650,7 +663,7 @@ public static class SelfUpdate {
 				? new Said("Downloaded {0} ({1}MB) - installing it now, by itself. The accounts sign out one at a time; back in about a minute.", tag, got / 1048576)
 				: new Said("Downloaded {0} ({1}MB) - installing it now. The accounts sign out one at a time; back in about a minute.", tag, got / 1048576));
 
-			await SignOutOneByOneAsync(tag, ct).ConfigureAwait(false);
+			await SignOutOneByOneAsync(tag, signedOut, ct).ConfigureAwait(false);
 
 			// Closed while the accounts were signing out: the update stops there. Carried on, the swap went ahead as
 			// the app shut down, installed the new version and started nocat.farm again after it had been closed.
@@ -720,6 +733,7 @@ public static class SelfUpdate {
 			swap.Environment["NF_OK"] = okFile;
 			swap.Environment["NF_TAG"] = tag.TrimStart('v', 'V');
 			Process.Start(swap);
+			handedOver = true;   // stays busy from here: the swap script owns the folder until this copy has gone
 
 			Commands.RequestExit();
 
@@ -727,10 +741,31 @@ public static class SelfUpdate {
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
+			SignBackIn(signedOut);
+
 			return Fail(new Said("update failed: {0} - nothing changed", e.Message));
 		} finally {
-			Busy = false;
+			if (!handedOver) {
+				Volatile.Write(ref _busy, 0);
+			}
+
 			Progress = "";
+		}
+	}
+
+	/// <summary>
+	/// The update stopped after the accounts were signed out (the swap couldn't be started, say). "Nothing changed" has to
+	/// be true of them too: they used to stay signed out until somebody noticed - all night, for an update by itself.
+	/// </summary>
+	private static void SignBackIn(List<Bot> signedOut) {
+		if ((signedOut.Count == 0) || Commands.ExitRequested) {
+			return;
+		}
+
+		Log.Info(new Said("update: signing the accounts back in"));
+
+		foreach (Bot b in signedOut.Where(static b => b.Cfg.Enabled)) {
+			_ = b.StartAsync();
 		}
 	}
 

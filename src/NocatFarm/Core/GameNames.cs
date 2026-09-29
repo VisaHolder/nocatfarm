@@ -20,6 +20,7 @@ public static class GameNames {
 	private static readonly SemaphoreSlim SaveLock = new(1, 1);
 	private static readonly HttpClient Http = Browser.Anonymous(TimeSpan.FromSeconds(15));
 	private static bool _loaded;
+	private static readonly Lock LoadGate = new();
 	private static bool _dirty;
 
 	private static string CachePath => Path.Combine(ConfigStore.ConfigDir, ".appnames.json");
@@ -183,34 +184,39 @@ public static class GameNames {
 	}
 
 	private static void Load() {
-		if (_loaded) {
-			return;
-		}
-
-		_loaded = true;
-
-		foreach ((uint appId, string name) in BuiltIn) {
-			Known.TryAdd(appId, name);
-		}
-
-		try {
-			if (!File.Exists(CachePath)) {
+		// The check and the read under one lock. Marked loaded first and read after, a second caller in the meantime went
+		// on as if it were loaded - two callers at once: the second found it loaded while the file was still being read,
+		// and its save could write a near-empty name cache over the real one.
+		lock (LoadGate) {
+			if (_loaded) {
 				return;
 			}
 
-			Dictionary<string, string>? cached = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(CachePath));
+			_loaded = true;
 
-			if (cached == null) {
-				return;
+			foreach ((uint appId, string name) in BuiltIn) {
+				Known.TryAdd(appId, name);
 			}
 
-			foreach ((string key, string name) in cached) {
-				if (uint.TryParse(key, out uint appId)) {
-					Known[appId] = name;
+			try {
+				if (!File.Exists(CachePath)) {
+					return;
 				}
+
+				Dictionary<string, string>? cached = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(CachePath));
+
+				if (cached == null) {
+					return;
+				}
+
+				foreach ((string key, string name) in cached) {
+					if (uint.TryParse(key, out uint appId)) {
+						Known[appId] = name;
+					}
+				}
+			} catch (Exception e) {
+				Log.Debug(new Said("couldn't read the game-name cache: {0}", e.Message));
 			}
-		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the game-name cache: {0}", e.Message));
 		}
 	}
 

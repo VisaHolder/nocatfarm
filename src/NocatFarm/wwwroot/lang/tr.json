@@ -1476,10 +1476,8 @@
     "rep4rep comments": "rep4rep yorumları",
     "No comments posted in the last {0} days.": "Son {0} günde yorum yazılmadı.",
     "Hours banked": "Biriktirilen saatler",
-    "Time with a game running, however many games were running at once.": "Bir oyunun açık olduğu süre; aynı anda kaç oyun açık olursa olsun.",
     "Nothing played in the last {0} days.": "Son {0} günde hiçbir şey oynanmadı.",
     "Hours by game": "Oyuna göre saatler",
-    "Steam counts the time for every game that is running, so several at once add up to more than the hours banked.": "Steam açık olan her oyunun süresini sayar, bu yüzden aynı anda birkaç oyun biriktirilen saatlerden fazlasını eder.",
     "since {0}": "{0} tarihinden beri",
     "Inventory value": "Envanter değeri",
     "What the inventory was worth at the end of each day, at the market median. A day with no new reading carries the last one over.": "Envanterin her günün sonundaki değeri, piyasa medyan fiyatıyla. Yeni ölçüm olmayan bir gün sonuncuyu devralır.",
@@ -2161,6 +2159,7 @@
     "update failed: couldn't unpack ({0}) - disk full?": "güncelleme başarısız: açılamadı ({0}) - disk dolu mu?",
     "update failed: couldn't back up the current version ({0})": "güncelleme başarısız: mevcut sürüm yedeklenemedi ({0})",
     "update: all signed out - restarting into {0}": "güncelleme: hepsinden çıkıldı - {0} ile yeniden başlıyor",
+    "update: signing the accounts back in": "güncelleme: hesaplara yeniden giriş yapılıyor",
     "update failed: {0} - nothing changed": "güncelleme başarısız: {0} - hiçbir şey değişmedi",
     " · {0} by nocat.farm": "· nocat.farm ile {0}",
     "no cards left - idling {0}{1}": "kart kalmadı - {0} boşta{1}",
@@ -2210,8 +2209,6 @@
     "Which games it hunts is set under Achievements.": "Hangi oyunların avlanacağı Başarımlar altında ayarlanır.",
     "Change the main game": "Ana oyunu değiştir",
     "the new main game: appID or store URL": "yeni ana oyun: appID ya da mağaza bağlantısı",
-    "{0} accounts on": "{0} hesap açık",
-    "{0} of {1} accounts on": "{1} hesaptan {0} tanesi açık",
     "clear works in the nocat.farm window and the dashboard - it clears that screen": "clear, nocat.farm penceresinde ve panelde çalışır - o ekranı temizler",
     "file logging is off - turn on Write a log file under Settings, Logging": "dosyaya günlük kapalı - Ayarlar, Günlük tutma altında Günlük dosyası yaz'ı aç",
     "opened the log folder: {0}": "günlük klasörü açıldı: {0}",
@@ -2232,7 +2229,33 @@
     "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "hizmet olarak çalışırken nocat.farm kendini güncellemez - durdur, {1} adresinden {0} dosyasını bu klasörün üstüne aç (config/ ve logs/ kalır) ve yeniden başlat",
     "update failed: it was started with an option that has a space in it - update by hand this time": "güncelleme başarısız: boşluk içeren bir seçenekle başlatılmış - bu sefer elle güncelle",
     "update failed: the download has no {0}": "güncelleme başarısız: indirilen dosyada {0} yok",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "Yeni sürüm çıkınca haber verir. Burada kendi kendine kuramaz - Docker'da yeni sürümü alıp docker compose up -d --build çalıştır; Linux hizmeti olarak çalışıyorsa durdur, yeni zip'i klasörün üstüne aç ve yeniden başlat. Hesapların ve ayarların yerinde kalır."
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "Yeni sürüm çıkınca haber verir. Burada kendi kendine kuramaz - Docker'da yeni sürümü alıp docker compose up -d --build çalıştır; Linux hizmeti olarak çalışıyorsa durdur, yeni zip'i klasörün üstüne aç ve yeniden başlat. Hesapların ve ayarların yerinde kalır.",
+    "finishing up": "bitiriyor",
+    "screen off turns the screens off - moving the mouse turns them back on": "screen off ekranları kapatır - fareyi oynatınca geri açılır",
+    "there's no screen here to turn off": "burada kapatılacak ekran yok",
+    "couldn't turn the screen off: {0}": "ekran kapatılamadı: {0}",
+    "screens off in a moment - move the mouse to turn them back on": "ekranlar birazdan kapanacak - açmak için fareyi oynat",
+    "Turn the PC's screens off: /screen off": "Bilgisayarın ekranlarını kapat: /screen off",
+    "up late - one more sitting, then bed around {0}": "geç saate kadar ayakta - bir oturum daha, sonra {0} civarı yatak",
+    "{0} accounts connected": "{0} hesap bağlı",
+    "{0} of {1} accounts connected": "{1} hesaptan {0} tanesi bağlı",
+    "the first account shown": "gösterilen ilk hesap",
+    "every account not in human mode": "insan modunda olmayan tüm hesaplar",
+    "Your own link": "Kendi bağlantın",
+    "Button text": "Düğme yazısı",
+    "My link": "Bağlantım",
+    "Every running game counts, the way Steam counts it - 32 games for an hour is 32 hours.": "Açık her oyun sayılır, Steam'in saydığı gibi - 32 oyun bir saat 32 saattir.",
+    "How the hours banked split between the games.": "Biriken saatlerin oyunlara nasıl dağıldığı.",
+    "up for one sitting until about {0}, then done for today": "yaklaşık {0} saatine kadar bir oturum daha, sonra bugünlük bu kadar",
+    "this account is posting a comment right now - try again in a few minutes": "bu hesap şu anda yorum gönderiyor - birkaç dakika sonra tekrar dene",
+    "already commented for that task - pick another": "o görev için zaten yorum yapıldı - başka birini seç",
+    "{0}: its items are being sent or sold right now - try again in a few minutes": "{0}: eşyaları şu anda gönderiliyor ya da satılıyor - birkaç dakika sonra tekrar dene",
+    "{0}: Steam wouldn't say which cards are in a waiting trade - try again in a while": "{0}: Steam bekleyen bir takasta hangi kartların olduğunu söylemiyor - biraz sonra tekrar dene",
+    "offer {0} is already being answered": "{0} numaralı teklif zaten yanıtlanıyor",
+    "the dashboard is switched off (Web dashboard, in Settings) - turn it on and restart nocat.farm first": "pano kapalı (Ayarlar'da Web panosu) - önce açıp nocat.farm'ı yeniden başlatın",
+    "{0}: saved \"{1}\" - it shows once human mode is off; human mode always shows the real game": "{0}: “{1}” kaydedildi - insan modu kapanınca görünür; insan modu her zaman gerçek oyunu gösterir",
+    "set {0} {1} <value> - the value is missing. It's {2} now.": "set {0} {1} <değer> - değer eksik. Şu an {2}.",
+    "1 account connected": "1 hesap bağlı"
   },
   "settings": {
     "WebEnabled": {
@@ -2394,11 +2417,11 @@
     },
     "DailyReportEnabled": {
       "label": "Günlükte günlük özet",
-      "tip": "Her hesabın son 24 saatte ne kazandığını günlüğe günlük bir özet olarak yazar: oynanan saatler, kartlar ve rep4rep yorumları. İstediğin an görmek için stats yaz."
+      "tip": "Her gün loga her hesabın son 24 saatte kazandıklarının özetini yazar: biriken saatler, kartlar ve rep4rep yorumları, ve şimdiye kadar biriken her şey. Açık her oyun sayılır, Steam'in saydığı gibi - 32 oyun bir saat 32 saattir. İstediğin zaman görmek için stats yaz."
     },
     "DailyReportHour": {
       "label": "Özet saati · saat",
-      "tip": "Günlük özetin yazıldığı saat, yerel saatle. Yalnızca “Günlükte günlük özet” açıkken kullanılır."
+      "tip": "Günlük özetin yazıldığı saat, yerel saatle - “Günlük özeti gönder” açıksa gönderildiği saat de."
     },
     "DailyReportMinute": {
       "label": "Özet saati · dakika",
@@ -3095,7 +3118,7 @@
     },
     "DiscordPresenceAccounts": {
       "label": "Gösterilen hesaplar",
-      "tip": "Discord kartının hangi hesapları saydığı. İnsan modunda olmayan her hesap için boş bırak, tüm hesaplar için all yaz ya da adları virgülle ayırarak listele."
+      "tip": "Kartın adını verip anlattığı hesaplar. Otomatik, insan modunda olmayan tüm hesaplardır; ya da istediklerini işaretle. Karttaki sayılar her zaman tüm hesapları sayar."
     },
     "DiscordShowNames": {
       "label": "Hesap adlarını göster",
@@ -3103,7 +3126,7 @@
     },
     "DiscordShowCounter": {
       "label": "Çevrimiçi hesapları göster",
-      "tip": "Discord kartına, gösterilen hesaplardan kaçının oturum açtığını ekler; örneğin \"2 hesap açık\" ya da \"3 hesaptan 2 tanesi açık\"."
+      "tip": "Discord kartına hesaplarından kaçının oturum açtığını ekler - kartın adını göstermediği hesaplar dahil hepsi -; örneğin \"3 hesap bağlı\" ya da \"3 hesaptan 2 tanesi bağlı\"."
     },
     "DiscordShowAvatar": {
       "label": "Bir hesabın avatarını göster",
@@ -3115,11 +3138,11 @@
     },
     "DiscordButton1": {
       "label": "Düğme 1",
-      "tip": "Discord'un kartta izin verdiği iki düğmeden ilki. \"nocat.farm'ı indir\" düğmesi için github, Steam profiline bağlantı için bir hesap adı, kendi düğmen için Label | https://link, hiç düğme olmaması için boş. Başkaları düğmeleri görür - Discord kendi düğmelerini sana göstermez."
+      "tip": "Discord'un karta izin verdiği iki düğmenin ilki: nocat.farm'ı al, bir hesabın Steam sayfası ya da kendi yazınla kendi bağlantın. Düğmeleri başkaları görür - Discord seninkileri sana göstermez."
     },
     "DiscordButton2": {
       "label": "Düğme 2",
-      "tip": "İkinci düğme, aynı şekilde: github, bir hesap adı, Label | https://link ya da hiç düğme için boş."
+      "tip": "İkinci düğme de aynı: nocat.farm'ı al, bir hesabın Steam sayfası, kendi bağlantın ya da hiçbiri."
     },
     "DiscordFeatured": {
       "label": "Öne çıkan hesap",
@@ -3229,7 +3252,7 @@
     },
     "DiscordSecondLine": {
       "label": "İkinci satır",
-      "tip": "Hesap adları kapalıyken Discord kartının ikinci satırının saydığı şey: bugün düşen kartlar ya da son bir hafta veya son bir ayda oynanan saatler - kartın gösterdiği hesapların toplamı.",
+      "tip": "Hesap adları kapalıyken Discord kartının ikinci satırının saydığı şey: bugün düşen kartlar ya da son bir hafta veya son bir ayda oynanan saatler - tüm hesaplarının toplamı.",
       "choices": "0 bugünkü kartlar | 1 son bir haftadaki saatler | 2 son bir aydaki saatler"
     },
     "SendAroundHour": {
