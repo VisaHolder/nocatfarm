@@ -333,6 +333,25 @@ public static class History {
 		}
 	}
 
+	/// <summary>Minutes banked by these accounts over the last <paramref name="days"/> local days, today included.</summary>
+	public static double MinutesOver(int days, IEnumerable<string> bots) {
+		Load();
+
+		HashSet<string> want = new(bots, StringComparer.OrdinalIgnoreCase);
+		DateTime today = DateTime.Now.Date;
+		double sum = 0;
+
+		lock (Gate) {
+			for (int i = 0; i < days; i++) {
+				if (Days.TryGetValue(Key(today.AddDays(-i)), out Dictionary<string, Day>? accounts)) {
+					sum += accounts.Where(a => want.Contains(a.Key)).Sum(static a => a.Value.Minutes);
+				}
+			}
+		}
+
+		return sum;
+	}
+
 	private static Day Get(string day, string bot) {
 		if (!Days.TryGetValue(day, out Dictionary<string, Day>? bots)) {
 			Days[day] = bots = new Dictionary<string, Day>(StringComparer.OrdinalIgnoreCase);

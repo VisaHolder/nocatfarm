@@ -211,7 +211,7 @@ public static class Seller {
 		}
 
 		if (listed > 0) {
-			Log.Info(new Said("listed {0} duplicate card(s) on the market - {1} to you if they all sell", listed, Money(earned, bot)), bot.Name);
+			Log.Info(new Said("listed {0} duplicate card(s) - {1} if they all sell", listed, Money(earned, bot)), bot.Name);
 		}
 
 		StringBuilder sb = new($"{bot.Name}: listed {listed} of {offers.Count}, {Money(earned, bot)} to you if they all sell");
@@ -226,7 +226,7 @@ public static class Seller {
 
 		if (!bot.CanConfirmTrades) {
 			// Said where it can't be missed - the log line alone scrolled past while the phone sat waiting.
-			Log.Attention(new Said("{0} market listing(s) are waiting - confirm them in the Steam app on your phone", listed), bot.Name);
+			Log.Attention(new Said("{0} market listing(s) to confirm in the Steam app", listed), bot.Name);
 
 			return sb.Append(". They need confirming in the Steam app on your phone (or load this account's authenticator secrets and it'll do that itself).").ToString();
 		}

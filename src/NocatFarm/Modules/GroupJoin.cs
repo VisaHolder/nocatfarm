@@ -105,7 +105,7 @@ public sealed partial class GroupJoin(Bot bot) : BotModule(bot) {
 
 						break;
 					case Outcome.NeedsApproval:
-						Log.Info(new Said("didn't join {0} - it needs an admin to approve new members", name), Bot.Name);
+						Log.Info(new Said("didn't join {0} - needs admin approval", name), Bot.Name);
 						_done.Add(group);
 
 						break;
@@ -115,7 +115,7 @@ public sealed partial class GroupJoin(Bot bot) : BotModule(bot) {
 
 						break;
 					case Outcome.NotFound:
-						Log.Info(new Said("there's no Steam group at \"{0}\" - check the link in its settings", group), Bot.Name);
+						Log.Info(new Said("no Steam group at \"{0}\" - check the link", group), Bot.Name);
 						_done.Add(group);
 
 						break;
@@ -123,7 +123,7 @@ public sealed partial class GroupJoin(Bot bot) : BotModule(bot) {
 						int tries = _tries[group] = _tries.GetValueOrDefault(group) + 1;
 
 						if (tries >= 4) {
-							Log.Info(new Said("couldn't join {0} this session - will try again next start", name), Bot.Name);
+							Log.Info(new Said("couldn't join {0} - trying again next start", name), Bot.Name);
 							_done.Add(group);
 						}
 

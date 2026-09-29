@@ -41,8 +41,11 @@ public static class ImportPlaces {
 	private static string Place(string sandboxed, Environment.SpecialFolder real) =>
 		Sandbox != null ? Path.Combine(Sandbox, sandboxed) : Special(real);
 
-	/// <summary>The folders a portable idler is usually unzipped into, searched a couple of folders deep.</summary>
-	public static IEnumerable<string> UsualRoots => new[] { Desktop, Documents, Downloads }.Where(static r => r.Length > 0);
+	/// <summary>The folders a portable idler is usually unzipped into, searched a couple of folders deep - and in Docker,
+	/// /import, where docker-compose.example.yml mounts another idler's folder.</summary>
+	public static IEnumerable<string> UsualRoots => new[] { Desktop, Documents, Downloads, DockerImport }.Where(static r => r.Length > 0);
+
+	private static string DockerImport => (Sandbox == null) && Core.Platform.InContainer && Directory.Exists("/import") ? "/import" : "";
 
 	private static string Special(Environment.SpecialFolder folder) {
 		try {
@@ -191,6 +194,13 @@ internal static class ImportFiles {
 	/// yes, up to <paramref name="depth"/> levels down. Hidden and system folders are skipped, and it gives up
 	/// quietly on anything it isn't allowed to list.
 	/// </summary>
+	/// <summary>
+	/// Two paths are the same folder when they match ignoring case on Windows and macOS, but only exactly on Linux -
+	/// there "/import/asf" and "/import/ASF" are two folders, and ignoring case dropped the real one as a copy.
+	/// </summary>
+	public static StringComparer PathComparer { get; } = OperatingSystem.IsWindows() || OperatingSystem.IsMacOS()
+		? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+
 	public static IEnumerable<string> Folders(IEnumerable<string> roots, int depth, Func<string, bool> match) {
 		foreach (string root in roots) {
 			foreach (string hit in Walk(root, depth, match)) {
@@ -206,7 +216,7 @@ internal static class ImportFiles {
 	public static IEnumerable<string> SearchUsual(Func<string, bool> match) =>
 		Folders(ImportPlaces.UsualRoots, 2, match)
 			.Concat(ImportPlaces.UsualRoots.Select(static r => Path.Combine(r, "…")))
-			.Distinct(StringComparer.OrdinalIgnoreCase);
+			.Distinct(PathComparer);
 
 	private static IEnumerable<string> Walk(string dir, int depth, Func<string, bool> match) {
 		if (!Directory.Exists(dir)) {

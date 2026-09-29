@@ -133,7 +133,7 @@ public sealed class Boosters(Bot bot) : BotModule(bot) {
 				gems = left;
 				tradable = leftTradable;
 				untradable = leftUntradable;
-				Log.Reward(new Said("made a {0} booster pack for {1} gems - {2} gems left", offer.Name, offer.Price, gems), Bot.Name);
+				Log.Reward(new Said("made a {0} booster ({1} gems, {2} left)", offer.Name, offer.Price, gems), Bot.Name);
 
 				// One a day per game, counted from now - with a little slack so it doesn't land on the same minute daily.
 				_next[id] = DateTime.UtcNow.AddHours(24).AddMinutes(Rng.Next(5, 45));

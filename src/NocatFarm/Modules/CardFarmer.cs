@@ -437,7 +437,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 			if (logOut) {
 				_status = new Said("finished - logging out");
-				Log.Good("nothing left to farm - logging this account out as configured", Bot.Name);
+				Log.Good("nothing left to farm - logging out (as set)", Bot.Name);
 				_ = Bot.StopAsync();
 
 				return 60;
@@ -466,14 +466,14 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				// A Said, not a formatted string. It is passed as a VALUE into the sentence below, and a value that
 				// is already finished text stays in whatever language it was built in - which is how the two lines
 				// ended up reading "keine Karten mehr zu farmen · 1h23m played in total".
-				Said been = lifetime > 0 ? new Said(" · {0} run by nocat.farm", Fmt.Hm(lifetime)) : default;
+				Said been = lifetime > 0 ? new Said(" · {0} by nocat.farm", Fmt.Hm(lifetime)) : default;
 				Said idle = !string.IsNullOrWhiteSpace(Bot.CustomName)
 					? new Said("{0}", Bot.CustomName + (Bot.Cfg.IdleGames.Count > 0 ? $" (+{Bot.Cfg.IdleGames.Count})" : ""))
 					: Bot.Cfg.IdleGames.Count > 0 ? new Said("{0} game(s)", Bot.Cfg.IdleGames.Count) : new Said("your games");
 
 				Log.Info(Bot.HumanOwned
 					? new Said("no cards left - human mode carries on{0}", been)
-					: new Said("no cards left to farm - now idling {0}{1}", idle, been), Bot.Name);
+					: new Said("no cards left - idling {0}{1}", idle, been), Bot.Name);
 			}
 
 			// Hand the session straight back to the idler so the custom game name goes back up NOW.
@@ -496,7 +496,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 		// One game is already spelled out by the "farming X - N to go" line below; only summarise a batch.
 		if (found.Count > 1) {
-			Log.Good(new Said("{0} games with {1} cards left to farm - about {2} of farming", found.Count, Bot.CardsRemaining, AllDoneIn), Bot.Name);
+			Log.Good(new Said("{0} games, {1} cards to farm - about {2} in all", found.Count, Bot.CardsRemaining, AllDoneIn), Bot.Name);
 		}
 
 		float threshold = Bot.Cfg.HoursUntilCardDrops;
@@ -682,7 +682,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			strikes = stall.Strikes;
 		}
 
-		Log.Warn(new Said("{0} gave up nothing in {1}h with {2} card(s) still listed - setting it aside for {3}h and moving on (strike {4})", game.GameName, (limit.TotalHours).ToString("0"), game.CardsRemaining, hours, strikes), Bot.Name);
+		Log.Warn(new Said("{0}: no drop in {1}h ({2} left) - skipping it {3}h (strike {4})", game.GameName, (limit.TotalHours).ToString("0"), game.CardsRemaining, hours, strikes), Bot.Name);
 	}
 
 	/// <summary>A game that dropped a card, or finished, is not stuck - forget everything about it.</summary>
@@ -749,7 +749,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			return;
 		}
 
-		Log.Info(new Said("all card drops done - winding down on {0} for ~{1} before the usual games", game.GameName, Fmt.Hm(mins)), Bot.Name);
+		Log.Info(new Said("all cards in - winding down on {0} for ~{1}", game.GameName, Fmt.Hm(mins)), Bot.Name);
 		DateTime until = DateTime.UtcNow.AddMinutes(mins);
 
 		while (!ct.IsCancellationRequested && (DateTime.UtcNow < until)) {
@@ -815,7 +815,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		Claim();
 		Bot.SetPlaying([game.AppId], Bot.Cfg.PlayWhileFarming ? null : "");
 		_status = new Said("farming {0} ({1} left · ~{2} in all)", game.GameName, game.CardsRemaining, AllDoneIn);
-		Log.Info(new Said("farming {0} - {1} card(s) to go · all done in ~{2} of farming", game.GameName, game.CardsRemaining, AllDoneIn), Bot.Name);
+		Log.Info(new Said("farming {0} - {1} card(s) left · ~{2} in all", game.GameName, game.CardsRemaining, AllDoneIn), Bot.Name);
 
 		// Farming time since the last drop - the measure of this game's pace. Restarts with every call, so a pause,
 		// a break or the owner playing is never counted as waiting for a card. The first drop of a call isn't
@@ -960,7 +960,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				}
 
 				Bot.CountDropsFirst(game.AppId, before - game.CardsRemaining);
-				Log.Reward(new Said("card dropped in {0} - {1} to go · all done in ~{2} of farming", game.GameName, game.CardsRemaining, AllDoneIn), Bot.Name);
+				Log.Reward(new Said("card dropped in {0} - {1} left · ~{2} in all", game.GameName, game.CardsRemaining, AllDoneIn), Bot.Name);
 				Plugins.PluginHost.RaiseCardDropped(Bot, game.AppId, game.CardsRemaining);
 			}
 
@@ -1011,7 +1011,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		string name = GameNames.Of(app);
 
 		if (start.CardsRemaining == 0) {
-			Log.Good(new Said("drop run over - {0} has no card drops left, back to the usual day", name), Bot.Name);
+			Log.Good(new Said("drop run over - {0} has no drops left", name), Bot.Name);
 			Bot.StopGrind();
 
 			return;
@@ -1091,7 +1091,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 			if ((cards == 0) || (Bot.GrindDropsLeft == 0)) {
 				Log.Good(cards == 0
-					? new Said("drop run done - {0} has no card drops left, back to the usual day", name)
+					? new Said("drop run done - {0} has no drops left", name)
 					: new Said("drop run done - back to the usual day"), Bot.Name);
 				Bot.StopGrind();
 
@@ -1102,7 +1102,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		// Ran out of time before the drops came - said, and cleared, rather than left looking like a run. Not on the
 		// way out of the app: a run still going then is picked back up after the restart.
 		if (!ct.IsCancellationRequested && !Bot.Grinding && (Bot.GrindGame == app) && (Bot.GrindDropsLeft > 0)) {
-			Log.Info(new Said("drop run on {0} ran out of time with {1} still to come - back to the usual day", name, Bot.GrindDropsLeft), Bot.Name);
+			Log.Info(new Said("drop run on {0} timed out, {1} drop(s) short", name, Bot.GrindDropsLeft), Bot.Name);
 			Bot.StopGrind();
 		}
 	}
@@ -1120,7 +1120,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		Claim();
 		Bot.SetPlaying(batch.Select(static g => g.AppId).ToArray(), Bot.Cfg.PlayWhileFarming ? null : "");
 		_status = new Said("building playtime on {0} game(s), ~{1}h to go", batch.Count, (needHours).ToString("0.0"));
-		Log.Info(new Said("none of these have enough playtime to drop yet - running {0} at once for ~{1}h", batch.Count, (needHours).ToString("0.0")), Bot.Name);
+		Log.Info(new Said("building playtime first - {0} games at once for ~{1}h", batch.Count, (needHours).ToString("0.0")), Bot.Name);
 
 		DateTime until = DateTime.UtcNow.AddHours(needHours);
 
@@ -1169,7 +1169,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 			// A drop here means Steam disagreed with our threshold - stop bumping and go farm properly.
 			if (await Bot.WaitForItemDropAsync(slice, ct).ConfigureAwait(false)) {
-				Log.Reward("a card dropped while building playtime - switching to farming", Bot.Name);
+				Log.Reward("card dropped early - switching to farming", Bot.Name);
 
 				return;
 			}
@@ -1244,7 +1244,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			if (Bot.Cfg.PriorityGames.Count == 0) {
 				// Honour the flag literally rather than quietly farming everything, which is the opposite of
 				// what "only farm those" says. Say so, once, so it isn't a mystery.
-				Log.Warn("\"Only farm those\" is on but the priority list is empty - nothing will be farmed", Bot.Name);
+				Log.Warn("\"Only farm those\" with an empty list - nothing to farm", Bot.Name);
 				byApp.Clear();
 			} else {
 				foreach (uint appId in byApp.Keys.Where(a => !Bot.Cfg.PriorityGames.Contains(a)).ToArray()) {

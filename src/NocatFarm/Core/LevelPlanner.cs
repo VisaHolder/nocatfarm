@@ -72,7 +72,7 @@ public static class LevelPlanner {
 				Working.Remove(bot.Name);
 			}
 
-			Log.Info(new Said("level plan for {0} is ready - type 'levelup {0} {1}' to see it", bot.Name, target), bot.Name);
+			Log.Info(new Said("level plan ready - 'levelup {0} {1}' shows it", bot.Name, target), bot.Name);
 		});
 
 		return $"{bot.Name}: working it out - reading its badges and cards, then pricing sets on the market a few seconds apart so Steam "

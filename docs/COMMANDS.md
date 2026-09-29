@@ -1,3 +1,5 @@
+[Wiki home](README.md) · [Front page](../README.md)
+
 # nocat.farm commands
 
 Every command nocat.farm has, and what it does. You can type them in the app window, in the dashboard's **Console** tab, on **Telegram** (start with `/`), on **Discord** (`/nocat command:` runs any of them), or send them to one of your accounts in **Steam chat** (start with `/` or `!`, from an account listed under *Accept commands from*).
@@ -22,9 +24,9 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 | **[Profile & info](#profile--info)** | `value` `level` `balance` `points` `bans` `owns` `privacy` `joingroup` |
 | **[rep4rep](#rep4rep)** | `rep4rep` |
 | **[Settings](#settings)** | `config` `set` `reload` `import` |
-| **[The app](#the-app)** | `log` `stats` `notify` `plugins` `tutorial` `help` `theme` `mini` `dashboard` `version` `update` `answer` `exit` |
+| **[The app](#the-app)** | `log` `stats` `notify` `plugins` `tutorial` `help` `theme` `mini` `dashboard` `anywhere` `unlock` `version` `update` `answer` `exit` |
 
-66 commands in all.
+68 commands in all.
 
 ## Accounts
 
@@ -141,13 +143,15 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 | `help [command\|setting]` <br>also `?`, `h` | This list, or what one command or setting does. |
 | `theme [dark\|light]` <br>also `dark`, `light` | Switch the dashboard between the dark and light themes. Without an argument it says which is on. |
 | `mini [on\|off]` | Shrink the window to a small panel of your accounts - what each is doing, start and stop, the dashboard - or back to the full window. |
-| `dashboard` <br>also `web`, `link` | The dashboard's address - on this PC, on your phone over the same wifi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. |
+| `dashboard [anywhere on\|off]` <br>also `web`, `link` | The dashboard's address - on this PC, on your phone over the same wifi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. 'dashboard anywhere on' opens it from anywhere and answers with the link; 'dashboard anywhere off' closes it (the same as 'anywhere on\|off'). |
+| `anywhere [on\|off]` <br>also `remote` | Open the dashboard from anywhere, not just your wifi - your router forwards the port (UPnP), like Jellyfin. 'anywhere on' does all of it and answers with the link; 'anywhere off' closes it again; on its own it says whether it's on and the link. Works from Telegram and Discord too. |
+| `unlock` | Locked out of the dashboard after too many wrong passwords? This lets you (and anyone else locked out) sign in again straight away. |
 | `version` <br>also `about` | Which version this is. |
-| `update [accept\|skip]` | Check for a newer release. 'update accept' downloads it and restarts into it; 'update skip' skips that version - no more reminders about it and it never installs by itself - until a newer one comes out. Nothing installs by itself unless 'Update by itself' is set to install at night. |
+| `update [accept\|now\|skip]` | Check for a newer release. 'update accept' downloads it and restarts into it - or, with 'When I say update' set to wait, installs it once your accounts are asleep; 'update now' always installs right away. 'update skip' skips that version - no more reminders about it and it never installs by itself - until a newer one comes out. Nothing installs by itself unless 'Update by itself' is set to install at night. |
 | `answer <text>` | Answer whatever nocat.farm is waiting on - a Steam Guard code, or a password. |
 | `exit` <br>also `quit`, `q` | Shut nocat.farm down. |
 
 ## More
 
-- [The full guide](GUIDE.md) - how everything works, every setting, Linux and Docker.
+- [The wiki](README.md) - how everything works, every setting, Linux and Docker.
 - [Plugins](../PLUGINS.md) - add your own commands in a few lines of C#. A plugin's commands are listed by `plugins` and on the dashboard's Plugins page.

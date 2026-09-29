@@ -47,6 +47,9 @@ services:
       - ./logs:/data/logs
       # Optional: plugin DLLs (see PLUGINS.md).
       # - ./plugins:/data/plugins
+      # Optional: your ArchiSteamFarm folder (the one with config/ in it), read-only, to bring its accounts over -
+      # login tokens too, so no Steam Guard code. The dashboard's Accounts > Import from another idler finds it.
+      # - /path/to/ArchiSteamFarm:/import/asf:ro
       # Optional: the same Steam machine id across re-creates, instead of a new one made up each time.
       # - /etc/machine-id:/etc/machine-id:ro
     # Lets `docker attach nocatfarm` type commands into it (detach again with Ctrl+P then Ctrl+Q). No tty on

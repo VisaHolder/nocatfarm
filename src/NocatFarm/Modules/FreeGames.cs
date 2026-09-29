@@ -174,7 +174,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				_status = _claimed == 0 ? new Said("watching for giveaways") : new Said("{0} claimed since start", _claimed);
 
 				if (added > 0) {
-					Log.Reward(new Said("claimed {0} free game(s) - the card farmer will pick them up", added), Bot.Name, topic: Topic.FreeStuff);
+					Log.Reward(new Said("claimed {0} free game(s)", added), Bot.Name, topic: Topic.FreeStuff);
 				}
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
@@ -202,7 +202,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 					int added = await CheckAsync(false, ct).ConfigureAwait(false);
 
 					if (added > 0) {
-						Log.Reward(new Said("claimed {0} free game(s) - the card farmer will pick them up", added), Bot.Name, topic: Topic.FreeStuff);
+						Log.Reward(new Said("claimed {0} free game(s)", added), Bot.Name, topic: Topic.FreeStuff);
 					}
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
@@ -273,7 +273,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 
 			if (RecentClaims() >= MaxPerWindow) {
 				_status = new Said("paused - {0} activations this window", MaxPerWindow);
-				Log.Info(new Said("hit {0} activations in {1}m - pausing so Steam doesn't start refusing", MaxPerWindow, WindowMinutes), Bot.Name);
+				Log.Info(new Said("{0} activations in {1}m - pausing to stay under Steam's limit", MaxPerWindow, WindowMinutes), Bot.Name);
 
 				break;
 			}
@@ -335,7 +335,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 
 						if (first.Added || (first.Detail == EPurchaseResultDetail.AlreadyPurchased)) {
 							gotBase = true;
-							Log.Good(new Said("claimed {0} (free right now) so its free DLC {1} can come too", baseName, name), Bot.Name);
+							Log.Good(new Said("claimed {0} (free now) for its free DLC {1}", baseName, name), Bot.Name);
 
 							// A person adds the game, then the DLC a moment later.
 							await Task.Delay(Rng.Seconds(4, 12), ct).ConfigureAwait(false);
@@ -386,7 +386,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				// Pressing on only lengthens it. Steam's own wording is "try again in an hour".
 				_quietUntil = DateTime.UtcNow.AddMinutes(Rng.Next(62, 80));
 				DateTime back = _quietUntil;
-				Log.Info(new Said("Steam is rate-limiting free-game claims - trying again after {0}", (Func<string>) (() => Fmt.Clock(back))), Bot.Name);
+				Log.Info(new Said("free-game claims rate-limited - retrying after {0}", (Func<string>) (() => Fmt.Clock(back))), Bot.Name);
 
 				break;
 			} else if (result.Final) {

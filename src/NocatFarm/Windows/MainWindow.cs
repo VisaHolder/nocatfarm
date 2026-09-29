@@ -298,7 +298,7 @@ public sealed class MainWindow : IDisposable {
 			// A window that dies quietly is the worst outcome here: the console log has already been suppressed
 			// in favour of this window, so the user is left with an app that shows them nothing at all.
 			Log.Suppressed = false;
-			Log.Error(new Said("the window couldn't start ({0}: {1}) - using the console instead", e.GetType().Name, e.Message));
+			Log.Error(new Said("window failed ({0}: {1}) - using the console", e.GetType().Name, e.Message));
 			Failed?.Invoke();
 		}
 	}
@@ -1071,7 +1071,7 @@ public sealed class MainWindow : IDisposable {
 			// at all unless you had debug detail switched on, so the window simply looked dead. Say it out
 			// loud once the failures stop being a blip, and say it only once so the log is not a wall.
 			if (++_paintFailures == 5) {
-				Log.Error(new Said("the window can't draw ({0}: {1}) - the dashboard still works", e.GetType().Name, e.Message));
+				Log.Error(new Said("window can't draw ({0}: {1}) - dashboard still works", e.GetType().Name, e.Message));
 			} else if (_paintFailures < 5) {
 				Log.Debug(new Said("paint failed: {0}: {1}", e.GetType().Name, e.Message));
 			}

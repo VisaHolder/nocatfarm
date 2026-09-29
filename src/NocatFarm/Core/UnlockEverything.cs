@@ -45,19 +45,19 @@ public static class UnlockEverything {
 		IReadOnlyDictionary<uint, AppOwnership> owned = await bot.GetAppOwnershipAsync().ConfigureAwait(false);
 
 		if (owned.Count == 0) {
-			Log.Warn("couldn't work out what this account owns - nothing was changed", bot.Name);
+			Log.Warn("couldn't tell what this account owns - nothing changed", bot.Name);
 
 			return;
 		}
 
-		Log.Warn(new Said("unlocking every achievement across {0} owned app(s) - this takes a while and cannot be undone", owned.Count), bot.Name);
+		Log.Warn(new Said("unlocking all achievements in {0} app(s) - can't be undone", owned.Count), bot.Name);
 
 		int games = 0, unlocked = 0, failed = 0, looked = 0;
 		int step = Math.Max(25, owned.Count / 10);
 
 		foreach (uint app in owned.Keys) {
 			if (!bot.IsOnline) {
-				Log.Warn(new Said("stopped early - the account signed out. {0} achievement(s) across {1} game(s) were unlocked", unlocked, games), bot.Name);
+				Log.Warn(new Said("stopped - signed out after {0} achievement(s) in {1} game(s)", unlocked, games), bot.Name);
 
 				return;
 			}
@@ -122,7 +122,7 @@ public static class UnlockEverything {
 		// whose library is mostly multiplayer it is the ORDINARY answer: Steam awards those achievements
 		// server-side and no client can set them, so there was never anything here to unlock.
 		if (unlocked == 0) {
-			Log.Good(new Said("done - nothing this account can unlock itself ({0} app(s) checked{1}). Steam awards the rest server-side.", looked, trouble), bot.Name);
+			Log.Good(new Said("done - nothing it can unlock ({0} app(s) checked{1}), Steam sets the rest", looked, trouble), bot.Name);
 
 			return;
 		}

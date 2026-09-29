@@ -104,7 +104,7 @@ public static class Secrets {
 			// Written by Windows' DPAPI, being read somewhere else - it cannot be recovered here.
 			if (!_warnedForeign) {
 				_warnedForeign = true;
-				Log.Warn(new Said("some saved logins were encrypted by Windows and can't be read here - those accounts will ask for their password (or a QR scan) again"));
+				Log.Warn(new Said("Windows-encrypted logins can't be read here - they sign in again"));
 			}
 
 			return "";
@@ -211,7 +211,8 @@ public static class Secrets {
 						fs.Write(Encoding.ASCII.GetBytes(Convert.ToBase64String(fresh) + "\n"));
 						fs.Flush(true);
 						_key = fresh;
-						Log.Info(new Said("made the key that encrypts saved logins: {0} - keep it with the config folder, the saved logins can't be read without it", path));
+						Log.Info(new Said("made the login key: {0}", path));
+						Log.Info(new Said("keep it with the config folder - saved logins need it"));
 
 						return _key;
 					} catch (IOException) when (File.Exists(path)) {
@@ -263,7 +264,8 @@ public static class Secrets {
 		_warned = true;
 
 		Log.Warn(AesGcm.IsSupported
-			? new Said("saved logins are kept as plain text - the key that encrypts them ({0}) couldn't be used: {1}. Keep the config folder somewhere private.", KeyPath, _keyProblem)
-			: new Said("saved logins are kept as plain text - this system has no AES-GCM to encrypt them with. Keep the config folder somewhere private."), bot);
+			? new Said("saved logins are plain text - key {0} unusable: {1}", KeyPath, _keyProblem)
+			: new Said("saved logins are plain text - no AES-GCM on this system"), bot);
+		Log.Info(new Said("keep the config folder somewhere private"), bot);
 	}
 }

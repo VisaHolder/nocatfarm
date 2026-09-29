@@ -62,9 +62,13 @@ public static class Platform {
 				File.WriteAllText(probe, "");
 				File.Delete(probe);
 			} catch (Exception e) when (e is UnauthorizedAccessException or IOException) {
-				Log.Error(InContainer
-					? new Said("can't write to {0} - the folder mounted there doesn't let this container's user (uid {1}) write to it. On the host: sudo chown -R {1}:{2} on that folder, or set user: in docker-compose.yml to the folder's owner", dir, getuid(), getgid())
-					: new Said("can't write to {0} ({1}) - nothing is saved until it's writable by the user running nocat.farm (uid {2})", dir, e.Message, getuid()));
+				if (InContainer) {
+					Log.Error(new Said("can't write to {0} as uid {1}", dir, getuid()));
+					Log.Info(new Said("fix on the host: sudo chown -R {0}:{1} that folder", getuid(), getgid()));
+					Log.Info(new Said("or set user: in docker-compose.yml to its owner"));
+				} else {
+					Log.Error(new Said("can't write to {0} ({1}) - nothing is saved (uid {2})", dir, e.Message, getuid()));
+				}
 			}
 		}
 	}
@@ -122,7 +126,7 @@ public static class Platform {
 					Log.Info(new Said("dashboard: port {0}, from {1}", p, EnvPort));
 				}
 			} else {
-				Log.Warn(new Said("{0} is \"{1}\", which isn't a port (1-65535) - keeping {2}", EnvPort, port, g.WebPort));
+				Log.Warn(new Said("{0}=\"{1}\" isn't a port - keeping {2}", EnvPort, port, g.WebPort));
 			}
 		}
 

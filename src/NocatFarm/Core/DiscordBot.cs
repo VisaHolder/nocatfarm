@@ -179,6 +179,7 @@ public static partial class Notifier {
 			("confirmations", new Said("What's waiting to be confirmed")),
 			("2fa", new Said("Steam Guard codes")),
 			("stats", new Said("Cards and comments by hour")),
+			("anywhere", new Said("Open the dashboard from anywhere: on, off, or the link")),
 			("update", new Said("Check for an update")),
 			("help", new Said("Every command"))
 		];
@@ -428,12 +429,12 @@ public static partial class Notifier {
 		switch (code) {
 			// Authentication failed: the token is wrong. Waits for a new one rather than knocking again and again.
 			case 4004:
-				BadDiscordToken(token, new Said("the token doesn't work - copy a new one from the Developer Portal (Bot, Reset Token)"));
+				BadDiscordToken(token, new Said("token rejected - Developer Portal, Bot, Reset Token"));
 
 				return (false, null);
 			// Something about the bot itself that trying again won't fix.
 			case >= 4010 and <= 4014:
-				BadDiscordToken(token, new Said("Discord refused the bot (code {0}) - check it in the Developer Portal", code));
+				BadDiscordToken(token, new Said("refused (code {0}) - check the Developer Portal", code));
 
 				return (false, null);
 			// Not signed in yet, a lost place in the stream, or a session that ran out: start fresh.
@@ -462,7 +463,7 @@ public static partial class Notifier {
 		(HttpStatusCode status, string body) = await DiscordApiAsync(HttpMethod.Get, "/gateway/bot", null, token, ct).ConfigureAwait(false);
 
 		if (status == HttpStatusCode.Unauthorized) {
-			BadDiscordToken(token, new Said("the token doesn't work - copy a new one from the Developer Portal (Bot, Reset Token)"));
+			BadDiscordToken(token, new Said("token rejected - Developer Portal, Bot, Reset Token"));
 
 			return (null, null);
 		}
@@ -478,7 +479,7 @@ public static partial class Notifier {
 		if (d.RootElement.TryGetProperty("session_start_limit", out JsonElement limit)
 			&& limit.TryGetProperty("remaining", out JsonElement remaining) && (remaining.GetInt32() <= 0)) {
 			double ms = limit.TryGetProperty("reset_after", out JsonElement reset) ? reset.GetDouble() : 60_000;
-			_dcProblem = new Said("Discord says the bot has connected too often today - it tries again in {0} minutes", (int) Math.Ceiling(ms / 60_000));
+			_dcProblem = new Said("too many connects today - retrying in {0} min", (int) Math.Ceiling(ms / 60_000));
 			Log.Warn(new Said("Discord bot: {0}", _dcProblem), "discord");
 
 			return (null, TimeSpan.FromMilliseconds(Math.Clamp(ms, 5_000, TimeSpan.FromDays(1).TotalMilliseconds)));
@@ -593,7 +594,7 @@ public static partial class Notifier {
 					Log.Good(new Said("Discord bot online as {0}", _dcBotName), "discord");
 
 					if (G.DiscordOwnerId.Length == 0) {
-						Log.Info(new Said("Discord bot: to connect it, press Connect Discord in Settings, Notifications and send /connect with the code to {0}", _dcBotName), "discord");
+						Log.Info(new Said("Discord bot: to link it, press Connect Discord in Settings"), "discord");
 					}
 				}
 
@@ -648,7 +649,7 @@ public static partial class Notifier {
 					DiscordRegistered[key] = hash;
 				} else if ((guild != null) && (status == HttpStatusCode.Forbidden)) {
 					// Added to the server without the commands permission (an older invite link).
-					Log.Warn(new Said("Discord bot: couldn't add the / commands to a server - add the bot to it again with the invite link in Settings, Notifications"), "discord");
+					Log.Warn(new Said("Discord bot: no / commands in a server - invite it again"), "discord");
 				} else {
 					Log.Debug(new Said("discord bot: couldn't add the / commands (HTTP {0}): {1}", (int) status, body), "discord");
 				}
@@ -804,7 +805,7 @@ public static partial class Notifier {
 		ConfigStore.SaveGlobal(G);
 		_dcOwnerName = userName;
 		_dcOwnerNameFor = userId;
-		Log.Good(new Said("notifications: Discord connected - only {0} can use the bot's commands", userName.Length > 0 ? userName : userId), "discord");
+		Log.Good(new Said("Discord connected - only {0} can use its commands", userName.Length > 0 ? userName : userId), "discord");
 
 		await DiscordReplyAsync(id, replyToken, $"**{new Said("Connected.")}** {new Said("Send /status for a summary, /help for the commands, or /nocat to run any console command.")}", flags, ct).ConfigureAwait(false);
 	}

@@ -133,7 +133,8 @@ public static partial class MobileAuth {
 				&& string.Equals(Path.GetDirectoryName(Path.GetFullPath(path)), Path.GetFullPath(MaFiles.Dir), StringComparison.OrdinalIgnoreCase)) {
 				try {
 					AtomicFile.Write(path, Secrets.Protect(stored, Path.GetFileNameWithoutExtension(path)));
-					Log.Info(new Said("encrypted {0} - it only opens in nocat.farm on this Windows user now, so keep your own copy of the maFile somewhere safe", Path.GetFileName(path)));
+					Log.Info(new Said("encrypted {0} - keep your own backup of the maFile", Path.GetFileName(path)));
+					Log.Debug(new Said("an encrypted maFile only opens in nocat.farm on this Windows user"));
 				} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 					// Still plain on disk, still read fine - the next read tries again.
 					Log.Debug(new Said("couldn't encrypt {0} in place: {1}", Path.GetFileName(path), e.Message));

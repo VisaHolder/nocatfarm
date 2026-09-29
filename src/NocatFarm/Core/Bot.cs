@@ -88,9 +88,24 @@ public sealed class Bot : IAsyncDisposable {
 		SaveGrind();
 	}
 
+	/// <summary>
+	/// A grind that hasn't started playing yet (a human-mode account still warming up): its start moves to now and its
+	/// end with it, so the hours asked for are hours of play - a 1h grind used to lose its warm-up and play 45 minutes.
+	/// </summary>
+	public void HoldGrindStart() {
+		if ((GrindGame == 0) || (GrindUntil is not { } until) || (DateTime.UtcNow <= GrindStartsAt)) {
+			return;
+		}
+
+		TimeSpan late = DateTime.UtcNow - GrindStartsAt;
+		GrindStartsAt = DateTime.UtcNow;
+		GrindUntil = until.Add(late);
+		SaveGrind();
+	}
+
 	public bool StartGrind(uint app, TimeSpan how, TimeSpan delay = default, bool boost = false, int drops = 0) {
 		if (Refunds.Holds(app)) {
-			Log.Warn(new Said("not grinding {0} - it's still inside its refund window (turn off \"Protect refundable games\" to override)", GameNames.Of(app)), Name);
+			Log.Warn(new Said("not grinding {0} - still refundable (Protect refundable games)", GameNames.Of(app)), Name);
 
 			return false;
 		}
@@ -158,7 +173,7 @@ public sealed class Bot : IAsyncDisposable {
 
 	public bool StartDropsFirst(uint app, int want) {
 		if (Refunds.Holds(app)) {
-			Log.Warn(new Said("not putting {0} first - it's still inside its refund window (turn off \"Protect refundable games\" to override)", GameNames.Of(app)), Name);
+			Log.Warn(new Said("not putting {0} first - still refundable (Protect refundable games)", GameNames.Of(app)), Name);
 
 			return false;
 		}
@@ -192,7 +207,7 @@ public sealed class Bot : IAsyncDisposable {
 			return;
 		}
 
-		Log.Good(new Said("{0}: all {1} card drop(s) in - back to its usual mix of games", GameNames.Of(app), DropsFirstWant), Name);
+		Log.Good(new Said("{0}: all {1} card drop(s) in - back to normal", GameNames.Of(app), DropsFirstWant), Name);
 		StopDropsFirst();
 	}
 
@@ -226,7 +241,7 @@ public sealed class Bot : IAsyncDisposable {
 			DropsFirstGot = saved.Got;
 
 			if (DropsFirstActive) {
-				Log.Info(new Said("still going for {0}: {1} of {2} card drop(s) so far, in its sittings", GameNames.Of(DropsFirstApp), DropsFirstGot, DropsFirstWant), Name);
+				Log.Info(new Said("still going for {0}: {1} of {2} card drop(s)", GameNames.Of(DropsFirstApp), DropsFirstGot, DropsFirstWant), Name);
 			}
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't resume the drop run: {0}", e.Message), Name);
@@ -497,7 +512,7 @@ public sealed class Bot : IAsyncDisposable {
 			}
 
 			if (await Confirmations.ActAsync(this, [match], accept, ct).ConfigureAwait(false)) {
-				Log.Good(new Said("confirmed trade offer #{0} on this account's own authenticator", tradeOfferId), Name);
+				Log.Good(new Said("confirmed trade offer {0} with its authenticator", tradeOfferId), Name);
 
 				return true;
 			}
@@ -1101,7 +1116,7 @@ public sealed class Bot : IAsyncDisposable {
 			handler.Proxy = proxy;
 			handler.UseProxy = true;
 		} catch (Exception e) {
-			Log.Warn(new Said("proxy '{0}' isn't a usable address ({1}) - connecting directly instead", address, e.Message));
+			Log.Warn(new Said("bad proxy '{0}' ({1}) - connecting directly", address, e.Message));
 		}
 
 		return handler;
@@ -1151,7 +1166,6 @@ public sealed class Bot : IAsyncDisposable {
 		await StopAsync().ConfigureAwait(false);
 
 		_running = true;
-		Log.Info("starting up", Name);
 
 		if (GrindGame == 0) {
 			LoadGrind();   // pick a still-running grind back up after a restart or crash
@@ -1167,12 +1181,21 @@ public sealed class Bot : IAsyncDisposable {
 		State = BotState.Connecting;
 		StatusText = "waiting for a login slot";
 
-		// In line behind another account's sign-in: said, so a quiet account doesn't look stuck.
+		// One line: "starting up", with how long it waits for its turn when it has to - a quiet account in line doesn't
+		// look stuck, and two lines per account filled a small window.
+		bool said = false;
+
 		await Limiters.WaitForLoginSlotAsync(_cts.Token, wait => {
 			if (wait >= TimeSpan.FromSeconds(3)) {
-				Log.Info(new Said("waiting its turn to sign in - about {0}s (Gap between logins)", (int) Math.Ceiling(wait.TotalSeconds)), Name);
+				int secs = (int) Math.Ceiling(wait.TotalSeconds);
+				Log.Info(said ? new Said("still waiting its turn to sign in - about {0}s", secs) : new Said("starting up - signs in in about {0}s (Gap between logins)", secs), Name);
+				said = true;
 			}
 		}).ConfigureAwait(false);
+
+		if (!said) {
+			Log.Info("starting up", Name);
+		}
 
 		if (!_running) {
 			return;
@@ -1368,7 +1391,7 @@ public sealed class Bot : IAsyncDisposable {
 			// half minute or so, which drawn into the log was a wall of blocks. Said once here where to find it.
 			ShowQr(session.ChallengeURL);
 			session.ChallengeURLChanged = () => ShowQr(session.ChallengeURL);
-			Log.Attention(new Said("{0} is waiting to be signed in: open the dashboard and scan the QR code there with the Steam app on your phone (Steam Guard tab)", Name), Name);
+			Log.Attention(new Said("sign-in: scan the QR on the dashboard (Steam app, Steam Guard)"), Name);
 
 			AuthPollResult poll = await session.PollingWaitForResultAsync(giveUp.Token).ConfigureAwait(false);
 			QrChallenge = null;
@@ -1387,7 +1410,7 @@ public sealed class Bot : IAsyncDisposable {
 				TokenStore.SaveAccess(Name, poll.AccessToken);
 			}
 
-			Log.Good(new Said("signed in with the QR code as {0} - the login token is stored, nothing to type next time", poll.AccountName), Name);
+			Log.Good(new Said("signed in with the QR code as {0} - saved for next time", poll.AccountName), Name);
 
 			return true;
 		} catch (OperationCanceledException) when (giveUp.IsCancellationRequested) {
@@ -1395,7 +1418,7 @@ public sealed class Bot : IAsyncDisposable {
 			_running = false;
 			State = BotState.Failed;
 			StatusText = "QR code not scanned";
-			Log.Attention(new Said("nobody scanned the QR code within 5 minutes - stopping. 'start {0}' shows a fresh one", Name), Name);
+			Log.Attention(new Said("QR code not scanned in 5 min - 'start {0}' for a new one", Name), Name);
 
 			return false;
 		} catch when (!_running) {
@@ -1455,7 +1478,7 @@ public sealed class Bot : IAsyncDisposable {
 					State = BotState.Failed;
 					StatusText = "no password";
 					_running = false;   // nothing to retry with - don't spin on reconnects
-					Log.Error("no password - put SteamPassword in the config, or type it at the prompt", Name);
+					Log.Error("no password - set SteamPassword, or type it at the prompt", Name);
 
 					return;
 				}
@@ -1493,7 +1516,7 @@ public sealed class Bot : IAsyncDisposable {
 						_running = false;
 						State = BotState.Failed;
 						StatusText = "sign-in failed";
-						Log.Attention(new Said("couldn't sign in after 3 tries ({0}) - stopping. Fix SteamPassword, then 'start {1}'", e.Message, Name), Name);
+						Log.Attention(new Said("sign-in failed 3 times ({0}) - fix SteamPassword, 'start {1}'", e.Message, Name), Name);
 					} else {
 						Log.Warn(new Said("sign-in attempt failed: {0}", e.Message), Name);
 					}
@@ -1513,7 +1536,7 @@ public sealed class Bot : IAsyncDisposable {
 					TokenStore.SaveAccess(Name, poll.AccessToken);
 				}
 
-				Log.Good("authenticated - token stored, the password won't be asked for again", Name);
+				Log.Good("signed in - login token saved, no password needed again", Name);
 			}
 
 			if (!Client.IsConnected) {
@@ -1612,7 +1635,7 @@ public sealed class Bot : IAsyncDisposable {
 				TokenStore.Clear(Name);
 				_refreshToken = null;
 				SetAccessToken(null);   // the whole family is revoked - the cached web token is dead too
-				Log.Warn(new Said("stored login token rejected ({0}) - the password will be asked for again", cb.Result), Name);
+				Log.Warn(new Said("login token rejected ({0}) - needs the password again", cb.Result), Name);
 			} else if (cb.Result is EResult.RateLimitExceeded or EResult.AccountLoginDeniedThrottle) {
 				Log.Warn("Steam is rate-limiting logins for this account", Name);
 			} else {
@@ -1666,7 +1689,7 @@ public sealed class Bot : IAsyncDisposable {
 		// be reused as-is, so most logons create no new web session at all. That is the difference between coexisting
 		// with the owner's client and evicting it.
 		if (!await Web.RefreshAsync(false).ConfigureAwait(false)) {
-			Log.Warn("couldn't establish a Steam web session - card farming and commenting will retry", Name);
+			Log.Warn("no Steam web session yet - farming and comments will retry", Name);
 		}
 
 		// Steam replays its standing unviewed-item count on request. That is not a drop that just happened, so
@@ -1725,7 +1748,7 @@ public sealed class Bot : IAsyncDisposable {
 			// The owner just started playing on this account, so Steam handed them the session. Expected, not a
 			// fault - so it reads as Info, in plain language, and says it will come back. The actual rejoin is
 			// kept quiet in OnDisconnected so this is the only line the user sees for a normal step-aside.
-			Log.Info("you're on this account now - standing aside until you're done", Name);
+			Log.Info("you're on this account - waiting until you're done", Name);
 
 			if (Cfg.PauseWhenYouPlay) {
 				PlayingBlocked = true;
@@ -1915,7 +1938,16 @@ public sealed class Bot : IAsyncDisposable {
 
 	private void StartHeartbeat() {
 		_heartbeat?.Dispose();
-		_heartbeat = new Timer(_ => _ = HeartbeatAsync(), null, TimeSpan.FromSeconds(HeartbeatSeconds), TimeSpan.FromSeconds(HeartbeatSeconds));
+		_heartbeat = new Timer(_ => _ = HeartbeatSafeAsync(), null, TimeSpan.FromSeconds(HeartbeatSeconds), TimeSpan.FromSeconds(HeartbeatSeconds));
+	}
+
+	/// <summary>The timer drops whatever the heartbeat throws without a word; this at least leaves a line behind.</summary>
+	private async Task HeartbeatSafeAsync() {
+		try {
+			await HeartbeatAsync().ConfigureAwait(false);
+		} catch (Exception e) {
+			Log.Debug($"heartbeat: {e.GetType().Name}: {e.Message}", Name);
+		}
 	}
 
 	private async Task HeartbeatAsync() {
@@ -1932,7 +1964,7 @@ public sealed class Bot : IAsyncDisposable {
 		// A stand-down that was too fresh to trust at logon gets announced here, once, if it held.
 		if (PlayingBlocked && _blockWarnDue is { } due && (DateTime.UtcNow >= due)) {
 			_blockWarnDue = null;
-			Log.Info("you're on this account now - standing aside until you're done", Name);
+			Log.Info("you're on this account - waiting until you're done", Name);
 		}
 
 		// Re-assert the schedule's persona so it actually holds: online during active hours, invisible while
@@ -1992,7 +2024,7 @@ public sealed class Bot : IAsyncDisposable {
 			&& _announcedLabel is { Length: > 0 } announced && !string.IsNullOrWhiteSpace(announced)
 			&& (DateTime.UtcNow.Subtract(_lastNameHeal).TotalSeconds >= 120)) {
 			_lastNameHeal = DateTime.UtcNow;
-			Log.Info(new Said("custom name slipped (Steam shows {0}) - re-asserting it", PlayingAsSeen), Name);
+			Log.Info(new Said("custom name slipped to {0} - setting it again", PlayingAsSeen), Name);
 
 			try {
 				// The same label that was announced - never the configured name over a farmer that chose none.
@@ -2097,7 +2129,7 @@ public sealed class Bot : IAsyncDisposable {
 				Log.Debug(new Said("Steam reports another session on app {0} right after logon - probably our own, waiting before saying so", cb.PlayingAppID), Name);
 			} else {
 				_blockWarnDue = null;
-				Log.Info("you're on this account now - standing aside until you're done", Name);
+				Log.Info("you're on this account - waiting until you're done", Name);
 			}
 		} else {
 			_blockWarnDue = null;
@@ -2413,7 +2445,7 @@ public sealed class Bot : IAsyncDisposable {
 			return;
 		}
 
-		Log.Event(new Said("somebody just commented on this profile - steamcommunity.com/profiles/{0}", SteamId), Name);
+		Log.Event(new Said("new comment: steamcommunity.com/profiles/{0}", SteamId), Name);
 
 		// Read it, so the counter goes back to zero rather than climbing for the life of the account.
 		ClearAllNotifications();
@@ -2587,7 +2619,7 @@ public sealed class Bot : IAsyncDisposable {
 				return null;
 			}
 
-			Log.Info("minting a new web token (the old one is spent) - this is the once-a-day web refresh", Name);
+			Log.Info("daily web refresh - getting a new web token", Name);
 
 			// Genuinely spent (or never had one). Mint a replacement. allowRenewal: true lets Steam rotate the
 			// long-lived refresh token before it ages out, so an unattended farmer keeps
@@ -3044,12 +3076,12 @@ public sealed class ConsoleGuard(string botName, string? sharedSecret = null) : 
 
 			if (code != null) {
 				_lastGenerated = code;
-				Log.Info("answered Steam Guard from this account's own authenticator", botName);
+				Log.Info("Steam Guard code sent from its authenticator", botName);
 
 				return code;
 			}
 		} else {
-			Log.Warn("the authenticator secret for this account isn't producing codes Steam accepts - check it", botName);
+			Log.Warn("Steam rejects its authenticator codes - check the secret", botName);
 		}
 
 		return await Prompt.LineAsync($"[{botName}] Steam Guard code (mobile app)", botName).ConfigureAwait(false);
@@ -3064,7 +3096,7 @@ public sealed class ConsoleGuard(string botName, string? sharedSecret = null) : 
 	}
 
 	public Task<bool> AcceptDeviceConfirmationAsync() {
-		Log.Attention("approve this login in the Steam mobile app (or type the code below)", botName);
+		Log.Attention("approve the login in the Steam app, or type the code below", botName);
 
 		return Task.FromResult(true);
 	}
@@ -3106,14 +3138,17 @@ public static class TokenStore {
 				try {
 					string bot = Path.GetFileNameWithoutExtension(path);
 					AtomicFile.Write(path, Secrets.Protect(plain, bot));
-					Log.Info(new Said("encrypted a login token that was stored as plain text by an older version"), bot);
+					Log.Info(new Said("login token encrypted - an older version saved it as plain text"), bot);
 				} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 					Log.Debug(new Said("couldn't encrypt a login token in place: {0}", e.Message));
 				}
 			}
 
 			return plain.Length > 0 ? plain : null;
-		} catch {
+		} catch (Exception e) {
+			// Out loud: what follows is a sign-in with the password (or a Steam Guard code), and nothing else says why.
+			Log.Warn(new Said("couldn't read the saved sign-in: {0}", e.Message), Path.GetFileNameWithoutExtension(path));
+
 			return null;
 		}
 	}

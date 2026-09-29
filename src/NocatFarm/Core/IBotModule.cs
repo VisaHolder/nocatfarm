@@ -44,14 +44,42 @@ public abstract class BotModule(Bot bot) : IBotModule {
 		}
 
 		_ = Task.Run(async () => {
+			int crashes = 0;
+
 			try {
-				await RunAsync(ct).ConfigureAwait(false);
-			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
-				// normal shutdown - and only that: a request that timed out is an OperationCanceledException too, and
-				// taking one of those for a shutdown is how a module used to stop without a single word in the log
-			} catch (Exception e) {
-				// never silent: a module dying quietly is the worst failure mode there is
-				Log.Error(new Said("module '{0}' stopped: {1}: {2}", Name, e.GetType().Name, e.Message), Bot.Name);
+				while (true) {
+					DateTime began = DateTime.UtcNow;
+
+					try {
+						await RunAsync(ct).ConfigureAwait(false);
+
+						return;   // it ended by itself (switched off, nothing to do) - that is not a crash
+					} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+						// normal shutdown - and only that: a request that timed out is an OperationCanceledException too, and
+						// taking one of those for a shutdown is how a module used to stop without a single word in the log
+						return;
+					} catch (Exception e) {
+						// And not for good. One odd answer from Steam used to switch the feature off until the next restart.
+						// Waits 1, 2, 4 ... up to 30 minutes, so a module that keeps failing can't fill the log; a run that
+						// lasted an hour first counts as a fresh start.
+						crashes = DateTime.UtcNow - began > TimeSpan.FromHours(1) ? 1 : crashes + 1;
+
+						// never silent: a module dying quietly is the worst failure mode there is. An error (and a pop-up,
+						// and a message to your phone) the first time; the same thing again is only a warning.
+						if (crashes == 1) {
+							Log.Error(new Said("module '{0}' stopped: {1}: {2}", Name, e.GetType().Name, e.Message), Bot.Name);
+						} else {
+							Log.Warn(new Said("module '{0}' stopped: {1}: {2}", Name, e.GetType().Name, e.Message), Bot.Name);
+						}
+					}
+
+					int minutes = Math.Min(30, 1 << Math.Min(crashes - 1, 5));
+					Log.Info(new Said("'{0}' starts again in {1}m", Name, minutes), Bot.Name);
+
+					if (!await Sleep(TimeSpan.FromMinutes(minutes), ct).ConfigureAwait(false)) {
+						return;
+					}
+				}
 			} finally {
 				// Release the handle whichever way the loop ended, so a module that returned early (feature
 				// switched off) can genuinely be started again later instead of looking permanently running.

@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Security;
 using System.Text;
@@ -118,7 +119,7 @@ public static partial class RemoteAccess {
 		(Uri control, string service, string lanIp)? gw = await FindGatewayAsync().ConfigureAwait(false);
 
 		if (gw is not { } found) {
-			Fail(new Said("your router didn't answer - turn on UPnP in its settings, or forward port {0} to this PC by hand", port));
+			Fail(new Said("router didn't answer - turn on UPnP, or forward port {0}", port));
 
 			return;
 		}
@@ -131,7 +132,7 @@ public static partial class RemoteAccess {
 		}
 
 		if (refused != null) {
-			Fail(new Said("your router refused to forward port {0} ({1}) - forward it to this PC by hand in the router's settings", port, refused));
+			Fail(new Said("router refused port {0} ({1}) - forward it by hand", port, refused));
 
 			return;
 		}
@@ -140,8 +141,8 @@ public static partial class RemoteAccess {
 		string ip = reply == null ? "" : ExternalIpRegex().Match(reply).Groups[1].Value;
 		IPAddress.TryParse(ip, out IPAddress? ext);
 		Said? unreachable = (ext == null) || Unusable(ext) ? new Said("your router didn't say its internet address")
-			: IsProviderShared(ext) ? new Said("your internet connection is shared with other homes (the provider's address {0}), so nothing from outside can reach this PC", ip)
-			: IsPrivate(ext) ? new Said("your router is behind another router ({0}) - forward port {1} on that one too, or ask whoever runs it", ip, port)
+			: IsProviderShared(ext) ? new Said("the provider shared address {0} can't be reached from outside", ip)
+			: IsPrivate(ext) ? new Said("behind another router ({0}) - forward port {1} there too", ip, port)
 			: null;
 
 		if (unreachable is { } why) {
@@ -165,7 +166,7 @@ public static partial class RemoteAccess {
 		Problem = null;
 
 		if (first) {
-			Log.Good(new Said("open from anywhere: your router forwards port {0} to this PC - the dashboard opens at {1} from anywhere (sign in with the dashboard password)", port, Link!));
+			Log.Good(new Said("open from anywhere: on at {0}", Link!));
 		}
 	}
 
@@ -195,8 +196,8 @@ public static partial class RemoteAccess {
 		}
 
 		Log.Info(kept == null
-			? new Said("open from anywhere: off - your router no longer forwards port {0}", m.Port)
-			: new Said("open from anywhere: off, but the router didn't take the forward away ({0}) - remove it in the router's settings", kept));
+			? new Said("open from anywhere: off - port {0} no longer forwarded", m.Port)
+			: new Said("open from anywhere: off - remove the forward in your router ({0})", kept));
 	}
 
 	/// <summary>
@@ -259,33 +260,97 @@ public static partial class RemoteAccess {
 			return await ReadGatewayAsync(test).ConfigureAwait(false);
 		}
 
-		using UdpClient udp = new(AddressFamily.InterNetwork);
-		udp.Client.ReceiveTimeout = 3000;
-
 		byte[] ask = Encoding.ASCII.GetBytes("M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 2\r\n"
 			+ "ST: urn:schemas-upnp-org:device:InternetGatewayDevice:1\r\n\r\n");
-		await udp.SendAsync(ask, new IPEndPoint(IPAddress.Parse("239.255.255.250"), 1900)).ConfigureAwait(false);
 
-		using CancellationTokenSource wait = new(TimeSpan.FromSeconds(4));
+		// Asked through every network card with a router behind it, not only the one Windows sends multicast out of by
+		// default - a VirtualBox, Hyper-V, WSL or VPN adapter is often that one, and no router ever hears the question.
+		List<UdpClient> askers = [];
 
-		while (!wait.IsCancellationRequested) {
-			UdpReceiveResult got;
+		try {
+			foreach ((IPAddress local, List<IPAddress> gateways) in LanAddresses()) {
+				try {
+					UdpClient udp = new(new IPEndPoint(local, 0));
+					udp.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastInterface, local.GetAddressBytes());
+					await udp.SendAsync(ask, new IPEndPoint(IPAddress.Parse("239.255.255.250"), 1900)).ConfigureAwait(false);
 
-			try {
-				got = await udp.ReceiveAsync(wait.Token).ConfigureAwait(false);
-			} catch (OperationCanceledException) {
-				break;
+					// And the card's router asked directly: some routers and mesh systems never answer the broadcast one.
+					foreach (IPAddress gateway in gateways) {
+						await udp.SendAsync(ask, new IPEndPoint(gateway, 1900)).ConfigureAwait(false);
+					}
+
+					askers.Add(udp);
+				} catch (SocketException) {
+					// that card can't send - the others still ask
+				}
 			}
 
-			Match loc = LocationRegex().Match(Encoding.ASCII.GetString(got.Buffer));
+			if (askers.Count == 0) {
+				UdpClient any = new(AddressFamily.InterNetwork);
+				await any.SendAsync(ask, new IPEndPoint(IPAddress.Parse("239.255.255.250"), 1900)).ConfigureAwait(false);
+				askers.Add(any);
+			}
 
-			if (loc.Success && Uri.TryCreate(loc.Groups[1].Value.Trim(), UriKind.Absolute, out Uri? descUrl)
-				&& (await ReadGatewayAsync(descUrl).ConfigureAwait(false) is { } found)) {
-				return found;
+			using CancellationTokenSource wait = new(TimeSpan.FromSeconds(4));
+			Dictionary<Task<UdpReceiveResult>, UdpClient> listening = askers.ToDictionary(u => u.ReceiveAsync(wait.Token).AsTask(), u => u);
+
+			while (listening.Count > 0) {
+				Task<UdpReceiveResult> done = await Task.WhenAny(listening.Keys).ConfigureAwait(false);
+				UdpClient from = listening[done];
+				listening.Remove(done);
+				UdpReceiveResult got;
+
+				try {
+					got = await done.ConfigureAwait(false);
+				} catch (Exception e) when (e is OperationCanceledException or SocketException) {
+					continue;   // that card is done listening
+				}
+
+				Match loc = LocationRegex().Match(Encoding.ASCII.GetString(got.Buffer));
+
+				if (loc.Success && Uri.TryCreate(loc.Groups[1].Value.Trim(), UriKind.Absolute, out Uri? descUrl)
+					&& (await ReadGatewayAsync(descUrl).ConfigureAwait(false) is { } found)) {
+					return found;
+				}
+
+				// Not a gateway that forwards ports - keep listening on that card.
+				listening[from.ReceiveAsync(wait.Token).AsTask()] = from;
+			}
+
+			return null;
+		} finally {
+			foreach (UdpClient u in askers) {
+				u.Dispose();
 			}
 		}
+	}
 
-		return null;
+	/// <summary>This PC's IPv4 addresses on network cards that are up and have a router (a gateway) behind them, with those routers.</summary>
+	private static List<(IPAddress Local, List<IPAddress> Gateways)> LanAddresses() {
+		List<(IPAddress, List<IPAddress>)> found = [];
+
+		try {
+			foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces()) {
+				if ((nic.OperationalStatus != OperationalStatus.Up) || nic.NetworkInterfaceType is NetworkInterfaceType.Loopback or NetworkInterfaceType.Tunnel) {
+					continue;
+				}
+
+				IPInterfaceProperties props = nic.GetIPProperties();
+
+				List<IPAddress> gateways = [.. props.GatewayAddresses.Select(static g => g.Address)
+					.Where(static g => (g.AddressFamily == AddressFamily.InterNetwork) && !g.Equals(IPAddress.Any))];
+
+				if (gateways.Count == 0) {
+					continue;
+				}
+
+				found.AddRange(props.UnicastAddresses.Select(static a => a.Address).Where(IsPrivate).Select(a => (a, gateways)));
+			}
+		} catch (NetworkInformationException) {
+			// no list of cards - the default one still asks
+		}
+
+		return found;
 	}
 
 	/// <summary>A router's description: the service that forwards ports, and this PC's address as the router sees it.</summary>

@@ -45,6 +45,8 @@ def cell(text):
 
 
 lines = [
+    "[Wiki home](README.md) · [Front page](../README.md)",
+    "",
     "# nocat.farm commands",
     "",
     "Every command nocat.farm has, and what it does. You can type them in the app window, in the dashboard's "
@@ -81,7 +83,7 @@ for g in order:
 lines += [
     "## More",
     "",
-    "- [The full guide](GUIDE.md) - how everything works, every setting, Linux and Docker.",
+    "- [The wiki](README.md) - how everything works, every setting, Linux and Docker.",
     "- [Plugins](../PLUGINS.md) - add your own commands in a few lines of C#. A plugin's commands are listed by "
     "`plugins` and on the dashboard's Plugins page.",
     "",

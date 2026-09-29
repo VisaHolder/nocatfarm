@@ -69,7 +69,7 @@ public static class AsfImport {
 		// And anywhere a couple of folders down the usual places - "Desktop\tools\ASF-win-x64", say.
 		full.AddRange(Folders(ImportPlaces.UsualRoots, 2, static d => File.Exists(Path.Combine(d, "config", "ASF.json"))).Select(static d => Path.Combine(d, "config")));
 
-		return full.Distinct(StringComparer.OrdinalIgnoreCase);
+		return full.Distinct(PathComparer);
 	}
 
 	/// <summary>

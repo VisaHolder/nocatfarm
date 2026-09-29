@@ -83,6 +83,24 @@ function showLogin(message) {
   if (message) $('loginError').textContent = message;
 }
 
+// Too many wrong passwords: say that, count down, and say how to skip the wait - not "Wrong password" for the right one.
+let loginLockTimer = null;
+function loginLocked(seconds, thisPc) {
+  clearInterval(loginLockTimer);
+  let left = Math.max(1, seconds | 0);
+  const draw = () => {
+    const wait = left >= 60 ? `${Math.ceil(left / 60)}m` : `${left}s`;
+    $('loginError').textContent = tf('Too many wrong passwords - try again in {0}.', wait)
+      + (thisPc ? ' ' + t('Or type unlock in the nocat.farm window.') : '');
+  };
+  draw();
+  loginLockTimer = setInterval(() => {
+    left--;
+    if (left <= 0) { clearInterval(loginLockTimer); $('loginError').textContent = t('You can try again now.'); return; }
+    draw();
+  }, 1000);
+}
+
 async function doLogin(e) {
   e.preventDefault();
   const res = await fetch('/api/login', {
@@ -90,6 +108,7 @@ async function doLogin(e) {
     body: JSON.stringify({ Password: $('pw').value })
   }).then((r) => r.json()).catch(() => ({ ok: false }));
 
+  if (!res.ok && res.error === 'locked') { loginLocked(res.seconds, res.thisPc); return false; }
   if (!res.ok) { $('loginError').textContent = t('Wrong password.'); return false; }
   token = res.token;
   localStorage.setItem('nocatfarm-token', token);
@@ -343,6 +362,11 @@ function render() {
   // rep4rep off -> drop its nav tab entirely; on -> show the points beside it once a token's set.
   const r4rTab = document.querySelector('.navitem[data-view="rep4rep"]');
   if (r4rTab) r4rTab.classList.toggle('hidden', !r4rOn());
+
+  // No account's authenticator is in nocat.farm: the Authenticator tab would only ever say so - it goes, and comes back
+  // by itself the moment one is added.
+  const authTab = document.querySelector('.navitem[data-view="auth"]');
+  if (authTab) authTab.classList.toggle('hidden', !bots.some((b) => b.HasAuthenticator));
   $('navPoints').textContent = r4rOn() && state.Rep4RepToken ? state.Points : '';
 
   // The Plugins tab stays put whether plugins are on or off, and says which inside.
@@ -5066,20 +5090,26 @@ function edit(name, value) {
 const PANEL_SECTIONS = new Set(['Discord profile']);
 
 // Settings drawn by a section's own panel (chips and switches) instead of as rows.
-const PANEL_ROWS = new Set(['DiscordPresence', 'DiscordShowNames', 'DiscordShowCounter', 'DiscordShowAvatar', 'DiscordShowTimer',
+const PANEL_ROWS = new Set(['DiscordPresence', 'DiscordShowNames', 'DiscordSecondLine', 'DiscordShowCounter', 'DiscordShowAvatar', 'DiscordShowTimer',
   'SendCardDrops', 'SendFreeStuff', 'SendTrades', 'SendProblems', 'SendUpdates', 'SendInstalls', 'SendDailySummary', 'SendComments',
   'SendAchievements', 'SendRep4Rep']);
 
 function discordCardIntro(val) {
   const on = !!val('DiscordPresence');
-  const parts = [['DiscordShowNames', 'Account names'], ['DiscordShowCounter', 'Accounts online'],
-    ['DiscordShowAvatar', 'Avatar'], ['DiscordShowTimer', 'Timer']];
+  const parts = [['DiscordShowCounter', 'Accounts online'], ['DiscordShowAvatar', 'Avatar'], ['DiscordShowTimer', 'Timer']];
+  // The second line is one pick of four: the names, or one of three counts.
+  const names = !!val('DiscordShowNames');
+  const line = Number(val('DiscordSecondLine') ?? 1);
+  const lines = [[-1, 'Account names'], [0, 'Cards today'], [1, 'Hours past week'], [2, 'Hours past month']];
+  const pickLine = (n) => n < 0 ? `editAndRender('DiscordShowNames', true)` : `pending.DiscordShowNames = false; editAndRender('DiscordSecondLine', ${n})`;
   return `<div class="explain dcard-intro">
     <div class="dhead"><b>${esc(t('Show on my Discord profile'))}</b>
       <label class="switch"><input type="checkbox" ${on ? 'checked' : ''} onchange="editAndRender('DiscordPresence', this.checked)"><span></span></label></div>
     <p style="margin:6px 0 0">${esc(t('While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.'))}</p>
     <div class="langpick">${parts.map(([k, label]) =>
       `<span class="p ${val(k) ? 'on' : ''}" onclick="editAndRender('${k}', ${!val(k)})">${esc(t(label))}</span>`).join('')}</div>
+    <div class="dline"><span class="muted small">${esc(t('Second line'))}</span><div class="langpick">${lines.map(([n, label]) =>
+      `<span class="p ${(n < 0 ? names : !names && line === n) ? 'on' : ''}" onclick="${pickLine(n)}">${esc(t(label))}</span>`).join('')}</div></div>
     ${discordPreview(val)}
     <p class="muted small" style="margin:8px 0 0">${esc(t('Buttons and which accounts it shows are under Show advanced. Discord shows your buttons to everyone but you.'))}</p>
   </div>`;
@@ -5088,7 +5118,8 @@ function discordCardIntro(val) {
 function discordPreview(val) {
   const bots = (state && state.Bots) || [];
   const list = String(val('DiscordPresenceAccounts') || '').trim();
-  const names = list.toLowerCase() === 'all' ? null : list.split(/[, ]+/).filter(Boolean).map((n) => n.toLowerCase());
+  // Nothing picked means every robot account, the same as the real card - an empty list is not "none".
+  const names = (list === '' || list.toLowerCase() === 'all') ? null : list.split(/[, ]+/).filter(Boolean).map((n) => n.toLowerCase());
   const featName = String(val('DiscordFeatured') || '').trim().toLowerCase();
   const featured = bots.find((b) => b.Name.toLowerCase() === featName) || null;
   const shown = bots.filter((b) => (names ? names.includes(b.Name.toLowerCase()) : list === '' ? !b.Legit : true));
@@ -5101,13 +5132,22 @@ function discordPreview(val) {
   const details = !shown.length && !featured ? t('No accounts picked') : !online.length ? t('Resting')
     : cardsLeft > 0 ? tf('Farming cards · {0} left', cardsLeft) : t('Idling games');
   const who = ordered.filter((b) => b !== featured).map(display);
+  const hours = (key) => {
+    const h = shown.reduce((n, b) => n + (b[key] || 0), 0) / 60;
+    return h < 10 ? String(Math.round(h * 10) / 10) : Math.round(h).toLocaleString('en-US');
+  };
+  const line = Number(val('DiscordSecondLine') ?? 1);
+  const counted = line === 1 ? tf('{0} hrs past week', hours('MinutesWeek'))
+    : line === 2 ? tf('{0} hrs past month', hours('MinutesMonth'))
+    : tf('{0} cards today', today);
   const stateLine = val('DiscordShowNames') && who.length
     ? (who.length <= 3 ? who.join(' · ') : who.slice(0, 2).join(' · ') + ' · +' + (who.length - 2))
-    : tf('{0} cards today', today);
+    : counted;
   const lead = featured || ordered.find((b) => b.Avatar) || ordered[0];
   const face = val('DiscordShowAvatar') && lead && lead.Avatar ? lead : null;
   const up = Math.max(0, (state && state.UptimeMinutes) || 0);
-  const timer = `${Math.floor(up / 60)}:${String(up % 60).padStart(2, '0')}:00`;
+  // Discord's own format: 32:17 under an hour, 1:02:17 after.
+  const timer = up < 60 ? `${up}:00` : `${Math.floor(up / 60)}:${String(up % 60).padStart(2, '0')}:00`;
 
   const button = (v) => {
     v = String(v || '').trim();
@@ -5120,15 +5160,20 @@ function discordPreview(val) {
   };
   const buttons = [button(val('DiscordButton1')), button(val('DiscordButton2'))].filter(Boolean);
 
+  // The last line as Discord draws it: the state line by the party icon, then the timer by a controller.
+  const pad = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 6h10a5 5 0 0 1 4.9 6l-.8 4a3 3 0 0 1-5 1.6L14 16h-4l-2.1 1.6a3 3 0 0 1-5-1.6l-.8-4A5 5 0 0 1 7 6Zm1 3v2H6v2h2v2h2v-2h2v-2h-2V9H8Zm7.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Zm3-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>';
+  const party = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 19c0-3.3 3.1-6 7-6s7 2.7 7 6v1H2v-1Zm16 1v-1c0-1.9-.8-3.6-2.1-4.9 3.5.1 6.1 2.2 6.1 4.9v1h-4Z"/></svg>';
+  const meta = (shown.length ? `<span class="dstate">${party}${esc(stateLine)}${val('DiscordShowCounter') ? ' ' + esc('(' + tf('{0} of {1}', online.length, shown.length) + ')') : ''}</span>` : '')
+    + (val('DiscordShowTimer') ? `<span class="dtime">${pad}${esc(timer)}</span>` : '');
+
   return `<div class="dcard ${val('DiscordPresence') ? '' : 'off'}">
     <div class="dlabel">${esc(t('Playing'))}</div>
     <div class="drow">
-      <div class="dart"><img src="logo.png" alt="">${face ? `<img class="dface" src="${esc(face.Avatar)}" alt="">` : ''}</div>
+      <div class="dart"><img src="logo-liquid.gif" alt="">${face ? `<img class="dface" src="${esc(face.Avatar)}" alt="">` : ''}</div>
       <div class="dtext">
         <div class="dname">nocat.farm</div>
         <div>${esc(details)}</div>
-        ${shown.length ? `<div>${esc(stateLine)}${val('DiscordShowCounter') ? ` <span class="dparty">(${esc(tf('{0} of {1}', online.length, shown.length))})</span>` : ''}</div>` : ''}
-        ${val('DiscordShowTimer') ? `<div class="dtime">${esc(timer)}</div>` : ''}
+        ${meta ? `<div class="dmeta">${meta}</div>` : ''}
       </div>
     </div>
     ${buttons.map((l) => `<div class="dbtn">${esc(l)}</div>`).join('')}

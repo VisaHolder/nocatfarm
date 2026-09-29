@@ -106,7 +106,7 @@ public static class Lifetime {
 				// from zero after a failed read and then saving is how a transient problem - a file still being
 				// written, a lock, a bad sector - turns into permanent loss.
 				_loadFailed = true;
-				Log.Warn(new Said("couldn't read the lifetime totals ({0}: {1}) - they will not be overwritten", e.GetType().Name, e.Message));
+				Log.Warn(new Said("couldn't read lifetime totals ({0}: {1}) - not overwriting", e.GetType().Name, e.Message));
 			}
 		}
 	}

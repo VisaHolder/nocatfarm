@@ -1,5 +1,6 @@
 ﻿using System.Buffers.Binary;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO.Pipes;
 using System.Net.Sockets;
 using System.Text;
@@ -28,6 +29,10 @@ public static class DiscordPresence {
 	private const string AppId = "1553951357894008872";
 
 	private const string Site = "https://github.com/VisaHolder/nocatfarm";
+
+	/// <summary>The logo with the n filling up with purple, as a GIF - Discord plays GIFs from a web address, not from the
+	/// app's uploaded pictures. Made by tools/make-logo-gif.py; the same file is assets/logo-liquid.gif.</summary>
+	private const string AnimatedLogo = "https://nocat.lol/nocatfarm/logo.gif";
 
 	private static BotManager? _mgr;
 	/// <summary>The connection: a named pipe on Windows, a unix socket elsewhere. Both speak the same frames.</summary>
@@ -124,7 +129,7 @@ public static class DiscordPresence {
 
 					if (!_shown && (activity != null)) {
 						_shown = true;
-						Log.Info(new Said("Discord Rich Presence on - your profile shows Playing nocat.farm"), "discord");
+						Log.Info(new Said("Discord profile now shows Playing nocat.farm"), "discord");
 					}
 				}
 
@@ -170,13 +175,21 @@ public static class DiscordPresence {
 
 		string today = new Said("{0} cards today", cardsToday).ToString();
 
+		// With names off, the line counts what Second line picks - hours over every shown account, like Steam's
+		// "hrs past 2 weeks".
+		string counted = G.DiscordSecondLine switch {
+			1 => new Said("{0} hrs past week", Hours(History.MinutesOver(7, shown.Select(static b => b.Name)))).ToString(),
+			2 => new Said("{0} hrs past month", Hours(History.MinutesOver(30, shown.Select(static b => b.Name)))).ToString(),
+			_ => today
+		};
+
 		// The names line leaves out the featured account - it's already the picture.
 		Bot[] named = [.. shown.Where(b => b != featured)];
-		string state = G.DiscordShowNames && (named.Length > 0) ? Names(named) : today;
+		string state = G.DiscordShowNames && (named.Length > 0) ? Names(named) : counted;
 
 		// What clicking does is said on hover - Discord gives a picture no other hint that it's a link.
 		Dictionary<string, object> assets = new() {
-			["large_image"] = "logo",
+			["large_image"] = AnimatedLogo,
 			["large_text"] = new Said("nocat.farm {0} · {1} · click to open it on GitHub", NocatFarm.Build.Version, today).ToString(),
 			["large_url"] = Site
 		};
@@ -266,6 +279,13 @@ public static class DiscordPresence {
 	private static string Clip(string label) => label.Length <= 32 ? label : label[..31] + "…";
 
 	/// <summary>"Show these accounts": names, or "all"; empty means every account that isn't in human mode.</summary>
+	/// <summary>Minutes as hours the way Steam writes them: 4.5 under ten, then whole hours with a thousands comma.</summary>
+	internal static string Hours(double minutes) {
+		double h = Math.Max(0, minutes) / 60;
+
+		return h < 10 ? h.ToString("0.#", CultureInfo.InvariantCulture) : Math.Round(h).ToString("N0", CultureInfo.InvariantCulture);
+	}
+
 	private static IEnumerable<Bot> Picked() {
 		IEnumerable<Bot> all = _mgr?.All ?? [];
 		string list = G.DiscordPresenceAccounts.Trim();

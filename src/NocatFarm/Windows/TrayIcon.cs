@@ -319,7 +319,7 @@ public sealed class TrayIcon : IDisposable {
 		}
 
 		if (!_added) {
-			Log.Warn("couldn't add the notification-area icon - nocatFarm still runs, it just won't show in the tray");
+			Log.Warn("no tray icon - nocatFarm still runs without it");
 		} else {
 			Log.Debug("tray icon added");
 		}

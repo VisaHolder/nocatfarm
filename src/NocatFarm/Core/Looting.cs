@@ -281,7 +281,7 @@ public static partial class Looting {
 					}
 
 					Config.ConfigStore.SaveBot(bot.Name, cfg);
-					Log.Attention(new Said("Steam won't let this account trade {0} items - it's most likely banned in that game, so they're left out of every send from now on",
+					Log.Attention(new Said("can't trade {0} items (banned there?) - left out from now on",
 						string.Join(", ", learned.Select(GameNames.Of))), bot.Name);
 					blocked += batch.Count(i => learned.Contains(i.App));
 				}
@@ -516,7 +516,7 @@ public static partial class Looting {
 				// Steam doesn't show the offer to anybody until it's confirmed - so "sent" is only the truth once it is.
 				if (needsConfirming && ulong.TryParse(id.GetString() ?? id.ToString(), out ulong offerId)) {
 					if (!await bot.ConfirmMobileAsync(offerId, true, ct).ConfigureAwait(false)) {
-						Log.Warn(new Said("the offer went out but needs confirming on your phone - add this account's authenticator secrets to do that here"), bot.Name);
+						Log.Warn(new Said("offer sent - confirm it on your phone (no authenticator here)"), bot.Name);
 
 						return (true, "sent - waiting for you to confirm it in the Steam app on your phone");
 					}

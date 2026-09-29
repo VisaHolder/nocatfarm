@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using NocatFarm.Config;
 using NocatFarm.Core;
 
@@ -104,16 +105,18 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			return true;
 		}
 
-		if (IsEnding(a)) {
+		if (TraitsOf(a).Ending) {
 			return hours >= length * 0.8;
 		}
 
-		foreach ((string family, int[] rungs) in LadderKeys(a)) {
-			if (!Regex.IsMatch(family, @"\b(" + StoryParts + @")\s+#") || (rungs.Length == 0)) {
+		foreach ((string family, int[] rungs) in TraitsOf(a).Ladders) {
+			if (!Regex.IsMatch(family, @"\b(" + StoryParts + @")\s+#") || (rungs.Length == 0) || (rungs[^1] is <= 0 or >= AllRung)) {
 				continue;
 			}
 
-			int top = all.SelectMany(LadderKeys).Where(k => k.Family == family && (k.Rungs.Length > 0)).Select(static k => k.Rungs[^1]).DefaultIfEmpty(rungs[^1]).Max();
+			int top = all.SelectMany(static x => TraitsOf(x).Ladders)
+				.Where(k => (k.Family == family) && (k.Rungs.Length > 0) && (k.Rungs[^1] is > 0 and < AllRung))
+				.Select(static k => k.Rungs[^1]).DefaultIfEmpty(rungs[^1]).Max();
 
 			if ((top > 1) && (hours < length * 0.8 * rungs[^1] / top)) {
 				return false;
@@ -130,6 +133,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		}
 	}
 
+	/// <summary>The rarity floor at its lowest, however many hours: nothing rarer than this is ever unlocked.</summary>
+	private const int LowestFloor = 1;
+
 	/// <summary>
 	/// The rarest an achievement may be, as a percentage of owners, for a given number of hours in the game.
 	///
@@ -145,7 +151,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		hours < 35 ? 5 :
 		hours < 50 ? 3 :      // around forty hours the genuinely low-percentage tail starts opening
 		hours < 80 ? 2 :
-		1;                    // never 0: a sub-1% achievement on an idled account is the giveaway
+		LowestFloor;          // never 0: a sub-1% achievement on an idled account is the giveaway
 
 	private sealed class GameState {
 		public long PlayedMins;         // our accumulated in-game minutes, which drive the rarity gate
@@ -440,7 +446,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			}
 
 			if (grind && (already < total)) {
-				Log.Info(new Said("can't unlock {0}'s achievements - Steam sets them server-side, so there's nothing to grind here", GameNames.Of(app)), Bot.Name);
+				Log.Info(new Said("{0}: achievements are server-side - nothing to grind", GameNames.Of(app)), Bot.Name);
 			}
 
 			Back(g, TimeSpan.FromHours(_rng.Next(8, 25)));
@@ -491,6 +497,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				&& !TierBlocked(a, set.All)
 				&& !DifficultyBlocked(a, set.All)
 				&& !StoryEndBlocked(a, set.All)
+				&& !VariantBlocked(a, set.All)
 				&& StoryTimeAllows(a, set.All, hours, typical)
 				&& !MilestoneUnearned(a, set.All))
 			.ToList();
@@ -571,19 +578,108 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			g.NextAllow = DateTime.UtcNow.AddMinutes(Paced(gap));
 		}
 
-		Said rarity = pick.GlobalPercent is { } percent ? new Said(" ({0}% of owners have it)", percent.ToString("0.#")) : default;
-		Log.Reward(new Said("unlocked \"{0}\" in {1}{2}  ({3}/{4})", pick.Display, GameNames.Of(app), rarity, nowUnlocked, total), Bot.Name, topic: Topic.Achievements);
+		Said rarity = pick.GlobalPercent is { } percent ? new Said(" ({0}% have it)", percent.ToString("0.#")) : default;
+		Log.Reward(new Said("unlocked \"{0}\" in {1}{2} ({3}/{4})", pick.Display, GameNames.Of(app), rarity, nowUnlocked, total), Bot.Name, topic: Topic.Achievements);
 		Remember(new Unlock(app, GameNames.Of(app), pick.Display, pick.GlobalPercent, DateTime.UtcNow, nowUnlocked, total));
 
 		return true;
 	}
 
 	/// <summary>
-	/// Valve's mass-granted community achievements, which are not earned by playing.
-	///
-	/// Left 4 Dead 2's GNOME ALONE is the example: handed out en masse in 2010, so it reads as a comfortable
-	/// ~69% "common" while being nothing of the sort. The pacer must never feature one.
+	/// What the order rules need to know about one achievement, worked out from its wording once per achievement.
+	/// Every rule compares every locked achievement against every other one, so without this a 500-achievement game
+	/// ran the same few dozen regular expressions a quarter of a million times per look.
 	/// </summary>
+	private sealed record Traits(
+		string Label,                                   // "halo 4", "me1": the game or mode a collection's achievement belongs to
+		List<(string Family, int[] Rungs)> Ladders,     // see LadderKeys
+		(string Stem, int Rank)? Difficulty,            // see DifficultyKey
+		bool Ending,                                    // "finish the game", "the final mission"
+		bool Challenge,                                 // ...with a challenge on top ("without dying", "in under 4 hours")
+		bool PlainEnding,                               // ...with nothing harder asked at all, not even "on Hard"
+		bool Numbered,                                  // one numbered step of the story: "Complete Chapter 3"
+		bool Named,                                     // one named step of the story: "ME1: Complete Ilos"
+		string Modes,                                   // co-op, multiplayer, DLC...: which part of the game it is about
+		string Core,                                    // the description, plain, for "the same thing, but harder"
+		bool Prestige,
+		bool LevelUp
+	);
+
+	private static readonly ConditionalWeakTable<Achievement, Traits> TraitCache = new();
+
+	private static Traits TraitsOf(Achievement a) => TraitCache.GetValue(a, static x => Work(x));
+
+	private static Traits Work(Achievement a) {
+		string desc = a.Description ?? "";
+		string text = $"{a.Display} {desc}";
+		(string label, string body) = SplitLabel(string.IsNullOrWhiteSpace(desc) ? a.Display : desc);
+		string modes = string.Join(",", Regex.Matches(Normalize(text), ModeWords).Select(static m => m.Groups[1].Value.Replace("coop", "co-op", StringComparison.Ordinal)).Distinct().Order(StringComparer.Ordinal));
+		List<(string Family, int[] Rungs)> ladders = LadderKeys(a);
+		(string Stem, int Rank)? difficulty = DifficultyKey(a);
+		bool ending = IsEnding(a);
+		bool challenge = ending && Regex.IsMatch(Plain(body), Qualifiers);
+
+		return new Traits(
+			label,
+			ladders,
+			difficulty,
+			ending,
+			challenge,
+			ending && !challenge && ((difficulty is null) || Regex.IsMatch(Normalize(body), @"\bany\b")),
+			!ending && IsNumberedStoryPart(ladders),
+			!ending && IsNamedStoryPart(a),
+			modes,
+			Plain(body),
+			Regex.IsMatch(text, @"\bprestige\b", RegexOptions.IgnoreCase),
+			Regex.IsMatch(Normalize(desc), @"\b(reach|reached|attain|attained|hit)\s+(the\s+)?(max(imum)?\s+)?(level|rank)\b") && !Regex.IsMatch(text, @"\bprestige\b", RegexOptions.IgnoreCase));
+	}
+
+	/// <summary>
+	/// "Halo 4: Beat the par score on Dawn", "ME1: Complete Eden Prime", "Red Dead Online: Reach Rank 10" - a collection
+	/// or a mode says which part of it an achievement belongs to in a label up front. Two achievements with different
+	/// labels are different games: the Halo 4 one never waits for the Halo 2 one, and the 4 in "Halo 4" is a name, not
+	/// a rung. Returns the label (lower case, "" when there is none) and the text after it.
+	/// </summary>
+	private static (string Label, string Body) SplitLabel(string text) {
+		string s = (text ?? "").Trim();
+		List<string> parts = [];
+
+		while (Regex.Match(s, @"^([A-Za-z0-9][A-Za-z0-9 .'’&+\-]{0,30}?):\s+(?=\S)") is { Success: true } m) {
+			string part = Regex.Replace(m.Groups[1].Value.ToLowerInvariant(), @"\s+", " ").Trim();
+
+			// "Chapter IV: The Bridge" and "Complete Chapter 3: Into the Dark" are a step with its title, not a label -
+			// and neither is anything that reads as a thing to do ("Kill 3 enemies: ...").
+			if (Regex.IsMatch(Normalize(part), @"\b(" + StoryParts + @")\s+\d") || Regex.IsMatch(part, @"^(complete|completed|finish|beat|defeat|kill|get|win|reach|collect|find|earn|play|survive|clear|unlock|use)\b")) {
+				break;
+			}
+
+			if (!parts.Contains(part)) {
+				parts.Add(part);
+			}
+
+			s = s[m.Length..];
+		}
+
+		return (string.Join(":", parts), s);
+	}
+
+	/// <summary>Lower case, no punctuation, no "on any difficulty": what an achievement asks for, to compare two of them.</summary>
+	private static string Plain(string text) {
+		string s = Regex.Replace((text ?? "").ToLowerInvariant(), @"[^\p{L}\p{N}%+\s]", " ");
+		s = Regex.Replace(s, @"\b(on|in|at)\s+any\s+(difficulty|mode)(\s+level)?\b", " ");
+
+		return Regex.Replace(s, @"\s+", " ").Trim();
+	}
+
+	/// <summary>Which part of a game an achievement is about. A step of the co-op campaign is not a step of the story.</summary>
+	private const string ModeWords = @"\b(multiplayer|online|co-op|coop|zombies|versus|pvp|arcade|horde|dlc|expansion|new game\+|ng\+|battlemode|snapmap|score attack|spartan ops)(?![\w])";
+
+	/// <summary>Asked on top of the plain thing: "without dying", "in under 2 hours", "using only kicks", "solo", "on Hard".</summary>
+	private const string Qualifiers = @"\b(without|under|within|less than|fewer than|only|exactly|never|no|solo|alone|yourself|single|one life|deathless|speedrun|mode)\b";
+
+	/// <summary>Words that start "the same thing, but harder" after a plain description: "...without taking a hit", "...on Veteran".</summary>
+	private const string HarderWords = @"^(without|in|under|within|with|while|using|only|on|by|solo|firing|before|after|at|as|no|never|exactly|twice|again|from|having|taking|wearing|alone)\b";
+
 	/// <summary>
 	/// Is this one rung of a ladder whose lower rungs are still locked?
 	///
@@ -592,14 +688,16 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// description: "Sharpshooter - get 5 kills" before "Marksman - get 10 kills". Steam publishes no dependency
 	/// graph at all, so this is inferred for every game the same way: two achievements whose name, or whose
 	/// description, reads the same once the numbers are taken out are one ladder, and a rung is held until every
-	/// lower rung is done. "Chapter One", "Act II" and "the third mission" count as numbers too.
+	/// lower rung is done. "Chapter One", "Act II" and "the third mission" count as numbers too, "all" and "every"
+	/// are the top rung ("Find all Collectibles" after "Find 25 Collectibles"), and a time limit counts down ("in
+	/// under 5 hours" after "in under 10 hours").
 	///
 	/// Rarity ordering already gets this right most of the time (a later tier is rarer, and the easiest is always
 	/// taken first), but not always: tiers can share a rarity, and a profile showing "10 kills" with "5 kills"
 	/// missing is the exact shape of a faked achievement.
 	/// </summary>
 	private static bool TierBlocked(Achievement a, IReadOnlyCollection<Achievement> all) {
-		List<(string Family, int[] Rungs)> mine = LadderKeys(a);
+		List<(string Family, int[] Rungs)> mine = TraitsOf(a).Ladders;
 
 		if (mine.Count == 0) {
 			return false;
@@ -610,12 +708,25 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				continue;
 			}
 
-			foreach ((string family, int[] rungs) in LadderKeys(other)) {
-				foreach ((string myFamily, int[] myRungs) in mine) {
-					// A lower rung of the same ladder, still locked - so this one is not next.
-					if (string.Equals(family, myFamily, StringComparison.Ordinal) && Below(rungs, myRungs)) {
-						return true;
-					}
+			List<(string Family, int[] Rungs)> theirs = TraitsOf(other).Ladders;
+
+			// A lower rung of the same ladder, still locked - so this one is not next. Unless the two read as each
+			// other's lower rung at once ("Speedrun 1 - under 10 hours" and "Speedrun 2 - under 5 hours" before time
+			// limits counted down): a contradiction is no evidence either way, and honouring it held both for ever.
+			if (Lower(theirs, mine) && !Lower(mine, theirs)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/// <summary>Any ladder in <paramref name="lower"/> a lower rung of the same ladder in <paramref name="higher"/>.</summary>
+	private static bool Lower(List<(string Family, int[] Rungs)> lower, List<(string Family, int[] Rungs)> higher) {
+		foreach ((string family, int[] rungs) in lower) {
+			foreach ((string otherFamily, int[] otherRungs) in higher) {
+				if (string.Equals(family, otherFamily, StringComparison.Ordinal) && Below(rungs, otherRungs)) {
+					return true;
 				}
 			}
 		}
@@ -642,6 +753,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		return smaller;
 	}
 
+	/// <summary>"all" and "every" as a number: more than any count a game asks for.</summary>
+	private const int AllRung = 9_999_999;
+
 	/// <summary>
 	/// The ladders an achievement could be a rung of: its name and its description, each with the numbers taken
 	/// out (the family) and the numbers themselves (the rungs). None when there is no number to order by, which
@@ -650,31 +764,61 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	private static List<(string Family, int[] Rungs)> LadderKeys(Achievement a) {
 		List<(string, int[])> keys = [];
 
-		foreach (string text in new[] { a.Display, a.Description }) {
-			if (string.IsNullOrWhiteSpace(text)) {
+		foreach ((string raw, bool isName) in new[] { (a.Display, true), (a.Description, false) }) {
+			if (string.IsNullOrWhiteSpace(raw)) {
 				continue;
 			}
 
-			string normal = Normalize(text);
-			MatchCollection numbers = Regex.Matches(normal, @"\d{1,7}");
+			(string label, string body) = SplitLabel(raw);
+			string normal = Normalize(body);
+
+			// A label's own number is its name: "every Halo 4 level" is Halo 4's, not rung 4 of anything.
+			foreach (string part in label.Split(':').Where(static p => Regex.IsMatch(p, @"\d"))) {
+				normal = Regex.Replace(normal, @"\b" + Regex.Escape(part) + @"\b", "@");
+			}
+
+			// "Chapter IV: The Bridge" is rung 4 of the chapters, whatever this one is called.
+			normal = Regex.Replace(normal, @"^(.*?\b(" + StoryParts + @")\s+\d{1,4})\s*[:\-–—]\s+\S.*$", "$1");
+
+			// A name ending in a numeral is a tier: "Medal of Exploration II", "Insanity III".
+			if (isName) {
+				normal = Regex.Replace(normal, @"\s([ivx]{1,4})[\s.!]*$", static m => Roman(m.Groups[1].Value) is > 0 and var r ? $" {r}" : m.Value);
+			}
+
+			// A limit counts down: "in under 5 hours" is harder than "in under 10 hours", so its rung is the negative.
+			normal = Regex.Replace(normal, @"\b(under|within|less than|fewer than|at most|no more than)\s+(?=\d)", "$1 ~");
+			normal = Regex.Replace(normal, @"(?<![\w~])(\d{1,7})((?:\s+[a-z]+){0,3}\s+or\s+(?:less|fewer))\b", "~$1$2");
+
+			// "Find all Collectibles" is the top rung of "Find 10 Collectibles" and "Find 25 Collectibles".
+			normal = Regex.Replace(normal, @"\b(all|every)\b(?!\s+(of\s+)?(the\s+)?~?\d)", AllRung.ToString(CultureInfo.InvariantCulture));
+
+			// Only a number standing on its own: "ME1", "E1M1", "The D20" and "2Fort" are names.
+			MatchCollection numbers = Regex.Matches(normal, NumberPattern);
 
 			if ((numbers.Count == 0) || (numbers.Count > 4)) {
 				continue;
 			}
 
-			string family = Regex.Replace(Regex.Replace(normal, @"\d{1,7}", "#"), @"\s+", " ").Trim();
+			string rest = Regex.Replace(Regex.Replace(normal, NumberPattern, "#"), @"[^\p{L}\p{N}#%@\s]", " ");
+			string family = Regex.Replace(rest, @"\s+", " ").Trim();
 
 			// A number with hardly a word around it ("100", "#1") says nothing about what it belongs to.
-			if (family.Replace("#", "").Trim().Length < 4) {
+			if (family.Replace("#", "").Replace("@", "").Trim().Length < 4) {
 				continue;
 			}
 
-			int[] rungs = [.. numbers.Select(static m => int.TryParse(m.Value, NumberStyles.None, CultureInfo.InvariantCulture, out int n) ? n : int.MaxValue)];
-			keys.Add((family, rungs));
+			int[] rungs = [.. numbers.Select(static m => {
+				string v = m.Value.TrimEnd('s', 't', 'n', 'd', 'r', 'h');
+				bool down = v.StartsWith('~');
+				return int.TryParse(down ? v[1..] : v, NumberStyles.None, CultureInfo.InvariantCulture, out int n) ? (down ? -n : n) : int.MaxValue;
+			})];
+			keys.Add((label.Length > 0 ? $"{label}|{family}" : family, rungs));
 		}
 
 		return keys;
 	}
+
+	private const string NumberPattern = @"(?<![\p{L}\d~])~?\d{1,7}(st|nd|rd|th)?(?![\p{L}\d])";
 
 	private static readonly Dictionary<string, int> NumberWords = new(StringComparer.Ordinal) {
 		["one"] = 1, ["two"] = 2, ["three"] = 3, ["four"] = 4, ["five"] = 5, ["six"] = 6, ["seven"] = 7, ["eight"] = 8, ["nine"] = 9,
@@ -686,6 +830,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 	/// <summary>Story parts: what a "beat the game" achievement comes after, and what a roman numeral follows.</summary>
 	private const string StoryParts = "chapter|act|part|episode|mission|stage|book|quest|world|area|zone|level|season";
+
+	/// <summary>Story parts that mean one whatever the sentence: "Kill 5 enemies in Chapter 3" is chapter 3 reached.</summary>
+	private const string SureStoryParts = "chapter|act|episode|mission|book";
 
 	/// <summary>Lower case, "1,000" and "10k" as plain numbers, "one"/"third"/"act ii" as digits.</summary>
 	private static string Normalize(string text) {
@@ -715,22 +862,28 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		return total;
 	}
 
+	/// <summary>Difficulty names, and medal grades, easiest first. Names shared by several games' scales rank where most put them.</summary>
 	private static readonly Dictionary<string, int> Difficulties = new(StringComparer.Ordinal) {
-		["easy"] = 1, ["casual"] = 1, ["normal"] = 2, ["medium"] = 2, ["standard"] = 2, ["hard"] = 3, ["veteran"] = 4, ["expert"] = 4,
-		["insane"] = 5, ["extreme"] = 5, ["nightmare"] = 6, ["legendary"] = 6, ["hell"] = 6
+		["easy"] = 1, ["casual"] = 1, ["recruit"] = 1, ["normal"] = 2, ["medium"] = 2, ["standard"] = 2, ["regular"] = 2,
+		["hard"] = 3, ["hardened"] = 3, ["heroic"] = 3, ["veteran"] = 4, ["expert"] = 4, ["hardcore"] = 4, ["professional"] = 4,
+		["master"] = 5, ["insane"] = 5, ["extreme"] = 5, ["madhouse"] = 5, ["realism"] = 5, ["realistic"] = 5,
+		["nightmare"] = 6, ["legendary"] = 6, ["hell"] = 6, ["inferno"] = 7, ["torment"] = 7,
+		["bronze"] = 1, ["silver"] = 2, ["gold"] = 3, ["platinum"] = 4
 	};
+
+	private static readonly string DifficultyPattern = @"\b(" + string.Join("|", Difficulties.Keys) + @")\b";
 
 	/// <summary>
 	/// "Beat it on Hard" while "beat it on Normal" is still locked: the same achievement at a lower difficulty
-	/// comes first - worded identically apart from the difficulty.
+	/// comes first - worded identically apart from the difficulty. Medals the same: silver after bronze.
 	/// </summary>
 	private static bool DifficultyBlocked(Achievement a, IReadOnlyCollection<Achievement> all) {
-		if (DifficultyKey(a) is not { } mine) {
+		if (TraitsOf(a).Difficulty is not { } mine) {
 			return false;
 		}
 
 		foreach (Achievement other in all) {
-			if (!other.Unlocked && (other.Name != a.Name) && (DifficultyKey(other) is { } theirs)
+			if (!other.Unlocked && (other.Name != a.Name) && (TraitsOf(other).Difficulty is { } theirs)
 				&& (theirs.Stem == mine.Stem) && (theirs.Rank < mine.Rank)) {
 				return true;
 			}
@@ -741,8 +894,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 	private static (string Stem, int Rank)? DifficultyKey(Achievement a) {
 		foreach (string text in new[] { a.Description, a.Display }) {
-			string normal = Normalize(text ?? "");
-			Match m = Regex.Match(normal, @"\b(easy|casual|normal|medium|standard|hard|veteran|expert|insane|extreme|nightmare|legendary|hell)\b");
+			string normal = Regex.Replace(Regex.Replace(Normalize(text ?? ""), @"[^\p{L}\p{N}%:\s]", " "), @"\s+", " ").Trim();
+			Match m = Regex.Match(normal, DifficultyPattern);
 
 			if (m.Success) {
 				return (normal[..m.Index] + "~" + normal[(m.Index + m.Length)..], Difficulties[m.Value]);
@@ -753,33 +906,144 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>
-	/// "Beat the game", "finish the story", the final chapter: never before the chapters, missions and acts that
-	/// lead up to it. Nobody plays the last mission first.
+	/// "Beat the game", "finish the story", the final chapter, every level: never before the chapters, missions and
+	/// acts that lead up to it. Nobody plays the last mission first.
 	/// </summary>
 	private static bool IsEnding(Achievement a) {
 		string text = Normalize($"{a.Display} {a.Description}");
 
-		return Regex.IsMatch(text, @"\b(complete|finish|beat|clear|conquer)\s+(the\s+)?(entire\s+|whole\s+|main\s+)?(game|story|campaign|adventure|storyline)\b")
+		// Not "play a complete game on 2Fort" (an adjective), nor "complete the game intro" (the opposite of an ending).
+		return Regex.IsMatch(text, @"(?<!\b(a|an)\s+)\b(complete|completed|finish|finished|beat|beaten|clear|cleared|conquer|conquered)\s+(the\s+)?(entire\s+|whole\s+|main\s+|base\s+)?(game|story|campaign|adventure|storyline|main quest)(?!['’]s|\s+(intro|introduction|tutorial|prologue|demo))\b")
 			|| Regex.IsMatch(text, @"\b(roll|see|watch)\s+the\s+(credits|ending)\b")
+			|| Regex.IsMatch(text, @"\b(reach|reached|witness|witnessed|see|saw|complete|completed)\s+the\s+epilogue\b")
+			|| Regex.IsMatch(text, @"\b(complete|completed|finish|finished|beat|clear)\s+(all|every)\s+(the\s+)?(?!(side|optional|secret|bonus|extra|daily|weekly|challenge|co-op|coop)\b)([a-z]+\s+)?(chapters?|missions?|levels?|acts?|episodes?|stages?)\b(?!\s+(challenges?|collectibles?|secrets?))")
 			|| Regex.IsMatch(text, @"\b(final|last)\s+(" + StoryParts + @"|boss)\b");
 	}
 
+	/// <summary>
+	/// "Complete Chapter 3", "Mission 7", "Chapter IV: The Bridge" - one numbered step of the story. A chapter or a
+	/// mission is one whatever the sentence around it; a level, a stage or a zone only when it is being completed
+	/// ("Complete Level 3"), because "Reach Level 5 in Multiplayer" and "Upgrade any weapon to level 10" are a
+	/// player's level, and they are not part of the story at all.
+	/// </summary>
+	private static bool IsNumberedStoryPart(List<(string Family, int[] Rungs)> ladders) {
+		foreach ((string family, _) in ladders) {
+			string f = family[(family.IndexOf('|') + 1)..];
+
+			if (Regex.IsMatch(f, @"\b(" + SureStoryParts + @")\s+#")
+				|| Regex.IsMatch(f, @"^(" + StoryParts + @")\s+#")
+				|| Regex.IsMatch(f, @"\b(complete|completed|finish|finished|beat|beaten|clear|cleared|pass|passed|survive|survived)\s+(the\s+)?(" + StoryParts + @")\s+#")) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/// <summary>
+	/// A real step before an ending is at least roughly as common as the ending: everyone who has the ending has the
+	/// step. One a quarter as common or rarer is some other part of the game - a zombies act, a co-op zone, a DLC -
+	/// and holding the story's ending behind it could only ever look stranger than not.
+	///
+	/// And never one under the lowest rarity floor: this account will never earn it, so whatever waited on it would
+	/// wait for ever ("Complete Act III in MWZ", 0.7%, held Call of Duty's "Complete the campaign" at 1.9% for good).
+	/// These rules are read off the wording, so a step that rare is far likelier some other mode than the story.
+	/// </summary>
+	private static bool CouldComeFirst(Achievement step, Achievement after) =>
+		(step.GlobalPercent is not { } s) || ((s >= LowestFloor) && ((after.GlobalPercent is not { } e) || (s * 4 >= e)));
+
+	/// <summary>A step of the same game and the same part of it: same label, and no mode (co-op, DLC...) the other doesn't have.</summary>
+	private static bool SameStory(Traits step, Traits after) =>
+		(step.Label == after.Label) && step.Modes.Split(',', StringSplitOptions.RemoveEmptyEntries).All(m => after.Modes.Split(',').Contains(m));
+
 	private static bool StoryEndBlocked(Achievement a, IReadOnlyCollection<Achievement> all) {
-		if (!IsEnding(a)) {
+		Traits me = TraitsOf(a);
+
+		if (!me.Ending) {
 			return false;
 		}
 
 		foreach (Achievement other in all) {
-			// Another ending ("the final boss in World 2") isn't a step before this one - two of them held each other for ever.
-			if (other.Unlocked || (other.Name == a.Name) || IsEnding(other)) {
+			if (other.Unlocked || (other.Name == a.Name)) {
 				continue;
 			}
 
-			// A still-locked numbered story part ("complete chapter 3", "Mission 7") comes first.
-			foreach ((string family, _) in LadderKeys(other)) {
-				if (Regex.IsMatch(family, @"\b(" + StoryParts + @")\s+#")) {
-					return true;
-				}
+			Traits them = TraitsOf(other);
+
+			// A still-locked step of this story - numbered ("complete chapter 3", "Mission 7") or named ("Complete Blood
+			// Feud in Campaign", "ME1: Complete Ilos") - comes first. Another ending ("the final boss in World 2") is never
+			// a step: two of them held each other for ever. A named step only holds the game finished, not a challenge run
+			// of it ("Complete the game within 4 hours"): a name is a looser clue than a number - it's as likely a DLC
+			// chapter as the story's own - and the run already waits for the plain finish (VariantBlocked).
+			if ((them.Numbered || (them.Named && !me.Challenge)) && SameStory(them, me) && CouldComeFirst(other, a)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/// <summary>
+	/// "Complete Blood Feud in Campaign", "ME1: Complete Eden Prime", "Complete the Casino" - one named step of the story,
+	/// not the whole of it (that's an ending), and not a challenge ("Complete Frontline without killing anyone").
+	/// </summary>
+	internal static bool IsNamedStoryPart(Achievement a) {
+		string text = $"{a.Display} {a.Description}".ToLowerInvariant();
+
+		// Not "Complete all Safehouse Puzzles in Campaign": all of something is a collection, not a step.
+		if (Regex.IsMatch(text, @"\b(complete|finish|beat|clear|survive)\s+(?!(the\s+)?(entire\s+|whole\s+|main\s+)?(game|campaign|story)\b)(?!(all|every)\b).{2,60}?\s+(in|on)\s+(the\s+)?(campaign|story(\s+mode)?)\b")) {
+			return true;
+		}
+
+		// The description is the sentence: a verb, then a Name - capitalised or quoted, since that's what makes it a
+		// place in the game rather than a thing done ("Complete a mission discovered by scanning" is not a step).
+		(_, string body) = SplitLabel(a.Description ?? "");
+		Match m = Regex.Match(body, @"^(?i:complete|completed|finish|finished|beat|beaten|clear|cleared|survive|survived)\s+(?i:the\s+)?(?<name>[""'‘“][^""'’”]{2,40}[""'’”]|[A-Z][\w'’\-]*(?:\s+(?:of|the|a|an|and|&|[A-Z0-9][\w'’\-]*))*)(?<rest>.*)$");
+
+		if (!m.Success) {
+			return false;
+		}
+
+		string name = m.Groups["name"].Value.ToLowerInvariant();
+		string rest = Plain(m.Groups["rest"].Value);
+
+		return !Regex.IsMatch(name, @"\b(mode|difficulty|challenges?|trials?|tutorials?|training|contracts?|bount(y|ies)|side|optional|trade|gauntlet|race|collection|arcade|horde|playlists?|puzzles?|tombs?|benchmarks?|course|dlc|expansion|survival|new game)\b" + "|" + DifficultyPattern)
+			&& Regex.IsMatch(rest, @"^(?:(?:level|mission|chapter|stage|quest|area|campaign|story|act|episode|in|the)\b\s*)*$");
+	}
+
+	/// <summary>
+	/// The same thing again, but harder, while the plain one is still locked:
+	///
+	///   • "Contain the Citadel core without killing any stalkers" after "Contain the Citadel core"; "Complete the Game
+	///     in Under 4 Hours" after "Complete the Game"; "Halo 2: Complete Delta Halo without entering a vehicle" after
+	///     "Halo 2: Complete Delta Halo". The harder one is the plain one's words with more asked on the end.
+	///   • A DLC's ending after the game's own: "Finish the Whistleblower DLC" after "Finish the game".
+	///   • Prestige after the level it takes: "Enter Prestige" after "Reach Level 55".
+	/// </summary>
+	private static bool VariantBlocked(Achievement a, IReadOnlyCollection<Achievement> all) {
+		Traits me = TraitsOf(a);
+		bool dlcEnd = (me.Ending || me.Named || Regex.IsMatch(me.Core, @"^(complete|completed|finish|finished|beat|beaten)\b")) && Regex.IsMatch(me.Modes, @"\b(dlc|expansion)\b");
+
+		foreach (Achievement other in all) {
+			if (other.Unlocked || (other.Name == a.Name) || !CouldComeFirst(other, a)) {
+				continue;
+			}
+
+			Traits them = TraitsOf(other);
+
+			// Not when the plain one is "all" of something: "Discover all named locations in The Highlands" is a part of
+			// "Discover all named locations", not a harder version of it.
+			if ((them.Label == me.Label) && (them.Core.Length >= 12) && (them.Core.Count(static c => c == ' ') >= 2) && me.Core.StartsWith(them.Core + " ", StringComparison.Ordinal)
+				&& Regex.IsMatch(me.Core[(them.Core.Length + 1)..], HarderWords) && !Regex.IsMatch(them.Core, @"\b(all|every|each)\b")) {
+				return true;
+			}
+
+			if (dlcEnd && them.PlainEnding && (them.Label == me.Label) && !Regex.IsMatch(them.Modes, @"\b(dlc|expansion)\b")) {
+				return true;
+			}
+
+			if (me.Prestige && them.LevelUp && SameStory(them, me)) {
+				return true;
 			}
 		}
 
@@ -879,6 +1143,12 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		return siblings.Count(static s => s.Unlocked) < needed;
 	}
 
+	/// <summary>
+	/// Valve's mass-granted community achievements, which are not earned by playing.
+	///
+	/// Left 4 Dead 2's GNOME ALONE is the example: handed out en masse in 2010, so it reads as a comfortable
+	/// ~69% "common" while being nothing of the sort. The pacer must never feature one.
+	/// </summary>
 	private static bool IsSpecialGlobal(Achievement a) => a.Name.StartsWith("GLOBAL_", StringComparison.Ordinal);
 
 	/// <summary>
@@ -1202,7 +1472,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			}
 
 			if (taken > 0) {
-				Log.Good(new Said("picked up ArchiSteamFarm's achievement pacing for {0} game(s) - carrying on from where it left off", taken), Bot.Name);
+				Log.Good(new Said("carried on ASF's achievement pacing for {0} game(s)", taken), Bot.Name);
 				Save();
 			}
 		} catch (Exception e) {

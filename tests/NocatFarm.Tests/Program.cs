@@ -1246,6 +1246,136 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("tray: the same copy always gets the same one (so its own leftover icon is cleaned up)", Id("C:/a/nocatFarm.exe") == Id("c:/A/NOCATFARM.EXE"));
 }
 
+// ── order: named missions come before "finish the campaign" (Call of Duty names them, it doesn't number them) ──
+{
+	const BindingFlags S = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
+	Type pacer = typeof(Rng).Assembly.GetType("NocatFarm.Modules.AchievementPacer")!;
+	NocatFarm.Core.Achievement A(string name, string display, string desc, bool unlocked = false) =>
+		new() { Name = name, Display = display, Description = desc, StatId = 1, Bit = 0, Unlocked = unlocked, Protected = false };
+	bool EndHeld(NocatFarm.Core.Achievement a, List<NocatFarm.Core.Achievement> all) => (bool) pacer.GetMethod("StoryEndBlocked", S)!.Invoke(null, [a, all])!;
+	var finish = A("spfinish", "Time for Pints", "Finish the Campaign on any difficulty.");
+	var feud = A("contract", "Talent Acquisition", "Complete Blood Feud in Campaign on any difficulty");
+	var prestige = A("dynasty", "New Dynasty", "Enter Prestige in Black Ops 7");
+	var kills = A("deathrow", "Death Row", "Kill 12 enemies while descending in the panopticon in 'Operation 627'");
+	Check("order: 'finish the campaign' waits for a locked named mission", EndHeld(finish, [feud, finish]));
+	Check("order: ...and goes once it's done", !EndHeld(finish, [A("contract", "Talent Acquisition", "Complete Blood Feud in Campaign on any difficulty", unlocked: true), finish]));
+	Check("order: multiplayer and side challenges don't hold the ending", !EndHeld(finish, [prestige, kills, finish]));
+}
+
+// ── order, checked against 77 real games' achievement lists (the wording below is theirs) ─────────────────
+{
+	const BindingFlags S = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
+	Type pacer = typeof(Rng).Assembly.GetType("NocatFarm.Modules.AchievementPacer")!;
+	NocatFarm.Core.Achievement A(string display, string desc, double? pct = null, bool unlocked = false) =>
+		new() { Name = display.ToUpperInvariant().Replace(' ', '_'), Display = display, Description = desc, StatId = 1, Bit = 0, Unlocked = unlocked, Protected = false, GlobalPercent = pct };
+	bool Held(NocatFarm.Core.Achievement a, params NocatFarm.Core.Achievement[] others) {
+		List<NocatFarm.Core.Achievement> all = [a, .. others];
+		return new[] { "TierBlocked", "DifficultyBlocked", "StoryEndBlocked", "VariantBlocked" }.Any(r => (bool) pacer.GetMethod(r, S)!.Invoke(null, [a, all])!);
+	}
+
+	// A collection's label is a name: Halo 4's never waits for Halo 2's, and the 4 is not a rung.
+	var h4 = A("You Had it Coming", "Halo 4: Beat the par score on every Halo 4 level.", 1.9);
+	var h2 = A("Arcade Owner", "Halo 2: Beat the par score on every Halo 2 level.", 0.9);
+	Check("order: 'Halo 4: ...every Halo 4 level' doesn't wait for Halo 2's (a label is a name, not a rung)", !Held(h4, h2));
+	var h2easy = A("Big Green Style", "Halo 2: Complete every level of the game on Easy difficulty.", 19.6);
+	var h2normal = A("Warrior", "Halo 2: Complete every level of the game on Normal difficulty.", 17.2);
+	var h3easy = A("Training Wheels", "Halo 3: Complete every level of the game on Easy difficulty.", 19.4);
+	Check("order: ...but Halo 2 on Normal still waits for Halo 2 on Easy", Held(h2normal, h2easy) && !Held(h3easy, h2easy, h2normal));
+	var ch3 = A("Chapter III: The Descent", "Complete Chapter III: The Descent", 40);
+	var ch4 = A("Chapter IV: The Bridge", "Complete Chapter IV: The Bridge", 38);
+	Check("order: 'Chapter IV: The Bridge' is a step with a title, not a label - it waits for Chapter III, and holds the ending",
+		Held(ch4, ch3) && !Held(ch3, ch4) && Held(A("The End", "Finish the story", 30), ch4));
+	var me1 = A("Medal of Honor", "ME1: Complete the game on any difficulty", 38.4);
+	Check("order: ME2's steps don't hold ME1's ending", !Held(me1, A("The Archangel", "ME2: Successfully recruit Archangel", 35.8), A("Suicide Mission", "ME2: Complete Horizon", 30)));
+
+	// A player's level is not a story level.
+	var doom = A("Knee-Deep in the Dead", "Complete the campaign on 'I'm Too Young to Die', 'Hurt Me Plenty', 'Ultra Violence', or 'Nightmare'.", 32.3);
+	Check("order: 'Reach Level 5 in Multiplayer' doesn't hold 'Complete the campaign'", !Held(doom, A("Combat tested", "Reach Level 5 in Multiplayer", 8.9)));
+	Check("order: 'Upgrade any weapon to level 10' doesn't hold 'Complete the game'", !Held(me1, A("Gunsmith", "ME3: Upgrade any weapon to level 10.", 4.3)));
+	var tomb = A("A Survivor Is Born", "Complete the game.", 42.2);
+	Check("order: 'Reach level 60 in multiplayer' doesn't hold 'Complete the game'", !Held(tomb, A("True Commitment", "Reach level 60 in multiplayer.", 1.8)));
+	Check("order: ...while 'Complete Level 3' still does", Held(tomb, A("Level Three", "Complete Level 3", 50)));
+
+	// A time limit counts down - and two ladders that disagree must not hold each other for ever.
+	var sr1 = A("Speedrun 1", "Complete the game in under 10 hours", 6.6);
+	var sr2 = A("Speedrun 2", "Complete the game in under 5 hours", 5.4);
+	Check("order: 'in under 5 hours' waits for 'in under 10 hours', never the other way (Hollow Knight held both for ever)", Held(sr2, sr1) && !Held(sr1, sr2));
+	var fast15 = A("Power Trip", "Capture the final control point within 15 seconds of your team capturing the previous control point.", 4.7);
+	var fast5 = A("Five the Fast Way", "Capture the final control point within five seconds of your team capturing the previous control point.", 7.9);
+	Check("order: 'within five seconds' waits for 'within 15 seconds'", Held(fast5, fast15) && !Held(fast15, fast5));
+
+	// Named steps of the story hold its ending; side content, co-op and DLC don't.
+	var ilos = A("Meritorious Service Medal", "ME1: Complete Ilos", 38.3);
+	Check("order: 'ME1: Complete Ilos' holds 'ME1: Complete the game'", Held(me1, ilos) && !Held(me1, ilos with { Unlocked = true }));
+	var cuphead = A("Souls Saved", "Complete the game on Normal", 17.6);
+	Check("order: 'Complete the Casino' holds 'Complete the game on Normal'", Held(cuphead, A("Casino Night", "Complete the Casino", 18.6)));
+	var witcher = A("Passed the Trial", "Finish the game on any difficulty.", 22.0);
+	Check("order: a side contract, a trade quest, a co-op mission don't hold the ending",
+		!Held(witcher, A("Ashes to Ashes", "Complete the contract on Therazane.", 19.7))
+		&& !Held(A("Destiny", "Complete the Game", 37.5), A("Mark of the Trader", "Complete the Trade Sequence Quest", 21.8))
+		&& !Held(A("Case Closed", "Complete the Campaign on any difficulty", 1.5), A("A Familiar Face", "Complete Exposure in Co-Op Campaign", 0.7)));
+	Check("order: 'Complete all Safehouse Puzzles in Campaign' is a collection, not a step", !Held(A("Never Bury Your Enemies Alive", "Complete the campaign", 1.9), A("The Puzzles, Mason", "Complete all Safehouse Puzzles in Campaign", 1.2)));
+	Check("order: 'Complete all Side Missions' is not the ending", !Held(A("Friendly Neighbourhood Spider-Man", "Complete all Side Missions", 27.1), A("Mission", "Complete Mission 5", 40)));
+	Check("order: a challenge run isn't held by a named step (as likely a DLC chapter)", !Held(A("Just Get Me Outta Here", "Complete the game within 4 hours.", 7.1), A("Sleepless in Dulvey", "Complete Night Terror.", 2.9)));
+
+	// Something from another mode, much rarer than the ending, or under the lowest rarity floor, is no step of the story:
+	// Call of Duty's campaign ending waited for ever on these.
+	var pints = A("Time for Pints", "Finish the Campaign on any difficulty.", 5.3);
+	var campaign = A("Never Bury Your Enemies Alive", "Complete the campaign", 1.9);
+	var mwz = A("The End?", "Complete Act III in MWZ", 0.7);
+	var zone = A("Checking Boxes", "Complete 10 Assignments in Zone IV in Co-Op Campaign", 0.2);
+	Check("order: a zombies act and a co-op zone never hold the campaign's ending", !Held(pints, mwz, zone) && !Held(campaign, mwz, zone));
+	Check("order: ...while the campaign's own missions still do", Held(pints, A("Talent Acquisition", "Complete Blood Feud in Campaign on any difficulty", 2.9)));
+
+	// Ladders: all is the top rung, a numeral at the end of a name is a tier, punctuation doesn't split one.
+	var c10 = A("Off the Beaten Path", "Find 10 Collectibles", 30.5);
+	var c25 = A("Collector", "Find 25 Collectibles", 4.6);
+	var call = A("Every Nook and Cranny", "Find All Collectibles", 2.2);
+	Check("order: 'Find All Collectibles' waits for 'Find 25 Collectibles'", Held(call, c25) && Held(call, c10) && !Held(c25, call) && Held(c25, c10));
+	Check("order: 'Tome of Curses III' waits for 'Tome of Curses II'", Held(A("Tome of Curses III", "Sell the Tome of Curses III.", 17.6), A("Tome of Curses II", "Sell the Tome of Curses II.", 17.5)));
+	Check("order: 'Win 142 rounds' waits for 'Win 139 Rounds.'", Held(A("Competitive Spirit", "Win 142 rounds", 5.4), A("Stand and Deliver", "Win 139 Rounds.", 5.2)));
+	Check("order: 'Clear stage 1-10 ...!' waits for 'Clear stage 1-1 ....'",
+		Held(A("TBH, This Game Slaps", "Clear stage 1-10 for the first time!", 100), A("Hero Out of the Taskbar", "Clear stage 1-1 for the first time.", 100)));
+	Check("order: 'The D20' is a name, not rung 20 after 'The D6'", !Held(A("The D20", "The D20", 19), A("The D6", "The D6", 31.9)));
+
+	// The same thing, harder, waits for the plain one.
+	var core = A("Containment", "Contain the Citadel core.", 7.6);
+	Check("order: 'Contain the Citadel core without killing any stalkers' waits for 'Contain the Citadel core'", Held(A("Pacifist", "Contain the Citadel core without killing any stalkers.", 2.0), core));
+	Check("order: 'Complete the Game in Under 4 Hours' waits for 'Complete the Game'", Held(A("Look at the Time", "Complete the Game in Under 4 Hours", 1.7), A("Destiny", "Complete the Game", 37.5)));
+	Check("order: 'Halo 2: Complete Delta Halo without entering a vehicle' waits for 'Halo 2: Complete Delta Halo.'",
+		Held(A("Just Like Old Times", "Halo 2: Complete Delta Halo without entering a vehicle on Heroic or Legendary.", 2.4), A("Delta Halo", "Halo 2: Complete Delta Halo.", 24.8)));
+	Check("order: ...but a region's 'all named locations' doesn't wait for the whole world's",
+		!Held(A("Highlands Explorer", "Discovered all named locations in The Highlands, Thousand Cuts, and Wildlife Exploitation Preserve.", 8.0), A("World Traveler", "Discovered all named locations.", 3.8)));
+	Check("order: a DLC's ending waits for the game's", Held(A("WHISTLEBLOWER", "Finish the Whistleblower DLC", 12.1), A("PUNISHED", "Finish the game", 25.2)) && !Held(A("PUNISHED", "Finish the game", 25.2), A("WHISTLEBLOWER", "Finish the Whistleblower DLC", 12.1)));
+	Check("order: prestige waits for the level it takes", Held(A("Return of the King", "Enter Prestige 1", 5.7), A("The First Step", "Reach Level 55", 9.6)));
+
+	// Difficulty names and medals from real games.
+	Check("order: Titanfall 2's 'on Master' waits for 'on Regular'", Held(A("Legendary Pilot", "Complete the Campaign on Master", 4.0), A("Certified Pilot", "Complete the Campaign on Regular", 42.5)));
+	Check("order: a gold medal waits for silver", Held(A("KILLING SPREE", "Earn a gold medal on every official survival map.", 1.5), A("LIKE LAMBS TO THE SLAUGHTER", "Earn a silver medal on every official survival map.", 1.4)));
+
+	// Not endings at all.
+	MethodInfo isEnding = pacer.GetMethod("IsEnding", S)!;
+	bool Ending(string desc) => (bool) isEnding.Invoke(null, [A("x", desc)])!;
+	Check("order: 'Play a complete game on 2Fort...' and 'Complete the game intro' are not endings",
+		!Ending("Play a complete game on 2Fort, Dustbowl, Granary, Gravel Pit, Hydro, and Well (CP).") && !Ending("Complete the game intro by liberating Dutch’s island (Solo Campaign only).")
+		&& Ending("Complete every level of the game on Easy difficulty.") && Ending("Witnessed the Epilogue"));
+}
+
+// ── import: an idler unzipped a folder or two down is found (the Docker /import mount works the same way) ──────
+{
+	string root = Path.Combine(Path.GetTempPath(), "nf-walk-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(root, "asf", "config"));
+	File.WriteAllText(Path.Combine(root, "asf", "config", "ASF.json"), "{}");
+	Type files = typeof(NocatFarm.Config.AsfImport).Assembly.GetType("NocatFarm.Config.ImportFiles")!;
+	MethodInfo folders = files.GetMethod("Folders", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!;
+	List<string> hits = [.. (IEnumerable<string>) folders.Invoke(null, [new[] { root }, 2, (Func<string, bool>) (d => File.Exists(Path.Combine(d, "config", "ASF.json")))])!];
+	Check("import: an ASF folder one level down is found", hits.Count == 1 && hits[0].EndsWith("asf", StringComparison.Ordinal), string.Join(", ", hits) + " attrs=" + File.GetAttributes(Path.Combine(root, "asf")));
+	// Linux: a lower-case "asf" next to the usual "ASF" guess must survive the de-duplication.
+	var cmp = (StringComparer) files.GetProperty("PathComparer")!.GetValue(null)!;
+	Check("import: paths differing only in case are different folders off Windows", OperatingSystem.IsWindows() ? cmp.Equals("/a/ASF", "/a/asf") : !cmp.Equals("/a/ASF", "/a/asf"));
+	try { Directory.Delete(root, true); } catch { }
+}
+
 // SETTINGSCOUNT
 Console.WriteLine($"settings: {NocatFarm.Config.Settings.Global.Count} global ({NocatFarm.Config.Settings.Global.Count(d => !d.Advanced)} basic), {NocatFarm.Config.Settings.Bot.Count} per account ({NocatFarm.Config.Settings.Bot.Count(d => !d.Advanced)} basic)");
 Console.WriteLine(fails == 0 ? "all passed" : $"{fails} failed");
