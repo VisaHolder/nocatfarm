@@ -2204,7 +2204,14 @@
     "listed {0} ({1}) for {2} - you get {3}": "выставлено {0} ({1}) за {2} - вы получите {3}",
     "couldn't read the trade page: {0}": "не удалось прочитать страницу обмена: {0}",
     "offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)": "предложение отправлено - подтвердите его по письму от Steam (нет аутентификатора в приложении Steam, поэтому Steam задержит его до 15 дней)",
-    "send due - waiting a few minutes after another account's send": "пора отправлять - ждёт несколько минут после отправки другого аккаунта"
+    "send due - waiting a few minutes after another account's send": "пора отправлять - ждёт несколько минут после отправки другого аккаунта",
+    "Achievement hunt": "Охота за достижениями",
+    "hunt": "охота",
+    "Hunt at most": "Охотиться не больше",
+    "Once it has hunted this long in a day, the hunt's game leaves the list until tomorrow. 0 is no limit.": "Когда за день охота заняла столько времени, её игра уходит из списка до завтра. 0 - без ограничений.",
+    "The achievement hunt's share of a mixed day. It plays the game it's hunting like a side game, in normal sittings, and moves on to the next game by itself.": "Доля охоты за достижениями в смешанном дне. Она играет в нужную игру как во второстепенную, обычными сеансами, и сама переходит к следующей игре.",
+    "hours a day (0 = no limit)": "часов в день (0 = без ограничений)",
+    "Which games it hunts is set under Achievements.": "На какие игры охотиться, настраивается в разделе «Достижения»."
   },
   "settings": {
     "WebEnabled": {

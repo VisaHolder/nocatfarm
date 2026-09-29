@@ -2204,7 +2204,14 @@
     "listed {0} ({1}) for {2} - you get {3}": "{0} ({1}) für {2} eingestellt - du bekommst {3}",
     "couldn't read the trade page: {0}": "konnte die Tauschseite nicht lesen: {0}",
     "offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)": "Angebot gesendet - bestätige es über die E-Mail von Steam (kein Authenticator in der Steam-App, darum hält Steam es bis zu 15 Tage zurück)",
-    "send due - waiting a few minutes after another account's send": "Versand fällig - wartet ein paar Minuten nach dem Versand eines anderen Kontos"
+    "send due - waiting a few minutes after another account's send": "Versand fällig - wartet ein paar Minuten nach dem Versand eines anderen Kontos",
+    "Achievement hunt": "Erfolgsjagd",
+    "hunt": "Jagd",
+    "Hunt at most": "Höchstens jagen",
+    "Once it has hunted this long in a day, the hunt's game leaves the list until tomorrow. 0 is no limit.": "Hat es an einem Tag so lange gejagt, verlässt das Jagdspiel die Liste bis morgen. 0 ist keine Grenze.",
+    "The achievement hunt's share of a mixed day. It plays the game it's hunting like a side game, in normal sittings, and moves on to the next game by itself.": "Der Anteil der Erfolgsjagd an einem gemischten Tag. Sie spielt das gejagte Spiel wie ein Nebenspiel, in normalen Sitzungen, und wechselt von selbst zum nächsten Spiel.",
+    "hours a day (0 = no limit)": "Stunden am Tag (0 = keine Grenze)",
+    "Which games it hunts is set under Achievements.": "Welche Spiele gejagt werden, stellst du unter Erfolge ein."
   },
   "settings": {
     "WebEnabled": {

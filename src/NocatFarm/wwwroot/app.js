@@ -4645,28 +4645,43 @@ function parseWeights(spec) {
 // ── the weights editor ────────────────────────────────────────────────────
 // One row per game: its real name, its share of the week, and a bar you can see at a glance. The first row is
 // the MAIN game — the one this account is supposed to be into — and everything else is what it dips into.
+// On a human-mode account with the achievement hunt on, the game being hunted joins these games as one more side
+// game, at "hunt game's weight". It used to be invisible here - the list read 70/15/15 while the day really split
+// 70/10/10/10 - and its weight and daily cap were two settings under Achievements, behind Show advanced.
+function huntRow() {
+  const values = settingsValues() || {};
+  if (settingsTarget === GLOBAL || !liveValue('LegitMode', values) || !(Number(liveValue('AchievementBoost', values)) > 0)) return null;
+  return { weight: Math.max(1, Math.min(95, Number(liveValue('BoostWeight', values)) || 15)), hours: Number(liveValue('BoostHoursPerDay', values)) || 0 };
+}
+
 function weightsEditor(spec) {
   const rows = parseWeights(spec);
   learnNames(rows.map((r) => r.game));
 
   const total = rows.reduce((sum, r) => sum + r.weight, 0) || 1;
+  const hunt = rows.length ? huntRow() : null;
 
   // Row zero's own number is the main game's share now, and the scheduler reads it. It used to be owned by a
   // separate "Main game gets" box, so this row was shown read-only — you could not set the one figure the whole
   // schedule turns on from the list it belongs to, and the number sitting in the spec was ignored.
-  const mainPct = Math.max(5, Math.min(95, Math.round((rows[0]?.weight ?? 70) * 100 / total)));
+  // The scheduler reads the main game's own number AS its share (5-95), whatever the others add up to - so that is
+  // what's shown. A one-game list with no hunt is simply that game all day.
+  const mainPct = rows.length === 1 && !hunt ? 100 : Math.max(5, Math.min(95, Math.round(rows[0]?.weight ?? 70)));
 
   // What each row is worth across a week rather than on a mixed day. Main-game-only days carry no side games at
   // all, so every side share is worth less over a week than it reads here - the gap is wide enough at a high
   // pure-main chance that showing only the configured figure reads as a promise the schedule never made.
   const pure = Math.max(0, Math.min(100, liveValue('PureMainDayChancePct', settingsValues() || {}) ?? 25));
 
-  const shares = rows.map((r, i) => i === 0 ? mainPct : Math.round(((r.weight / Math.max(1, total - rows[0].weight)) * (100 - mainPct))));
+  // The side games and the hunt share what the main game leaves, by weight - the same sum the scheduler does.
+  const sidePool = Math.max(1, total - (rows[0]?.weight ?? 0) + (hunt ? hunt.weight : 0));
+  const shares = rows.map((r, i) => i === 0 ? mainPct : Math.round((r.weight / sidePool) * (100 - mainPct)));
+  const huntShare = hunt ? Math.round((hunt.weight / sidePool) * (100 - mainPct)) : 0;
 
   // The exact weekly figures always total 100, so the rounded ones have to as well. Rounding each on its own
   // put a column of 78/6/6/11 on screen — 101, from two values that were really 77.5 and 10.5. Largest
   // remainder instead: floor everything, then hand the leftover points to whichever rows were cut hardest.
-  const weeklies = roundToTotal(shares.map((s, i) => i === 0 ? pure + ((100 - pure) * s / 100) : (100 - pure) * s / 100), 100);
+  const weeklies = roundToTotal([...shares, ...(hunt ? [huntShare] : [])].map((s, i) => i === 0 ? pure + ((100 - pure) * s / 100) : (100 - pure) * s / 100), 100);
 
   const body = rows.map((r, i) => {
     const share = shares[i];
@@ -4693,8 +4708,27 @@ function weightsEditor(spec) {
     </div>`;
   }).join('');
 
+  // The hunt's own row: which game it's on, its share like any other row, and how long a day at most.
+  const huntWeekly = weeklies[rows.length];
+  const huntTip = rows.length > 1 && pure > 0 ? tf('About {0} of an average week once the main-game-only days are counted in.', `${huntWeekly}%`) : '';
+  const huntNow = pacerHunt && pacerHunt.Now ? pacerHunt.Now : '';
+  const huntHtml = hunt ? `<div class="wrow whunt">
+      <span class="wname"><b class="wgame">${esc(huntNow || t('Achievement hunt'))}</b><b class="wtag">${esc(t('hunt'))}</b></span>
+      <span class="wbar"><i style="width:${huntShare}%"></i></span>
+      <input class="wpct" type="number" min="1" max="95" value="${huntShare}"
+             onchange="setShare(${rows.length},parseInt(this.value)||1)" data-tip="${esc(t("The achievement hunt's share of a mixed day. It plays the game it's hunting like a side game, in normal sittings, and moves on to the next game by itself.") + (huntTip ? ' ' + huntTip : ''))}">
+      <span class="wsign">%</span>
+      <span class="wweek"${huntTip ? ` data-tip="${esc(huntTip)}"` : ''}>${huntTip ? `${huntWeekly}%<i>${esc(t('/week'))}</i>` : ''}</span>
+      <span class="wact"></span>
+    </div>
+    <div class="whours muted small" data-tip="${esc(t("Once it has hunted this long in a day, the hunt's game leaves the list until tomorrow. 0 is no limit.") + ' ' + t('Which games it hunts is set under Achievements.'))}">
+      <span>${esc(t('Hunt at most'))}</span>
+      <input type="number" min="0" max="24" value="${hunt.hours}" onchange="editAndRender('BoostHoursPerDay', Math.max(0, Math.min(24, parseInt(this.value) || 0)))">
+      <span>${esc(t('hours a day (0 = no limit)'))}</span></div>` : '';
+
   return `<div class="weights" data-setting="GameWeights">
     ${body || `<p class="muted small" style="margin:0 0 8px">${esc(t('No games yet — add the one this account is meant to be into first.'))}</p>`}
+    ${huntHtml}
     <div class="wadd">
       <input type="text" placeholder="${esc(t('appID or store URL'))}" onkeydown="if(event.key==='Enter'){addWeight(this);event.preventDefault();}" onblur="addWeight(this)">
       <span class="muted small">${esc(t('The first game added is the main one.'))}</span>
@@ -4736,7 +4770,11 @@ function roundToTotal(values, total) {
 //
 // The main game is edited here like any other row - its number is the share the scheduler actually holds it at.
 function setShare(index, wantPct) {
-  const rows = parseWeights(liveWeights());
+  const spec = parseWeights(liveWeights());
+  const hunt = spec.length ? huntRow() : null;
+
+  // The hunt takes part in the balancing as one more side row (the last one), then goes back to its own setting.
+  const rows = hunt ? [...spec, { game: 0, weight: hunt.weight }] : spec;
   if (!rows[index]) return;
 
   const sides = rows.length - 1;
@@ -4746,9 +4784,10 @@ function setShare(index, wantPct) {
 
   // Dragging the main game moves every side game together; dragging a side game moves only its peers. Both
   // leave the column adding up to 100, so no row ever has to be worked out by hand.
+  // The main game's number is its share, as the scheduler reads it.
   const mainPct = index === 0
     ? Math.max(5, Math.min(100 - sides, wantPct))
-    : Math.max(5, Math.min(95, Math.round((rows[0].weight * 100) / (rows.reduce((s, r) => s + r.weight, 0) || 1))));
+    : Math.max(5, Math.min(95, Math.round(spec[0].weight)));
 
   const pool = 100 - mainPct;                       // what all the side games share between them
   const otherIdx = rows.map((_, i) => i).filter((i) => i !== 0 && i !== index);
@@ -4779,6 +4818,12 @@ function setShare(index, wantPct) {
   if (drift !== 0) {
     const soak = otherIdx.length ? otherIdx.reduce((best, i) => (rows[i].weight > rows[best].weight ? i : best), otherIdx[0]) : index;
     rows[soak].weight = Math.max(1, rows[soak].weight + drift);
+  }
+
+  if (hunt) {
+    // Back to its own setting. The main game keeps its number (that IS its share); the side games and the hunt
+    // split the rest by weight, so theirs only have to be right relative to each other.
+    pending.BoostWeight = Math.max(1, Math.min(95, rows.pop().weight));
   }
 
   editAndRender('GameWeights', weightsSpec(rows));
@@ -4833,9 +4878,12 @@ function dropWeight(index) {
   const rows = parseWeights(liveWeights()).filter((_, i) => i !== index);
   if (!rows.length) { editAndRender('GameWeights', ''); return; }
 
-  // The share the removed game had goes back to the main game, rather than being left to add up to 90.
-  const drift = 100 - rows.reduce((sum, r) => sum + r.weight, 0);
-  rows[0].weight = Math.max(1, rows[0].weight + drift);
+  // The share the removed game had goes back to the main game, rather than being left to add up to 90. Not with the
+  // hunt on: then the main game's number is its share on its own, and the hunt and the other games take the rest.
+  if (!huntRow()) {
+    const drift = 100 - rows.reduce((sum, r) => sum + r.weight, 0);
+    rows[0].weight = Math.max(1, rows[0].weight + drift);
+  }
   editAndRender('GameWeights', weightsSpec(rows));
 }
 

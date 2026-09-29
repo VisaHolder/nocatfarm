@@ -2204,7 +2204,14 @@
     "listed {0} ({1}) for {2} - you get {3}": "已上架 {0}（{1}），售价 {2} - 你得到 {3}",
     "couldn't read the trade page: {0}": "无法读取交易页面：{0}",
     "offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)": "报价已发送 - 请在 Steam 发来的邮件里确认（没有 Steam 应用令牌，Steam 最多会暂扣 15 天）",
-    "send due - waiting a few minutes after another account's send": "该发送了 - 等另一个账户发送完几分钟后再发"
+    "send due - waiting a few minutes after another account's send": "该发送了 - 等另一个账户发送完几分钟后再发",
+    "Achievement hunt": "成就狩猎",
+    "hunt": "狩猎",
+    "Hunt at most": "最多狩猎",
+    "Once it has hunted this long in a day, the hunt's game leaves the list until tomorrow. 0 is no limit.": "一天狩猎到这么久后，狩猎的游戏会离开列表直到明天。0 表示不限。",
+    "The achievement hunt's share of a mixed day. It plays the game it's hunting like a side game, in normal sittings, and moves on to the next game by itself.": "成就狩猎在混合日里的占比。它像副游戏一样在正常时段里玩正在狩猎的游戏，并会自己换到下一个游戏。",
+    "hours a day (0 = no limit)": "小时/天（0 = 不限）",
+    "Which games it hunts is set under Achievements.": "狩猎哪些游戏在「成就」里设置。"
   },
   "settings": {
     "WebEnabled": {

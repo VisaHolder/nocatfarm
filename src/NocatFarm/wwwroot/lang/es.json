@@ -2204,7 +2204,14 @@
     "listed {0} ({1}) for {2} - you get {3}": "{0} ({1}) puesto a la venta por {2}; recibes {3}",
     "couldn't read the trade page: {0}": "no se pudo leer la página de intercambio: {0}",
     "offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)": "oferta enviada: confírmala desde el correo de Steam (sin autenticador de la app de Steam, así que Steam la retiene hasta 15 días)",
-    "send due - waiting a few minutes after another account's send": "envío pendiente: espera unos minutos tras el envío de otra cuenta"
+    "send due - waiting a few minutes after another account's send": "envío pendiente: espera unos minutos tras el envío de otra cuenta",
+    "Achievement hunt": "Caza de logros",
+    "hunt": "caza",
+    "Hunt at most": "Cazar como mucho",
+    "Once it has hunted this long in a day, the hunt's game leaves the list until tomorrow. 0 is no limit.": "Cuando ya ha cazado este tiempo en un día, el juego de la caza sale de la lista hasta mañana. 0 es sin límite.",
+    "The achievement hunt's share of a mixed day. It plays the game it's hunting like a side game, in normal sittings, and moves on to the next game by itself.": "La parte de la caza de logros en un día mixto. Juega el juego que caza como un juego secundario, en sesiones normales, y pasa al siguiente juego por sí sola.",
+    "hours a day (0 = no limit)": "horas al día (0 = sin límite)",
+    "Which games it hunts is set under Achievements.": "Qué juegos caza se configura en Logros."
   },
   "settings": {
     "WebEnabled": {

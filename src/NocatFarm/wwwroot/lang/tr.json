@@ -2204,7 +2204,14 @@
     "listed {0} ({1}) for {2} - you get {3}": "{0} ({1}) {2} fiyatla listelendi - eline {3} geçer",
     "couldn't read the trade page: {0}": "takas sayfası okunamadı: {0}",
     "offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)": "teklif gönderildi - Steam'in gönderdiği e-postadan onayla (Steam uygulaması doğrulayıcısı yok, bu yüzden Steam 15 güne kadar bekletir)",
-    "send due - waiting a few minutes after another account's send": "gönderim zamanı - başka bir hesabın gönderiminden sonra birkaç dakika bekliyor"
+    "send due - waiting a few minutes after another account's send": "gönderim zamanı - başka bir hesabın gönderiminden sonra birkaç dakika bekliyor",
+    "Achievement hunt": "Başarım avı",
+    "hunt": "av",
+    "Hunt at most": "En fazla avla",
+    "Once it has hunted this long in a day, the hunt's game leaves the list until tomorrow. 0 is no limit.": "Bir günde bu kadar avladıktan sonra avın oyunu yarına kadar listeden çıkar. 0 sınır yok demek.",
+    "The achievement hunt's share of a mixed day. It plays the game it's hunting like a side game, in normal sittings, and moves on to the next game by itself.": "Karışık bir günde başarım avının payı. Avladığı oyunu yan oyun gibi, normal oturumlarda oynar ve sıradaki oyuna kendi geçer.",
+    "hours a day (0 = no limit)": "saat/gün (0 = sınır yok)",
+    "Which games it hunts is set under Achievements.": "Hangi oyunların avlanacağı Başarımlar altında ayarlanır."
   },
   "settings": {
     "WebEnabled": {

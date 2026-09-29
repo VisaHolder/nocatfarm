@@ -2204,7 +2204,14 @@
     "listed {0} ({1}) for {2} - you get {3}": "wystawiono {0} ({1}) za {2} - dostaniesz {3}",
     "couldn't read the trade page: {0}": "nie udało się odczytać strony wymiany: {0}",
     "offer sent - confirm it from the email Steam sent (no Steam app authenticator, so Steam holds it for up to 15 days)": "oferta wysłana - potwierdź ją z e-maila od Steama (bez uwierzytelniacza w aplikacji Steam, więc Steam wstrzymuje ją do 15 dni)",
-    "send due - waiting a few minutes after another account's send": "wysyłka zaplanowana - czeka kilka minut po wysyłce innego konta"
+    "send due - waiting a few minutes after another account's send": "wysyłka zaplanowana - czeka kilka minut po wysyłce innego konta",
+    "Achievement hunt": "Polowanie na osiągnięcia",
+    "hunt": "polowanie",
+    "Hunt at most": "Poluj najwyżej",
+    "Once it has hunted this long in a day, the hunt's game leaves the list until tomorrow. 0 is no limit.": "Gdy w ciągu dnia poluje już tyle, gra z polowania znika z listy do jutra. 0 to brak limitu.",
+    "The achievement hunt's share of a mixed day. It plays the game it's hunting like a side game, in normal sittings, and moves on to the next game by itself.": "Udział polowania na osiągnięcia w mieszanym dniu. Gra w polowaną grę jak w grę poboczną, w zwykłych sesjach, i sama przechodzi do następnej gry.",
+    "hours a day (0 = no limit)": "godzin dziennie (0 = bez limitu)",
+    "Which games it hunts is set under Achievements.": "Na które gry poluje, ustawia się w Osiągnięciach."
   },
   "settings": {
     "WebEnabled": {
