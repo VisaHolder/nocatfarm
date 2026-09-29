@@ -11,13 +11,18 @@ namespace NocatFarm.Core;
 ///
 /// "Hours banked in the last 24h" is a delta: lifetime-now minus the lifetime we snapshotted at the last
 /// report. So it counts only the time nocat.farm actually ran, and it survives a restart because the snapshot
-/// is on disk. The day-plan line that human mode prints at midnight is a different thing entirely - that is the
+/// is on disk. Every running game counts, the way Steam credits them: 32 games for an hour is 32 hours banked,
+/// and "total" is everything nocat.farm has banked for the account, counted the same way. The day-plan line that human mode prints at midnight is a different thing entirely - that is the
 /// PLAN for the coming day; this is the RESULT of the day that just passed.
 /// </summary>
 public static class DailyReport {
 	private sealed class State {
 		public string LastFired { get; set; } = "";   // yyyy-MM-dd, local time; "" = never fired
 		public Dictionary<string, double> Lifetime { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+		/// <summary>Game-minutes at the last report - what "banked" counts from now. Missing in a report file from
+		/// before game-hours were counted; that one report works it out from the clock time instead.</summary>
+		public Dictionary<string, double>? Games { get; set; }
 	}
 
 	private static readonly Lock Gate = new();
@@ -48,7 +53,7 @@ public static class DailyReport {
 		}
 
 		Load();
-		(List<Said> lines, Said fleet, bool first, _) = Build(mgr);
+		(List<Said> lines, Said fleet, bool first, _, _) = Build(mgr);
 
 		if (lines.Count == 0) {
 			return "";
@@ -63,7 +68,9 @@ public static class DailyReport {
 
 	private static void Tick() {
 		try {
-			if (_mgr is not { } mgr || !mgr.Global.DailyReportEnabled) {
+			// Either one wants it: "Send the daily summary" is sent at this time even with the log's copy switched off -
+			// it used to wait on that switch, and with it off nothing was ever sent.
+			if (_mgr is not { } mgr || (!mgr.Global.DailyReportEnabled && !mgr.Global.SendDailySummary)) {
 				return;
 			}
 
@@ -86,20 +93,23 @@ public static class DailyReport {
 	}
 
 	private static bool Fire(BotManager mgr, string today, bool commit) {
-		(List<Said> lines, Said fleet, bool first, Dictionary<string, double> snapshot) = Build(mgr);
+		(List<Said> lines, Said fleet, bool first, Dictionary<string, double> snapshot, Dictionary<string, double> games) = Build(mgr);
 
 		if (lines.Count == 0) {
 			return false;
 		}
 
-		Log.Good(first
-			? new Said("── daily report · 24h · 'banked' starts counting now ──")
-			: new Said("── daily report · last 24h ──"), "report");
-		foreach (Said line in lines) {
-			Log.Info(line, "report");
-		}
+		// In the log only when "Daily summary in the log" is on.
+		if (mgr.Global.DailyReportEnabled) {
+			Log.Good(first
+				? new Said("── daily report · 24h · 'banked' starts counting now ──")
+				: new Said("── daily report · last 24h ──"), "report");
+			foreach (Said line in lines) {
+				Log.Info(line, "report");
+			}
 
-		Log.Good(fleet, "report");
+			Log.Good(fleet, "report");
+		}
 
 		// The same summary as one message for Discord / Telegram, when that's switched on - only for the real
 		// daily one.
@@ -108,6 +118,7 @@ public static class DailyReport {
 
 			lock (Gate) {
 				_state.Lifetime = snapshot;
+				_state.Games = games;
 				_state.LastFired = today;
 			}
 
@@ -117,8 +128,8 @@ public static class DailyReport {
 		return true;
 	}
 
-	/// <summary>One row per account plus the fleet line, and the lifetime snapshot the next report counts from.</summary>
-	private static (List<Said> Lines, Said Fleet, bool First, Dictionary<string, double> Snapshot) Build(BotManager mgr) {
+	/// <summary>One row per account plus the fleet line, and the lifetime snapshots the next report counts from.</summary>
+	private static (List<Said> Lines, Said Fleet, bool First, Dictionary<string, double> Snapshot, Dictionary<string, double> Games) Build(BotManager mgr) {
 		List<Bot> bots = mgr.All.OrderBy(static b => b.Name, StringComparer.OrdinalIgnoreCase).ToList();
 
 		bool r4r = mgr.Global.Rep4RepEnabled;
@@ -126,20 +137,28 @@ public static class DailyReport {
 		Dictionary<string, int> comments = Count(Stats.KindComment);
 
 		Dictionary<string, double> prev;
+		Dictionary<string, double>? prevGames;
 		lock (Gate) {
 			prev = new Dictionary<string, double>(_state.Lifetime, StringComparer.OrdinalIgnoreCase);
+			prevGames = _state.Games is { } g ? new Dictionary<string, double>(g, StringComparer.OrdinalIgnoreCase) : null;
 		}
 
 		bool first = prev.Count == 0;
 		Dictionary<string, double> snapshot = new(StringComparer.OrdinalIgnoreCase);
+		Dictionary<string, double> games = new(StringComparer.OrdinalIgnoreCase);
 		int totBanked = 0, totCards = 0, totComments = 0, totLife = 0;
 		List<Said> lines = [];
 
 		foreach (Bot b in bots) {
-			double life = Lifetime.For(b.Name);
-			snapshot[b.Name] = life;
+			double clock = Lifetime.For(b.Name);
+			double played = Lifetime.GamesFor(b.Name);
+			snapshot[b.Name] = clock;
+			games[b.Name] = played;
+			double life = played;
 
-			int banked = prev.TryGetValue(b.Name, out double before) ? (int) Math.Max(0, life - before) : -1;
+			int banked = prevGames != null
+				? prevGames.TryGetValue(b.Name, out double gamesBefore) ? (int) Math.Max(0, played - gamesBefore) : -1
+				: prev.TryGetValue(b.Name, out double before) ? (int) (Math.Max(0, clock - before) * GamesPerHour(b.Name)) : -1;
 			int c = cards.GetValueOrDefault(b.Name);
 			int cm = comments.GetValueOrDefault(b.Name);
 
@@ -167,7 +186,15 @@ public static class DailyReport {
 			: new Said("  fleet: banked {0} · {1} card(s) · {2} total",
 				Fmt.Hm(totBanked), totCards, Fmt.Hm(totLife));
 
-		return (lines, fleet, first, snapshot);
+		return (lines, fleet, first, snapshot, games);
+
+		// The one report after game-hours started being counted has only a clock-time baseline: the clock time since,
+		// times how many games were on at once over the last two days of history.
+		static double GamesPerHour(string bot) {
+			(double clock, double banked) = History.Recent(2, bot);
+
+			return clock > 0 ? Math.Max(1, banked / clock) : 1;
+		}
 
 		static Dictionary<string, int> Count(string kind) =>
 			Stats.Recent(24)

@@ -924,12 +924,14 @@ public static class ConfigStore {
 		try {
 			Directory.CreateDirectory(ConfigDir);
 
-			// The secrets go to disk encrypted, but the config in memory stays readable - so a COPY is written
-			// rather than the live object. Encrypting in place would leave every other part of the program
-			// holding ciphertext where it expects a password.
-			BotConfig onDisk = Secrets.Available ? Sealed(cfg) : cfg;
-
 			lock (SaveGate) {
+				// The secrets go to disk encrypted, but the config in memory stays readable - so a COPY is written
+				// rather than the live object. Encrypting in place would leave every other part of the program
+				// holding ciphertext where it expects a password.
+				//
+				// Copied inside the lock, like SaveGlobal. Copied before it, a module's save and a dashboard save that
+				// ran together could write in the opposite order to the one they copied in - older settings last.
+				BotConfig onDisk = Secrets.Available ? Sealed(cfg) : cfg;
 				AtomicFile.Write(Path.Combine(ConfigDir, name + ".json"), JsonSerializer.Serialize(onDisk, Json));
 			}
 

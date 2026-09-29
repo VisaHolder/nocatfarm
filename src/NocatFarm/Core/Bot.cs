@@ -651,6 +651,11 @@ public sealed class Bot : IAsyncDisposable {
 	private DateTime? _accessTokenValidUntil;
 	private DateTime _lastRemint = DateTime.MinValue;
 
+	// Guards the two tokens and their files, and counts every time a sign-in (or a rejected one) replaced them. See
+	// AdoptMinted for the race it closes.
+	private readonly Lock _tokenSync = new();
+	private long _tokenGeneration;
+
 	// Last time the schedule's persona was re-asserted, so the heartbeat can keep it true without spamming.
 	private DateTime _lastPersonaAssert;
 	private DateTime _nextPersonaAssert;
@@ -1163,35 +1168,54 @@ public sealed class Bot : IAsyncDisposable {
 	}
 
 	private async Task StartCoreAsync() {
-		if (_running) {
+		// Finishing up before it logs off still counts as running, and "start" then did nothing at all: the account
+		// logged off a few seconds later and stayed off, while the reply said "signing in". It waits for that stop
+		// below instead, then signs back in.
+		if (_running && !Stopping) {
 			return;
 		}
 
-		// A previous run that ended without StopAsync (a disabled account, a dead login) can still be holding a
-		// token source and a callback pump. Tear it down or the second start runs two pumps on one client.
-		await StopAsync().ConfigureAwait(false);
+		CancellationToken ct;
 
-		_running = true;
+		// The teardown and the setup as one step under the stop lock. Apart, a 'stop' clicked just after 'start' ran in
+		// between: it cleared the running flag before the start set it again, then cancelled the start's wait - so the
+		// account read "stopped" while still flagged running, and every later 'start' did nothing. Or it came before
+		// the token source existed, cancelled nothing, and the account signed in after being told to stop.
+		await _stopGate.WaitAsync().ConfigureAwait(false);
 
-		if (GrindGame == 0) {
-			LoadGrind();   // pick a still-running grind back up after a restart or crash
-			LoadDropsFirst();
+		try {
+			// A previous run that ended without StopAsync (a disabled account, a dead login) can still be holding a
+			// token source and a callback pump. Tear it down or the second start runs two pumps on one client.
+			await StopCoreAsync(false).ConfigureAwait(false);
+
+			_running = true;
+
+			if (GrindGame == 0) {
+				LoadGrind();   // pick a still-running grind back up after a restart or crash
+				LoadDropsFirst();
+			}
+			Paused = Cfg.StartPaused;   // re-applied per start, so 'restart' doesn't quietly un-pause the account
+			// And a timed pause from before the restart is over. Left behind, it lifted a "Start paused" account by itself
+			// at the old pause's end time.
+			PausedUntil = null;
+			PlayingBlocked = false;
+			_resumeAt = DateTime.MinValue;
+			_loginFailures = 0;
+			_cts = new CancellationTokenSource();
+			ct = _cts.Token;   // kept here: a stop from now on disposes the source, and reading its token then throws
+			_pump = Task.Run(() => Pump(ct), CancellationToken.None);
+
+			State = BotState.Connecting;
+			StatusText = "waiting for a login slot";
+		} finally {
+			_stopGate.Release();
 		}
-		Paused = Cfg.StartPaused;   // re-applied per start, so 'restart' doesn't quietly un-pause the account
-		PlayingBlocked = false;
-		_resumeAt = DateTime.MinValue;
-		_loginFailures = 0;
-		_cts = new CancellationTokenSource();
-		_pump = Task.Run(() => Pump(_cts.Token), CancellationToken.None);
-
-		State = BotState.Connecting;
-		StatusText = "waiting for a login slot";
 
 		// One line: "starting up", with how long it waits for its turn when it has to - a quiet account in line doesn't
 		// look stuck, and two lines per account filled a small window.
 		bool said = false;
 
-		await Limiters.WaitForLoginSlotAsync(_cts.Token, wait => {
+		await Limiters.WaitForLoginSlotAsync(ct, wait => {
 			if (wait >= TimeSpan.FromSeconds(3)) {
 				int secs = (int) Math.Ceiling(wait.TotalSeconds);
 				Log.Info(said ? new Said("still waiting its turn to sign in - about {0}s", secs) : new Said("starting up - signs in in about {0}s (Gap between logins)", secs), Name);
@@ -1211,6 +1235,13 @@ public sealed class Bot : IAsyncDisposable {
 		_lastLogOnResult = EResult.Invalid;
 		Client.Connect();
 	}
+
+	/// <summary>
+	/// A human-mode account finishing up before it logs off (a graceful stop, like the one an update does). Nothing new
+	/// starts while this is set - the game it's in carries on, the way a person finishes a match and then quits - and
+	/// every place that shows the account says "finishing up" instead of what human mode was about to do next.
+	/// </summary>
+	public bool Stopping { get; private set; }
 
 	public async Task StopAsync(bool graceful = false) {
 		// Two callers arriving together used to double-dispose the token source and throw out of the middle of
@@ -1239,6 +1270,7 @@ public sealed class Bot : IAsyncDisposable {
 				// The only StatusText with a value baked into it, so it cannot be looked up at render time like
 				// the rest. Translated here instead; Loc.T on an already-translated string returns it untouched.
 				StatusText = Loc.T("finishing up - logging off in ~{0}s", secs);
+				Stopping = true;
 				Log.Info(new Said("stopping - finishing up, logging off in about {0}s", secs), Name);
 
 				try {
@@ -1257,6 +1289,7 @@ public sealed class Bot : IAsyncDisposable {
 		bool wasRunning = _running;
 
 		_running = false;
+		Stopping = false;
 		State = BotState.Stopped;
 		StatusText = "stopped";
 		OnlineSince = null;
@@ -1412,13 +1445,7 @@ public sealed class Bot : IAsyncDisposable {
 				ConfigStore.SaveBot(Name, Cfg);
 			}
 
-			_refreshToken = poll.RefreshToken;
-			TokenStore.Save(Name, _refreshToken);
-
-			if (!string.IsNullOrEmpty(poll.AccessToken)) {
-				SetAccessToken(poll.AccessToken);
-				TokenStore.SaveAccess(Name, poll.AccessToken);
-			}
+			ReplaceTokens(poll.RefreshToken, poll.AccessToken);
 
 			Log.Good(new Said("signed in with the QR code as {0} - saved for next time", poll.AccountName), Name);
 
@@ -1456,12 +1483,14 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		try {
-			_refreshToken ??= TokenStore.Load(Name);
+			lock (_tokenSync) {
+				_refreshToken ??= TokenStore.Load(Name);
 
-			// Pick up a still-valid access token from a previous run, so a restart reuses it instead of minting a
-			// new web session on the spot. Nulls out silently if it is already past its life.
-			if ((_accessToken == null) && TokenStore.LoadAccess(Name) is { } stored) {
-				SetAccessToken(stored);
+				// Pick up a still-valid access token from a previous run, so a restart reuses it instead of minting a
+				// new web session on the spot. Nulls out silently if it is already past its life.
+				if ((_accessToken == null) && TokenStore.LoadAccess(Name) is { } stored) {
+					SetAccessToken(stored);
+				}
 			}
 
 			// Signed in by scanning a QR code with the Steam app instead - no password at all.
@@ -1537,16 +1566,11 @@ public sealed class Bot : IAsyncDisposable {
 				}
 
 				_loginFailures = 0;
-				_refreshToken = poll.RefreshToken;
-				TokenStore.Save(Name, _refreshToken);
 
 				// The login just handed us a web access token as well. Keep it. Using the token that came WITH the
 				// session means we never have to mint a separate one, and a separately minted web token is what was
 				// evicting the owner's Friends & Chat.
-				if (!string.IsNullOrEmpty(poll.AccessToken)) {
-					SetAccessToken(poll.AccessToken);
-					TokenStore.SaveAccess(Name, poll.AccessToken);
-				}
+				ReplaceTokens(poll.RefreshToken, poll.AccessToken);
 
 				Log.Good("signed in - login token saved, no password needed again", Name);
 			}
@@ -1644,9 +1668,7 @@ public sealed class Bot : IAsyncDisposable {
 			// A rejected token means the session was revoked (password change, "sign out everywhere") - not that the
 			// account is bad. Drop it so the next attempt asks for the password again.
 			if (cb.Result is EResult.InvalidPassword or EResult.AccessDenied or EResult.Expired) {
-				TokenStore.Clear(Name);
-				_refreshToken = null;
-				SetAccessToken(null);   // the whole family is revoked - the cached web token is dead too
+				ReplaceTokens(null, null);   // the whole family is revoked - the cached web token is dead too
 				Log.Warn(new Said("login token rejected ({0}) - needs the password again", cb.Result), Name);
 			} else if (cb.Result is EResult.RateLimitExceeded or EResult.AccountLoginDeniedThrottle) {
 				Log.Warn("Steam is rate-limiting logins for this account", Name);
@@ -2595,6 +2617,32 @@ public sealed class Bot : IAsyncDisposable {
 		return true;
 	}
 
+	// ── items on the move ───────────────────────────────────────────────────
+	private readonly HashSet<ulong> _itemsOnTheMove = [];
+
+	/// <summary>
+	/// Claim items for a send or a sale: the ones nothing else of this account is moving right now, held until
+	/// <see cref="ReleaseItems"/>. By asset id - a clash between two inventories only holds one item back once.
+	/// </summary>
+	/// <remarks>
+	/// A send and a sale each read the inventory and the waiting trades, then act on what they found. Run together -
+	/// the timed send while the seller works through its listings, or two sends at once - both picked the same
+	/// cards: the listing took a card out of the trade offer and Steam dropped the whole offer, or the same cards
+	/// went out in two offers. Whoever claims a card first moves it; the other leaves it out.
+	/// </remarks>
+	internal HashSet<ulong> ClaimItems(IEnumerable<ulong> assets) {
+		lock (_itemsOnTheMove) {
+			return [.. assets.Where(_itemsOnTheMove.Add)];
+		}
+	}
+
+	/// <summary>Hand back items claimed with <see cref="ClaimItems"/>, once the send or sale is done with them.</summary>
+	internal void ReleaseItems(IEnumerable<ulong> assets) {
+		lock (_itemsOnTheMove) {
+			_itemsOnTheMove.ExceptWith(assets);
+		}
+	}
+
 	// ── tokens ──────────────────────────────────────────────────────────────
 	/// <summary>The web access token is treated as live for its whole span except the last few minutes.</summary>
 	private const int AccessTokenSlackMinutes = 5;
@@ -2607,6 +2655,58 @@ public sealed class Bot : IAsyncDisposable {
 		// A token we cannot read the expiry of is worse than useless - we would reuse it forever. Drop it.
 		if ((_accessToken != null) && (_accessTokenValidUntil == null)) {
 			_accessToken = null;
+		}
+	}
+
+	/// <summary>A sign-in's tokens replace whatever was held - or, with nulls, a rejected one throws them all away.</summary>
+	private void ReplaceTokens(string? refresh, string? access) {
+		lock (_tokenSync) {
+			_tokenGeneration++;
+			_refreshToken = string.IsNullOrEmpty(refresh) ? null : refresh;
+
+			if (_refreshToken == null) {
+				TokenStore.Clear(Name);
+				SetAccessToken(null);
+
+				return;
+			}
+
+			TokenStore.Save(Name, _refreshToken);
+
+			if (!string.IsNullOrEmpty(access)) {
+				SetAccessToken(access);
+				TokenStore.SaveAccess(Name, access);
+			}
+		}
+	}
+
+	/// <summary>Keep what a mint handed back - unless a sign-in replaced the tokens while the request was out.</summary>
+	/// <remarks>
+	/// The mint is sent with the refresh token held at the time and answered later. A drop and reconnect in between
+	/// can have that token rejected (password changed - it is cleared and the password asked for) or a fresh sign-in
+	/// store a new one. Writing the late answer over that put the old token back in memory and on disk, over the new
+	/// one - so the next sign-in used a revoked token, or a restart asked for the password again. Now it is dropped.
+	/// </remarks>
+	/// <returns>The access token in force afterwards, or null when the answer was too late to use.</returns>
+	private string? AdoptMinted(long generation, string? rotated, string? access) {
+		lock (_tokenSync) {
+			if (generation != _tokenGeneration) {
+				Log.Debug("a web token arrived after the sign-in changed - not kept", Name);
+
+				return null;
+			}
+
+			if (!string.IsNullOrEmpty(rotated) && (rotated != _refreshToken)) {
+				_refreshToken = rotated;   // Steam rotated it; keeping the old one would lock us out
+				TokenStore.Save(Name, rotated);
+			}
+
+			if (!string.IsNullOrEmpty(access)) {
+				SetAccessToken(access);
+				TokenStore.SaveAccess(Name, access);
+			}
+
+			return _accessToken;
 		}
 	}
 
@@ -2640,16 +2740,29 @@ public sealed class Bot : IAsyncDisposable {
 				_lastRemint = DateTime.UtcNow;
 			}
 
-			// Still good for more than the slack window - hand back exactly what we already have. No network call,
-			// no new session, nothing for Steam to arbitrate against the owner's client.
-			if (!rejected && !string.IsNullOrEmpty(_accessToken) && _accessTokenValidUntil.HasValue
-				&& (_accessTokenValidUntil.Value > DateTime.UtcNow.AddMinutes(AccessTokenSlackMinutes))) {
-				Log.Debug(new Said("reusing web token (good for {0}h) - no new web session", ((_accessTokenValidUntil.Value - DateTime.UtcNow).TotalHours).ToString("0.#")), Name);
+			// Read together: a sign-in can be replacing them this moment, and half of each is a token with the wrong expiry.
+			string? access;
+			DateTime? validUntil;
+			string? refresh;
+			long generation;
 
-				return _accessToken;
+			lock (_tokenSync) {
+				access = _accessToken;
+				validUntil = _accessTokenValidUntil;
+				refresh = _refreshToken;
+				generation = _tokenGeneration;
 			}
 
-			if (string.IsNullOrEmpty(_refreshToken)) {
+			// Still good for more than the slack window - hand back exactly what we already have. No network call,
+			// no new session, nothing for Steam to arbitrate against the owner's client.
+			if (!rejected && !string.IsNullOrEmpty(access) && validUntil.HasValue
+				&& (validUntil.Value > DateTime.UtcNow.AddMinutes(AccessTokenSlackMinutes))) {
+				Log.Debug(new Said("reusing web token (good for {0}h) - no new web session", ((validUntil.Value - DateTime.UtcNow).TotalHours).ToString("0.#")), Name);
+
+				return access;
+			}
+
+			if (string.IsNullOrEmpty(refresh)) {
 				return null;
 			}
 
@@ -2658,19 +2771,9 @@ public sealed class Bot : IAsyncDisposable {
 			// Genuinely spent (or never had one). Mint a replacement. allowRenewal: true lets Steam rotate the
 			// long-lived refresh token before it ages out, so an unattended farmer keeps
 			// running for months without the password.
-			AccessTokenGenerateResult result = await Client.Authentication.GenerateAccessTokenForAppAsync(SteamId, _refreshToken, true).ConfigureAwait(false);
+			AccessTokenGenerateResult result = await Client.Authentication.GenerateAccessTokenForAppAsync(SteamId, refresh, true).ConfigureAwait(false);
 
-			if (!string.IsNullOrEmpty(result.RefreshToken) && result.RefreshToken != _refreshToken) {
-				_refreshToken = result.RefreshToken;   // Steam rotated it; keeping the old one would lock us out
-				TokenStore.Save(Name, _refreshToken);
-			}
-
-			if (!string.IsNullOrEmpty(result.AccessToken)) {
-				SetAccessToken(result.AccessToken);
-				TokenStore.SaveAccess(Name, result.AccessToken);
-			}
-
-			return _accessToken;
+			return AdoptMinted(generation, result.RefreshToken, result.AccessToken);
 		} catch (Exception e) {
 			Log.Warn(new Said("couldn't get a web token: {0}", e.Message), Name);
 

@@ -179,6 +179,23 @@ public static class Seller {
 	// ── listing ──────────────────────────────────────────────────────────────
 	/// <summary>List them, a little apart, then confirm them if this account can. Returns a summary.</summary>
 	public static async Task<string> SellAsync(Bot bot, IReadOnlyList<Offer> offers, CancellationToken ct) {
+		// Claimed, then checked against the waiting trades once more. The plan read them a while ago (pricing takes
+		// minutes), and a send that went out since would lose its whole offer to one of these listings - see
+		// Bot.ClaimItems. A send starting from now on leaves the claimed ones out.
+		HashSet<ulong> claimed = bot.ClaimItems(offers.Select(static o => o.AssetId));
+
+		try {
+			if (await TradeOffers.PromisedAsync(bot, ct).ConfigureAwait(false) is not { } promised) {
+				return new Said("{0}: Steam wouldn't say which cards are in a waiting trade - try again in a while", bot.Name).ToString();
+			}
+
+			return await SellClaimedAsync(bot, [.. offers.Where(o => claimed.Contains(o.AssetId) && !promised.Contains(o.AssetId))], ct).ConfigureAwait(false);
+		} finally {
+			bot.ReleaseItems(claimed);
+		}
+	}
+
+	private static async Task<string> SellClaimedAsync(Bot bot, IReadOnlyList<Offer> offers, CancellationToken ct) {
 		int listed = 0;
 		int earned = 0;
 		List<ulong> assets = [];

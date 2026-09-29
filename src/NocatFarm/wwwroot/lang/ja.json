@@ -1476,10 +1476,8 @@
     "rep4rep comments": "rep4rep のコメント",
     "No comments posted in the last {0} days.": "直近 {0} 日間に投稿したコメントはありません。",
     "Hours banked": "記録した時間",
-    "Time with a game running, however many games were running at once.": "ゲームが動いていた時間です。同時にいくつ動いていても 1 回分として数えます。",
     "Nothing played in the last {0} days.": "直近 {0} 日間は何もプレイしていません。",
     "Hours by game": "ゲーム別の時間",
-    "Steam counts the time for every game that is running, so several at once add up to more than the hours banked.": "Steam は動いているゲームごとに時間を数えるので、同時に複数動かすと記録した時間より多くなります。",
     "since {0}": "{0} から",
     "Inventory value": "インベントリの価値",
     "What the inventory was worth at the end of each day, at the market median. A day with no new reading carries the last one over.": "各日の終わりにインベントリがいくらだったか (市場の中央値)。新しい読み取りがない日は、前回の値を引き継ぎます。",
@@ -2161,6 +2159,7 @@
     "update failed: couldn't unpack ({0}) - disk full?": "更新失敗: 展開できず ({0}) - ディスクが満杯？",
     "update failed: couldn't back up the current version ({0})": "更新失敗: 現在の版をバックアップできず ({0})",
     "update: all signed out - restarting into {0}": "更新: 全員サインアウト - {0} で再起動",
+    "update: signing the accounts back in": "アップデート: アカウントをサインインし直しています",
     "update failed: {0} - nothing changed": "更新失敗: {0} - 変更なし",
     " · {0} by nocat.farm": "· nocat.farm で {0}",
     "no cards left - idling {0}{1}": "カードなし - {0} をアイドル中{1}",
@@ -2210,8 +2209,6 @@
     "Which games it hunts is set under Achievements.": "どのゲームをハントするかは「実績」で設定します。",
     "Change the main game": "メインゲームを変更",
     "the new main game: appID or store URL": "新しいメインゲーム: appID かストアの URL",
-    "{0} accounts on": "{0} アカウント稼働中",
-    "{0} of {1} accounts on": "{1} 中 {0} アカウント稼働中",
     "clear works in the nocat.farm window and the dashboard - it clears that screen": "clear は nocat.farm のウィンドウとダッシュボードで使えます - その画面を消します",
     "file logging is off - turn on Write a log file under Settings, Logging": "ファイルへのログはオフです - 設定のログで「ログファイルを書く」をオンにしてください",
     "opened the log folder: {0}": "ログフォルダを開きました: {0}",
@@ -2232,7 +2229,33 @@
     "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "サービスとして動いているので自動更新しません - 止めて、{1} の {0} をこのフォルダに上書き展開し（config/ と logs/ は残ります）、もう一度起動してください",
     "update failed: it was started with an option that has a space in it - update by hand this time": "更新失敗: スペースを含むオプションで起動されています - 今回は手動で更新してください",
     "update failed: the download has no {0}": "更新失敗: ダウンロードに {0} がありません",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "新しいバージョンが出たら知らせます。ここでは自動ではインストールできません。Docker では新しいバージョンを取得して docker compose up -d --build を実行、Linux のサービスとして動かしている場合は止めて、新しい zip をフォルダに上書き展開し、もう一度起動してください。アカウントと設定はそのまま残ります。"
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "新しいバージョンが出たら知らせます。ここでは自動ではインストールできません。Docker では新しいバージョンを取得して docker compose up -d --build を実行、Linux のサービスとして動かしている場合は止めて、新しい zip をフォルダに上書き展開し、もう一度起動してください。アカウントと設定はそのまま残ります。",
+    "finishing up": "仕上げ中",
+    "screen off turns the screens off - moving the mouse turns them back on": "screen off で画面を消します - マウスを動かすとまた点きます",
+    "there's no screen here to turn off": "ここには消せる画面がありません",
+    "couldn't turn the screen off: {0}": "画面を消せませんでした: {0}",
+    "screens off in a moment - move the mouse to turn them back on": "まもなく画面が消えます - マウスを動かすとまた点きます",
+    "Turn the PC's screens off: /screen off": "PC の画面を消す: /screen off",
+    "up late - one more sitting, then bed around {0}": "夜更かし - もう1回遊んでから {0} 頃に寝ます",
+    "{0} accounts connected": "{0} アカウント接続中",
+    "{0} of {1} accounts connected": "{1} 中 {0} アカウント接続中",
+    "the first account shown": "最初に表示されるアカウント",
+    "every account not in human mode": "人間モード以外のすべてのアカウント",
+    "Your own link": "自分のリンク",
+    "Button text": "ボタンの文字",
+    "My link": "私のリンク",
+    "Every running game counts, the way Steam counts it - 32 games for an hour is 32 hours.": "起動中のゲームはすべて数えます。Steam と同じで、32 本を 1 時間なら 32 時間です。",
+    "How the hours banked split between the games.": "貯まった時間がゲームごとにどう分かれているか。",
+    "up for one sitting until about {0}, then done for today": "{0} 頃までもう1回遊んで、今日はおしまい",
+    "this account is posting a comment right now - try again in a few minutes": "このアカウントは今コメントを投稿中です - 数分後にもう一度お試しください",
+    "already commented for that task - pick another": "そのタスクにはもうコメント済みです - 別のものを選んでください",
+    "{0}: its items are being sent or sold right now - try again in a few minutes": "{0}: アイテムを今送信中か出品中です - 数分後にもう一度お試しください",
+    "{0}: Steam wouldn't say which cards are in a waiting trade - try again in a while": "{0}: 保留中のトレードに入っているカードを Steam が教えてくれません - しばらくしてからもう一度お試しください",
+    "offer {0} is already being answered": "オファー {0} はすでに対応中です",
+    "the dashboard is switched off (Web dashboard, in Settings) - turn it on and restart nocat.farm first": "ダッシュボードがオフです（設定の「ウェブ・ダッシュボード」）- 先にオンにして nocat.farm を再起動してください",
+    "{0}: saved \"{1}\" - it shows once human mode is off; human mode always shows the real game": "{0}: 「{1}」を保存しました - 人間モードをオフにすると表示されます。人間モードでは常に実際のゲームが表示されます",
+    "set {0} {1} <value> - the value is missing. It's {2} now.": "set {0} {1} <値> - 値がありません。今は {2} です。",
+    "1 account connected": "1 アカウント接続中"
   },
   "settings": {
     "WebEnabled": {
@@ -2394,11 +2417,11 @@
     },
     "DailyReportEnabled": {
       "label": "ログへの日次まとめ",
-      "tip": "各アカウントが過去 24 時間で稼いだもの（プレイ時間、カード、rep4rep のコメント）の日次まとめをログに書きます。stats と入力すればいつでも見られます。"
+      "tip": "各アカウントが直近 24 時間で稼いだもの（貯まった時間、カード、rep4rep コメント、これまでの合計）を毎日ログにまとめます。起動中のゲームはすべて数えます。Steam と同じで、32 本を 1 時間なら 32 時間です。いつでも stats と入力すると見られます。"
     },
     "DailyReportHour": {
       "label": "まとめの時刻 · 時",
-      "tip": "日次まとめを書く時刻の「時」です（現地時間）。「ログへの日次まとめ」がオンのときだけ使います。"
+      "tip": "日次まとめを書く時刻の「時」です（現地時間）。「日次まとめを送る」がオンなら、この時刻に送信もします。"
     },
     "DailyReportMinute": {
       "label": "まとめの時刻 · 分",
@@ -3095,7 +3118,7 @@
     },
     "DiscordPresenceAccounts": {
       "label": "表示するアカウント",
-      "tip": "Discord カードで数えるアカウント。空欄なら人間モードでないすべてのアカウント、all と入力するとすべてのアカウント、またはカンマ区切りで名前を並べます。"
+      "tip": "カードが名前を出して説明するアカウント。自動は人間モード以外のすべて、または好きなものにチェックを入れてください。カードの数字は常に全アカウントです。"
     },
     "DiscordShowNames": {
       "label": "アカウント名を表示",
@@ -3103,7 +3126,7 @@
     },
     "DiscordShowCounter": {
       "label": "オンラインのアカウントを表示",
-      "tip": "表示中のアカウントのうち何個がサインインしているかを Discord カードに出します（例:「2 アカウント稼働中」「3 中 2 アカウント稼働中」）。"
+      "tip": "アカウントのうち何個がサインインしているかを Discord カードに出します（カードに名前が出ないものも含めて全部）。例:「3 アカウント接続中」「3 中 2 アカウント接続中」。"
     },
     "DiscordShowAvatar": {
       "label": "アカウントのアバターを表示",
@@ -3115,11 +3138,11 @@
     },
     "DiscordButton1": {
       "label": "ボタン 1",
-      "tip": "Discord がカードに置ける 2 つのボタンの 1 つ目。github で「nocat.farm を入手」ボタン、アカウント名でその Steam プロフィールへのリンク、自分のボタンは Label | https://link、空欄ならボタンなし。ボタンはほかの人に見えます。Discord は自分のボタンを自分には表示しません。"
+      "tip": "Discord がカードに許す2つのボタンの1つ目: nocat.farm を入手、アカウントの Steam ページ、または自分の文字と自分のリンク。ボタンは他の人に見えます - 自分のボタンは Discord が表示しません。"
     },
     "DiscordButton2": {
       "label": "ボタン 2",
-      "tip": "2 つ目のボタンも同じです: github、アカウント名、Label | https://link、または空欄でボタンなし。"
+      "tip": "2つ目のボタンも同じ: nocat.farm を入手、アカウントの Steam ページ、自分のリンク、またはなし。"
     },
     "DiscordFeatured": {
       "label": "注目のアカウント",
@@ -3229,7 +3252,7 @@
     },
     "DiscordSecondLine": {
       "label": "2行目",
-      "tip": "アカウント名がオフのとき、Discord カードの2行目が数えるもの: 今日のカード、または過去1週間か過去1か月のプレイ時間 - カードに出るアカウントの合計です。",
+      "tip": "アカウント名がオフのとき、Discord カードの2行目が数えるもの: 今日のカード、または過去1週間か過去1か月のプレイ時間 - 全アカウントの合計です。",
       "choices": "0 今日のカード | 1 過去1週間の時間 | 2 過去1か月の時間"
     },
     "SendAroundHour": {

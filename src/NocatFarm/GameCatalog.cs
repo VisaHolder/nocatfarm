@@ -42,6 +42,7 @@ public static class GameCatalog {
 	private static DateTime _coolUntil = DateTime.MinValue;
 	private static DateTime _lastSave = DateTime.MinValue;
 	private static bool _loaded;
+	private static readonly Lock LoadGate = new();
 
 	private static string Path => System.IO.Path.Combine(ConfigStore.ConfigDir, "state", "gamecatalog.json");
 
@@ -191,28 +192,33 @@ public static class GameCatalog {
 	}
 
 	private static void Load() {
-		if (_loaded) {
-			return;
-		}
-
-		_loaded = true;
-
-		try {
-			if (!File.Exists(Path)) {
+		// The check and the read under one lock. Marked loaded first and read after, a second caller in the meantime went
+		// on as if it were loaded - two callers at once: the second found it loaded while the file was still being read,
+		// and its save could write a near-empty catalogue over the real one.
+		lock (LoadGate) {
+			if (_loaded) {
 				return;
 			}
 
-			Dictionary<uint, Entry>? saved = JsonSerializer.Deserialize<Dictionary<uint, Entry>>(File.ReadAllText(Path));
+			_loaded = true;
 
-			if (saved != null) {
-				lock (Cache) {
-					foreach ((uint app, Entry e) in saved) {
-						Cache[app] = e;
+			try {
+				if (!File.Exists(Path)) {
+					return;
+				}
+
+				Dictionary<uint, Entry>? saved = JsonSerializer.Deserialize<Dictionary<uint, Entry>>(File.ReadAllText(Path));
+
+				if (saved != null) {
+					lock (Cache) {
+						foreach ((uint app, Entry e) in saved) {
+							Cache[app] = e;
+						}
 					}
 				}
+			} catch (Exception e) {
+				Log.Debug(new Said("couldn't read the game catalog: {0}", e.Message));
 			}
-		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the game catalog: {0}", e.Message));
 		}
 	}
 

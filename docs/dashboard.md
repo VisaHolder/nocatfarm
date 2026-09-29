@@ -18,7 +18,9 @@ idler** and **+ Add account** are here. Removing an account asks you to type its
 authenticator is in nocat.farm, and is covered on [the Authenticator page](trades.md#the-authenticator-page). **Phone** is everything for opening the dashboard on your
 phone - see [below](#using-the-dashboard-from-another-device).
 
-**Log** is live, with search, level chips (Debug is hidden by default), an account filter, Follow and Copy.
+**Log** is live, with search, level chips (Debug is hidden by default), an account filter, Follow and Copy. `clear`
+(or `cls`) in the Console empties this tab and the Console on this screen only - the app window keeps its lines, and
+the log file keeps everything. *Settings → Logging → Open the log folder* opens the files on the PC it runs on.
 
 **Console** runs the same commands as the app window. Tab completes commands and then account names, and up/down
 goes through your history. A bare `help` opens a searchable command list.

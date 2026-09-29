@@ -7,7 +7,7 @@
 On the dashboard's Settings page, pick **Global settings** (things for the whole app) or an account on the left.
 Everyday switches show first; tick **Show advanced** for the rest. Search finds a setting by its name or its
 explanation, **Only changed** shows only what you've changed, and each changed field has a link back to its default.
-Hover over any setting for a plain explanation. Settings marked ⟳ need a restart.
+Tap or hover the ⓘ beside any setting for a plain explanation. Settings marked ⟳ need a restart.
 
 From the console:
 

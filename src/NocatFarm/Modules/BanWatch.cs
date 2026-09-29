@@ -149,7 +149,9 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 			return;
 		}
 
-		Bot.Cfg.InventoryIgnoreGames.AddRange(added);
+		// A new list rather than added to in place: a send or a dashboard save can be reading the old one right now,
+		// and a list that changes under a reader throws.
+		Bot.Cfg.InventoryIgnoreGames = [.. Bot.Cfg.InventoryIgnoreGames, .. added];
 		ConfigStore.SaveBot(Bot.Name, Bot.Cfg);
 		Log.Info(new Said("banned in {0} - skipping its items (cards still trade)",
 			string.Join(", ", added.Select(GameNames.Of))), Bot.Name);

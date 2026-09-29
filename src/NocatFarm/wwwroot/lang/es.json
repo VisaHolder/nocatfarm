@@ -1476,10 +1476,8 @@
     "rep4rep comments": "Comentarios de rep4rep",
     "No comments posted in the last {0} days.": "No se publicó ningún comentario en los últimos {0} días.",
     "Hours banked": "Horas acumuladas",
-    "Time with a game running, however many games were running at once.": "Tiempo con algún juego abierto, sin importar cuántos juegos estuvieran abiertos a la vez.",
     "Nothing played in the last {0} days.": "No se jugó nada en los últimos {0} días.",
     "Hours by game": "Horas por juego",
-    "Steam counts the time for every game that is running, so several at once add up to more than the hours banked.": "Steam cuenta el tiempo de cada juego abierto, así que varios a la vez suman más que las horas acumuladas.",
     "since {0}": "desde el {0}",
     "Inventory value": "Valor del inventario",
     "What the inventory was worth at the end of each day, at the market median. A day with no new reading carries the last one over.": "Lo que valía el inventario al final de cada día, al precio medio del mercado. Un día sin lectura nueva mantiene la anterior.",
@@ -2161,6 +2159,7 @@
     "update failed: couldn't unpack ({0}) - disk full?": "actualización fallida: no se pudo descomprimir ({0}) - ¿disco lleno?",
     "update failed: couldn't back up the current version ({0})": "actualización fallida: no se pudo respaldar la versión actual ({0})",
     "update: all signed out - restarting into {0}": "actualización: todas las sesiones cerradas - reiniciando en {0}",
+    "update: signing the accounts back in": "actualización: volviendo a iniciar sesión en las cuentas",
     "update failed: {0} - nothing changed": "actualización fallida: {0} - nada cambió",
     " · {0} by nocat.farm": "· {0} con nocat.farm",
     "no cards left - idling {0}{1}": "no quedan cartas - en reposo con {0}{1}",
@@ -2210,8 +2209,6 @@
     "Which games it hunts is set under Achievements.": "Qué juegos caza se configura en Logros.",
     "Change the main game": "Cambiar el juego principal",
     "the new main game: appID or store URL": "el nuevo juego principal: appID o enlace de la tienda",
-    "{0} accounts on": "{0} cuentas activas",
-    "{0} of {1} accounts on": "{0} de {1} cuentas activas",
     "clear works in the nocat.farm window and the dashboard - it clears that screen": "clear funciona en la ventana de nocat.farm y en el panel: vacía esa pantalla",
     "file logging is off - turn on Write a log file under Settings, Logging": "el registro en archivo está desactivado: activa Escribir un archivo de registro en Ajustes, Registro",
     "opened the log folder: {0}": "carpeta de registros abierta: {0}",
@@ -2232,7 +2229,33 @@
     "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "como servicio, nocat.farm no se actualiza solo: páralo, extrae {0} de {1} sobre esta carpeta (config/ y logs/ se conservan) y vuelve a iniciarlo",
     "update failed: it was started with an option that has a space in it - update by hand this time": "actualización fallida: se inició con una opción que tiene un espacio; esta vez actualiza a mano",
     "update failed: the download has no {0}": "actualización fallida: la descarga no trae {0}",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "Te avisa cuando sale una versión nueva. Aquí no puede instalarla sola: en Docker, consigue la nueva versión y ejecuta docker compose up -d --build; como servicio de Linux, páralo, descomprime el zip nuevo sobre la carpeta y vuelve a iniciarlo. Tus cuentas y ajustes se quedan donde están."
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "Te avisa cuando sale una versión nueva. Aquí no puede instalarla sola: en Docker, consigue la nueva versión y ejecuta docker compose up -d --build; como servicio de Linux, páralo, descomprime el zip nuevo sobre la carpeta y vuelve a iniciarlo. Tus cuentas y ajustes se quedan donde están.",
+    "finishing up": "terminando",
+    "screen off turns the screens off - moving the mouse turns them back on": "screen off apaga las pantallas; al mover el ratón vuelven a encenderse",
+    "there's no screen here to turn off": "aquí no hay pantalla que apagar",
+    "couldn't turn the screen off: {0}": "no se pudo apagar la pantalla: {0}",
+    "screens off in a moment - move the mouse to turn them back on": "las pantallas se apagan en un momento; mueve el ratón para encenderlas",
+    "Turn the PC's screens off: /screen off": "Apagar las pantallas del PC: /screen off",
+    "up late - one more sitting, then bed around {0}": "despierto hasta tarde: una sesión más y a la cama hacia las {0}",
+    "{0} accounts connected": "{0} cuentas conectadas",
+    "{0} of {1} accounts connected": "{0} de {1} cuentas conectadas",
+    "the first account shown": "la primera cuenta mostrada",
+    "every account not in human mode": "todas las cuentas que no están en modo humano",
+    "Your own link": "Tu propio enlace",
+    "Button text": "Texto del botón",
+    "My link": "Mi enlace",
+    "Every running game counts, the way Steam counts it - 32 games for an hour is 32 hours.": "Cuenta cada juego abierto, como lo cuenta Steam: 32 juegos durante una hora son 32 horas.",
+    "How the hours banked split between the games.": "Cómo se reparten las horas acumuladas entre los juegos.",
+    "up for one sitting until about {0}, then done for today": "despierto para una sesión más hasta las {0} aprox., luego terminado por hoy",
+    "this account is posting a comment right now - try again in a few minutes": "esta cuenta está publicando un comentario ahora mismo - inténtalo de nuevo en unos minutos",
+    "already commented for that task - pick another": "ya se comentó para esa tarea - elige otra",
+    "{0}: its items are being sent or sold right now - try again in a few minutes": "{0}: sus objetos se están enviando o vendiendo ahora mismo - inténtalo de nuevo en unos minutos",
+    "{0}: Steam wouldn't say which cards are in a waiting trade - try again in a while": "{0}: Steam no dice qué cromos están en un intercambio pendiente - inténtalo de nuevo más tarde",
+    "offer {0} is already being answered": "la oferta {0} ya se está respondiendo",
+    "the dashboard is switched off (Web dashboard, in Settings) - turn it on and restart nocat.farm first": "el panel está apagado (Panel web, en Ajustes) - actívalo y reinicia nocat.farm primero",
+    "{0}: saved \"{1}\" - it shows once human mode is off; human mode always shows the real game": "{0}: «{1}» guardado - se mostrará cuando el modo humano esté apagado; el modo humano siempre muestra el juego real",
+    "set {0} {1} <value> - the value is missing. It's {2} now.": "set {0} {1} <valor> - falta el valor. Ahora es {2}.",
+    "1 account connected": "1 cuenta conectada"
   },
   "settings": {
     "WebEnabled": {
@@ -2394,11 +2417,11 @@
     },
     "DailyReportEnabled": {
       "label": "Resumen diario en el registro",
-      "tip": "Escribe en el registro un resumen diario de lo que ganó cada cuenta en las últimas 24 horas: horas jugadas, cromos y comentarios de rep4rep. Escribe stats para verlo cuando quieras."
+      "tip": "Escribe cada día en el registro un resumen de lo que ganó cada cuenta en las últimas 24 horas: horas acumuladas, cromos y comentarios de rep4rep, y todo lo acumulado hasta ahora. Cuenta cada juego abierto, como lo cuenta Steam: 32 juegos durante una hora son 32 horas. Escribe stats para verlo cuando quieras."
     },
     "DailyReportHour": {
       "label": "Hora del resumen · hora",
-      "tip": "La hora a la que se escribe el resumen diario, en hora local. Solo se usa si «Resumen diario en el registro» está activado."
+      "tip": "La hora a la que se escribe el resumen diario, en hora local - y se envía, si «Enviar el resumen diario» está activado."
     },
     "DailyReportMinute": {
       "label": "Hora del resumen · minuto",
@@ -3095,7 +3118,7 @@
     },
     "DiscordPresenceAccounts": {
       "label": "Cuentas que muestra",
-      "tip": "Qué cuentas cuenta la tarjeta de Discord. Déjalo vacío para todas las cuentas que no estén en modo humano, escribe all para todas las cuentas, o pon nombres separados por comas."
+      "tip": "Qué cuentas nombra y describe la tarjeta. Automático son todas las cuentas que no están en modo humano, o marca las que quieras. Los números de la tarjeta siempre cuentan todas las cuentas."
     },
     "DiscordShowNames": {
       "label": "Mostrar nombres de cuenta",
@@ -3103,7 +3126,7 @@
     },
     "DiscordShowCounter": {
       "label": "Mostrar cuentas conectadas",
-      "tip": "Añade a la tarjeta de Discord cuántas de las cuentas mostradas han iniciado sesión, como «2 cuentas activas» o «2 de 3 cuentas activas»."
+      "tip": "Añade a la tarjeta de Discord cuántas de tus cuentas han iniciado sesión (todas, también las que la tarjeta no nombra), como «3 cuentas conectadas» o «2 de 3 cuentas conectadas»."
     },
     "DiscordShowAvatar": {
       "label": "Mostrar el avatar de una cuenta",
@@ -3115,11 +3138,11 @@
     },
     "DiscordButton1": {
       "label": "Botón 1",
-      "tip": "El primero de los dos botones que Discord permite en la tarjeta. github para un botón «Consigue nocat.farm», un nombre de cuenta para un enlace a su perfil de Steam, uno tuyo como Label | https://link, o vacío para ninguno. Los demás ven los botones - Discord no te muestra los tuyos."
+      "tip": "El primero de los dos botones que Discord permite en la tarjeta: Consigue nocat.farm, la página de Steam de una cuenta o tu propio enlace con tu propio texto. Los demás ven los botones; Discord no te muestra los tuyos."
     },
     "DiscordButton2": {
       "label": "Botón 2",
-      "tip": "El segundo botón, igual: github, un nombre de cuenta, Label | https://link, o vacío para ninguno."
+      "tip": "El segundo botón, igual: Consigue nocat.farm, la página de Steam de una cuenta, tu propio enlace o ninguno."
     },
     "DiscordFeatured": {
       "label": "Cuenta destacada",
@@ -3229,7 +3252,7 @@
     },
     "DiscordSecondLine": {
       "label": "Segunda línea",
-      "tip": "Lo que cuenta la segunda línea de la tarjeta de Discord cuando los nombres de cuenta están desactivados: los cromos conseguidos hoy, o las horas jugadas la última semana o el último mes, sumadas entre las cuentas que muestra la tarjeta.",
+      "tip": "Lo que cuenta la segunda línea de la tarjeta de Discord cuando los nombres de cuenta están desactivados: los cromos conseguidos hoy, o las horas jugadas la última semana o el último mes, sumadas entre todas tus cuentas.",
       "choices": "0 cromos hoy | 1 horas la última semana | 2 horas el último mes"
     },
     "SendAroundHour": {

@@ -764,6 +764,12 @@ public sealed class WebHost : IAsyncDisposable {
 				return Results.Json(new { Message = $"You're on the newest release ({Build.Version})." });
 			}
 
+			// Pressing it is choosing that version after all, as 'update accept' is. Left skipped, a queued install
+			// was dropped at bedtime without a word, after the button had said it would go in.
+			if (UpdateCheck.Skipped != null) {
+				UpdateCheck.Skipped = null;
+			}
+
 			// "When I say update" set to wait: the button queues it for when the accounts are asleep, like 'update accept'.
 			if (Live.Global.UpdateWhenAsked == 1) {
 				return Results.Json(new { Message = UpdateCheck.Queue(UpdateCheck.Available).ToString() });
@@ -938,7 +944,10 @@ public sealed class WebHost : IAsyncDisposable {
 			// A max below the min would make every gap calculation nonsense; fix it rather than store it. This
 			// covered only the rep4rep gap for years while seven other pairs went unchecked - it walks them all
 			// now, from the same helper the console uses, so the two paths cannot drift apart again.
-			adjusted.AddRange(Settings.FixRanges(body));
+			// Whichever side was just changed keeps its number, as at the console.
+			adjusted.AddRange(Settings.FixRanges(body, [.. Settings.Bot
+				.Where(d => !Equals(Settings.Show(body, d), Settings.Show(bot.Cfg, d)))
+				.Select(static d => d.Name)]));
 
 			// Only fire side effects for settings that ACTUALLY changed. Running them all meant editing a note
 			// re-started an account the user had deliberately stopped.
@@ -1956,8 +1965,14 @@ public sealed class WebHost : IAsyncDisposable {
 		// Same as the console: a grind is not idling, and saying so contradicted the detail line beside it.
 		// Grouped with "playing" rather than given a chip of its own - it IS playing one game deliberately,
 		// which is exactly what that chip means, and the row's own text names the game and the time left.
-		if (b.Grinding) {
+		// Paused, or you're on it: the grind's game is off, and "playing" counted the account as working.
+		if (b.Grinding && !b.Paused && !b.PlayingBlocked) {
 			return "playing";
+		}
+
+		// Finishing up before it logs off - between things, not whatever human mode was about to start.
+		if (b.Stopping) {
+			return "break";
 		}
 
 		HumanMode? human = BotManager.ModuleOf<HumanMode>(b);

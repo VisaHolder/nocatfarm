@@ -116,6 +116,7 @@ public static partial class Commands {
 		new("plugins", "", GroupOther, "Which plugins are loaded, and where they came from."),
 		new("tutorial", "[topic]", GroupOther, "Getting started, in order, ticking off what you have already done.", "guide|setup"),
 		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does.", "?|h"),
+		new("screen", "off", GroupOther, "Turns this computer's screens off now, to save power - nocat.farm keeps running. Moving the mouse or pressing a key turns them back on. Works from Telegram and Discord too.", "monitor|display"),
 		new("theme", "[dark|light]", GroupOther, "Switch the dashboard between the dark and light themes. Without an argument it says which is on.", "dark|light"),
 		new("mini", "[on|off]", GroupOther, "Shrink the window to a small panel of your accounts - what each is doing, start and stop, the dashboard - or back to the full window."),
 		new("dashboard", "[anywhere on|off]", GroupOther, "The dashboard's address - on this PC, on your phone over the same wifi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. 'dashboard anywhere on' opens it from anywhere and answers with the link; 'dashboard anywhere off' closes it (the same as 'anywhere on|off').", "web|link"),
@@ -168,7 +169,8 @@ public static partial class Commands {
 	}
 
 	/// <summary>The command a typed word reaches - its name or any alias - or null when it reaches none.</summary>
-	public static CommandDef? Resolve(string typed) => All.FirstOrDefault(c => c.Matches(typed));
+	/// <remarks>Slashes off first, as the dispatcher takes them off: "//exit" from a chat has to meet the same guard as "exit".</remarks>
+	public static CommandDef? Resolve(string typed) => All.FirstOrDefault(c => c.Matches(typed.TrimStart('/')));
 
 	/// <summary>
 	/// A command line as it may be written to the log: the value of a secret setting ('set new SteamPassword x')
@@ -268,7 +270,10 @@ public static partial class Commands {
 		}
 
 		string[] parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-		string cmd = parts[0].ToLowerInvariant();
+
+		// With or without a slash, as 'help' and 'clear' already were: "/pause kylro" - the Telegram habit - typed in the
+		// window or the dashboard's Console answered "there's no '/pause' command".
+		string cmd = parts[0].TrimStart('/').ToLowerInvariant();
 		string[] rest = parts[1..];
 
 		try {
@@ -331,6 +336,7 @@ public static partial class Commands {
 				"stats" => StatsText(rest),
 				"answer" => Prompt.Answer(string.Join(' ', rest)) ? "answered" : "nothing is waiting for an answer",
 				"theme" or "dark" or "light" => Theme(cmd, rest),
+				"screen" or "monitor" or "display" => await ScreenAsync(rest).ConfigureAwait(false),
 				"dashboard" or "web" or "link" => (rest.Length > 0) && rest[0].Equals("unlock", StringComparison.OrdinalIgnoreCase)
 					? Unlock()
 					: (rest.Length > 0) && rest[0].ToLowerInvariant() is "anywhere" or "remote"
@@ -391,6 +397,12 @@ public static partial class Commands {
 			return new Said("Open from anywhere is off - the router forward is taken away, your wifi still works").ToString();
 		}
 
+		// No dashboard, nothing to forward: 'anywhere on' waited fifteen seconds and then said it was "still asking your
+		// router", which it never would.
+		if (!g.WebEnabled) {
+			return new Said("the dashboard is switched off (Web dashboard, in Settings) - turn it on and restart nocat.farm first").ToString();
+		}
+
 		if (what is "on" or "start" or "true") {
 			if (string.IsNullOrEmpty(g.WebPassword) || (g.WebPassword.Length < RemoteAccess.MinPasswordLength)) {
 				return new Said("needs a dashboard password of at least {0} characters first - anyone on the internet can try it. Set one on the Phone page, or: set WebPassword <password>", RemoteAccess.MinPasswordLength).ToString();
@@ -426,6 +438,43 @@ public static partial class Commands {
 		return RemoteAccess.Link is { } link ? new Said("Open from anywhere is on: {0} - sign in with the dashboard password", link).ToString()
 			: RemoteAccess.Problem is { } problem ? new Said("Open from anywhere is on, but {0}", problem).ToString()
 			: new Said("Open from anywhere is on - still asking your router; 'anywhere' shows the link in a moment").ToString();
+	}
+
+	/// <summary>
+	/// 'screen off': the monitors off, the way the power button's display-off does it. A second and a half first, so
+	/// letting go of Enter after typing it here doesn't wake them straight back up.
+	/// </summary>
+	private static async Task<string> ScreenAsync(string[] args) {
+		if ((args.Length == 0) || (args[0].ToLowerInvariant() is not ("off" or "sleep"))) {
+			return new Said("screen off turns the screens off - moving the mouse turns them back on").ToString();
+		}
+
+		if (!Platform.HasDesktop) {
+			return new Said("there's no screen here to turn off").ToString();
+		}
+
+		_ = Task.Run(async () => {
+			await Task.Delay(1500).ConfigureAwait(false);
+
+			try {
+				if (OperatingSystem.IsWindows()) {
+					Windows.WindowsIntegration.ScreenOff();
+				} else {
+					string[] how = OperatingSystem.IsMacOS() ? ["pmset", "displaysleepnow"] : ["xset", "dpms", "force", "off"];
+					System.Diagnostics.ProcessStartInfo start = new(how[0]) { UseShellExecute = false };
+					foreach (string a in how.Skip(1)) {
+						start.ArgumentList.Add(a);
+					}
+					System.Diagnostics.Process.Start(start)?.Dispose();
+				}
+			} catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException) {
+				Log.Warn(new Said("couldn't turn the screen off: {0}", e.Message));
+			}
+		});
+
+		await Task.CompletedTask.ConfigureAwait(false);
+
+		return new Said("screens off in a moment - move the mouse to turn them back on").ToString();
 	}
 
 	/// <summary>'clear' or 'cls', with or without a slash - handled by whichever screen it was typed in.</summary>
@@ -836,13 +885,19 @@ public static partial class Commands {
 			return "disabled";
 		}
 
-		if (b.Paused) {
+		// Only while it's running. A pause outlives a stop (and 'pause all' reaches stopped accounts too), and a signed-out
+		// account read "paused" in the status, on its card and on Telegram.
+		if (b.Paused && b.Running) {
 			return "paused";
 		}
 
 		if (b.State == BotState.Online) {
 			if (b.PlayingBlocked) {
 				return "stood down";
+			}
+
+			if (b.Stopping) {
+				return "finishing up";
 			}
 
 			if (b.IsFarming) {
@@ -1167,11 +1222,13 @@ public static partial class Commands {
 				}
 			}
 
-			List<(uint Game, int Weight)> weights = HumanMode.ParseWeights(bot.Cfg.GameWeights);
+			// What the day really picks from - the hunt's game included - split the way the picker splits it.
+			List<(uint Game, int Weight)> weights = human.Rotation;
+			List<double> shares = HumanMode.Shares(weights);
 
 			if (weights.Count > 0) {
-				int total = Math.Max(1, weights.Sum(static w => w.Weight));
-				sb.AppendLine("  set to play " + string.Join(", ", weights.Select(w => $"{GameNames.Of(w.Game)} {w.Weight * 100 / total}%")));
+				int[] mixed = Fmt.RoundToTotal([.. shares], 100);
+				sb.AppendLine("  set to play " + string.Join(", ", weights.Select((w, i) => $"{GameNames.Of(w.Game)} {mixed[i]}%")));
 
 				// What those percentages actually come to over a week.
 				//
@@ -1184,12 +1241,8 @@ public static partial class Commands {
 				if ((weights.Count > 1) && (pure > 0)) {
 					// Exact first, rounded once at the end. Rounding each share on its own printed a row that
 					// added up to 101, because a 77.5 and a 10.5 both went up.
-					double[] exact = weights
-						.Select((w, i) => {
-							double share = w.Weight * 100.0 / total;
-
-							return i == 0 ? pure + ((100 - pure) * share / 100) : (100 - pure) * share / 100;
-						})
+					double[] exact = shares
+						.Select((share, i) => i == 0 ? pure + ((100 - pure) * share / 100) : (100 - pure) * share / 100)
 						.ToArray();
 
 					int[] shown = Fmt.RoundToTotal(exact, 100);
@@ -2284,16 +2337,25 @@ public static partial class Commands {
 		if (args.Length == 1) {
 			return string.IsNullOrEmpty(bot.Cfg.CustomGameName)
 				? $"{bot.Name}: no custom name - it shows the real game. 'name {bot.Name} <text>' sets one."
-				: $"{bot.Name}: shows \"{bot.Cfg.CustomGameName}\"{(bot.Cfg.CustomGameNameEnabled ? "" : " (switched off under Settings)")} · 'name {bot.Name} off' clears it";
+				: $"{bot.Name}: shows \"{bot.Cfg.CustomGameName}\"{(bot.Cfg.LegitMode ? " (not while human mode is on)" : bot.Cfg.CustomGameNameEnabled ? "" : " (switched off under Settings)")} · 'name {bot.Name} off' clears it";
 		}
 
 		string text = string.Join(' ', args[1..]);
-		bot.Cfg.CustomGameName = text.Equals("off", StringComparison.OrdinalIgnoreCase) || text.Equals("clear", StringComparison.OrdinalIgnoreCase) ? "" : text;
+		bool clearing = text.Equals("off", StringComparison.OrdinalIgnoreCase) || text.Equals("clear", StringComparison.OrdinalIgnoreCase);
+		bot.Cfg.CustomGameName = clearing ? "" : text;
+
+		// Naming it is asking for it to be shown. With "Show a custom game name" switched off this answered "now showing"
+		// and the friends list went on showing the real game.
+		if (!clearing) {
+			bot.Cfg.CustomGameNameEnabled = true;
+		}
+
 		ConfigStore.SaveBot(bot.Name, bot.Cfg);
 		BotManager.ModuleOf<Idler>(bot)?.Assert();
 
-		return string.IsNullOrEmpty(bot.Cfg.CustomGameName)
-			? $"{bot.Name}: showing the real game again"
+		// Human mode always shows the real game (Bot.CustomName), so "now showing" would be untrue there.
+		return string.IsNullOrEmpty(bot.Cfg.CustomGameName) ? $"{bot.Name}: showing the real game again"
+			: bot.Cfg.LegitMode ? new Said("{0}: saved \"{1}\" - it shows once human mode is off; human mode always shows the real game", bot.Name, bot.Cfg.CustomGameName).ToString()
 			: $"{bot.Name}: now showing \"{bot.Cfg.CustomGameName}\"";
 	}
 
@@ -3157,6 +3219,11 @@ public static partial class Commands {
 			return $"There's no per-account setting called '{args[1]}'. 'config {bot.Name}' lists them all.";
 		}
 
+		// 'set kylro Rep4Rep' with the value left off answered "there's no setting called 'kylro'".
+		if ((bot != null) && (args.Length == 2) && (Settings.FindBot(args[1]) is { } missingValue)) {
+			return new Said("set {0} {1} <value> - the value is missing. It's {2} now.", bot.Name, missingValue.Name, Settings.Show(bot.Cfg, missingValue)).ToString();
+		}
+
 		SettingDef? globalDef = Settings.FindGlobal(args[0]);
 
 		if (globalDef == null) {
@@ -3226,9 +3293,11 @@ public static partial class Commands {
 			case "Enabled":
 				// "Disabled" has to actually stop it. It used to keep farming and commenting while the dashboard
 				// said disabled, which is the worst kind of wrong.
+				// Not running rather than Stopped: an account whose sign-in gave up (three wrong passwords, say) is Failed,
+				// and 'enable' answered "logging in" and left it there.
 				if (!bot.Cfg.Enabled) {
 					_ = bot.StopAsync();
-				} else if (bot.State == BotState.Stopped) {
+				} else if (!bot.Running) {
 					_ = bot.StartAsync();
 				}
 

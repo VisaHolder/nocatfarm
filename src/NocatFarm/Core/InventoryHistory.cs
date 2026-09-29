@@ -23,6 +23,7 @@ public static class InventoryHistory {
 	private static readonly Lock Gate = new();
 	private static DateTime _lastSave = DateTime.MinValue;
 	private static bool _loaded;
+	private static readonly Lock LoadGate = new();
 
 	private static string Path => System.IO.Path.Combine(ConfigStore.ConfigDir, "state", "invhistory.json");
 
@@ -117,35 +118,40 @@ public static class InventoryHistory {
 	}
 
 	private static void Load() {
-		if (_loaded) {
-			return;
-		}
-
-		_loaded = true;
-
-		try {
-			if (!File.Exists(Path)) {
+		// The check and the read under one lock. Marked loaded first and read after, a second caller in the meantime went
+		// on as if it were loaded - the dashboard and an account at once: the account found it loaded while the file was
+		// still being read, and its first save wrote a history holding one point over the month on disk.
+		lock (LoadGate) {
+			if (_loaded) {
 				return;
 			}
 
-			Dictionary<string, List<Point>>? saved = JsonSerializer.Deserialize<Dictionary<string, List<Point>>>(File.ReadAllText(Path));
+			_loaded = true;
 
-			if (saved != null) {
-				lock (Gate) {
-					foreach ((string bot, List<Point> points) in saved) {
-						Points[bot] = points;
+			try {
+				if (!File.Exists(Path)) {
+					return;
+				}
+
+				Dictionary<string, List<Point>>? saved = JsonSerializer.Deserialize<Dictionary<string, List<Point>>>(File.ReadAllText(Path));
+
+				if (saved != null) {
+					lock (Gate) {
+						foreach ((string bot, List<Point> points) in saved) {
+							Points[bot] = points;
+						}
 					}
 				}
-			}
-		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the inventory history: {0}", e.Message));
+			} catch (Exception e) {
+				Log.Debug(new Said("couldn't read the inventory history: {0}", e.Message));
 
-			// Moved aside, like the history files: the next save would write the new points over whatever it still held.
-			// If it can't even be moved, it isn't written over either.
-			try {
-				File.Move(Path, Path + ".bad", overwrite: true);
-			} catch (Exception move) when (move is IOException or UnauthorizedAccessException) {
-				_loadFailed = true;
+				// Moved aside, like the history files: the next save would write the new points over whatever it still held.
+				// If it can't even be moved, it isn't written over either.
+				try {
+					File.Move(Path, Path + ".bad", overwrite: true);
+				} catch (Exception move) when (move is IOException or UnauthorizedAccessException) {
+					_loadFailed = true;
+				}
 			}
 		}
 	}
@@ -166,7 +172,9 @@ public static class InventoryHistory {
 					return;
 				}
 
-				snapshot = new Dictionary<string, List<Point>>(Points, StringComparer.OrdinalIgnoreCase);
+				// The points themselves, not just the dictionary: the lists and their last value keep changing under
+				// the lock while the file is written outside it, and a list that changes mid-write throws or tears.
+				snapshot = Points.ToDictionary(static p => p.Key, static p => p.Value.Select(static x => new Point { At = x.At, Value = x.Value }).ToList(), StringComparer.OrdinalIgnoreCase);
 			}
 
 			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);

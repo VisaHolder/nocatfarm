@@ -181,7 +181,7 @@ bot; [Discord and Telegram](phone-and-notifications.md#discord-and-telegram) has
 
 **Start with Windows**: *Global settings → Running in the background → Start with Windows*.
 
-Hover over any setting, or type `help <setting>`, to see what it does.
+Tap or hover the ⓘ beside any setting, or type `help <setting>`, to see what it does.
 
 ## 6. Everyday commands
 
@@ -229,8 +229,8 @@ old version starts again, the log says so, and that version is skipped. Every re
 deliberately broken version, on Windows (installed and portable), Linux and a Mac.
 
 The message that a new version is out lists what changed, and so does the log after updating. With
-*Send install progress* on (it's off by default), Telegram and Discord get "Downloaded 1.4.9 - installing it now",
-then "Install complete - now on 1.4.9" with what's new, or that it failed or was undone and why.
+*Send install progress* on (it's off by default), Telegram and Discord get "Downloaded 1.5.4 - installing it now",
+then "Install complete - now on 1.5.4" with what's new, or that it failed or was undone and why.
 
 **The Linux and Mac zips** update themselves just like Windows, putting back included. **In Docker, or run as a
 Linux service** (systemd), it tells you when a new version is out and you update it yourself: see

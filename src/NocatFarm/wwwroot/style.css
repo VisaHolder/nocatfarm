@@ -933,6 +933,8 @@ button.ghost:hover:not(:disabled) { background: var(--line); }
 .wgame { font-weight: 400; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wname .wid { font-style: normal; font-size: 11px; color: var(--muted); opacity: .6; flex: none; }
 .wmainedit { width: 100%; min-width: 0; }
+.dbtnpick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dbtnpick input { flex: 1 1 160px; min-width: 0; }
 .whours { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 2px 0 12px; }
 .whours input { width: 64px; flex: 0 0 64px; }
 .wtag { background: var(--accent); color: var(--on-accent); font-size: 10px; letter-spacing: .5px; letter-spacing: .3px;

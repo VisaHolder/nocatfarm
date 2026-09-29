@@ -382,7 +382,15 @@ public static class Settings {
 	/// snapped back and nothing said why. The value someone explicitly asked for is never the one to overwrite.
 	/// </param>
 	/// <returns>One human-readable line per pair that had to be moved.</returns>
-	public static List<string> FixRanges(object config, string? justSet = null) {
+	public static List<string> FixRanges(object config, string? justSet = null) =>
+		FixRanges(config, justSet == null ? [] : [justSet]);
+
+	/// <summary>
+	/// The same, for a save that changed several settings at once - the dashboard's. Every "longest" in
+	/// <paramref name="justSet"/> keeps its number and pulls its "shortest" down; it used to be given no names, so a
+	/// longest lowered below its shortest there snapped back up, while the same change typed at the console stuck.
+	/// </summary>
+	public static List<string> FixRanges(object config, IReadOnlyCollection<string> justSet) {
 		List<string> adjusted = [];
 
 		foreach ((string min, string max) in RangePairs) {
@@ -390,8 +398,8 @@ public static class Settings {
 				continue;
 			}
 
-			// Move the side the user did NOT just touch.
-			bool moveMin = string.Equals(justSet, max, StringComparison.Ordinal);
+			// Move the side the user did NOT just touch - both touched, the longest gives way as before.
+			bool moveMin = justSet.Contains(max, StringComparer.Ordinal) && !justSet.Contains(min, StringComparer.Ordinal);
 			string moving = moveMin ? min : max;
 			int target = moveMin ? hi : lo;
 
@@ -575,7 +583,7 @@ public static class Settings {
 			"While nocat.farm is open, your Discord profile shows Playing nocat.farm - like a game - with what it's doing and the cards it got today. Needs the Discord app open on this PC, and Activity Privacy in Discord letting it share what you play.",
 			Advanced: true),
 		new("DiscordPresenceAccounts", "Accounts it shows", SecDiscordProfile, SettingKind.Text,
-			"Which accounts the Discord card counts. Leave it empty for every account that isn't in human mode, type all for every account, or list names separated by commas.",
+			"Which accounts the card names and describes. Automatic is every account not in human mode, or tick the ones you want. The counts on the card always include every account.",
 			Advanced: true, Placeholder: "every account not in human mode"),
 		new("DiscordFeatured", "Featured account", SecDiscordProfile, SettingKind.Text,
 			"The account whose Steam avatar sits on the corner of the nocat.farm logo on your Discord card - clicking it opens that account's Steam profile. Any account works, human mode too. Empty uses the first account shown.",
@@ -584,10 +592,10 @@ public static class Settings {
 			"The second line of the Discord card lists the accounts by their Steam names, like kylro · old. Off shows what Second line picks instead.",
 			Advanced: true),
 		new("DiscordSecondLine", "Second line", SecDiscordProfile, SettingKind.Choice,
-			"What the second line of the Discord card counts when account names are off: the cards dropped today, or the hours played in the past week or the past month - added up over the accounts the card shows.",
+			"What the second line of the Discord card counts when account names are off: the cards dropped today, or the hours played in the past week or the past month - added up over all your accounts.",
 			Advanced: true, Choices: "0 cards today | 1 hours past week | 2 hours past month"),
 		new("DiscordShowCounter", "Show accounts online", SecDiscordProfile, SettingKind.Bool,
-			"Adds how many of the shown accounts are signed in to the Discord card, like \"2 accounts on\" or \"2 of 3 accounts on\".",
+			"Adds how many of your accounts are signed in to the Discord card - all of them, including ones the card doesn't name - like \"3 accounts connected\" or \"2 of 3 accounts connected\".",
 			Advanced: true),
 		new("DiscordShowAvatar", "Show an account's avatar", SecDiscordProfile, SettingKind.Bool,
 			"Puts the first shown account's Steam avatar in the corner of the nocat.farm logo. Hovering it shows the name, clicking it opens the Steam profile.",
@@ -596,10 +604,10 @@ public static class Settings {
 			"The Discord card counts up from when nocat.farm was opened, like a game's play time.",
 			Advanced: true),
 		new("DiscordButton1", "Button 1", SecDiscordProfile, SettingKind.Text,
-			"The first of the two buttons Discord allows on the card. github for a Get nocat.farm button, an account name for a link to its Steam profile, your own as Label | https://link, or empty for none. Other people see the buttons - Discord doesn't show your own to you.",
+			"The first of the two buttons Discord allows on the card: Get nocat.farm, an account's Steam page, or your own link with your own text. Other people see the buttons - Discord doesn't show your own to you.",
 			Advanced: true, Placeholder: "github"),
 		new("DiscordButton2", "Button 2", SecDiscordProfile, SettingKind.Text,
-			"The second button, the same way: github, an account name, Label | https://link, or empty for none.",
+			"The second button, the same way: Get nocat.farm, an account's Steam page, your own link, or none.",
 			Advanced: true, Placeholder: "an account name"),
 		// ── Pop-ups ──
 		new("TrayNotifications", "Show pop-ups", SecPopups, SettingKind.Bool,
@@ -711,10 +719,10 @@ public static class Settings {
 			"Deletes log files older than this many days. 0 keeps them forever.",
 			Advanced: true, Min: 0, Max: 3650),
 		new("DailyReportEnabled", "Daily summary in the log", SecLogging, SettingKind.Bool,
-			"Writes a daily summary in the log of what each account earned in the last 24 hours: hours played, cards and rep4rep comments. Type stats to see it any time.",
+			"Writes a daily summary in the log of what each account earned in the last 24 hours: hours banked, cards and rep4rep comments, and everything banked so far. Every running game counts, the way Steam counts it - 32 games for an hour is 32 hours. Type stats to see it any time.",
 			Advanced: true),
 		new("DailyReportHour", "Summary time · hour", SecLogging, SettingKind.Int,
-			"The hour the daily summary is written, in local time. Only used when \"Daily summary in the log\" is on.",
+			"The hour the daily summary is written, in local time - and sent, when \"Send the daily summary\" is on.",
 			Min: 0, Max: 23, Advanced: true),
 		new("DailyReportMinute", "Summary time · minute", SecLogging, SettingKind.Int,
 			"The minute past the hour the daily summary is written. Hour 9 and minute 30 means 09:30.",

@@ -44,6 +44,33 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	private int _rateLimitRun;   // consecutive Steam rate-limits, reset on a good post
 	private DateTime _capNoticed = DateTime.MinValue;   // when the cap was last announced on screen
 
+	/// <summary>One comment at a time from this account - the scheduled loop and the dashboard's "Post now" alike.</summary>
+	/// <remarks>
+	/// Both used to check the cap and then post on their own. At 9 of 10, the loop and a click could each see room for
+	/// one more and both post - 11 in a day - or both pick the same task and put the same comment on one profile twice.
+	/// Whoever holds this does the last checks and the post; the other sees the result.
+	/// </remarks>
+	private readonly SemaphoreSlim _posting = new(1, 1);
+
+	/// <summary>
+	/// The state, read from disk the first time anybody needs it. Only the first read is kept: the loop and a
+	/// dashboard action could both load it at once, and the slower one replaced the copy the other had just counted
+	/// a comment into - so that comment vanished from the 24h count and the cap let one too many through.
+	/// </summary>
+	private async Task<Rep4RepState?> StateAsync() {
+		if (_state is { } have) {
+			return have;
+		}
+
+		Rep4RepState? loaded = await Rep4RepState.LoadAsync(Bot.Name).ConfigureAwait(false);
+
+		if (loaded == null) {
+			return null;   // unreadable - the callers hold off rather than guess zero
+		}
+
+		return Interlocked.CompareExchange(ref _state, loaded, null) ?? loaded;
+	}
+
 	public override string Name => "rep4rep";
 	public override string Status => _status;
 
@@ -206,7 +233,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			return;
 		}
 
-		_state = await Rep4RepState.LoadAsync(Bot.Name).ConfigureAwait(false);
+		await StateAsync().ConfigureAwait(false);
 
 		// Before the settle-in wait, not after it.
 		//
@@ -301,7 +328,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		}
 
 		// A state file we couldn't read means we don't know today's count. Retry the read; never guess zero.
-		_state ??= await Rep4RepState.LoadAsync(Bot.Name).ConfigureAwait(false);
+		await StateAsync().ConfigureAwait(false);
 
 		if (_state == null) {
 			_status = new Said("state unreadable - holding");
@@ -320,6 +347,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		}
 
 		int posted = _state.PostsInLast24h();
+		DateTime? lastSeen = _state.LastPost();   // to notice a post from the button while this step was fetching
 
 		if (posted >= Cap) {
 			_status = new Said("{0}/{1} today - done", posted, Cap);
@@ -377,39 +405,53 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			return NoTaskRetryMinutes * 60;
 		}
 
-		// Final cap check the instant before posting: the count above was taken before the window/gap/session and
-		// task-fetch steps, and a dashboard "post now" could have spent a slot since. This is the one number that
-		// gets an account comment-banned, so it's re-checked here too.
-		if (_state.PostsInLast24h() >= Cap) {
-			_status = new Said("{0}/{1} today - done", Cap, Cap);
+		// One post at a time from this account - see _posting. Held through the retry as well: the retry is the
+		// same comment, and a click in between would be a second one inside the gap.
+		await _posting.WaitAsync(ct).ConfigureAwait(false);
 
-			return CapWaitSeconds();
+		try {
+			// Final cap check the instant before posting: the count above was taken before the window/gap/session and
+			// task-fetch steps, and a dashboard "post now" could have spent a slot since. This is the one number that
+			// gets an account comment-banned, so it's re-checked here too.
+			if (_state.PostsInLast24h() >= Cap) {
+				_status = new Said("{0}/{1} today - done", Cap, Cap);
+
+				return CapWaitSeconds();
+			}
+
+			// "Post now" went out while this step was fetching, or rested the account, or took this very task. Look
+			// again in a minute: the next step measures the gap from that post instead of commenting straight after it.
+			if (_state.IsBlocked || (_state.LastPost() != lastSeen) || _state.HasPostedTask(task.TaskId)) {
+				return 60;
+			}
+
+			_status = new Said("commenting on {0}", task.TargetName);
+			(Outcome outcome, string? error) = await PostCommentAsync(task, ct).ConfigureAwait(false);
+
+			switch (outcome) {
+				case Outcome.RateLimited:
+					return await OnRateLimitedAsync().ConfigureAwait(false);
+				case Outcome.DailyLimit:
+					return await OnDailyLimitAsync().ConfigureAwait(false);
+				case Outcome.AccountBlocked:
+					return await BlockAccountAsync("Steam refused", error).ConfigureAwait(false);
+				case Outcome.Unknown:
+					// Steam may well have posted it. A retry would put a SECOND identical comment on the same profile,
+					// which is exactly the pattern being avoided - so count it, leave the task alone, carry on.
+					await CountPostAsync(task).ConfigureAwait(false);
+					Log.Warn(new Said("no reply for {0} - counting it as posted", task.TargetName), Bot.Name);
+
+					return NextGapSeconds();
+				case Outcome.Refused:
+					return Bot.Cfg.Rep4RepRetryRefused
+						? await RetryOnceAsync(task, error, ct).ConfigureAwait(false)
+						: await OnTargetRefusedAsync(task).ConfigureAwait(false);
+			}
+
+			return await CreditAsync(task, ct).ConfigureAwait(false);
+		} finally {
+			_posting.Release();
 		}
-
-		_status = new Said("commenting on {0}", task.TargetName);
-		(Outcome outcome, string? error) = await PostCommentAsync(task, ct).ConfigureAwait(false);
-
-		switch (outcome) {
-			case Outcome.RateLimited:
-				return await OnRateLimitedAsync().ConfigureAwait(false);
-			case Outcome.DailyLimit:
-				return await OnDailyLimitAsync().ConfigureAwait(false);
-			case Outcome.AccountBlocked:
-				return await BlockAccountAsync("Steam refused", error).ConfigureAwait(false);
-			case Outcome.Unknown:
-				// Steam may well have posted it. A retry would put a SECOND identical comment on the same profile,
-				// which is exactly the pattern being avoided - so count it, leave the task alone, carry on.
-				await CountPostAsync(task).ConfigureAwait(false);
-				Log.Warn(new Said("no reply for {0} - counting it as posted", task.TargetName), Bot.Name);
-
-				return NextGapSeconds();
-			case Outcome.Refused:
-				return Bot.Cfg.Rep4RepRetryRefused
-					? await RetryOnceAsync(task, error, ct).ConfigureAwait(false)
-					: await OnTargetRefusedAsync(task).ConfigureAwait(false);
-		}
-
-		return await CreditAsync(task, ct).ConfigureAwait(false);
 	}
 
 	private async Task<int> RetryOnceAsync(Rep4RepTask task, string? error, CancellationToken ct) {
@@ -850,80 +892,95 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			return "That account isn't logged in.";
 		}
 
-		_state ??= await Rep4RepState.LoadAsync(Bot.Name).ConfigureAwait(false);
-
-		if (_state == null) {
-			return "Can't read this account's commenting history, so it won't post.";
+		// The scheduled loop may be posting this very minute. Told rather than queued: its retry can take minutes, and a
+		// click that goes through long after it was made - into whatever the count is by then - isn't what was asked for.
+		if (!await _posting.WaitAsync(0, ct).ConfigureAwait(false)) {
+			return new Said("this account is posting a comment right now - try again in a few minutes").ToString();
 		}
 
-		if (_state.PostsInLast24h() >= Cap) {
-			return $"Already at {Cap} comments in the last 24 hours - posting more is what gets accounts blocked.";
+		try {
+			await StateAsync().ConfigureAwait(false);
+
+			if (_state == null) {
+				return "Can't read this account's commenting history, so it won't post.";
+			}
+
+			if (_state.PostsInLast24h() >= Cap) {
+				return $"Already at {Cap} comments in the last 24 hours - posting more is what gets accounts blocked.";
+			}
+
+			// Resting after refusals, or after Steam's daily limit, is the same kind of ceiling as the cap - posting through
+			// it is how an account goes from refused comments to a comment ban.
+			if (_state.IsBlocked) {
+				DateTime until = new(_state.BlockedUntil, DateTimeKind.Utc);
+
+				return new Said("this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it", Fmt.Clock(until), Bot.Name).ToString();
+			}
+
+			_profileId ??= await _api.ResolveProfileIdAsync(Bot.SteamId, Live.Global.Rep4RepAutoAddProfiles, ct).ConfigureAwait(false);
+
+			if (_profileId == null) {
+				return "That account isn't registered with rep4rep yet.";
+			}
+
+			// Look in the batch the user was actually shown FIRST.
+			//
+			// rep4rep's /tasks endpoint does not return a stable list - it hands back a fresh random sample every
+			// single call. Two calls seconds apart share barely any ids. So re-fetching and matching on taskId, which
+			// is what this used to do, missed almost every time and reported the task as gone when it was not.
+			Rep4RepTask? task = FindShown(taskId);
+
+			if (task == null) {
+				// Not in the cache - a restart, or a page left open a very long time. A fresh batch is the only thing
+				// left to try; the id usually will not be in it, which is exactly what the message below says.
+				List<Rep4RepTask> batch = await _api.GetTasksAsync(_profileId, ct).ConfigureAwait(false);
+				Remember(batch);
+
+				task = batch.FirstOrDefault(t => t.TaskId == taskId);
+			}
+
+			if (task == null) {
+				return "That one isn't in rep4rep's current batch any more. Refresh the list and pick another.";
+			}
+
+			// A second click on the same row, after the first one went through: the same comment on the same profile again.
+			if (_state.HasPostedTask(task.TaskId)) {
+				return new Said("already commented for that task - pick another").ToString();
+			}
+
+			(Outcome outcome, string? error) = await PostCommentAsync(task, ct).ConfigureAwait(false);
+
+			if (outcome is Outcome.Refused or Outcome.AccountBlocked) {
+				return $"Steam refused it{(string.IsNullOrEmpty(error) ? "" : $": {error}")}";
+			}
+
+			if (outcome == Outcome.RateLimited) {
+				return "Steam is rate-limiting this account right now.";
+			}
+
+			// Nothing was posted, so nothing is claimed - and the account rests the day, exactly as when the scheduled
+			// path meets it. Falling through claimed the credit for a comment that never went up and carried on posting.
+			if (outcome == Outcome.DailyLimit) {
+				await OnDailyLimitAsync().ConfigureAwait(false);
+
+				return new Said("Steam's daily limit on comments to non-friends is reached - nothing was posted, and this account rests ~24h").ToString();
+			}
+
+			// The scheduled path deliberately counts an unconfirmed post but never credits it, because Steam may
+			// well have posted it and claiming the credit for something that might not exist is how an account's
+			// numbers drift out of step with rep4rep's. The button has to behave the same way, not report success.
+			if (outcome == Outcome.Unknown) {
+				await CountPostAsync(task).ConfigureAwait(false);
+
+				return $"Sent it to {task.TargetName}, but Steam never answered - it counts against the daily cap and hasn't been claimed with rep4rep. Check the profile.";
+			}
+
+			await CreditAsync(task, ct).ConfigureAwait(false);
+
+			return $"Posted on {task.TargetName}.";
+		} finally {
+			_posting.Release();
 		}
-
-		// Resting after refusals, or after Steam's daily limit, is the same kind of ceiling as the cap - posting through
-		// it is how an account goes from refused comments to a comment ban.
-		if (_state.IsBlocked) {
-			DateTime until = new(_state.BlockedUntil, DateTimeKind.Utc);
-
-			return new Said("this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it", Fmt.Clock(until), Bot.Name).ToString();
-		}
-
-		_profileId ??= await _api.ResolveProfileIdAsync(Bot.SteamId, Live.Global.Rep4RepAutoAddProfiles, ct).ConfigureAwait(false);
-
-		if (_profileId == null) {
-			return "That account isn't registered with rep4rep yet.";
-		}
-
-		// Look in the batch the user was actually shown FIRST.
-		//
-		// rep4rep's /tasks endpoint does not return a stable list - it hands back a fresh random sample every
-		// single call. Two calls seconds apart share barely any ids. So re-fetching and matching on taskId, which
-		// is what this used to do, missed almost every time and reported the task as gone when it was not.
-		Rep4RepTask? task = FindShown(taskId);
-
-		if (task == null) {
-			// Not in the cache - a restart, or a page left open a very long time. A fresh batch is the only thing
-			// left to try; the id usually will not be in it, which is exactly what the message below says.
-			List<Rep4RepTask> batch = await _api.GetTasksAsync(_profileId, ct).ConfigureAwait(false);
-			Remember(batch);
-
-			task = batch.FirstOrDefault(t => t.TaskId == taskId);
-		}
-
-		if (task == null) {
-			return "That one isn't in rep4rep's current batch any more. Refresh the list and pick another.";
-		}
-
-		(Outcome outcome, string? error) = await PostCommentAsync(task, ct).ConfigureAwait(false);
-
-		if (outcome is Outcome.Refused or Outcome.AccountBlocked) {
-			return $"Steam refused it{(string.IsNullOrEmpty(error) ? "" : $": {error}")}";
-		}
-
-		if (outcome == Outcome.RateLimited) {
-			return "Steam is rate-limiting this account right now.";
-		}
-
-		// Nothing was posted, so nothing is claimed - and the account rests the day, exactly as when the scheduled
-		// path meets it. Falling through claimed the credit for a comment that never went up and carried on posting.
-		if (outcome == Outcome.DailyLimit) {
-			await OnDailyLimitAsync().ConfigureAwait(false);
-
-			return new Said("Steam's daily limit on comments to non-friends is reached - nothing was posted, and this account rests ~24h").ToString();
-		}
-
-		// The scheduled path deliberately counts an unconfirmed post but never credits it, because Steam may
-		// well have posted it and claiming the credit for something that might not exist is how an account's
-		// numbers drift out of step with rep4rep's. The button has to behave the same way, not report success.
-		if (outcome == Outcome.Unknown) {
-			await CountPostAsync(task).ConfigureAwait(false);
-
-			return $"Sent it to {task.TargetName}, but Steam never answered - it counts against the daily cap and hasn't been claimed with rep4rep. Check the profile.";
-		}
-
-		await CreditAsync(task, ct).ConfigureAwait(false);
-
-		return $"Posted on {task.TargetName}.";
 	}
 
 	/// <summary>Release a cooldown / strike streak and let this account try again immediately.</summary>
@@ -931,7 +988,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	public async Task<bool> ClearHoldAsync() {
 		// Read from disk if the loop hasn't yet (it waits for settling in first). Returning on an unloaded state did
 		// nothing at all while the command still said the hold was cleared.
-		_state ??= await Rep4RepState.LoadAsync(Bot.Name).ConfigureAwait(false);
+		await StateAsync().ConfigureAwait(false);
 
 		if (_state == null) {
 			return false;
@@ -955,7 +1012,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	/// <summary>Pause commenting for a full 24h and come back at a clean baseline (rolling window emptied).</summary>
 	/// <returns>Whether the rest was set - false when this account's commenting history can't be read.</returns>
 	public async Task<bool> RestFullDayAsync(string reason) {
-		_state ??= await Rep4RepState.LoadAsync(Bot.Name).ConfigureAwait(false);
+		await StateAsync().ConfigureAwait(false);
 
 		if (_state == null) {
 			return false;

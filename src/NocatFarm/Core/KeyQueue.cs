@@ -35,6 +35,7 @@ public static class KeyQueue {
 	private static readonly Lock Gate = new();
 	private static readonly Random Rng = new();
 	private static bool _loaded;
+	private static readonly Lock LoadGate = new();
 
 	/// <summary>
 	/// Set when keys.json existed but could not be read. Saving then would write the in-memory queue - missing
@@ -186,37 +187,43 @@ public static class KeyQueue {
 	}
 
 	private static void Load() {
-		if (_loaded) {
-			return;
-		}
-
-		_loaded = true;
-
-		try {
-			if (!File.Exists(Path)) {
+		// The check and the read under one lock. Marked loaded first and read after, a second caller in the meantime went
+		// on as if it were loaded - the Upkeep driver's first look and a 'redeem' together: the redeem found it loaded
+		// while the file was still being read, and saved a queue holding only its own key over every key waiting in
+		// keys.json.
+		lock (LoadGate) {
+			if (_loaded) {
 				return;
 			}
 
-			// Steam keys are worth money, so the queue is encrypted like the other secrets. A plain file from before
-			// that is read as-is and written back encrypted.
-			string stored = File.ReadAllText(Path);
-			bool plain = Secrets.IsPlain(stored) && stored.TrimStart().StartsWith('[');
-			List<Entry>? saved = JsonSerializer.Deserialize<List<Entry>>(plain ? stored : Secrets.Unprotect(stored));
+			_loaded = true;
 
-			if (saved != null) {
-				lock (Gate) {
-					Pending.AddRange(saved);
+			try {
+				if (!File.Exists(Path)) {
+					return;
 				}
-			}
 
-			if (plain && Secrets.Available && !SelfUpdate.OnTrial) {
-				Save();
+				// Steam keys are worth money, so the queue is encrypted like the other secrets. A plain file from before
+				// that is read as-is and written back encrypted.
+				string stored = File.ReadAllText(Path);
+				bool plain = Secrets.IsPlain(stored) && stored.TrimStart().StartsWith('[');
+				List<Entry>? saved = JsonSerializer.Deserialize<List<Entry>>(plain ? stored : Secrets.Unprotect(stored));
+
+				if (saved != null) {
+					lock (Gate) {
+						Pending.AddRange(saved);
+					}
+				}
+
+				if (plain && Secrets.Available && !SelfUpdate.OnTrial) {
+					Save();
+				}
+			} catch (Exception e) {
+				_loadFailed = true;
+				// Not the error text: for an encrypted file it's the file itself, a screen of gibberish.
+				Log.Warn(new Said("key queue unreadable (newer version or damaged) - left as is"));
+				Log.Debug(new Said("key queue: {0}", e.Message));
 			}
-		} catch (Exception e) {
-			_loadFailed = true;
-			// Not the error text: for an encrypted file it's the file itself, a screen of gibberish.
-			Log.Warn(new Said("key queue unreadable (newer version or damaged) - left as is"));
-			Log.Debug(new Said("key queue: {0}", e.Message));
 		}
 	}
 

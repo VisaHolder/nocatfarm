@@ -29,7 +29,8 @@ public readonly record struct BotStatus(
 	public bool AtTheKeyboard { get; private init; }
 
 	public static BotStatus Of(Bot bot) {
-		if (!bot.IsOnline) {
+		// Offline, or finishing up before it logs off: the account's own status says it - not what human mode was up to.
+		if (!bot.IsOnline || bot.Stopping) {
 			return new BotStatus(new Said(bot.StatusText), default, default, default, "", default, 0, 0, 0, 0);
 		}
 
@@ -42,7 +43,9 @@ public readonly record struct BotStatus(
 		int done = 0, total = 0, dayDone = 0, dayTotal = 0;
 		bool playing = false;
 
-		if (bot.Grinding) {
+		// Not while paused or while you're on it: the grind's game is off then, and "grinding" on every screen said
+		// otherwise - the pause further down is what's true.
+		if (bot.Grinding && !bot.Paused && !bot.PlayingBlocked) {
 			doing = bot.GrindDropsLeft > 0
 				? new Said("going for {0} card drop(s) in {1}", bot.GrindDropsLeft, GameNames.Of(bot.GrindGame))
 				: new Said("grinding {0}", GameNames.Of(bot.GrindGame));

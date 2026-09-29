@@ -228,10 +228,30 @@ public static partial class Looting {
 		List<Item> allowed = all.Where(i => !banned.Contains(i.App)).ToList();
 		int blocked = all.Count - allowed.Count;
 
+		// Claimed before the waiting trades are read, not after: another send or a sale that already made its offer
+		// or listing has released its claim by then, so its trade shows up below - see Bot.ClaimItems.
+		List<Item> wanted = allowed.Where(i => WantedType(i.Type, types)).ToList();
+		HashSet<ulong> claimed = bot.ClaimItems(wanted.Select(static i => i.AssetId));
+
+		try {
+			return await SendClaimedAsync(bot, master, token, types, all, allowed, banned, blocked,
+				wanted.Where(i => claimed.Contains(i.AssetId)).ToList(), wanted.Count - claimed.Count, ct).ConfigureAwait(false);
+		} finally {
+			bot.ReleaseItems(claimed);
+		}
+	}
+
+	private static async Task<string> SendClaimedAsync(Bot bot, ulong master, string token, string types, List<Item> all, List<Item> allowed,
+		HashSet<uint> banned, int blocked, List<Item> claimed, int busy, CancellationToken ct) {
 		// Nothing already promised in a trade that's waiting - sending it would quietly take it out of that trade. When
 		// Steam won't say, the send goes ahead: it only goes to your own account.
 		HashSet<ulong> promised = await TradeOffers.PromisedAsync(bot, ct).ConfigureAwait(false) ?? [];
-		List<Item> sending = allowed.Where(i => WantedType(i.Type, types) && !promised.Contains(i.AssetId)).ToList();
+		List<Item> sending = claimed.Where(i => !promised.Contains(i.AssetId)).ToList();
+
+		// Everything wanted is being sent or sold by something else of this account at this moment.
+		if ((sending.Count == 0) && (busy > 0)) {
+			return new Said("{0}: its items are being sent or sold right now - try again in a few minutes", bot.Name).ToString();
+		}
 
 		if (sending.Count == 0) {
 			// Blame the ban only when the ban is actually what stopped it. Asked for booster packs on an account
@@ -278,12 +298,14 @@ public static partial class Looting {
 				sent += more;
 
 				if (learned.Count > 0) {
-					foreach (uint app in learned) {
-						cfg.InventoryIgnoreGames.Add(app);
-						banned.Add(app);
-					}
+					banned.UnionWith(learned);
 
-					Config.ConfigStore.SaveBot(bot.Name, cfg);
+					// Onto the settings in force NOW, and as a new list. A send takes minutes, and the dashboard can save
+					// the account meanwhile: the copy read when the send began is then an old one, and saving it put the
+					// old settings back over the new. Changed in place, the list could also be mid-read by a save.
+					BotConfig now = bot.Cfg;
+					now.InventoryIgnoreGames = [.. now.InventoryIgnoreGames, .. learned.Where(a => !now.InventoryIgnoreGames.Contains(a))];
+					Config.ConfigStore.SaveBot(bot.Name, now);
 					Log.Attention(new Said("can't trade {0} items (banned there?) - left out from now on",
 						string.Join(", ", learned.Select(GameNames.Of))), bot.Name);
 					blocked += batch.Count(i => learned.Contains(i.App));

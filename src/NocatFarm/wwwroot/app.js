@@ -948,7 +948,7 @@ function renderHistory() {
 
   // hours banked, per day
   const minutesIn = histSum(m.minutes.slice(m.off));
-  panels.push(panel(t('Hours banked'), t('Time with a game running, however many games were running at once.'), esc(hm(minutesIn)), esc(inDays),
+  panels.push(panel(t('Hours banked'), t('Every running game counts, the way Steam counts it - 32 games for an hour is 32 hours.'), esc(hm(minutesIn)), esc(inDays),
     minutesIn ? chart('hours') : empty(tf('Nothing played in the last {0} days.', m.n))));
   draws.hours = (w, h) => histBars(w, h, m, m.minutes, histMinuteAxis, (i) => {
     const top = Object.entries(m.games[i]).sort((a, b) => b[1] - a[1]).slice(0, 3);
@@ -957,7 +957,7 @@ function renderHistory() {
 
   // hours per game
   const games = histGames(m);
-  panels.push(panel(t('Hours by game'), t('Steam counts the time for every game that is running, so several at once add up to more than the hours banked.'),
+  panels.push(panel(t('Hours by game'), t('How the hours banked split between the games.'),
     games ? esc(games.count === 1 ? t('one game') : tf('{0} games', games.count)) : '', games ? esc(inDays) : '',
     games ? games.html : empty(tf('Nothing played in the last {0} days.', m.n))));
 
@@ -2052,6 +2052,8 @@ const LANGUAGES = [
 
 /// Chosen from the tutorial: saved, loaded and applied at once, so the very next step is already translated.
 async function pickTutorialLanguage(code) {
+  // Read again first, like every other save: the copy from when the page opened would put back what changed since.
+  await loadConfig().catch(() => {});
   if (config && config.Global) {
     config.Global.Language = code;
     await post('/api/config', config.Global).catch(() => {});
@@ -3967,7 +3969,9 @@ function renderRep4RepPacing() {
 async function quickSet(bot, key, value) {
   // Reload first. Spreading an undefined config (an account added since the page last loaded) produced a
   // body with ONE key, and the server materialised every other field as its default - wiping the Steam login.
-  if (!config || !config.Bots[bot]) await loadConfig();
+  // And always, not only when the account is missing: the copy from when the page opened put back anything changed
+  // since - '/set kylro Rep4Rep off' from Telegram, then a new gap here, and rep4rep was on again.
+  await loadConfig().catch(() => {});
   const base = config && config.Bots[bot];
   if (!base) { toast(t('That account is not loaded yet - try again in a second'), true); return; }
 
@@ -4678,7 +4682,10 @@ function parseWeights(spec) {
 // 70/10/10/10 - and its weight and daily cap were two settings under Achievements, behind Show advanced.
 function huntRow() {
   const values = settingsValues() || {};
-  if (settingsTarget === GLOBAL || !liveValue('LegitMode', values) || !(Number(liveValue('AchievementBoost', values)) > 0)) return null;
+  // The hunt only runs with "Earn achievements over time" on as well (AchievementBoost.On) - without it the row showed a
+  // share the day never gave, and the side games looked smaller than they were.
+  if (settingsTarget === GLOBAL || !liveValue('LegitMode', values) || !(Number(liveValue('AchievementBoost', values)) > 0)
+    || !liveValue('UnlockAchievements', values)) return null;
   return { weight: Math.max(1, Math.min(95, Number(liveValue('BoostWeight', values)) || 15)), hours: Number(liveValue('BoostHoursPerDay', values)) || 0 };
 }
 
@@ -5051,13 +5058,76 @@ function editBool(name, el) {
   setTimeout(() => { const i = $('guardConfirm'); if (i) i.focus(); }, 30);
 }
 
+// The Discord card's account and button settings as choices - they were boxes to type an account name, a code word
+// ("github") or "Label | https://link" into, and nobody could tell what went in them.
+function discordControl(def, cur, id) {
+  const bots = (state && state.Bots) || [];
+  const who = (b) => (b.SteamName && b.SteamName !== b.Name ? `${b.Name} (${b.SteamName})` : b.Name);
+  const v = String(cur || '').trim();
+
+  if (def.Name === 'DiscordFeatured') {
+    return `<select id="${id}" data-setting="${def.Name}" onchange="editAndRender('${def.Name}',this.value)">
+      <option value="" ${v ? '' : 'selected'}>${esc(t('the first account shown'))}</option>
+      ${bots.map((b) => `<option value="${esc(b.Name)}" ${v.toLowerCase() === b.Name.toLowerCase() ? 'selected' : ''}>${esc(who(b))}</option>`).join('')}</select>`;
+  }
+
+  if (def.Name === 'DiscordPresenceAccounts') {
+    const auto = v === '';
+    const listed = v.toLowerCase() === 'all' ? bots.map((b) => b.Name.toLowerCase()) : v.split(/[, ]+/).filter(Boolean).map((n) => n.toLowerCase());
+    return `<div class="pills" data-setting="${def.Name}">
+      <span class="p ${auto ? 'on' : ''}" onclick="editAndRender('${def.Name}','')">${esc(t('every account not in human mode'))}</span>
+      ${bots.map((b) => `<span class="p ${!auto && listed.includes(b.Name.toLowerCase()) ? 'on' : ''}" onclick="toggleShownAccount('${esc(b.Name)}')">${esc(b.Name)}</span>`).join('')}</div>`;
+  }
+
+  if (def.Name === 'DiscordButton1' || def.Name === 'DiscordButton2') {
+    const bar = v.indexOf('|');
+    const acct = bots.find((b) => b.Name.toLowerCase() === v.toLowerCase());
+    const pick = !v ? '' : v.toLowerCase() === 'github' ? 'github' : acct ? acct.Name : 'custom';
+    const label = bar > 0 ? v.slice(0, bar).trim() : '';
+    const link = bar > 0 ? v.slice(bar + 1).trim() : '';
+    return `<div class="dbtnpick" data-setting="${def.Name}">
+      <select id="${id}" onchange="discordButtonPick('${def.Name}',this.value)">
+        <option value="" ${pick === '' ? 'selected' : ''}>${esc(t('none'))}</option>
+        <option value="github" ${pick === 'github' ? 'selected' : ''}>${esc(t('Get nocat.farm'))}</option>
+        ${bots.map((b) => `<option value="${esc(b.Name)}" ${pick === b.Name ? 'selected' : ''}>${esc(tf('{0} on Steam', who(b)))}</option>`).join('')}
+        <option value="custom" ${pick === 'custom' ? 'selected' : ''}>${esc(t('Your own link'))}</option>
+      </select>
+      ${pick === 'custom' ? `<input type="text" id="${id}-label" placeholder="${esc(t('Button text'))}" value="${esc(label)}" maxlength="32" oninput="discordButtonCustom('${def.Name}')">
+        <input type="text" id="${id}-link" placeholder="https://..." value="${esc(link)}" oninput="discordButtonCustom('${def.Name}')">` : ''}
+    </div>`;
+  }
+
+  return null;
+}
+
+function toggleShownAccount(name) {
+  const bots = (state && state.Bots) || [];
+  const v = String(liveValue('DiscordPresenceAccounts', settingsValues() || {}) || '').trim();
+  // From "automatic" the list starts as what automatic meant, so ticking one more adds to it rather than replacing it.
+  let list = v === '' ? bots.filter((b) => !b.Legit).map((b) => b.Name)
+    : v.toLowerCase() === 'all' ? bots.map((b) => b.Name) : v.split(/[, ]+/).filter(Boolean);
+  list = list.some((n) => n.toLowerCase() === name.toLowerCase()) ? list.filter((n) => n.toLowerCase() !== name.toLowerCase()) : [...list, name];
+  editAndRender('DiscordPresenceAccounts', list.join(', '));
+}
+
+function discordButtonPick(setting, choice) {
+  editAndRender(setting, choice === 'custom' ? `${t('My link')} | https://` : choice);
+}
+
+function discordButtonCustom(setting) {
+  const id = 'f-' + setting;
+  const label = ($(id + '-label')?.value || '').replace(/\|/g, '').trim();
+  const link = ($(id + '-link')?.value || '').trim();
+  edit(setting, `${label} | ${link}`);
+}
+
 function fieldHtml(def, values, defaults) {
   const cur = pending[def.Name] !== undefined ? pending[def.Name] : values[def.Name];
   const id = 'f-' + def.Name;
   const changed = pending[def.Name] !== undefined;
-  let ctl;
+  let ctl = discordControl(def, cur, id);
 
-  switch (def.Kind) {
+  if (ctl === null) switch (def.Kind) {
     case 'Bool':
       ctl = `<label class="switch"><input type="checkbox" id="${id}" data-setting="${def.Name}" ${cur ? 'checked' : ''} onchange="editBool('${def.Name}',this)"><span></span></label>`;
       break;
@@ -5156,6 +5226,10 @@ function fieldHtml(def, values, defaults) {
     : def.Kind === 'Secret' ? ''
     : def.Kind === 'Bool' ? (def0 ? t('on') : t('off'))
     : (def.Kind === 'Choice' || def.Kind === 'Pick') ? (choiceName() || String(def0))
+    // the Discord buttons' code word, and an empty account list, in the words the dropdowns use
+    : /^DiscordButton[12]$/.test(def.Name) ? (String(def0).toLowerCase() === 'github' ? t('Get nocat.farm') : def0 ? String(def0) : t('none'))
+    : def.Name === 'DiscordPresenceAccounts' && !def0 ? t('every account not in human mode')
+    : def.Name === 'DiscordFeatured' && !def0 ? t('the first account shown')
     : String(def0);
 
   return `<div class="field ${changed ? 'changed' : ''}">
@@ -5233,15 +5307,19 @@ function discordPreview(val) {
   const shown = bots.filter((b) => (names ? names.includes(b.Name.toLowerCase()) : list === '' ? !b.Legit : true));
   const online = shown.filter((b) => b.Online);
   const cardsLeft = online.reduce((n, b) => n + (b.Cards || 0), 0);
-  const today = shown.reduce((n, b) => n + (b.CardsToday || 0), 0);
+  // The numbers are the whole farm's; which accounts are shown only decides the names and the top line.
+  const today = bots.reduce((n, b) => n + (b.CardsToday || 0), 0);
+  const connected = bots.filter((b) => b.Online).length;
   const display = (b) => b.SteamName || b.Name;
   const ordered = [...online, ...shown.filter((b) => !b.Online)];
 
   const details = !shown.length && !featured ? t('No accounts picked') : !online.length ? t('Resting')
     : cardsLeft > 0 ? tf('Farming cards · {0} left', cardsLeft) : t('Idling games');
-  const who = ordered.filter((b) => b !== featured).map(display);
+  // The featured account is left out of the names only while it's the picture - as on the real card.
+  const featuredShown = !!(featured && val('DiscordShowAvatar') && featured.Avatar);
+  const who = ordered.filter((b) => !featuredShown || b !== featured).map(display);
   const hours = (key) => {
-    const h = shown.reduce((n, b) => n + (b[key] || 0), 0) / 60;
+    const h = bots.reduce((n, b) => n + (b[key] || 0), 0) / 60;
     return h < 10 ? String(Math.round(h * 10) / 10) : Math.round(h).toLocaleString('en-US');
   };
   const line = Number(val('DiscordSecondLine') ?? 1);
@@ -5271,7 +5349,7 @@ function discordPreview(val) {
   // The last line as Discord draws it: the state line by the party icon, then the timer by a controller.
   const pad = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 6h10a5 5 0 0 1 4.9 6l-.8 4a3 3 0 0 1-5 1.6L14 16h-4l-2.1 1.6a3 3 0 0 1-5-1.6l-.8-4A5 5 0 0 1 7 6Zm1 3v2H6v2h2v2h2v-2h2v-2h-2V9H8Zm7.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Zm3-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>';
   const party = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 19c0-3.3 3.1-6 7-6s7 2.7 7 6v1H2v-1Zm16 1v-1c0-1.9-.8-3.6-2.1-4.9 3.5.1 6.1 2.2 6.1 4.9v1h-4Z"/></svg>';
-  const meta = (shown.length ? `<span class="dstate">${party}${esc(stateLine)}${val('DiscordShowCounter') ? esc(' · ' + (online.length === shown.length ? tf('{0} accounts on', online.length) : tf('{0} of {1} accounts on', online.length, shown.length))) : ''}</span>` : '')
+  const meta = (shown.length ? `<span class="dstate">${party}${esc(stateLine)}${val('DiscordShowCounter') && bots.length ? esc(' · ' + (connected === bots.length ? (connected === 1 ? t('1 account connected') : tf('{0} accounts connected', connected)) : tf('{0} of {1} accounts connected', connected, bots.length))) : ''}</span>` : '')
     + (val('DiscordShowTimer') ? `<span class="dtime">${pad}${esc(timer)}</span>` : '');
 
   return `<div class="dcard ${val('DiscordPresence') ? '' : 'off'}">

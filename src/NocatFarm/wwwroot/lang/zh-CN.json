@@ -1476,10 +1476,8 @@
     "rep4rep comments": "rep4rep 评论",
     "No comments posted in the last {0} days.": "最近 {0} 天没有发出评论。",
     "Hours banked": "累计时长",
-    "Time with a game running, however many games were running at once.": "有游戏在运行的时间，不管同时运行了几款游戏。",
     "Nothing played in the last {0} days.": "最近 {0} 天什么都没玩。",
     "Hours by game": "各游戏时长",
-    "Steam counts the time for every game that is running, so several at once add up to more than the hours banked.": "Steam 会给每款运行中的游戏计时，所以同时运行几款时，加起来会比累计时长多。",
     "since {0}": "自 {0} 起",
     "Inventory value": "库存价值",
     "What the inventory was worth at the end of each day, at the market median. A day with no new reading carries the last one over.": "每天结束时库存值多少，按市场中位价计。没有新读数的日子沿用上一个读数。",
@@ -2161,6 +2159,7 @@
     "update failed: couldn't unpack ({0}) - disk full?": "更新失败：无法解压（{0}）- 磁盘满了？",
     "update failed: couldn't back up the current version ({0})": "更新失败：无法备份当前版本（{0}）",
     "update: all signed out - restarting into {0}": "更新：已全部登出 - 重启进入 {0}",
+    "update: signing the accounts back in": "更新：正在重新登录账号",
     "update failed: {0} - nothing changed": "更新失败：{0} - 未做更改",
     " · {0} by nocat.farm": "· nocat.farm 已跑 {0}",
     "no cards left - idling {0}{1}": "没卡了 - 挂机 {0}{1}",
@@ -2210,8 +2209,6 @@
     "Which games it hunts is set under Achievements.": "狩猎哪些游戏在「成就」里设置。",
     "Change the main game": "更换主游戏",
     "the new main game: appID or store URL": "新的主游戏：appID 或商店链接",
-    "{0} accounts on": "{0} 个账户在线",
-    "{0} of {1} accounts on": "{1} 个账户中 {0} 个在线",
     "clear works in the nocat.farm window and the dashboard - it clears that screen": "clear 只在 nocat.farm 窗口和面板里有用 - 清空那个画面",
     "file logging is off - turn on Write a log file under Settings, Logging": "文件日志已关闭 - 在设置的日志里打开「写日志文件」",
     "opened the log folder: {0}": "已打开日志文件夹：{0}",
@@ -2232,7 +2229,33 @@
     "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "作为服务运行时 nocat.farm 不会自己更新 - 停止它，把 {1} 里的 {0} 解压覆盖到这个文件夹（config/ 和 logs/ 会保留），再启动",
     "update failed: it was started with an option that has a space in it - update by hand this time": "更新失败：启动时用了带空格的选项 - 这次请手动更新",
     "update failed: the download has no {0}": "更新失败：下载的文件里没有 {0}",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "有新版本时会告诉你。这里它不能自己安装：Docker 里请获取新版本并运行 docker compose up -d --build；作为 Linux 服务运行时，先停止它，把新 zip 解压覆盖到文件夹，再启动。你的账户和设置都会保留。"
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "有新版本时会告诉你。这里它不能自己安装：Docker 里请获取新版本并运行 docker compose up -d --build；作为 Linux 服务运行时，先停止它，把新 zip 解压覆盖到文件夹，再启动。你的账户和设置都会保留。",
+    "finishing up": "正在收尾",
+    "screen off turns the screens off - moving the mouse turns them back on": "screen off 会关掉屏幕 - 动一下鼠标就会重新亮起",
+    "there's no screen here to turn off": "这里没有可以关掉的屏幕",
+    "couldn't turn the screen off: {0}": "无法关掉屏幕：{0}",
+    "screens off in a moment - move the mouse to turn them back on": "屏幕马上关闭 - 动一下鼠标就会重新亮起",
+    "Turn the PC's screens off: /screen off": "关掉电脑屏幕：/screen off",
+    "up late - one more sitting, then bed around {0}": "熬夜 - 再玩一轮，然后大约 {0} 睡觉",
+    "{0} accounts connected": "{0} 个账户已连接",
+    "{0} of {1} accounts connected": "{1} 个账户中 {0} 个已连接",
+    "the first account shown": "显示的第一个账户",
+    "every account not in human mode": "所有未开人类模式的账户",
+    "Your own link": "自己的链接",
+    "Button text": "按钮文字",
+    "My link": "我的链接",
+    "Every running game counts, the way Steam counts it - 32 games for an hour is 32 hours.": "每个运行中的游戏都算，和 Steam 的算法一样：32 个游戏跑 1 小时就是 32 小时。",
+    "How the hours banked split between the games.": "累积的小时数在各个游戏间怎么分。",
+    "up for one sitting until about {0}, then done for today": "再玩一轮到大约 {0}，然后今天就结束",
+    "this account is posting a comment right now - try again in a few minutes": "这个账号正在发表评论 - 请过几分钟再试",
+    "already commented for that task - pick another": "这个任务已经评论过了 - 请换一个",
+    "{0}: its items are being sent or sold right now - try again in a few minutes": "{0}：它的物品正在发送或出售 - 请过几分钟再试",
+    "{0}: Steam wouldn't say which cards are in a waiting trade - try again in a while": "{0}：Steam 没说哪些卡牌在等待中的交易里 - 请过一会儿再试",
+    "offer {0} is already being answered": "报价 {0} 已经在处理了",
+    "the dashboard is switched off (Web dashboard, in Settings) - turn it on and restart nocat.farm first": "网页面板已关闭（设置里的「网页面板」）- 请先打开它并重启 nocat.farm",
+    "{0}: saved \"{1}\" - it shows once human mode is off; human mode always shows the real game": "{0}：已保存「{1}」- 关闭拟人模式后才会显示；拟人模式始终显示真实的游戏",
+    "set {0} {1} <value> - the value is missing. It's {2} now.": "set {0} {1} <值> - 缺少值。现在是 {2}。",
+    "1 account connected": "1 个账户已连接"
   },
   "settings": {
     "WebEnabled": {
@@ -2394,11 +2417,11 @@
     },
     "DailyReportEnabled": {
       "label": "日志里的每日总结",
-      "tip": "每天在日志里写一份总结，列出每个账户过去 24 小时的收获：游戏时长、卡牌和 rep4rep 评论。随时输入 stats 都能查看。"
+      "tip": "每天在日志里写一份各账户过去 24 小时的收获摘要：累积的小时数、卡牌和 rep4rep 评论，以及至今累积的全部。每个运行中的游戏都算，和 Steam 的算法一样：32 个游戏跑 1 小时就是 32 小时。随时输入 stats 查看。"
     },
     "DailyReportHour": {
       "label": "总结时间 · 小时",
-      "tip": "每日总结在几点写入（本地时间）。只在开启「日志里的每日总结」时使用。"
+      "tip": "每日总结在几点写入（本地时间）。开启「发送每日总结」时，也在这个时间发送。"
     },
     "DailyReportMinute": {
       "label": "总结时间 · 分钟",
@@ -3095,7 +3118,7 @@
     },
     "DiscordPresenceAccounts": {
       "label": "显示哪些账户",
-      "tip": "Discord 卡片统计哪些账户。留空表示所有不在拟人模式的账户，输入 all 表示所有账户，或者用逗号分隔列出名字。"
+      "tip": "卡片上写名字和描述的账户。自动是所有未开人类模式的账户，也可以勾选你想要的。卡片上的数字始终计算所有账户。"
     },
     "DiscordShowNames": {
       "label": "显示账户名",
@@ -3103,7 +3126,7 @@
     },
     "DiscordShowCounter": {
       "label": "显示在线账户",
-      "tip": "在 Discord 卡片上显示所列账户中有几个已登录，比如「2 个账户在线」或「3 个账户中 2 个在线」。"
+      "tip": "在 Discord 卡片上显示你有几个账户已登录（全部账户，包括卡片上没写名字的），比如「3 个账户已连接」或「3 个账户中 2 个已连接」。"
     },
     "DiscordShowAvatar": {
       "label": "显示账户头像",
@@ -3115,11 +3138,11 @@
     },
     "DiscordButton1": {
       "label": "按钮 1",
-      "tip": "Discord 允许卡片上放两个按钮，这是第一个。填 github 显示“获取 nocat.farm”按钮，填账户名链接到它的 Steam 资料，自定义的写成 Label | https://link，留空则不显示。别人能看到这些按钮——Discord 不会向你显示你自己的按钮。"
+      "tip": "Discord 允许卡片上放两个按钮，这是第一个：获取 nocat.farm、某个账户的 Steam 页面，或自己的文字加自己的链接。别人能看到按钮 - Discord 不会给你看你自己的。"
     },
     "DiscordButton2": {
       "label": "按钮 2",
-      "tip": "第二个按钮，用法一样：github、账户名、Label | https://link，或留空不显示。"
+      "tip": "第二个按钮也一样：获取 nocat.farm、某个账户的 Steam 页面、自己的链接，或者不要。"
     },
     "DiscordFeatured": {
       "label": "主打账号",
@@ -3229,7 +3252,7 @@
     },
     "DiscordSecondLine": {
       "label": "第二行",
-      "tip": "账户名称关闭时，Discord 卡片第二行统计的内容：今天掉落的卡牌，或过去一周、过去一个月的游戏小时数 - 按卡片显示的账户合计。",
+      "tip": "账户名称关闭时，Discord 卡片第二行统计的内容：今天掉落的卡牌，或过去一周、过去一个月的游戏小时数 - 按你所有账户合计。",
       "choices": "0 今日卡牌 | 1 过去一周的小时数 | 2 过去一个月的小时数"
     },
     "SendAroundHour": {

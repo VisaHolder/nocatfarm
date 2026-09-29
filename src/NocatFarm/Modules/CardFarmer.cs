@@ -268,7 +268,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	/// </summary>
 	private bool OutsideOwnHours() => !InFarmWindow() || (Bot.Cfg.FarmInSittings && !Bot.Cfg.LegitMode && !InSittingNow(out _));
 
-	private bool MayFarmNow() =>Bot.EffectiveFarmCards && Bot.CanPlay && !Bot.Grinding && !ScheduleWantsItBack() && InFarmWindow();
+	// Not while finishing up before it logs off: a farming slot that came free then started a new game seconds before
+	// the sign-out. The game already on carries on.
+	private bool MayFarmNow() => Bot.EffectiveFarmCards && Bot.CanPlay && !Bot.Stopping && !Bot.Grinding && !ScheduleWantsItBack() && InFarmWindow();
 
 	/// <summary>
 	/// Handing the account back: the claim goes, and so does the farm game if it's still the only thing on and human
@@ -477,7 +479,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				// which for an account with thousands of them makes a figure of 3h49m look like a counter that
 				// has just been wiped. It is neither of those spans. It is how long THIS program has had a game
 				// running for this account since it started counting, so it says so.
-				int lifetime = Lifetime.For(Bot.Name);
+				int lifetime = Lifetime.GamesFor(Bot.Name);
 				// A Said, not a formatted string. It is passed as a VALUE into the sentence below, and a value that
 				// is already finished text stays in whatever language it was built in - which is how the two lines
 				// ended up reading "keine Karten mehr zu farmen · 1h23m played in total".

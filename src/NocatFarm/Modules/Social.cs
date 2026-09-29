@@ -87,7 +87,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 						await Task.Delay(FriendWait()).ConfigureAwait(false);
 						await WaitUntilAwakeAsync(FriendWait).ConfigureAwait(false);
 
-						if (!StillAsking(steamId)) {
+						if (GoneMeanwhile(steamId) || !StillAsking(steamId)) {
 							Forget(steamId);
 
 							return;
@@ -97,6 +97,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 						Log.Info(new Said("turned down a friend request from {0}", await SteamNames.OfAsync(Bot, steamId).ConfigureAwait(false)), Bot.Name);
 					} catch (Exception e) {
 						Log.Debug(new Said("couldn't turn down the request from {0}: {1}", steamId, e.Message), Bot.Name);
+						Forget(steamId);   // looked at again when Steam next sends the list, like an accept that failed
 					}
 				});
 			}
@@ -116,7 +117,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 					await Task.Delay(FriendWait()).ConfigureAwait(false);
 					await WaitUntilAwakeAsync(FriendWait).ConfigureAwait(false);
 
-					if (!StillAsking(steamId)) {
+					if (GoneMeanwhile(steamId) || !StillAsking(steamId)) {
 						Forget(steamId);
 
 						return;
@@ -135,7 +136,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 
 				// Withdrawn, or already answered by hand, in the meantime: adding them now would send a friend request of
 				// our own in the owner's name.
-				if (!StillAsking(steamId)) {
+				if (GoneMeanwhile(steamId) || !StillAsking(steamId)) {
 					Forget(steamId);
 
 					return;
@@ -166,6 +167,31 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 	private void Forget(ulong id) {
 		lock (_handledInvites) {
 			_handledInvites.Remove(id);
+		}
+	}
+
+	/// <summary>Signed out, or finishing up before it logs off - nothing sent now would reach Steam, or should.</summary>
+	private bool Away => !Bot.IsOnline || Bot.Stopping;
+
+	/// <summary>
+	/// Signed out (or finishing up) by the time its wait ran out. The answer used to go anyway: Steam never got it, the
+	/// log said "accepted", and the request was marked handled - so the list Steam sends at the next sign-in skipped it
+	/// for as long as the app ran. Forgotten instead, so that list brings it back.
+	/// </summary>
+	private bool GoneMeanwhile(ulong id) {
+		if (!Away) {
+			return false;
+		}
+
+		Forget(id);
+
+		return true;
+	}
+
+	/// <summary>The auto-reply didn't go after all, so the once-a-day rule doesn't count it.</summary>
+	private void Unreplied(ulong from) {
+		lock (_repliedTo) {
+			_repliedTo.Remove(from);
 		}
 	}
 
@@ -214,7 +240,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 				await WaitUntilAwakeAsync(FriendWait).ConfigureAwait(false);
 
 				// Declined by hand while it waited - that answer stands.
-				if (Bot.Friends?.GetClanRelationship(new SteamID(clanId)) != EClanRelationship.Invited) {
+				if (GoneMeanwhile(clanId) || (Bot.Friends?.GetClanRelationship(new SteamID(clanId)) != EClanRelationship.Invited)) {
 					Forget(clanId);
 
 					return;
@@ -224,6 +250,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 				Log.Event(new Said("joined group {0}", clanId), Bot.Name);
 			} catch (Exception e) {
 				Log.Debug(new Said("couldn't join group {0}: {1}", clanId, e.Message), Bot.Name);
+				Forget(clanId);   // a reconnect while it waited for morning cancels the wait - it's taken up again after
 			}
 		});
 	}
@@ -303,11 +330,19 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 				// Once up, overnight messages get answered over the morning, not all in its first minute.
 				await WaitUntilAwakeAsync(() => Rng.HumanMinutes(5, 60) + (seconds > 0 ? Rng.Seconds(seconds, seconds * 2) : TimeSpan.Zero)).ConfigureAwait(false);
 
+				// Signed out while it waited: nothing would arrive, so it isn't counted as said today either.
+				if (Away) {
+					Unreplied(from);
+
+					return;
+				}
+
 				Bot.SendChatMessage(from, reply);
 				_replied++;
 				Log.Info(new Said("auto-replied to {0} after {1}s", from, (int) (DateTime.UtcNow - received).TotalSeconds), Bot.Name);
 			} catch (Exception e) {
 				Log.Debug(new Said("couldn't reply to {0}: {1}", from, e.Message), Bot.Name);
+				Unreplied(from);
 			}
 		});
 	}

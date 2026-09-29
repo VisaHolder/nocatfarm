@@ -180,6 +180,7 @@ public static partial class Notifier {
 			("2fa", new Said("Steam Guard codes")),
 			("stats", new Said("Cards and comments by hour")),
 			("anywhere", new Said("Open the dashboard from anywhere: on, off, or the link")),
+			("screen", new Said("Turn the PC's screens off: /screen off")),
 			("update", new Said("Check for an update")),
 			("help", new Said("Every command"))
 		];
@@ -957,8 +958,8 @@ public static partial class Notifier {
 		sb.AppendLine($"/help - {Md(new Said("this list").ToString())}");
 		sb.AppendLine(Md(new Said("The others take what goes after them in args - /human args: week, /offers args: kylro.").ToString()));
 
-		// Window-only commands (the mini panel, the dashboard theme) mean nothing from a phone.
-		string[] skip = ["mini", "theme", "tutorial", "help"];
+		// Window-only commands (the mini panel, the dashboard theme, clearing a screen) mean nothing from a phone.
+		string[] skip = ["mini", "theme", "tutorial", "help", "clear"];
 
 		foreach (IGrouping<string, CommandDef> group in Commands.All.Where(c => !skip.Contains(c.Name)).GroupBy(static c => c.Group)) {
 			if ((group.Key == Commands.GroupRep4Rep) && !G.Rep4RepEnabled) {

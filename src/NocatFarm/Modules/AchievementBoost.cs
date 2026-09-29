@@ -33,6 +33,19 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 	/// <summary>The hunt game while it may be played today - 0 once "Hunt at most, hours a day" is used up.</summary>
 	public uint HuntTargetNow => DailyLimitReached ? 0 : HuntTarget;
 
+	/// <summary>Minutes still allowed today under "Hunt at most, hours a day"; null with no limit set.</summary>
+	public int? HuntMinutesLeftToday {
+		get {
+			if (Bot.Cfg.BoostHoursPerDay <= 0) {
+				return null;
+			}
+
+			RollDay();
+
+			return (int) Math.Max(0, (Bot.Cfg.BoostHoursPerDay * 60.0) - _todayMinutes);
+		}
+	}
+
 	private DateTime _grindTick = DateTime.MinValue;   // a robot's hunt grind: when its time was last counted
 	private double _todayMinutes;                // minutes hunted today (a human account's hunt game, or a robot's grinds)
 	private DateTime _today = DateTime.MinValue;

@@ -32,6 +32,28 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 	/// the account wakes get a fresh wait then anyway, so they don't hold anything up.</summary>
 	public int WaitingCount => _waiting.ArmedCount;
 	private readonly HashSet<ulong> _done = [];
+
+	/// <summary>Offers being answered this moment, by the loop or by hand - under the <see cref="_done"/> lock.</summary>
+	/// <remarks>
+	/// Both used to go ahead on their own. 'trade accept all' could reach an offer the loop was accepting that same
+	/// minute and accept it a second time, or 'trade decline' could land while the loop's accept was on its way - the
+	/// decline was refused and the trade the user turned down went through. Whoever claims an offer answers it.
+	/// </remarks>
+	private readonly HashSet<ulong> _answering = [];
+
+	/// <summary>Take an offer to answer - false when it's answered already, or being answered by the other side.</summary>
+	private bool TryClaim(ulong id) {
+		lock (_done) {
+			return !_done.Contains(id) && _answering.Add(id);
+		}
+	}
+
+	private void Unclaim(ulong id) {
+		lock (_done) {
+			_answering.Remove(id);
+		}
+	}
+
 	private int _accepted;
 	private int _declined;
 	private int _fruitless;
@@ -345,50 +367,59 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			}
 		}
 
-		bool swapped = false;
-		_answeredThisLook = true;
+		// Taken by 'trade accept|decline' this moment, or just answered by it.
+		if (!TryClaim(offer.Id)) {
+			return (true, false);
+		}
 
-		if (accept) {
-			// A fair swap with a stranger is accepted, but the confirmation waits for you - only accounts you allowed (and
-			// your own) are confirmed without asking.
-			Accepted result = await AcceptAsync(offer, ct, mayConfirm: fromMaster || fleet.Contains(offer.Partner)).ConfigureAwait(false);
+		try {
+			bool swapped = false;
+			_answeredThisLook = true;
 
-			if (result == Accepted.Failed) {
-				return (true, false);
-			}
+			if (accept) {
+				// A fair swap with a stranger is accepted, but the confirmation waits for you - only accounts you allowed (and
+				// your own) are confirmed without asking.
+				Accepted result = await AcceptAsync(offer, ct, mayConfirm: fromMaster || fleet.Contains(offer.Partner)).ConfigureAwait(false);
 
-			Finish(offer.Id);
-			swapped = fair && !fromMaster && !donation;
-
-			if (swapped) {
-				lock (_fair) {
-					_fair.Clear();   // every other verdict was made against cards that have now changed
+				if (result == Accepted.Failed) {
+					return (true, false);
 				}
-			}
 
-			if (result == Accepted.Done) {
-				_accepted++;
-				Log.Trade(new Said("accepted offer {0} from {1} - {2} item(s) in, {3} out", NumberOf(offer.Id), Who(offer), offer.Receiving.Sum(static i => i.Amount), offer.Giving.Sum(static i => i.Amount)), Bot.Name, good: true);
-			} else {
-				// Accepted, but nothing moves until it's confirmed. Not a reward yet - and its cards stay promised,
-				// so another swap can't be judged as if they were still here.
-				if (swapped && (FairSwap.CardsOf(offer) is { } cards)) {
-					lock (_promised) {
-						_promised[offer.Id] = cards.Giving;
+				Finish(offer.Id);
+				swapped = fair && !fromMaster && !donation;
+
+				if (swapped) {
+					lock (_fair) {
+						_fair.Clear();   // every other verdict was made against cards that have now changed
 					}
 				}
 
-				Log.Trade(NeedsConfirming(offer, result), Bot.Name);
+				if (result == Accepted.Done) {
+					Interlocked.Increment(ref _accepted);   // the loop and a command both count
+					Log.Trade(new Said("accepted offer {0} from {1} - {2} item(s) in, {3} out", NumberOf(offer.Id), Who(offer), offer.Receiving.Sum(static i => i.Amount), offer.Giving.Sum(static i => i.Amount)), Bot.Name, good: true);
+				} else {
+					// Accepted, but nothing moves until it's confirmed. Not a reward yet - and its cards stay promised,
+					// so another swap can't be judged as if they were still here.
+					if (swapped && (FairSwap.CardsOf(offer) is { } cards)) {
+						lock (_promised) {
+							_promised[offer.Id] = cards.Giving;
+						}
+					}
+
+					Log.Trade(NeedsConfirming(offer, result), Bot.Name);
+				}
+			} else if (await DeclineAsync(offer, ct).ConfigureAwait(false)) {
+				Interlocked.Increment(ref _declined);
+				Log.Trade(new Said("declined offer {0} from {1}", NumberOf(offer.Id), Who(offer)), Bot.Name);
+				Finish(offer.Id);
 			}
-		} else if (await DeclineAsync(offer, ct).ConfigureAwait(false)) {
-			_declined++;
-			Log.Trade(new Said("declined offer {0} from {1}", NumberOf(offer.Id), Who(offer)), Bot.Name);
-			Finish(offer.Id);
+
+			await Task.Delay(Rng.Seconds(3, 12), ct).ConfigureAwait(false);
+
+			return (true, swapped);
+		} finally {
+			Unclaim(offer.Id);
 		}
-
-		await Task.Delay(Rng.Seconds(3, 12), ct).ConfigureAwait(false);
-
-		return (true, swapped);
 	}
 
 	private void ForgetVerdict(ulong id) {
@@ -428,21 +459,29 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			return true;
 		}
 
-		_answeredThisLook = true;
-
-		if (await AcceptAsync(offer, ct).ConfigureAwait(false) == Accepted.Failed) {
+		if (!TryClaim(offer.Id)) {
 			return true;
 		}
 
-		lock (_nightDue) {
-			_nightDue.Remove(offer.Id);
+		try {
+			_answeredThisLook = true;
+
+			if (await AcceptAsync(offer, ct).ConfigureAwait(false) == Accepted.Failed) {
+				return true;
+			}
+
+			lock (_nightDue) {
+				_nightDue.Remove(offer.Id);
+			}
+
+			Interlocked.Increment(ref _accepted);   // the loop and a command both count
+			Log.Trade(new Said("accepted offer {0} from {1} - {2} item(s) in, {3} out", NumberOf(offer.Id), Who(offer), offer.Receiving.Sum(static i => i.Amount), 0), Bot.Name, good: true);
+			Finish(offer.Id);
+
+			return true;
+		} finally {
+			Unclaim(offer.Id);
 		}
-
-		_accepted++;
-		Log.Trade(new Said("accepted offer {0} from {1} - {2} item(s) in, {3} out", NumberOf(offer.Id), Who(offer), offer.Receiving.Sum(static i => i.Amount), 0), Bot.Name, good: true);
-		Finish(offer.Id);
-
-		return true;
 	}
 
 	private void Finish(ulong id) {
@@ -682,56 +721,67 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		foreach (TradeOffers.Offer offer in picked) {
 			int num = NumberOf(offer.Id);
 
-			bool named;
-
-			lock (_announceLock) {
-				named = Announced().ContainsKey(offer.Id);
-			}
-
-			if (!named) {
-				string name = await SteamNames.OfAsync(Bot, offer.Partner, ct).ConfigureAwait(false);
-
-				lock (_announceLock) {
-					Announced().TryAdd(offer.Id, name);
-				}
-			}
-
-			if (!accept) {
-				if (await DeclineAsync(offer, ct).ConfigureAwait(false)) {
-					_declined++;
-					Log.Trade(new Said("declined offer {0} from {1}", num, Who(offer)), Bot.Name);
-					Finish(offer.Id);
-					lines.Add(new Said("declined offer {0}", num).ToString());
-				} else {
-					lines.Add(new Said("offer {0}: Steam didn't take the decline - try again", num).ToString());
-				}
+			// The loop is answering it this moment - or has, since the list above was read.
+			if (!TryClaim(offer.Id)) {
+				lines.Add(new Said("offer {0} is already being answered", num).ToString());
 
 				continue;
 			}
 
-			Accepted result = await AcceptAsync(offer, ct).ConfigureAwait(false);
+			try {
+				bool named;
 
-			switch (result) {
-				case Accepted.Done:
-					_accepted++;
-					Log.Trade(new Said("accepted offer {0} from {1} - {2} item(s) in, {3} out", num, Who(offer), offer.Receiving.Sum(static i => i.Amount), offer.Giving.Sum(static i => i.Amount)), Bot.Name, good: true);
-					Finish(offer.Id);
-					lines.Add(new Said("accepted offer {0}", num).ToString());
+				lock (_announceLock) {
+					named = Announced().ContainsKey(offer.Id);
+				}
 
-					break;
-				case Accepted.Failed:
-					lines.Add(new Said("offer {0}: Steam didn't take the accept - try again", num).ToString());
+				if (!named) {
+					string name = await SteamNames.OfAsync(Bot, offer.Partner, ct).ConfigureAwait(false);
 
-					break;
-				default:
-					Log.Trade(NeedsConfirming(offer, result), Bot.Name);
-					Finish(offer.Id);
-					lines.Add(NeedsConfirming(offer, result).ToString());
+					lock (_announceLock) {
+						Announced().TryAdd(offer.Id, name);
+					}
+				}
 
-					break;
+				if (!accept) {
+					if (await DeclineAsync(offer, ct).ConfigureAwait(false)) {
+						Interlocked.Increment(ref _declined);
+						Log.Trade(new Said("declined offer {0} from {1}", num, Who(offer)), Bot.Name);
+						Finish(offer.Id);
+						lines.Add(new Said("declined offer {0}", num).ToString());
+					} else {
+						lines.Add(new Said("offer {0}: Steam didn't take the decline - try again", num).ToString());
+					}
+
+					continue;
+				}
+
+				Accepted result = await AcceptAsync(offer, ct).ConfigureAwait(false);
+
+				switch (result) {
+					case Accepted.Done:
+						Interlocked.Increment(ref _accepted);   // the loop and a command both count
+						Log.Trade(new Said("accepted offer {0} from {1} - {2} item(s) in, {3} out", num, Who(offer), offer.Receiving.Sum(static i => i.Amount), offer.Giving.Sum(static i => i.Amount)), Bot.Name, good: true);
+						Finish(offer.Id);
+						lines.Add(new Said("accepted offer {0}", num).ToString());
+
+						break;
+					case Accepted.Failed:
+						lines.Add(new Said("offer {0}: Steam didn't take the accept - try again", num).ToString());
+
+						break;
+					default:
+						Log.Trade(NeedsConfirming(offer, result), Bot.Name);
+						Finish(offer.Id);
+						lines.Add(NeedsConfirming(offer, result).ToString());
+
+						break;
+				}
+
+				await Task.Delay(Rng.Seconds(1, 3), ct).ConfigureAwait(false);
+			} finally {
+				Unclaim(offer.Id);
 			}
-
-			await Task.Delay(Rng.Seconds(1, 3), ct).ConfigureAwait(false);
 		}
 
 		return string.Join(Environment.NewLine, lines);
