@@ -2,7 +2,8 @@
   package-release.ps1 - build clean, shippable nocat.farm release zips.
 
   Produces, in dist/:
-    nocat.farm-v<version>.zip               Windows (win-x64) - the one the in-app updater installs
+    nocat.farm-v<version>-setup.exe         Windows installer (the recommended download) - needs Inno Setup 7
+    nocat.farm-v<version>.zip               Windows (win-x64) portable - also the one the in-app updater installs
     nocat.farm-v<version>_linux-x64.zip     Linux on 64-bit Intel/AMD
     nocat.farm-v<version>_linux-arm64.zip   Linux on 64-bit ARM (a Raspberry Pi 4/5 on a 64-bit OS, ARM servers)
 
@@ -146,6 +147,22 @@ New-FlatZip $stage $zip
 $size = [math]::Round((Get-Item $zip).Length / 1MB, 1)
 Write-Host "Done  ->  $zip  (${size} MB)" -ForegroundColor Green
 
+# --- the installer, from the very same files ----------------------------------------------------------------
+# Inno Setup 7 builds it (tools/installer/nocatfarm.iss). The installed copy updates itself from the zip above,
+# exactly like the portable one. Without Inno Setup on this machine the setup is skipped, loudly.
+$iscc = @("$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe", "$env:ProgramFiles\Inno Setup 7\ISCC.exe",
+          "${env:ProgramFiles(x86)}\Inno Setup 7\ISCC.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($iscc) {
+    python (Join-Path $PSScriptRoot 'installer\make-messages.py') | Out-Null
+    & $iscc /Q "/DAppVersion=$version" "/DSourceDir=$stage" (Join-Path $PSScriptRoot 'installer\nocatfarm.iss')
+    if ($LASTEXITCODE -ne 0) { throw 'Inno Setup failed to build the installer' }
+    $setup = Join-Path $dist "nocat.farm-v$version-setup.exe"
+    $ssize = [math]::Round((Get-Item $setup).Length / 1MB, 1)
+    Write-Host "Done  ->  $setup  (${ssize} MB)" -ForegroundColor Green
+} else {
+    Write-Host 'Inno Setup 7 not found - the installer was NOT built (the zips still are).' -ForegroundColor Yellow
+}
+
 # ==== Linux ==============================================================================================
 # Self-contained as well, so it runs on a box with no .NET. The csproj makes these a plain console program
 # (no WinExe) - on Linux it's the console and the web dashboard, no window. Start it with ./nocatFarm.
@@ -170,4 +187,4 @@ foreach ($rid in 'linux-x64', 'linux-arm64') {
 }
 
 Write-Host 'Clean: no accounts, tokens, or logs included.' -ForegroundColor Green
-Write-Host 'Upload all three to the release. The Windows zip stays first in the list by name - see the note at the top.' -ForegroundColor DarkGray
+Write-Host 'Upload the setup and all three zips to the release. The Windows zip stays first among the zips by name - see the note at the top.' -ForegroundColor DarkGray

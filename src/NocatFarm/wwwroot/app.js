@@ -297,6 +297,9 @@ function go(name) {
   view = name;
   location.hash = name;
   document.querySelectorAll('.navitem').forEach((n) => n.classList.toggle('active', n.dataset.view === name));
+  // On a phone the tab bar scrolls sideways - bring the tab you're on into view, not left off the edge.
+  const tab = document.querySelector('.navitem.active');
+  if (tab && tab.parentElement.scrollWidth > tab.parentElement.clientWidth) tab.scrollIntoView({ block: 'nearest', inline: 'center' });
   document.querySelectorAll('.view').forEach((v) => v.classList.toggle('hidden', v.id !== 'view-' + name));
 
   // Returned so a caller can wait for the settings form to be drawn before reaching into it.
@@ -308,6 +311,7 @@ function go(name) {
   if (name === 'plugins') loadPlugins();
   if (name === 'auth') openAuth();
   if (name !== 'auth') closeAuth();
+  if (name === 'phone') { renderPhone(); loadConfig().catch(() => {}).then(() => loadPhone(true)); }
   render();
   return ready;
 }
@@ -1181,89 +1185,301 @@ function showAddAccount() {
       <input id="a-pass" type="password" placeholder="${esc(t("leave blank and it'll ask"))}" autocomplete="off">
       <label for="a-qr">${esc(t('Sign in with a QR code'))}${tipIcon(t("Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty."))}</label>
       <input id="a-qr" type="checkbox" onchange="['a-login','a-pass'].forEach((id) => { $(id).disabled = this.checked; })">
-      <label for="a-human">${esc(t('Human mode'))}${tipIcon(t("Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated."))}</label>
-      <input id="a-human" type="checkbox">
+    </div>
+    <p style="margin:14px 0 8px"><b>${esc(t('What kind of account is it?'))}</b></p>
+    <div class="pickcards">
+      <div class="pickcard" id="a-type-human" onclick="addPickType(true)">
+        <b>${esc(t('My main - I play on it'))}</b>
+        <span>${esc(t("Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated."))}</span>
+      </div>
+      <div class="pickcard" id="a-type-robot" onclick="addPickType(false)">
+        <b>${esc(t('A spare or farm account'))}</b>
+        <span>${esc(t('Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.'))}</span>
+      </div>
     </div>
     <p id="addError" class="error"></p>
     <div class="actions"><button onclick="createBot()">${esc(t('Add account'))}</button><button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button></div>`);
+  addType = null;
   setTimeout(() => $('a-name').focus(), 50);
 }
 
+// Human or robot is always asked - a small unticked box made every account a robot by accident.
+let addType = null;
+function addPickType(human) {
+  addType = human;
+  $('a-type-human').classList.toggle('on', human);
+  $('a-type-robot').classList.toggle('on', !human);
+}
+
 async function createBot() {
-  const res = await post('/api/bots', { Name: $('a-name').value.trim(), SteamLogin: $('a-login').value.trim(), Password: $('a-pass').value, Qr: $('a-qr').checked, Human: $('a-human').checked });
+  if (addType === null) { $('addError').textContent = t('Pick one first'); return; }
+  const res = await post('/api/bots', { Name: $('a-name').value.trim(), SteamLogin: $('a-login').value.trim(), Password: $('a-pass').value, Qr: $('a-qr').checked, Human: addType });
   if (!res.ok) { $('addError').textContent = res.error; return; }
   closeModal();
   refresh();
 }
 
-// ── importing from ArchiSteamFarm ────────────────────────────────────
-// Retyping five accounts by hand is the reason people don't switch tools. If an ASF install is sitting there,
-// say so before asking anyone to type anything.
-async function checkForAsf() {
-  const found = await api('/api/import/asf').catch(() => null);
-  if (!found || !found.Found || !found.Accounts.length) return;
+// ── importing from another idler ─────────────────────────────────────
+// Retyping five accounts by hand is the reason people don't switch tools. So: pick the program they're in now (or a
+// folder, and it works out which), see exactly what was found and where it looked, tick what to bring, and only then
+// is anything written. The other program's files are only ever read. Passwords and tokens never come to the browser -
+// the preview only says whether each is there, and importing reads the files again on the server.
+let imp = null;   // { tutorial, tools, tool, path, scan, off, human, signin, logins, settingsOff }
 
-  const withTokens = found.Accounts.filter((a) => a.HasToken).length;
-  $('importBanner').classList.remove('hidden');
-  const n = found.Accounts.length;
-  $('importBanner').innerHTML = `
-    <div class="alert accent" style="margin-bottom:18px;display:block">
-      <b>${esc(n === 1 ? t('Found an ArchiSteamFarm install with one account.') : tf('Found an ArchiSteamFarm install with {0} accounts.', n))}</b>
-      <div class="muted small" style="margin:4px 0 10px">
-        ${esc(found.Path)}<br>
-        ${esc(withTokens
-          ? tf('{0} of them can come across with their saved logins — no passwords, no Steam Guard codes.', withTokens)
-          : t('You will still need to sign in to each one once.'))}
-      </div>
-      <button onclick="runImport()">${esc(n === 1 ? t('Import one account') : tf('Import {0} accounts', n))}</button>
-    </div>`;
+function impReset(tutorial) {
+  imp = { tutorial: !!tutorial, tools: null, tool: '', path: '', scan: null,
+    off: new Set(), human: new Set(), signin: new Set(), logins: {}, settingsOff: new Set() };
 }
 
-function showImport() {
-  api('/api/import/asf').then((found) => {
-    if (!found || !found.Found) {
-      modal(`<h2>${esc(t('Import from ArchiSteamFarm'))}</h2>
-        <p class="muted">${t('No ASF install found automatically. Point at its {0} folder:').replace('{0}', '<code>config</code>')}</p>
-        <input id="importPath" type="text" placeholder="C:\\...\\ArchiSteamFarm\\config" autocomplete="off">
-        <p id="importError" class="error"></p>
-        <div class="actions"><button onclick="runImport()">${esc(t('Import'))}</button><button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button></div>`);
-      return;
-    }
-
-    modal(`<h2>${esc(t('Import from ArchiSteamFarm'))}</h2>
-      <p class="muted small">${esc(found.Path)}</p>
-      <div class="tablewrap"><table>
-        <tr><th>${esc(t('Account'))}</th><th>${esc(t('Steam login'))}</th><th>${esc(t('Sign-in'))}</th></tr>
-        ${found.Accounts.map((a) => `<tr><td><b>${esc(a.Name)}</b></td><td class="muted">${esc(a.SteamLogin)}</td>
-          <td>${a.HasToken ? `<span class="pill good">${esc(t('token — no password needed'))}</span>`
-            : a.HasPassword ? `<span class="pill warn">${esc(t('password only'))}</span>`
-            : `<span class="pill">${esc(t('will ask on first login'))}</span>`}</td></tr>`).join('')}
-      </table></div>
-      <p class="muted small" style="margin-top:12px">${esc(t("Accounts you already have here are left alone. Don't run ASF and nocat.farm on the same account at once — they'd take turns kicking each other off Steam."))}</p>
-      <p id="importError" class="error"></p>
-      <div class="actions"><button onclick="runImport()">${esc(tf('Import {0}', found.Accounts.length))}</button><button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button></div>`);
-  });
+/// The standalone dialog: from the Accounts page, Settings, the welcome banner, or the installer's "coming from".
+async function openImport(tool, path) {
+  impReset(false);
+  modal(`<h2>${esc(t('Import from another idler'))}</h2><p class="muted">${esc(t('Looking…'))}</p>`);
+  if (tool) await impScan(tool, path); else await impLoadTools();
+  renderImport();
 }
 
-async function runImport() {
-  const pathEl = $('importPath');
-  const res = await post('/api/import/asf', { Path: pathEl ? pathEl.value.trim() : '' });
+async function impLoadTools() {
+  imp.tools = await api('/api/import/tools').catch(() => null);
+}
 
-  if (!res.ok) {
-    const err = $('importError');
-    if (err) err.textContent = res.error; else toast(res.error, true);
+async function impScan(tool, path, keep) {
+  // Looked at again in a new language (keep): the ticks, sign-ins and typed names stay as they were.
+  const kept = keep ? { off: imp.off, signin: imp.signin, logins: imp.logins, settingsOff: imp.settingsOff } : null;
+  imp.tool = tool;
+  imp.path = path || '';
+  imp.scan = await api('/api/import/scan?tool=' + encodeURIComponent(tool) + (path ? '&path=' + encodeURIComponent(path) : '')).catch(() => null);
+  imp.off = new Set();
+  imp.signin = new Set();
+  imp.logins = {};
+  imp.settingsOff = new Set();
+  const accts = (imp.scan && imp.scan.Accounts) || [];
+  // Ones already here are left alone anyway, so they start unticked rather than looking like they'd be replaced.
+  accts.forEach((a) => { if (a.Exists) imp.off.add(a.Key); });
+  if (kept) {
+    const keys = new Set(accts.map((a) => a.Key));
+    imp.off = new Set([...kept.off].filter((k) => keys.has(k)));
+    imp.signin = new Set([...kept.signin].filter((k) => keys.has(k)));
+    imp.logins = Object.fromEntries(Object.entries(kept.logins).filter(([k]) => keys.has(k)));
+    imp.settingsOff = kept.settingsOff;
+  }
+  // The walkthrough already asked "your main or a spare?" - for a single account, that is the answer.
+  if (imp.tutorial && tutorialHuman === true && accts.length === 1) imp.human.add(accts[0].Key);
+}
+
+/// Redraw - from the top when it's a different screen (the list, a preview) rather than the same one again.
+function renderImport(fresh) {
+  if (!imp) return;
+  if (imp.tutorial) renderTutorial(); else renderImportDialog();
+  if (fresh && $('modalCard')) $('modalCard').scrollTop = 0;
+  if (fresh && $('tutStage')) $('tutStage').scrollTop = 0;
+}
+
+function renderImportDialog() {
+  const s = imp.scan;
+  const ready = s && s.Found && ((s.Accounts || []).length || (s.Settings || []).length);
+  modal(`<h2>${esc(s && s.Found ? tf('Import from {0}', s.ToolName) : t('Import from another idler'))}</h2>
+    ${s ? importPreviewHtml() : importToolsHtml()}
+    <p id="importError" class="error"></p>
+    <div class="actions">
+      ${s ? `<button class="ghost" onclick="impBack()">${esc(t('Back'))}</button>` : ''}
+      <button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button>
+      ${ready ? `<button id="impGo" onclick="impApply()">${esc(t('Import'))}</button>` : ''}
+    </div>`);
+}
+
+/// Back from a preview to the list of programs.
+async function impBack() {
+  imp.scan = null;
+  imp.tool = '';
+  if (!imp.tools) await impLoadTools();
+  renderImport(true);
+}
+
+async function impPick(tool) {
+  await impScan(tool, '');
+  renderImport(true);
+}
+
+/// The example in the folder box, in the shape of the machine nocat.farm runs on (the only non-Windows ones are Linux and Docker).
+function folderHint() { return state && state.CanSelfUpdate === false ? '/path/to/folder' : 'C:\\...\\folder'; }
+
+/// "Pick a folder", or "look in this folder" on a preview that found nothing: the path box decides.
+async function impPickFolder(tool) {
+  const el = $('impPath');
+  const path = el ? el.value.trim() : '';
+  if (!path) { toast(t('Type or paste the folder first'), true); return; }
+  await impScan(tool || 'auto', path);
+  renderImport(true);
+}
+
+function impToggle(key, what, on) {
+  const set = imp[what];
+  // No redraw: nothing else on screen depends on it, and redrawing would drop a half-typed account name.
+  if (on) set.add(key); else set.delete(key);
+}
+
+function impSetting(index, on) {
+  if (on) imp.settingsOff.delete(index); else imp.settingsOff.add(index);
+}
+
+/// The programs it knows, each with what a look at its usual places found.
+function importToolsHtml() {
+  const tools = (imp.tools && imp.tools.Tools) || [];
+  const found = (tl) => {
+    if (!tl.Found) return t('Not in its usual places - pick its folder below if you have it somewhere else.');
+    const what = tl.Accounts === 1 ? t('one account') : tl.Accounts ? tf('{0} accounts', tl.Accounts) : tf('{0} setting(s)', tl.Settings);
+    return tf('Found at {0} - {1}.', tl.Path, what);
+  };
+
+  return `<p class="muted small">${esc(t('Pick the program your accounts are in now. nocat.farm only reads its files - it never changes them.'))}</p>
+    <div class="pickcards">
+      ${tools.map((tl) => `<div class="pickcard ${tl.Found ? 'on' : ''}" data-tool="${esc(tl.Id)}" onclick="impPick(this.dataset.tool)">
+        <b>${esc(tl.Name)}</b><span>${esc(found(tl))}</span></div>`).join('')}
+    </div>
+    <p class="muted small">${esc(t('Somewhere else? Paste the folder the idler is in and nocat.farm works out which one it is.'))}</p>
+    <div class="impfolder"><input id="impPath" type="text" placeholder="${esc(folderHint())}" autocomplete="off" onkeydown="if(event.key==='Enter')impPickFolder('auto')">
+      <button class="ghost" onclick="impPickFolder('auto')">${esc(t('Look here'))}</button></div>`;
+}
+
+/// One look's result: where it looked, what it found, and the choices - per account, and for the settings.
+function importPreviewHtml() {
+  const s = imp.scan;
+  const looked = s && (s.Looked || []).length
+    ? `<details class="implooked muted small"><summary>${esc(t('Where it looked'))}</summary>
+        <ul>${s.Looked.map((p) => `<li><code>${esc(p)}</code></li>`).join('')}</ul></details>`
+    : '';
+  const notes = (list) => (list || []).map((n) => `<p class="muted small">${esc(n)}</p>`).join('');
+  const retry = `<div class="impfolder"><input id="impPath" type="text" placeholder="${esc(folderHint())}" autocomplete="off" value="${esc(imp.path || '')}"
+      onkeydown="if(event.key==='Enter')impPickFolder(${esc(JSON.stringify(imp.tool || 'auto'))})">
+      <button class="ghost" onclick="impPickFolder(${esc(JSON.stringify(imp.tool || 'auto'))})">${esc(t('Look here'))}</button></div>`;
+
+  if (!s) return `<p class="error">${esc(t("Couldn't look there."))}</p>`;
+
+  if (!s.Found) {
+    return `<p>${esc(s.ToolName ? tf('No {0} files were found.', s.ToolName) : t('Nothing nocat.farm can import was found there.'))}</p>
+      ${looked}${notes(s.Notes)}
+      <p class="muted small">${esc(t('If it is somewhere else, paste its folder:'))}</p>${retry}`;
+  }
+
+  const accts = s.Accounts || [];
+  const sets = s.Settings || [];
+  let html = `<p>${tf('Found {0} at {1}.', `<b>${esc(s.ToolName)}</b>`, `<code>${esc(s.Path)}</code>`)}</p>${looked}`;
+
+  if (accts.length) {
+    html += `<p class="muted small">${esc(t('Tick the accounts to bring over. Tick human mode on the ones you play on yourself - the rest farm at full speed.'))}</p>
+      <div class="improws">${accts.map((a) => importAccountHtml(a)).join('')}</div>`;
+  }
+
+  if (sets.length) {
+    html += `<p class="muted small" style="margin-bottom:4px">${esc(t('Settings it brings too:'))}</p>
+      <div class="improws">${sets.map((x) => `<label class="improw"><span class="impmain">
+        <input type="checkbox" class="impon" ${imp.settingsOff.has(x.Index) ? '' : 'checked'} onchange="impSetting(${x.Index}, this.checked)">
+        <span><b>${esc(tSetting({ Name: x.Name, Label: x.Label }, 'label'))}</b> <span class="muted">${esc(x.Value)}</span>
+        ${x.EveryAccount ? `<br><span class="muted small">${esc(t('onto every account already here'))}</span>` : ''}</span></span></label>`).join('')}</div>`;
+  }
+
+  if (!accts.length && !sets.length) html += `<p>${esc(t('There is nothing in it to bring over.'))}</p>`;
+
+  html += notes(s.Notes);
+
+  if (accts.length) {
+    html += `<div class="alert warn" style="display:block;margin-top:10px">${esc(tf('Close {0} before these accounts start here - two programs on one Steam account keep signing each other out.', s.ToolName))}</div>`;
+  }
+
+  return html;
+}
+
+function importAccountHtml(a) {
+  const key = esc(a.Key);
+  const signin = a.HasToken ? `<span class="pill good">${esc(t('token — no password needed'))}</span>`
+    : a.HasPassword ? `<span class="pill warn">${esc(t('password'))}</span>`
+    : a.CanBringSignIn ? `<span class="pill">${esc(t('sign-in can come over'))}</span>`
+    : `<span class="pill">${esc(t('will ask on first login'))}</span>`;
+  const auth = a.HasAuthenticator ? ` <span class="pill good">${esc(t('authenticator'))}</span>` : '';
+
+  return `<div class="improw">
+    <label class="impmain"><input type="checkbox" class="impon" data-key="${key}" ${imp.off.has(a.Key) ? '' : 'checked'}
+      onchange="impToggle(this.dataset.key, 'off', !this.checked)">
+      <span><b>${esc(a.Name)}</b>${a.SteamLogin && a.SteamLogin !== a.Name ? ` <span class="muted">- ${esc(a.SteamLogin)}</span>` : ''}
+      ${a.Exists ? ` <span class="muted small">${esc(t('(already here - left alone)'))}</span>` : ''}</span></label>
+    <div class="small">${signin}${auth}</div>
+    ${(a.Brings || []).length ? `<div class="muted small">${esc(a.Brings.join(' · '))}</div>` : ''}
+    ${a.SteamLogin ? '' : `<input type="text" data-key="${key}" placeholder="${esc(t('Steam account name - or leave empty for a QR code'))}" autocomplete="off"
+      value="${esc(imp.logins[a.Key] || '')}" oninput="imp.logins[this.dataset.key] = this.value">`}
+    <div class="impopts">
+      <label class="inline"><input type="checkbox" data-key="${key}" ${imp.human.has(a.Key) ? 'checked' : ''}
+        onchange="impToggle(this.dataset.key, 'human', this.checked)"> ${esc(t('Human mode'))}</label>
+      ${a.CanBringSignIn ? `<label class="inline"><input type="checkbox" data-key="${key}" ${imp.signin.has(a.Key) ? 'checked' : ''}
+        onchange="impToggle(this.dataset.key, 'signin', this.checked)"> ${esc(t('Bring its sign-in over'))}${tipIcon(t("Reads this account's saved sign-in from Windows, where the other idler keeps it, so it signs in with no password. Left unticked, it asks for the password (or a QR code) instead."))}</label>` : ''}
+    </div>
+    ${(a.Notes || []).map((n) => `<div class="muted small">${esc(n)}</div>`).join('')}
+  </div>`;
+}
+
+/// Write what's ticked. The server reads the files again - the browser only says which accounts and choices.
+async function impApply() {
+  const s = imp && imp.scan;
+  if (!s || !s.Found) { toast(t('Pick one first'), true); return; }
+
+  const accounts = (s.Accounts || []).filter((a) => !imp.off.has(a.Key)).map((a) => ({
+    Key: a.Key, Human: imp.human.has(a.Key), SignIn: imp.signin.has(a.Key), SteamLogin: (imp.logins[a.Key] || '').trim(),
+  }));
+  const settings = (s.Settings || []).filter((x) => !imp.settingsOff.has(x.Index)).map((x) => x.Index);
+  if (!accounts.length && !settings.length) { toast(t('Nothing is ticked'), true); return; }
+
+  const btn = $('impGo') || $('tutNext');
+  const label = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = t('Importing…'); }
+
+  const res = await post('/api/import/apply', { Tool: s.Tool, Path: s.Path, Accounts: accounts, Settings: settings }).catch(() => null);
+
+  if (!res || !res.ok) {
+    const err = $('importError') || $('tutError');
+    const why = (res && res.error) || t('Import failed');
+    if (err) err.textContent = why; else toast(why, true);
+    if (btn) { btn.disabled = false; btn.textContent = label; }
     return;
   }
 
+  const tutorial = imp.tutorial;
+  const toolName = s.ToolName;
+  imp = null;
+
+  if (tutorial) { await tutorialAfterImport(res, toolName); return; }
+
   closeModal();
   await afterImport(res);
+}
+
+// The welcome screen says so before anybody types anything: the first idler found with accounts in it.
+async function checkForIdlers() {
+  const tools = await api('/api/import/tools').catch(() => null);
+  const found = tools && (tools.Tools || []).find((tl) => tl.Found && tl.Accounts > 0);
+  if (!found) return;
+
+  const n = found.Accounts;
+  $('importBanner').classList.remove('hidden');
+  $('importBanner').innerHTML = `
+    <div class="alert accent" style="margin-bottom:18px;display:block">
+      <b>${esc(n === 1 ? tf('Found {0} with one account.', found.Name) : tf('Found {0} with {1} accounts.', found.Name, n))}</b>
+      <div class="muted small" style="margin:4px 0 10px">
+        ${esc(found.Path)}<br>
+        ${esc(found.Tokens
+          ? tf('{0} of them can come across with their saved logins — no passwords, no Steam Guard codes.', found.Tokens)
+          : t('You will still need to sign in to each one once.'))}
+      </div>
+      <button data-tool="${esc(found.Id)}" onclick="openImport(this.dataset.tool)">${esc(n === 1 ? t('Import one account') : tf('Import {0} accounts', n))}</button>
+    </div>`;
 }
 
 /// After a successful import, from the import dialog or the walkthrough: say what came across and offer to start it.
 async function afterImport(res) {
   $('importBanner').classList.add('hidden');
   sessionStorage.setItem('skip-welcome', '1');
-  const done = res.Imported === 1 ? t('Imported one account') : tf('Imported {0} accounts', res.Imported || 0);
+  // Settings only (SingleBoostr), or every account already here: nothing new to start.
+  const done = !res.Imported ? (res.Skipped ? t('Nothing was imported') : t('Settings brought across'))
+    : res.Imported === 1 ? t('Imported one account') : tf('Imported {0} accounts', res.Imported);
   toast(done);
   await loadConfig();
   await refresh();
@@ -1272,13 +1488,24 @@ async function afterImport(res) {
   if (res.Notes && res.Notes.length) {
     modal(`<h2>${esc(done)}</h2>
       <div class="rows">${res.Notes.map((n) => `<div class="row"><span>${esc(n)}</span></div>`).join('')}</div>
-      <p class="muted small" style="margin-top:12px">${t("They're added but not started. Press Start on each, or run {0}.").replace('{0}', '<code>start all</code>')}</p>
-      <div class="actions"><button onclick="closeModal();run('start all')">${esc(t('Start them all'))}</button><button class="ghost" onclick="closeModal()">${esc(t('Not yet'))}</button></div>`);
+      ${res.Imported ? `<p class="muted small" style="margin-top:12px">${t("They're added but not started. Press Start on each, or run {0}.").replace('{0}', '<code>start all</code>')}</p>
+      <div class="actions"><button onclick="closeModal();run('start all')">${esc(t('Start them all'))}</button><button class="ghost" onclick="closeModal()">${esc(t('Not yet'))}</button></div>`
+      : `<div class="actions"><button onclick="closeModal()">${esc(t('Close'))}</button></div>`}`);
   }
 }
 
+// The welcome form asks human or robot too - it's the big button on a fresh install, and sent nothing, so every
+// account added there became a robot.
+let welcomeType = null;
+function welcomePickType(human) {
+  welcomeType = human;
+  $('w-type-human').classList.toggle('on', human);
+  $('w-type-robot').classList.toggle('on', !human);
+}
+
 async function createFirstBot() {
-  const res = await post('/api/bots', { Name: $('w-name').value.trim(), SteamLogin: $('w-login').value.trim(), Password: $('w-pass').value });
+  if (welcomeType === null) { $('welcomeError').textContent = t('Pick one first'); return; }
+  const res = await post('/api/bots', { Name: $('w-name').value.trim(), SteamLogin: $('w-login').value.trim(), Password: $('w-pass').value, Human: welcomeType });
   if (!res.ok) { $('welcomeError').textContent = res.error; return; }
   sessionStorage.setItem('skip-welcome', '1');
   await refresh();
@@ -1752,12 +1979,13 @@ let tutorialStep = 0;
 // Open right now - so Escape or a click outside counts as Skip, not as "close and show it again next time".
 let tutorialOpen = false;
 
-// ArchiSteamFarm was found, but they would rather type an account in than import.
+// Another idler was found (or picked), but they would rather type an account in than import.
 let tutorialManual = false;
 
-// 'quick' goes straight from the welcome to the account; 'full' explains every feature and where the fine-tuning
-// lives on the way. Quick is the default - somebody new wants their account running, not a lecture.
-let tutorialMode = 'quick';
+// 'easy' asks a couple of plain questions on the way to the account; 'advanced' asks about everything - the phone,
+// opening it from anywhere, notifications, the update window - and ends on all of the new account's settings.
+// Easy is the default: somebody new wants their account running, not a lecture.
+let tutorialMode = 'easy';
 
 // What the account is for: true = your main, human mode; false = a spare, robot defaults; null = not picked yet.
 let tutorialHuman = null;
@@ -1765,20 +1993,24 @@ let tutorialHuman = null;
 // Human mode, and you also sign into it from your own Steam client.
 let tutorialSelf = false;
 
-// Importing: which ArchiSteamFarm accounts to bring across in human mode.
-let tutorialImportHuman = new Set();
+// The dashboard's own steps - phone, from anywhere, password, notifications, updates. What was picked on the way,
+// and the last look at /api/phone. Each is saved as its step is left, through the same config POST the settings
+// page uses, so leaving halfway keeps everything already answered. The password is only ever what was typed
+// here, and only until it's saved: a saved one never comes back to the browser.
+let tutDash = null;
+
+// Which screen was drawn last and which way the walkthrough is moving, for the slide between screens; and how many
+// steps the bar had, so the sign-in and set-up screens after it can show it finished.
+let tutLastKey = '';
+let tutDir = 1;
+let tutBarSteps = 1;
 
 /// The account-type step: remembers the choice, and for a one-account import ticks that account to match.
 function tutorialPickType(human) {
   tutorialHuman = human;
-  tutorialImportHuman = new Set();
-  const accts = (tutorialAsf && tutorialAsf.Accounts) || [];
-  if (human && accts.length === 1) tutorialImportHuman.add(accts[0].Name);
+  const accts = (imp && imp.scan && imp.scan.Accounts) || [];
+  if (imp) imp.human = new Set(human && accts.length === 1 ? [accts[0].Key] : []);
   renderTutorial();
-}
-
-function tutorialToggleImportHuman(name, on) {
-  if (on) tutorialImportHuman.add(name); else tutorialImportHuman.delete(name);
 }
 
 // Kept here rather than read from the settings schema: the tutorial runs before the schema is needed, and this
@@ -1800,12 +2032,14 @@ async function pickTutorialLanguage(code) {
   await loadLanguage(code);
   translateChrome();
 
-  // The welcome screen's ArchiSteamFarm banner is built in script, not tagged for translateChrome - redraw it.
-  if (!$('importBanner').classList.contains('hidden')) checkForAsf();
+  // The welcome screen's import banner is built in script, not tagged for translateChrome - redraw it. And what an
+  // import found is worded by the server, in the language it had then - look again for the new one.
+  if (!$('importBanner').classList.contains('hidden')) checkForIdlers();
+  if (imp && imp.tutorial && imp.tool) await impScan(imp.tool, imp.path, true);
+  if (tutDash) tutDash.info = await api('/api/phone').catch(() => tutDash.info);
 
   renderTutorial();
 }
-let tutorialAsf = null;
 
 function shouldShowTutorial() {
   if (!config || !state) return false;
@@ -1816,203 +2050,769 @@ function shouldShowTutorial() {
 async function startTutorial() {
   tutorialStep = 0;
   tutorialManual = false;
-  tutorialMode = 'quick';
+  tutorialMode = 'easy';
   tutorialHuman = null;
   tutorialSelf = false;
-  tutorialImportHuman = new Set();
-  tutorialAsf = await api('/api/import/asf').catch(() => null);
+  tutLastKey = '';
+  tutDir = 1;
+  imp = null;
+  await tutLoadDash();
+
+  // The installer's "coming from": open straight on bringing the accounts over from that idler.
+  const pending = await api('/api/import/pending').catch(() => null);
+
+  if (pending && pending.Pending) {
+    impReset(true);
+    if (pending.Pending.Tool) await impScan(pending.Pending.Tool, pending.Pending.Path);
+    else await impLoadTools();
+    tutorialStep = 99;   // clamped to the last step, where the import is; Back still reaches the rest
+  } else if (!(state && state.Bots && state.Bots.length)) {
+    // Otherwise, on a first run, if an idler with accounts in it is sitting in its usual place, offer those instead
+    // of typing. (Replayed with accounts already here, the walkthrough ends without adding one.)
+    const tools = await api('/api/import/tools').catch(() => null);
+    const found = tools && (tools.Tools || []).find((tl) => tl.Found && tl.Accounts > 0);
+    if (found) {
+      impReset(true);
+      imp.tools = tools;
+      await impScan(found.Id, '');
+    }
+  }
+
   renderTutorial();
+}
+
+/// What the dashboard steps start from: the settings as they are now, so a replay shows what's already set up.
+async function tutLoadDash() {
+  await loadConfig().catch(() => {});
+  if (!schema) schema = await api('/api/settings/schema').catch(() => null);
+  const info = await api('/api/phone').catch(() => null);
+  const g = (config && config.Global) || {};
+  tutDash = {
+    info,
+    phone: info && info.ListensBeyondThisPc ? true : null,
+    anywhere: g.WebRemoteAccess ? true : null,
+    pw: '', pwShow: false, pwDone: false, fwMsg: '', fwBad: false,
+    autoUpdate: g.AutoUpdate === 1,
+    fromHour: g.AutoUpdateFromHour ?? 3, untilHour: g.AutoUpdateUntilHour ?? 6,
+    waitHours: g.AutoUpdateWaitHours ?? 2, checkHours: g.UpdateCheckHours ?? 2,
+  };
+}
+
+/// From the add-an-account step: the list of idlers, inside the walkthrough.
+async function tutorialOpenImport() {
+  tutorialManual = false;
+  impReset(true);
+  await impLoadTools();
+  renderTutorial();
+}
+
+// ── the walkthrough's frame ──
+// Every screen of it - the language, the questions, signing in, the account's games, the last "you're all set" - is
+// drawn in the same frame: the progress bar, a big plain heading, and the buttons in the same places. Before, each
+// was its own pop-up, and it read as a string of dialogs rather than one setup.
+
+/// o = { key, kicker, title, lead, body, hero, badge, back, skip, skipLabel, next, nextOff, at, of }
+/// back and skip are onclick code (strings), next is the main button's label - its handler comes from tutShow. A missing
+/// one draws no button.
+function tutFrame(o) {
+  const of = Math.max(1, o.of || tutBarSteps);
+  const at = o.at ?? of;
+  const bar = Array.from({ length: of }, (_, i) =>
+    `<i class="${i < at ? 'done' : i === at ? 'now' : ''}"></i>`).join('');
+
+  return `<div class="tut-head">
+      <img src="logo.png" alt="" class="tut-logo"><span class="tut-brand">nocat.<b>farm</b></span>
+      <span class="spacer"></span>
+      <button class="tut-x" onclick="closeTutorial()" data-tip="${esc(t('You can skip this and come back from the Overview page.'))}" aria-label="${esc(t('Skip'))}">✕</button>
+    </div>
+    <div class="tut-bar" aria-hidden="true">${bar}</div>
+    <div class="tut-stage" id="tutStage">
+      ${o.hero ? `<div class="tut-hero"><img src="logo.png" alt=""><h1 class="wordmark">nocat.<span>farm</span></h1></div>` : ''}
+      ${o.badge ? `<div class="tut-check-big" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor"
+        stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>` : ''}
+      ${o.kicker ? `<div class="tut-kicker">${esc(o.kicker)}</div>` : ''}
+      ${o.title ? `<h2 class="tut-title">${esc(o.title)}</h2>` : ''}
+      ${o.lead ? `<p class="tut-lead">${o.lead}</p>` : ''}
+      ${o.body || ''}
+    </div>
+    <div class="tut-foot">
+      ${o.back ? `<button class="ghost" onclick="${o.back}">${esc(t('Back'))}</button>` : ''}
+      <span class="spacer"></span>
+      ${o.skip ? `<button class="ghost tut-skip" onclick="${o.skip}">${esc(o.skipLabel || t('Skip'))}</button>` : ''}
+      ${o.next ? `<button id="tutNext" class="tut-go" ${o.nextOff ? 'disabled' : ''}>${esc(o.next)}</button>` : ''}
+    </div>`;
+}
+
+/// Put a drawn frame on screen. A new screen slides in (from the side it came from); the same screen drawn again -
+/// a card picked, a box ticked - just swaps in place, so nothing jumps under the pointer.
+function tutPaint(key, html) {
+  const fresh = key !== tutLastKey;
+  const was = !fresh && $('tutStage') ? $('tutStage').scrollTop : 0;
+  tutorialOpen = true;
+  modal(html);
+  $('modal').classList.add('tut');
+  const stage = $('tutStage');
+  if (fresh && stage) {
+    stage.classList.add(tutDir < 0 ? 'in-back' : 'in-fwd');
+    const now = document.querySelector('.tut-bar .now');
+    if (now) now.classList.add('grow');
+  }
+  // Drawn again in place (a firewall answer, a card picked further down): stay where the reader was.
+  if (stage) stage.scrollTop = was;
+  tutLastKey = key;
+  tutDir = 1;
+}
+
+function tutShow(o, onNext) {
+  tutPaint(o.key, tutFrame(o));
+  const next = $('tutNext');
+  if (next && onNext) next.onclick = onNext;
+}
+
+function tutBack() { tutDir = -1; tutorialStep--; renderTutorial(); }
+function tutForward() { tutorialStep++; renderTutorial(); }
+
+// Line icons for the walkthrough's cards - drawn rather than emoji, so they look the same on every system and take
+// the theme's colours.
+const TUT_ICONS = {
+  easy: '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z"/>',
+  advanced: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+  phone: '<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/>',
+  pc: '<rect x="3" y="4" width="18" height="12" rx="1"/><path d="M8 20h8M12 16v4"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/>',
+  home: '<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
+  bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+};
+const tutIcon = (name) => `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"
+  stroke-linecap="round" stroke-linejoin="round">${TUT_ICONS[name] || ''}</svg>`;
+
+/// A big either-or card. Picked, it gets the purple edge.
+const tutCard = (on, onclick, icon, title, text, tag) => `<div class="pickcard tut-card ${on ? 'on' : ''}" role="button" tabindex="0" onclick="${onclick}">
+    <span class="tut-ico" aria-hidden="true">${icon}</span>
+    <span class="tut-cardtext"><b>${esc(title)}${tag ? ` <em class="tut-tag">${esc(tag)}</em>` : ''}</b><span>${esc(text)}</span></span></div>`;
+
+/// A switch with a sentence beside it - the walkthrough's on/off questions.
+const tutSwitch = (id, on, onchange, title, text) => `<label class="tut-switch" for="${id}">
+    <span><b>${esc(title)}</b>${text ? `<span class="muted small">${esc(text)}</span>` : ''}</span>
+    <span class="switch"><input type="checkbox" id="${id}" ${on ? 'checked' : ''} onchange="${onchange}"><span></span></span></label>`;
+
+/// The steps, in order, for the mode picked. Worked out again on every draw: saying yes to the phone adds the password
+/// step after it, and the bar grows by one.
+function tutSteps() {
+  const adv = tutorialMode === 'advanced';
+  const hasAccounts = !!(state && state.Bots && state.Bots.length);
+  return ['language', 'welcome', 'phone', adv ? 'anywhere' : null,
+    // Easy never asks about from anywhere, so only a yes to the phone brings the password step.
+    adv || (tutDash && tutDash.phone === true) ? 'password' : null,
+    adv ? 'notify' : null, 'updates', hasAccounts ? null : 'type', 'final'].filter(Boolean);
+}
+
+function tutStepName(key) {
+  switch (key) {
+    case 'language': return t('Language');
+    case 'welcome': return t('Welcome');
+    case 'phone': return t('Phone');
+    case 'anywhere': return t('From anywhere');
+    case 'password': return t('Password');
+    case 'notify': return t('Notifications');
+    case 'updates': return t('Updates');
+    case 'type': return t('Account type');
+    default: return state && state.Bots && state.Bots.length ? t('Done') : t('Account');
+  }
+}
+
+/// Saved the way the settings page saves: read again first, so nothing changed elsewhere in the meantime is put back,
+/// then only these on top. A new dashboard password signs every browser out - this one gets a fresh session back.
+async function tutSaveGlobal(changes) {
+  await loadConfig().catch(() => {});
+  if (!config || !config.Global) { toast(t('Save failed'), true); return null; }
+  const res = await post('/api/config', { ...config.Global, ...changes }).catch(() => null);
+  if (!res || !res.ok) { toast((res && res.error) || t('Save failed'), true); return null; }
+  if (res.Token) {
+    token = res.Token;
+    localStorage.setItem('nocatfarm-token', token);
+  }
+  const adjusted = (res.Adjusted || []).filter(Boolean);
+  if (adjusted.length) toast(adjusted.join(' · '), true);
+  await loadConfig().catch(() => {});
+  return res;
 }
 
 function renderTutorial() {
   tutorialOpen = true;
+  if (!tutDash) tutDash = { info: null, phone: null, anywhere: null, pw: '', autoUpdate: false, fromHour: 3, untilHour: 6, waitHours: 2, checkHours: 2 };
 
-  const found = tutorialAsf && tutorialAsf.Found && (tutorialAsf.Accounts || []).length > 0;
+  const steps = tutSteps();
+  if (tutorialStep > steps.length - 1) tutorialStep = steps.length - 1;
+  if (tutorialStep < 0) tutorialStep = 0;
+  tutBarSteps = steps.length;
+
+  const key = steps[tutorialStep];
+  const st = tutStep(key);
+  const last = tutorialStep >= steps.length - 1;
   const hasAccounts = !!(state && state.Bots && state.Bots.length);
-  const importing = found && !tutorialManual;
+
+  tutShow({
+    key: key + (st.sub || ''),
+    at: tutorialStep, of: steps.length,
+    kicker: tf('STEP {0} OF {1}', tutorialStep + 1, steps.length) + ' · ' + tutStepName(key),
+    hero: st.hero, title: st.title, lead: st.lead, body: st.body,
+    back: st.back || (tutorialStep > 0 ? 'tutBack()' : ''),
+    // The account step's Skip is the old "Not yet": it leaves without adding one. Replayed with accounts already
+    // here there's nothing to leave undone, so only Finish.
+    skip: st.skip || (last && !hasAccounts ? 'closeTutorial()' : ''),
+    skipLabel: st.skipLabel || (last ? t('Not yet') : ''),
+    next: st.next || t('Next'),
+  }, st.act || tutForward);
+
+  // A step with boxes to fill in: the first one gets the caret.
+  const first = st.focus && $(st.focus);
+  if (first) setTimeout(() => first.focus(), 60);
+}
+
+/// One step's content. Returns { title, lead, body, hero, next, act, back, skip, skipLabel, focus, sub }.
+function tutStep(key) {
+  switch (key) {
+    case 'language': return tutStepLanguage();
+    case 'welcome': return tutStepWelcome();
+    case 'phone': return tutStepPhone();
+    case 'anywhere': return tutStepAnywhere();
+    case 'password': return tutStepPassword();
+    case 'notify': return tutStepNotify();
+    case 'updates': return tutStepUpdates();
+    case 'type': return tutStepType();
+    default: return tutStepFinal();
+  }
+}
+
+function tutStepLanguage() {
+  // Language first, before a word of the rest is read. Skipping leaves it English, which is also what an
+  // untranslated string falls back to - so there is no way to end up looking at blanks.
+  const now = (config && config.Global && config.Global.Language) || 'en';
+  return {
+    hero: true,
+    lead: esc(t('Pick the language for this dashboard. You can change it later under Settings › Global.')),
+    body: `<div class="langpick tut-langs">${LANGUAGES.map((l) =>
+        `<span class="p ${now === l.code ? 'on' : ''}" role="button" tabindex="0" onclick="pickTutorialLanguage('${l.code}')">${esc(l.name)}</span>`).join('')}</div>
+      <p class="muted small">${esc(t("Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. Status and log lines follow it too; replies to commands typed in the console stay in English."))}</p>`,
+    next: t('Continue'),
+  };
+}
+
+function tutStepWelcome() {
+  const b = (name) => `<b>${esc(name)}</b>`;
+  return {
+    title: t('Welcome to nocat.farm'),
+    lead: esc(t('It signs your Steam accounts in, farms their trading cards, plays games so the hours count and picks up free stuff - all from this machine. Your accounts never leave it.')),
+    body: `<div class="pickcards tut-cards">
+        ${tutCard(tutorialMode === 'easy', "tutorialMode='easy';renderTutorial()", tutIcon('easy'), t('Easy'),
+          t('A few plain questions, then your account is running. The defaults are good. About two minutes.'), t('Recommended'))}
+        ${tutCard(tutorialMode === 'advanced', "tutorialMode='advanced';renderTutorial()", tutIcon('advanced'), t('Advanced'),
+          t("Everything: your phone, opening it from anywhere, notifications, the update hours, then every setting of the account. For anyone who has used ArchiSteamFarm or another idler."))}
+      </div>
+      <details class="tut-more"><summary>${esc(t('What does it do?'))}</summary><ul>
+        <li>${tf('{0} - it works through everything in your library that still has drops, then stops. Nothing to configure.', b(t('Trading cards')))}</li>
+        <li>${tf('{0} - it keeps a believable daily routine: a few games, one at a time, with breaks, meals and a bedtime. Use this on an account you care about.', b(t('Human mode')))}</li>
+        <li>${tf('{0} - the daily sticker during a Steam sale, and anything in the Points Shop that costs 0 points.', b(t('Free event items')))}</li>
+        <li>${tf('{0} - Steam wallet gift cards and guest passes people send you.', b(t('Gifts')))}</li>
+      </ul><p class="muted small">${esc(t('Free games, booster packs from gems and fair card swaps are one switch each under Settings, per account.'))}</p></details>`,
+    next: t('Start'),
+  };
+}
+
+// ── the phone ──
+
+function tutStepPhone() {
+  const d = tutDash;
+  const p = d.info;
+  return {
+    title: t('Use it from your phone'),
+    lead: esc(t('Check on your accounts from your phone while it is on the same Wi-Fi. It opens this same dashboard.')),
+    body: `<div class="pickcards tut-cards two">
+        ${tutCard(d.phone === true, 'tutPickPhone(true)', tutIcon('phone'), t('Yes, set it up'), t('You pick a password next, then scan a code with your phone.'))}
+        ${tutCard(d.phone === false, 'tutPickPhone(false)', tutIcon('pc'), t('Not now'), t('Only this PC can open it. You can turn it on later in Settings.'))}
+      </div>
+      ${d.phone === true && p && p.OpenAtHome ? tutPhoneStatus(p) : ''}`,
+    act: tutPhoneNext,
+    skip: 'tutForward()',
+  };
+}
+
+function tutPickPhone(on) {
+  tutDash.phone = on;
+  renderTutorial();
+}
+
+async function tutPhoneNext() {
+  const d = tutDash;
+  // "Not now" on a dashboard that is open to the phone already closes it again - that's what was asked. Not from the
+  // phone itself, though: that would lock out the very screen asking, after the next restart.
+  if (d.phone === false && d.info && d.info.ListensBeyondThisPc && d.info.OnThisPc) {
+    if (!await tutSaveGlobal({ WebHost: '127.0.0.1' })) return;
+    d.info = await api('/api/phone').catch(() => d.info);
+  }
+  tutForward();
+}
+
+/// What the phone needs next, from a fresh look at /api/phone: a restart, the firewall, then the code to scan. And from
+/// anywhere, when that's on: the link, or why the router won't.
+function tutPhoneStatus(p) {
+  const link = (url) => `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a>`;
+  const d = tutDash;
+  let html = '';
+
+  if (p.NeedsRestart) {
+    html += `<div class="tut-note warn"><b>${esc(t('One more thing: restart nocat.farm'))}</b>
+      <span>${esc(t('It starts listening for your phone the next time it starts. Close it and open it again once.'))}</span>
+      <span><button class="small" onclick="phoneRestart(this, tutAfterRestart)">${esc(t('Restart the dashboard now'))}</button></span></div>`;
+  }
+
+  if (p.FirewallBlocks) {
+    html += `<div class="tut-note"><b>${esc(t('Windows Firewall is blocking your phone'))}</b>
+      <span>${esc(t('Your phone will just keep loading until Windows lets it in. This allows the dashboard only, only on home networks - Windows asks you to confirm.'))}</span>
+      ${p.OnThisPc ? `<span><button class="small" id="tutFw" onclick="tutFirewall(this)">${esc(t('Let it through the firewall'))}</button></span>`
+        : `<span class="muted small">${esc(t('Press it on the PC nocat.farm runs on.'))}</span>`}
+      ${d && d.fwMsg ? `<span class="small ${d.fwBad ? 'error' : ''}" style="margin:0">${esc(d.fwMsg)}</span>` : ''}</div>`;
+  }
+
+  if (p.OpenAtHome && p.NeedsHomeAddress) {
+    html += `<div class="tut-note"><b>${esc(t('Running in Docker'))}</b>
+      <span>${esc(t("From inside Docker nocat.farm can't see this computer's address on your wifi. On your phone, open this computer's address with the port Docker publishes - or put it in NOCATFARM_HOME_ADDRESS in docker-compose.yml, and this shows the link and a code to scan."))}</span></div>`;
+  }
+
+  if (p.OpenAtHome && p.Qr) {
+    html += `<div class="tut-qr"><div class="phoneqr">${p.Qr}</div>
+      <div><p class="small">${esc(t('Scan this with your phone\'s camera while it is on the same wifi, then sign in with the dashboard password.'))}</p>
+      <p class="muted small">${link(p.Home[0])}${p.Home.length > 1 ? ' · ' + p.Home.slice(1).map(link).join(' · ') : ''}</p></div></div>`;
+  }
+
+  if (p.RemoteOn) {
+    html += `<p class="muted small">${p.Outside ? `${esc(t('From outside your home:'))} ${link(p.Outside)}`
+      : p.RemoteProblem ? `${esc(t('From anywhere:'))} ${esc(p.RemoteProblem)}`
+      : esc(t('From anywhere: asking your router to forward the port...'))}</p>`;
+  }
+
+  return html;
+}
+
+/// Back from "Restart the dashboard now" in the walkthrough: a fresh look, so the note makes way for the code to scan.
+async function tutAfterRestart() {
+  if (!tutDash) return;
+  tutDash.info = await api('/api/phone').catch(() => tutDash.info);
+  if (tutorialOpen) renderTutorial();
+}
+
+/// "Let it through the firewall": Windows asks the person at this PC. Whatever comes back is said on the step - done,
+/// said no on the prompt, a Public network, or anything else - and the button stays for another go.
+async function tutFirewall(btn) {
+  btn.disabled = true;
+  btn.textContent = t('Check the Windows prompt…');
+  const r = await api('/api/phone/firewall', { method: 'POST' }).catch(() => null);
+  const d = tutDash;
+
+  if (r && r.Ok) {
+    toast(t('Done - your phone can open it now.'));
+    d.fwMsg = '';
+    d.fwBad = false;
+  } else {
+    d.fwMsg = (r && r.Error) || t("That didn't work");
+    d.fwBad = true;
+  }
+
+  d.info = await api('/api/phone').catch(() => d.info);
+  if (tutorialOpen) renderTutorial();   // closed while Windows asked: stay closed
+}
+
+// ── from anywhere ──
+
+function tutStepAnywhere() {
+  const d = tutDash;
+  const p = d.info;
+  return {
+    title: t('Open it from anywhere?'),
+    lead: esc(t('Check on your accounts away from home, on mobile data. Like Jellyfin: nocat.farm asks your router to pass the dashboard through to this PC. No other app needed.')),
+    body: `<ul class="tut-list">
+        <li>${esc(t('The link is plain http, not encrypted. Sign in on mobile data or a network you trust.'))}</li>
+        <li>${esc(t('It needs a strong password: at least 12 characters. Five wrong tries lock someone out for an hour.'))}</li>
+        <li>${esc(t("Some routers and internet providers don't allow it. If yours doesn't, it says why."))}</li>
+      </ul>
+      <div class="pickcards tut-cards two">
+        ${tutCard(d.anywhere === true, 'tutPickAnywhere(true)', tutIcon('globe'), t('Yes, open it up'), t('You pick a strong password next.'))}
+        ${tutCard(d.anywhere === false, 'tutPickAnywhere(false)', tutIcon('home'), t('No, home only'), t('Nothing changes on your router.'))}
+      </div>
+      ${p && p.RemoteOn && p.RemoteProblem ? `<div class="tut-note warn"><b>${esc(t('Right now'))}</b><span>${esc(p.RemoteProblem)}</span></div>` : ''}`,
+    act: tutAnywhereNext,
+    skip: 'tutForward()',
+  };
+}
+
+function tutPickAnywhere(on) {
+  tutDash.anywhere = on;
+  renderTutorial();
+}
+
+async function tutAnywhereNext() {
+  // Turning it off needs no password, so it's saved straight away; turning it on waits for the password step.
+  if (tutDash.anywhere === false && config && config.Global && config.Global.WebRemoteAccess) {
+    if (!await tutSaveGlobal({ WebRemoteAccess: false })) return;
+    tutDash.info = await api('/api/phone').catch(() => tutDash.info);
+  }
+  tutForward();
+}
+
+// ── the dashboard password ──
+
+/// How much a password holds up, 0-4: nothing, too short, weak, okay, strong. Rough on purpose - it's a hint, the
+/// only hard rules are the lengths.
+function tutPwScore(pw) {
+  if (!pw) return 0;
+  if (pw.length < 8) return 1;
+  const kinds = [/[a-z]/, /[A-Z]/, /\d/, /[^A-Za-z0-9]/].filter((r) => r.test(pw)).length;
+  if (/^(.)\1+$/.test(pw) || /password|passwort|123456|qwerty|nocat/i.test(pw)) return 2;
+  if (pw.length >= 16 || (pw.length >= 12 && kinds >= 3)) return 4;
+  if (pw.length >= 12 || kinds >= 3) return 3;
+  return 2;
+}
+
+/// The shortest password the steps picked need: 12 to open it from anywhere, 8 for the phone.
+const tutPwMin = () => (tutDash.anywhere === true ? 12 : 8);
+
+function tutPwMeter() {
+  const pw = tutDash.pw;
+  const score = tutPwScore(pw);
+  const words = ['', t('Too short'), t('Weak'), t('Okay'), t('Strong')];
+  const min = tutPwMin();
+  const hint = pw && pw.length < min
+    ? (tutDash.anywhere === true ? tf('Open from anywhere needs at least {0} characters.', min) : tf('Use at least {0} characters.', min))
+    : (pw ? words[score] : '');
+  return `<div class="tut-meter s${score}" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <span class="muted small">${esc(hint)}</span>`;
+}
+
+function tutPwInput(el) {
+  tutDash.pw = el.value;
+  const m = $('tutMeter');
+  if (m) { m.innerHTML = tutPwMeter(); m.classList.remove('bad'); }
+  if ($('tutError')) $('tutError').textContent = '';
+}
+
+function tutPwToggle() {
+  tutDash.pwShow = !tutDash.pwShow;
+  const el = $('tut-pw');
+  if (el) el.type = tutDash.pwShow ? 'text' : 'password';
+  const b = $('tutPwShow');
+  if (b) b.textContent = tutDash.pwShow ? t('Hide') : t('Show');
+}
+
+function tutStepPassword() {
+  const d = tutDash;
+  const p = d.info || {};
+  const wanted = d.phone === true || d.anywhere === true;
+
+  // Saved: now say what happens next - the code to scan, the firewall, a restart.
+  if (d.pwDone) {
+    return {
+      sub: '-done',
+      title: d.phone === true ? t('Scan it with your phone') : t('Password saved'),
+      lead: d.phone === true ? '' : esc(t('Anyone who opens the dashboard from another device signs in with it.')),
+      body: tutPhoneStatus(p) || `<p class="muted small">${esc(t('Saved.'))}</p>`,
+      back: "tutDash.pwDone=false;tutDir=-1;renderTutorial()",
+      act: tutForward,
+    };
+  }
+
+  return {
+    title: t('Pick a dashboard password'),
+    lead: esc(wanted
+      ? t('Your phone signs in with it. Without one, only this PC can open the dashboard - so nobody else on your Wi-Fi can reach your accounts.')
+      : t('Optional while only this PC opens the dashboard. Your phone, or anywhere, needs one first.')),
+    body: `${p.HasPassword ? `<p class="tut-note"><span>${esc(t('A password is already set. Leave the box empty to keep it.'))}</span></p>` : ''}
+      <div class="tut-pw">
+        <input id="tut-pw" type="${d.pwShow ? 'text' : 'password'}" autocomplete="new-password" spellcheck="false"
+          placeholder="${esc(p.HasPassword ? t('leave empty to keep it') : t('a password only you know'))}" value="${esc(d.pw)}" oninput="tutPwInput(this)">
+        <button type="button" class="ghost" id="tutPwShow" onclick="tutPwToggle()">${esc(d.pwShow ? t('Hide') : t('Show'))}</button>
+      </div>
+      <div class="tut-meterrow" id="tutMeter">${tutPwMeter()}</div>
+      <p id="tutError" class="error"></p>`,
+    next: wanted ? t('Save and continue') : t('Next'),
+    act: tutSavePassword,
+    skip: wanted ? '' : 'tutForward()',
+    focus: 'tut-pw',
+  };
+}
+
+/// Saves the password with whatever the phone and from-anywhere steps asked for, in one go: listening on the network
+/// only ever goes out together with a password.
+async function tutSavePassword() {
+  const d = tutDash;
+  const p = d.info || {};
+  const pw = d.pw;
+  const err = $('tutError');
+  // Easy doesn't ask about from anywhere: a setting already on stays as it is, and doesn't make this step demand anything.
+  const anywhere = tutorialMode === 'advanced' && d.anywhere === true;
+  const wanted = d.phone === true || anywhere;
+  const say = (text) => { if (err) err.textContent = text; };
+
+  if (!pw && !wanted) { tutForward(); return; }
+  if (!pw && !p.HasPassword) { say(t('Type a password first - your phone signs in with it.')); return; }
+  // The hint under the box already says how long - it turns red rather than being said twice.
+  if (pw && pw.length < tutPwMin()) {
+    const m = $('tutMeter');
+    if (m) m.classList.add('bad');
+    return;
+  }
+  // Keeping the saved one for from anywhere: it has to be long enough, and only the server knows how long it is.
+  if (!pw && anywhere && !p.LongPassword) { say(tf('Open from anywhere needs at least {0} characters.', 12)); return; }
+
+  const btn = $('tutNext');
+  if (btn) btn.disabled = true;
+  const changes = {};
+  if (pw) changes.WebPassword = pw;
+  if (wanted && !p.ListensBeyondThisPc) changes.WebHost = '0.0.0.0';
+  if (anywhere) changes.WebRemoteAccess = true;
+
+  const res = await tutSaveGlobal(changes);
+  if (!res) { if (btn) btn.disabled = false; return; }
+
+  // Gone from the page the moment it's saved - it never comes back from the server, and it shouldn't linger here.
+  d.pw = '';
+  d.pwShow = false;
+  d.info = await api('/api/phone').catch(() => d.info);
+
+  if (!wanted) { tutForward(); return; }
+  d.pwDone = true;
+  renderTutorial();
+
+  // The router takes a few seconds to answer - look again once, so the step says how that went.
+  if (d.anywhere === true) {
+    setTimeout(async () => {
+      if (!tutorialOpen || !d.pwDone || tutDash !== d) return;
+      d.info = await api('/api/phone').catch(() => d.info);
+      if (tutorialOpen && d.pwDone && tutDash === d && tutLastKey === 'password-done') renderTutorial();
+    }, 4000);
+  }
+}
+
+// ── notifications ──
+
+function tutStepNotify() {
+  const set = (name) => (config && config.GlobalSecretsSet || []).includes(name);
+  const secret = (id, name, label, ph) => `<div class="tut-secret">
+      <label for="${id}">${esc(label)}${set(name) ? ` <span class="pill good">${esc(t('saved'))}</span>` : ''}</label>
+      <div class="tut-pw"><input id="${id}" type="password" autocomplete="off" spellcheck="false"
+        placeholder="${esc(set(name) ? t('leave empty to keep it') : ph)}" onkeydown="if(event.key==='Enter')tutSaveSecret('${id}','${name}')">
+      <button class="ghost" onclick="tutSaveSecret('${id}','${name}')">${esc(t('Save'))}</button></div></div>`;
+  const g = (config && config.Global) || {};
+
+  return {
+    title: t('Hear from it on your phone'),
+    lead: esc(t('A message when cards drop, a gift arrives or something needs you. Discord, Telegram, both - or neither.')),
+    body: `<div class="tut-svc">
+        <div class="tut-svchead"><b>Telegram</b></div>
+        ${notifyGuide('telegram')}
+        ${secret('tut-tg', 'TelegramBotToken', t('Telegram bot token'), '123456789:ABC...')}
+        ${telegramConnect()}
+      </div>
+      <div class="tut-svc">
+        <div class="tut-svchead"><b>Discord</b></div>
+        ${notifyGuide('discord')}
+        ${secret('tut-dh', 'DiscordWebhookUrl', t('Discord webhook'), 'https://discord.com/api/webhooks/...')}
+        <details class="tut-more"><summary>${esc(t('Discord commands too (optional)'))}</summary>
+          ${notifyGuide('discordbot')}
+          ${secret('tut-db', 'DiscordBotToken', t('Discord bot token'), 'MTIz...')}
+          ${discordConnect()}
+        </details>
+      </div>
+      ${tutSwitch('tut-installs', g.SendInstalls, 'tutSaveGlobal({ SendInstalls: this.checked })',
+        t('Tell me when an update installs'), t('Off unless you turn it on.'))}`,
+    act: tutSaveNotify,
+    skip: 'tutForward()',
+  };
+}
+
+/// Whatever is pasted into the notification boxes right now, as settings. Empty boxes keep what's saved.
+function tutNotifyTyped() {
+  const changes = {};
+  for (const [id, name] of [['tut-tg', 'TelegramBotToken'], ['tut-dh', 'DiscordWebhookUrl'], ['tut-db', 'DiscordBotToken']]) {
+    const v = $(id) ? $(id).value.trim() : '';
+    if (v) changes[name] = v;
+  }
+  return changes;
+}
+
+/// A token or webhook, saved the moment Save is pressed - together with anything pasted into the other boxes, which the
+/// redraw would otherwise empty. Connect Telegram only appears once the token is saved and Telegram has said yes to it,
+/// a few seconds later (refresh() redraws it in place).
+async function tutSaveSecret(id) {
+  const changes = tutNotifyTyped();
+  if (!$(id) || !$(id).value.trim()) { toast(t('Paste it first'), true); return; }
+  const res = await tutSaveGlobal(changes);
+  if (!res) return;
+  toast(t('Saved.'));
+  renderTutorial();
+  refresh();
+}
+
+/// Next on the notifications step: anything pasted and not yet saved is saved, not dropped.
+async function tutSaveNotify() {
+  const changes = tutNotifyTyped();
+  if (Object.keys(changes).length) {
+    const btn = $('tutNext');
+    if (btn) btn.disabled = true;
+    if (!await tutSaveGlobal(changes)) { if (btn) btn.disabled = false; return; }
+    toast(t('Saved.'));
+    refresh();
+  }
+  tutForward();
+}
+
+// ── updates ──
+
+function tutStepUpdates() {
+  const d = tutDash;
+  const adv = tutorialMode === 'advanced';
+  const def = (n) => schema && (schema.Global || []).find((x) => x.Name === n);
+  const label = (n, fallback) => { const x = def(n); return x ? tSetting(x, 'label') : fallback; };
+  const num = (key, min, max) => `<input type="number" min="${min}" max="${max}" value="${esc(d[key])}" oninput="tutDash.${key}=+this.value">`;
+
+  // Linux and Docker can't swap themselves over: it says when a new version is out, and that's all it can do.
+  if (state && state.CanSelfUpdate === false) {
+    return {
+      title: t('Keep it up to date'),
+      lead: esc(t('New versions fix things and add new ones.')),
+      body: `<p class="small">${esc(t('It tells you when a new version is out. Here it can\'t install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux zip, swap in the new zip. Your accounts and settings stay where they are.'))}</p>
+        ${adv ? `<div class="tut-grid">
+          <label>${esc(label('UpdateCheckHours', 'Look for updates every'))}</label>
+          <span class="tut-hours">${num('checkHours', 1, 24)}<span>${esc(t('hours'))}</span></span>
+        </div>` : `<p class="muted small tut-later">${esc(t('You can connect Discord or Telegram later in Settings, to get a message when something happens.'))}</p>`}`,
+      act: tutSaveUpdates,
+      skip: 'tutForward()',
+    };
+  }
+
+  return {
+    title: t('Keep it up to date'),
+    lead: esc(t('New versions fix things and add new ones.')),
+    body: `${tutSwitch('tut-auto', d.autoUpdate, 'tutDash.autoUpdate=this.checked;renderTutorial()',
+        t('Keep it up to date by itself'), t('Installs at night while your accounts sleep, and only when nobody is playing.'))}
+      ${d.autoUpdate ? '' : `<p class="muted small">${esc(t('Off: it tells you when a new version is out, and you install it with one click.'))}</p>`}
+      ${adv ? `<div class="tut-grid">
+          <label>${esc(t('Installs between'))}</label>
+          <span class="tut-hours">${num('fromHour', 0, 23)}<span>:00 ${esc(t('and'))}</span>${num('untilHour', 0, 24)}<span>:00</span></span>
+          <label>${esc(label('AutoUpdateWaitHours', 'Wait after a release for'))}</label>
+          <span class="tut-hours">${num('waitHours', 0, 168)}<span>${esc(t('hours'))}</span></span>
+          <label>${esc(label('UpdateCheckHours', 'Look for updates every'))}</label>
+          <span class="tut-hours">${num('checkHours', 1, 24)}<span>${esc(t('hours'))}</span></span>
+        </div>` : `<p class="muted small tut-later">${esc(t('You can connect Discord or Telegram later in Settings, to get a message when something happens.'))}</p>`}`,
+    act: tutSaveUpdates,
+    skip: 'tutForward()',
+  };
+}
+
+async function tutSaveUpdates() {
+  const d = tutDash;
+  const g = (config && config.Global) || {};
+  const changes = {};
+  const auto = d.autoUpdate ? 1 : 0;
+  if (auto !== g.AutoUpdate) changes.AutoUpdate = auto;
+  // Looking for updates switched off stops installing them too - so switching installing on has to switch it back on.
+  if (auto === 1 && g.CheckForUpdates === false) changes.CheckForUpdates = true;
+
+  if (tutorialMode === 'advanced') {
+    const clamp = (v, lo, hi, was) => (Number.isFinite(v) ? Math.max(lo, Math.min(hi, Math.round(v))) : was);
+    const set = (name, v) => { if (v !== g[name]) changes[name] = v; };
+    set('AutoUpdateFromHour', clamp(d.fromHour, 0, 23, g.AutoUpdateFromHour));
+    set('AutoUpdateUntilHour', clamp(d.untilHour, 0, 24, g.AutoUpdateUntilHour));
+    set('AutoUpdateWaitHours', clamp(d.waitHours, 0, 168, g.AutoUpdateWaitHours));
+    set('UpdateCheckHours', clamp(d.checkHours, 1, 24, g.UpdateCheckHours));
+  }
+
+  if (Object.keys(changes).length) {
+    const btn = $('tutNext');
+    if (btn) btn.disabled = true;
+    if (!await tutSaveGlobal(changes)) { if (btn) btn.disabled = false; return; }
+  }
+  tutForward();
+}
+
+// ── the account ──
+
+function tutStepType() {
+  // What the account is for - asked once there is no account yet, and turned into its settings when it's added.
+  const importing = !!(imp && imp.tutorial) && !tutorialManual;
+  const importAccts = (importing && imp.scan && imp.scan.Accounts) || [];
+  return {
+    title: t('What kind of account is it?'),
+    lead: esc(t('This picks the right settings for it. Anything can be changed later, per account.')),
+    body: `<div class="pickcards tut-cards">
+        ${tutCard(tutorialHuman === true, 'tutorialPickType(true)', tutIcon('user'), t('My main - I play on it'),
+          t("Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated."))}
+        ${tutCard(tutorialHuman === false, 'tutorialPickType(false)', tutIcon('bolt'), t('A spare or farm account'),
+          t('Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.'))}
+      </div>
+      ${importAccts.length > 1 ? `<p class="muted small">${esc(t('Importing several? You pick which ones on the next step.'))}</p>` : ''}`,
+    act: () => {
+      if (tutorialHuman === null) { toast(t('Pick one first'), true); return; }
+      tutForward();
+    },
+  };
+}
+
+function tutStepFinal() {
+  const hasAccounts = !!(state && state.Bots && state.Bots.length);
+  const importing = !!(imp && imp.tutorial) && !tutorialManual;
 
   const tips = `<p class="muted small">${tf('Everything has an explanation attached - hover the {0} beside any setting.', '<i class="info" style="display:inline-flex"></i>')}
       ${tf('The Console tab does anything the other tabs do, by typing. {0} lists it all.', '<code>help</code>')}</p>`;
 
-  // The account comes LAST. Adding one starts it signing in, and the password and Steam Guard questions appear
-  // in a bar at the top of the dashboard - behind this dialog, if the walkthrough were still open. So every
-  // explanation comes first, and the final button adds the account (or imports) and gets out of the way.
+  // The account comes LAST. Adding one starts it signing in, and every question before it is best out of the way
+  // first - so the final button adds the account (or imports) and the sign-in carries on right here.
   // It used to be step three, and "Add an account" there closed the walkthrough outright: nobody who took
   // that path ever saw the rest of it.
-  let final;
-
   if (hasAccounts) {
     // Replayed from the Overview page on a machine that is already running accounts.
-    final = { title: t("That's it"), body: tips, next: t('Finish'), act: closeTutorial };
-  } else if (importing) {
-    final = {
-      title: t('Bring your ArchiSteamFarm accounts across'),
-      body: `<p>${tf('Found an ArchiSteamFarm setup at {0} with {1}.', `<code>${esc(tutorialAsf.Path)}</code>`,
-             `<b>${esc(tutorialAsf.Accounts.length === 1 ? t('one account') : tf('{0} accounts', tutorialAsf.Accounts.length))}</b>`)}</p>
-           <p class="muted small">${esc(t('Tick the ones you play on yourself - they come across in human mode. The rest farm at full speed.'))}</p>
-           <div class="pickrows">
-             ${tutorialAsf.Accounts.map((a) => `<label class="pickrow">
-               <input type="checkbox" ${tutorialImportHuman.has(a.Name) ? 'checked' : ''} onchange="tutorialToggleImportHuman(${esc(JSON.stringify(a.Name))}, this.checked)">
-               <span><b>${esc(a.Name)}</b> <span class="muted">- ${esc(a.SteamLogin)}</span>${a.HasToken ? `<br><span class="muted small">${esc(t('(login token comes across, so no password needed)'))}</span>` : ''}</span>
-               <span class="pill">${esc(t('Human mode'))}</span>
-             </label>`).join('')}
-           </div>
-           <p class="muted small">${esc(t('Importing copies the accounts and their login tokens. It changes nothing in ArchiSteamFarm.'))}
+    return { title: t("That's it"), lead: esc(t('Everything you picked is saved. You can change any of it later under Settings.')), body: tips, next: t('Finish'), act: closeTutorial };
+  }
+
+  if (importing) {
+    const sc = imp.scan;
+    return {
+      title: sc && sc.Found ? tf('Bring your {0} accounts across', sc.ToolName) : t('Import from another idler'),
+      body: `${sc ? importPreviewHtml() : importToolsHtml()}
+           <p id="tutError" class="error"></p>
+           <p class="muted small">${esc(t('Importing copies the accounts, their sign-ins and settings. It changes nothing in the other program.'))}
+             ${sc ? `<a style="cursor:pointer" onclick="impBack()">${esc(t('A different idler'))}</a> ·` : ''}
              <a style="cursor:pointer" onclick="tutorialManual=true;renderTutorial()">${esc(t('Add one by hand instead'))}</a></p>
            ${tips}`,
       next: t('Import them'),
-      act: doTutorialImport,
-    };
-  } else {
-    final = {
-      title: t('Add your first account'),
-      body: `<p>${tf('Add the Steam account you want it to run. You will be asked for the password {0}, and for a Steam Guard code - after that it remembers a login token and never needs the password again.', `<b>${esc(t('once'))}</b>`)}</p>
-        <div class="form2">
-          <label for="tut-login">${esc(t('Steam account name'))}${tipIcon(t("What you type into Steam's sign-in box. Not your display name, not your email."))}</label>
-          <input id="tut-login" type="text" placeholder="${esc(t('your steam login'))}" autocomplete="off">
-          <label for="tut-pass">${esc(t('Password'))}${tipIcon(t('Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.'))}</label>
-          <input id="tut-pass" type="password" placeholder="${esc(t("leave blank and it'll ask"))}" autocomplete="off">
-          <label for="tut-name">${esc(t('Nickname (optional)'))}${tipIcon(t("What this account is called in nocat.farm. Leave it empty and it uses the Steam account name."))}</label>
-          <input id="tut-name" type="text" placeholder="${esc(t('same as the Steam account name'))}" autocomplete="off">
-          ${tutorialMode !== 'quick' ? `<label for="tut-qr">${esc(t('Sign in with a QR code'))}${tipIcon(t("Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty."))}</label>
-          <input id="tut-qr" type="checkbox" onchange="['tut-login','tut-pass'].forEach((id) => { $(id).disabled = this.checked; })">` : ''}
-          ${tutorialHuman === true ? `<label for="tut-self">${esc(t('I also sign into it from my own Steam app'))}${tipIcon(t('Then nocat.farm never changes its online status - if it did, Steam would sign your own client out of Friends and Chat.'))}</label>
-          <input id="tut-self" type="checkbox" ${tutorialSelf ? 'checked' : ''} onchange="tutorialSelf=this.checked">` : ''}
-        </div>
-        <p id="tutError" class="error"></p>
-        ${found
-          ? `<p class="muted small"><a style="cursor:pointer" onclick="tutorialManual=false;renderTutorial()">${esc(t('Import from ArchiSteamFarm'))}</a></p>`
-          : `<p class="muted small">${esc(t('No ArchiSteamFarm install was found on this machine, so there is nothing to import.'))}</p>`}
-        ${tips}`,
-      next: t('Add account'),
-      act: tutorialAddAccount,
+      act: impApply,
     };
   }
 
-  const steps = [
-    {
-      // Language first, before a word of the rest is read. Skipping leaves it English, which is also what an
-      // untranslated string falls back to - so there is no way to end up looking at blanks.
-      title: t('Language'),
-      body: `<p>${esc(t('Pick the language for this dashboard. You can change it later under Settings › Global.'))}</p>
-        <div class="langpick">${LANGUAGES.map((l) =>
-          `<span class="p ${(config && config.Global && config.Global.Language || 'en') === l.code ? 'on' : ''}"
-            onclick="pickTutorialLanguage('${l.code}')">${esc(l.name)}</span>`).join('')}</div>
-        <p class="muted small">${esc(t("Anything a translation hasn't covered yet stays in English rather than showing a blank, so a part-finished language is still perfectly usable. Status and log lines follow it too; replies to commands typed in the console stay in English."))}</p>`,
-      next: t('Continue'),
-    },
-    {
-      title: t('Welcome to nocat.farm'),
-      body: `<p>${esc(t('It signs your Steam accounts in, farms their trading cards, plays games so the hours count and picks up free stuff - all from this machine. Your accounts never leave it.'))}</p>
-        <div class="pickcards">
-          <div class="pickcard ${tutorialMode === 'quick' ? 'on' : ''}" onclick="tutorialMode='quick';renderTutorial()">
-            <b>${esc(t('Quick setup'))}</b>
-            <span>${esc(t('Add or import an account and go - the defaults are sensible. About a minute.'))}</span>
-          </div>
-          <div class="pickcard ${tutorialMode === 'full' ? 'on' : ''}" onclick="tutorialMode='full';renderTutorial()">
-            <b>${esc(t('Full tour'))}</b>
-            <span>${esc(t('Every feature explained, and where the fine-tuning lives. A few minutes.'))}</span>
-          </div>
-          <div class="pickcard ${tutorialMode === 'advanced' ? 'on' : ''}" onclick="tutorialMode='advanced';renderTutorial()">
-            <b>${esc(t('Advanced setup'))}</b>
-            <span>${esc(t("Used ArchiSteamFarm or another idler before? Add the account, then go straight to all of its settings, advanced ones included."))}</span>
-          </div>
-        </div>
-        <p class="muted small">${esc(t('You can skip this and come back from the Overview page.'))}</p>`,
-      next: t('Start'),
-    },
-    {
-      full: true,
-      title: t('Tell it what to play'),
-      body: `<p>${esc(t('A new account starts farming trading cards straight away. There are two ways it can spend its time:'))}</p>
-        <ul class="muted small">
-          <li>${tf('{0} - it works through everything in your library that still has drops, then stops. Nothing to configure.', `<b>${esc(t('Trading cards'))}</b>`)}</li>
-          <li>${tf('{0} - it keeps a believable daily routine: a few games, one at a time, with breaks, meals and a bedtime. Use this on an account you care about.', `<b>${esc(t('Human mode'))}</b>`)}</li>
-        </ul>
-        <p class="muted small">${esc(t('Both live under Settings, per account.'))}</p>`,
-      next: t('Next'),
-    },
-    {
-      full: true,
-      title: t('Free stuff, collected for you'),
-      body: `<p>${esc(t('Two things happen by themselves on every account:'))}</p>
-        <ul class="muted small">
-          <li>${tf('{0} - the daily sticker during a Steam sale, and anything in the Points Shop that costs 0 points.', `<b>${esc(t('Free event items'))}</b>`)}</li>
-          <li>${tf('{0} - Steam wallet gift cards and guest passes people send you.', `<b>${esc(t('Gifts'))}</b>`)}</li>
-        </ul>
-        <p class="muted small">${esc(t('Free games, booster packs from gems and fair card swaps are one switch each under Settings, per account.'))}</p>`,
-      next: t('Next'),
-    },
-    {
-      full: true,
-      title: t('rep4rep, if you want it'),
-      body: `<p>${esc(t("Optional. Your accounts post comments on other people's Steam profiles and earn points you can spend on comments for your own."))}</p>
-        <p class="muted small">${tf('Needs a free account - {0}. Then switch on {1} under Settings, paste the API token, and choose which accounts comment. Skip it entirely if you only want cards and playtime.',
-          '<a href="https://rep4rep.com/?r=reap" target="_blank" rel="noopener">rep4rep.com ↗</a>', `<b>${esc(t('Use rep4rep at all'))}</b>`)}</p>`,
-      next: t('Next'),
-    },
-    {
-      // Only in the full tour: the quick path is for people who want the defaults, and this is all about what
-      // they can change once the defaults aren't enough.
-      full: true,
-      title: t('Fine-tuning, when you want it'),
-      body: `<p>${tf('Settings starts with the everyday switches. Tick {0} at the top of Settings for the rest:', `<b>${esc(t('Show advanced'))}</b>`)}</p>
-        <ul class="muted small">
-          <li>${tf('{0} - how long it waits after waking before it trades or replies, when a break turns it Away, whether behind-the-scenes things wait for its day, one trade at a time.', `<b>${esc(t('Human mode timings'))}</b>`)}</li>
-          <li>${tf('{0} - the order it farms in, sittings, hours a day, how long it keeps playing after the last card.', `<b>${esc(t('Card farming detail'))}</b>`)}</li>
-          <li>${tf('{0} - its port, a password, the tray, log files.', `<b>${esc(t('The dashboard itself'))}</b>`)}</li>
-        </ul>
-        <p class="muted small">${tf('Type {0} in the Console to read about any one setting. Plugins go in the {1} folder - PLUGINS.md on GitHub shows how to write one.', '<code>help &lt;setting&gt;</code>', '<code>plugins</code>')}</p>`,
-      next: t('Next'),
-    },
-    // What the account is for - asked once there is no account yet, and turned into its settings when it's added.
-    hasAccounts ? null : {
-      title: t('What kind of account is it?'),
-      body: `<p>${esc(t('This picks the right settings for it. Anything can be changed later, per account.'))}</p>
-        <div class="pickcards">
-          <div class="pickcard ${tutorialHuman === true ? 'on' : ''}" onclick="tutorialPickType(true)">
-            <b>${esc(t('My main - I play on it'))}</b>
-            <span>${esc(t("Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated."))}</span>
-          </div>
-          <div class="pickcard ${tutorialHuman === false ? 'on' : ''}" onclick="tutorialPickType(false)">
-            <b>${esc(t('A spare or farm account'))}</b>
-            <span>${esc(t('Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.'))}</span>
-          </div>
-        </div>
-        ${importing && tutorialAsf.Accounts.length > 1 ? `<p class="muted small">${esc(t('Importing several? You pick which ones on the next step.'))}</p>` : ''}`,
-      next: t('Next'),
-      act: () => {
-        if (tutorialHuman === null) { toast(t('Pick one first'), true); return; }
-        tutorialStep++;
-        renderTutorial();
-      },
-    },
-    final,
-  ].filter((s) => s && (!s.full || tutorialMode === 'full'));
-
-  const st = steps[Math.min(tutorialStep, steps.length - 1)];
-  const last = tutorialStep >= steps.length - 1;
-
-  modal(`
-    <div class="muted small" style="letter-spacing:1px">${esc(tf('STEP {0} OF {1}', tutorialStep + 1, steps.length))}</div>
-    <h2>${esc(st.title)}</h2>
-    ${st.body}
-    <div class="actions">
-      ${tutorialStep > 0 ? `<button class="ghost" onclick="tutorialStep--;renderTutorial()">${esc(t('Back'))}</button>` : ''}
-      ${last && hasAccounts ? '' : `<button class="ghost" onclick="closeTutorial()">${esc(last ? t('Not yet') : t('Skip'))}</button>`}
-      <button id="tutNext">${esc(st.next)}</button>
-    </div>`);
-
-  $('tutNext').onclick = st.act || (() => { tutorialStep++; renderTutorial(); });
-
-  // The form step: focus the first box, and Enter in any of them adds the account.
-  const first = $('tut-login');
-  if (first) {
-    ['tut-name', 'tut-login', 'tut-pass'].forEach((id) => {
-      $(id).onkeydown = (e) => { if (e.key === 'Enter') tutorialAddAccount(); };
-    });
-    setTimeout(() => first.focus(), 50);
-  }
+  const field = (id, label, tip, input) => `<div class="tut-field"><label for="${id}">${esc(label)}${tipIcon(tip)}</label>${input}</div>`;
+  return {
+    title: t('Add your first account'),
+    lead: tf('Add the Steam account you want it to run. You will be asked for the password {0}, and for a Steam Guard code - after that it remembers a login token and never needs the password again.', `<b>${esc(t('once'))}</b>`),
+    body: `<div class="tut-fields">
+        ${field('tut-login', t('Steam account name'), t("What you type into Steam's sign-in box. Not your display name, not your email."),
+          `<input id="tut-login" type="text" placeholder="${esc(t('your steam login'))}" autocomplete="off" spellcheck="false">`)}
+        ${field('tut-pass', t('Password'), t('Optional. Leave it blank and nocat.farm asks once, then remembers the account with a login token instead - which is safer than a password in a file.'),
+          `<input id="tut-pass" type="password" placeholder="${esc(t("leave blank and it'll ask"))}" autocomplete="off">`)}
+        ${field('tut-name', t('Nickname (optional)'), t("What this account is called in nocat.farm. Leave it empty and it uses the Steam account name."),
+          `<input id="tut-name" type="text" placeholder="${esc(t('same as the Steam account name'))}" autocomplete="off" spellcheck="false">`)}
+      </div>
+      ${tutorialMode === 'advanced' ? `<label class="tut-check"><input id="tut-qr" type="checkbox" onchange="['tut-login','tut-pass'].forEach((id) => { $(id).disabled = this.checked; })">
+        <span>${esc(t('Sign in with a QR code'))}${tipIcon(t("Scan a code with the Steam app on your phone instead of typing a password - the account name comes from Steam, so both boxes above can stay empty."))}</span></label>` : ''}
+      ${tutorialHuman === true ? `<label class="tut-check"><input id="tut-self" type="checkbox" ${tutorialSelf ? 'checked' : ''} onchange="tutorialSelf=this.checked">
+        <span>${esc(t('I also sign into it from my own Steam app'))}${tipIcon(t('Then nocat.farm never changes its online status - if it did, Steam would sign your own client out of Friends and Chat.'))}</span></label>` : ''}
+      <p id="tutError" class="error"></p>
+      <p class="muted small"><a style="cursor:pointer" onclick="${imp && imp.tutorial ? 'tutorialManual=false;renderTutorial()' : 'tutorialOpenImport()'}">${esc(t('Coming from another idler? Import from it'))}</a></p>
+      ${tips}`,
+    next: t('Add account'),
+    act: tutorialAddAccount,
+    focus: 'tut-login',
+  };
 }
 
 async function tutorialAddAccount() {
@@ -2076,14 +2876,17 @@ async function startTutorialSetup(name, steps) {
       BedHour: d.BedHour ?? 1, DayOffChancePct: d.DayOffChancePct ?? 10,
     },
   };
-  modal(`<h2>${esc(t('Looking at its games...'))}</h2><p class="muted small">${esc(t('This takes a few seconds...'))}</p>`);
+  tutShow({ key: 'setup-loading', at: tutBarSteps - 1, kicker: tf('SETTING UP {0}', name.toUpperCase()),
+    title: t('Looking at its games...'), body: `<div class="tut-spin" aria-hidden="true"></div><p class="muted small">${esc(t('This takes a few seconds...'))}</p>` });
 
   // The library lands a few seconds after signing in.
   for (let i = 0; i < 15; i++) {
     const lib = await api('/api/bots/' + encodeURIComponent(name) + '/library').catch(() => null);
     if (lib && lib.Ready) { tutSetup.lib = lib.Games || []; break; }
     await new Promise((r) => setTimeout(r, 2000));
+    if (!tutorialOpen) return;   // closed while it looked - don't come back over the dashboard
   }
+  if (!tutorialOpen) return;
   tutSetup.lib = tutSetup.lib || [];
   tutSetup.lib.forEach((g) => { if (g.Name) GAME_NAMES[g.AppId] = g.Name; });
 
@@ -2130,8 +2933,8 @@ function renderTutorialSetup() {
         <div class="row"><span class="muted">${esc(t('Main game'))}</span><b>${esc(s.main ? gameLabel(s.main) : t('tap one above'))}</b></div>
         <div class="row"><span class="muted">${esc(t('Side games'))}</span><span>${esc(sides.length ? sides.map(gameLabel).join(', ') : t('none - that is fine'))}</span></div>
       </div>
-      <label style="display:block;margin-top:12px">${esc(tf('Time on the main game: {0}%', s.pct))}
-        <input type="range" min="40" max="100" step="5" value="${s.pct}" style="width:100%" oninput="tutSetup.pct=+this.value;this.previousSibling.textContent=tf('Time on the main game: {0}%', this.value)"></label>
+      <label class="tut-range"><span id="tutPct">${esc(tf('Time on the main game: {0}%', s.pct))}</span>
+        <input type="range" min="40" max="100" step="5" value="${s.pct}" oninput="tutSetup.pct=+this.value;$('tutPct').textContent=tf('Time on the main game: {0}%', this.value)"></label>
       <p class="muted small">${esc(t('The side games share the rest. You can fine-tune all of this later under Settings.'))}</p>
       <p id="tutError" class="error"></p>`;
   } else if (step === 'routine') {
@@ -2143,7 +2946,7 @@ function renderTutorialSetup() {
         <input id="tut-${n}" type="number" min="${min}" max="${max}" value="${s.routine[n]}" oninput="tutSetup.routine['${n}']=+this.value;tutRoutinePreview()">`;
     };
     body = `<p>${esc(t('Roughly how a person would use this account. Every day comes out a bit different around these numbers.'))}</p>
-      <div class="form2">
+      <div class="form2 tut-form2">
         ${field('WeekdayHours', 0, 20)}${field('WeekendHours', 0, 20)}${field('DayStartHour', 0, 23)}${field('BedHour', 0, 23)}${field('DayOffChancePct', 0, 90)}
       </div>
       <p id="tutRoutinePreview" class="muted small" style="margin-top:12px"></p>`;
@@ -2153,17 +2956,17 @@ function renderTutorialSetup() {
       ${s.lib.length ? tutGameChips((id) => s.idle.has(id) ? 'on' : '', 'tutPickIdle', [...s.idle]) : ''}
       <div style="display:flex;gap:6px;margin:6px 0 12px"><input id="tutAddGame" type="text" placeholder="${esc(t('Not in the list? Paste a store link or game ID'))}" style="flex:1">
         <button class="ghost" onclick="tutAddGame()">${esc(t('Add'))}</button></div>
-      <label for="tut-custom">${esc(t('Show friends a custom game name (optional)'))}</label>
-      <input id="tut-custom" type="text" style="width:100%" value="${esc(s.customName)}" placeholder="${esc(t('leave empty to show the real game'))}" oninput="tutSetup.customName=this.value">`;
+      <div class="tut-field"><label for="tut-custom">${esc(t('Show friends a custom game name (optional)'))}</label>
+      <input id="tut-custom" type="text" value="${esc(s.customName)}" placeholder="${esc(t('leave empty to show the real game'))}" oninput="tutSetup.customName=this.value"></div>`;
   }
 
-  modal(`<div class="muted small" style="letter-spacing:1px">${esc(tf('SETTING UP {0}', s.name.toUpperCase()))}</div>
-    <h2>${esc(title)}</h2>${body}
-    <div class="actions">
-      ${s.at > 0 ? `<button class="ghost" onclick="tutSetup.at--;renderTutorialSetup()">${esc(t('Back'))}</button>` : ''}
-      <button class="ghost" onclick="tutSkipSetup()">${esc(t('Skip - use the defaults'))}</button>
-      <button id="tutNext" onclick="tutSetupNext()">${esc(last ? t('Save') : t('Next'))}</button>
-    </div>`);
+  tutShow({
+    key: 'setup-' + step, at: tutBarSteps - 1,
+    kicker: tf('SETTING UP {0}', s.name.toUpperCase()), title, body,
+    back: s.at > 0 ? 'tutDir=-1;tutSetup.at--;renderTutorialSetup()' : '',
+    skip: 'tutSkipSetup()', skipLabel: t('Skip - use the defaults'),
+    next: last ? t('Save') : t('Next'),
+  }, tutSetupNext);
 
   if (step === 'routine') tutRoutinePreview();
   const add = $('tutAddGame');
@@ -2260,16 +3063,20 @@ function tutShowDone() {
       : t('It is checking which of your games still have cards to drop - that takes a minute. Then it farms them, and idles your games after that.');
   }
 
-  tutorialOpen = true;
-  modal(`<h2>${esc(t("You're all set"))}</h2>
-    <p>${esc(tf('{0} is signed in.', b ? b.Name : ''))} ${esc(what)}</p>
-    <p class="muted small">${esc(t('You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.'))}</p>
-    ${tutImportOthers.length ? `<p class="muted small">${esc(tf('The other {0} imported account(s) are added but not started yet.', tutImportOthers.length))}</p>` : ''}
-    <label class="tutdiscord"><input type="checkbox" ${config && config.Global && config.Global.DiscordPresence ? 'checked' : ''} onchange="tutDiscordPresence(this.checked)">
-      <span><b>${esc(t('Show on my Discord profile'))}</b><br><span class="muted small">${esc(t('Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.'))}</span></span></label>
-    <div class="actions">
-      ${tutImportOthers.length ? `<button class="ghost" onclick="tutStartOthers()">${esc(t('Start the others too'))}</button>` : ''}
-      <button id="tutNext" onclick="finishSignin()">${esc(t('Show me my account'))}</button></div>`);
+  tutShow({
+    key: 'done', at: tutBarSteps, kicker: t('Done'),
+    title: t("You're all set"),
+    badge: true,
+    body: `<p>${esc(tf('{0} is signed in.', b ? b.Name : ''))} ${esc(what)}</p>
+      <p class="muted small">${esc(t('You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.'))}</p>
+      ${tutImportOthers.length ? `<p class="muted small">${esc(tf('The other {0} imported account(s) are added but not started yet.', tutImportOthers.length))}</p>` : ''}
+      ${tutDash && tutDash.info && tutDash.info.NeedsRestart ? `<div class="tut-note warn"><b>${esc(t('One more thing: restart nocat.farm'))}</b>
+        <span>${esc(t('It starts listening for your phone the next time it starts. Close it and open it again once.'))}</span></div>` : ''}
+      ${tutSwitch('tut-dpres', config && config.Global && config.Global.DiscordPresence, 'tutDiscordPresence(this.checked)',
+        t('Show on my Discord profile'), t('Your Discord shows Playing nocat.farm while it is open, like a game. You can change this any time under Settings, Discord profile.'))}`,
+    skip: tutImportOthers.length ? 'tutStartOthers()' : '', skipLabel: t('Start the others too'),
+    next: t('Show me my account'),
+  }, finishSignin);
 }
 
 // The first-run question for the Discord card: saved the moment it's ticked, nothing else to press.
@@ -2312,14 +3119,19 @@ function renderSignin() {
   const qr = (state.QrWaiting || []).find((q) => q.Name === tutorialSignin);
   let title;
   let body;
-  let buttons;
+  let key;
+  let next = null;
+  let act = null;
+  let skip = '';
+  let skipLabel = '';
 
   // Signed in: now its library is known, so the setup can offer the account's own games instead of asking for IDs.
   // A human-mode account always gets the games step - without games it has nothing to play. The routine, and a
   // robot's idle list, are the full tour's.
   if (b && b.Online && !tutorialSetupDone) {
     tutorialSetupDone = true;
-    const steps = b.Legit ? (tutorialMode === 'full' ? ['games', 'routine'] : ['games']) : (tutorialMode === 'full' ? ['idle'] : []);
+    const adv = tutorialMode === 'advanced';
+    const steps = b.Legit ? (adv ? ['games', 'routine'] : ['games']) : (adv ? ['idle'] : []);
     if (steps.length) {
       startTutorialSetup(b.Name, steps);
       return;
@@ -2335,39 +3147,48 @@ function renderSignin() {
         : t('It is checking which of your games still have cards to drop - that takes a minute. Then it farms them, and idles your games after that.'));
     body = `<p>${esc(tf('{0} is signed in.', b.Name))} ${esc(what)}</p>
       <p class="muted small">${esc(t('You can close this window - nocat.farm keeps running by the clock (in the tray). The Accounts page shows what each account is doing, and that is where you add another one.'))}</p>`;
-    buttons = `<button id="tutNext" onclick="finishSignin()">${esc(t('Show me my account'))}</button>`;
+    key = 'signin-done';
+    next = t('Show me my account');
+    act = finishSignin;
   } else if (b && b.Group === 'problem') {
     title = t("Couldn't sign in");
-    body = `<p>${esc(b.Detail || '')}</p>
+    body = `<div class="tut-note bad"><span>${esc(b.Detail || '')}</span></div>
       <p class="muted small">${esc(t('Check the account name and password on the Accounts page, then press Start on it to try again.'))}</p>`;
+    key = 'signin-problem';
     // One imported account failing mustn't strand the rest of them.
-    buttons = tutImportQueue.length
-      ? `<button id="tutNext" onclick="tutNextImported()">${esc(t('Next account'))}</button>`
-      : `<button id="tutNext" onclick="finishSignin()">${esc(t('Go to Accounts'))}</button>`;
+    next = tutImportQueue.length ? t('Next account') : t('Go to Accounts');
+    act = tutImportQueue.length ? tutNextImported : finishSignin;
   } else if (qr) {
     title = t('Scan the code');
     body = `<p>${esc(t('Open the Steam app on your phone, tap the Steam Guard tab and scan this.'))}</p>
-      <div style="text-align:center;margin:12px 0"><img src="/api/bots/${encodeURIComponent(qr.Name)}/qr.svg?v=${qr.QrVersion}" alt="QR code" width="200" height="200"></div>`;
-    buttons = `<button class="ghost" onclick="finishSignin()">${esc(t('Hide this'))}</button>`;
+      <div class="tut-steamqr"><img src="/api/bots/${encodeURIComponent(qr.Name)}/qr.svg?v=${qr.QrVersion}" alt="QR code" width="200" height="200"></div>`;
+    key = 'signin-qr';
+    skip = 'finishSignin()';
+    skipLabel = t('Hide this');
   } else if (state.Prompt) {
     title = state.PromptSecret ? t('Your Steam password') : t('Steam Guard code');
     body = `<p>${esc(state.Prompt)}</p>
       <p class="muted small">${esc(state.PromptSecret
         ? t('Asked once. After this it remembers the account with a login token, not the password.')
         : t('Open the Steam app on your phone (Steam Guard tab), or check your email, and type the code here.'))}</p>
-      <input id="tutPrompt" type="${state.PromptSecret ? 'password' : 'text'}" autocomplete="off" style="width:100%">`;
-    buttons = `<button id="tutNext" onclick="sendTutorialPrompt()">${esc(t('Continue'))}</button>`;
+      <input id="tutPrompt" class="tut-code" type="${state.PromptSecret ? 'password' : 'text'}" autocomplete="off" spellcheck="false">`;
+    key = 'signin-prompt';
+    next = t('Continue');
+    act = sendTutorialPrompt;
   } else {
     title = t('Signing in to Steam');
-    body = `<p>${esc(t('This takes a few seconds...'))}</p>`;
-    buttons = `<button class="ghost" onclick="finishSignin()">${esc(t('Hide this'))}</button>`;
+    body = `<div class="tut-spin" aria-hidden="true"></div><p class="muted small">${esc(t('This takes a few seconds...'))}</p>`;
+    key = 'signin-wait';
+    skip = 'finishSignin()';
+    skipLabel = t('Hide this');
   }
 
-  const html = `<h2>${esc(title)}</h2>${body}<div class="actions">${buttons}</div>`;
+  const html = tutFrame({ key, at: key === 'signin-done' ? tutBarSteps : tutBarSteps - 1, kicker: tf('{0} · Steam', tutorialSignin),
+    badge: key === 'signin-done', title, body, skip, skipLabel, next });
   if (html === tutorialSigninHtml) return;
   tutorialSigninHtml = html;
-  tutorialOpen = true;
-  modal(html);
+  tutPaint(key, html);
+  if (act) $('tutNext').onclick = act;
 
   const input = $('tutPrompt');
   if (input) {
@@ -2407,45 +3228,43 @@ async function finishSignin() {
   go('accounts');
 }
 
-async function doTutorialImport() {
-  const btn = $('tutNext');
-  btn.disabled = true;
-  btn.textContent = t('Importing…');
-
-  const res = await post('/api/import/asf', { Path: tutorialAsf.Path, Human: [...tutorialImportHuman] });
-
-  if (!res.ok) {
-    toast(res.error || t('Import failed'), true);
-    btn.disabled = false;
-    btn.textContent = t('Import them');
+/// After an import from the walkthrough. Accounts brought over in human mode need games before human mode has anything
+/// to play, and games are picked from the account's own library - which needs it signed in. So: check the other idler
+/// is out of the way, sign those in, and walk each through the same steps as an account added by hand.
+async function tutorialAfterImport(res, toolName) {
+  // Settings only (SingleBoostr), or nothing new: the walkthrough still ends on adding an account.
+  if (!res.Imported) {
+    toast((res.Notes || []).slice(-1)[0] || t('Nothing was imported'));
+    tutorialManual = true;
+    renderTutorial();
     return;
   }
 
-  const human = [...tutorialImportHuman].filter((n) => (res.Imported || 0) > 0);
+  const human = res.Human || [];
 
-  // Nothing ticked as human mode: nothing to set up, the import summary is the end of it.
+  // Nothing in human mode: nothing to set up, the import summary is the end of it.
   if (!human.length) {
     await closeTutorial();
     await afterImport(res);
     return;
   }
 
-  // The human-mode ones need games before human mode has anything to play, and games are picked from the
-  // account's own library - which needs it signed in. So: check ASF is out of the way, sign those in, and walk
-  // each through the same steps as an account added by hand.
   sessionStorage.setItem('skip-welcome', '1');
   post('/api/tutorial/done', {}).catch(() => {});
   if (config && config.Global) config.Global.TutorialDone = true;
   $('importBanner').classList.add('hidden');
   await loadConfig();
   tutImportQueue = human.filter((n) => config.Bots[n]);
-  tutImportOthers = Object.keys(config.Bots).filter((n) => !tutImportQueue.includes(n));
-  tutorialOpen = true;
-  modal(`<h2>${esc(t('Close ArchiSteamFarm first'))}</h2>
-    <p>${esc(tf('Next it signs in the {0} you play on, so it can set them up from their own games.', tutImportQueue.length === 1 ? t('one account') : tf('{0} accounts', tutImportQueue.length)))}</p>
-    <p class="muted small">${esc(t("If ArchiSteamFarm is still running, close it now - two programs on one account keep signing each other out."))}</p>
-    <div class="actions"><button class="ghost" onclick="tutImportQueue=[];closeTutorial();afterImport(${esc(JSON.stringify({ Imported: res.Imported, Notes: res.Notes || [] }))})">${esc(t('Not now'))}</button>
-      <button id="tutNext" onclick="tutImportSignIn()">${esc(t("It's closed - sign them in"))}</button></div>`);
+  tutImportOthers = (res.Names || []).filter((n) => config.Bots[n] && !tutImportQueue.includes(n));
+  tutShow({
+    key: 'import-close', at: tutBarSteps - 1, kicker: t('Import from another idler'),
+    title: tf('Close {0} first', toolName),
+    lead: esc(tf('Next it signs in the {0} you play on, so it can set them up from their own games.', tutImportQueue.length === 1 ? t('one account') : tf('{0} accounts', tutImportQueue.length))),
+    body: `<div class="tut-note warn"><span>${esc(tf('If {0} is still running, close it now - two programs on one account keep signing each other out.', toolName))}</span></div>`,
+    skip: `tutImportQueue=[];closeTutorial();afterImport(${esc(JSON.stringify({ Imported: res.Imported, Notes: res.Notes || [] }))})`,
+    skipLabel: t('Not now'),
+    next: t("It's closed - sign them in"),
+  }, tutImportSignIn);
 }
 
 // Imported accounts ticked as human mode, still to set up; and the rest, added but not started.
@@ -2474,6 +3293,9 @@ async function closeTutorial() {
   tutorialOpen = false;
   tutorialSignin = null;
   closeModal();
+  // The installer's "coming from" was a one-time hint - shown now, whether it was used or not.
+  if (imp && imp.tutorial) imp = null;
+  post('/api/import/pending/clear', {}).catch(() => {});
   // Marked done however it was dismissed - being shown it again after skipping is worse than never seeing it.
   await post('/api/tutorial/done', {}).catch(() => {});
   if (config && config.Global) config.Global.TutorialDone = true;
@@ -2518,50 +3340,358 @@ function helpListHtml(filter) {
     : `<p class="muted">${esc(t('Nothing matches.'))}</p>`;
 }
 
-function modal(html) { $('modalCard').innerHTML = html; $('modal').classList.remove('hidden'); }
+function modal(html) { $('modalCard').innerHTML = html; $('modal').classList.remove('hidden', 'tut'); }
 
-// The dashboard on a phone: a QR code of the home-network link to scan, or - until the dashboard is open to other
-// devices - the two settings that open it. The same links the dashboard command and Telegram's /dashboard give.
-async function phoneModal() {
-  const p = await api('/api/phone').catch(() => null);
-  if (!p) { toast(t('Could not read the dashboard address'), true); return; }
-  const link = (url) => `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a>`;
-  const body = p.OpenAtHome && p.Qr
-    ? `<p>${esc(t('Scan this with your phone\'s camera while it is on the same wifi, then sign in with the dashboard password.'))}</p>
-       <div class="phoneqr">${p.Qr}</div>
-       <p class="muted small">${link(p.Home[0])}${p.Home.length > 1 ? ' · ' + p.Home.slice(1).map(link).join(' · ') : ''}</p>
-       ${p.FirewallBlocks ? `<div class="explain"><b>${esc(t('Windows Firewall is blocking your phone'))}</b>
-         <p class="small" style="margin:6px 0 10px">${esc(t('Your phone will just keep loading until Windows lets it in. This allows the dashboard only, only on home networks - Windows asks you to confirm.'))}</p>
-         ${p.OnThisPc ? `<button onclick="allowFirewall(this)">${esc(t('Allow through Windows Firewall'))}</button>`
-           : `<span class="muted small">${esc(t('Press it on the PC nocat.farm runs on.'))}</span>`}</div>` : ''}`
-    : `<p>${esc(t('Your phone can\'t open it yet - only this PC can. Two settings open it to your other devices:'))}</p>
-       <ol class="small">
-         <li>${p.HasPassword ? '✓ ' : ''}${esc(t('Set a Dashboard password, so nobody else on your wifi can control your accounts.'))}</li>
-         <li>${p.ListensBeyondThisPc ? '✓ ' : ''}${esc(t('Put 0.0.0.0 in Listen on.'))}</li>
-         <li>${esc(t('Save, then restart nocat.farm (type restart, or quit and open it again).'))}</li>
-       </ol>
-       ${p.Home.length ? `<p class="muted small">${esc(t('Then your phone opens:'))} ${esc(p.Home[0])}</p>` : ''}`;
-  modal(`<h2>${esc(t('Open on your phone'))}</h2>${body}
-    ${p.QrOutside ? `<p class="small" style="margin-top:14px">${esc(t('From anywhere - scan this on mobile data, away from your wifi:'))}</p><div class="phoneqr">${p.QrOutside}</div>` : ''}
-    <p class="muted small">${p.Outside
-      ? `${esc(t('From outside your home:'))} ${link(p.Outside)} - ${esc(p.OpenAtHome ? t('anyone with it and the password controls every account.') : t("(works once it's open to other devices)"))}`
-      : p.RemoteOn && p.RemoteProblem ? `${esc(t('From anywhere:'))} ${esc(p.RemoteProblem)}`
-      : p.RemoteOn ? esc(t('From anywhere: asking your router to forward the port...'))
-      : `${esc(t('From anywhere: turn on Open from anywhere - your router forwards the port, like Jellyfin.'))} <a href="#" onclick="closeModal();goSetting('WebRemoteAccess');return false">${esc(t('Take me there'))}</a>`}</p>
-    <div class="actions">${p.OpenAtHome ? '' : `<button onclick="closeModal();goSetting('WebPassword')">${esc(t('Take me there'))}</button>`}<button class="ghost" onclick="closeModal()">${esc(t('Close'))}</button></div>`);
+// ── the Phone page ───────────────────────────────────────────────────
+// Everything about opening the dashboard on a phone, on one page: the home link and the away link, each with a code
+// to scan; a checklist that ticks itself as things get fixed, with the fix beside each; Telegram and Discord; and what
+// it means for safety. It reads /api/phone every few seconds while it's open, so a tick flips the moment a fix lands.
+let phone = { info: null, at: 0, loading: false, pw: '', pwShow: false, pwOpen: false, restarting: false, painted: {} };
+
+// The old "Open on your phone" dialog is this page now - every button that opened it lands here.
+function phoneModal() { closeModal(); go('phone'); }
+
+async function loadPhone(force) {
+  if (phone.loading || (!force && Date.now() - phone.at < 4000)) return;
+  phone.loading = true;
+  try {
+    const p = await api('/api/phone').catch(() => null);
+    if (p) { phone.info = p; phone.at = Date.now(); }
+  } finally { phone.loading = false; }
+  if (view === 'phone') renderPhone();
 }
+
+/// paint() compares against the browser's own serialising of the markup, which never matches ours exactly (checked=""),
+/// so it redrew every few seconds - under a finger about to tap a switch. This remembers what it last drew instead.
+function phPaint(id, html) {
+  const el = $(id);
+  if (!el || phone.painted[id] === html) return;
+  phone.painted[id] = html;
+  el.innerHTML = html;
+}
+
+const phIcon = (name) => `<span class="ph-ico" aria-hidden="true">${tutIcon(name)}</span>`;
+const phTick = (ok) => `<span class="ph-tick ${ok ? 'ok' : ''}" aria-hidden="true">${ok
+  ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+  : ''}</span>`;
+const phPill = (kind, text) => `<span class="ph-pill ${kind}">${esc(text)}</span>`;
+const phCopy = (url) => `<button class="ghost ph-copy" onclick="copyText('${esc(url)}', t('Link copied'))">${esc(t('Copy'))}</button>`;
+
+/// The parts of the page, from one look at /api/phone. Each is painted on its own, so a change in one doesn't redraw
+/// the others - and the password box isn't redrawn while somebody is typing in it.
+function renderPhone() {
+  const p = phone.info;
+  if (!p) { phPaint('phoneTop', `<p class="muted empty">${esc(t('Loading…'))}</p>`); return; }
+
+  const homeReady = p.OpenAtHome && p.Home.length > 0 && !p.NeedsRestart && !p.FirewallBlocks && !p.NeedsHomeAddress;
+  const awayReady = !!p.Outside && homeReady;
+  const items = phoneChecklist(p);
+  // The router only counts once away from home is wanted - home alone is a whole setup, not 3 of 4.
+  const counted = items.filter((i) => !i.optional || p.RemoteOn || p.Outside);
+  const done = counted.filter((i) => i.ok).length;
+
+  phPaint('phoneTop', `<div class="ph-hero">
+      <div><h2 class="ph-title">${esc(t('Use it from your phone'))}</h2>
+      <p class="ph-lead">${esc(t('Scan a code and this dashboard opens on your phone - at home on your Wi-Fi, or anywhere on mobile data.'))}</p></div>
+      <div class="ph-score ${done === counted.length ? 'all' : ''}"><b>${done}<i>/${counted.length}</i></b><span>${esc(t('ready'))}</span></div>
+    </div>`);
+  phPaint('phoneHome', phoneHomeCard(p, homeReady));
+  phPaint('phoneAway', phoneAwayCard(p, awayReady));
+  $('phoneHome').classList.toggle('ready', homeReady);
+  $('phoneAway').classList.toggle('ready', awayReady);
+
+  const pw = $('phPw');
+  if (!(pw && document.activeElement === pw)) {
+    phPaint('phoneReady', `<h2>${esc(t('Ready?'))}</h2><div class="ph-list">${items.map(phoneRow).join('')}</div>`);
+    const again = $('phPw');
+    if (again) again.value = phone.pw;
+  }
+
+  phPaint('phoneChat', phoneChatCard());
+  phPaint('phoneSafe', phoneSafeCard(p));
+}
+
+function phoneHomeCard(p, ready) {
+  const head = `<div class="ph-head">${phIcon('home')}<div><div class="ph-kicker">${esc(t('At home'))}</div>
+      <div class="ph-name">${esc(t('On the same Wi-Fi'))}</div></div>
+      ${ready ? phPill('ok', t('Ready')) : phPill('', t('Not ready yet'))}</div>`;
+
+  // In Docker the addresses nocat.farm can see are Docker's own - showing one would send the phone nowhere.
+  if (p.NeedsHomeAddress) {
+    return `${head}<p class="ph-text">${esc(t("From inside Docker nocat.farm can't see this computer's address on your wifi. On your phone, open this computer's address with the port Docker publishes - or put it in NOCATFARM_HOME_ADDRESS in docker-compose.yml, and this shows the link and a code to scan."))}</p>
+      <pre class="ph-code">environment:\n  - NOCATFARM_HOME_ADDRESS=192.168.1.50</pre>`;
+  }
+
+  const link = p.Home[0];
+  const others = p.Home.slice(1);
+  const qr = p.Qr && ready ? `<div class="ph-qr">${p.Qr}</div>`
+    : `<div class="ph-qr off">${p.Qr || ''}<div class="ph-qrcover"><b>${esc(t('Not ready yet'))}</b><span>${esc(t('Finish the list below and the code shows here.'))}</span></div></div>`;
+
+  return `${head}<div class="ph-body">${qr}
+      <div class="ph-side">
+        ${link ? `<div class="ph-link"><span class="ph-url">${esc(link)}</span>${phCopy(link)}</div>` : ''}
+        <p class="ph-text">${esc(ready ? t('Scan this with your phone\'s camera while it is on the same wifi, then sign in with the dashboard password.')
+          : t('This is the address your phone will open.'))}</p>
+        ${others.length ? `<p class="muted small">${esc(t('Other addresses of this PC:'))} ${others.map((h) => `<span class="ph-mono">${esc(h)}</span>`).join(' · ')}</p>` : ''}
+      </div></div>
+    <p class="ph-note">${esc(tf('Sign in once and the phone stays signed in for {0} days.', (config && config.Global && config.Global.WebSessionDays) || 7))}</p>`;
+}
+
+function phoneAwayCard(p, ready) {
+  const setting = tSetting({ Name: 'WebRemoteAccess', Label: 'Open from anywhere' }, 'label');
+  const asking = p.RemoteOn && !p.Outside && !p.RemoteProblem;
+  const pill = p.Outside ? (ready ? phPill('ok', t('Working')) : phPill('', t('Not ready yet')))
+    : p.RemoteOn && p.RemoteProblem ? phPill('bad', t('Not working'))
+    : asking ? phPill('wait', t('Asking...'))
+    : phPill('', t('Off'));
+  const head = `<div class="ph-head">${phIcon('globe')}<div><div class="ph-kicker">${esc(t('Away from home'))}</div>
+      <div class="ph-name">${esc(t('Anywhere, on mobile data'))}</div></div>${pill}</div>`;
+
+  // A switch that can't be turned on says why, instead of saving something the server will only refuse.
+  const canTurnOn = p.LongPassword;
+  const toggle = p.ManualOutside && !p.RemoteOn ? '' : `<label class="ph-switch" for="phRemote">
+      <span><b>${esc(setting)}</b><span class="muted small">${esc(!p.RemoteOn && !canTurnOn
+        ? tf('Needs a dashboard password of at least {0} characters - set one below.', p.MinPassword)
+        : t('Your router passes the dashboard through to this PC. No other app needed.'))}</span></span>
+      <span class="switch"><input type="checkbox" id="phRemote" ${p.RemoteOn ? 'checked' : ''} ${!p.RemoteOn && !canTurnOn ? 'disabled' : ''}
+        onchange="phoneRemote(this.checked, this)"><span></span></span></label>`;
+
+  let body;
+  if (p.Outside) {
+    const qr = p.QrOutside && ready ? `<div class="ph-qr">${p.QrOutside}</div>`
+      : `<div class="ph-qr off">${p.QrOutside || ''}<div class="ph-qrcover"><b>${esc(t('Not ready yet'))}</b><span>${esc(t('Finish the list below and the code shows here.'))}</span></div></div>`;
+    body = `<div class="ph-body">${qr}<div class="ph-side">
+        <div class="ph-link"><span class="ph-url">${esc(p.Outside)}</span>${phCopy(p.Outside)}</div>
+        <p class="ph-text">${esc(t('Scan this on mobile data, then sign in with the dashboard password.'))}</p>
+        ${p.ManualOutside ? `<p class="muted small">${esc(t('Set by hand in Public address (Settings).'))}</p>` : ''}
+      </div></div>`;
+  } else if (p.RemoteOn && p.RemoteProblem) {
+    body = `<div class="ph-state bad">${esc(p.RemoteProblem)}</div>`;
+  } else if (asking) {
+    body = `<div class="ph-state"><span class="ph-spin" aria-hidden="true"></span>${esc(t('Asking your router to forward the port...'))}</div>`;
+  } else {
+    body = `<div class="ph-state">${esc(t('Off. Only your home Wi-Fi can open it.'))}</div>`;
+  }
+
+  return `${head}${toggle}${body}
+    <p class="ph-note">${esc(t("Test it with Wi-Fi off on your phone, on mobile data. From inside your home your own internet address often won't open - that is the router, not nocat.farm."))}</p>`;
+}
+
+/// The checklist: each thing a phone needs, ticked or not, and the fix beside it. Firewall only on Windows, the
+/// computer's address only in Docker, and the router last - it's only for away from home.
+function phoneChecklist(p) {
+  const items = [];
+
+  // The password: never shown, only replaced. A box to set it, with the same strength hint as the walkthrough.
+  const pwState = !p.HasPassword ? t('Not set. Your phone signs in with it.')
+    : p.LongPassword ? t('Set, and long enough for away from home.')
+    : tf('Set. Away from home needs {0} or more characters.', p.MinPassword);
+  const pwBox = !p.HasPassword || phone.pwOpen ? `<div class="ph-pwrow">
+      <input id="phPw" type="${phone.pwShow ? 'text' : 'password'}" autocomplete="new-password" spellcheck="false"
+        placeholder="${esc(t('New password'))}" oninput="phonePwInput(this)" onkeydown="if(event.key==='Enter')phoneSavePw()">
+      <button class="ghost" onclick="phonePwToggle()">${esc(phone.pwShow ? t('Hide') : t('Show'))}</button>
+      <button class="ph-go" onclick="phoneSavePw()">${esc(t('Save'))}</button>
+      ${p.HasPassword ? `<button class="ghost" onclick="phone.pwOpen=false;phone.pw='';renderPhone()">${esc(t('Cancel'))}</button>` : ''}
+    </div><div class="tut-meterrow" id="phMeter">${phoneMeter(p)}</div>`
+    : `<button class="ghost" onclick="phone.pwOpen=true;renderPhone();setTimeout(()=>$('phPw')&&$('phPw').focus())">${esc(t('Change'))}</button>`;
+  items.push({ ok: p.HasPassword, name: tSetting({ Name: 'WebPassword', Label: 'Dashboard password' }, 'label'), text: pwState, fix: pwBox });
+
+  // Open to other devices: the switch saves 0.0.0.0 (or 127.0.0.1), and the restart makes it real.
+  const listens = p.ListensBeyondThisPc;
+  const lockedOn = listens && !p.OnThisPc;   // switching it off from the phone would lock the phone out
+  const openText = p.RestartProblem ? p.RestartProblem
+    : p.NeedsRestart ? t('Saved - restart the dashboard to use it.')
+    : listens ? t('On. Phones and PCs on your Wi-Fi can open it.')
+    : !p.HasPassword ? t('Set a password first.')
+    : t('Off. Only this PC can open the dashboard.');
+  const openFix = `<span class="switch" ${lockedOn ? `data-tip="${esc(t('Switch it off on the PC itself.'))}"` : ''}><input type="checkbox" id="phOpen" aria-label="${esc(t('Open to other devices'))}"
+      ${listens ? 'checked' : ''} ${(!listens && !p.HasPassword) || lockedOn || phone.restarting ? 'disabled' : ''} onchange="phoneOpen(this.checked, this)"><span></span></span>
+    ${p.NeedsRestart ? `<button class="ph-go" ${phone.restarting ? 'disabled' : ''} onclick="phoneRestart(this)">${esc(phone.restarting ? t('Restarting the dashboard...') : t('Restart the dashboard now'))}</button>
+      <span class="muted small">${esc(t('Your accounts stay signed in.'))}</span>` : ''}`;
+  items.push({ ok: listens && !p.NeedsRestart, name: t('Open to other devices'), text: openText, fix: openFix, bad: !!p.RestartProblem });
+
+  if (p.InDocker) {
+    items.push({ ok: !p.NeedsHomeAddress, name: t("This computer's address"),
+      text: p.NeedsHomeAddress ? t("set NOCATFARM_HOME_ADDRESS in docker-compose.yml to this computer's address")
+        : t('Set with NOCATFARM_HOME_ADDRESS.'), fix: '' });
+  } else if (p.Windows) {
+    const fwOk = listens && !p.FirewallBlocks;
+    items.push({ ok: fwOk, name: t('Windows Firewall'),
+      text: !listens ? t('Checked once it is open to other devices.')
+        : p.FirewallBlocks ? t('Your phone will just keep loading until Windows lets it in. This allows the dashboard only, only on home networks - Windows asks you to confirm.')
+        : t('Lets it in.'),
+      fix: listens && p.FirewallBlocks ? (p.OnThisPc ? `<button class="ph-go" onclick="allowFirewall(this)">${esc(t('Allow through Windows Firewall'))}</button>`
+        : `<span class="muted small">${esc(t('Press it on the PC nocat.farm runs on.'))}</span>`) : '' });
+  }
+
+  const routerOk = !!p.Outside;
+  items.push({ ok: routerOk, name: t('Router (away from home only)'),
+    text: p.Outside ? (p.ManualOutside ? t('Set by hand in Public address (Settings).') : t('Forwarding the port.'))
+      : p.RemoteOn && p.RemoteProblem ? p.RemoteProblem
+      : p.RemoteOn ? t('Asking your router to forward the port...')
+      : t('Only needed away from home. Turn on Open from anywhere above.'),
+    fix: '', bad: p.RemoteOn && !!p.RemoteProblem && !p.Outside, optional: true });
+
+  return items;
+}
+
+function phoneRow(i) {
+  return `<div class="ph-row ${i.ok ? 'ok' : ''} ${i.bad ? 'bad' : ''}">${phTick(i.ok)}
+    <div class="ph-rowtext"><b>${esc(i.name)}</b><span>${esc(i.text)}</span>${i.fix ? `<div class="ph-fix">${i.fix}</div>` : ''}</div></div>`;
+}
+
+function phoneMeter(p) {
+  const pw = phone.pw;
+  const score = tutPwScore(pw);
+  const words = ['', t('Too short'), t('Weak'), t('Okay'), t('Strong')];
+  const hint = !pw ? '' : pw.length < 8 ? tf('Use at least {0} characters.', 8)
+    : pw.length < p.MinPassword ? `${words[score]} - ${tf('Open from anywhere needs at least {0} characters.', p.MinPassword)}`
+    : words[score];
+  return `<div class="tut-meter s${score}" aria-hidden="true"><i></i><i></i><i></i><i></i></div><span class="muted small">${esc(hint)}</span>`;
+}
+
+function phonePwInput(el) {
+  phone.pw = el.value;
+  const m = $('phMeter');
+  if (m && phone.info) m.innerHTML = phoneMeter(phone.info);
+}
+
+function phonePwToggle() {
+  phone.pwShow = !phone.pwShow;
+  renderPhone();
+}
+
+async function phoneSavePw() {
+  const pw = phone.pw;
+  if (!pw || pw.length < 8) { toast(tf('Use at least {0} characters.', 8), true); return; }
+  const res = await tutSaveGlobal({ WebPassword: pw });
+  if (!res) return;
+  phone.pw = '';
+  phone.pwOpen = false;
+  if ($('phPw')) $('phPw').value = '';
+  if (document.activeElement) document.activeElement.blur();
+  toast(t('Saved.'));
+  loadPhone(true);
+}
+
+async function phoneOpen(on, el) {
+  el.disabled = true;
+  const ok = await tutSaveGlobal({ WebHost: on ? '0.0.0.0' : '127.0.0.1' });
+  if (!ok) el.checked = !on;
+  el.disabled = false;
+  loadPhone(true);
+}
+
+async function phoneRemote(on, el) {
+  el.disabled = true;
+  const ok = await tutSaveGlobal({ WebRemoteAccess: on });
+  if (!ok) el.checked = !on;
+  loadPhone(true);
+}
+
+/// "Restart the dashboard now": the server answers, then stops and starts listening again a moment later. Same port:
+/// wait for it to answer again. A new port is a new address, so the page goes there.
+async function phoneRestart(btn, after) {
+  if (btn) btn.disabled = true;
+  const r = await api('/api/phone/restart', { method: 'POST' }).catch(() => null);
+  if (!r || !r.Ok) { toast(t("That didn't work"), true); if (btn) btn.disabled = false; return; }
+  phone.restarting = true;
+  if (view === 'phone') renderPhone();
+  toast(t('Restarting the dashboard...'));
+
+  const here = Number(location.port || (location.protocol === 'https:' ? 443 : 80));
+  if (r.Needed && r.Port && r.Port !== here) {
+    setTimeout(() => { location.href = `${location.protocol}//${location.hostname}:${r.Port}/#phone`; }, 2500);
+    return;
+  }
+
+  await new Promise((ok) => setTimeout(ok, 1500));
+  let back = false;
+  for (let i = 0; i < 24 && !back; i++) {
+    back = await fetch('/api/ping', { cache: 'no-store' }).then((x) => x.ok).catch(() => false);
+    if (!back) await new Promise((ok) => setTimeout(ok, 750));
+  }
+  phone.restarting = false;
+  await loadPhone(true);
+  const p = phone.info;
+  if (!back) toast(t("It didn't come back. Check the nocat.farm window."), true);
+  else if (p && p.RestartProblem) toast(p.RestartProblem, true);
+  else toast(t('The dashboard is back.'));
+  if (after) after();
+}
+
 async function allowFirewall(btn) {
   btn.disabled = true; btn.textContent = t('Check the Windows prompt…');
   const r = await api('/api/phone/firewall', { method: 'POST' }).catch(() => null);
-  if (r && r.Ok) { toast(t('Done - your phone can open it now.')); phoneModal(); }
+  if (r && r.Ok) toast(t('Done - your phone can open it now.'));
   else { toast((r && r.Error) || t('That didn\'t work'), true); btn.disabled = false; btn.textContent = t('Allow through Windows Firewall'); }
+  loadPhone(true);
 }
-function closeModal() { $('modal').classList.add('hidden'); }
+
+/// Telegram and Discord: the phone's other way in, from anywhere and with no router involved. The connect parts are
+/// the same ones Settings shows, so there's one flow, not two.
+function phoneChatCard() {
+  const secrets = (config && config.GlobalSecretsSet) || [];
+  const g = (config && config.Global) || {};
+  const acct = (state && state.Bots && state.Bots[0] && state.Bots[0].Name) || 'myaccount';
+
+  const tgSet = secrets.includes('TelegramBotToken');
+  const tgOn = !!(state && state.TelegramConnected);
+  const tgBody = !tgSet ? `<button class="ghost" onclick="goSetting('TelegramBotToken')">${esc(t('Set it up'))}</button>`
+    : tgOn && g.TelegramCommands === false ? `<span class="muted small">${esc(t('Commands are off. Turn on Take commands from Telegram.'))}</span>
+      <button class="ghost" onclick="goSetting('TelegramCommands')">${esc(t('Set it up'))}</button>`
+    : (state && (state.TelegramConnectLink || state.TelegramConnected)) ? telegramConnect()
+    : `<span class="muted small">${esc(t('Checking the bot token...'))}</span>`;
+
+  const dcSet = !!(state && state.DiscordBotSet);
+  const dcOn = !!(state && state.DiscordConnected && state.DiscordBotOnline);
+  const dcBody = !dcSet ? `<button class="ghost" onclick="goSetting('DiscordBotToken')">${esc(t('Set it up'))}</button>` : discordConnect();
+
+  const box = (name, on, set, body) => `<div class="ph-svc">
+      <div class="ph-svchead"><b>${esc(name)}</b>${on ? phPill('ok', t('Connected')) : phPill('', set ? t('Not connected') : t('Not set up'))}</div>
+      <div class="ph-svcbody">${body}</div></div>`;
+
+  const cmds = [['/status', t('What every account is doing')], ['/cards', t('Cards left to farm')],
+    [`/pause ${acct}`, t('Stop playing for a while, stay signed in')], [`/resume ${acct}`, t('Undo a pause')],
+    ['/dashboard', t('Open the dashboard on your phone')], ['/help', t('Every command')]];
+
+  return `<h2>${esc(t('Control it from your phone'))}</h2>
+    <p class="ph-text">${esc(t('Telegram and Discord work from anywhere, with no router setup. /dashboard sends you the links above.'))}</p>
+    <div class="ph-svcs">${box('Telegram', tgOn, tgSet, tgBody)}${box('Discord', dcOn, dcSet, dcBody)}</div>
+    <div class="ph-kicker" style="margin-top:16px">${esc(t('Handy commands'))}</div>
+    <div class="ph-cmds">${cmds.map(([c, d]) => `<div><code>${esc(c)}</code><span>${esc(d)}</span></div>`).join('')}</div>
+    <p class="muted small">${tf('In Discord, the rest go through /nocat, like {0}.', `<code>/nocat pause ${esc(acct)}</code>`)}</p>`;
+}
+
+function phoneSafeCard(p) {
+  return `<h2>${esc(t('Keep it safe'))}</h2>
+    <ul class="ph-safe">
+      <li>${esc(t('Anyone with the away-from-home link reaches the sign-in page, and nothing more without the password.'))}</li>
+      <li>${esc(t('Five wrong passwords lock that address out for an hour.'))}</li>
+      <li>${esc(t("It's plain http, not encrypted - use a password you don't use anywhere else."))}</li>
+    </ul>
+    ${p.RemoteOn ? `<button class="ghost ph-off" onclick="phoneRemote(false, this)">${esc(t('Turn Open from anywhere off'))}</button>`
+      : `<p class="muted small">${esc(t('Off. Only your home Wi-Fi can open it.'))}</p>`}`;
+}
+
+function closeModal() { $('modal').classList.add('hidden'); $('modal').classList.remove('tut'); }
 // Escape and a click outside close whatever is open - and for the walkthrough, that counts as Skip. Before, it
 // closed the dialog without marking it seen, so it came back on the next reload.
 function dismissModal() { if (tutorialOpen) closeTutorial(); else closeModal(); }
 $('modal').addEventListener('click', (e) => { if (e.target.id === 'modal') dismissModal(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') dismissModal(); });
+
+// Enter moves the walkthrough on, like its main button. A box with its own Enter (a game to add, the Steam Guard code,
+// a folder to look in) keeps it; a focused card or language picks itself, the way a click would; and a button or a
+// link does what it does anyway.
+document.addEventListener('keydown', (e) => {
+  if ((e.key !== 'Enter') || e.isComposing || !tutorialOpen || $('modal').classList.contains('hidden')) return;
+  const el = e.target;
+  if (el && el.getAttribute && (el.getAttribute('role') === 'button')) { e.preventDefault(); el.click(); return; }
+  if (el && (['BUTTON', 'A', 'TEXTAREA', 'SELECT', 'SUMMARY'].includes(el.tagName) || el.onkeydown)) return;
+  const next = $('tutNext');
+  if (next && !next.disabled) { e.preventDefault(); next.click(); }
+});
 
 // One delegated listener instead of interpolating account names into inline onclick attributes. HTML-escaping
 // an apostrophe as &#39; does NOT help there: the parser decodes it back to ' before the JS is parsed, so a
@@ -3077,6 +4207,9 @@ function renderSettings() {
     ? Object.keys(config.Bots).map((n) =>
         `<div class="s ${settingsTarget === n ? 'active' : ''}" data-bot="${esc(n)}" onclick="selectSettings(this.dataset.bot)">${esc(n)}</div>`).join('')
     : `<p class="muted small">${esc(t('No accounts yet.'))}</p>`;
+  // Accounts and their settings from another idler, straight from where the accounts are listed.
+  $('settingsNavBots').insertAdjacentHTML('beforeend',
+    `<div class="s muted" onclick="openImport()">+ ${esc(t('Import from another idler'))}</div>`);
 
   $('settingsNavJump').innerHTML = jump;
 
@@ -3303,7 +4436,7 @@ function sectionIntro(section, values) {
   if (section === 'Dashboard' && settingsTarget === GLOBAL) {
     return `<div class="explain"><b>${esc(t('Open on your phone'))}</b>
       <p style="margin:6px 0 10px">${esc(t('Use the dashboard from your phone or another PC on the same wifi - a QR code to scan, or the two settings that open it up.'))}</p>
-      <button class="ghost" onclick="phoneModal()">${esc(t('Open on your phone'))}</button></div>`;
+      <button class="ghost" onclick="go('phone')">${esc(t('Open on your phone'))}</button></div>`;
   }
 
   // Achievements are the one area where the settings alone tell you nothing useful. Three dials and an
@@ -4007,18 +5140,20 @@ function discordPreview(val) {
 // Wrapped in a fixed spot that refresh() updates on its own: the link only exists a few seconds after the token is
 // saved (once Telegram has confirmed the bot), and "connected" arrives when Start is pressed - neither should need
 // a page reload.
+// A class, not an id: the settings page keeps its copy in the page while the walkthrough draws its own, and an id only
+// ever found the first - the hidden one.
 function telegramConnect() {
   const html = telegramConnectInner();
-  return `<div id="tgConnect" data-html="${esc(html)}">${html}</div>`;
+  return `<div class="tg-connect" data-html="${esc(html)}">${html}</div>`;
 }
 
 function syncTelegramConnect() {
-  const el = document.getElementById('tgConnect');
-  if (!el) return;
   const html = telegramConnectInner();
-  if (el.dataset.html === html) return;
-  el.dataset.html = html;
-  el.innerHTML = html;
+  document.querySelectorAll('.tg-connect').forEach((el) => {
+    if (el.dataset.html === html) return;
+    el.dataset.html = html;
+    el.innerHTML = html;
+  });
 }
 
 function telegramConnectInner() {
@@ -4040,16 +5175,16 @@ let discordCode = null;
 
 function discordConnect() {
   const html = discordConnectInner();
-  return `<div id="dcConnect" data-html="${esc(html)}">${html}</div>`;
+  return `<div class="dc-connect" data-html="${esc(html)}">${html}</div>`;
 }
 
 function syncDiscordConnect() {
-  const el = document.getElementById('dcConnect');
-  if (!el) return;
   const html = discordConnectInner();
-  if (el.dataset.html === html) return;
-  el.dataset.html = html;
-  el.innerHTML = html;
+  document.querySelectorAll('.dc-connect').forEach((el) => {
+    if (el.dataset.html === html) return;
+    el.dataset.html = html;
+    el.innerHTML = html;
+  });
 }
 
 function discordConnectInner() {
@@ -4085,10 +5220,15 @@ async function discordConnectCode(btn) {
 }
 
 function notifyGuides() {
+  return `<div class="guides">${notifyGuide('telegram')}${notifyGuide('discord')}${notifyGuide('discordbot')}</div>`;
+}
+
+/// One of them on its own - the walkthrough puts each beside the box it fills in.
+function notifyGuide(which) {
   const step = (html) => `<li>${html}</li>`;
   const b = (s) => `<b>${esc(s)}</b>`;
-  return `<div class="guides">
-    <details class="guide"><summary>${esc(t('How to set up Telegram (2 minutes)'))}</summary><ol>
+  if (which === 'telegram') {
+    return `<details class="guide"><summary>${esc(t('How to set up Telegram (2 minutes)'))}</summary><ol>
       ${step(tf('Open Telegram, search for {0} (the one with the blue check) and press {1}.', b('@BotFather'), b(t('Start'))))}
       ${step(tf('Send {0}. Give it a name, like {1}, then a username that ends in "bot", like {2}.', '<code>/newbot</code>', b('nocat.farm'), b('myname_farm_bot')))}
       ${step(tf('BotFather sends you a token that looks like {0}. Copy it.', '<code>123456789:AAH...</code>'))}
@@ -4096,13 +5236,16 @@ function notifyGuides() {
       ${step(tf('Press {0} here (it shows up once the token is saved), then press {1} in Telegram. nocat.farm connects and says hello.', b(t('Connect Telegram')), b(t('Start'))))}
       ${step(tf('Optional: send BotFather {0} and give your bot the {1}.', '<code>/setuserpic</code>',
         `<a href="https://raw.githubusercontent.com/VisaHolder/nocatfarm/main/assets/logo.png" target="_blank" rel="noopener">${esc(t('nocat.farm logo'))}</a>`))}
-    </ol><p class="muted small">${esc(t('Keep the token private - anyone who has it can control your bot. Everyone makes their own bot: Telegram only lets one program read each bot.'))}</p></details>
-    <details class="guide"><summary>${esc(t('How to set up Discord (1 minute)'))}</summary><ol>
+    </ol><p class="muted small">${esc(t('Keep the token private - anyone who has it can control your bot. Everyone makes their own bot: Telegram only lets one program read each bot.'))}</p></details>`;
+  }
+  if (which === 'discord') {
+    return `<details class="guide"><summary>${esc(t('How to set up Discord (1 minute)'))}</summary><ol>
       ${step(tf('In your Discord server, open {0}.', b(t('Server Settings → Integrations → Webhooks'))))}
       ${step(tf('Press {0}, pick the channel notifications should go to, and name it {1} if you like.', b(t('New Webhook')), b('nocat.farm')))}
       ${step(tf('Press {0}, paste it into {1} below and press {2}.', b(t('Copy Webhook URL')), b(t('Discord webhook')), b(t('Save'))))}
-    </ol><p class="muted small">${esc(t('Anyone with the webhook link can post in that channel, so keep it private.'))}</p></details>
-    <details class="guide"><summary>${esc(t('How to set up Discord commands (3 minutes)'))}</summary><ol>
+    </ol><p class="muted small">${esc(t('Anyone with the webhook link can post in that channel, so keep it private.'))}</p></details>`;
+  }
+  return `<details class="guide"><summary>${esc(t('How to set up Discord commands (3 minutes)'))}</summary><ol>
       ${step(tf('Open the {0} and sign in with your Discord account.',
         `<a href="https://discord.com/developers/applications" target="_blank" rel="noopener">Discord Developer Portal</a>`))}
       ${step(tf('Press {0}, name it {1}, tick the box and press {2}.', b('New Application'), b('nocat.farm'), b('Create')))}
@@ -4111,8 +5254,7 @@ function notifyGuides() {
       ${step(tf('A few seconds later {0} shows up here. Open it and add the bot to a server you own - a new, empty one is fine.', b(t('Add the bot to your server'))))}
       ${step(tf('Press {0} here. In Discord, type {1} and the code it shows - in the server, or in a private chat with the bot (click the bot in the member list and send it a message).', b(t('Connect Discord')), '<code>/connect</code>'))}
       ${step(tf('Done. Type {0} for a summary, {1} for every command, or {2} to run any console command.', '<code>/status</code>', '<code>/help</code>', '<code>/nocat</code>'))}
-    </ol><p class="muted small">${esc(t('Keep the token private - anyone who has it can control your bot. Only your connected Discord account can use the commands, and in a server only you see the answers.'))}</p></details>
-  </div>`;
+    </ol><p class="muted small">${esc(t('Keep the token private - anyone who has it can control your bot. Only your connected Discord account can use the commands, and in a server only you see the answers.'))}</p></details>`;
 }
 
 async function notifyTest(btn) {
@@ -4259,7 +5401,7 @@ function syncWelcome() {
 
   if (show && !askedAboutAsf) {
     askedAboutAsf = true;
-    checkForAsf();
+    checkForIdlers();
   }
 }
 
@@ -4292,6 +5434,7 @@ async function refresh() {
     syncTelegramConnect();
     syncDiscordConnect();
     if (tutorialSignin) renderSignin();
+    if (view === 'phone') loadPhone();
 
     // nocat.farm restarting resets its sequence numbers. Without noticing that, "everything after seq 812"
     // matches nothing forever and the log tab silently freezes.
@@ -4342,7 +5485,15 @@ async function boot() {
   go(view);
   await refresh();   // arms the single polling timer
 
-  if (shouldShowTutorial()) startTutorial();
+  if (shouldShowTutorial()) { startTutorial(); return; }
+
+  // "Coming from another idler" in the installer, on a copy that already has its walkthrough behind it (installed over
+  // an existing config): still open on that import, once.
+  const pending = await api('/api/import/pending').catch(() => null);
+  if (pending && pending.Pending) {
+    post('/api/import/pending/clear', {}).catch(() => {});
+    openImport(pending.Pending.Tool, pending.Pending.Path);
+  }
 }
 
 boot();

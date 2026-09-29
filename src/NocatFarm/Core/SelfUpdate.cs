@@ -99,9 +99,28 @@ public static class SelfUpdate {
 	/// </summary>
 	private static string Fail(Said why) {
 		Log.Error(why, topic: Topic.Installs);
+
+		// Said before Telegram and Discord are listening (the first thing at start): kept to send once they are.
+		if (!_notifierReady) {
+			_heldBack = why;
+		}
+
 		LastFailure = why.ToString();
 
 		return LastFailure;
+	}
+
+	private static bool _notifierReady;
+	private static Said? _heldBack;
+
+	/// <summary>Telegram and Discord are listening now: what an update said before they were goes out.</summary>
+	public static void NotifierReady() {
+		_notifierReady = true;
+
+		if (_heldBack is { } why) {
+			_heldBack = null;
+			Log.Publish(Topic.Installs, "nocat.farm", why);
+		}
 	}
 
 	/// <summary>The last update that failed and why, for a red alert on the dashboard. Cleared by the next try.</summary>
@@ -181,6 +200,7 @@ public static class SelfUpdate {
 
 				ConfirmWhenSettled(p[0], p[1], notes);
 			} else if (swapCode != null) {
+				UpdateCheck.NoteFailedInstall();
 				// The swap put every file back the way it was before starting this version again, so "nothing was
 				// changed" is true - see SwapScript.
 				Fail(swapCode.StartsWith("backup", StringComparison.Ordinal)
@@ -247,7 +267,20 @@ public static class SelfUpdate {
 	}
 
 	/// <summary>Tell the swap script this version is fine. Once; nothing to do when this start wasn't an update.</summary>
-	public static void ConfirmStarted() => Mark("ok");
+	public static void ConfirmStarted() {
+		_confirmed = true;
+		Mark("ok");
+	}
+
+	private static volatile bool _confirmed;
+
+	/// <summary>
+	/// This start is a new version being tried out, and the swap script may still put the old one back. Until it has
+	/// said it's fine, secrets the old version can't read (the Family View PIN, maFiles, the key queue) stay in the
+	/// form they were in - so "nothing else was changed" is true if it goes back.
+	/// </summary>
+	public static bool OnTrial => !_confirmed && (Environment.GetEnvironmentVariable("NF_OK") is { Length: > 0 } ok)
+		&& Directory.Exists(Path.GetDirectoryName(ok));
 
 	/// <summary>A crash while the new version is being tried out: the swap script puts the old one back straight away.</summary>
 	public static void ReportCrashed() => Mark("crashed");
@@ -404,7 +437,10 @@ public static class SelfUpdate {
 				return Fail(new Said("update failed: {0} has no download attached yet - try again later, or get it from {1}. Nothing was changed", tag, ReleasesPage));
 			}
 
-			string work = Path.Combine(Path.GetTempPath(), "nocatfarm-update");
+			// One folder per install: two copies updating at the same minute (both on "Update by itself") must never
+			// share a swap script, a safety copy or the file the new version answers in.
+			string work = Path.Combine(Path.GetTempPath(), "nocatfarm-update-" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+				System.Text.Encoding.UTF8.GetBytes(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar).ToLowerInvariant())))[..10]);
 
 			// A half-finished attempt from last time would otherwise be extracted over the new one.
 			if (Directory.Exists(work)) {
@@ -629,6 +665,7 @@ public static class SelfUpdate {
 		rem failed copy: put every file back, leave the reason for the app to say, and start it again as it was.
 		if %rc% GEQ 8 (
 			robocopy "%NF_BACKUP%" "%NF_HERE%" /E /R:3 /W:2 /NFL /NDL /NJH /NJS >nul
+			if exist "%NF_WORK%\added.txt" for /f "usebackq delims=" %%f in ("%NF_WORK%\added.txt") do del /f /q "%NF_HERE%\%%f" >nul 2>&1
 			echo %rc%>"%NF_FAIL%"
 			start "" /D "%NF_HERE%" "%NF_HERE%\nocatFarm.exe" %NF_ARGS%
 			exit /b 1

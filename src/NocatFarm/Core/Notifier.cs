@@ -43,6 +43,7 @@ public static partial class Notifier {
 
 	/// <summary>The bot's @name, from getMe - so "open @yourbot and press Start" can name it.</summary>
 	private static string _botName = "";
+	private static DateTime _nextTokenCheck = DateTime.MinValue;
 
 	/// <summary>
 	/// The bot already hands its messages to a webhook (another program - a website, another bot framework), so
@@ -111,9 +112,16 @@ public static partial class Notifier {
 			try {
 				await Task.Delay(1000, ct).ConfigureAwait(false);
 
-				if (HasTelegramToken && (G.TelegramBotToken != _checkedToken)) {
-					_checkedToken = G.TelegramBotToken;
-					await CheckTelegramTokenAsync(ct).ConfigureAwait(false);
+				// Until Telegram has answered for this token: one failed look (a blip, a timeout) used to be the only look,
+				// and without the bot's name there's no Connect Telegram button until the next start.
+				if (HasTelegramToken && (G.TelegramBotToken != _checkedToken) && (DateTime.UtcNow >= _nextTokenCheck)) {
+					string token = G.TelegramBotToken;
+
+					if (await CheckTelegramTokenAsync(ct).ConfigureAwait(false)) {
+						_checkedToken = token;
+					} else {
+						_nextTokenCheck = DateTime.UtcNow.AddMinutes(1);
+					}
 				}
 
 				await FlushAsync(force: false, ct).ConfigureAwait(false);
@@ -351,28 +359,45 @@ public static partial class Notifier {
 		return (false, new Said("Telegram kept saying slow down").ToString());
 	}
 
-	/// <summary>A new token: say at once if it's no good, rather than when the first card drops.</summary>
-	private static async Task CheckTelegramTokenAsync(CancellationToken ct) {
-		using HttpResponseMessage r = await Http.GetAsync($"https://api.telegram.org/bot{G.TelegramBotToken}/getMe", ct).ConfigureAwait(false);
+	/// <summary>
+	/// A new token: say at once if it's no good, rather than when the first card drops. True once Telegram has given
+	/// an answer either way; false when it couldn't be asked, so it's asked again.
+	/// </summary>
+	private static async Task<bool> CheckTelegramTokenAsync(CancellationToken ct) {
+		HttpResponseMessage r;
+
+		try {
+			r = await Http.GetAsync($"https://api.telegram.org/bot{G.TelegramBotToken}/getMe", ct).ConfigureAwait(false);
+		} catch (Exception e) when ((e is HttpRequestException or TaskCanceledException) && !ct.IsCancellationRequested) {
+			Log.Debug(new Said("notifications: couldn't reach Telegram to check the bot ({0}) - trying again in a minute", e.Message), "telegram");
+
+			return false;
+		}
+
+		using HttpResponseMessage _ = r;
 
 		if (r.StatusCode == HttpStatusCode.Unauthorized) {
 			Log.Warn("notifications: the Telegram bot token doesn't work - copy it again from @BotFather", "telegram");
 
-			return;
+			return true;
 		}
 
-		if (r.IsSuccessStatusCode) {
-			try {
-				using JsonDocument d = JsonDocument.Parse(await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
-				_botName = d.RootElement.GetProperty("result").TryGetProperty("username", out JsonElement u) ? "@" + u.GetString() : "";
-			} catch {
-				_botName = "";
-			}
-
-			if (TelegramConnectLink is { } link) {
-				Log.Info(new Said("notifications: Telegram bot {0} found - to connect, open {1} and press Start (or press Connect Telegram in Settings, Notifications)", _botName, link), "telegram");
-			}
+		if (!r.IsSuccessStatusCode) {
+			return false;
 		}
+
+		try {
+			using JsonDocument d = JsonDocument.Parse(await r.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
+			_botName = d.RootElement.GetProperty("result").TryGetProperty("username", out JsonElement u) ? "@" + u.GetString() : "";
+		} catch {
+			_botName = "";
+		}
+
+		if (TelegramConnectLink is { } link) {
+			Log.Info(new Said("notifications: Telegram bot {0} found - to connect, open {1} and press Start (or press Connect Telegram in Settings, Notifications)", _botName, link), "telegram");
+		}
+
+		return true;
 	}
 
 	/// <summary>

@@ -303,14 +303,10 @@ public static partial class Notifier {
 			output = new Said("done").ToString();
 		}
 
-		foreach (string outLine in output.Replace("\r\n", "\n").Split('\n')) {
-			if (outLine.Length > 0) {
-				Log.Info(new Said("  " + outLine), "telegram");
-			}
-		}
+		EchoToLog(output, "telegram");
 
-		// A code block keeps the console's columns lined up; long replies go as several messages.
-		foreach (string chunk in Chunks(output, 3500)) {
+		// A code block keeps the console's columns lined up; long replies go as a couple of messages, then stop.
+		foreach (string chunk in ChatChunks(output, 3500)) {
 			await PostTelegramAsync($"<pre>{Html(chunk)}</pre>", ct).ConfigureAwait(false);
 		}
 	}
@@ -328,6 +324,42 @@ public static partial class Notifier {
 		}
 
 		return rest.EndsWith("confirm", StringComparison.OrdinalIgnoreCase) ? (null, rest[..^"confirm".Length].Trim()) : (canonical, rest);
+	}
+
+	/// <summary>
+	/// A reply for a chat: at most two messages' worth, then how much was left off. A full list (520 achievements, a long
+	/// log) used to arrive as a dozen messages in a row - on a phone that's a wall, not an answer.
+	/// </summary>
+	internal static List<string> ChatChunks(string text, int size) {
+		const int MaxMessages = 2;
+		List<string> all = [.. Chunks(text, size)];
+
+		if (all.Count <= MaxMessages) {
+			return all;
+		}
+
+		// Cut again with room for the note (in any language), or the last message goes over the chat's limit.
+		all = [.. Chunks(text, size - 200)];
+
+		int left = all.Skip(MaxMessages).Sum(static c => c.Split('\n').Length);
+		List<string> kept = all.Take(MaxMessages).ToList();
+		kept[^1] += "\n" + new Said("... and {0} more line(s) - the whole reply is in the dashboard's Console", left);
+
+		return kept;
+	}
+
+	/// <summary>The reply in the log too - the first 40 lines of it, so one long answer doesn't bury everything else.</summary>
+	internal static void EchoToLog(string output, string source) {
+		const int MaxLines = 40;
+		string[] lines = [.. output.Replace("\r\n", "\n").Split('\n').Where(static l => l.Length > 0)];
+
+		foreach (string outLine in lines.Take(MaxLines)) {
+			Log.Info(new Said("  " + outLine), source);
+		}
+
+		if (lines.Length > MaxLines) {
+			Log.Info(new Said("  ... and {0} more line(s)", lines.Length - MaxLines), source);
+		}
 	}
 
 	private static IEnumerable<string> Chunks(string text, int size) {
@@ -362,20 +394,19 @@ public static partial class Notifier {
 
 		sb.AppendLine(Section(new Said("Dashboard")));
 
-		if (l.OpenAtHome && (l.Home.Count > 0)) {
-			sb.AppendLine($"◆ {Html(new Said("On your phone, on the same wifi:").ToString())} {A(l.Home[0])}");
-		} else {
-			sb.AppendLine($"◆ {Html(new Said("Not open to other devices yet. On the PC: Settings, Dashboard, Show advanced - set a Dashboard password and put 0.0.0.0 in Listen on, then restart.").ToString())}");
+		foreach (DashboardLinks.Row r in DashboardLinks.Rows(l, RemoteAccess.MinPasswordLength)) {
+			string note = r.Note.IsEmpty ? "" : r.Link == null ? Html(r.Note.ToString()) : $"<i>({Html(r.Note.ToString())})</i>";
+			sb.AppendLine($"◆ {Html(r.Label.ToString())} {(r.Link == null ? "" : A(r.Link) + " ")}{note}".TrimEnd());
 		}
 
-		if (l.FirewallBlocks) {
-			sb.AppendLine($"◆ {Html(new Said("Windows Firewall is blocking other devices - on the PC, open the dashboard's Open on your phone and press Allow through Windows Firewall.").ToString())}");
+		List<Said> todo = DashboardLinks.Todo(l);
+
+		if (todo.Count > 0) {
+			sb.AppendLine(Html(DashboardLinks.TodoHeading.ToString()));
+			todo.ForEach(t => sb.AppendLine($"  - {Html(t.ToString())}"));
 		}
 
-		sb.AppendLine(l.Outside != null
-			? $"◆ {Html(new Said("From anywhere:").ToString())} {A(l.Outside)}{(l.OpenAtHome ? "" : " " + Html(new Said("(works once it's open to other devices)").ToString()))}"
-			: $"◆ {Html(new Said("From anywhere: not set up - on the PC, turn on Open from anywhere (Settings, Dashboard, Show advanced).").ToString())}");
-		sb.AppendLine($"◆ {Html(new Said("On the PC itself:").ToString())} {A(l.Local)}");
+		sb.AppendLine(Html(DashboardLinks.ScanHint.ToString()));
 
 		return sb.ToString();
 	}

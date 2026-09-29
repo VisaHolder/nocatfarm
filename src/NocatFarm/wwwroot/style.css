@@ -45,13 +45,19 @@
 
 * { box-sizing: border-box; }
 
+/* A console look everywhere: Consolas on Windows, and the same bundled coding font on phones and Linux (which don't
+   have Consolas) instead of whatever monospace each one happens to have. */
+@font-face { font-family: 'JBMono'; src: url('fonts/jbmono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'JBMono'; src: url('fonts/jbmono-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+:root { --mono: Consolas, 'JBMono', 'Cascadia Mono', ui-monospace, 'SF Mono', Menlo, 'DejaVu Sans Mono', monospace; }
+
 html, body { height: 100%; }
 
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 14px/1.55 "Share Tech Mono", ui-monospace, "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
+  font: 14px/1.55 var(--mono);
 }
 
 .hidden { display: none !important; }
@@ -72,7 +78,7 @@ code {
    wasn't a link, a state or a warning, just decoration, and it read as belonging to some other app. */
 h1.wordmark {
   position: relative; display: inline-block; margin: 0;
-  font: 400 15px/1.4 var(--mono, ui-monospace, "Cascadia Mono", Consolas, monospace);
+  font: 400 15px/1.4 var(--mono);
   letter-spacing: 3.5px; text-transform: lowercase; color: var(--text);
   padding-right: var(--s5); border-right: 1px solid var(--line);
   text-shadow: 0 0 12px rgba(255, 255, 255, .07);
@@ -114,6 +120,7 @@ h2 a:hover { color: var(--text); }
 .welcome-card h1.wordmark::after { inset: -2px; }
 .welcome-card .lead { font-size: 18px; margin: 6px 0 20px; }
 .welcome-card .foot { margin-top: 18px; }
+.welcome-card .welcome-ask { margin: 18px 0 8px; }
 .error { color: var(--bad); min-height: 18px; margin: 8px 0; font-size: 13px; }
 
 /* ── shell ─────────────────────────────────────────────────────────── */
@@ -771,7 +778,7 @@ button.ghost:hover:not(:disabled) { background: var(--line); }
   position: fixed; z-index: 100; width: max-content; max-width: 440px;
   background: #1c1c1c; border: 1px solid #4a4a4a; border-left: 3px solid #a0a0a0; border-radius: 0;
   padding: 10px 14px 11px; color: #e4e4e4; letter-spacing: normal;
-  font: 400 13.5px/1.55 "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font: 400 13px/1.55 var(--mono);
   white-space: pre-line;   /* multi-line tips (the inventory breakdown) keep their line breaks */
   box-shadow: 0 10px 34px rgba(0,0,0,.75); pointer-events: none;
 }
@@ -820,6 +827,37 @@ button.ghost:hover:not(:disabled) { background: var(--line); }
   .settingswrap { grid-template-columns: minmax(0, 1fr); }
   .field { grid-template-columns: 1fr; gap: 4px; }
   .field .meta { justify-content: flex-start; }
+}
+
+/* The Recent activity header: its two links sit at the right on a wide screen. */
+.h2links .links { margin-left: auto; display: flex; gap: 14px; }
+.h2links .links a { cursor: pointer; }
+
+/* ── phones ────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* The tab bar scrolls sideways: fade its right edge, so the tabs past it read as "more this way". */
+  nav { -webkit-mask-image: linear-gradient(to right, #000 82%, transparent); mask-image: linear-gradient(to right, #000 82%, transparent); padding-right: 28px; }
+  /* Labels above their boxes - side by side, the boxes shrank to a word wide. */
+  .form2 { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .form2 > label { margin-top: 8px; }
+  /* A log line: time and source on top, the message the full width under them. */
+  .out .l { flex-wrap: wrap; column-gap: 8px; row-gap: 0; padding-bottom: 4px; }
+  .out .s { flex: 0 0 auto; }
+  .out .m { flex: 0 0 100%; }
+  /* Recent activity: the links go under the heading instead of squeezing it into three columns. */
+  .h2links { flex-wrap: wrap; row-gap: 6px; }
+  .h2links .links { margin-left: 0; flex-basis: 100%; }
+  /* Import and Add account side by side, the same width, under the search and filters. */
+  #view-accounts .toolbar .spacer { display: none; }
+  #view-accounts .toolbar > button { flex: 1 1 0; }
+  #view-accounts .toolbar > button:last-child { order: -1; }
+  /* The settings list: chips that wrap, not a column of links a whole screen long before the first setting. */
+  .settingsnav { padding: var(--s3); }
+  .settingsnav h2 { margin: 10px 0 6px 0; }
+  #settingsNavGlobal, #settingsNavBots, .settingsnav .jump { display: flex; flex-wrap: wrap; gap: 6px; }
+  .settingsnav .s { border: 1px solid var(--line2); padding: 5px 10px; margin: 0; }
+  .settingsnav h2 + .jump, .settingsnav .s:first-of-type { border-top: 1px solid var(--line2); padding-top: 5px; }
+  .settingsnav .s.active { box-shadow: inset 0 -2px 0 var(--accent); }
 }
 
 /* ── loading ───────────────────────────────────────────────────────── */
@@ -1046,6 +1084,21 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 .pickrow:has(input:checked) { border-color: var(--text); }
 .pickrow:has(input:checked) .pill { opacity: 1; }
 
+/* Importing from another idler: one box per account found, with what comes across and the choices for it. An
+   account left unticked fades out; its own choices stay put in case it's ticked again. */
+.improws { display: flex; flex-direction: column; gap: 6px; margin: var(--s2) 0 var(--s3); max-height: 320px; overflow-y: auto; }
+.improw { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border: 1px solid var(--line); background: var(--panel2); }
+.improw:has(.impon:checked) { border-color: var(--text); }
+.improw:not(:has(.impon:checked)) > :not(.impmain) { opacity: .4; }
+.improw .impmain { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.improw .impopts { display: flex; flex-wrap: wrap; gap: 14px; }
+.improw input[type=text] { width: 100%; }
+.implooked { margin: 4px 0 10px; }
+.implooked ul { margin: 4px 0 0; padding-left: 18px; }
+.implooked code { word-break: break-all; }
+.impfolder { display: flex; gap: 8px; margin-top: 8px; }
+.impfolder input { flex: 1; min-width: 0; }
+
 /* The version, which doubles as the link to the repo. Underlined only on hover so the footer stays quiet. */
 .ghlink { text-decoration: none; }
 .ghlink:hover { text-decoration: underline; color: var(--text); }
@@ -1055,3 +1108,388 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 
 /* Jump to lands a section's heading below the sticky top bar, not under it. */
 #settingsBody .section h3 { scroll-margin-top: 76px; }
+
+/* ── the walkthrough ───────────────────────────────────────────────── */
+/* The first-run setup is the one place the wordmark's purple is allowed to spread: the progress bar, the picked
+   card, the main button. It is the product introducing itself, not a state or a warning, so the colour reads as
+   "nocat.farm" rather than as a signal - and everything else stays the same greys, fonts and square corners as the
+   rest of the dashboard. */
+:root { --brand: #8b5cf6; --brand-soft: rgba(139, 92, 246, .13); --brand-line: rgba(139, 92, 246, .55); --brand-glow: rgba(139, 92, 246, .35); }
+:root[data-theme="light"] { --brand: #6d28d9; --brand-soft: rgba(109, 40, 217, .07); --brand-line: rgba(109, 40, 217, .45); --brand-glow: rgba(109, 40, 217, .2); }
+
+.modal.tut { background: rgba(0, 0, 0, .62); backdrop-filter: blur(6px); }
+/* A column: the head and bar stay put, the step scrolls, the buttons stay at the bottom where the thumb is. */
+.modal.tut .card {
+  width: 580px; max-height: min(780px, 92vh); min-height: min(560px, 92vh); padding: 0; overflow: hidden;
+  display: flex; flex-direction: column;
+  background: radial-gradient(120% 60% at 50% -18%, var(--brand-soft), transparent 62%), var(--panel);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, .6);
+}
+:root[data-theme="light"] .modal.tut { background: rgba(20, 20, 20, .35); }
+:root[data-theme="light"] .modal.tut .card { box-shadow: 0 24px 70px rgba(0, 0, 0, .18); }
+
+.tut-head { display: flex; align-items: center; gap: 10px; padding: 14px 20px 12px; flex: 0 0 auto; }
+.tut-logo { width: 22px; height: 22px; border-radius: 5px; }
+.tut-brand { letter-spacing: 3px; font-size: 13px; color: var(--text); }
+.tut-brand b { color: var(--brand); font-weight: 400; }
+.tut-x { background: transparent; color: var(--muted); padding: 4px 9px; font-size: 14px; }
+.tut-x:hover:not(:disabled) { color: var(--text); background: var(--panel2); filter: none; }
+
+/* One segment per step: done ones purple, the current one filling in as it arrives. */
+.tut-bar { display: flex; gap: 4px; padding: 0 20px; flex: 0 0 auto; }
+.tut-bar i { flex: 1; height: 3px; background: var(--line); position: relative; overflow: hidden; }
+.tut-bar i.done { background: var(--brand); }
+.tut-bar i.now::after { content: ""; position: absolute; inset: 0; background: var(--brand); box-shadow: 0 0 10px var(--brand); transform-origin: left; }
+.tut-bar i.now.grow::after { animation: tutGrow .55s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes tutGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+.tut-stage { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-wrap: anywhere; padding: 24px 28px 18px; }
+.tut-stage.in-fwd { animation: tutInFwd .34s cubic-bezier(.2, .7, .2, 1) both; }
+.tut-stage.in-back { animation: tutInBack .34s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes tutInFwd { from { opacity: 0; transform: translateX(22px); } to { opacity: 1; transform: none; } }
+@keyframes tutInBack { from { opacity: 0; transform: translateX(-22px); } to { opacity: 1; transform: none; } }
+
+.tut-kicker { font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--brand); margin-bottom: 8px; }
+/* The app's h2 is a small grey caps label; here it is the one big line on the screen. */
+h2.tut-title {
+  display: block; font-size: 26px; line-height: 1.22; font-weight: 400; text-transform: none; letter-spacing: 0;
+  color: var(--text); margin: 0 0 10px;
+}
+.tut-lead { font-size: 14.5px; line-height: 1.6; margin: 0 0 16px; color: var(--text); opacity: .86; }
+.tut-stage > p { margin: 0 0 12px; }
+
+/* The first screen: the logo, big, and the wordmark as a title. */
+.tut-hero { display: flex; flex-direction: column; align-items: center; gap: 16px; margin: 8px 0 20px; }
+.tut-hero img, .welcome-hero img {
+  width: 76px; height: 76px; border-radius: 16px;
+  box-shadow: 0 0 0 1px var(--line), 0 14px 44px var(--brand-glow);
+  animation: tutFloat 6s ease-in-out infinite;
+}
+.tut-hero h1.wordmark, .welcome-hero h1.wordmark { border-right: 0; padding-right: 0; font-size: 28px; letter-spacing: 7px; }
+.tut-hero h1.wordmark::after, .welcome-hero h1.wordmark::after { inset: -2px; }
+.tut-hero ~ .tut-kicker, .tut-hero ~ .tut-lead, .tut-hero ~ p.muted { text-align: center; }
+.tut-langs { justify-content: center; }
+@keyframes tutFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+/* The either-or cards: an icon, a name, a sentence. */
+.tut-cards { gap: 10px; }
+.tut-cards.two { grid-template-columns: 1fr 1fr; }
+.tut-card { flex-direction: row; align-items: flex-start; gap: 12px; padding: 14px; transition: border-color .15s, background .15s, box-shadow .15s, transform .15s; }
+.tut-card:hover { transform: translateY(-1px); }
+.tut-card.on { border-color: var(--brand); background: var(--brand-soft); box-shadow: inset 0 0 0 1px var(--brand), 0 8px 26px var(--brand-glow); }
+.tut-card:focus-visible, .langpick .p:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.pickcard .tut-ico {
+  flex: 0 0 36px; height: 36px; display: grid; place-items: center;
+  border: 1px solid var(--line); background: var(--bg); color: var(--muted); transition: color .15s, border-color .15s;
+}
+.tut-card.on .tut-ico { color: var(--brand); border-color: var(--brand-line); }
+.pickcard .tut-cardtext { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 12.5px; }
+.tut-cardtext b { color: var(--text); font-weight: 400; font-size: 14.5px; letter-spacing: .3px; }
+.tut-tag {
+  font-style: normal; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--brand);
+  border: 1px solid var(--brand-line); padding: 1px 6px; margin-left: 6px; vertical-align: 2px; white-space: nowrap;
+}
+.modal.tut .langpick .p.on { border-color: var(--brand); background: var(--brand-soft); }
+
+/* A question answered with a switch. */
+.tut-switch {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 10px 0;
+  padding: 14px; border: 1px solid var(--line); background: var(--panel2); cursor: pointer;
+}
+.tut-switch > span:first-child { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tut-switch b { font-weight: 400; color: var(--text); }
+.tut-switch:has(input:checked) { border-color: var(--brand-line); }
+.modal.tut .switch input:checked + span { border-color: var(--brand); background: var(--brand-soft); }
+.modal.tut .switch input:checked + span::before { background: var(--brand); }
+.modal.tut .switch input:focus-visible + span { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* Something to know or do: a restart, the firewall, a password already set. */
+.tut-note {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin: 12px 0; padding: 12px 14px;
+  border-left: 3px solid var(--brand); background: var(--panel2); font-size: 13px; line-height: 1.55;
+}
+.tut-note b { font-weight: 400; color: var(--text); }
+.tut-note.warn { border-left-color: var(--warn); }
+.tut-note.warn b { color: var(--warn); }
+.tut-note.bad { border-left-color: var(--bad); color: var(--bad); }
+.tut-note button { margin-top: 6px; }
+
+.tut-qr { display: flex; gap: 18px; align-items: center; margin: 14px 0; }
+.tut-qr .phoneqr { flex: 0 0 170px; width: 170px; margin: 0; }
+.tut-qr p { margin: 0 0 8px; }
+
+.tut-list { margin: 0 0 14px; padding-left: 18px; color: var(--muted); font-size: 13px; }
+.tut-list li { margin: 4px 0; }
+
+.tut-more { margin: 14px 0 4px; border-top: 1px solid var(--line); }
+.tut-more summary { cursor: pointer; padding: 10px 0 6px; color: var(--muted); list-style: none; user-select: none; }
+.tut-more summary::-webkit-details-marker { display: none; }
+.tut-more summary::before { content: "+"; display: inline-block; width: 16px; color: var(--brand); }
+.tut-more[open] summary::before { content: "−"; }
+.tut-more summary:hover { color: var(--text); }
+.tut-more ul { margin: 4px 0 8px; padding-left: 18px; font-size: 13px; color: var(--muted); }
+.tut-more li { margin: 5px 0; }
+.tut-more li b { color: var(--text); font-weight: 400; }
+
+/* The password box, its show/hide, and the four-bar strength hint. */
+.tut-pw { display: flex; gap: 8px; }
+.tut-pw input:not([type=checkbox]) { flex: 1; min-width: 0; padding: 10px 12px; }
+.tut-meterrow { display: flex; align-items: center; gap: 12px; margin-top: 10px; min-height: 18px; }
+.tut-meter { display: flex; gap: 4px; flex: 0 0 120px; }
+.tut-meterrow.bad .muted { color: var(--bad); }
+.tut-meter i { flex: 1; height: 4px; background: var(--line); transition: background .2s; }
+.tut-meter.s1 i:nth-child(-n+1) { background: var(--bad); }
+.tut-meter.s2 i:nth-child(-n+2) { background: var(--warn); }
+.tut-meter.s3 i:nth-child(-n+3) { background: #a78bfa; }
+.tut-meter.s4 i { background: var(--brand); box-shadow: 0 0 8px var(--brand-glow); }
+
+/* Discord and Telegram, one box each: the how-to, the box to paste into, then Connect. */
+.tut-svc { border: 1px solid var(--line); background: var(--panel2); padding: 12px 14px; margin: 10px 0; }
+.tut-svchead { letter-spacing: .5px; margin-bottom: 2px; }
+.tut-svc .guide { border-bottom: 0; }
+.tut-svc .guide summary { padding: 4px 0; font-size: 12.5px; color: var(--muted); }
+.tut-svc .guide ol { padding-left: 34px; font-size: 12.5px; }
+.tut-svc .tut-more { border-top: 1px solid var(--line); margin: 10px 0 0; }
+.tut-secret label { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); margin: 8px 0 5px; }
+
+/* The update hours: a label, then a number or two with their unit. */
+.tut-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 14px; align-items: center; margin-top: 14px; font-size: 13px; }
+.tut-grid label { color: var(--muted); }
+.tut-hours { display: flex; align-items: center; gap: 6px; white-space: nowrap; color: var(--muted); }
+.tut-hours input[type=number] { width: 66px; }
+.tut-later { margin-top: 14px; }
+
+/* The account: labels above their boxes, which fits a phone as well as a desktop. */
+.tut-fields { display: grid; gap: 12px; margin: 4px 0 6px; }
+.tut-field label { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); margin-bottom: 5px; }
+.tut-field input:not([type=checkbox]) { padding: 10px 12px; }
+.tut-check { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 13px; cursor: pointer; }
+.tut-check span { display: inline-flex; align-items: center; gap: 6px; }
+.modal.tut input[type=checkbox] { accent-color: var(--brand); }
+.modal.tut input:not([type=checkbox]):not([type=radio]):focus { border-color: var(--brand); }
+.tut-range { display: block; margin-top: 14px; font-size: 13px; }
+.tut-range input { width: 100%; accent-color: var(--brand); }
+.tut-code:not([type=checkbox]) { font-size: 20px; letter-spacing: 5px; text-align: center; padding: 12px; }
+.tut-steamqr { text-align: center; margin: 14px 0; }
+.tut-steamqr img { background: #fff; padding: 8px; border-radius: 6px; max-width: 100%; height: auto; }
+
+/* Waiting on Steam, and done. */
+.tut-spin { width: 28px; height: 28px; margin: 8px 0 14px; border: 2px solid var(--line); border-top-color: var(--brand); border-radius: 50%; animation: tutSpin .8s linear infinite; }
+@keyframes tutSpin { to { transform: rotate(360deg); } }
+.tut-check-big {
+  width: 56px; height: 56px; margin: 2px 0 16px; border-radius: 50%; display: grid; place-items: center;
+  color: #fff; background: var(--brand);
+  box-shadow: 0 0 0 7px var(--brand-soft), 0 12px 32px var(--brand-glow);
+  animation: tutPop .5s cubic-bezier(.2, 1.4, .4, 1) both;
+}
+@keyframes tutPop { from { transform: scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Back on the left; Skip and the main button on the right. The main button is the purple one, and only it. */
+.tut-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 0 0 auto; padding: 14px 20px; border-top: 1px solid var(--line); }
+.tut-foot button { padding: 9px 16px; }
+/* Waiting on Steam or a game list: nothing to press, but the bar keeps its place so nothing jumps when it's back. */
+.tut-foot:not(:has(button)) { visibility: hidden; }
+button.tut-go { background: var(--brand); color: #fff; min-width: 120px; box-shadow: 0 6px 22px var(--brand-glow); }
+button.tut-go:hover:not(:disabled) { filter: brightness(1.12); }
+button.tut-go:focus-visible { outline-color: var(--brand); }
+button.tut-skip { background: transparent; border-color: transparent; color: var(--muted); }
+button.tut-skip:hover:not(:disabled) { background: var(--panel2); color: var(--text); }
+
+/* On a phone the walkthrough is the whole screen, like an app's own setup, with the buttons along the bottom. */
+@media (max-width: 560px) {
+  .modal.tut { padding: 0; place-items: stretch; }
+  .modal.tut .card { width: 100%; height: 100vh; height: 100dvh; max-height: none; min-height: 0; border: 0; }
+  .tut-head { padding: 12px 16px 10px; }
+  .tut-bar { padding: 0 16px; }
+  .tut-stage { padding: 20px 16px 14px; }
+  h2.tut-title { font-size: 22px; }
+  .tut-foot { padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); }
+  .tut-foot .tut-go { flex: 1 1 auto; }
+  .tut-cards.two { grid-template-columns: 1fr; }
+  .tut-qr { flex-direction: column; align-items: center; text-align: center; }
+  .tut-grid { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .tut-grid label { margin-top: 8px; }
+  .modal.tut .form2 { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .modal.tut .form2 label { margin-top: 8px; }
+}
+
+/* ── the welcome screen ───────────────────────────────────────────── */
+/* The same hero as the walkthrough's first screen, over the form for somebody who skipped it. */
+#welcome { align-content: center; gap: 26px; background: radial-gradient(80% 45% at 50% 0%, var(--brand-soft), transparent 70%), var(--bg); }
+.welcome-hero { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.welcome-hero .welcome-tag { margin: 0; max-width: 46ch; color: var(--muted); }
+.welcome-card { box-shadow: 0 24px 70px rgba(0, 0, 0, .35); }
+.welcome-card .lead { margin-top: 0; }
+.welcome-card .wbtns { display: flex; flex-wrap: wrap; gap: 8px; }
+.welcome-card button.tut-go { min-width: 0; }
+@media (max-width: 560px) {
+  .welcome-card .form2 { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .welcome-card .form2 label { margin-top: 8px; }
+  .welcome-hero h1.wordmark { font-size: 24px; letter-spacing: 6px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tut-stage.in-fwd, .tut-stage.in-back, .tut-bar i.now.grow::after, .tut-hero img, .welcome-hero img, .tut-check-big { animation: none; }
+  .tut-spin { animation-duration: 2.4s; }
+  .tut-card, .tut-card:hover { transition: none; transform: none; }
+}
+
+/* ── the Phone page ───────────────────────────────────────────────── */
+/* The second place the wordmark's purple spreads: this page is the product reaching past the PC, so the kickers, the
+   icons and the one button that matters are purple. Ready is the only green on the page - a tick you can read from
+   across the room - and everything else keeps the app's greys, fonts and square corners. */
+:root { --ph-ok: #34d399; --ph-ok-soft: rgba(52, 211, 153, .09); --ph-ok-line: rgba(52, 211, 153, .45); }
+:root[data-theme="light"] { --ph-ok: #047857; --ph-ok-soft: rgba(4, 120, 87, .07); --ph-ok-line: rgba(4, 120, 87, .4); }
+
+.ph-hero {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s5); margin-bottom: var(--s4);
+  padding: 20px 24px; border: 1px solid var(--line); border-left: 3px solid var(--brand);
+  background: radial-gradient(110% 160% at 0% 0%, var(--brand-soft), transparent 58%), var(--panel);
+}
+h2.ph-title { display: block; font-size: 26px; line-height: 1.2; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text); margin: 0 0 6px; }
+.ph-lead { margin: 0; max-width: 62ch; color: var(--text); opacity: .82; font-size: 14px; }
+.ph-score { display: flex; flex-direction: column; align-items: flex-end; flex: 0 0 auto; line-height: 1; }
+.ph-score b { font-weight: 400; font-size: 40px; color: var(--brand); letter-spacing: 1px; text-shadow: 0 0 24px var(--brand-glow); }
+.ph-score b i { font-style: normal; font-size: 20px; color: var(--muted); text-shadow: none; }
+.ph-score span { margin-top: 6px; font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--muted); }
+.ph-score.all b { color: var(--ph-ok); text-shadow: 0 0 24px var(--ph-ok-soft); }
+
+/* The two big cards, side by side, the same height; one above the other on a phone. */
+.ph-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4); margin-bottom: var(--s4); }
+.ph-cards .card { margin: 0; display: flex; flex-direction: column; padding: 20px; }
+.ph-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.ph-head > div { min-width: 0; }
+.ph-ico { flex: 0 0 40px; height: 40px; display: grid; place-items: center; color: var(--brand); border: 1px solid var(--brand-line); background: var(--brand-soft); }
+.ph-ico svg { width: 20px; height: 20px; }
+.ph-kicker { font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--brand); }
+.ph-name { font-size: 17px; color: var(--text); letter-spacing: .2px; }
+.ph-head .ph-pill { margin-left: auto; }
+
+.ph-pill {
+  flex: 0 0 auto; font-size: 10.5px; letter-spacing: 1.2px; text-transform: uppercase; white-space: nowrap;
+  padding: 3px 9px; border: 1px solid var(--line); color: var(--muted);
+}
+.ph-pill.ok { color: var(--ph-ok); border-color: var(--ph-ok-line); background: var(--ph-ok-soft); }
+.ph-pill.bad { color: var(--bad); border-color: var(--bad); }
+.ph-pill.wait { color: var(--brand); border-color: var(--brand-line); background: var(--brand-soft); }
+
+/* The code, big, on white whatever the theme (phone cameras read that best), and the link beside it. */
+.ph-body { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 20px; align-items: center; }
+.ph-qr { position: relative; aspect-ratio: 1; background: #fff; padding: 4px; box-shadow: 0 0 0 1px var(--line), 0 14px 44px var(--brand-glow); }
+.ph-qr svg { display: block; width: 100%; height: 100%; }
+/* Not ready: no code to scan by mistake - a faint pattern where it will be, and why. */
+.ph-qr.off {
+  background: repeating-conic-gradient(color-mix(in srgb, var(--line) 55%, transparent) 0 25%, transparent 0 50%) 0 0 / 12px 12px, var(--panel2);
+  box-shadow: 0 0 0 1px var(--line);
+}
+.ph-qr.off svg { display: none; }
+.ph-qrcover {
+  position: absolute; inset: 18%; display: flex; flex-direction: column; justify-content: center; gap: 6px; text-align: center;
+  padding: 10px; background: var(--panel); border: 1px solid var(--line); font-size: 12px; color: var(--muted);
+}
+.ph-qrcover b { font-weight: 400; color: var(--text); font-size: 13px; letter-spacing: .5px; }
+.ph-side { min-width: 0; }
+.ph-link { display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 14px; background: var(--bg); border: 1px solid var(--line); }
+.ph-url { flex: 1; min-width: 0; font-size: 19px; line-height: 1.35; color: var(--text); letter-spacing: .3px; overflow-wrap: anywhere; }
+.ph-copy { flex: 0 0 auto; padding: 6px 12px; }
+.ph-text { margin: 12px 0 0; font-size: 13px; line-height: 1.6; color: var(--text); opacity: .86; }
+.ph-mono { color: var(--text); overflow-wrap: anywhere; }
+.ph-code { margin: 12px 0 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); font: 12.5px/1.6 inherit; color: var(--text); overflow-x: auto; white-space: pre; }
+
+/* Open from anywhere: the one switch on this card. */
+.ph-switch {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 0 0 16px;
+  padding: 12px 14px; border: 1px solid var(--line); background: var(--panel2); cursor: pointer;
+}
+.ph-switch > span:first-child { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ph-switch b { font-weight: 400; color: var(--text); }
+.ph-switch:has(input:checked) { border-color: var(--brand-line); }
+.ph-switch:has(input:disabled) { cursor: default; }
+#view-phone .switch input:checked + span { border-color: var(--brand); background: var(--brand-soft); }
+#view-phone .switch input:checked + span::before { background: var(--brand); }
+#view-phone .switch input:focus-visible + span { outline: 2px solid var(--brand); outline-offset: 2px; }
+#view-phone .switch input:disabled + span { opacity: .45; cursor: default; }
+
+.ph-state { display: flex; align-items: center; gap: 10px; padding: 14px; background: var(--panel2); border-left: 3px solid var(--line2); font-size: 13px; }
+.ph-state.bad { border-left-color: var(--bad); color: var(--bad); }
+.ph-spin { flex: 0 0 14px; width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--brand); border-radius: 50%; animation: tutSpin .8s linear infinite; }
+/* Pinned to the bottom, so the two cards end on the same line whatever is above. */
+.ph-card .ph-body, .ph-card .ph-state { margin-bottom: 16px; }
+.ph-note { margin: auto 0 0; padding-top: 14px; border-top: 1px solid var(--line); font-size: 12px; line-height: 1.55; color: var(--muted); }
+
+/* The checklist beside the ways to control it; one column on anything narrower than a laptop. */
+.ph-cols { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: var(--s4); align-items: start; }
+.ph-cols .card { margin: 0 0 var(--s4); padding: 20px; }
+.ph-colside { min-width: 0; }
+.ph-list { display: grid; }
+.ph-row { display: flex; align-items: flex-start; gap: 14px; padding: 14px 0; border-top: 1px solid var(--line); }
+.ph-row:first-child { border-top: 0; padding-top: 4px; }
+.ph-tick {
+  flex: 0 0 22px; height: 22px; margin-top: 1px; display: grid; place-items: center;
+  border: 1px solid var(--line2); color: transparent; transition: background .2s, border-color .2s;
+}
+.ph-tick.ok { background: var(--ph-ok); border-color: var(--ph-ok); color: #05150d; box-shadow: 0 0 12px var(--ph-ok-soft); }
+:root[data-theme="light"] .ph-tick.ok { color: #fff; }
+.ph-rowtext { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.ph-rowtext b { font-weight: 400; color: var(--text); font-size: 14px; letter-spacing: .2px; }
+.ph-rowtext > span { color: var(--muted); font-size: 13px; line-height: 1.55; }
+.ph-row.bad .ph-rowtext > span { color: var(--bad); }
+.ph-fix { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 10px; }
+/* A long label (German, the firewall button) wraps inside the card instead of running off its edge. */
+.ph-fix button, .ph-svcbody .btn, .ph-safe + button { white-space: normal; max-width: 100%; text-align: center; }
+.ph-pwrow { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+.ph-pwrow input:not([type=checkbox]) { flex: 1 1 200px; min-width: 0; width: auto; padding: 9px 12px; }
+.ph-pwrow input:focus { border-color: var(--brand); }
+.ph-fix .tut-meterrow { margin-top: 2px; width: 100%; }
+button.ph-go { background: var(--brand); color: #fff; box-shadow: 0 6px 20px var(--brand-glow); }
+button.ph-go:hover:not(:disabled) { filter: brightness(1.12); }
+button.ph-go:focus-visible { outline-color: var(--brand); }
+
+/* Telegram and Discord, a box each, then the commands worth knowing. */
+.ph-svcs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+.ph-svc { border: 1px solid var(--line); background: var(--panel2); padding: 12px 14px; min-width: 0; }
+.ph-svchead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.ph-svchead b { font-weight: 400; color: var(--text); letter-spacing: .5px; }
+.ph-svcbody { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.ph-svcbody .tg-connect, .ph-svcbody .dc-connect { width: 100%; }
+.ph-svcbody .tgconnect { margin-top: 0; }
+.ph-cmds { margin: 8px 0 10px; }
+.ph-cmds > div { display: grid; grid-template-columns: minmax(0, 200px) minmax(0, 1fr); gap: 12px; align-items: baseline; padding: 7px 0; border-bottom: 1px dashed var(--line); }
+.ph-cmds code { justify-self: start; color: var(--text); overflow-wrap: anywhere; }
+.ph-cmds span { color: var(--muted); font-size: 12.5px; }
+
+/* Ready: a green edge along the top, the same green as the ticks. */
+.ph-cards .ph-card.ready { border-top: 2px solid var(--ph-ok); padding-top: 19px; }
+button.ph-off { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 55%, var(--line)); }
+button.ph-off:hover:not(:disabled) { background: color-mix(in srgb, var(--bad) 12%, var(--panel2)); }
+
+.ph-safe { margin: 0 0 14px; padding-left: 18px; font-size: 13px; color: var(--muted); line-height: 1.6; }
+.ph-safe li { margin: 6px 0; }
+.ph-safe li::marker { color: var(--brand); }
+
+@media (max-width: 1100px) {
+  .ph-cols { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 980px) {
+  .ph-cards { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .ph-hero { padding: 16px; gap: 14px; align-items: flex-start; }
+  h2.ph-title { font-size: 21px; }
+  .ph-lead { font-size: 13px; }
+  .ph-score b { font-size: 30px; }
+  .ph-score b i { font-size: 16px; }
+  .ph-cards .card, .ph-cols .card { padding: 16px; }
+  .ph-body { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .ph-qr { width: min(250px, 100%); justify-self: center; }
+  /* The link gets the whole width, and Copy a full-width button under it - a thumb-sized target. */
+  .ph-link { flex-direction: column; align-items: stretch; padding: 12px; }
+  .ph-url { font-size: 17px; text-align: center; }
+  .ph-copy { padding: 9px 12px; }
+  .ph-svcs { grid-template-columns: minmax(0, 1fr); }
+  .ph-cmds > div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .ph-pwrow input:not([type=checkbox]) { flex-basis: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ph-spin { animation-duration: 2.4s; }
+}

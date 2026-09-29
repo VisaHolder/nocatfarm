@@ -10,8 +10,8 @@ This guide has two parts:
 - **[Advanced](#part-2-advanced)** - for when you want more: tuning human mode, trades, phone notifications, every
   command and setting, Linux and Docker, plugins.
 
-The app works the same way. The first-run setup offers **Quick setup**, a **Full tour** or **Advanced setup**, and the Settings page
-shows the everyday switches first, with a **Show advanced** box for the rest.
+The app works the same way. The first-run walkthrough offers **Easy** or **Advanced**, and the Settings page shows
+the everyday switches first, with a **Show advanced** box for the rest.
 
 The [front page](../README.md) is the one-minute version.
 
@@ -56,15 +56,30 @@ The [front page](../README.md) is the one-minute version.
 
 ## 1. Install and run
 
-**On Windows:**
+**On Windows** there are two downloads on the [latest release](https://github.com/VisaHolder/nocatfarm/releases/latest).
+They are the same app - pick how you want it:
 
-1. Download `nocat.farm-v….zip` from the [latest release](https://github.com/VisaHolder/nocatfarm/releases/latest).
-   (The files ending `_linux-x64` and `_linux-arm64` are for Linux.)
-2. Right-click the zip and pick **Extract All…**. This gives it a folder of its own.
-3. Open the folder and run **`nocatFarm.exe`**.
+- **The setup, `nocat.farm-v…-setup.exe` (recommended).** One screen: it installs to
+  `%LOCALAPPDATA%\Programs\nocat.farm` (no admin needed, so it can keep updating itself), adds a Start menu entry,
+  a desktop shortcut and "start with Windows" if you want them, and puts an uninstaller in *Settings → Apps*.
+  - **Coming from another idler?** Pick ArchiSteamFarm, Idle Master or "another idler" and the dashboard's setup
+    opens straight on bringing your accounts over (see [Coming from another idler](#coming-from-another-idler)). It
+    finds ASF by itself if it's on your Desktop, in Documents or Downloads.
+  - **Already have a portable nocat.farm?** It offers to **move it here** - accounts, settings and history come
+    along, the old copy is closed first and its folder is left alone.
+  - **Already installed?** Running a newer setup offers **update** (or **reinstall**) and **uninstall**. Your
+    accounts and settings stay as they are.
+  - Uninstalling asks whether to keep your accounts and settings, in case you install it again.
+- **The portable zip, `nocat.farm-v….zip`.** Right-click → **Extract All…**, open the folder, run
+  **`nocatFarm.exe`**. Nothing is installed; everything - settings, logs, login tokens - stays in that folder.
 
-Nothing else to install. A small window opens, and the dashboard opens in your browser at
+(The files ending `_linux-x64` and `_linux-arm64` are for Linux.)
+
+Nothing else to install either way. A small window opens, and the dashboard opens in your browser at
 `http://127.0.0.1:7242/`.
+
+Unattended install (for scripts): `nocat.farm-v…-setup.exe /VERYSILENT /DIR="C:\nocat.farm" /STARTUP=no /DESKTOP=no
+/MOVE=no /PORT=7300`.
 
 On Linux or a server, see [Linux and Docker](#linux-and-docker).
 
@@ -73,31 +88,42 @@ On Linux or a server, see [Linux and Docker](#linux-and-docker).
 The first time, the dashboard walks you through a short setup. You can skip it any time, and replay it later from
 the Overview page (**Show the walkthrough again**).
 
+A bar along the top shows how far you are, and every step has **Back**, and **Skip** where it makes sense.
+
 1. **Language.** Pick yours. It changes straight away.
-2. **Quick setup, Full tour or Advanced setup.**
-   - *Quick setup* goes straight to adding your account. About a minute.
-   - *Full tour* explains each feature on the way. A few minutes.
-   - *Advanced setup* is for people who've used ArchiSteamFarm or another idler: add the account, and it opens
-     all of that account's settings with the advanced ones showing.
-3. **What kind of account is it?**
+2. **Easy or Advanced.**
+   - *Easy* (the default) asks a few plain questions: your phone, keeping it up to date, then the account. About
+     two minutes.
+   - *Advanced* adds opening it from anywhere, notifications (Discord and Telegram), the update hours, and at the
+     end opens all of the account's settings. For people who've used ArchiSteamFarm or another idler.
+3. **Your phone.** *Yes, set it up* opens the dashboard to your wifi: you pick a dashboard password, then scan the
+   QR code with your phone. If Windows Firewall is blocking it, the button to let it through is right there.
+   *Not now* keeps it on this PC only.
+4. **From anywhere** (Advanced). The same, away from home - your router forwards the port, like Jellyfin. It needs a
+   password of at least 12 characters.
+5. **Notifications** (Advanced). Connect Telegram or Discord, and pick whether you're told when an update installs.
+6. **Keep it up to date.** One switch: it installs new versions at night, while your accounts sleep. Advanced also
+   sets the hours and how often it looks. (On Linux and Docker it tells you when there's a new version instead.)
+7. **What kind of account is it?**
    - **My main - I play on it.** It's added in human mode, so it acts like a person. You can also tick
      *I also sign into it from my own Steam app* - then nocat.farm never changes your online status, so it never
      kicks you off Friends & Chat.
    - **A spare or farm account.** Robot mode: it farms cards and idles games around the clock, at full speed.
 
    You can change this later with the **Human mode** switch in the account's settings.
-4. **Add the account.**
+8. **Add the account.**
    - Type the **Steam account name** (what you type to sign in to Steam - not your display name or email).
    - The **password** is optional. Leave it empty and you're asked once when it signs in.
-   - In the full tour and advanced setup you can tick **Sign in with a QR code** instead. You scan a code with the Steam app on your
+   - In Advanced you can tick **Sign in with a QR code** instead. You scan a code with the Steam app on your
      phone, and nothing is typed at all.
-   - **Using ArchiSteamFarm?** If the setup finds it, it lists your ASF accounts instead. Tick the ones you play on
-     yourself (they come across in human mode) and press **Import them**. Close ASF first, so two programs aren't
-     signed in to the same account.
-5. **Sign in.** The Steam Guard code, password or QR code is asked for right there in the setup.
-6. **Pick its games** (optional). A human-mode account shows its most-played games: tap a main game and a few side
-   games. The full tour also asks for its daily routine (hours a day, when it gets on, bedtime). A farm account can
-   pick games to idle and a custom game name. **Skip - use the defaults** is always there.
+   - **Using another idler?** If the setup finds one with accounts in it (ArchiSteamFarm, Idle Master, HourBoostr,
+     Steam Game Idler...), it lists those accounts instead. Tick the ones to bring, tick **Human mode** on the ones you
+     play on yourself, and press **Import them**. *Coming from another idler? Import from it* under the form picks a
+     different one. Close the other idler first, so two programs aren't signed in to the same account.
+9. **Sign in.** The Steam Guard code, password or QR code is asked for right there in the setup.
+10. **Pick its games** (optional). A human-mode account shows its most-played games: tap a main game and a few side
+    games. Advanced also asks for its daily routine (hours a day, when it gets on, bedtime). A farm account can
+    pick games to idle and a custom game name. **Skip - use the defaults** is always there.
 
 After the first sign-in, nocat.farm keeps a Steam login token, so it signs itself in from then on. No password is
 stored unless you type one into the settings.
@@ -248,7 +274,7 @@ The dashboard is at `http://127.0.0.1:7242/`. Its tabs, in order:
   (the last 24 hours per account, with a total for all of them); **History** charts; and recent activity. The
   **Show the walkthrough again** link is here.
 - **Accounts** - search by name, login, notes or game; filter chips by state; drag cards to change the order (the
-  app window and console use the same order). **Import from ASF** and **+ Add account** are here. Removing an
+  app window and console use the same order). **Import from another idler** and **+ Add account** are here. Removing an
   account asks you to type its name first.
 - **rep4rep** - only shown when rep4rep is switched on.
 - **Authenticator** - see [the Authenticator page](#the-authenticator-page).
@@ -351,7 +377,7 @@ console.
 
 ## Accounts and signing in
 
-*For: adding accounts by command, authenticators, and moving from ArchiSteamFarm.*
+*For: adding accounts by command, authenticators, and moving from another idler.*
 
 ```
 add myaccount mysteamlogin     # add an account and start signing in
@@ -380,11 +406,33 @@ never changes the online status, so your own app keeps Friends & Chat.
 **Enable, disable, remove.** `disable myaccount` keeps the settings but never signs in; `enable myaccount` undoes
 it. `remove myaccount` deletes the account and its login token.
 
-**Coming from ArchiSteamFarm.** `import asf` (or **Import from ASF** on the Accounts page) looks for an ASF install
-nearby, or give it ASF's config folder: `import asf C:\ASF\config`. Each bot comes across with its login token (no passwords, no Guard
-codes), its games, custom name, farming order, priority list, blacklist, trade and gift settings, booster games and
-rep4rep settings. A bot's maFile is copied if it's still in ASF's `config` folder. Imported accounts are added but
-not started. Close ASF before starting them. Add `force` to overwrite accounts that already exist here.
+### Coming from another idler
+
+**Import from another idler** (on the Accounts page, under Accounts in Settings, and in the first-run setup) lists the
+idlers nocat.farm can read and what it found in each one's usual place. Pick one - or paste the folder an idler is in
+and it works out which one it is. It then shows **where it looked**, every account it found and what comes with it,
+and nothing is written until you press **Import**. Per account: tick it to bring it, tick **Human mode** for the ones
+you play on yourself. Accounts you already have here are left alone. The other program's files are only ever read -
+never changed - and passwords, tokens and authenticator secrets are stored encrypted, like everything else here.
+**Close the other idler before starting the imported accounts**: two programs on one account keep signing each other
+out.
+
+| From | Where it looks | What comes across |
+|---|---|---|
+| **ArchiSteamFarm** | ASF's `config` folder (Desktop, Documents, Downloads, or next to nocat.farm) | Login token (no password, no Guard code), the password (plain, ASF-encrypted, Windows-protected, from an environment variable or a file), the authenticator ASF keeps in `<bot>.db` or a leftover `.maFile` / `.maFile.NEW` / `<SteamID>.maFile`, games, custom name, farming order, priority list, blacklist, Family View PIN, trade and gift settings, booster games, rep4rep. From `ASF.json`: the global blacklist and the web proxy. |
+| **Idle Master Extended** | `%LOCALAPPDATA%\IdleMasterExtended` | Blacklist, whitelist (as games to idle), farming order, "only played games". The account name is looked up in this PC's Steam; it asks for the password (or a QR code) once. |
+| **Idle Master** | `%LOCALAPPDATA%\IdleMaster`, or ClickOnce's `%LOCALAPPDATA%\Apps\2.0` | Blacklist and farming order. Type the account name in the preview, or leave it empty to sign in with a QR code. |
+| **HourBoostr** | Its `Settings.json`, next to its exe | Each account's name, password, games; ignored accounts arrive switched off. Its old login keys don't work on Steam any more, so Steam Guard is asked once. |
+| **SingleBoostr** | Its `Settings.json` | No account (it uses whoever the Steam app is signed into): its blacklist goes into the global one, and its minutes-before-farming onto every account already here. |
+| **Steam Game Idler** | `%APPDATA%\com.zevnda.steam-game-idler\cache` (or `cache` beside the portable exe) | Accounts, the games switched on for idling, card-farming blacklist and choices, playtime caps (as hour targets), custom status. Tick **Bring its sign-in over** to read its saved sign-in from the Windows Credential Manager - otherwise it asks for the password. |
+| **steam-idler** (3urobeat) | Its folder: `accounts.txt` and `config.json` | Every account with its password and shared secret, the games it plays and its custom status. |
+
+From the console: `import <asf|ime|idlemaster|hourboostr|singleboostr|sgi|steamidler> [path] [force]`, or
+`import auto <folder>`. It imports everything it finds (Steam Game Idler sign-ins stay behind - that's the
+dashboard's tick-box); `force` overwrites accounts that already exist here. Imported accounts are added but not
+started.
+
+The setup's "coming from" choice is remembered until the first-run setup has shown it once (or you import).
 
 ## Card farming
 
@@ -697,6 +745,17 @@ roughly one per hour of play. It never finishes more than 90% of a game (*Finish
 only open up as playtime builds, and milestones wait for the achievements they depend on. *How fast* makes the gaps
 longer or shorter. *Never in these games* keeps it out of games you pick.
 
+The order is one a real player could have earned, in every game: mostly easiest first (now and then the second
+easiest, so it isn't a perfect robot order), and never out of sequence. "10 kills" waits for "5 kills" - the number
+can be in the name or only in the description - "Chapter Two" waits for "Chapter One" (and "Act II" for "Act I"),
+"beat it on Hard" waits for "beat it on Normal", and "finish the game" or "the final mission" wait for every chapter,
+mission and act before them.
+
+It also knows how long each game really takes (*Pace by how long games really take*, on). It looks up a typical
+player's hours for the game (public SteamSpy figures; only the game's ID is sent) and paces to them. "Finish the game"
+waits until the account has played most of a normal playthrough. Chapter 5 of 10 waits for about 40% of it. A long
+game's rare achievements open more slowly than a short game's.
+
 Some games' achievements are set by Steam's servers, not the client (Counter-Strike 2 is one) - nothing can unlock
 those, and the log says so.
 
@@ -707,9 +766,16 @@ achievements over time* on too.
 - *all single-player* - finds single-player games with achievements in the library, played or not (never DLC, demos
   or games with few reviews). Turn on *Only hunt games you've played* to skip the ones the account never launched.
 
-One game at a time, about 2 hours each (*Play each for about*), and it stops at your *Finish no more than* limit
-(only a `grind` you type goes to 100%). Games with nothing left to earn are skipped, and it moves on once a game is
-done.
+It keeps a few games on the go at once, like a person does. It takes turns between the first 3 on its list (*Games in
+rotation*), about 2 hours per turn (*Play each for about*), and never plays the same one twice in a row.
+
+When a game reaches about 65-75% of its achievements (*Move to another game at about* / *...up to*, a different random point for
+each game), the hunter has had enough of it for now. That game rests for 3-14 days (*Come back to a game after* /
+*...to*) and the next game on the list takes its slot. Each time it comes back, it goes a bit further in, up to your
+*Finish no more than* limit. Only a `grind` you type goes to 100%. Games with nothing left to earn are skipped.
+
+*Hunt at most, hours a day* (0 = no limit) caps the hunting per day. After that, the hunt game leaves a human account's
+games until tomorrow, and a robot account stops hunting for the day.
 
 On a **human-mode account** the hunter never takes the account over. The game it's hunting joins the games the
 account plays, like one more side game in *Games and how often*, at *Human mode: hunt game's weight*. It's played in
@@ -1031,6 +1097,7 @@ Environment variables (any install, not just Docker) - when set, they win at eve
 | `NOCATFARM_WEB_PORT` | *Port* (`WebPort`, 7242 by default). |
 | `NOCATFARM_WEB_PASSWORD` | *Dashboard password*. |
 | `NOCATFARM_WEB_PASSWORD_FILE` | A file to read the password from (how Docker secrets arrive). Wins over the one above. |
+| `NOCATFARM_HOME_ADDRESS` | Your computer's address on your wifi, like `192.168.1.20` (add `:port` if Docker publishes a different one). In Docker nocat.farm can't see it, so without this *Open on your phone* can't show the link or a QR code - it tells you what to open instead. |
 | `NOCATFARM_NETLOG=1` | For troubleshooting: writes every Steam message to `netlog-<account>.txt`. |
 
 ## Linux and Docker
@@ -1122,6 +1189,73 @@ Commands: the dashboard's Console tab, or `docker attach nocatfarm` (Ctrl+P then
 
 **Other CPUs:** the image builds for amd64 and arm64 from the same Dockerfile:
 `docker buildx build --platform linux/amd64,linux/arm64 -t nocatfarm .`
+
+### On a VPS (a rented server)
+
+*For: running it 24/7 without leaving your own PC on.*
+
+A VPS is a small Linux computer you rent by the month from a hosting company. nocat.farm runs happily on the cheapest
+ones: **1 CPU and 1 GB of memory** is plenty for a handful of accounts. Pick **Ubuntu 24.04** (64-bit) when it asks.
+Intel/AMD or ARM both work.
+
+**1. Get in.** The host gives you an address and a password or key. From your PC (Windows Terminal works):
+
+```
+ssh root@your.server.address
+```
+
+**2. Install Docker and start nocat.farm** - paste these one at a time:
+
+```
+curl -fsSL https://get.docker.com | sh
+git clone https://github.com/VisaHolder/nocatfarm.git
+cd nocatfarm
+cp docker-compose.example.yml docker-compose.yml
+mkdir -p config logs && chown -R 1000:1000 config logs
+echo 'NOCATFARM_WEB_PASSWORD=pick-a-long-password-you-use-nowhere-else' > .env
+docker compose up -d --build
+```
+
+It keeps running after you log out, and starts again by itself when the server restarts.
+
+**3. Open the dashboard.** The safest way leaves the dashboard closed to the internet: an **SSH tunnel** from your PC.
+
+```
+ssh -L 7242:127.0.0.1:7242 root@your.server.address
+```
+
+Keep that window open and go to `http://localhost:7242` on your PC. It's the server's dashboard, through the
+encrypted SSH connection - nobody else can reach it.
+
+Want it on your phone, or without a tunnel? Two options:
+
+- **Open the port:** in `docker-compose.yml` change `"127.0.0.1:7242:7242"` to `"7242:7242"`, run
+  `docker compose up -d`, and allow it in the server's firewall (`ufw allow 7242/tcp` on Ubuntu). Then it's
+  `http://your.server.address:7242`. It's plain http, so the long password matters - five wrong tries lock that
+  address out for an hour.
+- **HTTPS with your own domain:** point a domain at the server and put [Caddy](https://caddyserver.com) in front.
+  It gets the certificate by itself. A `Caddyfile` of two lines does it:
+
+  ```
+  farm.yourdomain.com
+  reverse_proxy 127.0.0.1:7242
+  ```
+
+**4. Add your accounts** in the dashboard, same as on a PC. The Steam Guard code - or the QR scan with the Steam
+app - is asked for right on the page. Already have nocat.farm on your PC? Stop it there, copy its `config` folder into
+the server's `nocatfarm/config` (with `scp -r`), and start it - each account signs in once more, because Windows ties
+saved logins to your Windows user.
+
+**Good to know**
+
+- **Steam sees the server's location.** Signing in from a data centre in another city or country is normal for an
+  idler, but the first sign-in may ask for Steam Guard, and your account's recent-logins list shows the server. For
+  an account you also play on, a server near you looks most natural.
+- **Only one copy per account.** Don't run the same account on your PC and the server at the same time - they keep
+  signing each other out.
+- **Updating:** `cd nocatfarm && git pull && docker compose up -d --build`.
+- **Backups:** the `config` folder is everything. `scp -r root@your.server.address:nocatfarm/config .` copies it home.
+- **Commands and the log:** the dashboard's Console and Log tabs, or `docker compose logs -f` on the server.
 
 ## Plugins
 

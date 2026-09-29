@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using NocatFarm.Config;
 using NocatFarm.Core;
 
@@ -29,6 +29,129 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 	/// one (off, nothing to hunt, or not a human account).
 	/// </summary>
 	public uint HuntTarget { get; private set; }
+
+	/// <summary>The hunt game while it may be played today - 0 once "Hunt at most, hours a day" is used up.</summary>
+	public uint HuntTargetNow => DailyLimitReached ? 0 : HuntTarget;
+
+	private DateTime _grindTick = DateTime.MinValue;   // a robot's hunt grind: when its time was last counted
+	private double _todayMinutes;                // minutes hunted today (a human account's hunt game, or a robot's grinds)
+	private DateTime _today = DateTime.MinValue;
+
+	/// <summary>Per game: where it moves on (percent) and when it may come back.</summary>
+	private readonly Dictionary<uint, GamePlan> _plans = [];
+
+	private sealed record GamePlan(int SwitchAtPct, long RestUntil);
+
+	private bool DailyLimitReached {
+		get {
+			RollDay();
+
+			return (Bot.Cfg.BoostHoursPerDay > 0) && (_todayMinutes >= Bot.Cfg.BoostHoursPerDay * 60.0);
+		}
+	}
+
+	private void RollDay() {
+		if (_today != DateTime.Today) {
+			_today = DateTime.Today;
+			_todayMinutes = 0;
+		}
+	}
+
+	/// <summary>This game's stopping point - a fresh random one in the range the first time it's seen.</summary>
+	private GamePlan PlanFor(uint app) {
+		if (!_plans.TryGetValue(app, out GamePlan? plan)) {
+			int lo = Math.Clamp(Math.Min(Bot.Cfg.BoostSwitchFromPct, Bot.Cfg.BoostSwitchToPct), 5, 100);
+			int hi = Math.Clamp(Math.Max(Bot.Cfg.BoostSwitchFromPct, Bot.Cfg.BoostSwitchToPct), lo, 100);
+			plan = new GamePlan(_rng.Next(lo, hi + 1), 0);
+			_plans[app] = plan;
+		}
+
+		return plan;
+	}
+
+	private bool Resting(uint app) => _plans.TryGetValue(app, out GamePlan? p) && (p.RestUntil > DateTime.UtcNow.Ticks);
+
+	/// <summary>Far enough into this game for now: its achievements have reached its stopping point.</summary>
+	private bool ReachedStop(uint app, out int pct) {
+		pct = 0;
+		(int unlocked, int total) = BotManager.ModuleOf<AchievementPacer>(Bot)?.Progress(app) ?? (0, 0);
+
+		if (total == 0) {
+			return false;
+		}
+
+		pct = unlocked * 100 / total;
+
+		return pct >= PlanFor(app).SwitchAtPct;
+	}
+
+	/// <summary>
+	/// Had enough of this game for now: back in a few days, and next time it goes a little further in - the way a
+	/// person drifts between games and comes back to them, rather than finishing one after another.
+	/// </summary>
+	private void RestGame(uint app, int pct) {
+		int lo = Math.Clamp(Math.Min(Bot.Cfg.BoostRestDaysMin, Bot.Cfg.BoostRestDaysMax), 0, 180);
+		int hi = Math.Clamp(Math.Max(Bot.Cfg.BoostRestDaysMin, Bot.Cfg.BoostRestDaysMax), lo, 180);
+		int days = _rng.Next(lo, hi + 1);
+		int next = Math.Min(100, Math.Max(PlanFor(app).SwitchAtPct, pct) + _rng.Next(8, 16));
+		_plans[app] = new GamePlan(next, DateTime.UtcNow.AddDays(days).AddMinutes(_rng.Next(0, 24 * 60)).Ticks);
+		Log.Info(new Said("{0}: {1}% of its achievements - moving to another game, back to it in about {2} day(s)", GameNames.Of(app), pct, days), Bot.Name);
+	}
+
+	/// <summary>
+	/// The next game to hunt: it takes turns between the first "Games in rotation" games on the list that aren't
+	/// resting or at their stopping point - a handful on the go at once, like a person's - and when one of those
+	/// rests or is done, the next game on the list takes its place. 0 when every game is resting.
+	/// </summary>
+	private uint NextTarget(List<uint> targets) =>
+		Rotate(targets, Bot.Cfg.BoostGamesInRotation, app => {
+			if (Resting(app)) {
+				return false;
+			}
+
+			if (ReachedStop(app, out int pct)) {
+				RestGame(app, pct);
+
+				return false;
+			}
+
+			return true;
+		}, ref _index, HuntTarget);
+
+	/// <summary>
+	/// The pick itself: the first <paramref name="size"/> usable games on the list, taken in turn, never straight back
+	/// to <paramref name="current"/> when there's another to go to. 0 when none is usable.
+	/// </summary>
+	internal static uint Rotate(IReadOnlyList<uint> targets, int size, Func<uint, bool> usable, ref int index, uint current) {
+		size = Math.Clamp(size, 1, 20);
+		List<uint> active = [];
+
+		foreach (uint app in targets) {
+			if (!usable(app)) {
+				continue;
+			}
+
+			active.Add(app);
+
+			if (active.Count == size) {
+				break;
+			}
+		}
+
+		if (active.Count == 0) {
+			return 0;
+		}
+
+		uint pick = active[index % active.Count];
+
+		if ((pick == current) && (active.Count > 1)) {
+			pick = active[++index % active.Count];
+		}
+
+		index++;
+
+		return pick;
+	}
 
 	private double _huntMinutes;                  // minutes the hunt game has actually been played (human account)
 	private int _huntGoal;                        // about how long it plays one hunt game before moving on
@@ -452,6 +575,19 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 				return;
 			}
 
+			// The day's hunting counts the time really played - a grind cut short counts what it got to.
+			if (_ours) {
+				DateTime now = DateTime.UtcNow;
+
+				if (_grindTick != DateTime.MinValue) {
+					RollDay();
+					_todayMinutes += Math.Clamp((now - _grindTick).TotalMinutes, 0, 5);
+					SaveHunt();
+				}
+
+				_grindTick = now;
+			}
+
 			_sawGrind = true;
 			_status = _ours ? new Said("hunting {0}", GameNames.Of(Bot.GrindGame)) : new Said("waiting - a manual grind is running");
 
@@ -463,6 +599,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		if (_sawGrind) {
 			_sawGrind = false;
 			_ours = false;
+			_grindTick = DateTime.MinValue;
 			_status = new Said("between games");
 
 			return;
@@ -498,12 +635,30 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			return;
 		}
 
-		uint target = targets[_index % targets.Count];
-		_index++;
+		LoadHunt();
+
+		if (DailyLimitReached) {
+			_status = new Said("done hunting for today (Hunt at most, hours a day)");
+
+			return;
+		}
+
+		uint target = NextTarget(targets);
+
+		if (target == 0) {
+			_status = new Said("every game on the list is resting for now - it comes back to them in a few days");
+
+			return;
+		}
 
 		// Nobody plays for exactly two hours, twice. The setting is the middle of a range, not a stopwatch.
 		int hours = Math.Clamp(Bot.Cfg.BoostSessionHours, 1, 24);
 		int minutes = _rng.Next(hours * 60 * 70 / 100, (hours * 60 * 130 / 100) + 1);
+
+		// Never past today's limit.
+		if (Bot.Cfg.BoostHoursPerDay > 0) {
+			minutes = Math.Max(15, Math.Min(minutes, (int) ((Bot.Cfg.BoostHoursPerDay * 60.0) - _todayMinutes)));
+		}
 
 		// Targets are already filtered, so a refusal here means the guard changed its mind between the two - fine,
 		// leave it, the next tick picks the game after it.
@@ -512,6 +667,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		}
 
 		_ours = true;
+		_grindTick = DateTime.UtcNow;
 		_status = new Said("hunting {0}", GameNames.Of(target));
 		Log.Info(new Said("achievement boost - hunting {0} for {1} ({2}/{3} through the list)", GameNames.Of(target), Fmt.Hm(minutes), _index, targets.Count), Bot.Name);
 	}
@@ -531,23 +687,40 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		// Only minutes it really played the hunt game count - a tick that ran late is a gap, not play.
 		if ((HuntTarget != 0) && (BotManager.ModuleOf<HumanMode>(Bot)?.PlayingNow == HuntTarget) && (elapsed is > 0 and <= 3)) {
 			_huntMinutes += elapsed;
+			RollDay();
+			_todayMinutes += elapsed;
 		}
 
 		bool nothingLeft = (HuntTarget != 0) && (BotManager.ModuleOf<AchievementPacer>(Bot)?.NothingLeft(HuntTarget) ?? false);
+		int pct = 0;
+		bool enough = (HuntTarget != 0) && !nothingLeft && ReachedStop(HuntTarget, out pct);
 
-		if ((HuntTarget == 0) || !targets.Contains(HuntTarget) || nothingLeft || (_huntMinutes >= _huntGoal)) {
+		if ((HuntTarget == 0) || !targets.Contains(HuntTarget) || nothingLeft || enough || Resting(HuntTarget) || (_huntMinutes >= _huntGoal)) {
 			if (nothingLeft) {
 				Log.Info(new Said("done with {0}'s achievements for now - moving on", GameNames.Of(HuntTarget)), Bot.Name);
+			} else if (enough) {
+				RestGame(HuntTarget, pct);
 			}
 
-			StartHunt(targets[_index % targets.Count], targets.Count);
-			_index++;
+			uint next = NextTarget(targets);
+
+			if (next == 0) {
+				HuntTarget = 0;
+				_status = new Said("every game on the list is resting for now - it comes back to them in a few days");
+				SaveHunt();
+
+				return;
+			}
+
+			StartHunt(next, targets.Count);
 			SaveHunt();
 		} else if (now - _huntSavedAt > TimeSpan.FromMinutes(10)) {
 			SaveHunt();
 		}
 
-		_status = new Said("{0} is in its games - {1} of about {2} played", GameNames.Of(HuntTarget), Fmt.Hm((int) _huntMinutes), Fmt.Hm(_huntGoal));
+		_status = DailyLimitReached
+			? new Said("{0} is done for today (Hunt at most, hours a day) - back tomorrow", GameNames.Of(HuntTarget))
+			: new Said("{0} is in its games - {1} of about {2} played", GameNames.Of(HuntTarget), Fmt.Hm((int) _huntMinutes), Fmt.Hm(_huntGoal));
 	}
 
 	private void StartHunt(uint game, int listed = 0) {
@@ -559,12 +732,13 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		_huntGoal = _rng.Next(hours * 60 * 70 / 100, (hours * 60 * 130 / 100) + 1);
 
 		Log.Info(listed > 0
-			? new Said("achievement boost - {0} joins the games it plays, for about {1} ({2}/{3} through the list)", GameNames.Of(game), Fmt.Hm(_huntGoal), (_index % listed) + 1, listed)
+			? new Said("achievement boost - {0} joins the games it plays, for about {1} ({2}/{3} through the list)", GameNames.Of(game), Fmt.Hm(_huntGoal), ((_index - 1 + listed) % listed) + 1, listed)
 			: new Said("achievement boost - {0} joins the games it plays, for about {1}", GameNames.Of(game), Fmt.Hm(_huntGoal)), Bot.Name);
 		SaveHunt();
 	}
 
-	private sealed record HuntSave(int Index, uint Target, double Minutes, int Goal);
+	private sealed record HuntSave(int Index, uint Target, double Minutes, int Goal, double TodayMinutes = 0, DateTime Today = default,
+		Dictionary<uint, GamePlan>? Plans = null);
 
 	private string HuntPath => Path.Combine(Config.ConfigStore.ConfigDir, "state", $"hunt-{Bot.Name}.json");
 
@@ -581,6 +755,12 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 				HuntTarget = saved.Target;
 				_huntMinutes = Math.Max(0, saved.Minutes);
 				_huntGoal = Math.Max(30, saved.Goal);
+				_today = saved.Today.Date;
+				_todayMinutes = Math.Max(0, saved.TodayMinutes);
+
+				foreach ((uint app, GamePlan plan) in saved.Plans ?? []) {
+					_plans[app] = plan;
+				}
 			}
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) {
 			// A bad file is the same as none: it starts again from the top of the list.
@@ -591,7 +771,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		_huntSavedAt = DateTime.UtcNow;
 
 		try {
-			AtomicFile.Write(HuntPath, JsonSerializer.Serialize(new HuntSave(_index, HuntTarget, _huntMinutes, _huntGoal)));
+			AtomicFile.Write(HuntPath, JsonSerializer.Serialize(new HuntSave(_index, HuntTarget, _huntMinutes, _huntGoal, _todayMinutes, _today, _plans)));
 		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 			// Next time it simply doesn't remember where it was on the list.
 		}

@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.Versioning;
+using NocatFarm.Core;
 
 namespace NocatFarm.Windows;
 
@@ -20,7 +21,10 @@ public static class Firewall {
 
 	private const int Inbound = 1;
 	private const int Allow = 1;
+	private const int DomainProfile = 1;
 	private const int PrivateProfile = 2;
+	private const int PublicProfile = 4;
+	private const int Block = 0;
 
 	/// <summary>
 	/// True when an enabled inbound rule lets the port in on a home network, false when none does, null when it
@@ -33,10 +37,18 @@ public static class Firewall {
 			}
 
 			dynamic policy = Activator.CreateInstance(type)!;
+			int current = CurrentProfiles(policy);
 
-			// The firewall switched off for home networks lets everything in.
+			// The firewall switched off for the network in use lets everything in.
 			try {
-				if (!(bool) policy.FirewallEnabled[PrivateProfile]) {
+				bool on = false;
+
+				foreach (int profile in new[] { DomainProfile, PrivateProfile, PublicProfile }) {
+					bool enabled = policy.FirewallEnabled[profile];
+					on |= ((current & profile) != 0) && enabled;
+				}
+
+				if (!on) {
 					return true;
 				}
 			} catch {
@@ -44,10 +56,13 @@ public static class Firewall {
 			}
 
 			string exe = Environment.ProcessPath ?? "";
+			bool allowed = false;
 
 			foreach (dynamic rule in policy.Rules) {
-				if (!(bool) rule.Enabled || ((int) rule.Direction != Inbound) || ((int) rule.Action != Allow)
-					|| (((int) rule.Profiles & PrivateProfile) == 0) || ((int) rule.Protocol is not (Tcp or AnyProtocol))) {
+				// A rule only counts for the network Windows is on right now - a home-network rule does nothing on a
+				// network it has marked Public.
+				if (!(bool) rule.Enabled || ((int) rule.Direction != Inbound)
+					|| (((int) rule.Profiles & current) == 0) || ((int) rule.Protocol is not (Tcp or AnyProtocol))) {
 					continue;
 				}
 
@@ -57,15 +72,48 @@ public static class Firewall {
 				// Only a rule that is plainly for us: this exe (any port), or this port for any program. Windows' own
 				// rules for Store apps look like "everything, any program" but are tied to their app package, and
 				// counting them said "not blocked" on a PC where the phone just loaded for ever.
-				if (string.Equals(app, exe, StringComparison.OrdinalIgnoreCase)
-					|| ((app.Length == 0) && (ports.Length > 0) && (ports != "*") && PortMatches(ports, port) && !Scoped(rule))) {
-					return true;
+				if (!string.Equals(app, exe, StringComparison.OrdinalIgnoreCase)
+					&& !((app.Length == 0) && (ports.Length > 0) && (ports != "*") && PortMatches(ports, port) && !Scoped(rule))) {
+					continue;
 				}
+
+				// A Block rule beats every Allow rule - the one Windows leaves after "Cancel" on its own prompt, say.
+				if ((int) rule.Action == Block) {
+					return false;
+				}
+
+				allowed = true;
 			}
 
-			return false;
+			return allowed;
 		} catch {
 			return null;
+		}
+	}
+
+	/// <summary>The network kinds in use now (domain 1, private 2, public 4); private when it can't be read.</summary>
+	private static int CurrentProfiles(dynamic policy) {
+		try {
+			return (int) policy.CurrentProfileTypes;
+		} catch {
+			return PrivateProfile;
+		}
+	}
+
+	/// <summary>True when Windows has the network marked Public - the rule is for home networks only, on purpose.</summary>
+	public static bool OnPublicNetwork() {
+		try {
+			// Every active network's type at once: a VPN or a virtual adapter marked Public doesn't count while the home
+			// network (Private, or a work Domain) is there too.
+			if (Type.GetTypeFromProgID("HNetCfg.FwPolicy2") is not { } type) {
+				return false;
+			}
+
+			int profiles = CurrentProfiles(Activator.CreateInstance(type)!);
+
+			return ((profiles & PublicProfile) != 0) && ((profiles & (PrivateProfile | DomainProfile)) == 0);
+		} catch {
+			return false;
 		}
 	}
 
@@ -115,8 +163,16 @@ public static class Firewall {
 	/// saying no leaves everything as it was.
 	/// </summary>
 	public static async Task<(bool Ok, string Why)> AllowAsync(int port) {
-		// One prompt for both: take away an older rule (a different port), then add this one.
-		string args = $"/c netsh advfirewall firewall delete rule name=\"{RuleName}\" >nul & netsh advfirewall firewall add rule name=\"{RuleName}\" dir=in action=allow protocol=TCP localport={port} profile=private,domain";
+		// On a network Windows calls Public the rule wouldn't apply - saying so beats "done" and a phone that still can't.
+		if (OnPublicNetwork()) {
+			return (false, new Said("Windows has this network set to Public, where the rule doesn't apply. Set it to Private (Settings > Network & internet > your network), then press it again.").ToString());
+		}
+
+		// One prompt for all of it: clear this program's own inbound rules (a Block rule left by "Cancel" on Windows'
+		// prompt wins over any Allow), take away an older rule for a different port, then add this one.
+		string exe = Environment.ProcessPath ?? "";
+		string clearOwn = exe.Length > 0 ? $"netsh advfirewall firewall delete rule name=all dir=in program=\"{exe}\" >nul & " : "";
+		string args = $"/c {clearOwn}netsh advfirewall firewall delete rule name=\"{RuleName}\" >nul & netsh advfirewall firewall add rule name=\"{RuleName}\" dir=in action=allow protocol=TCP localport={port} profile=private,domain";
 
 		try {
 			using Process? p = Process.Start(new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"), args) {
@@ -126,14 +182,14 @@ public static class Firewall {
 			});
 
 			if (p == null) {
-				return (false, "Windows didn't start it");
+				return (false, new Said("Windows didn't start it").ToString());
 			}
 
 			await p.WaitForExitAsync().WaitAsync(TimeSpan.FromMinutes(2)).ConfigureAwait(false);
 
-			return AllowsPort(port) == false ? (false, "the rule didn't take") : (true, "");
+			return AllowsPort(port) == false ? (false, new Said("the rule didn't take").ToString()) : (true, "");
 		} catch (Win32Exception e) when (e.NativeErrorCode == 1223) {
-			return (false, "you said no on the Windows prompt - nothing was changed");
+			return (false, new Said("you said no on the Windows prompt - nothing was changed").ToString());
 		} catch (Exception e) {
 			return (false, e.Message);
 		}

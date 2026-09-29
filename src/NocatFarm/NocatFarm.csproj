@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <!-- WinExe, not Exe: a console app is handed a console window by Windows BEFORE any of our code runs,
@@ -18,7 +18,7 @@
     <RootNamespace>NocatFarm</RootNamespace>
     <InvariantGlobalization>true</InvariantGlobalization>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <Version>1.4.7</Version>
+    <Version>1.4.8</Version>
     <!-- A background app, not a server: the web SDK turns on the server collector, which keeps a heap per CPU core.
          The workstation collector is the right fit and holds far less memory for the same work. -->
     <ServerGarbageCollection>false</ServerGarbageCollection>

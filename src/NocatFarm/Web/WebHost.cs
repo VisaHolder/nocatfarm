@@ -53,6 +53,9 @@ public sealed class WebHost : IAsyncDisposable {
 
 	public string Url { get; private set; } = "";
 
+	/// <summary>The address and port the dashboard really listens on - "Listen on" and "Port" only change it at a restart.</summary>
+	private string _listening = "";
+
 	public WebHost(BotManager mgr, GlobalConfig cfg) {
 		_mgr = mgr;
 		_ = cfg;   // the bind address is read from the live config at StartAsync
@@ -73,8 +76,9 @@ public sealed class WebHost : IAsyncDisposable {
 	//
 	// "Stay signed in for 7 days" meant until the next restart: sessions lived only in memory, so every restart, every
 	// update and every night's "Update by itself" sent every browser - a phone included - back to the password.
-	// Only a hash of each token is written, with a fingerprint of the password it was issued under: a password
-	// changed while the app was closed (in the config file) throws them all away.
+	// Only a hash of each token is written, with a fingerprint of the password it was issued under (a password
+	// changed while the app was closed, in the config file, throws them all away) - and the whole file is encrypted
+	// like the other secrets, so not even the fingerprint can be tried against guesses.
 
 	private static string SessionsPath => Path.Combine(ConfigStore.ConfigDir, "state", "web-sessions.json");
 
@@ -86,8 +90,16 @@ public sealed class WebHost : IAsyncDisposable {
 
 	private void LoadSessions() {
 		try {
-			if (string.IsNullOrEmpty(_cfg.WebPassword) || !File.Exists(SessionsPath)
-				|| (JsonSerializer.Deserialize<SavedSessions>(File.ReadAllText(SessionsPath)) is not { } saved) || (saved.Key != PasswordKey)) {
+			if (string.IsNullOrEmpty(_cfg.WebPassword) || !File.Exists(SessionsPath)) {
+				return;
+			}
+
+			string stored = File.ReadAllText(SessionsPath);
+
+			// Written as plain JSON by 1.4.7 only; anything else has to decrypt.
+			string json = Secrets.IsPlain(stored) && stored.TrimStart().StartsWith('{') ? stored : Secrets.Unprotect(stored);
+
+			if ((json.Length == 0) || (JsonSerializer.Deserialize<SavedSessions>(json) is not { } saved) || (saved.Key != PasswordKey)) {
 				return;
 			}
 
@@ -97,6 +109,11 @@ public sealed class WebHost : IAsyncDisposable {
 				if (expires > DateTime.UtcNow) {
 					_sessions[hash] = expires;
 				}
+			}
+
+			// The 1.4.7 file, rewritten encrypted.
+			if (Secrets.IsPlain(stored) && Secrets.Available) {
+				SaveSessions();
 			}
 		} catch {
 			// everybody signs in again - nothing worse
@@ -109,15 +126,75 @@ public sealed class WebHost : IAsyncDisposable {
 		try {
 			lock (_sessionsFile) {
 				Directory.CreateDirectory(Path.GetDirectoryName(SessionsPath)!);
-				AtomicFile.Write(SessionsPath, JsonSerializer.Serialize(new SavedSessions(PasswordKey,
-					_sessions.Where(static kv => kv.Value > DateTime.UtcNow).ToDictionary(static kv => kv.Key, static kv => kv.Value.Ticks))));
+				AtomicFile.Write(SessionsPath, Secrets.Protect(JsonSerializer.Serialize(new SavedSessions(PasswordKey,
+					_sessions.Where(static kv => kv.Value > DateTime.UtcNow).ToDictionary(static kv => kv.Key, static kv => kv.Value.Ticks))), "dashboard"));
 			}
 		} catch {
 			// they last until the next restart, then
 		}
 	}
 
-	public async Task<bool> StartAsync() {
+	public Task<bool> StartAsync() => StartAsync(_cfg.WebHost, _cfg.WebPort);
+
+	/// <summary>True when "Listen on" or "Port" were changed and the dashboard still listens the old way.</summary>
+	public bool NeedsRestart => _listening != $"{_cfg.WebHost}:{_cfg.WebPort}";
+
+	/// <summary>Why the last "Restart the dashboard" couldn't open on the new address, or null.</summary>
+	public string? RestartProblem { get; private set; }
+
+	private int _relistening;
+
+	/// <summary>
+	/// "Restart the dashboard now": stops listening and starts again with "Listen on" and "Port" as they are saved -
+	/// the only settings that need it. Only the dashboard restarts; every account stays signed in. When the new
+	/// address won't open (the port is taken, an address this PC doesn't have), it goes back to the old one, so the
+	/// dashboard never just disappears, and says why.
+	/// </summary>
+	public async Task RelistenAsync() {
+		if (Interlocked.Exchange(ref _relistening, 1) == 1) {
+			return;
+		}
+
+		try {
+			int colon = _listening.LastIndexOf(':');
+			string oldHost = colon > 0 ? _listening[..colon] : _cfg.WebHost;
+			int oldPort = (colon > 0) && int.TryParse(_listening[(colon + 1)..], out int p) ? p : _cfg.WebPort;
+			string newHost = _cfg.WebHost;
+			int newPort = _cfg.WebPort;
+
+			await StopListeningAsync().ConfigureAwait(false);
+
+			if (await StartAsync(newHost, newPort).ConfigureAwait(false)) {
+				RestartProblem = null;
+
+				return;
+			}
+
+			RestartProblem = new Said("It couldn't open on {0}:{1}, so it's back on {2}:{3} - see the Log.", newHost, newPort, oldHost, oldPort).ToString();
+			await StopListeningAsync().ConfigureAwait(false);
+			await StartAsync(oldHost, oldPort).ConfigureAwait(false);
+		} finally {
+			Volatile.Write(ref _relistening, 0);
+		}
+	}
+
+	private async Task StopListeningAsync() {
+		if (_app is not { } app) {
+			return;
+		}
+
+		_app = null;
+
+		try {
+			await app.StopAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
+		} catch (Exception e) when (e is OperationCanceledException or ObjectDisposedException) {
+			// a request that wouldn't finish - it goes with the old listener
+		}
+
+		await app.DisposeAsync().ConfigureAwait(false);
+	}
+
+	private async Task<bool> StartAsync(string listenHost, int listenPort) {
 		try {
 			// The pages live next to the exe, not wherever it was started from. Left to the default (the working
 			// directory), a restart by the updater - which runs from the temp folder - served a 404 for everything.
@@ -126,7 +203,8 @@ public sealed class WebHost : IAsyncDisposable {
 				WebRootPath = Path.Combine(AppContext.BaseDirectory, "wwwroot")
 			});
 			builder.Logging.ClearProviders();   // our own log is the log; Kestrel's chatter would drown it
-			builder.WebHost.UseUrls($"http://{_cfg.WebHost}:{_cfg.WebPort}");
+			_listening = $"{listenHost}:{listenPort}";
+			builder.WebHost.UseUrls($"http://{listenHost}:{listenPort}");
 			builder.WebHost.ConfigureKestrel(static o => o.AddServerHeader = false);
 
 			// PascalCase on the wire, matching the config FILES exactly. ASP.NET's default is camelCase, which
@@ -172,8 +250,8 @@ public sealed class WebHost : IAsyncDisposable {
 
 			await _app.StartAsync().ConfigureAwait(false);
 
-			string host = _cfg.WebHost is "0.0.0.0" or "*" or "+" ? "localhost" : _cfg.WebHost;
-			Url = $"http://{host}:{_cfg.WebPort}/";
+			string host = listenHost is "0.0.0.0" or "*" or "+" ? "localhost" : listenHost;
+			Url = $"http://{host}:{listenPort}/";
 
 			// The parenthetical is a Said too. As a bare string it was a finished English phrase by the time the
 			// sentence around it was translated, so a Chinese log read "仪表盘:http://... (this PC only - no
@@ -186,16 +264,16 @@ public sealed class WebHost : IAsyncDisposable {
 			// server lets in loopback only (see Authorised) - but Docker's port mapping arrives from the container's
 			// gateway, not from loopback, so that dashboard turns everybody away and needs saying why.
 			if (!OperatingSystem.IsWindows()) {
-				if (!Platform.IsLoopback(_cfg.WebHost) && string.IsNullOrEmpty(_cfg.WebPassword)) {
-					Log.Warn(new Said("dashboard: listening on {0} with NO password, so it only lets this machine itself in - nobody on another device (or outside Docker) can sign in. Set WebPassword, or NOCATFARM_WEB_PASSWORD in Docker", _cfg.WebHost));
-				} else if (Platform.InContainer && Platform.IsLoopback(_cfg.WebHost)) {
-					Log.Warn(new Said("dashboard: listening on {0} inside a container, where nothing outside it can reach it - set NOCATFARM_WEB_HOST=0.0.0.0", _cfg.WebHost));
+				if (!Platform.IsLoopback(listenHost) && string.IsNullOrEmpty(_cfg.WebPassword)) {
+					Log.Warn(new Said("dashboard: listening on {0} with NO password, so it only lets this machine itself in - nobody on another device (or outside Docker) can sign in. Set WebPassword, or NOCATFARM_WEB_PASSWORD in Docker", listenHost));
+				} else if (Platform.InContainer && Platform.IsLoopback(listenHost)) {
+					Log.Warn(new Said("dashboard: listening on {0} inside a container, where nothing outside it can reach it - set NOCATFARM_WEB_HOST=0.0.0.0", listenHost));
 				}
 			}
 
 			return true;
 		} catch (Exception e) {
-			Log.Error(new Said("couldn't start the dashboard on {0}:{1} - {2}", _cfg.WebHost, _cfg.WebPort, e.Message));
+			Log.Error(new Said("couldn't start the dashboard on {0}:{1} - {2}", listenHost, listenPort, e.Message));
 			Log.Info("the console still works. Change WebPort in config/nocatFarm.json, or set WebEnabled false.");
 
 			return false;
@@ -402,6 +480,71 @@ public sealed class WebHost : IAsyncDisposable {
 
 			return Results.Json(new { ok = true, result.Imported, result.Skipped, result.Notes });
 		});
+
+		// ── importing from any idler: the list, a preview, then only what was confirmed ──
+		// Every program's usual places, looked at now, and the "coming from" choice the installer left.
+		app.MapGet("/api/import/tools", (HttpContext ctx) => Guard(ctx, () => {
+			(string Tool, string? Path)? pending = IdlerImport.FromPending(PendingImport.Load());
+
+			return Results.Json(new {
+				Pending = pending == null ? null : new { pending.Value.Tool, Path = pending.Value.Path ?? "" },
+				Tools = IdlerImport.Tools.Select(static t => {
+					ImportScan scan = IdlerImport.Scan(t.Id, null);
+
+					return new {
+						t.Id, t.Name, scan.Found, Path = scan.Path ?? "", Accounts = scan.Accounts.Count, Tokens = scan.Accounts.Count(static a => a.Token != null),
+						Settings = scan.Settings.Count, scan.Looked
+					};
+				})
+			});
+		}));
+
+		app.MapGet("/api/import/scan", (HttpContext ctx, string? tool, string? path) => Guard(ctx, () =>
+			Results.Json(ScanJson(IdlerImport.Scan(tool ?? IdlerImport.Auto, path)))));
+
+		app.MapPost("/api/import/apply", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			ApplyImportRequest? body = await ReadJsonAsync<ApplyImportRequest>(ctx).ConfigureAwait(false);
+
+			// Read again here rather than taking anything back from the browser: passwords and tokens never leave the server.
+			ImportScan scan = IdlerImport.Scan(body?.Tool ?? "", body?.Path);
+
+			if (!scan.Found) {
+				return Results.Json(new { ok = false, error = new Said("Nothing to import was found there any more.").ToString() });
+			}
+
+			List<IdlerImport.Pick> picks = (body?.Accounts ?? []).Select(static a => new IdlerImport.Pick(a.Key ?? "", a.Human, a.SignIn, a.SteamLogin)).ToList();
+			IdlerImport.Outcome outcome = IdlerImport.Apply(scan, picks, _mgr.Global, body?.Overwrite ?? false, body?.Settings);
+			await _mgr.SyncFromDiskAsync().ConfigureAwait(false);
+			PendingImport.Clear();
+			Log.Good(new Said("imported {0} account(s) from {1}", outcome.Imported, scan.ToolName));
+
+			return Results.Json(new {
+				ok = true,
+				outcome.Imported,
+				outcome.Skipped,
+				outcome.Names,
+				outcome.Human,
+				Notes = outcome.Notes.Select(static n => n.ToString())
+			});
+		});
+
+		// Just the installer's hint, without looking anywhere - asked on every start of the dashboard.
+		app.MapGet("/api/import/pending", (HttpContext ctx) => Guard(ctx, () => {
+			(string Tool, string? Path)? pending = IdlerImport.FromPending(PendingImport.Load());
+
+			return Results.Json(new { Pending = pending == null ? null : new { pending.Value.Tool, Path = pending.Value.Path ?? "" } });
+		}));
+
+		// The installer's "coming from" is a one-time hint: gone once imported, or once the first-run setup is closed.
+		app.MapPost("/api/import/pending/clear", (HttpContext ctx) => Guard(ctx, () => {
+			PendingImport.Clear();
+
+			return Results.Json(new { ok = true });
+		}));
 
 		// ── the settings schema: why the form has real labels, tooltips, ranges and defaults with no duplication ──
 		app.MapGet("/api/settings/schema", (HttpContext ctx) => Guard(ctx, () => Results.Json(new {
@@ -959,12 +1102,37 @@ public sealed class WebHost : IAsyncDisposable {
 			string? scan = l.OpenAtHome && (l.Home.Count > 0) ? l.Home[0] : null;
 
 			return Results.Json(new {
-				l.Local, l.Home, l.OpenAtHome, l.HasPassword, l.ListensBeyondThisPc, l.Outside, l.FirewallBlocks,
+				l.Local, l.Home, l.OpenAtHome, l.HasPassword, l.ListensBeyondThisPc, l.Outside, l.FirewallBlocks, l.NeedsHomeAddress,
 				RemoteOn = Live.Global.WebRemoteAccess, RemoteProblem = Core.RemoteAccess.Problem,
+				// Saved, but still listening the old way until the dashboard restarts - the phone link won't answer yet.
+				// Why the last restart didn't take - only while it still needs one, or an old failure outlives the fix.
+				NeedsRestart, RestartProblem = NeedsRestart ? RestartProblem : null,
+				Windows = OperatingSystem.IsWindows(), InDocker = Platform.InContainer,
+				// The Public address typed by hand, rather than the one the router gave.
+				ManualOutside = !string.IsNullOrWhiteSpace(Live.Global.WebPublicAddress),
+				MinPassword = Core.RemoteAccess.MinPasswordLength,
+				// Long enough to open it from anywhere - so the walkthrough can say so before a saved password it never sees fails.
+				LongPassword = (Live.Global.WebPassword ?? "").Length >= Core.RemoteAccess.MinPasswordLength,
 				OnThisPc = ctx.Connection.RemoteIpAddress is { } ip && System.Net.IPAddress.IsLoopback(ip),
 				Qr = scan == null ? null : Core.QrPicture.Svg(scan),
 				QrOutside = l.OpenAtHome && (l.Outside != null) ? Core.QrPicture.Svg(l.Outside) : null
 			});
+		}));
+
+		// "Restart the dashboard now", after Listen on or Port changed. The answer goes out first; the dashboard stops and
+		// starts again a moment later on the new address, and the page waits for it to come back.
+		app.MapPost("/api/phone/restart", (HttpContext ctx) => Guard(ctx, () => {
+			if (!NeedsRestart) {
+				return Results.Json(new { Ok = true, Needed = false, Port = _cfg.WebPort });
+			}
+
+			Log.Info(new Said("restarting the dashboard on {0}:{1} - the accounts stay signed in", _cfg.WebHost, _cfg.WebPort));
+			_ = Task.Run(async () => {
+				await Task.Delay(500).ConfigureAwait(false);
+				await RelistenAsync().ConfigureAwait(false);
+			});
+
+			return Results.Json(new { Ok = true, Needed = true, Port = _cfg.WebPort });
 		}));
 
 		// "Allow through Windows Firewall": Windows' own prompt appears on this PC, so only this PC may ask for it.
@@ -1631,12 +1799,12 @@ public sealed class WebHost : IAsyncDisposable {
 					// The dashboard used to filter these rows with m.Status !== 'off' && m.Status !== 'idle',
 					// which silently stopped matching in every language but English and put a wall of idle
 					// module rows on each card.
-					Modules = b.Modules.Select(static m => new {
+					Modules = b.Modules.Select(m => new {
 						// The module label the card shows. Name stays English on the module - it is an identifier the
 						// log and the command output use - so it is translated here, where it becomes a row label.
 						Name = Loc.T(m.Name),
 						Status = m.Status,
-						Quiet = (m.Status.Length == 0) || Loc.Is(m.Status, "off") || Loc.Is(m.Status, "idle")
+						Quiet = !b.Running || (m.Status.Length == 0) || Loc.Is(m.Status, "off") || Loc.Is(m.Status, "idle")
 					})
 				};
 			})
@@ -1732,6 +1900,54 @@ public sealed class WebHost : IAsyncDisposable {
 		public List<string>? Human { get; set; }
 	}
 
+	private sealed class ApplyImportRequest {
+		public string? Tool { get; set; }
+		public string? Path { get; set; }
+		public bool Overwrite { get; set; }
+		public List<ImportPick>? Accounts { get; set; }
+
+		/// <summary>Which of the scan's settings to bring, by index. Null brings them all.</summary>
+		public List<int>? Settings { get; set; }
+	}
+
+	private sealed class ImportPick {
+		public string? Key { get; set; }
+		public bool Human { get; set; }
+		public bool SignIn { get; set; }
+		public string? SteamLogin { get; set; }
+	}
+
+	/// <summary>
+	/// A scan as the dashboard's preview shows it: where it looked, and per account whether a password, a token and an
+	/// authenticator are there - never the things themselves.
+	/// </summary>
+	private static object ScanJson(ImportScan scan) {
+		HashSet<string> here = new(ConfigStore.LoadBots().Keys, StringComparer.OrdinalIgnoreCase);
+
+		return new {
+			scan.Tool,
+			scan.ToolName,
+			scan.Found,
+			Path = scan.Path ?? "",
+			scan.Looked,
+			Accounts = scan.Accounts.Select(a => new {
+				a.Key,
+				a.Name,
+				a.SteamLogin,
+				a.SteamId,
+				Exists = here.Contains(a.Name),
+				HasToken = a.Token != null,
+				a.HasPassword,
+				a.HasAuthenticator,
+				CanBringSignIn = a.CredentialTarget != null,
+				Brings = IdlerImport.Describe(a).Select(static s => s.ToString()),
+				Notes = a.Notes.Select(static n => n.ToString())
+			}),
+			Settings = scan.Settings.Select(static (s, i) => new { Index = i, s.Name, Label = Settings.Find(s.Name)?.Label ?? s.Name, s.Value, s.EveryAccount }),
+			Notes = scan.Notes.Select(static n => n.ToString())
+		};
+	}
+
 	private sealed class ThemeRequest {
 		public string? Theme { get; set; }
 	}
@@ -1753,11 +1969,5 @@ public sealed class WebHost : IAsyncDisposable {
 		public bool SelfSignIn { get; set; }
 	}
 
-	public async ValueTask DisposeAsync() {
-		if (_app != null) {
-			await _app.StopAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
-			await _app.DisposeAsync().ConfigureAwait(false);
-			_app = null;
-		}
-	}
+	public async ValueTask DisposeAsync() => await StopListeningAsync().ConfigureAwait(false);
 }

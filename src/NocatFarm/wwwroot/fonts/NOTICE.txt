@@ -1,0 +1,3 @@
+JetBrains Mono - Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono).
+Licensed under the SIL Open Font License, Version 1.1 (https://openfontlicense.org). The licence is also in each font file.
+Used on screens without Consolas (phones, Linux) so the dashboard looks the same everywhere.

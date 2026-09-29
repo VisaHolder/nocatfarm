@@ -1802,7 +1802,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// The game the achievement hunter is on joins the rotation as one more side game, at its own weight - played
 		// in ordinary sittings like any other, instead of the hunter taking the account over and cutting a sitting
 		// short. Last in the list, so it is never mistaken for the main game.
-		uint hunt = BotManager.ModuleOf<AchievementBoost>(Bot)?.HuntTarget ?? 0;
+		uint hunt = BotManager.ModuleOf<AchievementBoost>(Bot)?.HuntTargetNow ?? 0;   // not once today's hunting is used up
 
 		if ((hunt != 0) && (list.Count > 0) && !list.Exists(w => w.Game == hunt)) {
 			list = [.. list, (hunt, Math.Max(1, Bot.Cfg.BoostWeight))];
@@ -1938,6 +1938,16 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		return (human == null) || !human._ticked || !human.InWakingHours(DateTime.Now) || human._offlineBreak || human.NightGrind
 			|| (human.Current is Phase.Asleep or Phase.NightIdle);
+	}
+
+	/// <summary>
+	/// Up and about - not asleep, not idling the night away - whatever "Only react while awake" says. AwakeFor answers
+	/// "may it react", which is always yes with that switch off; "Update by itself" needs to know if it's up.
+	/// </summary>
+	public static bool UpAndAbout(Bot bot) {
+		HumanMode? human = bot.Modules.OfType<HumanMode>().FirstOrDefault();
+
+		return (human == null) || (human._ticked && (human.Current is not (Phase.Asleep or Phase.NightIdle)) && !human.NightGrind);
 	}
 
 	public static bool AwakeFor(Bot bot) {

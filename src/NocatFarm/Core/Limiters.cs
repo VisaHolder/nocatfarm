@@ -45,7 +45,7 @@ public static class Limiters {
 	private static readonly ConcurrentDictionary<string, (SemaphoreSlim One, Gate Gate)> Hosts = new(StringComparer.OrdinalIgnoreCase);
 
 	/// <summary>Book a turn at <paramref name="gate"/>, <paramref name="gap"/> after the last one, and wait for it.</summary>
-	private static async Task TurnAsync(Gate gate, TimeSpan gap, CancellationToken ct) {
+	private static async Task TurnAsync(Gate gate, TimeSpan gap, CancellationToken ct, Action<TimeSpan>? waiting = null) {
 		DateTime now = DateTime.UtcNow;
 		DateTime at;
 
@@ -55,6 +55,7 @@ public static class Limiters {
 		}
 
 		if (at > now) {
+			waiting?.Invoke(at - now);
 			await Task.Delay(at - now, ct).ConfigureAwait(false);
 		}
 	}
@@ -180,12 +181,23 @@ public static class Limiters {
 	}
 
 	/// <summary>Wait for this caller's turn to log in. The first login goes straight away.</summary>
-	public static async Task WaitForLoginSlotAsync(CancellationToken ct = default) {
-		await TurnAsync(LoginGate, LoginGap, ct).ConfigureAwait(false);
+	/// <param name="waiting">Told how long the wait is, when there is one - so an account can say it's in line.</param>
+	public static async Task WaitForLoginSlotAsync(CancellationToken ct = default, Action<TimeSpan>? waiting = null) {
+		while (true) {
+			await TurnAsync(LoginGate, LoginGap, ct, waiting).ConfigureAwait(false);
 
-		// Blocks only while somebody is serving a rate-limit cooldown; otherwise it's a free pass through.
-		await LoginCooldownLatch.WaitAsync(ct).ConfigureAwait(false);
-		LoginCooldownLatch.Release();
+			// No cooldown being served: go.
+			if (await LoginCooldownLatch.WaitAsync(0, ct).ConfigureAwait(false)) {
+				LoginCooldownLatch.Release();
+
+				return;
+			}
+
+			// Steam said slow down while this one was in line. Wait it out, then book a new spaced turn - every
+			// account going at the same instant when the cooldown ends is exactly what got it rate-limited.
+			await LoginCooldownLatch.WaitAsync(ct).ConfigureAwait(false);
+			LoginCooldownLatch.Release();
+		}
 	}
 
 	/// <summary>

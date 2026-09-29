@@ -51,6 +51,14 @@ public static class Secrets {
 
 	public static bool Available => OperatingSystem.IsWindows() || (Key(create: true) != null);
 
+	/// <summary>
+	/// A stored value that is plain text - neither scheme's marker. Whoever reads one rewrites it encrypted straight
+	/// away: waiting for "the next save" left Steam login tokens from before encryption existed in the clear for
+	/// months, because a token that doesn't change is never saved again.
+	/// </summary>
+	public static bool IsPlain(string? stored) =>
+		!string.IsNullOrEmpty(stored) && !stored.StartsWith(Marker, StringComparison.Ordinal) && !stored.StartsWith(AesMarker, StringComparison.Ordinal);
+
 	/// <summary>Encrypt for storage. Falls back to the plain text where the platform can't do better.</summary>
 	public static string Protect(string plain, string forBot) {
 		if (string.IsNullOrEmpty(plain)) {

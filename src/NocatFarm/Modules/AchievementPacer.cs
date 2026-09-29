@@ -87,6 +87,50 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	private static Profile ProfileFor(uint app) => Profiles.TryGetValue(app, out Profile? p) ? p : Fallback;
 
 	/// <summary>
+	/// How much playtime stretches this game's rarity floor: the hand-tuned figure for the games in the table, and
+	/// otherwise the game's real length - a three-hour game opens its rare tail far sooner than a hundred-hour one.
+	/// </summary>
+	private double ScaleFor(uint app, Profile prof) =>
+		!Profiles.ContainsKey(app) && Bot.Cfg.AchievementRealLength && (Core.Playtime.TypicalHours(app) is { } typical)
+			? Math.Clamp(typical / 9.0, 0.4, 4.0)
+			: prof.RarityScale;
+
+	/// <summary>
+	/// Hours a real player needs for this one: "beat the game" most of a playthrough, chapter 3 of 10 about three
+	/// tenths of it. Nothing extra for the rest - the rarity floor already paces those.
+	/// </summary>
+	private static bool StoryTimeAllows(Achievement a, IReadOnlyCollection<Achievement> all, double hours, double? typical) {
+		if (typical is not { } length || (length <= 0)) {
+			return true;
+		}
+
+		if (IsEnding(a)) {
+			return hours >= length * 0.8;
+		}
+
+		foreach ((string family, int[] rungs) in LadderKeys(a)) {
+			if (!Regex.IsMatch(family, @"\b(" + StoryParts + @")\s+#") || (rungs.Length == 0)) {
+				continue;
+			}
+
+			int top = all.SelectMany(LadderKeys).Where(k => k.Family == family && (k.Rungs.Length > 0)).Select(static k => k.Rungs[^1]).DefaultIfEmpty(rungs[^1]).Max();
+
+			if ((top > 1) && (hours < length * 0.8 * rungs[^1] / top)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/// <summary>How far through a game's achievements this account is, as last read from Steam; (0, 0) when unknown.</summary>
+	public (int Unlocked, int Total) Progress(uint app) {
+		lock (_gate) {
+			return _games.TryGetValue(app, out GameState? g) && (g.Total > 0) ? (Math.Max(0, g.Unlocked), g.Total) : (0, 0);
+		}
+	}
+
+	/// <summary>
 	/// The rarest an achievement may be, as a percentage of owners, for a given number of hours in the game.
 	///
 	/// This is the heart of it. An achievement below the floor is not eligible yet, so the rare tail opens
@@ -436,7 +480,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		// game, so a rare/grindy achievement (a low global %, e.g. "win 1000 rounds") can't be unlocked two hours
 		// in - only what a real player could plausibly have reached by now, easiest-first. A grind just plays the
 		// game continuously so the hours (and the floor) move faster; it does not skip ahead to the hard tail.
-		int floor = Math.Max(Math.Max(1, prof.MinPercent), RarityFloorForHours(hours / prof.RarityScale));
+		int floor = Math.Max(Math.Max(1, prof.MinPercent), RarityFloorForHours(hours / ScaleFor(app, prof)));
+		double? typical = Bot.Cfg.AchievementRealLength ? Core.Playtime.TypicalHours(app) : null;
 
 		List<Achievement> eligible = set.All
 			// Unknown rarity (Steam's global-percent endpoint was unreachable) counts as eligible rather than being
@@ -444,6 +489,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			.Where(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a) && ((a.GlobalPercent ?? floor) >= floor)
 				&& (RequiredPriorAchievements(a) <= already)
 				&& !TierBlocked(a, set.All)
+				&& !DifficultyBlocked(a, set.All)
+				&& !StoryEndBlocked(a, set.All)
+				&& StoryTimeAllows(a, set.All, hours, typical)
 				&& !MilestoneUnearned(a, set.All))
 			.ToList();
 
@@ -537,35 +585,153 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// ~69% "common" while being nothing of the sort. The pacer must never feature one.
 	/// </summary>
 	/// <summary>
-	/// How many OTHER achievements a milestone/meta achievement needs first (e.g. TF2's "Achieve 17 of the
-	/// achievements in the Sniper pack" -> 17). Unlocking one before its prerequisites is impossible for a real
-	/// player, so the caller holds it until the account has at least this many unlocked in the game. We only know
-	/// the COUNT, not which ones, so "N unlocked total" is the safe necessary condition.
-	/// </summary>
-	/// <summary>
 	/// Is this one rung of a ladder whose lower rungs are still locked?
 	///
 	/// Games number their tiers, and the numbering IS the dependency: "Sniper Milestone 3" after 1 and 2, "Level
-	/// 50" after "Level 10", "Chapter 4" after "Chapter 3". Steam publishes no dependency graph at all, so this
-	/// is inferred - achievements whose names are identical once the numbers are stripped are treated as one
-	/// family, and a rung is held until every lower rung in its family is done.
+	/// 50" after "Level 10", "Chapter 4" after "Chapter 3" - and just as often the numbers are only in the
+	/// description: "Sharpshooter - get 5 kills" before "Marksman - get 10 kills". Steam publishes no dependency
+	/// graph at all, so this is inferred for every game the same way: two achievements whose name, or whose
+	/// description, reads the same once the numbers are taken out are one ladder, and a rung is held until every
+	/// lower rung is done. "Chapter One", "Act II" and "the third mission" count as numbers too.
 	///
 	/// Rarity ordering already gets this right most of the time (a later tier is rarer, and the easiest is always
-	/// taken first), but not always: tiers can share a rarity, and a profile showing "Milestone 3" with 1 and 2
-	/// missing is the exact shape of a faked achievement. Belt and braces on the one thing that would give it away.
+	/// taken first), but not always: tiers can share a rarity, and a profile showing "10 kills" with "5 kills"
+	/// missing is the exact shape of a faked achievement.
 	/// </summary>
 	private static bool TierBlocked(Achievement a, IReadOnlyCollection<Achievement> all) {
-		if (!TierOf(a.Display, out string family, out int rung)) {
+		List<(string Family, int[] Rungs)> mine = LadderKeys(a);
+
+		if (mine.Count == 0) {
 			return false;
 		}
 
 		foreach (Achievement other in all) {
-			if (other.Unlocked || (other.Name == a.Name) || !TierOf(other.Display, out string otherFamily, out int otherRung)) {
+			if (other.Unlocked || (other.Name == a.Name)) {
 				continue;
 			}
 
-			// A lower rung of the same ladder, still locked - so this one is not next.
-			if ((otherRung < rung) && string.Equals(family, otherFamily, StringComparison.OrdinalIgnoreCase)) {
+			foreach ((string family, int[] rungs) in LadderKeys(other)) {
+				foreach ((string myFamily, int[] myRungs) in mine) {
+					// A lower rung of the same ladder, still locked - so this one is not next.
+					if (string.Equals(family, myFamily, StringComparison.Ordinal) && Below(rungs, myRungs)) {
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/// <summary>Every number in <paramref name="lower"/> at most its partner in <paramref name="higher"/>, and one smaller.</summary>
+	private static bool Below(int[] lower, int[] higher) {
+		if (lower.Length != higher.Length) {
+			return false;
+		}
+
+		bool smaller = false;
+
+		for (int i = 0; i < lower.Length; i++) {
+			if (lower[i] > higher[i]) {
+				return false;
+			}
+
+			smaller |= lower[i] < higher[i];
+		}
+
+		return smaller;
+	}
+
+	/// <summary>
+	/// The ladders an achievement could be a rung of: its name and its description, each with the numbers taken
+	/// out (the family) and the numbers themselves (the rungs). None when there is no number to order by, which
+	/// is most achievements - those aren't part of any ladder we can see.
+	/// </summary>
+	private static List<(string Family, int[] Rungs)> LadderKeys(Achievement a) {
+		List<(string, int[])> keys = [];
+
+		foreach (string text in new[] { a.Display, a.Description }) {
+			if (string.IsNullOrWhiteSpace(text)) {
+				continue;
+			}
+
+			string normal = Normalize(text);
+			MatchCollection numbers = Regex.Matches(normal, @"\d{1,7}");
+
+			if ((numbers.Count == 0) || (numbers.Count > 4)) {
+				continue;
+			}
+
+			string family = Regex.Replace(Regex.Replace(normal, @"\d{1,7}", "#"), @"\s+", " ").Trim();
+
+			// A number with hardly a word around it ("100", "#1") says nothing about what it belongs to.
+			if (family.Replace("#", "").Trim().Length < 4) {
+				continue;
+			}
+
+			int[] rungs = [.. numbers.Select(static m => int.TryParse(m.Value, NumberStyles.None, CultureInfo.InvariantCulture, out int n) ? n : int.MaxValue)];
+			keys.Add((family, rungs));
+		}
+
+		return keys;
+	}
+
+	private static readonly Dictionary<string, int> NumberWords = new(StringComparer.Ordinal) {
+		["one"] = 1, ["two"] = 2, ["three"] = 3, ["four"] = 4, ["five"] = 5, ["six"] = 6, ["seven"] = 7, ["eight"] = 8, ["nine"] = 9,
+		["ten"] = 10, ["eleven"] = 11, ["twelve"] = 12, ["thirteen"] = 13, ["fourteen"] = 14, ["fifteen"] = 15, ["sixteen"] = 16,
+		["seventeen"] = 17, ["eighteen"] = 18, ["nineteen"] = 19, ["twenty"] = 20, ["thirty"] = 30, ["fifty"] = 50, ["hundred"] = 100,
+		["first"] = 1, ["second"] = 2, ["third"] = 3, ["fourth"] = 4, ["fifth"] = 5, ["sixth"] = 6, ["seventh"] = 7, ["eighth"] = 8,
+		["ninth"] = 9, ["tenth"] = 10
+	};
+
+	/// <summary>Story parts: what a "beat the game" achievement comes after, and what a roman numeral follows.</summary>
+	private const string StoryParts = "chapter|act|part|episode|mission|stage|book|quest|world|area|zone|level|season";
+
+	/// <summary>Lower case, "1,000" and "10k" as plain numbers, "one"/"third"/"act ii" as digits.</summary>
+	private static string Normalize(string text) {
+		string s = text.ToLowerInvariant();
+		s = Regex.Replace(s, @"(?<=\d),(?=\d{3}\b)", "");
+		s = Regex.Replace(s, @"\b(\d{1,4})k\b", static m => (int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture) * 1000).ToString(CultureInfo.InvariantCulture));
+		s = Regex.Replace(s, @"\b[a-z]+\b", static m => NumberWords.TryGetValue(m.Value, out int n) ? n.ToString(CultureInfo.InvariantCulture) : m.Value);
+		s = Regex.Replace(s, @"\b(" + StoryParts + @")\s+([ivx]{1,5})\b", static m => Roman(m.Groups[2].Value) is > 0 and var r ? $"{m.Groups[1].Value} {r}" : m.Value);
+
+		return s;
+	}
+
+	private static int Roman(string r) {
+		int total = 0, last = 0;
+
+		for (int i = r.Length - 1; i >= 0; i--) {
+			int v = r[i] switch { 'i' => 1, 'v' => 5, 'x' => 10, _ => 0 };
+
+			if (v == 0) {
+				return 0;
+			}
+
+			total += v < last ? -v : v;
+			last = Math.Max(last, v);
+		}
+
+		return total;
+	}
+
+	private static readonly Dictionary<string, int> Difficulties = new(StringComparer.Ordinal) {
+		["easy"] = 1, ["casual"] = 1, ["normal"] = 2, ["medium"] = 2, ["standard"] = 2, ["hard"] = 3, ["veteran"] = 4, ["expert"] = 4,
+		["insane"] = 5, ["extreme"] = 5, ["nightmare"] = 6, ["legendary"] = 6, ["hell"] = 6
+	};
+
+	/// <summary>
+	/// "Beat it on Hard" while "beat it on Normal" is still locked: the same achievement at a lower difficulty
+	/// comes first - worded identically apart from the difficulty.
+	/// </summary>
+	private static bool DifficultyBlocked(Achievement a, IReadOnlyCollection<Achievement> all) {
+		if (DifficultyKey(a) is not { } mine) {
+			return false;
+		}
+
+		foreach (Achievement other in all) {
+			if (!other.Unlocked && (other.Name != a.Name) && (DifficultyKey(other) is { } theirs)
+				&& (theirs.Stem == mine.Stem) && (theirs.Rank < mine.Rank)) {
 				return true;
 			}
 		}
@@ -573,41 +739,59 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		return false;
 	}
 
-	/// <summary>
-	/// Split "Sniper Milestone 3" into ("sniper milestone", 3). False when there is no number to order by, which
-	/// is most achievements - those are not part of any ladder we can see.
-	/// </summary>
-	private static bool TierOf(string display, out string family, out int rung) {
-		family = "";
-		rung = 0;
+	private static (string Stem, int Rank)? DifficultyKey(Achievement a) {
+		foreach (string text in new[] { a.Description, a.Display }) {
+			string normal = Normalize(text ?? "");
+			Match m = Regex.Match(normal, @"\b(easy|casual|normal|medium|standard|hard|veteran|expert|insane|extreme|nightmare|legendary|hell)\b");
 
-		if (string.IsNullOrWhiteSpace(display)) {
-			return false;
+			if (m.Success) {
+				return (normal[..m.Index] + "~" + normal[(m.Index + m.Length)..], Difficulties[m.Value]);
+			}
 		}
 
-		// The LAST number in the name is the rung: "Half-Life 2 Chapter 3" is chapter three, not half-life two.
-		MatchCollection numbers = Regex.Matches(display, @"\d{1,4}");
-
-		if (numbers.Count == 0) {
-			return false;
-		}
-
-		Match last = numbers[^1];
-
-		if (!int.TryParse(last.Value, out rung)) {
-			return false;
-		}
-
-		// Everything either side of the number, normalised - that is the ladder's identity.
-		family = (display[..last.Index] + display[(last.Index + last.Length)..])
-			.Replace("  ", " ")
-			.Trim()
-			.ToLowerInvariant();
-
-		// A number with no name around it ("100") tells us nothing about what it belongs to.
-		return family.Length >= 3;
+		return null;
 	}
 
+	/// <summary>
+	/// "Beat the game", "finish the story", the final chapter: never before the chapters, missions and acts that
+	/// lead up to it. Nobody plays the last mission first.
+	/// </summary>
+	private static bool IsEnding(Achievement a) {
+		string text = Normalize($"{a.Display} {a.Description}");
+
+		return Regex.IsMatch(text, @"\b(complete|finish|beat|clear|conquer)\s+(the\s+)?(entire\s+|whole\s+|main\s+)?(game|story|campaign|adventure|storyline)\b")
+			|| Regex.IsMatch(text, @"\b(roll|see|watch)\s+the\s+(credits|ending)\b")
+			|| Regex.IsMatch(text, @"\b(final|last)\s+(" + StoryParts + @"|boss)\b");
+	}
+
+	private static bool StoryEndBlocked(Achievement a, IReadOnlyCollection<Achievement> all) {
+		if (!IsEnding(a)) {
+			return false;
+		}
+
+		foreach (Achievement other in all) {
+			// Another ending ("the final boss in World 2") isn't a step before this one - two of them held each other for ever.
+			if (other.Unlocked || (other.Name == a.Name) || IsEnding(other)) {
+				continue;
+			}
+
+			// A still-locked numbered story part ("complete chapter 3", "Mission 7") comes first.
+			foreach ((string family, _) in LadderKeys(other)) {
+				if (Regex.IsMatch(family, @"\b(" + StoryParts + @")\s+#")) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/// <summary>
+	/// How many OTHER achievements a milestone/meta achievement needs first (e.g. TF2's "Achieve 17 of the
+	/// achievements in the Sniper pack" -> 17). Unlocking one before its prerequisites is impossible for a real
+	/// player, so the caller holds it until the account has at least this many unlocked in the game. We only know
+	/// the COUNT, not which ones, so "N unlocked total" is the safe necessary condition.
+	/// </summary>
 	private static int RequiredPriorAchievements(Achievement a) {
 		string text = $"{a.Display} {a.Description}".ToLowerInvariant();
 
@@ -799,7 +983,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				.OrderByDescending(static kv => kv.Value.PlayedMins)
 				.Select(kv => {
 					Profile prof = ProfileFor(kv.Key);
-					double eff = Math.Max(kv.Value.PlayedMins, Bot.Library.MinutesOn(kv.Key)) / 60.0 / prof.RarityScale;
+					double eff = Math.Max(kv.Value.PlayedMins, Bot.Library.MinutesOn(kv.Key)) / 60.0 / ScaleFor(kv.Key, prof);
 					int floor = Math.Max(Math.Max(1, prof.MinPercent), RarityFloorForHours(eff));
 
 					string why =

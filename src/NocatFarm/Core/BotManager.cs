@@ -128,8 +128,11 @@ public sealed class BotManager : IAsyncDisposable {
 
 	/// <summary>Start every enabled bot, staggered so several logins don't hit Steam at once.</summary>
 	public async Task StartAllAsync() {
-		// No gap of its own: every start already queues for a login slot (Limiters.WaitForLoginSlotAsync), spaced by
-		// "Gap between logins". A second wait here doubled it for the last accounts only.
+		// Every account starts now and queues for its login slot (Limiters.WaitForLoginSlotAsync), spaced by "Gap
+		// between logins" in list order. Started one after another, each waited out the one before it silently -
+		// the first two said "starting up" together and the third only half a minute later, which looked broken.
+		List<Task> starting = [];
+
 		foreach (Bot bot in All) {
 			if (!bot.Cfg.Enabled) {
 				Log.Info("disabled in config - not starting", bot.Name);
@@ -137,8 +140,13 @@ public sealed class BotManager : IAsyncDisposable {
 				continue;
 			}
 
-			await bot.StartAsync().ConfigureAwait(false);
+			starting.Add(bot.StartAsync());
+
+			// A moment apart, so they join the queue in list order.
+			await Task.Delay(100).ConfigureAwait(false);
 		}
+
+		await Task.WhenAll(starting).ConfigureAwait(false);
 	}
 
 	/// <summary>

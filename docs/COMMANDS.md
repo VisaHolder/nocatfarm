@@ -36,7 +36,7 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 | `restart <account\|all>` | Stop then start again. |
 | `pause <account\|all> [minutes]` | Stay logged in but stop playing, farming and commenting. Give it minutes and it picks back up by itself. |
 | `resume <account\|all>` | Undo a pause. |
-| `add <name> <steamLogin\|qr>` | Add an account. It asks for the password once, then remembers a login token - or 'qr' signs it in by scanning a code on the dashboard with the Steam app, no password at all. |
+| `add <name> <steamLogin\|qr> [human\|robot]` | Add an account. It asks for the password once, then remembers a login token - or 'qr' signs it in by scanning a code on the dashboard with the Steam app, no password at all. End with 'human' for your main (human mode) or 'robot' for a farm account - it says which it made. |
 | `remove <account>` <br>also `delete` | Delete an account and its stored login token. |
 | `enable <account>` | Let this account log in again. |
 | `disable <account>` | Keep the account configured but never log it in. |
@@ -127,7 +127,7 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 | `config [account] [all]` | Show the settings and their current values. Add 'all' to include the advanced ones. |
 | `set [account] <key> <value>` | Change a setting. Without an account name it changes a global one. |
 | `reload` | Re-read every config file from disk. |
-| `import asf [path] [force]` | Bring accounts across from ArchiSteamFarm, login tokens and all. |
+| `import <asf\|ime\|idlemaster\|hourboostr\|singleboostr\|sgi\|steamidler\|auto> [path] [force]` | Bring accounts and settings across from another idler - ArchiSteamFarm login tokens and all. |
 
 ## The app
 

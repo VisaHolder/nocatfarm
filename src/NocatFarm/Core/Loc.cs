@@ -148,9 +148,10 @@ public static class Loc {
 	///
 	/// Walking once and copying each value in verbatim makes a substituted value final by construction.
 	/// </remarks>
-	public static string T(string english, params object?[] args) {
-		string text = T(english);
+	public static string T(string english, params object?[] args) => Fill(T(english), args);
 
+	/// <summary>The values put into a sentence as it is, untranslated - for the console, whose replies stay English.</summary>
+	public static string Fill(string text, object?[] args) {
 		if ((args.Length == 0) || (text.IndexOf('{') < 0)) {
 			return text;
 		}
