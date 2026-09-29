@@ -25,15 +25,27 @@ namespace NocatFarm.Core;
 /// Everything is staged and checked BEFORE anything is touched, so a download that fails or arrives truncated
 /// leaves the installation exactly as it was. config/ and logs/ are never in the archive and never copied over.
 ///
-/// Windows only, on purpose. On Linux the app is usually run by something that restarts it - Docker, where the
-/// app is the container and a swap script dies with it (and the next pull replaces the files anyway), or
-/// systemd, which kills everything the service started the moment it exits. A script that outlived us there
-/// would either be killed half way through a copy or start a second copy nobody supervises. Updating by hand
-/// (a new image, or the new zip extracted over the folder) is one step and can't half-happen, so off Windows
-/// this says how and changes nothing.
+/// On Linux and a Mac the same happens with a shell script (see UnixSwapScript): run from a terminal, a desktop or
+/// start.command it updates itself exactly like Windows does, safety copy and putting back included. Not in two
+/// places, on purpose: Docker, where the app is the container and a swap script dies with it (and the next build
+/// replaces the files anyway), and a systemd service, where systemd kills everything the service started the moment
+/// it exits. A script that outlived us there would either be killed half way through a copy or start a second copy
+/// nobody supervises. Updating by hand (a new image, or the new zip over the folder) is one step and can't
+/// half-happen, so there it says how and changes nothing.
 /// </remarks>
 public static class SelfUpdate {
 	private const string Releases = "https://api.github.com/repos/VisaHolder/nocatfarm/releases/latest";
+
+	/// <summary>
+	/// Where to ask what's newest. GitHub - unless NOCATFARM_UPDATE_FEED points at a copy on this same machine, which is
+	/// how the tests hand it a broken release to see it put the old version back. Nothing but this machine is taken.
+	/// </summary>
+	internal static string Feed => Environment.GetEnvironmentVariable("NOCATFARM_UPDATE_FEED") is { Length: > 0 } feed
+		&& (feed.StartsWith("http://127.0.0.1:", StringComparison.Ordinal) || feed.StartsWith("http://localhost:", StringComparison.Ordinal))
+			? feed : Releases;
+
+	/// <summary>The program's own file: nocatFarm.exe on Windows, nocatFarm everywhere else.</summary>
+	private static string ExeName => OperatingSystem.IsWindows() ? "nocatFarm.exe" : "nocatFarm";
 
 	/// <summary>Where a person gets it by hand when updating itself can't.</summary>
 	private const string ReleasesPage = "https://github.com/VisaHolder/nocatfarm/releases/latest";
@@ -47,8 +59,34 @@ public static class SelfUpdate {
 	/// <summary>True while a download is in flight, so a second press doesn't start a second one.</summary>
 	public static bool Busy { get; private set; }
 
-	/// <summary>Whether this copy can replace itself. Windows only - see the remarks above for why.</summary>
-	public static bool Supported => OperatingSystem.IsWindows();
+	/// <summary>Whether this copy can replace itself: everywhere but Docker and a systemd service - see the remarks above.</summary>
+	public static bool Supported => OperatingSystem.IsWindows()
+		|| ((OperatingSystem.IsLinux() || OperatingSystem.IsMacOS()) && !Platform.InContainer && !RunAsService());
+
+	/// <summary>
+	/// Started by systemd as a service. systemd gives the service INVOCATION_ID and, with the log going to the journal,
+	/// JOURNAL_STREAM naming the journal's socket - which is then what this process's output really is. A terminal
+	/// started from a desktop can hand INVOCATION_ID down too, so that alone isn't enough; systemd as the parent is.
+	/// </summary>
+	internal static bool RunAsService() {
+		if (!OperatingSystem.IsLinux() || string.IsNullOrEmpty(Environment.GetEnvironmentVariable("INVOCATION_ID"))) {
+			return false;
+		}
+
+		try {
+			if (Environment.GetEnvironmentVariable("JOURNAL_STREAM") is { Length: > 0 } stream && (stream.Split(':') is [_, string inode])
+				&& (new FileInfo("/proc/self/fd/1").LinkTarget is { } output) && (output == $"socket:[{inode}]")) {
+				return true;
+			}
+
+			string[] stat = File.ReadAllText("/proc/self/stat").Split(' ');
+			string parent = stat.Length > 3 ? File.ReadAllText($"/proc/{stat[3]}/comm").Trim() : "";
+
+			return parent == "systemd";
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			return true;   // can't tell - the safe answer is "update by hand"
+		}
+	}
 
 	/// <summary>
 	/// How to update where updating itself isn't possible: pull the new image in Docker, or extract the new Linux zip.
@@ -59,7 +97,7 @@ public static class SelfUpdate {
 			return new Said("nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git pull, then docker compose up -d --build. config/ and logs/ are kept");
 		}
 
-		return new Said("nocat.farm only updates itself on Windows - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again", ReleaseZipName(tag), ReleasesPage);
+		return new Said("running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again", ReleaseZipName(tag), ReleasesPage);
 	}
 
 	/// <summary>The release file for this machine off Windows: nocat.farm-v1.3.9_linux-x64.zip. A file name, not prose.</summary>
@@ -239,9 +277,7 @@ public static class SelfUpdate {
 	/// isn't mistaken for a crash.
 	/// </summary>
 	private static void VerifyIfAsked() {
-		string? ok = Environment.GetEnvironmentVariable("NF_OK");
-
-		if (string.IsNullOrEmpty(ok) || !Directory.Exists(Path.GetDirectoryName(ok))) {
+		if (TrialOkFile is not { } ok) {
 			return;
 		}
 
@@ -279,8 +315,39 @@ public static class SelfUpdate {
 	/// said it's fine, secrets the old version can't read (the Family View PIN, maFiles, the key queue) stay in the
 	/// form they were in - so "nothing else was changed" is true if it goes back.
 	/// </summary>
-	public static bool OnTrial => !_confirmed && (Environment.GetEnvironmentVariable("NF_OK") is { Length: > 0 } ok)
-		&& Directory.Exists(Path.GetDirectoryName(ok));
+	public static bool OnTrial => !_confirmed && (TrialOkFile != null);
+
+	/// <summary>Left by the old version: the file its swap script waits on (see ApplyAsync).</summary>
+	private static string VerifyPath => Path.Combine(ConfigStore.ConfigDir, "state", "update-verify.txt");
+
+	/// <summary>
+	/// The file to answer "ok" in when this start is a new version being tried out: handed over in NF_OK, or - when the
+	/// new version was started somewhere that starts clean, like a new Terminal window - in the file the old one left.
+	/// Only while the script is still there to read it: its folder goes when it's done.
+	/// </summary>
+	private static string? TrialOkFile {
+		get {
+			_trialOk ??= FindTrialOkFile() ?? "";
+
+			return _trialOk.Length > 0 ? _trialOk : null;
+		}
+	}
+
+	private static string? _trialOk;
+
+	private static string? FindTrialOkFile() {
+		string? ok = Environment.GetEnvironmentVariable("NF_OK");
+
+		try {
+			if (string.IsNullOrEmpty(ok) && File.Exists(VerifyPath) && (DateTime.UtcNow - File.GetLastWriteTimeUtc(VerifyPath) < TimeSpan.FromMinutes(15))) {
+				ok = File.ReadAllText(VerifyPath).Trim();
+			}
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			return null;
+		}
+
+		return !string.IsNullOrEmpty(ok) && Directory.Exists(Path.GetDirectoryName(ok)) ? ok : null;
+	}
 
 	/// <summary>A crash while the new version is being tried out: the swap script puts the old one back straight away.</summary>
 	public static void ReportCrashed() => Mark("crashed");
@@ -291,6 +358,8 @@ public static class SelfUpdate {
 		if (ok == null) {
 			return;
 		}
+
+		TryDelete(VerifyPath);
 
 		try {
 			File.WriteAllText(ok, what);
@@ -397,7 +466,7 @@ public static class SelfUpdate {
 			string json;
 
 			try {
-				json = await Http.GetStringAsync(Releases, ct).ConfigureAwait(false);
+				json = await Http.GetStringAsync(Feed, ct).ConfigureAwait(false);
 			} catch (Exception e) when (e is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested) {
 				return Fail(new Said("update failed: couldn't reach GitHub ({0}) - nothing changed", e.Message));
 			}
@@ -527,19 +596,25 @@ public static class SelfUpdate {
 			// never install one.
 			string payload = staged;
 
-			if (!File.Exists(Path.Combine(payload, "nocatFarm.exe")) && (Directory.GetFiles(staged).Length == 0)
-				&& (Directory.GetDirectories(staged) is [string only]) && File.Exists(Path.Combine(only, "nocatFarm.exe"))) {
+			if (!File.Exists(Path.Combine(payload, ExeName)) && (Directory.GetFiles(staged).Length == 0)
+				&& (Directory.GetDirectories(staged) is [string only]) && File.Exists(Path.Combine(only, ExeName))) {
 				payload = only;
 			}
 
-			string exe = Path.Combine(payload, "nocatFarm.exe");
+			string exe = Path.Combine(payload, ExeName);
 
 			if (!File.Exists(exe)) {
-				return Fail(new Said("update failed: the download has no nocatFarm.exe"));
+				return Fail(new Said("update failed: the download has no {0}", ExeName));
+			}
+
+			// The shell script restarts it with the same options, split on spaces: an option with a space in it (a --path
+			// to "My Folder") would come back as two, and it would start on the wrong folder. Said now, before anything.
+			if (!OperatingSystem.IsWindows() && Environment.GetCommandLineArgs().Skip(1).Any(static a => a.Any(char.IsWhiteSpace))) {
+				return Fail(new Said("update failed: it was started with an option that has a space in it - update by hand this time"));
 			}
 
 			string here = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
-			string script = Path.Combine(work, "swap.cmd");
+			string script = Path.Combine(work, OperatingSystem.IsWindows() ? "swap.cmd" : "swap.sh");
 			string backup = Path.Combine(work, "backup");
 
 			// The safety copy: only the files the update is about to replace. Copying the whole install folder
@@ -569,7 +644,7 @@ public static class SelfUpdate {
 				return Fail(new Said("update failed: couldn't back up the current version ({0})", e.Message));
 			}
 
-			await File.WriteAllTextAsync(script, SwapScript(Environment.ProcessId), ct).ConfigureAwait(false);
+			await File.WriteAllTextAsync(script, OperatingSystem.IsWindows() ? SwapScript(Environment.ProcessId) : UnixSwapScript, ct).ConfigureAwait(false);
 
 			Log.Publish(Topic.Installs, "nocat.farm", byItself
 				? new Said("Downloaded {0} ({1}MB) - installing it now, by itself. The accounts sign out one at a time; back in about a minute.", tag, got / 1048576)
@@ -588,8 +663,14 @@ public static class SelfUpdate {
 			// the whole thing was over before anyone saw it, and nothing afterwards said an update had happened.
 			// Written only now the swap is really going ahead: written before the backup and the sign-outs, an update
 			// that stopped in either left it behind, and the next start said "update failed" about one never tried.
+			string okFile = Path.Combine(work, "started.txt");
+
 			try {
 				Directory.CreateDirectory(Path.GetDirectoryName(NotePath)!);
+
+				// Where the new version answers "ok", for when it can't be handed over in the environment: on a Mac
+				// started from start.command, the new version comes up in a fresh Terminal window, which starts clean.
+				AtomicFile.Write(VerifyPath, okFile);
 				AtomicFile.Write(NotePath, string.Join('|', Build.Version, tag.TrimStart('v', 'V'), got / 1048576,
 					(int) Math.Max(1, (DateTime.UtcNow - started).TotalSeconds), DateTime.UtcNow.Ticks));
 				AtomicFile.Write(NotesPath, UpdateCheck.Highlights(body));
@@ -605,21 +686,38 @@ public static class SelfUpdate {
 			// The folders and the way it was started go in as environment variables, not written into the script.
 			// cmd.exe reads a script in the old OEM code page, so a user folder like "José" came out as garbage and
 			// the copy and the restart both missed; a "%" in a path was worse. A variable arrives exactly as it is.
-			ProcessStartInfo swap = new() {
-				FileName = "cmd.exe",
-				Arguments = $"/c \"{script}\"",
-				UseShellExecute = false,
-				CreateNoWindow = true,
-				WorkingDirectory = Path.GetTempPath()
-			};
+			ProcessStartInfo swap;
+
+			if (OperatingSystem.IsWindows()) {
+				swap = new() {
+					FileName = "cmd.exe",
+					Arguments = $"/c \"{script}\"",
+					UseShellExecute = false,
+					CreateNoWindow = true,
+					WorkingDirectory = Path.GetTempPath()
+				};
+			} else {
+				// nohup and in the background, so neither this process ending nor its Terminal window closing takes the
+				// script with it. It waits for this PID, like the Windows one.
+				swap = new("/bin/sh") { UseShellExecute = false, WorkingDirectory = Path.GetTempPath() };
+				swap.ArgumentList.Add("-c");
+				swap.ArgumentList.Add("nohup /bin/sh \"$0\" >/dev/null 2>&1 &");
+				swap.ArgumentList.Add(script);
+				swap.Environment["NF_PID"] = Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+				// Started from start.command on a Mac: the new version opens the same way, in a Terminal window of its own.
+				if (OperatingSystem.IsMacOS() && (Environment.GetEnvironmentVariable("NOCATFARM_STARTER") == "start.command")) {
+					swap.Environment["NF_TERMINAL"] = "1";
+				}
+			}
 
 			swap.Environment["NF_HERE"] = here;
 			swap.Environment["NF_WORK"] = work;
 			swap.Environment["NF_STAGED"] = payload;
 			swap.Environment["NF_BACKUP"] = backup;
 			swap.Environment["NF_FAIL"] = SwapFailedPath;
-			swap.Environment["NF_ARGS"] = RelaunchArgs();
-			swap.Environment["NF_OK"] = Path.Combine(work, "started.txt");
+			swap.Environment["NF_ARGS"] = OperatingSystem.IsWindows() ? RelaunchArgs() : string.Join(' ', Environment.GetCommandLineArgs().Skip(1));
+			swap.Environment["NF_OK"] = okFile;
 			swap.Environment["NF_TAG"] = tag.TrimStart('v', 'V');
 			Process.Start(swap);
 
@@ -694,7 +792,13 @@ public static class SelfUpdate {
 		rem ping, not timeout: timeout refuses to run without a console to read keys from, and the wait would be zero.
 		ping -n 3 127.0.0.1 >nul
 		set /a waited+=2
+		rem Gone without a word (it crashed on the way up, before it could say so): no point waiting out the three minutes.
+		set /a check=waited %% 10
+		if %waited% GEQ 10 if %check%==0 powershell -NoProfile -Command "exit [int](-not (Get-Process nocatFarm -ErrorAction SilentlyContinue | Where-Object Path -eq (Join-Path $env:NF_HERE 'nocatFarm.exe')))" >nul 2>&1 || goto gone
 		goto verify
+		:gone
+		if exist "%NF_OK%" goto verified
+		goto undo
 		:verified
 		findstr /b "crashed" "%NF_OK%" >nul && goto undo
 		goto finish
@@ -710,6 +814,65 @@ public static class SelfUpdate {
 		rem Remove the staging folder, then this script, from a directory we are not standing in.
 		cd /d "%TEMP%"
 		rmdir /s /q "%NF_WORK%" >nul 2>&1
+		""";
+
+	/// <summary>
+	/// The swap on Linux and a Mac - the same steps as the Windows script, in sh. Waits for this process (NF_PID), copies
+	/// the new files over the top, starts the new version, and waits for its "ok". A copy that fails, "crashed", no answer
+	/// in three minutes, or the new version gone without a word after ten seconds: the safety copy goes back, the files
+	/// the new version added go, "crashed &lt;tag&gt;" is left in NF_FAIL, and the old version starts again.
+	/// Started from start.command on a Mac (NF_TERMINAL), a version comes up in a Terminal window of its own; otherwise
+	/// in the background, the dashboard being where it's seen.
+	/// </summary>
+	private const string UnixSwapScript = """
+		#!/bin/sh
+		# nocat.farm self-update. Written by the app, run once.
+		while kill -0 "$NF_PID" 2>/dev/null; do sleep 1; done
+
+		start_it() {
+			if [ -n "$NF_TERMINAL" ] && [ -x "$NF_HERE/start.command" ]; then
+				open -a Terminal "$NF_HERE/start.command"
+			else
+				cd "$NF_HERE" && nohup "$NF_HERE/nocatFarm" $NF_ARGS >/dev/null 2>&1 &
+			fi
+		}
+
+		running() { pgrep -f "$NF_HERE/nocatFarm" >/dev/null 2>&1; }
+
+		put_back() {
+			pkill -f "$NF_HERE/nocatFarm" 2>/dev/null
+			sleep 3
+			cp -Rf "$NF_BACKUP"/. "$NF_HERE"/
+			if [ -f "$NF_WORK/added.txt" ]; then
+				while IFS= read -r f; do [ -n "$f" ] && rm -f "$NF_HERE/$f"; done < "$NF_WORK/added.txt"
+			fi
+			chmod +x "$NF_HERE/nocatFarm" 2>/dev/null
+		}
+
+		if ! cp -Rf "$NF_STAGED"/. "$NF_HERE"/; then
+			put_back
+			echo 8 > "$NF_FAIL"
+			start_it
+			exit 1
+		fi
+		chmod +x "$NF_HERE/nocatFarm" "$NF_HERE/start.command" 2>/dev/null
+
+		start_it
+		waited=0
+		while [ ! -f "$NF_OK" ]; do
+			sleep 2
+			waited=$((waited + 2))
+			if [ "$waited" -ge 180 ]; then break; fi
+			if [ "$waited" -ge 10 ] && ! running; then break; fi
+		done
+
+		if [ ! -f "$NF_OK" ] || grep -q '^crashed' "$NF_OK"; then
+			put_back
+			echo "crashed $NF_TAG" > "$NF_FAIL"
+			start_it
+		fi
+
+		cd /tmp && rm -rf "$NF_WORK"
 		""";
 
 	/// <summary>One read of the download, given a minute. The clock is restarted every call, so a slow line is fine - only silence isn't.</summary>

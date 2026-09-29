@@ -1447,7 +1447,6 @@
     "made the key that encrypts saved logins: {0} - keep it with the config folder, the saved logins can't be read without it": "저장된 로그인 정보를 암호화하는 키를 만들었습니다: {0} - 설정 폴더와 함께 보관하세요. 이 키가 없으면 저장된 로그인 정보를 읽을 수 없습니다",
     "saved logins are kept as plain text - the key that encrypts them ({0}) couldn't be used: {1}. Keep the config folder somewhere private.": "저장된 로그인 정보가 평문으로 보관됩니다 - 이를 암호화하는 키({0})를 쓸 수 없었습니다: {1}. 설정 폴더를 안전한 곳에 두세요.",
     "saved logins are kept as plain text - this system has no AES-GCM to encrypt them with. Keep the config folder somewhere private.": "저장된 로그인 정보가 평문으로 보관됩니다 - 이 시스템에는 암호화에 쓸 AES-GCM이 없습니다. 설정 폴더를 안전한 곳에 두세요.",
-    "nocat.farm only updates itself on Windows - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "nocat.farm은 Windows에서만 스스로 업데이트합니다 - 종료한 뒤 {1}에서 {0}을(를) 받아 이 폴더에 덮어써서 압축을 풀고 (config/와 logs/는 유지됩니다) 다시 시작하세요",
     "What's waiting to be confirmed": "확인을 기다리는 항목",
     "Steam Guard codes": "Steam Guard 코드",
     "{0} - {1} is out, send /update to see how to install it": "{0} - {1} 출시됨, 설치 방법은 /update를 보내 확인하세요",
@@ -2160,7 +2159,6 @@
     "update failed: download broke off ({0}) - try again": "업데이트 실패: 다운로드 끊김 ({0}) - 다시 시도",
     "update failed: download stopped at {0} of {1}MB - try again": "업데이트 실패: 다운로드가 {1}MB 중 {0}에서 멈춤 - 다시 시도",
     "update failed: couldn't unpack ({0}) - disk full?": "업데이트 실패: 압축 해제 불가 ({0}) - 디스크 가득?",
-    "update failed: the download has no nocatFarm.exe": "업데이트 실패: 다운로드에 nocatFarm.exe 없음",
     "update failed: couldn't back up the current version ({0})": "업데이트 실패: 현재 버전 백업 불가 ({0})",
     "update: all signed out - restarting into {0}": "업데이트: 모두 로그아웃 - {0}(으)로 재시작",
     "update failed: {0} - nothing changed": "업데이트 실패: {0} - 변경 없음",
@@ -2224,14 +2222,17 @@
     "File logging is off - turn on \"Write a log file\" below.": "파일 로그가 꺼져 있습니다 - 아래 \"로그 파일 기록\"을 켜세요.",
     "Opened {0}": "{0}을(를) 열었습니다",
     "The log files are in {0} on the PC nocat.farm runs on.": "로그 파일은 nocat.farm이 실행 중인 PC의 {0}에 있습니다.",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux or Mac zip, unzip the new one and keep your config folder. Your accounts and settings stay where they are.": "새 버전이 나오면 알려 줍니다. 여기서는 스스로 설치할 수 없습니다. Docker에서는 새 버전을 받아 docker compose up -d --build를 실행하고, Linux나 Mac zip은 새 것을 풀고 config 폴더를 그대로 옮기세요. 계정과 설정은 그대로 남습니다.",
     "on": "켜짐",
     "Everything has an explanation attached - tap or hover the {0} beside any setting.": "모든 설정에 설명이 있습니다 - 옆의 {0}을 탭하거나 마우스를 올려 보세요.",
     "the rep4rep hold has run out - back on at {0}/{1}": "rep4rep 보류 기간이 끝났습니다 - {0}/{1}에서 다시 시작합니다",
     "this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it": "이 계정은 {0}까지 댓글을 쉽니다 - 'rep4rep clear {1}'로 풀 수 있습니다",
     "nocatFarm.json didn't load - still on the settings in use; fix it and 'reload' again": "nocatFarm.json을 불러오지 못했습니다 - 지금 설정을 그대로 씁니다. 파일을 고친 뒤 다시 'reload' 하세요",
     "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0}은(는) 휴먼 모드입니다 - 이 목록이 아니라 \"플레이할 게임과 빈도\"(GameWeights)의 게임을 플레이합니다",
-    "update stopped - nocat.farm was closed first; nothing changed": "업데이트를 멈췄습니다 - 먼저 nocat.farm이 닫혔습니다. 아무것도 변경되지 않았습니다"
+    "update stopped - nocat.farm was closed first; nothing changed": "업데이트를 멈췄습니다 - 먼저 nocat.farm이 닫혔습니다. 아무것도 변경되지 않았습니다",
+    "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "서비스로 실행 중이라 스스로 업데이트하지 않습니다 - 멈추고 {1}의 {0}을 이 폴더에 덮어 풀고(config/와 logs/는 유지) 다시 시작하세요",
+    "update failed: it was started with an option that has a space in it - update by hand this time": "업데이트 실패: 공백이 들어간 옵션으로 시작되었습니다 - 이번에는 직접 업데이트하세요",
+    "update failed: the download has no {0}": "업데이트 실패: 다운로드에 {0}이(가) 없습니다",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "새 버전이 나오면 알려 줍니다. 여기서는 스스로 설치할 수 없습니다. Docker에서는 새 버전을 받아 docker compose up -d --build를 실행하고, Linux 서비스로 실행 중이면 멈추고 새 zip을 폴더에 덮어 푼 뒤 다시 시작하세요. 계정과 설정은 그대로 남습니다."
   },
   "settings": {
     "WebEnabled": {
@@ -3033,7 +3034,7 @@
     },
     "Rep4RepLearnCap": {
       "label": "실제 한도 학습",
-      "tip": "Steam의 거부를 보고 이 계정의 실제 하루 댓글 한도를 학습합니다. “댓글을 너무 자주 작성함” 거부로는 한도가 절대 낮아지지 않습니다."
+      "tip": "위에서 정한 수보다 먼저 Steam이 하루 댓글 한도에 도달했다고 하면 그 수가 이 계정의 한도가 됩니다(5 미만으로는 안 됨). \"너무 자주 댓글을 단다\"는 거절은 댓글 간격 문제라서 한도를 바꾸지 않습니다."
     },
     "Rep4RepRetryRefused": {
       "label": "거부된 댓글 재시도",
@@ -3154,7 +3155,7 @@
     },
     "AutoUpdate": {
       "label": "자동 업데이트",
-      "tip": "새 버전이 나왔을 때 하는 일. 알려주기: 로그, Telegram, Discord로 알려주고 update accept를 입력해 설치합니다. 밤에 설치: 아래 시간대에 자동으로 설치하며, 사람 모드 계정이 깨어 있지 않고 아무도 계정으로 플레이하지 않을 때만 설치하고 전후로 알려줍니다. Windows 전용.",
+      "tip": "새 버전이 나왔을 때 하는 일. 알려주기: 로그, Telegram, Discord로 알려주고 update accept를 입력해 설치합니다. 밤에 설치: 아래 시간대에 자동으로 설치하며, 사람 모드 계정이 깨어 있지 않고 아무도 계정으로 플레이하지 않을 때만 설치하고 전후로 알려줍니다. Docker나 Linux 서비스에서는 안 됩니다(직접 업데이트).",
       "choices": "0 알려주기 | 1 밤에 설치"
     },
     "AutoUpdateFromHour": {
@@ -3223,7 +3224,7 @@
     },
     "UpdateWhenAsked": {
       "label": "업데이트라고 하면",
-      "tip": "update accept와 업데이트 버튼이 하는 일. 바로: 지금 설치합니다. 계정이 잠들면: 사람 모드 계정이 모두 자고, 아무도 플레이하지 않고, 기다리는 거래나 선물이 없을 때까지 기다립니다. 밤새 켜진 로봇 계정은 막지 않습니다. 사람 모드 계정이 없으면 아래 시간대를 기다립니다. update now는 항상 바로 설치합니다. Windows 전용.",
+      "tip": "update accept와 업데이트 버튼이 하는 일. 바로: 지금 설치합니다. 계정이 잠들면: 사람 모드 계정이 모두 자고, 아무도 플레이하지 않고, 기다리는 거래나 선물이 없을 때까지 기다립니다. 밤새 켜진 로봇 계정은 막지 않습니다. 사람 모드 계정이 없으면 아래 시간대를 기다립니다. update now는 항상 바로 설치합니다. Docker나 Linux 서비스에서는 안 됩니다(직접 업데이트).",
       "choices": "0 바로 | 1 계정이 잠들면"
     },
     "DiscordSecondLine": {

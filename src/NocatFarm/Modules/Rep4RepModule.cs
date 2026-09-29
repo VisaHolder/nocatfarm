@@ -31,6 +31,9 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	private const int RateLimitHighMinutes = 180;
 	private const int CapFloor = 5;
 
+	/// <summary>Whether a daily-limit refusal at <paramref name="posted"/> comments should become the account's cap.</summary>
+	internal static bool LearnsDailyLimit(bool on, int posted, int cap) => on && (posted >= CapFloor) && (posted < cap);
+
 	private enum Outcome { Posted, Refused, Unknown, RateLimited, AccountBlocked, DailyLimit }
 
 	private readonly Rep4RepApi _api = api;
@@ -558,6 +561,16 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	/// </summary>
 	private async Task<int> OnDailyLimitAsync() {
 		int posted = _state!.PostsInLast24h();
+
+		// The one refusal that IS about the daily limit: Steam cut it off at this many, below the cap that's set. That's
+		// the account's real limit, so the cap comes down to it and "12 of 15" stops being chased every day. Never below
+		// the floor - comments posted outside nocat.farm count on Steam's side too, and a day like that says less.
+		if (LearnsDailyLimit(Bot.Cfg.Rep4RepLearnCap, posted, Cap)) {
+			_state.Cap = posted;
+			_state.CapLearned = true;
+			Log.Info(new Said("daily limit found: {0}/24h", posted), Bot.Name);
+		}
+
 		_state.BlockedUntil = DateTime.UtcNow.AddHours(24).Ticks;
 		_state.BlockReason = "Steam's daily comment limit";
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
@@ -582,13 +595,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		//
 		// Only a refusal AFTER the configured cap has already been reached says anything real, and by then we
 		// have stopped posting anyway - so the honest answer is to learn nothing here and simply back off.
-		if (Bot.Cfg.Rep4RepLearnCap && (posted > cap) && (posted > CapFloor)) {
-			_state.Cap = posted;
-			_state.CapLearned = true;
-			Log.Info(new Said("daily limit found: {0}/24h", posted), Bot.Name);
-		} else {
-			Log.Info(new Said("rate-limited at {0}/{1} - comment gap, not the daily cap", posted, cap), Bot.Name);
-		}
+		Log.Info(new Said("rate-limited at {0}/{1} - comment gap, not the daily cap", posted, cap), Bot.Name);
 
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 

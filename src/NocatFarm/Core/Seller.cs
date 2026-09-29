@@ -78,6 +78,12 @@ public static class Seller {
 			return new Plan([], 0, 0, "couldn't read all of its inventory - Steam stopped part way; try again in a while");
 		}
 
+		// Cards promised in a trade that's still waiting aren't this account's to sell - and don't count towards its sets
+		// either, since they're about to leave. Not knowing is a reason to wait, not to guess: listing one breaks the trade.
+		if (await TradeOffers.PromisedAsync(bot, ct).ConfigureAwait(false) is not { } promised) {
+			return new Plan([], 0, 0, "Steam wouldn't say which cards are in a waiting trade - try again in a while");
+		}
+
 		// game -> card -> the copies held (asset ids), marketable normal cards only
 		Dictionary<uint, Dictionary<string, List<ulong>>> cards = [];
 
@@ -91,7 +97,7 @@ public static class Seller {
 			if (!type.EndsWith("Trading Card", StringComparison.OrdinalIgnoreCase) || type.Contains("Foil", StringComparison.OrdinalIgnoreCase)
 				|| (InventoryContents.Text(d, "marketable") != "1")
 				|| !uint.TryParse(InventoryContents.Text(d, "market_fee_app"), out uint game) || (game == 0)
-				|| !ulong.TryParse(InventoryContents.Text(asset, "assetid"), out ulong id)) {
+				|| !ulong.TryParse(InventoryContents.Text(asset, "assetid"), out ulong id) || promised.Contains(id)) {
 				continue;
 			}
 

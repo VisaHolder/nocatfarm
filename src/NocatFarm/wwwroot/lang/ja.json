@@ -1447,7 +1447,6 @@
     "made the key that encrypts saved logins: {0} - keep it with the config folder, the saved logins can't be read without it": "保存されたログイン情報を暗号化する鍵を作成しました: {0} - 設定フォルダーと一緒に保管してください。これがないと保存されたログイン情報は読めません",
     "saved logins are kept as plain text - the key that encrypts them ({0}) couldn't be used: {1}. Keep the config folder somewhere private.": "保存されたログイン情報は平文で保存されています - 暗号化する鍵 ({0}) を使えませんでした: {1}。設定フォルダーは人目につかない場所に置いてください。",
     "saved logins are kept as plain text - this system has no AES-GCM to encrypt them with. Keep the config folder somewhere private.": "保存されたログイン情報は平文で保存されています - このシステムには暗号化に使う AES-GCM がありません。設定フォルダーは人目につかない場所に置いてください。",
-    "nocat.farm only updates itself on Windows - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "nocat.farm が自動更新するのは Windows だけです - 停止し、{1} から {0} をこのフォルダーに上書き展開して (config/ と logs/ は残ります)、もう一度起動してください",
     "What's waiting to be confirmed": "確認待ちのもの",
     "Steam Guard codes": "Steam Guard コード",
     "{0} - {1} is out, send /update to see how to install it": "{0} - {1} が公開されました。/update を送るとインストール方法がわかります",
@@ -2160,7 +2159,6 @@
     "update failed: download broke off ({0}) - try again": "更新失敗: ダウンロードが途切れた ({0}) - 再試行を",
     "update failed: download stopped at {0} of {1}MB - try again": "更新失敗: ダウンロードが {1}MB 中 {0} で停止 - 再試行を",
     "update failed: couldn't unpack ({0}) - disk full?": "更新失敗: 展開できず ({0}) - ディスクが満杯？",
-    "update failed: the download has no nocatFarm.exe": "更新失敗: ダウンロードに nocatFarm.exe がない",
     "update failed: couldn't back up the current version ({0})": "更新失敗: 現在の版をバックアップできず ({0})",
     "update: all signed out - restarting into {0}": "更新: 全員サインアウト - {0} で再起動",
     "update failed: {0} - nothing changed": "更新失敗: {0} - 変更なし",
@@ -2224,14 +2222,17 @@
     "File logging is off - turn on \"Write a log file\" below.": "ファイルへのログはオフです - 下の「ログファイルを書く」をオンにしてください。",
     "Opened {0}": "{0} を開きました",
     "The log files are in {0} on the PC nocat.farm runs on.": "ログファイルは nocat.farm が動いている PC の {0} にあります。",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux or Mac zip, unzip the new one and keep your config folder. Your accounts and settings stay where they are.": "新しいバージョンが出たら知らせます。ここでは自動ではインストールできません。Docker では新しいバージョンを取得して docker compose up -d --build を実行、Linux か Mac の zip では新しいものを展開して config フォルダを引き継いでください。アカウントと設定はそのまま残ります。",
     "on": "オン",
     "Everything has an explanation attached - tap or hover the {0} beside any setting.": "どの設定にも説明があります - 横の {0} をタップするかマウスを乗せてください。",
     "the rep4rep hold has run out - back on at {0}/{1}": "rep4repの保留期間が終了 - {0}/{1}から再開します",
     "this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it": "このアカウントは {0} までコメントを休んでいます - 'rep4rep clear {1}' で解除できます",
     "nocatFarm.json didn't load - still on the settings in use; fix it and 'reload' again": "nocatFarm.json を読み込めませんでした - 今の設定のままです。直してからもう一度 'reload' してください",
     "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0} はヒューマンモードです - このリストではなく「遊ぶゲームと頻度」(GameWeights) のゲームを遊びます",
-    "update stopped - nocat.farm was closed first; nothing changed": "更新を中止しました - 先に nocat.farm が閉じられました。何も変更されていません"
+    "update stopped - nocat.farm was closed first; nothing changed": "更新を中止しました - 先に nocat.farm が閉じられました。何も変更されていません",
+    "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "サービスとして動いているので自動更新しません - 止めて、{1} の {0} をこのフォルダに上書き展開し（config/ と logs/ は残ります）、もう一度起動してください",
+    "update failed: it was started with an option that has a space in it - update by hand this time": "更新失敗: スペースを含むオプションで起動されています - 今回は手動で更新してください",
+    "update failed: the download has no {0}": "更新失敗: ダウンロードに {0} がありません",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "新しいバージョンが出たら知らせます。ここでは自動ではインストールできません。Docker では新しいバージョンを取得して docker compose up -d --build を実行、Linux のサービスとして動かしている場合は止めて、新しい zip をフォルダに上書き展開し、もう一度起動してください。アカウントと設定はそのまま残ります。"
   },
   "settings": {
     "WebEnabled": {
@@ -3033,7 +3034,7 @@
     },
     "Rep4RepLearnCap": {
       "label": "本当の上限を学習する",
-      "tip": "Steam の拒否から、このアカウントの本当の 1 日のコメント上限を学習させます。「コメントが頻繁すぎます」という拒否では上限を下げません。"
+      "tip": "上で決めた数より前に Steam が「1日のコメント上限に達した」と言ったら、それをこのアカウントの上限にします（5未満にはしません）。「コメントが多すぎる」という拒否はコメントの間隔のことなので、上限は変えません。"
     },
     "Rep4RepRetryRefused": {
       "label": "拒否されたコメントを再試行",
@@ -3154,7 +3155,7 @@
     },
     "AutoUpdate": {
       "label": "自動アップデート",
-      "tip": "新しいバージョンが出たときの動き。知らせる: ログ・Telegram・Discord で知らせ、update accept で入れます。夜にインストール: 下の時間帯に自動で入れます。人間モードのアカウントが起きておらず、誰もアカウントでプレイしていないときだけで、前後に知らせます。Windows のみ。",
+      "tip": "新しいバージョンが出たときの動き。知らせる: ログ・Telegram・Discord で知らせ、update accept で入れます。夜にインストール: 下の時間帯に自動で入れます。人間モードのアカウントが起きておらず、誰もアカウントでプレイしていないときだけで、前後に知らせます。Docker と Linux のサービスでは使えません（手動で更新します）。",
       "choices": "0 知らせる | 1 夜にインストール"
     },
     "AutoUpdateFromHour": {
@@ -3223,7 +3224,7 @@
     },
     "UpdateWhenAsked": {
       "label": "アップデートと言ったら",
-      "tip": "update accept とアップデートボタンの動き。すぐに: 今すぐ入れます。アカウントが寝たら: 人間モードのアカウントが誰も起きておらず、誰もプレイしておらず、待っているトレードやギフトがないときまで待ちます。一晩中動くロボットのアカウントは邪魔しません。人間モードのアカウントがなければ下の時間帯を待ちます。update now は常にすぐ入れます。Windows のみ。",
+      "tip": "update accept とアップデートボタンの動き。すぐに: 今すぐ入れます。アカウントが寝たら: 人間モードのアカウントが誰も起きておらず、誰もプレイしておらず、待っているトレードやギフトがないときまで待ちます。一晩中動くロボットのアカウントは邪魔しません。人間モードのアカウントがなければ下の時間帯を待ちます。update now は常にすぐ入れます。Docker と Linux のサービスでは使えません（手動で更新します）。",
       "choices": "0 すぐに | 1 アカウントが寝たら"
     },
     "DiscordSecondLine": {

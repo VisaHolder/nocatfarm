@@ -1740,7 +1740,7 @@ public sealed class WebHost : IAsyncDisposable {
 			// line per request buried everything else in the log.
 			if (!_warnedAboutBalance) {
 				_warnedAboutBalance = true;
-				Log.Debug(new Said("rep4rep is reporting an impossible balance ({0} points, {1} pending) - keeping the last sensible figure", user.Value.Points, user.Value.PendingPoints));
+				Log.Debug(new Said("rep4rep is reporting an impossible balance ({0} points, {1} pending) - keeping the last sensible figure", user?.Points, user?.PendingPoints));
 			}
 
 			return _pointsCache.HasValue ? (_pointsCache.Value.Points, _pointsCache.Value.Pending) : null;

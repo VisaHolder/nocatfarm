@@ -228,7 +228,10 @@ public static partial class Looting {
 		List<Item> allowed = all.Where(i => !banned.Contains(i.App)).ToList();
 		int blocked = all.Count - allowed.Count;
 
-		List<Item> sending = allowed.Where(i => WantedType(i.Type, types)).ToList();
+		// Nothing already promised in a trade that's waiting - sending it would quietly take it out of that trade. When
+		// Steam won't say, the send goes ahead: it only goes to your own account.
+		HashSet<ulong> promised = await TradeOffers.PromisedAsync(bot, ct).ConfigureAwait(false) ?? [];
+		List<Item> sending = allowed.Where(i => WantedType(i.Type, types) && !promised.Contains(i.AssetId)).ToList();
 
 		if (sending.Count == 0) {
 			// Blame the ban only when the ban is actually what stopped it. Asked for booster packs on an account

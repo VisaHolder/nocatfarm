@@ -1447,7 +1447,6 @@
     "made the key that encrypts saved logins: {0} - keep it with the config folder, the saved logins can't be read without it": "создан ключ, которым шифруются сохранённые входы: {0} - храните его вместе с папкой конфигурации, без него сохранённые входы не прочитать",
     "saved logins are kept as plain text - the key that encrypts them ({0}) couldn't be used: {1}. Keep the config folder somewhere private.": "сохранённые входы хранятся в открытом виде - ключ для их шифрования ({0}) не удалось использовать: {1}. Держите папку конфигурации в приватном месте.",
     "saved logins are kept as plain text - this system has no AES-GCM to encrypt them with. Keep the config folder somewhere private.": "сохранённые входы хранятся в открытом виде - в этой системе нет AES-GCM для их шифрования. Держите папку конфигурации в приватном месте.",
-    "nocat.farm only updates itself on Windows - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "nocat.farm обновляется сам только в Windows - остановите его, распакуйте {0} из {1} поверх этой папки (config/ и logs/ сохраняются) и запустите снова",
     "What's waiting to be confirmed": "Что ждёт подтверждения",
     "Steam Guard codes": "Коды Steam Guard",
     "{0} - {1} is out, send /update to see how to install it": "{0} - вышла {1}, отправьте /update, чтобы узнать, как её установить",
@@ -2160,7 +2159,6 @@
     "update failed: download broke off ({0}) - try again": "обновление не удалось: загрузка оборвалась ({0}) - попробуйте снова",
     "update failed: download stopped at {0} of {1}MB - try again": "обновление не удалось: загрузка встала на {0} из {1}МБ - попробуйте снова",
     "update failed: couldn't unpack ({0}) - disk full?": "обновление не удалось: не распаковать ({0}) - диск полон?",
-    "update failed: the download has no nocatFarm.exe": "обновление не удалось: в загрузке нет nocatFarm.exe",
     "update failed: couldn't back up the current version ({0})": "обновление не удалось: не сделать копию текущей версии ({0})",
     "update: all signed out - restarting into {0}": "обновление: все вышли - перезапуск в {0}",
     "update failed: {0} - nothing changed": "обновление не удалось: {0} - ничего не изменено",
@@ -2224,14 +2222,17 @@
     "File logging is off - turn on \"Write a log file\" below.": "Запись журнала в файл выключена - включите ниже «Писать файл журнала».",
     "Opened {0}": "Открыто: {0}",
     "The log files are in {0} on the PC nocat.farm runs on.": "Файлы журнала лежат в {0} на компьютере, где работает nocat.farm.",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux or Mac zip, unzip the new one and keep your config folder. Your accounts and settings stay where they are.": "Сообщает, когда выходит новая версия. Здесь он не может установить её сам: в Docker получите новую версию и выполните docker compose up -d --build; с zip для Linux или Mac распакуйте новый и перенесите папку config. Аккаунты и настройки остаются на месте.",
     "on": "включено",
     "Everything has an explanation attached - tap or hover the {0} beside any setting.": "У всего есть пояснение - нажмите на {0} рядом с настройкой или наведите на него мышь.",
     "the rep4rep hold has run out - back on at {0}/{1}": "приостановка rep4rep истекла - продолжаем с {0}/{1}",
     "this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it": "этот аккаунт отдыхает от комментариев до {0} - 'rep4rep clear {1}' снимает паузу",
     "nocatFarm.json didn't load - still on the settings in use; fix it and 'reload' again": "nocatFarm.json не загрузился - остаются текущие настройки; исправьте файл и снова выполните 'reload'",
     "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0} в режиме «человек» - он играет в игры из «Игры и как часто» (GameWeights), а не из этого списка",
-    "update stopped - nocat.farm was closed first; nothing changed": "обновление остановлено - nocat.farm закрыли раньше; ничего не изменено"
+    "update stopped - nocat.farm was closed first; nothing changed": "обновление остановлено - nocat.farm закрыли раньше; ничего не изменено",
+    "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "как служба nocat.farm не обновляется сам - остановите его, распакуйте {0} с {1} поверх этой папки (config/ и logs/ сохранятся) и запустите снова",
+    "update failed: it was started with an option that has a space in it - update by hand this time": "обновление не удалось: он запущен с параметром, в котором есть пробел - в этот раз обновите вручную",
+    "update failed: the download has no {0}": "обновление не удалось: в загрузке нет {0}",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "Сообщает, когда выходит новая версия. Здесь он не может установить её сам: в Docker получите новую версию и выполните docker compose up -d --build; как службу Linux остановите его, распакуйте новый zip поверх папки и запустите снова. Аккаунты и настройки остаются на месте."
   },
   "settings": {
     "WebEnabled": {
@@ -3033,7 +3034,7 @@
     },
     "Rep4RepLearnCap": {
       "label": "Выучить настоящий лимит",
-      "tip": "Позволяет узнать настоящий дневной лимит комментариев этого аккаунта по отказам Steam. Отказ «слишком часто комментируете» лимит никогда не снижает."
+      "tip": "Если Steam сообщает, что аккаунт достиг дневного лимита комментариев раньше заданного выше числа, это становится его лимитом (не ниже 5). Отказ «слишком частые комментарии» касается промежутка между комментариями и лимит не меняет."
     },
     "Rep4RepRetryRefused": {
       "label": "Повторить отклонённый комментарий",
@@ -3154,7 +3155,7 @@
     },
     "AutoUpdate": {
       "label": "Обновляться самому",
-      "tip": "Что делать, когда выходит новая версия. Сообщить: пишет в журнал, в Telegram и Discord, а вы вводите update accept. Ставить ночью: ставит сам в часы ниже, только когда ни один аккаунт в человеческом режиме не бодрствует и никто не играет на аккаунтах, и сообщает до и после. Только Windows.",
+      "tip": "Что делать, когда выходит новая версия. Сообщить: пишет в журнал, в Telegram и Discord, а вы вводите update accept. Ставить ночью: ставит сам в часы ниже, только когда ни один аккаунт в человеческом режиме не бодрствует и никто не играет на аккаунтах, и сообщает до и после. Не в Docker и не как служба Linux - там обновление вручную.",
       "choices": "0 сообщить | 1 ставить ночью"
     },
     "AutoUpdateFromHour": {
@@ -3223,7 +3224,7 @@
     },
     "UpdateWhenAsked": {
       "label": "Когда я говорю «обновить»",
-      "tip": "Что делают update accept и кнопка «Обновить». Сразу: ставит сейчас. Когда аккаунты спят: ждёт, пока ни один аккаунт в человеческом режиме не бодрствует, никто не играет на аккаунте и не ждёт обмен или подарок - аккаунты-роботы, работающие всю ночь, не мешают. Без аккаунтов в человеческом режиме ждёт часы ниже. update now всегда ставит сразу. Только Windows.",
+      "tip": "Что делают update accept и кнопка «Обновить». Сразу: ставит сейчас. Когда аккаунты спят: ждёт, пока ни один аккаунт в человеческом режиме не бодрствует, никто не играет на аккаунте и не ждёт обмен или подарок - аккаунты-роботы, работающие всю ночь, не мешают. Без аккаунтов в человеческом режиме ждёт часы ниже. update now всегда ставит сразу. Не в Docker и не как служба Linux - там обновление вручную.",
       "choices": "0 сразу | 1 когда аккаунты спят"
     },
     "DiscordSecondLine": {

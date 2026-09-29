@@ -1447,7 +1447,6 @@
     "made the key that encrypts saved logins: {0} - keep it with the config folder, the saved logins can't be read without it": "已生成加密保存的登录信息的密钥：{0} - 请把它和配置文件夹放在一起，没有它就无法读取保存的登录信息",
     "saved logins are kept as plain text - the key that encrypts them ({0}) couldn't be used: {1}. Keep the config folder somewhere private.": "保存的登录信息以明文保存 - 加密它们的密钥（{0}）无法使用：{1}。请把配置文件夹放在私密位置。",
     "saved logins are kept as plain text - this system has no AES-GCM to encrypt them with. Keep the config folder somewhere private.": "保存的登录信息以明文保存 - 此系统没有可用于加密的 AES-GCM。请把配置文件夹放在私密位置。",
-    "nocat.farm only updates itself on Windows - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "nocat.farm 只在 Windows 上自行更新 - 先停止它，从 {1} 把 {0} 解压覆盖到此文件夹（config/ 和 logs/ 会保留），然后重新启动",
     "What's waiting to be confirmed": "等待确认的内容",
     "Steam Guard codes": "Steam Guard 验证码",
     "{0} - {1} is out, send /update to see how to install it": "{0} - {1} 已发布，发送 /update 查看如何安装",
@@ -2160,7 +2159,6 @@
     "update failed: download broke off ({0}) - try again": "更新失败：下载中断（{0}）- 请重试",
     "update failed: download stopped at {0} of {1}MB - try again": "更新失败：下载停在 {0}/{1}MB - 请重试",
     "update failed: couldn't unpack ({0}) - disk full?": "更新失败：无法解压（{0}）- 磁盘满了？",
-    "update failed: the download has no nocatFarm.exe": "更新失败：下载内容中没有 nocatFarm.exe",
     "update failed: couldn't back up the current version ({0})": "更新失败：无法备份当前版本（{0}）",
     "update: all signed out - restarting into {0}": "更新：已全部登出 - 重启进入 {0}",
     "update failed: {0} - nothing changed": "更新失败：{0} - 未做更改",
@@ -2224,14 +2222,17 @@
     "File logging is off - turn on \"Write a log file\" below.": "文件日志已关闭 - 在下面打开「写日志文件」。",
     "Opened {0}": "已打开 {0}",
     "The log files are in {0} on the PC nocat.farm runs on.": "日志文件在运行 nocat.farm 的电脑上的 {0}。",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux or Mac zip, unzip the new one and keep your config folder. Your accounts and settings stay where they are.": "有新版本时会告诉你。这里它不能自己安装：Docker 里请获取新版本并运行 docker compose up -d --build；Linux 或 Mac 的 zip 则解压新的并保留你的 config 文件夹。你的账户和设置都会保留。",
     "on": "开启",
     "Everything has an explanation attached - tap or hover the {0} beside any setting.": "每项都有说明 - 点按或把鼠标移到设置旁边的 {0} 上。",
     "the rep4rep hold has run out - back on at {0}/{1}": "rep4rep 暂停已到期 —— 从 {0}/{1} 继续",
     "this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it": "这个账号在 {0} 前暂停评论 —— 'rep4rep clear {1}' 可以解除",
     "nocatFarm.json didn't load - still on the settings in use; fix it and 'reload' again": "nocatFarm.json 没能读取 —— 仍使用当前设置；改好后再 'reload' 一次",
     "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0} 在真人模式 —— 它玩的是“游戏与频率”(GameWeights) 里的游戏，不是这个列表",
-    "update stopped - nocat.farm was closed first; nothing changed": "更新已停止 —— nocat.farm 先被关闭了；未做任何更改"
+    "update stopped - nocat.farm was closed first; nothing changed": "更新已停止 —— nocat.farm 先被关闭了；未做任何更改",
+    "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "作为服务运行时 nocat.farm 不会自己更新 - 停止它，把 {1} 里的 {0} 解压覆盖到这个文件夹（config/ 和 logs/ 会保留），再启动",
+    "update failed: it was started with an option that has a space in it - update by hand this time": "更新失败：启动时用了带空格的选项 - 这次请手动更新",
+    "update failed: the download has no {0}": "更新失败：下载的文件里没有 {0}",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "有新版本时会告诉你。这里它不能自己安装：Docker 里请获取新版本并运行 docker compose up -d --build；作为 Linux 服务运行时，先停止它，把新 zip 解压覆盖到文件夹，再启动。你的账户和设置都会保留。"
   },
   "settings": {
     "WebEnabled": {
@@ -3033,7 +3034,7 @@
     },
     "Rep4RepLearnCap": {
       "label": "学习真实上限",
-      "tip": "根据 Steam 的拒绝，学习这个账户每天真实的评论上限。「你评论得太频繁了」这种拒绝绝不会降低上限。"
+      "tip": "如果 Steam 在达到上面设定的数量之前就说这个账户到了每日评论上限，那就把它当成这个账户的上限（不会低于 5）。「评论太频繁」的拒绝是关于评论间隔的，永远不会改变上限。"
     },
     "Rep4RepRetryRefused": {
       "label": "重试被拒的评论",
@@ -3154,7 +3155,7 @@
     },
     "AutoUpdate": {
       "label": "自动更新",
-      "tip": "新版本发布时怎么做。告诉我：在日志、Telegram 和 Discord 里提醒，由你输入 update accept。夜里安装：在下面的时段自动安装，只在没有拟人模式账户醒着、也没人在账户上玩的时候进行，并在前后通知你。仅限 Windows。",
+      "tip": "新版本发布时怎么做。告诉我：在日志、Telegram 和 Discord 里提醒，由你输入 update accept。夜里安装：在下面的时段自动安装，只在没有拟人模式账户醒着、也没人在账户上玩的时候进行，并在前后通知你。Docker 和 Linux 服务中不行（需要手动更新）。",
       "choices": "0 告诉我 | 1 夜里安装"
     },
     "AutoUpdateFromHour": {
@@ -3223,7 +3224,7 @@
     },
     "UpdateWhenAsked": {
       "label": "我说更新时",
-      "tip": "update accept 和更新按钮的行为。立即：现在就安装。账户睡下后：等到没有拟人模式账户醒着、没人在账户上玩、也没有等待中的交易或礼物时再装 - 整夜在线的机器人账户不会拖住它。没有拟人模式账户时，改为等下面的时段。update now 总是立即安装。仅限 Windows。",
+      "tip": "update accept 和更新按钮的行为。立即：现在就安装。账户睡下后：等到没有拟人模式账户醒着、没人在账户上玩、也没有等待中的交易或礼物时再装 - 整夜在线的机器人账户不会拖住它。没有拟人模式账户时，改为等下面的时段。update now 总是立即安装。Docker 和 Linux 服务中不行（需要手动更新）。",
       "choices": "0 立即 | 1 账户睡下后"
     },
     "DiscordSecondLine": {

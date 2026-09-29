@@ -86,8 +86,8 @@ on the Overview page replays it.
 6. **Notifications** (Advanced). Connect Telegram or Discord, and choose whether you're told when an update
    installs.
 7. **Keep it up to date.** One switch: install new versions at night while your accounts sleep. Advanced also sets
-   the hours, the wait after a release and how often it looks. On Linux, a Mac and Docker this step explains how to
-   update by hand instead.
+   the hours, the wait after a release and how often it looks. In Docker, or run as a Linux service, this step
+   explains how to update by hand instead.
 8. **What kind of account is it?** Asked when you have no accounts yet.
    - *My main - I play on it* adds it in human mode, so it acts like a person. You can also tick
      *I also sign into it from my own Steam app*. Then nocat.farm never changes its online status, so it never
@@ -224,15 +224,17 @@ sets how often it checks (2 hours).
 announced as usual, and `update accept` still installs the skipped one if you change your mind.
 
 If a new version won't start, it's put back by itself. The new version has to run for half a minute first. If it
-crashes, or hasn't started after three minutes, the old files go back, the old version starts again, the log says
-so, and that version is skipped.
+crashes - usually noticed within seconds - or hasn't said it's fine after three minutes, the old files go back, the
+old version starts again, the log says so, and that version is skipped. Every release is tested this way with a
+deliberately broken version, on Windows (installed and portable), Linux and a Mac.
 
 The message that a new version is out lists what changed, and so does the log after updating. With
 *Send install progress* on (it's off by default), Telegram and Discord get "Downloaded 1.4.9 - installing it now",
 then "Install complete - now on 1.4.9" with what's new, or that it failed or was undone and why.
 
-**On Linux, a Mac and in Docker** it tells you when a new version is out, but you update it yourself. See
-[Updating on Linux](linux-docker-vps.md#from-the-zip), [on a Mac](linux-docker-vps.md#mac) and [in Docker](linux-docker-vps.md#docker).
+**The Linux and Mac zips** update themselves just like Windows, putting back included. **In Docker, or run as a
+Linux service** (systemd), it tells you when a new version is out and you update it yourself: see
+[Updating as a service](linux-docker-vps.md#from-the-zip) and [in Docker](linux-docker-vps.md#docker).
 
 ## 8. If something looks wrong
 

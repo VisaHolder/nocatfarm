@@ -1447,7 +1447,6 @@
     "made the key that encrypts saved logins: {0} - keep it with the config folder, the saved logins can't be read without it": "criada a chave que criptografa os logins salvos: {0} - guarde-a junto com a pasta de configuração, sem ela os logins salvos não podem ser lidos",
     "saved logins are kept as plain text - the key that encrypts them ({0}) couldn't be used: {1}. Keep the config folder somewhere private.": "os logins salvos estão guardados em texto puro - a chave que os criptografa ({0}) não pôde ser usada: {1}. Mantenha a pasta de configuração em local privado.",
     "saved logins are kept as plain text - this system has no AES-GCM to encrypt them with. Keep the config folder somewhere private.": "os logins salvos estão guardados em texto puro - este sistema não tem AES-GCM para criptografá-los. Mantenha a pasta de configuração em local privado.",
-    "nocat.farm only updates itself on Windows - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "o nocat.farm só se atualiza sozinho no Windows - feche-o, extraia {0} de {1} por cima desta pasta (config/ e logs/ são mantidos) e abra-o de novo",
     "What's waiting to be confirmed": "O que está esperando confirmação",
     "Steam Guard codes": "Códigos do Steam Guard",
     "{0} - {1} is out, send /update to see how to install it": "{0} - saiu a {1}, envie /update para ver como instalar",
@@ -2160,7 +2159,6 @@
     "update failed: download broke off ({0}) - try again": "atualização falhou: download interrompido ({0}) - tente de novo",
     "update failed: download stopped at {0} of {1}MB - try again": "atualização falhou: download parou em {0} de {1}MB - tente de novo",
     "update failed: couldn't unpack ({0}) - disk full?": "atualização falhou: não deu para descompactar ({0}) - disco cheio?",
-    "update failed: the download has no nocatFarm.exe": "atualização falhou: o download não tem nocatFarm.exe",
     "update failed: couldn't back up the current version ({0})": "atualização falhou: não deu para fazer backup da versão atual ({0})",
     "update: all signed out - restarting into {0}": "atualização: todas saíram - reiniciando no {0}",
     "update failed: {0} - nothing changed": "atualização falhou: {0} - nada mudou",
@@ -2224,14 +2222,17 @@
     "File logging is off - turn on \"Write a log file\" below.": "O log em arquivo está desligado - ligue \"Gravar um arquivo de log\" abaixo.",
     "Opened {0}": "Aberto: {0}",
     "The log files are in {0} on the PC nocat.farm runs on.": "Os arquivos de log estão em {0}, no PC onde o nocat.farm roda.",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux or Mac zip, unzip the new one and keep your config folder. Your accounts and settings stay where they are.": "Ele avisa quando sai uma versão nova. Aqui ele não consegue instalar sozinho - no Docker, pegue a versão nova e rode docker compose up -d --build; com o zip do Linux ou do Mac, descompacte o novo e mantenha sua pasta config. Suas contas e configurações ficam onde estão.",
     "on": "ligado",
     "Everything has an explanation attached - tap or hover the {0} beside any setting.": "Tudo tem uma explicação - toque ou passe o mouse no {0} ao lado de qualquer configuração.",
     "the rep4rep hold has run out - back on at {0}/{1}": "a espera do rep4rep acabou - voltando em {0}/{1}",
     "this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it": "esta conta está sem comentar até {0} - 'rep4rep clear {1}' libera",
     "nocatFarm.json didn't load - still on the settings in use; fix it and 'reload' again": "o nocatFarm.json não carregou - as configurações em uso continuam; corrija e faça 'reload' de novo",
     "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0} está no modo humano - joga os jogos de \"Jogos e com que frequência\" (GameWeights), não esta lista",
-    "update stopped - nocat.farm was closed first; nothing changed": "atualização interrompida - o nocat.farm foi fechado antes; nada foi alterado"
+    "update stopped - nocat.farm was closed first; nothing changed": "atualização interrompida - o nocat.farm foi fechado antes; nada foi alterado",
+    "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "rodando como serviço, o nocat.farm não se atualiza sozinho - pare, extraia {0} de {1} sobre esta pasta (config/ e logs/ ficam) e inicie de novo",
+    "update failed: it was started with an option that has a space in it - update by hand this time": "falha na atualização: ele foi iniciado com uma opção que tem espaço - atualize à mão desta vez",
+    "update failed: the download has no {0}": "falha na atualização: o download não tem {0}",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "Ele avisa quando sai uma versão nova. Aqui ele não consegue instalar sozinho - no Docker, pegue a versão nova e rode docker compose up -d --build; como serviço do Linux, pare, descompacte o zip novo sobre a pasta e inicie de novo. Suas contas e configurações ficam onde estão."
   },
   "settings": {
     "WebEnabled": {
@@ -3033,7 +3034,7 @@
     },
     "Rep4RepLearnCap": {
       "label": "Aprender o limite real",
-      "tip": "Deixa ela aprender o limite diário real de comentários desta conta pelas recusas da Steam. Uma recusa de “comentando com muita frequência” nunca baixa o limite."
+      "tip": "Quando a Steam diz que a conta chegou ao limite diário de comentários antes do número definido acima, esse vira o limite dela (nunca abaixo de 5). Uma recusa por \"comentando com muita frequência\" é sobre o intervalo entre comentários e nunca o muda."
     },
     "Rep4RepRetryRefused": {
       "label": "Tentar de novo um comentário recusado",
@@ -3154,7 +3155,7 @@
     },
     "AutoUpdate": {
       "label": "Atualizar sozinho",
-      "tip": "O que acontece quando sai uma versão nova. Me avisar: diz no log, no Telegram e no Discord, e você digita update accept. Instalar à noite: instala sozinho nos horários abaixo, só quando nenhuma conta em modo humano está acordada e ninguém está jogando numa conta, e avisa antes e depois. Só Windows.",
+      "tip": "O que acontece quando sai uma versão nova. Me avisar: diz no log, no Telegram e no Discord, e você digita update accept. Instalar à noite: instala sozinho nos horários abaixo, só quando nenhuma conta em modo humano está acordada e ninguém está jogando numa conta, e avisa antes e depois. Não no Docker nem como serviço do Linux, que se atualizam à mão.",
       "choices": "0 me avisar | 1 instalar à noite"
     },
     "AutoUpdateFromHour": {
@@ -3223,7 +3224,7 @@
     },
     "UpdateWhenAsked": {
       "label": "Quando eu mando atualizar",
-      "tip": "O que update accept e o botão Atualizar fazem. Na hora: instala agora. Quando minhas contas dormirem: espera até nenhuma conta em modo humano estar acordada, ninguém estar jogando numa conta e nenhuma troca ou presente estar esperando - contas robô ligadas a noite toda não atrapalham. Sem contas em modo humano, espera pelas horas abaixo. update now sempre instala na hora. Só Windows.",
+      "tip": "O que update accept e o botão Atualizar fazem. Na hora: instala agora. Quando minhas contas dormirem: espera até nenhuma conta em modo humano estar acordada, ninguém estar jogando numa conta e nenhuma troca ou presente estar esperando - contas robô ligadas a noite toda não atrapalham. Sem contas em modo humano, espera pelas horas abaixo. update now sempre instala na hora. Não no Docker nem como serviço do Linux, que se atualizam à mão.",
       "choices": "0 na hora | 1 quando minhas contas dormirem"
     },
     "DiscordSecondLine": {

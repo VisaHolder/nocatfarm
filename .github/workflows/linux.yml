@@ -77,6 +77,9 @@ jobs:
           ! kill -0 $(cat pid) 2>/dev/null
           grep -q 'shutting down' run.log
 
+      - name: updating itself, and putting a broken version back
+        run: sh tests/update-rollback.sh ${{ matrix.rid }}
+
       - name: log
         if: always()
         run: tail -n 60 run.log || true

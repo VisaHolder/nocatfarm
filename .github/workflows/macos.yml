@@ -91,6 +91,9 @@ jobs:
           ! pgrep -f 'app/nocatFarm' > /dev/null
           grep -q 'shutting down' run.log
 
+      - name: updating itself, and putting a broken version back
+        run: sh tests/update-rollback.sh ${{ matrix.rid }}
+
       - name: zip it (flat, permissions kept, nothing of the test run in it)
         run: |
           rm -rf app/config app/logs

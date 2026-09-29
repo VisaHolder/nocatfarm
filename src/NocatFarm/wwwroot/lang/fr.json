@@ -1447,7 +1447,6 @@
     "made the key that encrypts saved logins: {0} - keep it with the config folder, the saved logins can't be read without it": "clé créée pour chiffrer les connexions enregistrées : {0} - garde-la avec le dossier de configuration, sans elle les connexions enregistrées sont illisibles",
     "saved logins are kept as plain text - the key that encrypts them ({0}) couldn't be used: {1}. Keep the config folder somewhere private.": "les connexions enregistrées sont gardées en clair - la clé qui les chiffre ({0}) n'a pas pu être utilisée : {1}. Garde le dossier de configuration dans un endroit privé.",
     "saved logins are kept as plain text - this system has no AES-GCM to encrypt them with. Keep the config folder somewhere private.": "les connexions enregistrées sont gardées en clair - ce système n'a pas AES-GCM pour les chiffrer. Garde le dossier de configuration dans un endroit privé.",
-    "nocat.farm only updates itself on Windows - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "nocat.farm ne se met à jour tout seul que sous Windows - arrête-le, extrais {0} depuis {1} par-dessus ce dossier (config/ et logs/ sont conservés) et relance-le",
     "What's waiting to be confirmed": "Ce qui attend une confirmation",
     "Steam Guard codes": "Codes Steam Guard",
     "{0} - {1} is out, send /update to see how to install it": "{0} - {1} est sorti, envoie /update pour voir comment l'installer",
@@ -2160,7 +2159,6 @@
     "update failed: download broke off ({0}) - try again": "mise à jour ratée : téléchargement interrompu ({0}) - réessaie",
     "update failed: download stopped at {0} of {1}MB - try again": "mise à jour ratée : téléchargement arrêté à {0} sur {1}MB - réessaie",
     "update failed: couldn't unpack ({0}) - disk full?": "mise à jour ratée : décompression impossible ({0}) - disque plein ?",
-    "update failed: the download has no nocatFarm.exe": "mise à jour ratée : le téléchargement n'a pas nocatFarm.exe",
     "update failed: couldn't back up the current version ({0})": "mise à jour ratée : sauvegarde de la version actuelle impossible ({0})",
     "update: all signed out - restarting into {0}": "mise à jour : tout est déconnecté - redémarrage sur {0}",
     "update failed: {0} - nothing changed": "mise à jour ratée : {0} - rien changé",
@@ -2224,14 +2222,17 @@
     "File logging is off - turn on \"Write a log file\" below.": "L'écriture du journal est désactivée - active « Écrire un fichier journal » plus bas.",
     "Opened {0}": "Ouvert : {0}",
     "The log files are in {0} on the PC nocat.farm runs on.": "Les fichiers journaux sont dans {0}, sur le PC où tourne nocat.farm.",
-    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; with the Linux or Mac zip, unzip the new one and keep your config folder. Your accounts and settings stay where they are.": "Il te prévient quand une nouvelle version sort. Ici, il ne peut pas l'installer tout seul - dans Docker, récupère la nouvelle version et lance docker compose up -d --build ; avec le zip Linux ou Mac, décompresse le nouveau et garde ton dossier config. Tes comptes et réglages restent où ils sont.",
     "on": "activé",
     "Everything has an explanation attached - tap or hover the {0} beside any setting.": "Tout est expliqué - touche ou survole le {0} à côté de chaque réglage.",
     "the rep4rep hold has run out - back on at {0}/{1}": "la pause rep4rep est terminée - on reprend à {0}/{1}",
     "this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it": "ce compte ne commente plus jusqu'à {0} - 'rep4rep clear {1}' lève la pause",
     "nocatFarm.json didn't load - still on the settings in use; fix it and 'reload' again": "nocatFarm.json n'a pas pu être chargé - les réglages en cours restent ; corrigez-le puis refaites 'reload'",
     "{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list": "{0} est en mode humain - il joue aux jeux de \"Jeux et à quelle fréquence\" (GameWeights), pas à cette liste",
-    "update stopped - nocat.farm was closed first; nothing changed": "mise à jour arrêtée - nocat.farm a été fermé avant ; rien n'a été modifié"
+    "update stopped - nocat.farm was closed first; nothing changed": "mise à jour arrêtée - nocat.farm a été fermé avant ; rien n'a été modifié",
+    "running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again": "en service, nocat.farm ne se met pas à jour tout seul - arrête-le, extrais {0} depuis {1} par-dessus ce dossier (config/ et logs/ sont gardés) et relance-le",
+    "update failed: it was started with an option that has a space in it - update by hand this time": "échec de la mise à jour : il a été lancé avec une option qui contient une espace - mets à jour à la main cette fois",
+    "update failed: the download has no {0}": "échec de la mise à jour : le téléchargement ne contient pas {0}",
+    "It tells you when a new version is out. Here it can't install it by itself - in Docker, get the new version and run docker compose up -d --build; run as a Linux service, stop it, unzip the new zip over the folder and start it again. Your accounts and settings stay where they are.": "Il te prévient quand une nouvelle version sort. Ici, il ne peut pas l'installer tout seul - dans Docker, récupère la nouvelle version et lance docker compose up -d --build ; en service Linux, arrête-le, décompresse le nouveau zip par-dessus le dossier et relance-le. Tes comptes et réglages restent où ils sont."
   },
   "settings": {
     "WebEnabled": {
@@ -3033,7 +3034,7 @@
     },
     "Rep4RepLearnCap": {
       "label": "Apprendre la vraie limite",
-      "tip": "Lui permet d'apprendre la vraie limite quotidienne de commentaires de ce compte à partir des refus de Steam. Un refus « commentaires trop fréquents » ne baisse jamais la limite."
+      "tip": "Quand Steam dit que le compte a atteint sa limite quotidienne de commentaires avant le nombre réglé plus haut, ça devient sa limite (jamais moins de 5). Un refus « commente trop souvent » concerne l'écart entre les commentaires et ne la change jamais."
     },
     "Rep4RepRetryRefused": {
       "label": "Réessayer un commentaire refusé",
@@ -3154,7 +3155,7 @@
     },
     "AutoUpdate": {
       "label": "Se mettre à jour seul",
-      "tip": "Ce qui se passe quand une nouvelle version sort. Me prévenir : il le dit dans le journal, sur Telegram et Discord, et vous tapez update accept. Installer la nuit : il s'installe seul aux heures ci-dessous, seulement quand aucun compte en mode humain n'est réveillé et que personne ne joue sur un compte, et prévient avant et après. Windows uniquement.",
+      "tip": "Ce qui se passe quand une nouvelle version sort. Me prévenir : il le dit dans le journal, sur Telegram et Discord, et vous tapez update accept. Installer la nuit : il s'installe seul aux heures ci-dessous, seulement quand aucun compte en mode humain n'est réveillé et que personne ne joue sur un compte, et prévient avant et après. Pas dans Docker ni en service Linux, qui se mettent à jour à la main.",
       "choices": "0 me prévenir | 1 installer la nuit"
     },
     "AutoUpdateFromHour": {
@@ -3223,7 +3224,7 @@
     },
     "UpdateWhenAsked": {
       "label": "Quand je dis mise à jour",
-      "tip": "Ce que font update accept et le bouton Mettre à jour. Tout de suite : il installe maintenant. Quand mes comptes dorment : il attend qu'aucun compte en mode humain ne soit éveillé, que personne ne joue sur un compte et qu'aucun échange ou cadeau n'attende - les comptes robots allumés toute la nuit ne le bloquent pas. Sans compte en mode humain, il attend les heures ci-dessous. update now installe toujours tout de suite. Windows uniquement.",
+      "tip": "Ce que font update accept et le bouton Mettre à jour. Tout de suite : il installe maintenant. Quand mes comptes dorment : il attend qu'aucun compte en mode humain ne soit éveillé, que personne ne joue sur un compte et qu'aucun échange ou cadeau n'attende - les comptes robots allumés toute la nuit ne le bloquent pas. Sans compte en mode humain, il attend les heures ci-dessous. update now installe toujours tout de suite. Pas dans Docker ni en service Linux, qui se mettent à jour à la main.",
       "choices": "0 tout de suite | 1 quand mes comptes dorment"
     },
     "DiscordSecondLine": {
