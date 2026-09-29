@@ -138,8 +138,10 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	/// </remarks>
 	private static readonly DateTime Started = DateTime.UtcNow;
 
-	/// <summary>Set once the hold has been tidied away, so three accounts do not all rewrite the same file.</summary>
-	private static int _tidied;
+	/// <summary>The hold (its deadline's ticks) already tidied away, so three accounts do not all rewrite the same file.</summary>
+	/// <remarks>The deadline, not a once-per-run flag: a flag tidied the first hold of a run and never a later one, which
+	/// then sat in the config expired - and the next hold was worked out from its stale start, already over.</remarks>
+	private static long _tidiedFor;
 
 	/// <summary>
 	/// Put this account back to a clean slate once a hold has passed, then tidy the hold away.
@@ -169,7 +171,8 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 				await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 			}
 
-			Log.Info(new Said("the rep4rep hold has run out - starting fresh at 0/{0}", Cap), Bot.Name);
+			// The comments of the last 24h still count - a short hold doesn't wipe them.
+			Log.Info(new Said("the rep4rep hold has run out - back on at {0}/{1}", _state?.PostsInLast24h() ?? 0, Cap), Bot.Name);
 		}
 
 		// Whichever account gets here after the grace tidies up for everybody. Deliberately NOT pinned to the
@@ -177,7 +180,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		// of its settle-in window, so a hold could sit there expired indefinitely because account one happened
 		// to be stopped. Clearing is idempotent, so it does not matter who does it or how often.
 		if ((now >= end + TidyGrace) && (now - Started >= TidyGrace)
-			&& (Interlocked.Exchange(ref _tidied, 1) == 0)) {
+			&& (Interlocked.Exchange(ref _tidiedFor, end.Ticks) != end.Ticks)) {
 			Live.Global.Rep4RepHoldUntil = null;
 			Live.Global.Rep4RepHoldFrom = null;
 			Live.Global.Rep4RepPauseHours = 0;
@@ -782,9 +785,12 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			_closeEarly = Rng.Next(0, 41);
 		}
 
-		int stagger = _openStagger;
+		// Neither may eat more than its share of a short window. A 1-hour window could open 55 minutes late and close 40
+		// early - after it had opened - and then the account couldn't comment at all that day.
+		int span = (endHour - startHour) * 60;
+		int stagger = Math.Min(_openStagger, span / 2);
 		DateTime open = now.Date.AddHours(startHour).AddMinutes(stagger);
-		DateTime close = now.Date.AddHours(endHour).AddMinutes(-_closeEarly);
+		DateTime close = now.Date.AddHours(endHour).AddMinutes(-Math.Min(_closeEarly, span / 3));
 
 		if (now < open) {
 			return (int) (open - now).TotalSeconds;
@@ -845,6 +851,14 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 		if (_state.PostsInLast24h() >= Cap) {
 			return $"Already at {Cap} comments in the last 24 hours - posting more is what gets accounts blocked.";
+		}
+
+		// Resting after refusals, or after Steam's daily limit, is the same kind of ceiling as the cap - posting through
+		// it is how an account goes from refused comments to a comment ban.
+		if (_state.IsBlocked) {
+			DateTime until = new(_state.BlockedUntil, DateTimeKind.Utc);
+
+			return new Said("this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it", Fmt.Clock(until), Bot.Name).ToString();
 		}
 
 		_profileId ??= await _api.ResolveProfileIdAsync(Bot.SteamId, Live.Global.Rep4RepAutoAddProfiles, ct).ConfigureAwait(false);

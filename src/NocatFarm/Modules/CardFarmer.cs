@@ -222,7 +222,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				}
 
 				// Farming switched off, or a game just added to the account (it may have cards) - look now, not in hours.
-				if (!Bot.EffectiveFarmCards || (Bot.LicenseGeneration != _licensesSeen)) {
+				if (!Bot.EffectiveFarmCards || (Bot.LicenseGeneration != _licensesAsked)) {
 					break;
 				}
 			}
@@ -231,6 +231,13 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 	/// <summary>The licence list the last badge read saw - a newer one means a game may have been added.</summary>
 	private int _licensesSeen = -1;
+
+	/// <summary>
+	/// The licence list the last badge read was made for, whether or not it worked - what the wait watches for a new game.
+	/// Watching <see cref="_licensesSeen"/> instead, a read that failed never caught up with it, so every wait after one
+	/// broke off within the minute and read up to twenty badge pages again, for as long as Steam kept failing.
+	/// </summary>
+	private int _licensesAsked = -1;
 
 	/// <summary>
 	/// Farming time on each game since its card count last moved, carried across sittings, pauses and restarts of the
@@ -254,7 +261,14 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>Whether this module may put a farming game on right now - asked again after any long wait.</summary>
-	private bool MayFarmNow() => Bot.EffectiveFarmCards && Bot.CanPlay && !Bot.Grinding && !ScheduleWantsItBack() && InFarmWindow();
+	/// <summary>
+	/// Past the account's own farming hours - the "farm cards only from ... until" window, or, farming in sittings, the
+	/// end of the sitting. Both used to be looked at only before a game went on: a game started at 22:50 in a 9-23
+	/// window farmed on until its cards ran out at 3am, and a sitting ran as long as the game did.
+	/// </summary>
+	private bool OutsideOwnHours() => !InFarmWindow() || (Bot.Cfg.FarmInSittings && !Bot.Cfg.LegitMode && !InSittingNow(out _));
+
+	private bool MayFarmNow() =>Bot.EffectiveFarmCards && Bot.CanPlay && !Bot.Grinding && !ScheduleWantsItBack() && InFarmWindow();
 
 	/// <summary>
 	/// Handing the account back: the claim goes, and so does the farm game if it's still the only thing on and human
@@ -381,6 +395,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		bool reuse = (licenses == _licensesSeen) && (Bot.CardsCheckedAt is { } looked) && (DateTime.UtcNow - looked < maxAge)
 			&& Queue.Any(static g => g.CardsRemaining > 0);
 
+		_licensesAsked = licenses;
 		List<FarmTarget>? found;
 
 		if (reuse) {
@@ -841,7 +856,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 			// The schedule wants the account back - a sitting ended, bedtime, morning - or farming was switched off.
 			// Checked before the claim and the game go back on below, or they'd go straight back over human mode's break.
-			if (ScheduleWantsItBack() || !Bot.EffectiveFarmCards) {
+			if (ScheduleWantsItBack() || OutsideOwnHours() || !Bot.EffectiveFarmCards) {
 				_status = Bot.EffectiveFarmCards ? new Said("between sittings - {0} card(s) left", game.CardsRemaining) : new Said("off");
 				HandBack(game.AppId);
 
@@ -864,7 +879,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			// Not the same number of minutes every time: the badge page is read on an uneven beat.
 			DateTime recheckAt = DateTime.UtcNow + (check * (0.8 + (Rng.Next(0, 46) / 100.0)));
 
-			while (!pushed && !ct.IsCancellationRequested && (DateTime.UtcNow < recheckAt) && Bot.CanPlay && !Bot.Grinding && !ScheduleWantsItBack()) {
+			while (!pushed && !ct.IsCancellationRequested && (DateTime.UtcNow < recheckAt) && Bot.CanPlay && !Bot.Grinding && !ScheduleWantsItBack() && !OutsideOwnHours()) {
 				TimeSpan left = recheckAt - DateTime.UtcNow;
 				pushed = await Bot.WaitForItemDropAsync(left < TimeSpan.FromSeconds(20) ? left : TimeSpan.FromSeconds(20), ct).ConfigureAwait(false);
 			}
@@ -1138,8 +1153,17 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				return;
 			}
 
-			if (ScheduleWantsItBack() || !Bot.EffectiveFarmCards) {
+			if (ScheduleWantsItBack() || OutsideOwnHours() || !Bot.EffectiveFarmCards) {
 				HandBack(batch.Count == 1 ? batch[0].AppId : 0);
+
+				// HandBack only puts a lone game down, and on a human-mode account the idler doesn't replace the rest. A batch
+				// left behind this way ran on - up to 31 games - after farming was switched off at night, so whatever is still
+				// on and is all the batch's goes too.
+				IReadOnlyList<uint> still = Bot.PlayingApps;
+
+				if (Bot.HumanOwned && (batch.Count > 1) && (still.Count > 0) && still.All(a => batch.Exists(g => g.AppId == a))) {
+					Bot.StopPlaying();
+				}
 
 				return;
 			}
@@ -1202,7 +1226,14 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			string? page = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/badges?l=english&p={p}"), ct).ConfigureAwait(false);
 
 			if ((page == null) || !IsProfilePage(page)) {
-				break;   // partial results still beat none - the next cycle picks up the rest
+				// Partial results still beat none - the next cycle picks up the rest. But not when the pages that did load
+				// had nothing to farm: that read as "all done", which swept the cards, could log the account out, and
+				// didn't look again for hours, with the games still waiting on the pages that failed.
+				if (byApp.Count == 0) {
+					return null;
+				}
+
+				break;
 			}
 
 			CollectPage(page, byApp, zero);
@@ -1234,7 +1265,10 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				facts = await GameCatalog.LookUpAsync(app, ct).ConfigureAwait(false);
 			}
 
-			if (facts is { IsGame: false }) {
+			// Unless the account's own library lists it as a game. The store says nothing at all about a game that has been
+			// delisted, or isn't sold in this PC's region, and that silence reads as "not a game" - yet those still drop
+			// cards, and whole libraries of them went unfarmed. A sale or event badge is never in the library.
+			if (facts is { IsGame: false } && (Bot.Library.Find(app) == null)) {
 				Log.Debug(new Said("{0} has card drops listed but isn't a game (a sale or event badge) - not farmed", GameNames.Of(app)), Bot.Name);
 				byApp.Remove(app);
 			}
@@ -1404,7 +1438,30 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		}
 
 		_farmDayStamp = now.DayOfYear;
-		_farmWindows = [];
+
+		_farmWindows = SittingsOn(Bot.Name, now.Date, Math.Clamp(Bot.Cfg.FarmHoursPerDay, 1, 20));
+		List<(DateTime From, DateTime To)> today = [.. _farmWindows.Where(w => w.From >= now.Date)];
+
+		int spent = (int) today.Sum(static w => (w.To - w.From).TotalMinutes);
+
+		Log.Debug(new Said("today's farming: {0} sitting(s), {1} in total", today.Count, Fmt.Hm(spent))
+			+ (today.Count > 0 ? $", {today[0].From:HH:mm}-{today[^1].To:HH:mm}" : ""),
+			Bot.Name);
+	}
+
+	/// <summary>
+	/// The sittings that fall on <paramref name="day"/>: that day's own, and the end of the night before's.
+	///
+	/// Yesterday's last sitting can run past midnight - and the new day is rolled at midnight, which used to throw the
+	/// rest of it away: a sitting laid out as 23:40-01:30 stopped dead at 00:00. The roll is seeded by the date, so
+	/// yesterday's is the same one it was then, and whatever of it runs into today is kept.
+	/// </summary>
+	internal static List<(DateTime From, DateTime To)> SittingsOn(string name, DateTime day, int hours) =>
+		[.. RollSittings(name, day.Date.AddDays(-1), hours).Where(w => w.To > day.Date), .. RollSittings(name, day.Date, hours)];
+
+	/// <summary>One day's farming sittings for an account - the same every time for the same account and date.</summary>
+	internal static List<(DateTime From, DateTime To)> RollSittings(string name, DateTime day, int hours) {
+		List<(DateTime From, DateTime To)> windows = [];
 
 		// Same account, same date, same day - however many times it is rolled.
 		//
@@ -1412,22 +1469,21 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		// schedule on every restart - which is precisely the thing this seeding exists to prevent. Restarting
 		// twice would have handed out two fresh sets of sittings. A plain rolling hash of the name is stable
 		// across processes and machines, which is all that is wanted here.
-		int seed = now.Year * 1000 + now.DayOfYear;
+		int seed = day.Year * 1000 + day.DayOfYear;
 
-		foreach (char c in Bot.Name) {
+		foreach (char c in name) {
 			seed = (seed * 31) + c;
 		}
 
 		Random rng = new(seed);
 
-		bool weekend = now.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
-		int hours = Math.Clamp(Bot.Cfg.FarmHoursPerDay, 1, 20);
+		bool weekend = day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
 		int target = (int) (hours * 60 * (weekend ? rng.Next(115, 146) : rng.Next(85, 116)) / 100.0);
 
 		// Start somewhere in the morning-to-midday spread, then lay sittings end to end with gaps until the
 		// day's minutes are spent or it gets too late to plausibly still be at it.
-		DateTime at = now.Date.AddHours(rng.Next(8, 13)).AddMinutes(rng.Next(0, 60));
-		DateTime latest = now.Date.AddHours(rng.Next(23, 27));   // some days run past midnight
+		DateTime at = day.Date.AddHours(rng.Next(8, 13)).AddMinutes(rng.Next(0, 60));
+		DateTime latest = day.Date.AddHours(rng.Next(23, 27));   // some days run past midnight
 		int spent = 0;
 
 		while ((spent < target) && (at < latest)) {
@@ -1439,14 +1495,12 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 			DateTime end = at.AddMinutes(length);
 
-			_farmWindows.Add((at, end));
+			windows.Add((at, end));
 			spent += length;
 			at = end.AddMinutes(rng.Next(20, 110));   // up, away from the desk, back later
 		}
 
-		Log.Debug(new Said("today's farming: {0} sitting(s), {1} in total", _farmWindows.Count, Fmt.Hm(spent))
-			+ (_farmWindows.Count > 0 ? $", {_farmWindows[0].From:HH:mm}-{_farmWindows[^1].To:HH:mm}" : ""),
-			Bot.Name);
+		return windows;
 	}
 
 	/// <summary>Inside one of today's rolled sittings. The window that is open right now, if any.</summary>
@@ -1511,9 +1565,15 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			return null;
 		}
 
+		// The known name first: on a game's card page that header is often the "Badges" breadcrumb, and games picked back up
+		// from here were farmed, logged and given up on as "Badges".
+		string? header = TagText(html, "profile_small_header_location");
+
 		return new FarmTarget {
 			AppId = appId,
-			GameName = TagText(html, "profile_small_header_location") ?? appId.ToString(CultureInfo.InvariantCulture),
+			GameName = GameNames.IsKnown(appId) || string.IsNullOrWhiteSpace(header) || header.Equals("Badges", StringComparison.OrdinalIgnoreCase)
+				? GameNames.Of(appId)
+				: header,
 			HoursPlayed = ReadDecimal(TagText(html, "badge_title_stats_playtime")),
 			CardsRemaining = ReadInt(TagText(html, "progress_info_bold"))
 		};

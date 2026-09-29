@@ -209,14 +209,20 @@ public static class Limiters {
 			return;   // somebody else already holds it
 		}
 
-		try {
-			Log.Warn(new Said("Steam is rate-limiting logins - all accounts wait {0}m", LoginCooldownMinutes));
-			await Task.Delay(TimeSpan.FromMinutes(LoginCooldownMinutes), ct).ConfigureAwait(false);
-		} catch (OperationCanceledException) {
-			// shutting down
-		} finally {
-			LoginCooldownLatch.Release();
-		}
+		Log.Warn(new Said("Steam is rate-limiting logins - all accounts wait {0}m", LoginCooldownMinutes));
+
+		// The cooldown belongs to every account, so it runs on its own clock rather than the one account's that
+		// happened to hit it. Tied to that account, stopping or restarting it ended the wait for all of them, and
+		// every account in line signed in straight into the live limit. The caller then waits its turn like the rest.
+		TimeSpan wait = TimeSpan.FromMinutes(LoginCooldownMinutes);
+
+		_ = Task.Run(async () => {
+			try {
+				await Task.Delay(wait).ConfigureAwait(false);
+			} finally {
+				LoginCooldownLatch.Release();
+			}
+		});
 	}
 
 	/// <summary>

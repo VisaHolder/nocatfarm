@@ -284,6 +284,16 @@ public sealed class MainWindow : IDisposable {
 		}
 	}
 
+	/// <summary>Empty the log pane - the 'clear' command. The log file is untouched.</summary>
+	public void ClearLog() {
+		lock (_logGate) {
+			_log.Clear();
+			_logScroll = 0;
+		}
+
+		Invalidate();
+	}
+
 	// ── the window ──────────────────────────────────────────────────────────
 	/// <summary>Raised if the window cannot be created, so the caller can put the console log back.</summary>
 	public event Action? Failed;
@@ -486,6 +496,14 @@ public sealed class MainWindow : IDisposable {
 
 		if (asHelp is "help" or "?" or "h") {
 			SetHelpSheet(true);
+			SetWindowText(_input, "");
+
+			return;
+		}
+
+		// 'clear' empties this window only - the dashboard keeps its own log, and the file keeps everything.
+		if (Commands.IsClear(line)) {
+			ClearLog();
 			SetWindowText(_input, "");
 
 			return;

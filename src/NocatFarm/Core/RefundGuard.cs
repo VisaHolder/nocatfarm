@@ -1,4 +1,3 @@
-using NocatFarm.Config;
 
 namespace NocatFarm.Core;
 

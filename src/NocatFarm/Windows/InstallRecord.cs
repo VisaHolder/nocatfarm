@@ -1,6 +1,5 @@
 using System.Runtime.Versioning;
 using Microsoft.Win32;
-using NocatFarm.Core;
 
 namespace NocatFarm.Windows;
 

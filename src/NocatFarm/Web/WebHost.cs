@@ -1,10 +1,10 @@
 ﻿using System.Collections.Concurrent;
 using System.Net;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,8 +45,10 @@ public sealed class WebHost : IAsyncDisposable {
 		IPAddress from = ctx.Connection.RemoteIpAddress ?? IPAddress.None;
 		string? forwarded = ctx.Request.Headers["X-Forwarded-For"].FirstOrDefault() ?? ctx.Request.Headers["X-Real-IP"].FirstOrDefault();
 
+		// The LAST address in the list: the proxy adds the one it really saw to the end. The first is whatever the visitor
+		// chose to send, so reading that let anybody give a fresh made-up address with every guess and never be locked out.
 		if (IPAddress.IsLoopback(from) && !string.IsNullOrWhiteSpace(forwarded)) {
-			return (forwarded.Split(',')[0].Trim(), false);
+			return (forwarded.Split(',')[^1].Trim(), false);
 		}
 
 		return (from.ToString(), IPAddress.IsLoopback(from));
@@ -361,6 +363,14 @@ public sealed class WebHost : IAsyncDisposable {
 			return "This dashboard only opens as http://localhost on the PC it runs on. To open it from another device, set a dashboard password and listen on 0.0.0.0.";
 		}
 
+		// With no password, "from this PC" is all that guards it - and a reverse proxy on this PC makes every visitor on the
+		// internet arrive from this PC, with a Host of localhost when the proxy rewrites it (nginx does by default). A
+		// request the proxy says it forwarded came from somewhere else.
+		if (string.IsNullOrEmpty(_cfg.WebPassword)
+			&& (request.Headers.ContainsKey("X-Forwarded-For") || request.Headers.ContainsKey("X-Real-IP") || request.Headers.ContainsKey("Forwarded"))) {
+			return "This dashboard has no password, so it only opens on the PC it runs on - not through a proxy. Set a dashboard password first.";
+		}
+
 		if (HttpMethods.IsGet(request.Method) || HttpMethods.IsHead(request.Method)) {
 			return null;
 		}
@@ -420,10 +430,12 @@ public sealed class WebHost : IAsyncDisposable {
 			return false;
 		}
 
-		// Constant-time compare: a check that returns early leaks the password one character at a time.
+		// Constant-time compare: a check that returns early leaks the password one character at a time. Of the hashes,
+		// so every character counts: padded and cut to 64, "pw  " passed for "pw" and a long password only needed its
+		// first 64 characters.
 		bool ok = CryptographicOperations.FixedTimeEquals(
-			Encoding.UTF8.GetBytes(password.PadRight(64)[..64]),
-			Encoding.UTF8.GetBytes(_cfg.WebPassword.PadRight(64)[..64]));
+			SHA256.HashData(Encoding.UTF8.GetBytes(password)),
+			SHA256.HashData(Encoding.UTF8.GetBytes(_cfg.WebPassword)));
 
 		if (!ok) {
 			int count = (_failures.TryGetValue(ip, out (int Count, DateTime Until) prev) ? prev.Count : 0) + 1;
@@ -488,6 +500,13 @@ public sealed class WebHost : IAsyncDisposable {
 
 		// ── live state ──
 		app.MapGet("/api/status", (HttpContext ctx) => Guard(ctx, () => Results.Json(BuildStatus())));
+
+		// Opens only on the PC nocat.farm runs on, and only for someone sitting at it: from a phone it would pop up a
+		// window on a screen nobody is looking at. Everyone gets the path.
+		app.MapPost("/api/logs/open", (HttpContext ctx) => Guard(ctx, () => Results.Json(new {
+			Path = Log.Folder,
+			Opened = (Log.Folder is { } dir) && WhoIsSigningIn(ctx).ThisPc && Platform.OpenFolder(dir)
+		})));
 
 		app.MapGet("/api/log", (HttpContext ctx, int? n, long? since) => Guard(ctx, () => Results.Json(
 			(since.HasValue ? Log.Since(since.Value) : Log.Recent(Math.Clamp(n ?? 200, 1, 1000)))
@@ -839,6 +858,11 @@ public sealed class WebHost : IAsyncDisposable {
 			// An empty secret means "unchanged", never "erase it". Every Secret in the registry, not a list here.
 			KeepSecrets(body, current, Settings.Global);
 
+			// Only settings are changed here. The page posts its whole copy of the config, so the fields the app keeps
+			// for itself - the theme, the account order, the window's place, a rep4rep hold, the connected chat - came
+			// back as they were when the page loaded, undoing whatever had changed them since.
+			KeepServerFields(body, current);
+
 			if (Invalid(body, current, Settings.Global) is { } error) {
 				return Results.Json(new { ok = false, error }, statusCode: 400);
 			}
@@ -922,7 +946,9 @@ public sealed class WebHost : IAsyncDisposable {
 				.Where(d => !Equals(Settings.Show(body, d), Settings.Show(bot.Cfg, d)))
 				.ToList();
 
-			if (!ConfigStore.SaveBot(name, body)) {
+			// The account's own name, not the one in the address: the lookup ignores case, and off Windows "MAIN" in the
+			// address wrote MAIN.json beside main.json - two files for one account, either of which the next start read.
+			if (!ConfigStore.SaveBot(bot.Name, body)) {
 				adjusted.Add(new Said("in use now, but not saved to disk - see the Log").ToString());
 			}
 
@@ -932,7 +958,7 @@ public sealed class WebHost : IAsyncDisposable {
 				Commands.ApplyBotSideEffects(bot, def);
 			}
 
-			Log.Info("settings saved from the dashboard", name);
+			Log.Info("settings saved from the dashboard", bot.Name);
 
 			return Results.Json(new { ok = true, Adjusted = adjusted });
 		});
@@ -1634,6 +1660,15 @@ public sealed class WebHost : IAsyncDisposable {
 	/// key in it blanked the Steam login, the games and everything else. Now the current config is the starting
 	/// point and only what was actually sent is written over it.
 	/// </summary>
+	/// <summary>Every global field that isn't a setting, put back to what the app holds now.</summary>
+	internal static void KeepServerFields(GlobalConfig body, GlobalConfig current) {
+		foreach (PropertyInfo p in typeof(GlobalConfig).GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
+			if (p.CanRead && p.CanWrite && (p.GetIndexParameters().Length == 0) && !Settings.Global.Any(d => d.Name == p.Name)) {
+				p.SetValue(body, p.GetValue(current));
+			}
+		}
+	}
+
 	private static async Task<T?> ReadMergedAsync<T>(HttpContext ctx, T current) where T : class {
 		JsonSerializerOptions options = ctx.RequestServices
 			.GetRequiredService<Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>>().Value.SerializerOptions;

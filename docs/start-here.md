@@ -52,7 +52,8 @@ settings and logs as well. Say no if you might install it again.
 folder and run **`nocatFarm.exe`**. Settings, logs and login tokens all stay in that folder, and uninstalling is
 closing it and deleting the folder. It updates itself the same way the installed one does.
 
-The files ending in `_linux-x64` and `_linux-arm64` are for Linux; see [Linux and Docker](linux-docker-vps.md).
+The files ending in `_osx-arm64` (M1 and newer) and `_osx-x64` (Intel) are for a Mac, and `_linux-x64` and
+`_linux-arm64` for Linux; see [Linux, Mac and Docker](linux-docker-vps.md).
 
 Either way there's nothing else to install, not even .NET. A small window opens, and the dashboard opens in your
 browser at `http://127.0.0.1:7242/`.
@@ -85,8 +86,8 @@ on the Overview page replays it.
 6. **Notifications** (Advanced). Connect Telegram or Discord, and choose whether you're told when an update
    installs.
 7. **Keep it up to date.** One switch: install new versions at night while your accounts sleep. Advanced also sets
-   the hours, the wait after a release and how often it looks. On Linux and Docker this step explains how to update
-   by hand instead.
+   the hours, the wait after a release and how often it looks. On Linux, a Mac and Docker this step explains how to
+   update by hand instead.
 8. **What kind of account is it?** Asked when you have no accounts yet.
    - *My main - I play on it* adds it in human mode, so it acts like a person. You can also tick
      *I also sign into it from my own Steam app*. Then nocat.farm never changes its online status, so it never
@@ -230,8 +231,8 @@ The message that a new version is out lists what changed, and so does the log af
 *Send install progress* on (it's off by default), Telegram and Discord get "Downloaded 1.4.9 - installing it now",
 then "Install complete - now on 1.4.9" with what's new, or that it failed or was undone and why.
 
-**On Linux and in Docker** it tells you when a new version is out, but you update it yourself. See
-[Updating on Linux](linux-docker-vps.md#from-the-zip) and [Updating in Docker](linux-docker-vps.md#docker).
+**On Linux, a Mac and in Docker** it tells you when a new version is out, but you update it yourself. See
+[Updating on Linux](linux-docker-vps.md#from-the-zip), [on a Mac](linux-docker-vps.md#mac) and [in Docker](linux-docker-vps.md#docker).
 
 ## 8. If something looks wrong
 

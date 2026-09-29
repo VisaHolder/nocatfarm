@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using System.Text;
 
 using NocatFarm.Core;
 
@@ -25,6 +24,11 @@ public sealed class TrayIcon : IDisposable {
 	private const int WmLButtonDblClk = 0x0203;
 	private const int WmRButtonUp = 0x0205;
 	private const int WmLButtonUp = 0x0202;
+	private const int WmTimer = 0x0113;
+
+	/// <summary>The timer that holds a left click's menu back until a double-click has had its chance.</summary>
+	private static readonly IntPtr MenuTimerId = 1;
+	private bool _swallowNextUp;
 
 	private const int NimAdd = 0x0000;
 	private const int NimModify = 0x0001;
@@ -121,6 +125,9 @@ public sealed class TrayIcon : IDisposable {
 	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool AppendMenu(IntPtr menu, uint flags, int id, string? item);
 	[DllImport("user32.dll")] private static extern int TrackPopupMenuEx(IntPtr menu, uint flags, int x, int y, IntPtr hWnd, IntPtr parameters);
 	[DllImport("user32.dll")] private static extern bool GetCursorPos(out Point point);
+	[DllImport("user32.dll")] private static extern IntPtr SetTimer(IntPtr hWnd, IntPtr id, uint elapse, IntPtr timerProc);
+	[DllImport("user32.dll")] private static extern bool KillTimer(IntPtr hWnd, IntPtr id);
+	[DllImport("user32.dll")] private static extern uint GetDoubleClickTime();
 	[DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr hWnd);
 	[DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr hWnd, int cmdShow);
 	[DllImport("user32.dll")] private static extern bool IsIconic(IntPtr hWnd);
@@ -340,6 +347,9 @@ public sealed class TrayIcon : IDisposable {
 						// Double-click brings the app back. Opening a browser tab was the old behaviour from when
 						// the dashboard was the only face it had; now there is a window, and that is what people
 						// expect a tray icon to restore.
+						KillTimer(hWnd, MenuTimerId);
+						_swallowNextUp = true;   // the second click's button-up follows, and is not a click of its own
+
 						if (Commands.Window is { } window) {
 							window.Show();
 						} else {
@@ -348,11 +358,28 @@ public sealed class TrayIcon : IDisposable {
 
 						break;
 					case WmLButtonUp:
+						if (_swallowNextUp) {
+							_swallowNextUp = false;
+
+							break;
+						}
+
+						// The menu waits out a double-click first. Opened at once, it took the second click itself - a
+						// menu is modal - so the double-click never arrived and the window could never be brought back
+						// from the tray.
+						SetTimer(hWnd, MenuTimerId, GetDoubleClickTime(), IntPtr.Zero);
+
+						break;
 					case WmRButtonUp:
 						ShowMenu();
 
 						break;
 				}
+
+				return IntPtr.Zero;
+			case WmTimer when (wParam == MenuTimerId):
+				KillTimer(hWnd, MenuTimerId);
+				ShowMenu();
 
 				return IntPtr.Zero;
 			case WmCommand:

@@ -110,7 +110,7 @@ public static partial class Commands {
 		new("reload", "", GroupSettings, "Re-read every config file from disk."),
 		new("import", "<asf|ime|idlemaster|hourboostr|singleboostr|sgi|steamidler|auto> [path] [force]", GroupSettings, "Bring accounts and settings across from another idler - ArchiSteamFarm login tokens and all."),
 
-		new("log", "[count]", GroupOther, "The last few log lines.", "logs"),
+		new("log", "[count|folder]", GroupOther, "The last few log lines. 'log folder' opens the folder the log files are in, on this PC.", "logs"),
 		new("stats", "[hours]", GroupOther, "Each account's last 24 hours - hours banked, cards, comments, totals - then cards dropped and comments posted, by hour."),
 		new("notify", "[test]", GroupOther, "Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now."),
 		new("plugins", "", GroupOther, "Which plugins are loaded, and where they came from."),
@@ -120,6 +120,7 @@ public static partial class Commands {
 		new("mini", "[on|off]", GroupOther, "Shrink the window to a small panel of your accounts - what each is doing, start and stop, the dashboard - or back to the full window."),
 		new("dashboard", "[anywhere on|off]", GroupOther, "The dashboard's address - on this PC, on your phone over the same wifi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. 'dashboard anywhere on' opens it from anywhere and answers with the link; 'dashboard anywhere off' closes it (the same as 'anywhere on|off').", "web|link"),
 		new("anywhere", "[on|off]", GroupOther, "Open the dashboard from anywhere, not just your wifi - your router forwards the port (UPnP), like Jellyfin. 'anywhere on' does all of it and answers with the link; 'anywhere off' closes it again; on its own it says whether it's on and the link. Works from Telegram and Discord too.", "remote"),
+		new("clear", "", GroupOther, "Clears the log off the screen you type it in - the nocat.farm window, or the dashboard's Log and Console. The other one keeps its lines, and nothing is deleted: the log file has every line (Settings, Logging, Open the log folder).", "cls"),
 		new("unlock", "", GroupOther, "Locked out of the dashboard after too many wrong passwords? This lets you (and anyone else locked out) sign in again straight away."),
 		new("version", "", GroupOther, "Which version this is.", "about"),
 		new("update", "[accept|now|skip]", GroupOther, "Check for a newer release. 'update accept' downloads it and restarts into it - or, with 'When I say update' set to wait, installs it once your accounts are asleep; 'update now' always installs right away. 'update skip' skips that version - no more reminders about it and it never installs by itself - until a newer one comes out. Nothing installs by itself unless 'Update by itself' is set to install at night."),
@@ -336,6 +337,7 @@ public static partial class Commands {
 						? await Anywhere(mgr, rest[1..]).ConfigureAwait(false)   // 'dashboard anywhere on' - the same as 'anywhere on'
 						: DashboardLinks.Text(mgr.Global),
 				"unlock" => Unlock(),
+				"clear" or "cls" => new Said("clear works in the nocat.farm window and the dashboard - it clears that screen").ToString(),
 				"anywhere" or "remote" => await Anywhere(mgr, rest).ConfigureAwait(false),
 				"version" or "about" => About(),
 				"mini" => Mini(rest),
@@ -425,6 +427,9 @@ public static partial class Commands {
 			: RemoteAccess.Problem is { } problem ? new Said("Open from anywhere is on, but {0}", problem).ToString()
 			: new Said("Open from anywhere is on - still asking your router; 'anywhere' shows the link in a moment").ToString();
 	}
+
+	/// <summary>'clear' or 'cls', with or without a slash - handled by whichever screen it was typed in.</summary>
+	public static bool IsClear(string line) => line.Trim().TrimStart('/').ToLowerInvariant() is "clear" or "cls";
 
 	/// <summary>'unlock': lifts every dashboard sign-in lockout, so whoever mistyped their password can try again now.</summary>
 	private static string Unlock() {
@@ -1237,8 +1242,10 @@ public static partial class Commands {
 		// A batch of keys arrives as a file far more often than as something anybody would type, and pasting two
 		// hundred of them into a command line is not a thing people do. Any line shape works - one per line, with
 		// or without a game name beside it - because the key is found by its shape rather than by position.
-		if ((keys.Length == 1) && LooksLikePath(keys[0])) {
-			string path = keys[0].Trim('"');
+		// The words are put back together first: the command line is split on spaces, so "C:\Users\John Smith\keys.txt"
+		// arrived as two words and each was turned away as a bad key.
+		if ((keys.Length > 0) && LooksLikePath(keys[0]) && !keys.Any(Redeeming.LooksLikeKey)) {
+			string path = string.Join(' ', keys).Trim().Trim('"');
 
 			if (!File.Exists(path)) {
 				return $"There's no file at '{path}'.";
@@ -1613,7 +1620,8 @@ public static partial class Commands {
 		List<Confirmations.Item> picked;
 
 		if (args[1].Equals("all", StringComparison.OrdinalIgnoreCase)) {
-			picked = items;
+			// All of what was shown - a trade that turned up after the list, and was never seen, isn't confirmed with it.
+			picked = listed != null ? [.. items.Where(c => listed.Contains(c.Id))] : items;
 		} else if (int.TryParse(args[1].TrimStart('#'), out int n) && (n >= 1)) {
 			// By the list that was shown - so a new confirmation arriving in between can't shift what "2" means.
 			ulong? id = listed != null ? (n <= listed.Count ? listed[n - 1] : null) : (n <= items.Count ? items[n - 1].Id : null);
@@ -2242,6 +2250,12 @@ public static partial class Commands {
 			return NoSuchAccount(mgr, args[0]);
 		}
 
+		// Human mode plays from its own list, and with that filled in the idle list does nothing - this answered
+		// "idling 730" and nothing changed, and the saved list was put back from the backup when human mode went off.
+		if (bot.Cfg.LegitMode && !string.IsNullOrWhiteSpace(bot.Cfg.GameWeights)) {
+			return new Said("{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list", bot.Name).ToString();
+		}
+
 		string? error = Settings.Apply(bot.Cfg, Settings.FindBot("IdleGames")!, string.Join(',', args[1..]));
 
 		if (error != null) {
@@ -2630,8 +2644,9 @@ public static partial class Commands {
 			List<string> said = [];
 			uint tradable = page.TradableGems, untradable = page.UntradableGems, gems = page.Gems;
 
-			foreach (string arg in args[1..]) {
-				if (!uint.TryParse(arg.Trim(','), NumberStyles.None, CultureInfo.InvariantCulture, out uint appId) || (appId == 0)) {
+			// "730,440" as well as "730 440" - a comma list came back as one bad appID.
+			foreach (string arg in args[1..].SelectMany(static a => a.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))) {
+				if (!uint.TryParse(arg, NumberStyles.None, CultureInfo.InvariantCulture, out uint appId) || (appId == 0)) {
 					said.Add($"'{arg}' isn't an appID");
 
 					continue;
@@ -3367,11 +3382,27 @@ public static partial class Commands {
 
 	private static async Task<string> ReloadAsync(BotManager mgr) {
 		string passwordBefore = mgr.Global.WebPassword;
-		mgr.ApplyGlobal(ConfigStore.LoadGlobal());
+		GlobalConfig loaded = ConfigStore.LoadGlobal();
+
+		// A file that doesn't load comes back as defaults. Put in force, one stray comma blanked the dashboard password,
+		// the rep4rep token and the Telegram bot - so the settings in use stay until the file is fixed.
+		if (ConfigStore.GlobalBroken) {
+			await mgr.SyncFromDiskAsync().ConfigureAwait(false);
+
+			return new Said("nocatFarm.json didn't load - still on the settings in use; fix it and 'reload' again").ToString();
+		}
+
+		mgr.ApplyGlobal(loaded);
 
 		// A password changed in the file and reloaded ends every browser's session, like a change anywhere else.
 		if (!string.Equals(passwordBefore, mgr.Global.WebPassword, StringComparison.Ordinal)) {
 			Web.WebHost.Current?.SignOutAll();
+		}
+
+		// What a change made anywhere else sets off - logging, a rep4rep hold, start with Windows. All of them are safe
+		// to run again, which is how the dashboard's own save does it.
+		foreach (SettingDef def in Settings.Global) {
+			ApplyGlobalSideEffects(mgr, def);
 		}
 
 		await mgr.SyncFromDiskAsync().ConfigureAwait(false);
@@ -3380,6 +3411,12 @@ public static partial class Commands {
 	}
 
 	private static string Logs(string[] args) {
+		if ((args.Length > 0) && args[0].ToLowerInvariant() is "folder" or "dir" or "open") {
+			return Log.Folder is not { } dir ? new Said("file logging is off - turn on Write a log file under Settings, Logging").ToString()
+				: Platform.OpenFolder(dir) ? new Said("opened the log folder: {0}", dir).ToString()
+				: new Said("the log files are in {0}", dir).ToString();
+		}
+
 		int n = args.Length > 0 && int.TryParse(args[0], out int parsed) ? Math.Clamp(parsed, 1, 500) : 30;
 
 		return string.Join(Environment.NewLine, Log.Recent(n).Select(static e => $"{e.When:HH:mm:ss}  {e.Source,-12}{e.Text}"));

@@ -673,6 +673,11 @@ public static class ConfigStore {
 			loaded.Rep4RepApiToken = Secrets.Unprotect(loaded.Rep4RepApiToken);
 			loaded.WebProxyPassword = Secrets.Unprotect(loaded.WebProxyPassword);
 
+			// It loads, so it can be saved again. A file that was broken once and fixed ('reload') used to stay refused for
+			// the rest of the run: every change after that said it was saved and was gone at the next start.
+			_globalBroken = false;
+			_brokenSaveSaid = false;
+
 			if (plain && Secrets.Available) {
 				SaveGlobal(loaded);
 			}
@@ -702,6 +707,9 @@ public static class ConfigStore {
 
 	/// <summary>The global config didn't load, so the app is on defaults and must not save them over the file.</summary>
 	private static bool _globalBroken;
+
+	/// <summary>The last read of the global config failed - what it returned is defaults, not the settings.</summary>
+	public static bool GlobalBroken => _globalBroken;
 
 	private static bool _brokenSaveSaid;
 

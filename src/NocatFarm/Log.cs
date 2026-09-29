@@ -182,6 +182,9 @@ public static class Log {
 
 	public static bool DebugEnabled => _debug;
 
+	/// <summary>The folder the log files go in; null when file logging is off.</summary>
+	public static string? Folder => _logDir;
+
 	public static IReadOnlyList<Entry> Recent(int max = 200) {
 		Entry[] all = Ring.ToArray();
 

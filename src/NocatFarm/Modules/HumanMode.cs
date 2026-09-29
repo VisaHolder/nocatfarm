@@ -282,10 +282,18 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// then play/farm) on the next tick. Bed time is untouched, so it still turns in at its usual hour.
 	/// </summary>
 	public void WakeNow() {
+		// Today's plan first, if it hasn't been rolled yet. It normally waits for the earliest wake time, so 'wake' at 8am
+		// ran on last night's plan - its hours already played, so "done for today" - and then at 9:30 today's plan rolled
+		// a wake time hours away and sent the account back to bed.
+		if (_dayStamp != DateTime.Now.DayOfYear) {
+			RollNewDayIfNeeded(wakingNow: true);
+		}
+
 		int nowMin = (int) (DateTime.Now - DateTime.Now.Date).TotalMinutes;
 
 		if (_wakeMinuteOfDay > nowMin) {
 			_wakeMinuteOfDay = nowMin;
+			Persist();   // or a restart puts the old wake time back and the account to bed
 		}
 
 		_wokeUp = true;
@@ -914,7 +922,8 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		RollNewDayIfNeeded();
 	}
 
-	private void RollNewDayIfNeeded() {
+	/// <param name="wakingNow">'wake': today starts now, so today's plan is wanted even before its earliest wake time.</param>
+	private void RollNewDayIfNeeded(bool wakingNow = false) {
 		int today = DateTime.Now.DayOfYear;
 
 		if (_dayStamp == today) {
@@ -929,7 +938,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// Rolled once it's past the EARLIEST today's wake could possibly be, never yesterday's wake minute: keyed to
 		// yesterday's, a day that rolled an earlier wake was already "awake" the moment it rolled, so on about half
 		// of all days the account got up at exactly the same minute as the day before.
-		if ((_dayStamp >= 0) && (DateTime.Now < EarliestWakeToday())) {
+		if (!wakingNow && (_dayStamp >= 0) && (DateTime.Now < EarliestWakeToday())) {
 			return;
 		}
 
@@ -938,14 +947,20 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// Steam playing a game the scheduler had already forgotten about.
 		if (_phase == Phase.Playing) {
 			BankSession();
-			Bot.StopPlaying();
+
+			// Not a grind's game, though: the grind carries on into the new day, and closing it here only had the grind
+			// put it straight back on in the same tick - the game closed and reopened for nothing.
+			if (!_wasGrinding) {
+				Bot.StopPlaying();
+			}
+
 			_phase = Phase.Off;
 		}
 
 		// Started after midnight but before getting up: last night is still going, and its plan is the one in force.
 		// Rolling a fresh day here counted the rest of last night against today - the split that waiting for the
 		// wake time above exists to prevent, lost on every restart in the small hours.
-		if ((_dayStamp < 0) && (HumanDay.Load(Bot.Name, DateTime.Now.AddDays(-1)) is { } lastNight)) {
+		if (!wakingNow && (_dayStamp < 0) && (HumanDay.Load(Bot.Name, DateTime.Now.AddDays(-1)) is { } lastNight)) {
 			Restore(lastNight);
 
 			if (DateTime.Now < WakeTime()) {
@@ -1056,8 +1071,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		}
 
 		int signOuts = Math.Clamp(cfg.MaxSignOutsPerDay, 0, 40);
-		_signOutCap = signOuts == 0 ? 0 : Rng(Math.Max(1, signOuts - 3), signOuts + 3);
-		_mealCap = cfg.MealBreaksPerDay <= 0 ? 0 : Rng(1, cfg.MealBreaksPerDay + 1);
+		// Both at most what the setting says. Rng includes its top end, so "+ 3" let "Drop offline at most 1" drop offline
+		// four times, and "Meals a day 2" take three.
+		_signOutCap = signOuts == 0 ? 0 : Rng(Math.Max(1, signOuts - 3), signOuts);
+		_mealCap = cfg.MealBreaksPerDay <= 0 ? 0 : Rng(1, cfg.MealBreaksPerDay);
 
 		_playedMinutesToday = 0;
 		_otherPlayed = 0;
@@ -1137,7 +1154,14 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		return now < BedTime();
 	}
 
-	private int MinutesUntilBed() => (int) Math.Max(0, (BedTime() - DateTime.Now).TotalMinutes);
+	private int MinutesUntilBed() {
+		// Before today's wake time it's still last night, whose bedtime is a day earlier than BedTime() builds - the
+		// same correction InWakingHours makes. Without it a sitting started at 01:30 with bed at 02:30 read a day to go,
+		// wasn't shortened to fit, and was cut off by bedtime instead of ending with the usual break.
+		DateTime bed = DateTime.Now < WakeTime() ? BedTime().AddDays(-1) : BedTime();
+
+		return (int) Math.Max(0, (bed - DateTime.Now).TotalMinutes);
+	}
 
 	private void GoToBed() {
 		// Re-arm the warm-up gate for the morning. It's keyed on the login timestamp, which doesn't change
@@ -1514,6 +1538,19 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	private DateTime _breakPersonaAt;
 	private bool _breakPersonaSet;
 
+	/// <summary>When the session was last banked - banking runs every 20-second tick while it plays.</summary>
+	private DateTime _lastBankAt = DateTime.MinValue;
+
+	/// <summary>
+	/// The banking cursor, moved past a gap in the ticks. A session banks every 20 seconds, so minutes since the last
+	/// bank (or since the cursor was set, when that is later) mean the process wasn't running: none of it is played.
+	/// </summary>
+	internal static DateTime SkipGap(DateTime bankedTo, DateTime lastBank, DateTime now) {
+		DateTime since = lastBank > bankedTo ? lastBank : bankedTo;
+
+		return now - since > TimeSpan.FromMinutes(3) ? now : bankedTo;
+	}
+
 	/// <summary>Credit the running session's real elapsed time, once, and never a minute more than it played.</summary>
 	private void BankSession() {
 		if (_phase != Phase.Playing) {
@@ -1532,9 +1569,16 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		if (_bankedForLogon != logon) {
 			_bankedForLogon = logon;
 			_bankedTo = DateTime.UtcNow;   // start counting from now, not from before the gap
+			_lastBankAt = DateTime.UtcNow;
 
 			return;
 		}
+
+		// Nor is time the machine spent asleep. The sign-in survives a sleep until Steam notices the connection has
+		// gone, so the first tick after waking banked the whole night as played - and put the account into "done
+		// for today" having played none of it.
+		_bankedTo = SkipGap(_bankedTo, _lastBankAt, DateTime.UtcNow);
+		_lastBankAt = DateTime.UtcNow;
 
 		int played = (int) Math.Max(0, (DateTime.UtcNow - _bankedTo).TotalMinutes);
 
@@ -1574,7 +1618,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		new HumanDay {
 			DayOfYear = _dayStamp,
-			Year = DateTime.Now.Year,
+
+			// The plan's own year: New Year's Eve's plan is still in force after midnight, and saved under the new year it
+			// was never found again - a restart in the small hours of 1 January lost the night and rolled a fresh day.
+			Year = _dayStamp > DateTime.Now.DayOfYear ? DateTime.Now.Year - 1 : DateTime.Now.Year,
 			TargetMinutes = _targetMinutes,
 			PlayedMinutes = _playedMinutesToday,
 			MainSharePct = _mainSharePct,

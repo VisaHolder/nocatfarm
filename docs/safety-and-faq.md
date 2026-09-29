@@ -8,7 +8,7 @@ Everything stays on your PC. Accounts, login tokens and logs are never uploaded 
 
 Passwords are optional. After the first sign-in a Steam login token does the work. Login tokens, saved passwords,
 authenticator secrets and proxy passwords are all encrypted on disk: on Windows they're tied to your Windows user,
-and on Linux and Docker they use a key only your user can read.
+and on Linux, a Mac and Docker they use a key only your user can read.
 
 nocat.farm talks to Steam, always. It checks GitHub every 2 hours for a new version (*Look for updates every*) and
 downloads one when you say so; *Notify if an update is available* turns the check off. Discord, Telegram and rep4rep

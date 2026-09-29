@@ -269,8 +269,10 @@ public static partial class RemoteAccess {
 
 		try {
 			foreach ((IPAddress local, List<IPAddress> gateways) in LanAddresses()) {
+				UdpClient? udp = null;
+
 				try {
-					UdpClient udp = new(new IPEndPoint(local, 0));
+					udp = new(new IPEndPoint(local, 0));
 					udp.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastInterface, local.GetAddressBytes());
 					await udp.SendAsync(ask, new IPEndPoint(IPAddress.Parse("239.255.255.250"), 1900)).ConfigureAwait(false);
 
@@ -281,7 +283,9 @@ public static partial class RemoteAccess {
 
 					askers.Add(udp);
 				} catch (SocketException) {
-					// that card can't send - the others still ask
+					// that card can't send - the others still ask. Its socket is closed, not left open: this runs every
+					// half minute while no forward is in place, and each failed card leaked one.
+					udp?.Dispose();
 				}
 			}
 

@@ -612,6 +612,21 @@ async Task ConsoleLoop(BotManager mgr, CancellationTokenSource cts) {
 			continue;
 		}
 
+		// 'clear' clears this screen and nothing else - the window and the dashboard keep theirs.
+		if (Commands.IsClear(line)) {
+			if (Commands.Board is { Active: true } board) {
+				board.ClearLog();
+			} else {
+				try {
+					Console.Clear();
+				} catch (IOException) {
+					// not a real terminal (docker logs, a pipe) - there is no screen to clear
+				}
+			}
+
+			continue;
+		}
+
 		string output = await Commands.RunAsync(mgr, line).ConfigureAwait(false);
 
 		if (output.Length > 0) {

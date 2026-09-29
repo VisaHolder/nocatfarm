@@ -52,9 +52,17 @@ public static partial class Notifier {
 				bool finding = G.TelegramChatId.Length == 0;
 
 				if (!HasTelegramToken || (!finding && !G.TelegramCommands) || (_webhookBusy && (DateTime.UtcNow < _nextDiscover))) {
+					_notListening = true;
 					await Task.Delay(3000, ct).ConfigureAwait(false);
 
 					continue;
+				}
+
+				// Listening again after a stretch of not (commands switched off, say): what was sent in between waits in
+				// Telegram's queue, and a "/stop all" sent while commands were off ran the moment they came back on.
+				if (_notListening) {
+					_notListening = false;
+					_listeningSince = DateTimeOffset.UtcNow.AddSeconds(-5);
 				}
 
 				string token = G.TelegramBotToken;
@@ -125,7 +133,7 @@ public static partial class Notifier {
 
 					// Sent while nocat.farm was closed: skipped, so a "/stop all" from yesterday doesn't fire this
 					// morning. Anything sent since it opened - even while the accounts are still starting - counts.
-					if (msg.TryGetProperty("date", out JsonElement sent) && (DateTimeOffset.FromUnixTimeSeconds(sent.GetInt64()) < StartedAt)) {
+					if (msg.TryGetProperty("date", out JsonElement sent) && (DateTimeOffset.FromUnixTimeSeconds(sent.GetInt64()) < _listeningSince)) {
 						continue;
 					}
 
@@ -168,6 +176,11 @@ public static partial class Notifier {
 
 	/// <summary>When nocat.farm opened, give or take a few seconds for Telegram's clock.</summary>
 	private static readonly DateTimeOffset StartedAt = Process.GetCurrentProcess().StartTime.ToUniversalTime().AddSeconds(-5);
+
+	/// <summary>Messages from before this are old news: opening nocat.farm, or listening again after a stretch of not.</summary>
+	private static DateTimeOffset _listeningSince = StartedAt;
+
+	private static bool _notListening;
 
 	/// <summary>A one-off answer to a chat that isn't the connected one (so PostTelegramAsync, which goes there, won't do).</summary>
 	private static async Task ReplyAsync(string chatId, string html, CancellationToken ct) {

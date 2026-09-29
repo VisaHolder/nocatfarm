@@ -18,6 +18,7 @@ namespace NocatFarm.Modules;
 public sealed class HumanGate(Bot bot, bool followsDay = true, bool ownDay = false) {
 	private bool _ready;
 	private DateTime _openAt = DateTime.MaxValue;
+	private DateTime? _signedIn;
 
 	/// <summary>For things nobody watches: any time of day, just not the moment it signs in.</summary>
 	public static HumanGate Quiet(Bot bot) => new(bot, followsDay: false);
@@ -30,6 +31,14 @@ public sealed class HumanGate(Bot bot, bool followsDay = true, bool ownDay = fal
 		get {
 			if (!bot.Cfg.LegitMode) {
 				return true;
+			}
+
+			// A new sign-in is a fresh start, whether or not anybody asked while it was gone. Every module stops while the
+			// account is signed out, so the gate was never asked then - and after a reconnect it was still open from the
+			// last session, letting a send or a booster pack go in the first seconds of the new one.
+			if (bot.OnlineSince != _signedIn) {
+				_signedIn = bot.OnlineSince;
+				_ready = false;
 			}
 
 			// Behind-the-scenes things follow the day too when the account is set up that way.
@@ -53,7 +62,10 @@ public sealed class HumanGate(Bot bot, bool followsDay = true, bool ownDay = fal
 					hi = lo;
 				}
 
-				_openAt = DateTime.UtcNow + Rng.HumanMinutes(lo, hi);
+				DateTime at = DateTime.UtcNow + Rng.HumanMinutes(lo, hi);
+
+				// A spacing still running from before (Space) isn't cut short by a fresh wait that ends sooner.
+				_openAt = (_openAt != DateTime.MaxValue) && (_openAt > at) ? _openAt : at;
 			}
 
 			return DateTime.UtcNow >= _openAt;

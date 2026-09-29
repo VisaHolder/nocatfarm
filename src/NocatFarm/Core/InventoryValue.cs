@@ -103,7 +103,11 @@ public sealed partial class InventoryValue(Bot bot) {
 			return;
 		}
 
-		List<(uint App, string Name, string Context)> inventories = ParseContexts(page);
+		// Not the list at all (an error page, a layout change): the last picture stands rather than being wiped.
+		if (ParseContexts(page) is not { } inventories) {
+			return;
+		}
+
 		Dictionary<uint, (string Game, Dictionary<string, Held> Items, bool Blocked)> previous;
 
 		lock (_holdings) {
@@ -295,14 +299,20 @@ public sealed partial class InventoryValue(Bot bot) {
 		return true;
 	}
 
-	/// <summary>Pull the appIDs and context IDs out of the inventory page's g_rgAppContextData blob.</summary>
-	private static List<(uint App, string Name, string Context)> ParseContexts(string page) {
-		List<(uint, string, string)> found = [];
+	/// <summary>
+	/// Pull the appIDs and context IDs out of the inventory page's g_rgAppContextData blob, the fullest first - or null
+	/// when the page doesn't carry the blob at all. An error page Steam serves with a 200 used to read as "holds nothing"
+	/// and wiped the total to $0 until the next read; and unsorted, the inventories past the cap could be the one holding
+	/// almost all of the value.
+	/// </summary>
+	private static List<(uint App, string Name, string Context)>? ParseContexts(string page) {
+		List<(uint App, string Name, string Context, int Assets)> found = [];
 
 		Match blob = ContextData().Match(page);
 
 		if (!blob.Success) {
-			return found;
+			// An inventory with nothing in it at all writes the list as an empty [] - a real answer, not a missing one.
+			return Regex.IsMatch(page, @"g_rgAppContextData\s*=\s*\[\s*\]") ? [] : null;
 		}
 
 		try {
@@ -319,15 +329,17 @@ public sealed partial class InventoryValue(Bot bot) {
 					int assets = context.Value.TryGetProperty("asset_count", out JsonElement a) && a.TryGetInt32(out int count) ? count : 0;
 
 					if (assets > 0) {
-						found.Add((appId, name, context.Name));
+						found.Add((appId, name, context.Name, assets));
 					}
 				}
 			}
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't read the inventory list: {0}", e.Message));
+
+			return null;
 		}
 
-		return found;
+		return [.. found.OrderByDescending(static f => f.Assets).Select(static f => (f.App, f.Name, f.Context))];
 	}
 
 	// ── pricing ──────────────────────────────────────────────────────────────

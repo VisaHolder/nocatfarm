@@ -77,11 +77,13 @@ public sealed class Rep4RepState {
 	/// The LEARNED cap is deliberately kept. It is not our state - it is a ceiling Steam handed us, and
 	/// forgetting it means re-discovering it the only way there is, by having a comment refused. Everything
 	/// else here is ours and goes.
+	///
+	/// The comments already posted stay too. They age out of the 24h window by themselves over a long hold - but a
+	/// hold can be as short as an hour, and clearing them then let an account that had just posted its ten post ten
+	/// more inside the same day, past Steam's ceiling, and comment twice on the same profile.
 	/// </remarks>
 	public void ResetForFreshStart() {
 		lock (_sync) {
-			Posts.Clear();
-			PostedTasks.Clear();
 			DeadTargets.Clear();
 			Strikes = 0;
 			BlockedUntil = 0;

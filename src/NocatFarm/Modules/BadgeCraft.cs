@@ -227,6 +227,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		}
 
 		List<Craftable> ready = Parse(html);
+		List<(uint App, bool Foil)> linked = ReadyLinks(html);
 
 		// Steam paginates at ~60 badges. Reading only page 1 meant a big library never crafted anything past it.
 		int pages = Math.Min(MaxBadgePages, CardFarmer.ParseMaxPages(html));
@@ -244,6 +245,21 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 				if (!ready.Exists(existing => existing.AppId == c.AppId)) {
 					ready.Add(c);
 				}
+			}
+
+			linked.AddRange(ReadyLinks(more));
+		}
+
+		// The badges list only LINKS a finished set's craft button to the game's card page; the numbers the craft needs
+		// are on that page, in Profile_CraftGameBadge(...). Looking for them on the list alone found nothing to craft,
+		// ever. Each set still to read costs one page, a few seconds apart.
+		foreach ((uint app, bool foil) in linked.Where(l => !ready.Exists(r => r.AppId == l.App)).DistinctBy(static l => l.App).Take(MaxCardPages)) {
+			await Task.Delay(Rng.Seconds(3, 10), ct).ConfigureAwait(false);
+
+			string? cards = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/gamecards/{app}/?l=english" + (foil ? "&border=1" : "")), ct).ConfigureAwait(false);
+
+			if ((cards != null) && (ParseCardsPage(cards) is { } c) && (c.AppId == app)) {
+				ready.Add(c);
 			}
 		}
 
@@ -360,6 +376,76 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 				nums.Count >= 3 ? nums[2] : 0,
 				nums.Count >= 4 ? nums[3] : 1));
 		}
+	}
+
+	/// <summary>Card pages read per sweep, at most - each finished set the list only links to is one page.</summary>
+	private const int MaxCardPages = 25;
+
+	/// <summary>The games whose craft button on the badges list links to their card page: /gamecards/&lt;appid&gt;/, foil with border=1.</summary>
+	internal static List<(uint App, bool Foil)> ReadyLinks(string html) {
+		List<(uint, bool)> found = [];
+		int i = 0;
+
+		while (true) {
+			int at = html.IndexOf("badge_craft_button", i, StringComparison.Ordinal);
+
+			if (at < 0) {
+				return found;
+			}
+
+			i = at + "badge_craft_button".Length;
+
+			// The link sits on the button's own tag or just inside it - never further back, where the row before's links are.
+			int from = Math.Max(0, html.LastIndexOf('<', at));
+			string near = html[from..Math.Min(html.Length, at + 300)];
+			int link = near.IndexOf("/gamecards/", StringComparison.Ordinal);
+
+			if (link < 0) {
+				continue;
+			}
+
+			int digits = link + "/gamecards/".Length;
+			int end = digits;
+
+			while ((end < near.Length) && char.IsAsciiDigit(near[end])) {
+				end++;
+			}
+
+			if (uint.TryParse(near.AsSpan(digits, end - digits), NumberStyles.None, CultureInfo.InvariantCulture, out uint app) && (app > 0)) {
+				int quote = near.IndexOfAny(['"', '\''], end);
+				bool foil = (quote > end) && near[end..quote].Contains("border=1", StringComparison.Ordinal);
+				found.Add((app, foil));
+			}
+		}
+	}
+
+	/// <summary>
+	/// The craft a game's card page offers: Profile_CraftGameBadge( profile, appid, series, border, levels ). The first
+	/// argument is the profile's address - which can hold a SteamID's digits - so the numbers are read after it.
+	/// </summary>
+	internal static Craftable? ParseCardsPage(string html) {
+		int at = html.IndexOf("Profile_CraftGameBadge(", StringComparison.Ordinal);
+
+		if (at < 0) {
+			return null;
+		}
+
+		int open = at + "Profile_CraftGameBadge".Length;
+		int close = html.IndexOf(')', open);
+
+		if ((close < 0) || (close - open > 300)) {
+			return null;
+		}
+
+		string[] args = html[(open + 1)..close].Split(',');
+
+		if (args.Length < 5) {
+			return null;
+		}
+
+		List<int> nums = Numbers(string.Join(',', args[1..]));
+
+		return (nums.Count >= 4) && (nums[0] > 0) ? new Craftable((uint) nums[0], nums[1], nums[2], Math.Max(1, nums[3])) : null;
 	}
 
 	private static List<int> Numbers(string s) {

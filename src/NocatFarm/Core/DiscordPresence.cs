@@ -117,7 +117,9 @@ public static class DiscordPresence {
 							Log.Warn(new Said("Discord didn't show the card: {0}", why), "discord");
 						}
 
-						_lastSent = "";   // try again on a later pass, not every fifteen seconds (the 3-minute resend)
+						// Try again on a later pass, not every fifteen seconds: remembered as sent, only a change or the 3-minute
+						// resend sends it again. Blanked, it never matched and went out on every pass.
+						_lastSent = json;
 
 						await Task.Delay(15_000).ConfigureAwait(false);
 
@@ -149,7 +151,7 @@ public static class DiscordPresence {
 	///
 	///   nocat.farm
 	///   Farming cards · 12 left          what the shown accounts are doing
-	///   kylro · old  (2 of 3)            their Steam names, and how many are signed in
+	///   kylro · old · 2 of 3 accounts on their Steam names, and how many are signed in
 	///   5:12:00 elapsed                  since nocat.farm was opened
 	///   [ Get nocat.farm ] [ reap. on Steam ]
 	///
@@ -187,6 +189,14 @@ public static class DiscordPresence {
 		Bot[] named = [.. shown.Where(b => b != featured)];
 		string state = G.DiscordShowNames && (named.Length > 0) ? Names(named) : counted;
 
+		// How many are signed in, said in words. Discord's own party counter only ever reads "(2 of 2)", with nothing
+		// to say 2 of what - it looked like a player count.
+		if (G.DiscordShowCounter && (shown.Length > 0)) {
+			state += " · " + (online.Length == shown.Length
+				? new Said("{0} accounts on", online.Length)
+				: new Said("{0} of {1} accounts on", online.Length, shown.Length));
+		}
+
 		// What clicking does is said on hover - Discord gives a picture no other hint that it's a link.
 		Dictionary<string, object> assets = new() {
 			["large_image"] = AnimatedLogo,
@@ -214,10 +224,6 @@ public static class DiscordPresence {
 
 		if (G.DiscordShowNames && named.FirstOrDefault() is { SteamId: not 0 } first) {
 			card["state_url"] = Profile(first);
-		}
-
-		if (G.DiscordShowCounter) {
-			card["party"] = new { id = "nocatfarm", size = new[] { online.Length, shown.Length } };
 		}
 
 		if (G.DiscordShowTimer) {

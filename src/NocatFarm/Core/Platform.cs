@@ -27,6 +27,25 @@ public static class Platform {
 		|| (!InContainer && (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DISPLAY"))
 			|| !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAYLAND_DISPLAY"))));
 
+	/// <summary>Opens a folder in the file manager on this machine - Explorer, Finder, or the desktop's own. False when
+	/// there's no desktop to open it on (a server, a container) or it wouldn't start.</summary>
+	public static bool OpenFolder(string dir) {
+		if (!HasDesktop || !Directory.Exists(dir)) {
+			return false;
+		}
+
+		try {
+			string opener = OperatingSystem.IsWindows() ? "explorer.exe" : OperatingSystem.IsMacOS() ? "open" : "xdg-open";
+			System.Diagnostics.ProcessStartInfo start = new(opener) { UseShellExecute = false };
+			start.ArgumentList.Add(dir);
+			System.Diagnostics.Process.Start(start)?.Dispose();
+
+			return true;
+		} catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException) {
+			return false;
+		}
+	}
+
 	/// <summary>"linux-x64", "linux-arm64" and so on: which release zip fits this machine.</summary>
 	public static string ReleaseRid {
 		get {
