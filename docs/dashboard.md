@@ -161,7 +161,7 @@ had the page open can't carry on through the router. Ten wrong passwords from th
 mix of addresses, pause signing in from outside for an hour (home still works, and `unlock` lifts it). And after
 *Turn Open from anywhere off after* wrong passwords or codes from the internet in a day - 5 by default, 0 never -
 it switches itself off and nothing from outside gets in, a *Public address* set by hand included, until you turn it
-on again (the Phone page, or `anywhere on`). That survives a restart. Backups and restores only work at home or on
+on again (the Phone page, or `anywhere on`) or type `unlock`. That survives a restart. Backups and restores only work at home or on
 this PC, since the zip holds every saved login.
 
 **A code on Telegram.** With Telegram connected, signing in from outside your home takes the password and then a

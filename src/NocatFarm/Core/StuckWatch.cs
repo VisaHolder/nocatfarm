@@ -251,11 +251,25 @@ public static class StuckWatch {
 
 		// A robot with nothing to play: signed in and idle is all it's meant to be. Not one set to idle its whole library -
 		// that one has games to play with an empty list, and not banking is exactly what the alarm is for.
-		if (bot.IsOnline && !bot.Cfg.LegitMode && (bot.Cfg.IdleGames.Count == 0) && !bot.Cfg.IdleWholeLibrary && !bot.IsFarming && !bot.Grinding && !bot.DropsFirstActive) {
+		if (bot.IsOnline && !bot.Cfg.LegitMode && !bot.IsFarming && !bot.Grinding && !bot.DropsFirstActive && NothingToIdle(bot, now)) {
 			return new Said("nothing to play");
 		}
 
 		return default;
+	}
+
+	/// <summary>
+	/// Nothing it's allowed to idle: an empty list, or "Idle my whole library" with a library that turned out to hold
+	/// nothing playable (empty, or all blacklisted or still refundable). Asked of the idler's own plan, so it's the same
+	/// answer the idler acts on.
+	/// </summary>
+	private static bool NothingToIdle(Bot bot, DateTime now) {
+		if (!bot.Cfg.IdleWholeLibrary) {
+			return bot.Cfg.IdleGames.Count == 0;
+		}
+
+		return bot.Library.Ready && string.IsNullOrWhiteSpace(bot.CustomName)
+			&& (BotManager.ModuleOf<Modules.Idler>(bot) is { } idler) && (idler.Plan(now).Count == 0);
 	}
 
 	/// <summary>What the account is doing instead of banking, in a few words.</summary>

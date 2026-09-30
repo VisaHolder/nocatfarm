@@ -988,6 +988,8 @@
     "{0} are past the refund window - free to play again": "{0}은(는) 환불 기간이 지났습니다 - 다시 플레이할 수 있습니다",
     "{0} is past the refund window - free to play again": "{0}은(는) 환불 기간이 지났습니다 - 다시 플레이할 수 있습니다",
     "── daily report · last 24h ──": "── 일일 보고서 · 최근 24시간 ──",
+    "── report · since the last daily summary ──": "── 보고서 · 지난 일일 보고서 이후 ──",
+    "── report · since the daily summary at {0} ({1}) ──": "── 보고서 · {0} 일일 보고서 이후 ({1}) ──",
     "reached {0}h in {1} - that hour target is done": "{1}에서 {0}시간 달성 - 이 시간 목표는 완료되었습니다",
     "couldn't read the play history: {0}": "플레이 기록을 읽지 못했습니다: {0}",
     "library: {0} played game(s) Steam's owned list left out, added from the play history ({1})": "라이브러리: Steam 보유 목록에서 빠진 플레이한 게임 {0}개를 플레이 기록에서 추가 ({1})",

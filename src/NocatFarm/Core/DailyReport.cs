@@ -18,6 +18,9 @@ namespace NocatFarm.Core;
 public static class DailyReport {
 	private sealed class State {
 		public string LastFired { get; set; } = "";   // yyyy-MM-dd, local time; "" = never fired
+
+		/// <summary>When the last one went out (UTC) - what "banked" counts from. Missing in a file from before 1.6.2.</summary>
+		public DateTime? LastAt { get; set; }
 		public Dictionary<string, double> Lifetime { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>Game-minutes at the last report - what "banked" counts from now. Missing in a report file from
@@ -60,9 +63,7 @@ public static class DailyReport {
 			return "";
 		}
 
-		Said header = first
-			? new Said("── daily report · 24h · 'banked' starts counting now ──")
-			: new Said("── daily report · last 24h ──");
+		Said header = Header(first, DateTime.UtcNow);
 
 		return string.Join(Environment.NewLine, lines.Prepend(header).Append(fleet).Select(static l => l.ToString()));
 	}
@@ -105,9 +106,7 @@ public static class DailyReport {
 
 		// In the log only when "Daily summary in the log" is on.
 		if (mgr.Global.DailyReportEnabled) {
-			Log.Good(first
-				? new Said("── daily report · 24h · 'banked' starts counting now ──")
-				: new Said("── daily report · last 24h ──"), "report");
+			Log.Good(Header(first, DateTime.UtcNow), "report");
 			foreach (Said line in lines) {
 				Log.Info(line, "report");
 			}
@@ -124,12 +123,53 @@ public static class DailyReport {
 				_state.Lifetime = snapshot;
 				_state.Games = games;
 				_state.LastFired = today;
+				_state.LastAt = DateTime.UtcNow;
 			}
 
 			Save();
 		}
 
 		return true;
+	}
+
+	/// <summary>
+	/// What the numbers cover: "last 24h" only when the last summary really was a day ago. Asked for at 09:47 with the
+	/// summary sent at 06:00, 'report' said "last 24h" over 3 hours and 47 minutes of hours - a third of what a day had.
+	/// </summary>
+	public static Said Header(bool first, DateTime nowUtc) {
+		if (first) {
+			return new Said("── daily report · 24h · 'banked' starts counting now ──");
+		}
+
+		DateTime? at;
+		string day;
+
+		lock (Gate) {
+			at = _state.LastAt;
+			day = _state.LastFired;
+		}
+
+		// A file from before LastAt: the day it went out, at the time it's set for.
+		if ((at == null) && (_mgr is { } mgr) && DateTime.TryParseExact(day, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+			System.Globalization.DateTimeStyles.None, out DateTime fired)) {
+			at = fired.AddHours(mgr.Global.DailyReportHour).AddMinutes(mgr.Global.DailyReportMinute).ToUniversalTime();
+		}
+
+		if (at is not { } last) {
+			return new Said("── report · since the last daily summary ──");
+		}
+
+		TimeSpan gap = nowUtc - last;
+
+		if ((gap > TimeSpan.FromHours(23.5)) && (gap < TimeSpan.FromHours(24.5))) {
+			return new Said("── daily report · last 24h ──");
+		}
+
+		DateTime local = last.ToLocalTime();
+		string when = local.Date == nowUtc.ToLocalTime().Date ? local.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)
+			: local.ToString("MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+
+		return new Said("── report · since the daily summary at {0} ({1}) ──", when, Fmt.Hm((int) gap.TotalMinutes));
 	}
 
 	/// <summary>One row per account plus the fleet line, and the lifetime snapshots the next report counts from.</summary>

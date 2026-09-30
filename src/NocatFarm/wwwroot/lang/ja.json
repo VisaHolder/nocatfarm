@@ -988,6 +988,8 @@
     "{0} are past the refund window - free to play again": "{0} は返金期間を過ぎました - 再びプレイ可能です",
     "{0} is past the refund window - free to play again": "{0} は返金期間を過ぎました - 再びプレイ可能です",
     "── daily report · last 24h ──": "── 日次レポート · 直近24時間 ──",
+    "── report · since the last daily summary ──": "── レポート · 前回の日次レポート以降 ──",
+    "── report · since the daily summary at {0} ({1}) ──": "── レポート · {0} の日次レポート以降 ({1}) ──",
     "reached {0}h in {1} - that hour target is done": "{1} で {0} 時間に到達 - この時間目標は達成です",
     "couldn't read the play history: {0}": "プレイ履歴を読み込めませんでした: {0}",
     "library: {0} played game(s) Steam's owned list left out, added from the play history ({1})": "ライブラリ: Steamの所有リストから漏れていたプレイ済みゲーム {0} 本をプレイ履歴から追加 ({1})",

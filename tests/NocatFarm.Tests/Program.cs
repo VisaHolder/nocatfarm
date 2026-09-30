@@ -5103,7 +5103,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("visitors: no browser name at all", NocatFarm.Core.Visitors.Device(null) == "unknown" && NocatFarm.Core.Visitors.Device("curl/8.4.0") == "curl/8.4.0");
 	Check("visitors: where - this PC, home, the internet",
 		NocatFarm.Core.Visitors.WhereFrom("127.0.0.1", true) == "this PC" && NocatFarm.Core.Visitors.WhereFrom("192.168.2.40", false) == "home"
-		&& NocatFarm.Core.Visitors.WhereFrom("134.41.250.88", false) == "internet" && NocatFarm.Core.Visitors.WhereFrom("not an address", false) == "home");
+		&& NocatFarm.Core.Visitors.WhereFrom("134.41.250.88", false) == "internet" && NocatFarm.Core.Visitors.WhereFrom("not an address", false) == "internet");
 
 	string realRoot = NocatFarm.Config.ConfigStore.Root;
 	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-visitors-" + Guid.NewGuid().ToString("N"));
@@ -5199,6 +5199,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("forwarded: RFC 7239 Forwarded: for= is read, port and brackets and all",
 		Ask("127.0.0.1", ("Forwarded", "for=\"[2001:db8:cafe::17]:4711\";proto=https")).Ip == "2001:db8:cafe::17"
 		&& Ask("127.0.0.1", ("X-Real-IP", "203.0.113.9:5555")).Ip == "203.0.113.9");
+	Check("forwarded: made-up text is one shared 'unknown' - no fresh key per guess, no words of the visitor's in the log",
+		Ask("127.0.0.1", ("X-Forwarded-For", "<b>hi</b>")) == ("unknown", false) && Ask("127.0.0.1", ("X-Real-IP", "obfuscated_7f3a")).Ip == "unknown");
+	Check("visitors: 'unknown' is logged as the internet, like the checks treat it", NocatFarm.Core.Visitors.WhereFrom("unknown", false) == "internet");
 	Check("forwarded: an address that can't be read counts as the internet, never home",
 		NocatFarm.Web.WebHost.IsInternet("unknown") && NocatFarm.Web.WebHost.IsInternet("") && !NocatFarm.Web.WebHost.IsInternet("10.1.2.3"));
 	Check("visitors: IPv6 turned-away visitors are grouped by /64",
@@ -5229,6 +5232,14 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("switching itself off: it shuts a Public address set by hand too, until Open from anywhere is on again",
 		host.Contains("if ((InternetShut() || (!_cfg.WebRemoteAccess", StringComparison.Ordinal) && host.Contains("if (_internetShut && _cfg.WebRemoteAccess) {", StringComparison.Ordinal));
 	string upd = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "UpdateCheck.cs"));
+	Check("switching itself off: the setting goes off before the flag goes up, both under one lock",
+		host.IndexOf("_cfg.WebRemoteAccess = false;", host.IndexOf("private void ShutToTheInternet(", StringComparison.Ordinal), StringComparison.Ordinal)
+			< host.IndexOf("_internetShut = true;", host.IndexOf("private void ShutToTheInternet(", StringComparison.Ordinal), StringComparison.Ordinal)
+		&& host.Contains("lock (_shutGate) {", StringComparison.Ordinal));
+	Check("sign-in code: a try is spent (swapped in) before the code is compared, and only the request that takes the record signs in",
+		host.Contains("if (!_pendingCodes.TryUpdate(body.Challenge!, spent, pending)) {", StringComparison.Ordinal)
+		&& host.Contains("if (!_pendingCodes.TryRemove(new KeyValuePair<string, PendingCode>(body.Challenge!, spent))) {", StringComparison.Ordinal));
+	Check("wrong guesses: counted atomically", host.Contains("_failures.AddOrUpdate(ip,", StringComparison.Ordinal));
 	Check("updates: an account waiting for a Steam Guard code doesn't hold them for ever", upd.Contains("(b.State is BotState.Failed or BotState.NeedsGuard)", StringComparison.Ordinal));
 }
 
@@ -5566,6 +5577,30 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		} catch (IOException) {
 			// temp - it goes when Windows tidies up
 		}
+	}
+}
+
+// ── 'report' says what it covers: "last 24h" only when it really is ───────────────────────────────────────────────
+{
+	Type dr = typeof(NocatFarm.Core.DailyReport);
+	var stateField = dr.GetField("_state", BindingFlags.NonPublic | BindingFlags.Static)!;
+	object saved = stateField.GetValue(null)!;
+	object fresh = Activator.CreateInstance(saved.GetType())!;
+	stateField.SetValue(null, fresh);
+	DateTime now = DateTime.UtcNow;
+
+	try {
+		saved.GetType().GetProperty("LastAt")!.SetValue(fresh, now.AddHours(-3).AddMinutes(-47));
+		string early = NocatFarm.Core.DailyReport.Header(false, now).ToEnglish();
+		Check("report: asked 3h47m after the summary, it says since when - not 'last 24h'", early.Contains("since the daily summary at", StringComparison.Ordinal) && early.Contains("3h47m", StringComparison.Ordinal), early);
+		saved.GetType().GetProperty("LastAt")!.SetValue(fresh, now.AddHours(-24));
+		Check("report: the summary a day later is 'last 24h'", NocatFarm.Core.DailyReport.Header(false, now).ToEnglish().Contains("last 24h", StringComparison.Ordinal));
+		saved.GetType().GetProperty("LastAt")!.SetValue(fresh, now.AddHours(-30));
+		Check("report: a summary late after the PC was off says it covers more than a day", NocatFarm.Core.DailyReport.Header(false, now).ToEnglish().Contains("(30h", StringComparison.Ordinal),
+			NocatFarm.Core.DailyReport.Header(false, now).ToEnglish());
+		Check("report: the very first one says it starts counting now", NocatFarm.Core.DailyReport.Header(true, now).ToEnglish().Contains("starts counting now", StringComparison.Ordinal));
+	} finally {
+		stateField.SetValue(null, saved);
 	}
 }
 

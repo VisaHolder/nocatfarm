@@ -70,6 +70,9 @@ jobs:
           test -f app/config/state/secret.key
           [ "$(stat -c %a app/config/state/secret.key)" = "600" ]
 
+      - name: signing in from outside (lockouts, switching itself off, the visitor log)
+        run: sh tests/security-check.sh http://127.0.0.1:7242 app/config
+
       - name: clean shutdown on SIGTERM
         run: |
           kill -TERM $(cat pid)
