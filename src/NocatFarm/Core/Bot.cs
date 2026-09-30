@@ -480,6 +480,14 @@ public sealed class Bot : IAsyncDisposable {
 	/// the entry whose creator is this offer, and confirm that. So this reads the list, matches on the offer id,
 	/// and acts on nothing else. An offer somebody else is waiting on is never touched by accident.
 	/// </summary>
+	/// <summary>
+	/// The line for a confirmation just made - named for what it was. The seller confirms its market listings through
+	/// here too, and each one went down as "confirmed trade offer 5123..." with the listing's number.
+	/// </summary>
+	internal static Said Confirmed(Confirmations.Item match) => match.Type == Confirmations.MarketListing
+		? new Said("confirmed market listing {0} with its authenticator", match.CreatorId)
+		: new Said("confirmed trade offer {0} with its authenticator", match.CreatorId);
+
 	public async Task<bool> ConfirmMobileAsync(ulong tradeOfferId, bool accept, CancellationToken ct = default) {
 		if (!CanConfirmTrades || (SteamId == 0) || !Web.Ready) {
 			return false;
@@ -512,7 +520,7 @@ public sealed class Bot : IAsyncDisposable {
 			}
 
 			if (await Confirmations.ActAsync(this, [match], accept, ct).ConfigureAwait(false)) {
-				Log.Good(new Said("confirmed trade offer {0} with its authenticator", tradeOfferId), Name);
+				Log.Good(Confirmed(match), Name);
 
 				return true;
 			}
@@ -642,6 +650,21 @@ public sealed class Bot : IAsyncDisposable {
 
 	/// <summary>Started and not stopped - signed in, signing in, reconnecting or sitting out a cooldown alike.</summary>
 	public bool Running => _running;
+
+	/// <summary>
+	/// Failed and not going to try again by itself: a sign-in that gave up (three refusals, no password, a QR code
+	/// nobody scanned), a disabled account, a start that broke. A failed sign-in that's about to retry reads Failed
+	/// for a moment too, but it's still running - that one isn't finished.
+	/// </summary>
+	public bool GaveUp => (State == BotState.Failed) && !_running;
+
+	// Which run of this account is the live one (one per start), and which run opened the connection Steam last
+	// reported on. A stop disconnects and SteamKit queues the "disconnected" for the callback pump - but the stop also
+	// ends that pump, so the message could wait there and be read by the NEXT run's pump, which took it for its own
+	// dropped connection: a moment of "reconnecting" and a login slot spent for nothing. A disconnect from a connection
+	// an earlier run opened belonged to that run, and it's over.
+	private long _session;
+	private long _connectedSession;
 	private string? _guardPrompt;
 	private string? _refreshToken;
 
@@ -1207,11 +1230,50 @@ public sealed class Bot : IAsyncDisposable {
 			State = BotState.Stopped;
 			StatusText = "stopped";
 		} catch (Exception e) {
+			// Undone before it says so: a throw after the account was marked running left it marked running, and
+			// every 'start' after that did nothing at all until somebody thought to 'stop' it first.
+			await AbandonStartAsync().ConfigureAwait(false);
 			State = BotState.Failed;
 			StatusText = "couldn't start";
 			Log.Error(new Said("couldn't start: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Name);
+			Log.StackToFile(e, Name);
 		} finally {
 			_startGate.Release();
+		}
+	}
+
+	/// <summary>A start that broke part way: not running, no pump, no token source - so the next 'start' starts.</summary>
+	private async Task AbandonStartAsync() {
+		await _stopGate.WaitAsync().ConfigureAwait(false);
+
+		try {
+			bool wasRunning = _running;
+			_running = false;
+
+			try {
+				Client.Disconnect();
+			} catch {
+				// never connected
+			}
+
+			if (_cts != null) {
+				await _cts.CancelAsync().ConfigureAwait(false);
+			}
+
+			if (_pump != null) {
+				try {
+					await _pump.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+				} catch {
+					// the pump falls out on its own
+				}
+			}
+
+			_cts?.Dispose();
+			_cts = null;
+			_pump = null;
+			Log.Debug($"start failed part way (was marked running: {wasRunning}) - cleared, so 'start' works again", Name);
+		} finally {
+			_stopGate.Release();
 		}
 	}
 
@@ -1224,6 +1286,7 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		CancellationToken ct;
+		long session;
 
 		// The teardown and the setup as one step under the stop lock. Apart, a 'stop' clicked just after 'start' ran in
 		// between: it cleared the running flag before the start set it again, then cancelled the start's wait - so the
@@ -1235,6 +1298,12 @@ public sealed class Bot : IAsyncDisposable {
 			// A previous run that ended without StopAsync (a disabled account, a dead login) can still be holding a
 			// token source and a callback pump. Tear it down or the second start runs two pumps on one client.
 			await StopCoreAsync(false).ConfigureAwait(false);
+
+			// A new run: anything Steam still says about the last one's connection is ignored from here on. And
+			// nothing is announced yet - the last run's "disconnected" may never be read, so what it would have
+			// cleared is cleared here.
+			session = Interlocked.Increment(ref _session);
+			ForgetConnection();
 
 			_running = true;
 
@@ -1281,6 +1350,7 @@ public sealed class Bot : IAsyncDisposable {
 
 		StatusText = "connecting";
 		_lastLogOnResult = EResult.Invalid;
+		Interlocked.Exchange(ref _connectedSession, session);   // before Connect: its "disconnected" can come back at once
 		Client.Connect();
 	}
 
@@ -1865,20 +1935,32 @@ public sealed class Bot : IAsyncDisposable {
 	/// log line to say why. The body lives in a Task below so it can be wrapped.
 	/// </summary>
 	private async void OnDisconnected(SteamClient.DisconnectedCallback callback) {
+		long session = Interlocked.Read(ref _session);
+		long opened = Interlocked.Read(ref _connectedSession);
+
+		// A connection an earlier run opened: that run's stop already cleaned up after it, and this run hasn't
+		// connected yet. Taken as ours, it read "reconnecting" and queued a second sign-in behind the real one.
+		if (opened != session) {
+			Log.Debug($"disconnected - an earlier run's connection (run {opened}, this is run {session}), ignored", Name);
+
+			return;
+		}
+
 		// The on-screen line only says "reconnecting"; this is the why, for the file.
 		if (_running) {
 			Log.Debug($"disconnected - by us: {callback.UserInitiated}, Steam's last word: {_lastLogOnResult}", Name);
 		}
 
 		try {
-			await OnDisconnectedAsync().ConfigureAwait(false);
+			await OnDisconnectedAsync(session).ConfigureAwait(false);
 		} catch (Exception e) {
 			Log.Error(new Said("the disconnect handler failed: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Name);
 			Log.StackToFile(e, Name);
 		}
 	}
 
-	private async Task OnDisconnectedAsync() {
+	/// <summary>What a connection that's gone leaves behind: nothing playing, nothing announced, no web session.</summary>
+	private void ForgetConnection() {
 		OnlineSince = null;
 		Playing = "";
 		PlayingApps = [];   // nothing is playing on a session that's gone - or a grind thinks its game is still on
@@ -1894,6 +1976,10 @@ public sealed class Bot : IAsyncDisposable {
 		_mismatchedSince = null;
 		_personaFightSince = null;   // the next session's own echo decides whether anybody else is writing it
 		_contestRetried = false;
+	}
+
+	private async Task OnDisconnectedAsync(long session) {
+		ForgetConnection();
 
 		_heartbeat?.Dispose();
 		_heartbeat = null;
@@ -1991,7 +2077,8 @@ public sealed class Bot : IAsyncDisposable {
 					break;
 			}
 
-			if (!_running) {
+			// Stopped - or stopped and started again - while it waited: the run this reconnect was for is over.
+			if (!_running || (Interlocked.Read(ref _session) != session)) {
 				return;
 			}
 
@@ -2003,7 +2090,8 @@ public sealed class Bot : IAsyncDisposable {
 
 			await Limiters.WaitForLoginSlotAsync(_cts?.Token ?? CancellationToken.None).ConfigureAwait(false);
 
-			if (_running && !Client.IsConnected) {
+			if (_running && (Interlocked.Read(ref _session) == session) && !Client.IsConnected) {
+				Interlocked.Exchange(ref _connectedSession, session);
 				Client.Connect();
 			}
 		} catch (OperationCanceledException) {

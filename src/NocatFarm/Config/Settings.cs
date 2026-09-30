@@ -224,7 +224,9 @@ public static class Settings {
 			}
 
 			case SettingKind.Float: {
-				if (!float.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out float f)) {
+				// Finite too: "nan" parses, passes every range check (NaN is neither below nor above), and a NaN can't be
+				// written as JSON - so every save of that account failed from then on, and each change was lost at restart.
+				if (!float.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out float f) || !float.IsFinite(f)) {
 					return $"{def.Label} must be a number";
 				}
 
@@ -334,14 +336,24 @@ public static class Settings {
 
 	private static string Bound(double v) => v is <= double.MinValue or >= double.MaxValue ? "anything" : v.ToString("0.##", CultureInfo.InvariantCulture);
 
-	private static int? MatchChoice(SettingDef def, string raw) {
-		foreach ((int Value, string Label) option in ParseChoices(def)) {
-			if (option.Label.StartsWith(raw, StringComparison.OrdinalIgnoreCase)) {
-				return option.Value;
-			}
+	/// <summary>
+	/// A choice by its label: the whole label, or the start of exactly one. Nothing typed matched every label and took the
+	/// first ("" set Appear as to offline), and "o" picked offline over online by being listed first.
+	/// </summary>
+	internal static int? MatchChoice(SettingDef def, string raw) {
+		if (raw.Length == 0) {
+			return null;
 		}
 
-		return null;
+		List<(int Value, string Label)> options = ParseChoices(def);
+
+		if (options.FirstOrDefault(o => o.Label.Equals(raw, StringComparison.OrdinalIgnoreCase)) is { Label: not null } exact) {
+			return exact.Value;
+		}
+
+		List<(int Value, string Label)> starts = [.. options.Where(o => o.Label.StartsWith(raw, StringComparison.OrdinalIgnoreCase))];
+
+		return starts.Count == 1 ? starts[0].Value : null;
 	}
 
 	/// <summary>
@@ -381,8 +393,8 @@ public static class Settings {
 	/// lowering a "longest" below its "shortest" used to be silently undone, so the number you had just typed
 	/// snapped back and nothing said why. The value someone explicitly asked for is never the one to overwrite.
 	/// </param>
-	/// <returns>One human-readable line per pair that had to be moved.</returns>
-	public static List<string> FixRanges(object config, string? justSet = null) =>
+	/// <returns>One human-readable line per pair that had to be moved - English for the console, translated for the dashboard.</returns>
+	public static List<Core.Said> FixRanges(object config, string? justSet = null) =>
 		FixRanges(config, justSet == null ? [] : [justSet]);
 
 	/// <summary>
@@ -390,8 +402,8 @@ public static class Settings {
 	/// <paramref name="justSet"/> keeps its number and pulls its "shortest" down; it used to be given no names, so a
 	/// longest lowered below its shortest there snapped back up, while the same change typed at the console stuck.
 	/// </summary>
-	public static List<string> FixRanges(object config, IReadOnlyCollection<string> justSet) {
-		List<string> adjusted = [];
+	public static List<Core.Said> FixRanges(object config, IReadOnlyCollection<string> justSet) {
+		List<Core.Said> adjusted = [];
 
 		foreach ((string min, string max) in RangePairs) {
 			if ((Read(config, min) is not int lo) || (Read(config, max) is not int hi) || (hi >= lo)) {
@@ -410,7 +422,7 @@ public static class Settings {
 			}
 
 			Apply(config, def, target.ToString(System.Globalization.CultureInfo.InvariantCulture));
-			adjusted.Add($"{def.Label} moved to {target} to match");
+			adjusted.Add(new Core.Said("{0} moved to {1} to match", new Core.Said(def.Label), target));
 		}
 
 		return adjusted;
@@ -992,7 +1004,7 @@ public static class Settings {
 			"How long it waits between unlocks. Careful doubles every wait and brisk halves them. No pace unlocks anything before the hours played allow it.",
 			Advanced: true, Choices: "0 careful (twice as slow) | 1 normal | 2 brisk (twice as fast)"),
 		new("AchievementMaxCompletionPct", "Finish no more than", SecAchievements, SettingKind.Int,
-			"The most of any one game it will ever complete, in percent. Leaving a few unearned looks like a real library. The grind command ignores this.",
+			"The most of any one game it will ever complete, in percent. Leaving a few unearned looks like a real library. Once a game gets there, the hunt leaves it for good - raise this and it comes back. The grind command ignores this.",
 			Advanced: true, Min: 1, Max: 100),
 		new("AchievementIncludeMainGame", "Earn them in the main game too", SecAchievements, SettingKind.Bool,
 			"Lets the main game from \"Human mode\" earn achievements like every other game. Best left on, since hundreds of hours with no achievements looks odd.",
@@ -1189,7 +1201,7 @@ public static class Settings {
 			"Seconds to wait before replying, so it doesn't answer instantly. The real wait is random, up to double this.",
 			Advanced: true, Min: 0, Max: 600),
 		new("CommandMasters", "Accept commands from", SecSocial, SettingKind.Text,
-			"SteamID64s allowed to control nocat.farm by messaging this account, separated by commas. Commands start with a slash, so send /help to begin. Leave empty so nobody can.",
+			"SteamID64s allowed to control this account by messaging it, separated by commas - this account only, not the others or the app's settings. Commands start with a slash, so send /help to begin. Leave empty so nobody can.",
 			Advanced: true, Placeholder: "76561198000000000"),
 		// ── Staying out of the way ──
 		new("PauseWhenYouPlay", "Stand down when you play", SecCourtesy, SettingKind.Bool,

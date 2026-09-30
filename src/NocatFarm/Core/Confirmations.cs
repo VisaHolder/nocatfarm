@@ -27,6 +27,9 @@ public static class Confirmations {
 	/// <summary>Steam's confirmation types.</summary>
 	public const int Trade = 2;
 
+	/// <summary>A market listing waiting to go up - its creator id is the listing's id.</summary>
+	public const int MarketListing = 3;
+
 	private static readonly HttpClient Plain = new() { Timeout = TimeSpan.FromSeconds(15) };
 	private static long _offset;
 	private static DateTime _alignedAt = DateTime.MinValue;

@@ -162,7 +162,7 @@ public static partial class Notifier {
 		}
 	}
 
-	private sealed record Block(Topic Topic, string Source, List<string> Lines);
+	internal sealed record Block(Topic Topic, string Source, List<string> Lines);
 
 	/// <summary>What a kind of event is called: "Cards", "Needs you", "Daily summary".</summary>
 	public static string Label(Topic topic) => Look(topic).Label.ToString();
@@ -237,10 +237,11 @@ public static partial class Notifier {
 
 		foreach (Block b in blocks) {
 			(_, int colour) = Look(b.Topic);
-			string body = b.Topic == Topic.Summary
-				? "```\n" + string.Join('\n', b.Lines) + "\n```"
-				: string.Join('\n', Capped(b, 15).Select(static l => "◆ " + l));
-			string description = body.Length > 4000 ? body[..4000] + "…" : body;
+			// Escaped: a line can be a stranger's words - a profile comment "[free case](https://...)" came up as a link
+			// with any text they liked on it. Cut before the code block is closed, so a long summary keeps its closing ```.
+			string description = b.Topic == Topic.Summary
+				? "```\n" + Fit(string.Join('\n', b.Lines).Replace("```", "`​``", StringComparison.Ordinal), 3900) + "\n```"
+				: Fit(string.Join('\n', Capped(b, 15).Select(static l => "◆ " + Md(l))), 4000);
 			string title = Title(b);
 			int length = title.Length + description.Length + footer.Length;
 
@@ -383,11 +384,7 @@ public static partial class Notifier {
 	private static string Html(string s) => WebUtility.HtmlEncode(s);
 
 	private static async Task<(bool Ok, string Why)> SendTelegramAsync(List<Block> blocks, CancellationToken ct) {
-		// "// CARDS · kylro" then "◆ card dropped in Rust - 2 to go" - the owner's site bot's look, no emoji.
-		List<string> parts = [.. blocks.Select(static b => b.Topic == Topic.Summary
-			? $"<code>// {Html(Look(b.Topic).Label.ToString().ToUpperInvariant())}</code>\n<pre>{Html(string.Join('\n', b.Lines))}</pre>"
-			: $"<code>// {Html(Look(b.Topic).Label.ToString().ToUpperInvariant())}</code>{(Account(b) is { } a ? " · <b>" + Html(a) + "</b>" : "")}\n"
-				+ string.Join('\n', Capped(b, 15).Select(static l => "◆ " + Html(l))))];
+		List<string> parts = [.. blocks.Select(TelegramPart)];
 
 		// A Telegram message holds 4096 characters; several blocks share one until it's full.
 		StringBuilder message = new();
@@ -403,10 +400,55 @@ public static partial class Notifier {
 				message.Clear();
 			}
 
-			message.Append(message.Length > 0 ? "\n\n" : "").Append(part.Length > 4000 ? part[..4000] : part);
+			message.Append(message.Length > 0 ? "\n\n" : "").Append(part);
 		}
 
 		return message.Length > 0 ? await PostTelegramAsync(message.ToString(), ct).ConfigureAwait(false) : (true, "");
+	}
+
+	/// <summary>The most of <paramref name="text"/> that fits in <paramref name="max"/> characters, with "…" when cut.</summary>
+	internal static string Fit(string text, int max) => text.Length <= max ? text : text[..Math.Max(0, max - 1)] + "…";
+
+	/// <summary>
+	/// One block as Telegram HTML: "// CARDS · kylro" then "◆ card dropped in Rust - 2 to go" - the owner's site bot's look,
+	/// no emoji. Never over 3900 characters, and cut a whole line at a time, before encoding.
+	/// </summary>
+	/// <remarks>
+	/// The finished HTML used to be cut at 4000, which took the closing &lt;/pre&gt; off a big fleet's daily summary (or
+	/// halved an &amp;amp;) - Telegram turns the whole message down as HTML it can't read, so none of it arrived.
+	/// </remarks>
+	internal static string TelegramPart(Block b) {
+		bool summary = b.Topic == Topic.Summary;
+		string head = $"<code>// {Html(Look(b.Topic).Label.ToString().ToUpperInvariant())}</code>"
+			+ (!summary && (Account(b) is { } a) ? " · <b>" + Html(a) + "</b>" : "") + "\n";
+		int room = 3900 - head.Length - (summary ? "<pre></pre>".Length : 0);
+		StringBuilder body = new();
+
+		foreach (string line in summary ? b.Lines : Capped(b, 15).Select(static l => "◆ " + l)) {
+			string encoded = Html(line);
+			int left = room - body.Length - (body.Length > 0 ? 1 : 0);
+
+			if (encoded.Length > left) {
+				// A line of its own too long for the message is cut short; otherwise it stops at the last whole line.
+				if (body.Length == 0) {
+					string cut = line;
+
+					while ((cut.Length > 0) && (Html(cut).Length + 1 > left)) {
+						cut = cut[..(cut.Length * 9 / 10)];
+					}
+
+					body.Append(Html(cut)).Append('…');
+				} else if (left >= 2) {
+					body.Append("\n…");
+				}
+
+				break;
+			}
+
+			body.Append(body.Length > 0 ? "\n" : "").Append(encoded);
+		}
+
+		return summary ? $"{head}<pre>{body}</pre>" : head + body;
 	}
 
 	private static async Task<(bool Ok, string Why)> PostTelegramAsync(string html, CancellationToken ct) {

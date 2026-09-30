@@ -245,6 +245,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	/// </summary>
 	private int _licensesAsked = -1;
 
+	/// <summary>Read the badge pages at the next look rather than reuse the queue - a card dropped while building playtime.</summary>
+	private bool _readBadgesAgain;
+
 	/// <summary>
 	/// Farming time on each game since its card count last moved, carried across sittings, pauses and restarts of the
 	/// loop - so "gave up nothing in N hours" means N hours of farming, not N hours of one uninterrupted run, which a
@@ -400,7 +403,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		// the queue has run dry - the last to confirm it really is finished.
 		int licenses = Bot.LicenseGeneration;
 		TimeSpan maxAge = HoldingBack ? TimeSpan.FromHours(3) : TimeSpan.FromHours(1);
-		bool reuse = (licenses == _licensesSeen) && (Bot.CardsCheckedAt is { } looked) && (DateTime.UtcNow - looked < maxAge)
+		bool reuse = !_readBadgesAgain && (licenses == _licensesSeen) && (Bot.CardsCheckedAt is { } looked) && (DateTime.UtcNow - looked < maxAge)
 			&& Queue.Any(static g => g.CardsRemaining > 0);
 
 		_licensesAsked = licenses;
@@ -420,6 +423,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 			Bot.CardsCheckedAt = DateTime.UtcNow;
 			_licensesSeen = licenses;
+			_readBadgesAgain = false;
 		}
 
 		lock (_queue) {
@@ -1145,8 +1149,36 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		_status = new Said("building playtime on {0} game(s), ~{1}h to go", batch.Count, (needHours).ToString("0.0"));
 		Log.Info(new Said("building playtime first - {0} games at once for ~{1}h", batch.Count, (needHours).ToString("0.0")), Bot.Name);
 
-		DateTime until = DateTime.UtcNow.AddHours(needHours);
+		DateTime started = DateTime.UtcNow;
+		DateTime until = started.AddHours(needHours);
 
+		try {
+			await BumpLoopAsync(batch, until, ct).ConfigureAwait(false);
+		} finally {
+			NoteBumped(batch, DateTime.UtcNow - started);
+		}
+	}
+
+	/// <summary>
+	/// The hours a bump put on its games, onto the queue's own copies of them. Steam counts playtime on every game of the
+	/// batch at once.
+	/// </summary>
+	/// <remarks>
+	/// The queue is reused for an hour between badge reads, and its hours only ever came from the badge page. So a bump
+	/// that finished in minutes was followed by the same bump again - same games, same hours, same "building playtime
+	/// first" line - every few minutes until the page was read again, the game already over the line and not farmed.
+	/// </remarks>
+	internal static void NoteBumped(IEnumerable<FarmTarget> batch, TimeSpan played) {
+		if (played <= TimeSpan.Zero) {
+			return;
+		}
+
+		foreach (FarmTarget game in batch) {
+			game.HoursPlayed += (float) played.TotalHours;
+		}
+	}
+
+	private async Task BumpLoopAsync(List<FarmTarget> batch, DateTime until, CancellationToken ct) {
 		while (!ct.IsCancellationRequested && DateTime.UtcNow < until) {
 			if (!Bot.CanPlay) {
 				_status = new Said("paused (account in use)");
@@ -1202,6 +1234,10 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			// A drop here means Steam disagreed with our threshold - stop bumping and go farm properly.
 			if (await Bot.WaitForItemDropAsync(slice, ct).ConfigureAwait(false)) {
 				Log.Reward("card dropped early - switching to farming", Bot.Name);
+
+				// From the badge pages, not the queue: the queue still has this game under the line, and reused it went
+				// straight back to building playtime on it.
+				_readBadgesAgain = true;
 
 				return;
 			}

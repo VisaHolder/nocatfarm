@@ -26,6 +26,12 @@ public readonly record struct RedeemResult(EPurchaseResultDetail Detail, string 
 		// sitting in Steam's hour-long activation cooldown blocked every other account from trying.
 		or EPurchaseResultDetail.RateLimited
 		or EPurchaseResultDetail.Timeout;
+
+	/// <summary>The key is fine, and this account will never be able to use it - unlike a rate limit or a timeout, which pass.</summary>
+	public bool NotForThisAccount => Detail is EPurchaseResultDetail.AlreadyPurchased
+		or EPurchaseResultDetail.RestrictedCountry
+		or EPurchaseResultDetail.DoesNotOwnRequiredApp
+		or EPurchaseResultDetail.CannotRedeemCodeFromClient;
 }
 
 /// <summary>
@@ -186,24 +192,30 @@ public static class Redeeming {
 			return;
 		}
 
+		List<Bot> all = [.. bots];
+
 		// Only accounts that are signed in AND, on a human-mode account, awake and warmed up. Activating a key on an
 		// account that is asleep - invisible, logged off for the night - is a person redeeming in his sleep.
-		List<Bot> online = [.. bots.Where(static b => b.IsOnline && NocatFarm.Modules.HumanMode.ReadyFor(b))];
+		List<Bot> online = [.. all.Where(static b => b.IsOnline && NocatFarm.Modules.HumanMode.ReadyFor(b))];
 
 		if (online.Count == 0) {
 			return;
 		}
 
-		// A key queued for one named account goes to that account and no other, however long it has to wait for it.
-		if (KeyQueue.Next(account => (account == null) || online.Exists(b => b.Name.Equals(account, StringComparison.OrdinalIgnoreCase))) is not { } next) {
+		static bool Untried(Bot b, IReadOnlyList<string> refused) => !refused.Contains(b.Name, StringComparer.OrdinalIgnoreCase);
+
+		// A key queued for one named account goes to that account and no other, however long it has to wait for it. Any
+		// other goes to the accounts that haven't already said it isn't for them.
+		if (KeyQueue.Next((account, refused) => (account == null) ? online.Exists(b => Untried(b, refused))
+			: online.Exists(b => b.Name.Equals(account, StringComparison.OrdinalIgnoreCase))) is not { } next) {
 			return;
 		}
 
 		string key = next.Key;
 
-		if (next.Account != null) {
-			online = [.. online.Where(b => b.Name.Equals(next.Account, StringComparison.OrdinalIgnoreCase))];
-		}
+		online = next.Account != null
+			? [.. online.Where(b => b.Name.Equals(next.Account, StringComparison.OrdinalIgnoreCase))]
+			: [.. online.Where(b => Untried(b, next.RefusedBy))];
 
 		KeyQueue.Spent();   // whatever happens below, the next one waits its own jittered gap
 		bool first = true;
@@ -243,6 +255,15 @@ public static class Redeeming {
 			if (!result.WorthAnotherAccount || pinned) {
 				Log.Info(new Said("dropping a queued key - {0}  ({1} left)", result.Message, KeyQueue.Count - 1), bot.Name);
 				KeyQueue.Done(key);   // the key is dead, not the account
+
+				return;
+			}
+
+			// Owned already, another region's: this account is never asked about it again. It used to be, at every retry
+			// until the eighth - each one a failed activation on every account, for a key none of them could ever use.
+			if (result.NotForThisAccount && KeyQueue.RefusedOn(key, bot.Name, all.Select(static b => b.Name))) {
+				Log.Info(new Said("dropping a queued key - none of your accounts can use it  ({0} left)", KeyQueue.Count - 1), bot.Name);
+				KeyQueue.Done(key);
 
 				return;
 			}

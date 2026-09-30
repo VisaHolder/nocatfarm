@@ -161,8 +161,31 @@ public static partial class Notifier {
 						continue;
 					}
 
+					// Commands only from a private chat - the one person who connected it. A group's ID can be typed in by hand
+					// for the notifications, and then every member of the group was obeyed: /2fa, /set WebPassword, /anywhere on.
+					bool fromPrivate = chat.TryGetProperty("type", out JsonElement kind) && (kind.GetString() == "private");
+
+					if (G.TelegramCommands && (text.Length > 0) && !fromPrivate) {
+						if (text.StartsWith('/') && _hinted.Add("group:" + chatId)) {
+							await ReplyAsync(chatId, Html(new Said("Commands only work in a private chat with this bot - a group gets the notifications.").ToString()), ct).ConfigureAwait(false);
+						}
+
+						continue;
+					}
+
+					// Not awaited here, as Discord's aren't: '/start all' on ten accounts waits out every sign-in gap - minutes -
+					// and while it ran nothing else was read, a '/stop all' sent after it included.
 					if (G.TelegramCommands && (text.Length > 0)) {
-						await HandleAsync(text, ct).ConfigureAwait(false);
+						_ = Task.Run(async () => {
+							try {
+								await HandleAsync(text, ct).ConfigureAwait(false);
+							} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+								// closing
+							} catch (Exception e) {
+								Log.Failed("telegram: answering a command", e, "telegram");
+								Log.StackToFile(e, "telegram");
+							}
+						}, CancellationToken.None);
 					}
 				}
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
@@ -288,7 +311,10 @@ public static partial class Notifier {
 
 					return;
 				case "status" when rest.Length == 0:
-					await PostTelegramAsync(StatusHtml(), ct).ConfigureAwait(false);
+					// Split at whole lines like Discord's: a big fleet's list went over Telegram's 4096 and nothing arrived.
+					foreach (string part in Chunks(StatusHtml(), 4000)) {
+						await PostTelegramAsync(part, ct).ConfigureAwait(false);
+					}
 
 					return;
 				// Links to tap, not a code block to copy from.
@@ -363,7 +389,12 @@ public static partial class Notifier {
 			return (null, rest);
 		}
 
-		return rest.EndsWith("confirm", StringComparison.OrdinalIgnoreCase) ? (null, rest[..^"confirm".Length].Trim()) : (canonical, rest);
+		// "confirm" as a word of its own: '/remove autoconfirm' ran 'remove auto' without asking.
+		string[] words = rest.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+		return (words.Length > 0) && words[^1].Equals("confirm", StringComparison.OrdinalIgnoreCase)
+			? (null, string.Join(' ', words[..^1]))
+			: (canonical, rest);
 	}
 
 	/// <summary>
@@ -383,7 +414,8 @@ public static partial class Notifier {
 
 		int left = all.Skip(MaxMessages).Sum(static c => c.Split('\n').Length);
 		List<string> kept = all.Take(MaxMessages).ToList();
-		kept[^1] += "\n" + new Said("... and {0} more line(s) - the whole reply is in the dashboard's Console", left);
+		// Not "the whole reply is in the dashboard's Console": that shows only what's typed there, and the log keeps 40 lines.
+		kept[^1] += "\n" + new Said("... and {0} more line(s) - type it in the dashboard's Console for the whole reply", left);
 
 		return kept;
 	}

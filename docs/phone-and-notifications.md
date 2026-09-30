@@ -84,6 +84,9 @@ switches, under Show advanced:
 | Send achievements | off |
 | Send rep4rep comments | off |
 
+A new comment on one of your profiles says who wrote it and what it says, like *new comment from AEZAKMI: "+rep
+pretty good player"*. One Steam is still checking says so instead.
+
 In the log, lines from Telegram and Discord are tagged `telegram` and `discord`. You can change their colours under
 Logging with Show advanced ticked (*Telegram's colour in the log*, *Discord's colour in the log*), from the same
 palette as each account's *Colour in the log*.

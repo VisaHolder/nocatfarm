@@ -141,12 +141,25 @@ public static class AsfImport {
 			// The token is the reason to do this at all.
 			string? token = Str(db, "BackingRefreshToken") ?? Str(db, "RefreshToken");
 
+			// Only one that still works. An expired one was brought over and tried first - a failed logon that left the
+			// account stopped as Failed, when the password that came with it would have signed straight in.
 			if (!string.IsNullOrWhiteSpace(token)) {
-				account.Token = token;
+				if (IsLiveJwt(token, out string? steamId)) {
+					account.Token = token;
+				} else {
+					account.Notes.Add(new Said("its ASF login token has run out, so it isn't brought over"));
+				}
 
-				if (IsLiveJwt(token, out string? steamId) && IsSteamId(steamId)) {
+				if (IsSteamId(steamId)) {
 					account.SteamId = steamId!;
 				}
+			}
+
+			// No login in the file - ASF asks for it at start. This PC's Steam may know it by the SteamID; otherwise the
+			// preview asks, and without one it signs in by QR code. The bot's own name was used, which is somebody else's
+			// account, or nobody's.
+			if ((account.SteamLogin.Length == 0) && (SteamLogins.AccountFor(account.SteamId.Length > 0 ? account.SteamId : null) is { Length: > 0 } known)) {
+				account.SteamLogin = account.Config.SteamLogin = known;
 			}
 
 			// ASF reads a dropped-in maFile once and then DELETES it, keeping the two secrets in the bot's database.
@@ -176,8 +189,12 @@ public static class AsfImport {
 		if (rep4repToken != null) {
 			string kept = rep4repToken;
 			scan.Settings.Add(new ImportSetting("Rep4RepApiToken", "••••••", ToGlobal: g => {
+				// With rep4rep's own switch: the token and every account's tick came across and it stayed off, so the preview
+				// said "rep4rep on" and nothing was ever posted. Only when this brings the token - one set here already is
+				// under a switch somebody set here.
 				if (string.IsNullOrEmpty(g.Rep4RepApiToken)) {
 					g.Rep4RepApiToken = kept;
+					g.Rep4RepEnabled = true;
 				}
 			}));
 		}
@@ -231,6 +248,12 @@ public static class AsfImport {
 
 		try {
 			foreach (string path in Directory.EnumerateFiles(dir, "*.maFile*")) {
+				// Not a .PENDING one: ASF writes that at 2fainit, before the authenticator is live on Steam, and one never
+				// finalised makes codes Steam turns down.
+				if (path.EndsWith(".PENDING", StringComparison.OrdinalIgnoreCase)) {
+					continue;
+				}
+
 				if ((Text(path) is { } text) && (MaFileSecrets(text).Shared is { Length: > 0 })
 					&& (Find(Json(path), "account_name") is { ValueKind: JsonValueKind.String } account)
 					&& string.Equals(account.GetString(), login, StringComparison.OrdinalIgnoreCase)) {
@@ -247,12 +270,18 @@ public static class AsfImport {
 	// ── translation ─────────────────────────────────────────────────────────
 	private static BotConfig Translate(JsonElement cfg, string name, JsonElement db, ImportedAccount account, string dir) {
 		BotConfig bot = new() {
-			Enabled = Bool(cfg, "Enabled") ?? true,
-			SteamLogin = Str(cfg, "SteamLogin") ?? name,
+			// Left out means ASF's default, which is off: a bot ASF never started started signing in here.
+			Enabled = Bool(cfg, "Enabled") ?? false,
+			SteamLogin = Str(cfg, "SteamLogin") ?? "",
 			SteamParentalCode = Str(cfg, "SteamParentalCode") ?? ""
 		};
 
-		// With no PIN in the config ASF works the Family View PIN out itself and keeps it in the bot's database.
+		// With no PIN in the config ASF works the Family View PIN out itself and keeps it in the bot's database. ASF also
+		// takes "0" for "none" - that isn't a PIN, and copied as one it kept the real one from the database out.
+		if (!((bot.SteamParentalCode.Length == 4) && bot.SteamParentalCode.All(char.IsAsciiDigit))) {
+			bot.SteamParentalCode = "";
+		}
+
 		if (bot.SteamParentalCode.Length == 0) {
 			bot.SteamParentalCode = Str(db, "CachedSteamParentalCode") ?? Str(db, "BackingCachedSteamParentalCode") ?? "";
 		}
@@ -291,7 +320,8 @@ public static class AsfImport {
 		}
 
 		if (Num(cfg, "HoursUntilCardDrops") is double hours) {
-			bot.HoursUntilCardDrops = (float) hours;
+			// ASF takes up to 255; here the most is 100, and more was quietly put back to 3 at the first save from the dashboard.
+			bot.HoursUntilCardDrops = (float) Math.Clamp(hours, 0, 100);
 		}
 
 		// ASF's scheduled loot, in hours - the same meaning as ours.
@@ -311,15 +341,21 @@ public static class AsfImport {
 		bot.AcceptGifts = gifts;
 		bot.AcceptGiftedGames = gifts;
 
-		// ASF's current key is a list, FarmingOrders, tried in turn; ours is one choice, so the first one wins.
-		// The single-number FarmingOrder is what older ASF configs used. Reading only that missed every order
-		// set on a current install.
-		if (cfg.TryGetProperty("FarmingOrders", out JsonElement orders) && (orders.ValueKind == JsonValueKind.Array)
-			&& (orders.EnumerateArray().FirstOrDefault() is { ValueKind: JsonValueKind.Number } firstOrder) && firstOrder.TryGetInt32(out int order)) {
-			bot.FarmingOrder = MapFarmingOrder(order);
+		// ASF's current key is a list, FarmingOrders, tried in turn; the single-number FarmingOrder is what older ASF
+		// configs used. Reading only that missed every order set on a current install.
+		List<int> asfOrders = [];
+
+		if (cfg.TryGetProperty("FarmingOrders", out JsonElement orders) && (orders.ValueKind == JsonValueKind.Array)) {
+			foreach (JsonElement entry in orders.EnumerateArray()) {
+				if (AsfOrder(entry) is int known) {
+					asfOrders.Add(known);
+				}
+			}
 		} else if (Int(cfg, "FarmingOrder") is int legacyOrder) {
-			bot.FarmingOrder = MapFarmingOrder(legacyOrder);
+			asfOrders.Add(legacyOrder);
 		}
+
+		ApplyFarmingOrders(asfOrders, bot, account);
 
 		bot.IdleGames = Apps(Prop(cfg, "GamesPlayedWhileIdle"));
 		bot.CustomGameName = Str(cfg, "CustomGamePlayedWhileIdle") ?? "";
@@ -369,7 +405,10 @@ public static class AsfImport {
 
 		TranslateFarming(cfg, bot);
 		TranslateBehaviour(cfg, bot);
-		TranslateTrading(cfg, bot);
+		JsonElement asf = Json(Path.Combine(dir, "ASF.json"));
+		ulong owner = (Prop(asf, "SteamOwnerID") is { ValueKind: JsonValueKind.Number } o) && o.TryGetUInt64(out ulong id) ? id
+			: ulong.TryParse(Str(asf, "SteamOwnerID") ?? Str(asf, "s_SteamOwnerID"), CultureInfo.InvariantCulture, out ulong typed) ? typed : 0;
+		TranslateTrading(cfg, bot, owner);
 
 		return bot;
 	}
@@ -483,9 +522,9 @@ public static class AsfImport {
 
 	/// <summary>ASF packs its farming switches into one bitfield. Unpack it into the individual settings here.</summary>
 	private static void TranslateFarming(JsonElement cfg, BotConfig bot) {
-		if (Int(cfg, "FarmingPreferences") is not int flags) {
-			return;
-		}
+		// Left out means ASF's default, none of them - as with the trading switches. Skipped instead, the sale-event
+		// things below stayed at nocat.farm's "on" for a bot ASF never ran them on.
+		int flags = Int(cfg, "FarmingPreferences") ?? 0;
 
 		// ASF's EFarmingPreferences values. These were read one bit off, so FarmingPausedByDefault (1) arrived as
 		// "log out when finished" and nothing arrived where it belonged. FarmingPausedByDefault itself has no
@@ -496,6 +535,12 @@ public static class AsfImport {
 		bot.SkipRefundableGames = (flags & 16) != 0;     // SkipRefundableGames
 		bot.SkipUnplayedGames = (flags & 32) != 0;       // SkipUnplayedGames
 		bot.UnpackBoosterPacks = (flags & 256) != 0;     // AutoUnpackBoosterPacks
+
+		// AutoSteamSaleEvent: the sale's discovery queue and its free items. It was never read, so both stayed on here
+		// whatever ASF had.
+		bool saleEvent = (flags & 128) != 0;
+		bot.ClaimEventItems = saleEvent;
+		bot.DiscoveryQueue = saleEvent ? 1 : 0;          // during sales, as ASF does it
 	}
 
 	/// <summary>
@@ -505,9 +550,8 @@ public static class AsfImport {
 	/// filter off.
 	/// </summary>
 	private static void TranslateBehaviour(JsonElement cfg, BotConfig bot) {
-		if (Int(cfg, "BotBehaviour") is not int flags) {
-			return;
-		}
+		// Left out means ASF's default, 0 - "clear the new-items badge" stayed on for a bot that never cleared it.
+		int flags = Int(cfg, "BotBehaviour") ?? 0;
 
 		bot.RejectInvalidFriendInvites = (flags & 1) != 0;       // RejectInvalidFriendInvites
 		bot.ClearInventoryNotifications = (flags & 8) != 0;      // DismissInventoryNotifications
@@ -519,7 +563,7 @@ public static class AsfImport {
 	/// ASF's SteamUserPermissions map is where the accounts allowed to take items live - anyone at Master level
 	/// or above. That is exactly what our trade-masters list means, so it comes straight across.
 	/// </summary>
-	private static void TranslateTrading(JsonElement cfg, BotConfig bot) {
+	private static void TranslateTrading(JsonElement cfg, BotConfig bot, ulong owner) {
 		// Left out of the file means ASF's default, 0: no donations, no card swaps - not nocat.farm's defaults.
 		int flags = Int(cfg, "TradingPreferences") ?? 0;
 		bot.AcceptDonations = (flags & 1) != 0;   // AcceptDonations
@@ -530,11 +574,21 @@ public static class AsfImport {
 		if (cfg.TryGetProperty("SteamUserPermissions", out JsonElement permissions) && (permissions.ValueKind == JsonValueKind.Object)) {
 			foreach (JsonProperty entry in permissions.EnumerateObject()) {
 				// 1 FamilySharing · 2 Operator · 3 Master · 4 Owner. Master and up may take items.
-				if ((entry.Value.ValueKind == JsonValueKind.Number) && (entry.Value.GetInt32() >= 3) && ulong.TryParse(entry.Name, out ulong id)) {
+				// TryGet: a level written as 3.0 threw, and took the whole ASF folder's preview with it.
+				if ((entry.Value.ValueKind == JsonValueKind.Number) && entry.Value.TryGetDouble(out double level) && (level >= 3) && ulong.TryParse(entry.Name, out ulong id)) {
 					masters.Add(id.ToString(CultureInfo.InvariantCulture));
 				}
 			}
 		}
+
+		// No Master on the bot: ASF sends to the owner in ASF.json instead, so that's who the items go to here too. Left
+		// out, an account that sent its items every day under ASF came across with nobody to send them to.
+		if ((masters.Count == 0) && (owner != 0)) {
+			masters.Add(owner.ToString(CultureInfo.InvariantCulture));
+		}
+
+		// Lowest SteamID first, as ASF picks the first Master to send to.
+		masters = [.. masters.OrderBy(static m => ulong.Parse(m, CultureInfo.InvariantCulture))];
 
 		if (masters.Count > 0) {
 			bot.TradeMasters = string.Join(", ", masters);
@@ -544,15 +598,70 @@ public static class AsfImport {
 	}
 
 	/// <summary>ASF's farming order enum onto ours. Anything without an equivalent falls back to the default.</summary>
-	private static int MapFarmingOrder(int asf) => asf switch {
+	private static int? MapFarmingOrder(int asf) => asf switch {
 		3 => 2,    // CardDropsAscending  -> fewest cards left
 		4 => 3,    // CardDropsDescending -> most cards left
 		5 => 1,    // HoursAscending      -> least played first
 		6 => 0,    // HoursDescending     -> most played first
-		7 or 8 => 5,   // Names*          -> alphabetical
+		7 => 5,    // NamesAscending      -> alphabetical (A to Z; there is no Z to A here)
 		9 => 4,    // Random
-		_ => 0
+		_ => null
 	};
+
+	/// <summary>ASF's EFarmingOrder names, by number - for saying which ones had no match.</summary>
+	private static readonly string[] AsfOrderNames = [
+		"Unordered", "AppIDsAscending", "AppIDsDescending", "CardDropsAscending", "CardDropsDescending", "HoursAscending",
+		"HoursDescending", "NamesAscending", "NamesDescending", "Random", "BadgeLevelsAscending", "BadgeLevelsDescending",
+		"RedeemDateTimesAscending", "RedeemDateTimesDescending", "MarketableAscending", "MarketableDescending"
+	];
+
+	/// <summary>One FarmingOrders entry: ASF writes the number, and takes the name too.</summary>
+	private static int? AsfOrder(JsonElement e) =>
+		e.ValueKind == JsonValueKind.Number && e.TryGetInt32(out int n) ? n
+		: e.ValueKind == JsonValueKind.String && Array.FindIndex(AsfOrderNames, a => a.Equals(e.GetString(), StringComparison.OrdinalIgnoreCase)) is >= 0 and int i ? i
+		: null;
+
+	/// <summary>
+	/// ASF's whole ordered list of farming orders, in turn. The first one with a match here is the order; what couldn't
+	/// be matched, and anything after it (here there is one order, no tie-breakers), is said in the import's notes.
+	/// </summary>
+	/// <remarks>
+	/// Only the first entry was read, and one with no match here - BadgeLevelsAscending first, say - fell back to "most
+	/// played first", though the next entry, CardDropsAscending, had an exact match. And nothing said so.
+	/// </remarks>
+	internal static void ApplyFarmingOrders(IReadOnlyList<int> asfOrders, BotConfig bot, ImportedAccount account) {
+		int? chosen = null;
+		List<string> unmatched = [];
+		List<string> after = [];
+
+		foreach (int asf in asfOrders) {
+			string name = (asf >= 0) && (asf < AsfOrderNames.Length) ? AsfOrderNames[asf] : asf.ToString(CultureInfo.InvariantCulture);
+
+			if (asf == 0) {
+				continue;   // Unordered - no preference, nothing to carry
+			}
+
+			if (MapFarmingOrder(asf) is not int mapped) {
+				unmatched.Add(name);
+			} else if (chosen == null) {
+				chosen = mapped;
+			} else if (mapped != chosen) {
+				after.Add(name);
+			}
+		}
+
+		if (chosen is int order) {
+			bot.FarmingOrder = order;
+		}
+
+		if (unmatched.Count > 0) {
+			account.Notes.Add(new Said("ASF's farming order {0} has no match here, so it was left out", string.Join(", ", unmatched)));
+		}
+
+		if (after.Count > 0) {
+			account.Notes.Add(new Said("only one farming order is used here - {0} came after it in ASF, so it was left out", string.Join(", ", after)));
+		}
+	}
 
 	// ── reading ─────────────────────────────────────────────────────────────
 	private static IEnumerable<string> SafeFiles(string dir) {

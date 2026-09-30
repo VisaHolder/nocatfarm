@@ -36,6 +36,32 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 	/// <summary>What each waiting guest pass turned out to be, so the store is asked about a gift once.</summary>
 	private readonly Dictionary<ulong, (bool Game, string Name)> _kinds = [];
 
+	/// <summary>Guest passes Steam said no to, and when each may be tried again.</summary>
+	/// <remarks>
+	/// Any no used to mark the pass done for the whole run - a gifted game Steam was merely too busy to add that minute
+	/// was never tried again until a restart.
+	/// </remarks>
+	private readonly Dictionary<ulong, (int Tries, DateTime NotBefore)> _passRetry = [];
+
+	private static readonly TimeSpan[] PassBackoff = [TimeSpan.FromMinutes(30), TimeSpan.FromHours(2), TimeSpan.FromHours(8)];
+
+	/// <summary>
+	/// When a guest pass Steam turned down is tried again - 30 minutes, 2 hours, 8 hours - or null to give up: after the
+	/// third wait, or when the answer is one that won't change (expired, revoked, already redeemed or owned, not allowed).
+	/// </summary>
+	internal static TimeSpan? PassRetry(EResult result, int tries) =>
+		(result is EResult.Expired or EResult.Revoked or EResult.AlreadyRedeemed or EResult.AlreadyOwned or EResult.InvalidParam
+			or EResult.AccessDenied or EResult.DuplicateRequest) || (tries > PassBackoff.Length)
+			? null
+			: PassBackoff[Math.Max(1, tries) - 1];
+
+	/// <summary>The soonest a guest pass waiting out a refusal may be tried again, if any is.</summary>
+	private DateTime? NextPassRetry() {
+		DateTime now = DateTime.UtcNow;
+
+		return _passRetry.Values.Where(r => r.NotBefore > now).Select(static r => (DateTime?) r.NotBefore).Min();
+	}
+
 	/// <summary>Gifted games the owner has been told to take themselves (AcceptGiftedGames off) - said once each.</summary>
 	private readonly HashSet<ulong> _pointedOut = [];
 
@@ -97,6 +123,11 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 						}
 
 						await AnswerAsync(ct).ConfigureAwait(false);
+
+						// A pass waiting out a refusal wakes the loop when it's due, not at the six-hourly look.
+						if ((NextPassRetry() is { } passAt) && ((retryAt == null) || (passAt < retryAt))) {
+							retryAt = passAt;
+						}
 					} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 						throw;
 					} catch (Exception e) {
@@ -175,11 +206,20 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 
 		_pointedOut.RemoveWhere(gid => !passes.Contains(gid));
 
+		foreach (ulong gone in _passRetry.Keys.Where(gid => !passes.Contains(gid)).ToList()) {
+			_passRetry.Remove(gone);
+		}
+
 		// Guest passes - gifted games and trials alike - come pushed over the connection; no page to read.
 		foreach (ulong gid in passes) {
 			(Kind, ulong) key = (Kind.Pass, gid);
 
 			if (_handled.Contains(key) || _queue.Contains(key)) {
+				continue;
+			}
+
+			// Refused a little while ago - it waits out its turn before it's asked for again.
+			if (_passRetry.TryGetValue(gid, out (int Tries, DateTime NotBefore) refused) && (DateTime.UtcNow < refused.NotBefore)) {
 				continue;
 			}
 
@@ -435,11 +475,25 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 			SteamApps.RedeemGuestPassResponseCallback answer = await job.ToTask().WaitAsync(TimeSpan.FromSeconds(30), ct).ConfigureAwait(false);
 
 			if (answer.Result != EResult.OK) {
-				Log.Info(what.GiftedGame ? new Said("couldn't add gifted {0} - Steam said {1}", what.Name, answer.Result)
-					: new Said("couldn't accept a guest pass - Steam said {0}", answer.Result), Bot.Name);
+				Said failed = what.GiftedGame ? new Said("couldn't add gifted {0} - Steam said {1}", what.Name, answer.Result)
+					: new Said("couldn't accept a guest pass - Steam said {0}", answer.Result);
+				int tries = (_passRetry.TryGetValue(gid, out (int Tries, DateTime NotBefore) before) ? before.Tries : 0) + 1;
+
+				if (PassRetry(answer.Result, tries) is { } wait) {
+					DateTime again = DateTime.UtcNow + wait;
+					_passRetry[gid] = (tries, again);
+					Log.Info(new Said("{0} - trying again around {1}", failed, (Func<string>) (() => Fmt.Clock(again))), Bot.Name);
+
+					return false;   // not done - asked for again once its wait is up
+				}
+
+				_passRetry.Remove(gid);
+				Log.Info(new Said("{0} - not trying again", failed), Bot.Name);
 
 				return true;
 			}
+
+			_passRetry.Remove(gid);
 
 			if (what.GiftedGame) {
 				Log.Reward(new Said("gifted game added: {0}", what.Name), Bot.Name, topic: Topic.FreeStuff);

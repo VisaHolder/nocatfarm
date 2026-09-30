@@ -437,7 +437,7 @@ public sealed class WebHost : IAsyncDisposable {
 			SHA256.HashData(Encoding.UTF8.GetBytes(_cfg.WebPassword)));
 
 		if (!ok) {
-			int count = (_failures.TryGetValue(ip, out (int Count, DateTime Until) prev) ? prev.Count : 0) + 1;
+			int count = FailuresAfter(_failures.TryGetValue(ip, out (int Count, DateTime Until) prev) ? prev : null, DateTime.UtcNow);
 			_failures[ip] = (count, DateTime.UtcNow.AddMinutes(lockout));
 
 			if (count >= MaxFailedLogins) {
@@ -456,6 +456,14 @@ public sealed class WebHost : IAsyncDisposable {
 
 		return true;
 	}
+
+	/// <summary>
+	/// The wrong guesses to count after one more: counted afresh once the last one has had its time. Four typos last week
+	/// and one today used to lock the owner out on the first slip, and after a lockout ran out a single mistyped password
+	/// started a whole new one.
+	/// </summary>
+	internal static int FailuresAfter((int Count, DateTime Until)? previous, DateTime now) =>
+		(previous is { } p && (p.Until > now) ? p.Count : 0) + 1;
 
 	/// <summary>A fresh signed-in session for whoever sent this request: remembered here, and handed back as the cookie.</summary>
 	private string NewSession(HttpContext ctx) {
@@ -739,7 +747,10 @@ public sealed class WebHost : IAsyncDisposable {
 				? new Said("plugin {0} switched on - takes effect after a restart", body.Name)
 				: new Said("plugin {0} switched off - takes effect after a restart", body.Name));
 
-			return Results.Json(new { Message = $"{body.Name} is {(body.Enabled ? "on" : "off")} after a restart." });
+			// In the page's language - the toast shows it as it comes.
+			return Results.Json(new { Message = (body.Enabled
+				? new Said("{0} is on after a restart.", body.Name)
+				: new Said("{0} is off after a restart.", body.Name)).ToString() });
 
 			static int Add(List<string> list, string name) {
 				list.Add(name);
@@ -756,11 +767,11 @@ public sealed class WebHost : IAsyncDisposable {
 			string? problem = await UpdateCheck.LookAsync(force: true, quiet: true).ConfigureAwait(false);
 
 			if ((problem != null) && (UpdateCheck.Available == null)) {
-				return Results.Json(new { Message = new Said("couldn't reach GitHub to check ({0}) - try again in a minute", problem).ToString() });
+				return Results.Json(new { Ok = false, Message = new Said("couldn't reach GitHub to check ({0}) - try again in a minute", problem).ToString() });
 			}
 
 			if (UpdateCheck.Available == null) {
-				return Results.Json(new { Message = $"You're on the newest release ({Build.Version})." });
+				return Results.Json(new { Message = new Said("You're on the newest release ({0}).", Build.Version).ToString() });
 			}
 
 			// Pressing it is choosing that version after all, as 'update accept' is. Left skipped, a queued install
@@ -776,8 +787,10 @@ public sealed class WebHost : IAsyncDisposable {
 
 			string? failure = await SelfUpdate.ApplyAsync(CancellationToken.None).ConfigureAwait(false);
 
+			// Ok says whether it's on its way, so the page can show a failure as one.
 			return Results.Json(new {
-				Message = failure ?? "Downloading. It restarts by itself when it lands."
+				Ok = failure == null,
+				Message = failure ?? Loc.T("Downloading. It restarts by itself when it lands.")
 			});
 		});
 
@@ -936,7 +949,7 @@ public sealed class WebHost : IAsyncDisposable {
 			// Whichever side was just changed keeps its number, as at the console.
 			adjusted.AddRange(Settings.FixRanges(body, [.. Settings.Bot
 				.Where(d => !Equals(Settings.Show(body, d), Settings.Show(bot.Cfg, d)))
-				.Select(static d => d.Name)]));
+				.Select(static d => d.Name)]).Select(static s => s.ToString()));
 
 			// Only fire side effects for settings that ACTUALLY changed. Running them all meant editing a note
 			// re-started an account the user had deliberately stopped.
@@ -1113,9 +1126,11 @@ public sealed class WebHost : IAsyncDisposable {
 
 			// The rule the message states, enforced here: the file-name check alone lets in spaces, quotes and
 			// apostrophes, and a name like that turns into a different command the moment it's typed in the console.
-			bool plain = body.Name.All(static c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_');
+			if (ConfigStore.NameProblem(body.Name) is { } problem) {
+				return Results.Json(new { ok = false, error = problem.ToString() }, statusCode: 400);
+			}
 
-			if (!plain || !ConfigStore.IsValidBotName(body.Name)) {
+			if (!ConfigStore.IsPlainBotName(body.Name) || !ConfigStore.IsValidBotName(body.Name)) {
 				return Results.Json(new { ok = false, error = Loc.T("Letters, numbers, dashes and underscores. 'nocatFarm' is taken by the global config.") }, statusCode: 400);
 			}
 
@@ -1218,7 +1233,8 @@ public sealed class WebHost : IAsyncDisposable {
 				MinPassword = Core.RemoteAccess.MinPasswordLength,
 				// Long enough to open it from anywhere - so the walkthrough can say so before a saved password it never sees fails.
 				LongPassword = (Live.Global.WebPassword ?? "").Length >= Core.RemoteAccess.MinPasswordLength,
-				OnThisPc = ctx.Connection.RemoteIpAddress is { } ip && System.Net.IPAddress.IsLoopback(ip),
+				// Through a reverse proxy on this PC every visitor arrives from loopback - WhoIsSigningIn knows the difference.
+				OnThisPc = WhoIsSigningIn(ctx).ThisPc,
 				Qr = scan == null ? null : Core.QrPicture.Svg(scan),
 				QrOutside = l.OpenAtHome && (l.Outside != null) ? Core.QrPicture.Svg(l.Outside) : null
 			});
@@ -1253,7 +1269,8 @@ public sealed class WebHost : IAsyncDisposable {
 				return Unauthorised();
 			}
 
-			if (!OperatingSystem.IsWindows() || (ctx.Connection.RemoteIpAddress is not { } ip) || !System.Net.IPAddress.IsLoopback(ip)) {
+			// Asked the way the Log's "open the folder" asks: a visitor through a proxy on this PC arrives from loopback too.
+			if (!OperatingSystem.IsWindows() || !WhoIsSigningIn(ctx).ThisPc) {
 				return Results.Json(new { Ok = false, Error = new Said("only from the PC nocat.farm runs on").ToString() });
 			}
 
@@ -1627,7 +1644,8 @@ public sealed class WebHost : IAsyncDisposable {
 				// Out of range or not a valid choice - put the default back rather than store nonsense.
 				object? fallback = Settings.Read(defs == Settings.Global ? Settings.GlobalDefaults : Settings.BotDefaults, def.Name);
 				Settings.Apply(config, def, Convert.ToString(fallback, System.Globalization.CultureInfo.InvariantCulture) ?? "");
-				adjusted.Add($"{def.Label} was {before}, reset to {Settings.Show(config, def)}");
+				// A Said, as the other lines beside it are: the page shows it as it comes, in the page's language.
+				adjusted.Add(new Said("{0} was {1}, reset to {2}", new Said(def.Label), before, Settings.Show(config, def)).ToString());
 			}
 		}
 
@@ -1764,7 +1782,7 @@ public sealed class WebHost : IAsyncDisposable {
 	/// key in it blanked the Steam login, the games and everything else. Now the current config is the starting
 	/// point and only what was actually sent is written over it.
 	/// </summary>
-	internal static T? Merge<T>(T current, JsonObject sent, JsonSerializerOptions options) where T : class {
+	internal static T? Merge<T>(T current, JsonObject sent, JsonSerializerOptions options) where T : class, new() {
 		try {
 			JsonObject merged = JsonSerializer.SerializeToNode(current, options)!.AsObject();
 
@@ -1783,7 +1801,8 @@ public sealed class WebHost : IAsyncDisposable {
 				merged[name] = value?.DeepClone();
 			}
 
-			return merged.Deserialize<T>(options);
+			// A null sent for a list is the default list, as in a file: a null one crashed whatever read it next.
+			return merged.Deserialize<T>(options) is { } read ? ConfigStore.FillNulls(read) : null;
 		} catch (Exception e) {
 			// A field of the wrong type (text where a number goes): the whole save is turned down - say which.
 			Log.Failed($"dashboard: the {typeof(T).Name} settings sent don't fit", e);
@@ -1939,8 +1958,9 @@ public sealed class WebHost : IAsyncDisposable {
 			QrWaiting = bots.Where(static b => b.QrChallenge != null).Select(static b => new { b.Name, b.QrVersion }).ToList(),
 			// Genuinely reachable from the network AND unprotected. With no password the server already refuses
 			// everything that isn't loopback, so warning about that case was crying wolf.
-			Exposed = _mgr.Global.WebHost is not ("127.0.0.1" or "localhost") && !string.IsNullOrEmpty(_mgr.Global.WebPassword) && (_mgr.Global.WebPassword.Length < 8),
-			LockedToThisPc = _mgr.Global.WebHost is not ("127.0.0.1" or "localhost") && string.IsNullOrEmpty(_mgr.Global.WebPassword),
+			// Every way of writing this PC counts as this PC - "::1" was warned about as if it were the network.
+			Exposed = !Platform.IsLoopback(_mgr.Global.WebHost ?? "") && !string.IsNullOrEmpty(_mgr.Global.WebPassword) && (_mgr.Global.WebPassword.Length < 8),
+			LockedToThisPc = !Platform.IsLoopback(_mgr.Global.WebHost ?? "") && string.IsNullOrEmpty(_mgr.Global.WebPassword),
 			Points = _pointsCache?.Points ?? 0,
 			PendingPoints = _pointsCache?.Pending ?? 0,
 			CardsToday = cards,
@@ -2157,7 +2177,8 @@ public sealed class WebHost : IAsyncDisposable {
 	/// authenticator are there - never the things themselves.
 	/// </summary>
 	private static object ScanJson(ImportScan scan) {
-		HashSet<string> here = new(ConfigStore.LoadBots().Keys, StringComparer.OrdinalIgnoreCase);
+		Dictionary<string, BotConfig> bots = ConfigStore.LoadBots();
+		HashSet<string> here = new(bots.Keys, StringComparer.OrdinalIgnoreCase);
 
 		return new {
 			scan.Tool,
@@ -2170,7 +2191,8 @@ public sealed class WebHost : IAsyncDisposable {
 				a.Name,
 				a.SteamLogin,
 				a.SteamId,
-				Exists = here.Contains(a.Name),
+				// Here already by the name, or signing in as the same Steam account under another - as the import decides.
+				Exists = here.Contains(a.Name) || (IdlerImport.ExistingFor(bots, a.SteamLogin) != null),
 				HasToken = a.Token != null,
 				a.HasPassword,
 				a.HasAuthenticator,

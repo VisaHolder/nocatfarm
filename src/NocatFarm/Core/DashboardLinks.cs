@@ -157,8 +157,15 @@ public static class DashboardLinks {
 		return (b[0] == 10) || ((b[0] == 172) && (b[1] >= 16) && (b[1] <= 31)) || ((b[0] == 192) && (b[1] == 168));
 	}
 
-	/// <summary>"myname.duckdns.org" becomes http://myname.duckdns.org:7242/ - the port is added when it wasn't typed.</summary>
-	private static string? Outside(string? typed, int port) {
+	/// <summary>
+	/// "myname.duckdns.org" becomes http://myname.duckdns.org:7242/ - the port is added when it wasn't typed.
+	/// </summary>
+	/// <remarks>
+	/// Not to an https address: the dashboard itself only speaks http, so https is a proxy or a tunnel in front of it, on
+	/// its own port - "https://farm.example.com" was handed out as https://farm.example.com:7242/, which nothing answers.
+	/// And the port goes after the name, not after a path: "example.com/farm" came out as example.com/farm:7242.
+	/// </remarks>
+	internal static string? Outside(string? typed, int port) {
 		string t = (typed ?? "").Trim().TrimEnd('/');
 
 		if (t.Length == 0) {
@@ -168,12 +175,18 @@ public static class DashboardLinks {
 		int at = t.IndexOf("://", StringComparison.Ordinal);
 		string scheme = at < 0 ? "http" : t[..at];
 		string rest = at < 0 ? t : t[(at + 3)..];
+		int slash = rest.IndexOf('/');
+		string name = slash < 0 ? rest : rest[..slash];
+		string path = slash < 0 ? "" : rest[slash..];
 
-		if (!rest.Contains(':')) {
-			rest += ":" + port;
+		// A bracketed IPv6 address has colons of its own - only one after the closing bracket is a port.
+		bool hasPort = name.StartsWith('[') ? name.Contains("]:", StringComparison.Ordinal) : name.Contains(':');
+
+		if (!hasPort && !scheme.Equals("https", StringComparison.OrdinalIgnoreCase)) {
+			name += ":" + port;
 		}
 
-		string link = $"{scheme}://{rest}/";
+		string link = $"{scheme}://{name}{path}/";
 
 		return Uri.TryCreate(link, UriKind.Absolute, out _) ? link : null;
 	}

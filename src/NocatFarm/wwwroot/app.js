@@ -145,14 +145,21 @@ async function loadLanguage(code) {
 /// recreated every button, link and row inside it. A click landing during a rebuild went nowhere, hover
 /// tooltips vanished mid-read, and any text you were selecting was dropped. Comparing first costs a string
 /// compare and keeps the DOM still whenever nothing has moved.
+///
+/// Compared with the markup it was last given, not with innerHTML: the browser never hands back what it was given -
+/// it adds a <tbody> to a table and turns &#39; back into ' - so the two never matched, and nearly every panel was
+/// rebuilt on every poll anyway. Whatever the page looked like after that write is kept too, so a panel something
+/// else has since written into is still repainted.
 function paint(id, html) {
   const el = $(id);
 
-  if (!el || ((el.innerHTML === html) && (html !== ''))) {
+  if (!el || ((el._paintedFrom === html) && (el._paintedAs === el.innerHTML) && (html !== ''))) {
     return;
   }
 
   el.innerHTML = html;
+  el._paintedFrom = html;
+  el._paintedAs = el.innerHTML;
 }
 
 /// Translate a chrome string. The English text IS the key, so nothing has to be kept in sync by hand.
@@ -201,12 +208,22 @@ document.addEventListener('mouseout', (e) => {
 /// A long explanation read as one block is a wall. Its first sentence becomes a bold headline - usually the
 /// whole answer ("Human mode only.", "Leave a newly bought game alone...") - and the rest is cut into short
 /// paragraphs at sentence ends. Short tips and ones with their own line breaks are shown exactly as written.
+///
+/// Built from a string, not written as a /.../ literal: the look-behind in it is a syntax error to Safari before iOS
+/// 16.4, and as a literal that stopped the whole of app.js loading - an older iPhone got no dashboard at all. There,
+/// a long tip is simply shown as one block.
+let sentenceEnd = null;
+try {
+  sentenceEnd = new RegExp('(?<=[.!?](?:["\'»”)])?)\\s+(?=[\\p{Lu}\\d"\'«“(*])|(?<=[。！？])', 'u');
+} catch { /* no look-behind in this browser */ }
+
 function tipHtml(text) {
   if (!text || text.length < 140 || text.includes(String.fromCharCode(10))) return esc(text || '');
 
   // A sentence ends at . ! ? followed by a space and something that starts a sentence (so "2.5 GB", "e.g. this"
   // and "730:70, 440:20" don't split), or right after a CJK full stop, which has no space after it.
-  const parts = text.split(/(?<=[.!?](?:["'»”)])?)\s+(?=[\p{Lu}\d"'«“(*])|(?<=[。！？])/u).map((s) => s.trim()).filter(Boolean);
+  if (!sentenceEnd) return esc(text);
+  const parts = text.split(sentenceEnd).map((s) => s.trim()).filter(Boolean);
   if (parts.length < 2) return esc(text);
 
   const paras = [];
@@ -270,7 +287,8 @@ async function refreshInventory(name) {
 // The hover breakdown: which games hold the value, biggest first.
 const nlChar = String.fromCharCode(10);
 function valueTip(b) {
-  if (b.InventoryOn === false) return tf('Not being valued. To switch it back on, go to Settings, pick {0}, open Trades and tick "Work out what its inventory is worth".', b.Name);
+  // Where the switch really is: under Inventory & bans, and only with Show advanced ticked - it said Trades.
+  if (b.InventoryOn === false) return tf('Not being valued. To switch it back on, go to Settings, pick {0}, tick Show advanced, open Inventory & bans and tick "Work out what its inventory is worth".', b.Name);
   if (!b.InventoryReady) return t('Reading this inventory...');
   const rows = (b.InventoryByGame || []).filter((g) => g.Value > 0 || g.Blocked);
   if (!rows.length) return t('Nothing with a market price in this inventory.');
@@ -395,7 +413,8 @@ function render() {
   bots.forEach((b) => { counts[b.Group] = (counts[b.Group] || 0) + 1; });
   $('railChips').innerHTML = Object.keys(STATUS_META)
     .filter((k) => counts[k])
-    .map((k) => `<span class="chip ${k}" data-tip="${esc(t(STATUS_META[k].tip))}" onclick="filterTo('${k}')"><i class="dot"></i>${esc(t(STATUS_META[k].label))}<b>${counts[k]}</b></span>`)
+    // Lit like the Accounts page's own filter pills when it is the filter showing there - the two are one filter.
+    .map((k) => `<span class="chip ${k} ${view === 'accounts' && acctFilter === k ? 'on' : ''}" data-tip="${esc(t(STATUS_META[k].tip))}" onclick="filterTo('${k}')"><i class="dot"></i>${esc(t(STATUS_META[k].label))}<b>${counts[k]}</b></span>`)
     .join('') || `<span class="muted small">${esc(t('no accounts yet'))}</span>`;
   fitRailChips();
 
@@ -449,7 +468,13 @@ function render() {
   if (view === 'rep4rep') renderRep4RepPacing();
 }
 
-function filterTo(group) { acctFilter = acctFilter === group ? '' : group; go('accounts'); }
+/// A status chip in the rail: show those accounts. It clears the filter only where you can see it's on - on the Accounts
+/// page, lit up, the way a second click on a filter pill there clears it. From anywhere else it toggled a filter left
+/// over from an earlier visit, so "3 farming" opened a page showing every account.
+function filterTo(group) {
+  acctFilter = view === 'accounts' && acctFilter === group ? '' : group;
+  go('accounts');
+}
 
 function renderAlerts() {
   const out = [];
@@ -506,10 +531,25 @@ function renderAlerts() {
 
   if (html !== lastAlertsHtml) {
     lastAlertsHtml = html;
+
+    // Whatever is half typed into the Steam Guard box survives the redraw. Any other alert changing - a QR code
+    // refreshing, an update turning up - rebuilt the box and threw away the code being typed. Kept only while it's the
+    // same question; the focus only goes to the box for a new one, or back to it if it had it.
+    const old = $('promptInput');
+    const sameAsk = !!old && (state.Prompt === lastPromptAsked);
+    const typed = sameAsk ? old.value : '';
+    const hadFocus = !!old && (document.activeElement === old);
+
     $('alerts').innerHTML = html;
     const input = $('promptInput');
-    if (input) { input.focus(); input.onkeydown = (e) => { if (e.key === 'Enter') sendPrompt(); }; }
+    if (input) {
+      input.value = typed;
+      if (!sameAsk || hadFocus) input.focus();
+      input.onkeydown = (e) => { if (e.key === 'Enter') sendPrompt(); };
+    }
   }
+
+  lastPromptAsked = state.Prompt || null;
 }
 
 // Jump to one global setting. Through selectSettings, so edits pending on an account's page get the usual "discard
@@ -1055,9 +1095,7 @@ function renderAccounts() {
   const chips = Object.keys(STATUS_META).map((k) =>
     `<span class="chip ${k} ${acctFilter === k ? 'on' : ''}" data-tip="${esc(t(STATUS_META[k].tip))}" onclick="acctFilter='${acctFilter === k ? '' : k}';render()"><i class="dot"></i>${esc(t(STATUS_META[k].label))}</span>`).join('');
 
-  if (chips !== $('acctFilters').innerHTML) {
-    $('acctFilters').innerHTML = chips;
-  }
+  paint('acctFilters', chips);
 
   const bots = state.Bots.filter((b) =>
     (!acctFilter || b.Group === acctFilter) &&
@@ -1078,7 +1116,7 @@ function renderAccounts() {
     const capPct = b.Rep4Rep && b.Rep4RepCap ? Math.min(100, Math.round((b.Rep4RepToday / b.Rep4RepCap) * 100)) : 0;
 
     return `<div class="card bot ${b.Group}" draggable="true" data-name="${esc(b.Name)}"
-      ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragend="dragEnd()" ondrop="dragEnd()">
+      ondragstart="dragStart(event)" ondragover="dragOver(event)" ondragend="dragEnd()" ondrop="event.preventDefault();dragEnd()">
       <div class="bot-head">
         <span class="bot-name" title="${esc(b.Name)}" data-tip="${esc(t('Drag this card to move the account. The order is used everywhere - here, the app window and the console.'))}">${esc(b.Name)}</span>
         <span class="chip ${b.Group}" data-tip="${esc(t(STATUS_META[b.Group].tip))}"><i class="dot"></i>${esc(b.Status)}</span>
@@ -1203,17 +1241,16 @@ async function dragEnd() {
   // matching the filter silently lost its place and fell to the end, alphabetically. Searching for one account
   // and nudging it was enough to scramble the arrangement of all the others.
   const visible = [...document.querySelectorAll('#bots .card.bot')].map((c) => c.dataset.name);
-  const known = (state && state.Bots ? state.Bots : []).map((b) => b.Name);
-  const hidden = known.filter((n) => !visible.includes(n));
+  const known = (state && state.Bots ? state.Bots : []).map((b) => b.Name);   // the order as it stands, from the server
+  const shown = new Set(visible);
 
-  // Hidden accounts keep their existing relative order, which is what config already holds.
-  const saved = (config && config.Global && config.Global.AccountOrder) || [];   // lives in the global config
-  hidden.sort((a, b) => {
-    const ia = saved.indexOf(a), ib = saved.indexOf(b);
-    return (ia < 0 ? 1e9 : ia) - (ib < 0 ? 1e9 : ib);
-  });
-
-  const order = [...visible, ...hidden];
+  // The hidden accounts stay exactly where they were, and the shown ones fill their own places in the new order.
+  // Putting every hidden account after every shown one moved them: [a, b, c] searched to b and c, c dragged ahead of
+  // b, came back [c, b, a] - a went from first to last. (Sorted by the order loaded at start, a second drag used an
+  // old one as well.)
+  let k = 0;
+  const order = known.map((n) => (shown.has(n) ? visible[k++] : n));
+  visible.slice(k).forEach((n) => order.push(n));
   const res = await post('/api/accounts/order', order);
   if (!res.ok) toast(res.error || t("Couldn't save that order"), true);
   refresh();
@@ -1637,7 +1674,9 @@ async function openAuth() {
   clearInterval(authTimer);
   authTimer = setInterval(tickAuth, 1000);
   clearInterval(authListTimer);
-  authListTimer = setInterval(() => { if (!authBusy) loadConfirmations(false); }, 30000);
+  // Not while the tab is hidden, as the main poll isn't: each look is a real request to Steam, and a tab left open in
+  // the background asked about 2,900 times a day.
+  authListTimer = setInterval(() => { if (!authBusy && !document.hidden) loadConfirmations(false); }, 30000);
 }
 
 function closeAuth() {
@@ -1673,11 +1712,17 @@ async function loadConfirmations(show) {
   const a = (authAccounts || []).find((x) => x.Name === authPick);
   if (!a || !a.CanConfirm) return;
   if (show) { authConfs = { Loading: true }; renderAuthList(); }
+  // Whose list this is. Reading one takes a while (each trade's offer is fetched too), and another account picked
+  // meanwhile got this one's list under its name - Confirm then only said "already gone".
+  const who = authPick;
+  let got;
   try {
-    authConfs = await api('/api/auth/' + encodeURIComponent(authPick) + '/confirmations');
+    got = await api('/api/auth/' + encodeURIComponent(who) + '/confirmations');
   } catch (e) {
-    authConfs = { Ok: false, Error: e.message || String(e) };
+    got = { Ok: false, Error: e.message || String(e) };
   }
+  if (authPick !== who) return;
+  authConfs = got;
   const live = new Set(((authConfs && authConfs.Items) || []).map((c) => String(c.Id)));
   authSelected = new Set([...authSelected].filter((id) => live.has(id)));
   const nav = $('navAuth');
@@ -1753,8 +1798,19 @@ function renderAuthCode() {
   const left = Math.max(0, a.SecondsLeft - Math.floor((Date.now() - a.At) / 1000));
   const r = 26, c = 2 * Math.PI * r;
   const dash = (c * left / 30).toFixed(2);
+
+  // The same code on screen: only the ring and its number move. Rebuilt every second, the Copy button under the
+  // pointer was replaced mid-click and the digits couldn't stay selected long enough to copy by hand.
+  const shown = box.querySelector('.auth-code');
+  if (shown && shown.dataset.for === a.Name && shown.dataset.code === (a.Code || '')) {
+    shown.querySelector('.auth-ring').classList.toggle('low', left <= 5);
+    shown.querySelector('.auth-ring .left').setAttribute('stroke-dasharray', `${dash} ${c.toFixed(2)}`);
+    shown.querySelector('.auth-ring text').textContent = String(left);
+    return;
+  }
+
   box.innerHTML = `
-    <div class="auth-code">
+    <div class="auth-code" data-for="${esc(a.Name)}" data-code="${esc(a.Code || '')}">
       <svg class="auth-ring ${left <= 5 ? 'low' : ''}" viewBox="0 0 64 64" aria-hidden="true">
         <circle cx="32" cy="32" r="${r}" class="track"></circle>
         <circle cx="32" cy="32" r="${r}" class="left" stroke-dasharray="${dash} ${c.toFixed(2)}" transform="rotate(-90 32 32)"></circle>
@@ -1903,7 +1959,7 @@ function renderPlugins() {
       <div class="prow">
         <span class="pname"><b>${esc(p.Name)}</b> <span class="muted small">${esc(p.Version)}</span><i class="wid">${esc(p.File)}</i></span>
         <label class="switch" data-tip="${esc(t('Takes effect after a restart — a plugin wires itself up as the app starts.'))}">
-          <input type="checkbox" ${p.Enabled ? 'checked' : ''} onchange="togglePlugin('${esc(p.Name)}', this.checked)"><span></span>
+          <input type="checkbox" ${p.Enabled ? 'checked' : ''} onchange="togglePlugin(${esc(JSON.stringify(p.Name))}, this.checked)"><span></span>
         </label>
       </div>
       ${pluginSettings(p)}
@@ -1928,7 +1984,7 @@ function pluginSettings(p) {
   const rows = list.map((sett) => {
     const id = `ps-${p.Name}-${sett.Name}`.replace(/[^A-Za-z0-9_-]/g, '_');
     const tip = sett.Help ? ` data-tip="${esc(sett.Help)}"` : '';
-    const set = `setPluginSetting('${esc(p.Name)}','${esc(sett.Name)}',this)`;
+    const set = `setPluginSetting(${esc(JSON.stringify(p.Name))},${esc(JSON.stringify(sett.Name))},this)`;
     let ctl;
 
     if (sett.Kind === 'Bool') {
@@ -2011,10 +2067,12 @@ async function doUpdate(confirmed) {
 
   try {
     const r = await api('/api/update', { method: 'POST' });
-    toast(r && r.Message ? r.Message : t('Downloading. It restarts by itself when it lands.'));
-    if (btn && state && state.UpdateWaits) btn.disabled = false;   // only queued - nothing is downloading yet
+    // Red when it didn't work: a failed download came up looking just like "Downloading".
+    const failed = !!(r && r.Ok === false);
+    toast(r && r.Message ? r.Message : t('Downloading. It restarts by itself when it lands.'), failed);
+    if (btn && ((state && state.UpdateWaits) || failed)) btn.disabled = false;   // only queued, or nothing is downloading
   } catch (e) {
-    toast(tf('Update failed: {0}', e.message || e));
+    toast(tf('Update failed: {0}', e.message || e), true);
     if (btn) btn.disabled = false;
   }
 }
@@ -2897,6 +2955,14 @@ function tutStepFinal() {
 async function tutorialAddAccount() {
   const btn = $('tutNext');
   if (btn.disabled) return;
+
+  // Never added without being asked what it's for. Opened straight on the installer's import and switched to adding
+  // one by hand, the "what kind of account" step was jumped past - and the account went in as a robot, unasked.
+  if (tutorialHuman === null) {
+    const at = tutSteps().indexOf('type');
+    if (at >= 0) { toast(t('Pick one first'), true); tutorialStep = at; renderTutorial(); return; }
+  }
+
   btn.disabled = true;
 
   const qr = !!($('tut-qr') && $('tut-qr').checked);
@@ -3096,7 +3162,8 @@ async function tutSaveSetup() {
   const s = tutSetup;
   const btn = $('tutNext');
   if (btn) btn.disabled = true;
-  await loadConfig();   // a partial body resets the whole account, so start from what it has
+  // No answer: the button came back, not left greyed out with nothing said.
+  try { await loadConfig(); } catch { if (btn) btn.disabled = false; toast(t("Couldn't save those settings"), true); return; }   // a partial body resets the whole account, so start from what it has
   const base = config.Bots[s.name];
   if (!base) { tutSkipSetup(); return; }
   const changes = {};
@@ -3111,8 +3178,8 @@ async function tutSaveSetup() {
     if (s.customName.trim()) { changes.CustomGameName = s.customName.trim(); changes.CustomGameNameEnabled = true; }
   }
 
-  const res = await postBot(s.name, { ...base, ...changes });
-  if (!res.ok) toast(res.error || t("Couldn't save those settings"), true);
+  const res = await postBot(s.name, { ...base, ...changes }).catch(() => null);
+  if (!res || !res.ok) toast((res && res.error) || t("Couldn't save those settings"), true);
   tutShowDone();
 }
 
@@ -3412,7 +3479,7 @@ function helpListHtml(filter) {
 
   return Object.keys(groups).length
     ? Object.keys(groups).map((g) => `<div class="grp">${esc(t(g))}</div>${groups[g].map((c) => `
-        <div class="c" onclick="useCommand('${esc(c.Name)}')">
+        <div class="c" onclick="useCommand(${esc(JSON.stringify(c.Name))})">
           <code>${esc(c.Display || c.Name)}${c.Args ? ' ' + esc(c.Args) : ''}</code>
           <span class="h">${esc(c.Help)}</span>
         </div>`).join('')}`).join('')
@@ -3451,7 +3518,7 @@ const phTick = (ok) => `<span class="ph-tick ${ok ? 'ok' : ''}" aria-hidden="tru
   ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
   : ''}</span>`;
 const phPill = (kind, text) => `<span class="ph-pill ${kind}">${esc(text)}</span>`;
-const phCopy = (url) => `<button class="ghost ph-copy" onclick="copyText('${esc(url)}', t('Link copied'))">${esc(t('Copy'))}</button>`;
+const phCopy = (url) => `<button class="ghost ph-copy" onclick="copyText(${esc(JSON.stringify(url))}, t('Link copied'))">${esc(t('Copy'))}</button>`;
 
 /// The parts of the page, from one look at /api/phone. Each is painted on its own, so a change in one doesn't redraw
 /// the others - and the password box isn't redrawn while somebody is typing in it.
@@ -3640,7 +3707,10 @@ function phonePwToggle() {
 async function phoneSavePw() {
   const pw = phone.pw;
   if (!pw || pw.length < 8) { toast(tf('Use at least {0} characters.', 8), true); return; }
-  const res = await tutSaveGlobal({ WebPassword: pw });
+  // Enter pressed twice: the second save went out under the session the first had just ended.
+  if (phone.savingPw) return;
+  phone.savingPw = true;
+  const res = await tutSaveGlobal({ WebPassword: pw }).finally(() => { phone.savingPw = false; });
   if (!res) return;
   phone.pw = '';
   phone.pwOpen = false;
@@ -3662,6 +3732,8 @@ async function phoneRemote(on, el) {
   el.disabled = true;
   const ok = await tutSaveGlobal({ WebRemoteAccess: on });
   if (!ok) el.checked = !on;
+  // As phoneOpen does: a save that failed changed nothing, so the page may not be redrawn - and the switch stayed dead.
+  el.disabled = false;
   loadPhone(true);
 }
 
@@ -3803,7 +3875,9 @@ document.addEventListener('click', (e) => {
   el.disabled = true;
   el.textContent = t('posting…');
   post('/api/rep4rep/tasks/' + encodeURIComponent(el.dataset.task) + '/post?bot=' + encodeURIComponent($('r4rBot').value))
-    .then((res) => { toast(res.message, !res.ok); loadTasks(); refresh(); });
+    .then((res) => { toast(res.message || res.error, !res.ok); loadTasks(); refresh(); })
+    // No answer at all: the button stood on "posting…", greyed out, until the page was reloaded.
+    .catch(() => { toast(t("That didn't work"), true); loadTasks(); });
 });
 
 document.addEventListener('change', (e) => {
@@ -3888,13 +3962,17 @@ function renderRep4RepAccount() {
 
 async function enableAllRep4Rep() {
   await loadConfig();   // same reason as quickSet: a partial body resets the whole account
+  const failed = [];
   for (const b of state.Bots) {
     if (b.Rep4Rep) continue;
     const base = config.Bots[b.Name];
     if (!base) continue;
-    await postBot(b.Name, { ...base, Rep4Rep: true });
+    const res = await postBot(b.Name, { ...base, Rep4Rep: true }).catch(() => null);
+    if (!res || !res.ok) failed.push(b.Name);
   }
-  toast(t('rep4rep commenting switched on for every account'));
+  // "Every account" only when it's true - a save that was turned down was reported as switched on with the rest.
+  if (failed.length) toast(tf("Couldn't switch it on for {0}", failed.join(', ')), true);
+  else toast(t('rep4rep commenting switched on for every account'));
   await loadConfig();
   loadRep4Rep();
   refresh();
@@ -4166,7 +4244,7 @@ function renderCommandList() {
   const groups = [...new Set(commands.map((c) => c.Group))];
   $('cmdList').innerHTML = groups.map((g) =>
     `<div class="grp">${esc(t(g))}</div>` + commands.filter((c) => c.Group === g).map((c) =>
-      `<div class="c" onclick="useCommand('${esc(c.Name)}','${esc(c.Args)}')"><code>${esc(c.Name)} ${esc(c.Args)}</code><span class="h">${esc(c.Help)}</span></div>`).join('')).join('');
+      `<div class="c" onclick="useCommand(${esc(JSON.stringify(c.Name))},${esc(JSON.stringify(c.Args))})"><code>${esc(c.Name)} ${esc(c.Args)}</code><span class="h">${esc(c.Help)}</span></div>`).join('')).join('');
 }
 
 function useCommand(name, args) {
@@ -4394,13 +4472,18 @@ async function loadPacer(name) {
 
   try {
     const d = await api(`/api/bots/${encodeURIComponent(name)}/achievements`);
+    // Another account picked while this was on its way: its answer is the one to keep, not this one.
+    if (pacerFor !== name) return;
     pacerRows = d.Games || [];
     pacerRecent = d.Recent || [];
     pacerHunt = d.Hunt || null;
     // Resolve any "app 12345" names against Steam so the table reads with real game names; learnNames redraws
     // the settings pane (which this pacer lives in) once they land.
     learnNames(pacerRows.map((g) => g.App).filter(Boolean));
-  } catch { pacerRows = []; pacerRecent = []; pacerHunt = null; }
+  } catch {
+    if (pacerFor !== name) return;
+    pacerRows = []; pacerRecent = []; pacerHunt = null;
+  }
 
   if (view === 'settings' && settingsTarget === name) renderSettings();
 }
@@ -4944,9 +5027,20 @@ function addWeight(input) {
   // The rebalance has to happen on THIS array, not by calling setWeight afterwards: setWeight re-reads the
   // committed value, and the new row is not committed yet — so it looked up an index that did not exist, hit
   // its own guard, and returned silently. Adding a second game did nothing at all.
+  //
+  // The main game keeps its number - that number IS its share, however many games are added. Evening every row out
+  // flattened it: 730:70, 440:30 plus a third game came out 42/42/16, and the main game dropped to 42% of the day.
+  // Only the second game takes a share off it, as that one ends "the main game all day".
   if (rows.length > 1) {
-    rows[rows.length - 1].weight = Math.max(5, Math.floor(100 / rows.length / 2));
-    balance(rows, rows.length - 1);
+    const sides = rows.length - 1;
+    const main = sides === 1
+      ? 100 - Math.max(5, Math.floor(100 / rows.length / 2))
+      : Math.max(5, Math.min(100 - sides, rows[0].weight));
+    const pool = 100 - main;
+    const mine = Math.max(1, Math.floor(pool / sides));
+    rows[0].weight = main;
+    rows[rows.length - 1].weight = mine;
+    fitSides(rows, rows.length - 1);
   } else {
     rows[0].weight = 100;
   }
@@ -4954,20 +5048,21 @@ function addWeight(input) {
   editAndRender('GameWeights', weightsSpec(rows));
 }
 
-/// Even the remainder out across every row except the one that was just set, and make the total exactly 100.
-function balance(rows, fixedIndex) {
-  const others = rows.filter((_, i) => i !== fixedIndex);
-  if (!others.length) { rows[0].weight = 100; return rows; }
+/// The side games scaled to share what the main game leaves (100 minus its number), keeping their balance with each
+/// other; `keep` is a row whose number stays as it is. Adds up to exactly 100, the drift on the biggest other side game.
+function fitSides(rows, keep) {
+  const pool = 100 - rows[0].weight;
+  const idx = rows.map((_, i) => i).filter((i) => i !== 0 && i !== keep);
+  if (!idx.length) return rows;
 
-  const spare = Math.max(others.length, 100 - rows[fixedIndex].weight);
-  const each = Math.floor(spare / others.length);
-  others.forEach((r) => { r.weight = Math.max(1, each); });
+  const room = Math.max(idx.length, pool - (keep > 0 ? rows[keep].weight : 0));
+  const sum = idx.reduce((a, i) => a + Math.max(1, rows[i].weight), 0) || 1;
+  idx.forEach((i) => { rows[i].weight = Math.max(1, Math.round(room * Math.max(1, rows[i].weight) / sum)); });
 
-  // Whatever integer division dropped goes on the main game, so it always adds up to 100.
-  const drift = 100 - rows.reduce((sum, r) => sum + r.weight, 0);
+  const drift = 100 - rows.reduce((a, r) => a + r.weight, 0);
   if (drift !== 0) {
-    const soakIndex = fixedIndex === 0 ? (rows[1] ? 1 : 0) : 0;
-    rows[soakIndex].weight = Math.max(1, rows[soakIndex].weight + drift);
+    const soak = idx.reduce((best, i) => (rows[i].weight > rows[best].weight ? i : best), idx[0]);
+    rows[soak].weight = Math.max(1, rows[soak].weight + drift);
   }
 
   return rows;
@@ -4977,12 +5072,10 @@ function dropWeight(index) {
   const rows = parseWeights(liveWeights()).filter((_, i) => i !== index);
   if (!rows.length) { editAndRender('GameWeights', ''); return; }
 
-  // The share the removed game had goes back to the main game, rather than being left to add up to 90. Not with the
-  // hunt on: then the main game's number is its share on its own, and the hunt and the other games take the rest.
-  if (!huntRow()) {
-    const drift = 100 - rows.reduce((sum, r) => sum + r.weight, 0);
-    rows[0].weight = Math.max(1, rows[0].weight + drift);
-  }
+  // The share the removed game had goes to the other side games, not the main game: the main game's number is its
+  // share, so handing it the leftover took 730:70, 440:15, 570:15 to 85% main by removing one side game. Just the
+  // main game left, it's that game all day.
+  if (rows.length > 1) fitSides(rows, -1);
   editAndRender('GameWeights', weightsSpec(rows));
 }
 
@@ -5009,7 +5102,12 @@ function setMainGame(raw) {
 function makeMain(index) {
   const rows = parseWeights(liveWeights());
   if (!rows[index]) return;
+  // The two swap numbers as well as places: the first number is the main game's share, so moving 440:15 up over
+  // 730:70 made a "main" game that played 15% of the day, with the old main still at 70 as a side game.
+  const mainWeight = rows[0].weight;
   const [moved] = rows.splice(index, 1);
+  rows[0].weight = moved.weight;
+  moved.weight = mainWeight;
   rows.unshift(moved);
   editAndRender('GameWeights', weightsSpec(rows));
 }
@@ -5138,7 +5236,7 @@ function discordControl(def, cur, id) {
     const listed = v.toLowerCase() === 'all' ? bots.map((b) => b.Name.toLowerCase()) : v.split(/[, ]+/).filter(Boolean).map((n) => n.toLowerCase());
     return `<div class="pills" data-setting="${def.Name}">
       <span class="p ${auto ? 'on' : ''}" onclick="editAndRender('${def.Name}','')">${esc(t('every account not in human mode'))}</span>
-      ${bots.map((b) => `<span class="p ${!auto && listed.includes(b.Name.toLowerCase()) ? 'on' : ''}" onclick="toggleShownAccount('${esc(b.Name)}')">${esc(b.Name)}</span>`).join('')}</div>`;
+      ${bots.map((b) => `<span class="p ${!auto && listed.includes(b.Name.toLowerCase()) ? 'on' : ''}" onclick="toggleShownAccount(${esc(JSON.stringify(b.Name))})">${esc(b.Name)}</span>`).join('')}</div>`;
   }
 
   if (def.Name === 'DiscordButton1' || def.Name === 'DiscordButton2') {
@@ -5639,7 +5737,16 @@ function updateSaveButton() {
   btn.textContent = n === 0 ? t('Save') : n === 1 ? t('Save one change') : tf('Save {0} changes', n);
 }
 
+/// One save at a time. A double click on Save with a new dashboard password sent two: the first signed every browser
+/// out, the second went with the old session and got the sign-in page back.
+let savingSettings = false;
 async function saveSettings() {
+  if (savingSettings) return;
+  savingSettings = true;
+  try { await saveSettingsOnce(); } finally { savingSettings = false; }
+}
+
+async function saveSettingsOnce() {
   const target = settingsTarget;
   const edits = { ...pending };
 
@@ -5694,6 +5801,7 @@ async function saveSettings() {
 // has to dismiss it on its own, or you end up staring at a setup screen for a farm that's already running.
 let askedAboutAsf = false;
 let lastAlertsHtml = null;
+let lastPromptAsked = null;   // the Steam Guard question the alert box holds, so what's typed survives a redraw
 
 function syncWelcome() {
   const show = state && !state.Bots.length && !sessionStorage.getItem('skip-welcome');
@@ -5743,7 +5851,11 @@ async function refresh() {
     bootId = state.BootId;
 
     const since = logLines.length ? logLines[logLines.length - 1].Seq : logClearedAt;
-    const fresh = since ? await api('/api/log?since=' + since) : await api('/api/log?n=300');
+    const got = since ? await api('/api/log?since=' + since) : await api('/api/log?n=300');
+    // Only what's newer than the last line held NOW: two refreshes in flight at once (the timer and one after a
+    // button) asked from the same place and both appended it, so the Log showed every line twice.
+    const last = logLines.length ? logLines[logLines.length - 1].Seq : 0;
+    const fresh = got.filter((e) => e.Seq > last);
     if (fresh.length) {
       logLines = logLines.concat(fresh).slice(-1000);
       if (view === 'log') renderLog();
@@ -5751,7 +5863,10 @@ async function refresh() {
 
     render();
   } catch {
-    // showLogin already fired, or the server is restarting - the next tick retries
+    // showLogin already fired, or the server is restarting - the next tick retries. There has to BE a next tick:
+    // coming back to a hidden tab stops the timer and only a refresh that worked started it again, so one that failed
+    // (the phone's network still waking up) left the page frozen until it was reloaded.
+    if (!pollTimer && $('login').classList.contains('hidden')) armPolling(refreshSeconds);
   }
 }
 

@@ -152,7 +152,19 @@ for (int attempt = 0; (attempt < 3) && (giveaways.Count == 0); attempt++) {
 	}
 	giveaways = await (Task<List<string>>) fg.GetMethod("StoreGiveawaysAsync", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [CancellationToken.None])!;
 }
-Check("store search: reads giveaways (right now: the free Supporter Pack DLC)", giveaways.Count > 0 && giveaways.All(t => t.StartsWith("g/") || t.StartsWith("s/")), string.Join(", ", giveaways));
+// How many the store itself says it has - giveaways come and go, and "none right now" read as none is right.
+int storeHas = -1;
+try {
+	using HttpClient web = new() { Timeout = TimeSpan.FromSeconds(20) };
+	string search = await web.GetStringAsync("https://store.steampowered.com/search/results/?maxprice=free&specials=1&infinite=1&count=50&l=english");
+	storeHas = System.Text.Json.JsonDocument.Parse(search).RootElement.GetProperty("total_count").GetInt32();
+} catch (Exception) {
+	// the store didn't answer - judged on what the reader found
+}
+Check("store search: reads what the store is giving away", storeHas == 0
+	? giveaways.Count == 0
+	: giveaways.Count > 0 && giveaways.All(t => t.StartsWith("g/") || t.StartsWith("s/")),
+	storeHas == 0 ? "the store has no giveaways right now" : string.Join(", ", giveaways));
 uint steepFree = await (Task<uint>) fg.GetMethod("FreeSubAsync", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [460920u, CancellationToken.None])!;
 Check("store: a normal paid game has no free package", steepFree == 0, $"{steepFree}");
 
@@ -478,7 +490,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("discord replies: each part is a whole code block", parts.All(static p => p.StartsWith("```text\n", StringComparison.Ordinal) && p.EndsWith("\n```", StringComparison.Ordinal)));
 	string shown = string.Join("\n", parts.Select(static p => p[8..^4]));
 	Check("discord replies: two messages at most, the start of the reply word for word, then how much was left off",
-		(parts.Count == 2) && big.StartsWith(shown[..shown.LastIndexOf('\n')], StringComparison.Ordinal) && shown.EndsWith("the whole reply is in the dashboard's Console", StringComparison.Ordinal));
+		(parts.Count == 2) && big.StartsWith(shown[..shown.LastIndexOf('\n')], StringComparison.Ordinal) && shown.EndsWith("type it in the dashboard's Console for the whole reply", StringComparison.Ordinal));
 	List<string> oneLong = Blocks(new string('y', 5000));
 	Check("discord replies: one huge line still fits", oneLong.All(static p => p.Length <= 2000));
 	List<string> fence = Blocks("a ``` b");
@@ -508,6 +520,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("confirm: exit and quit are held", Guard("exit", "").Needs == "exit" && Guard("quit", "").Needs == "exit");
 	Check("confirm: with confirm it runs, confirm taken off", Guard("remove", "farm1 confirm") == (null, "farm1") && Guard("exit", "confirm") == (null, ""));
 	Check("confirm: everything else runs as typed", Guard("pause", "kylro 30") == (null, "kylro 30"));
+	Check("confirm: 'confirm' has to be a word of its own - '/remove autoconfirm' is held, not run as 'remove auto'", Guard("remove", "autoconfirm") == ("remove", "autoconfirm"));
 
 	TimeSpan Retry(string body, TimeSpan? header) => (TimeSpan) Invoke("DiscordRetryAfter", body, header)!;
 	Check("discord 429: waits what Discord says", Retry("{\"retry_after\": 1.5}", null) == TimeSpan.FromSeconds(1.5));
@@ -1541,7 +1554,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 	// The main game's number is its share of the TIME: main sittings are longer, so it's picked less often to match.
 	MethodInfo mainWeight = ht.GetMethod("MainWeight", BindingFlags.NonPublic | BindingFlags.Static)!;
-	int w = (int) mainWeight.Invoke(null, [30, 70, 30, 150, int.MaxValue])!;
+	MethodInfo meanLength = ht.GetMethod("MeanLength", BindingFlags.NonPublic | BindingFlags.Static)!;
+	double MeanOf(bool main) => (double) meanLength.Invoke(null, [main, 30, 150, 0, -1, 0, int.MaxValue, 0])!;
+	double w = (double) mainWeight.Invoke(null, [30, 70, MeanOf(true), MeanOf(false)])!;
 	F("_wakeMinuteOfDay").SetValue(human, 0);
 	F("_bedHour").SetValue(human, 23);
 	F("_bedMinute").SetValue(human, 59);
@@ -1555,7 +1570,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	double mainMin = 0, allMin = 0;
 
 	for (int i = 0; i < 40_000; i++) {
-		bool isMain = pick.Next(w + 30) < w;
+		bool isMain = pick.NextDouble() * (w + 30) < w;
 		int m = (int) length.Invoke(human, [isMain ? 730u : 440u, 730u])!;
 		allMin += m;
 		mainMin += isMain ? m : 0;
@@ -2260,7 +2275,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	fqueue.Add(new NocatFarm.Modules.FarmTarget { AppId = 440, CardsRemaining = 5, HoursPlayed = 9 });
 	Set(fh, "_mainSharePct", 70);
 	Set(fh, "_firstSessionOfDay", false);   // an ordinary sitting, the day's first being short whatever it's on
-	int mw = (int) Static("MainWeight", 30, 70, 30, 150, int.MaxValue)!;
+	Set(fh, "_otherBudget", 1_000_000);     // with side-game time left to give
+	double mw = (double) Static("MainWeight", 30, 70, (double) Static("MeanLength", true, 30, 150, 0, -1, 0, int.MaxValue, 0)!,
+		(double) Static("MeanLength", false, 30, 150, 0, -1, 0, int.MaxValue, 0)!)!;
 	int picked440 = 0;
 	const int Picks = 20_000;
 
@@ -2607,98 +2624,228 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			$"{freeBed / freeNights:0.0}h vs {schoolBed / schoolNights:0.0}h after the day's midnight");
 	}
 
-	// Sittings: twenty months of days through the real session picker and the real banking, cards farmed in some
-	// sittings every other day. The clock is kept out of it (up round the clock) - this is about the mix.
-	string simName = "harness-sim-" + Guid.NewGuid().ToString("N")[..6];
-	var simCfg = new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730:70, 440:20, 550:10", PureMainDayChancePct = 0,
-		FarmCardsWhen = NocatFarm.Modules.FarmWhen.Mixed, CardSittingsPct = 40, FarmFromHour = 0, FarmUntilHour = 0 };
-	var simBot = new NocatFarm.Core.Bot(simName, simCfg);
-	var sim = new NocatFarm.Modules.HumanMode(simBot);
-	var simFarmer = new NocatFarm.Modules.CardFarmer(simBot);
-	simBot.AddModule(sim);
-	HF("_rng").SetValue(sim, new Random(5));   // the same sittings every run
-	simBot.AddModule(simFarmer);
-	DateTime simLogon = DateTime.UtcNow.AddHours(-1);
-	typeof(NocatFarm.Core.Bot).GetProperty("OnlineSince")!.SetValue(simBot, simLogon);
-	typeof(NocatFarm.Modules.CardFarmer).GetField("_nextGame", Inst)!.SetValue(simFarmer, 999u);
-	Random dayRng = new(4242);
-	double[] mainMin = [0, 0], sideMin = [0, 0];   // [no cards, cards]
-	double farmMin = 0;
-	int sittings = 0, cardDaySittings = 0, farmSittings = 0, longest = 0, didntStart = 0, overDay = 0;
-	NocatFarm.Log.Suppressed = true;
+	// Sittings: years of days through the real session picker and the real banking, cards farmed in some sittings every
+	// other day. The clock is kept out of it (up round the clock) - this is about the mix. Several shapes of settings,
+	// because a lean that cancels out on the defaults can still show on a main game set to 50 or 85, or on short
+	// sittings where the day's first and last are most of it.
+	MethodInfo rollMix = ht.GetMethod("RollDay", Stat)!;
+	(double Plain, double Card, double Farm, int CardSittings, int DidntStart, int Longest, int OverDay, double NoSideDays, double MainRun) Simulate(string weights,
+		int centre, Action<NocatFarm.Config.BotConfig> tweak, int days, int seed) {
+		string simName = "harness-sim-" + Guid.NewGuid().ToString("N")[..6];
+		var simCfg = new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = weights, PureMainDayChancePct = 0,
+			FarmCardsWhen = NocatFarm.Modules.FarmWhen.Mixed, CardSittingsPct = 40, FarmFromHour = 0, FarmUntilHour = 0 };
+		tweak(simCfg);
+		var simBot = new NocatFarm.Core.Bot(simName, simCfg);
+		var sim = new NocatFarm.Modules.HumanMode(simBot);
+		var simFarmer = new NocatFarm.Modules.CardFarmer(simBot);
+		simBot.AddModule(sim);
+		HF("_rng").SetValue(sim, new Random(seed));   // the same sittings every run
+		simBot.AddModule(simFarmer);
+		DateTime simLogon = DateTime.UtcNow.AddHours(-1);
+		typeof(NocatFarm.Core.Bot).GetProperty("OnlineSince")!.SetValue(simBot, simLogon);
+		typeof(NocatFarm.Modules.CardFarmer).GetField("_nextGame", Inst)!.SetValue(simFarmer, 999u);
+		Random dayRng = new(seed * 811);
+		double[] mainMin = [0, 0], sideMin = [0, 0];   // [no cards, cards]
+		int cardDaySittings = 0, farmSittings = 0, longest = 0, didntStart = 0, overDay = 0, plainDays = 0, noSideDays = 0, runs = 0, runSittings = 0;
+		NocatFarm.Log.Suppressed = true;
 
-	for (int day = 0; day < 600; day++) {
-		int cards = day % 2;
-		typeof(NocatFarm.Core.Bot).GetProperty("CardsRemaining")!.SetValue(simBot, cards == 1 ? 50 : 0);
-		var plan = Roll(simCfg, new DateTime(2026, 3, 2).AddDays(day), DateTime.MinValue, dayRng);
+		for (int day = 0; day < days; day++) {
+			int cards = day % 2;
+			typeof(NocatFarm.Core.Bot).GetProperty("CardsRemaining")!.SetValue(simBot, cards == 1 ? 50 : 0);
+			object plan = rollMix.Invoke(null, [simCfg, new DateTime(2026, 3, 2).AddDays(day), centre, true, DateTime.MinValue, dayRng])!;
+			int P(string n) => (int) plan.GetType().GetProperty(n)!.GetValue(plan)!;
+			int target = P("Target");
 
-		if (plan.Target == 0) {
-			continue;
-		}
-
-		Set(sim, "_dayStamp", DateTime.Now.DayOfYear);
-		Set(sim, "_wakeMinuteOfDay", 0);
-		Set(sim, "_bedHour", 23);
-		Set(sim, "_bedMinute", 59);
-		Set(sim, "_bedIsTomorrow", true);
-		Set(sim, "_stayUpUntil", DateTime.MinValue);
-		Set(sim, "_targetMinutes", plan.Target);
-		Set(sim, "_mainSharePct", plan.Share);
-		Set(sim, "_otherBudget", plan.Budget);
-		Set(sim, "_playedMinutesToday", 0);
-		Set(sim, "_otherPlayed", 0);
-		Set(sim, "_farmPlayed", 0);
-		Set(sim, "_firstSessionOfDay", true);
-		Set(sim, "_lastGame", 0u);
-		Set(sim, "_switchingTo", 0u);
-
-		while (HGet<int>(sim, "_playedMinutesToday") < plan.Target) {
-			Set(sim, "_phase", NocatFarm.Modules.HumanMode.Phase.Off);
-			HCall(sim, "StartSession");
-
-			if ((NocatFarm.Modules.HumanMode.Phase) HF("_phase").GetValue(sim)! != NocatFarm.Modules.HumanMode.Phase.Playing) {
-				didntStart++;
-
-				break;
+			if (target == 0) {
+				continue;
 			}
 
-			uint game = HGet<uint>(sim, "_game");
-			int m = (int) Math.Round((HGet<DateTime>(sim, "_sessionEnds") - HGet<DateTime>(sim, "_sessionStarted")).TotalMinutes);
-			bool farming = HGet<bool>(sim, "_farmSitting");
-			sittings++;
-			cardDaySittings += cards;
-			farmSittings += farming ? 1 : 0;
-			longest = Math.Max(longest, m);
+			// No plan in force: nothing is saved (writing the day to disk after every sitting was most of the time years of
+			// sittings took), and with no bedtime nothing is cut short by one - which is the point here.
+			Set(sim, "_dayStamp", -1);
+			Set(sim, "_stayUpUntil", DateTime.MinValue);
+			Set(sim, "_targetMinutes", target);
+			Set(sim, "_mainSharePct", P("MainSharePct"));
+			Set(sim, "_otherBudget", P("OtherBudget"));
+			Set(sim, "_playedMinutesToday", 0);
+			Set(sim, "_otherPlayed", 0);
+			Set(sim, "_farmPlayed", 0);
+			Set(sim, "_firstSessionOfDay", true);
+			Set(sim, "_lastGame", 0u);
+			Set(sim, "_switchingTo", 0u);
+			int run = 0;
+			double sideToday = 0;
 
-			// Banked by the real banking, as the day's ticks would.
-			Set(sim, "_bankedForLogon", simLogon);
-			Set(sim, "_bankedTo", DateTime.UtcNow.AddMinutes(-m));
-			Set(sim, "_lastBankAt", DateTime.UtcNow.AddSeconds(-10));
-			HCall(sim, "BankSession");
+			while (HGet<int>(sim, "_playedMinutesToday") < target) {
+				Set(sim, "_phase", NocatFarm.Modules.HumanMode.Phase.Off);
+				HCall(sim, "StartSession");
 
-			if (farming) {
-				farmMin += m;
-			} else if (game == 730) {
-				mainMin[cards] += m;
-			} else {
-				sideMin[cards] += m;
+				if ((NocatFarm.Modules.HumanMode.Phase) HF("_phase").GetValue(sim)! != NocatFarm.Modules.HumanMode.Phase.Playing) {
+					didntStart++;
+
+					break;
+				}
+
+				uint game = HGet<uint>(sim, "_game");
+				int m = (int) Math.Round((HGet<DateTime>(sim, "_sessionEnds") - HGet<DateTime>(sim, "_sessionStarted")).TotalMinutes);
+				bool farming = HGet<bool>(sim, "_farmSitting");
+				cardDaySittings += cards;
+				farmSittings += farming ? 1 : 0;
+				longest = Math.Max(longest, m);
+
+				// Banked by the real banking, as the day's ticks would.
+				Set(sim, "_bankedForLogon", simLogon);
+				Set(sim, "_bankedTo", DateTime.UtcNow.AddMinutes(-m));
+				Set(sim, "_lastBankAt", DateTime.UtcNow.AddSeconds(-10));
+				HCall(sim, "BankSession");
+
+				if (farming) {
+					continue;
+				}
+
+				// Main-game sittings in a row, counted on the days without cards.
+				if (game == 730) {
+					mainMin[cards] += m;
+					run += 1 - cards;
+				} else {
+					sideMin[cards] += m;
+					sideToday += m;
+					runSittings += run;
+					runs += run > 0 ? 1 : 0;
+					run = 0;
+				}
+			}
+
+			runSittings += run;
+			runs += run > 0 ? 1 : 0;
+			overDay += HGet<int>(sim, "_playedMinutesToday") > target + 15 ? 1 : 0;
+
+			if (cards == 0) {
+				plainDays++;
+				noSideDays += sideToday == 0 ? 1 : 0;
 			}
 		}
 
-		overDay += HGet<int>(sim, "_playedMinutesToday") > plan.Target + 15 ? 1 : 0;
+		NocatFarm.Log.Suppressed = false;
+		NocatFarm.Modules.HumanDay.Forget(simName);
+		simBot.DisposeAsync().AsTask().GetAwaiter().GetResult();
+
+		return (mainMin[0] / (mainMin[0] + sideMin[0]), mainMin[1] / (mainMin[1] + sideMin[1]), (double) farmSittings / Math.Max(1, cardDaySittings), cardDaySittings,
+			didntStart, longest, overDay, (double) noSideDays / Math.Max(1, plainDays), (double) runSittings / Math.Max(1, runs));
 	}
 
-	NocatFarm.Log.Suppressed = false;
-	NocatFarm.Modules.HumanDay.Forget(simName);
-	await simBot.DisposeAsync();
+	// The main game's share, over a long run, within half a point of what it's set to - whatever the settings look like.
+	// Forty thousand days each: the days are lumpy (a handful of sittings, each a big piece of the day), so a shorter
+	// run wanders by more than the half point being checked.
+	(string Name, string Weights, int Centre, Action<NocatFarm.Config.BotConfig> Tweak)[] mixes = [
+		("70/20/10, the defaults", "730:70, 440:20, 550:10", 70, static _ => { }),
+		("50/30/20", "730:50, 440:30, 550:20", 50, static _ => { }),
+		("85/15", "730:85, 440:15", 85, static _ => { }),
+		("70/30, short sittings (20-60m)", "730:70, 440:30", 70, static c => { c.SessionMinMinutes = 20; c.SessionMaxMinutes = 60; }),
+		("60/25/15, long sittings (45-240m) on short days", "730:60, 440:25, 550:15", 60, static c => { c.SessionMinMinutes = 45; c.SessionMaxMinutes = 240; c.WeekdayHours = 3; c.WeekendHours = 5; }),
+	];
 
-	double plainMain = mainMin[0] / (mainMin[0] + sideMin[0]), cardMain = mainMin[1] / (mainMin[1] + sideMin[1]);
-	double farmShare = (double) farmSittings / cardDaySittings;
-	Check("simulated sittings: every one starts, none longer than 'longest sitting' (150m)", (didntStart == 0) && (longest <= 150), $"{didntStart} didn't start, longest {longest}m");
-	Check("simulated sittings: a day never runs more than a few minutes past its hours", overDay == 0, $"{overDay} days over");
-	Check("simulated sittings: the main game gets about its 70% of the usual games' time", Math.Abs(plainMain - 0.70) < 0.05, $"{plainMain:P1}");
-	Check("simulated sittings: ...on days cards farm in some sittings too - farming doesn't eat the side games' share", Math.Abs(cardMain - 0.70) < 0.05, $"{cardMain:P1}");
-	Check("simulated sittings: about 40% of the sittings farm cards on a card day (CardSittingsPct)", Math.Abs(farmShare - 0.40) < 0.06, $"{farmShare:P1} of {cardDaySittings}");
+	foreach ((string mixName, string mixWeights, int centre, Action<NocatFarm.Config.BotConfig> tweak) in mixes) {
+		var s = Simulate(mixWeights, centre, tweak, 40_000, 5);
+		double want = centre / 100.0;
+
+		if (mixName.EndsWith("the defaults", StringComparison.Ordinal)) {
+			Check("simulated sittings: every one starts, none longer than 'longest sitting' (150m)", (s.DidntStart == 0) && (s.Longest <= 150), $"{s.DidntStart} didn't start, longest {s.Longest}m");
+			Check("simulated sittings: a day never runs more than a few minutes past its hours", s.OverDay == 0, $"{s.OverDay} days over");
+			Check("simulated sittings: about 40% of the sittings farm cards on a card day (CardSittingsPct)", Math.Abs(s.Farm - 0.40) < 0.03, $"{s.Farm:P1} of {s.CardSittings}");
+		}
+
+		Check($"simulated sittings, {mixName}: the main game's share is within half a point of its {centre}%", Math.Abs(s.Plain - want) < 0.005,
+			$"{s.Plain:P2}, {s.NoSideDays:P1} of the days with no side game, main-game sittings {s.MainRun:0.00} in a row");
+		Check($"simulated sittings, {mixName}: ...on days cards farm in some sittings too", Math.Abs(s.Card - want) < 0.005, $"{s.Card:P2}");
+	}
+
+	// What the pick's sums are built on: the average sitting worked out from the ranges is what the real roll gives - the
+	// day's short first sitting, the last one cut to what's left of the day, and a side game near the end of its allowance.
+	string lenName = "harness-len-" + Guid.NewGuid().ToString("N")[..6];
+	var lenBot = new NocatFarm.Core.Bot(lenName, new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730:70, 440:30" });
+	var lenHuman = new NocatFarm.Modules.HumanMode(lenBot);
+	lenBot.AddModule(lenHuman);
+	HF("_rng").SetValue(lenHuman, new Random(3));
+	Set(lenHuman, "_dayStamp", -1);
+	Set(lenHuman, "_stayUpUntil", DateTime.MinValue);
+	int lenOff = 0;
+	string lenWorst = "";
+
+	foreach ((bool first, int remaining, int sideLeft) in new[] { (false, 10_000, 0), (true, 10_000, 0), (false, 70, 0), (false, 20, 0), (false, 10_000, 40), (true, 55, 25) }) {
+		Set(lenHuman, "_firstSessionOfDay", first);
+		Set(lenHuman, "_targetMinutes", 20_000);
+		Set(lenHuman, "_playedMinutesToday", 20_000 - remaining);
+		Set(lenHuman, "_otherBudget", sideLeft > 0 ? sideLeft : 1_000_000);
+		Set(lenHuman, "_farmPlayed", 0);
+		Set(lenHuman, "_otherPlayed", 0);
+
+		foreach (bool main in new[] { true, false }) {
+			double rolled = 0;
+
+			for (int i = 0; i < 40_000; i++) {
+				rolled += (int) HCall(lenHuman, "SessionLength", main ? 730u : 440u, 730u)!;
+			}
+
+			rolled /= 40_000;
+			double worked = (double) ht.GetMethod("MeanLength", Stat)!.Invoke(null, [main, 30, 150, sideLeft > 0 ? sideLeft : 0, -1,
+				first ? (int) ht.GetMethod("FirstSittingCap", Stat)!.Invoke(null, [30, 150])! : 0, remaining, 0])!;
+
+			if (Math.Abs(rolled - worked) > 0.5) {
+				lenOff++;
+				lenWorst = $"{(main ? "main" : "side")} first={first} left={remaining} side left={sideLeft}: rolled {rolled:0.0}m, worked out {worked:0.0}m";
+			}
+		}
+	}
+
+	Check("the pick's sums: the average sitting worked out from the ranges is what the roll really gives, every limit included", lenOff == 0, lenWorst);
+
+	// Carrying on never keeps it on the main game: after a main-game sitting the next is the main game exactly as often as
+	// after a side game, or with nothing before it - it's which side game that carries on.
+	Set(lenHuman, "_firstSessionOfDay", false);
+	Set(lenHuman, "_targetMinutes", 1_000_000);
+	Set(lenHuman, "_playedMinutesToday", 0);
+	Set(lenHuman, "_otherBudget", 1_000_000);
+	Set(lenHuman, "_mainSharePct", 70);
+	lenBot.Cfg.GameWeights = "730:70, 440:20, 550:10";
+	const int CarryPicks = 40_000;
+	int[] mainAfter = new int[3];
+	int again440 = 0, sides440 = 0, again550 = 0, sides550 = 0;
+	uint[] lastOnes = [0, 730, 440];
+
+	for (int which = 0; which < 3; which++) {
+		for (int i = 0; i < CarryPicks; i++) {
+			Set(lenHuman, "_lastGame", lastOnes[which]);
+			uint picked = (uint) HCall(lenHuman, "PickGame")!;
+			mainAfter[which] += picked == 730 ? 1 : 0;
+
+			if ((which == 2) && (picked != 730)) {
+				sides440++;
+				again440 += picked == 440 ? 1 : 0;
+			}
+		}
+	}
+
+	for (int i = 0; i < CarryPicks; i++) {
+		Set(lenHuman, "_lastGame", 550u);
+		uint picked = (uint) HCall(lenHuman, "PickGame")!;
+
+		if (picked != 730) {
+			sides550++;
+			again550 += picked == 550 ? 1 : 0;
+		}
+	}
+
+	double[] mainOdds = [.. mainAfter.Select(static n => (double) n / CarryPicks)];
+	Check("carry on: after a main-game sitting the main game comes round no more often than after a side game, or a fresh start",
+		(Math.Abs(mainOdds[1] - mainOdds[0]) < 0.012) && (Math.Abs(mainOdds[1] - mainOdds[2]) < 0.012), $"{mainOdds[0]:P1} fresh, {mainOdds[1]:P1} after main, {mainOdds[2]:P1} after a side game");
+
+	// 440 is two thirds of the side games by weight and 550 a third: 40% carry on, the rest by weight.
+	double keep440 = (double) again440 / sides440, keep550 = (double) again550 / sides550;
+	Check("carry on: a side-game sitting straight after one is the same side game again about 40% more often than a fresh pick",
+		(Math.Abs(keep440 - (0.4 + (0.6 * 2 / 3))) < 0.015) && (Math.Abs(keep550 - (0.4 + (0.6 / 3))) < 0.015), $"440 again {keep440:P1}, 550 again {keep550:P1}");
+	NocatFarm.Modules.HumanDay.Forget(lenName);
+	await lenBot.DisposeAsync();
 }
 
 // ── Discord card: the counter fits on the line Discord shows, or goes short ────────────────────────────────────
@@ -2807,6 +2954,606 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("comments: both read, newest first", c.Count == 2 && c[0].At == 1790720459 && c[1].At == 1790533206, string.Join(" | ", c));
 	Check("comments: who wrote it and what it says, as plain text", (c.Count > 0) && (c[0].Author == "AEZAKMI") && (c[0].Text == "+rep pretty good player & nice"), c.Count > 0 ? $"{c[0].Author}: {c[0].Text}" : "");
 	Check("comments: nothing there reads as none, not a crash", NocatFarm.Core.Bot.ReadComments("<div>no comments</div>").Count == 0);
+}
+
+// ── help: a setting that's both whole-app and per-account explains both ─────────────────────────────────────
+{
+	string Help(params string[] args) => (string) typeof(NocatFarm.Commands).GetMethod("Help", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [args])!;
+	string both = Help("StatusEveryMinutes");
+	Check("help: StatusEveryMinutes explains the whole-app one and the per-account one", both.Contains("For the whole app") && both.Contains("Per account"), both.Length > 120 ? both[..120] : both);
+	string one = Help("LegitMode");
+	Check("help: a per-account-only setting is explained once, as before", !one.Contains("For the whole app") && one.StartsWith("LegitMode", StringComparison.Ordinal), one.Length > 80 ? one[..80] : one);
+}
+// ── lifecycle edges: an old run's disconnect, a start that breaks, a failed account that will retry ──────────
+{
+	const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance;
+	Type bt = typeof(NocatFarm.Core.Bot);
+
+	// Held for the whole block, so nothing here ever connects to Steam: every start waits at it for its login slot.
+	var latch = (SemaphoreSlim) typeof(NocatFarm.Core.Limiters).GetField("LoginCooldownLatch", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+	bool tookLatch = latch.Wait(0);
+	Check("edges: the login latch is held, so nothing below can sign in for real", latch.CurrentCount == 0);
+
+	var bot = new NocatFarm.Core.Bot("harness-edge-" + Guid.NewGuid().ToString("N")[..6], new NocatFarm.Config.BotConfig());
+	FieldInfo session = bt.GetField("_session", Inst)!, opened = bt.GetField("_connectedSession", Inst)!;
+	MethodInfo onDisconnected = bt.GetMethod("OnDisconnected", Inst)!;
+	var dropped = (SteamKit2.SteamClient.DisconnectedCallback) System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(SteamKit2.SteamClient.DisconnectedCallback));
+
+	// Run 7 had a connection and was stopped; its "disconnected" is still waiting in SteamKit's queue. Run 8 starts and
+	// queues for its login slot - and then the new pump reads the old message.
+	session.SetValue(bot, 7L);
+	opened.SetValue(bot, 7L);
+	Task run = bot.StartAsync();
+	await Task.Delay(300);
+	bool waiting = bot.Running && (bot.State == NocatFarm.Core.BotState.Connecting);
+	onDisconnected.Invoke(bot, [dropped]);
+	await Task.Delay(300);
+	Check("stale disconnect: an earlier run's connection dropping is ignored - no 'reconnecting', no second sign-in queued",
+		waiting && (bot.State == NocatFarm.Core.BotState.Connecting) && (bot.StatusText == "waiting for a login slot"), $"{bot.State} / {bot.StatusText}");
+
+	// The same message about this run's own connection is a real drop, and reconnects.
+	opened.SetValue(bot, session.GetValue(bot));
+	onDisconnected.Invoke(bot, [dropped]);
+	await Task.Delay(300);
+	Check("stale disconnect: ...while this run's own connection dropping still reconnects", (long) session.GetValue(bot)! == 8L
+		&& (bot.State == NocatFarm.Core.BotState.Reconnecting), $"run {session.GetValue(bot)}, {bot.State}");
+	await bot.StopAsync();
+	await Task.WhenAny(run, Task.Delay(5000));
+	Check("stale disconnect: stops cleanly after", run.IsCompleted && !bot.Running && (bot.State == NocatFarm.Core.BotState.Stopped), $"{bot.State}");
+
+	// A start that throws after the account is marked running: here the config is gone, so reading "Start paused" does.
+	var broken = new NocatFarm.Core.Bot("harness-edge-" + Guid.NewGuid().ToString("N")[..6], new NocatFarm.Config.BotConfig());
+	broken.Reconfigure(null!);
+	Task first = broken.StartAsync();
+	bool ended = first.Wait(5000);
+	Check("broken start: not left marked running, and says it failed", ended && !broken.Running && (broken.State == NocatFarm.Core.BotState.Failed)
+		&& (bt.GetField("_cts", Inst)!.GetValue(broken) == null) && (bt.GetField("_pump", Inst)!.GetValue(broken) == null), $"running {broken.Running}, {broken.State}");
+	broken.Reconfigure(new NocatFarm.Config.BotConfig());
+	Task second = broken.StartAsync();
+	await Task.Delay(300);
+	Check("broken start: ...so the next 'start' starts instead of doing nothing", broken.Running && (broken.State == NocatFarm.Core.BotState.Connecting), $"{broken.State}");
+	await broken.StopAsync();
+	await Task.WhenAny(second, Task.Delay(5000));
+
+	// "Close when everything's done": a failed account only counts once it has given up.
+	MethodInfo finished = typeof(NocatFarm.Core.BotManager).GetMethod("IsFinished", BindingFlags.NonPublic | BindingFlags.Static)!;
+	var acct = new NocatFarm.Core.Bot("harness-edge-" + Guid.NewGuid().ToString("N")[..6], new NocatFarm.Config.BotConfig());
+	bool Finished() => (bool) finished.Invoke(null, [acct])!;
+	FieldInfo running = bt.GetField("_running", Inst)!;
+	bt.GetProperty("State")!.SetValue(acct, NocatFarm.Core.BotState.Failed);
+	running.SetValue(acct, true);
+	bool retrying = Finished() || acct.GaveUp;
+	running.SetValue(acct, false);
+	bool gaveUp = Finished();
+	Check("close when done: a failed sign-in that's about to retry isn't finished", !retrying);
+	Check("close when done: ...one that gave up for good is", gaveUp && acct.GaveUp);
+	bt.GetProperty("State")!.SetValue(acct, NocatFarm.Core.BotState.Stopped);
+	bool stopped = Finished();
+	bt.GetProperty("State")!.SetValue(acct, NocatFarm.Core.BotState.Online);
+	running.SetValue(acct, true);
+	bool online = Finished();
+	acct.Cfg.Enabled = false;
+	Check("close when done: stopped or switched off is finished, online isn't", stopped && !online && Finished());
+
+	if (tookLatch) {
+		latch.Release();
+	}
+}
+
+// ── the installer's --setup: a save that fails says so, with an exit code and a reason ─────────────────────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-setup-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	string cfgFile = NocatFarm.Config.ConfigStore.GlobalPath;
+	string LastLogLine() => File.Exists(NocatFarm.Config.SetupChoices.LogPath) ? File.ReadAllLines(NocatFarm.Config.SetupChoices.LogPath).LastOrDefault() ?? "" : "";
+
+	try {
+		// A config that doesn't load isn't saved over - and that used to come back as 0, "saved".
+		File.WriteAllText(cfgFile, "{ not json");
+		int broken = NocatFarm.Config.SetupChoices.Run(["WebPort=7301"]);
+		Check("setup: a config it can't save over is exit 4, not 'saved'", broken == NocatFarm.Config.SetupChoices.SaveFailed, $"exit {broken}");
+		Check("setup: ...and the reason is in logs\\setup.log for the installer", LastLogLine().Contains("--setup exit 4: ") && LastLogLine().Contains("didn't load"), LastLogLine());
+		Check("setup: ...and nothing was written over the file", File.ReadAllText(cfgFile) == "{ not json");
+
+		// A file it can't write. Read-only is enough on Windows; on Linux and Mac the save writes a new file and swaps it
+		// in, which a read-only file doesn't stop - there, the folder itself is made read-only.
+		File.WriteAllText(cfgFile, "{}");
+		string cfgDir = Path.GetDirectoryName(cfgFile)!;
+		File.SetAttributes(cfgFile, FileAttributes.ReadOnly);
+		if (!OperatingSystem.IsWindows()) {
+			File.SetUnixFileMode(cfgDir, UnixFileMode.UserRead | UnixFileMode.UserExecute);
+		}
+		int locked = NocatFarm.Config.SetupChoices.Run(["WebPort=7301"]);
+		if (!OperatingSystem.IsWindows()) {
+			File.SetUnixFileMode(cfgDir, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+		}
+		File.SetAttributes(cfgFile, FileAttributes.Normal);
+		Check("setup: a config file it can't write is exit 4 with why", (locked == NocatFarm.Config.SetupChoices.SaveFailed) && LastLogLine().Contains("couldn't write"), $"exit {locked}: {LastLogLine()}");
+
+		// The refusal keeps its own code, and a refused value never lands in the file - it could be a password.
+		int refused = NocatFarm.Config.SetupChoices.Run(["WebPassword=hunter2-secret"]);
+		Check("setup: a setting it doesn't take is still exit 2", refused == 2, $"exit {refused}");
+		Check("setup: ...named in the log, its value left out", LastLogLine().Contains("--setup exit 2: 'WebPassword'") && !File.ReadAllText(NocatFarm.Config.SetupChoices.LogPath).Contains("hunter2"), LastLogLine());
+	} finally {
+		// Loaded once more from a good file, so the "didn't load - don't save" flag is off for everything after.
+		try {
+			File.SetAttributes(cfgFile, FileAttributes.Normal);
+			File.WriteAllText(cfgFile, "{}");
+			NocatFarm.Config.ConfigStore.LoadGlobal();
+		} catch {
+			// best effort
+		}
+
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch {
+			// the temp folder empties itself eventually
+		}
+	}
+}
+
+// ── farming and trading sweep: held swaps, market pauses, playtime, badges, boosters, listings, keys ────────────
+{
+	const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance;
+	const BindingFlags Stat = BindingFlags.NonPublic | BindingFlags.Static;
+	NocatFarm.Log.Suppressed = true;
+
+	try {
+		// A fair swap that would sit in a trade hold is left for you - and stays left, instead of being queued, waited
+		// out and turned down again at every look.
+		var tbot = new NocatFarm.Core.Bot("harness-heldswap", new NocatFarm.Config.BotConfig { AcceptFairCardSwaps = true });
+		var trades = new NocatFarm.Modules.Trading(tbot);
+		Type tt = typeof(NocatFarm.Modules.Trading);
+		var verdicts = (IDictionary) tt.GetField("_fair", Inst)!.GetValue(trades)!;
+		MethodInfo handle = tt.GetMethod("HandleAsync", Inst)!;
+		NocatFarm.Core.TradeOffers.Item SCard(string name) => new(753, "6", 1, 1, 0, 1, "Trading Card", name, 440, true);
+		NocatFarm.Core.TradeOffers.Offer Swap(ulong id) => new(id, 76561198000000123UL, NocatFarm.Core.TradeOffers.Active, false, null, [SCard("A")], [SCard("B")]);
+		async Task<(bool, bool)> Handle(ulong id) => await (Task<(bool, bool)>) handle.Invoke(trades,
+			[Swap(id), new Dictionary<ulong, NocatFarm.Modules.Trading.Way>(), new HashSet<ulong>(), false, CancellationToken.None])!;
+
+		verdicts[2UL] = (true, DateTime.UtcNow);
+		(bool queuedActed, _) = await Handle(2);
+		Check("held swap: an ordinary fair swap is queued to be answered", queuedActed && (trades.WaitingCount == 1), $"{trades.WaitingCount} waiting");
+		tt.GetMethod("LeaveHeldSwap", Inst)!.Invoke(trades, [1UL]);
+		verdicts[1UL] = (true, DateTime.UtcNow);   // what the next look's judging finds: the cards still fit
+		(bool heldActed, bool heldSwapped) = await Handle(1);
+		Check("held swap: one that would be held isn't queued again at the next look", !heldActed && !heldSwapped && (trades.WaitingCount == 1), $"{trades.WaitingCount} waiting");
+		await tbot.DisposeAsync();
+
+		// The market said 429: the lookups already queued behind that one wait it out too, instead of each asking anyway.
+		Type pb = typeof(NocatFarm.PriceBook);
+		FieldInfo PF(string n) => pb.GetField(n, Stat)!;
+		var priceGate = (SemaphoreSlim) PF("Gate").GetValue(null)!;
+		PF("_coolLoaded").SetValue(null, true);
+		PF("_coolUntil").SetValue(null, DateTime.MinValue);
+		PF("_lastCall").SetValue(null, DateTime.MinValue);
+		await priceGate.WaitAsync();
+		Task<decimal?> queuedLookup = NocatFarm.PriceBook.FetchAsync(753, "harness-no-such-item", CancellationToken.None);
+		await Task.Delay(200);
+		bool waitedItsTurn = !queuedLookup.IsCompleted;
+		PF("_coolUntil").SetValue(null, DateTime.UtcNow.AddMinutes(15));   // the one ahead of it was just refused
+		priceGate.Release();
+		bool answered = await Task.WhenAny(queuedLookup, Task.Delay(5000)) == queuedLookup;
+		Check("prices: a lookup queued behind a refused one doesn't ask the market", waitedItsTurn && answered && (queuedLookup.Result == null)
+			&& ((DateTime) PF("_lastCall").GetValue(null)! == DateTime.MinValue));
+		PF("_coolUntil").SetValue(null, DateTime.MinValue);
+
+		// Building playtime: the hours go onto the queue's own copies, so the next look (reusing the queue) farms the game.
+		var fbot = new NocatFarm.Core.Bot("harness-bump", new NocatFarm.Config.BotConfig());
+		var bumper = new NocatFarm.Modules.CardFarmer(fbot);
+		var bumpQueue = (List<NocatFarm.Modules.FarmTarget>) typeof(NocatFarm.Modules.CardFarmer).GetField("_queue", Inst)!.GetValue(bumper)!;
+		bumpQueue.Add(new NocatFarm.Modules.FarmTarget { AppId = 400, HoursPlayed = 2.9f, CardsRemaining = 3 });
+		bumpQueue.Add(new NocatFarm.Modules.FarmTarget { AppId = 620, HoursPlayed = 1.0f, CardsRemaining = 4 });
+		typeof(NocatFarm.Modules.CardFarmer).GetMethod("NoteBumped", Stat)!.Invoke(null, [bumper.Queue, TimeSpan.FromMinutes(7)]);
+		Check("bump: 7 minutes on a game at 2.9h puts it over a 3h line in the queue itself", bumper.Queue[0].HoursPlayed >= 3.0f, $"{bumper.Queue[0].HoursPlayed:0.00}h");
+		Check("bump: every game in the batch got the time", Math.Abs(bumper.Queue[1].HoursPlayed - 1.1167f) < 0.01f, $"{bumper.Queue[1].HoursPlayed:0.000}h");
+		await fbot.DisposeAsync();
+
+		// Badges: a game's foil set and its plain one are two crafts, not one.
+		Type bcT = typeof(NocatFarm.Modules.BadgeCraft);
+		Type craftT = bcT.GetNestedType("Craftable", BindingFlags.NonPublic)!;
+		var readyList = (IList) Activator.CreateInstance(typeof(List<>).MakeGenericType(craftT))!;
+		MethodInfo toRead = bcT.GetMethod("CardPagesToRead", Stat)!;
+		List<(uint App, bool Foil)> Pages() => (List<(uint App, bool Foil)>) toRead.Invoke(null, [new List<(uint App, bool Foil)> { (730, false), (730, true), (730, false) }, readyList])!;
+		List<(uint App, bool Foil)> both = Pages();
+		Check("craft: both the plain and the foil card page of one game are read", both.Count == 2 && both.Contains((730u, false)) && both.Contains((730u, true)), string.Join(" ", both));
+		readyList.Add(Activator.CreateInstance(craftT, [730u, 1, 0, 1])!);
+		List<(uint App, bool Foil)> foilOnly = Pages();
+		Check("craft: with the plain set already read, the foil one still is", foilOnly.Count == 1 && foilOnly[0] == (730u, true), string.Join(" ", foilOnly));
+		var craftButtons = (IList) bcT.GetMethod("Parse", Stat)!.Invoke(null, ["onclick=\"CraftBadge( 730, 1, 0, 1 )\" ... onclick=\"CraftBadge( 730, 1, 1, 1 )\" ... onclick=\"CraftBadge( 730, 1, 0, 1 )\""])!;
+		Check("craft: craft buttons for a game's plain and foil sets are both kept", craftButtons.Count == 2, $"{craftButtons.Count}");
+
+		// A sweep that finds nothing to craft doesn't inherit "more to craft" from the one before and come back in hours.
+		var cbot = new NocatFarm.Core.Bot("harness-craftmore", new NocatFarm.Config.BotConfig { CraftBadges = true });
+		var crafter = new NocatFarm.Modules.BadgeCraft(cbot);
+		FieldInfo moreToCraft = bcT.GetField("_moreToCraft", Inst)!;
+		moreToCraft.SetValue(crafter, true);
+		int made = await crafter.SweepAsync(CancellationToken.None);
+		Check("craft: a sweep that read nothing isn't 'more to craft' because the last one was", (made == 0) && !(bool) moreToCraft.GetValue(crafter)!);
+		await cbot.DisposeAsync();
+
+		// Booster packs in a waiting trade offer (a timed send of boosters, say) aren't opened out of it.
+		var packInv = new NocatFarm.Core.InventoryContents { Complete = true };
+		void AddItem(ulong id, string cls, string type, string name, string app) {
+			packInv.Assets.Add(System.Text.Json.JsonDocument.Parse($"{{\"assetid\":\"{id}\",\"classid\":\"{cls}\",\"instanceid\":\"0\"}}").RootElement);
+			packInv.Descriptions[cls + "_0"] = System.Text.Json.JsonDocument.Parse($"{{\"type\":\"{type}\",\"name\":\"{name}\",\"market_fee_app\":\"{app}\"}}").RootElement;
+		}
+		AddItem(7, "p", "Booster Pack", "Dota 2 Booster Pack", "570");
+		AddItem(8, "p", "Booster Pack", "Dota 2 Booster Pack", "570");
+		AddItem(9, "c", "Dota 2 Trading Card", "Axe", "570");
+		var packs = (List<(string App, ulong Asset)>) bcT.GetMethod("Packs", Stat)!.Invoke(null, [packInv, new HashSet<ulong> { 8 }])!;
+		Check("boosters: the packs are found, and one promised in a waiting trade is left shut", packs.Count == 1 && packs[0] == ("570", 7ul), string.Join(" ", packs));
+
+		// A market listing confirmed through the authenticator is called a market listing, not a trade offer.
+		MethodInfo confirmedLine = typeof(NocatFarm.Core.Bot).GetMethod("Confirmed", Stat)!;
+		string Line(int type, ulong creator) => confirmedLine.Invoke(null, [new NocatFarm.Core.Confirmations.Item(1, 2, creator, type, "", "", [], "", 0)])!.ToString()!;
+		Check("confirm: a market listing says so", Line(3, 5123) == "confirmed market listing 5123 with its authenticator", Line(3, 5123));
+		Check("confirm: a trade offer still says trade offer", Line(2, 77) == "confirmed trade offer 77 with its authenticator", Line(2, 77));
+
+		// A queued key an account can never use (already owned, another region's) isn't tried on it again - and once every
+		// account has said so, the key goes.
+		Check("keys: owned already is for good, a rate limit isn't",
+			new NocatFarm.Core.RedeemResult(SteamKit2.EPurchaseResultDetail.AlreadyPurchased, "", []).NotForThisAccount
+			&& !new NocatFarm.Core.RedeemResult(SteamKit2.EPurchaseResultDetail.RateLimited, "", []).NotForThisAccount
+			&& !new NocatFarm.Core.RedeemResult(SteamKit2.EPurchaseResultDetail.BadActivationCode, "", []).NotForThisAccount);
+		string realRoot = NocatFarm.Config.ConfigStore.Root;
+		string keyRoot = Path.Combine(Path.GetTempPath(), "nf-keys-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(Path.Combine(keyRoot, "config"));
+		NocatFarm.Config.ConfigStore.UseRoot(keyRoot);
+
+		try {
+			Type kq = typeof(NocatFarm.Core.KeyQueue);
+			NocatFarm.Core.KeyQueue.Clear();
+			const string Key = "HARNS-KEYQU-EUE01";
+			NocatFarm.Core.KeyQueue.Add([Key]);
+			bool allAfterA = NocatFarm.Core.KeyQueue.RefusedOn(Key, "a", ["a", "b"]);
+			var forA = NocatFarm.Core.KeyQueue.Next((account, refused) => (account == null) && !refused.Contains("a", StringComparer.OrdinalIgnoreCase));
+			var forB = NocatFarm.Core.KeyQueue.Next((account, refused) => (account == null) && !refused.Contains("b", StringComparer.OrdinalIgnoreCase));
+			Check("keys: an account that refused a key for good isn't handed it again; the others still are", !allAfterA && (forA == null) && (forB?.Key == Key));
+
+			// Kept across a restart: read back from the file.
+			kq.GetField("_loaded", Stat)!.SetValue(null, false);
+			((IList) kq.GetField("Pending", Stat)!.GetValue(null)!).Clear();
+			var readBack = NocatFarm.Core.KeyQueue.Next(static (_, _) => true);
+			Check("keys: who refused it survives a restart", readBack is { } r && r.RefusedBy.SequenceEqual(new[] { "a" }), string.Join(",", readBack?.RefusedBy ?? Array.Empty<string>()));
+			Check("keys: once every account has refused it, nobody is left to try", NocatFarm.Core.KeyQueue.RefusedOn(Key, "B", ["a", "b"]));
+			NocatFarm.Core.KeyQueue.Clear();
+		} finally {
+			NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+			try {
+				Directory.Delete(keyRoot, true);
+			} catch (IOException) {
+				// a temp folder - the OS clears it
+			}
+		}
+	} finally {
+		NocatFarm.Log.Suppressed = false;
+	}
+}
+
+// ── only what Steam confirms counts: listings, crafts, packs, declines, comments, busy sends, guest passes ─────────
+{
+	const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance;
+	const BindingFlags Stat = BindingFlags.NonPublic | BindingFlags.Static;
+	NocatFarm.Log.Suppressed = true;
+
+	try {
+		// Listings to confirm: by asset id, or - re-numbered by Steam - the same card at the same price, listed this run.
+		DateTime runStart = DateTime.UtcNow.AddMinutes(-5);
+		List<NocatFarm.Core.Seller.Offer> listed = [new(1, "Game", "A", 6, 5, 3, "440-A"), new(2, "Game", "B", 9, 8, 6, "440-B")];
+		List<NocatFarm.Core.Seller.Listing> onMarket = [
+			new(10, 1, "440-A", 3, DateTime.UtcNow, true),                      // ours, same asset id
+			new(11, 99, "440-B", 6, DateTime.UtcNow, true),                     // ours, given a new asset id
+			new(12, 98, "440-B", 6, DateTime.UtcNow.AddDays(-2), true),         // the owner's own, from days ago
+			new(13, 97, "440-C", 6, DateTime.UtcNow, true),                     // another card
+			new(14, 96, "440-B", 6, DateTime.UtcNow, false)];                   // already live - nothing to confirm
+		var pending = (List<ulong>) typeof(NocatFarm.Core.Seller).GetMethod("MatchPending", Stat)!.Invoke(null, [onMarket, listed, runStart])!;
+		Check("listings: ours are found by asset id or, re-numbered, by card and price - nothing else", pending.Order().SequenceEqual(new ulong[] { 10, 11 }), string.Join(",", pending));
+		List<NocatFarm.Core.Seller.Listing> twoLike = [new(20, 90, "440-B", 6, DateTime.UtcNow, true), new(21, 91, "440-B", 6, DateTime.UtcNow, true)];
+		var one = (List<ulong>) typeof(NocatFarm.Core.Seller).GetMethod("MatchPending", Stat)!.Invoke(null, [twoLike, listed, runStart])!;
+		Check("listings: one card listed confirms one listing, not every one that looks like it", one.Count == 1, string.Join(",", one));
+
+		// Crafts and packs: only an explicit yes.
+		MethodInfo succeeded = typeof(NocatFarm.Modules.BadgeCraft).GetMethod("Succeeded", Stat)!;
+		bool Ok(string? body, string field) => (bool) succeeded.Invoke(null, [body, field])!;
+		Check("craft/pack: success 1 or true is a yes", Ok("""{"success":1,"rgDroppedItems":[]}""", "rgDroppedItems") && Ok("""{"success":true}""", "rgItems"));
+		Check("craft/pack: no success flag but the result that only comes on success is a yes", Ok("""{"rgItems":[{"name":"x"}]}""", "rgItems"));
+		Check("craft/pack: a numeric failure code, false, an HTML page or nothing is a no",
+			!Ok("""{"success":2}""", "rgItems") && !Ok("""{"success":16,"rgItems":[]}""", "rgItems") && !Ok("""{"success":false}""", "rgItems")
+			&& !Ok("<html>too many requests</html>", "rgItems") && !Ok(null, "rgItems") && !Ok("{}", "rgDroppedItems"));
+
+		// Declines and cancels: only when Steam hands the offer back, or says success.
+		MethodInfo answered = typeof(NocatFarm.Modules.Trading).GetMethod("OfferAnswered", Stat)!;
+		bool Answered(string? body, ulong id) => (bool) answered.Invoke(null, [body, id])!;
+		Check("decline/cancel: Steam handing the offer's id back is done", Answered("""{"tradeofferid":"7123"}""", 7123) && Answered("""{"tradeofferid":7123}""", 7123));
+		Check("decline/cancel: another id, an error, an HTML page or nothing isn't",
+			!Answered("""{"tradeofferid":"999"}""", 7123) && !Answered("""{"strError":"There was an error (28)"}""", 7123) && !Answered("<html>Sign In</html>", 7123) && !Answered(null, 7123));
+
+		// Rep4rep: a comment that never left this PC isn't counted or credited, and the next try backs off.
+		var rbot = new NocatFarm.Core.Bot("harness-r4r-notsent-" + Guid.NewGuid().ToString("N")[..6], new NocatFarm.Config.BotConfig());
+		typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(rbot, NocatFarm.Core.BotState.Online);   // "online", but with no web session to send with
+		using var rapi = new NocatFarm.Rep4Rep.Rep4RepApi();
+		var r4r = new NocatFarm.Modules.Rep4RepModule(rbot, rapi);
+		Type rt = typeof(NocatFarm.Modules.Rep4RepModule);
+		var rstate = new NocatFarm.Rep4Rep.Rep4RepState();
+		rt.GetField("_state", Inst)!.SetValue(r4r, rstate);
+		rt.GetField("_profileId", Inst)!.SetValue(r4r, "harness-profile");
+		r4r.Remember([new NocatFarm.Rep4Rep.Rep4RepTask { TaskId = "task-ns", TargetSteamId = 76561198000000001, TargetName = "someone", CommentText = "+rep" }]);
+		string notSent = await r4r.PostNowAsync("task-ns");
+		Check("rep4rep: a comment that couldn't be sent isn't counted as posted", notSent.Contains("couldn't reach Steam", StringComparison.Ordinal)
+			&& (rstate.PostsInLast24h() == 0) && !rstate.HasPostedTask("task-ns"), notSent);
+		MethodInfo notSentWait = rt.GetMethod("NotSentWaitSeconds", Stat)!;
+		int W(int run) => (int) notSentWait.Invoke(null, [run])!;
+		Check("rep4rep: not sent backs off - 5, 10, 20, 40, then 60 minutes at most", (W(1) / 60 is >= 5 and < 7) && (W(2) / 60 is >= 10 and < 12) && (W(4) / 60 is >= 40 and < 42) && (W(9) / 60 is >= 60 and < 62),
+			$"{W(1) / 60} {W(2) / 60} {W(4) / 60} {W(9) / 60}");
+		await rbot.DisposeAsync();
+
+		// A timed send that found every item busy says so - and tries again in minutes, not at the next period.
+		var sbot = new NocatFarm.Core.Bot("harness-busysend", new NocatFarm.Config.BotConfig());
+		MethodInfo sendClaimed = typeof(NocatFarm.Core.Looting).GetMethod("SendClaimedAsync", Stat)!;
+		List<NocatFarm.Core.Looting.Item> noItems = [];
+		async Task<(string, bool)> SendWith(int busyCount) => await (Task<(string, bool)>) sendClaimed.Invoke(null,
+			[sbot, 76561198000000002UL, "", "cards", noItems, noItems, new HashSet<uint>(), 0, noItems, busyCount, CancellationToken.None])!;
+		(string busyText, bool isBusy) = await SendWith(3);
+		(_, bool notBusy) = await SendWith(0);
+		Check("send: everything busy is told apart from nothing to send", isBusy && !notBusy && busyText.Contains("being sent or sold", StringComparison.Ordinal), busyText);
+		MethodInfo busyRetry = typeof(NocatFarm.Modules.Sender).GetMethod("BusyRetry", Stat)!;
+		TimeSpan? Retry(bool busy, int tries) => (TimeSpan?) busyRetry.Invoke(null, [busy, tries]);
+		Check("send: busy tries again in 3-8 minutes, a few times, then waits for its usual time",
+			(Retry(true, 1) is { } r1) && (r1 >= TimeSpan.FromMinutes(3)) && (r1 <= TimeSpan.FromMinutes(8)) && (Retry(true, 6) != null) && (Retry(true, 7) == null) && (Retry(false, 0) == null));
+		await sbot.DisposeAsync();
+
+		// Guest passes: a no that may pass is tried again later; a lasting one, or the fourth, is given up on.
+		MethodInfo passRetry = typeof(NocatFarm.Modules.Gifts).GetMethod("PassRetry", Stat)!;
+		TimeSpan? Pass(SteamKit2.EResult result, int tries) => (TimeSpan?) passRetry.Invoke(null, [result, tries]);
+		Check("gifts: a busy Steam is asked again in 30m, 2h, 8h", (Pass(SteamKit2.EResult.Busy, 1) == TimeSpan.FromMinutes(30))
+			&& (Pass(SteamKit2.EResult.Fail, 2) == TimeSpan.FromHours(2)) && (Pass(SteamKit2.EResult.ServiceUnavailable, 3) == TimeSpan.FromHours(8)));
+		Check("gifts: ...then given up; an expired or already-redeemed pass isn't asked again", (Pass(SteamKit2.EResult.Busy, 4) == null)
+			&& (Pass(SteamKit2.EResult.Expired, 1) == null) && (Pass(SteamKit2.EResult.AlreadyRedeemed, 1) == null));
+	} finally {
+		NocatFarm.Log.Suppressed = false;
+	}
+}
+
+// ── the dashboard's sign-in lockout and the "Public address" link ────────────────────────────────────────────────
+{
+	const BindingFlags Internal = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+	DateTime now = new(2026, 9, 29, 12, 0, 0, DateTimeKind.Utc);
+	int After((int, DateTime)? previous) => (int) typeof(NocatFarm.Web.WebHost).GetMethod("FailuresAfter", Internal)!.Invoke(null, [previous, now])!;
+	Check("sign-in: the first wrong guess counts one", After(null) == 1);
+	Check("sign-in: a wrong guess inside the window adds to the count", After((3, now.AddMinutes(40))) == 4);
+	Check("sign-in: old guesses whose time is up don't count - a typo today after four last week is one, not a lockout", After((4, now.AddDays(-4))) == 1);
+	Check("sign-in: one typo after a lockout ran out doesn't start another", After((5, now.AddSeconds(-1))) == 1);
+
+	string? Out(string typed) => (string?) typeof(NocatFarm.Core.DashboardLinks).GetMethod("Outside", Internal)!.Invoke(null, [typed, 7242]);
+	Check("public address: a bare name gets the port", Out("myname.duckdns.org") == "http://myname.duckdns.org:7242/", Out("myname.duckdns.org") ?? "null");
+	Check("public address: a port typed is kept", Out("http://1.2.3.4:8080") == "http://1.2.3.4:8080/", Out("http://1.2.3.4:8080") ?? "null");
+	Check("public address: https (a proxy in front) is left on its own port", Out("https://farm.example.com") == "https://farm.example.com/", Out("https://farm.example.com") ?? "null");
+	Check("public address: the port goes after the name, not after a path", Out("example.com/farm") == "http://example.com:7242/farm/", Out("example.com/farm") ?? "null");
+	Check("public address: nothing typed is no link", Out("  ") == null);
+
+	// ── settings: a choice by its label, and a number that isn't one ──
+	var cfgC = new NocatFarm.Config.BotConfig { OnlineStatus = 1, HoursUntilCardDrops = 3 };
+	var persona = NocatFarm.Config.Settings.FindBot("OnlineStatus")!;
+	Check("choice: nothing typed isn't the first choice (it set Appear as to offline)", (NocatFarm.Config.Settings.Apply(cfgC, persona, "") != null) && (cfgC.OnlineStatus == 1));
+	Check("choice: the start of two labels ('o' - offline, online) is refused, not the first one listed", (NocatFarm.Config.Settings.Apply(cfgC, persona, "o") != null) && (cfgC.OnlineStatus == 1));
+	Check("choice: a whole label, and the start of just one, still work",
+		(NocatFarm.Config.Settings.Apply(cfgC, persona, "online") == null) && (cfgC.OnlineStatus == 1) && (NocatFarm.Config.Settings.Apply(cfgC, persona, "invis") == null) && (cfgC.OnlineStatus == 7));
+	var hoursDef = NocatFarm.Config.Settings.FindBot("HoursUntilCardDrops")!;
+	Check("float: 'nan' is refused - it passed the range check and then no save of that account could be written",
+		(NocatFarm.Config.Settings.Apply(cfgC, hoursDef, "nan") != null) && (NocatFarm.Config.Settings.Apply(cfgC, hoursDef, "Infinity") != null) && (cfgC.HoursUntilCardDrops == 3f));
+
+	// ── config files: an explicit null is the default, not a crash later ──
+	var nulled = System.Text.Json.JsonSerializer.Deserialize<NocatFarm.Config.BotConfig>("""{ "IdleGames": null, "GameWeights": null, "SteamLogin": "x" }""")!;
+	NocatFarm.Config.ConfigStore.FillNulls(nulled);
+	Check("config: a list or text written as null comes back as its default", (nulled.IdleGames != null) && (nulled.GameWeights != null) && (nulled.SteamLogin == "x"));
+
+	// ── names: what a new account may be called ──
+	Check("names: 'all' can't be an account - every command reads it as every account", !NocatFarm.Config.ConfigStore.IsPlainBotName("all") && !NocatFarm.Config.ConfigStore.IsPlainBotName("ALL"));
+	Check("names: letters, numbers, dashes and underscores - nothing else", NocatFarm.Config.ConfigStore.IsPlainBotName("farm-1_b") && !NocatFarm.Config.ConfigStore.IsPlainBotName("o'brien") && !NocatFarm.Config.ConfigStore.IsPlainBotName("two words"));
+
+	// ── Steam chat: a master of one account commands that account, not the app ──
+	bool Refuses(string verb) => (bool) typeof(NocatFarm.Commands).GetMethod("SteamChatRefuses", Internal)!.Invoke(null, [verb])!;
+	Check("steam chat: the app's settings, the dashboard, updates and files on this PC are refused", Refuses("set") && Refuses("anywhere") && Refuses("dashboard") && Refuses("update") && Refuses("import") && Refuses("redeem"));
+	Check("steam chat: the account's own everyday commands still work", !Refuses("pause") && !Refuses("status") && !Refuses("2fa") && !Refuses("offers"));
+
+	NocatFarm.Config.GlobalConfig liveBefore = NocatFarm.Config.Live.Global;
+	var chatMgr = new NocatFarm.Core.BotManager(liveBefore);
+	string one = "harness-chat-" + Guid.NewGuid().ToString("N")[..6], other = one + "b";
+	await chatMgr.AddAsync(one, new NocatFarm.Config.BotConfig { Enabled = false });
+	await chatMgr.AddAsync(other, new NocatFarm.Config.BotConfig { Enabled = false });
+	bool Past(string line) => (bool) typeof(NocatFarm.Commands).GetMethod("ReachesPast", Internal)!.Invoke(null, [chatMgr, line, one])!;
+	Check("steam chat: another account named, or all of them, is refused", Past($"confirm {other} all") && Past("2fa all") && Past($"trade accept {other} 1") && Past($"send {other} to {one}"));
+	Check("steam chat: this account itself, and its items sent to another, are fine",
+		!Past($"pause {one}") && !Past($"confirm {one} all") && !Past($"trade accept {one} all") && !Past($"send {one} to {other}") && !Past("status"));
+	await chatMgr.RemoveAsync(one);
+	await chatMgr.RemoveAsync(other);
+	NocatFarm.Config.Live.Global = liveBefore;
+
+	// ── Telegram: a big block is cut a whole line at a time, and stays HTML Telegram can read ──
+	Type notifier = typeof(NocatFarm.Core.Notifier);
+	Type blockType = notifier.GetNestedType("Block", BindingFlags.NonPublic | BindingFlags.Public)!;
+	string Part(NocatFarm.Topic topic, List<string> lines) => (string) notifier.GetMethod("TelegramPart", Internal)!.Invoke(null, [Activator.CreateInstance(blockType, topic, "report", lines)])!;
+	string summary = Part(NocatFarm.Topic.Summary, [.. Enumerable.Range(1, 400).Select(static i => $"account{i} & co  banked 3h12m · 4 card(s)")]);
+	Check("telegram: a long daily summary stays under the limit and keeps its closing </pre>", (summary.Length <= 3900) && summary.EndsWith("</pre>", StringComparison.Ordinal), $"{summary.Length}");
+	Check("telegram: ...cut between lines, never through an &amp;", !summary.Contains("&am<", StringComparison.Ordinal) && summary.Contains("\n…</pre>", StringComparison.Ordinal));
+	string lone = Part(NocatFarm.Topic.Cards, [new string('<', 5000)]);
+	Check("telegram: one line too long on its own is cut short, still whole entities", (lone.Length <= 3900) && lone.EndsWith("&lt;…", StringComparison.Ordinal), $"{lone.Length}");
+
+	// ── ASF: what a bot file leaves out means what it means to ASF ──
+	string asfDir = Path.Combine(Path.GetTempPath(), "nf-asf-" + Guid.NewGuid().ToString("N")[..8]);
+	Directory.CreateDirectory(asfDir);
+	static string Url64(string s) => Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(s)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+	string expired = Url64("{\"alg\":\"EdDSA\",\"typ\":\"JWT\"}") + "." + Url64("{\"iss\":\"steam\",\"sub\":\"76561198000000009\",\"exp\":1000}") + ".c2ln";
+	File.WriteAllText(Path.Combine(asfDir, "ASF.json"), """{ "SteamOwnerID": 76561198000000042 }""");
+	File.WriteAllText(Path.Combine(asfDir, "plain.json"), """{ "SteamPassword": "pw", "SendTradePeriod": 24 }""");
+	File.WriteAllText(Path.Combine(asfDir, "plain.db"), $$"""{ "BackingRefreshToken": "{{expired}}" }""");
+	File.WriteAllText(Path.Combine(asfDir, "half.json"), """{ "SteamLogin": "halflogin", "Enabled": true, "SteamParentalCode": "0", "SteamUserPermissions": { "76561198000000077": 3.0 }, "FarmingPreferences": 128 }""");
+	File.WriteAllText(Path.Combine(asfDir, "half.maFile.PENDING"), """{"shared_secret":"cGVuZGluZy1zaGFyZWQtc2VjcmV0MTI=","account_name":"halflogin"}""");
+	var asfRead = NocatFarm.Config.AsfImport.Read(asfDir);
+	var plainBot = asfRead.Accounts.First(static a => a.Key == "plain");
+	var halfBot = asfRead.Accounts.First(static a => a.Key == "half");
+	Check("import asf: a bot whose file leaves Enabled out comes in off, as ASF has it", !plainBot.Config.Enabled && halfBot.Config.Enabled);
+	Check("import asf: no SteamLogin is no login - not the bot's own name", plainBot.SteamLogin.Length == 0, plainBot.SteamLogin);
+	Check("import asf: a login token that has run out isn't brought (it was tried first, and failed the account)",
+		(plainBot.Token == null) && plainBot.Notes.Any(static n => n.ToString().Contains("run out", StringComparison.Ordinal)));
+	Check("import asf: an unfinished authenticator (.maFile.PENDING) isn't taken for a real one", halfBot.MaFile == null);
+	Check("import asf: no Master on the bot - its items go to ASF's owner, as ASF sends them", plainBot.Config.TradeMasters == "76561198000000042", plainBot.Config.TradeMasters);
+	Check("import asf: a permission level written 3.0 still counts, and doesn't stop the read", halfBot.Config.TradeMasters == "76561198000000077", halfBot.Config.TradeMasters);
+	Check("import asf: a Family View PIN of 0 isn't a PIN", halfBot.Config.SteamParentalCode.Length == 0);
+	Check("import asf: the sale event (AutoSteamSaleEvent) only where ASF had it on, and the badge clearing only if asked",
+		halfBot.Config is { ClaimEventItems: true, DiscoveryQueue: 1 } && plainBot.Config is { ClaimEventItems: false, DiscoveryQueue: 0, ClearInventoryNotifications: false });
+
+	try {
+		Directory.Delete(asfDir, true);
+	} catch (IOException) {
+		// a temp folder - the OS clears it
+	}
+
+	// ── any import: the same Steam account under another name is that account, not a second copy ──
+	string had = "harness-dupe-" + Guid.NewGuid().ToString("N")[..6];
+	NocatFarm.Config.ConfigStore.SaveBot(had, new NocatFarm.Config.BotConfig { SteamLogin = "Dupe-Login-X", Enabled = false });
+	var dupeScan = new NocatFarm.Config.ImportScan { Tool = "asf", ToolName = "ArchiSteamFarm" };
+	dupeScan.Accounts.Add(new NocatFarm.Config.ImportedAccount { Key = "k1", Name = had + "-main", SteamLogin = "dupe-login-x", Config = new NocatFarm.Config.BotConfig { SteamLogin = "dupe-login-x", Enabled = false } });
+	dupeScan.Accounts.Add(new NocatFarm.Config.ImportedAccount { Key = "k2", Name = had + "-new", SteamLogin = "dupe-login-y", Config = new NocatFarm.Config.BotConfig { SteamLogin = "dupe-login-y", Enabled = false } });
+	dupeScan.Accounts.Add(new NocatFarm.Config.ImportedAccount { Key = "k3", Name = had + "-again", SteamLogin = "DUPE-LOGIN-Y", Config = new NocatFarm.Config.BotConfig { SteamLogin = "DUPE-LOGIN-Y", Enabled = false } });
+	var dupeOut = NocatFarm.Config.IdlerImport.Apply(dupeScan, [new("k1"), new("k2"), new("k3")], new NocatFarm.Config.GlobalConfig());
+	Check("import: an account already here under another name is left alone, not added again", !File.Exists(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, had + "-main.json"))
+		&& dupeOut.Notes.Any(n => n.ToString().Contains($"already here as {had}", StringComparison.Ordinal)));
+	Check("import: the same login twice in one import comes in once", (dupeOut.Imported == 1) && File.Exists(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, had + "-new.json"))
+		&& !File.Exists(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, had + "-again.json")), $"{dupeOut.Imported} imported");
+
+	foreach (string f in new[] { had, had + "-new" }) {
+		File.Delete(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, f + ".json"));
+	}
+
+	// ── names Windows keeps for devices ──
+	Check("names: con, nul, com1, lpt9 - with or without an extension - are refused",
+		new[] { "con", "NUL", "com1", "Lpt9", "aux.txt", "prn.json" }.All(static n => NocatFarm.Config.ConfigStore.IsReservedName(n) && !NocatFarm.Config.ConfigStore.IsValidBotName(n))
+		&& NocatFarm.Config.ConfigStore.NameProblem("con") is not null && NocatFarm.Config.ConfigStore.NameProblem("farm1") is null);
+	Check("names: ones that only look like them are fine", !NocatFarm.Config.ConfigStore.IsReservedName("console") && !NocatFarm.Config.ConfigStore.IsReservedName("com10") && !NocatFarm.Config.ConfigStore.IsReservedName("nulls"));
+	string NameFor(string login) => (string) typeof(NocatFarm.Config.AsfImport).Assembly.GetType("NocatFarm.Config.ImportFiles")!
+		.GetMethod("NameFor", Internal)!.Invoke(null, [login, "x", new List<string>()])!;
+	Check("names: an import's name from a login like 'con' or 'all' gets a 1 on the end", (NameFor("con") == "con1") && (NameFor("all") == "all1"), $"{NameFor("con")} {NameFor("all")}");
+
+	// ── ASF: the whole FarmingOrders list, in turn ──
+	var orderBot = new NocatFarm.Config.BotConfig();
+	var orderAcct = new NocatFarm.Config.ImportedAccount { Key = "o", Name = "o", Config = orderBot };
+	typeof(NocatFarm.Config.AsfImport).GetMethod("ApplyFarmingOrders", Internal)!.Invoke(null, [new List<int> { 0, 10, 3, 5 }, orderBot, orderAcct]);
+	Check("import asf: the first order with a match wins, not just the first one (BadgeLevels first, then CardDrops)", orderBot.FarmingOrder == 2, $"{orderBot.FarmingOrder}");
+	Check("import asf: ...and it says which ones it couldn't match, and which came after", orderAcct.Notes.Any(static n => n.ToString().Contains("BadgeLevelsAscending", StringComparison.Ordinal))
+		&& orderAcct.Notes.Any(static n => n.ToString().Contains("HoursAscending", StringComparison.Ordinal)), string.Join(" | ", orderAcct.Notes));
+
+	// ── plugins: an async handler that throws after its await is logged, not the end of the app ──
+	Type hostType = typeof(NocatFarm.Plugins.IPluginHost).Assembly.GetType("NocatFarm.Plugins.Host")!;
+	var plugMgr = new NocatFarm.Core.BotManager(NocatFarm.Config.Live.Global);
+	var host = (NocatFarm.Plugins.IPluginHost) Activator.CreateInstance(hostType, [plugMgr, "harness-plugin"])!;
+	var plugBot = new NocatFarm.Core.Bot("harness-plug", new NocatFarm.Config.BotConfig());
+	bool heard = false;
+	host.AccountOnline += static _ => throw new InvalidOperationException("thrown straight away");
+	host.AccountOnline += async _ => { await Task.Delay(20); throw new InvalidOperationException("thrown after an await"); };
+	host.AccountOnline += _ => heard = true;
+	FieldInfo caught = hostType.GetField("Caught", BindingFlags.NonPublic | BindingFlags.Static)!;
+	int caughtBefore = (int) caught.GetValue(null)!;
+	hostType.GetMethod("RaiseOnline", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(host, [plugBot]);
+	SpinWait.SpinUntil(() => (int) caught.GetValue(null)! >= caughtBefore + 2, 3000);
+	Check("plugins: a handler that throws - before or after an await - is caught and logged, and the others still hear it",
+		heard && ((int) caught.GetValue(null)! == caughtBefore + 2), $"{(int) caught.GetValue(null)! - caughtBefore} caught");
+	await plugBot.DisposeAsync();
+}
+
+// ── human mode: nothing it sends reaches Steam while you're on the account, and the day's log line says what to expect ──
+{
+	const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance;
+	const BindingFlags Stat = BindingFlags.NonPublic | BindingFlags.Static;
+	Type ht = typeof(NocatFarm.Modules.HumanMode);
+	Type bt = typeof(NocatFarm.Core.Bot);
+	FieldInfo HF(string f) => ht.GetField(f, Inst) ?? throw new MissingFieldException(f);
+	void Set(object h, string f, object? v) => HF(f).SetValue(h, v);
+	void BotSet(NocatFarm.Core.Bot b, string p, object? v) => bt.GetProperty(p)!.SetValue(b, v);
+	object? BotField(NocatFarm.Core.Bot b, string f) => bt.GetField(f, Inst)!.GetValue(b);
+
+	// On a break it had gone Away, and then you sat down at your own PC and started a game on the account.
+	string oname = "harness-owner-" + Guid.NewGuid().ToString("N")[..6];
+	var obot = new NocatFarm.Core.Bot(oname, new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730:70, 440:30" });
+	var oh = new NocatFarm.Modules.HumanMode(obot);
+	obot.AddModule(oh);
+	BotSet(obot, "State", NocatFarm.Core.BotState.Online);
+	BotSet(obot, "OnlineSince", DateTime.UtcNow.AddHours(-2));
+	Set(oh, "_dayStamp", DateTime.Now.DayOfYear);   // up from midnight until a day and more away
+	Set(oh, "_wakeMinuteOfDay", 0);
+	Set(oh, "_bedHour", 23);
+	Set(oh, "_bedMinute", 59);
+	Set(oh, "_bedIsTomorrow", true);
+	Set(oh, "_targetMinutes", 300);
+	Set(oh, "_lastStepAt", DateTime.UtcNow);
+	Set(oh, "_phase", NocatFarm.Modules.HumanMode.Phase.ShortBreak);
+	Set(oh, "_phaseEnds", DateTime.UtcNow.AddMinutes(10));
+	Set(oh, "_breakPersonaSet", true);
+	obot.SetPersonaOverride(3);   // Away, sent while the account was its own
+	int sentBefore = (int) BotField(obot, "_lastLoggedPersona")!;
+	BotSet(obot, "PlayingBlocked", true);
+	NocatFarm.Log.Suppressed = true;
+
+	for (int i = 0; i < 3; i++) {
+		oh.GetType().GetMethod("StepAsync", Inst)!.Invoke(oh, null);
+		Set(oh, "_lastStepAt", DateTime.UtcNow);
+	}
+
+	oh.WakeNow();   // and 'wake' from the console while you're on it
+	oh.GetType().GetMethod("StepAsync", Inst)!.Invoke(oh, null);
+	Set(oh, "_lastStepAt", DateTime.UtcNow);
+	NocatFarm.Log.Suppressed = false;
+	bool stoodDown = oh.Current == NocatFarm.Modules.HumanMode.Phase.StoodDown;
+	bool untouched = (BotField(obot, "_personaOverride") is int held) && (held == 3) && ((int) BotField(obot, "_lastLoggedPersona")! == sentBefore);
+	Check("you on the account: standing down sends no status change - the break's Away is left as it was, 'wake' included", stoodDown && untouched,
+		$"{oh.Current}, override {BotField(obot, "_personaOverride") ?? "none"}");
+
+	// You stop, and the wait after it runs out: the look it should have now goes on - online, in the day.
+	BotSet(obot, "PlayingBlocked", false);
+	bt.GetField("_resumeAt", Inst)!.SetValue(obot, DateTime.UtcNow.AddSeconds(-1));
+	NocatFarm.Log.Suppressed = true;
+	oh.GetType().GetMethod("StepAsync", Inst)!.Invoke(oh, null);
+	NocatFarm.Log.Suppressed = false;
+	Check("you off the account again: the held status goes on then - back online in the day, nothing left held",
+		(BotField(obot, "_personaOverride") == null) && ((int) BotField(obot, "_lastLoggedPersona")! == obot.Cfg.OnlineStatus) && !(bool) HF("_personaHeld").GetValue(oh)!,
+		$"override {BotField(obot, "_personaOverride") ?? "none"}");
+	BotSet(obot, "State", NocatFarm.Core.BotState.Stopped);
+	NocatFarm.Modules.HumanDay.Forget(oname);
+	await obot.DisposeAsync();
+
+	// The day's mix in the log: what the side games can expect, the same as 'human week' shows - not the allowance.
+	Check("side games' expected time: their share of the day, the same sum 'human week' uses", (int) ht.GetMethod("SideExpected", Stat)!.Invoke(null, [300, 70])! == 90);
+	string mixRoot = Path.Combine(Path.GetTempPath(), "nf-mixlog-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(mixRoot);
+	string mname = "harness-mix-" + Guid.NewGuid().ToString("N")[..6];
+	var mbot = new NocatFarm.Core.Bot(mname, new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730:70, 440:30", PureMainDayChancePct = 0, DayOffChancePct = 0 });
+	var mh = new NocatFarm.Modules.HumanMode(mbot);
+	mbot.AddModule(mh);
+	NocatFarm.Log.Suppressed = true;
+	NocatFarm.Log.Configure(fileLogging: true, debug: true, mixRoot, retentionDays: 14);
+	mh.RerollToday();
+	NocatFarm.Log.Configure(fileLogging: false, debug: false, mixRoot);
+	NocatFarm.Log.Suppressed = false;
+	string mixFile = Path.Combine(mixRoot, "logs", $"nocatFarm-{DateTime.Now:yyyy-MM-dd}.log");
+	string mixLine = File.Exists(mixFile) ? File.ReadAllLines(mixFile).LastOrDefault(l => l.Contains("today's mix")) ?? "" : "";
+	int target = (int) HF("_targetMinutes").GetValue(mh)!, mixShare = (int) HF("_mainSharePct").GetValue(mh)!, allowance = (int) HF("_otherBudget").GetValue(mh)!;
+	string expected = NocatFarm.Fmt.Hm((int) ht.GetMethod("SideExpected", Stat)!.Invoke(null, [target, mixShare])!);
+	Check("the day's log line: 'around X on the others' is what they can expect, not the allowance",
+		mixLine.EndsWith($"around {expected} on the others", StringComparison.Ordinal) && !mixLine.Contains("up to", StringComparison.Ordinal) && (allowance > target * (100 - mixShare) / 100), mixLine);
+	NocatFarm.Modules.HumanDay.Forget(mname);
+	await mbot.DisposeAsync();
+
+	try {
+		Directory.Delete(mixRoot, true);
+	} catch (IOException) {
+		// a temp folder - the OS clears it
+	}
 }
 
 // SETTINGSCOUNT

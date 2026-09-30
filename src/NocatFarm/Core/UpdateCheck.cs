@@ -135,7 +135,11 @@ public static class UpdateCheck {
 
 		_remindedAt = DateTime.UtcNow;
 		// The log only: an hourly pop-up (or Telegram message) would be spam - the first one already said it there.
-		Log.Attention(SelfUpdate.Supported
+		// With "Update by itself" on, it says it's going to - "'update accept' installs it" read as if nothing would happen
+		// without you.
+		Log.Attention(SelfUpdate.Supported && (Live.Global.AutoUpdate == 1)
+				? new Said("reminder: nocat.farm {0} is out - it installs by itself at a quiet time ('update accept' does it now)", Available)
+			: SelfUpdate.Supported
 				? new Said("reminder: nocat.farm {0} is out - 'update accept' installs it", Available)
 				: new Said("reminder: nocat.farm {0} is out - 'update' shows how", Available),
 			UpdateBrief(Available), UpdateTitle(Available), Topic.Updates, loud: false);
@@ -209,7 +213,9 @@ public static class UpdateCheck {
 
 			// Said once when it's first seen; after that the hourly reminder carries it.
 			if ((Available != tag) && !quiet && !IsSkipped(tag)) {
-				Log.Attention(SelfUpdate.Supported
+				Log.Attention(SelfUpdate.Supported && (Live.Global.AutoUpdate == 1)
+						? new Said("nocat.farm {0} is out - it installs by itself at a quiet time ('update accept' does it now)", tag)
+					: SelfUpdate.Supported
 						? new Said("nocat.farm {0} is out - 'update accept' installs it", tag)
 						: new Said("nocat.farm {0} is out - 'update' shows how to install it", tag),
 					UpdateBrief(tag), UpdateTitle(tag), Topic.Updates);

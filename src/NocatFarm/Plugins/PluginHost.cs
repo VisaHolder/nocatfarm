@@ -31,7 +31,18 @@ public static class PluginHost {
 
 	/// <summary>What is loaded, for the `plugins` command.</summary>
 	public static IReadOnlyList<(string Name, string Version, string File)> Running =>
-		[.. Plugins.Select(static p => (p.Plugin.Name, p.Plugin.Version, Path.GetFileName(p.File)))];
+		[.. Snapshot().Select(static p => (p.Plugin.Name, p.Plugin.Version, Path.GetFileName(p.File)))];
+
+	/// <summary>
+	/// The loaded plugins as they are this moment. Every read goes through this (and every write through the lock): the
+	/// dashboard is up before the plugins load, and a look at the Plugins page while they were being added to the list
+	/// could throw "collection was modified" - or read half of it.
+	/// </summary>
+	private static Loaded[] Snapshot() {
+		lock (HostsGate) {
+			return [.. Plugins];
+		}
+	}
 
 	public static string Folder => Path.Combine(ConfigStore.Root, "plugins");
 
@@ -40,7 +51,10 @@ public static class PluginHost {
 			return;
 		}
 
-		Seen.Clear();
+		lock (HostsGate) {
+			Seen.Clear();
+		}
+
 		Directory.CreateDirectory(Folder);
 
 		string[] files = Directory.GetFiles(Folder, "*.dll", SearchOption.TopDirectoryOnly);
@@ -57,8 +71,8 @@ public static class PluginHost {
 			await LoadOneAsync(file, ct).ConfigureAwait(false);
 		}
 
-		if (Plugins.Count > 0) {
-			NocatFarm.Log.Info(new Said("{0} plugin(s) loaded - type 'plugins' to see them", Plugins.Count));
+		if (Snapshot().Length is > 0 and int loaded) {
+			NocatFarm.Log.Info(new Said("{0} plugin(s) loaded - type 'plugins' to see them", loaded));
 		}
 	}
 
@@ -82,7 +96,9 @@ public static class PluginHost {
 				// whole feature off to be rid of it.
 				bool off = Live.Global.DisabledPlugins.Contains(plugin.Name, StringComparer.OrdinalIgnoreCase);
 
-				Seen.Add((plugin.Name, plugin.Version, Path.GetFileName(file), !off));
+				lock (HostsGate) {
+					Seen.Add((plugin.Name, plugin.Version, Path.GetFileName(file), !off));
+				}
 
 				if (off) {
 					NocatFarm.Log.Info(new Said("plugin {0} is switched off - skipping it", plugin.Name));
@@ -100,9 +116,9 @@ public static class PluginHost {
 					await plugin.OnLoadAsync(host, limit.Token).WaitAsync(TimeSpan.FromSeconds(15), ct).ConfigureAwait(false);
 					lock (HostsGate) {
 						Hosts.Add(host);
+						Plugins.Add(new Loaded(plugin, file, host));
 					}
 
-					Plugins.Add(new Loaded(plugin, file, host));
 					NocatFarm.Log.Good(new Said("plugin loaded: {0} {1}", plugin.Name, plugin.Version));
 				} catch (Exception e) {
 					NocatFarm.Log.Warn(new Said("plugin {0} failed to load: {1}: {2}", plugin.Name, e.GetType().Name, NocatFarm.Log.Scrub(e.Message)));
@@ -141,7 +157,9 @@ public static class PluginHost {
 			}
 		}
 
-		Plugins.Clear();
+		lock (HostsGate) {
+			Plugins.Clear();
+		}
 	}
 
 	// ── the events, raised by the app ─────────────────────────────────────────
@@ -188,11 +206,11 @@ public static class PluginHost {
 
 	/// <summary>A plugin's own settings, with current values, for the dashboard.</summary>
 	public static IReadOnlyList<(PluginSetting Setting, string Value)> SettingsOf(string plugin) =>
-		Plugins.FirstOrDefault(p => string.Equals(p.Plugin.Name, plugin, StringComparison.OrdinalIgnoreCase))?.Host.SettingsView() ?? [];
+		Snapshot().FirstOrDefault(p => string.Equals(p.Plugin.Name, plugin, StringComparison.OrdinalIgnoreCase))?.Host.SettingsView() ?? [];
 
 	/// <summary>Change one. Returns false when there is no such plugin or setting.</summary>
 	public static bool SetSetting(string plugin, string name, string value) {
-		Loaded? loaded = Plugins.FirstOrDefault(p => string.Equals(p.Plugin.Name, plugin, StringComparison.OrdinalIgnoreCase));
+		Loaded? loaded = Snapshot().FirstOrDefault(p => string.Equals(p.Plugin.Name, plugin, StringComparison.OrdinalIgnoreCase));
 
 		if ((loaded == null) || !loaded.Host.Declared.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase))) {
 			return false;
@@ -205,7 +223,13 @@ public static class PluginHost {
 	}
 
 	/// <summary>Every plugin found on disk, whether it is switched on or not - for the dashboard's list.</summary>
-	public static IReadOnlyList<(string Name, string Version, string File, bool Enabled)> Discovered => Seen;
+	public static IReadOnlyList<(string Name, string Version, string File, bool Enabled)> Discovered {
+		get {
+			lock (HostsGate) {
+				return [.. Seen];
+			}
+		}
+	}
 
 	private static readonly List<(string Name, string Version, string File, bool Enabled)> Seen = [];
 
@@ -215,7 +239,13 @@ public static class PluginHost {
 		protected override Assembly? Load(AssemblyName name) {
 			// Anything the app already has - nocatFarm itself, SteamKit - must resolve to the LOADED copy, or a
 			// plugin ends up holding types that are not the same types the app is using, and every cast fails
-			// for reasons that look like magic.
+			// for reasons that look like magic. Asked first, not after the plugin's folder: with no .deps.json the resolver
+			// takes every DLL beside the plugin as its own, and a copy of nocatFarm.dll left there by the build made the
+			// plugin's INocatPlugin a different type from the app's - so it was never found, and nothing said why.
+			if (AssemblyLoadContext.Default.Assemblies.Any(a => string.Equals(a.GetName().Name, name.Name, StringComparison.OrdinalIgnoreCase))) {
+				return null;
+			}
+
 			string? path = _resolver.ResolveAssemblyToPath(name);
 
 			return path == null ? null : LoadFromAssemblyPath(path);

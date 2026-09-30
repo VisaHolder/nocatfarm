@@ -66,6 +66,18 @@ public static class Loc {
 					}
 				}
 
+				// The settings' own names too, from the pack's "settings" part - keyed there by setting, so they are
+				// matched up through the registry. "Most per 24 hours was -50, reset to 10" came back from a save half
+				// German: the sentence translated and the setting it was about didn't.
+				if (doc.RootElement.TryGetProperty("settings", out JsonElement settings) && (settings.ValueKind == JsonValueKind.Object)) {
+					foreach (JsonProperty entry in settings.EnumerateObject()) {
+						if ((Settings.Find(entry.Name) is { } def) && (entry.Value.ValueKind == JsonValueKind.Object)
+							&& entry.Value.TryGetProperty("label", out JsonElement label) && (label.GetString() is { Length: > 0 } text)) {
+							map.TryAdd(def.Label, text);
+						}
+					}
+				}
+
 				_map = map;
 			}
 		} catch (Exception e) {

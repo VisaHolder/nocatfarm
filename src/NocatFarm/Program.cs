@@ -118,7 +118,7 @@ if (quitRunning) {
 }
 
 if (setupChoices != null) {
-	return SetupChoices.Apply(setupChoices);
+	return SetupChoices.Run(setupChoices);
 }
 
 // A crash on any thread lands in the log, not nowhere. Only the ones that end the process get here.

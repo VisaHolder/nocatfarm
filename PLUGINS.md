@@ -255,7 +255,9 @@ A few more things worth knowing:
 - You can't take a command that already exists. A plugin that tries to add `stop`, or any built-in name or alias,
   gets a warning in the log and its version is ignored.
 - A broken plugin only breaks itself. One that fails to load is left out with the reason in the log, and an event
-  handler that throws is logged and skipped while the plugin stays loaded.
+  handler that throws is logged under your plugin's name and skipped while the plugin stays loaded. That holds for an
+  `async` handler too (`host.CardDropped += async (a, app, left) => { await ...; }`): what it throws after an
+  `await` is caught and logged the same way instead of taking the app down.
 - Each plugin has its own on/off switch on the dashboard's Plugins page.
 - If the app can't read your DLL, the log says it was probably built against a different version. Rebuild against
   the current `nocatFarm.dll`.

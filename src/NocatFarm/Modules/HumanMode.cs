@@ -371,7 +371,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			Bot.StopPlaying();
 		}
 
-		Bot.ClearPersonaOverride();
+		ShowAs(null);
 
 		// It's a manual "start now", so skip the random settle - but NOT the owner-safety check. Clearing the
 		// timed part of the warm-up lets it start as soon as the clear-reads confirm the owner isn't mid-game,
@@ -483,11 +483,16 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				if ((_phase != Phase.Off) || Bot.HumanOwned) {
 					_phase = Phase.Off;
 					Bot.HumanOwned = false;
-					Bot.ClearPersonaOverride();
+					ShowAs(null);
 
 					// It is an ordinary idling account from here, and those switch straight away. Left to the idler's
 					// own re-assert it sat on nothing (or the last human game) for up to seven minutes.
 					BotManager.ModuleOf<Idler>(Bot)?.Assert();
+				}
+
+				// Switched off while you were on the account: the break's or the night's look it left comes off once you're done.
+				if (_personaHeld && !Bot.PlayingBlocked) {
+					ShowAs(null);
 				}
 
 				if (!await Sleep(TimeSpan.FromSeconds(15), ct).ConfigureAwait(false)) {
@@ -574,14 +579,18 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			}
 
 			// Paused in the night, it keeps the night's invisible look (and gets up with the morning). Clearing it put a
-			// sleeping account up online at 3am, doing nothing, for as long as the pause lasted.
-			if (Bot.Paused && !Bot.PlayingBlocked && !InWakingHours(DateTime.Now)) {
-				Bot.SetPersonaOverride(Bot.PersonaDark);
-			} else {
-				Bot.ClearPersonaOverride();
-			}
+			// sleeping account up online at 3am, doing nothing, for as long as the pause lasted. While you're the one on
+			// the account this sends nothing at all (ShowAs holds it) - it used to drop the break's Away or the night's
+			// invisible here, a status change sent to Steam underneath you while you were signed in on your own client.
+			ShowAs(Bot.Paused && !InWakingHours(DateTime.Now) ? Bot.PersonaDark : null);
 
 			return;
+		}
+
+		// Done standing down, and past the wait after it: the look it should have now goes on - whatever was held while you
+		// were on the account.
+		if ((_phase == Phase.StoodDown) || _personaHeld) {
+			ShowAs(InWakingHours(DateTime.Now) ? null : Bot.PersonaDark);
 		}
 
 		// A grind outranks the schedule. Banked first, so the hours it puts in still count toward the day
@@ -633,9 +642,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			// friends don't see it in a game at 3am while it's meant to be asleep. Back to normal the moment it's
 			// morning.
 			if (InWakingHours(DateTime.Now)) {
-				Bot.ClearPersonaOverride();
+				ShowAs(null);
 			} else {
-				Bot.SetPersonaOverride(Bot.PersonaDark);
+				ShowAs(Bot.PersonaDark);
 			}
 
 			// Put the grind game on directly (idempotent - only re-sends when it isn't already the one running).
@@ -696,7 +705,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			_switchingTo = 0;
 			_phase = Phase.Off;
 			ClearBreakState();
-			Bot.ClearPersonaOverride();   // daytime farming/stand-off looks online, never carrying a night-dark or break-away persona
+			ShowAs(null);   // daytime farming/stand-off looks online, never carrying a night-dark or break-away persona
 
 			return;
 		}
@@ -711,7 +720,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_switchingTo = 0;
 				ClearBreakState();
 				Bot.StopPlaying();
-				Bot.ClearPersonaOverride();
+				ShowAs(null);
 				Log.Info(new Said("day off - online, idle until bed ~{0}", (PlanBed()).ToString("HH:mm")), Bot.Name);
 			}
 
@@ -727,7 +736,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_switchingTo = 0;
 				ClearBreakState();
 				Bot.StopPlaying();
-				Bot.ClearPersonaOverride();
+				ShowAs(null);
 				Log.Info(new Said("done for the day - {0} played, back around {1}", Fmt.Hm(_playedMinutesToday), (NextWakeTime()).ToString("HH:mm")), Bot.Name);
 			}
 
@@ -740,7 +749,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_breakPersona = null;
 				_breakPersonaSet = true;
 				_offlineBreak = persona == Bot.PersonaDark;
-				Bot.SetPersonaOverride(persona);
+				ShowAs(persona);
 
 				// Saved there and then, or a restart during the break gave the day that sign-out back.
 				if (_offlineBreak) {
@@ -759,7 +768,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_breakPersonaSet = false;
 				_offlineBreak = false;
 				_breakPersona = null;
-				Bot.ClearPersonaOverride();
+				ShowAs(null);
 				_phaseEnds = DateTime.UtcNow.AddSeconds(Rng(20, 180));
 
 				return;
@@ -865,7 +874,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// instead, and the farmer takes the session over the moment it starts (the IsFarming check above).
 		if (!FarmInDay && (Bot.CardsRemaining > 0) && Bot.Cfg.FarmCards && (BotManager.ModuleOf<CardFarmer>(Bot)?.HoldingBack != true)) {
 			_phase = Phase.Off;
-			Bot.ClearPersonaOverride();
+			ShowAs(null);
 
 			return;
 		}
@@ -977,7 +986,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			// Only in the day. A settle at night (a grind asked for at 3am) keeps the night's invisible look rather
 			// than popping the account up online on everybody's friends list while it waits.
 			if (InWakingHours(DateTime.Now)) {
-				Bot.ClearPersonaOverride();
+				ShowAs(null);
 			}
 		}
 
@@ -1023,6 +1032,31 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_breakPersona = null;
 	}
 
+	/// <summary>A look human mode wanted while you were on the account, and didn't send.</summary>
+	private bool _personaHeld;
+
+	/// <summary>
+	/// Put a look on the account - invisible, Away, Snooze - or take it off (null). Every one human mode sends goes through
+	/// here, so none of them reaches Steam while you're on the account: a persona sent from this session while you're
+	/// signed in on your own client can sign one of the two out of Friends and Chat. It's held instead, and the right
+	/// one for the time goes on once the stand-down is over (see StepAsync).
+	/// </summary>
+	private void ShowAs(int? persona) {
+		if (Bot.PlayingBlocked) {
+			_personaHeld = true;
+
+			return;
+		}
+
+		_personaHeld = false;
+
+		if (persona is int state) {
+			Bot.SetPersonaOverride(state);
+		} else {
+			Bot.ClearPersonaOverride();
+		}
+	}
+
 	// ═══ the day ════════════════════════════════════════════════════════════
 	/// <summary>
 	/// Throw today's plan away and roll a new one from the settings as they stand now.
@@ -1052,7 +1086,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		HumanDay.Forget(Bot.Name);
 
 		if (_breakPersonaSet) {
-			Bot.ClearPersonaOverride();
+			ShowAs(null);
 		}
 
 		ClearBreakState();
@@ -1185,11 +1219,21 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		Said mix = _otherBudget == 0
 			? new Said("{0} only today", GameName(MainGame()))
-			: new Said("{0} about {1}%, up to {2} on the others", GameName(MainGame()), _mainSharePct, Fmt.Hm(_otherBudget));
+			: new Said("{0} about {1}%, around {2} on the others", GameName(MainGame()), _mainSharePct, Fmt.Hm(SideExpected(_targetMinutes, _mainSharePct)));
 
 		Log.Info(new Said("today: ~{0} of play, up {1}, bed {2}", Fmt.Hm(_targetMinutes), (PlanWake()).ToString("HH:mm"), (PlanBed()).ToString("HH:mm")), Bot.Name);
 		Log.Debug(new Said("today's mix: {0}", mix), Bot.Name);
 	}
+
+	/// <summary>A mixed day's side-game allowance, as a multiple of the side games' share of it (see RollDay).</summary>
+	internal const int SideAllowanceTimes = 3;
+
+	/// <summary>
+	/// What the side games can expect on a mixed day: their share of it. The allowance is a cap well above that, so it is
+	/// not the number to show anybody - the day's log line said "up to 2h54m on the others" for a day that, like 'human week'
+	/// and 'human' said, would put about an hour and a half on them.
+	/// </summary>
+	internal static int SideExpected(int target, int mainSharePct) => Math.Max(20, target * Math.Clamp(100 - mainSharePct, 1, 95) / 100);
 
 	/// <summary>One day's plan as rolled: getting up and going to bed (on the plan's own date), how long it plays, and the caps.</summary>
 	internal readonly record struct DayRoll(int WakeMinute, int BedHour, int BedMinute, bool BedIsTomorrow, int Target, int MainSharePct, int OtherBudget,
@@ -1294,12 +1338,14 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			// independent number was a second limit on the same minutes: whichever happened to be tighter won, and the
 			// weights quietly became fiction whenever it was this one.
 			//
-			// Twice the side games' share, not an eighth over it. A day is only a handful of sittings, so its side-game
-			// time swings a lot either way; a cap that close cut off every day that swung up while nothing made up for
-			// the days that swung down, and a main game set to 70% played 76-79% of the time. At twice, it still stops a
-			// runaway day of side games and leaves the average where the number says.
+			// Three times the side games' share, not an eighth over it. A day is only a handful of sittings, so its
+			// side-game time swings a lot either way; a cap that close cut off every day that swung up while nothing made
+			// up for the days that swung down, and a main game set to 70% played 76-79% of the time. Twice still did it on
+			// a smaller scale - a point over on the defaults, more on a main game set high, where one side-game sitting is
+			// already most of the day's side time. At three times it still stops a runaway day of side games, and the
+			// average stays where the number says.
 			int side = Math.Clamp(100 - mainShare, 1, 95);
-			otherBudget = Math.Max(20, target * side / 100 * 2);
+			otherBudget = Math.Max(20, target * side / 100 * SideAllowanceTimes);
 		}
 
 		int signOuts = Math.Clamp(cfg.MaxSignOutsPerDay, 0, 40);
@@ -1420,7 +1466,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// Cards farm in the day, so bedtime ends the sitting. The farmer lets go within seconds of it closing; the
 		// overnight games go on once it has, rather than both fighting over what's playing.
 		if (FarmInDay && Bot.IsFarming) {
-			Bot.SetPersonaOverride(Bot.PersonaDark);
+			ShowAs(Bot.PersonaDark);
 
 			return;
 		}
@@ -1431,7 +1477,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// Invisible for the night. This is a no-op once it's already set - the override is remembered on the bot
 		// and re-applied by the logon handler, which is what carries it across a reconnect. Steam resetting the
 		// persona when a game starts is handled inside SetPlaying, which re-applies it after the games message.
-		Bot.SetPersonaOverride(Bot.PersonaDark);
+		ShowAs(Bot.PersonaDark);
 
 		// Same reconnect problem as a live session, and worse here: a drop at 1am used to mean the account banked
 		// nothing for the rest of the night while still reporting "asleep, banking hours quietly". Re-asserting
@@ -1529,7 +1575,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		if (main == 0) {
 			if (_phase != Phase.DoneForToday) {
 				_phase = Phase.DoneForToday;
-				Bot.ClearPersonaOverride();   // never leave a break's Away/Snooze stuck on for the rest of the day
+				ShowAs(null);   // never leave a break's Away/Snooze stuck on for the rest of the day
 				Log.Warn("human mode has no games - fill in \"Games and how often\"", Bot.Name);
 			}
 
@@ -1555,17 +1601,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			game = farm;
 			farmPick = true;
 		} else {
-			// A real player does not change game every time they sit down. Often they carry straight on - with one of the
-			// games it plays, though. Carrying on from a farming sitting gave an ordinary sitting to a card game that isn't
-			// one of them (and counted it as a side game), and a hunt game already moved on from got one more.
-			game = (_lastGame != 0) && InRotation(_lastGame) && Chance(0.40) ? _lastGame : PickGame();
+			// The hour targets, the side allowance and carrying on with the same game are all part of the pick now, so they
+			// can be counted in the shares. Carrying on used to be decided out here, ahead of the pick and outside its sums.
+			game = PickGame();
 			farmPick = false;
-
-			// Once today's side-game allowance is spent it is the main game for the rest of the day - an hour target
-			// excepted, since reaching it is the point.
-			if ((game != main) && !SideGameAllowed(_otherPlayed, SideBudgetNow(_otherBudget, _targetMinutes, _farmPlayed)) && !IsTargetGame(game)) {
-				game = main;
-			}
 		}
 
 		// Closing one game and launching another is not instant - when there is a game to close. After a break, a
@@ -1602,7 +1641,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_bankedTo = _sessionStarted;
 		_bankedForLogon = Bot.OnlineSince ?? DateTime.UtcNow;
 
-		Bot.ClearPersonaOverride();
+		ShowAs(null);
 		Bot.SetPlaying([game]);   // ONE game. Six at once is the tell.
 		_playingAssertedFor = Bot.OnlineSince ?? DateTime.UtcNow;
 
@@ -1610,9 +1649,6 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			? new Said("farming cards on {0} for ~{1} ({2}/{3} today)", GameName(game), Fmt.Hm(minutes), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes))
 			: new Said("playing {0} for ~{1} ({2}/{3} today)", GameName(game), Fmt.Hm(minutes), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)), Bot.Name);
 	}
-
-	/// <summary>One of the games it plays: in the rotation (the hunt's game while it may be played today), or an hour target.</summary>
-	private bool InRotation(uint game) => Weights().Exists(w => w.Game == game) || IsTargetGame(game);
 
 	/// <summary>
 	/// Whether starting <paramref name="next"/> means closing another game first: only when something else is really
@@ -1649,17 +1685,17 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		int min = Math.Max(5, Bot.Cfg.SessionMinMinutes);
 		int max = Math.Max(min + 5, Bot.Cfg.SessionMaxMinutes);
-		int span = max - min;
-		int length;
+		(int Lo, int Hi, int Pct)[] bands = LengthBands(game == main, min, max);
+		int roll = Rng(0, 99);
+		int band = 0;
 
-		if (game == main) {
-			int roll = Rng(0, 99);
+		for (int below = bands[0].Pct; (roll >= below) && (band < bands.Length - 1); below += bands[band].Pct) {
+			band++;
+		}
 
-			length = roll < 30 ? Rng(min, min + (span * 21 / 100))
-				: roll < 80 ? Rng(min + (span * 28 / 100), min + (span * 64 / 100))
-				: Rng(min + (span * 71 / 100), max);
-		} else {
-			length = Rng(min, min + (span * 29 / 100));
+		int length = Rng(bands[band].Lo, bands[band].Hi);
+
+		if (game != main) {
 			int left = SideBudgetNow(_otherBudget, _targetMinutes, _farmPlayed) - _otherPlayed;
 
 			if ((left > 0) && (length > left)) {
@@ -2213,18 +2249,16 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		return list;
 	}
 
+	/// <summary>How often a side-game sitting straight after another carries on with that same side game.</summary>
+	internal const double CarryOnChance = 0.40;
+
 	/// <summary>
-	/// A weighted pick where the MAIN game's share is pinned to today's roll instead of being left to its raw
-	/// weight. Fixed weights meant every side game you added quietly diluted the main one; sizing the main weight
-	/// against the side total holds it at its share however many side games are configured.
+	/// The game for an ordinary sitting: an hour target if one wants it, otherwise a weighted pick where the MAIN game's
+	/// share is pinned to today's roll instead of being left to its raw weight. Fixed weights meant every side game you
+	/// added quietly diluted the main one; sizing the main weight against the side total holds it at its share however
+	/// many side games are configured.
 	/// </summary>
 	private uint PickGame() {
-		List<(uint Game, int Weight)> weights = Weights();
-
-		if (weights.Count == 0) {
-			return 0;
-		}
-
 		// No lean toward games that still have card drops any more. That was card farming's humanised form from before
 		// "Farm cards" had its own when (FarmCardsWhen): two sittings in three went to a game with drops whenever one of
 		// these had any, so on top of the farming sittings the usual games' shares were fiction while cards lasted -
@@ -2237,53 +2271,187 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return target;
 		}
 
-		if (weights.Count == 1) {
-			return weights[0].Game;
+		List<(uint Game, int Weight)> weights = Weights();
+
+		// A real player does not change game every time they sit down; often they carry straight on. That used to be a
+		// flat 40% ahead of the pick, on whatever was played last, and it tilted the day toward the main game: the day's
+		// first sitting is a short one, so the main game is picked for more of those, and 40% of them carried that into a
+		// full sitting the pick would have given a side game more often - a main game set to 70% came out at 71.5%. It
+		// also strung main-game sittings together four and five at a time, so one mixed day in five went by without a
+		// single side game.
+		//
+		// Now the pick says main game or side games at the odds that give each its share of the time, whatever was
+		// played last - the main game follows itself exactly as often as those odds say, never more. Carrying on is
+		// WHICH side game: straight after one, it's the same one again 40% of the time rather than a fresh pick between
+		// them. That can't move the main game's share (the odds below count the carried-on game's own sittings), and it
+		// leaves the side games' split as their weights say, since the game carried on from was picked by weight too.
+		uint carryOn = (_lastGame != 0) && weights.Skip(1).Any(w => w.Game == _lastGame) ? _lastGame : 0;
+		List<(uint Game, double Odds)> odds = PickOdds(weights, carryOn);
+
+		if (odds.Count == 0) {
+			return 0;
 		}
 
-		int sideTotal = 0;
-		List<(uint Game, int Weight)> today = [(weights[0].Game, 0)];
+		uint game = Draw(odds);
 
-		for (int i = 1; i < weights.Count; i++) {
-			int w = Math.Max(1, weights[i].Weight);
-			today.Add((weights[i].Game, w));
-			sideTotal += w;
+		return (game != odds[0].Game) && (carryOn != 0) && Chance(CarryOnChance) ? carryOn : game;
+	}
+
+	/// <summary>
+	/// Each game's odds for this sitting, adding up to 1: the main game weighted so it gets its share of the TIME, the
+	/// side games splitting the rest by weight - or the main game alone once today's side allowance is spent.
+	/// </summary>
+	/// <param name="carryOn">The side game a side-game sitting may carry on with (0: none), whose length counts for more.</param>
+	private List<(uint Game, double Odds)> PickOdds(List<(uint Game, int Weight)> weights, uint carryOn) {
+		if (weights.Count == 0) {
+			return [];
 		}
 
-		int min = Math.Max(5, Bot.Cfg.SessionMinMinutes);
-		int max = Math.Max(min + 5, Bot.Cfg.SessionMaxMinutes);
-
-		// The day's first sitting is a short one whatever it's on, and its last is cut to what's left of the hours - and
-		// then a main-game sitting is no longer than a side game's, so there's nothing to make up for. Weighted as if it
-		// were, the main game lost those sittings to the side games and came in a few points under its share.
-		int cap = _firstSessionOfDay ? (min + FirstSittingCap(min, max)) / 2 : int.MaxValue;
-		int left = _targetMinutes - _playedMinutesToday;
-
-		if (left > 0) {
-			cap = Math.Min(cap, left);
+		// Once today's side-game allowance is spent it is the main game for the rest of the day.
+		if ((weights.Count == 1) || !SideGameAllowed(_otherPlayed, SideBudgetNow(_otherBudget, _targetMinutes, _farmPlayed))) {
+			return [(weights[0].Game, 1.0)];
 		}
 
-		today[0] = (weights[0].Game, sideTotal > 0 ? MainWeight(sideTotal, _mainSharePct, min, max, cap) : 100);
+		int sideTotal = weights.Skip(1).Sum(static w => Math.Max(1, w.Weight));
+		double mainMean = 1, sideMean = 1;
 
-		return WeightedPick(today);
+		// Up for one more sitting after a 'wake': it runs to the stay-up time whatever it's on, so the sittings are alike.
+		if (_stayUpUntil <= DateTime.Now) {
+			// How long a sitting on each would really run THIS time - the day's first is a short one whatever it's on, the
+			// last is cut to what's left of the hours, a side game's to what's left of its allowance. Weighed on the plain
+			// ranges alone, with the first and last sittings patched on as a rough cap, the main game came out a point or
+			// so off its share.
+			int min = Math.Max(5, Bot.Cfg.SessionMinMinutes);
+			int max = Math.Max(min + 5, Bot.Cfg.SessionMaxMinutes);
+			int sideLeft = SideBudgetNow(_otherBudget, _targetMinutes, _farmPlayed) - _otherPlayed;
+			int first = _firstSessionOfDay ? FirstSittingCap(min, max) : 0;
+			int remaining = _targetMinutes - _playedMinutesToday;
+			int untilBed = MinutesUntilBed();
+			AchievementBoost? boost = BotManager.ModuleOf<AchievementBoost>(Bot);
+
+			// A side game that is also an hour target runs the main game's long sittings (see StartSession).
+			double Mean(uint game, bool main) => MeanLength(main || IsTargetGame(game), min, max, sideLeft,
+				(boost != null) && (game == boost.HuntTargetNow) && (boost.HuntMinutesLeftToday is int huntLeft) ? huntLeft : -1, first, remaining, untilBed);
+
+			mainMean = Mean(weights[0].Game, true);
+			sideMean = weights.Skip(1).Sum(w => Math.Max(1, w.Weight) * Mean(w.Game, false)) / sideTotal;
+
+			if (carryOn != 0) {
+				sideMean = (CarryOnChance * Mean(carryOn, false)) + ((1 - CarryOnChance) * sideMean);
+			}
+		}
+
+		double mainWeight = MainWeight(sideTotal, _mainSharePct, mainMean, sideMean);
+		double all = mainWeight + sideTotal;
+
+		return [(weights[0].Game, mainWeight / all), .. weights.Skip(1).Select(w => (w.Game, Math.Max(1, w.Weight) / all))];
+	}
+
+	/// <summary>Rolls one game from odds that add up to 1 (or near enough - the last one takes any rounding).</summary>
+	private uint Draw(List<(uint Game, double Odds)> odds) {
+		double roll = _rng.NextDouble();
+		double running = 0;
+
+		foreach ((uint game, double p) in odds) {
+			running += p;
+
+			if (roll < running) {
+				return game;
+			}
+		}
+
+		return odds[^1].Game;
 	}
 
 	/// <summary>
 	/// The main game's weight in the pick, so it gets its share of the day's TIME, not just of its sittings. Its sittings
 	/// run far longer than a side game's short dips (about 80 minutes against 47 with the default 30-150), so picked
-	/// for 70% of the sittings it got about 80% of the day - not the number written beside it. Mirrors SessionLength.
+	/// for 70% of the sittings it got about 80% of the day - not the number written beside it.
 	/// </summary>
-	/// <param name="cap">The most this sitting can run whatever it's on (the day's first, or what's left of the day).</param>
-	internal static int MainWeight(int sideTotal, int mainPct, int min, int max, int cap = int.MaxValue) {
-		int span = max - min;
-		double mainMean = (0.30 * (min + min + (span * 21 / 100)) / 2.0)
-			+ (0.50 * ((min + (span * 28 / 100)) + (min + (span * 64 / 100))) / 2.0)
-			+ (0.20 * ((min + (span * 71 / 100)) + max) / 2.0);
-		double sideMean = (min + min + (span * 29 / 100)) / 2.0;
-		mainMean = Math.Max(1, Math.Min(mainMean, cap));
-		sideMean = Math.Max(1, Math.Min(sideMean, cap));
+	/// <param name="mainMean">How long a main-game sitting would run this time, on average (<see cref="MeanLength"/>).</param>
+	/// <param name="sideMean">The same for the side games, weighted between them.</param>
+	internal static double MainWeight(int sideTotal, int mainPct, double mainMean, double sideMean) =>
+		Math.Max(0.01, sideTotal * mainPct / (double) Math.Max(1, 100 - mainPct) * Math.Max(1, sideMean) / Math.Max(1, mainMean));
 
-		return Math.Max(1, (int) Math.Round(sideTotal * mainPct / (double) Math.Max(1, 100 - mainPct) * sideMean / mainMean));
+	/// <summary>
+	/// The ranges a sitting's length is rolled from, with how often each: the main game's real gaming sessions - mostly
+	/// a couple of hours, sometimes a quick one, sometimes an all-evening one - or a side game's shorter dip. One list for
+	/// both the roll and the pick's sums, so the two can't drift apart.
+	/// </summary>
+	internal static (int Lo, int Hi, int Pct)[] LengthBands(bool main, int min, int max) {
+		int span = max - min;
+
+		return main
+			? [(min, min + (span * 21 / 100), 30), (min + (span * 28 / 100), min + (span * 64 / 100), 50), (min + (span * 71 / 100), max, 20)]
+			: [(min, min + (span * 29 / 100), 100)];
+	}
+
+	/// <summary>
+	/// The average length <see cref="SessionLength"/> comes out at, worked out exactly from the same ranges and the same
+	/// limits in the same order: what's left of a side game's allowance and of the hunt, the day's short first sitting,
+	/// what's left of the day's hours, the longest sitting and bedtime.
+	/// </summary>
+	/// <param name="sideLeft">What's left of the side allowance - a side game's sitting stops there. 0 or less: no limit.</param>
+	/// <param name="huntLeft">What's left of today's hunting, for the hunt's game. -1: no limit.</param>
+	/// <param name="first">The first sitting's cap (<see cref="FirstSittingCap"/>), or 0 when it isn't the day's first.</param>
+	internal static double MeanLength(bool main, int min, int max, int sideLeft, int huntLeft, int first, int remaining, int untilBed) {
+		double[] odds = new double[max + 16];   // nothing runs past the longest sitting, bar a few minutes on the way
+
+		foreach ((int lo, int hi, int pct) in LengthBands(main, min, max)) {
+			int top = Math.Max(lo, hi);
+
+			for (int x = lo; x <= top; x++) {
+				odds[x] += pct / 100.0 / (top - lo + 1);
+			}
+		}
+
+		if (!main && (sideLeft > 0)) {
+			odds = Remap(odds, x => x > sideLeft ? Math.Max(15, sideLeft) : x);
+		}
+
+		if (huntLeft >= 0) {
+			odds = Remap(odds, x => x > huntLeft ? Math.Max(15, huntLeft) : x);
+		}
+
+		if (first > 0) {
+			odds = RemapRolled(odds, min, first, static (x, cap) => Math.Min(x, cap));
+		}
+
+		if (remaining < odds.Length) {
+			odds = RemapRolled(odds, -5, 15, (x, over) => x > remaining ? Math.Max(Math.Min(min, remaining), remaining + over) : x);
+		}
+
+		odds = Remap(odds, x => Math.Max(5, Math.Min(Math.Min(x, max), untilBed > 0 ? untilBed : int.MaxValue)));
+
+		double mean = 0;
+
+		for (int x = 0; x < odds.Length; x++) {
+			mean += x * odds[x];
+		}
+
+		return mean;
+	}
+
+	/// <summary>Every length moved to what <paramref name="to"/> makes of it.</summary>
+	private static double[] Remap(double[] odds, Func<int, int> to) => RemapRolled(odds, 0, 0, (x, _) => to(x));
+
+	/// <summary>Every length moved to what <paramref name="to"/> makes of it with a number rolled evenly from lo to hi, the way Rng rolls it.</summary>
+	private static double[] RemapRolled(double[] odds, int lo, int hi, Func<int, int, int> to) {
+		double[] next = new double[odds.Length];
+		int top = Math.Max(lo, hi);
+		double each = 1.0 / (top - lo + 1);
+
+		for (int x = 0; x < odds.Length; x++) {
+			if (odds[x] <= 0) {
+				continue;
+			}
+
+			for (int r = lo; r <= top; r++) {
+				next[Math.Clamp(to(x, r), 0, odds.Length - 1)] += odds[x] * each;
+			}
+		}
+
+		return next;
 	}
 
 	/// <summary>
@@ -2472,10 +2640,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				continue;
 			}
 
-			// What the others can expect - their share of the day - rather than the cap on them, which is twice that.
+			// What the others can expect - their share of the day - rather than the cap on them, which is three times that.
 			string mix = roll.OtherBudget == 0
 				? GameName(weights[0].Game) + " only"
-				: $"mostly {GameName(weights[0].Game)}, about {Fmt.Hm(Math.Max(20, roll.Target * Math.Clamp(100 - roll.MainSharePct, 1, 95) / 100))} on the others";
+				: $"mostly {GameName(weights[0].Game)}, about {Fmt.Hm(SideExpected(roll.Target, roll.MainSharePct))} on the others";
 
 			lines.Add($"{when}  {Fmt.Hm(roll.Target),-7} from {roll.WakeMinute / 60:00}:{roll.WakeMinute % 60:00} to {roll.BedHour:00}:xx   {mix}");
 		}

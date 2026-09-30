@@ -108,11 +108,14 @@ Replies to typed commands are in English. The dashboard, status lines and log fo
 
 ### Commands by Steam chat
 
-You can also control nocat.farm by messaging one of its accounts on Steam. Put your SteamID64 in that account's
+You can also control an account by messaging it on Steam. Put your SteamID64 in that account's
 *Accept commands from* (`CommandMasters`), then send a message starting with `/` or `!`, like `/help` or `!status`.
-A bare command such as `/pause` or `/status` acts on the account you messaged. Messages without `/` or `!` get the
-normal auto-reply, and commands from anyone not on the list are ignored. Replies are cut at 1,900 characters.
-`exit` and `remove` can't be run this way; they have to be done at the PC, or from Telegram with `confirm`.
+A bare command such as `/pause`, `/status` or `/2fa` acts on the account you messaged. Messages without `/` or `!` get
+the normal auto-reply, and commands from anyone not on the list are ignored. Replies are cut at 1,900 characters.
+Steam chat only reaches the account you messaged: a command that names another account, or `all`, is refused, and so
+are the ones that change the app itself - `set`, `anywhere`, `dashboard`, `update`, `import`, `redeem`, `keys`,
+`answer`, `add`, `reload`, `plugins`, `notify`, `screen`, `match`, `theme`, `mini`, `exit` and `remove`. Those are for
+the PC, the dashboard, Telegram or Discord.
 
 ---
 

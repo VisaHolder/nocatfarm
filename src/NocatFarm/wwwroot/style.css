@@ -109,7 +109,8 @@ h2 a:hover { color: var(--text); }
 
 /* ── gates ─────────────────────────────────────────────────────────── */
 .gate { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
-.gate-card { width: 330px; display: grid; gap: 12px; }
+/* min() too: 330px plus the gate's 24px each side is wider than a 360px or 375px phone - the password page scrolled sideways. */
+.gate-card { width: min(330px, 100%); display: grid; gap: 12px; }
 /* min(), not a fixed 520px: on a phone the card was wider than the screen and the page scrolled sideways. */
 .welcome-card { width: min(520px, 100%); }
 /* The phone QR code: white behind it, or phone cameras struggle with the dark theme. */

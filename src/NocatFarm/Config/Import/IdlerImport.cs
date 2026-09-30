@@ -227,6 +227,11 @@ public static class IdlerImport {
 	/// exists here is left alone unless <paramref name="overwrite"/>. <paramref name="settings"/> are the indexes of the
 	/// scan's settings to bring (null = all of them).
 	/// </summary>
+	/// <summary>The account here that signs in as <paramref name="login"/> (ignoring case), by its name - or null.</summary>
+	public static string? ExistingFor(IReadOnlyDictionary<string, BotConfig> existing, string? login) =>
+		string.IsNullOrWhiteSpace(login) ? null
+			: existing.FirstOrDefault(e => string.Equals(e.Value.SteamLogin?.Trim(), login.Trim(), StringComparison.OrdinalIgnoreCase)).Key;
+
 	public static Outcome Apply(ImportScan scan, IReadOnlyCollection<Pick> picks, GlobalConfig global, bool overwrite = false, IReadOnlyCollection<int>? settings = null) {
 		List<Said> notes = [];
 		List<string> names = [];
@@ -234,6 +239,7 @@ public static class IdlerImport {
 		int imported = 0, skipped = 0;
 		Dictionary<string, BotConfig> existing = ConfigStore.LoadBots();
 		HashSet<string> taken = new(existing.Keys, StringComparer.OrdinalIgnoreCase);
+		Dictionary<string, string> logins = new(StringComparer.OrdinalIgnoreCase);
 
 		foreach (ImportedAccount account in scan.Accounts) {
 			if (picks.FirstOrDefault(p => p.Key == account.Key) is not { } pick) {
@@ -249,8 +255,37 @@ public static class IdlerImport {
 				name = ImportFiles.NameFor(bot.SteamLogin, name, taken);
 			}
 
+			// A name the other program was happy with but that can't be one here - ASF's "con" or "all" - comes in under
+			// the next free one, and says so, rather than being left out.
+			if (ConfigStore.NameProblem(name) is not null) {
+				string was = name;
+				name = ImportFiles.NameFor(name, "account", taken);
+				notes.Add(new Said("{0}: that name can't be used here, so it's {1}", was, name));
+			}
+
 			if (!ConfigStore.IsValidBotName(name)) {
 				notes.Add(new Said("{0}: skipped, that name can't be used as a config file", name));
+				skipped++;
+
+				continue;
+			}
+
+			// The same Steam account under another name - added by hand as "old", brought from ASF as "old-main", or the
+			// same login typed twice. Two configs for one account sign each other off Steam all day. It is that account:
+			// left alone, or written over it when overwriting - never a second copy beside it.
+			if (ExistingFor(existing, bot.SteamLogin) is { } already && !already.Equals(name, StringComparison.OrdinalIgnoreCase)) {
+				if (!overwrite) {
+					notes.Add(new Said("{0}: already here as {1}, left alone", name, already));
+					skipped++;
+
+					continue;
+				}
+
+				name = already;
+			}
+
+			if ((bot.SteamLogin.Length > 0) && names.Any(n => string.Equals(logins.GetValueOrDefault(n), bot.SteamLogin, StringComparison.OrdinalIgnoreCase))) {
+				notes.Add(new Said("{0}: skipped, another account in this import signs in as {1} too", name, bot.SteamLogin));
 				skipped++;
 
 				continue;
@@ -286,6 +321,7 @@ public static class IdlerImport {
 
 			ConfigStore.SaveBot(name, bot);
 			names.Add(name);
+			logins[name] = bot.SteamLogin;
 			imported++;
 
 			if (bot.LegitMode) {
