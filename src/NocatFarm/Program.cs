@@ -384,6 +384,15 @@ NocatFarm.Core.UpdateCheck.Start(manager);
 // "Open from anywhere": the router forwards the dashboard's port, while the switch is on.
 NocatFarm.Core.RemoteAccess.Start();
 
+// 1.5.9's "Tell me if nocat.farm stops" (removed in 1.6.0) left its random id behind; nothing reads it any more.
+try {
+	File.Delete(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "stop-alert-id.txt"));
+} catch (IOException) {
+	// in use or gone - it's two lines of nothing
+} catch (UnauthorizedAccessException) {
+	// the same
+}
+
 
 // Only where there's a desktop: a server or a container has no browser, and the attempt is just a baffling error.
 // And not when it starts hidden (with Windows) or has just restarted itself into an update - a browser tab popping

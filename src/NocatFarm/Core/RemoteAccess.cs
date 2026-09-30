@@ -243,6 +243,62 @@ public static partial class RemoteAccess {
 	private static string DeleteArgs(int port) =>
 		$"<NewRemoteHost></NewRemoteHost><NewExternalPort>{port}</NewExternalPort><NewProtocol>TCP</NewProtocol>";
 
+	/// <summary>
+	/// Whether a visitor came from the internet rather than from home: not this PC, not a home-network address, not
+	/// link-local, and not 100.64.0.0/10 (Tailscale and other VPNs hand those out). An IPv6 address counts as home when
+	/// it's link-local, unique-local, or in the same /64 as one of this PC's own.
+	/// </summary>
+	public static bool FromTheInternet(IPAddress? ip) {
+		if (ip == null) {
+			return false;   // no network connection at all - an in-process test host
+		}
+
+		if (ip.IsIPv4MappedToIPv6) {
+			ip = ip.MapToIPv4();
+		}
+
+		if (IPAddress.IsLoopback(ip)) {
+			return false;
+		}
+
+		byte[] b = ip.GetAddressBytes();
+
+		if (ip.AddressFamily == AddressFamily.InterNetwork) {
+			return !(IsPrivate(ip) || IsProviderShared(ip) || ((b[0] == 169) && (b[1] == 254)));
+		}
+
+		if (ip.IsIPv6LinkLocal || ip.IsIPv6SiteLocal || ip.IsIPv6UniqueLocal) {
+			return false;
+		}
+
+		return !OwnPrefixes().Any(p => b.AsSpan(0, 8).SequenceEqual(p));
+	}
+
+	private static byte[][] _prefixes = [];
+	private static DateTime _prefixesAt = DateTime.MinValue;
+
+	/// <summary>The first 64 bits of this PC's own IPv6 addresses, read at most once a minute.</summary>
+	private static byte[][] OwnPrefixes() {
+		if (DateTime.UtcNow - _prefixesAt < TimeSpan.FromMinutes(1)) {
+			return _prefixes;
+		}
+
+		try {
+			_prefixes = [.. NetworkInterface.GetAllNetworkInterfaces()
+				.Where(static n => n.OperationalStatus == OperationalStatus.Up)
+				.SelectMany(static n => n.GetIPProperties().UnicastAddresses)
+				.Select(static u => u.Address)
+				.Where(static a => (a.AddressFamily == AddressFamily.InterNetworkV6) && !a.IsIPv6LinkLocal && !IPAddress.IsLoopback(a))
+				.Select(static a => a.GetAddressBytes()[..8])];
+		} catch (NetworkInformationException) {
+			// keep the last answer
+		}
+
+		_prefixesAt = DateTime.UtcNow;
+
+		return _prefixes;
+	}
+
 	/// <summary>Not an internet address at all: 0.0.0.0, loopback, link-local, 192.0.0.x, multicast and above.</summary>
 	private static bool Unusable(IPAddress ip) {
 		byte[] b = ip.GetAddressBytes();

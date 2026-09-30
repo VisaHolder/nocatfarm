@@ -106,15 +106,49 @@ function loginLocked(seconds, thisPc) {
   }, 1000);
 }
 
+/// Signing in from outside with "Code on Telegram" on: after the right password, the box asks for the code Telegram got.
+let loginChallenge = null;
+
+function loginAskCode(on, message) {
+  loginChallenge = on ? loginChallenge : null;
+  $('pw').classList.toggle('hidden', on);
+  $('loginCode').classList.toggle('hidden', !on);
+  $('loginCode').value = '';
+  if (on) $('loginCode').focus(); else $('pw').focus();
+  $('loginError').textContent = message || '';
+}
+
 async function doLogin(e) {
   e.preventDefault();
-  const res = await fetch('/api/login', {
+  const second = !!loginChallenge;
+  const res = await fetch(second ? '/api/login/code' : '/api/login', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ Password: $('pw').value })
+    body: JSON.stringify(second ? { Challenge: loginChallenge, Code: $('loginCode').value } : { Password: $('pw').value })
   }).then((r) => r.json()).catch(() => ({ ok: false }));
 
-  if (!res.ok && res.error === 'locked') { loginLocked(res.seconds, res.thisPc); return false; }
-  if (!res.ok) { $('loginError').textContent = t('Wrong password.'); return false; }
+  if (!res.ok && res.error === 'locked') { loginAskCode(false); loginLocked(res.seconds, res.thisPc); return false; }
+  if (!res.ok && res.error === 'closed') {
+    loginAskCode(false, t('Open from anywhere switched itself off after too many wrong passwords. It opens again once it is turned back on at home.'));
+    return false;
+  }
+  if (!res.ok && res.error === 'code') {
+    loginChallenge = res.challenge;
+    loginAskCode(true, tf('We sent a 6-digit code to your Telegram. Type it here - it works for {0} minutes.', res.minutes));
+    return false;
+  }
+  if (!res.ok && res.error === 'no code') {
+    $('loginError').textContent = t("Couldn't send the sign-in code to Telegram. Try again in a while, or sign in at home.");
+    return false;
+  }
+  if (!res.ok && res.error === 'wrong code') {
+    $('loginError').textContent = tf('Wrong code - {0} tries left.', res.left);
+    $('loginCode').value = '';
+    return false;
+  }
+  if (!res.ok && res.error === 'expired') { loginAskCode(false, t('That code has run out. Type the password again for a new one.')); return false; }
+  if (!res.ok && res.error === 'too many tries') { loginAskCode(false, t('Too many wrong codes. Type the password again for a new one.')); return false; }
+  if (!res.ok) { $('loginError').textContent = second ? t("That didn't work") : t('Wrong password.'); return false; }
+  loginAskCode(false);
   token = res.token;
   localStorage.setItem('nocatfarm-token', token);
   $('loginError').textContent = '';
@@ -280,8 +314,10 @@ function copyText(text, done) {
 }
 
 async function refreshInventory(name) {
-  await post(`/api/bots/${encodeURIComponent(name)}/inventory/refresh`, {});
-  toast(tf('Reading {0}’s inventory again…', name));
+  // The answer, not a "reading" whatever came back - an account removed a moment ago said it was being read.
+  const res = await post(`/api/bots/${encodeURIComponent(name)}/inventory/refresh`, {}).catch((e) => ({ ok: false, error: e.message || String(e) }));
+  if (res && res.ok) toast(tf('Reading {0}’s inventory again…', name));
+  else toast((res && res.error) || t("That didn't work"), true);
 }
 
 // The hover breakdown: which games hold the value, biggest first.
@@ -370,6 +406,10 @@ window.addEventListener('hashchange', () => { const h = location.hash.replace('#
 
 document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+  // Not with Ctrl/Alt/Cmd held (Ctrl+1 is the browser's own tab switch), and not behind a dialog, the walkthrough or
+  // the sign-in screen: a digit there switched the page underneath, so closing the dialog landed somewhere else.
+  if (e.ctrlKey || e.altKey || e.metaKey || e.target.isContentEditable) return;
+  if (tutorialOpen || !$('modal').classList.contains('hidden') || $('app').classList.contains('hidden')) return;
   // 1-9 are the tabs as they're shown, left to right - so they still line up when one is hidden or a new one is added.
   const tabs = [...document.querySelectorAll('.navitem')].filter((el) => el.offsetParent !== null);
   const n = parseInt(e.key, 10);
@@ -414,7 +454,7 @@ function render() {
   $('railChips').innerHTML = Object.keys(STATUS_META)
     .filter((k) => counts[k])
     // Lit like the Accounts page's own filter pills when it is the filter showing there - the two are one filter.
-    .map((k) => `<span class="chip ${k} ${view === 'accounts' && acctFilter === k ? 'on' : ''}" data-tip="${esc(t(STATUS_META[k].tip))}" onclick="filterTo('${k}')"><i class="dot"></i>${esc(t(STATUS_META[k].label))}<b>${counts[k]}</b></span>`)
+    .map((k) => `<span class="chip ${k} ${view === 'accounts' && acctFilter === k ? 'on' : ''}" data-tip="${esc(t(STATUS_META[k].tip))}" role="button" tabindex="0" onclick="filterTo('${k}')"><i class="dot"></i>${esc(t(STATUS_META[k].label))}<b>${counts[k]}</b></span>`)
     .join('') || `<span class="muted small">${esc(t('no accounts yet'))}</span>`;
   fitRailChips();
 
@@ -943,7 +983,7 @@ function renderHistory() {
   }
 
   histPaint(bar, `<div class="pills">${[7, 30, 90].map((n) =>
-    `<span class="p${histRange === n ? ' on' : ''}" onclick="setHistRange(${n})">${esc(tf('{0} days', n))}</span>`).join('')}</div>`
+    `<span class="p${histRange === n ? ' on' : ''}" role="button" tabindex="0" onclick="setHistRange(${n})">${esc(tf('{0} days', n))}</span>`).join('')}</div>`
     + (d.Accounts.length > 1
       ? `<select onchange="setHistScope(this.value)" aria-label="${esc(t('Show the history of'))}"><option value="">${esc(t('Whole fleet'))}</option>${d.Accounts.map((a) =>
         `<option value="${esc(a.Name)}"${a.Name === histScope ? ' selected' : ''}>${esc(a.Name)}</option>`).join('')}</select>`
@@ -1093,7 +1133,7 @@ function renderAccounts() {
   const q = ($('acctSearch').value || '').toLowerCase();
 
   const chips = Object.keys(STATUS_META).map((k) =>
-    `<span class="chip ${k} ${acctFilter === k ? 'on' : ''}" data-tip="${esc(t(STATUS_META[k].tip))}" onclick="acctFilter='${acctFilter === k ? '' : k}';render()"><i class="dot"></i>${esc(t(STATUS_META[k].label))}</span>`).join('');
+    `<span class="chip ${k} ${acctFilter === k ? 'on' : ''}" data-tip="${esc(t(STATUS_META[k].tip))}" role="button" tabindex="0" onclick="acctFilter='${acctFilter === k ? '' : k}';render()"><i class="dot"></i>${esc(t(STATUS_META[k].label))}</span>`).join('');
 
   paint('acctFilters', chips);
 
@@ -1296,11 +1336,11 @@ function showAddAccount() {
     </div>
     <p style="margin:14px 0 8px"><b>${esc(t('What kind of account is it?'))}</b></p>
     <div class="pickcards">
-      <div class="pickcard" id="a-type-human" onclick="addPickType(true)">
+      <div class="pickcard" id="a-type-human" role="button" tabindex="0" onclick="addPickType(true)">
         <b>${esc(t('My main - I play on it'))}</b>
         <span>${esc(t("Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated."))}</span>
       </div>
-      <div class="pickcard" id="a-type-robot" onclick="addPickType(false)">
+      <div class="pickcard" id="a-type-robot" role="button" tabindex="0" onclick="addPickType(false)">
         <b>${esc(t('A spare or farm account'))}</b>
         <span>${esc(t('Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.'))}</span>
       </div>
@@ -1325,6 +1365,8 @@ async function createBot() {
   if (!res.ok) { $('addError').textContent = res.error; return; }
   closeModal();
   refresh();
+  // The page's settings copy learns about the new account now, so its Settings button opens it (not Global).
+  loadConfig().catch(() => {});
 }
 
 // ── importing from another idler ─────────────────────────────────────
@@ -1442,7 +1484,7 @@ function importToolsHtml() {
 
   return `<p class="muted small">${esc(t('Pick the program your accounts are in now. nocat.farm only reads its files - it never changes them.'))}</p>
     <div class="pickcards">
-      ${tools.map((tl) => `<div class="pickcard ${tl.Found ? 'on' : ''}" data-tool="${esc(tl.Id)}" onclick="impPick(this.dataset.tool)">
+      ${tools.map((tl) => `<div class="pickcard ${tl.Found ? 'on' : ''}" data-tool="${esc(tl.Id)}" role="button" tabindex="0" onclick="impPick(this.dataset.tool)">
         <b>${esc(tl.Name)}</b><span>${esc(found(tl))}</span></div>`).join('')}
     </div>
     <p class="muted small">${esc(t('Somewhere else? Paste the folder the idler is in and nocat.farm works out which one it is.'))}</p>
@@ -1617,6 +1659,7 @@ async function createFirstBot() {
   if (!res.ok) { $('welcomeError').textContent = res.error; return; }
   sessionStorage.setItem('skip-welcome', '1');
   await refresh();
+  await loadConfig().catch(() => {});
   go('accounts');
 }
 
@@ -1743,12 +1786,17 @@ function tickAuth() {
   renderAuthCode();
 }
 
+// One at a time. The tick runs every second and the code stays "run out" until the answer lands, so a slow reply
+// used to have a fresh request sent after it every second.
+let authCodesLoading = false;
 async function loadAuthCodes() {
+  if (authCodesLoading) return;
+  authCodesLoading = true;
   try {
     const r = await api('/api/auth');
     const now = Date.now();
     authAccounts = (r.Accounts || []).map((a) => ({ ...a, At: now }));
-  } catch (e) { /* the next tick tries again */ }
+  } catch (e) { /* the next tick tries again */ } finally { authCodesLoading = false; }
   renderAuthCode();
 }
 
@@ -1767,7 +1815,7 @@ function renderAuth() {
       <div class="auth-top">
         <h2>${esc(t('Authenticator'))}</h2>
         <div class="langpick auth-accounts">${accts.map((a) =>
-          `<span class="p ${a.Name === authPick ? 'on' : ''} ${a.HasCode ? '' : 'dim'}" data-auth-pick="${esc(a.Name)}">${esc(a.Name)}</span>`).join('')}</div>
+          `<span class="p ${a.Name === authPick ? 'on' : ''} ${a.HasCode ? '' : 'dim'}" data-auth-pick="${esc(a.Name)}" role="button" tabindex="0">${esc(a.Name)}</span>`).join('')}</div>
       </div>
       <div id="authCode"></div>
     </div>
@@ -1988,7 +2036,7 @@ function pluginSettings(p) {
     let ctl;
 
     if (sett.Kind === 'Bool') {
-      ctl = `<label class="switch"><input type="checkbox" id="${id}" ${sett.Value === 'true' ? 'checked' : ''} onchange="${set}"><span></span></label>`;
+      ctl = `<label class="switch"><input type="checkbox" id="${id}" ${String(sett.Value).toLowerCase() === 'true' ? 'checked' : ''} onchange="${set}"><span></span></label>`;
     } else if (sett.Kind === 'Int') {
       ctl = `<input type="number" id="${id}" value="${esc(sett.Value)}" onchange="${set}">`;
     } else if (sett.Kind === 'Choice') {
@@ -2919,8 +2967,8 @@ function tutStepFinal() {
       body: `${sc ? importPreviewHtml() : importToolsHtml()}
            <p id="tutError" class="error"></p>
            <p class="muted small">${esc(t('Importing copies the accounts, their sign-ins and settings. It changes nothing in the other program.'))}
-             ${sc ? `<a style="cursor:pointer" onclick="impBack()">${esc(t('A different idler'))}</a> ·` : ''}
-             <a style="cursor:pointer" onclick="tutorialManual=true;renderTutorial()">${esc(t('Add one by hand instead'))}</a></p>
+             ${sc ? `<a style="cursor:pointer" role="button" tabindex="0" onclick="impBack()">${esc(t('A different idler'))}</a> ·` : ''}
+             <a style="cursor:pointer" role="button" tabindex="0" onclick="tutorialManual=true;renderTutorial()">${esc(t('Add one by hand instead'))}</a></p>
            ${tips}`,
       next: t('Import them'),
       act: impApply,
@@ -2944,7 +2992,7 @@ function tutStepFinal() {
       ${tutorialHuman === true ? `<label class="tut-check"><input id="tut-self" type="checkbox" ${tutorialSelf ? 'checked' : ''} onchange="tutorialSelf=this.checked">
         <span>${esc(t('I also sign into it from my own Steam app'))}${tipIcon(t('Then nocat.farm never changes its online status - if it did, Steam would sign your own client out of Friends and Chat.'))}</span></label>` : ''}
       <p id="tutError" class="error"></p>
-      <p class="muted small"><a style="cursor:pointer" onclick="${imp && imp.tutorial ? 'tutorialManual=false;renderTutorial()' : 'tutorialOpenImport()'}">${esc(t('Coming from another idler? Import from it'))}</a></p>
+      <p class="muted small"><a style="cursor:pointer" role="button" tabindex="0" onclick="${imp && imp.tutorial ? 'tutorialManual=false;renderTutorial()' : 'tutorialOpenImport()'}">${esc(t('Coming from another idler? Import from it'))}</a></p>
       ${tips}`,
     next: t('Add account'),
     act: tutorialAddAccount,
@@ -3056,7 +3104,7 @@ function tutGameChips(selected, onclick, extra) {
   // Anything picked by hand that isn't in the top list still shows, so it can be seen and un-picked.
   const added = [...extra].filter((id) => !ids.has(id)).map((id) => ({ AppId: id, Name: gameLabel(id), Minutes: 0 }));
   return `<div class="langpick">${[...games, ...added].map((g) =>
-    `<span class="p ${selected(g.AppId)}" onclick="${onclick}(${g.AppId})">${esc(g.Name || gameLabel(g.AppId))}${g.Minutes ? ` <span class="muted">${tutHours(g.Minutes)}</span>` : ''}</span>`).join('')}</div>`;
+    `<span class="p ${selected(g.AppId)}" role="button" tabindex="0" onclick="${onclick}(${g.AppId})">${esc(g.Name || gameLabel(g.AppId))}${g.Minutes ? ` <span class="muted">${tutHours(g.Minutes)}</span>` : ''}</span>`).join('')}</div>`;
 }
 
 function renderTutorialSetup() {
@@ -3479,7 +3527,7 @@ function helpListHtml(filter) {
 
   return Object.keys(groups).length
     ? Object.keys(groups).map((g) => `<div class="grp">${esc(t(g))}</div>${groups[g].map((c) => `
-        <div class="c" onclick="useCommand(${esc(JSON.stringify(c.Name))})">
+        <div class="c" role="button" tabindex="0" onclick="useCommand(${esc(JSON.stringify(c.Name))})">
           <code>${esc(c.Display || c.Name)}${c.Args ? ' ' + esc(c.Args) : ''}</code>
           <span class="h">${esc(c.Help)}</span>
         </div>`).join('')}`).join('')
@@ -3498,8 +3546,9 @@ async function loadPhone(force) {
   if (phone.loading || (!force && Date.now() - phone.at < 4000)) return;
   phone.loading = true;
   try {
-    const p = await api('/api/phone').catch(() => null);
+    const [p, v] = await Promise.all([api('/api/phone').catch(() => null), api('/api/visitors').catch(() => null)]);
     if (p) { phone.info = p; phone.at = Date.now(); }
+    if (v) phone.visitors = v;
   } finally { phone.loading = false; }
   if (view === 'phone') renderPhone();
 }
@@ -3552,6 +3601,32 @@ function renderPhone() {
 
   phPaint('phoneChat', phoneChatCard());
   phPaint('phoneSafe', phoneSafeCard(p));
+  phPaint('phoneVisitors', phoneVisitorsCard(phone.visitors));
+}
+
+/// Who has been at the dashboard: sign-ins, wrong passwords, lockouts, and the internet turned away.
+function phoneVisitorsCard(v) {
+  const where = { 'this PC': t('this PC'), home: t('home'), internet: t('the internet') };
+  const when = (iso) => new Date(iso).toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const rows = v && v.Visits && v.Visits.length
+    ? `<div class="ph-visits">${v.Visits.map((x) => `<div class="ph-visit ${x.Where === 'internet' ? 'out' : ''} ${x.Kind === 'SignedIn' ? 'ok' : 'bad'}">
+        <span class="muted">${esc(when(x.When))}</span><b>${esc(x.What)}</b><code>${esc(x.Ip)}</code><span>${esc(where[x.Where] || x.Where)}</span><span class="muted">${esc(x.Device)}</span></div>`).join('')}</div>`
+    : `<p class="muted small">${esc(t('Nobody has signed in or tried yet.'))}</p>`;
+  const paused = v && v.InternetPausedFor > 0
+    ? `<p class="ph-warn">${esc(tf('Signing in from outside is paused for {0} after too many wrong passwords. Home still works.', hm(Math.ceil(v.InternetPausedFor / 60))))}</p>` : '';
+  return `<h2>${esc(t("Who's been here"))}</h2>
+    <p class="ph-text">${esc(t('Every sign-in and every wrong password, newest first. A sign-in from outside your home is also sent to Telegram and Discord.'))}</p>
+    ${paused}${rows}
+    <button class="ghost" onclick="phoneSignOutAll(this)">${esc(t('Sign every device out'))}</button>
+    <span class="muted small">${esc(t('This browser too - sign in again with the password.'))}</span>`;
+}
+
+async function phoneSignOutAll(btn) {
+  if (!confirm(t('Sign every browser and phone out of the dashboard, this one included?'))) return;
+  btn.disabled = true;
+  const r = await api('/api/visitors/signout', { method: 'POST' }).catch(() => null);
+  if (!r || !r.ok) { toast(t("That didn't work"), true); btn.disabled = false; return; }
+  location.reload();
 }
 
 function phoneHomeCard(p, ready) {
@@ -3647,8 +3722,10 @@ function phoneChecklist(p) {
     : listens ? t('On. Phones and PCs on your Wi-Fi can open it.')
     : !p.HasPassword ? t('Set a password first.')
     : t('Off. Only this PC can open the dashboard.');
-  const openFix = `<span class="switch" ${lockedOn ? `data-tip="${esc(t('Switch it off on the PC itself.'))}"` : ''}><input type="checkbox" id="phOpen" aria-label="${esc(t('Open to other devices'))}"
-      ${listens ? 'checked' : ''} ${(!listens && !p.HasPassword) || lockedOn || phone.restarting ? 'disabled' : ''} onchange="phoneOpen(this.checked, this)"><span></span></span>
+  // A label, not a span: the checkbox itself is 0x0, so only a label passes the click on - as a span it could never be
+  // switched at all.
+  const openFix = `<label class="switch" ${lockedOn ? `data-tip="${esc(t('Switch it off on the PC itself.'))}"` : ''}><input type="checkbox" id="phOpen" aria-label="${esc(t('Open to other devices'))}"
+      ${listens ? 'checked' : ''} ${(!listens && !p.HasPassword) || lockedOn || phone.restarting ? 'disabled' : ''} onchange="phoneOpen(this.checked, this)"><span></span></label>
     ${p.NeedsRestart ? `<button class="ph-go" ${phone.restarting ? 'disabled' : ''} onclick="phoneRestart(this)">${esc(phone.restarting ? t('Restarting the dashboard...') : t('Restart the dashboard now'))}</button>
       <span class="muted small">${esc(t('Your accounts stay signed in.'))}</span>` : ''}`;
   items.push({ ok: listens && !p.NeedsRestart, name: t('Open to other devices'), text: openText, fix: openFix, bad: !!p.RestartProblem });
@@ -3816,6 +3893,12 @@ function phoneSafeCard(p) {
     <ul class="ph-safe">
       <li>${esc(t('Anyone with the away-from-home link reaches the sign-in page, and nothing more without the password.'))}</li>
       <li>${esc(t('Five wrong passwords lock that address out for an hour.'))}</li>
+      <li>${esc(t('Ten wrong passwords from the internet in an hour, from any addresses, pause signing in from outside for an hour.'))}</li>
+      ${p.OffAfter > 0 ? `<li>${esc(tf('{0} wrong passwords or codes from the internet in a day switch Open from anywhere off by itself.', p.OffAfter))}</li>` : ''}
+      <li>${esc(t('Every sign-in from outside your home is sent to Telegram and Discord.'))}</li>
+      <li>${esc(!p.SignInCode ? t('Code on Telegram for sign-ins from outside is off - the password alone lets somebody in.')
+        : p.CodeReady ? t('From outside, the password alone is not enough: it also takes a 6-digit code sent to your Telegram.')
+        : t('Connect Telegram and signing in from outside will also take a code sent to it.'))}</li>
       <li>${esc(t("It's plain http, not encrypted - use a password you don't use anywhere else."))}</li>
     </ul>
     ${p.RemoteOn ? `<button class="ghost ph-off" onclick="phoneRemote(false, this)">${esc(t('Turn Open from anywhere off'))}</button>`
@@ -3833,12 +3916,24 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') dismissMod
 // a folder to look in) keeps it; a focused card or language picks itself, the way a click would; and a button or a
 // link does what it does anyway.
 document.addEventListener('keydown', (e) => {
-  if ((e.key !== 'Enter') || e.isComposing || !tutorialOpen || $('modal').classList.contains('hidden')) return;
+  if ((e.key !== 'Enter') || e.isComposing || e.defaultPrevented || !tutorialOpen || $('modal').classList.contains('hidden')) return;
   const el = e.target;
-  if (el && el.getAttribute && (el.getAttribute('role') === 'button')) { e.preventDefault(); el.click(); return; }
+  // A card or language pick presses itself - the listener below does that, for Space as well.
+  if (el && el.getAttribute && (el.getAttribute('role') === 'button')) return;
   if (el && (['BUTTON', 'A', 'TEXTAREA', 'SELECT', 'SUMMARY'].includes(el.tagName) || el.onkeydown)) return;
   const next = $('tutNext');
   if (next && !next.disabled) { e.preventDefault(); next.click(); }
+});
+
+// Anything drawn as a chip, a card or a link with no address carries role="button" and tabindex="0", so Tab reaches it -
+// and this makes Enter and Space press it, the way they press a real button. One listener for all of them, so a new
+// chip only needs the two attributes. A handler of its own (the tabs) calls preventDefault and is left to it.
+document.addEventListener('keydown', (e) => {
+  if (((e.key !== 'Enter') && (e.key !== ' ')) || e.isComposing || e.defaultPrevented || e.ctrlKey || e.altKey || e.metaKey) return;
+  const el = e.target;
+  if (!el || !el.getAttribute || (el.getAttribute('role') !== 'button') || (el.tagName === 'BUTTON')) return;
+  e.preventDefault();
+  el.click();
 });
 
 // One delegated listener instead of interpolating account names into inline onclick attributes. HTML-escaping
@@ -3851,7 +3946,7 @@ document.addEventListener('click', (e) => {
   switch (el.dataset.act) {
     case 'start': case 'stop': case 'pause': case 'resume': act(name, el.dataset.act); break;
     case 'cards': openBot(name); break;
-    case 'settings': closeModal(); selectSettings(name); go('settings'); break;
+    case 'settings': closeModal(); openBotSettings(name); break;
     case 'remove': removeBot(name); break;
     case 'postnow': postNow(name); break;
     case 'register': registerProfile(name); break;
@@ -4030,7 +4125,19 @@ async function registerProfile(name) {
 
 async function postNow(name) {
   const res = await post('/api/bots/' + encodeURIComponent(name) + '/rep4repnow');
-  toast(res.ok ? tf('{0}: will post as soon as the daily cap allows', name) : (res.error || t("That didn't work")), !res.ok);
+  if (!res.ok) { toast(res.error || t("That didn't work"), true); return; }
+
+  // The request only says it arrived - it promised a post even to an account with commenting off, signed out, or at
+  // its cap. What the account can really do is in its row, so read that fresh and say it.
+  const list = await api('/api/rep4rep/profiles').catch(() => null);
+  if (Array.isArray(list)) { r4rProfiles = list; renderRep4RepProfiles(); }
+  const p = r4rProfiles.find((x) => x.Account === name);
+
+  if (!p) toast(tf("{0}: asked to post next. Its status: {1}", name, t('waiting')));
+  else if (!p.Enabled) toast(tf('{0} has rep4rep commenting switched off, so nothing will be posted.', name), true);
+  else if (!p.Online) toast(tf("{0} isn't signed in, so it can't post until it is.", name), true);
+  else if (p.Today >= p.Cap && p.NextSlot) toast(tf('{0} is at its cap ({1}/{2}) - it posts when a slot frees {3}.', name, p.Today, p.Cap, until(p.NextSlot)));
+  else toast(tf("{0}: asked to post next. Its status: {1}", name, p.Status || t('waiting')));
 }
 
 function renderBotPicker() {
@@ -4118,7 +4225,7 @@ function renderLog() {
   const who = $('logBot').value;
 
   $('logLevels').innerHTML = Object.keys(logLevels).map((l) =>
-    `<span class="chip ${logLevels[l] ? 'on' : ''}" onclick="logLevels['${l}']=!logLevels['${l}'];renderLog()">${esc(t(l === 'GOOD' ? 'Good' : l[0] + l.slice(1).toLowerCase()))}</span>`).join('');
+    `<span class="chip ${logLevels[l] ? 'on' : ''}" role="button" tabindex="0" onclick="logLevels['${l}']=!logLevels['${l}'];renderLog()">${esc(t(l === 'GOOD' ? 'Good' : l[0] + l.slice(1).toLowerCase()))}</span>`).join('');
 
   const sources = [...new Set(logLines.map((l) => l.Source))].sort();
   if ($('logBot').options.length !== sources.length + 1) {
@@ -4244,7 +4351,7 @@ function renderCommandList() {
   const groups = [...new Set(commands.map((c) => c.Group))];
   $('cmdList').innerHTML = groups.map((g) =>
     `<div class="grp">${esc(t(g))}</div>` + commands.filter((c) => c.Group === g).map((c) =>
-      `<div class="c" onclick="useCommand(${esc(JSON.stringify(c.Name))},${esc(JSON.stringify(c.Args))})"><code>${esc(c.Name)} ${esc(c.Args)}</code><span class="h">${esc(c.Help)}</span></div>`).join('')).join('');
+      `<div class="c" role="button" tabindex="0" onclick="useCommand(${esc(JSON.stringify(c.Name))},${esc(JSON.stringify(c.Args))})"><code>${esc(c.Name)} ${esc(c.Args)}</code><span class="h">${esc(c.Help)}</span></div>`).join('')).join('');
 }
 
 function useCommand(name, args) {
@@ -4300,6 +4407,15 @@ function postGlobal(body) {
 function postBot(name, body) {
   const loaded = configLoaded && configLoaded.Bots && configLoaded.Bots[name];
   return post('/api/bots/' + encodeURIComponent(name) + '/config', loaded ? { ...body, Base: loaded } : body);
+}
+
+/// An account's Settings button. The page's copy of the settings is read when the Settings tab opens, so an account
+/// added since (the Add dialog, the walkthrough, `add` in the console) wasn't in it yet - and renderSettings, finding
+/// no such account, quietly opened Global instead. Read it again first when the account is missing.
+async function openBotSettings(name) {
+  if (name && !(config && config.Bots && config.Bots[name])) await loadConfig().catch(() => {});
+  selectSettings(name);
+  go('settings');
 }
 
 /// Switch the settings pane to an account (or null for Global). Returns false when the user chose to keep their
@@ -4374,7 +4490,7 @@ function renderSettings() {
 
   // left pane: Global, then one entry per account
   $('settingsNavGlobal').innerHTML =
-    `<div class="s ${settingsTarget === GLOBAL ? 'active' : ''}" onclick="selectSettings(null)">${esc(t('Global settings'))}</div>`;
+    `<div class="s ${settingsTarget === GLOBAL ? 'active' : ''}" role="button" tabindex="0" onclick="selectSettings(null)">${esc(t('Global settings'))}</div>`;
   // Section jump-list for whatever pane is open. A 40-setting page without one is a scroll hunt.
   // Only sections this account can show at all: human mode hides the robot-only ones and the other way round,
   // and a link to a section that never appears is a link that does nothing.
@@ -4384,15 +4500,15 @@ function renderSettings() {
       && !(settingsTarget === GLOBAL && PANEL_ROWS.has(d.Name) && !PANEL_SECTIONS.has(d.Section)))
     .map((d) => d.Section))];
   const jump = `<div class="jump">${sectionNames.map((n) =>
-    `<a class="j" data-jump="${esc(n)}">${esc(t(n))}</a>`).join('')}</div>`;
+    `<a class="j" role="button" tabindex="0" data-jump="${esc(n)}">${esc(t(n))}</a>`).join('')}</div>`;
 
   $('settingsNavBots').innerHTML = Object.keys(config.Bots).length
     ? Object.keys(config.Bots).map((n) =>
-        `<div class="s ${settingsTarget === n ? 'active' : ''}" data-bot="${esc(n)}" onclick="selectSettings(this.dataset.bot)">${esc(n)}</div>`).join('')
+        `<div class="s ${settingsTarget === n ? 'active' : ''}" data-bot="${esc(n)}" role="button" tabindex="0" onclick="selectSettings(this.dataset.bot)">${esc(n)}</div>`).join('')
     : `<p class="muted small">${esc(t('No accounts yet.'))}</p>`;
   // Accounts and their settings from another idler, straight from where the accounts are listed.
   $('settingsNavBots').insertAdjacentHTML('beforeend',
-    `<div class="s muted" onclick="openImport()">+ ${esc(t('Import from another idler'))}</div>`);
+    `<div class="s muted" role="button" tabindex="0" onclick="openImport()">+ ${esc(t('Import from another idler'))}</div>`);
 
   $('settingsNavJump').innerHTML = jump;
 
@@ -4414,6 +4530,8 @@ function renderSettings() {
   const sections = [...new Set(defs.map((d) => d.Section))];
   let html = '';
   let hiddenAdvanced = 0;
+  const found = (d) => !q || tSetting(d, 'label').toLowerCase().includes(q) || d.Label.toLowerCase().includes(q)
+    || d.Name.toLowerCase().includes(q) || tSetting(d, 'tip').toLowerCase().includes(q);
 
   for (const section of sections) {
     const legitOn = settingsTarget !== GLOBAL && !!liveValue('LegitMode', values);
@@ -4428,15 +4546,20 @@ function renderSettings() {
       // second row for each was the same setting twice.
       if (settingsTarget === GLOBAL && PANEL_ROWS.has(d.Name)) return false;
       if (!advanced && d.Advanced) { hiddenAdvanced++; return false; }
-      if (q && !(tSetting(d, 'label').toLowerCase().includes(q) || d.Label.toLowerCase().includes(q)
-        || d.Name.toLowerCase().includes(q) || tSetting(d, 'tip').toLowerCase().includes(q))) return false;
+      if (!found(d)) return false;
       if (onlyChanged && !isChanged(d, values, defaults)) return false;
       return true;
     });
 
     // A section whose rows are all drawn by its own panel (Discord profile) still shows, panel and all.
     const intro = sectionIntro(section, values);
-    if (!fields.length && !(intro && PANEL_SECTIONS.has(section) && !q && !onlyChanged)) continue;
+    // The chips and switches in a panel (Notifications, Discord profile) are settings too. A search or "only changed"
+    // that matches one of them shows its panel - they were skipped as rows, so the search said "Nothing matches" and
+    // hid the whole section. Show advanced doesn't come into it: they are marked advanced only to keep them out of the
+    // rows, and the panel shows them either way.
+    const panelHit = intro && settingsTarget === GLOBAL && (q || onlyChanged) && defs.some((d) => d.Section === section
+      && PANEL_ROWS.has(d.Name) && found(d) && (!onlyChanged || isChanged(d, values, defaults)));
+    if (!fields.length && !panelHit && !(intro && PANEL_SECTIONS.has(section) && !q && !onlyChanged)) continue;
     html += `<div class="section"><h3 data-section="${esc(section)}">${esc(t(section))}</h3>${intro}${fields.map((d) => fieldHtml(d, values, defaults)).join('')}</div>`;
   }
 
@@ -4611,13 +4734,13 @@ function sectionIntro(section, values) {
   if (section === 'Notifications' && settingsTarget === GLOBAL) {
     const kinds = [['SendCardDrops', 'Card drops'], ['SendFreeStuff', 'Free stuff'], ['SendTrades', 'Trades'],
       ['SendProblems', 'Needs you'], ['SendUpdates', 'Updates'], ['SendInstalls', 'Install progress'], ['SendDailySummary', 'Daily summary'],
-      ['SendComments', 'Profile comments'], ['SendAchievements', 'Achievements'], ['SendRep4Rep', 'rep4rep']];
+      ['SendComments', 'Profile comments'], ['SendAchievements', 'Achievements'], ['SendRep4Rep', 'rep4rep'], ['SendSignIns', 'Dashboard sign-ins'], ['SendBreakIns', 'Break-in attempts']];
     const setUp = (config.GlobalSecretsSet || []).includes('DiscordWebhookUrl') || (config.GlobalSecretsSet || []).includes('TelegramBotToken');
     return `<div class="explain">
       <b>${esc(t('Get notified on Discord or Telegram'))}</b>
       <p style="margin:6px 0 10px">${esc(t('Paste a Discord webhook link or a Telegram bot token below, save, then pick what gets sent. Busy moments are bundled into one message.'))}</p>
       <div class="langpick">${kinds.map(([k, label]) =>
-        `<span class="p ${val(k) ? 'on' : ''}" onclick="editAndRender('${k}', ${!val(k)})">${esc(t(label))}</span>`).join('')}</div>
+        `<span class="p ${val(k) ? 'on' : ''}" role="button" tabindex="0" onclick="editAndRender('${k}', ${!val(k)})">${esc(t(label))}</span>`).join('')}</div>
       <button class="ghost" ${setUp ? '' : 'disabled'} onclick="notifyTest(this)">${esc(t('Send a test message'))}</button>
       ${setUp ? '' : `<span class="muted small" style="margin-left:8px">${esc(t('Save a webhook link or bot token first.'))}</span>`}
       ${telegramConnect()}
@@ -4908,7 +5031,7 @@ function weightsEditor(spec) {
                + (weeklyTip ? ' ' + weeklyTip : ''))}">
       <span class="wsign">%</span>
       <span class="wweek"${weeklyTip ? ` data-tip="${esc(weeklyTip)}"` : ''}>${weeklyTip ? `${weekly}%<i>${esc(t('/week'))}</i>` : ''}</span>
-      ${i === 0 ? `<span class="wact"><b onclick="changingMain=true;renderSettings();setTimeout(()=>{const e=document.querySelector('.wmainedit');if(e)e.focus();},0)" data-tip="${esc(t('Change the main game'))}">⇄</b></span>` : `<span class="wact"><b onclick="makeMain(${i})" data-tip="${esc(t('Make this the main game'))}">↑</b><b onclick="dropWeight(${i})" data-tip="${esc(t('Remove'))}">×</b></span>`}
+      ${i === 0 ? `<span class="wact"><b role="button" tabindex="0" onclick="changingMain=true;renderSettings();setTimeout(()=>{const e=document.querySelector('.wmainedit');if(e)e.focus();},0)" data-tip="${esc(t('Change the main game'))}">⇄</b></span>` : `<span class="wact"><b role="button" tabindex="0" onclick="makeMain(${i})" data-tip="${esc(t('Make this the main game'))}">↑</b><b role="button" tabindex="0" onclick="dropWeight(${i})" data-tip="${esc(t('Remove'))}">×</b></span>`}
     </div>`;
   }).join('');
 
@@ -5181,6 +5304,8 @@ async function downloadBackup(btn) {
   try {
     const res = await fetch('/api/backup', { method: 'POST', headers: authHeaders() });
     if (res.status === 401) { showLogin(); return; }
+    // From outside the home a backup is refused (it holds every saved login) - and says so.
+    if (res.status === 403) { const r = await res.json().catch(() => ({})); toast(r.error || t("That didn't work"), true); return; }
     if (!res.ok) throw new Error(String(res.status));
 
     const blob = await res.blob();
@@ -5317,7 +5442,11 @@ function editBool(name, el) {
 
   // Only when switching OFF, and only for the handful listed above.
   if (!guard || el.checked) {
-    edit(name, el.checked);
+    // Redrawn, not just noted: a switch can show or hide other settings (Human mode brings in the human ones) and
+    // its own explain box says what the new state does. Anything typed elsewhere is already in `pending`, so the
+    // redraw keeps it. Focus goes back to the switch so a keyboard user is not dropped at the top of the page.
+    editAndRender(name, el.checked);
+    document.querySelector(`#settingsBody [data-setting="${CSS.escape(name)}"]`)?.focus();
     return;
   }
 
@@ -5356,8 +5485,8 @@ function discordControl(def, cur, id) {
     const auto = v === '';
     const listed = v.toLowerCase() === 'all' ? bots.map((b) => b.Name.toLowerCase()) : v.split(/[, ]+/).filter(Boolean).map((n) => n.toLowerCase());
     return `<div class="pills" data-setting="${def.Name}">
-      <span class="p ${auto ? 'on' : ''}" onclick="editAndRender('${def.Name}','')">${esc(t('every account not in human mode'))}</span>
-      ${bots.map((b) => `<span class="p ${!auto && listed.includes(b.Name.toLowerCase()) ? 'on' : ''}" onclick="toggleShownAccount(${esc(JSON.stringify(b.Name))})">${esc(b.Name)}</span>`).join('')}</div>`;
+      <span class="p ${auto ? 'on' : ''}" role="button" tabindex="0" onclick="editAndRender('${def.Name}','')">${esc(t('every account not in human mode'))}</span>
+      ${bots.map((b) => `<span class="p ${!auto && listed.includes(b.Name.toLowerCase()) ? 'on' : ''}" role="button" tabindex="0" onclick="toggleShownAccount(${esc(JSON.stringify(b.Name))})">${esc(b.Name)}</span>`).join('')}</div>`;
   }
 
   if (def.Name === 'DiscordButton1' || def.Name === 'DiscordButton2') {
@@ -5454,7 +5583,7 @@ function fieldHtml(def, values, defaults) {
                value="${cleared || cur === undefined ? '' : esc(cur)}" oninput="edit('${def.Name}',this.value)">
         ${state}
         ${isSet && !cleared ? `<button class="ghost small" data-tip="${esc(t("Erase the stored value. There's no undo."))}" onclick="clearSecret('${def.Name}')">${esc(t('Clear'))}</button>` : ''}
-        ${cleared ? `<button class="ghost small" onclick="editAndRender('${def.Name}','')">${esc(t('Undo'))}</button>` : ''}
+        ${cleared ? `<button class="ghost small" onclick="undoClearSecret('${def.Name}')">${esc(t('Undo'))}</button>` : ''}
       </div>`;
       break;
     }
@@ -5471,7 +5600,7 @@ function fieldHtml(def, values, defaults) {
       const opts = parseChoices(tSetting(def, 'choices'));
       ctl = opts.length <= 6
         ? `<div class="pills" data-setting="${def.Name}">${opts.map((o) =>
-            `<span class="p ${Number(cur) === o.value ? 'on' : ''}" onclick="editAndRender('${def.Name}',${o.value})">${esc(o.label)}</span>`).join('')}</div>`
+            `<span class="p ${Number(cur) === o.value ? 'on' : ''}" role="button" tabindex="0" onclick="editAndRender('${def.Name}',${o.value})">${esc(o.label)}</span>`).join('')}</div>`
         : `<select id="${id}" data-setting="${def.Name}" onchange="editAndRender('${def.Name}',parseInt(this.value))">${opts.map((o) =>
             `<option value="${o.value}" ${Number(cur) === o.value ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`;
       break;
@@ -5482,7 +5611,7 @@ function fieldHtml(def, values, defaults) {
       // its store page. Names arrive from Steam after the first draw (learnNames redraws once they're in).
       learnNames(list);
       ctl = `<div class="tags" data-setting="${def.Name}">
-        ${list.map((a, i) => `<span class="tag">${GAME_NAMES[a] ? `<span>${esc(GAME_NAMES[a])}</span>` : ''}<a class="tagid" href="https://store.steampowered.com/app/${a}" target="_blank" rel="noopener" data-tip="${esc(t('Open its Steam store page'))}">${a}</a><b onclick="removeApp('${def.Name}',${i})">×</b></span>`).join('')}
+        ${list.map((a, i) => `<span class="tag">${GAME_NAMES[a] ? `<span>${esc(GAME_NAMES[a])}</span>` : ''}<a class="tagid" href="https://store.steampowered.com/app/${a}" target="_blank" rel="noopener" data-tip="${esc(t('Open its Steam store page'))}">${a}</a><b role="button" tabindex="0" onclick="removeApp('${def.Name}',${i})">×</b></span>`).join('')}
         <input type="text" class="appin" placeholder="${esc(t('appID or store URL'))}" onkeydown="if(event.key==='Enter'||event.key===','){addApp('${def.Name}',this);event.preventDefault();}" onblur="addApp('${def.Name}',this)">
       </div>`;
       break;
@@ -5518,7 +5647,7 @@ function fieldHtml(def, values, defaults) {
     <div class="ctl">${ctl}</div>
     <div class="meta">
       ${def.NeedsRestart ? `<span class="restart" data-tip="${esc(t('This takes effect the next time nocat.farm starts.'))}">⟳</span>` : ''}
-      ${defText !== '' ? `<span class="revert" data-tip="${esc(t('Put this back to the default.'))}" onclick="editAndRender('${def.Name}',${JSON.stringify(def0).replace(/"/g, '&quot;')})">${esc(tf('default {0}', defText))}</span>` : ''}
+      ${defText !== '' ? `<span class="revert" data-tip="${esc(t('Put this back to the default.'))}" role="button" tabindex="0" onclick="editAndRender('${def.Name}',${JSON.stringify(def0).replace(/"/g, '&quot;')})">${esc(tf('default {0}', defText))}</span>` : ''}
     </div></div>`;
 }
 
@@ -5555,7 +5684,7 @@ const PANEL_SECTIONS = new Set(['Discord profile']);
 // Settings drawn by a section's own panel (chips and switches) instead of as rows.
 const PANEL_ROWS = new Set(['DiscordPresence', 'DiscordShowNames', 'DiscordSecondLine', 'DiscordShowCounter', 'DiscordShowAvatar', 'DiscordShowTimer',
   'SendCardDrops', 'SendFreeStuff', 'SendTrades', 'SendProblems', 'SendUpdates', 'SendInstalls', 'SendDailySummary', 'SendComments',
-  'SendAchievements', 'SendRep4Rep']);
+  'SendAchievements', 'SendRep4Rep', 'SendSignIns', 'SendBreakIns']);
 
 function discordCardIntro(val) {
   const on = !!val('DiscordPresence');
@@ -5570,9 +5699,9 @@ function discordCardIntro(val) {
       <label class="switch"><input type="checkbox" ${on ? 'checked' : ''} onchange="editAndRender('DiscordPresence', this.checked)"><span></span></label></div>
     <p style="margin:6px 0 0">${esc(t('While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.'))}</p>
     <div class="langpick">${parts.map(([k, label]) =>
-      `<span class="p ${val(k) ? 'on' : ''}" onclick="editAndRender('${k}', ${!val(k)})">${esc(t(label))}</span>`).join('')}</div>
+      `<span class="p ${val(k) ? 'on' : ''}" role="button" tabindex="0" onclick="editAndRender('${k}', ${!val(k)})">${esc(t(label))}</span>`).join('')}</div>
     <div class="dline"><span class="muted small">${esc(t('Second line'))}</span><div class="langpick">${lines.map(([n, label]) =>
-      `<span class="p ${(n < 0 ? names : !names && line === n) ? 'on' : ''}" onclick="${pickLine(n)}">${esc(t(label))}</span>`).join('')}</div></div>
+      `<span class="p ${(n < 0 ? names : !names && line === n) ? 'on' : ''}" role="button" tabindex="0" onclick="${pickLine(n)}">${esc(t(label))}</span>`).join('')}</div></div>
     ${discordPreview(val)}
     <p class="muted small" style="margin:8px 0 0">${esc(t('Buttons and which accounts it shows are under Show advanced. Discord shows your buttons to everyone but you.'))}</p>
   </div>`;
@@ -5823,6 +5952,13 @@ function refreshPreviews() {
 function clearSecret(name) {
   if (!confirm(t('Erase the stored value? There is no undo.'))) return;
   editAndRender(name, CLEAR_SECRET);
+}
+
+// Undo takes the edit away altogether. Setting it to '' (which means "keep the stored one") left a change behind that
+// changed nothing, and Save offered to save it.
+function undoClearSecret(name) {
+  delete pending[name];
+  renderSettings();
 }
 
 /// An appID, or the store URL somebody pasted instead of one. Returns 0 when it's neither.

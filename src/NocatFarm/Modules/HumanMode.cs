@@ -411,6 +411,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_announcedWarmUp = false;
 		_warmedUp = false;
 		_readyAt = safety > DateTime.UtcNow ? safety : DateTime.UtcNow;
+
+		// Rep4rep sits the night out until the wake time it was given; that time has just moved to now.
+		BotManager.ModuleOf<Rep4RepModule>(Bot)?.DayMoved();
 	}
 
 	/// <summary>

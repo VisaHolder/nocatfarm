@@ -3778,9 +3778,14 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		robot.AddModule(robotIdler);
 		Check("idler, both off: exactly the old list (blacklist still honoured)", robotIdler.Plan(r0).SequenceEqual(OldWay(robot)) && !robotIdler.Plan(r0).Contains(4000u)
 			&& (robotIdler.Rotating == null) && !File.Exists(NocatFarm.Modules.IdleRotation.PathFor("rot-robot")));
-		robotCfg.IdleGames = [.. forty, 777];   // hand-edited past 32: the old code sent it all and Steam cut it at 32
-		Check("idler, both off: a hand-edited 40-game list is passed on untouched, as before", robotIdler.Plan(r0).SequenceEqual(OldWay(robot)) && (robotIdler.Plan(r0).Count == 40)
-			&& !File.Exists(NocatFarm.Modules.IdleRotation.PathFor("rot-robot")));
+		robotCfg.IdleGames = [.. forty, 777];   // hand-edited past 32 (or left long when rotation was switched off)
+		// Cut to what Steam plays at once - 31 beside the custom name. Handed on whole, the account counted 40 as playing
+		// while Steam played 32, and banked 40 game-minutes a minute.
+		Check("idler, both off: a 40-game list is cut to the first 31 beside a custom name", robotIdler.Plan(r0).SequenceEqual(OldWay(robot).Take(31)) && (robotIdler.Plan(r0).Count == 31)
+			&& (robotIdler.Rotating == null) && !File.Exists(NocatFarm.Modules.IdleRotation.PathFor("rot-robot")), $"{robotIdler.Plan(r0).Count}");
+		robotCfg.CustomGameNameEnabled = false;
+		Check("idler, both off: ...and to 32 with no custom name", robotIdler.Plan(r0).SequenceEqual(OldWay(robot).Take(32)), $"{robotIdler.Plan(r0).Count}");
+		robotCfg.CustomGameNameEnabled = true;
 
 		// Rotation on, the same 40: a batch of 31 beside the custom name, 32 without.
 		robotCfg.BlacklistedGames = [];
@@ -5041,6 +5046,527 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("1.5.9 settings file: they're gone on the next save", !System.Text.Json.JsonSerializer.Serialize(old, json).Contains("StopAlert", StringComparison.Ordinal));
 	Check("the alert is gone: no 'alert' command and no StopAlert setting",
 		!NocatFarm.Commands.All.Any(static c => c.Matches("alert")) && NocatFarm.Config.Settings.FindGlobal("StopAlert") == null);
+}
+
+// ── "Open from anywhere" off: the internet is turned away on every request, home and VPNs are not ────────────────────
+{
+	bool Inet(string a) => NocatFarm.Core.RemoteAccess.FromTheInternet(System.Net.IPAddress.Parse(a));
+	Check("internet check: a phone on mobile data is from the internet", Inet("134.41.250.88") && Inet("8.8.8.8") && Inet("2001:4860:4860::8888"));
+	Check("internet check: this PC, home Wi-Fi and link-local are not",
+		!Inet("127.0.0.1") && !Inet("::1") && !Inet("192.168.2.40") && !Inet("10.0.0.5") && !Inet("172.20.1.1") && !Inet("169.254.3.3") && !Inet("fe80::1") && !Inet("fd12:3456::1"));
+	Check("internet check: Tailscale / VPN addresses (100.64.0.0/10) are not", !Inet("100.101.102.103") && Inet("100.128.0.1"));
+	Check("internet check: an IPv4 address written as IPv6 is read as IPv4", !Inet("::ffff:192.168.2.40") && Inet("::ffff:134.41.250.88"));
+	Check("internet check: no address at all (an in-process host) is not", !NocatFarm.Core.RemoteAccess.FromTheInternet(null));
+	string app = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "wwwroot", "app.js"));
+	Check("phone page: 'Open to other devices' is a label, so clicking the switch reaches it",
+		app.Contains("const openFix = `<label class=\"switch\"", StringComparison.Ordinal) && !app.Contains("<span class=\"switch\" ${lockedOn", StringComparison.Ordinal));
+}
+
+// ── the window's command box: up and down through what was typed, like a terminal ─────────────────────────────────
+{
+	var h = new NocatFarm.Windows.CommandHistory();
+	Check("history: nothing typed yet - up does nothing", h.Step(true, "") == null && h.Step(false, "") == null);
+	h.Add("status");
+	h.Add("cards");
+	h.Add("cards");   // twice in a row is kept once
+	h.Add("version");
+	Check("history: up gives the newest, then older", h.Step(true, "half-typed") == "version" && h.Step(true, "") == "cards" && h.Step(true, "") == "status");
+	Check("history: up at the oldest stays there", h.Step(true, "") == null);
+	Check("history: down comes forward again", h.Step(false, "") == "cards" && h.Step(false, "") == "version");
+	Check("history: down past the newest gives back what was being typed", h.Step(false, "") == "half-typed" && h.Step(false, "") == null);
+	h.Add("stuck");
+	Check("history: after a new command, up starts from it", h.Step(true, "") == "stuck");
+	for (int i = 0; i < 150; i++) {
+		h.Add("c" + i);
+	}
+
+	int n = 0;
+	h.Reset();
+
+	while (h.Step(true, "") != null) {
+		n++;
+	}
+
+	Check("history: keeps the last 100", n == NocatFarm.Windows.CommandHistory.Keep, n.ToString());
+	string mw = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Windows", "MainWindow.cs"));
+	Check("history: an answer to a question (a password, a Steam Guard code) or a masked line is never remembered",
+		mw.Contains("if ((Prompt.Pending == null) && (Commands.ForLog(line) == line)) {", StringComparison.Ordinal));
+}
+
+// ── who has been at the dashboard ──────────────────────────────────────────────────────────────────────────────────
+{
+	Check("visitors: an iPhone on Safari", NocatFarm.Core.Visitors.Device("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1") == "iPhone · Safari");
+	Check("visitors: Android Chrome, Windows Edge, a Mac on Firefox",
+		NocatFarm.Core.Visitors.Device("Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Mobile Safari/537.36") == "Android · Chrome"
+		&& NocatFarm.Core.Visitors.Device("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36 Edg/129.0") == "Windows · Edge"
+		&& NocatFarm.Core.Visitors.Device("Mozilla/5.0 (Macintosh; Intel Mac OS X 14.5; rv:130.0) Gecko/20100101 Firefox/130.0") == "Mac · Firefox");
+	Check("visitors: no browser name at all", NocatFarm.Core.Visitors.Device(null) == "unknown" && NocatFarm.Core.Visitors.Device("curl/8.4.0") == "curl/8.4.0");
+	Check("visitors: where - this PC, home, the internet",
+		NocatFarm.Core.Visitors.WhereFrom("127.0.0.1", true) == "this PC" && NocatFarm.Core.Visitors.WhereFrom("192.168.2.40", false) == "home"
+		&& NocatFarm.Core.Visitors.WhereFrom("134.41.250.88", false) == "internet" && NocatFarm.Core.Visitors.WhereFrom("not an address", false) == "home");
+
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-visitors-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	var published = new List<string>();
+	Action<NocatFarm.Topic, string, string> onPub = (topic, src, text) => { if (topic is NocatFarm.Topic.Security or NocatFarm.Topic.BreakIn) published.Add(text); };
+	NocatFarm.Log.Published += onPub;
+
+	try {
+		NocatFarm.Core.Visitors.Reload();
+		Check("visitors: nothing yet says so", NocatFarm.Core.Visitors.Describe().StartsWith("Nobody", StringComparison.Ordinal));
+		NocatFarm.Core.Visitors.Note(NocatFarm.Core.Visitors.What.SignedIn, "192.168.2.40", false, "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1");
+		Check("visitors: a sign-in at home is written down but not sent anywhere", (NocatFarm.Core.Visitors.Recent(5).Count == 1) && (published.Count == 0));
+		NocatFarm.Core.Visitors.Note(NocatFarm.Core.Visitors.What.SignedIn, "134.41.250.88", false, "Mozilla/5.0 (Linux; Android 14) Chrome/129.0 Mobile Safari/537.36");
+		Check("visitors: a sign-in from outside the home goes to Telegram and Discord, with the address and the device",
+			(published.Count == 1) && published[0].Contains("134.41.250.88", StringComparison.Ordinal) && published[0].Contains("Android · Chrome", StringComparison.Ordinal)
+			&& published[0].Contains("Send /visitors signout here", StringComparison.Ordinal), string.Join(" | ", published));
+		NocatFarm.Core.Visitors.Note(NocatFarm.Core.Visitors.What.LockedOut, "8.8.8.8", false, null, 5, 60);
+		Check("visitors: a lockout is sent too", (published.Count == 2) && published[1].Contains("locked out for 60 minutes", StringComparison.Ordinal), string.Join(" | ", published));
+		NocatFarm.Core.Visitors.Note(NocatFarm.Core.Visitors.What.LockedOut, "127.0.0.1", true, null, 5, 1);
+		Check("visitors: you mistyping on this PC is not", published.Count == 2);
+		NocatFarm.Core.Visitors.Note(NocatFarm.Core.Visitors.What.Paused, "9.9.9.9", false, null, 10, 60);
+		Check("visitors: the internet brake is sent", (published.Count == 3) && published[2].Contains("paused for 60 minutes", StringComparison.Ordinal));
+		int before = NocatFarm.Core.Visitors.Recent(500).Count;
+		NocatFarm.Core.Visitors.Note(NocatFarm.Core.Visitors.What.TurnedAway, "1.2.3.4", false, null);
+		NocatFarm.Core.Visitors.Note(NocatFarm.Core.Visitors.What.TurnedAway, "1.2.3.4", false, null);
+		NocatFarm.Core.Visitors.Note(NocatFarm.Core.Visitors.What.TurnedAway, "5.6.7.8", false, null);
+		Check("visitors: the same address turned away over and over is written down once (per 10 minutes)", NocatFarm.Core.Visitors.Recent(500).Count == before + 2);
+		List<NocatFarm.Core.Visitors.Visit> recent = NocatFarm.Core.Visitors.Recent(3);
+		Check("visitors: newest first", (recent[0].Ip == "5.6.7.8") && (recent[1].Ip == "1.2.3.4"));
+		NocatFarm.Core.Visitors.Reload();
+		Check("visitors: kept on disk across a restart", NocatFarm.Core.Visitors.Recent(500).Count == before + 2);
+		for (int i = 0; i < 250; i++) {
+			NocatFarm.Core.Visitors.Note(NocatFarm.Core.Visitors.What.WrongPassword, "10.0.0." + (i % 250), false, null);
+		}
+
+		Check("visitors: only the last 200 are kept", NocatFarm.Core.Visitors.Recent(1000).Count == NocatFarm.Core.Visitors.Keep);
+		string said = NocatFarm.Core.Visitors.Describe(3);
+		Check("visitors: the command lists them and says how to sign everything out", said.Contains("wrong password", StringComparison.Ordinal) && said.Contains("visitors signout", StringComparison.Ordinal), said);
+	} finally {
+		NocatFarm.Log.Published -= onPub;
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+		NocatFarm.Core.Visitors.Reload();
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// best effort
+		}
+	}
+
+	Check("visitors: 'Send dashboard sign-ins' is on by default", new NocatFarm.Config.GlobalConfig().SendSignIns);
+	Check("visitors: 'visitors' is a command, 'who' too", NocatFarm.Commands.All.Any(static c => c.Matches("visitors")) && NocatFarm.Commands.All.Any(static c => c.Matches("who")));
+}
+
+// ── a code on Telegram for signing in from outside ─────────────────────────────────────────────────────────────────
+{
+	Check("sign-in code: on by default", new NocatFarm.Config.GlobalConfig().WebSignInCode);
+	var def = NocatFarm.Config.Settings.FindGlobal("WebSignInCode");
+	Check("sign-in code: a setting in the Dashboard section, not hidden behind Show advanced", (def != null) && !def.Advanced && def.Section == NocatFarm.Config.Settings.FindGlobal("WebRemoteAccess")!.Section);
+	Check("sign-in code: nothing to send it to without Telegram (then the password is enough, as before)",
+		!NocatFarm.Core.Notifier.CanSendPrivately || (NocatFarm.Config.Live.Global.TelegramBotToken.Length > 0));
+	string host = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Web", "WebHost.cs"));
+	Check("sign-in code: only asked from the internet, and only when Telegram can take it",
+		host.Contains("private bool NeedsCode(bool internet) => internet && _cfg.WebSignInCode && Notifier.CanSendPrivately;", StringComparison.Ordinal));
+	Check("sign-in code: compared in constant time, bound to the address it was sent for, five tries",
+		host.Contains("CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(typed.PadRight(6))", StringComparison.Ordinal)
+		&& host.Contains("(pending.Ip != ip)", StringComparison.Ordinal) && host.Contains("private const int CodeTries = 5;", StringComparison.Ordinal));
+	Check("sign-in code: a wrong code counts towards the same lockout and brake as a wrong password",
+		host.Contains("Visitors.What.WrongCode);", StringComparison.Ordinal) && host.Contains("private void CountFailure(", StringComparison.Ordinal));
+}
+
+// ── who is asking: a proxy's forwarded address, read so nobody outside can pass for home ────────────────────────
+{
+	var whoFn = typeof(NocatFarm.Web.WebHost).GetMethod("WhoIsSigningIn", BindingFlags.NonPublic | BindingFlags.Static)!;
+	(string Ip, bool ThisPc) Ask(string from, params (string Name, string Value)[] headers) {
+		var ctx = new Microsoft.AspNetCore.Http.DefaultHttpContext();
+		ctx.Connection.RemoteIpAddress = System.Net.IPAddress.Parse(from);
+		foreach ((string n, string v) in headers) {
+			ctx.Request.Headers[n] = v;
+		}
+
+		return ((string, bool)) whoFn.Invoke(null, [ctx])!;
+	}
+
+	Check("forwarded: a direct visitor is who they are", Ask("134.41.250.88") == ("134.41.250.88", false) && Ask("192.168.2.40") == ("192.168.2.40", false));
+	Check("forwarded: this PC with no proxy is this PC", Ask("127.0.0.1") == ("127.0.0.1", true));
+	Check("forwarded: the last X-Forwarded-For entry, not the first (the visitor writes the first)",
+		Ask("127.0.0.1", ("X-Forwarded-For", "192.168.1.5, 134.41.250.88")) == ("134.41.250.88", false));
+	Check("forwarded: a made-up home address in X-Real-IP can't hide an internet one the proxy added",
+		Ask("127.0.0.1", ("X-Forwarded-For", "134.41.250.88"), ("X-Real-IP", "192.168.1.5")).Ip == "134.41.250.88");
+	Check("forwarded: RFC 7239 Forwarded: for= is read, port and brackets and all",
+		Ask("127.0.0.1", ("Forwarded", "for=\"[2001:db8:cafe::17]:4711\";proto=https")).Ip == "2001:db8:cafe::17"
+		&& Ask("127.0.0.1", ("X-Real-IP", "203.0.113.9:5555")).Ip == "203.0.113.9");
+	Check("forwarded: an address that can't be read counts as the internet, never home",
+		NocatFarm.Web.WebHost.IsInternet("unknown") && NocatFarm.Web.WebHost.IsInternet("") && !NocatFarm.Web.WebHost.IsInternet("10.1.2.3"));
+	Check("visitors: IPv6 turned-away visitors are grouped by /64",
+		NocatFarm.Core.Visitors.Neighbourhood("2001:db8:1:2::aaaa") == NocatFarm.Core.Visitors.Neighbourhood("2001:db8:1:2:ffff::1")
+		&& NocatFarm.Core.Visitors.Neighbourhood("2001:db8:1:3::1") != NocatFarm.Core.Visitors.Neighbourhood("2001:db8:1:2::1")
+		&& NocatFarm.Core.Visitors.Neighbourhood("134.41.250.88") == "134.41.250.88");
+}
+
+// ── Steam-chat masters can't see the dashboard's visitors or take a backup ───────────────────────────────────────────
+{
+	Check("steam chat: visitors, who, backup, report and stuck are refused",
+		new[] { "visitors", "backup", "report", "stuck" }.All(NocatFarm.Commands.SteamChatRefuses));
+	string cmds = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Commands.cs"));
+	Check("steam chat: refused by the command an alias reaches ('who' is 'visitors')", cmds.Contains("if (Resolve(verb)?.Name is { } name && SteamChatRefuses(name)) {", StringComparison.Ordinal));
+}
+
+// ── backups only at home; break-in alerts; switching itself off ─────────────────────────────────────────────────────
+{
+	string host = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Web", "WebHost.cs"));
+	Check("backup: the download and both restore steps refuse the internet",
+		System.Text.RegularExpressions.Regex.Matches(host, @"if \(FromOutside\(ctx\)\) \{\s+return HomeOnly\(\);").Count == 3);
+	Check("break-ins: their own switch, on by default, and lockouts use it",
+		new NocatFarm.Config.GlobalConfig().SendBreakIns && (NocatFarm.Config.Settings.FindGlobal("SendBreakIns") != null)
+		&& NocatFarm.Core.Notifier.Wanted(NocatFarm.Topic.BreakIn) == NocatFarm.Config.Live.Global.SendBreakIns);
+	var off = NocatFarm.Config.Settings.FindGlobal("WebRemoteOffAfter");
+	Check("switching itself off: 5 wrong passwords or codes from the internet by default, 0 = never",
+		(new NocatFarm.Config.GlobalConfig().WebRemoteOffAfter == 5) && (off != null) && (off.Min == 0));
+	Check("switching itself off: it shuts a Public address set by hand too, until Open from anywhere is on again",
+		host.Contains("if ((InternetShut() || (!_cfg.WebRemoteAccess", StringComparison.Ordinal) && host.Contains("if (_internetShut && _cfg.WebRemoteAccess) {", StringComparison.Ordinal));
+	string upd = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "UpdateCheck.cs"));
+	Check("updates: an account waiting for a Steam Guard code doesn't hold them for ever", upd.Contains("(b.State is BotState.Failed or BotState.NeedsGuard)", StringComparison.Ordinal));
+}
+
+// ── what the owner's log said wrong: idle count, trade names, doubled calls, licence spam, stale echoes, waits ─────
+{
+	string Src(string rel) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", rel)).Replace("\r\n", "\n");
+	const BindingFlags Any = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance;
+
+	// "no cards left - idling 💀name💀 (+8)" on an account really idling 31.
+	MethodInfo idleSummary = typeof(NocatFarm.Modules.CardFarmer).GetMethod("IdleSummary", Any)!;
+	string IdleSays(string? name, int playing) => ((NocatFarm.Core.Said) idleSummary.Invoke(null, [name, playing])!).ToEnglish();
+	Check("no cards left: the custom name with what's really playing", IdleSays("💀nocat.lol💀", 31) == "💀nocat.lol💀 (+31)", IdleSays("💀nocat.lol💀", 31));
+	Check("no cards left: no name - the count playing; nothing - 'your games'", IdleSays(null, 31) == "31 game(s)" && IdleSays("", 0) == "your games" && IdleSays("x", 0) == "x");
+	string farmer = Src(Path.Combine("Modules", "CardFarmer.cs"));
+	int assertAt = farmer.IndexOf("BotManager.ModuleOf<Idler>(Bot)?.Assert();", StringComparison.Ordinal);
+	int saidAt = farmer.IndexOf("new Said(\"no cards left - idling {0}{1}\"", StringComparison.Ordinal);
+	Check("no cards left: said after the idler has put its games on, from what is playing",
+		(assertAt > 0) && (saidAt > assertAt) && farmer.Contains("int idling = Bot.CanPlay ? Bot.PlayingApps.Count : Bot.Cfg.IdleGames.Count;", StringComparison.Ordinal));
+
+	// Trades: the name is read before Finish forgets it.
+	string trading = Src(Path.Combine("Modules", "Trading.cs"));
+	Check("trades: 'accepted offer N from' uses the name read before Finish",
+		trading.Contains("string who = Who(offer);\n\t\t\t\tFinish(offer.Id);", StringComparison.Ordinal)
+		&& trading.Contains("NumberOf(offer.Id), who, offer.Receiving.Sum(", StringComparison.Ordinal)
+		&& trading.Contains("Log.Trade(NeedsConfirming(offer, result, who), Bot.Name);", StringComparison.Ordinal));
+	Check("trades: 'confirm it...' never reads Who after Finish",
+		!trading.Contains("Finish(offer.Id);\n\t\t\t\t\t\tlines.Add(NeedsConfirming(", StringComparison.Ordinal)
+		&& trading.Contains("Said confirm = NeedsConfirming(offer, result, Who(offer));", StringComparison.Ordinal));
+
+	// Library: two modules asking at sign-in share one read.
+	var lbot = new NocatFarm.Core.Bot("harness-lib-" + Guid.NewGuid().ToString("N")[..6], new NocatFarm.Config.BotConfig());
+	NocatFarm.Core.Library lib = lbot.Library;
+	FieldInfo refreshing = typeof(NocatFarm.Core.Library).GetField("_refreshing", Any)!;
+	var inFlight = new TaskCompletionSource<bool>();
+	refreshing.SetValue(lib, inFlight.Task);
+	Task<bool> first = lib.RefreshIfStaleAsync(TimeSpan.FromHours(6), CancellationToken.None);
+	Task<bool> second = lib.RefreshAsync(CancellationToken.None);
+	Check("library: a second caller waits for the read already going, doesn't start its own",
+		!first.IsCompleted && !second.IsCompleted && ReferenceEquals(refreshing.GetValue(lib), inFlight.Task));
+	inFlight.SetResult(true);
+	Check("library: both get that read's answer", first.Result && second.Result);
+	var stopped = new TaskCompletionSource<bool>();
+	refreshing.SetValue(lib, stopped.Task);
+	Task<bool> joined = lib.RefreshAsync(CancellationToken.None);
+	stopped.SetCanceled();
+	Check("library: the first caller stopping is 'not read' for the one waiting, not a crash", !joined.Result);
+	Check("library: with no read going (and signed out) it reads itself - and says no", !lib.RefreshAsync(CancellationToken.None).Result);
+	await lbot.DisposeAsync();
+
+	// Licences: each recent one once; the account's own copy wins over a family member's.
+	MethodInfo newLic = typeof(NocatFarm.Core.Bot).GetMethod("NewLicences", Any)!;
+	List<uint> NewLic(uint[] before, uint[] now) => (List<uint>) newLic.Invoke(null, [new HashSet<uint>(before), now])!;
+	Check("licences: first push - every recent one", NewLic([], [1, 2, 3]).SequenceEqual([1u, 2u, 3u]));
+	Check("licences: the same list again - nothing", NewLic([1, 2, 3], [1, 2, 3]).Count == 0);
+	Check("licences: one added - only that one", NewLic([1, 2, 3], [1, 2, 3, 4]).SequenceEqual([4u]));
+	MethodInfo replaces = typeof(NocatFarm.Core.Bot).GetMethod("Replaces", Any)!;
+	bool Replaces(bool hadOwn, bool own) => (bool) replaces.Invoke(null, [hadOwn, own])!;
+	Check("licences: a family copy never replaces the account's own", !Replaces(true, false));
+	Check("licences: the account's own replaces a family copy; same kind, the later one", Replaces(false, true) && Replaces(true, true) && Replaces(false, false));
+	string botSrc = Src(Path.Combine("Core", "Bot.cs"));
+	Check("licences: the count and the recent list are only written when they change",
+		botSrc.Contains("if (cb.LicenseList.Count != _licenceCountLogged) {", StringComparison.Ordinal)
+		&& botSrc.Contains("recent.Where(l => fresh.Contains(l.PackageID))", StringComparison.Ordinal));
+
+	// Gifts: the two pushes for one gift are one look.
+	MethodInfo settle = typeof(NocatFarm.Modules.Gifts).GetMethod("SettleAsync", Any)!;
+	var poke = new SemaphoreSlim(0);
+	poke.Release();   // the gift count
+	Task settling = (Task) settle.Invoke(null, [poke, TimeSpan.FromMilliseconds(300), CancellationToken.None])!;
+	poke.Release();   // the guest-pass list, a moment later
+	await settling;
+	Check("gifts: a second wake-up inside the settle is the same look", poke.CurrentCount == 0);
+
+	// Persona: the first echo after signing in is the last session's, not a fight.
+	var pbot = new NocatFarm.Core.Bot("harness-persona-" + Guid.NewGuid().ToString("N")[..6], new NocatFarm.Config.BotConfig { OnlineStatus = 7 });
+	void PSet(string name, object? value) => typeof(NocatFarm.Core.Bot).GetProperty(name)!.SetValue(pbot, value);
+	const ulong me = 76561198000000001UL;
+	PSet("State", NocatFarm.Core.BotState.Online);
+	PSet("SteamId", me);
+
+	void Put(object o, string name, object? value) {
+		PropertyInfo? p = o.GetType().GetProperty(name, Any);
+
+		if (p?.GetSetMethod(true) is { } set) {
+			set.Invoke(o, [value]);
+		} else {
+			o.GetType().GetField($"<{name}>k__BackingField", Any)!.SetValue(o, value);
+		}
+	}
+
+	object Echo(SteamKit2.EPersonaState state) {
+		object cb = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(SteamKit2.SteamFriends.PersonaStateCallback));
+		Put(cb, "FriendID", new SteamKit2.SteamID(me));
+		Put(cb, "State", state);
+		Put(cb, "GameID", new SteamKit2.GameID(0));
+
+		return cb;
+	}
+
+	MethodInfo onPersona = typeof(NocatFarm.Core.Bot).GetMethod("OnPersonaState", Any)!;
+	onPersona.Invoke(pbot, [Echo(SteamKit2.EPersonaState.Online)]);
+	Check("persona: the stale first echo after sign-in isn't a fight", !pbot.PersonaContested);
+	onPersona.Invoke(pbot, [Echo(SteamKit2.EPersonaState.Online)]);
+	Check("persona: still not ours on the next echo - that is one", pbot.PersonaContested);
+	typeof(NocatFarm.Core.Bot).GetMethod("ForgetConnection", Any)!.Invoke(pbot, []);
+	onPersona.Invoke(pbot, [Echo(SteamKit2.EPersonaState.Online)]);
+	Check("persona: a new sign-in's first echo is stale again", !pbot.PersonaContested);
+	await pbot.DisposeAsync();
+
+	// The status says the real wait after you stop playing.
+	MethodInfo picking = typeof(NocatFarm.Core.BotStatus).GetMethod("PickingBackUp", Any)!;
+
+	string Picking(double minutes) {
+		DateTime now = DateTime.UtcNow;
+
+		return ((NocatFarm.Core.Said) picking.Invoke(null, [now.AddMinutes(minutes), now])!).ToEnglish();
+	}
+
+	Check("status: 'picking back up in 14m' while 14 minutes are left", Picking(13.5) == "picking back up in 14m", Picking(13.5));
+	Check("status: 'in a moment' only for the last minute", Picking(0.5) == "picking back up in a moment" && Picking(-1) == "picking back up in a moment");
+	Check("status: reads the Bot's own resume time", Src(Path.Combine("Core", "BotStatus.cs")).Contains("PickingBackUp(bot.ResumesAt, DateTime.UtcNow)", StringComparison.Ordinal));
+
+	// "other session" only when it is another session.
+	MethodInfo stateLine = typeof(NocatFarm.Core.Bot).GetMethod("SessionStateLine", Any)!;
+	string StateLine(bool blocked, uint app) => ((NocatFarm.Core.Said) stateLine.Invoke(null, [blocked, app])!).ToEnglish();
+	Check("session report: our own game list isn't 'another session'",
+		!StateLine(false, 730).Contains("other", StringComparison.Ordinal) && StateLine(false, 730).Contains("this session is playing app 730", StringComparison.Ordinal));
+	Check("session report: blocked is another session; nothing is nothing",
+		StateLine(true, 730).Contains("another session is playing app 730", StringComparison.Ordinal) && (StateLine(false, 0) == "Steam says: not blocked - nothing playing"));
+
+	// Rep4rep sleeps through the account's night instead of looking every few minutes.
+	MethodInfo dayWait = typeof(NocatFarm.Modules.Rep4RepModule).GetMethod("DayWaitSeconds", Any)!;
+	int DayWait(NocatFarm.Modules.HumanMode.Phase phase, DateTime? wakes, DateTime now) => (int) dayWait.Invoke(null, [phase, wakes, now, 300, 120])!;
+	DateTime night = new(2026, 9, 30, 1, 0, 0, DateTimeKind.Utc);
+	Check("rep4rep: asleep - until it gets up, and a little more", DayWait(NocatFarm.Modules.HumanMode.Phase.Asleep, night.AddHours(8), night) == (8 * 3600) + 120);
+	Check("rep4rep: overnight idling is asleep too", DayWait(NocatFarm.Modules.HumanMode.Phase.NightIdle, night.AddHours(2), night) == (2 * 3600) + 120);
+	Check("rep4rep: never past twelve hours", DayWait(NocatFarm.Modules.HumanMode.Phase.Asleep, night.AddHours(20), night) == 12 * 3600);
+	Check("rep4rep: awake, or no wake time - the usual few minutes",
+		(DayWait(NocatFarm.Modules.HumanMode.Phase.WarmingUp, night.AddHours(8), night) == 300) && (DayWait(NocatFarm.Modules.HumanMode.Phase.Asleep, null, night) == 300)
+		&& (DayWait(NocatFarm.Modules.HumanMode.Phase.Asleep, night.AddMinutes(-1), night) == 300));
+	Check("rep4rep: 'wake' cuts the night's wait short", Src(Path.Combine("Modules", "HumanMode.cs")).Contains("BotManager.ModuleOf<Rep4RepModule>(Bot)?.DayMoved();", StringComparison.Ordinal));
+
+	// The market: doubling to four hours, then twice a day, said once.
+	MethodInfo cool = typeof(NocatFarm.PriceBook).GetMethod("NextCoolMinutes", Any)!;
+	int Cool(int now) => (int) cool.Invoke(null, [now])!;
+	Check("market: 15, 30 ... up to 240 minutes", (Cool(0) == 15) && (Cool(15) == 30) && (Cool(120) == 240) && (Cool(200) == 240));
+	Check("market: refused after four hours' rest - twice a day from then on", (Cool(240) == 720) && (Cool(720) == 720));
+	string book = Src(Path.Combine("Core", "PriceBook.cs"));
+	Check("market: the refusal is said once, plainly, and the pause line isn't repeated with it",
+		book.Contains("if (refused && !_saidRefused) {", StringComparison.Ordinal) && book.Contains("} else if (!refused) {", StringComparison.Ordinal)
+		&& book.Contains("_saidRefused = _coolMinutes >= RefusedMinutes;", StringComparison.Ordinal));
+}
+
+// ── dashboard, idler, backup and stuck-alarm fixes ────────────────────────────────────────────────────────────────────
+{
+	string web = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm");
+	string app = File.ReadAllText(Path.Combine(web, "wwwroot", "app.js"));
+	string indexPage = File.ReadAllText(Path.Combine(web, "wwwroot", "index.html"));
+	string host = File.ReadAllText(Path.Combine(web, "Web", "WebHost.cs"));
+	string idlerSrc = File.ReadAllText(Path.Combine(web, "Modules", "Idler.cs"));
+	// The body of one function in app.js, up to the next top-level function - enough to check what it does.
+	string Fn(string head) {
+		int at = app.IndexOf(head, StringComparison.Ordinal);
+		if (at < 0) {
+			return "";
+		}
+
+		int end = app.IndexOf("\nfunction ", at + head.Length, StringComparison.Ordinal);
+		int endAsync = app.IndexOf("\nasync function ", at + head.Length, StringComparison.Ordinal);
+		end = (end < 0) ? endAsync : (endAsync < 0) ? end : Math.Min(end, endAsync);
+		return end < 0 ? app[at..] : app[at..end];
+	}
+
+	// 1. The plugin switch shows the saved choice, not what was loaded at start-up.
+	Check("plugins: the switch reads the saved choice", host.Contains("Enabled = !Live.Global.DisabledPlugins.Contains(p.Name, StringComparer.OrdinalIgnoreCase)", StringComparison.Ordinal)
+		&& !host.Contains("p.Name, p.Version, p.File, p.Enabled,", StringComparison.Ordinal));
+
+	// 2. A settings switch redraws the form (Human mode brings in the human settings), keeping what was typed elsewhere.
+	string editBool = Fn("function editBool(");
+	Check("settings: an on/off switch redraws the form", editBool.Contains("editAndRender(name, el.checked);", StringComparison.Ordinal)
+		&& !editBool.Contains("    edit(name, el.checked);", StringComparison.Ordinal));
+	Check("settings: the redraw keeps other unsaved edits (it draws from pending)", Fn("function editAndRender(").Contains("pending[name] = value;", StringComparison.Ordinal)
+		&& Fn("function liveValue(").Contains("pending[name] !== undefined ? pending[name] : values[name]", StringComparison.Ordinal));
+
+	// 3. Settings on an account added since the indexPage read its settings opens that account, not Global.
+	string openSet = Fn("async function openBotSettings(");
+	Check("settings: an account's Settings button reads the settings again when that account is missing",
+		openSet.Contains("await loadConfig()", StringComparison.Ordinal) && openSet.Contains("selectSettings(name);", StringComparison.Ordinal)
+		&& app.Contains("case 'settings': closeModal(); openBotSettings(name); break;", StringComparison.Ordinal));
+	Check("settings: adding an account (dialog or welcome) reads the settings again",
+		Fn("async function createBot(").Contains("loadConfig()", StringComparison.Ordinal) && Fn("async function createFirstBot(").Contains("loadConfig()", StringComparison.Ordinal));
+
+	// 4. The inventory Value button says what the server said.
+	string inv = Fn("async function refreshInventory(");
+	Check("inventory: Value shows the error instead of always 'reading'", inv.Contains("res.ok", StringComparison.Ordinal) && inv.Contains("res.error", StringComparison.Ordinal));
+
+	// 5. A plugin's on/off setting stored as "True" shows as on.
+	Check("plugins: a bool setting is read without caring about case", app.Contains("String(sett.Value).toLowerCase() === 'true'", StringComparison.Ordinal)
+		&& !app.Contains("sett.Value === 'true'", StringComparison.Ordinal));
+
+	// 6. Tab hotkeys: not with a modifier held, not behind a dialog or the walkthrough.
+	int hk = app.IndexOf("// 1-9 are the tabs as they're shown", StringComparison.Ordinal);
+	string hotkeys = hk < 0 ? "" : app[Math.Max(0, hk - 900)..hk];
+	Check("hotkeys: ignored with Ctrl/Alt/Cmd, behind a dialog, the walkthrough or the sign-in screen",
+		hotkeys.Contains("e.ctrlKey || e.altKey || e.metaKey", StringComparison.Ordinal) && hotkeys.Contains("tutorialOpen || !$('modal').classList.contains('hidden')", StringComparison.Ordinal));
+
+	// 7. Everything clickable that isn't a button or a link with an address can be reached with Tab and pressed with Enter/Space.
+	List<string> unreachable = [];
+	foreach ((string file, string text) in new[] { ("app.js", app), ("index.html", indexPage) }) {
+		foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(text, @"<(?:span|div|a|b|li|td|i|label)\b[^<>]*?onclick=")) {
+			if (!m.Value.Contains("role=\"button\"", StringComparison.Ordinal) && !m.Value.Contains("href=", StringComparison.Ordinal)) {
+				unreachable.Add(file + ": " + m.Value[..Math.Min(60, m.Value.Length)]);
+			}
+		}
+	}
+
+	Check("keyboard: no clickable span/div/link without role=button and tabindex", unreachable.Count == 0, string.Join(" | ", unreachable.Take(5)));
+	Check("keyboard: the walkthrough links, account-type cards, auth picker and jump links are reachable",
+		indexPage.Contains("role=\"button\" tabindex=\"0\" onclick=\"go('phone')\"", StringComparison.Ordinal) && indexPage.Contains("role=\"button\" tabindex=\"0\" onclick=\"startTutorial()\"", StringComparison.Ordinal)
+		&& indexPage.Contains("id=\"w-type-human\" role=\"button\" tabindex=\"0\"", StringComparison.Ordinal) && app.Contains("id=\"a-type-robot\" role=\"button\" tabindex=\"0\"", StringComparison.Ordinal)
+		&& app.Contains("data-auth-pick=\"${esc(a.Name)}\" role=\"button\" tabindex=\"0\"", StringComparison.Ordinal) && app.Contains("<a class=\"j\" role=\"button\" tabindex=\"0\" data-jump=", StringComparison.Ordinal));
+	Check("keyboard: Enter and Space press anything with role=button (walkthrough cards included)",
+		app.Contains("((e.key !== 'Enter') && (e.key !== ' ')) || e.isComposing || e.defaultPrevented", StringComparison.Ordinal)
+		&& app.Contains("(el.getAttribute('role') !== 'button') || (el.tagName === 'BUTTON')) return;", StringComparison.Ordinal));
+
+	// 8. rep4rep "Post now" says what the account can really do.
+	string postNow = Fn("async function postNow(");
+	Check("rep4rep: Post now reads the account's row and says off / signed out / at its cap",
+		postNow.Contains("/api/rep4rep/profiles", StringComparison.Ordinal) && postNow.Contains("!p.Enabled", StringComparison.Ordinal)
+		&& postNow.Contains("!p.Online", StringComparison.Ordinal) && postNow.Contains("p.Today >= p.Cap", StringComparison.Ordinal)
+		&& !postNow.Contains("will post as soon as the daily cap allows", StringComparison.Ordinal));
+
+	// 9. Clear, then Undo, leaves nothing to save.
+	Check("secrets: Undo after Clear takes the change away", Fn("function undoClearSecret(").Contains("delete pending[name];", StringComparison.Ordinal)
+		&& app.Contains("onclick=\"undoClearSecret('${def.Name}')\"", StringComparison.Ordinal) && !app.Contains("onclick=\"editAndRender('${def.Name}','')\">${esc(t('Undo'))}", StringComparison.Ordinal));
+
+	// 10. A code that ran out is fetched once, not once a second until the answer lands.
+	string codes = Fn("async function loadAuthCodes(");
+	Check("authenticator: one code request at a time", app.Contains("let authCodesLoading = false;", StringComparison.Ordinal)
+		&& codes.Contains("if (authCodesLoading) return;", StringComparison.Ordinal) && codes.Contains("finally { authCodesLoading = false; }", StringComparison.Ordinal));
+
+	// 11. Searching finds the Notifications and Discord chips.
+	string render = Fn("function renderSettings(");
+	Check("settings search: a chip setting's panel shows when the search matches it", render.Contains("PANEL_ROWS.has(d.Name) && found(d) && (!onlyChanged || isChanged(d, values, defaults))", StringComparison.Ordinal)
+		&& render.Contains("!fields.length && !panelHit &&", StringComparison.Ordinal));
+
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	NocatFarm.Config.GlobalConfig realGlobal = NocatFarm.Config.Live.Global;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-uifix-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig();
+
+	try {
+		List<uint> forty = [.. Enumerable.Range(1, 40).Select(static i => (uint) i)];
+
+		// 12. Both settings off: still no more than Steam plays at once.
+		var cfg = new NocatFarm.Config.BotConfig { CustomGameName = "nocat.lol", IdleGames = [.. forty] };
+		var bot = new NocatFarm.Core.Bot("uifix-idle", cfg);
+		var idler = new NocatFarm.Modules.Idler(bot);
+		bot.AddModule(idler);
+		Check("idler, both off: 40 listed -> 31 beside a custom name, in list order", idler.Plan(DateTime.UtcNow).SequenceEqual(forty.Take(31)), $"{idler.Plan(DateTime.UtcNow).Count}");
+		cfg.CustomGameNameEnabled = false;
+		Check("idler, both off: 40 listed -> 32 with no custom name", idler.Plan(DateTime.UtcNow).SequenceEqual(forty.Take(32)));
+		cfg.IdleGames = [730, 440, 730];
+		Check("idler, both off: a short list plays whole (a repeat once)", idler.Plan(DateTime.UtcNow).SequenceEqual<uint>([730, 440]));
+
+		// 13. The rotation card goes when something else owns the account.
+		cfg.IdleGames = [.. forty];
+		cfg.RotateIdleGames = true;
+		idler.Plan(DateTime.UtcNow);
+		bool wasRotating = idler.Rotating != null;
+		cfg.LegitMode = true;
+		idler.Assert();
+		Check("idler: human mode owning the account clears the rotation card", wasRotating && (idler.Rotating == null));
+		cfg.LegitMode = false;
+		idler.Plan(DateTime.UtcNow);
+		typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(bot, NocatFarm.Core.BotState.Online);
+		typeof(NocatFarm.Core.Bot).GetProperty("IsFarming")!.SetValue(bot, true);
+		idler.Assert();
+		Check("idler: farming clears the rotation card", idler.Rotating == null);
+		typeof(NocatFarm.Core.Bot).GetProperty("IsFarming")!.SetValue(bot, false);
+		typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(bot, NocatFarm.Core.BotState.Stopped);
+		int grind = idlerSrc.IndexOf("if (Bot.Grinding) {", idlerSrc.IndexOf("public void Assert()", StringComparison.Ordinal), StringComparison.Ordinal);
+		Check("idler: a grind clears the rotation card", (grind > 0) && idlerSrc[grind..(grind + 400)].Contains("Rotating = null;", StringComparison.Ordinal));
+
+		// 14. The rotation is made once, however many threads ask first.
+		var fresh = new NocatFarm.Modules.Idler(new NocatFarm.Core.Bot("uifix-race", new NocatFarm.Config.BotConfig()));
+		var made = new System.Collections.Concurrent.ConcurrentBag<NocatFarm.Modules.IdleRotation>();
+		using (var go = new ManualResetEventSlim()) {
+			Thread[] threads = [.. Enumerable.Range(0, 16).Select(_ => new Thread(() => { go.Wait(); made.Add(fresh.Rotation); }))];
+			foreach (Thread th in threads) {
+				th.Start();
+			}
+
+			go.Set();
+			foreach (Thread th in threads) {
+				th.Join();
+			}
+		}
+
+		Check("idler: the rotation is created once when two threads ask together", (made.Count == 16) && made.All(r => ReferenceEquals(r, made.First()))
+			&& idlerSrc.Contains("lock (_rotationGate) {", StringComparison.Ordinal));
+
+		// 15. The backup keeps what "Learn from how I play" learned and where the rotation is.
+		MethodInfo kind = typeof(NocatFarm.Core.Backup).GetMethod("Kind", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)!;
+		string? Kind(string rel) => (string?) kind.Invoke(null, [rel]);
+		Check("backup: state/owner-<account>.json and state/rotation-<account>.json go in",
+			(Kind("state/owner-new.json") == "state") && (Kind("state/rotation-kylro.json") == "state") && (Kind("state/owner-../x.json") == null));
+		string ownerPath = (string) typeof(NocatFarm.Modules.OwnerHabits)
+			.GetMethod("PathFor", BindingFlags.Static | BindingFlags.NonPublic)!.Invoke(null, ["new"])!;
+		string rotPath = NocatFarm.Modules.IdleRotation.PathFor("new");
+		string Rel(string full) => Path.GetRelativePath(NocatFarm.Config.ConfigStore.ConfigDir, full).Replace('\\', '/');
+		Check("backup: ...under the names OwnerHabits and IdleRotation really use", (Kind(Rel(ownerPath)) == "state") && (Kind(Rel(rotPath)) == "state"), $"{Rel(ownerPath)}, {Rel(rotPath)}");
+
+		// 16. "Idle my whole library" with an empty list has games to play - not banking is worth an alarm.
+		Type sw = typeof(NocatFarm.Core.StuckWatch);
+		Type watchT = sw.GetNestedType("Watch", BindingFlags.NonPublic | BindingFlags.Public)!;
+		MethodInfo excuse = sw.GetMethod("Excuse", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)!;
+		string ExcuseOf(NocatFarm.Config.BotConfig c) {
+			var b = new NocatFarm.Core.Bot("uifix-stuck", c);
+			typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(b, NocatFarm.Core.BotState.Online);
+			return ((NocatFarm.Core.Said) excuse.Invoke(null, [b, Activator.CreateInstance(watchT, true)!, new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc)])!).ToEnglish();
+		}
+
+		Check("stuck alarm: an empty list is still 'nothing to play'", ExcuseOf(new NocatFarm.Config.BotConfig { CustomGameNameEnabled = false }) == "nothing to play");
+		string whole = ExcuseOf(new NocatFarm.Config.BotConfig { CustomGameNameEnabled = false, IdleWholeLibrary = true });
+		Check("stuck alarm: an empty list with 'Idle my whole library' is not excused", whole.Length == 0, whole);
+	} finally {
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+		NocatFarm.Config.Live.Global = realGlobal;
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
 }
 
 // SETTINGSCOUNT

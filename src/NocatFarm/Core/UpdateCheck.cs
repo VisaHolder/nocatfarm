@@ -410,7 +410,9 @@ public static class UpdateCheck {
 		List<string> clear = [];
 
 		foreach (Bot b in mgr.All) {
-			if (!b.Cfg.Enabled || !b.Running || (b.State == BotState.Failed)) {
+			// An account waiting for a Steam Guard code waits for you, not for Steam - it would have held every update until
+			// somebody typed the code. A restart asks for it again.
+			if (!b.Cfg.Enabled || !b.Running || (b.State is BotState.Failed or BotState.NeedsGuard)) {
 				continue;   // nothing running there to disturb
 			}
 

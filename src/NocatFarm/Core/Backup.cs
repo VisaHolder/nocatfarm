@@ -10,7 +10,7 @@ namespace NocatFarm.Core;
 /// <summary>
 /// One zip with everything worth keeping - the settings, every account, login tokens, authenticator files and the
 /// state that took time to build (history, lifetime totals, today's plans, hunt progress, rep4rep counts, the key
-/// queue) - and the way back from one.
+/// queue, what "Learn from how I play" learned, the idle rotation's place) - and the way back from one.
 /// </summary>
 /// <remarks>
 /// What goes in is a fixed list, not "the config folder": caches, logs and temp files are either rebuilt by themselves
@@ -112,7 +112,7 @@ public static partial class Backup {
 		@"|state/(?<key>)secret\.key" +
 		@"|state/history/(?<hist>)\d{4}-\d{2}\.json" +
 		@"|state/(?:lifetime|lifetime-games|keys|report|weekly-report)\.json" +
-		@"|state/(?:human|hunt|rep4rep)-(?<name>[^/\\:*?""<>|]+)\.json)$", RegexOptions.CultureInvariant)]
+		@"|state/(?:human|hunt|rep4rep|owner|rotation)-(?<name>[^/\\:*?""<>|]+)\.json)$", RegexOptions.CultureInvariant)]
 	private static partial Regex Pattern();
 
 	/// <summary>Every file of ours in the config folder now, as (path under config/ with forward slashes, full path).</summary>
@@ -239,6 +239,7 @@ public static partial class Backup {
 		sb.AppendLine("  state/history/            the day-by-day history behind the charts");
 		sb.AppendLine("  state/lifetime*.json      hours banked in all");
 		sb.AppendLine("  state/human-, hunt-,      today's human-mode plans, achievement hunt progress,");
+		sb.AppendLine("  owner-, rotation-         what it learned from how you play, where the idle rotation is,");
 		sb.AppendLine("  rep4rep-, keys, report    rep4rep counts, the key queue, the daily/weekly report");
 		sb.AppendLine("  manifest.json             what this backup is, so nocat.farm knows it on restore");
 		sb.AppendLine();

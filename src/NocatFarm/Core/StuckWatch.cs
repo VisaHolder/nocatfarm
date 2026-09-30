@@ -249,8 +249,9 @@ public static class StuckWatch {
 			return new Said("human mode is resting");
 		}
 
-		// A robot with nothing to play: signed in and idle is all it's meant to be.
-		if (bot.IsOnline && !bot.Cfg.LegitMode && (bot.Cfg.IdleGames.Count == 0) && !bot.IsFarming && !bot.Grinding && !bot.DropsFirstActive) {
+		// A robot with nothing to play: signed in and idle is all it's meant to be. Not one set to idle its whole library -
+		// that one has games to play with an empty list, and not banking is exactly what the alarm is for.
+		if (bot.IsOnline && !bot.Cfg.LegitMode && (bot.Cfg.IdleGames.Count == 0) && !bot.Cfg.IdleWholeLibrary && !bot.IsFarming && !bot.Grinding && !bot.DropsFirstActive) {
 			return new Said("nothing to play");
 		}
 

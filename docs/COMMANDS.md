@@ -24,9 +24,9 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 | **[Profile & info](#profile--info)** | `value` `level` `balance` `points` `bans` `owns` `privacy` `joingroup` |
 | **[rep4rep](#rep4rep)** | `rep4rep` |
 | **[Settings](#settings)** | `config` `set` `reload` `backup` `import` |
-| **[The app](#the-app)** | `log` `report` `stats` `notify` `plugins` `tutorial` `help` `screen` `theme` `mini` `dashboard` `anywhere` `clear` `unlock` `version` `update` `answer` `exit` |
+| **[The app](#the-app)** | `log` `report` `stats` `notify` `plugins` `tutorial` `help` `screen` `theme` `mini` `dashboard` `anywhere` `clear` `unlock` `visitors` `version` `update` `answer` `exit` |
 
-75 commands in all.
+76 commands in all.
 
 ## Accounts
 
@@ -153,6 +153,7 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 | `anywhere [on\|off]` <br>also `remote` | Open the dashboard from anywhere, not just your wifi - your router forwards the port (UPnP), like Jellyfin. 'anywhere on' does all of it and answers with the link; 'anywhere off' closes it again; on its own it says whether it's on and the link. Works from Telegram and Discord too. |
 | `clear` <br>also `cls` | Clears the log off the screen you type it in - the nocat.farm window, or the dashboard's Log and Console. The other one keeps its lines, and nothing is deleted: the log file has every line (Settings, Logging, Open the log folder). |
 | `unlock` | Locked out of the dashboard after too many wrong passwords? This lets you (and anyone else locked out) sign in again straight away. |
+| `visitors [signout]` <br>also `who` | Who has been at the dashboard: sign-ins, wrong passwords, lockouts, and visitors from the internet turned away - when, from where and on what. 'visitors signout' signs every browser and phone out; you sign in again with the password. |
 | `version` <br>also `about` | Which version this is. |
 | `update [accept\|now\|skip]` | Check for a newer release. 'update accept' downloads it and restarts into it - or, with 'When I say update' set to wait, installs it once your accounts are asleep; 'update now' always installs right away. 'update skip' skips that version - no more reminders about it and it never installs by itself - until a newer one comes out. Nothing installs by itself unless 'Update by itself' is set to install at night. |
 | `answer <text>` | Answer whatever nocat.farm is waiting on - a Steam Guard code, or a password. |

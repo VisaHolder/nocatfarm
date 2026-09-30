@@ -28,6 +28,17 @@ public readonly record struct BotStatus(
 	/// <summary>True when the account is actually running a game right now, as opposed to asleep or resting.</summary>
 	public bool AtTheKeyboard { get; private init; }
 
+	/// <summary>
+	/// The courtesy wait after you stop playing, as it really is. "In a moment" was said for the whole of it - on a
+	/// human-mode account that can be three times the setting, so a quarter of an hour of "a moment" right after the
+	/// log had said "picking back up in 14m".
+	/// </summary>
+	internal static Said PickingBackUp(DateTime resumesAt, DateTime now) {
+		int left = (int) Math.Ceiling((resumesAt - now).TotalMinutes);
+
+		return left > 1 ? new Said("picking back up in {0}", Fmt.Hm(left)) : new Said("picking back up in a moment");
+	}
+
 	public static BotStatus Of(Bot bot) {
 		// Offline, or finishing up before it logs off: the account's own status says it - not what human mode was up to.
 		if (!bot.IsOnline || bot.Stopping) {
@@ -66,7 +77,7 @@ public readonly record struct BotStatus(
 			// back up. Saying "you're playing on this account" here (the human-mode StoodDown text, which is still
 			// the live phase until the delay elapses) directly contradicts the "free again - picking back up"
 			// line that just fired, which is exactly the confusion this branch removes.
-			doing = new Said("picking back up in a moment");
+			doing = PickingBackUp(bot.ResumesAt, DateTime.UtcNow);
 		} else if (human is { Current: not HumanMode.Phase.Off }) {
 			doing = human.Doing;
 			(done, total) = human.Session;
