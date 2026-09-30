@@ -1734,7 +1734,6 @@
     "couldn't read lifetime totals ({0}: {1}) - not overwriting": "totaux illisibles ({0} : {1}) - pas écrasés",
     "Steam is rate-limiting logins - all accounts wait {0}m": "Steam limite les connexions - tous les comptes attendent {0}m",
     "can't trade {0} items (banned there?) - left out from now on": "impossible d'échanger les objets {0} (banni là-bas ?) - exclus désormais",
-    "offer sent - confirm it on your phone (no authenticator here)": "offre envoyée - confirme-la sur ton téléphone (pas d'authentificateur ici)",
     "encrypted {0} - keep your own backup of the maFile": "{0} chiffré - garde ta propre copie du maFile",
     "an encrypted maFile only opens in nocat.farm on this Windows user": "un maFile chiffré ne s'ouvre que dans nocat.farm sous cet utilisateur Windows",
     "webhook link dead (HTTP {0}) - copy it again from the channel": "lien webhook mort (HTTP {0}) - recopie-le depuis le salon",
@@ -2067,7 +2066,10 @@
     "{0}: that name can't be used here, so it's {1}": "{0} : ce nom ne peut pas être utilisé ici, il s'appelle donc {1}",
     "plugin {0} failed on {1}: {2}: {3}": "le plugin {0} a échoué sur {1} : {2} : {3}",
     "'{0}' is a name Windows keeps for itself (like con, nul or com1) - pick another": "'{0}' est un nom que Windows se réserve (comme con, nul ou com1) - choisis-en un autre",
-    "'all' means every account in a command - pick another name": "'all' veut dire tous les comptes dans une commande - choisis un autre nom"
+    "'all' means every account in a command - pick another name": "'all' veut dire tous les comptes dans une commande - choisis un autre nom",
+    "offer sent - confirm it in the Steam app on your phone": "offre envoyée - confirme-la dans l'appli Steam sur ton téléphone",
+    "{0} invited you to play {1}": "{0} t'a invité à jouer à {1}",
+    "human mode spaces comments out - this account can post the next one from {0}": "le mode humain espace les commentaires - ce compte peut poster le suivant à partir de {0}"
   },
   "settings": {
     "WebEnabled": {

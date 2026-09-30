@@ -18,6 +18,25 @@ namespace NocatFarm.Core;
 /// </summary>
 public sealed class WebSession : IDisposable {
 	public static readonly Uri Community = new("https://steamcommunity.com");
+
+	/// <summary>
+	/// A failed request's body, short enough for one log line. Steam's own reason comes as JSON or text and is kept as
+	/// it is (the first 300 characters); an error page is HTML, and its first 300 characters are a doctype and a style
+	/// sheet - so a page is named by its title instead.
+	/// </summary>
+	internal static string FailureText(string body) {
+		string text = body.Trim();
+
+		if (!text.StartsWith('<')) {
+			return text[..Math.Min(300, text.Length)];
+		}
+
+		System.Text.RegularExpressions.Match title = System.Text.RegularExpressions.Regex.Match(text, @"<title[^>]*>(.*?)</title>",
+			System.Text.RegularExpressions.RegexOptions.Singleline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+		string name = title.Success ? string.Join(' ', WebUtility.HtmlDecode(title.Groups[1].Value).Split((char[]?) null, StringSplitOptions.RemoveEmptyEntries)) : "";
+
+		return name.Length > 0 ? $"(an HTML page: \"{(name.Length > 100 ? name[..100] : name)}\")" : "(an HTML page)";
+	}
 	public static readonly Uri Store = new("https://store.steampowered.com");
 	public static readonly Uri Help = new("https://help.steampowered.com");
 	public static readonly Uri Api = new("https://api.steampowered.com");
@@ -272,7 +291,7 @@ public sealed class WebSession : IDisposable {
 				}
 
 				Log.Debug(new Said("{0} {1} -> {2}", (form == null ? "GET" : "POST"), Loggable(url), (int) response.StatusCode)
-					+ (failure.Length > 0 ? $"  {Log.Scrub(failure[..Math.Min(300, failure.Length)])}" : ""), _bot.Name);
+					+ (failure.Length > 0 ? $"  {Log.Scrub(FailureText(failure))}" : ""), _bot.Name);
 
 				return errorVerdict && failure.StartsWith('{') ? failure : null;
 			}

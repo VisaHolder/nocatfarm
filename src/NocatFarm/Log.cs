@@ -478,7 +478,9 @@ public static class Log {
 			return;
 		}
 
-		Append(file, $"{now:yyyy-MM-dd HH:mm:ss}|{level}|{source}|{text}{Environment.NewLine}", level == "DEBUG");
+		// One event, one line - whatever the text carries. A 502's error page went in raw once: "GET .../inventory/ -> 502
+		// <!DOCTYPE html>" and then sixteen lines of HTML with no time, level or account on them.
+		Append(file, $"{now:yyyy-MM-dd HH:mm:ss}|{level}|{source}|{text.ReplaceLineEndings(" ")}{Environment.NewLine}", level == "DEBUG");
 	}
 
 	private static readonly Lock FileGate = new();

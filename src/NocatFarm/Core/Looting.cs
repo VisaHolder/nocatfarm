@@ -224,7 +224,7 @@ public static partial class Looting {
 			token = await TradeTokenOfAsync(master, ct).ConfigureAwait(false) ?? "";
 
 			if (token.Length > 0) {
-				Log.Debug(new Said("using {0}'s own trade token - it is one of your accounts", master), bot.Name);
+				Log.Debug(new Said("using {0}'s own trade token - it is one of your accounts", BotManager.Instance?.All.FirstOrDefault(b => b.SteamId == master)?.Name ?? master.ToString(CultureInfo.InvariantCulture)), bot.Name);
 			}
 		}
 
@@ -362,14 +362,22 @@ public static partial class Looting {
 	/// that could never send (no mobile authenticator) failed quietly every time.
 	/// </summary>
 	public static void Report(Bot bot, string result) {
+		// The line is already filed under the account, so the "old: " a command's answer starts with comes off - it read
+		// "old | old: sent 26 item(s) to new".
+		string line = Unprefixed(bot.Name, result);
+
 		if (result.Contains(": sent ", StringComparison.Ordinal)) {
-			Log.Good(result, bot.Name);
+			Log.Good(line, bot.Name);
 		} else if (result.Contains(": couldn't send", StringComparison.Ordinal) || result.Contains(": nowhere to send", StringComparison.Ordinal)) {
-			Log.Attention(result, bot.Name);
+			Log.Attention(line, bot.Name);
 		} else {
-			Log.Debug(result, bot.Name);
+			Log.Debug(line, bot.Name);
 		}
 	}
+
+	/// <summary>A result without the "account: " it opens with for a command's answer.</summary>
+	internal static string Unprefixed(string account, string result) =>
+		result.StartsWith(account + ": ", StringComparison.Ordinal) ? result[(account.Length + 2)..] : result;
 
 	private static async Task<string?> TradeTokenOfAsync(ulong steamId, CancellationToken ct) {
 		Bot? owner = BotManager.Instance?.All.FirstOrDefault(b => b.SteamId == steamId);
@@ -611,7 +619,7 @@ public static partial class Looting {
 				if (needsConfirming && ulong.TryParse(id.GetString() ?? id.ToString(), out ulong offerId)) {
 					if (!await bot.ConfirmMobileAsync(offerId, true, ct).ConfigureAwait(false)) {
 						// To your phone too: nobody sees the offer until it's confirmed, and nothing else will say so.
-						Log.Attention(new Said("offer sent - confirm it on your phone (no authenticator here)"), bot.Name, Topic.Trades);
+						Log.Attention(new Said("offer sent - confirm it in the Steam app on your phone"), bot.Name, Topic.Trades);
 
 						return (true, "sent - waiting for you to confirm it in the Steam app on your phone");
 					}

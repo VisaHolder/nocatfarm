@@ -1734,7 +1734,6 @@
     "couldn't read lifetime totals ({0}: {1}) - not overwriting": "Gesamtwerte unlesbar ({0}: {1}) - werden nicht überschrieben",
     "Steam is rate-limiting logins - all accounts wait {0}m": "Steam bremst Anmeldungen - alle Konten warten {0}m",
     "can't trade {0} items (banned there?) - left out from now on": "kann {0}-Items nicht handeln (dort gebannt?) - ab jetzt ausgelassen",
-    "offer sent - confirm it on your phone (no authenticator here)": "Angebot gesendet - am Handy bestätigen (kein Authenticator hier)",
     "encrypted {0} - keep your own backup of the maFile": "{0} verschlüsselt - behalte eine eigene Kopie der maFile",
     "an encrypted maFile only opens in nocat.farm on this Windows user": "eine verschlüsselte maFile öffnet sich nur in nocat.farm unter diesem Windows-Benutzer",
     "webhook link dead (HTTP {0}) - copy it again from the channel": "Webhook-Link tot (HTTP {0}) - im Kanal neu kopieren",
@@ -2067,7 +2066,10 @@
     "{0}: that name can't be used here, so it's {1}": "{0}: dieser Name geht hier nicht, darum heißt es {1}",
     "plugin {0} failed on {1}: {2}: {3}": "Plugin {0} ist bei {1} gescheitert: {2}: {3}",
     "'{0}' is a name Windows keeps for itself (like con, nul or com1) - pick another": "'{0}' ist ein Name, den Windows für sich reserviert (wie con, nul oder com1) - nimm einen anderen",
-    "'all' means every account in a command - pick another name": "'all' heißt in einem Befehl jedes Konto - nimm einen anderen Namen"
+    "'all' means every account in a command - pick another name": "'all' heißt in einem Befehl jedes Konto - nimm einen anderen Namen",
+    "offer sent - confirm it in the Steam app on your phone": "Angebot gesendet - bestätige es in der Steam-App auf deinem Handy",
+    "{0} invited you to play {1}": "{0} hat dich zu {1} eingeladen",
+    "human mode spaces comments out - this account can post the next one from {0}": "Der Menschen-Modus verteilt Kommentare - dieses Konto kann den nächsten ab {0} posten"
   },
   "settings": {
     "WebEnabled": {

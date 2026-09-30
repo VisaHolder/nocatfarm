@@ -1734,7 +1734,6 @@
     "couldn't read lifetime totals ({0}: {1}) - not overwriting": "累計を読めない ({0}: {1}) - 上書きしません",
     "Steam is rate-limiting logins - all accounts wait {0}m": "Steam がログインを制限中 - 全アカウント {0} 分待機",
     "can't trade {0} items (banned there?) - left out from now on": "{0} のアイテムはトレード不可（そこで BAN？）- 今後は除外",
-    "offer sent - confirm it on your phone (no authenticator here)": "オファー送信 - スマホで確認を（ここに認証なし）",
     "encrypted {0} - keep your own backup of the maFile": "{0} を暗号化 - maFile の控えは自分で保管を",
     "an encrypted maFile only opens in nocat.farm on this Windows user": "暗号化した maFile はこの Windows ユーザーの nocat.farm でしか開けません",
     "webhook link dead (HTTP {0}) - copy it again from the channel": "Webhook リンクが無効 (HTTP {0}) - チャンネルからコピーし直して",
@@ -2067,7 +2066,10 @@
     "{0}: that name can't be used here, so it's {1}": "{0}: その名前はここでは使えないため、{1} にしました",
     "plugin {0} failed on {1}: {2}: {3}": "プラグイン {0} が {1} で失敗しました: {2}: {3}",
     "'{0}' is a name Windows keeps for itself (like con, nul or com1) - pick another": "'{0}' は Windows が予約している名前です (con、nul、com1 など) - 別の名前にしてください",
-    "'all' means every account in a command - pick another name": "'all' はコマンドで全アカウントを意味します - 別の名前にしてください"
+    "'all' means every account in a command - pick another name": "'all' はコマンドで全アカウントを意味します - 別の名前にしてください",
+    "offer sent - confirm it in the Steam app on your phone": "オファー送信済み - スマホの Steam アプリで確認してください",
+    "{0} invited you to play {1}": "{0} から {1} に招待されました",
+    "human mode spaces comments out - this account can post the next one from {0}": "人間モードはコメントの間隔を空けます - このアカウントの次の投稿は {0} から"
   },
   "settings": {
     "WebEnabled": {

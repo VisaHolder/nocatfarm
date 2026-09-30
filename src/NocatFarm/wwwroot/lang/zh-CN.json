@@ -500,7 +500,7 @@
     "waiting - farming cards first": "等待——先挂卡",
     "waiting for a farming slot": "等待挂卡名额",
     "waiting for the account": "等待账号",
-    "a game": "一款游戏",
+    "a game": "一个游戏",
     "a waiting gift was already taken care of before its turn came": "一份等待中的礼物在轮到它之前已被处理",
     "accepting a gift around {0}": "大约 {0} 接受一份礼物",
     "trade offer #{0} waited for the account to wake - handling it around {1}": "交易报价 #{0} 等到账号醒来——大约 {1} 处理",
@@ -1734,7 +1734,6 @@
     "couldn't read lifetime totals ({0}: {1}) - not overwriting": "无法读取累计数据（{0}：{1}）- 不覆盖",
     "Steam is rate-limiting logins - all accounts wait {0}m": "Steam 正在限制登录 - 所有账号等待 {0} 分钟",
     "can't trade {0} items (banned there?) - left out from now on": "无法交易 {0} 的物品（在那被封？）- 今后排除",
-    "offer sent - confirm it on your phone (no authenticator here)": "报价已发出 - 请在手机上确认（此处无验证器）",
     "encrypted {0} - keep your own backup of the maFile": "已加密 {0} - 请自行备份 maFile",
     "an encrypted maFile only opens in nocat.farm on this Windows user": "加密的 maFile 只能在此 Windows 用户的 nocat.farm 中打开",
     "webhook link dead (HTTP {0}) - copy it again from the channel": "Webhook 链接失效（HTTP {0}）- 从频道重新复制",
@@ -2067,7 +2066,10 @@
     "{0}: that name can't be used here, so it's {1}": "{0}：这个名称在这里不能用，因此改为 {1}",
     "plugin {0} failed on {1}: {2}: {3}": "插件 {0} 在 {1} 时出错：{2}：{3}",
     "'{0}' is a name Windows keeps for itself (like con, nul or com1) - pick another": "'{0}' 是 Windows 保留的名称（如 con、nul 或 com1）- 请换一个",
-    "'all' means every account in a command - pick another name": "'all' 在命令中表示所有账号 - 请换一个名称"
+    "'all' means every account in a command - pick another name": "'all' 在命令中表示所有账号 - 请换一个名称",
+    "offer sent - confirm it in the Steam app on your phone": "报价已发出 - 请在手机上的 Steam 应用里确认",
+    "{0} invited you to play {1}": "{0} 邀请你玩 {1}",
+    "human mode spaces comments out - this account can post the next one from {0}": "人类模式会拉开留言间隔 - 此账户可在 {0} 起发下一条"
   },
   "settings": {
     "WebEnabled": {

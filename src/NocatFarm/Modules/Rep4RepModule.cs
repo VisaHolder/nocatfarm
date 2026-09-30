@@ -955,6 +955,16 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 				return new Said("this account is resting from comments until {0} - 'rep4rep clear {1}' lifts it", Fmt.Clock(until), Bot.Name).ToString();
 			}
 
+			// A human-mode account keeps a person's spacing even for a comment you pick: "Post now" used to put several up
+			// seconds apart - eight in 46 seconds once - which no person does and rep4rep's side can see.
+			if (Bot.Cfg.LegitMode && (_state.LastPost() is { } lastPost)) {
+				DateTime next = lastPost.AddMinutes(Math.Max(Bot.Cfg.Rep4RepGapMinMinutes, HumanGapMinMinutes));
+
+				if (DateTime.UtcNow < next) {
+					return new Said("human mode spaces comments out - this account can post the next one from {0}", Fmt.Clock(next)).ToString();
+				}
+			}
+
 			_profileId ??= await _api.ResolveProfileIdAsync(Bot.SteamId, Live.Global.Rep4RepAutoAddProfiles, ct).ConfigureAwait(false);
 
 			if (_profileId == null) {

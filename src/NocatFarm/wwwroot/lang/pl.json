@@ -500,7 +500,7 @@
     "waiting - farming cards first": "czeka - najpierw karty",
     "waiting for a farming slot": "czeka na miejsce do farmienia",
     "waiting for the account": "czeka na konto",
-    "a game": "gra",
+    "a game": "gry",
     "a waiting gift was already taken care of before its turn came": "czekający prezent został załatwiony, zanim przyszła jego kolej",
     "accepting a gift around {0}": "przyjmuje prezent około {0}",
     "trade offer #{0} waited for the account to wake - handling it around {1}": "oferta #{0} czekała, aż konto się obudzi - obsługa około {1}",
@@ -1734,7 +1734,6 @@
     "couldn't read lifetime totals ({0}: {1}) - not overwriting": "nie da się odczytać sum ({0}: {1}) - bez nadpisywania",
     "Steam is rate-limiting logins - all accounts wait {0}m": "Steam ogranicza logowania - wszystkie konta czekają {0}m",
     "can't trade {0} items (banned there?) - left out from now on": "nie może wymieniać przedmiotów z {0} (ban tam?) - od teraz pomijane",
-    "offer sent - confirm it on your phone (no authenticator here)": "oferta wysłana - potwierdź w telefonie (brak uwierzytelniacza tutaj)",
     "encrypted {0} - keep your own backup of the maFile": "zaszyfrowano {0} - trzymaj własną kopię maFile",
     "an encrypted maFile only opens in nocat.farm on this Windows user": "zaszyfrowany maFile otworzy tylko nocat.farm na tym użytkowniku Windows",
     "webhook link dead (HTTP {0}) - copy it again from the channel": "link webhooka nie działa (HTTP {0}) - skopiuj go z kanału ponownie",
@@ -2067,7 +2066,10 @@
     "{0}: that name can't be used here, so it's {1}": "{0}: tej nazwy nie można tu użyć, więc nazywa się {1}",
     "plugin {0} failed on {1}: {2}: {3}": "wtyczka {0} zawiodła przy {1}: {2}: {3}",
     "'{0}' is a name Windows keeps for itself (like con, nul or com1) - pick another": "'{0}' to nazwa zarezerwowana przez Windows (jak con, nul czy com1) - wybierz inną",
-    "'all' means every account in a command - pick another name": "'all' oznacza w poleceniu każde konto - wybierz inną nazwę"
+    "'all' means every account in a command - pick another name": "'all' oznacza w poleceniu każde konto - wybierz inną nazwę",
+    "offer sent - confirm it in the Steam app on your phone": "oferta wysłana - potwierdź ją w aplikacji Steam na telefonie",
+    "{0} invited you to play {1}": "{0} zaprasza cię do gry w {1}",
+    "human mode spaces comments out - this account can post the next one from {0}": "tryb ludzki robi odstępy między komentarzami - to konto może dodać kolejny od {0}"
   },
   "settings": {
     "WebEnabled": {
