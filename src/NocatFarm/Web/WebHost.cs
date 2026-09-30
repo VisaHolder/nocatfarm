@@ -68,7 +68,9 @@ public sealed class WebHost : IAsyncDisposable {
 			return (from.ToString(), true);
 		}
 
-		List<string> clean = [.. said.Select(ForwardedAddress)];
+		// Only a real address counts: anything else ("unknown", an obfuscated id, made-up text) is one shared "unknown" -
+		// never a fresh key to dodge the lockout with, and never words of the visitor's choosing in the log or a message.
+		List<string> clean = [.. said.Select(static s => IPAddress.TryParse(ForwardedAddress(s), out IPAddress? a) ? a.ToString() : "unknown")];
 
 		return (clean.FirstOrDefault(IsInternet) ?? clean[0], false);
 	}
@@ -105,6 +107,15 @@ public sealed class WebHost : IAsyncDisposable {
 		_internetMissesToday.Clear();
 		_internetPausedUntil = DateTime.MinValue;
 
+		// Switched itself off: unlock opens it again - the only way back that doesn't need Open from anywhere (a forward
+		// set up by hand, or a proxy). With Open from anywhere off and no Public address, the internet stays out anyway.
+		lock (_shutGate) {
+			if (_internetShut) {
+				Reopen();
+				n++;
+			}
+		}
+
 		return n;
 	}
 
@@ -131,7 +142,7 @@ public sealed class WebHost : IAsyncDisposable {
 	private DateTime _internetPausedUntil = DateTime.MinValue;
 
 	/// <summary>From the internet - and an address that can't be read counts as the internet, never as home.</summary>
-	public static bool IsInternet(string ip) => !IPAddress.TryParse(ip, out IPAddress? a) || RemoteAccess.FromTheInternet(a);
+	public static bool IsInternet(string ip) => RemoteAccess.IsInternet(ip);
 
 	/// <summary>Wrong passwords and codes from the internet in the last 24 hours, for "Turn Open from anywhere off after".</summary>
 	private readonly ConcurrentQueue<DateTime> _internetMissesToday = new();
@@ -145,19 +156,33 @@ public sealed class WebHost : IAsyncDisposable {
 	/// <summary>Kept on disk, so a restart doesn't open it again behind the owner's back.</summary>
 	private static string ShutPath => Path.Combine(ConfigStore.ConfigDir, "state", "internet-shut.txt");
 
+	/// <summary>Shutting and opening again happen under this, so a request arriving mid-shut can't read it half done.</summary>
+	private readonly Lock _shutGate = new();
+
 	/// <summary>Shut, and not opened again since: turning Open from anywhere back on is the owner saying "open".</summary>
 	private bool InternetShut() {
-		if (_internetShut && _cfg.WebRemoteAccess) {
-			_internetShut = false;
-
-			try {
-				File.Delete(ShutPath);
-			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
-				Log.Failed("dashboard: forgetting that it was shut to the internet", e);
-			}
+		if (!_internetShut) {
+			return false;
 		}
 
-		return _internetShut;
+		lock (_shutGate) {
+			if (_internetShut && _cfg.WebRemoteAccess) {
+				Reopen();
+			}
+
+			return _internetShut;
+		}
+	}
+
+	/// <summary>Open to the internet again (as far as the settings allow): the flag, and the file that keeps it over a restart.</summary>
+	private void Reopen() {
+		_internetShut = false;
+
+		try {
+			File.Delete(ShutPath);
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			Log.Failed("dashboard: forgetting that it was shut to the internet", e);
+		}
 	}
 
 	/// <summary>
@@ -601,8 +626,10 @@ public sealed class WebHost : IAsyncDisposable {
 
 	/// <summary>A wrong password or a wrong code: towards this address's lockout, and from the internet, the brake.</summary>
 	private void CountFailure(string ip, bool thisPc, int lockout, bool internet, string? device, Visitors.What what) {
-		int count = FailuresAfter(_failures.TryGetValue(ip, out (int Count, DateTime Until) prev) ? prev : null, DateTime.UtcNow);
-		_failures[ip] = (count, DateTime.UtcNow.AddMinutes(lockout));
+		// Counted atomically: guesses sent all at once each read the same count and wrote back the same "one more".
+		(int count, DateTime _) = _failures.AddOrUpdate(ip,
+			_ => (1, DateTime.UtcNow.AddMinutes(lockout)),
+			(_, prev) => (FailuresAfter(prev, DateTime.UtcNow), DateTime.UtcNow.AddMinutes(lockout)));
 
 		if (count >= MaxFailedLogins) {
 			Log.Warn(new Said("dashboard: {0} failed logins from {1} - locked out for {2}m", count, ip, lockout));
@@ -653,26 +680,29 @@ public sealed class WebHost : IAsyncDisposable {
 	/// <summary>"Turn Open from anywhere off after" reached: the setting goes off (the router forward with it), and nothing
 	/// from the internet gets in until it's turned on again.</summary>
 	private void ShutToTheInternet(string ip, bool thisPc, string? device, int misses) {
-		_internetShut = true;
+		lock (_shutGate) {
+			// The setting goes off BEFORE the flag goes up: "shut while Open from anywhere is on" is what reopening looks
+			// for, so a request seeing the two the other way round mid-shut opened it again straight away.
+			if (_cfg.WebRemoteAccess) {
+				_cfg.WebRemoteAccess = false;
+				ConfigStore.SaveGlobal(_cfg);
+				RemoteAccess.Poke();
+			}
 
-		try {
-			Directory.CreateDirectory(Path.GetDirectoryName(ShutPath)!);
-			File.WriteAllText(ShutPath, DateTime.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
-		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
-			// shut until the next restart, then - the setting itself is off and saved either way
-			Log.Failed("dashboard: remembering that it's shut to the internet", e);
+			_internetShut = true;
+
+			try {
+				Directory.CreateDirectory(Path.GetDirectoryName(ShutPath)!);
+				File.WriteAllText(ShutPath, DateTime.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
+			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+				// shut until the next restart, then - the setting itself is off and saved either way
+				Log.Failed("dashboard: remembering that it's shut to the internet", e);
+			}
 		}
 
 		_internetMissesToday.Clear();
 		_internetMisses.Clear();
 		_pendingCodes.Clear();
-
-		if (_cfg.WebRemoteAccess) {
-			_cfg.WebRemoteAccess = false;
-			ConfigStore.SaveGlobal(_cfg);
-			RemoteAccess.Poke();
-		}
-
 		Visitors.Note(Visitors.What.ClosedToInternet, ip, thisPc, device, misses);
 	}
 
@@ -824,19 +854,28 @@ public sealed class WebHost : IAsyncDisposable {
 
 			string typed = new((body.Code ?? "").Where(char.IsAsciiDigit).ToArray());
 
+			// The try is spent before the code is even looked at, and only by whoever swaps the record first: guesses sent
+			// all at once each read "0 tries" and got five more each. A right code signs in only if this request is the one
+			// that takes the record away - not after a lockout, the brake or another request already took it.
+			int tries = pending.Tries + 1;
+			PendingCode spent = pending with { Tries = tries };
+
+			if (!_pendingCodes.TryUpdate(body.Challenge!, spent, pending)) {
+				return Results.Json(new { ok = false, error = "expired" }, statusCode: 401);
+			}
+
 			if (CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(typed.PadRight(6)), Encoding.ASCII.GetBytes(pending.Code))) {
-				_pendingCodes.TryRemove(body.Challenge!, out _);
+				if (!_pendingCodes.TryRemove(new KeyValuePair<string, PendingCode>(body.Challenge!, spent))) {
+					return Results.Json(new { ok = false, error = "expired" }, statusCode: 401);
+				}
+
 				SignIn(ctx, ip, thisPc, device, out string token);
 
 				return Results.Json(new { ok = true, token });
 			}
 
-			int tries = pending.Tries + 1;
-
 			if (tries >= CodeTries) {
-				_pendingCodes.TryRemove(body.Challenge!, out _);
-			} else {
-				_pendingCodes[body.Challenge!] = pending with { Tries = tries };
+				_pendingCodes.TryRemove(new KeyValuePair<string, PendingCode>(body.Challenge!, spent));
 			}
 
 			CountFailure(ip, thisPc, thisPc ? LockoutMinutesThisPc : LockoutMinutes, !thisPc && IsInternet(ip), device, Visitors.What.WrongCode);

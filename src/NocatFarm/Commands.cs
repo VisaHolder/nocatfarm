@@ -2344,6 +2344,12 @@ public static partial class Commands {
 			}
 		}
 
+		// Farming or a grind: the idler isn't the one playing, and working a plan out here would put a rotation card up
+		// that nothing is following.
+		if ((idler.Rotating == null) && (bot.IsFarming || bot.Grinding)) {
+			return $"{bot.Name}: rotation is on - it isn't idling right now ({(bot.IsFarming ? "farming cards" : "a grind")}), and picks the rotation up again as soon as it is.";
+		}
+
 		// Worked out fresh, not from the last re-assert - the list may have changed since.
 		List<uint> now = idler.Rotating == null ? idler.Plan(DateTime.UtcNow) : idler.Rotating.Now;
 		int slots = IdleRotation.Slots(!string.IsNullOrWhiteSpace(bot.CustomName));

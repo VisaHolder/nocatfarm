@@ -30,7 +30,7 @@ public static class Visitors {
 
 	/// <summary>Where an address is: this PC, home (the home network, a VPN) or the internet.</summary>
 	public static string WhereFrom(string ip, bool thisPc) =>
-		thisPc ? "this PC" : IPAddress.TryParse(ip, out IPAddress? a) && RemoteAccess.FromTheInternet(a) ? "internet" : "home";
+		thisPc ? "this PC" : RemoteAccess.IsInternet(ip) ? "internet" : "home";
 
 	/// <summary>"iPhone · Safari", "Windows · Chrome" - enough to tell your own phone from somebody else's.</summary>
 	public static string Device(string? userAgent) {

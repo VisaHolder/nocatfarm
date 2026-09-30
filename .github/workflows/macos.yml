@@ -84,6 +84,9 @@ jobs:
           test -f app/config/state/secret.key
           [ "$(stat -f %Lp app/config/state/secret.key)" = "600" ]
 
+      - name: signing in from outside (lockouts, switching itself off, the visitor log)
+        run: sh tests/security-check.sh http://127.0.0.1:7242 app/config
+
       - name: clean shutdown
         run: |
           pkill -TERM -f 'app/nocatFarm' || kill -TERM $(cat pid)

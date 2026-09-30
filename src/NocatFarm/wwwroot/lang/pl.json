@@ -988,6 +988,8 @@
     "{0} are past the refund window - free to play again": "{0} są po okresie zwrotu - znów można grać",
     "{0} is past the refund window - free to play again": "{0} jest po okresie zwrotu - znów można grać",
     "── daily report · last 24h ──": "── raport dzienny · ostatnie 24 h ──",
+    "── report · since the last daily summary ──": "── raport · od ostatniego raportu dziennego ──",
+    "── report · since the daily summary at {0} ({1}) ──": "── raport · od raportu dziennego o {0} ({1}) ──",
     "reached {0}h in {1} - that hour target is done": "osiągnięto {0} godz. w {1} - ten cel godzinowy jest wykonany",
     "couldn't read the play history: {0}": "nie udało się odczytać historii gry: {0}",
     "library: {0} played game(s) Steam's owned list left out, added from the play history ({1})": "biblioteka: {0} grana(-e) gra(-y) pominięta(-e) na liście Steam, dodana(-e) z historii ({1})",

@@ -1,6 +1,6 @@
 ﻿# Everything a release has to pass on this PC, in one go, stopping at the first failure:
 #   build (0 warnings), unit tests, translations, the dashboard's script parses, the release files are built,
-#   then the setup, moving a running portable copy, and updating itself with a broken and a good version
+#   then the setup, moving a running portable copy, signing in from outside, and updating itself with a broken and a good version
 #   (portable and installed). Linux, Mac and Docker run on GitHub: this starts those runs and waits for them.
 #   -From 1.5.4   the previous release, for the move test (its portable zip must be in dist\)
 param([Parameter(Mandatory)][string]$From)
@@ -33,6 +33,7 @@ try {
     Step 'release files' { powershell -ExecutionPolicy Bypass -File tools\package-release.ps1 }
     Step 'setup' { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\install.ps1" }
     Step 'moving a running portable copy in' { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\move-portable.ps1" -From $From }
+    Step 'signing in from outside' { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\security.ps1" }
     Step 'updating itself - portable' { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\rollback.ps1" -Mode portable }
     Step 'updating itself - installed' { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\rollback.ps1" -Mode installed }
     Step 'Linux, Docker and Mac on GitHub' {

@@ -988,6 +988,8 @@
     "{0} are past the refund window - free to play again": "{0} iade süresini geçti - yeniden oynanabilir",
     "{0} is past the refund window - free to play again": "{0} iade süresini geçti - yeniden oynanabilir",
     "── daily report · last 24h ──": "── günlük rapor · son 24 saat ──",
+    "── report · since the last daily summary ──": "── rapor · son günlük rapordan beri ──",
+    "── report · since the daily summary at {0} ({1}) ──": "── rapor · {0} günlük raporundan beri ({1}) ──",
     "reached {0}h in {1} - that hour target is done": "{1} içinde {0} saate ulaşıldı - bu saat hedefi tamam",
     "couldn't read the play history: {0}": "oyun geçmişi okunamadı: {0}",
     "library: {0} played game(s) Steam's owned list left out, added from the play history ({1})": "kütüphane: Steam'in sahip listesinin atladığı {0} oynanmış oyun geçmişten eklendi ({1})",

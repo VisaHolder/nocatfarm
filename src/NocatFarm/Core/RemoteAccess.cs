@@ -248,6 +248,9 @@ public static partial class RemoteAccess {
 	/// link-local, and not 100.64.0.0/10 (Tailscale and other VPNs hand those out). An IPv6 address counts as home when
 	/// it's link-local, unique-local, or in the same /64 as one of this PC's own.
 	/// </summary>
+	/// <summary>The same for an address as text: one that can't be read counts as the internet, never as home.</summary>
+	public static bool IsInternet(string ip) => !IPAddress.TryParse(ip, out IPAddress? a) || FromTheInternet(a);
+
 	public static bool FromTheInternet(IPAddress? ip) {
 		if (ip == null) {
 			return false;   // no network connection at all - an in-process test host

@@ -988,6 +988,8 @@
     "{0} are past the refund window - free to play again": "{0} 已过退款期 —— 可以再玩了",
     "{0} is past the refund window - free to play again": "{0} 已过退款期 —— 可以再玩了",
     "── daily report · last 24h ──": "── 每日报告 · 最近 24 小时 ──",
+    "── report · since the last daily summary ──": "── 报告 · 自上次每日报告以来 ──",
+    "── report · since the daily summary at {0} ({1}) ──": "── 报告 · 自 {0} 的每日报告以来（{1}）──",
     "reached {0}h in {1} - that hour target is done": "{1} 已达到 {0} 小时 - 这个时长目标已完成",
     "couldn't read the play history: {0}": "无法读取游玩记录：{0}",
     "library: {0} played game(s) Steam's owned list left out, added from the play history ({1})": "库：从游玩记录中补上了 Steam 拥有列表漏掉的 {0} 个玩过的游戏（{1}）",
