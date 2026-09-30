@@ -249,15 +249,45 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 				}
 
 				Bot.Notifications?.AcknowledgeClanInvite(clanId, true);
-				Log.Event(new Said("joined group {0}", clanId), Bot.Name);
+				Log.Event(new Said("joined the Steam group {0}", ClanName(clanId)), Bot.Name);
 			} catch (Exception e) {
-				Log.Debug(new Said("couldn't join group {0}: {1}", clanId, Log.Describe(e)), Bot.Name);
+				Log.Debug(new Said("couldn't join group {0}: {1}", ClanName(clanId), Log.Describe(e)), Bot.Name);
 				Forget(clanId);   // a reconnect while it waited for morning cancels the wait - it's taken up again after
 			}
 		});
 	}
 
+	/// <summary>The group's name as Steam sent it with the invite - its 18-digit number only when there's none.</summary>
+	private string ClanName(ulong clanId) => Bot.Friends?.GetClanName(new SteamID(clanId)) is { Length: > 0 } name ? name : clanId.ToString(CultureInfo.InvariantCulture);
+
 	// ── messages ────────────────────────────────────────────────────────────
+	/// <summary>
+	/// Whether the auto-reply goes to whoever sent this. Never to one of your own accounts or to somebody on the command
+	/// list - that's you: "help" typed without its slash got "im not real! add my new main" back, sent to the owner's
+	/// own main. Your accounts only ever message each other with a command's answer, which isn't somebody to answer.
+	/// </summary>
+	public static bool AutoReplyGoesTo(ulong from, bool ownAccount, HashSet<ulong> masters) => (from != 0) && !ownAccount && !masters.Contains(from);
+
+	/// <summary>A message Steam wrote itself, one BBCode tag and nothing else: its kind, and the game it's about if any.</summary>
+	public sealed record Embed(string Kind, string? AppId);
+
+	private static readonly System.Text.RegularExpressions.Regex EmbedPattern = new(
+		@"^\[(?<kind>tradeoffer|lobbyinvite|gameinvite|remoteplaytogether)\b(?<attrs>[^\]]*)\](?:.*\[/\k<kind>\])?$",
+		System.Text.RegularExpressions.RegexOptions.Singleline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+	/// <summary>The message as one of Steam's own - a trade offer, a game invite - or null when a person wrote it.</summary>
+	public static Embed? SteamEmbed(string text) {
+		System.Text.RegularExpressions.Match m = EmbedPattern.Match(text.Trim());
+
+		if (!m.Success) {
+			return null;
+		}
+
+		System.Text.RegularExpressions.Match app = System.Text.RegularExpressions.Regex.Match(m.Groups["attrs"].Value, @"appid=""?(\d+)");
+
+		return new Embed(m.Groups["kind"].Value.ToLowerInvariant(), app.Success ? app.Groups[1].Value : null);
+	}
+
 	private void OnChatMessage(ulong from, string message) {
 		if ((from == 0) || string.IsNullOrWhiteSpace(message)) {
 			return;
@@ -266,16 +296,46 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 		DateTime received = DateTime.UtcNow;
 		string text = message.Trim();
 
+		// Steam writes some messages itself: "[tradeoffer sender=... id=...][/tradeoffer]" goes with every trade offer,
+		// "[lobbyinvite appid=...]" with a game invite. They aren't somebody talking - printed raw they were gibberish in
+		// the log, and the auto-reply answered them: "away right now" sent back to a trade offer from your own account.
+		if (SteamEmbed(text) is { } embed) {
+			if (embed.Kind == "tradeoffer") {
+				return;   // the offer itself is announced by trading, with what's in it
+			}
+
+			if (embed.Kind is "lobbyinvite" or "gameinvite") {
+				uint app = uint.TryParse(embed.AppId, out uint a) ? a : 0;
+				_ = Task.Run(async () => Log.Info(new Said("{0} invited you to play {1}", await SteamNames.OfAsync(Bot, from).ConfigureAwait(false),
+					app != 0 ? GameNames.Of(app) : new Said("a game").ToString()), Bot.Name));
+			}
+
+			return;
+		}
+
 		// Log who messaged the account and what they said - a real person talking to something pretending to
 		// be one, and the auto-reply can't be judged without seeing what prompted it. Trimmed so a pasted wall
 		// of text doesn't take the log with it.
 		// Flatten to one short line - a command reply (e.g. the whole /help wall) echoes back to whoever
 		// sent it, and logging its newlines and tab columns raw turned the log into a mess.
+		// By name, not the 17-digit number it used to print.
 		string oneLine = string.Join(' ', text.Split((char[]?) null, StringSplitOptions.RemoveEmptyEntries));
-		Log.Info(new Said("message from {0}: {1}", from, (oneLine.Length > 120 ? oneLine[..120] + "…" : oneLine)), Bot.Name);
+		string said = oneLine.Length > 120 ? oneLine[..120] + "…" : oneLine;
+		// From one of your own accounts it's the answer to a command you sent it from this one - you read it in your chat
+		// already. On screen it read as a stranger's message: "new: message from kylro: ACCOUNT STATE UPTIME ...".
+		bool own = SteamNames.IsOwn(from);
+		_ = Task.Run(async () => {
+			Said line = new("message from {0}: {1}", await SteamNames.OfAsync(Bot, from).ConfigureAwait(false), said);
+
+			if (own) {
+				Log.Debug(line, Bot.Name);
+			} else {
+				Log.Info(line, Bot.Name);
+			}
+		});
 
 		// A command must be prefixed with / or ! (e.g. /help or !status) - so ordinary chat is never mistaken for
-		// one, and the master still gets the auto-reply when they just talk. Only masters actually run them; a
+		// one (a master who just talks gets nothing back - the auto-reply isn't for you). Only masters actually run them; a
 		// prefixed command from anyone else is ignored, never answered, since confirming the account takes
 		// commands would tell a stranger exactly what it is.
 		bool looksLikeCommand = text.StartsWith('/') || text.StartsWith('!');
@@ -283,7 +343,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 		if (looksLikeCommand) {
 			if (!IsMaster(from)) {
 				// Silent - confirming the account takes commands tells a stranger exactly what it is.
-				Log.Debug(new Said("ignoring a command from {0} - not on the list", from), Bot.Name);
+				_ = Task.Run(async () => Log.Debug(new Said("ignoring a command from {0} - not on the list", await SteamNames.OfAsync(Bot, from).ConfigureAwait(false)), Bot.Name));
 
 				return;
 			}
@@ -304,7 +364,8 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 		string reply = Bot.Cfg.AutoReply;
 
 		// You're on the account yourself: you'll answer - an "away" reply sent in your name while you play is wrong.
-		if (!Bot.Cfg.AutoReplyEnabled || string.IsNullOrWhiteSpace(reply) || Bot.PlayingBlocked) {
+		// And never to you, or to one of your accounts: see AutoReplyGoesTo.
+		if (!Bot.Cfg.AutoReplyEnabled || string.IsNullOrWhiteSpace(reply) || Bot.PlayingBlocked || !AutoReplyGoesTo(from, own, ParseIds(Bot.Cfg.CommandMasters))) {
 			return;
 		}
 
@@ -339,9 +400,10 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 					return;
 				}
 
+				string who = await SteamNames.OfAsync(Bot, from).ConfigureAwait(false);
 				Bot.SendChatMessage(from, reply);
 				_replied++;
-				Log.Info(new Said("auto-replied to {0} after {1}s", from, (int) (DateTime.UtcNow - received).TotalSeconds), Bot.Name);
+				Log.Info(new Said("auto-replied to {0} after {1}s", who, (int) (DateTime.UtcNow - received).TotalSeconds), Bot.Name);
 			} catch (Exception e) {
 				Log.Debug(new Said("couldn't reply to {0}: {1}", from, Log.Describe(e)), Bot.Name);
 				Unreplied(from);
@@ -383,8 +445,17 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 
 	/// <summary>Run a console command sent by Steam message and send the answer straight back.</summary>
 	private async Task RunCommandAsync(ulong from, string command, DateTime received) {
+		// Named - it's nearly always one of your own accounts, and "new" says that where 76561199... didn't.
+		string who = from.ToString(CultureInfo.InvariantCulture);
+
 		try {
-			Log.Info(new Said("command from {0}: {1}", from, Commands.ForLog(command)), Bot.Name);   // a secret typed in chat stays out of the log
+			who = await SteamNames.OfAsync(Bot, from).ConfigureAwait(false);
+		} catch (Exception e) {
+			Log.Failed($"couldn't look up the Steam name of {from}", e, Bot.Name);   // the number will do
+		}
+
+		try {
+			Log.Info(new Said("command from {0}: {1}", who, Commands.ForLog(command)), Bot.Name);   // a secret typed in chat stays out of the log
 			string answer = await Commands.RunAsync(command, Bot.Name).ConfigureAwait(false);
 
 			if (string.IsNullOrWhiteSpace(answer)) {
@@ -397,9 +468,9 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 			}
 
 			Bot.SendChatMessage(from, answer);
-			Log.Info(new Said("answered {0} ({1}) in {2}s", from, command.Split(' ')[0], (int) (DateTime.UtcNow - received).TotalSeconds), Bot.Name);
+			Log.Info(new Said("answered {0} ({1}) in {2}s", who, command.Split(' ')[0], (int) (DateTime.UtcNow - received).TotalSeconds), Bot.Name);
 		} catch (Exception e) {
-			Log.Warn(new Said("the command from {0} failed: {1}", from, Log.Describe(e)), Bot.Name);
+			Log.Warn(new Said("the command from {0} failed: {1}", who, Log.Describe(e)), Bot.Name);
 			Log.StackToFile(e, Bot.Name);
 
 			try {

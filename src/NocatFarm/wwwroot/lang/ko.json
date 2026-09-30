@@ -1734,7 +1734,6 @@
     "couldn't read lifetime totals ({0}: {1}) - not overwriting": "누적 합계를 읽을 수 없음 ({0}: {1}) - 덮어쓰지 않음",
     "Steam is rate-limiting logins - all accounts wait {0}m": "Steam 로그인 제한 중 - 모든 계정 {0}분 대기",
     "can't trade {0} items (banned there?) - left out from now on": "{0} 아이템 교환 불가 (거기서 밴?) - 이제부터 제외",
-    "offer sent - confirm it on your phone (no authenticator here)": "제안 보냄 - 휴대폰에서 확인 (여기엔 인증기 없음)",
     "encrypted {0} - keep your own backup of the maFile": "{0} 암호화됨 - maFile 백업은 직접 보관하세요",
     "an encrypted maFile only opens in nocat.farm on this Windows user": "암호화된 maFile은 이 Windows 사용자의 nocat.farm에서만 열립니다",
     "webhook link dead (HTTP {0}) - copy it again from the channel": "웹훅 링크 작동 안 함 (HTTP {0}) - 채널에서 다시 복사",
@@ -2067,7 +2066,10 @@
     "{0}: that name can't be used here, so it's {1}": "{0}: 그 이름은 여기서 쓸 수 없어 {1}(으)로 했습니다",
     "plugin {0} failed on {1}: {2}: {3}": "플러그인 {0}이(가) {1}에서 실패했습니다: {2}: {3}",
     "'{0}' is a name Windows keeps for itself (like con, nul or com1) - pick another": "'{0}'은(는) Windows가 예약한 이름입니다 (con, nul, com1 등) - 다른 이름을 고르세요",
-    "'all' means every account in a command - pick another name": "'all'은 명령에서 모든 계정을 뜻합니다 - 다른 이름을 고르세요"
+    "'all' means every account in a command - pick another name": "'all'은 명령에서 모든 계정을 뜻합니다 - 다른 이름을 고르세요",
+    "offer sent - confirm it in the Steam app on your phone": "제안 보냄 - 휴대폰의 Steam 앱에서 확인하세요",
+    "{0} invited you to play {1}": "{0}님이 {1} 게임에 초대했습니다",
+    "human mode spaces comments out - this account can post the next one from {0}": "사람 모드는 댓글 간격을 둡니다 - 이 계정은 {0}부터 다음 댓글을 올릴 수 있습니다"
   },
   "settings": {
     "WebEnabled": {

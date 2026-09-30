@@ -3556,6 +3556,91 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	}
 }
 
+// ── chat: Steam's own messages (a trade offer, a game invite) aren't somebody talking ─────────────────────────────
+{
+	var offer = NocatFarm.Modules.Social.SteamEmbed("[tradeoffer sender=1086831032 id=9396234175][/tradeoffer]");
+	Check("chat: a trade offer's message is Steam's own, not chat", offer?.Kind == "tradeoffer", $"{offer}");
+	var lobby = NocatFarm.Modules.Social.SteamEmbed("[lobbyinvite appid=\"730\" lobbyid=\"109775243346442957\"][/lobbyinvite]");
+	Check("chat: a lobby invite is Steam's own, with its game", (lobby?.Kind == "lobbyinvite") && (lobby.AppId == "730"), $"{lobby}");
+	Check("chat: a person's message isn't, even with a tag in it", (NocatFarm.Modules.Social.SteamEmbed("hey check this [tradeoffer] lol") == null)
+		&& (NocatFarm.Modules.Social.SteamEmbed("gg") == null) && (NocatFarm.Modules.Social.SteamEmbed("/status") == null));
+}
+
+// ── from the real logs: the auto-reply, the keepalive, the log file, names ─────────────────────────────────────────
+{
+	const BindingFlags Stat = BindingFlags.NonPublic | BindingFlags.Static;
+	const ulong owner = 76561199109828420, kylro = 76561198153646901, stranger = 76561198777239703;
+	HashSet<ulong> masters = [owner];
+	Check("chat: the auto-reply never goes to you (on the command list) or to one of your own accounts",
+		!NocatFarm.Modules.Social.AutoReplyGoesTo(owner, false, masters) && !NocatFarm.Modules.Social.AutoReplyGoesTo(kylro, true, masters)
+		&& NocatFarm.Modules.Social.AutoReplyGoesTo(stranger, false, masters) && !NocatFarm.Modules.Social.AutoReplyGoesTo(0, false, masters));
+
+	MethodInfo quiet = typeof(NocatFarm.Core.Bot).GetMethod("WentQuiet", Stat)!;
+	DateTime qnow = DateTime.UtcNow;
+	bool Quiet(double inboundSecs, double assertSecs, bool aside) => (bool) quiet.Invoke(null, [qnow, qnow.AddSeconds(-inboundSecs), qnow.AddSeconds(-assertSecs), aside])!;
+	Check("keepalive: a session you're playing on isn't taken for dead and signed back in mid-game",
+		!Quiet(600, 3 * 3600, true) && Quiet(600, 3 * 3600, false) && !Quiet(5, 3 * 3600, false) && !Quiet(600, 30, false));
+
+	string oneRoot = Path.Combine(Path.GetTempPath(), "nf-oneline-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(oneRoot);
+	NocatFarm.Log.Suppressed = true;
+	NocatFarm.Log.Configure(fileLogging: true, debug: true, oneRoot, retentionDays: 14);
+	NocatFarm.Log.Debug("GET /inventory/ -> 502  <!DOCTYPE html>\n<html lang=\"en\">\r\n<head>oneline-marker", "harness");
+	NocatFarm.Log.Configure(fileLogging: false, debug: false, oneRoot);
+	NocatFarm.Log.Suppressed = false;
+	string oneFile = Path.Combine(oneRoot, "logs", $"nocatFarm-{DateTime.Now:yyyy-MM-dd}.log");
+	string[] oneLines = File.Exists(oneFile) ? File.ReadAllLines(oneFile) : [];
+	Check("log file: one event is one line, even with an HTML page in it",
+		oneLines.Count(l => l.Contains("|harness|", StringComparison.Ordinal)) == 1 && oneLines.Any(l => l.Contains("|harness|", StringComparison.Ordinal) && l.EndsWith("oneline-marker", StringComparison.Ordinal))
+		&& !oneLines.Any(l => l.StartsWith("<", StringComparison.Ordinal)), string.Join(" / ", oneLines));
+
+	try {
+		Directory.Delete(oneRoot, true);
+	} catch (IOException) {
+		// a temp folder - the OS clears it
+	}
+
+	MethodInfo failure = typeof(NocatFarm.Core.WebSession).GetMethod("FailureText", Stat)!;
+	string errPage = (string) failure.Invoke(null, ["<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <title id=\"title\">Error</title>\n<style>* { padding: 0; }</style>"])!;
+	string reason = (string) failure.Invoke(null, ["{\"strError\":\"There was an error sending your trade offer.\"}"])!;
+	Check("web: a failed request's error page is named by its title, Steam's own reason kept as it is",
+		(errPage == "(an HTML page: \"Error\")") && (reason == "{\"strError\":\"There was an error sending your trade offer.\"}"), $"{errPage} | {reason}");
+
+	MethodInfo unprefixed = typeof(NocatFarm.Core.Looting).GetMethod("Unprefixed", Stat)!;
+	Check("sending items: the log line filed under old doesn't say 'old: ' again",
+		((string) unprefixed.Invoke(null, ["old", "old: sent 26 item(s) to new"])! == "sent 26 item(s) to new")
+		&& ((string) unprefixed.Invoke(null, ["old", "kylro: sent 1 item(s) to new"])! == "kylro: sent 1 item(s) to new"));
+
+	SteamKit2.KeyValue pass = new("0");
+	pass.Children.Add(new SteamKit2.KeyValue("gid", "222521133245705365"));
+	pass.Children.Add(new SteamKit2.KeyValue("packageid", "821602"));
+	pass.Children.Add(new SteamKit2.KeyValue("AccessToken", "6842360938661594872"));
+	string passLine = (string) typeof(NocatFarm.Core.Bot).GetMethod("PassForLog", Stat)!.Invoke(null, [pass])!;
+	Check("gifts: a waiting pass goes in the log without its access token",
+		passLine.Contains("packageid=821602", StringComparison.Ordinal) && passLine.Contains("AccessToken=…", StringComparison.Ordinal) && !passLine.Contains("6842360938661594872", StringComparison.Ordinal), passLine);
+
+	MethodInfo storeName = typeof(NocatFarm.Modules.FreeGames).GetMethod("StoreName", Stat)!;
+	Check("free games: the store's name comes without the space it sometimes ends in",
+		((string) storeName.Invoke(null, ["{\"name\":\"Train Sim World® 7 \"}", "sub 1768268"])! == "Train Sim World® 7")
+		&& ((string) storeName.Invoke(null, ["{\"name\":\"  \"}", "sub 1768268"])! == "sub 1768268"));
+}
+
+// ── you on the account: what shows on it waits, what nobody sees carries on ─────────────────────────────────────
+{
+	var cfg = new NocatFarm.Config.BotConfig { LegitMode = true, QuietDelayMinMinutes = 0, QuietDelayMaxMinutes = 0 };
+	var bot = new NocatFarm.Core.Bot("harness-youonit", cfg);
+	void SetProp(string name, object? value) => typeof(NocatFarm.Core.Bot).GetProperty(name)!.SetValue(bot, value);
+	SetProp("State", NocatFarm.Core.BotState.Online);
+	SetProp("OnlineSince", DateTime.UtcNow.AddHours(-2));
+	SetProp("PlayingBlocked", true);
+	var quiet = NocatFarm.Modules.HumanGate.Quiet(bot);
+	_ = quiet.Open;
+	Check("you on the account: a send to your own account still goes (nobody sees it)", quiet.Open);
+	var shows = new NocatFarm.Modules.HumanGate(bot);
+	Check("you on the account: a comment or a group join waits", !shows.Open);
+	await bot.DisposeAsync();
+}
+
 // SETTINGSCOUNT
 Console.WriteLine($"settings: {NocatFarm.Config.Settings.Global.Count} global ({NocatFarm.Config.Settings.Global.Count(d => !d.Advanced)} basic), {NocatFarm.Config.Settings.Bot.Count} per account ({NocatFarm.Config.Settings.Bot.Count(d => !d.Advanced)} basic)");
 Console.WriteLine(fails == 0 ? "all passed" : $"{fails} failed");

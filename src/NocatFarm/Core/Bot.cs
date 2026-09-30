@@ -803,6 +803,13 @@ public sealed class Bot : IAsyncDisposable {
 		}
 	}
 
+	/// <summary>
+	/// Everything Steam said about a waiting gift or pass, for the log - except its access token, which is the pass's
+	/// key and went into the file in full ("AccessToken=6842..."). Kept as "AccessToken=…" so the record still says one was there.
+	/// </summary>
+	internal static string PassForLog(KeyValue pass) =>
+		string.Join(", ", pass.Children.Select(static c => c.Name + "=" + ((c.Name ?? "").Contains("token", StringComparison.OrdinalIgnoreCase) ? "…" : c.Value)));
+
 	private void OnGuestPassList(SteamApps.GuestPassListCallback cb) {
 		if (cb.CountGuestPassesToRedeem == 0) {
 			GuestPasses = [];
@@ -825,7 +832,7 @@ public sealed class Bot : IAsyncDisposable {
 			}
 
 			packages[gid] = pass["packageid"].AsUnsignedInteger();
-			Log.Debug(new Said("waiting gift or guest pass: {0}", string.Join(", ", pass.Children.Select(static c => c.Name + "=" + c.Value))), Name);
+			Log.Debug(new Said("waiting gift or guest pass: {0}", PassForLog(pass)), Name);
 		}
 
 		GuestPassPackages = packages;
@@ -2263,9 +2270,8 @@ public sealed class Bot : IAsyncDisposable {
 		//
 		// So liveness is inbound OR our own outbound heartbeat: the persona re-assert just above runs every 60s and
 		// only gets there if this session can still reach Steam. Reconnect only when BOTH have been silent past the
-		// timeout - a genuinely wedged, half-open socket. A PlayingBlocked account skips the persona re-assert, so
-		// there _lastPacket carries it alone, which is right: a session its owner is actively using is never idle.
-		// A truly dead socket is still caught quickly by SteamKit's own heartbeat, which raises OnDisconnected.
+		// timeout - a genuinely wedged, half-open socket. A truly dead socket is still caught quickly by SteamKit's own
+		// heartbeat, which raises OnDisconnected.
 		//
 		// This used to PROBE by requesting our own account's profile info and awaiting the reply - a self-directed
 		// friends/profile call, the same family of request that signed the owner out of Friends & Chat - so it is
@@ -2273,8 +2279,7 @@ public sealed class Bot : IAsyncDisposable {
 		// The re-assert runs every 3-10 minutes, not every minute as this was written for - so it only counts as
 		// silent once it has missed its longest gap by the timeout. Comparing it to the bare timeout reconnected a
 		// quiet (warming-up or invisible) account a few minutes after every sign-in, for nothing.
-		if ((DateTime.UtcNow.Subtract(_lastPacket).TotalSeconds >= ConnectionTimeoutSeconds)
-			&& (DateTime.UtcNow.Subtract(_lastPersonaAssert).TotalSeconds >= PersonaAssertMaxSeconds + ConnectionTimeoutSeconds)) {
+		if (WentQuiet(DateTime.UtcNow, _lastPacket, _lastPersonaAssert, PlayingBlocked)) {
 			Log.Warn("connection went quiet - reconnecting", Name);
 
 			try {
@@ -2284,6 +2289,17 @@ public sealed class Bot : IAsyncDisposable {
 			}
 		}
 	}
+
+	/// <summary>
+	/// Nothing in from Steam and no re-assert of ours past the timeout - a wedged socket worth reconnecting. Never while
+	/// standing aside for you: the re-assert is skipped then, and a session you're playing on gets next to no traffic
+	/// of its own - it was taken for dead two minutes after each sign-in and signed back into your account, twice
+	/// in three minutes, in the middle of your game. SteamKit's own heartbeat still catches a dead socket then.
+	/// </summary>
+	internal static bool WentQuiet(DateTime now, DateTime lastInbound, DateTime lastAssert, bool standingAside) =>
+		!standingAside
+		&& ((now - lastInbound).TotalSeconds >= ConnectionTimeoutSeconds)
+		&& ((now - lastAssert).TotalSeconds >= PersonaAssertMaxSeconds + ConnectionTimeoutSeconds);
 
 	// ── pushes ──────────────────────────────────────────────────────────────
 	private void OnPlayingSessionState(SteamUser.PlayingSessionStateCallback cb) {
@@ -2347,8 +2363,10 @@ public sealed class Bot : IAsyncDisposable {
 			int delay = Math.Max(0, Cfg.ResumeDelayMinutes);
 			_resumeAt = DateTime.UtcNow + (Cfg.LegitMode && (delay > 0) ? Rng.HumanMinutes(delay, delay * 3) : TimeSpan.FromMinutes(delay));
 
+			// The wait it actually rolled, not the setting: on a human-mode account that's anywhere up to three times it, and
+			// "in 5m" for a wait of 14 was simply wrong.
 			if (Cfg.ResumeDelayMinutes > 0) {
-				Log.Info(new Said("the account is free again - picking back up in {0}m", Cfg.ResumeDelayMinutes), Name);
+				Log.Info(new Said("the account is free again - picking back up in {0}m", (int) Math.Ceiling((_resumeAt - DateTime.UtcNow).TotalMinutes)), Name);
 			} else {
 				Log.Info("the account is free again - resuming", Name);
 			}

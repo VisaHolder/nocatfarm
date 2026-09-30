@@ -500,7 +500,7 @@
     "waiting - farming cards first": "ждёт — сначала карточки",
     "waiting for a farming slot": "ждёт свободный слот для фарма",
     "waiting for the account": "ждёт аккаунт",
-    "a game": "игра",
+    "a game": "игру",
     "a waiting gift was already taken care of before its turn came": "ожидавший подарок уже был обработан до своей очереди",
     "accepting a gift around {0}": "примет подарок около {0}",
     "trade offer #{0} waited for the account to wake - handling it around {1}": "предложение #{0} ждало, пока аккаунт проснётся - обработка около {1}",
@@ -1734,7 +1734,6 @@
     "couldn't read lifetime totals ({0}: {1}) - not overwriting": "не прочитать итоги ({0}: {1}) - не перезаписываю",
     "Steam is rate-limiting logins - all accounts wait {0}m": "Steam ограничивает входы - все аккаунты ждут {0}м",
     "can't trade {0} items (banned there?) - left out from now on": "не может обменивать предметы {0} (там бан?) - теперь пропускаются",
-    "offer sent - confirm it on your phone (no authenticator here)": "предложение отправлено - подтвердите на телефоне (аутентификатора тут нет)",
     "encrypted {0} - keep your own backup of the maFile": "{0} зашифрован - храните свою копию maFile",
     "an encrypted maFile only opens in nocat.farm on this Windows user": "зашифрованный maFile открывается только в nocat.farm под этим пользователем Windows",
     "webhook link dead (HTTP {0}) - copy it again from the channel": "ссылка вебхука не работает (HTTP {0}) - скопируйте её в канале заново",
@@ -2067,7 +2066,10 @@
     "{0}: that name can't be used here, so it's {1}": "{0}: это имя здесь использовать нельзя, поэтому оно {1}",
     "plugin {0} failed on {1}: {2}: {3}": "плагин {0} дал сбой на {1}: {2}: {3}",
     "'{0}' is a name Windows keeps for itself (like con, nul or com1) - pick another": "'{0}' - имя, которое Windows оставляет за собой (как con, nul или com1), - выберите другое",
-    "'all' means every account in a command - pick another name": "'all' в команде означает все аккаунты - выберите другое имя"
+    "'all' means every account in a command - pick another name": "'all' в команде означает все аккаунты - выберите другое имя",
+    "offer sent - confirm it in the Steam app on your phone": "предложение отправлено - подтвердите его в приложении Steam на телефоне",
+    "{0} invited you to play {1}": "{0} приглашает вас в {1}",
+    "human mode spaces comments out - this account can post the next one from {0}": "человеческий режим делает паузы между комментариями - следующий с этого аккаунта можно с {0}"
   },
   "settings": {
     "WebEnabled": {

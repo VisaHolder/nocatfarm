@@ -1734,7 +1734,6 @@
     "couldn't read lifetime totals ({0}: {1}) - not overwriting": "não deu para ler os totais ({0}: {1}) - sem sobrescrever",
     "Steam is rate-limiting logins - all accounts wait {0}m": "a Steam está limitando logins - todas as contas esperam {0}m",
     "can't trade {0} items (banned there?) - left out from now on": "não pode trocar itens de {0} (banida lá?) - fora de agora em diante",
-    "offer sent - confirm it on your phone (no authenticator here)": "oferta enviada - confirme no celular (sem autenticador aqui)",
     "encrypted {0} - keep your own backup of the maFile": "{0} criptografado - guarde sua própria cópia do maFile",
     "an encrypted maFile only opens in nocat.farm on this Windows user": "um maFile criptografado só abre no nocat.farm deste usuário do Windows",
     "webhook link dead (HTTP {0}) - copy it again from the channel": "link do webhook morto (HTTP {0}) - copie de novo do canal",
@@ -2067,7 +2066,10 @@
     "{0}: that name can't be used here, so it's {1}": "{0}: esse nome não pode ser usado aqui, então ficou {1}",
     "plugin {0} failed on {1}: {2}: {3}": "o plugin {0} falhou em {1}: {2}: {3}",
     "'{0}' is a name Windows keeps for itself (like con, nul or com1) - pick another": "'{0}' é um nome que o Windows reserva para si (como con, nul ou com1) - escolha outro",
-    "'all' means every account in a command - pick another name": "'all' quer dizer todas as contas num comando - escolha outro nome"
+    "'all' means every account in a command - pick another name": "'all' quer dizer todas as contas num comando - escolha outro nome",
+    "offer sent - confirm it in the Steam app on your phone": "oferta enviada - confirme no app da Steam no seu celular",
+    "{0} invited you to play {1}": "{0} convidou você para jogar {1}",
+    "human mode spaces comments out - this account can post the next one from {0}": "o modo humano espaça os comentários - esta conta pode postar o próximo a partir das {0}"
   },
   "settings": {
     "WebEnabled": {

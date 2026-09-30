@@ -423,6 +423,9 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 		return added;
 	}
 
+	/// <summary>The store's name for it, trimmed - it sends some with a space on the end ("claimed Train Sim World 7 ").</summary>
+	internal static string StoreName(string json, string fallback) => Json.Str(json, "name")?.Trim() is { Length: > 0 } name ? name : fallback;
+
 	/// <summary>
 	/// A free-to-keep promo of a normally-paid game is worth taking whether or not it has cards. The game in the
 	/// package has to be showing 100% off - the same test a change-feed find gets.
@@ -442,7 +445,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			return (null, name, false, 0);
 		}
 
-		name = Json.Str(pkg, "name") ?? name;
+		name = StoreName(pkg, name);
 		uint appId = FirstAppId(pkg);
 
 		if (appId == 0) {
@@ -479,7 +482,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			return (false, name, false, 0);   // delisted, or not sold here
 		}
 
-		name = Json.Str(details, "name") ?? name;
+		name = StoreName(details, name);
 		GameNames.Learn(appId, name);
 
 		string? type = Json.Str(details, "type");
@@ -527,7 +530,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			return (false, name, false);
 		}
 
-		name = Json.Str(details, "name") ?? name;
+		name = StoreName(details, name);
 		GameNames.Learn(appId, name);
 
 		if (details.Contains("\"coming_soon\":true", StringComparison.OrdinalIgnoreCase)) {

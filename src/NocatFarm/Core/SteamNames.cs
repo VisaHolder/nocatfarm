@@ -20,6 +20,12 @@ public static partial class SteamNames {
 			return hit.Name;
 		}
 
+		// A friend's name is already here - Steam sends it with the friends list. Asking their profile page instead cost a
+		// steamcommunity.com request per chat line, on the one site that rate-limits every account at once.
+		if (via.Friends?.GetFriendPersonaName(new SteamKit2.SteamID(id)) is { Length: > 0 } friend) {
+			return friend;
+		}
+
 		try {
 			string? xml = await via.Web.GetAsync(new Uri($"https://steamcommunity.com/profiles/{id}/?xml=1"), ct).ConfigureAwait(false);
 
@@ -35,6 +41,9 @@ public static partial class SteamNames {
 
 		return id.ToString();
 	}
+
+	/// <summary>One of the accounts this app runs.</summary>
+	public static bool IsOwn(ulong id) => (id != 0) && (BotManager.Instance?.All.Any(b => b.SteamId == id) ?? false);
 
 	[GeneratedRegex(@"<steamID><!\[CDATA\[(.*?)\]\]></steamID>", RegexOptions.Singleline)]
 	private static partial Regex NameRegex();

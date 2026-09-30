@@ -45,7 +45,12 @@ public sealed class HumanGate(Bot bot, bool followsDay = true, bool ownDay = fal
 			bool day = followsDay || bot.Cfg.QuietThingsWaitForDay;
 
 			// Finishing up before it logs off: nothing new starts, quiet things included - they wait for the next sign-in.
-			if (bot.Stopping || (ownDay ? !HumanMode.UpFor(bot) : day ? !HumanMode.ReadyFor(bot) : !bot.IsOnline)) {
+			// You're on the account yourself: nothing that shows on it starts behind your back - a comment posted, a group
+			// joined, a card listed while you're in the middle of a match. It waits till you're done, then a fresh wait.
+			// Things nobody sees (a Quiet gate - items sent to your own account) carry on.
+			bool youOnIt = followsDay && bot.PlayingBlocked;
+
+			if (bot.Stopping || youOnIt || (ownDay ? !HumanMode.UpFor(bot) : day ? !HumanMode.ReadyFor(bot) : !bot.IsOnline)) {
 				_ready = false;
 
 				return false;

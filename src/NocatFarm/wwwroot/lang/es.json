@@ -1734,7 +1734,6 @@
     "couldn't read lifetime totals ({0}: {1}) - not overwriting": "no se pudieron leer los totales ({0}: {1}) - no se sobrescriben",
     "Steam is rate-limiting logins - all accounts wait {0}m": "Steam limita los inicios - todas las cuentas esperan {0}m",
     "can't trade {0} items (banned there?) - left out from now on": "no puede intercambiar objetos de {0} (¿baneada ahí?) - se omiten desde ahora",
-    "offer sent - confirm it on your phone (no authenticator here)": "oferta enviada - confírmala en el móvil (sin autenticador aquí)",
     "encrypted {0} - keep your own backup of the maFile": "{0} cifrado - guarda tu propia copia del maFile",
     "an encrypted maFile only opens in nocat.farm on this Windows user": "un maFile cifrado solo se abre en nocat.farm con este usuario de Windows",
     "webhook link dead (HTTP {0}) - copy it again from the channel": "enlace del webhook muerto (HTTP {0}) - cópialo de nuevo del canal",
@@ -2067,7 +2066,10 @@
     "{0}: that name can't be used here, so it's {1}": "{0}: ese nombre no se puede usar aquí, así que se llama {1}",
     "plugin {0} failed on {1}: {2}: {3}": "el plugin {0} falló en {1}: {2}: {3}",
     "'{0}' is a name Windows keeps for itself (like con, nul or com1) - pick another": "'{0}' es un nombre que Windows se reserva (como con, nul o com1): elige otro",
-    "'all' means every account in a command - pick another name": "'all' significa todas las cuentas en un comando: elige otro nombre"
+    "'all' means every account in a command - pick another name": "'all' significa todas las cuentas en un comando: elige otro nombre",
+    "offer sent - confirm it in the Steam app on your phone": "oferta enviada: confírmala en la app de Steam de tu móvil",
+    "{0} invited you to play {1}": "{0} te invitó a jugar a {1}",
+    "human mode spaces comments out - this account can post the next one from {0}": "el modo humano espacia los comentarios: esta cuenta puede publicar el siguiente a partir de las {0}"
   },
   "settings": {
     "WebEnabled": {
