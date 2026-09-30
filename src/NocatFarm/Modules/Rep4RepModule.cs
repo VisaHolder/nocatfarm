@@ -130,6 +130,12 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	private volatile bool _forceNext;
 
 	/// <summary>
+	/// The account's day started at a different time than planned ('wake'). A wait for the old wake time is cut short
+	/// and the day is looked at again - nothing is forced, the day's own waits still apply.
+	/// </summary>
+	public void DayMoved() => Wake();
+
+	/// <summary>
 	/// Tripped to cut a wait short.
 	///
 	/// The loop can be part way through a thirty-minute sleep, so setting the flag alone left "post now" and
@@ -320,6 +326,26 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		}
 	}
 
+	/// <summary>
+	/// How long to leave it while the account's day hasn't started. Asleep, until it gets up (and a few minutes more,
+	/// so it isn't the first thing it does); otherwise the usual few minutes.
+	/// </summary>
+	/// <remarks>
+	/// Asleep, it used to look again every four to ten minutes all night - some sixty "waiting for the account's day"
+	/// passes before the morning, every one of them certain to say the same. The wait is cut short by anything that
+	/// wakes the loop - 'rep4rep now', a hold cleared, 'wake' (<see cref="DayMoved"/>) - and never runs past twelve
+	/// hours, in case the wake time moves some other way.
+	/// </remarks>
+	internal static int DayWaitSeconds(HumanMode.Phase phase, DateTime? wakes, DateTime now, int usual, int afterWaking) {
+		if ((phase is not (HumanMode.Phase.Asleep or HumanMode.Phase.NightIdle)) || (wakes is not { } at) || (at <= now)) {
+			return usual;
+		}
+
+		double untilUp = (at - now).TotalSeconds + afterWaking;
+
+		return (int) Math.Clamp(untilUp, usual, TimeSpan.FromHours(12).TotalSeconds);
+	}
+
 	/// <summary>One iteration. Returns how many seconds to wait before the next.</summary>
 	private async Task<int> StepAsync(CancellationToken ct) {
 		bool force = _forceNext;
@@ -344,7 +370,9 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		if (!force && !_gate.Open) {
 			_status = new Said("waiting for the account's day");
 
-			return Rng.Next(4 * 60, 10 * 60);
+			HumanMode? human = BotManager.ModuleOf<HumanMode>(Bot);
+
+			return DayWaitSeconds(human?.Current ?? HumanMode.Phase.Off, human?.NextChange, DateTime.UtcNow, Rng.Next(4 * 60, 10 * 60), Rng.Next(60, 15 * 60));
 		}
 
 		// A state file we couldn't read means we don't know today's count. Retry the read; never guess zero.

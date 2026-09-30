@@ -156,6 +156,10 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 
 				try {
 					poked = await _poke.WaitAsync(wait, ct).ConfigureAwait(false);
+
+					if (poked) {
+						await SettleAsync(_poke, PokeSettle, ct).ConfigureAwait(false);
+					}
 				} catch (OperationCanceledException) {
 					return;
 				}
@@ -172,6 +176,25 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 	}
 
 	private static TimeSpan Clamp(TimeSpan value, TimeSpan lo, TimeSpan hi) => value < lo ? lo : value > hi ? hi : value;
+
+	/// <summary>How long a wake-up waits for the rest of the same news before it looks.</summary>
+	private static readonly TimeSpan PokeSettle = TimeSpan.FromSeconds(5);
+
+	/// <summary>
+	/// Wait a moment after being woken, then let go of every wake-up that came in meanwhile - they're the same news.
+	/// </summary>
+	/// <remarks>
+	/// One gift arrives as two pushes from Steam, the gift count and the guest-pass list, a moment apart - and each
+	/// woke this up, so the store's gifts page was read twice for one gift. Waiting a few seconds also means the look
+	/// that follows has both: the count can land before the list that says which pass it is.
+	/// </remarks>
+	internal static async Task SettleAsync(SemaphoreSlim poke, TimeSpan settle, CancellationToken ct) {
+		await Task.Delay(settle, ct).ConfigureAwait(false);
+
+		while (poke.Wait(0)) {
+			// drained - one look answers them all
+		}
+	}
 
 	/// <summary>
 	/// How long before asking the store again about a guest pass it couldn't tell us about: two minutes, doubling to

@@ -92,6 +92,8 @@ public static partial class Notifier {
 		Topic.Social => G.SendComments,
 		Topic.Achievements => G.SendAchievements,
 		Topic.Rep4Rep => G.SendRep4Rep,
+		Topic.Security => G.SendSignIns,
+		Topic.BreakIn => G.SendBreakIns,
 		_ => false
 	};
 
@@ -180,6 +182,8 @@ public static partial class Notifier {
 		Topic.Social => (new Said("Friends & comments"), 0x1ABC9C),
 		Topic.Achievements => (new Said("Achievements"), 0xF1C40F),
 		Topic.Rep4Rep => (new Said("rep4rep"), 0x95A5A6),
+		Topic.Security => (new Said("Dashboard sign-ins"), 0xE74C3C),
+		Topic.BreakIn => (new Said("Break-in attempts"), 0xE74C3C),
 		_ => (new Said("nocat.farm"), 0xC8C8C8)
 	};
 
@@ -452,6 +456,13 @@ public static partial class Notifier {
 
 		return summary ? $"{head}<pre>{body}</pre>" : head + body;
 	}
+
+	/// <summary>Whether a private Telegram chat is connected - somewhere only the owner reads, for a sign-in code.</summary>
+	public static bool CanSendPrivately => HasTelegram;
+
+	/// <summary>One message straight to the Telegram chat, now rather than in the next batch - the dashboard's sign-in code.</summary>
+	public static async Task<bool> SendPrivateNowAsync(string text, CancellationToken ct) =>
+		HasTelegram && (await PostTelegramAsync(WebUtility.HtmlEncode(text), ct).ConfigureAwait(false)).Ok;
 
 	private static async Task<(bool Ok, string Why)> PostTelegramAsync(string html, CancellationToken ct) {
 		string token = G.TelegramBotToken;

@@ -84,6 +84,22 @@ public static partial class PriceBook {
 	private const int CoolMinMinutes = 15;
 	private const int CoolMaxMinutes = 240;
 
+	/// <summary>
+	/// The pause once the market has refused even after the longest one - it isn't slowing us down any more, it has
+	/// shut this connection out.
+	/// </summary>
+	/// <remarks>
+	/// Seen for days on end: every four hours exactly one lookup, and that one refused (429) - never a second one, so
+	/// this program's pace had nothing left to do with it. It is Steam turning the internet connection away, and the
+	/// same address was refused a single lookup with nothing else running, while a popular item still came back -
+	/// most likely from Steam's own cache (it is marked public for fifteen seconds). Every request into a limit
+	/// that is still in force can keep it in force, so past that point it is asked twice a day, not six times.
+	/// </remarks>
+	private const int RefusedMinutes = 12 * 60;
+
+	/// <summary>"The market is refusing" has been said - it isn't said again until the market has answered once.</summary>
+	private static bool _saidRefused;
+
 	private static DateTime _lastCall = DateTime.MinValue;
 	private static DateTime _coolUntil = DateTime.MinValue;
 	private static int _coolMinutes;
@@ -144,6 +160,7 @@ public static partial class PriceBook {
 		if (!_coolLoaded) {
 			_coolLoaded = true;
 			(_coolUntil, _coolMinutes) = Limiters.Remembered("market");   // a restart doesn't lift the market's limit
+			_saidRefused = _coolMinutes >= RefusedMinutes;                   // and it was said before the restart
 		}
 
 		if (DateTime.UtcNow < _coolUntil) {
@@ -175,15 +192,25 @@ public static partial class PriceBook {
 				// tripped the same limit within a minute, and spent hours doing that - which is what starved the
 				// accounts' own community requests. So the wait doubles each time it happens and only resets on
 				// an answer, which turns an endless retry loop into a handful of attempts spread over the day.
+				bool refused = false;
+
 				if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests) {
-					_coolMinutes = _coolMinutes <= 0 ? CoolMinMinutes : Math.Min(CoolMaxMinutes, _coolMinutes * 2);
+					_coolMinutes = NextCoolMinutes(_coolMinutes);
 					_coolUntil = DateTime.UtcNow.AddMinutes(_coolMinutes);
+					refused = _coolMinutes >= RefusedMinutes;
 				} else {
 					_coolUntil = DateTime.UtcNow.AddMinutes(2);
 				}
 
 				Limiters.Remember("market", _coolUntil, _coolMinutes);
-				Log.Debug(new Said("the market answered {0} - pausing price lookups until {1}", (int) response.StatusCode, (_coolUntil.ToLocalTime()).ToString("HH:mm")));
+
+				// Once, in plain words, rather than the same pause line every four hours for days.
+				if (refused && !_saidRefused) {
+					_saidRefused = true;
+					Log.Info(new Said("Steam's market is refusing price lookups from this internet connection - inventory values keep the last prices it gave, and it is asked again twice a day"));
+				} else if (!refused) {
+					Log.Debug(new Said("the market answered {0} - pausing price lookups until {1}", (int) response.StatusCode, (_coolUntil.ToLocalTime()).ToString("HH:mm")));
+				}
 
 				return null;
 			}
@@ -191,6 +218,11 @@ public static partial class PriceBook {
 			if (_coolMinutes != 0) {
 				_coolMinutes = 0;
 				Limiters.Remember("market", _coolUntil, 0);
+			}
+
+			if (_saidRefused) {
+				_saidRefused = false;
+				Log.Info(new Said("Steam's market answers price lookups again"));
 			}
 
 			string json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
@@ -225,6 +257,15 @@ public static partial class PriceBook {
 			Gate.Release();
 		}
 	}
+
+	/// <summary>
+	/// The pause after one more 429: fifteen minutes, doubling to four hours - and refused after four hours' rest too,
+	/// <see cref="RefusedMinutes"/>.
+	/// </summary>
+	internal static int NextCoolMinutes(int current) =>
+		current <= 0 ? CoolMinMinutes
+		: current < CoolMaxMinutes ? Math.Min(CoolMaxMinutes, current * 2)
+		: RefusedMinutes;
 
 	private static string? Text(JsonElement node, string name) =>
 		node.TryGetProperty(name, out JsonElement v) && (v.ValueKind == JsonValueKind.String) ? v.GetString() : null;

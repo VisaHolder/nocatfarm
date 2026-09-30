@@ -10,7 +10,7 @@ public enum NotifyKind { Earning, Social, Problem, Trade }
 /// What an event is about, finer than <see cref="NotifyKind"/>: the Discord and Telegram notifications let people
 /// pick exactly which of these they want sent.
 /// </summary>
-public enum Topic { Cards, FreeStuff, Trades, Achievements, Rep4Rep, Social, Problems, Updates, Summary, Installs, Weekly }
+public enum Topic { Cards, FreeStuff, Trades, Achievements, Rep4Rep, Social, Problems, Updates, Summary, Installs, Weekly, Security, BreakIn }
 
 /// <summary>
 /// Console + file logging, and a ring buffer the dashboard reads so the browser shows the same stream you see

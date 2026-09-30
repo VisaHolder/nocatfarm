@@ -144,12 +144,32 @@ nocat.farm goes by the address the proxy passes on, and each visitor gets the fu
 a password the dashboard refuses everything that isn't this PC, even when it's open to the network. A banner warns
 you if the password is short enough to guess.
 
+**Who's been here.** The Phone page lists every sign-in, wrong password and lockout, and every visitor from the internet
+turned away, with the address, whether it was this PC, home or the internet, and the device (`iPhone · Safari`). The
+last 200 are kept; `visitors` (or `who`) shows them anywhere, and **Sign every device out** (or `visitors signout`)
+signs every browser and phone out at once - from Telegram too, `/visitors signout`. A sign-in from outside your home
+is sent to Telegram and Discord (*Send dashboard sign-ins*), and so is anybody guessing: a lockout, the brake below,
+or *Open from anywhere* switching itself off (*Send break-in attempts*). Both are on by default.
+
 **From anywhere.** Turning on *Open from anywhere* (on the Phone page, or Settings → Dashboard with Show advanced)
 works like Jellyfin. nocat.farm asks your router to forward the dashboard's port to this PC (UPnP), finds your
 internet address, and gives you a link and QR code that work anywhere. It needs a password of at least 12
 characters, because anyone on the internet can reach the sign-in page. The link is plain http, so use a password you
 don't use anywhere else. The forward is taken away when you turn it off or close nocat.farm, and put back when it
-starts. Test it on mobile data with the phone's wifi off - from inside your own home, your internet address often
+starts. Turned off, it's off at once: nocat.farm itself turns away anything from the internet, so a phone that still
+had the page open can't carry on through the router. Ten wrong passwords from the internet in an hour, from any
+mix of addresses, pause signing in from outside for an hour (home still works, and `unlock` lifts it). And after
+*Turn Open from anywhere off after* wrong passwords or codes from the internet in a day - 5 by default, 0 never -
+it switches itself off and nothing from outside gets in, a *Public address* set by hand included, until you turn it
+on again (the Phone page, or `anywhere on`). That survives a restart. Backups and restores only work at home or on
+this PC, since the zip holds every saved login.
+
+**A code on Telegram.** With Telegram connected, signing in from outside your home takes the password and then a
+6-digit code the bot sends you (*Code on Telegram for sign-ins from outside*, on by default). So the password alone
+never lets anyone in from the internet - and a code you didn't ask for means somebody has the password: change it and
+type `visitors signout`. The code works for 5 minutes, only for the address it was sent for, and five wrong codes
+lock that address out like five wrong passwords. At home and on this PC the password is all it asks. Until Telegram
+is connected, the password is enough from outside too; the Phone page says which. Test it on mobile data with the phone's wifi off - from inside your own home, your internet address often
 won't open, and that's the router, not nocat.farm. If your router has UPnP switched off, the page says so; forward
 the port by hand and put your address in *Public address* instead (a name like `myname.duckdns.org` works too).
 

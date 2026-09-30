@@ -472,6 +472,18 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 			_status = new Said("nothing left to farm");
 
+			// Hand the session straight back to the idler so the custom game name goes back up NOW.
+			//
+			// Without this, when farming ends the account keeps showing whatever real game was farmed last (or the
+			// raw first idle game after a reconnect) until the idler's own 4-7 minute timer next fires - a window
+			// where a boosting account visibly reads "Rust" instead of its custom name. The idler's Assert is
+			// idempotent and no-ops for human-mode accounts, so this is safe to call on every idle rescan.
+			//
+			// Before the line below, not after it: that line says what is idling, and until the idler has put its
+			// games on, the only number to hand was the idle LIST - which with "Idle my whole library" or "Rotate the
+			// idle list" is not what plays. It said "(+8)" on an account idling 31.
+			BotManager.ModuleOf<Idler>(Bot)?.Assert();
+
 			// Said once, not on every rescan, and never claiming to be "idling instead" while human mode has a
 			// game open - which is what it used to announce every few minutes in the middle of a visible session.
 			if (!_saidNothingLeft) {
@@ -494,22 +506,14 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				// is already finished text stays in whatever language it was built in - which is how the two lines
 				// ended up reading "keine Karten mehr zu farmen · 1h23m played in total".
 				Said been = lifetime > 0 ? new Said(" · {0} by nocat.farm", Fmt.Hm(lifetime)) : default;
-				Said idle = !string.IsNullOrWhiteSpace(Bot.CustomName)
-					? new Said("{0}", Bot.CustomName + (Bot.Cfg.IdleGames.Count > 0 ? $" (+{Bot.Cfg.IdleGames.Count})" : ""))
-					: Bot.Cfg.IdleGames.Count > 0 ? new Said("{0} game(s)", Bot.Cfg.IdleGames.Count) : new Said("your games");
+				// What is really playing now - when the idler could put its games on. Paused, or with you on the
+				// account, nothing of the idler's is playing, and the list is the best there is to go on.
+				int idling = Bot.CanPlay ? Bot.PlayingApps.Count : Bot.Cfg.IdleGames.Count;
 
 				Log.Info(Bot.HumanOwned
 					? new Said("no cards left - human mode carries on{0}", been)
-					: new Said("no cards left - idling {0}{1}", idle, been), Bot.Name);
+					: new Said("no cards left - idling {0}{1}", IdleSummary(Bot.CustomName, idling), been), Bot.Name);
 			}
-
-			// Hand the session straight back to the idler so the custom game name goes back up NOW.
-			//
-			// Without this, when farming ends the account keeps showing whatever real game was farmed last (or the
-			// raw first idle game after a reconnect) until the idler's own 4-7 minute timer next fires - a window
-			// where a boosting account visibly reads "Rust" instead of its custom name. The idler's Assert is
-			// idempotent and no-ops for human-mode accounts, so this is safe to call on every idle rescan.
-			BotManager.ModuleOf<Idler>(Bot)?.Assert();
 
 			// Nothing to farm changes only when a game is added, and that cuts this wait short (see RunAsync) - so the
 			// slow look is only a backstop.
@@ -1158,6 +1162,15 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			NoteBumped(batch, DateTime.UtcNow - started);
 		}
 	}
+
+	/// <summary>
+	/// What "no cards left - idling ..." names: the custom name with how many real games ride under it, or the count.
+	/// <paramref name="playing"/> is what is really on - not the length of the idle list.
+	/// </summary>
+	internal static Said IdleSummary(string? customName, int playing) =>
+		!string.IsNullOrWhiteSpace(customName)
+			? new Said("{0}", customName + (playing > 0 ? $" (+{playing})" : ""))
+			: playing > 0 ? new Said("{0} game(s)", playing) : new Said("your games");
 
 	/// <summary>
 	/// The hours a bump put on its games, onto the queue's own copies of them. Steam counts playtime on every game of the

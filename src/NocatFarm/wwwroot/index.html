@@ -19,6 +19,8 @@
     <h1 class="wordmark">nocat.<span>farm</span></h1>
     <p class="muted" data-t="This dashboard is password protected.">This dashboard is password protected.</p>
     <input id="pw" type="password" placeholder="Password" data-t-ph="Password" autocomplete="current-password">
+    <input id="loginCode" class="hidden" type="text" inputmode="numeric" pattern="[0-9 ]*" maxlength="7" autocomplete="one-time-code"
+      placeholder="6-digit code" data-t-ph="6-digit code" aria-label="6-digit code">
     <button type="submit" data-t="Sign in">Sign in</button>
     <p id="loginError" class="error"></p>
   </form>
@@ -50,11 +52,11 @@
 
     <p class="welcome-ask"><b data-t="What kind of account is it?">What kind of account is it?</b></p>
     <div class="pickcards">
-      <div class="pickcard" id="w-type-human" onclick="welcomePickType(true)">
+      <div class="pickcard" id="w-type-human" role="button" tabindex="0" onclick="welcomePickType(true)">
         <b data-t="My main - I play on it">My main - I play on it</b>
         <span data-t="Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated.">Human mode: it keeps a believable day - sleeps, takes breaks, plays one game at a time and waits a person's while before it trades or replies. Slower, but nothing about it looks automated.</span>
       </div>
-      <div class="pickcard" id="w-type-robot" onclick="welcomePickType(false)">
+      <div class="pickcard" id="w-type-robot" role="button" tabindex="0" onclick="welcomePickType(false)">
         <b data-t="A spare or farm account">A spare or farm account</b>
         <span data-t="Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.">Robot mode: farms cards and idles games around the clock at full speed. Best for accounts nobody looks at.</span>
       </div>
@@ -124,7 +126,7 @@
         <div id="history"><p class="muted empty" data-t="Loading…">Loading…</p></div>
       </div>
       <div class="card">
-        <h2 class="h2links"><span data-t="Recent activity">Recent activity</span><span class="links"><a class="muted small" onclick="go('phone')" data-t="Open on your phone">Open on your phone</a><a class="muted small" onclick="startTutorial()" data-t="Show the walkthrough again">Show the walkthrough again</a></span></h2>
+        <h2 class="h2links"><span data-t="Recent activity">Recent activity</span><span class="links"><a class="muted small" role="button" tabindex="0" onclick="go('phone')" data-t="Open on your phone">Open on your phone</a><a class="muted small" role="button" tabindex="0" onclick="startTutorial()" data-t="Show the walkthrough again">Show the walkthrough again</a></span></h2>
         <div id="recent" class="recent"><p class="muted empty" data-t="Loading…">Loading…</p></div>
       </div>
     </section>
@@ -204,6 +206,7 @@
           <div id="phoneSafe" class="card"></div>
         </div>
       </div>
+      <div id="phoneVisitors" class="card"></div>
     </section>
 
     <!-- Plugins -->

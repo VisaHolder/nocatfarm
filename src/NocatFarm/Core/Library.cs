@@ -197,7 +197,38 @@ public sealed class Library(Bot bot) {
 	public async Task<bool> RefreshIfStaleAsync(TimeSpan maxAge, CancellationToken ct) =>
 		(Ready && (DateTime.UtcNow - RefreshedAt < maxAge)) || await RefreshAsync(ct).ConfigureAwait(false);
 
-	public async Task<bool> RefreshAsync(CancellationToken ct) {
+	/// <summary>The read of the library that is under way, if one is - everybody who asks meanwhile waits for that one.</summary>
+	private Task<bool>? _refreshing;
+	private readonly Lock _refreshGate = new();
+
+	/// <summary>
+	/// Read the library from Steam - or, when a read is already on its way, wait for that one.
+	/// </summary>
+	/// <remarks>
+	/// Two modules ask at sign-in (the upkeep pass and the achievement hunter), a second apart, and both found the
+	/// library stale - so every call behind it (owned games, the play history, the family's library) went to Steam
+	/// twice, and the log said everything twice. One read answers both.
+	/// </remarks>
+	public Task<bool> RefreshAsync(CancellationToken ct) {
+		lock (_refreshGate) {
+			if (_refreshing is { IsCompleted: false } running) {
+				return JoinAsync(running, ct);
+			}
+
+			return _refreshing = ReadAsync(ct);
+		}
+	}
+
+	/// <summary>Wait for a read somebody else started. Theirs being stopped is not ours failing - it just didn't get there.</summary>
+	private static async Task<bool> JoinAsync(Task<bool> running, CancellationToken ct) {
+		try {
+			return await running.WaitAsync(ct).ConfigureAwait(false);
+		} catch (OperationCanceledException) when (!ct.IsCancellationRequested) {
+			return false;
+		}
+	}
+
+	private async Task<bool> ReadAsync(CancellationToken ct) {
 		if (!bot.IsOnline || (bot.SteamId == 0)) {
 			return false;
 		}

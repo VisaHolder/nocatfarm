@@ -17,7 +17,10 @@ hunter's game-length lookups go to SteamSpy with nothing but the game's ID. *Ope
 talks to your router.
 
 The dashboard only listens on this PC by default. With no password it refuses anything that isn't from this PC, even
-if you open it to the network, and five wrong passwords lock an address out (an hour, or a minute on this PC).
+if you open it to the network, and five wrong passwords lock an address out (an hour, or a minute on this PC). From
+the internet, ten wrong passwords in an hour from any addresses pause signing in from outside for an hour, and every
+sign-in from outside is sent to Telegram and Discord - `visitors` lists who has been at the dashboard. With Telegram
+connected, a sign-in from outside also needs a 6-digit code the bot sends you, so the password alone isn't enough.
 Secrets are never sent to the browser. An empty secret box means "leave it as it is"; use its **Clear** button to
 erase one.
 

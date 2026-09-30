@@ -53,10 +53,25 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 
 	public RotationView? Rotating { get; private set; }
 
-	/// <summary>Created on first use, so an account that never rotates never reads or writes a state file.</summary>
-	public IdleRotation Rotation => _rotation ??= new IdleRotation(IdleRotation.PathFor(Bot.Name), Bot.Name);
+	/// <summary>
+	/// Created on first use, so an account that never rotates never reads or writes a state file. Under a lock: the
+	/// idler's own loop and a 'rotation' command can both get here first, and two of them would each keep their own
+	/// batch and write the same file over each other.
+	/// </summary>
+	public IdleRotation Rotation {
+		get {
+			if (_rotation is { } made) {
+				return made;
+			}
 
-	private IdleRotation? _rotation;
+			lock (_rotationGate) {
+				return _rotation ??= new IdleRotation(IdleRotation.PathFor(Bot.Name), Bot.Name);
+			}
+		}
+	}
+
+	private volatile IdleRotation? _rotation;
+	private readonly Lock _rotationGate = new();
 
 	/// <summary>
 	/// What the last re-assert was worked out from. Turning "Idle my whole library" or "Rotate the idle list" on or
@@ -119,7 +134,12 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 		// Human mode runs its own grinds, after the owner-safety wait at logon. Playing the grind game from here
 		// skipped that wait: a reconnect mid-grind put the game on seconds after logon, over the owner if he had
 		// sat down in the meantime.
+		//
+		// Rotating goes with it on every path that doesn't reach Plan: something else owns the account, so no batch
+		// is idling - and the dashboard kept showing "idling 31 of N, next batch at" a time long gone.
 		if (Bot.HumanOwned || Bot.Cfg.LegitMode) {
+			Rotating = null;
+
 			return;
 		}
 
@@ -132,6 +152,7 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 				return;   // grind is queued but not started - let whatever's playing keep running (legit switch-over)
 			}
 
+			Rotating = null;
 			Bot.SetPlaying([Bot.GrindGame]);
 			IdlingSince ??= DateTime.UtcNow;
 
@@ -139,6 +160,8 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 		}
 
 		if (Bot.IsFarming) {
+			Rotating = null;
+
 			return;   // the card farmer decides what plays while it is working
 		}
 
@@ -159,8 +182,8 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 
 	/// <summary>
 	/// The games to idle right now. With "Idle my whole library" and "Rotate the idle list" both off this is the
-	/// idle list exactly as it always was; either one on can grow the list past what Steam plays at once, and then
-	/// it is either cut to what fits (least played first) or taken a batch at a time.
+	/// idle list as it always was, cut to what Steam plays at once; either one on can grow the list past that, and
+	/// then it is either cut to what fits (least played first) or taken a batch at a time.
 	/// </summary>
 	public List<uint> Plan(DateTime now) {
 		// "Never touch these" has to mean never, not just never farm - the card farmer honoured the blacklist
@@ -174,7 +197,10 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 		if (!whole && !Bot.Cfg.RotateIdleGames) {
 			Rotating = null;
 
-			return games;
+			// Still cut to what Steam plays at once. A 40-game list (left long after switching rotation off) was
+			// handed on whole: Steam played 32, but the account counted 40 as playing and banked 40 game-minutes
+			// every minute.
+			return [.. games.Distinct().Take(IdleRotation.Slots(!string.IsNullOrWhiteSpace(Bot.CustomName)))];
 		}
 
 		// The library is games only - no DLC, tools or soundtracks. Family-shared games come along only with

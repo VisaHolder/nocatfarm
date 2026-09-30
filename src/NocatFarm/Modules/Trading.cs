@@ -421,6 +421,9 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 					return (true, false);
 				}
 
+				// Who it was from, read BEFORE Finish: Finish forgets the name the offer was announced under, and the
+				// lines below then said "from 76561198..." about somebody the announcement had just called by name.
+				string who = Who(offer);
 				Finish(offer.Id);
 				swapped = fair && !fromMaster && !donation;
 
@@ -432,7 +435,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 				if (result == Accepted.Done) {
 					Interlocked.Increment(ref _accepted);   // the loop and a command both count
-					Log.Trade(new Said("accepted offer {0} from {1} - {2} item(s) in, {3} out", NumberOf(offer.Id), Who(offer), offer.Receiving.Sum(static i => i.Amount), offer.Giving.Sum(static i => i.Amount)), Bot.Name, good: true);
+					Log.Trade(new Said("accepted offer {0} from {1} - {2} item(s) in, {3} out", NumberOf(offer.Id), who, offer.Receiving.Sum(static i => i.Amount), offer.Giving.Sum(static i => i.Amount)), Bot.Name, good: true);
 				} else {
 					// Accepted, but nothing moves until it's confirmed. Not a reward yet - and its cards stay promised,
 					// so another swap can't be judged as if they were still here.
@@ -442,7 +445,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 						}
 					}
 
-					Log.Trade(NeedsConfirming(offer, result), Bot.Name);
+					Log.Trade(NeedsConfirming(offer, result, who), Bot.Name);
 				}
 			} else if (await DeclineAsync(offer, ct).ConfigureAwait(false)) {
 				Interlocked.Increment(ref _declined);
@@ -678,11 +681,12 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			: new Said("{0} item(s): {1}", total, shown);
 	}
 
-	private Said NeedsConfirming(TradeOffers.Offer offer, Accepted result) => result == Accepted.NeedsEmail
-		? new Said("offer {0} from {1} accepted - confirm it in Steam's email", NumberOf(offer.Id), Who(offer))
+	/// <param name="who">Who it's from, read with <see cref="Who"/> before <see cref="Finish"/> forgot the name.</param>
+	private Said NeedsConfirming(TradeOffers.Offer offer, Accepted result, string who) => result == Accepted.NeedsEmail
+		? new Said("offer {0} from {1} accepted - confirm it in Steam's email", NumberOf(offer.Id), who)
 		: Bot.CanConfirmTrades
-			? new Said("offer {0} from {1} accepted - confirm it ('confirmations {2}')", NumberOf(offer.Id), Who(offer), Bot.Name)
-			: new Said("offer {0} from {1} accepted - confirm it on your phone", NumberOf(offer.Id), Who(offer));
+			? new Said("offer {0} from {1} accepted - confirm it ('confirmations {2}')", NumberOf(offer.Id), who, Bot.Name)
+			: new Said("offer {0} from {1} accepted - confirm it on your phone", NumberOf(offer.Id), who);
 
 	private void Forget(ulong id) {
 		lock (_announceLock) {
@@ -801,9 +805,11 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 						break;
 					default:
-						Log.Trade(NeedsConfirming(offer, result), Bot.Name);
+						// Said once, before Finish: the reply built after it said the SteamID where the log had the name.
+						Said confirm = NeedsConfirming(offer, result, Who(offer));
+						Log.Trade(confirm, Bot.Name);
 						Finish(offer.Id);
-						lines.Add(NeedsConfirming(offer, result).ToString());
+						lines.Add(confirm.ToString());
 
 						break;
 				}

@@ -128,6 +128,7 @@ public static partial class Commands {
 		new("anywhere", "[on|off]", GroupOther, "Open the dashboard from anywhere, not just your wifi - your router forwards the port (UPnP), like Jellyfin. 'anywhere on' does all of it and answers with the link; 'anywhere off' closes it again; on its own it says whether it's on and the link. Works from Telegram and Discord too.", "remote"),
 		new("clear", "", GroupOther, "Clears the log off the screen you type it in - the nocat.farm window, or the dashboard's Log and Console. The other one keeps its lines, and nothing is deleted: the log file has every line (Settings, Logging, Open the log folder).", "cls"),
 		new("unlock", "", GroupOther, "Locked out of the dashboard after too many wrong passwords? This lets you (and anyone else locked out) sign in again straight away."),
+		new("visitors", "[signout]", GroupOther, "Who has been at the dashboard: sign-ins, wrong passwords, lockouts, and visitors from the internet turned away - when, from where and on what. 'visitors signout' signs every browser and phone out; you sign in again with the password.", "who"),
 		new("version", "", GroupOther, "Which version this is.", "about"),
 		new("update", "[accept|now|skip]", GroupOther, "Check for a newer release. 'update accept' downloads it and restarts into it - or, with 'When I say update' set to wait, installs it once your accounts are asleep; 'update now' always installs right away. 'update skip' skips that version - no more reminders about it and it never installs by itself - until a newer one comes out. Nothing installs by itself unless 'Update by itself' is set to install at night."),
 		new("answer", "<text>", GroupOther, "Answer whatever nocat.farm is waiting on - a Steam Guard code, or a password."),
@@ -230,9 +231,12 @@ public static partial class Commands {
 	/// Commands a Steam-chat master can't give: the app's own settings and secrets, the dashboard and its way in from the
 	/// internet, updates, files on this PC, and the ones that act on every account at once.
 	/// </summary>
-	internal static bool SteamChatRefuses(string command) =>
+	public static bool SteamChatRefuses(string command) =>
 		command is "set" or "anywhere" or "dashboard" or "unlock" or "update" or "import" or "redeem" or "keys" or "answer"
-			or "add" or "reload" or "plugins" or "notify" or "screen" or "match" or "theme" or "mini";
+			or "add" or "reload" or "plugins" or "notify" or "screen" or "match" or "theme" or "mini"
+			// Who has been at the dashboard (addresses, devices, and signing everybody out), a zip of every saved login,
+			// and the reports that show every account.
+			or "visitors" or "backup" or "report" or "stuck";
 
 	/// <summary>
 	/// Whether a command sent to <paramref name="botName"/> over Steam chat names another account, or all of them - in the
@@ -394,6 +398,7 @@ public static partial class Commands {
 						? await Anywhere(mgr, rest[1..]).ConfigureAwait(false)   // 'dashboard anywhere on' - the same as 'anywhere on'
 						: DashboardLinks.Text(mgr.Global),
 				"unlock" => Unlock(),
+				"visitors" or "who" => VisitorsCommand(rest),
 				"clear" or "cls" => new Said("clear works in the nocat.farm window and the dashboard - it clears that screen").ToString(),
 				"anywhere" or "remote" => await Anywhere(mgr, rest).ConfigureAwait(false),
 				"version" or "about" => About(),
@@ -536,6 +541,18 @@ public static partial class Commands {
 
 	/// <summary>'clear' or 'cls', with or without a slash - handled by whichever screen it was typed in.</summary>
 	public static bool IsClear(string line) => line.Trim().TrimStart('/').ToLowerInvariant() is "clear" or "cls";
+
+	/// <summary>'visitors': who has been at the dashboard; 'visitors signout' signs every browser and phone out.</summary>
+	private static string VisitorsCommand(string[] args) {
+		if ((args.Length > 0) && args[0].Equals("signout", StringComparison.OrdinalIgnoreCase)) {
+			Web.WebHost.Current?.SignOutAll();
+			Log.Info(new Said("dashboard: every browser and phone signed out"));
+
+			return "Every browser and phone is signed out of the dashboard. Sign in again with the password - change it too if somebody else had it.";
+		}
+
+		return Visitors.Describe();
+	}
 
 	/// <summary>'unlock': lifts every dashboard sign-in lockout, so whoever mistyped their password can try again now.</summary>
 	private static string Unlock() {
@@ -1317,13 +1334,6 @@ public static partial class Commands {
 		return $"waking {bot.Name} up - starting its day now (a short settle, then it plays or farms).";
 	}
 
-	/// <summary>
-	/// What human mode is up to.
-	///
-	/// This exists because "online" told you nothing. You could not see which weighted game it had picked, how
-	/// long it meant to stay there, or how much of the day was left - so there was no way to tell a working
-	/// schedule from a broken one. Now you can read the whole day off one screen.
-	/// </summary>
 	/// <summary>'habits': what "Learn from how I play" has picked up from you, and 'habits account forget' to wipe it.</summary>
 	private static string Habits(BotManager mgr, string[] args) {
 		bool forget = args.Any(static a => a.Equals("forget", StringComparison.OrdinalIgnoreCase));
@@ -1371,6 +1381,13 @@ public static partial class Commands {
 		return sb.ToString().TrimEnd();
 	}
 
+	/// <summary>
+	/// What human mode is up to.
+	///
+	/// This exists because "online" told you nothing. You could not see which weighted game it had picked, how
+	/// long it meant to stay there, or how much of the day was left - so there was no way to tell a working
+	/// schedule from a broken one. Now you can read the whole day off one screen.
+	/// </summary>
 	private static string Human(BotManager mgr, string[] args) {
 		bool week = args.Any(static a => a.Equals("week", StringComparison.OrdinalIgnoreCase));
 		bool reroll = args.Any(static a => a.Equals("reroll", StringComparison.OrdinalIgnoreCase));

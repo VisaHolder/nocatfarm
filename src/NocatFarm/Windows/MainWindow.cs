@@ -456,6 +456,16 @@ public sealed class MainWindow : IDisposable {
 			return IntPtr.Zero;
 		}
 
+		// Up and down go through the commands typed before, like a terminal (and like the dashboard's console).
+		if ((msg == WmKeyDown) && (wParam.ToInt32() is VkUp or VkDown) && (Prompt.Pending == null)) {
+			if (_typed.Step(wParam.ToInt32() == VkUp, CurrentInput()) is { } line) {
+				SetWindowText(_input, line);
+				SendMessage(_input, EmSetSel, new IntPtr(line.Length), new IntPtr(line.Length));
+			}
+
+			return IntPtr.Zero;
+		}
+
 		// The Enter (and Escape) that follow as characters would reach the text box too, which answers a key it has
 		// no use for with the error beep - on every command typed.
 		if ((msg == WmChar) && (wParam.ToInt32() is 13 or 27)) {
@@ -463,6 +473,16 @@ public sealed class MainWindow : IDisposable {
 		}
 
 		return CallWindowProc(_originalInputProc, hwnd, msg, wParam, lParam);
+	}
+
+	/// <summary>The commands typed in this window, for up/down.</summary>
+	private readonly CommandHistory _typed = new();
+
+	private string CurrentInput() {
+		StringBuilder buffer = new(Math.Max(1, GetWindowTextLength(_input)) + 1);
+		GetWindowText(_input, buffer, buffer.Capacity);
+
+		return buffer.ToString();
 	}
 
 	private void RunTypedCommand() {
@@ -476,6 +496,14 @@ public sealed class MainWindow : IDisposable {
 		}
 
 		SetWindowText(_input, "");
+
+		// Remembered for up/down - never an answer to a question (a password, a Steam Guard code), and never a line
+		// the log would mask ('set ... SteamPassword ...').
+		if ((Prompt.Pending == null) && (Commands.ForLog(line) == line)) {
+			_typed.Add(line);
+		} else {
+			_typed.Reset();
+		}
 
 		// A waiting question takes the line first, exactly as the console loop did. With the console detached
 		// this is the ONLY place a Steam Guard code can be typed, so getting it wrong would make adding an
@@ -1950,6 +1978,8 @@ public sealed class MainWindow : IDisposable {
 	private const int DtNoPrefix = 0x0800;
 	private const int DtEndEllipsis = 0x8000;
 	private const int VkReturn = 0x0D;
+	private const int VkUp = 0x26;
+	private const int VkDown = 0x28;
 	private const int GwlWndProc = -4;
 	private const int SmCxScreen = 0;
 	private const int SmCyScreen = 1;

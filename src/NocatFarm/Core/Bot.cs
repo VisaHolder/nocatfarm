@@ -607,6 +607,9 @@ public sealed class Bot : IAsyncDisposable {
 	/// </summary>
 	public bool InResumeGrace => IsOnline && !Paused && !PlayingBlocked && (DateTime.UtcNow < _resumeAt);
 
+	/// <summary>When the courtesy delay after you stop playing runs out - the "picking back up in 14m" the log said.</summary>
+	public DateTime ResumesAt => _resumeAt;
+
 	/// <summary>
 	/// Does this account already have that package? Stops free-game claiming wasting an activation. Only its OWN
 	/// licences count: Steam Families put the family's licences in the list too, and taking a borrowed free game
@@ -1006,13 +1009,21 @@ public sealed class Bot : IAsyncDisposable {
 		// earlier attempt at this ended up reporting the wrong thing on the wrong account. Ninety seconds is
 		// long enough that only a real second writer survives it - your own Steam client, signed into the same
 		// account, quietly winning every persona fight while this program reported what it had asked for.
+		//
+		// And that first echo is not counted as a fight at all. It describes the session before this one, so on an
+		// account that signs in invisible it reliably said "something else is setting this account's persona -
+		// backing off", followed a second later by "the persona is ours again": a fight with nobody, in the log after
+		// every sign-in. A real second writer is still there on the next echo, and is caught then.
+		bool firstEcho = !_personaEchoed;
+		_personaEchoed = true;
+
 		if (PersonaAsSeen == EffectivePersona) {
 			if (_personaFightSince != null) {
 				_personaFightSince = null;
 				_contestRetried = false;
 				Log.Debug("the persona is ours again - resuming the periodic re-assert", Name);
 			}
-		} else if (_personaFightSince == null) {
+		} else if ((_personaFightSince == null) && !firstEcho) {
 			_personaFightSince = DateTime.UtcNow;
 
 			// Backing off starts NOW, not after the ninety seconds the message waits for. Those ninety seconds
@@ -1065,6 +1076,9 @@ public sealed class Bot : IAsyncDisposable {
 
 	private DateTime? _mismatchedSince;
 	private DateTime? _personaFightSince;
+
+	/// <summary>This session has had its first persona echo - the stale one - so a mismatch from here on is real news.</summary>
+	private bool _personaEchoed;
 
 	/// <summary>
 	/// Another session is setting this account's persona right now.
@@ -1993,6 +2007,7 @@ public sealed class Bot : IAsyncDisposable {
 		_mismatchedSince = null;
 		_personaFightSince = null;   // the next session's own echo decides whether anybody else is writing it
 		_contestRetried = false;
+		_personaEchoed = false;      // and its first echo is stale again
 	}
 
 	private async Task OnDisconnectedAsync(long session) {
@@ -2311,14 +2326,21 @@ public sealed class Bot : IAsyncDisposable {
 		&& ((now - lastInbound).TotalSeconds >= ConnectionTimeoutSeconds)
 		&& ((now - lastAssert).TotalSeconds >= PersonaAssertMaxSeconds + ConnectionTimeoutSeconds);
 
+	/// <summary>What Steam's playing-session report says, for the log - "another session" only when it isn't ours.</summary>
+	internal static Said SessionStateLine(bool blocked, uint app) =>
+		blocked ? new Said("Steam says: blocked - another session is playing app {0}", app)
+		: app != 0 ? new Said("Steam says: not blocked - this session is playing app {0}", app)
+		: new Said("Steam says: not blocked - nothing playing");
+
 	// ── pushes ──────────────────────────────────────────────────────────────
 	private void OnPlayingSessionState(SteamUser.PlayingSessionStateCallback cb) {
 		_lastPacket = DateTime.UtcNow;
 
-		// PlayingAppID is what a session OTHER than this one claims to be running. Steam allows one playing
-		// session per account, so a non-zero value here means our games-played is accepted and then quietly
-		// ignored - which from the inside looks identical to it never having been sent.
-		Log.Debug(new Said("Steam says: blocked={0}, other session playing app {1}", cb.PlayingBlocked, cb.PlayingAppID), Name);
+		// PlayingAppID is what the account's playing session is running. While blocked that is a session OTHER than
+		// this one - Steam allows one playing session per account, so our games-played is accepted and then quietly
+		// ignored, which from the inside looks identical to it never having been sent. While not blocked it is our
+		// own: the line used to call nocat.farm's own game list "other session playing app 730".
+		Log.Debug(SessionStateLine(cb.PlayingBlocked, cb.PlayingAppID), Name);
 
 		// Before anything below can return early: this is what you're playing, stood down for or not.
 		OtherSessionApp = cb.PlayingBlocked ? cb.PlayingAppID : 0;
@@ -2411,6 +2433,14 @@ public sealed class Bot : IAsyncDisposable {
 			foreach (SteamApps.LicenseListCallback.License license in cb.LicenseList) {
 				// A family member's licence carries their account ID; ours carries ours (or 0 on older licences).
 				bool own = (license.OwnerAccountID == 0) || (license.OwnerAccountID == (uint) (SteamId & 0xFFFFFFFF));
+
+				// The same package can be on the list twice: this account's own copy and a family member's. Whichever
+				// came last used to win, so a family copy listed after ours marked the account's own game as "not
+				// ours" - and the refund guard and the library filter both read exactly that. Ours always wins.
+				if (_licenses.TryGetValue(license.PackageID, out (DateTime Created, ulong Token, bool Paid, bool Own, bool Gift) had) && !Replaces(had.Own, own)) {
+					continue;
+				}
+
 				// A game somebody GIFTED arrives marked "guest pass" - not paid for by this account, but paid for by
 				// the giver, who can still have it refunded under Steam's usual two hours / fourteen days. A real guest
 				// pass (a timed trial) carries the same payment method, so what tells them apart is the licence
@@ -2425,14 +2455,42 @@ public sealed class Bot : IAsyncDisposable {
 			_licenseGeneration++;
 		}
 
-		Log.Debug(new Said("{0} licence(s) known", cb.LicenseList.Count), Name);
+		// Only what changed. Steam pushes the whole list again for all sorts of reasons - a game added anywhere in the
+		// family, a guest pass, a reconnect - and writing every recent licence each time was a fifth of the log, the
+		// same dozen lines over and over. The count when it moves; each recent licence once, the first time it's seen.
+		List<SteamApps.LicenseListCallback.License> recent = [.. cb.LicenseList.Where(static l => DateTime.UtcNow - l.TimeCreated < TimeSpan.FromDays(14))];
+		List<uint> fresh;
+
+		lock (_licenses) {
+			fresh = NewLicences(_licencesLogged, recent.Select(static l => l.PackageID));
+			_licencesLogged = [.. recent.Select(static l => l.PackageID)];
+		}
+
+		if (cb.LicenseList.Count != _licenceCountLogged) {
+			_licenceCountLogged = cb.LicenseList.Count;
+			Log.Debug(new Said("{0} licence(s) known", cb.LicenseList.Count), Name);
+		}
 
 		// What the last fortnight's licences were, by how Steam says they were paid for - refund protection
 		// decides from exactly this, so when it holds (or doesn't hold) a game the reason is in the log.
-		foreach (SteamApps.LicenseListCallback.License license in cb.LicenseList.Where(static l => DateTime.UtcNow - l.TimeCreated < TimeSpan.FromDays(14))) {
+		foreach (SteamApps.LicenseListCallback.License license in recent.Where(l => fresh.Contains(l.PackageID))) {
 			Log.Debug(new Said("recent licence: package {0}, {1}, {2}", license.PackageID, license.PaymentMethod, license.TimeCreated.ToString("d")) + $" · type {license.LicenseType}, flags {license.LicenseFlags}, minute limit {license.MinuteLimit}, used {license.MinutesUsed}", Name);
 		}
 	}
+
+	/// <summary>The recent licences already written to the log, and the count last written - so a repeat push says nothing.</summary>
+	private HashSet<uint> _licencesLogged = [];
+	private int _licenceCountLogged = -1;
+
+	/// <summary>The packages in <paramref name="now"/> that weren't in <paramref name="before"/>, each once, in order.</summary>
+	internal static List<uint> NewLicences(IReadOnlySet<uint> before, IEnumerable<uint> now) =>
+		[.. now.Where(p => !before.Contains(p)).Distinct()];
+
+	/// <summary>
+	/// Whether a licence for a package already seen on this list takes its place. This account's own copy is never
+	/// replaced by a family member's; otherwise the later one wins, as before.
+	/// </summary>
+	internal static bool Replaces(bool hadOwn, bool own) => own || !hadOwn;
 
 	/// <summary>
 	/// Money changed hands for this licence, so a refund is a thing that could be lost.

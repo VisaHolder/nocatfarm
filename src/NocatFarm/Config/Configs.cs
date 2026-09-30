@@ -26,6 +26,12 @@ public sealed class GlobalConfig {
 
 	/// <summary>"Open from anywhere": the router forwards the dashboard's port to this PC (UPnP). See RemoteAccess.</summary>
 	public bool WebRemoteAccess { get; set; }
+
+	/// <summary>A sign-in from the internet also needs a 6-digit code sent to Telegram (when Telegram is connected).</summary>
+	public bool WebSignInCode { get; set; } = true;
+
+	/// <summary>Wrong passwords and codes from the internet in a day before Open from anywhere switches itself off. 0 = never.</summary>
+	public int WebRemoteOffAfter { get; set; } = 5;
 	// On by default. A brand new account only farms its cards until it is told what to play, and the dashboard
 	// is the only place with a form for that - so starting up and showing nothing but a console was the wrong
 	// first impression for the one screen people actually need.
@@ -181,6 +187,12 @@ public sealed class GlobalConfig {
 
 	/// <summary>Off by default: downloaded and installing, installed, failed or undone.</summary>
 	public bool SendInstalls { get; set; }
+
+	/// <summary>On by default: a sign-in to the dashboard from outside the home, a lockout, the internet brake.</summary>
+	public bool SendSignIns { get; set; } = true;
+
+	/// <summary>On by default: lockouts, wrong codes, the internet brake, and Open from anywhere switching itself off.</summary>
+	public bool SendBreakIns { get; set; } = true;
 	public bool SendDailySummary { get; set; } = true;
 	public bool SendComments { get; set; }
 	public bool SendAchievements { get; set; }

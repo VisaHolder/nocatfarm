@@ -38,30 +38,72 @@ public sealed class WebHost : IAsyncDisposable {
 	/// </summary>
 	private static (string Ip, bool ThisPc) WhoIsSigningIn(HttpContext ctx) {
 		IPAddress from = ctx.Connection.RemoteIpAddress ?? IPAddress.None;
-		string? forwarded = ctx.Request.Headers["X-Forwarded-For"].FirstOrDefault() ?? ctx.Request.Headers["X-Real-IP"].FirstOrDefault();
 
-		// The LAST address in the list: the proxy adds the one it really saw to the end. The first is whatever the visitor
-		// chose to send, so reading that let anybody give a fresh made-up address with every guess and never be locked out.
-		if (IPAddress.IsLoopback(from) && !string.IsNullOrWhiteSpace(forwarded)) {
-			return (forwarded.Split(',')[^1].Trim(), false);
+		if (!IPAddress.IsLoopback(from)) {
+			return (from.ToString(), false);
 		}
 
-		return (from.ToString(), IPAddress.IsLoopback(from));
+		// What the proxy says, three ways: the LAST X-Forwarded-For entry (the proxy adds the one it really saw to the end;
+		// the first is whatever the visitor chose to send), X-Real-IP, and RFC 7239's Forwarded: for=. Which one a proxy
+		// fills in - and whether it passes on one the visitor made up - depends on its setup, so the most outside-looking
+		// of them wins: a visitor can only make itself look MORE like the internet (which only earns it the stricter
+		// rules), never like home. One that can't be read at all counts as the internet.
+		List<string> said = [];
+		HttpRequest r = ctx.Request;
+
+		if (r.Headers["X-Forwarded-For"].ToString() is { Length: > 0 } xff) {
+			said.Add(xff.Split(',')[^1]);
+		}
+
+		if (r.Headers["X-Real-IP"].ToString() is { Length: > 0 } real) {
+			said.Add(real);
+		}
+
+		if (r.Headers["Forwarded"].ToString() is { Length: > 0 } fwd
+			&& fwd.Split(',')[^1].Split(';').Select(static p => p.Trim()).FirstOrDefault(static p => p.StartsWith("for=", StringComparison.OrdinalIgnoreCase)) is { } forPart) {
+			said.Add(forPart[4..]);
+		}
+
+		if (said.Count == 0) {
+			return (from.ToString(), true);
+		}
+
+		List<string> clean = [.. said.Select(ForwardedAddress)];
+
+		return (clean.FirstOrDefault(IsInternet) ?? clean[0], false);
+	}
+
+	/// <summary>A forwarded address as it's written: 1.2.3.4, 1.2.3.4:5678, "[2001:db8::1]:443", quoted or not.</summary>
+	internal static string ForwardedAddress(string text) {
+		string t = text.Trim().Trim('"');
+
+		if (t.StartsWith('[') && (t.IndexOf(']', StringComparison.Ordinal) is > 0 and int close)) {
+			return t[1..close];
+		}
+
+		// One colon is IPv4 with a port; more is a bare IPv6 address.
+		return (t.Count(static c => c == ':') == 1) ? t[..t.IndexOf(':', StringComparison.Ordinal)] : t;
 	}
 
 	/// <summary>Seconds this address is still locked out for after too many wrong passwords; 0 when it isn't.</summary>
 	private int LockedFor(HttpContext ctx) {
-		string ip = WhoIsSigningIn(ctx).Ip;
+		(string ip, bool thisPc) = WhoIsSigningIn(ctx);
+		DateTime until = _failures.TryGetValue(ip, out (int Count, DateTime Until) f) && (f.Count >= MaxFailedLogins) ? f.Until : DateTime.MinValue;
 
-		return _failures.TryGetValue(ip, out (int Count, DateTime Until) f) && (f.Count >= MaxFailedLogins) && (f.Until > DateTime.UtcNow)
-			? (int) Math.Ceiling((f.Until - DateTime.UtcNow).TotalSeconds)
-			: 0;
+		if (!thisPc && (_internetPausedUntil > until) && IsInternet(ip)) {
+			until = _internetPausedUntil;
+		}
+
+		return until > DateTime.UtcNow ? (int) Math.Ceiling((until - DateTime.UtcNow).TotalSeconds) : 0;
 	}
 
 	/// <summary>Every sign-in lockout lifted - the 'unlock' command, for whoever is at this PC.</summary>
 	public int ClearLockouts() {
 		int n = _failures.Count(static f => f.Value.Count >= MaxFailedLogins && f.Value.Until > DateTime.UtcNow);
 		_failures.Clear();
+		_internetMisses.Clear();
+		_internetMissesToday.Clear();
+		_internetPausedUntil = DateTime.MinValue;
 
 		return n;
 	}
@@ -78,6 +120,63 @@ public sealed class WebHost : IAsyncDisposable {
 	/// <summary>Signed-in browsers: a hash of each one's token, and when it runs out. Kept on disk (see SaveSessions).</summary>
 	private readonly ConcurrentDictionary<string, DateTime> _sessions = new(StringComparer.Ordinal);
 	private readonly ConcurrentDictionary<string, (int Count, DateTime Until)> _failures = new(StringComparer.Ordinal);
+
+	/// <summary>
+	/// Wrong passwords from the internet, from any address, in the last hour. Five per address stops one guesser; this
+	/// stops many addresses sharing the guessing, which the per-address lockout never sees.
+	/// </summary>
+	private readonly ConcurrentQueue<DateTime> _internetMisses = new();
+	private const int InternetMissesPerHour = 10;
+	private const int InternetPauseMinutes = 60;
+	private DateTime _internetPausedUntil = DateTime.MinValue;
+
+	/// <summary>From the internet - and an address that can't be read counts as the internet, never as home.</summary>
+	public static bool IsInternet(string ip) => !IPAddress.TryParse(ip, out IPAddress? a) || RemoteAccess.FromTheInternet(a);
+
+	/// <summary>Wrong passwords and codes from the internet in the last 24 hours, for "Turn Open from anywhere off after".</summary>
+	private readonly ConcurrentQueue<DateTime> _internetMissesToday = new();
+
+	/// <summary>
+	/// Shut to the internet after "Turn Open from anywhere off after" was reached - a Public address set by hand
+	/// included, which switching the setting off alone wouldn't close. Until Open from anywhere is on again.
+	/// </summary>
+	private volatile bool _internetShut = File.Exists(ShutPath);
+
+	/// <summary>Kept on disk, so a restart doesn't open it again behind the owner's back.</summary>
+	private static string ShutPath => Path.Combine(ConfigStore.ConfigDir, "state", "internet-shut.txt");
+
+	/// <summary>Shut, and not opened again since: turning Open from anywhere back on is the owner saying "open".</summary>
+	private bool InternetShut() {
+		if (_internetShut && _cfg.WebRemoteAccess) {
+			_internetShut = false;
+
+			try {
+				File.Delete(ShutPath);
+			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+				Log.Failed("dashboard: forgetting that it was shut to the internet", e);
+			}
+		}
+
+		return _internetShut;
+	}
+
+	/// <summary>
+	/// A right password from the internet, waiting for the code sent to Telegram: the code, the address it's for, when
+	/// it runs out, and the wrong tries so far. The password alone never lets anyone in from outside while
+	/// "Code on Telegram for sign-ins from outside" is on and Telegram is connected.
+	/// </summary>
+	private sealed record PendingCode(string Code, string Ip, DateTime Expires, int Tries);
+
+	private readonly ConcurrentDictionary<string, PendingCode> _pendingCodes = new(StringComparer.Ordinal);
+	private readonly ConcurrentQueue<DateTime> _codesSent = new();
+	internal const int CodeMinutes = 5;
+	private const int CodeTries = 5;
+
+	/// <summary>Codes sent in an hour, all addresses together: somebody with the password can't flood Telegram.</summary>
+	private const int CodesPerHour = 6;
+
+	/// <summary>Whether a sign-in from here needs the Telegram code as well as the password.</summary>
+	private bool NeedsCode(bool internet) => internet && _cfg.WebSignInCode && Notifier.CanSendPrivately;
 	private readonly DateTime _started = DateTime.UtcNow;
 
 	private WebApplication? _app;
@@ -266,6 +365,14 @@ public sealed class WebHost : IAsyncDisposable {
 
 			// Before anything else, static files included - see Refusal for what this turns away and why.
 			_app.Use(async (HttpContext ctx, RequestDelegate next) => {
+				// Never inside another site's frame (clickjacking: a page laying its own buttons over Confirm or Remove),
+				// never a guessed file type, and no address of this dashboard handed to the sites its links open.
+				IHeaderDictionary h = ctx.Response.Headers;
+				h.XFrameOptions = "DENY";
+				h.ContentSecurityPolicy = "frame-ancestors 'none'";
+				h.XContentTypeOptions = "nosniff";
+				h["Referrer-Policy"] = "no-referrer";
+
 				if (Refusal(ctx) is { } why) {
 					ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
 					ctx.Response.ContentType = "text/plain; charset=utf-8";
@@ -357,6 +464,17 @@ public sealed class WebHost : IAsyncDisposable {
 	private string? Refusal(HttpContext ctx) {
 		HttpRequest request = ctx.Request;
 
+		// "Open from anywhere" off means the internet doesn't get in - checked here, on every request, and not only by
+		// taking the router's forward away. A phone that had the page open on mobile data kept its connection through the
+		// router after the forward was gone and carried on as if nothing had changed. "Public address" set by hand is
+		// somebody's own forward, so that one still opens.
+		if ((InternetShut() || (!_cfg.WebRemoteAccess && string.IsNullOrWhiteSpace(_cfg.WebPublicAddress))) && RemoteAccess.FromTheInternet(ctx.Connection.RemoteIpAddress)) {
+			ctx.Response.Headers.Connection = "close";
+			Visitors.Note(Visitors.What.TurnedAway, ctx.Connection.RemoteIpAddress!.ToString(), false, request.Headers.UserAgent.FirstOrDefault());
+
+			return "Open from anywhere is off, so this dashboard only opens at home.";
+		}
+
 		// With a password, somebody who bound it to 0.0.0.0 opens it by the PC's LAN address or name, so any Host is
 		// fine there - the password is what guards it. Without one, or while it only listens on this PC, it can only
 		// honestly be called localhost.
@@ -424,12 +542,25 @@ public sealed class WebHost : IAsyncDisposable {
 		return !string.IsNullOrEmpty(token) && _sessions.TryGetValue(Hash(token), out DateTime expires) && (expires > DateTime.UtcNow);
 	}
 
-	private bool TryLogin(HttpContext ctx, string password, out string token) {
+	/// <summary>
+	/// Checks the password. Right from home: signed in (<paramref name="token"/>). Right from the internet with the code
+	/// on: <paramref name="needsCode"/>, and no session yet. Wrong: counted towards the address's lockout and the
+	/// internet brake.
+	/// </summary>
+	private bool TryLogin(HttpContext ctx, string password, out string token, out bool needsCode) {
 		token = "";
+		needsCode = false;
 		(string ip, bool thisPc) = WhoIsSigningIn(ctx);
 		int lockout = thisPc ? LockoutMinutesThisPc : LockoutMinutes;
+		bool internet = !thisPc && IsInternet(ip);
+		string? device = ctx.Request.Headers.UserAgent.FirstOrDefault();
 
 		if (_failures.TryGetValue(ip, out (int Count, DateTime Until) fail) && (fail.Count >= MaxFailedLogins) && (fail.Until > DateTime.UtcNow)) {
+			return false;
+		}
+
+		// Not even tried while the internet brake is on (or it's shut): a right guess mid-attack would still be a stranger's.
+		if (internet && ((_internetPausedUntil > DateTime.UtcNow) || InternetShut())) {
 			return false;
 		}
 
@@ -441,24 +572,149 @@ public sealed class WebHost : IAsyncDisposable {
 			SHA256.HashData(Encoding.UTF8.GetBytes(_cfg.WebPassword)));
 
 		if (!ok) {
-			int count = FailuresAfter(_failures.TryGetValue(ip, out (int Count, DateTime Until) prev) ? prev : null, DateTime.UtcNow);
-			_failures[ip] = (count, DateTime.UtcNow.AddMinutes(lockout));
-
-			if (count >= MaxFailedLogins) {
-				Log.Warn(new Said("dashboard: {0} failed logins from {1} - locked out for {2}m", count, ip, lockout));
-			}
+			CountFailure(ip, thisPc, lockout, internet, device, Visitors.What.WrongPassword);
 
 			return false;
 		}
 
+		// The wrong-guess count stays until the code is right too, so guessing codes adds to the same lockout.
+		if (NeedsCode(internet)) {
+			needsCode = true;
+
+			return true;
+		}
+
+		SignIn(ctx, ip, thisPc, device, out token);
+
+		return true;
+	}
+
+	private void SignIn(HttpContext ctx, string ip, bool thisPc, string? device, out string token) {
 		_failures.TryRemove(ip, out _);
 		token = NewSession(ctx);
+		Visitors.Note(Visitors.What.SignedIn, ip, thisPc, device);
 
 		foreach (string stale in _sessions.Where(static kv => kv.Value < DateTime.UtcNow).Select(static kv => kv.Key).ToArray()) {
 			_sessions.TryRemove(stale, out _);
 		}
+	}
 
-		return true;
+	/// <summary>A wrong password or a wrong code: towards this address's lockout, and from the internet, the brake.</summary>
+	private void CountFailure(string ip, bool thisPc, int lockout, bool internet, string? device, Visitors.What what) {
+		int count = FailuresAfter(_failures.TryGetValue(ip, out (int Count, DateTime Until) prev) ? prev : null, DateTime.UtcNow);
+		_failures[ip] = (count, DateTime.UtcNow.AddMinutes(lockout));
+
+		if (count >= MaxFailedLogins) {
+			Log.Warn(new Said("dashboard: {0} failed logins from {1} - locked out for {2}m", count, ip, lockout));
+			Visitors.Note(Visitors.What.LockedOut, ip, thisPc, device, count, lockout);
+
+			// Locked out: whatever code it was waiting on is gone too.
+			foreach (string id in _pendingCodes.Where(kv => kv.Value.Ip == ip).Select(static kv => kv.Key).ToArray()) {
+				_pendingCodes.TryRemove(id, out _);
+			}
+		} else {
+			Visitors.Note(what, ip, thisPc, device);
+		}
+
+		if (!internet) {
+			return;
+		}
+
+		DateTime now = DateTime.UtcNow;
+		_internetMisses.Enqueue(now);
+
+		while (_internetMisses.TryPeek(out DateTime oldest) && (now - oldest > TimeSpan.FromHours(1))) {
+			_internetMisses.TryDequeue(out _);
+		}
+
+		_internetMissesToday.Enqueue(now);
+
+		while (_internetMissesToday.TryPeek(out DateTime oldest) && (now - oldest > TimeSpan.FromHours(24))) {
+			_internetMissesToday.TryDequeue(out _);
+		}
+
+		int offAfter = _cfg.WebRemoteOffAfter;
+
+		if ((offAfter > 0) && (_internetMissesToday.Count >= offAfter) && !_internetShut) {
+			ShutToTheInternet(ip, thisPc, device, _internetMissesToday.Count);
+
+			return;
+		}
+
+		if (_internetMisses.Count >= InternetMissesPerHour) {
+			int misses = _internetMisses.Count;
+			_internetMisses.Clear();
+			_internetPausedUntil = now.AddMinutes(InternetPauseMinutes);
+			_pendingCodes.Clear();
+			Visitors.Note(Visitors.What.Paused, ip, thisPc, device, misses, InternetPauseMinutes);
+		}
+	}
+
+	/// <summary>"Turn Open from anywhere off after" reached: the setting goes off (the router forward with it), and nothing
+	/// from the internet gets in until it's turned on again.</summary>
+	private void ShutToTheInternet(string ip, bool thisPc, string? device, int misses) {
+		_internetShut = true;
+
+		try {
+			Directory.CreateDirectory(Path.GetDirectoryName(ShutPath)!);
+			File.WriteAllText(ShutPath, DateTime.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			// shut until the next restart, then - the setting itself is off and saved either way
+			Log.Failed("dashboard: remembering that it's shut to the internet", e);
+		}
+
+		_internetMissesToday.Clear();
+		_internetMisses.Clear();
+		_pendingCodes.Clear();
+
+		if (_cfg.WebRemoteAccess) {
+			_cfg.WebRemoteAccess = false;
+			ConfigStore.SaveGlobal(_cfg);
+			RemoteAccess.Poke();
+		}
+
+		Visitors.Note(Visitors.What.ClosedToInternet, ip, thisPc, device, misses);
+	}
+
+	/// <summary>
+	/// Sends a fresh sign-in code to Telegram for this address and returns what the page quotes back with it, or null
+	/// when it couldn't be sent (Telegram down, or too many codes this hour) - then nobody gets in from outside.
+	/// </summary>
+	private async Task<string?> SendCodeAsync(string ip, bool thisPc, string? device, CancellationToken ct) {
+		DateTime now = DateTime.UtcNow;
+
+		while (_codesSent.TryPeek(out DateTime oldest) && (now - oldest > TimeSpan.FromHours(1))) {
+			_codesSent.TryDequeue(out _);
+		}
+
+		if (_codesSent.Count >= CodesPerHour) {
+			Log.Warn(new Said("dashboard: {0} sign-in codes sent this hour - no more until it's over", CodesPerHour));
+
+			return null;
+		}
+
+		// One code per address at a time: a new sign-in replaces the last, and every stale one goes.
+		foreach (string old in _pendingCodes.Where(kv => (kv.Value.Ip == ip) || (kv.Value.Expires < now)).Select(static kv => kv.Key).ToArray()) {
+			_pendingCodes.TryRemove(old, out _);
+		}
+
+		string code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6", System.Globalization.CultureInfo.InvariantCulture);
+		string id = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(16));
+		_codesSent.Enqueue(now);
+
+		Said message = new("nocat.farm dashboard sign-in code: {0}\n\nSomebody at {1} ({2}) typed the right dashboard password from outside your home. The code works for {3} minutes.\n\nNot you? Don't give the code to anyone. Send /visitors signout here, then change the dashboard password.",
+			code, ip, Visitors.Device(device), CodeMinutes);
+
+		if (!await Notifier.SendPrivateNowAsync(message.ToString(), ct).ConfigureAwait(false)) {
+			Log.Warn(new Said("dashboard: couldn't send the sign-in code to Telegram - nobody can sign in from outside until it can"));
+
+			return null;
+		}
+
+		_pendingCodes[id] = new PendingCode(code, ip, now.AddMinutes(CodeMinutes), 0);
+		Visitors.Note(Visitors.What.CodeSent, ip, thisPc, device);
+
+		return id;
 	}
 
 	/// <summary>
@@ -493,10 +749,38 @@ public sealed class WebHost : IAsyncDisposable {
 			authorised = Authorised(ctx)
 		}));
 
+		// Who has been here, for the Phone page - and a way to sign every browser and phone out.
+		app.MapGet("/api/visitors", (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			return Results.Json(new {
+				Visits = Visitors.Recent(15).Select(static v => new { v.When, v.Ip, v.Where, What = Visitors.Words(v.What), Kind = v.What.ToString(), v.Device }),
+				InternetPausedFor = _internetPausedUntil > DateTime.UtcNow ? (int) Math.Ceiling((_internetPausedUntil - DateTime.UtcNow).TotalSeconds) : 0
+			});
+		});
+
+		app.MapPost("/api/visitors/signout", (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			SignOutAll();
+			Log.Info(new Said("dashboard: every browser and phone signed out"));
+
+			return Results.Json(new { ok = true });
+		});
+
 		app.MapPost("/api/login", async (HttpContext ctx) => {
 			LoginRequest? body = await ReadJsonAsync<LoginRequest>(ctx).ConfigureAwait(false);
 
-			if (body == null || !TryLogin(ctx, body.Password ?? "", out string token)) {
+			if (body == null || !TryLogin(ctx, body.Password ?? "", out string token, out bool needsCode)) {
+				// Shut to the internet isn't a wait - it opens when the owner turns it on again, so it says that instead.
+				if (ShutToThis(ctx)) {
+					return Closed();
+				}
+
 				// Locked out says so, with how long - "wrong password" for the right one while it waited was the most
 				// confusing thing the page could say.
 				int wait = LockedFor(ctx);
@@ -506,7 +790,60 @@ public sealed class WebHost : IAsyncDisposable {
 					: Results.Json(new { ok = false, error = "wrong password" }, statusCode: 401);
 			}
 
+			if (needsCode) {
+				(string ip, bool thisPc) = WhoIsSigningIn(ctx);
+				string? challenge = await SendCodeAsync(ip, thisPc, ctx.Request.Headers.UserAgent.FirstOrDefault(), ctx.RequestAborted).ConfigureAwait(false);
+
+				return challenge == null
+					? Results.Json(new { ok = false, error = "no code" }, statusCode: 503)
+					: Results.Json(new { ok = false, error = "code", challenge, minutes = CodeMinutes }, statusCode: 401);
+			}
+
 			return Results.Json(new { ok = true, token });
+		});
+
+		// The second step from outside: the code Telegram got. Only for the address the code was sent for, five tries,
+		// and every wrong one counts towards the same lockout and brake as a wrong password.
+		app.MapPost("/api/login/code", async (HttpContext ctx) => {
+			CodeRequest? body = await ReadJsonAsync<CodeRequest>(ctx).ConfigureAwait(false);
+			(string ip, bool thisPc) = WhoIsSigningIn(ctx);
+			string? device = ctx.Request.Headers.UserAgent.FirstOrDefault();
+
+			if (ShutToThis(ctx)) {
+				return Closed();
+			}
+
+			if (LockedFor(ctx) is > 0 and int wait) {
+				return Results.Json(new { ok = false, error = "locked", seconds = wait, thisPc }, statusCode: 429);
+			}
+
+			if ((body == null) || !_pendingCodes.TryGetValue(body.Challenge ?? "", out PendingCode? pending)
+				|| (pending.Ip != ip) || (pending.Expires < DateTime.UtcNow)) {
+				return Results.Json(new { ok = false, error = "expired" }, statusCode: 401);
+			}
+
+			string typed = new((body.Code ?? "").Where(char.IsAsciiDigit).ToArray());
+
+			if (CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(typed.PadRight(6)), Encoding.ASCII.GetBytes(pending.Code))) {
+				_pendingCodes.TryRemove(body.Challenge!, out _);
+				SignIn(ctx, ip, thisPc, device, out string token);
+
+				return Results.Json(new { ok = true, token });
+			}
+
+			int tries = pending.Tries + 1;
+
+			if (tries >= CodeTries) {
+				_pendingCodes.TryRemove(body.Challenge!, out _);
+			} else {
+				_pendingCodes[body.Challenge!] = pending with { Tries = tries };
+			}
+
+			CountFailure(ip, thisPc, thisPc ? LockoutMinutesThisPc : LockoutMinutes, !thisPc && IsInternet(ip), device, Visitors.What.WrongCode);
+
+			return LockedFor(ctx) is > 0 and int locked
+				? Results.Json(new { ok = false, error = "locked", seconds = locked, thisPc }, statusCode: 429)
+				: Results.Json(new { ok = false, error = tries >= CodeTries ? "too many tries" : "wrong code", left = CodeTries - tries }, statusCode: 401);
 		});
 
 		// ── live state ──
@@ -700,7 +1037,7 @@ public sealed class WebHost : IAsyncDisposable {
 			Enabled = Live.Global.PluginsEnabled,
 			Folder = Plugins.PluginHost.Folder,
 			Installed = Plugins.PluginHost.Discovered.Select(static p => new {
-				p.Name, p.Version, p.File, p.Enabled,
+				p.Name, p.Version, p.File, Enabled = !Live.Global.DisabledPlugins.Contains(p.Name, StringComparer.OrdinalIgnoreCase),
 				Settings = Plugins.PluginHost.SettingsOf(p.Name).Select(static x => new {
 					x.Setting.Name, x.Setting.Label, x.Setting.Help,
 					Kind = x.Setting.Kind.ToString(),
@@ -802,6 +1139,10 @@ public sealed class WebHost : IAsyncDisposable {
 		// The download is a POST, not a link: it holds every saved login, so only this page (never another site sending
 		// the browser here) may ask for it - POSTs are the ones checked for where they came from.
 		app.MapPost("/api/backup", (HttpContext ctx) => Guard(ctx, () => {
+			if (FromOutside(ctx)) {
+				return HomeOnly();
+			}
+
 			byte[] zip = Backup.Create();
 			Log.Info(new Said("backup downloaded from the dashboard ({0} KB)", (zip.Length + 1023) / 1024));
 
@@ -813,6 +1154,10 @@ public sealed class WebHost : IAsyncDisposable {
 		app.MapPost("/api/restore/check", async (HttpContext ctx) => {
 			if (!Authorised(ctx)) {
 				return Unauthorised();
+			}
+
+			if (FromOutside(ctx)) {
+				return HomeOnly();
 			}
 
 			if (ctx.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>() is { IsReadOnly: false } limit) {
@@ -863,6 +1208,10 @@ public sealed class WebHost : IAsyncDisposable {
 		app.MapPost("/api/restore/apply", async (HttpContext ctx) => {
 			if (!Authorised(ctx)) {
 				return Unauthorised();
+			}
+
+			if (FromOutside(ctx)) {
+				return HomeOnly();
 			}
 
 			RestoreRequest? body = await ReadJsonAsync<RestoreRequest>(ctx).ConfigureAwait(false);
@@ -1324,6 +1673,7 @@ public sealed class WebHost : IAsyncDisposable {
 			return Results.Json(new {
 				l.Local, l.Home, l.OpenAtHome, l.HasPassword, l.ListensBeyondThisPc, l.Outside, l.FirewallBlocks, l.NeedsHomeAddress,
 				RemoteOn = Live.Global.WebRemoteAccess, RemoteProblem = Core.RemoteAccess.Problem,
+				SignInCode = Live.Global.WebSignInCode, CodeReady = Notifier.CanSendPrivately, OffAfter = Live.Global.WebRemoteOffAfter,
 				// Saved, but still listening the old way until the dashboard restarts - the phone link won't answer yet.
 				// Why the last restart didn't take - only while it still needs one, or an old failure outlives the fix.
 				NeedsRestart, RestartProblem = NeedsRestart ? RestartProblem : null,
@@ -2013,6 +2363,24 @@ public sealed class WebHost : IAsyncDisposable {
 
 	private static IResult Unauthorised() => Results.Json(new { ok = false, error = "unauthorised" }, statusCode: 401);
 
+	/// <summary>
+	/// From outside the home - directly, or through a proxy on this PC. A backup holds every saved login (and on Linux the
+	/// key that opens them), and the away-from-home link is plain http: anyone on the way could read the zip.
+	/// </summary>
+	private static bool FromOutside(HttpContext ctx) {
+		(string ip, bool thisPc) = WhoIsSigningIn(ctx);
+
+		return !thisPc && IsInternet(ip);
+	}
+
+	/// <summary>Shut to the internet after too many wrong guesses, and this visitor is from the internet.</summary>
+	private bool ShutToThis(HttpContext ctx) => FromOutside(ctx) && InternetShut();
+
+	private static IResult Closed() => Results.Json(new { ok = false, error = "closed" }, statusCode: 403);
+
+	private static IResult HomeOnly() =>
+		Results.Json(new { ok = false, error = new Said("Backups and restores only work at home or on this PC - the zip holds every saved login.").ToString() }, statusCode: 403);
+
 	private static async Task<T?> ReadJsonAsync<T>(HttpContext ctx) {
 		try {
 			return await ctx.Request.ReadFromJsonAsync<T>().ConfigureAwait(false);
@@ -2222,6 +2590,11 @@ public sealed class WebHost : IAsyncDisposable {
 
 	private sealed class LoginRequest {
 		public string? Password { get; set; }
+	}
+
+	private sealed class CodeRequest {
+		public string? Challenge { get; set; }
+		public string? Code { get; set; }
 	}
 
 	private sealed class RestoreRequest {
