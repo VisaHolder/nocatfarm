@@ -50,6 +50,9 @@ public static class SelfUpdate {
 	/// <summary>Where a person gets it by hand when updating itself can't.</summary>
 	private const string ReleasesPage = "https://github.com/VisaHolder/nocatfarm/releases/latest";
 
+	/// <summary>One release's page, where its notes are: https://github.com/VisaHolder/nocatfarm/releases/tag/v1.6.2.</summary>
+	public static string ReleasePage(string version) => $"https://github.com/VisaHolder/nocatfarm/releases/tag/v{version.TrimStart('v', 'V')}";
+
 	private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromMinutes(10) };
 
 	static SelfUpdate() {
@@ -290,8 +293,9 @@ public static class SelfUpdate {
 				TryDelete(NotesPath);
 
 				if (notes.Length > 0) {
-					// One line in the log: "what's new in 1.4.6: Discord commands · Update by itself".
-					Log.Info(new Said("what's new in {0}: {1}", p[1], string.Join(" · ", notes.Split('\n').Select(static l => l.TrimStart('-', ' ')).Where(static l => l.Length > 0))));
+					// One short line and where to read the rest. Every change strung onto one line ran across the whole
+					// window and off the end of it once a release had more than two or three.
+					Log.Info(new Said("what's new in {0}: {1}", p[1], ReleasePage(p[1])));
 				}
 
 				ConfirmWhenSettled(p[0], p[1], notes);

@@ -5604,6 +5604,14 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	}
 }
 
+// ── after an update: one short "what's new" line with where to read it, not every change strung across the window ──
+{
+	Check("what's new: the release's own page", NocatFarm.Core.SelfUpdate.ReleasePage("1.6.2") == "https://github.com/VisaHolder/nocatfarm/releases/tag/v1.6.2"
+		&& NocatFarm.Core.SelfUpdate.ReleasePage("v1.6.2") == NocatFarm.Core.SelfUpdate.ReleasePage("1.6.2"));
+	string su = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "SelfUpdate.cs"));
+	Check("what's new: the log line is the version and the link, not the notes", su.Contains("Log.Info(new Said(\"what's new in {0}: {1}\", p[1], ReleasePage(p[1])));", StringComparison.Ordinal));
+}
+
 // SETTINGSCOUNT
 Console.WriteLine($"settings: {NocatFarm.Config.Settings.Global.Count} global ({NocatFarm.Config.Settings.Global.Count(d => !d.Advanced)} basic), {NocatFarm.Config.Settings.Bot.Count} per account ({NocatFarm.Config.Settings.Bot.Count(d => !d.Advanced)} basic)");
 Console.WriteLine(fails == 0 ? "all passed" : $"{fails} failed");
