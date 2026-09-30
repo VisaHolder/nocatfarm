@@ -177,19 +177,26 @@ public static partial class Looting {
 	public static Task<string> SendToMasterAsync(Bot bot, CancellationToken ct = default) => SendToMasterAsync(bot, null, ct);
 
 	/// <summary>The same, with the item types given rather than read from the account's send setting (null = the setting).</summary>
-	public static async Task<string> SendToMasterAsync(Bot bot, string? types, CancellationToken ct = default) {
+	public static async Task<string> SendToMasterAsync(Bot bot, string? types, CancellationToken ct = default) =>
+		(await SendToMasterCheckedAsync(bot, types, ct).ConfigureAwait(false)).Text;
+
+	/// <summary>
+	/// The same, also saying whether nothing went only because everything wanted was being sent or sold that moment - the
+	/// one "nothing sent" that's worth trying again in a few minutes rather than at the next send.
+	/// </summary>
+	public static async Task<(string Text, bool Busy)> SendToMasterCheckedAsync(Bot bot, string? types, CancellationToken ct = default) {
 		BotConfig cfg = bot.Cfg;
 		ulong master = Modules.Social.ParseIds(cfg.TradeMasters).FirstOrDefault();
 
 		if (master == 0) {
-			return $"{bot.Name}: nowhere to send to - set \"Your own accounts\" under Trades first";
+			return ($"{bot.Name}: nowhere to send to - set \"Your own accounts\" under Trades first", false);
 		}
 
 		if (master == bot.SteamId) {
-			return $"{bot.Name}: it is the trade master, so there is nothing to send anywhere";
+			return ($"{bot.Name}: it is the trade master, so there is nothing to send anywhere", false);
 		}
 
-		return await SendItemsAsync(bot, master, cfg.TradeMasterToken, types ?? cfg.SendItemTypes, ct).ConfigureAwait(false);
+		return await SendItemsCheckedAsync(bot, master, cfg.TradeMasterToken, types ?? cfg.SendItemTypes, ct).ConfigureAwait(false);
 	}
 
 	/// <summary>
@@ -197,12 +204,15 @@ public static partial class Looting {
 	/// </summary>
 	/// <param name="token">The recipient's trade-link token, if known. Read automatically when it's one of your accounts.</param>
 	/// <param name="types">Item types, as in the "Which items to send" setting - blank means trading cards.</param>
-	public static async Task<string> SendItemsAsync(Bot bot, ulong to, string? token, string types, CancellationToken ct = default) {
+	public static async Task<string> SendItemsAsync(Bot bot, ulong to, string? token, string types, CancellationToken ct = default) =>
+		(await SendItemsCheckedAsync(bot, to, token, types, ct).ConfigureAwait(false)).Text;
+
+	private static async Task<(string Text, bool Busy)> SendItemsCheckedAsync(Bot bot, ulong to, string? token, string types, CancellationToken ct) {
 		BotConfig cfg = bot.Cfg;
 		ulong master = to;
 
 		if (!bot.IsOnline || !bot.Web.Ready) {
-			return $"{bot.Name}: not logged in";
+			return ($"{bot.Name}: not logged in", false);
 		}
 
 		// The trade-link token is only needed between accounts that are not Steam friends - and when the
@@ -243,7 +253,7 @@ public static partial class Looting {
 		}
 	}
 
-	private static async Task<string> SendClaimedAsync(Bot bot, ulong master, string token, string types, List<Item> all, List<Item> allowed,
+	private static async Task<(string Text, bool Busy)> SendClaimedAsync(Bot bot, ulong master, string token, string types, List<Item> all, List<Item> allowed,
 		HashSet<uint> banned, int blocked, List<Item> claimed, int busy, CancellationToken ct) {
 		// Nothing already promised in a trade that's waiting - sending it would quietly take it out of that trade. When
 		// Steam won't say, the send goes ahead: it only goes to your own account.
@@ -252,7 +262,7 @@ public static partial class Looting {
 
 		// Everything wanted is being sent or sold by something else of this account at this moment.
 		if ((sending.Count == 0) && (busy > 0)) {
-			return new Said("{0}: its items are being sent or sold right now - try again in a few minutes", bot.Name).ToString();
+			return (new Said("{0}: its items are being sent or sold right now - try again in a few minutes", bot.Name).ToString(), true);
 		}
 
 		if (sending.Count == 0) {
@@ -266,7 +276,7 @@ public static partial class Looting {
 				: allowed.Count > 0 ? $" ({allowed.Count} tradable item(s), none of the types you asked for)"
 				: all.Count > 0 ? $" (everything tradable is in a game this account is banned in)" : " (no tradable items)";
 
-			return $"{bot.Name}: nothing tradable to send{why}";
+			return ($"{bot.Name}: nothing tradable to send{why}", false);
 		}
 
 		// Steam rejects an offer with too many items in it outright, so send it in batches.
@@ -328,7 +338,7 @@ public static partial class Looting {
 		}
 
 		if (sent == 0) {
-			return $"{bot.Name}: couldn't send - {(problems.Count > 0 ? problems[0] : "Steam refused the offer")}";
+			return ($"{bot.Name}: couldn't send - {(problems.Count > 0 ? problems[0] : "Steam refused the offer")}", false);
 		}
 
 		// By account name when it's one of yours - a SteamID64 says nothing at a glance.
@@ -336,7 +346,7 @@ public static partial class Looting {
 		string note = $"{bot.Name}: sent {sent} item(s) to {whom}"
 			+ (blocked > 0 ? $" ({blocked} left out - banned in that game)" : "");
 
-		return problems.Count > 0 ? note + $" (then stopped: {problems[0]})" : note;
+		return (problems.Count > 0 ? note + $" (then stopped: {problems[0]})" : note, false);
 	}
 
 	/// <summary>

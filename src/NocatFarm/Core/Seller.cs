@@ -24,7 +24,9 @@ public static class Seller {
 	/// <summary>Games to price per run - each is a market request or two.</summary>
 	private const int MaxLookups = 8;
 
-	public sealed record Offer(ulong AssetId, string Game, string Card, int LowestCents, int BuyerCents, int YouGetCents);
+	/// <param name="Hash">The card's market name ("391540-Sans") - what a listing is recognised by once Steam has given the
+	/// card a new asset id.</param>
+	public sealed record Offer(ulong AssetId, string Game, string Card, int LowestCents, int BuyerCents, int YouGetCents, string Hash = "");
 
 	public sealed record Plan(List<Offer> Offers, int Duplicates, int Unpriced, string? Problem);
 
@@ -161,7 +163,7 @@ public static class Seller {
 					int receive = ReceiveFor(buyer);
 
 					if (receive > 0) {
-						offers.Add(new Offer(asset, set.Game, CardName(hash), lowest, buyer, receive));
+						offers.Add(new Offer(asset, set.Game, CardName(hash), lowest, buyer, receive, hash));
 					}
 				}
 			}
@@ -196,7 +198,8 @@ public static class Seller {
 	private static async Task<string> SellClaimedAsync(Bot bot, IReadOnlyList<Offer> offers, CancellationToken ct) {
 		int listed = 0;
 		int earned = 0;
-		List<ulong> assets = [];
+		List<Offer> up = [];
+		DateTime started = DateTime.UtcNow;
 		string? refusal = null;
 		bool first = true;
 
@@ -218,7 +221,7 @@ public static class Seller {
 			if (body?.Contains("\"success\":true", StringComparison.OrdinalIgnoreCase) == true) {
 				listed++;
 				earned += offer.YouGetCents;
-				assets.Add(offer.AssetId);
+				up.Add(offer);
 
 				// Each one the moment it's up, by name and price - the summary only came once the whole batch was done,
 				// by which time the phone had been asking about listings nobody had been told of.
@@ -260,7 +263,7 @@ public static class Seller {
 
 		int confirmed = 0;
 
-		foreach (ulong listing in await PendingListingsAsync(bot, assets, ct).ConfigureAwait(false)) {
+		foreach (ulong listing in MatchPending(await ListingsAsync(bot, ct).ConfigureAwait(false) ?? [], up, started)) {
 			await Task.Delay(Rng.Seconds(2, 5), ct).ConfigureAwait(false);
 			confirmed += await bot.ConfirmMobileAsync(listing, true, ct).ConfigureAwait(false) ? 1 : 0;
 		}
@@ -332,9 +335,40 @@ public static class Seller {
 		return found;
 	}
 
-	/// <summary>The listing ids of OUR new listings still waiting on a confirmation - nothing the owner listed themselves.</summary>
-	private static async Task<List<ulong>> PendingListingsAsync(Bot bot, IReadOnlyCollection<ulong> assets, CancellationToken ct) =>
-		(await ListingsAsync(bot, ct).ConfigureAwait(false) ?? []).Where(l => l.AwaitingConfirmation && assets.Contains(l.AssetId)).Select(static l => l.Id).ToList();
+	/// <summary>
+	/// The listing ids of OUR new listings still waiting on a confirmation - nothing the owner listed themselves. Each card
+	/// just listed matches at most one listing: by its asset id, or - when Steam has given the listed card a new id - by the
+	/// same card at the same price, put up since this run began.
+	/// </summary>
+	/// <remarks>
+	/// Matched by the old asset id alone, a card Steam re-numbered on listing was never found, so none of them were
+	/// confirmed and the run said "0 confirmed" with the phone full of listings. The time bound and the one-listing-per-card
+	/// rule keep a listing the owner made by hand, days ago or at another price, out of it.
+	/// </remarks>
+	internal static List<ulong> MatchPending(IEnumerable<Listing> listings, IReadOnlyList<Offer> listed, DateTime since) {
+		List<Listing> waiting = [.. listings.Where(static l => l.AwaitingConfirmation && (l.Id != 0))];
+		List<Offer> left = [.. listed];
+		List<ulong> ours = [];
+
+		void Take(Listing l, Func<Offer, bool> fits) {
+			int at = left.FindIndex(o => fits(o));
+
+			if (at >= 0) {
+				ours.Add(l.Id);
+				left.RemoveAt(at);
+			}
+		}
+
+		foreach (Listing l in waiting.Where(static l => l.AssetId != 0)) {
+			Take(l, o => o.AssetId == l.AssetId);
+		}
+
+		foreach (Listing l in waiting.Where(l => !ours.Contains(l.Id) && (l.Hash.Length > 0) && (l.Created >= since.AddMinutes(-2)))) {
+			Take(l, o => (o.Hash == l.Hash) && (o.YouGetCents == l.YouGetCents));
+		}
+
+		return ours;
+	}
 
 	/// <summary>
 	/// Take down listings that have sat unsold for a week while the market went under them. The cards come back to

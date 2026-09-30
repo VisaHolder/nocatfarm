@@ -149,7 +149,24 @@ public sealed class WebSession : IDisposable {
 	public async Task<string?> PostPairsAsync(Uri url, IEnumerable<KeyValuePair<string, string>> form, Uri? referer = null, CancellationToken ct = default) =>
 		await SendAsync(url, form, referer, true, ct).ConfigureAwait(false);
 
-	private async Task<string?> SendAsync(Uri url, IEnumerable<KeyValuePair<string, string>>? form, Uri? referer, bool allowRetry, CancellationToken ct, bool skipReadyCheck = false, bool errorVerdict = false) {
+	/// <summary>Whether a request actually left this PC - set the moment it's handed to the network.</summary>
+	private sealed class SendNote {
+		public bool Sent;
+	}
+
+	/// <summary>
+	/// POST a form, and say whether it ever went out. A null body with Sent false means nothing reached Steam at all - no
+	/// session, no sessionid cookie, the host shut for a rate limit - so whatever it was for didn't happen. With Sent true
+	/// and no body, Steam may well have acted on it: the answer just never came back.
+	/// </summary>
+	public async Task<(string? Body, bool Sent)> PostTrackedAsync(Uri url, Dictionary<string, string> form, Uri? referer = null, CancellationToken ct = default) {
+		SendNote note = new();
+		string? body = await SendAsync(url, form, referer, true, ct, note: note).ConfigureAwait(false);
+
+		return (body, note.Sent || (body != null));
+	}
+
+	private async Task<string?> SendAsync(Uri url, IEnumerable<KeyValuePair<string, string>>? form, Uri? referer, bool allowRetry, CancellationToken ct, bool skipReadyCheck = false, bool errorVerdict = false, SendNote? note = null) {
 		if (!skipReadyCheck && !Ready && !await RefreshAsync(true, ct).ConfigureAwait(false)) {
 			return null;
 		}
@@ -187,6 +204,10 @@ public sealed class WebSession : IDisposable {
 					request.Headers.Referrer = referer;
 				}
 
+				if (note != null) {
+					note.Sent = true;   // from here on it may have reached Steam, whatever happens next
+				}
+
 				return await _http.SendAsync(request, HttpCompletionOption.ResponseContentRead, ct).ConfigureAwait(false);
 			}).ConfigureAwait(false);
 
@@ -216,7 +237,7 @@ public sealed class WebSession : IDisposable {
 					return null;
 				}
 
-				return await SendAsync(url, form, referer, false, ct, errorVerdict: errorVerdict).ConfigureAwait(false);
+				return await SendAsync(url, form, referer, false, ct, errorVerdict: errorVerdict, note: note).ConfigureAwait(false);
 			}
 
 			if (!response.IsSuccessStatusCode) {

@@ -43,6 +43,12 @@ public sealed class SteamIdlerImport : IIdlerImporter {
 
 		foreach (string line in Lines(resolved)) {
 			string[] parts = line.Split(':');
+
+			// "user:pass:" - an empty secret on the end. Kept, the colon went into the password: a failed logon.
+			if ((parts.Length >= 3) && string.IsNullOrWhiteSpace(parts[^1])) {
+				parts = parts[..^1];
+			}
+
 			string login = parts[0].Trim();
 			string password;
 			string shared = "";

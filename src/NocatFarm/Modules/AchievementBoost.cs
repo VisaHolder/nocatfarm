@@ -122,6 +122,13 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 	/// </summary>
 	private uint NextTarget(List<uint> targets) =>
 		Rotate(targets, Bot.Cfg.BoostGamesInRotation, app => {
+			// At "Finish no more than", or nothing left to earn: left for good. It used to rest a few days and come back,
+			// be found finished straight away and dropped again - back in the rotation for a moment every week or two.
+			// Raising "Finish no more than" brings it back by itself (the pacer stops calling it capped).
+			if (BotManager.ModuleOf<AchievementPacer>(Bot)?.NothingLeft(app) == true) {
+				return false;
+			}
+
 			if (Resting(app)) {
 				return false;
 			}
@@ -314,6 +321,11 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 
 		List<uint> plan = Targets();
 
+		// Finished with for good - at "Finish no more than", or nothing left to earn - and never picked again.
+		AchievementPacer? pacer = BotManager.ModuleOf<AchievementPacer>(Bot);
+		List<uint> finished = [.. plan.Where(app => pacer?.NothingLeft(app) == true)];
+		plan = [.. plan.Except(finished)];
+
 		lines.Add(plan.Count == 0 ? "   nothing to hunt" : $"   next up ({plan.Count} game(s)):");
 
 		foreach (uint app in plan.Skip(_index % Math.Max(1, plan.Count)).Concat(plan.Take(_index % Math.Max(1, plan.Count))).Take(12)) {
@@ -324,6 +336,11 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 
 		if (plan.Count > 12) {
 			lines.Add($"      ...and {plan.Count - 12} more");
+		}
+
+		if (finished.Count > 0) {
+			lines.Add($"   finished with ({finished.Count}) - at \"Finish no more than\" ({Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100)}%) or nothing left, never picked again: "
+				+ string.Join(", ", finished.Take(5).Select(GameNames.Of)) + (finished.Count > 5 ? ", ..." : ""));
 		}
 
 		// Why not the rest. Only for the auto-discovering mode - a picked list needs no explanation beyond the

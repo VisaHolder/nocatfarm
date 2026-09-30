@@ -21,6 +21,22 @@ public sealed class Sender(Bot bot) : BotModule(bot) {
 	private int _periodSeen;
 	private int _hourSeen = -2;
 
+	/// <summary>Sends in a row that found every wanted item busy with a sale or another send.</summary>
+	private int _busyTries;
+
+	/// <summary>How many of those are tried again a few minutes later before the send just waits for its next time.</summary>
+	private const int BusyRetries = 6;
+
+	/// <summary>
+	/// When a send that found everything busy tries again: a few minutes on (3-8), up to <see cref="BusyRetries"/> times in a
+	/// row - null once that's used up, or when it wasn't busy, and the send waits for its usual next time.
+	/// </summary>
+	/// <remarks>
+	/// It used to wait the whole period - a day, typically - while the message it logged said "try again in a few minutes".
+	/// A sale lists its cards a minute or so apart, so the cards are free again well inside that.
+	/// </remarks>
+	internal static TimeSpan? BusyRetry(bool busy, int tries) => busy && (tries <= BusyRetries) ? Rng.Minutes(3, 8) : null;
+
 	/// <summary>
 	/// One account's send at a time, a few minutes apart. Several accounts set to the same hour would otherwise read
 	/// their inventories and post their offers in the same minute from the same IP - which is what Steam rate-limits.
@@ -126,12 +142,24 @@ public sealed class Sender(Bot bot) : BotModule(bot) {
 					}
 				}
 
-				Looting.Report(Bot, await Looting.SendToMasterAsync(Bot, ct).ConfigureAwait(false));
+				(string text, bool busy) = await Looting.SendToMasterCheckedAsync(Bot, null, ct).ConfigureAwait(false);
+				Looting.Report(Bot, text);
+				_busyTries = busy ? _busyTries + 1 : 0;
 			} finally {
 				_lastSendUtc = DateTime.UtcNow;
 				OneAtATime.Release();
 			}
 
+			if (BusyRetry(_busyTries > 0, _busyTries) is { } soon) {
+				_nextDue = DateTime.UtcNow + soon;
+				Save();
+				DateTime retry = _nextDue.Value;
+				Log.Info(new Said("its items are busy with a sale or another send - sending again around {0}", (Func<string>) (() => Fmt.Clock(retry))), Bot.Name);
+
+				continue;
+			}
+
+			_busyTries = 0;
 			Schedule(hours);
 			DateTime again = _nextDue!.Value;
 			Log.Debug(new Said("next send around {0}", (Func<string>) (() => Fmt.Clock(again))), Bot.Name);

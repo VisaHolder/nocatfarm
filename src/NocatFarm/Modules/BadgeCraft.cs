@@ -38,6 +38,9 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 	/// <summary>The last sweep left sets uncrafted on purpose (human mode crafts a few at a time) - look again sooner.</summary>
 	private bool _moreToCraft;
 
+	/// <summary>A booster pack Steam didn't say it opened this sweep - look again in a few hours, not tomorrow.</summary>
+	private bool _unpackFailed;
+
 	protected override async Task RunAsync(CancellationToken ct) {
 		while (!ct.IsCancellationRequested) {
 			// Either switch runs the daily pass. Opening booster packs used to happen only inside a badge-crafting
@@ -98,7 +101,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 
 				if (made < 0) {
 					wait = Rng.Minutes(BackoffHours * 50, BackoffHours * 80);   // Steam refused - back off rather than knock again
-				} else if (_moreToCraft) {
+				} else if (_moreToCraft || _unpackFailed) {
 					wait = Rng.HumanMinutes(2 * 60, 6 * 60);   // the rest of the sets later on, not tomorrow
 				}
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
@@ -149,44 +152,57 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			return 0;
 		}
 
+		List<(string App, ulong Asset)> packs = Packs(inventory, []);
+
+		if (packs.Count == 0) {
+			return 0;
+		}
+
+		// A pack in a trade offer that's waiting - a timed send of boosters to your main, say - isn't this account's to
+		// open: opening it takes it out of the offer, and Steam drops the whole offer. Not knowing is a reason to wait, as
+		// it is for a sale or a craft.
+		if (await TradeOffers.PromisedAsync(Bot, ct).ConfigureAwait(false) is not { } promised) {
+			Log.Debug(new Said("Steam wouldn't say which booster packs are in a waiting trade - opening them later"), Bot.Name);
+			_unpackFailed = true;
+
+			return 0;
+		}
+
 		int opened = 0;
 
-		// Read as data rather than walked as text. The old version searched the raw JSON for a classid and walked
-		// backwards to the nearest "assetid" - but the same classid also appears in the descriptions section, and
-		// walking back from there landed on whichever asset happened to be listed last.
-		foreach (JsonElement asset in inventory.Assets) {
-			if (inventory.DescriptionOf(asset) is not { } description) {
-				continue;
-			}
-
-			string type = InventoryContents.Text(description, "type");
-			string name = InventoryContents.Text(description, "name");
-
-			if (!type.Contains("Booster Pack", StringComparison.Ordinal) && !name.EndsWith("Booster Pack", StringComparison.Ordinal)) {
-				continue;
-			}
-
-			string appId = InventoryContents.Text(description, "market_fee_app");
-			string assetId = InventoryContents.Text(asset, "assetid");
-
-			if ((appId.Length == 0) || (assetId.Length == 0)) {
-				continue;
-			}
-
+		foreach ((string appId, ulong asset) in Packs(inventory, promised)) {
 			ct.ThrowIfCancellationRequested();
 
-			string? body = await Bot.Web.PostAsync(
-				new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/ajaxunpackbooster/"),
-				new Dictionary<string, string>(StringComparer.Ordinal) {
-					["appid"] = appId,
-					["communityitemid"] = assetId
-				},
-				new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/inventory/"), ct).ConfigureAwait(false);
+			// Claimed like a card for a send or a sale (Bot.ClaimItems): a send reading the inventory this moment could
+			// otherwise put the pack in its offer just as it's opened.
+			HashSet<ulong> claimed = Bot.ClaimItems([asset]);
 
-			if (body != null && !body.Contains("\"success\":false", StringComparison.Ordinal)) {
+			if (claimed.Count == 0) {
+				continue;   // being sent right now
+			}
+
+			string assetId = asset.ToString(CultureInfo.InvariantCulture);
+			string? body;
+
+			try {
+				body = await Bot.Web.PostAsync(
+					new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/ajaxunpackbooster/"),
+					new Dictionary<string, string>(StringComparer.Ordinal) {
+						["appid"] = appId,
+						["communityitemid"] = assetId
+					},
+					new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/inventory/"), ct).ConfigureAwait(false);
+			} finally {
+				Bot.ReleaseItems(claimed);
+			}
+
+			// Only Steam's yes counts - "success":1 or true, or the cards it hands over. Anything else, a numeric failure
+			// code included, used to be counted as opened; now it's written down and the pack is tried again later.
+			if (Succeeded(body, "rgItems")) {
 				opened++;
-			} else if (body != null) {
-				Log.Debug($"opening booster pack {assetId} (app {appId}) refused: {Log.Scrub(body.Length > 150 ? body[..150] : body)}", Bot.Name);
+			} else {
+				_unpackFailed = true;
+				Log.Debug($"opening booster pack {assetId} (app {appId}) didn't go through: {(body == null ? "no answer" : Log.Scrub(body.Length > 150 ? body[..150] : body))}", Bot.Name);
 			}
 
 			if (!await Sleep(Rng.Seconds(UnpackGapLowSeconds, UnpackGapHighSeconds), ct).ConfigureAwait(false)) {
@@ -205,6 +221,11 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 	/// One sweep. Returns how many badges were crafted, or -1 if Steam refused and we should back off.
 	/// </summary>
 	public async Task<int> SweepAsync(CancellationToken ct) {
+		// Only this sweep says whether there's more to craft. Left over from the last one, a sweep that found the badges
+		// page unreadable or nothing ready at all still came back in 2-6 hours rather than a day - and every one after it.
+		_moreToCraft = false;
+		_unpackFailed = false;
+
 		if (Bot.Cfg.UnpackBoosterPacks) {
 			_status = new Said("opening booster packs");
 
@@ -249,7 +270,7 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			}
 
 			foreach (Craftable c in Parse(more)) {
-				if (!ready.Exists(existing => existing.AppId == c.AppId)) {
+				if (!ready.Exists(existing => SameSet(existing, c.AppId, c.Border > 0))) {
 					ready.Add(c);
 				}
 			}
@@ -260,13 +281,15 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		// The badges list only LINKS a finished set's craft button to the game's card page; the numbers the craft needs
 		// are on that page, in Profile_CraftGameBadge(...). Looking for them on the list alone found nothing to craft,
 		// ever. Each set still to read costs one page, a few seconds apart.
-		foreach ((uint app, bool foil) in linked.Where(l => !ready.Exists(r => r.AppId == l.App)).DistinctBy(static l => l.App).Take(MaxCardPages)) {
+		foreach ((uint app, bool foil) in CardPagesToRead(linked, ready)) {
 			await Task.Delay(Rng.Seconds(3, 10), ct).ConfigureAwait(false);
 
 			string? cards = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{Bot.SteamId}/gamecards/{app}/?l=english" + (foil ? "&border=1" : "")), ct).ConfigureAwait(false);
 
 			if ((cards != null) && (ParseCardsPage(cards) is { } c) && (c.AppId == app)) {
-				ready.Add(c);
+				if (!ready.Contains(c)) {
+					ready.Add(c);
+				}
 			} else if (cards != null) {
 				// The list said this set is ready; its page not offering the craft is worth knowing about.
 				Log.Debug($"{GameNames.Of(app)}: the card page has no craft button to read ({cards.Length} chars) - left for the next sweep", Bot.Name);
@@ -415,14 +438,42 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			return false;   // the web session already logged why
 		}
 
-		if (body.Contains("too many requests", StringComparison.OrdinalIgnoreCase) || body.Contains("\"success\":false", StringComparison.Ordinal)) {
-			// The caller only says "refused" - Steam's own answer is the why.
+		if (!Succeeded(body, "rgDroppedItems")) {
+			// The caller only says "refused" - Steam's own answer is the why. Only an explicit yes is a craft: "success":2 and
+			// every other failure code used to pass as one, and the set was counted as a badge it never became.
 			Log.Debug($"crafting the {GameNames.Of(c.AppId)} badge refused: {Log.Scrub(body.Length > 150 ? body[..150] : body)}", Bot.Name);
 
 			return false;
 		}
 
 		return true;
+	}
+
+	/// <summary>
+	/// Whether Steam said yes: "success" of 1 or true - or, with no success flag at all, the result it only sends when it
+	/// worked (<paramref name="resultField"/>). A number other than 1, false, an HTML page or nothing at all is a no.
+	/// </summary>
+	internal static bool Succeeded(string? body, string resultField) {
+		if (string.IsNullOrWhiteSpace(body)) {
+			return false;
+		}
+
+		try {
+			using JsonDocument doc = JsonDocument.Parse(body);
+			JsonElement root = doc.RootElement;
+
+			if (root.ValueKind != JsonValueKind.Object) {
+				return false;
+			}
+
+			if (root.TryGetProperty("success", out JsonElement s)) {
+				return (s.ValueKind == JsonValueKind.True) || ((s.ValueKind == JsonValueKind.Number) && s.TryGetInt32(out int n) && (n == 1));
+			}
+
+			return root.TryGetProperty(resultField, out _);
+		} catch (JsonException) {
+			return false;
+		}
 	}
 
 	internal readonly record struct Craftable(uint AppId, int Series, int Border, int Levels);
@@ -453,6 +504,43 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 		}
 
 		return cards;
+	}
+
+	/// <summary>
+	/// The sealed booster packs in the inventory, as (game, asset id) - leaving out the ones in <paramref name="promised"/>,
+	/// a trade offer that's waiting.
+	/// </summary>
+	/// <remarks>
+	/// Read as data rather than walked as text. The old version searched the raw JSON for a classid and walked backwards to
+	/// the nearest "assetid" - but the same classid also appears in the descriptions section, and walking back from there
+	/// landed on whichever asset happened to be listed last.
+	/// </remarks>
+	internal static List<(string App, ulong Asset)> Packs(InventoryContents inventory, ICollection<ulong> promised) {
+		List<(string, ulong)> packs = [];
+
+		foreach (JsonElement asset in inventory.Assets) {
+			if (inventory.DescriptionOf(asset) is not { } description) {
+				continue;
+			}
+
+			string type = InventoryContents.Text(description, "type");
+			string name = InventoryContents.Text(description, "name");
+
+			if (!type.Contains("Booster Pack", StringComparison.Ordinal) && !name.EndsWith("Booster Pack", StringComparison.Ordinal)) {
+				continue;
+			}
+
+			string appId = InventoryContents.Text(description, "market_fee_app");
+
+			if ((appId.Length == 0) || !ulong.TryParse(InventoryContents.Text(asset, "assetid"), NumberStyles.None, CultureInfo.InvariantCulture, out ulong id)
+				|| (id == 0) || promised.Contains(id)) {
+				continue;
+			}
+
+			packs.Add((appId, id));
+		}
+
+		return packs;
 	}
 
 	/// <summary>
@@ -502,18 +590,33 @@ public sealed class BadgeCraft(Bot bot) : BotModule(bot) {
 			}
 
 			uint appId = (uint) nums[0];
+			int border = nums.Count >= 3 ? nums[2] : 0;
 
-			if (found.Exists(f => f.AppId == appId)) {
+			if (found.Exists(f => SameSet(f, appId, border > 0))) {
 				continue;
 			}
 
 			found.Add(new Craftable(
 				appId,
 				nums.Count >= 2 ? nums[1] : 1,
-				nums.Count >= 3 ? nums[2] : 0,
+				border,
 				nums.Count >= 4 ? nums[3] : 1));
 		}
 	}
+
+	/// <summary>
+	/// The same set: the same game AND the same kind, foil or plain. A game's foil set and its plain one are two badges
+	/// with two craft buttons.
+	/// </summary>
+	/// <remarks>
+	/// Told apart by game alone, a game with both ready crafted one of them and left the other for the next day's sweep -
+	/// the foil link was dropped as a repeat of the plain one.
+	/// </remarks>
+	private static bool SameSet(Craftable c, uint app, bool foil) => (c.AppId == app) && ((c.Border > 0) == foil);
+
+	/// <summary>The card pages still to read: every set the list links to, foil and plain apart, that isn't read already.</summary>
+	internal static List<(uint App, bool Foil)> CardPagesToRead(IEnumerable<(uint App, bool Foil)> linked, List<Craftable> ready) =>
+		[.. linked.Where(l => !ready.Exists(r => SameSet(r, l.App, l.Foil))).Distinct().Take(MaxCardPages)];
 
 	/// <summary>Card pages read per sweep, at most - each finished set the list only links to is one page.</summary>
 	private const int MaxCardPages = 25;

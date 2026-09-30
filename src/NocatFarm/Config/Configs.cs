@@ -643,7 +643,56 @@ public static class ConfigStore {
 		&& (name[0] != '.')
 		&& !name.Equals("nocatFarm", StringComparison.OrdinalIgnoreCase)
 		&& (name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0)
-		&& (Path.GetRelativePath(".", name) == name);
+		&& (Path.GetRelativePath(".", name) == name)
+		&& !IsReservedName(name);
+
+	private static readonly HashSet<string> WindowsDevices = new(StringComparer.OrdinalIgnoreCase) {
+		"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+		"LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+	};
+
+	/// <summary>
+	/// A name Windows keeps for a device - con, prn, aux, nul, com1-9, lpt1-9 - with or without an extension ("nul.txt"
+	/// is nul too). config\con.json isn't a file there: saving the account went nowhere or failed, and it was gone at the
+	/// next start - and a folder carried over from Linux with one in it couldn't be copied back.
+	/// </summary>
+	public static bool IsReservedName(string name) {
+		string stem = name.Split('.')[0].TrimEnd(' ');
+
+		return WindowsDevices.Contains(stem);
+	}
+
+	/// <summary>Why a name can't be one - for the add paths, which say so rather than a general "can't be used".</summary>
+	public static Core.Said? NameProblem(string name) =>
+		IsReservedName(name) ? new Core.Said("'{0}' is a name Windows keeps for itself (like con, nul or com1) - pick another", name)
+		: name.Equals("all", StringComparison.OrdinalIgnoreCase) ? new Core.Said("'all' means every account in a command - pick another name")
+		: null;
+
+	/// <summary>
+	/// Every list and text left null - "IdleGames": null typed into a file by hand, or sent that way - put back to its
+	/// default. JSON takes an explicit null over the default, and a null list crashed whatever read it next: turning on
+	/// human mode, an import's settings step half-way through, the idler.
+	/// </summary>
+	public static T FillNulls<T>(T config) where T : class, new() {
+		T fresh = new();
+
+		foreach (System.Reflection.PropertyInfo p in typeof(T).GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)) {
+			if (p.CanRead && p.CanWrite && (p.GetIndexParameters().Length == 0) && !p.PropertyType.IsValueType
+				&& (p.GetValue(config) == null) && (p.GetValue(fresh) is { } fallback)) {
+				p.SetValue(config, fallback);
+			}
+		}
+
+		return config;
+	}
+
+	/// <summary>
+	/// A name for a NEW account: letters, numbers, dashes and underscores only - anything else turns into a different
+	/// command once typed in the console - and never "all", which every command reads as every account.
+	/// </summary>
+	public static bool IsPlainBotName(string name) =>
+		(name.Length > 0) && name.All(static c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_')
+		&& !name.Equals("all", StringComparison.OrdinalIgnoreCase);
 
 	public static GlobalConfig LoadGlobal() {
 		Directory.CreateDirectory(ConfigDir);
@@ -656,7 +705,7 @@ public static class ConfigStore {
 		}
 
 		try {
-			GlobalConfig loaded = JsonSerializer.Deserialize<GlobalConfig>(File.ReadAllText(GlobalPath), Json) ?? new GlobalConfig();
+			GlobalConfig loaded = FillNulls(JsonSerializer.Deserialize<GlobalConfig>(File.ReadAllText(GlobalPath), Json) ?? new GlobalConfig());
 
 			// Anything still in plain text - typed into the file by hand, or left by an older version - is written back
 			// encrypted as soon as it has been read, not whenever a setting next happens to be saved.
@@ -731,10 +780,15 @@ public static class ConfigStore {
 	/// </summary>
 	private static readonly Lock SaveGate = new();
 
+	/// <summary>Why the last global save didn't reach the disk, in plain words; null once one has.</summary>
+	/// <remarks>For a caller with no log to read it from - the installer's --setup runs before logging exists.</remarks>
+	public static string? LastSaveProblem { get; private set; }
+
 	/// <returns>False when nothing reached the disk, so a caller that told somebody "saved" can say otherwise.</returns>
 	public static bool SaveGlobal(GlobalConfig cfg) {
 		if (_globalBroken) {
 			Log.Debug("config: not saving nocatFarm.json - it didn't load, and saving now would put defaults over it");
+			LastSaveProblem = $"{GlobalLoadProblem ?? $"config: {GlobalPath} didn't load"} - not saved over it; fix it or delete it";
 
 			// Once, in plain words, the first time a change is lost this way - the warning at start has long scrolled by.
 			if (!_brokenSaveSaid) {
@@ -764,8 +818,11 @@ public static class ConfigStore {
 				AtomicFile.Write(GlobalPath, JsonSerializer.Serialize(onDisk, Json));
 			}
 
+			LastSaveProblem = null;
+
 			return true;
 		} catch (Exception e) {
+			LastSaveProblem = $"couldn't write {GlobalPath}: {Log.Describe(e)}";
 			Log.Warn(new Said("config: couldn't save global config: {0}", Log.Describe(e)));
 
 			return false;
@@ -895,6 +952,8 @@ public static class ConfigStore {
 				if (cfg == null) {
 					continue;
 				}
+
+				FillNulls(cfg);
 
 				if (string.IsNullOrWhiteSpace(cfg.SteamLogin)) {
 					cfg.SteamLogin = name;   // default the login to the file name

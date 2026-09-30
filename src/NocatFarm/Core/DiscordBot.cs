@@ -287,7 +287,10 @@ public static partial class Notifier {
 					Log.Recovered("discord:bot");
 				}
 
-				wait = hold ?? (failures == 0 ? Rng.Seconds(1, 5) : SteamMaintenance.Grown(failures, TimeSpan.FromSeconds(2)));
+				// Discord's own short wait never replaces the growing one: an identify turned down again and again (op 9) was
+				// retried every few seconds for ever, each one spending one of the day's session starts.
+				TimeSpan grown = failures == 0 ? Rng.Seconds(1, 5) : SteamMaintenance.Grown(failures, TimeSpan.FromSeconds(2));
+				wait = hold is { } h && (h > grown) ? h : grown;
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				return;
 			} catch (Exception e) {

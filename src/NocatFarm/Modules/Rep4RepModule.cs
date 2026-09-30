@@ -34,7 +34,26 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	/// <summary>Whether a daily-limit refusal at <paramref name="posted"/> comments should become the account's cap.</summary>
 	internal static bool LearnsDailyLimit(bool on, int posted, int cap) => on && (posted >= CapFloor) && (posted < cap);
 
-	private enum Outcome { Posted, Refused, Unknown, RateLimited, AccountBlocked, DailyLimit }
+	private enum Outcome { Posted, Refused, Unknown, RateLimited, AccountBlocked, DailyLimit, NotSent }
+
+	/// <summary>Comments in a row that never left this PC - each backs off longer.</summary>
+	private int _notSentRun;
+
+	/// <summary>
+	/// How long to wait after a comment that never went out: 5, 10, 20, 40, then 60 minutes, give or take - never straight
+	/// back at it, whatever keeps it from going.
+	/// </summary>
+	internal static int NotSentWaitSeconds(int run) => (Math.Min(60, 5 << Math.Clamp(run - 1, 0, 4)) * 60) + Rng.Next(0, 120);
+
+	/// <summary>Nothing reached Steam, so nothing is counted or credited - and the next try waits a while.</summary>
+	private int OnNotSent(Rep4RepTask task) {
+		_notSentRun++;
+		int wait = NotSentWaitSeconds(_notSentRun);
+		_status = new Said("couldn't reach Steam - trying again in {0}", Fmt.Hm(wait / 60));
+		Log.Info(new Said("comment on {0} wasn't sent (couldn't reach Steam) - not counted, trying again in {1}", task.TargetName, Fmt.Hm(wait / 60)), Bot.Name);
+
+		return wait;
+	}
 
 	private readonly Rep4RepApi _api = api;
 
@@ -430,6 +449,8 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			(Outcome outcome, string? error) = await PostCommentAsync(task, ct).ConfigureAwait(false);
 
 			switch (outcome) {
+				case Outcome.NotSent:
+					return OnNotSent(task);
 				case Outcome.RateLimited:
 					return await OnRateLimitedAsync().ConfigureAwait(false);
 				case Outcome.DailyLimit:
@@ -466,6 +487,8 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		(Outcome outcome, string? retryError) = await PostCommentAsync(task, ct).ConfigureAwait(false);
 
 		switch (outcome) {
+			case Outcome.NotSent:
+				return OnNotSent(task);
 			case Outcome.RateLimited:
 				return await OnRateLimitedAsync().ConfigureAwait(false);
 			case Outcome.DailyLimit:
@@ -552,6 +575,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	private async Task CountPostAsync(Rep4RepTask task) {
 		_state!.RecordPost(task.TaskId);
 		_rateLimitRun = 0;
+		_notSentRun = 0;
 		Stats.Record(Stats.KindComment, Bot.Name);
 		await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
 	}
@@ -718,9 +742,10 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		};
 
 		string? body;
+		bool sent;
 
 		try {
-			body = await Bot.Web.PostAsync(url, form, referer, ct).ConfigureAwait(false);
+			(body, sent) = await Bot.Web.PostTrackedAsync(url, form, referer, ct).ConfigureAwait(false);
 		} catch (Exception e) {
 			// Including a shutdown mid-request. Steam may well have taken the comment, and an uncounted live
 			// comment is how an account quietly ends up at 11 in 24 hours.
@@ -732,7 +757,10 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		}
 
 		if (body == null) {
-			return (Outcome.Unknown, null);   // never saw a reply - Steam might still have posted it
+			// Never sent at all - no session, no cookie, the site shut for a rate limit: nothing was posted, so nothing is
+			// counted. These used to be counted as posted, spending a day's comment on one that never went up.
+			// Sent and no reply is different: Steam might still have posted it.
+			return (sent ? Outcome.Unknown : Outcome.NotSent, null);
 		}
 
 		if (body.Contains("\"success\":true", StringComparison.Ordinal)) {
@@ -959,6 +987,10 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			}
 
 			(Outcome outcome, string? error) = await PostCommentAsync(task, ct).ConfigureAwait(false);
+
+			if (outcome == Outcome.NotSent) {
+				return new Said("couldn't reach Steam - nothing was posted or counted; try again in a few minutes").ToString();
+			}
 
 			if (outcome is Outcome.Refused or Outcome.AccountBlocked) {
 				return $"Steam refused it{(string.IsNullOrEmpty(error) ? "" : $": {error}")}";

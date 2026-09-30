@@ -153,6 +153,12 @@ public static partial class PriceBook {
 		await Gate.WaitAsync(ct).ConfigureAwait(false);
 
 		try {
+			// Asked again once it's our turn. Several accounts pricing at once queue here, and when the one ahead is told
+			// 429, the rest used to go on and ask anyway - each refused in turn, each doubling the pause.
+			if (DateTime.UtcNow < _coolUntil) {
+				return null;
+			}
+
 			TimeSpan since = DateTime.UtcNow - _lastCall;
 
 			if (since < TimeSpan.FromSeconds(GapSeconds)) {

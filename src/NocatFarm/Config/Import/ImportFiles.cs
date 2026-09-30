@@ -285,7 +285,10 @@ internal static class ImportFiles {
 
 		string stem = clean.Length > 0 ? clean.ToString()[..Math.Min(32, clean.Length)] : fallback;
 
-		if (stem.Equals("nocatFarm", StringComparison.OrdinalIgnoreCase)) {
+		// Names that can't be an account here get a 1 on the end: the global config's, "all" (every account, to a
+		// command) and the ones Windows keeps for devices - a Steam login "con" came out as config\con.json.
+		if (stem.Equals("nocatFarm", StringComparison.OrdinalIgnoreCase) || stem.Equals("all", StringComparison.OrdinalIgnoreCase)
+			|| ConfigStore.IsReservedName(stem)) {
 			stem += "1";
 		}
 

@@ -801,9 +801,25 @@ begin
   end;
 end;
 
+// Why --setup didn't save, from the line it wrote to logs\setup.log - only when that line is about this very exit code,
+// so an old failure in the same file is never shown as today's. The code alone told nobody what to fix.
+function SetupProblem(Code: Integer): String;
+var
+  Lines: TArrayOfString;
+  Last, Mark: String;
+  P: Integer;
+begin
+  Result := '';
+  if not LoadStringsFromFile(ExpandConstant('{app}\logs\setup.log'), Lines) or (GetArrayLength(Lines) = 0) then Exit;
+  Last := Trim(Lines[GetArrayLength(Lines) - 1]);
+  Mark := '--setup exit ' + IntToStr(Code) + ': ';
+  P := Pos(Mark, Last);
+  if P > 0 then Result := Copy(Last, P + Length(Mark), Length(Last));
+end;
+
 procedure SaveChoices(Moving: Boolean);
 var
-  Args: String;
+  Args, Why: String;
   Code: Integer;
 begin
   Args := '--setup StartWithWindows=' + TrueFalse(Toggles[0].On);
@@ -822,8 +838,13 @@ begin
     Args := Args + ' ImportFrom=' + SourceKey;
     if SourcePath[Source] <> '' then Args := Args + ' "ImportPath=' + SourcePath[Source] + '"';
   end;
-  if not Exec(ExpandConstant('{app}\{#AppExe}'), Args, ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, Code) or (Code <> 0) then
-    SuppressibleMsgBox(FmtMessage(CustomMessage('SetupFailed'), [IntToStr(Code)]), mbInformation, MB_OK, IDOK);
+  if not Exec(ExpandConstant('{app}\{#AppExe}'), Args, ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, Code) or (Code <> 0) then begin
+    // The reason is in English, as nocat.farm wrote it - still more use than a bare number.
+    Why := SetupProblem(Code);
+    if Why <> '' then Why := #13#10#13#10 + Why;
+    Log('--setup failed with exit code ' + IntToStr(Code) + Why);
+    SuppressibleMsgBox(FmtMessage(CustomMessage('SetupFailed'), [IntToStr(Code)]) + Why, mbInformation, MB_OK, IDOK);
+  end;
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);

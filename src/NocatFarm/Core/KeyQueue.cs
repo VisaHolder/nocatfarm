@@ -29,6 +29,10 @@ public static class KeyQueue {
 		// The one account this key is for, when 'redeem <account> ...' named one. Null means whichever account can
 		// use it. A file written before this existed has no such field and reads back as null - the old behaviour.
 		public string? Account { get; set; }
+
+		// Accounts that already answered "not for this account" - they own it, it's another region's, it needs a game they
+		// haven't got. Asked again, each would only say so again and spend one of its failed activations doing it.
+		public List<string>? RefusedBy { get; set; }
 	}
 
 	private static readonly List<Entry> Pending = [];
@@ -112,13 +116,42 @@ public static class KeyQueue {
 	/// <paramref name="usable"/> says whether a key for that account can be tried at all right now - so a key for
 	/// an account that is offline waits without holding up the keys behind it.
 	/// </summary>
-	public static (string Key, string? Account)? Next(Func<string?, bool> usable) {
+	/// <param name="usable">Given the key's account and the accounts that already turned it down for good.</param>
+	public static (string Key, string? Account, IReadOnlyList<string> RefusedBy)? Next(Func<string?, IReadOnlyList<string>, bool> usable) {
 		Load();
 		long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
 		lock (Gate) {
-			return Pending.Find(e => (e.NotBefore <= now) && usable(e.Account)) is { } next ? (next.Key, next.Account) : null;
+			return Pending.Find(e => (e.NotBefore <= now) && usable(e.Account, e.RefusedBy ?? [])) is { } next
+				? (next.Key, next.Account, [.. next.RefusedBy ?? []])
+				: null;
 		}
+	}
+
+	/// <summary>
+	/// This account can't use this key and never will - it owns the game, the key is another region's. It isn't asked
+	/// again. True when every one of <paramref name="accounts"/> has now said so: nobody is left to try it.
+	/// </summary>
+	public static bool RefusedOn(string key, string account, IEnumerable<string> accounts) {
+		bool everyone;
+
+		lock (Gate) {
+			if (Pending.Find(e => string.Equals(e.Key, key, StringComparison.OrdinalIgnoreCase)) is not { } entry) {
+				return false;
+			}
+
+			entry.RefusedBy ??= [];
+
+			if (!entry.RefusedBy.Contains(account, StringComparer.OrdinalIgnoreCase)) {
+				entry.RefusedBy.Add(account);
+			}
+
+			everyone = accounts.All(a => entry.RefusedBy.Contains(a, StringComparer.OrdinalIgnoreCase));
+		}
+
+		Save();
+
+		return everyone;
 	}
 
 	/// <summary>It worked, or it is dead. Either way it never comes back.</summary>

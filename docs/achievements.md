@@ -57,8 +57,9 @@ row.
 When a game reaches about 65-75% of its achievements (*Move to another game at about* / *...up to*), the hunter has
 had enough of it for now. The exact point is random and different for every game. That game then rests for 3-14 days
 (*Come back to a game after* / *...to*) and the next game on the list takes its slot. Each time it comes back, it
-goes a little further in, up to your *Finish no more than* limit. Only a `grind` you type goes to 100%. Games with
-nothing left to earn are skipped.
+goes a little further in, up to your *Finish no more than* limit. A game that gets there, or has nothing left to earn,
+is left for good (raise *Finish no more than* and it comes back); `hunt` lists them apart. Only a `grind` you type goes
+to 100%.
 
 *Hunt at most, hours a day* caps the hunting per day (0, the default, means no limit). Once the day's hours are
 played, a human-mode account drops the hunt game from its games until tomorrow, and a robot account stops hunting

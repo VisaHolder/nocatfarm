@@ -78,7 +78,8 @@ Every wait is a setting, under Show advanced on a human-mode account:
 
 This matters for any account you also play on, human mode or not.
 
-*Stand down when you play* (on) stops nocat.farm playing the moment you start a game on that account yourself.
+*Stand down when you play* (on) stops nocat.farm playing the moment you start a game on that account yourself. While
+you're on it, it doesn't change the account's status either - the right one goes back on once you're done.
 *Wait before resuming* (5 minutes) is how long after you stop before it carries on; a human-mode account waits a
 random time, up to three times that. *I sign into this one myself* (off) means it never changes the online status,
 so your own Steam app keeps Friends & Chat.

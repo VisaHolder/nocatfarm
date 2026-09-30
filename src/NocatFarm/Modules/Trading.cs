@@ -124,6 +124,21 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 	private static readonly TimeSpan NotFairFor = TimeSpan.FromMinutes(30);
 
+	/// <summary>Fair swaps that would sit in a trade hold - left for you for as long as the offer is there. Under the <see cref="_fair"/> lock.</summary>
+	/// <remarks>
+	/// Only the verdict used to be forgotten. The next look found the swap fair again, queued it, waited it out, found the
+	/// hold again and said so - round and round for as long as the offer stood, two lines and a hold lookup every time.
+	/// </remarks>
+	private readonly HashSet<ulong> _heldSwaps = [];
+
+	/// <summary>A fair swap that would be held: not accepted, not declined, not looked at again - it's yours to answer.</summary>
+	private void LeaveHeldSwap(ulong id) {
+		lock (_fair) {
+			_fair.Remove(id);
+			_heldSwaps.Add(id);
+		}
+	}
+
 	protected override async Task RunAsync(CancellationToken ct) {
 		while (!ct.IsCancellationRequested) {
 			// A trade accepted at 4am by an account whose friends list says it is offline is not a person. When
@@ -234,6 +249,8 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			foreach (ulong gone in _fair.Keys.Where(k => !ids.Contains(k)).ToList()) {
 				_fair.Remove(gone);
 			}
+
+			_heldSwaps.IntersectWith(ids);
 		}
 
 		lock (_nightDue) {
@@ -299,6 +316,16 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 		bool fromMaster = Auto(offer, allowed);
 		bool donation = Bot.Cfg.AcceptDonations && offer.IsPureDonation;
+
+		// A swap that would be held was left for you, and stays left - neither taken nor declined behind your back.
+		if (!fromMaster && !donation) {
+			lock (_fair) {
+				if (_heldSwaps.Contains(offer.Id)) {
+					return (false, false);
+				}
+			}
+		}
+
 		bool swapWanted = Bot.Cfg.AcceptFairCardSwaps || fleet.Contains(offer.Partner);
 		bool? swap = !fromMaster && !donation && swapWanted ? await FairSwapAsync(offer, ct).ConfigureAwait(false) : false;
 		bool fair = swap == true;
@@ -344,7 +371,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			}
 
 			if (hold > TimeSpan.Zero) {
-				ForgetVerdict(offer.Id);
+				LeaveHeldSwap(offer.Id);
 				_waiting.Remove(offer.Id);
 				Log.Info(new Said("offer {0} no longer a fair swap ({1}) - left for you", NumberOf(offer.Id), new Said("the cards would sit in a trade hold")), Bot.Name);
 
@@ -356,7 +383,16 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			(bool? still, Said why) = await FairSwap.JudgeAsync(Bot, offer, Promised(), ct).ConfigureAwait(false);
 
 			if (still != true) {
-				ForgetVerdict(offer.Id);
+				// A "no" is kept like any other, so the next look doesn't say "isn't a fair swap" all over again; a
+				// "couldn't tell" is forgotten, and judged afresh.
+				lock (_fair) {
+					if (still == false) {
+						_fair[offer.Id] = (false, DateTime.UtcNow);
+					} else {
+						_fair.Remove(offer.Id);
+					}
+				}
+
 				_waiting.Remove(offer.Id);
 
 				if (still == false) {
@@ -419,12 +455,6 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			return (true, swapped);
 		} finally {
 			Unclaim(offer.Id);
-		}
-	}
-
-	private void ForgetVerdict(ulong id) {
-		lock (_fair) {
-			_fair.Remove(id);
 		}
 	}
 
@@ -921,10 +951,11 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 				new Uri(WebSession.Community, "/profiles/" + Bot.SteamId + "/tradeoffers/sent/"), ct).ConfigureAwait(false);
 			string who = await SteamNames.OfAsync(Bot, offer.Partner, ct).ConfigureAwait(false);
 
-			if (body != null) {
+			if (OfferAnswered(body, offer.Id)) {
 				Log.Trade(new Said("cancelled the offer it sent to {0} (#{1})", who, offer.Id), Bot.Name);
 				lines.Add(new Said("cancelled #{0} to {1}", offer.Id, who).ToString());
 			} else {
+				Log.Debug($"cancelling trade offer #{offer.Id} didn't go through - Steam answered: {Answer(body)}", Bot.Name);
 				lines.Add(new Said("#{0}: Steam didn't take the cancel - try again", offer.Id).ToString());
 			}
 		}
@@ -936,8 +967,49 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		Dictionary<string, string> form = new() { ["sessionid"] = Bot.Web.SessionId };
 		string? body = await Bot.Web.PostAsync(new Uri(WebSession.Community, $"/tradeoffer/{offer.Id}/decline"), form, new Uri(WebSession.Community, "/profiles/" + Bot.SteamId + "/tradeoffers/"), ct).ConfigureAwait(false);
 
-		return body != null;
+		if (OfferAnswered(body, offer.Id)) {
+			return true;
+		}
+
+		// Tried again at the next look while it keeps failing - the same answer once is enough.
+		Log.DebugOnChange($"decline:{Bot.Name}:{offer.Id}", $"declining trade offer #{offer.Id} didn't go through - Steam answered: {Answer(body)}", Bot.Name);
+
+		return false;
 	}
+
+	/// <summary>
+	/// Whether Steam's reply to a decline or a cancel says it happened: the offer's own id handed back, or "success" 1/true.
+	/// </summary>
+	/// <remarks>
+	/// Any reply at all used to count - an HTML error page served with a 200 included - so an offer could be logged as
+	/// declined, and never looked at again, while it still stood.
+	/// </remarks>
+	internal static bool OfferAnswered(string? body, ulong id) {
+		if (string.IsNullOrWhiteSpace(body)) {
+			return false;
+		}
+
+		try {
+			using System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(body);
+			System.Text.Json.JsonElement root = doc.RootElement;
+
+			if (root.ValueKind != System.Text.Json.JsonValueKind.Object) {
+				return false;
+			}
+
+			if (root.TryGetProperty("tradeofferid", out System.Text.Json.JsonElement said)) {
+				return said.ToString() == id.ToString(CultureInfo.InvariantCulture);
+			}
+
+			return root.TryGetProperty("success", out System.Text.Json.JsonElement ok)
+				&& ((ok.ValueKind == System.Text.Json.JsonValueKind.True) || ((ok.ValueKind == System.Text.Json.JsonValueKind.Number) && ok.TryGetInt32(out int n) && (n == 1)));
+		} catch (System.Text.Json.JsonException) {
+			return false;
+		}
+	}
+
+	/// <summary>The start of Steam's reply, safe for the log.</summary>
+	private static string Answer(string? body) => body == null ? "nothing" : Log.Scrub(body[..Math.Min(150, body.Length)]);
 }
 
 /// <summary>

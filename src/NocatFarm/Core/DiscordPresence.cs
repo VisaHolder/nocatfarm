@@ -86,8 +86,8 @@ public static class DiscordPresence {
 	private static async Task LoopAsync() {
 		while (true) {
 			try {
-				if (!G.DiscordPresence) {
-					Disconnect();
+				if (!G.DiscordPresence || _stopped) {
+					Disconnect(quietly: _stopped);
 					await Task.Delay(5000).ConfigureAwait(false);
 
 					continue;
@@ -138,6 +138,9 @@ public static class DiscordPresence {
 				}
 
 				await Task.Delay(15_000).ConfigureAwait(false);
+			} catch (Exception) when (_stopped) {
+				// shutdown took the pipe from under a send - nothing to say, and nothing to start again
+				await Task.Delay(5000).ConfigureAwait(false);
 			} catch (Exception e) {
 				// Discord closed or restarted (an update does it): start over on the next pass - quietly. "Rich Presence
 				// off/on" in the log is for when you switch it; Discord blinking isn't news, and it read as if you had.
@@ -374,7 +377,9 @@ public static class DiscordPresence {
 				_lastSent = "";
 
 				return true;
-			} catch (Exception e) when (e is TimeoutException or IOException) {
+			} catch (Exception e) when (e is TimeoutException or IOException or UnauthorizedAccessException) {
+				// Access denied too - a pipe belonging to a Discord run as administrator - and on to the next number: it
+				// used to end the search there, so a normal Discord on pipe 1 was never found.
 				await pipe.DisposeAsync().ConfigureAwait(false);
 				_pipe = null;
 			}
@@ -483,8 +488,16 @@ public static class DiscordPresence {
 		_lastSent = "";
 	}
 
+	/// <summary>Set at shutdown: the loop stays away from Discord from then on.</summary>
+	private static volatile bool _stopped;
+
 	/// <summary>Called at shutdown, so the card goes when nocat.farm does.</summary>
-	public static void Stop() => Disconnect();
+	/// <remarks>And stays gone: the accounts' sign-outs come after this and can take a while, and the loop - which had no
+	/// idea - connected again within fifteen seconds and put the card back up for the rest of the way out.</remarks>
+	public static void Stop() {
+		_stopped = true;
+		Disconnect();
+	}
 
 	/// <summary>A frame: opcode and length (little-endian int32s), then the JSON.</summary>
 	private static async Task SendAsync(int op, object payload) {

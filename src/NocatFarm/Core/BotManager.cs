@@ -161,7 +161,14 @@ public sealed class BotManager : IAsyncDisposable {
 	/// </summary>
 	public bool AllFinished =>
 		(_bots.Count > 0)
-		&& All.All(static b => !b.Cfg.Enabled || b.State is Core.BotState.Stopped or Core.BotState.Failed);
+		&& All.All(IsFinished);
+
+	/// <summary>
+	/// Nothing more will happen on this account by itself. A failed account only counts once it has given up: a sign-in
+	/// that failed and is about to retry is "failed" for a moment too, and closing the app right then ended a run that
+	/// was a reconnect away from carrying on.
+	/// </summary>
+	internal static bool IsFinished(Bot b) => !b.Cfg.Enabled || (b.State == BotState.Stopped) || b.GaveUp;
 
 	public async Task StopAllAsync(bool graceful = false) {
 		if (graceful) {

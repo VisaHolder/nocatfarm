@@ -96,8 +96,15 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 
 		try {
 			if (File.Exists(SettingsFile)) {
-				_values = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(SettingsFile))
-					?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+				// Read into one that ignores case, as it was made: a plain deserialise gave back one that didn't, so a setting
+				// asked for as "every" found "Every" until the first restart and never after.
+				Dictionary<string, string> read = new(StringComparer.OrdinalIgnoreCase);
+
+				foreach ((string key, string value) in System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(SettingsFile)) ?? []) {
+					read[key] = value;
+				}
+
+				_values = read;
 			}
 		} catch (Exception e) {
 			NocatFarm.Log.Warn(new Said("couldn't read {0}'s settings: {1}", _owner, NocatFarm.Log.Scrub(e.Message)));
@@ -172,23 +179,64 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 	public event Action<IPluginAccount, uint, int>? CardDropped;
 	public event Action<IPluginAccount, int>? TradeOffersWaiting;
 
-	internal void RaiseOnline(Bot bot) => Safely(() => AccountOnline?.Invoke(new AccountView(bot)), nameof(AccountOnline));
-	internal void RaiseOffline(Bot bot) => Safely(() => AccountOffline?.Invoke(new AccountView(bot)), nameof(AccountOffline));
+	internal void RaiseOnline(Bot bot) => Safely(AccountOnline, h => h(new AccountView(bot)), nameof(AccountOnline));
+	internal void RaiseOffline(Bot bot) => Safely(AccountOffline, h => h(new AccountView(bot)), nameof(AccountOffline));
 
 	internal void RaiseCardDropped(Bot bot, uint app, int left) =>
-		Safely(() => CardDropped?.Invoke(new AccountView(bot), app, left), nameof(CardDropped));
+		Safely(CardDropped, h => h(new AccountView(bot), app, left), nameof(CardDropped));
 
 	internal void RaiseTradeOffers(Bot bot, int waiting) =>
-		Safely(() => TradeOffersWaiting?.Invoke(new AccountView(bot), waiting), nameof(TradeOffersWaiting));
+		Safely(TradeOffersWaiting, h => h(new AccountView(bot), waiting), nameof(TradeOffersWaiting));
 
-	private static void Safely(Action raise, string which) {
-		try {
-			raise();
-		} catch (Exception e) {
-			NocatFarm.Log.Warn(new Said("a plugin failed on {0}: {1}: {2}", which, e.GetType().Name, NocatFarm.Log.Scrub(e.Message)));
+	/// <summary>How many plugin failures were caught and logged rather than let loose - for the tests.</summary>
+	internal static int Caught;
 
-			// Where in the plugin, for whoever wrote it.
-			NocatFarm.Log.StackToFile(e);
+	/// <summary>
+	/// Every handler on its own, each under a <see cref="PluginSync"/>. One after another, so one that throws doesn't
+	/// keep the rest from hearing it.
+	/// </summary>
+	/// <remarks>
+	/// The events are plain Actions, so <c>host.AccountOnline += async a =&gt; { await ...; throw ...; }</c> compiles to
+	/// async void - and an async void that throws after its first await rethrows on the thread pool, which ends the
+	/// process: every account dropped, and a crash the updater takes for a bad release. The try/catch here only ever
+	/// saw the part before the await. An async void hands its failure to the SynchronizationContext it started under,
+	/// so it starts under one that catches, and says whose plugin it was. Nothing changes for the plugin.
+	/// </remarks>
+	private void Safely<T>(T? handlers, Action<T> raise, string which) where T : Delegate {
+		if (handlers == null) {
+			return;
+		}
+
+		PluginSync sync = new(_owner, which);
+
+		foreach (T handler in handlers.GetInvocationList().Cast<T>()) {
+			sync.Run(_ => raise(handler), null);
+		}
+	}
+
+	/// <summary>Where a plugin's handlers - and whatever an async one does after its awaits - run: failures logged, never thrown.</summary>
+	internal sealed class PluginSync(string owner, string which) : SynchronizationContext {
+		public override void Post(SendOrPostCallback d, object? state) => ThreadPool.UnsafeQueueUserWorkItem(_ => Run(d, state), null);
+
+		public override void Send(SendOrPostCallback d, object? state) => Run(d, state);
+
+		public override SynchronizationContext CreateCopy() => this;
+
+		internal void Run(SendOrPostCallback d, object? state) {
+			SynchronizationContext? was = Current;
+			SetSynchronizationContext(this);
+
+			try {
+				d(state);
+			} catch (Exception e) {
+				Interlocked.Increment(ref Caught);
+				NocatFarm.Log.Warn(new Said("plugin {0} failed on {1}: {2}: {3}", owner, which, e.GetType().Name, NocatFarm.Log.Scrub(e.Message)));
+
+				// Where in the plugin, for whoever wrote it.
+				NocatFarm.Log.StackToFile(e);
+			} finally {
+				SetSynchronizationContext(was);
+			}
 		}
 	}
 

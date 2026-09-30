@@ -161,6 +161,18 @@ public static partial class Commands {
 			return "that one has to be done at the PC";
 		}
 
+		// Someone allowed to command ONE account - an ASF Master of that bot comes across as one - could reach every other
+		// account from its chat: every account's Steam Guard codes with a bare /2fa, /confirm on another account, /set
+		// WebPassword and /anywhere on, which opens the dashboard to the internet under a password they chose. What
+		// reaches past this account, or hands out its secrets and the app's, is for the PC, Telegram and Discord only.
+		if (Resolve(verb)?.Name is { } name && SteamChatRefuses(name)) {
+			return "that one has to be done at the PC, or from Telegram or Discord";
+		}
+
+		if (ReachesPast(mgr, line, botName)) {
+			return $"from Steam chat this account only takes commands for itself ({botName})";
+		}
+
 		if ((verb.Length > 0) && (line.IndexOf(' ') < 0) && DefaultsToThisBot(verb)) {
 			line = $"{verb} {botName}";
 		}
@@ -207,7 +219,35 @@ public static partial class Commands {
 
 	/// <summary>Commands where a bare verb sensibly means "this account", rather than "all of them".</summary>
 	private static bool DefaultsToThisBot(string verb) =>
-		verb is "status" or "s" or "pause" or "resume" or "start" or "stop" or "cards" or "config" or "human";
+		verb is "status" or "s" or "pause" or "resume" or "start" or "stop" or "cards" or "config" or "human" or "2fa" or "guard";
+
+	/// <summary>
+	/// Commands a Steam-chat master can't give: the app's own settings and secrets, the dashboard and its way in from the
+	/// internet, updates, files on this PC, and the ones that act on every account at once.
+	/// </summary>
+	internal static bool SteamChatRefuses(string command) =>
+		command is "set" or "anywhere" or "dashboard" or "unlock" or "update" or "import" or "redeem" or "keys" or "answer"
+			or "add" or "reload" or "plugins" or "notify" or "screen" or "match" or "theme" or "mini";
+
+	/// <summary>
+	/// Whether a command sent to <paramref name="botName"/> over Steam chat names another account, or all of them - in the
+	/// account's place ('trade' has it second: 'trade accept kylro 1'), or anywhere else ('send new to kylro' is fine,
+	/// the items are this account's; 'send kylro to new' is not).
+	/// </summary>
+	internal static bool ReachesPast(BotManager mgr, string line, string botName) {
+		string[] words = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+		int accountAt = Resolve(words.FirstOrDefault() ?? "")?.Name == "trade" ? 2 : 1;
+
+		if ((words.Length > accountAt) && words[accountAt].Equals("all", StringComparison.OrdinalIgnoreCase)) {
+			return true;
+		}
+
+		// 'send <this> to <other>' moves this account's own items - the one place another account may be named.
+		bool sendTo = (Resolve(words.FirstOrDefault() ?? "")?.Name == "send") && (words.Length > 3) && words[2].Equals("to", StringComparison.OrdinalIgnoreCase);
+
+		return words.Skip(1).Select((w, i) => (w, i: i + 1))
+			.Any(x => !(sendTo && (x.i == 3)) && (mgr.Get(x.w) is { } other) && !other.Name.Equals(botName, StringComparison.OrdinalIgnoreCase));
+	}
 
 	/// <summary>Set by the host so 'exit' works from the dashboard too, not just from the console.</summary>
 	public static Action? ExitHandler { get; set; }
@@ -548,7 +588,11 @@ public static partial class Commands {
 		// Progress goes to the log in green every 10%, and any failure is said there in red, with the reason.
 		_ = Task.Run(async () => {
 			try {
-				await SelfUpdate.ApplyAsync(CancellationToken.None).ConfigureAwait(false);
+				// Its answer said too: "already downloading", or shutting down, came back here and went nowhere - after the
+				// reply had promised a download that wasn't happening.
+				if (await SelfUpdate.ApplyAsync(CancellationToken.None).ConfigureAwait(false) is { Length: > 0 } refused) {
+					Log.Warn(refused);
+				}
 			} catch (Exception e) {
 				Log.Error(new Said("update failed: {0} - nothing was changed", Log.Scrub(e.Message)));
 				Log.Failed("update", e);
@@ -767,6 +811,30 @@ public static partial class Commands {
 		""";
 
 	// ── help ────────────────────────────────────────────────────────────────
+	/// <summary>One setting explained: its name, label, the dashboard's sentence, its range and its default.</summary>
+	private static string SettingHelp(SettingDef def, object defaults) {
+		StringBuilder sb = new();
+		sb.AppendLine($"{def.Name}  ({def.Label})");
+		sb.AppendLine($"  {def.Tooltip}");
+
+		if (def.Choices != null) {
+			sb.AppendLine($"  One of: {def.Choices}");
+		}
+
+		if (def.Min > double.MinValue || def.Max < double.MaxValue) {
+			sb.AppendLine($"  Between {def.Min:0.##} and {def.Max:0.##}.");
+		}
+
+		object? fallback = Settings.Read(defaults, def.Name);
+		sb.AppendLine($"  Default: {(fallback is List<uint> l ? (l.Count == 0 ? "(none)" : string.Join(", ", l)) : fallback)}");
+
+		if (def.NeedsRestart) {
+			sb.AppendLine("  Takes effect the next time nocat.farm starts.");
+		}
+
+		return sb.ToString().TrimEnd();
+	}
+
 	private static string Help(string[] args) {
 		if (args.Length > 0) {
 			// 'help set <key>' and 'help <key>' both explain a setting - the same sentence the dashboard shows.
@@ -778,26 +846,17 @@ public static partial class Commands {
 			SettingDef? def = command ? null : Settings.Find(wanted);
 
 			if (def != null) {
-				StringBuilder sb = new();
-				sb.AppendLine($"{def.Name}  ({def.Label})");
-				sb.AppendLine($"  {def.Tooltip}");
+				// A setting that exists for the whole app AND per account (StatusEveryMinutes, say) is two settings with one
+				// name. Explaining only the first one found left the per-account one out of reach of 'help' entirely.
+				SettingDef? global = Settings.FindGlobal(def.Name);
+				SettingDef? perAccount = Settings.FindBot(def.Name);
 
-				if (def.Choices != null) {
-					sb.AppendLine($"  One of: {def.Choices}");
+				if ((global != null) && (perAccount != null)) {
+					return "For the whole app (Global settings):\n" + SettingHelp(global, Settings.GlobalDefaults)
+						+ "\n\nPer account (set it on one account to override the whole-app one):\n" + SettingHelp(perAccount, Settings.BotDefaults);
 				}
 
-				if (def.Min > double.MinValue || def.Max < double.MaxValue) {
-					sb.AppendLine($"  Between {def.Min:0.##} and {def.Max:0.##}.");
-				}
-
-				object? fallback = Settings.Read(Settings.FindGlobal(def.Name) != null ? Settings.GlobalDefaults : Settings.BotDefaults, def.Name);
-				sb.AppendLine($"  Default: {(fallback is List<uint> l ? (l.Count == 0 ? "(none)" : string.Join(", ", l)) : fallback)}");
-
-				if (def.NeedsRestart) {
-					sb.AppendLine("  Takes effect the next time nocat.farm starts.");
-				}
-
-				return sb.ToString().TrimEnd();
+				return SettingHelp(def, global != null ? Settings.GlobalDefaults : Settings.BotDefaults);
 			}
 
 			CommandDef? cmd = All.FirstOrDefault(c => c.Matches(wanted));
@@ -981,7 +1040,8 @@ public static partial class Commands {
 		TimeSpan? pauseFor = null;
 
 		if ((verb == "pause") && (args.Length > 1)) {
-			if (!double.TryParse(args[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double minutes) || (minutes <= 0)) {
+			// Finite: "NaN" and "Infinity" parse as doubles, and a NaN wait threw from TimeSpan instead of saying this.
+			if (!double.TryParse(args[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double minutes) || !double.IsFinite(minutes) || (minutes <= 0)) {
 				return $"'{args[1]}' isn't a number of minutes - e.g. pause {args[0]} 30";
 			}
 
@@ -1037,17 +1097,32 @@ public static partial class Commands {
 			_ => verb
 		};
 
+		// The account's own name, not as typed - "pause KYLRO" answered "KYLRO: paused".
+		string named = all ? "" : targets.First().Name;
+
 		// A disabled account is skipped, and the reply has to say so - "signing in" about an account that never
 		// will left people waiting on it.
 		if (!all && (disabled > 0)) {
-			return $"{args[0]} is disabled, so it won't sign in. 'enable {args[0]}' lets it sign in again.";
+			return $"{named} is disabled, so it won't sign in. 'enable {named}' lets it sign in again.";
 		}
 
-		return all ? $"{what}: {count} account(s)" + (disabled > 0 ? $" ({disabled} disabled, left alone)" : "") : $"{args[0]}: {what}";
+		return all ? $"{what}: {count} account(s)" + (disabled > 0 ? $" ({disabled} disabled, left alone)" : "") : $"{named}: {what}";
 	}
 
 	private static async Task<string> RestartAsync(BotManager mgr, string[] args) {
-		await LifecycleAsync(mgr, args, "stop").ConfigureAwait(false);
+		// Checked before anything stops: a bare 'restart' waited a second and a half and then answered with the usage
+		// of 'start', and a mistyped name was only reported after the pause.
+		if (args.Length == 0) {
+			return "restart <account|all>";
+		}
+
+		if (!args[0].Equals("all", StringComparison.OrdinalIgnoreCase) && (mgr.Get(args[0]) == null)) {
+			return NoSuchAccount(mgr, args[0]);
+		}
+
+		// Stopped the way 'stop' stops: a human-mode account finishes up and signs off a short beat later, as a person
+		// would, instead of vanishing mid-game. Robots (not human-owned) stop at once either way - Bot.StopAsync decides.
+		await LifecycleAsync(mgr, args, "stop", graceful: true).ConfigureAwait(false);
 		await Task.Delay(1500).ConfigureAwait(false);
 
 		return await LifecycleAsync(mgr, args, "start").ConfigureAwait(false);
@@ -1060,8 +1135,14 @@ public static partial class Commands {
 
 		string name = args[0];
 
-		if (!ConfigStore.IsValidBotName(name)) {
-			return "That name can't be used. Letters, numbers, dashes and underscores - and 'nocatFarm' is taken by the global config.";
+		// The rule the message states, as the dashboard's Add enforces it - and never "all": an account called that could
+		// not be named on its own, and 'stop all' meant every account.
+		if (ConfigStore.NameProblem(name) is { } problem) {
+			return problem.ToString();
+		}
+
+		if (!ConfigStore.IsValidBotName(name) || !ConfigStore.IsPlainBotName(name)) {
+			return "That name can't be used. Letters, numbers, dashes and underscores - and 'nocatFarm' and 'all' are taken.";
 		}
 
 		if (mgr.Get(name) != null) {
@@ -1683,14 +1764,24 @@ public static partial class Commands {
 			ListedConfirmations.TryGetValue(bot.Name, out listed);
 		}
 
+		// Nothing shown yet - since the start, or ever: "all" confirmed everything waiting, a trade nobody had looked at
+		// included, and a number picked from a list nobody had seen. Both are only ever answers to a list.
+		if (listed == null) {
+			return new Said("{0}: see what's waiting first - 'confirmations {0}' - then confirm or deny by its number", bot.Name).ToString();
+		}
+
 		List<Confirmations.Item> picked;
 
 		if (args[1].Equals("all", StringComparison.OrdinalIgnoreCase)) {
 			// All of what was shown - a trade that turned up after the list, and was never seen, isn't confirmed with it.
-			picked = listed != null ? [.. items.Where(c => listed.Contains(c.Id))] : items;
+			picked = [.. items.Where(c => listed.Contains(c.Id))];
 		} else if (int.TryParse(args[1].TrimStart('#'), out int n) && (n >= 1)) {
+			if (n > listed.Count) {
+				return new Said("{0}: there's no number {1} - 'confirmations {0}' showed {2}", bot.Name, n, listed.Count).ToString();
+			}
+
 			// By the list that was shown - so a new confirmation arriving in between can't shift what "2" means.
-			ulong? id = listed != null ? (n <= listed.Count ? listed[n - 1] : null) : (n <= items.Count ? items[n - 1].Id : null);
+			ulong id = listed[n - 1];
 			picked = [.. items.Where(c => c.Id == id)];
 		} else {
 			return $"'{args[1]}' isn't a number from 'confirmations {bot.Name}' - or say all.";
@@ -1844,7 +1935,7 @@ public static partial class Commands {
 			return $"'{args[1]}' is not an appID - it's the number in a game's store URL.";
 		}
 
-		if ((args.Length < 3) || !double.TryParse(args[2], out double hours) || (hours <= 0)) {
+		if ((args.Length < 3) || !double.TryParse(args[2], out double hours) || !double.IsFinite(hours) || (hours <= 0)) {
 			return "How many hours? e.g.  grind " + args[0] + " " + appId + " 6";
 		}
 
@@ -3224,7 +3315,7 @@ public static partial class Commands {
 
 			// Raising a "shortest" above its "longest" (or the reverse) used to be accepted and written to disk.
 			// The dashboard fixed one such pair; this fixes all of them, on both paths.
-			List<string> pulled = Settings.FixRanges(bot.Cfg, def.Name);
+			List<string> pulled = [.. Settings.FixRanges(bot.Cfg, def.Name).Select(static s => s.ToEnglish())];
 
 			ConfigStore.SaveBot(bot.Name, bot.Cfg);
 			ApplyBotSideEffects(bot, def);
