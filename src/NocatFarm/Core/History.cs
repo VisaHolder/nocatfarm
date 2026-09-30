@@ -394,6 +394,28 @@ public static class History {
 		return (banked, cards, comments);
 	}
 
+	/// <summary>Whether any hours were recorded for this account before <paramref name="day"/>. Hours only went into
+	/// the history from 1.5.5 on, so a first weekly report had "last week 0m" for accounts that ran all week.</summary>
+	public static bool HoursBefore(string bot, DateTime day) {
+		Load();
+
+		string key = Key(day.Date);
+
+		lock (Gate) {
+			foreach ((string k, Dictionary<string, Day> accounts) in Days) {
+				if (string.CompareOrdinal(k, key) >= 0) {
+					break;
+				}
+
+				if (accounts.TryGetValue(bot, out Day? d) && (Banked(d) > 0)) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	/// <summary>The inventory's value as it stood at the end of <paramref name="day"/>: that day's closing figure, or the
 	/// last one before it within a fortnight. Only in today's currency - a value in another one can't be compared.</summary>
 	public static decimal? ClosingValue(string bot, DateTime day) {

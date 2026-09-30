@@ -186,17 +186,6 @@ public sealed class GlobalConfig {
 	public bool SendAchievements { get; set; }
 	public bool SendRep4Rep { get; set; }
 
-	// ── "Tell me if nocat.farm stops" (Core/StopAlert.cs) ──
-	/// <summary>Check in with nocat.lol every few minutes, so its Telegram bot can say when this copy stops. Off by
-	/// default: nothing is sent anywhere until it's turned on.</summary>
-	public bool StopAlert { get; set; }
-
-	/// <summary>What the Telegram message calls this PC - "nocat.farm on my PC hasn't checked in since 14:05".</summary>
-	public string StopAlertPcName { get; set; } = "my PC";
-
-	/// <summary>Minutes without a check-in before the message goes out.</summary>
-	public int StopAlertMinutes { get; set; } = 20;
-
 	/// <summary>Steam groups every account joins - links or short names, comma separated. Open groups only. Starts
 	/// with the nocat.farm group; anyone can change or clear it.</summary>
 	public string GroupsToJoin { get; set; } = "steamcommunity.com/groups/nocatfarm";

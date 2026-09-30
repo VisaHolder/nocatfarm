@@ -2084,28 +2084,7 @@
     "all the games it owns": "tous les jeux qu'il possède",
     "Idling {0} of {1} at a time - next batch at {2}.": "{0} sur {1} à la fois - prochain lot à {2}.",
     "More than fit at once? It idles a batch at a time and moves on every {0}h.": "Plus qu'il n'en tient à la fois ? Il fait tourner un lot à la fois et passe au suivant toutes les {0} h.",
-    "If nocat.farm stops": "Si nocat.farm s'arrête",
-    "the stop alert": "l'alerte d'arrêt",
-    "stop alert: Telegram is no longer linked - press Connect to link it again": "alerte d'arrêt : Telegram n'est plus lié - appuyez sur « Connecter » pour le lier à nouveau",
-    "stop alert: linked - Telegram will tell you if nocat.farm stops": "alerte d'arrêt : lié - Telegram vous préviendra si nocat.farm s'arrête",
-    "Get a Telegram message if nocat.farm stops": "Un message Telegram si nocat.farm s'arrête",
-    "nocat.lol's Telegram bot tells you when nocat.farm stops checking in on this PC - a crash, or the PC off or offline - and again when it's back. Closing it yourself or an update doesn't count. It sends only a random number made for this PC, no account names.": "Le bot Telegram de nocat.lol vous prévient quand nocat.farm ne donne plus signe de vie sur ce PC - un plantage, ou le PC éteint ou hors ligne - et à nouveau quand il revient. Le fermer vous-même ou une mise à jour ne comptent pas. Il n'envoie qu'un nombre aléatoire créé pour ce PC, aucun nom de compte.",
-    "Couldn't reach nocat.lol - is this PC online?": "Impossible de joindre nocat.lol - ce PC est-il en ligne ?",
-    "Alerts aren't switched on at nocat.lol yet - try again later.": "Les alertes ne sont pas encore activées sur nocat.lol - réessayez plus tard.",
-    "nocat.lol gave an unexpected answer - try again later.": "nocat.lol a donné une réponse inattendue - réessayez plus tard.",
-    "nocat.lol asked to slow down - try again in a minute.": "nocat.lol demande de ralentir - réessayez dans une minute.",
-    "Sent - check Telegram.": "Envoyé - regardez Telegram.",
-    "Not linked yet - press Connect first.": "Pas encore lié - appuyez d'abord sur « Connecter ».",
-    "Telegram didn't take the message - press Connect to link it again.": "Telegram n'a pas accepté le message - appuyez sur « Connecter » pour le lier à nouveau.",
-    "Unlinked - no more alerts for this PC.": "Délié - plus d'alertes pour ce PC.",
-    "Turn on \"Tell me if nocat.farm stops\" below and save, then press Connect.": "Activez « Prévenez-moi si nocat.farm s'arrête » ci-dessous et enregistrez, puis appuyez sur « Connecter ».",
-    "Last check-in: {0}": "Dernier signe de vie : {0}",
-    "Not checked in yet.": "Pas encore de signe de vie.",
     "Open Telegram": "Ouvrir Telegram",
-    "Press Start in Telegram. The link works once, for 15 minutes - scan the code to open it on your phone.": "Appuyez sur « Démarrer » dans Telegram. Le lien marche une fois, pendant 15 minutes - scannez le code pour l'ouvrir sur votre téléphone.",
-    "Linked to Telegram.": "Lié à Telegram.",
-    "Unlink": "Délier",
-    "Not linked to Telegram yet.": "Pas encore lié à Telegram.",
     "couldn't read what it learned from your play: {0}": "impossible de lire ce qu'il a appris de ta façon de jouer : {0}",
     "couldn't save what it learned from your play: {0}": "impossible d'enregistrer ce qu'il a appris de ta façon de jouer : {0}",
     "couldn't forget what it learned from your play: {0}": "impossible d'oublier ce qu'il a appris de ta façon de jouer : {0}",
@@ -3194,18 +3173,6 @@
     "RotateEveryHours": {
       "label": "Changer de lot toutes les",
       "tip": "Combien d'heures chaque lot tourne avant que le suivant prenne le relais. Utilisé seulement si « Faire tourner la liste par lots » est activé."
-    },
-    "StopAlert": {
-      "label": "Prévenez-moi si nocat.farm s'arrête",
-      "tip": "Recevez un message Telegram quand nocat.farm s'arrête sur ce PC - il a planté, le PC s'est éteint ou a perdu internet. Toutes les 5 minutes, il donne signe de vie à nocat.lol en n'envoyant qu'un nombre aléatoire créé pour ce PC : aucun nom de compte, rien d'autre. Le fermer vous-même ou une mise à jour ne comptent pas. Activez-le, appuyez sur « Connecter », puis sur « Démarrer » dans Telegram."
-    },
-    "StopAlertPcName": {
-      "label": "Nom de ce PC",
-      "tip": "Le nom utilisé dans le message Telegram, comme « nocat.farm sur my PC ne donne plus signe de vie depuis 14:05 ». Pratique avec nocat.farm sur plusieurs PC."
-    },
-    "StopAlertMinutes": {
-      "label": "Alerter après",
-      "tip": "Combien de minutes sans signe de vie avant l'envoi du message. Il donne signe de vie toutes les 5 minutes, et le message peut arriver jusqu'à 10 minutes plus tard."
     },
     "LearnFromOwner": {
       "label": "Apprendre de ma façon de jouer",

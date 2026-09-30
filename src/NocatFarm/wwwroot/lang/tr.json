@@ -2084,28 +2084,7 @@
     "all the games it owns": "sahip olduğu tüm oyunlar",
     "Idling {0} of {1} at a time - next batch at {2}.": "{1} oyundan {0} tanesi aynı anda - sonraki grup {2}.",
     "More than fit at once? It idles a batch at a time and moves on every {0}h.": "Aynı anda sığmayacak kadar çok mu? Her seferinde bir grup çalıştırır ve {0} saatte bir sonrakine geçer.",
-    "If nocat.farm stops": "nocat.farm durursa",
-    "the stop alert": "durma uyarısı",
-    "stop alert: Telegram is no longer linked - press Connect to link it again": "durma uyarısı: Telegram bağlantısı kalktı - yeniden bağlamak için “Bağlan” düğmesine bas",
-    "stop alert: linked - Telegram will tell you if nocat.farm stops": "durma uyarısı: bağlandı - nocat.farm durursa Telegram haber verecek",
-    "Get a Telegram message if nocat.farm stops": "nocat.farm durursa Telegram'dan mesaj al",
-    "nocat.lol's Telegram bot tells you when nocat.farm stops checking in on this PC - a crash, or the PC off or offline - and again when it's back. Closing it yourself or an update doesn't count. It sends only a random number made for this PC, no account names.": "nocat.lol'un Telegram botu, bu bilgisayardaki nocat.farm haber vermeyi bıraktığında - çökme, ya da bilgisayar kapalı veya çevrimdışı - ve geri geldiğinde sana haber verir. Kendin kapatman ya da bir güncelleme sayılmaz. Yalnızca bu bilgisayar için üretilmiş rastgele bir sayı gönderir, hesap adı göndermez.",
-    "Couldn't reach nocat.lol - is this PC online?": "nocat.lol'a ulaşılamadı - bu bilgisayar çevrimiçi mi?",
-    "Alerts aren't switched on at nocat.lol yet - try again later.": "Uyarılar nocat.lol'da henüz açılmadı - sonra tekrar dene.",
-    "nocat.lol gave an unexpected answer - try again later.": "nocat.lol beklenmedik bir yanıt verdi - sonra tekrar dene.",
-    "nocat.lol asked to slow down - try again in a minute.": "nocat.lol yavaşlamanı istedi - bir dakika sonra tekrar dene.",
-    "Sent - check Telegram.": "Gönderildi - Telegram'a bak.",
-    "Not linked yet - press Connect first.": "Henüz bağlı değil - önce “Bağlan” düğmesine bas.",
-    "Telegram didn't take the message - press Connect to link it again.": "Telegram mesajı kabul etmedi - yeniden bağlamak için “Bağlan” düğmesine bas.",
-    "Unlinked - no more alerts for this PC.": "Bağlantı kaldırıldı - bu bilgisayar için artık uyarı yok.",
-    "Turn on \"Tell me if nocat.farm stops\" below and save, then press Connect.": "Aşağıda “nocat.farm durursa haber ver” seçeneğini aç ve kaydet, sonra “Bağlan” düğmesine bas.",
-    "Last check-in: {0}": "Son haber: {0}",
-    "Not checked in yet.": "Henüz haber vermedi.",
     "Open Telegram": "Telegram'ı aç",
-    "Press Start in Telegram. The link works once, for 15 minutes - scan the code to open it on your phone.": "Telegram'da “Başlat” düğmesine bas. Bağlantı bir kez, 15 dakika boyunca çalışır - telefonda açmak için kodu tara.",
-    "Linked to Telegram.": "Telegram'a bağlı.",
-    "Unlink": "Bağlantıyı kaldır",
-    "Not linked to Telegram yet.": "Henüz Telegram'a bağlı değil.",
     "couldn't read what it learned from your play: {0}": "oynayışından öğrendikleri okunamadı: {0}",
     "couldn't save what it learned from your play: {0}": "oynayışından öğrendikleri kaydedilemedi: {0}",
     "couldn't forget what it learned from your play: {0}": "oynayışından öğrendikleri unutulamadı: {0}",
@@ -3194,18 +3173,6 @@
     "RotateEveryHours": {
       "label": "Değiştirme aralığı",
       "tip": "Her grubun, sonraki grup devralmadan önce kaç saat çalışacağı. Yalnızca \"Listeyi sırayla döndür\" açıkken kullanılır."
-    },
-    "StopAlert": {
-      "label": "nocat.farm durursa haber ver",
-      "tip": "Bu bilgisayarda nocat.farm durduğunda Telegram'dan mesaj al - çöktü, bilgisayar kapandı ya da interneti gitti. 5 dakikada bir nocat.lol'a haber verir ve yalnızca bu bilgisayar için üretilmiş rastgele bir sayı gönderir: hesap adı yok, başka bir şey yok. Kendin kapatman ya da bir güncelleme sayılmaz. Aç, “Bağlan” düğmesine bas, sonra Telegram'da “Başlat” düğmesine bas."
-    },
-    "StopAlertPcName": {
-      "label": "Bu bilgisayarın adı",
-      "tip": "Telegram mesajında kullanılan ad, örneğin “my PC üzerindeki nocat.farm 14:05'ten beri haber vermedi”. nocat.farm birden fazla bilgisayardaysa işe yarar."
-    },
-    "StopAlertMinutes": {
-      "label": "Uyarı süresi",
-      "tip": "Mesaj gönderilmeden önce kaç dakika haber gelmemesi gerektiği. 5 dakikada bir haber verir ve mesaj bundan 10 dakikaya kadar geç gelebilir."
     },
     "LearnFromOwner": {
       "label": "Nasıl oynadığımdan öğren",

@@ -57,7 +57,19 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 	public IdleRotation Rotation => _rotation ??= new IdleRotation(IdleRotation.PathFor(Bot.Name), Bot.Name);
 
 	private IdleRotation? _rotation;
-	private bool _libraryReady;
+
+	/// <summary>
+	/// What the last re-assert was worked out from. Turning "Idle my whole library" or "Rotate the idle list" on or
+	/// off, or the library arriving, puts the new list on within 20 seconds instead of at the next 7-10 minute
+	/// re-assert. Only Assert sets it: 'rotation &lt;account&gt;' works out a plan too, and used to count as done, so
+	/// the account kept its old games until the next re-assert.
+	/// </summary>
+	private (bool Whole, bool Rotate, bool Ready)? _assertedFor;
+
+	public bool OutOfDate => _assertedFor is { } was && (was != Now());
+
+	private (bool Whole, bool Rotate, bool Ready) Now() =>
+		(Bot.Cfg.IdleWholeLibrary, Bot.Cfg.RotateIdleGames, Bot.Cfg.IdleWholeLibrary && Bot.Library.Ready);
 
 	protected override async Task RunAsync(CancellationToken ct) {
 		// A brand new session is still settling; asserting games in the same instant as the logon is the one thing
@@ -86,13 +98,13 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 					break;   // it just ended - put the normal games back now
 				}
 
-				// The rotation's batch is up (or 'rotation <account> next' asked), or the library just arrived for
-				// "Idle my whole library": no reason to sit out the rest of the wait. Only while the idler is the one
+				// The rotation's batch is up (or 'rotation <account> next' asked), one of the two settings changed, or the
+				// library just arrived for "Idle my whole library": no reason to sit out the rest of the wait. Only while the idler is the one
 				// playing - farming, a grind or a pause would just bounce the re-assert straight back every 20 seconds.
 				bool mine = Bot.CanPlay && !Bot.Grinding && !Bot.IsFarming && !Bot.HumanOwned && !Bot.Cfg.LegitMode;
 
 				if (mine && (((Rotating is { } r) && (DateTime.UtcNow >= r.MovesAt)) || (_rotation?.MoveRequested ?? false)
-					|| (Bot.Cfg.IdleWholeLibrary && (Bot.Library.Ready != _libraryReady)))) {
+					|| OutOfDate)) {
 					break;
 				}
 			}
@@ -130,6 +142,7 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 			return;   // the card farmer decides what plays while it is working
 		}
 
+		_assertedFor = Now();
 		List<uint> games = Plan(DateTime.UtcNow);
 
 		if (games.Count == 0 && string.IsNullOrWhiteSpace(Bot.CustomName)) {
@@ -163,8 +176,6 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 
 			return games;
 		}
-
-		_libraryReady = Bot.Library.Ready;
 
 		// The library is games only - no DLC, tools or soundtracks. Family-shared games come along only with
 		// "Include family-shared games", and never one somebody in the family is playing right now.

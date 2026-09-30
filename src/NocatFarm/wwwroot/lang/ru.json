@@ -2084,28 +2084,7 @@
     "all the games it owns": "все игры, что есть на аккаунте",
     "Idling {0} of {1} at a time - next batch at {2}.": "{0} из {1} одновременно - следующая партия в {2}.",
     "More than fit at once? It idles a batch at a time and moves on every {0}h.": "Больше, чем помещается за раз? Запускает по одной партии и переходит к следующей каждые {0} ч.",
-    "If nocat.farm stops": "Если nocat.farm остановится",
-    "the stop alert": "оповещение об остановке",
-    "stop alert: Telegram is no longer linked - press Connect to link it again": "оповещение об остановке: Telegram больше не привязан - нажмите «Подключить», чтобы привязать снова",
-    "stop alert: linked - Telegram will tell you if nocat.farm stops": "оповещение об остановке: привязано - Telegram сообщит, если nocat.farm остановится",
-    "Get a Telegram message if nocat.farm stops": "Сообщение в Telegram, если nocat.farm остановится",
-    "nocat.lol's Telegram bot tells you when nocat.farm stops checking in on this PC - a crash, or the PC off or offline - and again when it's back. Closing it yourself or an update doesn't count. It sends only a random number made for this PC, no account names.": "Telegram-бот nocat.lol сообщит, когда nocat.farm на этом ПК перестанет выходить на связь - сбой, ПК выключен или без сети - и ещё раз, когда он вернётся. Если вы закрыли его сами или идёт обновление, это не считается. Отправляется только случайное число, созданное для этого ПК, без имён аккаунтов.",
-    "Couldn't reach nocat.lol - is this PC online?": "Не удалось связаться с nocat.lol - этот ПК в сети?",
-    "Alerts aren't switched on at nocat.lol yet - try again later.": "Оповещения на nocat.lol ещё не включены - попробуйте позже.",
-    "nocat.lol gave an unexpected answer - try again later.": "nocat.lol ответил неожиданно - попробуйте позже.",
-    "nocat.lol asked to slow down - try again in a minute.": "nocat.lol просит не спешить - попробуйте через минуту.",
-    "Sent - check Telegram.": "Отправлено - проверьте Telegram.",
-    "Not linked yet - press Connect first.": "Ещё не привязано - сначала нажмите «Подключить».",
-    "Telegram didn't take the message - press Connect to link it again.": "Telegram не принял сообщение - нажмите «Подключить», чтобы привязать снова.",
-    "Unlinked - no more alerts for this PC.": "Отвязано - оповещений для этого ПК больше не будет.",
-    "Turn on \"Tell me if nocat.farm stops\" below and save, then press Connect.": "Включите ниже «Сообщить, если nocat.farm остановится» и сохраните, затем нажмите «Подключить».",
-    "Last check-in: {0}": "Последняя связь: {0}",
-    "Not checked in yet.": "Ещё не выходил на связь.",
     "Open Telegram": "Открыть Telegram",
-    "Press Start in Telegram. The link works once, for 15 minutes - scan the code to open it on your phone.": "Нажмите «Запустить» в Telegram. Ссылка работает один раз, 15 минут - отсканируйте код, чтобы открыть её на телефоне.",
-    "Linked to Telegram.": "Привязано к Telegram.",
-    "Unlink": "Отвязать",
-    "Not linked to Telegram yet.": "Ещё не привязано к Telegram.",
     "couldn't read what it learned from your play: {0}": "не удалось прочитать, чему он научился по твоей игре: {0}",
     "couldn't save what it learned from your play: {0}": "не удалось сохранить, чему он научился по твоей игре: {0}",
     "couldn't forget what it learned from your play: {0}": "не удалось забыть, чему он научился по твоей игре: {0}",
@@ -3194,18 +3173,6 @@
     "RotateEveryHours": {
       "label": "Менять партию каждые",
       "tip": "Сколько часов работает каждая партия, прежде чем её сменит следующая. Используется только при включённой «Ротация списка»."
-    },
-    "StopAlert": {
-      "label": "Сообщить, если nocat.farm остановится",
-      "tip": "Получайте сообщение в Telegram, когда nocat.farm на этом ПК останавливается - сбой, ПК выключился или пропал интернет. Каждые 5 минут он выходит на связь с nocat.lol и отправляет только случайное число, созданное для этого ПК: без имён аккаунтов, больше ничего. Если вы закрыли его сами или идёт обновление, это не считается. Включите, нажмите «Подключить», затем «Запустить» в Telegram."
-    },
-    "StopAlertPcName": {
-      "label": "Имя этого ПК",
-      "tip": "Имя в сообщении Telegram, например «nocat.farm на my PC не выходит на связь с 14:05». Удобно, если nocat.farm работает на нескольких ПК."
-    },
-    "StopAlertMinutes": {
-      "label": "Сообщить через",
-      "tip": "Сколько минут без связи, прежде чем отправить сообщение. Он выходит на связь каждые 5 минут, и сообщение может прийти до 10 минут позже."
     },
     "LearnFromOwner": {
       "label": "Учиться у того, как я играю",

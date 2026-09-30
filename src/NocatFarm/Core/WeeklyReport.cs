@@ -132,11 +132,17 @@ public static class WeeklyReport {
 		double totNow = 0, totBefore = 0;
 		int totCards = 0, totListed = 0, totComments = 0;
 		decimal? totValue = null;
-		bool valueGap = false;
+		bool valueGap = false, anyBefore = false;
 
 		foreach (Bot b in fleet) {
 			(double banked, int cards, int comments) = History.Totals(b.Name, thisWeek, 7);
 			(double before, _, _) = History.Totals(b.Name, lastWeek, 7);
+
+			// No hours on record before this week at all: a dash, like an unknown value - not "0m", which reads as
+			// an account that did nothing.
+			bool known = History.HoursBefore(b.Name, thisWeek);
+			anyBefore |= known;
+			string was = known ? Fmt.Hm((int) before) : "—";
 			int sold = Listed(b.Name);
 			decimal? end = History.ClosingValue(b.Name, today.Date.AddDays(-1));
 			decimal? start = History.ClosingValue(b.Name, thisWeek.AddDays(-1));
@@ -156,9 +162,9 @@ public static class WeeklyReport {
 
 			lines.Add(r4r
 				? new Said("  {0} {1} banked (last week {2}) · {3} card(s) · {4} listed · value {5} · {6} comment(s)",
-					b.Name.PadRight(14), Fmt.Hm((int) banked).PadRight(8), Fmt.Hm((int) before), cards, sold, Money(change), comments)
+					b.Name.PadRight(14), Fmt.Hm((int) banked).PadRight(8), was, cards, sold, Money(change), comments)
 				: new Said("  {0} {1} banked (last week {2}) · {3} card(s) · {4} listed · value {5}",
-					b.Name.PadRight(14), Fmt.Hm((int) banked).PadRight(8), Fmt.Hm((int) before), cards, sold, Money(change)));
+					b.Name.PadRight(14), Fmt.Hm((int) banked).PadRight(8), was, cards, sold, Money(change)));
 		}
 
 		if (lines.Count == 0) {
@@ -167,12 +173,13 @@ public static class WeeklyReport {
 
 		// A fleet total that silently left out an account whose change isn't known yet would read as the whole story.
 		string fleetValue = Money(totValue) + (valueGap && (totValue != null) ? "*" : "");
+		string fleetWas = anyBefore ? Fmt.Hm((int) totBefore) : "—";
 
 		lines.Add(r4r
 			? new Said("  fleet: {0} banked (last week {1}) · {2} card(s) · {3} listed · value {4} · {5} comment(s)",
-				Fmt.Hm((int) totNow), Fmt.Hm((int) totBefore), totCards, totListed, fleetValue, totComments)
+				Fmt.Hm((int) totNow), fleetWas, totCards, totListed, fleetValue, totComments)
 			: new Said("  fleet: {0} banked (last week {1}) · {2} card(s) · {3} listed · value {4}",
-				Fmt.Hm((int) totNow), Fmt.Hm((int) totBefore), totCards, totListed, fleetValue));
+				Fmt.Hm((int) totNow), fleetWas, totCards, totListed, fleetValue));
 
 		return (lines, header);
 	}

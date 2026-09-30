@@ -119,30 +119,6 @@ are under Show advanced:
 - *Button 1* and *Button 2*: pick *Get nocat.farm*, an account's Steam page, *Your own link* (a box for the button's
   text and one for where it goes), or *none*. Discord doesn't show you your own buttons, but other people see them.
 
-## If nocat.farm stops
-
-Turn on **Tell me if nocat.farm stops** (*Global settings → If nocat.farm stops*, off by default) and you get a
-Telegram message when nocat.farm stops on that PC: it crashed, the PC turned off, or it lost its internet. You get
-one message, and one more when it's back. Closing it yourself or an update restart doesn't count.
-
-1. Turn it on and save.
-2. Press **Connect**. You get a Telegram link and a QR code (scan it to open the link on your phone). The link works
-   once, for 15 minutes.
-3. Press **Start** in Telegram. The dashboard then says *Linked to Telegram*.
-
-This uses nocat.lol's own bot, so you don't need your own Telegram bot for it. Every 5 minutes nocat.farm checks in
-with nocat.lol and sends only a random number made for this PC. No account names or anything else leaves your PC.
-
-| Setting | Default | What it does |
-|---|---|---|
-| *Tell me if nocat.farm stops* | off | Checks in every 5 minutes while on |
-| *Call this PC* | my PC | The name in the message: "nocat.farm on my PC hasn't checked in since about 14:05" |
-| *Alert after* (Show advanced) | 20 minutes | Minutes without a check-in before the message. It can come up to 10 minutes later |
-
-`alert` says whether it's on and linked, and when it last checked in. `alert on` turns it on and gives the Telegram
-link, `alert link` gives a fresh link, `alert test` sends a test message, `alert unlink` unlinks this PC and
-`alert off` turns it off. In Telegram, `/status` shows your linked PCs and `/stop` unlinks all of them.
-
 ## Daily summary
 
 *Daily summary in the log* (on) writes a summary at 09:30 (*Summary time · hour* and *· minute*). For each account

@@ -3794,6 +3794,19 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		robotCfg.IdleGames = [730, 440, 570];
 		Check("idler, rotating: a list that fits plays whole, no rotation", robotIdler.Plan(r0).SequenceEqual<uint>([730, 440, 570]) && (robotIdler.Rotating == null));
 
+		// Turning a setting on puts the new games on at the next 20-second look - even after 'rotation <account>'
+		// has worked out a plan (on his kylro that plan counted as done and the old 8 stayed for up to 7 minutes).
+		var asserted = typeof(NocatFarm.Modules.Idler).GetField("_assertedFor", BindingFlags.NonPublic | BindingFlags.Instance)!;
+		robotCfg.RotateIdleGames = false;
+		asserted.SetValue(robotIdler, (false, false, false));
+		Check("idler: nothing changed since the last re-assert -> nothing to do early", !robotIdler.OutOfDate);
+		robotCfg.RotateIdleGames = true;
+		Check("idler: rotation switched on -> the new games go on early", robotIdler.OutOfDate);
+		robotIdler.Plan(r0);
+		Check("idler: ...and still after 'rotation <account>' worked out a plan", robotIdler.OutOfDate);
+		asserted.SetValue(robotIdler, null);
+		Check("idler: before its first re-assert it doesn't jump the logon wait", !robotIdler.OutOfDate);
+
 		// Persistence through the idler: a new idler on the same account picks up the same batch.
 		robotCfg.IdleGames = forty;
 		var r1 = new NocatFarm.Modules.Idler(robot);
@@ -3808,6 +3821,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		var libIdler = new NocatFarm.Modules.Idler(libBot);
 		libBot.AddModule(libIdler);
 		Check("whole library: until the library is read, just the idle list", libIdler.Plan(r0).SequenceEqual<uint>([9001, 9002]));
+		typeof(NocatFarm.Modules.Idler).GetField("_assertedFor", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(libIdler, (true, false, false));
 		NocatFarm.Core.Library library = libBot.Library;
 		Type lt = typeof(NocatFarm.Core.Library);
 		List<NocatFarm.Core.Library.Entry> owned = [.. Enumerable.Range(1, 60).Select(static i => new NocatFarm.Core.Library.Entry((uint) i, $"g{i}", 1000 - i, DateTime.MinValue, 0))];
@@ -3817,6 +3831,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		lt.GetField("_byApp", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(library, owned.ToDictionary(static g => g.AppId));
 		lt.GetProperty("Ready")!.SetValue(library, true);
 		typeof(NocatFarm.Core.RefundGuard).GetField("_held", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(libBot.Refunds, new HashSet<uint> { 7 });
+		Check("whole library: the library arriving puts the whole list on early", libIdler.OutOfDate);
 		List<uint> cut = libIdler.Plan(r0);
 		Check("whole library, no rotation: the listed games first, then the least played, cut to 32",
 			(cut.Count == 32) && cut.Take(2).SequenceEqual<uint>([9001, 9002]) && (cut[2] == 60) && (cut[3] == 59) && (libIdler.Rotating == null), string.Join(",", cut.Take(5)));
@@ -3912,181 +3927,6 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		typeof(NocatFarm.Core.Bot).GetProperty("Playing")!.SetValue(b, "nocat.lol (+31)");
 
 		return idler.Status;
-	}
-}
-
-// ── "Tell me if nocat.farm stops": settings, what a ping carries, backoff, the goodbye ─────────────────────────────
-{
-	const BindingFlags SA = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
-	Type sa = typeof(NocatFarm.Core.StopAlert);
-	object? SaCall(string m, params object?[] a) => sa.GetMethod(m, SA)!.Invoke(null, a);
-	object? SaGet(string p) => sa.GetProperty(p, SA)!.GetValue(null);
-	void SaSet(string p, object? v) => sa.GetProperty(p, SA)!.SetValue(null, v);
-	async Task<(bool Ok, int? Next, int? RetryAfter)> Ping(bool bye) => await (Task<(bool, int?, int?)>) SaCall("PingOnceAsync", bye, CancellationToken.None)!;
-
-	// settings
-	var gd = new NocatFarm.Config.GlobalConfig();
-	var defOn = NocatFarm.Config.Settings.FindGlobal("StopAlert");
-	var defName = NocatFarm.Config.Settings.FindGlobal("StopAlertPcName");
-	var defMin = NocatFarm.Config.Settings.FindGlobal("StopAlertMinutes");
-	Check("stop alert: off by default, called \"my PC\", 20 minutes", !gd.StopAlert && gd.StopAlertPcName == "my PC" && gd.StopAlertMinutes == 20);
-	Check("stop alert: three settings in their own section, the minutes behind Show advanced (10-1440)",
-		defOn != null && defName != null && defMin != null && defOn.Section == "If nocat.farm stops" && defName.Section == defOn.Section && defMin.Section == defOn.Section
-		&& !defOn.Advanced && !defName.Advanced && defMin.Advanced && defMin.Min == 10 && defMin.Max == 1440 && defOn.Kind == NocatFarm.Config.SettingKind.Bool);
-	Check("stop alert: the tooltip says what is sent", defOn!.Tooltip.Contains("random number", StringComparison.Ordinal) && defOn.Tooltip.Contains("no account names", StringComparison.Ordinal));
-	Check("stop alert: 'alert' is a command, with help, and Steam chat can't use it",
-		NocatFarm.Commands.All.Any(c => c.Name == "alert" && c.Help.Length > 40) && (bool) typeof(NocatFarm.Commands).GetMethod("SteamChatRefuses", SA)!.Invoke(null, ["alert"])!);
-
-	// the name and minutes it sends are tidied
-	Check("stop alert: an empty name is \"my PC\", a long one is cut to 40, minutes kept to 10-1440",
-		(string) SaCall("PcName", new NocatFarm.Config.GlobalConfig { StopAlertPcName = "  " })! == "my PC"
-		&& ((string) SaCall("PcName", new NocatFarm.Config.GlobalConfig { StopAlertPcName = new string('x', 90) })!).Length == 40
-		&& (int) SaCall("After", new NocatFarm.Config.GlobalConfig { StopAlertMinutes = 1 })! == 10
-		&& (int) SaCall("After", new NocatFarm.Config.GlobalConfig { StopAlertMinutes = 99999 })! == 1440);
-
-	// backoff
-	TimeSpan Next(bool ok, int failures, int? next, int? retry, bool waiting, bool linked = true) => (TimeSpan) SaCall("NextDelay", ok, failures, next, retry, waiting, linked)!;
-	Check("stop alert: every 5 minutes by default, the site's own interval kept to 61 s-15 min",
-		Next(true, 0, null, null, false) == TimeSpan.FromMinutes(5) && Next(true, 0, 120, null, false) == TimeSpan.FromSeconds(120)
-		&& Next(true, 0, 5, null, false) == TimeSpan.FromSeconds(61) && Next(true, 0, 99999, null, false) == TimeSpan.FromMinutes(15));
-	Check("stop alert: failures back off 1, 2, 4, 8, then 15 minutes",
-		Next(false, 1, null, null, false) == TimeSpan.FromMinutes(1) && Next(false, 2, null, null, false) == TimeSpan.FromMinutes(2)
-		&& Next(false, 3, null, null, false) == TimeSpan.FromMinutes(4) && Next(false, 4, null, null, false) == TimeSpan.FromMinutes(8)
-		&& Next(false, 5, null, null, false) == TimeSpan.FromMinutes(15) && Next(false, 40, null, null, false) == TimeSpan.FromMinutes(15));
-	Check("stop alert: told to slow down, it waits what it's told (never under 61 s); waiting for Start, every 61 s",
-		Next(false, 0, null, 600, false) == TimeSpan.FromMinutes(10) && Next(false, 0, null, 5, false) == TimeSpan.FromSeconds(61)
-		&& Next(true, 0, 300, null, true) == TimeSpan.FromSeconds(61));
-	Check("stop alert: on but not linked (nobody to tell) -> only every 30 minutes, until Connect is pressed",
-		Next(true, 0, 300, null, false, false) == TimeSpan.FromMinutes(30) && Next(true, 0, 300, null, true, false) == TimeSpan.FromSeconds(61));
-
-	string realRoot = NocatFarm.Config.ConfigStore.Root;
-	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-stopalert-" + Guid.NewGuid().ToString("N"));
-	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
-	NocatFarm.Config.GlobalConfig realGlobal = NocatFarm.Config.Live.Global;
-	HttpClient realHttp = (HttpClient) SaGet("Http")!;
-	string realSite = (string) SaGet("Site")!;
-
-	try {
-		NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
-		string id = (string) SaGet("InstallId")!;
-		string idFile = Path.Combine(tmpRoot, "config", "state", "stop-alert-id.txt");
-		Check("stop alert: the install id is 32 random hex characters, saved and reused", (bool) SaCall("IsId", id)! && File.Exists(idFile)
-			&& File.ReadAllText(idFile).Trim() == id && (string) SaGet("InstallId")! == id);
-
-		// A config full of things that must never leave the PC.
-		NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig {
-			StopAlert = true, StopAlertPcName = "gaming rig", StopAlertMinutes = 30,
-			TelegramBotToken = "123456789:secret-telegram-token", WebPassword = "hunter2-dash", DiscordOwnerId = "112233445566778899",
-			TelegramChatId = "987654321", GroupsToJoin = "steamcommunity.com/groups/private-group", Rep4RepApiToken = "r4r-secret"
-		};
-		string[] personal = ["secret-telegram-token", "hunter2-dash", "112233445566778899", "987654321", "private-group", "r4r-secret", Environment.UserName, Environment.MachineName];
-
-		// what a ping carries, straight from the builder
-		var plain = System.Text.Json.Nodes.JsonNode.Parse((string) SaCall("PingBody", id, false, null)!)!.AsObject();
-		var byeBody = System.Text.Json.Nodes.JsonNode.Parse((string) SaCall("PingBody", id, true, null)!)!.AsObject();
-		var withCfg = System.Text.Json.Nodes.JsonNode.Parse((string) SaCall("PingBody", id, false, NocatFarm.Config.Live.Global)!)!.AsObject();
-		Check("stop alert: a normal ping is the install id and nothing else", plain.Count == 1 && (string?) plain["id"] == id);
-		Check("stop alert: the goodbye adds only bye:true", byeBody.Count == 2 && (bool?) byeBody["bye"] == true);
-		Check("stop alert: after a settings change it adds only the PC name, time zone and minutes",
-			withCfg.Count == 2 && withCfg["cfg"]!.AsObject().Select(kv => kv.Key).OrderBy(k => k).SequenceEqual(["after", "name", "tz"])
-			&& (string?) withCfg["cfg"]!["name"] == "gaming rig" && (int?) withCfg["cfg"]!["after"] == 30);
-
-		// the real thing, against a fake site
-		List<(string Url, string Body)> seen = [];
-		Func<HttpRequestMessage, string, HttpResponseMessage> answer = (_, _) => new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent("{\"ok\":true,\"linked\":true,\"next\":300}") };
-		SaSet("Http", new HttpClient(new FakeHttp((r, b) => { seen.Add((r.RequestUri!.ToString(), b)); return answer(r, b); })));
-		SaSet("Site", "https://alive.invalid/api/nocatfarm/alive/");
-		SaCall("ResetForTests");
-
-		var first = await Ping(false);
-		Check("stop alert: a check-in the site answers linked -> linked, checked in, no problem",
-			first.Ok && first.Next == 300 && (bool?) SaGet("Linked") == true && SaGet("LastCheckIn") != null && SaGet("Problem") == null && (int) SaGet("Failures")! == 0);
-		Check("stop alert: it goes to /ping on nocat.lol's alive API", seen[0].Url == "https://alive.invalid/api/nocatfarm/alive/ping");
-		await Ping(false);
-		var secondBody = System.Text.Json.Nodes.JsonNode.Parse(seen[1].Body)!.AsObject();
-		Check("stop alert: the first check-in carries the name once, after that just the id", seen[0].Body.Contains("\"cfg\"", StringComparison.Ordinal) && secondBody.Count == 1 && (string?) secondBody["id"] == id);
-		Check("stop alert: nothing personal in any request - no tokens, passwords, chat or owner ids, groups, user or PC name",
-			seen.All(x => personal.All(p => !x.Body.Contains(p, StringComparison.OrdinalIgnoreCase))));
-
-		// failures: counted, a code for the page, and the loop is never ended by one
-		answer = (_, _) => new HttpResponseMessage(System.Net.HttpStatusCode.InternalServerError) { Content = new StringContent("oops") };
-		var bad = await Ping(false);
-		Check("stop alert: a 500 is a failure the page can show", !bad.Ok && (int) SaGet("Failures")! == 1 && (string?) SaGet("Problem") == "site");
-		answer = (_, _) => throw new HttpRequestException("no route to host");
-		var off = await Ping(false);
-		Check("stop alert: no network -> 'unreachable', counted, not thrown", !off.Ok && (int) SaGet("Failures")! == 2 && (string?) SaGet("Problem") == "unreachable");
-		answer = (_, _) => throw new TaskCanceledException("HttpClient timeout");
-		var slow = await Ping(false);
-		Check("stop alert: a timeout is a failure too, not a cancel that ends the loop", !slow.Ok && (int) SaGet("Failures")! == 3);
-		answer = (_, _) => {
-			HttpResponseMessage r = new((System.Net.HttpStatusCode) 429) { Content = new StringContent("{\"ok\":false}") };
-			r.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(90));
-			return r;
-		};
-		var busy = await Ping(false);
-		Check("stop alert: 'slow down' isn't counted as a failure and its wait is kept", !busy.Ok && busy.RetryAfter == 90 && (int) SaGet("Failures")! == 3);
-		answer = (_, _) => new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent("{\"ok\":true,\"linked\":true,\"next\":300}") };
-		await Ping(false);
-		Check("stop alert: the next good check-in clears the failures", (int) SaGet("Failures")! == 0 && SaGet("Problem") == null);
-
-		// the goodbye
-		seen.Clear();
-		await NocatFarm.Core.StopAlert.ByeAsync(quitting: false);
-		Check("stop alert: a graceful stop sends one goodbye ping (id + bye) and nothing else",
-			seen.Count == 1 && seen[0].Url.EndsWith("/ping", StringComparison.Ordinal) && System.Text.Json.Nodes.JsonNode.Parse(seen[0].Body)!.AsObject().Count == 2
-			&& seen[0].Body.Contains("\"bye\":true", StringComparison.Ordinal));
-		seen.Clear();
-		await NocatFarm.Core.StopAlert.ByeAsync(quitting: false);
-		Check("stop alert: said once - a second goodbye sends nothing", seen.Count == 0);
-		SaCall("ResetForTests");
-		await NocatFarm.Core.StopAlert.ByeAsync(quitting: false);
-		Check("stop alert: never linked this run -> no goodbye to send", seen.Count == 0);
-		await Ping(false);
-		NocatFarm.Config.Live.Global.StopAlert = false;
-		seen.Clear();
-		await NocatFarm.Core.StopAlert.ByeAsync(quitting: false);
-		Check("stop alert: switched off -> nothing sent on quit", seen.Count == 0);
-		NocatFarm.Config.Live.Global.StopAlert = true;
-		await Ping(false);
-		answer = (_, _) => throw new TaskCanceledException("hangs");
-		System.Diagnostics.Stopwatch took = System.Diagnostics.Stopwatch.StartNew();
-		await NocatFarm.Core.StopAlert.ByeAsync(quitting: false);
-		Check("stop alert: a goodbye that fails never holds up the quit", took.Elapsed < TimeSpan.FromSeconds(6));
-
-		// Connect, test, unlink
-		SaCall("ResetForTests");
-		answer = (_, _) => new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent("{\"ok\":true,\"code\":\"abc\",\"link\":\"https://t.me/nocatfarm_alert_bot?start=abc\",\"minutes\":15}") };
-		seen.Clear();
-		(string? link, string? err) = await NocatFarm.Core.StopAlert.LinkAsync();
-		var linkBody = System.Text.Json.Nodes.JsonNode.Parse(seen[0].Body)!.AsObject();
-		Check("stop alert: Connect asks /link with the id, name, time zone and minutes only, and shows the t.me link",
-			link == "https://t.me/nocatfarm_alert_bot?start=abc" && err == null && NocatFarm.Core.StopAlert.LinkUrl == link && seen[0].Url.EndsWith("/link", StringComparison.Ordinal)
-			&& linkBody.Select(kv => kv.Key).OrderBy(k => k).SequenceEqual(["after", "id", "name", "tz"]));
-		answer = (_, _) => new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent("{\"ok\":true,\"link\":\"https://evil.example/x\"}") };
-		Check("stop alert: a link that isn't t.me is refused", (await NocatFarm.Core.StopAlert.LinkAsync()).Link == null);
-		answer = (_, _) => new HttpResponseMessage(System.Net.HttpStatusCode.ServiceUnavailable) { Content = new StringContent("{\"ok\":false}") };
-		Check("stop alert: the site without its bot -> 'notsetup'", (await NocatFarm.Core.StopAlert.LinkAsync()).Error == "notsetup");
-		answer = (_, _) => new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent("{\"ok\":true,\"linked\":true,\"sent\":true}") };
-		Check("stop alert: test -> 'sent'", await NocatFarm.Core.StopAlert.TestAsync() == "sent" && seen[^1].Url.EndsWith("/test", StringComparison.Ordinal));
-		answer = (_, _) => new HttpResponseMessage(System.Net.HttpStatusCode.NotFound) { Content = new StringContent("{\"ok\":false,\"linked\":false}") };
-		Check("stop alert: test while unlinked -> 'notlinked'", await NocatFarm.Core.StopAlert.TestAsync() == "notlinked");
-		answer = (_, _) => new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent("{\"ok\":true,\"linked\":false}") };
-		string unlinked = await NocatFarm.Core.StopAlert.UnlinkAsync();
-		Check("stop alert: unlink -> 'done', and it shows as not linked", unlinked == "done" && (bool?) SaGet("Linked") == false && seen[^1].Url.EndsWith("/unlink", StringComparison.Ordinal));
-		Check("stop alert: every code has plain words for the console", new[] { "sent", "done", "notlinked", "telegram", "busy", "notsetup", "unreachable", "site" }
-			.All(c => (string) SaCall("Explain", c)! != c));
-	} finally {
-		SaSet("Http", realHttp);
-		SaSet("Site", realSite);
-		SaCall("ResetForTests");
-		NocatFarm.Config.Live.Global = realGlobal;
-		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
-
-		try {
-			Directory.Delete(tmpRoot, true);
-		} catch (IOException) {
-			// temp - the OS clears it
-		}
 	}
 }
 
@@ -4970,6 +4810,13 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("weekly report: a fleet line last", fleet.StartsWith("  fleet: 14h00m banked (last week 7h00m)", StringComparison.Ordinal), fleet);
 		Check("weekly report: no rep4rep, no comments column", !row.Contains("comment", StringComparison.Ordinal));
 
+		// A week earlier, the history starts inside "this week": nothing before it is a dash, not "0m" (his first
+		// report read "last week 0m" for accounts that had run all week - hours were only recorded from 1.5.5).
+		built = wr.GetMethod("Build", S)!.Invoke(null, [new[] { bot }, false, today.AddDays(-7)])!;
+		lines = (List<NocatFarm.Core.Said>) built.GetType().GetField("Item1")!.GetValue(built)!;
+		Check("weekly report: no hours on record before the week -> last week is a dash",
+			lines[0].ToEnglish().Contains("7h00m    banked (last week —)", StringComparison.Ordinal) && lines[^1].ToEnglish().Contains("(last week —)", StringComparison.Ordinal), lines[0].ToEnglish());
+
 		NocatFarm.Stats.Record(NocatFarm.Stats.KindListed, "wk-a");
 		built = wr.GetMethod("Build", S)!.Invoke(null, [new[] { bot }, true, today.AddDays(1)])!;
 		lines = (List<NocatFarm.Core.Said>) built.GetType().GetField("Item1")!.GetValue(built)!;
@@ -5185,16 +5032,18 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("help libr: finds settings by a word of their label too", label.Contains("Idle my whole library"), label);
 }
 
+// ── a settings file from 1.5.9 still loads: the removed "PC is off" alert left 3 lines behind ──────────────────────
+{
+	var json = (System.Text.Json.JsonSerializerOptions) typeof(NocatFarm.Config.ConfigStore).GetField("Json", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+	var old = System.Text.Json.JsonSerializer.Deserialize<NocatFarm.Config.GlobalConfig>(
+		"{\"AutoUpdate\": 1, \"StopAlert\": false, \"StopAlertPcName\": \"my PC\", \"StopAlertMinutes\": 20, \"WeeklyReport\": true}", json)!;
+	Check("1.5.9 settings file: the old alert lines are ignored and everything else is read", old.AutoUpdate == 1 && old.WeeklyReport);
+	Check("1.5.9 settings file: they're gone on the next save", !System.Text.Json.JsonSerializer.Serialize(old, json).Contains("StopAlert", StringComparison.Ordinal));
+	Check("the alert is gone: no 'alert' command and no StopAlert setting",
+		!NocatFarm.Commands.All.Any(static c => c.Matches("alert")) && NocatFarm.Config.Settings.FindGlobal("StopAlert") == null);
+}
+
 // SETTINGSCOUNT
 Console.WriteLine($"settings: {NocatFarm.Config.Settings.Global.Count} global ({NocatFarm.Config.Settings.Global.Count(d => !d.Advanced)} basic), {NocatFarm.Config.Settings.Bot.Count} per account ({NocatFarm.Config.Settings.Bot.Count(d => !d.Advanced)} basic)");
 Console.WriteLine(fails == 0 ? "all passed" : $"{fails} failed");
 return fails;
-
-/// <summary>A pretend nocat.lol for the stop alert: every request goes to the test's own answer, nothing to the network.</summary>
-sealed class FakeHttp(Func<HttpRequestMessage, string, HttpResponseMessage> answer) : HttpMessageHandler {
-	protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
-		string body = request.Content == null ? "" : await request.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-
-		return answer(request, body);
-	}
-}

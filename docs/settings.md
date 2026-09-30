@@ -33,7 +33,6 @@ You can edit them by hand and type `reload`. Back up the `config` folder and you
 | Running in the background (Windows) | *Tray icon*, *Start with Windows* | *Start hidden*, *Minimise to the tray*, *Keep mini mode on top*, *Keep this PC awake*, *Close when everything's done* |
 | All accounts | *Groups every account joins*, *Restart a stuck account* (on - see [Stuck accounts](phone-and-notifications.md#stuck-accounts)) | *Never touch these (all accounts)*, *Stuck after* (3 hours) |
 | Notifications | Discord webhook, Telegram bot and Discord bot, and a test button | what gets sent - see [Discord and Telegram](phone-and-notifications.md#discord-and-telegram) |
-| If nocat.farm stops | *Tell me if nocat.farm stops* (off), *Call this PC* - see [If nocat.farm stops](phone-and-notifications.md#if-nocatfarm-stops) | *Alert after* (20 minutes) |
 | Discord profile | the *Playing nocat.farm* card: its switch, what it shows, a preview | which accounts, the featured account, the two buttons |
 | Pop-ups (Windows) | *Show pop-ups* | which kinds: earnings, comments, problems, trade offers |
 | Inventory prices | *Inventory prices in* (the currency) | price lookup speed, how long a price is trusted |
