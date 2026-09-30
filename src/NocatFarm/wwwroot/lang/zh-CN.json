@@ -2084,28 +2084,7 @@
     "all the games it owns": "它拥有的所有游戏",
     "Idling {0} of {1} at a time - next batch at {2}.": "每次挂 {1} 个中的 {0} 个 - 下一批在 {2}。",
     "More than fit at once? It idles a batch at a time and moves on every {0}h.": "一次放不下？它每次挂一批，每 {0} 小时换下一批。",
-    "If nocat.farm stops": "nocat.farm 停止时",
-    "the stop alert": "停止提醒",
-    "stop alert: Telegram is no longer linked - press Connect to link it again": "停止提醒：Telegram 已不再关联 - 点“连接”重新关联",
-    "stop alert: linked - Telegram will tell you if nocat.farm stops": "停止提醒：已关联 - nocat.farm 停止时 Telegram 会通知你",
-    "Get a Telegram message if nocat.farm stops": "nocat.farm 停止时收到 Telegram 消息",
-    "nocat.lol's Telegram bot tells you when nocat.farm stops checking in on this PC - a crash, or the PC off or offline - and again when it's back. Closing it yourself or an update doesn't count. It sends only a random number made for this PC, no account names.": "当这台电脑上的 nocat.farm 不再报到（崩溃、电脑关机或断网）时，nocat.lol 的 Telegram 机器人会通知你，恢复时也会再通知一次。你自己关闭或更新不算。只发送为这台电脑生成的一个随机数，不含任何账号名。",
-    "Couldn't reach nocat.lol - is this PC online?": "无法连接 nocat.lol - 这台电脑联网了吗？",
-    "Alerts aren't switched on at nocat.lol yet - try again later.": "nocat.lol 上还没有开启提醒 - 请稍后再试。",
-    "nocat.lol gave an unexpected answer - try again later.": "nocat.lol 返回了意外的结果 - 请稍后再试。",
-    "nocat.lol asked to slow down - try again in a minute.": "nocat.lol 要求放慢速度 - 请一分钟后再试。",
-    "Sent - check Telegram.": "已发送 - 请查看 Telegram。",
-    "Not linked yet - press Connect first.": "尚未关联 - 请先点“连接”。",
-    "Telegram didn't take the message - press Connect to link it again.": "Telegram 没有接收这条消息 - 点“连接”重新关联。",
-    "Unlinked - no more alerts for this PC.": "已取消关联 - 这台电脑不会再有提醒。",
-    "Turn on \"Tell me if nocat.farm stops\" below and save, then press Connect.": "在下方打开“nocat.farm 停止时告诉我”并保存，然后点“连接”。",
-    "Last check-in: {0}": "最后报到：{0}",
-    "Not checked in yet.": "还没有报到。",
     "Open Telegram": "打开 Telegram",
-    "Press Start in Telegram. The link works once, for 15 minutes - scan the code to open it on your phone.": "在 Telegram 里点“启动”。链接只能用一次，15 分钟内有效 - 扫码可在手机上打开。",
-    "Linked to Telegram.": "已关联 Telegram。",
-    "Unlink": "取消关联",
-    "Not linked to Telegram yet.": "尚未关联 Telegram。",
     "couldn't read what it learned from your play: {0}": "无法读取从你的玩法中学到的内容：{0}",
     "couldn't save what it learned from your play: {0}": "无法保存从你的玩法中学到的内容：{0}",
     "couldn't forget what it learned from your play: {0}": "无法清除从你的玩法中学到的内容：{0}",
@@ -3194,18 +3173,6 @@
     "RotateEveryHours": {
       "label": "每隔多久轮换",
       "tip": "每一批挂多少小时后换下一批。只在打开“轮换挂机列表”时使用。"
-    },
-    "StopAlert": {
-      "label": "nocat.farm 停止时告诉我",
-      "tip": "当这台电脑上的 nocat.farm 停止时（崩溃、电脑关机或断网）收到一条 Telegram 消息。它每 5 分钟向 nocat.lol 报到一次，只发送为这台电脑生成的一个随机数：没有账号名，也没有别的。你自己关闭或更新不算。打开后点“连接”，再在 Telegram 里点“启动”。"
-    },
-    "StopAlertPcName": {
-      "label": "这台电脑的名字",
-      "tip": "Telegram 消息里用的名字，比如“my PC 上的 nocat.farm 自 14:05 起没有报到”。在多台电脑上用 nocat.farm 时很方便。"
-    },
-    "StopAlertMinutes": {
-      "label": "提醒时间",
-      "tip": "多少分钟没有报到后发送消息。它每 5 分钟报到一次，消息最多可能比这个时间晚 10 分钟。"
     },
     "LearnFromOwner": {
       "label": "学习我的玩法",

@@ -384,9 +384,6 @@ NocatFarm.Core.UpdateCheck.Start(manager);
 // "Open from anywhere": the router forwards the dashboard's port, while the switch is on.
 NocatFarm.Core.RemoteAccess.Start();
 
-// "Tell me if nocat.farm stops": checks in with nocat.lol every few minutes, only while that switch is on.
-NocatFarm.Core.StopAlert.Start();
-
 
 // Only where there's a desktop: a server or a container has no browser, and the attempt is just a baffling error.
 // And not when it starts hidden (with Windows) or has just restarted itself into an update - a browser tab popping
@@ -452,10 +449,6 @@ Log.Info("shutting down...");
 
 // Closed straight after an update: that's somebody closing it, not the new version failing to start.
 NocatFarm.Core.SelfUpdate.ConfirmStarted();
-
-// A goodbye to nocat.lol first, while the network is surely still up: quitting on purpose (or restarting into an
-// update) is not the "nocat.farm stopped" the Telegram alert is for. A few seconds at most.
-await NocatFarm.Core.StopAlert.ByeAsync().ConfigureAwait(false);
 
 // Nothing left forwarded to a PC where nothing is listening.
 await NocatFarm.Core.RemoteAccess.StopAsync().ConfigureAwait(false);

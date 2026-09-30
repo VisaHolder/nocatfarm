@@ -4626,14 +4626,6 @@ function sectionIntro(section, values) {
     </div>`;
   }
 
-  if (section === 'If nocat.farm stops' && settingsTarget === GLOBAL) {
-    return `<div class="explain">
-      <b>${esc(t('Get a Telegram message if nocat.farm stops'))}</b>
-      <p style="margin:6px 0 10px">${esc(t("nocat.lol's Telegram bot tells you when nocat.farm stops checking in on this PC - a crash, or the PC off or offline - and again when it's back. Closing it yourself or an update doesn't count. It sends only a random number made for this PC, no account names."))}</p>
-      ${stopAlertBox()}
-    </div>`;
-  }
-
   if (section === 'Discord profile' && settingsTarget === GLOBAL) {
     return discordCardIntro(val);
   }
@@ -5670,83 +5662,6 @@ function discordPreview(val) {
 // a page reload.
 // A class, not an id: the settings page keeps its copy in the page while the walkthrough draws its own, and an id only
 // ever found the first - the hidden one.
-// "Tell me if nocat.farm stops": Connect (a Telegram link and a QR code for the phone), then linked, the last check-in,
-// a test message and unlink. Kept in a fixed spot that refresh() redraws, so "linked" appears by itself once Start is
-// pressed in Telegram.
-function stopAlertBox() {
-  const html = stopAlertInner();
-  return `<div class="stop-alert" data-html="${esc(html)}">${html}</div>`;
-}
-
-function syncStopAlert() {
-  const html = stopAlertInner();
-  document.querySelectorAll('.stop-alert').forEach((el) => {
-    if (el.dataset.html === html) return;
-    el.dataset.html = html;
-    el.innerHTML = html;
-  });
-}
-
-function stopAlertText(code) {
-  return ({
-    unreachable: t("Couldn't reach nocat.lol - is this PC online?"),
-    notsetup: t("Alerts aren't switched on at nocat.lol yet - try again later."),
-    site: t('nocat.lol gave an unexpected answer - try again later.'),
-    busy: t('nocat.lol asked to slow down - try again in a minute.'),
-    sent: t('Sent - check Telegram.'),
-    notlinked: t('Not linked yet - press Connect first.'),
-    telegram: t("Telegram didn't take the message - press Connect to link it again."),
-    done: t('Unlinked - no more alerts for this PC.'),
-  })[code] || t("That didn't work");
-}
-
-function stopAlertInner() {
-  if (!state) return '';
-  if (!state.StopAlertOn) {
-    return `<div class="tgconnect"><span class="muted small">${esc(t('Turn on "Tell me if nocat.farm stops" below and save, then press Connect.'))}</span></div>`;
-  }
-  const at = state.StopAlertLastCheckIn ? new Date(state.StopAlertLastCheckIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null;
-  const seen = at ? tf('Last check-in: {0}', at) : t('Not checked in yet.');
-  const problem = state.StopAlertProblem ? `<span class="muted small">${esc(stopAlertText(state.StopAlertProblem))}</span>` : '';
-  if (state.StopAlertLink) {
-    return `<div class="tgconnect"><div class="phoneqr" style="width:170px;margin:0"><img src="/api/stopalert/qr.svg?v=${encodeURIComponent(state.StopAlertLink.slice(-8))}" alt="QR code" width="150" height="150"></div>
-      <a class="btn" href="${esc(state.StopAlertLink)}" target="_blank" rel="noopener">${esc(t('Open Telegram'))}</a>
-      <span class="muted small">${esc(t('Press Start in Telegram. The link works once, for 15 minutes - scan the code to open it on your phone.'))}</span></div>`;
-  }
-  if (state.StopAlertLinked) {
-    return `<div class="tgconnect"><span class="muted small">${esc(t('Linked to Telegram.'))} ${esc(seen)}</span>
-      <button class="ghost" onclick="stopAlertTest(this)">${esc(t('Send a test message'))}</button>
-      <button class="ghost" onclick="stopAlertUnlink(this)">${esc(t('Unlink'))}</button>${problem}</div>`;
-  }
-  return `<div class="tgconnect"><button class="ghost" onclick="stopAlertConnect(this)">${esc(t('Connect'))}</button>
-    <span class="muted small">${esc(state.StopAlertLinked === false ? t('Not linked to Telegram yet.') : seen)}</span>${problem}</div>`;
-}
-
-async function stopAlertConnect(btn) {
-  btn.disabled = true;
-  const r = await post('/api/stopalert/connect', {}).catch(() => null);
-  btn.disabled = false;
-  if (!r || !r.Ok) { toast(stopAlertText(r && r.Error), true); return; }
-  if (state) state.StopAlertLink = r.Link;
-  syncStopAlert();
-  refresh();
-}
-
-async function stopAlertTest(btn) {
-  btn.disabled = true;
-  const r = await post('/api/stopalert/test', {}).catch(() => null);
-  btn.disabled = false;
-  toast(stopAlertText(r && r.Code), !(r && r.Ok));
-}
-
-async function stopAlertUnlink(btn) {
-  btn.disabled = true;
-  const r = await post('/api/stopalert/unlink', {}).catch(() => null);
-  btn.disabled = false;
-  toast(stopAlertText(r && r.Code), !(r && r.Ok));
-  refresh();
-}
-
 function telegramConnect() {
   const html = telegramConnectInner();
   return `<div class="tg-connect" data-html="${esc(html)}">${html}</div>`;
@@ -6048,7 +5963,6 @@ async function refresh() {
     syncWelcome();
     syncTelegramConnect();
     syncDiscordConnect();
-    syncStopAlert();
     if (tutorialSignin) renderSignin();
     if (view === 'phone') loadPhone();
 

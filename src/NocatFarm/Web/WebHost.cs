@@ -925,41 +925,6 @@ public sealed class WebHost : IAsyncDisposable {
 			Minutes = Notifier.DiscordCodeMinutes
 		})));
 
-		// "Tell me if nocat.farm stops": Connect gets a Telegram link from nocat.lol (shown with a QR code for the phone),
-		// Test asks the site's bot for a test message, Unlink unlinks this PC. Each answers with a code the page translates.
-		app.MapPost("/api/stopalert/connect", async (HttpContext ctx) => {
-			if (!Authorised(ctx)) {
-				return Unauthorised();
-			}
-
-			(string? link, string? error) = await StopAlert.LinkAsync(ctx.RequestAborted).ConfigureAwait(false);
-
-			return Results.Json(new { Ok = link != null, Link = link, Error = error });
-		});
-
-		app.MapGet("/api/stopalert/qr.svg", (HttpContext ctx) => Guard(ctx, () =>
-			StopAlert.LinkUrl is { } link ? Results.Text(Core.QrPicture.Svg(link), "image/svg+xml") : Results.NotFound()));
-
-		app.MapPost("/api/stopalert/test", async (HttpContext ctx) => {
-			if (!Authorised(ctx)) {
-				return Unauthorised();
-			}
-
-			string code = await StopAlert.TestAsync(ctx.RequestAborted).ConfigureAwait(false);
-
-			return Results.Json(new { Ok = code == "sent", Code = code });
-		});
-
-		app.MapPost("/api/stopalert/unlink", async (HttpContext ctx) => {
-			if (!Authorised(ctx)) {
-				return Unauthorised();
-			}
-
-			string code = await StopAlert.UnlinkAsync(ctx.RequestAborted).ConfigureAwait(false);
-
-			return Results.Json(new { Ok = code == "done", Code = code });
-		});
-
 		app.MapPost("/api/prompt", async (HttpContext ctx) => {
 			if (!Authorised(ctx)) {
 				return Unauthorised();
@@ -2113,13 +2078,6 @@ public sealed class WebHost : IAsyncDisposable {
 			UpdateFailed = SelfUpdate.LastFailure,
 			TelegramConnectLink = Notifier.TelegramConnectLink,
 			TelegramConnected = Notifier.TelegramConnected,
-			// "Tell me if nocat.farm stops": the switch, whether a Telegram chat is linked, the last check-in, and a problem
-			// code the page translates (unreachable, notsetup, site, busy).
-			StopAlertOn = _mgr.Global.StopAlert,
-			StopAlertLinked = StopAlert.Linked,
-			StopAlertLastCheckIn = StopAlert.LastCheckIn,
-			StopAlertProblem = StopAlert.Problem,
-			StopAlertLink = StopAlert.LinkUrl,
 			DiscordBotSet = Notifier.HasDiscordBot,
 			DiscordBotOn = _mgr.Global.DiscordCommands,
 			DiscordBotOnline = Notifier.DiscordBotOnline,

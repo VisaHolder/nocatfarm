@@ -2084,28 +2084,7 @@
     "all the games it owns": "持っているすべてのゲーム",
     "Idling {0} of {1} at a time - next batch at {2}.": "{1}本中{0}本ずつ稼働中 - 次のグループは{2}。",
     "More than fit at once? It idles a batch at a time and moves on every {0}h.": "一度に入りきらない？ 1グループずつ動かして、{0}時間ごとに次へ進みます。",
-    "If nocat.farm stops": "nocat.farm が止まったら",
-    "the stop alert": "停止アラート",
-    "stop alert: Telegram is no longer linked - press Connect to link it again": "停止アラート: Telegram との連携が外れました - もう一度「接続」を押して連携してください",
-    "stop alert: linked - Telegram will tell you if nocat.farm stops": "停止アラート: 連携済み - nocat.farm が止まったら Telegram でお知らせします",
-    "Get a Telegram message if nocat.farm stops": "nocat.farm が止まったら Telegram でメッセージを受け取る",
-    "nocat.lol's Telegram bot tells you when nocat.farm stops checking in on this PC - a crash, or the PC off or offline - and again when it's back. Closing it yourself or an update doesn't count. It sends only a random number made for this PC, no account names.": "nocat.lol の Telegram ボットが、この PC の nocat.farm から連絡が来なくなったとき（クラッシュ、PC の電源オフやオフライン）と、復帰したときにお知らせします。自分で閉じたときやアップデートは対象外です。送るのはこの PC 用に作ったランダムな番号だけで、アカウント名は送りません。",
-    "Couldn't reach nocat.lol - is this PC online?": "nocat.lol に接続できませんでした - この PC はオンラインですか？",
-    "Alerts aren't switched on at nocat.lol yet - try again later.": "nocat.lol ではまだアラートが有効になっていません - しばらくしてからもう一度お試しください。",
-    "nocat.lol gave an unexpected answer - try again later.": "nocat.lol から予期しない応答がありました - しばらくしてからもう一度お試しください。",
-    "nocat.lol asked to slow down - try again in a minute.": "nocat.lol から間隔を空けるよう求められました - 1 分後にもう一度お試しください。",
-    "Sent - check Telegram.": "送信しました - Telegram を確認してください。",
-    "Not linked yet - press Connect first.": "まだ連携していません - 先に「接続」を押してください。",
-    "Telegram didn't take the message - press Connect to link it again.": "Telegram がメッセージを受け付けませんでした - 「接続」を押してもう一度連携してください。",
-    "Unlinked - no more alerts for this PC.": "連携を解除しました - この PC のアラートはもう届きません。",
-    "Turn on \"Tell me if nocat.farm stops\" below and save, then press Connect.": "下の「nocat.farm が止まったら知らせる」をオンにして保存し、「接続」を押してください。",
-    "Last check-in: {0}": "最後の連絡: {0}",
-    "Not checked in yet.": "まだ連絡がありません。",
     "Open Telegram": "Telegram を開く",
-    "Press Start in Telegram. The link works once, for 15 minutes - scan the code to open it on your phone.": "Telegram で「開始」を押してください。リンクは 1 回だけ、15 分間有効です - コードをスキャンするとスマホで開けます。",
-    "Linked to Telegram.": "Telegram と連携済みです。",
-    "Unlink": "連携を解除",
-    "Not linked to Telegram yet.": "まだ Telegram と連携していません。",
     "couldn't read what it learned from your play: {0}": "あなたの遊び方から学んだ内容を読み込めませんでした: {0}",
     "couldn't save what it learned from your play: {0}": "あなたの遊び方から学んだ内容を保存できませんでした: {0}",
     "couldn't forget what it learned from your play: {0}": "あなたの遊び方から学んだ内容を消去できませんでした: {0}",
@@ -3194,18 +3173,6 @@
     "RotateEveryHours": {
       "label": "切り替えの間隔",
       "tip": "各グループを何時間動かしてから次のグループに替えるか。「リストを順番に回す」がオンのときだけ使います。"
-    },
-    "StopAlert": {
-      "label": "nocat.farm が止まったら知らせる",
-      "tip": "この PC で nocat.farm が止まったとき（クラッシュ、PC の電源オフ、ネット切断）に Telegram でメッセージを受け取ります。5 分ごとに nocat.lol へ連絡しますが、送るのはこの PC 用に作ったランダムな番号だけです。アカウント名などは一切送りません。自分で閉じたときやアップデートは対象外です。オンにしたら「接続」を押し、Telegram で「開始」を押してください。"
-    },
-    "StopAlertPcName": {
-      "label": "この PC の名前",
-      "tip": "Telegram のメッセージで使う名前です（例:「my PC の nocat.farm から 14:05 以降連絡がありません」）。複数の PC で nocat.farm を使うときに便利です。"
-    },
-    "StopAlertMinutes": {
-      "label": "通知までの時間",
-      "tip": "連絡が途絶えてから何分でメッセージを送るか。連絡は 5 分ごとで、メッセージはこの時間より最大 10 分遅れて届くことがあります。"
     },
     "LearnFromOwner": {
       "label": "自分の遊び方から学ぶ",

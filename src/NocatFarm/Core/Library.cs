@@ -233,6 +233,10 @@ public sealed class Library(Bot bot) {
 				string name = g.TryGetProperty("name", out JsonElement n) ? n.GetString() ?? "" : "";
 				int minutes = g.TryGetProperty("playtime_forever", out JsonElement p) && p.TryGetInt32(out int m) ? m : 0;
 
+				// Kept for everything else that says a game's name - the rotation's "next" list said "app 582660" for
+				// games whose name had only ever arrived here.
+				GameNames.Learn(app, name);
+
 				// Acquired stays unset for owned games on purpose: when a game was BOUGHT comes from the licence
 				// list, which the refund guard reads directly. Working it out here would mean a PICS sweep of every
 				// package on every library refresh, for a number only one caller wants.
@@ -370,6 +374,7 @@ public sealed class Library(Bot bot) {
 
 			string name = app.TryGetProperty("name", out JsonElement n) ? n.GetString() ?? "" : "";
 			int minutes = app.TryGetProperty("rt_playtime", out JsonElement p) && p.TryGetInt32(out int mins) ? mins : 0;
+			GameNames.Learn(appId, name);
 			DateTime acquired = app.TryGetProperty("rt_time_acquired", out JsonElement t) && t.TryGetInt64(out long secs) && (secs > 0)
 				? DateTimeOffset.FromUnixTimeSeconds(secs).UtcDateTime
 				: DateTime.MinValue;

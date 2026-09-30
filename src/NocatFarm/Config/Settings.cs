@@ -57,7 +57,6 @@ public static class Settings {
 	public const string SecLogging = "Logging";
 	public const string SecAllAccounts = "All accounts";
 	public const string SecNotifications = "Notifications";
-	public const string SecStopAlert = "If nocat.farm stops";
 	public const string SecDiscordProfile = "Discord profile";
 	public const string SecPopups = "Pop-ups";
 	public const string SecPrices = "Inventory prices";
@@ -600,15 +599,6 @@ public static class Settings {
 			"Every achievement unlocked. Can be a lot.", Advanced: true),
 		new("SendRep4Rep", "Send rep4rep comments", SecNotifications, SettingKind.Bool,
 			"Every rep4rep comment posted. Can be a lot.", Advanced: true),
-		// ── If nocat.farm stops ──
-		new("StopAlert", "Tell me if nocat.farm stops", SecStopAlert, SettingKind.Bool,
-			"Get a Telegram message when nocat.farm stops on this PC - it crashed, the PC turned off or lost its internet. Every 5 minutes it checks in with nocat.lol, sending only a random number made for this PC: no account names, nothing else. Closing it yourself or an update doesn't count. Turn it on, then press Connect and press Start in Telegram."),
-		new("StopAlertPcName", "Call this PC", SecStopAlert, SettingKind.Text,
-			"The name the Telegram message uses, like \"nocat.farm on my PC hasn't checked in since 14:05\". Handy with nocat.farm on more than one PC.",
-			Placeholder: "my PC"),
-		new("StopAlertMinutes", "Alert after", SecStopAlert, SettingKind.Int,
-			"How many minutes without a check-in before the message is sent. It checks in every 5 minutes, and the message can come up to 10 minutes later than this.",
-			Advanced: true, Min: 10, Max: 1440),
 		// ── Discord profile ──
 		new("DiscordPresence", "Show on my Discord profile", SecDiscordProfile, SettingKind.Bool,
 			"While nocat.farm is open, your Discord profile shows Playing nocat.farm - like a game - with what it's doing and the cards it got today. Needs the Discord app open on this PC, and Activity Privacy in Discord letting it share what you play.",

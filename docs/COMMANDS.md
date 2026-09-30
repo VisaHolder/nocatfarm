@@ -24,9 +24,9 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 | **[Profile & info](#profile--info)** | `value` `level` `balance` `points` `bans` `owns` `privacy` `joingroup` |
 | **[rep4rep](#rep4rep)** | `rep4rep` |
 | **[Settings](#settings)** | `config` `set` `reload` `backup` `import` |
-| **[The app](#the-app)** | `log` `report` `stats` `notify` `alert` `plugins` `tutorial` `help` `screen` `theme` `mini` `dashboard` `anywhere` `clear` `unlock` `version` `update` `answer` `exit` |
+| **[The app](#the-app)** | `log` `report` `stats` `notify` `plugins` `tutorial` `help` `screen` `theme` `mini` `dashboard` `anywhere` `clear` `unlock` `version` `update` `answer` `exit` |
 
-76 commands in all.
+75 commands in all.
 
 ## Accounts
 
@@ -143,7 +143,6 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 | `report [week]` <br>also `weekly` | The daily summary now - each account's last 24 hours. 'report week' is the weekly report: the last seven days next to the seven before - hours banked, cards, cards listed, inventory value, comments. |
 | `stats [hours]` | Each account's last 24 hours - hours banked, cards, comments, totals - then cards dropped and comments posted, by hour. |
 | `notify [test]` | Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now. |
-| `alert [on\|off\|link\|test\|unlink]` | Tell me if nocat.farm stops: a Telegram message from nocat.lol's bot when this copy stops checking in (a crash, the PC off or offline) - not when you close it. On its own it says whether it's on, linked, and when it last checked in. 'alert on' switches it on and gives the Telegram link, 'alert link' gives a fresh link (press Start in Telegram), 'alert test' sends a test message, 'alert unlink' unlinks this PC, 'alert off' stops checking in. |
 | `plugins` | Which plugins are loaded, and where they came from. |
 | `tutorial [topic]` <br>also `guide`, `setup` | Getting started, in order, ticking off what you have already done. |
 | `help [command\|setting]` <br>also `?`, `h` | This list, or what one command or setting does. Only know how it starts? 'help rot' lists every command and setting starting with "rot". |

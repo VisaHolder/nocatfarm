@@ -118,7 +118,6 @@ public static partial class Commands {
 		new("report", "[week]", GroupOther, "The daily summary now - each account's last 24 hours. 'report week' is the weekly report: the last seven days next to the seven before - hours banked, cards, cards listed, inventory value, comments.", "weekly"),
 		new("stats", "[hours]", GroupOther, "Each account's last 24 hours - hours banked, cards, comments, totals - then cards dropped and comments posted, by hour."),
 		new("notify", "[test]", GroupOther, "Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now."),
-		new("alert", "[on|off|link|test|unlink]", GroupOther, "Tell me if nocat.farm stops: a Telegram message from nocat.lol's bot when this copy stops checking in (a crash, the PC off or offline) - not when you close it. On its own it says whether it's on, linked, and when it last checked in. 'alert on' switches it on and gives the Telegram link, 'alert link' gives a fresh link (press Start in Telegram), 'alert test' sends a test message, 'alert unlink' unlinks this PC, 'alert off' stops checking in."),
 		new("plugins", "", GroupOther, "Which plugins are loaded, and where they came from."),
 		new("tutorial", "[topic]", GroupOther, "Getting started, in order, ticking off what you have already done.", "guide|setup"),
 		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does. Only know how it starts? 'help rot' lists every command and setting starting with \"rot\".", "?|h"),
@@ -233,7 +232,7 @@ public static partial class Commands {
 	/// </summary>
 	internal static bool SteamChatRefuses(string command) =>
 		command is "set" or "anywhere" or "dashboard" or "unlock" or "update" or "import" or "redeem" or "keys" or "answer"
-			or "add" or "reload" or "plugins" or "notify" or "alert" or "screen" or "match" or "theme" or "mini";
+			or "add" or "reload" or "plugins" or "notify" or "screen" or "match" or "theme" or "mini";
 
 	/// <summary>
 	/// Whether a command sent to <paramref name="botName"/> over Steam chat names another account, or all of them - in the
@@ -370,7 +369,6 @@ public static partial class Commands {
 				"privacy" => await PrivacyAsync(mgr, rest).ConfigureAwait(false),
 				"joingroup" => await JoinGroupAsync(mgr, rest).ConfigureAwait(false),
 				"notify" => await NotifyAsync(rest).ConfigureAwait(false),
-				"alert" => await AlertAsync(mgr, rest).ConfigureAwait(false),
 				"cards" => Cards(mgr, rest),
 				"rep4rep" or "r4r" => await Rep4RepAsync(mgr, rest).ConfigureAwait(false),
 				"add" => await AddAsync(mgr, rest).ConfigureAwait(false),
@@ -2689,66 +2687,6 @@ public static partial class Commands {
 			+ Environment.NewLine + "'notify test' sends a test message now. Set it up under Settings, Notifications.";
 	}
 
-	/// <summary>
-	/// 'alert': "Tell me if nocat.farm stops" - status, on/off, the Telegram link, a test message, unlink.
-	/// </summary>
-	private static async Task<string> AlertAsync(BotManager mgr, string[] args) {
-		GlobalConfig g = mgr.Global;
-		string what = args.Length > 0 ? args[0].ToLowerInvariant() : "";
-
-		switch (what) {
-			case "off" or "stop" or "false": {
-				// The goodbye before the switch goes off, so this isn't reported as a crash later.
-				await StopAlert.ByeAsync(quitting: false).ConfigureAwait(false);
-				g.StopAlert = false;
-				ConfigStore.SaveGlobal(g);
-				StopAlert.Poke();
-
-				return "Tell me if nocat.farm stops is off - it no longer checks in, and no alert is sent for that. It stays linked; 'alert on' picks up again.";
-			}
-			case "on" or "start" or "true" or "link": {
-				if (!g.StopAlert) {
-					g.StopAlert = true;
-					ConfigStore.SaveGlobal(g);
-					StopAlert.Poke();
-				}
-
-				if ((what != "link") && (StopAlert.Linked == true)) {
-					return "Tell me if nocat.farm stops is on and linked to Telegram.";
-				}
-
-				(string? link, string? error) = await StopAlert.LinkAsync().ConfigureAwait(false);
-
-				return link == null
-					? $"Tell me if nocat.farm stops is on, but no link: {StopAlert.Explain(error)}"
-					: $"Open this and press Start in Telegram (works once, for 15 minutes):{Environment.NewLine}{link}";
-			}
-			case "test":
-				return !g.StopAlert ? "Tell me if nocat.farm stops is off - 'alert on' first."
-					: $"Test message: {StopAlert.Explain(await StopAlert.TestAsync().ConfigureAwait(false))}";
-			case "unlink":
-				return $"Unlink: {StopAlert.Explain(await StopAlert.UnlinkAsync().ConfigureAwait(false))}";
-			case "":
-				break;
-			default:
-				return "alert [on|off|link|test|unlink]";
-		}
-
-		string linked = StopAlert.Linked switch {
-			true => "yes",
-			false => "no - 'alert link' gives the Telegram link",
-			null => g.StopAlert ? "not known yet - it hasn't checked in" : "-"
-		};
-		string last = StopAlert.LastCheckIn is { } at ? $"{at.ToLocalTime():HH:mm} ({(DateTime.UtcNow - at < TimeSpan.FromMinutes(1) ? "just now" : Fmt.Ago(at) + " ago")})" : "never this run";
-
-		return $"Tell me if nocat.farm stops: {(g.StopAlert ? "on" : "off - 'alert on' switches it on")}"
-			+ Environment.NewLine + $"Linked to Telegram: {linked}"
-			+ Environment.NewLine + $"Last check-in: {last}"
-			+ (StopAlert.Problem is { } problem ? Environment.NewLine + $"Problem: {StopAlert.Explain(problem)}" : "")
-			+ Environment.NewLine + $"The message calls this PC \"{StopAlert.PcName(g)}\" and comes after {StopAlert.After(g)} minutes without a check-in."
-			+ Environment.NewLine + "It sends only a random number made for this PC - no account names. 'alert test' sends a test message.";
-	}
-
 	private static async Task<string> JoinGroupAsync(BotManager mgr, string[] args) {
 		if (args.Length < 2) {
 			return "joingroup <account|all> <group link or name>   e.g. joingroup all steamcommunity.com/groups/nocatfarm";
@@ -3668,10 +3606,6 @@ public static partial class Commands {
 		switch (def.Name) {
 			case "WebRemoteAccess":
 				RemoteAccess.Poke();
-
-				break;
-			case "StopAlert" or "StopAlertPcName" or "StopAlertMinutes":
-				StopAlert.Poke();
 
 				break;
 			case "MiniOnTop":
