@@ -275,11 +275,13 @@ public static class UpdateCheck {
 		int until = Math.Clamp(g.AutoUpdateUntilHour, 0, 24);
 		bool inWindow = from < until ? (hour >= from) && (hour < until) : (hour >= from) || (hour < until);
 
-		// Quiet means quiet for every account: nobody at the keyboard on one of them, and no human-mode account
-		// awake - an update signs everything out for a minute, which an awake account would notice.
-		bool quietNow = mgr.All.All(static b => !b.IsOnline || (!b.PlayingBlocked && !(b.Cfg.LegitMode && Modules.HumanMode.UpAndAbout(b))));
+		(bool quietNow, string why) = Quiet(mgr);
 
 		if (!inWindow || !quietNow) {
+			if (inWindow) {
+				Log.DebugOnChange("update:held", $"auto-update waiting: {why}");
+			}
+
 			return;
 		}
 
@@ -303,7 +305,8 @@ public static class UpdateCheck {
 		}
 
 		_autoTriedAt = DateTime.UtcNow;
-		Log.Good(new Said("installing {0} by itself - quiet time (Update by itself)", Available));
+		// Says why it was clear, so an update at an odd moment can be checked against what it saw.
+		Log.Good(new Said("installing {0} by itself - all clear: {1}", Available, why));
 
 		_ = Task.Run(async () => {
 			try {
@@ -356,7 +359,7 @@ public static class UpdateCheck {
 		}
 
 		bool anyHuman = mgr.All.Any(static b => b.Cfg.Enabled && b.Cfg.LegitMode);
-		bool quietNow = mgr.All.All(static b => !b.IsOnline || (!b.PlayingBlocked && !(b.Cfg.LegitMode && Modules.HumanMode.UpAndAbout(b))));
+		(bool quietNow, string why) = Quiet(mgr);
 
 		if (!anyHuman) {
 			int hour = DateTime.Now.Hour;
@@ -380,7 +383,7 @@ public static class UpdateCheck {
 
 		string tag = Queued;
 		Queued = null;
-		Log.Good(new Said("installing {0} - the accounts are asleep", tag));
+		Log.Good(new Said("installing {0} - all clear: {1}", tag, why));
 
 		_ = Task.Run(async () => {
 			try {
@@ -390,6 +393,49 @@ public static class UpdateCheck {
 				Log.StackToFile(e);
 			}
 		});
+	}
+
+	/// <summary>
+	/// Whether it's clear to sign everything out for an update, and in words why - or what's holding it.
+	/// </summary>
+	/// <remarks>
+	/// Clear means: nobody on any account, and no human-mode account awake. Two holes are closed here. An account that
+	/// was only signing back in (a dropped connection, 20 seconds) used to count as "not online, so quiet" - and an update
+	/// went in while you were playing on it. And an account you'd just stopped playing on counted as clear the minute
+	/// Steam freed it. So a running account that isn't online yet holds it, and so does one you were on in the last
+	/// quarter of an hour. An account stopped by you, switched off, or given up signing in doesn't.
+	/// </remarks>
+	internal static (bool Quiet, string Why) Quiet(BotManager mgr, DateTime? nowUtc = null) {
+		DateTime now = nowUtc ?? DateTime.UtcNow;
+		List<string> clear = [];
+
+		foreach (Bot b in mgr.All) {
+			if (!b.Cfg.Enabled || !b.Running || (b.State == BotState.Failed)) {
+				continue;   // nothing running there to disturb
+			}
+
+			if (b.PlayingBlocked) {
+				return (false, new Said("you're playing on {0}", b.Name).ToString());
+			}
+
+			if (now - b.YouPlayedAt < TimeSpan.FromMinutes(15)) {
+				return (false, new Said("you were on {0} a few minutes ago", b.Name).ToString());
+			}
+
+			if (!b.IsOnline) {
+				return (false, new Said("{0} is signing in", b.Name).ToString());
+			}
+
+			if (b.Cfg.LegitMode && Modules.HumanMode.UpAndAbout(b)) {
+				return (false, new Said("{0} is awake", b.Name).ToString());
+			}
+
+			clear.Add((b.Cfg.LegitMode ? new Said("{0} asleep", b.Name) : b.IsFarming ? new Said("{0} farming", b.Name) : new Said("{0} idling", b.Name)).ToString());
+		}
+
+		clear.Add(new Said("nobody playing").ToString());
+
+		return (true, string.Join(", ", clear));
 	}
 
 	/// <summary>Is this release tag newer than what is running? Used by the updater before it downloads.</summary>

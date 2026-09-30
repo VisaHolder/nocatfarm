@@ -52,6 +52,26 @@ The dashboard comes in a dark and a light theme (the *theme* button under the ta
 It's set in Consolas. Phones and Linux usually don't have that font, so the dashboard ships its own JetBrains Mono
 for them instead of falling back to whatever monospace font is around.
 
+## Backup and restore
+
+At the bottom of *Settings → Global settings* is **Backup & restore**. `backup` in the Console does the same
+download into a `backups` folder next to `config` and says where.
+
+**Download a backup** gives one file, like `nocat.farm-backup-2026-09-30.zip`, with your settings, every account,
+saved logins, authenticator files, the history, lifetime totals, today's human-mode plans, hunt progress, rep4rep
+counts and the key queue. Logs and caches aren't in it. A `README.txt` inside says what's there.
+
+Saved logins stay encrypted in the zip, as they are on disk. A backup made on Windows opens them only on the same
+PC, signed in as the same Windows user. Restored on another PC, your settings and history come back, but each
+account asks for its password (and Steam Guard) once, and authenticators need adding again. Off Windows, the key
+goes in the zip too, so it restores anywhere. Either way, keep the zip private - it signs in to your accounts.
+
+**Restore a backup** checks the zip first and shows what's in it: when and where it was made, the accounts, the
+files. Nothing changes until you press *Restore*. Then every account stops, the files go back, and the accounts
+start again. Accounts that aren't in the backup are left alone, and what gets replaced is saved in `backups` first.
+A zip that isn't a nocat.farm backup, or has anything else in it, is refused. Restoring is only in the dashboard -
+not from Telegram, Discord or Steam chat.
+
 ## The app window (Windows)
 
 The title bar has *mini*, *hide* and *quit*. The toolbar under it has *start all*, *stop all*, *dashboard*,

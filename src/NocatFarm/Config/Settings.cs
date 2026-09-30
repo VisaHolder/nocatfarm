@@ -57,6 +57,7 @@ public static class Settings {
 	public const string SecLogging = "Logging";
 	public const string SecAllAccounts = "All accounts";
 	public const string SecNotifications = "Notifications";
+	public const string SecStopAlert = "If nocat.farm stops";
 	public const string SecDiscordProfile = "Discord profile";
 	public const string SecPopups = "Pop-ups";
 	public const string SecPrices = "Inventory prices";
@@ -295,8 +296,12 @@ public static class Settings {
 				// Steam's limit is on games played SIMULTANEOUSLY, so it applies to the lists that get played and
 				// to nothing else. Capping a blacklist at 32 rejected a perfectly sensible "never touch these
 				// forty games" - a list whose whole purpose is that they are never played.
-				if (def.Name is "IdleGames" or "OfflineIdleGames" && (apps.Count > Core.SteamIds.GamesAtOnce)) {
-					return $"Steam only lets an account play {Core.SteamIds.GamesAtOnce} games at once";
+				// ...unless the idle list is rotated, which is exactly what a longer one is for.
+				if (def.Name is "IdleGames" or "OfflineIdleGames" && (apps.Count > Core.SteamIds.GamesAtOnce)
+					&& !((def.Name == "IdleGames") && config is BotConfig { RotateIdleGames: true })) {
+					return def.Name == "IdleGames"
+						? $"Steam only lets an account play {Core.SteamIds.GamesAtOnce} games at once - turn on \"Rotate the idle list\" to idle more, a batch at a time"
+						: $"Steam only lets an account play {Core.SteamIds.GamesAtOnce} games at once";
 				}
 
 				p.SetValue(config, apps);
@@ -550,6 +555,11 @@ public static class Settings {
 		new("GlobalBlacklistedGames", "Never touch these (all accounts)", SecAllAccounts, SettingKind.AppIds,
 			"Games no account will ever farm or idle, listed by game ID (the number in its store link). Each account can still add its own on top.",
 			Advanced: true),
+		new("StuckAlarm", "Restart a stuck account", SecAllAccounts, SettingKind.Bool,
+			"If an account that should be playing hasn't banked any hours for a few hours - disconnected, stuck signing in, failed, or its games gone - it tells you (on Telegram and Discord too) and restarts that account once. Never for an account you stopped, paused or are playing on, or one human mode has asleep, done for the day or on a day off. At most one restart per account every 12 hours."),
+		new("StuckAlarmHours", "Stuck after", SecAllAccounts, SettingKind.Int,
+			"How many hours without banking any hours, when it should be, before an account counts as stuck.",
+			Advanced: true, Min: 1, Max: 48),
 		// ── Notifications ──
 		new("TelegramBotToken", "Telegram bot token", SecNotifications, SettingKind.Secret,
 			"Paste your Telegram bot's token (make a bot by messaging @BotFather - the guide above shows how), press Save, then press Connect Telegram and press Start in Telegram.",
@@ -590,6 +600,15 @@ public static class Settings {
 			"Every achievement unlocked. Can be a lot.", Advanced: true),
 		new("SendRep4Rep", "Send rep4rep comments", SecNotifications, SettingKind.Bool,
 			"Every rep4rep comment posted. Can be a lot.", Advanced: true),
+		// ── If nocat.farm stops ──
+		new("StopAlert", "Tell me if nocat.farm stops", SecStopAlert, SettingKind.Bool,
+			"Get a Telegram message when nocat.farm stops on this PC - it crashed, the PC turned off or lost its internet. Every 5 minutes it checks in with nocat.lol, sending only a random number made for this PC: no account names, nothing else. Closing it yourself or an update doesn't count. Turn it on, then press Connect and press Start in Telegram."),
+		new("StopAlertPcName", "Call this PC", SecStopAlert, SettingKind.Text,
+			"The name the Telegram message uses, like \"nocat.farm on my PC hasn't checked in since 14:05\". Handy with nocat.farm on more than one PC.",
+			Placeholder: "my PC"),
+		new("StopAlertMinutes", "Alert after", SecStopAlert, SettingKind.Int,
+			"How many minutes without a check-in before the message is sent. It checks in every 5 minutes, and the message can come up to 10 minutes later than this.",
+			Advanced: true, Min: 10, Max: 1440),
 		// ── Discord profile ──
 		new("DiscordPresence", "Show on my Discord profile", SecDiscordProfile, SettingKind.Bool,
 			"While nocat.farm is open, your Discord profile shows Playing nocat.farm - like a game - with what it's doing and the cards it got today. Needs the Discord app open on this PC, and Activity Privacy in Discord letting it share what you play.",
@@ -739,6 +758,15 @@ public static class Settings {
 		new("DailyReportMinute", "Summary time · minute", SecLogging, SettingKind.Int,
 			"The minute past the hour the daily summary is written. Hour 9 and minute 30 means 09:30.",
 			Min: 0, Max: 59, Advanced: true),
+		new("WeeklyReport", "Weekly report", SecLogging, SettingKind.Bool,
+			"Once a week, each account's week next to the week before: hours banked, cards dropped, cards listed for sale, inventory value and rep4rep comments. Written in the log and sent on Telegram and Discord when those are set up. Type report week to see it any time.",
+			Advanced: true),
+		new("WeeklyReportDay", "Weekly report · day", SecLogging, SettingKind.Choice,
+			"The day the weekly report comes. It covers the seven days before it.",
+			Advanced: true, Choices: "1 Monday | 2 Tuesday | 3 Wednesday | 4 Thursday | 5 Friday | 6 Saturday | 0 Sunday"),
+		new("WeeklyReportHour", "Weekly report · hour", SecLogging, SettingKind.Int,
+			"The hour the weekly report comes, on a 24-hour clock.",
+			Min: 0, Max: 23, Advanced: true),
 		new("TelegramLogColour", "Telegram's colour in the log", SecLogging, SettingKind.Choice,
 			"The colour of \"telegram\" in the log - commands sent from Telegram and their answers - like an account's colour.",
 			Choices: NocatFarm.Core.NameColour.ChoicesSpec, Advanced: true),
@@ -834,6 +862,19 @@ public static class Settings {
 		new("PureMainDayChancePct", "Days on the main game only", SecHuman, SettingKind.Int,
 			"The percent chance a whole day goes on the main game only, so side games show up in bursts instead of a small slice daily. This lowers their weekly share, shown under the games box.",
 			Min: 0, Max: 100, Mode: "legit", Advanced: true),
+		// a life, not just a day - all off unless you switch them on
+		new("LearnFromOwner", "Learn from how I play", SecHuman, SettingKind.Choice,
+			"Notes when you play on this account yourself and which games. After 7 days of that, it leans its day toward yours: when it gets on and goes to bed, and how its time splits between the games in \"Games and how often\". It never adds a game that isn't in that list, and how long it plays still comes from the hours settings. The habits command shows what it has learned.",
+			Mode: "legit", Choices: "0 off | 1 a little | 2 a lot"),
+		new("NewGamesFirst", "Play new games more at first", SecHuman, SettingKind.Bool,
+			"A game that has just arrived in the library, bought, gifted or free, gets extra sittings for 3 to 10 days, fewer each day, like trying something new. Games you can still refund, blacklisted or family-shared games, and games your other accounts are running are left alone.",
+			Advanced: true, Mode: "legit"),
+		new("LongerRhythms", "Quiet spells and late nights", SecHuman, SettingKind.Bool,
+			"Once or twice a month it has a quiet spell of 2 to 5 days with noticeably shorter days, and now and then a Friday or Saturday night runs later than usual. Days off and the hours settings still apply. human week shows them.",
+			Advanced: true, Mode: "legit"),
+		new("JoinFriends", "Sometimes play what a friend is playing", SecHuman, SettingKind.Bool,
+			"When a Steam friend is in a game this account owns, it now and then picks that game for its next sitting, at most twice a day and only while it's up. Your own accounts and the games they're running are ignored, and so are blacklisted and refundable games.",
+			Advanced: true, Mode: "legit"),
 		// settling in
 		new("WarmUpMinMinutes", "Settle in for at least", SecHuman, SettingKind.Int,
 			"The shortest wait after signing in before it starts a game, in minutes. Also applies when you turn on \"Human mode\", so it doesn't launch a game instantly.",
@@ -902,6 +943,15 @@ public static class Settings {
 		new("IdleGames", "Games to idle", SecPlaying, SettingKind.AppIds,
 			"Games to idle for playtime when no cards are left to farm. Use the game ID (the number in its store link) or paste the whole link, separated by commas.",
 			Placeholder: "730, 440", Mode: "rage"),
+		new("IdleWholeLibrary", "Idle my whole library", SecPlaying, SettingKind.Bool,
+			"Idles every game the account owns, after the ones in \"Games to idle\". Skips games in \"Never touch these\", refundable games and family-shared games (unless \"Include family-shared games\" is on). Steam plays 32 at once, so turn on \"Rotate the idle list\" to give every game a turn.",
+			Mode: "rage"),
+		new("RotateIdleGames", "Rotate the idle list", SecPlaying, SettingKind.Bool,
+			"When there are more games than Steam plays at once (32, or 31 with a custom name), it idles one batch at a time and moves to the next batch every so often, so every game gets hours. Games with an hour target and the least played go first.",
+			Mode: "rage"),
+		new("RotateEveryHours", "Rotate every", SecPlaying, SettingKind.Int,
+			"How many hours each batch idles before the next batch takes over. Only used when \"Rotate the idle list\" is on.",
+			Advanced: true, Min: 1, Max: 720, Mode: "rage"),
 		new("CustomGameNameEnabled", "Show a custom game name", SecPlaying, SettingKind.Bool,
 			"Shows your friends a custom name instead of the real game. Turning it off keeps the name you typed below for next time.",
 			Mode: "rage"),

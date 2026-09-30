@@ -4446,6 +4446,9 @@ function renderSettings() {
   // scrolling an account's ordinary settings, and anyone who needs it can find the switch.
   if (settingsTarget !== GLOBAL && !q && !onlyChanged && advanced) html += dangerZone(settingsTarget);
 
+  // Not a setting either, so the same rule: the whole of global settings, nothing searched or filtered.
+  if (settingsTarget === GLOBAL && !q && !onlyChanged) html += backupPanel();
+
   if (!html) html = `<p class="muted">${esc(t('Nothing matches.'))}</p>`;
   if (hiddenAdvanced && !q) {
     const many = hiddenAdvanced === 1 ? t('One advanced setting is hidden.') : tf('{0} advanced settings are hidden.', hiddenAdvanced);
@@ -4623,6 +4626,14 @@ function sectionIntro(section, values) {
     </div>`;
   }
 
+  if (section === 'If nocat.farm stops' && settingsTarget === GLOBAL) {
+    return `<div class="explain">
+      <b>${esc(t('Get a Telegram message if nocat.farm stops'))}</b>
+      <p style="margin:6px 0 10px">${esc(t("nocat.lol's Telegram bot tells you when nocat.farm stops checking in on this PC - a crash, or the PC off or offline - and again when it's back. Closing it yourself or an update doesn't count. It sends only a random number made for this PC, no account names."))}</p>
+      ${stopAlertBox()}
+    </div>`;
+  }
+
   if (section === 'Discord profile' && settingsTarget === GLOBAL) {
     return discordCardIntro(val);
   }
@@ -4682,17 +4693,28 @@ function sectionIntro(section, values) {
     const black = val('BlacklistedGames') || [];
     const playing = games.filter((g) => !black.includes(g));
 
+    // "Idle my whole library" makes the list every game it owns, whatever is typed in the box.
+    const whole = !!val('IdleWholeLibrary');
     const shownName = `<b>${esc(name)}</b>`;
-    const list = `<b>${esc(playing.map(gameLabel).join(', '))}</b>`;
+    const list = `<b>${esc(whole ? t('all the games it owns') : playing.map(gameLabel).join(', '))}</b>`;
     let line;
-    if (name && playing.length) {
+    if (name && (playing.length || whole)) {
       line = tf('Your friends see {0}. Underneath, {1} keep gaining real playtime — both at the same time.', shownName, list);
     } else if (name) {
       line = tf('Your friends see {0}. No games are listed, so no playtime is being banked — add some below if you want hours too.', shownName);
-    } else if (playing.length) {
+    } else if (playing.length || whole) {
       line = tf('{0} gain playtime, all at once. Set a name below to show something else instead while the hours still count.', list);
     } else {
       line = esc(t('Nothing set yet. Add games to bank playtime, and optionally a name to display instead of the real one.'));
+    }
+
+    // The rotation, once it is running: how many are on now out of how many, and when the next batch takes over.
+    const bot = settingsTarget !== GLOBAL && state && (state.Bots || []).find((b) => b.Name === settingsTarget);
+    const rot = bot && bot.Rotation;
+    if (val('RotateIdleGames')) {
+      line += ' ' + (rot
+        ? tf('Idling {0} of {1} at a time - next batch at {2}.', `<b>${rot.Idling}</b>`, `<b>${rot.Total}</b>`, `<b>${esc(rot.Next)}</b>`)
+        : esc(tf('More than fit at once? It idles a batch at a time and moves on every {0}h.', val('RotateEveryHours') || 24)));
     }
 
     return `<div class="preview"><span class="k">${esc(t('Right now'))}</span>${line}</div>`;
@@ -4711,6 +4733,13 @@ function sectionIntro(section, values) {
     const weekday = val('WeekdayHours'), weekend = val('WeekendHours');
     const dayOff = val('DayOffChancePct');
     const night = val('OfflineIdleAtNight') && (val('OfflineIdleGames') || []).length;
+    // The four "a life, not just a day" extras, named only when switched on.
+    const extras = [
+      Number(val('LearnFromOwner') || 0) > 0 ? t('learns from how you play') : '',
+      val('NewGamesFirst') ? t('tries new games out') : '',
+      val('LongerRhythms') ? t('has quiet spells and late nights') : '',
+      val('JoinFriends') ? t('sometimes joins a friend') : '',
+    ].filter(Boolean);
 
     const others = w.length - 1;
     let mostly;
@@ -4731,6 +4760,7 @@ function sectionIntro(section, values) {
       ${tf('One game at a time, in sittings of {0}.', `<b>${val('SessionMinMinutes')}–${val('SessionMaxMinutes')} min</b>`)}
       ${mostly}
       ${night ? esc(t('Overnight it goes invisible and keeps banking hours.')) : ''}
+      ${extras.length ? tf('It also {0}.', esc(extras.join(', '))) : ''}
       </div>`;
   }
 
@@ -5133,6 +5163,105 @@ function isChanged(def, values, defaults) {
 // Kept away from the settings themselves, and deliberately awkward to trigger. Everything else on this page is
 // a preference that can be changed back; this writes several thousand achievements onto a Steam profile, all
 // sharing one timestamp, and Steam stamps that time server-side so there is no undoing it.
+// ── backup & restore ─────────────────────────────────────────────────────────
+// One zip out, one zip back. The restore is two steps on purpose: the server checks the zip and says what's in it,
+// and nothing is written until you've read that and pressed Restore.
+function backupPanel() {
+  return `<div class="section">
+    <h3 data-section="Backup & restore">${esc(t('Backup & restore'))}</h3>
+    <div class="explain">
+      <p style="margin:0 0 8px">${esc(t('One zip with your settings, every account, saved logins, authenticators, history and progress. Logs and caches are left out.'))}</p>
+      <p class="muted small" style="margin:0 0 12px">${esc(t('Logins inside stay encrypted, as they are on disk. A backup made on Windows only opens them on the same PC and Windows user - restored anywhere else, each account asks for its password once. Keep the zip private: it signs in to your accounts.'))}</p>
+      <div class="backupbtns">
+        <button onclick="downloadBackup(this)">${esc(t('Download a backup'))}</button>
+        <button class="ghost" onclick="$('restoreFile').click()">${esc(t('Restore a backup'))}</button>
+        <input type="file" id="restoreFile" accept=".zip,application/zip" hidden onchange="checkRestore(this)">
+      </div>
+    </div>
+  </div>`;
+}
+
+const authHeaders = (extra = {}) => ({ ...extra, ...(token ? { Authorization: 'Bearer ' + token } : {}) });
+
+async function downloadBackup(btn) {
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/backup', { method: 'POST', headers: authHeaders() });
+    if (res.status === 401) { showLogin(); return; }
+    if (!res.ok) throw new Error(String(res.status));
+
+    const blob = await res.blob();
+    const name = (/filename="?([^";]+)/.exec(res.headers.get('Content-Disposition') || '') || [])[1] || 'nocat.farm-backup.zip';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    toast(tf('Saved {0}', name));
+  } catch {
+    toast(t("That didn't work"), true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function checkRestore(input) {
+  const file = input.files && input.files[0];
+  input.value = '';   // picking the same file again still fires
+  if (!file) return;
+
+  let r = null;
+
+  try {
+    const res = await fetch('/api/restore/check', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/zip' }), body: file });
+    if (res.status === 401) { showLogin(); return; }
+    r = await res.json();
+  } catch { r = null; }
+
+  if (!r || !r.Ok) { toast((r && r.Error) || t("That didn't work"), true); return; }
+
+  const kinds = {
+    settings: t('settings'), account: t('account settings'), 'login token': t('saved logins'), authenticator: t('authenticators'),
+    'login key': t('login key'), history: t('history days'), state: t('progress and totals'),
+  };
+  const what = Object.entries(r.Kinds || {}).map(([k, n]) => `${n} ${kinds[k] || k}`).join(' · ');
+
+  modal(`
+    <h2>${esc(t('Restore this backup?'))}</h2>
+    <p>${esc(tf('Made {0} by nocat.farm {1} on {2}.', new Date(r.Created).toLocaleString(), r.Version, r.Machine))}</p>
+    <p><b>${esc(t('Accounts'))}:</b> ${esc((r.Accounts || []).join(', ') || '-')}</p>
+    <p class="muted small">${esc(what)}</p>
+    ${r.SameMachine ? '' : `<p class="small warnline">${esc(t('Made on another PC: its saved logins may not open here, so those accounts ask for their passwords again.'))}</p>`}
+    <p class="small">${esc(t('Every account stops, these files replace the ones here, and the accounts start again. Accounts not in the backup are left alone, and what gets replaced is saved in the backups folder first.'))}</p>
+    <div class="actions">
+      <button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button>
+      <button class="danger" data-token="${esc(r.Token)}" onclick="applyRestore(this)">${esc(t('Restore'))}</button>
+    </div>`);
+}
+
+async function applyRestore(btn) {
+  btn.disabled = true;
+  btn.textContent = t('Restoring...');
+
+  const r = await post('/api/restore/apply', { Token: btn.dataset.token }).catch(() => null);
+  closeModal();
+
+  if (!r || !r.Ok) { toast((r && r.Error) || t("That didn't work"), true); return; }
+
+  // A different dashboard password came back: this browser was given a fresh session under it.
+  if (r.Token) {
+    token = r.Token;
+    localStorage.setItem('nocatfarm-token', token);
+  }
+
+  toast(r.Message);
+  await loadConfig().catch(() => {});
+  if (view === 'settings') renderSettings();
+}
+
 function dangerZone(name) {
   return `<div class="section danger">
     <h3 data-section="Careful">${esc(t('Careful'))}</h3>
@@ -5541,6 +5670,83 @@ function discordPreview(val) {
 // a page reload.
 // A class, not an id: the settings page keeps its copy in the page while the walkthrough draws its own, and an id only
 // ever found the first - the hidden one.
+// "Tell me if nocat.farm stops": Connect (a Telegram link and a QR code for the phone), then linked, the last check-in,
+// a test message and unlink. Kept in a fixed spot that refresh() redraws, so "linked" appears by itself once Start is
+// pressed in Telegram.
+function stopAlertBox() {
+  const html = stopAlertInner();
+  return `<div class="stop-alert" data-html="${esc(html)}">${html}</div>`;
+}
+
+function syncStopAlert() {
+  const html = stopAlertInner();
+  document.querySelectorAll('.stop-alert').forEach((el) => {
+    if (el.dataset.html === html) return;
+    el.dataset.html = html;
+    el.innerHTML = html;
+  });
+}
+
+function stopAlertText(code) {
+  return ({
+    unreachable: t("Couldn't reach nocat.lol - is this PC online?"),
+    notsetup: t("Alerts aren't switched on at nocat.lol yet - try again later."),
+    site: t('nocat.lol gave an unexpected answer - try again later.'),
+    busy: t('nocat.lol asked to slow down - try again in a minute.'),
+    sent: t('Sent - check Telegram.'),
+    notlinked: t('Not linked yet - press Connect first.'),
+    telegram: t("Telegram didn't take the message - press Connect to link it again."),
+    done: t('Unlinked - no more alerts for this PC.'),
+  })[code] || t("That didn't work");
+}
+
+function stopAlertInner() {
+  if (!state) return '';
+  if (!state.StopAlertOn) {
+    return `<div class="tgconnect"><span class="muted small">${esc(t('Turn on "Tell me if nocat.farm stops" below and save, then press Connect.'))}</span></div>`;
+  }
+  const at = state.StopAlertLastCheckIn ? new Date(state.StopAlertLastCheckIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null;
+  const seen = at ? tf('Last check-in: {0}', at) : t('Not checked in yet.');
+  const problem = state.StopAlertProblem ? `<span class="muted small">${esc(stopAlertText(state.StopAlertProblem))}</span>` : '';
+  if (state.StopAlertLink) {
+    return `<div class="tgconnect"><div class="phoneqr" style="width:170px;margin:0"><img src="/api/stopalert/qr.svg?v=${encodeURIComponent(state.StopAlertLink.slice(-8))}" alt="QR code" width="150" height="150"></div>
+      <a class="btn" href="${esc(state.StopAlertLink)}" target="_blank" rel="noopener">${esc(t('Open Telegram'))}</a>
+      <span class="muted small">${esc(t('Press Start in Telegram. The link works once, for 15 minutes - scan the code to open it on your phone.'))}</span></div>`;
+  }
+  if (state.StopAlertLinked) {
+    return `<div class="tgconnect"><span class="muted small">${esc(t('Linked to Telegram.'))} ${esc(seen)}</span>
+      <button class="ghost" onclick="stopAlertTest(this)">${esc(t('Send a test message'))}</button>
+      <button class="ghost" onclick="stopAlertUnlink(this)">${esc(t('Unlink'))}</button>${problem}</div>`;
+  }
+  return `<div class="tgconnect"><button class="ghost" onclick="stopAlertConnect(this)">${esc(t('Connect'))}</button>
+    <span class="muted small">${esc(state.StopAlertLinked === false ? t('Not linked to Telegram yet.') : seen)}</span>${problem}</div>`;
+}
+
+async function stopAlertConnect(btn) {
+  btn.disabled = true;
+  const r = await post('/api/stopalert/connect', {}).catch(() => null);
+  btn.disabled = false;
+  if (!r || !r.Ok) { toast(stopAlertText(r && r.Error), true); return; }
+  if (state) state.StopAlertLink = r.Link;
+  syncStopAlert();
+  refresh();
+}
+
+async function stopAlertTest(btn) {
+  btn.disabled = true;
+  const r = await post('/api/stopalert/test', {}).catch(() => null);
+  btn.disabled = false;
+  toast(stopAlertText(r && r.Code), !(r && r.Ok));
+}
+
+async function stopAlertUnlink(btn) {
+  btn.disabled = true;
+  const r = await post('/api/stopalert/unlink', {}).catch(() => null);
+  btn.disabled = false;
+  toast(stopAlertText(r && r.Code), !(r && r.Ok));
+  refresh();
+}
+
 function telegramConnect() {
   const html = telegramConnectInner();
   return `<div class="tg-connect" data-html="${esc(html)}">${html}</div>`;
@@ -5842,6 +6048,7 @@ async function refresh() {
     syncWelcome();
     syncTelegramConnect();
     syncDiscordConnect();
+    syncStopAlert();
     if (tutorialSignin) renderSignin();
     if (view === 'phone') loadPhone();
 

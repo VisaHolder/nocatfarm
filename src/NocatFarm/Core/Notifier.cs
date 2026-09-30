@@ -88,6 +88,7 @@ public static partial class Notifier {
 		Topic.Updates => G.SendUpdates,
 		Topic.Installs => G.SendInstalls,
 		Topic.Summary => G.SendDailySummary,
+		Topic.Weekly => G.WeeklyReport,   // switching the weekly report on is asking for it - it has no separate "send" switch
 		Topic.Social => G.SendComments,
 		Topic.Achievements => G.SendAchievements,
 		Topic.Rep4Rep => G.SendRep4Rep,
@@ -175,6 +176,7 @@ public static partial class Notifier {
 		Topic.Updates => (new Said("Update"), 0x8B5CF6),
 		Topic.Installs => (new Said("Installing"), 0x8B5CF6),
 		Topic.Summary => (new Said("Daily summary"), 0xC8C8C8),
+		Topic.Weekly => (new Said("Weekly report"), 0xC8C8C8),
 		Topic.Social => (new Said("Friends & comments"), 0x1ABC9C),
 		Topic.Achievements => (new Said("Achievements"), 0xF1C40F),
 		Topic.Rep4Rep => (new Said("rep4rep"), 0x95A5A6),
@@ -239,7 +241,7 @@ public static partial class Notifier {
 			(_, int colour) = Look(b.Topic);
 			// Escaped: a line can be a stranger's words - a profile comment "[free case](https://...)" came up as a link
 			// with any text they liked on it. Cut before the code block is closed, so a long summary keeps its closing ```.
-			string description = b.Topic == Topic.Summary
+			string description = b.Topic is Topic.Summary or Topic.Weekly
 				? "```\n" + Fit(string.Join('\n', b.Lines).Replace("```", "`​``", StringComparison.Ordinal), 3900) + "\n```"
 				: Fit(string.Join('\n', Capped(b, 15).Select(static l => "◆ " + Md(l))), 4000);
 			string title = Title(b);
@@ -418,7 +420,7 @@ public static partial class Notifier {
 	/// halved an &amp;amp;) - Telegram turns the whole message down as HTML it can't read, so none of it arrived.
 	/// </remarks>
 	internal static string TelegramPart(Block b) {
-		bool summary = b.Topic == Topic.Summary;
+		bool summary = b.Topic is Topic.Summary or Topic.Weekly;
 		string head = $"<code>// {Html(Look(b.Topic).Label.ToString().ToUpperInvariant())}</code>"
 			+ (!summary && (Account(b) is { } a) ? " · <b>" + Html(a) + "</b>" : "") + "\n";
 		int room = 3900 - head.Length - (summary ? "<pre></pre>".Length : 0);

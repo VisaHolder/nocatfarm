@@ -56,6 +56,23 @@ This part is for farm accounts. Human-mode accounts don't have it.
 *Games to idle* (`play myaccount 730, 440`, or `play myaccount none` to clear it) takes up to 32 games, which play
 for playtime once the cards are done. Store links work as well as numbers.
 
+**More than 32 games.** Steam plays 32 games at once (31 with a custom name). Two settings, both off by default,
+go past that:
+
+- *Idle my whole library* adds every game the account owns after the ones in *Games to idle*. It skips *Never touch
+  these*, refundable games, and family-shared games unless *Include family-shared games* is on.
+- *Rotate the idle list* idles one batch at a time and moves to the next batch every 24 hours (*Rotate every*,
+  under Show advanced). Games with an hour target and the least played go first, so every game gets hours over the
+  days. It remembers where it is across restarts. With it on, *Games to idle* can hold more than 32 too.
+
+Card farming still goes first; the rotation carries on when the cards are done. The account card shows e.g.
+"idling 31 of 214 games - next batch at 14:10".
+
+```
+rotation myaccount        # which batch, when the next one starts, and what's in it
+rotation myaccount next   # move on to the next batch now
+```
+
 *Show as* (`name myaccount nocat.lol`) makes friends see that name instead of the real game, while the real games
 still count playtime. `name myaccount off` removes it, and *Keep the name while farming* (on) keeps it showing
 during card farming too. Now and then Steam drops the name and shows the real game; the account card then warns

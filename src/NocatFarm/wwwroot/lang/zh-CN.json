@@ -920,7 +920,6 @@
     "resuming the grind of {0} - {1} left": "继续刷 {0} —— 还剩 {1}",
     "stopping - finishing up, logging off in about {0}s": "正在停止 —— 收尾中，约 {0} 秒后登出",
     "{0} licence(s) known": "已知 {0} 个许可",
-    "joined group {0}": "已加入群组 {0}",
     "inventory now {0}{1} across {2} game(s), {3} item(s) still to price": "库存现为 {0}{1}，分布在 {2} 款游戏中，还有 {3} 件待估价",
     "the market answered {0} - pausing price lookups until {1}": "市场返回 {0} —— 暂停价格查询至 {1}",
     "the store answered {0} - pausing game lookups until {1}": "商店返回 {0} —— 暂停游戏查询至 {1}",
@@ -1775,9 +1774,7 @@
     "stopped - signed out after {0} achievement(s) in {1} game(s)": "已停止 - 在 {1} 款游戏解锁 {0} 个成就后登出",
     "done - nothing it can unlock ({0} app(s) checked{1}), Steam sets the rest": "完成 - 没有可自行解锁的（已检查 {0} 个应用{1}），其余由 Steam 设置",
     "auto-update waiting: {0} has {1} offer(s), {2} gift(s) queued": "自动更新等待中：{0} 有 {1} 个报价、{2} 个礼物在排队",
-    "installing {0} by itself - quiet time (Update by itself)": "自动安装 {0} - 空闲时段（自动更新）",
     "{0} waits for bedtime - 'update now' installs it now": "{0} 等待就寝时间 - 'update now' 立即安装",
-    "installing {0} - the accounts are asleep": "正在安装 {0} - 账号都在睡觉",
     "reminder: nocat.farm {0} is out - 'update accept' installs it": "提醒：nocat.farm {0} 已发布 - 'update accept' 安装",
     "reminder: nocat.farm {0} is out - 'update' shows how": "提醒：nocat.farm {0} 已发布 - 'update' 查看方法",
     "nocat.farm {0} is out - 'update accept' installs it": "nocat.farm {0} 已发布 - 'update accept' 安装",
@@ -2069,7 +2066,120 @@
     "'all' means every account in a command - pick another name": "'all' 在命令中表示所有账号 - 请换一个名称",
     "offer sent - confirm it in the Steam app on your phone": "报价已发出 - 请在手机上的 Steam 应用里确认",
     "{0} invited you to play {1}": "{0} 邀请你玩 {1}",
-    "human mode spaces comments out - this account can post the next one from {0}": "人类模式会拉开留言间隔 - 此账户可在 {0} 起发下一条"
+    "human mode spaces comments out - this account can post the next one from {0}": "人类模式会拉开留言间隔 - 此账户可在 {0} 起发下一条",
+    "installing {0} by itself - all clear: {1}": "正在自动安装 {0} - 一切就绪：{1}",
+    "installing {0} - all clear: {1}": "正在安装 {0} - 一切就绪：{1}",
+    "you're playing on {0}": "你正在 {0} 上玩",
+    "you were on {0} a few minutes ago": "你几分钟前还在用 {0}",
+    "{0} is signing in": "{0} 正在登录",
+    "{0} is awake": "{0} 醒着",
+    "{0} asleep": "{0} 在睡觉",
+    "{0} farming": "{0} 在挂卡",
+    "{0} idling": "{0} 在挂机",
+    "nobody playing": "没人在玩",
+    "idling {0} of {1} games - next batch at {2}": "正在挂 {1} 个游戏中的 {0} 个 - 下一批在 {2}",
+    "idle rotation: batch {0} of {1} now, {2} games": "游戏轮换：现在是第 {0} 批（共 {1} 批），{2} 个游戏",
+    "couldn't save the idle rotation: {0}": "无法保存游戏轮换：{0}",
+    "couldn't read the idle rotation - starting it fresh: {0}": "无法读取游戏轮换 - 重新开始：{0}",
+    "all the games it owns": "它拥有的所有游戏",
+    "Idling {0} of {1} at a time - next batch at {2}.": "每次挂 {1} 个中的 {0} 个 - 下一批在 {2}。",
+    "More than fit at once? It idles a batch at a time and moves on every {0}h.": "一次放不下？它每次挂一批，每 {0} 小时换下一批。",
+    "If nocat.farm stops": "nocat.farm 停止时",
+    "the stop alert": "停止提醒",
+    "stop alert: Telegram is no longer linked - press Connect to link it again": "停止提醒：Telegram 已不再关联 - 点“连接”重新关联",
+    "stop alert: linked - Telegram will tell you if nocat.farm stops": "停止提醒：已关联 - nocat.farm 停止时 Telegram 会通知你",
+    "Get a Telegram message if nocat.farm stops": "nocat.farm 停止时收到 Telegram 消息",
+    "nocat.lol's Telegram bot tells you when nocat.farm stops checking in on this PC - a crash, or the PC off or offline - and again when it's back. Closing it yourself or an update doesn't count. It sends only a random number made for this PC, no account names.": "当这台电脑上的 nocat.farm 不再报到（崩溃、电脑关机或断网）时，nocat.lol 的 Telegram 机器人会通知你，恢复时也会再通知一次。你自己关闭或更新不算。只发送为这台电脑生成的一个随机数，不含任何账号名。",
+    "Couldn't reach nocat.lol - is this PC online?": "无法连接 nocat.lol - 这台电脑联网了吗？",
+    "Alerts aren't switched on at nocat.lol yet - try again later.": "nocat.lol 上还没有开启提醒 - 请稍后再试。",
+    "nocat.lol gave an unexpected answer - try again later.": "nocat.lol 返回了意外的结果 - 请稍后再试。",
+    "nocat.lol asked to slow down - try again in a minute.": "nocat.lol 要求放慢速度 - 请一分钟后再试。",
+    "Sent - check Telegram.": "已发送 - 请查看 Telegram。",
+    "Not linked yet - press Connect first.": "尚未关联 - 请先点“连接”。",
+    "Telegram didn't take the message - press Connect to link it again.": "Telegram 没有接收这条消息 - 点“连接”重新关联。",
+    "Unlinked - no more alerts for this PC.": "已取消关联 - 这台电脑不会再有提醒。",
+    "Turn on \"Tell me if nocat.farm stops\" below and save, then press Connect.": "在下方打开“nocat.farm 停止时告诉我”并保存，然后点“连接”。",
+    "Last check-in: {0}": "最后报到：{0}",
+    "Not checked in yet.": "还没有报到。",
+    "Open Telegram": "打开 Telegram",
+    "Press Start in Telegram. The link works once, for 15 minutes - scan the code to open it on your phone.": "在 Telegram 里点“启动”。链接只能用一次，15 分钟内有效 - 扫码可在手机上打开。",
+    "Linked to Telegram.": "已关联 Telegram。",
+    "Unlink": "取消关联",
+    "Not linked to Telegram yet.": "尚未关联 Telegram。",
+    "couldn't read what it learned from your play: {0}": "无法读取从你的玩法中学到的内容：{0}",
+    "couldn't save what it learned from your play: {0}": "无法保存从你的玩法中学到的内容：{0}",
+    "couldn't forget what it learned from your play: {0}": "无法清除从你的玩法中学到的内容：{0}",
+    "a quiet spell - shorter days for a while": "安静期 —— 接下来几天会短一些",
+    "a late one tonight - bed around {0}": "今晚晚睡 —— 约 {0} 睡觉",
+    "noted you playing {0} for {1}": "已记下：你玩了 {0}，共 {1}",
+    "noted you on the account for {0}": "已记下：你在账号上待了 {0}",
+    "seen you play on {0} days - its day now leans toward yours": "已看到你玩了 {0} 天 —— 它的一天现在会向你靠拢",
+    "{0} is playing {1} - joining in for a sitting": "{0} 正在玩 {1} —— 一起玩一个时段",
+    "trying out {0} - it's new here": "正在尝试 {0} —— 这里的新游戏",
+    "couldn't read what friends are playing: {0}": "无法读取好友在玩什么：{0}",
+    "couldn't look for new games: {0}": "无法查找新游戏：{0}",
+    "learns from how you play": "会学习你的玩法",
+    "tries new games out": "会尝试新游戏",
+    "has quiet spells and late nights": "有安静期和晚睡夜",
+    "sometimes joins a friend": "有时会加入朋友",
+    "It also {0}.": "另外，它{0}。",
+    "backup saved: {0}": "备份已保存：{0}",
+    "that file is too big to be a nocat.farm backup": "这个文件太大，不像是 nocat.farm 的备份",
+    "that zip has far too many files to be a nocat.farm backup": "这个 zip 里的文件太多，不像是 nocat.farm 的备份",
+    "refused: {0} points outside the config folder": "已拒绝：{0} 指向配置文件夹之外",
+    "refused: {0} is in the zip twice": "已拒绝：{0} 在 zip 里出现了两次",
+    "refused: {0} isn't something a nocat.farm backup holds": "已拒绝：{0} 不是 nocat.farm 备份里该有的东西",
+    "refused: {0} is too big": "已拒绝：{0} 太大",
+    "refused: the files in it add up to too much": "已拒绝：里面的文件加起来太大",
+    "that isn't a zip nocat.farm can read": "这不是 nocat.farm 能读的 zip",
+    "that isn't a nocat.farm backup - it has no manifest": "这不是 nocat.farm 的备份 - 没有清单文件",
+    "that backup is from a newer nocat.farm ({0}) - update first": "这个备份来自更新版本的 nocat.farm（{0}）- 请先更新",
+    "restoring a backup from {0} - stopping every account": "正在恢复 {0} 的备份 - 停止所有账户",
+    "backup restored: {0} file(s) - what was there before is in {1}": "备份已恢复：{0} 个文件 - 原来的内容在 {1}",
+    "Restored {0} file(s). The accounts are starting again.": "已恢复 {0} 个文件。账户正在重新启动。",
+    "Weekly report": "每周报告",
+    "the PC just woke up": "电脑刚从睡眠中醒来",
+    "hasn't banked any hours for {0} - it's {1}; it needs you": "已经 {0} 没有累计时长 - 当前{1}；需要你处理",
+    "hasn't banked any hours for {0} - it's {1}; restarted {2} ago, so not again": "已经 {0} 没有累计时长 - 当前{1}；{2} 前已重启过，这次不再重启",
+    "hasn't banked any hours for {0} - it's {1}; restarting it": "已经 {0} 没有累计时长 - 当前{1}；正在重启",
+    "still hasn't banked any hours for {0} - it's {1}; not restarting it again - have a look": "仍然 {0} 没有累计时长 - 当前{1}；不再重启 - 请看一下",
+    "you're playing on it": "你正在用它玩",
+    "Steam's weekly maintenance": "Steam 每周维护",
+    "human mode is resting": "真人模式在休息",
+    "nothing to play": "没有可玩的游戏",
+    "stuck signing in": "卡在登录",
+    "disconnected and not coming back": "已断开且没有重连",
+    "waiting for a Steam Guard code or password": "在等 Steam Guard 验证码或密码",
+    "failed: {0}": "失败：{0}",
+    "signed in but not playing anything": "已登录但什么都没在玩",
+    "  {0} {1} banked (last week {2}) · {3} card(s) · {4} listed · value {5} · {6} comment(s)": "  {0} 累计 {1}（上周 {2}）· {3} 张卡 · 上架 {4} · 价值 {5} · {6} 条评论",
+    "  {0} {1} banked (last week {2}) · {3} card(s) · {4} listed · value {5}": "  {0} 累计 {1}（上周 {2}）· {3} 张卡 · 上架 {4} · 价值 {5}",
+    "  fleet: {0} banked (last week {1}) · {2} card(s) · {3} listed · value {4} · {5} comment(s)": "  全部：累计 {0}（上周 {1}）· {2} 张卡 · 上架 {3} · 价值 {4} · {5} 条评论",
+    "  fleet: {0} banked (last week {1}) · {2} card(s) · {3} listed · value {4}": "  全部：累计 {0}（上周 {1}）· {2} 张卡 · 上架 {3} · 价值 {4}",
+    "backup downloaded from the dashboard ({0} KB)": "已从控制面板下载备份（{0} KB）",
+    "dashboard: a backup was refused - {0}": "控制面板：一个备份被拒绝 - {0}",
+    "that restore has run out - pick the file again": "这次恢复已过期 - 请重新选择文件",
+    "Backup & restore": "备份与恢复",
+    "One zip with your settings, every account, saved logins, authenticators, history and progress. Logs and caches are left out.": "一个 zip，包含你的设置、每个账户、保存的登录、验证器、历史和进度。日志和缓存不包括在内。",
+    "Logins inside stay encrypted, as they are on disk. A backup made on Windows only opens them on the same PC and Windows user - restored anywhere else, each account asks for its password once. Keep the zip private: it signs in to your accounts.": "里面的登录信息和磁盘上一样保持加密。在 Windows 上做的备份只能在同一台电脑、同一个 Windows 用户下打开 - 在别处恢复时，每个账户会问一次密码。请妥善保管这个 zip：它能登录你的账户。",
+    "Download a backup": "下载备份",
+    "Restore a backup": "恢复备份",
+    "Saved {0}": "已保存 {0}",
+    "settings": "设置",
+    "account settings": "账户设置",
+    "saved logins": "保存的登录",
+    "authenticators": "验证器",
+    "login key": "登录密钥",
+    "history days": "历史天数",
+    "progress and totals": "进度和总计",
+    "Restore this backup?": "要恢复这个备份吗？",
+    "Made {0} by nocat.farm {1} on {2}.": "{0} 由 nocat.farm {1} 在 {2} 上创建。",
+    "Made on another PC: its saved logins may not open here, so those accounts ask for their passwords again.": "在另一台电脑上创建：保存的登录可能在这里打不开，那些账户会重新询问密码。",
+    "Every account stops, these files replace the ones here, and the accounts start again. Accounts not in the backup are left alone, and what gets replaced is saved in the backups folder first.": "所有账户会停止，这些文件替换这里的文件，然后账户重新启动。备份里没有的账户保持不变，被替换的内容会先保存到 backups 文件夹。",
+    "Restore": "恢复",
+    "Restoring...": "正在恢复...",
+    "── weekly report · {0} to {1} ──": "── 每周报告 · {0} 至 {1} ──",
+    "banking hours again": "又开始累计时长了"
   },
   "settings": {
     "WebEnabled": {
@@ -3072,6 +3182,68 @@
     "SendAroundHour": {
       "label": "...大约在",
       "tip": "每天发送的钟点，0 到 23 - 比如 4 表示凌晨 4 点左右。在那个小时里的随机一分钟、在「每隔多久发送物品」允许的日子发出。-1 = 不定时：从开启时起每隔这么多小时。"
+    },
+    "IdleWholeLibrary": {
+      "label": "挂我的整个游戏库",
+      "tip": "在“挂时长的游戏”之后，挂这个账号拥有的每一个游戏。会跳过“永不碰这些”里的游戏、还能退款的游戏和家庭共享的游戏（除非打开了“包含家庭共享的游戏”）。Steam 一次最多挂 32 个，所以打开“轮换挂机列表”，让每个游戏都轮得到。"
+    },
+    "RotateIdleGames": {
+      "label": "轮换挂机列表",
+      "tip": "游戏多于 Steam 一次能挂的数量（32 个，有自定义名称时 31 个）时，每次挂一批，隔一段时间换下一批，让每个游戏都能涨时长。有时长目标的游戏和玩得最少的游戏优先。"
+    },
+    "RotateEveryHours": {
+      "label": "每隔多久轮换",
+      "tip": "每一批挂多少小时后换下一批。只在打开“轮换挂机列表”时使用。"
+    },
+    "StopAlert": {
+      "label": "nocat.farm 停止时告诉我",
+      "tip": "当这台电脑上的 nocat.farm 停止时（崩溃、电脑关机或断网）收到一条 Telegram 消息。它每 5 分钟向 nocat.lol 报到一次，只发送为这台电脑生成的一个随机数：没有账号名，也没有别的。你自己关闭或更新不算。打开后点“连接”，再在 Telegram 里点“启动”。"
+    },
+    "StopAlertPcName": {
+      "label": "这台电脑的名字",
+      "tip": "Telegram 消息里用的名字，比如“my PC 上的 nocat.farm 自 14:05 起没有报到”。在多台电脑上用 nocat.farm 时很方便。"
+    },
+    "StopAlertMinutes": {
+      "label": "提醒时间",
+      "tip": "多少分钟没有报到后发送消息。它每 5 分钟报到一次，消息最多可能比这个时间晚 10 分钟。"
+    },
+    "LearnFromOwner": {
+      "label": "学习我的玩法",
+      "tip": "记下你自己在这个账号上什么时候玩、玩哪些游戏。攒够 7 天后，它会让自己的一天向你靠拢：何时上线、何时睡觉，以及时间在“游戏与频率”里各游戏之间怎么分。它从不添加不在该列表里的游戏，玩多久仍由时长设置决定。habits 命令可以查看它学到了什么。",
+      "choices": "0 关 | 1 一点 | 2 很多"
+    },
+    "NewGamesFirst": {
+      "label": "新游戏开始时多玩",
+      "tip": "刚进入游戏库的游戏（购买、赠送或免费）会在 3 到 10 天里多得几个时段，并逐日减少，就像在尝试新东西。仍可退款的游戏、黑名单或家庭共享的游戏，以及你其他账号正在运行的游戏都不会碰。"
+    },
+    "LongerRhythms": {
+      "label": "安静期和晚睡夜",
+      "tip": "每月一两次，它会有 2 到 5 天的安静期，每天明显更短；偶尔周五或周六晚上会比平时玩得更晚。休息日和时长设置照样生效。human week 可以看到。"
+    },
+    "JoinFriends": {
+      "label": "有时玩朋友在玩的游戏",
+      "tip": "当某个 Steam 好友在玩这个账号拥有的游戏时，它偶尔会在下一个时段选那个游戏，每天最多两次，并且只在醒着时。你自己的账号及其正在运行的游戏会被忽略，黑名单和可退款的游戏也一样。"
+    },
+    "StuckAlarm": {
+      "label": "重启卡住的账户",
+      "tip": "如果一个本该在玩的账户几个小时都没有累计任何时长 - 断开、卡在登录、失败或者游戏掉了 - 它会告诉你（Telegram 和 Discord 上也会）并把这个账户重启一次。你停止、暂停或正在用它玩的账户，以及真人模式正在睡觉、今天已结束或休息日的账户，永远不会触发。每个账户每 12 小时最多重启一次。"
+    },
+    "StuckAlarmHours": {
+      "label": "多久算卡住",
+      "tip": "本该累计却没有累计时长，过了多少小时算作账户卡住。"
+    },
+    "WeeklyReport": {
+      "label": "每周报告",
+      "tip": "每周一次，把每个账户的这一周和上一周并排列出：累计时长、掉落的卡、上架出售的卡、库存价值和 rep4rep 评论。写进日志，设置了的话也发到 Telegram 和 Discord。随时输入 report week 查看。"
+    },
+    "WeeklyReportDay": {
+      "label": "每周报告 · 星期",
+      "tip": "每周报告在星期几到来。它涵盖之前的七天。",
+      "choices": "1 星期一 | 2 星期二 | 3 星期三 | 4 星期四 | 5 星期五 | 6 星期六 | 0 星期日"
+    },
+    "WeeklyReportHour": {
+      "label": "每周报告 · 小时",
+      "tip": "每周报告到来的小时，24 小时制。"
     }
   }
 }

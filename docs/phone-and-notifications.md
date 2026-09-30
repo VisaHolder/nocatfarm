@@ -84,6 +84,8 @@ switches, under Show advanced:
 | Send achievements | off |
 | Send rep4rep comments | off |
 
+The weekly report has no switch here: when *Weekly report* is on, it's sent too.
+
 A new comment on one of your profiles says who wrote it and what it says, like *new comment from AEZAKMI: "+rep
 pretty good player"*. One Steam is still checking says so instead.
 
@@ -117,6 +119,30 @@ are under Show advanced:
 - *Button 1* and *Button 2*: pick *Get nocat.farm*, an account's Steam page, *Your own link* (a box for the button's
   text and one for where it goes), or *none*. Discord doesn't show you your own buttons, but other people see them.
 
+## If nocat.farm stops
+
+Turn on **Tell me if nocat.farm stops** (*Global settings → If nocat.farm stops*, off by default) and you get a
+Telegram message when nocat.farm stops on that PC: it crashed, the PC turned off, or it lost its internet. You get
+one message, and one more when it's back. Closing it yourself or an update restart doesn't count.
+
+1. Turn it on and save.
+2. Press **Connect**. You get a Telegram link and a QR code (scan it to open the link on your phone). The link works
+   once, for 15 minutes.
+3. Press **Start** in Telegram. The dashboard then says *Linked to Telegram*.
+
+This uses nocat.lol's own bot, so you don't need your own Telegram bot for it. Every 5 minutes nocat.farm checks in
+with nocat.lol and sends only a random number made for this PC. No account names or anything else leaves your PC.
+
+| Setting | Default | What it does |
+|---|---|---|
+| *Tell me if nocat.farm stops* | off | Checks in every 5 minutes while on |
+| *Call this PC* | my PC | The name in the message: "nocat.farm on my PC hasn't checked in since about 14:05" |
+| *Alert after* (Show advanced) | 20 minutes | Minutes without a check-in before the message. It can come up to 10 minutes later |
+
+`alert` says whether it's on and linked, and when it last checked in. `alert on` turns it on and gives the Telegram
+link, `alert link` gives a fresh link, `alert test` sends a test message, `alert unlink` unlinks this PC and
+`alert off` turns it off. In Telegram, `/status` shows your linked PCs and `/stop` unlinks all of them.
+
 ## Daily summary
 
 *Daily summary in the log* (on) writes a summary at 09:30 (*Summary time · hour* and *· minute*). For each account
@@ -124,6 +150,32 @@ it gives hours banked, cards and rep4rep comments in the last 24 hours, with a r
 accounts together. Hours count every running game, the way Steam counts them: 8 games for 24 hours is 192 hours. If the PC was off at that time, it's written on the next start. With *Send the daily summary* on,
 it goes to Discord and Telegram too. `stats` shows the same 24-hour figures any time, followed by cards and comments
 by hour.
+
+## Weekly report
+
+*Weekly report* (*Global settings → Logging*, off) comes once a week - Monday at 10:00 unless you change *Weekly
+report · day* and *· hour*. For each account it gives the last seven days next to the seven before: hours banked,
+cards dropped, cards put up for sale, how much the inventory value went up or down, and rep4rep comments if rep4rep
+is on, then a line for all accounts. It's written in the log and sent to Discord and Telegram when they're set up.
+If the PC was off that day, it comes when it's next on. `report week` shows it any time; `report` alone shows the
+daily summary.
+
+"Put up for sale" is what nocat.farm listed. Steam doesn't say when a listing sells, so sales aren't counted.
+
+## Stuck accounts
+
+*Restart a stuck account* (*Global settings → All accounts*, on) watches for an account that should be playing but
+hasn't banked any hours for 3 hours (*Stuck after*): disconnected and not coming back, stuck signing in, a sign-in
+Steam turned down, or its games gone. It says so in the log and on Discord and Telegram (with *Send problems that
+need you* on), like *kylro: hasn't banked any hours for 3h00m - it's disconnected and not coming back; restarting
+it*, and restarts that account once. If it's still stuck 3 hours later it says so again, but doesn't restart it
+again. At most one restart per account every 12 hours. An account waiting for a Steam Guard code is never
+restarted - it's only said.
+
+It never counts time when nothing should run: an account you stopped, disabled or paused, you playing on it, human
+mode asleep (with nothing banking overnight), done for the day or on a day off, a robot with nothing to play,
+Steam's weekly maintenance (Tuesday evening, US time), or the first minutes after your PC wakes from sleep. `stuck`
+shows each account as the alarm sees it.
 
 ## Steam groups
 

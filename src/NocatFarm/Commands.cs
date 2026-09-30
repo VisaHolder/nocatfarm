@@ -52,6 +52,7 @@ public static partial class Commands {
 		new("remove", "<account>", GroupAccounts, "Delete an account and its stored login token.", "delete"),
 		new("enable", "<account>", GroupAccounts, "Let this account log in again."),
 		new("disable", "<account>", GroupAccounts, "Keep the account configured but never log it in."),
+		new("stuck", "", GroupAccounts, "The stuck-account alarm: when each account last banked hours, whether it's counting as stuck (and why not, when it isn't), and any automatic restart. The StuckAlarm setting switches it on or off.", "alarm"),
 
 		new("play", "<account> <appIDs|none>", GroupPlaying, "Set the games this account idles for playtime."),
 		new("name", "<account> [text|off]", GroupPlaying, "Custom non-Steam game name shown instead of the real game. No text shows the current one; 'off' clears it."),
@@ -60,8 +61,10 @@ public static partial class Commands {
 		new("grind", "<account|all> <appID> <hours> | <account> off", GroupPlaying,
 			"Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs."),
 		new("human", "[account] [week|reroll]", GroupPlaying, "What human mode is doing today, and what it played. Add 'week' to see the next seven days, or 'reroll' to throw today's plan away and roll a fresh one from the current settings."),
+		new("habits", "[account] [forget]", GroupPlaying, "What human mode has learned from you playing on the account yourself - days seen, the hours you're usually on, your top games - and whether \"Learn from how I play\" is using it yet. 'habits <account> forget' wipes it and it starts learning again."),
 		new("wake", "<account>", GroupPlaying, "Wake a sleeping human-mode account and start its day now. Bed time is unchanged.", "wakeup|skipsleep"),
 		new("hours", "<account>", GroupPlaying, "How the account's hour targets are going - hours so far, what's left, and the pace needed to make a date."),
+		new("rotation", "<account> [next]", GroupPlaying, "The idle rotation: whether it's on, how many games are on the list, which batch is idling and when the next one takes over, and a look at the next batch. 'next' moves on to the next batch now."),
 		new("selfcheck", "[account]", GroupPlaying, "Does a human-mode account look like a bot? A score out of 100 from what other people can see - hours on the profile, what its status shows, comments - with the setting that fixes each tell. Boost accounts are left out unless you name one.", "tells"),
 
 		new("cards", "[account]", GroupCards, "What is still left to farm, and about how long it will take."),
@@ -108,14 +111,17 @@ public static partial class Commands {
 		new("config", "[account] [all]", GroupSettings, "Show the settings and their current values. Add 'all' to include the advanced ones."),
 		new("set", "[account] <key> <value>", GroupSettings, "Change a setting. Without an account name it changes a global one."),
 		new("reload", "", GroupSettings, "Re-read every config file from disk."),
+		new("backup", "", GroupSettings, "Save a backup zip of your settings, accounts, saved logins, authenticators and history into the backups folder next to config, and say where. Restoring one is done in the dashboard: Settings, Backup & restore."),
 		new("import", "<asf|ime|idlemaster|hourboostr|singleboostr|sgi|steamidler|auto> [path] [force]", GroupSettings, "Bring accounts and settings across from another idler - ArchiSteamFarm login tokens and all."),
 
 		new("log", "[count|folder]", GroupOther, "The last few log lines. 'log folder' opens the folder the log files are in, on this PC.", "logs"),
+		new("report", "[week]", GroupOther, "The daily summary now - each account's last 24 hours. 'report week' is the weekly report: the last seven days next to the seven before - hours banked, cards, cards listed, inventory value, comments.", "weekly"),
 		new("stats", "[hours]", GroupOther, "Each account's last 24 hours - hours banked, cards, comments, totals - then cards dropped and comments posted, by hour."),
 		new("notify", "[test]", GroupOther, "Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now."),
+		new("alert", "[on|off|link|test|unlink]", GroupOther, "Tell me if nocat.farm stops: a Telegram message from nocat.lol's bot when this copy stops checking in (a crash, the PC off or offline) - not when you close it. On its own it says whether it's on, linked, and when it last checked in. 'alert on' switches it on and gives the Telegram link, 'alert link' gives a fresh link (press Start in Telegram), 'alert test' sends a test message, 'alert unlink' unlinks this PC, 'alert off' stops checking in."),
 		new("plugins", "", GroupOther, "Which plugins are loaded, and where they came from."),
 		new("tutorial", "[topic]", GroupOther, "Getting started, in order, ticking off what you have already done.", "guide|setup"),
-		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does.", "?|h"),
+		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does. Only know how it starts? 'help rot' lists every command and setting starting with \"rot\".", "?|h"),
 		new("screen", "off", GroupOther, "Turns this computer's screens off now, to save power - nocat.farm keeps running. Moving the mouse or pressing a key turns them back on. Works from Telegram and Discord too.", "monitor|display"),
 		new("theme", "[dark|light]", GroupOther, "Switch the dashboard between the dark and light themes. Without an argument it says which is on.", "dark|light"),
 		new("mini", "[on|off]", GroupOther, "Shrink the window to a small panel of your accounts - what each is doing, start and stop, the dashboard - or back to the full window."),
@@ -219,7 +225,7 @@ public static partial class Commands {
 
 	/// <summary>Commands where a bare verb sensibly means "this account", rather than "all of them".</summary>
 	private static bool DefaultsToThisBot(string verb) =>
-		verb is "status" or "s" or "pause" or "resume" or "start" or "stop" or "cards" or "config" or "human" or "2fa" or "guard";
+		verb is "status" or "s" or "pause" or "resume" or "start" or "stop" or "cards" or "config" or "human" or "habits" or "2fa" or "guard";
 
 	/// <summary>
 	/// Commands a Steam-chat master can't give: the app's own settings and secrets, the dashboard and its way in from the
@@ -227,7 +233,7 @@ public static partial class Commands {
 	/// </summary>
 	internal static bool SteamChatRefuses(string command) =>
 		command is "set" or "anywhere" or "dashboard" or "unlock" or "update" or "import" or "redeem" or "keys" or "answer"
-			or "add" or "reload" or "plugins" or "notify" or "screen" or "match" or "theme" or "mini";
+			or "add" or "reload" or "plugins" or "notify" or "alert" or "screen" or "match" or "theme" or "mini";
 
 	/// <summary>
 	/// Whether a command sent to <paramref name="botName"/> over Steam chat names another account, or all of them - in the
@@ -330,12 +336,14 @@ public static partial class Commands {
 				"grind" => Grind(mgr, rest),
 				"drops" => await DropsAsync(mgr, rest).ConfigureAwait(false),
 				"hours" => Hours(mgr, rest),
+				"rotation" => Rotation(mgr, rest),
 				"offers" => await OffersAsync(mgr, rest).ConfigureAwait(false),
 				"bans" => await BansAsync(mgr, rest).ConfigureAwait(false),
 				"trade" => await TradeAsync(mgr, rest).ConfigureAwait(false),
 				"levelup" or "lvlup" => LevelUp(mgr, rest),
 				"selfcheck" or "tells" => await SelfCheckAsync(mgr, rest).ConfigureAwait(false),
 				"human" => Human(mgr, rest),
+				"habits" => Habits(mgr, rest),
 				"wake" or "wakeup" or "skipsleep" => Wake(mgr, rest),
 				"redeem" => await RedeemAsync(mgr, rest).ConfigureAwait(false),
 				"send" or "loot" => await SendAsync(mgr, rest).ConfigureAwait(false),
@@ -362,6 +370,7 @@ public static partial class Commands {
 				"privacy" => await PrivacyAsync(mgr, rest).ConfigureAwait(false),
 				"joingroup" => await JoinGroupAsync(mgr, rest).ConfigureAwait(false),
 				"notify" => await NotifyAsync(rest).ConfigureAwait(false),
+				"alert" => await AlertAsync(mgr, rest).ConfigureAwait(false),
 				"cards" => Cards(mgr, rest),
 				"rep4rep" or "r4r" => await Rep4RepAsync(mgr, rest).ConfigureAwait(false),
 				"add" => await AddAsync(mgr, rest).ConfigureAwait(false),
@@ -374,6 +383,10 @@ public static partial class Commands {
 				"reload" => await ReloadAsync(mgr).ConfigureAwait(false),
 				"log" or "logs" => Logs(rest),
 				"stats" => StatsText(rest),
+				"report" => Report(mgr, rest),
+				"weekly" => WeeklyReport.Text(mgr),
+				"stuck" or "alarm" => StuckWatch.Text(mgr),
+				"backup" => BackupNow(),
 				"answer" => Prompt.Answer(string.Join(' ', rest)) ? "answered" : "nothing is waiting for an answer",
 				"theme" or "dark" or "light" => Theme(cmd, rest),
 				"screen" or "monitor" or "display" => await ScreenAsync(rest).ConfigureAwait(false),
@@ -835,6 +848,72 @@ public static partial class Commands {
 		return sb.ToString().TrimEnd();
 	}
 
+	/// <summary>
+	/// 'help' with only the start of a name: every command and every setting that begins with it. "help rot" used to
+	/// say "nothing called 'rot'" - now it lists rotation and "Rotate the idle list", and one command on its own is
+	/// explained in full as if it had been typed out.
+	/// </summary>
+	internal static string HelpStartingWith(string start) {
+		const int Most = 15;
+
+		if (start.Length == 0) {
+			return "Type 'help' for commands, or 'config' to list settings.";
+		}
+
+		bool Begins(string s) => s.StartsWith(start, StringComparison.OrdinalIgnoreCase);
+
+		List<CommandDef> commands = [.. All.Where(c => Begins(c.Name) || c.Aliases.Split('|', StringSplitOptions.RemoveEmptyEntries).Any(Begins))];
+
+		// A setting by its name (RotateIdleGames) or by any word of what the dashboard calls it ("Rotate the idle list").
+		List<SettingDef> settings = [.. Settings.Global.Concat(Settings.Bot)
+			.Where(d => Begins(d.Name) || d.Label.Split([' ', '-', '·', '.', '(', ')', '"'], StringSplitOptions.RemoveEmptyEntries).Any(Begins))
+			.DistinctBy(static d => d.Name)];
+
+		if ((commands.Count == 1) && (settings.Count == 0)) {
+			return $"{commands[0].Display} {commands[0].Args}\n  {commands[0].Help}";
+		}
+
+		if ((commands.Count == 0) && (settings.Count == 0)) {
+			return $"Nothing starts with '{start}'. Type 'help' for commands, or 'config' to list settings.";
+		}
+
+		StringBuilder sb = new();
+
+		if (commands.Count > 0) {
+			sb.AppendLine($"Commands starting with '{start}':");
+
+			foreach (CommandDef c in commands.Take(Most)) {
+				string left = (c.Display + " " + c.Args).TrimEnd();
+				string what = c.Help.Length > 70 ? c.Help[..67] + "..." : c.Help;
+				sb.AppendLine(left.Length > 34 ? $"  {left}\n  {new string(' ', 34)}{what}" : $"  {left,-34}{what}");
+			}
+
+			if (commands.Count > Most) {
+				sb.AppendLine($"  ...and {commands.Count - Most} more - type a little more of it");
+			}
+		}
+
+		if (settings.Count > 0) {
+			if (commands.Count > 0) {
+				sb.AppendLine();
+			}
+
+			sb.AppendLine($"Settings starting with '{start}':");
+
+			foreach (SettingDef d in settings.Take(Most)) {
+				sb.AppendLine($"  {d.Name,-34}{d.Label}");
+			}
+
+			if (settings.Count > Most) {
+				sb.AppendLine($"  ...and {settings.Count - Most} more - type a little more of it");
+			}
+		}
+
+		sb.Append("'help <name>' explains one.");
+
+		return sb.ToString();
+	}
+
 	private static string Help(string[] args) {
 		if (args.Length > 0) {
 			// 'help set <key>' and 'help <key>' both explain a setting - the same sentence the dashboard shows.
@@ -865,7 +944,7 @@ public static partial class Commands {
 				return $"{cmd.Display} {cmd.Args}\n  {cmd.Help}";
 			}
 
-			return $"Nothing called '{wanted}'. Type 'help' for commands, or 'config' to list settings.";
+			return HelpStartingWith(wanted.TrimStart('/', '!'));
 		}
 
 		StringBuilder help = new();
@@ -1247,6 +1326,53 @@ public static partial class Commands {
 	/// long it meant to stay there, or how much of the day was left - so there was no way to tell a working
 	/// schedule from a broken one. Now you can read the whole day off one screen.
 	/// </summary>
+	/// <summary>'habits': what "Learn from how I play" has picked up from you, and 'habits account forget' to wipe it.</summary>
+	private static string Habits(BotManager mgr, string[] args) {
+		bool forget = args.Any(static a => a.Equals("forget", StringComparison.OrdinalIgnoreCase));
+		string? name = args.FirstOrDefault(static a => !a.Equals("forget", StringComparison.OrdinalIgnoreCase));
+
+		if (forget && (name == null)) {
+			return "habits <account> forget - say which account's habits to wipe.";
+		}
+
+		List<Bot> bots = name == null
+			? mgr.All.Where(static b => b.Cfg.LegitMode).ToList()
+			: mgr.Get(name) is { } one ? [one] : [];
+
+		if ((name != null) && (bots.Count == 0)) {
+			return NoSuchAccount(mgr, name);
+		}
+
+		if (bots.Count == 0) {
+			return "No account has human mode switched on. Turn it on under Human mode in the settings.";
+		}
+
+		StringBuilder sb = new();
+
+		foreach (Bot bot in bots) {
+			if (BotManager.ModuleOf<HumanMode>(bot) is not { } human) {
+				continue;
+			}
+
+			if (forget) {
+				human.ForgetHabits();
+				sb.AppendLine($"{bot.Name}: forgot everything it learned from you - it starts learning again from now");
+
+				continue;
+			}
+
+			sb.AppendLine($"{bot.Name}  ({bot.Cfg.SteamLogin})");
+
+			foreach (string line in human.HabitsReport()) {
+				sb.AppendLine(line);
+			}
+
+			sb.AppendLine();
+		}
+
+		return sb.ToString().TrimEnd();
+	}
+
 	private static string Human(BotManager mgr, string[] args) {
 		bool week = args.Any(static a => a.Equals("week", StringComparison.OrdinalIgnoreCase));
 		bool reroll = args.Any(static a => a.Equals("reroll", StringComparison.OrdinalIgnoreCase));
@@ -1304,6 +1430,11 @@ public static partial class Commands {
 				sb.AppendLine($"  today       {Fmt.Hm(human.PlayedMinutesToday)} of about {Fmt.Hm(human.TargetMinutesToday)}  ({pct}%)");
 			}
 
+			// Only the extras that are switched on - with none on, this prints exactly what it always did.
+			foreach (string line in human.ExtrasReport()) {
+				sb.AppendLine("  " + line);
+			}
+
 			List<(uint Game, int Minutes)> byGame = human.TodayByGame().ToList();
 
 			if (byGame.Count > 0) {
@@ -1348,7 +1479,7 @@ public static partial class Commands {
 			if (week) {
 				sb.AppendLine("  the week ahead (rolled the same way the real one is, so it's a sample - not a promise):");
 
-				foreach (string line in HumanMode.PreviewWeek(bot.Cfg, human.Rotation)) {
+				foreach (string line in HumanMode.PreviewWeek(bot.Cfg, human.Rotation, bot.Name, bot.Cfg.LearnFromOwner > 0 ? human.LearnedHabits : null)) {
 					sb.AppendLine("                " + line);
 				}
 			}
@@ -2167,6 +2298,59 @@ public static partial class Commands {
 		return $"{bot.Name}:" + Environment.NewLine + string.Join(Environment.NewLine, lines.Select(static l => "  " + l)) + note;
 	}
 
+	private static string Rotation(BotManager mgr, string[] args) {
+		if ((args.Length < 1) || (mgr.Get(args[0]) is not { } bot)) {
+			return args.Length < 1 ? "rotation <account> [next]   the idle rotation, or 'next' to move on to the next batch now" : NoSuchAccount(mgr, args[0]);
+		}
+
+		if (bot.Cfg.LegitMode) {
+			return $"{bot.Name} is in human mode - it plays one game at a time, so there's no idle rotation.";
+		}
+
+		if (BotManager.ModuleOf<Idler>(bot) is not { } idler) {
+			return $"{bot.Name} has no idler running.";
+		}
+
+		string Names(List<uint> apps) =>
+			string.Join(", ", apps.Take(6).Select(static a => GameNames.Of(a))) + (apps.Count > 6 ? $" and {apps.Count - 6} more" : "");
+
+		bool next = (args.Length > 1) && args[1].Equals("next", StringComparison.OrdinalIgnoreCase);
+
+		if (!bot.Cfg.RotateIdleGames) {
+			return $"{bot.Name}: rotation is off (\"Rotate the idle list\"). Turn it on with:  set {bot.Name} RotateIdleGames true";
+		}
+
+		if (next) {
+			idler.MoveOn();
+
+			// Farming, a grind, paused or you on it: the idler isn't the one playing, so the move waits for it.
+			if (bot.IsFarming || bot.Grinding || !bot.CanPlay) {
+				return $"{bot.Name}: it isn't idling right now - it moves on to the next batch as soon as it is.";
+			}
+		}
+
+		// Worked out fresh, not from the last re-assert - the list may have changed since.
+		List<uint> now = idler.Rotating == null ? idler.Plan(DateTime.UtcNow) : idler.Rotating.Now;
+		int slots = IdleRotation.Slots(!string.IsNullOrWhiteSpace(bot.CustomName));
+
+		if (idler.Rotating is not { } r) {
+			return $"{bot.Name}: rotation is on, but all {now.Count} game(s) fit at once ({slots} can play together) - nothing to rotate."
+				+ (bot.Cfg.IdleWholeLibrary && !bot.Library.Ready ? " The library hasn't been read yet." : "");
+		}
+
+		string when = IdleRotation.When(r.MovesAt);
+		string waiting = bot.IsFarming ? Environment.NewLine + "  (farming cards right now - the rotation carries on once the cards are done)"
+			: !bot.CanPlay ? Environment.NewLine + "  (not playing right now - paused, offline or you're on it)" : "";
+
+		return string.Join(Environment.NewLine, [
+			(next ? $"{bot.Name}: moved on. " : $"{bot.Name}: ") + $"rotation on, every {Math.Max(1, bot.Cfg.RotateEveryHours)}h",
+			$"  list:  {r.Total} games" + (bot.Cfg.IdleWholeLibrary ? " (whole library)" : ""),
+			$"  batch: {r.Now.Count} at once, batch {r.Batch} of {r.Batches}, next batch at {when}",
+			$"  now:   {Names(r.Now)}",
+			$"  next:  {Names(r.Next)}"
+		]) + waiting;
+	}
+
 	private static async Task<string> DropsAsync(BotManager mgr, string[] args) {
 		if (args.Length < 1) {
 			return string.Join(Environment.NewLine, [
@@ -2503,6 +2687,66 @@ public static partial class Commands {
 			+ Environment.NewLine + Notifier.DiscordBotState()
 			+ Environment.NewLine + $"Sends: {(sent.Count > 0 ? string.Join(", ", sent) : "nothing")}"
 			+ Environment.NewLine + "'notify test' sends a test message now. Set it up under Settings, Notifications.";
+	}
+
+	/// <summary>
+	/// 'alert': "Tell me if nocat.farm stops" - status, on/off, the Telegram link, a test message, unlink.
+	/// </summary>
+	private static async Task<string> AlertAsync(BotManager mgr, string[] args) {
+		GlobalConfig g = mgr.Global;
+		string what = args.Length > 0 ? args[0].ToLowerInvariant() : "";
+
+		switch (what) {
+			case "off" or "stop" or "false": {
+				// The goodbye before the switch goes off, so this isn't reported as a crash later.
+				await StopAlert.ByeAsync(quitting: false).ConfigureAwait(false);
+				g.StopAlert = false;
+				ConfigStore.SaveGlobal(g);
+				StopAlert.Poke();
+
+				return "Tell me if nocat.farm stops is off - it no longer checks in, and no alert is sent for that. It stays linked; 'alert on' picks up again.";
+			}
+			case "on" or "start" or "true" or "link": {
+				if (!g.StopAlert) {
+					g.StopAlert = true;
+					ConfigStore.SaveGlobal(g);
+					StopAlert.Poke();
+				}
+
+				if ((what != "link") && (StopAlert.Linked == true)) {
+					return "Tell me if nocat.farm stops is on and linked to Telegram.";
+				}
+
+				(string? link, string? error) = await StopAlert.LinkAsync().ConfigureAwait(false);
+
+				return link == null
+					? $"Tell me if nocat.farm stops is on, but no link: {StopAlert.Explain(error)}"
+					: $"Open this and press Start in Telegram (works once, for 15 minutes):{Environment.NewLine}{link}";
+			}
+			case "test":
+				return !g.StopAlert ? "Tell me if nocat.farm stops is off - 'alert on' first."
+					: $"Test message: {StopAlert.Explain(await StopAlert.TestAsync().ConfigureAwait(false))}";
+			case "unlink":
+				return $"Unlink: {StopAlert.Explain(await StopAlert.UnlinkAsync().ConfigureAwait(false))}";
+			case "":
+				break;
+			default:
+				return "alert [on|off|link|test|unlink]";
+		}
+
+		string linked = StopAlert.Linked switch {
+			true => "yes",
+			false => "no - 'alert link' gives the Telegram link",
+			null => g.StopAlert ? "not known yet - it hasn't checked in" : "-"
+		};
+		string last = StopAlert.LastCheckIn is { } at ? $"{at.ToLocalTime():HH:mm} ({(DateTime.UtcNow - at < TimeSpan.FromMinutes(1) ? "just now" : Fmt.Ago(at) + " ago")})" : "never this run";
+
+		return $"Tell me if nocat.farm stops: {(g.StopAlert ? "on" : "off - 'alert on' switches it on")}"
+			+ Environment.NewLine + $"Linked to Telegram: {linked}"
+			+ Environment.NewLine + $"Last check-in: {last}"
+			+ (StopAlert.Problem is { } problem ? Environment.NewLine + $"Problem: {StopAlert.Explain(problem)}" : "")
+			+ Environment.NewLine + $"The message calls this PC \"{StopAlert.PcName(g)}\" and comes after {StopAlert.After(g)} minutes without a check-in."
+			+ Environment.NewLine + "It sends only a random number made for this PC - no account names. 'alert test' sends a test message.";
 	}
 
 	private static async Task<string> JoinGroupAsync(BotManager mgr, string[] args) {
@@ -3426,6 +3670,10 @@ public static partial class Commands {
 				RemoteAccess.Poke();
 
 				break;
+			case "StopAlert" or "StopAlertPcName" or "StopAlertMinutes":
+				StopAlert.Poke();
+
+				break;
 			case "MiniOnTop":
 				if (OperatingSystem.IsWindows()) {
 					Window?.RefreshOnTop();
@@ -3602,6 +3850,29 @@ public static partial class Commands {
 		int n = args.Length > 0 && int.TryParse(args[0], out int parsed) ? Math.Clamp(parsed, 1, 500) : 30;
 
 		return string.Join(Environment.NewLine, Log.Recent(n).Select(static e => $"{e.When:HH:mm:ss}  {e.Source,-12}{e.Text}"));
+	}
+
+	/// <summary>'report' is the daily summary now; 'report week' the weekly one - neither sends anything or moves a baseline.</summary>
+	private static string Report(BotManager mgr, string[] args) {
+		if ((args.Length > 0) && args[0].ToLowerInvariant() is "week" or "weekly" or "w") {
+			return WeeklyReport.Text(mgr);
+		}
+
+		string daily = DailyReport.Summary();
+
+		return daily.Length > 0 ? daily : "Nothing to report yet - no accounts, or nothing banked so far.";
+	}
+
+	/// <summary>'backup': the same zip the dashboard hands out, written next to config. It holds logins, so it says so.</summary>
+	private static string BackupNow() {
+		try {
+			string path = Backup.WriteToFolder();
+			Log.Info(new Said("backup saved: {0}", path));
+
+			return $"Backup saved: {path}{Environment.NewLine}It holds your saved logins - keep it private. Restore it from the dashboard: Settings, Backup & restore.";
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			return $"Couldn't save the backup: {Log.Describe(e)}";
+		}
 	}
 
 	private static string StatsText(string[] args) {

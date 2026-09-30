@@ -143,6 +143,19 @@ public static class Lifetime {
 		}
 	}
 
+	/// <summary>Forget what's in memory and read the files again - after a restore put other ones in their place.
+	/// Not saved first: what's in memory is exactly what the restore replaced.</summary>
+	internal static void Reload() {
+		lock (Gate) {
+			Minutes.Clear();
+			GameMinutes.Clear();
+			_loaded = false;
+			_loadFailed = false;
+		}
+
+		Load();
+	}
+
 	/// <summary>Write the totals out.</summary>
 	/// <remarks>
 	/// Load FIRST, and never write nothing over something.

@@ -222,6 +222,7 @@ public static class Seller {
 				listed++;
 				earned += offer.YouGetCents;
 				up.Add(offer);
+				Stats.Record(Stats.KindListed, bot.Name);
 
 				// Each one the moment it's up, by name and price - the summary only came once the whole batch was done,
 				// by which time the phone had been asking about listings nobody had been told of.

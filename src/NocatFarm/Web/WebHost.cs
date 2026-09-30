@@ -86,6 +86,10 @@ public sealed class WebHost : IAsyncDisposable {
 	private (int Points, int Pending, DateTime At)? _pointsCache;
 	private bool _warnedAboutBalance;
 	private readonly SemaphoreSlim _pointsGate = new(1, 1);
+
+	/// <summary>A checked backup waiting for the page to say yes - one at a time, for a few minutes.</summary>
+	private (string Token, byte[] Bytes, DateTime Until)? _staged;
+	private readonly Lock _restoreGate = new();
 	private DateTime _lastPointsAttempt = DateTime.MinValue;
 
 	public string Url { get; private set; } = "";
@@ -794,6 +798,102 @@ public sealed class WebHost : IAsyncDisposable {
 			});
 		});
 
+		// ── backup & restore ──
+		// The download is a POST, not a link: it holds every saved login, so only this page (never another site sending
+		// the browser here) may ask for it - POSTs are the ones checked for where they came from.
+		app.MapPost("/api/backup", (HttpContext ctx) => Guard(ctx, () => {
+			byte[] zip = Backup.Create();
+			Log.Info(new Said("backup downloaded from the dashboard ({0} KB)", (zip.Length + 1023) / 1024));
+
+			return Results.File(zip, "application/zip", Backup.FileName(DateTime.Now));
+		}));
+
+		// Step one of a restore: the zip is checked and held here for a few minutes, and the page is told what's in it.
+		// Nothing is written until step two, after the page has asked.
+		app.MapPost("/api/restore/check", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			if (ctx.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>() is { IsReadOnly: false } limit) {
+				limit.MaxRequestBodySize = Backup.MaxZipBytes + 1;
+			}
+
+			byte[] bytes;
+
+			try {
+				using MemoryStream ms = new();
+				await ctx.Request.Body.CopyToAsync(ms, ctx.RequestAborted).ConfigureAwait(false);
+				bytes = ms.ToArray();
+			} catch (Exception e) when (e is BadHttpRequestException or IOException) {
+				return Results.Json(new { Ok = false, Error = new Said("that file is too big to be a nocat.farm backup").ToString() });
+			}
+
+			Backup.Inspection check = Backup.Inspect(bytes);
+
+			if (!check.Ok) {
+				Log.Warn(new Said("dashboard: a backup was refused - {0}", check.Error!));
+
+				return Results.Json(new { Ok = false, check.Error });
+			}
+
+			string token = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(16));
+
+			lock (_restoreGate) {
+				_staged = (token, bytes, DateTime.UtcNow.AddMinutes(15));
+			}
+
+			Backup.Manifest m = check.Manifest!;
+
+			return Results.Json(new {
+				Ok = true,
+				Token = token,
+				Created = m.Created,
+				m.Version,
+				m.Machine,
+				m.Windows,
+				check.SameMachine,
+				check.Accounts,
+				Files = check.Files.Count,
+				Kinds = check.Files.GroupBy(static f => Backup.Kind(f) ?? "").ToDictionary(static g => g.Key, static g => g.Count())
+			});
+		});
+
+		// Step two: the page said yes. Every account stops, the files go back and everything starts again.
+		app.MapPost("/api/restore/apply", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			RestoreRequest? body = await ReadJsonAsync<RestoreRequest>(ctx).ConfigureAwait(false);
+			byte[]? bytes = null;
+
+			lock (_restoreGate) {
+				if ((_staged is { } s) && (body?.Token is { Length: > 0 } t) && CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(s.Token), Encoding.UTF8.GetBytes(t))
+					&& (s.Until > DateTime.UtcNow)) {
+					bytes = s.Bytes;
+					_staged = null;
+				}
+			}
+
+			if (bytes == null) {
+				return Results.Json(new { Ok = false, Error = new Said("that restore has run out - pick the file again").ToString() });
+			}
+
+			string passwordBefore = _cfg.WebPassword;
+			string message = await Backup.RestoreAsync(_mgr, bytes).ConfigureAwait(false);
+
+			// A different dashboard password came back with it: everyone else signs in again, this browser carries on.
+			string? fresh = null;
+
+			if (!string.Equals(passwordBefore, _cfg.WebPassword, StringComparison.Ordinal)) {
+				SignOutAll();
+				fresh = string.IsNullOrEmpty(_cfg.WebPassword) ? null : NewSession(ctx);
+			}
+
+			return Results.Json(new { Ok = true, Message = message, Token = fresh });
+		});
+
 		// The Notifications section's test button: one message to each place that's set up, and what happened.
 		app.MapPost("/api/notify/test", async (HttpContext ctx) => {
 			if (!Authorised(ctx)) {
@@ -824,6 +924,41 @@ public sealed class WebHost : IAsyncDisposable {
 			Code = Notifier.HasDiscordBot ? Notifier.NewDiscordCode() : null,
 			Minutes = Notifier.DiscordCodeMinutes
 		})));
+
+		// "Tell me if nocat.farm stops": Connect gets a Telegram link from nocat.lol (shown with a QR code for the phone),
+		// Test asks the site's bot for a test message, Unlink unlinks this PC. Each answers with a code the page translates.
+		app.MapPost("/api/stopalert/connect", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			(string? link, string? error) = await StopAlert.LinkAsync(ctx.RequestAborted).ConfigureAwait(false);
+
+			return Results.Json(new { Ok = link != null, Link = link, Error = error });
+		});
+
+		app.MapGet("/api/stopalert/qr.svg", (HttpContext ctx) => Guard(ctx, () =>
+			StopAlert.LinkUrl is { } link ? Results.Text(Core.QrPicture.Svg(link), "image/svg+xml") : Results.NotFound()));
+
+		app.MapPost("/api/stopalert/test", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			string code = await StopAlert.TestAsync(ctx.RequestAborted).ConfigureAwait(false);
+
+			return Results.Json(new { Ok = code == "sent", Code = code });
+		});
+
+		app.MapPost("/api/stopalert/unlink", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			string code = await StopAlert.UnlinkAsync(ctx.RequestAborted).ConfigureAwait(false);
+
+			return Results.Json(new { Ok = code == "done", Code = code });
+		});
 
 		app.MapPost("/api/prompt", async (HttpContext ctx) => {
 			if (!Authorised(ctx)) {
@@ -1978,6 +2113,13 @@ public sealed class WebHost : IAsyncDisposable {
 			UpdateFailed = SelfUpdate.LastFailure,
 			TelegramConnectLink = Notifier.TelegramConnectLink,
 			TelegramConnected = Notifier.TelegramConnected,
+			// "Tell me if nocat.farm stops": the switch, whether a Telegram chat is linked, the last check-in, and a problem
+			// code the page translates (unreachable, notsetup, site, busy).
+			StopAlertOn = _mgr.Global.StopAlert,
+			StopAlertLinked = StopAlert.Linked,
+			StopAlertLastCheckIn = StopAlert.LastCheckIn,
+			StopAlertProblem = StopAlert.Problem,
+			StopAlertLink = StopAlert.LinkUrl,
 			DiscordBotSet = Notifier.HasDiscordBot,
 			DiscordBotOn = _mgr.Global.DiscordCommands,
 			DiscordBotOnline = Notifier.DiscordBotOnline,
@@ -2040,6 +2182,11 @@ public sealed class WebHost : IAsyncDisposable {
 					// For the Discord card's preview, which can count hours instead of cards.
 					MinutesWeek = (int) History.MinutesOver(7, [b.Name]),
 					MinutesMonth = (int) History.MinutesOver(30, [b.Name]),
+					// The idle rotation, for the account's "What it plays" panel: "idling 31 of 214 - next batch at 14:10".
+					// Null while it isn't rotating (off, human mode, or everything fits at once).
+					Rotation = BotManager.ModuleOf<Idler>(b)?.Rotating is { } rot
+						? new { Idling = rot.Now.Count, rot.Total, Next = IdleRotation.When(rot.MovesAt) }
+						: null,
 					// Quiet is worked out HERE, against the translated words, because Status is localised now.
 					// The dashboard used to filter these rows with m.Status !== 'off' && m.Status !== 'idle',
 					// which silently stopped matching in every language but English and put a wall of idle
@@ -2117,6 +2264,10 @@ public sealed class WebHost : IAsyncDisposable {
 
 	private sealed class LoginRequest {
 		public string? Password { get; set; }
+	}
+
+	private sealed class RestoreRequest {
+		public string? Token { get; set; }
 	}
 
 	private sealed class PluginSettingChange {

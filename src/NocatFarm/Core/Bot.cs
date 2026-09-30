@@ -589,6 +589,12 @@ public sealed class Bot : IAsyncDisposable {
 	/// <summary>Steam says this account can't play right now - the human is using it, or the library is locked.</summary>
 	public bool PlayingBlocked { get; private set; }
 
+	/// <summary>
+	/// The game another session on this account is running - you, on your own PC - as Steam last said; 0 when none.
+	/// Kept whether or not the account stands down for it, so human mode can learn when and what you play.
+	/// </summary>
+	public uint OtherSessionApp { get; private set; }
+
 	public bool IsOnline => State == BotState.Online;
 
 	/// <summary>Online, not paused, not standing down for the human, and past the courtesy delay.</summary>
@@ -1323,6 +1329,7 @@ public sealed class Bot : IAsyncDisposable {
 			// at the old pause's end time.
 			PausedUntil = null;
 			PlayingBlocked = false;
+			OtherSessionApp = 0;
 			_resumeAt = DateTime.MinValue;
 			_loginFailures = 0;
 			_cts = new CancellationTokenSource();
@@ -1367,6 +1374,9 @@ public sealed class Bot : IAsyncDisposable {
 	/// every place that shows the account says "finishing up" instead of what human mode was about to do next.
 	/// </summary>
 	public bool Stopping { get; private set; }
+
+	/// <summary>The last time Steam said you started or stopped playing on this account yourself (UTC).</summary>
+	public DateTime YouPlayedAt { get; private set; } = DateTime.MinValue;
 
 	public async Task StopAsync(bool graceful = false) {
 		// Two callers arriving together used to double-dispose the token source and throw out of the middle of
@@ -2310,6 +2320,9 @@ public sealed class Bot : IAsyncDisposable {
 		// ignored - which from the inside looks identical to it never having been sent.
 		Log.Debug(new Said("Steam says: blocked={0}, other session playing app {1}", cb.PlayingBlocked, cb.PlayingAppID), Name);
 
+		// Before anything below can return early: this is what you're playing, stood down for or not.
+		OtherSessionApp = cb.PlayingBlocked ? cb.PlayingAppID : 0;
+
 		// The opt-out only suppresses standing DOWN. It must never suppress standing back up: doing that once
 		// latched the flag on forever, so the setting that promises "don't stand down" was the one that made
 		// standing down permanent.
@@ -2322,6 +2335,7 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		PlayingBlocked = cb.PlayingBlocked;
+		YouPlayedAt = DateTime.UtcNow;   // started or stopped: either way you were on it just now
 
 		if (PlayingBlocked) {
 			Playing = "";

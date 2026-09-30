@@ -197,7 +197,7 @@ Type these in the app window or the dashboard's Console tab, using the name you 
 | `name myaccount nocat.lol` | Show this name instead of the real game. `name myaccount off` removes it. |
 | `offers` | Trade offers waiting on your accounts. |
 | `update` | Check for a new version. |
-| `help` | Every command. `help <command>` or `help <setting>` explains one. |
+| `help` | Every command. `help <command>` or `help <setting>` explains one; `help rot` lists everything starting with "rot". |
 
 `tutorial` shows a getting-started checklist that ticks off what you've already done.
 

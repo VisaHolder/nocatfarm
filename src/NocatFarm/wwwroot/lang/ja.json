@@ -920,7 +920,6 @@
     "resuming the grind of {0} - {1} left": "{0}の周回を再開します - 残り{1}",
     "stopping - finishing up, logging off in about {0}s": "停止します - 終了処理中、約{0}秒後にログオフします",
     "{0} licence(s) known": "既知のライセンス{0}件",
-    "joined group {0}": "グループ{0}に参加しました",
     "inventory now {0}{1} across {2} game(s), {3} item(s) still to price": "インベントリは現在{0}{1}、{2}本のゲームにわたり、{3}件が未査定です",
     "the market answered {0} - pausing price lookups until {1}": "マーケットが{0}を返しました - {1}まで価格照会を停止します",
     "the store answered {0} - pausing game lookups until {1}": "ストアが{0}を返しました - {1}までゲーム照会を停止します",
@@ -1775,9 +1774,7 @@
     "stopped - signed out after {0} achievement(s) in {1} game(s)": "停止 - {1} ゲームで実績 {0} 個の後にサインアウト",
     "done - nothing it can unlock ({0} app(s) checked{1}), Steam sets the rest": "完了 - 自分で解除できるものなし（{0} 個確認{1}）、残りは Steam 側",
     "auto-update waiting: {0} has {1} offer(s), {2} gift(s) queued": "自動更新待ち: {0} にオファー {1} 件、ギフト {2} 件が待機中",
-    "installing {0} by itself - quiet time (Update by itself)": "{0} を自動でインストール - 静かな時間（自動更新）",
     "{0} waits for bedtime - 'update now' installs it now": "{0} は就寝時間待ち - 'update now' で今すぐインストール",
-    "installing {0} - the accounts are asleep": "{0} をインストール中 - アカウントは就寝中",
     "reminder: nocat.farm {0} is out - 'update accept' installs it": "リマインド: nocat.farm {0} 公開 - 'update accept' でインストール",
     "reminder: nocat.farm {0} is out - 'update' shows how": "リマインド: nocat.farm {0} 公開 - 方法は 'update' で",
     "nocat.farm {0} is out - 'update accept' installs it": "nocat.farm {0} 公開 - 'update accept' でインストール",
@@ -2069,7 +2066,120 @@
     "'all' means every account in a command - pick another name": "'all' はコマンドで全アカウントを意味します - 別の名前にしてください",
     "offer sent - confirm it in the Steam app on your phone": "オファー送信済み - スマホの Steam アプリで確認してください",
     "{0} invited you to play {1}": "{0} から {1} に招待されました",
-    "human mode spaces comments out - this account can post the next one from {0}": "人間モードはコメントの間隔を空けます - このアカウントの次の投稿は {0} から"
+    "human mode spaces comments out - this account can post the next one from {0}": "人間モードはコメントの間隔を空けます - このアカウントの次の投稿は {0} から",
+    "installing {0} by itself - all clear: {1}": "{0} を自動でインストール中 - 問題なし: {1}",
+    "installing {0} - all clear: {1}": "{0} をインストール中 - 問題なし: {1}",
+    "you're playing on {0}": "{0} でプレイ中",
+    "you were on {0} a few minutes ago": "数分前まで {0} を使っていました",
+    "{0} is signing in": "{0} がサインイン中",
+    "{0} is awake": "{0} は起きています",
+    "{0} asleep": "{0} 就寝中",
+    "{0} farming": "{0} ファーム中",
+    "{0} idling": "{0} アイドル中",
+    "nobody playing": "誰もプレイしていない",
+    "idling {0} of {1} games - next batch at {2}": "{1}本中{0}本を稼働中 - 次のグループは{2}",
+    "idle rotation: batch {0} of {1} now, {2} games": "ローテーション：グループ{0}/{1}に切り替え、{2}本",
+    "couldn't save the idle rotation: {0}": "ローテーションを保存できませんでした：{0}",
+    "couldn't read the idle rotation - starting it fresh: {0}": "ローテーションを読めなかったので最初からやり直します：{0}",
+    "all the games it owns": "持っているすべてのゲーム",
+    "Idling {0} of {1} at a time - next batch at {2}.": "{1}本中{0}本ずつ稼働中 - 次のグループは{2}。",
+    "More than fit at once? It idles a batch at a time and moves on every {0}h.": "一度に入りきらない？ 1グループずつ動かして、{0}時間ごとに次へ進みます。",
+    "If nocat.farm stops": "nocat.farm が止まったら",
+    "the stop alert": "停止アラート",
+    "stop alert: Telegram is no longer linked - press Connect to link it again": "停止アラート: Telegram との連携が外れました - もう一度「接続」を押して連携してください",
+    "stop alert: linked - Telegram will tell you if nocat.farm stops": "停止アラート: 連携済み - nocat.farm が止まったら Telegram でお知らせします",
+    "Get a Telegram message if nocat.farm stops": "nocat.farm が止まったら Telegram でメッセージを受け取る",
+    "nocat.lol's Telegram bot tells you when nocat.farm stops checking in on this PC - a crash, or the PC off or offline - and again when it's back. Closing it yourself or an update doesn't count. It sends only a random number made for this PC, no account names.": "nocat.lol の Telegram ボットが、この PC の nocat.farm から連絡が来なくなったとき（クラッシュ、PC の電源オフやオフライン）と、復帰したときにお知らせします。自分で閉じたときやアップデートは対象外です。送るのはこの PC 用に作ったランダムな番号だけで、アカウント名は送りません。",
+    "Couldn't reach nocat.lol - is this PC online?": "nocat.lol に接続できませんでした - この PC はオンラインですか？",
+    "Alerts aren't switched on at nocat.lol yet - try again later.": "nocat.lol ではまだアラートが有効になっていません - しばらくしてからもう一度お試しください。",
+    "nocat.lol gave an unexpected answer - try again later.": "nocat.lol から予期しない応答がありました - しばらくしてからもう一度お試しください。",
+    "nocat.lol asked to slow down - try again in a minute.": "nocat.lol から間隔を空けるよう求められました - 1 分後にもう一度お試しください。",
+    "Sent - check Telegram.": "送信しました - Telegram を確認してください。",
+    "Not linked yet - press Connect first.": "まだ連携していません - 先に「接続」を押してください。",
+    "Telegram didn't take the message - press Connect to link it again.": "Telegram がメッセージを受け付けませんでした - 「接続」を押してもう一度連携してください。",
+    "Unlinked - no more alerts for this PC.": "連携を解除しました - この PC のアラートはもう届きません。",
+    "Turn on \"Tell me if nocat.farm stops\" below and save, then press Connect.": "下の「nocat.farm が止まったら知らせる」をオンにして保存し、「接続」を押してください。",
+    "Last check-in: {0}": "最後の連絡: {0}",
+    "Not checked in yet.": "まだ連絡がありません。",
+    "Open Telegram": "Telegram を開く",
+    "Press Start in Telegram. The link works once, for 15 minutes - scan the code to open it on your phone.": "Telegram で「開始」を押してください。リンクは 1 回だけ、15 分間有効です - コードをスキャンするとスマホで開けます。",
+    "Linked to Telegram.": "Telegram と連携済みです。",
+    "Unlink": "連携を解除",
+    "Not linked to Telegram yet.": "まだ Telegram と連携していません。",
+    "couldn't read what it learned from your play: {0}": "あなたの遊び方から学んだ内容を読み込めませんでした: {0}",
+    "couldn't save what it learned from your play: {0}": "あなたの遊び方から学んだ内容を保存できませんでした: {0}",
+    "couldn't forget what it learned from your play: {0}": "あなたの遊び方から学んだ内容を消去できませんでした: {0}",
+    "a quiet spell - shorter days for a while": "静かな時期 - しばらく短めの日が続きます",
+    "a late one tonight - bed around {0}": "今夜は夜更かし - {0}ごろ就寝",
+    "noted you playing {0} for {1}": "記録: あなたが{0}を{1}遊びました",
+    "noted you on the account for {0}": "記録: あなたが{0}アカウントを使っていました",
+    "seen you play on {0} days - its day now leans toward yours": "あなたが遊ぶのを{0}日見ました - これからは 1 日をあなたに寄せます",
+    "{0} is playing {1} - joining in for a sitting": "{0}が{1}を遊んでいます - 1 セッション参加します",
+    "trying out {0} - it's new here": "{0}を試しています - ここでは新しいゲームです",
+    "couldn't read what friends are playing: {0}": "フレンドが遊んでいるゲームを読み込めませんでした: {0}",
+    "couldn't look for new games: {0}": "新しいゲームを探せませんでした: {0}",
+    "learns from how you play": "あなたの遊び方から学ぶ",
+    "tries new games out": "新しいゲームを試す",
+    "has quiet spells and late nights": "静かな時期と夜更かしがある",
+    "sometimes joins a friend": "ときどきフレンドに合流する",
+    "It also {0}.": "ほかに: {0}。",
+    "backup saved: {0}": "バックアップを保存しました: {0}",
+    "that file is too big to be a nocat.farm backup": "このファイルは nocat.farm のバックアップにしては大きすぎます",
+    "that zip has far too many files to be a nocat.farm backup": "この zip は nocat.farm のバックアップにしてはファイルが多すぎます",
+    "refused: {0} points outside the config folder": "拒否: {0} は設定フォルダの外を指しています",
+    "refused: {0} is in the zip twice": "拒否: {0} が zip に二つあります",
+    "refused: {0} isn't something a nocat.farm backup holds": "拒否: {0} は nocat.farm のバックアップに入るものではありません",
+    "refused: {0} is too big": "拒否: {0} が大きすぎます",
+    "refused: the files in it add up to too much": "拒否: 中のファイルの合計が大きすぎます",
+    "that isn't a zip nocat.farm can read": "nocat.farm が読める zip ではありません",
+    "that isn't a nocat.farm backup - it has no manifest": "nocat.farm のバックアップではありません - マニフェストがありません",
+    "that backup is from a newer nocat.farm ({0}) - update first": "このバックアップは新しい nocat.farm ({0}) のものです - 先に更新してください",
+    "restoring a backup from {0} - stopping every account": "{0} のバックアップを復元中 - すべてのアカウントを停止します",
+    "backup restored: {0} file(s) - what was there before is in {1}": "バックアップを復元しました: {0} 個のファイル - 以前の内容は {1} にあります",
+    "Restored {0} file(s). The accounts are starting again.": "{0} 個のファイルを復元しました。アカウントを再び起動しています。",
+    "Weekly report": "週次レポート",
+    "the PC just woke up": "PC がスリープから復帰したところです",
+    "hasn't banked any hours for {0} - it's {1}; it needs you": "{0} の間、時間を記録していません - 状態: {1}。対応が必要です",
+    "hasn't banked any hours for {0} - it's {1}; restarted {2} ago, so not again": "{0} の間、時間を記録していません - 状態: {1}。{2} 前に再起動したので、もう再起動しません",
+    "hasn't banked any hours for {0} - it's {1}; restarting it": "{0} の間、時間を記録していません - 状態: {1}。再起動します",
+    "still hasn't banked any hours for {0} - it's {1}; not restarting it again - have a look": "まだ {0} の間、時間を記録していません - 状態: {1}。これ以上再起動しません - 確認してください",
+    "you're playing on it": "あなたがこのアカウントでプレイ中",
+    "Steam's weekly maintenance": "Steam の週次メンテナンス",
+    "human mode is resting": "人間モードが休憩中",
+    "nothing to play": "プレイするものがない",
+    "stuck signing in": "サインインで止まっている",
+    "disconnected and not coming back": "切断されたまま戻らない",
+    "waiting for a Steam Guard code or password": "Steam Guard コードかパスワードを待っている",
+    "failed: {0}": "失敗: {0}",
+    "signed in but not playing anything": "サインイン済みだが何もプレイしていない",
+    "  {0} {1} banked (last week {2}) · {3} card(s) · {4} listed · value {5} · {6} comment(s)": "  {0} {1}を記録 (先週 {2}) · カード{3}枚 · 出品{4} · 価値 {5} · コメント{6}件",
+    "  {0} {1} banked (last week {2}) · {3} card(s) · {4} listed · value {5}": "  {0} {1}を記録 (先週 {2}) · カード{3}枚 · 出品{4} · 価値 {5}",
+    "  fleet: {0} banked (last week {1}) · {2} card(s) · {3} listed · value {4} · {5} comment(s)": "  全体: {0}を記録 (先週 {1}) · カード{2}枚 · 出品{3} · 価値 {4} · コメント{5}件",
+    "  fleet: {0} banked (last week {1}) · {2} card(s) · {3} listed · value {4}": "  全体: {0}を記録 (先週 {1}) · カード{2}枚 · 出品{3} · 価値 {4}",
+    "backup downloaded from the dashboard ({0} KB)": "ダッシュボードからバックアップをダウンロードしました ({0} KB)",
+    "dashboard: a backup was refused - {0}": "ダッシュボード: バックアップを拒否しました - {0}",
+    "that restore has run out - pick the file again": "この復元は期限切れです - もう一度ファイルを選んでください",
+    "Backup & restore": "バックアップと復元",
+    "One zip with your settings, every account, saved logins, authenticators, history and progress. Logs and caches are left out.": "設定、すべてのアカウント、保存されたログイン、認証システム、履歴、進行状況をまとめた一つの zip です。ログとキャッシュは含みません。",
+    "Logins inside stay encrypted, as they are on disk. A backup made on Windows only opens them on the same PC and Windows user - restored anywhere else, each account asks for its password once. Keep the zip private: it signs in to your accounts.": "中のログイン情報はディスク上と同じく暗号化されたままです。Windows で作ったバックアップは、同じ PC の同じ Windows ユーザーでしか開けません - 別の場所で復元すると、各アカウントが一度だけパスワードを聞いてきます。zip は人に渡さないでください: アカウントにサインインできます。",
+    "Download a backup": "バックアップをダウンロード",
+    "Restore a backup": "バックアップを復元",
+    "Saved {0}": "{0} を保存しました",
+    "settings": "設定",
+    "account settings": "アカウント設定",
+    "saved logins": "保存されたログイン",
+    "authenticators": "認証システム",
+    "login key": "ログインキー",
+    "history days": "履歴の日数",
+    "progress and totals": "進行状況と合計",
+    "Restore this backup?": "このバックアップを復元しますか?",
+    "Made {0} by nocat.farm {1} on {2}.": "{0} に nocat.farm {1} で {2} 上で作成。",
+    "Made on another PC: its saved logins may not open here, so those accounts ask for their passwords again.": "別の PC で作成: 保存されたログインがここでは開けないかもしれず、その場合そのアカウントはパスワードを聞き直します。",
+    "Every account stops, these files replace the ones here, and the accounts start again. Accounts not in the backup are left alone, and what gets replaced is saved in the backups folder first.": "すべてのアカウントが止まり、これらのファイルがここのファイルを置き換え、アカウントが再び起動します。バックアップにないアカウントはそのままで、置き換えられるものは先に backups フォルダに保存されます。",
+    "Restore": "復元",
+    "Restoring...": "復元中...",
+    "── weekly report · {0} to {1} ──": "── 週次レポート · {0} ～ {1} ──",
+    "banking hours again": "再び時間を記録しています"
   },
   "settings": {
     "WebEnabled": {
@@ -3072,6 +3182,68 @@
     "SendAroundHour": {
       "label": "...頃に",
       "tip": "送信する時刻（0〜23時）。たとえば 4 なら朝4時頃です。その時間内のランダムな分に、「アイテムを送る間隔」が許す日に送ります。-1 = 時刻を決めない: オンにした時から一定時間ごと。"
+    },
+    "IdleWholeLibrary": {
+      "label": "ライブラリ全体で時間を稼ぐ",
+      "tip": "このアカウントが持っているすべてのゲームで時間を稼ぎます（「時間を稼ぐゲーム」のあとに）。「これには絶対に触らない」のゲーム、返金できるゲーム、ファミリー共有のゲーム（「ファミリー共有のゲームも含める」がオンの場合を除く）は飛ばします。Steamは同時に32本までなので、全部のゲームに順番が回るよう「リストを順番に回す」をオンにしてください。"
+    },
+    "RotateIdleGames": {
+      "label": "リストを順番に回す",
+      "tip": "Steamが同時に動かせる数（32本、カスタム名ありなら31本）より多いときは、1グループずつ動かして一定時間ごとに次のグループへ切り替えるので、どのゲームにも時間が入ります。時間の目標があるゲームと、いちばん遊んでいないゲームが先です。"
+    },
+    "RotateEveryHours": {
+      "label": "切り替えの間隔",
+      "tip": "各グループを何時間動かしてから次のグループに替えるか。「リストを順番に回す」がオンのときだけ使います。"
+    },
+    "StopAlert": {
+      "label": "nocat.farm が止まったら知らせる",
+      "tip": "この PC で nocat.farm が止まったとき（クラッシュ、PC の電源オフ、ネット切断）に Telegram でメッセージを受け取ります。5 分ごとに nocat.lol へ連絡しますが、送るのはこの PC 用に作ったランダムな番号だけです。アカウント名などは一切送りません。自分で閉じたときやアップデートは対象外です。オンにしたら「接続」を押し、Telegram で「開始」を押してください。"
+    },
+    "StopAlertPcName": {
+      "label": "この PC の名前",
+      "tip": "Telegram のメッセージで使う名前です（例:「my PC の nocat.farm から 14:05 以降連絡がありません」）。複数の PC で nocat.farm を使うときに便利です。"
+    },
+    "StopAlertMinutes": {
+      "label": "通知までの時間",
+      "tip": "連絡が途絶えてから何分でメッセージを送るか。連絡は 5 分ごとで、メッセージはこの時間より最大 10 分遅れて届くことがあります。"
+    },
+    "LearnFromOwner": {
+      "label": "自分の遊び方から学ぶ",
+      "tip": "あなた自身がこのアカウントで遊んだ時間帯とゲームを記録します。7 日分たまると、1 日の過ごし方をあなたに寄せます。オンラインになる時間と寝る時間、そして「遊ぶゲームと頻度」のゲームへの時間配分です。このリストにないゲームを足すことはなく、遊ぶ長さは時間の設定のままです。学んだ内容は habits コマンドで見られます。",
+      "choices": "0 オフ | 1 少し | 2 しっかり"
+    },
+    "NewGamesFirst": {
+      "label": "新しいゲームを最初は多めに遊ぶ",
+      "tip": "ライブラリに届いたばかりのゲーム（購入、ギフト、無料）は、3〜10 日間セッションが増え、日ごとに減っていきます。新しいものを試すときのようにです。まだ返金できるゲーム、ブラックリストやファミリー共有のゲーム、ほかのアカウントが起動中のゲームには触れません。"
+    },
+    "LongerRhythms": {
+      "label": "静かな時期と夜更かし",
+      "tip": "月に 1〜2 回、1 日が目に見えて短くなる 2〜5 日の静かな時期があり、ときどき金曜や土曜の夜がいつもより遅くまで続きます。休みの日と時間の設定はそのまま効きます。human week で確認できます。"
+    },
+    "JoinFriends": {
+      "label": "ときどきフレンドと同じゲームを遊ぶ",
+      "tip": "Steam のフレンドがこのアカウントの持っているゲームを遊んでいると、ときどき次のセッションにそのゲームを選びます。1 日 2 回までで、起きている間だけです。あなた自身のアカウントとそれらが起動中のゲームは無視し、ブラックリストや返金可能なゲームも選びません。"
+    },
+    "StuckAlarm": {
+      "label": "止まったアカウントを再起動",
+      "tip": "プレイしているはずのアカウントが数時間まったく時間を記録していないとき - 切断、サインインで停止、失敗、ゲームが外れた - 知らせて (Telegram と Discord にも) そのアカウントを一度だけ再起動します。あなたが停止・一時停止したアカウント、あなたがプレイ中のアカウント、人間モードで就寝中・今日は終了・休みの日のアカウントでは決して動きません。再起動はアカウントごとに 12 時間に一回まで。"
+    },
+    "StuckAlarmHours": {
+      "label": "止まったとみなすまで",
+      "tip": "記録しているはずなのに時間を記録しないまま、何時間たったらアカウントを止まったとみなすか。"
+    },
+    "WeeklyReport": {
+      "label": "週次レポート",
+      "tip": "週に一度、各アカウントの一週間を前の週と並べて: 記録した時間、ドロップしたカード、出品したカード、インベントリの価値、rep4rep のコメント。ログに書き、設定してあれば Telegram と Discord にも送ります。report week と入力すればいつでも見られます。"
+    },
+    "WeeklyReportDay": {
+      "label": "週次レポート · 曜日",
+      "tip": "週次レポートが届く曜日。その前の七日間が対象です。",
+      "choices": "1 月曜日 | 2 火曜日 | 3 水曜日 | 4 木曜日 | 5 金曜日 | 6 土曜日 | 0 日曜日"
+    },
+    "WeeklyReportHour": {
+      "label": "週次レポート · 時",
+      "tip": "週次レポートが届く時刻 (24 時間表記)。"
     }
   }
 }

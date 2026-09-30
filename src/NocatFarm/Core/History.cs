@@ -362,6 +362,57 @@ public static class History {
 		return sum;
 	}
 
+	/// <summary>Forget what's in memory and read the month files again - after a restore put other ones in their place.</summary>
+	internal static void Reload() {
+		lock (Gate) {
+			Days.Clear();
+			Dirty.Clear();
+			_loaded = false;
+		}
+
+		Load();
+	}
+
+	/// <summary>One account's banked minutes, cards and comments over <paramref name="days"/> local days from
+	/// <paramref name="first"/> - the weekly report's "this week" and "last week".</summary>
+	public static (double Banked, int Cards, int Comments) Totals(string bot, DateTime first, int days) {
+		Load();
+
+		double banked = 0;
+		int cards = 0, comments = 0;
+
+		lock (Gate) {
+			for (int i = 0; i < days; i++) {
+				if (Days.TryGetValue(Key(first.Date.AddDays(i)), out Dictionary<string, Day>? accounts) && accounts.TryGetValue(bot, out Day? d)) {
+					banked += Banked(d);
+					cards += d.Cards;
+					comments += d.Comments;
+				}
+			}
+		}
+
+		return (banked, cards, comments);
+	}
+
+	/// <summary>The inventory's value as it stood at the end of <paramref name="day"/>: that day's closing figure, or the
+	/// last one before it within a fortnight. Only in today's currency - a value in another one can't be compared.</summary>
+	public static decimal? ClosingValue(string bot, DateTime day) {
+		Load();
+
+		int currency = PriceBook.CurrencyId;
+
+		lock (Gate) {
+			for (int i = 0; i < 14; i++) {
+				if (Days.TryGetValue(Key(day.Date.AddDays(-i)), out Dictionary<string, Day>? accounts) && accounts.TryGetValue(bot, out Day? d)
+					&& (d.Value is { } value) && (d.Currency == currency)) {
+					return value;
+				}
+			}
+		}
+
+		return null;
+	}
+
 	/// <summary>This account's clock minutes and banked minutes over the last <paramref name="days"/> local days.</summary>
 	public static (double Clock, double Banked) Recent(int days, string bot) {
 		Load();

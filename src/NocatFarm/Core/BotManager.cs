@@ -123,6 +123,21 @@ public sealed class BotManager : IAsyncDisposable {
 		bot.AddModule(new Heartbeat(bot));
 	}
 
+	/// <summary>
+	/// Every account thrown away and built again from the files on disk - for a restore. Reconfiguring the ones already
+	/// here would keep what each has in memory (today's plan, the hunt, the rep4rep counts), and the next save would put
+	/// that back over what was just restored. Nothing is deleted: this only lets go of the objects.
+	/// </summary>
+	public async Task ReplaceAllFromDiskAsync() {
+		foreach (string name in _bots.Keys.ToArray()) {
+			if (_bots.TryRemove(name, out Bot? b)) {
+				await b.DisposeAsync().ConfigureAwait(false);
+			}
+		}
+
+		await SyncFromDiskAsync().ConfigureAwait(false);
+	}
+
 	/// <summary>Flush anything held in memory. Called on the way out so a clean exit loses nothing.</summary>
 	public static void Flush() {
 		Lifetime.Save();

@@ -240,6 +240,13 @@ public static class Secrets {
 		}
 	}
 
+	/// <summary>Drop the key held in memory, so the next use reads the key file again - a restore may have put another there.</summary>
+	internal static void ForgetKey() {
+		lock (KeyGate) {
+			_key = null;
+		}
+	}
+
 	/// <summary>A key left readable by other users (copied in, restored from a backup) is tightened back to 600.</summary>
 	private static void OwnerOnly(string path) {
 		if (OperatingSystem.IsWindows()) {
