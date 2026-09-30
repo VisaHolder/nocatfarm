@@ -14,8 +14,8 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 
 | | |
 |---|---|
-| **[Accounts](#accounts)** | `status` `start` `stop` `restart` `pause` `resume` `add` `remove` `enable` `disable` |
-| **[Playing](#playing)** | `play` `name` `persona` `nickname` `grind` `human` `wake` `hours` `selfcheck` |
+| **[Accounts](#accounts)** | `status` `start` `stop` `restart` `pause` `resume` `add` `remove` `enable` `disable` `stuck` |
+| **[Playing](#playing)** | `play` `name` `persona` `nickname` `grind` `human` `habits` `wake` `hours` `rotation` `selfcheck` |
 | **[Trading cards](#trading-cards)** | `cards` `drops` `match` `sell` `booster` `levelup` |
 | **[Trades & items](#trades--items)** | `offers` `trade` `fairswap` `send` |
 | **[Steam Guard](#steam-guard)** | `2fa` `confirmations` `confirm` `deny` |
@@ -23,10 +23,10 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 | **[Free stuff & keys](#free-stuff--keys)** | `freeitems` `queue` `redeem` `keys` `addlicense` |
 | **[Profile & info](#profile--info)** | `value` `level` `balance` `points` `bans` `owns` `privacy` `joingroup` |
 | **[rep4rep](#rep4rep)** | `rep4rep` |
-| **[Settings](#settings)** | `config` `set` `reload` `import` |
-| **[The app](#the-app)** | `log` `stats` `notify` `plugins` `tutorial` `help` `screen` `theme` `mini` `dashboard` `anywhere` `clear` `unlock` `version` `update` `answer` `exit` |
+| **[Settings](#settings)** | `config` `set` `reload` `backup` `import` |
+| **[The app](#the-app)** | `log` `report` `stats` `notify` `alert` `plugins` `tutorial` `help` `screen` `theme` `mini` `dashboard` `anywhere` `clear` `unlock` `version` `update` `answer` `exit` |
 
-70 commands in all.
+76 commands in all.
 
 ## Accounts
 
@@ -42,6 +42,7 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 | `remove <account>` <br>also `delete` | Delete an account and its stored login token. |
 | `enable <account>` | Let this account log in again. |
 | `disable <account>` | Keep the account configured but never log it in. |
+| `stuck` <br>also `alarm` | The stuck-account alarm: when each account last banked hours, whether it's counting as stuck (and why not, when it isn't), and any automatic restart. The StuckAlarm setting switches it on or off. |
 
 ## Playing
 
@@ -53,8 +54,10 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 | `nickname <account> <profile name>` | Change the name everybody sees on the profile and friends list. Not the custom game name - that's 'name'. |
 | `grind <account\|all> <appID> <hours> \| <account> off` | Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs. |
 | `human [account] [week\|reroll]` | What human mode is doing today, and what it played. Add 'week' to see the next seven days, or 'reroll' to throw today's plan away and roll a fresh one from the current settings. |
+| `habits [account] [forget]` | What human mode has learned from you playing on the account yourself - days seen, the hours you're usually on, your top games - and whether "Learn from how I play" is using it yet. 'habits <account> forget' wipes it and it starts learning again. |
 | `wake <account>` <br>also `wakeup`, `skipsleep` | Wake a sleeping human-mode account and start its day now. Bed time is unchanged. |
 | `hours <account>` | How the account's hour targets are going - hours so far, what's left, and the pace needed to make a date. |
+| `rotation <account> [next]` | The idle rotation: whether it's on, how many games are on the list, which batch is idling and when the next one takes over, and a look at the next batch. 'next' moves on to the next batch now. |
 | `selfcheck [account]` <br>also `tells` | Does a human-mode account look like a bot? A score out of 100 from what other people can see - hours on the profile, what its status shows, comments - with the setting that fixes each tell. Boost accounts are left out unless you name one. |
 
 ## Trading cards
@@ -129,6 +132,7 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 | `config [account] [all]` | Show the settings and their current values. Add 'all' to include the advanced ones. |
 | `set [account] <key> <value>` | Change a setting. Without an account name it changes a global one. |
 | `reload` | Re-read every config file from disk. |
+| `backup` | Save a backup zip of your settings, accounts, saved logins, authenticators and history into the backups folder next to config, and say where. Restoring one is done in the dashboard: Settings, Backup & restore. |
 | `import <asf\|ime\|idlemaster\|hourboostr\|singleboostr\|sgi\|steamidler\|auto> [path] [force]` | Bring accounts and settings across from another idler - ArchiSteamFarm login tokens and all. |
 
 ## The app
@@ -136,11 +140,13 @@ In the app, `help` lists them all and `help <command>` explains one - it also ex
 | Command | What it does |
 |---|---|
 | `log [count\|folder]` <br>also `logs` | The last few log lines. 'log folder' opens the folder the log files are in, on this PC. |
+| `report [week]` <br>also `weekly` | The daily summary now - each account's last 24 hours. 'report week' is the weekly report: the last seven days next to the seven before - hours banked, cards, cards listed, inventory value, comments. |
 | `stats [hours]` | Each account's last 24 hours - hours banked, cards, comments, totals - then cards dropped and comments posted, by hour. |
 | `notify [test]` | Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now. |
+| `alert [on\|off\|link\|test\|unlink]` | Tell me if nocat.farm stops: a Telegram message from nocat.lol's bot when this copy stops checking in (a crash, the PC off or offline) - not when you close it. On its own it says whether it's on, linked, and when it last checked in. 'alert on' switches it on and gives the Telegram link, 'alert link' gives a fresh link (press Start in Telegram), 'alert test' sends a test message, 'alert unlink' unlinks this PC, 'alert off' stops checking in. |
 | `plugins` | Which plugins are loaded, and where they came from. |
 | `tutorial [topic]` <br>also `guide`, `setup` | Getting started, in order, ticking off what you have already done. |
-| `help [command\|setting]` <br>also `?`, `h` | This list, or what one command or setting does. |
+| `help [command\|setting]` <br>also `?`, `h` | This list, or what one command or setting does. Only know how it starts? 'help rot' lists every command and setting starting with "rot". |
 | `screen off` <br>also `monitor`, `display` | Turns this computer's screens off now, to save power - nocat.farm keeps running. Moving the mouse or pressing a key turns them back on. Works from Telegram and Discord too. |
 | `theme [dark\|light]` <br>also `dark`, `light` | Switch the dashboard between the dark and light themes. Without an argument it says which is on. |
 | `mini [on\|off]` | Shrink the window to a small panel of your accounts - what each is doing, start and stop, the dashboard - or back to the full window. |

@@ -920,7 +920,6 @@
     "resuming the grind of {0} - {1} left": "возобновляем гринд {0} - осталось {1}",
     "stopping - finishing up, logging off in about {0}s": "останавливается - завершает, выйдет примерно через {0}с",
     "{0} licence(s) known": "известно лицензий: {0}",
-    "joined group {0}": "вступил в группу {0}",
     "inventory now {0}{1} across {2} game(s), {3} item(s) still to price": "инвентарь теперь {0}{1} по {2} игр(ам), ещё {3} предмет(ов) без цены",
     "the market answered {0} - pausing price lookups until {1}": "рынок ответил {0} - приостанавливаем запросы цен до {1}",
     "the store answered {0} - pausing game lookups until {1}": "магазин ответил {0} - приостанавливаем запросы игр до {1}",
@@ -1775,9 +1774,7 @@
     "stopped - signed out after {0} achievement(s) in {1} game(s)": "остановлено - выход после {0} дост. в {1} играх",
     "done - nothing it can unlock ({0} app(s) checked{1}), Steam sets the rest": "готово - открыть нечего ({0} прил. проверено{1}), остальное ставит Steam",
     "auto-update waiting: {0} has {1} offer(s), {2} gift(s) queued": "автообновление ждёт: у {0} в очереди {1} предл., {2} подар.",
-    "installing {0} by itself - quiet time (Update by itself)": "устанавливаю {0} сам - тихое время (Обновляться самому)",
     "{0} waits for bedtime - 'update now' installs it now": "{0} ждёт отбоя - 'update now' установит сразу",
-    "installing {0} - the accounts are asleep": "устанавливаю {0} - аккаунты спят",
     "reminder: nocat.farm {0} is out - 'update accept' installs it": "напоминание: вышел nocat.farm {0} - 'update accept' установит",
     "reminder: nocat.farm {0} is out - 'update' shows how": "напоминание: вышел nocat.farm {0} - 'update' покажет как",
     "nocat.farm {0} is out - 'update accept' installs it": "вышел nocat.farm {0} - 'update accept' установит",
@@ -2069,7 +2066,120 @@
     "'all' means every account in a command - pick another name": "'all' в команде означает все аккаунты - выберите другое имя",
     "offer sent - confirm it in the Steam app on your phone": "предложение отправлено - подтвердите его в приложении Steam на телефоне",
     "{0} invited you to play {1}": "{0} приглашает вас в {1}",
-    "human mode spaces comments out - this account can post the next one from {0}": "человеческий режим делает паузы между комментариями - следующий с этого аккаунта можно с {0}"
+    "human mode spaces comments out - this account can post the next one from {0}": "человеческий режим делает паузы между комментариями - следующий с этого аккаунта можно с {0}",
+    "installing {0} by itself - all clear: {1}": "ставлю {0} сам - всё спокойно: {1}",
+    "installing {0} - all clear: {1}": "ставлю {0} - всё спокойно: {1}",
+    "you're playing on {0}": "вы играете на {0}",
+    "you were on {0} a few minutes ago": "вы были на {0} несколько минут назад",
+    "{0} is signing in": "{0} входит",
+    "{0} is awake": "{0} не спит",
+    "{0} asleep": "{0} спит",
+    "{0} farming": "{0} фармит",
+    "{0} idling": "{0} в простое",
+    "nobody playing": "никто не играет",
+    "idling {0} of {1} games - next batch at {2}": "фармит {0} из {1} игр - следующая партия в {2}",
+    "idle rotation: batch {0} of {1} now, {2} games": "ротация игр: теперь партия {0} из {1}, игр: {2}",
+    "couldn't save the idle rotation: {0}": "не удалось сохранить ротацию игр: {0}",
+    "couldn't read the idle rotation - starting it fresh: {0}": "не удалось прочитать ротацию игр - начинаю заново: {0}",
+    "all the games it owns": "все игры, что есть на аккаунте",
+    "Idling {0} of {1} at a time - next batch at {2}.": "{0} из {1} одновременно - следующая партия в {2}.",
+    "More than fit at once? It idles a batch at a time and moves on every {0}h.": "Больше, чем помещается за раз? Запускает по одной партии и переходит к следующей каждые {0} ч.",
+    "If nocat.farm stops": "Если nocat.farm остановится",
+    "the stop alert": "оповещение об остановке",
+    "stop alert: Telegram is no longer linked - press Connect to link it again": "оповещение об остановке: Telegram больше не привязан - нажмите «Подключить», чтобы привязать снова",
+    "stop alert: linked - Telegram will tell you if nocat.farm stops": "оповещение об остановке: привязано - Telegram сообщит, если nocat.farm остановится",
+    "Get a Telegram message if nocat.farm stops": "Сообщение в Telegram, если nocat.farm остановится",
+    "nocat.lol's Telegram bot tells you when nocat.farm stops checking in on this PC - a crash, or the PC off or offline - and again when it's back. Closing it yourself or an update doesn't count. It sends only a random number made for this PC, no account names.": "Telegram-бот nocat.lol сообщит, когда nocat.farm на этом ПК перестанет выходить на связь - сбой, ПК выключен или без сети - и ещё раз, когда он вернётся. Если вы закрыли его сами или идёт обновление, это не считается. Отправляется только случайное число, созданное для этого ПК, без имён аккаунтов.",
+    "Couldn't reach nocat.lol - is this PC online?": "Не удалось связаться с nocat.lol - этот ПК в сети?",
+    "Alerts aren't switched on at nocat.lol yet - try again later.": "Оповещения на nocat.lol ещё не включены - попробуйте позже.",
+    "nocat.lol gave an unexpected answer - try again later.": "nocat.lol ответил неожиданно - попробуйте позже.",
+    "nocat.lol asked to slow down - try again in a minute.": "nocat.lol просит не спешить - попробуйте через минуту.",
+    "Sent - check Telegram.": "Отправлено - проверьте Telegram.",
+    "Not linked yet - press Connect first.": "Ещё не привязано - сначала нажмите «Подключить».",
+    "Telegram didn't take the message - press Connect to link it again.": "Telegram не принял сообщение - нажмите «Подключить», чтобы привязать снова.",
+    "Unlinked - no more alerts for this PC.": "Отвязано - оповещений для этого ПК больше не будет.",
+    "Turn on \"Tell me if nocat.farm stops\" below and save, then press Connect.": "Включите ниже «Сообщить, если nocat.farm остановится» и сохраните, затем нажмите «Подключить».",
+    "Last check-in: {0}": "Последняя связь: {0}",
+    "Not checked in yet.": "Ещё не выходил на связь.",
+    "Open Telegram": "Открыть Telegram",
+    "Press Start in Telegram. The link works once, for 15 minutes - scan the code to open it on your phone.": "Нажмите «Запустить» в Telegram. Ссылка работает один раз, 15 минут - отсканируйте код, чтобы открыть её на телефоне.",
+    "Linked to Telegram.": "Привязано к Telegram.",
+    "Unlink": "Отвязать",
+    "Not linked to Telegram yet.": "Ещё не привязано к Telegram.",
+    "couldn't read what it learned from your play: {0}": "не удалось прочитать, чему он научился по твоей игре: {0}",
+    "couldn't save what it learned from your play: {0}": "не удалось сохранить, чему он научился по твоей игре: {0}",
+    "couldn't forget what it learned from your play: {0}": "не удалось забыть, чему он научился по твоей игре: {0}",
+    "a quiet spell - shorter days for a while": "тихий период - какое-то время дни короче",
+    "a late one tonight - bed around {0}": "сегодня допоздна - спать около {0}",
+    "noted you playing {0} for {1}": "записано: ты играл в {0} {1}",
+    "noted you on the account for {0}": "записано: ты был на аккаунте {0}",
+    "seen you play on {0} days - its day now leans toward yours": "видел, как ты играешь, {0} дн. - теперь его день подстраивается под твой",
+    "{0} is playing {1} - joining in for a sitting": "{0} играет в {1} - присоединяется на сеанс",
+    "trying out {0} - it's new here": "пробует {0} - это что-то новое",
+    "couldn't read what friends are playing: {0}": "не удалось прочитать, во что играют друзья: {0}",
+    "couldn't look for new games: {0}": "не удалось поискать новые игры: {0}",
+    "learns from how you play": "учится у того, как ты играешь",
+    "tries new games out": "пробует новые игры",
+    "has quiet spells and late nights": "устраивает тихие периоды и поздние ночи",
+    "sometimes joins a friend": "иногда присоединяется к другу",
+    "It also {0}.": "Кроме того, он {0}.",
+    "backup saved: {0}": "резервная копия сохранена: {0}",
+    "that file is too big to be a nocat.farm backup": "этот файл слишком большой для резервной копии nocat.farm",
+    "that zip has far too many files to be a nocat.farm backup": "в этом zip слишком много файлов для резервной копии nocat.farm",
+    "refused: {0} points outside the config folder": "отклонено: {0} указывает за пределы папки настроек",
+    "refused: {0} is in the zip twice": "отклонено: {0} есть в zip дважды",
+    "refused: {0} isn't something a nocat.farm backup holds": "отклонено: {0} не относится к резервной копии nocat.farm",
+    "refused: {0} is too big": "отклонено: {0} слишком большой",
+    "refused: the files in it add up to too much": "отклонено: файлы вместе занимают слишком много",
+    "that isn't a zip nocat.farm can read": "это не zip, который nocat.farm может прочитать",
+    "that isn't a nocat.farm backup - it has no manifest": "это не резервная копия nocat.farm - в ней нет манифеста",
+    "that backup is from a newer nocat.farm ({0}) - update first": "эта копия из более новой версии nocat.farm ({0}) - сначала обновитесь",
+    "restoring a backup from {0} - stopping every account": "восстановление копии от {0} - все аккаунты останавливаются",
+    "backup restored: {0} file(s) - what was there before is in {1}": "копия восстановлена: {0} файл(ов) - то, что было раньше, лежит в {1}",
+    "Restored {0} file(s). The accounts are starting again.": "Восстановлено файлов: {0}. Аккаунты запускаются снова.",
+    "Weekly report": "Еженедельный отчёт",
+    "the PC just woke up": "ПК только что проснулся",
+    "hasn't banked any hours for {0} - it's {1}; it needs you": "не накопил часов за {0} - сейчас {1}; нужны вы",
+    "hasn't banked any hours for {0} - it's {1}; restarted {2} ago, so not again": "не накопил часов за {0} - сейчас {1}; перезапускался {2} назад, поэтому не снова",
+    "hasn't banked any hours for {0} - it's {1}; restarting it": "не накопил часов за {0} - сейчас {1}; перезапускаю",
+    "still hasn't banked any hours for {0} - it's {1}; not restarting it again - have a look": "всё ещё не накопил часов за {0} - сейчас {1}; больше не перезапускаю - посмотрите сами",
+    "you're playing on it": "вы на нём играете",
+    "Steam's weekly maintenance": "еженедельное обслуживание Steam",
+    "human mode is resting": "человеческий режим отдыхает",
+    "nothing to play": "нечего запускать",
+    "stuck signing in": "завис на входе",
+    "disconnected and not coming back": "отключён и не возвращается",
+    "waiting for a Steam Guard code or password": "ждёт код Steam Guard или пароль",
+    "failed: {0}": "ошибка: {0}",
+    "signed in but not playing anything": "в сети, но ничего не запущено",
+    "  {0} {1} banked (last week {2}) · {3} card(s) · {4} listed · value {5} · {6} comment(s)": "  {0} накопил {1} (прошлая неделя {2}) · {3} карт. · {4} выставлено · стоимость {5} · {6} комм.",
+    "  {0} {1} banked (last week {2}) · {3} card(s) · {4} listed · value {5}": "  {0} накопил {1} (прошлая неделя {2}) · {3} карт. · {4} выставлено · стоимость {5}",
+    "  fleet: {0} banked (last week {1}) · {2} card(s) · {3} listed · value {4} · {5} comment(s)": "  флот: накоплено {0} (прошлая неделя {1}) · {2} карт. · {3} выставлено · стоимость {4} · {5} комм.",
+    "  fleet: {0} banked (last week {1}) · {2} card(s) · {3} listed · value {4}": "  флот: накоплено {0} (прошлая неделя {1}) · {2} карт. · {3} выставлено · стоимость {4}",
+    "backup downloaded from the dashboard ({0} KB)": "резервная копия скачана через панель ({0} КБ)",
+    "dashboard: a backup was refused - {0}": "панель: резервная копия отклонена - {0}",
+    "that restore has run out - pick the file again": "время на восстановление истекло - выберите файл ещё раз",
+    "Backup & restore": "Резервная копия и восстановление",
+    "One zip with your settings, every account, saved logins, authenticators, history and progress. Logs and caches are left out.": "Один zip с вашими настройками, каждым аккаунтом, сохранёнными входами, аутентификаторами, историей и прогрессом. Журналы и кэши не входят.",
+    "Logins inside stay encrypted, as they are on disk. A backup made on Windows only opens them on the same PC and Windows user - restored anywhere else, each account asks for its password once. Keep the zip private: it signs in to your accounts.": "Входы внутри остаются зашифрованными, как на диске. Копия, сделанная в Windows, открывает их только на том же ПК под тем же пользователем Windows - при восстановлении в другом месте каждый аккаунт один раз спросит пароль. Храните zip в тайне: с ним можно войти в ваши аккаунты.",
+    "Download a backup": "Скачать копию",
+    "Restore a backup": "Восстановить копию",
+    "Saved {0}": "Сохранено: {0}",
+    "settings": "настройки",
+    "account settings": "настройки аккаунтов",
+    "saved logins": "сохранённые входы",
+    "authenticators": "аутентификаторы",
+    "login key": "ключ входа",
+    "history days": "дни истории",
+    "progress and totals": "прогресс и итоги",
+    "Restore this backup?": "Восстановить эту копию?",
+    "Made {0} by nocat.farm {1} on {2}.": "Сделана {0} в nocat.farm {1} на {2}.",
+    "Made on another PC: its saved logins may not open here, so those accounts ask for their passwords again.": "Сделана на другом ПК: сохранённые входы могут здесь не открыться, и эти аккаунты снова спросят пароль.",
+    "Every account stops, these files replace the ones here, and the accounts start again. Accounts not in the backup are left alone, and what gets replaced is saved in the backups folder first.": "Все аккаунты останавливаются, эти файлы заменяют здешние, и аккаунты запускаются снова. Аккаунты, которых нет в копии, не трогаются, а то, что заменяется, сначала сохраняется в папку backups.",
+    "Restore": "Восстановить",
+    "Restoring...": "Восстановление...",
+    "── weekly report · {0} to {1} ──": "── еженедельный отчёт · {0} - {1} ──",
+    "banking hours again": "снова копит часы"
   },
   "settings": {
     "WebEnabled": {
@@ -3072,6 +3182,68 @@
     "SendAroundHour": {
       "label": "...около",
       "tip": "Час отправки, от 0 до 23 - например 4 означает около 4 утра. Уходит в случайную минуту этого часа, в дни, которые позволяет «Отправлять предметы каждые». -1 = без точного времени: каждые столько часов с момента включения."
+    },
+    "IdleWholeLibrary": {
+      "label": "Вся моя библиотека",
+      "tip": "Фармит часы во всех играх аккаунта, после тех, что в «Игры для фарма часов». Пропускает игры из «Никогда не трогать», игры с правом возврата и игры из семейной библиотеки (если не включено «Включать игры из семейной библиотеки»). Steam запускает 32 игры одновременно, так что включите «Ротация списка», чтобы очередь дошла до каждой."
+    },
+    "RotateIdleGames": {
+      "label": "Ротация списка",
+      "tip": "Когда игр больше, чем Steam запускает одновременно (32, или 31 со своим названием), запускает по одной партии и время от времени переходит к следующей, чтобы часы шли каждой игре. Первыми идут игры с целью по часам и наименее сыгранные."
+    },
+    "RotateEveryHours": {
+      "label": "Менять партию каждые",
+      "tip": "Сколько часов работает каждая партия, прежде чем её сменит следующая. Используется только при включённой «Ротация списка»."
+    },
+    "StopAlert": {
+      "label": "Сообщить, если nocat.farm остановится",
+      "tip": "Получайте сообщение в Telegram, когда nocat.farm на этом ПК останавливается - сбой, ПК выключился или пропал интернет. Каждые 5 минут он выходит на связь с nocat.lol и отправляет только случайное число, созданное для этого ПК: без имён аккаунтов, больше ничего. Если вы закрыли его сами или идёт обновление, это не считается. Включите, нажмите «Подключить», затем «Запустить» в Telegram."
+    },
+    "StopAlertPcName": {
+      "label": "Имя этого ПК",
+      "tip": "Имя в сообщении Telegram, например «nocat.farm на my PC не выходит на связь с 14:05». Удобно, если nocat.farm работает на нескольких ПК."
+    },
+    "StopAlertMinutes": {
+      "label": "Сообщить через",
+      "tip": "Сколько минут без связи, прежде чем отправить сообщение. Он выходит на связь каждые 5 минут, и сообщение может прийти до 10 минут позже."
+    },
+    "LearnFromOwner": {
+      "label": "Учиться у того, как я играю",
+      "tip": "Запоминает, когда ты сам играешь на этом аккаунте и во что. Через 7 таких дней подстраивает свой день под твой: когда заходит и ложится спать и как делит время между играми из «Игры и как часто». Он никогда не добавляет игру, которой нет в этом списке, а сколько играть, по-прежнему решают настройки часов. Команда habits показывает, чему он научился.",
+      "choices": "0 выкл | 1 немного | 2 сильно"
+    },
+    "NewGamesFirst": {
+      "label": "Сначала чаще играть в новые игры",
+      "tip": "Игра, которая только что появилась в библиотеке, купленная, подаренная или бесплатная, получает дополнительные сеансы на 3–10 дней, каждый день меньше, как когда пробуешь что-то новое. Игры, которые ещё можно вернуть, игры из чёрного списка или из семейной библиотеки и игры, запущенные на твоих других аккаунтах, не трогаются."
+    },
+    "LongerRhythms": {
+      "label": "Тихие периоды и поздние ночи",
+      "tip": "Раз или два в месяц у него бывает тихий период на 2–5 дней с заметно более короткими днями, а иногда вечер пятницы или субботы затягивается дольше обычного. Выходные дни и настройки часов по-прежнему действуют. human week их показывает."
+    },
+    "JoinFriends": {
+      "label": "Иногда играть в то, во что играет друг",
+      "tip": "Когда друг в Steam сидит в игре, которая есть у этого аккаунта, он иногда выбирает её на следующий сеанс, не чаще двух раз в день и только пока не спит. Твои собственные аккаунты и игры, которые на них запущены, не учитываются, как и игры из чёрного списка и те, что можно вернуть."
+    },
+    "StuckAlarm": {
+      "label": "Перезапускать зависший аккаунт",
+      "tip": "Если аккаунт, который должен играть, несколько часов не накопил ни одного часа - отключён, завис на входе, ошибка или пропали игры, - он сообщит вам (и в Telegram, и в Discord) и один раз перезапустит этот аккаунт. Никогда для аккаунта, который вы остановили, поставили на паузу или на котором играете, и для того, который человеческий режим отправил спать, закончил на сегодня или дал выходной. Не больше одного перезапуска на аккаунт раз в 12 часов."
+    },
+    "StuckAlarmHours": {
+      "label": "Зависшим через",
+      "tip": "Сколько часов без накопленных часов, когда они должны копиться, прежде чем аккаунт считается зависшим."
+    },
+    "WeeklyReport": {
+      "label": "Еженедельный отчёт",
+      "tip": "Раз в неделю неделя каждого аккаунта рядом с предыдущей: накопленные часы, выпавшие карточки, выставленные на продажу карточки, стоимость инвентаря и комментарии rep4rep. Пишется в журнал и отправляется в Telegram и Discord, если они настроены. Введите report week, чтобы посмотреть его в любой момент."
+    },
+    "WeeklyReportDay": {
+      "label": "Еженедельный отчёт · день",
+      "tip": "День, когда приходит еженедельный отчёт. Он охватывает семь дней до него.",
+      "choices": "1 понедельник | 2 вторник | 3 среда | 4 четверг | 5 пятница | 6 суббота | 0 воскресенье"
+    },
+    "WeeklyReportHour": {
+      "label": "Еженедельный отчёт · час",
+      "tip": "Час, когда приходит еженедельный отчёт, в 24-часовом формате."
     }
   }
 }

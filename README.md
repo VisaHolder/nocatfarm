@@ -205,7 +205,7 @@ the [wiki](docs/settings.md#commands-by-steam-chat) shows how.
 | `offers` | Every trade offer that's waiting. |
 | `dashboard` | The dashboard's address - on this PC, on your phone, and from anywhere if you've set that up. |
 | `update accept` | Install the newest version (`update now` skips any waiting, `update skip` skips that version). |
-| `help` | Every command. `help <anything>` explains one command or setting. |
+| `help` | Every command. `help <anything>` explains one command or setting; `help rot` lists everything starting with "rot". |
 
 [Every command](docs/COMMANDS.md) is in one list in the wiki. In the app, `help` shows the same list.
 

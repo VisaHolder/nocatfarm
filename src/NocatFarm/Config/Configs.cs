@@ -186,6 +186,17 @@ public sealed class GlobalConfig {
 	public bool SendAchievements { get; set; }
 	public bool SendRep4Rep { get; set; }
 
+	// ── "Tell me if nocat.farm stops" (Core/StopAlert.cs) ──
+	/// <summary>Check in with nocat.lol every few minutes, so its Telegram bot can say when this copy stops. Off by
+	/// default: nothing is sent anywhere until it's turned on.</summary>
+	public bool StopAlert { get; set; }
+
+	/// <summary>What the Telegram message calls this PC - "nocat.farm on my PC hasn't checked in since 14:05".</summary>
+	public string StopAlertPcName { get; set; } = "my PC";
+
+	/// <summary>Minutes without a check-in before the message goes out.</summary>
+	public int StopAlertMinutes { get; set; } = 20;
+
 	/// <summary>Steam groups every account joins - links or short names, comma separated. Open groups only. Starts
 	/// with the nocat.farm group; anyone can change or clear it.</summary>
 	public string GroupsToJoin { get; set; } = "steamcommunity.com/groups/nocatfarm";
@@ -225,6 +236,19 @@ public sealed class GlobalConfig {
 	public bool DailyReportEnabled { get; set; } = true;
 	public int DailyReportHour { get; set; } = 9;
 	public int DailyReportMinute { get; set; } = 30;
+
+	// ── weekly report ──
+	// Off by default: once a week, this week next to last week - see Core/WeeklyReport.cs.
+	public bool WeeklyReport { get; set; }
+
+	/// <summary>0 Sunday ... 6 Saturday, like DayOfWeek.</summary>
+	public int WeeklyReportDay { get; set; } = 1;
+	public int WeeklyReportHour { get; set; } = 10;
+
+	// ── stuck-account alarm (Core/StuckWatch.cs) ──
+	// On by default: it only ever looks at time an account should have been banking, so a healthy one never trips it.
+	public bool StuckAlarm { get; set; } = true;
+	public int StuckAlarmHours { get; set; } = 3;
 
 	// ── inventory value ──
 	/// <summary>Steam's currency id for market prices. 1 USD, 2 GBP, 3 EUR, 20 CAD, 21 AUD - as the store uses.</summary>
@@ -328,6 +352,14 @@ public sealed class BotConfig {
 	public string CustomGameName { get; set; } = "";
 	public bool PlayWhileFarming { get; set; } = true;
 	public int GameDevice { get; set; }
+
+	/// <summary>Idle every game the account owns, after the ones in IdleGames. See <see cref="Modules.IdleRotation"/>.</summary>
+	public bool IdleWholeLibrary { get; set; }
+
+	/// <summary>A list longer than Steam plays at once is idled a batch at a time, the next batch every RotateEveryHours.</summary>
+	public bool RotateIdleGames { get; set; }
+
+	public int RotateEveryHours { get; set; } = Modules.IdleRotation.DefaultHours;
 
 	// ── trading cards ──
 	public bool FarmCards { get; set; } = true;
@@ -502,6 +534,20 @@ public sealed class BotConfig {
 	/// </summary>
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 	public int MainGameSharePct { get; set; }
+
+	// A life, not just a day. All four are off unless switched on, so an account set up before them plays exactly as it did.
+
+	/// <summary>Learn when you play on the account and what, and lean its day that way: 0 off, 1 a little, 2 a lot.</summary>
+	public int LearnFromOwner { get; set; }
+
+	/// <summary>A game that just arrived gets extra sittings for a few days, fewer each day.</summary>
+	public bool NewGamesFirst { get; set; }
+
+	/// <summary>Now and then a quiet spell of shorter days, and some Friday and Saturday nights a late one.</summary>
+	public bool LongerRhythms { get; set; }
+
+	/// <summary>Now and then a sitting on what a friend is playing right then.</summary>
+	public bool JoinFriends { get; set; }
 
 	// settling in after a login
 	public int WarmUpMinMinutes { get; set; } = 3;

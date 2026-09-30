@@ -219,6 +219,20 @@ public static class KeyQueue {
 		return had;
 	}
 
+	/// <summary>Forget the queue in memory and read keys.json again - after a restore put a different one in its place.</summary>
+	internal static void Reload() {
+		lock (LoadGate) {
+			lock (Gate) {
+				Pending.Clear();
+			}
+
+			_loaded = false;
+			_loadFailed = false;
+		}
+
+		Load();
+	}
+
 	private static void Load() {
 		// The check and the read under one lock. Marked loaded first and read after, a second caller in the meantime went
 		// on as if it were loaded - the Upkeep driver's first look and a 'redeem' together: the redeem found it loaded

@@ -31,15 +31,18 @@ You can edit them by hand and type `reload`. Back up the `config` folder and you
 |---|---|---|
 | Dashboard | *Web dashboard*, *Language* | *Listen on*, *Port*, *Dashboard password*, *Stay signed in for* (7 days), *Open from anywhere*, *Public address*, opening the browser, refresh speed |
 | Running in the background (Windows) | *Tray icon*, *Start with Windows* | *Start hidden*, *Minimise to the tray*, *Keep mini mode on top*, *Keep this PC awake*, *Close when everything's done* |
-| All accounts | *Groups every account joins* | *Never touch these (all accounts)* |
+| All accounts | *Groups every account joins*, *Restart a stuck account* (on - see [Stuck accounts](phone-and-notifications.md#stuck-accounts)) | *Never touch these (all accounts)*, *Stuck after* (3 hours) |
 | Notifications | Discord webhook, Telegram bot and Discord bot, and a test button | what gets sent - see [Discord and Telegram](phone-and-notifications.md#discord-and-telegram) |
+| If nocat.farm stops | *Tell me if nocat.farm stops* (off), *Call this PC* - see [If nocat.farm stops](phone-and-notifications.md#if-nocatfarm-stops) | *Alert after* (20 minutes) |
 | Discord profile | the *Playing nocat.farm* card: its switch, what it shows, a preview | which accounts, the featured account, the two buttons |
 | Pop-ups (Windows) | *Show pop-ups* | which kinds: earnings, comments, problems, trade offers |
 | Inventory prices | *Inventory prices in* (the currency) | price lookup speed, how long a price is trusted |
 | rep4rep account | *Use rep4rep at all*, *API token* | *Hold commenting for (hours)*, *Register accounts automatically* |
 | Updates & plugins | *Update by itself* (tell me, or install at night), *When I say update* (right away, or when my accounts are asleep) | the hours it may install in (3 to 6), *Wait after a release for* (2 hours), *Notify if an update is available*, *Look for updates every* (2 hours), *Remind me every hour*, *Load plugins* |
 | Steam connection | | gap between logins, reconnect, timeout, *Farm at most* (accounts farming at once), rate-limit cooldown, web request gap, *Connect using*, proxy |
-| Logging | | *Say what it's doing every* (5 minutes while playing) and *And while it's resting, every* (30 minutes), where 0 turns them off; *Write a log file*; *Show debug detail on screen* (the log file always has it); *Keep logs for* (14 days); the daily summary and its time; the colours of `telegram` and `discord` in the log |
+| Logging | | *Say what it's doing every* (5 minutes while playing) and *And while it's resting, every* (30 minutes), where 0 turns them off; *Write a log file*; *Show debug detail on screen* (the log file always has it); *Keep logs for* (14 days); the daily summary and its time; the *Weekly report* (off), its day and hour; the colours of `telegram` and `discord` in the log |
+
+At the bottom of Global settings is **Backup & restore** - see [Backup and restore](dashboard.md#backup-and-restore).
 
 On Linux and in Docker the Windows-only settings (tray, pop-ups, start with Windows and so on) aren't shown. They
 stay in the config file untouched, in case you take it back to Windows.
@@ -50,7 +53,7 @@ stay in the config file untouched, in case you take it back to Windows.
 |---|---|---|
 | Account | *Enabled*, *Steam account name*, *Password*, *Appear as*, *I sign into this one myself* | QR sign-in, *Sign in as*, *Start paused*, notes, Family View PIN, device name, authenticator secrets, its own proxy, clearing Steam's notifications |
 | Human mode | *Human mode*, *Games and how often*, hours on weekdays and at the weekend, when it gets on and goes to bed, *Bank hours overnight* | hour targets, day-off chance, sittings, breaks, meals, going Away or offline on breaks, overnight games, how long it waits after waking or signing in, finishing up when stopped |
-| What it plays (not on human-mode accounts) | *Games to idle*, *Show a custom game name*, *Show as* | *Keep the name while farming*, *Play as if on* |
+| What it plays (not on human-mode accounts) | *Games to idle*, *Idle my whole library*, *Rotate the idle list*, *Show a custom game name*, *Show as* | *Rotate every*, *Keep the name while farming*, *Play as if on* |
 | Trading cards | *Farm trading cards*, *When to farm cards* (human mode) | order, priority list, blacklist, refund protection, sittings, clock window, give-up time, and more |
 | Badges, boosters & selling | *Craft badges from card sets*, *Sell duplicate cards* | booster packs, opening packs, how many cards to list at a time |
 | Achievements | *Earn achievements over time* | pace, completion limit, only/never lists, grind spacing, the hunter (rotation, when to move on, rest days, daily cap, game length), family-shared games |
@@ -62,7 +65,7 @@ stay in the config file untouched, in case you take it back to Windows.
 | Staying out of the way | | *Stand down when you play*, *Wait before resuming* |
 | Logging | | *Report in every* and *And while resting, every* (0 follows the global setting, -1 keeps this account quiet), and its colour in the log |
 
-On a human-mode account, *Games to idle*, the custom game name, *Keep the name while farming*, *Farm in sittings*,
+On a human-mode account, *Games to idle*, the idle rotation, the custom game name, *Keep the name while farming*, *Farm in sittings*,
 *Hours a day to farm*, *Log out when finished* and *Farm while appearing offline* are hidden, and human-only
 settings show instead.
 
@@ -96,7 +99,7 @@ Environment variables work on any install, not just Docker. When set, they win a
 
 ## Commands
 
-`help` lists every built-in command, and `help <command>` or `help <setting>` explains one. `plugins` lists the
+`help` lists every built-in command, and `help <command>` or `help <setting>` explains one. Only know how it starts? `help rot` lists every command and setting that starts with "rot". `plugins` lists the
 commands plugins have added. The dashboard's Console tab runs the same commands with the same output. Commands
 that show `<account|all>` also take `all`, and aliases are shown after the name.
 

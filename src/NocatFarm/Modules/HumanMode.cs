@@ -108,6 +108,26 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	private bool _firstSessionOfDay = true;
 	private readonly Dictionary<uint, int> _minutesByGame = [];
 
+	// ── a life, not just a day (each off unless its setting is on) ──
+	/// <summary>What it has learned from you playing on the account - read from disk the first time it's wanted.</summary>
+	private OwnerHabits? _habits;
+	private readonly OwnerWatch _ownerWatch = new();
+
+	/// <summary>His minutes per game, worked out once per change to what's learned rather than on every pick.</summary>
+	private Dictionary<uint, int> _learnedMinutes = [];
+	private int _learnedVersion = -1;
+
+	private bool _quietDay;
+	private bool _lateNight;
+	private int _friendJoins;
+	private int _newGameSittings;
+	private string _joinedToday = "";
+
+	/// <summary>Games that just arrived, worked out in the background every half hour or on a new licence.</summary>
+	private List<Trial> _trials = [];
+	private DateTime _trialsDue = DateTime.MinValue;
+	private int _trialsGeneration = -1;
+
 	// ── settling in ──
 	// Nobody signs in and launches a game in the same second. This is when the account is allowed to start, and
 	// it is re-armed on every fresh login and every time human mode takes the account over.
@@ -258,6 +278,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 	/// <summary>The account's headline game. The achievement pacer deliberately never writes to this one.</summary>
 	public uint MainGameId => MainGame();
+
+	/// <summary>What it has learned from you - for 'human week', which rolls its days the way the real ones are.</summary>
+	public OwnerHabits LearnedHabits => Habits;
 
 	/// <summary>
 	/// In bed: invisible on the friends list, and nobody can see what it is running.
@@ -503,6 +526,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			}
 
 			try {
+				await RefreshTrialsAsync().ConfigureAwait(false);
 				StepAsync();
 			} catch (Exception e) {
 				Log.Warn(new Said("human mode hiccup: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
@@ -539,6 +563,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		if (!Bot.IsOnline || Bot.Stopping) {
 			return;
 		}
+
+		// Before anything that stands down for you: you playing is exactly what it's watching for.
+		WatchOwner(DateTime.Now);
 
 		if (_proveSince != DateTime.MinValue) {
 			if (!LiveAgain(_proveSince, _proveLogon, Bot.OnlineSince, Bot.LastInbound, tick)) {
@@ -1182,7 +1209,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// favour of a separate box, so the number typed beside the main game did nothing at all and only its
 		// position in the list carried meaning.
 		List<(uint Game, int Weight)> spread = Weights();
-		DayRoll roll = RollDay(Bot.Cfg, date, Math.Clamp(spread.Count > 0 ? spread[0].Weight : 70, 5, 95), spread.Count >= 2, lastBed, _rng);
+		DayRoll roll = RollDayWith(Bot.Cfg, date, Math.Clamp(spread.Count > 0 ? spread[0].Weight : 70, 5, 95), spread.Count >= 2, lastBed, _rng, Extras(date));
 
 		_wakeMinuteOfDay = roll.WakeMinute;
 		_bedHour = roll.BedHour;
@@ -1193,6 +1220,11 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_otherBudget = roll.OtherBudget;
 		_signOutCap = roll.SignOutCap;
 		_mealCap = roll.MealCap;
+		_quietDay = roll.Quiet;
+		_lateNight = roll.LateNight;
+		_friendJoins = 0;
+		_newGameSittings = 0;
+		_joinedToday = "";
 
 		_playedMinutesToday = 0;
 		_otherPlayed = 0;
@@ -1223,6 +1255,12 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		Log.Info(new Said("today: ~{0} of play, up {1}, bed {2}", Fmt.Hm(_targetMinutes), (PlanWake()).ToString("HH:mm"), (PlanBed()).ToString("HH:mm")), Bot.Name);
 		Log.Debug(new Said("today's mix: {0}", mix), Bot.Name);
+
+		if (_quietDay) {
+			Log.Info(new Said("a quiet spell - shorter days for a while"), Bot.Name);
+		} else if (_lateNight) {
+			Log.Info(new Said("a late one tonight - bed around {0}", (PlanBed()).ToString("HH:mm")), Bot.Name);
+		}
 	}
 
 	/// <summary>A mixed day's side-game allowance, as a multiple of the side games' share of it (see RollDay).</summary>
@@ -1237,7 +1275,20 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 	/// <summary>One day's plan as rolled: getting up and going to bed (on the plan's own date), how long it plays, and the caps.</summary>
 	internal readonly record struct DayRoll(int WakeMinute, int BedHour, int BedMinute, bool BedIsTomorrow, int Target, int MainSharePct, int OtherBudget,
-		int SignOutCap, int MealCap);
+		int SignOutCap, int MealCap, bool Quiet = false, bool LateNight = false);
+
+	/// <summary>
+	/// What today's roll takes on top of the settings: its place in a quiet spell or a late night ("Quiet spells and late
+	/// nights"), and your own habits with how hard they pull ("Learn from how I play"). Null when neither is on - the day is
+	/// then rolled exactly as it always was.
+	/// </summary>
+	private DayExtras? Extras(DateTime date) {
+		double pull = HumanHabits.Pull(Bot.Cfg.LearnFromOwner);
+		OwnerHabits? habits = LearningInUse ? Habits : null;
+
+		return !Bot.Cfg.LongerRhythms && (habits == null) ? null
+			: new DayExtras(Bot.Cfg.LongerRhythms ? HumanHabits.RhythmFor(Bot.Name, date) : default, habits, pull);
+	}
 
 	/// <summary>
 	/// Roll one day. A real week is not flat: weekday gaming is mostly evenings, weekends start earlier and run
@@ -1248,7 +1299,14 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// <param name="mainCentre">The main game's written share, the centre of today's roll.</param>
 	/// <param name="hasSides">Whether there's anything to play besides the main game.</param>
 	/// <param name="lastBed">When the night before really ended - MinValue when that isn't known.</param>
-	internal static DayRoll RollDay(BotConfig cfg, DateTime date, int mainCentre, bool hasSides, DateTime lastBed, Random rng) {
+	internal static DayRoll RollDay(BotConfig cfg, DateTime date, int mainCentre, bool hasSides, DateTime lastBed, Random rng) =>
+		RollDayWith(cfg, date, mainCentre, hasSides, lastBed, rng, null);
+
+	/// <summary>
+	/// <see cref="RollDay"/> with the day's extras. Every one of them only touches the dice when it's switched on, so with
+	/// <paramref name="extras"/> null this is the very roll it always was, number for number.
+	/// </summary>
+	internal static DayRoll RollDayWith(BotConfig cfg, DateTime date, int mainCentre, bool hasSides, DateTime lastBed, Random rng, DayExtras? extras) {
 		int Roll(int lo, int hi) => hi <= lo ? lo : rng.Next(lo, hi + 1);   // inclusive, like the plugin's helper
 		bool Pct(int pct) => rng.Next(100) < pct;
 
@@ -1282,6 +1340,14 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			wake -= Math.Min(Roll(45, 150), wake * 2 / 3);
 		}
 
+		// Learning from you: one of your real days, and today leans part of the way toward when you got on then. A real
+		// day of yours rather than your average, and a little jitter on top, so it never settles on one minute.
+		(int Start, int End)? yours = (extras?.Habits is { } habits) && (extras.Pull > 0) ? habits.SampleDay(rng) : null;
+
+		if (yours is { } learned) {
+			wake = HumanHabits.Nudge(wake, learned.Start, extras!.Pull) + Roll(-20, 20);
+		}
+
 		// Never up before last night is over, nor straight after it: a night's sleep first, a different length every
 		// time. With the day starting at 2, a late Friday rolled a Saturday that got up before Friday had gone to bed.
 		if (lastBed != DateTime.MinValue) {
@@ -1295,6 +1361,28 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// a few hours of each other - bedtime jumped a full day and the account counted itself awake round the
 		// clock, playing its whole target from midnight.
 		bool bedIsTomorrow = (rolled >= 24) || (bedHour <= start);
+
+		// Your usual stopping time pulls bedtime the same way, and a late night pushes it on. Worked on the clock as minutes
+		// from this morning's midnight, then put back into hour, minute and day - never less than an hour and a half after
+		// getting up, and never so late it runs into the next day's start hour.
+		bool late = extras?.Rhythm.LateNight == true;
+
+		if ((yours != null) || late) {
+			int bedAt = (bedIsTomorrow ? 24 * 60 : 0) + (bedHour * 60) + bedMinute;
+
+			if (yours is { } learned2) {
+				bedAt = HumanHabits.Nudge(bedAt, learned2.End, extras!.Pull) + Roll(-20, 20);
+			}
+
+			if (late) {
+				bedAt += extras!.Rhythm.LateMinutes;
+			}
+
+			bedAt = Math.Clamp(bedAt, wake + 90, Math.Max(wake + 90, ((start + 23) * 60) + 30));
+			bedIsTomorrow = bedAt >= 24 * 60;
+			bedHour = bedAt / 60 % 24;
+			bedMinute = bedAt % 60;
+		}
 
 		if (!bedIsTomorrow) {
 			wake = Math.Min(wake, Math.Max(0, ((bedHour * 60) + bedMinute) - 60));
@@ -1314,6 +1402,12 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			target = roll < 20 ? Roll(full * 55 / 100, full * 80 / 100)
 				: roll < 65 ? Roll(full * 80 / 100, full * 105 / 100)
 				: Roll(full * 105 / 100, full * 125 / 100);
+
+			// A quiet spell: a noticeably shorter day, for a few days running. After the day off, before the window cap -
+			// both still have their say.
+			if (extras?.Rhythm.Quiet == true) {
+				target = Math.Max(30, target * extras.Rhythm.QuietPct / 100);
+			}
 		}
 
 		// A day cannot hold more play than the hours it is awake. Four fifths of the window leaves room for the
@@ -1354,7 +1448,8 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		int signOutCap = signOuts == 0 ? 0 : Roll(Math.Max(1, signOuts - 3), signOuts);
 		int mealCap = cfg.MealBreaksPerDay <= 0 ? 0 : Roll(1, cfg.MealBreaksPerDay);
 
-		return new DayRoll(wake, bedHour, bedMinute, bedIsTomorrow, target, mainShare, otherBudget, signOutCap, mealCap);
+		return new DayRoll(wake, bedHour, bedMinute, bedIsTomorrow, target, mainShare, otherBudget, signOutCap, mealCap,
+			extras?.Rhythm.Quiet == true, late);
 	}
 
 	/// <summary>Minutes from getting up to going to bed.</summary>
@@ -1630,7 +1725,8 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// usual games runs as what it is: a side game that happened to have cards used to get the main game's long
 		// sittings, and far more than its share of the day.
 		_farmSitting = farmPick;
-		int minutes = SessionLength(game, farmPick || IsTargetGame(game) ? game : main);
+		// A new game being tried out gets a real sitting too, not a side game's dip - that's what trying something is.
+		int minutes = SessionLength(game, farmPick || IsTargetGame(game) || IsTrialGame(game) ? game : main);
 
 		_game = game;
 		_lastGame = game;
@@ -2010,6 +2106,11 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			BedIsTomorrow = _bedIsTomorrow,
 			LastGame = _lastGame,
 			StayUpUntil = _stayUpUntil > DateTime.Now ? _stayUpUntil : DateTime.MinValue,
+			Quiet = _quietDay,
+			LateNight = _lateNight,
+			FriendJoins = _friendJoins,
+			NewGameSittings = _newGameSittings,
+			JoinedToday = _joinedToday,
 			ByGame = ByGameSnapshot()
 		}.Save(Bot.Name);
 	}
@@ -2037,6 +2138,11 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_bedIsTomorrow = saved.BedIsTomorrow;
 		_lastGame = saved.LastGame;
 		_stayUpUntil = saved.StayUpUntil > DateTime.Now ? saved.StayUpUntil : DateTime.MinValue;
+		_quietDay = saved.Quiet;
+		_lateNight = saved.LateNight;
+		_friendJoins = saved.FriendJoins;
+		_newGameSittings = saved.NewGameSittings;
+		_joinedToday = saved.JoinedToday ?? "";
 
 		lock (_minutesByGame) {
 			_minutesByGame.Clear();
@@ -2054,6 +2160,332 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_firstSessionOfDay = _playedMinutesToday == 0;
 		_wasFarming = false;
 		_phase = Phase.Off;
+	}
+
+	// ═══ a life, not just a day ══════════════════════════════════════════════
+	// Four extras, each off until its setting is switched on: learning from you, new games tried out, quiet spells and late
+	// nights, and now and then joining a friend. The sums are in HumanHabits; this is where they meet the account.
+
+	private OwnerHabits Habits => _habits ??= OwnerHabits.Load(Bot.Name);
+
+	/// <summary>"Learn from how I play" is on and has seen enough of you to go on.</summary>
+	private bool LearningInUse => (Bot.Cfg.LearnFromOwner > 0) && Habits.Ready;
+
+	private Dictionary<uint, int> LearnedMinutes() {
+		if (_learnedVersion != Habits.Version) {
+			_learnedMinutes = Habits.MinutesByGame();
+			_learnedVersion = Habits.Version;
+		}
+
+		return _learnedMinutes;
+	}
+
+	/// <summary>
+	/// Every tick: are you playing on the account yourself, and what. A finished sitting of yours is kept. Watching stops
+	/// (and nothing is kept) while the setting is off.
+	/// </summary>
+	private void WatchOwner(DateTime now) {
+		if (Bot.Cfg.LearnFromOwner <= 0) {
+			_ownerWatch.Reset();
+
+			return;
+		}
+
+		bool on = Bot.PlayingBlocked || (Bot.OtherSessionApp != 0);
+
+		foreach (OwnerHabits.Sitting sitting in _ownerWatch.Observe(now, on, Bot.OtherSessionApp)) {
+			bool wasReady = Habits.Ready;
+			Habits.Add(sitting, now);
+			Habits.Save(Bot.Name);
+
+			Log.Debug(sitting.App != 0
+				? new Said("noted you playing {0} for {1}", GameName(sitting.App), Fmt.Hm(sitting.Minutes))
+				: new Said("noted you on the account for {0}", Fmt.Hm(sitting.Minutes)), Bot.Name);
+
+			if (!wasReady && Habits.Ready) {
+				Log.Info(new Said("seen you play on {0} days - its day now leans toward yours", Habits.DaysSeen), Bot.Name);
+			}
+		}
+	}
+
+	/// <summary>Throw away everything learned from you ('habits forget').</summary>
+	public void ForgetHabits() {
+		OwnerHabits.Forget(Bot.Name);
+		_habits = new OwnerHabits();
+		_ownerWatch.Reset();
+		_learnedVersion = -1;
+	}
+
+	/// <summary>A game's name from the library - a game that just arrived or a friend's pick is rarely in the built-in list.</summary>
+	private string LibName(uint app) => Bot.Library.Find(app)?.Name is { Length: > 0 } name ? name : GameName(app);
+
+	/// <summary>Games your other accounts are playing right now - never picked here, so two of yours aren't on one game by chance.</summary>
+	private HashSet<uint> OwnAccountsRunning() {
+		HashSet<uint> busy = [];
+
+		foreach (Bot other in BotManager.Instance?.All ?? []) {
+			if (other == Bot) {
+				continue;
+			}
+
+			busy.UnionWith(other.PlayingApps);
+
+			if (other.GrindGame != 0) {
+				busy.Add(other.GrindGame);
+			}
+		}
+
+		return busy;
+	}
+
+	/// <summary>Every one of your accounts, by SteamID - none of them is ever a "friend" to join.</summary>
+	private HashSet<ulong> OwnSteamIds() {
+		HashSet<ulong> ids = [.. (BotManager.Instance?.All ?? []).Select(static b => b.SteamId).Where(static id => id != 0)];
+
+		if (Bot.SteamId != 0) {
+			ids.Add(Bot.SteamId);
+		}
+
+		return ids;
+	}
+
+	/// <summary>
+	/// Whether an extra (a friend's game, a new one) may be played here: in the library, not blacklisted, not held for its
+	/// refund, and not a family game unless shared games are allowed and nobody in the family is on it.
+	/// </summary>
+	private bool MayPlayExtra(uint app, bool allowShared) =>
+		(Bot.Library.Find(app) is { } entry) && (!entry.Shared || (allowShared && !Bot.Library.FamilyIsPlaying(app)))
+		&& !Bot.Cfg.BlacklistedGames.Contains(app) && !Live.Global.GlobalBlacklistedGames.Contains(app) && !Bot.Refunds.Holds(app);
+
+	/// <summary>
+	/// A sitting for a friend's game or a new one, or 0 for the usual pick. A friend first - they're on it now and gone in an
+	/// hour, where a new game is still new tomorrow.
+	/// </summary>
+	private uint PickExtra() {
+		if (Bot.Cfg.JoinFriends && (_friendJoins < HumanHabits.FriendJoinsCap) && (FriendsGame() is { App: not 0 } friend)
+			&& Chance(HumanHabits.FriendJoinChance)) {
+			_friendJoins++;
+			_joinedToday = $"{friend.Name} in {LibName(friend.App)}";
+			Persist();
+			Log.Info(new Said("{0} is playing {1} - joining in for a sitting", friend.Name, LibName(friend.App)), Bot.Name);
+
+			return friend.App;
+		}
+
+		if (Bot.Cfg.NewGamesFirst && (_newGameSittings < HumanHabits.TrialSittingsCap) && (TrialsNow() is { Count: > 0 } trials)
+			&& Chance(HumanHabits.TrialPickChance * trials.Max(static t => t.Strength))) {
+			uint game = trials.Count == 1 ? trials[0].App
+				: WeightedPick([.. trials.Select(static t => (t.App, Math.Max(1, (int) Math.Round(t.Strength * 100))))]);
+			_newGameSittings++;
+			Persist();
+			Log.Info(new Said("trying out {0} - it's new here", LibName(game)), Bot.Name);
+
+			return game;
+		}
+
+		return 0;
+	}
+
+	/// <summary>
+	/// What your Steam friends are playing that this account could join, one at random. Steam pushes friends' games to the
+	/// session as they change; this only reads that, it never asks.
+	/// </summary>
+	private (string Name, uint App) FriendsGame() {
+		HashSet<uint> busy = OwnAccountsRunning();
+		uint main = MainGame();
+
+		// Not the main game: that already has its share, and "joining" it would only tip that share over its number.
+		return HumanHabits.PickFriendGame(FriendsFeed?.Invoke() ?? FriendsPlaying(), OwnSteamIds(),
+			app => (app != main) && !busy.Contains(app) && MayPlayExtra(app, allowShared: true), _rng);
+	}
+
+	/// <summary>Who's playing what, in place of Steam's friends list - only the tests set this.</summary>
+	internal Func<List<(ulong Id, string Name, uint App)>>? FriendsFeed { get; set; }
+
+	private List<(ulong Id, string Name, uint App)> FriendsPlaying() {
+		List<(ulong Id, string Name, uint App)> playing = [];
+
+		if (Bot.Friends is not { } friends) {
+			return playing;
+		}
+
+		try {
+			int count = friends.GetFriendCount();
+
+			for (int i = 0; i < count; i++) {
+				SteamKit2.SteamID id = friends.GetFriendByIndex(i);
+
+				if (!id.IsIndividualAccount || (friends.GetFriendRelationship(id) != SteamKit2.EFriendRelationship.Friend)) {
+					continue;
+				}
+
+				// A non-Steam shortcut or a mod isn't a game this account could own.
+				if ((friends.GetFriendGamePlayed(id) is not { IsSteamApp: true } game) || (game.AppID == 0)) {
+					continue;
+				}
+
+				string? name = friends.GetFriendPersonaName(id);
+				playing.Add((id.ConvertToUInt64(), string.IsNullOrWhiteSpace(name) ? id.ConvertToUInt64().ToString(CultureInfo.InvariantCulture) : name, game.AppID));
+			}
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't read what friends are playing: {0}", Log.Describe(e)), Bot.Name);
+
+			return [];
+		}
+
+		return playing;
+	}
+
+	/// <summary>The new games that may be tried right now, with how keen on each it is today.</summary>
+	private List<Trial> TrialsNow() {
+		if (_trials.Count == 0) {
+			return [];
+		}
+
+		DateTime now = DateTime.UtcNow;
+		HashSet<uint> busy = OwnAccountsRunning();
+		HashSet<uint> listed = [.. ParseWeights(Bot.Cfg.GameWeights).Select(static w => w.Game)];
+		uint main = MainGame();
+		List<Trial> ready = [];
+
+		foreach (Trial trial in _trials) {
+			double strength = HumanHabits.TrialStrength(trial.Start, now, trial.Days);
+
+			// One already in "Games and how often" has its own share; one your other accounts are on waits for them.
+			if ((strength > 0) && (trial.App != main) && !listed.Contains(trial.App) && !busy.Contains(trial.App) && MayPlayExtra(trial.App, allowShared: false)) {
+				ready.Add(trial with { Strength = strength });
+			}
+		}
+
+		return ready;
+	}
+
+	private bool IsTrialGame(uint app) => Bot.Cfg.NewGamesFirst && _trials.Exists(t => t.App == app);
+
+	/// <summary>
+	/// Which games arrived lately, from the licence list - when each one was really got, and whether it was bought. Its
+	/// own licences only: a family member's game isn't new here. Every half hour, or at once when a licence arrives.
+	/// </summary>
+	private async Task RefreshTrialsAsync() {
+		if (!Bot.Cfg.LegitMode || !Bot.Cfg.NewGamesFirst) {
+			_trials = [];
+
+			return;
+		}
+
+		// Not while you're on the account: nothing goes to Steam from here underneath you, not even a question.
+		if (!Bot.IsOnline || Bot.PlayingBlocked || !Bot.Library.Ready || ((DateTime.UtcNow < _trialsDue) && (Bot.LicenseGeneration == _trialsGeneration))) {
+			return;
+		}
+
+		_trialsDue = DateTime.UtcNow.AddMinutes(30);
+		_trialsGeneration = Bot.LicenseGeneration;
+
+		try {
+			IReadOnlyDictionary<uint, AppOwnership> owned = await Bot.GetAppOwnershipAsync().ConfigureAwait(false);
+			DateTime now = DateTime.UtcNow;
+			List<Trial> fresh = [];
+
+			foreach (Library.Entry game in Bot.Library.Games) {
+				if (game.Shared || !owned.TryGetValue(game.AppId, out AppOwnership own) || !own.Own) {
+					continue;
+				}
+
+				DateTime start = HumanHabits.TrialStart(own, Bot.Cfg);
+				int days = HumanHabits.TrialDays(Bot.Name, game.AppId);
+				double strength = HumanHabits.TrialStrength(start, now, days);
+
+				if (strength > 0) {
+					fresh.Add(new Trial(game.AppId, strength, start, days));
+				}
+			}
+
+			_trials = [.. fresh.OrderByDescending(static t => t.Strength).Take(HumanHabits.TrialsAtOnce)];
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't look for new games: {0}", Log.Describe(e)), Bot.Name);
+		}
+	}
+
+	/// <summary>What the four extras are up to, for 'human' - only the ones switched on, so nothing changes for anybody else.</summary>
+	public List<string> ExtrasReport() {
+		List<string> lines = [];
+
+		if (Bot.Cfg.LearnFromOwner > 0) {
+			OwnerHabits h = Habits;
+			string how = Bot.Cfg.LearnFromOwner >= 2 ? "a lot" : "a little";
+			string hours = OwnerHabits.HoursText(h.HourShare());
+
+			lines.Add(h.Ready
+				? $"learning from you   in use ({how}) - {h.DaysSeen} days seen" + (hours.Length > 0 ? $", usually on {hours}" : "")
+				: $"learning from you   watching - {h.DaysSeen} of {OwnerHabits.DaysNeeded} days seen, not used yet");
+		}
+
+		if (Bot.Cfg.NewGamesFirst) {
+			List<Trial> trials = TrialsNow();
+			DateTime now = DateTime.UtcNow;
+
+			lines.Add(trials.Count == 0
+				? "new games           nothing new to try right now"
+				: "new games           trying " + string.Join(", ", trials.Select(t => $"{LibName(t.App)} (day {(int) (now - t.Start).TotalDays + 1} of {t.Days})"))
+					+ $" - {_newGameSittings} of {HumanHabits.TrialSittingsCap} sittings today");
+		}
+
+		if (Bot.Cfg.LongerRhythms) {
+			lines.Add(_quietDay ? "rhythm              a quiet spell - a shorter day today"
+				: _lateNight ? $"rhythm              a late night - bed around {PlanBed():HH:mm}"
+				: "rhythm              an ordinary day");
+		}
+
+		if (Bot.Cfg.JoinFriends) {
+			lines.Add(_joinedToday.Length > 0
+				? $"friends             joined {_joinedToday} ({_friendJoins} of {HumanHabits.FriendJoinsCap} today)"
+				: "friends             nobody joined today");
+		}
+
+		return lines;
+	}
+
+	/// <summary>What 'habits' prints: what it has learned from you, and whether it's being used.</summary>
+	public List<string> HabitsReport() {
+		OwnerHabits h = Habits;
+		List<string> lines = [];
+		int days = h.DaysSeen;
+
+		lines.Add(Bot.Cfg.LearnFromOwner <= 0
+			? "  \"Learn from how I play\" is off - it isn't watching. Switch it on under Human mode."
+			: h.Ready
+				? $"  in use ({(Bot.Cfg.LearnFromOwner >= 2 ? "a lot" : "a little")}) - its day leans toward yours"
+				: $"  watching - {days} of {OwnerHabits.DaysNeeded} days seen, used once it has {OwnerHabits.DaysNeeded}");
+
+		if (days == 0) {
+			lines.Add("  nothing seen yet - it learns from the times you play on this account yourself");
+
+			return lines;
+		}
+
+		List<(int Start, int End)> seen = h.Days();
+		string hours = OwnerHabits.HoursText(h.HourShare());
+		lines.Add($"  days seen     {days} (the last {OwnerHabits.KeepDays} days are kept)");
+		lines.Add($"  usually       on around {OwnerHabits.Clock(OwnerHabits.Median(seen.Select(static d => d.Start)))}, off around {OwnerHabits.Clock(OwnerHabits.Median(seen.Select(static d => d.End)))}"
+			+ (hours.Length > 0 ? $"; mostly {hours}" : ""));
+
+		Dictionary<uint, int> games = h.MinutesByGame();
+
+		if (games.Count > 0) {
+			int total = Math.Max(1, games.Values.Sum());
+			HashSet<uint> listed = [.. ParseWeights(Bot.Cfg.GameWeights).Select(static w => w.Game)];
+
+			lines.Add("  top games     " + string.Join(", ", games.OrderByDescending(static g => g.Value).Take(5)
+				.Select(g => $"{LibName(g.Key)} {g.Value * 100 / total}% ({Fmt.Hm(g.Value)})")));
+
+			List<uint> notListed = [.. games.OrderByDescending(static g => g.Value).Select(static g => g.Key).Where(g => !listed.Contains(g)).Take(5)];
+
+			if (notListed.Count > 0) {
+				lines.Add("  not in \"Games and how often\" (add them there if you want them in its day): " + string.Join(", ", notListed.Select(LibName)));
+			}
+		}
+
+		return lines;
 	}
 
 	// ═══ which game ═════════════════════════════════════════════════════════
@@ -2237,6 +2669,11 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			list[0] = (list[0].Game, Math.Max(1, (int) Math.Round(100.0 * Math.Max(1, list[0].Weight) / left)));
 		}
 
+		// Learning from you: the same games, leaned toward how you split your own time between them.
+		if (LearningInUse) {
+			list = HumanHabits.Reweight(list, LearnedMinutes(), HumanHabits.Pull(Bot.Cfg.LearnFromOwner));
+		}
+
 		// The game the achievement hunter is on joins the rotation as one more side game, at its own weight - played
 		// in ordinary sittings like any other, instead of the hunter taking the account over and cutting a sitting
 		// short. Last in the list, so it is never mistaken for the main game.
@@ -2269,6 +2706,14 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		if (target != 0) {
 			return target;
+		}
+
+		// A friend's game, or a new one being tried out - each only when its setting is on, and only then touching the dice,
+		// so with them off the pick below is exactly what it was.
+		uint extra = PickExtra();
+
+		if (extra != 0) {
+			return extra;
 		}
 
 		List<(uint Game, int Weight)> weights = Weights();
@@ -2557,6 +3002,23 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		return human.Current is Phase.Asleep or Phase.DoneForToday or Phase.DayOff ? human.Current : null;
 	}
 
+	/// <summary>
+	/// Resting by its own plan, so no hours are due: asleep with nothing banking overnight, done for today, a day off,
+	/// or standing down for you. False before human mode has looked at the clock this run - it has no plan to go by.
+	/// For the stuck-account alarm (<see cref="StuckWatch"/>), which must never call a planned rest "stuck".
+	/// </summary>
+	public static bool RestingByPlan(Bot bot) {
+		if (!bot.Cfg.LegitMode || bot.IsFarming || bot.Grinding || (bot.Modules.OfType<HumanMode>().FirstOrDefault() is not { _ticked: true } human)) {
+			return false;
+		}
+
+		return human._phase switch {
+			Phase.Asleep => !human._nightFarming,
+			Phase.DoneForToday or Phase.DayOff or Phase.StoodDown => true,
+			_ => false
+		};
+	}
+
 	public static bool AwakeFor(Bot bot) {
 		if (!bot.Cfg.LegitMode || !bot.Cfg.ActOnlyWhileAwake) {
 			return true;
@@ -2613,7 +3075,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// </summary>
 	/// <param name="rotation">What the day really picks from - the hunt's game included (<see cref="Rotation"/>). Without
 	/// it the preview left the hunt out, so a main game plus a hunt read as main-game-only days.</param>
-	public static List<string> PreviewWeek(BotConfig cfg, List<(uint Game, int Weight)>? rotation = null) {
+	/// <param name="account">The account's name: its quiet spells and late nights are decided per account and day, so with
+	/// it the preview shows the very ones the real days will have.</param>
+	/// <param name="habits">What it has learned from you, when "Learn from how I play" is using it.</param>
+	public static List<string> PreviewWeek(BotConfig cfg, List<(uint Game, int Weight)>? rotation = null, string? account = null, OwnerHabits? habits = null) {
 		List<string> lines = [];
 		Random rng = new();
 		List<(uint Game, int Weight)> weights = rotation is { Count: > 0 } ? rotation : ParseWeights(cfg.GameWeights);
@@ -2629,13 +3094,18 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			// Rolled by the very roller the day uses, each night's bedtime feeding the next morning - so the preview is
 			// the real thing's shape, not a copy of it that had already drifted twice (no target cap, no hunt).
 			DateTime date = DateTime.Now.Date.AddDays(day);
-			DayRoll roll = RollDay(cfg, date, mainCentre, weights.Count >= 2, lastBed, rng);
+			bool rhythms = cfg.LongerRhythms && (account != null);
+			OwnerHabits? learned = (cfg.LearnFromOwner > 0) && (habits?.Ready == true) ? habits : null;
+			DayExtras? extras = !rhythms && (learned == null) ? null
+				: new DayExtras(rhythms ? HumanHabits.RhythmFor(account!, date) : default, learned, HumanHabits.Pull(cfg.LearnFromOwner));
+			DayRoll roll = RollDayWith(cfg, date, mainCentre, weights.Count >= 2, lastBed, rng, extras);
 			lastBed = BedOn(date, roll.BedHour, roll.BedMinute, roll.BedIsTomorrow);
 
 			string when = $"{date:ddd}";
+			string note = roll.Quiet ? "   (a quiet spell)" : roll.LateNight ? "   (a late night)" : "";
 
 			if (roll.Target == 0) {
-				lines.Add($"{when}  not playing");
+				lines.Add($"{when}  not playing{note}");
 
 				continue;
 			}
@@ -2645,7 +3115,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				? GameName(weights[0].Game) + " only"
 				: $"mostly {GameName(weights[0].Game)}, about {Fmt.Hm(SideExpected(roll.Target, roll.MainSharePct))} on the others";
 
-			lines.Add($"{when}  {Fmt.Hm(roll.Target),-7} from {roll.WakeMinute / 60:00}:{roll.WakeMinute % 60:00} to {roll.BedHour:00}:xx   {mix}");
+			lines.Add($"{when}  {Fmt.Hm(roll.Target),-7} from {roll.WakeMinute / 60:00}:{roll.WakeMinute % 60:00} to {roll.BedHour:00}:xx   {mix}{note}");
 		}
 
 		return lines;

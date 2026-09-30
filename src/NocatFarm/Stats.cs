@@ -17,6 +17,9 @@ public static class Stats {
 	public const string KindComment = "comment";
 	public const string KindBadge = "badge";
 
+	/// <summary>A card put up on the market - the weekly report counts them. A sale itself isn't something Steam tells us.</summary>
+	public const string KindListed = "listed";
+
 	public sealed record Event(DateTime When, string Kind, string Bot);
 
 	private static readonly object Gate = new();

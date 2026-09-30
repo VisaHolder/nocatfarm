@@ -45,6 +45,7 @@ human myaccount          # what it's doing today and what it played
 human myaccount week     # a sample of the next seven days
 human myaccount reroll   # throw today's plan away and roll a new one from the current settings
 wake myaccount           # wake it up and start its day now (bedtime stays the same)
+habits myaccount         # what it has learned from you playing on the account (see below)
 ```
 
 A day is planned once, when it wakes, so a change to its hours or main game shows up tomorrow. `reroll` applies it
@@ -73,6 +74,32 @@ Every wait is a setting, under Show advanced on a human-mode account:
 | *On a break, go Away after at least … up to* | 2-10 minutes |
 | *Answer one trade offer at a time* | on |
 | *Settle in for at least … And at most* - after signing in, before the first game | 3-20 minutes |
+
+## A life, not just a day
+
+Four extras make the weeks less alike. All four are off until you switch them on, so an account set up before them
+plays exactly as it did.
+
+*Learn from how I play* (off, a little, a lot) notes when you play on the account yourself, and which games. After 7
+days of that, its day leans toward yours: about 30% of the way (a little) or 70% (a lot) toward when you get on and
+when you stop, and toward how you split your time between the games in *Games and how often*. It never adds a game
+that isn't in that list, and how long it plays still comes from the hours settings. It keeps the last 60 days.
+`habits myaccount` shows what it has seen (days, your usual hours, top games, and games you play that aren't in the
+list), and `habits myaccount forget` wipes it.
+
+*Play new games more at first* gives a game that has just arrived (bought, gifted or free) extra sittings for 3 to 10
+days, fewer each day, at most 3 sittings a day. Games still refundable (with refund protection on it waits for that
+to end), blacklisted or family-shared games, and games your other accounts are running are left alone.
+
+*Quiet spells and late nights*: once or twice a month a quiet spell of 2 to 5 days with days about half as long, and
+now and then a Friday or Saturday night that runs one to two and a half hours later. Days off and the hours still
+apply, and `human week` shows the same quiet spells and late nights the real days will have.
+
+*Sometimes play what a friend is playing*: when a Steam friend is in a game this account owns, now and then (at most
+twice a day, only while it's up and between sittings) its next sitting is that game. Your own accounts, anything they
+are running, blacklisted and refundable games, and the main game are never picked this way.
+
+`human myaccount` says what each one that is on is doing today.
 
 ## Staying out of your way
 

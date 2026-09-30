@@ -920,7 +920,6 @@
     "resuming the grind of {0} - {1} left": "{0}의 집중 플레이를 재개합니다 - {1} 남음",
     "stopping - finishing up, logging off in about {0}s": "중지합니다 - 마무리 중, 약 {0}초 후 로그오프합니다",
     "{0} licence(s) known": "알려진 라이선스 {0}개",
-    "joined group {0}": "그룹 {0}에 가입했습니다",
     "inventory now {0}{1} across {2} game(s), {3} item(s) still to price": "인벤토리는 현재 {0}{1}, 게임 {2}개에 걸쳐 {3}개가 아직 가격 미확인입니다",
     "the market answered {0} - pausing price lookups until {1}": "마켓이 {0}을(를) 반환했습니다 - {1}까지 가격 조회를 멈춥니다",
     "the store answered {0} - pausing game lookups until {1}": "상점이 {0}을(를) 반환했습니다 - {1}까지 게임 조회를 멈춥니다",
@@ -1775,9 +1774,7 @@
     "stopped - signed out after {0} achievement(s) in {1} game(s)": "중지 - 게임 {1}개에서 업적 {0}개 후 로그아웃",
     "done - nothing it can unlock ({0} app(s) checked{1}), Steam sets the rest": "완료 - 직접 해제할 것 없음 (앱 {0}개 확인{1}), 나머지는 Steam이 설정",
     "auto-update waiting: {0} has {1} offer(s), {2} gift(s) queued": "자동 업데이트 대기: {0}에 제안 {1}건, 선물 {2}건 대기 중",
-    "installing {0} by itself - quiet time (Update by itself)": "{0} 자동 설치 중 - 한가한 시간 (자동 업데이트)",
     "{0} waits for bedtime - 'update now' installs it now": "{0}은(는) 취침 시간 대기 중 - 'update now'로 바로 설치",
-    "installing {0} - the accounts are asleep": "{0} 설치 중 - 계정들이 자는 중",
     "reminder: nocat.farm {0} is out - 'update accept' installs it": "알림: nocat.farm {0} 출시 - 'update accept'로 설치",
     "reminder: nocat.farm {0} is out - 'update' shows how": "알림: nocat.farm {0} 출시 - 방법은 'update'",
     "nocat.farm {0} is out - 'update accept' installs it": "nocat.farm {0} 출시 - 'update accept'로 설치",
@@ -2069,7 +2066,120 @@
     "'all' means every account in a command - pick another name": "'all'은 명령에서 모든 계정을 뜻합니다 - 다른 이름을 고르세요",
     "offer sent - confirm it in the Steam app on your phone": "제안 보냄 - 휴대폰의 Steam 앱에서 확인하세요",
     "{0} invited you to play {1}": "{0}님이 {1} 게임에 초대했습니다",
-    "human mode spaces comments out - this account can post the next one from {0}": "사람 모드는 댓글 간격을 둡니다 - 이 계정은 {0}부터 다음 댓글을 올릴 수 있습니다"
+    "human mode spaces comments out - this account can post the next one from {0}": "사람 모드는 댓글 간격을 둡니다 - 이 계정은 {0}부터 다음 댓글을 올릴 수 있습니다",
+    "installing {0} by itself - all clear: {1}": "{0}을(를) 알아서 설치 중 - 모두 조용함: {1}",
+    "installing {0} - all clear: {1}": "{0} 설치 중 - 모두 조용함: {1}",
+    "you're playing on {0}": "{0}에서 플레이 중",
+    "you were on {0} a few minutes ago": "몇 분 전까지 {0}을(를) 쓰고 있었음",
+    "{0} is signing in": "{0} 로그인 중",
+    "{0} is awake": "{0} 깨어 있음",
+    "{0} asleep": "{0} 자는 중",
+    "{0} farming": "{0} 파밍 중",
+    "{0} idling": "{0} 아이들 중",
+    "nobody playing": "아무도 플레이 안 함",
+    "idling {0} of {1} games - next batch at {2}": "게임 {1}개 중 {0}개 실행 중 - 다음 묶음은 {2}",
+    "idle rotation: batch {0} of {1} now, {2} games": "게임 순환: 이제 {1}개 묶음 중 {0}번째, 게임 {2}개",
+    "couldn't save the idle rotation: {0}": "게임 순환 상태를 저장하지 못했습니다: {0}",
+    "couldn't read the idle rotation - starting it fresh: {0}": "게임 순환 상태를 읽지 못해 처음부터 시작합니다: {0}",
+    "all the games it owns": "보유한 모든 게임",
+    "Idling {0} of {1} at a time - next batch at {2}.": "{1}개 중 {0}개씩 실행 중 - 다음 묶음은 {2}.",
+    "More than fit at once? It idles a batch at a time and moves on every {0}h.": "한 번에 다 못 돌리나요? 한 묶음씩 돌리고 {0}시간마다 다음 묶음으로 넘어갑니다.",
+    "If nocat.farm stops": "nocat.farm가 멈추면",
+    "the stop alert": "중지 알림",
+    "stop alert: Telegram is no longer linked - press Connect to link it again": "중지 알림: 텔레그램 연결이 끊겼습니다 - 다시 연결하려면 “연결”을 누르세요",
+    "stop alert: linked - Telegram will tell you if nocat.farm stops": "중지 알림: 연결됨 - nocat.farm가 멈추면 텔레그램으로 알려 드립니다",
+    "Get a Telegram message if nocat.farm stops": "nocat.farm가 멈추면 텔레그램 메시지 받기",
+    "nocat.lol's Telegram bot tells you when nocat.farm stops checking in on this PC - a crash, or the PC off or offline - and again when it's back. Closing it yourself or an update doesn't count. It sends only a random number made for this PC, no account names.": "nocat.lol의 텔레그램 봇이 이 PC의 nocat.farm가 연락을 멈추면(충돌, PC 꺼짐 또는 오프라인) 알려 주고, 다시 돌아오면 또 알려 줍니다. 직접 닫거나 업데이트하는 것은 해당되지 않습니다. 이 PC용으로 만든 무작위 번호만 보내며, 계정 이름은 보내지 않습니다.",
+    "Couldn't reach nocat.lol - is this PC online?": "nocat.lol에 연결할 수 없습니다 - 이 PC가 온라인인가요?",
+    "Alerts aren't switched on at nocat.lol yet - try again later.": "nocat.lol에서 아직 알림이 켜져 있지 않습니다 - 나중에 다시 시도하세요.",
+    "nocat.lol gave an unexpected answer - try again later.": "nocat.lol이 예상하지 못한 응답을 보냈습니다 - 나중에 다시 시도하세요.",
+    "nocat.lol asked to slow down - try again in a minute.": "nocat.lol이 속도를 늦춰 달라고 합니다 - 1분 뒤에 다시 시도하세요.",
+    "Sent - check Telegram.": "보냈습니다 - 텔레그램을 확인하세요.",
+    "Not linked yet - press Connect first.": "아직 연결되지 않았습니다 - 먼저 “연결”을 누르세요.",
+    "Telegram didn't take the message - press Connect to link it again.": "텔레그램이 메시지를 받지 않았습니다 - 다시 연결하려면 “연결”을 누르세요.",
+    "Unlinked - no more alerts for this PC.": "연결을 해제했습니다 - 이 PC에 대한 알림은 더 이상 없습니다.",
+    "Turn on \"Tell me if nocat.farm stops\" below and save, then press Connect.": "아래의 “nocat.farm가 멈추면 알려 주기”를 켜고 저장한 다음 “연결”을 누르세요.",
+    "Last check-in: {0}": "마지막 연락: {0}",
+    "Not checked in yet.": "아직 연락이 없습니다.",
+    "Open Telegram": "텔레그램 열기",
+    "Press Start in Telegram. The link works once, for 15 minutes - scan the code to open it on your phone.": "텔레그램에서 “시작”을 누르세요. 링크는 한 번, 15분 동안만 작동합니다 - 코드를 스캔하면 휴대폰에서 열 수 있습니다.",
+    "Linked to Telegram.": "텔레그램에 연결되었습니다.",
+    "Unlink": "연결 해제",
+    "Not linked to Telegram yet.": "아직 텔레그램에 연결되지 않았습니다.",
+    "couldn't read what it learned from your play: {0}": "당신의 플레이에서 배운 내용을 읽지 못했습니다: {0}",
+    "couldn't save what it learned from your play: {0}": "당신의 플레이에서 배운 내용을 저장하지 못했습니다: {0}",
+    "couldn't forget what it learned from your play: {0}": "당신의 플레이에서 배운 내용을 지우지 못했습니다: {0}",
+    "a quiet spell - shorter days for a while": "조용한 시기 - 한동안 짧은 하루",
+    "a late one tonight - bed around {0}": "오늘은 늦은 밤 - {0}쯤 취침",
+    "noted you playing {0} for {1}": "기록: {0}을(를) {1} 동안 플레이함",
+    "noted you on the account for {0}": "기록: {0} 동안 계정에 있었음",
+    "seen you play on {0} days - its day now leans toward yours": "당신이 {0}일 플레이하는 걸 봤습니다 - 이제 하루를 당신 쪽으로 맞춥니다",
+    "{0} is playing {1} - joining in for a sitting": "{0}님이 {1} 플레이 중 - 한 세션 함께합니다",
+    "trying out {0} - it's new here": "{0} 해 보는 중 - 새로 들어온 게임",
+    "couldn't read what friends are playing: {0}": "친구들이 하는 게임을 읽지 못했습니다: {0}",
+    "couldn't look for new games: {0}": "새 게임을 찾지 못했습니다: {0}",
+    "learns from how you play": "당신의 플레이 방식에서 배움",
+    "tries new games out": "새 게임을 해 봄",
+    "has quiet spells and late nights": "조용한 시기와 늦은 밤이 있음",
+    "sometimes joins a friend": "가끔 친구와 함께함",
+    "It also {0}.": "그 밖에: {0}.",
+    "backup saved: {0}": "백업 저장됨: {0}",
+    "that file is too big to be a nocat.farm backup": "이 파일은 nocat.farm 백업이라기엔 너무 큽니다",
+    "that zip has far too many files to be a nocat.farm backup": "이 zip은 nocat.farm 백업이라기엔 파일이 너무 많습니다",
+    "refused: {0} points outside the config folder": "거부됨: {0}이(가) 설정 폴더 밖을 가리킵니다",
+    "refused: {0} is in the zip twice": "거부됨: {0}이(가) zip에 두 번 들어 있습니다",
+    "refused: {0} isn't something a nocat.farm backup holds": "거부됨: {0}은(는) nocat.farm 백업에 들어가는 것이 아닙니다",
+    "refused: {0} is too big": "거부됨: {0}이(가) 너무 큽니다",
+    "refused: the files in it add up to too much": "거부됨: 안의 파일을 합치면 너무 큽니다",
+    "that isn't a zip nocat.farm can read": "nocat.farm이 읽을 수 있는 zip이 아닙니다",
+    "that isn't a nocat.farm backup - it has no manifest": "nocat.farm 백업이 아닙니다 - 매니페스트가 없습니다",
+    "that backup is from a newer nocat.farm ({0}) - update first": "더 새로운 nocat.farm ({0})의 백업입니다 - 먼저 업데이트하세요",
+    "restoring a backup from {0} - stopping every account": "{0} 백업 복원 중 - 모든 계정을 멈춥니다",
+    "backup restored: {0} file(s) - what was there before is in {1}": "백업 복원됨: 파일 {0}개 - 이전 내용은 {1}에 있습니다",
+    "Restored {0} file(s). The accounts are starting again.": "파일 {0}개를 복원했습니다. 계정이 다시 시작합니다.",
+    "Weekly report": "주간 보고서",
+    "the PC just woke up": "PC가 방금 절전에서 깨어났습니다",
+    "hasn't banked any hours for {0} - it's {1}; it needs you": "{0} 동안 시간을 적립하지 못했습니다 - 상태: {1}; 확인이 필요합니다",
+    "hasn't banked any hours for {0} - it's {1}; restarted {2} ago, so not again": "{0} 동안 시간을 적립하지 못했습니다 - 상태: {1}; {2} 전에 재시작했으니 다시는 안 합니다",
+    "hasn't banked any hours for {0} - it's {1}; restarting it": "{0} 동안 시간을 적립하지 못했습니다 - 상태: {1}; 재시작합니다",
+    "still hasn't banked any hours for {0} - it's {1}; not restarting it again - have a look": "아직도 {0} 동안 시간을 적립하지 못했습니다 - 상태: {1}; 더는 재시작하지 않습니다 - 확인해 보세요",
+    "you're playing on it": "이 계정으로 직접 플레이 중",
+    "Steam's weekly maintenance": "Steam 주간 점검",
+    "human mode is resting": "휴먼 모드가 쉬는 중",
+    "nothing to play": "플레이할 게임이 없음",
+    "stuck signing in": "로그인에서 멈춤",
+    "disconnected and not coming back": "연결이 끊기고 돌아오지 않음",
+    "waiting for a Steam Guard code or password": "Steam Guard 코드나 비밀번호를 기다리는 중",
+    "failed: {0}": "실패: {0}",
+    "signed in but not playing anything": "로그인했지만 아무것도 플레이하지 않음",
+    "  {0} {1} banked (last week {2}) · {3} card(s) · {4} listed · value {5} · {6} comment(s)": "  {0} {1} 적립 (지난주 {2}) · 카드 {3}장 · 판매 등록 {4} · 가치 {5} · 댓글 {6}개",
+    "  {0} {1} banked (last week {2}) · {3} card(s) · {4} listed · value {5}": "  {0} {1} 적립 (지난주 {2}) · 카드 {3}장 · 판매 등록 {4} · 가치 {5}",
+    "  fleet: {0} banked (last week {1}) · {2} card(s) · {3} listed · value {4} · {5} comment(s)": "  전체: {0} 적립 (지난주 {1}) · 카드 {2}장 · 판매 등록 {3} · 가치 {4} · 댓글 {5}개",
+    "  fleet: {0} banked (last week {1}) · {2} card(s) · {3} listed · value {4}": "  전체: {0} 적립 (지난주 {1}) · 카드 {2}장 · 판매 등록 {3} · 가치 {4}",
+    "backup downloaded from the dashboard ({0} KB)": "대시보드에서 백업을 내려받았습니다 ({0} KB)",
+    "dashboard: a backup was refused - {0}": "대시보드: 백업이 거부되었습니다 - {0}",
+    "that restore has run out - pick the file again": "이 복원은 시간이 지났습니다 - 파일을 다시 고르세요",
+    "Backup & restore": "백업과 복원",
+    "One zip with your settings, every account, saved logins, authenticators, history and progress. Logs and caches are left out.": "설정, 모든 계정, 저장된 로그인, 인증기, 기록과 진행 상황을 담은 zip 하나입니다. 로그와 캐시는 빠집니다.",
+    "Logins inside stay encrypted, as they are on disk. A backup made on Windows only opens them on the same PC and Windows user - restored anywhere else, each account asks for its password once. Keep the zip private: it signs in to your accounts.": "안의 로그인 정보는 디스크에서처럼 암호화된 채로 있습니다. Windows에서 만든 백업은 같은 PC의 같은 Windows 사용자에서만 열 수 있습니다 - 다른 곳에서 복원하면 각 계정이 비밀번호를 한 번 묻습니다. zip은 남에게 주지 마세요: 계정에 로그인할 수 있습니다.",
+    "Download a backup": "백업 내려받기",
+    "Restore a backup": "백업 복원",
+    "Saved {0}": "{0} 저장됨",
+    "settings": "설정",
+    "account settings": "계정 설정",
+    "saved logins": "저장된 로그인",
+    "authenticators": "인증기",
+    "login key": "로그인 키",
+    "history days": "기록 일수",
+    "progress and totals": "진행 상황과 합계",
+    "Restore this backup?": "이 백업을 복원할까요?",
+    "Made {0} by nocat.farm {1} on {2}.": "{0}에 nocat.farm {1}로 {2}에서 만듦.",
+    "Made on another PC: its saved logins may not open here, so those accounts ask for their passwords again.": "다른 PC에서 만든 백업: 저장된 로그인이 여기서 열리지 않을 수 있어, 그 계정들은 비밀번호를 다시 묻습니다.",
+    "Every account stops, these files replace the ones here, and the accounts start again. Accounts not in the backup are left alone, and what gets replaced is saved in the backups folder first.": "모든 계정이 멈추고, 이 파일들이 여기 파일을 대신하며, 계정이 다시 시작합니다. 백업에 없는 계정은 그대로 두고, 바뀌는 파일은 먼저 backups 폴더에 저장됩니다.",
+    "Restore": "복원",
+    "Restoring...": "복원 중...",
+    "── weekly report · {0} to {1} ──": "── 주간 보고서 · {0} ~ {1} ──",
+    "banking hours again": "다시 시간을 적립하는 중"
   },
   "settings": {
     "WebEnabled": {
@@ -3072,6 +3182,68 @@
     "SendAroundHour": {
       "label": "...쯤에",
       "tip": "보낼 시각(0~23시). 예를 들어 4면 새벽 4시쯤입니다. 그 시간 안의 무작위 분에, \"아이템 보내기 주기\"가 허락하는 날에 보냅니다. -1 = 시각을 정하지 않음: 켠 때부터 몇 시간마다."
+    },
+    "IdleWholeLibrary": {
+      "label": "라이브러리 전체 돌리기",
+      "tip": "\"시간을 쌓을 게임\" 다음으로, 계정이 가진 모든 게임에 시간을 쌓습니다. \"절대 건드리지 않을 것\"에 있는 게임, 환불 가능한 게임, 가족 공유 게임(\"가족 공유 게임도 포함\"이 켜져 있지 않으면)은 건너뜁니다. Steam은 한 번에 32개까지 돌리니, 모든 게임에 차례가 가도록 \"목록 순환\"을 켜세요."
+    },
+    "RotateIdleGames": {
+      "label": "목록 순환",
+      "tip": "Steam이 한 번에 돌리는 수(32개, 사용자 지정 이름이 있으면 31개)보다 게임이 많으면 한 묶음씩 돌리고 일정 시간마다 다음 묶음으로 넘어가서 모든 게임에 시간이 쌓입니다. 시간 목표가 있는 게임과 가장 적게 플레이한 게임이 먼저입니다."
+    },
+    "RotateEveryHours": {
+      "label": "순환 간격",
+      "tip": "각 묶음을 몇 시간 돌린 뒤 다음 묶음으로 넘어갈지. \"목록 순환\"이 켜져 있을 때만 씁니다."
+    },
+    "StopAlert": {
+      "label": "nocat.farm가 멈추면 알려 주기",
+      "tip": "이 PC에서 nocat.farm가 멈추면(충돌, PC 꺼짐, 인터넷 끊김) 텔레그램 메시지를 받습니다. 5분마다 nocat.lol에 연락하며, 이 PC용으로 만든 무작위 번호만 보냅니다. 계정 이름도, 그 밖의 어떤 것도 보내지 않습니다. 직접 닫거나 업데이트하는 것은 해당되지 않습니다. 켠 다음 “연결”을 누르고 텔레그램에서 “시작”을 누르세요."
+    },
+    "StopAlertPcName": {
+      "label": "이 PC의 이름",
+      "tip": "텔레그램 메시지에 쓰이는 이름입니다. 예: “my PC의 nocat.farm가 14:05 이후로 연락이 없습니다”. 여러 PC에서 nocat.farm를 쓸 때 편리합니다."
+    },
+    "StopAlertMinutes": {
+      "label": "알림까지",
+      "tip": "연락이 없은 지 몇 분 뒤에 메시지를 보낼지 정합니다. 5분마다 연락하며, 메시지는 이 시간보다 최대 10분 늦게 올 수 있습니다."
+    },
+    "LearnFromOwner": {
+      "label": "내가 노는 방식에서 배우기",
+      "tip": "당신이 직접 이 계정에서 언제, 어떤 게임을 하는지 기록합니다. 그렇게 7일이 쌓이면 하루를 당신 쪽으로 맞춥니다. 접속하고 잠자리에 드는 시간, 그리고 '플레이할 게임과 빈도'에 있는 게임들 사이의 시간 배분입니다. 그 목록에 없는 게임은 절대 추가하지 않고, 얼마나 오래 하는지는 여전히 시간 설정을 따릅니다. habits 명령으로 배운 내용을 볼 수 있습니다.",
+      "choices": "0 끔 | 1 조금 | 2 많이"
+    },
+    "NewGamesFirst": {
+      "label": "새 게임은 처음에 더 많이 하기",
+      "tip": "라이브러리에 막 들어온 게임(구매, 선물, 무료)은 3~10일 동안 세션이 더 생기고 날마다 줄어듭니다. 새로운 걸 해 보는 것처럼요. 아직 환불할 수 있는 게임, 블랙리스트나 가족 공유 게임, 다른 계정이 실행 중인 게임은 건드리지 않습니다."
+    },
+    "LongerRhythms": {
+      "label": "조용한 시기와 늦은 밤",
+      "tip": "한 달에 한두 번 하루가 눈에 띄게 짧아지는 2~5일의 조용한 시기가 있고, 가끔 금요일이나 토요일 밤이 평소보다 늦게까지 이어집니다. 쉬는 날과 시간 설정은 그대로 적용됩니다. human week에서 볼 수 있습니다."
+    },
+    "JoinFriends": {
+      "label": "가끔 친구가 하는 게임 하기",
+      "tip": "Steam 친구가 이 계정이 가진 게임을 하고 있으면, 가끔 다음 세션에 그 게임을 고릅니다. 하루 최대 두 번, 깨어 있을 때만입니다. 당신의 다른 계정과 그 계정들이 실행 중인 게임은 무시하고, 블랙리스트와 환불 가능한 게임도 고르지 않습니다."
+    },
+    "StuckAlarm": {
+      "label": "멈춘 계정 재시작",
+      "tip": "플레이해야 할 계정이 몇 시간째 시간을 전혀 적립하지 못하면 - 연결 끊김, 로그인에서 멈춤, 실패, 게임이 빠짐 - 알려 주고 (Telegram과 Discord에도) 그 계정을 한 번 재시작합니다. 직접 멈추거나 일시 중지했거나 직접 플레이 중인 계정, 휴먼 모드가 재우는 중이거나 오늘 끝났거나 쉬는 날인 계정에는 절대 하지 않습니다. 계정마다 12시간에 한 번까지만 재시작합니다."
+    },
+    "StuckAlarmHours": {
+      "label": "멈춤으로 보는 시간",
+      "tip": "적립해야 하는데 시간을 적립하지 못한 채 몇 시간이 지나면 계정을 멈춘 것으로 볼지."
+    },
+    "WeeklyReport": {
+      "label": "주간 보고서",
+      "tip": "일주일에 한 번, 각 계정의 한 주를 지난주와 나란히: 적립한 시간, 드롭된 카드, 판매 등록한 카드, 인벤토리 가치, rep4rep 댓글. 로그에 쓰고, 설정되어 있으면 Telegram과 Discord로 보냅니다. report week를 입력하면 언제든 볼 수 있습니다."
+    },
+    "WeeklyReportDay": {
+      "label": "주간 보고서 · 요일",
+      "tip": "주간 보고서가 오는 요일. 그 전 7일을 다룹니다.",
+      "choices": "1 월요일 | 2 화요일 | 3 수요일 | 4 목요일 | 5 금요일 | 6 토요일 | 0 일요일"
+    },
+    "WeeklyReportHour": {
+      "label": "주간 보고서 · 시",
+      "tip": "주간 보고서가 오는 시각 (24시간 표기)."
     }
   }
 }

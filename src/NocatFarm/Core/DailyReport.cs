@@ -225,6 +225,16 @@ public static class DailyReport {
 		}
 	}
 
+	/// <summary>Read the state file again - after a restore put a different one in its place.</summary>
+	internal static void Reload() {
+		lock (Gate) {
+			_state = new State();
+			_loaded = false;
+		}
+
+		Load();
+	}
+
 	private static void Save() {
 		try {
 			State snap;

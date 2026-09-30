@@ -11,7 +11,8 @@ then covers the few settings most people change and what to do when something lo
 
 Nothing past Start here is required reading. Open whichever page you need.
 
-- [The dashboard and the app window](dashboard.md) - the tabs, the Phone page, mini mode, the tray and console mode
+- [The dashboard and the app window](dashboard.md) - the tabs, backup and restore, the Phone page, mini mode, the
+  tray and console mode
 - [Accounts and signing in](accounts.md) - adding accounts, Steam Guard, authenticators, and importing from another
   idler
 - [Cards and idling](cards-and-idling.md) - card farming, idling, a custom game name, free games, booster packs,
@@ -21,7 +22,7 @@ Nothing past Start here is required reading. Open whichever page you need.
   charts
 - [Achievements and the hunter](achievements.md)
 - [Phone and notifications](phone-and-notifications.md) - Discord and Telegram, pop-ups, the Discord profile card,
-  the daily summary and Steam groups
+  the daily summary, the weekly report, stuck accounts and Steam groups
 - [rep4rep](rep4rep.md), only if you use rep4rep.com
 - [Settings and commands](settings.md) - how settings work, what's in each group, command line options, and
   commands by Steam chat

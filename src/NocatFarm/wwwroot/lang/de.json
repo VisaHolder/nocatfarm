@@ -920,7 +920,6 @@
     "resuming the grind of {0} - {1} left": "setzt den Grind von {0} fort - noch {1}",
     "stopping - finishing up, logging off in about {0}s": "stoppt - macht Schluss, meldet sich in etwa {0}s ab",
     "{0} licence(s) known": "{0} Lizenzen bekannt",
-    "joined group {0}": "Gruppe {0} beigetreten",
     "inventory now {0}{1} across {2} game(s), {3} item(s) still to price": "Inventar jetzt {0}{1} über {2} Spiele, {3} Gegenstände noch zu bewerten",
     "the market answered {0} - pausing price lookups until {1}": "der Markt antwortete {0} - Preisabfragen pausieren bis {1}",
     "the store answered {0} - pausing game lookups until {1}": "der Shop antwortete {0} - Spielabfragen pausieren bis {1}",
@@ -1775,9 +1774,7 @@
     "stopped - signed out after {0} achievement(s) in {1} game(s)": "gestoppt - abgemeldet nach {0} Erfolg(en) in {1} Spiel(en)",
     "done - nothing it can unlock ({0} app(s) checked{1}), Steam sets the rest": "fertig - nichts selbst freischaltbar ({0} App(s) geprüft{1}), den Rest setzt Steam",
     "auto-update waiting: {0} has {1} offer(s), {2} gift(s) queued": "Auto-Update wartet: {0} hat {1} Angebot(e), {2} Geschenk(e) in der Schlange",
-    "installing {0} by itself - quiet time (Update by itself)": "installiere {0} von selbst - ruhige Zeit (Selbst aktualisieren)",
     "{0} waits for bedtime - 'update now' installs it now": "{0} wartet auf die Schlafenszeit - 'update now' installiert sofort",
-    "installing {0} - the accounts are asleep": "installiere {0} - die Konten schlafen",
     "reminder: nocat.farm {0} is out - 'update accept' installs it": "Erinnerung: nocat.farm {0} ist da - 'update accept' installiert es",
     "reminder: nocat.farm {0} is out - 'update' shows how": "Erinnerung: nocat.farm {0} ist da - 'update' zeigt wie",
     "nocat.farm {0} is out - 'update accept' installs it": "nocat.farm {0} ist da - 'update accept' installiert es",
@@ -2069,7 +2066,120 @@
     "'all' means every account in a command - pick another name": "'all' heißt in einem Befehl jedes Konto - nimm einen anderen Namen",
     "offer sent - confirm it in the Steam app on your phone": "Angebot gesendet - bestätige es in der Steam-App auf deinem Handy",
     "{0} invited you to play {1}": "{0} hat dich zu {1} eingeladen",
-    "human mode spaces comments out - this account can post the next one from {0}": "Der Menschen-Modus verteilt Kommentare - dieses Konto kann den nächsten ab {0} posten"
+    "human mode spaces comments out - this account can post the next one from {0}": "Der Menschen-Modus verteilt Kommentare - dieses Konto kann den nächsten ab {0} posten",
+    "installing {0} by itself - all clear: {1}": "installiert {0} von selbst - alles ruhig: {1}",
+    "installing {0} - all clear: {1}": "installiert {0} - alles ruhig: {1}",
+    "you're playing on {0}": "du spielst auf {0}",
+    "you were on {0} a few minutes ago": "du warst vor ein paar Minuten auf {0}",
+    "{0} is signing in": "{0} meldet sich an",
+    "{0} is awake": "{0} ist wach",
+    "{0} asleep": "{0} schläft",
+    "{0} farming": "{0} farmt",
+    "{0} idling": "{0} idlet",
+    "nobody playing": "niemand spielt",
+    "idling {0} of {1} games - next batch at {2}": "sammelt {0} von {1} Spielen - nächste Gruppe um {2}",
+    "idle rotation: batch {0} of {1} now, {2} games": "Leerlauf-Rotation: jetzt Gruppe {0} von {1}, {2} Spiele",
+    "couldn't save the idle rotation: {0}": "Leerlauf-Rotation konnte nicht gespeichert werden: {0}",
+    "couldn't read the idle rotation - starting it fresh: {0}": "Leerlauf-Rotation konnte nicht gelesen werden - sie beginnt neu: {0}",
+    "all the games it owns": "alle Spiele, die es besitzt",
+    "Idling {0} of {1} at a time - next batch at {2}.": "Sammelt {0} von {1} gleichzeitig - nächste Gruppe um {2}.",
+    "More than fit at once? It idles a batch at a time and moves on every {0}h.": "Mehr, als auf einmal passen? Es sammelt eine Gruppe nach der anderen und wechselt alle {0} h.",
+    "If nocat.farm stops": "Wenn nocat.farm stoppt",
+    "the stop alert": "die Stopp-Warnung",
+    "stop alert: Telegram is no longer linked - press Connect to link it again": "Stopp-Warnung: Telegram ist nicht mehr verknüpft - tippe auf „Verbinden“, um es wieder zu verknüpfen",
+    "stop alert: linked - Telegram will tell you if nocat.farm stops": "Stopp-Warnung: verknüpft - Telegram sagt dir Bescheid, wenn nocat.farm stoppt",
+    "Get a Telegram message if nocat.farm stops": "Eine Telegram-Nachricht, wenn nocat.farm stoppt",
+    "nocat.lol's Telegram bot tells you when nocat.farm stops checking in on this PC - a crash, or the PC off or offline - and again when it's back. Closing it yourself or an update doesn't count. It sends only a random number made for this PC, no account names.": "Der Telegram-Bot von nocat.lol sagt dir Bescheid, wenn sich nocat.farm auf diesem PC nicht mehr meldet - ein Absturz, oder der PC ist aus oder offline - und noch einmal, wenn es wieder läuft. Selbst schließen oder ein Update zählt nicht. Gesendet wird nur eine Zufallszahl, die für diesen PC erzeugt wurde, keine Kontonamen.",
+    "Couldn't reach nocat.lol - is this PC online?": "nocat.lol war nicht erreichbar - ist dieser PC online?",
+    "Alerts aren't switched on at nocat.lol yet - try again later.": "Die Warnungen sind auf nocat.lol noch nicht eingeschaltet - versuch es später noch einmal.",
+    "nocat.lol gave an unexpected answer - try again later.": "nocat.lol hat unerwartet geantwortet - versuch es später noch einmal.",
+    "nocat.lol asked to slow down - try again in a minute.": "nocat.lol bittet um eine Pause - versuch es in einer Minute noch einmal.",
+    "Sent - check Telegram.": "Gesendet - schau in Telegram nach.",
+    "Not linked yet - press Connect first.": "Noch nicht verknüpft - tippe zuerst auf „Verbinden“.",
+    "Telegram didn't take the message - press Connect to link it again.": "Telegram hat die Nachricht nicht angenommen - tippe auf „Verbinden“, um es wieder zu verknüpfen.",
+    "Unlinked - no more alerts for this PC.": "Verknüpfung gelöst - keine Warnungen mehr für diesen PC.",
+    "Turn on \"Tell me if nocat.farm stops\" below and save, then press Connect.": "Schalte unten „Sag mir, wenn nocat.farm stoppt“ ein und speichere, dann tippe auf „Verbinden“.",
+    "Last check-in: {0}": "Zuletzt gemeldet: {0}",
+    "Not checked in yet.": "Noch nicht gemeldet.",
+    "Open Telegram": "Telegram öffnen",
+    "Press Start in Telegram. The link works once, for 15 minutes - scan the code to open it on your phone.": "Tippe in Telegram auf „Starten“. Der Link funktioniert einmal, 15 Minuten lang - scanne den Code, um ihn auf dem Handy zu öffnen.",
+    "Linked to Telegram.": "Mit Telegram verknüpft.",
+    "Unlink": "Verknüpfung lösen",
+    "Not linked to Telegram yet.": "Noch nicht mit Telegram verknüpft.",
+    "couldn't read what it learned from your play: {0}": "konnte nicht lesen, was es aus deinem Spielen gelernt hat: {0}",
+    "couldn't save what it learned from your play: {0}": "konnte nicht speichern, was es aus deinem Spielen gelernt hat: {0}",
+    "couldn't forget what it learned from your play: {0}": "konnte nicht vergessen, was es aus deinem Spielen gelernt hat: {0}",
+    "a quiet spell - shorter days for a while": "eine ruhige Phase - eine Weile kürzere Tage",
+    "a late one tonight - bed around {0}": "heute wird es spät - Bett gegen {0}",
+    "noted you playing {0} for {1}": "notiert: du hast {0} {1} lang gespielt",
+    "noted you on the account for {0}": "notiert: du warst {0} auf dem Konto",
+    "seen you play on {0} days - its day now leans toward yours": "hat dich an {0} Tagen spielen sehen - sein Tag richtet sich jetzt nach deinem",
+    "{0} is playing {1} - joining in for a sitting": "{0} spielt {1} - macht eine Sitzung lang mit",
+    "trying out {0} - it's new here": "probiert {0} aus - das ist neu hier",
+    "couldn't read what friends are playing: {0}": "konnte nicht lesen, was Freunde spielen: {0}",
+    "couldn't look for new games: {0}": "konnte nicht nach neuen Spielen suchen: {0}",
+    "learns from how you play": "lernt von deinem Spielen",
+    "tries new games out": "probiert neue Spiele aus",
+    "has quiet spells and late nights": "hat ruhige Phasen und lange Nächte",
+    "sometimes joins a friend": "spielt manchmal mit einem Freund",
+    "It also {0}.": "Außerdem: es {0}.",
+    "backup saved: {0}": "Backup gespeichert: {0}",
+    "that file is too big to be a nocat.farm backup": "diese Datei ist zu groß für ein nocat.farm-Backup",
+    "that zip has far too many files to be a nocat.farm backup": "dieses Zip hat viel zu viele Dateien für ein nocat.farm-Backup",
+    "refused: {0} points outside the config folder": "abgelehnt: {0} zeigt aus dem Konfigurationsordner heraus",
+    "refused: {0} is in the zip twice": "abgelehnt: {0} ist zweimal im Zip",
+    "refused: {0} isn't something a nocat.farm backup holds": "abgelehnt: {0} gehört nicht in ein nocat.farm-Backup",
+    "refused: {0} is too big": "abgelehnt: {0} ist zu groß",
+    "refused: the files in it add up to too much": "abgelehnt: die Dateien darin sind zusammen zu groß",
+    "that isn't a zip nocat.farm can read": "das ist kein Zip, das nocat.farm lesen kann",
+    "that isn't a nocat.farm backup - it has no manifest": "das ist kein nocat.farm-Backup - es hat kein Manifest",
+    "that backup is from a newer nocat.farm ({0}) - update first": "dieses Backup ist von einem neueren nocat.farm ({0}) - erst aktualisieren",
+    "restoring a backup from {0} - stopping every account": "stelle ein Backup vom {0} wieder her - alle Konten werden gestoppt",
+    "backup restored: {0} file(s) - what was there before is in {1}": "Backup wiederhergestellt: {0} Datei(en) - was vorher da war, liegt in {1}",
+    "Restored {0} file(s). The accounts are starting again.": "{0} Datei(en) wiederhergestellt. Die Konten starten wieder.",
+    "Weekly report": "Wochenbericht",
+    "the PC just woke up": "der PC ist gerade aufgewacht",
+    "hasn't banked any hours for {0} - it's {1}; it needs you": "hat seit {0} keine Stunden verbucht - es ist {1}; es braucht dich",
+    "hasn't banked any hours for {0} - it's {1}; restarted {2} ago, so not again": "hat seit {0} keine Stunden verbucht - es ist {1}; vor {2} neu gestartet, also nicht nochmal",
+    "hasn't banked any hours for {0} - it's {1}; restarting it": "hat seit {0} keine Stunden verbucht - es ist {1}; wird neu gestartet",
+    "still hasn't banked any hours for {0} - it's {1}; not restarting it again - have a look": "hat immer noch seit {0} keine Stunden verbucht - es ist {1}; wird nicht nochmal neu gestartet - schau mal nach",
+    "you're playing on it": "du spielst darauf",
+    "Steam's weekly maintenance": "Steams wöchentliche Wartung",
+    "human mode is resting": "Menschen-Modus ruht",
+    "nothing to play": "nichts zu spielen",
+    "stuck signing in": "hängt beim Anmelden",
+    "disconnected and not coming back": "getrennt und kommt nicht zurück",
+    "waiting for a Steam Guard code or password": "wartet auf einen Steam-Guard-Code oder ein Passwort",
+    "failed: {0}": "fehlgeschlagen: {0}",
+    "signed in but not playing anything": "angemeldet, spielt aber nichts",
+    "  {0} {1} banked (last week {2}) · {3} card(s) · {4} listed · value {5} · {6} comment(s)": "  {0} {1} verbucht (letzte Woche {2}) · {3} Karte(n) · {4} eingestellt · Wert {5} · {6} Kommentar(e)",
+    "  {0} {1} banked (last week {2}) · {3} card(s) · {4} listed · value {5}": "  {0} {1} verbucht (letzte Woche {2}) · {3} Karte(n) · {4} eingestellt · Wert {5}",
+    "  fleet: {0} banked (last week {1}) · {2} card(s) · {3} listed · value {4} · {5} comment(s)": "  Flotte: {0} verbucht (letzte Woche {1}) · {2} Karte(n) · {3} eingestellt · Wert {4} · {5} Kommentar(e)",
+    "  fleet: {0} banked (last week {1}) · {2} card(s) · {3} listed · value {4}": "  Flotte: {0} verbucht (letzte Woche {1}) · {2} Karte(n) · {3} eingestellt · Wert {4}",
+    "backup downloaded from the dashboard ({0} KB)": "Backup aus dem Dashboard heruntergeladen ({0} KB)",
+    "dashboard: a backup was refused - {0}": "Dashboard: ein Backup wurde abgelehnt - {0}",
+    "that restore has run out - pick the file again": "diese Wiederherstellung ist abgelaufen - wähl die Datei nochmal",
+    "Backup & restore": "Backup & Wiederherstellen",
+    "One zip with your settings, every account, saved logins, authenticators, history and progress. Logs and caches are left out.": "Ein Zip mit deinen Einstellungen, jedem Konto, gespeicherten Anmeldungen, Authentifikatoren, Verlauf und Fortschritt. Logs und Caches bleiben draußen.",
+    "Logins inside stay encrypted, as they are on disk. A backup made on Windows only opens them on the same PC and Windows user - restored anywhere else, each account asks for its password once. Keep the zip private: it signs in to your accounts.": "Die Anmeldungen darin bleiben verschlüsselt, wie auf der Festplatte. Ein unter Windows gemachtes Backup öffnet sie nur auf demselben PC und Windows-Benutzer - woanders wiederhergestellt, fragt jedes Konto einmal nach seinem Passwort. Halt das Zip privat: es meldet sich bei deinen Konten an.",
+    "Download a backup": "Backup herunterladen",
+    "Restore a backup": "Backup wiederherstellen",
+    "Saved {0}": "{0} gespeichert",
+    "settings": "Einstellungen",
+    "account settings": "Konto-Einstellungen",
+    "saved logins": "gespeicherte Anmeldungen",
+    "authenticators": "Authentifikatoren",
+    "login key": "Anmeldeschlüssel",
+    "history days": "Verlaufstage",
+    "progress and totals": "Fortschritt und Summen",
+    "Restore this backup?": "Dieses Backup wiederherstellen?",
+    "Made {0} by nocat.farm {1} on {2}.": "Erstellt am {0} von nocat.farm {1} auf {2}.",
+    "Made on another PC: its saved logins may not open here, so those accounts ask for their passwords again.": "Auf einem anderen PC erstellt: die gespeicherten Anmeldungen öffnen sich hier vielleicht nicht, dann fragen diese Konten nochmal nach ihrem Passwort.",
+    "Every account stops, these files replace the ones here, and the accounts start again. Accounts not in the backup are left alone, and what gets replaced is saved in the backups folder first.": "Alle Konten stoppen, diese Dateien ersetzen die hier, und die Konten starten wieder. Konten, die nicht im Backup sind, bleiben unberührt, und was ersetzt wird, wird vorher im Ordner backups gesichert.",
+    "Restore": "Wiederherstellen",
+    "Restoring...": "Wird wiederhergestellt...",
+    "── weekly report · {0} to {1} ──": "── Wochenbericht · {0} bis {1} ──",
+    "banking hours again": "verbucht wieder Stunden"
   },
   "settings": {
     "WebEnabled": {
@@ -3072,6 +3182,68 @@
     "SendAroundHour": {
       "label": "...gegen",
       "tip": "Die Stunde des Tages für den Versand, 0 bis 23 - etwa 4 für ungefähr 4 Uhr morgens. Er geht zu einer zufälligen Minute in dieser Stunde raus, an den Tagen, die „Gegenstände senden alle“ erlaubt. -1 = keine feste Zeit: alle so viele Stunden ab dem Einschalten."
+    },
+    "IdleWholeLibrary": {
+      "label": "Meine ganze Bibliothek sammeln",
+      "tip": "Sammelt Stunden in jedem Spiel, das das Konto besitzt, nach denen in „Spiele zum Sammeln“. Lässt Spiele aus „Diese nie anfassen“, erstattungsfähige Spiele und familiengeteilte Spiele aus (außer „Familiengeteilte Spiele einbeziehen“ ist an). Steam spielt 32 gleichzeitig, also schalte „Sammelliste durchwechseln“ ein, damit jedes Spiel drankommt."
+    },
+    "RotateIdleGames": {
+      "label": "Sammelliste durchwechseln",
+      "tip": "Wenn es mehr Spiele sind, als Steam gleichzeitig spielt (32, oder 31 mit eigenem Namen), sammelt es eine Gruppe nach der anderen und wechselt immer wieder zur nächsten, damit jedes Spiel Stunden bekommt. Spiele mit einem Stundenziel und die am wenigsten gespielten kommen zuerst."
+    },
+    "RotateEveryHours": {
+      "label": "Wechseln alle",
+      "tip": "Wie viele Stunden jede Gruppe läuft, bevor die nächste übernimmt. Nur genutzt, wenn „Sammelliste durchwechseln“ an ist."
+    },
+    "StopAlert": {
+      "label": "Sag mir, wenn nocat.farm stoppt",
+      "tip": "Du bekommst eine Telegram-Nachricht, wenn nocat.farm auf diesem PC stoppt - abgestürzt, der PC ist aus oder ohne Internet. Alle 5 Minuten meldet es sich bei nocat.lol und sendet dabei nur eine Zufallszahl, die für diesen PC erzeugt wurde: keine Kontonamen, sonst nichts. Selbst schließen oder ein Update zählt nicht. Einschalten, dann auf „Verbinden“ und in Telegram auf „Starten“ tippen."
+    },
+    "StopAlertPcName": {
+      "label": "Name dieses PCs",
+      "tip": "Der Name in der Telegram-Nachricht, etwa „nocat.farm auf my PC hat sich seit 14:05 nicht gemeldet“. Praktisch, wenn nocat.farm auf mehreren PCs läuft."
+    },
+    "StopAlertMinutes": {
+      "label": "Warnen nach",
+      "tip": "Wie viele Minuten ohne Meldung, bis die Nachricht gesendet wird. Es meldet sich alle 5 Minuten, und die Nachricht kann bis zu 10 Minuten später kommen."
+    },
+    "LearnFromOwner": {
+      "label": "Von meinem Spielen lernen",
+      "tip": "Merkt sich, wann du selbst auf diesem Konto spielst und welche Spiele. Nach 7 solchen Tagen richtet es seinen Tag nach deinem aus: wann es online kommt und schlafen geht, und wie sich seine Zeit auf die Spiele in „Spiele und wie oft“ verteilt. Es fügt nie ein Spiel hinzu, das nicht in dieser Liste steht, und wie lange es spielt, bestimmen weiter die Stunden-Einstellungen. Der Befehl habits zeigt, was es gelernt hat.",
+      "choices": "0 aus | 1 ein wenig | 2 stark"
+    },
+    "NewGamesFirst": {
+      "label": "Neue Spiele anfangs öfter spielen",
+      "tip": "Ein Spiel, das gerade in die Bibliothek gekommen ist, gekauft, geschenkt oder gratis, bekommt 3 bis 10 Tage lang zusätzliche Sitzungen, jeden Tag weniger, wie wenn man etwas Neues ausprobiert. Spiele, die du noch zurückgeben kannst, gesperrte oder per Familie geteilte Spiele und Spiele, die deine anderen Konten gerade laufen haben, bleiben unberührt."
+    },
+    "LongerRhythms": {
+      "label": "Ruhige Phasen und lange Nächte",
+      "tip": "Ein- oder zweimal im Monat hat es eine ruhige Phase von 2 bis 5 Tagen mit deutlich kürzeren Tagen, und ab und zu geht ein Freitag- oder Samstagabend länger als sonst. Freie Tage und die Stunden-Einstellungen gelten weiter. human week zeigt sie."
+    },
+    "JoinFriends": {
+      "label": "Manchmal spielen, was ein Freund spielt",
+      "tip": "Wenn ein Steam-Freund in einem Spiel ist, das dieses Konto besitzt, nimmt es ab und zu dieses Spiel für die nächste Sitzung, höchstens zweimal am Tag und nur, wenn es wach ist. Deine eigenen Konten und die Spiele, die sie laufen haben, werden ignoriert, ebenso gesperrte und erstattbare Spiele."
+    },
+    "StuckAlarm": {
+      "label": "Hängendes Konto neu starten",
+      "tip": "Wenn ein Konto, das spielen sollte, seit ein paar Stunden keine Stunden verbucht hat - getrennt, hängt beim Anmelden, fehlgeschlagen oder die Spiele sind weg - sagt es dir Bescheid (auch auf Telegram und Discord) und startet das Konto einmal neu. Nie bei einem Konto, das du gestoppt oder pausiert hast oder auf dem du spielst, und nie, wenn der Menschen-Modus es schlafen lässt, es für heute fertig ist oder einen freien Tag hat. Höchstens ein Neustart pro Konto alle 12 Stunden."
+    },
+    "StuckAlarmHours": {
+      "label": "Hängt nach",
+      "tip": "Wie viele Stunden ohne verbuchte Stunden, obwohl es spielen sollte, bis ein Konto als hängend gilt."
+    },
+    "WeeklyReport": {
+      "label": "Wochenbericht",
+      "tip": "Einmal pro Woche die Woche jedes Kontos neben der Woche davor: verbuchte Stunden, gedroppte Karten, zum Verkauf eingestellte Karten, Inventarwert und rep4rep-Kommentare. Steht im Log und wird auf Telegram und Discord geschickt, wenn die eingerichtet sind. Tippe report week, um ihn jederzeit zu sehen."
+    },
+    "WeeklyReportDay": {
+      "label": "Wochenbericht · Tag",
+      "tip": "Der Tag, an dem der Wochenbericht kommt. Er deckt die sieben Tage davor ab.",
+      "choices": "1 Montag | 2 Dienstag | 3 Mittwoch | 4 Donnerstag | 5 Freitag | 6 Samstag | 0 Sonntag"
+    },
+    "WeeklyReportHour": {
+      "label": "Wochenbericht · Stunde",
+      "tip": "Die Stunde, zu der der Wochenbericht kommt, im 24-Stunden-Format."
     }
   }
 }

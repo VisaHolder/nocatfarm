@@ -42,6 +42,17 @@ public sealed class HumanDay {
 	/// straight back to bed. Unset (MinValue) when there isn't one.</summary>
 	public DateTime StayUpUntil { get; set; }
 
+	/// <summary>Part of a quiet spell / a late night ("Quiet spells and late nights") - false in older files.</summary>
+	public bool Quiet { get; set; }
+	public bool LateNight { get; set; }
+
+	/// <summary>Sittings given today to a friend's game and to new games, so a restart doesn't hand out the caps again.</summary>
+	public int FriendJoins { get; set; }
+	public int NewGameSittings { get; set; }
+
+	/// <summary>Who it joined today and in what, for 'human'.</summary>
+	public string JoinedToday { get; set; } = "";
+
 	/// <summary>Minutes per appID so far today, so the console's breakdown survives a restart too.</summary>
 	public Dictionary<string, int> ByGame { get; set; } = [];
 

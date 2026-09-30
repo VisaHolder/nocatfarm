@@ -988,6 +988,8 @@ button.ghost:hover:not(:disabled) { background: var(--line); }
    row - everything else on that page can be changed back and this cannot. */
 .section.danger h3 { color: var(--bad); }
 .dangerbox { border: 1px solid rgba(255,49,49,.40); padding: var(--s4); background: rgba(255,49,49,.05); }
+.backupbtns { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.warnline { color: var(--warn); }
 .dangerbox b { display: block; margin-bottom: 6px; }
 .dangerbox p { margin: 0 0 12px; }
 button.danger { background: var(--bad); border-color: var(--bad); color: #fff; }

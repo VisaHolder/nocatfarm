@@ -920,7 +920,6 @@
     "resuming the grind of {0} - {1} left": "{0} grindi sürdürülüyor - {1} kaldı",
     "stopping - finishing up, logging off in about {0}s": "durduruluyor - bitiriliyor, yaklaşık {0}sn içinde çıkılacak",
     "{0} licence(s) known": "bilinen {0} lisans",
-    "joined group {0}": "{0} grubuna katılındı",
     "inventory now {0}{1} across {2} game(s), {3} item(s) still to price": "envanter şimdi {0}{1}, {2} oyuna yayılı, {3} eşyanın fiyatı belirsiz",
     "the market answered {0} - pausing price lookups until {1}": "pazar {0} yanıtı verdi - {1} saatine kadar fiyat sorguları duraklatıldı",
     "the store answered {0} - pausing game lookups until {1}": "mağaza {0} yanıtı verdi - {1} saatine kadar oyun sorguları duraklatıldı",
@@ -1775,9 +1774,7 @@
     "stopped - signed out after {0} achievement(s) in {1} game(s)": "durdu - {1} oyunda {0} başarımdan sonra çıkış yapıldı",
     "done - nothing it can unlock ({0} app(s) checked{1}), Steam sets the rest": "bitti - açabileceği bir şey yok ({0} uygulama kontrol edildi{1}), kalanını Steam verir",
     "auto-update waiting: {0} has {1} offer(s), {2} gift(s) queued": "otomatik güncelleme bekliyor: {0} hesabında {1} teklif, {2} hediye sırada",
-    "installing {0} by itself - quiet time (Update by itself)": "{0} kendiliğinden kuruluyor - sakin saat (Kendiliğinden güncelle)",
     "{0} waits for bedtime - 'update now' installs it now": "{0} uyku saatini bekliyor - 'update now' hemen kurar",
-    "installing {0} - the accounts are asleep": "{0} kuruluyor - hesaplar uykuda",
     "reminder: nocat.farm {0} is out - 'update accept' installs it": "hatırlatma: nocat.farm {0} çıktı - 'update accept' kurar",
     "reminder: nocat.farm {0} is out - 'update' shows how": "hatırlatma: nocat.farm {0} çıktı - 'update' nasıl yapılacağını gösterir",
     "nocat.farm {0} is out - 'update accept' installs it": "nocat.farm {0} çıktı - 'update accept' kurar",
@@ -2069,7 +2066,120 @@
     "'all' means every account in a command - pick another name": "'all' bir komutta tüm hesaplar demek - başka bir ad seç",
     "offer sent - confirm it in the Steam app on your phone": "teklif gönderildi - telefonundaki Steam uygulamasından onayla",
     "{0} invited you to play {1}": "{0} seni {1} oynamaya davet etti",
-    "human mode spaces comments out - this account can post the next one from {0}": "insan modu yorumlar arasına boşluk koyar - bu hesap bir sonrakini {0} itibarıyla gönderebilir"
+    "human mode spaces comments out - this account can post the next one from {0}": "insan modu yorumlar arasına boşluk koyar - bu hesap bir sonrakini {0} itibarıyla gönderebilir",
+    "installing {0} by itself - all clear: {1}": "{0} kendiliğinden kuruluyor - her şey sakin: {1}",
+    "installing {0} - all clear: {1}": "{0} kuruluyor - her şey sakin: {1}",
+    "you're playing on {0}": "{0} hesabında oynuyorsun",
+    "you were on {0} a few minutes ago": "birkaç dakika önce {0} hesabındaydın",
+    "{0} is signing in": "{0} oturum açıyor",
+    "{0} is awake": "{0} uyanık",
+    "{0} asleep": "{0} uyuyor",
+    "{0} farming": "{0} farm yapıyor",
+    "{0} idling": "{0} idle'da",
+    "nobody playing": "kimse oynamıyor",
+    "idling {0} of {1} games - next batch at {2}": "{1} oyundan {0} tanesi çalışıyor - sonraki grup {2}",
+    "idle rotation: batch {0} of {1} now, {2} games": "oyun sırası: şimdi {1} gruptan {0}. grup, {2} oyun",
+    "couldn't save the idle rotation: {0}": "oyun sırası kaydedilemedi: {0}",
+    "couldn't read the idle rotation - starting it fresh: {0}": "oyun sırası okunamadı - baştan başlıyor: {0}",
+    "all the games it owns": "sahip olduğu tüm oyunlar",
+    "Idling {0} of {1} at a time - next batch at {2}.": "{1} oyundan {0} tanesi aynı anda - sonraki grup {2}.",
+    "More than fit at once? It idles a batch at a time and moves on every {0}h.": "Aynı anda sığmayacak kadar çok mu? Her seferinde bir grup çalıştırır ve {0} saatte bir sonrakine geçer.",
+    "If nocat.farm stops": "nocat.farm durursa",
+    "the stop alert": "durma uyarısı",
+    "stop alert: Telegram is no longer linked - press Connect to link it again": "durma uyarısı: Telegram bağlantısı kalktı - yeniden bağlamak için “Bağlan” düğmesine bas",
+    "stop alert: linked - Telegram will tell you if nocat.farm stops": "durma uyarısı: bağlandı - nocat.farm durursa Telegram haber verecek",
+    "Get a Telegram message if nocat.farm stops": "nocat.farm durursa Telegram'dan mesaj al",
+    "nocat.lol's Telegram bot tells you when nocat.farm stops checking in on this PC - a crash, or the PC off or offline - and again when it's back. Closing it yourself or an update doesn't count. It sends only a random number made for this PC, no account names.": "nocat.lol'un Telegram botu, bu bilgisayardaki nocat.farm haber vermeyi bıraktığında - çökme, ya da bilgisayar kapalı veya çevrimdışı - ve geri geldiğinde sana haber verir. Kendin kapatman ya da bir güncelleme sayılmaz. Yalnızca bu bilgisayar için üretilmiş rastgele bir sayı gönderir, hesap adı göndermez.",
+    "Couldn't reach nocat.lol - is this PC online?": "nocat.lol'a ulaşılamadı - bu bilgisayar çevrimiçi mi?",
+    "Alerts aren't switched on at nocat.lol yet - try again later.": "Uyarılar nocat.lol'da henüz açılmadı - sonra tekrar dene.",
+    "nocat.lol gave an unexpected answer - try again later.": "nocat.lol beklenmedik bir yanıt verdi - sonra tekrar dene.",
+    "nocat.lol asked to slow down - try again in a minute.": "nocat.lol yavaşlamanı istedi - bir dakika sonra tekrar dene.",
+    "Sent - check Telegram.": "Gönderildi - Telegram'a bak.",
+    "Not linked yet - press Connect first.": "Henüz bağlı değil - önce “Bağlan” düğmesine bas.",
+    "Telegram didn't take the message - press Connect to link it again.": "Telegram mesajı kabul etmedi - yeniden bağlamak için “Bağlan” düğmesine bas.",
+    "Unlinked - no more alerts for this PC.": "Bağlantı kaldırıldı - bu bilgisayar için artık uyarı yok.",
+    "Turn on \"Tell me if nocat.farm stops\" below and save, then press Connect.": "Aşağıda “nocat.farm durursa haber ver” seçeneğini aç ve kaydet, sonra “Bağlan” düğmesine bas.",
+    "Last check-in: {0}": "Son haber: {0}",
+    "Not checked in yet.": "Henüz haber vermedi.",
+    "Open Telegram": "Telegram'ı aç",
+    "Press Start in Telegram. The link works once, for 15 minutes - scan the code to open it on your phone.": "Telegram'da “Başlat” düğmesine bas. Bağlantı bir kez, 15 dakika boyunca çalışır - telefonda açmak için kodu tara.",
+    "Linked to Telegram.": "Telegram'a bağlı.",
+    "Unlink": "Bağlantıyı kaldır",
+    "Not linked to Telegram yet.": "Henüz Telegram'a bağlı değil.",
+    "couldn't read what it learned from your play: {0}": "oynayışından öğrendikleri okunamadı: {0}",
+    "couldn't save what it learned from your play: {0}": "oynayışından öğrendikleri kaydedilemedi: {0}",
+    "couldn't forget what it learned from your play: {0}": "oynayışından öğrendikleri unutulamadı: {0}",
+    "a quiet spell - shorter days for a while": "sakin bir dönem - bir süre daha kısa günler",
+    "a late one tonight - bed around {0}": "bu gece geç yatacak - yatış {0} civarı",
+    "noted you playing {0} for {1}": "not edildi: {1} boyunca {0} oynadın",
+    "noted you on the account for {0}": "not edildi: {0} boyunca hesaptaydın",
+    "seen you play on {0} days - its day now leans toward yours": "seni {0} gün oynarken gördü - artık günü seninkine yaklaşıyor",
+    "{0} is playing {1} - joining in for a sitting": "{0}, {1} oynuyor - bir oturumluğuna katılıyor",
+    "trying out {0} - it's new here": "{0} deneniyor - burada yeni",
+    "couldn't read what friends are playing: {0}": "arkadaşların ne oynadığı okunamadı: {0}",
+    "couldn't look for new games: {0}": "yeni oyunlara bakılamadı: {0}",
+    "learns from how you play": "nasıl oynadığından öğrenir",
+    "tries new games out": "yeni oyunları dener",
+    "has quiet spells and late nights": "sakin dönemler ve geç geceler yaşar",
+    "sometimes joins a friend": "bazen bir arkadaşına katılır",
+    "It also {0}.": "Ayrıca: {0}.",
+    "backup saved: {0}": "yedek kaydedildi: {0}",
+    "that file is too big to be a nocat.farm backup": "bu dosya bir nocat.farm yedeği olmak için fazla büyük",
+    "that zip has far too many files to be a nocat.farm backup": "bu zip bir nocat.farm yedeği olmak için çok fazla dosya içeriyor",
+    "refused: {0} points outside the config folder": "reddedildi: {0} yapılandırma klasörünün dışını gösteriyor",
+    "refused: {0} is in the zip twice": "reddedildi: {0} zip içinde iki kez var",
+    "refused: {0} isn't something a nocat.farm backup holds": "reddedildi: {0} bir nocat.farm yedeğinde bulunacak bir şey değil",
+    "refused: {0} is too big": "reddedildi: {0} fazla büyük",
+    "refused: the files in it add up to too much": "reddedildi: içindeki dosyalar toplamda fazla büyük",
+    "that isn't a zip nocat.farm can read": "bu, nocat.farm’ın okuyabildiği bir zip değil",
+    "that isn't a nocat.farm backup - it has no manifest": "bu bir nocat.farm yedeği değil - manifest yok",
+    "that backup is from a newer nocat.farm ({0}) - update first": "bu yedek daha yeni bir nocat.farm sürümünden ({0}) - önce güncelle",
+    "restoring a backup from {0} - stopping every account": "{0} tarihli yedek geri yükleniyor - tüm hesaplar durduruluyor",
+    "backup restored: {0} file(s) - what was there before is in {1}": "yedek geri yüklendi: {0} dosya - önceki hali {1} içinde",
+    "Restored {0} file(s). The accounts are starting again.": "{0} dosya geri yüklendi. Hesaplar yeniden başlıyor.",
+    "Weekly report": "Haftalık rapor",
+    "the PC just woke up": "bilgisayar az önce uyandı",
+    "hasn't banked any hours for {0} - it's {1}; it needs you": "{0} süredir saat biriktirmedi - durumu {1}; sana ihtiyacı var",
+    "hasn't banked any hours for {0} - it's {1}; restarted {2} ago, so not again": "{0} süredir saat biriktirmedi - durumu {1}; {2} önce yeniden başlatıldı, o yüzden tekrar değil",
+    "hasn't banked any hours for {0} - it's {1}; restarting it": "{0} süredir saat biriktirmedi - durumu {1}; yeniden başlatılıyor",
+    "still hasn't banked any hours for {0} - it's {1}; not restarting it again - have a look": "hâlâ {0} süredir saat biriktirmedi - durumu {1}; bir daha yeniden başlatılmıyor - bir bak",
+    "you're playing on it": "üzerinde sen oynuyorsun",
+    "Steam's weekly maintenance": "Steam'in haftalık bakımı",
+    "human mode is resting": "insan modu dinleniyor",
+    "nothing to play": "oynanacak bir şey yok",
+    "stuck signing in": "girişte takıldı",
+    "disconnected and not coming back": "bağlantı koptu ve geri gelmiyor",
+    "waiting for a Steam Guard code or password": "bir Steam Guard kodu ya da şifre bekliyor",
+    "failed: {0}": "başarısız: {0}",
+    "signed in but not playing anything": "giriş yaptı ama hiçbir şey oynamıyor",
+    "  {0} {1} banked (last week {2}) · {3} card(s) · {4} listed · value {5} · {6} comment(s)": "  {0} {1} biriktirdi (geçen hafta {2}) · {3} kart · {4} satışta · değer {5} · {6} yorum",
+    "  {0} {1} banked (last week {2}) · {3} card(s) · {4} listed · value {5}": "  {0} {1} biriktirdi (geçen hafta {2}) · {3} kart · {4} satışta · değer {5}",
+    "  fleet: {0} banked (last week {1}) · {2} card(s) · {3} listed · value {4} · {5} comment(s)": "  filo: {0} biriktirildi (geçen hafta {1}) · {2} kart · {3} satışta · değer {4} · {5} yorum",
+    "  fleet: {0} banked (last week {1}) · {2} card(s) · {3} listed · value {4}": "  filo: {0} biriktirildi (geçen hafta {1}) · {2} kart · {3} satışta · değer {4}",
+    "backup downloaded from the dashboard ({0} KB)": "yedek panelden indirildi ({0} KB)",
+    "dashboard: a backup was refused - {0}": "panel: bir yedek reddedildi - {0}",
+    "that restore has run out - pick the file again": "bu geri yüklemenin süresi doldu - dosyayı yeniden seç",
+    "Backup & restore": "Yedekleme ve geri yükleme",
+    "One zip with your settings, every account, saved logins, authenticators, history and progress. Logs and caches are left out.": "Ayarların, her hesap, kayıtlı girişler, doğrulayıcılar, geçmiş ve ilerlemeyle tek bir zip. Günlükler ve önbellekler dahil değil.",
+    "Logins inside stay encrypted, as they are on disk. A backup made on Windows only opens them on the same PC and Windows user - restored anywhere else, each account asks for its password once. Keep the zip private: it signs in to your accounts.": "İçindeki girişler diskteki gibi şifreli kalır. Windows’ta yapılan bir yedek onları yalnızca aynı bilgisayarda ve aynı Windows kullanıcısında açar - başka yerde geri yüklenirse her hesap bir kez şifresini sorar. Zip’i gizli tut: hesaplarına giriş yapar.",
+    "Download a backup": "Yedek indir",
+    "Restore a backup": "Yedeği geri yükle",
+    "Saved {0}": "{0} kaydedildi",
+    "settings": "ayarlar",
+    "account settings": "hesap ayarları",
+    "saved logins": "kayıtlı girişler",
+    "authenticators": "doğrulayıcılar",
+    "login key": "giriş anahtarı",
+    "history days": "geçmiş günleri",
+    "progress and totals": "ilerleme ve toplamlar",
+    "Restore this backup?": "Bu yedek geri yüklensin mi?",
+    "Made {0} by nocat.farm {1} on {2}.": "{0} tarihinde nocat.farm {1} ile {2} üzerinde yapıldı.",
+    "Made on another PC: its saved logins may not open here, so those accounts ask for their passwords again.": "Başka bir bilgisayarda yapılmış: kayıtlı girişler burada açılmayabilir, o hesaplar şifrelerini yeniden sorar.",
+    "Every account stops, these files replace the ones here, and the accounts start again. Accounts not in the backup are left alone, and what gets replaced is saved in the backups folder first.": "Tüm hesaplar durur, bu dosyalar buradakilerin yerine geçer ve hesaplar yeniden başlar. Yedekte olmayan hesaplara dokunulmaz, değiştirilenler önce backups klasörüne kaydedilir.",
+    "Restore": "Geri yükle",
+    "Restoring...": "Geri yükleniyor...",
+    "── weekly report · {0} to {1} ──": "── haftalık rapor · {0} - {1} ──",
+    "banking hours again": "yeniden saat biriktiriyor"
   },
   "settings": {
     "WebEnabled": {
@@ -3072,6 +3182,68 @@
     "SendAroundHour": {
       "label": "...civarında",
       "tip": "Gönderim saati, 0 ile 23 arası - örneğin 4, sabah 4 civarı demek. O saatin rastgele bir dakikasında, \"Eşyaları şu aralıkla gönder\" ayarının izin verdiği günlerde gider. -1 = belirli saat yok: açıldığı andan itibaren her şu kadar saatte bir."
+    },
+    "IdleWholeLibrary": {
+      "label": "Tüm kütüphanem",
+      "tip": "\"Saat biriktirilecek oyunlar\" listesindekilerden sonra, hesabın sahip olduğu her oyunda saat biriktirir. \"Bunlara asla dokunma\" listesindekileri, iade edilebilir oyunları ve aileyle paylaşılan oyunları (\"Aileyle paylaşılan oyunları dahil et\" açık değilse) atlar. Steam aynı anda 32 oyun çalıştırır, bu yüzden her oyuna sıra gelsin diye \"Listeyi sırayla döndür\" ayarını aç."
+    },
+    "RotateIdleGames": {
+      "label": "Listeyi sırayla döndür",
+      "tip": "Steam'in aynı anda çalıştırdığından (32, özel adla 31) fazla oyun varsa, her seferinde bir grup çalıştırır ve belirli aralıklarla sonraki gruba geçer; böylece her oyun saat kazanır. Saat hedefi olan oyunlar ve en az oynananlar önce gelir."
+    },
+    "RotateEveryHours": {
+      "label": "Değiştirme aralığı",
+      "tip": "Her grubun, sonraki grup devralmadan önce kaç saat çalışacağı. Yalnızca \"Listeyi sırayla döndür\" açıkken kullanılır."
+    },
+    "StopAlert": {
+      "label": "nocat.farm durursa haber ver",
+      "tip": "Bu bilgisayarda nocat.farm durduğunda Telegram'dan mesaj al - çöktü, bilgisayar kapandı ya da interneti gitti. 5 dakikada bir nocat.lol'a haber verir ve yalnızca bu bilgisayar için üretilmiş rastgele bir sayı gönderir: hesap adı yok, başka bir şey yok. Kendin kapatman ya da bir güncelleme sayılmaz. Aç, “Bağlan” düğmesine bas, sonra Telegram'da “Başlat” düğmesine bas."
+    },
+    "StopAlertPcName": {
+      "label": "Bu bilgisayarın adı",
+      "tip": "Telegram mesajında kullanılan ad, örneğin “my PC üzerindeki nocat.farm 14:05'ten beri haber vermedi”. nocat.farm birden fazla bilgisayardaysa işe yarar."
+    },
+    "StopAlertMinutes": {
+      "label": "Uyarı süresi",
+      "tip": "Mesaj gönderilmeden önce kaç dakika haber gelmemesi gerektiği. 5 dakikada bir haber verir ve mesaj bundan 10 dakikaya kadar geç gelebilir."
+    },
+    "LearnFromOwner": {
+      "label": "Nasıl oynadığımdan öğren",
+      "tip": "Bu hesapta kendin ne zaman ve hangi oyunları oynadığını not eder. Bunun 7 günü dolunca gününü seninkine yaklaştırır: ne zaman çevrimiçi olup yattığını ve zamanını “Oyunlar ve ne sıklıkta” listesindeki oyunlar arasında nasıl böldüğünü. Bu listede olmayan bir oyunu asla eklemez; ne kadar oynayacağı yine saat ayarlarından gelir. habits komutu ne öğrendiğini gösterir.",
+      "choices": "0 kapalı | 1 biraz | 2 çok"
+    },
+    "NewGamesFirst": {
+      "label": "Yeni oyunları başta daha çok oyna",
+      "tip": "Kütüphaneye yeni gelen bir oyun, satın alınmış, hediye ya da ücretsiz, 3 ila 10 gün boyunca her gün biraz azalan ek oturumlar alır, yeni bir şey denemek gibi. Hâlâ iade edebileceğin oyunlara, kara listedeki ya da aileyle paylaşılan oyunlara ve diğer hesaplarının çalıştırdığı oyunlara dokunulmaz."
+    },
+    "LongerRhythms": {
+      "label": "Sakin dönemler ve geç geceler",
+      "tip": "Ayda bir iki kez 2 ila 5 günlük, belirgin şekilde daha kısa günlerden oluşan sakin bir dönem geçirir ve arada bir cuma ya da cumartesi gecesi her zamankinden geç biter. İzin günleri ve saat ayarları yine geçerlidir. human week bunları gösterir."
+    },
+    "JoinFriends": {
+      "label": "Bazen bir arkadaşın oynadığını oyna",
+      "tip": "Bir Steam arkadaşı bu hesabın sahip olduğu bir oyundayken, arada bir sonraki oturum için o oyunu seçer; günde en çok iki kez ve yalnızca uyanıkken. Kendi hesapların ve onların çalıştırdığı oyunlar yok sayılır, kara listedeki ve iade edilebilir oyunlar da."
+    },
+    "StuckAlarm": {
+      "label": "Takılan hesabı yeniden başlat",
+      "tip": "Oynaması gereken bir hesap birkaç saattir hiç saat biriktirmediyse - bağlantı koptu, girişte takıldı, başarısız oldu ya da oyunları gitti - sana haber verir (Telegram ve Discord’da da) ve o hesabı bir kez yeniden başlatır. Durdurduğun, duraklattığın ya da üzerinde oynadığın bir hesapta, insan modunun uyuttuğu, bugünü bitirmiş ya da izin gününde olan bir hesapta asla. Hesap başına 12 saatte en fazla bir yeniden başlatma."
+    },
+    "StuckAlarmHours": {
+      "label": "Takılmış sayılma süresi",
+      "tip": "Biriktirmesi gerekirken hiç saat biriktirmeden kaç saat geçince bir hesabın takılmış sayılacağı."
+    },
+    "WeeklyReport": {
+      "label": "Haftalık rapor",
+      "tip": "Haftada bir, her hesabın haftası bir önceki haftanın yanında: biriktirilen saatler, düşen kartlar, satışa konan kartlar, envanter değeri ve rep4rep yorumları. Günlüğe yazılır, ayarlıysa Telegram ve Discord’a gönderilir. İstediğin zaman görmek için report week yaz."
+    },
+    "WeeklyReportDay": {
+      "label": "Haftalık rapor · gün",
+      "tip": "Haftalık raporun geldiği gün. Kendinden önceki yedi günü kapsar.",
+      "choices": "1 Pazartesi | 2 Salı | 3 Çarşamba | 4 Perşembe | 5 Cuma | 6 Cumartesi | 0 Pazar"
+    },
+    "WeeklyReportHour": {
+      "label": "Haftalık rapor · saat",
+      "tip": "Haftalık raporun geldiği saat, 24 saat biçiminde."
     }
   }
 }
