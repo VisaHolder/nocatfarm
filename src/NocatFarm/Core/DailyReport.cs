@@ -4,16 +4,18 @@ using NocatFarm.Config;
 namespace NocatFarm.Core;
 
 /// <summary>
-/// A once-a-day, plain-language summary of what the whole fleet banked in the last 24 hours - hours played,
-/// trading cards dropped, rep4rep comments, and a running lifetime total - written to the log/console at a time
-/// you choose (default 09:30). The heartbeat tells you what each account is doing this minute; this is the one
-/// line that answers "what did I actually get overnight?" without reading the whole log.
+/// A once-a-day, plain-language summary of what every account got in the last 24 hours - hours played, trading
+/// cards dropped, rep4rep comments - plus anything that wants a look, sent to Discord/Telegram and written to the
+/// log at a time you choose (default 09:30). The heartbeat tells you what each account is doing this minute; this
+/// answers "what did I actually get overnight?" without reading the whole log. Laid out as a ReportCard.
 ///
-/// "Hours banked in the last 24h" is a delta: lifetime-now minus the lifetime we snapshotted at the last
-/// report. So it counts only the time nocat.farm actually ran, and it survives a restart because the snapshot
-/// is on disk. Every running game counts, the way Steam credits them: 32 games for an hour is 32 hours banked,
-/// and "total" is everything nocat.farm has banked for the account, counted the same way. The day-plan line that human mode prints at midnight is a different thing entirely - that is the
-/// PLAN for the coming day; this is the RESULT of the day that just passed.
+/// "Played" is a delta: game-minutes now minus the game-minutes snapshotted at the last summary. So it counts only
+/// the time nocat.farm actually ran games, and it survives a restart because the snapshot is on disk. Every
+/// running game counts, the way Steam credits playtime: 32 games for an hour is 32 hours played - the same hours
+/// that land on the account's Steam profile, which is why the word is "played" (it used to say "banked") and why a
+/// day can show far more than 24h. The lifetime total is left out of the message and kept for 'report' and 'stats',
+/// where somebody is asking for it. The day-plan line that human mode prints at midnight is a different thing
+/// entirely - that is the PLAN for the coming day; this is the RESULT of the day that just passed.
 /// </summary>
 public static class DailyReport {
 	private sealed class State {
@@ -26,7 +28,20 @@ public static class DailyReport {
 		/// <summary>Game-minutes at the last report - what "banked" counts from now. Missing in a report file from
 		/// before game-hours were counted; that one report works it out from the clock time instead.</summary>
 		public Dictionary<string, double>? Games { get; set; }
+
+		/// <summary>The most bans each account has been seen with (only accounts the ban watch has looked at), so a new one
+		/// is flagged once, the next morning. Missing in a file from before this was kept: that one report flags none.</summary>
+		public Dictionary<string, int>? Bans { get; set; }
+
+		/// <summary>
+		/// 2: Bans holds only accounts the ban watch had looked at. Missing in a file from before: those wrote 0 for an
+		/// account never looked at too, so a 0 there is read as not known (see <see cref="BansBefore"/>).
+		/// </summary>
+		public int? BansFormat { get; set; }
 	}
+
+	/// <summary>What <see cref="State.BansFormat"/> is written as now.</summary>
+	private const int BansFormatNow = 2;
 
 	private static readonly Lock Gate = new();
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0052", Justification = "Held, never read: a timer nothing holds on to is collected and stops firing.")]
@@ -48,8 +63,9 @@ public static class DailyReport {
 	}
 
 	/// <summary>
-	/// The same per-account rows the daily report writes, as text for the 'stats' command - empty when there is
-	/// nothing to report on. Does not log anything, consume the day's scheduled report or move the 24h baseline.
+	/// The daily summary as text, for the 'report' and 'stats' commands - with each account's lifetime total, as these
+	/// are where somebody asks for it. Empty when there is nothing to report on. Does not log anything, consume the
+	/// day's scheduled report or move the 24h baseline.
 	/// </summary>
 	public static string Summary() {
 		if (_mgr is not { } mgr) {
@@ -57,15 +73,9 @@ public static class DailyReport {
 		}
 
 		Load();
-		(List<Said> lines, Said fleet, bool first, _, _) = Build(mgr);
+		Built built = Build(mgr, withTotal: true, DateTime.UtcNow);
 
-		if (lines.Count == 0) {
-			return "";
-		}
-
-		Said header = Header(first, DateTime.UtcNow);
-
-		return string.Join(Environment.NewLine, lines.Prepend(header).Append(fleet).Select(static l => l.ToString()));
+		return built.Empty ? "" : built.Card.Text();
 	}
 
 	private static void Tick() {
@@ -98,30 +108,27 @@ public static class DailyReport {
 	}
 
 	private static bool Fire(BotManager mgr, string today, bool commit) {
-		(List<Said> lines, Said fleet, bool first, Dictionary<string, double> snapshot, Dictionary<string, double> games) = Build(mgr);
+		Built built = Build(mgr, withTotal: false, DateTime.UtcNow);
 
-		if (lines.Count == 0) {
+		if (built.Empty) {
 			return false;
 		}
 
 		// In the log only when "Daily summary in the log" is on.
 		if (mgr.Global.DailyReportEnabled) {
-			Log.Good(Header(first, DateTime.UtcNow), "report");
-			foreach (Said line in lines) {
-				Log.Info(line, "report");
-			}
-
-			Log.Good(fleet, "report");
+			built.Card.WriteToLog("report");
 		}
 
 		// The same summary as one message for Discord / Telegram, when that's switched on - only for the real
 		// daily one.
 		if (commit) {
-			Log.Publish(Topic.Summary, "report", new Said(string.Join("\n", lines.Select(static l => l.ToString().TrimStart()).Append(fleet.ToString().TrimStart()))));
+			Log.Publish(Topic.Summary, "report", new Said("{0}", built.Card.Wire()));
 
 			lock (Gate) {
-				_state.Lifetime = snapshot;
-				_state.Games = games;
+				_state.Lifetime = built.Snapshot;
+				_state.Games = built.Games;
+				_state.Bans = built.Bans;
+				_state.BansFormat = BansFormatNow;
 				_state.LastFired = today;
 				_state.LastAt = DateTime.UtcNow;
 			}
@@ -135,10 +142,11 @@ public static class DailyReport {
 	/// <summary>
 	/// What the numbers cover: "last 24h" only when the last summary really was a day ago. Asked for at 09:47 with the
 	/// summary sent at 06:00, 'report' said "last 24h" over 3 hours and 47 minutes of hours - a third of what a day had.
+	/// It goes beside the heading: "// ACCOUNTS · last 24h".
 	/// </summary>
-	public static Said Header(bool first, DateTime nowUtc) {
+	public static Said Note(bool first, DateTime nowUtc) {
 		if (first) {
-			return new Said("── daily report · 24h · 'banked' starts counting now ──");
+			return new Said("counting starts now");
 		}
 
 		DateTime? at;
@@ -156,25 +164,112 @@ public static class DailyReport {
 		}
 
 		if (at is not { } last) {
-			return new Said("── report · since the last daily summary ──");
+			return new Said("since the last daily summary");
 		}
 
 		TimeSpan gap = nowUtc - last;
 
 		if ((gap > TimeSpan.FromHours(23.5)) && (gap < TimeSpan.FromHours(24.5))) {
-			return new Said("── daily report · last 24h ──");
+			return new Said("last 24h");
 		}
 
 		DateTime local = last.ToLocalTime();
 		string when = local.Date == nowUtc.ToLocalTime().Date ? local.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)
 			: local.ToString("MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture);
 
-		return new Said("── report · since the daily summary at {0} ({1}) ──", when, Fmt.Hm((int) gap.TotalMinutes));
+		return new Said("since the daily summary at {0} ({1})", when, Fmt.Hm((int) gap.TotalMinutes));
 	}
 
-	/// <summary>One row per account plus the fleet line, and the lifetime snapshots the next report counts from.</summary>
-	private static (List<Said> Lines, Said Fleet, bool First, Dictionary<string, double> Snapshot, Dictionary<string, double> Games) Build(BotManager mgr) {
-		List<Bot> bots = mgr.All.OrderBy(static b => b.Name, StringComparer.OrdinalIgnoreCase).ToList();
+	/// <summary>One account's day as the summary counts it.</summary>
+	/// <param name="Minutes">Game-minutes played since the last summary - null for an account with nothing to count
+	/// from yet (the very first summary), which is "not counted yet" rather than a made-up "off".</param>
+	/// <param name="Total">Every game-minute nocat.farm has put on it - shown only where someone asks ('report', 'stats').</param>
+	public sealed record Day(string Name, double? Minutes, int Cards, int Comments, double Total);
+
+	/// <summary>The card, and what the next summary counts from - kept only when the real one goes out.</summary>
+	private sealed record Built(ReportCard Card, bool Empty, Dictionary<string, double> Snapshot, Dictionary<string, double> Games, Dictionary<string, int> Bans);
+
+	/// <summary>
+	/// The summary from plain figures: what needs a look when anything does, then the accounts in the order they were
+	/// given (the dashboard's) - a line each, then "All accounts" - then the app itself. Separate from the counting, so
+	/// the checks can hand it figures.
+	/// </summary>
+	public static ReportCard Card(IReadOnlyList<Day> days, bool r4r, Said note, bool withTotal, List<ReportCard.Row> attention, DateTime local) {
+		List<ReportCard.Row> rows = [.. days.Select(d => Line(new Said("{0}", d.Name), d.Minutes, d.Cards, d.Comments, withTotal ? d.Total : null))];
+
+		// Not counted for any of them (the first summary) stays "not counted yet"; otherwise the ones that were counted.
+		double? played = days.Any(static d => d.Minutes != null) ? days.Sum(static d => d.Minutes ?? 0) : null;
+		rows.Add(Line(new Said("All accounts"), played, days.Sum(static d => d.Cards), days.Sum(static d => d.Comments), withTotal ? days.Sum(static d => d.Total) : null));
+
+		// What needs a look first: after the accounts, a big fleet's list ran it off the end of the message.
+		List<ReportCard.Section> sections = [];
+
+		if (attention.Count > 0) {
+			sections.Add(new(new Said("Attention"), default, attention));
+		}
+
+		sections.Add(new(new Said("Accounts"), note, rows));
+		sections.Add(ReportCard.System());
+
+		return new ReportCard {
+			Title = new Said("Daily summary"),
+			Date = new Said("{0}", ReportCard.Day(local)),
+			Time = ReportCard.Clock(local),
+			Sections = sections
+		};
+
+		// "268h played · 3 cards · 8 comments" - each part only when it's something. Nothing at all is "off": no game
+		// ran for it and it earned nothing, which is what an account that was switched off all day looks like.
+		ReportCard.Row Line(Said label, double? minutes, int cards, int comments, double? total) {
+			Said? figures = ReportCard.Join([
+				(minutes is { } m) && (ReportCard.Hours(m) is { Length: > 0 } h) ? new Said("{0} played", h) : null,
+				ReportCard.Cards(cards),
+				r4r ? ReportCard.Comments(comments) : null
+			]);
+			Said none = minutes == null ? new Said("not counted yet") : new Said("off");
+
+			if (total is not { } life) {
+				return figures is { } f ? new ReportCard.Row(label, f) : new ReportCard.Row(label, none, Strong: false);
+			}
+
+			Said lifetime = new Said("{0} total", ReportCard.Hours(life) is { Length: > 0 } lh ? lh : "0m");
+
+			return new ReportCard.Row(label, ReportCard.Join([figures ?? none, lifetime])!.Value, Strong: figures != null);
+		}
+	}
+
+	/// <summary>
+	/// The bans an account has on record, as one number - null when the ban watch hasn't looked yet. Read as 0 then, an
+	/// account added yesterday (or one whose watch hadn't run) had every ban it already had called new the first morning
+	/// after its first look.
+	/// </summary>
+	private static int? BanCount(Bot b) => BotManager.ModuleOf<Modules.BanWatch>(b) is { CheckedAt: not null, Last: { } bans }
+		? bans.Vac + bans.Game + (bans.Community ? 1 : 0) + (bans.TradeBanned ? 1 : 0)
+		: null;
+
+	/// <summary>
+	/// One account's ban count against the last summary's: what to keep for the next one, and whether a ban is new. Kept
+	/// is the most ever seen, so a ban lifted and then back again isn't new - only a count above anything seen before is.
+	/// Not looked at now: the count from before is kept as it was. Nothing from before (a new account, the first look):
+	/// noted, never new.
+	/// </summary>
+	internal static (int? Keep, bool New) BanStep(int? now, int? before) =>
+		now is not { } n ? (before, false)
+		: before is not { } b ? (n, false)
+		: (Math.Max(n, b), n > b);
+
+	/// <summary>
+	/// The last summary's ban counts, as known. A file from before <see cref="State.BansFormat"/> wrote 0 for an account the
+	/// ban watch had never looked at as well - read as 0, an account with a ban it always had was called newly banned on the
+	/// first summary after updating. Its 0s are dropped there (not known: noted, never new); any other count was a real look.
+	/// </summary>
+	internal static Dictionary<string, int>? BansBefore(Dictionary<string, int>? stored, int? format) =>
+		stored is not { } pb ? null
+		: new Dictionary<string, int>(format >= BansFormatNow ? pb : pb.Where(static kv => kv.Value != 0), StringComparer.OrdinalIgnoreCase);
+
+	/// <summary>Every account's figures counted up, the card made from them, and the snapshots the next summary counts from.</summary>
+	private static Built Build(BotManager mgr, bool withTotal, DateTime nowUtc) {
+		List<Bot> bots = [.. mgr.All];   // in the dashboard's order, like everywhere else
 
 		bool r4r = mgr.Global.Rep4RepEnabled;
 		Dictionary<string, int> cards = Count(Stats.KindCard);
@@ -182,55 +277,50 @@ public static class DailyReport {
 
 		Dictionary<string, double> prev;
 		Dictionary<string, double>? prevGames;
+		Dictionary<string, int>? prevBans;
 		lock (Gate) {
 			prev = new Dictionary<string, double>(_state.Lifetime, StringComparer.OrdinalIgnoreCase);
 			prevGames = _state.Games is { } g ? new Dictionary<string, double>(g, StringComparer.OrdinalIgnoreCase) : null;
+			prevBans = BansBefore(_state.Bans, _state.BansFormat);
 		}
 
 		bool first = prev.Count == 0;
 		Dictionary<string, double> snapshot = new(StringComparer.OrdinalIgnoreCase);
 		Dictionary<string, double> games = new(StringComparer.OrdinalIgnoreCase);
-		int totBanked = 0, totCards = 0, totComments = 0, totLife = 0;
-		List<Said> lines = [];
+		Dictionary<string, int> bans = new(StringComparer.OrdinalIgnoreCase);
+		HashSet<string> newBan = new(StringComparer.OrdinalIgnoreCase);
+		List<Day> days = [];
 
 		foreach (Bot b in bots) {
 			double clock = Lifetime.For(b.Name);
 			double played = Lifetime.GamesFor(b.Name);
 			snapshot[b.Name] = clock;
 			games[b.Name] = played;
-			double life = played;
 
-			int banked = prevGames != null
-				? prevGames.TryGetValue(b.Name, out double gamesBefore) ? (int) Math.Max(0, played - gamesBefore) : -1
-				: prev.TryGetValue(b.Name, out double before) ? (int) (Math.Max(0, clock - before) * GamesPerHour(b.Name)) : -1;
-			int c = cards.GetValueOrDefault(b.Name);
-			int cm = comments.GetValueOrDefault(b.Name);
+			(int? keep, bool fresh) = BanStep(BanCount(b), (prevBans != null) && prevBans.TryGetValue(b.Name, out int had) ? had : null);
 
-			totCards += c;
-			totComments += cm;
-			totLife += (int) life;
-			if (banked > 0) {
-				totBanked += banked;
+			if (keep is { } kept) {
+				bans[b.Name] = kept;
 			}
 
-			// -1 = no baseline yet (first report for this account), shown as a dash rather than a fake "0m".
-			string banked24 = banked < 0 ? "—" : Fmt.Hm(banked);
-			Said row = r4r
-				? new Said("  {0} banked {1} · {2} card(s) · {3} comment(s) · {4} total",
-					b.Name.PadRight(14), banked24.PadRight(7), c, cm, Fmt.Hm((int) life))
-				: new Said("  {0} banked {1} · {2} card(s) · {3} total",
-					b.Name.PadRight(14), banked24.PadRight(7), c, Fmt.Hm((int) life));
+			if (fresh) {
+				newBan.Add(b.Name);
+			}
 
-			lines.Add(row);
+			// Null = nothing to count from yet (the first report for this account) - "not counted yet", not a fake "off".
+			double? since = prevGames != null
+				? prevGames.TryGetValue(b.Name, out double gamesBefore) ? Math.Max(0, played - gamesBefore) : null
+				: prev.TryGetValue(b.Name, out double before) ? Math.Max(0, clock - before) * GamesPerHour(b.Name) : null;
+
+			days.Add(new Day(b.Name, since, cards.GetValueOrDefault(b.Name), comments.GetValueOrDefault(b.Name), played));
 		}
 
-		Said fleet = r4r
-			? new Said("  fleet: banked {0} · {1} card(s) · {2} comment(s) · {3} total",
-				Fmt.Hm(totBanked), totCards, totComments, Fmt.Hm(totLife))
-			: new Said("  fleet: banked {0} · {1} card(s) · {2} total",
-				Fmt.Hm(totBanked), totCards, Fmt.Hm(totLife));
+		// A ban is new when the count went above anything seen before (BanStep) - one that was already there isn't flagged
+		// every morning.
+		List<ReportCard.Row> attention = ReportCard.Attention(bots, r4r, prevBans == null ? null : b => newBan.Contains(b.Name), nowUtc);
+		ReportCard card = Card(days, r4r, Note(first, nowUtc), withTotal, attention, nowUtc.ToLocalTime());
 
-		return (lines, fleet, first, snapshot, games);
+		return new Built(card, days.Count == 0, snapshot, games, bans);
 
 		// The one report after game-hours started being counted has only a clock-time baseline: the clock time since,
 		// times how many games were on at once over the last two days of history.

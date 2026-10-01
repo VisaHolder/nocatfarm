@@ -160,9 +160,11 @@ their setup is on the same page.
 
 ## Mini mode
 
-Click **mini** on the window (or type `mini`) and it shrinks to a small panel: every account, what it's doing, and
-a start/stop button. A farming account opens up to show cards left, time left and a progress bar. The pin keeps it
-above your other windows (off by default), and the arrow brings the full window back.
+Click **mini** on the window (or type `mini`) and it shrinks to a small panel: up to 5 accounts, what each is doing,
+and a start/stop button, with a bar like `+7 more · 6 idling` for the rest - click it to see 10 at a time and scroll.
+Accounts that need you go to the top in yellow. A farming account opens up to show cards left, time left and a
+progress bar, and the top shows today's game-hours (or another number you pick). The pin keeps it above your other
+windows (off by default), and the arrow brings the full window back.
 
 <p align="center">
   <img src="assets/mini-mode.png" alt="Mini mode: one line per account, and a farming account shows its progress" width="680">

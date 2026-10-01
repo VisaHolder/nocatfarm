@@ -1171,7 +1171,6 @@ function renderAccounts() {
       ${b.Notes ? `<div class="bot-notes" title="${esc(b.Notes)}">${esc(b.Notes)}</div>` : ''}
       ${b.Guard ? `<div class="bot-guard">${esc(tf('Waiting on you: {0}', b.Guard))}</div>` : ''}
       <div class="bot-playing" title="${esc(b.Playing || '')}">${b.Playing ? esc(b.Playing) : `<span class="real">${esc(t('not playing anything'))}</span>`}</div>
-      ${dlcAsks(b.Name, b.DlcQuestions)}
       ${b.Online ? `<div class="bot-persona ${b.PersonaHidden ? 'hidden-persona' : ''}"
         data-tip="${esc(t("What your friends list shows for this account. The status is what nocat.farm set it to, and the game comes straight back from Steam. While it is invisible, friends see it as offline with no game - the hours still count. Human mode changes the status by itself: invisible overnight, away on a break, Snooze over a meal."))}">${esc(t('your friends see:'))} <b>${esc(b.PersonaHidden ? t('offline') : b.Persona)}</b>${b.Seen && !b.PersonaHidden ? ` · <b>${esc(b.Seen)}</b>` : ''}</div>` : ''}
       ${b.Bans ? `<div class="bot-bans" data-tip="${esc(t('What Steam shows about this account\'s bans. nocat.farm checks every few hours and tells you when a new one appears. Games it is banned in are left out of trades; trading cards still trade.'))}">${esc(tf('bans: {0}', b.Bans))}</div>` : ''}
@@ -2867,6 +2866,7 @@ function tutStepUpdates() {
   const def = (n) => schema && (schema.Global || []).find((x) => x.Name === n);
   const label = (n, fallback) => { const x = def(n); return x ? tSetting(x, 'label') : fallback; };
   const num = (key, min, max) => `<input type="number" min="${min}" max="${max}" value="${esc(d[key])}" oninput="tutDash.${key}=+this.value">`;
+  const hour = (key, min, max) => hourSelect(`onchange="tutDash.${key}=+this.value"`, d[key], min, max);
 
   // Docker and a Linux service can't swap themselves over: it says when a new version is out, and that's all it can do.
   if (state && state.CanSelfUpdate === false) {
@@ -2891,7 +2891,7 @@ function tutStepUpdates() {
       ${d.autoUpdate ? '' : `<p class="muted small">${esc(t('Off: it tells you when a new version is out, and you install it with one click.'))}</p>`}
       ${adv ? `<div class="tut-grid">
           <label>${esc(t('Installs between'))}</label>
-          <span class="tut-hours">${num('fromHour', 0, 23)}<span>:00 ${esc(t('and'))}</span>${num('untilHour', 0, 24)}<span>:00</span></span>
+          <span class="tut-hours">${hour('fromHour', 0, 23)}<span>${esc(t('and'))}</span>${hour('untilHour', 0, 24)}</span>
           <label>${esc(label('AutoUpdateWaitHours', 'Wait after a release for'))}</label>
           <span class="tut-hours">${num('waitHours', 0, 168)}<span>${esc(t('hours'))}</span></span>
           <label>${esc(label('UpdateCheckHours', 'Look for updates every'))}</label>
@@ -3145,8 +3145,11 @@ function renderTutorialSetup() {
     const def = (n) => (schema && schema.Bot || []).find((d) => d.Name === n);
     const field = (n, min, max) => {
       const d = def(n);
+      const box = d && d.Kind === 'Hour'
+        ? hourSelect(`id="tut-${n}" onchange="tutSetup.routine['${n}']=+this.value;tutRoutinePreview()"`, s.routine[n], min, max)
+        : `<input id="tut-${n}" type="number" min="${min}" max="${max}" value="${s.routine[n]}" oninput="tutSetup.routine['${n}']=+this.value;tutRoutinePreview()">`;
       return `<label for="tut-${n}">${esc(d ? tSetting(d, 'label') : n)}${d ? tipIcon(tSetting(d, 'tip')) : ''}</label>
-        <input id="tut-${n}" type="number" min="${min}" max="${max}" value="${s.routine[n]}" oninput="tutSetup.routine['${n}']=+this.value;tutRoutinePreview()">`;
+        ${box}`;
     };
     body = `<p>${esc(t('Roughly how a person would use this account. Every day comes out a bit different around these numbers.'))}</p>
       <div class="form2 tut-form2">
@@ -3179,8 +3182,8 @@ function renderTutorialSetup() {
 function tutRoutinePreview() {
   const r = tutSetup.routine;
   const el = $('tutRoutinePreview');
-  if (el) el.textContent = tf('About {0}h on weekdays and {1}h at weekends, from around {2}:00 until about {3}:00, with a day off {4}% of the time.',
-    r.WeekdayHours, r.WeekendHours, String(r.DayStartHour).padStart(2, '0'), String(r.BedHour).padStart(2, '0'), r.DayOffChancePct);
+  if (el) el.textContent = tf('About {0}h on weekdays and {1}h at weekends, from around {2} until about {3}, with a day off {4}% of the time.',
+    r.WeekdayHours, r.WeekendHours, hourLabel(Number(r.DayStartHour)), hourLabel(Number(r.BedHour)), r.DayOffChancePct);
 }
 
 /// First tap is the main game; tapping the main again clears it; any other tap adds or removes a side game.
@@ -3961,8 +3964,6 @@ document.addEventListener('click', (e) => {
     case 'postnow': postNow(name); break;
     case 'register': registerProfile(name); break;
     case 'inventory': refreshInventory(name); break;
-    case 'dlccarryon': answerDlc(name, el.dataset.app, 'carryon'); break;
-    case 'dlcleave': answerDlc(name, el.dataset.app, 'leave'); break;
     case 'dlcundo': answerDlc(name, el.dataset.app, 'undo'); break;
   }
 });
@@ -4189,7 +4190,7 @@ function renderRep4RepPacing() {
   const box = $('r4rPacing');
   // This runs on every poll, and rebuilding the table threw away a number half-typed into it - the box reset under
   // your fingers every few seconds. Leave it alone while one of its boxes has the focus; the next poll catches up.
-  if (box.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;
+  if (box.contains(document.activeElement) && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT')) return;
 
   const keys = ['Rep4RepDailyCap', 'Rep4RepGapMinMinutes', 'Rep4RepGapMaxMinutes', 'Rep4RepStartHour', 'Rep4RepEndHour'];
   const defs = keys.map((k) => (schema ? schema.Bot.find((d) => d.Name === k) : null));
@@ -4198,8 +4199,12 @@ function renderRep4RepPacing() {
     <tr><th>${esc(t('Account'))}</th>${defs.map((d, i) => `<th${d ? ` data-tip="${esc(tSetting(d, 'tip'))}"` : ''}>${esc(d ? tSetting(d, 'label') : keys[i])}</th>`).join('')}</tr>
     ${state.Bots.map((b) => `<tr>
       <td><b>${esc(b.Name)}</b></td>
-      ${keys.map((k) => `<td><input type="number" style="max-width:80px" value="${config && config.Bots[b.Name] ? config.Bots[b.Name][k] : ''}"
-        data-qs="${k}" data-bot="${esc(b.Name)}"></td>`).join('')}
+      ${keys.map((k, i) => {
+        const v = config && config.Bots[b.Name] ? config.Bots[b.Name][k] : '';
+        return defs[i] && defs[i].Kind === 'Hour'
+          ? `<td>${hourSelect(`data-qs="${k}" data-bot="${esc(b.Name)}"`, v, defs[i].Min, defs[i].Max)}</td>`
+          : `<td><input type="number" style="max-width:80px" value="${v}" data-qs="${k}" data-bot="${esc(b.Name)}"></td>`;
+      }).join('')}
       </tr>`).join('')}
     </table></div>`;
 
@@ -4620,9 +4625,7 @@ let pacerFor = null;
 let pacerRows = null;
 let pacerRecent = [];
 let pacerHunt = null;
-let pacerAsks = [];        // games held whole for add-ons, waiting for "carry on" or "leave it paused"
-let pacerCarried = [];     // answered "carry on" - each with an undo
-let pacerLeft = [];        // answered "leave it paused" - each with "ask again"
+let pacerLeft = [];        // games left alone for achievements ('dlc leave') - each with an undo
 
 async function loadPacer(name) {
   if (pacerFor === name) return;
@@ -4636,52 +4639,27 @@ async function loadPacer(name) {
     pacerRows = d.Games || [];
     pacerRecent = d.Recent || [];
     pacerHunt = d.Hunt || null;
-    pacerAsks = d.DlcQuestions || [];
-    pacerCarried = d.DlcCarriedOn || [];
     pacerLeft = d.DlcLeft || [];
     // Resolve any "app 12345" names against Steam so the table reads with real game names; learnNames redraws
     // the settings pane (which this pacer lives in) once they land.
     learnNames(pacerRows.map((g) => g.App).filter(Boolean));
   } catch {
     if (pacerFor !== name) return;
-    pacerRows = []; pacerRecent = []; pacerHunt = null; pacerAsks = []; pacerCarried = []; pacerLeft = [];
+    pacerRows = []; pacerRecent = []; pacerHunt = null; pacerLeft = [];
   }
 
   if (view === 'settings' && settingsTarget === name) renderSettings();
 }
 
-// "Is it OK to carry on?" - one box per game held whole because it has add-ons this account doesn't own and Steam
-// doesn't say which of them come with achievements. Only the owner knows whether the account has what matters, so it
-// asks, in plain words, with the two answers as buttons. Every name here came from Steam, so all of it is escaped.
-function dlcAsks(name, asks) {
-  if (!asks || !asks.length) return '';
-
-  return asks.map((q) => {
-    const game = GAME_NAMES[q.App] || q.Game;
-    const names = (q.Missing || []).join(', ');
-    const missing = q.OnlyPacks ? t('Only skin, team and other packs are missing.')
-      : names ? tf('Missing: {0}', q.More > 0 ? `${names}, ${tf('and {0} more', q.More)}` : names)
-      : q.More > 0 ? tf('Missing: {0} add-ons', q.More)
-      : '';
-
-    return `<div class="dlcask">
-      <p>${tf("{0} is paused for achievements. It has add-ons this account doesn't own, and Steam doesn't say which of them come with achievements.", `<b>${esc(game)}</b>`)}</p>
-      ${missing ? `<p class="muted small">${esc(missing)}</p>` : ''}
-      <div class="actions">
-        <button data-act="dlccarryon" data-bot="${esc(name)}" data-app="${Number(q.App)}" data-tip="${esc(t("Achievements that certainly come with an add-on it doesn't own stay locked either way."))}">${esc(t('I own what matters - carry on'))}</button>
-        <button class="ghost" data-act="dlcleave" data-bot="${esc(name)}" data-app="${Number(q.App)}">${esc(t('Leave it paused'))}</button>
-      </div></div>`;
-  }).join('');
-}
-
-// The answers already given, each with a way back - no appIDs, just the games.
+// The games left alone for achievements ('dlc leave'), each with a way back - no appIDs, just the games. Every other
+// game with add-ons Steam doesn't explain earns anyway, base game first, so there is nothing to ask about them.
 function dlcAnswered(name) {
-  const link = (g, label) => `${esc(GAME_NAMES[g.App] || g.Game)} <a role="button" tabindex="0" data-act="dlcundo" data-bot="${esc(name)}" data-app="${Number(g.App)}">(${esc(label)})</a>`;
-  const line = (list, label, undo) => (list && list.length
-    ? `<p class="muted small dlcanswered">${esc(label)} ${list.map((g) => link(g, undo)).join(' · ')}</p>`
-    : '');
+  if (!pacerLeft || !pacerLeft.length) return '';
 
-  return line(pacerCarried, t('You said carry on for:'), t('undo')) + line(pacerLeft, t('You said leave it paused for:'), t('ask again'));
+  const tip = esc(t("Lets it earn achievements again - the base game's first. Those of an add-on it doesn't own stay locked."));
+  const link = (g) => `${esc(GAME_NAMES[g.App] || g.Game)} <a role="button" tabindex="0" data-act="dlcundo" data-bot="${esc(name)}" data-app="${Number(g.App)}" data-tip="${tip}">(${esc(t('undo'))})</a>`;
+
+  return `<p class="muted small dlcanswered">${esc(t('You said leave it paused for:'))} ${pacerLeft.map(link).join(' · ')}</p>`;
 }
 
 async function answerDlc(name, app, answer) {
@@ -4689,7 +4667,7 @@ async function answerDlc(name, app, answer) {
   if (!res.ok) { toast(res.error || t("That didn't work"), true); return; }
   if (res.note) toast(res.note);
 
-  // The account card and the achievements section both show it: read both again.
+  // The achievements section shows it: read it again (and the rest, which the undo may change).
   refresh();
   if (pacerFor === name) { pacerFor = null; loadPacer(name); }
 }
@@ -4777,15 +4755,20 @@ function pacerTable() {
 
   // Achievements from DLC this account doesn't own are never unlocked - said under whatever the line above says, so
   // "40 of 157 done" is never read as 117 still to come.
-  // A game where it can't be told which achievements come with a DLC it doesn't own is held whole (but for the DLC it
-  // owns), and says so in those words - "from DLC it doesn't own" would claim more than is known.
+  // A game left alone ('dlc leave') where it can't be told which achievements come with a DLC it doesn't own is held
+  // whole (but for the DLC it owns), and says so in those words - "from DLC it doesn't own" would claim more than is known.
   const dlc = live.DlcHeld > 0 && live.State !== 'DlcOnly' && live.State !== 'DlcUnmapped'
     ? `<p class="muted small">${esc(live.Unmapped
       ? tf("can't tell which achievements come with its DLC - {0} left alone", live.DlcHeld)
       : tf("{0} achievement(s) are from DLC this account doesn't own - left alone", live.DlcHeld))}</p>`
     : '';
 
-  return pacerLine(live, name, hrs, done) + dlc;
+  // An account that skips multiplayer achievements skips them - said, so "40 of 157 done" isn't read as 117 to come.
+  const mp = live.Multiplayer > 0 && live.State !== 'Multiplayer'
+    ? `<p class="muted small">${esc(tf('{0} multiplayer ones skipped', live.Multiplayer))}</p>`
+    : '';
+
+  return pacerLine(live, name, hrs, done) + dlc + mp;
 }
 
 // The one line about the game being earned in: what state it's in, from the last time Steam was read.
@@ -4808,6 +4791,14 @@ function pacerLine(live, name, hrs, done) {
     }
     case 'NeedsHours':
       return `<p class="earning">${tf('Earning in {0} — {1} played, {2}. The next ones need more hours in it first.', name, hrs, done)}</p>`;
+    case 'Multiplayer':
+      return `<p class="muted small">${tf('Playing {0} — {1}; the rest are multiplayer achievements, which this account skips.', name, done)}</p>`;
+    case 'NoRarity':
+      return `<p class="muted small">${tf("Playing {0} — waiting for Steam's figures on how many players have each achievement.", name)}</p>`;
+    case 'CountersOnly':
+      return `<p class="muted small">${tf("Playing {0} — {1}; the rest count something in the game, and wait for the game's own counter.", name, done)}</p>`;
+    case 'NothingOpen':
+      return `<p class="muted small">${tf('Playing {0} — {1}; nothing left it would earn for now. It looks again in a few days.', name, done)}</p>`;
     case 'DlcOnly':
       // Some of the rest only Steam can award: said, rather than calling them all DLC.
       if (live.DlcHeld > 0 && live.Unlocked >= 0 && live.DlcHeld < live.Total - live.Unlocked) {
@@ -4815,8 +4806,7 @@ function pacerLine(live, name, hrs, done) {
       }
       return `<p class="muted small">${tf("Playing {0} — {1}; the rest are from DLC this account doesn't own, so they're left alone.", name, done)}</p>`;
     case 'DlcUnmapped': {
-      // Only the owner knows whether the account has what matters - the question about it is just above, or, once
-      // answered "leave it paused", the "ask again" below.
+      // Only a game the owner left alone ('dlc leave') is held like this - the undo for it is below.
       return `<p class="muted small">${tf("Playing {0} — {1}; can't tell which achievements come with its DLC, so the rest are left alone.", name, done)}</p>`;
     }
     case 'DlcChecking':
@@ -4892,7 +4882,6 @@ function sectionIntro(section, values) {
       <p style="margin:8px 0 0">${esc(t('Unlocking a pile of achievements the second it logs in is what gives a bot away. This drips them out the way a real player would instead - a few at a time, only the common ones, paced to the hours actually put in.'))}
       ${esc(tf('It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.', cap || 90))}</p>
     </div>
-    ${dlcAsks(settingsTarget, pacerFor === settingsTarget ? pacerAsks : [])}
     ${huntPanel()}
     ${recentUnlocks()}
     ${pacerTable()}
@@ -4979,6 +4968,10 @@ function sectionIntro(section, values) {
       val('LongerRhythms') ? t('has quiet spells and late nights') : '',
       val('JoinFriends') ? t('sometimes joins a friend') : '',
     ].filter(Boolean);
+    // What it has learned from you so far (days seen; once in use, when you get on and off) - worked out from the saved
+    // settings, so only while it is on and none of what it depends on is an edit still waiting to be saved.
+    const learnedSaved = ['LearnFromOwner', 'LearnFollow', 'LearnWeekends', 'GameWeights'].every((k) => pending[k] === undefined);
+    const learned = Number(val('LearnFromOwner') || 0) > 0 && learnedSaved && card ? card.Learned || '' : '';
 
     const others = w.length - 1;
     let mostly;
@@ -4993,7 +4986,7 @@ function sectionIntro(section, values) {
 
     return `<div class="preview"><span class="k">${esc(t('A day looks like'))}</span>
       ${tf('On around {0}, bed around {1} — both jittered daily.',
-        `<b>${String(from).padStart(2, '0')}:00</b>`, `<b>${String(to).padStart(2, '0')}:00</b>`)}
+        `<b>${esc(hourLabel(Number(from)))}</b>`, `<b>${esc(hourLabel(Number(to)))}</b>`)}
       ${tf('About {0} on a weekday and {1} at the weekend.', `<b>${weekday}h</b>`, `<b>${weekend}h</b>`)}
       ${dayOff > 0 ? tf('Roughly {0} days off entirely.', `<b>${dayOff} in 100</b>`) : ''}
       ${tf('One game at a time, in sittings of {0}.', `<b>${val('SessionMinMinutes')}–${val('SessionMaxMinutes')} min</b>`)}
@@ -5003,6 +4996,7 @@ function sectionIntro(section, values) {
       ${nightTop ? tf('Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).', `<b>${Number(val('OfflineIdleTopGames')) || 1}</b>`) : ''}
       ${nightEmpty ? esc(t('Nothing to bank overnight yet: add games to "Games to idle overnight".')) : ''}
       ${extras.length ? tf('It also {0}.', esc(extras.join(', '))) : ''}
+      ${learned ? `<span class="k then">${esc(t('Learned from you'))}</span>${esc(learned)}` : ''}
       </div>`;
   }
 
@@ -5014,7 +5008,7 @@ function sectionIntro(section, values) {
     const to = val('Rep4RepEndHour');
     const hours = from === to
       ? t('around the clock')
-      : tf('between {0} and {1}', String(from).padStart(2, '0') + ':00', String(to).padStart(2, '0') + ':00');
+      : tf('between {0} and {1}', hourLabel(Number(from)), hourLabel(Number(to)));
     const span = Math.round((cap * (lo + hi) / 2) / 60 * 10) / 10;
 
     return `<div class="preview"><span class="k">${esc(t('Right now'))}</span>
@@ -5398,11 +5392,14 @@ function liveValue(name, values) {
 }
 
 // A setting with ShowWhen ("FarmCardsWhen=3", "SomeSwitch=true") shows only while that other setting has that value -
-// including an edit not saved yet, since choices and switches redraw the form.
+// or, written "LearnFromOwner!=0", anything but it - including an edit not saved yet, since choices and switches redraw
+// the form.
 function shownWhen(def, values) {
   if (!def.ShowWhen) return true;
   const at = def.ShowWhen.indexOf('=');
-  return String(liveValue(def.ShowWhen.slice(0, at), values)) === def.ShowWhen.slice(at + 1);
+  const not = def.ShowWhen[at - 1] === '!';
+  const same = String(liveValue(def.ShowWhen.slice(0, not ? at - 1 : at), values)) === def.ShowWhen.slice(at + 1);
+  return not ? !same : same;
 }
 
 function isChanged(def, values, defaults) {
@@ -5671,6 +5668,39 @@ function discordButtonCustom(setting) {
   edit(setting, `${label} | ${link}`);
 }
 
+// Does this browser show times on a 12-hour clock? Asked of the browser's own locale, so it follows the viewer - once:
+// every hour list on the settings page asked it twice per option on every redraw, a new formatter each time.
+let hourClock = null;
+function twelveHourClock() {
+  if (hourClock) return hourClock.twelve;
+  hourClock = { twelve: false, format: null };
+  try {
+    const cycle = new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hourCycle;
+    hourClock.twelve = cycle === 'h11' || cycle === 'h12';
+    if (hourClock.twelve) hourClock.format = new Intl.DateTimeFormat(undefined, { hour: 'numeric', hour12: true });
+  } catch { hourClock.twelve = false; }
+  return hourClock.twelve;
+}
+
+// A list of the hours from lo to hi, in the viewer's own clock, with the current one picked. attrs goes on the <select>.
+function hourSelect(attrs, cur, lo, hi) {
+  const hours = [];
+  for (let h = lo; h <= hi; h++) hours.push(h);
+  if (!hours.includes(Number(cur))) hours.push(Number(cur));
+  return `<select ${attrs}>${hours.map((h) => `<option value="${h}" ${Number(cur) === h ? 'selected' : ''}>${esc(hourLabel(h))}</option>`).join('')}</select>`;
+}
+
+// An hour of the day as the viewer reads one: "9 am" / "11 pm" on a 12-hour clock (in the browser's language), "09:00" /
+// "23:00" otherwise. 24 is the end of the day, -1 no set time.
+function hourLabel(h) {
+  if (h === -1) return t('no set time');
+  if (h === 24) return `${hourLabel(0)} (${t('end of the day')})`;
+  if (!twelveHourClock()) return `${String(h).padStart(2, '0')}:00`;
+  try {
+    return hourClock.format.format(new Date(2000, 0, 1, h));
+  } catch { return `${((h + 11) % 12) + 1} ${h < 12 ? 'am' : 'pm'}`; }
+}
+
 function fieldHtml(def, values, defaults) {
   const cur = pending[def.Name] !== undefined ? pending[def.Name] : values[def.Name];
   const id = 'f-' + def.Name;
@@ -5681,6 +5711,12 @@ function fieldHtml(def, values, defaults) {
     case 'Bool':
       ctl = `<label class="switch"><input type="checkbox" id="${id}" data-setting="${def.Name}" ${cur ? 'checked' : ''} onchange="editBool('${def.Name}',this)"><span></span></label>`;
       break;
+    case 'Hour': {
+      // An hour of the day: a list of hours in the viewer's own clock ("9 am" or "09:00"). What's kept is the same number.
+      ctl = hourSelect(`id="${id}" data-setting="${def.Name}" style="max-width:180px" onchange="editAndRender('${def.Name}',parseInt(this.value))"`,
+        cur, def.Min > -1e300 ? def.Min : 0, def.Max < 1e300 ? def.Max : 23);
+      break;
+    }
     case 'Int':
     case 'Float':
       ctl = `<input type="number" id="${id}" data-setting="${def.Name}" style="max-width:140px" value="${esc(cur)}"
@@ -5778,6 +5814,7 @@ function fieldHtml(def, values, defaults) {
   const defText = Array.isArray(def0) ? (def0.length ? def0.join(', ') : t('none'))
     : def.Kind === 'Secret' ? ''
     : def.Kind === 'Bool' ? (def0 ? t('on') : t('off'))
+    : def.Kind === 'Hour' ? hourLabel(Number(def0))
     : (def.Kind === 'Choice' || def.Kind === 'Pick') ? (choiceName() || String(def0))
     // the Discord buttons' code word, and an empty account list, in the words the dropdowns use
     : /^DiscordButton[12]$/.test(def.Name) ? (String(def0).toLowerCase() === 'github' ? t('Get nocat.farm') : def0 ? String(def0) : t('none'))

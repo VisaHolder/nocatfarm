@@ -122,17 +122,21 @@ are under Show advanced:
 ## Daily summary
 
 *Daily summary in the log* (on) writes a summary at 09:30 (*Summary time · hour* and *· minute*). For each account
-it gives hours banked, cards and rep4rep comments in the last 24 hours, with a running total and a line for all
-accounts together. Hours count every running game, the way Steam counts them: 8 games for 24 hours is 192 hours. If the PC was off at that time, it's written on the next start. With *Send the daily summary* on,
-it goes to Discord and Telegram too. `stats` shows the same 24-hour figures any time, followed by cards and comments
-by hour.
+it gives hours played, cards and rep4rep comments in the last 24 hours, then a line for all accounts together, for
+example `kylro: 268h played · 8 comments`. Hours count every running game, the way Steam counts them: 8 games for 24
+hours is 192 hours. Hours are rounded to whole hours, anything that's zero is left out, and an account that did nothing
+all day says `off`. Below that comes *Attention*, only when something needs you (an account that can't sign in, one
+that stopped getting hours, a new ban, Steam blocking comments, a new version), then the version and how long the app
+has been running. If the PC was off at that time, it's written on the next start. With *Send the daily summary* on, it
+goes to Discord and Telegram too. `report` and `stats` show the same figures any time, with each account's total
+hours; `stats` adds cards and comments by hour.
 
 ## Weekly report
 
 *Weekly report* (*Global settings → Logging*, off) comes once a week, on Monday at 10:00 unless you change *Weekly
-report · day* and *· hour*. For each account it gives the last seven days next to the seven before: hours banked,
+report · day* and *· hour*. For each account it gives the last seven days next to the seven before: hours played,
 cards dropped, cards put up for sale, how much the inventory value went up or down, and rep4rep comments if rep4rep
-is on, then a line for all accounts. It's written in the log and sent to Discord and Telegram when they're set up.
+is on, then a line for all accounts - laid out like the daily summary, zeros left out. It's written in the log and sent to Discord and Telegram when they're set up.
 If the PC was off that day, it comes when it's next on. `report week` shows it any time; `report` alone shows the
 daily summary.
 

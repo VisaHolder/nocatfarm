@@ -1048,7 +1048,6 @@
     "Couldn't save those settings": "Bu ayarlar kaydedilemedi",
     "Its game list didn't load - add games by their store link below.": "Oyun listesi yüklenmedi - aşağıdan mağaza bağlantısıyla oyun ekle.",
     ", and {0} now and then": " ve arada bir {0}",
-    "About {0}h on weekdays and {1}h at weekends, from around {2}:00 until about {3}:00, with a day off {4}% of the time.": "Hafta içi yaklaşık {0} saat, hafta sonu {1} saat; aşağı yukarı {2}:00'dan {3}:00 civarına kadar. %{4} ihtimalle izin günü yapar.",
     "Add": "Ekle",
     "It farms trading cards first. Once they are done, it plays these games to add hours. Tap any you like - or none.": "Önce takas kartlarını toplar. Bitince saat eklemek için bu oyunları oynar. İstediklerine dokun - ya da hiçbirine.",
     "It will mostly play {0}{1}, with breaks, meals and a bedtime. First it settles in for a few minutes, like somebody who just opened Steam.": "Molalar, yemekler ve bir yatma saatiyle çoğunlukla {0}{1} oynayacak. Önce, Steam'i yeni açmış biri gibi birkaç dakika ortama alışır.",
@@ -2107,11 +2106,22 @@
     "noted you playing {0} for {1}": "not edildi: {1} boyunca {0} oynadın",
     "noted you on the account for {0}": "not edildi: {0} boyunca hesaptaydın",
     "seen you play on {0} days - its day now leans toward yours": "seni {0} gün oynarken gördü - artık günü seninkine yaklaşıyor",
+    "{0} of {1} days seen ({2} weekdays, {3} weekend days), used once it has {1}": "{1} günün {0} günü görüldü ({2} hafta içi, {3} hafta sonu), {1} olunca kullanılır",
+    "{0} of {1} days seen, used once it has {1}": "{1} günün {0} günü görüldü, {1} olunca kullanılır",
+    "{0} weekdays and {1} weekend days seen": "{0} hafta içi ve {1} hafta sonu günü görüldü",
+    "{0} days seen": "{0} gün görüldü",
+    "on around {0}, off around {1}": "{0} civarı girersin, {1} civarı çıkarsın",
+    "weekdays: on around {0}, off around {1}": "hafta içi: {0} civarı girersin, {1} civarı çıkarsın",
+    "weekdays: on around {0}, off around {1} - the whole week's, until it has seen {2} weekdays": "hafta içi: {0} civarı girersin, {1} civarı çıkarsın - {2} hafta içi günü görene kadar tüm haftanınki",
+    "weekends: on around {0}, off around {1}": "hafta sonu: {0} civarı girersin, {1} civarı çıkarsın",
+    "weekends: on around {0}, off around {1} - the whole week's, until it has seen {2} weekend days": "hafta sonu: {0} civarı girersin, {1} civarı çıkarsın - {2} hafta sonu günü görene kadar tüm haftanınki",
+    "you play {0} more than your list says": "{0} oyununu listenin söylediğinden fazla oynuyorsun",
     "{0} is playing {1} - joining in for a sitting": "{0}, {1} oynuyor - bir oturumluğuna katılıyor",
     "trying out {0} - it's new here": "{0} deneniyor - burada yeni",
     "couldn't read what friends are playing: {0}": "arkadaşların ne oynadığı okunamadı: {0}",
     "couldn't look for new games: {0}": "yeni oyunlara bakılamadı: {0}",
     "learns from how you play": "nasıl oynadığından öğrenir",
+    "Learned from you": "Senden öğrendikleri",
     "tries new games out": "yeni oyunları dener",
     "has quiet spells and late nights": "sakin dönemler ve geç geceler yaşar",
     "sometimes joins a friend": "bazen bir arkadaşına katılır",
@@ -2132,6 +2142,30 @@
     "backup restored: {0} file(s) - what was there before is in {1}": "yedek geri yüklendi: {0} dosya - önceki hali {1} içinde",
     "Restored {0} file(s). The accounts are starting again.": "{0} dosya geri yüklendi. Hesaplar yeniden başlıyor.",
     "Weekly report": "Haftalık rapor",
+    "…and {0} more": "…ve {0} tane daha",
+    "off (last week {0})": "kapalı (geçen hafta {0})",
+    "counting starts now": "sayım şimdi başlıyor",
+    "since the last daily summary": "son günlük rapordan beri",
+    "last 24h": "son 24 saat",
+    "since the daily summary at {0} ({1})": "{0} günlük raporundan beri ({1})",
+    "Attention": "Dikkat",
+    "{0} played": "{0} oynandı",
+    "not counted yet": "henüz sayılmadı",
+    "{0} total": "toplam {0}",
+    "{0} card": "{0} kart",
+    "{0} comment": "{0} yorum",
+    "can't sign in": "oturum açamıyor",
+    "no hours for {0}": "{0} süredir saat yok",
+    "new ban on record": "yeni yasak kaydı",
+    "Steam is blocking its comments": "Steam yorumlarını engelliyor",
+    "New version": "Yeni sürüm",
+    "{0} is out": "{0} çıktı",
+    "This week": "Bu hafta",
+    "{0} to {1}": "{0} - {1}",
+    "{0} played (last week {1})": "{0} oynandı (geçen hafta {1})",
+    "inventory {0} (partial)": "envanter {0} (kısmi)",
+    "inventory {0}": "envanter {0}",
+    "{0} listed": "{0} listelendi",
     "the PC just woke up": "bilgisayar az önce uyandı",
     "hasn't banked any hours for {0} - it's {1}; it needs you": "{0} süredir saat biriktirmedi - durumu {1}; sana ihtiyacı var",
     "hasn't banked any hours for {0} - it's {1}; restarted {2} ago, so not again": "{0} süredir saat biriktirmedi - durumu {1}; {2} önce yeniden başlatıldı, o yüzden tekrar değil",
@@ -2235,7 +2269,6 @@
     "{0} of them unlocked": "{0} tanesi açılmış",
     "couldn't read what it has unlocked": "neyin açıldığı okunamadı",
     "{0} from DLC it doesn't own, {1}": "sahip olmadığı DLC'den {0} tane, {1}",
-    "{0}: none of the games it hunts or plays has achievements from DLC it doesn't own": "{0}: avladığı ya da oynadığı oyunların hiçbirinde sahip olmadığı DLC'den başarım yok",
     "{0} more game(s) still being looked at - ask again in a few minutes": "{0} oyun daha hâlâ inceleniyor - birkaç dakika sonra tekrar sor",
     "Still working out {0}'s DLC - try again in a few minutes.": "{0} oyununun DLC'leri hâlâ çıkarılıyor - birkaç dakika sonra tekrar dene.",
     "{0} on {1}: {2} DLC, {3} with achievements in its list": "{1} hesabında {0}: {2} DLC, listesinde başarımı olan {3} tane",
@@ -2257,8 +2290,6 @@
     "Playing {0} — first checking which of its achievements come with DLC.": "{0} oynanıyor - önce hangi başarımlarının DLC'ye ait olduğu kontrol ediliyor.",
     "\"{0}\" may come with DLC {1} doesn't own, and Steam doesn't list which achievements that DLC adds ({2}) - it won't be unlocked.": "\"{0}\", {1} hesabında olmayan bir DLC'ye ait olabilir ve Steam o DLC'nin hangi başarımları eklediğini söylemiyor ({2}) - açılmayacak.",
     "{0} left alone - can't tell which achievements come with its DLC": "{0} tanesine dokunulmadı - hangi başarımların DLC'sine ait olduğu bilinmiyor",
-    "can't tell which achievements come with its DLC - left alone": "hangi başarımların DLC'sine ait olduğu bilinmiyor - dokunulmuyor",
-    "{0}: games with achievements left alone for DLC it doesn't own (never unlocked)": "{0}: sahip olmadığı DLC yüzünden dokunulmayan başarımları olan oyunlar (asla açılmaz)",
     "Couldn't read which DLC {0} owns just now - nothing in {1} is unlocked until it can. Try again in a few minutes.": "{0} hesabının hangi DLC'lere sahip olduğu şu an okunamadı - okunana kadar {1} içinde hiçbir şey açılmaz. Birkaç dakika sonra tekrar dene.",
     "Held: {0} is missing DLC, and Steam doesn't list which achievements they add - so {1} achievement(s) outside the DLC it owns are left alone.": "Bekletiliyor: {0} hesabında bazı DLC'ler yok ve Steam bunların hangi başarımları eklediğini söylemiyor - bu yüzden sahip olduğu DLC'lerin dışındaki {1} başarıma dokunulmuyor.",
     "{0} is missing DLC, and Steam doesn't list which achievements they add - but every achievement outside the DLC it owns is already unlocked, so there's nothing to hold.": "{0} hesabında eksik DLC var ve Steam bunların hangi başarımları eklediğini söylemiyor - ama sahip olunan DLC dışındaki tüm başarımlar zaten açık, yani bekletilecek bir şey yok.",
@@ -2278,30 +2309,11 @@
     "{0}: {1}/{2} - can't tell which achievements come with its DLC - left alone": "{0}: {1}/{2} - hangi başarımların DLC'sine ait olduğu bilinmiyor - dokunulmuyor",
     "Playing {0} — {1}; can't tell which achievements come with its DLC, so the rest are left alone.": "{0} oynanıyor - {1}; hangi başarımların DLC'sine ait olduğu bilinmiyor, bu yüzden kalanlara dokunulmuyor.",
     "see 'dlc {0} {1}'": "bkz. 'dlc {0} {1}'",
-    "Nothing held in {0} - you said carry on": "{0} içinde bekletilen bir şey yok - devam et dedin",
-    "Trusted: you said {0} owns what matters, so nothing in it is held just because Steam doesn't say which add-on an achievement comes with.": "Güvenilir: {0} için önemli olanlara sahip dedin, bu yüzden içinde sırf Steam bir başarımın hangi eklentiden geldiğini söylemediği için bekletilen bir şey yok.",
-    "Trusted: you said {0} owns what matters. {1} achievement(s) from {2}, which it doesn't own, are still left alone.": "Güvenilir: {0} için önemli olanlara sahip dedin. Sahip olmadığı {2} içinden {1} başarıma hâlâ dokunulmuyor.",
-    "If {0} owns what matters in {1}, answer on the dashboard or type 'dlc carryon {0} {2}'. Achievements that certainly come with an add-on it doesn't own stay locked.": "{0}, {1} içinde önemli olanlara sahipse panelden yanıtla ya da 'dlc carryon {0} {2}' yaz. Sahip olmadığı bir eklentiden geldiği kesin olan başarımlar kilitli kalır.",
-    "{0}: carrying on with {1}. Only achievements that certainly come with an add-on it doesn't own stay locked.": "{0}: {1} ile devam ediliyor. Yalnızca sahip olmadığı bir eklentiden geldiği kesin olan başarımlar kilitli kalır.",
-    "{0}: {1} stays paused for achievements. It won't be asked about again unless its add-ons change.": "{0}: {1} başarımlar için duraklatılmış kalıyor. Eklentileri değişmedikçe bir daha sorulmayacak.",
-    "{0}: there's no answer for {1} to take back.": "{0}: {1} için geri alınacak bir yanıt yok.",
-    "{0}: took back \"carry on\" for {1}. Nothing in it is unlocked on a guess any more.": "{0}: {1} için \"devam et\" geri alındı. İçinde artık tahminle hiçbir şey açılmıyor.",
-    "{0}: {1} will be asked about again.": "{0}: {1} yeniden sorulacak.",
     "Which game? Its name or its appID.": "Hangi oyun? Adı ya da appID'si.",
     "{0} has no game called \"{1}\". Try its appID - the number in its store link.": "{0} hesabında \"{1}\" adında bir oyun yok. appID'sini dene - mağaza bağlantısındaki sayı.",
     "More than one game matches \"{0}\": {1}. Type more of the name, or the appID.": "\"{0}\" ile birden fazla oyun eşleşiyor: {1}. Adın daha fazlasını ya da appID'yi yaz.",
-    "{0}: {1} is paused for achievements - it has add-ons this account doesn't own. Answer on the dashboard, or 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.": "{0}: {1} başarımlar için duraklatıldı - bu hesabın sahip olmadığı eklentileri var. Panelden yanıtla ya da 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.",
-    "Only skin, team and other packs are missing.": "Yalnızca kaplama, takım ve benzeri paketler eksik.",
-    "Missing: {0}": "Eksik: {0}",
-    "Missing: {0} add-ons": "Eksik: {0} eklenti",
-    "{0} is paused for achievements. It has add-ons this account doesn't own, and Steam doesn't say which of them come with achievements.": "{0} başarımlar için duraklatıldı. Bu hesabın sahip olmadığı eklentileri var ve Steam hangilerinin başarım getirdiğini söylemiyor.",
-    "Achievements that certainly come with an add-on it doesn't own stay locked either way.": "Sahip olmadığı bir eklentiden geldiği kesin olan başarımlar her durumda kilitli kalır.",
-    "I own what matters - carry on": "Önemli olanlar bende - devam et",
-    "Leave it paused": "Duraklatılmış kalsın",
-    "You said carry on for:": "Devam et dediğin oyunlar:",
     "undo": "geri al",
     "You said leave it paused for:": "Duraklatılmış kalsın dediğin oyunlar:",
-    "ask again": "yeniden sor",
     "not grinding {0} - still refundable (Protect refunds)": "{0} kasılmıyor - hâlâ iade edilebilir (İadeleri koru)",
     "not putting {0} first - still refundable (Protect refunds)": "{0} öne alınmıyor - hâlâ iade edilebilir (İadeleri koru)",
     "asleep, no games chosen - idling your {0} most-played game(s): {1} · up {2}": "uyuyor, oyun seçilmedi - en çok oynadığın {0} oyunda saat biriktiriyor: {1} · {2} kalkacak",
@@ -2317,11 +2329,77 @@
     "No game in its library matches - paste its appID or store link.": "Kütüphanesinde eşleşen oyun yok - appID'sini ya da mağaza bağlantısını yapıştır.",
     "Its games haven't been read yet - paste an appID or store link.": "Oyunları henüz okunmadı - bir appID ya da mağaza bağlantısı yapıştır.",
     "{0}: {1} hasn't been looked at since the app started - try again in a few minutes.": "{0}: {1} uygulama açıldığından beri henüz incelenmedi - birkaç dakika sonra tekrar dene.",
-    "{0}: {1} isn't paused for add-ons it doesn't own, so there's nothing to answer for it.": "{0}: {1}, sahip olmadığı eklentiler yüzünden duraklatılmış değil, yani yanıtlanacak bir şey yok.",
     "Type more of the game's name, or its appID.": "Oyunun adından biraz daha yaz ya da appID'sini yaz.",
     "{0}: Claim free games now also claims a free DLC's game when that's free too - that was its own switch, and it was off.": "{0}: Ücretsiz oyunları al artık ücretsiz bir DLC'nin oyununu da, o da ücretsizse alıyor - bu ayrı bir anahtardı ve kapalıydı.",
     "{0}: Bank hours overnight was on with no games listed, which banked nothing - switched off so nothing changes. Turn it on to idle its most-played games overnight.": "{0}: Gece saat biriktir açıktı ama listede oyun yoktu, yani hiçbir şey biriktirmiyordu - hiçbir şey değişmesin diye kapatıldı. Gece en çok oynadığı oyunlarda saat biriktirmesi için aç.",
-    "Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).": "Gece görünmez olur ve oyun seçilmediği için en çok oynadığı {0} oyunda saat biriktirir."
+    "Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).": "Gece görünmez olur ve oyun seçilmediği için en çok oynadığı {0} oyunda saat biriktirir.",
+    "{0} left alone, as you asked - can't tell which achievements come with its DLC": "istediğin gibi {0} tanesine dokunulmuyor - hangi başarımların DLC'sine ait olduğu bilinmiyor",
+    "earns them anyway, base game first; {0} from DLC it doesn't own left alone": "yine de kazanıyor, önce ana oyun; sahip olmadığı DLC'den {0} tanesine dokunulmuyor",
+    "earns them anyway, base game first - Steam doesn't say which come with the add-ons it doesn't own": "yine de kazanıyor, önce ana oyun - Steam, sahip olmadığı eklentilere hangilerinin ait olduğunu söylemiyor",
+    "{0}: none of the games it hunts or plays has add-ons that matter for achievements": "{0}: avladığı ya da oynadığı oyunların hiçbirinde başarımlar için önemli bir eklenti yok",
+    "{0}: games with add-ons it doesn't own (achievements from those are never unlocked)": "{0}: sahip olmadığı eklentileri olan oyunlar (bunların başarımları asla açılmaz)",
+    "{0} is missing DLC, and Steam doesn't list which achievements they add. It earns them anyway - the base game's first, and the {1} it can't place after those, in case some come with that DLC.": "{0} hesabında bazı DLC'ler yok ve Steam bunların hangi başarımları eklediğini söylemiyor. Yine de kazanıyor - önce ana oyununkiler, yerini belirleyemediği {1} tanesi ise sonra, bazıları o DLC'ye ait olabilir diye.",
+    "{0} is missing DLC, and Steam doesn't list which achievements they add. It earns them anyway - the base game's first, and the ones it can't place after those.": "{0} hesabında bazı DLC'ler yok ve Steam bunların hangi başarımları eklediğini söylemiyor. Yine de kazanıyor - önce ana oyununkiler, yerini belirleyemedikleri ise sonra.",
+    "It never touches the achievements of {0}, which it doesn't own.": "Sahip olmadığı {0} başarımlarına asla dokunmaz.",
+    "To have {1} left alone instead: 'dlc leave {0} {2}'.": "{1} oyununa bunun yerine hiç dokunulmasın istiyorsan: 'dlc leave {0} {2}'.",
+    "It's left alone because you asked - 'dlc undo {0} {1}' lets it earn them, base game first.": "Sen istediğin için dokunulmuyor - 'dlc undo {0} {1}' kazanmasına izin verir, önce ana oyun.",
+    "{0}: {1} is left alone for achievements now - 'dlc undo {0} {2}' lets it earn them again.": "{0}: {1} artık başarımlar için kendi haline bırakıldı - 'dlc undo {0} {2}' yeniden kazanmasına izin verir.",
+    "{0}: as far as it has seen, {1} has no add-ons Steam doesn't explain, so there's nothing to leave alone.": "{0}: gördüğü kadarıyla {1} oyununda Steam'in açıklamadığı bir eklenti yok, yani kendi haline bırakılacak bir şey yok.",
+    "{0}: {1} isn't left alone, so there's nothing to take back.": "{0}: {1} kendi haline bırakılmamış, geri alınacak bir şey yok.",
+    "{0}: {1} earns achievements again - the base game's first. Those of an add-on it doesn't own stay locked.": "{0}: {1} yeniden başarım kazanıyor - önce ana oyununkiler. Sahip olmadığı bir eklentinin başarımları kilitli kalır.",
+    "{0}: 'dlc carryon' isn't needed any more - {1} earns anyway, the base game's achievements first.": "{0}: 'dlc carryon' artık gerekmiyor - {1} yine de kazanıyor, önce ana oyunun başarımları.",
+    "Lets it earn achievements again - the base game's first. Those of an add-on it doesn't own stay locked.": "Yeniden başarım kazanmasına izin verir - önce ana oyununkiler. Sahip olmadığı bir eklentinin başarımları kilitli kalır.",
+    "unlocked {0} in {1} - {2} left locked": "{1} içinde {0} başarım açıldı - {2} tanesi kilitli kaldı",
+    "{0} left locked - the game's own counter for them isn't there yet": "{0} tanesi kilitli kaldı - oyunun kendi sayacı henüz oraya varmadı",
+    "{0} multiplayer ones skipped": "{0} çok oyunculu başarım atlandı",
+    "{0}: what's left is multiplayer, which this account skips - nothing to grind": "{0}: kalanlar çok oyunculu ve bu hesap onları atlıyor - kasılacak bir şey yok",
+    "{0}: {1}/{2} - the rest are multiplayer achievements, which this account skips": "{0}: {1}/{2} - kalanlar çok oyunculu başarımlar ve bu hesap onları atlıyor",
+    "{0}: waiting for Steam's figures on how many players have each achievement": "{0}: her başarıma kaç oyuncunun sahip olduğuna dair Steam'in rakamlarını bekliyor",
+    "{0}: {1}/{2} - the rest count something in the game, and wait for the game's own counter": "{0}: {1}/{2} - kalanlar oyunda bir şey sayıyor ve oyunun kendi sayacını bekliyor",
+    "Playing {0} — {1}; the rest are multiplayer achievements, which this account skips.": "{0} oynanıyor - {1}; kalanlar çok oyunculu başarımlar ve bu hesap onları atlıyor.",
+    "Playing {0} — waiting for Steam's figures on how many players have each achievement.": "{0} oynanıyor - her başarıma kaç oyuncunun sahip olduğuna dair Steam'in rakamlarını bekliyor.",
+    "Playing {0} — {1}; the rest count something in the game, and wait for the game's own counter.": "{0} oynanıyor - {1}; kalanlar oyunda bir şey sayıyor ve oyunun kendi sayacını bekliyor.",
+    "{0} left locked - they're for having all the others, and some of those stay locked": "{0} tanesi kilitli kaldı - diğer hepsine sahip olmak içinler ve onlardan bazıları kilitli kalıyor",
+    "\"{0}\" needs other players, and {1} skips multiplayer achievements (\"Skip multiplayer achievements\") - it won't be unlocked.": "\"{0}\" başka oyuncular gerektiriyor ve {1} çok oyunculu başarımları atlıyor (\"Çok oyunculu başarımları atla\") - açılmayacak.",
+    "\"{0}\" counts something in the game, and the game's own counter is at {1} of {2} - it won't be unlocked before the game gets there.": "\"{0}\" oyunda bir şey sayıyor ve oyunun kendi sayacı {2} içinde {1} durumunda - oyun oraya varmadan açılmayacak.",
+    "\"{0}\" is for having the others, and some of those are still locked - it won't be unlocked before they are.": "\"{0}\" diğerlerine sahip olmak için ve bazıları hâlâ kilitli - onlardan önce açılmayacak.",
+    "may come with DLC this account doesn't own - left alone": "bu hesabın sahip olmadığı bir DLC'den olabilir - dokunulmuyor",
+    "probably DLC - earned last, after the base game's": "muhtemelen DLC - en son, ana oyununkilerden sonra kazanılır",
+    "{0} with \"DLC\" in their API name are left alone while it's missing add-ons.": "API adında \"DLC\" geçen {0} başarım, eklentiler eksikken bırakılıyor.",
+    "{0}: what's left waits for the game's own counters - nothing to grind": "{0}: kalanlar oyunun kendi sayaçlarını bekliyor - kasılacak bir şey yok",
+    "{0}: {1}/{2} - nothing left it would earn for now; looked at again in a few days": "{0}: {1}/{2} - şimdilik kazanacağı bir şey kalmadı; birkaç gün sonra yeniden bakılacak",
+    "Playing {0} — {1}; nothing left it would earn for now. It looks again in a few days.": "{0} oynanıyor — {1}; şimdilik kazanacağı bir şey kalmadı. Birkaç gün sonra yeniden bakar.",
+    "About {0}h on weekdays and {1}h at weekends, from around {2} until about {3}, with a day off {4}% of the time.": "Hafta içi yaklaşık {0} saat, hafta sonu {1} saat; aşağı yukarı {2} ile {3} civarı arası. %{4} ihtimalle izin günü yapar.",
+    "no set time": "belirli bir saat yok",
+    "end of the day": "günün sonu",
+    "couldn't save whether mini mode's list was open: {0}": "mini modun listesinin açık olup olmadığı kaydedilemedi: {0}",
+    "no accounts yet - 'full window' to add one": "henüz hesap yok - eklemek için 'tam pencere'",
+    "farming {0}": "{0} toplanıyor",
+    "1 card left": "1 kart kaldı",
+    "human mode": "insan modu",
+    " · {0} farming": " · {0} toplamada",
+    " · {0} idling": " · {0} boşta",
+    " · {0} online": " · {0} çevrimiçi",
+    " · {0} connecting": " · {0} bağlanıyor",
+    " · {0} need you": " · {0} sana ihtiyaç duyuyor",
+    " · {0} can't sign in": " · {0} oturum açamıyor",
+    " · {0} playing": " · {0} oynuyor",
+    " · {0} on a break": " · {0} molada",
+    " · {0} done for today": " · {0} bugünlük bitti",
+    " · {0} on a day off": " · {0} izin gününde",
+    " · {0} night idling": " · {0} gece boşta",
+    " · {0} asleep": " · {0} uyuyor",
+    " · {0} off": " · {0} kapalı",
+    "{0} today": "bugün {0}",
+    "{0} past week": "son bir haftada {0}",
+    "{0} past month": "son bir ayda {0}",
+    "1 card today": "bugün 1 kart",
+    "1 achievement today": "bugün 1 başarım",
+    "{0} achievements today": "bugün {0} başarım",
+    "1 comment today": "bugün 1 yorum",
+    "{0} comments today": "bugün {0} yorum",
+    "{0}/{1} online": "{0}/{1} çevrimiçi",
+    "{0} inventory": "{0} envanter"
   },
   "settings": {
     "WebEnabled": {
@@ -2363,6 +2441,11 @@
     "MiniOnTop": {
       "label": "Mini modu üstte tut",
       "tip": "Küçük mini mod penceresini diğer pencerelerinin üstünde tutar. Mini pencerenin başlık çubuğundaki raptiye de bunu açıp kapatır."
+    },
+    "MiniStats": {
+      "label": "Mini pencere gösterir",
+      "tip": "Mini pencerenin üstünde, adın yanındaki tek sayı. Saatler, tüm hesaplarının toplam oyun saatleridir ve günlük özetteki gibi sayılır: çalışan her oyun sayılır, yani 8 oyun bütün bir gün boyunca 192 saat eder. Son bir hafta ve son bir ay, bugün dahil son 7 ve 30 gündür. Kartlar, başarımlar ve yorumlar son 24 saattir.",
+      "choices": "0 hiçbir şey | 1 bugünkü saatler | 2 son bir haftadaki saatler | 3 son bir aydaki saatler | 4 bugünkü kartlar | 5 bugünkü başarımlar | 6 bugünkü yorumlar | 7 çevrimiçi hesaplar | 8 envanter değeri"
     },
     "StartWithWindows": {
       "label": "Windows ile başlat",
@@ -2569,11 +2652,11 @@
     },
     "DayStartHour": {
       "label": "Yaklaşık şu saatte girer",
-      "tip": "Genelde çevrimiçi olduğu saat, 24 saatlik düzende. Gerçek saat bunun çevresinde değişir ve hafta sonları daha erken başlar."
+      "tip": "Genelde çevrimiçi olduğu saat. Gerçek saat bunun çevresinde değişir ve hafta sonları daha erken başlar."
     },
     "BedHour": {
       "label": "Yaklaşık şu saatte yatar",
-      "tip": "Gece için bıraktığı saat, 24 saatlik düzende. Geç saatler de olur, 2 gece 2 demek."
+      "tip": "Gece için bıraktığı saat. Gece yarısından sonrası da olur - uzun bir gece için sabaha karşı bir saat seç."
     },
     "LateNightExtraHours": {
       "label": "Cuma/Cumartesi daha geç yatar",
@@ -2683,7 +2766,7 @@
     },
     "Rep4RepStartHour": {
       "label": "Yalnızca şu saatten sonra yaz",
-      "tip": "Bu hesabın yorum yazdığı günün en erken saati. Gece 4'te yazılan yorumlar botu kolayca ele verir."
+      "tip": "Bu hesabın yorum yazdığı günün en erken saati. Gece yarısı yazılan yorumlar botu kolayca ele verir."
     },
     "Rep4RepEndHour": {
       "label": "Şu saate kadar",
@@ -2875,11 +2958,11 @@
     },
     "FarmFromHour": {
       "label": "Kartları yalnızca şu saatten sonra topla",
-      "tip": "Kartları yalnızca bu saatten itibaren toplar, 24 saatlik düzende. Her an toplamak için bunu ve “...şu saate kadar” ayarını 0'da bırak."
+      "tip": "Kartları yalnızca bu saatten itibaren toplar. Her an toplamak için bunu ve “...şu saate kadar” ayarını gece yarısında bırak."
     },
     "FarmUntilHour": {
       "label": "...şu saate kadar",
-      "tip": "Kartları bu saate kadar toplar, 24 saatlik düzende. Gece yarısını geçmek için başlangıç saatinden erken bir saat yaz. Örneğin 22'den 6'ya gece boyunca toplar."
+      "tip": "Kartları bu saate kadar toplar. Gece yarısını geçmek için başlangıç saatinden erken bir saat seç - gece geç saatten sabah erkene kadar gece boyunca toplar."
     },
     "PostFarmWindDownMinMinutes": {
       "label": "Son karttan sonra en az şu kadar devam et",
@@ -3220,11 +3303,11 @@
     },
     "AutoUpdateFromHour": {
       "label": "...arasında (başlangıç)",
-      "tip": "Kendiliğinden kurabileceği en erken saat, 24 saat biçiminde."
+      "tip": "Kendiliğinden kurabileceği en erken saat."
     },
     "AutoUpdateUntilHour": {
       "label": "...arasında (bitiş)",
-      "tip": "O gece denemeyi bıraktığı saat. Başlangıçtan erken bir saat gece yarısını geçer, yani 23 ile 5 olur."
+      "tip": "O gece denemeyi bıraktığı saat. Başlangıçtan erken bir saat gece yarısını geçer, yani gece geç saatten sabah erkene kadar olur."
     },
     "AutoUpdateWaitHours": {
       "label": "Sürümden sonra bekle",
@@ -3305,7 +3388,7 @@
     },
     "SendAroundHour": {
       "label": "...civarında",
-      "tip": "Gönderim saati, 0 ile 23 arası - örneğin 4, sabah 4 civarı demek. O saatin rastgele bir dakikasında, \"Eşyaları şu aralıkla gönder\" ayarının izin verdiği günlerde gider. -1 = belirli saat yok: açıldığı andan itibaren her şu kadar saatte bir."
+      "tip": "Gönderim saati - örneğin sabaha karşı. O saatin rastgele bir dakikasında, \"Eşyaları şu aralıkla gönder\" ayarının izin verdiği günlerde gider. Belirli saat yok: açıldığı andan itibaren her şu kadar saatte bir."
     },
     "IdleWholeLibrary": {
       "label": "Tüm kütüphanem",
@@ -3323,6 +3406,15 @@
       "label": "Nasıl oynadığımdan öğren",
       "tip": "Bu hesapta kendin ne zaman ve hangi oyunları oynadığını not eder. Bunun 7 günü dolunca gününü seninkine yaklaştırır: ne zaman çevrimiçi olup yattığını ve zamanını “Oyunlar ve ne sıklıkta” listesindeki oyunlar arasında nasıl böldüğünü. Bu listede olmayan bir oyunu asla eklemez; ne kadar oynayacağı yine saat ayarlarından gelir. habits komutu ne öğrendiğini gösterir.",
       "choices": "0 kapalı | 1 biraz | 2 çok"
+    },
+    "LearnFollow": {
+      "label": "Değişikliklere ayak uydurur",
+      "tip": "Ne zaman ya da ne oynadığındaki bir değişikliğin ne kadar çabuk yansıdığı. Eski günler gitgide daha az sayılır - hızlı yeni bir düzeni yaklaşık bir haftada yakalar, yavaş yaklaşık bir ay sürer.",
+      "choices": "0 yavaş | 1 normal | 2 hızlı"
+    },
+    "LearnWeekends": {
+      "label": "Hafta sonları ayrı",
+      "tip": "Cumartesi ve pazarlarını haftanın geri kalanından ayrı öğrenir, çünkü çoğu insan o günler farklı oynar."
     },
     "NewGamesFirst": {
       "label": "Yeni oyunları başta daha çok oyna",
@@ -3355,7 +3447,7 @@
     },
     "WeeklyReportHour": {
       "label": "Haftalık rapor · saat",
-      "tip": "Haftalık raporun geldiği saat, 24 saat biçiminde."
+      "tip": "Haftalık raporun geldiği saat, yerel saatle."
     },
     "OfflineIdleTopGames": {
       "label": "...ya da hiçbiri seçilmemişse en çok oynananlar",
@@ -3379,6 +3471,10 @@
     "BoosterPackGames": {
       "label": "Kart paketi oluşturulacak oyunlar",
       "tip": "Değerli taşların güçlendirici paketlere dönüştürüleceği oyunlar. Steam oyun başına günde bir paket verir, yalnızca hâlâ kart düşüren oyunlar için. Kapatmak için boş bırak."
+    },
+    "AchievementSkipMultiplayer": {
+      "label": "Çok oyunculu başarımları atla",
+      "tip": "Başka oyuncular gerektiren başarımları asla açmaz: çok oyunculu, eşli, zombi, karşılaşma, dereceli ve çevrimiçi olanlar. Bu oyunlar her maçın kaydını tutar ve arkasında maç olmayan bir başarım göze batar. İnsan modu hesabında açık, robotta kapalı. İnsan modunu açıp kapatmak bunu da ona göre ayarlar."
     }
   }
 }

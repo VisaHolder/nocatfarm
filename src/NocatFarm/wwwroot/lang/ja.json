@@ -1048,7 +1048,6 @@
     "Couldn't save those settings": "設定を保存できませんでした",
     "Its game list didn't load - add games by their store link below.": "ゲーム一覧を読み込めませんでした - 下からストアのリンクでゲームを追加してください。",
     ", and {0} now and then": "、ときどき {0}",
-    "About {0}h on weekdays and {1}h at weekends, from around {2}:00 until about {3}:00, with a day off {4}% of the time.": "平日は約 {0} 時間、週末は約 {1} 時間。だいたい {2}:00 から {3}:00 ごろまでで、{4}% の確率で休む日があります。",
     "Add": "追加",
     "It farms trading cards first. Once they are done, it plays these games to add hours. Tap any you like - or none.": "まずトレーディングカードを集めます。それが終わったら、時間を稼ぐためにこれらのゲームを遊びます。好きなものをタップしてください（なしでもOK）。",
     "It will mostly play {0}{1}, with breaks, meals and a bedtime. First it settles in for a few minutes, like somebody who just opened Steam.": "主に {0}{1} を遊び、休憩や食事、就寝もはさみます。最初は Steam を開いたばかりの人のように、数分かけて落ち着きます。",
@@ -2107,11 +2106,22 @@
     "noted you playing {0} for {1}": "記録: あなたが{0}を{1}遊びました",
     "noted you on the account for {0}": "記録: あなたが{0}アカウントを使っていました",
     "seen you play on {0} days - its day now leans toward yours": "あなたが遊ぶのを{0}日見ました - これからは 1 日をあなたに寄せます",
+    "{0} of {1} days seen ({2} weekdays, {3} weekend days), used once it has {1}": "{1} 日のうち {0} 日見ました (平日 {2} 日、週末 {3} 日)。{1} 日になったら使います",
+    "{0} of {1} days seen, used once it has {1}": "{1} 日のうち {0} 日見ました。{1} 日になったら使います",
+    "{0} weekdays and {1} weekend days seen": "平日 {0} 日、週末 {1} 日を見ました",
+    "{0} days seen": "{0} 日見ました",
+    "on around {0}, off around {1}": "{0} ごろに始めて {1} ごろにやめる",
+    "weekdays: on around {0}, off around {1}": "平日: {0} ごろに始めて {1} ごろにやめる",
+    "weekdays: on around {0}, off around {1} - the whole week's, until it has seen {2} weekdays": "平日: {0} ごろに始めて {1} ごろにやめる - 平日を {2} 日見るまでは週全体のもの",
+    "weekends: on around {0}, off around {1}": "週末: {0} ごろに始めて {1} ごろにやめる",
+    "weekends: on around {0}, off around {1} - the whole week's, until it has seen {2} weekend days": "週末: {0} ごろに始めて {1} ごろにやめる - 週末を {2} 日見るまでは週全体のもの",
+    "you play {0} more than your list says": "あなたはリストより {0} を多く遊んでいます",
     "{0} is playing {1} - joining in for a sitting": "{0}が{1}を遊んでいます - 1 セッション参加します",
     "trying out {0} - it's new here": "{0}を試しています - ここでは新しいゲームです",
     "couldn't read what friends are playing: {0}": "フレンドが遊んでいるゲームを読み込めませんでした: {0}",
     "couldn't look for new games: {0}": "新しいゲームを探せませんでした: {0}",
     "learns from how you play": "あなたの遊び方から学ぶ",
+    "Learned from you": "あなたから学んだこと",
     "tries new games out": "新しいゲームを試す",
     "has quiet spells and late nights": "静かな時期と夜更かしがある",
     "sometimes joins a friend": "ときどきフレンドに合流する",
@@ -2132,6 +2142,30 @@
     "backup restored: {0} file(s) - what was there before is in {1}": "バックアップを復元しました: {0} 個のファイル - 以前の内容は {1} にあります",
     "Restored {0} file(s). The accounts are starting again.": "{0} 個のファイルを復元しました。アカウントを再び起動しています。",
     "Weekly report": "週次レポート",
+    "…and {0} more": "…ほか {0} 件",
+    "off (last week {0})": "オフ（先週 {0}）",
+    "counting starts now": "ここから集計開始",
+    "since the last daily summary": "前回の日次レポート以降",
+    "last 24h": "過去24時間",
+    "since the daily summary at {0} ({1})": "{0} の日次レポート以降 ({1})",
+    "Attention": "要確認",
+    "{0} played": "プレイ {0}",
+    "not counted yet": "まだ集計なし",
+    "{0} total": "合計 {0}",
+    "{0} card": "カード {0} 枚",
+    "{0} comment": "コメント {0} 件",
+    "can't sign in": "サインインできません",
+    "no hours for {0}": "{0} の間プレイ時間なし",
+    "new ban on record": "新しい BAN の記録",
+    "Steam is blocking its comments": "Steam がコメントをブロック中",
+    "New version": "新しいバージョン",
+    "{0} is out": "{0} が公開されました",
+    "This week": "今週",
+    "{0} to {1}": "{0} ～ {1}",
+    "{0} played (last week {1})": "プレイ {0}（先週 {1}）",
+    "inventory {0} (partial)": "インベントリ {0}（一部）",
+    "inventory {0}": "インベントリ {0}",
+    "{0} listed": "出品 {0} 件",
     "the PC just woke up": "PC がスリープから復帰したところです",
     "hasn't banked any hours for {0} - it's {1}; it needs you": "{0} の間、時間を記録していません - 状態: {1}。対応が必要です",
     "hasn't banked any hours for {0} - it's {1}; restarted {2} ago, so not again": "{0} の間、時間を記録していません - 状態: {1}。{2} 前に再起動したので、もう再起動しません",
@@ -2235,7 +2269,6 @@
     "{0} of them unlocked": "うち {0} 件解除済み",
     "couldn't read what it has unlocked": "解除済みの実績を読み取れませんでした",
     "{0} from DLC it doesn't own, {1}": "持っていない DLC のものが {0} 件、{1}",
-    "{0}: none of the games it hunts or plays has achievements from DLC it doesn't own": "{0}: ハントやプレイ中のゲームに、持っていない DLC の実績はありません",
     "{0} more game(s) still being looked at - ask again in a few minutes": "あと {0} 本のゲームを確認中 - 数分後にもう一度聞いてください",
     "Still working out {0}'s DLC - try again in a few minutes.": "{0} の DLC をまだ調べています。数分後にもう一度試してください。",
     "{0} on {1}: {2} DLC, {3} with achievements in its list": "{1} の {0}: DLC {2} 個、うち {3} 個の実績がリストにあります",
@@ -2257,8 +2290,6 @@
     "Playing {0} — first checking which of its achievements come with DLC.": "{0} をプレイ中 - まずどの実績が DLC のものかを確認しています。",
     "\"{0}\" may come with DLC {1} doesn't own, and Steam doesn't list which achievements that DLC adds ({2}) - it won't be unlocked.": "「{0}」は {1} が持っていない DLC の実績かもしれません。Steam はその DLC がどの実績を追加するかを公開していません（{2}）- 解除しません。",
     "{0} left alone - can't tell which achievements come with its DLC": "{0} 件はそのまま - どの実績が DLC のものか分かりません",
-    "can't tell which achievements come with its DLC - left alone": "どの実績が DLC のものか分かりません - そのまま",
-    "{0}: games with achievements left alone for DLC it doesn't own (never unlocked)": "{0}：持っていない DLC のためにそのままにしている実績があるゲーム（解除しません）",
     "Couldn't read which DLC {0} owns just now - nothing in {1} is unlocked until it can. Try again in a few minutes.": "{0} がどの DLC を持っているか今は読めませんでした - 読めるまで {1} では何も解除しません。数分後にもう一度試してください。",
     "Held: {0} is missing DLC, and Steam doesn't list which achievements they add - so {1} achievement(s) outside the DLC it owns are left alone.": "保留中：{0} には持っていない DLC があり、Steam はそれらがどの実績を追加するかを公開していません - そのため、持っている DLC 以外の実績 {1} 件はそのままにします。",
     "{0} is missing DLC, and Steam doesn't list which achievements they add - but every achievement outside the DLC it owns is already unlocked, so there's nothing to hold.": "{0} には持っていない DLC があり、Steam はそれがどの実績を追加するかを示しません - ただし、所有している DLC 以外の実績はすべて解除済みなので、保留するものはありません。",
@@ -2278,30 +2309,11 @@
     "{0}: {1}/{2} - can't tell which achievements come with its DLC - left alone": "{0}：{1}/{2} - どの実績が DLC のものか分かりません - そのまま",
     "Playing {0} — {1}; can't tell which achievements come with its DLC, so the rest are left alone.": "{0} をプレイ中 - {1}。どの実績が DLC のものか分からないので、残りはそのままにします。",
     "see 'dlc {0} {1}'": "「dlc {0} {1}」を参照",
-    "Nothing held in {0} - you said carry on": "{0} では何も保留していません - 続けると答えました",
-    "Trusted: you said {0} owns what matters, so nothing in it is held just because Steam doesn't say which add-on an achievement comes with.": "信頼済み：{0} は大事なものを持っていると答えたので、どの追加コンテンツの実績か Steam が言わないというだけで保留するものはありません。",
-    "Trusted: you said {0} owns what matters. {1} achievement(s) from {2}, which it doesn't own, are still left alone.": "信頼済み：{0} は大事なものを持っていると答えました。持っていない {2} の実績 {1} 件はそのまま触れません。",
-    "If {0} owns what matters in {1}, answer on the dashboard or type 'dlc carryon {0} {2}'. Achievements that certainly come with an add-on it doesn't own stay locked.": "{0} が {1} の大事なものを持っているなら、ダッシュボードで答えるか「dlc carryon {0} {2}」と入力してください。持っていない追加コンテンツの実績だと確実なものはロックされたままです。",
-    "{0}: carrying on with {1}. Only achievements that certainly come with an add-on it doesn't own stay locked.": "{0}：{1} を続けます。持っていない追加コンテンツの実績だと確実なものだけはロックされたままです。",
-    "{0}: {1} stays paused for achievements. It won't be asked about again unless its add-ons change.": "{0}：{1} は実績を一時停止したままにします。追加コンテンツが変わらない限り、もう聞きません。",
-    "{0}: there's no answer for {1} to take back.": "{0}：{1} には取り消す答えがありません。",
-    "{0}: took back \"carry on\" for {1}. Nothing in it is unlocked on a guess any more.": "{0}：{1} の「続ける」を取り消しました。推測で解除されるものはもうありません。",
-    "{0}: {1} will be asked about again.": "{0}：{1} についてまた聞きます。",
     "Which game? Its name or its appID.": "どのゲーム？名前か appID で。",
     "{0} has no game called \"{1}\". Try its appID - the number in its store link.": "{0} には「{1}」というゲームがありません。appID（ストアのリンクにある数字）で試してください。",
     "More than one game matches \"{0}\": {1}. Type more of the name, or the appID.": "「{0}」に合うゲームが複数あります：{1}。名前をもっと入力するか、appID を入力してください。",
-    "{0}: {1} is paused for achievements - it has add-ons this account doesn't own. Answer on the dashboard, or 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.": "{0}：{1} は実績を一時停止中です - このアカウントが持っていない追加コンテンツがあります。ダッシュボードで答えるか、「dlc carryon {0} {2}」/「dlc leave {0} {2}」で。",
-    "Only skin, team and other packs are missing.": "足りないのはスキン・チームなどのパックだけです。",
-    "Missing: {0}": "足りないもの：{0}",
-    "Missing: {0} add-ons": "足りないもの：追加コンテンツ {0} 件",
-    "{0} is paused for achievements. It has add-ons this account doesn't own, and Steam doesn't say which of them come with achievements.": "{0} は実績を一時停止中です。このアカウントが持っていない追加コンテンツがあり、そのどれに実績があるかを Steam は示していません。",
-    "Achievements that certainly come with an add-on it doesn't own stay locked either way.": "持っていない追加コンテンツの実績だと確実なものは、どちらにしてもロックされたままです。",
-    "I own what matters - carry on": "大事なものは持っている - 続ける",
-    "Leave it paused": "一時停止のままにする",
-    "You said carry on for:": "「続ける」と答えたゲーム：",
     "undo": "取り消す",
     "You said leave it paused for:": "「一時停止のまま」と答えたゲーム：",
-    "ask again": "もう一度聞く",
     "not grinding {0} - still refundable (Protect refunds)": "{0} はグラインドしません - まだ返金可能（返金を守る）",
     "not putting {0} first - still refundable (Protect refunds)": "{0} は優先しません - まだ返金可能（返金を守る）",
     "asleep, no games chosen - idling your {0} most-played game(s): {1} · up {2}": "就寝中、ゲーム未選択 - いちばん遊んでいる {0} 本を放置中: {1} · {2} に起床",
@@ -2317,11 +2329,77 @@
     "No game in its library matches - paste its appID or store link.": "ライブラリに一致するゲームがありません - appID かストアのリンクを貼り付けてください。",
     "Its games haven't been read yet - paste an appID or store link.": "まだゲームを読み込んでいません - appID かストアのリンクを貼り付けてください。",
     "{0}: {1} hasn't been looked at since the app started - try again in a few minutes.": "{0}：{1} はアプリの起動後まだ確認されていません - 数分後にもう一度試してください。",
-    "{0}: {1} isn't paused for add-ons it doesn't own, so there's nothing to answer for it.": "{0}：{1} は持っていない追加コンテンツのために一時停止していないので、答えることはありません。",
     "Type more of the game's name, or its appID.": "ゲーム名をもう少し入力するか、appID を入力してください。",
     "{0}: Claim free games now also claims a free DLC's game when that's free too - that was its own switch, and it was off.": "{0}：無料ゲームを受け取るは、無料 DLC の本体ゲームも無料のときはそれも受け取るようになりました - 以前は別のスイッチで、オフになっていました。",
     "{0}: Bank hours overnight was on with no games listed, which banked nothing - switched off so nothing changes. Turn it on to idle its most-played games overnight.": "{0}：夜間に時間を稼ぐがオンでしたが、ゲームが登録されておらず何も稼いでいませんでした - 何も変わらないようにオフにしました。オンにすると、夜間にいちばん遊んでいるゲームを回します。",
-    "Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).": "夜間はオフライン表示になり、ゲームが選ばれていないので、いちばん遊んでいるゲームを {0} 本回します。"
+    "Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).": "夜間はオフライン表示になり、ゲームが選ばれていないので、いちばん遊んでいるゲームを {0} 本回します。",
+    "{0} left alone, as you asked - can't tell which achievements come with its DLC": "{0} 件はご指定どおりそのまま - どの実績が DLC のものか分かりません",
+    "earns them anyway, base game first; {0} from DLC it doesn't own left alone": "それでも解除します（本編が先）。持っていない DLC のもの {0} 件はそのまま",
+    "earns them anyway, base game first - Steam doesn't say which come with the add-ons it doesn't own": "それでも解除します（本編が先） - 持っていない追加コンテンツにどれが含まれるか Steam は公開していません",
+    "{0}: none of the games it hunts or plays has add-ons that matter for achievements": "{0}：狩る・遊ぶゲームのどれにも、実績に関わる追加コンテンツはありません",
+    "{0}: games with add-ons it doesn't own (achievements from those are never unlocked)": "{0}：持っていない追加コンテンツがあるゲーム（それらの実績は決して解除しません）",
+    "{0} is missing DLC, and Steam doesn't list which achievements they add. It earns them anyway - the base game's first, and the {1} it can't place after those, in case some come with that DLC.": "{0} には持っていない DLC があり、Steam はそれらがどの実績を追加するかを公開していません。それでも解除します - 本編の実績が先で、どこのものか分からない {1} 件はその後です（その DLC のものかもしれないので）。",
+    "{0} is missing DLC, and Steam doesn't list which achievements they add. It earns them anyway - the base game's first, and the ones it can't place after those.": "{0} には持っていない DLC があり、Steam はそれらがどの実績を追加するかを公開していません。それでも解除します - 本編の実績が先で、どこのものか分からない実績はその後です。",
+    "It never touches the achievements of {0}, which it doesn't own.": "持っていない {0} の実績には決して触れません。",
+    "To have {1} left alone instead: 'dlc leave {0} {2}'.": "代わりに {1} をそのままにするには：「dlc leave {0} {2}」。",
+    "It's left alone because you asked - 'dlc undo {0} {1}' lets it earn them, base game first.": "ご指定によりそのままにしています - 「dlc undo {0} {1}」で解除できるようになります（本編が先）。",
+    "{0}: {1} is left alone for achievements now - 'dlc undo {0} {2}' lets it earn them again.": "{0}：{1} の実績は今後そのままにします - 「dlc undo {0} {2}」でまた解除できるようになります。",
+    "{0}: as far as it has seen, {1} has no add-ons Steam doesn't explain, so there's nothing to leave alone.": "{0}：これまで見た限り、{1} には Steam が説明していない追加コンテンツはないので、そのままにするものはありません。",
+    "{0}: {1} isn't left alone, so there's nothing to take back.": "{0}：{1} はそのままにしていないので、取り消すものはありません。",
+    "{0}: {1} earns achievements again - the base game's first. Those of an add-on it doesn't own stay locked.": "{0}：{1} はまた実績を解除します - 本編の実績が先です。持っていない追加コンテンツの実績はロックされたままです。",
+    "{0}: 'dlc carryon' isn't needed any more - {1} earns anyway, the base game's achievements first.": "{0}：「dlc carryon」はもう必要ありません - {1} はそのまま解除します（本編の実績が先）。",
+    "Lets it earn achievements again - the base game's first. Those of an add-on it doesn't own stay locked.": "また実績を解除できるようにします - 本編の実績が先です。持っていない追加コンテンツの実績はロックされたままです。",
+    "unlocked {0} in {1} - {2} left locked": "{1}の{0}個を解除しました - {2}個はロックのままです",
+    "{0} left locked - the game's own counter for them isn't there yet": "{0}個はロックのままです - ゲーム自体のカウンターがまだ届いていません",
+    "{0} multiplayer ones skipped": "マルチプレイの実績 {0} 件をスキップ",
+    "{0}: what's left is multiplayer, which this account skips - nothing to grind": "{0}：残りはマルチプレイの実績で、このアカウントはスキップします - グラインドするものはありません",
+    "{0}: {1}/{2} - the rest are multiplayer achievements, which this account skips": "{0}：{1}/{2} - 残りはマルチプレイの実績で、このアカウントはスキップします",
+    "{0}: waiting for Steam's figures on how many players have each achievement": "{0}：各実績を持つプレイヤーの割合を Steam が出すのを待っています",
+    "{0}: {1}/{2} - the rest count something in the game, and wait for the game's own counter": "{0}：{1}/{2} - 残りはゲーム内で何かを数える実績で、ゲーム自体のカウンターを待ちます",
+    "Playing {0} — {1}; the rest are multiplayer achievements, which this account skips.": "{0} をプレイ中 - {1}。残りはマルチプレイの実績で、このアカウントはスキップします。",
+    "Playing {0} — waiting for Steam's figures on how many players have each achievement.": "{0} をプレイ中 - 各実績を持つプレイヤーの割合を Steam が出すのを待っています。",
+    "Playing {0} — {1}; the rest count something in the game, and wait for the game's own counter.": "{0} をプレイ中 - {1}。残りはゲーム内で何かを数える実績で、ゲーム自体のカウンターを待ちます。",
+    "{0} left locked - they're for having all the others, and some of those stay locked": "{0}個はロックのままです - 他のすべてを持っていることが条件で、そのうちいくつかがロックのままです",
+    "\"{0}\" needs other players, and {1} skips multiplayer achievements (\"Skip multiplayer achievements\") - it won't be unlocked.": "「{0}」は他のプレイヤーが必要で、{1} はマルチプレイの実績をスキップしています（「マルチプレイの実績をスキップ」）- 解除しません。",
+    "\"{0}\" counts something in the game, and the game's own counter is at {1} of {2} - it won't be unlocked before the game gets there.": "「{0}」はゲーム内の何かを数える実績で、ゲーム自体のカウンターは {2} 中 {1} です - ゲームがそこに届くまで解除しません。",
+    "\"{0}\" is for having the others, and some of those are still locked - it won't be unlocked before they are.": "「{0}」は他の実績をすべて持っていることが条件で、まだロックされているものがあります - それらより先には解除しません。",
+    "may come with DLC this account doesn't own - left alone": "このアカウントが持っていない DLC のものかもしれません - そのままにします",
+    "probably DLC - earned last, after the base game's": "おそらく DLC - 本編のものの後、最後に獲得します",
+    "{0} with \"DLC\" in their API name are left alone while it's missing add-ons.": "API 名に「DLC」を含む {0} 個は、追加コンテンツが足りない間はそのままにします。",
+    "{0}: what's left waits for the game's own counters - nothing to grind": "{0}: 残りはゲーム自体のカウンター待ちです - グラインドするものはありません",
+    "{0}: {1}/{2} - nothing left it would earn for now; looked at again in a few days": "{0}: {1}/{2} - 今のところ獲得するものはありません。数日後にもう一度確認します",
+    "Playing {0} — {1}; nothing left it would earn for now. It looks again in a few days.": "{0} をプレイ中 — {1}。今のところ獲得するものはありません。数日後にもう一度確認します。",
+    "About {0}h on weekdays and {1}h at weekends, from around {2} until about {3}, with a day off {4}% of the time.": "平日は約 {0} 時間、週末は約 {1} 時間。だいたい {2} から {3} ごろまでで、{4}% の確率で休む日があります。",
+    "no set time": "時刻指定なし",
+    "end of the day": "一日の終わり",
+    "couldn't save whether mini mode's list was open: {0}": "ミニモードの一覧を開いていたかを保存できませんでした: {0}",
+    "no accounts yet - 'full window' to add one": "アカウントはまだありません - 「通常のウィンドウ」で追加してください",
+    "farming {0}": "{0} を収集中",
+    "1 card left": "残り 1 枚",
+    "human mode": "人間モード",
+    " · {0} farming": " · 収集中 {0}",
+    " · {0} idling": " · 放置中 {0}",
+    " · {0} online": " · オンライン {0}",
+    " · {0} connecting": " · 接続中 {0}",
+    " · {0} need you": " · 対応が必要 {0}",
+    " · {0} can't sign in": " · サインインできない {0}",
+    " · {0} playing": " · プレイ中 {0}",
+    " · {0} on a break": " · 休憩中 {0}",
+    " · {0} done for today": " · 本日は終了 {0}",
+    " · {0} on a day off": " · 休養日 {0}",
+    " · {0} night idling": " · 夜間の放置 {0}",
+    " · {0} asleep": " · 就寝中 {0}",
+    " · {0} off": " · オフ {0}",
+    "{0} today": "今日 {0}",
+    "{0} past week": "過去1週間 {0}",
+    "{0} past month": "過去1か月 {0}",
+    "1 card today": "今日のカード 1 枚",
+    "1 achievement today": "今日の実績 1 件",
+    "{0} achievements today": "今日の実績 {0} 件",
+    "1 comment today": "今日のコメント 1 件",
+    "{0} comments today": "今日のコメント {0} 件",
+    "{0}/{1} online": "オンライン {0}/{1}",
+    "{0} inventory": "インベントリ {0}"
   },
   "settings": {
     "WebEnabled": {
@@ -2363,6 +2441,11 @@
     "MiniOnTop": {
       "label": "ミニモードを最前面に表示",
       "tip": "小さなミニモードのウィンドウを、ほかのウィンドウより前に表示し続けます。ミニウィンドウのタイトルバーにあるピンでも切り替えられます。"
+    },
+    "MiniStats": {
+      "label": "ミニウィンドウの表示",
+      "tip": "ミニウィンドウ上部の名前の横に出す数字です。時間は全アカウントのゲーム時間の合計で、日次サマリーと同じ数え方です。起動中のゲームはすべて数えるので、8 本を丸一日動かすと 192 時間になります。過去1週間と過去1か月は、今日を含む直近 7 日と 30 日です。カード、実績、コメントは直近 24 時間です。",
+      "choices": "0 なし | 1 今日の時間 | 2 過去1週間の時間 | 3 過去1か月の時間 | 4 今日のカード | 5 今日の実績 | 6 今日のコメント | 7 オンラインのアカウント | 8 インベントリの価値"
     },
     "StartWithWindows": {
       "label": "Windows と一緒に起動",
@@ -2569,11 +2652,11 @@
     },
     "DayStartHour": {
       "label": "だいたい何時に始める",
-      "tip": "ふだんオンラインになる時刻です（24 時間制）。実際の時刻はこの前後で変わり、週末は早めに始まります。"
+      "tip": "ふだんオンラインになる時刻です。実際の時刻はこの前後で変わり、週末は早めに始まります。"
     },
     "BedHour": {
       "label": "だいたい何時に寝る",
-      "tip": "夜にやめる時刻です（24 時間制）。遅い時刻でも大丈夫で、2 なら午前 2 時です。"
+      "tip": "夜にやめる時刻です。日付が変わった後でも大丈夫で、夜更かしなら早朝の時刻を選んでください。"
     },
     "LateNightExtraHours": {
       "label": "金・土は遅くまで起きている",
@@ -2683,11 +2766,11 @@
     },
     "Rep4RepStartHour": {
       "label": "投稿を始める時刻",
-      "tip": "このアカウントがコメントする最も早い時刻です。午前 4 時のコメントは、すぐボットだとばれます。"
+      "tip": "このアカウントがコメントする最も早い時刻です。真夜中のコメントは、すぐボットだとばれます。"
     },
     "Rep4RepEndHour": {
       "label": "この時刻まで",
-      "tip": "このアカウントがコメントする最も遅い時刻です。「投稿を始める時刻」と同じにすると、24 時間コメントします。"
+      "tip": "このアカウントがコメントする最も遅い時刻です。「投稿を始める時刻」と同じにすると、一日中コメントします。"
     },
     "AcceptFriendRequests": {
       "label": "フレンド申請を承認",
@@ -2875,11 +2958,11 @@
     },
     "FarmFromHour": {
       "label": "この時刻からだけカードを集める",
-      "tip": "この時刻からだけカードを集めます（24 時間制）。これと「...まで」を両方 0 にすると、いつでも集めます。"
+      "tip": "この時刻からだけカードを集めます。これと「...まで」を両方とも真夜中にすると、いつでも集めます。"
     },
     "FarmUntilHour": {
       "label": "...まで",
-      "tip": "この時刻までカードを集めます（24 時間制）。開始時刻より早くすると深夜 0 時をまたぐので、22 から 6 なら夜通し集めます。"
+      "tip": "この時刻までカードを集めます。開始時刻より早くすると日付をまたぐので、夜遅くから早朝までなら夜通し集めます。"
     },
     "PostFarmWindDownMinMinutes": {
       "label": "最後のカードのあと、少なくとも",
@@ -3220,11 +3303,11 @@
     },
     "AutoUpdateFromHour": {
       "label": "...の間（開始）",
-      "tip": "自動でインストールしてよい最も早い時刻（24 時間表記）。"
+      "tip": "自動でインストールしてよい最も早い時刻。"
     },
     "AutoUpdateUntilHour": {
       "label": "...の間（終了）",
-      "tip": "その夜の試行をやめる時刻。開始より早い時刻にすると日付をまたぐので、23 から 5 も使えます。"
+      "tip": "その夜の試行をやめる時刻。開始より早い時刻にすると日付をまたぐので、夜遅くから早朝までも使えます。"
     },
     "AutoUpdateWaitHours": {
       "label": "リリース後の待ち時間",
@@ -3305,7 +3388,7 @@
     },
     "SendAroundHour": {
       "label": "...頃に",
-      "tip": "送信する時刻（0〜23時）。たとえば 4 なら朝4時頃です。その時間内のランダムな分に、「アイテムを送る間隔」が許す日に送ります。-1 = 時刻を決めない: オンにした時から一定時間ごと。"
+      "tip": "送信する時刻。たとえば早朝です。その時間内のランダムな分に、「アイテムを送る間隔」が許す日に送ります。時刻を決めない: オンにした時から一定時間ごと。"
     },
     "IdleWholeLibrary": {
       "label": "ライブラリ全体で時間を稼ぐ",
@@ -3323,6 +3406,15 @@
       "label": "自分の遊び方から学ぶ",
       "tip": "あなた自身がこのアカウントで遊んだ時間帯とゲームを記録します。7 日分たまると、1 日の過ごし方をあなたに寄せます。オンラインになる時間と寝る時間、そして「遊ぶゲームと頻度」のゲームへの時間配分です。このリストにないゲームを足すことはなく、遊ぶ長さは時間の設定のままです。学んだ内容は habits コマンドで見られます。",
       "choices": "0 オフ | 1 少し | 2 しっかり"
+    },
+    "LearnFollow": {
+      "label": "変化についていく",
+      "tip": "いつ・何を遊ぶかの変化がどれだけ早く反映されるか。古い日ほど少しずつ軽く数えます - 速いは新しい習慣に 1 週間ほどで追いつき、ゆっくりは 1 か月ほどかかります。",
+      "choices": "0 ゆっくり | 1 ふつう | 2 速い"
+    },
+    "LearnWeekends": {
+      "label": "週末は別に",
+      "tip": "土曜と日曜を平日とは別に学びます。たいていの人はその日の遊び方が違うからです。"
     },
     "NewGamesFirst": {
       "label": "新しいゲームを最初は多めに遊ぶ",
@@ -3355,7 +3447,7 @@
     },
     "WeeklyReportHour": {
       "label": "週次レポート · 時",
-      "tip": "週次レポートが届く時刻 (24 時間表記)。"
+      "tip": "週次レポートが届く時刻 (現地時間)。"
     },
     "OfflineIdleTopGames": {
       "label": "...選んでいなければ、よく遊ぶゲーム",
@@ -3379,6 +3471,10 @@
     "BoosterPackGames": {
       "label": "ブースターパックを作るゲーム",
       "tip": "ジェムをブースターパックに変えるゲームです。Steam で作れるのは 1 ゲームにつき 1 日 1 パックで、まだカードがドロップするゲームだけです。空にするとオフになります。"
+    },
+    "AchievementSkipMultiplayer": {
+      "label": "マルチプレイの実績をスキップ",
+      "tip": "他のプレイヤーが必要な実績は解除しません：マルチプレイ、協力プレイ、ゾンビ、対戦、ランクマッチ、オンライン。こうしたゲームは試合ごとに記録を残すので、試合の裏付けがない実績は目立ちます。人間モードのアカウントではオン、ロボットではオフ。人間モードをオン・オフすると、それに合わせて切り替わります。"
     }
   }
 }

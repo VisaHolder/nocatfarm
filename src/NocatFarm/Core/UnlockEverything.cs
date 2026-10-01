@@ -53,7 +53,7 @@ public static class UnlockEverything {
 
 		Log.Warn(new Said("unlocking all achievements in {0} app(s) - can't be undone", owned.Count), bot.Name);
 
-		int games = 0, unlocked = 0, failed = 0, looked = 0, held = 0, unsure = 0, steamOnly = 0, unmapped = 0;
+		int games = 0, unlocked = 0, failed = 0, looked = 0, held = 0, unsure = 0, steamOnly = 0, unmapped = 0, counted = 0, skipped = 0, metas = 0;
 		int step = Math.Max(25, owned.Count / 10);
 
 		foreach (uint app in owned.Keys) {
@@ -96,19 +96,22 @@ public static class UnlockEverything {
 				continue;
 			}
 
-			List<Achievement> locked = set.Locked.Where(static a => a.Settable).ToList();
-			steamOnly += set.Locked.Count(static a => !a.Settable);
+			// Steam's own: counted, never asked for. Every permission bit, as the read marks them.
+			steamOnly += set.All.Count(static a => !a.Unlocked && !a.Settable);
 
-			if (locked.Count == 0) {
+			if (!set.Locked.Any()) {
 				await Breathe().ConfigureAwait(false);
 
 				continue;
 			}
 
-			// Not even here: an account that isn't pretending still can't have played DLC it doesn't own, and an
-			// achievement from one sits on its profile as proof of the tool. Waited for, game by game - a game with a
-			// hundred DLC takes a few minutes to work out, which is nothing next to the whole run. A game that can't be
-			// worked out (the store not answering) is skipped whole rather than guessed at.
+			// The pacer's own rule for what may be unlocked here. An account that isn't pretending still can't have played
+			// DLC it doesn't own: what is held on certain evidence (an add-on's exact block it doesn't own, one naming an
+			// add-on it doesn't own, "DLC" in the API name while it's missing add-ons) is never unlocked - one would sit on
+			// its profile as proof of the tool. What only looks like an add-on's by the game's layout is unlocked: it may as
+			// well be the base game's. Multiplayer ones are left when the account skips those. Waited for, game by game - a
+			// game with a hundred DLC takes a few minutes to work out, which is nothing next to the whole run. A game that
+			// can't be worked out (the store not answering) is skipped whole rather than guessed at.
 			DlcAchievements.View dlc = await DlcAchievements.ViewAsync(bot, app, TimeSpan.FromMinutes(15)).ConfigureAwait(false);
 
 			if (!dlc.Known) {
@@ -119,15 +122,25 @@ public static class UnlockEverything {
 				continue;
 			}
 
-			int before = locked.Count;
-			locked = [.. locked.Where(dlc.Allows)];
+			Modules.AchievementPacer.Sorted sorted = Modules.AchievementPacer.Sort(set, dlc, bot.Cfg.AchievementSkipMultiplayer, new HashSet<string>());
+
+			// A counted achievement ("Complete 100 parries") whose counter isn't there stays locked even here: the game shows
+			// the count beside it, and 37 of 100 on an unlocked achievement is a contradiction anybody can see. Sort leaves
+			// those out of the candidates.
+			counted += sorted.Counters;
+			skipped += sorted.Multiplayer;
+
+			// "Obtain all other achievements" stays locked while any of the others do - held for DLC, short of a counter,
+			// skipped, Steam's own. Unlocked with them still locked, it's a contradiction on the profile.
+			(List<Achievement> locked, int waitingMetas) = Modules.AchievementPacer.WithoutWaitingMetas(set.All, sorted.Candidates);
+			metas += waitingMetas;
 
 			// A game it can't map is its own count: those may well be the base game's, and "from DLC it doesn't own"
 			// would be claiming more than is known.
 			if (dlc.Unmapped) {
-				unmapped += before - locked.Count;
+				unmapped += sorted.HeldDlc;
 			} else {
-				held += before - locked.Count;
+				held += sorted.HeldDlc;
 			}
 
 			if (locked.Count == 0) {
@@ -147,7 +160,13 @@ public static class UnlockEverything {
 			} else if (changed > 0) {
 				games++;
 				unlocked += changed;
-				Log.Reward(new Said("unlocked all {0} in {1}", changed, GameNames.Of(app)), bot.Name, topic: Topic.Achievements);
+				// "All" only when nothing is left behind in the game: held for DLC, skipped, waiting on a counter, Steam's own.
+				int left = set.All.Count(static a => !a.Unlocked) - changed;
+
+				Log.Reward(left > 0
+					? new Said("unlocked {0} in {1} - {2} left locked", changed, GameNames.Of(app), left)
+					: new Said("unlocked all {0} in {1}", changed, GameNames.Of(app)), bot.Name, topic: Topic.Achievements);
+				Stats.Record(Stats.KindAchievement, bot.Name, changed);
 			}
 
 			await Breathe().ConfigureAwait(false);
@@ -168,6 +187,18 @@ public static class UnlockEverything {
 			trouble = new Said("{0}, {1}", trouble, new Said("{0} game(s) skipped - couldn't tell which achievements come with DLC", unsure));
 		}
 
+		if (counted > 0) {
+			trouble = new Said("{0}, {1}", trouble, new Said("{0} left locked - the game's own counter for them isn't there yet", counted));
+		}
+
+		if (skipped > 0) {
+			trouble = new Said("{0}, {1}", trouble, new Said("{0} multiplayer ones skipped", skipped));
+		}
+
+		if (metas > 0) {
+			trouble = new Said("{0}, {1}", trouble, new Said("{0} left locked - they're for having all the others, and some of those stay locked", metas));
+		}
+
 		// "done - 0 achievement(s) unlocked" is a true sentence that reads as a broken feature. On an account
 		// whose library is mostly multiplayer it is the ORDINARY answer: Steam awards those achievements
 		// server-side and no client can set them, so there was never anything here to unlock.
@@ -175,7 +206,7 @@ public static class UnlockEverything {
 		// But only then. "Steam sets the rest" was said whatever was left - achievements held for DLC included, which
 		// Steam will never set either. What's left is said as what it is: the counts above, and Steam's own share.
 		if (unlocked == 0) {
-			bool heldBack = (held > 0) || (unmapped > 0) || (unsure > 0);
+			bool heldBack = (held > 0) || (unmapped > 0) || (unsure > 0) || (counted > 0) || (skipped > 0) || (metas > 0);
 
 			Log.Good(!heldBack && (steamOnly > 0)
 				? new Said("done - nothing it can unlock ({0} app(s) checked{1}), Steam sets the rest", looked, trouble)

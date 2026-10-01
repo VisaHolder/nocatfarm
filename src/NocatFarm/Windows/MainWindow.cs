@@ -134,16 +134,18 @@ public sealed partial class MainWindow : IDisposable {
 	private bool _mini;
 
 	private IntPtr _fontIcon;
+	private IntPtr _fontSmallBold;
+	private IntPtr _fontChevron;
 
 	private const int MiniW = 300;
-	private const int MiniTitleH = 30;
-	private const int MiniRowH = 30;
 
-	/// <summary>A farming account's row: the line, then cards left and time left, then its progress bar.</summary>
-	private const int MiniFocusH = 58;
+	// The rest of mini mode's sizes live with its layout arithmetic, where the checks can reach them.
+	private const int MiniTitleH = MiniLayout.TitleH;
+	private const int MiniRowH = MiniLayout.RowH;
+	private const int MiniFocusH = MiniLayout.FocusH;
 
-	/// <summary>Past this many accounts the rest are summed up in one line - mini is for a glance, not eighty rows.</summary>
-	private const int MiniMaxRows = 10;
+	/// <summary>First row shown while mini mode's list is open and longer than fits - moved by the wheel.</summary>
+	private int _miniScroll;
 
 	// Segoe MDL2 Assets, which every Windows 10 and 11 has: drawn as text, so they take the palette like any label.
 	private const string GlyphPlay = "\uE768";
@@ -151,6 +153,8 @@ public sealed partial class MainWindow : IDisposable {
 	private const string GlyphDashboard = "\uECA5";
 	private const string GlyphFullWindow = "\uE740";
 	private const string GlyphPin = "\uE718";
+	private const string GlyphMore = "\uE70D";   // ChevronDown
+	private const string GlyphLess = "\uE70E";   // ChevronUp
 
 	public bool Mini => _mini;
 
@@ -463,6 +467,10 @@ public sealed partial class MainWindow : IDisposable {
 		_fontMono = CreateFont(13, 0, 0, 0, 400, 0, 0, 0, 1, 0, 0, 5, 0, "Consolas");
 		_fontMonoLink = CreateFont(13, 0, 0, 0, 400, 0, 1, 0, 1, 0, 0, 5, 0, "Consolas");
 		_fontIcon = CreateFont(14, 0, 0, 0, 400, 0, 0, 0, 1, 0, 0, 5, 0, "Segoe MDL2 Assets");
+
+		// Mini mode's "+7 more" bar: its numbers a little heavier than its words, and a smaller chevron than the buttons'.
+		_fontSmallBold = CreateFont(13, 0, 0, 0, 600, 0, 0, 0, 1, 0, 0, 5, 0, "Segoe UI");
+		_fontChevron = CreateFont(10, 0, 0, 0, 400, 0, 0, 0, 1, 0, 0, 5, 0, "Segoe MDL2 Assets");
 	}
 
 	private void MakeInput() {
@@ -773,6 +781,19 @@ public sealed partial class MainWindow : IDisposable {
 				_wheel += (short) ((wParam.ToInt64() >> 16) & 0xFFFF);
 				int notches = _wheel / 120;
 				_wheel %= 120;
+
+				// Mini mode has no log: the wheel moves its list, and only while the list is open and longer than fits -
+				// closed it's always the top five, problems first.
+				if (_mini) {
+					if (Live.Global.MiniExpanded && (notches != 0)) {
+						// Kept clamped, so scrolling on past the end doesn't bank notches the other way has to undo first.
+						_miniScroll = MiniPlan(MiniRows(), _miniScroll - notches).Scroll;
+						FitMini();
+						Invalidate();
+					}
+
+					return IntPtr.Zero;
+				}
 
 				// The sheet takes the wheel while it is open; otherwise it belongs to the log, which is now the
 				// only scrollable thing on the main window.
@@ -1136,6 +1157,11 @@ public sealed partial class MainWindow : IDisposable {
 
 			case IdPin:
 				ToggleOnTop();
+
+				break;
+
+			case IdMiniMore:
+				ToggleMiniList();
 
 				break;
 		}
@@ -1693,6 +1719,9 @@ public sealed partial class MainWindow : IDisposable {
 			int h = MiniHeight();
 			(int x, int y) = MiniSpot(h);
 			SetWindowPos(_hwnd, Live.Global.MiniOnTop ? HwndTopmost : HwndNoTopmost, x, y, MiniW, h, SwpFrameChanged);
+
+			// Measured against the screen it was on as the full window; now it's where it belongs, against that one.
+			FitMini();
 		} else {
 			int w = Live.Global.WindowWidth > 0 ? Math.Clamp(Live.Global.WindowWidth, MinW, GetSystemMetrics(SmCxScreen)) : StartW;
 			int h = Live.Global.WindowHeight > 0 ? Math.Clamp(Live.Global.WindowHeight, MinH, GetSystemMetrics(SmCyScreen)) : StartH;
@@ -1782,8 +1811,9 @@ public sealed partial class MainWindow : IDisposable {
 	}
 
 	/// <summary>
-	/// Grow or shrink to the rows as they are now - a row opens up while its account farms. A panel in the lower
-	/// half of the screen grows upwards, so one parked above the taskbar never slides underneath it.
+	/// Grow or shrink to the rows as they are now - a row opens up while its account farms, the list opens and closes.
+	/// A panel in the lower half of the screen grows upwards, so one parked above the taskbar never slides underneath it,
+	/// and either way it stays on the screen it's on.
 	/// </summary>
 	private void FitMini() {
 		if (!GetWindowRect(_hwnd, out Rect r)) {
@@ -1800,31 +1830,82 @@ public sealed partial class MainWindow : IDisposable {
 		Rect work = WorkAreaAt(r.Left + (MiniW / 2), r.Top + (now / 2));
 		bool lowerHalf = (r.Top + (now / 2)) > (work.Top + ((work.Bottom - work.Top) / 2));
 		int top = lowerHalf ? r.Bottom - want : r.Top;
-		SetWindowPos(_hwnd, IntPtr.Zero, r.Left, top, MiniW, want, SwpNoZOrder | SwpNoActivate);
+
+		// Opening the list near the top or the bottom of the screen could push the panel past the edge.
+		(int x, int y) = OnScreen(r.Left, top, MiniW, want);
+		SetWindowPos(_hwnd, IntPtr.Zero, x, y, MiniW, want, SwpNoZOrder | SwpNoActivate);
 	}
 
-	/// <summary>Accounts in mini mode, and whether each gets the open, farming layout.</summary>
-	private List<(Bot Bot, bool Farming)> MiniRows() =>
-		// Not while finishing up before it logs off: the row says that instead, like every other screen.
-		[.. _mgr.All.Take(MiniMaxRows).Select(static b => (b, b.IsOnline && b.IsFarming && !b.Stopping && (b.CardsRemaining > 0)))];
+	/// <summary>One account's row in mini mode: whether it gets the open, farming layout, and what needs its owner, if anything.</summary>
+	private sealed record MiniRow(Bot Bot, bool Farming, Said? Trouble);
 
-	private int MiniHeight() {
-		List<(Bot Bot, bool Farming)> rows = MiniRows();
-		int more = _mgr.All.Count > MiniMaxRows ? MiniRowH : 0;
+	/// <summary>Every account in mini mode's order - the ones that need you first, then the dashboard's order.</summary>
+	private List<MiniRow> MiniRows() {
+		DateTime now = DateTime.UtcNow;
 
-		return MiniTitleH + Math.Max(MiniRowH, rows.Sum(static r => r.Farming ? MiniFocusH : MiniRowH)) + more;
+		List<MiniRow> all = [.. _mgr.All.Select(b => new MiniRow(b,
+			// Not while finishing up before it logs off: the row says that instead, like every other screen.
+			b.IsOnline && b.IsFarming && !b.Stopping && (b.CardsRemaining > 0),
+			// A stopped or switched-off account isn't waiting on anybody, whatever it was doing when it stopped.
+			b.Cfg.Enabled && (b.State != BotState.Stopped) ? ReportCard.Trouble(b, now) : null))];
+
+		return MiniLayout.ProblemsFirst(all, static r => r.Trouble != null);
+	}
+
+	/// <summary>Which rows show and how tall that is, on the screen the panel is on now.</summary>
+	private MiniLayout.Plan MiniPlan(List<MiniRow> rows, int scroll) =>
+		MiniLayout.Fit([.. rows.Select(static r => r.Farming ? MiniFocusH : MiniRowH)], Live.Global.MiniExpanded, scroll, MiniWorkHeight());
+
+	/// <summary>
+	/// The height of the usable part of the screen the panel is on (or will open on) - the most it may ever be. Taller,
+	/// and the list's bottom rows and the bar under them would sit behind the taskbar or off the screen.
+	/// </summary>
+	private int MiniWorkHeight() {
+		if ((_hwnd != IntPtr.Zero) && _mini && GetWindowRect(_hwnd, out Rect r)) {
+			Rect at = WorkAreaAt(r.Left + (MiniW / 2), r.Top + ((r.Bottom - r.Top) / 2));
+
+			return at.Bottom - at.Top;
+		}
+
+		if ((Live.Global.MiniX != int.MinValue) && (Live.Global.MiniY != int.MinValue)) {
+			Rect saved = WorkAreaAt(Live.Global.MiniX + (MiniW / 2), Live.Global.MiniY);
+
+			return saved.Bottom - saved.Top;
+		}
+
+		return SystemParametersInfo(SpiGetWorkArea, 0, out Rect work, 0) ? work.Bottom - work.Top : GetSystemMetrics(SmCyScreen);
+	}
+
+	private int MiniHeight() => MiniPlan(MiniRows(), _miniScroll).Height;
+
+	/// <summary>Open or close the list under the "+N more" bar, remember it, and resize to match.</summary>
+	private void ToggleMiniList() {
+		try {
+			Live.Global.MiniExpanded = !Live.Global.MiniExpanded;
+			ConfigStore.SaveGlobal(Live.Global);
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't save whether mini mode's list was open: {0}", Log.Describe(e)));
+		}
+
+		// Opened at the top, so the problems sorted there are what's in view.
+		_miniScroll = 0;
+		FitMini();
+		Invalidate();
 	}
 
 	/// <summary>
 	/// One line per account, and a farming account opened up with its cards left, time left and a progress bar -
-	/// the question you'd otherwise open the full window to answer.
+	/// the question you'd otherwise open the full window to answer. Five rows at most while closed, with a bar under
+	/// them for the rest; ten at a time while open, the others a scroll away.
 	/// </summary>
 	private void PaintMini(IntPtr dc) {
 		Fill(dc, 0, 0, _w, MiniTitleH, Panel);
 		Fill(dc, 0, MiniTitleH - 1, _w, 1, Border);
 
 		Text(dc, "nocat.", 10, 7, _fontBold, TextBright);
-		Text(dc, "farm", 10 + TextWidth(dc, "nocat.", _fontBold), 7, _fontBold, Wordmark);
+		int titleEnd = 10 + TextWidth(dc, "nocat.", _fontBold);
+		Text(dc, "farm", titleEnd, 7, _fontBold, Wordmark);
+		titleEnd += TextWidth(dc, "farm", _fontBold);
 
 		int bx = _w - 6 - 24;
 		AddIconButton(dc, GlyphFullWindow, IdFullWindow, bx, 4, 24, 22, TextMid);
@@ -1833,27 +1914,42 @@ public sealed partial class MainWindow : IDisposable {
 		bx -= 26;
 		AddIconButton(dc, GlyphPin, IdPin, bx, 4, 24, 22, Live.Global.MiniOnTop ? Accent : TextDim);
 
-		(int cards, _) = Stats.Totals(24);
-		string today = cards == 1 ? "1 card today" : $"{cards} cards today";
-		Text(dc, today, bx - 8 - TextWidth(dc, today, _fontSmall), 8, _fontSmall, TextDim);
+		// The figure the owner picked ("Mini window shows"), against the buttons. A long one in a long language starts
+		// after the name instead and ends in "…" rather than running under the pin.
+		List<Bot> bots = [.. _mgr.All];
+		string figure = MiniLayout.Stat(Live.Global.MiniStats, bots);
+
+		if (figure.Length > 0) {
+			int room = (bx - 8) - (titleEnd + 10);
+			int width = TextWidth(dc, figure, _fontSmall);
+
+			if (width <= room) {
+				Text(dc, figure, bx - 8 - width, 8, _fontSmall, TextDim);
+			} else if (room > 20) {
+				Clipped(dc, figure, titleEnd + 10, 8, room, _fontSmall, TextDim);
+			}
+		}
 
 		int y = MiniTitleH;
-		List<(Bot Bot, bool Farming)> rows = MiniRows();
+		List<MiniRow> rows = MiniRows();
+		MiniLayout.Plan plan = MiniPlan(rows, _miniScroll);
+		_miniScroll = plan.Scroll;
 
 		if (rows.Count == 0) {
-			Text(dc, "no accounts yet - 'full window' to add one", 12, y + 8, _fontSmall, TextMid);
+			Text(dc, new Said("no accounts yet - 'full window' to add one"), 12, y + 8, _fontSmall, TextMid);
 
 			return;
 		}
 
-		foreach ((Bot bot, bool farming) in rows) {
+		foreach ((Bot bot, bool farming, Said? trouble) in rows.Skip(plan.First).Take(plan.Count)) {
 			int h = farming ? MiniFocusH : MiniRowH;
 
 			if (farming) {
 				Fill(dc, 0, y, _w, h, Surface);
 			}
 
-			int dot = bot.IsOnline ? (bot.Paused || bot.PlayingBlocked ? Amber : Green) : TextDim;
+			// Something only the owner can fix is said in yellow, in place of what it's doing, so it reads at a glance.
+			int dot = trouble != null ? Amber : bot.IsOnline ? (bot.Paused || bot.PlayingBlocked ? Amber : Green) : TextDim;
 			Fill(dc, 10, y + 12, 6, 6, dot);
 
 			int nameColour = bot.IsOnline ? NameColour.Of(bot.Cfg.LogColour)?.Win32 ?? TextBright : TextDim;
@@ -1865,13 +1961,16 @@ public sealed partial class MainWindow : IDisposable {
 			int buttonX = _w - 6 - 24;
 			// Read once: the account's thread swaps the list whole, and a second read could find it emptied since the first.
 			IReadOnlyList<uint> playing = bot.PlayingApps;
-			string doing = farming && (playing.Count > 0) ? $"farming {GameNames.Of(playing[0])}" : BotStatus.Of(bot).Doing;
-			Clipped(dc, doing, textX, y + 8, buttonX - textX - 6, _fontSmall, farming ? TextNormal : TextMid);
+			string doing = trouble is { } wrong ? wrong
+				: farming && (playing.Count > 0) ? new Said("farming {0}", GameNames.Of(playing[0]))
+				: BotStatus.Of(bot).Doing;
+			Clipped(dc, doing, textX, y + 8, buttonX - textX - 6, _fontSmall, trouble != null ? Amber : farming ? TextNormal : TextMid);
 
 			MiniRowButton(dc, bot.Running ? GlyphStop : GlyphPlay, buttonX, y + 4, 24, 22, bot.Name, bot.Running ? Red : Green);
 
 			if (farming && (BotManager.ModuleOf<CardFarmer>(bot) is { } farmer)) {
-				string left = (bot.CardsRemaining == 1 ? "1 card left" : $"{bot.CardsRemaining} cards left") + (bot.HumanOwned ? " · human mode" : "");
+				Said cardsLeft = bot.CardsRemaining == 1 ? new Said("1 card left") : new Said("{0} cards left", bot.CardsRemaining);
+				string left = bot.HumanOwned ? cardsLeft + " · " + new Said("human mode") : cardsLeft;
 				string eta = "~" + Fmt.Rough(farmer.EstimateMinutes);
 
 				Clipped(dc, left, 24, y + 28, _w - 24 - 70, _fontSmall, TextMid);
@@ -1885,8 +1984,43 @@ public sealed partial class MainWindow : IDisposable {
 			Fill(dc, 0, y - 1, _w, 1, Rgb(28, 28, 28));
 		}
 
-		if (_mgr.All.Count > MiniMaxRows) {
-			Text(dc, $"+{_mgr.All.Count - MiniMaxRows} more - 'full window' for all of them", 12, y + 8, _fontSmall, TextDim);
+		if (plan.Footer) {
+			PaintMiniFooter(dc, y, plan, [.. rows.Select(static r => BotStatus.Group(r.Bot))]);
+		}
+	}
+
+	/// <summary>
+	/// The thin bar under the rows - the whole of it is the button. Closed: "+7 more · 6 idling · 1 asleep" and a
+	/// chevron down; open: "12 accounts" and a chevron up. The numbers in the text colour, a little heavier, the words dim.
+	/// </summary>
+	private void PaintMiniFooter(IntPtr dc, int y, MiniLayout.Plan plan, IReadOnlyList<string> groups) {
+		bool open = Live.Global.MiniExpanded;
+		int h = MiniLayout.FooterH;
+
+		_buttons.Add(new Button(IdMiniMore, 0, y, _w, h));
+		Fill(dc, 0, y, _w, h, _hoverId == IdMiniMore ? Rgb(24, 24, 24) : Panel);
+
+		string chevron = open ? GlyphLess : GlyphMore;
+		int chevronW = TextWidth(dc, chevron, _fontChevron);
+		Text(dc, chevron, _w - 12 - chevronW, y + 7, _fontChevron, TextMid);
+
+		int x = 12;
+		int limit = _w - 12 - chevronW - 8;
+
+		foreach ((string text, bool strong) in MiniLayout.Footer(plan, open, groups)) {
+			IntPtr font = strong ? _fontSmallBold : _fontSmall;
+			int colour = strong ? TextNormal : TextMid;
+			int width = TextWidth(dc, text, font);
+
+			// Whatever doesn't fit ends in "…" - a big fleet in a long language has more groups than the bar is wide.
+			if (x + width > limit) {
+				Clipped(dc, text, x, y + 5, Math.Max(0, limit - x), font, colour);
+
+				break;
+			}
+
+			Text(dc, text, x, y + 5, font, colour);
+			x += width;
 		}
 	}
 
@@ -2034,7 +2168,7 @@ public sealed partial class MainWindow : IDisposable {
 			_hwnd = IntPtr.Zero;
 		}
 
-		foreach (IntPtr font in new[] { _fontUi, _fontBold, _fontSmall, _fontMono, _fontMonoLink, _fontIcon, _inputBrush }) {
+		foreach (IntPtr font in new[] { _fontUi, _fontBold, _fontSmall, _fontMono, _fontMonoLink, _fontIcon, _fontSmallBold, _fontChevron, _inputBrush }) {
 			if (font != IntPtr.Zero) {
 				DeleteObject(font);
 			}
@@ -2129,6 +2263,7 @@ public sealed partial class MainWindow : IDisposable {
 	private const int IdMini = 16;
 	private const int IdFullWindow = 17;
 	private const int IdPin = 18;
+	private const int IdMiniMore = 19;
 	private const int IdInput = 100;
 
 	/// <summary>WM_APP + 1: mini mode on (wParam 1) or off, posted so the switch always runs on the window's own thread.</summary>

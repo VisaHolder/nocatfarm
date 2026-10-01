@@ -31,7 +31,7 @@ You can edit them by hand and type `reload`. Back up the `config` folder and you
 | Group | Everyday | Behind Show advanced |
 |---|---|---|
 | Dashboard | *Web dashboard*, *Language* | *Listen on*, *Port*, *Dashboard password*, *Stay signed in for* (7 days), *Open from anywhere*, *Public address*, *Trust forwarded addresses from*, opening the browser, refresh speed |
-| Running in the background (Windows) | *Tray icon*, *Start with Windows* | *Start hidden*, *Minimise to the tray*, *Keep mini mode on top*, *Keep this PC awake*, *Close when everything's done* |
+| Running in the background (Windows) | *Tray icon*, *Start with Windows* | *Start hidden*, *Minimise to the tray*, *Keep mini mode on top*, *Mini window shows* (hours today), *Keep this PC awake*, *Close when everything's done* |
 | All accounts | *Groups every account joins*, *Restart a stuck account* (on, see [Stuck accounts](phone-and-notifications.md#stuck-accounts)) | *Never touch these (all accounts)*, *Stuck after* (3 hours) |
 | Notifications | Discord webhook, Telegram bot and Discord bot, and a test button | what gets sent (see [Discord and Telegram](phone-and-notifications.md#discord-and-telegram)) |
 | Discord profile | the *Playing nocat.farm* card: its switch, what it shows, a preview | which accounts, the featured account, the two buttons |
@@ -52,11 +52,11 @@ stay in the config file untouched, in case you take it back to Windows.
 | Group | Everyday | Behind Show advanced |
 |---|---|---|
 | Account | *Enabled*, *Steam account name*, *Password*, *Appear as*, *I sign into this one myself* | QR sign-in, *Sign in as*, *Start paused*, notes, Family View PIN, device name, authenticator secrets, its own proxy, clearing Steam's notifications |
-| Human mode | *Human mode*, *Games and how often*, hours on weekdays and at the weekend, when it gets on and goes to bed, *Learn from how I play*, *Reaction speed*, *Bank hours overnight* with its games (or its top games when none are chosen) | hour targets, day-off chance, sittings, breaks, meals, going Away or offline on breaks, how long it waits after waking or signing in, finishing up when stopped |
+| Human mode | *Human mode*, *Games and how often*, hours on weekdays and at the weekend, when it gets on and goes to bed, *Learn from how I play* (with *Keeps up with changes* and *Weekends separately* while it's on), *Reaction speed*, *Bank hours overnight* with its games (or its top games when none are chosen) | hour targets, day-off chance, sittings, breaks, meals, going Away or offline on breaks, how long it waits after waking or signing in, finishing up when stopped |
 | What it plays | *Protect refunds*; on robot accounts *Games to idle*, *Idle my whole library*, *Rotate the idle list*, *Show a custom game name*, *Show as* | *Rotate every*, *Keep the name while farming*, *Play as if on* |
 | Trading cards | *Farm trading cards*, *When to farm cards* (human mode; with *mixed*, its share of sittings) | order, priority list, blacklist, sittings and the clock window (robot accounts), give-up time, and more |
 | Badges, boosters & selling | *Craft badges from card sets*, *Sell duplicate cards* | booster packs, opening packs, how many cards to list at a time |
-| Achievements | *Earn achievements over time* | pace, completion limit, only/never lists, grind spacing, the hunter (rotation, when to move on, rest days, daily cap, game length), family-shared games |
+| Achievements | *Earn achievements over time*, *How fast*, *Skip multiplayer achievements* | completion limit, only/never lists, grind spacing, the hunter (rotation, when to move on, rest days, daily cap, game length), family-shared games |
 | Free stuff | *Claim free games* (off, games, or games and DLC), event items, the discovery queue | |
 | Inventory & bans | *Watch for bans* | *Work out what its inventory is worth*, and games to leave out |
 | Trades | donations, gifts, fair card swaps, your own accounts, *Trade by itself with*, *What to send* | *Decline everything else*, waits, sending items, trade link token |
@@ -64,6 +64,10 @@ stay in the config file untouched, in case you take it back to Windows.
 | Friends & messages | *Accept friend requests*, *Reply to messages* and its text | delays, spam filter, group invites and joining, *Accept commands from* |
 | Staying out of the way | | *Stand down when you play*, *Wait before resuming* |
 | Logging | | *Report in every* and *And while resting, every* (0 follows the global setting, -1 keeps this account quiet), and its colour in the log |
+
+Hours of the day (when it gets on and goes to bed, when it farms, installs updates, sends items, comments, writes the
+summaries) are picked from a list in your own clock - "9 am" or "09:00", whichever your browser uses. In the Console,
+`set` takes the hour as a number (21), or like 9pm or 21:00.
 
 On a human-mode account, *Games to idle*, the idle rotation, the custom game name, *Keep the name while farming*, *Farm in sittings*,
 *Hours a day to farm*, the *Farm cards only from … until* clock window, *Log out when finished* and *Farm while appearing offline* are hidden, and human-only
@@ -134,7 +138,7 @@ the normal auto-reply, and commands from anyone not on the list are ignored. Rep
 Steam chat only reaches the account you messaged: a command that names another account, or `all`, is refused, and so
 are the ones that change the app itself: `set`, `anywhere`, `dashboard`, `update`, `import`, `redeem`, `keys`,
 `answer`, `add`, `reload`, `plugins`, `notify`, `screen`, `match`, `theme`, `mini`, `visitors`, `backup`, `report`, `stuck`,
-`exit` and `remove`, and the answers to the add-on question (`dlc carryon`, `dlc leave`, `dlc undo` - looking with `dlc`
+`exit` and `remove`, and leaving a game alone for achievements (`dlc leave`, `dlc undo` - looking with `dlc`
 is fine). Those are for the PC, the dashboard, Telegram or Discord.
 
 ---

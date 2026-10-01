@@ -231,6 +231,14 @@ public sealed class GlobalConfig {
 	public int MiniX { get; set; } = int.MinValue;
 	public int MiniY { get; set; } = int.MinValue;
 
+	/// <summary>Mini mode's list opened up (up to 10 rows, the rest by scrolling) rather than the first 5 and a "+N more"
+	/// bar. Set by clicking that bar, so it has no entry in Settings.cs.</summary>
+	public bool MiniExpanded { get; set; }
+
+	/// <summary>The one figure beside the name in mini mode's title bar - see the choices in Settings.cs. Game-hours today
+	/// unless changed (an install from before this setting existed gets that too).</summary>
+	public int MiniStats { get; set; } = 1;
+
 	public int StatusEveryMinutes { get; set; } = 5;
 	public int StatusQuietEveryMinutes { get; set; } = 30;
 
@@ -504,26 +512,34 @@ public sealed class BotConfig {
 	public List<uint> AchievementNeverGames { get; set; } = [];
 
 	/// <summary>
-	/// Games the owner answered "I own what matters - carry on" for, on the dashboard or with 'dlc carryon'. A game whose
-	/// DLC can't all be placed is held whole (Core/DlcAchievements); in these, the DLC that can't be placed count as owned,
-	/// while a DLC whose achievements are known exactly still goes by the licences. Empty by default; only the owner can
-	/// know.
+	/// Games the owner once answered "I own what matters - carry on" for. Not used any more: every game with add-ons Steam
+	/// doesn't explain earns anyway now, base game first (Core/DlcAchievements). Still read, so account files that have
+	/// the list load as they did, and written back untouched.
 	/// </summary>
-	/// <remarks>
-	/// Not a setting any more - asked per game instead, and 'dlc undo' or the dashboard takes an answer back. The name is
-	/// kept so the lists already in people's account files still count.
-	/// </remarks>
 	public List<uint> AchievementDlcTrusted { get; set; } = [];
 
 	/// <summary>
-	/// Games the owner answered "Leave it paused" for: the game, and which of its DLC the account had for good then (as
-	/// <see cref="Core.DlcAchievements.LicenceKey"/> writes it). Not asked again - until the account's DLC for that game
-	/// changes, when it may be asked once more. Not a setting.
+	/// Games the owner left alone ('dlc leave', or "Leave it paused" on the dashboard before): the game, and which of its
+	/// DLC the account had for good then (as <see cref="Core.DlcAchievements.LicenceKey"/> writes it). Such a game is held
+	/// as it used to be - nothing in it unlocked on a guess - whatever DLC it gets later, until 'dlc undo'. Not a setting.
 	/// </summary>
 	public Dictionary<uint, string> AchievementDlcLeft { get; set; } = [];
 
 	/// <summary>Whether human mode's main game earns achievements like any other. On - it's where the hours are.</summary>
 	public bool AchievementIncludeMainGame { get; set; } = true;
+
+	/// <summary>
+	/// Never unlock multiplayer, co-op, zombies, versus or ranked achievements - ones that need other players, whose matches
+	/// the game and Steam keep a record of that an unlock can't match. On by default for a human-mode account and off for a
+	/// robot: until it's chosen it follows human mode, and turning human mode on or off sets it to match
+	/// (<see cref="Settings.ApplyLegitMode"/>). Once written to the file it stays what it says.
+	/// </summary>
+	public bool AchievementSkipMultiplayer {
+		get => _skipMultiplayer ?? LegitMode;
+		set => _skipMultiplayer = value;
+	}
+
+	private bool? _skipMultiplayer;
 
 	/// <summary>0 careful, 1 normal, 2 brisk. Scales every gap the pacer waits.</summary>
 	public int AchievementPace { get; set; } = 1;
@@ -666,6 +682,12 @@ public sealed class BotConfig {
 
 	/// <summary>Learn when you play on the account and what, and lean its day that way: 0 off, 1 a little, 2 a lot.</summary>
 	public int LearnFromOwner { get; set; }
+
+	/// <summary>How fast what it learned follows a change in your routine: 0 slowly, 1 normal, 2 quickly - see <see cref="Modules.OwnerHabits.HalfLife"/>.</summary>
+	public int LearnFollow { get; set; } = 1;
+
+	/// <summary>Learn your Saturdays and Sundays apart from the rest of the week.</summary>
+	public bool LearnWeekends { get; set; } = true;
 
 	/// <summary>A game that just arrived gets extra sittings for a few days, fewer each day.</summary>
 	public bool NewGamesFirst { get; set; }

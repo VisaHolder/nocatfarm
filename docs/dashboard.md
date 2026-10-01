@@ -86,6 +86,17 @@ remembers its size and position.
 Click *mini*, type `mini`, or use the tray menu. The window shrinks to a small panel with one line per account:
 what it's doing and a start/stop button. A farming account also shows cards left, time left and a progress bar.
 
+It shows 5 accounts. With more, a thin bar underneath counts the rest by what they're doing, like
+`+7 more · 6 idling · 1 asleep`. Click the bar to open the list: 10 accounts at a time, the wheel scrolls through the
+rest, and the bar says `12 accounts` - click it again to close it. Open or closed is remembered. An account that
+needs you (a Steam Guard code, a sign-in that failed, the stuck alarm) goes to the top in yellow, so it's never one
+of the hidden ones. The panel never gets taller than your screen.
+
+Beside the name at the top is one number, picked with *Mini window shows* (Settings, Running in the background,
+behind Show advanced): game-hours today (the default), the past week or the past month, cards, achievements or
+comments in the last 24 hours, accounts online, inventory value, or nothing. Hours are counted like the daily
+summary - every game running counts, so 8 games for a whole day is 192h - and added up over all your accounts.
+
 The mini title bar has a pin that keeps it above other windows (the *Keep mini mode on top* setting, off by
 default), a button for the dashboard, and one back to the full window. It remembers where you put it, and opens in
 mini mode next time if you left it that way.

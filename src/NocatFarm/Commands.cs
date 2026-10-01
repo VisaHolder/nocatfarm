@@ -94,7 +94,7 @@ public static partial class Commands {
 
 		new("achievements", "<account> <appID> [list|unlock|lock] [name|all]", GroupAchievements, "A game's achievements: see them, unlock them all, or put them back.", "ach|cheevo"),
 		new("hunt", "[account]", GroupAchievements, "What the achievement boost would hunt next, in order, and what it ruled out and why."),
-		new("dlc", "<account> [game] | carryon|leave|undo <account> <game>", GroupAchievements, "Achievements that come with add-ons (DLC). 'dlc <account>' lists the games where some are left alone. Add a game, by name or appID, to see its add-ons, which ones the account owns, and why anything is held. When a game has add-ons the account doesn't own and Steam doesn't say which of them come with achievements, the game is paused and you're asked once, on the dashboard: 'dlc carryon <account> <game>' says the account owns what matters and lets it carry on, 'dlc leave <account> <game>' keeps it paused without asking again, and 'dlc undo <account> <game>' takes the answer back. Achievements that certainly come with an add-on it doesn't own are never unlocked, carry on or not.", "dlcach|dlcachievements"),
+		new("dlc", "<account> [game] | leave|undo <account> <game>", GroupAchievements, "Achievements that come with add-ons (DLC). 'dlc <account>' lists the games where add-ons matter. Add a game, by name or appID, to see its add-ons, which ones the account owns, and what is held. Achievements Steam ties to an add-on the account doesn't own are never unlocked. When a game has add-ons the account doesn't own and Steam doesn't say which achievements they bring, it earns anyway: the base game's first, the ones it can't place last. 'dlc leave <account> <game>' leaves a game like that alone instead, and 'dlc undo <account> <game>' takes that back.", "dlcach|dlcachievements"),
 
 		new("freeitems", "[account|all]", GroupFree, "Look for free event items now: the daily sale sticker, and anything in the Points Shop at 0 points. The ClaimEventItems setting does it by itself."),
 		new("queue", "[account|all]", GroupFree, "Go through today's discovery queue now, a few seconds on each game. The DiscoveryQueue setting does it by itself once a day (during sales, by default)."),
@@ -249,9 +249,9 @@ public static partial class Commands {
 		command is "status" or "pause" or "resume" or "start" or "stop" or "cards" or "config" or "human" or "habits" or "2fa";
 
 	/// <summary>
-	/// An answer to "is it OK to carry on?" ('dlc carryon|leave|undo'): the owner's word about what the account owns,
-	/// which decides what it unlocks - not something a Steam-chat master gives for them. Looking ('dlc &lt;account&gt;')
-	/// is fine. An account that happens to be called "leave" is that account, as it is at the PC.
+	/// A choice about a game with add-ons ('dlc leave|undo', and the old 'dlc carryon'): the owner's word, which decides
+	/// what it unlocks - not something a Steam-chat master gives for them. Looking ('dlc &lt;account&gt;') is fine. An
+	/// account that happens to be called "leave" is that account, as it is at the PC.
 	/// </summary>
 	public static bool SteamChatRefusesAnswer(BotManager mgr, string line) {
 		string[] words = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -2623,13 +2623,30 @@ public static partial class Commands {
 		}
 
 		int held = 0;
+		Said why = default;
+
+		// The pacer's own rules for what may be unlocked - the same as unlock-everything: held for DLC, short of the game's
+		// own counter, multiplayer on an account that skips those, "all other achievements" with others staying locked.
+		// Only the hours and the order are left to whoever typed it.
+		AchievementPacer.Sorted? sorted = (unlock && (dlc != null)) ? AchievementPacer.Sort(set, dlc, bot.Cfg.AchievementSkipMultiplayer, new HashSet<string>()) : null;
 
 		if (target.Equals("all", StringComparison.OrdinalIgnoreCase)) {
-			chosen = (unlock ? set.Locked : set.Unlocked.Where(static a => a.Settable)).ToList();
+			if (sorted != null) {
+				(chosen, int metas) = AchievementPacer.WithoutWaitingMetas(set.All, sorted.Candidates);
+				held = sorted.HeldDlc;
+				int steamOnly = set.All.Count(static a => !a.Unlocked && !a.Settable);
 
-			if (dlc != null) {
-				held = chosen.Count(a => !dlc.Allows(a));
-				chosen = [.. chosen.Where(dlc.Allows)];
+				// What it left, and why - said with the answer, so "unlocked 40" is never read as "all of them".
+				foreach (Said part in new[] {
+					sorted.Counters > 0 ? new Said("{0} left locked - the game's own counter for them isn't there yet", sorted.Counters) : default,
+					sorted.Multiplayer > 0 ? new Said("{0} multiplayer ones skipped", sorted.Multiplayer) : default,
+					metas > 0 ? new Said("{0} left locked - they're for having all the others, and some of those stay locked", metas) : default,
+					steamOnly > 0 ? new Said("{0} only Steam can award", steamOnly) : default
+				}.Where(static p => !p.IsEmpty)) {
+					why = why.IsEmpty ? part : new Said("{0}, {1}", why, part);
+				}
+			} else {
+				chosen = (unlock ? set.Locked : set.Unlocked.Where(static a => a.Settable)).ToList();
 			}
 		} else {
 			Achievement? one = set.All.FirstOrDefault(a => a.Name.Equals(target, StringComparison.OrdinalIgnoreCase));
@@ -2643,22 +2660,29 @@ public static partial class Commands {
 			}
 
 			if ((dlc != null) && !dlc.Allows(one)) {
-				// "Comes with DLC it doesn't own" only when that's known exactly; one held on a guess may come with it.
+				// "Comes with DLC it doesn't own" only when that's known exactly; one held on a guess may come with it. Held
+				// on a guess at all is only in a game left alone ('dlc leave'), or inside a block of a DLC it doesn't own
+				// whose edges are drawn wide to be safe.
 				return dlc.Of(one) switch {
 					DlcAchievements.Hold.Unmapped or DlcAchievements.Hold.NotOwned when !dlc.Certain(one) => new Said("\"{0}\" may come with DLC {1} doesn't own, and Steam doesn't list which achievements that DLC adds ({2}) - it won't be unlocked.",
-						one.Display, bot.Name, Few(dlc.Missing(one))) + " " + VouchHint(bot, appId),
+						one.Display, bot.Name, Few(dlc.Missing(one))) + (dlc.Trusted ? "" : " " + LeftHint(bot, appId)),
 					DlcAchievements.Hold.Checking => new Said("Still checking which of {0}'s achievements come with DLC - try again in a few minutes.", GameNames.Of(appId)).ToString(),
 					_ => new Said("\"{0}\" comes with DLC {1} doesn't own ({2}) - it won't be unlocked.", one.Display, bot.Name, string.Join(", ", dlc.Missing(one))).ToString()
 				};
+			}
+
+			if (unlock && (sorted != null) && (WhyNotOne(bot, set, one) is { IsEmpty: false } refusal)) {
+				return refusal.ToString();
 			}
 
 			chosen = [one];
 		}
 
 		// Said with the answer, whatever it is, so "unlocked 40" is never read as "all of them".
-		string heldNote = held == 0 ? ""
+		string heldNote = (held == 0 ? ""
 			: dlc is { Unmapped: true } ? " " + new Said("{0} left alone - can't tell which achievements come with its DLC", held) + "."
-			: " " + new Said("{0} left alone - from DLC this account doesn't own", held) + ".";
+			: " " + new Said("{0} left alone - from DLC this account doesn't own", held) + ".")
+			+ (why.IsEmpty ? "" : " " + why + ".");
 
 		if (chosen.Count == 0) {
 			return (unlock ? "Nothing left to unlock." : "Nothing unlocked that can be put back.") + heldNote;
@@ -2677,7 +2701,38 @@ public static partial class Commands {
 
 		Log.Reward(new Said("{0} in {1}", message, GameNames.Of(appId)), bot.Name, topic: Topic.Achievements);
 
+		// Counted for "achievements today" - only ones gained, not ones put back.
+		if (unlock) {
+			Stats.Record(Stats.KindAchievement, bot.Name, changed);
+		}
+
 		return $"{bot.Name}: {message} in {GameNames.Of(appId)}.{heldNote}";
+	}
+
+	/// <summary>
+	/// Why one achievement named in 'cheevo unlock' won't be unlocked by the pacer's rules, or nothing: multiplayer on an
+	/// account that skips those, short of the game's own counter, or "all other achievements" with others still locked.
+	/// (Held for DLC and Steam's own are said before this.) Called after Sort, which marks each one's add-on part.
+	/// </summary>
+	internal static Said WhyNotOne(Bot bot, AchievementSet set, Achievement one) {
+		if (one.Unlocked) {
+			return default;
+		}
+
+		if (bot.Cfg.AchievementSkipMultiplayer && AchievementPacer.IsMultiplayer(one, AchievementPacer.MultiplayerGame(set.All))) {
+			return new Said("\"{0}\" needs other players, and {1} skips multiplayer achievements (\"Skip multiplayer achievements\") - it won't be unlocked.", one.Display, bot.Name);
+		}
+
+		if (one.CounterShort) {
+			return new Said("\"{0}\" counts something in the game, and the game's own counter is at {1} of {2} - it won't be unlocked before the game gets there.",
+				one.Display, one.ProgressNow.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture), one.ProgressMax.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture));
+		}
+
+		if (AchievementPacer.WithoutWaitingMetas(set.All, [one]).Waiting > 0) {
+			return new Said("\"{0}\" is for having the others, and some of those are still locked - it won't be unlocked before they are.", one.Display);
+		}
+
+		return default;
 	}
 
 	private static string DescribeAchievements(Bot bot, AchievementSet set, DlcAchievements.View? dlc = null) {
@@ -2703,9 +2758,10 @@ public static partial class Commands {
 		// From DLC this account doesn't own: marked, because none of those is ever unlocked - and one that already is
 		// wasn't earned by playing, so it's worth seeing.
 		//
-		// In a game where it can't be told which achievements come with a DLC it doesn't own, the rest are marked too:
-		// they're left alone just the same, and the list shouldn't read as if they could be unlocked.
-		bool anyDlc = false, anyUnsure = false;
+		// Held on other evidence - a DLC named in it, "DLC" in its API name, a game left alone - is [h]: held, but not known
+		// to be that DLC's. What only looks like an add-on's by the game's layout is [?]: earned last, never held.
+		bool anyDlc = false, anyUnsure = false, anyLater = false;
+		HashSet<string> addOn = dlc?.AddOnSet(set.All) ?? [];
 
 		foreach (Achievement a in set.All.OrderByDescending(static a => a.GlobalPercent ?? 50)) {
 			DlcAchievements.Hold hold = dlc?.Of(a) ?? DlcAchievements.Hold.None;
@@ -2716,11 +2772,15 @@ public static partial class Commands {
 			// "can't tell", locked or not. An unlocked one in a game that can't be mapped at all stays plain [x]: it isn't
 			// tied to any DLC, the whole game just can't be told apart.
 			bool fromDlc = (hold == DlcAchievements.Hold.NotOwned) && dlc!.Certain(a);
-			bool unsure = !fromDlc && ((hold == DlcAchievements.Hold.NotOwned) || (!a.Unlocked && (hold == DlcAchievements.Hold.Unmapped)));
-			string mark = a.Unlocked ? (fromDlc ? "X" : unsure ? "?" : "x") : fromDlc ? "d" : unsure ? "?" : a.Settable ? " " : "-";
+			bool unsure = !a.Unlocked && !fromDlc && (hold is DlcAchievements.Hold.NotOwned or DlcAchievements.Hold.Unmapped);
+			// Allowed only because the game earns anyway, and it looks like an add-on's (after the jump in the game's own
+			// layout): probably an add-on's, so it's earned after every base-game one - on every account, never held for it.
+			bool later = !a.Unlocked && a.Settable && (hold == DlcAchievements.Hold.None) && (dlc?.AddOnLikely(a, addOn) ?? false);
+			string mark = a.Unlocked ? (fromDlc ? "X" : "x") : fromDlc ? "d" : unsure ? "h" : later ? "?" : a.Settable ? " " : "-";
 			string rarity = a.GlobalPercent is { } p ? $"{p,5:0.#}%" : "     ?";
 			anyDlc |= fromDlc;
 			anyUnsure |= unsure;
+			anyLater |= later;
 			sb.AppendLine($"  [{mark}] {rarity}  {Log.Pad(a.Name, 34)} {a.Display}");
 		}
 
@@ -2731,10 +2791,14 @@ public static partial class Commands {
 		}
 
 		if (anyUnsure) {
-			sb.AppendLine().Append("  [?] ").Append(new Said("can't tell which achievements come with its DLC - left alone")).Append(" (").Append(new Said("see 'dlc {0} {1}'", bot.Name, set.AppId)).Append(')');
+			sb.AppendLine().Append("  [h] ").Append(new Said("may come with DLC this account doesn't own - left alone")).Append(" (").Append(new Said("see 'dlc {0} {1}'", bot.Name, set.AppId)).Append(')');
 		}
 
-		if (!anyDlc && !anyUnsure && dlc is { Known: false }) {
+		if (anyLater) {
+			sb.AppendLine().Append("  [?] ").Append(new Said("probably DLC - earned last, after the base game's")).Append(" (").Append(new Said("see 'dlc {0} {1}'", bot.Name, set.AppId)).Append(')');
+		}
+
+		if (!anyDlc && !anyUnsure && !anyLater && dlc is { Known: false }) {
 			sb.AppendLine().Append("  ").Append(new Said("Still checking which of {0}'s achievements come with DLC - try again in a few minutes.", GameNames.Of(set.AppId)));
 		}
 
@@ -2742,21 +2806,21 @@ public static partial class Commands {
 	}
 
 	/// <summary>
-	/// 'dlc': achievements that come with add-ons. Looking (a game, or every game it works on), and the three answers to
-	/// the question asked about a game held whole - carry on, leave it paused, undo. The looking never changes anything.
+	/// 'dlc': achievements that come with add-ons. Looking (a game, or every game it works on), and the one choice about
+	/// a game with add-ons Steam doesn't explain - leave it alone, or undo that. The looking never changes anything.
 	/// </summary>
 	private static async Task<string> DlcAsync(BotManager mgr, string[] args) {
 		if (args.Length == 0) {
 			return string.Join(Environment.NewLine, [
-				"dlc <account> [game]                  what's left alone for add-ons, and why",
-				"dlc carryon <account> <game>          it owns what matters - carry on",
-				"dlc leave <account> <game>            keep it paused, and don't ask again",
-				"dlc undo <account> <game>             take the answer back",
+				"dlc <account> [game]                  which add-ons matter, and what is held",
+				"dlc leave <account> <game>            leave a game with add-ons Steam doesn't explain alone",
+				"dlc undo <account> <game>             let a game left alone earn again",
 				"  dlc new Call of Duty                Call of Duty's add-ons, and which this account owns"
 			]);
 		}
 
-		// An answer - unless there's an account called that, which is then what was meant.
+		// A choice - unless there's an account called that, which is then what was meant. 'carryon' is the old answer,
+		// kept so scripts that type it still work.
 		string verb = args[0].ToLowerInvariant();
 
 		if ((verb is "carryon" or "leave" or "undo") && (mgr.Get(args[0]) == null)) {
@@ -2774,7 +2838,7 @@ public static partial class Commands {
 		}
 
 		if (args.Length > 1) {
-			(uint app, Said problem) = DlcQuestions.Find(bot, string.Join(' ', args[1..]));
+			(uint app, Said problem) = DlcChoices.Find(bot, string.Join(' ', args[1..]));
 
 			return app == 0 ? problem.ToString() : await DlcGameAsync(bot, app).ConfigureAwait(false);
 		}
@@ -2792,7 +2856,6 @@ public static partial class Commands {
 		// another, slowly - and a later look has them. A hunt list can be hundreds of games, and working them all out at
 		// once is hundreds of questions to the store.
 		List<string> rows = [];
-		List<string> vouched = [];
 		int waiting = 0, asked = 0;
 
 		foreach (uint app in apps) {
@@ -2815,31 +2878,32 @@ public static partial class Commands {
 
 			DlcAchievements.View view = await DlcAchievements.ViewAsync(bot, app, TimeSpan.Zero).ConfigureAwait(false);
 
-			// Answered "carry on" with nothing held: said, so a game missing from the list isn't a puzzle. One that still
-			// holds the achievements of an add-on known exactly is listed like any other.
-			if (view.NotOwnedCount == 0) {
-				if (view.Trusted) {
-					vouched.Add(GameNames.Of(app));
-				}
-
+			// Nothing held, and nothing it can't place: its add-ons don't matter here.
+			if ((view.NotOwnedCount == 0) && !view.Unclear) {
 				continue;
 			}
 
-			AchievementSet? set = await Achievements.GetAsync(bot, app).ConfigureAwait(false);
-			Said got = set is { Total: > 0 } ? new Said("{0} of them unlocked", view.UnlockedWithout(set)) : new Said("couldn't read what it has unlocked");
+			Said row;
 
-			rows.Add($"  {GameNames.Of(app)} ({app}) - " + (view.Unmapped
-				? new Said("{0} left alone - can't tell which achievements come with its DLC", view.NotOwnedCount)
-				: new Said("{0} from DLC it doesn't own, {1}", view.NotOwnedCount, got)));
+			if (view.Unmapped) {
+				// Left alone ('dlc leave'): held as it used to be.
+				row = new Said("{0} left alone, as you asked - can't tell which achievements come with its DLC", view.NotOwnedCount);
+			} else if (view.Unclear) {
+				row = view.NotOwnedCount > 0
+					? new Said("earns them anyway, base game first; {0} from DLC it doesn't own left alone", view.NotOwnedCount)
+					: new Said("earns them anyway, base game first - Steam doesn't say which come with the add-ons it doesn't own");
+			} else {
+				AchievementSet? set = await Achievements.GetAsync(bot, app).ConfigureAwait(false);
+				Said got = set is { Total: > 0 } ? new Said("{0} of them unlocked", view.UnlockedWithout(set)) : new Said("couldn't read what it has unlocked");
+				row = new Said("{0} from DLC it doesn't own, {1}", view.NotOwnedCount, got);
+			}
+
+			rows.Add($"  {GameNames.Of(app)} ({app}) - " + row);
 		}
 
 		List<string> lines = rows.Count == 0
-			? [new Said("{0}: none of the games it hunts or plays has achievements from DLC it doesn't own", bot.Name)]
-			: [new Said("{0}: games with achievements left alone for DLC it doesn't own (never unlocked)", bot.Name), .. rows];
-
-		if (vouched.Count > 0) {
-			lines.Add("  " + new Said("Nothing held in {0} - you said carry on", string.Join(", ", vouched)));
-		}
+			? [new Said("{0}: none of the games it hunts or plays has add-ons that matter for achievements", bot.Name)]
+			: [new Said("{0}: games with add-ons it doesn't own (achievements from those are never unlocked)", bot.Name), .. rows];
 
 		if (waiting > 0) {
 			lines.Add("  " + new Said("{0} more game(s) still being looked at - ask again in a few minutes", waiting));
@@ -2849,8 +2913,8 @@ public static partial class Commands {
 	}
 
 	/// <summary>
-	/// 'dlc carryon|leave|undo &lt;account&gt; &lt;game&gt;' - the answers the dashboard's buttons give, typed. Doesn't
-	/// need the account signed in: it's only the account's answer, kept in its settings file.
+	/// 'dlc leave|undo &lt;account&gt; &lt;game&gt;' (and the old 'dlc carryon') - the dashboard's undo, typed. Doesn't
+	/// need the account signed in: it's only the account's choice, kept in its settings file.
 	/// </summary>
 	private static string DlcAnswer(BotManager mgr, string verb, string[] args) {
 		if (args.Length < 2) {
@@ -2863,16 +2927,16 @@ public static partial class Commands {
 			return NoSuchAccount(mgr, args[0]);
 		}
 
-		(uint app, Said problem) = DlcQuestions.Find(bot, string.Join(' ', args[1..]));
+		(uint app, Said problem) = DlcChoices.Find(bot, string.Join(' ', args[1..]));
 
 		if (app == 0) {
 			return problem.ToString();
 		}
 
 		return verb switch {
-			"carryon" => DlcQuestions.CarryOn(bot, app),
-			"leave" => DlcQuestions.Leave(bot, app),
-			_ => DlcQuestions.Undo(bot, app)
+			"carryon" => DlcChoices.CarryOn(bot, app),
+			"leave" => DlcChoices.Leave(bot, app),
+			_ => DlcChoices.Undo(bot, app)
 		};
 	}
 
@@ -2893,17 +2957,6 @@ public static partial class Commands {
 		List<DlcAchievements.Group> placed = [.. map.Groups.Where(static g => g.Unsure == DlcAchievements.Doubt.None)];
 		List<DlcAchievements.Group> unsure = [.. map.Groups.Where(static g => g.Unsure != DlcAchievements.Doubt.None)];
 		List<string> lines = [new Said("{0} on {1}: {2} DLC, {3} with achievements in its list", GameNames.Of(app), bot.Name, map.DlcCount, placed.Count)];
-
-		// The owner's word, said first: nothing is held on a guess - but a DLC whose achievements are known exactly still
-		// goes by the licences, and what that still holds is said with it.
-		if (view.Trusted) {
-			List<string> notOwned = [.. placed.Where(g => !view.Licensed.Contains(g.App)).Select(g => DlcAchievements.DlcName(map, g.App))];
-
-			lines.Add("  " + (notOwned.Count == 0
-				? new Said("Trusted: you said {0} owns what matters, so nothing in it is held just because Steam doesn't say which add-on an achievement comes with.", bot.Name)
-				: new Said("Trusted: you said {0} owns what matters. {1} achievement(s) from {2}, which it doesn't own, are still left alone.",
-					bot.Name, set is { Total: > 0 } ? set.All.Count(a => !a.Unlocked && (view.Of(a) == DlcAchievements.Hold.NotOwned)) : view.NotOwnedCount, Few(notOwned))));
-		}
 
 		foreach (DlcAchievements.Group g in placed) {
 			bool owned = view.Licensed.Contains(g.App);
@@ -2933,36 +2986,46 @@ public static partial class Commands {
 				+ (how.IsEmpty ? "" : " - " + how));
 		}
 
-		// DLC whose achievements, if they have any, can't be placed. Owned, they change nothing. Not owned, the whole game
-		// is held but for the DLC it owns - said as that, with which DLC and why, so it's plain why nothing is unlocked.
-		List<DlcAchievements.Group> missing = [.. unsure.Where(g => !view.Owned.Contains(g.App))];
+		// DLC whose achievements, if they have any, can't be placed - by its licences, not what is counted as owned: a game
+		// that earns anyway counts them all as owned. Owned, they change nothing.
+		List<DlcAchievements.Group> missing = [.. unsure.Where(g => !view.Licensed.Contains(g.App))];
 
-		if (missing.Count > 0) {
+		if ((missing.Count > 0) && !view.Trusted) {
+			// Left alone ('dlc leave'): the whole game is held but for the DLC it owns - said as that, with which DLC and
+			// why, so it's plain why nothing is unlocked.
 			int held = set is { Total: > 0 } ? view.HeldIn(set) : view.NotOwnedCount;
 
 			// None left to hold - every one is already unlocked - reads as that, not as "0 are left alone".
 			lines.Add("  " + (held > 0
 				? new Said("Held: {0} is missing DLC, and Steam doesn't list which achievements they add - so {1} achievement(s) outside the DLC it owns are left alone.", bot.Name, held)
 				: new Said("{0} is missing DLC, and Steam doesn't list which achievements they add - but every achievement outside the DLC it owns is already unlocked, so there's nothing to hold.", bot.Name)));
+			MissingRows(lines, missing);
+			lines.Add("  " + LeftHint(bot, app));
+		} else if (missing.Count > 0) {
+			// Earns anyway, on every account: the base game's first, what looks like an add-on's by the game's layout last,
+			// and only what is held on certain evidence never - an add-on's exact block, one naming an add-on it doesn't own,
+			// one with "DLC" in its API name.
+			HashSet<string> addOn = set is { Total: > 0 } ? view.AddOnSet(set.All) : [];
+			int later = set is { Total: > 0 } ? set.All.Count(a => !a.Unlocked && a.Settable && view.AddOnLikely(a, addOn)) : 0;
+			int named = set is { Total: > 0 } ? set.All.Count(a => !a.Unlocked && view.HeldForName(a)) : 0;
 
-			foreach (DlcAchievements.Group g in missing.Take(10)) {
-				Said why = g.Unsure switch {
-					DlcAchievements.Doubt.BasePage => new Said("its store page is the game's own"),
-					DlcAchievements.Doubt.Delisted => new Said("it isn't on the store any more"),
-					DlcAchievements.Doubt.NotFound => new Said("the store's names for its achievements aren't in the game's list"),
-					_ => new Said("the store gives no achievement figures for it")
-				};
+			lines.Add("  " + (later > 0
+				? new Said("{0} is missing DLC, and Steam doesn't list which achievements they add. It earns them anyway - the base game's first, and the {1} it can't place after those, in case some come with that DLC.", bot.Name, later)
+				: new Said("{0} is missing DLC, and Steam doesn't list which achievements they add. It earns them anyway - the base game's first, and the ones it can't place after those.", bot.Name)));
 
-				lines.Add($"    {(g.Name.Length > 0 ? g.Name : GameNames.Of(g.App))} ({g.App}): " + new Said("not owned - {0}", why));
+			if (named > 0) {
+				lines.Add("  " + new Said("{0} with \"DLC\" in their API name are left alone while it's missing add-ons.", named));
 			}
 
-			if (missing.Count > 10) {
-				lines.Add("    " + new Said("and {0} more", missing.Count - 10));
+			MissingRows(lines, missing);
+
+			List<string> exact = [.. placed.Where(g => !view.Licensed.Contains(g.App)).Select(g => DlcAchievements.DlcName(map, g.App))];
+
+			if (exact.Count > 0) {
+				lines.Add("  " + new Said("It never touches the achievements of {0}, which it doesn't own.", Few(exact)));
 			}
 
-			lines.Add("  " + VouchHint(bot, app));
-		} else if (view.Trusted) {
-			// Said above.
+			lines.Add("  " + new Said("To have {1} left alone instead: 'dlc leave {0} {2}'.", bot.Name, GameNames.Of(app), DlcChoices.Typed(bot, app)));
 		} else if (unsure.Count > 0) {
 			lines.Add("  " + new Said("Steam doesn't list which achievements {0} of its DLC add, but {1} owns all of those - nothing is held for them.", unsure.Count, bot.Name));
 		} else if (map.DlcCount == 0) {
@@ -2974,13 +3037,27 @@ public static partial class Commands {
 		return string.Join(Environment.NewLine, lines);
 	}
 
-	/// <summary>
-	/// How the owner answers for a game held for add-ons Steam says nothing about. Only they know whether the account has
-	/// what matters, so it is theirs to say - and a held game says how.
-	/// </summary>
-	private static Said VouchHint(Bot bot, uint app) =>
-		new Said("If {0} owns what matters in {1}, answer on the dashboard or type 'dlc carryon {0} {2}'. Achievements that certainly come with an add-on it doesn't own stay locked.",
-			bot.Name, GameNames.Of(app), DlcQuestions.Typed(bot, app));
+	/// <summary>The DLC it's missing that can't be placed, ten at most, each with why.</summary>
+	private static void MissingRows(List<string> lines, List<DlcAchievements.Group> missing) {
+		foreach (DlcAchievements.Group g in missing.Take(10)) {
+			Said why = g.Unsure switch {
+				DlcAchievements.Doubt.BasePage => new Said("its store page is the game's own"),
+				DlcAchievements.Doubt.Delisted => new Said("it isn't on the store any more"),
+				DlcAchievements.Doubt.NotFound => new Said("the store's names for its achievements aren't in the game's list"),
+				_ => new Said("the store gives no achievement figures for it")
+			};
+
+			lines.Add($"    {(g.Name.Length > 0 ? g.Name : GameNames.Of(g.App))} ({g.App}): " + new Said("not owned - {0}", why));
+		}
+
+		if (missing.Count > 10) {
+			lines.Add("    " + new Said("and {0} more", missing.Count - 10));
+		}
+	}
+
+	/// <summary>A game left alone says how to let it earn again.</summary>
+	private static Said LeftHint(Bot bot, uint app) =>
+		new Said("It's left alone because you asked - 'dlc undo {0} {1}' lets it earn them, base game first.", bot.Name, DlcChoices.Typed(bot, app));
 
 	/// <summary>A few names, then how many more: a game can have a hundred DLC.</summary>
 	private static string Few(List<string> names) =>

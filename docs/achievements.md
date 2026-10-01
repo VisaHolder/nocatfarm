@@ -6,30 +6,94 @@ You can set achievements by hand:
 
 ```
 achievements myaccount 440                  # its achievements, easiest first, with how rare each is
-achievements myaccount 440 unlock all       # all the ones that can be set, now
+achievements myaccount 440 unlock all       # all the ones it's allowed to set, now
 achievements myaccount 440 unlock ACH_NAME  # just one
 achievements myaccount 440 lock ACH_NAME    # put one back
 ```
 
 But unlocking a whole list at once shows on the profile forever, all with one timestamp. **Earn achievements over
 time** (`UnlockAchievements`, off) is the gentle way. It unlocks them only in a game the account is actually
-playing, roughly one per hour of play, and never finishes more than 90% of a game (*Finish no more than*). Rare
+playing, roughly one every hour or two of play, and never finishes more than 90% of a game (*Finish no more than*). Rare
 achievements only open up as playtime builds, and milestones wait for the achievements they depend on. *How fast*
-(careful, normal or brisk) doubles or halves the gaps. *Never in these games* keeps it out of games you pick, *Only
+(careful, normal or brisk) doubles or halves every wait - see [How fast](#how-fast). *Never in these games* keeps it out of games you pick, *Only
 these games* limits it to a list, and *Earn them in the main game too* (on) decides whether a human-mode account's
 main game joins in. Hundreds of hours with no achievements looks odd, so it's best left on.
 
+*Skip multiplayer achievements* (on for a human-mode account, off for a robot) never unlocks achievements that need
+other players: multiplayer, co-op, zombies, versus, ranked and online ones, and prestige in a game with multiplayer.
+Those games keep a record of every match, and an achievement with no match behind it stands out. It goes by the
+achievement's words and its name inside the game: Portal 2's co-op course, Call of Duty's multiplayer, zombies and
+co-op campaign are skipped; "in the Campaign or in Co-op" isn't, and Team Fortress 2's class achievements aren't
+(only its "five friends in one game" ones). Nor is anything that can be done alone too, with words in between: "Alone in
+Single Player or together in Multiplayer" (The Forest), "Complete 10 missions or multiplayer games" (Halo), "7 minutes
+on solo, or 4 minutes on multiplayer" (PAYDAY 2). Words only count where they mean other players: "co-op moves", "the
+chicken coop", "an online forum" and "a Master-ranked weapon" don't, and "versus" in a name alone ("Man versus
+Machine") doesn't either. Skipped ones don't count towards *Finish no more than*. Turning human mode on or off sets it
+to match - unless you change it in the same save; after that it stays what you set.
+
+### How fast
+
+*How fast* stretches or shortens every wait between two unlocks in a game, and nothing else. Two waits apply, and the
+later of the two wins: time on the clock since the last one, and minutes the game was really played since then. For
+most games (the usual figures - a few games have their own):
+
+| | Normal | Careful | Brisk |
+|---|---|---|---|
+| First 3 in a game: clock gap | 20-120 min | 40-240 min | 10-60 min |
+| First 3 in a game: play needed | 25 min | 50 min | 12 min |
+| After that: clock gap | 60-150 min | 120-300 min | 30-75 min |
+| After that: play needed | 25 min | 50 min | 12 min |
+| Quick follow-ups (a level's cluster) | 1-4 min | 2-8 min | 1-2 min |
+| During a `grind` (default 12-24 min) | 12-24 min | 24-48 min | 6-12 min |
+
+So in a long sitting, once the first few are in, it's about one every 1-2.5 hours on normal, every 2-5 hours on
+careful and every 30-75 minutes on brisk, with the odd cluster of two or three. The chance of a cluster (45% early on, 12% after, 25% in a grind) doesn't change. No
+pace changes which achievements are open: the rarity floor goes by hours played, and the order rules, counters,
+DLC holds and the multiplayer skip are the same at every pace. A new choice counts from the next look, within the
+minute - the wait already running is stretched or shortened to match, no restart needed. The hunter's rotation (how
+long it plays each game, rest days) doesn't use it.
+
 ## The order
 
-It earns them in an order a real player could have managed. Mostly that's easiest first, with the second easiest
-now and then so it isn't a perfect robot order. On top of that, nothing comes out of sequence:
+It earns them in an order a real player could have managed: most players first, the fewest last. Now and then it
+takes the second most common instead, so it isn't a perfect robot order - but only when the two are nearly as common
+(the second has at least 85% of the first's players), and never when the second is an ending, a step of the story, a
+New Game+ one or a step of a ladder. On top of that, nothing comes out of sequence:
 
 - "10 kills" waits for "5 kills", whether the number is in the name or only in the description
 - "Chapter Two" waits for "Chapter One", and "Act II" for "Act I"
-- "beat it on Hard" waits for "beat it on Normal"
+- "beat it on Hard" waits for "beat it on Normal", also when they're worded differently ("Finish the campaign on Hard
+  difficulty" and "Complete the game on Normal"). Only when the easier one is about as common or more: an Easy that
+  fewer players have than Normal (most never play Easy) doesn't hold Normal back.
 - "finish the game" and "the final mission" wait for every chapter, mission and act before them, and that includes
   missions with names instead of numbers: "Complete Blood Feud in Campaign" comes before "Finish the Campaign".
-  Multiplayer and side challenges don't hold the ending back.
+  Multiplayer and side challenges don't hold the ending back, and nor do an add-on's own steps.
+- an add-on's ending waits for the base game's. Which achievements are an add-on's is what the game's DLC map says
+  (below), not only the words DLC and expansion.
+- anything in New Game+ waits for every ending of the game it hasn't got yet
+- an achievement for having the others ("Obtain all other achievements", "Unlock every achievement", a Platinum for
+  all trophies) waits until every other achievement in the game is unlocked; "all base game achievements" (Ghost of
+  Tsushima's Living Legend) waits for every other base-game one
+- an achievement with a counter ("Complete 100 parries") is never unlocked before the game's own counter for it gets
+  there. Steam shows that counter next to the achievement, so "37 of 100" beside an unlocked one is a giveaway. Nothing
+  writes the counter, so these wait for real play - and a ladder of counted steps waits with them. While they're short
+  they don't count towards *Finish no more than* or the hunter's "far enough"; that's worked out again every look.
+
+When nothing left in a game could open at any number of hours - all of it waits on the game's own counters, is too
+rare for this account ever (under 1%), or waits on others that stay locked - the game is done for now and the hunter
+moves on. Only for a few days (3-5), or until you play the game yourself: then it's looked at again, in case the
+counters moved.
+
+Steam's figures for how many players have each achievement are what the order is made of. When there are none at all
+for a game (Steam didn't answer, or has none), nothing is unlocked there and it asks again later. One achievement
+without a figure in a game that has them (one added recently) can go, but only after everything else that's open.
+
+An achievement Steam says a client can't set, whatever the game's list says, is left alone for a week instead of
+being tried every hour - only when Steam says so (it puts the stat back, or answers "access denied"), or refuses one
+while others in the same game went through. A plain failure, a timeout, or a family member taking a shared game back
+leaves nothing behind, and a game that's "Steam only" because of refusals is looked at again when the first one runs
+out. A game with only one to three achievements stops at *Finish no more than* as it rounds: three at 90% is all three,
+three at 50% is two.
 
 It also knows how long each game really takes (*Pace by how long games really take*, on). It looks up a typical
 player's hours from SteamSpy's public figures (only the game's ID is sent) and paces to them. "Finish the game"
@@ -48,23 +112,20 @@ a game is played it looks up the game's DLC on Steam's store, slowly (a game wit
 minutes), and unlocks nothing there until it has. The answer is kept for a week, and looked up again sooner when an
 achievement turns up that wasn't in the game's list last time (a new DLC, usually).
 
-Steam publishes which achievements come with a DLC only for newer DLC, so older games with DLC the account doesn't
-own are left alone entirely. More exactly: when the account is missing a DLC that Steam gives no achievement numbers
-for, or whose store page is the base game's own (Call of Duty's Black Ops 6 and 7), or that isn't on the store any
-more, it can't be told which achievements come with it. Then only achievements that are certainly from DLC the
-account owns are unlocked - where Steam's names for that DLC's achievements line up exactly, and not the hidden ones
-just in front of them, which could as well be the DLC nobody can place - and the rest of the game is left alone:
-Fallout: New Vegas, Borderlands 2, Civilization V, Cuphead, and Call of Duty on an account without every DLC. The
-status says so ("can't tell which achievements come with its DLC - left alone") and the hunter moves on to another
-game. Buying the DLC, or anything else that changes the account's licences, has it looked at again - and so does the
-game's DLC being looked up again and coming out different. When Steam didn't answer for some DLC's names, that look-up
-is done again in an hour rather than a week.
+Steam publishes which achievements come with a DLC only for newer DLC. When the account is missing a DLC that Steam
+gives no achievement numbers for, or whose store page is the base game's own (Call of Duty's Black Ops 6 and 7), or
+that isn't on the store any more, it can't be told which achievements come with it: Fallout: New Vegas, Borderlands
+2, Civilization V, Cuphead, and Call of Duty on an account without every DLC. Such a game earns anyway, base game
+first - see [Add-ons Steam doesn't explain](#add-ons-steam-doesnt-explain) below. Buying a DLC, or anything else that
+changes the account's licences, has a game looked at again - and so does the game's DLC being looked up again and
+coming out different. When Steam didn't answer for some DLC's names, that look-up is done again in an hour rather than
+a week.
 
 Owning a DLC means the account's own licence, for good. A family member's copy, a free weekend, a timed trial, a guest
 pass, and a licence that ran out, was refunded or cancelled, or hasn't gone through yet all stay on Steam's list, and
 none of them counts.
 
-Plainly harmless DLC never hold a game: a soundtrack, an artbook, wallpapers, and packs whose name says they are
+Plainly harmless DLC never count as add-ons Steam doesn't explain: a soundtrack, an artbook, wallpapers, and packs whose name says they are
 only looks or in-game money - skins, tracer packs, operator packs, camos, emblems, calling cards, stickers, charm
 packs, outfits, costumes, avatars, profile backgrounds, BlackCell, a battle pass, Pro and Starter packs, a Vault
 Edition Pack, COD Points, and amounts or packs of coins, gems, credits or gold ("1,100 Gold", "Currency Pack"). The
@@ -78,47 +139,49 @@ or a pack of money), "DLC 2", or a "+" or "&" (two things in one) and the like. 
 can't read (Japanese, Chinese, Russian...). A name that doesn't say ("Gunzerker Madness Pack", "Call of Duty League -
 Boston Breach Team Pack") isn't harmless either. And a DLC Steam does give achievement numbers for is always placed
 by those, whatever it's called. About 40 of Call of Duty's nearly 100 DLC come out harmless; the rest (team packs,
-charity packs, Modern Warfare II and III's multiplayer, co-op and vault packs, Warzone) still hold it on an account
+charity packs, Modern Warfare II and III's multiplayer, co-op and vault packs, Warzone) still count on an account
 without them.
 
-### "Is it OK to carry on?"
+### Add-ons Steam doesn't explain
 
-When a game is held whole like that, nocat.farm asks you about it, once. The account's card on the Accounts page and
-its Achievements section say, for example:
+A game like that isn't held. It earns, from the most players to the fewest, and only what is certainly an add-on's
+is held - the same on a human-mode account and a robot:
 
-> **Call of Duty** is paused for achievements. It has add-ons this account doesn't own, and Steam doesn't say which of
-> them come with achievements.
-> Missing: Black Ops 7, Black Ops 6 - Vault Edition Upgrade, and 3 more
+- an add-on's achievements that Steam does list, on an account without that add-on (Call of Duty with Modern Warfare II
+  but not III: III's 39 stay locked);
+- an achievement whose name or description names an add-on the account doesn't own ("Complete Old World Blues");
+- an achievement with "DLC" in its name inside the game (Cuphead's CompleteWorldDLC) while the account is missing any
+  of the game's add-ons - not counting soundtracks, skins and the like.
 
-Skin, team, league, charity and other packs are left out of that list, to keep it short (they still count). Then two
-buttons:
+The game's own layout only changes the order. Steam keeps a game's achievements in numbered slots, and a game's own
+come first, in a row. An add-on added later often gets slots further on, after a gap (Cuphead's base game is in slot
+2, The Delicious Last Course in slot 5), so what comes after the first gap of two empty slots or more is probably an
+add-on's: it's earned after every base-game one that's ready, like a player who finishes the base game first. It's
+never held for that - the layout is a guess, and it's wrong both ways: PAYDAY 2, Dead by Daylight and Left 4 Dead 2
+put free updates of the base game after a gap, and Fallout: New Vegas, Borderlands 2 and Cyberpunk 2077 put their
+add-ons straight after the base game with none. On an account missing those add-ons, `dlc leave` is the safe choice
+for a game like that.
 
-- **I own what matters - carry on**: nothing in the game is held any more just because Steam doesn't say which
-  add-on an achievement comes with. It's looked at again within a minute. Achievements Steam does tie to an add-on the
-  account doesn't own stay locked anyway: on an account with Modern Warfare II but not III, III's 39 are never
-  unlocked.
-- **Leave it paused**: it stays as it is, and you aren't asked again - unless the account gets (or loses) one of
-  the game's add-ons later, when it may ask once more.
+Cuphead without The Delicious Last Course: the four with "DLC" in their names (CompleteWorldDLC, SRankAnyDLC...) stay locked; the add-on's other 10 come
+after the base game's 28. Call of Duty with Modern Warfare II only: II's own come first, III's never, Black Ops 6 and
+7's after II's. Nobody is asked about any of this.
 
-The same question goes in the log, and to Discord or Telegram if *Achievements* notifications are on: "new: Call of
-Duty is paused for achievements - it has add-ons this account doesn't own. Answer on the dashboard, or 'dlc carryon
-new Call of Duty' / 'dlc leave new Call of Duty'." Under the achievements section, "You said carry on for: ..." and
-"You said leave it paused for: ..." list your answers, each with *undo* or *ask again*. In the Console that's
-`dlc undo <account> <game>`. The game can be typed by name (any case, or two letters or more of it) or appID. If two
-of the account's games have the same name, the log line gives the appID instead. Only a game it's asking about, or one
-you've already answered, can be answered. The answers can't be given from Steam chat (see
-[Commands by Steam chat](settings.md#commands-by-steam-chat)).
-
-Only games held whole are asked about, and only ones the pacer or the hunter wanted to work on. A game where Steam
-says exactly which achievements come with the add-on the account doesn't own needs no question: those are never
-unlocked, and the rest of the game carries on.
+To have a game like that left alone instead, type `dlc leave <account> <game>`. Then only achievements that are
+certainly from an add-on the account owns are unlocked there, and the rest of the game is left alone (the status says
+"can't tell which achievements come with its DLC - left alone"). The achievements section lists the games left alone,
+each with *undo*; in the Console that's `dlc undo <account> <game>`. The game can be typed by name (any case, or two
+letters or more of it) or appID. Only a game with add-ons Steam doesn't explain can be left alone. Neither can be done
+from Steam chat (see [Commands by Steam chat](settings.md#commands-by-steam-chat)). Games left paused before this
+version stay left alone. `dlc carryon` isn't needed any more - it still works, and takes back a `dlc leave`.
 
 Those achievements don't count towards *Finish no more than* or the hunter's "far enough", and the status says how
 many were left alone. `dlc myaccount Call of Duty` lists a game's DLC with achievements, whether the account owns
-each, and how many of them it already has - and when the whole game is held, which DLC it's missing and why. `dlc
-myaccount` lists the games it plays where some are left alone. (`dlcach` still works.) In `achievements myaccount <appID>`,
-`[d]` and `[X]` mark achievements that certainly come with an add-on the account doesn't own (locked, and unlocked
-anyway); `[?]` marks ones held because it can't be told.
+each, and how many of them it already has - and which add-ons Steam doesn't explain, why, and how many achievements it
+can't place. `dlc myaccount` lists the games it plays where add-ons matter. (`dlcach` still works.) In
+`achievements myaccount <appID>`, `[d]` and `[X]` mark achievements that certainly come with an add-on the account
+doesn't own (locked, and unlocked anyway); `[h]` marks ones held because they may come with one (they name it, say
+"DLC", or the game was left alone); `[?]` marks ones that are probably an add-on's by the game's layout - earned last,
+after the base game's.
 
 With an account picked in Settings, the Achievements section shows what the pacer is doing in each game and what it
 unlocked recently.
@@ -165,7 +228,13 @@ starts it, then leaves it alone until 20 minutes after they stop.
 For an account that isn't pretending to be anyone, like a throwaway or one you're clearing out, there's **Unlock every
 achievement, in every game this account owns** at the bottom of the account's settings, with Show advanced ticked.
 Every achievement gets the same unlock time, set by Steam, and it can't be back-dated or hidden, so anyone looking
-at the profile can tell. It asks you to type `confirm` first.
+at the profile can tell. It asks you to type `confirm` first. Even then it leaves alone what nobody could have
+earned: an add-on's achievements the account doesn't own (as above - what only looks like an add-on's by the layout is
+unlocked), an achievement whose counter in the game isn't there yet, multiplayer ones when *Skip multiplayer
+achievements* is on, and "obtain all other achievements" while any of the others stay locked. It says how many it left
+and why. `achievements myaccount <appID> unlock all` goes by the same rules, and so does unlocking one by name: it says
+why when it won't (held for an add-on, multiplayer on an account that skips those, short of its counter, or waiting
+on the others).
 
 ---
 

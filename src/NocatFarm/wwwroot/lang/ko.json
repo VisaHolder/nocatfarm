@@ -1048,7 +1048,6 @@
     "Couldn't save those settings": "설정을 저장하지 못했습니다",
     "Its game list didn't load - add games by their store link below.": "게임 목록을 불러오지 못했습니다 - 아래에서 상점 링크로 게임을 추가하세요.",
     ", and {0} now and then": ", 가끔 {0}",
-    "About {0}h on weekdays and {1}h at weekends, from around {2}:00 until about {3}:00, with a day off {4}% of the time.": "평일 약 {0}시간, 주말 약 {1}시간. 대략 {2}:00부터 {3}:00쯤까지 하며, {4}% 확률로 쉬는 날이 있습니다.",
     "Add": "추가",
     "It farms trading cards first. Once they are done, it plays these games to add hours. Tap any you like - or none.": "먼저 트레이딩 카드를 파밍합니다. 다 끝나면 시간을 쌓기 위해 이 게임들을 플레이합니다. 원하는 걸 탭하세요 - 없어도 됩니다.",
     "It will mostly play {0}{1}, with breaks, meals and a bedtime. First it settles in for a few minutes, like somebody who just opened Steam.": "주로 {0}{1} 게임을 플레이하며, 중간에 휴식과 식사, 잠자는 시간이 있습니다. 처음 몇 분은 방금 Steam을 연 사람처럼 자리를 잡습니다.",
@@ -2107,11 +2106,22 @@
     "noted you playing {0} for {1}": "기록: {0}을(를) {1} 동안 플레이함",
     "noted you on the account for {0}": "기록: {0} 동안 계정에 있었음",
     "seen you play on {0} days - its day now leans toward yours": "당신이 {0}일 플레이하는 걸 봤습니다 - 이제 하루를 당신 쪽으로 맞춥니다",
+    "{0} of {1} days seen ({2} weekdays, {3} weekend days), used once it has {1}": "{1}일 중 {0}일 봤습니다 (평일 {2}일, 주말 {3}일), {1}일이 되면 사용",
+    "{0} of {1} days seen, used once it has {1}": "{1}일 중 {0}일 봤습니다, {1}일이 되면 사용",
+    "{0} weekdays and {1} weekend days seen": "평일 {0}일, 주말 {1}일 봤습니다",
+    "{0} days seen": "{0}일 봤습니다",
+    "on around {0}, off around {1}": "{0}쯤 시작, {1}쯤 끝",
+    "weekdays: on around {0}, off around {1}": "평일: {0}쯤 시작, {1}쯤 끝",
+    "weekdays: on around {0}, off around {1} - the whole week's, until it has seen {2} weekdays": "평일: {0}쯤 시작, {1}쯤 끝 - 평일을 {2}일 볼 때까지는 한 주 전체 기준",
+    "weekends: on around {0}, off around {1}": "주말: {0}쯤 시작, {1}쯤 끝",
+    "weekends: on around {0}, off around {1} - the whole week's, until it has seen {2} weekend days": "주말: {0}쯤 시작, {1}쯤 끝 - 주말을 {2}일 볼 때까지는 한 주 전체 기준",
+    "you play {0} more than your list says": "{0}을(를) 목록보다 더 많이 플레이합니다",
     "{0} is playing {1} - joining in for a sitting": "{0}님이 {1} 플레이 중 - 한 세션 함께합니다",
     "trying out {0} - it's new here": "{0} 해 보는 중 - 새로 들어온 게임",
     "couldn't read what friends are playing: {0}": "친구들이 하는 게임을 읽지 못했습니다: {0}",
     "couldn't look for new games: {0}": "새 게임을 찾지 못했습니다: {0}",
     "learns from how you play": "당신의 플레이 방식에서 배움",
+    "Learned from you": "당신에게서 배운 것",
     "tries new games out": "새 게임을 해 봄",
     "has quiet spells and late nights": "조용한 시기와 늦은 밤이 있음",
     "sometimes joins a friend": "가끔 친구와 함께함",
@@ -2132,6 +2142,30 @@
     "backup restored: {0} file(s) - what was there before is in {1}": "백업 복원됨: 파일 {0}개 - 이전 내용은 {1}에 있습니다",
     "Restored {0} file(s). The accounts are starting again.": "파일 {0}개를 복원했습니다. 계정이 다시 시작합니다.",
     "Weekly report": "주간 보고서",
+    "…and {0} more": "…외 {0}개",
+    "off (last week {0})": "꺼짐 (지난주 {0})",
+    "counting starts now": "지금부터 집계",
+    "since the last daily summary": "지난 일일 보고서 이후",
+    "last 24h": "최근 24시간",
+    "since the daily summary at {0} ({1})": "{0} 일일 보고서 이후 ({1})",
+    "Attention": "확인 필요",
+    "{0} played": "{0} 플레이",
+    "not counted yet": "아직 집계 안 됨",
+    "{0} total": "총 {0}",
+    "{0} card": "카드 {0}장",
+    "{0} comment": "댓글 {0}개",
+    "can't sign in": "로그인할 수 없음",
+    "no hours for {0}": "{0} 동안 플레이 시간 없음",
+    "new ban on record": "새 밴 기록",
+    "Steam is blocking its comments": "Steam이 댓글을 막고 있음",
+    "New version": "새 버전",
+    "{0} is out": "{0} 출시됨",
+    "This week": "이번 주",
+    "{0} to {1}": "{0} ~ {1}",
+    "{0} played (last week {1})": "{0} 플레이 (지난주 {1})",
+    "inventory {0} (partial)": "인벤토리 {0} (일부)",
+    "inventory {0}": "인벤토리 {0}",
+    "{0} listed": "{0}개 등록",
     "the PC just woke up": "PC가 방금 절전에서 깨어났습니다",
     "hasn't banked any hours for {0} - it's {1}; it needs you": "{0} 동안 시간을 적립하지 못했습니다 - 상태: {1}; 확인이 필요합니다",
     "hasn't banked any hours for {0} - it's {1}; restarted {2} ago, so not again": "{0} 동안 시간을 적립하지 못했습니다 - 상태: {1}; {2} 전에 재시작했으니 다시는 안 합니다",
@@ -2235,7 +2269,6 @@
     "{0} of them unlocked": "그중 {0}개 달성됨",
     "couldn't read what it has unlocked": "달성한 것을 읽지 못했습니다",
     "{0} from DLC it doesn't own, {1}": "갖고 있지 않은 DLC의 것 {0}개, {1}",
-    "{0}: none of the games it hunts or plays has achievements from DLC it doesn't own": "{0}: 사냥하거나 플레이하는 게임 중 갖고 있지 않은 DLC의 도전 과제가 있는 게임은 없습니다",
     "{0} more game(s) still being looked at - ask again in a few minutes": "게임 {0}개를 아직 확인 중 - 몇 분 뒤에 다시 물어보세요",
     "Still working out {0}'s DLC - try again in a few minutes.": "{0}의 DLC를 아직 알아보는 중입니다 - 몇 분 뒤에 다시 시도하세요.",
     "{0} on {1}: {2} DLC, {3} with achievements in its list": "{1}의 {0}: DLC {2}개, 그중 {3}개는 목록에 도전 과제가 있음",
@@ -2257,8 +2290,6 @@
     "Playing {0} — first checking which of its achievements come with DLC.": "{0} 플레이 중 - 먼저 어떤 도전 과제가 DLC의 것인지 확인하고 있습니다.",
     "\"{0}\" may come with DLC {1} doesn't own, and Steam doesn't list which achievements that DLC adds ({2}) - it won't be unlocked.": "\"{0}\"은(는) {1}이(가) 갖고 있지 않은 DLC의 것일 수 있고, Steam은 그 DLC가 어떤 도전 과제를 추가하는지 알려 주지 않습니다({2}) - 달성하지 않습니다.",
     "{0} left alone - can't tell which achievements come with its DLC": "{0}개는 그대로 둠 - 어떤 도전 과제가 DLC의 것인지 알 수 없음",
-    "can't tell which achievements come with its DLC - left alone": "어떤 도전 과제가 DLC의 것인지 알 수 없음 - 그대로 둠",
-    "{0}: games with achievements left alone for DLC it doesn't own (never unlocked)": "{0}: 갖고 있지 않은 DLC 때문에 그대로 두는 도전 과제가 있는 게임 (달성하지 않음)",
     "Couldn't read which DLC {0} owns just now - nothing in {1} is unlocked until it can. Try again in a few minutes.": "지금은 {0}이(가) 어떤 DLC를 갖고 있는지 읽을 수 없습니다 - 읽을 수 있을 때까지 {1}에서는 아무것도 달성하지 않습니다. 몇 분 뒤에 다시 시도하세요.",
     "Held: {0} is missing DLC, and Steam doesn't list which achievements they add - so {1} achievement(s) outside the DLC it owns are left alone.": "보류: {0}에게 없는 DLC가 있고, Steam은 그 DLC가 어떤 도전 과제를 추가하는지 알려 주지 않습니다 - 그래서 갖고 있는 DLC 밖의 도전 과제 {1}개는 그대로 둡니다.",
     "{0} is missing DLC, and Steam doesn't list which achievements they add - but every achievement outside the DLC it owns is already unlocked, so there's nothing to hold.": "{0}에는 없는 DLC가 있고, Steam은 그 DLC가 어떤 도전 과제를 추가하는지 알려주지 않습니다 - 하지만 보유한 DLC 밖의 도전 과제는 이미 모두 달성되어 보류할 것이 없습니다.",
@@ -2278,30 +2309,11 @@
     "{0}: {1}/{2} - can't tell which achievements come with its DLC - left alone": "{0}: {1}/{2} - 어떤 도전 과제가 DLC의 것인지 알 수 없음 - 그대로 둠",
     "Playing {0} — {1}; can't tell which achievements come with its DLC, so the rest are left alone.": "{0} 플레이 중 - {1}. 어떤 도전 과제가 DLC의 것인지 알 수 없어 나머지는 그대로 둡니다.",
     "see 'dlc {0} {1}'": "'dlc {0} {1}' 참고",
-    "Nothing held in {0} - you said carry on": "{0}에서 보류하는 것 없음 - 계속하라고 답함",
-    "Trusted: you said {0} owns what matters, so nothing in it is held just because Steam doesn't say which add-on an achievement comes with.": "신뢰함: {0}이(가) 중요한 것은 가졌다고 답했으므로, 도전 과제가 어떤 추가 콘텐츠의 것인지 Steam이 말하지 않는다는 이유만으로 보류하는 것은 없습니다.",
-    "Trusted: you said {0} owns what matters. {1} achievement(s) from {2}, which it doesn't own, are still left alone.": "신뢰함: {0}이(가) 중요한 것은 가졌다고 답했습니다. 갖고 있지 않은 {2}의 도전 과제 {1}개는 그대로 둡니다.",
-    "If {0} owns what matters in {1}, answer on the dashboard or type 'dlc carryon {0} {2}'. Achievements that certainly come with an add-on it doesn't own stay locked.": "{0}이(가) {1}에서 중요한 것을 가졌다면 대시보드에서 답하거나 'dlc carryon {0} {2}'를 입력하세요. 갖고 있지 않은 추가 콘텐츠의 것이 확실한 도전 과제는 계속 잠겨 있습니다.",
-    "{0}: carrying on with {1}. Only achievements that certainly come with an add-on it doesn't own stay locked.": "{0}: {1}을(를) 계속합니다. 갖고 있지 않은 추가 콘텐츠의 것이 확실한 도전 과제만 잠긴 채로 둡니다.",
-    "{0}: {1} stays paused for achievements. It won't be asked about again unless its add-ons change.": "{0}: {1}의 도전 과제는 계속 일시 정지합니다. 추가 콘텐츠가 바뀌지 않는 한 다시 묻지 않습니다.",
-    "{0}: there's no answer for {1} to take back.": "{0}: {1}에는 되돌릴 답이 없습니다.",
-    "{0}: took back \"carry on\" for {1}. Nothing in it is unlocked on a guess any more.": "{0}: {1}의 '계속'을 되돌렸습니다. 이제 추측으로 달성되는 것은 없습니다.",
-    "{0}: {1} will be asked about again.": "{0}: {1}에 대해 다시 묻습니다.",
     "Which game? Its name or its appID.": "어떤 게임인가요? 이름이나 appID로.",
     "{0} has no game called \"{1}\". Try its appID - the number in its store link.": "{0}에는 \"{1}\"(이)라는 게임이 없습니다. appID(상점 링크의 숫자)로 해 보세요.",
     "More than one game matches \"{0}\": {1}. Type more of the name, or the appID.": "\"{0}\"에 맞는 게임이 여러 개입니다: {1}. 이름을 더 입력하거나 appID를 입력하세요.",
-    "{0}: {1} is paused for achievements - it has add-ons this account doesn't own. Answer on the dashboard, or 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.": "{0}: {1}의 도전 과제가 일시 정지됨 - 이 계정에 없는 추가 콘텐츠가 있습니다. 대시보드에서 답하거나 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.",
-    "Only skin, team and other packs are missing.": "스킨, 팀 등의 팩만 빠져 있습니다.",
-    "Missing: {0}": "없는 것: {0}",
-    "Missing: {0} add-ons": "없는 것: 추가 콘텐츠 {0}개",
-    "{0} is paused for achievements. It has add-ons this account doesn't own, and Steam doesn't say which of them come with achievements.": "{0}의 도전 과제가 일시 정지되었습니다. 이 계정에 없는 추가 콘텐츠가 있고, 그중 어느 것에 도전 과제가 있는지 Steam이 알려 주지 않습니다.",
-    "Achievements that certainly come with an add-on it doesn't own stay locked either way.": "갖고 있지 않은 추가 콘텐츠의 것이 확실한 도전 과제는 어느 쪽이든 잠긴 채로 둡니다.",
-    "I own what matters - carry on": "중요한 건 가지고 있음 - 계속",
-    "Leave it paused": "일시 정지 유지",
-    "You said carry on for:": "계속하라고 답한 게임:",
     "undo": "되돌리기",
     "You said leave it paused for:": "일시 정지로 두라고 답한 게임:",
-    "ask again": "다시 묻기",
     "not grinding {0} - still refundable (Protect refunds)": "{0} 그라인드 안 함 - 아직 환불 가능 (환불 보호)",
     "not putting {0} first - still refundable (Protect refunds)": "{0} 우선 안 함 - 아직 환불 가능 (환불 보호)",
     "asleep, no games chosen - idling your {0} most-played game(s): {1} · up {2}": "취침 중, 고른 게임 없음 - 가장 많이 한 게임 {0}개로 시간 적립: {1} · {2}에 기상",
@@ -2317,11 +2329,77 @@
     "No game in its library matches - paste its appID or store link.": "라이브러리에 맞는 게임이 없습니다 - appID나 상점 링크를 붙여넣으세요.",
     "Its games haven't been read yet - paste an appID or store link.": "아직 게임 목록을 읽지 못했습니다 - appID나 상점 링크를 붙여넣으세요.",
     "{0}: {1} hasn't been looked at since the app started - try again in a few minutes.": "{0}: 앱이 시작된 뒤로 {1}을(를) 아직 확인하지 않았습니다 - 몇 분 뒤에 다시 해 보세요.",
-    "{0}: {1} isn't paused for add-ons it doesn't own, so there's nothing to answer for it.": "{0}: {1}은(는) 없는 추가 콘텐츠 때문에 일시 정지된 게임이 아니어서 답할 것이 없습니다.",
     "Type more of the game's name, or its appID.": "게임 이름을 더 입력하거나 appID를 입력하세요.",
     "{0}: Claim free games now also claims a free DLC's game when that's free too - that was its own switch, and it was off.": "{0}: 무료 게임 받기가 이제 무료 DLC의 본편도 무료일 때 함께 받습니다 - 원래 따로 있던 스위치였고, 꺼져 있었습니다.",
     "{0}: Bank hours overnight was on with no games listed, which banked nothing - switched off so nothing changes. Turn it on to idle its most-played games overnight.": "{0}: 밤에 시간 쌓기가 켜져 있었지만 목록에 게임이 없어 아무것도 쌓지 않았습니다 - 바뀌는 것이 없도록 껐습니다. 켜면 밤에 가장 많이 한 게임을 돌립니다.",
-    "Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).": "밤에는 오프라인으로 바뀌고, 고른 게임이 없어 가장 많이 한 게임 {0}개를 돌립니다."
+    "Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).": "밤에는 오프라인으로 바뀌고, 고른 게임이 없어 가장 많이 한 게임 {0}개를 돌립니다.",
+    "{0} left alone, as you asked - can't tell which achievements come with its DLC": "요청대로 {0}개는 그대로 둠 - 어떤 도전 과제가 DLC의 것인지 알 수 없음",
+    "earns them anyway, base game first; {0} from DLC it doesn't own left alone": "그래도 달성함, 본편 먼저; 갖고 있지 않은 DLC의 것 {0}개는 그대로 둠",
+    "earns them anyway, base game first - Steam doesn't say which come with the add-ons it doesn't own": "그래도 달성함, 본편 먼저 - 갖고 있지 않은 추가 콘텐츠에 어떤 것이 있는지 Steam이 알려 주지 않음",
+    "{0}: none of the games it hunts or plays has add-ons that matter for achievements": "{0}: 사냥하거나 플레이하는 게임 중 도전 과제에 영향을 주는 추가 콘텐츠가 있는 게임은 없습니다",
+    "{0}: games with add-ons it doesn't own (achievements from those are never unlocked)": "{0}: 갖고 있지 않은 추가 콘텐츠가 있는 게임 (그 도전 과제는 절대 달성하지 않음)",
+    "{0} is missing DLC, and Steam doesn't list which achievements they add. It earns them anyway - the base game's first, and the {1} it can't place after those, in case some come with that DLC.": "{0}에게 없는 DLC가 있고, Steam은 그 DLC가 어떤 도전 과제를 추가하는지 알려 주지 않습니다. 그래도 달성합니다 - 본편 도전 과제 먼저, 어디 것인지 알 수 없는 {1}개는 그 다음에 (그 DLC의 것일 수도 있으니).",
+    "{0} is missing DLC, and Steam doesn't list which achievements they add. It earns them anyway - the base game's first, and the ones it can't place after those.": "{0}에게 없는 DLC가 있고, Steam은 그 DLC가 어떤 도전 과제를 추가하는지 알려 주지 않습니다. 그래도 달성합니다 - 본편 도전 과제 먼저, 어디 것인지 알 수 없는 것은 그 다음에.",
+    "It never touches the achievements of {0}, which it doesn't own.": "갖고 있지 않은 {0}의 도전 과제는 절대 건드리지 않습니다.",
+    "To have {1} left alone instead: 'dlc leave {0} {2}'.": "대신 {1}을(를) 그대로 두려면: 'dlc leave {0} {2}'.",
+    "It's left alone because you asked - 'dlc undo {0} {1}' lets it earn them, base game first.": "요청하셔서 그대로 둡니다 - 'dlc undo {0} {1}'로 다시 달성하게 할 수 있습니다 (본편 먼저).",
+    "{0}: {1} is left alone for achievements now - 'dlc undo {0} {2}' lets it earn them again.": "{0}: 이제 {1}의 도전 과제는 그대로 둡니다 - 'dlc undo {0} {2}'로 다시 달성하게 할 수 있습니다.",
+    "{0}: as far as it has seen, {1} has no add-ons Steam doesn't explain, so there's nothing to leave alone.": "{0}: 지금까지 본 바로는 {1}에 Steam이 설명하지 않는 추가 콘텐츠가 없어서, 그대로 둘 것이 없습니다.",
+    "{0}: {1} isn't left alone, so there's nothing to take back.": "{0}: {1}은(는) 그대로 두고 있지 않아서 되돌릴 것이 없습니다.",
+    "{0}: {1} earns achievements again - the base game's first. Those of an add-on it doesn't own stay locked.": "{0}: {1}은(는) 다시 도전 과제를 달성합니다 - 본편 먼저. 갖고 있지 않은 추가 콘텐츠의 도전 과제는 잠긴 채로 둡니다.",
+    "{0}: 'dlc carryon' isn't needed any more - {1} earns anyway, the base game's achievements first.": "{0}: 'dlc carryon'은 더 이상 필요 없습니다 - {1}은(는) 그래도 달성합니다, 본편 도전 과제 먼저.",
+    "Lets it earn achievements again - the base game's first. Those of an add-on it doesn't own stay locked.": "다시 도전 과제를 달성하게 합니다 - 본편 먼저. 갖고 있지 않은 추가 콘텐츠의 도전 과제는 잠긴 채로 둡니다.",
+    "unlocked {0} in {1} - {2} left locked": "{1}의 {0}개를 해제했습니다 - {2}개는 잠긴 채로 둠",
+    "{0} left locked - the game's own counter for them isn't there yet": "{0}개는 잠긴 채로 둠 - 게임 자체의 카운터가 아직 도달하지 않음",
+    "{0} multiplayer ones skipped": "멀티플레이 도전 과제 {0}개 건너뜀",
+    "{0}: what's left is multiplayer, which this account skips - nothing to grind": "{0}: 남은 것은 멀티플레이 도전 과제이고 이 계정은 건너뜀 - 그라인드할 것이 없음",
+    "{0}: {1}/{2} - the rest are multiplayer achievements, which this account skips": "{0}: {1}/{2} - 나머지는 멀티플레이 도전 과제이고 이 계정은 건너뜀",
+    "{0}: waiting for Steam's figures on how many players have each achievement": "{0}: 도전 과제마다 몇 명이 달성했는지 Steam의 수치를 기다리는 중",
+    "{0}: {1}/{2} - the rest count something in the game, and wait for the game's own counter": "{0}: {1}/{2} - 나머지는 게임 안에서 무언가를 세는 도전 과제이며 게임 자체의 카운터를 기다림",
+    "Playing {0} — {1}; the rest are multiplayer achievements, which this account skips.": "{0} 플레이 중 - {1}. 나머지는 멀티플레이 도전 과제이고 이 계정은 건너뜁니다.",
+    "Playing {0} — waiting for Steam's figures on how many players have each achievement.": "{0} 플레이 중 - 도전 과제마다 몇 명이 달성했는지 Steam의 수치를 기다리는 중입니다.",
+    "Playing {0} — {1}; the rest count something in the game, and wait for the game's own counter.": "{0} 플레이 중 - {1}. 나머지는 게임 안에서 무언가를 세는 도전 과제이며 게임 자체의 카운터를 기다립니다.",
+    "{0} left locked - they're for having all the others, and some of those stay locked": "{0}개는 잠긴 채로 둠 - 다른 모든 것을 가져야 하는 도전 과제인데, 그중 일부가 잠긴 채로 남음",
+    "\"{0}\" needs other players, and {1} skips multiplayer achievements (\"Skip multiplayer achievements\") - it won't be unlocked.": "\"{0}\"은(는) 다른 플레이어가 필요하고, {1}은(는) 멀티플레이 도전 과제를 건너뜁니다(\"멀티플레이 도전 과제 건너뛰기\") - 해제하지 않습니다.",
+    "\"{0}\" counts something in the game, and the game's own counter is at {1} of {2} - it won't be unlocked before the game gets there.": "\"{0}\"은(는) 게임 안의 무언가를 세는 도전 과제이고, 게임 자체의 카운터는 {2} 중 {1}입니다 - 게임이 거기에 도달하기 전에는 해제하지 않습니다.",
+    "\"{0}\" is for having the others, and some of those are still locked - it won't be unlocked before they are.": "\"{0}\"은(는) 다른 도전 과제를 모두 가져야 하는데, 아직 잠긴 것이 있습니다 - 그것들보다 먼저 해제하지 않습니다.",
+    "may come with DLC this account doesn't own - left alone": "이 계정에 없는 DLC의 것일 수 있음 - 그대로 둠",
+    "probably DLC - earned last, after the base game's": "아마 DLC - 본편 것 다음에 마지막으로 획득",
+    "{0} with \"DLC\" in their API name are left alone while it's missing add-ons.": "API 이름에 \"DLC\"가 들어간 {0}개는 추가 콘텐츠가 없는 동안 그대로 둡니다.",
+    "{0}: what's left waits for the game's own counters - nothing to grind": "{0}: 남은 것은 게임 자체의 카운터를 기다립니다 - 그라인드할 것 없음",
+    "{0}: {1}/{2} - nothing left it would earn for now; looked at again in a few days": "{0}: {1}/{2} - 지금은 더 얻을 것이 없음; 며칠 뒤에 다시 확인",
+    "Playing {0} — {1}; nothing left it would earn for now. It looks again in a few days.": "{0} 플레이 중 — {1}; 지금은 더 얻을 것이 없습니다. 며칠 뒤에 다시 확인합니다.",
+    "About {0}h on weekdays and {1}h at weekends, from around {2} until about {3}, with a day off {4}% of the time.": "평일 약 {0}시간, 주말 약 {1}시간. 대략 {2}부터 {3}쯤까지 하며, {4}% 확률로 쉬는 날이 있습니다.",
+    "no set time": "정해진 시간 없음",
+    "end of the day": "하루의 끝",
+    "couldn't save whether mini mode's list was open: {0}": "미니 모드 목록이 열려 있었는지 저장하지 못했습니다: {0}",
+    "no accounts yet - 'full window' to add one": "아직 계정이 없습니다 - '전체 창'에서 추가하세요",
+    "farming {0}": "{0} 파밍 중",
+    "1 card left": "카드 1장 남음",
+    "human mode": "사람 모드",
+    " · {0} farming": " · 파밍 중 {0}",
+    " · {0} idling": " · 유휴 {0}",
+    " · {0} online": " · 온라인 {0}",
+    " · {0} connecting": " · 연결 중 {0}",
+    " · {0} need you": " · 확인 필요 {0}",
+    " · {0} can't sign in": " · 로그인 불가 {0}",
+    " · {0} playing": " · 플레이 중 {0}",
+    " · {0} on a break": " · 휴식 중 {0}",
+    " · {0} done for today": " · 오늘은 끝 {0}",
+    " · {0} on a day off": " · 쉬는 날 {0}",
+    " · {0} night idling": " · 야간 유휴 {0}",
+    " · {0} asleep": " · 취침 중 {0}",
+    " · {0} off": " · 꺼짐 {0}",
+    "{0} today": "오늘 {0}",
+    "{0} past week": "지난 1주 {0}",
+    "{0} past month": "지난 1달 {0}",
+    "1 card today": "오늘 카드 1장",
+    "1 achievement today": "오늘 업적 1개",
+    "{0} achievements today": "오늘 업적 {0}개",
+    "1 comment today": "오늘 댓글 1개",
+    "{0} comments today": "오늘 댓글 {0}개",
+    "{0}/{1} online": "온라인 {0}/{1}",
+    "{0} inventory": "인벤토리 {0}"
   },
   "settings": {
     "WebEnabled": {
@@ -2363,6 +2441,11 @@
     "MiniOnTop": {
       "label": "미니 모드를 항상 위에",
       "tip": "작은 미니 모드 창을 다른 창들 위에 둡니다. 미니 창 제목 표시줄의 핀으로도 바꿀 수 있습니다."
+    },
+    "MiniStats": {
+      "label": "미니 창에 표시",
+      "tip": "미니 창 위쪽 이름 옆에 보이는 숫자 하나입니다. 시간은 모든 계정의 게임 시간을 더한 값이며 일일 요약과 같은 방식으로 셉니다. 실행 중인 게임은 모두 세므로 게임 8개를 하루 종일 돌리면 192시간입니다. 지난 1주와 지난 1달은 오늘을 포함한 최근 7일과 30일입니다. 카드, 업적, 댓글은 최근 24시간 기준입니다.",
+      "choices": "0 없음 | 1 오늘 시간 | 2 지난 1주 시간 | 3 지난 1달 시간 | 4 오늘 카드 | 5 오늘 업적 | 6 오늘 댓글 | 7 온라인 계정 | 8 인벤토리 가치"
     },
     "StartWithWindows": {
       "label": "Windows와 함께 시작",
@@ -2569,11 +2652,11 @@
     },
     "DayStartHour": {
       "label": "대략 접속하는 시각",
-      "tip": "보통 접속하는 시각(24시간제)입니다. 실제 시각은 이 근처에서 달라지고, 주말에는 더 일찍 시작합니다."
+      "tip": "보통 접속하는 시각입니다. 실제 시각은 이 근처에서 달라지고, 주말에는 더 일찍 시작합니다."
     },
     "BedHour": {
       "label": "대략 자는 시각",
-      "tip": "밤에 그만두는 시각(24시간제)입니다. 늦은 시각도 괜찮습니다. 2는 새벽 2시입니다."
+      "tip": "밤에 그만두는 시각입니다. 자정을 넘겨도 괜찮습니다. 늦게까지 하려면 이른 새벽 시각을 고르세요."
     },
     "LateNightExtraHours": {
       "label": "금/토는 더 늦게까지",
@@ -2683,7 +2766,7 @@
     },
     "Rep4RepStartHour": {
       "label": "이 시각부터만 게시",
-      "tip": "이 계정이 하루 중 댓글을 달기 시작하는 가장 이른 시각입니다. 새벽 4시 댓글은 봇이라는 게 금방 티가 납니다."
+      "tip": "이 계정이 하루 중 댓글을 달기 시작하는 가장 이른 시각입니다. 한밤중 댓글은 봇이라는 게 금방 티가 납니다."
     },
     "Rep4RepEndHour": {
       "label": "이 시각까지",
@@ -2875,11 +2958,11 @@
     },
     "FarmFromHour": {
       "label": "이 시각부터만 카드 파밍",
-      "tip": "이 시각부터만 카드를 파밍합니다(24시간제). 이 값과 “...까지”를 둘 다 0으로 두면 언제든 파밍합니다."
+      "tip": "이 시각부터만 카드를 파밍합니다. 이 값과 “...까지”를 둘 다 자정으로 두면 언제든 파밍합니다."
     },
     "FarmUntilHour": {
       "label": "...까지",
-      "tip": "이 시각까지 카드를 파밍합니다(24시간제). 시작 시각보다 이르게 설정하면 자정을 넘깁니다. 22부터 6이면 밤새 파밍합니다."
+      "tip": "이 시각까지 카드를 파밍합니다. 시작 시각보다 이르게 설정하면 자정을 넘깁니다. 늦은 밤부터 이른 아침까지면 밤새 파밍합니다."
     },
     "PostFarmWindDownMinMinutes": {
       "label": "마지막 카드 후 최소 이만큼 더",
@@ -3220,11 +3303,11 @@
     },
     "AutoUpdateFromHour": {
       "label": "...사이(시작)",
-      "tip": "자동으로 설치해도 되는 가장 이른 시각(24시간제)."
+      "tip": "자동으로 설치해도 되는 가장 이른 시각."
     },
     "AutoUpdateUntilHour": {
       "label": "...사이(끝)",
-      "tip": "그날 밤 시도를 멈추는 시각. 시작 시각보다 이르면 자정을 넘기므로 23부터 5도 됩니다."
+      "tip": "그날 밤 시도를 멈추는 시각. 시작 시각보다 이르면 자정을 넘기므로 늦은 밤부터 이른 아침까지도 됩니다."
     },
     "AutoUpdateWaitHours": {
       "label": "출시 후 기다리기",
@@ -3305,7 +3388,7 @@
     },
     "SendAroundHour": {
       "label": "...쯤에",
-      "tip": "보낼 시각(0~23시). 예를 들어 4면 새벽 4시쯤입니다. 그 시간 안의 무작위 분에, \"아이템 보내기 주기\"가 허락하는 날에 보냅니다. -1 = 시각을 정하지 않음: 켠 때부터 몇 시간마다."
+      "tip": "보낼 시각. 예를 들어 이른 새벽입니다. 그 시간 안의 무작위 분에, \"아이템 보내기 주기\"가 허락하는 날에 보냅니다. 시각을 정하지 않음: 켠 때부터 몇 시간마다."
     },
     "IdleWholeLibrary": {
       "label": "라이브러리 전체 돌리기",
@@ -3323,6 +3406,15 @@
       "label": "내가 노는 방식에서 배우기",
       "tip": "당신이 직접 이 계정에서 언제, 어떤 게임을 하는지 기록합니다. 그렇게 7일이 쌓이면 하루를 당신 쪽으로 맞춥니다. 접속하고 잠자리에 드는 시간, 그리고 '플레이할 게임과 빈도'에 있는 게임들 사이의 시간 배분입니다. 그 목록에 없는 게임은 절대 추가하지 않고, 얼마나 오래 하는지는 여전히 시간 설정을 따릅니다. habits 명령으로 배운 내용을 볼 수 있습니다.",
       "choices": "0 끔 | 1 조금 | 2 많이"
+    },
+    "LearnFollow": {
+      "label": "변화 따라가기",
+      "tip": "언제 또는 무엇을 플레이하는지의 변화가 얼마나 빨리 반영되는지. 오래된 날일수록 점점 덜 셉니다 - 빠르게는 새 습관을 1주일쯤에, 느리게는 한 달쯤 걸려 따라갑니다.",
+      "choices": "0 느리게 | 1 보통 | 2 빠르게"
+    },
+    "LearnWeekends": {
+      "label": "주말은 따로",
+      "tip": "토요일과 일요일을 나머지 요일과 따로 배웁니다. 대부분 그때는 다르게 플레이하니까요."
     },
     "NewGamesFirst": {
       "label": "새 게임은 처음에 더 많이 하기",
@@ -3355,7 +3447,7 @@
     },
     "WeeklyReportHour": {
       "label": "주간 보고서 · 시",
-      "tip": "주간 보고서가 오는 시각 (24시간 표기)."
+      "tip": "주간 보고서가 오는 시각 (현지 시간)."
     },
     "OfflineIdleTopGames": {
       "label": "...고른 게임이 없으면 가장 많이 한 게임",
@@ -3379,6 +3471,10 @@
     "BoosterPackGames": {
       "label": "부스터 팩을 만들 게임",
       "tip": "보석을 부스터 팩으로 바꿀 게임입니다. Steam은 게임마다 하루에 한 팩, 아직 카드가 나오는 게임만 허용합니다. 비워 두면 꺼집니다."
+    },
+    "AchievementSkipMultiplayer": {
+      "label": "멀티플레이 도전 과제 건너뛰기",
+      "tip": "다른 플레이어가 필요한 도전 과제는 해제하지 않습니다: 멀티플레이, 협동, 좀비, 대전, 랭크, 온라인. 이런 게임은 매치마다 기록이 남아서, 매치 기록 없는 도전 과제는 눈에 띕니다. 사람 모드 계정은 켜짐, 로봇은 꺼짐. 사람 모드를 켜거나 끄면 그에 맞게 바뀝니다."
     }
   }
 }

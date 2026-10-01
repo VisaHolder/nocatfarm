@@ -37,6 +37,35 @@ public sealed record Achievement {
 	public double? GlobalPercent { get; set; }
 
 	public bool Settable => !Protected;
+
+	/// <summary>
+	/// The count an achievement with a progress bar is earned at ("Complete 100 parries" - 100), or 0 when it has none.
+	/// Steam keeps the count in one of the game's own stats, named in the schema's "progress" block.
+	/// </summary>
+	public double ProgressMax { get; init; }
+
+	/// <summary>Where that count stands on this account, read from the same stat. 0 when the stat was never set.</summary>
+	public double ProgressNow { get; init; }
+
+	/// <summary>
+	/// A counted achievement whose count isn't there yet: "100 parries" with 37 on the counter. Unlocked like that, the
+	/// profile shows it earned while the game's own counter - which Steam shows on the achievement too - says 37 of 100.
+	/// Nothing writes the counter (that would be making up play), so such an achievement waits for the real count.
+	/// A "progress" of 0-1 is only a done/not-done flag, and counts for nothing here.
+	/// </summary>
+	public bool CounterShort => (ProgressMax > 1) && (ProgressNow < ProgressMax);
+
+	/// <summary>
+	/// Which add-on it belongs to, as far as can be told: "" for the base game; the DLC that claims it in the game's DLC
+	/// map; or "?" - in a game whose add-ons Steam doesn't place - for one outside the game's first block of achievements,
+	/// or named "DLC". Worked out for each look at a game (see <see cref="DlcAchievements.AddOnParts"/>) and set here so
+	/// the order rules can ask it: a DLC's ending comes after the game's own, and one part's steps never hold another
+	/// part's ending back.
+	/// </summary>
+	public string AddOnPart { get; set; } = "";
+
+	/// <summary>Belongs to an add-on (<see cref="AddOnPart"/>), owned or not.</summary>
+	public bool AddOn => AddOnPart.Length > 0;
 }
 
 /// <summary>Everything known about one game's achievements, and the raw stat values needed to write them back.</summary>
@@ -97,6 +126,49 @@ public static class Achievements {
 
 	private static readonly HttpClient Http = Browser.Anonymous(TimeSpan.FromSeconds(20));
 	private static readonly Dictionary<uint, Dictionary<string, double>> GlobalCache = [];
+
+	/// <summary>
+	/// What a refused write says about the achievement. <see cref="PutBack"/> and <see cref="NotSettable"/> are about the
+	/// achievement itself; the pacer leaves one refused like that alone for a week (see AchievementPacer.ParkRefusal).
+	/// </summary>
+	public enum Refusal {
+		/// <summary>Not refused: written, or nothing to write.</summary>
+		None,
+
+		/// <summary>The write had no answer, "not now", a timeout, or Fail - nothing learned.</summary>
+		Transient,
+
+		/// <summary>Steam answered no, in a way that doesn't say why (InvalidParam and the like).</summary>
+		Answered,
+
+		/// <summary>Steam said AccessDenied / InsufficientPrivilege: a client can't set it - or a borrowed game's owner is in it.</summary>
+		NotSettable,
+
+		/// <summary>
+		/// Steam took the write and put the stat back as it was ("failed validation"): the game's own servers decide that
+		/// one. Said about the achievement whoever owns the game - a family member starting it gets a refusal, not this.
+		/// </summary>
+		PutBack,
+
+		/// <summary>
+		/// Steam was never asked about the achievement: not connected, the read before the write didn't work, or what the
+		/// account owns changed. Says nothing about the achievement - the pacer counts no strike for it.
+		/// </summary>
+		NotAsked
+	}
+
+	/// <summary>Steam's answers to a write that mean a client may not set it, whatever is tried.</summary>
+	internal static bool MeansNotSettable(EResult result) => result is EResult.AccessDenied or EResult.InsufficientPrivilege;
+
+	/// <summary>
+	/// What kind of refusal a write's answer is - see <see cref="Refusal"/>. Fail is Steam's catch-all, and a family member
+	/// taking a borrowed game back gets it too: nothing learned.
+	/// </summary>
+	internal static Refusal RefusalOf(EResult result) =>
+		result == EResult.OK ? Refusal.None
+		: NotNow(result) || (result is EResult.Fail or EResult.Invalid) ? Refusal.Transient
+		: MeansNotSettable(result) ? Refusal.NotSettable
+		: Refusal.Answered;
 
 	/// <summary>Results that mean "ask again later", as opposed to an answer about the game itself.</summary>
 	private static bool NotNow(EResult result) => result is EResult.Busy or EResult.ServiceUnavailable
@@ -192,6 +264,17 @@ public static class Achievements {
 		string appKey = appId.ToString(CultureInfo.InvariantCulture);
 		KeyValue root = schema.Name == appKey ? schema : schema.Children.FirstOrDefault(k => k.Name == appKey) ?? schema;
 
+		// The game's ordinary stats by name, for the progress bars: an achievement's "progress" block names the stat its
+		// count lives in ("Medic.accum.iHealthPointsHealed"), not its number.
+		Dictionary<string, (uint Id, bool Float)> statsByName = new(StringComparer.Ordinal);
+
+		foreach (KeyValue statNode in root["stats"].Children) {
+			if (uint.TryParse(statNode.Name, NumberStyles.None, CultureInfo.InvariantCulture, out uint id) && (statNode["name"].AsString() is { Length: > 0 } statName)) {
+				string type = statNode["type"].AsString() ?? "";
+				statsByName.TryAdd(statName, (id, type is "2" or "3" or "FLOAT" or "AVGRATE"));
+			}
+		}
+
 		foreach (KeyValue statNode in root["stats"].Children) {
 			if (!IsAchievementStat(statNode["type"])) {
 				continue;
@@ -217,8 +300,10 @@ public static class Achievements {
 					}
 				}
 
-				// permission 2 means Steam awards it server-side and refuses a client write.
-				bool locked = (bitNode["permission"].AsInteger() & 2) != 0;
+				// Any permission bit means Steam keeps it to itself: 2 is awarded server-side, 1 is set by the game's own
+				// trusted servers. A client write is refused either way - and takes the rest of the store request with it.
+				bool locked = (bitNode["permission"].AsInteger() & 3) != 0;
+				(double progressMax, double progressNow) = ProgressOf(bitNode["progress"], statsByName, statValues);
 
 				string display = bitNode["display"]["name"].Children.FirstOrDefault(static k => k.Name == "english")?.Value
 					?? bitNode["display"]["name"].AsString()
@@ -238,7 +323,9 @@ public static class Achievements {
 					StatId = statId,
 					Bit = bit,
 					Unlocked = unlocked,
-					Protected = locked
+					Protected = locked,
+					ProgressMax = progressMax,
+					ProgressNow = progressNow
 				});
 			}
 		}
@@ -247,6 +334,28 @@ public static class Achievements {
 		await AddGlobalPercentagesAsync(set, bot.Name, ct).ConfigureAwait(false);
 
 		return set;
+	}
+
+	/// <summary>
+	/// An achievement's progress bar: the count it is earned at, and where the account's counter stands. The block is
+	/// { min_val, max_val, value { operation "statvalue", operand1 "&lt;stat name&gt;" } }. No block, no count: (0, 0). A
+	/// stat the account never set reads 0 - Steam leaves untouched stats out of its answer.
+	/// </summary>
+	internal static (double Max, double Now) ProgressOf(KeyValue progress, IReadOnlyDictionary<string, (uint Id, bool Float)> statsByName, IReadOnlyDictionary<uint, uint> values) {
+		if ((progress == KeyValue.Invalid) || (progress.Children.Count == 0)
+			|| !double.TryParse(progress["max_val"].AsString(), NumberStyles.Float, CultureInfo.InvariantCulture, out double max) || (max <= 0)) {
+			return (0, 0);
+		}
+
+		// A counter whose stat can't be found reads as nothing done: held, rather than taken as finished.
+		if ((progress["value"]["operand1"].AsString() is not { Length: > 0 } name) || !statsByName.TryGetValue(name, out (uint Id, bool Float) stat)) {
+			return (max, 0);
+		}
+
+		uint raw = values.GetValueOrDefault(stat.Id);
+
+		// Integer stats are signed; float ones are the float's own bits.
+		return (max, stat.Float ? BitConverter.Int32BitsToSingle(unchecked((int) raw)) : unchecked((int) raw));
 	}
 
 	/// <summary>
@@ -265,8 +374,19 @@ public static class Achievements {
 	/// changed or the game was taken off the owner's vouched-for list since, and nothing is unlocked.
 	/// </summary>
 	public static async Task<(bool Ok, string Message, int Changed)> SetAsync(Bot bot, AchievementSet set, IEnumerable<Achievement> which, bool unlock, CancellationToken ct = default, DlcAchievements.View? dlc = null) {
+		(bool ok, string message, int changed, Refusal _) = await SetCheckedAsync(bot, set, which, unlock, ct, dlc).ConfigureAwait(false);
+
+		return (ok, message, changed);
+	}
+
+	/// <summary>
+	/// <see cref="SetAsync"/>, also saying what kind of no Steam's answer was, if it was one (<see cref="Refusal"/>). The
+	/// pacer remembers an achievement Steam says a client can't set rather than asking again every hour: Steam keeps some
+	/// for itself without the schema saying so.
+	/// </summary>
+	public static async Task<(bool Ok, string Message, int Changed, Refusal Refused)> SetCheckedAsync(Bot bot, AchievementSet set, IEnumerable<Achievement> which, bool unlock, CancellationToken ct = default, DlcAchievements.View? dlc = null) {
 		if (bot.Stats == null) {
-			return (false, "not connected", 0);
+			return (false, "not connected", 0, Refusal.NotAsked);
 		}
 
 		// One write per account and game at a time, worked out from the stats as they are NOW. A write stores whole
@@ -278,7 +398,7 @@ public static class Achievements {
 
 		try {
 			if (unlock && (dlc != null) && !dlc.StillSo(bot)) {
-				return (false, new Said("what this account owns changed a moment ago - nothing was unlocked, try again").ToString(), 0);
+				return (false, new Said("what this account owns changed a moment ago - nothing was unlocked, try again").ToString(), 0, Refusal.NotAsked);
 			}
 
 			return await SetLatestAsync(bot, set, which, unlock, ct).ConfigureAwait(false);
@@ -292,15 +412,15 @@ public static class Achievements {
 
 	private static readonly System.Collections.Concurrent.ConcurrentDictionary<(string Bot, uint App), SemaphoreSlim> Gates = new();
 
-	private static async Task<(bool Ok, string Message, int Changed)> SetLatestAsync(Bot bot, AchievementSet set, IEnumerable<Achievement> which, bool unlock, CancellationToken ct) {
+	private static async Task<(bool Ok, string Message, int Changed, Refusal Refused)> SetLatestAsync(Bot bot, AchievementSet set, IEnumerable<Achievement> which, bool unlock, CancellationToken ct) {
 		if (bot.Stats == null) {
-			return (false, "not connected", 0);
+			return (false, "not connected", 0, Refusal.NotAsked);
 		}
 
 		CMsgClientGetUserStatsResponse? latest = await bot.Stats.GetUserStatsAsync(set.AppId, bot.SteamId, ct).ConfigureAwait(false);
 
 		if ((latest == null) || ((EResult) latest.eresult != EResult.OK)) {
-			return (false, $"Steam didn't say what's unlocked right now ({(latest == null ? "no answer" : (EResult) latest.eresult)}) - try again shortly", 0);
+			return (false, $"Steam didn't say what's unlocked right now ({(latest == null ? "no answer" : (EResult) latest.eresult)}) - try again shortly", 0, Refusal.NotAsked);
 		}
 
 		Dictionary<uint, uint> now = [];
@@ -317,6 +437,7 @@ public static class Achievements {
 		// InvalidParam, because most of a game's stats are ordinary counters and many are marked increment-only.
 		// Re-submitting those at their existing value is not a no-op to Steam, it is an invalid write.
 		Dictionary<uint, uint> changed = [];
+		Dictionary<uint, int> perStat = [];
 		int touched = 0;
 
 		foreach (Achievement achievement in which) {
@@ -335,22 +456,36 @@ public static class Achievements {
 			}
 
 			changed[achievement.StatId] = updated;
+			perStat[achievement.StatId] = perStat.GetValueOrDefault(achievement.StatId) + 1;
 			touched++;
 		}
 
 		if (touched == 0) {
-			return (true, "nothing to change", 0);
+			return (true, "nothing to change", 0, Refusal.None);
 		}
 
-		EResult result = await bot.Stats.StoreUserStatsAsync(set.AppId, bot.SteamId, changed, crc, ct).ConfigureAwait(false);
+		(EResult result, IReadOnlyCollection<uint> putBack) = await bot.Stats.StoreUserStatsAsync(set.AppId, bot.SteamId, changed, crc, ct).ConfigureAwait(false);
 
 		if (result != EResult.OK) {
 			Log.Debug($"achievement write for {set.AppId} refused: {result} ({touched} achievement(s), {changed.Count} stat(s))", bot.Name);
+
+			return (false, $"Steam refused it ({result})", 0, RefusalOf(result));
 		}
 
-		return result == EResult.OK
-			? (true, $"{touched} achievement(s) {(unlock ? "unlocked" : "re-locked")}", touched)
-			: (false, $"Steam refused it ({result})", 0);
+		// OK, but with stats Steam put back as they were ("failed validation"): the achievements in those weren't set - and
+		// that is Steam saying a client can't set them. Taken as unlocked before, they were logged and counted while still
+		// locked on the profile.
+		int refused = putBack.Distinct().Where(perStat.ContainsKey).Sum(id => perStat[id]);
+
+		if (refused > 0) {
+			Log.Debug($"achievement write for {set.AppId}: Steam put back {refused} achievement(s) in {putBack.Count} stat(s)", bot.Name);
+		}
+
+		int done = touched - refused;
+
+		return done > 0
+			? (true, $"{done} achievement(s) {(unlock ? "unlocked" : "re-locked")}", done, Refusal.None)
+			: (false, "Steam put it back - a client isn't allowed to set it", 0, Refusal.PutBack);
 	}
 
 	/// <summary>
@@ -436,7 +571,7 @@ public static class Achievements {
 /// </summary>
 public sealed class UserStatsHandler : ClientMsgHandler {
 	private readonly Dictionary<JobID, TaskCompletionSource<CMsgClientGetUserStatsResponse>> _pendingGets = [];
-	private readonly Dictionary<JobID, TaskCompletionSource<EResult>> _pendingStores = [];
+	private readonly Dictionary<JobID, TaskCompletionSource<(EResult, IReadOnlyCollection<uint>)>> _pendingStores = [];
 
 	public override void HandleMsg(IPacketMsg packetMsg) {
 		ArgumentNullException.ThrowIfNull(packetMsg);
@@ -457,9 +592,12 @@ public sealed class UserStatsHandler : ClientMsgHandler {
 			case EMsg.ClientStoreUserStatsResponse: {
 				ClientMsgProtobuf<CMsgClientStoreUserStatsResponse> msg = new(packetMsg);
 
+				// The stats Steam put back as they were come with the answer, even an OK one.
+				List<uint> putBack = [.. (msg.Body.stats_failed_validation ?? []).Select(static f => f.stat_id)];
+
 				lock (_pendingStores) {
-					if (_pendingStores.Remove(packetMsg.TargetJobID, out TaskCompletionSource<EResult>? waiting)) {
-						waiting.TrySetResult((EResult) msg.Body.eresult);
+					if (_pendingStores.Remove(packetMsg.TargetJobID, out TaskCompletionSource<(EResult, IReadOnlyCollection<uint>)>? waiting)) {
+						waiting.TrySetResult(((EResult) msg.Body.eresult, putBack));
 					}
 				}
 
@@ -497,9 +635,10 @@ public sealed class UserStatsHandler : ClientMsgHandler {
 		return (await WaitAsync(answer.Task, () => Forget(_pendingGets, request.SourceJobID), ct).ConfigureAwait(false)).Value;
 	}
 
-	public async Task<EResult> StoreUserStatsAsync(uint appId, ulong steamId, Dictionary<uint, uint> statValues, uint crcStats, CancellationToken ct = default) {
+	/// <summary>Store the stats: Steam's answer, and the stats it put back as they were (refused one by one).</summary>
+	public async Task<(EResult Result, IReadOnlyCollection<uint> PutBack)> StoreUserStatsAsync(uint appId, ulong steamId, Dictionary<uint, uint> statValues, uint crcStats, CancellationToken ct = default) {
 		if (Client == null) {
-			return EResult.NoConnection;
+			return (EResult.NoConnection, []);
 		}
 
 		ClientMsgProtobuf<CMsgClientStoreUserStats2> request = new(EMsg.ClientStoreUserStats2) {
@@ -520,7 +659,7 @@ public sealed class UserStatsHandler : ClientMsgHandler {
 			request.Body.stats.Add(new CMsgClientStoreUserStats2.Stats { stat_id = statId, stat_value = value });
 		}
 
-		TaskCompletionSource<EResult> answer = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		TaskCompletionSource<(EResult, IReadOnlyCollection<uint>)> answer = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
 		lock (_pendingStores) {
 			_pendingStores[request.SourceJobID] = answer;
@@ -528,9 +667,9 @@ public sealed class UserStatsHandler : ClientMsgHandler {
 
 		Client.Send(request);
 
-		(bool ok, EResult result) = await WaitAsync(answer.Task, () => Forget(_pendingStores, request.SourceJobID), ct).ConfigureAwait(false);
+		(bool ok, (EResult, IReadOnlyCollection<uint>) result) = await WaitAsync(answer.Task, () => Forget(_pendingStores, request.SourceJobID), ct).ConfigureAwait(false);
 
-		return ok ? result : EResult.Timeout;
+		return ok ? result : (EResult.Timeout, []);
 	}
 
 	/// <summary>Wait with a ceiling, and never leave the pending entry behind when it expires. Returns Ok=false

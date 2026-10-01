@@ -46,7 +46,37 @@ public sealed class OwnerHabits {
 	/// <summary>Goes up with every change, so what's worked out from the list can be kept until it changes.</summary>
 	internal int Version { get; private set; }
 
-	internal static DateTime DayOf(DateTime local) => local.AddHours(-DayStartsAtHour).Date;
+	public static DateTime DayOf(DateTime local) => local.AddHours(-DayStartsAtHour).Date;
+
+	/// <summary>Saturday and Sunday - by his own 5am-to-5am day, so Friday's late night is still a weekday.</summary>
+	public static bool IsWeekend(DateTime day) => day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+
+	/// <summary>
+	/// Weekdays seen before the weekdays get a picture of their own: one whole working week. Fewer and it's a couple of
+	/// days off sick, not how his weeks go.
+	/// </summary>
+	internal const int WeekdaysNeeded = 5;
+
+	/// <summary>
+	/// Weekend days seen before the weekends get a picture of their own: two weekends. One weekend can be a trip or a
+	/// LAN party - two that agree are a habit.
+	/// </summary>
+	internal const int WeekendDaysNeeded = 4;
+
+	/// <summary>
+	/// "Keeps up with changes": how many days until a day of his counts half as much as today - slowly 28, normal 14,
+	/// quickly 7. With the old days fading like that, a new routine outweighs everything before it after about one
+	/// half-life, however long the old one went on: a week at quickly, two at normal, about a month at slowly.
+	/// </summary>
+	public static double HalfLife(int setting) => setting switch {
+		0 => 28,
+		2 => 7,
+		_ => 14
+	};
+
+	/// <summary>How much a sitting counts now: all of it today, half after one half-life, a quarter after two.</summary>
+	public static double Weight(DateTime start, DateTime now, double halfLifeDays) =>
+		Math.Pow(0.5, Math.Max(0, (now - start).TotalDays) / Math.Max(1, halfLifeDays));
 
 	private List<Sitting> Snapshot() {
 		lock (_gate) {
@@ -54,53 +84,41 @@ public sealed class OwnerHabits {
 		}
 	}
 
-	/// <summary>How many different days he's been seen playing.</summary>
+	/// <summary>How many different days he's been seen playing. Every day counts as one here - the fade is about what's learned, not how much was seen.</summary>
 	public int DaysSeen => Snapshot().Select(static s => DayOf(s.Start)).Distinct().Count();
 
 	/// <summary>Enough seen to go on.</summary>
 	public bool Ready => DaysSeen >= DaysNeeded;
 
-	/// <summary>
-	/// Each day seen: when he first sat down and when he last got up, in minutes from that day's midnight - past 1440 is
-	/// after midnight, the small hours of the same evening.
-	/// </summary>
-	public List<(int Start, int End)> Days() => [.. Snapshot()
-		.GroupBy(static s => DayOf(s.Start))
-		.OrderBy(static g => g.Key)
-		.Select(static g => ((int) (g.Min(static s => s.Start) - g.Key).TotalMinutes, (int) g.Max(s => (s.Start.AddMinutes(s.Minutes) - g.Key).TotalMinutes)))];
+	/// <summary>Which of his days a picture is drawn from.</summary>
+	public enum Part { All, Weekdays, Weekends }
 
-	/// <summary>One of his days at random - the pull on a day is toward a real day of his, not an average nobody ever had.</summary>
-	internal (int Start, int End)? SampleDay(Random rng) {
-		List<(int Start, int End)> days = Days();
+	/// <summary>What he does as of <paramref name="now"/>, from some of his days, each counting less the older it is.</summary>
+	public HabitPicture Picture(DateTime now, double halfLifeDays, Part part = Part.All) {
+		IEnumerable<Sitting> sittings = Snapshot();
 
-		return days.Count == 0 ? null : days[rng.Next(days.Count)];
+		if (part != Part.All) {
+			sittings = sittings.Where(s => IsWeekend(DayOf(s.Start)) == (part == Part.Weekends));
+		}
+
+		return new HabitPicture(part, sittings, now, halfLifeDays);
 	}
 
-	/// <summary>Minutes on each game (the ones Steam named).</summary>
-	public Dictionary<uint, int> MinutesByGame() => Snapshot().Where(static s => s.App != 0).GroupBy(static s => s.App)
-		.ToDictionary(static g => g.Key, static g => g.Sum(static s => s.Minutes));
+	/// <summary>
+	/// Everything "Learn from how I play" goes on, as of now: the whole week, and - with "Weekends separately" on - the
+	/// weekdays and the weekends apart, each only once it has seen enough of its own days.
+	/// </summary>
+	public LearnedHabits Learn(DateTime now, double halfLifeDays, bool weekendsApart) {
+		HabitPicture all = Picture(now, halfLifeDays);
 
-	/// <summary>For each hour of the clock, the share of his days he was playing in it.</summary>
-	public double[] HourShare() {
-		List<Sitting> all = Snapshot();
-		HashSet<(DateTime Day, int Hour)> on = [];
-
-		foreach (Sitting s in all) {
-			DateTime end = s.Start.AddMinutes(s.Minutes);
-
-			for (DateTime t = s.Start; t < end; t = t.AddMinutes(15)) {
-				on.Add((DayOf(t), t.Hour));
-			}
+		if (!weekendsApart) {
+			return new LearnedHabits(all, null, null, false);
 		}
 
-		int days = Math.Max(1, all.Select(static s => DayOf(s.Start)).Distinct().Count());
-		double[] share = new double[24];
+		HabitPicture weekdays = Picture(now, halfLifeDays, Part.Weekdays);
+		HabitPicture weekends = Picture(now, halfLifeDays, Part.Weekends);
 
-		foreach ((DateTime _, int hour) in on) {
-			share[hour] += 1.0 / days;
-		}
-
-		return share;
+		return new LearnedHabits(all, weekdays, weekends, true);
 	}
 
 	/// <summary>
@@ -133,11 +151,31 @@ public sealed class OwnerHabits {
 		return string.Join(", ", blocks);
 	}
 
-	/// <summary>The middle of a list - what a "usual" time is, without one odd night dragging it about the way an average would.</summary>
-	internal static int Median(IEnumerable<int> values) {
-		List<int> sorted = [.. values.Order()];
+	/// <summary>
+	/// The middle of a list where each value counts by its weight - what a "usual" time is, without one odd night
+	/// dragging it about the way an average would. It is always a time he really had: it moves to a new routine once
+	/// that one carries more than half the weight, rather than drifting through times nobody ever kept.
+	/// </summary>
+	internal static int WeightedMedian(IEnumerable<(int Value, double Weight)> values) {
+		List<(int Value, double Weight)> sorted = [.. values.Where(static v => v.Weight > 0).OrderBy(static v => v.Value)];
 
-		return sorted.Count == 0 ? 0 : sorted[sorted.Count / 2];
+		if (sorted.Count == 0) {
+			return 0;
+		}
+
+		double half = sorted.Sum(static v => v.Weight) / 2;
+		double run = 0;
+
+		foreach ((int value, double weight) in sorted) {
+			run += weight;
+
+			// Past half, not at it: with equal weights that is the upper middle, the one a plain median picks.
+			if (run > half + 1e-9) {
+				return value;
+			}
+		}
+
+		return sorted[^1].Value;
 	}
 
 	/// <summary>Minutes from midnight as a clock time - 1530 (past midnight) reads 01:30.</summary>
@@ -146,6 +184,9 @@ public sealed class OwnerHabits {
 
 		return $"{m / 60:00}:{m % 60:00}";
 	}
+
+	/// <summary>A usual time as somebody would say it: to the nearest quarter hour. "Around 15:07" reads like a timetable.</summary>
+	internal static string Around(int minutes) => Clock((int) Math.Round(minutes / 15.0) * 15);
 
 	/// <summary>Keep a sitting, and let go of anything older than <see cref="KeepDays"/>.</summary>
 	public void Add(Sitting sitting, DateTime now) {
@@ -216,6 +257,127 @@ public sealed class OwnerHabits {
 }
 
 /// <summary>
+/// What's been learned from some of his days, as of one moment. Every sitting counts by its age
+/// (<see cref="OwnerHabits.Weight"/>), so all of it - his usual times, his hours, his games - leans toward lately: a
+/// change in his routine shows up here bit by bit instead of waiting for the old one to fall out of the 60 days.
+/// </summary>
+public sealed class HabitPicture {
+	/// <summary>
+	/// One day of his: when he first sat down and when he last got up, in minutes from that day's midnight - past 1440 is
+	/// after midnight, the small hours of the same evening - and how much the day counts (its first sitting's weight).
+	/// </summary>
+	public readonly record struct Day(DateTime Date, int Start, int End, double Weight);
+
+	internal HabitPicture(OwnerHabits.Part part, IEnumerable<OwnerHabits.Sitting> sittings, DateTime now, double halfLifeDays) {
+		List<OwnerHabits.Sitting> all = [.. sittings];
+		double WeightOf(OwnerHabits.Sitting s) => OwnerHabits.Weight(s.Start, now, halfLifeDays);
+
+		Part = part;
+		Days = [.. all.GroupBy(static s => OwnerHabits.DayOf(s.Start)).OrderBy(static g => g.Key).Select(g => {
+			OwnerHabits.Sitting first = g.MinBy(static s => s.Start)!;
+
+			return new Day(g.Key, (int) (first.Start - g.Key).TotalMinutes, (int) g.Max(s => (s.Start.AddMinutes(s.Minutes) - g.Key).TotalMinutes), WeightOf(first));
+		})];
+
+		Games = all.Where(static s => s.App != 0).GroupBy(static s => s.App).ToDictionary(static g => g.Key, g => g.Sum(s => s.Minutes * WeightOf(s)));
+		UsualStart = OwnerHabits.WeightedMedian(Days.Select(static d => (d.Start, d.Weight)));
+		UsualEnd = OwnerHabits.WeightedMedian(Days.Select(static d => (d.End, d.Weight)));
+
+		// Each hour of each day he was on in, counted once, by that day's weight - over all his days' weight. The day's own
+		// weight, not the sitting's: a later sitting weighs more than the day's first, and a sitting running on past the
+		// day's turn counted in a day that wasn't one of his - on top, not in the total under it, so an hour he was on
+		// most days read as more than every day. A sitting running into a day he didn't start one on stays in its own.
+		Dictionary<DateTime, double> dayWeight = Days.ToDictionary(static d => d.Date, static d => d.Weight);
+		HashSet<(DateTime Day, int Hour)> on = [];
+
+		foreach (OwnerHabits.Sitting s in all) {
+			DateTime end = s.Start.AddMinutes(s.Minutes);
+			DateTime own = OwnerHabits.DayOf(s.Start);
+
+			for (DateTime t = s.Start; t < end; t = t.AddMinutes(15)) {
+				DateTime day = OwnerHabits.DayOf(t);
+				on.Add((dayWeight.ContainsKey(day) ? day : own, t.Hour));
+			}
+		}
+
+		double total = Days.Sum(static d => d.Weight);
+		HourShare = new double[24];
+
+		foreach ((DateTime day, int hour) in on) {
+			HourShare[hour] += total > 0 ? dayWeight[day] / total : 0;
+		}
+
+		for (int h = 0; h < 24; h++) {
+			HourShare[h] = Math.Clamp(HourShare[h], 0, 1);   // sums of fractions can land a hair over 1
+		}
+	}
+
+	public OwnerHabits.Part Part { get; }
+
+	/// <summary>His days in this picture, oldest first.</summary>
+	public IReadOnlyList<Day> Days { get; }
+
+	/// <summary>How many different days it is drawn from - each one counted once, however old.</summary>
+	public int DaysSeen => Days.Count;
+
+	/// <summary>When he usually gets on and gets off, in the same minutes as <see cref="Day"/>.</summary>
+	public int UsualStart { get; }
+
+	public int UsualEnd { get; }
+
+	/// <summary>His minutes on each game Steam named, each sitting's counted by its weight - only the split means anything.</summary>
+	public IReadOnlyDictionary<uint, double> Games { get; }
+
+	/// <summary>For each hour of the clock, how much of his (weighted) days he was playing in it.</summary>
+	public double[] HourShare { get; }
+
+	/// <summary>
+	/// One of his days at random, the recent ones likelier - the pull on a day is toward a real day of his, not an average
+	/// nobody ever had. One roll of the dice, null when there are no days.
+	/// </summary>
+	public (int Start, int End)? SampleDay(Random rng) {
+		if (Days.Count == 0) {
+			return null;
+		}
+
+		double pick = rng.NextDouble() * Days.Sum(static d => d.Weight);
+
+		foreach (Day day in Days) {
+			pick -= day.Weight;
+
+			if (pick < 0) {
+				return (day.Start, day.End);
+			}
+		}
+
+		return (Days[^1].Start, Days[^1].End);
+	}
+}
+
+/// <summary>
+/// Everything "Learn from how I play" goes on, as of one moment: the whole week, and - with "Weekends separately" on -
+/// the weekdays and the weekends each on their own.
+/// </summary>
+public sealed record LearnedHabits(HabitPicture All, HabitPicture? Weekdays, HabitPicture? Weekends, bool Apart) {
+	/// <summary>Used at all: a week of days seen, whichever days they were - the same 7 as ever.</summary>
+	public bool Ready => All.DaysSeen >= OwnerHabits.DaysNeeded;
+
+	/// <summary>The weekdays have seen enough of their own to go by.</summary>
+	public bool WeekdaysOwn => Apart && (Weekdays?.DaysSeen >= OwnerHabits.WeekdaysNeeded);
+
+	/// <summary>The weekends have seen enough of their own to go by.</summary>
+	public bool WeekendsOwn => Apart && (Weekends?.DaysSeen >= OwnerHabits.WeekendDaysNeeded);
+
+	/// <summary>
+	/// What a day on this date goes by: its own half of the week once that half has seen enough days, and the whole week
+	/// until then - two weekend days are too few to copy, but the whole week is still a better guess than nothing.
+	/// </summary>
+	public HabitPicture For(DateTime date) => OwnerHabits.IsWeekend(date.Date)
+		? WeekendsOwn ? Weekends! : All
+		: WeekdaysOwn ? Weekdays! : All;
+}
+
+/// <summary>
 /// Turns "Steam says somebody else is playing on this account" - read every tick - into finished sittings.
 /// </summary>
 internal sealed class OwnerWatch {
@@ -277,8 +439,8 @@ internal sealed class OwnerWatch {
 /// <summary>A day's longer rhythm: part of a quiet spell (shorter days, by how much), or a late night.</summary>
 internal readonly record struct DayRhythm(bool Quiet, int QuietPct, bool LateNight, int LateMinutes);
 
-/// <summary>What a day's roll takes on top of the settings: its rhythm, and his habits with how hard they pull.</summary>
-internal sealed record DayExtras(DayRhythm Rhythm, OwnerHabits? Habits, double Pull);
+/// <summary>What a day's roll takes on top of the settings: its rhythm, and his habits for that day with how hard they pull.</summary>
+internal sealed record DayExtras(DayRhythm Rhythm, HabitPicture? Habits, double Pull);
 
 /// <summary>A game that just arrived, being tried out: how strongly today, from when, for how many days.</summary>
 internal readonly record struct Trial(uint App, double Strength, DateTime Start, int Days);
@@ -302,12 +464,12 @@ internal static class HumanHabits {
 	/// reweighted: a game he plays that isn't in the list is never added, so nothing turns up on the account that you
 	/// didn't put there yourself ('habits' names those so you can add them). Nothing he played in the list: unchanged.
 	/// </summary>
-	internal static List<(uint Game, int Weight)> Reweight(List<(uint Game, int Weight)> weights, IReadOnlyDictionary<uint, int> learned, double pull) {
+	internal static List<(uint Game, int Weight)> Reweight(List<(uint Game, int Weight)> weights, IReadOnlyDictionary<uint, double> learned, double pull) {
 		if ((weights.Count < 2) || (pull <= 0)) {
 			return weights;
 		}
 
-		double seen = weights.Sum(w => (double) learned.GetValueOrDefault(w.Game));
+		double seen = weights.Sum(w => learned.GetValueOrDefault(w.Game));
 
 		if (seen <= 0) {
 			return weights;
@@ -324,6 +486,76 @@ internal static class HumanHabits {
 		}
 
 		return leaned;
+	}
+
+	// ── what's been learned, said plainly ('habits', 'human' and the dashboard all say it the same way) ──
+	/// <summary>How many of his days it has seen - weekdays and weekends apart when it learns them apart - and, before a week, how far off using them it is.</summary>
+	internal static Said Seen(LearnedHabits learned) {
+		int days = learned.All.DaysSeen;
+		int weekdays = learned.Weekdays?.DaysSeen ?? 0;
+		int weekends = learned.Weekends?.DaysSeen ?? 0;
+
+		if (!learned.Ready) {
+			return learned.Apart
+				? new Said("{0} of {1} days seen ({2} weekdays, {3} weekend days), used once it has {1}", days, OwnerHabits.DaysNeeded, weekdays, weekends)
+				: new Said("{0} of {1} days seen, used once it has {1}", days, OwnerHabits.DaysNeeded);
+		}
+
+		return learned.Apart ? new Said("{0} weekdays and {1} weekend days seen", weekdays, weekends) : new Said("{0} days seen", days);
+	}
+
+	/// <summary>
+	/// When he usually gets on and off. Learned apart, the weekdays and the weekends each - and a half that hasn't seen
+	/// enough days of its own says it's going by the whole week for now, so nobody wonders why his Saturdays aren't showing.
+	/// </summary>
+	internal static List<Said> Times(LearnedHabits learned) {
+		HabitPicture all = learned.All;
+		string on = OwnerHabits.Around(all.UsualStart), off = OwnerHabits.Around(all.UsualEnd);
+
+		if (!learned.Apart) {
+			return [new Said("on around {0}, off around {1}", on, off)];
+		}
+
+		HabitPicture weekdays = learned.Weekdays!, weekends = learned.Weekends!;
+
+		return [
+			learned.WeekdaysOwn
+				? new Said("weekdays: on around {0}, off around {1}", OwnerHabits.Around(weekdays.UsualStart), OwnerHabits.Around(weekdays.UsualEnd))
+				: new Said("weekdays: on around {0}, off around {1} - the whole week's, until it has seen {2} weekdays", on, off, OwnerHabits.WeekdaysNeeded),
+			learned.WeekendsOwn
+				? new Said("weekends: on around {0}, off around {1}", OwnerHabits.Around(weekends.UsualStart), OwnerHabits.Around(weekends.UsualEnd))
+				: new Said("weekends: on around {0}, off around {1} - the whole week's, until it has seen {2} weekend days", on, off, OwnerHabits.WeekendDaysNeeded)
+		];
+	}
+
+	/// <summary>How far past its share in the list a game of his has to be before it's worth saying - in points of his time.</summary>
+	internal const double PlaysMoreBy = 10;
+
+	/// <summary>
+	/// The game in "Games and how often" he plays clearly more than the list gives it (by <see cref="PlaysMoreBy"/> points
+	/// or more of the time he spends on the listed games), the clearest one - or 0 when the list is about right.
+	/// </summary>
+	internal static uint PlaysMore(HabitPicture picture, List<(uint Game, int Weight)> listed) {
+		double seen = listed.Sum(w => picture.Games.GetValueOrDefault(w.Game));
+
+		if ((listed.Count < 2) || (seen <= 0)) {
+			return 0;
+		}
+
+		List<double> shares = HumanMode.Shares(listed);
+		uint most = 0;
+		double widest = PlaysMoreBy;
+
+		for (int i = 0; i < listed.Count; i++) {
+			double gap = (100 * picture.Games.GetValueOrDefault(listed[i].Game) / seen) - shares[i];
+
+			if (gap >= widest) {
+				widest = gap;
+				most = listed[i].Game;
+			}
+		}
+
+		return most;
 	}
 
 	// ── longer rhythms ──

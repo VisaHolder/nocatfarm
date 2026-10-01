@@ -20,6 +20,10 @@ public static class Stats {
 	/// <summary>A card put up on the market - the weekly report counts them. A sale itself isn't something Steam tells us.</summary>
 	public const string KindListed = "listed";
 
+	/// <summary>An achievement unlocked - by the pacer, 'achievements ... unlock' or unlock-everything. The mini window can
+	/// show how many today, and nothing else kept a count that outlives a restart.</summary>
+	public const string KindAchievement = "achievement";
+
 	public sealed record Event(DateTime When, string Kind, string Bot);
 
 	private static readonly object Gate = new();
@@ -47,6 +51,13 @@ public static class Stats {
 				// the in-memory tally still works; a stats file is not worth an exception - but a line, said once
 				Log.DebugOnChange("stats:write", $"couldn't add a {kind} to stats.log: {Log.Describe(e)}", bot);
 			}
+		}
+	}
+
+	/// <summary>The same event several times over - "unlock all" sets a whole game's achievements in one go.</summary>
+	public static void Record(string kind, string bot, int times) {
+		for (int i = 0; i < times; i++) {
+			Record(kind, bot);
 		}
 	}
 
