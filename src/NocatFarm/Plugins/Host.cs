@@ -48,51 +48,71 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 	private Dictionary<string, string> _values = new(StringComparer.OrdinalIgnoreCase);
 	private bool _valuesRead;
 
-	internal IReadOnlyList<PluginSetting> Declared => _declared;
+	/// <summary>
+	/// The settings, read and written from the plugin's own threads, the dashboard and the Steam callbacks all at once.
+	/// Unguarded, a first save racing the first read wrote only the one new value - over every other setting the plugin had.
+	/// </summary>
+	private readonly Lock _valuesGate = new();
+
+	internal IReadOnlyList<PluginSetting> Declared {
+		get {
+			lock (_valuesGate) {
+				return [.. _declared];
+			}
+		}
+	}
 
 	public void AddSetting(PluginSetting setting) {
-		if (string.IsNullOrWhiteSpace(setting.Name) || _declared.Any(d => string.Equals(d.Name, setting.Name, StringComparison.OrdinalIgnoreCase))) {
-			return;
-		}
+		lock (_valuesGate) {
+			if (string.IsNullOrWhiteSpace(setting.Name) || _declared.Any(d => string.Equals(d.Name, setting.Name, StringComparison.OrdinalIgnoreCase))) {
+				return;
+			}
 
-		_declared.Add(setting);
+			_declared.Add(setting);
+		}
 	}
 
 	public string Setting(string name) {
-		ReadValues();
+		lock (_valuesGate) {
+			ReadValues();
 
-		return _values.TryGetValue(name, out string? v)
-			? v
-			: _declared.FirstOrDefault(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase))?.Default ?? "";
+			return _values.TryGetValue(name, out string? v)
+				? v
+				: _declared.FirstOrDefault(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase))?.Default ?? "";
+		}
 	}
 
 	/// <summary>Everything the operator can edit for this plugin, with its current value - for the page.</summary>
 	internal IReadOnlyList<(PluginSetting Setting, string Value)> SettingsView() {
-		ReadValues();
+		lock (_valuesGate) {
+			ReadValues();
 
-		return [.. _declared.Select(d => (d, Setting(d.Name)))];
+			return [.. _declared.Select(d => (d, Setting(d.Name)))];
+		}
 	}
 
 	internal void SetValue(string name, string value) {
-		ReadValues();
-		_values[name] = value;
+		lock (_valuesGate) {
+			ReadValues();
+			_values[name] = value;
 
-		try {
-			Directory.CreateDirectory(Path.GetDirectoryName(SettingsFile)!);
-			AtomicFile.Write(SettingsFile, System.Text.Json.JsonSerializer.Serialize(_values));
-		} catch (Exception e) {
-			NocatFarm.Log.Warn(new Said("couldn't save {0}'s settings: {1}", _owner, NocatFarm.Log.Scrub(e.Message)));
+			try {
+				Directory.CreateDirectory(Path.GetDirectoryName(SettingsFile)!);
+				AtomicFile.Write(SettingsFile, System.Text.Json.JsonSerializer.Serialize(_values));
+			} catch (Exception e) {
+				NocatFarm.Log.Warn(new Said("couldn't save {0}'s settings: {1}", _owner, NocatFarm.Log.Scrub(e.Message)));
+			}
 		}
 	}
 
 	private string SettingsFile => Path.Combine(ConfigStore.ConfigDir, "plugins", $"{Sanitise(_owner)}.settings.json");
 
+	/// <summary>Called under <see cref="_valuesGate"/>. Marked read only once the values are in: marked first, a second caller
+	/// went on with the empty set while the file was still being read.</summary>
 	private void ReadValues() {
 		if (_valuesRead) {
 			return;
 		}
-
-		_valuesRead = true;
 
 		try {
 			if (File.Exists(SettingsFile)) {
@@ -116,6 +136,8 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 				// the warning above still stands - but the copy the next save would overwrite isn't kept
 				NocatFarm.Log.Failed($"plugin {_owner}: keeping the unreadable settings aside", copy);
 			}
+		} finally {
+			_valuesRead = true;
 		}
 	}
 

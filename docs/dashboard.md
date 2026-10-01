@@ -15,11 +15,11 @@ and drag cards to change the order (the app window and the console follow the sa
 idler** and **+ Add account** are here. Removing an account asks you to type its name first.
 
 **rep4rep** only shows when rep4rep is switched on. **Authenticator** only shows once at least one account's
-authenticator is in nocat.farm, and is covered on [the Authenticator page](trades.md#the-authenticator-page). **Phone** is everything for opening the dashboard on your
-phone - see [below](#using-the-dashboard-from-another-device).
+authenticator is in nocat.farm, and is covered on [the Authenticator page](trades.md#the-authenticator-page). **Phone** has everything for opening the dashboard on your
+phone (see [below](#using-the-dashboard-from-another-device)).
 
 **Log** is live, with search, level chips (Debug is hidden by default), an account filter, Follow and Copy. `clear`
-(or `cls`) in the Console empties this tab and the Console on this screen only - the app window keeps its lines, and
+(or `cls`) in the Console empties this tab and the Console on this screen only. The app window keeps its lines, and
 the log file keeps everything. *Settings → Logging → Open the log folder* opens the files on the PC it runs on.
 
 **Console** runs the same commands as the app window. Tab completes commands and then account names, and up/down
@@ -49,8 +49,6 @@ When you're not typing in a box, these keys switch tabs:
 Authenticator, Phone and Plugins have no number key.
 
 The dashboard comes in a dark and a light theme (the *theme* button under the tabs, or `theme light`).
-It's set in Consolas. Phones and Linux usually don't have that font, so the dashboard ships its own JetBrains Mono
-for them instead of falling back to whatever monospace font is around.
 
 ## Backup and restore
 
@@ -64,13 +62,14 @@ counts and the key queue. Logs and caches aren't in it. A `README.txt` inside sa
 Saved logins stay encrypted in the zip, as they are on disk. A backup made on Windows opens them only on the same
 PC, signed in as the same Windows user. Restored on another PC, your settings and history come back, but each
 account asks for its password (and Steam Guard) once, and authenticators need adding again. Off Windows, the key
-goes in the zip too, so it restores anywhere. Either way, keep the zip private - it signs in to your accounts.
+goes in the zip too, so it restores anywhere. Either way, keep the zip private: it signs in to your accounts.
 
 **Restore a backup** checks the zip first and shows what's in it: when and where it was made, the accounts, the
 files. Nothing changes until you press *Restore*. Then every account stops, the files go back, and the accounts
 start again. Accounts that aren't in the backup are left alone, and what gets replaced is saved in `backups` first.
-A zip that isn't a nocat.farm backup, or has anything else in it, is refused. Restoring is only in the dashboard -
-not from Telegram, Discord or Steam chat.
+A zip that isn't a nocat.farm backup, or has anything else in it, is refused. Restoring only works in the
+dashboard, not from Telegram, Discord or Steam chat. On Linux and a Mac the backups are only readable by your user,
+and in Docker they're kept in `./backups` next to `./config`.
 
 ## The app window (Windows)
 
@@ -114,7 +113,7 @@ always get.
 Out of the box the dashboard only answers this PC. The **Phone** tab is where you change that, and it's also where
 the **Open on your phone** buttons elsewhere in the dashboard lead.
 
-At the top are two cards. *At home* is the link for a phone on the same wifi. *Away from home* is the link for
+At the top are two cards. *At home* is the link for a phone on the same Wi-Fi. *Away from home* is the link for
 mobile data, once *Open from anywhere* is on. Each shows its link as a QR code to scan with the phone's camera, with a
 Copy button beside it. Until everything the link needs is in place, the code is covered with "Not ready yet".
 
@@ -124,7 +123,7 @@ done:
 1. **Dashboard password.** A box to set one, with a strength meter. It's never shown, only replaced. At least 8
    characters, and 12 or more for away from home.
 2. **Open to other devices.** A switch that sets *Listen on* to `0.0.0.0` (or back to `127.0.0.1`). The dashboard
-   has to restart to pick that up, so a **Restart the dashboard now** button appears. Only the web page restarts -
+   has to restart to pick that up, so a **Restart the dashboard now** button appears. Only the web page restarts;
    your accounts stay signed in. You can't switch this off from the phone itself, since that would lock the phone
    out.
 3. **Windows Firewall.** If your phone just keeps loading, Windows is blocking it; many PCs are set not to ask.
@@ -140,14 +139,16 @@ at the bottom sums up what's exposed and has a button to turn *Open from anywher
 A phone that signs in stays signed in for 7 days (*Stay signed in for*). Five wrong passwords lock that address out
 for an hour. On this PC itself the lockout is only a minute, since whoever is at the PC can open the config folder
 anyway. A reverse proxy on the same PC, like Caddy for HTTPS, makes every visitor look like this PC, so there
-nocat.farm goes by the address the proxy passes on, and each visitor gets the full hour. `unlock` lifts every lockout at once. Without
+nocat.farm goes by the address the proxy passes on, and each visitor gets the full hour. A proxy somewhere else (Caddy
+in front of Docker comes in from Docker's own network) is only believed once its address is in *Trust forwarded
+addresses from* (`WebTrustedProxies`, or `NOCATFARM_TRUSTED_PROXIES`). `unlock` lifts every lockout at once. Without
 a password the dashboard refuses everything that isn't this PC, even when it's open to the network. A banner warns
 you if the password is short enough to guess.
 
 **Who's been here.** The Phone page lists every sign-in, wrong password and lockout, and every visitor from the internet
 turned away, with the address, whether it was this PC, home or the internet, and the device (`iPhone · Safari`). The
 last 200 are kept; `visitors` (or `who`) shows them anywhere, and **Sign every device out** (or `visitors signout`)
-signs every browser and phone out at once - from Telegram too, `/visitors signout`. A sign-in from outside your home
+signs every browser and phone out at once (`/visitors signout` on Telegram). A sign-in from outside your home
 is sent to Telegram and Discord (*Send dashboard sign-ins*), and so is anybody guessing: a lockout, the brake below,
 or *Open from anywhere* switching itself off (*Send break-in attempts*). Both are on by default.
 
@@ -159,17 +160,17 @@ don't use anywhere else. The forward is taken away when you turn it off or close
 starts. Turned off, it's off at once: nocat.farm itself turns away anything from the internet, so a phone that still
 had the page open can't carry on through the router. Ten wrong passwords from the internet in an hour, from any
 mix of addresses, pause signing in from outside for an hour (home still works, and `unlock` lifts it). And after
-*Turn Open from anywhere off after* wrong passwords or codes from the internet in a day - 5 by default, 0 never -
-it switches itself off and nothing from outside gets in, a *Public address* set by hand included, until you turn it
+*Turn Open from anywhere off after* wrong passwords or codes from the internet in a day (5 by default, 0 for
+never), it switches itself off and nothing from outside gets in, a *Public address* set by hand included, until you turn it
 on again (the Phone page, or `anywhere on`) or type `unlock`. That survives a restart. Backups and restores only work at home or on
 this PC, since the zip holds every saved login.
 
 **A code on Telegram.** With Telegram connected, signing in from outside your home takes the password and then a
 6-digit code the bot sends you (*Code on Telegram for sign-ins from outside*, on by default). So the password alone
-never lets anyone in from the internet - and a code you didn't ask for means somebody has the password: change it and
+never lets anyone in from the internet, and a code you didn't ask for means somebody has the password. Change it and
 type `visitors signout`. The code works for 5 minutes, only for the address it was sent for, and five wrong codes
 lock that address out like five wrong passwords. At home and on this PC the password is all it asks. Until Telegram
-is connected, the password is enough from outside too; the Phone page says which. Test it on mobile data with the phone's wifi off - from inside your own home, your internet address often
+is connected, the password is enough from outside too; the Phone page says which. Test it on mobile data with the phone's Wi-Fi off. From inside your own home your internet address often
 won't open, and that's the router, not nocat.farm. If your router has UPnP switched off, the page says so; forward
 the port by hand and put your address in *Public address* instead (a name like `myname.duckdns.org` works too).
 

@@ -255,11 +255,61 @@ public static class Achievements {
 	/// One request, not one per achievement: Steam rate-limits stat writes hard, and a hundred separate stores
 	/// is both slower and far more likely to be refused halfway through, leaving the game in a state nobody
 	/// asked for.
+	///
+	/// Changed is how many really changed. Ok with 0 is "already that way" - another write got there first (the pacer's
+	/// pick against 'cheevo', say), read under the gate - and a caller counting Ok as "unlocked it" logged, notified and
+	/// counted an achievement a second time.
+	///
+	/// <paramref name="dlc"/> is the DLC rule the unlocks were picked by. It was asked seconds ago - minutes, for a
+	/// command that waited on it - so it is asked again under the gate, right before the write: the account's licences
+	/// changed or the game was taken off the owner's vouched-for list since, and nothing is unlocked.
 	/// </summary>
-	public static async Task<(bool Ok, string Message)> SetAsync(Bot bot, AchievementSet set, IEnumerable<Achievement> which, bool unlock, CancellationToken ct = default) {
+	public static async Task<(bool Ok, string Message, int Changed)> SetAsync(Bot bot, AchievementSet set, IEnumerable<Achievement> which, bool unlock, CancellationToken ct = default, DlcAchievements.View? dlc = null) {
 		if (bot.Stats == null) {
-			return (false, "not connected");
+			return (false, "not connected", 0);
 		}
+
+		// One write per account and game at a time, worked out from the stats as they are NOW. A write stores whole
+		// stat values, and the set it was worked out from can be many seconds old: the pacer's pick, 'cheevo lock all'
+		// and unlock-everything each read a set, and whichever wrote second put its old copy of a shared stat back -
+		// undoing the other's unlocks or re-locks. Under the gate, read again, then change only what still needs it.
+		SemaphoreSlim gate = GateOf(bot, set.AppId);
+		await gate.WaitAsync(ct).ConfigureAwait(false);
+
+		try {
+			if (unlock && (dlc != null) && !dlc.StillSo(bot)) {
+				return (false, new Said("what this account owns changed a moment ago - nothing was unlocked, try again").ToString(), 0);
+			}
+
+			return await SetLatestAsync(bot, set, which, unlock, ct).ConfigureAwait(false);
+		} finally {
+			gate.Release();
+		}
+	}
+
+	/// <summary>The gate for one account's writes to one game's stats - see <see cref="SetAsync"/>.</summary>
+	internal static SemaphoreSlim GateOf(Bot bot, uint appId) => Gates.GetOrAdd((bot.Name, appId), static _ => new SemaphoreSlim(1, 1));
+
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<(string Bot, uint App), SemaphoreSlim> Gates = new();
+
+	private static async Task<(bool Ok, string Message, int Changed)> SetLatestAsync(Bot bot, AchievementSet set, IEnumerable<Achievement> which, bool unlock, CancellationToken ct) {
+		if (bot.Stats == null) {
+			return (false, "not connected", 0);
+		}
+
+		CMsgClientGetUserStatsResponse? latest = await bot.Stats.GetUserStatsAsync(set.AppId, bot.SteamId, ct).ConfigureAwait(false);
+
+		if ((latest == null) || ((EResult) latest.eresult != EResult.OK)) {
+			return (false, $"Steam didn't say what's unlocked right now ({(latest == null ? "no answer" : (EResult) latest.eresult)}) - try again shortly", 0);
+		}
+
+		Dictionary<uint, uint> now = [];
+
+		foreach (CMsgClientGetUserStatsResponse.Stats stat in latest.stats) {
+			now[stat.stat_id] = stat.stat_value;
+		}
+
+		uint crc = latest.crc_stats != 0 ? latest.crc_stats : set.CrcStats;
 
 		// ONLY the stats that actually change go in the request.
 		//
@@ -276,7 +326,7 @@ public static class Achievements {
 
 			// Read-modify-write on the stat this achievement lives in. Writing a bare bit instead of the modified
 			// current value would clear every other achievement sharing that stat.
-			uint current = changed.TryGetValue(achievement.StatId, out uint pending) ? pending : set.StatValues.GetValueOrDefault(achievement.StatId);
+			uint current = changed.TryGetValue(achievement.StatId, out uint pending) ? pending : now.GetValueOrDefault(achievement.StatId);
 			uint mask = 1u << (achievement.Bit & 31);
 			uint updated = unlock ? current | mask : current & ~mask;
 
@@ -289,18 +339,18 @@ public static class Achievements {
 		}
 
 		if (touched == 0) {
-			return (true, "nothing to change");
+			return (true, "nothing to change", 0);
 		}
 
-		EResult result = await bot.Stats.StoreUserStatsAsync(set.AppId, bot.SteamId, changed, set.CrcStats, ct).ConfigureAwait(false);
+		EResult result = await bot.Stats.StoreUserStatsAsync(set.AppId, bot.SteamId, changed, crc, ct).ConfigureAwait(false);
 
 		if (result != EResult.OK) {
 			Log.Debug($"achievement write for {set.AppId} refused: {result} ({touched} achievement(s), {changed.Count} stat(s))", bot.Name);
 		}
 
 		return result == EResult.OK
-			? (true, $"{touched} achievement(s) {(unlock ? "unlocked" : "re-locked")}")
-			: (false, $"Steam refused it ({result})");
+			? (true, $"{touched} achievement(s) {(unlock ? "unlocked" : "re-locked")}", touched)
+			: (false, $"Steam refused it ({result})", 0);
 	}
 
 	/// <summary>

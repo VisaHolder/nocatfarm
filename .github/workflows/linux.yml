@@ -1,9 +1,14 @@
 # Linux and Docker, tested on real machines: x64 and arm64 (a Raspberry Pi 4/5 class CPU).
 #
-# For each: builds the self-contained release the way the _linux-* zips are built, runs the unit tests, starts the
-# app headless and checks the dashboard, commands, encrypted secrets and a clean SIGTERM shutdown. Then builds the
-# Docker image natively on each CPU and checks it the way docker-compose.example.yml runs it: password required,
-# sign-in, the dashboard, a clean `docker stop`. Run it from the Actions tab (or `gh workflow run linux.yml`).
+# For each: builds the real release zip (tools/package-release.ps1, the very script that makes the _linux-* zips, file
+# modes included), unpacks it into a folder with a space and "(1)" in its name, runs the unit tests, starts it headless
+# and checks the dashboard, commands, every button of the dashboard in a real browser, encrypted secrets, one copy per
+# config folder, SIGHUP and SIGTERM shutdowns, updating itself (and putting a broken version back) with a relative
+# --path, and updating from the newest real GitHub release to this build. Both it and the Docker image also go live to
+# Steam (--steam-selftest: anonymous, no account). Then Docker, natively on each CPU, through the real
+# docker-compose.example.yml: password required, healthy, backups surviving a re-create, signing in from outside
+# through a trusted proxy, a clean stop.
+# Run it from the Actions tab (or `gh workflow run linux.yml`).
 name: linux
 
 on:
@@ -24,31 +29,63 @@ jobs:
           - rid: linux-arm64
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
 
-      - name: build the self-contained release (as the zip)
+      - name: build the release zip, the way the release is made
         run: |
-          dotnet publish src/NocatFarm -c Release -o app -r ${{ matrix.rid }} --self-contained true \
-            -p:PublishSingleFile=false -p:DebugType=none --nologo -v q
-          test -x app/nocatFarm
-          file app/nocatFarm
+          command -v pwsh > /dev/null || { dotnet tool install --global PowerShell && echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH" && export PATH="$PATH:$HOME/.dotnet/tools"; }
+          pwsh -NoProfile -File tools/package-release.ps1 -OnlyRid ${{ matrix.rid }}
+          version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/NocatFarm/NocatFarm.csproj)
+          zip="dist/nocat.farm-v${version}_${{ matrix.rid }}.zip"
+          unzip -l "$zip" | grep -E ' (nocatFarm|README\.md)$'
+          # never a bare "! cmd" or "a && b" as a check: bash -e stops for neither, so such a check could never fail
+          if unzip -l "$zip" | grep -E ' (config|logs|backups)/'; then echo "FAIL: personal folders in the zip"; exit 1; fi
+          # unpacked the way the docs say, into a folder people end up with: a space and "(1)" in it
+          APP="$PWD/nocat.farm (1)"
+          unzip -q "$zip" -d "$APP"
+          echo "APP=$APP" >> "$GITHUB_ENV"
+          [ "$(stat -c %a "$APP/nocatFarm")" = "755" ]
+          [ "$(stat -c %a "$APP/README.md")" = "644" ]
+          for so in "$APP"/*.so; do [ "$(stat -c %a "$so")" = "755" ] || { echo "$so isn't 755"; exit 1; }; done
+          file "$APP/nocatFarm"
 
       - name: unit tests
         run: cd tests/NocatFarm.Tests && dotnet run -c Release
 
+      - name: live Steam connection and idling (anonymous - no account)
+        timeout-minutes: 4
+        # The unpacked release connects to Steam over WebSocket and TCP, signs in anonymously, sends the idler's
+        # games-played message (custom name with emoji first, then 730 and 440), stays on 20s and logs off. Exits 1 on any FAIL.
+        run: '"$APP/nocatFarm" --path "$RUNNER_TEMP/steam-selftest" --steam-selftest'
+
       - name: start it headless
         run: |
-          mkdir -p app/config
-          echo '{"WebPort":7242,"CheckForUpdates":false,"JoinGroup":false}' > app/config/nocatFarm.json
-          echo '{"Enabled":false,"SteamLogin":"not_a_real_account"}' > app/config/demo.json
-          cd app && (setsid ./nocatFarm --no-gui < /dev/null > ../run.log 2>&1 & echo $! > ../pid)
+          mkdir -p "$APP/config"
+          echo '{"WebPort":7242,"CheckForUpdates":false,"JoinGroup":false}' > "$APP/config/nocatFarm.json"
+          echo '{"Enabled":false,"SteamLogin":"not_a_real_account"}' > "$APP/config/demo.json"
+          cd "$APP" && (setsid ./nocatFarm --no-gui < /dev/null > "$GITHUB_WORKSPACE/run.log" 2>&1 & echo $! > "$GITHUB_WORKSPACE/pid")
           for i in $(seq 1 60); do curl -sf http://127.0.0.1:7242/api/status > /dev/null && break; sleep 1; done
-          curl -sf http://127.0.0.1:7242/api/status | tee status.json | head -c 300; echo
-          grep -q '"Version"' status.json
+          curl -sf http://127.0.0.1:7242/api/status | tee "$GITHUB_WORKSPACE/status.json" | head -c 300; echo
+          grep -q '"Version"' "$GITHUB_WORKSPACE/status.json"
+
+      - name: a second copy on the same folder says so and exits (from a session of its own)
+        run: |
+          set +e
+          (cd "$APP" && timeout 60 setsid ./nocatFarm --no-gui < /dev/null > "$GITHUB_WORKSPACE/second.log" 2>&1)
+          code=$?
+          set -e
+          cat second.log
+          [ "$code" -ne 0 ] || { echo "FAIL: the second copy exited 0"; exit 1; }
+          [ "$code" -ne 124 ] || { echo "FAIL: the second copy was still running after 60s"; exit 1; }
+          grep -q 'already running for this folder' second.log
+          grep -q "process $(cat pid)" second.log
+          kill -0 $(cat pid)
 
       - name: dashboard, commands and settings
         run: |
@@ -60,32 +97,61 @@ jobs:
           cmd 'update' | tee out.txt; grep -Eqi 'newest|linux|zip|out' out.txt
           cmd 'dashboard' | tee out.txt; grep -q '127.0.0.1:7242' out.txt
           cmd 'set UpdateCheckHours 5' | tee out.txt; grep -q 'UpdateCheckHours = 5' out.txt
-          grep -q '"UpdateCheckHours": 5' app/config/nocatFarm.json
+          grep -q '"UpdateCheckHours": 5' "$APP/config/nocatFarm.json"
+          cmd 'backup' | tee out.txt; grep -q 'Backup saved' out.txt
+          [ "$(stat -c %a "$APP/backups")" = "700" ]
+          for z in "$APP"/backups/*.zip; do [ "$(stat -c %a "$z")" = "600" ] || { echo "$z isn't 600"; exit 1; }; done
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tests/e2e/package-lock.json
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('tests/e2e/package-lock.json') }}
+
+      - name: every button, switch, tab, chip and form of the dashboard, in a real browser
+        run: |
+          (cd tests/e2e && npm ci --no-audit --no-fund && npx playwright install --with-deps chromium)
+          sh tests/e2e/run.sh "$APP" 7377
 
       - name: secrets are encrypted on disk (AES key, owner-only)
         run: |
           curl -sf -X POST http://127.0.0.1:7242/api/command -H 'Content-Type: application/json' -d '{"line":"set TelegramBotToken 123456789:not-a-real-token"}' > /dev/null
-          grep -q 'nocat-aes1:' app/config/nocatFarm.json
-          ! grep -q 'not-a-real-token' app/config/nocatFarm.json
-          test -f app/config/state/secret.key
-          [ "$(stat -c %a app/config/state/secret.key)" = "600" ]
+          grep -q 'nocat-aes1:' "$APP/config/nocatFarm.json"
+          if grep -q 'not-a-real-token' "$APP/config/nocatFarm.json"; then echo "FAIL: the token is on disk as it was typed"; exit 1; fi
+          test -f "$APP/config/state/secret.key"
+          [ "$(stat -c %a "$APP/config/state/secret.key")" = "600" ]
 
       - name: signing in from outside (lockouts, switching itself off, the visitor log)
-        run: sh tests/security-check.sh http://127.0.0.1:7242 app/config
+        run: sh tests/security-check.sh http://127.0.0.1:7242 "$APP/config"
 
       - name: clean shutdown on SIGTERM
         run: |
           kill -TERM $(cat pid)
           for i in $(seq 1 30); do kill -0 $(cat pid) 2>/dev/null || break; sleep 1; done
-          ! kill -0 $(cat pid) 2>/dev/null
+          if kill -0 $(cat pid) 2>/dev/null; then echo "FAIL: still running 30s after SIGTERM"; exit 1; fi
           grep -q 'shutting down' run.log
 
-      - name: updating itself, and putting a broken version back
-        run: sh tests/update-rollback.sh ${{ matrix.rid }}
+      - name: one copy per folder, SIGHUP and nohup
+        run: sh tests/instance-and-signals.sh "$APP"
+
+      - name: updating itself, putting a broken version back, and another copy in the folder
+        run: sh tests/update-rollback.sh ${{ matrix.rid }} "$APP"
+
+      - name: updating from the newest GitHub release to this build
+        run: |
+          pwsh -NoProfile -File tools/package-release.ps1 -OnlyRid ${{ matrix.rid }} -AsVersion 9.9.9
+          sh tests/update-from-release.sh ${{ matrix.rid }} "dist/nocat.farm-v9.9.9_${{ matrix.rid }}.zip"
 
       - name: log
         if: always()
-        run: tail -n 60 run.log || true
+        run: |
+          tail -n 60 run.log || true
+          for f in signals-test/*.log upd-test/*.log from-release/run.log; do [ -f "$f" ] && { echo "== $f"; tail -n 30 "$f"; }; done || true
 
   docker:
     name: docker - ${{ matrix.arch }}
@@ -103,6 +169,10 @@ jobs:
 
       - name: build the image
         run: docker build -t nocatfarm:test .
+
+      - name: live Steam connection and idling from inside the image (anonymous - no account)
+        timeout-minutes: 4
+        run: docker run --rm --init nocatfarm:test --steam-selftest
 
       - name: run it like docker-compose.example.yml
         run: |
@@ -134,11 +204,20 @@ jobs:
           ls -la data/config data/logs
           ls data/logs | grep -q .
 
+      - name: the health check answers from inside the image
+        run: docker exec nf dotnet /app/nocatFarm.dll --path /data --ping
+
       - name: clean docker stop
         run: |
           docker stop -t 60 nf
           docker logs nf 2>&1 | grep -q 'shutting down'
 
+      - name: the real docker-compose.example.yml - password, time zone, health, backups across a re-create, a trusted proxy
+        run: sh tests/docker-compose.sh
+
       - name: log
         if: always()
-        run: docker logs nf 2>&1 | tail -n 60 || true
+        run: |
+          docker logs nf 2>&1 | tail -n 60 || true
+          (cd compose-test && docker compose logs --tail 60) 2>/dev/null || true
+          tail -n 60 compose-test/logs/*.log 2>/dev/null || true

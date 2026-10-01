@@ -100,6 +100,87 @@ public static class Platform {
 	[DllImport("libc")]
 	private static extern uint getgid();
 
+	[DllImport("libc")]
+	private static extern int sigaction(int signal, IntPtr action, IntPtr old);
+
+	/// <summary>
+	/// Started to ignore SIGHUP - by nohup, say - so closing the terminal it came from isn't meant to stop it. The handler is
+	/// the first field of struct sigaction on Linux and on a Mac alike, and SIG_IGN is 1; the buffer is bigger than either.
+	/// </summary>
+	public static bool HangupIgnored() {
+		if (OperatingSystem.IsWindows()) {
+			return false;
+		}
+
+		IntPtr old = Marshal.AllocHGlobal(512);
+
+		try {
+			return (sigaction(1, IntPtr.Zero, old) == 0) && (Marshal.ReadIntPtr(old) == 1);
+		} catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException) {
+			return false;
+		} finally {
+			Marshal.FreeHGlobal(old);
+		}
+	}
+
+	/// <summary>
+	/// '--ping', for Docker's HEALTHCHECK: 0 when the dashboard of the copy for this folder answers /api/ping (or it's switched
+	/// off, so there's nothing to ask), 1 when it doesn't. Reads the settings file and the environment, changes nothing.
+	/// </summary>
+	public static async Task<int> PingAsync() {
+		bool enabled = true;
+		string host = "127.0.0.1";
+		int port = 7242;
+
+		try {
+			if (File.Exists(ConfigStore.GlobalPath)) {
+				using System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(ConfigStore.GlobalPath));
+				System.Text.Json.JsonElement root = doc.RootElement;
+
+				if (root.TryGetProperty("WebEnabled", out System.Text.Json.JsonElement on) && (on.ValueKind == System.Text.Json.JsonValueKind.False)) {
+					enabled = false;
+				}
+
+				if (root.TryGetProperty("WebPort", out System.Text.Json.JsonElement p) && p.TryGetInt32(out int saved)) {
+					port = saved;
+				}
+
+				if (root.TryGetProperty("WebHost", out System.Text.Json.JsonElement h) && (h.GetString() is { Length: > 0 } listen)) {
+					host = listen;
+				}
+			}
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) {
+			// the defaults, and the environment below
+		}
+
+		if (Environment.GetEnvironmentVariable(EnvPort) is { Length: > 0 } envPort && int.TryParse(envPort, out int p2)) {
+			port = p2;
+		}
+
+		if (Environment.GetEnvironmentVariable(EnvHost)?.Trim() is { Length: > 0 } envHost) {
+			host = envHost;
+		}
+
+		if (!enabled) {
+			return 0;
+		}
+
+		string ask = host.Trim('[', ']') is "0.0.0.0" or "*" or "+" or "localhost" ? "127.0.0.1" : host.Trim('[', ']') is "::" ? "::1" : host.Trim('[', ']');
+
+		try {
+			using HttpClient http = new() { Timeout = TimeSpan.FromSeconds(5) };
+			using HttpResponseMessage answer = await http.GetAsync($"http://{UrlHost(ask)}:{port}/api/ping").ConfigureAwait(false);
+
+			return answer.IsSuccessStatusCode ? 0 : 1;
+		} catch (Exception e) when (e is HttpRequestException or TaskCanceledException) {
+			return 1;
+		}
+	}
+
+	/// <summary>An address as it goes in a URL: an IPv6 one in brackets ([::1]), anything else as it is.</summary>
+	public static string UrlHost(string host) =>
+		host.Contains(':', StringComparison.Ordinal) && !host.StartsWith('[') ? $"[{host}]" : host;
+
 	/// <summary>Is this dashboard address this machine only?</summary>
 	public static bool IsLoopback(string host) =>
 		host.Trim().Trim('[', ']') is "127.0.0.1" or "localhost" or "::1";
@@ -110,6 +191,8 @@ public static class Platform {
 	private const string EnvPassword = "NOCATFARM_WEB_PASSWORD";
 	private const string EnvPasswordFile = "NOCATFARM_WEB_PASSWORD_FILE";
 	private const string EnvHomeAddress = "NOCATFARM_HOME_ADDRESS";
+	private const string EnvPublicAddress = "NOCATFARM_PUBLIC_ADDRESS";
+	private const string EnvTrustedProxies = "NOCATFARM_TRUSTED_PROXIES";
 
 	/// <summary>
 	/// The computer's own address on the home network, for the phone link - "192.168.1.20", or with a port when Docker
@@ -123,11 +206,18 @@ public static class Platform {
 	///
 	/// For Docker, where editing a JSON file inside a volume is the awkward way round and a compose file or a
 	/// Docker secret is the natural one. Nothing changes when none of them is set - which is every ordinary run.
-	/// A value that is set wins at every start and is written into config/nocatFarm.json, so the settings page
-	/// shows what is actually in use.
+	/// A value that is set wins at every start (and after a restore) and is written into config/nocatFarm.json, so the
+	/// settings page shows what is actually in use.
+	///
+	/// The two that let the internet in - the public address and the trusted proxies - go again once their variable is
+	/// taken away: which values came from the environment is kept in config/state/env-applied.json, and a value still as
+	/// the variable left it is cleared. Kept, removing NOCATFARM_PUBLIC_ADDRESS to close the dashboard to the internet left
+	/// it open. One changed in Settings since is the owner's own, and stays.
 	/// </summary>
 	public static void ApplyEnvironment(GlobalConfig g) {
 		bool changed = false;
+		Dictionary<string, string> fromEnv = LoadEnvApplied();
+		bool fromEnvChanged = false;
 
 		string? host = Environment.GetEnvironmentVariable(EnvHost)?.Trim();
 
@@ -172,8 +262,110 @@ public static class Platform {
 			Log.Info(new Said("dashboard: password set from {0}", string.IsNullOrEmpty(file) ? EnvPassword : EnvPasswordFile));
 		}
 
+		// On a VPS the dashboard is reached from the internet by design, and "Open from anywhere" (UPnP) has no router to ask:
+		// the public address is what says "this is my own way in" - without it every visitor from outside is turned away.
+		string? publicAddress = Environment.GetEnvironmentVariable(EnvPublicAddress)?.Trim();
+
+		if (!string.IsNullOrEmpty(publicAddress)) {
+			if (publicAddress != g.WebPublicAddress) {
+				g.WebPublicAddress = publicAddress;
+				changed = true;
+				Log.Info(new Said("dashboard: public address {0}, from {1}", publicAddress, EnvPublicAddress));
+			}
+
+			fromEnvChanged |= Remember(fromEnv, nameof(GlobalConfig.WebPublicAddress), publicAddress);
+		} else if (Forget(fromEnv, nameof(GlobalConfig.WebPublicAddress), g.WebPublicAddress, EnvPublicAddress, ref fromEnvChanged)) {
+			g.WebPublicAddress = "";
+			changed = true;
+		}
+
+		// A reverse proxy that isn't on this PC - Caddy in front of Docker reaches the container from Docker's own network.
+		string? proxies = Environment.GetEnvironmentVariable(EnvTrustedProxies)?.Trim();
+
+		if (!string.IsNullOrEmpty(proxies)) {
+			// One that can't be read changes nothing - not even a list an earlier start took from the variable.
+			if (TrustedProxies.Unreadable(proxies) is { } bad) {
+				Log.Warn(new Said("{0}: \"{1}\" isn't an address or a range like 172.16.0.0/12 - ignored", EnvTrustedProxies, bad));
+			} else {
+				if (proxies != g.WebTrustedProxies) {
+					g.WebTrustedProxies = proxies;
+					changed = true;
+					Log.Info(new Said("dashboard: trusting proxies {0}, from {1}", proxies, EnvTrustedProxies));
+				}
+
+				fromEnvChanged |= Remember(fromEnv, nameof(GlobalConfig.WebTrustedProxies), proxies);
+			}
+		} else if (Forget(fromEnv, nameof(GlobalConfig.WebTrustedProxies), g.WebTrustedProxies, EnvTrustedProxies, ref fromEnvChanged)) {
+			g.WebTrustedProxies = "";
+			changed = true;
+		}
+
 		if (changed) {
 			ConfigStore.SaveGlobal(g);
+		}
+
+		if (fromEnvChanged) {
+			SaveEnvApplied(fromEnv);
+		}
+	}
+
+	/// <summary>Which settings the environment set, and to what: config/state/env-applied.json. Not in backups - it's this machine's.</summary>
+	public static string EnvAppliedPath => Path.Combine(ConfigStore.ConfigDir, "state", "env-applied.json");
+
+	private static bool Remember(Dictionary<string, string> fromEnv, string setting, string value) {
+		if (fromEnv.TryGetValue(setting, out string? had) && (had == value)) {
+			return false;
+		}
+
+		fromEnv[setting] = value;
+
+		return true;
+	}
+
+	/// <summary>
+	/// The variable for <paramref name="setting"/> is gone: true when the value in use is still the one it set, and so goes
+	/// with it. Either way it's no longer remembered as the environment's.
+	/// </summary>
+	private static bool Forget(Dictionary<string, string> fromEnv, string setting, string now, string variable, ref bool fromEnvChanged) {
+		if (!fromEnv.Remove(setting, out string? had)) {
+			return false;
+		}
+
+		fromEnvChanged = true;
+
+		if ((had.Length == 0) || (now != had)) {
+			return false;   // changed in Settings since: the owner's own now
+		}
+
+		Log.Info(new Said("dashboard: {0} isn't set any more - {1} is cleared", variable, had));
+
+		return true;
+	}
+
+	private static Dictionary<string, string> LoadEnvApplied() {
+		try {
+			if (File.Exists(EnvAppliedPath)) {
+				return System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(EnvAppliedPath)) ?? [];
+			}
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) {
+			Log.Debug($"couldn't read {EnvAppliedPath}: {Log.Describe(e)}");
+		}
+
+		return [];
+	}
+
+	private static void SaveEnvApplied(Dictionary<string, string> fromEnv) {
+		try {
+			if (fromEnv.Count == 0) {
+				File.Delete(EnvAppliedPath);
+
+				return;
+			}
+
+			Directory.CreateDirectory(Path.GetDirectoryName(EnvAppliedPath)!);
+			AtomicFile.Write(EnvAppliedPath, System.Text.Json.JsonSerializer.Serialize(fromEnv));
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			Log.Debug($"couldn't save {EnvAppliedPath}: {Log.Describe(e)}");
 		}
 	}
 }

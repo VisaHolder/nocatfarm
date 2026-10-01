@@ -27,7 +27,11 @@ public static partial class Notifier {
 
 	private static long _offset;
 	private static string _pollingToken = "";
-	private static bool _consoleMode;
+	/// <summary>
+	/// /console on or off. Toggled and read by commands in turn (TelegramLane), and volatile, as they still run on
+	/// whichever thread their turn comes up on.
+	/// </summary>
+	private static volatile bool _consoleMode;
 	private static string _menuSetFor = "";
 	private static readonly HashSet<string> _hinted = [];
 	private static string _pollerWarnedFor = "";
@@ -175,15 +179,24 @@ public static partial class Notifier {
 
 					// Not awaited here, as Discord's aren't: '/start all' on ten accounts waits out every sign-in gap - minutes -
 					// and while it ran nothing else was read, a '/stop all' sent after it included.
+					//
+					// But in the order they were sent: the place in the line is taken HERE, as each message is read, and the
+					// command runs when the one before it is done (or has gone on for a few seconds - see CommandLane). Each on
+					// a task of its own and nothing more, "/pause kylro" then "/resume kylro" could run the other way round.
 					if (G.TelegramCommands && (text.Length > 0)) {
+						CommandLane.Slot slot = TelegramLane.Take();
+
 						_ = Task.Run(async () => {
 							try {
+								await slot.WaitTurnAsync().ConfigureAwait(false);
 								await HandleAsync(text, ct).ConfigureAwait(false);
 							} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 								// closing
 							} catch (Exception e) {
 								Log.Failed("telegram: answering a command", e, "telegram");
 								Log.StackToFile(e, "telegram");
+							} finally {
+								slot.Done();
 							}
 						}, CancellationToken.None);
 					}

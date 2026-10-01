@@ -42,6 +42,14 @@ public static class KeyQueue {
 	private static readonly Lock LoadGate = new();
 
 	/// <summary>
+	/// One save at a time, from the snapshot to the file. Taken before the snapshot, the order the queue changed in is
+	/// the order it reaches the disk: snapshot under Gate and written after, a 'redeem' adding keys and the worker
+	/// finishing one saved at once - and whichever older snapshot landed last lost the new keys or brought a used key
+	/// back to be activated again.
+	/// </summary>
+	private static readonly Lock SaveGate = new();
+
+	/// <summary>
 	/// Set when keys.json existed but could not be read. Saving then would write the in-memory queue - missing
 	/// every key in the file - over the only copy of them, so Save refuses until the next run reads it cleanly.
 	/// </summary>
@@ -274,7 +282,18 @@ public static class KeyQueue {
 		}
 	}
 
+	/// <summary>Write the queue out now, for a shutdown - a no-op until it's been read, so an unread queue never empties the file.</summary>
+	public static void Flush() {
+		if (_loaded) {
+			Save();
+		}
+	}
+
 	public static void Save() {
+		if (ConfigStore.RestoreWriting) {
+			return;   // see ConfigStore.RestoreWriting: the restored queue is about to be read in
+		}
+
 		if (_loadFailed) {
 			// Said once per run, not on every key the worker touches.
 			if (!_saveRefusedSaid) {
@@ -286,15 +305,17 @@ public static class KeyQueue {
 		}
 
 		try {
-			List<Entry> snapshot;
+			lock (SaveGate) {
+				string json;
 
-			lock (Gate) {
-				snapshot = [.. Pending];
+				// Serialized under Gate too: the entries themselves change (a try counted, an account pinned), not just the list.
+				lock (Gate) {
+					json = JsonSerializer.Serialize(Pending);
+				}
+
+				Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
+				AtomicFile.Write(Path, SelfUpdate.OnTrial ? json : Secrets.Protect(json, "keys"));   // see SelfUpdate.OnTrial
 			}
-
-			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
-			string json = JsonSerializer.Serialize(snapshot);
-			AtomicFile.Write(Path, SelfUpdate.OnTrial ? json : Secrets.Protect(json, "keys"));   // see SelfUpdate.OnTrial
 		} catch (Exception e) {
 			Log.Warn(new Said("couldn't save the key queue: {0}", Log.Scrub(e.Message)));
 		}

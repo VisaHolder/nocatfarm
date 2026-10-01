@@ -1495,14 +1495,17 @@ button.ph-off:hover:not(:disabled) { background: color-mix(in srgb, var(--bad) 1
 
 .ph-safe { margin: 0 0 14px; padding-left: 18px; font-size: 13px; color: var(--muted); line-height: 1.6; }
 .ph-safe li { margin: 6px 0; }
+a.loglink { color: #58a6ff; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+a.loglink:hover { color: #79b8ff; }
+:root[data-theme="light"] a.loglink { color: #0969da; }
 #phoneVisitors { margin-top: 16px; }
 .ph-visits { display: grid; gap: 2px; margin: 0 0 14px; font-size: 13px; }
 .ph-visit { display: grid; grid-template-columns: 110px 130px minmax(0, 1.4fr) 90px minmax(0, 1fr); gap: 10px; align-items: baseline;
   padding: 6px 8px; border-left: 2px solid var(--line); }
 .ph-visit code { overflow-wrap: anywhere; }
 .ph-visit.bad { border-left-color: var(--warn, #d9a441); }
-.ph-visit.out.ok { border-left-color: var(--brand); }
-.ph-visit.out.bad { border-left-color: var(--bad, #e74c3c); }
+.ph-visit.away.ok { border-left-color: var(--brand); }
+.ph-visit.away.bad { border-left-color: var(--bad, #e74c3c); }
 .ph-warn { color: var(--bad, #e74c3c); font-size: 13px; }
 @media (max-width: 700px) {
   .ph-visit { grid-template-columns: 1fr 1fr; }

@@ -59,6 +59,43 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 	private Rep4RepState? _state;
 	private string? _profileId;
+
+	/// <summary>The profile lookup in flight, shared: the loop and a "Post now" both finding no id used to ask rep4rep
+	/// twice at once - and with auto-add on, that could add the account twice.</summary>
+	private Task<string?>? _resolving;
+	private readonly Lock _resolveGate = new();
+
+	private async Task<string?> ProfileIdAsync(CancellationToken ct) {
+		if (_profileId is { } have) {
+			return have;
+		}
+
+		Task<string?> lookup;
+
+		lock (_resolveGate) {
+			bool autoAdd = Live.Global.Rep4RepAutoAddProfiles;
+			lookup = _resolving ??= Task.Run(() => _api.ResolveProfileIdAsync(Bot.SteamId, autoAdd, CancellationToken.None));
+		}
+
+		try {
+			string? id = await lookup.WaitAsync(ct).ConfigureAwait(false);
+
+			if (id != null) {
+				_profileId = id;
+			}
+
+			return id;
+		} finally {
+			// Done with, answer or not: a failed lookup is tried again next time rather than kept.
+			if (lookup.IsCompleted) {
+				lock (_resolveGate) {
+					if (ReferenceEquals(_resolving, lookup)) {
+						_resolving = null;
+					}
+				}
+			}
+		}
+	}
 	private Said _status = new("off");
 	private int _rateLimitRun;   // consecutive Steam rate-limits, reset on a good post
 	private DateTime _capNoticed = DateTime.MinValue;   // when the cap was last announced on screen
@@ -121,6 +158,9 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	/// raising the configured cap will NOT lift it. This is what explains "I set 15 but it's stuck at 10".</summary>
 	public bool CapIsSteamLimit => _state is { CapLearned: true, Cap: > 0 } && (_state.Cap < Math.Max(1, Bot.Cfg.Rep4RepDailyCap));
 
+	/// <summary>Anything that says no comment may go out right now - checked again right before posting.</summary>
+	private bool StoppedPosting() => Paused || Bot.Paused || HoldActive || !CommentingOn || (_state is not { } state) || state.IsBlocked || (state.PostsInLast24h() >= Cap);
+
 	/// <summary>Skip the wait and try a post right now. Never skips the daily cap.</summary>
 	public void RunNow() {
 		_forceNext = true;
@@ -144,16 +184,26 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	/// </summary>
 	private TaskCompletionSource<bool> _wake = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-	private void Wake() => _wake.TrySetResult(true);
+	/// <summary>
+	/// 1 when a wake came in that no sleep has taken yet. The flag and the signal together, each set with a full fence
+	/// before the other is read: a wake arriving between one sleep's end and the next one arming the new signal
+	/// tripped the old one that nobody waited on, and a 'wake' or a lifted hold then waited out the whole sleep.
+	/// </summary>
+	private int _wakePending;
+
+	private void Wake() {
+		Interlocked.Exchange(ref _wakePending, 1);
+		Volatile.Read(ref _wake).TrySetResult(true);
+	}
 
 	/// <summary>Sleep, unless somebody asks for the next step sooner. True if the wait ran its course.</summary>
 	private async Task<bool> SleepOrWake(TimeSpan wait, CancellationToken ct) {
 		TaskCompletionSource<bool> woken = new(TaskCreationOptions.RunContinuationsAsynchronously);
-		_wake = woken;
+		Interlocked.Exchange(ref _wake, woken);
 
 		// Re-check after arming: a wake between the last step and this line would otherwise be missed.
-		if (_forceNext) {
-			return true;
+		if ((Interlocked.Exchange(ref _wakePending, 0) == 1) || _forceNext) {
+			return !ct.IsCancellationRequested;
 		}
 
 		using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -162,6 +212,10 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		Task winner = await Task.WhenAny(woken.Task, delay).ConfigureAwait(false);
 
 		await linked.CancelAsync().ConfigureAwait(false);
+
+		if (winner == woken.Task) {
+			Interlocked.Exchange(ref _wakePending, 0);   // this wake is taken
+		}
 
 		return !ct.IsCancellationRequested;
 	}
@@ -434,9 +488,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			return 5 * 60;
 		}
 
-		_profileId ??= await _api.ResolveProfileIdAsync(Bot.SteamId, Live.Global.Rep4RepAutoAddProfiles, ct).ConfigureAwait(false);
-
-		if (_profileId == null) {
+		if (await ProfileIdAsync(ct).ConfigureAwait(false) == null) {
 			_status = new Said("not registered on rep4rep");
 			Log.Warn(Live.Global.Rep4RepAutoAddProfiles
 				? new Said("rep4rep won't add this account - check the API token")
@@ -445,7 +497,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			return 30 * 60;
 		}
 
-		Rep4RepTask? task = await NextTaskAsync(_profileId, ct).ConfigureAwait(false);
+		Rep4RepTask? task = await NextTaskAsync(_profileId!, ct).ConfigureAwait(false);
 
 		if (task == null) {
 			_status = new Said("{0}/{1} today - no task available", posted, Cap);
@@ -458,6 +510,12 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		await _posting.WaitAsync(ct).ConfigureAwait(false);
 
 		try {
+			// Stopped while this step was fetching or waiting its turn - paused, held, switched off. Nothing goes out; the
+			// top of the loop says why.
+			if (StoppedPosting()) {
+				return 60;
+			}
+
 			// Final cap check the instant before posting: the count above was taken before the window/gap/session and
 			// task-fetch steps, and a dashboard "post now" could have spent a slot since. This is the one number that
 			// gets an account comment-banned, so it's re-checked here too.
@@ -509,6 +567,14 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		Log.Warn(new Said("comment on {0} failed{1} - retrying in ~{2}", task.TargetName, (string.IsNullOrEmpty(error) ? "" : $" (\"{error}\")"), Fmt.Hm(Math.Max(1, pause / 60))), Bot.Name);
 
 		if (!await Sleep(TimeSpan.FromSeconds(pause), ct).ConfigureAwait(false)) {
+			return 60;
+		}
+
+		// Minutes went by. A pause, a hold, commenting switched off, a rest or the cap reached in that time all mean no -
+		// the retry used to post regardless, after you'd said stop.
+		if (StoppedPosting()) {
+			Log.Debug($"didn't retry the comment on {task.TargetName} - commenting was stopped or rested meanwhile", Bot.Name);
+
 			return 60;
 		}
 
@@ -993,9 +1059,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 				}
 			}
 
-			_profileId ??= await _api.ResolveProfileIdAsync(Bot.SteamId, Live.Global.Rep4RepAutoAddProfiles, ct).ConfigureAwait(false);
-
-			if (_profileId == null) {
+			if (await ProfileIdAsync(ct).ConfigureAwait(false) == null) {
 				return "That account isn't registered with rep4rep yet.";
 			}
 
@@ -1009,7 +1073,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 			if (task == null) {
 				// Not in the cache - a restart, or a page left open a very long time. A fresh batch is the only thing
 				// left to try; the id usually will not be in it, which is exactly what the message below says.
-				List<Rep4RepTask> batch = await _api.GetTasksAsync(_profileId, ct).ConfigureAwait(false);
+				List<Rep4RepTask> batch = await _api.GetTasksAsync(_profileId!, ct).ConfigureAwait(false);
 				Remember(batch);
 
 				task = batch.FirstOrDefault(t => t.TaskId == taskId);

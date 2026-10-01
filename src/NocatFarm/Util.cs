@@ -11,19 +11,53 @@ namespace NocatFarm;
 public static class Prompt {
 	private static readonly SemaphoreSlim Gate = new(1, 1);
 
+	/// <summary>
+	/// One question, with its own answer. Everything about it - the words, whether it's a secret, who asked, and where
+	/// the answer goes - travels together, so nothing can pair one question's text with another question's answer.
+	/// </summary>
+	/// <remarks>
+	/// Four separate fields used to be set and cleared one by one: the window could read "a question is up", the dashboard
+	/// answer it and the next account ask its own, and the line typed for the first went to the second.
+	/// </remarks>
+	public sealed class Question {
+		internal Question(string text, bool secret, string? owner) {
+			Text = text;
+			Secret = secret;
+			Owner = owner;
+		}
+
+		public string Text { get; }
+		public bool Secret { get; }
+		public string? Owner { get; }
+
+		internal TaskCompletionSource<string> Reply { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+	}
+
+	private static volatile Question? _current;
+
+	/// <summary>The question up right now, or null. Read it once and use that: it can change between two reads.</summary>
+	public static Question? Current => _current;
+
 	/// <summary>The question currently waiting for an answer, or null.</summary>
-	public static string? Pending { get; private set; }
+	public static string? Pending => _current?.Text;
 
 	/// <summary>Who asked it, so stopping one account can't answer a different account's question.</summary>
-	public static string? PendingOwner { get; private set; }
+	public static string? PendingOwner => _current?.Owner;
 
 	/// <summary>Whether the pending answer is a secret, so the console stops echoing what is typed.</summary>
-	public static bool PendingSecret { get; private set; }
+	public static bool PendingSecret => _current?.Secret ?? false;
 
-	private static TaskCompletionSource<string>? _answer;
+	/// <summary>A question went up or came down - the live board redraws its prompt line.</summary>
+	public static event Action? Changed;
 
 	/// <summary>Supply the answer to the pending prompt. Returns false when nothing was asked.</summary>
-	public static bool Answer(string value) => _answer?.TrySetResult(value) ?? false;
+	public static bool Answer(string value) => _current?.Reply.TrySetResult(value) ?? false;
+
+	/// <summary>
+	/// Answer <paramref name="question"/> and nothing else - the one on screen when the answer was typed. False when it has
+	/// already been answered (from the dashboard, say) or given up: the answer never carries over to the next question.
+	/// </summary>
+	public static bool Answer(Question question, string value) => question.Reply.TrySetResult(value);
 
 	/// <summary>
 	/// Abandon the pending question, but only if <paramref name="owner"/> is the one who asked it. Used when the
@@ -33,7 +67,9 @@ public static class Prompt {
 	private static readonly HashSet<string> Abandoned = new(StringComparer.OrdinalIgnoreCase);
 
 	public static void Cancel(string? owner = null) {
-		if (owner != null && PendingOwner != null && !string.Equals(owner, PendingOwner, StringComparison.OrdinalIgnoreCase)) {
+		Question? up = _current;
+
+		if (owner != null && up?.Owner != null && !string.Equals(owner, up.Owner, StringComparison.OrdinalIgnoreCase)) {
 			// Someone else's question is on screen. This owner may still be QUEUED behind it - remember that it
 			// was cancelled, or its turn would come round and hang the prompt on a bot nobody is running.
 			lock (Abandoned) {
@@ -43,7 +79,7 @@ public static class Prompt {
 			return;
 		}
 
-		_answer?.TrySetResult("");
+		up?.Reply.TrySetResult("");
 	}
 
 	public static Task<string> LineAsync(string question, string? owner = null) => AskAsync(question, false, owner);
@@ -68,21 +104,32 @@ public static class Prompt {
 				}
 			}
 
-			_answer = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-			Pending = question;
-			PendingOwner = owner;
-			PendingSecret = secret;
+			Question asked = new(question, secret, owner);
+			_current = asked;
+			Raise();
 
-			Console.WriteLine();
-			Console.Write($"  {question}: ");
+			// Straight onto the console only while nothing else owns the screen. The live board repaints the bottom of it
+			// every second - a question written there was painted over at once, and on Linux or --no-gui the Steam Guard
+			// code was asked for where nobody could read it. The board draws it on its own prompt line instead (Changed),
+			// and the window shows it above its command box.
+			if (!Log.Suppressed) {
+				Log.ToConsole(Environment.NewLine + $"  {question}: ");
+			}
 
-			return (await _answer.Task.ConfigureAwait(false)).Trim();
+			return (await asked.Reply.Task.ConfigureAwait(false)).Trim();
 		} finally {
-			Pending = null;
-			PendingOwner = null;
-			PendingSecret = false;
-			_answer = null;
+			_current = null;
+			Raise();
 			Gate.Release();
+		}
+	}
+
+	private static void Raise() {
+		try {
+			Changed?.Invoke();
+		} catch (Exception e) {
+			// a screen that couldn't redraw must not lose the question, or the answer
+			Log.Debug($"the prompt line couldn't be redrawn: {Log.Describe(e)}");
 		}
 	}
 }
@@ -292,4 +339,37 @@ public static class Background {
 			Log.Failed(what, e, source);
 			Log.StackToFile(e, source);
 		}, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
+}
+
+/// <summary>Line editing for the console's own reader (Program's ReadLine), the one every OS types commands into.</summary>
+public static class TypedLine {
+	/// <summary>
+	/// Backspace: takes the last thing typed off the line and says how many columns to rub out on the screen.
+	/// </summary>
+	/// <remarks>
+	/// The last thing typed, not the last char. An emoji is two chars (a surrogate pair), and taking one off left half of
+	/// it behind: "name kylro nocat💀", a backspace to drop the 💀, and the name saved was "nocat" plus a broken half-char
+	/// that went to Steam as "�" on the friends list. A whole text element goes - a pair, an emoji with its variation
+	/// selector (☠️), a letter with its accent - and a masked answer rubs out one star per char it echoed.
+	/// </remarks>
+	public static int Backspace(StringBuilder line, bool masked) {
+		ArgumentNullException.ThrowIfNull(line);
+
+		if (line.Length == 0) {
+			return 0;
+		}
+
+		string text = line.ToString();
+		int[] starts = System.Globalization.StringInfo.ParseCombiningCharacters(text);
+		int from = starts.Length > 0 ? starts[^1] : text.Length - 1;
+		string gone = text[from..];
+		line.Length = from;
+
+		if (masked) {
+			return gone.Length;
+		}
+
+		// Emoji draw two columns wide in a terminal; anything else typed here, one.
+		return gone.Any(char.IsSurrogate) || gone.Contains('\uFE0F', StringComparison.Ordinal) ? 2 : 1;
+	}
 }

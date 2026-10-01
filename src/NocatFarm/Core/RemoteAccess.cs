@@ -51,11 +51,26 @@ public static partial class RemoteAccess {
 	public static string? Link => (_mapped is { } m) && (ExternalIp != null) ? $"http://{ExternalIp}:{m.Port}/" : null;
 
 	public static void Start() {
+		if (_stopped) {
+			return;   // closing already - no timer, and nothing forwarded on the way out
+		}
+
 		_timer = new Timer(static _ => _ = TickAsync(), null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(30));
 	}
 
 	/// <summary>Look now rather than at the next tick - after the switch or the password changed.</summary>
-	public static void Poke() => _ = TickAsync();
+	/// <remarks>
+	/// A look already under way (the timer's) used to swallow this: it had read the settings before they changed, so
+	/// "anywhere off" left the port forwarded until the next tick, and "anywhere on" answered with no link. Now the
+	/// look that's running goes round once more when it finishes (<see cref="_again"/>).
+	/// </remarks>
+	public static void Poke() {
+		Volatile.Write(ref _again, 1);
+		_ = TickAsync();
+	}
+
+	/// <summary>Poked while a look was running: that look goes round again once it's done, with the settings as they are now.</summary>
+	private static int _again;
 
 	/// <summary>Why it can't be opened with the settings as they are, or null when it can.</summary>
 	public static Said? Blocker(GlobalConfig g) =>
@@ -66,10 +81,25 @@ public static partial class RemoteAccess {
 				: null;
 
 	private static async Task TickAsync() {
-		if (Interlocked.Exchange(ref _busy, 1) == 1) {
-			return;
-		}
+		// Round again while a poke came in during the look before: claimed, it covers every poke so far (_again cleared);
+		// finished, it looks whether another arrived meanwhile. A poke landing after that check claims the next look itself.
+		while (!_stopped && (Interlocked.Exchange(ref _busy, 1) == 0)) {
+			Volatile.Write(ref _again, 0);
 
+			try {
+				await LookAsync().ConfigureAwait(false);
+			} finally {
+				Volatile.Write(ref _busy, 0);
+			}
+
+			if (Interlocked.Exchange(ref _again, 0) == 0) {
+				return;
+			}
+		}
+	}
+
+	/// <summary>Whether the forward should be there, and putting it there or taking it away. One at a time (TickAsync).</summary>
+	private static async Task LookAsync() {
 		try {
 			GlobalConfig g = Live.Global;
 			bool wanted = g.WebRemoteAccess && g.WebEnabled;
@@ -114,8 +144,6 @@ public static partial class RemoteAccess {
 				&& e is not (HttpRequestException or TaskCanceledException or SocketException)) {
 				Log.StackToFile(e);
 			}
-		} finally {
-			Volatile.Write(ref _busy, 0);
 		}
 	}
 

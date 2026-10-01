@@ -26,7 +26,14 @@ public sealed class Bot : IAsyncDisposable {
 	public BotState State { get; private set; } = BotState.Stopped;
 	public string StatusText { get; private set; } = "stopped";
 	public ulong SteamId { get; private set; }
-	public DateTime? OnlineSince { get; private set; }
+	// Ticks (0 = not signed in): read by every module's thread, and a DateTime? can be read half-written.
+	private long _onlineSinceTicks;
+
+	public DateTime? OnlineSince {
+		get => FromTicks(Volatile.Read(ref _onlineSinceTicks));
+		private set => Volatile.Write(ref _onlineSinceTicks, ToTicks(value));
+	}
+
 	public string Playing { get; private set; } = "";
 
 	/// <summary>
@@ -54,13 +61,34 @@ public sealed class Bot : IAsyncDisposable {
 	/// </summary>
 	public uint GrindGame { get; private set; }
 
-	public DateTime? GrindUntil { get; private set; }
+	// Kept as ticks (0 = none) so a read on another thread can never see half of a DateTime? being written.
+	private long _grindUntilTicks;
+	private long _grindStartsAtTicks;
+
+	public DateTime? GrindUntil {
+		get => FromTicks(Volatile.Read(ref _grindUntilTicks));
+		private set => Volatile.Write(ref _grindUntilTicks, ToTicks(value));
+	}
 
 	/// <summary>When the grind game actually goes on. On a legit account this is a short beat after the command,
 	/// so it finishes up its current game rather than snapping over instantly; on a non-human account it's now.</summary>
-	public DateTime GrindStartsAt { get; private set; }
+	public DateTime GrindStartsAt {
+		get => new(Volatile.Read(ref _grindStartsAtTicks), DateTimeKind.Utc);
+		private set => Volatile.Write(ref _grindStartsAtTicks, value.Ticks);
+	}
 
 	public bool Grinding => (GrindGame != 0) && (GrindUntil > DateTime.UtcNow);
+
+	private static DateTime? FromTicks(long ticks) => ticks == 0 ? null : new DateTime(ticks, DateTimeKind.Utc);
+
+	private static long ToTicks(DateTime? when) => when is { } w ? w.Ticks : 0;
+
+	/// <summary>
+	/// Every change to the grind and the drop run - and the file each is saved to - happens under this, so a stop can't
+	/// land in the middle of a count or a save: a stopped grind came back at the next start (the save after the stop had
+	/// deleted the file wrote it again), an end time moved by the warm-up was overwritten, drops went to the wrong run.
+	/// </summary>
+	private readonly Lock _grindGate = new();
 
 	/// <summary>
 	/// Play one game and nothing else for a while. Returns false, having done nothing, if that game is inside its
@@ -82,10 +110,39 @@ public sealed class Bot : IAsyncDisposable {
 	/// </summary>
 	public int GrindDropsLeft { get; private set; }
 
-	/// <summary>Knock drops off the running drop run, and keep that across a restart.</summary>
-	public void CountGrindDrops(int drops) {
-		GrindDropsLeft = Math.Max(0, GrindDropsLeft - drops);
-		SaveGrind();
+	/// <summary>
+	/// Which grind is running: a new number every time one starts (or comes back after a restart). What watches a grind -
+	/// the card farmer's drop run - keeps the number it started with, so a grind started in its place while it was waiting
+	/// on a badge page (the same game or another) is never counted down or ended by the old one.
+	/// </summary>
+	public long GrindRun { get; private set; }
+
+	/// <summary>The grind game and its run number, read together.</summary>
+	public (uint Game, long Run) CurrentGrind {
+		get {
+			lock (_grindGate) {
+				return (GrindGame, GrindRun);
+			}
+		}
+	}
+
+	/// <summary>Knock drops off the running drop run, and keep that across a restart. True when they were counted.</summary>
+	/// <param name="app">The game they dropped in, when known: a drop from a game other than the one the run is on
+	/// (the run was stopped and another started meanwhile) isn't counted against it.</param>
+	/// <param name="run">The <see cref="GrindRun"/> they were counted for, when known: the same, for a new run on the same game.</param>
+	public bool CountGrindDrops(int drops, uint app = 0, long run = 0) {
+		lock (_grindGate) {
+			// Nothing running (stopped while the drops were being counted): nothing to count down, and nothing to save -
+			// a save here is what put a stopped grind back on disk.
+			if ((GrindGame == 0) || (GrindDropsLeft <= 0) || ((app != 0) && (app != GrindGame)) || ((run != 0) && (run != GrindRun))) {
+				return false;
+			}
+
+			GrindDropsLeft = Math.Max(0, GrindDropsLeft - drops);
+			SaveGrind();
+
+			return true;
+		}
 	}
 
 	/// <summary>
@@ -93,14 +150,16 @@ public sealed class Bot : IAsyncDisposable {
 	/// end with it, so the hours asked for are hours of play - a 1h grind used to lose its warm-up and play 45 minutes.
 	/// </summary>
 	public void HoldGrindStart() {
-		if ((GrindGame == 0) || (GrindUntil is not { } until) || (DateTime.UtcNow <= GrindStartsAt)) {
-			return;
-		}
+		lock (_grindGate) {
+			if ((GrindGame == 0) || (GrindUntil is not { } until) || (DateTime.UtcNow <= GrindStartsAt)) {
+				return;
+			}
 
-		TimeSpan late = DateTime.UtcNow - GrindStartsAt;
-		GrindStartsAt = DateTime.UtcNow;
-		GrindUntil = until.Add(late);
-		SaveGrind();
+			TimeSpan late = DateTime.UtcNow - GrindStartsAt;
+			GrindStartsAt = DateTime.UtcNow;
+			GrindUntil = until.Add(late);
+			SaveGrind();
+		}
 	}
 
 	public bool StartGrind(uint app, TimeSpan how, TimeSpan delay = default, bool boost = false, int drops = 0) {
@@ -110,12 +169,16 @@ public sealed class Bot : IAsyncDisposable {
 			return false;
 		}
 
-		GrindGame = app;
-		GrindStartsAt = DateTime.UtcNow.Add(delay);
-		GrindUntil = GrindStartsAt.Add(how);   // the hours run from when it actually starts, not the command
-		GrindIsBoost = boost;
-		GrindDropsLeft = Math.Max(0, drops);
-		SaveGrind();
+		lock (_grindGate) {
+			DateTime starts = DateTime.UtcNow.Add(delay);
+			GrindGame = app;
+			GrindStartsAt = starts;
+			GrindUntil = starts.Add(how);   // the hours run from when it actually starts, not the command
+			GrindIsBoost = boost;
+			GrindDropsLeft = Math.Max(0, drops);
+			GrindRun++;
+			SaveGrind();
+		}
 
 		// A grind with no delay should start with NO DELAY.
 		//
@@ -134,15 +197,40 @@ public sealed class Bot : IAsyncDisposable {
 	}
 
 	public void StopGrind() {
+		lock (_grindGate) {
+			ClearGrind();
+		}
+
+		// Put the normal games back now. Left to the idler's own schedule, "grind kylro off" answered "back to
+		// normal" and the account went on playing the one grind game for up to seven more minutes.
+		BotManager.ModuleOf<Modules.Idler>(this)?.Assert();
+	}
+
+	/// <summary>
+	/// Stop the grind only if it is still run <paramref name="run"/> (<see cref="GrindRun"/>). False, touching nothing,
+	/// when another has started in its place - an old drop run finishing must not end the grind somebody started since.
+	/// </summary>
+	public bool StopGrind(long run) {
+		lock (_grindGate) {
+			if ((GrindGame == 0) || (GrindRun != run)) {
+				return false;
+			}
+
+			ClearGrind();
+		}
+
+		BotManager.ModuleOf<Modules.Idler>(this)?.Assert();
+
+		return true;
+	}
+
+	/// <summary>No grind. Under _grindGate.</summary>
+	private void ClearGrind() {
 		GrindGame = 0;
 		GrindUntil = null;
 		GrindIsBoost = false;
 		GrindDropsLeft = 0;
 		SaveGrind();
-
-		// Put the normal games back now. Left to the idler's own schedule, "grind kylro off" answered "back to
-		// normal" and the account went on playing the one grind game for up to seven more minutes.
-		BotManager.ModuleOf<Modules.Idler>(this)?.Assert();
 	}
 
 	private string GrindPath => Path.Combine(ConfigStore.ConfigDir, "state", $"grind-{Name}.json");
@@ -178,15 +266,23 @@ public sealed class Bot : IAsyncDisposable {
 			return false;
 		}
 
-		DropsFirstApp = app;
-		DropsFirstWant = Math.Max(1, want);
-		DropsFirstGot = 0;
-		SaveDropsFirst();
+		lock (_grindGate) {
+			DropsFirstApp = app;
+			DropsFirstWant = Math.Max(1, want);
+			DropsFirstGot = 0;
+			SaveDropsFirst();
+		}
 
 		return true;
 	}
 
 	public void StopDropsFirst() {
+		lock (_grindGate) {
+			StopDropsFirstLocked();
+		}
+	}
+
+	private void StopDropsFirstLocked() {
 		DropsFirstApp = 0;
 		DropsFirstWant = 0;
 		DropsFirstGot = 0;
@@ -195,20 +291,28 @@ public sealed class Bot : IAsyncDisposable {
 
 	/// <summary>Cards that just dropped in <paramref name="app"/> - counted toward a drop run on it, if there is one.</summary>
 	public void CountDropsFirst(uint app, int drops) {
-		if ((drops <= 0) || (app != DropsFirstApp) || !DropsFirstActive) {
-			return;
+		int want;
+
+		// The check and the count as one step: a stop, or a new run on another game, landing in between had these drops
+		// credited to a run that was no longer the one they dropped for.
+		lock (_grindGate) {
+			if ((drops <= 0) || (app != DropsFirstApp) || !DropsFirstActive) {
+				return;
+			}
+
+			DropsFirstGot = Math.Min(DropsFirstWant, DropsFirstGot + drops);
+
+			if (DropsFirstActive) {
+				SaveDropsFirst();
+
+				return;
+			}
+
+			want = DropsFirstWant;
+			StopDropsFirstLocked();
 		}
 
-		DropsFirstGot = Math.Min(DropsFirstWant, DropsFirstGot + drops);
-
-		if (DropsFirstActive) {
-			SaveDropsFirst();
-
-			return;
-		}
-
-		Log.Good(new Said("{0}: all {1} card drop(s) in - back to normal", GameNames.Of(app), DropsFirstWant), Name);
-		StopDropsFirst();
+		Log.Good(new Said("{0}: all {1} card drop(s) in - back to normal", GameNames.Of(app), want), Name);
 	}
 
 	private string DropsFirstPath => Path.Combine(ConfigStore.ConfigDir, "state", $"dropsfirst-{Name}.json");
@@ -250,10 +354,10 @@ public sealed class Bot : IAsyncDisposable {
 
 	private sealed record DropsFirstSave(uint App, int Want, int Got);
 
-	/// <summary>Persist the current grind so it survives a restart, a crash, or the owner playing for a while.</summary>
+	/// <summary>Persist the current grind so it survives a restart, a crash, or the owner playing for a while. Under _grindGate.</summary>
 	private void SaveGrind() {
 		try {
-			if ((GrindGame == 0) || (GrindUntil == null)) {
+			if ((GrindGame == 0) || (GrindUntil is not { } until)) {
 				if (File.Exists(GrindPath)) {
 					File.Delete(GrindPath);
 				}
@@ -262,7 +366,7 @@ public sealed class Bot : IAsyncDisposable {
 			}
 
 			Directory.CreateDirectory(Path.GetDirectoryName(GrindPath)!);
-			AtomicFile.Write(GrindPath, JsonSerializer.Serialize(new GrindSave(GrindGame, GrindUntil.Value.Ticks, GrindIsBoost, GrindDropsLeft)));
+			AtomicFile.Write(GrindPath, JsonSerializer.Serialize(new GrindSave(GrindGame, until.Ticks, GrindIsBoost, GrindDropsLeft)));
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't save the grind: {0}", Log.Describe(e)), Name);
 		}
@@ -293,6 +397,7 @@ public sealed class Bot : IAsyncDisposable {
 			GrindUntil = until;
 			GrindIsBoost = saved.Boost;
 			GrindDropsLeft = Math.Max(0, saved.DropsLeft);
+			GrindRun++;
 			GrindStartsAt = DateTime.UtcNow;   // resume now - no fresh switch-in delay on a resume
 			Log.Info(new Said("resuming the grind of {0} - {1} left", GameNames.Of(GrindGame), Fmt.Hm((int) (until - DateTime.UtcNow).TotalMinutes)), Name);
 		} catch (Exception e) {
@@ -543,10 +648,14 @@ public sealed class Bot : IAsyncDisposable {
 	public DateTime? PausedUntil { get; private set; }
 
 	public void Pause(TimeSpan? duration = null) {
-		Paused = true;
-		PausedUntil = duration is { } d && (d > TimeSpan.Zero) ? DateTime.UtcNow + d : null;
-		IsFarming = false;
-		StopPlaying();
+		// The flag and the clear as one step under SetPlaying's lock: a SetPlaying already past its "paused" check can't
+		// land its games after this cleared them.
+		lock (_playGate) {
+			Paused = true;
+			PausedUntil = duration is { } d && (d > TimeSpan.Zero) ? DateTime.UtcNow + d : null;
+			IsFarming = false;
+			StopPlaying();
+		}
 
 		if (PausedUntil is { } until) {
 			Log.Info(new Said("paused for {0} - picks back up by itself at {1}", Fmt.Hm((int) Math.Ceiling(duration!.Value.TotalMinutes)),
@@ -617,13 +726,14 @@ public sealed class Bot : IAsyncDisposable {
 	/// </summary>
 	public bool OwnsPackage(uint packageId) {
 		lock (_licenses) {
-			return _licenses.TryGetValue(packageId, out (DateTime Created, ulong Token, bool Paid, bool Own, bool Gift) license) && license.Own;
+			return _licenses.TryGetValue(packageId, out Licence license) && license.Own;
 		}
 	}
 
-	private readonly Dictionary<uint, (DateTime Created, ulong Token, bool Paid, bool Own, bool Gift)> _licenses = [];
+	private readonly Dictionary<uint, Licence> _licenses = [];
 	private Dictionary<uint, AppOwnership>? _appOwnedSince;
 	private int _licenseGeneration;
+	private long _licenseStamp;
 	private DateTime _resumeAt = DateTime.MinValue;
 
 	internal SteamClient Client { get; }
@@ -653,6 +763,10 @@ public sealed class Bot : IAsyncDisposable {
 	private int _loginFailures;
 
 	private CancellationTokenSource? _cts;
+
+	// The live run's token, kept apart from its source: a stop disposes the source, and reading .Token off a disposed one
+	// throws - the reconnect path read it again after every wait. A stopped run's token stays cancelled, which is the point.
+	private CancellationToken _runToken = new(true);
 	private Task? _pump;
 	private Timer? _heartbeat;
 	private volatile bool _running;
@@ -1018,13 +1132,13 @@ public sealed class Bot : IAsyncDisposable {
 		_personaEchoed = true;
 
 		if (PersonaAsSeen == EffectivePersona) {
-			if (_personaFightSince != null) {
-				_personaFightSince = null;
+			if (PersonaFightSince != null) {
+				PersonaFightSince = null;
 				_contestRetried = false;
 				Log.Debug("the persona is ours again - resuming the periodic re-assert", Name);
 			}
-		} else if ((_personaFightSince == null) && !firstEcho) {
-			_personaFightSince = DateTime.UtcNow;
+		} else if ((PersonaFightSince == null) && !firstEcho) {
+			PersonaFightSince = DateTime.UtcNow;
 
 			// Backing off starts NOW, not after the ninety seconds the message waits for. Those ninety seconds
 			// exist so a stale first echo cannot produce a wrong headline - they are not a licence to keep
@@ -1057,12 +1171,12 @@ public sealed class Bot : IAsyncDisposable {
 		bool mismatched = !string.IsNullOrWhiteSpace(wanted) && (seen.Length > 0) && (seen != wanted);
 
 		if (!mismatched) {
-			_mismatchedSince = null;
+			MismatchedSince = null;
 
 			return;
 		}
 
-		_mismatchedSince ??= DateTime.UtcNow;
+		MismatchedSince ??= DateTime.UtcNow;
 	}
 
 	/// <summary>
@@ -1072,10 +1186,22 @@ public sealed class Bot : IAsyncDisposable {
 	/// at login never gets reported as a problem.
 	/// </summary>
 	public bool CustomNameNotShowing =>
-		(_mismatchedSince != null) && (DateTime.UtcNow - _mismatchedSince.Value > TimeSpan.FromSeconds(90));
+		(MismatchedSince is { } since) && (DateTime.UtcNow - since > TimeSpan.FromSeconds(90));
 
-	private DateTime? _mismatchedSince;
-	private DateTime? _personaFightSince;
+	// Ticks (0 = none) behind both: the callback pump writes them while the dashboard and the heartbeat read them, and a
+	// DateTime? read on another thread could come back half-written - or null between the check and the .Value.
+	private long _mismatchedSinceTicks;
+	private long _personaFightSinceTicks;
+
+	private DateTime? MismatchedSince {
+		get => FromTicks(Volatile.Read(ref _mismatchedSinceTicks));
+		set => Volatile.Write(ref _mismatchedSinceTicks, ToTicks(value));
+	}
+
+	private DateTime? PersonaFightSince {
+		get => FromTicks(Volatile.Read(ref _personaFightSinceTicks));
+		set => Volatile.Write(ref _personaFightSinceTicks, ToTicks(value));
+	}
 
 	/// <summary>This session has had its first persona echo - the stale one - so a mismatch from here on is real news.</summary>
 	private bool _personaEchoed;
@@ -1087,7 +1213,7 @@ public sealed class Bot : IAsyncDisposable {
 	/// anything, so a stale echo cannot produce a wrong headline. This one is true immediately, because backing
 	/// off has to happen at the first sign - every extra round of the fight is another sign-out.
 	/// </summary>
-	public bool PersonaContested => _personaFightSince != null;
+	public bool PersonaContested => PersonaFightSince != null;
 
 	/// <summary>
 	/// Something else is setting this account's persona and winning.
@@ -1098,7 +1224,7 @@ public sealed class Bot : IAsyncDisposable {
 	/// a dashboard confidently reporting "invisible" at something anybody can see is not.
 	/// </summary>
 	public bool PersonaOverridden =>
-		(_personaFightSince != null) && (DateTime.UtcNow - _personaFightSince.Value > TimeSpan.FromSeconds(90));
+		(PersonaFightSince is { } since) && (DateTime.UtcNow - since > TimeSpan.FromSeconds(90));
 
 	/// <summary>What the friends list is really showing, when that differs from what we asked for.</summary>
 	public string PersonaReallyWord => PersonaAsSeen is { } seen ? Word(seen) : PersonaWord;
@@ -1176,7 +1302,7 @@ public sealed class Bot : IAsyncDisposable {
 	/// Connection settings that can only be chosen up front: which transport to use, how long to wait, and
 	/// whether everything goes through a proxy.
 	/// </summary>
-	private static SteamConfiguration BuildSteamConfiguration(BotConfig cfg) {
+	internal static SteamConfiguration BuildSteamConfiguration(BotConfig cfg) {
 		GlobalConfig g = Live.Global;
 		string proxy = string.IsNullOrWhiteSpace(cfg.AccountProxy) ? g.WebProxy : cfg.AccountProxy;
 
@@ -1236,6 +1362,8 @@ public sealed class Bot : IAsyncDisposable {
 
 	public void AddModule(IBotModule m) => _modules.Add(m);
 	public IReadOnlyList<IBotModule> Modules => _modules;
+
+	public Lock CfgGate { get; } = new();
 
 	public void Reconfigure(BotConfig cfg) => Cfg = cfg;
 
@@ -1322,6 +1450,13 @@ public sealed class Bot : IAsyncDisposable {
 		await _stopGate.WaitAsync().ConfigureAwait(false);
 
 		try {
+			// Removed or replaced while this start waited its turn: it stays that way.
+			if (Volatile.Read(ref _disposed)) {
+				Log.Debug("not starting - this account was removed", Name);
+
+				return;
+			}
+
 			// A previous run that ended without StopAsync (a disabled account, a dead login) can still be holding a
 			// token source and a callback pump. Tear it down or the second start runs two pumps on one client.
 			await StopCoreAsync(false).ConfigureAwait(false);
@@ -1334,9 +1469,11 @@ public sealed class Bot : IAsyncDisposable {
 
 			_running = true;
 
-			if (GrindGame == 0) {
-				LoadGrind();   // pick a still-running grind back up after a restart or crash
-				LoadDropsFirst();
+			lock (_grindGate) {
+				if (GrindGame == 0) {
+					LoadGrind();   // pick a still-running grind back up after a restart or crash
+					LoadDropsFirst();
+				}
 			}
 			Paused = Cfg.StartPaused;   // re-applied per start, so 'restart' doesn't quietly un-pause the account
 			// And a timed pause from before the restart is over. Left behind, it lifted a "Start paused" account by itself
@@ -1348,6 +1485,7 @@ public sealed class Bot : IAsyncDisposable {
 			_loginFailures = 0;
 			_cts = new CancellationTokenSource();
 			ct = _cts.Token;   // kept here: a stop from now on disposes the source, and reading its token then throws
+			_runToken = ct;
 			_pump = Task.Run(() => Pump(ct), CancellationToken.None);
 
 			State = BotState.Connecting;
@@ -1372,14 +1510,22 @@ public sealed class Bot : IAsyncDisposable {
 			Log.Info("starting up", Name);
 		}
 
-		if (!_running) {
-			return;
-		}
+		// The check and the connect under the stop lock. Apart, a stop landing between them disconnected nothing (there was
+		// nothing yet) and the connect went ahead - the account signed in after being told to stop.
+		await _stopGate.WaitAsync().ConfigureAwait(false);
 
-		StatusText = "connecting";
-		_lastLogOnResult = EResult.Invalid;
-		Interlocked.Exchange(ref _connectedSession, session);   // before Connect: its "disconnected" can come back at once
-		Client.Connect();
+		try {
+			if (!_running || (Interlocked.Read(ref _session) != session)) {
+				return;
+			}
+
+			StatusText = "connecting";
+			_lastLogOnResult = EResult.Invalid;
+			Interlocked.Exchange(ref _connectedSession, session);   // before Connect: its "disconnected" can come back at once
+			Client.Connect();
+		} finally {
+			_stopGate.Release();
+		}
 	}
 
 	/// <summary>
@@ -1392,7 +1538,23 @@ public sealed class Bot : IAsyncDisposable {
 	/// <summary>The last time Steam said you started or stopped playing on this account yourself (UTC).</summary>
 	public DateTime YouPlayedAt { get; private set; } = DateTime.MinValue;
 
+	/// <summary>
+	/// Goes up with every stop asked for (and the dispose), the moment it's asked. Something that stops the account and
+	/// means to start it again (the stuck alarm's restart) notes this first and doesn't start it if anybody else stopped
+	/// it meanwhile - a 'stop' you gave during that restart used to be undone a second later.
+	/// </summary>
+	public long StopCount => Interlocked.Read(ref _stopCount);
+
+	private long _stopCount;
+
+	/// <summary>Disposed - removed, or swapped out by a restore. Nothing starts it again after that. Set under _stopGate.</summary>
+	public bool Disposed => Volatile.Read(ref _disposed);
+
+	private bool _disposed;
+
 	public async Task StopAsync(bool graceful = false) {
+		Interlocked.Increment(ref _stopCount);
+
 		// Two callers arriving together used to double-dispose the token source and throw out of the middle of
 		// StopAllAsync, leaving the rest of the accounts running.
 		await _stopGate.WaitAsync().ConfigureAwait(false);
@@ -1441,7 +1603,6 @@ public sealed class Bot : IAsyncDisposable {
 		Stopping = false;
 		State = BotState.Stopped;
 		StatusText = "stopped";
-		OnlineSince = null;
 		Playing = "";
 		IsFarming = false;
 		_guardPrompt = null;
@@ -1451,6 +1612,10 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		await StopModulesAsync().ConfigureAwait(false);
+
+		// Only once the modules have stopped: human mode banks the session in flight as it stops, measured from this
+		// sign-in - cleared first, it found no sign-in to measure from and every stop lost up to a minute of play.
+		OnlineSince = null;
 
 		_heartbeat?.Dispose();
 		_heartbeat = null;
@@ -1531,6 +1696,11 @@ public sealed class Bot : IAsyncDisposable {
 	private async Task OnConnectedAsync(SteamClient.ConnectedCallback _) {
 		_lastPacket = DateTime.UtcNow;
 
+		// Which run this sign-in is for. It can wait a long time (a password typed, a code scanned); stopped - or stopped and
+		// started again - meanwhile, it must neither sign in nor disconnect the newer run's connection when it fails.
+		long session = Interlocked.Read(ref _session);
+		CancellationToken ct = _runToken;
+
 		User = Client.GetHandler<SteamUser>();
 		Apps = Client.GetHandler<SteamApps>();
 		Friends = Client.GetHandler<SteamFriends>();
@@ -1539,7 +1709,9 @@ public sealed class Bot : IAsyncDisposable {
 		StatusText = "logging in";
 
 		try {
-			await LogInAsync().ConfigureAwait(false);
+			await LogInAsync(ct).ConfigureAwait(false);
+		} catch (Exception) when (ct.IsCancellationRequested || (Interlocked.Read(ref _session) != session)) {
+			// The run it was for is over: nothing to report, and the connection may already be the next run's.
 		} catch (Exception e) {
 			// Keep the more telling "sign-in failed" the sign-in set when it gave up.
 			if (State != BotState.Failed) {
@@ -1570,12 +1742,15 @@ public sealed class Bot : IAsyncDisposable {
 	/// account rather than keeping a sign-in open indefinitely.
 	/// </summary>
 	/// <returns>Whether it signed in.</returns>
-	private async Task<bool> SignInWithQrAsync() {
+	private async Task<bool> SignInWithQrAsync(CancellationToken ct) {
 		State = BotState.NeedsGuard;
 		_guardPrompt = "scan the QR code with the Steam app";
 		StatusText = "waiting for the QR code to be scanned";
 
 		using CancellationTokenSource giveUp = new(TimeSpan.FromMinutes(5));
+
+		// Stopping the account ends the wait too - it used to go on polling Steam for the rest of the five minutes.
+		using CancellationTokenSource waiting = CancellationTokenSource.CreateLinkedTokenSource(giveUp.Token, ct);
 
 		try {
 			QrAuthSession session = await Client.Authentication.BeginAuthSessionViaQRAsync(new AuthSessionDetails {
@@ -1589,13 +1764,19 @@ public sealed class Bot : IAsyncDisposable {
 			session.ChallengeURLChanged = () => ShowQr(session.ChallengeURL);
 			Log.Attention(new Said("sign-in: scan the QR on the dashboard (Steam app, Steam Guard)"), Name);
 
-			AuthPollResult poll = await session.PollingWaitForResultAsync(giveUp.Token).ConfigureAwait(false);
+			AuthPollResult poll = await session.PollingWaitForResultAsync(waiting.Token).ConfigureAwait(false);
 			QrChallenge = null;
+			ct.ThrowIfCancellationRequested();   // scanned just as the account was stopped: that run is over
 
-			// The account name comes from Steam - "add <name> qr" never asked for one.
-			if (!string.IsNullOrEmpty(poll.AccountName) && !string.Equals(Cfg.SteamLogin, poll.AccountName, StringComparison.OrdinalIgnoreCase)) {
-				Cfg.SteamLogin = poll.AccountName;
-				ConfigStore.SaveBot(Name, Cfg);
+			// The account name comes from Steam - "add <name> qr" never asked for one. Changed and saved under the config
+			// lock, like every other edit of an account's settings, so a settings save at the same moment can't lose it.
+			lock (CfgGate) {
+				BotConfig cfg = Cfg;
+
+				if (!string.IsNullOrEmpty(poll.AccountName) && !string.Equals(cfg.SteamLogin, poll.AccountName, StringComparison.OrdinalIgnoreCase)) {
+					cfg.SteamLogin = poll.AccountName;
+					ConfigStore.SaveBot(Name, cfg);
+				}
 			}
 
 			ReplaceTokens(poll.RefreshToken, poll.AccessToken);
@@ -1611,7 +1792,7 @@ public sealed class Bot : IAsyncDisposable {
 			Log.Attention(new Said("QR code not scanned in 5 min - 'start {0}' for a new one", Name), Name);
 
 			return false;
-		} catch when (!_running) {
+		} catch when (!_running || ct.IsCancellationRequested) {
 			// Stopped or removed while the code was up - that ends the sign-in, it isn't a failure.
 			QrChallenge = null;
 
@@ -1628,7 +1809,7 @@ public sealed class Bot : IAsyncDisposable {
 		QrVersion++;
 	}
 
-	private async Task LogInAsync() {
+	private async Task LogInAsync(CancellationToken ct) {
 		// Steam can drop an idle pre-login connection (TryAnotherCM) while somebody is still typing a password,
 		// which reconnects and would otherwise queue a SECOND prompt behind the first. One attempt at a time.
 		if (Interlocked.Exchange(ref _loggingIn, 1) == 1) {
@@ -1647,7 +1828,7 @@ public sealed class Bot : IAsyncDisposable {
 			}
 
 			// Signed in by scanning a QR code with the Steam app instead - no password at all.
-			if (string.IsNullOrEmpty(_refreshToken) && Cfg.SignInWithQr && !await SignInWithQrAsync().ConfigureAwait(false)) {
+			if (string.IsNullOrEmpty(_refreshToken) && Cfg.SignInWithQr && !await SignInWithQrAsync(ct).ConfigureAwait(false)) {
 				return;
 			}
 
@@ -1695,8 +1876,10 @@ public sealed class Bot : IAsyncDisposable {
 
 				try {
 					session = await Client.Authentication.BeginAuthSessionViaCredentialsAsync(details).ConfigureAwait(false);
-					poll = await session.PollingWaitForResultAsync().ConfigureAwait(false);
-				} catch (Exception e) {
+					// The run's token: stopped while it waits on the phone, it stops waiting - and a stopped run's sign-in
+					// can't go on to sign in on whatever connection is open by the time it's approved.
+					poll = await session.PollingWaitForResultAsync(ct).ConfigureAwait(false);
+				} catch (Exception e) when (!ct.IsCancellationRequested) {
 					// A wrong password fails here every time. Retrying it every few seconds forever is both
 					// useless and exactly what makes Steam rate-limit the IP, so ask again after a few tries.
 					// Only Steam turning the sign-in down counts: a dropped connection or a timeout is no reason to give
@@ -1728,7 +1911,7 @@ public sealed class Bot : IAsyncDisposable {
 				Log.Good("signed in - login token saved, no password needed again", Name);
 			}
 
-			if (!Client.IsConnected) {
+			if (!Client.IsConnected || ct.IsCancellationRequested) {
 				return;
 			}
 
@@ -1802,7 +1985,19 @@ public sealed class Bot : IAsyncDisposable {
 		}
 	}
 
+	/// <summary>Goes up with every logon Steam answers. See OnLoggedOnAsync.</summary>
+	private long _logonGen;
+
+	/// <summary>
+	/// This logon is still the latest, signed in, on a running account. A logon handler waits (for the web session) part
+	/// way through; a reconnect meanwhile brings the next logon, and the older handler then used to carry on as if it were
+	/// current - clearing the new one's drop latch and comment baseline, forgetting what it had just announced, sweeping
+	/// the notifications a second time.
+	/// </summary>
+	internal bool LogonStillCurrent(long logon) => _running && (State == BotState.Online) && (Interlocked.Read(ref _logonGen) == logon);
+
 	private async Task OnLoggedOnAsync(SteamUser.LoggedOnCallback cb) {
+		long logon = Interlocked.Increment(ref _logonGen);
 		_lastPacket = DateTime.UtcNow;
 		_lastLogOnResult = cb.Result > EResult.OK ? cb.Result : EResult.Invalid;
 
@@ -1883,8 +2078,8 @@ public sealed class Bot : IAsyncDisposable {
 
 		// That can take a while (a new token, the Family View unlock). Stopped, removed or dropped in the meantime, the
 		// heartbeat and every module used to be started anyway - on an account that was no longer running, with
-		// nothing left to ever stop them.
-		if (!_running || (State != BotState.Online)) {
+		// nothing left to ever stop them. Or signed in again meanwhile: that logon does all this itself.
+		if (!LogonStillCurrent(logon)) {
 			return;
 		}
 
@@ -1914,15 +2109,29 @@ public sealed class Bot : IAsyncDisposable {
 		ClearAllNotifications();
 
 		_reconnectAttempts = 0;   // a successful logon ends the backoff streak
-		StartHeartbeat();
 
-		foreach (IBotModule m in _modules) {
-			try {
-				await m.StartAsync().ConfigureAwait(false);
-			} catch (Exception e) {
-				Log.Warn(new Said("module {0} failed to start: {1}", m.Name, Log.Scrub(e.Message)), Name);
-				Log.StackToFile(e, Name);
+		// Checked again and started under the stop lock. Unlocked, a stop between the check above and here stopped the
+		// modules first and these then started them again - on an account that had been stopped, with nothing left to
+		// stop them. Starting a module only kicks off its loop, so this holds the lock for a moment.
+		await _stopGate.WaitAsync().ConfigureAwait(false);
+
+		try {
+			if (!LogonStillCurrent(logon)) {
+				return;
 			}
+
+			StartHeartbeat();
+
+			foreach (IBotModule m in _modules) {
+				try {
+					await m.StartAsync().ConfigureAwait(false);
+				} catch (Exception e) {
+					Log.Warn(new Said("module {0} failed to start: {1}", m.Name, Log.Scrub(e.Message)), Name);
+					Log.StackToFile(e, Name);
+				}
+			}
+		} finally {
+			_stopGate.Release();
 		}
 
 		// Put the custom game name back up immediately on a non-human account, rather than leaving it showing
@@ -1934,7 +2143,7 @@ public sealed class Bot : IAsyncDisposable {
 		// HumanOwned is still false for a legit account (its module hasn't ticked yet), and asserting here would
 		// slam the multi-game idle list on for a beat and grab the session inside the owner-report lag the warm-up
 		// gate exists to respect. LegitMode is known immediately, so this never fires on a human account.
-		if (!Cfg.LegitMode && !PlayingBlocked) {
+		if (!Cfg.LegitMode && !PlayingBlocked && LogonStillCurrent(logon)) {
 			BotManager.ModuleOf<Modules.Idler>(this)?.Assert();
 		}
 	}
@@ -1957,7 +2166,10 @@ public sealed class Bot : IAsyncDisposable {
 
 		State = BotState.Reconnecting;
 		StatusText = cb.Result == EResult.LoggedInElsewhere ? "you're playing" : "reconnecting";
-		OnlineSince = null;
+
+		// OnlineSince is left for the disconnect that follows, which clears it once the modules have stopped: human mode
+		// banks the session in flight as it stops, measured from this sign-in, and with it cleared here it found nothing
+		// to measure from and lost up to a minute of play every time.
 	}
 
 	/// <summary>
@@ -2004,19 +2216,28 @@ public sealed class Bot : IAsyncDisposable {
 		_announcedApps = null;
 		_announcedLabel = null;
 		PlayingAsSeen = "";
-		_mismatchedSince = null;
-		_personaFightSince = null;   // the next session's own echo decides whether anybody else is writing it
+		MismatchedSince = null;
+		PersonaFightSince = null;   // the next session's own echo decides whether anybody else is writing it
 		_contestRetried = false;
 		_personaEchoed = false;      // and its first echo is stale again
 	}
 
 	private async Task OnDisconnectedAsync(long session) {
-		ForgetConnection();
+		// Read once. The source behind it is disposed by a stop, and reading .Token after every wait below threw then - or,
+		// once a new run had started, handed this old reconnect the NEW run's token.
+		CancellationToken ct = _runToken;
+
+		if (Interlocked.Read(ref _session) != session) {
+			return;   // a new run started in the moment since the disconnect was read
+		}
 
 		_heartbeat?.Dispose();
 		_heartbeat = null;
 
+		// Modules first, then the connection is forgotten: human mode banks the session in flight as it stops, measured from
+		// this sign-in (OnlineSince) - forgotten first, it lost up to a minute of play on every disconnect.
 		await StopModulesAsync().ConfigureAwait(false);
+		ForgetConnection();
 
 		if (!_running) {
 			// A sign-in that gave up (three wrong passwords, no password, a QR code nobody scanned) stops the account AND
@@ -2057,7 +2278,7 @@ public sealed class Bot : IAsyncDisposable {
 					int idle = Math.Max(1, Live.Global.ReconnectDelaySeconds);
 					TimeSpan hop = TimeSpan.FromSeconds(Rng.Next(idle, idle * 2));
 					Log.Debug(new Said("moving to another Steam server in ~{0}s", (int) hop.TotalSeconds), Name);
-					await Task.Delay(hop, _cts?.Token ?? CancellationToken.None).ConfigureAwait(false);
+					await Task.Delay(hop, ct).ConfigureAwait(false);
 
 					break;
 				}
@@ -2087,7 +2308,7 @@ public sealed class Bot : IAsyncDisposable {
 
 					StatusText = "rate-limited";
 					_reconnectAttempts = 0;   // a cooldown is not a failure streak; don't let backoff compound on top
-					await Limiters.ServeLoginCooldownAsync(_cts?.Token ?? CancellationToken.None).ConfigureAwait(false);
+					await Limiters.ServeLoginCooldownAsync(ct).ConfigureAwait(false);
 
 					break;
 				case EResult.LoggedInElsewhere: {
@@ -2098,7 +2319,7 @@ public sealed class Bot : IAsyncDisposable {
 					TimeSpan rejoin = TimeSpan.FromSeconds(Rng.Next(idle, idle * 2));
 					StatusText = "you're playing";
 					Log.Debug(new Said("rejoining in ~{0}s, then standing down until you're done", (int) rejoin.TotalSeconds), Name);
-					await Task.Delay(rejoin, _cts?.Token ?? CancellationToken.None).ConfigureAwait(false);
+					await Task.Delay(rejoin, ct).ConfigureAwait(false);
 
 					break;
 				}
@@ -2117,14 +2338,22 @@ public sealed class Bot : IAsyncDisposable {
 			// Never reconnect while a login attempt is still in flight - that's how you end up with two password
 			// prompts stacked on top of each other.
 			while (Volatile.Read(ref _loggingIn) == 1) {
-				await Task.Delay(1000, _cts?.Token ?? CancellationToken.None).ConfigureAwait(false);
+				await Task.Delay(1000, ct).ConfigureAwait(false);
 			}
 
-			await Limiters.WaitForLoginSlotAsync(_cts?.Token ?? CancellationToken.None).ConfigureAwait(false);
+			await Limiters.WaitForLoginSlotAsync(ct).ConfigureAwait(false);
 
-			if (_running && (Interlocked.Read(ref _session) == session) && !Client.IsConnected) {
-				Interlocked.Exchange(ref _connectedSession, session);
-				Client.Connect();
+			// Under the stop lock, like the first connect: a stop between the check and the connect signed a stopped account
+			// back in.
+			await _stopGate.WaitAsync(ct).ConfigureAwait(false);
+
+			try {
+				if (_running && (Interlocked.Read(ref _session) == session) && !Client.IsConnected) {
+					Interlocked.Exchange(ref _connectedSession, session);
+					Client.Connect();
+				}
+			} finally {
+				_stopGate.Release();
 			}
 		} catch (OperationCanceledException) {
 			// shutting down
@@ -2151,7 +2380,7 @@ public sealed class Bot : IAsyncDisposable {
 				Log.Debug(SteamMaintenance.Explain(back), Name);
 			}
 
-			await Task.Delay(back, _cts?.Token ?? CancellationToken.None).ConfigureAwait(false);
+			await Task.Delay(back, ct).ConfigureAwait(false);
 		}
 	}
 
@@ -2335,41 +2564,65 @@ public sealed class Bot : IAsyncDisposable {
 	// ── pushes ──────────────────────────────────────────────────────────────
 	private void OnPlayingSessionState(SteamUser.PlayingSessionStateCallback cb) {
 		_lastPacket = DateTime.UtcNow;
+		NotePlayingSession(cb.PlayingBlocked, cb.PlayingAppID);
+	}
 
+	/// <summary>Steam's playing-session report: stand down for the owner, or stand back up once he's done.</summary>
+	internal void NotePlayingSession(bool blocked, uint app) {
 		// PlayingAppID is what the account's playing session is running. While blocked that is a session OTHER than
 		// this one - Steam allows one playing session per account, so our games-played is accepted and then quietly
 		// ignored, which from the inside looks identical to it never having been sent. While not blocked it is our
 		// own: the line used to call nocat.farm's own game list "other session playing app 730".
-		Log.Debug(SessionStateLine(cb.PlayingBlocked, cb.PlayingAppID), Name);
+		Log.Debug(SessionStateLine(blocked, app), Name);
 
 		// Before anything below can return early: this is what you're playing, stood down for or not.
-		OtherSessionApp = cb.PlayingBlocked ? cb.PlayingAppID : 0;
+		OtherSessionApp = blocked ? app : 0;
 
 		// The opt-out only suppresses standing DOWN. It must never suppress standing back up: doing that once
 		// latched the flag on forever, so the setting that promises "don't stand down" was the one that made
 		// standing down permanent.
-		if (cb.PlayingBlocked && !Cfg.PauseWhenYouPlay) {
+		if (blocked && !Cfg.PauseWhenYouPlay) {
 			return;
 		}
 
-		if (cb.PlayingBlocked == PlayingBlocked) {
-			return;
+		// The flag and what it clears as one step, under the lock SetPlaying decides under - so a SetPlaying already past
+		// its "you're playing" check finishes first and is cleared here, and one after this sees the flag and sends nothing.
+		// The wait before picking back up, rolled before the flag drops - dropped first, CanPlay read "free, no wait" for
+		// the moment in between and the idler could jump straight back in.
+		int delay = Math.Max(0, Cfg.ResumeDelayMinutes);
+		DateTime resumeAt = DateTime.UtcNow + (Cfg.LegitMode && (delay > 0) ? Rng.HumanMinutes(delay, delay * 3) : TimeSpan.FromMinutes(delay));
+
+		lock (_playGate) {
+			if (blocked == PlayingBlocked) {
+				return;
+			}
+
+			if (blocked) {
+				PlayingBlocked = true;
+				Playing = "";
+				IsFarming = false;
+
+				// Steam has taken our games off while you play, so nothing of ours is running. Left set, the lifetime total,
+				// the history charts and the daily report went on counting your own play as the account's farming, and the
+				// next announce once you'd finished was taken for a repeat rather than a fresh start.
+				PlayingApps = [];
+				_announcedApps = null;
+				_announcedLabel = null;
+
+				// And whatever SetPlaying left waiting to finish (its second half, a persona re-send) is superseded.
+				Interlocked.Increment(ref _playSequence);
+			} else {
+				// A courtesy pause: coming straight back the instant Steam frees the session is what makes an idler
+				// feel like it's fighting you for your own account.
+				// Human mode takes its time about it - somewhere from the delay to three times it, not the same minute count every time.
+				_resumeAt = resumeAt;
+				PlayingBlocked = false;
+			}
 		}
 
-		PlayingBlocked = cb.PlayingBlocked;
 		YouPlayedAt = DateTime.UtcNow;   // started or stopped: either way you were on it just now
 
-		if (PlayingBlocked) {
-			Playing = "";
-			IsFarming = false;
-
-			// Steam has taken our games off while you play, so nothing of ours is running. Left set, the lifetime total,
-			// the history charts and the daily report went on counting your own play as the account's farming, and the
-			// next announce once you'd finished was taken for a repeat rather than a fresh start.
-			PlayingApps = [];
-			_announcedApps = null;
-			_announcedLabel = null;
-
+		if (blocked) {
 			// Don't cry wolf on the report that arrives WITH the logon.
 			//
 			// Steam's first PlayingSessionState after signing in still describes the session that just ENDED -
@@ -2386,23 +2639,18 @@ public sealed class Bot : IAsyncDisposable {
 
 			if (freshLogon) {
 				_blockWarnDue = DateTime.UtcNow.AddSeconds(25);
-				Log.Debug(new Said("Steam reports another session on app {0} right after logon - probably our own, waiting before saying so", cb.PlayingAppID), Name);
+				Log.Debug(new Said("Steam reports another session on app {0} right after logon - probably our own, waiting before saying so", app), Name);
 			} else {
 				_blockWarnDue = null;
 				Log.Info("you're on this account - waiting until you're done", Name);
 			}
 		} else {
 			_blockWarnDue = null;
-			// A courtesy pause: coming straight back the instant Steam frees the session is what makes an idler
-			// feel like it's fighting you for your own account.
-			// Human mode takes its time about it - somewhere from the delay to three times it, not the same minute count every time.
-			int delay = Math.Max(0, Cfg.ResumeDelayMinutes);
-			_resumeAt = DateTime.UtcNow + (Cfg.LegitMode && (delay > 0) ? Rng.HumanMinutes(delay, delay * 3) : TimeSpan.FromMinutes(delay));
 
 			// The wait it actually rolled, not the setting: on a human-mode account that's anywhere up to three times it, and
 			// "in 5m" for a wait of 14 was simply wrong.
 			if (Cfg.ResumeDelayMinutes > 0) {
-				Log.Info(new Said("the account is free again - picking back up in {0}m", (int) Math.Ceiling((_resumeAt - DateTime.UtcNow).TotalMinutes)), Name);
+				Log.Info(new Said("the account is free again - picking back up in {0}m", (int) Math.Ceiling((resumeAt - DateTime.UtcNow).TotalMinutes)), Name);
 			} else {
 				Log.Info("the account is free again - resuming", Name);
 			}
@@ -2416,6 +2664,34 @@ public sealed class Bot : IAsyncDisposable {
 				return _licenseGeneration;
 			}
 		}
+	}
+
+	/// <summary>
+	/// What this account's own licences are, as one number: the same list gives the same number, whenever and however
+	/// often it's read; 0 until the list has arrived. <see cref="LicenseGeneration"/> starts again at every launch, so
+	/// it can't be kept - this can. The achievement pacer keeps it with a game it has called done for DLC the account
+	/// doesn't own, and looks again when it changes: a DLC bought, even while this app was closed, releases the game.
+	/// </summary>
+	public long LicenseStamp {
+		get {
+			lock (_licenses) {
+				return _licenseStamp;
+			}
+		}
+	}
+
+	/// <summary>The stamp of a licence list: its own packages, in order, run through FNV-1a. Never 0.</summary>
+	internal static long StampOf(IEnumerable<uint> ownPackages) {
+		ulong hash = 14695981039346656037UL;
+
+		foreach (uint package in ownPackages.Distinct().Order()) {
+			for (int shift = 0; shift < 32; shift += 8) {
+				hash ^= (package >> shift) & 0xFF;
+				hash *= 1099511628211UL;
+			}
+		}
+
+		return hash == 0 ? 1 : unchecked((long) hash);
 	}
 
 	private void OnLicenseList(SteamApps.LicenseListCallback cb) {
@@ -2437,7 +2713,7 @@ public sealed class Bot : IAsyncDisposable {
 				// The same package can be on the list twice: this account's own copy and a family member's. Whichever
 				// came last used to win, so a family copy listed after ours marked the account's own game as "not
 				// ours" - and the refund guard and the library filter both read exactly that. Ours always wins.
-				if (_licenses.TryGetValue(license.PackageID, out (DateTime Created, ulong Token, bool Paid, bool Own, bool Gift) had) && !Replaces(had.Own, own)) {
+				if (_licenses.TryGetValue(license.PackageID, out Licence had) && !Replaces(had.Own, own)) {
 					continue;
 				}
 
@@ -2446,13 +2722,18 @@ public sealed class Bot : IAsyncDisposable {
 				// pass (a timed trial) carries the same payment method, so what tells them apart is the licence
 				// itself: a gift is a permanent single purchase with no time limit, a trial is not. Seen on real
 				// gifts (Riders Republic, Steep): GuestPass, SinglePurchase, flags None, minute limit 0.
-				_licenses[license.PackageID] = (license.TimeCreated, license.AccessToken, IsPaid(license.PaymentMethod), own,
+				_licenses[license.PackageID] = new Licence(license.TimeCreated, license.AccessToken, IsPaid(license.PaymentMethod), own,
 					(license.PaymentMethod == EPaymentMethod.GuestPass) && (license.LicenseType == ELicenseType.SinglePurchase)
-						&& (license.MinuteLimit == 0) && !license.LicenseFlags.HasFlag(ELicenseFlags.Expired));
+						&& (license.MinuteLimit == 0) && !license.LicenseFlags.HasFlag(ELicenseFlags.Expired),
+					IsPermanent(license.LicenseFlags, license.MinuteLimit, license.LicenseType, license.PaymentMethod));
 			}
 
 			_appOwnedSince = null;   // the mapping is stale now
 			_licenseGeneration++;
+
+			// Only the licences that count as really having something. One that runs out, or goes from pending to
+			// active, changes what the account owns for good - and has a game held for DLC looked at again.
+			_licenseStamp = StampOf(_licenses.Where(static l => l.Value.Own && l.Value.Permanent).Select(static l => l.Key));
 		}
 
 		// Only what changed. Steam pushes the whole list again for all sorts of reasons - a game added anywhere in the
@@ -2486,6 +2767,27 @@ public sealed class Bot : IAsyncDisposable {
 	internal static List<uint> NewLicences(IReadOnlySet<uint> before, IEnumerable<uint> now) =>
 		[.. now.Where(p => !before.Contains(p)).Distinct()];
 
+	/// <summary>One licence on the account's list, as kept here.</summary>
+	/// <param name="Own">The account's own, not a family member's.</param>
+	/// <param name="Gift">Gifted by somebody else and still refundable to them - see <see cref="OnLicenseList"/>.</param>
+	/// <param name="Permanent">Owned for good - see <see cref="IsPermanent"/>.</param>
+	private readonly record struct Licence(DateTime Created, ulong Token, bool Paid, bool Own, bool Gift, bool Permanent);
+
+	/// <summary>
+	/// A licence the account really has for good: not run out, not cancelled or refunded, not still waiting to go
+	/// through, and not a timed one - a free weekend, a timed trial, a guest pass. Those put a game (or a DLC) on the
+	/// licence list too, some of them for years after they ended, and taken as owning the DLC they let its achievements
+	/// be unlocked on an account that never had it. A gifted game is a guest pass that is a plain single purchase with
+	/// no time limit; any other guest pass is a trial.
+	/// </summary>
+	internal static bool IsPermanent(ELicenseFlags flags, int minuteLimit, ELicenseType type, EPaymentMethod method) =>
+		((flags & (ELicenseFlags.Expired | ELicenseFlags.Pending | ELicenseFlags.CancelledByUser | ELicenseFlags.CancelledByAdmin
+			| ELicenseFlags.CancelledByFriendlyFraudLock | ELicenseFlags.NotActivated)) == 0)
+		&& (minuteLimit == 0)
+		&& (type is not (ELicenseType.NoLicense or ELicenseType.SinglePurchaseLimitedUse or ELicenseType.RecurringChargeLimitedUse
+			or ELicenseType.RecurringChargeLimitedUseWithOverages or ELicenseType.LimitedUseDelayedActivation))
+		&& ((method != EPaymentMethod.GuestPass) || (type == ELicenseType.SinglePurchase));
+
 	/// <summary>
 	/// Whether a licence for a package already seen on this list takes its place. This account's own copy is never
 	/// replaced by a family member's; otherwise the later one wins, as before.
@@ -2504,15 +2806,19 @@ public sealed class Bot : IAsyncDisposable {
 		or EPaymentMethod.GuestPass or EPaymentMethod.OEMTicket or EPaymentMethod.MasterComp);
 
 	/// <summary>
-	/// When each owned app was first licensed to this account and whether it was paid for, worked out by asking
-	/// Steam what is inside each owned package. Only used for refund protection, so it is built lazily and only
-	/// when something asks - resolving thousands of packages on every login for a setting most people leave off
-	/// would be rude.
+	/// When each owned app was first licensed to this account, whether it was paid for, and whether the account has it
+	/// for good, worked out by asking Steam what is inside each owned package. Used by refund protection and to tell
+	/// which DLC the account really owns, so it is built lazily and only when something asks - resolving thousands of
+	/// packages on every login for a setting most people leave off would be rude.
 	///
-	/// Returns empty on any failure, which means "don't skip anything" rather than "skip everything".
+	/// Every licence counts here, run out or not: refund protection wants the earliest one. What the account really
+	/// owns is <see cref="AppOwnership.Permanent"/>.
+	///
+	/// Returns empty on any failure, or when only part of the answer came: "no answer", never "owns nothing". Refund
+	/// protection then holds nothing new but keeps what it already held; the DLC check holds the game.
 	/// </summary>
 	internal async Task<IReadOnlyDictionary<uint, AppOwnership>> GetAppOwnershipAsync() {
-		Dictionary<uint, (DateTime Created, ulong Token, bool Paid, bool Own, bool Gift)> snapshot;
+		Dictionary<uint, Licence> snapshot;
 		int generation;
 
 		lock (_licenses) {
@@ -2520,7 +2826,7 @@ public sealed class Bot : IAsyncDisposable {
 				return _appOwnedSince;
 			}
 
-			snapshot = new Dictionary<uint, (DateTime Created, ulong Token, bool Paid, bool Own, bool Gift)>(_licenses);
+			snapshot = new Dictionary<uint, Licence>(_licenses);
 			generation = _licenseGeneration;
 		}
 
@@ -2537,15 +2843,17 @@ public sealed class Bot : IAsyncDisposable {
 			// A failed job hands back a default ResultSet, whose Results really is null.
 			IReadOnlyList<SteamApps.PICSProductInfoCallback>? pages = result.Results;
 
-			if (pages == null) {
-				Log.Debug($"Steam didn't answer the package lookup for refund protection ({(result.Failed ? "job failed" : "no results")}) - refund protection is off this round", Name);
+			// Only part of the answer is no answer: a reply that stalls hands back the pages it had, with Complete false.
+			// Taken as the whole list - and cached - a DLC whose page never came read as not owned for a week.
+			if ((pages == null) || !result.Complete) {
+				Log.Debug($"Steam didn't answer the package lookup for refund protection ({(result.Failed ? "job failed" : (pages == null) ? "no results" : "only part of it")}) - refund protection keeps what it holds and asks again in a few minutes", Name);
 
 				return map;
 			}
 
 			foreach (SteamApps.PICSProductInfoCallback page in pages) {
 				foreach (SteamApps.PICSProductInfoCallback.PICSProductInfo package in page.Packages.Values) {
-					if (!snapshot.TryGetValue(package.ID, out (DateTime Created, ulong Token, bool Paid, bool Own, bool Gift) license)) {
+					if (!snapshot.TryGetValue(package.ID, out Licence license)) {
 						continue;
 					}
 
@@ -2558,22 +2866,19 @@ public sealed class Bot : IAsyncDisposable {
 							continue;
 						}
 
-						// Earliest licence wins - that's when you really got it. A game can also arrive twice (a free
-						// weekend, then the purchase), and if EITHER licence was paid for the refund clock is real.
-						if (!map.TryGetValue(appId, out AppOwnership existing)) {
-							map[appId] = new AppOwnership(license.Created, license.Paid, license.Own, license.Gift);
-						} else {
-							map[appId] = new AppOwnership(
-								license.Created < existing.Since ? license.Created : existing.Since,
-								existing.Paid || license.Paid,
-								existing.Own || license.Own,
-								existing.Gift || license.Gift);
-						}
+						// The same app from more than one licence: see AppOwnership.Join. "For good" only from a licence
+						// that is both the account's own and permanent - a family member's copy never makes it that.
+						// A free weekend isn't for good either, whatever its licence says: a running free weekend's licence
+						// looks like a plain purchase - no flags, no minute limit. Only "freeweekend", not "expirytime": that is
+						// the end of the window to CLAIM a package in, and a free-to-keep giveaway claimed in it has one too.
+						bool timed = package.KeyValues["extended"]["freeweekend"].AsInteger() != 0;
+						AppOwnership next = new(license.Created, license.Paid, license.Own, license.Gift, license.Own && license.Permanent && !timed);
+						map[appId] = map.TryGetValue(appId, out AppOwnership existing) ? existing.Join(next) : next;
 					}
 				}
 			}
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't work out when games were bought ({0}) - refund protection is off this round", Log.Describe(e)), Name);
+			Log.Debug(new Said("couldn't work out when games were bought ({0}) - refund protection keeps what it holds and asks again soon", Log.Describe(e)), Name);
 
 			return new Dictionary<uint, AppOwnership>();
 		}
@@ -2604,6 +2909,8 @@ public sealed class Bot : IAsyncDisposable {
 		// every 45 minutes: the inventory page is heavy, and loading it on every single card drop cost far more
 		// than a counter that reads 3 for a while.
 		if (Cfg.ClearInventoryNotifications && (Interlocked.Exchange(ref _inventoryVisitQueued, 1) == 0)) {
+			long session = Interlocked.Read(ref _session);
+
 			_ = Task.Run(async () => {
 				try {
 					// Human mode: an uneven 30-120 minutes apart, and a few minutes after the drop at the earliest.
@@ -2618,6 +2925,10 @@ public sealed class Bot : IAsyncDisposable {
 						await Task.Delay(wait).ConfigureAwait(false);
 					}
 
+					// Stopped, signed out or started afresh during that wait (up to two hours): not this run's page to load.
+					if (!_running || (State != BotState.Online) || (Interlocked.Read(ref _session) != session)) {
+						return;
+					}
 
 					_inventoryVisitedAt = DateTime.UtcNow;
 					await Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{SteamId}/inventory/")).ConfigureAwait(false);
@@ -2651,10 +2962,18 @@ public sealed class Bot : IAsyncDisposable {
 	/// recent truth, so this never overwrites a higher number with a stale zero.
 	/// </summary>
 	public void NoteTradeOffersSeen(int seen) {
-		if (seen <= Volatile.Read(ref _tradeOffersWaiting)) {
-			Volatile.Write(ref _tradeOffersWaiting, seen);
-		} else if (Volatile.Read(ref _tradeOffersWaiting) < 0) {
-			Volatile.Write(ref _tradeOffersWaiting, seen);
+		// Compare-and-swap: a push landing between reading the count and writing it used to be overwritten with this
+		// older, lower figure - the very thing this promises not to do.
+		while (true) {
+			int current = Volatile.Read(ref _tradeOffersWaiting);
+
+			if ((seen > current) && (current >= 0)) {
+				return;
+			}
+
+			if (Interlocked.CompareExchange(ref _tradeOffersWaiting, seen, current) == current) {
+				return;
+			}
 		}
 	}
 
@@ -2755,7 +3074,8 @@ public sealed class Bot : IAsyncDisposable {
 		// Steam only says THAT somebody commented, not who or what - the line used to be this profile's own address,
 		// which told you nothing. So the newest comments are read off the profile and each new one is said in full.
 		int arrived = (int) Math.Min(3, cb.NewOwnerComments - previous);
-		Background.Run("couldn't read the new comment", () => AnnounceCommentsAsync(arrived), Name);
+		long takenAt = Interlocked.Read(ref _lastCommentAt);
+		Background.Run("couldn't read the new comment", () => AnnounceCommentsAsync(arrived, takenAt), Name);
 
 		// Read it, so the counter goes back to zero rather than climbing for the life of the account.
 		ClearAllNotifications();
@@ -2767,43 +3087,66 @@ public sealed class Bot : IAsyncDisposable {
 	/// <summary>One comment on the profile: who wrote it, what it says, and when (Unix seconds).</summary>
 	public sealed record ProfileComment(string Author, string Text, long At);
 
-	/// <summary>Who commented and what they wrote, for each comment newer than the last one announced.</summary>
-	private async Task AnnounceCommentsAsync(int arrived) {
+	/// <summary>One announcement at a time: two pushes close together read the same comments and said each one twice.</summary>
+	private readonly SemaphoreSlim _commentGate = new(1, 1);
+
+	/// <summary>The profile's newest comments, off Steam.</summary>
+	private async Task<List<ProfileComment>> ReadProfileCommentsAsync() {
 		string? json = await Web.PostAsync(new Uri(WebSession.Community, $"/comment/Profile/render/{SteamId}/-1/"),
 			new Dictionary<string, string> { ["start"] = "0", ["count"] = "5" }).ConfigureAwait(false);
-		List<ProfileComment> comments = [];
 
 		if (json != null) {
 			try {
 				using JsonDocument doc = JsonDocument.Parse(json);
 
 				if (doc.RootElement.TryGetProperty("comments_html", out JsonElement html) && (html.GetString() is { } markup)) {
-					comments = ReadComments(markup);
+					return ReadComments(markup);
 				}
 			} catch (JsonException e) {
 				Log.Failed("the profile's comments weren't readable", e, Name);
 			}
 		}
 
-		// Newer than the last one said; failing that (a clock off, a comment Steam dated oddly), the newest few.
-		List<ProfileComment> fresh = [.. comments.Where(c => c.At > _lastCommentAt)];
+		return [];
+	}
 
-		if (fresh.Count == 0) {
-			fresh = [.. comments.Take(arrived)];
-		}
+	/// <summary>Who commented and what they wrote, for each comment newer than the last one announced.</summary>
+	/// <param name="takenAt">The newest comment already announced when the push came in.</param>
+	/// <param name="read">Where the comments come from - the profile, unless the checks hand in their own.</param>
+	internal async Task AnnounceCommentsAsync(int arrived, long takenAt, Func<Task<List<ProfileComment>>>? read = null) {
+		await _commentGate.WaitAsync().ConfigureAwait(false);
 
-		if (fresh.Count == 0) {
-			Log.Event(new Said("new comment on the profile - Steam wouldn't show it, so look on the profile"), Name);
+		try {
+			List<ProfileComment> comments = await (read ?? ReadProfileCommentsAsync)().ConfigureAwait(false);
+			long last = Interlocked.Read(ref _lastCommentAt);
 
-			return;
-		}
+			// Newer than the last one said; failing that (a clock off, a comment Steam dated oddly), the newest few.
+			List<ProfileComment> fresh = [.. comments.Where(c => c.At > last)];
 
-		_lastCommentAt = Math.Max(_lastCommentAt, fresh.Max(static c => c.At));
+			if (fresh.Count == 0) {
+				// Unless an announcement since this push already said what's new: its comments were this push's too.
+				if (last != takenAt) {
+					return;
+				}
 
-		foreach (ProfileComment c in Enumerable.Reverse(fresh)) {
-			Log.Event(c.Text.StartsWith("This comment is awaiting analysis", StringComparison.Ordinal)
-				? new Said("new comment from {0} - Steam is still checking what it says", c.Author)
-				: new Said("new comment from {0}: \"{1}\"", c.Author, c.Text.Length > 200 ? c.Text[..197] + "..." : c.Text), Name);
+				fresh = [.. comments.Take(arrived)];
+			}
+
+			if (fresh.Count == 0) {
+				Log.Event(new Said("new comment on the profile - Steam wouldn't show it, so look on the profile"), Name);
+
+				return;
+			}
+
+			Interlocked.Exchange(ref _lastCommentAt, Math.Max(last, fresh.Max(static c => c.At)));
+
+			foreach (ProfileComment c in Enumerable.Reverse(fresh)) {
+				Log.Event(c.Text.StartsWith("This comment is awaiting analysis", StringComparison.Ordinal)
+					? new Said("new comment from {0} - Steam is still checking what it says", c.Author)
+					: new Said("new comment from {0}: \"{1}\"", c.Author, c.Text.Length > 200 ? c.Text[..197] + "..." : c.Text), Name);
+			}
+		} finally {
+			_commentGate.Release();
 		}
 	}
 
@@ -3116,6 +3459,16 @@ public sealed class Bot : IAsyncDisposable {
 	/// playtime. Order matters: the shortcut has to lead, or the real game's store name wins the display.
 	/// </summary>
 	public void SetPlaying(IReadOnlyCollection<uint> appIds, string? overrideName = null, bool force = false) {
+		// One decision at a time, and never across a stand-down. Unlocked, a caller passed the "you're playing" check,
+		// the stand-down for the owner cleared what was announced, and the caller then sent its games anyway - over the
+		// owner's own session, with his play counted as ours. And two callers at once (the name heal and the idler) left
+		// what we think we announced different from what Steam got. Everything in here sends without waiting.
+		lock (_playGate) {
+			SetPlayingLocked(appIds, overrideName, force);
+		}
+	}
+
+	private void SetPlayingLocked(IReadOnlyCollection<uint> appIds, string? overrideName, bool force) {
 		if (State != BotState.Online) {
 			return;
 		}
@@ -3225,7 +3578,7 @@ public sealed class Bot : IAsyncDisposable {
 		_announcedLabel = label;
 
 		if (string.IsNullOrWhiteSpace(label)) {
-			_mismatchedSince = null;   // nothing to slip when no name is being shown
+			MismatchedSince = null;   // nothing to slip when no name is being shown
 		}
 
 		if (relaunch) {
@@ -3236,20 +3589,24 @@ public sealed class Bot : IAsyncDisposable {
 				try {
 					await Task.Delay(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
 
-					if ((Volatile.Read(ref _playSequence) != mine) || (State != BotState.Online) || PlayingBlocked || Paused) {
-						return;   // superseded, or no longer ours to drive - whoever won will announce its own
-					}
+					// The check and the send together, under the same lock as the stand-down - or the owner could start
+					// playing between the two and get these games sent over his session.
+					lock (_playGate) {
+						if ((Volatile.Read(ref _playSequence) != mine) || (State != BotState.Online) || PlayingBlocked || Paused) {
+							return;   // superseded, or no longer ours to drive - whoever won will announce its own
+						}
 
-					// Cfg.GameDevice, same as the ordinary path below. Leaving it off defaulted the device to 0
-					// ("desktop, legacy") on every re-announce, quietly discarding whatever the account was set
-					// to - and now that a login takes this path too, that was every session.
-					Client.Send(BuildGamesPlayed(label, apps, Cfg.GameDevice));
+						// Cfg.GameDevice, same as the ordinary path below. Leaving it off defaulted the device to 0
+						// ("desktop, legacy") on every re-announce, quietly discarding whatever the account was set
+						// to - and now that a login takes this path too, that was every session.
+						Client.Send(BuildGamesPlayed(label, apps, Cfg.GameDevice));
 
-					// Same rule as the ordinary path below: on an account its owner signs into himself the status is his.
-					// Sent here regardless, every game-list change - and every custom-name heal, two minutes apart - put
-					// him back to Online after he had picked Invisible or Away in his own client.
-					if (!Cfg.IUseThisAccount) {
-						ApplyPersona();
+						// Same rule as the ordinary path below: on an account its owner signs into himself the status is his.
+						// Sent here regardless, every game-list change - and every custom-name heal, two minutes apart - put
+						// him back to Online after he had picked Invisible or Away in his own client.
+						if (!Cfg.IUseThisAccount) {
+							ApplyPersona();
+						}
 					}
 				} catch (Exception e) {
 					Log.Debug(new Said("couldn't re-announce after the game list changed: {0}", Log.Describe(e)), Name);
@@ -3293,7 +3650,7 @@ public sealed class Bot : IAsyncDisposable {
 	}
 
 	/// <summary>One games-played message: the custom-name shortcut first when there is one, then the real games.</summary>
-	private static ClientMsgProtobuf<CMsgClientGamesPlayed> BuildGamesPlayed(string? label, List<uint> apps, int device = 0) {
+	internal static ClientMsgProtobuf<CMsgClientGamesPlayed> BuildGamesPlayed(string? label, List<uint> apps, int device = 0) {
 		ClientMsgProtobuf<CMsgClientGamesPlayed> msg = new(EMsg.ClientGamesPlayedWithDataBlob);
 
 		if (!string.IsNullOrWhiteSpace(label)) {
@@ -3351,6 +3708,13 @@ public sealed class Bot : IAsyncDisposable {
 	/// <summary>Bumped by every SetPlaying, so a delayed re-announce knows it has been superseded.</summary>
 	private int _playSequence;
 
+	/// <summary>What is announced and whether it may be: SetPlaying, its delayed halves, and the stand-down for the owner.</summary>
+	private readonly Lock _playGate = new();
+
+	/// <summary>A delayed persona re-send is still wanted: nothing newer announced, signed in, and nobody else on the account.</summary>
+	internal bool StillRePersona(int sequence) =>
+		(Volatile.Read(ref _playSequence) == sequence) && (State == BotState.Online) && !PlayingBlocked && !Paused;
+
 	public void StopPlaying() => SetPlaying([], "");
 
 	/// <summary>
@@ -3379,12 +3743,15 @@ public sealed class Bot : IAsyncDisposable {
 				foreach (TimeSpan wait in (TimeSpan[]) [Rng.Seconds(2, 4), Rng.Seconds(3, 6)]) {
 					await Task.Delay(wait).ConfigureAwait(false);
 
-					// Something newer took the session - it will apply its own.
-					if ((Volatile.Read(ref _playSequence) != mine) || (State != BotState.Online)) {
-						return;
-					}
+					// Something newer took the session - it will apply its own. Or the owner started playing (or it was
+					// paused) during the wait: a persona sent from here under him signs him out of Friends & Chat.
+					lock (_playGate) {
+						if (!StillRePersona(mine)) {
+							return;
+						}
 
-					ApplyPersona();
+						ApplyPersona();
+					}
 				}
 			} catch (Exception e) {
 				Log.Debug(new Said("couldn't re-apply the persona: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Name);
@@ -3492,24 +3859,55 @@ public sealed class Bot : IAsyncDisposable {
 	}
 
 	public async ValueTask DisposeAsync() {
-		await StopAsync().ConfigureAwait(false);
+		Interlocked.Increment(ref _stopCount);
+
+		// Marked under the stop lock, the same lock a start sets itself up under - so a start queued behind this (the stuck
+		// alarm's restart, a start already on its way when the account was removed or a restore replaced it) finds it
+		// disposed and does nothing. Before, it signed the removed account back in: a ghost nothing could stop, and after a
+		// restore two sessions of one account kicking each other off.
+		await _stopGate.WaitAsync().ConfigureAwait(false);
+
+		try {
+			Volatile.Write(ref _disposed, true);
+			await StopCoreAsync(false).ConfigureAwait(false);
+		} finally {
+			_stopGate.Release();
+		}
+
+		// _tokenLock (and the web session's own lock) are deliberately NOT disposed: a token being minted when this runs
+		// releases its lock afterwards, and a disposed semaphore throws there. Neither holds anything that needs freeing.
 		Web.Dispose();
-		_tokenLock.Dispose();
 	}
 }
 
 /// <summary>When an app first appeared on the account, and whether it was actually bought.</summary>
 /// <param name="Own">At least one of the licences is the account's own, not a family member's.</param>
-public readonly record struct AppOwnership(DateTime Since, bool Paid, bool Own, bool Gift = false) {
+/// <param name="Permanent">
+/// At least one of the account's OWN licences for it is for good (<see cref="Bot.IsPermanent"/>): not a free weekend,
+/// a timed trial, a guest pass, or one that has run out, been cancelled or not gone through yet. What "does this
+/// account really own it" asks - a DLC's achievements are only unlocked on this.
+/// </param>
+public readonly record struct AppOwnership(DateTime Since, bool Paid, bool Own, bool Gift = false, bool Permanent = false) {
 	/// <summary>Somebody could lose money if it's played: bought by this account, or gifted and still refundable to the giver.</summary>
 	public bool Refundable(bool gifts) => Paid || (Gift && gifts);
+
+	/// <summary>
+	/// The same app from two licences. Earliest licence wins - that's when you really got it. A game can also arrive
+	/// twice (a free weekend, then the purchase), and if EITHER licence was paid for the refund clock is real; if either
+	/// is the account's own and for good, it owns it for good.
+	/// </summary>
+	public AppOwnership Join(AppOwnership other) => new(
+		other.Since < Since ? other.Since : Since,
+		Paid || other.Paid,
+		Own || other.Own,
+		Gift || other.Gift,
+		Permanent || other.Permanent);
 }
 
 public static class SteamIds {
 	/// <summary>GameID layout: bits 0-23 appID, 24-31 type, 32-63 modID. Type 2 = Shortcut, i.e. a non-Steam game.</summary>
 	public const ulong ShortcutGameId = (2UL << 24) | (0xFFFFFFFFUL << 32);
 
-	/// <summary>Steam's own ceiling on simultaneous games. Send more and it drops the message.</summary>
 	/// <summary>LaunchTypeGamepad | LaunchTypeCompatTool - the pair Steam reads as "this is a Deck".</summary>
 	public const int DeviceSteamDeck = 12288;
 
@@ -3519,6 +3917,7 @@ public static class SteamIds {
 	/// <summary>ESteamInputType for the Deck's own built-in controller.</summary>
 	public const int ControllerTypeSteamDeck = 13;
 
+	/// <summary>Steam's own ceiling on simultaneous games. Send more and it drops the message.</summary>
 	public const int GamesAtOnce = 32;
 }
 

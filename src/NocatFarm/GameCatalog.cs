@@ -196,6 +196,57 @@ public static class GameCatalog {
 		}
 	}
 
+	/// <summary>
+	/// One question to the store, in the same queue as the catalogue's own lookups, at least <paramref name="gap"/>
+	/// after the last one from either.
+	///
+	/// The store's limit is about two hundred questions every five minutes for this whole PC, not per caller. Working
+	/// out a game's DLC achievements (<see cref="DlcAchievements"/>) can take a hundred of them, and asking those
+	/// alongside a library sweep on a separate clock is how both end up shut out for ten minutes - so they share
+	/// this one, and a 429 either of them gets pauses both. Status 0 means it wasn't asked (the store is cooling off).
+	/// </summary>
+	internal static async Task<(int Status, string? Body)> StoreGetAsync(string url, TimeSpan gap, CancellationToken ct) {
+		await FileGate.WaitAsync(ct).ConfigureAwait(false);
+
+		try {
+			if (DateTime.UtcNow < _coolUntil) {
+				return (0, null);
+			}
+
+			TimeSpan since = DateTime.UtcNow - _lastCall;
+			TimeSpan least = gap > TimeSpan.FromSeconds(1.5) ? gap : TimeSpan.FromSeconds(1.5);
+
+			if (since < least) {
+				await Task.Delay(least - since, ct).ConfigureAwait(false);
+			}
+
+			_lastCall = DateTime.UtcNow;
+
+			using HttpResponseMessage response = await Http.GetAsync(url, ct).ConfigureAwait(false);
+
+			if (!response.IsSuccessStatusCode) {
+				_coolUntil = DateTime.UtcNow.AddMinutes(response.StatusCode == System.Net.HttpStatusCode.TooManyRequests ? 10 : 2);
+				Log.DebugOnChange("catalog:store", $"the store answered {(int) response.StatusCode} - pausing store lookups until {_coolUntil.ToLocalTime():HH:mm}");
+
+				return ((int) response.StatusCode, null);
+			}
+
+			Log.Recovered("catalog:store");
+
+			return (200, await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
+		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+			throw;
+		} catch (Exception e) {
+			// A request timing out is an OperationCanceledException too - that one is only a failed ask, and must never
+			// reach the caller as "stop".
+			Log.DebugOnChange("catalog:store", $"store lookup failed: {Log.Describe(e)}");
+
+			return (0, null);
+		} finally {
+			FileGate.Release();
+		}
+	}
+
 	private static void Load() {
 		// The check and the read under one lock. Marked loaded first and read after, a second caller in the meantime went
 		// on as if it were loaded - two callers at once: the second found it loaded while the file was still being read,
@@ -238,7 +289,16 @@ public static class GameCatalog {
 		SaveAsync().GetAwaiter().GetResult();
 	}
 
+	/// <summary>
+	/// One write of the file at a time, the copy taken inside. The way-out <see cref="Flush"/> saved beside a lookup's own
+	/// save, outside <see cref="FileGate"/> (held through a whole store call, too long to wait for on the way out) - and
+	/// the older copy could land last.
+	/// </summary>
+	private static readonly SemaphoreSlim SaveGate = new(1, 1);
+
 	private static async Task SaveAsync() {
+		await SaveGate.WaitAsync().ConfigureAwait(false);
+
 		try {
 			Dictionary<uint, Entry> snapshot;
 
@@ -250,6 +310,8 @@ public static class GameCatalog {
 			await AtomicFile.WriteAsync(Path, JsonSerializer.Serialize(snapshot)).ConfigureAwait(false);
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't save the game catalog: {0}", Log.Describe(e)));
+		} finally {
+			SaveGate.Release();
 		}
 	}
 }

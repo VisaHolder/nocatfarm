@@ -106,8 +106,13 @@ public static class DiscordPresence {
 				// card Discord dropped on its side (it can, after the PC sleeps or Discord reloads, with the pipe still
 				// open) comes back within minutes instead of staying gone.
 				if ((json != _lastSent) || (DateTime.UtcNow - _sentAt > TimeSpan.FromMinutes(3))) {
-					await SendAsync(1, new { cmd = "SET_ACTIVITY", args = new { pid = Environment.ProcessId, activity }, nonce = Guid.NewGuid().ToString() }).ConfigureAwait(false);
-					string reply = await ReadAsync().ConfigureAwait(false);
+					string? reply = await SendCardAsync(activity).ConfigureAwait(false);
+
+					// Stopped (nocat.farm closing) since the top of the loop: nothing was sent.
+					if (reply == null) {
+						continue;
+					}
+
 					_sentAt = DateTime.UtcNow;
 
 					// Discord answers every card - and says so when it won't show one. Ignoring that answer meant a
@@ -361,27 +366,76 @@ public static class DiscordPresence {
 		return all.Where(b => names.Contains(b.Name));
 	}
 
+	/// <summary>
+	/// The card sent on the connection as it is right now, and Discord's answer - or null when nocat.farm is closing, or
+	/// there's no connection any more. Under <see cref="SendGate"/>, the same lock <see cref="Disconnect"/> takes to
+	/// clear the card, and <see cref="_stopped"/> is looked at inside it: a card can never go out after the clear.
+	/// </summary>
+	private static async Task<string?> SendCardAsync(object? activity) {
+		await SendGate.WaitAsync().ConfigureAwait(false);
+
+		try {
+			Stream? pipe = _pipe;
+
+			if (_stopped || (pipe == null)) {
+				return null;
+			}
+
+			await SendAsync(pipe, 1, new { cmd = "SET_ACTIVITY", args = new { pid = Environment.ProcessId, activity }, nonce = Guid.NewGuid().ToString() }).ConfigureAwait(false);
+
+			return await ReadAsync(pipe).ConfigureAwait(false);
+		} finally {
+			SendGate.Release();
+		}
+	}
+
+	/// <summary>One write-and-answer on the connection at a time: the card, or taking it down on the way out.</summary>
+	private static readonly SemaphoreSlim SendGate = new(1, 1);
+
+	/// <summary>Where "stopped" and "connected" are decided together - see <see cref="Adopt"/> and <see cref="Stop"/>.</summary>
+	private static readonly Lock StateGate = new();
+
+	/// <summary>
+	/// A connection that has done its handshake becomes THE connection - unless nocat.farm started closing while it was
+	/// being made, and then it is closed instead. Stop used to find nothing to take down while a connect was under way
+	/// (the pipe was only set part-way through), the connect then put it in place and the loop sent the card: Playing
+	/// nocat.farm came back up on the profile of an app that was closing.
+	/// </summary>
+	private static bool Adopt(Stream connected) {
+		lock (StateGate) {
+			if (!_stopped) {
+				_pipe = connected;
+
+				return true;
+			}
+		}
+
+		connected.Dispose();
+
+		return false;
+	}
+
 	private static async Task<bool> ConnectAsync() {
 		if (!OperatingSystem.IsWindows()) {
 			return await ConnectUnixAsync().ConfigureAwait(false);
 		}
 
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; (i < 10) && !_stopped; i++) {
 			NamedPipeClientStream pipe = new(".", $"discord-ipc-{i}", PipeDirection.InOut, PipeOptions.Asynchronous);
 
 			try {
 				await pipe.ConnectAsync(500).ConfigureAwait(false);
-				_pipe = pipe;
-				await SendAsync(0, new { v = 1, client_id = AppId }).ConfigureAwait(false);
-				await ReadAsync().ConfigureAwait(false);   // READY
+
+				// The handshake on this pipe alone; it only becomes the connection once it has worked (Adopt).
+				await SendAsync(pipe, 0, new { v = 1, client_id = AppId }).ConfigureAwait(false);
+				await ReadAsync(pipe).ConfigureAwait(false);   // READY
 				_lastSent = "";
 
-				return true;
+				return Adopt(pipe);
 			} catch (Exception e) when (e is TimeoutException or IOException or UnauthorizedAccessException) {
 				// Access denied too - a pipe belonging to a Discord run as administrator - and on to the next number: it
 				// used to end the search there, so a normal Discord on pipe 1 was never found.
 				await pipe.DisposeAsync().ConfigureAwait(false);
-				_pipe = null;
 			}
 		}
 
@@ -436,24 +490,29 @@ public static class DiscordPresence {
 
 	/// <summary>One socket: connect, handshake, READY. Separate so it can be pointed at any path.</summary>
 	internal static async Task<bool> ConnectSocketAsync(string path) {
+		if (_stopped) {
+			return false;
+		}
+
 		Socket socket = new(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+		NetworkStream? stream = null;
 
 		try {
 			using (CancellationTokenSource timeout = new(500)) {
 				await socket.ConnectAsync(new UnixDomainSocketEndPoint(path), timeout.Token).ConfigureAwait(false);
 			}
 
-			_pipe = new NetworkStream(socket, ownsSocket: true);
-			await SendAsync(0, new { v = 1, client_id = AppId }).ConfigureAwait(false);
-			await ReadAsync().ConfigureAwait(false);   // READY
+			// The handshake on this socket alone; it only becomes the connection once it has worked (Adopt).
+			stream = new NetworkStream(socket, ownsSocket: true);
+			await SendAsync(stream, 0, new { v = 1, client_id = AppId }).ConfigureAwait(false);
+			await ReadAsync(stream).ConfigureAwait(false);   // READY
 			_lastSent = "";
 
-			return true;
+			return Adopt(stream);
 		} catch (Exception e) when (e is SocketException or IOException or OperationCanceledException or TimeoutException) {
 			// a stale socket left by a Discord that has since closed, or one that isn't Discord's
-			if (_pipe != null) {
-				await _pipe.DisposeAsync().ConfigureAwait(false);
-				_pipe = null;
+			if (stream != null) {
+				await stream.DisposeAsync().ConfigureAwait(false);
 			} else {
 				socket.Dispose();
 			}
@@ -461,6 +520,9 @@ public static class DiscordPresence {
 			return false;
 		}
 	}
+
+	/// <summary>Whether there is a connection to Discord right now - for the tests.</summary>
+	internal static bool HasConnection => _pipe != null;
 
 	private static void Disconnect(bool quietly = false) {
 		if (_pipe == null) {
@@ -472,13 +534,23 @@ public static class DiscordPresence {
 			Log.Info(new Said("Discord Rich Presence off"), "discord");
 		}
 
+		// Take the card down straight away rather than when Discord notices the pipe is gone - after any card being sent
+		// right now (the send lock), so the clear is the last thing Discord hears. Two seconds at most: a hung Discord
+		// mustn't hold up closing, and the pipe closing takes the card down anyway.
+		bool mine = false;
+
 		try {
-			// Take the card down straight away rather than when Discord notices the pipe is gone.
-			if (Connected) {
-				SendAsync(1, new { cmd = "SET_ACTIVITY", args = new { pid = Environment.ProcessId, activity = (object?) null }, nonce = Guid.NewGuid().ToString() }).Wait(2000);
+			mine = SendGate.Wait(2000);
+
+			if (mine && Connected && (_pipe is { } pipe)) {
+				SendAsync(pipe, 1, new { cmd = "SET_ACTIVITY", args = new { pid = Environment.ProcessId, activity = (object?) null }, nonce = Guid.NewGuid().ToString() }).Wait(2000);
 			}
 		} catch {
 			// going anyway
+		} finally {
+			if (mine) {
+				SendGate.Release();
+			}
 		}
 
 		// Taken in one step. The loop (after Discord dropped it) and shutdown can both be in here at once - shutdown's
@@ -495,22 +567,28 @@ public static class DiscordPresence {
 	/// <remarks>And stays gone: the accounts' sign-outs come after this and can take a while, and the loop - which had no
 	/// idea - connected again within fifteen seconds and put the card back up for the rest of the way out.</remarks>
 	public static void Stop() {
-		_stopped = true;
+		// Under the lock Adopt takes: a connect finishing right now either lands before this (and is taken down just
+		// below) or after it (and closes itself instead of becoming the connection).
+		lock (StateGate) {
+			_stopped = true;
+		}
+
 		Disconnect();
 	}
 
 	/// <summary>A frame: opcode and length (little-endian int32s), then the JSON.</summary>
-	private static async Task SendAsync(int op, object payload) {
+	/// <remarks>On the stream it's given - never "whatever _pipe is by now", which shutdown can swap out mid-send.</remarks>
+	private static async Task SendAsync(Stream pipe, int op, object payload) {
 		byte[] body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payload));
 		byte[] frame = new byte[8 + body.Length];
 		BinaryPrimitives.WriteInt32LittleEndian(frame, op);
 		BinaryPrimitives.WriteInt32LittleEndian(frame.AsSpan(4), body.Length);
 		body.CopyTo(frame, 8);
-		await _pipe!.WriteAsync(frame).ConfigureAwait(false);
-		await _pipe.FlushAsync().ConfigureAwait(false);
+		await pipe.WriteAsync(frame).ConfigureAwait(false);
+		await pipe.FlushAsync().ConfigureAwait(false);
 	}
 
-	private static async Task<string> ReadAsync() {
+	private static async Task<string> ReadAsync(Stream pipe) {
 		// Five seconds, then give up. Discord answers in milliseconds; a pipe that never answers - a hung Discord, or
 		// something else sitting on the name - used to hold the whole card loop on this read forever. A timeout
 		// is reported as one, so the connect loop moves on to the next pipe and the card loop starts over.
@@ -519,9 +597,9 @@ public static class DiscordPresence {
 		byte[] body;
 
 		try {
-			await _pipe!.ReadExactlyAsync(header, timeout.Token).ConfigureAwait(false);
+			await pipe.ReadExactlyAsync(header, timeout.Token).ConfigureAwait(false);
 			body = new byte[BinaryPrimitives.ReadInt32LittleEndian(header.AsSpan(4))];
-			await _pipe.ReadExactlyAsync(body, timeout.Token).ConfigureAwait(false);
+			await pipe.ReadExactlyAsync(body, timeout.Token).ConfigureAwait(false);
 		} catch (OperationCanceledException) when (timeout.IsCancellationRequested) {
 			throw new TimeoutException("Discord didn't answer within 5s");
 		}

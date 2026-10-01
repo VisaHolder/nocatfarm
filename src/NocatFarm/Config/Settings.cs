@@ -309,6 +309,10 @@ public static class Settings {
 			}
 
 			default:
+				if ((def.Name == "WebTrustedProxies") && (Core.TrustedProxies.Unreadable(raw) is { } bad)) {
+					return $"'{bad}' isn't an address or a range like 172.16.0.0/12";
+				}
+
 				p.SetValue(config, raw);
 
 				return null;
@@ -533,6 +537,9 @@ public static class Settings {
 		new("WebPublicAddress", "Public address", SecDashboard, SettingKind.Text,
 			"Only if you forwarded the port by hand or use a name like myname.duckdns.org: the address to give out for the dashboard from outside your home. Leave it empty with Open from anywhere on - it finds your address by itself.",
 			Advanced: true, Placeholder: "myname.duckdns.org"),
+		new("WebTrustedProxies", "Trust forwarded addresses from", SecDashboard, SettingKind.Text,
+			"Only for a reverse proxy that isn't on this PC, like Caddy in front of Docker: its address or range, like 172.16.0.0/12. The visitor's address it passes on is then believed, so people on the internet are treated as the internet and not as home. A proxy on this PC needs nothing here. Leave it empty otherwise.",
+			Advanced: true, Placeholder: "172.16.0.0/12"),
 		// ── Running in the background ──
 		new("Tray", "Tray icon", SecBackground, SettingKind.Bool,
 			"Shows an icon by the clock so nocat.farm can run in the background. Right-click the icon for the menu.",
@@ -1063,6 +1070,9 @@ public static class Settings {
 			Advanced: true),
 		new("AchievementNeverGames", "Never in these games", SecAchievements, SettingKind.AppIds,
 			"Games to leave alone completely. No achievements are unlocked in them and boosts never pick them. In human mode the account's main game is skipped too.",
+			Advanced: true),
+		new("AchievementDlcTrusted", "Games I own all the DLC for", SecAchievements, SettingKind.AppIds,
+			"Games this account owns every DLC of. nocat.farm then unlocks achievements in them as if every DLC were owned.",
 			Advanced: true),
 		new("AchievementGrindGapMinMinutes", "While grinding, one achievement every", SecAchievements, SettingKind.Int,
 			"How far apart achievements unlock during a grind, in minutes. A grind sits on one game, so this is a faster, active pace. Easiest ones go first.",

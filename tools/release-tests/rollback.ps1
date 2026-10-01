@@ -1,16 +1,16 @@
 ﻿# Updating itself against releases served from this machine (NOCATFARM_UPDATE_FEED): a download that's gone and a
 # damaged one change nothing, a new version that crashes is put back, a good one goes in and stays.
 #   -Mode portable | installed   (installed needs dist\nocat.farm-v<version>-setup.exe)
-param([string]$Mode = 'portable')   # portable | installed
+#   -Port, -FeedPort and -TestRoot move it off its usual ports and folder, to run beside another test.
+param([string]$Mode = 'portable', [int]$Port = 7298, [int]$FeedPort = 8766, [string]$TestRoot = '')   # portable | installed
 # The repo, the version being released (from the csproj), and a working folder outside the repo for the test copies.
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $Version = (Select-Xml -Path "$Repo\src\NocatFarm\NocatFarm.csproj" -XPath '//Version').Node.InnerText
-$SP = Join-Path $env:TEMP 'nocatfarm-tests'
+$SP = if ($TestRoot) { $TestRoot } else { Join-Path $env:TEMP 'nocatfarm-tests' }
 New-Item -ItemType Directory -Force $SP | Out-Null
 #   broken download link -> nothing changed; damaged zip -> nothing changed; a crashing new version -> put back; a good one -> in.
 $ErrorActionPreference = 'Stop'
 $W = Join-Path $SP 'winupd'
-$port = 7298; $feedPort = 8766
 function Check($name, $ok, $detail = '') { "{0}  [{1}] {2}{3}" -f ($(if ($ok) { 'PASS' } else { 'FAIL' })), $Mode, $name, $(if ($detail) { "  ($detail)" } else { '' }) }
 
 Remove-Item $W -Recurse -Force -ErrorAction SilentlyContinue   # this build, every time

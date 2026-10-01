@@ -70,8 +70,9 @@ public static class SelfUpdate {
 	/// <summary>
 	/// The handover to the swap script and 'update skip' take turns on this. An install decided on a moment before a
 	/// skip - the queued one at bedtime, the night's "Update by itself" - went ahead anyway: it had already looked.
+	/// Closing takes it too (Commands.RequestExit), for the same reason - see <see cref="HandOver"/>.
 	/// </summary>
-	private static readonly Lock HandoverGate = new();
+	internal static readonly Lock HandoverGate = new();
 
 	/// <summary>The swap script has been started: from here the new version goes in whatever is typed.</summary>
 	private static bool _handedOver;
@@ -95,9 +96,14 @@ public static class SelfUpdate {
 	/// Start the swap - unless 'update skip' got there first. Under the same lock as <see cref="Skip"/>, so a skip either
 	/// lands before this and nothing is started, or finds the swap already going and is told it's too late.
 	/// </summary>
+	/// <remarks>Nor once nocat.farm is closing: the flag goes up before anything is cancelled, so an install that got
+	/// this far while the app was being closed stops here rather than starting the swap - which would install the new
+	/// version and start nocat.farm again after it had been closed. The flag goes up under this same lock, so closing
+	/// lands either before the check (nothing is started) or after the swap has been (too late, as for a skip) - never
+	/// between the two, where it was read as still open and the swap then started anyway.</remarks>
 	internal static bool HandOver(string tag, Action start) {
 		lock (HandoverGate) {
-			if (UpdateCheck.IsSkipped(tag)) {
+			if (UpdateCheck.IsSkipped(tag) || Commands.ExitRequested) {
 				return false;
 			}
 
@@ -185,6 +191,67 @@ public static class SelfUpdate {
 		return asset.EndsWith("_" + Platform.ReleaseRid + ".zip", StringComparison.OrdinalIgnoreCase);
 	}
 
+	/// <summary>
+	/// The download for this machine in a release as GitHub describes it: its address and size, or null when it has none
+	/// (yet - the Mac zips are added a while after the rest, and a release is announced the moment its tag exists).
+	/// </summary>
+	internal static (string Url, long Size)? ZipForThisMachine(JsonElement release) {
+		if (!release.TryGetProperty("assets", out JsonElement assets) || (assets.ValueKind != JsonValueKind.Array)) {
+			return null;
+		}
+
+		foreach (JsonElement asset in assets.EnumerateArray()) {
+			string assetName = asset.TryGetProperty("name", out JsonElement n) ? n.GetString() ?? "" : "";
+
+			if (IsZipForThisMachine(assetName) && asset.TryGetProperty("browser_download_url", out JsonElement u) && (u.GetString() is { Length: > 0 } url)) {
+				return (url, asset.TryGetProperty("size", out JsonElement s) && s.TryGetInt64(out long size) ? size : 0);
+			}
+		}
+
+		return null;
+	}
+
+	/// <summary>
+	/// Other copies of nocat.farm running from this very folder (with a config folder of their own, or the lock would have
+	/// stopped them). Off Windows only: an update replaces the files they're running, putting the old version back would
+	/// stop them, and the check for "the new version is up" would see them instead. Their process ids; empty when none.
+	/// </summary>
+	internal static List<int> OthersRunningHere() {
+		List<int> found = [];
+
+		if (OperatingSystem.IsWindows()) {
+			return found;
+		}
+
+		string mine = Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, ExeName);
+		HashSet<string> same = new(StringComparer.Ordinal) {
+			mine,
+			Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ExeName)),
+			File.ResolveLinkTarget(mine, true)?.FullName ?? mine
+		};
+
+		foreach (Process p in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(ExeName))) {
+			using (p) {
+				if (p.Id == Environment.ProcessId) {
+					continue;
+				}
+
+				try {
+					string? exe = OperatingSystem.IsLinux() ? new FileInfo($"/proc/{p.Id}/exe").LinkTarget : p.MainModule?.FileName;
+
+					if ((exe != null) && same.Contains(exe)) {
+						found.Add(p.Id);
+					}
+				} catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidOperationException
+					or NotSupportedException or System.ComponentModel.Win32Exception) {
+					// another user's, or gone - not one of ours
+				}
+			}
+		}
+
+		return found;
+	}
+
 	/// <summary>"from|to|MB|seconds|ticks", written just before the restart and read back by the new version.</summary>
 	private static string NotePath => Path.Combine(ConfigStore.ConfigDir, "state", "updated.txt");
 
@@ -198,9 +265,13 @@ public static class SelfUpdate {
 	private static string Fail(Said why) {
 		Log.Error(why, topic: Topic.Installs);
 
-		// Said before Telegram and Discord are listening (the first thing at start): kept to send once they are.
-		if (!_notifierReady) {
-			_heldBack = why;
+		// Said before Telegram and Discord are listening (the first thing at start): kept to send once they are. Under
+		// the lock NotifierReady takes: checked and kept on one side of it, a failure landing just as they started
+		// listening was kept after NotifierReady had already looked - and never sent.
+		lock (HeldBackGate) {
+			if (!_notifierReady) {
+				_heldBack = why;
+			}
 		}
 
 		LastFailure = why.ToString();
@@ -208,16 +279,22 @@ public static class SelfUpdate {
 		return LastFailure;
 	}
 
+	private static readonly Lock HeldBackGate = new();
 	private static bool _notifierReady;
 	private static Said? _heldBack;
 
 	/// <summary>Telegram and Discord are listening now: what an update said before they were goes out.</summary>
 	public static void NotifierReady() {
-		_notifierReady = true;
+		Said? why;
 
-		if (_heldBack is { } why) {
+		lock (HeldBackGate) {
+			_notifierReady = true;
+			why = _heldBack;
 			_heldBack = null;
-			Log.Publish(Topic.Installs, "nocat.farm", why);
+		}
+
+		if (why is { } said) {
+			Log.Publish(Topic.Installs, "nocat.farm", said);
 		}
 	}
 
@@ -245,6 +322,15 @@ public static class SelfUpdate {
 			if (File.Exists(SwapFailedPath)) {
 				swapCode = File.ReadAllText(SwapFailedPath).Trim();
 				File.Delete(SwapFailedPath);
+			}
+
+			// Another copy started from this folder while the accounts were signing out: nothing was copied.
+			if (swapCode?.StartsWith("busy", StringComparison.Ordinal) == true) {
+				TryDelete(NotePath);
+				TryDelete(NotesPath);
+				Fail(new Said("update stopped - another nocat.farm is running from this folder (process {0}); close it first, nothing changed", swapCode[4..].Trim()));
+
+				return;
 			}
 
 			if (swapCode?.StartsWith("crashed", StringComparison.Ordinal) == true) {
@@ -474,6 +560,11 @@ public static class SelfUpdate {
 		int next = 0;
 
 		for (int left = secs; left > 0; left--) {
+			// Closed during the countdown: nobody else is signed out, and the caller stops the update (ExitRequested).
+			if (Commands.ExitRequested) {
+				return;
+			}
+
 			Progress = $"restarting in {left}s";
 
 			while ((next < order.Length) && ((DateTime.UtcNow - start).TotalSeconds >= at[next])) {
@@ -537,6 +628,9 @@ public static class SelfUpdate {
 		// Who the update signed out, so a failure after that can sign them back in.
 		List<Bot> signedOut = [];
 
+		// The download's own folder, gone again if the update stops before the swap script takes it over.
+		string? work = null;
+
 		try {
 			// Looked at again now it's this install's turn. The bedtime queue and "Update by itself" check for a skip and
 			// then start this on another thread, so an 'update skip' typed in between used to be too late.
@@ -576,39 +670,30 @@ public static class SelfUpdate {
 				return SkippedStop(tag);
 			}
 
-			// The zip for this machine - not the source tarballs GitHub adds to every release by itself, and not
-			// the Linux builds that sit beside the Windows one.
-			string? url = null;
-			long size = 0;
-
-			if (root.TryGetProperty("assets", out JsonElement assets)) {
-				foreach (JsonElement asset in assets.EnumerateArray()) {
-					string assetName = asset.TryGetProperty("name", out JsonElement n) ? n.GetString() ?? "" : "";
-
-					if (IsZipForThisMachine(assetName)) {
-						url = asset.TryGetProperty("browser_download_url", out JsonElement u) ? u.GetString() : null;
-						size = asset.TryGetProperty("size", out JsonElement s) ? s.GetInt64() : 0;
-
-						break;
-					}
-				}
+			// Closed while GitHub was asked: nothing downloaded for an app on its way out.
+			if (Commands.ExitRequested) {
+				return Fail(new Said("update stopped - nocat.farm was closed first; nothing changed"));
 			}
 
-			if (url == null) {
+			// The zip for this machine - not the source tarballs GitHub adds to every release by itself, and not
+			// the Linux builds that sit beside the Windows one.
+			if (ZipForThisMachine(root) is not ({ } url, long size)) {
 				return Fail(new Said("update failed: {0} has no download yet - try again later", tag));
 			}
 
-			// One folder per install: two copies updating at the same minute (both on "Update by itself") must never
-			// share a swap script, a safety copy or the file the new version answers in.
-			string work = Path.Combine(Path.GetTempPath(), "nocatfarm-update-" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
-				System.Text.Encoding.UTF8.GetBytes(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar).ToLowerInvariant())))[..10]);
-
-			// A half-finished attempt from last time would otherwise be extracted over the new one.
-			if (Directory.Exists(work)) {
-				Directory.Delete(work, true);
+			// Another copy running from this folder (on a config folder of its own): replacing the files under it, and
+			// stopping "the new version" if it didn't come up, would take that one down too. Said now, before a download.
+			if (OthersRunningHere() is [int other, ..]) {
+				return Fail(new Said("update stopped - another nocat.farm is running from this folder (process {0}); close it first, nothing changed", other));
 			}
 
-			Directory.CreateDirectory(work);
+			// One folder per install, made fresh with a random name that only this user can open (mkdtemp): two copies
+			// updating at the same minute never share a swap script, and nobody else on the machine can guess the name in
+			// /tmp and put something of their own there first.
+			// What an earlier update left behind - a swap that failed before it could tidy up, a machine switched off half way:
+			// with a random name no later update can find its own again, so each would stay in temp for good.
+			SweepOldWork(Path.GetTempPath(), TimeSpan.FromDays(1));
+			work = Directory.CreateTempSubdirectory("nocatfarm-update-").FullName;
 
 			string zip = Path.Combine(work, "release.zip");
 
@@ -701,12 +786,6 @@ public static class SelfUpdate {
 				return Fail(new Said("update failed: the download has no {0}", ExeName));
 			}
 
-			// The shell script restarts it with the same options, split on spaces: an option with a space in it (a --path
-			// to "My Folder") would come back as two, and it would start on the wrong folder. Said now, before anything.
-			if (!OperatingSystem.IsWindows() && Environment.GetCommandLineArgs().Skip(1).Any(static a => a.Any(char.IsWhiteSpace))) {
-				return Fail(new Said("update failed: it was started with an option that has a space in it - update by hand this time"));
-			}
-
 			string here = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
 			string script = Path.Combine(work, OperatingSystem.IsWindows() ? "swap.cmd" : "swap.sh");
 			string backup = Path.Combine(work, "backup");
@@ -775,13 +854,24 @@ public static class SelfUpdate {
 					WorkingDirectory = Path.GetTempPath()
 				};
 			} else {
-				// nohup and in the background, so neither this process ending nor its Terminal window closing takes the
-				// script with it. It waits for this PID, like the Windows one.
+				// In a session of its own (setsid - or perl's, on a Mac, which has no setsid command) and in the background, so
+				// neither this process ending nor its Terminal window or SSH session closing reaches the script or the new
+				// version it starts: closing a terminal is a clean shutdown now (SIGHUP), and it mustn't stop those two. nohup
+				// on top, and on its own where neither is there. It waits for this PID, like the Windows one.
+				//
+				// The options to start with go to the script as its own arguments, each exactly as it is. Split on spaces, a
+				// --path to "nocat.farm (1)" came back as two and it started on the wrong folder.
 				swap = new("/bin/sh") { UseShellExecute = false, WorkingDirectory = Path.GetTempPath() };
 				swap.ArgumentList.Add("-c");
-				swap.ArgumentList.Add("nohup /bin/sh \"$0\" >/dev/null 2>&1 &");
+				swap.ArgumentList.Add(DetachedStart);
 				swap.ArgumentList.Add(script);
+
+				foreach (string arg in RestartArgs([.. Environment.GetCommandLineArgs().Skip(1)], ConfigStore.Root)) {
+					swap.ArgumentList.Add(arg);
+				}
+
 				swap.Environment["NF_PID"] = Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+				swap.Environment["NF_EXE"] = Environment.ProcessPath ?? Path.Combine(here, ExeName);
 
 				// Started from start.command on a Mac: the new version opens the same way, in a Terminal window of its own.
 				if (OperatingSystem.IsMacOS() && (Environment.GetEnvironmentVariable("NOCATFARM_STARTER") == "start.command")) {
@@ -794,7 +884,9 @@ public static class SelfUpdate {
 			swap.Environment["NF_STAGED"] = payload;
 			swap.Environment["NF_BACKUP"] = backup;
 			swap.Environment["NF_FAIL"] = SwapFailedPath;
-			swap.Environment["NF_ARGS"] = OperatingSystem.IsWindows() ? RelaunchArgs() : string.Join(' ', Environment.GetCommandLineArgs().Skip(1));
+			if (OperatingSystem.IsWindows()) {
+				swap.Environment["NF_ARGS"] = RelaunchArgs();
+			}
 			swap.Environment["NF_OK"] = okFile;
 			swap.Environment["NF_TAG"] = tag.TrimStart('v', 'V');
 
@@ -827,6 +919,11 @@ public static class SelfUpdate {
 			});
 
 			if (!swapped) {
+				// Closed in the moment between the check above and the handover: stopped, and nothing is signed back in.
+				if (Commands.ExitRequested) {
+					return Fail(new Said("update stopped - nocat.farm was closed first; nothing changed"));
+				}
+
 				SignBackIn(signedOut);
 
 				return SkippedStop(tag);
@@ -848,6 +945,14 @@ public static class SelfUpdate {
 		} finally {
 			if (!handedOver) {
 				Volatile.Write(ref _busy, 0);
+
+				if (work != null) {
+					try {
+						Directory.Delete(work, true);
+					} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+						// the system's own temp cleaning gets it
+					}
+				}
 			}
 
 			Progress = "";
@@ -916,6 +1021,9 @@ public static class SelfUpdate {
 			rem The redirect first: "echo 8>file" is read as handle 8, and the file came out empty for codes 8 and 9.
 			>"%NF_FAIL%" echo %rc%
 			start "" /D "%NF_HERE%" "%NF_HERE%\nocatFarm.exe" %NF_ARGS%
+			rem The download, the unpacked copy and the safety copy go too: nothing else knows this folder's name.
+			cd /d "%TEMP%"
+			rmdir /s /q "%NF_WORK%" >nul 2>&1
 			exit /b 1
 		)
 		echo Starting the new version...
@@ -953,47 +1061,136 @@ public static class SelfUpdate {
 		""";
 
 	/// <summary>
-	/// The swap on Linux and a Mac - the same steps as the Windows script, in sh. Waits for this process (NF_PID), copies
-	/// the new files over the top, starts the new version, and waits for its "ok". A copy that fails, "crashed", no answer
-	/// in three minutes, or the new version gone without a word after ten seconds: the safety copy goes back, the files
-	/// the new version added go, "crashed &lt;tag&gt;" is left in NF_FAIL, and the old version starts again.
+	/// The swap on Linux and a Mac - the same steps as the Windows script, in sh. Waits for this process (NF_PID), puts the
+	/// new files in, starts the new version with the options it was given (its own arguments, "$@"), and waits for its
+	/// "ok". A copy that fails, "crashed", no answer in three minutes, or the new version gone without a word after ten
+	/// seconds: the safety copy goes back, the files the new version added go, "crashed &lt;tag&gt;" is left in NF_FAIL,
+	/// and the old version starts again. Another copy running from this folder by then: nothing is touched, "busy &lt;pid&gt;"
+	/// is left in NF_FAIL, and the old version starts again.
 	/// Started from start.command on a Mac (NF_TERMINAL), a version comes up in a Terminal window of its own; otherwise
 	/// in the background, the dashboard being where it's seen.
 	/// </summary>
+	/// <remarks>
+	/// Each file goes in as a copy beside it and then a rename over the old one, never written over in place. Overwritten
+	/// in place, a library another process has loaded changes under it, and a Mac kills a signed program whose file changed
+	/// under the signature it checked ("Killed: 9"); renamed, the old file lives on for whatever still has it open.
+	///
+	/// The new version is known by its process id ($!), never by a pattern: pgrep -f read the folder as a regular
+	/// expression, so "nocat.farm (1)" never matched itself - a good update was taken for a crash and put back - and
+	/// pkill -f couldn't stop anything there, or stopped another copy's.
+	/// </remarks>
 	private const string UnixSwapScript = """
 		#!/bin/sh
-		# nocat.farm self-update. Written by the app, run once.
+		# nocat.farm self-update. Written by the app, run once. The options to start with are this script's arguments.
 		while kill -0 "$NF_PID" 2>/dev/null; do sleep 1; done
 
-		start_it() {
-			if [ -n "$NF_TERMINAL" ] && [ -x "$NF_HERE/start.command" ]; then
-				open -a Terminal "$NF_HERE/start.command"
+		# Process ids of copies of nocat.farm running from this folder: by the program each one runs (/proc on Linux), or
+		# on a Mac by the program its command line starts with - compared as text, never as a pattern.
+		from_here() {
+			if [ -e /proc/self/exe ]; then
+				for d in /proc/[0-9]*; do
+					t=$(readlink "$d/exe" 2>/dev/null) || continue
+					if [ "$t" = "$NF_EXE" ] || [ "$t" = "$NF_HERE/nocatFarm" ]; then echo "${d#/proc/}"; fi
+				done
 			else
-				cd "$NF_HERE" && nohup "$NF_HERE/nocatFarm" $NF_ARGS >/dev/null 2>&1 &
+				ps -A -ww -o pid= -o args= 2>/dev/null | awk '{
+					pid = $1; sub(/^[ \t]*[0-9]+[ \t]+/, "")
+					for (i = 1; i <= 2; i++) {
+						e = (i == 1) ? ENVIRON["NF_HERE"] "/nocatFarm" : ENVIRON["NF_EXE"]
+						if (e != "" && substr($0, 1, length(e)) == e && (length($0) == length(e) || substr($0, length(e) + 1, 1) == " ")) { print pid; break }
+					}
+				}'
 			fi
 		}
 
-		running() { pgrep -f "$NF_HERE/nocatFarm" >/dev/null 2>&1; }
+		# In a Terminal window of its own, from start.command, when that's how it was started. open can't hand a program
+		# any options, so they go in restart-args.txt beside it, one per line, for start.command to read back - dropped,
+		# a copy started with --path came back up on the wrong folder, never said "ok", and was put back. Only a
+		# start.command that knows the file gets them: an older one (the version just put back) starts in the background.
+		start_it() {
+			rm -f "$NF_WORK/started.pid" "$NF_HERE/restart-args.txt"
+			if [ -n "$NF_TERMINAL" ] && [ -x "$NF_HERE/start.command" ] && { [ "$#" -eq 0 ] || grep -q 'restart-args.txt' "$NF_HERE/start.command" 2>/dev/null; }; then
+				if [ "$#" -gt 0 ]; then printf '%s\n' "$@" > "$NF_HERE/restart-args.txt"; fi
+				open -a Terminal "$NF_HERE/start.command"
+			else
+				# In a subshell that ends at once, so the new copy is nobody's child here: gone, it's gone - not a zombie
+				# that kill -0 still finds.
+				( cd "$NF_HERE" || exit 1; nohup "$NF_HERE/nocatFarm" "$@" </dev/null >/dev/null 2>&1 & echo $! > "$NF_WORK/started.pid" )
+			fi
+		}
+
+		running() {
+			if [ -s "$NF_WORK/started.pid" ]; then
+				kill -0 "$(cat "$NF_WORK/started.pid")" 2>/dev/null
+			else
+				[ -n "$(from_here)" ]
+			fi
+		}
+
+		# Asked to stop, then waited for. SIGTERM is a clean shutdown now, which can take a while, and the new copy holds the
+		# config, its state and instance.lock until it has gone: after a fixed three seconds the old version started, found
+		# the lock taken, and left - nothing running at all. A minute to go by itself, then it's killed outright.
+		stop_new() {
+			if [ -s "$NF_WORK/started.pid" ]; then
+				p=$(cat "$NF_WORK/started.pid")
+				kill "$p" 2>/dev/null
+				n=0
+				while kill -0 "$p" 2>/dev/null && [ "$n" -lt 60 ]; do sleep 1; n=$((n + 1)); done
+				kill -9 "$p" 2>/dev/null
+				n=0
+				while kill -0 "$p" 2>/dev/null && [ "$n" -lt 5 ]; do sleep 1; n=$((n + 1)); done
+			else
+				for p in $(from_here); do kill "$p" 2>/dev/null; done
+				n=0
+				while [ -n "$(from_here)" ] && [ "$n" -lt 60 ]; do sleep 1; n=$((n + 1)); done
+				for p in $(from_here); do kill -9 "$p" 2>/dev/null; done
+				n=0
+				while [ -n "$(from_here)" ] && [ "$n" -lt 5 ]; do sleep 1; n=$((n + 1)); done
+			fi
+		}
+
+		# Every file in a folder into this one, each copied beside its place and then renamed over it.
+		install_from() {
+			(cd "$1" && find . \( -type f -o -type l \)) | while IFS= read -r f; do
+				f=${f#./}
+				mkdir -p "$(dirname "$NF_HERE/$f")" || exit 1
+				rm -f "$NF_HERE/$f.nf-new"
+				if ! { cp -pP "$1/$f" "$NF_HERE/$f.nf-new" && mv -f "$NF_HERE/$f.nf-new" "$NF_HERE/$f"; }; then
+					rm -f "$NF_HERE/$f.nf-new"
+					exit 1
+				fi
+			done
+		}
 
 		put_back() {
-			pkill -f "$NF_HERE/nocatFarm" 2>/dev/null
-			sleep 3
-			cp -Rf "$NF_BACKUP"/. "$NF_HERE"/
+			stop_new
+			install_from "$NF_BACKUP"
 			if [ -f "$NF_WORK/added.txt" ]; then
 				while IFS= read -r f; do [ -n "$f" ] && rm -f "$NF_HERE/$f"; done < "$NF_WORK/added.txt"
 			fi
 			chmod +x "$NF_HERE/nocatFarm" 2>/dev/null
 		}
 
-		if ! cp -Rf "$NF_STAGED"/. "$NF_HERE"/; then
+		# Started from this folder while the accounts were signing out: replacing its files would pull them out from under it.
+		other=$(from_here | head -n 1)
+		if [ -n "$other" ]; then
+			echo "busy $other" > "$NF_FAIL"
+			start_it "$@"
+			cd / && rm -rf "$NF_WORK"
+			exit 1
+		fi
+
+		if ! install_from "$NF_STAGED"; then
 			put_back
 			echo 8 > "$NF_FAIL"
-			start_it
+			start_it "$@"
+			# The download, the unpacked copy and the safety copy go too: nothing else knows this folder's name.
+			cd / && rm -rf "$NF_WORK"
 			exit 1
 		fi
 		chmod +x "$NF_HERE/nocatFarm" "$NF_HERE/start.command" 2>/dev/null
 
-		start_it
+		start_it "$@"
 		waited=0
 		while [ ! -f "$NF_OK" ]; do
 			sleep 2
@@ -1005,11 +1202,40 @@ public static class SelfUpdate {
 		if [ ! -f "$NF_OK" ] || grep -q '^crashed' "$NF_OK"; then
 			put_back
 			echo "crashed $NF_TAG" > "$NF_FAIL"
-			start_it
+			start_it "$@"
 		fi
 
-		cd /tmp && rm -rf "$NF_WORK"
+		cd / && rm -rf "$NF_WORK"
 		""";
+
+	/// <summary>
+	/// Delete the update folders (nocatfarm-update-*) in <paramref name="temp"/> untouched for longer than
+	/// <paramref name="age"/>. A swap runs for minutes, so one that old is finished with; one this user can't delete (another
+	/// user's, in a shared /tmp) is left alone. How many went.
+	/// </summary>
+	public static int SweepOldWork(string temp, TimeSpan age) {
+		int removed = 0;
+
+		try {
+			foreach (DirectoryInfo old in new DirectoryInfo(temp).EnumerateDirectories("nocatfarm-update-*")) {
+				try {
+					// A link someone else made is never followed, and one still in use isn't touched.
+					if (((old.Attributes & FileAttributes.ReparsePoint) != 0) || (DateTime.UtcNow - old.LastWriteTimeUtc < age)) {
+						continue;
+					}
+
+					old.Delete(true);
+					removed++;
+				} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+					Log.Debug($"update: couldn't remove the old update folder {old.FullName}: {Log.Describe(e)}");
+				}
+			}
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			Log.Debug($"update: couldn't look for old update folders in {temp}: {Log.Describe(e)}");
+		}
+
+		return removed;
+	}
 
 	/// <summary>One read of the download, given a minute. The clock is restarted every call, so a slow line is fine - only silence isn't.</summary>
 	private static ValueTask<int> ReadWithin(Stream from, byte[] buffer, CancellationTokenSource stall) {
@@ -1023,7 +1249,35 @@ public static class SelfUpdate {
 	/// to run a bare nocatFarm.exe, so an install started with --path, --no-gui or --minimized came back up as a
 	/// different setup - on the wrong config folder, or with a window on a machine meant to run headless.
 	/// </summary>
-	internal static string RelaunchArgs() => string.Join(' ', Environment.GetCommandLineArgs().Skip(1).Select(QuoteArg));
+	internal static string RelaunchArgs() => string.Join(' ', RestartArgs([.. Environment.GetCommandLineArgs().Skip(1)], ConfigStore.Root).Select(QuoteArg));
+
+	/// <summary>
+	/// The arguments for the restarted copy: the same ones, with --path's folder made absolute. The restart starts in the
+	/// install folder, so "--path data" typed in another folder came back up on an empty data folder next to the program -
+	/// every account and setting gone, as far as it could see.
+	/// </summary>
+	internal static List<string> RestartArgs(IReadOnlyList<string> args, string root) {
+		List<string> list = [.. args];
+
+		for (int i = 0; i < list.Count - 1; i++) {
+			if (list[i].Equals("--path", StringComparison.OrdinalIgnoreCase)) {
+				list[++i] = root;
+			}
+		}
+
+		return list;
+	}
+
+	/// <summary>
+	/// Starts the swap script ($0, with the options to restart with as its arguments) detached: its own session where
+	/// there's a way to give it one, in the background, and deaf to SIGHUP.
+	/// </summary>
+	private const string DetachedStart = """
+		if command -v setsid >/dev/null 2>&1; then setsid nohup /bin/sh "$0" "$@" </dev/null >/dev/null 2>&1 &
+		elif command -v perl >/dev/null 2>&1; then perl -MPOSIX -e 'POSIX::setsid(); exec @ARGV or exit 1' nohup /bin/sh "$0" "$@" </dev/null >/dev/null 2>&1 &
+		else nohup /bin/sh "$0" "$@" </dev/null >/dev/null 2>&1 &
+		fi
+		""";
 
 	/// <summary>One argument, quoted when it has to be. A trailing backslash is doubled so it can't escape the closing quote.</summary>
 	internal static string QuoteArg(string arg) {

@@ -27,6 +27,9 @@ public sealed class GlobalConfig {
 	/// <summary>"Open from anywhere": the router forwards the dashboard's port to this PC (UPnP). See RemoteAccess.</summary>
 	public bool WebRemoteAccess { get; set; }
 
+	/// <summary>Reverse proxies not on this PC whose forwarded addresses are believed, like loopback's. See TrustedProxies.</summary>
+	public string WebTrustedProxies { get; set; } = "";
+
 	/// <summary>A sign-in from the internet also needs a 6-digit code sent to Telegram (when Telegram is connected).</summary>
 	public bool WebSignInCode { get; set; } = true;
 
@@ -443,6 +446,13 @@ public sealed class BotConfig {
 	/// </summary>
 	public List<uint> AchievementNeverGames { get; set; } = [];
 
+	/// <summary>
+	/// Games the owner says this account owns every DLC of. Achievements from DLC it doesn't own are never unlocked, and
+	/// a game whose DLC can't all be placed is held whole (Core/DlcAchievements) - in these, neither: they're unlocked as
+	/// if every DLC were owned. Empty by default; only the owner can know.
+	/// </summary>
+	public List<uint> AchievementDlcTrusted { get; set; } = [];
+
 	/// <summary>Whether human mode's main game earns achievements like any other. On - it's where the hours are.</summary>
 	public bool AchievementIncludeMainGame { get; set; } = true;
 
@@ -684,12 +694,19 @@ public static class ConfigStore {
 		Directory.CreateDirectory(ConfigDir);
 	}
 
-	/// <summary>A bot name has to be usable as a file name and must not walk out of the config directory.</summary>
+	/// <summary>
+	/// What a file name can't have on Windows - the strictest of the three - used on every system. Linux only refuses "/"
+	/// and a NUL, so an import there could make an account called "a:b" or "why?" that a backup then left out without a
+	/// word, and that a config folder carried to Windows couldn't hold.
+	/// </summary>
+	private static readonly char[] NotInAName = [.. "\"<>|:*?\\/", ..Enumerable.Range(0, 32).Select(static c => (char) c)];
+
+	/// <summary>A bot name has to be usable as a file name on every system and must not walk out of the config directory.</summary>
 	public static bool IsValidBotName(string name) =>
 		!string.IsNullOrWhiteSpace(name)
 		&& (name[0] != '.')
 		&& !name.Equals("nocatFarm", StringComparison.OrdinalIgnoreCase)
-		&& (name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0)
+		&& (name.IndexOfAny(NotInAName) < 0)
 		&& (Path.GetRelativePath(".", name) == name)
 		&& !IsReservedName(name);
 
@@ -753,6 +770,13 @@ public static class ConfigStore {
 
 		try {
 			GlobalConfig loaded = FillNulls(JsonSerializer.Deserialize<GlobalConfig>(File.ReadAllText(GlobalPath), Json) ?? new GlobalConfig());
+
+			// "pt-br" typed into the file by hand is pt-BR: the language packs are files, and off Windows a file name's case
+			// counts - pt-br.json wasn't found, and the dashboard and the log stayed English.
+			if ((Settings.FindGlobal("Language") is { } language)
+				&& (Settings.ParsePicks(language).FirstOrDefault(p => p.Value.Equals(loaded.Language, StringComparison.OrdinalIgnoreCase)) is { Value: { } code })) {
+				loaded.Language = code;
+			}
 
 			// Anything still in plain text - typed into the file by hand, or left by an older version - is written back
 			// encrypted as soon as it has been read, not whenever a setting next happens to be saved.
@@ -827,6 +851,66 @@ public static class ConfigStore {
 	/// </summary>
 	private static readonly Lock SaveGate = new();
 
+	/// <summary>
+	/// Held by whatever changes the live global settings and saves them - the dashboard's save, 'set', a plugin's switch,
+	/// an import - and by 'reload' and a restore while they put a new one in its place. Without it a change made while
+	/// 'reload' swapped the object went onto the one being thrown away, and two changes to one list lost one of them.
+	/// </summary>
+	public static Lock GlobalEditGate { get; } = new();
+
+	/// <summary>Which restore is putting files back right now (0 = none); see <see cref="BeginRestore"/>.</summary>
+	private static int _restoring;
+
+	private static int _restores;
+
+	/// <summary>The restore this code is running for - only it may save while its files go back.</summary>
+	private static readonly AsyncLocal<int> Restorer = new();
+
+	/// <summary>
+	/// A restore is putting its files back: until the handle is disposed, only the restore itself saves. A dashboard save
+	/// or a module's save in the meantime wrote the old settings over the restored files - or its move collided with the
+	/// restore's and the restore stopped half way. Taken under the save lock, so a save already writing finishes first.
+	/// </summary>
+	public static IDisposable BeginRestore() {
+		int id = Interlocked.Increment(ref _restores);
+
+		lock (SaveGate) {
+			_restoring = id;
+		}
+
+		Restorer.Value = id;
+
+		return new RestoreScope(id);
+	}
+
+	private sealed class RestoreScope(int id) : IDisposable {
+		private int _done;
+
+		public void Dispose() {
+			if (Interlocked.Exchange(ref _done, 1) != 0) {
+				return;
+			}
+
+			lock (SaveGate) {
+				if (_restoring == id) {
+					_restoring = 0;
+				}
+			}
+
+			Restorer.Value = 0;
+		}
+	}
+
+	/// <summary>A restore is writing its files and this isn't it: a save now would go over them. Read under the save lock.</summary>
+	private static bool HeldByRestore => (_restoring != 0) && (Restorer.Value != _restoring);
+
+	/// <summary>
+	/// A restore is writing its files right now (and this isn't the restore asking). The state stores that save on their
+	/// own timers - history, lifetime totals, the key queue - hold off: a save in that window put pre-restore numbers
+	/// back over the restored file just before the restore read it in.
+	/// </summary>
+	public static bool RestoreWriting => HeldByRestore;
+
 	/// <summary>Why the last global save didn't reach the disk, in plain words; null once one has.</summary>
 	/// <remarks>For a caller with no log to read it from - the installer's --setup runs before logging exists.</remarks>
 	public static string? LastSaveProblem { get; private set; }
@@ -848,6 +932,13 @@ public static class ConfigStore {
 
 		try {
 			lock (SaveGate) {
+				if (HeldByRestore) {
+					Log.Debug("config: not saving nocatFarm.json - a backup is being restored over it");
+					LastSaveProblem = "a backup is being restored - not saved over it";
+
+					return false;
+				}
+
 				Directory.CreateDirectory(ConfigDir);
 
 				// A copy with the notification secrets encrypted - the live config keeps them readable. Either one
@@ -993,51 +1084,70 @@ public static class ConfigStore {
 				continue;
 			}
 
-			try {
-				BotConfig? cfg = JsonSerializer.Deserialize<BotConfig>(File.ReadAllText(file), Json);
-
-				if (cfg == null) {
-					continue;
-				}
-
-				FillNulls(cfg);
-
-				if (string.IsNullOrWhiteSpace(cfg.SteamLogin)) {
-					cfg.SteamLogin = name;   // default the login to the file name
-				}
-
-				// Decrypt whatever was sealed. Plain text passes straight through, so a hand-edited file and a
-				// config written by an older version both still work - and it's written back encrypted below.
-				bool plain = new[] { cfg.SteamPassword, cfg.SharedSecret, cfg.IdentitySecret, cfg.AccountProxyPassword, cfg.SteamParentalCode }
-					.Any(Secrets.IsPlain);
-
-				cfg.SteamPassword = Secrets.Unprotect(cfg.SteamPassword);
-				cfg.SharedSecret = Secrets.Unprotect(cfg.SharedSecret);
-				cfg.IdentitySecret = Secrets.Unprotect(cfg.IdentitySecret);
-				cfg.AccountProxyPassword = Secrets.Unprotect(cfg.AccountProxyPassword);
-				cfg.SteamParentalCode = Secrets.Unprotect(cfg.SteamParentalCode);
-
-				// Every migration runs, then one write - a config can need any of them, and none is worth two saves.
-				bool migrated = plain && Secrets.Available;
-				migrated |= MigrateGameShares(cfg, name);
-				migrated |= MigrateAchievementCeiling(cfg, name);
-				migrated |= MigrateFarmWhen(cfg, name);
-				migrated |= MigrateWindDown(cfg);
-
-				if (migrated) {
-					SaveBot(name, cfg);
-				}
-
+			if (ReadBot(file, name) is { } cfg) {
 				bots[name] = cfg;
-			} catch (Exception e) {
-				Log.Warn(new Said("config: {0} is not valid JSON ({1}) - skipped", Path.GetFileName(file), Log.Scrub(e.Message)));
-
-				// Not always bad JSON - a file it may not read lands here too, and the type says which.
-				Log.Failed($"config: loading {file}", e, name);
 			}
 		}
 
 		return bots;
+	}
+
+	/// <summary>
+	/// One account's file as it is on disk now, or null when it isn't there or doesn't load. For reading one account again
+	/// under its lock (<see cref="Core.Bot.CfgGate"/>) - a copy read for every account at once and put in later was already
+	/// older than a save made in between.
+	/// </summary>
+	public static BotConfig? LoadBot(string name) {
+		string file = Path.Combine(ConfigDir, name + ".json");
+
+		return (name.Length > 0) && (name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0) && File.Exists(file) ? ReadBot(file, name) : null;
+	}
+
+	private static BotConfig? ReadBot(string file, string name) {
+		try {
+			BotConfig? cfg = JsonSerializer.Deserialize<BotConfig>(File.ReadAllText(file), Json);
+
+			if (cfg == null) {
+				return null;
+			}
+
+			FillNulls(cfg);
+
+			if (string.IsNullOrWhiteSpace(cfg.SteamLogin)) {
+				cfg.SteamLogin = name;   // default the login to the file name
+			}
+
+			// Decrypt whatever was sealed. Plain text passes straight through, so a hand-edited file and a
+			// config written by an older version both still work - and it's written back encrypted below.
+			bool plain = new[] { cfg.SteamPassword, cfg.SharedSecret, cfg.IdentitySecret, cfg.AccountProxyPassword, cfg.SteamParentalCode }
+				.Any(Secrets.IsPlain);
+
+			cfg.SteamPassword = Secrets.Unprotect(cfg.SteamPassword);
+			cfg.SharedSecret = Secrets.Unprotect(cfg.SharedSecret);
+			cfg.IdentitySecret = Secrets.Unprotect(cfg.IdentitySecret);
+			cfg.AccountProxyPassword = Secrets.Unprotect(cfg.AccountProxyPassword);
+			cfg.SteamParentalCode = Secrets.Unprotect(cfg.SteamParentalCode);
+
+			// Every migration runs, then one write - a config can need any of them, and none is worth two saves.
+			bool migrated = plain && Secrets.Available;
+			migrated |= MigrateGameShares(cfg, name);
+			migrated |= MigrateAchievementCeiling(cfg, name);
+			migrated |= MigrateFarmWhen(cfg, name);
+			migrated |= MigrateWindDown(cfg);
+
+			if (migrated) {
+				SaveBot(name, cfg);
+			}
+
+			return cfg;
+		} catch (Exception e) {
+			Log.Warn(new Said("config: {0} is not valid JSON ({1}) - skipped", Path.GetFileName(file), Log.Scrub(e.Message)));
+
+			// Not always bad JSON - a file it may not read lands here too, and the type says which.
+			Log.Failed($"config: loading {file}", e, name);
+
+			return null;
+		}
 	}
 
 	/// <returns>False when nothing reached the disk.</returns>
@@ -1046,6 +1156,12 @@ public static class ConfigStore {
 			Directory.CreateDirectory(ConfigDir);
 
 			lock (SaveGate) {
+				if (HeldByRestore) {
+					Log.Debug($"config: not saving {name}.json - a backup is being restored over it", name);
+
+					return false;
+				}
+
 				// The secrets go to disk encrypted, but the config in memory stays readable - so a COPY is written
 				// rather than the live object. Encrypting in place would leave every other part of the program
 				// holding ciphertext where it expects a password.

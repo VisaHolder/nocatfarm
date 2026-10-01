@@ -47,9 +47,24 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 
 	private string StatePath => Path.Combine(ConfigStore.ConfigDir, "state", $"freeitems-{Bot.Name}.json");
 
-	protected override async Task RunAsync(CancellationToken ct) {
-		_taken ??= Load();
+	/// <summary>
+	/// One of the sticker, the shop and the queue at a time, from the loop or a command. 'freeitems' while the loop was in
+	/// the shop took the same free item twice over, and the two changed the list of taken items at once - which can
+	/// break it, or throw from the save. A command waits for the loop's turn to finish, then sees what it took.
+	/// </summary>
+	private readonly SemaphoreSlim _busy = new(1, 1);
 
+	private async Task<T> OneAtATimeAsync<T>(Func<Task<T>> work, CancellationToken ct) {
+		await _busy.WaitAsync(ct).ConfigureAwait(false);
+
+		try {
+			return await work().ConfigureAwait(false);
+		} finally {
+			_busy.Release();
+		}
+	}
+
+	protected override async Task RunAsync(CancellationToken ct) {
 		// Not in the first minutes after signing in, with everything else.
 		if (!await Sleep(Rng.Minutes(2, 6), ct).ConfigureAwait(false)) {
 			return;
@@ -110,7 +125,9 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 
 	/// <summary>The daily sale sticker. Returns whether one was claimed.</summary>
 	/// <param name="claim">False only looks - to learn whether a sale is on - without taking anything.</param>
-	public async Task<bool> StickerAsync(CancellationToken ct, bool claim = true) {
+	public Task<bool> StickerAsync(CancellationToken ct, bool claim = true) => OneAtATimeAsync(() => StickerLockedAsync(ct, claim), ct);
+
+	private async Task<bool> StickerLockedAsync(CancellationToken ct, bool claim) {
 		string? can = await Bot.Web.ApiGetAsync("ISaleItemRewardsService", "CanClaimItem", new Dictionary<string, string> { ["language"] = "english" }, ct).ConfigureAwait(false);
 
 		if (can == null) {
@@ -239,7 +256,9 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 	/// Go through today's discovery queue: each game looked at for a few seconds, the way somebody clicking "next in
 	/// queue" does, never the dozen at once a script would. Returns how many were seen, or -1 if Steam wouldn't answer.
 	/// </summary>
-	public async Task<int> QueueAsync(CancellationToken ct) {
+	public Task<int> QueueAsync(CancellationToken ct) => OneAtATimeAsync(() => QueueLockedAsync(ct), ct);
+
+	private async Task<int> QueueLockedAsync(CancellationToken ct) {
 		// Somewhere in the day rather than on the stroke of waking: a person gets to it when they get to it.
 		_queueAt = DateTime.UtcNow + Rng.Minutes(20, 90);
 
@@ -303,7 +322,10 @@ public sealed class EventItems(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>Take whatever the Points Shop has at 0 points. Returns how many were taken.</summary>
-	public async Task<int> ShopAsync(CancellationToken ct) {
+	public Task<int> ShopAsync(CancellationToken ct) => OneAtATimeAsync(() => ShopLockedAsync(ct), ct);
+
+	/// <summary>Under <see cref="_busy"/> - the only place <see cref="_taken"/> is read, changed or saved.</summary>
+	private async Task<int> ShopLockedAsync(CancellationToken ct) {
 		_nextShop = DateTime.UtcNow + Rng.Minutes(8 * 60, 12 * 60);
 
 		if (Bot.Unified?.CreateService<LoyaltyRewards>() is not { } shop) {

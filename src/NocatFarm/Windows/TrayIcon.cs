@@ -192,6 +192,7 @@ public sealed class TrayIcon : IDisposable {
 
 			if (_hwnd == IntPtr.Zero) {
 				Log.Debug($"tray: couldn't create the message window (Windows error {Marshal.GetLastWin32Error()}) - running without a tray icon");
+				NoIcon();
 
 				return;
 			}
@@ -210,9 +211,10 @@ public sealed class TrayIcon : IDisposable {
 				DispatchMessage(ref msg);
 			}
 		} catch (Exception e) {
-			// The icon's thread is gone with it: no menu, no double-click back to the window.
+			// The icon's thread is gone with it: no menu, no double-click back to the window - so the window comes up.
 			Log.Failed("tray: the icon's thread stopped", e);
 			Log.StackToFile(e);
+			NoIcon();
 		}
 	}
 
@@ -338,11 +340,35 @@ public sealed class TrayIcon : IDisposable {
 		}
 
 		// Only claim a tray once the icon is really there: "hide" with no icon to click was a window lost for good.
-		Commands.TrayPresent = _added;
-
-		if (!_added) {
-			Commands.Window?.Show();
+		if (_added) {
+			Unavailable = false;
+			Commands.TrayPresent = true;
+		} else {
+			NoIcon();
 		}
+	}
+
+	/// <summary>
+	/// True once the icon couldn't be put in the notification area (or its thread couldn't start). The window reads it
+	/// as it opens: started hidden, it shows itself after all - with no icon, hidden meant gone.
+	/// </summary>
+	internal static bool Unavailable {
+		get => Volatile.Read(ref _unavailable);
+		private set => Volatile.Write(ref _unavailable, value);
+	}
+
+	private static bool _unavailable;
+
+	/// <summary>
+	/// No icon: say so, then bring the window up. The window may not exist yet this early (both start on their own
+	/// threads) - then it sees <see cref="Unavailable"/> itself when it opens. The fence between saying and looking is
+	/// what makes one of the two always see the other (see MainWindow's matching fence).
+	/// </summary>
+	private static void NoIcon() {
+		Commands.TrayPresent = false;
+		Unavailable = true;
+		Interlocked.MemoryBarrier();
+		Commands.Window?.ShowIfReady();
 	}
 
 	private IntPtr HandleMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam) {

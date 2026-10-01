@@ -10,6 +10,18 @@ public sealed class BotManager : IAsyncDisposable {
 	private readonly ConcurrentDictionary<string, Bot> _bots = new(StringComparer.OrdinalIgnoreCase);
 	private readonly Lock _adding = new();
 
+	/// <summary>Accounts being removed: gone from the list, their file not deleted yet. Only touched under <see cref="_adding"/>.</summary>
+	private readonly HashSet<string> _removing = new(StringComparer.OrdinalIgnoreCase);
+
+	/// <summary>Stands in for an account's <see cref="Bot.CfgGate"/> when its file has no account running on it.</summary>
+	private static readonly Lock NoBotGate = new();
+
+	/// <summary>
+	/// The lock to hold while reading, changing and saving <paramref name="name"/>'s config: its account's own, or one
+	/// shared by files nothing runs yet (an import writing a brand new one).
+	/// </summary>
+	public static Lock GateFor(string name) => Instance?.Get(name)?.CfgGate ?? NoBotGate;
+
 	public GlobalConfig Global { get; private set; }
 
 	/// <summary>One rep4rep client for the whole process - one account, one token, many Steam profiles.</summary>
@@ -81,17 +93,27 @@ public sealed class BotManager : IAsyncDisposable {
 			}
 		}
 
-		foreach ((string name, BotConfig cfg) in onDisk) {
+		foreach (string name in onDisk.Keys) {
 			if (_bots.TryGetValue(name, out Bot? existing)) {
-				existing.Reconfigure(cfg);
+				// Read again under the account's lock. The copy above was read for every account at once, before any of
+				// them was put in, so a save made in between (a dashboard save, 'set', a learned ban) was already newer
+				// than it - put in, it undid that change here and at the account's next save on disk too.
+				lock (existing.CfgGate) {
+					if (ConfigStore.LoadBot(existing.Name) is { } fresh) {
+						existing.Reconfigure(fresh);
+					}
+				}
 
 				continue;
 			}
 
-			// Under the same lock as AddAsync, so an account being added right now isn't replaced by a second copy.
+			// Under the same lock as AddAsync, so an account being added right now isn't replaced by a second copy - nor
+			// one being removed brought back from the file it hasn't deleted yet.
 			lock (_adding) {
-				if (!_bots.ContainsKey(name)) {
-					Bot bot = new(name, cfg);
+				// And read again here: a 'remove' that finished after the read above has deleted the file this came from, and
+				// an account put back for it would run with no config behind it.
+				if (!_bots.ContainsKey(name) && !_removing.Contains(name) && (ConfigStore.LoadBot(name) is { } fresh)) {
+					Bot bot = new(name, fresh);
 					Wire(bot);
 					_bots[name] = bot;
 				}
@@ -145,6 +167,7 @@ public sealed class BotManager : IAsyncDisposable {
 		PriceBook.Save();      // ditto the market prices, which are slow and rate-limited to re-fetch
 		InventoryHistory.Save();
 		History.Save();        // the day-by-day totals write once a minute; this keeps the last minute of them
+		KeyQueue.Flush();      // keys pasted or used in the last moments, which are worth money
 	}
 
 	/// <summary>Start every enabled bot, staggered so several logins don't hit Steam at once.</summary>
@@ -207,7 +230,7 @@ public sealed class BotManager : IAsyncDisposable {
 		// the name free and both started an account: the second replaced the first in the list, and the first carried on
 		// signed in to the same Steam account with nothing left able to stop it.
 		lock (_adding) {
-			if (_bots.ContainsKey(name)) {
+			if (_bots.ContainsKey(name) || _removing.Contains(name)) {
 				return null;
 			}
 
@@ -225,17 +248,34 @@ public sealed class BotManager : IAsyncDisposable {
 	}
 
 	public async Task<bool> RemoveAsync(string name) {
-		if (!_bots.TryRemove(name, out Bot? bot)) {
-			return false;
+		Bot? bot;
+
+		// Taken out of the list and marked as going in one step, under the lock AddAsync and a reload use. In between, an
+		// import or 'reload' found its file still there and brought it back, or an Add of the same name wrote a new file
+		// that this then deleted - an account running with no config behind it.
+		lock (_adding) {
+			if (!_bots.TryRemove(name, out bot)) {
+				return false;
+			}
+
+			_removing.Add(bot.Name);
 		}
 
-		await bot.DisposeAsync().ConfigureAwait(false);   // dispose, not just stop - frees its HttpClient/locks
+		try {
+			await bot.DisposeAsync().ConfigureAwait(false);   // dispose, not just stop - frees its HttpClient/locks
 
-		// Its own name, not however it was typed: the lookup ignores case, and off Windows "MAIN" left main.json and its
-		// login token behind, so the account came back at the next start.
-		TokenStore.Clear(bot.Name);
+			// Its own name, not however it was typed: the lookup ignores case, and off Windows "MAIN" left main.json and its
+			// login token behind, so the account came back at the next start.
+			lock (_adding) {
+				TokenStore.Clear(bot.Name);
 
-		return ConfigStore.DeleteBot(bot.Name);
+				return ConfigStore.DeleteBot(bot.Name);
+			}
+		} finally {
+			lock (_adding) {
+				_removing.Remove(bot.Name);
+			}
+		}
 	}
 
 	public async ValueTask DisposeAsync() {

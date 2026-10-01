@@ -7,3 +7,10 @@ dist/
 tools/apiscan/
 __pycache__/
 .claude/
+# A copy run from the repo folder, and Docker Compose's own files (made from docker-compose.example.yml).
+/config/
+/logs/
+/backups/
+/plugins/
+/.env
+/docker-compose.yml

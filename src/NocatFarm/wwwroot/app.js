@@ -475,6 +475,12 @@ function render() {
       ver.href = state.UpdateUrl || 'https://github.com/VisaHolder/nocatfarm/releases';
       ver.classList.add('update');
       ver.dataset.tip = tf('{0} is out - you have {1}. Click to see what changed.', state.UpdateAvailable, state.Version);
+    } else if (state.UpdateNoDownloadYet) {
+      // Newer, but not downloadable here yet (the Mac zips come a while after the tag): shown, with no Update button.
+      ver.textContent = `v${state.Version} → ${state.UpdateNoDownloadYet}`;
+      ver.href = state.UpdateUrl || 'https://github.com/VisaHolder/nocatfarm/releases';
+      ver.classList.add('update');
+      ver.dataset.tip = tf("{0} is out, and you have {1}. There's no download for this computer yet. It usually comes within the hour.", state.UpdateNoDownloadYet, state.Version);
     } else {
       ver.textContent = 'v' + state.Version;
       ver.href = 'https://github.com/VisaHolder/nocatfarm';
@@ -681,7 +687,7 @@ function renderOverview() {
 
   const interesting = logLines.filter((l) => l.Level !== 'INFO' && l.Level !== 'DEBUG').slice(-8).reverse();
   paint('recent', interesting.length
-    ? interesting.map((l) => `<div class="line"><span class="who">${esc(l.Source)}</span><span>${esc(l.Text)}</span><span class="when">${esc(l.Time)}</span></div>`).join('')
+    ? interesting.map((l) => `<div class="line"><span class="who">${esc(l.Source)}</span><span>${linked(l.Text)}</span><span class="when">${esc(l.Time)}</span></div>`).join('')
     : `<p class="muted">${esc(t('Nothing worth reporting yet.'))}</p>`);
 }
 
@@ -3609,7 +3615,7 @@ function phoneVisitorsCard(v) {
   const where = { 'this PC': t('this PC'), home: t('home'), internet: t('the internet') };
   const when = (iso) => new Date(iso).toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
   const rows = v && v.Visits && v.Visits.length
-    ? `<div class="ph-visits">${v.Visits.map((x) => `<div class="ph-visit ${x.Where === 'internet' ? 'out' : ''} ${x.Kind === 'SignedIn' ? 'ok' : 'bad'}">
+    ? `<div class="ph-visits">${v.Visits.map((x) => `<div class="ph-visit ${x.Where === 'internet' ? 'away' : ''} ${x.Kind === 'SignedIn' ? 'ok' : 'bad'}">
         <span class="muted">${esc(when(x.When))}</span><b>${esc(x.What)}</b><code>${esc(x.Ip)}</code><span>${esc(where[x.Where] || x.Where)}</span><span class="muted">${esc(x.Device)}</span></div>`).join('')}</div>`
     : `<p class="muted small">${esc(t('Nobody has signed in or tried yet.'))}</p>`;
   const paused = v && v.InternetPausedFor > 0
@@ -4240,7 +4246,7 @@ function renderLog() {
   const atBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 60;
 
   body.innerHTML = rows.length
-    ? rows.map((l) => `<div class="l ${esc(l.Level)}"><span class="t">${esc(l.Time)}</span><span class="s"${sourceStyle(l.Source)} data-log-source="${esc(l.Source)}">${esc(l.Source)}</span><span class="m">${highlight(l.Text, q)}</span></div>`).join('')
+    ? rows.map((l) => `<div class="l ${esc(l.Level)}"><span class="t">${esc(l.Time)}</span><span class="s"${sourceStyle(l.Source)} data-log-source="${esc(l.Source)}">${esc(l.Source)}</span><span class="m">${linked(l.Text, q)}</span></div>`).join('')
     : `<p class="muted">${esc(t('Nothing matches.'))}</p>`;
 
   if (atBottom && $('logFollow').checked) body.scrollTop = body.scrollHeight;
@@ -4256,6 +4262,18 @@ function sourceStyle(source) {
     : 0;
   const css = choice > 0 && schema && schema.NameColours ? schema.NameColours[choice] : null;
   return css ? ` style="color:${css}"` : '';
+}
+
+/// A log line or a command's reply with its web links clickable (and the search still marked). Only http(s) addresses,
+/// escaped like everything else, opened in a new tab with no way back to this page.
+function linked(text, q) {
+  const parts = String(text).split(/(https?:\/\/[^\s<>"]+)/);
+  return parts.map((part, i) => {
+    if (i % 2 === 0) return highlight(part, q);
+    const url = part.replace(/[.,);:!?'"]+$/, '');
+    const rest = part.slice(url.length);
+    return `<a class="loglink" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${highlight(url, q)}</a>${highlight(rest, q)}`;
+  }).join('');
 }
 
 function highlight(text, q) {
@@ -4327,7 +4345,7 @@ async function run(line) {
   }
 
   const res = await post('/api/command', { Line: asHelp.startsWith('help ') ? line.trim().replace(/^\//, '') : line });
-  if (res.output) pushLocal(`<div class="reply">${esc(res.output)}</div>`);
+  if (res.output) pushLocal(`<div class="reply">${linked(res.output)}</div>`);
   refresh();
   return res.output;
 }
@@ -4374,7 +4392,9 @@ $('cmd').addEventListener('keydown', (e) => {
     historyAt = Math.max(historyAt - 1, -1);
     input.value = historyAt < 0 ? '' : history[historyAt];
     e.preventDefault();
-  } else if (e.key === 'Tab') {
+  } else if (e.key === 'Tab' && !e.shiftKey && input.value.trim()) {
+    // Completes what's half typed. An empty box (and Shift+Tab) has nothing to complete, so the key moves on as it does
+    // everywhere else - it was taken every time, and a keyboard could never leave the box again.
     e.preventDefault();
     const parts = input.value.split(' ');
     if (parts.length === 1) {
@@ -4695,6 +4715,21 @@ function pacerTable() {
   const hrs = live.PlayedMinutes >= 60 ? (live.PlayedMinutes / 60).toFixed(1) + t('h') : live.PlayedMinutes + t('m');
   const done = esc(tf('{0} of {1} done', live.Unlocked, live.Total));
 
+  // Achievements from DLC this account doesn't own are never unlocked - said under whatever the line above says, so
+  // "40 of 157 done" is never read as 117 still to come.
+  // A game where it can't be told which achievements come with a DLC it doesn't own is held whole (but for the DLC it
+  // owns), and says so in those words - "from DLC it doesn't own" would claim more than is known.
+  const dlc = live.DlcHeld > 0 && live.State !== 'DlcOnly' && live.State !== 'DlcUnmapped'
+    ? `<p class="muted small">${esc(live.Unmapped
+      ? tf("can't tell which achievements come with its DLC - {0} left alone", live.DlcHeld)
+      : tf("{0} achievement(s) are from DLC this account doesn't own - left alone", live.DlcHeld))}</p>`
+    : '';
+
+  return pacerLine(live, name, hrs, done) + dlc;
+}
+
+// The one line about the game being earned in: what state it's in, from the last time Steam was read.
+function pacerLine(live, name, hrs, done) {
   // "Earning" only when there is something left to earn.
   //
   // Every running game used to be "Earning in X", whether it had fifty to go, had hit the ceiling, was already
@@ -4713,6 +4748,19 @@ function pacerTable() {
     }
     case 'NeedsHours':
       return `<p class="earning">${tf('Earning in {0} — {1} played, {2}. The next ones need more hours in it first.', name, hrs, done)}</p>`;
+    case 'DlcOnly':
+      // Some of the rest only Steam can award: said, rather than calling them all DLC.
+      if (live.DlcHeld > 0 && live.Unlocked >= 0 && live.DlcHeld < live.Total - live.Unlocked) {
+        return `<p class="muted small">${tf("Playing {0} — {1}; {2} are from DLC this account doesn't own, so they're left alone, and only Steam can award the rest.", name, done, live.DlcHeld)}</p>`;
+      }
+      return `<p class="muted small">${tf("Playing {0} — {1}; the rest are from DLC this account doesn't own, so they're left alone.", name, done)}</p>`;
+    case 'DlcUnmapped': {
+      // Only the owner knows whether the account has all of it - so the way to say so is right here.
+      const setting = esc(tSetting({ Name: 'AchievementDlcTrusted', Label: 'Games I own all the DLC for' }, 'label'));
+      return `<p class="muted small">${tf("Playing {0} — {1}; can't tell which achievements come with its DLC, so the rest are left alone.", name, done)} ${tf('If this account owns all its DLC, add the game to “{0}”.', setting)}</p>`;
+    }
+    case 'DlcChecking':
+      return `<p class="muted small">${tf('Playing {0} — first checking which of its achievements come with DLC.', name)}</p>`;
   }
 
   const progress = live.Total > 0 ? done : esc(t('reading what it has so far'));
@@ -5031,7 +5079,7 @@ function weightsEditor(spec) {
                + (weeklyTip ? ' ' + weeklyTip : ''))}">
       <span class="wsign">%</span>
       <span class="wweek"${weeklyTip ? ` data-tip="${esc(weeklyTip)}"` : ''}>${weeklyTip ? `${weekly}%<i>${esc(t('/week'))}</i>` : ''}</span>
-      ${i === 0 ? `<span class="wact"><b role="button" tabindex="0" onclick="changingMain=true;renderSettings();setTimeout(()=>{const e=document.querySelector('.wmainedit');if(e)e.focus();},0)" data-tip="${esc(t('Change the main game'))}">⇄</b></span>` : `<span class="wact"><b role="button" tabindex="0" onclick="makeMain(${i})" data-tip="${esc(t('Make this the main game'))}">↑</b><b role="button" tabindex="0" onclick="dropWeight(${i})" data-tip="${esc(t('Remove'))}">×</b></span>`}
+      ${i === 0 ? `<span class="wact"><b role="button" tabindex="0" onclick="changingMain=true;renderSettings();setTimeout(()=>{const e=document.querySelector('.wmainedit');if(e)e.focus();},0)" data-tip="${esc(t('Change the main game'))}">⇄</b><b role="button" tabindex="0" onclick="dropWeight(0)" data-tip="${esc(t('Remove'))}">×</b></span>` : `<span class="wact"><b role="button" tabindex="0" onclick="makeMain(${i})" data-tip="${esc(t('Make this the main game'))}">↑</b><b role="button" tabindex="0" onclick="dropWeight(${i})" data-tip="${esc(t('Remove'))}">×</b></span>`}
     </div>`;
   }).join('');
 
@@ -5214,8 +5262,13 @@ function fitSides(rows, keep) {
 }
 
 function dropWeight(index) {
-  const rows = parseWeights(liveWeights()).filter((_, i) => i !== index);
+  const before = parseWeights(liveWeights());
+  const rows = before.filter((_, i) => i !== index);
   if (!rows.length) { editAndRender('GameWeights', ''); return; }
+
+  // The main game removed: the next one up becomes main and keeps the main game's share. Before there was no × on
+  // the main row at all, so once a list had a game in it, nothing on the page could empty it again.
+  if (index === 0) rows[0].weight = before[0].weight;
 
   // The share the removed game had goes to the other side games, not the main game: the main game's number is its
   // share, so handing it the leftover took 730:70, 440:15, 570:15 to 85% main by removing one side game. Just the

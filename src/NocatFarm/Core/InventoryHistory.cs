@@ -25,6 +25,9 @@ public static class InventoryHistory {
 	private static bool _loaded;
 	private static readonly Lock LoadGate = new();
 
+	/// <summary>One save at a time, from the snapshot to the file - so an older snapshot can never land after a newer one.</summary>
+	private static readonly Lock SaveGate = new();
+
 	private static string Path => System.IO.Path.Combine(ConfigStore.ConfigDir, "state", "invhistory.json");
 
 	/// <summary>
@@ -44,6 +47,8 @@ public static class InventoryHistory {
 
 		Load();
 
+		bool due;
+
 		lock (Gate) {
 			if (!Points.TryGetValue(bot, out List<Point>? points)) {
 				Points[bot] = points = [];
@@ -62,10 +67,16 @@ public static class InventoryHistory {
 			// A month is as far back as anybody looks, and it bounds the file.
 			long cutoff = DateTimeOffset.UtcNow.AddDays(-30).ToUnixTimeSeconds();
 			points.RemoveAll(p => p.At < cutoff);
+
+			// Checked and claimed under the lock: several accounts pricing at once all saw the old time and each saved.
+			due = DateTime.UtcNow - _lastSave > TimeSpan.FromMinutes(5);
+
+			if (due) {
+				_lastSave = DateTime.UtcNow;
+			}
 		}
 
-		if (DateTime.UtcNow - _lastSave > TimeSpan.FromMinutes(5)) {
-			_lastSave = DateTime.UtcNow;
+		if (due) {
 			Save();
 		}
 	}
@@ -166,20 +177,22 @@ public static class InventoryHistory {
 		}
 
 		try {
-			Dictionary<string, List<Point>> snapshot;
+			lock (SaveGate) {
+				Dictionary<string, List<Point>> snapshot;
 
-			lock (Gate) {
-				if (Points.Count == 0) {
-					return;
+				lock (Gate) {
+					if (Points.Count == 0) {
+						return;
+					}
+
+					// The points themselves, not just the dictionary: the lists and their last value keep changing under
+					// the lock while the file is written outside it, and a list that changes mid-write throws or tears.
+					snapshot = Points.ToDictionary(static p => p.Key, static p => p.Value.Select(static x => new Point { At = x.At, Value = x.Value }).ToList(), StringComparer.OrdinalIgnoreCase);
 				}
 
-				// The points themselves, not just the dictionary: the lists and their last value keep changing under
-				// the lock while the file is written outside it, and a list that changes mid-write throws or tears.
-				snapshot = Points.ToDictionary(static p => p.Key, static p => p.Value.Select(static x => new Point { At = x.At, Value = x.Value }).ToList(), StringComparer.OrdinalIgnoreCase);
+				Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
+				AtomicFile.Write(Path, JsonSerializer.Serialize(snapshot));
 			}
-
-			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
-			AtomicFile.Write(Path, JsonSerializer.Serialize(snapshot));
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't save the inventory history: {0}", Log.Describe(e)));
 		}

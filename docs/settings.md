@@ -29,10 +29,10 @@ You can edit them by hand and type `reload`. Back up the `config` folder and you
 
 | Group | Everyday | Behind Show advanced |
 |---|---|---|
-| Dashboard | *Web dashboard*, *Language* | *Listen on*, *Port*, *Dashboard password*, *Stay signed in for* (7 days), *Open from anywhere*, *Public address*, opening the browser, refresh speed |
+| Dashboard | *Web dashboard*, *Language* | *Listen on*, *Port*, *Dashboard password*, *Stay signed in for* (7 days), *Open from anywhere*, *Public address*, *Trust forwarded addresses from*, opening the browser, refresh speed |
 | Running in the background (Windows) | *Tray icon*, *Start with Windows* | *Start hidden*, *Minimise to the tray*, *Keep mini mode on top*, *Keep this PC awake*, *Close when everything's done* |
-| All accounts | *Groups every account joins*, *Restart a stuck account* (on - see [Stuck accounts](phone-and-notifications.md#stuck-accounts)) | *Never touch these (all accounts)*, *Stuck after* (3 hours) |
-| Notifications | Discord webhook, Telegram bot and Discord bot, and a test button | what gets sent - see [Discord and Telegram](phone-and-notifications.md#discord-and-telegram) |
+| All accounts | *Groups every account joins*, *Restart a stuck account* (on, see [Stuck accounts](phone-and-notifications.md#stuck-accounts)) | *Never touch these (all accounts)*, *Stuck after* (3 hours) |
+| Notifications | Discord webhook, Telegram bot and Discord bot, and a test button | what gets sent (see [Discord and Telegram](phone-and-notifications.md#discord-and-telegram)) |
 | Discord profile | the *Playing nocat.farm* card: its switch, what it shows, a preview | which accounts, the featured account, the two buttons |
 | Pop-ups (Windows) | *Show pop-ups* | which kinds: earnings, comments, problems, trade offers |
 | Inventory prices | *Inventory prices in* (the currency) | price lookup speed, how long a price is trusted |
@@ -41,7 +41,7 @@ You can edit them by hand and type `reload`. Back up the `config` folder and you
 | Steam connection | | gap between logins, reconnect, timeout, *Farm at most* (accounts farming at once), rate-limit cooldown, web request gap, *Connect using*, proxy |
 | Logging | | *Say what it's doing every* (5 minutes while playing) and *And while it's resting, every* (30 minutes), where 0 turns them off; *Write a log file*; *Show debug detail on screen* (the log file always has it); *Keep logs for* (14 days); the daily summary and its time; the *Weekly report* (off), its day and hour; the colours of `telegram` and `discord` in the log |
 
-At the bottom of Global settings is **Backup & restore** - see [Backup and restore](dashboard.md#backup-and-restore).
+At the bottom of Global settings is **Backup & restore**. See [Backup and restore](dashboard.md#backup-and-restore).
 
 On Linux and in Docker the Windows-only settings (tray, pop-ups, start with Windows and so on) aren't shown. They
 stay in the config file untouched, in case you take it back to Windows.
@@ -81,11 +81,25 @@ These are for shortcuts, scripts and running several copies:
 --help          list these (also -h)
 ```
 
-One copy runs per config folder; a second one says so and exits. To run separate sets of accounts, give each its
+One copy runs per config folder, on Windows, Linux and a Mac alike; a second one says so and exits. To run separate sets of accounts, give each its
 own `--path` folder.
 
-Environment variables work on any install, not just Docker. When set, they win at every start and are written into
-`config/nocatFarm.json`:
+### The setup's command line
+
+The Windows setup takes the same choices as its screen, for scripted installs:
+
+```
+nocat.farm-v…-setup.exe /VERYSILENT /DIR="C:\nocat.farm" /STARTUP=no /DESKTOP=no /HIDDEN=no /MOVE=no /PORT=7300 /FROM=fresh
+```
+
+`/FROM` is `fresh`, `asf`, `idlemaster` or `other`. Leave any of them out to get the screen's default. To uninstall
+without questions: `unins000.exe /VERYSILENT` keeps your accounts and settings, `/DELETEDATA=yes` deletes them too.
+
+### Environment variables
+
+Environment variables work on any install, not just Docker. When set, they win at every start (and after a restore)
+and are written into `config/nocatFarm.json`. Take `NOCATFARM_PUBLIC_ADDRESS` or `NOCATFARM_TRUSTED_PROXIES` away again
+and the next start clears what it had set, unless you've changed it in Settings since:
 
 | Variable | What it sets |
 |---|---|
@@ -93,7 +107,9 @@ Environment variables work on any install, not just Docker. When set, they win a
 | `NOCATFARM_WEB_PORT` | *Port* (`WebPort`, 7242 by default). |
 | `NOCATFARM_WEB_PASSWORD` | *Dashboard password*. |
 | `NOCATFARM_WEB_PASSWORD_FILE` | A file to read the password from (how Docker secrets arrive). Wins over the one above. |
-| `NOCATFARM_HOME_ADDRESS` | Your computer's address on your wifi, like `192.168.1.20` (add `:port` if Docker publishes a different one). Inside Docker nocat.farm can't see it, so without this the Phone page and `/dashboard` can't show the home link or its QR code, and tell you what to open instead. |
+| `NOCATFARM_PUBLIC_ADDRESS` | *Public address* (`WebPublicAddress`): the address it's reached at from the internet, like `farm.example.com` or `203.0.113.7:7242`. On a VPS it's what lets visitors from outside in at all - see [On a VPS](linux-docker-vps.md#on-a-vps-a-rented-server). |
+| `NOCATFARM_TRUSTED_PROXIES` | *Trust forwarded addresses from* (`WebTrustedProxies`): a reverse proxy that isn't on this PC, like Caddy in front of Docker (`172.16.0.0/12`). Its X-Forwarded-For is believed, so internet visitors count as the internet. A proxy on this PC needs nothing. |
+| `NOCATFARM_HOME_ADDRESS` | Your computer's address on your Wi-Fi, like `192.168.1.20` (add `:port` if Docker publishes a different one). Inside Docker nocat.farm can't see it, so without this the Phone page and `/dashboard` can't show the home link or its QR code, and tell you what to open instead. |
 | `NOCATFARM_NETLOG=1` | For troubleshooting: writes every Steam message to `netlog-<account>.txt`. |
 
 ## Commands
@@ -115,10 +131,10 @@ You can also control an account by messaging it on Steam. Put your SteamID64 in 
 A bare command such as `/pause`, `/status` or `/2fa` acts on the account you messaged. Messages without `/` or `!` get
 the normal auto-reply, and commands from anyone not on the list are ignored. Replies are cut at 1,900 characters.
 Steam chat only reaches the account you messaged: a command that names another account, or `all`, is refused, and so
-are the ones that change the app itself - `set`, `anywhere`, `dashboard`, `update`, `import`, `redeem`, `keys`,
+are the ones that change the app itself: `set`, `anywhere`, `dashboard`, `update`, `import`, `redeem`, `keys`,
 `answer`, `add`, `reload`, `plugins`, `notify`, `screen`, `match`, `theme`, `mini`, `exit` and `remove`. Those are for
 the PC, the dashboard, Telegram or Discord.
 
 ---
 
-[← rep4rep](rep4rep.md) · [Linux and Docker →](linux-docker-vps.md)
+[← rep4rep](rep4rep.md) · [Linux, Mac and Docker →](linux-docker-vps.md)

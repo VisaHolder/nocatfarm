@@ -29,13 +29,17 @@ public sealed partial class InventoryValue(Bot bot) {
 
 	public sealed record GameValue(uint AppId, string Game, int Items, decimal Value, bool Blocked);
 
-	private List<GameValue> _byGame = [];
+	/// <summary>The total and the games it adds up from, published together as one object. A decimal is four words
+	/// and isn't written in one go: the dashboard reading it while a recount wrote it could get half of each.</summary>
+	private sealed record Figures(decimal Total, List<GameValue> ByGame);
+
+	private volatile Figures _figures = new(0, []);
 
 	/// <summary>Total US dollars, at the market's median price, across every game.</summary>
-	public decimal Total { get; private set; }
+	public decimal Total => _figures.Total;
 
 	/// <summary>Per-game totals, most valuable first.</summary>
-	public IReadOnlyList<GameValue> ByGame => _byGame;
+	public IReadOnlyList<GameValue> ByGame => _figures.ByGame;
 
 	/// <summary>Item names still waiting on a price. While this is above zero the total is still climbing.</summary>
 	public int Pending { get; private set; }
@@ -52,6 +56,10 @@ public sealed partial class InventoryValue(Bot bot) {
 
 	private DateTime _readAt = DateTime.MinValue;
 
+	/// <summary>Counts refresh presses. A read that finds it changed since it began doesn't mark itself fresh - the press
+	/// came mid-read, and stamping "read just now" at the end swallowed it until the timer ran out hours later.</summary>
+	private int _refreshes;
+
 	/// <summary>
 	/// False while the last read is missing a game Steam didn't answer for, and there was no earlier read of it to
 	/// fall back on. Such a total is short by that whole game - CS2's skins, say - so it is shown but never banked:
@@ -66,7 +74,13 @@ public sealed partial class InventoryValue(Bot bot) {
 	/// somebody pressed a button is how you get rate-limited. This picks up what has CHANGED: items traded away,
 	/// items received, a case opened.
 	/// </summary>
-	public void ForceRefresh() => _readAt = DateTime.MinValue;
+	public void ForceRefresh() {
+		Interlocked.Increment(ref _refreshes);
+		_readAt = DateTime.MinValue;
+	}
+
+	/// <summary>Mark a read done - unless a refresh was pressed since it began, which gets its own read next pass.</summary>
+	private void MarkRead(int refreshesAtStart) => _readAt = Volatile.Read(ref _refreshes) == refreshesAtStart ? DateTime.UtcNow : DateTime.MinValue;
 
 	public async Task RefreshIfStaleAsync(TimeSpan maxAge, CancellationToken ct) {
 		if (!bot.IsOnline || !bot.Cfg.ShowInventoryValue) {
@@ -91,6 +105,8 @@ public sealed partial class InventoryValue(Bot bot) {
 
 	// ── reading what's in there ──────────────────────────────────────────────
 	private async Task ReadInventoriesAsync(CancellationToken ct) {
+		int refreshes = Volatile.Read(ref _refreshes);
+
 		if (!bot.Web.Ready && !await bot.Web.RefreshAsync(false, ct).ConfigureAwait(false)) {
 			return;
 		}
@@ -120,7 +136,7 @@ public sealed partial class InventoryValue(Bot bot) {
 		}
 
 		if (inventories.Count == 0) {
-			_readAt = DateTime.UtcNow;   // nothing held anywhere: a real answer, not a failure
+			MarkRead(refreshes);   // nothing held anywhere: a real answer, not a failure
 			_complete = true;
 			Ready = true;
 
@@ -167,7 +183,7 @@ public sealed partial class InventoryValue(Bot bot) {
 			}
 		}
 
-		_readAt = DateTime.UtcNow;
+		MarkRead(refreshes);
 		_complete = complete;
 		Ready = true;
 
@@ -481,19 +497,21 @@ public sealed partial class InventoryValue(Bot bot) {
 		}
 
 		decimal was = Total;
+		List<GameValue> sorted = [.. byGame.OrderByDescending(static g => g.Value)];
+		Figures now = new(decimal.Round(sorted.Sum(static g => g.Value), 2), sorted);
 
-		_byGame = [.. byGame.OrderByDescending(static g => g.Value)];
-		Total = decimal.Round(_byGame.Sum(static g => g.Value), 2);
+		_figures = now;
+		decimal total = now.Total;
 		RefreshedAt = DateTime.UtcNow;
 
 		// Only banked once the whole thing has a price. A total that is still filling in would otherwise be
 		// recorded as a genuine drop and then a genuine rise, and the day's percentage would be fiction.
 		if ((Pending == 0) && _complete) {
-			InventoryHistory.Note(bot.Name, Total);
+			InventoryHistory.Note(bot.Name, total);
 		}
 
-		if (Total != was) {
-			Log.Debug(new Said("inventory now {0}{1} across {2} game(s), {3} item(s) still to price", PriceBook.Symbol, (Total).ToString("0.00"), _byGame.Count, Pending), bot.Name);
+		if (total != was) {
+			Log.Debug(new Said("inventory now {0}{1} across {2} game(s), {3} item(s) still to price", PriceBook.Symbol, (total).ToString("0.00"), sorted.Count, Pending), bot.Name);
 		}
 	}
 

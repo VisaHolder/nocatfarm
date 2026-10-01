@@ -28,7 +28,7 @@ and log out when finished. They come back unchanged when you turn human mode off
 The main settings are up front and the fine detail is behind Show advanced. From the console:
 
 ```
-set myaccount GameWeights "730:70, 440:20, 550:10"   # games and their share - the first is the main game
+set myaccount GameWeights "730:70, 440:20, 550:10"   # games and their share; the first is the main game
 set myaccount WeekdayHours 6                         # about 6 hours Monday to Friday
 set myaccount WeekendHours 9
 set myaccount DayStartHour 13                        # gets on around 1pm
@@ -68,12 +68,12 @@ Every wait is a setting, under Show advanced on a human-mode account:
 
 | Setting | Default |
 |---|---|
-| *After waking, wait at least … up to* - before things people can see | 10-90 minutes |
+| *After waking, wait at least … up to*, before things people can see | 10-90 minutes |
 | *After signing in, behind-the-scenes things wait at least … up to* | 5-60 minutes |
 | *Behind-the-scenes things wait for its day too* | off |
 | *On a break, go Away after at least … up to* | 2-10 minutes |
 | *Answer one trade offer at a time* | on |
-| *Settle in for at least … And at most* - after signing in, before the first game | 3-20 minutes |
+| *Settle in for at least … And at most*, after signing in, before the first game | 3-20 minutes |
 
 ## A life, not just a day
 
@@ -106,7 +106,7 @@ are running, blacklisted and refundable games, and the main game are never picke
 This matters for any account you also play on, human mode or not.
 
 *Stand down when you play* (on) stops nocat.farm playing the moment you start a game on that account yourself. While
-you're on it, it doesn't change the account's status either - the right one goes back on once you're done.
+you're on it, it doesn't change the account's status either. The right one goes back on once you're done.
 *Wait before resuming* (5 minutes) is how long after you stop before it carries on; a human-mode account waits a
 random time, up to three times that. *I sign into this one myself* (off) means it never changes the online status,
 so your own Steam app keeps Friends & Chat.

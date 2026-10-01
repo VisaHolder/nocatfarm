@@ -20,8 +20,8 @@ namespace NocatFarm.Core;
 /// deciding - and their playtime, the number that would actually settle it, is not visible from here.
 ///
 /// The hold lifts on its own: buy a game today and the hunter picks it up in a fortnight, or the moment you have
-/// played two hours of it yourself. Fails OPEN by design - if Steam won't say what a licence is, nothing is held,
-/// because holding an entire library over one failed lookup is worse than the thing it protects against.
+/// played two hours of it yourself. A failed lookup holds nothing NEW - holding an entire library over one failed
+/// lookup is worse than the thing it protects against - but keeps what was already held until Steam answers again.
 /// </summary>
 public sealed class RefundGuard(Bot bot) {
 	/// <summary>Steam's own line. Not configurable, because it isn't ours to move.</summary>
@@ -81,6 +81,16 @@ public sealed class RefundGuard(Bot bot) {
 
 			ct.ThrowIfCancellationRequested();
 
+			// No answer from Steam (it failed, or only part of it came) is not "nothing is refundable any more": that let
+			// go of every bought game being held and logged each one as past its refund window, for twenty minutes. Those
+			// holds are kept as they are until it answers, and it's asked again in about three. Shared games don't need
+			// the answer - they're judged from the library alone - so they're worked out as always.
+			bool unanswered = owned.Count == 0;
+
+			if (unanswered) {
+				_refreshedAt = DateTime.UtcNow - TimeSpan.FromMinutes(17);
+			}
+
 			int days = Math.Max(1, bot.Cfg.RefundHoldDays);
 			HashSet<uint> held = [];
 			HashSet<uint> shared = [];
@@ -109,8 +119,30 @@ public sealed class RefundGuard(Bot bot) {
 					continue;
 				}
 
-				if (owned.TryGetValue(game.AppId, out AppOwnership own) && own.Refundable(bot.Cfg.ProtectGiftedGames) && ((DateTime.UtcNow - own.Since).TotalDays < days)) {
+				if (unanswered) {
+					if (_held.Contains(game.AppId)) {
+						held.Add(game.AppId);
+					}
+				} else if (owned.TryGetValue(game.AppId, out AppOwnership own) && own.Refundable(bot.Cfg.ProtectGiftedGames) && ((DateTime.UtcNow - own.Since).TotalDays < days)) {
 					held.Add(game.AppId);
+				}
+			}
+
+			// The FIRST list of a session is a state of affairs, not an event.
+			//
+			// A hold lasts a fortnight, and this set is worked out fresh on every start - so announcing it at
+			// startup meant the same "leaving X alone" line every time the app was restarted, which during a
+			// day of deploys is a lot of times for one unchanged fact. Only a change from here on is news.
+			// A first pass without Steam's answer isn't that state yet: it says nothing, and the first answered pass is the
+			// start - decided here, not only when the set changed, or one that came out the same as the unanswered pass
+			// left the next real change (a game bought an hour later) unsaid.
+			bool first = !_announced;
+
+			if (first && !unanswered) {
+				_announced = true;
+
+				if (held.Count > 0) {
+					Log.Debug(new Said("refund protection is holding {0} game(s): {1}", held.Count, Names([.. held])), bot.Name);
 				}
 			}
 
@@ -118,19 +150,9 @@ public sealed class RefundGuard(Bot bot) {
 				List<uint> fresh = [.. held.Except(_held)];
 				List<uint> freed = [.. _held.Except(held)];
 
-				// The FIRST list of a session is a state of affairs, not an event.
-				//
-				// A hold lasts a fortnight, and this set is worked out fresh on every start - so announcing it at
-				// startup meant the same "leaving X alone" line every time the app was restarted, which during a
-				// day of deploys is a lot of times for one unchanged fact. Only a change from here on is news.
-				if (!_announced) {
-					_announced = true;
+				if (first) {
 					fresh = [];
 					freed = [];
-
-					if (held.Count > 0) {
-						Log.Debug(new Said("refund protection is holding {0} game(s): {1}", held.Count, Names([.. held])), bot.Name);
-					}
 				}
 
 				// One line, not one per game: a fortnight's worth of purchases is a sentence, not a wall. Borrowed

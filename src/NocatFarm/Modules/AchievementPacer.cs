@@ -126,12 +126,19 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		return true;
 	}
 
-	/// <summary>How far through a game's achievements this account is, as last read from Steam; (0, 0) when unknown.</summary>
+	/// <summary>
+	/// How far through a game's achievements this account is, as last read from Steam; (0, 0) when unknown. The total
+	/// is what it can reach: the ones from DLC it doesn't own are left out, or the hunt's "far enough" could never be
+	/// reached in Call of Duty on an account with neither Modern Warfare - 63 of its 157 are theirs.
+	/// </summary>
 	public (int Unlocked, int Total) Progress(uint app) {
 		lock (_gate) {
-			return _games.TryGetValue(app, out GameState? g) && (g.Total > 0) ? (Math.Max(0, g.Unlocked), g.Total) : (0, 0);
+			return _games.TryGetValue(app, out GameState? g) && (g.Total > 0) ? (Math.Max(0, g.Unlocked), Reachable(g)) : (0, 0);
 		}
 	}
+
+	/// <summary>How many of a game's achievements this account could ever have - all of them, less what's held for DLC.</summary>
+	private static int Reachable(GameState g) => g.Reachable > 0 ? Math.Min(g.Reachable, g.Total) : g.Total;
 
 	/// <summary>The rarity floor at its lowest, however many hours: nothing rarer than this is ever unlocked.</summary>
 	private const int LowestFloor = 1;
@@ -162,6 +169,14 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		public int BurstLeft;           // mid-burst: this many more pop quickly, bypassing the played-time gate
 		public Outcome Last;            // what the last real read of Steam concluded
 		public int CappedAt;            // the ceiling in force when it stopped, so raising it can release the game
+		public int Reachable;           // Total less the locked ones from DLC this account doesn't own; 0 = not worked out
+		public int DlcHeld;             // locked ones from DLC this account doesn't own - never unlocked
+		public int DlcSaid = -1;        // the DlcHeld last written to the log, so it is said once, not every look
+		public bool Unmapped;           // can't tell which achievements come with a DLC it doesn't own: all but its owned DLC's left alone
+		public long Licences;           // the account's licence stamp when the DLC it owns was last read for this game
+		public List<uint> DlcOwned = []; // which of the game's DLC it counted as owned then (all of them, vouched for) - a change releases DlcOnly, DlcUnmapped and Capped
+		public long MapStamp;           // which build of the game's DLC map that was read from (DlcAchievements.Stamp); 0 = not known
+		public long HoldKey;            // what that map said about every achievement then (DlcAchievements.HoldKey) - a change releases the game too
 	}
 
 	/// <summary>
@@ -173,11 +188,155 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// </summary>
 	/// <remarks>Numbered explicitly: these are written to the state file as numbers, and reordering the names
 	/// must never quietly change what a saved game means.</remarks>
-	public enum Outcome { Unknown = 0, Earning = 1, None = 2, Complete = 3, SteamOnly = 4, Capped = 5, NeedsHours = 6 }
+	public enum Outcome { Unknown = 0, Earning = 1, None = 2, Complete = 3, SteamOnly = 4, Capped = 5, NeedsHours = 6, DlcOnly = 7, DlcChecking = 8, DlcUnmapped = 9 }
 
 	/// <summary>The outcome as it stands NOW - a game capped under a ceiling that has since been raised is not capped.</summary>
+	/// <remarks>
+	/// A game done for DLC the account doesn't own is let go by <see cref="RecheckLicencesAsync"/> instead, when the DLC
+	/// it owns for that game has changed - not on every licence change: a free game claimed changes the licences too,
+	/// and the hunt would have gone back to every held game in turn, for a sitting each, to find nothing new.
+	/// </remarks>
 	private Outcome Current(GameState g) =>
 		(g.Last == Outcome.Capped) && (Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100) > g.CappedAt) ? Outcome.Unknown : g.Last;
+
+	/// <summary>Outcomes that can only change when the account gets (or loses) one of the game's DLC.</summary>
+	internal static bool HeldForDlc(Outcome last) => last is Outcome.DlcOnly or Outcome.DlcUnmapped or Outcome.Capped;
+
+	/// <summary>Has the DLC the account owns for a game changed since it was last looked at?</summary>
+	internal static bool DlcChanged(IReadOnlyCollection<uint>? before, IReadOnlySet<uint> now) => !now.SetEquals(before ?? []);
+
+	/// <summary>
+	/// A game done for DLC the account doesn't own - or capped, which is counted on what it can reach - is kept that way
+	/// (DlcOnly, DlcUnmapped and Capped are saved) and the hunt never comes back to it. Kept for good, a DLC bought later
+	/// never let it go. So when the account's licences change, each such game has the DLC it owns read again, from what
+	/// is already known (no store questions): the same, and it stays as it is; different, and it's looked at afresh.
+	/// Licences that can't be read yet leave it as it is and are tried again next minute.
+	///
+	/// The owner vouching for a game (AchievementDlcTrusted) counts as a change too: every DLC of it is then counted
+	/// as owned, so a game held for DLC is let go within the minute - and taken off the list, it is held again.
+	///
+	/// So does the game's DLC map being built again. A game held on a map that couldn't place a DLC (Steam didn't
+	/// answer for its name, say) stayed held when the next build could place it - nothing about the licences had
+	/// changed. A held game's map is built again when it is due (a week, or an hour for one built without every name),
+	/// and the game is looked at again when what the new map says about its achievements differs.
+	/// </summary>
+	private async Task RecheckLicencesAsync(CancellationToken ct) {
+		long stamp = Bot.LicenseStamp;
+
+		if (stamp == 0) {
+			return;
+		}
+
+		string trusted = TrustKey(Bot.Cfg.AchievementDlcTrusted);
+		bool trustChanged = trusted != _trustSeen;
+
+		// Unseen from the start of the pass, so a pass cut short (an exception, a cancel) can't leave the old list marked.
+		if (trustChanged) {
+			_trustSeen = null;
+		}
+		List<(uint App, List<uint> Owned, long Licences, long MapStamp, long HoldKey)> held;
+
+		lock (_gate) {
+			held = [.. _games.Where(static kv => HeldForDlc(kv.Value.Last))
+				.Select(static kv => (kv.Key, kv.Value.DlcOwned, kv.Value.Licences, kv.Value.MapStamp, kv.Value.HoldKey))];
+		}
+
+		// Only marked as seen once every held game has been looked at: one whose licences couldn't be read is left for
+		// next minute, and would otherwise never be asked again (its licence stamp may well not have changed).
+		bool all = true;
+
+		foreach ((uint app, List<uint> before, long licences, long mapStamp, long holdKey) in held) {
+			DlcAchievements.Map? map = DlcAchievements.Current(app);
+
+			// Due to be built again: in the background, behind whatever is being played. Once it has been, its stamp is
+			// new, and the game is looked at below.
+			if (DlcAchievements.Stale(map)) {
+				DlcAchievements.Request(Bot, app);
+			}
+
+			// No map yet, or one being built again right now: wait for the background build rather than asking for it
+			// here. ViewAsync asks urgently, and doing that every minute for every held game pushed them all ahead of the
+			// game being played - which then waited behind the whole backlog, unlocking nothing. Once built, the new stamp
+			// brings the game back here. A stale map that isn't being rebuilt (the last try failed and is waiting out its
+			// back-off) is still looked at, or a game whose build keeps failing would stay held even after the DLC was
+			// bought. Nor is there an exception for a vouched-for game without a map: it can't be judged without one.
+			if ((map == null) || (DlcAchievements.Stale(map) && DlcAchievements.IsPending(app))) {
+				// Skipped while a change to the vouched-for list is waiting: that change isn't marked as seen until this
+				// game has had its look. Marked anyway, a vouch made while its rebuild was queued was never seen if the
+				// rebuild then failed. (A game with no map at all is looked at once one is built - its new stamp does that.)
+				if (trustChanged && (map != null)) {
+					all = false;
+				}
+
+				continue;
+			}
+
+			bool mapChanged = (map != null) && (DlcAchievements.Stamp(map) != mapStamp);
+
+			if (!trustChanged && (licences == stamp) && !mapChanged) {
+				continue;
+			}
+
+			DlcAchievements.View view = await DlcAchievements.ViewAsync(Bot, app, TimeSpan.Zero, ct).ConfigureAwait(false);
+
+			if (!view.Known) {
+				all = false;
+
+				continue;
+			}
+
+			// What the rule says about the game now, against what it said when the game was held. The same, and it stays
+			// held - a map built again with nothing new in it, a free game claimed. Different, and it's looked at again.
+			long key = DlcAchievements.HoldKey(view.Map, view.Owned);
+			// A game held before this was recorded (holdKey 0, an empty owned list) is only noted down the first time, not
+			// let go: otherwise every capped and held game was looked at again after an update, a sitting in each, to end
+			// up exactly where it was.
+			bool first = holdKey == 0;
+			// Vouched for since, though, it is let go whatever was recorded.
+			bool changed = first
+				? Bot.Cfg.AchievementDlcTrusted.Contains(app) || ((licences != 0) && DlcChanged(before, view.Owned))
+				: (DlcChanged(before, view.Owned) || (key != holdKey));
+
+			lock (_gate) {
+				if (!_games.TryGetValue(app, out GameState? g) || !HeldForDlc(g.Last)) {
+					continue;
+				}
+
+				g.Licences = view.Licences;
+				g.DlcOwned = [.. view.Owned.Order()];
+				g.MapStamp = DlcAchievements.Stamp(view.Map);
+				g.HoldKey = key;
+
+				if (changed) {
+					g.Last = Outcome.Unknown;
+					g.NextAllow = DateTime.UtcNow;
+				}
+			}
+
+			if (changed) {
+				Log.Debug($"{GameNames.Of(app)}: the DLC this account owns for it, or what is known about its DLC, changed - looking at its achievements again", Bot.Name);
+			}
+		}
+
+		// A change not yet seen by every held game stays unseen until one pass has seen it all the way through. Left as the
+		// old list, taking a game off and putting it back while a pass was incomplete read as "no change" - and the game
+		// stayed held for up to a week.
+		if (all) {
+			_trustSeen = trusted;
+		} else if (trustChanged) {
+			_trustSeen = null;
+		}
+	}
+
+	/// <summary>The games vouched for, as one string - the same list in any order is the same.</summary>
+	internal static string TrustKey(IEnumerable<uint>? apps) => string.Join(",", (apps ?? []).Distinct().Order());
+
+	/// <summary>
+	/// The vouched-for list as last acted on. Null after a start, so the first minute looks at every held game once:
+	/// the list may have been changed while the app was closed. What it owns for a game is compared, not asked about
+	/// again - a held game whose counted DLC are the same stays held.
+	/// </summary>
+	private string? _trustSeen;
 
 	private readonly Dictionary<uint, GameState> _games = [];
 	private readonly Random _rng = new();
@@ -240,6 +399,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 			return;
 		}
+
+		await RecheckLicencesAsync(ct).ConfigureAwait(false);
 
 		// One minute of credit per tick, and only for time that genuinely elapsed. Without this a restart loop,
 		// or a tick that ran late, would hand out playtime the account never spent - and playtime is exactly
@@ -439,6 +600,63 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			g.Total = total;
 		}
 
+		// Nothing from DLC this account doesn't own, ever. Games keep their DLC achievements in the base game's list
+		// (Call of Duty: Modern Warfare II and III are 63 of its 157), and one of those on the profile of an account
+		// without the DLC is something nobody could have earned. Until the game has been worked out - one question to
+		// Steam for a game with no DLC, a few minutes for one with a hundred - nothing in it is unlocked at all.
+		//
+		// "Not worked out" is also: the account's licences couldn't be read just now. That is checking too - never
+		// "owns none of its DLC", which would call the game done for this account until its licences changed.
+		DlcAchievements.View dlc = await DlcAchievements.ViewAsync(Bot, app, TimeSpan.Zero, ct).ConfigureAwait(false);
+
+		if (!dlc.Known) {
+			lock (_gate) {
+				g.Last = Outcome.DlcChecking;
+			}
+
+			Back(g, TimeSpan.FromMinutes(_rng.Next(3, 9)));
+
+			return false;
+		}
+
+		(_, int reachable, int held) = DlcAchievements.Reach(set.All.Select(a => (a.Unlocked, dlc.Of(a))));
+		bool unmapped = dlc.Unmapped;
+		bool saidHeld;
+
+		// Which map this was, and what it says - kept with a game held for DLC, so a map built again that says something
+		// else lets it go (see RecheckLicencesAsync).
+		long mapStamp = DlcAchievements.Stamp(dlc.Map);
+		long holdKey = DlcAchievements.HoldKey(dlc.Map, dlc.Owned);
+
+		lock (_gate) {
+			g.Reachable = reachable;
+			g.DlcHeld = held;
+			g.Unmapped = unmapped;
+			g.Licences = dlc.Licences;
+			g.DlcOwned = [.. dlc.Owned.Order()];
+			g.MapStamp = mapStamp;
+			g.HoldKey = holdKey;
+			saidHeld = g.DlcSaid == held;
+			g.DlcSaid = held;
+		}
+
+		if (!saidHeld && (held > 0)) {
+			Log.Info(new Said("{0}: {1}", GameNames.Of(app), unmapped
+				? new Said("can't tell which achievements come with its DLC - {0} left alone", held)
+				: new Said("{0} achievement(s) are from DLC this account doesn't own - left alone", held)), Bot.Name);
+
+			// Held whole on the strength of a DLC Steam says nothing about. Only the owner knows whether the account has
+			// it all - so the way to say so goes with it.
+			if (unmapped) {
+				Log.Info(new Said("If {0} owns all of {1}'s DLC, add {2} to \"Games I own all the DLC for\" in its settings - then nothing in it is held for DLC.",
+					Bot.Name, GameNames.Of(app), app), Bot.Name);
+			}
+		}
+
+		// What the order rules look at: everything but the locked ones it will never have. A ladder's lower rung, a
+		// story step or an easier difficulty that only comes with DLC would otherwise hold a base-game one back for ever.
+		List<Achievement> reach = held > 0 ? [.. set.All.Where(a => a.Unlocked || dlc.Allows(a))] : set.All;
+
 		// One ceiling, the one in the settings box.
 		//
 		// Every game used to roll its own out of a hardcoded per-game range - Team Fortress 2 drew from 18-28,
@@ -455,13 +673,39 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		// Nothing left that a client may set. Either the game is finished, or everything still locked is awarded
 		// by Steam itself (Counter-Strike 2's are, bar the one for launching it). Asked before the ceiling, so a
 		// game in that state is described as what it is rather than as having hit a limit.
-		if (!set.All.Any(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a))) {
+		//
+		// And what's left being DLC this account doesn't own is the same: nothing more to earn here. Said as that, not
+		// as "Steam only", when nothing left is Steam's to award.
+		//
+		// An achievement the game's map has never seen (a DLC added since it was built, most likely) is neither: it waits
+		// while the game is worked out again, and the game is looked at again soon rather than called done.
+		if (!set.All.Any(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a) && dlc.Allows(a))) {
+			if (set.All.Any(a => !a.Unlocked && (dlc.Of(a) == DlcAchievements.Hold.Checking))) {
+				lock (_gate) {
+					g.Last = Outcome.DlcChecking;
+				}
+
+				Back(g, TimeSpan.FromMinutes(_rng.Next(10, 30)));
+
+				return false;
+			}
+
+			// Anything held for DLC makes it a game held for DLC, even with some left that only Steam can award: buying the
+			// DLC (or vouching for the game) is what can change it, and only a game kept as held for DLC is looked at again
+			// when that happens. Asked as "is nothing allowed left", a game with a few Steam-only ones besides was kept as
+			// Steam-only - and stayed that way whatever DLC was bought.
+			bool dlcOnly = held > 0;
+
 			lock (_gate) {
-				g.Last = already >= total ? Outcome.Complete : Outcome.SteamOnly;
+				g.Last = already >= total ? Outcome.Complete
+					: dlcOnly ? (unmapped ? Outcome.DlcUnmapped : Outcome.DlcOnly)
+					: Outcome.SteamOnly;
 			}
 
 			if (grind && (already < total)) {
-				Log.Info(new Said("{0}: achievements are server-side - nothing to grind", GameNames.Of(app)), Bot.Name);
+				Log.Info(!dlcOnly ? new Said("{0}: achievements are server-side - nothing to grind", GameNames.Of(app))
+					: unmapped ? new Said("{0}: can't tell which achievements come with its DLC - nothing to grind", GameNames.Of(app))
+					: new Said("{0}: what's left is from DLC this account doesn't own - nothing to grind", GameNames.Of(app)), Bot.Name);
 			}
 
 			Back(g, TimeSpan.FromHours(_rng.Next(8, 25)));
@@ -471,7 +715,10 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 		// Never below the onboarding cluster, or a short game with a big early burst (Portal onboards 5 of its
 		// 15) would be cut off mid-cluster by a percentage that was never meant to apply that finely.
-		int ceilingCount = Math.Min(total, Math.Max(prof.OnboardCount, total * ceiling / 100));
+		//
+		// Of what this account can reach: DLC it doesn't own isn't part of its game. That stops it a little earlier
+		// than the same percentage of everything would, which is the safe way round.
+		int ceilingCount = CeilingCount(reachable, ceiling, prof.OnboardCount);
 
 		if (already >= ceilingCount) {
 			lock (_gate) {
@@ -507,13 +754,13 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		List<Achievement> eligible = set.All
 			// Unknown rarity (Steam's global-percent endpoint was unreachable) counts as eligible rather than being
 			// excluded - otherwise a missing fetch would silently stop the account unlocking anything at all.
-			.Where(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a) && ((a.GlobalPercent ?? floor) >= floor)
+			.Where(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a) && dlc.Allows(a) && ((a.GlobalPercent ?? floor) >= floor)
 				&& (RequiredPriorAchievements(a) <= already)
-				&& !TierBlocked(a, set.All)
-				&& !DifficultyBlocked(a, set.All)
-				&& !StoryEndBlocked(a, set.All)
-				&& !VariantBlocked(a, set.All)
-				&& StoryTimeAllows(a, set.All, hours, typical)
+				&& !TierBlocked(a, reach)
+				&& !DifficultyBlocked(a, reach)
+				&& !StoryEndBlocked(a, reach)
+				&& !VariantBlocked(a, reach)
+				&& StoryTimeAllows(a, reach, hours, typical)
 				&& !MilestoneUnearned(a, set.All))
 			.ToList();
 
@@ -541,11 +788,23 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		int idx = (eligible.Count > 1) && (_rng.Next(100) < 20) ? 1 : 0;
 		Achievement pick = eligible[idx];
 
-		(bool ok, string message) = await Achievements.SetAsync(Bot, set, [pick], true, ct).ConfigureAwait(false);
+		(bool ok, string message, int changed) = await Achievements.SetAsync(Bot, set, [pick], true, ct, dlc).ConfigureAwait(false);
 
 		if (!ok) {
 			Log.Debug(new Said("couldn't unlock \"{0}\" in {1} - {2}", pick.Display, GameNames.Of(app), message), Bot.Name);
 			Back(g, TimeSpan.FromMinutes(_rng.Next(30, 90)));
+
+			return false;
+		}
+
+		// Already unlocked when the write came to it: something else got there between the read above and the write (a
+		// 'cheevo unlock', unlock-everything). Nothing was earned now, so nothing is said, notified or put in the history,
+		// and no gap is spaced out from it - the next look picks the next one. Taken as an unlock, it said "unlocked" a
+		// second time, counted it twice, and held the game back as if it had just earned one.
+		if (changed == 0) {
+			lock (_gate) {
+				g.Unlocked = already + 1;
+			}
 
 			return false;
 		}
@@ -594,8 +853,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		}
 
 		Said rarity = pick.GlobalPercent is { } percent ? new Said(" ({0}% have it)", percent.ToString("0.#")) : default;
-		Log.Reward(new Said("unlocked \"{0}\" in {1}{2} ({3}/{4})", pick.Display, GameNames.Of(app), rarity, nowUnlocked, total), Bot.Name, topic: Topic.Achievements);
-		Remember(new Unlock(app, GameNames.Of(app), pick.Display, pick.GlobalPercent, DateTime.UtcNow, nowUnlocked, total));
+		Log.Reward(new Said("unlocked \"{0}\" in {1}{2} ({3}/{4})", pick.Display, GameNames.Of(app), rarity, nowUnlocked, total), Bot.Name, topic: Topic.Achievements);		Remember(new Unlock(app, GameNames.Of(app), pick.Display, pick.GlobalPercent, DateTime.UtcNow, nowUnlocked, total));
 
 		return true;
 	}
@@ -1186,14 +1444,24 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>
-	/// Nothing more this account will earn in <paramref name="app"/> right now: finished, up to the ceiling, or only
-	/// Steam-awarded achievements left. The hunter skips such a game rather than spend a sitting earning nothing.
+	/// Nothing more this account will earn in <paramref name="app"/> right now: finished, up to the ceiling, only
+	/// Steam-awarded achievements left, or only ones held for DLC - from DLC it doesn't own, or in a game where it can't
+	/// be told which come with its DLC. The hunter skips such a game rather than spend a sitting earning nothing, until
+	/// the ceiling is raised or the account's licences change.
 	/// </summary>
 	public bool NothingLeft(uint app) {
 		lock (_gate) {
-			return _games.TryGetValue(app, out GameState? g) && (Current(g) is Outcome.Complete or Outcome.SteamOnly or Outcome.Capped);
+			return _games.TryGetValue(app, out GameState? g) && (Current(g) is Outcome.Complete or Outcome.SteamOnly or Outcome.Capped or Outcome.DlcOnly or Outcome.DlcUnmapped);
 		}
 	}
+
+	/// <summary>
+	/// Where a game stops: the ceiling's share of what the account can reach, never below the onboarding cluster, never
+	/// more than there is. <paramref name="reachable"/> leaves out DLC it doesn't own - counted in, a game whose DLC
+	/// is most of its list could never get to its ceiling, and would be played for nothing for ever.
+	/// </summary>
+	internal static int CeilingCount(int reachable, int ceilingPercent, int onboard) =>
+		Math.Min(reachable, Math.Max(onboard, reachable * Math.Clamp(ceilingPercent, 1, 100) / 100));
 
 	private GameState StateFor(uint app) {
 		lock (_gate) {
@@ -1241,7 +1509,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		bool Blocked,
 		string Why,
 		bool Running,
-		string State
+		string State,
+		int DlcHeld = 0,        // locked ones from DLC this account doesn't own, left alone
+		bool Unmapped = false   // can't tell which achievements come with its DLC: everything but its owned DLC's left alone
 	);
 
 	/// <summary>
@@ -1275,17 +1545,22 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						floor > 100 ? "not enough hours yet" :
 						"";
 
+					// The hours the pacing goes by: Steam's own count when it's the bigger one, as in the status line. Only
+					// the minutes nocat.farm played itself went out here, so the dashboard read "45.6h played" beside a
+					// status of "401.7h in" for the same game.
 					return new Row(
 						kv.Key,
 						GameNames.Of(kv.Key),
-						(int) kv.Value.PlayedMins,
+						(int) Math.Max(kv.Value.PlayedMins, Bot.Library.MinutesOn(kv.Key)),
 						Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100),
 						kv.Value.Unlocked,
 						kv.Value.Total,
 						why.Length > 0,
 						why,
 						live.Contains(kv.Key),
-						Current(kv.Value).ToString());
+						Current(kv.Value).ToString(),
+						kv.Value.DlcHeld,
+						kv.Value.Unmapped);
 				})
 				.ToList();
 		}
@@ -1307,41 +1582,62 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				.ThenByDescending(static kv => kv.Value.PlayedMins)
 				.First();
 
-			double hours = Math.Max(g.PlayedMins, Bot.Library.MinutesOn(app)) / 60.0;
+			Said said = DescribeOne(app, g);
 
-			// A finished, capped or achievement-less game has no "next". Its NextAllow is only the back-off timer,
-			// and printing it as "next after 21:38" dressed a game that will never earn again as one that is queued.
-			switch (Current(g)) {
-				case Outcome.None:
-					return new Said("{0} has no achievements", GameNames.Of(app));
-				case Outcome.Complete:
-					return new Said("{0}: every achievement done ({1}/{2})", GameNames.Of(app), g.Unlocked, g.Total);
-				case Outcome.SteamOnly:
-					return new Said("{0}: {1}/{2} - the rest can only be awarded by Steam", GameNames.Of(app), g.Unlocked, g.Total);
-				case Outcome.Capped:
-					return new Said("{0}: {1}/{2} - stopped at your {3}% ceiling", GameNames.Of(app), g.Unlocked, g.Total, g.CappedAt);
-				case Outcome.NeedsHours:
-					return new Said("{0}: {1}h in - the next ones need more hours in it", GameNames.Of(app), hours.ToString("0.#"));
-			}
-
-			Profile prof = ProfileFor(app);
-			bool onboarding = (g.Unlocked < 0) || (g.Unlocked < prof.OnboardCount);
-			int playedGate = onboarding ? prof.OnboardPlayedMins : prof.SteadyPlayedMins;
-			long shortBy = playedGate - (g.PlayedMins - g.MinsAtLastUnlock);
-
-			// Report the gate that is actually holding it up. "next after <time>" while the spacing had long
-			// since elapsed and the real hold-up was in-game minutes gave no way to tell waiting from stuck.
-			DateTime next = g.NextAllow;
-			Said when =
-				DateTime.UtcNow < g.NextAllow ? new Said("next after {0}", (Func<string>) (() => Fmt.Clock(next)))
-				: (g.BurstLeft <= 0) && (shortBy > 0) ? new Said("next after {0} more play", Fmt.Hm((int) shortBy))
-				: new Said("next one due");
-
-			// `when` is passed through as a Said, not as text. Loc.T calls ToString on its arguments when it
-			// renders, so the inner sentence is translated at the same instant as the outer one - bake it to a
-			// string here and it would be frozen in whatever language was selected when the status was written.
-			return new Said("{0}: {1}h in, {2}", GameNames.Of(app), hours.ToString("0.#"), when);
+			// Held back for DLC it doesn't own: said on every line but the one that is already about exactly that.
+			return (g.DlcHeld > 0) && (Current(g) is not (Outcome.DlcOnly or Outcome.DlcUnmapped))
+				? new Said("{0} ({1})", said, g.Unmapped
+					? new Said("can't tell which achievements come with its DLC - {0} left alone", g.DlcHeld)
+					: new Said("{0} achievement(s) are from DLC this account doesn't own - left alone", g.DlcHeld))
+				: said;
 		}
+	}
+
+	/// <summary>The status line for one game. Called under the gate.</summary>
+	private Said DescribeOne(uint app, GameState g) {
+		double hours = Math.Max(g.PlayedMins, Bot.Library.MinutesOn(app)) / 60.0;
+
+		// A finished, capped or achievement-less game has no "next". Its NextAllow is only the back-off timer,
+		// and printing it as "next after 21:38" dressed a game that will never earn again as one that is queued.
+		switch (Current(g)) {
+			case Outcome.None:
+				return new Said("{0} has no achievements", GameNames.Of(app));
+			case Outcome.Complete:
+				return new Said("{0}: every achievement done ({1}/{2})", GameNames.Of(app), g.Unlocked, g.Total);
+			case Outcome.SteamOnly:
+				return new Said("{0}: {1}/{2} - the rest can only be awarded by Steam", GameNames.Of(app), g.Unlocked, g.Total);
+			case Outcome.Capped:
+				return new Said("{0}: {1}/{2} - stopped at your {3}% ceiling", GameNames.Of(app), g.Unlocked, g.Total, g.CappedAt);
+			case Outcome.NeedsHours:
+				return new Said("{0}: {1}h in - the next ones need more hours in it", GameNames.Of(app), hours.ToString("0.#"));
+			case Outcome.DlcOnly:
+				// Some of the rest only Steam can award: said, rather than calling them all DLC.
+				return (g.DlcHeld > 0) && (g.Unlocked >= 0) && (g.DlcHeld < g.Total - g.Unlocked)
+					? new Said("{0}: {1}/{2} - {3} are from DLC this account doesn't own, and only Steam can award the rest", GameNames.Of(app), g.Unlocked, g.Total, g.DlcHeld)
+					: new Said("{0}: {1}/{2} - the rest are from DLC this account doesn't own", GameNames.Of(app), g.Unlocked, g.Total);
+			case Outcome.DlcUnmapped:
+				return new Said("{0}: {1}/{2} - can't tell which achievements come with its DLC - left alone", GameNames.Of(app), g.Unlocked, g.Total);
+			case Outcome.DlcChecking:
+				return new Said("{0}: checking which achievements come with its DLC", GameNames.Of(app));
+		}
+
+		Profile prof = ProfileFor(app);
+		bool onboarding = (g.Unlocked < 0) || (g.Unlocked < prof.OnboardCount);
+		int playedGate = onboarding ? prof.OnboardPlayedMins : prof.SteadyPlayedMins;
+		long shortBy = playedGate - (g.PlayedMins - g.MinsAtLastUnlock);
+
+		// Report the gate that is actually holding it up. "next after <time>" while the spacing had long
+		// since elapsed and the real hold-up was in-game minutes gave no way to tell waiting from stuck.
+		DateTime next = g.NextAllow;
+		Said when =
+			DateTime.UtcNow < g.NextAllow ? new Said("next after {0}", (Func<string>) (() => Fmt.Clock(next)))
+			: (g.BurstLeft <= 0) && (shortBy > 0) ? new Said("next after {0} more play", Fmt.Hm((int) shortBy))
+			: new Said("next one due");
+
+		// `when` is passed through as a Said, not as text. Loc.T calls ToString on its arguments when it
+		// renders, so the inner sentence is translated at the same instant as the outer one - bake it to a
+		// string here and it would be frozen in whatever language was selected when the status was written.
+		return new Said("{0}: {1}h in, {2}", GameNames.Of(app), hours.ToString("0.#"), when);
 	}
 
 	// ── remembering where it got to ─────────────────────────────────────────
@@ -1357,6 +1653,21 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		// a finished game, which the counts alone can prove.
 		public Outcome Last { get; set; }
 		public int CappedAt { get; set; }
+
+		// Absent from files written before DLC was checked: 0, which reads as "not worked out yet".
+		public int Reachable { get; set; }
+		public int DlcHeld { get; set; }
+
+		// Absent from older files: false, 0 and none. A 0 stamp never matches a real one, so a game called done for
+		// DLC before these were kept has the DLC it owns read again once the licences are in.
+		public bool Unmapped { get; set; }
+		public long Licences { get; set; }
+		public List<uint>? DlcOwned { get; set; }
+
+		// Absent from older files: 0. A 0 never matches a real map, so a game held before these were kept is looked at
+		// again once, the first time its map is read.
+		public long MapStamp { get; set; }
+		public long HoldKey { get; set; }
 	}
 
 	private static string PathFor(string bot) => Path.Combine(ConfigStore.ConfigDir, "state", $"cheevo-{bot}.json");
@@ -1386,7 +1697,14 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						Unlocked = s.Unlocked,
 						Total = s.Total,
 						Last = s.Last,
-						CappedAt = s.CappedAt
+						CappedAt = s.CappedAt,
+						Reachable = s.Reachable,
+						DlcHeld = s.DlcHeld,
+						Unmapped = s.Unmapped,
+						Licences = s.Licences,
+						DlcOwned = s.DlcOwned ?? [],
+						MapStamp = s.MapStamp,
+						HoldKey = s.HoldKey
 					};
 
 					// A file written before outcomes existed says nothing about them, and a finished or capped game
@@ -1394,9 +1712,15 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 					// Both can be worked out from the counts already saved.
 					GameState g = _games[s.App];
 
+					// Saved before a game with DLC held back and a few Steam-only ones left was kept as held for DLC: it
+					// was kept as Steam-only, and nothing ever looked at it again when the DLC was bought. Held for DLC now.
+					if ((g.Last == Outcome.SteamOnly) && (g.DlcHeld > 0)) {
+						g.Last = g.Unmapped ? Outcome.DlcUnmapped : Outcome.DlcOnly;
+					}
+
 					if ((g.Last == Outcome.Unknown) && (g.Total > 0) && (g.Unlocked >= 0)) {
 						int ceiling = Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100);
-						int ceilingCount = Math.Min(g.Total, Math.Max(ProfileFor(s.App).OnboardCount, g.Total * ceiling / 100));
+						int ceilingCount = CeilingCount(Reachable(g), ceiling, ProfileFor(s.App).OnboardCount);
 
 						if (g.Unlocked >= g.Total) {
 							g.Last = Outcome.Complete;
@@ -1502,7 +1826,14 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 					Unlocked = kv.Value.Unlocked,
 					Total = kv.Value.Total,
 					Last = kv.Value.Last,
-					CappedAt = kv.Value.CappedAt
+					CappedAt = kv.Value.CappedAt,
+					Reachable = kv.Value.Reachable,
+					DlcHeld = kv.Value.DlcHeld,
+					Unmapped = kv.Value.Unmapped,
+					Licences = kv.Value.Licences,
+					DlcOwned = kv.Value.DlcOwned,
+					MapStamp = kv.Value.MapStamp,
+					HoldKey = kv.Value.HoldKey
 				}).ToList();
 			}
 

@@ -336,9 +336,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				return 0;
 			}
 
+			// Whole minutes gone by, the same as this module's own "settling for 4m", so the two lines agree.
 			double mins = (_readyAt - DateTime.UtcNow).TotalMinutes;
 
-			return mins <= 0 ? 0 : (int) Math.Ceiling(mins);
+			return mins <= 0 ? 0 : (int) mins;
 		}
 	}
 
@@ -350,70 +351,73 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// bed after it. Before, a late 'wake' got up and went straight back to bed, and looked like it did nothing.
 	/// </summary>
 	public void WakeNow() {
-		// Today's plan first, if it hasn't been rolled yet. It normally waits for the earliest wake time, so 'wake' at 8am
-		// ran on last night's plan - its hours already played, so "done for today" - and then at 9:30 today's plan rolled
-		// a wake time hours away and sent the account back to bed.
-		//
-		// But not in the small hours nearer last night's bedtime than the morning: that is still last night, and 'wake'
-		// is one more sitting on it. Rolling today there started a whole new day at 1am - hours of play through the
-		// night and "done for today" by breakfast - where 'wake' at 23:50 got the one sitting.
-		DateTime now = DateTime.Now;
-		bool lastNight = (_dayStamp >= 0) && (_dayStamp != now.DayOfYear) && StillLastNight(now, PlanBed(), EarliestWakeToday());
+		// One step at a time - see StepAsync.
+		lock (_stepGate) {
+			// Today's plan first, if it hasn't been rolled yet. It normally waits for the earliest wake time, so 'wake' at 8am
+			// ran on last night's plan - its hours already played, so "done for today" - and then at 9:30 today's plan rolled
+			// a wake time hours away and sent the account back to bed.
+			//
+			// But not in the small hours nearer last night's bedtime than the morning: that is still last night, and 'wake'
+			// is one more sitting on it. Rolling today there started a whole new day at 1am - hours of play through the
+			// night and "done for today" by breakfast - where 'wake' at 23:50 got the one sitting.
+			DateTime now = DateTime.Now;
+			bool lastNight = (_dayStamp >= 0) && (_dayStamp != now.DayOfYear) && StillLastNight(now, PlanBed(), EarliestWakeToday());
 
-		if (!lastNight && (_dayStamp != now.DayOfYear)) {
-			RollNewDayIfNeeded(wakingNow: true);
+			if (!lastNight && (_dayStamp != now.DayOfYear)) {
+				RollNewDayIfNeeded(wakingNow: true);
+			}
+
+			int nowMin = (int) (now - now.Date).TotalMinutes;
+
+			if (!lastNight && (_wakeMinuteOfDay > nowMin)) {
+				_wakeMinuteOfDay = nowMin;
+				Persist();   // or a restart puts the old wake time back and the account to bed
+			}
+
+			// Past bedtime, or the day already played (a day off included): one more sitting, like somebody who couldn't sleep.
+			if (lastNight || !InPlannedHours(now) || (_playedMinutesToday >= _targetMinutes)) {
+				int min = Math.Max(5, Bot.Cfg.SessionMinMinutes);
+				int max = Math.Max(min + 5, Bot.Cfg.SessionMaxMinutes);
+				_stayUpUntil = now.AddMinutes(Rng(min, max));
+
+				// In its planned hours (a day off, or the day's hours played) it doesn't go to bed after it - it's done for today.
+				Log.Info(lastNight || !InPlannedHours(now)
+					? new Said("up late - one more sitting, then bed around {0}", _stayUpUntil.ToString("HH:mm"))
+					: new Said("up for one sitting until about {0}, then done for today", _stayUpUntil.ToString("HH:mm")), Bot.Name);
+				Persist();   // a restart during the sitting keeps it, rather than putting the account back to bed
+			}
+
+			_wokeUp = true;
+			_phase = Phase.Off;
+			ClearBreakState();
+
+			// The overnight games off first. Made visible with them still running, the friends list showed the whole
+			// night's list for up to a tick before the wake-up settle put them down.
+			if (!Bot.IsFarming) {
+				Bot.StopPlaying();
+			}
+
+			ShowAs(null);
+
+			// It's a manual "start now", so skip the random settle - but NOT the owner-safety check. Clearing the
+			// timed part of the warm-up lets it start as soon as the clear-reads confirm the owner isn't mid-game,
+			// rather than sitting through a fresh ~15-minute settle.
+			//
+			// Armed here for this sign-in, or SettledIn re-arms (bedtime clears the stamp) and rolls a full settle
+			// anyway - which is what 'wake' always quietly did.
+			DateTime loggedOn = Bot.OnlineSince ?? DateTime.UtcNow;
+			DateTime safety = loggedOn.AddSeconds(SafetyGateSeconds);
+
+			_gateArmedFor = loggedOn;
+			_settleFromNow = false;
+			_clearReads = 0;
+			_announcedWarmUp = false;
+			_warmedUp = false;
+			_readyAt = safety > DateTime.UtcNow ? safety : DateTime.UtcNow;
+
+			// Rep4rep sits the night out until the wake time it was given; that time has just moved to now.
+			BotManager.ModuleOf<Rep4RepModule>(Bot)?.DayMoved();
 		}
-
-		int nowMin = (int) (now - now.Date).TotalMinutes;
-
-		if (!lastNight && (_wakeMinuteOfDay > nowMin)) {
-			_wakeMinuteOfDay = nowMin;
-			Persist();   // or a restart puts the old wake time back and the account to bed
-		}
-
-		// Past bedtime, or the day already played (a day off included): one more sitting, like somebody who couldn't sleep.
-		if (lastNight || !InPlannedHours(now) || (_playedMinutesToday >= _targetMinutes)) {
-			int min = Math.Max(5, Bot.Cfg.SessionMinMinutes);
-			int max = Math.Max(min + 5, Bot.Cfg.SessionMaxMinutes);
-			_stayUpUntil = now.AddMinutes(Rng(min, max));
-
-			// In its planned hours (a day off, or the day's hours played) it doesn't go to bed after it - it's done for today.
-			Log.Info(lastNight || !InPlannedHours(now)
-				? new Said("up late - one more sitting, then bed around {0}", _stayUpUntil.ToString("HH:mm"))
-				: new Said("up for one sitting until about {0}, then done for today", _stayUpUntil.ToString("HH:mm")), Bot.Name);
-			Persist();   // a restart during the sitting keeps it, rather than putting the account back to bed
-		}
-
-		_wokeUp = true;
-		_phase = Phase.Off;
-		ClearBreakState();
-
-		// The overnight games off first. Made visible with them still running, the friends list showed the whole
-		// night's list for up to a tick before the wake-up settle put them down.
-		if (!Bot.IsFarming) {
-			Bot.StopPlaying();
-		}
-
-		ShowAs(null);
-
-		// It's a manual "start now", so skip the random settle - but NOT the owner-safety check. Clearing the
-		// timed part of the warm-up lets it start as soon as the clear-reads confirm the owner isn't mid-game,
-		// rather than sitting through a fresh ~15-minute settle.
-		//
-		// Armed here for this sign-in, or SettledIn re-arms (bedtime clears the stamp) and rolls a full settle
-		// anyway - which is what 'wake' always quietly did.
-		DateTime loggedOn = Bot.OnlineSince ?? DateTime.UtcNow;
-		DateTime safety = loggedOn.AddSeconds(SafetyGateSeconds);
-
-		_gateArmedFor = loggedOn;
-		_settleFromNow = false;
-		_clearReads = 0;
-		_announcedWarmUp = false;
-		_warmedUp = false;
-		_readyAt = safety > DateTime.UtcNow ? safety : DateTime.UtcNow;
-
-		// Rep4rep sits the night out until the wake time it was given; that time has just moved to now.
-		BotManager.ModuleOf<Rep4RepModule>(Bot)?.DayMoved();
 	}
 
 	/// <summary>
@@ -485,7 +489,12 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// <summary>Bank and persist whatever is in flight before the module goes away.</summary>
 	public override async Task StopAsync() {
 		try {
-			BankSession();
+			// The sign-in time is still there when the modules stop (the Bot clears it only after them, on a stop and on a
+			// disconnect alike), so this credits the minutes since the last tick against that sign-in. Already gone means
+			// a disconnect stopped the modules and banked this sign-in then - see BankSessionLocked.
+			lock (_stepGate) {
+				BankSessionOnStop();
+			}
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't bank the session on shutdown: {0}", Log.Describe(e)), Bot.Name);
 			Log.StackToFile(e, Bot.Name);   // nothing in here talks to Steam - a throw is a bug
@@ -547,6 +556,14 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	}
 
 	private void StepAsync() {
+		// Under the step gate: 'wake', 'human reroll' and 'habits forget' come from the console, the dashboard and the tray,
+		// and changed the day (its phase, its plan, the game) halfway through a step that was working from the old one.
+		lock (_stepGate) {
+			StepLocked();
+		}
+	}
+
+	private void StepLocked() {
 		// Back from the PC being asleep: the sign-in still reads as online until Steam's side of it is noticed gone, so
 		// the first tick after waking used to carry on as if nothing happened - "playing Counter-Strike 2 for ~1h40m" in
 		// the log, sent down a connection that was already dead, and then the reconnect a minute later. Nothing happens
@@ -836,8 +853,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			// the game it's actually on, and ends the sitting early once the cards run out - with a break, like any
 			// other sitting, before the usual games take over.
 			if (_farmSession) {
-				if (Bot.IsFarming && (Bot.PlayingApps.Count == 1)) {
-					_game = Bot.PlayingApps[0];
+				// Read once: the list is swapped whole by other threads, and read twice it could be one game, then none.
+				if (Bot.IsFarming && (Bot.PlayingApps is [uint only])) {
+					_game = only;
 					_lastGame = _game;
 				}
 
@@ -1097,41 +1115,44 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// rolled against the old numbers. This is the way to say "apply it now" without waiting a day.
 	/// </summary>
 	public void RerollToday() {
-		DateTime now = DateTime.Now;
+		// One step at a time - see StepAsync.
+		lock (_stepGate) {
+			DateTime now = DateTime.Now;
 
-		// The day being lived is the one rolled again - which in the small hours before last night's bedtime is still
-		// last night. Rolled as today instead, the new plan's morning was hours away and the account went to bed in the
-		// middle of its evening.
-		DateTime date = (_dayStamp >= 0) && (_dayStamp != now.DayOfYear) && (now < PlanEnds()) ? PlanDate(_dayStamp, now) : now.Date;
-		DateTime lastBed = (_dayStamp >= 0) && (PlanDate(_dayStamp, now) < date) ? PlanEnds() : DateTime.MinValue;
+			// The day being lived is the one rolled again - which in the small hours before last night's bedtime is still
+			// last night. Rolled as today instead, the new plan's morning was hours away and the account went to bed in the
+			// middle of its evening.
+			DateTime date = (_dayStamp >= 0) && (_dayStamp != now.DayOfYear) && (now < PlanEnds()) ? PlanDate(_dayStamp, now) : now.Date;
+			DateTime lastBed = (_dayStamp >= 0) && (PlanDate(_dayStamp, now) < date) ? PlanEnds() : DateTime.MinValue;
 
-		// Up and about, it stays up: a new plan whose wake time happened to land later sent it back to bed at noon.
-		bool wasUp = (_dayStamp >= 0) && InWakingHours(now);
+			// Up and about, it stays up: a new plan whose wake time happened to land later sent it back to bed at noon.
+			bool wasUp = (_dayStamp >= 0) && InWakingHours(now);
 
-		if (_phase == Phase.Playing) {
-			BankSession();
-			Bot.StopPlaying();
-		}
+			if (_phase == Phase.Playing) {
+				BankSession();
+				Bot.StopPlaying();
+			}
 
-		HumanDay.Forget(Bot.Name);
+			HumanDay.Forget(Bot.Name);
 
-		if (_breakPersonaSet) {
-			ShowAs(null);
-		}
+			if (_breakPersonaSet) {
+				ShowAs(null);
+			}
 
-		ClearBreakState();
-		_phase = Phase.Off;
-		_dayStamp = -1;
-		_game = 0;
-		_lastGame = 0;
-		_switchingTo = 0;
+			ClearBreakState();
+			_phase = Phase.Off;
+			_dayStamp = -1;
+			_game = 0;
+			_lastGame = 0;
+			_switchingTo = 0;
 
-		Log.Info("new plan for today from the current settings", Bot.Name);
-		RollFor(date, lastBed);
+			Log.Info("new plan for today from the current settings", Bot.Name);
+			RollFor(date, lastBed);
 
-		if (wasUp && (now < PlanWake())) {
-			_wakeMinuteOfDay = Math.Clamp((int) (now - PlanDate(_dayStamp, now)).TotalMinutes, 0, (23 * 60) + 59);
-			Persist();
+			if (wasUp && (now < PlanWake())) {
+				_wakeMinuteOfDay = Math.Clamp((int) (now - PlanDate(_dayStamp, now)).TotalMinutes, 0, (23 * 60) + 59);
+				Persist();
+			}
 		}
 	}
 
@@ -2003,6 +2024,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// </summary>
 	private readonly Lock _bankGate = new();
 
+	/// <summary>A tick of the day and the commands that change the day ('wake', 'human reroll', 'habits forget') never run
+	/// at the same time. Taken before <see cref="_bankGate"/>, never after it.</summary>
+	private readonly Lock _stepGate = new();
+
 	/// <summary>
 	/// Whether the connection has shown it's alive since a gap in the ticks: Steam sent something since, or it signed in
 	/// again. Failing both, a connection that is still up a few minutes on is taken as fine - by then a dead one has been
@@ -2016,11 +2041,19 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// Read, count and move the cursor as one step, so the second of two banks at once finds the cursor already
 		// moved and credits nothing.
 		lock (_bankGate) {
-			BankSessionLocked();
+			BankSessionLocked(false);
 		}
 	}
 
-	private void BankSessionLocked() {
+	/// <summary>The bank as the module stops - see <see cref="StopAsync"/>.</summary>
+	private void BankSessionOnStop() {
+		lock (_bankGate) {
+			BankSessionLocked(true);
+		}
+	}
+
+	/// <param name="stopping">The module is stopping - see <see cref="StopAsync"/>.</param>
+	private void BankSessionLocked(bool stopping) {
 		if (_phase != Phase.Playing) {
 			return;
 		}
@@ -2032,6 +2065,15 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// 19:26 reading 1h05m today, four minutes offline, and 19:40 reading 1h18m - thirteen minutes of credit
 		// for ten minutes of connection. A stop at 14:00 and a start at 20:00 would have credited six hours in
 		// one tick and put the account into "done for today" having played almost none of it.
+		//
+		// Stopping with no sign-in time: it was banked already. The Bot clears the sign-in only after the modules have
+		// stopped, so a stop with it gone is the second of two - a disconnect stopped them and banked (sign-in still set),
+		// then the stop or the restart that follows stops them again. Measured from the sign-in it recorded, that second
+		// bank credited the time since the disconnect - up to three minutes signed out, counted as played.
+		if (stopping && (Bot.OnlineSince == null)) {
+			return;
+		}
+
 		DateTime logon = Bot.OnlineSince ?? DateTime.UtcNow;
 
 		if (_bankedForLogon != logon) {
@@ -2213,10 +2255,13 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 	/// <summary>Throw away everything learned from you ('habits forget').</summary>
 	public void ForgetHabits() {
-		OwnerHabits.Forget(Bot.Name);
-		_habits = new OwnerHabits();
-		_ownerWatch.Reset();
-		_learnedVersion = -1;
+		// One step at a time - see StepAsync.
+		lock (_stepGate) {
+			OwnerHabits.Forget(Bot.Name);
+			_habits = new OwnerHabits();
+			_ownerWatch.Reset();
+			_learnedVersion = -1;
+		}
 	}
 
 	/// <summary>A game's name from the library - a game that just arrived or a friend's pick is rarely in the built-in list.</summary>
@@ -2515,7 +2560,14 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			HourTargets.Progress progress = HourTargets.Of(target, Bot.Library.MinutesOn(target.AppId), now);
 
 			if (progress.Done) {
-				if (_targetsReached.Add(target.AppId)) {
+				bool first;
+
+				// Locked: this runs from the status line and the board (dashboard, tray, heartbeat threads) as well as the loop.
+				lock (_targetsReached) {
+					first = _targetsReached.Add(target.AppId);
+				}
+
+				if (first) {
 					Log.Good(new Said("reached {0}h in {1} - that hour target is done", target.Hours, GameName(target.AppId)), Bot.Name);
 				}
 

@@ -147,14 +147,21 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 			return;
 		}
 
+		// Read once, before the check: a grind stopped between "is it grinding" and "which game" left 0 here, and
+		// SetPlaying([0]) put a game with no id on.
+		uint grind = Bot.GrindGame;
+
 		if (Bot.Grinding) {
 			if (DateTime.UtcNow < Bot.GrindStartsAt) {
 				return;   // grind is queued but not started - let whatever's playing keep running (legit switch-over)
 			}
 
 			Rotating = null;
-			Bot.SetPlaying([Bot.GrindGame]);
-			IdlingSince ??= DateTime.UtcNow;
+
+			if (grind != 0) {
+				Bot.SetPlaying([grind]);
+				IdlingSince ??= DateTime.UtcNow;
+			}
 
 			return;   // the user asked for hours on one game; nothing else gets a say until it expires
 		}

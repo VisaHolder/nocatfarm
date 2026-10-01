@@ -18,14 +18,14 @@ This one adds a `hello` command and writes a line in the log whenever a card dro
 You need the [.NET 10 SDK](https://dotnet.microsoft.com/download). Everywhere below, replace
 `C:\path\to\nocat.farm` with the folder your `nocatFarm.exe` is in.
 
-### Step 1 - make a project
+### Step 1: make a project
 
 ```
 dotnet new classlib -n HelloPlugin
 cd HelloPlugin
 ```
 
-### Step 2 - point it at nocat.farm
+### Step 2: point it at nocat.farm
 
 Open `HelloPlugin.csproj`, delete everything in it, and paste this:
 
@@ -49,7 +49,7 @@ Open `HelloPlugin.csproj`, delete everything in it, and paste this:
 > Keep `<Private>false</Private>`. Without it, your build copies `nocatFarm.dll` next to your plugin, and the
 > plugin ends up with its own copy that doesn't match the running app.
 
-### Step 3 - write the plugin
+### Step 3: write the plugin
 
 Delete `Class1.cs`. Make a file called `HelloPlugin.cs` with this in it:
 
@@ -76,7 +76,7 @@ public sealed class HelloPlugin : INocatPlugin {
 }
 ```
 
-### Step 4 - build it and copy it in
+### Step 4: build it and copy it in
 
 ```
 dotnet build -c Release
@@ -85,12 +85,12 @@ copy bin\Release\net10.0\HelloPlugin.dll C:\path\to\nocat.farm\plugins\
 
 (Make the `plugins` folder next to `nocatFarm.exe` if it isn't there yet.)
 
-### Step 5 - turn plugins on
+### Step 5: turn plugins on
 
 Plugins are off until you switch them on. In the dashboard, go to **Settings**, tick **Show advanced**, and under
 **Updates & plugins** switch on **Load plugins**. Or type `set PluginsEnabled true`. Then restart nocat.farm.
 
-### Step 6 - try it
+### Step 6: try it
 
 Type `plugins`. It lists your plugin and the `hello` command. Then type `hello`:
 
@@ -195,7 +195,7 @@ Both examples on this page build against the current nocat.farm.
 |---|---|
 | **Watch** | Know when an account signs in or goes offline, when a card drops, and when trade offers are waiting. |
 | **Read** | Every account: online or not, what it's playing, cards left, its games and playtime, what its items are worth, and any of its settings. |
-| **Do** | Run any command, the same ones you type - like `pause farm1` or `grind farm1 730 2`. |
+| **Do** | Run any command, the same ones you type, like `pause farm1` or `grind farm1 730 2`. |
 | **Add** | New commands, and settings that get real controls on the dashboard's Plugins page. |
 | **Remember** | Save its own data so it survives restarts and updates. |
 
@@ -214,7 +214,7 @@ Everything your plugin gets is on `host`, the `IPluginHost` passed to `OnLoadAsy
 | `Log("text")` | Write a line to the log. It shows up tagged `[plugin]`. |
 | `RunCommandAsync("pause farm1")` | Run a command and get back the text it would have printed. |
 | `AddCommand(verb, usage, help, handler)` | Add a command. It works in the console, the dashboard and Steam chat, and is listed by `plugins` and on the dashboard's Plugins page (not by `help`). |
-| `AddSetting(new PluginSetting(...))` · `Setting("name")` | Declare a setting and read its current value (always as text - parse it yourself). Kinds: `Text`, `Int`, `Bool`, `Choice`. For `Choice`, pass `Choices` as one `"value label"` string per option. |
+| `AddSetting(new PluginSetting(...))` · `Setting("name")` | Declare a setting and read its current value (always as text, so parse it yourself). Kinds: `Text`, `Int`, `Bool`, `Choice`. For `Choice`, pass `Choices` as one `"value label"` string per option. |
 | `GetSetting("farm1", "FarmCards")` | Read one of an account's own settings, by its setting name. `null` if the account or setting doesn't exist. To change one, run a `set` command. |
 | `SaveStateAsync(json)` · `LoadStateAsync()` | Keep your own data between restarts. `LoadStateAsync` returns `null` the first time. |
 | `AppVersion` | Which nocat.farm version is running. |
@@ -223,14 +223,14 @@ Everything your plugin gets is on `host`, the `IPluginHost` passed to `OnLoadAsy
 |---|---|
 | `AccountOnline` · `AccountOffline` | An account finished signing in, or went offline. |
 | `CardDropped` | A card dropped: the account, the game's appID, and how many cards that game has left. |
-| `TradeOffersWaiting` | Steam says trade offers are waiting on an account, and how many. Only the count - use a command such as `offers` if you want the details. |
+| `TradeOffersWaiting` | Steam says trade offers are waiting on an account, and how many. Only the count; use a command such as `offers` if you want the details. |
 
 `INocatPlugin` has one optional extra: `OnUnloadAsync()`, called when nocat.farm closes. It gets 5 seconds.
 
 **Where things are saved** (in the `config/plugins/` folder, named after your plugin's `Name`):
 
-- `<Name>.json` - what you save with `SaveStateAsync`
-- `<Name>.settings.json` - the values of your settings, as changed on the Plugins page
+- `<Name>.json`: what you save with `SaveStateAsync`
+- `<Name>.settings.json`: the values of your settings, as changed on the Plugins page
 
 The full, commented contract is one file: [`src/NocatFarm/Plugins/IPlugin.cs`](src/NocatFarm/Plugins/IPlugin.cs).
 Every built-in command is in [the command list](docs/COMMANDS.md).

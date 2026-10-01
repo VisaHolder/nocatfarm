@@ -222,17 +222,22 @@ public static class IdlerImport {
 	/// <param name="Human">The ones of those brought over in human mode.</param>
 	public sealed record Outcome(int Imported, int Skipped, List<Said> Notes, List<string> Names, List<string> Human);
 
-	/// <summary>
-	/// Write what the user confirmed. Accounts not in <paramref name="picks"/> are left out; an account that already
-	/// exists here is left alone unless <paramref name="overwrite"/>. <paramref name="settings"/> are the indexes of the
-	/// scan's settings to bring (null = all of them).
-	/// </summary>
 	/// <summary>The account here that signs in as <paramref name="login"/> (ignoring case), by its name - or null.</summary>
 	public static string? ExistingFor(IReadOnlyDictionary<string, BotConfig> existing, string? login) =>
 		string.IsNullOrWhiteSpace(login) ? null
 			: existing.FirstOrDefault(e => string.Equals(e.Value.SteamLogin?.Trim(), login.Trim(), StringComparison.OrdinalIgnoreCase)).Key;
 
+	/// <summary>
+	/// Write what the user confirmed. Accounts not in <paramref name="picks"/> are left out; an account that already
+	/// exists here is left alone unless <paramref name="overwrite"/>. <paramref name="settings"/> are the indexes of the
+	/// scan's settings to bring (null = all of them).
+	/// </summary>
+	/// <param name="global">The global settings to bring settings into. The live ones are passed in, and then it's the
+	/// live ones as they are when it gets to them that change - see the lock near the end.</param>
 	public static Outcome Apply(ImportScan scan, IReadOnlyCollection<Pick> picks, GlobalConfig global, bool overwrite = false, IReadOnlyCollection<int>? settings = null) {
+		// Were these the live settings? A reload or a restore while the accounts go in puts new ones in their place, and
+		// the ones passed in are then an old copy.
+		bool live = ReferenceEquals(global, Live.Global);
 		List<Said> notes = [];
 		List<string> names = [];
 		List<string> human = [];
@@ -319,7 +324,11 @@ public static class IdlerImport {
 				notes.Add(new Said("{0}: set to human mode", name));
 			}
 
-			ConfigStore.SaveBot(name, bot);
+			// Under the account's lock when it's running: a dashboard save of it at the same moment wrote its copy after this.
+			lock (BotManager.GateFor(name)) {
+				ConfigStore.SaveBot(name, bot);
+			}
+
 			names.Add(name);
 			logins[name] = bot.SteamLogin;
 			imported++;
@@ -365,13 +374,23 @@ public static class IdlerImport {
 		bool globalChanged = false;
 		List<ImportSetting> chosen = scan.Settings.Where((_, i) => (settings == null) || settings.Contains(i)).ToList();
 
-		foreach (ImportSetting setting in chosen.Where(static s => s.ToGlobal != null)) {
-			setting.ToGlobal!(global);
-			globalChanged = true;
+		// The live global settings: changed and saved under the lock every other change to them takes - and the live ones as
+		// they are now, read under it. The copy passed in is from before the accounts went in: a reload or a backup
+		// restored meanwhile replaced it, and changing and saving the old copy wrote its stale settings over nocatFarm.json.
+		lock (ConfigStore.GlobalEditGate) {
+			GlobalConfig target = live ? Live.Global : global;
+
+			foreach (ImportSetting setting in chosen.Where(static s => s.ToGlobal != null)) {
+				setting.ToGlobal!(target);
+				globalChanged = true;
+			}
+
+			if (globalChanged) {
+				ConfigStore.SaveGlobal(target);
+			}
 		}
 
 		if (globalChanged) {
-			ConfigStore.SaveGlobal(global);
 			notes.Add(new Said("brought {0} setting(s) across into the global settings", chosen.Count(static s => s.ToGlobal != null)));
 		}
 
@@ -380,9 +399,15 @@ public static class IdlerImport {
 		if (everyAccount.Count > 0) {
 			Dictionary<string, BotConfig> all = ConfigStore.LoadBots();
 
-			foreach ((string name, BotConfig cfg) in all) {
-				everyAccount.ForEach(s => s.ToAccounts!(cfg));
-				ConfigStore.SaveBot(name, cfg);
+			// Each one read again, changed and saved under its account's lock. Read all at once above and saved one by one
+			// here, a save made in between (the dashboard, 'set', a learned ban) was written over with the older copy.
+			foreach (string name in all.Keys) {
+				lock (BotManager.GateFor(name)) {
+					if (ConfigStore.LoadBot(name) is { } cfg) {
+						everyAccount.ForEach(s => s.ToAccounts!(cfg));
+						ConfigStore.SaveBot(name, cfg);
+					}
+				}
 			}
 
 			notes.Add(all.Count > 0

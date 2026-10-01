@@ -17,6 +17,10 @@ namespace NocatFarm.Core;
 /// </remarks>
 public static class Lifetime {
 	private static readonly Lock Gate = new();
+
+	/// <summary>One save at a time, snapshot to file: the minute's save from a heartbeat and the shutdown save together
+	/// could write in the wrong order, the older numbers landing last.</summary>
+	private static readonly Lock SaveGate = new();
 	private static readonly Dictionary<string, double> Minutes = new(StringComparer.OrdinalIgnoreCase);
 
 	/// <summary>Game-minutes: every game that was running counts, the way Steam credits playtime - 32 games for an
@@ -170,39 +174,49 @@ public static class Lifetime {
 	/// to do with a file that already has something in it is leave it alone.
 	/// </remarks>
 	public static void Save() {
+		if (ConfigStore.RestoreWriting) {
+			return;   // see ConfigStore.RestoreWriting: the restored totals are about to be read in
+		}
+
 		try {
 			Load();
 
-			Dictionary<string, double> snapshot;
-			Dictionary<string, double> games;
-
-			lock (Gate) {
-				snapshot = new Dictionary<string, double>(Minutes);
-				games = new Dictionary<string, double>(GameMinutes);
-			}
-
-			string path = Path;
-
-			if (_loadFailed) {
-				Log.Debug("the lifetime totals could not be read this run - not writing over them");
-
-				return;
-			}
-
-			if ((snapshot.Count == 0) && File.Exists(path)) {
-				Log.Debug("nothing to record - leaving the existing lifetime totals alone");
-
-				return;
-			}
-
-			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
-			AtomicFile.Write(path, JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true }));
-
-			if ((games.Count > 0) || !File.Exists(GamesPath)) {
-				AtomicFile.Write(GamesPath, JsonSerializer.Serialize(games, new JsonSerializerOptions { WriteIndented = true }));
+			lock (SaveGate) {
+				WriteLocked();
 			}
 		} catch (Exception e) {
 			Log.Warn(new Said("couldn't save the lifetime totals: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)));
+		}
+	}
+
+	private static void WriteLocked() {
+		Dictionary<string, double> snapshot;
+		Dictionary<string, double> games;
+
+		lock (Gate) {
+			snapshot = new Dictionary<string, double>(Minutes);
+			games = new Dictionary<string, double>(GameMinutes);
+		}
+
+		string path = Path;
+
+		if (_loadFailed) {
+			Log.Debug("the lifetime totals could not be read this run - not writing over them");
+
+			return;
+		}
+
+		if ((snapshot.Count == 0) && File.Exists(path)) {
+			Log.Debug("nothing to record - leaving the existing lifetime totals alone");
+
+			return;
+		}
+
+		Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
+		AtomicFile.Write(path, JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true }));
+
+		if ((games.Count > 0) || !File.Exists(GamesPath)) {
+			AtomicFile.Write(GamesPath, JsonSerializer.Serialize(games, new JsonSerializerOptions { WriteIndented = true }));
 		}
 	}
 }

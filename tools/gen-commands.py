@@ -53,7 +53,7 @@ lines = [
     "**Console** tab, on **Telegram** (start with `/`), on **Discord** (`/nocat command:` runs any of them), or send them to one of your accounts in **Steam chat** "
     "(start with `/` or `!`, from an account listed under *Accept commands from*).",
     "",
-    "In the app, `help` lists them all and `help <command>` explains one - it also explains any setting: "
+    "In the app, `help` lists them all and `help <command>` explains one. It explains settings too: "
     "`help FarmCards`.",
     "",
     "**How to read them:** `<account>` is something you must type (an account's name in nocat.farm); `[count]` "
@@ -83,8 +83,8 @@ for g in order:
 lines += [
     "## More",
     "",
-    "- [The wiki](README.md) - how everything works, every setting, Linux, Mac and Docker.",
-    "- [Plugins](../PLUGINS.md) - add your own commands in a few lines of C#. A plugin's commands are listed by "
+    "- [The wiki](README.md): how everything works, every setting, Linux, Mac and Docker.",
+    "- [Plugins](../PLUGINS.md): add your own commands in a few lines of C#. A plugin's commands are listed by "
     "`plugins` and on the dashboard's Plugins page.",
     "",
 ]

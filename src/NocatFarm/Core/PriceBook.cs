@@ -108,6 +108,10 @@ public static partial class PriceBook {
 	private static bool _loaded;
 	private static readonly Lock LoadGate = new();
 
+	/// <summary>One save at a time, from the snapshot to the file: the 30-second save and the shutdown one together could
+	/// write in the wrong order, the older book landing last and the newest prices lost.</summary>
+	private static readonly Lock SaveGate = new();
+
 	private static string Path => System.IO.Path.Combine(ConfigStore.ConfigDir, "state", "prices.json");
 
 	/// <summary>Steam's currency id for everything here. Changing it makes every cached price a different key.</summary>
@@ -292,12 +296,20 @@ public static partial class PriceBook {
 	}
 
 	private static void Remember(uint app, string marketHashName, decimal usd) {
+		bool due;
+
 		lock (Cache) {
 			Cache[Key(app, marketHashName)] = new Price { Usd = usd, At = DateTimeOffset.UtcNow.ToUnixTimeSeconds() };
+
+			// Checked and claimed under the lock, so two accounts pricing together don't both save.
+			due = DateTime.UtcNow - _lastSave > TimeSpan.FromSeconds(30);
+
+			if (due) {
+				_lastSave = DateTime.UtcNow;
+			}
 		}
 
-		if (DateTime.UtcNow - _lastSave > TimeSpan.FromSeconds(30)) {
-			_lastSave = DateTime.UtcNow;
+		if (due) {
 			Save();
 		}
 	}
@@ -340,18 +352,20 @@ public static partial class PriceBook {
 	/// <summary>Write the book out. Called on a timer and once on the way out.</summary>
 	public static void Save() {
 		try {
-			Dictionary<string, Price> snapshot;
+			lock (SaveGate) {
+				Dictionary<string, Price> snapshot;
 
-			lock (Cache) {
-				if (Cache.Count == 0) {
-					return;
+				lock (Cache) {
+					if (Cache.Count == 0) {
+						return;
+					}
+
+					snapshot = new Dictionary<string, Price>(Cache, StringComparer.Ordinal);
 				}
 
-				snapshot = new Dictionary<string, Price>(Cache, StringComparer.Ordinal);
+				Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
+				AtomicFile.Write(Path, JsonSerializer.Serialize(snapshot));
 			}
-
-			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
-			AtomicFile.Write(Path, JsonSerializer.Serialize(snapshot));
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't save the price book: {0}", Log.Describe(e)));
 		}

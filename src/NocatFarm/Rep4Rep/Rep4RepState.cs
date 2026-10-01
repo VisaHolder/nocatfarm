@@ -130,6 +130,19 @@ public sealed class Rep4RepState {
 	}
 
 	public async Task SaveAsync(string bot) {
+		// The file's gate first, and the snapshot taken inside it. Snapshot first and then queued for the gate, two
+		// saves could write in the wrong order - the older one, missing the comment just posted, landing last - and
+		// after a restart the 24h count was one short: an account at Steam's ceiling could post past it.
+		await Gate.WaitAsync().ConfigureAwait(false);
+
+		try {
+			await SaveLockedAsync(bot).ConfigureAwait(false);
+		} finally {
+			Gate.Release();
+		}
+	}
+
+	private async Task SaveLockedAsync(string bot) {
 		long cutoff = DateTime.UtcNow.AddHours(-24).Ticks;
 		long taskCutoff = DateTime.UtcNow.AddDays(-30).Ticks;
 		long now = DateTime.UtcNow.Ticks;
@@ -150,15 +163,11 @@ public sealed class Rep4RepState {
 			body = JsonSerializer.Serialize(this, Json);   // snapshot under the lock, so nothing mutates mid-serialize
 		}
 
-		await Gate.WaitAsync().ConfigureAwait(false);
-
 		try {
 			Directory.CreateDirectory(Dir);
 			await AtomicFile.WriteAsync(PathFor(bot), body).ConfigureAwait(false);
 		} catch (Exception e) {
 			Log.Warn(new Said("couldn't save commenting state: {0}", Log.Describe(e)), bot);
-		} finally {
-			Gate.Release();
 		}
 	}
 

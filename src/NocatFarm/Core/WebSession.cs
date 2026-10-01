@@ -77,8 +77,12 @@ public sealed class WebSession : IDisposable {
 	public void Init(ulong steamId, string accessToken) {
 		string steamLoginSecure = $"{steamId}||{accessToken}";
 
-		// 24 lowercase hex chars, which is the shape Steam's own pages use.
-		SessionId = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(12));
+		// 24 lowercase hex chars, which is the shape Steam's own pages use. Chosen once and kept across token refreshes, the
+		// way a browser keeps it across a sign-in: a new one on every refresh changed the cookie under a POST already on its
+		// way, whose body still carried the old one - and Steam turned it down as a bad session key.
+		if (SessionId.Length == 0) {
+			SessionId = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(12));
+		}
 
 		// Seconds east of UTC, then a literal escaped comma and "0" - Steam's shared_global.js writes exactly this.
 		string timezone = $"{(int) DateTimeOffset.Now.Offset.TotalSeconds}{Uri.EscapeDataString(",")}0";
@@ -529,7 +533,8 @@ public sealed class WebSession : IDisposable {
 	}
 
 	public void Dispose() {
+		// Not _refreshLock: a refresh still running when the account is removed releases it afterwards, and a disposed
+		// semaphore throws there. It holds nothing that needs freeing.
 		_http.Dispose();
-		_refreshLock.Dispose();
 	}
 }

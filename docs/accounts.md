@@ -64,7 +64,7 @@ From the console it's `import <asf|ime|idlemaster|hourboostr|singleboostr|sgi|st
 dashboard's tick-box. `force` overwrites accounts that already exist here. Imported accounts are added but not
 started.
 
-The setup's "coming from" choice is remembered until the first-run setup has shown it once, or until you import.
+The setup's "switching from" choice is remembered until the first-run setup has shown it once, or until you import.
 
 ---
 

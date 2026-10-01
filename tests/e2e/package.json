@@ -1,0 +1,12 @@
+{
+  "name": "nocatfarm-e2e",
+  "private": true,
+  "description": "Clicks every button, switch, tab, chip and form of the nocat.farm dashboard in a real browser.",
+  "type": "module",
+  "scripts": {
+    "test": "node dashboard.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.63.0"
+  }
+}
