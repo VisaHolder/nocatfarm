@@ -842,6 +842,9 @@ public sealed class Bot : IAsyncDisposable {
 	// drop is noticed within a second or two rather than up to fifteen minutes later.
 	private TaskCompletionSource<bool> _itemDrop = new(TaskCreationOptions.RunContinuationsAsynchronously);
 	private int _dropPending;
+
+	/// <summary>When this sign-in asked Steam for its standing new-item count (ticks), until that answer has come in; 0 after.</summary>
+	private long _itemCountAskedTicks;
 	private uint _knownComments;
 	private bool _commentBaselineSet;
 
@@ -2095,6 +2098,9 @@ public sealed class Bot : IAsyncDisposable {
 		Interlocked.Exchange(ref _tradeOfferPending, 0);
 
 		try {
+			// The answer to this arrives after the clear above, and set the latch all over again: an account whose new-items
+			// counter was lit had a card "drop" a minute into every sign-in. Marked, so that one answer isn't taken for a drop.
+			Interlocked.Exchange(ref _itemCountAskedTicks, DateTime.UtcNow.Ticks);
 			Notifications?.RequestItemAnnouncements();
 			Notifications?.RequestCommentNotifications();
 		} catch (Exception e) {
@@ -2896,13 +2902,17 @@ public sealed class Bot : IAsyncDisposable {
 
 	private void OnItemAnnouncements(ItemAnnouncementsCallback cb) {
 		_lastPacket = DateTime.UtcNow;
+		bool standing = IsStandingCount(Interlocked.Exchange(ref _itemCountAskedTicks, 0), DateTime.UtcNow);
 
 		if (cb.NewItems == 0) {
 			return;
 		}
 
 		Log.Debug(new Said("Steam pushed {0} new item(s)", cb.NewItems), Name);
-		SignalItemDrop();
+
+		if (!standing) {
+			SignalItemDrop();
+		}
 
 		// A farming account trips Steam's green "new items" counter dozens of times a day and it stays lit
 		// forever, which is both irritating and an obvious tell. Marking the inventory viewed clears it - at most
@@ -3240,6 +3250,12 @@ public sealed class Bot : IAsyncDisposable {
 			_tradeOffer.TrySetResult(true);
 		});
 	}
+
+	/// <summary>
+	/// The first item count after a sign-in asked for it (at <paramref name="askedTicks"/>, 0 when it didn't) is the count
+	/// that was already standing, not something new - within a minute of asking. Later, it's a real push.
+	/// </summary>
+	public static bool IsStandingCount(long askedTicks, DateTime now) => (askedTicks != 0) && (now.Ticks - askedTicks is >= 0 and < TimeSpan.TicksPerMinute);
 
 	private void SignalItemDrop() {
 		// Level-triggered, not edge-triggered. A drop that lands while the farmer is busy re-reading the badge

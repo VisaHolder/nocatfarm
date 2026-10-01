@@ -73,6 +73,9 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 		_ => perAccount
 	};
 
+	/// <summary>Whether this tick's time goes to the account's hours: its own games are on, and nobody else's session is playing.</summary>
+	public static bool Banks(Bot bot) => (bot.PlayingApps.Count > 0) && (bot.OtherSessionApp == 0);
+
 	private void Beat() {
 		BotStatus status = BotStatus.Of(Bot);
 
@@ -84,7 +87,9 @@ public sealed class Heartbeat(Bot bot) : BotModule(bot) {
 		double since = Creditable(_lastTick, now);
 		_lastTick = now;
 
-		if ((since > 0) && (Bot.PlayingApps.Count > 0)) {
+		// Not while you're playing on the account yourself: Steam takes our games-played and ignores it then. With "stand
+		// down when I play" off our list stays as it was, and your evening was banked as the account's hours.
+		if ((since > 0) && Banks(Bot)) {
 			// Every real game counts, the way Steam credits them - a custom name on its own (app 0) isn't one.
 			Lifetime.Add(Bot.Name, since, Bot.PlayingApps.Count(static a => a != 0));
 

@@ -213,7 +213,8 @@ public static class Redeeming {
 
 		// Only accounts that are signed in AND, on a human-mode account, awake and warmed up. Activating a key on an
 		// account that is asleep - invisible, logged off for the night - is a person redeeming in his sleep.
-		List<Bot> online = [.. all.Where(static b => b.IsOnline && NocatFarm.Modules.HumanMode.ReadyFor(b))];
+		// Nor while you're playing on a human-mode account, or it's finishing up (StandsBack).
+		List<Bot> online = [.. all.Where(static b => b.IsOnline && NocatFarm.Modules.HumanMode.ReadyFor(b) && !NocatFarm.Modules.HumanGate.StandsBack(b))];
 
 		if (online.Count == 0) {
 			return;

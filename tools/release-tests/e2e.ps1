@@ -94,8 +94,7 @@ try {
   Wait-Process -Id $q -Timeout 30 -ErrorAction SilentlyContinue
   Start-Sleep 1
   # Only if it's still the test copy: the id of one that closed on its own can already belong to something else.
-  Get-Process -Id $id -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq "$W
-ocatFarm.exe" } | Stop-Process -Force -ErrorAction SilentlyContinue
+  Get-Process -Id $id -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq "$W\nocatFarm.exe" } | Stop-Process -Force -ErrorAction SilentlyContinue
 }
 
 exit $code

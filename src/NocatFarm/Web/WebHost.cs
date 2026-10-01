@@ -124,6 +124,8 @@ public sealed class WebHost : IAsyncDisposable {
 			}
 		}
 
+		SaveBrake();
+
 		return n;
 	}
 
@@ -256,6 +258,7 @@ public sealed class WebHost : IAsyncDisposable {
 		_ = cfg;   // the bind address is read from the live config at StartAsync
 		Current = this;
 		LoadSessions();
+		LoadBrake();
 	}
 
 	/// <summary>The running dashboard, for the console's 'set WebPassword' - which has to sign browsers out too.</summary>
@@ -331,6 +334,81 @@ public sealed class WebHost : IAsyncDisposable {
 		} catch (Exception e) {
 			// they last until the next restart, then
 			Log.Failed("dashboard: saving the sign-ins", e);
+		}
+	}
+
+	// ── the sign-in brake, kept over a restart ──
+	//
+	// Only "switched itself off" was kept. The lockouts, the hour's pause and the day's count of wrong guesses from the
+	// internet lived in memory, so every restart - every night's "Update by itself" - handed a guesser a fresh set of tries.
+
+	private static string BrakePath => Path.Combine(ConfigStore.ConfigDir, "state", "signin-brake.json");
+
+	/// <summary>The brake on disk: the misses in the last hour and day, when the pause ends (ticks, 0 for none), and each
+	/// address's wrong guesses still counting [count, until ticks].</summary>
+	internal sealed record SavedBrake(List<long>? Hour, List<long>? Day, long PausedUntil, Dictionary<string, long[]>? Failures);
+
+	private readonly Lock _brakeFile = new();
+
+	private void LoadBrake() {
+		try {
+			if (!File.Exists(BrakePath) || (JsonSerializer.Deserialize<SavedBrake>(File.ReadAllText(BrakePath)) is not { } saved)) {
+				return;
+			}
+
+			DateTime now = DateTime.UtcNow;
+			static DateTime At(long ticks) => new(Math.Clamp(ticks, 0, DateTime.MaxValue.Ticks), DateTimeKind.Utc);
+
+			lock (_brakeGate) {
+				foreach (long t in (saved.Hour ?? []).Order()) {
+					_internetMisses.Enqueue(Saved(At(t)));
+				}
+
+				foreach (long t in (saved.Day ?? []).Order()) {
+					_internetMissesToday.Enqueue(Saved(At(t)));
+				}
+
+				_internetPausedUntil = Until(At(saved.PausedUntil), InternetPauseMinutes);
+				PruneMisses(now);
+			}
+
+			foreach ((string ip, long[] f) in saved.Failures ?? []) {
+				if ((f is [long count, long until]) && (count > 0) && (Until(At(until), LockoutMinutes) > now)) {
+					_failures[ip] = ((int) Math.Min(count, int.MaxValue), Until(At(until), LockoutMinutes));
+				}
+			}
+
+			// Never longer than it could have been when it was written. With the clock put back since (a wrong clock at start-up
+			// set right, a PC dual-booting with Linux), an hour's lockout read back as lasting that much longer, and the day's
+			// wrong guesses counted towards switching off for days.
+			DateTime Saved(DateTime t) => t > now ? now : t;
+			DateTime Until(DateTime t, int minutes) => t <= now ? DateTime.MinValue : t > now.AddMinutes(minutes) ? now.AddMinutes(minutes) : t;
+		} catch (Exception e) {
+			// a fresh brake, as before - nothing worse
+			Log.Failed("dashboard: reading the sign-in lockouts", e);
+		}
+	}
+
+	private void SaveBrake() {
+		try {
+			// One save at a time, its picture taken inside: two at once could otherwise write the older picture last.
+			lock (_brakeFile) {
+				DateTime now = DateTime.UtcNow;
+				SavedBrake snap;
+
+				lock (_brakeGate) {
+					snap = new([.. _internetMisses.Select(static t => t.Ticks)], [.. _internetMissesToday.Select(static t => t.Ticks)],
+						_internetPausedUntil > now ? _internetPausedUntil.Ticks : 0,
+						_failures.Where(kv => (kv.Value.Count > 0) && (kv.Value.Until > now))
+							.ToDictionary(static kv => kv.Key, static kv => new[] { kv.Value.Count, kv.Value.Until.Ticks }, StringComparer.Ordinal));
+				}
+
+				Directory.CreateDirectory(Path.GetDirectoryName(BrakePath)!);
+				AtomicFile.Write(BrakePath, JsonSerializer.Serialize(snap));
+			}
+		} catch (Exception e) {
+			// kept until the next restart, then
+			Log.Failed("dashboard: saving the sign-in lockouts", e);
 		}
 	}
 
@@ -527,9 +605,15 @@ public sealed class WebHost : IAsyncDisposable {
 		// taking the router's forward away. A phone that had the page open on mobile data kept its connection through the
 		// router after the forward was gone and carried on as if nothing had changed. "Public address" set by hand is
 		// somebody's own forward, so that one still opens.
-		if ((InternetShut() || (!_cfg.WebRemoteAccess && string.IsNullOrWhiteSpace(_cfg.WebPublicAddress))) && RemoteAccess.FromTheInternet(ctx.Connection.RemoteIpAddress)) {
+		//
+		// Shut after too many wrong guesses, it's shut to the internet through a proxy too - the visitor the proxy names, as
+		// the guesses were counted. By the connection alone, a proxy on this PC (or a trusted one) arrives from home: the
+		// alert said "nothing from outside gets in now", and a browser already signed in from outside carried on regardless.
+		bool direct = RemoteAccess.FromTheInternet(ctx.Connection.RemoteIpAddress);
+
+		if ((direct && !_cfg.WebRemoteAccess && string.IsNullOrWhiteSpace(_cfg.WebPublicAddress)) || ((direct || FromOutside(ctx)) && InternetShut())) {
 			ctx.Response.Headers.Connection = "close";
-			Visitors.Note(Visitors.What.TurnedAway, ctx.Connection.RemoteIpAddress!.ToString(), false, request.Headers.UserAgent.FirstOrDefault());
+			Visitors.Note(Visitors.What.TurnedAway, direct ? ctx.Connection.RemoteIpAddress!.ToString() : WhoIsSigningIn(ctx).Ip, false, request.Headers.UserAgent.FirstOrDefault());
 
 			return "Open from anywhere is off, so this dashboard only opens at home.";
 		}
@@ -551,6 +635,13 @@ public sealed class WebHost : IAsyncDisposable {
 			return "This dashboard has no password, so it only opens on the PC it runs on - not through a proxy. Set a dashboard password first.";
 		}
 
+		// A GET from another website - an image or a script pointed at /api/... - carries no Origin to look at, and with no
+		// password it counts as signed in from this PC. The import scan takes a path, and a network-share path there had
+		// Windows sign in to somebody else's server with the user's login. The browser says where it came from here.
+		if (CrossSiteApi(request)) {
+			return "Refused: that came from another website, not from this dashboard.";
+		}
+
 		if (HttpMethods.IsGet(request.Method) || HttpMethods.IsHead(request.Method)) {
 			return null;
 		}
@@ -564,6 +655,11 @@ public sealed class WebHost : IAsyncDisposable {
 
 		return fromHere ? null : "Refused: that came from another website, not from this dashboard.";
 	}
+
+	/// <summary>A request to the dashboard's API that a page on another website made - as the browser itself says.</summary>
+	public static bool CrossSiteApi(HttpRequest request) =>
+		request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase)
+		&& string.Equals(request.Headers["Sec-Fetch-Site"].FirstOrDefault(), "cross-site", StringComparison.OrdinalIgnoreCase);
 
 	/// <summary>localhost, or any loopback address written as one (127.0.0.1, [::1]) - nothing a website can own.</summary>
 	private static bool IsLoopbackName(string host) =>
@@ -664,7 +760,13 @@ public sealed class WebHost : IAsyncDisposable {
 		}
 
 		token = fresh;
-		_failures.TryRemove(attempt.Ip, out _);
+
+		// On disk too: kept there, the wrong guesses before this right one came back with the next restart, and counted
+		// towards a lockout again.
+		if (_failures.TryRemove(attempt.Ip, out _)) {
+			SaveBrake();
+		}
+
 		Visitors.Note(Visitors.What.SignedIn, attempt.Ip, attempt.ThisPc, attempt.Device);
 
 		foreach (string stale in _sessions.Where(static kv => kv.Value < DateTime.UtcNow).Select(static kv => kv.Key).ToArray()) {
@@ -804,6 +906,14 @@ public sealed class WebHost : IAsyncDisposable {
 			return;
 		}
 
+		try {
+			CountSettledFailure(attempt, what);
+		} finally {
+			SaveBrake();
+		}
+	}
+
+	private void CountSettledFailure(Attempt attempt, Visitors.What what) {
 		(string ip, bool thisPc, string? device) = (attempt.Ip, attempt.ThisPc, attempt.Device);
 
 		// Already in the count - its place was taken before the compare (see Reserve).
@@ -2849,8 +2959,11 @@ public sealed class WebHost : IAsyncDisposable {
 			UpdateUrl = UpdateCheck.Url,
 			// A newer version with no download for this machine yet: the version chip says so, and there's no button.
 			UpdateNoDownloadYet = UpdateCheck.Available == null ? UpdateCheck.NoDownloadYet : null,
-			// False on Linux and in Docker, where it can't swap itself: the page drops its update button then.
+			// False in Docker and as a Linux service, where it can't swap itself: the page drops its update button then.
 			CanSelfUpdate = SelfUpdate.Supported,
+			// Which shape of folder path the page's examples take - C:\... or /... ("Can it update itself" said the wrong one
+			// on a Linux desktop and a Mac, which can).
+			Windows = OperatingSystem.IsWindows(),
 			PluginsOn = Live.Global.PluginsEnabled,
 			UpdateBusy = SelfUpdate.Busy,
 			UpdateFailed = SelfUpdate.LastFailure,

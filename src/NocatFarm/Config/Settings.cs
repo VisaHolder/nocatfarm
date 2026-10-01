@@ -218,7 +218,9 @@ public static class Settings {
 	/// "9:00pm"), or a 24-hour one ("21:00", "9:00", "24:00"). Only whole hours. Null when it isn't one of those.
 	/// </summary>
 	public static int? ParseHour(string raw) {
-		string s = (raw ?? "").Trim().ToLowerInvariant().Replace(".", "", StringComparison.Ordinal);
+		// Only the dots of "a.m." and "p.m.": taken out everywhere, "1.5" read as 15 and "0.9" as 9 - a valid hour, set
+		// without a word, from what was never one.
+		string s = System.Text.RegularExpressions.Regex.Replace((raw ?? "").Trim().ToLowerInvariant(), @"([ap])\.?(m)?\.?$", "$1$2");
 
 		if (int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out int plain)) {
 			return plain;

@@ -429,8 +429,9 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 	/// <summary>Give new gifts their wait, and take the ones whose wait has run out.</summary>
 	private async Task AnswerAsync(CancellationToken ct) {
 		// Accepting a gift is something a person does - not at 4am on an account that is asleep. Everything goes
-		// back on hold, and gets a fresh wait once the account is up.
-		if (!HumanMode.ReadyFor(Bot)) {
+		// back on hold, and gets a fresh wait once the account is up. The same while you're playing on it yourself, or it's
+		// finishing up before it logs off.
+		if (!HumanMode.ReadyFor(Bot) || HumanGate.StandsBack(Bot)) {
 			_queue.Hold();
 
 			return;

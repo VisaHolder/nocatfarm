@@ -1458,7 +1458,7 @@ async function impPick(tool) {
 }
 
 /// The example in the folder box, in the shape of the machine nocat.farm runs on (Windows, or a Mac/Linux/Docker path).
-function folderHint() { return state && state.CanSelfUpdate === false ? '/path/to/folder' : 'C:\\...\\folder'; }
+function folderHint() { return state && state.Windows === false ? '/path/to/folder' : 'C:\\...\\folder'; }
 
 /// "Pick a folder", or "look in this folder" on a preview that found nothing: the path box decides.
 async function impPickFolder(tool) {
@@ -5006,7 +5006,9 @@ function sectionIntro(section, values) {
     const hi = Math.max(lo, val('Rep4RepGapMaxMinutes') || 0);
     const from = val('Rep4RepStartHour');
     const to = val('Rep4RepEndHour');
-    const hours = from === to
+    // The account's own rule (Rep4RepModule.WindowWaitSeconds): an end at or before the start is no window at all, so it
+    // comments around the clock - "between 22:00 and 06:00" said an overnight window it never keeps.
+    const hours = Number(from) >= Number(to)
       ? t('around the clock')
       : tf('between {0} and {1}', hourLabel(Number(from)), hourLabel(Number(to)));
     const span = Math.round((cap * (lo + hi) / 2) / 60 * 10) / 10;
