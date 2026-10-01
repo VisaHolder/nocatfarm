@@ -17,6 +17,15 @@ public static class Visitors {
 	/// <summary>A visitor turned away is written down once per address in this long, not once per request.</summary>
 	private static readonly TimeSpan TurnedAwayQuiet = TimeSpan.FromMinutes(10);
 
+	/// <summary>
+	/// At most this many visitors turned away are written down in any <see cref="TurnedAwayQuiet"/>, all addresses together.
+	/// Once per address wasn't enough: somebody with a few hundred addresses (one IPv6 /56 is 256 /64s) wrote 200 in ten
+	/// minutes and pushed everything else out of the 200 kept - a sign-in from outside with it - rewriting the file each time.
+	/// </summary>
+	public const int TurnedAwayPerQuiet = 20;
+
+	private static readonly Queue<DateTime> TurnedAwayWritten = new();
+
 	public enum What { SignedIn, WrongPassword, LockedOut, TurnedAway, Paused, CodeSent, WrongCode, ClosedToInternet }
 
 	/// <summary>One visit. Where: "this PC", "home" or "internet".</summary>
@@ -77,6 +86,15 @@ public static class Visitors {
 					return;
 				}
 
+				while (TurnedAwayWritten.TryPeek(out DateTime first) && (now - first >= TurnedAwayQuiet)) {
+					TurnedAwayWritten.Dequeue();
+				}
+
+				if (TurnedAwayWritten.Count >= TurnedAwayPerQuiet) {
+					return;
+				}
+
+				TurnedAwayWritten.Enqueue(now);
 				TurnedAwaySaid[key] = now;
 
 				if (TurnedAwaySaid.Count > 500) {

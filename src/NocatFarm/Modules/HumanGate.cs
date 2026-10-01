@@ -21,6 +21,13 @@ public sealed class HumanGate(Bot bot, bool followsDay = true, bool ownDay = fal
 	private DateTime _openAt = DateTime.MaxValue;
 	private DateTime? _signedIn;
 
+	/// <summary>
+	/// Answering other people waits: the account is finishing up before it logs off, or you're playing on a human-mode
+	/// account yourself. For what doesn't go through a gate - trades, gifts, queued keys - which read only whether the
+	/// account was awake, and that stays true while you play: an offer was accepted and confirmed mid-match.
+	/// </summary>
+	public static bool StandsBack(Bot bot) => bot.Stopping || (bot.Cfg.LegitMode && bot.PlayingBlocked);
+
 	/// <summary>For things nobody watches: any time of day, just not the moment it signs in.</summary>
 	public static HumanGate Quiet(Bot bot) => new(bot, followsDay: false);
 

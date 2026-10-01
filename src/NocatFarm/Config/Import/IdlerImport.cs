@@ -537,7 +537,12 @@ public static class IdlerImport {
 		}
 	}
 
-	private static string? Clean(string? path) {
+	/// <summary>
+	/// The folder or file asked for, as a full local path - or null. Never a network share (\server\share): only looking
+	/// for a file there makes Windows sign in to that server with the user's Windows login, and the scan can be asked for by
+	/// a link on any web page when the dashboard has no password.
+	/// </summary>
+	public static string? Clean(string? path) {
 		if (string.IsNullOrWhiteSpace(path)) {
 			return null;
 		}
@@ -545,11 +550,24 @@ public static class IdlerImport {
 		string trimmed = path.Trim().Trim('"').Trim();
 
 		try {
-			return trimmed.Length == 0 ? null : System.IO.Path.GetFullPath(Environment.ExpandEnvironmentVariables(trimmed));
+			string expanded = Environment.ExpandEnvironmentVariables(trimmed);
+
+			// A network share, judged as typed as well as in full: off Windows GetFullPath puts the working folder in front
+			// of "\\server\share", and the check after it let the share through.
+			if ((expanded.Length == 0) || NetworkPath(expanded)) {
+				return null;
+			}
+
+			string full = System.IO.Path.GetFullPath(expanded);
+
+			return NetworkPath(full) ? null : full;
 		} catch {
 			return null;
 		}
 	}
+
+	private static bool NetworkPath(string path) =>
+		path.StartsWith(@"\\", StringComparison.Ordinal) || path.StartsWith("//", StringComparison.Ordinal);
 
 	private static string? SafeResolve(IIdlerImporter importer, string path) {
 		try {

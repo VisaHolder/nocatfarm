@@ -195,6 +195,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		public bool Pulled;             // a grind pulled that wait forward - a new pace never puts it back later
 		public Dictionary<string, List<DateTime>> Strikes = []; // API name -> when Steam turned it down lately, whatever it said - see StruckOut
 		public string? SkipOnce;        // turned down on the last look and not parked: the next look picks another, once (not saved)
+		public bool MetaLook = true;    // look on the next tick, outside the spacing, for a "for having the others" one with nothing left to wait for - see MetaLookAsync
 	}
 
 	/// <summary>
@@ -555,6 +556,20 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		Save();
 	}
 
+	/// <summary>
+	/// Something was unlocked in <paramref name="app"/> outside the pacer ('cheevo unlock'): a "for having the others"
+	/// one it completed goes on the next tick the game runs (see MetaLookAsync), as the game would have awarded it.
+	/// </summary>
+	public void LookForMetas(uint app) {
+		EnsureLoaded();
+
+		lock (_gate) {
+			StateFor(app).MetaLook = true;
+		}
+
+		Save();
+	}
+
 	protected override async Task RunAsync(CancellationToken ct) {
 		while (!ct.IsCancellationRequested) {
 			try {
@@ -593,11 +608,26 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// <summary>When each running game's current sitting may first unlock something (10-30 minutes in).</summary>
 	private readonly Dictionary<uint, DateTime> _sittingSince = [];
 
+	/// <summary>
+	/// Ends the sitting of every game not in <paramref name="running"/>: the next time it runs is a new sitting, with its
+	/// own 10-30 minutes before anything may unlock. Called before any of the tick's returns that a stopped game can get
+	/// to - a break, the night, a pause or a sign-out in between makes a new sitting. Done only after them, a game played
+	/// again after a break (or the next morning) kept its old sitting and could unlock in its first minute.
+	/// </summary>
+	internal static void KeepSittings(Dictionary<uint, DateTime> sittings, IReadOnlyCollection<uint> running) {
+		foreach (uint gone in sittings.Keys.Where(k => !running.Contains(k)).ToList()) {
+			sittings.Remove(gone);
+		}
+	}
+
 	private async Task StepAsync(CancellationToken ct) {
 		EnsureLoaded();
 
 		if (!Bot.IsOnline || Bot.Paused || Bot.PlayingBlocked) {
 			_status = new Said("waiting");
+
+			// Nothing of ours is running now, so whatever runs next is a new sitting.
+			KeepSittings(_sittingSince, []);
 
 			return;
 		}
@@ -621,7 +651,14 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		double elapsed = _lastTick == DateTime.MinValue ? 0 : (now - _lastTick).TotalMinutes;
 		_lastTick = now;
 
-		if ((elapsed < 0.5) || (elapsed > 3)) {
+		if (elapsed > 3) {
+			// A gap (the PC asleep, a stall): no telling what ran in it - start every sitting again.
+			KeepSittings(_sittingSince, []);
+
+			return;
+		}
+
+		if (elapsed < 0.5) {
 			return;
 		}
 
@@ -644,6 +681,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			}
 		}
 
+		// A game that stopped ends its sitting - before the "nothing running" return below (see KeepSittings).
+		KeepSittings(_sittingSince, running);
+
 		if (running.Count == 0) {
 			// "nothing being played" while a game is plainly running reads as broken. The main game is skipped
 			// deliberately - never fully completing the one this account plays most is the whole point - so say
@@ -665,10 +705,6 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		bool mayUnlock = MayUnlockNow(Bot);
 
 		// Each game's current sitting: an achievement doesn't pop a minute after launching, whatever was played before.
-		foreach (uint gone in _sittingSince.Keys.Where(k => !running.Contains(k)).ToList()) {
-			_sittingSince.Remove(gone);
-		}
-
 		foreach (uint app in running) {
 			if (!_sittingSince.ContainsKey(app)) {
 				_sittingSince[app] = now + Rng.Minutes(10, 30);   // the earliest this sitting may unlock anything
@@ -715,7 +751,23 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				}
 			}
 
-			if (!mayUnlock || (now < _sittingSince[app]) || !Due(g, prof)) {
+			if (!mayUnlock) {
+				continue;
+			}
+
+			// A "for having the others" one with nothing left to wait for goes now, outside the spacing and the sitting: a
+			// game awards it by itself, the moment it's earned - or as it starts, for one earned while it wasn't running.
+			bool metaLook;
+
+			lock (_gate) {
+				metaLook = g.MetaLook;
+			}
+
+			if (metaLook && await MetaLookAsync(app, g, prof, ct).ConfigureAwait(false)) {
+				break;
+			}
+
+			if ((now < _sittingSince[app]) || !Due(g, prof)) {
 				continue;
 			}
 
@@ -984,7 +1036,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		// onboarding cluster lifts it only as far as the ceiling rounds - see CeilingCount.)
 		int ceilingCount = CeilingCount(reachable, ceiling, prof.OnboardCount);
 
-		if (already >= ceilingCount) {
+		bool Capped() {
 			lock (_gate) {
 				g.Last = Outcome.Capped;
 				g.CappedAt = ceiling;
@@ -998,6 +1050,23 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			Back(g, TimeSpan.FromHours(_rng.Next(8, 25)));
 
 			return false;
+		}
+
+		if (already >= ceilingCount) {
+			return Capped();
+		}
+
+		// "For having the others" ones with nothing left to wait for go first, all together and without a pacing slot of
+		// their own - a game awards them by itself (see MetaLookAsync). Only when they all fit under the ceiling: two that
+		// a game awards together aren't split.
+		lock (_gate) {
+			g.MetaLook = false;
+		}
+
+		List<Achievement> ready = ReadyMetas(sorted.Candidates, set.All, NoNames);
+
+		if ((ready.Count > 0) && (already + ready.Count <= ceilingCount)) {
+			return await UnlockMetasAsync(app, g, set, ready, dlc, already, backOff: true, ct).ConfigureAwait(false) > 0;
 		}
 
 		// No figure at all for how many players have each achievement: the order (easiest first) and the rarity floor are
@@ -1032,7 +1101,13 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		int floor = Math.Max(Math.Max(1, prof.MinPercent), RarityFloorForHours(hours / ScaleFor(app, prof)));
 		double? typical = Bot.Cfg.AchievementRealLength ? Core.Playtime.TypicalHours(app) : null;
 
-		List<Achievement> eligible = Eligible(sorted, set.All, already, floor, hours, typical);
+		// Never a "for having the others" one: those go by themselves, straight after the one that completes them.
+		List<Achievement> eligible = [.. Eligible(sorted, set.All, already, floor, hours, typical).Where(static a => TraitsOf(a).Meta == Meta.None)];
+
+		// Nothing else to earn, and the ones for having the others don't all fit under the ceiling: as far as it goes.
+		if ((eligible.Count == 0) && (ready.Count > 0)) {
+			return Capped();
+		}
 
 		if (eligible.Count == 0) {
 			// More hours open more of it - or nothing left could open at any number of hours (see CanEverOpen): all of it too
@@ -1091,6 +1166,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		if (changed == 0) {
 			lock (_gate) {
 				g.Unlocked = already + 1;
+				g.MetaLook = true;   // it may have been the last one a "for having the others" one waited on
 			}
 
 			return false;
@@ -1149,7 +1225,159 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		Remember(new Unlock(app, GameNames.Of(app), pick.Display, pick.GlobalPercent, DateTime.UtcNow, nowUnlocked, total));
 		Stats.Record(Stats.KindAchievement, Bot.Name);
 
+		// The last one a "for having the others" one waited on: the game awards it a moment later, with any other one it
+		// completes too. The pick's own spacing stands - this takes no slot of its own. One that doesn't all fit under the
+		// ceiling stays locked, as the pick before it would have.
+		List<Achievement> follow = ReadyMetas(sorted.Candidates, set.All, new HashSet<string>([pick.Name], StringComparer.Ordinal));
+
+		if ((follow.Count > 0) && (nowUnlocked + follow.Count <= ceilingCount)) {
+			await Task.Delay(TimeSpan.FromSeconds(_rng.Next(1, 6)), ct).ConfigureAwait(false);
+			await UnlockMetasAsync(app, g, set, follow, dlc, nowUnlocked, backOff: false, ct).ConfigureAwait(false);
+		}
+
 		return true;
+	}
+
+	private static readonly HashSet<string> NoNames = [];
+
+	/// <summary>
+	/// The "for having the others" achievements of <paramref name="candidates"/> with nothing left to wait for, once
+	/// <paramref name="justUnlocked"/> are unlocked too: every one <see cref="MetaBlocked"/> no longer holds - and with them
+	/// any that only waited on those ("all other achievements" on "all base game achievements"), as a game awards them in
+	/// the same moment. Only candidates: never one held for DLC, skipped as multiplayer, refused lately, short of a counter
+	/// or Steam's own - and one of those still locked holds the rest as it always did.
+	/// </summary>
+	internal static List<Achievement> ReadyMetas(IReadOnlyCollection<Achievement> candidates, IReadOnlyCollection<Achievement> all, IReadOnlySet<string> justUnlocked) {
+		HashSet<string> going = new(StringComparer.Ordinal);
+		List<Achievement> ready = [];
+		bool more = true;
+
+		while (more) {
+			more = false;
+			List<Achievement> after = [.. all.Select(a => !a.Unlocked && (justUnlocked.Contains(a.Name) || going.Contains(a.Name)) ? a with { Unlocked = true } : a)];
+
+			foreach (Achievement m in candidates) {
+				if (m.Unlocked || !m.Settable || m.CounterShort || IsSpecialGlobal(m) || (TraitsOf(m).Meta == Meta.None)
+					|| justUnlocked.Contains(m.Name) || going.Contains(m.Name) || MetaBlocked(m, after)) {
+					continue;
+				}
+
+				going.Add(m.Name);
+				ready.Add(m);
+				more = true;
+			}
+		}
+
+		return ready;
+	}
+
+	/// <summary>
+	/// The account has everything a "for having the others" one waits for - unlocked before they went straight after the
+	/// last one, by 'cheevo unlock', or by a write the pacer didn't make: it goes now, on the tick, outside the spacing and
+	/// the sitting (a game awards one like that as it starts), with the DLC rule, the multiplayer skip, refusals and the
+	/// ceiling as for any other. One read of the game, once - the next look comes when something could have changed.
+	/// True when one was unlocked.
+	/// </summary>
+	private async Task<bool> MetaLookAsync(uint app, GameState g, Profile prof, CancellationToken ct) {
+		lock (_gate) {
+			g.MetaLook = false;
+		}
+
+		AchievementSet? set = await Achievements.GetAsync(Bot, app, ct).ConfigureAwait(false);
+
+		if ((set == null) || (set.All.Count == 0) || set.All.All(static a => a.Unlocked)) {
+			return false;
+		}
+
+		DlcAchievements.View dlc = await DlcAchievements.ViewAsync(Bot, app, TimeSpan.Zero, ct).ConfigureAwait(false);
+
+		// Its add-ons not worked out yet: nothing goes on a guess - looked at again on the next tick.
+		if (!dlc.Known) {
+			lock (_gate) {
+				g.MetaLook = true;
+			}
+
+			return false;
+		}
+
+		HashSet<string> refused;
+
+		lock (_gate) {
+			DateTime weekAgo = DateTime.UtcNow - RefusedFor;
+			refused = new HashSet<string>(g.Refused.Where(kv => kv.Value > weekAgo).Select(static kv => kv.Key), StringComparer.Ordinal);
+		}
+
+		Sorted sorted = Sort(set, dlc, Bot.Cfg.AchievementSkipMultiplayer, refused);
+		int already = set.All.Count(static a => a.Unlocked);
+		int ceiling = Bot.Grinding && (Bot.GrindGame == app) && !Bot.GrindIsBoost ? 100 : Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100);
+		List<Achievement> ready = ReadyMetas(sorted.Candidates, set.All, NoNames);
+
+		return (ready.Count > 0) && (already + ready.Count <= CeilingCount(sorted.Reachable, ceiling, prof.OnboardCount))
+			&& (await UnlockMetasAsync(app, g, set, ready, dlc, already, backOff: false, ct).ConfigureAwait(false) > 0);
+	}
+
+	/// <summary>
+	/// Unlocks "for having the others" ones together, in one write, as a game awards them: logged, kept and counted like
+	/// any other, but no pacing slot is used - the next ordinary one keeps its own wait. Turned down: a strike each, as for
+	/// any other; <paramref name="backOff"/> also spaces the next look out (when this was the look's whole answer). How
+	/// many were unlocked.
+	/// </summary>
+	private async Task<int> UnlockMetasAsync(uint app, GameState g, AchievementSet set, List<Achievement> metas, DlcAchievements.View dlc, int already, bool backOff, CancellationToken ct) {
+		(bool ok, string message, int changed, Achievements.Refusal refusal) = await Achievements.SetCheckedAsync(Bot, set, metas, true, ct, dlc).ConfigureAwait(false);
+		int total = set.All.Count;
+
+		if (!ok) {
+			Log.Debug(new Said("couldn't unlock \"{0}\" in {1} - {2}", string.Join("\", \"", metas.Select(static m => m.Display)), GameNames.Of(app), message), Bot.Name);
+			bool shared = Bot.Library.Find(app)?.Shared == true;
+
+			lock (_gate) {
+				foreach (Achievement m in metas) {
+					TurnedDown(g, m.Name, refusal, shared, DateTime.UtcNow);
+				}
+			}
+
+			if (backOff) {
+				Back(g, TimeSpan.FromMinutes(_rng.Next(30, 90)));
+			}
+
+			return 0;
+		}
+
+		lock (_gate) {
+			// None changed: another write got there first - unlocked all the same, and nothing to say.
+			g.Unlocked = already + (changed == 0 ? metas.Count : changed);
+
+			if (changed > 0) {
+				g.Last = Outcome.Earning;
+				g.WroteOkAt = DateTime.UtcNow;
+
+				foreach (Achievement m in metas) {
+					g.Strikes.Remove(m.Name);
+				}
+			}
+		}
+
+		if (changed == 0) {
+			return 0;
+		}
+
+		if (changed == metas.Count) {
+			int n = already;
+
+			foreach (Achievement m in metas) {
+				n++;
+				Said rarity = m.GlobalPercent is { } percent ? new Said(" ({0}% have it)", percent.ToString("0.#")) : default;
+				Log.Reward(new Said("unlocked \"{0}\" in {1}{2} ({3}/{4})", m.Display, GameNames.Of(app), rarity, n, total), Bot.Name, topic: Topic.Achievements);
+				Remember(new Unlock(app, GameNames.Of(app), m.Display, m.GlobalPercent, DateTime.UtcNow, n, total));
+			}
+		} else {
+			// Steam put some back: which ones isn't known here, so the count is said as it is.
+			Log.Reward(new Said("{0} in {1}", message, GameNames.Of(app)), Bot.Name, topic: Topic.Achievements);
+		}
+
+		Stats.Record(Stats.KindAchievement, Bot.Name, changed);
+
+		return changed;
 	}
 
 	/// <summary>How long an achievement Steam refused to set is left alone before it is tried again.</summary>
@@ -1353,7 +1581,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// The ones of <paramref name="unlocking"/> that may go together, and how many "for having the others" ones wait: one
 	/// of those ("obtain all other achievements", "all base game achievements") goes only when nothing it counts would
 	/// still be locked once the rest are unlocked - held for DLC, short of a counter, skipped, Steam's own. Two of them
-	/// don't hold each other.
+	/// don't hold each other, but for "all base game achievements" staying locked, which holds "all other achievements" -
+	/// the pacer's rule (<see cref="MetaBlocked"/>).
 	/// </summary>
 	internal static (List<Achievement> Go, int Waiting) WithoutWaitingMetas(IReadOnlyCollection<Achievement> all, IReadOnlyCollection<Achievement> unlocking) {
 		HashSet<string> going = new(unlocking.Select(static a => a.Name), StringComparer.Ordinal);
@@ -1372,9 +1601,10 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				bool blocked = all.Any(o => (o.Name != meta.Name) && !IsSpecialGlobal(o) && ((kind == Meta.All) || !o.AddOn)
 					&& (TraitsOf(o).Meta == Meta.None) && StaysLocked(o));
 
-				// Another meta waiting counts too, unless it is the "all" one and this is only the base game's.
-				blocked |= all.Any(o => (o.Name != meta.Name) && (TraitsOf(o).Meta != Meta.None) && StaysLocked(o)
-					&& ((kind == Meta.All) || (TraitsOf(o).Meta == Meta.BaseGame)));
+				// Another meta only holds "all other achievements" back when it is the base game's one, as in the pacer
+				// (MetaBlocked). Any meta staying locked counted before: two "every achievement" ones, one of them held for
+				// DLC or Steam's own, kept the other locked here while the pacer unlocked it.
+				blocked |= all.Any(o => (o.Name != meta.Name) && StaysLocked(o) && (kind == Meta.All) && (TraitsOf(o).Meta == Meta.BaseGame));
 
 				if (blocked) {
 					metaOk.Remove(meta.Name);
@@ -1560,10 +1790,16 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// add-on's (<see cref="Achievement.AddOn"/>). Any of them still locked - held for DLC, Steam's own, too rare for this
 	/// account ever to earn - and it waits for good, which is the only honest answer: nobody has it without the others.
 	/// </summary>
-	private static bool MetaBlocked(Achievement a, IReadOnlyCollection<Achievement> all) {
+	/// <remarks>
+	/// Another one of these only holds "every other achievement" back when it is the base game's ("all base game
+	/// achievements"), as in <see cref="WithoutWaitingMetas"/>. Counted like any other, a game with both - or with two
+	/// "every other" ones - had each waiting on the other, and neither was ever unlocked, not even in a grind.
+	/// </remarks>
+	internal static bool MetaBlocked(Achievement a, IReadOnlyCollection<Achievement> all) {
 		Meta meta = TraitsOf(a).Meta;
 
-		return (meta != Meta.None) && all.Any(o => !o.Unlocked && (o.Name != a.Name) && !IsSpecialGlobal(o) && ((meta == Meta.All) || !o.AddOn));
+		return (meta != Meta.None) && all.Any(o => !o.Unlocked && (o.Name != a.Name) && !IsSpecialGlobal(o) && ((meta == Meta.All) || !o.AddOn)
+			&& ((TraitsOf(o).Meta == Meta.None) || ((meta == Meta.All) && (TraitsOf(o).Meta == Meta.BaseGame))));
 	}
 
 	/// <summary>
@@ -2583,6 +2819,10 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		// Absent from older files: null. StuckOwnMins was PlayedMins then, so RanMins starts from that (see Load).
 		public long? RanMins { get; set; }
 		public Dictionary<string, List<DateTime>>? Strikes { get; set; }
+
+		// Absent from older files: false - every game is looked at once for a "for having the others" achievement with
+		// nothing left to wait for (everything else unlocked before metas went straight after the last one).
+		public bool MetasLooked { get; set; }
 	}
 
 	private static string PathFor(string bot) => Path.Combine(ConfigStore.ConfigDir, "state", $"cheevo-{bot}.json");
@@ -2639,7 +2879,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						WroteOkAt = s.WroteOkAt,
 						PaceUsed = s.PaceUsed,
 						PacedFrom = s.PacedFrom,
-						Strikes = s.Strikes ?? []
+						Strikes = s.Strikes ?? [],
+						MetaLook = !s.MetasLooked
 					};
 
 					// A file written before outcomes existed says nothing about them, and a finished or capped game
@@ -2831,6 +3072,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 					WroteOkAt = kv.Value.WroteOkAt,
 					PaceUsed = kv.Value.PaceUsed,
 					PacedFrom = kv.Value.PacedFrom,
+					MetasLooked = !kv.Value.MetaLook,
 					Multiplayer = kv.Value.Multiplayer,
 					Rules = kv.Value.Rules,
 					// A copy: the tick changes the live one while this is written out. Only the last week's - older ones

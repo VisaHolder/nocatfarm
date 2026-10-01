@@ -252,6 +252,14 @@ public static class SelfUpdate {
 		return found;
 	}
 
+	/// <summary>
+	/// The program file that is this copy of nocat.farm, for the swap script to know copies from this folder by: the one
+	/// running, unless that's the .NET host - started as "dotnet nocatFarm.dll", the running program is dotnet itself, and
+	/// the script took every .NET program on the machine for another nocat.farm in this folder and refused to update.
+	/// </summary>
+	internal static string ProgramPath(string? processPath, string here, string exeName) =>
+		(processPath != null) && Path.GetFileName(processPath).Equals(exeName, StringComparison.Ordinal) ? processPath : Path.Combine(here, exeName);
+
 	/// <summary>"from|to|MB|seconds|ticks", written just before the restart and read back by the new version.</summary>
 	private static string NotePath => Path.Combine(ConfigStore.ConfigDir, "state", "updated.txt");
 
@@ -389,13 +397,7 @@ public static class SelfUpdate {
 				UpdateCheck.NoteFailedInstall();
 				// The swap put every file back the way it was before starting this version again, so "nothing was
 				// changed" is true - see SwapScript.
-				Fail(swapCode.StartsWith("backup", StringComparison.Ordinal)
-					? new Said("update failed: backup copy error {0} - disk full? Nothing changed", swapCode[6..].Trim())
-					// robocopy adds flags together: 8 and up with 16 unset means some files failed (in use, access
-					// denied); 16 and up means it couldn't work in the folder at all. 11 = 8 + extra files + copied.
-					: int.TryParse(swapCode, out int rc) && (rc is >= 8 and < 16)
-						? new Said("update failed: files in use (a 2nd copy? antivirus?) - try again")
-						: new Said("update failed: copy error {0} (read-only? disk full?) - nothing changed", swapCode));
+				Fail(SwapFailure(swapCode, OperatingSystem.IsWindows()));
 			} else {
 				Fail(new Said("update failed: {0} didn't start - still on {1}, try again", p[1], Build.Version));
 			}
@@ -403,6 +405,23 @@ public static class SelfUpdate {
 			Log.Failed("couldn't read the update note", e);
 		}
 	}
+
+	/// <summary>
+	/// Why copying the new files in failed, from what the swap script left in NF_FAIL.
+	/// </summary>
+	/// <remarks>
+	/// On Windows that's robocopy's exit code, whose flags add up: 8 and up with 16 unset means some files failed (in use,
+	/// access denied); 16 and up means it couldn't work in the folder at all. 11 = 8 + extra files + copied. The sh script
+	/// on Linux and a Mac writes a plain 8 for any copy that failed - and there a file in use is never why (a rename over a
+	/// running program works), while a folder this user can't write to (unzipped with sudo, or in /opt) or a full disk is.
+	/// Read as robocopy's 8 it blamed "a 2nd copy? antivirus?", neither of which it can be there.
+	/// </remarks>
+	internal static Said SwapFailure(string code, bool windows) =>
+		code.StartsWith("backup", StringComparison.Ordinal)
+			? new Said("update failed: backup copy error {0} - disk full? Nothing changed", code[6..].Trim())
+			: windows && int.TryParse(code, out int rc) && (rc is >= 8 and < 16)
+				? new Said("update failed: files in use (a 2nd copy? antivirus?) - try again")
+				: new Said("update failed: copy error {0} (read-only? disk full?) - nothing changed", code);
 
 	/// <summary>The first lines of the new version's release notes, left by the old version for the new one to say.</summary>
 	private static string NotesPath => Path.Combine(ConfigStore.ConfigDir, "state", "update-notes.txt");
@@ -817,7 +836,7 @@ public static class SelfUpdate {
 				return Fail(new Said("update failed: couldn't back up the current version ({0})", Log.Scrub(e.Message)));
 			}
 
-			await File.WriteAllTextAsync(script, OperatingSystem.IsWindows() ? SwapScript(Environment.ProcessId) : UnixScript, ct).ConfigureAwait(false);
+			await File.WriteAllTextAsync(script, OperatingSystem.IsWindows() ? WindowsScript(Environment.ProcessId) : UnixScript, ct).ConfigureAwait(false);
 
 			// Skipped while it downloaded: stopped here, before a single account is signed out for nothing.
 			if (UpdateCheck.IsSkipped(tag)) {
@@ -848,7 +867,10 @@ public static class SelfUpdate {
 			if (OperatingSystem.IsWindows()) {
 				swap = new() {
 					FileName = "cmd.exe",
-					Arguments = $"/c \"{script}\"",
+					// /s with a second pair of quotes round the path: without it cmd keeps the quotes only when nothing in the path
+					// is one of ( ) & ^ @ - a Windows user called "Paul (Home)" has a temp folder like that, cmd ran "C:\Users\Paul",
+					// the script never started and nocat.farm closed for good. /d: the user's own cmd start-up hooks stay out of it.
+					Arguments = SwapArguments(script),
 					UseShellExecute = false,
 					CreateNoWindow = true,
 					WorkingDirectory = Path.GetTempPath()
@@ -871,7 +893,7 @@ public static class SelfUpdate {
 				}
 
 				swap.Environment["NF_PID"] = Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture);
-				swap.Environment["NF_EXE"] = Environment.ProcessPath ?? Path.Combine(here, ExeName);
+				swap.Environment["NF_EXE"] = ProgramPath(Environment.ProcessPath, here, ExeName);
 
 				// Started from start.command on a Mac: the new version opens the same way, in a Terminal window of its own.
 				if (OperatingSystem.IsMacOS() && (Environment.GetEnvironmentVariable("NOCATFARM_STARTER") == "start.command")) {
@@ -999,6 +1021,15 @@ public static class SelfUpdate {
 	/// is left in NF_FAIL, and the old version starts.
 	/// NF_OK lives in the work folder, which is removed once it's all over - so a later crash has nowhere to write.
 	/// </remarks>
+	/// <summary>cmd's command line for the swap script: the path quoted inside the quotes /s strips, so it stays whole.</summary>
+	public static string SwapArguments(string script) => $"/d /s /c \"\"{script}\"\"";
+
+	/// <summary>
+	/// The Windows swap script as cmd gets it: \r\n on every line, whatever this file's line endings were when it was built.
+	/// From a checkout with \n only, cmd can miss a label it jumps to (:verify, :undo) - the mirror of 1.6.4's Unix script.
+	/// </summary>
+	public static string WindowsScript(int pid) => SwapScript(pid).ReplaceLineEndings("\r\n");
+
 	private static string SwapScript(int pid) =>
 		$"""
 		@echo off
@@ -1038,7 +1069,13 @@ public static class SelfUpdate {
 		set /a waited+=2
 		rem Gone without a word (it crashed on the way up, before it could say so): no point waiting out the three minutes.
 		set /a check=waited %% 10
-		if %waited% GEQ 10 if %check%==0 powershell -NoProfile -Command "exit [int](-not (Get-Process nocatFarm -ErrorAction SilentlyContinue | Where-Object Path -eq (Join-Path $env:NF_HERE 'nocatFarm.exe')))" >nul 2>&1 || goto gone
+		rem Only an answer of 1 means gone: PowerShell missing or blocked (9009, or a policy's refusal) isn't the new version
+		rem crashing, and taking it for one put a good update back and skipped that version for good.
+		if %waited% LSS 10 goto verify
+		if not %check%==0 goto verify
+		powershell -NoProfile -Command "exit [int](-not (Get-Process nocatFarm -ErrorAction SilentlyContinue | Where-Object Path -eq (Join-Path $env:NF_HERE 'nocatFarm.exe')))" >nul 2>&1
+		if errorlevel 2 goto verify
+		if errorlevel 1 goto gone
 		goto verify
 		:gone
 		if exist "%NF_OK%" goto verified
@@ -1279,7 +1316,13 @@ public static class SelfUpdate {
 	/// Starts the swap script ($0, with the options to restart with as its arguments) detached: its own session where
 	/// there's a way to give it one, in the background, and deaf to SIGHUP.
 	/// </summary>
-	private const string DetachedStart = """
+	/// <remarks>
+	/// One \n per line, like <see cref="UnixScript"/>: built on Windows, the text below has \r\n, and sh read the \r at the
+	/// end of each line as a command of its own, and printed "not found" errors on the console at every update.
+	/// </remarks>
+	internal static string DetachedStart => DetachedStartScript.ReplaceLineEndings("\n");
+
+	private const string DetachedStartScript = """
 		if command -v setsid >/dev/null 2>&1; then setsid nohup /bin/sh "$0" "$@" </dev/null >/dev/null 2>&1 &
 		elif command -v perl >/dev/null 2>&1; then perl -MPOSIX -e 'POSIX::setsid(); exec @ARGV or exit 1' nohup /bin/sh "$0" "$@" </dev/null >/dev/null 2>&1 &
 		else nohup /bin/sh "$0" "$@" </dev/null >/dev/null 2>&1 &

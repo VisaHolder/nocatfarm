@@ -151,7 +151,8 @@ public static class StuckWatch {
 				}
 
 				double banked = BankedMinutes(bot);
-				bool played = ((w.LastBanked >= 0) && (banked > w.LastBanked)) || (bot.IsOnline && bot.PlayingApps.Any(static a => a != 0));
+				// Our games on the list aren't play while you're on the account yourself - Steam ignores them then.
+				bool played = ((w.LastBanked >= 0) && (banked > w.LastBanked)) || (bot.IsOnline && (bot.OtherSessionApp == 0) && bot.PlayingApps.Any(static a => a != 0));
 				w.LastBanked = banked;
 
 				if (bot.IsOnline) {
@@ -259,7 +260,10 @@ public static class StuckWatch {
 			return new Said("paused");
 		}
 
-		if (bot.PlayingBlocked || bot.InResumeGrace) {
+		// Signed in and you're on it - with "stand down when I play" off too, where only the game you're in says so. Not
+		// while it's signed out: the flag from being bumped off stays set until the next sign-in, and an account that
+		// never got back on after that was excused as "you're playing on it" for as long as it stayed off.
+		if ((bot.IsOnline && (bot.PlayingBlocked || (bot.OtherSessionApp != 0))) || bot.InResumeGrace) {
 			return new Said("you're playing on it");
 		}
 

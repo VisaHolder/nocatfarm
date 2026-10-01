@@ -159,17 +159,26 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 			// Ready, not just awake: settled in after signing in or waking, and not on a break it's spending offline -
 			// the same as gifts. Awake alone answered a trade a minute after signing in, or while it looked signed out.
 			// "Only react while awake" switched off means exactly that - trades answered whenever, as before.
-			bool awake = !Bot.Cfg.ActOnlyWhileAwake || HumanMode.ReadyFor(Bot);
+			// And never while you're on a human-mode account yourself, or while it's finishing up before it logs off - a trade
+			// accepted (and confirmed) in the middle of your match is the account acting behind your back. That's this module's
+			// own rule (HumanGate.StandsBack); "act only while awake" is about sleep, and doesn't switch it off.
+			bool you = HumanGate.StandsBack(Bot);
+			bool awake = !you && (!Bot.Cfg.ActOnlyWhileAwake || HumanMode.ReadyFor(Bot));
 
 			if (!awake) {
 				_waiting.Hold();
+				_wasHeld = true;
 			}
+
+			_wasHeld = StillHeld(_wasHeld, awake, _waiting.Count, Bot.TradeOffersWaiting);
 
 			// Asleep, only donations may still go through - and only when that's switched on. Merely settling in isn't
 			// asleep: that waits the few minutes for the account to be ready.
-			bool nightDonations = !HumanMode.AwakeFor(Bot) && Bot.Cfg.AcceptDonations && Bot.Cfg.DonationsWhileAsleep;
+			bool nightDonations = !you && !HumanMode.AwakeFor(Bot) && Bot.Cfg.AcceptDonations && Bot.Cfg.DonationsWhileAsleep;
 
-			if (Wanted && Bot.IsOnline && Bot.Web.Ready && (awake || nightDonations) && ShouldLook()) {
+			// Paused is paused: every other module stops for it, and this one went on accepting and confirming. Answering by
+			// hand ('trade accept') still works.
+			if (Wanted && Bot.IsOnline && Bot.Web.Ready && !Bot.Paused && (awake || nightDonations) && ShouldLook()) {
 				try {
 					await CheckAsync(awake, ct).ConfigureAwait(false);
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
@@ -223,6 +232,21 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		// count stops being taken as a reason to hurry.
 		return (Bot.TradeOffersWaiting > 0) && (_fruitless < FruitlessBeforeBackingOff) ? Rng.Minutes(4, 9) : Rng.Minutes(45, 90);
 	}
+
+	/// <summary>
+	/// Offers were held since the last full look - asleep, or you on it. One that ARRIVED meanwhile was never on the held
+	/// list, so it got only the usual wait once the account was up, not the extra one after waking the held ones get: three
+	/// offers from the night all came due in the account's first minutes.
+	/// </summary>
+	private bool _wasHeld;
+
+	/// <summary>
+	/// Whether offers still count as held from before. Up again with nothing queued and Steam saying none are waiting: none
+	/// came in meanwhile, so it's over. Only a full look cleared it before - and an account with nothing waiting never
+	/// takes one, so after every sign-in (settling in holds too), night or match of yours, the first offer of the day,
+	/// hours later, still got the extra after-waking wait.
+	/// </summary>
+	public static bool StillHeld(bool wasHeld, bool awake, int queued, int steamSays) => wasHeld && !(awake && (queued == 0) && (steamSays == 0));
 
 	private async Task CheckAsync(bool awake, CancellationToken ct) {
 		// Steam's own list of this account's live incoming offers. Null is "Steam didn't answer" - try again later,
@@ -312,6 +336,11 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 		_fruitless = actedOnSomething ? 0 : _fruitless + 1;
 
+		// Everything there now has had its after-waking wait; one arriving from here on is an ordinary new offer.
+		if (awake) {
+			_wasHeld = false;
+		}
+
 		// We have just read the list, so we know better than the notification counter does - tell it. Without
 		// this a count left at "don't know" (which is what the notification sweep deliberately does) stayed that
 		// way for ever, and the account went on looking every hour or so with nothing to find.
@@ -353,7 +382,8 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 		}
 
 		// Everything waits its turn. The wait is per offer, so two arriving together are not handled together.
-		if (_waiting.Add(offer.Id, DateTime.UtcNow + TradeWait()) && (_waiting.DueOf(offer.Id) is { } due)) {
+		if (_waiting.Add(offer.Id, DateTime.UtcNow + TradeWait() + (Bot.Cfg.LegitMode && _wasHeld ? AfterWaking() : TimeSpan.Zero))
+			&& (_waiting.DueOf(offer.Id) is { } due)) {
 			Said what = !accept ? new Said("unwanted") : fromMaster ? new Said("from one of your accounts") : fair ? new Said("a fair card swap") : new Said("a donation");
 			Log.Info(new Said("offer {0} ({1}: {2}) - handling it in {3}", NumberOf(offer.Id), what, offer.Describe, Fmt.Hm((int) Math.Max(1, (due - DateTime.UtcNow).TotalMinutes))), Bot.Name);
 		}

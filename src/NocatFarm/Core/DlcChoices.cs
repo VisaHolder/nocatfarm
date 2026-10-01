@@ -64,6 +64,13 @@ public static class DlcChoices {
 		lock (bot.CfgGate) {
 			// A new dictionary rather than changed in place: a save or the pacer can be reading the old one right now.
 			bot.Cfg.AchievementDlcLeft = new(bot.Cfg.AchievementDlcLeft) { [app] = key };
+
+			// And off the old "carry on" list, as 1.6.5's "leave it paused" did. Unused here, but 1.6.5 goes by it before
+			// anything: kept on it, a game left alone went back to earning on a guess after a rollback.
+			if (bot.Cfg.AchievementDlcTrusted.Contains(app)) {
+				bot.Cfg.AchievementDlcTrusted = [.. bot.Cfg.AchievementDlcTrusted.Where(a => a != app)];
+			}
+
 			saved = ConfigStore.SaveBot(bot.Name, bot.Cfg);
 		}
 

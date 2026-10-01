@@ -232,7 +232,7 @@ public static class DailyReport {
 				return figures is { } f ? new ReportCard.Row(label, f) : new ReportCard.Row(label, none, Strong: false);
 			}
 
-			Said lifetime = new Said("{0} total", ReportCard.Hours(life) is { Length: > 0 } lh ? lh : "0m");
+			Said lifetime = new Said("{0} all time", ReportCard.Hours(life) is { Length: > 0 } lh ? lh : "0m");
 
 			return new ReportCard.Row(label, ReportCard.Join([figures ?? none, lifetime])!.Value, Strong: figures != null);
 		}

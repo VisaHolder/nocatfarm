@@ -277,6 +277,12 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				continue;
 			}
 
+			// What the account owns comes from its library for these, which is empty until it has been read after signing
+			// in: read as "not owned", a game it already had was claimed again after every restart. They wait for it.
+			if ((app || pics) && !Bot.Library.Ready) {
+				continue;
+			}
+
 			// Only skip what we have genuinely already decided about. Committing to _seen BEFORE the claim meant
 			// a package that failed once (rate limit, network blip) was never looked at again this run. A game
 			// borrowed through family sharing is not owned - taking it for real is exactly the point.
@@ -346,9 +352,12 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 
 				(bool? baseFree, string baseName, bool baseGiveaway) = await FreeNowAsync(baseApp, ct).ConfigureAwait(false);
 
-				if (baseFree == true) {
+				uint baseSub = (baseFree == true) && baseGiveaway ? await FreeSubAsync(baseApp, ct).ConfigureAwait(false) : 0;
+
+				if (AlreadyHas(Bot, baseSub)) {
+					gotBase = true;   // its free package is on the account already - nothing to ask for
+				} else if (baseFree == true) {
 					_claims.Add(DateTime.UtcNow);
-					uint baseSub = baseGiveaway ? await FreeSubAsync(baseApp, ct).ConfigureAwait(false) : 0;
 					ClaimResult first = baseSub != 0 ? await AddPackageAsync(Bot, baseSub, ct).ConfigureAwait(false)
 						: await AddAppAsync(Bot, baseApp, ct).ConfigureAwait(false);
 
@@ -378,11 +387,19 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				continue;
 			}
 
-			_claims.Add(DateTime.UtcNow);
-
 			// A store giveaway is claimed the way the store's own "Add to account" button does it - through the package
 			// that's free right now. Only if the store names none is the app asked for over the connection instead.
 			uint freeSub = giveaway ? await FreeSubAsync(id, ct).ConfigureAwait(false) : 0;
+
+			// That package is on the account already - a DLC given away, which the library (games only) never shows. Asked
+			// for again after every restart, and with an answer that names no verdict it was "claimed" - and announced - again.
+			if (AlreadyHas(Bot, freeSub)) {
+				_seen.Add(token);
+
+				continue;
+			}
+
+			_claims.Add(DateTime.UtcNow);
 			ClaimResult result = freeSub != 0 ? await AddPackageAsync(Bot, freeSub, ct).ConfigureAwait(false)
 				: app ? await AddAppAsync(Bot, id, ct).ConfigureAwait(false)
 				: await AddPackageAsync(Bot, id, ct).ConfigureAwait(false);
@@ -784,6 +801,9 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 	/// among them - without a single licence arriving, and without a single line saying why, because the reply
 	/// was never read. Steam's verdict is in that reply, when it gives one, so it is read now.
 	/// </remarks>
+	/// <summary>The account already has this free package (0 is none, never had).</summary>
+	internal static bool AlreadyHas(Bot bot, uint subId) => (subId != 0) && bot.OwnsPackage(subId);
+
 	public static async Task<ClaimResult> AddPackageAsync(Bot bot, uint subId, CancellationToken ct) {
 		Dictionary<string, string> form = new(StringComparer.Ordinal) {
 			["ajax"] = "true"

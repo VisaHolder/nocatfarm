@@ -448,8 +448,9 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 				(int wakeLo, int wakeHi) = ReactionSpeed.Fixed(Bot.Cfg, 5, 60);
 				await WaitUntilAwakeAsync(() => Rng.HumanMinutes(wakeLo, wakeHi) + (seconds > 0 ? Rng.Seconds(seconds, seconds * 2) : TimeSpan.Zero)).ConfigureAwait(false);
 
-				// Signed out while it waited: nothing would arrive, so it isn't counted as said today either.
-				if (Away) {
+				// Signed out while it waited: nothing would arrive, so it isn't counted as said today either. Nor when you've come
+				// on the account meanwhile - you answer them yourself.
+				if (!ReplyStillGoes(Bot)) {
 					Unreplied(from);
 
 					return;
@@ -492,17 +493,35 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 		// The run's own token, not Cts: that is swapped and disposed as the module stops and starts, and read from here - a
 		// request answered hours later - it could be one already disposed, which throws.
 		CancellationToken ct = _runToken;
-		bool held = false;
 
-		while (!ct.IsCancellationRequested && !HumanMode.ReadyFor(Bot)) {
-			held = true;
-			await Task.Delay(TimeSpan.FromMinutes(5), ct).ConfigureAwait(false);
-		}
+		while (true) {
+			bool held = false;
 
-		if (held && !ct.IsCancellationRequested) {
+			// You on the account yourself holds it too, like every other visible thing on a human-mode account (HumanGate): a
+			// request that came in at night was accepted in the morning in the middle of your match.
+			while (!ct.IsCancellationRequested && Holds(Bot)) {
+				held = true;
+				await Task.Delay(TimeSpan.FromMinutes(5), ct).ConfigureAwait(false);
+			}
+
+			if (!held || ct.IsCancellationRequested) {
+				return;
+			}
+
+			// Looked at again after the wait after waking: you can have come on the account during it (up to an hour), and
+			// the request was then accepted in the middle of your match after all.
 			await Task.Delay(afterWaking(), ct).ConfigureAwait(false);
 		}
 	}
+
+	/// <summary>Whether an answer to somebody waits: asleep or not settled in, or - on a human-mode account - you're on it.</summary>
+	public static bool Holds(Bot bot) => !HumanMode.ReadyFor(bot) || HumanGate.StandsBack(bot);
+
+	/// <summary>
+	/// The auto-reply still goes once its wait is over. Not while you're on the account: you'll answer yourself - that was
+	/// only looked at when the message came in, so one that waited for morning went out in the middle of your game.
+	/// </summary>
+	public static bool ReplyStillGoes(Bot bot) => bot.IsOnline && !bot.Stopping && !bot.PlayingBlocked;
 
 	/// <summary>Run a console command sent by Steam message and send the answer straight back.</summary>
 	private async Task RunCommandAsync(ulong from, string command, DateTime received) {

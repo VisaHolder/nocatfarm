@@ -119,8 +119,9 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 			return null;
 		}
 
-		List<uint>? games = now.Any ? await BanGames.ReadAsync(Bot, ct).ConfigureAwait(false) : [];
 		Saved? before = Seen;
+		now = OnNoticePage(now, before is { } b ? new Bans(b.Vac, b.Game, b.Community, b.Economy, b.DaysSinceLast) : null);
+		List<uint>? games = now.Any ? await BanGames.ReadAsync(Bot, ct).ConfigureAwait(false) : [];
 		_seen = new Saved(now.Vac, now.Game, now.Community, now.Economy, now.DaysSinceLast, DateTime.UtcNow.Ticks, games ?? before?.Games);
 		Save();
 
@@ -130,7 +131,7 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 				Log.Info(new Said("bans on record: {0}", Summary(now)), Bot.Name);
 			}
 		} else {
-			foreach (Said news in News(before, now)) {
+			foreach (Said news in News(new Bans(before.Vac, before.Game, before.Community, before.Economy, before.DaysSinceLast), now)) {
 				Log.Attention(news, Bot.Name, Topic.Problems);
 			}
 		}
@@ -142,21 +143,40 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 		return now;
 	}
 
+	/// <summary>
+	/// Steam's community-ban notice page shows no ban lines - it's shown instead of the profile - so it read as no VAC, game
+	/// or trade ban at all, and that was saved over what was known. The next time the profile itself came back, the ban it
+	/// had all along was announced as NEW. On that page the rest is kept as it was; only the community ban is new.
+	/// </summary>
+	public static Bans OnNoticePage(Bans now, Bans? before) =>
+		now.Community && (before != null) ? now with { Vac = before.Vac, Game = before.Game, Economy = before.Economy, DaysSinceLast = before.DaysSinceLast } : now;
+
 	/// <summary>What changed for the worse since the last look, one line each.</summary>
-	private static IEnumerable<Said> News(Saved before, Bans now) {
+	public static IEnumerable<Said> News(Bans before, Bans now) {
+		bool counted = false;
+
 		if (now.Vac > before.Vac) {
+			counted = true;
 			yield return new Said("NEW VAC ban - {0} on record now (was {1})", now.Vac, before.Vac);
 		}
 
 		if (now.Game > before.Game) {
+			counted = true;
 			yield return new Said("NEW game ban - {0} on record now (was {1})", now.Game, before.Game);
+		}
+
+		// Steam stops counting at "Multiple" (kept as 2), so a third VAC or game ban left both counts as they were. The days
+		// since the last ban only ever go down when another lands.
+		if (!counted && ((now.Vac > 0) || (now.Game > 0)) && (now.DaysSinceLast < before.DaysSinceLast)) {
+			yield return new Said("NEW ban - the last one was {0} day(s) ago now (was {1})", now.DaysSinceLast, before.DaysSinceLast);
 		}
 
 		if (now.Community && !before.Community) {
 			yield return new Said("NEW community ban - Steam has community banned this account");
 		}
 
-		if ((now.Economy != before.Economy) && (now.Economy is "banned" or "probation")) {
+		// A trade ban stepping down to probation is better, not a new problem.
+		if ((now.Economy != before.Economy) && (now.Economy is "banned" or "probation") && !(before.Economy == "banned" && now.Economy == "probation")) {
 			yield return now.Economy == "banned"
 				? new Said("NEW trade ban - this account can't trade or use the market")
 				: new Said("NEW trade probation - trading is restricted");

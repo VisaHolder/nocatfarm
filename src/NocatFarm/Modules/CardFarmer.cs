@@ -1351,9 +1351,22 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			TimeSpan most = Bot.HumanOwned && ((Bot.Cfg.FarmCardsWhen != FarmWhen.Any) || (batch.Count > 1)) ? TimeSpan.FromSeconds(20) : TimeSpan.FromMinutes(10);
 			TimeSpan slice = left < most ? left : most;
 
-			// A drop here means Steam disagreed with our threshold - stop bumping and go farm properly.
+			// A drop here means Steam disagreed with our threshold - stop bumping and go farm properly. But Steam announces
+			// every new item, not only cards: a booster pack made, a badge crafted, a gift or a trade landing all came out
+			// as "card dropped early" - on the phone too - and ended the batch for nothing. The games' own card pages say.
 			if (await Bot.WaitForItemDropAsync(slice, ct).ConfigureAwait(false)) {
-				Log.Reward("card dropped early - switching to farming", Bot.Name);
+				await Task.Delay(TimeSpan.FromSeconds(5), ct).ConfigureAwait(false);   // the page lags the announcement a little
+				bool? dropped = await DroppedInAsync(batch, ct).ConfigureAwait(false);
+
+				if (dropped == false) {
+					continue;   // something else arrived - the batch carries on
+				}
+
+				if (dropped == true) {
+					Log.Reward("card dropped early - switching to farming", Bot.Name);
+				} else {
+					Log.Debug("something new arrived during the playtime batch - reading the badge pages again", Bot.Name);
+				}
 
 				// From the badge pages, not the queue: the queue still has this game under the line, and reused it went
 				// straight back to building playtime on it.
@@ -1364,6 +1377,28 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 			_status = new Said("building playtime on {0} game(s), ~{1}h to go", batch.Count, ((until - DateTime.UtcNow).TotalHours).ToString("0.0"));
 		}
+	}
+
+	/// <summary>How many of a playtime batch's card pages are read after a new item arrives - the most-played first.</summary>
+	internal const int DropLooks = 5;
+
+	/// <summary>
+	/// Whether a card dropped in one of the batch's games: true when a page shows fewer left than the queue had, false when
+	/// none did and every game was looked at, null when it can't say (a page didn't load, or the batch is bigger than
+	/// <see cref="DropLooks"/>) - the badge pages are read again then.
+	/// </summary>
+	private async Task<bool?> DroppedInAsync(List<FarmTarget> batch, CancellationToken ct) {
+		foreach (FarmTarget game in batch.OrderByDescending(static g => g.HoursPlayed).Take(DropLooks)) {
+			if (await GetGameCardsAsync(game.AppId, ct).ConfigureAwait(false) is not { } fresh) {
+				return null;
+			}
+
+			if (fresh.CardsRemaining < game.CardsRemaining) {
+				return true;
+			}
+		}
+
+		return batch.Count <= DropLooks ? false : null;
 	}
 
 	// ── discovery ───────────────────────────────────────────────────────────

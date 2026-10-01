@@ -196,10 +196,9 @@ public static partial class Commands {
 			return $"from Steam chat this account only takes commands for itself ({botName})";
 		}
 
-		// By the command the word reaches, so the hidden 'bots' means this account too, like 'status'.
-		if ((verb.Length > 0) && (line.IndexOf(' ') < 0) && DefaultsToThisBot(Resolve(verb)?.Name ?? "")) {
-			line = $"{verb} {botName}";
-		}
+		// By the command the word reaches, so the hidden 'bots' means this account too, like 'status'. And not only when the
+		// word is alone: 'value refresh' or 'pause 30' name no account either, and with none these mean every account.
+		line = ThisBotFilledIn(mgr, line, botName);
 
 		return await RunAsync(mgr, line).ConfigureAwait(false);
 	}
@@ -246,7 +245,25 @@ public static partial class Commands {
 	/// whichever of its names was typed.
 	/// </summary>
 	public static bool DefaultsToThisBot(string command) =>
-		command is "status" or "pause" or "resume" or "start" or "stop" or "cards" or "config" or "human" or "habits" or "2fa";
+		command is "status" or "pause" or "resume" or "start" or "stop" or "cards" or "config" or "human" or "habits" or "2fa"
+			// With no account these go over every account - claiming event items on all of them, every account's trades,
+			// wallet, inventory and bans - which from one account's chat reached past it.
+			or "hunt" or "selfcheck" or "confirmations" or "offers" or "booster" or "freeitems" or "queue" or "value" or "level"
+			or "balance" or "points" or "bans";
+
+	/// <summary>
+	/// A Steam-chat line with this account's name put in after the command, for a command that takes the account first and,
+	/// without one, means every account - unless an account is already named there.
+	/// </summary>
+	public static string ThisBotFilledIn(BotManager mgr, string line, string botName) {
+		string[] words = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+		if ((words.Length == 0) || !DefaultsToThisBot(Resolve(words[0])?.Name ?? "") || ((words.Length > 1) && (mgr.Get(words[1]) != null))) {
+			return line;
+		}
+
+		return string.Join(' ', [words[0], botName, .. words[1..]]);
+	}
 
 	/// <summary>
 	/// A choice about a game with add-ons ('dlc leave|undo', and the old 'dlc carryon'): the owner's word, which decides
@@ -269,7 +286,14 @@ public static partial class Commands {
 			or "add" or "reload" or "plugins" or "notify" or "screen" or "match" or "theme" or "mini"
 			// Who has been at the dashboard (addresses, devices, and signing everybody out), a zip of every saved login,
 			// and the reports that show every account.
-			or "visitors" or "backup" or "report" or "stuck";
+			or "visitors" or "backup" or "report" or "stuck"
+			// 'stats' opens with that same report, and the log has every account in it: the answers Telegram and Discord got
+			// (Steam Guard codes from /2fa among them), and the Telegram connect link before a chat is connected - which made
+			// whoever opened it the owner. 'log folder' opens a folder on this PC.
+			or "log" or "stats"
+			// 'owns' looks a game up on every account, and rep4rep is one queue for them all: its summary lists every account,
+			// and 'rep4rep pause' or 'clear' stops or wipes it for every one of them.
+			or "owns" or "rep4rep";
 
 	/// <summary>
 	/// Whether a command sent to <paramref name="botName"/> over Steam chat names another account, or all of them - in the
@@ -1089,7 +1113,14 @@ public static partial class Commands {
 			Rep4RepModule? r4r = BotManager.ModuleOf<Rep4RepModule>(b);
 			string comments = b.Cfg.Rep4Rep && r4r != null ? $"{r4r.PostsToday}/{r4r.Cap}" : "—";
 
-			sb.AppendLine($"  {Log.Pad(b.Name, 13)}{Log.Pad(StateWord(b), 13)}{Log.Pad(uptime, 8)}{Log.Pad(playing, 24)}{Log.Pad(cards, 7)}{comments}");
+			// One space always left between columns: a value cut to the full width ran straight into the next one
+			// ("waiting for …—"). A state that doesn't fit is given whole on its own line below.
+			string state = StateWord(b);
+			sb.AppendLine($"  {Log.Pad(b.Name, 12)} {Log.Pad(state, 12)} {Log.Pad(uptime, 7)} {Log.Pad(playing, 23)} {Log.Pad(cards, 6)} {comments}");
+
+			if (state.Length > 12) {
+				sb.AppendLine($"    {bar} {Log.Pad("state", 12)} {state}");
+			}
 
 			if (b.GuardPrompt != null) {
 				sb.AppendLine($"    {bar} waiting on you: {b.GuardPrompt}");
@@ -2704,6 +2735,9 @@ public static partial class Commands {
 		// Counted for "achievements today" - only ones gained, not ones put back.
 		if (unlock) {
 			Stats.Record(Stats.KindAchievement, bot.Name, changed);
+
+			// One that completed a "for having the others" achievement: the pacer awards that on the game's next tick.
+			BotManager.ModuleOf<AchievementPacer>(bot)?.LookForMetas(appId);
 		}
 
 		return $"{bot.Name}: {message} in {GameNames.Of(appId)}.{heldNote}";
@@ -2728,7 +2762,9 @@ public static partial class Commands {
 				one.Display, one.ProgressNow.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture), one.ProgressMax.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture));
 		}
 
-		if (AchievementPacer.WithoutWaitingMetas(set.All, [one]).Waiting > 0) {
+		// The pacer's own rule for one at a time. Asked as a batch of one, two "for having the others" ones ("all other
+		// achievements" and "unlock every achievement") each waited on the other, and both were refused for good.
+		if (AchievementPacer.MetaBlocked(one, set.All)) {
 			return new Said("\"{0}\" is for having the others, and some of those are still locked - it won't be unlocked before they are.", one.Display);
 		}
 
@@ -4272,7 +4308,8 @@ public static partial class Commands {
 		if (!scan.Found) {
 			return $"Nothing to import was found. Looked in:\n  {string.Join("\n  ", scan.Looked)}"
 				+ string.Concat(scan.Notes.Select(static n => "\n  " + n))
-				+ $"\nPoint at it directly:  import {args[0]} C:\\path\\to\\it";
+				// The example in the shape of a path on this machine: a C:\ one was no help on Linux, a Mac or in Docker.
+				+ $"\nPoint at it directly:  import {args[0]} {(OperatingSystem.IsWindows() ? @"C:\path\to\it" : "/path/to/it")}";
 		}
 
 		if ((scan.Accounts.Count == 0) && (scan.Settings.Count == 0)) {

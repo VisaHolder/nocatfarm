@@ -514,7 +514,8 @@ public sealed class BotConfig {
 	/// <summary>
 	/// Games the owner once answered "I own what matters - carry on" for. Not used any more: every game with add-ons Steam
 	/// doesn't explain earns anyway now, base game first (Core/DlcAchievements). Still read, so account files that have
-	/// the list load as they did, and written back untouched.
+	/// the list load as they did, and written back - less a game left alone ('dlc leave'), which 1.6.5 would otherwise
+	/// still carry on with after a rollback.
 	/// </summary>
 	public List<uint> AchievementDlcTrusted { get; set; } = [];
 
