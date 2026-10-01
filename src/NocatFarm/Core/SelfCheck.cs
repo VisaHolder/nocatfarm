@@ -45,10 +45,20 @@ public static class SelfCheck {
 
 		// Where the surplus comes from decides the fix: with human mode on it can only be the overnight list, which
 		// runs every game on it at once all night.
-		bool nightBank = bot.Cfg.LegitMode && bot.Cfg.OfflineIdleAtNight && (bot.Cfg.OfflineIdleGames.Count > 0);
-		string manyFix = nightBank
-			? $"it banks {bot.Cfg.OfflineIdleGames.Count} game(s) at once every night - cut OfflineIdleGames down to one or two, or turn OfflineIdleAtNight off"
-			: bot.Cfg.LegitMode ? "lower WeekdayHours / WeekendHours" : "idle fewer games at once, or turn on human mode (one game at a time)";
+		int nightGames = bot.Cfg.OfflineIdleGames.Count;
+		bool nightBank = bot.Cfg.LegitMode && bot.Cfg.OfflineIdleAtNight && (nightGames > 0);
+
+		// More a day than today's settings could ever bank (every night game all day, plus the day's one game): the
+		// hours are from before human mode, when it idled many games at once. On a robot account switched to human mode
+		// this said "cut the night list down to one or two" when it was already one.
+		bool fromBefore = bot.Cfg.LegitMode && (perDay > (24.0 * Math.Max(1, nightBank ? nightGames : 0)) + 24);
+		string manyFix = fromBefore
+			? "those hours are from before human mode, when it idled many games at once - they leave Steam's two-week count by themselves within 14 days"
+			: nightBank
+				? (nightGames > 2
+					? $"it banks {nightGames} games at once every night - cut OfflineIdleGames down to one or two, or turn OfflineIdleAtNight off"
+					: "the overnight games bank hours all night - turn OfflineIdleAtNight off, or lower WeekdayHours / WeekendHours")
+				: bot.Cfg.LegitMode ? "lower WeekdayHours / WeekendHours" : "idle fewer games at once, or turn on human mode (one game at a time)";
 
 		if (total > TwoWeeks) {
 			Add(35, hoursWeight, $"{total / 60}h across its games in the past two weeks - {perDay:0.#}h a day, more hours than a day has, which only running several games at once does", manyFix);

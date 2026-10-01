@@ -154,23 +154,17 @@ public static class GameNames {
 			}
 
 			try {
-				string url = $"https://store.steampowered.com/api/appdetails?appids={appId}&filters=basic&l=english";
-				using HttpResponseMessage response = await Http.GetAsync(url, ct).ConfigureAwait(false);
+				StoreAnswer answer = await AskStoreAsync(appId, ct).ConfigureAwait(false);
 
-				if (!response.IsSuccessStatusCode) {
+				if (answer.Status != 200) {
 					// Up to forty of these a round, and a 429 answers every one the same - said once.
-					Log.DebugOnChange("gamenames:store", $"game name lookup: HTTP {(int) response.StatusCode} from {Log.Where(response.RequestMessage?.RequestUri)}");
+					Log.DebugOnChange("gamenames:store", $"game name lookup: HTTP {answer.Status} from {Log.Where(answer.From)}");
 
 					continue;
 				}
 
-				using JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
-
-				if (doc.RootElement.TryGetProperty(appId.ToString(CultureInfo.InvariantCulture), out JsonElement entry)
-					&& entry.TryGetProperty("success", out JsonElement ok) && ok.ValueKind == JsonValueKind.True
-					&& entry.TryGetProperty("data", out JsonElement data)
-					&& data.TryGetProperty("name", out JsonElement name)) {
-					Learn(appId, name.GetString());
+				if (answer.Name != null) {
+					Learn(appId, answer.Name);
 				} else {
 					// A delisted or private app answers success:false forever. Remember that so we stop asking.
 					Known[appId] = "";
@@ -184,6 +178,30 @@ public static class GameNames {
 		}
 
 		await SaveAsync().ConfigureAwait(false);
+	}
+
+	/// <summary>What the store said about one app: the HTTP status, and the name when it had one (null for success:false).</summary>
+	internal readonly record struct StoreAnswer(int Status, string? Name, Uri? From);
+
+	/// <summary>One lookup against the store's public appdetails endpoint - the request the names come from, and the one
+	/// the Steam self-test (--steam-selftest) makes to prove HTTPS works on the machine.</summary>
+	internal static async Task<StoreAnswer> AskStoreAsync(uint appId, CancellationToken ct) {
+		string url = $"https://store.steampowered.com/api/appdetails?appids={appId.ToString(CultureInfo.InvariantCulture)}&filters=basic&l=english";
+		using HttpResponseMessage response = await Http.GetAsync(url, ct).ConfigureAwait(false);
+		Uri? from = response.RequestMessage?.RequestUri;
+
+		if (!response.IsSuccessStatusCode) {
+			return new StoreAnswer((int) response.StatusCode, null, from);
+		}
+
+		using JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
+
+		return doc.RootElement.TryGetProperty(appId.ToString(CultureInfo.InvariantCulture), out JsonElement entry)
+			&& entry.TryGetProperty("success", out JsonElement ok) && ok.ValueKind == JsonValueKind.True
+			&& entry.TryGetProperty("data", out JsonElement data)
+			&& data.TryGetProperty("name", out JsonElement name)
+				? new StoreAnswer(200, name.GetString(), from)
+				: new StoreAnswer(200, null, from);
 	}
 
 	private static void Load() {

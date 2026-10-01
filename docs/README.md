@@ -11,27 +11,27 @@ then covers the few settings most people change and what to do when something lo
 
 Nothing past Start here is required reading. Open whichever page you need.
 
-- [The dashboard and the app window](dashboard.md) - the tabs, backup and restore, the Phone page, mini mode, the
+- [The dashboard and the app window](dashboard.md): the tabs, backup and restore, the Phone page, mini mode, the
   tray and console mode
-- [Accounts and signing in](accounts.md) - adding accounts, Steam Guard, authenticators, and importing from another
+- [Accounts and signing in](accounts.md): adding accounts, Steam Guard, authenticators, and importing from another
   idler
-- [Cards and idling](cards-and-idling.md) - card farming, idling, a custom game name, free games, booster packs,
+- [Cards and idling](cards-and-idling.md): card farming, idling, a custom game name, free games, booster packs,
   badges, selling and product keys
-- [Human mode](human-mode.md) - making an account play like a person, and keeping out of your way when you play
-- [Trades](trades.md) - trade offers, sending items, the Authenticator page, ban watch, inventory value and history
+- [Human mode](human-mode.md): making an account play like a person, and keeping out of your way when you play
+- [Trades](trades.md): trade offers, sending items, the Authenticator page, ban watch, inventory value and history
   charts
 - [Achievements and the hunter](achievements.md)
-- [Phone and notifications](phone-and-notifications.md) - Discord and Telegram, pop-ups, the Discord profile card,
+- [Phone and notifications](phone-and-notifications.md): Discord and Telegram, pop-ups, the Discord profile card,
   the daily summary, the weekly report, stuck accounts and Steam groups
 - [rep4rep](rep4rep.md), only if you use rep4rep.com
-- [Settings and commands](settings.md) - how settings work, what's in each group, command line options, and
+- [Settings and commands](settings.md): how settings work, what's in each group, command line options, and
   commands by Steam chat
 - [Every command](COMMANDS.md), generated from the app's own command list so it always matches your version
 
 ## Going further
 
 - [Linux, Mac and Docker](linux-docker-vps.md), including a rented server (VPS) that runs it around the clock
-- [Plugins](plugins.md), for adding your own commands and features in C# - the full how-to is
+- [Plugins](plugins.md), for adding your own commands and features in C#. The full how-to is
   [PLUGINS.md](../PLUGINS.md)
-- [Safety and FAQ](safety-and-faq.md) - what happens to your data, Steam's rules, common questions, and building
+- [Safety and FAQ](safety-and-faq.md): what happens to your data, Steam's rules, common questions, and building
   from source

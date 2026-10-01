@@ -48,7 +48,7 @@ public static partial class Commands {
 		new("restart", "<account|all>", GroupAccounts, "Stop then start again."),
 		new("pause", "<account|all> [minutes]", GroupAccounts, "Stay logged in but stop playing, farming and commenting. Give it minutes and it picks back up by itself."),
 		new("resume", "<account|all>", GroupAccounts, "Undo a pause."),
-		new("add", "<name> <steamLogin|qr> [human|robot]", GroupAccounts, "Add an account. It asks for the password once, then remembers a login token - or 'qr' signs it in by scanning a code on the dashboard with the Steam app, no password at all. End with 'human' for your main (human mode) or 'robot' for a farm account - it says which it made."),
+		new("add", "<name> <steamLogin|qr> [human|robot]", GroupAccounts, "Add an account. It asks for the password once, then remembers a login token. Or 'qr' signs it in by scanning a code on the dashboard with the Steam app, no password at all. End with 'human' for your main (human mode) or 'robot' for a farm account. It says which it made."),
 		new("remove", "<account>", GroupAccounts, "Delete an account and its stored login token.", "delete"),
 		new("enable", "<account>", GroupAccounts, "Let this account log in again."),
 		new("disable", "<account>", GroupAccounts, "Keep the account configured but never log it in."),
@@ -56,41 +56,42 @@ public static partial class Commands {
 
 		new("play", "<account> <appIDs|none>", GroupPlaying, "Set the games this account idles for playtime."),
 		new("name", "<account> [text|off]", GroupPlaying, "Custom non-Steam game name shown instead of the real game. No text shows the current one; 'off' clears it."),
-		new("persona", "<account> <state>", GroupPlaying, "What the account shows your friends: online | offline | busy | away | snooze | looking to trade | looking to play | invisible - or its number, 0-7. Same as the OnlineStatus setting."),
-		new("nickname", "<account> <profile name>", GroupPlaying, "Change the name everybody sees on the profile and friends list. Not the custom game name - that's 'name'."),
+		new("persona", "<account> <state>", GroupPlaying, "What the account shows your friends: online | offline | busy | away | snooze | looking to trade | looking to play | invisible (or its number, 0-7). Same as the OnlineStatus setting."),
+		new("nickname", "<account> <profile name>", GroupPlaying, "Change the name everybody sees on the profile and friends list. Not the custom game name, that's 'name'."),
 		new("grind", "<account|all> <appID> <hours> | <account> off", GroupPlaying,
 			"Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs."),
 		new("human", "[account] [week|reroll]", GroupPlaying, "What human mode is doing today, and what it played. Add 'week' to see the next seven days, or 'reroll' to throw today's plan away and roll a fresh one from the current settings."),
-		new("habits", "[account] [forget]", GroupPlaying, "What human mode has learned from you playing on the account yourself - days seen, the hours you're usually on, your top games - and whether \"Learn from how I play\" is using it yet. 'habits <account> forget' wipes it and it starts learning again."),
+		new("habits", "[account] [forget]", GroupPlaying, "What human mode has learned from you playing on the account yourself (days seen, the hours you're usually on, your top games), and whether \"Learn from how I play\" is using it yet. 'habits <account> forget' wipes it and it starts learning again."),
 		new("wake", "<account>", GroupPlaying, "Wake a sleeping human-mode account and start its day now. Bed time is unchanged.", "wakeup|skipsleep"),
-		new("hours", "<account>", GroupPlaying, "How the account's hour targets are going - hours so far, what's left, and the pace needed to make a date."),
+		new("hours", "<account>", GroupPlaying, "How the account's hour targets are going: hours so far, what's left, and the pace needed to make a date."),
 		new("rotation", "<account> [next]", GroupPlaying, "The idle rotation: whether it's on, how many games are on the list, which batch is idling and when the next one takes over, and a look at the next batch. 'next' moves on to the next batch now."),
-		new("selfcheck", "[account]", GroupPlaying, "Does a human-mode account look like a bot? A score out of 100 from what other people can see - hours on the profile, what its status shows, comments - with the setting that fixes each tell. Boost accounts are left out unless you name one.", "tells"),
+		new("selfcheck", "[account]", GroupPlaying, "Does a human-mode account look like a bot? A score out of 100 from what other people can see (hours on the profile, what its status shows, comments), with the setting that fixes each tell. Boost accounts are left out unless you name one.", "tells"),
 
 		new("cards", "[account]", GroupCards, "What is still left to farm, and about how long it will take."),
 		new("drops", "<account> [appID|next] [count|all] | <account> off", GroupCards,
 			"You pick a game and how many cards, and it goes first. On a human-mode account it's played in the normal sittings - the main game's share of them, with breaks and bedtime - until that many have dropped. On other accounts it's played non-stop until then. Without an appID, the next game with cards. Automatic card farming (\"When to farm cards\") needs no command."),
-		new("match", "[do]", GroupCards, "Swap duplicate trading cards between your own accounts so sets finish - only swaps that help both sides, never a card already on an offer. Shows what it would trade; 'match do' sends the offers, and the other account accepts them by itself."),
+		new("match", "[do]", GroupCards, "Swap duplicate trading cards between your own accounts so sets finish. Only swaps that help both sides, never a card already on an offer. Shows what it would trade; 'match do' sends the offers, and the other account accepts them by itself."),
 		new("sell", "<account> [preview|do|relist] [count]", GroupCards, "Spare trading cards on the market: 'preview' (the default) shows what it would list and what you'd get after Steam's fees, 'do' lists them (5 by default), 'relist' takes down week-old listings the market has gone under. SellDuplicates does it by itself."),
 		new("booster", "[account|all] | <account> <appIDs>", GroupCards, "Gems, and which games can be made into booster packs now. With appIDs it makes those packs straight away; the BoosterGames setting does it by itself every day.", "boosters"),
-		new("levelup", "<account> <level>", GroupCards, "What reaching a Steam level would cost: the XP missing, badges it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest - priced gently in the background.", "lvlup"),
+		new("levelup", "<account> <level>", GroupCards, "What reaching a Steam level would cost: the XP missing, badges it can craft from its own cards, sets it has nearly finished, and the cheapest complete sets on the market for the rest, priced gently in the background.", "lvlup"),
 
 		new("offers", "[account|all]", GroupTrades, "Live trade offers, straight from Steam: what's waiting to be accepted, what's been sent, and anything stuck on a confirmation or a trade hold."),
-		new("trade", "accept|decline <account> <number|all> | cancel <account> <offer id|all>", GroupTrades, "Answer a trade offer yourself, by the number 'offers' and the announcements give it. Accepting one that sends items out confirms it too when this account's authenticator is in nocat.farm - you asked, so that is the confirmation. 'trade cancel' takes back offers the account sent that haven't gone through, such as one stuck waiting on a confirmation."),
-		new("fairswap", "<account> <offerID>", GroupTrades, "Whether a trade offer is a fair card swap that AcceptFairCardSwaps would accept, and if not, why. Only looks - never accepts or declines."),
-		new("send", "<account|all> [to <account>] [types]", GroupTrades, "Send an account's tradable items to the account listed under Trades - or 'to' another of your accounts. Types as in the send setting (cards, foils, backgrounds, emoticons, boosters, gems, all); leave them off for what the send setting says, or trading cards when sending 'to' an account.", "loot"),
+		new("trade", "accept|decline <account> <number|all> | cancel <account> <offer id|all>", GroupTrades, "Answer a trade offer yourself, by the number 'offers' and the announcements give it. Accepting one that sends items out confirms it too when this account's authenticator is in nocat.farm. You asked, so that is the confirmation. 'trade cancel' takes back offers the account sent that haven't gone through, such as one stuck waiting on a confirmation."),
+		new("fairswap", "<account> <offerID>", GroupTrades, "Whether a trade offer is a fair card swap that AcceptFairCardSwaps would accept, and if not, why. Only looks, never accepts or declines."),
+		new("send", "<account|all> [to <account>] [types]", GroupTrades, "Send an account's tradable items to the account listed under Trades, or 'to' another of your accounts. Types as in the send setting (cards, foils, backgrounds, emoticons, boosters, gems, all); leave them off for what the send setting says, or trading cards when sending 'to' an account.", "loot"),
 
 		new("2fa", "[account]", GroupGuard, "Show this account's Steam Guard code, if its authenticator is set up here. Without an account, every account's code.", "guard"),
-		new("confirmations", "[account]", GroupGuard, "What's waiting to be confirmed on this account, like the Steam app's list: trades, market listings, account changes - numbered for confirm and deny. Needs the account's authenticator in nocat.farm."),
+		new("confirmations", "[account]", GroupGuard, "What's waiting to be confirmed on this account, like the Steam app's list: trades, market listings, account changes. They're numbered for confirm and deny. Needs the account's authenticator in nocat.farm."),
 		new("confirm", "<account> <number|all>", GroupGuard, "Confirm what 'confirmations' listed under that number, or all of it."),
 		new("deny", "<account> <number|all>", GroupGuard, "Deny (cancel) what 'confirmations' listed under that number, or all of it."),
 
 		new("cheevo", "<account> <appID> [list|unlock|lock] [name|all]", GroupAchievements, "Achievements: see them, unlock them all, or put them back.", "ach|achievements"),
-		new("hunt", "[account]", GroupAchievements, "What the achievement hunter would play, in order - and what it ruled out and why."),
+		new("hunt", "[account]", GroupAchievements, "What the achievement hunter would play, in order, and what it ruled out and why."),
+		new("dlcach", "<account> [appID]", GroupAchievements, "Achievements that come with DLC. With an appID: the game's DLC that have achievements in its list, how many each, whether this account owns it, and how many of those it already has - and, when it can't be told which achievements come with a DLC this account doesn't own, which DLC those are and why, since then everything outside the DLC it owns is left alone (unless the game is listed under \"Games I own all the DLC for\", when nothing in it is held). Without one: the games it hunts or plays where achievements are left alone for DLC. Those are never unlocked. Only looks, never changes anything.", "dlcachievements"),
 
 		new("freeitems", "[account|all]", GroupFree, "Look for free event items now: the daily sale sticker, and anything in the Points Shop at 0 points. The ClaimEventItems setting does it by itself."),
 		new("queue", "[account|all]", GroupFree, "Go through today's discovery queue now, a few seconds on each game. The DiscoveryQueue setting does it by itself once a day (during sales, by default)."),
-		new("redeem", "[account] <key|file.txt> [key...]", GroupFree, "Activate product keys - or point it at a text file full of them. More than five queues itself and activates them slowly. With an account, only that account ever gets them, queued ones too. Without one it tries each account in turn until one can use it."),
+		new("redeem", "[account] <key|file.txt> [key...]", GroupFree, "Activate product keys, or point it at a text file full of them. More than five queues itself and activates them slowly. With an account, only that account ever gets them, queued ones too. Without one it tries each account in turn until one can use it."),
 		new("keys", "[list|clear]", GroupFree, "Product keys waiting to be activated. A big batch queues itself rather than burning Steam's per-account activation allowance all at once."),
 		new("addlicense", "<account|all> <IDs>", GroupFree,
 			"Add free licences to an account's library - a subID, or a/<appID> for a free app. Only works for genuinely free licences - a paid one is refused by Steam, and it says why."),
@@ -104,7 +105,7 @@ public static partial class Commands {
 			"Which accounts already own a game, and how long each has played it. Takes an appID, a store URL, or part of a name."),
 		new("privacy", "<account> [public|friends|private|part=level ...]", GroupInfo,
 			"See an account's profile privacy, or set it - one word for everything, or parts such as inventory=public comments=friends. Parts: profile, games, playtime, friends, inventory, gifts, comments."),
-		new("joingroup", "<account|all> <group link or name>", GroupInfo, "Join a Steam group now, if it's open - one account or all of them. For a group every account should always be in, put it in the \"Groups every account joins\" setting instead."),
+		new("joingroup", "<account|all> <group link or name>", GroupInfo, "Join a Steam group now if it's open, on one account or all of them. For a group every account should always be in, put it in the \"Groups every account joins\" setting instead."),
 
 		new("rep4rep", "status|points|profiles|tasks|now|pause|resume|clear|rest", GroupRep4Rep, "Everything rep4rep. Run it bare for a summary. To switch it on or off for an account: set <account> Rep4Rep on|off.", "r4r"),
 
@@ -112,30 +113,37 @@ public static partial class Commands {
 		new("set", "[account] <key> <value>", GroupSettings, "Change a setting. Without an account name it changes a global one."),
 		new("reload", "", GroupSettings, "Re-read every config file from disk."),
 		new("backup", "", GroupSettings, "Save a backup zip of your settings, accounts, saved logins, authenticators and history into the backups folder next to config, and say where. Restoring one is done in the dashboard: Settings, Backup & restore."),
-		new("import", "<asf|ime|idlemaster|hourboostr|singleboostr|sgi|steamidler|auto> [path] [force]", GroupSettings, "Bring accounts and settings across from another idler - ArchiSteamFarm login tokens and all."),
+		new("import", "<asf|ime|idlemaster|hourboostr|singleboostr|sgi|steamidler|auto> [path] [force]", GroupSettings, "Bring accounts and settings across from another idler, ArchiSteamFarm login tokens and all."),
 
 		new("log", "[count|folder]", GroupOther, "The last few log lines. 'log folder' opens the folder the log files are in, on this PC.", "logs"),
-		new("report", "[week]", GroupOther, "The daily summary now - each account's last 24 hours. 'report week' is the weekly report: the last seven days next to the seven before - hours banked, cards, cards listed, inventory value, comments.", "weekly"),
-		new("stats", "[hours]", GroupOther, "Each account's last 24 hours - hours banked, cards, comments, totals - then cards dropped and comments posted, by hour."),
+		new("report", "[week]", GroupOther, "The daily summary, right now: each account's last 24 hours. 'report week' is the weekly report: the last seven days next to the seven before (hours banked, cards, cards listed, inventory value, comments).", "weekly"),
+		new("stats", "[hours]", GroupOther, "Each account's last 24 hours (hours banked, cards, comments, totals), then cards dropped and comments posted, by hour."),
 		new("notify", "[test]", GroupOther, "Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now."),
 		new("plugins", "", GroupOther, "Which plugins are loaded, and where they came from."),
 		new("tutorial", "[topic]", GroupOther, "Getting started, in order, ticking off what you have already done.", "guide|setup"),
 		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does. Only know how it starts? 'help rot' lists every command and setting starting with \"rot\".", "?|h"),
-		new("screen", "off", GroupOther, "Turns this computer's screens off now, to save power - nocat.farm keeps running. Moving the mouse or pressing a key turns them back on. Works from Telegram and Discord too.", "monitor|display"),
+		new("screen", "off", GroupOther, "Turns this computer's screens off now to save power. nocat.farm keeps running. Moving the mouse or pressing a key turns them back on. Works from Telegram and Discord too.", "monitor|display"),
 		new("theme", "[dark|light]", GroupOther, "Switch the dashboard between the dark and light themes. Without an argument it says which is on.", "dark|light"),
-		new("mini", "[on|off]", GroupOther, "Shrink the window to a small panel of your accounts - what each is doing, start and stop, the dashboard - or back to the full window."),
-		new("dashboard", "[anywhere on|off]", GroupOther, "The dashboard's address - on this PC, on your phone over the same wifi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. 'dashboard anywhere on' opens it from anywhere and answers with the link; 'dashboard anywhere off' closes it (the same as 'anywhere on|off').", "web|link"),
-		new("anywhere", "[on|off]", GroupOther, "Open the dashboard from anywhere, not just your wifi - your router forwards the port (UPnP), like Jellyfin. 'anywhere on' does all of it and answers with the link; 'anywhere off' closes it again; on its own it says whether it's on and the link. Works from Telegram and Discord too.", "remote"),
-		new("clear", "", GroupOther, "Clears the log off the screen you type it in - the nocat.farm window, or the dashboard's Log and Console. The other one keeps its lines, and nothing is deleted: the log file has every line (Settings, Logging, Open the log folder).", "cls"),
+		new("mini", "[on|off]", GroupOther, "Shrink the window to a small panel of your accounts (what each is doing, start and stop, the dashboard), or back to the full window."),
+		new("dashboard", "[anywhere on|off]", GroupOther, "The dashboard's address: on this PC, on your phone over the same Wi-Fi, and from outside your home if you've set that up. /dashboard on Telegram or Discord sends the same links there. 'dashboard anywhere on' opens it from anywhere and answers with the link; 'dashboard anywhere off' closes it (the same as 'anywhere on|off').", "web|link"),
+		new("anywhere", "[on|off]", GroupOther, "Open the dashboard from anywhere, not just your Wi-Fi. Your router forwards the port (UPnP), like Jellyfin. 'anywhere on' does all of it and answers with the link; 'anywhere off' closes it again; on its own it says whether it's on and the link. Works from Telegram and Discord too.", "remote"),
+		new("clear", "", GroupOther, "Clears the log off the screen you type it in: the nocat.farm window, or the dashboard's Log and Console. The other one keeps its lines, and nothing is deleted: the log file has every line (Settings, Logging, Open the log folder).", "cls"),
 		new("unlock", "", GroupOther, "Locked out of the dashboard after too many wrong passwords? This lets you (and anyone else locked out) sign in again straight away."),
-		new("visitors", "[signout]", GroupOther, "Who has been at the dashboard: sign-ins, wrong passwords, lockouts, and visitors from the internet turned away - when, from where and on what. 'visitors signout' signs every browser and phone out; you sign in again with the password.", "who"),
+		new("visitors", "[signout]", GroupOther, "Who has been at the dashboard: sign-ins, wrong passwords, lockouts, and visitors from the internet turned away. It shows when, from where and on what. 'visitors signout' signs every browser and phone out; you sign in again with the password.", "who"),
 		new("version", "", GroupOther, "Which version this is.", "about"),
-		new("update", "[accept|now|skip]", GroupOther, "Check for a newer release. 'update accept' downloads it and restarts into it - or, with 'When I say update' set to wait, installs it once your accounts are asleep; 'update now' always installs right away. 'update skip' skips that version - no more reminders about it and it never installs by itself - until a newer one comes out. Nothing installs by itself unless 'Update by itself' is set to install at night."),
-		new("answer", "<text>", GroupOther, "Answer whatever nocat.farm is waiting on - a Steam Guard code, or a password."),
+		new("update", "[accept|now|skip]", GroupOther, "Check for a newer release. 'update accept' downloads it and restarts into it. Or, if 'When I say update' is set to wait, it installs once your accounts are asleep. 'update now' always installs right away. 'update skip' skips that version until a newer one comes out: no more reminders about it, and it never installs by itself. Nothing installs by itself unless 'Update by itself' is set to install at night."),
+		new("answer", "<text>", GroupOther, "Answer whatever nocat.farm is waiting on, like a Steam Guard code or a password."),
 		new("exit", "", GroupOther, "Shut nocat.farm down.", "quit|q")
 	];
 
-	public static bool ExitRequested { get; private set; }
+	/// <summary>
+	/// Closing. Set before anything is cancelled, by every way out (exit, the tray, the window, Ctrl+C, SIGTERM) - an
+	/// update that is downloading or signing accounts out reads it and stops rather than installing and starting
+	/// nocat.farm again after it was closed. Volatile: it is read on other threads, and once set it stays set.
+	/// </summary>
+	public static bool ExitRequested => _exitRequested;
+
+	private static volatile bool _exitRequested;
 
 	/// <summary>
 	/// The running manager, so a command arriving from somewhere that has no reference to it - a Steam message to
@@ -302,9 +310,19 @@ public static partial class Commands {
 	/// </summary>
 	public static bool TrayPresent { get; set; }
 
-	/// <summary>Ask for shutdown from somewhere that isn't the command router - the window's quit button.</summary>
+	/// <summary>
+	/// Ask for shutdown from anywhere - the window's quit button, the tray, Ctrl+C. The flag goes up FIRST, then the
+	/// host is told: an update checking the flag can never see the app closing without it. Safe to call twice.
+	/// </summary>
+	/// <remarks>The flag goes up under the updater's handover lock, which checks it and starts the swap as one step.
+	/// Set without it, a close between that check and the swap starting installed the new version and started nocat.farm
+	/// again after it had been closed. Only the flag is under it: the host is told outside, since cancelling runs every
+	/// shutdown callback on this thread, and none of them should wait on a swap starting.</remarks>
 	public static void RequestExit() {
-		ExitRequested = true;
+		lock (SelfUpdate.HandoverGate) {
+			_exitRequested = true;
+		}
+
 		ExitHandler?.Invoke();
 	}
 
@@ -356,6 +374,7 @@ public static partial class Commands {
 				"deny" => await AnswerConfirmationsAsync(mgr, rest, false).ConfigureAwait(false),
 				"cheevo" or "ach" or "achievements" => await CheevoAsync(mgr, rest).ConfigureAwait(false),
 				"hunt" => await HuntAsync(mgr, rest).ConfigureAwait(false),
+				"dlcach" or "dlcachievements" => await DlcAchAsync(mgr, rest).ConfigureAwait(false),
 				"value" or "inv" or "inventory" => InventoryText(mgr, rest),
 				"keys" => KeysText(rest),
 				"match" => await MatchAsync(mgr, rest).ConfigureAwait(false),
@@ -450,11 +469,14 @@ public static partial class Commands {
 		string what = args.Length > 0 ? args[0].ToLowerInvariant() : "";
 
 		if (what is "off" or "stop" or "false") {
-			g.WebRemoteAccess = false;
-			ConfigStore.SaveGlobal(g);
+			lock (ConfigStore.GlobalEditGate) {
+				mgr.Global.WebRemoteAccess = false;
+				ConfigStore.SaveGlobal(mgr.Global);
+			}
+
 			RemoteAccess.Poke();
 
-			return new Said("Open from anywhere is off - the router forward is taken away, your wifi still works").ToString();
+			return new Said("Open from anywhere is off. The router forward is taken away; your Wi-Fi still works.").ToString();
 		}
 
 		// No dashboard, nothing to forward: 'anywhere on' waited fifteen seconds and then said it was "still asking your
@@ -470,12 +492,16 @@ public static partial class Commands {
 
 			bool relisten = Platform.IsLoopback(g.WebHost ?? "");
 
-			if (relisten) {
-				g.WebHost = "0.0.0.0";
-			}
+			lock (ConfigStore.GlobalEditGate) {
+				g = mgr.Global;
 
-			g.WebRemoteAccess = true;
-			ConfigStore.SaveGlobal(g);
+				if (relisten) {
+					g.WebHost = "0.0.0.0";
+				}
+
+				g.WebRemoteAccess = true;
+				ConfigStore.SaveGlobal(g);
+			}
 
 			if (relisten && (Web.WebHost.Current is { } web)) {
 				await web.RelistenAsync().ConfigureAwait(false);
@@ -571,6 +597,18 @@ public static partial class Commands {
 		// Not "you're on the newest" when GitHub never answered - that's a guess, and a wrong one on the day it matters.
 		if ((problem != null) && (UpdateCheck.Available == null)) {
 			return new Said("couldn't reach GitHub to check ({0}) - try again in a minute", problem).ToString();
+		}
+
+		// Newer, but not downloadable here yet (the Mac zips come a while after the tag): not "you're on the newest", and a
+		// queued install waits for the download rather than being dropped.
+		if ((UpdateCheck.Available == null) && (UpdateCheck.NoDownloadYet is { } coming)) {
+			string said = UpdateCheck.NoDownloadSaid(coming, queued: UpdateCheck.Queued != null).ToString();
+
+			// Asked to install or skip it: neither can happen before there's a download, and the reply has to say so -
+			// it read the same as a plain 'update', so an accept looked queued and a skip looked recorded.
+			return (accept || (what == "skip")) && (UpdateCheck.Queued == null)
+				? said + " " + new Said("Nothing is queued or skipped yet. Ask again once the download is up.")
+				: said;
 		}
 
 		if (UpdateCheck.Available == null) {
@@ -801,8 +839,7 @@ public static partial class Commands {
 	}
 
 	private static string Exit() {
-		ExitRequested = true;
-		ExitHandler?.Invoke();
+		RequestExit();
 
 		return "";   // the host logs "shutting down" - saying it twice looks broken
 	}
@@ -825,8 +862,10 @@ public static partial class Commands {
 			return $"'{want}' is not a theme - it is either dark or light.";
 		}
 
-		Live.Global.Theme = want;
-		ConfigStore.SaveGlobal(Live.Global);
+		lock (ConfigStore.GlobalEditGate) {
+			Live.Global.Theme = want;
+			ConfigStore.SaveGlobal(Live.Global);
+		}
 
 		return $"Dashboard set to the {want} theme. Reload the page to see it.";
 	}
@@ -1296,8 +1335,13 @@ public static partial class Commands {
 			return NoSuchAccount(mgr, args[0]);
 		}
 
-		bot.Cfg.Enabled = enabled;
-		ConfigStore.SaveBot(bot.Name, bot.Cfg);
+		// Changed and saved under the account's lock, like every change to its settings: a dashboard save of the same account
+		// at the same moment put its older copy back, in memory and on disk.
+		lock (bot.CfgGate) {
+			bot.Cfg.Enabled = enabled;
+			ConfigStore.SaveBot(bot.Name, bot.Cfg);
+		}
+
 		ApplyBotSideEffects(bot, Settings.FindBot("Enabled")!);
 
 		return $"{bot.Name}: {(enabled ? "enabled - logging in" : "disabled - logging out")}";
@@ -2081,8 +2125,8 @@ public static partial class Commands {
 			return $"'{args[1]}' is not an appID - it's the number in a game's store URL.";
 		}
 
-		if ((args.Length < 3) || !double.TryParse(args[2], out double hours) || !double.IsFinite(hours) || (hours <= 0)) {
-			return "How many hours? e.g.  grind " + args[0] + " " + appId + " 6";
+		if ((args.Length < 3) || !TryHours(string.Join("", args[2..]), out double hours)) {
+			return "How many hours? e.g.  grind " + args[0] + " " + appId + " 6   (or 1.5, 90m, 1h30m)";
 		}
 
 		hours = Math.Min(hours, 24 * 7);
@@ -2523,7 +2567,7 @@ public static partial class Commands {
 		string verb = args.Length > 2 ? args[2].ToLowerInvariant() : "list";
 
 		if (verb == "list") {
-			return DescribeAchievements(bot, set);
+			return DescribeAchievements(bot, set, set.Total > 0 ? await DlcAchievements.ViewAsync(bot, appId, TimeSpan.Zero).ConfigureAwait(false) : null);
 		}
 
 		if (verb is not ("unlock" or "lock")) {
@@ -2539,8 +2583,29 @@ public static partial class Commands {
 
 		List<Achievement> chosen;
 
+		// Never one from DLC this account doesn't own - asked for by name or not. It's on the profile for anybody to
+		// see, and nobody could have earned it. There is no way round this here: buy the DLC, and it's allowed.
+		// Putting one BACK is fine, so only an unlock asks. A game not worked out yet gets a short wait - enough for
+		// one with no DLC - and is otherwise refused until it has been.
+		DlcAchievements.View? dlc = null;
+
+		if (unlock && (set.Total > 0)) {
+			dlc = await DlcAchievements.ViewAsync(bot, appId, TimeSpan.FromSeconds(20)).ConfigureAwait(false);
+
+			if (!dlc.Known) {
+				return new Said("Still checking which of {0}'s achievements come with DLC - try again in a few minutes.", GameNames.Of(appId)).ToString();
+			}
+		}
+
+		int held = 0;
+
 		if (target.Equals("all", StringComparison.OrdinalIgnoreCase)) {
 			chosen = (unlock ? set.Locked : set.Unlocked.Where(static a => a.Settable)).ToList();
+
+			if (dlc != null) {
+				held = chosen.Count(a => !dlc.Allows(a));
+				chosen = [.. chosen.Where(dlc.Allows)];
+			}
 		} else {
 			Achievement? one = set.All.FirstOrDefault(a => a.Name.Equals(target, StringComparison.OrdinalIgnoreCase));
 
@@ -2552,25 +2617,44 @@ public static partial class Commands {
 				return $"\"{one.Display}\" is awarded by Steam's own servers - a client isn't allowed to set it.";
 			}
 
+			if ((dlc != null) && !dlc.Allows(one)) {
+				return dlc.Of(one) switch {
+					DlcAchievements.Hold.Unmapped => new Said("\"{0}\" may come with DLC {1} doesn't own, and Steam doesn't list which achievements that DLC adds ({2}) - it won't be unlocked.",
+						one.Display, bot.Name, Few(dlc.Missing(one))) + " " + VouchHint(bot, appId),
+					DlcAchievements.Hold.Checking => new Said("Still checking which of {0}'s achievements come with DLC - try again in a few minutes.", GameNames.Of(appId)).ToString(),
+					_ => new Said("\"{0}\" comes with DLC {1} doesn't own ({2}) - it won't be unlocked.", one.Display, bot.Name, string.Join(", ", dlc.Missing(one))).ToString()
+				};
+			}
+
 			chosen = [one];
 		}
 
+		// Said with the answer, whatever it is, so "unlocked 40" is never read as "all of them".
+		string heldNote = held == 0 ? ""
+			: dlc is { Unmapped: true } ? " " + new Said("{0} left alone - can't tell which achievements come with its DLC", held) + "."
+			: " " + new Said("{0} left alone - from DLC this account doesn't own", held) + ".";
+
 		if (chosen.Count == 0) {
-			return unlock ? "Nothing left to unlock." : "Nothing unlocked that can be put back.";
+			return (unlock ? "Nothing left to unlock." : "Nothing unlocked that can be put back.") + heldNote;
 		}
 
-		(bool ok, string message) = await Achievements.SetAsync(bot, set, chosen, unlock).ConfigureAwait(false);
+		(bool ok, string message, int changed) = await Achievements.SetAsync(bot, set, chosen, unlock, dlc: dlc).ConfigureAwait(false);
 
 		if (!ok) {
 			return $"{bot.Name}: {message}";
 		}
 
+		// Already that way by the time it wrote (the pacer got there first): said, but not logged as an unlock.
+		if (changed == 0) {
+			return (unlock ? "Nothing left to unlock." : "Nothing unlocked that can be put back.") + heldNote;
+		}
+
 		Log.Reward(new Said("{0} in {1}", message, GameNames.Of(appId)), bot.Name, topic: Topic.Achievements);
 
-		return $"{bot.Name}: {message} in {GameNames.Of(appId)}.";
+		return $"{bot.Name}: {message} in {GameNames.Of(appId)}.{heldNote}";
 	}
 
-	private static string DescribeAchievements(Bot bot, AchievementSet set) {
+	private static string DescribeAchievements(Bot bot, AchievementSet set, DlcAchievements.View? dlc = null) {
 		// Steam's answer for a game with no stats at all - "0/0 unlocked" and a legend for an empty list said the
 		// same thing far less clearly.
 		//
@@ -2590,16 +2674,244 @@ public static partial class Commands {
 
 		// Easiest first, which is both the order they would really be earned in and the order that makes the
 		// list readable - the ones near the top are the ones anybody playing would already have.
+		// From DLC this account doesn't own: marked, because none of those is ever unlocked - and one that already is
+		// wasn't earned by playing, so it's worth seeing.
+		//
+		// In a game where it can't be told which achievements come with a DLC it doesn't own, the rest are marked too:
+		// they're left alone just the same, and the list shouldn't read as if they could be unlocked.
+		bool anyDlc = false, anyUnsure = false;
+
 		foreach (Achievement a in set.All.OrderByDescending(static a => a.GlobalPercent ?? 50)) {
-			string mark = a.Unlocked ? "x" : a.Settable ? " " : "-";
+			DlcAchievements.Hold hold = dlc?.Of(a) ?? DlcAchievements.Hold.None;
+			bool fromDlc = hold == DlcAchievements.Hold.NotOwned;
+			bool unsure = !a.Unlocked && (hold == DlcAchievements.Hold.Unmapped);
+			string mark = a.Unlocked ? (fromDlc ? "X" : "x") : fromDlc ? "d" : unsure ? "?" : a.Settable ? " " : "-";
 			string rarity = a.GlobalPercent is { } p ? $"{p,5:0.#}%" : "     ?";
+			anyDlc |= fromDlc;
+			anyUnsure |= unsure;
 			sb.AppendLine($"  [{mark}] {rarity}  {Log.Pad(a.Name, 34)} {a.Display}");
 		}
 
 		sb.Append("  [x] unlocked   [ ] can be unlocked   [-] Steam-awarded only");
 
+		if (anyDlc) {
+			sb.AppendLine().Append("  [d] ").Append(new Said("from DLC this account doesn't own - never unlocked")).Append("   [X] ").Append(new Said("unlocked, but from DLC this account doesn't own"));
+		}
+
+		if (anyUnsure) {
+			sb.AppendLine().Append("  [?] ").Append(new Said("can't tell which achievements come with its DLC - left alone")).Append(" (").Append(new Said("see 'dlcach {0} {1}'", bot.Name, set.AppId)).Append(')');
+		}
+
+		if (!anyDlc && !anyUnsure && dlc is { Known: false }) {
+			sb.AppendLine().Append("  ").Append(new Said("Still checking which of {0}'s achievements come with DLC - try again in a few minutes.", GameNames.Of(set.AppId)));
+		}
+
 		return sb.ToString();
 	}
+
+	/// <summary>
+	/// Achievements that come with DLC, read only. With a game: its DLC that have achievements in its list, and for
+	/// each how many, whether this account owns it, and how many of them it already has - so an unlock from DLC it
+	/// doesn't own, from before this checked or from somewhere else, can be seen. Without one: the games the pacer and
+	/// the hunt work on where that's the case.
+	/// </summary>
+	private static async Task<string> DlcAchAsync(BotManager mgr, string[] args) {
+		if (args.Length == 0) {
+			return string.Join(Environment.NewLine, [
+				"dlcach <account> [appID]",
+				"  dlcach new 1938090   Call of Duty's DLC with achievements, and which this account owns",
+				"  dlcach new           the games it hunts or plays with achievements from DLC it doesn't own"
+			]);
+		}
+
+		Bot? bot = mgr.Get(args[0]);
+
+		if (bot == null) {
+			return NoSuchAccount(mgr, args[0]);
+		}
+
+		if (!bot.IsOnline) {
+			return $"{bot.Name} isn't logged in.";
+		}
+
+		if (args.Length > 1) {
+			if (!uint.TryParse(args[1], out uint app) || (app == 0)) {
+				return $"'{args[1]}' is not an appID - it's the number in a game's store URL.";
+			}
+
+			return await DlcAchGameAsync(bot, app).ConfigureAwait(false);
+		}
+
+		// The games it works on: what the pacer has tracked, and what the hunt has lined up.
+		List<uint> apps = [.. (BotManager.ModuleOf<AchievementPacer>(bot)?.Snapshot().Select(static r => r.App) ?? [])
+			.Concat(BotManager.ModuleOf<AchievementBoost>(bot)?.Plan().Next.Select(static r => r.App) ?? [])
+			.Distinct()];
+
+		if (apps.Count == 0) {
+			return new Said("{0}: the achievement pacer and the hunt haven't worked on any game yet", bot.Name).ToString();
+		}
+
+		// Only what is already worked out is read now. The rest is asked for - twenty at a time at most, one game after
+		// another, slowly - and a later look has them. A hunt list can be hundreds of games, and working them all out at
+		// once is hundreds of questions to the store.
+		List<string> rows = [];
+		List<string> vouched = [];
+		int waiting = 0, asked = 0;
+
+		foreach (uint app in apps) {
+			DlcAchievements.Map? map = DlcAchievements.Current(app);
+
+			if (map == null) {
+				waiting++;
+
+				if (!DlcAchievements.IsPending(app) && (asked < 20)) {
+					DlcAchievements.Request(bot, app);
+					asked++;
+				}
+
+				continue;
+			}
+
+			if (map.Groups.Count == 0) {
+				continue;
+			}
+
+			DlcAchievements.View view = await DlcAchievements.ViewAsync(bot, app, TimeSpan.Zero).ConfigureAwait(false);
+
+			// Vouched for: nothing held, and said so, so a game missing from the list isn't a puzzle.
+			if (view.Trusted) {
+				vouched.Add($"{GameNames.Of(app)} ({app})");
+
+				continue;
+			}
+
+			if (view.NotOwnedCount == 0) {
+				continue;
+			}
+
+			AchievementSet? set = await Achievements.GetAsync(bot, app).ConfigureAwait(false);
+			Said got = set is { Total: > 0 } ? new Said("{0} of them unlocked", view.UnlockedWithout(set)) : new Said("couldn't read what it has unlocked");
+
+			rows.Add($"  {GameNames.Of(app)} ({app}) - " + (view.Unmapped
+				? new Said("{0} left alone - can't tell which achievements come with its DLC", view.NotOwnedCount)
+				: new Said("{0} from DLC it doesn't own, {1}", view.NotOwnedCount, got)));
+		}
+
+		List<string> lines = rows.Count == 0
+			? [new Said("{0}: none of the games it hunts or plays has achievements from DLC it doesn't own", bot.Name)]
+			: [new Said("{0}: games with achievements left alone for DLC it doesn't own (never unlocked)", bot.Name), .. rows];
+
+		if (vouched.Count > 0) {
+			lines.Add("  " + new Said("Nothing held in {0} - you listed them as owning all their DLC", string.Join(", ", vouched)));
+		}
+
+		if (waiting > 0) {
+			lines.Add("  " + new Said("{0} more game(s) still being looked at - ask again in a few minutes", waiting));
+		}
+
+		return string.Join(Environment.NewLine, lines);
+	}
+
+	private static async Task<string> DlcAchGameAsync(Bot bot, uint app) {
+		DlcAchievements.View view = await DlcAchievements.ViewAsync(bot, app, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+
+		if (view.Map is not { } map) {
+			return new Said("Still working out {0}'s DLC - try again in a few minutes.", GameNames.Of(app)).ToString();
+		}
+
+		// Couldn't read which DLC it owns just now: nothing in the game is unlocked until it can, and nothing is said
+		// about owning or not owning.
+		if (!view.Known) {
+			return new Said("Couldn't read which DLC {0} owns just now - nothing in {1} is unlocked until it can. Try again in a few minutes.", bot.Name, GameNames.Of(app)).ToString();
+		}
+
+		AchievementSet? set = await Achievements.GetAsync(bot, app).ConfigureAwait(false);
+		List<DlcAchievements.Group> placed = [.. map.Groups.Where(static g => g.Unsure == DlcAchievements.Doubt.None)];
+		List<DlcAchievements.Group> unsure = [.. map.Groups.Where(static g => g.Unsure != DlcAchievements.Doubt.None)];
+		List<string> lines = [new Said("{0} on {1}: {2} DLC, {3} with achievements in its list", GameNames.Of(app), bot.Name, map.DlcCount, placed.Count)];
+
+		// The owner's word: every DLC counted as owned, whatever the licences say. Said first, so what follows - which
+		// DLC the licences do and don't show - isn't read as "held".
+		if (view.Trusted) {
+			lines.Add("  " + new Said("Trusted: you listed it as owning all its DLC (\"Games I own all the DLC for\"), so nothing in it is held for DLC."));
+		}
+
+		foreach (DlcAchievements.Group g in placed) {
+			// What the licences say, for showing - not what the rule counts, which for a game vouched for is everything.
+			bool owned = view.Licensed.Contains(g.App);
+			int count = g.Located;
+			Said got = new("couldn't read what it has unlocked");
+
+			if (set is { Total: > 0 }) {
+				count = set.All.Count(a => view.In(a, g.App));
+				int unlocked = set.All.Count(a => a.Unlocked && view.In(a, g.App));
+				got = !owned && !view.Trusted && (unlocked > 0)
+					? new Said("{0} of them unlocked without owning it", unlocked)
+					: new Said("{0} of them unlocked", unlocked);
+			}
+
+			string name = g.Name.Length > 0 ? g.Name : GameNames.Of(g.App);
+			Said how = g.ByName && (g.Total == 0) ? new Said("found by its name")
+				: (g.Total > 0) && !g.Exact ? new Said("the store's names didn't line up, so more are held back to be safe")
+				: default;
+
+			Said state = owned ? new Said("owned")
+				: view.Trusted ? new Said("not in its licences, but counted as owned - you listed the game")
+				: new Said("not owned - never unlocked");
+
+			lines.Add($"  {name} ({g.App}): " + new Said("{0} achievement(s), {1}, {2}", count, state, got)
+				+ (how.IsEmpty ? "" : " - " + how));
+		}
+
+		// DLC whose achievements, if they have any, can't be placed. Owned, they change nothing. Not owned, the whole game
+		// is held but for the DLC it owns - said as that, with which DLC and why, so it's plain why nothing is unlocked.
+		List<DlcAchievements.Group> missing = [.. unsure.Where(g => !view.Owned.Contains(g.App))];
+
+		if (missing.Count > 0) {
+			int held = set is { Total: > 0 } ? view.HeldIn(set) : view.NotOwnedCount;
+
+			lines.Add("  " + new Said("Held: {0} is missing DLC, and Steam doesn't list which achievements they add - so {1} achievement(s) outside the DLC it owns are left alone.", bot.Name, held));
+
+			foreach (DlcAchievements.Group g in missing.Take(10)) {
+				Said why = g.Unsure switch {
+					DlcAchievements.Doubt.BasePage => new Said("its store page is the game's own"),
+					DlcAchievements.Doubt.Delisted => new Said("it isn't on the store any more"),
+					DlcAchievements.Doubt.NotFound => new Said("the store's names for its achievements aren't in the game's list"),
+					_ => new Said("the store gives no achievement figures for it")
+				};
+
+				lines.Add($"    {(g.Name.Length > 0 ? g.Name : GameNames.Of(g.App))} ({g.App}): " + new Said("not owned - {0}", why));
+			}
+
+			if (missing.Count > 10) {
+				lines.Add("    " + new Said("and {0} more", missing.Count - 10));
+			}
+
+			lines.Add("  " + VouchHint(bot, app));
+		} else if (view.Trusted) {
+			// Said above: nothing is held, whatever the licences show.
+		} else if (unsure.Count > 0) {
+			lines.Add("  " + new Said("Steam doesn't list which achievements {0} of its DLC add, but {1} owns all of those - nothing is held for them.", unsure.Count, bot.Name));
+		} else if (map.DlcCount == 0) {
+			lines.Add("  " + new Said("It has no DLC."));
+		} else if (placed.Count == 0) {
+			lines.Add("  " + new Said("None of its DLC add achievements to its list - they're soundtracks and the like."));
+		}
+
+		return string.Join(Environment.NewLine, lines);
+	}
+
+	/// <summary>
+	/// How the owner vouches for a game held for DLC Steam says nothing about. Only they know whether the account has it
+	/// all, so it is theirs to say - and a held game says how.
+	/// </summary>
+	private static Said VouchHint(Bot bot, uint app) =>
+		new("If {0} owns all of {1}'s DLC, add {2} to \"Games I own all the DLC for\" in its settings - then nothing in it is held for DLC.",
+			bot.Name, GameNames.Of(app), app);
+
+	/// <summary>A few names, then how many more: a game can have a hundred DLC.</summary>
+	private static string Few(List<string> names) =>
+		names.Count <= 3 ? string.Join(", ", names) : string.Join(", ", names.Take(3)) + ", " + new Said("and {0} more", names.Count - 3);
 
 	private static string Play(BotManager mgr, string[] args) {
 		if (args.Length < 2) {
@@ -2618,16 +2930,57 @@ public static partial class Commands {
 			return new Said("{0} is in human mode - it plays the games in \"Games and how often\" (GameWeights), not this list", bot.Name).ToString();
 		}
 
-		string? error = Settings.Apply(bot.Cfg, Settings.FindBot("IdleGames")!, string.Join(',', args[1..]));
+		lock (bot.CfgGate) {
+			string? error = Settings.Apply(bot.Cfg, Settings.FindBot("IdleGames")!, string.Join(',', args[1..]));
 
-		if (error != null) {
-			return error;
+			if (error != null) {
+				return error;
+			}
+
+			ConfigStore.SaveBot(bot.Name, bot.Cfg);
 		}
 
-		ConfigStore.SaveBot(bot.Name, bot.Cfg);
 		BotManager.ModuleOf<Idler>(bot)?.Assert();
 
 		return bot.Cfg.IdleGames.Count == 0 ? $"{bot.Name}: stopped idling" : $"{bot.Name}: idling {string.Join(", ", bot.Cfg.IdleGames)}";
+	}
+
+	/// <summary>
+	/// A length of time as people type it: "6", "1.5" or "1,5" (whatever the PC's language), "1h", "90m", "1h30m", "2h 15m".
+	/// In hours. It used to be the PC's own number format only - "1h" was refused, and on a German PC so was "1.5".
+	/// At least a minute: "0.5m" started a grind of half a minute, shown as "0m", over before anything had happened.
+	/// </summary>
+	public static bool TryHours(string text, out double hours) {
+		hours = 0;
+		string t = text.Trim().ToLowerInvariant().Replace(" ", "", StringComparison.Ordinal).Replace(',', '.');
+
+		// A bare number is hours.
+		// [0-9], not \d: \d takes every script's digits, a full-width "３" among them, and double.Parse only reads 0-9 -
+		// typed on a Japanese keyboard, 'grind' threw instead of answering.
+		if (System.Text.RegularExpressions.Regex.IsMatch(t, @"^[0-9]+(?:\.[0-9]+)?$")) {
+			hours = double.Parse(t, CultureInfo.InvariantCulture);
+
+			return AtLeastAMinute(hours);
+		}
+
+		// Otherwise every number has its unit, and the pieces cover the whole text: "1h30m" yes, "1h30" no. One pattern
+		// with both parts optional read "90m" as 9 hours and 0 minutes.
+		System.Text.RegularExpressions.MatchCollection parts = System.Text.RegularExpressions.Regex.Matches(t,
+			@"([0-9]+(?:\.[0-9]+)?)(hours|hour|hrs|hr|h|minutes|minute|mins|min|m)");
+
+		if ((parts.Count == 0) || (string.Concat(parts.Select(static p => p.Value)) != t)) {
+			return false;
+		}
+
+		foreach (System.Text.RegularExpressions.Match part in parts) {
+			double n = double.Parse(part.Groups[1].Value, CultureInfo.InvariantCulture);
+			hours += part.Groups[2].Value.StartsWith('h') ? n : n / 60;
+		}
+
+		return AtLeastAMinute(hours);
+
+		// Rounded first, so "1m" - a sixtieth of an hour, not exactly - still counts as the minute it is.
+		static bool AtLeastAMinute(double h) => double.IsFinite(h) && (Math.Round(h * 60, 6) >= 1);
 	}
 
 	private static string Name(BotManager mgr, string[] args) {
@@ -2651,15 +3004,19 @@ public static partial class Commands {
 
 		string text = string.Join(' ', args[1..]);
 		bool clearing = text.Equals("off", StringComparison.OrdinalIgnoreCase) || text.Equals("clear", StringComparison.OrdinalIgnoreCase);
-		bot.Cfg.CustomGameName = clearing ? "" : text;
 
-		// Naming it is asking for it to be shown. With "Show a custom game name" switched off this answered "now showing"
-		// and the friends list went on showing the real game.
-		if (!clearing) {
-			bot.Cfg.CustomGameNameEnabled = true;
+		lock (bot.CfgGate) {
+			bot.Cfg.CustomGameName = clearing ? "" : text;
+
+			// Naming it is asking for it to be shown. With "Show a custom game name" switched off this answered "now showing"
+			// and the friends list went on showing the real game.
+			if (!clearing) {
+				bot.Cfg.CustomGameNameEnabled = true;
+			}
+
+			ConfigStore.SaveBot(bot.Name, bot.Cfg);
 		}
 
-		ConfigStore.SaveBot(bot.Name, bot.Cfg);
 		BotManager.ModuleOf<Idler>(bot)?.Assert();
 
 		// Human mode always shows the real game (Bot.CustomName), so "now showing" would be untrue there.
@@ -2681,14 +3038,17 @@ public static partial class Commands {
 
 		SettingDef def = Settings.FindBot("OnlineStatus")!;
 
-		// Everything after the account: "looking to trade" is three words, and only the first used to reach here.
-		string? error = Settings.Apply(bot.Cfg, def, string.Join(' ', args[1..]));
+		lock (bot.CfgGate) {
+			// Everything after the account: "looking to trade" is three words, and only the first used to reach here.
+			string? error = Settings.Apply(bot.Cfg, def, string.Join(' ', args[1..]));
 
-		if (error != null) {
-			return error;
+			if (error != null) {
+				return error;
+			}
+
+			ConfigStore.SaveBot(bot.Name, bot.Cfg);
 		}
 
-		ConfigStore.SaveBot(bot.Name, bot.Cfg);
 		bot.ApplyPersona();
 
 		return $"{bot.Name}: {Settings.ChoiceLabel(def, bot.Cfg.OnlineStatus)}";
@@ -3509,20 +3869,27 @@ public static partial class Commands {
 
 		if (bot != null && args.Length >= 3 && Settings.FindBot(args[1]) != null) {
 			SettingDef def = Settings.FindBot(args[1])!;
-			bool wasLegit = bot.Cfg.LegitMode;
-			string? error = Settings.Apply(bot.Cfg, def, Unquote(string.Join(' ', args[2..])));
+			List<string> pulled;
 
-			if (error != null) {
-				return error;
+			// The change and its save under the account's lock: a dashboard save of it at the same moment put its older copy
+			// back over this one, in memory and on disk.
+			lock (bot.CfgGate) {
+				bool wasLegit = bot.Cfg.LegitMode;
+				string? error = Settings.Apply(bot.Cfg, def, Unquote(string.Join(' ', args[2..])));
+
+				if (error != null) {
+					return error;
+				}
+
+				Settings.ApplyLegitMode(bot.Cfg, wasLegit);
+
+				// Raising a "shortest" above its "longest" (or the reverse) used to be accepted and written to disk.
+				// The dashboard fixed one such pair; this fixes all of them, on both paths.
+				pulled = [.. Settings.FixRanges(bot.Cfg, def.Name).Select(static s => s.ToEnglish())];
+
+				ConfigStore.SaveBot(bot.Name, bot.Cfg);
 			}
 
-			Settings.ApplyLegitMode(bot.Cfg, wasLegit);
-
-			// Raising a "shortest" above its "longest" (or the reverse) used to be accepted and written to disk.
-			// The dashboard fixed one such pair; this fixes all of them, on both paths.
-			List<string> pulled = [.. Settings.FixRanges(bot.Cfg, def.Name).Select(static s => s.ToEnglish())];
-
-			ConfigStore.SaveBot(bot.Name, bot.Cfg);
 			ApplyBotSideEffects(bot, def);
 
 			return $"{bot.Name}.{def.Name} = {Settings.Show(bot.Cfg, def)}"
@@ -3552,15 +3919,22 @@ public static partial class Commands {
 				: $"There's no setting called '{args[0]}'. 'config' lists the global ones, 'config <account>' the per-account ones.";
 		}
 
-		string passwordBefore = mgr.Global.WebPassword;
-		string? failure = Settings.Apply(mgr.Global, globalDef, Unquote(string.Join(' ', args[1..])));
+		string passwordBefore;
 
-		if (failure != null) {
-			return failure;
+		// Under the lock every change to the live settings takes: 'reload' or a restore swapping them in the meantime took
+		// this change away with the settings it was made on.
+		lock (ConfigStore.GlobalEditGate) {
+			passwordBefore = mgr.Global.WebPassword;
+			string? failure = Settings.Apply(mgr.Global, globalDef, Unquote(string.Join(' ', args[1..])));
+
+			if (failure != null) {
+				return failure;
+			}
+
+			ConfigStore.SaveGlobal(mgr.Global);
+			mgr.ApplyGlobal(mgr.Global);
 		}
 
-		ConfigStore.SaveGlobal(mgr.Global);
-		mgr.ApplyGlobal(mgr.Global);
 		ApplyGlobalSideEffects(mgr, globalDef);
 
 		// A new password ends every browser's session, like the dashboard's own save. Only when it really changed.
@@ -3648,10 +4022,18 @@ public static partial class Commands {
 				int hours = Live.Global.Rep4RepPauseHours;
 
 				if (hours <= 0) {
-					if (Live.Global.Rep4RepHoldUntil != null) {
-						Live.Global.Rep4RepHoldUntil = null;
-						Live.Global.Rep4RepHoldFrom = null;
-						ConfigStore.SaveGlobal(Live.Global);
+					bool lifted = false;
+
+					lock (ConfigStore.GlobalEditGate) {
+						if (Live.Global.Rep4RepHoldUntil != null) {
+							Live.Global.Rep4RepHoldUntil = null;
+							Live.Global.Rep4RepHoldFrom = null;
+							ConfigStore.SaveGlobal(Live.Global);
+							lifted = true;
+						}
+					}
+
+					if (lifted) {
 						Log.Info("rep4rep hold lifted - commenting resumes");
 					}
 
@@ -3768,18 +4150,28 @@ public static partial class Commands {
 	}
 
 	private static async Task<string> ReloadAsync(BotManager mgr) {
-		string passwordBefore = mgr.Global.WebPassword;
-		GlobalConfig loaded = ConfigStore.LoadGlobal();
+		string passwordBefore;
+		bool broken;
+
+		// Read and swapped in under the lock every change to the live settings takes. A dashboard save running meanwhile
+		// wrote its change onto the settings being thrown away - saved, then gone - or saved the old ones over the file.
+		lock (ConfigStore.GlobalEditGate) {
+			passwordBefore = mgr.Global.WebPassword;
+			GlobalConfig loaded = ConfigStore.LoadGlobal();
+			broken = ConfigStore.GlobalBroken;
+
+			if (!broken) {
+				mgr.ApplyGlobal(loaded);
+			}
+		}
 
 		// A file that doesn't load comes back as defaults. Put in force, one stray comma blanked the dashboard password,
 		// the rep4rep token and the Telegram bot - so the settings in use stay until the file is fixed.
-		if (ConfigStore.GlobalBroken) {
+		if (broken) {
 			await mgr.SyncFromDiskAsync().ConfigureAwait(false);
 
 			return new Said("nocatFarm.json didn't load - still on the settings in use; fix it and 'reload' again").ToString();
 		}
-
-		mgr.ApplyGlobal(loaded);
 
 		// A password changed in the file and reloaded ends every browser's session, like a change anywhere else.
 		if (!string.Equals(passwordBefore, mgr.Global.WebPassword, StringComparison.Ordinal)) {

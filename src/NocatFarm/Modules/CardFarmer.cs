@@ -66,16 +66,70 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 	// Optional cap on how many accounts farm at once. Farming is the only thing here that hammers the community
 	// site, so on a machine running a lot of accounts this is the knob that keeps Steam happy.
-	private static SemaphoreSlim? _slots;
+	//
+	// One count of the slots in use, whatever the limit is changed to. A new semaphore each time the setting changed
+	// handed out a full set of fresh slots while the accounts on the old ones kept farming - lowered from 3 to 1, four
+	// accounts farmed at once.
+	private static readonly Lock SlotGate = new();
 	private static int _limit;
+	private static int _held;
+	private static TaskCompletionSource _slotFreed = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
 	public static void ApplyConcurrencyLimit(int limit) {
-		if (limit == _limit) {
-			return;
-		}
+		lock (SlotGate) {
+			if (limit == _limit) {
+				return;
+			}
 
-		_limit = limit;
-		_slots = limit > 0 ? new SemaphoreSlim(limit, limit) : null;
+			_limit = limit;
+			SlotFreedLocked();   // a higher limit (or none) lets the ones waiting go now
+		}
+	}
+
+	/// <summary>Whether there's a limit at all.</summary>
+	private static bool SlotsLimited {
+		get {
+			lock (SlotGate) {
+				return _limit > 0;
+			}
+		}
+	}
+
+	/// <summary>Wait for a farming slot. True when one was taken (give it back with <see cref="ReleaseSlot"/>); false
+	/// when there's no limit, so nothing was taken.</summary>
+	internal static async Task<bool> TakeSlotAsync(CancellationToken ct) {
+		while (true) {
+			Task freed;
+
+			lock (SlotGate) {
+				if (_limit <= 0) {
+					return false;
+				}
+
+				if (_held < _limit) {
+					_held++;
+
+					return true;
+				}
+
+				freed = _slotFreed.Task;
+			}
+
+			await freed.WaitAsync(ct).ConfigureAwait(false);
+		}
+	}
+
+	internal static void ReleaseSlot() {
+		lock (SlotGate) {
+			_held = Math.Max(0, _held - 1);
+			SlotFreedLocked();
+		}
+	}
+
+	private static void SlotFreedLocked() {
+		TaskCompletionSource freed = _slotFreed;
+		_slotFreed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		freed.TrySetResult();
 	}
 
 	private readonly List<FarmTarget> _queue = [];
@@ -107,7 +161,20 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	private bool _saidNothingLeft;
 
 	public override string Name => "cards";
-	public override string Status => _status;
+	public override string Status => _settling && (BotManager.ModuleOf<HumanMode>(Bot) is { } w) ? SettlingSaid(w) : _status;
+
+	/// <summary>
+	/// Set while the farmer waits out human mode's settle after signing in. The wait is re-checked once a minute, so
+	/// a status written then was up to a minute old, and rounded the other way from human mode's own line: the two
+	/// read "~6m" and "4m" for the same settle, side by side. Worked out on read instead, from the same clock.
+	/// </summary>
+	private volatile bool _settling;
+
+	private static Said SettlingSaid(HumanMode warmup) {
+		int mins = warmup.WarmUpMinutesLeft;
+
+		return mins > 0 ? new Said("settling in first (~{0}m), then farming", mins) : new Said("settling in first, then farming");
+	}
 
 	private CardPace? _pace;
 	private CardPace Pace => _pace ??= new CardPace(Bot.Name);
@@ -188,6 +255,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			// The loop stays alive when farming is off, so switching it back on takes effect straight away
 			// instead of needing a restart.
 			if (!Bot.EffectiveFarmCards) {
+				// The settle's countdown goes too: it is only cleared at the top of a farming pass, which this never gets
+				// to, and Status reads it first - "settling in first (~4m)" stayed up for as long as farming was off.
+				_settling = false;
 				_status = new Said("off");
 				Release();
 
@@ -353,7 +423,6 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		}
 	}
 
-	/// <summary>One discovery + farming pass. Returns how many minutes to wait before looking again.</summary>
 	/// <summary>
 	/// Cards are left, but the farmer is deliberately waiting - for bedtime, its clock window or its next sitting.
 	/// Human mode reads this: stepping aside for a farmer that isn't going to farm left the account sitting online
@@ -361,7 +430,10 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	/// </summary>
 	public bool HoldingBack { get; private set; }
 
+	/// <summary>One discovery + farming pass. Returns how many minutes to wait before looking again.</summary>
 	private async Task<int> CycleAsync(CancellationToken ct) {
+		_settling = false;
+
 		if (Bot.Grinding) {
 			// A drop run is a grind the farmer watches: it counts the drops and ends it once they're in.
 			if ((Bot.GrindDropsLeft > 0) && (DateTime.UtcNow >= Bot.GrindStartsAt)) {
@@ -391,8 +463,8 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		// The owner-safety part still applies, though. Skipping it started night farming seconds after signing in,
 		// while Steam's word that the owner is playing can still be minutes behind.
 		if (Bot.HumanOwned && (warmup != null) && !warmup.WarmedUp && !(warmup.InBed && warmup.SafeToPlay)) {
-			int mins = warmup.WarmUpMinutesLeft;
-			_status = mins > 0 ? new Said("settling in first (~{0}m), then farming", mins) : new Said("settling in first, then farming");
+			_status = SettlingSaid(warmup);
+			_settling = true;
 
 			return 1;
 		}
@@ -639,17 +711,19 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		// holding back too - it can take hours with several accounts farming - so human mode keeps its day meanwhile.
 		// The flag is cleared only here, once every gate has passed: clearing it at the top of each cycle dropped it
 		// for any cycle that ended early (a badge page that didn't load), and human mode went idle again.
-		SemaphoreSlim? slots = _slots;
+		bool slot = false;
 
-		if (slots != null) {
+		if (SlotsLimited) {
 			_status = new Said("waiting for a farming slot");
 			HoldingBack = true;
-			await slots.WaitAsync(ct).ConfigureAwait(false);
+			slot = await TakeSlotAsync(ct).ConfigureAwait(false);
 
 			// That wait can be hours. Whatever the account is doing by now - a break, bedtime, you, a grind - wins over
 			// a slot that finally came free.
 			if (!MayFarmNow()) {
-				slots.Release();
+				if (slot) {
+					ReleaseSlot();
+				}
 
 				return 1;
 			}
@@ -669,7 +743,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				await BumpHoursAsync(visible ? [.. underThreshold.Take(1)] : underThreshold, threshold, ct).ConfigureAwait(false);
 			}
 		} finally {
-			slots?.Release();
+			if (slot) {
+				ReleaseSlot();
+			}
 		}
 
 		return 1;
@@ -895,12 +971,20 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			// Not the same number of minutes every time: the badge page is read on an uneven beat.
 			DateTime recheckAt = DateTime.UtcNow + (check * (0.8 + (Rng.Next(0, 46) / 100.0)));
 
-			while (!pushed && !ct.IsCancellationRequested && (DateTime.UtcNow < recheckAt) && Bot.CanPlay && !Bot.Grinding && !ScheduleWantsItBack() && !OutsideOwnHours()) {
+			// Its game still on, too: the idler checking "is it farming" a moment before the claim above could still send its
+			// own list over the farm game, and nothing put the farm game back until the next badge read - many minutes.
+			while (!pushed && !ct.IsCancellationRequested && (DateTime.UtcNow < recheckAt) && Bot.CanPlay && !Bot.Grinding && !ScheduleWantsItBack() && !OutsideOwnHours()
+				&& Bot.PlayingApps.Contains(game.AppId)) {
 				TimeSpan left = recheckAt - DateTime.UtcNow;
 				pushed = await Bot.WaitForItemDropAsync(left < TimeSpan.FromSeconds(20) ? left : TimeSpan.FromSeconds(20), ct).ConfigureAwait(false);
 			}
 
 			if (!pushed && (DateTime.UtcNow < recheckAt)) {
+				// A game knocked off is put back at the top - after a breath, so two modules can't trade it back and forth flat out.
+				if (!Bot.PlayingApps.Contains(game.AppId)) {
+					await Task.Delay(TimeSpan.FromSeconds(3), ct).ConfigureAwait(false);
+				}
+
 				continue;   // cut short by one of those - the top of the loop deals with it, no page read needed
 			}
 
@@ -926,6 +1010,13 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			}
 
 			int before = game.CardsRemaining;
+
+			// Before the count goes to 0: human mode reads "no cards left" and "which game just gave its last" from another
+			// thread, and set after, it saw the first without the second and ended the sitting the plain way - no play-on.
+			if (fresh.CardsRemaining == 0) {
+				FinishedGame = game.AppId;
+			}
+
 			game.CardsRemaining = fresh.CardsRemaining;
 			game.HoursPlayed = fresh.HoursPlayed;
 			Bot.CardsRemaining = Queue.Sum(static g => g.CardsRemaining);
@@ -1029,7 +1120,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	/// time is only the cap for a game that stops dropping.
 	/// </summary>
 	private async Task DropRunAsync(CancellationToken ct) {
-		uint app = Bot.GrindGame;
+		// This run by its number: a grind started in its place while a badge page loads (another game, or the same one
+		// again) is a new run, and nothing here counts it down or ends it.
+		(uint app, long run) = Bot.CurrentGrind;
 		FarmTarget? start = await GetGameCardsAsync(app, ct).ConfigureAwait(false);
 
 		if (start == null) {
@@ -1042,8 +1135,9 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		string name = GameNames.Of(app);
 
 		if (start.CardsRemaining == 0) {
-			Log.Good(new Said("drop run over - {0} has no drops left", name), Bot.Name);
-			Bot.StopGrind();
+			if (Bot.StopGrind(run)) {
+				Log.Good(new Said("drop run over - {0} has no drops left", name), Bot.Name);
+			}
 
 			return;
 		}
@@ -1055,13 +1149,13 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 		DateTime sinceDrop = DateTime.UtcNow;
 		bool measuring = false;
 
-		while (!ct.IsCancellationRequested && Bot.Grinding && (Bot.GrindGame == app) && (Bot.GrindDropsLeft > 0)) {
+		while (!ct.IsCancellationRequested && Bot.Grinding && (Bot.GrindRun == run) && (Bot.GrindDropsLeft > 0)) {
 			_status = new Said("drop run on {0} - {1} to go", name, Bot.GrindDropsLeft);
 
 			bool pushed = false;
 			DateTime recheckAt = DateTime.UtcNow + (check * (0.8 + (Rng.Next(0, 46) / 100.0)));
 
-			while (!pushed && !ct.IsCancellationRequested && (DateTime.UtcNow < recheckAt) && Bot.Grinding && (Bot.GrindGame == app)) {
+			while (!pushed && !ct.IsCancellationRequested && (DateTime.UtcNow < recheckAt) && Bot.Grinding && (Bot.GrindRun == run)) {
 				// You playing, or a pause: the game isn't running, so this stretch doesn't count towards a card's pace.
 				if (!Bot.CanPlay) {
 					sinceDrop = DateTime.UtcNow;
@@ -1072,7 +1166,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 				pushed = await Bot.WaitForItemDropAsync(left < TimeSpan.FromSeconds(20) ? left : TimeSpan.FromSeconds(20), ct).ConfigureAwait(false);
 			}
 
-			if (ct.IsCancellationRequested || !Bot.Grinding || (Bot.GrindGame != app)) {
+			if (ct.IsCancellationRequested || !Bot.Grinding || (Bot.GrindRun != run)) {
 				break;
 			}
 
@@ -1116,15 +1210,20 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			}
 
 			Bot.CardsRemaining = Queue.Sum(static g => g.CardsRemaining);
-			Bot.CountGrindDrops(dropped);
+			bool counted = Bot.CountGrindDrops(dropped, app, run);
 			Plugins.PluginHost.RaiseCardDropped(Bot, app, cards);
+
+			// Another grind started while the page loaded: its count and its end are its own, not this run's.
+			if (!counted) {
+				return;
+			}
+
 			Log.Reward(new Said("card dropped in {0} - {1} more on this drop run", name, Bot.GrindDropsLeft), Bot.Name);
 
-			if ((cards == 0) || (Bot.GrindDropsLeft == 0)) {
+			if (((cards == 0) || (Bot.GrindDropsLeft == 0)) && Bot.StopGrind(run)) {
 				Log.Good(cards == 0
 					? new Said("drop run done - {0} has no drops left", name)
 					: new Said("drop run done - back to the usual day"), Bot.Name);
-				Bot.StopGrind();
 
 				return;
 			}
@@ -1132,9 +1231,12 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 
 		// Ran out of time before the drops came - said, and cleared, rather than left looking like a run. Not on the
 		// way out of the app: a run still going then is picked back up after the restart.
-		if (!ct.IsCancellationRequested && !Bot.Grinding && (Bot.GrindGame == app) && (Bot.GrindDropsLeft > 0)) {
-			Log.Info(new Said("drop run on {0} timed out, {1} drop(s) short", name, Bot.GrindDropsLeft), Bot.Name);
-			Bot.StopGrind();
+		if (!ct.IsCancellationRequested && !Bot.Grinding && (Bot.GrindRun == run) && (Bot.GrindDropsLeft > 0)) {
+			int shortBy = Bot.GrindDropsLeft;
+
+			if (Bot.StopGrind(run)) {
+				Log.Info(new Said("drop run on {0} timed out, {1} drop(s) short", name, shortBy), Bot.Name);
+			}
 		}
 	}
 

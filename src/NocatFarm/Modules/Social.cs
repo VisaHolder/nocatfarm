@@ -37,12 +37,18 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 		}
 	}
 
+	/// <summary>This run's token, taken once when it starts - see <see cref="WaitUntilAwakeAsync"/>.</summary>
+	private CancellationToken _runToken;
+
 	protected override async Task RunAsync(CancellationToken ct) {
+		_runToken = ct;
 		Bot.FriendRequest += OnFriendRequest;
 		Bot.ClanInvite += OnClanInvite;
 		Bot.ChatMessage += OnChatMessage;
 
 		try {
+			CatchUpWaiting();
+
 			// Everything here is callback-driven. The loop exists only to keep the subscription alive for as long
 			// as the module is running, and to expire the "already replied" list so it can't grow forever.
 			while (!ct.IsCancellationRequested) {
@@ -60,6 +66,53 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 			Bot.FriendRequest -= OnFriendRequest;
 			Bot.ClanInvite -= OnClanInvite;
 			Bot.ChatMessage -= OnChatMessage;
+		}
+	}
+
+	/// <summary>
+	/// Friend requests and group invites that were already waiting when this started.
+	/// </summary>
+	/// <remarks>
+	/// Steam sends the friends list - every request that came in while the account was signed out - straight after signing
+	/// in, and the modules start after that. Nobody was listening yet, so those were never answered; only a request that
+	/// arrived later was. The list it already has is walked once here; one both here and in a list Steam sends meanwhile
+	/// is only handled once (_handledInvites).
+	/// </remarks>
+	internal void CatchUpWaiting() {
+		if (Bot.Friends is not { } friends) {
+			return;
+		}
+
+		List<ulong> people = [];
+		List<ulong> groups = [];
+
+		try {
+			for (int i = 0; i < friends.GetFriendCount(); i++) {
+				SteamID id = friends.GetFriendByIndex(i);
+
+				if (friends.GetFriendRelationship(id) == EFriendRelationship.RequestRecipient) {
+					people.Add(id.ConvertToUInt64());
+				}
+			}
+
+			for (int i = 0; i < friends.GetClanCount(); i++) {
+				SteamID id = friends.GetClanByIndex(i);
+
+				if (friends.GetClanRelationship(id) == EClanRelationship.Invited) {
+					groups.Add(id.ConvertToUInt64());
+				}
+			}
+		} catch (Exception e) when (e is ArgumentOutOfRangeException or InvalidOperationException) {
+			// The list changed while it was read - Steam sending a fresh one, which the handlers see anyway.
+			Log.Debug($"friends list changed while it was read: {Log.Describe(e)}", Bot.Name);
+		}
+
+		foreach (ulong id in people) {
+			OnFriendRequest(id);
+		}
+
+		foreach (ulong id in groups) {
+			OnClanInvite(id);
 		}
 	}
 
@@ -430,7 +483,9 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 	/// same minute, which is a burst no person produces.
 	/// </summary>
 	private async Task WaitUntilAwakeAsync(Func<TimeSpan> afterWaking) {
-		CancellationToken ct = Cts?.Token ?? CancellationToken.None;
+		// The run's own token, not Cts: that is swapped and disposed as the module stops and starts, and read from here - a
+		// request answered hours later - it could be one already disposed, which throws.
+		CancellationToken ct = _runToken;
 		bool held = false;
 
 		while (!ct.IsCancellationRequested && !HumanMode.ReadyFor(Bot)) {

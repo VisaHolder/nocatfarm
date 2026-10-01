@@ -4,12 +4,13 @@
 #   default), after which even the right password from outside is refused while home still gets in; the visitor log;
 #   and turning it back on opening it again.
 # The internet is played by X-Forwarded-For from this machine: nocat.farm only believes that header from loopback,
-# which is exactly how a proxy on the same PC reaches it.
-#   sh tests/security-check.sh http://127.0.0.1:7242 path/to/config
+# which is exactly how a proxy on the same PC reaches it - or from a proxy listed in WebTrustedProxies, which is how
+# Docker (reached from its own network, not loopback) is checked.
+#   sh tests/security-check.sh http://127.0.0.1:7242 path/to/config [the password it already has]
 set -e
 B="$1"
 CONFIG="$2"
-PW="security-check-$(date +%s)-password"
+PW="${3:-security-check-$(date +%s)-password}"
 fails=0
 
 check() {   # name, then the test as a command
@@ -30,8 +31,10 @@ cmd() {   # a command as the signed-in owner
 	curl -s -X POST "$B/api/command" -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d "{\"Line\":\"$1\"}"
 }
 
-# No password yet, so this PC may set one - the way the Phone page does.
-curl -sf -X POST "$B/api/command" -H 'Content-Type: application/json' -d "{\"Line\":\"set WebPassword $PW\"}" > /dev/null
+# No password yet, so this PC may set one - the way the Phone page does. (Docker has one from its .env already.)
+if [ -z "$3" ]; then
+	curl -sf -X POST "$B/api/command" -H 'Content-Type: application/json' -d "{\"Line\":\"set WebPassword $PW\"}" > /dev/null
+fi
 
 curl -sI "$B/" > headers.txt
 check "headers: never inside another site's frame" grep -qi 'X-Frame-Options: DENY' headers.txt

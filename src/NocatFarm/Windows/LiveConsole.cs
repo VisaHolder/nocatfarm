@@ -44,10 +44,20 @@ public sealed class LiveConsole : IDisposable {
 		_enabled = true;
 		Log.Suppressed = true;
 		Log.Written += OnLogged;
+		Prompt.Changed += Repaint;
 
-		// The lines it will show, not the last few entries of which most may be hidden debug detail.
-		foreach (Log.Entry entry in Log.Recent(200).Where(Shown).TakeLast(LogLines)) {
-			_recent.Add(entry);
+		// The lines it will show, not the last few entries of which most may be hidden debug detail. Under the lock
+		// OnLogged takes - it is already subscribed, so a line logged right now arrives there at the same moment - and
+		// merged by sequence number: added bare, the backfill raced those, could put a line in twice, and left the
+		// rows out of order.
+		lock (_recent) {
+			HashSet<long> have = [.. _recent.Select(static e => e.Seq)];
+			_recent.AddRange(Log.Recent(200).Where(Shown).Where(e => !have.Contains(e.Seq)).TakeLast(LogLines));
+			_recent.Sort(static (a, b) => a.Seq.CompareTo(b.Seq));
+
+			while (_recent.Count > LogLines) {
+				_recent.RemoveAt(0);
+			}
 		}
 
 		_cts = new CancellationTokenSource();
@@ -213,8 +223,18 @@ public sealed class LiveConsole : IDisposable {
 				}
 			}
 
-			// The prompt is drawn last and left without a newline, so the cursor ends where the user is typing.
-			sb.Append("\x1b[2K").Append("  > ").Append(_input);
+			// A question waiting for an answer (a Steam Guard code, a password) gets its own line right above the input,
+			// part of the board. Written to the console by itself, the next repaint drew straight over it.
+			Prompt.Question? asked = Prompt.Current;
+
+			if (asked != null) {
+				Line("\x1b[33m  " + asked.Text + ":\x1b[0m");
+			}
+
+			// The prompt is drawn last and left without a newline, so the cursor ends where the user is typing. Then everything
+			// below it is cleared: a board one row shorter than the last (the question answered) left the old prompt row,
+			// "  ? " and all, under the new one. Only here, where the console takes ANSI - Paint does nothing otherwise.
+			sb.Append("\x1b[2K").Append(asked != null ? "  ? " : "  > ").Append(_input).Append("\x1b[J");
 			height++;
 
 			_lastHeight = height;
@@ -393,6 +413,7 @@ public sealed class LiveConsole : IDisposable {
 
 		_enabled = false;
 		Log.Written -= OnLogged;
+		Prompt.Changed -= Repaint;
 		Log.Suppressed = false;
 
 		try {

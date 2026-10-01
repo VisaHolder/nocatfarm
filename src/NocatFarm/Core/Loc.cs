@@ -29,30 +29,87 @@ namespace NocatFarm.Core;
 /// the app was set to at the time. A log wants to be a fixed record, so it is never rewritten afterwards.
 /// </remarks>
 public static class Loc {
-	private static Dictionary<string, string> _map = [];
-	private static string _loaded = "";
+	/// <summary>
+	/// A language and its phrases, published together as one object. As two fields (the code set first, the phrases
+	/// assigned after loading), a second quick language change saw the new code already "loaded" and returned at once,
+	/// while the first load finished afterwards and put ITS phrases in: German on screen with French selected.
+	/// </summary>
+	private sealed record Pack(string Code, Dictionary<string, string> Map);
+
+	private static volatile Pack _pack = new("", []);
+
+	/// <summary>Publishing a pack: only while its language is still the one selected, checked and set in one step.</summary>
+	private static readonly Lock PublishGate = new();
+
+	/// <summary>Loading on this thread right now: a line said while loading translates with what's there, not by loading again.</summary>
+	[ThreadStatic]
+	private static bool _loading;
+
+	/// <summary>The language whose phrases are in use now - for the tests.</summary>
+	internal static string Loaded => _pack.Code;
 
 	/// <summary>Re-read the pack for whatever language is now selected. Cheap, and idempotent.</summary>
+	/// <remarks>
+	/// Loaded outside any lock (a slow disk never holds up a thread that only wants a word translated), then put in
+	/// place only if its language is STILL the selected one - checked and published together. Changed again while it
+	/// loaded, it's thrown away and the newer one loaded instead, so the last language picked is always the one in use.
+	/// </remarks>
 	public static void Refresh() {
-		string code = Live.Global.Language ?? "en";
-
-		if (code == _loaded) {
+		if (_loading) {
 			return;
 		}
 
-		_loaded = code;
-		_map = [];
+		while (true) {
+			string code = Live.Global.Language ?? "en";
+
+			if (code == _pack.Code) {
+				return;
+			}
+
+			Dictionary<string, string> map;
+			Exception? failed;
+			_loading = true;
+
+			try {
+				map = Load(code, out failed);
+			} finally {
+				_loading = false;
+			}
+
+			bool published = false;
+
+			lock (PublishGate) {
+				if ((Live.Global.Language ?? "en") == code) {
+					_pack = new Pack(code, map);
+					published = true;
+				}
+			}
+
+			if (published) {
+				// Said once it's in place: the line itself goes through T.
+				if (failed != null) {
+					Log.Debug(new Said("couldn't read the {0} language pack: {1}", code, Log.Describe(failed)));
+				}
+
+				return;
+			}
+		}
+	}
+
+	/// <summary>One language's phrases, from its pack. Empty for English (the key itself) and for a pack that isn't there.</summary>
+	private static Dictionary<string, string> Load(string code, out Exception? failed) {
+		failed = null;
 
 		// English is the key, so there is no en.json and nothing to load for it.
 		if (string.IsNullOrWhiteSpace(code) || code.Equals("en", StringComparison.OrdinalIgnoreCase)) {
-			return;
+			return [];
 		}
 
 		try {
 			string path = Path.Combine(AppContext.BaseDirectory, "wwwroot", "lang", $"{code}.json");
 
 			if (!File.Exists(path)) {
-				return;
+				return [];
 			}
 
 			using JsonDocument doc = JsonDocument.Parse(File.ReadAllText(path));
@@ -78,18 +135,20 @@ public static class Loc {
 					}
 				}
 
-				_map = map;
+				return map;
 			}
 		} catch (Exception e) {
-			Log.Debug(new Said("couldn't read the {0} language pack: {1}", code, Log.Describe(e)));
+			failed = e;
 		}
+
+		return [];
 	}
 
 	/// <summary>The translation of <paramref name="english"/>, or the English itself.</summary>
 	public static string T(string english) {
 		Refresh();
 
-		return _map.TryGetValue(english, out string? found) && (found.Length > 0) ? found : english;
+		return _pack.Map.TryGetValue(english, out string? found) && (found.Length > 0) ? found : english;
 	}
 
 	/// <summary>Whether <paramref name="text"/> is <paramref name="english"/> - in any language.</summary>

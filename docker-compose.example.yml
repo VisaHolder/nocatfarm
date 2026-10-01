@@ -1,14 +1,16 @@
 # nocat.farm with Docker Compose.
 #
 #   1. Copy this file to docker-compose.yml.
-#   2. Make the data folders, and put the dashboard password in a file called .env next to this one:
-#        mkdir -p config logs
+#   2. Make the data folders, and put the dashboard password and your time zone in a file called .env next to this one:
+#        mkdir -p config logs backups
 #        echo 'NOCATFARM_WEB_PASSWORD=something-long-and-your-own' > .env
+#        echo 'TZ=Europe/London' >> .env        (yours - see the list at https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
 #   3. docker compose up -d --build
 #   4. Open http://localhost:7242 and sign in with that password. Add accounts there (the Steam Guard code or
 #      QR scan is asked for right on the page), or see the log with: docker compose logs -f
 #
-# Accounts, login tokens and settings live in ./config, logs in ./logs - both survive rebuilds and re-creates.
+# Accounts, login tokens and settings live in ./config, logs in ./logs and backups in ./backups - all three survive
+# rebuilds and re-creates.
 # Updating: get the new source (git pull), then run step 3 again. nocat.farm doesn't update itself in Docker.
 # Stopping: docker compose down - every account signs out cleanly first.
 
@@ -24,12 +26,13 @@ services:
     init: true
     # Time to sign every account out before Docker gives up and kills it.
     stop_grace_period: 1m
-    # The owner of ./config and ./logs on this machine (run: id -u; id -g). Remove the line to use the image's
-    # own user (uid 1654) - then those folders have to belong to it: sudo chown -R 1654:1654 config logs
+    # The owner of ./config, ./logs and ./backups on this machine (run: id -u; id -g). Remove the line to use the image's
+    # own user (uid 1654) - then those folders have to belong to it: sudo chown -R 1654:1654 config logs backups
     user: "1000:1000"
     environment:
-      # Your time zone. Human mode's day, the night-time rules and the daily report all follow it.
-      TZ: Europe/London
+      # Your time zone, from .env (TZ=Europe/London, say). Human mode's day, the night-time rules and the daily report all
+      # follow it. Without one it's UTC.
+      TZ: ${TZ:-Etc/UTC}
       # REQUIRED - compose won't start without it (it's read from .env). With no password the dashboard only
       # lets in requests from inside the container itself, which through a published port is nobody.
       NOCATFARM_WEB_PASSWORD: ${NOCATFARM_WEB_PASSWORD:?put NOCATFARM_WEB_PASSWORD=yourpassword in a .env file next to docker-compose.yml}
@@ -39,12 +42,24 @@ services:
       # For your phone: this computer's address on your wifi (e.g. 192.168.1.20). From inside Docker nocat.farm can't
       # see it, so Open on your phone and /dashboard use this for the link and the QR code.
       # NOCATFARM_HOME_ADDRESS: 192.168.1.20
+      # On a VPS, or anywhere it's opened from the internet on purpose (the port published beyond 127.0.0.1, or a proxy):
+      # the address people use to reach it, like farm.example.com or 203.0.113.7:7242. Without it, "Open from anywhere" is
+      # off and every visitor from the internet is refused - Open from anywhere asks a home router for a forward (UPnP),
+      # and a VPS has no router to ask. The SSH tunnel doesn't need it. Taken away again, the next start clears it.
+      # NOCATFARM_PUBLIC_ADDRESS: farm.example.com
+      # Behind Caddy or another reverse proxy that isn't inside this container: its address as the container sees it
+      # (Docker's network - 172.16.0.0/12 covers Docker's own ranges). Its X-Forwarded-For is then believed, so visitors
+      # from the internet count as the internet - the sign-in code, the lockouts and switching itself off all work.
+      # Without it, everybody coming through the proxy looks like home.
+      # NOCATFARM_TRUSTED_PROXIES: 172.16.0.0/12
     ports:
       # This machine only. To reach it from your phone or another PC, make it "7242:7242".
       - "127.0.0.1:7242:7242"
     volumes:
       - ./config:/data/config
       - ./logs:/data/logs
+      # The 'backup' command's zips, and the copy a restore keeps of what it replaced.
+      - ./backups:/data/backups
       # Optional: plugin DLLs (see PLUGINS.md).
       # - ./plugins:/data/plugins
       # Optional: your ArchiSteamFarm folder (the one with config/ in it), read-only, to bring its accounts over -

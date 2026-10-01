@@ -21,6 +21,8 @@ bool forceNoTray = false;
 bool startMinimized = false;
 bool forceNoGui = false;
 bool quitRunning = false;
+bool ping = false;
+bool steamSelfTest = false;
 List<string>? setupChoices = null;
 
 for (int i = 0; i < args.Length; i++) {
@@ -55,6 +57,18 @@ for (int i = 0; i < args.Length; i++) {
 			quitRunning = true;
 
 			break;
+		// For Docker's HEALTHCHECK (the image has no curl or wget): is the dashboard of the copy for this folder answering?
+		// Exits 0 when it is (or when the dashboard is switched off), 1 when it isn't. Starts nothing.
+		case "--ping":
+			ping = true;
+
+			break;
+		// For the release tests: the real connection to Steam and the games-played message the idler sends, signed in
+		// anonymously - no account involved. Prints PASS/FAIL lines, exits 0 when all passed. Starts nothing else.
+		case "--steam-selftest":
+			steamSelfTest = true;
+
+			break;
 		case "--setup":
 			setupChoices = [.. args.Skip(i + 1).Where(static a => a.Contains('='))];
 			i = args.Length;
@@ -73,6 +87,7 @@ for (int i = 0; i < args.Length; i++) {
 				  --no-tray       don't create a notification-area icon
 				  --no-gui        no window - the plain console board instead
 				  --minimized     start hidden, straight to the tray
+				  --steam-selftest  connect to Steam anonymously (no account), send a games-played message, exit 0 if it all works
 				""");
 
 			return 0;
@@ -105,11 +120,36 @@ try {
 
 	Console.WriteLine();
 	Console.WriteLine($"  nocat.farm can't write its settings next to itself: {e.Message}");
-	Console.WriteLine("  Move the folder somewhere you can write to - Desktop, Documents or its own folder on another drive.");
+
+	// Said for the machine it's on: on Linux or a Mac the usual cause is a folder that belongs to another user (unzipped
+	// with sudo, or /opt), and "move it to Documents" was Windows advice that fixes nothing there.
+	if (OperatingSystem.IsWindows()) {
+		Console.WriteLine("  Move the folder somewhere you can write to - Desktop, Documents or its own folder on another drive.");
+	} else {
+		Console.WriteLine($"  The folder isn't writable by this user ({Environment.UserName}). Give it to this user -");
+		Console.WriteLine($"  sudo chown -R {Environment.UserName}: \"{Path.GetFullPath(root)}\" - or run nocat.farm as its owner.");
+	}
+
 	Console.WriteLine();
-	await Task.Delay(8000).ConfigureAwait(false);
+
+	if (OperatingSystem.IsWindows()) {
+		await Task.Delay(8000).ConfigureAwait(false);
+	}
 
 	return 1;
+}
+
+if (ping) {
+	return await Platform.PingAsync().ConfigureAwait(false);
+}
+
+if (steamSelfTest) {
+	// A windowed exe run from a terminal has nowhere to print; one whose output is captured already does.
+	if (OperatingSystem.IsWindows() && !Console.IsOutputRedirected) {
+		NativeConsole.Attach();
+	}
+
+	return await SteamSelfTest.RunAsync().ConfigureAwait(false);
 }
 
 if (quitRunning) {
@@ -151,10 +191,11 @@ AppDomain.CurrentDomain.UnhandledException += static (_, e) => {
 TaskScheduler.UnobservedTaskException += Log.OnUnobservedTask;
 
 // One instance per config folder. Two copies running the same accounts share a Steam login ID, so they take
-// turns kicking each other off - and they put two icons in the tray, which is how you notice.
-using Mutex singleInstance = new(false, AppInstance.LockName(ConfigStore.Root));
+// turns kicking each other off - and they put two icons in the tray, which is how you notice. A named mutex on
+// Windows, a locked config/state/instance.lock everywhere else (see AppInstance.TryClaim).
+using IDisposable? singleInstance = AppInstance.TryClaim(ConfigStore.Root);
 
-if (!singleInstance.WaitOne(TimeSpan.Zero, false)) {
+if (singleInstance == null) {
 	// Opened again - from the Start menu, say - while it's running: the running one comes to the front, and this one
 	// goes quietly. Only a copy from before that existed gets the message below.
 	if (AppInstance.Signal(ConfigStore.Root, "show")) {
@@ -169,10 +210,23 @@ if (!singleInstance.WaitOne(TimeSpan.Zero, false)) {
 
 	Console.WriteLine();
 	Console.WriteLine("  nocatFarm is already running for this folder.");
-	Console.WriteLine("  Look for its icon by the clock, or close the other one first.");
+
+	if (OperatingSystem.IsWindows()) {
+		Console.WriteLine("  Look for its icon by the clock, or close the other one first.");
+	} else {
+		int other = AppInstance.HolderPid(ConfigStore.Root);
+		Console.WriteLine(other > 0
+			? $"  It's process {other}. Close that one first, or start this one with its own --path folder."
+			: "  Close the other one first, or start this one with its own --path folder.");
+	}
+
 	Console.WriteLine();
 	Console.WriteLine("  (Two copies would share a Steam login and keep signing each other out.)");
-	await Task.Delay(4000).ConfigureAwait(false);
+
+	// The pause is for a window that would otherwise vanish before it's read - a terminal keeps the lines anyway.
+	if (OperatingSystem.IsWindows()) {
+		await Task.Delay(4000).ConfigureAwait(false);
+	}
 
 	return 1;
 }
@@ -192,16 +246,18 @@ Banner();
 Platform.ApplyEnvironment(global);
 
 // Off Windows: a data folder that can't be written (a Docker bind mount made by root) is said now, with the fix.
-Platform.CheckWritable(ConfigStore.ConfigDir, Path.Combine(ConfigStore.Root, "logs"));
+// In Docker the backups folder is a volume of its own too, and can be made by root the same way.
+Platform.CheckWritable(Platform.InContainer
+	? [ConfigStore.ConfigDir, Path.Combine(ConfigStore.Root, "logs"), Backup.Folder]
+	: [ConfigStore.ConfigDir, Path.Combine(ConfigStore.Root, "logs")]);
 
 BotManager manager = new(global);
 Commands.Host = manager;   // so a command sent by Steam message can reach the same engine the console does
 await manager.SyncFromDiskAsync().ConfigureAwait(false);
 
 // Keep the registry entry in step with the setting, in case the exe moved since it was last written.
-if (OperatingSystem.IsWindows() && ((global.StartWithWindows != WindowsIntegration.StartsWithWindows())
-	|| (global.StartWithWindows && !WindowsIntegration.StartupPointsHere()))) {
-	WindowsIntegration.SetStartWithWindows(global.StartWithWindows);
+if (OperatingSystem.IsWindows()) {
+	WindowsIntegration.KeepInStep(global.StartWithWindows);
 }
 
 // Before anything else is said: if this start finishes an update, that's the first line in the window.
@@ -226,13 +282,27 @@ if (global.WebEnabled && !forceNoWeb) {
 CancellationTokenSource shutdown = new();
 Commands.ExitHandler = () => shutdown.Cancel();
 
+// Every way out goes through Commands.RequestExit (see Quit): the "closing" flag first, then the cancel. The tray's
+// Exit, Ctrl+C, SIGTERM and "every account has finished" used to cancel on their own, the flag never went up, and an
+// update part-way through signing the accounts out carried on - installed itself and started nocat.farm again after
+// it had been closed. Anything that still cancels directly raises the flag here too.
+shutdown.Token.Register(static () => Commands.RequestExit());
+
 // Docker and systemd stop a program with SIGTERM. Left alone, .NET ends the process on it (and the dashboard's own
 // host takes it as its cue to stop and leave the rest running), so the orderly sign-out below never happened and a
 // `docker stop` waited out its timeout and killed it. Taken here, SIGTERM is the same clean shutdown as 'exit'.
 // Not on Windows, where nothing sends it and closing works the way it always has.
 using PosixSignalRegistration? sigterm = OperatingSystem.IsWindows() ? null : PosixSignalRegistration.Create(PosixSignal.SIGTERM, ctx => {
 	ctx.Cancel = true;
-	shutdown.Cancel();
+	Quit();
+});
+
+// SIGHUP is closing the Terminal window on a Mac, or an SSH session ending: it used to end the process on the spot, with
+// no sign-out and the last minutes of lifetime totals lost. Now it's the same clean shutdown - unless it was started to
+// ignore it (nohup), which is somebody asking for it to keep running after they log out.
+using PosixSignalRegistration? sighup = OperatingSystem.IsWindows() || Platform.HangupIgnored() ? null : PosixSignalRegistration.Create(PosixSignal.SIGHUP, ctx => {
+	ctx.Cancel = true;
+	Quit();
 });
 
 if (OperatingSystem.IsWindows()) {
@@ -246,9 +316,11 @@ Commands.DashboardUrl = () => web?.Url ?? "";
 
 TrayIcon? tray = null;
 
+// Whether there is a tray icon is the tray thread's to say, once the icon is really in the notification area (or isn't).
+// Set here to "there is one" as soon as the object existed, it overwrote the icon's own "couldn't add it" - and a
+// window started hidden stayed hidden, with no icon to bring it back.
 if (global.Tray && !forceNoTray && OperatingSystem.IsWindows()) {
-	tray = StartTray(manager, () => web?.Url ?? "", shutdown);
-	Commands.TrayPresent = tray != null;
+	tray = StartTray(manager, () => web?.Url ?? "");
 }
 
 if (OperatingSystem.IsWindows() && global.KeepAwake) {
@@ -268,10 +340,7 @@ LiveConsole? board = null;
 bool windowFailed = false;
 
 if (wantWindow && OperatingSystem.IsWindows()) {
-	window = new MainWindow(manager, () => web?.Url ?? "", () => {
-		Commands.RequestExit();
-		shutdown.Cancel();
-	});
+	window = new MainWindow(manager, () => web?.Url ?? "", Quit);
 
 	// If it can't open, put the console log straight back rather than leaving a silent app behind.
 	window.Failed += () => {
@@ -326,13 +395,21 @@ if (wantWindow && OperatingSystem.IsWindows()) {
 
 	// Hidden at start only with a tray icon to bring it back - without one it was an app with no way to be seen.
 	window.Start(!((global.StartMinimized || startMinimized) && (tray != null)));
+	Ready(web?.Url, manager.All.Count);
 } else {
+	// Said BEFORE the board starts. The board repaints the bottom of the screen every second, and written after it
+	// these raced its first paint - half the block drawn over, or the board's rows scribbled through the middle.
+	// Written first, they sit above it and scroll away with the rest.
+	Ready(web?.Url, manager.All.Count);
+
+	if (manager.All.Count == 0) {
+		FirstRunHint(web?.Url);
+	}
+
 	board = new LiveConsole(manager);
 	board.Start();
 	Commands.Board = board;
 }
-
-Ready(web?.Url, manager.All.Count);
 
 // A second launch brings this one to the front - the window, or the dashboard when there is no window - and the
 // installer can ask it to close cleanly before it replaces files.
@@ -362,27 +439,34 @@ NocatFarm.Core.SelfUpdate.Fleet = () => manager.All;
 NocatFarm.Core.History.Start(manager);
 
 if (manager.All.Count == 0) {
-	FirstRunHint(web?.Url);
+	// Said above the board already, where there is one.
+	if (board == null) {
+		FirstRunHint(web?.Url);
+	}
 } else {
 	// Not waited on past a quit: the installer's --quit (or exit) while accounts are still queueing to sign in has to
-	// close now, not after the last login slot.
+	// close now, not after the last login slot. The accounts still queueing are stopped with the rest on the way out.
 	await Task.WhenAny(manager.StartAllAsync(), Task.Delay(Timeout.Infinite, shutdown.Token)).ConfigureAwait(false);
 }
 
-// Once-a-day "what did the fleet bank overnight" summary to the log (default 09:30). Self-scheduling; no-ops
-// with no accounts. Type `report` to see it on demand.
-NocatFarm.Core.DailyReport.Start(manager);
+// Closed while the accounts were starting: none of what follows is wanted any more. Started anyway, the update timer,
+// the router's port forward and a browser tab all came up in the seconds the app was on its way out.
+if (!shutdown.IsCancellationRequested) {
+	// Once-a-day "what did the fleet bank overnight" summary to the log (default 09:30). Self-scheduling; no-ops
+	// with no accounts. Type `report` to see it on demand.
+	NocatFarm.Core.DailyReport.Start(manager);
 
-// The same once a week (off unless switched on), and the stuck-account alarm - both look once a minute.
-NocatFarm.Core.WeeklyReport.Start(manager);
-NocatFarm.Core.StuckWatch.Start(manager);
+	// The same once a week (off unless switched on), and the stuck-account alarm - both look once a minute.
+	NocatFarm.Core.WeeklyReport.Start(manager);
+	NocatFarm.Core.StuckWatch.Start(manager);
 
-// Looking for a new version, the hourly reminder and "Update by itself" - for the app, not for an account, so it
-// happens with no account signed in too.
-NocatFarm.Core.UpdateCheck.Start(manager);
+	// Looking for a new version, the hourly reminder and "Update by itself" - for the app, not for an account, so it
+	// happens with no account signed in too.
+	NocatFarm.Core.UpdateCheck.Start(manager);
 
-// "Open from anywhere": the router forwards the dashboard's port, while the switch is on.
-NocatFarm.Core.RemoteAccess.Start();
+	// "Open from anywhere": the router forwards the dashboard's port, while the switch is on.
+	NocatFarm.Core.RemoteAccess.Start();
+}
 
 // 1.5.9's "Tell me if nocat.farm stops" (removed in 1.6.0) left its random id behind; nothing reads it any more.
 try {
@@ -397,7 +481,7 @@ try {
 // Only where there's a desktop: a server or a container has no browser, and the attempt is just a baffling error.
 // And not when it starts hidden (with Windows) or has just restarted itself into an update - a browser tab popping
 // up then is something nobody asked for.
-if (global.OpenBrowserOnStart && (web != null) && Platform.HasDesktop && !startMinimized && !NocatFarm.Core.SelfUpdate.OnTrial) {
+if (global.OpenBrowserOnStart && (web != null) && Platform.HasDesktop && !startMinimized && !NocatFarm.Core.SelfUpdate.OnTrial && !shutdown.IsCancellationRequested) {
 	OpenBrowser(web.Url);
 }
 
@@ -405,6 +489,9 @@ if (global.OpenBrowserOnStart && (web != null) && Platform.HasDesktop && !startM
 // fight over stdin: whatever is typed goes to the prompt if one is waiting, and to the command router if not.
 // Its own thread, because reading a key blocks it for as long as nobody types.
 List<string> consoleHistory = [];
+
+// The question that was up when the last line read started being typed (its first key) - see ConsoleLoop.
+Prompt.Question? lineTypedFor = null;
 
 // With a window there is no console to read from - it has its own command line - so the keyboard loop is only
 // started when the console is still ours.
@@ -434,10 +521,10 @@ Task console = (window != null) && !windowFailed
 
 Console.CancelKeyPress += (_, e) => {
 	e.Cancel = true;
-	shutdown.Cancel();
+	Quit();
 };
 
-AppDomain.CurrentDomain.ProcessExit += (_, _) => shutdown.Cancel();
+AppDomain.CurrentDomain.ProcessExit += (_, _) => Quit();
 
 // ExitWhenAllFinished pairs with the per-account "log out when finished": a user who set both is asking for a
 // finite run, and leaving the process parked in the tray (still blocking sleep) is not what they asked for.
@@ -447,7 +534,7 @@ try {
 
 		if (manager.Global.ExitWhenAllFinished && manager.AllFinished) {
 			Log.Good("every account has finished - closing down as configured");
-			await shutdown.CancelAsync().ConfigureAwait(false);
+			Quit();
 		}
 	}
 } catch (OperationCanceledException) {
@@ -455,6 +542,9 @@ try {
 }
 
 Log.Info("shutting down...");
+
+// No more update looks, reminders or installs by itself from here - the timer is gone, not just ignored.
+NocatFarm.Core.UpdateCheck.Stop();
 
 // Closed straight after an update: that's somebody closing it, not the new version failing to start.
 NocatFarm.Core.SelfUpdate.ConfirmStarted();
@@ -588,14 +678,19 @@ void OpenBrowser(string url) {
 	}
 }
 
+// The one way out: "closing" goes up first (Commands.ExitRequested - an update reads it and stops), then the shutdown
+// token is cancelled through Commands.ExitHandler. Every exit - the tray, the window, Ctrl+C, SIGTERM, SIGHUP, ProcessExit,
+// "every account has finished" - comes through here.
+static void Quit() => Commands.RequestExit();
+
 [SupportedOSPlatform("windows")]
-TrayIcon StartTray(BotManager mgr, Func<string> url, CancellationTokenSource cts) {
+TrayIcon StartTray(BotManager mgr, Func<string> url) {
 	TrayIcon icon = new(
 		"nocat.farm",
 		url,
 		() => _ = mgr.StartAllAsync(),
 		() => _ = mgr.StopAllAsync(),
-		() => cts.Cancel()) {
+		Quit) {
 		MinimizeToTray = mgr.Global.MinimizeToTray
 	};
 
@@ -641,6 +736,9 @@ async Task ConsoleLoop(BotManager mgr, CancellationTokenSource cts) {
 	while (!cts.IsCancellationRequested) {
 		string? line = ReadLine(cts.Token);
 
+		// The question up when this line started being typed - see below.
+		Prompt.Question? typedFor = lineTypedFor;
+
 		if (line == null) {
 			// stdin closed (a service, or the console was detached) - keep the engine alive.
 			await Task.Delay(Timeout.Infinite, cts.Token).ConfigureAwait(false);
@@ -648,8 +746,16 @@ async Task ConsoleLoop(BotManager mgr, CancellationTokenSource cts) {
 			return;
 		}
 
-		if (Prompt.Pending != null) {
-			Prompt.Answer(line);
+		// Answers the question it was typed for, and only that one. Answered from the dashboard while this was being
+		// typed, and another question up by now (the next account's code), the line is dropped rather than handed to
+		// a question it was never meant for - nor run as a command (a password typed for a question that has gone
+		// would otherwise land in the log and the history).
+		Prompt.Question? question = Prompt.Current;
+
+		if ((question != null) || (typedFor != null)) {
+			if ((question != null) && ((typedFor == null) || (typedFor == question))) {
+				Prompt.Answer(question, line);
+			}
 
 			continue;
 		}
@@ -702,6 +808,12 @@ string? ReadLine(CancellationToken ct) {
 	// Without this the two would write to the same rows and the typed line would be scribbled over every second.
 	LiveConsole? board = Commands.Board is { Active: true } live ? live : null;
 
+	// A question up at any point while this line was typed makes it an answer, never history - a password answered
+	// from the dashboard a moment before Enter would otherwise sit under the up arrow.
+	bool asked = false;
+	bool firstKey = true;
+	lineTypedFor = null;
+
 	void Echo() {
 		if (board != null) {
 			board.SetInput(Prompt.PendingSecret ? new string('*', buffer.Length) : buffer.ToString());
@@ -714,8 +826,21 @@ string? ReadLine(CancellationToken ct) {
 		try {
 			key = Console.ReadKey(true);
 		} catch (InvalidOperationException) {
-			return Console.ReadLine();   // redirected input
+			string? piped = Console.ReadLine();   // redirected input
+			lineTypedFor = Prompt.Current;
+
+			return piped;
 		}
+
+		// Which question this line is for: the one up as its first key was pressed.
+		Prompt.Question? up = Prompt.Current;
+
+		if (firstKey) {
+			firstKey = false;
+			lineTypedFor = up;
+		}
+
+		asked |= up != null;
 
 		switch (key.Key) {
 			case ConsoleKey.Enter:
@@ -727,7 +852,7 @@ string? ReadLine(CancellationToken ct) {
 
 				string result = buffer.ToString();
 
-				if (result.Trim().Length > 0 && Prompt.Pending == null) {
+				if (result.Trim().Length > 0 && !asked && Prompt.Pending == null) {
 					typed.Insert(0, result);
 
 					if (typed.Count > 50) {
@@ -739,10 +864,11 @@ string? ReadLine(CancellationToken ct) {
 
 			case ConsoleKey.Backspace:
 				if (buffer.Length > 0) {
-					buffer.Length--;
+					// A whole emoji, not half of one (see TypedLine.Backspace).
+					int columns = TypedLine.Backspace(buffer, Prompt.PendingSecret);
 
 					if (board == null) {
-						Console.Write("\b \b");
+						Console.Write(string.Concat(Enumerable.Repeat("\b \b", columns)));
 					}
 
 					Echo();

@@ -5,7 +5,7 @@
 This page takes you from the download to a running account, then through the handful of things most people change.
 You don't need to have used an idler before.
 
-The app is laid out the same way. The first-run walkthrough offers **Easy** or **Advanced**, and the Settings page
+The app works the same way: the first-run walkthrough offers **Easy** or **Advanced**, and the Settings page
 shows the everyday switches first, with a **Show advanced** box for everything else.
 
 ## Words to know
@@ -16,7 +16,7 @@ shows the everyday switches first, with a **Show advanced** box for everything e
 | **Farming cards** | Letting a game "play" until all its free cards have dropped. |
 | **Idling** | Telling Steam you're playing a game when nobody is. The game doesn't really run, but the playtime counts. |
 | **appID** | A game's number. It's in the store link: `store.steampowered.com/app/`**`730`**`/...` is Counter-Strike 2. Wherever an appID is asked for, you can paste the whole link instead. |
-| **Human mode** | Makes an account play like a person - one game at a time, breaks, a bedtime - instead of running around the clock. |
+| **Human mode** | Makes an account play like a person, with one game at a time, breaks and a bedtime, instead of running around the clock. |
 | **Badge** | What a full set of cards turns into. Badges raise your Steam level. |
 | **Steam Guard** | The extra code Steam asks for when you sign in, from your email or the Steam app on your phone. |
 | **Authenticator / maFile** | The Steam app's Steam Guard, stored as a file. A `.maFile` comes from tools like Steam Desktop Authenticator or ArchiSteamFarm. With one, nocat.farm can type Steam Guard codes and confirm trades by itself. You don't need one. |
@@ -35,18 +35,21 @@ the same app, so pick whichever suits you.
 and adds a Start menu entry, a desktop shortcut and "start with Windows" if you leave those ticked. *change* picks a
 different folder, and *advanced* adds the dashboard port and starting hidden in the tray.
 
+If Windows says it protected your PC, click More info, then Run anyway.
+
 It also checks what's already on the PC:
 
-- Pick ArchiSteamFarm, Idle Master or another idler under *coming from*, and the dashboard opens straight on
+- Pick ArchiSteamFarm, Idle Master or another idler under *switching from*, and the dashboard opens straight on
   bringing those accounts over (see [Coming from another idler](accounts.md#coming-from-another-idler)). It finds
   ASF by itself on your Desktop, in Documents or in Downloads.
 - If there's a portable nocat.farm, it offers to move it into the install. Accounts, settings and history come
   along. The old copy is closed first and its folder is left alone.
-- If nocat.farm is already installed, a newer setup offers to update (or reinstall) and to uninstall. Your accounts
-  and settings stay as they are.
+- If nocat.farm is already installed, a newer setup offers to update (or reinstall) and to uninstall. Updating keeps
+  your accounts and settings. An older setup doesn't offer to go back a version.
 
-To uninstall, go to Windows *Settings → Apps → nocat.farm → Uninstall*. It asks whether to delete your accounts,
-settings and logs as well. Say no if you might install it again.
+To uninstall, go to Windows *Settings → Apps → nocat.farm → Uninstall*. It asks whether to delete your accounts
+and settings as well - saved Steam logins, authenticators, backups and logs with them. Say no if you might install it
+again.
 
 **The portable zip, `nocat.farm-v…-portable.zip`,** installs nothing. Right-click it, choose **Extract All…**, open the
 folder and run **`nocatFarm.exe`**. Settings, logs and login tokens all stay in that folder, and uninstalling is
@@ -58,13 +61,7 @@ The files ending in `_osx-arm64` (M1 and newer) and `_osx-x64` (Intel) are for a
 Either way there's nothing else to install, not even .NET. A small window opens, and the dashboard opens in your
 browser at `http://127.0.0.1:7242/`.
 
-For scripted installs, the setup takes the same choices on the command line:
-
-```
-nocat.farm-v…-setup.exe /VERYSILENT /DIR="C:\nocat.farm" /STARTUP=no /DESKTOP=no /HIDDEN=no /MOVE=no /PORT=7300 /FROM=fresh
-```
-
-`/FROM` is `fresh`, `asf`, `idlemaster` or `other`. Leave any of them out to get the screen's default.
+For a scripted install, see [the setup's command line](settings.md#the-setups-command-line).
 
 ## 2. The first-run setup
 
@@ -77,7 +74,7 @@ on the Overview page replays it.
    about two minutes in all. Advanced adds opening it from anywhere, Discord and Telegram, and the update hours,
    and ends by opening every setting of the account. It's for people who've used ArchiSteamFarm or something like
    it.
-3. **Your phone.** *Yes, set it up* opens the dashboard to your wifi. You pick a dashboard password, then scan a QR
+3. **Your phone.** *Yes, set it up* opens the dashboard to your Wi-Fi. You pick a dashboard password, then scan a QR
    code with your phone. If Windows Firewall is in the way, the button to let it through is right there. *Not now*
    keeps the dashboard on this PC.
 4. **From anywhere** (Advanced). The same thing for away from home. Your router forwards the port, the way it does
@@ -96,7 +93,7 @@ on the Overview page replays it.
 
    The **Human mode** switch in the account's settings changes this later.
 
-Then the account itself. Type the **Steam account name** - what you type to sign in to Steam, not your display name
+Then the account itself. Type the **Steam account name**: what you type to sign in to Steam, not your display name
 or email. The **password** is optional; leave it empty and you're asked once when it signs in. A nickname for the
 account in nocat.farm is optional too. In Advanced you can tick **Sign in with a QR code** instead and scan a code
 with the Steam app, so nothing is typed at all.
@@ -167,8 +164,8 @@ the cards are done.
 **A custom game name** (farm accounts): *What it plays → Show as*, or `name myaccount nocat.lol`. Friends see that
 name instead of the real game, and the real games still count playtime.
 
-**Human mode**: *Human mode → Human mode*. Then set **Games and how often** - `730:70, 440:30` means 70%
-Counter-Strike 2 and 30% Team Fortress 2 - along with the hours it plays and its bedtime.
+**Human mode**: *Human mode → Human mode*. Then set **Games and how often** (`730:70, 440:30` means 70%
+Counter-Strike 2 and 30% Team Fortress 2), the hours it plays and its bedtime.
 
 **Claim free games**: *Free stuff → Claim free games*. Paid games that Steam gives away free-to-keep get added to
 the account.
@@ -224,11 +221,11 @@ sets how often it checks (2 hours).
 announced as usual, and `update accept` still installs the skipped one if you change your mind.
 
 If a new version won't start, it's put back by itself. The new version has to run for half a minute first. If it
-crashes - usually noticed within seconds - or hasn't said it's fine after three minutes, the old files go back, the
-old version starts again, the log says so, and that version is skipped. Every release is tested this way with a
-deliberately broken version, on Windows (installed and portable), Linux and a Mac.
+crashes (usually within seconds) or hasn't said it's fine after three minutes, the old files go back, the old
+version starts again, the log says so, and that version is skipped.
 
-The message that a new version is out lists what changed, and so does the log after updating. With
+The message that a new version is out lists what changed. After updating, the log has one line, "what's new in
+<version>", with a link to the release. With
 *Send install progress* on (it's off by default), Telegram and Discord get "Downloaded 1.5.4 - installing it now",
 then "Install complete - now on 1.5.4" with what's new, or that it failed or was undone and why.
 
@@ -247,8 +244,8 @@ Check the **Log** tab first. It says what happened in plain words. Some common o
 | "Rate-limited" or "too many logins" | Steam slows down a PC that asks too much, usually after lots of restarts. It waits it out by itself. |
 | Steam kicks you off Friends & Chat | Turn on *I sign into this one myself* for that account. |
 | Friends see the real game, not your custom name | The account card warns "Steam shows …" and nocat.farm puts the name back by itself. Human-mode accounts have no custom name, on purpose. |
-| Nothing is farming | Type `cards myaccount`. With no cards left it idles its games, if it has any. If it says it's waiting, human mode may have it asleep or on a break - `human myaccount` shows its day. |
-| The dashboard says "Too many wrong passwords" | Five wrong tries lock that address out - for a minute on this PC, an hour from anywhere else. The page counts down; type `unlock` in the app window (or on Telegram) to skip the wait. |
+| Nothing is farming | Type `cards myaccount`. With no cards left it idles its games, if it has any. If it says it's waiting, human mode may have it asleep or on a break; `human myaccount` shows its day. |
+| The dashboard says "Too many wrong passwords" | Five wrong tries lock that address out: for a minute on this PC, an hour from anywhere else. The page counts down; type `unlock` in the app window (or on Telegram) to skip the wait. |
 | The settings page looks short | Tick **Show advanced**. |
 
 Still stuck? Open an [issue](https://github.com/VisaHolder/nocatfarm/issues) and paste the log lines.

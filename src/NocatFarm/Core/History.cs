@@ -271,6 +271,10 @@ public static class History {
 			return;   // nothing was ever read, so there is nothing to write - and never an empty file over a real one
 		}
 
+		if (ConfigStore.RestoreWriting) {
+			return;   // the restore reloads this straight after; saving now would put the old days back over the restored ones
+		}
+
 		lock (SaveGate) {
 			List<(string Month, Dictionary<string, Dictionary<string, Day>> Data)> work = [];
 

@@ -188,6 +188,44 @@ public static partial class Backup {
 		}
 	}
 
+	/// <summary>
+	/// A new file - never one that's there already (an IOException then) - that only its owner can read or write off Windows
+	/// (0600); an ordinary one on Windows.
+	/// </summary>
+	internal static void WriteOwnerOnly(string path, byte[] data) {
+		using FileStream fs = OperatingSystem.IsWindows()
+			? new(path, FileMode.CreateNew, FileAccess.Write)
+			: new(path, new FileStreamOptions {
+				Mode = FileMode.CreateNew,
+				Access = FileAccess.Write,
+				UnixCreateMode = UnixFileMode.UserRead | UnixFileMode.UserWrite
+			});
+
+		fs.Write(data);
+		fs.Flush(true);
+	}
+
+	/// <summary>The backups folder, only its owner let in off Windows (0700) - made that way, or put that way if it's there.</summary>
+	internal static void OwnerOnlyFolder(string dir) {
+		if (OperatingSystem.IsWindows()) {
+			Directory.CreateDirectory(dir);
+
+			return;
+		}
+
+		const UnixFileMode Owner = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
+		Directory.CreateDirectory(dir, Owner);
+
+		try {
+			if (File.GetUnixFileMode(dir) != Owner) {
+				File.SetUnixFileMode(dir, Owner);
+			}
+		} catch (Exception e) when (e is UnauthorizedAccessException or IOException) {
+			// Not ours to change (a Docker volume made by root, say): the files in it are owner-only all the same.
+			Log.DebugOnChange("backup:folder-mode", $"backup: couldn't make {dir} owner-only: {Log.Describe(e)}");
+		}
+	}
+
 	/// <summary>Read a file another part of the app may be writing at the same moment.</summary>
 	private static byte[] ReadShared(string path) {
 		using FileStream fs = new(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
@@ -206,7 +244,7 @@ public static partial class Backup {
 
 	/// <summary>Write a backup into the backups folder and hand back its path. A second one the same day gets the time too.</summary>
 	public static string WriteToFolder(string suffix = "") {
-		Directory.CreateDirectory(Folder);
+		OwnerOnlyFolder(Folder);
 		DateTime now = DateTime.Now;
 		string path = Path.Combine(Folder, FileName(now, suffix));
 
@@ -215,9 +253,58 @@ public static partial class Backup {
 		}
 
 		byte[] zip = Create();
-		string tmp = path + ".tmp";
-		File.WriteAllBytes(tmp, zip);
-		File.Move(tmp, path, overwrite: true);
+
+		// Its own temporary name: two backups at once (the command and a restore's "before" copy) both wrote "<zip>.tmp",
+		// and one moved the other's half-written file into place or failed finding it gone.
+		string tmp = $"{path}.{Guid.NewGuid():N}.tmp";
+		string? claimed = null;
+
+		try {
+			// Owner-only from the first byte off Windows: a backup holds every saved login and config/state/secret.key, the
+			// key that opens them. Written with the usual 0644, anyone else on the machine could read the lot.
+			WriteOwnerOnly(tmp, zip);
+
+			// And never over another backup: two finished in the same second each get a name of their own. Moved over one
+			// another, the second was refused ("access denied") while the first was still landing. The name is claimed
+			// first, by creating it: that fails for everyone but one, on every system. A move that refuses to overwrite
+			// only checks and then renames off Windows, so two backups at once both "won" the same name and one was lost.
+			for (int n = 2; ; n++) {
+				try {
+					WriteOwnerOnly(path, []);
+					claimed = path;
+
+					break;
+				} catch (Exception e) when ((e is IOException or UnauthorizedAccessException) && (n < 100)) {
+					// Any refusal means "taken", not only a file that's plainly there: on Windows a name another backup is
+					// replacing at that instant is "access denied" and doesn't exist yet - which failed the whole backup.
+					path = Path.Combine(Folder, FileName(now, "-" + now.ToString("HHmmss", CultureInfo.InvariantCulture) + "-" + n.ToString(CultureInfo.InvariantCulture) + suffix));
+				}
+			}
+
+			// Onto our own placeholder. Windows can refuse that for a moment while something else has the new file open
+			// (an antivirus scan of a fresh zip, the search indexer), so a refusal is tried again for a few seconds.
+			for (int attempt = 1; ; attempt++) {
+				try {
+					File.Move(tmp, path, overwrite: true);
+
+					break;
+				} catch (Exception e) when ((e is IOException or UnauthorizedAccessException) && (attempt < 20)) {
+					Thread.Sleep(100 * attempt);
+				}
+			}
+		} catch {
+			foreach (string? leftover in new[] { tmp, claimed }) {
+				try {
+					if (leftover != null) {
+						File.Delete(leftover);
+					}
+				} catch {
+					// nothing more to do
+				}
+			}
+
+			throw;
+		}
 
 		return path;
 	}
@@ -404,7 +491,8 @@ public static partial class Backup {
 			string tmp = $"{full}.{Guid.NewGuid():N}.tmp";
 
 			try {
-				File.WriteAllBytes(tmp, data);
+				// Owner-only off Windows, like the files it puts back were: secret.key, the login tokens, the authenticators.
+				WriteOwnerOnly(tmp, data);
 				File.Move(tmp, full, overwrite: true);
 			} catch {
 				try {
@@ -450,49 +538,93 @@ public static partial class Backup {
 			return check.Error!;
 		}
 
-		Log.Info(new Said("restoring a backup from {0} - stopping every account", Stamp(check.Manifest!.Created.ToLocalTime())));
-		await mgr.StopAllAsync(graceful: true).ConfigureAwait(false);
+		// One restore at a time: a second one staged and confirmed while the first was still writing mixed the two.
+		await RestoreGate.WaitAsync().ConfigureAwait(false);
 
-		// What's in memory goes to disk first, so it's in the "before" copy and nothing is left waiting to be saved over
-		// the restored files later.
-		BotManager.Flush();
-		string before = WriteToFolder(BeforeRestore);
-		int written = WriteFiles(bytes);
+		try {
+			Log.Info(new Said("restoring a backup from {0} - stopping every account", Stamp(check.Manifest!.Created.ToLocalTime())));
+			await mgr.StopAllAsync(graceful: true).ConfigureAwait(false);
 
-		// Everything that read these files once and kept them reads them again.
-		Secrets.ForgetKey();
-		Lifetime.Reload();
-		History.Reload();
-		DailyReport.Reload();
-		WeeklyReport.Reload();
-		KeyQueue.Reload();
-		StuckWatch.Reset();
+			bool wrote = false, replaced = false;
 
-		GlobalConfig current = mgr.Global;
-		GlobalConfig loaded = ConfigStore.LoadGlobal();
+			try {
+				string before;
+				int written;
+				List<SettingDef> changed = [];
 
-		if (!ConfigStore.GlobalBroken) {
-			// A dashboard password or a bot token sealed on another PC opens as nothing here. Taken as it comes, a restore
-			// from a phone would leave the dashboard with no password - local only - and lock that phone out. So one the
-			// backup can't give (can't open, or never had) keeps the one set now.
-			if (KeepSecrets(loaded, current)) {
-				ConfigStore.SaveGlobal(loaded);
+				// Nothing but the restore saves a setting from here until everything has read the restored files again. A
+				// dashboard save or a module's save in the meantime wrote the old settings over them - or its file move
+				// collided with the restore's, and the restore stopped half way with every account stopped.
+				using (ConfigStore.BeginRestore()) {
+					// What's in memory goes to disk first, so it's in the "before" copy and nothing is left waiting to be saved
+					// over the restored files later.
+					BotManager.Flush();
+					before = WriteToFolder(BeforeRestore);
+					wrote = true;
+					written = WriteFiles(bytes);
+
+					// Everything that read these files once and kept them reads them again.
+					Secrets.ForgetKey();
+					Lifetime.Reload();
+					History.Reload();
+					DailyReport.Reload();
+					WeeklyReport.Reload();
+					KeyQueue.Reload();
+					StuckWatch.Reset();
+
+					// Swapped under the lock every change to the live settings takes, so a change made at the same moment
+					// isn't put onto the settings being thrown away.
+					lock (ConfigStore.GlobalEditGate) {
+						GlobalConfig current = mgr.Global;
+						GlobalConfig loaded = ConfigStore.LoadGlobal();
+
+						if (!ConfigStore.GlobalBroken) {
+							// A dashboard password or a bot token sealed on another PC opens as nothing here. Taken as it comes, a
+							// restore from a phone would leave the dashboard with no password - local only - and lock that phone
+							// out. So one the backup can't give (can't open, or never had) keeps the one set now.
+							if (KeepSecrets(loaded, current)) {
+								ConfigStore.SaveGlobal(loaded);
+							}
+
+							// The environment wins over a restored file as it does at every start: a backup from a PC has no
+							// public address or trusted proxy, and taken as it came it switched a VPS's off until the next start.
+							Platform.ApplyEnvironment(loaded);
+
+							// Only what the restore changed sets anything off - start with Windows, keep awake, the log. Running
+							// them all would rewrite the startup entry and the rest for settings that came back exactly as they were.
+							changed = [.. Settings.Global.Where(d => !Equals(Settings.Show(current, d), Settings.Show(loaded, d)))];
+							mgr.ApplyGlobal(loaded);
+						}
+					}
+
+					await mgr.ReplaceAllFromDiskAsync().ConfigureAwait(false);
+					replaced = true;
+				}
+
+				foreach (SettingDef def in changed) {
+					Commands.ApplyGlobalSideEffects(mgr, def);
+				}
+
+				Log.Good(new Said("backup restored: {0} file(s) - what was there before is in {1}", written, before));
+
+				return new Said("Restored {0} file(s). The accounts are starting again.", written).ToString();
+			} finally {
+				// Whatever happened, the accounts come back: a restore that failed half way used to leave every one stopped.
+				// Files that did go back are read first, so what runs is what's on disk.
+				if (wrote && !replaced) {
+					try {
+						await mgr.ReplaceAllFromDiskAsync().ConfigureAwait(false);
+					} catch (Exception e) {
+						Log.Failed("restore: reading the accounts again after it failed", e);
+					}
+				}
+
+				_ = mgr.StartAllAsync();
 			}
-
-			// Only what the restore changed sets anything off - start with Windows, keep awake, the log. Running them all
-			// would rewrite the startup entry and the rest for settings that came back exactly as they were.
-			List<SettingDef> changed = [.. Settings.Global.Where(d => !Equals(Settings.Show(current, d), Settings.Show(loaded, d)))];
-			mgr.ApplyGlobal(loaded);
-
-			foreach (SettingDef def in changed) {
-				Commands.ApplyGlobalSideEffects(mgr, def);
-			}
+		} finally {
+			RestoreGate.Release();
 		}
-
-		await mgr.ReplaceAllFromDiskAsync().ConfigureAwait(false);
-		Log.Good(new Said("backup restored: {0} file(s) - what was there before is in {1}", written, before));
-		_ = mgr.StartAllAsync();
-
-		return new Said("Restored {0} file(s). The accounts are starting again.", written).ToString();
 	}
+
+	private static readonly SemaphoreSlim RestoreGate = new(1, 1);
 }

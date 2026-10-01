@@ -85,8 +85,34 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 		}
 	}
 
+	/// <summary>The look in flight, which a second caller joins rather than starting its own.</summary>
+	private Task<Bans?>? _checking;
+	private readonly Lock _checkGate = new();
+
 	/// <summary>Look now. Returns the reading, or null when neither way of looking worked.</summary>
+	/// <remarks>
+	/// One look at a time: 'bans' typed while the timed look was running read the same page twice and both compared it
+	/// against the same "before" - a new ban was announced twice, and the older of the two readings could be saved last.
+	/// </remarks>
 	public async Task<Bans?> CheckAsync(CancellationToken ct = default) {
+		Task<Bans?> look;
+
+		lock (_checkGate) {
+			look = _checking ??= Task.Run(async () => {
+				try {
+					return await CheckOnceAsync(CancellationToken.None).ConfigureAwait(false);
+				} finally {
+					lock (_checkGate) {
+						_checking = null;
+					}
+				}
+			}, CancellationToken.None);
+		}
+
+		return await look.WaitAsync(ct).ConfigureAwait(false);
+	}
+
+	private async Task<Bans?> CheckOnceAsync(CancellationToken ct) {
 		Bans? now = await FromProfileAsync(ct).ConfigureAwait(false);
 
 		if (now == null) {
@@ -143,16 +169,23 @@ public sealed partial class BanWatch(Bot bot) : BotModule(bot) {
 	/// Trading cards and other Steam items aren't game items and keep trading.
 	/// </summary>
 	private void LeaveOutOfTrades(List<uint> games) {
-		List<uint> added = [.. games.Where(g => (g != 753) && !Bot.Cfg.InventoryIgnoreGames.Contains(g))];
+		List<uint> added;
 
-		if (added.Count == 0) {
-			return;
+		// Under the account's config gate: a swap learning a banned game at the same moment reads the list, adds to it
+		// and saves too, and unserialized one of the two lost its games.
+		lock (Bot.CfgGate) {
+			added = [.. games.Where(g => (g != 753) && !Bot.Cfg.InventoryIgnoreGames.Contains(g))];
+
+			if (added.Count == 0) {
+				return;
+			}
+
+			// A new list rather than added to in place: a send or a dashboard save can be reading the old one right now,
+			// and a list that changes under a reader throws.
+			Bot.Cfg.InventoryIgnoreGames = [.. Bot.Cfg.InventoryIgnoreGames, .. added];
+			ConfigStore.SaveBot(Bot.Name, Bot.Cfg);
 		}
 
-		// A new list rather than added to in place: a send or a dashboard save can be reading the old one right now,
-		// and a list that changes under a reader throws.
-		Bot.Cfg.InventoryIgnoreGames = [.. Bot.Cfg.InventoryIgnoreGames, .. added];
-		ConfigStore.SaveBot(Bot.Name, Bot.Cfg);
 		Log.Info(new Said("banned in {0} - skipping its items (cards still trade)",
 			string.Join(", ", added.Select(GameNames.Of))), Bot.Name);
 	}

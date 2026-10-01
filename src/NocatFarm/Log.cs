@@ -64,9 +64,16 @@ public static class Log {
 	private static readonly ConcurrentQueue<Entry> Ring = new();
 	private static readonly object ConsoleLock = new();
 	private static long _seq;
-	private static string? _logDir;
-	private static string? _logFile;     // today's file; recomputed when the day turns
-	private static DateTime _logFileDay;
+	private static volatile string? _logDir;
+
+	/// <summary>
+	/// Today's file, with the folder and the day it is for - one object, swapped whole. As three fields (file, day and
+	/// folder read separately) Configure could clear the folder between a writer's check and its Path.Combine, and the
+	/// ArgumentNullException that followed came out of Log.Write into whatever was logging - a module's loop, say.
+	/// </summary>
+	private sealed record DayFile(string Dir, DateTime Day, string Path);
+
+	private static volatile DayFile? _today;
 	private static int _retentionDays;
 	private static readonly object FileLock = new();
 	private static bool _debug;
@@ -97,6 +104,20 @@ public static class Log {
 	}
 
 	/// <summary>
+	/// Text straight onto the console, between log lines rather than through the middle of one - a question waiting for
+	/// an answer, say, when nothing else owns the screen.
+	/// </summary>
+	internal static void ToConsole(string text) {
+		lock (ConsoleLock) {
+			try {
+				Console.Write(text);
+			} catch (IOException) {
+				// no console attached - the window and the dashboard show the question themselves
+			}
+		}
+	}
+
+	/// <summary>
 	/// Stop printing lines to the screen, while still filing them and still raising <see cref="Written"/>.
 	///
 	/// Set while the live board owns the console: it draws the recent lines itself as part of its own layout,
@@ -109,27 +130,36 @@ public static class Log {
 		_retentionDays = retentionDays;
 
 		if (!fileLogging) {
-			_logFile = null;
-			_logDir = null;   // TodaysFile rebuilds the path from the folder, so the folder has to go too
+			// Under the lock TodaysFile takes to roll the day, so a writer mid-roll can't put a file back.
+			lock (FileLock) {
+				_logDir = null;   // TodaysFile rebuilds the path from the folder, so the folder has to go too
+				_today = null;
+			}
 
 			return;
 		}
 
 		string dir = Path.Combine(root, "logs");
+		Exception? failed = null;
 
-		try {
-			Directory.CreateDirectory(dir);
+		lock (FileLock) {
+			try {
+				Directory.CreateDirectory(dir);
 
-			// The FOLDER is settled here; the filename is not. See TodaysFile.
-			_logDir = dir;
-			_logFile = null;
-			Sweep();
-		} catch (Exception e) {
-			_logDir = null;
-			_logFile = null;   // logging must never take the app down
+				// The FOLDER is settled here; the filename is not. See TodaysFile.
+				_logDir = dir;
+				_today = null;
+				Sweep(dir);
+			} catch (Exception e) {
+				_logDir = null;
+				_today = null;   // logging must never take the app down
+				failed = e;
+			}
+		}
 
-			// Nowhere to file it, so at least the screen hears why there is no log file.
-			Warn(new Said("can't write log files in {0}: {1}", Path.GetFullPath(dir), Describe(e)));
+		// Nowhere to file it, so at least the screen hears why there is no log file. Outside the lock: saying it logs.
+		if (failed != null) {
+			Warn(new Said("can't write log files in {0}: {1}", Path.GetFullPath(dir), Describe(failed)));
 		}
 	}
 
@@ -140,43 +170,58 @@ public static class Log {
 	/// one file, no way to open a given day, and the "one file per day" that retention is built around simply
 	/// was not true. Surfaced by a 17-day run.
 	/// </remarks>
+	/// <remarks>
+	/// Each shared field is read ONCE, into a local. Read twice - "is there a folder?" then Path.Combine with it - a
+	/// Configure in between (file logging switched off) turned the second read into null.
+	/// </remarks>
 	private static string? TodaysFile() {
-		if (_logDir == null) {
+		string? dir = _logDir;
+
+		if (dir == null) {
 			return null;
 		}
 
 		DateTime today = DateTime.Now.Date;
+		DayFile? known = _today;
 
-		if ((_logFile != null) && (_logFileDay == today)) {
-			return _logFile;
+		if ((known != null) && (known.Day == today) && (known.Dir == dir)) {
+			return known.Path;
 		}
 
 		lock (FileLock) {
-			if ((_logFile != null) && (_logFileDay == today)) {
-				return _logFile;
+			dir = _logDir;
+
+			if (dir == null) {
+				return null;
 			}
 
-			_logFile = Path.Combine(_logDir, $"nocatFarm-{today:yyyy-MM-dd}.log");
-			_logFileDay = today;
+			known = _today;
+
+			if ((known != null) && (known.Day == today) && (known.Dir == dir)) {
+				return known.Path;
+			}
+
+			DayFile fresh = new(dir, today, Path.Combine(dir, $"nocatFarm-{today:yyyy-MM-dd}.log"));
+			_today = fresh;
 
 			// The day just turned. On a long run this is the only chance to clear old files - doing it once at
 			// startup only ever tidies up for a process that gets restarted.
-			Sweep();
+			Sweep(dir);
 
-			return _logFile;
+			return fresh.Path;
 		}
 	}
 
 	/// <summary>Delete logs older than the retention setting. By last-write time, so a live file is never taken.</summary>
-	private static void Sweep() {
-		if ((_logDir == null) || (_retentionDays <= 0)) {
+	private static void Sweep(string dir) {
+		if (_retentionDays <= 0) {
 			return;
 		}
 
 		try {
 			DateTime cutoff = DateTime.Now.AddDays(-_retentionDays);
 
-			foreach (string old in Directory.GetFiles(_logDir, "nocatFarm-*.log")) {
+			foreach (string old in Directory.GetFiles(dir, "nocatFarm-*.log")) {
 				if (File.GetLastWriteTime(old) < cutoff) {
 					File.Delete(old);
 				}
@@ -538,7 +583,7 @@ public static class Log {
 			return;
 		}
 
-		string file = _logFile ?? Path.Combine(dir, $"nocatFarm-{DateTime.Now:yyyy-MM-dd}.log");
+		string file = (_today is { } known) && (known.Dir == dir) ? known.Path : Path.Combine(dir, $"nocatFarm-{DateTime.Now:yyyy-MM-dd}.log");
 		Append(file, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}|DEBUG|{source}|{text.ReplaceLineEndings(" ")}{Environment.NewLine}", debug: true);
 	}
 

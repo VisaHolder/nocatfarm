@@ -315,9 +315,12 @@ public static partial class Looting {
 					// Onto the settings in force NOW, and as a new list. A send takes minutes, and the dashboard can save
 					// the account meanwhile: the copy read when the send began is then an old one, and saving it put the
 					// old settings back over the new. Changed in place, the list could also be mid-read by a save.
-					BotConfig now = bot.Cfg;
-					now.InventoryIgnoreGames = [.. now.InventoryIgnoreGames, .. learned.Where(a => !now.InventoryIgnoreGames.Contains(a))];
-					Config.ConfigStore.SaveBot(bot.Name, now);
+					lock (bot.CfgGate) {
+						BotConfig now = bot.Cfg;
+						now.InventoryIgnoreGames = [.. now.InventoryIgnoreGames, .. learned.Where(a => !now.InventoryIgnoreGames.Contains(a))];
+						Config.ConfigStore.SaveBot(bot.Name, now);
+					}
+
 					Log.Attention(new Said("can't trade {0} items (banned there?) - left out from now on",
 						string.Join(", ", learned.Select(GameNames.Of))), bot.Name);
 					blocked += batch.Count(i => learned.Contains(i.App));
@@ -510,27 +513,46 @@ public static partial class Looting {
 			return (false, "a swap needs the same number of items on both sides");
 		}
 
-		if (!bot.IsOnline || !bot.Web.Ready) {
-			return (false, $"{bot.Name} isn't logged in");
-		}
+		// Claimed on both sides like a send or a sale claims them (Bot.ClaimItems). Unclaimed, a listing or a send
+		// running meanwhile took a card out of the swap and Steam voided the whole offer, and a second 'match do'
+		// offered the same cards twice. A swap is pairs, so it goes only when every card on both sides is free.
+		HashSet<ulong> mine = bot.ClaimItems(giving.Select(static i => i.AssetId));
+		HashSet<ulong> theirs = ReferenceEquals(bot, partner) ? [] : partner.ClaimItems(taking.Select(static i => i.AssetId));
 
-		// The PARTNER's trade token, read from its own session - this used to send the sender's own "trade master"
-		// token, which belongs to somebody else entirely, so swaps only ever worked between Steam friends.
-		string token = await TradeTokenOfAsync(partner.SteamId, ct).ConfigureAwait(false) ?? "";
-		List<string> results = [];
-		bool anySent = false;
-
-		for (int at = 0; at < giving.Count; at += SwapChunk) {
-			if (at > 0) {
-				await Task.Delay(Rng.Seconds(4, 10), ct).ConfigureAwait(false);
+		try {
+			if ((mine.Count < giving.Select(static i => i.AssetId).Distinct().Count())
+				|| (!ReferenceEquals(bot, partner) && (theirs.Count < taking.Select(static i => i.AssetId).Distinct().Count()))) {
+				return (false, "some of those cards are already being sent, sold or swapped - try again once that's done");
 			}
 
-			(bool ok, string message) = await SendOfferAsync(bot, partner.SteamId, [.. giving.Skip(at).Take(SwapChunk)], token, ct, [.. taking.Skip(at).Take(SwapChunk)]).ConfigureAwait(false);
-			anySent |= ok;
-			results.Add(message);
-		}
+			if (!bot.IsOnline || !bot.Web.Ready) {
+				return (false, $"{bot.Name} isn't logged in");
+			}
 
-		return (anySent, string.Join("; ", results.Distinct()));
+			// The PARTNER's trade token, read from its own session - this used to send the sender's own "trade master"
+			// token, which belongs to somebody else entirely, so swaps only ever worked between Steam friends.
+			string token = await TradeTokenOfAsync(partner.SteamId, ct).ConfigureAwait(false) ?? "";
+			List<string> results = [];
+			bool anySent = false;
+
+			for (int at = 0; at < giving.Count; at += SwapChunk) {
+				if (at > 0) {
+					await Task.Delay(Rng.Seconds(4, 10), ct).ConfigureAwait(false);
+				}
+
+				(bool ok, string message) = await SendOfferAsync(bot, partner.SteamId, [.. giving.Skip(at).Take(SwapChunk)], token, ct, [.. taking.Skip(at).Take(SwapChunk)]).ConfigureAwait(false);
+				anySent |= ok;
+				results.Add(message);
+			}
+
+			return (anySent, string.Join("; ", results.Distinct()));
+		} finally {
+			bot.ReleaseItems(mine);
+
+			if (!ReferenceEquals(bot, partner)) {
+				partner.ReleaseItems(theirs);
+			}
+		}
 	}
 
 	/// <summary>Card pairs per offer. Steam copes with a few hundred items, but a smaller offer is easier to confirm and less to lose to one refusal.</summary>

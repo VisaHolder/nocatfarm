@@ -76,8 +76,44 @@ public static partial class Notifier {
 			Log.Failed("notifications: sending the last batch on the way out", e);
 		}
 
+		// Then what is already on its way: a command's reply - the "/exit confirm" that closed the app is one, on Telegram
+		// and on Discord - and a batch the loop had just taken off the queue. Cancelled straight away they were cut off
+		// mid-send: the reply never came and the batch was gone. A few seconds at most - a long command (a '/start all'
+		// waiting out the sign-in gaps) doesn't hold closing up.
+		await SettleAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
 		_stop?.Cancel();
 	}
+
+	/// <summary>Batches being sent right now (the loop's, and the last one on the way out).</summary>
+	private static int _sending;
+
+	/// <summary>
+	/// Waits, up to <paramref name="within"/>, for every batch being sent and every chat command being answered to finish.
+	/// True when everything did.
+	/// </summary>
+	internal static async Task<bool> SettleAsync(TimeSpan within) {
+		DateTime until = DateTime.UtcNow + within;
+
+		while ((Volatile.Read(ref _sending) > 0) || (TelegramLane.Pending > 0) || (DiscordLane.Pending > 0)) {
+			if (DateTime.UtcNow >= until) {
+				return false;
+			}
+
+			await Task.Delay(25).ConfigureAwait(false);
+		}
+
+		return true;
+	}
+
+	/// <summary>
+	/// Commands from the Telegram chat, in the order they were sent. Each still runs on its own - see CommandLane -
+	/// so a long one doesn't stop the next being read.
+	/// </summary>
+	internal static readonly CommandLane TelegramLane = new(CommandLane.DetachAfter);
+
+	/// <summary>The same for the Discord bot's / commands.</summary>
+	internal static readonly CommandLane DiscordLane = new(CommandLane.DetachAfter);
 
 	/// <summary>Is this kind of event switched on?</summary>
 	public static bool Wanted(Topic topic) => topic switch {
@@ -145,6 +181,18 @@ public static partial class Notifier {
 			return;
 		}
 
+		// Counted from before the batch comes off the queue until it has gone, so the way out (SettleAsync) waits for
+		// it instead of cancelling it half-sent.
+		Interlocked.Increment(ref _sending);
+
+		try {
+			await SendBatchAsync(ct).ConfigureAwait(false);
+		} finally {
+			Interlocked.Decrement(ref _sending);
+		}
+	}
+
+	private static async Task SendBatchAsync(CancellationToken ct) {
 		List<(Topic Topic, string Source, string Text, DateTime At)> batch = [];
 
 		while (Queue.TryDequeue(out var item)) {
@@ -620,5 +668,100 @@ public static partial class Notifier {
 		}
 
 		return result;
+	}
+}
+
+/// <summary>
+/// Chat commands from one place - the Telegram chat, or the Discord bot - run in the order they were sent.
+/// </summary>
+/// <remarks>
+/// Each command used to get a task of its own the moment it arrived, so two sent a second apart ran side by side and
+/// finished in any order: "/pause kylro" then "/resume kylro" could end paused, and "/console" then a plain line could
+/// read console mode before the toggle had happened. Now each takes a place in the line as it arrives
+/// (<see cref="Take"/>), and runs once the one before it has finished.
+///
+/// Not a strict queue, though. Some commands genuinely take minutes - '/start all' waits out every sign-in gap - and a
+/// '/stop all' sent after one must not wait for it. So a command that has been going longer than
+/// <see cref="DetachAfter"/> lets the next one start and carries on by itself: quick ones keep their order, a slow one
+/// doesn't hold the rest up.
+/// </remarks>
+public sealed class CommandLane {
+	/// <summary>How long a command holds the next one back before it is left to finish on its own.</summary>
+	public static readonly TimeSpan DetachAfter = TimeSpan.FromSeconds(3);
+
+	private readonly TimeSpan _detachAfter;
+	private readonly Lock _gate = new();
+	private Task _tail = Task.CompletedTask;
+	private int _pending;
+
+	public CommandLane(TimeSpan detachAfter) => _detachAfter = detachAfter;
+
+	/// <summary>Commands taken and not finished yet - the way out waits (a little) for these to answer.</summary>
+	public int Pending => Volatile.Read(ref _pending);
+
+	/// <summary>A place in the line - taken as the message arrives, on the thread reading them, so in the order sent.</summary>
+	public Slot Take() {
+		TaskCompletionSource over = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		Task before;
+
+		lock (_gate) {
+			before = _tail;
+			_tail = over.Task;
+		}
+
+		Interlocked.Increment(ref _pending);
+
+		return new Slot(this, before, over);
+	}
+
+	/// <summary>Take a place and run <paramref name="job"/> in its turn. Returns once the job has finished.</summary>
+	public async Task RunAsync(Func<Task> job) {
+		Slot slot = Take();
+
+		try {
+			await slot.WaitTurnAsync().ConfigureAwait(false);
+			await job().ConfigureAwait(false);
+		} finally {
+			slot.Done();
+		}
+	}
+
+	/// <summary>One command's place in the line.</summary>
+	public sealed class Slot {
+		private readonly CommandLane _lane;
+		private readonly Task _before;
+		private readonly TaskCompletionSource _over;
+		private int _done;
+
+		internal Slot(CommandLane lane, Task before, TaskCompletionSource over) {
+			_lane = lane;
+			_before = before;
+			_over = over;
+		}
+
+		/// <summary>
+		/// Wait for the command before this one to finish (or to have gone on longer than the lane waits), then it's this
+		/// one's turn. From here the next one waits for this one the same way.
+		/// </summary>
+		public async Task WaitTurnAsync() {
+			await _before.ConfigureAwait(false);
+
+			// Still going after DetachAfter: the next one may start; this carries on by itself.
+			_ = Task.Delay(_lane._detachAfter).ContinueWith(_ => _over.TrySetResult(), CancellationToken.None,
+				TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+		}
+
+		/// <summary>
+		/// Finished - answered, or turned away without running. Always called, once (a second call does nothing). One
+		/// that finishes before its turn came still keeps the next behind the ones before it.
+		/// </summary>
+		public void Done() {
+			if (Interlocked.Exchange(ref _done, 1) != 0) {
+				return;
+			}
+
+			Interlocked.Decrement(ref _lane._pending);
+			_before.ContinueWith(_ => _over.TrySetResult(), CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+		}
 	}
 }

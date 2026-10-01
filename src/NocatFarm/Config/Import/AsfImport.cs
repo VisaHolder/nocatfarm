@@ -206,9 +206,9 @@ public static class AsfImport {
 	private static void ReadGlobal(JsonElement asf, ImportScan scan) {
 		if (Apps(Prop(asf, "Blacklist")) is { Count: > 0 } blacklist) {
 			scan.Settings.Add(new ImportSetting("GlobalBlacklistedGames", string.Join(", ", blacklist), ToGlobal: g => {
-				foreach (uint app in blacklist.Where(a => !g.GlobalBlacklistedGames.Contains(a))) {
-					g.GlobalBlacklistedGames.Add(app);
-				}
+				// A new list, not added to in place: this is the live one, and a save or a copy reading it at the same moment
+				// threw "collection was modified" half way through.
+				g.GlobalBlacklistedGames = [.. g.GlobalBlacklistedGames, .. blacklist.Where(a => !g.GlobalBlacklistedGames.Contains(a))];
 			}));
 		}
 

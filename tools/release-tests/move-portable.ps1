@@ -1,7 +1,10 @@
 ﻿# The setup moving a RUNNING portable copy (the previous release) into the install: closed first, account and port
 # kept, its startup entry taken over, the old folder left alone.
+# Then, with the accounts that uninstall kept still in the folder and a file in them held open (Explorer, a virus scan),
+# a second move: it can't set them aside, so it stops - and every kept account is still there.
 # Needs dist\nocat.farm-v<version>-setup.exe and dist\nocat.farm-v<from>-portable.zip:  -From 1.5.3
-param([Parameter(Mandatory)][string]$From)
+# (-Setup another-setup.exe runs the same checks against another build's setup.)
+param([Parameter(Mandatory)][string]$From, [string]$Setup = '')
 # The repo, the version being released (from the csproj), and a working folder outside the repo for the test copies.
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $Version = (Select-Xml -Path "$Repo\src\NocatFarm\NocatFarm.csproj" -XPath '//Version').Node.InnerText
@@ -9,10 +12,20 @@ $SP = Join-Path $env:TEMP 'nocatfarm-tests'
 New-Item -ItemType Directory -Force $SP | Out-Null
 $ErrorActionPreference = 'Continue'
 $old = "$SP\old147"; $inst = "$SP\inst148"
-$setup = "$Repo\dist\nocat.farm-v$Version-setup.exe"
+$setup = if ($Setup) { (Resolve-Path $Setup).Path } else { "$Repo\dist\nocat.farm-v$Version-setup.exe" }
 $runKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
 function Check($name, $ok, $detail = '') { "{0}  {1}{2}" -f ($(if ($ok) { 'PASS' } else { 'FAIL' })), $name, $(if ($detail) { "  ($detail)" } else { '' }) }
 $savedRun = (Get-ItemProperty $runKey -Name nocatFarm -ErrorAction SilentlyContinue).nocatFarm
+
+# The real startup entry, remembered on disk. Read from the registry alone, a run that overlapped another (or followed
+# one that was killed) saved a TEST copy's entry as the real one and put that back at the end - the owner's nocat.farm
+# then stopped starting with Windows. An entry pointing in here is never taken for the real one.
+$realRunFile = Join-Path $SP 'real-run-entry.txt'
+# No entry at all is the owner's choice (Start with Windows off) - the saved one is forgotten, not put back.
+if (-not $savedRun) { Remove-Item $realRunFile -ErrorAction SilentlyContinue }
+elseif ($savedRun -notlike "*nocatfarm-tests*") { Set-Content $realRunFile $savedRun -Encoding utf8 }
+elseif (Test-Path $realRunFile) { $savedRun = (Get-Content $realRunFile -Raw).Trim() }
+else { $savedRun = $null }
 try {
   Remove-Item $old, $inst -Recurse -Force -ErrorAction SilentlyContinue
   Expand-Archive "$Repo\dist\nocat.farm-v$From-portable.zip" $old
@@ -49,6 +62,30 @@ try {
   Check '--quit closed it' ($n.HasExited)
   $u = Start-Process "$inst\unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -PassThru -Wait
   Check 'silent uninstall finished without stopping on anything' ($u.ExitCode -eq 0) "exit $($u.ExitCode)"
+
+  "--- the kept accounts can't be set aside (a file in them is open): the move stops, and none of them is deleted"
+  # The uninstaller finishes from a copy of itself: until it has, the setup would take this for an update, not a move.
+  $uninstallKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{89595F01-E60C-4593-9BA7-51B5A3A2F7C5}_is1"
+  for ($i = 0; ($i -lt 60) -and ((Test-Path $uninstallKey) -or (Test-Path "$inst\nocatFarm.exe")); $i++) { Start-Sleep 1 }
+  Check 'the uninstall kept the accounts' (Test-Path "$inst\config\moved.json")
+  '{ "Enabled": false, "SteamLogin": "nf_dummy_kept" }' | Set-Content "$inst\config\kept.json" -Encoding utf8
+  $p = Start-Process "$old\nocatFarm.exe" -ArgumentList '--minimized' -WorkingDirectory $old -WindowStyle Hidden -PassThru
+  Start-Sleep 6
+  Set-ItemProperty $runKey -Name nocatFarm -Value "`"$old\nocatFarm.exe`" --minimized"
+  $held = [IO.File]::Open("$inst\config\nocatFarm.json", 'Open', 'ReadWrite', 'None')
+  try {
+    $s = Start-Process $setup -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=`"$inst`"", '/MOVE=yes', '/STARTUP=no', "/LOG=`"$SP\move-held.log`"" -PassThru -Wait
+  } finally {
+    $held.Dispose()
+  }
+  Check 'setup finished' ($s.ExitCode -eq 0) "exit $($s.ExitCode)"
+  $left = @(Get-ChildItem "$inst\config" -File -ErrorAction SilentlyContinue | ForEach-Object Name)
+  Check 'every kept account is still there' ((Test-Path "$inst\config\kept.json") -and (Test-Path "$inst\config\moved.json")) ($left -join ', ')
+  Check 'the setup log says why it did not move the copy in' ([bool](Select-String -Path "$SP\move-held.log" -Pattern "couldn't set the kept" -SimpleMatch -Quiet))
+  Check 'the portable copy is left as it was' (Test-Path "$old\config\moved.json")
+  $u = Start-Process "$inst\unins000.exe" -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/DELETEDATA=yes' -PassThru -Wait
+  for ($i = 0; ($i -lt 30) -and (Test-Path "$inst\config"); $i++) { Start-Sleep 1 }   # the uninstaller finishes from a copy of itself
+  Check 'uninstalled again, data and all' (($u.ExitCode -eq 0) -and -not (Test-Path "$inst\config")) "exit $($u.ExitCode)"
 } finally {
   Get-Process nocatFarm -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "*old147*" -or $_.Path -like "*inst148*" } | Stop-Process -Force
   if ($savedRun) { Set-ItemProperty $runKey -Name nocatFarm -Value $savedRun } else { Remove-ItemProperty $runKey -Name nocatFarm -ErrorAction SilentlyContinue }

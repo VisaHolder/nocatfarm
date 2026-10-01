@@ -23,7 +23,7 @@ namespace NocatFarm.Windows;
 /// whole project to a Windows-only target framework for a handful of rectangles.
 /// </summary>
 [SupportedOSPlatform("windows")]
-public sealed class MainWindow : IDisposable {
+public sealed partial class MainWindow : IDisposable {
 	// ── the palette, matching noDeploy ──
 	private static readonly int Bg = Rgb(10, 10, 10);
 	private static readonly int Surface = Rgb(18, 18, 18);
@@ -87,6 +87,9 @@ public sealed class MainWindow : IDisposable {
 	private IntPtr _fontBold;
 	private IntPtr _fontSmall;
 	private IntPtr _fontMono;
+
+	/// <summary>The log's font, underlined - for links.</summary>
+	private IntPtr _fontMonoLink;
 	private IntPtr _input;
 	private IntPtr _originalInputProc;
 	private IntPtr _inputBrush;
@@ -164,7 +167,8 @@ public sealed class MainWindow : IDisposable {
 	/// so a hidden or mini window comes up for it (once per question), and a password is masked while it's typed.
 	/// </summary>
 	private void WatchPrompt() {
-		string? question = Prompt.Pending;
+		Prompt.Question? asked = Prompt.Current;   // once: the text and whether it's a secret belong to the same question
+		string? question = asked?.Text;
 
 		if ((question != null) && (question != _surfacedFor)) {
 			_surfacedFor = question;
@@ -181,7 +185,7 @@ public sealed class MainWindow : IDisposable {
 			_surfacedFor = null;
 		}
 
-		bool secret = (question != null) && Prompt.PendingSecret;
+		bool secret = asked?.Secret ?? false;
 
 		if ((secret != _masked) && (_input != IntPtr.Zero)) {
 			_masked = secret;
@@ -194,6 +198,12 @@ public sealed class MainWindow : IDisposable {
 
 	/// <summary>Clickable areas worked out during the paint, so hit-testing always matches what is on screen.</summary>
 	private readonly List<(int X, int Y, int W, int H, string Bot, char What)> _hits = [];
+
+	/// <summary>Where the links in the log were drawn this time, and where each goes - for the click and the hand cursor.</summary>
+	private readonly List<(int X, int Y, int W, int H, string Url)> _links = [];
+
+	/// <summary>The cursor is over a link (the hand shows).</summary>
+	private bool _overLink;
 
 	private sealed record Button(int Id, int X, int Y, int W, int H);
 
@@ -237,6 +247,19 @@ public sealed class MainWindow : IDisposable {
 		_thread = new Thread(Pump) { IsBackground = true, Name = "nocatFarm window" };
 		_thread.SetApartmentState(ApartmentState.STA);
 		_thread.Start();
+	}
+
+	/// <summary>Set once the window is made and set up, just before it decides whether to show itself.</summary>
+	private volatile bool _ready;
+
+	/// <summary>
+	/// The tray couldn't add its icon: show the window if it's there yet. Not yet, and it shows itself once it is - it
+	/// looks at <see cref="TrayIcon.Unavailable"/> right after saying it's ready.
+	/// </summary>
+	internal void ShowIfReady() {
+		if (_ready) {
+			Show();
+		}
 	}
 
 	public void Show() {
@@ -410,7 +433,15 @@ public sealed class MainWindow : IDisposable {
 			ApplyMini(true, remember: false);
 		}
 
-		if (_showOnCreate) {
+		// Hidden at start only while there is a tray icon to bring it back. The tray adds its icon on its own thread, and
+		// finding it can't (Start with Windows, before Explorer is ready) it asks for the window - which, this early, may
+		// not exist yet, and the request did nothing: no icon and no window. So both sides say what they know and then
+		// look at the other's - the window "ready", the tray "no icon" - with a full fence between, and at least one of
+		// them sees the other and the window comes up.
+		_ready = true;
+		Interlocked.MemoryBarrier();
+
+		if (_showOnCreate || TrayIcon.Unavailable) {
 			ShowWindow(_hwnd, SwShow);
 			SetForegroundWindow(_hwnd);
 			Visible = true;
@@ -430,6 +461,7 @@ public sealed class MainWindow : IDisposable {
 		_fontBold = CreateFont(15, 0, 0, 0, 700, 0, 0, 0, 1, 0, 0, 5, 0, "Segoe UI");
 		_fontSmall = CreateFont(13, 0, 0, 0, 400, 0, 0, 0, 1, 0, 0, 5, 0, "Segoe UI");
 		_fontMono = CreateFont(13, 0, 0, 0, 400, 0, 0, 0, 1, 0, 0, 5, 0, "Consolas");
+		_fontMonoLink = CreateFont(13, 0, 0, 0, 400, 0, 1, 0, 1, 0, 0, 5, 0, "Consolas");
 		_fontIcon = CreateFont(14, 0, 0, 0, 400, 0, 0, 0, 1, 0, 0, 5, 0, "Segoe MDL2 Assets");
 	}
 
@@ -497,9 +529,12 @@ public sealed class MainWindow : IDisposable {
 
 		SetWindowText(_input, "");
 
+		// The question up as the line was sent, read once for everything below.
+		Prompt.Question? question = Prompt.Current;
+
 		// Remembered for up/down - never an answer to a question (a password, a Steam Guard code), and never a line
 		// the log would mask ('set ... SteamPassword ...').
-		if ((Prompt.Pending == null) && (Commands.ForLog(line) == line)) {
+		if ((question == null) && (Commands.ForLog(line) == line)) {
 			_typed.Add(line);
 		} else {
 			_typed.Reset();
@@ -508,9 +543,13 @@ public sealed class MainWindow : IDisposable {
 		// A waiting question takes the line first, exactly as the console loop did. With the console detached
 		// this is the ONLY place a Steam Guard code can be typed, so getting it wrong would make adding an
 		// account impossible rather than merely awkward.
-		if (Prompt.Pending != null) {
-			Append(new Log.Entry(0, DateTime.Now, "INFO", "you", new Core.Said("> " + (Prompt.PendingSecret ? new string('*', line.Length) : line))));
-			Prompt.Answer(line);
+		//
+		// Read ONCE, and answered as that question: checked, then answered through "whatever is up now", an answer the
+		// dashboard gave in between let this line answer the next account's question instead - and masked or not by
+		// what the next one was.
+		if (question != null) {
+			Append(new Log.Entry(0, DateTime.Now, "INFO", "you", new Core.Said("> " + (question.Secret ? new string('*', line.Length) : line))));
+			Prompt.Answer(question, line);
 			Invalidate();
 
 			return;
@@ -712,6 +751,13 @@ public sealed class MainWindow : IDisposable {
 					return IntPtr.Zero;
 				}
 
+				// A link in the log opens in the browser - only a web address, never anything else a line might hold.
+				if (LinkAt(mx, my) is { } link) {
+					OpenUrl(link);
+
+					return IntPtr.Zero;
+				}
+
 				// Anywhere else on the title bar drags the window, since there is no system caption to grab.
 				if (my < (_mini ? MiniTitleH : TitleH)) {
 					ReleaseCapture();
@@ -760,6 +806,7 @@ public sealed class MainWindow : IDisposable {
 			case WmMouseMove: {
 				int hit = ButtonAt(LoWord(lParam), HiWord(lParam));
 				int id = hit >= 0 ? _buttons[hit].Id : -1;
+				_overLink = LinkAt(LoWord(lParam), HiWord(lParam)) != null;
 
 				if (id != _hoverId) {
 					_hoverId = id;
@@ -776,8 +823,14 @@ public sealed class MainWindow : IDisposable {
 				return IntPtr.Zero;
 			}
 
+			case WmSetCursor when _overLink && ((lParam.ToInt64() & 0xFFFF) == HtClient):
+				SetCursor(LoadCursor(IntPtr.Zero, IdcHand));
+
+				return new IntPtr(1);
+
 			case WmMouseLeave:
 				_tracking = false;
+				_overLink = false;
 				_hoverId = -1;
 				Invalidate();
 
@@ -1110,6 +1163,7 @@ public sealed class MainWindow : IDisposable {
 
 		_buttons.Clear();
 		_hits.Clear();
+		_links.Clear();
 
 		if (_mini) {
 			PaintMini(mem);
@@ -1458,10 +1512,27 @@ public sealed class MainWindow : IDisposable {
 
 		int y = top + 6;
 
+		// Read once: the strip drawn at the bottom and the links under it have to agree on whether there's a question.
+		string? question = Prompt.Pending is { Length: > 0 } asked ? asked : null;
+
+		// Where the log is still showing: above the "scrolled back" strip and the question's, both painted over its last
+		// rows. A link under either was still clickable there - a click on the strip opened a line nobody could see.
+		int shownTo = top + height;
+
+		if (_logScroll > 0) {
+			shownTo = Math.Min(shownTo, (top + height) - (LineH + 2));
+		}
+
+		if (question != null) {
+			shownTo = Math.Min(shownTo, bottom - 20);
+		}
+
 		foreach (LogLine line in lines) {
 			Text(dc, line.Time, TimeX, y, _fontMono, TextDim);
 			Clipped(dc, line.Source, SourceX, y, 74, _fontMono, SourceColour(line.Source));
-			Clipped(dc, line.Text, TextX, y, textRoom, _fontMono, line.Colour);
+			string text = line.Text;
+			Clipped(dc, text, TextX, y, textRoom, _fontMono, line.Colour);
+			DrawLinks(dc, text, TextX, y, textRoom, shownTo);
 			y += LineH;
 		}
 
@@ -1500,13 +1571,55 @@ public sealed class MainWindow : IDisposable {
 		Outline(dc, wellX, wellY, _w - wellX - Pad, wellH, Rgb(48, 48, 48));
 		Fill(dc, wellX, wellY, 2, wellH, Accent);
 
-		if (Prompt.Pending is { Length: > 0 } question) {
+		if (question != null) {
 			Fill(dc, 0, inputTop - 20, _w, 20, Rgb(38, 30, 12));
 			Clipped(dc, question, Pad, inputTop - 19, _w - (Pad * 2), _fontSmall, Amber);
 			Text(dc, "?", Pad, PromptY, _fontMono, Amber);
 		} else {
 			Text(dc, ">", Pad, PromptY, _fontMono, Accent);
 		}
+	}
+
+	/// <summary>
+	/// The links in a log line, blue and underlined over what was just drawn, and remembered for the click. A link cut
+	/// off at the edge of the window still opens whole - the release page after an update is the usual one, and it's
+	/// long. Only what's above <paramref name="shownTo"/> can be clicked: below it a strip is painted over the line.
+	/// </summary>
+	private void DrawLinks(IntPtr dc, string text, int x, int y, int room, int shownTo) {
+		foreach (System.Text.RegularExpressions.Match m in LinkRegex().Matches(text)) {
+			string url = m.Value.TrimEnd('.', ',', ')', ';', ':', '!', '?', '\'', '"');
+			int from = x + TextWidth(dc, text[..m.Index], _fontMono);
+			int visible = Math.Min(TextWidth(dc, url, _fontMonoLink), x + room - from);
+
+			if (visible < 12) {
+				break;   // this one and every one after it is past the edge
+			}
+
+			Fill(dc, from, y, visible, LineH, Panel);
+			Clipped(dc, url, from, y, visible, _fontMonoLink, LinkBlue);
+
+			// Half under a strip, only the half that shows; all of it under one, nothing.
+			int shownH = Math.Min(LineH, shownTo - y);
+
+			if (shownH > 0) {
+				_links.Add((from, y, visible, shownH, url));
+			}
+		}
+	}
+
+	private static readonly int LinkBlue = Rgb(88, 166, 255);
+
+	[System.Text.RegularExpressions.GeneratedRegex(@"https?://[^\s<>""]+")]
+	private static partial System.Text.RegularExpressions.Regex LinkRegex();
+
+	private string? LinkAt(int mx, int my) {
+		foreach ((int lx, int ly, int lw, int lh, string url) in _links) {
+			if ((mx >= lx) && (mx < lx + lw) && (my >= ly) && (my < ly + lh)) {
+				return url;
+			}
+		}
+
+		return null;
 	}
 
 	private void PaintStatus(IntPtr dc) {
@@ -1750,7 +1863,9 @@ public sealed class MainWindow : IDisposable {
 
 			int textX = 24 + Math.Clamp(nameW, 36, 96) + 10;
 			int buttonX = _w - 6 - 24;
-			string doing = farming && (bot.PlayingApps.Count > 0) ? $"farming {GameNames.Of(bot.PlayingApps[0])}" : BotStatus.Of(bot).Doing;
+			// Read once: the account's thread swaps the list whole, and a second read could find it emptied since the first.
+			IReadOnlyList<uint> playing = bot.PlayingApps;
+			string doing = farming && (playing.Count > 0) ? $"farming {GameNames.Of(playing[0])}" : BotStatus.Of(bot).Doing;
 			Clipped(dc, doing, textX, y + 8, buttonX - textX - 6, _fontSmall, farming ? TextNormal : TextMid);
 
 			MiniRowButton(dc, bot.Running ? GlyphStop : GlyphPlay, buttonX, y + 4, 24, 22, bot.Name, bot.Running ? Red : Green);
@@ -1919,7 +2034,7 @@ public sealed class MainWindow : IDisposable {
 			_hwnd = IntPtr.Zero;
 		}
 
-		foreach (IntPtr font in new[] { _fontUi, _fontBold, _fontSmall, _fontMono, _fontIcon, _inputBrush }) {
+		foreach (IntPtr font in new[] { _fontUi, _fontBold, _fontSmall, _fontMono, _fontMonoLink, _fontIcon, _inputBrush }) {
 			if (font != IntPtr.Zero) {
 				DeleteObject(font);
 			}
@@ -1988,6 +2103,9 @@ public sealed class MainWindow : IDisposable {
 	private const int SmCxSmIcon = 49;
 	private const int SmCySmIcon = 50;
 	private const int IdcArrow = 32512;
+	private const int IdcHand = 32649;
+	private const int WmSetCursor = 0x0020;
+	private const int HtClient = 1;
 	private const uint ImageIcon = 1;
 	private const uint LrLoadFromFile = 0x0010;
 	private const int WmSetIcon = 0x0080;
@@ -2090,6 +2208,7 @@ public sealed class MainWindow : IDisposable {
 	[DllImport("user32.dll")] private static extern int FillRect(IntPtr dc, ref Rect r, IntPtr brush);
 	[DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int DrawText(IntPtr dc, string text, int count, ref Rect r, int format);
 	[DllImport("user32.dll")] private static extern IntPtr LoadCursor(IntPtr instance, int cursor);
+	[DllImport("user32.dll")] private static extern IntPtr SetCursor(IntPtr cursor);
 	[DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)] private static extern IntPtr LoadImage(IntPtr instance, string name, uint type, int cx, int cy, uint load);
 	[DllImport("user32.dll")] private static extern int GetSystemMetrics(int index);
 	[DllImport("user32.dll")] private static extern IntPtr SetTimer(IntPtr hwnd, IntPtr id, int elapse, IntPtr func);

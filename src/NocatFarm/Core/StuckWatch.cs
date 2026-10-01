@@ -72,10 +72,34 @@ public static class StuckWatch {
 
 	/// <summary>How an account is restarted: the way 'restart' does it - a human-mode account finishes up first.</summary>
 	internal static Func<Bot, Task> Restart { get; set; } = static async b => {
+		long stops = b.StopCount;
 		await b.StopAsync(graceful: true).ConfigureAwait(false);
 		await Task.Delay(1500).ConfigureAwait(false);
+
+		if (!StillRestarting(b, stops + 1)) {
+			Log.Debug("stuck alarm: not starting it again - it was stopped, switched off or removed meanwhile", b.Name);
+
+			return;
+		}
+
 		await b.StartAsync().ConfigureAwait(false);
 	};
+
+	/// <summary>
+	/// The restart's own stop is the only one since it began (<paramref name="stops"/> is the count with it), the account is
+	/// still switched on and still there, and nothing called the restart off (<see cref="Reset"/> after a restore does).
+	/// Otherwise the start is left out: a 'stop' you gave during the restart was undone a second later, and an account
+	/// removed or replaced by a restore signed back in as a ghost next to its replacement.
+	/// </summary>
+	internal static bool StillRestarting(Bot bot, long stops) {
+		lock (Gate) {
+			if (!Restarting.Contains(bot.Name)) {
+				return false;
+			}
+		}
+
+		return !bot.Disposed && bot.Cfg.Enabled && (bot.StopCount == stops);
+	}
 
 	public static void Start(BotManager mgr) {
 		_mgr = mgr;

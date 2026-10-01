@@ -35,11 +35,15 @@ public sealed class WebHost : IAsyncDisposable {
 	/// in front for HTTPS) makes every visitor look like this PC - it says who really asked in X-Forwarded-For, so that
 	/// address is used instead, and it counts as outside: the internet gets the full hour, and one person's wrong guesses
 	/// don't lock everybody else out.
+	///
+	/// A proxy that isn't on this PC - Caddy in front of Docker arrives from Docker's own network - is believed the same way
+	/// once it's listed in "Trust forwarded addresses from" (WebTrustedProxies). It is never "this PC" itself.
 	/// </summary>
 	private static (string Ip, bool ThisPc) WhoIsSigningIn(HttpContext ctx) {
 		IPAddress from = ctx.Connection.RemoteIpAddress ?? IPAddress.None;
+		bool loopback = IPAddress.IsLoopback(from);
 
-		if (!IPAddress.IsLoopback(from)) {
+		if (!loopback && !TrustedProxies.Trusted(from)) {
 			return (from.ToString(), false);
 		}
 
@@ -65,7 +69,7 @@ public sealed class WebHost : IAsyncDisposable {
 		}
 
 		if (said.Count == 0) {
-			return (from.ToString(), true);
+			return (from.ToString(), loopback);
 		}
 
 		// Only a real address counts: anything else ("unknown", an obfuscated id, made-up text) is one shared "unknown" -
@@ -91,9 +95,10 @@ public sealed class WebHost : IAsyncDisposable {
 	private int LockedFor(HttpContext ctx) {
 		(string ip, bool thisPc) = WhoIsSigningIn(ctx);
 		DateTime until = _failures.TryGetValue(ip, out (int Count, DateTime Until) f) && (f.Count >= MaxFailedLogins) ? f.Until : DateTime.MinValue;
+		DateTime paused = PausedUntil;
 
-		if (!thisPc && (_internetPausedUntil > until) && IsInternet(ip)) {
-			until = _internetPausedUntil;
+		if (!thisPc && (paused > until) && IsInternet(ip)) {
+			until = paused;
 		}
 
 		return until > DateTime.UtcNow ? (int) Math.Ceiling((until - DateTime.UtcNow).TotalSeconds) : 0;
@@ -103,9 +108,12 @@ public sealed class WebHost : IAsyncDisposable {
 	public int ClearLockouts() {
 		int n = _failures.Count(static f => f.Value.Count >= MaxFailedLogins && f.Value.Until > DateTime.UtcNow);
 		_failures.Clear();
-		_internetMisses.Clear();
-		_internetMissesToday.Clear();
-		_internetPausedUntil = DateTime.MinValue;
+
+		lock (_brakeGate) {
+			_internetMisses.Clear();
+			_internetMissesToday.Clear();
+			_internetPausedUntil = DateTime.MinValue;
+		}
 
 		// Switched itself off: unlock opens it again - the only way back that doesn't need Open from anywhere (a forward
 		// set up by hand, or a proxy). With Open from anywhere off and no Public address, the internet stays out anyway.
@@ -136,16 +144,34 @@ public sealed class WebHost : IAsyncDisposable {
 	/// Wrong passwords from the internet, from any address, in the last hour. Five per address stops one guesser; this
 	/// stops many addresses sharing the guessing, which the per-address lockout never sees.
 	/// </summary>
-	private readonly ConcurrentQueue<DateTime> _internetMisses = new();
+	private readonly Queue<DateTime> _internetMisses = new();
 	private const int InternetMissesPerHour = 10;
 	private const int InternetPauseMinutes = 60;
 	private DateTime _internetPausedUntil = DateTime.MinValue;
+
+	/// <summary>
+	/// The internet brake - the misses in the last hour and the last day, when it's paused till, and the guesses from the
+	/// internet being checked right now - read and changed under this one lock, so a burst of guesses can't all find room.
+	/// </summary>
+	private readonly Lock _brakeGate = new();
+
+	/// <summary>Guesses from the internet let through and not yet found right or wrong. Under <see cref="_brakeGate"/>.</summary>
+	private int _internetInFlight;
+
+	/// <summary>When the internet brake lets go; in the past when it's off.</summary>
+	private DateTime PausedUntil {
+		get {
+			lock (_brakeGate) {
+				return _internetPausedUntil;
+			}
+		}
+	}
 
 	/// <summary>From the internet - and an address that can't be read counts as the internet, never as home.</summary>
 	public static bool IsInternet(string ip) => RemoteAccess.IsInternet(ip);
 
 	/// <summary>Wrong passwords and codes from the internet in the last 24 hours, for "Turn Open from anywhere off after".</summary>
-	private readonly ConcurrentQueue<DateTime> _internetMissesToday = new();
+	private readonly Queue<DateTime> _internetMissesToday = new();
 
 	/// <summary>
 	/// Shut to the internet after "Turn Open from anywhere off after" was reached - a Public address set by hand
@@ -190,7 +216,8 @@ public sealed class WebHost : IAsyncDisposable {
 	/// it runs out, and the wrong tries so far. The password alone never lets anyone in from outside while
 	/// "Code on Telegram for sign-ins from outside" is on and Telegram is connected.
 	/// </summary>
-	private sealed record PendingCode(string Code, string Ip, DateTime Expires, int Tries);
+	/// <remarks>Key is the password it was right for (see <see cref="KeyOf"/>): changed before the code comes back, the code signs nobody in.</remarks>
+	private sealed record PendingCode(string Code, string Ip, DateTime Expires, int Tries, string Key);
 
 	private readonly ConcurrentDictionary<string, PendingCode> _pendingCodes = new(StringComparer.Ordinal);
 	private readonly ConcurrentQueue<DateTime> _codesSent = new();
@@ -206,8 +233,11 @@ public sealed class WebHost : IAsyncDisposable {
 
 	private WebApplication? _app;
 
-	// rep4rep's points are polled, not pushed, so the answer is cached rather than fetched per page view.
-	private (int Points, int Pending, DateTime At)? _pointsCache;
+	// rep4rep's points are polled, not pushed, so the answer is cached rather than fetched per page view. One object,
+	// swapped whole: as a tuple, a page reading it while a poll wrote it could get the new points with the old time.
+	private sealed record PointsSnapshot(int Points, int Pending, DateTime At);
+
+	private volatile PointsSnapshot? _pointsCache;
 	private bool _warnedAboutBalance;
 	private readonly SemaphoreSlim _pointsGate = new(1, 1);
 
@@ -251,7 +281,10 @@ public sealed class WebHost : IAsyncDisposable {
 
 	private static string Hash(string text) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
 
-	private string PasswordKey => Hash("nocat.farm/" + _cfg.WebPassword);
+	private string PasswordKey => KeyOf(_cfg.WebPassword);
+
+	/// <summary>A fingerprint of one dashboard password - which one a sign-in was checked against.</summary>
+	private static string KeyOf(string password) => Hash("nocat.farm/" + password);
 
 	private void LoadSessions() {
 		try {
@@ -371,7 +404,8 @@ public sealed class WebHost : IAsyncDisposable {
 			});
 			builder.Logging.ClearProviders();   // our own log is the log; Kestrel's chatter would drown it
 			_listening = $"{listenHost}:{listenPort}";
-			builder.WebHost.UseUrls($"http://{listenHost}:{listenPort}");
+			// An IPv6 address goes in brackets ("::" is http://[::]:7242): bare, the colons read as a port and it never opened.
+			builder.WebHost.UseUrls($"http://{Platform.UrlHost(listenHost)}:{listenPort}");
 			builder.WebHost.ConfigureKestrel(static o => o.AddServerHeader = false);
 
 			// PascalCase on the wire, matching the config FILES exactly. ASP.NET's default is camelCase, which
@@ -442,7 +476,7 @@ public sealed class WebHost : IAsyncDisposable {
 
 			await _app.StartAsync().ConfigureAwait(false);
 
-			string host = listenHost is "0.0.0.0" or "*" or "+" ? "localhost" : listenHost;
+			string host = listenHost.Trim('[', ']') is "0.0.0.0" or "*" or "+" or "::" ? "localhost" : Platform.UrlHost(listenHost);
 			Url = $"http://{host}:{listenPort}/";
 
 			// The parenthetical is a Said too. As a bare string it was a finished English phrase by the time the
@@ -572,68 +606,212 @@ public sealed class WebHost : IAsyncDisposable {
 	/// on: <paramref name="needsCode"/>, and no session yet. Wrong: counted towards the address's lockout and the
 	/// internet brake.
 	/// </summary>
-	private bool TryLogin(HttpContext ctx, string password, out string token, out bool needsCode) {
+	private bool TryLogin(HttpContext ctx, string password, out string token, out bool needsCode, out string passwordKey) {
 		token = "";
 		needsCode = false;
+		passwordKey = "";
 		(string ip, bool thisPc) = WhoIsSigningIn(ctx);
-		int lockout = thisPc ? LockoutMinutesThisPc : LockoutMinutes;
 		bool internet = !thisPc && IsInternet(ip);
 		string? device = ctx.Request.Headers.UserAgent.FirstOrDefault();
 
-		if (_failures.TryGetValue(ip, out (int Count, DateTime Until) fail) && (fail.Count >= MaxFailedLogins) && (fail.Until > DateTime.UtcNow)) {
+		// Not even tried while it's shut (or the internet brake is on - see Reserve): a right guess mid-attack would still
+		// be a stranger's.
+		if (internet && InternetShut()) {
 			return false;
 		}
 
-		// Not even tried while the internet brake is on (or it's shut): a right guess mid-attack would still be a stranger's.
-		if (internet && ((_internetPausedUntil > DateTime.UtcNow) || InternetShut())) {
+		// The guess takes its place in the count before the password is looked at. Checked first and counted after, a
+		// burst of guesses sent all at once all passed the lockout check before any of them had been counted.
+		if (Reserve(ip, thisPc, internet, device) is not { } attempt) {
 			return false;
 		}
 
 		// Constant-time compare: a check that returns early leaks the password one character at a time. Of the hashes,
 		// so every character counts: padded and cut to 64, "pw  " passed for "pw" and a long password only needed its
-		// first 64 characters.
+		// first 64 characters. The password is read once, and the session is issued only while it is still this one.
+		string current = _cfg.WebPassword;
 		bool ok = CryptographicOperations.FixedTimeEquals(
 			SHA256.HashData(Encoding.UTF8.GetBytes(password)),
-			SHA256.HashData(Encoding.UTF8.GetBytes(_cfg.WebPassword)));
+			SHA256.HashData(Encoding.UTF8.GetBytes(current)));
 
 		if (!ok) {
-			CountFailure(ip, thisPc, lockout, internet, device, Visitors.What.WrongPassword);
+			CountFailure(attempt, Visitors.What.WrongPassword);
 
 			return false;
 		}
 
-		// The wrong-guess count stays until the code is right too, so guessing codes adds to the same lockout.
+		passwordKey = KeyOf(current);
+
+		// The wrong-guess count stays until the code is right too, so guessing codes adds to the same lockout. The right
+		// password itself isn't a wrong guess: its place in the count is given back.
 		if (NeedsCode(internet)) {
+			GiveBack(attempt);
 			needsCode = true;
 
 			return true;
 		}
 
-		SignIn(ctx, ip, thisPc, device, out token);
-
-		return true;
+		return SignIn(ctx, attempt, passwordKey, out token);
 	}
 
-	private void SignIn(HttpContext ctx, string ip, bool thisPc, string? device, out string token) {
-		_failures.TryRemove(ip, out _);
-		token = NewSession(ctx);
-		Visitors.Note(Visitors.What.SignedIn, ip, thisPc, device);
+	/// <summary>False when the password changed since it was checked - then nobody is signed in by it.</summary>
+	private bool SignIn(HttpContext ctx, Attempt attempt, string passwordKey, out string token) {
+		GiveBack(attempt);
+		token = "";
+
+		if (NewSession(ctx, passwordKey) is not { } fresh) {
+			return false;
+		}
+
+		token = fresh;
+		_failures.TryRemove(attempt.Ip, out _);
+		Visitors.Note(Visitors.What.SignedIn, attempt.Ip, attempt.ThisPc, attempt.Device);
 
 		foreach (string stale in _sessions.Where(static kv => kv.Value < DateTime.UtcNow).Select(static kv => kv.Key).ToArray()) {
 			_sessions.TryRemove(stale, out _);
 		}
+
+		return true;
+	}
+
+	/// <summary>
+	/// One guess's place in the counts - this address's wrong guesses and, from the internet, the brake's - taken before
+	/// the password or code is compared, and then either kept as a wrong one (<see cref="CountFailure"/>) or given back
+	/// (<see cref="GiveBack"/>), once.
+	/// </summary>
+	private sealed class Attempt(string ip, bool thisPc, bool internet, string? device, int lockout, (int Count, DateTime Until)? before, (int Count, DateTime Until) taken) {
+		public string Ip { get; } = ip;
+		public bool ThisPc { get; } = thisPc;
+		public bool Internet { get; } = internet;
+		public string? Device { get; } = device;
+		public int Lockout { get; } = lockout;
+
+		/// <summary>This address's count as it was before this guess took its place; null when there wasn't one.</summary>
+		public (int Count, DateTime Until)? Before { get; } = before;
+
+		/// <summary>The count with this guess in it, as this guess wrote it.</summary>
+		public (int Count, DateTime Until) Taken { get; } = taken;
+
+		private int _settled;
+
+		/// <summary>True the first time only: a guess is counted or given back once.</summary>
+		public bool Settle() => Interlocked.Exchange(ref _settled, 1) == 0;
+	}
+
+	/// <summary>
+	/// A place in the counts for one more guess from <paramref name="ip"/>, or null when there's none: that address is
+	/// locked out, the internet brake is on, or enough guesses from the internet are already being checked to reach it.
+	/// </summary>
+	private Attempt? Reserve(string ip, bool thisPc, bool internet, string? device) {
+		int lockout = thisPc ? LockoutMinutesThisPc : LockoutMinutes;
+
+		if (internet) {
+			lock (_brakeGate) {
+				if (!InternetRoom(DateTime.UtcNow)) {
+					return null;
+				}
+
+				_internetInFlight++;
+			}
+		}
+
+		DateTime now = DateTime.UtcNow;
+		bool locked = false;
+		(int Count, DateTime Until)? before = null;
+
+		// Counted atomically: guesses sent all at once each read the same count and wrote back the same "one more". A
+		// locked-out address's count is left as it is - still locked, not locked for longer.
+		(int Count, DateTime Until) taken = _failures.AddOrUpdate(ip,
+			_ => {
+				locked = false;
+				before = null;
+
+				return (1, now.AddMinutes(lockout));
+			},
+			(_, prev) => {
+				before = prev;
+				locked = (prev.Count >= MaxFailedLogins) && (prev.Until > now);
+
+				return locked ? prev : (FailuresAfter(prev, now), now.AddMinutes(lockout));
+			});
+
+		if (locked) {
+			if (internet) {
+				lock (_brakeGate) {
+					_internetInFlight = Math.Max(0, _internetInFlight - 1);
+				}
+			}
+
+			return null;
+		}
+
+		return new Attempt(ip, thisPc, internet, device, lockout, before, taken);
+	}
+
+	/// <summary>Room for one more guess from the internet: the brake is off, and every guess being checked could be wrong without reaching it.</summary>
+	private bool InternetRoom(DateTime now) {
+		PruneMisses(now);
+
+		if (_internetPausedUntil > now) {
+			return false;
+		}
+
+		int offAfter = _cfg.WebRemoteOffAfter;
+
+		if ((offAfter > 0) && (_internetInFlight > 0) && (_internetMissesToday.Count + _internetInFlight >= offAfter)) {
+			return false;
+		}
+
+		return _internetMisses.Count + _internetInFlight < InternetMissesPerHour;
+	}
+
+	/// <summary>Misses older than the hour, and the day, dropped. Under <see cref="_brakeGate"/>.</summary>
+	private void PruneMisses(DateTime now) {
+		while (_internetMisses.TryPeek(out DateTime oldest) && (now - oldest > TimeSpan.FromHours(1))) {
+			_internetMisses.Dequeue();
+		}
+
+		while (_internetMissesToday.TryPeek(out DateTime oldest) && (now - oldest > TimeSpan.FromHours(24))) {
+			_internetMissesToday.Dequeue();
+		}
+	}
+
+	/// <summary>A guess that wasn't a wrong one (the right password waiting for its code, a code that had already gone): out of the counts again.</summary>
+	private void GiveBack(Attempt attempt) {
+		if (!attempt.Settle()) {
+			return;
+		}
+
+		if (attempt.Internet) {
+			lock (_brakeGate) {
+				_internetInFlight = Math.Max(0, _internetInFlight - 1);
+			}
+		}
+
+		// The count as it was before, when nothing has changed it since; otherwise this one guess taken off it.
+		bool restored = attempt.Before is { } was
+			? _failures.TryUpdate(attempt.Ip, was, attempt.Taken)
+			: _failures.TryRemove(new KeyValuePair<string, (int Count, DateTime Until)>(attempt.Ip, attempt.Taken));
+
+		while (!restored && _failures.TryGetValue(attempt.Ip, out (int Count, DateTime Until) now)) {
+			restored = _failures.TryUpdate(attempt.Ip, (Math.Max(0, now.Count - 1), now.Until), now);
+		}
 	}
 
 	/// <summary>A wrong password or a wrong code: towards this address's lockout, and from the internet, the brake.</summary>
-	private void CountFailure(string ip, bool thisPc, int lockout, bool internet, string? device, Visitors.What what) {
-		// Counted atomically: guesses sent all at once each read the same count and wrote back the same "one more".
-		(int count, DateTime _) = _failures.AddOrUpdate(ip,
-			_ => (1, DateTime.UtcNow.AddMinutes(lockout)),
-			(_, prev) => (FailuresAfter(prev, DateTime.UtcNow), DateTime.UtcNow.AddMinutes(lockout)));
+	private void CountFailure(Attempt attempt, Visitors.What what) {
+		if (!attempt.Settle()) {
+			return;
+		}
+
+		(string ip, bool thisPc, string? device) = (attempt.Ip, attempt.ThisPc, attempt.Device);
+
+		// Already in the count - its place was taken before the compare (see Reserve).
+		int count = attempt.Taken.Count;
 
 		if (count >= MaxFailedLogins) {
-			Log.Warn(new Said("dashboard: {0} failed logins from {1} - locked out for {2}m", count, ip, lockout));
-			Visitors.Note(Visitors.What.LockedOut, ip, thisPc, device, count, lockout);
+			Log.Warn(new Said("dashboard: {0} failed logins from {1} - locked out for {2}m", count, ip, attempt.Lockout));
+			Visitors.Note(Visitors.What.LockedOut, ip, thisPc, device, count, attempt.Lockout);
 
 			// Locked out: whatever code it was waiting on is gone too.
 			foreach (string id in _pendingCodes.Where(kv => kv.Value.Ip == ip).Select(static kv => kv.Key).ToArray()) {
@@ -643,37 +821,40 @@ public sealed class WebHost : IAsyncDisposable {
 			Visitors.Note(what, ip, thisPc, device);
 		}
 
-		if (!internet) {
+		if (!attempt.Internet) {
 			return;
 		}
 
 		DateTime now = DateTime.UtcNow;
-		_internetMisses.Enqueue(now);
+		int shutWith = 0, pausedWith = 0;
 
-		while (_internetMisses.TryPeek(out DateTime oldest) && (now - oldest > TimeSpan.FromHours(1))) {
-			_internetMisses.TryDequeue(out _);
+		// Its place among the guesses being checked becomes a miss, and what that adds up to is decided in the same step.
+		lock (_brakeGate) {
+			_internetInFlight = Math.Max(0, _internetInFlight - 1);
+			_internetMisses.Enqueue(now);
+			_internetMissesToday.Enqueue(now);
+			PruneMisses(now);
+
+			int offAfter = _cfg.WebRemoteOffAfter;
+
+			if ((offAfter > 0) && (_internetMissesToday.Count >= offAfter) && !_internetShut) {
+				shutWith = _internetMissesToday.Count;
+			} else if (_internetMisses.Count >= InternetMissesPerHour) {
+				pausedWith = _internetMisses.Count;
+				_internetMisses.Clear();
+				_internetPausedUntil = now.AddMinutes(InternetPauseMinutes);
+			}
 		}
 
-		_internetMissesToday.Enqueue(now);
-
-		while (_internetMissesToday.TryPeek(out DateTime oldest) && (now - oldest > TimeSpan.FromHours(24))) {
-			_internetMissesToday.TryDequeue(out _);
-		}
-
-		int offAfter = _cfg.WebRemoteOffAfter;
-
-		if ((offAfter > 0) && (_internetMissesToday.Count >= offAfter) && !_internetShut) {
-			ShutToTheInternet(ip, thisPc, device, _internetMissesToday.Count);
+		if (shutWith > 0) {
+			ShutToTheInternet(ip, thisPc, device, shutWith);
 
 			return;
 		}
 
-		if (_internetMisses.Count >= InternetMissesPerHour) {
-			int misses = _internetMisses.Count;
-			_internetMisses.Clear();
-			_internetPausedUntil = now.AddMinutes(InternetPauseMinutes);
+		if (pausedWith > 0) {
 			_pendingCodes.Clear();
-			Visitors.Note(Visitors.What.Paused, ip, thisPc, device, misses, InternetPauseMinutes);
+			Visitors.Note(Visitors.What.Paused, ip, thisPc, device, pausedWith, InternetPauseMinutes);
 		}
 	}
 
@@ -681,6 +862,11 @@ public sealed class WebHost : IAsyncDisposable {
 	/// from the internet gets in until it's turned on again.</summary>
 	private void ShutToTheInternet(string ip, bool thisPc, string? device, int misses) {
 		lock (_shutGate) {
+			// Two last guesses at once both reach the limit: it shuts once.
+			if (_internetShut) {
+				return;
+			}
+
 			// The setting goes off BEFORE the flag goes up: "shut while Open from anywhere is on" is what reopening looks
 			// for, so a request seeing the two the other way round mid-shut opened it again straight away.
 			if (_cfg.WebRemoteAccess) {
@@ -700,8 +886,11 @@ public sealed class WebHost : IAsyncDisposable {
 			}
 		}
 
-		_internetMissesToday.Clear();
-		_internetMisses.Clear();
+		lock (_brakeGate) {
+			_internetMissesToday.Clear();
+			_internetMisses.Clear();
+		}
+
 		_pendingCodes.Clear();
 		Visitors.Note(Visitors.What.ClosedToInternet, ip, thisPc, device, misses);
 	}
@@ -710,7 +899,7 @@ public sealed class WebHost : IAsyncDisposable {
 	/// Sends a fresh sign-in code to Telegram for this address and returns what the page quotes back with it, or null
 	/// when it couldn't be sent (Telegram down, or too many codes this hour) - then nobody gets in from outside.
 	/// </summary>
-	private async Task<string?> SendCodeAsync(string ip, bool thisPc, string? device, CancellationToken ct) {
+	private async Task<string?> SendCodeAsync(string ip, bool thisPc, string? device, string passwordKey, CancellationToken ct) {
 		DateTime now = DateTime.UtcNow;
 
 		while (_codesSent.TryPeek(out DateTime oldest) && (now - oldest > TimeSpan.FromHours(1))) {
@@ -741,7 +930,7 @@ public sealed class WebHost : IAsyncDisposable {
 			return null;
 		}
 
-		_pendingCodes[id] = new PendingCode(code, ip, now.AddMinutes(CodeMinutes), 0);
+		_pendingCodes[id] = new PendingCode(code, ip, now.AddMinutes(CodeMinutes), 0, passwordKey);
 		Visitors.Note(Visitors.What.CodeSent, ip, thisPc, device);
 
 		return id;
@@ -755,11 +944,26 @@ public sealed class WebHost : IAsyncDisposable {
 	internal static int FailuresAfter((int Count, DateTime Until)? previous, DateTime now) =>
 		(previous is { } p && (p.Until > now) ? p.Count : 0) + 1;
 
-	/// <summary>A fresh signed-in session for whoever sent this request: remembered here, and handed back as the cookie.</summary>
-	private string NewSession(HttpContext ctx) {
+	/// <summary>
+	/// A fresh signed-in session for whoever sent this request: remembered here, and handed back as the cookie. Only under
+	/// the password it was checked against (<paramref name="passwordKey"/>, see <see cref="KeyOf"/>) - null once that has
+	/// changed.
+	/// </summary>
+	private string? NewSession(HttpContext ctx, string passwordKey) {
 		string token = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(24));
+		string hash = Hash(token);
 		DateTime expires = DateTime.UtcNow.AddDays(Math.Clamp(_cfg.WebSessionDays, 1, 90));
-		_sessions[Hash(token)] = expires;
+		_sessions[hash] = expires;
+
+		// Looked at again once the session is in. The old password right, then the new one saved and everybody signed out
+		// before this session existed: it outlived the change it was meant to end. Changed after this look, the sign-out
+		// that follows every change takes it with the rest.
+		if (!string.Equals(PasswordKey, passwordKey, StringComparison.Ordinal)) {
+			_sessions.TryRemove(hash, out _);
+
+			return null;
+		}
+
 		SaveSessions();
 
 		ctx.Response.Cookies.Append("nocatfarm", token, new CookieOptions {
@@ -787,7 +991,7 @@ public sealed class WebHost : IAsyncDisposable {
 
 			return Results.Json(new {
 				Visits = Visitors.Recent(15).Select(static v => new { v.When, v.Ip, v.Where, What = Visitors.Words(v.What), Kind = v.What.ToString(), v.Device }),
-				InternetPausedFor = _internetPausedUntil > DateTime.UtcNow ? (int) Math.Ceiling((_internetPausedUntil - DateTime.UtcNow).TotalSeconds) : 0
+				InternetPausedFor = PausedUntil is { } paused && (paused > DateTime.UtcNow) ? (int) Math.Ceiling((paused - DateTime.UtcNow).TotalSeconds) : 0
 			});
 		});
 
@@ -805,7 +1009,7 @@ public sealed class WebHost : IAsyncDisposable {
 		app.MapPost("/api/login", async (HttpContext ctx) => {
 			LoginRequest? body = await ReadJsonAsync<LoginRequest>(ctx).ConfigureAwait(false);
 
-			if (body == null || !TryLogin(ctx, body.Password ?? "", out string token, out bool needsCode)) {
+			if (body == null || !TryLogin(ctx, body.Password ?? "", out string token, out bool needsCode, out string passwordKey)) {
 				// Shut to the internet isn't a wait - it opens when the owner turns it on again, so it says that instead.
 				if (ShutToThis(ctx)) {
 					return Closed();
@@ -822,7 +1026,7 @@ public sealed class WebHost : IAsyncDisposable {
 
 			if (needsCode) {
 				(string ip, bool thisPc) = WhoIsSigningIn(ctx);
-				string? challenge = await SendCodeAsync(ip, thisPc, ctx.Request.Headers.UserAgent.FirstOrDefault(), ctx.RequestAborted).ConfigureAwait(false);
+				string? challenge = await SendCodeAsync(ip, thisPc, ctx.Request.Headers.UserAgent.FirstOrDefault(), passwordKey, ctx.RequestAborted).ConfigureAwait(false);
 
 				return challenge == null
 					? Results.Json(new { ok = false, error = "no code" }, statusCode: 503)
@@ -852,6 +1056,11 @@ public sealed class WebHost : IAsyncDisposable {
 				return Results.Json(new { ok = false, error = "expired" }, statusCode: 401);
 			}
 
+			// Its place in the lockout and the brake, taken before the code is compared - as for a password.
+			if (Reserve(ip, thisPc, !thisPc && IsInternet(ip), device) is not { } attempt) {
+				return Results.Json(new { ok = false, error = "locked", seconds = Math.Max(1, LockedFor(ctx)), thisPc }, statusCode: 429);
+			}
+
 			string typed = new((body.Code ?? "").Where(char.IsAsciiDigit).ToArray());
 
 			// The try is spent before the code is even looked at, and only by whoever swaps the record first: guesses sent
@@ -861,15 +1070,22 @@ public sealed class WebHost : IAsyncDisposable {
 			PendingCode spent = pending with { Tries = tries };
 
 			if (!_pendingCodes.TryUpdate(body.Challenge!, spent, pending)) {
+				GiveBack(attempt);
+
 				return Results.Json(new { ok = false, error = "expired" }, statusCode: 401);
 			}
 
 			if (CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(typed.PadRight(6)), Encoding.ASCII.GetBytes(pending.Code))) {
 				if (!_pendingCodes.TryRemove(new KeyValuePair<string, PendingCode>(body.Challenge!, spent))) {
+					GiveBack(attempt);
+
 					return Results.Json(new { ok = false, error = "expired" }, statusCode: 401);
 				}
 
-				SignIn(ctx, ip, thisPc, device, out string token);
+				// Under the password the code was sent for: changed since, the code signs nobody in.
+				if (!SignIn(ctx, attempt, pending.Key, out string token)) {
+					return Results.Json(new { ok = false, error = "expired" }, statusCode: 401);
+				}
 
 				return Results.Json(new { ok = true, token });
 			}
@@ -878,7 +1094,7 @@ public sealed class WebHost : IAsyncDisposable {
 				_pendingCodes.TryRemove(new KeyValuePair<string, PendingCode>(body.Challenge!, spent));
 			}
 
-			CountFailure(ip, thisPc, thisPc ? LockoutMinutesThisPc : LockoutMinutes, !thisPc && IsInternet(ip), device, Visitors.What.WrongCode);
+			CountFailure(attempt, Visitors.What.WrongCode);
 
 			return LockedFor(ctx) is > 0 and int locked
 				? Results.Json(new { ok = false, error = "locked", seconds = locked, thisPc }, statusCode: 429)
@@ -1115,14 +1331,18 @@ public sealed class WebHost : IAsyncDisposable {
 				return Results.Json(new { Message = "which plugin?" });
 			}
 
-			List<string> off = [.. Live.Global.DisabledPlugins];
+			// Copied, changed and put back under the lock every change to the live settings takes: two switches flipped at
+			// once each copied the list before the other put its copy back, and one of them was lost.
+			lock (GlobalSaveGate) {
+				List<string> off = [.. Live.Global.DisabledPlugins];
 
-			_ = body.Enabled
-				? off.RemoveAll(n => string.Equals(n, body.Name, StringComparison.OrdinalIgnoreCase))
-				: off.Contains(body.Name, StringComparer.OrdinalIgnoreCase) ? 0 : Add(off, body.Name);
+				_ = body.Enabled
+					? off.RemoveAll(n => string.Equals(n, body.Name, StringComparison.OrdinalIgnoreCase))
+					: off.Contains(body.Name, StringComparer.OrdinalIgnoreCase) ? 0 : Add(off, body.Name);
 
-			Live.Global.DisabledPlugins = off;
-			ConfigStore.SaveGlobal(Live.Global);
+				Live.Global.DisabledPlugins = off;
+				ConfigStore.SaveGlobal(Live.Global);
+			}
 			Log.Info(body.Enabled
 				? new Said("plugin {0} switched on - takes effect after a restart", body.Name)
 				: new Said("plugin {0} switched off - takes effect after a restart", body.Name));
@@ -1148,6 +1368,11 @@ public sealed class WebHost : IAsyncDisposable {
 
 			if ((problem != null) && (UpdateCheck.Available == null)) {
 				return Results.Json(new { Ok = false, Message = new Said("couldn't reach GitHub to check ({0}) - try again in a minute", problem).ToString() });
+			}
+
+			// Newer, but with no download for this machine yet - said so, not "you're on the newest".
+			if ((UpdateCheck.Available == null) && (UpdateCheck.NoDownloadYet is { } coming)) {
+				return Results.Json(new { Message = UpdateCheck.NoDownloadSaid(coming, queued: UpdateCheck.Queued != null).ToString() });
 			}
 
 			if (UpdateCheck.Available == null) {
@@ -1273,10 +1498,11 @@ public sealed class WebHost : IAsyncDisposable {
 
 			// A different dashboard password came back with it: everyone else signs in again, this browser carries on.
 			string? fresh = null;
+			string restored = _cfg.WebPassword;
 
-			if (!string.Equals(passwordBefore, _cfg.WebPassword, StringComparison.Ordinal)) {
+			if (!string.Equals(passwordBefore, restored, StringComparison.Ordinal)) {
 				SignOutAll();
-				fresh = string.IsNullOrEmpty(_cfg.WebPassword) ? null : NewSession(ctx);
+				fresh = string.IsNullOrEmpty(restored) ? null : NewSession(ctx, KeyOf(restored));
 			}
 
 			return Results.Json(new { Ok = true, Message = message, Token = fresh });
@@ -1355,7 +1581,17 @@ public sealed class WebHost : IAsyncDisposable {
 			}
 
 			JsonObject? sent = await ReadSentAsync(ctx).ConfigureAwait(false);
-			GlobalSave? save = sent == null ? null : SaveFromPage(_mgr.Global, sent, JsonOptionsOf(ctx));
+			GlobalSave? save = null;
+			string savedPassword = "";
+
+			// The live settings taken under the lock the save itself holds: read before it, a 'reload' in between left this
+			// save writing onto the settings it had just thrown away.
+			if (sent != null) {
+				lock (GlobalSaveGate) {
+					save = SaveFromPage(_mgr.Global, sent, JsonOptionsOf(ctx));
+					savedPassword = _mgr.Global.WebPassword;
+				}
+			}
 
 			if (save == null) {
 				return Results.Json(new { ok = false, error = "bad request" }, statusCode: 400);
@@ -1392,7 +1628,7 @@ public sealed class WebHost : IAsyncDisposable {
 
 			if (passwordChanged) {
 				SignOutAll();
-				fresh = string.IsNullOrEmpty(body.WebPassword) ? null : NewSession(ctx);
+				fresh = string.IsNullOrEmpty(savedPassword) ? null : NewSession(ctx, KeyOf(savedPassword));
 				Log.Info(new Said("dashboard password changed - other browsers sign in again"));
 			}
 
@@ -1414,44 +1650,21 @@ public sealed class WebHost : IAsyncDisposable {
 			// request came in - the same reason as the global save: a field the app wrote meanwhile (a game learned to be
 			// banned during a send) isn't put back from the older copy. A Base from the page works here too.
 			JsonObject? sent = await ReadSentAsync(ctx).ConfigureAwait(false);
-			BotConfig? body = sent == null ? null : Merge(bot.Cfg, sent, JsonOptionsOf(ctx));
 
-			if (body == null) {
+			if (sent == null) {
 				return Results.Json(new { ok = false, error = "bad request" }, statusCode: 400);
 			}
 
-			KeepSecrets(body, bot.Cfg, Settings.Bot);
+			if (SaveBotFromPage(bot, sent, JsonOptionsOf(ctx)) is not { } save) {
+				return Results.Json(new { ok = false, error = "bad request" }, statusCode: 400);
+			}
 
-			if (Invalid(body, bot.Cfg, Settings.Bot) is { } error) {
+			if (save.Error is { } error) {
 				return Results.Json(new { ok = false, error }, statusCode: 400);
 			}
 
-			// Legit mode rewrites the config itself, so this has to happen before the diff and the save.
-			Settings.ApplyLegitMode(body, bot.Cfg.LegitMode);
-
-			List<string> adjusted = Clamp(body, Settings.Bot);
-
-			// A max below the min would make every gap calculation nonsense; fix it rather than store it. This
-			// covered only the rep4rep gap for years while seven other pairs went unchecked - it walks them all
-			// now, from the same helper the console uses, so the two paths cannot drift apart again.
-			// Whichever side was just changed keeps its number, as at the console.
-			adjusted.AddRange(Settings.FixRanges(body, [.. Settings.Bot
-				.Where(d => !Equals(Settings.Show(body, d), Settings.Show(bot.Cfg, d)))
-				.Select(static d => d.Name)]).Select(static s => s.ToString()));
-
-			// Only fire side effects for settings that ACTUALLY changed. Running them all meant editing a note
-			// re-started an account the user had deliberately stopped.
-			List<SettingDef> changed = Settings.Bot
-				.Where(d => !Equals(Settings.Show(body, d), Settings.Show(bot.Cfg, d)))
-				.ToList();
-
-			// The account's own name, not the one in the address: the lookup ignores case, and off Windows "MAIN" in the
-			// address wrote MAIN.json beside main.json - two files for one account, either of which the next start read.
-			if (!ConfigStore.SaveBot(bot.Name, body)) {
-				adjusted.Add(new Said("in use now, but not saved to disk - see the Log").ToString());
-			}
-
-			bot.Reconfigure(body);
+			List<string> adjusted = save.Adjusted;
+			List<SettingDef> changed = save.Changed;
 
 			foreach (SettingDef def in changed) {
 				Commands.ApplyBotSideEffects(bot, def);
@@ -1522,8 +1735,10 @@ public sealed class WebHost : IAsyncDisposable {
 				return Results.Json(new { ok = false, error = "Theme is either dark or light." }, statusCode: 400);
 			}
 
-			Live.Global.Theme = want;
-			ConfigStore.SaveGlobal(Live.Global);
+			lock (GlobalSaveGate) {
+				Live.Global.Theme = want;
+				ConfigStore.SaveGlobal(Live.Global);
+			}
 
 			return Results.Json(new { ok = true });
 		});
@@ -1533,8 +1748,10 @@ public sealed class WebHost : IAsyncDisposable {
 				return Unauthorised();
 			}
 
-			Live.Global.TutorialDone = true;
-			ConfigStore.SaveGlobal(Live.Global);
+			lock (GlobalSaveGate) {
+				Live.Global.TutorialDone = true;
+				ConfigStore.SaveGlobal(Live.Global);
+			}
 
 			return Results.Json(new { ok = true });
 		});
@@ -1595,8 +1812,10 @@ public sealed class WebHost : IAsyncDisposable {
 				}
 			}
 
-			Live.Global.AccountOrder = clean;
-			ConfigStore.SaveGlobal(Live.Global);
+			lock (GlobalSaveGate) {
+				Live.Global.AccountOrder = clean;
+				ConfigStore.SaveGlobal(Live.Global);
+			}
 
 			return Results.Json(new { ok = true, order = clean });
 		});
@@ -1670,8 +1889,10 @@ public sealed class WebHost : IAsyncDisposable {
 					// Pressing Start on a disabled account has to mean "enable it", not start something the rest
 					// of the UI will keep reporting as off while it quietly farms.
 					if (!bot.Cfg.Enabled) {
-						bot.Cfg.Enabled = true;
-						ConfigStore.SaveBot(bot.Name, bot.Cfg);
+						lock (bot.CfgGate) {
+							bot.Cfg.Enabled = true;
+							ConfigStore.SaveBot(bot.Name, bot.Cfg);
+						}
 					}
 
 					await bot.StartAsync().ConfigureAwait(false);
@@ -1921,19 +2142,24 @@ public sealed class WebHost : IAsyncDisposable {
 				return Results.Json(new { ok = false, error = "Paste the token from rep4rep.com first." }, statusCode: 400);
 			}
 
-			// Validate BEFORE saving, so a typo can't quietly stop every account commenting.
-			string previous = _mgr.Rep4Rep.Token;
-			_mgr.Rep4Rep.Token = token;
-			(int Points, int PendingPoints)? user = await _mgr.Rep4Rep.GetUserAsync().ConfigureAwait(false);
+			// Validate BEFORE saving, so a typo can't quietly stop every account commenting - and on a client of its own. Put
+			// on the shared one to be tried, every account's comments went out under the untested token while it was, and
+			// putting the old one back afterwards undid a token saved from somewhere else in the meantime.
+			(int Points, int PendingPoints)? user;
+
+			using (Rep4RepApi trial = new() { Token = token }) {
+				user = await trial.GetUserAsync(ctx.RequestAborted).ConfigureAwait(false);
+			}
 
 			if (user == null) {
-				_mgr.Rep4Rep.Token = previous;
-
 				return Results.Json(new { ok = false, error = "That token isn't valid. Copy it again from rep4rep.com under Settings - it's the whole string, with no spaces." });
 			}
 
-			_mgr.Global.Rep4RepApiToken = token;
-			ConfigStore.SaveGlobal(_mgr.Global);
+			lock (GlobalSaveGate) {
+				_mgr.Global.Rep4RepApiToken = token;
+				_mgr.Rep4Rep.Token = token;
+				ConfigStore.SaveGlobal(_mgr.Global);
+			}
 			RememberPoints(user.Value.Points, user.Value.PendingPoints);
 			Log.Good(new Said("rep4rep connected - {0} points", user.Value.Points));
 
@@ -2147,18 +2373,27 @@ public sealed class WebHost : IAsyncDisposable {
 	///
 	/// Refused rather than reset like Clamp does: resetting a list means emptying it, and throwing away somebody's
 	/// forty games because one too many was added is worse than telling them. Only lists that CHANGED are checked,
-	/// so one saved before this check existed can't block every other save on that account. Plain text is left
-	/// alone - the console accepts any text too, so there is nothing to check it against.
+	/// so one saved before this check existed can't block every other save on that account. Text goes through the same
+	/// check as the console's 'set' too, so what the console refuses (a trusted proxy that isn't an address or a range)
+	/// isn't "Saved." here and then quietly ignored; the text itself is kept exactly as it was sent.
 	/// </summary>
 	private static string? Invalid(object config, object current, IReadOnlyList<SettingDef> defs) {
 		foreach (SettingDef def in defs) {
-			if ((def.Kind != SettingKind.AppIds) || (Settings.Read(config, def.Name) is not IEnumerable<uint> apps)
-				|| (Settings.Show(config, def) == Settings.Show(current, def))) {
+			if (Settings.Show(config, def) == Settings.Show(current, def)) {
 				continue;
 			}
 
-			if (Settings.Apply(config, def, string.Join(',', apps)) is { } error) {
-				return error;
+			if ((def.Kind == SettingKind.AppIds) && (Settings.Read(config, def.Name) is IEnumerable<uint> apps)) {
+				if (Settings.Apply(config, def, string.Join(',', apps)) is { } error) {
+					return error;
+				}
+			} else if ((def.Kind == SettingKind.Text) && (Settings.Read(config, def.Name) is string text)) {
+				string? error = Settings.Apply(config, def, text);
+				config.GetType().GetProperty(def.Name)?.SetValue(config, text);
+
+				if (error != null) {
+					return error;
+				}
 			}
 		}
 
@@ -2177,8 +2412,72 @@ public sealed class WebHost : IAsyncDisposable {
 	/// <summary>What a dashboard save of the global settings came to. Error set = refused, nothing changed.</summary>
 	internal sealed record GlobalSave(string? Error, List<string> Adjusted, List<string> RestartNeeded, bool PasswordChanged, bool Saved);
 
-	/// <summary>One dashboard save of the global settings at a time, from reading the live config to writing it back.</summary>
-	private static readonly Lock GlobalSaveGate = new();
+	/// <summary>
+	/// One dashboard save of the global settings at a time, from reading the live config to writing it back - the same lock
+	/// as every other change to the live settings ('set', 'reload', a restore, an import), not one of the dashboard's own.
+	/// </summary>
+	private static Lock GlobalSaveGate => ConfigStore.GlobalEditGate;
+
+	/// <summary>What a dashboard save of one account's settings came to. Error set = refused, nothing changed.</summary>
+	internal sealed record BotSave(string? Error, List<string> Adjusted, List<SettingDef> Changed, bool Saved);
+
+	/// <summary>
+	/// A dashboard save of one account, put onto its live settings field by field under its lock (<see cref="Bot.CfgGate"/>),
+	/// the way <see cref="SaveFromPage"/> does the global ones.
+	/// </summary>
+	/// <remarks>
+	/// It used to merge onto a copy, save the copy and swap it in, with nothing held. Anything changed on the account in
+	/// between - 'set', enable, play, a name, a game learned to be banned, a second tab's save - was undone in memory, and on
+	/// disk too when its save landed first. Now every such change takes the same lock, and only what the page changed is
+	/// written onto the settings the account runs on.
+	/// </remarks>
+	/// <returns>Null when the post couldn't be read as an account's settings.</returns>
+	internal static BotSave? SaveBotFromPage(Bot bot, JsonObject sent, JsonSerializerOptions options) {
+		lock (bot.CfgGate) {
+			BotConfig current = Clone(bot.Cfg);
+
+			if (Merge(current, sent, options) is not { } body) {
+				return null;
+			}
+
+			KeepSecrets(body, current, Settings.Bot);
+
+			if (Invalid(body, current, Settings.Bot) is { } error) {
+				return new BotSave(error, [], [], false);
+			}
+
+			// Legit mode rewrites the config itself, so this has to happen before the diff and the save.
+			Settings.ApplyLegitMode(body, current.LegitMode);
+
+			List<string> adjusted = Clamp(body, Settings.Bot);
+
+			// A max below the min would make every gap calculation nonsense; fix it rather than store it. This
+			// covered only the rep4rep gap for years while seven other pairs went unchecked - it walks them all
+			// now, from the same helper the console uses, so the two paths cannot drift apart again.
+			// Whichever side was just changed keeps its number, as at the console.
+			adjusted.AddRange(Settings.FixRanges(body, [.. Settings.Bot
+				.Where(d => !Equals(Settings.Show(body, d), Settings.Show(current, d)))
+				.Select(static d => d.Name)]).Select(static s => s.ToString()));
+
+			// Only fire side effects for settings that ACTUALLY changed. Running them all meant editing a note
+			// re-started an account the user had deliberately stopped.
+			List<SettingDef> changed = Settings.Bot
+				.Where(d => !Equals(Settings.Show(body, d), Settings.Show(current, d)))
+				.ToList();
+
+			CopyChanged(body, current, bot.Cfg);
+
+			// The account's own name, not the one in the address: the lookup ignores case, and off Windows "MAIN" in the
+			// address wrote MAIN.json beside main.json - two files for one account, either of which the next start read.
+			bool saved = ConfigStore.SaveBot(bot.Name, bot.Cfg);
+
+			if (!saved) {
+				adjusted.Add(new Said("in use now, but not saved to disk - see the Log").ToString());
+			}
+
+			return new BotSave(null, adjusted, changed, saved);
+		}
+	}
 
 	/// <summary>
 	/// A dashboard save, put onto the live global config field by field: only what the page really changed is written.
@@ -2303,11 +2602,14 @@ public sealed class WebHost : IAsyncDisposable {
 	/// <summary>How often a "forced" refresh may actually reach rep4rep. See below for why this exists.</summary>
 	private static readonly TimeSpan ForcedRefreshFloor = TimeSpan.FromSeconds(45);
 
+	/// <summary>The cached points as the page wants them, from one read of the cache; null when there are none yet.</summary>
+	private (int Points, int PendingPoints)? CachedPoints() => _pointsCache is { } c ? (c.Points, c.Pending) : null;
+
 	private async Task<(int Points, int PendingPoints)?> CachedPointsAsync(bool force) {
 		int ttl = Math.Clamp(_mgr.Global.Rep4RepPointsRefreshMinutes, 1, 1440);
 
-		if (_pointsCache.HasValue) {
-			TimeSpan age = DateTime.UtcNow - _pointsCache.Value.At;
+		if (_pointsCache is { } cached) {
+			TimeSpan age = DateTime.UtcNow - cached.At;
 
 			// "Force" means "prefer fresh", not "ask again right now, every time you are asked".
 			//
@@ -2315,7 +2617,7 @@ public sealed class WebHost : IAsyncDisposable {
 			// request to rep4rep every single second - which is both rude to somebody else's free API and how an
 			// API token gets rate-limited or pulled. Forced refreshes are still near-live, just not unbounded.
 			if (age < (force ? ForcedRefreshFloor : TimeSpan.FromMinutes(ttl))) {
-				return (_pointsCache.Value.Points, _pointsCache.Value.Pending);
+				return (cached.Points, cached.Pending);
 			}
 		}
 
@@ -2324,14 +2626,14 @@ public sealed class WebHost : IAsyncDisposable {
 		// The cache is only stamped on a BELIEVABLE answer, so while rep4rep is down or the token is wrong every
 		// single dashboard poll went straight through to their API - a request every three seconds, forever.
 		if (!await _pointsGate.WaitAsync(0).ConfigureAwait(false)) {
-			return _pointsCache.HasValue ? (_pointsCache.Value.Points, _pointsCache.Value.Pending) : null;
+			return CachedPoints();
 		}
 
 		(int Points, int PendingPoints)? user;
 
 		try {
 			if (DateTime.UtcNow - _lastPointsAttempt < ForcedRefreshFloor) {
-				return _pointsCache.HasValue ? (_pointsCache.Value.Points, _pointsCache.Value.Pending) : null;
+				return CachedPoints();
 			}
 
 			_lastPointsAttempt = DateTime.UtcNow;
@@ -2350,7 +2652,7 @@ public sealed class WebHost : IAsyncDisposable {
 				Log.Debug(new Said("rep4rep is reporting an impossible balance ({0} points, {1} pending) - keeping the last sensible figure", user?.Points, user?.PendingPoints));
 			}
 
-			return _pointsCache.HasValue ? (_pointsCache.Value.Points, _pointsCache.Value.Pending) : null;
+			return CachedPoints();
 		}
 
 		_warnedAboutBalance = false;
@@ -2374,7 +2676,7 @@ public sealed class WebHost : IAsyncDisposable {
 	/// <summary>The only place the points cache is written, so nothing can slip past the check above.</summary>
 	private void RememberPoints(int points, int pending) {
 		if (Believable((points, pending))) {
-			_pointsCache = (points, pending, DateTime.UtcNow);
+			_pointsCache = new PointsSnapshot(points, pending, DateTime.UtcNow);
 		}
 	}
 
@@ -2468,8 +2770,8 @@ public sealed class WebHost : IAsyncDisposable {
 			// Every way of writing this PC counts as this PC - "::1" was warned about as if it were the network.
 			Exposed = !Platform.IsLoopback(_mgr.Global.WebHost ?? "") && !string.IsNullOrEmpty(_mgr.Global.WebPassword) && (_mgr.Global.WebPassword.Length < 8),
 			LockedToThisPc = !Platform.IsLoopback(_mgr.Global.WebHost ?? "") && string.IsNullOrEmpty(_mgr.Global.WebPassword),
-			Points = _pointsCache?.Points ?? 0,
-			PendingPoints = _pointsCache?.Pending ?? 0,
+			Points = CachedPoints()?.Points ?? 0,
+			PendingPoints = CachedPoints()?.PendingPoints ?? 0,
 			CardsToday = cards,
 			CommentsToday = comments,
 			CardsLeft = bots.Sum(static b => b.CardsRemaining),
@@ -2478,6 +2780,8 @@ public sealed class WebHost : IAsyncDisposable {
 			UpdateAvailable = UpdateCheck.Available,
 			UpdateWaits = Live.Global.UpdateWhenAsked == 1,   // the Update button's dialog says which it will do
 			UpdateUrl = UpdateCheck.Url,
+			// A newer version with no download for this machine yet: the version chip says so, and there's no button.
+			UpdateNoDownloadYet = UpdateCheck.Available == null ? UpdateCheck.NoDownloadYet : null,
 			// False on Linux and in Docker, where it can't swap itself: the page drops its update button then.
 			CanSelfUpdate = SelfUpdate.Supported,
 			PluginsOn = Live.Global.PluginsEnabled,

@@ -26,7 +26,7 @@ Commands need your own bot. It's optional and separate from the webhook.
 4. Paste it into **Discord bot token** and press **Save**. A few seconds later the dashboard says the bot is online
    and shows **Add the bot to your server**.
 5. Open that link and add the bot to a server you own. A new, empty one is fine.
-6. Press **Connect Discord**. You get a one-time code that works once, for 10 minutes. In Discord, type `/connect`
+6. Press **Connect Discord**. You get a code that works once, for 10 minutes. In Discord, type `/connect`
    and the code, either in the server or in a private chat with the bot (click the bot in the member list and send
    it a message). The bot answers "Connected."
 
@@ -40,10 +40,10 @@ Pick commands from Discord's `/` menu:
 | Command | What it does |
 |---|---|
 | `/status` | A summary of every account, the last 24 hours, and the version |
-| `/dashboard` | The dashboard's links: this PC, the same wifi, and from anywhere |
+| `/dashboard` | The dashboard's links: this PC, the same Wi-Fi, and from anywhere |
 | `/dashboard anywhere on` (or `/anywhere on`) | Opens the dashboard from anywhere (your router forwards the port) and answers with the link. `/dashboard anywhere off` closes it; `/anywhere` on its own says whether it's on |
-| `/cards`, `/human`, `/offers`, `/confirmations`, `/2fa`, `/stats`, `/update` | The everyday ones. Each has an optional `args` box for what goes after it: `/human args: week`, `/offers args: kylro`, `/update args: accept`. |
-| `/nocat command: ...` | Any console command, like `/nocat command: pause kylro 30` or `/nocat command: trade accept myaccount 4` |
+| `/cards`, `/human`, `/offers`, `/confirmations`, `/2fa`, `/stats`, `/update` | The everyday ones. Each has an optional `args` box for what goes after it: `/human args: week`, `/offers args: farm1`, `/update args: accept`. |
+| `/nocat command: ...` | Any console command, like `/nocat command: pause farm1 30` or `/nocat command: trade accept myaccount 4` |
 | `/help` | The command list |
 | `/connect code: ...` | Connects your Discord account (see above) |
 
@@ -87,7 +87,7 @@ switches, under Show advanced:
 The weekly report has no switch here: when *Weekly report* is on, it's sent too.
 
 A new comment on one of your profiles says who wrote it and what it says, like *new comment from AEZAKMI: "+rep
-pretty good player"*. One Steam is still checking says so instead.
+pretty good player"*. If Steam is still checking a comment, it says so instead.
 
 In the log, lines from Telegram and Discord are tagged `telegram` and `discord`. You can change their colours under
 Logging with Show advanced ticked (*Telegram's colour in the log*, *Discord's colour in the log*), from the same
@@ -106,8 +106,8 @@ with Discord's Activity Privacy letting it share what you play. Nothing goes ove
 are under Show advanced:
 
 - *Accounts it shows*: *every account not in human mode*, or tick the accounts you want. This only decides the names
-  on the card - the numbers always count every account, like *3 accounts linked*
-- *Featured account*: a list of your accounts - whose Steam avatar sits on the logo. Left on *the first account
+  on the card. The numbers always count every account, like *3 accounts linked*
+- *Featured account*: which account's Steam avatar sits on the logo. Left on *the first account
   shown*, it's the first one the card names
 - *Show account names*, *Show accounts online*, *Show an account's avatar* and *Show how long it's been running*,
   all on
@@ -129,7 +129,7 @@ by hour.
 
 ## Weekly report
 
-*Weekly report* (*Global settings → Logging*, off) comes once a week - Monday at 10:00 unless you change *Weekly
+*Weekly report* (*Global settings → Logging*, off) comes once a week, on Monday at 10:00 unless you change *Weekly
 report · day* and *· hour*. For each account it gives the last seven days next to the seven before: hours banked,
 cards dropped, cards put up for sale, how much the inventory value went up or down, and rep4rep comments if rep4rep
 is on, then a line for all accounts. It's written in the log and sent to Discord and Telegram when they're set up.
@@ -143,10 +143,10 @@ daily summary.
 *Restart a stuck account* (*Global settings → All accounts*, on) watches for an account that should be playing but
 hasn't banked any hours for 3 hours (*Stuck after*): disconnected and not coming back, stuck signing in, a sign-in
 Steam turned down, or its games gone. It says so in the log and on Discord and Telegram (with *Send problems that
-need you* on), like *kylro: hasn't banked any hours for 3h00m - it's disconnected and not coming back; restarting
+need you* on), like *farm1: hasn't banked any hours for 3h00m - it's disconnected and not coming back; restarting
 it*, and restarts that account once. If it's still stuck 3 hours later it says so again, but doesn't restart it
 again. At most one restart per account every 12 hours. An account waiting for a Steam Guard code is never
-restarted - it's only said.
+restarted, only reported.
 
 It never counts time when nothing should run: an account you stopped, disabled or paused, you playing on it, human
 mode asleep (with nothing banking overnight), done for the day or on a day off, a robot with nothing to play,

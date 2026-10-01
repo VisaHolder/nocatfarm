@@ -20,6 +20,16 @@ public static class UpdateCheck {
 
 	public static string? Url { get; private set; }
 
+	/// <summary>
+	/// A newer version that has no download for this machine yet: tagged, with the Mac zips (or this CPU's) still to
+	/// come. Kept apart from <see cref="Available"/>, which is announced and which 'update accept' installs - here there is
+	/// nothing to install yet. Folded into Available as null, 'update' said "you're on the newest release" on a Mac for the
+	/// half hour between the tag and its zips, and a queued 'update accept' was tried, failed and forgotten.
+	/// Null when there is no such version, or when this copy can't install itself anyway (Docker, a service): there it's
+	/// Available, since updating by hand needs no zip made for this machine.
+	/// </summary>
+	public static string? NoDownloadYet { get; private set; }
+
 	private static DateTime _lastLooked = DateTime.MinValue;
 
 	/// <summary>When the newest release was first seen - "Wait after a release for" counts from here.</summary>
@@ -36,40 +46,67 @@ public static class UpdateCheck {
 	private static bool _skipRead;
 
 	/// <summary>
+	/// The skipped version's reads and writes, one at a time. Unguarded, the first read (on the timer's thread) could
+	/// finish after an 'update skip' on another and put the file's old value back over the one just typed - and two
+	/// skips writing the file together could leave the older one in it.
+	/// </summary>
+	private static readonly Lock SkipGate = new();
+
+	/// <summary>
 	/// The version 'update skip' was typed for - or that was put back after it wouldn't start. Nothing is said about
 	/// it and it never installs by itself; the next version after it is announced as usual. Kept across restarts.
 	/// </summary>
 	public static string? Skipped {
 		get {
-			if (!_skipRead) {
+			Exception? failed = null;
+			string? skipped;
+
+			lock (SkipGate) {
+				if (!_skipRead) {
+					_skipRead = true;
+
+					try {
+						_skipped = File.Exists(SkipPath) ? File.ReadAllText(SkipPath).Trim() : null;
+					} catch (Exception e) {
+						failed = e;
+						_skipped = null;
+					}
+				}
+
+				skipped = _skipped;
+			}
+
+			// Said outside the lock: a log line can call back into the app.
+			if (failed != null) {
+				// a skipped version forgotten would be offered (or installed by itself) again
+				Log.Failed("update: reading the skipped version", failed);
+			}
+
+			return string.IsNullOrEmpty(skipped) ? null : skipped;
+		}
+		set {
+			Exception? failed = null;
+
+			lock (SkipGate) {
+				_skipped = value;
 				_skipRead = true;
 
 				try {
-					_skipped = File.Exists(SkipPath) ? File.ReadAllText(SkipPath).Trim() : null;
+					Directory.CreateDirectory(Path.GetDirectoryName(SkipPath)!);
+
+					if (string.IsNullOrEmpty(value)) {
+						File.Delete(SkipPath);
+					} else {
+						AtomicFile.Write(SkipPath, value);
+					}
 				} catch (Exception e) {
-					// a skipped version forgotten would be offered (or installed by itself) again
-					Log.Failed("update: reading the skipped version", e);
-					_skipped = null;
+					failed = e;
 				}
 			}
 
-			return string.IsNullOrEmpty(_skipped) ? null : _skipped;
-		}
-		set {
-			_skipped = value;
-			_skipRead = true;
-
-			try {
-				Directory.CreateDirectory(Path.GetDirectoryName(SkipPath)!);
-
-				if (string.IsNullOrEmpty(value)) {
-					File.Delete(SkipPath);
-				} else {
-					AtomicFile.Write(SkipPath, value);
-				}
-			} catch (Exception e) {
+			if (failed != null) {
 				// it only lasts until the next launch, then
-				Log.Failed("update: saving the skipped version", e);
+				Log.Failed("update: saving the skipped version", failed);
 			}
 		}
 	}
@@ -100,11 +137,27 @@ public static class UpdateCheck {
 	/// background loop, so with no account signed in nothing was ever checked.
 	/// </summary>
 	public static void Start(BotManager mgr) {
-		_timer = new Timer(_ => _ = TickAsync(mgr), null, TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(1));
+		if (Commands.ExitRequested) {
+			return;   // closing already - no timer to leave behind
+		}
+
+		Timer timer = new(_ => _ = TickAsync(mgr), null, TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(1));
+		Interlocked.Exchange(ref _timer, timer)?.Dispose();
+
+		// Closed while it was being made: Stop may have run before there was a timer to stop.
+		if (Commands.ExitRequested) {
+			Stop();
+		}
 	}
 
+	/// <summary>
+	/// On the way out: the timer goes, so no look, reminder or install by itself starts while the app closes. A tick
+	/// already running finds <see cref="Commands.ExitRequested"/> up and stops at its next step.
+	/// </summary>
+	public static void Stop() => Interlocked.Exchange(ref _timer, null)?.Dispose();
+
 	private static async Task TickAsync(BotManager mgr) {
-		if (Interlocked.Exchange(ref _ticking, 1) == 1) {
+		if (Commands.ExitRequested || (Interlocked.Exchange(ref _ticking, 1) == 1)) {
 			return;
 		}
 
@@ -155,8 +208,8 @@ public static class UpdateCheck {
 			? Live.Global.AutoUpdate == 1
 				? new("{0} is out - you have {1}. It installs by itself tonight, or type update accept (on Telegram: /update accept) to install it now.", tag, Build.Version)
 				: new("{0} is out - you have {1}. Type update accept in the nocat.farm window, or /update accept here, to install it.", tag, Build.Version)
-			: Platform.InContainer ? new("{0} is out - you have {1}. Pull the new image and recreate the container to update.", tag, Build.Version)
-			: new("{0} is out - you have {1}. Download the new Linux zip from the releases page to update.", tag, Build.Version);
+			// Docker (no image is published - it's built from the source) or a service: the same steps 'update' gives.
+			: new("{0} is out - you have {1}.\n{2}", tag, Build.Version, SelfUpdate.ByHand(tag));
 
 		return _notes.Length > 0 ? new Said("{0}\n\n{1}", how, _notes) : how;
 	}
@@ -202,9 +255,26 @@ public static class UpdateCheck {
 
 			if (!IsNewer(tag.TrimStart('v', 'V'), Build.Version)) {
 				Available = null;
+				NoDownloadYet = null;
 
 				return null;
 			}
+
+			// Out only once there's something to install on this machine. A release is up the moment its tag is, and the Mac
+			// zips are built and added a while later: a Mac was told "update accept installs it", and it failed with "no
+			// download yet". Looked at again at the next check - and said plainly by 'update' and the dashboard meanwhile.
+			// Only where it installs itself: Docker and a service update by hand, from the source or the zip for another
+			// machine, so a CPU with no zip of its own (a Raspberry Pi's 32-bit Docker) was never told of any update at all.
+			if (SelfUpdate.Supported && (SelfUpdate.ZipForThisMachine(doc.RootElement) == null)) {
+				Log.DebugOnChange("update:no-zip", $"update check: {tag} has no zip for {Platform.ReleaseRid} yet - not announced until it has");
+				Available = null;
+				NoDownloadYet = tag;
+				Url = page;
+
+				return null;
+			}
+
+			NoDownloadYet = null;
 
 			if (Available != tag) {
 				_seenAt = DateTime.UtcNow;
@@ -264,7 +334,7 @@ public static class UpdateCheck {
 	public static void AutoInstallIfDue(BotManager mgr) {
 		GlobalConfig g = Live.Global;
 
-		if ((g.AutoUpdate != 1) || !g.CheckForUpdates || !SelfUpdate.Supported || SelfUpdate.Busy || (Available == null) || IsSkipped(Available)
+		if (Commands.ExitRequested || (g.AutoUpdate != 1) || !g.CheckForUpdates || !SelfUpdate.Supported || SelfUpdate.Busy || (Available == null) || IsSkipped(Available)
 			|| (DateTime.UtcNow - _seenAt < TimeSpan.FromHours(Math.Max(0, g.AutoUpdateWaitHours)))
 			|| (DateTime.UtcNow - _autoTriedAt < TimeSpan.FromHours(4))) {
 			return;
@@ -322,9 +392,25 @@ public static class UpdateCheck {
 	/// A version 'update accept' was asked for, waiting for the accounts to be asleep ("When I say update"). Null when
 	/// nothing is waiting. Forgotten on restart - asking again is one command.
 	/// </summary>
-	public static string? Queued { get; private set; }
+	public static string? Queued {
+		get => Volatile.Read(ref _queued);
+		private set => Volatile.Write(ref _queued, value);
+	}
+
+	private static string? _queued;
+
+	/// <summary>A queued install on its way (1), so the next tick can't start it a second time before it has claimed Busy.</summary>
+	private static int _queuedInstalling;
 
 	private static DateTime _queuedSaidAt = DateTime.MinValue;
+
+	/// <summary>
+	/// What 'update' and the dashboard say when a newer version is out with no download for this machine yet (see
+	/// <see cref="NoDownloadYet"/>) - instead of "you're on the newest release", which it isn't.
+	/// </summary>
+	public static Said NoDownloadSaid(string tag, bool queued = false) => queued
+		? new Said("{0} is out, and you have {1}. There's no download for this computer yet. Your update accept still stands: it installs later, once the download is up.", tag, Build.Version)
+		: new Said("{0} is out, and you have {1}. There's no download for this computer yet. It usually comes within the hour.", tag, Build.Version);
 
 	/// <summary>'update accept' with "When I say update" set to wait: remember it, and say how it will go.</summary>
 	public static Said Queue(string tag) {
@@ -342,13 +428,19 @@ public static class UpdateCheck {
 	public static void QueuedInstallIfDue(BotManager mgr) {
 		GlobalConfig g = Live.Global;
 
-		if ((Queued == null) || !SelfUpdate.Supported || SelfUpdate.Busy) {
+		if ((Queued == null) || !SelfUpdate.Supported || SelfUpdate.Busy || Commands.ExitRequested || (Volatile.Read(ref _queuedInstalling) != 0)) {
 			return;
 		}
 
 		// A newer version came out while it waited: that's the one to install.
 		if ((Available != null) && (Available != Queued)) {
 			Queued = Available;
+		}
+
+		// Newer still, but with no download for this machine yet: an install now would ask GitHub for the newest, find no
+		// zip, fail, and forget it had been asked for. It waits for the download instead, and installs that.
+		if (NoDownloadYet != null) {
+			return;
 		}
 
 		// 'update skip' after 'update accept' means don't: it answered "it won't install by itself", and then it did.
@@ -381,16 +473,28 @@ public static class UpdateCheck {
 			return;
 		}
 
-		string tag = Queued;
-		Queued = null;
+		string? tag = Queued;
+
+		// Claimed once, by this tick and no other.
+		if ((tag == null) || (Interlocked.CompareExchange(ref _queuedInstalling, 1, 0) != 0)) {
+			return;
+		}
+
 		Log.Good(new Said("installing {0} - all clear: {1}", tag, why));
 
+		// Still queued while it installs, and cleared once the attempt is over - not before it starts. Cleared first,
+		// an install that never got going (another had just started, or the app was closing) forgot it had been asked
+		// for, and the dashboard stopped saying it was waiting before anything had begun.
 		_ = Task.Run(async () => {
 			try {
 				await SelfUpdate.ApplyAsync(CancellationToken.None, byItself: true).ConfigureAwait(false);
 			} catch (Exception e) {
 				Log.Error(new Said("update failed: {0} - nothing was changed", Log.Scrub(e.Message)));
 				Log.StackToFile(e);
+			} finally {
+				// Only the version this was for: an 'update accept' for a newer one while it ran stays queued.
+				Interlocked.CompareExchange(ref _queued, null, tag);
+				Volatile.Write(ref _queuedInstalling, 0);
 			}
 		});
 	}
@@ -408,6 +512,12 @@ public static class UpdateCheck {
 	internal static (bool Quiet, string Why) Quiet(BotManager mgr, DateTime? nowUtc = null) {
 		DateTime now = nowUtc ?? DateTime.UtcNow;
 		List<string> clear = [];
+
+		// Closing is never a quiet moment: its accounts are signing out because it's closing, not because they're
+		// asleep - counted as clear, an install by itself could start as the app went down.
+		if (Commands.ExitRequested) {
+			return (false, new Said("nocat.farm is closing").ToString());
+		}
 
 		foreach (Bot b in mgr.All) {
 			// An account waiting for a Steam Guard code waits for you, not for Steam - it would have held every update until

@@ -107,6 +107,41 @@ public static class WindowsIntegration {
 	private static string? StartupCommand() => string.IsNullOrEmpty(Environment.ProcessPath) ? null : $"\"{Environment.ProcessPath}\" --minimized";
 
 	/// <summary>
+	/// At start: bring the startup entry in line with the setting, without taking it from another copy.
+	/// </summary>
+	/// <remarks>
+	/// This used to point the entry at whichever copy started last with the setting on. A test copy made from the
+	/// real settings took it that way; once that test folder was deleted, the entry pointed at nothing and was
+	/// cleared, and the real copy no longer started with Windows. Now it's only taken when there's none, or when the
+	/// one there starts a program that's gone (the folder was moved). Switching the setting on by hand still takes it.
+	/// </remarks>
+	public static void KeepInStep(bool enabled) {
+		if (!enabled) {
+			SetStartWithWindows(false);
+
+			return;
+		}
+
+		try {
+			using RegistryKey? key = Registry.CurrentUser.OpenSubKey(RunKey);
+
+			if ((key?.GetValue(ValueName) is string current) && !StartsThisExe(current) && File.Exists(ExeOf(current))) {
+				Log.Info(new Said("another copy starts with Windows ({0}) - left as it is", ExeOf(current)));
+
+				return;
+			}
+		} catch (Exception e) {
+			Log.Failed("reading the Windows startup entry", e);
+
+			return;
+		}
+
+		if (!StartupPointsHere()) {
+			SetStartWithWindows(true);
+		}
+	}
+
+	/// <summary>
 	/// Add or remove the startup entry. HKEY_CURRENT_USER only - it needs no administrator rights and it
 	/// affects nobody else who uses this PC.
 	/// </summary>

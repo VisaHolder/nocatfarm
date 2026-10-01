@@ -2,8 +2,11 @@
 #
 # nocat.farm in Docker - headless: the log goes to `docker logs`, the dashboard is on port 7242.
 #
-#   docker build -t nocatfarm .
-#   docker compose up -d          (after copying docker-compose.example.yml to docker-compose.yml)
+#   docker compose up -d --build  (after copying docker-compose.example.yml to docker-compose.yml)
+#
+# A bare `docker build` needs Docker's buildx plugin (this file uses BuildKit's --platform): Ubuntu's own docker.io
+# package doesn't bring it, and the old builder stops at "invalid OS component". Compose builds with BuildKit
+# either way - or `sudo apt install docker-buildx` first.
 #
 # Framework-dependent, on Microsoft's ASP.NET Core runtime image, rather than self-contained on runtime-deps:
 #   - nocat.farm IS an ASP.NET Core app, so that image carries exactly the runtime it needs, and Microsoft keeps
@@ -32,8 +35,8 @@ FROM mcr.microsoft.com/dotnet/aspnet:${DOTNET_VERSION}
 # The data folders are open to any user id, so `user:` in docker-compose.yml can run it as the owner of your
 # bind-mounted folders instead of the image's default user (uid 1654).
 COPY --from=build /out/ /app/
-RUN mkdir -p /data/config /data/logs /data/plugins \
- && chmod 0777 /data /data/config /data/logs /data/plugins
+RUN mkdir -p /data/config /data/logs /data/backups /data/plugins \
+ && chmod 0777 /data /data/config /data/logs /data/backups /data/plugins
 
 # The dashboard has to listen beyond the container to be reachable through a published port. It still lets
 # nobody in without a password - set NOCATFARM_WEB_PASSWORD (docker-compose.example.yml refuses to start without).
@@ -42,10 +45,17 @@ ENV NOCATFARM_WEB_HOST=0.0.0.0 \
     ASPNETCORE_HTTP_PORTS=
 
 EXPOSE 7242
-VOLUME ["/data/config", "/data/logs"]
+# backups/ too: the 'backup' command and every restore's "before" copy land there, and kept only inside the container
+# they were gone with the next rebuild or re-create.
+VOLUME ["/data/config", "/data/logs", "/data/backups"]
 
 USER $APP_UID
 WORKDIR /data
+
+# Healthy while the dashboard answers. The image has no curl or wget, so the app asks itself (--ping: reads the port
+# from the settings, asks /api/ping, starts nothing). A dashboard that's switched off counts as healthy.
+HEALTHCHECK --interval=1m --timeout=15s --start-period=1m --retries=3 \
+    CMD ["dotnet", "/app/nocatFarm.dll", "--path", "/data", "--ping"]
 
 # SIGTERM (docker stop) signs every account out cleanly before exiting - give it time: stop_grace_period in compose.
 ENTRYPOINT ["dotnet", "/app/nocatFarm.dll", "--path", "/data"]

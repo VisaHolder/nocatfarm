@@ -188,6 +188,23 @@ public static class Redeeming {
 	/// minute is far below anything Steam objects to, and a queue is patient by nature.
 	/// </summary>
 	public static async Task WorkQueueAsync(IEnumerable<Bot> bots, CancellationToken ct = default) {
+		// One worker at a time, whoever drives it. Which account drives the queue is decided afresh every 30 seconds, and
+		// when that changes mid-key (the driver signs out, one earlier in the list signs in) the new one started on the
+		// same key the old one was still activating - two activations of one key. The one that finds it busy just goes.
+		if (!Working.Wait(0, CancellationToken.None)) {
+			return;
+		}
+
+		try {
+			await WorkQueueLockedAsync(bots, ct).ConfigureAwait(false);
+		} finally {
+			Working.Release();
+		}
+	}
+
+	private static readonly SemaphoreSlim Working = new(1, 1);
+
+	private static async Task WorkQueueLockedAsync(IEnumerable<Bot> bots, CancellationToken ct) {
 		if (!KeyQueue.DueNow()) {
 			return;
 		}

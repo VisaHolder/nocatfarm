@@ -1,10 +1,11 @@
 # Signing in from outside on Windows: the release's portable zip, unpacked and started hidden on its own port, then the
 # same end-to-end check Linux and the Mac run (tests/security-check.sh, through Git's sh).
+#   -Port and -TestRoot move it off its usual port and folder, to run beside another test.
+param([int]$Port = 7356, [string]$TestRoot = '')
 $ErrorActionPreference = 'Stop'
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $Version = (Select-Xml -Path "$Repo\src\NocatFarm\NocatFarm.csproj" -XPath '//Version').Node.InnerText
-$W = Join-Path $env:TEMP 'nocatfarm-tests\security'
-$port = 7356
+$W = Join-Path $(if ($TestRoot) { $TestRoot } else { Join-Path $env:TEMP 'nocatfarm-tests' }) 'security'
 
 if (Test-Path $W) { Remove-Item $W -Recurse -Force }
 New-Item -ItemType Directory -Force "$W\config" | Out-Null

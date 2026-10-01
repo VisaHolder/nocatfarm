@@ -632,9 +632,11 @@ public static partial class Notifier {
 				return false;
 			}
 			case "INTERACTION_CREATE": {
-				// Off the read loop: a command can take a while, and the heartbeat answers must keep arriving.
+				// Off the read loop: a command can take a while, and the heartbeat answers must keep arriving. Its place in
+				// the line is taken here, in the order Discord sent them, so the commands run in that order (DiscordLane).
 				JsonElement copy = d.Clone();
-				_ = Task.Run(() => OnDiscordInteractionAsync(copy, ct), CancellationToken.None);
+				CommandLane.Slot slot = DiscordLane.Take();
+				_ = Task.Run(() => OnDiscordInteractionAsync(copy, slot, ct), CancellationToken.None);
 
 				return false;
 			}
@@ -717,7 +719,11 @@ public static partial class Notifier {
 	}
 
 	// ── the commands ────────────────────────────────────────────────────────
-	private static async Task OnDiscordInteractionAsync(JsonElement d, CancellationToken ct) {
+	/// <remarks>
+	/// "Thinking..." goes back at once, whatever is ahead in the line - Discord gives three seconds for that. Only the
+	/// command itself waits its turn (<paramref name="slot"/>), and the slot is given back however this ends.
+	/// </remarks>
+	private static async Task OnDiscordInteractionAsync(JsonElement d, CommandLane.Slot slot, CancellationToken ct) {
 		try {
 			// 2 = a / command. Nothing else is registered, so nothing else should come.
 			if (!d.TryGetProperty("type", out JsonElement type) || (type.GetInt32() != 2)) {
@@ -787,6 +793,9 @@ public static partial class Notifier {
 				return;
 			}
 
+			// Its turn: after the commands sent before it.
+			await slot.WaitTurnAsync().ConfigureAwait(false);
+
 			List<string> messages = await DiscordAnswerAsync(line, $"/{name} {extra}:", ct).ConfigureAwait(false);
 
 			// A runaway answer (a long log) stops at fifteen messages rather than filling the chat.
@@ -808,6 +817,9 @@ public static partial class Notifier {
 			if (e is not (HttpRequestException or TaskCanceledException)) {
 				Log.StackToFile(e, "discord");
 			}
+		} finally {
+			// Answered, turned away, or failed: the next command may go, and the way out stops waiting for this one.
+			slot.Done();
 		}
 
 		static string Text(JsonElement e, string name) =>

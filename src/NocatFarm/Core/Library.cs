@@ -152,9 +152,11 @@ public sealed class Library(Bot bot) {
 		}
 
 		IReadOnlyDictionary<uint, AppOwnership> licensed = await bot.GetAppOwnershipAsync().ConfigureAwait(false);
-		// Its own licence, not a family member's (those are the family library's business, marked as borrowed), and
-		// never Spacewar - Valve's test app, which other games borrow, and whose "achievements" are test entries.
-		missing = [.. missing.Where(app => (app != 480) && licensed.TryGetValue(app, out AppOwnership o) && o.Own)];
+		// Its own licence, not a family member's (those are the family library's business, marked as borrowed), and one
+		// it has for good: a game played in a free weekend or a timed trial stays in the play history long after, and
+		// isn't the account's to idle or earn achievements in. Never Spacewar either - Valve's test app, which other
+		// games borrow, and whose "achievements" are test entries.
+		missing = [.. missing.Where(app => (app != 480) && licensed.TryGetValue(app, out AppOwnership o) && o.Permanent)];
 
 		if ((missing.Count == 0) || (bot.Apps is not { } apps)) {
 			return;

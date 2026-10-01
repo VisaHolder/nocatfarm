@@ -2,8 +2,8 @@
 
 # Trades
 
-Out of the box, an account accepts donations - offers where it gives nothing away (*Accept donations*, on) - and
-leaves every other offer for you. Offers from your own accounts can go through by themselves once you set that up
+Out of the box, an account accepts donations, which are offers where it gives nothing away (*Accept donations*,
+on), and leaves every other offer for you. Offers from your own accounts can go through by themselves once you set that up
 (below). Fair card swaps from anyone are accepted only if you turn on *Accept fair card swaps*. And if you'd rather
 not have offers pile up, *Decline everything else* (off) declines whatever isn't accepted.
 
@@ -66,7 +66,7 @@ card-swapping sites send. One is accepted only when every item is an ordinary tr
 for one, and the swap never sets your sets back: every card you give away must still have more copies afterwards
 than any incoming card had before. Swaps that would sit in a trade hold are left alone. A swap with a stranger is
 accepted, but its confirmation waits for you in the Steam app (or on the Authenticator page). Swaps between accounts
-in your own nocat.farm - the ones `match` sends - are always judged this way and accepted by themselves, even with
+in your own nocat.farm (the ones `match` sends) are always judged this way and accepted by themselves, even with
 the setting off. `fairswap myaccount <offer id>` tells you whether an offer passes and why not, without accepting or
 declining it.
 
@@ -77,8 +77,8 @@ by itself, and you can add more.
 
 This is for accounts whose maFile is in `config/authenticators`, or whose secrets are in their settings. The
 dashboard's **Authenticator** tab shows, for each one, the current Steam Guard code with a ring counting down its 30
-seconds and a Copy button. Below that are the confirmations waiting - trades with the items on both sides, market
-listings, account changes - each with **Confirm** and **Deny**. *Select all*, then *Confirm* or *Deny*, does several
+seconds and a Copy button. Below that are the confirmations waiting (trades with the items on both sides, market
+listings, account changes), each with **Confirm** and **Deny**. *Select all*, then *Confirm* or *Deny*, does several
 at once. The list refreshes every 30 seconds.
 
 The same from the console or Telegram:
@@ -107,7 +107,7 @@ value                    # every account, by game, and the change in the last 24
 value myaccount refresh  # read that account's inventory again
 ```
 
-Items are priced at the Steam market's median, in *Inventory prices in* (US dollar by default - match it to your
+Items are priced at the Steam market's median, in *Inventory prices in* (US dollar by default; match it to your
 Steam store). Inventories are read again every 6 hours. Prices are looked up slowly so Steam doesn't refuse, which
 means the first valuation of a big inventory can take hours. Turn *Work out what its inventory is worth* off on
 accounts that only hold a few cards. Games listed in *...but not these games* are left out.

@@ -1,6 +1,8 @@
 ﻿# Everything a release has to pass on this PC, in one go, stopping at the first failure:
 #   build (0 warnings), unit tests, translations, the dashboard's script parses, the release files are built,
-#   then the setup, moving a running portable copy, signing in from outside, and updating itself with a broken and a good version
+#   then a live Steam connection (signed in anonymously, the idler's games-played message, WebSocket and TCP), the setup,
+#   moving a running portable copy, signing in from outside, every button of the dashboard in a real browser, and
+#   updating itself with a broken and a good version
 #   (portable and installed). Linux, Mac and Docker run on GitHub: this starts those runs and waits for them.
 #   -From 1.5.4   the previous release, for the move test (its portable zip must be in dist\)
 param([Parameter(Mandatory)][string]$From)
@@ -8,10 +10,12 @@ $ErrorActionPreference = 'Continue'   # native tools write progress to stderr; f
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $Version = (Select-Xml -Path "$Repo\src\NocatFarm\NocatFarm.csproj" -XPath '//Version').Node.InnerText
 $failed = @()
+# "N failed" counts only on a line of its own - the summary every test script ends with. Anywhere in a line, the app's
+# own log inside a test ("dashboard: 5 failed logins from 127.0.0.1") failed a run whose every check had passed.
 function Step($name, [scriptblock]$run) {
   Write-Host "== $name" -ForegroundColor Cyan
   $out = & $run 2>&1 | Out-String
-  $bad = ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $null) -or ($out -match '(?m)^\s*FAIL\b') -or ($out -match '\b[1-9]\d* failed\b') -or ($out -match '[1-9]\d* Error\(s\)') -or ($out -match '[1-9]\d* Warning\(s\)') -or ($out -match '[1-9]\d* problem\(s\)')
+  $bad = ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $null) -or ($out -match '(?m)^\s*FAIL\b') -or ($out -match '(?m)^\s*[1-9]\d* failed\s*$') -or ($out -match '[1-9]\d* Error\(s\)') -or ($out -match '[1-9]\d* Warning\(s\)') -or ($out -match '[1-9]\d* problem\(s\)')
   $summary = ($out -split "`n" | Where-Object { $_ -match 'PASS|FAIL|all passed|all clear|Error\(s\)|Warning\(s\)|problem|Done  ->|success|failure' } | Select-Object -Last 12) -join "`n"
   Write-Host $summary
   if ($bad) { $script:failed += $name; Write-Host "!! $name FAILED" -ForegroundColor Red; Write-Host ($out -split "`n" | Select-Object -Last 30 | Out-String) }
@@ -31,9 +35,11 @@ try {
   Step 'commands list is current' { python tools/gen-commands.py }
   if ($failed.Count -eq 0) {
     Step 'release files' { powershell -ExecutionPolicy Bypass -File tools\package-release.ps1 }
+    Step 'live Steam connection and idling (anonymous)' { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\steam-live.ps1" }
     Step 'setup' { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\install.ps1" }
     Step 'moving a running portable copy in' { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\move-portable.ps1" -From $From }
     Step 'signing in from outside' { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\security.ps1" }
+    Step 'every button (browser)' { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\e2e.ps1" }
     Step 'updating itself - portable' { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\rollback.ps1" -Mode portable }
     Step 'updating itself - installed' { powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\rollback.ps1" -Mode installed }
     Step 'Linux, Docker and Mac on GitHub' {
@@ -50,9 +56,12 @@ try {
         if (-not $id) { Write-Output "FAIL: no $w run found for $sha"; continue }
         gh run watch $id --repo VisaHolder/nocatfarm --exit-status | Out-Null
         # Judged by each job's own result. Matching words in the log flagged a pass, because two test names end in "failure".
-        foreach ($job in (gh run view $id --repo VisaHolder/nocatfarm --json jobs | ConvertFrom-Json).jobs) {
+        $run = gh run view $id --repo VisaHolder/nocatfarm --json jobs,conclusion | ConvertFrom-Json
+        foreach ($job in $run.jobs) {
           if ($job.conclusion -eq 'success') { "$($job.name) success" } else { "FAIL: $($job.name) $($job.conclusion)" }
         }
+        # And the run as a whole: one that never started (startup_failure) has no jobs at all, and passed.
+        if (($run.conclusion -ne 'success') -or (@($run.jobs).Count -eq 0)) { "FAIL: $w run $id $($run.conclusion)" }
       }
     }
   }

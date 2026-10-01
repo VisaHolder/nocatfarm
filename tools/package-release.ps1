@@ -21,12 +21,20 @@
   The Windows one is "-portable.zip" for the same reason: "-portable" sorts before "_linux", so it stays first.
 
   Usage:  powershell -ExecutionPolicy Bypass -File tools\package-release.ps1
+
+  For the Linux CI (pwsh on Linux): only one Linux zip, exactly as the release makes it, optionally as another version -
+    pwsh tools/package-release.ps1 -OnlyRid linux-x64 [-AsVersion 9.9.9]
+  Nothing for Windows, no installer, no docs regenerated.
 #>
+param(
+    [ValidateSet('', 'linux-x64', 'linux-arm64')][string]$OnlyRid = '',
+    [string]$AsVersion = ''
+)
 
 $ErrorActionPreference = 'Stop'
 
 $root  = Split-Path -Parent $PSScriptRoot          # the repo root (idle/)
-$proj  = Join-Path $root 'src\NocatFarm'
+$proj  = Join-Path $root 'src/NocatFarm'
 $dist  = Join-Path $root 'dist'
 $stage = Join-Path $dist 'nocat.farm'
 
@@ -34,6 +42,9 @@ $stage = Join-Path $dist 'nocat.farm'
 [xml]$csproj = Get-Content (Join-Path $proj 'NocatFarm.csproj')
 $version = ($csproj.Project.PropertyGroup | ForEach-Object { $_.Version } | Where-Object { $_ } | Select-Object -First 1)
 if (-not $version) { $version = '0.0.0' }
+# Built as another version: the update tests need a "newer" one of this very code.
+$versionArgs = @()
+if ($AsVersion) { $version = $AsVersion; $versionArgs = @("-p:Version=$AsVersion") }
 
 Write-Host "Packaging nocat.farm v$version" -ForegroundColor Cyan
 
@@ -123,6 +134,7 @@ function Set-UnixModes([string]$zip) {
 }
 
 # ==== Windows ============================================================================================
+if (-not $OnlyRid) {
 
 # --- fresh staging folder ------------------------------------------------------------------------------
 if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
@@ -136,7 +148,7 @@ python (Join-Path $PSScriptRoot 'gen-commands.py')
 if ($LASTEXITCODE -ne 0) { throw 'gen-commands.py failed' }
 
 dotnet publish $proj -c Release -o $stage -r win-x64 --self-contained true `
-    -p:PublishSingleFile=false -p:DebugType=none --nologo -v q
+    -p:PublishSingleFile=false -p:DebugType=none --nologo -v q @versionArgs
 if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed' }
 
 Assert-Clean $stage
@@ -156,8 +168,8 @@ Write-Host "Done  ->  $zip  (${size} MB)" -ForegroundColor Green
 $iscc = @("$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe", "$env:ProgramFiles\Inno Setup 7\ISCC.exe",
           "${env:ProgramFiles(x86)}\Inno Setup 7\ISCC.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
 if ($iscc) {
-    python (Join-Path $PSScriptRoot 'installer\make-messages.py') | Out-Null
-    & $iscc /Q "/DAppVersion=$version" "/DSourceDir=$stage" (Join-Path $PSScriptRoot 'installer\nocatfarm.iss')
+    python (Join-Path $PSScriptRoot 'installer/make-messages.py') | Out-Null
+    & $iscc /Q "/DAppVersion=$version" "/DSourceDir=$stage" (Join-Path $PSScriptRoot 'installer/nocatfarm.iss')
     if ($LASTEXITCODE -ne 0) { throw 'Inno Setup failed to build the installer' }
     $setup = Join-Path $dist "nocat.farm-v$version-setup.exe"
     $ssize = [math]::Round((Get-Item $setup).Length / 1MB, 1)
@@ -166,16 +178,18 @@ if ($iscc) {
     Write-Host 'Inno Setup 7 not found - the installer was NOT built (the zips still are).' -ForegroundColor Yellow
 }
 
+}   # end of Windows
+
 # ==== Linux ==============================================================================================
 # Self-contained as well, so it runs on a box with no .NET. The csproj makes these a plain console program
 # (no WinExe) - on Linux it's the console and the web dashboard, no window. Start it with ./nocatFarm.
-foreach ($rid in 'linux-x64', 'linux-arm64') {
+foreach ($rid in $(if ($OnlyRid) { @($OnlyRid) } else { @('linux-x64', 'linux-arm64') })) {
     $lstage = Join-Path $dist "nocat.farm-$rid"
     if (Test-Path $lstage) { Remove-Item $lstage -Recurse -Force }
     New-Item -ItemType Directory -Force -Path $lstage | Out-Null
 
     dotnet publish $proj -c Release -o $lstage -r $rid --self-contained true `
-        -p:PublishSingleFile=false -p:DebugType=none --nologo -v q
+        -p:PublishSingleFile=false -p:DebugType=none --nologo -v q @versionArgs
     if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed for $rid" }
 
     Assert-Clean $lstage

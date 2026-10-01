@@ -1,7 +1,8 @@
 ; nocat.farm setup - built by tools/package-release.ps1 with Inno Setup 7:
 ;
 ;   ISCC /DAppVersion=1.4.8 /DSourceDir=<staged release folder> tools\installer\nocatfarm.iss
-;   ISCC /DAppVersion=1.4.8 /DPreview tools\installer\nocatfarm.iss      (the real screens, installs nothing)
+;   ISCC /DAppVersion=1.4.8 /DPreview tools\installer\nocatfarm.iss      (the real screens, installs nothing -
+;                                                                     /UPGRADE, /NEWER, /FRESH or /SHOTS to see the others)
 ;
 ; One screen in nocat.farm's own look - black, a thin grey border, the wordmark, monospace, [x] toggles, flat
 ; buttons - instead of Windows' wizard pages. It does the Windows side only (files, shortcuts, start with Windows,
@@ -13,6 +14,7 @@
 ; all live in that one folder, exactly like the portable zip.
 ;
 ; Unattended: /VERYSILENT /DIR=... /MOVE=no /FROM=fresh|asf|idlemaster|other /STARTUP=no /DESKTOP=no /HIDDEN=yes /PORT=7300
+; and to uninstall: unins000.exe /VERYSILENT /DELETEDATA=yes (accounts, settings, backups and logs too; default no)
 
 #ifndef AppVersion
   #error Pass /DAppVersion=x.y.z
@@ -28,7 +30,7 @@ AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
 AppPublisher=reap.
-AppPublisherURL=https://nocat.lol
+AppPublisherURL=https://nocat.lol/nocatfarm
 AppSupportURL=https://github.com/VisaHolder/nocatfarm/issues
 AppUpdatesURL=https://github.com/VisaHolder/nocatfarm/releases
 AppComments=Free. If you paid for it, you got scammed.
@@ -38,6 +40,8 @@ VersionInfoDescription={#AppName} setup
 VersionInfoProductName={#AppName}
 VersionInfoVersion={#AppVersion}
 PrivilegesRequired=lowest
+; Windows 10 1607 or later - what .NET 10 itself runs on.
+MinVersion=10.0.14393
 DefaultDirName={autopf}\{#AppName}
 DisableWelcomePage=yes
 DisableDirPage=yes
@@ -50,7 +54,8 @@ SetupIconFile=..\..\src\NocatFarm\nocatFarm.ico
 UninstallDisplayName={#AppName}
 UninstallDisplayIcon={app}\{#AppExe}
 WizardStyle=modern
-ShowLanguageDialog=auto
+; Never Inno's own language box: a language nocat.farm doesn't speak gets English.
+ShowLanguageDialog=no
 LanguageDetectionMethod=uilanguage
 CloseApplications=no
 RestartApplications=no

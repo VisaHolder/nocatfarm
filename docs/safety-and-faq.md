@@ -19,12 +19,12 @@ talks to your router.
 The dashboard only listens on this PC by default. With no password it refuses anything that isn't from this PC, even
 if you open it to the network, and five wrong passwords lock an address out (an hour, or a minute on this PC). From
 the internet, ten wrong passwords in an hour from any addresses pause signing in from outside for an hour, and every
-sign-in from outside is sent to Telegram and Discord - `visitors` lists who has been at the dashboard. With Telegram
+sign-in from outside is sent to Telegram and Discord. `visitors` lists who has been at the dashboard. With Telegram
 connected, a sign-in from outside also needs a 6-digit code the bot sends you, so the password alone isn't enough.
 Secrets are never sent to the browser. An empty secret box means "leave it as it is"; use its **Clear** button to
 erase one.
 
-It never fights you for your account - see [Staying out of your way](human-mode.md#staying-out-of-your-way).
+It never fights you for your account. See [Staying out of your way](human-mode.md#staying-out-of-your-way).
 
 Automating your accounts is against Steam's Subscriber Agreement and can get an account limited or banned.
 nocat.farm is built to be gentle, but only run it on accounts you're willing to risk.
@@ -53,8 +53,12 @@ everything.
 purpose. Pick its games under *Human mode → Games and how often*.
 
 **Why is a human-mode account offline?** It's asleep, or on a break it spends offline. On a day off, or once the
-day's hours are played, it stays online without a game - the dashboard shows those as *Day off* and *Done for today*.
+day's hours are played, it stays online without a game, and the dashboard shows those as *Day off* and *Done for today*.
 `human myaccount` shows its day, and `wake myaccount` starts it now.
+
+**Does it work on a Mac or Linux?** Yes. Every release is built and tested on real Apple Silicon and Intel Macs and
+on Linux x64 and arm64, updating included, and Docker has been run with real accounts. See
+[Linux, Mac and Docker](linux-docker-vps.md).
 
 **Why are replies to commands in English?** The dashboard, status lines and log are translated into 11 languages,
 but replies to typed commands stay in English.
