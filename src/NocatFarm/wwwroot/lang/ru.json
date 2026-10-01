@@ -1048,7 +1048,6 @@
     "Couldn't save those settings": "Не удалось сохранить эти настройки",
     "Its game list didn't load - add games by their store link below.": "Список его игр не загрузился — добавьте игры ниже по ссылке из магазина.",
     ", and {0} now and then": ", а иногда в {0}",
-    "About {0}h on weekdays and {1}h at weekends, from around {2}:00 until about {3}:00, with a day off {4}% of the time.": "Около {0} ч в будни и {1} ч в выходные, примерно с {2}:00 до {3}:00, с выходным днём в {4}% случаев.",
     "Add": "Добавить",
     "It farms trading cards first. Once they are done, it plays these games to add hours. Tap any you like - or none.": "Сначала он фармит карточки. Когда они закончатся, он играет в эти игры, чтобы набить часы. Нажмите на те, что нравятся, — или ни на одну.",
     "It will mostly play {0}{1}, with breaks, meals and a bedtime. First it settles in for a few minutes, like somebody who just opened Steam.": "В основном он будет играть в {0}{1}, с перерывами, едой и отходом ко сну. Сначала он несколько минут осваивается, как человек, который только что открыл Steam.",
@@ -2107,11 +2106,22 @@
     "noted you playing {0} for {1}": "записано: ты играл в {0} {1}",
     "noted you on the account for {0}": "записано: ты был на аккаунте {0}",
     "seen you play on {0} days - its day now leans toward yours": "видел, как ты играешь, {0} дн. - теперь его день подстраивается под твой",
+    "{0} of {1} days seen ({2} weekdays, {3} weekend days), used once it has {1}": "видел {0} из {1} дн. ({2} будних, {3} выходных), используется с {1}",
+    "{0} of {1} days seen, used once it has {1}": "видел {0} из {1} дн., используется с {1}",
+    "{0} weekdays and {1} weekend days seen": "видел будних дней: {0}, выходных: {1}",
+    "{0} days seen": "видел дней: {0}",
+    "on around {0}, off around {1}": "заходишь около {0}, выходишь около {1}",
+    "weekdays: on around {0}, off around {1}": "будни: заходишь около {0}, выходишь около {1}",
+    "weekdays: on around {0}, off around {1} - the whole week's, until it has seen {2} weekdays": "будни: заходишь около {0}, выходишь около {1} - по всей неделе, пока не увидит {2} будних дней",
+    "weekends: on around {0}, off around {1}": "выходные: заходишь около {0}, выходишь около {1}",
+    "weekends: on around {0}, off around {1} - the whole week's, until it has seen {2} weekend days": "выходные: заходишь около {0}, выходишь около {1} - по всей неделе, пока не увидит {2} выходных дней",
+    "you play {0} more than your list says": "ты играешь в {0} больше, чем говорит твой список",
     "{0} is playing {1} - joining in for a sitting": "{0} играет в {1} - присоединяется на сеанс",
     "trying out {0} - it's new here": "пробует {0} - это что-то новое",
     "couldn't read what friends are playing: {0}": "не удалось прочитать, во что играют друзья: {0}",
     "couldn't look for new games: {0}": "не удалось поискать новые игры: {0}",
     "learns from how you play": "учится у того, как ты играешь",
+    "Learned from you": "Узнал от тебя",
     "tries new games out": "пробует новые игры",
     "has quiet spells and late nights": "устраивает тихие периоды и поздние ночи",
     "sometimes joins a friend": "иногда присоединяется к другу",
@@ -2132,6 +2142,30 @@
     "backup restored: {0} file(s) - what was there before is in {1}": "копия восстановлена: {0} файл(ов) - то, что было раньше, лежит в {1}",
     "Restored {0} file(s). The accounts are starting again.": "Восстановлено файлов: {0}. Аккаунты запускаются снова.",
     "Weekly report": "Еженедельный отчёт",
+    "…and {0} more": "…и ещё {0}",
+    "off (last week {0})": "выключено (на прошлой неделе {0})",
+    "counting starts now": "отсчёт начинается сейчас",
+    "since the last daily summary": "с последнего ежедневного отчёта",
+    "last 24h": "за 24 ч",
+    "since the daily summary at {0} ({1})": "с ежедневного отчёта в {0} ({1})",
+    "Attention": "Внимание",
+    "{0} played": "сыграно {0}",
+    "not counted yet": "ещё не посчитано",
+    "{0} total": "всего {0}",
+    "{0} card": "{0} карта",
+    "{0} comment": "{0} комментарий",
+    "can't sign in": "не может войти",
+    "no hours for {0}": "нет часов уже {0}",
+    "new ban on record": "новый бан",
+    "Steam is blocking its comments": "Steam блокирует его комментарии",
+    "New version": "Новая версия",
+    "{0} is out": "вышла {0}",
+    "This week": "Эта неделя",
+    "{0} to {1}": "с {0} по {1}",
+    "{0} played (last week {1})": "сыграно {0} (на прошлой неделе {1})",
+    "inventory {0} (partial)": "инвентарь {0} (частично)",
+    "inventory {0}": "инвентарь {0}",
+    "{0} listed": "выставлено {0}",
     "the PC just woke up": "ПК только что проснулся",
     "hasn't banked any hours for {0} - it's {1}; it needs you": "не накопил часов за {0} - сейчас {1}; нужны вы",
     "hasn't banked any hours for {0} - it's {1}; restarted {2} ago, so not again": "не накопил часов за {0} - сейчас {1}; перезапускался {2} назад, поэтому не снова",
@@ -2235,7 +2269,6 @@
     "{0} of them unlocked": "открыто из них: {0}",
     "couldn't read what it has unlocked": "не удалось прочитать, что открыто",
     "{0} from DLC it doesn't own, {1}": "{0} из DLC, которого у него нет, {1}",
-    "{0}: none of the games it hunts or plays has achievements from DLC it doesn't own": "{0}: ни в одной игре, где он охотится или играет, нет достижений из DLC, которого у него нет",
     "{0} more game(s) still being looked at - ask again in a few minutes": "ещё проверяется игр: {0} - спросите снова через несколько минут",
     "Still working out {0}'s DLC - try again in a few minutes.": "Ещё выясняю DLC для {0} - попробуйте через несколько минут.",
     "{0} on {1}: {2} DLC, {3} with achievements in its list": "{0} на {1}: DLC - {2}, с достижениями в его списке - {3}",
@@ -2257,8 +2290,6 @@
     "Playing {0} — first checking which of its achievements come with DLC.": "Играет в {0} - сначала проверяет, какие его достижения относятся к DLC.",
     "\"{0}\" may come with DLC {1} doesn't own, and Steam doesn't list which achievements that DLC adds ({2}) - it won't be unlocked.": "«{0}» может относиться к DLC, которого у {1} нет, а Steam не сообщает, какие достижения добавляет это DLC ({2}) - открыто не будет.",
     "{0} left alone - can't tell which achievements come with its DLC": "пропущено {0} - неясно, какие достижения относятся к его DLC",
-    "can't tell which achievements come with its DLC - left alone": "неясно, какие достижения относятся к его DLC - не трогает",
-    "{0}: games with achievements left alone for DLC it doesn't own (never unlocked)": "{0}: игры с достижениями, которые не трогаются из-за DLC, которого у него нет (никогда не открываются)",
     "Couldn't read which DLC {0} owns just now - nothing in {1} is unlocked until it can. Try again in a few minutes.": "Сейчас не удалось узнать, какие DLC есть у {0} - в {1} ничего не открывается, пока это не получится. Попробуйте через несколько минут.",
     "Held: {0} is missing DLC, and Steam doesn't list which achievements they add - so {1} achievement(s) outside the DLC it owns are left alone.": "Не трогает: у {0} нет некоторых DLC, а Steam не сообщает, какие достижения они добавляют - поэтому {1} достиж. вне его DLC не трогаются.",
     "{0} is missing DLC, and Steam doesn't list which achievements they add - but every achievement outside the DLC it owns is already unlocked, so there's nothing to hold.": "У {0} нет некоторых DLC, и Steam не сообщает, какие достижения они добавляют - но все достижения вне имеющихся DLC уже открыты, так что удерживать нечего.",
@@ -2278,30 +2309,11 @@
     "{0}: {1}/{2} - can't tell which achievements come with its DLC - left alone": "{0}: {1}/{2} - неясно, какие достижения относятся к его DLC - не трогает",
     "Playing {0} — {1}; can't tell which achievements come with its DLC, so the rest are left alone.": "Играет в {0} - {1}; неясно, какие достижения относятся к его DLC, поэтому остальные не трогает.",
     "see 'dlc {0} {1}'": "см. «dlc {0} {1}»",
-    "Nothing held in {0} - you said carry on": "В {0} ничего не отложено - вы сказали продолжать",
-    "Trusted: you said {0} owns what matters, so nothing in it is held just because Steam doesn't say which add-on an achievement comes with.": "Доверено: вы сказали, что у {0} есть всё важное, поэтому в ней ничего не откладывается только из-за того, что Steam не говорит, к какому дополнению относится достижение.",
-    "Trusted: you said {0} owns what matters. {1} achievement(s) from {2}, which it doesn't own, are still left alone.": "Доверено: вы сказали, что у {0} есть всё важное. Достижения из {2}, которого у него нет ({1}), по-прежнему не трогаются.",
-    "If {0} owns what matters in {1}, answer on the dashboard or type 'dlc carryon {0} {2}'. Achievements that certainly come with an add-on it doesn't own stay locked.": "Если у {0} есть всё важное в {1}, ответьте на панели или введите «dlc carryon {0} {2}». Достижения, которые точно относятся к дополнению, которого у него нет, остаются закрытыми.",
-    "{0}: carrying on with {1}. Only achievements that certainly come with an add-on it doesn't own stay locked.": "{0}: продолжаем с {1}. Закрытыми остаются только достижения, которые точно относятся к дополнению, которого у него нет.",
-    "{0}: {1} stays paused for achievements. It won't be asked about again unless its add-ons change.": "{0}: {1} остаётся на паузе для достижений. Больше не спросим, если только его дополнения не изменятся.",
-    "{0}: there's no answer for {1} to take back.": "{0}: для {1} нет ответа, который можно отменить.",
-    "{0}: took back \"carry on\" for {1}. Nothing in it is unlocked on a guess any more.": "{0}: «продолжать» для {1} отменено. Наугад в ней больше ничего не открывается.",
-    "{0}: {1} will be asked about again.": "{0}: про {1} спросим снова.",
     "Which game? Its name or its appID.": "Какая игра? Её название или appID.",
     "{0} has no game called \"{1}\". Try its appID - the number in its store link.": "У {0} нет игры «{1}». Попробуйте её appID - число в ссылке на магазин.",
     "More than one game matches \"{0}\": {1}. Type more of the name, or the appID.": "Под «{0}» подходит несколько игр: {1}. Введите больше от названия или appID.",
-    "{0}: {1} is paused for achievements - it has add-ons this account doesn't own. Answer on the dashboard, or 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.": "{0}: {1} на паузе для достижений - у неё есть дополнения, которых у этого аккаунта нет. Ответьте на панели или «dlc carryon {0} {2}» / «dlc leave {0} {2}».",
-    "Only skin, team and other packs are missing.": "Не хватает только наборов скинов, команд и тому подобного.",
-    "Missing: {0}": "Не хватает: {0}",
-    "Missing: {0} add-ons": "Не хватает дополнений: {0}",
-    "{0} is paused for achievements. It has add-ons this account doesn't own, and Steam doesn't say which of them come with achievements.": "{0} на паузе для достижений. У неё есть дополнения, которых у этого аккаунта нет, и Steam не говорит, какие из них дают достижения.",
-    "Achievements that certainly come with an add-on it doesn't own stay locked either way.": "Достижения, которые точно относятся к дополнению, которого у него нет, в любом случае остаются закрытыми.",
-    "I own what matters - carry on": "Всё важное у меня есть - продолжать",
-    "Leave it paused": "Оставить на паузе",
-    "You said carry on for:": "Вы сказали продолжать для:",
     "undo": "отменить",
     "You said leave it paused for:": "Вы сказали оставить на паузе для:",
-    "ask again": "спросить снова",
     "not grinding {0} - still refundable (Protect refunds)": "{0} не гриндим - ещё можно вернуть (Беречь возвраты)",
     "not putting {0} first - still refundable (Protect refunds)": "{0} не ставим первой - ещё можно вернуть (Беречь возвраты)",
     "asleep, no games chosen - idling your {0} most-played game(s): {1} · up {2}": "спит, игры не выбраны - крутит {0} самые наигранные игр(ы): {1} · встанет в {2}",
@@ -2317,11 +2329,77 @@
     "No game in its library matches - paste its appID or store link.": "В библиотеке нет подходящей игры - вставьте её appID или ссылку на магазин.",
     "Its games haven't been read yet - paste an appID or store link.": "Его игры ещё не прочитаны - вставьте appID или ссылку на магазин.",
     "{0}: {1} hasn't been looked at since the app started - try again in a few minutes.": "{0}: {1} ещё не проверялась с запуска приложения - попробуйте снова через несколько минут.",
-    "{0}: {1} isn't paused for add-ons it doesn't own, so there's nothing to answer for it.": "{0}: {1} не на паузе из-за недостающих дополнений, так что отвечать не на что.",
     "Type more of the game's name, or its appID.": "Введите больше от названия игры или её appID.",
     "{0}: Claim free games now also claims a free DLC's game when that's free too - that was its own switch, and it was off.": "{0}: «Забирать бесплатные игры» теперь забирает и игру к бесплатному DLC, когда она тоже бесплатна - раньше это был отдельный переключатель, и он был выключен.",
     "{0}: Bank hours overnight was on with no games listed, which banked nothing - switched off so nothing changes. Turn it on to idle its most-played games overnight.": "{0}: «Копить часы ночью» было включено без игр в списке, поэтому ничего не копило - выключено, чтобы ничего не изменилось. Включите, чтобы ночью крутились самые наигранные игры.",
-    "Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).": "Ночью уходит в невидимку и, раз игры не выбраны, крутит самые наигранные игры: {0} шт."
+    "Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).": "Ночью уходит в невидимку и, раз игры не выбраны, крутит самые наигранные игры: {0} шт.",
+    "{0} left alone, as you asked - can't tell which achievements come with its DLC": "{0} не трогает, как вы просили - неясно, какие достижения относятся к его DLC",
+    "earns them anyway, base game first; {0} from DLC it doesn't own left alone": "всё равно открывает, сначала основную игру; {0} из DLC, которого у него нет, не трогает",
+    "earns them anyway, base game first - Steam doesn't say which come with the add-ons it doesn't own": "всё равно открывает, сначала основную игру - Steam не сообщает, какие относятся к дополнениям, которых у него нет",
+    "{0}: none of the games it hunts or plays has add-ons that matter for achievements": "{0}: ни у одной игры, на которую он охотится или в которую играет, нет дополнений, важных для достижений",
+    "{0}: games with add-ons it doesn't own (achievements from those are never unlocked)": "{0}: игры с дополнениями, которых у него нет (их достижения никогда не открываются)",
+    "{0} is missing DLC, and Steam doesn't list which achievements they add. It earns them anyway - the base game's first, and the {1} it can't place after those, in case some come with that DLC.": "У {0} нет некоторых DLC, а Steam не сообщает, какие достижения они добавляют. Всё равно открывает - сначала достижения основной игры, а {1}, которые не удаётся отнести, потом, на случай если часть из них из этого DLC.",
+    "{0} is missing DLC, and Steam doesn't list which achievements they add. It earns them anyway - the base game's first, and the ones it can't place after those.": "У {0} нет некоторых DLC, а Steam не сообщает, какие достижения они добавляют. Всё равно открывает - сначала достижения основной игры, а те, которые не удаётся отнести, потом.",
+    "It never touches the achievements of {0}, which it doesn't own.": "Достижения {0}, которого у него нет, никогда не трогает.",
+    "To have {1} left alone instead: 'dlc leave {0} {2}'.": "Чтобы {1} вместо этого не трогать: «dlc leave {0} {2}».",
+    "It's left alone because you asked - 'dlc undo {0} {1}' lets it earn them, base game first.": "Не трогает, потому что вы так попросили - «dlc undo {0} {1}» позволит открывать их, сначала основную игру.",
+    "{0}: {1} is left alone for achievements now - 'dlc undo {0} {2}' lets it earn them again.": "{0}: {1} теперь не трогает ради достижений - «dlc undo {0} {2}» позволит снова их открывать.",
+    "{0}: as far as it has seen, {1} has no add-ons Steam doesn't explain, so there's nothing to leave alone.": "{0}: насколько он видел, у {1} нет дополнений, которые Steam не объясняет, так что оставлять нечего.",
+    "{0}: {1} isn't left alone, so there's nothing to take back.": "{0}: {1} и так не оставлен в покое, отменять нечего.",
+    "{0}: {1} earns achievements again - the base game's first. Those of an add-on it doesn't own stay locked.": "{0}: {1} снова открывает достижения - сначала основной игры. Достижения дополнения, которого у него нет, остаются закрытыми.",
+    "{0}: 'dlc carryon' isn't needed any more - {1} earns anyway, the base game's achievements first.": "{0}: «dlc carryon» больше не нужен - {1} и так открывает их, сначала достижения основной игры.",
+    "Lets it earn achievements again - the base game's first. Those of an add-on it doesn't own stay locked.": "Позволяет снова открывать достижения - сначала основной игры. Достижения дополнения, которого у него нет, остаются закрытыми.",
+    "unlocked {0} in {1} - {2} left locked": "разблокировано {0} в {1} - {2} остаются заблокированными",
+    "{0} left locked - the game's own counter for them isn't there yet": "{0} остаются заблокированными - счётчик самой игры ещё не дошёл",
+    "{0} multiplayer ones skipped": "пропущено сетевых достижений: {0}",
+    "{0}: what's left is multiplayer, which this account skips - nothing to grind": "{0}: остались сетевые достижения, а этот аккаунт их пропускает - гриндить нечего",
+    "{0}: {1}/{2} - the rest are multiplayer achievements, which this account skips": "{0}: {1}/{2} - остальные - сетевые достижения, а этот аккаунт их пропускает",
+    "{0}: waiting for Steam's figures on how many players have each achievement": "{0}: ждёт данных Steam о том, сколько игроков получили каждое достижение",
+    "{0}: {1}/{2} - the rest count something in the game, and wait for the game's own counter": "{0}: {1}/{2} - остальные что-то считают в игре и ждут счётчика самой игры",
+    "Playing {0} — {1}; the rest are multiplayer achievements, which this account skips.": "Играет в {0} - {1}; остальные - сетевые достижения, а этот аккаунт их пропускает.",
+    "Playing {0} — waiting for Steam's figures on how many players have each achievement.": "Играет в {0} - ждёт данных Steam о том, сколько игроков получили каждое достижение.",
+    "Playing {0} — {1}; the rest count something in the game, and wait for the game's own counter.": "Играет в {0} - {1}; остальные что-то считают в игре и ждут счётчика самой игры.",
+    "{0} left locked - they're for having all the others, and some of those stay locked": "{0} остаются заблокированными - они за все остальные, а часть из них остаётся заблокированной",
+    "\"{0}\" needs other players, and {1} skips multiplayer achievements (\"Skip multiplayer achievements\") - it won't be unlocked.": "«{0}» требует других игроков, а {1} пропускает сетевые достижения («Пропускать сетевые достижения») - оно не будет открыто.",
+    "\"{0}\" counts something in the game, and the game's own counter is at {1} of {2} - it won't be unlocked before the game gets there.": "«{0}» считает что-то в игре, а счётчик самой игры на {1} из {2} - оно не будет открыто, пока игра туда не дойдёт.",
+    "\"{0}\" is for having the others, and some of those are still locked - it won't be unlocked before they are.": "«{0}» даётся за все остальные, а часть из них ещё заблокирована - оно не будет открыто раньше них.",
+    "may come with DLC this account doesn't own - left alone": "может быть из DLC, которого нет у этого аккаунта - не трогаем",
+    "probably DLC - earned last, after the base game's": "вероятно, DLC - открывается последним, после основной игры",
+    "{0} with \"DLC\" in their API name are left alone while it's missing add-ons.": "{0} с «DLC» в API-имени не трогаются, пока не хватает дополнений.",
+    "{0}: what's left waits for the game's own counters - nothing to grind": "{0}: остальное ждёт счётчиков самой игры - гриндить нечего",
+    "{0}: {1}/{2} - nothing left it would earn for now; looked at again in a few days": "{0}: {1}/{2} - пока больше нечего получать; проверит снова через несколько дней",
+    "Playing {0} — {1}; nothing left it would earn for now. It looks again in a few days.": "Играет в {0} — {1}; пока больше нечего получать. Проверит снова через несколько дней.",
+    "About {0}h on weekdays and {1}h at weekends, from around {2} until about {3}, with a day off {4}% of the time.": "Около {0} ч в будни и {1} ч в выходные, примерно с {2} до {3}, с выходным днём в {4}% случаев.",
+    "no set time": "без точного времени",
+    "end of the day": "конец дня",
+    "couldn't save whether mini mode's list was open: {0}": "не удалось сохранить, открыт ли список мини-режима: {0}",
+    "no accounts yet - 'full window' to add one": "аккаунтов пока нет - добавьте через 'полное окно'",
+    "farming {0}": "фармит {0}",
+    "1 card left": "осталась 1 карточка",
+    "human mode": "человеческий режим",
+    " · {0} farming": " · фарм: {0}",
+    " · {0} idling": " · простой: {0}",
+    " · {0} online": " · в сети: {0}",
+    " · {0} connecting": " · подключение: {0}",
+    " · {0} need you": " · нужны вы: {0}",
+    " · {0} can't sign in": " · не могут войти: {0}",
+    " · {0} playing": " · играют: {0}",
+    " · {0} on a break": " · на перерыве: {0}",
+    " · {0} done for today": " · на сегодня всё: {0}",
+    " · {0} on a day off": " · выходной: {0}",
+    " · {0} night idling": " · ночной простой: {0}",
+    " · {0} asleep": " · спят: {0}",
+    " · {0} off": " · выключены: {0}",
+    "{0} today": "{0} сегодня",
+    "{0} past week": "{0} за неделю",
+    "{0} past month": "{0} за месяц",
+    "1 card today": "1 карточка сегодня",
+    "1 achievement today": "1 достижение сегодня",
+    "{0} achievements today": "достижений сегодня: {0}",
+    "1 comment today": "1 комментарий сегодня",
+    "{0} comments today": "комментариев сегодня: {0}",
+    "{0}/{1} online": "в сети {0}/{1}",
+    "{0} inventory": "инвентарь {0}"
   },
   "settings": {
     "WebEnabled": {
@@ -2363,6 +2441,11 @@
     "MiniOnTop": {
       "label": "Мини-режим поверх окон",
       "tip": "Держит маленькое окно мини-режима поверх остальных окон. Это же переключает булавка в заголовке мини-окна."
+    },
+    "MiniStats": {
+      "label": "Мини-окно показывает",
+      "tip": "Одно число рядом с названием вверху мини-окна. Часы - это игровые часы, сложенные по всем вашим аккаунтам и посчитанные как в ежедневной сводке: считается каждая запущенная игра, так что 8 игр за целый день - это 192 часа. Неделя и месяц - это последние 7 и 30 дней, включая сегодня. Карточки, достижения и комментарии - за последние 24 часа.",
+      "choices": "0 ничего | 1 часы за сегодня | 2 часы за неделю | 3 часы за месяц | 4 карточки за сегодня | 5 достижения за сегодня | 6 комментарии за сегодня | 7 аккаунты в сети | 8 стоимость инвентаря"
     },
     "StartWithWindows": {
       "label": "Запускать вместе с Windows",
@@ -2569,11 +2652,11 @@
     },
     "DayStartHour": {
       "label": "Заходит примерно в",
-      "tip": "Час, когда он обычно заходит в сеть, по 24-часовым часам. Настоящее время колеблется вокруг него, а в выходные начинается раньше."
+      "tip": "Час, когда он обычно заходит в сеть. Настоящее время колеблется вокруг него, а в выходные начинается раньше."
     },
     "BedHour": {
       "label": "Ложится примерно в",
-      "tip": "Час, когда он заканчивает на ночь, по 24-часовым часам. Поздние часы подходят: 2 значит 2 часа ночи."
+      "tip": "Час, когда он заканчивает на ночь. После полуночи тоже можно: для поздней ночи выберите час ранним утром."
     },
     "LateNightExtraHours": {
       "label": "Сидит дольше в пт/сб",
@@ -2683,7 +2766,7 @@
     },
     "Rep4RepStartHour": {
       "label": "Публиковать не раньше",
-      "tip": "Самый ранний час дня, когда этот аккаунт комментирует. Комментарии в 4 утра легко выдают бота."
+      "tip": "Самый ранний час дня, когда этот аккаунт комментирует. Комментарии посреди ночи легко выдают бота."
     },
     "Rep4RepEndHour": {
       "label": "До",
@@ -2875,11 +2958,11 @@
     },
     "FarmFromHour": {
       "label": "Фармить карточки только с",
-      "tip": "Фармит карточки только с этого часа, по 24-часовым часам. Оставьте и его, и «...до» на 0, чтобы фармить в любое время."
+      "tip": "Фармит карточки только с этого часа. Оставьте и его, и «...до» на полуночи, чтобы фармить в любое время."
     },
     "FarmUntilHour": {
       "label": "...до",
-      "tip": "Фармит карточки до этого часа, по 24-часовым часам. Поставьте раньше часа начала, чтобы захватить полночь: с 22 до 6 — фарм ночью."
+      "tip": "Фармит карточки до этого часа. Поставьте раньше часа начала, чтобы захватить полночь: с позднего вечера до раннего утра — фарм ночью."
     },
     "PostFarmWindDownMinMinutes": {
       "label": "После последней карточки играть ещё не меньше",
@@ -3220,11 +3303,11 @@
     },
     "AutoUpdateFromHour": {
       "label": "...между",
-      "tip": "Самый ранний час, когда можно ставить самому, в 24-часовом формате."
+      "tip": "Самый ранний час, когда можно ставить самому."
     },
     "AutoUpdateUntilHour": {
       "label": "...и",
-      "tip": "Час, когда он перестаёт пытаться в эту ночь. Раньше начального часа - переход через полночь, так что 23-5 работает."
+      "tip": "Час, когда он перестаёт пытаться в эту ночь. Раньше начального часа - переход через полночь, так что с позднего вечера до раннего утра работает."
     },
     "AutoUpdateWaitHours": {
       "label": "Ждать после выхода",
@@ -3305,7 +3388,7 @@
     },
     "SendAroundHour": {
       "label": "...около",
-      "tip": "Час отправки, от 0 до 23 - например 4 означает около 4 утра. Уходит в случайную минуту этого часа, в дни, которые позволяет «Отправлять предметы каждые». -1 = без точного времени: каждые столько часов с момента включения."
+      "tip": "Час отправки - например, раннее утро. Уходит в случайную минуту этого часа, в дни, которые позволяет «Отправлять предметы каждые». Без точного времени: каждые столько часов с момента включения."
     },
     "IdleWholeLibrary": {
       "label": "Вся моя библиотека",
@@ -3323,6 +3406,15 @@
       "label": "Учиться у того, как я играю",
       "tip": "Запоминает, когда ты сам играешь на этом аккаунте и во что. Через 7 таких дней подстраивает свой день под твой: когда заходит и ложится спать и как делит время между играми из «Игры и как часто». Он никогда не добавляет игру, которой нет в этом списке, а сколько играть, по-прежнему решают настройки часов. Команда habits показывает, чему он научился.",
       "choices": "0 выкл | 1 немного | 2 сильно"
+    },
+    "LearnFollow": {
+      "label": "Следит за переменами",
+      "tip": "Как быстро видна перемена в том, когда или во что ты играешь. Старые дни значат всё меньше - быстро подхватывает новый распорядок примерно за неделю, медленно - примерно за месяц.",
+      "choices": "0 медленно | 1 обычно | 2 быстро"
+    },
+    "LearnWeekends": {
+      "label": "Выходные отдельно",
+      "tip": "Изучает твои субботы и воскресенья отдельно от остальной недели, ведь большинство играет в эти дни иначе."
     },
     "NewGamesFirst": {
       "label": "Сначала чаще играть в новые игры",
@@ -3355,7 +3447,7 @@
     },
     "WeeklyReportHour": {
       "label": "Еженедельный отчёт · час",
-      "tip": "Час, когда приходит еженедельный отчёт, в 24-часовом формате."
+      "tip": "Час, когда приходит еженедельный отчёт, по местному времени."
     },
     "OfflineIdleTopGames": {
       "label": "...или, если ни одна не выбрана, самые наигранные",
@@ -3379,6 +3471,10 @@
     "BoosterPackGames": {
       "label": "Создавать наборы карточек для",
       "tip": "Игры, для которых самоцветы превращаются в наборы карточек. Steam даёт один набор на игру в день и только для игр, где ещё выпадают карточки. Оставьте пустым, чтобы выключить."
+    },
+    "AchievementSkipMultiplayer": {
+      "label": "Пропускать сетевые достижения",
+      "tip": "Никогда не открывает достижения, для которых нужны другие игроки: сетевые, кооперативные, зомби, versus, рейтинговые и онлайн. Такие игры хранят запись каждого матча, и достижение без матча за ним бросается в глаза. Включено для аккаунта в человеческом режиме, выключено для робота. Включение или выключение человеческого режима выставляет его так же."
     }
   }
 }

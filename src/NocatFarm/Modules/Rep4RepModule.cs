@@ -136,6 +136,12 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	public int PostsToday => _state?.PostsInLast24h() ?? 0;
 
 	/// <summary>
+	/// Steam is turning this account's comments away (three profiles in a row refused) and it's sitting the cooldown
+	/// out - the daily summary's "needs a look". Steam's daily limit and the rate-limit rest are ordinary, not this.
+	/// </summary>
+	public bool CommentBlocked => _state is { IsBlocked: true, BlockReason: "comment-blocked, 24h cooldown" };
+
+	/// <summary>
 	/// The number actually enforced. The configured cap is always an UPPER bound: a limit learned from Steam can
 	/// only ever pull it down. Letting a learned value raise it would silently post more than the operator asked
 	/// for, which is the exact failure that gets an account comment-banned.

@@ -113,9 +113,13 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	private OwnerHabits? _habits;
 	private readonly OwnerWatch _ownerWatch = new();
 
-	/// <summary>His minutes per game, worked out once per change to what's learned rather than on every pick.</summary>
-	private Dictionary<uint, int> _learnedMinutes = [];
-	private int _learnedVersion = -1;
+	/// <summary>
+	/// What's learned, worked out again only when something is added, a setting changes or the hour turns - the fade
+	/// hardly moves in an hour - rather than on every pick. One reference, swapped whole, so a reader never sees half.
+	/// </summary>
+	private LearnedAt? _learned;
+
+	private sealed record LearnedAt(OwnerHabits Source, int Version, int Follow, bool Weekends, DateTime Hour, LearnedHabits Habits);
 
 	private bool _quietDay;
 	private bool _lateNight;
@@ -1344,7 +1348,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// </summary>
 	private DayExtras? Extras(DateTime date) {
 		double pull = HumanHabits.Pull(Bot.Cfg.LearnFromOwner);
-		OwnerHabits? habits = LearningInUse ? Habits : null;
+		HabitPicture? habits = LearningInUse ? Learned().For(date) : null;
 
 		return !Bot.Cfg.LongerRhythms && (habits == null) ? null
 			: new DayExtras(Bot.Cfg.LongerRhythms ? HumanHabits.RhythmFor(Bot.Name, date) : default, habits, pull);
@@ -2258,13 +2262,21 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// <summary>"Learn from how I play" is on and has seen enough of you to go on.</summary>
 	private bool LearningInUse => (Bot.Cfg.LearnFromOwner > 0) && Habits.Ready;
 
-	private Dictionary<uint, int> LearnedMinutes() {
-		if (_learnedVersion != Habits.Version) {
-			_learnedMinutes = Habits.MinutesByGame();
-			_learnedVersion = Habits.Version;
+	/// <summary>What's been learned from you as of now, by this account's "Keeps up with changes" and "Weekends separately".</summary>
+	private LearnedHabits Learned() {
+		OwnerHabits source = Habits;
+		DateTime now = DateTime.Now;
+		DateTime hour = now.Date.AddHours(now.Hour);
+		LearnedAt? have = _learned;
+
+		if ((have == null) || !ReferenceEquals(have.Source, source) || (have.Version != source.Version) || (have.Follow != Bot.Cfg.LearnFollow)
+			|| (have.Weekends != Bot.Cfg.LearnWeekends) || (have.Hour != hour)) {
+			have = new LearnedAt(source, source.Version, Bot.Cfg.LearnFollow, Bot.Cfg.LearnWeekends, hour,
+				source.Learn(now, OwnerHabits.HalfLife(Bot.Cfg.LearnFollow), Bot.Cfg.LearnWeekends));
+			_learned = have;
 		}
 
-		return _learnedMinutes;
+		return have.Habits;
 	}
 
 	/// <summary>
@@ -2302,7 +2314,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			OwnerHabits.Forget(Bot.Name);
 			_habits = new OwnerHabits();
 			_ownerWatch.Reset();
-			_learnedVersion = -1;
+			_learned = null;
 		}
 	}
 
@@ -2501,13 +2513,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		List<string> lines = [];
 
 		if (Bot.Cfg.LearnFromOwner > 0) {
-			OwnerHabits h = Habits;
 			string how = Bot.Cfg.LearnFromOwner >= 2 ? "a lot" : "a little";
-			string hours = OwnerHabits.HoursText(h.HourShare());
 
-			lines.Add(h.Ready
-				? $"learning from you   in use ({how}) - {h.DaysSeen} days seen" + (hours.Length > 0 ? $", usually on {hours}" : "")
-				: $"learning from you   watching - {h.DaysSeen} of {OwnerHabits.DaysNeeded} days seen, not used yet");
+			lines.Add((Learned().Ready ? $"learning from you   in use ({how}) - " : "learning from you   watching - ")
+				+ string.Join(" · ", LearnedSummary().Select(static s => s.ToEnglish())));
 		}
 
 		if (Bot.Cfg.NewGamesFirst) {
@@ -2535,17 +2544,48 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		return lines;
 	}
 
+	/// <summary>
+	/// What it has learned from you, in a few short phrases: days seen, and once it's in use when you usually get on and
+	/// off (weekdays and weekends apart when it learns them apart) and a game you play clearly more than the list says.
+	/// 'human', 'habits' and the dashboard's Human mode panel all say it with these, so they can't tell different stories.
+	/// </summary>
+	internal List<Said> LearnedSummary() {
+		LearnedHabits learned = Learned();
+		List<Said> said = [HumanHabits.Seen(learned)];
+
+		if (!learned.Ready) {
+			return said;
+		}
+
+		said.AddRange(HumanHabits.Times(learned));
+
+		if (HumanHabits.PlaysMore(learned.All, ParseWeights(Bot.Cfg.GameWeights)) is not 0 and var more) {
+			said.Add(new Said("you play {0} more than your list says", LibName(more)));
+		}
+
+		return said;
+	}
+
+	/// <summary>The same, in the dashboard's language, for the Human mode panel - empty while "Learn from how I play" is off.</summary>
+	public string LearnedLine() => Bot.Cfg.LearnFromOwner <= 0 ? "" : string.Join(" · ", LearnedSummary().Select(static s => s.ToString()));
+
 	/// <summary>What 'habits' prints: what it has learned from you, and whether it's being used.</summary>
 	public List<string> HabitsReport() {
-		OwnerHabits h = Habits;
+		LearnedHabits learned = Learned();
 		List<string> lines = [];
-		int days = h.DaysSeen;
+		int days = learned.All.DaysSeen;
+		string follow = Bot.Cfg.LearnFollow switch {
+			0 => "slowly",
+			2 => "quickly",
+			_ => "normally"
+		};
 
 		lines.Add(Bot.Cfg.LearnFromOwner <= 0
 			? "  \"Learn from how I play\" is off - it isn't watching. Switch it on under Human mode."
-			: h.Ready
-				? $"  in use ({(Bot.Cfg.LearnFromOwner >= 2 ? "a lot" : "a little")}) - its day leans toward yours"
-				: $"  watching - {days} of {OwnerHabits.DaysNeeded} days seen, used once it has {OwnerHabits.DaysNeeded}");
+			: learned.Ready
+				? $"  in use ({(Bot.Cfg.LearnFromOwner >= 2 ? "a lot" : "a little")}) - its day leans toward yours, keeping up with changes {follow}"
+					+ $" (a day counts half as much after {OwnerHabits.HalfLife(Bot.Cfg.LearnFollow):0} days)"
+				: "  watching - not used yet");
 
 		if (days == 0) {
 			lines.Add("  nothing seen yet - it learns from the times you play on this account yourself");
@@ -2553,20 +2593,29 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return lines;
 		}
 
-		List<(int Start, int End)> seen = h.Days();
-		string hours = OwnerHabits.HoursText(h.HourShare());
-		lines.Add($"  days seen     {days} (the last {OwnerHabits.KeepDays} days are kept)");
-		lines.Add($"  usually       on around {OwnerHabits.Clock(OwnerHabits.Median(seen.Select(static d => d.Start)))}, off around {OwnerHabits.Clock(OwnerHabits.Median(seen.Select(static d => d.End)))}"
-			+ (hours.Length > 0 ? $"; mostly {hours}" : ""));
+		HabitPicture all = learned.All;
+		string hours = OwnerHabits.HoursText(all.HourShare);
+		lines.Add($"  so far        {HumanHabits.Seen(learned).ToEnglish()} (the last {OwnerHabits.KeepDays} days are kept)");
+		lines.Add("  usually       " + string.Join(" · ", HumanHabits.Times(learned).Select(static s => s.ToEnglish())));
 
-		Dictionary<uint, int> games = h.MinutesByGame();
+		if (hours.Length > 0) {
+			lines.Add($"  mostly on     {hours}");
+		}
+
+		IReadOnlyDictionary<uint, double> games = all.Games;
 
 		if (games.Count > 0) {
-			int total = Math.Max(1, games.Values.Sum());
-			HashSet<uint> listed = [.. ParseWeights(Bot.Cfg.GameWeights).Select(static w => w.Game)];
+			double total = Math.Max(1e-9, games.Values.Sum());
+			List<(uint Game, int Weight)> listedWeights = ParseWeights(Bot.Cfg.GameWeights);
+			HashSet<uint> listed = [.. listedWeights.Select(static w => w.Game)];
 
+			// Shares of his time, the recent days counting most - his hours aren't shown, since faded minutes aren't hours.
 			lines.Add("  top games     " + string.Join(", ", games.OrderByDescending(static g => g.Value).Take(5)
-				.Select(g => $"{LibName(g.Key)} {g.Value * 100 / total}% ({Fmt.Hm(g.Value)})")));
+				.Select(g => $"{LibName(g.Key)} {Math.Round(g.Value * 100 / total):0}%")));
+
+			if (HumanHabits.PlaysMore(all, listedWeights) is not 0 and var more) {
+				lines.Add($"  you play {LibName(more)} more than your list says");
+			}
 
 			List<uint> notListed = [.. games.OrderByDescending(static g => g.Value).Select(static g => g.Key).Where(g => !listed.Contains(g)).Take(5)];
 
@@ -2810,9 +2859,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			list[0] = (list[0].Game, Math.Max(1, (int) Math.Round(100.0 * Math.Max(1, list[0].Weight) / left)));
 		}
 
-		// Learning from you: the same games, leaned toward how you split your own time between them.
+		// Learning from you: the same games, leaned toward how you split your own time between them - on a weekend, how
+		// you split your weekends, once those are learned on their own.
 		if (LearningInUse) {
-			list = HumanHabits.Reweight(list, LearnedMinutes(), HumanHabits.Pull(Bot.Cfg.LearnFromOwner));
+			list = HumanHabits.Reweight(list, Learned().For(PlanDay ?? DateTime.Now.Date).Games, HumanHabits.Pull(Bot.Cfg.LearnFromOwner));
 		}
 
 		// The game the achievement hunter is on joins the rotation as one more side game, at its own weight - played
@@ -3230,15 +3280,17 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		int mainCentre = Math.Clamp(weights[0].Weight, 5, 95);
 		DateTime lastBed = DateTime.MinValue;
+		LearnedHabits? learned = (cfg.LearnFromOwner > 0) && (habits?.Ready == true)
+			? habits.Learn(DateTime.Now, OwnerHabits.HalfLife(cfg.LearnFollow), cfg.LearnWeekends)
+			: null;
 
 		for (int day = 0; day < 7; day++) {
 			// Rolled by the very roller the day uses, each night's bedtime feeding the next morning - so the preview is
 			// the real thing's shape, not a copy of it that had already drifted twice (no target cap, no hunt).
 			DateTime date = DateTime.Now.Date.AddDays(day);
 			bool rhythms = cfg.LongerRhythms && (account != null);
-			OwnerHabits? learned = (cfg.LearnFromOwner > 0) && (habits?.Ready == true) ? habits : null;
 			DayExtras? extras = !rhythms && (learned == null) ? null
-				: new DayExtras(rhythms ? HumanHabits.RhythmFor(account!, date) : default, learned, HumanHabits.Pull(cfg.LearnFromOwner));
+				: new DayExtras(rhythms ? HumanHabits.RhythmFor(account!, date) : default, learned?.For(date), HumanHabits.Pull(cfg.LearnFromOwner));
 			DayRoll roll = RollDayWith(cfg, date, mainCentre, weights.Count >= 2, lastBed, rng, extras);
 			lastBed = BedOn(date, roll.BedHour, roll.BedMinute, roll.BedIsTomorrow);
 

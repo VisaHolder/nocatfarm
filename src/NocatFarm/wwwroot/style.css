@@ -727,6 +727,8 @@ table.today tr.fleet td:first-child { color: var(--muted); }
   color: var(--muted); margin-bottom: 3px;
 }
 .preview b { color: var(--accent); letter-spacing: .5px; }
+/* a second heading further down the same panel */
+.preview .k.then { margin-top: 10px; }
 
 /* numbered setup steps */
 ol.steps { margin: 0; padding-left: 0; list-style: none; counter-reset: step; display: grid; gap: 18px; }
@@ -1079,12 +1081,8 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 .hchip.shared { border-style: dashed; }
 .hchip.ghost { color: var(--muted); border-style: dotted; }
 
-/* "Is it OK to carry on?" - a game held whole for add-ons, with the owner's two answers. On the account's card and
-   in its achievements section. The buttons wrap rather than run off a phone's 375px. */
-.dlcask { margin: var(--s2) 0 0; padding: var(--s2) var(--s3); max-width: 90ch; border: 1px solid var(--warn); background: var(--panel2); font-size: 12px; overflow-wrap: anywhere; }
-.dlcask p { margin: 0 0 var(--s1); }
-.dlcask .actions { margin-top: var(--s2); }
-.dlcask .actions button { white-space: normal; text-align: left; }
+/* The games left alone for achievements ('dlc leave'), each with its undo - in the achievements section. Long game
+   names wrap rather than run off a phone's 375px. */
 .dlcanswered { margin: var(--s2) 0 0; overflow-wrap: anywhere; }
 .dlcanswered a { cursor: pointer; text-decoration: underline; }
 

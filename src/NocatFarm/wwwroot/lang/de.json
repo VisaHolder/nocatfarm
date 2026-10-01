@@ -1048,7 +1048,6 @@
     "Couldn't save those settings": "Die Einstellungen konnten nicht gespeichert werden",
     "Its game list didn't load - add games by their store link below.": "Die Spieleliste wurde nicht geladen - füg Spiele unten über ihren Store-Link hinzu.",
     ", and {0} now and then": " und ab und zu {0}",
-    "About {0}h on weekdays and {1}h at weekends, from around {2}:00 until about {3}:00, with a day off {4}% of the time.": "Etwa {0} Std. unter der Woche und {1} Std. am Wochenende, von etwa {2}:00 bis gegen {3}:00 Uhr, und an {4} % der Tage frei.",
     "Add": "Hinzufügen",
     "It farms trading cards first. Once they are done, it plays these games to add hours. Tap any you like - or none.": "Es farmt zuerst Sammelkarten. Danach spielt es diese Spiele, um Stunden zu sammeln. Tipp an, was du magst - oder nichts.",
     "It will mostly play {0}{1}, with breaks, meals and a bedtime. First it settles in for a few minutes, like somebody who just opened Steam.": "Es spielt meistens {0}{1}, mit Pausen, Mahlzeiten und einer Schlafenszeit. Zuerst lässt es sich ein paar Minuten Zeit, wie jemand, der gerade Steam geöffnet hat.",
@@ -2107,11 +2106,22 @@
     "noted you playing {0} for {1}": "notiert: du hast {0} {1} lang gespielt",
     "noted you on the account for {0}": "notiert: du warst {0} auf dem Konto",
     "seen you play on {0} days - its day now leans toward yours": "hat dich an {0} Tagen spielen sehen - sein Tag richtet sich jetzt nach deinem",
+    "{0} of {1} days seen ({2} weekdays, {3} weekend days), used once it has {1}": "{0} von {1} Tagen gesehen ({2} Wochentage, {3} Wochenendtage), genutzt ab {1}",
+    "{0} of {1} days seen, used once it has {1}": "{0} von {1} Tagen gesehen, genutzt ab {1}",
+    "{0} weekdays and {1} weekend days seen": "{0} Wochentage und {1} Wochenendtage gesehen",
+    "{0} days seen": "{0} Tage gesehen",
+    "on around {0}, off around {1}": "online gegen {0}, offline gegen {1}",
+    "weekdays: on around {0}, off around {1}": "unter der Woche: online gegen {0}, offline gegen {1}",
+    "weekdays: on around {0}, off around {1} - the whole week's, until it has seen {2} weekdays": "unter der Woche: online gegen {0}, offline gegen {1} - die der ganzen Woche, bis es {2} Wochentage gesehen hat",
+    "weekends: on around {0}, off around {1}": "am Wochenende: online gegen {0}, offline gegen {1}",
+    "weekends: on around {0}, off around {1} - the whole week's, until it has seen {2} weekend days": "am Wochenende: online gegen {0}, offline gegen {1} - die der ganzen Woche, bis es {2} Wochenendtage gesehen hat",
+    "you play {0} more than your list says": "du spielst {0} mehr, als deine Liste sagt",
     "{0} is playing {1} - joining in for a sitting": "{0} spielt {1} - macht eine Sitzung lang mit",
     "trying out {0} - it's new here": "probiert {0} aus - das ist neu hier",
     "couldn't read what friends are playing: {0}": "konnte nicht lesen, was Freunde spielen: {0}",
     "couldn't look for new games: {0}": "konnte nicht nach neuen Spielen suchen: {0}",
     "learns from how you play": "lernt von deinem Spielen",
+    "Learned from you": "Von dir gelernt",
     "tries new games out": "probiert neue Spiele aus",
     "has quiet spells and late nights": "hat ruhige Phasen und lange Nächte",
     "sometimes joins a friend": "spielt manchmal mit einem Freund",
@@ -2132,6 +2142,30 @@
     "backup restored: {0} file(s) - what was there before is in {1}": "Backup wiederhergestellt: {0} Datei(en) - was vorher da war, liegt in {1}",
     "Restored {0} file(s). The accounts are starting again.": "{0} Datei(en) wiederhergestellt. Die Konten starten wieder.",
     "Weekly report": "Wochenbericht",
+    "…and {0} more": "…und {0} weitere",
+    "off (last week {0})": "aus (letzte Woche {0})",
+    "counting starts now": "Zählung beginnt jetzt",
+    "since the last daily summary": "seit dem letzten Tagesbericht",
+    "last 24h": "letzte 24 Std.",
+    "since the daily summary at {0} ({1})": "seit dem Tagesbericht um {0} ({1})",
+    "Attention": "Achtung",
+    "{0} played": "{0} gespielt",
+    "not counted yet": "noch nicht gezählt",
+    "{0} total": "{0} insgesamt",
+    "{0} card": "{0} Karte",
+    "{0} comment": "{0} Kommentar",
+    "can't sign in": "kann sich nicht anmelden",
+    "no hours for {0}": "seit {0} keine Stunden",
+    "new ban on record": "neuer Bann verzeichnet",
+    "Steam is blocking its comments": "Steam blockiert seine Kommentare",
+    "New version": "Neue Version",
+    "{0} is out": "{0} ist da",
+    "This week": "Diese Woche",
+    "{0} to {1}": "{0} bis {1}",
+    "{0} played (last week {1})": "{0} gespielt (letzte Woche {1})",
+    "inventory {0} (partial)": "Inventar {0} (unvollständig)",
+    "inventory {0}": "Inventar {0}",
+    "{0} listed": "{0} eingestellt",
     "the PC just woke up": "der PC ist gerade aufgewacht",
     "hasn't banked any hours for {0} - it's {1}; it needs you": "hat seit {0} keine Stunden verbucht - es ist {1}; es braucht dich",
     "hasn't banked any hours for {0} - it's {1}; restarted {2} ago, so not again": "hat seit {0} keine Stunden verbucht - es ist {1}; vor {2} neu gestartet, also nicht nochmal",
@@ -2235,7 +2269,6 @@
     "{0} of them unlocked": "{0} davon freigeschaltet",
     "couldn't read what it has unlocked": "konnte nicht lesen, was freigeschaltet ist",
     "{0} from DLC it doesn't own, {1}": "{0} aus DLC, das es nicht besitzt, {1}",
-    "{0}: none of the games it hunts or plays has achievements from DLC it doesn't own": "{0}: Keins der Spiele, die es jagt oder spielt, hat Erfolge aus DLC, das es nicht besitzt",
     "{0} more game(s) still being looked at - ask again in a few minutes": "{0} weitere(s) Spiel(e) werden noch geprüft - frag in ein paar Minuten noch mal",
     "Still working out {0}'s DLC - try again in a few minutes.": "Die DLC von {0} werden noch ermittelt - versuch es in ein paar Minuten noch mal.",
     "{0} on {1}: {2} DLC, {3} with achievements in its list": "{0} auf {1}: {2} DLC, {3} mit Erfolgen in seiner Liste",
@@ -2257,8 +2290,6 @@
     "Playing {0} — first checking which of its achievements come with DLC.": "Spielt {0} - prüft zuerst, welche seiner Erfolge zu einem DLC gehören.",
     "\"{0}\" may come with DLC {1} doesn't own, and Steam doesn't list which achievements that DLC adds ({2}) - it won't be unlocked.": "„{0}“ gehört vielleicht zu einem DLC, das {1} nicht besitzt, und Steam sagt nicht, welche Erfolge dieses DLC bringt ({2}) - wird nicht freigeschaltet.",
     "{0} left alone - can't tell which achievements come with its DLC": "{0} bleiben liegen - unklar, welche Erfolge zu seinem DLC gehören",
-    "can't tell which achievements come with its DLC - left alone": "unklar, welche Erfolge zu seinem DLC gehören - bleibt liegen",
-    "{0}: games with achievements left alone for DLC it doesn't own (never unlocked)": "{0}: Spiele mit Erfolgen, die wegen DLC liegen bleiben, das es nicht besitzt (werden nie freigeschaltet)",
     "Couldn't read which DLC {0} owns just now - nothing in {1} is unlocked until it can. Try again in a few minutes.": "Konnte gerade nicht lesen, welche DLC {0} besitzt - in {1} wird nichts freigeschaltet, bis das geht. Versuch es in ein paar Minuten noch mal.",
     "Held: {0} is missing DLC, and Steam doesn't list which achievements they add - so {1} achievement(s) outside the DLC it owns are left alone.": "Liegt: {0} fehlen DLC, und Steam sagt nicht, welche Erfolge sie bringen - darum bleiben {1} Erfolg(e) außerhalb der DLC, die es besitzt, liegen.",
     "{0} is missing DLC, and Steam doesn't list which achievements they add - but every achievement outside the DLC it owns is already unlocked, so there's nothing to hold.": "{0} fehlen DLC, und Steam sagt nicht, welche Erfolge sie hinzufügen - aber jeder Erfolg außerhalb der DLC, die es besitzt, ist schon freigeschaltet, also gibt es nichts zurückzuhalten.",
@@ -2278,30 +2309,11 @@
     "{0}: {1}/{2} - can't tell which achievements come with its DLC - left alone": "{0}: {1}/{2} - unklar, welche Erfolge zu seinem DLC gehören - bleibt liegen",
     "Playing {0} — {1}; can't tell which achievements come with its DLC, so the rest are left alone.": "Spielt {0} - {1}; unklar, welche Erfolge zu seinem DLC gehören, darum bleibt der Rest liegen.",
     "see 'dlc {0} {1}'": "siehe „dlc {0} {1}“",
-    "Nothing held in {0} - you said carry on": "Nichts liegt in {0} - du hast „weitermachen“ gesagt",
-    "Trusted: you said {0} owns what matters, so nothing in it is held just because Steam doesn't say which add-on an achievement comes with.": "Vertraut: du hast gesagt, dass {0} besitzt, was zählt - darum liegt darin nichts nur deshalb, weil Steam nicht sagt, zu welchem Add-on ein Erfolg gehört.",
-    "Trusted: you said {0} owns what matters. {1} achievement(s) from {2}, which it doesn't own, are still left alone.": "Vertraut: du hast gesagt, dass {0} besitzt, was zählt. {1} Erfolg(e) aus {2}, das es nicht besitzt, bleiben trotzdem liegen.",
-    "If {0} owns what matters in {1}, answer on the dashboard or type 'dlc carryon {0} {2}'. Achievements that certainly come with an add-on it doesn't own stay locked.": "Wenn {0} in {1} besitzt, was zählt, antworte im Dashboard oder tippe „dlc carryon {0} {2}“. Erfolge, die sicher zu einem Add-on gehören, das es nicht besitzt, bleiben gesperrt.",
-    "{0}: carrying on with {1}. Only achievements that certainly come with an add-on it doesn't own stay locked.": "{0}: {1} geht weiter. Nur Erfolge, die sicher zu einem Add-on gehören, das es nicht besitzt, bleiben gesperrt.",
-    "{0}: {1} stays paused for achievements. It won't be asked about again unless its add-ons change.": "{0}: {1} bleibt für Erfolge pausiert. Es wird nicht wieder gefragt, außer seine Add-ons ändern sich.",
-    "{0}: there's no answer for {1} to take back.": "{0}: für {1} gibt es keine Antwort zum Zurücknehmen.",
-    "{0}: took back \"carry on\" for {1}. Nothing in it is unlocked on a guess any more.": "{0}: „weitermachen“ für {1} zurückgenommen. Darin wird nichts mehr auf Verdacht freigeschaltet.",
-    "{0}: {1} will be asked about again.": "{0}: zu {1} wird wieder gefragt.",
     "Which game? Its name or its appID.": "Welches Spiel? Sein Name oder seine App-ID.",
     "{0} has no game called \"{1}\". Try its appID - the number in its store link.": "{0} hat kein Spiel namens „{1}“. Versuch seine App-ID - die Zahl in seinem Store-Link.",
     "More than one game matches \"{0}\": {1}. Type more of the name, or the appID.": "Mehr als ein Spiel passt zu „{0}“: {1}. Tippe mehr vom Namen oder die App-ID.",
-    "{0}: {1} is paused for achievements - it has add-ons this account doesn't own. Answer on the dashboard, or 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.": "{0}: {1} ist für Erfolge pausiert - es hat Add-ons, die dieses Konto nicht besitzt. Antworte im Dashboard oder mit „dlc carryon {0} {2}“ / „dlc leave {0} {2}“.",
-    "Only skin, team and other packs are missing.": "Es fehlen nur Skin-, Team- und andere Pakete.",
-    "Missing: {0}": "Es fehlt: {0}",
-    "Missing: {0} add-ons": "Es fehlen: {0} Add-ons",
-    "{0} is paused for achievements. It has add-ons this account doesn't own, and Steam doesn't say which of them come with achievements.": "{0} ist für Erfolge pausiert. Es hat Add-ons, die dieses Konto nicht besitzt, und Steam sagt nicht, welche davon Erfolge mitbringen.",
-    "Achievements that certainly come with an add-on it doesn't own stay locked either way.": "Erfolge, die sicher zu einem Add-on gehören, das es nicht besitzt, bleiben so oder so gesperrt.",
-    "I own what matters - carry on": "Ich besitze, was zählt - weitermachen",
-    "Leave it paused": "Pausiert lassen",
-    "You said carry on for:": "Du hast „weitermachen“ gesagt für:",
     "undo": "rückgängig",
     "You said leave it paused for:": "Du hast „pausiert lassen“ gesagt für:",
-    "ask again": "wieder fragen",
     "not grinding {0} - still refundable (Protect refunds)": "{0} wird nicht gegrindet - noch erstattbar (Erstattungen schützen)",
     "not putting {0} first - still refundable (Protect refunds)": "{0} nicht vorgezogen - noch erstattbar (Erstattungen schützen)",
     "asleep, no games chosen - idling your {0} most-played game(s): {1} · up {2}": "schläft, keine Spiele gewählt - sammelt in deinen {0} meistgespielten Spiel(en): {1} · auf um {2}",
@@ -2317,11 +2329,77 @@
     "No game in its library matches - paste its appID or store link.": "Kein Spiel in seiner Bibliothek passt - füge die appID oder den Shop-Link ein.",
     "Its games haven't been read yet - paste an appID or store link.": "Seine Spiele wurden noch nicht gelesen - füge eine appID oder einen Shop-Link ein.",
     "{0}: {1} hasn't been looked at since the app started - try again in a few minutes.": "{0}: {1} wurde seit dem Start der App noch nicht angesehen - versuch es in ein paar Minuten noch mal.",
-    "{0}: {1} isn't paused for add-ons it doesn't own, so there's nothing to answer for it.": "{0}: {1} ist nicht wegen fehlender Add-ons pausiert, also gibt es dafür nichts zu beantworten.",
     "Type more of the game's name, or its appID.": "Tipp mehr vom Namen des Spiels ein, oder seine App-ID.",
     "{0}: Claim free games now also claims a free DLC's game when that's free too - that was its own switch, and it was off.": "{0}: Gratisspiele holen holt jetzt auch das Spiel zu einem Gratis-DLC, wenn es gerade ebenfalls gratis ist - das war ein eigener Schalter, und er war aus.",
     "{0}: Bank hours overnight was on with no games listed, which banked nothing - switched off so nothing changes. Turn it on to idle its most-played games overnight.": "{0}: Nachts Stunden sammeln war an, aber ohne Spiele in der Liste - gesammelt wurde nichts. Ausgeschaltet, damit sich nichts ändert. Schalt es ein, um nachts die meistgespielten Spiele laufen zu lassen.",
-    "Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).": "Über Nacht wird es unsichtbar und sammelt, da keine Spiele gewählt sind, in seinen {0} meistgespielten Spielen."
+    "Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).": "Über Nacht wird es unsichtbar und sammelt, da keine Spiele gewählt sind, in seinen {0} meistgespielten Spielen.",
+    "{0} left alone, as you asked - can't tell which achievements come with its DLC": "{0} bleiben liegen, wie gewünscht - unklar, welche Erfolge zu seinem DLC gehören",
+    "earns them anyway, base game first; {0} from DLC it doesn't own left alone": "verdient sie trotzdem, das Hauptspiel zuerst; {0} aus DLC, das es nicht besitzt, bleiben liegen",
+    "earns them anyway, base game first - Steam doesn't say which come with the add-ons it doesn't own": "verdient sie trotzdem, das Hauptspiel zuerst - Steam sagt nicht, welche zu den Add-ons gehören, die es nicht besitzt",
+    "{0}: none of the games it hunts or plays has add-ons that matter for achievements": "{0}: keines der Spiele, die es jagt oder spielt, hat Add-ons, die für Erfolge zählen",
+    "{0}: games with add-ons it doesn't own (achievements from those are never unlocked)": "{0}: Spiele mit Add-ons, die es nicht besitzt (deren Erfolge werden nie freigeschaltet)",
+    "{0} is missing DLC, and Steam doesn't list which achievements they add. It earns them anyway - the base game's first, and the {1} it can't place after those, in case some come with that DLC.": "{0} fehlen DLC, und Steam sagt nicht, welche Erfolge sie bringen. Es verdient sie trotzdem - zuerst die des Hauptspiels, danach die {1}, die es nicht zuordnen kann, falls manche zu diesem DLC gehören.",
+    "{0} is missing DLC, and Steam doesn't list which achievements they add. It earns them anyway - the base game's first, and the ones it can't place after those.": "{0} fehlen DLC, und Steam sagt nicht, welche Erfolge sie bringen. Es verdient sie trotzdem - zuerst die des Hauptspiels, danach die, die es nicht zuordnen kann.",
+    "It never touches the achievements of {0}, which it doesn't own.": "Die Erfolge von {0}, das es nicht besitzt, rührt es nie an.",
+    "To have {1} left alone instead: 'dlc leave {0} {2}'.": "Soll {1} stattdessen liegen bleiben: „dlc leave {0} {2}“.",
+    "It's left alone because you asked - 'dlc undo {0} {1}' lets it earn them, base game first.": "Es bleibt liegen, weil du es so wolltest - „dlc undo {0} {1}“ lässt es sie verdienen, das Hauptspiel zuerst.",
+    "{0}: {1} is left alone for achievements now - 'dlc undo {0} {2}' lets it earn them again.": "{0}: {1} bleibt für Erfolge jetzt liegen - „dlc undo {0} {2}“ lässt es sie wieder verdienen.",
+    "{0}: as far as it has seen, {1} has no add-ons Steam doesn't explain, so there's nothing to leave alone.": "{0}: soweit es gesehen hat, hat {1} keine Add-ons, die Steam nicht erklärt - es gibt also nichts liegen zu lassen.",
+    "{0}: {1} isn't left alone, so there's nothing to take back.": "{0}: {1} bleibt nicht liegen - es gibt nichts zurückzunehmen.",
+    "{0}: {1} earns achievements again - the base game's first. Those of an add-on it doesn't own stay locked.": "{0}: {1} verdient wieder Erfolge - zuerst die des Hauptspiels. Die eines Add-ons, das es nicht besitzt, bleiben gesperrt.",
+    "{0}: 'dlc carryon' isn't needed any more - {1} earns anyway, the base game's achievements first.": "{0}: „dlc carryon“ wird nicht mehr gebraucht - {1} verdient sie trotzdem, zuerst die Erfolge des Hauptspiels.",
+    "Lets it earn achievements again - the base game's first. Those of an add-on it doesn't own stay locked.": "Lässt es wieder Erfolge verdienen - zuerst die des Hauptspiels. Die eines Add-ons, das es nicht besitzt, bleiben gesperrt.",
+    "unlocked {0} in {1} - {2} left locked": "{0} in {1} freigeschaltet - {2} bleiben gesperrt",
+    "{0} left locked - the game's own counter for them isn't there yet": "{0} bleiben gesperrt - der Zähler des Spiels dafür ist noch nicht so weit",
+    "{0} multiplayer ones skipped": "{0} Mehrspieler-Erfolge übersprungen",
+    "{0}: what's left is multiplayer, which this account skips - nothing to grind": "{0}: der Rest ist Mehrspieler, und das überspringt dieses Konto - nichts zu grinden",
+    "{0}: {1}/{2} - the rest are multiplayer achievements, which this account skips": "{0}: {1}/{2} - der Rest sind Mehrspieler-Erfolge, und die überspringt dieses Konto",
+    "{0}: waiting for Steam's figures on how many players have each achievement": "{0}: wartet auf Steams Zahlen, wie viele Spieler jeden Erfolg haben",
+    "{0}: {1}/{2} - the rest count something in the game, and wait for the game's own counter": "{0}: {1}/{2} - der Rest zählt etwas im Spiel und wartet auf den eigenen Zähler des Spiels",
+    "Playing {0} — {1}; the rest are multiplayer achievements, which this account skips.": "Spielt {0} - {1}; der Rest sind Mehrspieler-Erfolge, und die überspringt dieses Konto.",
+    "Playing {0} — waiting for Steam's figures on how many players have each achievement.": "Spielt {0} - wartet auf Steams Zahlen, wie viele Spieler jeden Erfolg haben.",
+    "Playing {0} — {1}; the rest count something in the game, and wait for the game's own counter.": "Spielt {0} - {1}; der Rest zählt etwas im Spiel und wartet auf den eigenen Zähler des Spiels.",
+    "{0} left locked - they're for having all the others, and some of those stay locked": "{0} bleiben gesperrt - sie sind dafür, alle anderen zu haben, und einige davon bleiben gesperrt",
+    "\"{0}\" needs other players, and {1} skips multiplayer achievements (\"Skip multiplayer achievements\") - it won't be unlocked.": "„{0}“ braucht andere Spieler, und {1} überspringt Mehrspieler-Erfolge („Mehrspieler-Erfolge überspringen“) - er wird nicht freigeschaltet.",
+    "\"{0}\" counts something in the game, and the game's own counter is at {1} of {2} - it won't be unlocked before the game gets there.": "„{0}“ zählt etwas im Spiel, und der Zähler des Spiels steht bei {1} von {2} - er wird nicht freigeschaltet, bevor das Spiel so weit ist.",
+    "\"{0}\" is for having the others, and some of those are still locked - it won't be unlocked before they are.": "„{0}“ ist dafür, die anderen zu haben, und einige davon sind noch gesperrt - er wird nicht vor ihnen freigeschaltet.",
+    "may come with DLC this account doesn't own - left alone": "kommt vielleicht mit einem DLC, das dieses Konto nicht besitzt - bleibt liegen",
+    "probably DLC - earned last, after the base game's": "wahrscheinlich DLC - kommt zuletzt, nach denen des Hauptspiels",
+    "{0} with \"DLC\" in their API name are left alone while it's missing add-ons.": "{0} mit „DLC“ im API-Namen bleiben liegen, solange Add-ons fehlen.",
+    "{0}: what's left waits for the game's own counters - nothing to grind": "{0}: der Rest wartet auf die Zähler des Spiels - nichts zu grinden",
+    "{0}: {1}/{2} - nothing left it would earn for now; looked at again in a few days": "{0}: {1}/{2} - vorerst nichts mehr, was es verdienen würde; in ein paar Tagen wird wieder geschaut",
+    "Playing {0} — {1}; nothing left it would earn for now. It looks again in a few days.": "Spielt {0} — {1}; vorerst nichts mehr, was es verdienen würde. In ein paar Tagen schaut es wieder nach.",
+    "About {0}h on weekdays and {1}h at weekends, from around {2} until about {3}, with a day off {4}% of the time.": "Etwa {0} Std. unter der Woche und {1} Std. am Wochenende, von etwa {2} bis gegen {3}, und an {4} % der Tage frei.",
+    "no set time": "keine feste Zeit",
+    "end of the day": "Ende des Tages",
+    "couldn't save whether mini mode's list was open: {0}": "konnte nicht speichern, ob die Liste im Mini-Modus offen war: {0}",
+    "no accounts yet - 'full window' to add one": "noch keine Konten - über 'ganzes Fenster' eins hinzufügen",
+    "farming {0}": "farmt {0}",
+    "1 card left": "noch 1 Karte",
+    "human mode": "Menschen-Modus",
+    " · {0} farming": " · {0} farmen",
+    " · {0} idling": " · {0} im Leerlauf",
+    " · {0} online": " · {0} online",
+    " · {0} connecting": " · {0} verbinden sich",
+    " · {0} need you": " · {0} brauchen dich",
+    " · {0} can't sign in": " · {0} können sich nicht anmelden",
+    " · {0} playing": " · {0} spielen",
+    " · {0} on a break": " · {0} machen Pause",
+    " · {0} done for today": " · {0} für heute fertig",
+    " · {0} on a day off": " · {0} haben frei",
+    " · {0} night idling": " · {0} im Nacht-Leerlauf",
+    " · {0} asleep": " · {0} schlafen",
+    " · {0} off": " · {0} aus",
+    "{0} today": "{0} heute",
+    "{0} past week": "{0} letzte Woche",
+    "{0} past month": "{0} letzter Monat",
+    "1 card today": "1 Karte heute",
+    "1 achievement today": "1 Erfolg heute",
+    "{0} achievements today": "{0} Erfolge heute",
+    "1 comment today": "1 Kommentar heute",
+    "{0} comments today": "{0} Kommentare heute",
+    "{0}/{1} online": "{0}/{1} online",
+    "{0} inventory": "{0} Inventar"
   },
   "settings": {
     "WebEnabled": {
@@ -2363,6 +2441,11 @@
     "MiniOnTop": {
       "label": "Mini-Modus im Vordergrund halten",
       "tip": "Hält das kleine Fenster im Mini-Modus über deinen anderen Fenstern. Die Nadel in der Titelleiste des Mini-Fensters schaltet das ebenfalls um."
+    },
+    "MiniStats": {
+      "label": "Mini-Fenster zeigt",
+      "tip": "Die eine Zahl neben dem Namen oben im Mini-Fenster. Stunden sind Spielstunden, zusammengezählt über alle deine Konten und gezählt wie in der täglichen Zusammenfassung: Jedes laufende Spiel zählt, 8 Spiele einen ganzen Tag lang sind also 192 Stunden. Letzte Woche und letzter Monat sind die letzten 7 und 30 Tage, heute eingeschlossen. Karten, Erfolge und Kommentare sind die letzten 24 Stunden.",
+      "choices": "0 nichts | 1 Stunden heute | 2 Stunden letzte Woche | 3 Stunden letzter Monat | 4 Karten heute | 5 Erfolge heute | 6 Kommentare heute | 7 Konten online | 8 Inventarwert"
     },
     "StartWithWindows": {
       "label": "Mit Windows starten",
@@ -2569,11 +2652,11 @@
     },
     "DayStartHour": {
       "label": "Kommt ungefähr online um",
-      "tip": "Die Stunde, zu der es meist online kommt, im 24-Stunden-Format. Die echte Zeit schwankt darum herum, und am Wochenende geht es früher los."
+      "tip": "Die Stunde, zu der es meist online kommt. Die echte Zeit schwankt darum herum, und am Wochenende geht es früher los."
     },
     "BedHour": {
       "label": "Geht ungefähr schlafen um",
-      "tip": "Die Stunde, zu der es für die Nacht aufhört, im 24-Stunden-Format. Späte Stunden gehen, 2 heißt 2 Uhr nachts."
+      "tip": "Die Stunde, zu der es für die Nacht aufhört. Nach Mitternacht geht auch - für eine lange Nacht nimm eine Stunde am frühen Morgen."
     },
     "LateNightExtraHours": {
       "label": "Bleibt Fr/Sa länger auf",
@@ -2683,7 +2766,7 @@
     },
     "Rep4RepStartHour": {
       "label": "Erst posten ab",
-      "tip": "Die früheste Stunde des Tages, zu der dieses Konto kommentiert. Kommentare um 4 Uhr morgens verraten einen Bot sofort."
+      "tip": "Die früheste Stunde des Tages, zu der dieses Konto kommentiert. Kommentare mitten in der Nacht verraten einen Bot sofort."
     },
     "Rep4RepEndHour": {
       "label": "Bis",
@@ -2875,11 +2958,11 @@
     },
     "FarmFromHour": {
       "label": "Karten erst ab",
-      "tip": "Farmt Karten erst ab dieser Stunde, im 24-Stunden-Format. Lass dies und „...bis“ beide auf 0, um jederzeit zu farmen."
+      "tip": "Farmt Karten erst ab dieser Stunde. Lass dies und „...bis“ beide auf Mitternacht, um jederzeit zu farmen."
     },
     "FarmUntilHour": {
       "label": "...bis",
-      "tip": "Farmt Karten bis zu dieser Stunde, im 24-Stunden-Format. Stell sie früher als die Startstunde ein, um über Mitternacht zu laufen. 22 bis 6 farmt also über Nacht."
+      "tip": "Farmt Karten bis zu dieser Stunde. Stell sie früher als die Startstunde ein, um über Mitternacht zu laufen - von spätabends bis frühmorgens farmt über Nacht."
     },
     "PostFarmWindDownMinMinutes": {
       "label": "Nach der letzten Karte noch mindestens",
@@ -3220,11 +3303,11 @@
     },
     "AutoUpdateFromHour": {
       "label": "...zwischen",
-      "tip": "Die früheste Stunde, in der es von selbst installieren darf, im 24-Stunden-Format."
+      "tip": "Die früheste Stunde, in der es von selbst installieren darf."
     },
     "AutoUpdateUntilHour": {
       "label": "...und",
-      "tip": "Die Stunde, ab der es für die Nacht aufhört. Früher als die Startstunde geht über Mitternacht, 23 bis 5 funktioniert also."
+      "tip": "Die Stunde, ab der es für die Nacht aufhört. Früher als die Startstunde geht über Mitternacht, also klappt auch spätabends bis frühmorgens."
     },
     "AutoUpdateWaitHours": {
       "label": "Nach einem Release warten",
@@ -3305,7 +3388,7 @@
     },
     "SendAroundHour": {
       "label": "...gegen",
-      "tip": "Die Stunde des Tages für den Versand, 0 bis 23 - etwa 4 für ungefähr 4 Uhr morgens. Er geht zu einer zufälligen Minute in dieser Stunde raus, an den Tagen, die „Gegenstände senden alle“ erlaubt. -1 = keine feste Zeit: alle so viele Stunden ab dem Einschalten."
+      "tip": "Die Stunde des Tages für den Versand - etwa frühmorgens. Er geht zu einer zufälligen Minute in dieser Stunde raus, an den Tagen, die „Gegenstände senden alle“ erlaubt. Keine feste Zeit: alle so viele Stunden ab dem Einschalten."
     },
     "IdleWholeLibrary": {
       "label": "Meine ganze Bibliothek sammeln",
@@ -3323,6 +3406,15 @@
       "label": "Von meinem Spielen lernen",
       "tip": "Merkt sich, wann du selbst auf diesem Konto spielst und welche Spiele. Nach 7 solchen Tagen richtet es seinen Tag nach deinem aus: wann es online kommt und schlafen geht, und wie sich seine Zeit auf die Spiele in „Spiele und wie oft“ verteilt. Es fügt nie ein Spiel hinzu, das nicht in dieser Liste steht, und wie lange es spielt, bestimmen weiter die Stunden-Einstellungen. Der Befehl habits zeigt, was es gelernt hat.",
       "choices": "0 aus | 1 ein wenig | 2 stark"
+    },
+    "LearnFollow": {
+      "label": "Hält mit Änderungen Schritt",
+      "tip": "Wie schnell sich eine Änderung daran zeigt, wann oder was du spielst. Ältere Tage zählen immer weniger - schnell folgt einer neuen Routine in etwa einer Woche, langsam braucht etwa einen Monat.",
+      "choices": "0 langsam | 1 normal | 2 schnell"
+    },
+    "LearnWeekends": {
+      "label": "Wochenenden getrennt",
+      "tip": "Lernt deine Samstage und Sonntage getrennt vom Rest der Woche, weil die meisten Leute dann anders spielen."
     },
     "NewGamesFirst": {
       "label": "Neue Spiele anfangs öfter spielen",
@@ -3355,7 +3447,7 @@
     },
     "WeeklyReportHour": {
       "label": "Wochenbericht · Stunde",
-      "tip": "Die Stunde, zu der der Wochenbericht kommt, im 24-Stunden-Format."
+      "tip": "Die Stunde, zu der der Wochenbericht kommt, in Ortszeit."
     },
     "OfflineIdleTopGames": {
       "label": "...oder, wenn keine gewählt sind, seine Top-Spiele",
@@ -3379,6 +3471,10 @@
     "BoosterPackGames": {
       "label": "Boosterpacks erstellen für",
       "tip": "Spiele, für die Edelsteine in Booster-Packungen verwandelt werden. Steam erlaubt eine Packung pro Spiel und Tag, nur für Spiele, die noch Karten droppen. Leer lassen, um es auszuschalten."
+    },
+    "AchievementSkipMultiplayer": {
+      "label": "Mehrspieler-Erfolge überspringen",
+      "tip": "Schaltet nie Erfolge frei, die andere Spieler brauchen: Mehrspieler, Koop, Zombies, Versus, Ranglisten und Online. Diese Spiele speichern jedes Match, und ein Erfolg ohne Match dahinter fällt auf. An für ein Konto im menschlichen Modus, aus für einen Roboter. Den menschlichen Modus ein- oder auszuschalten stellt es passend ein."
     }
   }
 }

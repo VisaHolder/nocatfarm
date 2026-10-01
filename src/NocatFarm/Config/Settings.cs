@@ -18,7 +18,14 @@ public enum SettingKind {
 	/// Separate from <see cref="Choice"/> because that one parses its values as integers and silently drops
 	/// anything that isn't one, so a string-valued list would render with no options at all.
 	/// </summary>
-	Pick
+	Pick,
+
+	/// <summary>
+	/// An hour of the day, kept as a whole number (0-23, or 24 for "the end of the day", -1 where that means "no set
+	/// time"). The dashboard shows a list of hours in the viewer's own clock - "9 am" or "09:00" - and the console takes
+	/// the number, "9pm" or "21:00".
+	/// </summary>
+	Hour
 }
 
 /// <summary>
@@ -49,8 +56,9 @@ public sealed record SettingDef(
 
 	/// <summary>
 	/// Shown on the dashboard only while another setting has one value: "FarmCardsWhen=3" (a choice's number) or
-	/// "SomeSwitch=true". For a setting that only means something under one answer of another - the share of sittings
-	/// that farm cards, say, which only "mixed" uses. Null shows it whenever its Mode does. The console lists it anyway.
+	/// "SomeSwitch=true" - or anything but one: "LearnFromOwner!=0". For a setting that only means something under one
+	/// answer of another - the share of sittings that farm cards, say, which only "mixed" uses. Null shows it whenever its
+	/// Mode does. The console lists it anyway.
 	/// </summary>
 	string? ShowWhen = null
 );
@@ -99,7 +107,7 @@ public static class Settings {
 			return all;
 		}
 
-		string[] windowsOnly = ["Tray", "MinimizeToTray", "StartMinimized", "MiniOnTop", "StartWithWindows", "KeepAwake",
+		string[] windowsOnly = ["Tray", "MinimizeToTray", "StartMinimized", "MiniOnTop", "MiniStats", "StartWithWindows", "KeepAwake",
 			"TrayNotifications", "NotifyEarnings", "NotifySocial", "NotifyProblems", "NotifyTrades"];
 
 		return [.. all.Where(d => !windowsOnly.Contains(d.Name, StringComparer.OrdinalIgnoreCase))];
@@ -205,6 +213,39 @@ public static class Settings {
 		return options;
 	}
 
+	/// <summary>
+	/// An hour of the day as typed: a plain number ("21", "-1"), a 12-hour time ("9pm", "9 PM", "12am" is 0, "12pm" is 12,
+	/// "9:00pm"), or a 24-hour one ("21:00", "9:00", "24:00"). Only whole hours. Null when it isn't one of those.
+	/// </summary>
+	public static int? ParseHour(string raw) {
+		string s = (raw ?? "").Trim().ToLowerInvariant().Replace(".", "", StringComparison.Ordinal);
+
+		if (int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out int plain)) {
+			return plain;
+		}
+
+		// [0-9], not \d: \d takes any script's digits ("２１:00" in full width), which int.Parse then threw on.
+		System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(s, @"^([0-9]{1,2})(?::(00))?\s*(am|pm|a|p)?$");
+
+		if (!m.Success) {
+			return null;
+		}
+
+		int h = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
+		string half = m.Groups[3].Value;
+
+		if (half.Length == 0) {
+			// "21:00" - a 24-hour time needs its minutes, or it's the plain number already handled above.
+			return m.Groups[2].Success && (h <= 24) ? h : null;
+		}
+
+		if (h is < 1 or > 12) {
+			return null;
+		}
+
+		return half.StartsWith('p') ? (h % 12) + 12 : h % 12;
+	}
+
 	/// <summary>Apply a typed value from raw text. Returns null on success, or why it was rejected.</summary>
 	public static string? Apply(object config, SettingDef def, string raw) {
 		PropertyInfo? p = config.GetType().GetProperty(def.Name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
@@ -236,6 +277,20 @@ public static class Settings {
 				}
 
 				p.SetValue(config, i);
+
+				return null;
+			}
+
+			case SettingKind.Hour: {
+				if (ParseHour(raw) is not { } h) {
+					return $"{def.Label} must be an hour of the day - a number from {Bound(def.Min)} to {Bound(def.Max)}, or like 9pm or 21:00";
+				}
+
+				if (h < def.Min || h > def.Max) {
+					return $"{def.Label} must be between {Bound(def.Min)} and {Bound(def.Max)}";
+				}
+
+				p.SetValue(config, h);
 
 				return null;
 			}
@@ -460,9 +515,18 @@ public static class Settings {
 	/// OFF puts them back exactly as they were. The user asked for the config to be genuinely clean while human
 	/// mode is on, not just visually filtered.
 	/// </summary>
-	public static void ApplyLegitMode(BotConfig cfg, bool wasLegit) {
+	/// <param name="skipChosen">The same save also changed "Skip multiplayer achievements" - the owner chose it, so it
+	/// stays as chosen rather than following the mode. One dashboard save that turned human mode on and the skip off
+	/// ended with the skip on.</param>
+	public static void ApplyLegitMode(BotConfig cfg, bool wasLegit, bool skipChosen = false) {
 		if (cfg.LegitMode == wasLegit) {
 			return;
+		}
+
+		// Skipping multiplayer achievements goes with the mode: on for a human-mode account, off for a robot - unless it
+		// was chosen in the same save.
+		if (!skipChosen) {
+			cfg.AchievementSkipMultiplayer = cfg.LegitMode;
 		}
 
 		if (cfg.LegitMode) {
@@ -569,6 +633,9 @@ public static class Settings {
 		new("MiniOnTop", "Keep mini mode on top", SecBackground, SettingKind.Bool,
 			"Keeps the small mini mode window above your other windows. The pin in the mini window's title bar switches this too.",
 			Advanced: true),
+		new("MiniStats", "Mini window shows", SecBackground, SettingKind.Choice,
+			"The one number beside the name at the top of the mini window. Hours are game-hours added up over all your accounts, counted like the daily summary: every game running counts, so 8 games for a whole day is 192 hours. Past week and past month are the last 7 and 30 days, today included. Cards, achievements and comments are the last 24 hours.",
+			Advanced: true, Choices: "0 nothing | 1 hours today | 2 hours past week | 3 hours past month | 4 cards today | 5 achievements today | 6 comments today | 7 accounts online | 8 inventory value"),
 		new("StartWithWindows", "Start with Windows", SecBackground, SettingKind.Bool,
 			"Starts nocat.farm when you sign in to Windows. It only adds a startup entry for your own Windows user."),
 		new("KeepAwake", "Keep this PC awake", SecBackground, SettingKind.Bool,
@@ -702,11 +769,11 @@ public static class Settings {
 		new("UpdateMode", "Updates", SecUpdates, SettingKind.Choice,
 			"What happens when a new version is out. It always tells you first, in the log and on Telegram and Discord. Install when I click, once everyone's asleep: the Update button or update accept installs it once your accounts are asleep - no human-mode account awake, nobody playing, no trade or gift waiting. Install when I click: right away. Install by itself at night: it installs on its own in the hours below, at a quiet time, and tells you before and after. update now always installs right away. Not in Docker or as a Linux service, which update by hand.",
 			Choices: "0 install when I click, once everyone's asleep | 1 install when I click | 2 install by itself at night"),
-		new("AutoUpdateFromHour", "...between", SecUpdates, SettingKind.Int,
-			"The earliest hour it may install by itself, on a 24-hour clock.",
+		new("AutoUpdateFromHour", "...between", SecUpdates, SettingKind.Hour,
+			"The earliest hour it may install by itself.",
 			Advanced: true, Min: 0, Max: 23),
-		new("AutoUpdateUntilHour", "...and", SecUpdates, SettingKind.Int,
-			"The hour it stops trying for the night. Earlier than the start hour wraps past midnight, so 23 to 5 works.",
+		new("AutoUpdateUntilHour", "...and", SecUpdates, SettingKind.Hour,
+			"The hour it stops trying for the night. Earlier than the start hour runs on past midnight, so late evening until early morning works.",
 			Advanced: true, Min: 0, Max: 24),
 		new("AutoUpdateWaitHours", "Wait after a release for", SecUpdates, SettingKind.Int,
 			"Hours to wait after a new version comes out before installing it by itself, so a release with a problem can be fixed first.",
@@ -773,7 +840,7 @@ public static class Settings {
 		new("DailyReportEnabled", "Daily summary in the log", SecLogging, SettingKind.Bool,
 			"Writes a daily summary in the log of what each account earned in the last 24 hours: hours banked, cards and rep4rep comments, and everything banked so far. Every running game counts, the way Steam counts it - 32 games for an hour is 32 hours. Type stats to see it any time.",
 			Advanced: true),
-		new("DailyReportHour", "Summary time · hour", SecLogging, SettingKind.Int,
+		new("DailyReportHour", "Summary time · hour", SecLogging, SettingKind.Hour,
 			"The hour the daily summary is written, in local time - and sent, when \"Send the daily summary\" is on.",
 			Min: 0, Max: 23, Advanced: true),
 		new("DailyReportMinute", "Summary time · minute", SecLogging, SettingKind.Int,
@@ -785,8 +852,8 @@ public static class Settings {
 		new("WeeklyReportDay", "Weekly report · day", SecLogging, SettingKind.Choice,
 			"The day the weekly report comes. It covers the seven days before it.",
 			Advanced: true, Choices: "1 Monday | 2 Tuesday | 3 Wednesday | 4 Thursday | 5 Friday | 6 Saturday | 0 Sunday"),
-		new("WeeklyReportHour", "Weekly report · hour", SecLogging, SettingKind.Int,
-			"The hour the weekly report comes, on a 24-hour clock.",
+		new("WeeklyReportHour", "Weekly report · hour", SecLogging, SettingKind.Hour,
+			"The hour the weekly report comes, in local time.",
 			Min: 0, Max: 23, Advanced: true),
 		new("TelegramLogColour", "Telegram's colour in the log", SecLogging, SettingKind.Choice,
 			"The colour of \"telegram\" in the log - commands sent from Telegram and their answers - like an account's colour.",
@@ -870,11 +937,11 @@ public static class Settings {
 		new("DayOffChancePct", "Chance of a day off", SecHuman, SettingKind.Int,
 			"The percent chance it doesn't play at all on a given day. Real people don't game every single day.",
 			Min: 0, Max: 60, Mode: "legit", Advanced: true),
-		new("DayStartHour", "Gets on around", SecHuman, SettingKind.Int,
-			"The hour it usually comes online, on a 24-hour clock. The real time varies around it and weekends start earlier.",
+		new("DayStartHour", "Gets on around", SecHuman, SettingKind.Hour,
+			"The hour it usually comes online. The real time varies around it and weekends start earlier.",
 			Min: 0, Max: 23, Mode: "legit"),
-		new("BedHour", "Goes to bed around", SecHuman, SettingKind.Int,
-			"The hour it stops for the night, on a 24-hour clock. Late hours are fine, 2 means 2am.",
+		new("BedHour", "Goes to bed around", SecHuman, SettingKind.Hour,
+			"The hour it stops for the night. Past midnight is fine - pick an early-morning hour for a late night.",
 			Min: 0, Max: 23, Mode: "legit"),
 		new("LateNightExtraHours", "Stays up later Fri/Sat", SecHuman, SettingKind.Int,
 			"Extra hours it stays up on Friday and Saturday nights.",
@@ -887,6 +954,12 @@ public static class Settings {
 		new("LearnFromOwner", "Learn from how I play", SecHuman, SettingKind.Choice,
 			"Notes when you play on this account yourself and which games. After 7 days of that, it leans its day toward yours: when it gets on and goes to bed, and how its time splits between the games in \"Games and how often\". It never adds a game that isn't in that list, and how long it plays still comes from the hours settings. The habits command shows what it has learned.",
 			Mode: "legit", Choices: "0 off | 1 a little | 2 a lot"),
+		new("LearnFollow", "Keeps up with changes", SecHuman, SettingKind.Choice,
+			"How fast a change in when or what you play shows up. Older days count less and less - quickly follows a new routine in about a week, slowly takes about a month.",
+			Mode: "legit", Choices: "0 slowly | 1 normal | 2 quickly", ShowWhen: "LearnFromOwner!=0"),
+		new("LearnWeekends", "Weekends separately", SecHuman, SettingKind.Bool,
+			"Learns your Saturdays and Sundays apart from the rest of the week, since most people play differently then.",
+			Mode: "legit", ShowWhen: "LearnFromOwner!=0"),
 		new("NewGamesFirst", "Play new games more at first", SecHuman, SettingKind.Bool,
 			"A game that has just arrived in the library, bought, gifted or free, gets extra sittings for 3 to 10 days, fewer each day, like trying something new. Blacklisted or family-shared games and games your other accounts are running are left alone, and a game \"Protect refunds\" is holding waits until the hold ends.",
 			Advanced: true, Mode: "legit"),
@@ -1036,11 +1109,11 @@ public static class Settings {
 			Advanced: true, Min: 1, Max: 20, Mode: "rage"),
 		// Robot accounts only. On a human-mode account "When to farm cards" and its own day already decide when cards farm,
 		// and a clock window on top fought them - with night farming and a 9-to-23 window, cards never farmed at all.
-		new("FarmFromHour", "Farm cards only from", SecCards, SettingKind.Int,
-			"Farms cards only from this hour, on a 24-hour clock. Leave this and \"...until\" both at 0 to farm any time.",
+		new("FarmFromHour", "Farm cards only from", SecCards, SettingKind.Hour,
+			"Farms cards only from this hour. Leave this and \"...until\" both at midnight to farm any time.",
 			Advanced: true, Min: 0, Max: 23, Mode: "rage"),
-		new("FarmUntilHour", "...until", SecCards, SettingKind.Int,
-			"Farms cards up to this hour, on a 24-hour clock. Set it earlier than the start hour to run past midnight, so 22 to 6 farms overnight.",
+		new("FarmUntilHour", "...until", SecCards, SettingKind.Hour,
+			"Farms cards up to this hour. Set it earlier than the start hour to run past midnight - from late evening until early morning farms overnight.",
 			Advanced: true, Min: 0, Max: 24, Mode: "rage"),
 		new("PostFarmWindDownMinMinutes", "After the last card, keep playing at least", SecCards, SettingKind.Int,
 			"Human mode only. After a game drops its last card, it keeps playing it for a few minutes, then takes a break. Set both to 0 to stop right away.",
@@ -1083,13 +1156,15 @@ public static class Settings {
 			"Unlocks a few achievements a day in the games this account plays, easiest first. Unlocking a whole list at once shows on the profile forever, and this avoids that."),
 		new("AchievementPace", "How fast", SecAchievements, SettingKind.Choice,
 			"How long it waits between unlocks. Careful doubles every wait and brisk halves them. No pace unlocks anything before the hours played allow it.",
-			Advanced: true, Choices: "0 careful (twice as slow) | 1 normal | 2 brisk (twice as fast)"),
+			Choices: "0 careful (twice as slow) | 1 normal | 2 brisk (twice as fast)"),
 		new("AchievementMaxCompletionPct", "Finish no more than", SecAchievements, SettingKind.Int,
 			"The most of any one game it will ever complete, in percent. Leaving a few unearned looks like a real library. Once a game gets there, the hunt leaves it for good - raise this and it comes back. The grind command ignores this.",
 			Advanced: true, Min: 1, Max: 100),
 		new("AchievementIncludeMainGame", "Earn them in the main game too", SecAchievements, SettingKind.Bool,
 			"Lets the main game from \"Human mode\" earn achievements like every other game. Best left on, since hundreds of hours with no achievements looks odd.",
 			Advanced: true),
+		new("AchievementSkipMultiplayer", "Skip multiplayer achievements", SecAchievements, SettingKind.Bool,
+			"Never unlocks achievements that need other players: multiplayer, co-op, zombies, versus, ranked and online ones. Those games keep a record of every match, and an achievement with no match behind it stands out. On for a human-mode account, off for a robot. Turning human mode on or off sets it to match."),
 		new("AchievementGames", "Only these games", SecAchievements, SettingKind.AppIds,
 			"Game IDs to limit achievements to. Leave it empty to use whatever the account is playing.",
 			Advanced: true),
@@ -1215,8 +1290,8 @@ public static class Settings {
 		new("SendEveryHours", "Send items every", SecTrading, SettingKind.Int,
 			"Sends this account's items to the first account in \"Your own accounts\" every this many hours, so cards don't pile up. The first send is one period after you turn it on, the account's card on the dashboard shows when the next one is, and each send is in the log. 0 turns it off.",
 			Advanced: true, Min: 0, Max: 168),
-		new("SendAroundHour", "...around", SecTrading, SettingKind.Int,
-			"The hour of the day to send at, 0 to 23 - like 4 for about 4 in the morning. It goes out at a random minute in that hour, on the days \"Send items every\" allows. -1 = no set time: every so many hours from when it was turned on.",
+		new("SendAroundHour", "...around", SecTrading, SettingKind.Hour,
+			"The hour of the day to send at - early morning, say. It goes out at a random minute in that hour, on the days \"Send items every\" allows. No set time: every so many hours from when it was turned on.",
 			Advanced: true, Min: -1, Max: 23),
 		// ── rep4rep commenting ──
 		new("Rep4Rep", "Post rep4rep comments", SecComments, SettingKind.Bool,
@@ -1230,10 +1305,10 @@ public static class Settings {
 		new("Rep4RepGapMaxMinutes", "Longest gap", SecComments, SettingKind.Int,
 			"The longest time between comments, in minutes. Each gap is picked at random between the two.",
 			Min: 1, Max: 1440, Advanced: true),
-		new("Rep4RepStartHour", "Only post from", SecComments, SettingKind.Int,
-			"The earliest hour of the day this account comments. Comments at 4am are an easy bot giveaway.",
+		new("Rep4RepStartHour", "Only post from", SecComments, SettingKind.Hour,
+			"The earliest hour of the day this account comments. Comments in the middle of the night are an easy bot giveaway.",
 			Min: 0, Max: 23, Advanced: true),
-		new("Rep4RepEndHour", "Until", SecComments, SettingKind.Int,
+		new("Rep4RepEndHour", "Until", SecComments, SettingKind.Hour,
 			"The latest hour of the day this account comments. Set it the same as \"Only post from\" to comment around the clock.",
 			Min: 1, Max: 24, Advanced: true),
 		new("Rep4RepLearnCap", "Learn the real limit", SecComments, SettingKind.Bool,

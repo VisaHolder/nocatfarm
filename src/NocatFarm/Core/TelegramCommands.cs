@@ -465,23 +465,27 @@ public static partial class Notifier {
 	}
 
 	/// <summary>The boxed header every styled message starts with.</summary>
-	private static string Header() => $"<pre>◆ NOCAT.FARM · v{Html(Build.Version)} ◆</pre>";
+	private static string Header() => $"<pre>◆  NOCAT.FARM · v{Html(Build.Version)}  ◆</pre>";
 
 	private static string Row(Said label, string value) => $"◆ {Html(label.ToString())}: <b>{Html(value)}</b>";
 
 	private static string Section(Said name) => $"<code>// {Html(name.ToString().ToUpperInvariant())}</code>";
 
+	/// <summary>
+	/// A tappable link. Html() leaves " alone (Telegram's text doesn't need it), but inside href="..." a " in the address
+	/// ended the attribute early - the link broke, or the rest of the address was read as more of the tag.
+	/// </summary>
+	internal static string LinkHtml(string url) => $"<a href=\"{Html(url).Replace("\"", "&quot;", StringComparison.Ordinal)}\">{Html(url)}</a>";
+
 	/// <summary>The dashboard's links, tappable: on the same wifi, from anywhere, and on the PC itself.</summary>
 	private static string DashboardHtml() {
 		DashboardLinks.Links l = DashboardLinks.For(G);
 		StringBuilder sb = new();
-		static string A(string url) => $"<a href=\"{Html(url)}\">{Html(url)}</a>";
-
 		sb.AppendLine(Section(new Said("Dashboard")));
 
 		foreach (DashboardLinks.Row r in DashboardLinks.Rows(l, RemoteAccess.MinPasswordLength)) {
 			string note = r.Note.IsEmpty ? "" : r.Link == null ? Html(r.Note.ToString()) : $"<i>({Html(r.Note.ToString())})</i>";
-			sb.AppendLine($"◆ {Html(r.Label.ToString())} {(r.Link == null ? "" : A(r.Link) + " ")}{note}".TrimEnd());
+			sb.AppendLine($"◆ {Html(r.Label.ToString())} {(r.Link == null ? "" : LinkHtml(r.Link) + " ")}{note}".TrimEnd());
 		}
 
 		List<Said> todo = DashboardLinks.Todo(l);
@@ -517,10 +521,8 @@ public static partial class Notifier {
 		}
 
 		(int cards, int comments) = Stats.Totals(24);
-		TimeSpan up = DateTime.Now - Process.GetCurrentProcess().StartTime;
-		string uptime = up.TotalDays >= 1 ? $"{(int) up.TotalDays}d {up.Hours}h {up.Minutes}m" : $"{up.Hours}h {up.Minutes}m";
 
-		return new StatusView(DateTime.Now, accounts, cards, comments, G.Rep4RepEnabled, uptime, UpdateCheck.Available);
+		return new StatusView(DateTime.Now, accounts, cards, comments, G.Rep4RepEnabled, ReportCard.Uptime(), UpdateCheck.Available);
 	}
 
 	/// <summary>/status: every account in a line, the last 24 hours, and the app itself - no emoji, the site bot's look.</summary>

@@ -1709,11 +1709,8 @@ public sealed class WebHost : IAsyncDisposable {
 			return Results.Json(new {
 				On = bot?.Cfg.UnlockAchievements ?? false,
 				Games = pacer?.Snapshot() ?? [],
-				// The games held whole for add-ons Steam says nothing about, asked about one by one - and the answers
-				// already given, so each can be taken back.
-				DlcQuestions = bot == null ? [] : DlcQuestions.For(bot),
-				DlcCarriedOn = bot == null ? [] : DlcQuestions.CarriedOn(bot),
-				DlcLeft = bot == null ? [] : DlcQuestions.LeftPaused(bot),
+				// The games the owner left alone ('dlc leave'), so each can be taken back.
+				DlcLeft = bot == null ? [] : DlcChoices.LeftPaused(bot),
 				Recent = pacer?.Recent.Take(6) ?? [],
 				Hunt = new {
 					plan.Mode,
@@ -1728,9 +1725,9 @@ public sealed class WebHost : IAsyncDisposable {
 			});
 		}));
 
-		// The answer to "is it OK to carry on?" for one game: carry on, leave it paused, or take the answer back. Only the
-		// account's own answer, kept in its settings file - nothing is unlocked by it, and a game the account doesn't
-		// own is never asked about anyway.
+		// The owner's choice about one game with add-ons Steam doesn't explain: leave it alone, or take that back (the
+		// dashboard's undo). 'carryon' is the old answer, still taken. Only the account's own choice, kept in its settings
+		// file - nothing is unlocked by it.
 		app.MapPost("/api/bots/{name}/achievements/dlc", async (HttpContext ctx, string name) => {
 			if (!Authorised(ctx)) {
 				return Unauthorised();
@@ -1750,21 +1747,21 @@ public sealed class WebHost : IAsyncDisposable {
 
 			string answer = body.Answer?.Trim().ToLowerInvariant() ?? "";
 
-			// Only a game it's asking about, or one already answered - not any number sent here.
-			if ((answer is "carryon" or "leave") && !DlcQuestions.Answerable(bot, body.App)) {
-				return Results.Json(new { ok = false, error = new Said("{0}: {1} isn't paused for add-ons it doesn't own, so there's nothing to answer for it.", bot.Name, GameNames.Of(body.App)).ToString() }, statusCode: 400);
+			// Only a game with add-ons Steam doesn't explain, or one already left alone - not any number sent here.
+			if ((answer == "leave") && !DlcChoices.Answerable(bot, body.App)) {
+				return Results.Json(new { ok = false, error = new Said("{0}: as far as it has seen, {1} has no add-ons Steam doesn't explain, so there's nothing to leave alone.", bot.Name, GameNames.Of(body.App)).ToString() }, statusCode: 400);
 			}
 
 			Said? said = answer switch {
-				"carryon" => DlcQuestions.CarryOn(bot, body.App),
-				"leave" => DlcQuestions.Leave(bot, body.App),
-				"undo" => DlcQuestions.Undo(bot, body.App),
+				"carryon" => DlcChoices.CarryOn(bot, body.App),
+				"leave" => DlcChoices.Leave(bot, body.App),
+				"undo" => DlcChoices.Undo(bot, body.App),
 				_ => null
 			};
 
 			return said is { } done
 				? Results.Json(new { ok = true, note = done.ToString() })
-				: Results.Json(new { ok = false, error = "The answer is carryon, leave or undo." }, statusCode: 400);
+				: Results.Json(new { ok = false, error = "The answer is leave or undo." }, statusCode: 400);
 		});
 
 		app.MapPost("/api/theme", async (HttpContext ctx) => {
@@ -2411,7 +2408,7 @@ public sealed class WebHost : IAsyncDisposable {
 
 		foreach (SettingDef def in defs) {
 			// Pick too (the language): an unknown code falls back to the default like a bad choice does.
-			if (def.Kind is not (SettingKind.Int or SettingKind.Float or SettingKind.Choice or SettingKind.Pick)) {
+			if (def.Kind is not (SettingKind.Int or SettingKind.Hour or SettingKind.Float or SettingKind.Choice or SettingKind.Pick)) {
 				continue;
 			}
 
@@ -2516,7 +2513,8 @@ public sealed class WebHost : IAsyncDisposable {
 			}
 
 			// Legit mode rewrites the config itself, so this has to happen before the diff and the save.
-			Settings.ApplyLegitMode(body, current.LegitMode);
+			// A skip changed in this same save is the owner's choice, and stays.
+			Settings.ApplyLegitMode(body, current.LegitMode, skipChosen: body.AchievementSkipMultiplayer != current.AchievementSkipMultiplayer);
 
 			List<string> adjusted = Clamp(body, Settings.Bot);
 
@@ -2889,8 +2887,6 @@ public sealed class WebHost : IAsyncDisposable {
 					PersonaHidden = b.PersonaWord is "invisible" or "offline",
 					Seen = b.PlayingAsSeen,
 					NameNotShowing = b.CustomNameNotShowing,
-					// "Is it OK to carry on?" for games held whole for add-ons - shown on the account's card.
-					DlcQuestions = DlcQuestions.For(b),
 					Bans = BotManager.ModuleOf<BanWatch>(b)?.Last is { Any: true } bans ? BanWatch.Summary(bans).ToString() : "",
 					Online = b.IsOnline,
 					Paused = b.Paused,
@@ -2931,6 +2927,8 @@ public sealed class WebHost : IAsyncDisposable {
 						: "",
 					// Whether its games have been read: until then an empty pick isn't "nothing it may play".
 					LibraryReady = b.Library.Ready,
+					// What "Learn from how I play" has picked up so far, for the Human mode panel - empty while it's off.
+					Learned = BotManager.ModuleOf<HumanMode>(b)?.LearnedLine() ?? "",
 					Rotation = BotManager.ModuleOf<Idler>(b)?.Rotating is { } rot
 						? new { Idling = rot.Now.Count, rot.Total, Next = IdleRotation.When(rot.MovesAt) }
 						: null,
@@ -2950,64 +2948,9 @@ public sealed class WebHost : IAsyncDisposable {
 		};
 	}
 
-	/// <summary>The one status vocabulary the whole app uses - the rail chips, the filters and the cards agree.</summary>
-	private static string GroupOf(Bot b) {
-		if (!b.Cfg.Enabled || b.State == BotState.Stopped) {
-			return "off";
-		}
-
-		if (b.State == BotState.Failed) {
-			return "problem";
-		}
-
-		if (b.GuardPrompt != null || b.State == BotState.NeedsGuard) {
-			return "needsyou";
-		}
-
-		if (b.State != BotState.Online) {
-			return "connecting";
-		}
-
-		if (b.IsFarming) {
-			return "farming";
-		}
-
-		// Same as the console: a grind is not idling, and saying so contradicted the detail line beside it.
-		// Grouped with "playing" rather than given a chip of its own - it IS playing one game deliberately,
-		// which is exactly what that chip means, and the row's own text names the game and the time left.
-		// Paused, or you're on it: the grind's game is off, and "playing" counted the account as working.
-		if (b.Grinding && !b.Paused && !b.PlayingBlocked) {
-			return "playing";
-		}
-
-		// Finishing up before it logs off - between things, not whatever human mode was about to start.
-		if (b.Stopping) {
-			return "break";
-		}
-
-		HumanMode? human = BotManager.ModuleOf<HumanMode>(b);
-
-		if (human is { Current: not HumanMode.Phase.Off }) {
-			return human.Current switch {
-				HumanMode.Phase.Playing => "playing",
-				HumanMode.Phase.ShortBreak or HumanMode.Phase.MealBreak => "break",
-				HumanMode.Phase.NightIdle => "nightidle",
-				HumanMode.Phase.Asleep => "asleep",
-
-				// Up and showing online to everybody, just not in a game - so not "asleep", which is what these used to
-				// be filed under while the friends list said otherwise.
-				HumanMode.Phase.DoneForToday => "done",
-				HumanMode.Phase.DayOff => "dayoff",
-
-				// Settling in and switching games are both "between things", which is what a break already means
-				// on the dashboard - and far more honest than the "online" they used to fall through to.
-				HumanMode.Phase.WarmingUp or HumanMode.Phase.SwitchingGame => "break",
-				_ => "online"
-			};
-		}
-
-		return string.IsNullOrEmpty(b.Playing) ? "online" : "idling";
-	}
+	/// <summary>The one status vocabulary the whole app uses - kept in <see cref="BotStatus.Group"/> so the mini window's
+	/// counts and the dashboard's chips can't disagree.</summary>
+	private static string GroupOf(Bot b) => BotStatus.Group(b);
 
 	private sealed class LoginRequest {
 		public string? Password { get; set; }

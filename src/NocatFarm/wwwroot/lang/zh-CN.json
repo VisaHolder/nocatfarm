@@ -1048,7 +1048,6 @@
     "Couldn't save those settings": "无法保存这些设置",
     "Its game list didn't load - add games by their store link below.": "游戏列表没能加载——请在下方用商店链接添加游戏。",
     ", and {0} now and then": "，偶尔玩 {0}",
-    "About {0}h on weekdays and {1}h at weekends, from around {2}:00 until about {3}:00, with a day off {4}% of the time.": "工作日约 {0} 小时，周末约 {1} 小时，大约从 {2}:00 到 {3}:00 左右，有 {4}% 的概率休息一天。",
     "Add": "添加",
     "It farms trading cards first. Once they are done, it plays these games to add hours. Tap any you like - or none.": "它会先刷集换式卡牌。刷完后，就玩这些游戏来积累时长。点选你喜欢的——或者一个都不选。",
     "It will mostly play {0}{1}, with breaks, meals and a bedtime. First it settles in for a few minutes, like somebody who just opened Steam.": "它主要会玩 {0}{1}，中间会休息、吃饭，也会按时睡觉。一开始它会先缓几分钟，就像刚打开 Steam 的人一样。",
@@ -2107,11 +2106,22 @@
     "noted you playing {0} for {1}": "已记下：你玩了 {0}，共 {1}",
     "noted you on the account for {0}": "已记下：你在账号上待了 {0}",
     "seen you play on {0} days - its day now leans toward yours": "已看到你玩了 {0} 天 —— 它的一天现在会向你靠拢",
+    "{0} of {1} days seen ({2} weekdays, {3} weekend days), used once it has {1}": "已看到 {1} 天中的 {0} 天（工作日 {2} 天，周末 {3} 天），满 {1} 天后开始使用",
+    "{0} of {1} days seen, used once it has {1}": "已看到 {1} 天中的 {0} 天，满 {1} 天后开始使用",
+    "{0} weekdays and {1} weekend days seen": "已看到工作日 {0} 天、周末 {1} 天",
+    "{0} days seen": "已看到 {0} 天",
+    "on around {0}, off around {1}": "大约 {0} 上线，大约 {1} 下线",
+    "weekdays: on around {0}, off around {1}": "工作日：大约 {0} 上线，大约 {1} 下线",
+    "weekdays: on around {0}, off around {1} - the whole week's, until it has seen {2} weekdays": "工作日：大约 {0} 上线，大约 {1} 下线 —— 看到 {2} 个工作日之前，按整周来算",
+    "weekends: on around {0}, off around {1}": "周末：大约 {0} 上线，大约 {1} 下线",
+    "weekends: on around {0}, off around {1} - the whole week's, until it has seen {2} weekend days": "周末：大约 {0} 上线，大约 {1} 下线 —— 看到 {2} 个周末日之前，按整周来算",
+    "you play {0} more than your list says": "你玩 {0} 比列表里写的多",
     "{0} is playing {1} - joining in for a sitting": "{0} 正在玩 {1} —— 一起玩一个时段",
     "trying out {0} - it's new here": "正在尝试 {0} —— 这里的新游戏",
     "couldn't read what friends are playing: {0}": "无法读取好友在玩什么：{0}",
     "couldn't look for new games: {0}": "无法查找新游戏：{0}",
     "learns from how you play": "会学习你的玩法",
+    "Learned from you": "从你身上学到的",
     "tries new games out": "会尝试新游戏",
     "has quiet spells and late nights": "有安静期和晚睡夜",
     "sometimes joins a friend": "有时会加入朋友",
@@ -2132,6 +2142,30 @@
     "backup restored: {0} file(s) - what was there before is in {1}": "备份已恢复：{0} 个文件 - 原来的内容在 {1}",
     "Restored {0} file(s). The accounts are starting again.": "已恢复 {0} 个文件。账户正在重新启动。",
     "Weekly report": "每周报告",
+    "…and {0} more": "…还有 {0} 个",
+    "off (last week {0})": "关闭（上周 {0}）",
+    "counting starts now": "从现在开始统计",
+    "since the last daily summary": "自上次每日报告以来",
+    "last 24h": "最近 24 小时",
+    "since the daily summary at {0} ({1})": "自 {0} 的每日报告以来（{1}）",
+    "Attention": "需要注意",
+    "{0} played": "游玩 {0}",
+    "not counted yet": "尚未统计",
+    "{0} total": "共 {0}",
+    "{0} card": "{0} 张卡",
+    "{0} comment": "{0} 条评论",
+    "can't sign in": "无法登录",
+    "no hours for {0}": "已 {0} 没有游戏时长",
+    "new ban on record": "有新的封禁记录",
+    "Steam is blocking its comments": "Steam 正在阻止它的评论",
+    "New version": "新版本",
+    "{0} is out": "{0} 已发布",
+    "This week": "本周",
+    "{0} to {1}": "{0} 至 {1}",
+    "{0} played (last week {1})": "游玩 {0}（上周 {1}）",
+    "inventory {0} (partial)": "库存 {0}（部分）",
+    "inventory {0}": "库存 {0}",
+    "{0} listed": "上架 {0} 件",
     "the PC just woke up": "电脑刚从睡眠中醒来",
     "hasn't banked any hours for {0} - it's {1}; it needs you": "已经 {0} 没有累计时长 - 当前{1}；需要你处理",
     "hasn't banked any hours for {0} - it's {1}; restarted {2} ago, so not again": "已经 {0} 没有累计时长 - 当前{1}；{2} 前已重启过，这次不再重启",
@@ -2235,7 +2269,6 @@
     "{0} of them unlocked": "其中 {0} 个已解锁",
     "couldn't read what it has unlocked": "无法读取已解锁的内容",
     "{0} from DLC it doesn't own, {1}": "{0} 个来自它没有的 DLC，{1}",
-    "{0}: none of the games it hunts or plays has achievements from DLC it doesn't own": "{0}：它狩猎或玩的游戏里，没有来自它没有的 DLC 的成就",
     "{0} more game(s) still being looked at - ask again in a few minutes": "还有 {0} 款游戏正在查看 —— 请过几分钟再问",
     "Still working out {0}'s DLC - try again in a few minutes.": "仍在查明 {0} 的 DLC —— 请过几分钟再试。",
     "{0} on {1}: {2} DLC, {3} with achievements in its list": "{1} 上的 {0}：{2} 个 DLC，其中 {3} 个在它的列表里有成就",
@@ -2257,8 +2290,6 @@
     "Playing {0} — first checking which of its achievements come with DLC.": "正在玩 {0} —— 先检查它的哪些成就属于 DLC。",
     "\"{0}\" may come with DLC {1} doesn't own, and Steam doesn't list which achievements that DLC adds ({2}) - it won't be unlocked.": "“{0}”可能属于 {1} 没有的 DLC，而 Steam 没有列出该 DLC 添加了哪些成就（{2}）—— 不会解锁。",
     "{0} left alone - can't tell which achievements come with its DLC": "{0} 个未动 —— 无法判断哪些成就属于它的 DLC",
-    "can't tell which achievements come with its DLC - left alone": "无法判断哪些成就属于它的 DLC —— 不动",
-    "{0}: games with achievements left alone for DLC it doesn't own (never unlocked)": "{0}：因缺少 DLC 而有成就未动的游戏（永不解锁）",
     "Couldn't read which DLC {0} owns just now - nothing in {1} is unlocked until it can. Try again in a few minutes.": "暂时读不到 {0} 拥有哪些 DLC —— 在读到之前，{1} 中不会解锁任何成就。请过几分钟再试。",
     "Held: {0} is missing DLC, and Steam doesn't list which achievements they add - so {1} achievement(s) outside the DLC it owns are left alone.": "暂不处理：{0} 缺少一些 DLC，而 Steam 没有列出它们添加了哪些成就 —— 所以已拥有 DLC 之外的 {1} 个成就不动。",
     "{0} is missing DLC, and Steam doesn't list which achievements they add - but every achievement outside the DLC it owns is already unlocked, so there's nothing to hold.": "{0} 缺少一些 DLC，Steam 也没有说明它们会添加哪些成就 - 但拥有的 DLC 之外的成就都已解锁，所以没有需要暂缓的。",
@@ -2278,30 +2309,11 @@
     "{0}: {1}/{2} - can't tell which achievements come with its DLC - left alone": "{0}：{1}/{2} —— 无法判断哪些成就属于它的 DLC —— 不动",
     "Playing {0} — {1}; can't tell which achievements come with its DLC, so the rest are left alone.": "正在玩 {0} —— {1}；无法判断哪些成就属于它的 DLC，所以其余的不动。",
     "see 'dlc {0} {1}'": "见“dlc {0} {1}”",
-    "Nothing held in {0} - you said carry on": "{0} 中没有暂不处理的内容 —— 你选择了继续",
-    "Trusted: you said {0} owns what matters, so nothing in it is held just because Steam doesn't say which add-on an achievement comes with.": "已信任：你说 {0} 拥有重要的部分，所以不会仅仅因为 Steam 没说明成就来自哪个附加内容而暂不处理其中任何成就。",
-    "Trusted: you said {0} owns what matters. {1} achievement(s) from {2}, which it doesn't own, are still left alone.": "已信任：你说 {0} 拥有重要的部分。它没有的 {2} 中的 {1} 个成就仍然不动。",
-    "If {0} owns what matters in {1}, answer on the dashboard or type 'dlc carryon {0} {2}'. Achievements that certainly come with an add-on it doesn't own stay locked.": "如果 {0} 拥有 {1} 中重要的部分，请在控制面板回答，或输入“dlc carryon {0} {2}”。确定来自它没有的附加内容的成就会保持锁定。",
-    "{0}: carrying on with {1}. Only achievements that certainly come with an add-on it doesn't own stay locked.": "{0}：继续处理 {1}。只有确定来自它没有的附加内容的成就保持锁定。",
-    "{0}: {1} stays paused for achievements. It won't be asked about again unless its add-ons change.": "{0}：{1} 的成就保持暂停。除非它的附加内容有变化，否则不会再问。",
-    "{0}: there's no answer for {1} to take back.": "{0}：{1} 没有可撤回的回答。",
-    "{0}: took back \"carry on\" for {1}. Nothing in it is unlocked on a guess any more.": "{0}：已撤回对 {1} 的“继续”。其中不再凭猜测解锁任何成就。",
-    "{0}: {1} will be asked about again.": "{0}：会再次询问 {1}。",
     "Which game? Its name or its appID.": "哪个游戏？请给出名称或 appID。",
     "{0} has no game called \"{1}\". Try its appID - the number in its store link.": "{0} 没有名为“{1}”的游戏。试试它的 appID —— 商店链接里的数字。",
     "More than one game matches \"{0}\": {1}. Type more of the name, or the appID.": "不止一个游戏匹配“{0}”：{1}。请多输入一些名称，或输入 appID。",
-    "{0}: {1} is paused for achievements - it has add-ons this account doesn't own. Answer on the dashboard, or 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.": "{0}：{1} 的成就已暂停 —— 它有此账号没有的附加内容。请在控制面板回答，或用“dlc carryon {0} {2}” / “dlc leave {0} {2}”。",
-    "Only skin, team and other packs are missing.": "缺少的只有皮肤、战队之类的礼包。",
-    "Missing: {0}": "缺少：{0}",
-    "Missing: {0} add-ons": "缺少：{0} 个附加内容",
-    "{0} is paused for achievements. It has add-ons this account doesn't own, and Steam doesn't say which of them come with achievements.": "{0} 的成就已暂停。它有此账号没有的附加内容，而 Steam 没有说明其中哪些带有成就。",
-    "Achievements that certainly come with an add-on it doesn't own stay locked either way.": "确定来自它没有的附加内容的成就，无论如何都保持锁定。",
-    "I own what matters - carry on": "重要的我都有 —— 继续",
-    "Leave it paused": "保持暂停",
-    "You said carry on for:": "你选择继续的游戏：",
     "undo": "撤回",
     "You said leave it paused for:": "你选择保持暂停的游戏：",
-    "ask again": "再问一次",
     "not grinding {0} - still refundable (Protect refunds)": "不挂 {0} - 仍可退款（保护退款）",
     "not putting {0} first - still refundable (Protect refunds)": "不优先 {0} - 仍可退款（保护退款）",
     "asleep, no games chosen - idling your {0} most-played game(s): {1} · up {2}": "睡眠中，没选游戏 —— 正在挂你玩得最多的 {0} 款游戏：{1} · {2} 起床",
@@ -2317,11 +2329,77 @@
     "No game in its library matches - paste its appID or store link.": "库里没有匹配的游戏——请粘贴它的 appID 或商店链接。",
     "Its games haven't been read yet - paste an appID or store link.": "还没读到它的游戏——请粘贴 appID 或商店链接。",
     "{0}: {1} hasn't been looked at since the app started - try again in a few minutes.": "{0}：应用启动后还没查看过 {1} - 请过几分钟再试。",
-    "{0}: {1} isn't paused for add-ons it doesn't own, so there's nothing to answer for it.": "{0}：{1} 并没有因为缺少附加内容而暂停，所以没有什么要回答的。",
     "Type more of the game's name, or its appID.": "请多输入一些游戏名称，或输入它的 appID。",
     "{0}: Claim free games now also claims a free DLC's game when that's free too - that was its own switch, and it was off.": "{0}：领取免费游戏现在也会在免费 DLC 的本体游戏同样免费时一并领取 - 这原来是单独的开关，而且是关着的。",
     "{0}: Bank hours overnight was on with no games listed, which banked nothing - switched off so nothing changes. Turn it on to idle its most-played games overnight.": "{0}：夜间累积时长原本开着，但列表里没有游戏，所以什么也没累积 - 已关闭，一切照旧。打开它即可在夜里挂玩得最多的游戏。",
-    "Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).": "夜里它会隐身，因为没选游戏，就挂它玩得最多的 {0} 个游戏。"
+    "Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).": "夜里它会隐身，因为没选游戏，就挂它玩得最多的 {0} 个游戏。",
+    "{0} left alone, as you asked - can't tell which achievements come with its DLC": "按你的要求，{0} 个不动 —— 无法判断哪些成就属于它的 DLC",
+    "earns them anyway, base game first; {0} from DLC it doesn't own left alone": "照样解锁，先本体；{0} 个来自它没有的 DLC，不动",
+    "earns them anyway, base game first - Steam doesn't say which come with the add-ons it doesn't own": "照样解锁，先本体 —— Steam 没有说明哪些属于它没有的附加内容",
+    "{0}: none of the games it hunts or plays has add-ons that matter for achievements": "{0}：它狩猎或游玩的游戏里，没有与成就相关的附加内容",
+    "{0}: games with add-ons it doesn't own (achievements from those are never unlocked)": "{0}：有它没有的附加内容的游戏（那些附加内容的成就永不解锁）",
+    "{0} is missing DLC, and Steam doesn't list which achievements they add. It earns them anyway - the base game's first, and the {1} it can't place after those, in case some come with that DLC.": "{0} 缺少一些 DLC，而 Steam 没有列出它们添加了哪些成就。照样解锁 —— 先本体的成就，无法归类的 {1} 个放在之后，以防其中有些属于那些 DLC。",
+    "{0} is missing DLC, and Steam doesn't list which achievements they add. It earns them anyway - the base game's first, and the ones it can't place after those.": "{0} 缺少一些 DLC，而 Steam 没有列出它们添加了哪些成就。照样解锁 —— 先本体的成就，无法归类的放在之后。",
+    "It never touches the achievements of {0}, which it doesn't own.": "它没有的 {0}，其成就永远不动。",
+    "To have {1} left alone instead: 'dlc leave {0} {2}'.": "若想让 {1} 保持不动：“dlc leave {0} {2}”。",
+    "It's left alone because you asked - 'dlc undo {0} {1}' lets it earn them, base game first.": "因为你的要求而保持不动 —— 用“dlc undo {0} {1}”可以让它解锁，先本体。",
+    "{0}: {1} is left alone for achievements now - 'dlc undo {0} {2}' lets it earn them again.": "{0}：{1} 的成就现在保持不动 —— 用“dlc undo {0} {2}”可以让它重新解锁。",
+    "{0}: as far as it has seen, {1} has no add-ons Steam doesn't explain, so there's nothing to leave alone.": "{0}：就目前所见，{1} 没有 Steam 未说明的附加内容，所以没有需要保持不动的。",
+    "{0}: {1} isn't left alone, so there's nothing to take back.": "{0}：{1} 并没有保持不动，所以没有可撤回的。",
+    "{0}: {1} earns achievements again - the base game's first. Those of an add-on it doesn't own stay locked.": "{0}：{1} 重新解锁成就 —— 先本体的。它没有的附加内容的成就保持锁定。",
+    "{0}: 'dlc carryon' isn't needed any more - {1} earns anyway, the base game's achievements first.": "{0}：不再需要“dlc carryon”—— {1} 照样解锁，先本体的成就。",
+    "Lets it earn achievements again - the base game's first. Those of an add-on it doesn't own stay locked.": "让它重新解锁成就 —— 先本体的。它没有的附加内容的成就保持锁定。",
+    "unlocked {0} in {1} - {2} left locked": "已解锁 {1} 中的 {0} 个 —— {2} 个仍未解锁",
+    "{0} left locked - the game's own counter for them isn't there yet": "{0} 个仍未解锁 —— 游戏自己的计数还没到",
+    "{0} multiplayer ones skipped": "跳过了 {0} 个多人成就",
+    "{0}: what's left is multiplayer, which this account skips - nothing to grind": "{0}：剩下的是多人成就，此账号会跳过 —— 没有可以刷的",
+    "{0}: {1}/{2} - the rest are multiplayer achievements, which this account skips": "{0}：{1}/{2} —— 其余是多人成就，此账号会跳过",
+    "{0}: waiting for Steam's figures on how many players have each achievement": "{0}：正在等 Steam 给出每个成就有多少玩家解锁的数据",
+    "{0}: {1}/{2} - the rest count something in the game, and wait for the game's own counter": "{0}：{1}/{2} —— 其余是游戏里计数的成就，等游戏自己的计数到了再说",
+    "Playing {0} — {1}; the rest are multiplayer achievements, which this account skips.": "正在玩 {0} —— {1}；其余是多人成就，此账号会跳过。",
+    "Playing {0} — waiting for Steam's figures on how many players have each achievement.": "正在玩 {0} —— 正在等 Steam 给出每个成就有多少玩家解锁的数据。",
+    "Playing {0} — {1}; the rest count something in the game, and wait for the game's own counter.": "正在玩 {0} —— {1}；其余是游戏里计数的成就，等游戏自己的计数到了再说。",
+    "{0} left locked - they're for having all the others, and some of those stay locked": "{0} 个仍未解锁 —— 它们要求拥有其他全部成就，而其中一些仍未解锁",
+    "\"{0}\" needs other players, and {1} skips multiplayer achievements (\"Skip multiplayer achievements\") - it won't be unlocked.": "“{0}”需要其他玩家，而 {1} 跳过多人成就（“跳过多人成就”）—— 不会解锁。",
+    "\"{0}\" counts something in the game, and the game's own counter is at {1} of {2} - it won't be unlocked before the game gets there.": "“{0}”统计游戏里的某个数，游戏自己的计数是 {1}/{2} —— 游戏到那之前不会解锁。",
+    "\"{0}\" is for having the others, and some of those are still locked - it won't be unlocked before they are.": "“{0}”要求拥有其他成就，而其中一些仍未解锁 —— 不会在它们之前解锁。",
+    "may come with DLC this account doesn't own - left alone": "可能来自此账号没有的 DLC —— 不去动它",
+    "probably DLC - earned last, after the base game's": "大概是 DLC —— 最后获得，在本体的之后",
+    "{0} with \"DLC\" in their API name are left alone while it's missing add-ons.": "API 名称里带“DLC”的 {0} 个，在缺少附加内容时不去动。",
+    "{0}: what's left waits for the game's own counters - nothing to grind": "{0}：剩下的在等游戏自己的计数 —— 没什么可刷的",
+    "{0}: {1}/{2} - nothing left it would earn for now; looked at again in a few days": "{0}：{1}/{2} —— 暂时没有可获得的了；几天后再看",
+    "Playing {0} — {1}; nothing left it would earn for now. It looks again in a few days.": "正在玩 {0} — {1}；暂时没有可获得的了。几天后再看。",
+    "About {0}h on weekdays and {1}h at weekends, from around {2} until about {3}, with a day off {4}% of the time.": "工作日约 {0} 小时，周末约 {1} 小时，大约从 {2} 到 {3} 左右，有 {4}% 的概率休息一天。",
+    "no set time": "不定时",
+    "end of the day": "一天结束",
+    "couldn't save whether mini mode's list was open: {0}": "无法保存迷你模式列表是否展开：{0}",
+    "no accounts yet - 'full window' to add one": "还没有账户 - 点“完整窗口”添加一个",
+    "farming {0}": "正在刷 {0}",
+    "1 card left": "剩余 1 张卡牌",
+    "human mode": "拟人模式",
+    " · {0} farming": " · {0} 个刷卡中",
+    " · {0} idling": " · {0} 个挂机中",
+    " · {0} online": " · {0} 个在线",
+    " · {0} connecting": " · {0} 个连接中",
+    " · {0} need you": " · {0} 个需要你",
+    " · {0} can't sign in": " · {0} 个无法登录",
+    " · {0} playing": " · {0} 个游戏中",
+    " · {0} on a break": " · {0} 个休息中",
+    " · {0} done for today": " · {0} 个今天已结束",
+    " · {0} on a day off": " · {0} 个休息日",
+    " · {0} night idling": " · {0} 个夜间挂机",
+    " · {0} asleep": " · {0} 个睡眠中",
+    " · {0} off": " · {0} 个已关闭",
+    "{0} today": "今天 {0}",
+    "{0} past week": "过去一周 {0}",
+    "{0} past month": "过去一个月 {0}",
+    "1 card today": "今日 1 张卡牌",
+    "1 achievement today": "今日 1 个成就",
+    "{0} achievements today": "今日 {0} 个成就",
+    "1 comment today": "今日 1 条评论",
+    "{0} comments today": "今日 {0} 条评论",
+    "{0}/{1} online": "{0}/{1} 在线",
+    "{0} inventory": "库存 {0}"
   },
   "settings": {
     "WebEnabled": {
@@ -2363,6 +2441,11 @@
     "MiniOnTop": {
       "label": "迷你模式置顶",
       "tip": "让迷你模式的小窗口保持在其他窗口之上。迷你窗口标题栏上的图钉也可以切换这一项。"
+    },
+    "MiniStats": {
+      "label": "迷你窗口显示",
+      "tip": "迷你窗口顶部名称旁边显示的那个数字。小时数是所有账户的游戏时长之和，计法与每日摘要相同：每个运行中的游戏都算，所以 8 个游戏挂一整天就是 192 小时。过去一周和过去一个月指最近 7 天和 30 天，包括今天。卡牌、成就和评论按最近 24 小时计算。",
+      "choices": "0 不显示 | 1 今日小时数 | 2 过去一周的小时数 | 3 过去一个月的小时数 | 4 今日卡牌 | 5 今日成就 | 6 今日评论 | 7 在线账户 | 8 库存价值"
     },
     "StartWithWindows": {
       "label": "开机自启",
@@ -2569,11 +2652,11 @@
     },
     "DayStartHour": {
       "label": "大约几点上线",
-      "tip": "它通常几点上线（24 小时制）。真实时间会在这个点附近变化，周末开始得更早。"
+      "tip": "它通常几点上线。真实时间会在这个点附近变化，周末开始得更早。"
     },
     "BedHour": {
       "label": "大约几点睡觉",
-      "tip": "它晚上几点停下（24 小时制）。很晚也可以，2 就是凌晨两点。"
+      "tip": "它晚上几点停下。过了午夜也可以，想熬夜就选一个清晨的钟点。"
     },
     "LateNightExtraHours": {
       "label": "周五/周六熬得更晚",
@@ -2683,7 +2766,7 @@
     },
     "Rep4RepStartHour": {
       "label": "最早从几点开始发",
-      "tip": "这个账户一天中最早几点评论。凌晨四点发评论很容易暴露是机器人。"
+      "tip": "这个账户一天中最早几点评论。半夜发评论很容易暴露是机器人。"
     },
     "Rep4RepEndHour": {
       "label": "到几点为止",
@@ -2875,11 +2958,11 @@
     },
     "FarmFromHour": {
       "label": "仅从此时开始刷卡",
-      "tip": "只从这个整点开始刷卡（24 小时制）。把这项和「...直到」都留 0，就是任何时候都刷。"
+      "tip": "只从这个整点开始刷卡。把这项和「...直到」都设为午夜，就是任何时候都刷。"
     },
     "FarmUntilHour": {
       "label": "...直到",
-      "tip": "刷卡到这个整点为止（24 小时制）。设得比开始时间早就会跨过午夜，所以 22 到 6 就是通宵刷。"
+      "tip": "刷卡到这个整点为止。设得比开始时间早就会跨过午夜，所以从深夜到清晨就是通宵刷。"
     },
     "PostFarmWindDownMinMinutes": {
       "label": "最后一张卡之后，至少再玩",
@@ -3220,11 +3303,11 @@
     },
     "AutoUpdateFromHour": {
       "label": "...之间（开始）",
-      "tip": "允许自动安装的最早时间，24 小时制。"
+      "tip": "允许自动安装的最早时间。"
     },
     "AutoUpdateUntilHour": {
       "label": "...之间（结束）",
-      "tip": "当晚停止尝试的时间。比开始时间早就会跨过午夜，所以 23 到 5 也可以。"
+      "tip": "当晚停止尝试的时间。比开始时间早就会跨过午夜，所以从深夜到清晨也可以。"
     },
     "AutoUpdateWaitHours": {
       "label": "发布后等待",
@@ -3305,7 +3388,7 @@
     },
     "SendAroundHour": {
       "label": "...大约在",
-      "tip": "每天发送的钟点，0 到 23 - 比如 4 表示凌晨 4 点左右。在那个小时里的随机一分钟、在「每隔多久发送物品」允许的日子发出。-1 = 不定时：从开启时起每隔这么多小时。"
+      "tip": "每天发送的钟点，比如清晨。在那个小时里的随机一分钟、在「每隔多久发送物品」允许的日子发出。不定时：从开启时起每隔这么多小时。"
     },
     "IdleWholeLibrary": {
       "label": "挂我的整个游戏库",
@@ -3323,6 +3406,15 @@
       "label": "学习我的玩法",
       "tip": "记下你自己在这个账号上什么时候玩、玩哪些游戏。攒够 7 天后，它会让自己的一天向你靠拢：何时上线、何时睡觉，以及时间在“游戏与频率”里各游戏之间怎么分。它从不添加不在该列表里的游戏，玩多久仍由时长设置决定。habits 命令可以查看它学到了什么。",
       "choices": "0 关 | 1 一点 | 2 很多"
+    },
+    "LearnFollow": {
+      "label": "跟上变化",
+      "tip": "你在什么时候玩、玩什么的变化多快会体现出来。越早的日子算得越少 —— 快速大约一周就跟上新的作息，慢速大约要一个月。",
+      "choices": "0 慢速 | 1 正常 | 2 快速"
+    },
+    "LearnWeekends": {
+      "label": "周末单独学习",
+      "tip": "把你的周六和周日与一周其余几天分开学习，因为大多数人那两天玩法不同。"
     },
     "NewGamesFirst": {
       "label": "新游戏开始时多玩",
@@ -3355,7 +3447,7 @@
     },
     "WeeklyReportHour": {
       "label": "每周报告 · 小时",
-      "tip": "每周报告到来的小时，24 小时制。"
+      "tip": "每周报告到来的小时，按本地时间。"
     },
     "OfflineIdleTopGames": {
       "label": "...没选的话，挂玩得最多的几个",
@@ -3379,6 +3471,10 @@
     "BoosterPackGames": {
       "label": "为这些游戏制作补充包",
       "tip": "用宝石换补充包的游戏。Steam 每个游戏每天只能换一包，而且只限还会掉卡的游戏。留空就关闭。"
+    },
+    "AchievementSkipMultiplayer": {
+      "label": "跳过多人成就",
+      "tip": "从不解锁需要其他玩家的成就：多人、合作、僵尸、对战、排位和在线成就。这些游戏会记录每一场对局，没有对局记录的成就很显眼。拟人模式账号默认开启，机器人默认关闭。打开或关闭拟人模式时会随之设置。"
     }
   }
 }

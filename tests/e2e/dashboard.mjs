@@ -743,6 +743,9 @@ async function change(def, target) {
   } else if (kind === 'Int' || kind === 'Float') {
     await box.fill(String(nextInt(def, Number(cur) || 0)));
     await box.blur();
+  } else if (kind === 'Hour') {
+    // A list of hours: the next one along, so a from/until pair never crosses.
+    await box.selectOption(String(nextInt(def, Number(cur) || 0)));
   } else if (tag.startsWith('div') && /pills/.test(tag)) {
     // Choice pills, or the accounts shown on the Discord card.
     const want = CHOICE_VALUE[n];
@@ -854,6 +857,8 @@ async function putBack(def, orig, target, defaults) {
     await guardedOff();
   } else if (def.Kind === 'Int' || def.Kind === 'Float') {
     await box.fill(String(orig)); await box.blur();
+  } else if (def.Kind === 'Hour') {
+    await box.selectOption(String(orig));
   } else if (tag.startsWith('div') && /dbtnpick/.test(tag)) {
     const bots = await evalq(() => state.Bots.map((b) => b.Name.toLowerCase()));
     const v = String(orig || '');
@@ -973,9 +978,10 @@ async function settingsRound(target) {
   }
 
   // Put back: the last changed first; a mode switch saved on its own, with a save before it too. So is a setting another
-  // one shows under (ShowWhen, like "When to farm cards" for the card-sittings share): changing its answer back hides the
-  // other one, and an unsaved edit to a setting that gets hidden is dropped - so what was put back is saved first.
-  const controllers = new Set(defs.filter((d) => d.ShowWhen).map((d) => d.ShowWhen.split('=')[0]));
+  // one shows under (ShowWhen, like "When to farm cards" for the card-sittings share - "X=1", or "X!=0"): changing its
+  // answer back hides the other one, and an unsaved edit to a setting that gets hidden is dropped - so what was put back
+  // is saved first.
+  const controllers = new Set(defs.filter((d) => d.ShowWhen).map((d) => d.ShowWhen.split('=')[0].replace(/!$/, '')));
   const segments = [];
   let cur = [];
   for (const c of changed.slice().reverse()) {

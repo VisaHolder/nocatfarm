@@ -39,6 +39,68 @@ public readonly record struct BotStatus(
 		return left > 1 ? new Said("picking back up in {0}", Fmt.Hm(left)) : new Said("picking back up in a moment");
 	}
 
+	/// <summary>
+	/// The one status vocabulary the whole app uses - the rail chips, the filters, the cards and the mini window's
+	/// "+7 more · 6 idling" all agree. A key, not words: "off", "idling", "needsyou"...
+	/// </summary>
+	public static string Group(Bot b) {
+		if (!b.Cfg.Enabled || b.State == BotState.Stopped) {
+			return "off";
+		}
+
+		if (b.State == BotState.Failed) {
+			return "problem";
+		}
+
+		if (b.GuardPrompt != null || b.State == BotState.NeedsGuard) {
+			return "needsyou";
+		}
+
+		if (b.State != BotState.Online) {
+			return "connecting";
+		}
+
+		if (b.IsFarming) {
+			return "farming";
+		}
+
+		// Same as the console: a grind is not idling, and saying so contradicted the detail line beside it.
+		// Grouped with "playing" rather than given a chip of its own - it IS playing one game deliberately,
+		// which is exactly what that chip means, and the row's own text names the game and the time left.
+		// Paused, or you're on it: the grind's game is off, and "playing" counted the account as working.
+		if (b.Grinding && !b.Paused && !b.PlayingBlocked) {
+			return "playing";
+		}
+
+		// Finishing up before it logs off - between things, not whatever human mode was about to start.
+		if (b.Stopping) {
+			return "break";
+		}
+
+		HumanMode? human = BotManager.ModuleOf<HumanMode>(b);
+
+		if (human is { Current: not HumanMode.Phase.Off }) {
+			return human.Current switch {
+				HumanMode.Phase.Playing => "playing",
+				HumanMode.Phase.ShortBreak or HumanMode.Phase.MealBreak => "break",
+				HumanMode.Phase.NightIdle => "nightidle",
+				HumanMode.Phase.Asleep => "asleep",
+
+				// Up and showing online to everybody, just not in a game - so not "asleep", which is what these used to
+				// be filed under while the friends list said otherwise.
+				HumanMode.Phase.DoneForToday => "done",
+				HumanMode.Phase.DayOff => "dayoff",
+
+				// Settling in and switching games are both "between things", which is what a break already means
+				// on the dashboard - and far more honest than the "online" they used to fall through to.
+				HumanMode.Phase.WarmingUp or HumanMode.Phase.SwitchingGame => "break",
+				_ => "online"
+			};
+		}
+
+		return string.IsNullOrEmpty(b.Playing) ? "online" : "idling";
+	}
+
 	public static BotStatus Of(Bot bot) {
 		// Offline, or finishing up before it logs off: the account's own status says it - not what human mode was up to.
 		if (!bot.IsOnline || bot.Stopping) {

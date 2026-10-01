@@ -161,7 +161,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		LowestFloor;          // never 0: a sub-1% achievement on an idled account is the giveaway
 
 	private sealed class GameState {
-		public long PlayedMins;         // our accumulated in-game minutes, which drive the rarity gate
+		public uint App;                // which game this is
+		public long PlayedMins;        // our accumulated in-game minutes, which drive the rarity gate
 		public long MinsAtLastUnlock;   // enforces the played-time gap
 		public DateTime NextAllow;      // earliest wall-clock moment the next unlock may fire
 		public int Unlocked = -1;       // last known unlocked count; -1 means unknown, so treat as onboarding
@@ -172,13 +173,28 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		public int Reachable;           // Total less the locked ones from DLC this account doesn't own; 0 = not worked out
 		public int DlcHeld;             // locked ones from DLC this account doesn't own - never unlocked
 		public int DlcSaid = -1;        // the DlcHeld last written to the log, so it is said once, not every look
-		public bool Unmapped;           // can't tell which achievements come with a DLC it doesn't own: all but its owned DLC's left alone
+		public bool Unmapped;           // left alone ('dlc leave'), and can't tell which achievements come with a DLC it doesn't own: all but its owned DLC's left alone
+		public bool Unclear;            // has add-ons it doesn't own whose achievements Steam doesn't place - earns anyway, or left alone
 		public long Licences;           // the account's licence stamp when the DLC it owns was last read for this game
-		public List<uint> DlcOwned = []; // which of the game's DLC it counted as owned then (with the unplaceable ones, vouched for) - a change releases DlcOnly, DlcUnmapped and Capped
+		public List<uint> DlcOwned = []; // which of the game's DLC it counted as owned then (with the unplaceable ones, unless left alone) - a change releases DlcOnly, DlcUnmapped and Capped
 		public long MapStamp;           // which build of the game's DLC map that was read from (DlcAchievements.Stamp); 0 = not known
 		public long HoldKey;            // what that map said about every achievement then (DlcAchievements.HoldKey) - a change releases the game too
-		public string? DlcAsked;        // held whole: its DlcKey when the owner was asked about it - asked once per that
-		public string? DlcKey;          // which of the game's DLC ids the account has for good (DlcAchievements.LicenceKey) - what an answer is kept with; null = not read
+		public string? DlcKey;          // which of the game's DLC ids the account has for good (DlcAchievements.LicenceKey) - what 'dlc leave' is kept with; null = not read
+		public int Multiplayer;         // locked multiplayer ones, skipped (AchievementSkipMultiplayer)
+		public int Counters;            // locked ones whose counter in the game isn't there yet - not counted as reachable
+		public int Rules;               // RulesOf the account when it was last read - the multiplayer skip changes what it can reach
+		public Dictionary<string, DateTime> Refused = []; // API name -> when Steam refused the write: not asked again for a week
+		public DateTime RecheckAt;      // a "nothing left for now" that can change by itself ends here; MinValue = it can't
+		public long StuckLibMins = -1;  // Steam's minutes in the game when it stopped like that (-1: not stopped so)
+		public long StuckOwnMins;       // and RanMins as of that same read of the library - more on Steam's side than on ours is the owner playing
+		public long RanMins;            // minutes this app had the game running at all: PlayedMins, and the ones not played for achievements (a night idle)
+		public long RanAtLib;           // RanMins when the library was last read (see NoteLibraryRead) - not saved: the next read sets it again
+		public DateTime WroteOkAt;      // the last time a write in this game went through - a refusal after that is about the achievement
+		public int PaceUsed = -1;       // the pace the wait to NextAllow was spaced at (-1: that wait isn't a spacing one)
+		public DateTime PacedFrom;      // when that spacing started
+		public bool Pulled;             // a grind pulled that wait forward - a new pace never puts it back later
+		public Dictionary<string, List<DateTime>> Strikes = []; // API name -> when Steam turned it down lately, whatever it said - see StruckOut
+		public string? SkipOnce;        // turned down on the last look and not parked: the next look picks another, once (not saved)
 	}
 
 	/// <summary>
@@ -190,16 +206,140 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// </summary>
 	/// <remarks>Numbered explicitly: these are written to the state file as numbers, and reordering the names
 	/// must never quietly change what a saved game means.</remarks>
-	public enum Outcome { Unknown = 0, Earning = 1, None = 2, Complete = 3, SteamOnly = 4, Capped = 5, NeedsHours = 6, DlcOnly = 7, DlcChecking = 8, DlcUnmapped = 9 }
+	public enum Outcome {
+		Unknown = 0, Earning = 1, None = 2, Complete = 3, SteamOnly = 4, Capped = 5, NeedsHours = 6, DlcOnly = 7, DlcChecking = 8, DlcUnmapped = 9,
+
+		/// <summary>What's left is multiplayer, which this account skips (AchievementSkipMultiplayer).</summary>
+		Multiplayer = 10,
+
+		/// <summary>Steam has no figures at all for how many players have each achievement: nothing to order them by.</summary>
+		NoRarity = 11,
+
+		/// <summary>What's left counts something in the game ("100 parries") and the account's counter isn't there.</summary>
+		CountersOnly = 12,
+
+		/// <summary>
+		/// Something is left, but nothing of it could open at any number of hours: too rare for this account ever, or
+		/// waiting on others that stay locked ("all other achievements"). Looked at again in a few days.
+		/// </summary>
+		NothingOpen = 13
+	}
 
 	/// <summary>The outcome as it stands NOW - a game capped under a ceiling that has since been raised is not capped.</summary>
 	/// <remarks>
 	/// A game done for DLC the account doesn't own is let go by <see cref="RecheckLicencesAsync"/> instead, when the DLC
 	/// it owns for that game has changed - not on every licence change: a free game claimed changes the licences too,
 	/// and the hunt would have gone back to every held game in turn, for a sitting each, to find nothing new.
+	///
+	/// Nor is a game stopped under other rules: the multiplayer skip turned on or off since changes what it can reach
+	/// (see <see cref="RulesOf"/>). Nor one stopped for a while only (<see cref="GameState.RecheckAt"/>) whose while is
+	/// up, or whose owner has played it since.
 	/// </remarks>
 	private Outcome Current(GameState g) =>
-		(g.Last == Outcome.Capped) && (Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100) > g.CappedAt) ? Outcome.Unknown : g.Last;
+		(g.Last == Outcome.Capped) && (Math.Clamp(Bot.Cfg.AchievementMaxCompletionPct, 1, 100) > g.CappedAt) ? Outcome.Unknown
+		: RulesChanged(g) ? Outcome.Unknown
+		: (g.Last is Outcome.CountersOnly or Outcome.NothingOpen or Outcome.Capped or Outcome.SteamOnly) && StopOver(g, DateTime.UtcNow) ? Outcome.Unknown
+		: g.Last;
+
+	/// <summary>
+	/// A stop that can change by itself is over: its few days are up, or the owner has played the game since - Steam's
+	/// count of minutes in it went up by half an hour more than this app played it. Counters only move when the game is
+	/// really played, and a refusal is only kept a week; a game called done for good on those never came back.
+	/// </summary>
+	private bool StopOver(GameState g, DateTime now) =>
+		(g.RecheckAt != DateTime.MinValue) &&((now >= g.RecheckAt) || OwnerPlayed(g));
+
+	/// <summary>Did the account's owner play the game since it stopped: Steam's minutes up by 30 more than ours?</summary>
+	internal static bool OwnerPlayed(long steamMinutesNow, long stuckSteamMins, long stuckOwnMins, long ownMinsNow) =>
+		(stuckSteamMins >= 0) && ((steamMinutesNow - stuckSteamMins) - (ownMinsNow - stuckOwnMins) >= 30);
+
+	/// <summary>
+	/// "Ours" is every minute this app ran the game (RanMins), not only the ones played for achievements: a game idled
+	/// overnight on a human-mode account earns nothing then, but Steam counts the night - and taken as the owner playing,
+	/// every stopped game idled at night was looked at again the next day, for a sitting each, to find nothing new.
+	///
+	/// Both sides are counted from the same moment: the library's reads. Steam's minutes are only read every few hours,
+	/// while RanMins went up every minute - compared as they were, the minutes this app ran the game between the
+	/// library's last read and the stop came in on Steam's side at the next read and not on ours, and two hours idled
+	/// before a stop read as the owner playing: the stop ended early, for a sitting that found nothing new.
+	/// </summary>
+	private bool OwnerPlayed(GameState g) =>
+		Bot.Library.Ready && OwnerPlayed(Bot.Library.MinutesOn(g.App), g.StuckLibMins, g.StuckOwnMins, RanAtLibRead(g));
+
+	/// <summary>The library's read that <see cref="GameState.RanAtLib"/> was taken at (MinValue: none yet).</summary>
+	private DateTime _libSeen = DateTime.MinValue;
+
+	/// <summary>
+	/// RanMins when the library was last read. A read the tick hasn't seen yet came after the tick's last minute was
+	/// counted, so RanMins is still where it was then.
+	/// </summary>
+	private long RanAtLibRead(GameState g) => Bot.Library.RefreshedAt == _libSeen ? g.RanAtLib : g.RanMins;
+
+	/// <summary>
+	/// The library has been read again since the last tick: every game's RanMins is noted as of that read. Called under
+	/// the gate, before the tick counts its minute.
+	/// </summary>
+	private void NoteLibraryRead() {
+		DateTime read = Bot.Library.RefreshedAt;
+
+		if (!Bot.Library.Ready || (read == _libSeen)) {
+			return;
+		}
+
+		_libSeen = read;
+
+		foreach (GameState each in _games.Values) {
+			each.RanAtLib = each.RanMins;
+		}
+	}
+
+	/// <summary>How long a "nothing left for now" lasts before the game is looked at again: three to five days.</summary>
+	private DateTime RecheckSoon() => DateTime.UtcNow.AddHours(_rng.Next(72, 121));
+
+	/// <summary>Stopped until <paramref name="until"/> (MinValue: for good, until something else changes it).</summary>
+	/// <remarks>
+	/// With the library not read yet there are no Steam minutes to start from - only its few days end that stop.
+	/// </remarks>
+	private void StopUntil(uint app, GameState g, DateTime until) {
+		g.RecheckAt = until;
+		g.StuckLibMins = (until == DateTime.MinValue) || !Bot.Library.Ready ? -1 : Bot.Library.MinutesOn(app);
+		g.StuckOwnMins = RanAtLibRead(g);
+	}
+
+	/// <summary>
+	/// A stop that ended by itself (its few days are up, the owner played the game, a refusal ran out) is let go for good:
+	/// the game is looked at again now. Only Current read it as over before - the game still held its 8-25 hour back-off,
+	/// so the hunt came back to it and earned nothing there for most of a day. Called under the gate.
+	/// </summary>
+	private bool EndStopIfOver(GameState g, DateTime now) {
+		if ((g.Last is not (Outcome.CountersOnly or Outcome.NothingOpen or Outcome.Capped or Outcome.SteamOnly)) || !StopOver(g, now)) {
+			return false;
+		}
+
+		EndStop(g, now);
+
+		return true;
+	}
+
+	/// <summary>The stop is over: unknown until the next look, which is now.</summary>
+	private static void EndStop(GameState g, DateTime now) {
+		g.Last = Outcome.Unknown;
+		g.NextAllow = now;
+		g.PaceUsed = -1;
+		g.Pulled = false;
+		g.RecheckAt = DateTime.MinValue;
+		g.StuckLibMins = -1;
+	}
+
+	/// <summary>
+	/// The one setting that changes what a game can reach, as a number: skipping multiplayer achievements. (Human mode
+	/// was here too while it left add-on-looking ones alone; it no longer changes what a game can reach.)
+	/// </summary>
+	private static int RulesOf(Config.BotConfig cfg) => cfg.AchievementSkipMultiplayer ? 2 : 0;
+
+	/// <summary>Stopped (held, capped, or only multiplayer left) under rules that have changed since.</summary>
+	private bool RulesChanged(GameState g) =>
+		(g.Last is Outcome.DlcOnly or Outcome.DlcUnmapped or Outcome.Capped or Outcome.Multiplayer) && (g.Rules != RulesOf(Bot.Cfg));
 
 	/// <summary>Outcomes that can only change when the account gets (or loses) one of the game's DLC.</summary>
 	internal static bool HeldForDlc(Outcome last) => last is Outcome.DlcOnly or Outcome.DlcUnmapped or Outcome.Capped;
@@ -214,9 +354,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// is already known (no store questions): the same, and it stays as it is; different, and it's looked at afresh.
 	/// Licences that can't be read yet leave it as it is and are tried again next minute.
 	///
-	/// The owner vouching for a game ("I own what matters - carry on", kept in AchievementDlcTrusted) counts as a change
-	/// too: the DLC of it that can't be placed are then counted as owned, so a game held whole is let go within the
-	/// minute - and taken back, it is held again. A DLC whose achievements are known exactly still goes by the licences.
+	/// The owner leaving a game alone ('dlc leave', kept in AchievementDlcLeft) counts as a change too: the DLC of it
+	/// that can't be placed are then no longer counted as owned. Taken back ('dlc undo'), the game earns anyway again and
+	/// is let go within the minute. A DLC whose achievements are known exactly always goes by the licences.
 	///
 	/// So does the game's DLC map being built again. A game held on a map that couldn't place a DLC (Steam didn't
 	/// answer for its name, say) stayed held when the next build could place it - nothing about the licences had
@@ -230,7 +370,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			return;
 		}
 
-		string trusted = TrustKey(Bot.Cfg.AchievementDlcTrusted);
+		string trusted = TrustKey(Bot.Cfg.AchievementDlcLeft.Keys);
 		bool trustChanged = trusted != _trustSeen;
 
 		// Unseen from the start of the pass, so a pass cut short (an exception, a cancel) can't leave the old list marked.
@@ -262,10 +402,10 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			// game being played - which then waited behind the whole backlog, unlocking nothing. Once built, the new stamp
 			// brings the game back here. A stale map that isn't being rebuilt (the last try failed and is waiting out its
 			// back-off) is still looked at, or a game whose build keeps failing would stay held even after the DLC was
-			// bought. Nor is there an exception for a vouched-for game without a map: it can't be judged without one.
+			// bought. A game without a map can't be judged at all.
 			if ((map == null) || (DlcAchievements.Stale(map) && DlcAchievements.IsPending(app))) {
-				// Skipped while a change to the vouched-for list is waiting: that change isn't marked as seen until this
-				// game has had its look. Marked anyway, a vouch made while its rebuild was queued was never seen if the
+				// Skipped while a change to the left-alone list is waiting: that change isn't marked as seen until this
+				// game has had its look. Marked anyway, an undo made while its rebuild was queued was never seen if the
 				// rebuild then failed. (A game with no map at all is looked at once one is built - its new stamp does that.)
 				if (trustChanged && (map != null)) {
 					all = false;
@@ -290,14 +430,13 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 			// What the rule says about the game now, against what it said when the game was held. The same, and it stays
 			// held - a map built again with nothing new in it, a free game claimed. Different, and it's looked at again.
-			long key = DlcAchievements.HoldKey(view.Map, view.Owned);
+			long key = DlcAchievements.HoldKey(view.Map, view.Owned, view.ByLicence);
 			// A game held before this was recorded (holdKey 0, an empty owned list) is only noted down the first time, not
 			// let go: otherwise every capped and held game was looked at again after an update, a sitting in each, to end
 			// up exactly where it was.
 			bool first = holdKey == 0;
-			// Vouched for since, though, it is let go whatever was recorded.
 			bool changed = first
-				? Bot.Cfg.AchievementDlcTrusted.Contains(app) || ((licences != 0) && DlcChanged(before, view.Owned))
+				? (licences != 0) && DlcChanged(before, view.Owned)
 				: (DlcChanged(before, view.Owned) || (key != holdKey));
 
 			lock (_gate) {
@@ -332,13 +471,13 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		}
 	}
 
-	/// <summary>The games vouched for, as one string - the same list in any order is the same.</summary>
+	/// <summary>The games left alone, as one string - the same list in any order is the same.</summary>
 	internal static string TrustKey(IEnumerable<uint>? apps) => string.Join(",", (apps ?? []).Distinct().Order());
 
 	/// <summary>
-	/// The vouched-for list as last acted on. Null after a start, so the first minute looks at every held game once:
-	/// the list may have been changed while the app was closed. What it owns for a game is compared, not asked about
-	/// again - a held game whose counted DLC are the same stays held.
+	/// The left-alone list as last acted on. Null after a start, so the first minute looks at every held game once: the
+	/// list may have been changed while the app was closed. What it owns for a game is compared - a held game whose
+	/// counted DLC are the same stays held.
 	/// </summary>
 	private string? _trustSeen;
 
@@ -373,27 +512,14 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	private readonly Lock _loadGate = new();
 
 	/// <summary>
-	/// A game held whole for DLC Steam says nothing about, the DLC the account counted as owned for it then, which of its
-	/// DLC ids the account has for good (<see cref="DlcAchievements.LicenceKey"/>, null while not read since an update),
-	/// and that key when the owner was last asked.
+	/// Did the last look at this game find add-ons the account doesn't own whose achievements Steam doesn't place? Only
+	/// such a game can be left alone ('dlc leave') - every other one already goes by what is known.
 	/// </summary>
-	public sealed record HeldWhole(uint App, IReadOnlyList<uint> Owned, string? Key, string? Asked);
-
-	/// <summary>
-	/// The games held whole because it can't be told which achievements come with a DLC the account doesn't own - the
-	/// ones the owner may be asked about. Only games the pacer works on: not on the never list, and on the allow list
-	/// when there is one.
-	/// </summary>
-	public IReadOnlyList<HeldWhole> HeldWholeGames() {
+	public bool IsUnclear(uint app) {
 		EnsureLoaded();
-		List<uint> never = Bot.Cfg.AchievementNeverGames;
-		List<uint> allowed = Bot.Cfg.AchievementGames;
 
 		lock (_gate) {
-			return [.. _games
-				.Where(kv => (Current(kv.Value) == Outcome.DlcUnmapped) && !never.Contains(kv.Key) && ((allowed.Count == 0) || allowed.Contains(kv.Key)))
-				.OrderBy(static kv => kv.Key)
-				.Select(static kv => new HeldWhole(kv.Key, [.. kv.Value.DlcOwned], kv.Value.DlcKey, kv.Value.DlcAsked))];
+			return _games.TryGetValue(app, out GameState? g) && g.Unclear;
 		}
 	}
 
@@ -410,9 +536,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>
-	/// The owner said to carry on with a game held for DLC: looked at again the next time it's played, rather than
-	/// waiting out the minute's licence look (which would get there too). What it may then unlock is worked out afresh,
-	/// with the owner's word - nothing is unlocked by this.
+	/// A game left alone was let go again ('dlc undo'): looked at again the next time it's played, rather than waiting out
+	/// the minute's licence look (which would get there too). What it may then unlock is worked out afresh - nothing is
+	/// unlocked by this.
 	/// </summary>
 	public void Release(uint app) {
 		EnsureLoaded();
@@ -427,44 +553,6 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		}
 
 		Save();
-	}
-
-	/// <summary>
-	/// One line - on screen, and to Discord or Telegram under Achievements - the first time a game is held whole and the
-	/// owner hasn't answered for it. Once per game per account: asked again only when the DLC the account owns for it
-	/// changes (a DLC bought) and it's still held.
-	/// </summary>
-	private void AskAboutHeldGames() {
-		bool asked = false;
-
-		foreach (HeldWhole held in HeldWholeGames()) {
-			// Keyed on the licences, not on the DLC counted as owned: those change with a "carry on" and with how the
-			// map grouped the DLC, and a game left paused was asked about again after the next look.
-			if (held.Key is not { } key) {
-				continue;
-			}
-
-			if (!DlcQuestions.Asks(true, Bot.Cfg.AchievementDlcTrusted.Contains(held.App), Bot.Cfg.AchievementDlcLeft, held.App, key) || (held.Asked == key)) {
-				continue;
-			}
-
-			lock (_gate) {
-				if (_games.TryGetValue(held.App, out GameState? g)) {
-					g.DlcAsked = key;
-				}
-			}
-
-			Said line = new Said("{0}: {1} is paused for achievements - it has add-ons this account doesn't own. Answer on the dashboard, or 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.",
-				Bot.Name, GameNames.Of(held.App), DlcQuestions.Typed(Bot, held.App));
-			Log.Info(line, Bot.Name);
-			Log.Publish(Topic.Achievements, Bot.Name, line);
-			asked = true;
-		}
-
-		// Kept straight away: the tick doesn't always get as far as saving, and a restart before it did asked again.
-		if (asked) {
-			Save();
-		}
 	}
 
 	protected override async Task RunAsync(CancellationToken ct) {
@@ -515,7 +603,15 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		}
 
 		await RecheckLicencesAsync(ct).ConfigureAwait(false);
-		AskAboutHeldGames();
+
+		// A new "How fast" re-spaces the waits already running, every minute - asleep or not, so the status says the new
+		// time straight away. Every game's, not only the ones running now: a game not being played kept a wait spaced at
+		// the old pace for anything that showed it, until the next time it ran.
+		lock (_gate) {
+			foreach (GameState each in _games.Values) {
+				RepaceIfChanged(each, Bot.Cfg.AchievementPace);
+			}
+		}
 
 		// One minute of credit per tick, and only for time that genuinely elapsed. Without this a restart loop,
 		// or a tick that ran late, would hand out playtime the account never spent - and playtime is exactly
@@ -534,6 +630,19 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		}
 
 		List<uint> running = CurrentGames();
+
+		// The minutes this app runs a game without playing it for achievements - a night idle on a human-mode account, the
+		// main game left alone, a game beside a grind - count as its own too, or Steam's count of them reads as the owner
+		// playing (see OwnerPlayed). Only for a game already known here: that is the only kind that can be stopped.
+		lock (_gate) {
+			NoteLibraryRead();   // first, so a read since the last tick is noted with the minutes it saw
+
+			foreach (uint idled in Bot.PlayingApps.Distinct()) {
+				if (!running.Contains(idled) && _games.TryGetValue(idled, out GameState? known)) {
+					known.RanMins++;
+				}
+			}
+		}
 
 		if (running.Count == 0) {
 			// "nothing being played" while a game is plainly running reads as broken. The main game is skipped
@@ -570,6 +679,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 			lock (_gate) {
 				g.PlayedMins++;
+				g.RanMins++;
 
 				// The ceiling was raised since this game stopped at it. A capped game backs off for most of a day,
 				// so without this, raising the setting did nothing visible for up to 25 hours - which is exactly
@@ -578,6 +688,15 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 					g.Last = Outcome.Unknown;
 					g.NextAllow = now;
 				}
+
+				// The same for the multiplayer skip turned on or off: what it can reach is different now.
+				if (RulesChanged(g)) {
+					g.Last = Outcome.Unknown;
+					g.NextAllow = now;
+				}
+
+				// And for a stop that has ended by itself - the owner played it, its few days are up, a refusal ran out.
+				EndStopIfOver(g, now);
 
 				// A deliberate grind engages the achievement schedule NOW. Otherwise a spacing gap set during
 				// ordinary play (NextAllow hours out) blocks the grind for its whole duration - it'd drop nothing.
@@ -591,6 +710,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 					if (g.NextAllow > soon) {
 						g.NextAllow = soon;
+						g.Pulled = true;
 					}
 				}
 			}
@@ -659,7 +779,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	private bool Due(GameState g, Profile prof) {
 		lock (_gate) {
 			bool onboarding = (g.Unlocked < 0) || (g.Unlocked < prof.OnboardCount);
-			int playedGate = onboarding ? prof.OnboardPlayedMins : prof.SteadyPlayedMins;
+			int pace = Bot.Cfg.AchievementPace;
+			int playedGate = PlayedGate(prof, onboarding, pace);
+			RepaceIfChanged(g, pace);
 
 			// The played-time gate applies to EVERYTHING, including a grind: you cannot legitimately unlock an
 			// achievement faster than you put the hours in, and a game with 0-1 hours on it must not dump a pile of
@@ -734,19 +856,41 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			return false;
 		}
 
-		(_, int reachable, int held) = DlcAchievements.Reach(set.All.Select(a => (a.Unlocked, dlc.Of(a))));
+		// What the account may earn here, and what it leaves alone and why - see Sort. Refused by Steam in the last week:
+		// left alone too, rather than asked again every hour.
+		bool skipMultiplayer = Bot.Cfg.AchievementSkipMultiplayer;
+		HashSet<string> refused;
+		DateTime refusalEnds = DateTime.MinValue;
+
+		lock (_gate) {
+			DateTime weekAgo = DateTime.UtcNow - RefusedFor;
+			refused = new HashSet<string>(g.Refused.Where(kv => kv.Value > weekAgo).Select(static kv => kv.Key), StringComparer.Ordinal);
+
+			// When the first of those refusals runs out: a game that is "Steam only" because of them is looked at again then.
+			if (refused.Count > 0) {
+				refusalEnds = g.Refused.Where(kv => kv.Value > weekAgo).Min(static kv => kv.Value) + RefusedFor;
+			}
+		}
+
+		Sorted sorted = Sort(set, dlc, skipMultiplayer, refused);
+		int reachable = sorted.Reachable;
+		int held = sorted.HeldDlc;
 		bool unmapped = dlc.Unmapped;
 		bool saidHeld;
 
 		// Which map this was, and what it says - kept with a game held for DLC, so a map built again that says something
 		// else lets it go (see RecheckLicencesAsync).
 		long mapStamp = DlcAchievements.Stamp(dlc.Map);
-		long holdKey = DlcAchievements.HoldKey(dlc.Map, dlc.Owned);
+		long holdKey = DlcAchievements.HoldKey(dlc.Map, dlc.Owned, dlc.ByLicence);
 
 		lock (_gate) {
 			g.Reachable = reachable;
 			g.DlcHeld = held;
+			g.Multiplayer = sorted.Multiplayer;
+			g.Counters = sorted.Counters;
+			g.Rules = RulesOf(Bot.Cfg);
 			g.Unmapped = unmapped;
+			g.Unclear = dlc.Unclear;
 			g.Licences = dlc.Licences;
 			g.DlcOwned = [.. dlc.Owned.Order()];
 			g.DlcKey = dlc.LicenceKey ?? g.DlcKey;
@@ -756,17 +900,12 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			g.DlcSaid = held;
 		}
 
-		// Held whole on the strength of a DLC Steam says nothing about, the owner is asked about it - once, and from the
-		// minute's tick (AskAboutHeldGames), not from here.
+		// Said once per count. "Can't tell" only for a game left alone ('dlc leave'): every other game earns anyway.
 		if (!saidHeld && (held > 0)) {
 			Log.Info(new Said("{0}: {1}", GameNames.Of(app), unmapped
 				? new Said("can't tell which achievements come with its DLC - {0} left alone", held)
 				: new Said("{0} achievement(s) are from DLC this account doesn't own - left alone", held)), Bot.Name);
 		}
-
-		// What the order rules look at: everything but the locked ones it will never have. A ladder's lower rung, a
-		// story step or an easier difficulty that only comes with DLC would otherwise hold a base-game one back for ever.
-		List<Achievement> reach = held > 0 ? [.. set.All.Where(a => a.Unlocked || dlc.Allows(a))] : set.All;
 
 		// One ceiling, the one in the settings box.
 		//
@@ -786,12 +925,13 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		// game in that state is described as what it is rather than as having hit a limit.
 		//
 		// And what's left being DLC this account doesn't own is the same: nothing more to earn here. Said as that, not
-		// as "Steam only", when nothing left is Steam's to award.
+		// as "Steam only", when nothing left is Steam's to award. So is what's left being multiplayer, on an account that
+		// skips those.
 		//
 		// An achievement the game's map has never seen (a DLC added since it was built, most likely) is neither: it waits
 		// while the game is worked out again, and the game is looked at again soon rather than called done.
-		if (!set.All.Any(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a) && dlc.Allows(a))) {
-			if (set.All.Any(a => !a.Unlocked && (dlc.Of(a) == DlcAchievements.Hold.Checking))) {
+		if (sorted.Candidates.Count == 0) {
+			if (sorted.Checking > 0) {
 				lock (_gate) {
 					g.Last = Outcome.DlcChecking;
 				}
@@ -801,20 +941,34 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				return false;
 			}
 
-			// Anything held for DLC makes it a game held for DLC, even with some left that only Steam can award: buying the
-			// DLC (or vouching for the game) is what can change it, and only a game kept as held for DLC is looked at again
-			// when that happens. Asked as "is nothing allowed left", a game with a few Steam-only ones besides was kept as
-			// Steam-only - and stayed that way whatever DLC was bought.
-			bool dlcOnly = held > 0;
+			// What's left waiting on the game's own counters comes first: those move when the game is really played, so the
+			// game is only done for a few days (or until the owner plays it), whatever else is held. Kept as held for DLC
+			// before, a game with counters left and some DLC held was never looked at again until the DLC was bought.
+			//
+			// Then anything held for DLC makes it a game held for DLC, even with some left that only Steam can award: buying
+			// the DLC (or taking back 'dlc leave') is what can change it, and only a game kept as held for DLC is looked at
+			// again when that happens.
+			bool countersOnly = (already < total) && (sorted.Counters > 0);
+			bool dlcOnly = !countersOnly && (held > 0);
+			bool multiplayerOnly = !countersOnly && !dlcOnly && (sorted.Multiplayer > 0);
 
 			lock (_gate) {
 				g.Last = already >= total ? Outcome.Complete
+					: countersOnly ? Outcome.CountersOnly
 					: dlcOnly ? (unmapped ? Outcome.DlcUnmapped : Outcome.DlcOnly)
+					: multiplayerOnly ? Outcome.Multiplayer
 					: Outcome.SteamOnly;
+
+				// "Steam only" because Steam refused some lately: only until the first refusal runs out, a week after it.
+				StopUntil(app, g, countersOnly ? RecheckSoon()
+					: (g.Last == Outcome.SteamOnly) && (sorted.Refused > 0) ? refusalEnds
+					: DateTime.MinValue);
 			}
 
 			if (grind && (already < total)) {
-				Log.Info(!dlcOnly ? new Said("{0}: achievements are server-side - nothing to grind", GameNames.Of(app))
+				Log.Info(countersOnly ? new Said("{0}: what's left waits for the game's own counters - nothing to grind", GameNames.Of(app))
+					: multiplayerOnly ? new Said("{0}: what's left is multiplayer, which this account skips - nothing to grind", GameNames.Of(app))
+					: !dlcOnly ? new Said("{0}: achievements are server-side - nothing to grind", GameNames.Of(app))
 					: unmapped ? new Said("{0}: can't tell which achievements come with its DLC - nothing to grind", GameNames.Of(app))
 					: new Said("{0}: what's left is from DLC this account doesn't own - nothing to grind", GameNames.Of(app)), Bot.Name);
 			}
@@ -824,21 +978,39 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			return false;
 		}
 
-		// Never below the onboarding cluster, or a short game with a big early burst (Portal onboards 5 of its
-		// 15) would be cut off mid-cluster by a percentage that was never meant to apply that finely.
-		//
-		// Of what this account can reach: DLC it doesn't own isn't part of its game. That stops it a little earlier
-		// than the same percentage of everything would, which is the safe way round.
+		// Of what this account can reach: DLC it doesn't own, skipped multiplayer ones and the ones whose counter in the
+		// game isn't there yet aren't part of its game - for now, in the last case: worked out again on every look. That
+		// stops it a little earlier than the same percentage of everything would, which is the safe way round. (The
+		// onboarding cluster lifts it only as far as the ceiling rounds - see CeilingCount.)
 		int ceilingCount = CeilingCount(reachable, ceiling, prof.OnboardCount);
 
 		if (already >= ceilingCount) {
 			lock (_gate) {
 				g.Last = Outcome.Capped;
 				g.CappedAt = ceiling;
+
+				// Capped only because some are short of their counter: more becomes reachable when those move, so it is
+				// looked at again in a few days rather than left for good.
+				StopUntil(app, g, sorted.Counters > 0 ? RecheckSoon() : DateTime.MinValue);
 			}
 
 			// Done with this game. Back off hard rather than re-reading Steam's stats every played minute.
 			Back(g, TimeSpan.FromHours(_rng.Next(8, 25)));
+
+			return false;
+		}
+
+		// No figure at all for how many players have each achievement: the order (easiest first) and the rarity floor are
+		// both made of those, so nothing is unlocked on a guess. Most often the figures couldn't be fetched just now - they
+		// aren't kept then, and the next look asks again; a game Steam has no figures for at all keeps waiting. One
+		// achievement without a figure in a game that has them (a newly added one) is different: see RarityAllows.
+		if (!set.All.Any(static a => a.GlobalPercent != null)) {
+			lock (_gate) {
+				g.Last = Outcome.NoRarity;
+				g.BurstLeft = 0;
+			}
+
+			Back(g, TimeSpan.FromMinutes(_rng.Next(60, 181)));
 
 			return false;
 		}
@@ -853,8 +1025,6 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		// better number; our own count stays as the throttle below, which is what actually paces the drip.
 		double hours = Math.Max(g.PlayedMins, Bot.Library.MinutesOn(app)) / 60.0;
 		bool onboarding = already < prof.OnboardCount;
-		// A grind ignores the rarity floor: it works through everything settable, most-common first, rather
-		// than only what the hours "justify". Normal play keeps the floor so it never pops a rare one early.
 		// The rarity floor is the "possibility" gate and applies to a grind TOO: it opens with the hours in the
 		// game, so a rare/grindy achievement (a low global %, e.g. "win 1000 rounds") can't be unlocked two hours
 		// in - only what a real player could plausibly have reached by now, easiest-first. A grind just plays the
@@ -862,47 +1032,53 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		int floor = Math.Max(Math.Max(1, prof.MinPercent), RarityFloorForHours(hours / ScaleFor(app, prof)));
 		double? typical = Bot.Cfg.AchievementRealLength ? Core.Playtime.TypicalHours(app) : null;
 
-		List<Achievement> eligible = set.All
-			// Unknown rarity (Steam's global-percent endpoint was unreachable) counts as eligible rather than being
-			// excluded - otherwise a missing fetch would silently stop the account unlocking anything at all.
-			.Where(a => !a.Unlocked && a.Settable && !IsSpecialGlobal(a) && dlc.Allows(a) && ((a.GlobalPercent ?? floor) >= floor)
-				&& (RequiredPriorAchievements(a) <= already)
-				&& !TierBlocked(a, reach)
-				&& !DifficultyBlocked(a, reach)
-				&& !StoryEndBlocked(a, reach)
-				&& !VariantBlocked(a, reach)
-				&& StoryTimeAllows(a, reach, hours, typical)
-				&& !MilestoneUnearned(a, set.All))
-			.ToList();
+		List<Achievement> eligible = Eligible(sorted, set.All, already, floor, hours, typical);
 
 		if (eligible.Count == 0) {
-			lock (_gate) {
-				g.BurstLeft = 0;
-			}
+			// More hours open more of it - or nothing left could open at any number of hours (see CanEverOpen): all of it too
+			// rare for this account ever, or waiting on ones that stay locked. Then the game is done for now, so the hunt
+			// moves on - for a few days, or until the owner plays it: counters move, and so do Steam's figures.
+			bool canOpen = CanEverOpen(sorted, set.All, already, Math.Max(1, prof.MinPercent), typical);
 
 			lock (_gate) {
-				g.Last = Outcome.NeedsHours;
+				g.BurstLeft = 0;
+				g.Last = canOpen ? Outcome.NeedsHours : sorted.Counters > 0 ? Outcome.CountersOnly : Outcome.NothingOpen;
+				StopUntil(app, g, canOpen ? DateTime.MinValue : RecheckSoon());
 			}
 
 			// The gate is shut at this playtime, which is it working, not failing. Come back later rather than
 			// asking again every minute (sooner during a grind, which is actively waiting on them).
-			Back(g, TimeSpan.FromMinutes(grind ? _rng.Next(15, 41) : _rng.Next(60, 181)));
+			Back(g, !canOpen ? TimeSpan.FromHours(_rng.Next(8, 25)) : TimeSpan.FromMinutes(grind ? _rng.Next(15, 41) : _rng.Next(60, 181)));
 
 			return false;
 		}
 
-		// Strictly most-common first, working toward the rarest last, which is broadly what real players do.
-		// A window of "one of the top three" looked reasonable and was not: it would occasionally pop a 12% one
-		// while an 18% and a 14% sat still locked, and that ordering is unmistakably mechanical. The only
-		// wobble kept is an occasional step to the SECOND most common, so it is not a flawless metronome.
-		eligible.Sort(static (a, b) => (b.GlobalPercent ?? 0).CompareTo(a.GlobalPercent ?? 0));
-		int idx = (eligible.Count > 1) && (_rng.Next(100) < 20) ? 1 : 0;
-		Achievement pick = eligible[idx];
+		// Base game first, then most-common first - see NextPick. One turned down on the last look steps aside once.
+		string? skip;
 
-		(bool ok, string message, int changed) = await Achievements.SetAsync(Bot, set, [pick], true, ct, dlc).ConfigureAwait(false);
+		lock (_gate) {
+			skip = g.SkipOnce;
+			g.SkipOnce = null;
+		}
+
+		Achievement pick = NextPick(eligible, a => sorted.Later.Contains(a.Name), _rng.Next(100) < 20, skip);
+
+		(bool ok, string message, int changed, Achievements.Refusal refusal) = await Achievements.SetCheckedAsync(Bot, set, [pick], true, ct, dlc).ConfigureAwait(false);
 
 		if (!ok) {
 			Log.Debug(new Said("couldn't unlock \"{0}\" in {1} - {2}", pick.Display, GameNames.Of(app), message), Bot.Name);
+
+			// Some achievements are Steam's own without the schema saying so. One Steam said can't be set by a client is left
+			// alone for a week rather than asked about again every hour, and the next look picks another - see ParkRefusal.
+			// So is one turned down three times over two days, whatever Steam said (StruckOut). Otherwise the next look
+			// tries another one first: the same top pick asked about every hour, turned down every hour, was all a game
+			// ever did - nothing else in it unlocked, and it was never called done.
+			bool shared = Bot.Library.Find(app)?.Shared == true;
+
+			lock (_gate) {
+				TurnedDown(g, pick.Name, refusal, shared, DateTime.UtcNow);
+			}
+
 			Back(g, TimeSpan.FromMinutes(_rng.Next(30, 90)));
 
 			return false;
@@ -961,12 +1137,330 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			}
 
 			g.NextAllow = DateTime.UtcNow.AddMinutes(Paced(gap));
+			g.PacedFrom = DateTime.UtcNow;
+			g.PaceUsed = PaceOf(Bot.Cfg.AchievementPace);
+			g.Pulled = false;
+			g.WroteOkAt = DateTime.UtcNow;
+			g.Strikes.Remove(pick.Name);
 		}
 
 		Said rarity = pick.GlobalPercent is { } percent ? new Said(" ({0}% have it)", percent.ToString("0.#")) : default;
-		Log.Reward(new Said("unlocked \"{0}\" in {1}{2} ({3}/{4})", pick.Display, GameNames.Of(app), rarity, nowUnlocked, total), Bot.Name, topic: Topic.Achievements);		Remember(new Unlock(app, GameNames.Of(app), pick.Display, pick.GlobalPercent, DateTime.UtcNow, nowUnlocked, total));
+		Log.Reward(new Said("unlocked \"{0}\" in {1}{2} ({3}/{4})", pick.Display, GameNames.Of(app), rarity, nowUnlocked, total), Bot.Name, topic: Topic.Achievements);
+		Remember(new Unlock(app, GameNames.Of(app), pick.Display, pick.GlobalPercent, DateTime.UtcNow, nowUnlocked, total));
+		Stats.Record(Stats.KindAchievement, Bot.Name);
 
 		return true;
+	}
+
+	/// <summary>How long an achievement Steam refused to set is left alone before it is tried again.</summary>
+	private static readonly TimeSpan RefusedFor = TimeSpan.FromDays(7);
+
+	/// <summary>
+	/// A write that didn't go through: a strike, and parked or stepped past once - see the caller. Not when Steam was never
+	/// asked about the achievement (not connected, the read before the write failed or timed out, what the account owns
+	/// changed): that says nothing about it. Struck and stepped past for those, a Steam hiccup moved the hunt off its
+	/// best pick, and three of them over two days parked a perfectly good achievement for a week. Called under the gate.
+	/// </summary>
+	private static void TurnedDown(GameState g, string name, Achievements.Refusal refusal, bool shared, DateTime at) {
+		if (refusal == Achievements.Refusal.NotAsked) {
+			return;
+		}
+
+		if (!g.Strikes.TryGetValue(name, out List<DateTime>? strikes)) {
+			strikes = [];
+			g.Strikes[name] = strikes;
+		}
+
+		strikes.RemoveAll(t => at - t > StrikesKept);
+		strikes.Add(at);
+
+		if (ParkRefusal(refusal, shared, g.WroteOkAt, at) || StruckOut(strikes)) {
+			g.Refused[name] = at;
+			g.Strikes.Remove(name);
+		} else {
+			g.SkipOnce = name;
+		}
+	}
+
+	/// <summary>
+	/// Is a refused write about the achievement itself, so it is left alone for a week? Only when Steam said so. It put
+	/// the stat back ("failed validation"): always - Steam took the write and the game's servers said no, whoever owns
+	/// the game. It answered AccessDenied / InsufficientPrivilege: unless the game is borrowed from the family, where the
+	/// owner starting it can be the reason. Any other answer (InvalidParam and the like) only counts when another write in
+	/// the same game went through in the last month: then it's this achievement, not the game. Fail, a timeout, no answer,
+	/// "not now", a family member taking the game back - nothing is remembered on one go: those parked a perfectly good
+	/// achievement for a week, and the game read "Steam only" with it. Turned down again and again, it is (StruckOut).
+	/// </summary>
+	/// <remarks>
+	/// A put-back in a family game used to be let off as well. The game then tried the same top achievement every 30-90
+	/// minutes for good, nothing else in it ever unlocked, and it was never called done.
+	/// </remarks>
+	internal static bool ParkRefusal(Achievements.Refusal refusal, bool shared, DateTime wroteOkAt, DateTime now) {
+		bool wroteHere = now - wroteOkAt < TimeSpan.FromDays(30);
+
+		return refusal switch {
+			Achievements.Refusal.PutBack => true,
+			Achievements.Refusal.NotSettable => !shared || wroteHere,
+			Achievements.Refusal.Answered => wroteHere && !shared,
+			_ => false
+		};
+	}
+
+	/// <summary>How many times one achievement may be turned down, over at least <see cref="StrikeSpan"/>, before it is parked anyway.</summary>
+	private const int StrikesToPark = 3;
+
+	/// <summary>The first and last of those at least this far apart: a bad hour on Steam's side is not three strikes.</summary>
+	private static readonly TimeSpan StrikeSpan = TimeSpan.FromDays(2);
+
+	/// <summary>Turned down longer ago than this doesn't count any more.</summary>
+	private static readonly TimeSpan StrikesKept = TimeSpan.FromDays(14);
+
+	/// <summary>
+	/// Turned down three times, the first and last at least two days apart: parked for a week whatever Steam's answers
+	/// were. A game where every answer is Fail (a family game, Steam's catch-all) never parks on any one of them.
+	/// </summary>
+	internal static bool StruckOut(IReadOnlyCollection<DateTime> strikes) =>
+		(strikes.Count >= StrikesToPark) && (strikes.Max() - strikes.Min() >= StrikeSpan);
+
+	/// <summary>
+	/// One look at a game, sorted before the hours and the order rules have their say.
+	/// </summary>
+	/// <param name="Candidates">Locked, settable, allowed, its counter there: what the hours and the order rules choose from.</param>
+	/// <param name="Reach">What the order rules look at: everything but the locked ones it will never have. A ladder's
+	/// lower rung, a story step or an easier difficulty that only comes with DLC (or is multiplayer, on an account that
+	/// skips those) would otherwise hold a base-game one back for ever.</param>
+	/// <param name="Later">API names of the add-on-looking ones it may earn - only after every eligible base-game one.</param>
+	/// <param name="HeldDlc">Locked and held for DLC this account doesn't own (or, in a game left alone, can't be placed).</param>
+	/// <param name="Multiplayer">Locked multiplayer ones, skipped.</param>
+	/// <param name="Refused">Locked ones Steam refused to set in the last week.</param>
+	/// <param name="Checking">Locked ones the game's DLC map has never seen - waiting for it to be worked out again.</param>
+	/// <param name="Counters">Locked ones whose counter in the game isn't there yet ("100 parries" at 37).</param>
+	/// <param name="Reachable">How many it can have as things stand: all of them, less the held, the skipped and the ones
+	/// short of their counter - worked out again on every look, so a counter that moves brings its achievement back.</param>
+	internal sealed record Sorted(List<Achievement> Candidates, List<Achievement> Reach, HashSet<string> Later,
+		int HeldDlc, int Multiplayer, int Refused, int Checking, int Counters, int Reachable);
+
+	/// <summary>
+	/// What may be earned in a game, and what is left alone and why. The same on a human-mode account and a robot.
+	///
+	///   • DLC: only what is held on certain evidence is never earned - an add-on's exact block it doesn't own, one that
+	///     names an add-on it doesn't own, one with "DLC" in its API name while it's missing an add-on
+	///     (<see cref="DlcAchievements.View.Of"/>), and everything it can't place in a game the owner left alone ('dlc leave').
+	///   • Add-ons Steam doesn't place: the game earns anyway. Its own layout - the first block of achievement stats, then
+	///     a jump - is only used for the order: what comes after the jump looks like an add-on's
+	///     (<see cref="DlcAchievements.View.AddOnLikely"/>) and goes last, after every eligible base-game one. Never held for
+	///     it: PAYDAY 2 and Dead by Daylight put free updates of the base game after a jump, Fallout: New Vegas puts its
+	///     add-ons straight after the base game with none.
+	///   • Multiplayer, on an account that skips those (<see cref="IsMultiplayer"/>).
+	///   • A counted one ("Complete 100 parries") whose counter in the game isn't there: not a candidate, and not counted
+	///     as reachable while it's short - it waits for the game to be played.
+	///   • Steam's own (the schema says so, or Steam refused it in the last week) and Valve's mass-granted GLOBAL_ ones:
+	///     never candidates - but still in reach, as they always were.
+	/// Also marks every achievement that belongs to an add-on (<see cref="Achievement.AddOn"/>) for the order rules.
+	/// </summary>
+	internal static Sorted Sort(AchievementSet set, DlcAchievements.View dlc, bool skipMultiplayer, IReadOnlySet<string> refused) {
+		Dictionary<string, string> parts = DlcAchievements.AddOnParts(dlc.Map, set.All);
+		HashSet<string> addOn = new(parts.Keys, StringComparer.Ordinal);
+		bool multiplayerGame = MultiplayerGame(set.All);
+		List<Achievement> candidates = [], reach = [];
+		HashSet<string> later = new(StringComparer.Ordinal);
+		int heldDlc = 0, multiplayer = 0, refusedCount = 0, checking = 0, counters = 0;
+
+		foreach (Achievement a in set.All) {
+			a.AddOnPart = parts.GetValueOrDefault(a.Name.ToLowerInvariant(), "");
+		}
+
+		foreach (Achievement a in set.All) {
+			if (a.Unlocked) {
+				reach.Add(a);
+
+				continue;
+			}
+
+			DlcAchievements.Hold hold = dlc.Of(a);
+
+			if (hold is DlcAchievements.Hold.NotOwned or DlcAchievements.Hold.Unmapped) {
+				heldDlc++;
+
+				continue;
+			}
+
+			if (skipMultiplayer && IsMultiplayer(a, multiplayerGame)) {
+				multiplayer++;
+
+				continue;
+			}
+
+			reach.Add(a);
+
+			// One the map has never seen waits while the game is worked out again; it may be a lower rung of something.
+			if (hold == DlcAchievements.Hold.Checking) {
+				checking++;
+
+				continue;
+			}
+
+			if (!a.Settable || IsSpecialGlobal(a)) {
+				continue;
+			}
+
+			// Nothing writes counters, so it waits for the real count. Still in reach: a lower rung short of its count
+			// holds the higher rungs, as it should.
+			if (a.CounterShort) {
+				counters++;
+
+				continue;
+			}
+
+			if (refused.Contains(a.Name)) {
+				refusedCount++;
+
+				continue;
+			}
+
+			if ((hold == DlcAchievements.Hold.None) && dlc.AddOnLikely(a, addOn)) {
+				later.Add(a.Name);
+			}
+
+			candidates.Add(a);
+		}
+
+		return new Sorted(candidates, reach, later, heldDlc, multiplayer, refusedCount, checking, counters,
+			set.All.Count - heldDlc - multiplayer - counters);
+	}
+
+	/// <summary>Does the game have multiplayer achievements at all (for <see cref="IsMultiplayer"/>'s prestige rule)?</summary>
+	internal static bool MultiplayerGame(IEnumerable<Achievement> all) => all.Any(static a => TraitsOf(a).Multiplayer);
+
+	/// <summary>
+	/// The ones that may go now: open at these hours (<see cref="RarityAllows"/>) and every order rule satisfied. One short
+	/// of its counter ("Complete 100 parries") never gets here (see <see cref="Sort"/>); nothing writes counters, so a
+	/// ladder of counted rungs waits for the real count, rung by rung.
+	/// </summary>
+	internal static List<Achievement> Eligible(Sorted sorted, IReadOnlyCollection<Achievement> all, int already, int floor, double hours, double? typical) =>
+		[.. sorted.Candidates.Where(a => !a.CounterShort && RarityAllows(a, floor) && InOrder(a, sorted.Reach, all, already, hours, typical))];
+
+	/// <summary>
+	/// Could anything left open at all, at any number of hours: the lowest rarity floor there is, and every hour a story
+	/// could ask? None: what's left is too rare for this account ever, or waits on ones that stay locked ("all other
+	/// achievements" with some held), or on a lower rung short of its counter - and more play only changes that through
+	/// the game's own counters or Steam's figures. Then the game is done for now.
+	/// </summary>
+	internal static bool CanEverOpen(Sorted sorted, IReadOnlyCollection<Achievement> all, int already, int minPercent, double? typical) =>
+		Eligible(sorted, all, already, Math.Max(minPercent, LowestFloor), 1_000_000, typical).Count > 0;
+
+	/// <summary>
+	/// The ones of <paramref name="unlocking"/> that may go together, and how many "for having the others" ones wait: one
+	/// of those ("obtain all other achievements", "all base game achievements") goes only when nothing it counts would
+	/// still be locked once the rest are unlocked - held for DLC, short of a counter, skipped, Steam's own. Two of them
+	/// don't hold each other.
+	/// </summary>
+	internal static (List<Achievement> Go, int Waiting) WithoutWaitingMetas(IReadOnlyCollection<Achievement> all, IReadOnlyCollection<Achievement> unlocking) {
+		HashSet<string> going = new(unlocking.Select(static a => a.Name), StringComparer.Ordinal);
+		List<Achievement> metas = [.. unlocking.Where(static a => TraitsOf(a).Meta != Meta.None)];
+		HashSet<string> metaOk = new(metas.Select(static a => a.Name), StringComparer.Ordinal);
+		bool changed = true;
+
+		// Stays locked once this write is done: locked now, and not going - or a meta that has to wait itself.
+		bool StaysLocked(Achievement o) => !o.Unlocked && (!going.Contains(o.Name) || ((TraitsOf(o).Meta != Meta.None) && !metaOk.Contains(o.Name)));
+
+		while (changed) {
+			changed = false;
+
+			foreach (Achievement meta in metas.Where(m => metaOk.Contains(m.Name)).ToList()) {
+				Meta kind = TraitsOf(meta).Meta;
+				bool blocked = all.Any(o => (o.Name != meta.Name) && !IsSpecialGlobal(o) && ((kind == Meta.All) || !o.AddOn)
+					&& (TraitsOf(o).Meta == Meta.None) && StaysLocked(o));
+
+				// Another meta waiting counts too, unless it is the "all" one and this is only the base game's.
+				blocked |= all.Any(o => (o.Name != meta.Name) && (TraitsOf(o).Meta != Meta.None) && StaysLocked(o)
+					&& ((kind == Meta.All) || (TraitsOf(o).Meta == Meta.BaseGame)));
+
+				if (blocked) {
+					metaOk.Remove(meta.Name);
+					changed = true;
+				}
+			}
+		}
+
+		return ([.. unlocking.Where(a => (TraitsOf(a).Meta == Meta.None) || metaOk.Contains(a.Name))], metas.Count - metaOk.Count);
+	}
+
+	/// <summary>
+	/// Open at this rarity floor. One with no figure (newly added, so Steam hasn't counted it yet) is open whenever
+	/// anything is - and is taken last (see <see cref="NextPick"/>); a game with no figures at all isn't asked about here,
+	/// it waits. Under half an hour in, nothing is open, figure or not.
+	/// </summary>
+	internal static bool RarityAllows(Achievement a, int floor) => a.GlobalPercent is { } percent ? percent >= floor : floor <= 100;
+
+	/// <summary>
+	/// Every order rule at once: the milestones and "N achievements" ones after what they count, "every other achievement"
+	/// after every other one, a ladder's rungs in order, an easier difficulty before a harder one, a story's steps before its
+	/// ending (and a DLC's ending after the game's own), New Game+ after the game's endings, the plain thing before the
+	/// same thing harder, and the hours a story takes.
+	/// </summary>
+	/// <param name="reach">What the order rules look at: everything but the locked ones it will never have.</param>
+	/// <param name="all">The game's whole list - a milestone counts every one of its group, held or not.</param>
+	/// <param name="already">How many it has unlocked in the game.</param>
+	internal static bool InOrder(Achievement a, IReadOnlyCollection<Achievement> reach, IReadOnlyCollection<Achievement> all, int already, double hours, double? typical) =>
+		(RequiredPriorAchievements(a) <= already)
+		&& !MetaBlocked(a, all)
+		&& !TierBlocked(a, reach)
+		&& !DifficultyBlocked(a, reach)
+		&& !StoryEndBlocked(a, reach)
+		&& !NewGamePlusBlocked(a, reach)
+		&& !VariantBlocked(a, reach)
+		&& StoryTimeAllows(a, reach, hours, typical)
+		&& !MilestoneUnearned(a, all);
+
+	/// <summary>
+	/// Which of the eligible ones is unlocked next.
+	///
+	/// Base game first. In a game with add-ons the account doesn't own and Steam doesn't say which achievements they
+	/// bring, the ones that look like an add-on's (<paramref name="later"/>, see <see cref="DlcAchievements.View.AddOnLikely"/>)
+	/// wait until no base-game one is eligible - done, or not open yet at these hours. So if some of them do come with an
+	/// add-on, they come last, like a player who finishes the base game before anything else - on every account.
+	///
+	/// Then strictly most-common first, working toward the rarest last, which is broadly what real players do. A window
+	/// of "one of the top three" looked reasonable and was not: it would occasionally pop a 12% one while an 18% and a
+	/// 14% sat still locked, and that ordering is unmistakably mechanical. One with no figure yet (newly added) goes after
+	/// every one that has a figure.
+	///
+	/// The only wobble kept is an occasional step to the SECOND most common (<paramref name="wobble"/>), so it is not a
+	/// flawless metronome - and only between two that are nearly as common as each other (the second at least
+	/// <see cref="WobbleShare"/> of the first): 40% then 39% is a coin toss for a real player, 40% then 12% is not. Never
+	/// onto an ending, a step of the story, a New Game+ one or a rung of a ladder, which have a place in the order of
+	/// their own, and never from a base-game one to an add-on one.
+	///
+	/// <paramref name="skip"/> (turned down on the last look) steps aside when there is another to take in its place -
+	/// still base game first: an add-on one never goes ahead of a base-game one for it.
+	/// </summary>
+	internal static Achievement NextPick(IReadOnlyList<Achievement> eligible, Func<Achievement, bool> later, bool wobble, string? skip = null) {
+		List<Achievement> sure = [.. eligible.Where(a => !later(a))];
+		List<Achievement> pool = sure.Count > 0 ? sure : [.. eligible];
+
+		if ((skip != null) && (pool.Count > 1)) {
+			pool.RemoveAll(a => a.Name == skip);
+		}
+
+		pool.Sort(static (a, b) => (b.GlobalPercent ?? -1).CompareTo(a.GlobalPercent ?? -1));
+
+		if (wobble && (pool.Count > 1) && (pool[0].GlobalPercent is { } first) && (pool[1].GlobalPercent is { } second)
+			&& (second >= first * WobbleShare) && !HasItsPlace(pool[1])) {
+			return pool[1];
+		}
+
+		return pool[0];
+	}
+
+	/// <summary>How close the second most common has to be to the first for the wobble to step to it.</summary>
+	private const double WobbleShare = 0.85;
+
+	/// <summary>An ending, a story step, a New Game+ one or a ladder's rung: these go where the order puts them.</summary>
+	private static bool HasItsPlace(Achievement a) {
+		Traits t = TraitsOf(a);
+
+		return t.Ending || t.Numbered || t.Named || t.NewGamePlus || (t.Ladders.Count > 0);
 	}
 
 	/// <summary>
@@ -986,8 +1480,14 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		string Modes,                                   // co-op, multiplayer, DLC...: which part of the game it is about
 		string Core,                                    // the description, plain, for "the same thing, but harder"
 		bool Prestige,
-		bool LevelUp
+		bool LevelUp,
+		bool NewGamePlus,                               // "in New Game+", "NG+": a second run, after the first one's ending
+		bool Multiplayer,                               // needs other players - see IsMultiplayer
+		Meta Meta                                       // "obtain all other achievements" - see MetaOf
 	);
+
+	/// <summary>An achievement for having the others: none, every other one, or every other one of the base game.</summary>
+	private enum Meta { None, All, BaseGame }
 
 	private static readonly ConditionalWeakTable<Achievement, Traits> TraitCache = new();
 
@@ -1015,7 +1515,163 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			modes,
 			Plain(body),
 			Regex.IsMatch(text, @"\bprestige\b", RegexOptions.IgnoreCase),
-			Regex.IsMatch(Normalize(desc), @"\b(reach|reached|attain|attained|hit)\s+(the\s+)?(max(imum)?\s+)?(level|rank)\b") && !Regex.IsMatch(text, @"\bprestige\b", RegexOptions.IgnoreCase));
+			Regex.IsMatch(Normalize(desc), @"\b(reach|reached|attain|attained|hit)\s+(the\s+)?(max(imum)?\s+)?(level|rank)\b") && !Regex.IsMatch(text, @"\bprestige\b", RegexOptions.IgnoreCase),
+			IsNewGamePlus(a),
+			MultiplayerByItself(a),
+			MetaOf(a));
+	}
+
+	/// <summary>
+	/// "Purchase something from Baku in New Game+", "Complete the game in NG+", Cuphead's NewGamePlus - a second run of
+	/// the game, which only starts once the first one is over.
+	/// </summary>
+	private static bool IsNewGamePlus(Achievement a) =>
+		Regex.IsMatch($"{a.Display} {a.Description}", @"\bnew\s+game\s*(\+|plus\b)|\bng\s*\+|\bng\s+plus\b", RegexOptions.IgnoreCase)
+		|| Regex.IsMatch(a.Name, @"new_?game_?plus|ng_?plus", RegexOptions.IgnoreCase);
+
+	/// <summary>
+	/// "Obtain all other achievements" (God of War's Father and Son), "Unlock every achievement", "Earn 100% of the
+	/// achievements", a "Platinum" for "all trophies" - an achievement for having the rest. "Obtain all base game
+	/// achievements" (Ghost of Tsushima's Living Legend) is only the base game's rest. Only the wording that counts
+	/// achievements or trophies: Borderlands 2's "Completionist" (all Pirate's Booty side missions) is no such thing, and
+	/// nor is Stellaris's "...and all I got was this lousy achievement". The numbered kind ("Achieve 17 of the achievements
+	/// in the Sniper pack") is RequiredPriorAchievements' instead.
+	/// </summary>
+	private static Meta MetaOf(Achievement a) {
+		string text = $"{a.Display} {a.Description}".ToLowerInvariant();
+		const string Kind = @"(steam\s+)?(achievements?|trophies|trophy)\b";
+
+		bool all = Regex.IsMatch(text, @"\b(all|every|each)\s+(of\s+)?(the\s+)?(other|remaining|the\s+other)?\s*(base[\s-]game\s+|main[\s-]game\s+)?" + Kind)
+			|| Regex.IsMatch(text, @"\b100\s?%\s+(of\s+)?(the\s+)?(base[\s-]game\s+|main[\s-]game\s+)?" + Kind)
+			|| Regex.IsMatch(text, Kind + @"\s+(at\s+)?100\s?%")
+			|| (Regex.IsMatch(a.Display ?? "", @"\b(platinum|completionist|100\s?%)\b", RegexOptions.IgnoreCase)
+				&& Regex.IsMatch(text, @"\b(all|every|100\s?%)\b[^.!?]*\b(achievements|trophies)\b"));
+
+		if (!all) {
+			return Meta.None;
+		}
+
+		return Regex.IsMatch(text, @"\b(base|main)[\s-]game\b") ? Meta.BaseGame : Meta.All;
+	}
+
+	/// <summary>
+	/// An achievement for having the rest waits for the rest: "every other achievement" for every other one in the game
+	/// (Valve's mass-granted GLOBAL_ ones aside), "every base game achievement" for every other one that isn't an
+	/// add-on's (<see cref="Achievement.AddOn"/>). Any of them still locked - held for DLC, Steam's own, too rare for this
+	/// account ever to earn - and it waits for good, which is the only honest answer: nobody has it without the others.
+	/// </summary>
+	private static bool MetaBlocked(Achievement a, IReadOnlyCollection<Achievement> all) {
+		Meta meta = TraitsOf(a).Meta;
+
+		return (meta != Meta.None) && all.Any(o => !o.Unlocked && (o.Name != a.Name) && !IsSpecialGlobal(o) && ((meta == Meta.All) || !o.AddOn));
+	}
+
+	/// <summary>
+	/// New Game+ waits for every locked ending of the same game: a second run starts once the first is finished. An ending
+	/// too rare for this account ever to earn, or far rarer than the New Game+ one, doesn't hold it for ever (the same
+	/// escape as a story's steps - see <see cref="CouldComeFirst"/>), and only an ending of the same part counts: an add-on's
+	/// ending doesn't hold the base game's New Game+.
+	/// </summary>
+	private static bool NewGamePlusBlocked(Achievement a, IReadOnlyCollection<Achievement> reach) {
+		Traits me = TraitsOf(a);
+
+		if (!me.NewGamePlus) {
+			return false;
+		}
+
+		foreach (Achievement other in reach) {
+			if (other.Unlocked || (other.Name == a.Name)) {
+				continue;
+			}
+
+			Traits them = TraitsOf(other);
+
+			if (them.Ending && !them.NewGamePlus && (them.Label == me.Label) && (other.AddOnPart == a.AddOnPart) && CouldComeFirst(other, a)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/// <summary>
+	/// Needs other players, by its own words or API name: multiplayer, co-op, online, versus, PvP, ranked, a public match,
+	/// friends from the friends list, Call of Duty's Zombies, MWZ, DMZ and Warzone; or an API name with an mp, zm, pvp,
+	/// coop, versus, online or ranked part (Call of Duty's t10_mp_*, t10_zm_*, sat_mp_*, jup_mp_*). Not one that may as
+	/// well be done alone: "in the Campaign or in Co-op" is the campaign's too. Read off Portal 2, Call of Duty, Team
+	/// Fortress 2, Borderlands 2 and Civilization V: Portal 2's co-op course, Call of Duty's multiplayer, zombies and co-op
+	/// campaign are caught; Team Fortress 2's class achievements aren't (only its "five friends in a game" ones).
+	/// </summary>
+	/// <remarks>
+	/// Read off real schemas that it got wrong, so each word only counts where it means other players:
+	///   • "co-op" - not "co-op moves with Oda" (Yakuza 0, alone); a bare "coop" only as play ("in coop", "coop mode"), not
+	///     "the chicken coop" (2947440).
+	///   • "online" - anywhere, but not "some online forum" (738520), an online store, shop, guide, manual, help or community.
+	///   • "ranked" - not after a hyphen: "a Master-ranked weapon" (S.T.A.L.K.E.R. 2) is a weapon's grade.
+	///   • "versus" - only "versus mode" in the words, never from the API name alone: Call of Duty 4's MAN_VERSUS_MACHINE is
+	///     a campaign mission.
+	/// And not when alone is offered too, with words in between: The Forest's "Alone in Single Player or together in
+	/// Multiplayer", Halo's "Complete 10 missions or multiplayer games" and "a campaign mission or a match of
+	/// multiplayer", PAYDAY 2's "within 7 minutes on solo, or 4 minutes on multiplayer".
+	/// </remarks>
+	private static bool MultiplayerByItself(Achievement a) {
+		string text = $"{a.Display} {a.Description}";
+		string lower = text.ToLowerInvariant();
+
+		bool byName = Regex.IsMatch(a.Name, @"(^|[_.])(mp|zm|pvp|coop|online|ranked|multiplayer|wz|dmz)([_.]|$)", RegexOptions.IgnoreCase);
+		bool byWords = Regex.IsMatch(lower, @"\b(multi-?player|cooperative|pvp|versus mode|matchmaking|mwz|dmz|warzone|zombies mode|public (match|matches|game|games|server|servers)|with a friend|friends? list|other players?|another player|split-?screen)\b")
+			|| Regex.IsMatch(lower, CoopWords) || Regex.IsMatch(lower, OnlineWords) || Regex.IsMatch(lower, @"(?<![\w-])ranked\b")
+			|| Regex.IsMatch(text, @"\b(in|of) Zombies\b|\bZombies (mode|match|matches|game|games|map|maps|category|categories)\b");
+
+		return (byName || byWords) && !AlsoAlone(lower);
+	}
+
+	/// <summary>
+	/// Co-op as play: "co-op"/"co op" anywhere but before moves, attacks and the like (a single-player game's tag-team
+	/// moves); a bare "coop" only after in/on/play or before mode, match, campaign... (never "the chicken coop").
+	/// </summary>
+	private const string CoopWords =
+		@"\bco[- ]op\b(?!\s+(moves?|attacks?|actions?|techniques?|combos?|finishers?|skills?|heat)\b)"
+		+ @"|\b(in|on|via|during|play|playing|played|local|online)\s+(a\s+|the\s+)?coop\b"
+		+ @"|\bcoop\s+(mode|modes|game|games|match|matches|campaign|campaigns|mission|missions|partner|partners|player|players|session|sessions|level|levels|map|maps|run|runs|play)\b";
+
+	/// <summary>
+	/// Online, wherever it is - "win 10 matches online", "defeat 50 players online", "reach level 20 online", "Red Dead
+	/// Online:" - except where it plainly isn't play: an online forum, store, shop, guide, manual, help or community.
+	/// </summary>
+	/// <remarks>
+	/// It was narrowed to a list of the words that may come with it ("online match", "play online"), and that missed
+	/// every way of saying it the list didn't think of: "complete 5 races online", "win a round of deathmatch online".
+	/// A missed one is the unsafe way round - an achievement only other players could have given, on an account that
+	/// skips those - so it's every "online" bar the few that are something to read or buy. An online leaderboard counts:
+	/// it's a score other players see, and leaving one alone costs one achievement.
+	/// </remarks>
+	private const string OnlineWords =
+		@"\bonline\b(?!\s+(forums?|stores?|shops?|guides?|manuals?|help|community|communities)\b)";
+
+	/// <summary>
+	/// It can be done alone too: alone (the campaign, single player, story, solo, missions) on one side of an "or" and
+	/// other players (co-op, online, multiplayer) on the other, a few words apart at most and in the same sentence -
+	/// either way round. Not "co-op missions or multiplayer games": both sides are other players there.
+	/// </summary>
+	internal static bool AlsoAlone(string lower) {
+		const string Alone = @"(campaign|single[\s-]?player|story(\s+mode)?|solo|(?<!co-?op\s)missions?)";
+		const string Others = @"(co-?op|online|multi-?player)";
+
+		return Regex.IsMatch(lower, @"\b" + Alone + @"\b[^.!?;]{0,30}?\bor\b[^.!?;]{0,30}?\b" + Others + @"\b")
+			|| Regex.IsMatch(lower, @"\b" + Others + @"\b[^.!?;]{0,30}?\bor\b[^.!?;]{0,30}?\b" + Alone + @"\b");
+	}
+
+	/// <summary>
+	/// Multiplayer by itself (<see cref="MultiplayerByItself"/>) - or a prestige in a game whose other achievements are
+	/// multiplayer ones. Call of Duty's "Enter Prestige 1" says nothing about where, but prestige is the online ranks;
+	/// one that names the campaign or the story isn't.
+	/// </summary>
+	internal static bool IsMultiplayer(Achievement a, bool multiplayerGame) {
+		Traits t = TraitsOf(a);
+
+		return t.Multiplayer
+			|| (t.Prestige && multiplayerGame && !Regex.IsMatch($"{a.Display} {a.Description}", @"\b(campaign|story|single-?player)\b", RegexOptions.IgnoreCase));
 	}
 
 	/// <summary>
@@ -1259,7 +1915,13 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 	/// <summary>
 	/// "Beat it on Hard" while "beat it on Normal" is still locked: the same achievement at a lower difficulty
-	/// comes first - worded identically apart from the difficulty. Medals the same: silver after bronze.
+	/// comes first - worded the same apart from the difficulty (see <see cref="DifficultyKey"/>). Medals the same:
+	/// silver after bronze.
+	///
+	/// Only when the easier one is at least about as common as the harder one (<see cref="EasierShare"/>), which it is
+	/// whenever players really go up the scale. Where it isn't - Easy rarer than Normal, because most players start on
+	/// Normal and never touch Easy - the easier one is no step on the way, and holding Normal behind a 3% Easy held it
+	/// for ever on an account whose hours never open 3%.
 	/// </summary>
 	private static bool DifficultyBlocked(Achievement a, IReadOnlyCollection<Achievement> all) {
 		if (TraitsOf(a).Difficulty is not { } mine) {
@@ -1268,7 +1930,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 		foreach (Achievement other in all) {
 			if (!other.Unlocked && (other.Name != a.Name) && (TraitsOf(other).Difficulty is { } theirs)
-				&& (theirs.Stem == mine.Stem) && (theirs.Rank < mine.Rank)) {
+				&& (theirs.Stem == mine.Stem) && (theirs.Rank < mine.Rank)
+				&& ((other.GlobalPercent is not { } easier) || (a.GlobalPercent is not { } harder) || (easier >= harder * EasierShare))) {
 				return true;
 			}
 		}
@@ -1276,17 +1939,35 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		return false;
 	}
 
+	/// <summary>How common an easier difficulty has to be, next to the harder one, to come first: about as common.</summary>
+	private const double EasierShare = 0.9;
+
+	/// <summary>
+	/// The difficulty an achievement asks for, and the rest of its wording with the difficulty taken out - two
+	/// achievements with the same rest are the same thing on different difficulties. The rest is made plain first, so
+	/// "Complete the game on Normal" and "Finish the campaign on Hard difficulty" compare equal: the words difficulty,
+	/// mode, setting and level go, beat/complete/finish/clear read as one, and game/campaign/story as one.
+	/// </summary>
 	private static (string Stem, int Rank)? DifficultyKey(Achievement a) {
 		foreach (string text in new[] { a.Description, a.Display }) {
 			string normal = Regex.Replace(Regex.Replace(Normalize(text ?? ""), @"[^\p{L}\p{N}%:\s]", " "), @"\s+", " ").Trim();
 			Match m = Regex.Match(normal, DifficultyPattern);
 
 			if (m.Success) {
-				return (normal[..m.Index] + "~" + normal[(m.Index + m.Length)..], Difficulties[m.Value]);
+				return (DifficultyStem(normal[..m.Index] + " ~ " + normal[(m.Index + m.Length)..]), Difficulties[m.Value]);
 			}
 		}
 
 		return null;
+	}
+
+	/// <summary>The wording around a difficulty, made plain - see <see cref="DifficultyKey"/>.</summary>
+	private static string DifficultyStem(string text) {
+		string s = Regex.Replace(text, @"\b(difficulty|difficulties|mode|setting|settings|level|on|in|at|the|a|or\s+(harder|higher|above|greater|better))\b", " ");
+		s = Regex.Replace(s, @"\b(beat|beaten|complete|completed|finish|finished|clear|cleared)\b", "beat");
+		s = Regex.Replace(s, @"\b(game|campaign|story|storyline|adventure)\b", "game");
+
+		return Regex.Replace(s, @"\s+", " ").Trim();
 	}
 
 	/// <summary>
@@ -1352,6 +2033,13 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				continue;
 			}
 
+			// Only a step of the same part holds an ending: an add-on's step never holds the base game's ending (the add-on
+			// is played after, if at all), nor one add-on's step another's - Black Ops 6's missions don't hold Modern
+			// Warfare II's campaign. The base game's ending before an add-on's is VariantBlocked's.
+			if (other.AddOnPart != a.AddOnPart) {
+				continue;
+			}
+
 			Traits them = TraitsOf(other);
 
 			// A still-locked step of this story - numbered ("complete chapter 3", "Mission 7") or named ("Complete Blood
@@ -1401,12 +2089,16 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	///   • "Contain the Citadel core without killing any stalkers" after "Contain the Citadel core"; "Complete the Game
 	///     in Under 4 Hours" after "Complete the Game"; "Halo 2: Complete Delta Halo without entering a vehicle" after
 	///     "Halo 2: Complete Delta Halo". The harder one is the plain one's words with more asked on the end.
-	///   • A DLC's ending after the game's own: "Finish the Whistleblower DLC" after "Finish the game".
+	///   • A DLC's ending after the game's own: "Finish the Whistleblower DLC" after "Finish the game". Which ones are an
+	///     add-on's is what the game's DLC map says (<see cref="Achievement.AddOn"/>) as well as the words DLC and
+	///     expansion: Cuphead's "Complete your quest on Inkwell Isle IV" names no DLC, but sits in The Delicious Last
+	///     Course's block.
 	///   • Prestige after the level it takes: "Enter Prestige" after "Reach Level 55".
 	/// </summary>
 	private static bool VariantBlocked(Achievement a, IReadOnlyCollection<Achievement> all) {
 		Traits me = TraitsOf(a);
-		bool dlcEnd = (me.Ending || me.Named || Regex.IsMatch(me.Core, @"^(complete|completed|finish|finished|beat|beaten)\b")) && Regex.IsMatch(me.Modes, @"\b(dlc|expansion)\b");
+		bool dlcEnd = (me.Ending || me.Named || Regex.IsMatch(me.Core, @"^(complete|completed|finish|finished|beat|beaten|defeat|defeated)\b"))
+			&& (a.AddOn || Regex.IsMatch(me.Modes, @"\b(dlc|expansion)\b"));
 
 		foreach (Achievement other in all) {
 			if (other.Unlocked || (other.Name == a.Name) || !CouldComeFirst(other, a)) {
@@ -1422,7 +2114,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				return true;
 			}
 
-			if (dlcEnd && them.PlainEnding && (them.Label == me.Label) && !Regex.IsMatch(them.Modes, @"\b(dlc|expansion)\b")) {
+			if (dlcEnd && them.PlainEnding && (them.Label == me.Label) && !other.AddOn && !Regex.IsMatch(them.Modes, @"\b(dlc|expansion)\b")) {
 				return true;
 			}
 
@@ -1542,15 +2234,63 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// setting can make an account unlock something it has not put the hours in for - "brisk" simply spends
 	/// its eligible unlocks sooner, it does not get more of them.
 	/// </summary>
-	private int Paced(int minutes) => Bot.Cfg.AchievementPace switch {
+	private int Paced(int minutes) => PaceMinutes(Bot.Cfg.AchievementPace, minutes);
+
+	/// <summary>The pace as one of its three choices: 0 careful, 1 normal, 2 brisk - anything else is normal.</summary>
+	internal static int PaceOf(int pace) => pace is 0 or 2 ? pace : 1;
+
+	/// <summary>
+	/// Minutes of waiting at a pace: careful twice as long, brisk half (never under a minute), normal as it is.
+	/// </summary>
+	internal static int PaceMinutes(int pace, int minutes) => PaceOf(pace) switch {
 		0 => minutes * 2,
 		2 => Math.Max(1, minutes / 2),
 		_ => minutes
 	};
 
+	/// <summary>
+	/// The minutes the game has to be really played between two unlocks, at a pace: the game's own figure (onboarding
+	/// or steady), doubled when careful, halved when brisk. A wait like any other - only the hours-based rarity floor and
+	/// the order rules are untouched by the pace.
+	/// </summary>
+	private static int PlayedGate(Profile prof, bool onboarding, int pace) => PaceMinutes(pace, onboarding ? prof.OnboardPlayedMins : prof.SteadyPlayedMins);
+
+	/// <summary>
+	/// A wait spaced at one pace, re-spaced at another from when it started: half way through a careful wait, brisk
+	/// leaves a quarter of the careful one from its start - which may already be past.
+	/// </summary>
+	internal static DateTime Repace(DateTime from, DateTime next, int wasPace, int nowPace) {
+		double factor(int p) => PaceOf(p) switch { 0 => 2.0, 2 => 0.5, _ => 1.0 };
+
+		return from.AddMinutes((next - from).TotalMinutes / factor(wasPace) * factor(nowPace));
+	}
+
+	/// <summary>
+	/// "How fast" changed since the wait was spaced out: the rest of it is stretched or shortened now, so the new pace
+	/// counts from the next minute rather than after a wait spaced at the old one. Called under the gate.
+	///
+	/// A wait a grind pulled forward keeps the earlier of the two: re-spaced from where it started, a slower pace put the
+	/// grind's first unlock back hours out - exactly what pulling it forward was for.
+	/// </summary>
+	private static void RepaceIfChanged(GameState g, int pace) {
+		if ((g.PaceUsed >= 0) && (g.PaceUsed != PaceOf(pace)) && (g.NextAllow > DateTime.UtcNow)) {
+			g.NextAllow = Respaced(g.PacedFrom, g.NextAllow, g.PaceUsed, pace, g.Pulled);
+			g.PaceUsed = PaceOf(pace);
+		}
+	}
+
+	/// <summary>A wait re-spaced at a new pace - never later than it is when a grind has pulled it forward.</summary>
+	internal static DateTime Respaced(DateTime from, DateTime next, int wasPace, int nowPace, bool pulled) {
+		DateTime repaced = Repace(from, next, wasPace, nowPace);
+
+		return pulled && (repaced > next) ? next : repaced;
+	}
+
 	private void Back(GameState g, TimeSpan wait) {
 		lock (_gate) {
 			g.NextAllow = DateTime.UtcNow.Add(wait);
+			g.PaceUsed = -1;
+			g.Pulled = false;
 		}
 	}
 
@@ -1559,25 +2299,42 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// Steam-awarded achievements left, or only ones held for DLC - from DLC it doesn't own, or in a game where it can't
 	/// be told which come with its DLC. The hunter skips such a game rather than spend a sitting earning nothing, until
 	/// the ceiling is raised or the account's licences change.
+	///
+	/// So does it a game where nothing left could open now - waiting on the game's own counters, too rare for this account
+	/// ever, waiting on ones that stay locked - or that is "Steam only" because Steam refused some lately. Those can change
+	/// by themselves, so only for a while: a few days (a week for a refusal), or until the owner plays the game (see
+	/// <see cref="Current"/>). Then the hunt comes back to it.
 	/// </summary>
 	public bool NothingLeft(uint app) {
 		lock (_gate) {
-			return _games.TryGetValue(app, out GameState? g) && (Current(g) is Outcome.Complete or Outcome.SteamOnly or Outcome.Capped or Outcome.DlcOnly or Outcome.DlcUnmapped);
+			return _games.TryGetValue(app, out GameState? g)
+				&& (Current(g) is Outcome.Complete or Outcome.SteamOnly or Outcome.Capped or Outcome.DlcOnly or Outcome.DlcUnmapped or Outcome.Multiplayer
+					or Outcome.CountersOnly or Outcome.NothingOpen);
 		}
 	}
 
 	/// <summary>
-	/// Where a game stops: the ceiling's share of what the account can reach, never below the onboarding cluster, never
-	/// more than there is. <paramref name="reachable"/> leaves out DLC it doesn't own - counted in, a game whose DLC
-	/// is most of its list could never get to its ceiling, and would be played for nothing for ever.
+	/// Where a game stops: the ceiling's share of what the account can reach, never more than there is. <paramref
+	/// name="reachable"/> leaves out DLC it doesn't own - counted in, a game whose DLC is most of its list could never get
+	/// to its ceiling, and would be played for nothing for ever.
+	///
+	/// The onboarding cluster lifts it only as far as the ceiling rounds: a short game with an early burst (Portal
+	/// onboards 5 of its 15) isn't cut off a little below its share, but a game with one to three achievements can't be
+	/// taken past the ceiling on the cluster's account. Three at 90% is 2.7 - three is what that rounds to, so all three;
+	/// three at 50% is 1.5 - two, never all three; one at 40% is none.
 	/// </summary>
-	internal static int CeilingCount(int reachable, int ceilingPercent, int onboard) =>
-		Math.Min(reachable, Math.Max(onboard, reachable * Math.Clamp(ceilingPercent, 1, 100) / 100));
+	internal static int CeilingCount(int reachable, int ceilingPercent, int onboard) {
+		int percent = Math.Clamp(ceilingPercent, 1, 100);
+		int share = reachable * percent / 100;
+		int rounded = (int) Math.Round(reachable * percent / 100.0, MidpointRounding.AwayFromZero);
+
+		return Math.Min(reachable, Math.Max(share, Math.Min(onboard, rounded)));
+	}
 
 	private GameState StateFor(uint app) {
 		lock (_gate) {
 			if (!_games.TryGetValue(app, out GameState? g)) {
-				g = new GameState();
+				g = new GameState { App = app };
 				_games[app] = g;
 			}
 
@@ -1622,7 +2379,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		bool Running,
 		string State,
 		int DlcHeld = 0,        // locked ones from DLC this account doesn't own, left alone
-		bool Unmapped = false   // can't tell which achievements come with its DLC: everything but its owned DLC's left alone
+		bool Unmapped = false,  // left alone, and can't tell which achievements come with its DLC: everything but its owned DLC's left alone
+		int Multiplayer = 0     // locked multiplayer ones, skipped
 	);
 
 	/// <summary>
@@ -1671,7 +2429,8 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						live.Contains(kv.Key),
 						Current(kv.Value).ToString(),
 						kv.Value.DlcHeld,
-						kv.Value.Unmapped);
+						kv.Value.Unmapped,
+						kv.Value.Multiplayer);
 				})
 				.ToList();
 		}
@@ -1694,13 +2453,21 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				.First();
 
 			Said said = DescribeOne(app, g);
+			Outcome now = Current(g);
 
 			// Held back for DLC it doesn't own: said on every line but the one that is already about exactly that.
-			return (g.DlcHeld > 0) && (Current(g) is not (Outcome.DlcOnly or Outcome.DlcUnmapped))
-				? new Said("{0} ({1})", said, g.Unmapped
+			if ((g.DlcHeld > 0) && (now is not (Outcome.DlcOnly or Outcome.DlcUnmapped))) {
+				said = new Said("{0} ({1})", said, g.Unmapped
 					? new Said("can't tell which achievements come with its DLC - {0} left alone", g.DlcHeld)
-					: new Said("{0} achievement(s) are from DLC this account doesn't own - left alone", g.DlcHeld))
-				: said;
+					: new Said("{0} achievement(s) are from DLC this account doesn't own - left alone", g.DlcHeld));
+			}
+
+			// The same for the multiplayer ones it skips.
+			if ((g.Multiplayer > 0) && (now != Outcome.Multiplayer)) {
+				said = new Said("{0} ({1})", said, new Said("{0} multiplayer ones skipped", g.Multiplayer));
+			}
+
+			return said;
 		}
 	}
 
@@ -1721,6 +2488,14 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				return new Said("{0}: {1}/{2} - stopped at your {3}% ceiling", GameNames.Of(app), g.Unlocked, g.Total, g.CappedAt);
 			case Outcome.NeedsHours:
 				return new Said("{0}: {1}h in - the next ones need more hours in it", GameNames.Of(app), hours.ToString("0.#"));
+			case Outcome.Multiplayer:
+				return new Said("{0}: {1}/{2} - the rest are multiplayer achievements, which this account skips", GameNames.Of(app), g.Unlocked, g.Total);
+			case Outcome.NoRarity:
+				return new Said("{0}: waiting for Steam's figures on how many players have each achievement", GameNames.Of(app));
+			case Outcome.CountersOnly:
+				return new Said("{0}: {1}/{2} - the rest count something in the game, and wait for the game's own counter", GameNames.Of(app), g.Unlocked, g.Total);
+			case Outcome.NothingOpen:
+				return new Said("{0}: {1}/{2} - nothing left it would earn for now; looked at again in a few days", GameNames.Of(app), g.Unlocked, g.Total);
 			case Outcome.DlcOnly:
 				// Some of the rest only Steam can award: said, rather than calling them all DLC.
 				return (g.DlcHeld > 0) && (g.Unlocked >= 0) && (g.DlcHeld < g.Total - g.Unlocked)
@@ -1734,7 +2509,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 		Profile prof = ProfileFor(app);
 		bool onboarding = (g.Unlocked < 0) || (g.Unlocked < prof.OnboardCount);
-		int playedGate = onboarding ? prof.OnboardPlayedMins : prof.SteadyPlayedMins;
+		int playedGate = PlayedGate(prof, onboarding, Bot.Cfg.AchievementPace);
 		long shortBy = playedGate - (g.PlayedMins - g.MinsAtLastUnlock);
 
 		// Report the gate that is actually holding it up. "next after <time>" while the spacing had long
@@ -1780,11 +2555,34 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		public long MapStamp { get; set; }
 		public long HoldKey { get; set; }
 
-		// Absent from older files: null, so a game held whole before the owner could be asked is asked about once.
-		public string? DlcAsked { get; set; }
+		// Absent from older files: false. A game held whole then (Unmapped) had it too - see Load.
+		public bool Unclear { get; set; }
 
 		// Absent from older files: null - read again the next time the game is looked at.
 		public string? DlcKey { get; set; }
+
+		// Absent from older files: 0 and none. A game stopped under rules 0 on an account whose rules aren't 0 is looked at
+		// again once (see RulesChanged).
+		public int Multiplayer { get; set; }
+		public int Rules { get; set; }
+		public Dictionary<string, DateTime>? Refused { get; set; }
+
+		// Only read, from files written while a human-mode account left add-on-looking achievements alone: such a game is
+		// let go once (see Load). Never written - always 0 now.
+		public int Likely { get; set; }
+
+		// Absent from older files: 0, MinValue, -1-ish defaults - see Load for the stops that came without an end.
+		public int Counters { get; set; }
+		public DateTime RecheckAt { get; set; }
+		public long StuckLibMins { get; set; } = -1;
+		public long StuckOwnMins { get; set; }
+		public DateTime WroteOkAt { get; set; }
+		public int PaceUsed { get; set; } = -1;
+		public DateTime PacedFrom { get; set; }
+
+		// Absent from older files: null. StuckOwnMins was PlayedMins then, so RanMins starts from that (see Load).
+		public long? RanMins { get; set; }
+		public Dictionary<string, List<DateTime>>? Strikes { get; set; }
 	}
 
 	private static string PathFor(string bot) => Path.Combine(ConfigStore.ConfigDir, "state", $"cheevo-{bot}.json");
@@ -1805,9 +2603,12 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				return;
 			}
 
+			int released = 0;
+
 			lock (_gate) {
 				foreach (Saved s in saved) {
 					_games[s.App] = new GameState {
+						App = s.App,
 						PlayedMins = s.PlayedMins,
 						MinsAtLastUnlock = s.MinsAtLastUnlock,
 						NextAllow = s.NextAllow,
@@ -1822,8 +2623,23 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						DlcOwned = s.DlcOwned ?? [],
 						MapStamp = s.MapStamp,
 						HoldKey = s.HoldKey,
-						DlcAsked = s.DlcAsked,
-						DlcKey = s.DlcKey
+						// Held whole before it was kept: it can't have been for anything else.
+						Unclear = s.Unclear || s.Unmapped,
+						DlcKey = s.DlcKey,
+						Multiplayer = s.Multiplayer,
+						Counters = s.Counters,
+						// Without the old human-mode bit (1), which RulesOf no longer gives. Kept, every game stopped on a
+						// human-mode account read as stopped under other rules and was let go once, for a sitting each.
+						Rules = s.Rules & ~1,
+						Refused = s.Refused ?? [],
+						RecheckAt = s.RecheckAt,
+						StuckLibMins = s.StuckLibMins,
+						StuckOwnMins = s.StuckOwnMins,
+						RanMins = s.RanMins ?? s.PlayedMins,
+						WroteOkAt = s.WroteOkAt,
+						PaceUsed = s.PaceUsed,
+						PacedFrom = s.PacedFrom,
+						Strikes = s.Strikes ?? []
 					};
 
 					// A file written before outcomes existed says nothing about them, and a finished or capped game
@@ -1835,6 +2651,41 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 					// was kept as Steam-only, and nothing ever looked at it again when the DLC was bought. Held for DLC now.
 					if ((g.Last == Outcome.SteamOnly) && (g.DlcHeld > 0)) {
 						g.Last = g.Unmapped ? Outcome.DlcUnmapped : Outcome.DlcOnly;
+					}
+
+					// Held whole because it couldn't be told which achievements come with an add-on it doesn't own. Such a
+					// game earns anyway now, base game first - unless the owner left it alone. Let go at once, so the
+					// pacer and the hunt pick it up again: left to the minute's licence look, it waited for its map to be
+					// built again - up to a week. What it could reach was counted without the guesses, so that's
+					// forgotten too; otherwise it could read as capped below.
+					if ((g.Last == Outcome.DlcUnmapped) && !Bot.Cfg.AchievementDlcLeft.ContainsKey(s.App)) {
+						g.Last = Outcome.Unknown;
+						g.NextAllow = DateTime.UtcNow;
+						g.Unmapped = false;
+						g.Reachable = 0;
+						g.DlcHeld = 0;
+						released++;
+					}
+
+					// Held because a human-mode account left the add-on-looking ones alone. Nothing is held on the layout any
+					// more - they're only earned last - so it is let go at once, and what it can reach is worked out again.
+					if ((s.Likely > 0) && (g.Last is Outcome.DlcOnly or Outcome.Capped)) {
+						g.Last = Outcome.Unknown;
+						g.NextAllow = DateTime.UtcNow;
+						g.Reachable = 0;
+						released++;
+					}
+
+					// Stopped for counters before that stop had an end: for good, by mistake. Looked at again now.
+					if ((g.Last == Outcome.CountersOnly) && (g.RecheckAt == DateTime.MinValue)) {
+						g.Last = Outcome.Unknown;
+						g.NextAllow = DateTime.UtcNow;
+						released++;
+					}
+
+					// "Steam only" with refusals kept, from before that ended with them: it ends when the first one does.
+					if ((g.Last == Outcome.SteamOnly) && (g.RecheckAt == DateTime.MinValue) && (g.Refused.Count > 0)) {
+						g.RecheckAt = g.Refused.Values.Min() + RefusedFor;
 					}
 
 					if ((g.Last == Outcome.Unknown) && (g.Total > 0) && (g.Unlocked >= 0)) {
@@ -1852,6 +2703,10 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			}
 
 			Log.Debug(new Said("achievement pacing restored for {0} game(s)", saved.Count), Bot.Name);
+
+			if (released > 0) {
+				Log.Debug($"{released} game(s) held on a guess about add-ons, or stopped for counters for good, are let go - they're looked at again", Bot.Name);
+			}
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't read the achievement state: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
 		}
@@ -1914,6 +2769,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 					}
 
 					_games[app] = new GameState {
+						App = app,
 						PlayedMins = mins,
 						MinsAtLastUnlock = mins,
 						NextAllow = next,
@@ -1933,7 +2789,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>
-	/// Held from the copy to the write: the dashboard's "carry on" saves from its own thread while the minute's tick
+	/// Held from the copy to the write: an undo on the dashboard saves from its own thread while the minute's tick
 	/// saves from this one. Without it, a copy taken earlier could be written last and put back what the later one changed.
 	/// </summary>
 	private readonly Lock _saveGate = new();
@@ -1965,8 +2821,26 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 					DlcOwned = kv.Value.DlcOwned,
 					MapStamp = kv.Value.MapStamp,
 					HoldKey = kv.Value.HoldKey,
-					DlcAsked = kv.Value.DlcAsked,
-					DlcKey = kv.Value.DlcKey
+					Unclear = kv.Value.Unclear,
+					DlcKey = kv.Value.DlcKey,
+					Counters = kv.Value.Counters,
+					RecheckAt = kv.Value.RecheckAt,
+					StuckLibMins = kv.Value.StuckLibMins,
+					StuckOwnMins = kv.Value.StuckOwnMins,
+					RanMins = kv.Value.RanMins,
+					WroteOkAt = kv.Value.WroteOkAt,
+					PaceUsed = kv.Value.PaceUsed,
+					PacedFrom = kv.Value.PacedFrom,
+					Multiplayer = kv.Value.Multiplayer,
+					Rules = kv.Value.Rules,
+					// A copy: the tick changes the live one while this is written out. Only the last week's - older ones
+					// are tried again anyway.
+					Refused = kv.Value.Refused.Where(static r => DateTime.UtcNow - r.Value < RefusedFor).ToDictionary(static r => r.Key, static r => r.Value),
+					// The same: a copy, and only what still counts.
+					Strikes = kv.Value.Strikes
+						.Select(static s => (s.Key, Times: s.Value.Where(static t => DateTime.UtcNow - t <= StrikesKept).ToList()))
+						.Where(static s => s.Times.Count > 0)
+						.ToDictionary(static s => s.Key, static s => s.Times)
 				}).ToList();
 			}
 

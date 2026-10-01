@@ -94,9 +94,13 @@ plays exactly as it did.
 *Learn from how I play* (off, a little, a lot) notes when you play on the account yourself, and which games. After 7
 days of that, its day leans toward yours: about 30% of the way (a little) or 70% (a lot) toward when you get on and
 when you stop, and toward how you split your time between the games in *Games and how often*. It never adds a game
-that isn't in that list, and how long it plays still comes from the hours settings. It keeps the last 60 days.
-`habits myaccount` shows what it has seen (days, your usual hours, top games, and games you play that aren't in the
-list), and `habits myaccount forget` wipes it.
+that isn't in that list, and how long it plays still comes from the hours settings. It keeps the last 60 days, and
+older days count less and less: *Keeps up with changes* sets how fast - a day counts half as much after 7 days
+(quickly), 14 (normal) or 28 (slowly), so a new routine takes over in about a week, two weeks or a month.
+*Weekends separately* (on by default) learns your Saturdays and Sundays apart from the weekdays, once it has seen 5
+weekdays and 4 weekend days of their own; until then that half goes by your whole week. `habits myaccount` shows what
+it has seen (days, when you're usually on and off, top games, a game you play more than the list says, and games you
+play that aren't in the list), and `habits myaccount forget` wipes it.
 
 *Play new games more at first* gives a game that has just arrived (bought, gifted or free) extra sittings for 3 to 10
 days, fewer each day, at most 3 sittings a day. Blacklisted or family-shared games and games your other accounts

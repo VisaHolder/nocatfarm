@@ -40,11 +40,19 @@ namespace NocatFarm.Core;
 /// DOES own are unlocked (<see cref="Map.Sure"/>), and the rest of the game is left alone. Holding a game costs nothing - the hunt moves on. Unlocking
 /// one wrong achievement can't be taken back.
 ///
-/// The one way past that is the owner's word: a game on the account's AchievementDlcTrusted list (the dashboard asks
-/// about each held game, and "I own what matters - carry on" puts it there) has every DLC that can't be placed counted
-/// as owned, so nothing in it is held on a guess. A DLC whose achievements ARE known exactly is still judged by the
-/// licences: Call of Duty on an account with Modern Warfare II but not III, vouched for, still never has III's 39
-/// unlocked (see <see cref="Counted"/>).
+/// That is the rule on its own. What the pacer, the hunt and 'cheevo unlock' go by is gentler: a game isn't held whole
+/// on a guess. Every DLC that can't be placed is counted as owned (see <see cref="Counted"/>), so the game earns anyway.
+/// Something is held only on certain evidence, the same on every account, human mode or not:
+///   • the exact block of a DLC the account doesn't own for good (the store's figures and names lined up);
+///   • an achievement whose name or description names a DLC it doesn't own;
+///   • "DLC" in the API name (Cuphead's CompleteWorldDLC) while the account is missing any of the game's add-ons that
+///     aren't only looks (<see cref="NamedDlcHeld"/>).
+/// The game's own layout - its first block of achievement stats, then a jump - is only ever used for the ORDER: what
+/// comes after the jump looks like an add-on's (<see cref="View.AddOnLikely"/>) and is earned after every eligible
+/// base-game one, never held. Read off real games it is wrong both ways: Fallout: New Vegas and Borderlands 2 put their
+/// add-ons straight after the base game with no gap, and PAYDAY 2, Dead by Daylight and Left 4 Dead 2 put free updates
+/// of the base game after one. Only a game the owner asked to have left alone ('dlc leave', kept in AchievementDlcLeft)
+/// keeps to the rule above. Call of Duty on an account with Modern Warfare II but not III never has III's 39 unlocked.
 ///
 /// Built lazily, only for games something is about to unlock in, one game at a time, slowly (the store answers about
 /// two hundred questions every five minutes for everything on this PC, and a game like Call of Duty has close to a
@@ -68,9 +76,8 @@ public static class DlcAchievements {
 	/// word that can mean something else only counts with a pack after it, more words say a DLC has something to play,
 	/// and a game that can't be fully mapped keeps the certain part of each block (<see cref="Map.Sure"/>). 4 and 5: an
 	/// amount of money only makes a currency pack at the end of the name or before a pack word, with two digits or more
-	/// ("1849 Gold Rush" and "The 7 Gems" are stories). 6: the map keeps the game's whole DLC list, which the "leave it
-	/// paused" answer is keyed on - one built before had only the DLC with achievements, and its first rebuild changed
-	/// the key and asked again. A map saved
+	/// ("1849 Gold Rush" and "The 7 Gems" are stories). 6: the map keeps the game's whole DLC list, which a game left
+	/// alone ('dlc leave') is remembered with - one built before had only the DLC with achievements. A map saved
 	/// under older rules (0: before this was kept) is built again at once, and used as it is for the minute or two that
 	/// takes.
 	/// </summary>
@@ -200,7 +207,7 @@ public static class DlcAchievements {
 		/// <summary>
 		/// Every id of every DLC the game has - Steam's list and the store's, and the store app a DLC's page really is -
 		/// with achievements or not. The same however the map was built: a hurried build and a full one group the DLC
-		/// differently, but the game's DLC are the same ones. What the owner's answer is remembered against
+		/// differently, but the game's DLC are the same ones. What 'dlc leave' is remembered with
 		/// (<see cref="LicenceKey"/>). Null on maps saved before it was kept: then the ids in <see cref="Groups"/>.
 		/// </summary>
 		public List<uint>? Dlc { get; set; }
@@ -319,9 +326,8 @@ public static class DlcAchievements {
 
 	/// <summary>
 	/// The ids of the game's DLC this account has for good (<paramref name="owns"/>), as one string in order. Only the
-	/// licences: never the owner's "carry on", and never how the map grouped the DLC - so it reads the same before and
-	/// after an answer, and after the map is built again (in a hurry, or in full). What "leave it paused" is remembered
-	/// with, and what asks again once it changes: a DLC bought, or one refunded.
+	/// licences, never how the map grouped the DLC - so it reads the same after the map is built again (in a hurry, or in
+	/// full). What 'dlc leave' is remembered with.
 	/// </summary>
 	public static string LicenceKey(Map? map, Func<uint, bool> owns) {
 		if (map == null) {
@@ -334,15 +340,14 @@ public static class DlcAchievements {
 	}
 
 	/// <summary>
-	/// The DLC the rule counts as owned: what the licences say - and, for a game the owner vouched for
-	/// (AchievementDlcTrusted, "I own what matters - carry on"), every DLC that can't be placed as well. Their word
-	/// covers only what nobody can know: which achievements come with a DLC Steam says nothing about. A DLC that IS
-	/// placed is still judged by the licences, so its block stays held on an account without it - the owner's Call of
-	/// Duty, vouched for, has Modern Warfare II but not III, and III's 39 are never unlocked. Only for that game; every
-	/// other game keeps to its licences.
+	/// The DLC the rule counts as owned: what the licences say - and, when the game earns anyway (every game but one the
+	/// owner left alone), every DLC that can't be placed as well. That covers only what nobody can know: which
+	/// achievements come with a DLC Steam says nothing about. A DLC that IS placed is still judged by the licences, so its
+	/// block stays held on an account without it - Call of Duty on an account with Modern Warfare II but not III never
+	/// has III's 39 unlocked.
 	/// </summary>
-	public static HashSet<uint> Counted(Map? map, IReadOnlySet<uint> licensed, bool trusted) =>
-		trusted && (map != null)
+	public static HashSet<uint> Counted(Map? map, IReadOnlySet<uint> licensed, bool anyway) =>
+		anyway && (map != null)
 			? [.. licensed, .. map.Groups.Where(static g => g.Unsure != Doubt.None).Select(static g => g.App)]
 			: [.. licensed];
 
@@ -354,6 +359,40 @@ public static class DlcAchievements {
 	/// </summary>
 	public static bool CertainlyNotOwned(Map? map, string apiName, IReadOnlySet<uint> ownedGroups) =>
 		(map?.Sure != null) && map.Sure.TryGetValue(apiName.ToLowerInvariant(), out List<uint>? sure) && sure.Any(d => !ownedGroups.Contains(d));
+
+	/// <summary>
+	/// Is the account missing any of the game's add-ons that may bring something to play? Every DLC in the map's groups
+	/// is one: placed, unplaceable, or named in an achievement. Soundtracks, artbooks, skin packs and in-game money never
+	/// make a group (<see cref="Harmless"/>), so a game whose only missing DLC are those isn't missing anything here.
+	/// </summary>
+	public static bool MissingAny(Map? map, IReadOnlySet<uint> licensed) => (map != null) && map.Groups.Any(g => !licensed.Contains(g.App));
+
+	/// <summary>
+	/// "DLC" in its API name, and the account is missing an add-on that may bring something to play: held. Cuphead's
+	/// CompleteWorldDLC on an account without The Delicious Last Course. It's the one guess certain enough to hold on -
+	/// a game names an achievement DLC because it comes with one.
+	/// </summary>
+	public static bool NamedDlcHeld(Map? map, string apiName, IReadOnlySet<uint>? licensed) =>
+		(licensed != null) && NamedDlc(apiName) && MissingAny(map, licensed);
+
+	/// <summary>
+	/// The rule with every certain hold in: <see cref="HoldOf"/>; an achievement a DLC claims - by its exact block, or by
+	/// being named in its text ("Complete Old World Blues") - judged by the licences, even a DLC Steam doesn't place (those
+	/// are only counted as owned for what nobody can tell, never for one that names them); and an achievement named "DLC"
+	/// while the account is missing an add-on (<see cref="NamedDlcHeld"/>). <paramref name="licensed"/> null: only
+	/// <see cref="HoldOf"/>.
+	/// </summary>
+	public static Hold EffectiveHold(Map? map, string apiName, IReadOnlySet<uint> owned, IReadOnlySet<uint>? licensed) {
+		Hold hold = HoldOf(map, apiName, owned);
+
+		if ((hold != Hold.None) || (licensed == null) || (map == null)) {
+			return hold;
+		}
+
+		bool claimed = map.Owners.TryGetValue(apiName.ToLowerInvariant(), out List<uint>? needs) && needs.Any(d => !licensed.Contains(d));
+
+		return claimed || NamedDlcHeld(map, apiName, licensed) ? Hold.NotOwned : hold;
+	}
 
 	/// <summary>
 	/// How far through a game an account can really get: the achievements it has, and how many there are once the ones
@@ -376,25 +415,106 @@ public static class DlcAchievements {
 		return (unlocked, total - held, held);
 	}
 
+	/// <summary>
+	/// How far apart two achievement stats have to be, in stat numbers, to start a new block - for the ORDER only, never
+	/// to hold anything (free updates of the base game are put after a jump too: PAYDAY 2, Dead by Daylight). A game keeps its
+	/// achievements as bits of numbered stats, 32 to a stat, and the base game's fill stats 1, 2, 3... in a row. An
+	/// add-on added later is usually given stats of its own further on: Cuphead's base game is stat 2 and The Delicious
+	/// Last Course stat 5; Call of Duty's are 1, then 68, 97, 135. One empty stat is not a jump - Stardew Valley's own
+	/// achievements are in stats 1 and 3, Stellaris's in 4 and 6 - so a block ends only where two or more are skipped.
+	/// </summary>
+	public const int BlockJump = 3;
+
+	/// <summary>
+	/// The base game's block, read from the game's own layout: the achievements (API name, lower case) from the first
+	/// stat up to the first jump of <see cref="BlockJump"/> or more. A game with no such jump is one block, all of it.
+	/// Fallout: New Vegas, Borderlands 2 and Cyberpunk 2077 put their add-ons straight after the base game, with no gap,
+	/// and there this can't tell them apart - only a name can (<see cref="Map.Owners"/>, or "DLC" in the API name).
+	/// </summary>
+	public static HashSet<string> BaseBlock(IReadOnlyCollection<Achievement> all) {
+		List<uint> stats = [.. all.Select(static a => a.StatId).Distinct().Order()];
+		HashSet<string> block = new(StringComparer.Ordinal);
+
+		if (stats.Count == 0) {
+			return block;
+		}
+
+		uint last = stats[0];
+
+		foreach (uint s in stats.Skip(1)) {
+			if (s - last >= BlockJump) {
+				break;
+			}
+
+			last = s;
+		}
+
+		foreach (Achievement a in all.Where(a => a.StatId <= last)) {
+			block.Add(a.Name.ToLowerInvariant());
+		}
+
+		return block;
+	}
+
+	/// <summary>"DLC" in the API name: Cuphead's CompleteWorldDLC and SRankAnyDLC are The Delicious Last Course's.</summary>
+	public static bool NamedDlc(string apiName) => apiName.Contains("dlc", StringComparison.OrdinalIgnoreCase);
+
+	/// <summary>
+	/// Which achievements (API name, lower case) belong to an add-on, owned or not, as far as can be told - and which
+	/// add-on. Every one a DLC claims in the map (its exact block, or a DLC named in its text): that DLC, by id. And in a
+	/// game with an add-on Steam doesn't place (<see cref="Doubt"/>), also every one outside the game's first block
+	/// (<see cref="BaseBlock"/>) and every one with "DLC" in its API name: "?", an add-on nobody can name. There nothing
+	/// better is known, and Steam has a game's own achievements first. A fully mapped game is left to its map - Stardew
+	/// Valley's second block is its own. The "?" ones only go last; they are never held for it.
+	/// </summary>
+	public static Dictionary<string, string> AddOnParts(Map? map, IReadOnlyCollection<Achievement> all) {
+		Dictionary<string, string> addOn = new(StringComparer.Ordinal);
+
+		if (map == null) {
+			return addOn;
+		}
+
+		bool guess = map.Groups.Any(static g => g.Unsure != Doubt.None);
+		HashSet<string> baseBlock = guess ? BaseBlock(all) : [];
+
+		foreach (Achievement a in all) {
+			string key = a.Name.ToLowerInvariant();
+
+			if (map.Owners.TryGetValue(key, out List<uint>? needs) && (needs.Count > 0)) {
+				addOn[key] = string.Join("+", needs.Order());
+			} else if (guess && (!baseBlock.Contains(key) || NamedDlc(a.Name))) {
+				addOn[key] = "?";
+			}
+		}
+
+		return addOn;
+	}
+
 	/// <summary>One account's view of one game: the map, and which of its DLC the account owns.</summary>
 	public sealed class View {
 		public Map? Map { get; init; }
 
-		/// <summary>The DLC the rule counts as owned - see <see cref="Counted"/>. In a game the owner vouched for, every one that can't be placed too.</summary>
+		/// <summary>The DLC the rule counts as owned - see <see cref="Counted"/>. Unless the game is left alone, every one that can't be placed too.</summary>
 		public HashSet<uint> Owned { get; init; } = [];
 
-		/// <summary>The DLC its licences say it owns, vouched for or not - for saying what it really has.</summary>
+		/// <summary>The DLC its licences say it owns - for saying what it really has, and which achievements are a guess.</summary>
 		public HashSet<uint> Licensed { get; init; } = [];
 
 		/// <summary>
+		/// What the certain holds go by (<see cref="EffectiveHold"/>): the licences - which in a game left alone are what it
+		/// counts as owned anyway.
+		/// </summary>
+		public IReadOnlySet<uint> ByLicence => Trusted ? Licensed : Owned;
+
+		/// <summary>
 		/// Which of the game's DLC ids it has for good, as one string (<see cref="LicenceKey"/>) - null when the licences
-		/// weren't read. What the owner's answer about the game is remembered with.
+		/// weren't read. What 'dlc leave' is remembered with.
 		/// </summary>
 		public string? LicenceKey { get; init; }
 
 		/// <summary>
-		/// The owner vouched for this game (AchievementDlcTrusted): the DLC that can't be placed count as owned, the ones
-		/// that can still go by the licences - see <see cref="Counted"/>.
+		/// The game earns anyway: the DLC that can't be placed count as owned, the ones that can still go by the licences
+		/// - see <see cref="Counted"/>. True for every game but one the owner left alone (AchievementDlcLeft).
 		/// </summary>
 		public bool Trusted { get; init; }
 
@@ -420,12 +540,46 @@ public static class DlcAchievements {
 		/// </summary>
 		public bool Unmapped => Known && Unplaced(Map, Owned);
 
+		/// <summary>
+		/// The game has add-ons this account doesn't own whose achievements Steam doesn't place - whether it earns anyway
+		/// or was left alone. Such a game can be left alone ('dlc leave').
+		/// </summary>
+		public bool Unclear => Known && Unplaced(Map, Licensed);
+
+		/// <summary>
+		/// Allowed, but only because the game earns anyway: by the licences alone it would be held - it may be the base
+		/// game's, or come with an add-on Steam doesn't place. The pacer takes these after every one that is certainly the
+		/// base game's (or certainly from an add-on it owns), so if some do come with an add-on it doesn't own, they come
+		/// last - like a player who finishes the base game first. 'cheevo list' marks them [?].
+		/// </summary>
+		public bool Uncertain(Achievement a) =>
+			Known && Trusted && (Map != null) && (EffectiveHold(Map, a.Name, Owned, ByLicence) == Hold.None) && (HoldOf(Map, a.Name, Licensed) != Hold.None);
+
+		/// <summary>
+		/// Which of the game's achievements (API name, lower case) belong to an add-on, owned or not, as far as can be
+		/// told - see <see cref="AddOnParts"/>.
+		/// </summary>
+		public HashSet<string> AddOnSet(IReadOnlyCollection<Achievement> all) => new(AddOnParts(Map, all).Keys, StringComparer.Ordinal);
+
+		/// <summary>
+		/// Allowed only because the game earns anyway (<see cref="Uncertain"/>), and it looks like an add-on's: outside the
+		/// game's first block of achievements. Earned only after every eligible base-game one, on every account - never
+		/// held for it: the layout is a guess, and free updates of the base game sit after a jump as often as add-ons do.
+		/// One that is uncertain but sits in the base game's block is taken as the base game's - Steam has the game's own
+		/// achievements first.
+		/// </summary>
+		public bool AddOnLikely(Achievement a, IReadOnlySet<string> addOn) => Uncertain(a) && addOn.Contains(a.Name.ToLowerInvariant());
+
+		/// <summary>Held only because it has "DLC" in its API name and the account is missing an add-on (<see cref="NamedDlcHeld"/>).</summary>
+		public bool HeldForName(Achievement a) =>
+			Known && (Map != null) && (HoldOf(Map, a.Name, Owned) == Hold.None) && NamedDlcHeld(Map, a.Name, ByLicence);
+
 		public Hold Of(Achievement a) {
 			if (!Known) {
 				return Hold.Checking;
 			}
 
-			Hold hold = HoldOf(Map, a.Name, Owned);
+			Hold hold = EffectiveHold(Map, a.Name, Owned, ByLicence);
 
 			// One the map has never seen: a DLC added since, most likely. Worked out again soon, not in a week.
 			if ((hold == Hold.Checking) && (Bot != null) && (Map != null)) {
@@ -439,12 +593,12 @@ public static class DlcAchievements {
 		public bool Allows(Achievement a) => Of(a) == Hold.None;
 
 		/// <summary>
-		/// Is what this was worked out from still so: the account's licences the same, and the game still on (or still
-		/// off) the owner's vouched-for list? Asked right before a write - a DLC refunded or a game taken off the list
-		/// since, and what was allowed then may not be now. A game with no DLC has nothing to go stale.
+		/// Is what this was worked out from still so: the account's licences the same, and the game still left alone (or
+		/// still not)? Asked right before a write - a DLC refunded or the game left alone since, and what was allowed then
+		/// may not be now. A game with no DLC has nothing to go stale.
 		/// </summary>
 		public bool StillSo(Bot bot) =>
-			(Map is not { HasDlc: true } map) || ((bot.LicenseStamp == Licences) && (bot.Cfg.AchievementDlcTrusted.Contains(map.App) == Trusted));
+			(Map is not { HasDlc: true } map) || ((bot.LicenseStamp == Licences) && (!bot.Cfg.AchievementDlcLeft.ContainsKey(map.App) == Trusted));
 
 		/// <summary>Still locked, and from DLC this account doesn't own - or, in a game that can't be mapped, maybe.</summary>
 		public int HeldIn(AchievementSet set) => set.All.Count(a => !a.Unlocked && (Of(a) is Hold.NotOwned or Hold.Unmapped));
@@ -467,7 +621,7 @@ public static class DlcAchievements {
 		/// doesn't own, and in a game that can't be mapped, everything else outside the blocks of DLC it owns.
 		/// </summary>
 		public int NotOwnedCount => Known && (Map!.Names is { } names)
-			? names.Count(n => HoldOf(Map, n, Owned) is Hold.NotOwned or Hold.Unmapped)
+			? names.Count(n => EffectiveHold(Map, n, Owned, ByLicence) is Hold.NotOwned or Hold.Unmapped)
 			: Map?.Owners.Count(kv => !kv.Value.All(Owned.Contains)) ?? 0;
 
 		/// <summary>The DLC an achievement needs that this account doesn't own, by name.</summary>
@@ -481,9 +635,12 @@ public static class DlcAchievements {
 				return Unplaceable;
 			}
 
-			return map.Owners.TryGetValue(a.Name.ToLowerInvariant(), out List<uint>? needs) && (needs.Count > 0)
-				? [.. needs.Where(d => !Owned.Contains(d)).Select(d => NameOf(map, d))]
-				: [];
+			if (map.Owners.TryGetValue(a.Name.ToLowerInvariant(), out List<uint>? needs) && (needs.Count > 0)) {
+				return [.. needs.Where(d => !Owned.Contains(d) || !ByLicence.Contains(d)).Select(d => NameOf(map, d)).Distinct()];
+			}
+
+			// Named "DLC" while it's missing add-ons: those add-ons, since any of them may be the one.
+			return HeldForName(a) ? [.. map.Groups.Where(g => !ByLicence.Contains(g.App)).Select(g => NameOf(map, g.App))] : [];
 		}
 
 		/// <summary>The DLC this account doesn't own that stop the game being mapped, by name.</summary>
@@ -501,12 +658,6 @@ public static class DlcAchievements {
 	/// <summary>A DLC's name: the store's, or Steam's when the store has none (Black Ops 6 opens Call of Duty's page).</summary>
 	public static string DlcName(Map map, uint dlc) =>
 		map.Groups.FirstOrDefault(g => g.App == dlc)?.Name is { Length: > 0 } n ? n : GameNames.Of(dlc);
-
-	/// <summary>
-	/// The DLC this account doesn't own that stop the game being mapped, by name - what a game held whole is missing.
-	/// </summary>
-	public static List<string> UnplaceableNames(Map? map, IReadOnlyCollection<uint> owned) =>
-		map == null ? [] : [.. map.Groups.Where(g => (g.Unsure != Doubt.None) && !owned.Contains(g.App)).Select(g => DlcName(map, g.App))];
 
 	/// <summary>How old a map has to be before an achievement it has never seen has the game built again.</summary>
 	private static readonly TimeSpan UnfamiliarAfter = TimeSpan.FromHours(1);
@@ -546,9 +697,9 @@ public static class DlcAchievements {
 		// Read before the licences are: one that lands while they're being read then shows up as a change later.
 		long stamp = bot.LicenseStamp;
 
-		// The owner's word that this account has what matters in the game ("carry on"). Read each time, so taking the
-		// answer back holds it again from the next look.
-		bool trusted = bot.Cfg.AchievementDlcTrusted.Contains(app);
+		// Every game earns anyway - the add-ons Steam doesn't place counted as owned - but one the owner asked to have left
+		// alone ('dlc leave'). Read each time, so leaving a game alone, or taking that back, counts from the next look.
+		bool trusted = !bot.Cfg.AchievementDlcLeft.ContainsKey(app);
 
 		if ((map == null) || !map.HasDlc) {
 			return new View { Map = map, Bot = bot, Licences = stamp, Trusted = trusted };
@@ -558,8 +709,8 @@ public static class DlcAchievements {
 
 		// Nothing came back: Steam didn't answer, or the licence list hasn't arrived yet. That's "couldn't check", not
 		// "owns none of its DLC" - taken as that, the game would be called done for this account until its licences
-		// changed. Checking, and asked again in a few minutes. A game vouched for waits too: licences that can't be read
-		// may mean the account isn't all there yet, and a few minutes cost nothing.
+		// changed. Checking, and asked again in a few minutes. A game that earns anyway waits too: without the licences a
+		// DLC known exactly can't be told owned or not, and a few minutes cost nothing.
 		if (licences.Count == 0) {
 			return new View { Map = map, Bot = bot, Licences = stamp, OwnershipRead = false, Trusted = trusted };
 		}
@@ -593,7 +744,11 @@ public static class DlcAchievements {
 	/// number. The same map built again with nothing new says the same; a map that now places a DLC it couldn't, or
 	/// knows achievements it didn't, says something else - and a game held on the old one is looked at again.
 	/// </summary>
-	public static long HoldKey(Map? map, IReadOnlySet<uint> owned) {
+	/// <remarks>
+	/// With <paramref name="licensed"/>, the "DLC"-named holds are in it too (<see cref="EffectiveHold"/>): buying an add-on
+	/// the rule already counted as owned changes nothing else, and such a game would have stayed held.
+	/// </remarks>
+	public static long HoldKey(Map? map, IReadOnlySet<uint> owned, IReadOnlySet<uint>? licensed = null) {
 		if (map?.Names is not { } names) {
 			return 0;
 		}
@@ -601,7 +756,7 @@ public static class DlcAchievements {
 		ulong hash = 14695981039346656037UL;
 
 		foreach (string name in names.Order(StringComparer.Ordinal)) {
-			foreach (char c in name + ":" + (int) HoldOf(map, name, owned) + ";") {
+			foreach (char c in name + ":" + (int) EffectiveHold(map, name, owned, licensed) + ";") {
 				hash ^= c;
 				hash *= 1099511628211UL;
 			}
@@ -994,8 +1149,8 @@ public static class DlcAchievements {
 	/// </summary>
 	/// <remarks>
 	/// Kept narrow on purpose. A DLC called harmless that does bring achievements lets the rest of the game be unlocked
-	/// on an account without it - the thing all this is here to stop. One missed only holds a game back, and the owner
-	/// can vouch for that game ("I own what matters - carry on", kept in AchievementDlcTrusted).
+	/// on an account without it, in its normal order - and in a game left alone ('dlc leave'), too. One missed only puts
+	/// the achievements it can't place after the base game's.
 	/// </remarks>
 	public static bool Cosmetic(string name, string baseName = "") {
 		string plain = WithoutGame(name, baseName);

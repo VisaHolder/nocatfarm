@@ -292,9 +292,9 @@ public static partial class Notifier {
 		foreach (Block b in blocks) {
 			(_, int colour) = Look(b.Topic);
 			// Escaped: a line can be a stranger's words - a profile comment "[free case](https://...)" came up as a link
-			// with any text they liked on it. Cut before the code block is closed, so a long summary keeps its closing ```.
-			string description = b.Topic is Topic.Summary or Topic.Weekly
-				? "```\n" + Fit(string.Join('\n', b.Lines).Replace("```", "`​``", StringComparison.Ordinal), 3900) + "\n```"
+			// with any text they liked on it. A summary is a card, drawn in the site bot's look (CardMarkdown).
+			string description = Cards(b) is { } cards
+				? string.Join("\n\n", cards.Select(c => CardMarkdown(c, 4000 / cards.Count)))
 				: Fit(string.Join('\n', Capped(b, 15).Select(static l => "◆ " + Md(l))), 4000);
 			string title = Title(b);
 			int length = title.Length + description.Length + footer.Length;
@@ -435,7 +435,15 @@ public static partial class Notifier {
 	}
 
 	// ── Telegram ────────────────────────────────────────────────────────────
-	private static string Html(string s) => WebUtility.HtmlEncode(s);
+	/// <summary>
+	/// Text for Telegram's HTML: only &amp;, &lt; and &gt; - all it asks to be escaped. WebUtility's encoder turned "·" into
+	/// "&amp;#183;" and "'" into "&amp;#39;" as well, which made every summary line several characters longer than what shows,
+	/// and the summary was cut far sooner than Telegram's limit needed.
+	/// </summary>
+	private static string Html(string s) => s.Replace("&", "&amp;", StringComparison.Ordinal).Replace("<", "&lt;", StringComparison.Ordinal).Replace(">", "&gt;", StringComparison.Ordinal);
+
+	/// <summary>How long a piece of Telegram HTML is as Telegram counts it - the text that shows, tags gone and every entity one character.</summary>
+	internal static int Shown(string html) => WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(html, "<[^>]*>", "")).Length;
 
 	private static async Task<(bool Ok, string Why)> SendTelegramAsync(List<Block> blocks, CancellationToken ct) {
 		List<string> parts = [.. blocks.Select(TelegramPart)];
@@ -465,20 +473,24 @@ public static partial class Notifier {
 
 	/// <summary>
 	/// One block as Telegram HTML: "// CARDS · kylro" then "◆ card dropped in Rust - 2 to go" - the owner's site bot's look,
-	/// no emoji. Never over 3900 characters, and cut a whole line at a time, before encoding.
+	/// no emoji. A summary is a whole card (<see cref="CardHtml"/>). Never over 3900 characters, and cut a whole line at a
+	/// time, before encoding.
 	/// </summary>
 	/// <remarks>
-	/// The finished HTML used to be cut at 4000, which took the closing &lt;/pre&gt; off a big fleet's daily summary (or
-	/// halved an &amp;amp;) - Telegram turns the whole message down as HTML it can't read, so none of it arrived.
+	/// The finished HTML used to be cut at 4000, which took the closing tag off a big fleet's daily summary (or halved an
+	/// &amp;amp;) - Telegram turns the whole message down as HTML it can't read, so none of it arrived.
 	/// </remarks>
 	internal static string TelegramPart(Block b) {
-		bool summary = b.Topic is Topic.Summary or Topic.Weekly;
+		if (Cards(b) is { } cards) {
+			return string.Join("\n\n", cards.Select(c => CardHtml(c, 3900 / cards.Count)));
+		}
+
 		string head = $"<code>// {Html(Look(b.Topic).Label.ToString().ToUpperInvariant())}</code>"
-			+ (!summary && (Account(b) is { } a) ? " · <b>" + Html(a) + "</b>" : "") + "\n";
-		int room = 3900 - head.Length - (summary ? "<pre></pre>".Length : 0);
+			+ (Account(b) is { } a ? " · <b>" + Html(a) + "</b>" : "") + "\n";
+		int room = 3900 - head.Length;
 		StringBuilder body = new();
 
-		foreach (string line in summary ? b.Lines : Capped(b, 15).Select(static l => "◆ " + l)) {
+		foreach (string line in Capped(b, 15).Select(static l => "◆ " + l)) {
 			string encoded = Html(line);
 			int left = room - body.Length - (body.Length > 0 ? 1 : 0);
 
@@ -502,7 +514,152 @@ public static partial class Notifier {
 			body.Append(body.Length > 0 ? "\n" : "").Append(encoded);
 		}
 
-		return summary ? $"{head}<pre>{body}</pre>" : head + body;
+		return head + body;
+	}
+
+	// ── the daily and weekly summaries: a card, in the owner's site-bot look ──
+	/// <summary>A summary block's cards - null when it isn't a summary, or a line in it isn't a card (then it goes as plain lines).</summary>
+	private static List<ReportCard>? Cards(Block b) {
+		if (b.Topic is not (Topic.Summary or Topic.Weekly)) {
+			return null;
+		}
+
+		List<ReportCard> cards = [];
+
+		foreach (string line in b.Lines) {
+			if (ReportCard.Read(line) is not { } card) {
+				return null;
+			}
+
+			cards.Add(card);
+		}
+
+		return cards.Count > 0 ? cards : null;
+	}
+
+	/// <summary>
+	/// A summary as Telegram HTML, the site bot's layout - no table, no code block around the figures:
+	/// <code>
+	/// ◆  NOCAT.FARM · v1.6.6  ◆                    (boxed)
+	/// ▸ <b>Daily summary · 2026-10-01</b> · 05:00 NDT
+	///
+	/// // ACCOUNTS  ·  last 24h                    (code-coloured)
+	/// ◈ kylro: <b>268h played · 8 comments</b>
+	/// ◈ old: off
+	/// </code>
+	/// Every name and value escaped (an account name with &lt; or &amp; in it is just text), and never over
+	/// <paramref name="max"/> characters as Telegram counts them (<see cref="Shown"/>) - see <see cref="FitCard"/>.
+	/// </summary>
+	/// <remarks>The title is in the date line: without it a daily and a weekly summary looked the same on a phone.</remarks>
+	internal static string CardHtml(ReportCard card, int max) => FitCard(card, max,
+		[Header(), $"▸ <b>{Titled(card, Html)}</b> · {Html(card.Time)}"],
+		s => $"<code>// {Html(s.Name.ToString().ToUpperInvariant())}{(s.Note.IsEmpty ? "" : "  ·  " + Html(s.Note.ToString()))}</code>",
+		r => {
+			string value = Html(r.Value.ToString()) + (r.Alert ? " !" : "");
+
+			return $"◈ {Html(r.Label.ToString())}: {(r.Strong ? $"<b>{value}</b>" : value)}";
+		},
+		Html, Shown);
+
+	/// <summary>The same card in Discord's markdown: the boxed header as a code block, headings as inline code, figures in bold.</summary>
+	internal static string CardMarkdown(ReportCard card, int max) => FitCard(card, max,
+		[MdHeader(), $"▸ **{Titled(card, Md)}** · {Md(card.Time)}"],
+		// Inside `...` nothing is escaped, so a backtick in a translated heading would end it early - it can't be in one.
+		s => $"`// {(s.Name.ToString().ToUpperInvariant() + (s.Note.IsEmpty ? "" : "  ·  " + s.Note)).Replace('`', '\'')}`",
+		r => {
+			string value = Md(r.Value.ToString()) + (r.Alert ? " !" : "");
+
+			return $"◈ {Md(r.Label.ToString())}: {(r.Strong ? $"**{value}**" : value)}";
+		},
+		Md, static s => s.Length);
+
+	/// <summary>"Daily summary · 2026-10-01", escaped - or just the date for a card with no title.</summary>
+	private static string Titled(ReportCard card, Func<string, string> escape) =>
+		card.Title.IsEmpty ? escape(card.Date.ToString()) : $"{escape(card.Title.ToString())} · {escape(card.Date.ToString())}";
+
+	/// <summary>
+	/// The card's lines, never over <paramref name="max"/> by <paramref name="measure"/>. Too long, the longest section
+	/// gives up rows from its end - all but its last, the "All accounts" line - and says how many with "…and 312 more".
+	/// Every other section stays whole, so what needs a look is never what's cut.
+	/// </summary>
+	/// <remarks>
+	/// It used to keep whole lines from the top until the room ran out. With ATTENTION after the accounts, a fleet of
+	/// about fifty filled the message and the one line that wanted a look - a ban, an account that can't sign in - was
+	/// the part left out. The room was counted on the HTML too, where "·" took six characters, not on what Telegram counts.
+	/// </remarks>
+	private static string FitCard(ReportCard card, int max, List<string> head, Func<ReportCard.Section, string> heading,
+		Func<ReportCard.Row, string> row, Func<string, string> escape, Func<string, int> measure) {
+		List<(string Heading, List<string> Rows)> sections = [.. card.Sections.Select(s => (heading(s), s.Rows.Select(row).ToList()))];
+
+		string Draw(int cut, int keep) {
+			List<string> lines = [.. head];
+
+			for (int i = 0; i < sections.Count; i++) {
+				lines.Add("");
+				lines.Add(sections[i].Heading);
+				List<string> rows = sections[i].Rows;
+
+				if ((i != cut) || (keep >= rows.Count - 1)) {
+					lines.AddRange(rows);
+
+					continue;
+				}
+
+				lines.AddRange(rows.Take(keep));
+				lines.Add(escape(new Said("…and {0} more", rows.Count - 1 - keep).ToString()));
+				lines.Add(rows[^1]);
+			}
+
+			return string.Join('\n', lines);
+		}
+
+		string whole = Draw(-1, 0);
+
+		if ((measure(whole) <= max) || (sections.Count == 0)) {
+			return whole;
+		}
+
+		int longest = sections.Select(static (s, i) => (s.Rows.Count, i)).Max().i;
+
+		// As many of its rows as fit: the most whose drawing is in, found by halving.
+		int lo = 0, hi = sections[longest].Rows.Count - 2;
+
+		if ((hi < 0) || (measure(Draw(longest, 0)) > max)) {
+			return Fitted(whole.Split('\n'), max, measure);
+		}
+
+		while (lo < hi) {
+			int mid = (lo + hi + 1) / 2;
+
+			if (measure(Draw(longest, mid)) <= max) {
+				lo = mid;
+			} else {
+				hi = mid - 1;
+			}
+		}
+
+		return Draw(longest, lo);
+	}
+
+	/// <summary>As many whole lines as fit in <paramref name="max"/> by <paramref name="measure"/>, with "…" when some were left out.</summary>
+	private static string Fitted(IEnumerable<string> lines, int max, Func<string, int> measure) {
+		StringBuilder sb = new();
+		int size = 0;
+
+		foreach (string line in lines) {
+			int more = (sb.Length > 0 ? 1 : 0) + measure(line);
+
+			if (size + more > max - 2) {
+				sb.Append("\n…");
+
+				break;
+			}
+
+			sb.Append(sb.Length > 0 ? "\n" : "").Append(line);
+			size += more;
+		}
+
+		return sb.ToString();
 	}
 
 	/// <summary>Whether a private Telegram chat is connected - somewhere only the owner reads, for a sign-in code.</summary>

@@ -934,7 +934,7 @@ public static partial class Notifier {
 		return sb.ToString();
 	}
 
-	private static string MdHeader() => $"```\n◆ NOCAT.FARM · v{Build.Version} ◆\n```";
+	private static string MdHeader() => $"```\n◆  NOCAT.FARM · v{Build.Version}  ◆\n```";
 
 	private static string MdSection(Said name) => $"`// {name.ToString().ToUpperInvariant()}`";
 

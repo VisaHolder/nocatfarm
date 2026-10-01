@@ -306,6 +306,16 @@ public static class StuckWatch {
 		_ => new Said(bot.StatusText)
 	};
 
+	/// <summary>
+	/// How long this account has gone without banking when it should have been - only once the alarm has gone off for
+	/// it, so the daily summary flags what the alarm already said and never a short gap. Null while it's fine.
+	/// </summary>
+	internal static TimeSpan? StuckFor(string bot, DateTime nowUtc) {
+		lock (Gate) {
+			return Watches.TryGetValue(bot, out Watch? w) && (w.Alarms > 0) && (w.StuckSince is { } since) ? nowUtc - since : null;
+		}
+	}
+
 	/// <summary>The 'stuck' command: each account's last banked time as the alarm sees it, and what it would do.</summary>
 	public static string Text(BotManager mgr) {
 		GlobalConfig g = mgr.Global;
