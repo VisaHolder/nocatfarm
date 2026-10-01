@@ -62,7 +62,7 @@ public static class Tutorial {
 			"left, then falls back to idling this list. 'cards <name>' shows what's left.");
 
 		Step(sb, 4, customName, "Optional - show a custom name",
-			"name <name> whatever you like",
+			"gamename <name> whatever you like",
 			"Your friends list shows that text instead of the real game, while the real games keep banking",
 			"playtime underneath. Both at the same time.");
 
@@ -154,8 +154,8 @@ public static class Tutorial {
 			"Each gift waits its own 2-15 minutes first, most often nearer 2 (GiftDelayMinMinutes / GiftDelayMaxMinutes).",
 			"",
 			"One switch each, per account:",
-			"  set <name> ClaimFreeGames true        paid games given away free-to-keep, never free-to-play filler",
-			"  set <name> BoosterGames \"730, 440\"    turn gems into booster packs for these games, one a day each",
+			"  set <name> ClaimFree games            paid games given away free-to-keep, never free-to-play filler",
+			"  set <name> BoosterPackGames 730,440   turn gems into booster packs for these games, one a day each",
 			"  set <name> UnpackBoosterPacks true    open booster packs that land in the inventory",
 			"",
 			"  booster <name>                        gems, and which games can be made into packs",
@@ -212,10 +212,10 @@ public static class Tutorial {
 		"achievements" or "cheevo" => string.Join(Environment.NewLine, [
 			"Achievements",
 			"",
-			"  cheevo <name> 730                     what it has, easiest first, with how rare each one is",
-			"  cheevo <name> 730 unlock all          all of them, now",
-			"  cheevo <name> 730 unlock ACH_NAME     just one",
-			"  cheevo <name> 730 lock ACH_NAME       put one back",
+			"  achievements <name> 730               what it has, easiest first, with how rare each one is",
+			"  achievements <name> 730 unlock all    all of them, now",
+			"  achievements <name> 730 unlock ACH_NAME   just one",
+			"  achievements <name> 730 lock ACH_NAME     put one back",
 			"",
 			"Unlocking a game's whole list at once is permanent, stamped with one shared timestamp, and visible on",
 			"the profile forever. For an account meant to look real, drip them instead:",

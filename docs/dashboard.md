@@ -141,7 +141,7 @@ for an hour. On this PC itself the lockout is only a minute, since whoever is at
 anyway. A reverse proxy on the same PC, like Caddy for HTTPS, makes every visitor look like this PC, so there
 nocat.farm goes by the address the proxy passes on, and each visitor gets the full hour. A proxy somewhere else (Caddy
 in front of Docker comes in from Docker's own network) is only believed once its address is in *Trust forwarded
-addresses from* (`WebTrustedProxies`, or `NOCATFARM_TRUSTED_PROXIES`). `unlock` lifts every lockout at once. Without
+addresses from* (`WebTrustedProxies`, or `NOCATFARM_TRUSTED_PROXIES`). `dashboard unlock` lifts every lockout at once. Without
 a password the dashboard refuses everything that isn't this PC, even when it's open to the network. A banner warns
 you if the password is short enough to guess.
 
@@ -159,10 +159,10 @@ characters, because anyone on the internet can reach the sign-in page. The link 
 don't use anywhere else. The forward is taken away when you turn it off or close nocat.farm, and put back when it
 starts. Turned off, it's off at once: nocat.farm itself turns away anything from the internet, so a phone that still
 had the page open can't carry on through the router. Ten wrong passwords from the internet in an hour, from any
-mix of addresses, pause signing in from outside for an hour (home still works, and `unlock` lifts it). And after
+mix of addresses, pause signing in from outside for an hour (home still works, and `dashboard unlock` lifts it). And after
 *Turn Open from anywhere off after* wrong passwords or codes from the internet in a day (5 by default, 0 for
 never), it switches itself off and nothing from outside gets in, a *Public address* set by hand included, until you turn it
-on again (the Phone page, or `anywhere on`) or type `unlock`. That survives a restart. Backups and restores only work at home or on
+on again (the Phone page, or `anywhere on`) or type `dashboard unlock`. That survives a restart. Backups and restores only work at home or on
 this PC, since the zip holds every saved login.
 
 **A code on Telegram.** With Telegram connected, signing in from outside your home takes the password and then a

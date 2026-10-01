@@ -20,7 +20,8 @@ help FarmCardsWhen          # what a setting does, its default and range
 ```
 
 On/off settings take `true`/`false` (or `on`/`off`). Game lists take appIDs or store links separated by commas, or
-`none`. A choice takes its number or the start of its label, so `set myaccount OnlineStatus invisible` works.
+`none`. On the dashboard, a game list's box searches the account's own games by name (every account's, for a global
+list): type part of a name and pick it. A pasted appID or store link works there too, for a game it doesn't own. A choice takes its number or the start of its label, so `set myaccount OnlineStatus invisible` works.
 
 Settings live in `config/nocatFarm.json` (global) and `config/<account>.json`, as plain JSON under the same names.
 You can edit them by hand and type `reload`. Back up the `config` folder and you've backed up everything.
@@ -37,7 +38,7 @@ You can edit them by hand and type `reload`. Back up the `config` folder and you
 | Pop-ups (Windows) | *Show pop-ups* | which kinds: earnings, comments, problems, trade offers |
 | Inventory prices | *Inventory prices in* (the currency) | price lookup speed, how long a price is trusted |
 | rep4rep account | *Use rep4rep at all*, *API token* | *Hold commenting for (hours)*, *Register accounts automatically* |
-| Updates & plugins | *Update by itself* (tell me, or install at night), *When I say update* (right away, or when my accounts are asleep) | the hours it may install in (3 to 6), *Wait after a release for* (2 hours), *Notify if an update is available*, *Look for updates every* (2 hours), *Remind me every hour*, *Load plugins* |
+| Updates & plugins | *Updates*: install when I click, once everyone's asleep (the Update button waits until your accounts are asleep), install when I click (right away), or install by itself at night | the hours it may install in (3 to 6), *Wait after a release for* (2 hours), *Notify if an update is available*, *Look for updates every* (2 hours), *Remind me every hour*, *Load plugins* |
 | Steam connection | | gap between logins, reconnect, timeout, *Farm at most* (accounts farming at once), rate-limit cooldown, web request gap, *Connect using*, proxy |
 | Logging | | *Say what it's doing every* (5 minutes while playing) and *And while it's resting, every* (30 minutes), where 0 turns them off; *Write a log file*; *Show debug detail on screen* (the log file always has it); *Keep logs for* (14 days); the daily summary and its time; the *Weekly report* (off), its day and hour; the colours of `telegram` and `discord` in the log |
 
@@ -51,12 +52,12 @@ stay in the config file untouched, in case you take it back to Windows.
 | Group | Everyday | Behind Show advanced |
 |---|---|---|
 | Account | *Enabled*, *Steam account name*, *Password*, *Appear as*, *I sign into this one myself* | QR sign-in, *Sign in as*, *Start paused*, notes, Family View PIN, device name, authenticator secrets, its own proxy, clearing Steam's notifications |
-| Human mode | *Human mode*, *Games and how often*, hours on weekdays and at the weekend, when it gets on and goes to bed, *Bank hours overnight* | hour targets, day-off chance, sittings, breaks, meals, going Away or offline on breaks, overnight games, how long it waits after waking or signing in, finishing up when stopped |
-| What it plays (not on human-mode accounts) | *Games to idle*, *Idle my whole library*, *Rotate the idle list*, *Show a custom game name*, *Show as* | *Rotate every*, *Keep the name while farming*, *Play as if on* |
-| Trading cards | *Farm trading cards*, *When to farm cards* (human mode) | order, priority list, blacklist, refund protection, sittings, clock window, give-up time, and more |
+| Human mode | *Human mode*, *Games and how often*, hours on weekdays and at the weekend, when it gets on and goes to bed, *Learn from how I play*, *Reaction speed*, *Bank hours overnight* with its games (or its top games when none are chosen) | hour targets, day-off chance, sittings, breaks, meals, going Away or offline on breaks, how long it waits after waking or signing in, finishing up when stopped |
+| What it plays | *Protect refunds*; on robot accounts *Games to idle*, *Idle my whole library*, *Rotate the idle list*, *Show a custom game name*, *Show as* | *Rotate every*, *Keep the name while farming*, *Play as if on* |
+| Trading cards | *Farm trading cards*, *When to farm cards* (human mode; with *mixed*, its share of sittings) | order, priority list, blacklist, sittings and the clock window (robot accounts), give-up time, and more |
 | Badges, boosters & selling | *Craft badges from card sets*, *Sell duplicate cards* | booster packs, opening packs, how many cards to list at a time |
 | Achievements | *Earn achievements over time* | pace, completion limit, only/never lists, grind spacing, the hunter (rotation, when to move on, rest days, daily cap, game length), family-shared games |
-| Free stuff | free games, free DLC, event items, the discovery queue | |
+| Free stuff | *Claim free games* (off, games, or games and DLC), event items, the discovery queue | |
 | Inventory & bans | *Watch for bans* | *Work out what its inventory is worth*, and games to leave out |
 | Trades | donations, gifts, fair card swaps, your own accounts, *Trade by itself with*, *What to send* | *Decline everything else*, waits, sending items, trade link token |
 | rep4rep commenting (only when rep4rep is on) | *Post rep4rep comments* | cap, gaps, hours |
@@ -65,7 +66,7 @@ stay in the config file untouched, in case you take it back to Windows.
 | Logging | | *Report in every* and *And while resting, every* (0 follows the global setting, -1 keeps this account quiet), and its colour in the log |
 
 On a human-mode account, *Games to idle*, the idle rotation, the custom game name, *Keep the name while farming*, *Farm in sittings*,
-*Hours a day to farm*, *Log out when finished* and *Farm while appearing offline* are hidden, and human-only
+*Hours a day to farm*, the *Farm cards only from … until* clock window, *Log out when finished* and *Farm while appearing offline* are hidden, and human-only
 settings show instead.
 
 ## Command line options
@@ -132,8 +133,9 @@ A bare command such as `/pause`, `/status` or `/2fa` acts on the account you mes
 the normal auto-reply, and commands from anyone not on the list are ignored. Replies are cut at 1,900 characters.
 Steam chat only reaches the account you messaged: a command that names another account, or `all`, is refused, and so
 are the ones that change the app itself: `set`, `anywhere`, `dashboard`, `update`, `import`, `redeem`, `keys`,
-`answer`, `add`, `reload`, `plugins`, `notify`, `screen`, `match`, `theme`, `mini`, `exit` and `remove`. Those are for
-the PC, the dashboard, Telegram or Discord.
+`answer`, `add`, `reload`, `plugins`, `notify`, `screen`, `match`, `theme`, `mini`, `visitors`, `backup`, `report`, `stuck`,
+`exit` and `remove`, and the answers to the add-on question (`dlc carryon`, `dlc leave`, `dlc undo` - looking with `dlc`
+is fine). Those are for the PC, the dashboard, Telegram or Discord.
 
 ---
 

@@ -331,7 +331,8 @@ public static class AsfImport {
 
 		// The BoosterCreator plugin's list, in the same bot config.
 		if (cfg.TryGetProperty("GamesToBooster", out JsonElement boosters) && (boosters.ValueKind == JsonValueKind.Array)) {
-			bot.BoosterGames = string.Join(", ", boosters.EnumerateArray().Where(static e => e.ValueKind == JsonValueKind.Number).Select(static e => e.GetRawText()));
+			bot.BoosterPackGames = [.. boosters.EnumerateArray().Where(static e => e.ValueKind == JsonValueKind.Number)
+				.Select(static e => e.TryGetUInt32(out uint id) ? id : 0).Where(static id => id != 0).Distinct()];
 		}
 
 		// What the ASF account did, copied. Left out of its file means ASF's own default - off - and not nocat.farm's,

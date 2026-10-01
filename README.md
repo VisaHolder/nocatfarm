@@ -66,8 +66,8 @@ needs installing first, not even .NET.
 It starts farming cards straight away. Both Windows versions are the same app, and both update themselves.
 
 **Updating:** click **Update** on the dashboard or type `update accept`. Accounts, settings and logs are kept. Set
-*When I say update* to *when my accounts are asleep* and it holds the install until nobody's playing, or set
-*Update by itself* to install new versions at night with no click at all. `update now` always installs straight
+*Updates* to *install when I click, once everyone's asleep* and it holds the install until nobody's playing, or to *install by itself at night* for
+no click at all. `update now` always installs straight
 away. The Linux and Mac zips update themselves the same way. In Docker, or run as a Linux service, you update by
 hand; see [Linux, Mac and Docker](https://nocat.lol/nocatfarm/docs#linux-mac-and-docker).
 
@@ -88,7 +88,7 @@ picks up again a few minutes after you stop.
 
 Beyond that:
 
-- Gifts, guest passes and sale stickers are picked up by default. Free-to-keep games and free DLC are one switch.
+- Gifts, guest passes and sale stickers are picked up by default. Free-to-keep games and free DLC are one choice.
 - Donations are accepted, items move between your own accounts, and fair one-for-one card swaps are taken if you
   turn that on. Any other offer is announced with a number (log, pop-up, Discord, Telegram) and waits for
   `trade accept myaccount 3` or `trade decline myaccount 3`.
@@ -183,7 +183,7 @@ Type these in the app window or the dashboard's Console tab. You can also send t
 | `cards` | Cards left to farm, and about how long it'll take. |
 | `drops myaccount` | Go for card drops right now, then back to normal. |
 | `play myaccount 730, 440` | Idle these games (the number is in the game's store link). Human-mode accounts pick their games under Settings → Human mode instead. |
-| `name myaccount nocat.lol` | Show this name on your profile instead of the real game. |
+| `gamename myaccount nocat.lol` | Show this name on your profile instead of the real game. |
 | `human myaccount week` | See how human mode would spend the next week. |
 | `value` | What each account's items are worth. |
 | `match` | Swap spare cards between your own accounts so sets finish (`match do` sends them). |

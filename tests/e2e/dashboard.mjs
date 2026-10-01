@@ -111,7 +111,7 @@ const SKIP_SETTING = {
   NotifyProblems: 'pop-ups on this PC',
   NotifyTrades: 'pop-ups on this PC',
   CheckForUpdates: 'asks GitHub for a newer version',
-  AutoUpdate: 'could install a newer version mid-test',
+  UpdateMode: 'could install a newer version mid-test',
   DiscordPresence: "shows on the Discord running on this PC",
   TelegramBotToken: 'connects to Telegram',
   DiscordBotToken: 'connects to Discord',
@@ -129,9 +129,12 @@ const TEXT_VALUE = {
   WebPublicAddress: 'http://192.0.2.1:7377', WebTrustedProxies: '192.0.2.10', WebProxy: 'http://127.0.0.1:9', WebProxyUsername: 'e2e',
   TelegramChatId: '123456789', DiscordOwnerId: '123456789012345678', GroupsToJoin: 'e2e-group', SteamLogin: 'not_a_real_account_e2e',
   Notes: 'e2e note', MachineName: 'e2e-pc', AccountProxy: 'http://127.0.0.1:9', AccountProxyUsername: 'e2e', CustomGameName: 'e2e game',
-  HourTargets: '440:10', BoosterGames: '440', SendItemTypes: 'cards', TradeMasters: '76561197960287930', AutoTradeWith: '76561197960287930',
+  HourTargets: '440:10', SendItemTypes: 'cards', TradeMasters: '76561197960287930', AutoTradeWith: '76561197960287930',
   TradeMasterToken: 'e2etoken', CommandMasters: '76561197960287930', AutoReply: 'e2e reply', ExtraGroupsToJoin: 'e2e-group',
 };
+// A choice that shows other settings under one answer is changed TO that answer, so those settings appear and get
+// changed and put back too ("Share of sittings that farm cards" only shows with "mixed").
+const CHOICE_VALUE = { FarmCardsWhen: 3 };
 const SECRET_VALUE = { SteamPassword: 'e2e-not-a-password', SteamParentalCode: '1234', AccountProxyPassword: 'e2e-proxy-pw', WebProxyPassword: 'e2e-proxy-pw' };
 
 // ── the page's side: what can be clicked, found again by a key that survives a redraw ──
@@ -742,7 +745,9 @@ async function change(def, target) {
     await box.blur();
   } else if (tag.startsWith('div') && /pills/.test(tag)) {
     // Choice pills, or the accounts shown on the Discord card.
-    await box.locator('.p:not(.on)').first().click();
+    const want = CHOICE_VALUE[n];
+    if (want !== undefined && Number(cur) !== want) await box.locator(`.p[onclick*="editAndRender('${n}',${want})"]`).first().click();
+    else await box.locator('.p:not(.on)').first().click();
   } else if (tag.startsWith('div') && /dbtnpick/.test(tag)) {
     await box.locator('select').selectOption('custom');
     await settle(150);
@@ -967,11 +972,14 @@ async function settingsRound(target) {
     check(`settings ${who}: after a reload /api/config still holds all ${changed.length} changes`, diff.length === 0, diff.join(', '));
   }
 
-  // Put back: the last changed first; a mode switch saved on its own, with a save before it too.
+  // Put back: the last changed first; a mode switch saved on its own, with a save before it too. So is a setting another
+  // one shows under (ShowWhen, like "When to farm cards" for the card-sittings share): changing its answer back hides the
+  // other one, and an unsaved edit to a setting that gets hidden is dropped - so what was put back is saved first.
+  const controllers = new Set(defs.filter((d) => d.ShowWhen).map((d) => d.ShowWhen.split('=')[0]));
   const segments = [];
   let cur = [];
   for (const c of changed.slice().reverse()) {
-    if (MODE_SWITCHES.includes(c.def.Name)) { if (cur.length) segments.push(cur); segments.push([c]); cur = []; } else cur.push(c);
+    if (MODE_SWITCHES.includes(c.def.Name) || controllers.has(c.def.Name)) { if (cur.length) segments.push(cur); segments.push([c]); cur = []; } else cur.push(c);
   }
   if (cur.length) segments.push(cur);
   for (const seg of segments) {
@@ -1014,6 +1022,29 @@ async function settingsRound(target) {
 
 settingsCount.global = await settingsRound(null);
 for (const bot of Object.keys((await api('/api/config')).Bots)) settingsCount[bot] = await settingsRound(bot);
+
+// A game list searched by name: the test accounts never sign in, so their libraries are empty - typing a name says so
+// and adds nothing, and the box keeps what was typed and its focus (only the little list under it is drawn).
+{
+  await settingsOn('robot');
+  const box = page.locator('#settingsBody [data-setting="IdleGames"] .appin');
+  const before = await live('IdleGames');
+  await box.click();
+  await box.type('portal', { delay: 20 });
+  await page.waitForSelector('#settingsBody [data-setting="IdleGames"] .appsug', { timeout: 5000 }).catch(() => {});
+  const sug = page.locator('#settingsBody [data-setting="IdleGames"] .appsug');
+  check('game lists: typing a name drops a list down under the box, and with no library read it says so',
+    (await sug.count()) === 1 && (await sug.locator('.none').count()) === 1);
+  check('game lists: the box keeps its text and focus while it searches',
+    (await box.inputValue()) === 'portal' && await box.evaluate((e) => document.activeElement === e));
+  await box.press('Escape');
+  check('game lists: Escape closes the list', (await sug.count()) === 0);
+  await box.press('Enter');
+  check('game lists: Enter on a name nothing matches adds nothing', JSON.stringify(await live('IdleGames')) === JSON.stringify(before));
+  await box.fill('');
+  await evalq(() => { pending = {}; renderSettings(); });
+  await healthy('game lists: healthy after searching');
+}
 
 // ── 6. the keyboard ──────────────────────────────────────────────────────────
 await page.reload();

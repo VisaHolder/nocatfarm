@@ -12,10 +12,10 @@ namespace NocatFarm.Core;
 /// This is that check in one place, asked by all of them. It holds a game while ALL of these are true:
 ///   - the account is set to protect refunds (<c>SkipRefundableGames</c>, per account),
 ///   - the account BOUGHT it - free-to-play and claimed freebies are never held,
-///   - it was bought less than <c>RefundHoldDays</c> ago, and
+///   - it was bought (or gifted to it) less than <see cref="HoldDays"/> ago, and
 ///   - it has under two hours on it, which is the line Steam actually draws.
 ///
-/// Family-shared games are the exception, and are judged on arrival alone (<c>HoldNewFamilyGames</c>): a borrowed
+/// Family-shared games are the exception, and are judged on arrival alone: a borrowed
 /// game is left alone for its first fortnight in the shared library, because whoever paid for it might still be
 /// deciding - and their playtime, the number that would actually settle it, is not visible from here.
 ///
@@ -26,6 +26,13 @@ namespace NocatFarm.Core;
 public sealed class RefundGuard(Bot bot) {
 	/// <summary>Steam's own line. Not configurable, because it isn't ours to move.</summary>
 	private const double RefundHours = 2.0;
+
+	/// <summary>
+	/// Steam's refund window, in days. It used to be a setting (with a separate switch each for gifted and family games),
+	/// but a game held for longer than Steam refunds protects nothing, and a shorter hold just lets a refund slip - so it
+	/// is Steam's own number, like the two hours above.
+	/// </summary>
+	public const int HoldDays = 14;
 
 	/// <summary>"Hades", or "Hades, Tunic and 3 more" - a list a person can read at a glance.</summary>
 	private string Names(IReadOnlyList<uint> apps) => apps.Count switch {
@@ -91,7 +98,7 @@ public sealed class RefundGuard(Bot bot) {
 				_refreshedAt = DateTime.UtcNow - TimeSpan.FromMinutes(17);
 			}
 
-			int days = Math.Max(1, bot.Cfg.RefundHoldDays);
+			const int days = HoldDays;
 			HashSet<uint> held = [];
 			HashSet<uint> shared = [];
 
@@ -105,7 +112,7 @@ public sealed class RefundGuard(Bot bot) {
 				// launched it. So a freshly shared game is simply left alone for a fortnight while whoever paid
 				// for it makes their mind up, and the log says that rather than claiming to know it's refundable.
 				if (game.Shared) {
-					if (bot.Cfg.HoldNewFamilyGames && (game.Acquired != DateTime.MinValue)
+					if ((game.Acquired != DateTime.MinValue)
 						&& ((DateTime.UtcNow - game.Acquired).TotalDays < days)) {
 						held.Add(game.AppId);
 						shared.Add(game.AppId);
@@ -123,7 +130,7 @@ public sealed class RefundGuard(Bot bot) {
 					if (_held.Contains(game.AppId)) {
 						held.Add(game.AppId);
 					}
-				} else if (owned.TryGetValue(game.AppId, out AppOwnership own) && own.Refundable(bot.Cfg.ProtectGiftedGames) && ((DateTime.UtcNow - own.Since).TotalDays < days)) {
+				} else if (owned.TryGetValue(game.AppId, out AppOwnership own) && own.Refundable && ((DateTime.UtcNow - own.Since).TotalDays < days)) {
 					held.Add(game.AppId);
 				}
 			}

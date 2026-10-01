@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using NocatFarm.Config;
 using NocatFarm.Core;
 using SteamKit2;
 
@@ -435,7 +436,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 		_ = Task.Run(async () => {
 			try {
 				// Typing takes time. Randomised up to double the setting so it is never the same gap.
-				int seconds = Math.Max(0, Bot.Cfg.AutoReplyDelaySeconds);
+				int seconds = Math.Max(0, ReactionSpeed.One(Bot.Cfg, nameof(BotConfig.AutoReplyDelaySeconds)));
 
 				if (seconds > 0) {
 					await Task.Delay(Rng.Seconds(seconds, seconds * 2)).ConfigureAwait(false);
@@ -444,7 +445,8 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 				// If the account is meant to be asleep, the reply waits until morning - exactly what a person
 				// who was asleep when you messaged them would do.
 				// Once up, overnight messages get answered over the morning, not all in its first minute.
-				await WaitUntilAwakeAsync(() => Rng.HumanMinutes(5, 60) + (seconds > 0 ? Rng.Seconds(seconds, seconds * 2) : TimeSpan.Zero)).ConfigureAwait(false);
+				(int wakeLo, int wakeHi) = ReactionSpeed.Fixed(Bot.Cfg, 5, 60);
+				await WaitUntilAwakeAsync(() => Rng.HumanMinutes(wakeLo, wakeHi) + (seconds > 0 ? Rng.Seconds(seconds, seconds * 2) : TimeSpan.Zero)).ConfigureAwait(false);
 
 				// Signed out while it waited: nothing would arrive, so it isn't counted as said today either.
 				if (Away) {
@@ -475,7 +477,11 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>How long a friend request waits before it's accepted - a person's time, not a flat random pick.</summary>
-	private TimeSpan FriendWait() => Rng.HumanMinutes(Bot.Cfg.FriendRequestDelayMinMinutes, Bot.Cfg.FriendRequestDelayMaxMinutes);
+	private TimeSpan FriendWait() {
+		(int lo, int hi) = ReactionSpeed.Range(Bot.Cfg, nameof(BotConfig.FriendRequestDelayMinMinutes), nameof(BotConfig.FriendRequestDelayMaxMinutes));
+
+		return Rng.HumanMinutes(lo, hi);
+	}
 
 	/// <summary>
 	/// Hold on while human mode has the account asleep. If it had to hold, wait <paramref name="afterWaking"/> once

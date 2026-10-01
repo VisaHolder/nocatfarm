@@ -292,13 +292,18 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			// instead of whenever the next scan happened to be due. With nothing left to farm that wait runs to
 			// hours, and for all of it the status line went on saying "nothing left to farm" to somebody who had
 			// just turned the whole thing off.
+			// A grind that ends is the same: the status read "standing by - grinding Team Fortress 2" for up to five minutes
+			// after 'grind off', on an account already back to idling.
+			bool grinding = Bot.Grinding;
+
 			for (int slept = 0; slept < waitMinutes; slept++) {
 				if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
 					return;
 				}
 
-				// Farming switched off, or a game just added to the account (it may have cards) - look now, not in hours.
-				if (!Bot.EffectiveFarmCards || (Bot.LicenseGeneration != _licensesAsked)) {
+				// Farming switched off, a game just added to the account (it may have cards), or the grind over - look now,
+				// not in hours.
+				if (!Bot.EffectiveFarmCards || (Bot.LicenseGeneration != _licensesAsked) || (grinding && !Bot.Grinding)) {
 					break;
 				}
 			}
@@ -1475,7 +1480,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	/// </summary>
 	private async Task DropRefundableAsync(Dictionary<uint, FarmTarget> byApp) {
 		const float RefundableUnderHours = 2.0f;
-		int RefundableForDays = Math.Max(1, Bot.Cfg.RefundHoldDays);
+		const int RefundableForDays = RefundGuard.HoldDays;
 
 		if (byApp.Values.All(static g => g.HoursPlayed >= RefundableUnderHours)) {
 			return;   // nothing is refundable on playtime alone - no need to ask Steam anything
@@ -1496,7 +1501,7 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 			}
 
 			// Free games carry today's date too, and no amount of playing one costs anybody a refund.
-			if (owned.TryGetValue(appId, out AppOwnership own) && own.Refundable(Bot.Cfg.ProtectGiftedGames) && ((DateTime.UtcNow - own.Since).TotalDays < RefundableForDays)) {
+			if (owned.TryGetValue(appId, out AppOwnership own) && own.Refundable && ((DateTime.UtcNow - own.Since).TotalDays < RefundableForDays)) {
 				Log.Debug(new Said("leaving {0} alone - still refundable until {1}", game.GameName, (own.Since.AddDays(RefundableForDays)).ToString("d")), Bot.Name);
 				byApp.Remove(appId);
 			}
@@ -1698,11 +1703,15 @@ public sealed class CardFarmer(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>Whether now is inside the card-farming clock window, if the account set one (0-0 = any time).</summary>
+	/// <remarks>
+	/// A robot account's setting only. On a human-mode account "When to farm cards" and the account's own day decide, and the
+	/// window is hidden there - a value set before stays in the file and counts again if human mode goes off.
+	/// </remarks>
 	private bool InFarmWindow() {
 		int from = Bot.Cfg.FarmFromHour;
 		int until = Bot.Cfg.FarmUntilHour;
 
-		if (from == until) {
+		if ((from == until) || Bot.Cfg.LegitMode) {
 			return true;
 		}
 

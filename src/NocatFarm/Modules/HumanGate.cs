@@ -1,3 +1,4 @@
+using NocatFarm.Config;
 using NocatFarm.Core;
 
 namespace NocatFarm.Modules;
@@ -59,8 +60,8 @@ public sealed class HumanGate(Bot bot, bool followsDay = true, bool ownDay = fal
 			if (!_ready) {
 				_ready = true;
 				(int lo, int hi) = followsDay
-					? (bot.Cfg.WakeDelayMinMinutes, bot.Cfg.WakeDelayMaxMinutes)
-					: (bot.Cfg.QuietDelayMinMinutes, bot.Cfg.QuietDelayMaxMinutes);
+					? ReactionSpeed.Range(bot.Cfg, nameof(BotConfig.WakeDelayMinMinutes), nameof(BotConfig.WakeDelayMaxMinutes))
+					: ReactionSpeed.Range(bot.Cfg, nameof(BotConfig.QuietDelayMinMinutes), nameof(BotConfig.QuietDelayMaxMinutes));
 
 				if ((lo <= 0) && (hi <= 0)) {
 					(lo, hi) = (0, 0);

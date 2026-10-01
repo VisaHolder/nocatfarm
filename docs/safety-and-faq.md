@@ -64,7 +64,7 @@ on Linux x64 and arm64, updating included, and Docker has been run with real acc
 but replies to typed commands stay in English.
 
 **I locked myself out of the dashboard.** Five wrong passwords lock an address out. From this PC that's only a
-minute. Otherwise, type `unlock` in the app window, or on Telegram.
+minute. Otherwise, type `dashboard unlock` in the app window, or on Telegram.
 
 ## Building from source
 

@@ -12,7 +12,21 @@ FEED=8767
 T="$PWD/from-release"
 
 rm -rf "$T" && mkdir -p "$T/feed" "$T/app"
-gh release download --repo VisaHolder/nocatfarm --pattern "*_${RID}.zip" --dir "$T"
+# The newest release that HAS a zip for this machine. Not simply the newest: the run that builds a release's Mac zips
+# runs this before they're up, and the newest release - that one - had nothing to download.
+# v1.6.4's Linux updater can't run (its script has \r\n line endings - sh fails on the first command, and the app it
+# closed doesn't come back), so it can't be what's tested: people on it update by hand once, as its release notes say.
+SKIP=""
+case "$RID" in linux-*) SKIP="v1.6.4" ;; esac
+TAG=$(gh release list --repo VisaHolder/nocatfarm --limit 10 --json tagName -q '.[].tagName' | while read -r t; do
+	[ "$t" = "$SKIP" ] && continue
+	if gh release view "$t" --repo VisaHolder/nocatfarm --json assets -q '.assets[].name' | grep -q "_${RID}\.zip\$"; then
+		echo "$t"
+		break
+	fi
+done)
+test -n "$TAG" || { echo "FAIL  no release has a zip for $RID"; exit 1; }
+gh release download "$TAG" --repo VisaHolder/nocatfarm --pattern "*_${RID}.zip" --dir "$T"
 OLDZIP=$(ls "$T"/*_"$RID".zip | head -n 1)
 FROM=$(basename "$OLDZIP" | sed -n 's/^nocat\.farm-v\(.*\)_'"$RID"'\.zip$/\1/p')
 echo "the newest release: $FROM ($OLDZIP)"

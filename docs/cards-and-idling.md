@@ -18,18 +18,19 @@ To turn it off for one account, switch off *Farm trading cards* or type `set mya
 
 Most of the finer controls are under Show advanced: *Farm in this order*, *Farm these first*, *Only farm those*,
 *Never touch these*, *Skip games you've never played*, *Hours before cards drop* (set it to 0 if the account has
-spent over $5 on Steam), *Give up after* (8 hours per game), *Farm cards only from … until* (a clock window),
-*Farm while appearing offline*, *Log out when finished*, and *Farm in sittings, not flat out* with *Hours a day to
-farm*. *Farm at most* (a global setting under Steam connection) caps how many accounts farm at once.
+spent over $5 on Steam), *Give up after* (8 hours per game), and, on robot accounts, *Farm cards only from … until*
+(a clock window), *Farm while appearing offline*, *Log out when finished*, and *Farm in sittings, not flat out* with
+*Hours a day to farm*. *Farm at most* (a global setting under Steam connection) caps how many accounts farm at once.
 
-On a human-mode account, *When to farm cards* decides when the cards happen:
+On a human-mode account, *When to farm cards* decides when the cards happen (robot accounts farm the moment there
+are cards, so they don't show it, and the clock window isn't used there):
 
 | Choice | What happens |
 |---|---|
 | **day, in its sittings** (default) | Cards farm in its normal sittings, with breaks, meals and bedtime. |
 | **night, while it's asleep** | Cards farm only while it's asleep and invisible. By day it plays its usual games. |
 | **any time** | Non-stop until the cards are done. |
-| **mixed** | Some sittings farm cards (*Share of sittings that farm cards*, 40%), the rest play its usual games. |
+| **mixed** | Some sittings farm cards (*Share of sittings that farm cards*, 40%, shown once mixed is picked), the rest play its usual games. |
 
 After a game's last card it keeps playing that game for 15-20 minutes before a break (*After the last card, keep
 playing*).
@@ -45,9 +46,9 @@ drops myaccount off         # stop early
 A human-mode account plays that game in its normal sittings until those cards drop. Other accounts play it non-stop,
 and give up if the drops stop coming.
 
-**Refund protection** (*Protect refundable games*, off by default) leaves alone any game bought in the last 14 days
-with under 2 hours played, so you can still refund it. Farming, idling, grinds and the hunter all skip it. Gifted
-games count too (*...gifted games too*, on).
+**Refund protection** (*Protect refunds*, under *What it plays*, off by default) leaves alone any game bought or
+gifted in the last 14 days with under 2 hours played, so it can still be refunded, and a game new to the family
+library for its first 14 days. Farming, idling, grinds and the hunter all skip it.
 
 ## Idling and a custom game name
 
@@ -60,7 +61,7 @@ for playtime once the cards are done. Store links work as well as numbers.
 go past that:
 
 - *Idle my whole library* adds every game the account owns after the ones in *Games to idle*. It skips *Never touch
-  these*, refundable games, and family-shared games unless *Include family-shared games* is on.
+  these*, family-shared games unless *Include family-shared games* is on, and games *Protect refunds* is holding.
 - *Rotate the idle list* idles one batch at a time and moves to the next batch every 24 hours (*Rotate every*,
   under Show advanced). Games with an hour target and the least played go first, so every game gets hours over the
   days. It remembers where it is across restarts. With it on, *Games to idle* can hold more than 32 too.
@@ -73,8 +74,8 @@ rotation myaccount        # which batch, when the next one starts, and what's in
 rotation myaccount next   # move on to the next batch now
 ```
 
-*Show as* (`name myaccount nocat.lol`) makes friends see that name instead of the real game, while the real games
-still count playtime. `name myaccount off` removes it, and *Keep the name while farming* (on) keeps it showing
+*Show as* (`gamename myaccount nocat.lol`) makes friends see that name instead of the real game, while the real games
+still count playtime. `gamename myaccount off` removes it, and *Keep the name while farming* (on) keeps it showing
 during card farming too. Now and then Steam drops the name and shows the real game; the account card then warns
 "Steam shows …" and nocat.farm puts the name back.
 
@@ -95,17 +96,15 @@ human mode off.
 | Games friends gift the account | *Accept gifted games* | on |
 | Daily sale sticker, 0-point Points Shop items | *Claim free event items* | on |
 | Discovery queue (earns sale items) | *Go through the discovery queue*: off / during sales / every day | during sales |
-| Paid games given away free-to-keep | *Claim free games* | off |
-| Paid DLC marked down to free | *...free DLC too* | off |
-| The DLC's game, if that's free too | *...and its game, if that's free too* | on |
+| Paid games given away free-to-keep, and paid DLC marked down to free | *Claim free games*: off / games / games and DLC | off |
 
 Gifts wait 2-15 minutes before they're accepted (*Accept a gift after*), and a gift is never declined. Turn
 *Accept gifted games* off if you'd rather decide on each gifted game yourself.
 
 Free games are found from Steam itself, using the store's list of games at 100% off and Steam's change feed. Only
 released, paid games showing 100% off get claimed, never free-to-play games, demos or "free editions". Steam allows
-about 30 activations per 90 minutes, so it stops at 20 to leave room for you. Free DLC needs the game; if the game
-is missing but free right now, it claims the game first and then the DLC.
+about 30 activations per 90 minutes, so it stops at 20 to leave room for you. Free DLC (with *games and DLC*) needs
+the game; if the game is missing but free right now, it claims the game first and then the DLC.
 
 `freeitems [account|all]` looks for event items now, and `queue [account|all]` does the discovery queue now.
 `addlicense myaccount <subID>` adds a free licence by hand (`a/<appID>` for a free app); Steam refuses paid ones.

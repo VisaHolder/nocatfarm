@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using NocatFarm.Config;
 using NocatFarm.Core;
 using SteamKit2;
 
@@ -100,7 +101,18 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 	public void LookAgain() => Poke();
 
 	/// <summary>How long a gift waits before it's taken - a person's time, not a flat random pick.</summary>
-	private TimeSpan GiftWait() => Rng.HumanMinutes(Bot.Cfg.GiftDelayMinMinutes, Bot.Cfg.GiftDelayMaxMinutes);
+	private TimeSpan GiftWait() {
+		(int lo, int hi) = ReactionSpeed.Range(Bot.Cfg, nameof(BotConfig.GiftDelayMinMinutes), nameof(BotConfig.GiftDelayMaxMinutes));
+
+		return Rng.HumanMinutes(lo, hi);
+	}
+
+	/// <summary>The extra wait after waking, on a human-mode account - scaled by its reaction speed.</summary>
+	private TimeSpan AfterWaking() {
+		(int lo, int hi) = ReactionSpeed.Fixed(Bot.Cfg, 10, 60);
+
+		return Rng.HumanMinutes(lo, hi);
+	}
 
 	protected override async Task RunAsync(CancellationToken ct) {
 		Bot.GiftsWaiting += Poke;
@@ -425,7 +437,7 @@ public sealed partial class Gifts(Bot bot) : BotModule(bot) {
 		}
 
 		// Gifts that waited out the night get their wait from a while after waking, not all in its first quarter hour.
-		foreach (((Kind kind, ulong id) key, DateTime due) in _queue.Arm(DateTime.UtcNow, () => GiftWait() + (Bot.Cfg.LegitMode ? Rng.HumanMinutes(10, 60) : TimeSpan.Zero))) {
+		foreach (((Kind kind, ulong id) key, DateTime due) in _queue.Arm(DateTime.UtcNow, () => GiftWait() + (Bot.Cfg.LegitMode ? AfterWaking() : TimeSpan.Zero))) {
 			Announce(key, due);
 		}
 

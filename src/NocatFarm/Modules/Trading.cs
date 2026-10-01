@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using NocatFarm.Config;
 using NocatFarm.Core;
 
 namespace NocatFarm.Modules;
@@ -110,7 +111,18 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>How long an offer waits before it's answered - a person's time, not a flat random pick.</summary>
-	private TimeSpan TradeWait() => Rng.HumanMinutes(Bot.Cfg.TradeDelayMinMinutes, Bot.Cfg.TradeDelayMaxMinutes);
+	private TimeSpan TradeWait() {
+		(int lo, int hi) = ReactionSpeed.Range(Bot.Cfg, nameof(BotConfig.TradeDelayMinMinutes), nameof(BotConfig.TradeDelayMaxMinutes));
+
+		return Rng.HumanMinutes(lo, hi);
+	}
+
+	/// <summary>The extra wait after waking, on a human-mode account - scaled by its reaction speed.</summary>
+	private TimeSpan AfterWaking() {
+		(int lo, int hi) = ReactionSpeed.Fixed(Bot.Cfg, 10, 60);
+
+		return Rng.HumanMinutes(lo, hi);
+	}
 
 	// Another account in this nocat.farm counts too: swaps between your own accounts are always looked at.
 	private bool Wanted => Bot.Cfg.AcceptDonations || Bot.Cfg.AcceptFromMasters || Bot.Cfg.AcceptFairCardSwaps || Bot.Cfg.DeclineOtherTrades
@@ -261,7 +273,7 @@ public sealed class Trading(Bot bot) : BotModule(bot) {
 
 		// Offers held while the account slept get their wait now, from a while after it's up - not all in its first
 		// few minutes. The same extra wait gifts get, so a morning doesn't open with everything answered at once.
-		foreach ((ulong id, DateTime due) in awake ? _waiting.Arm(DateTime.UtcNow, () => TradeWait() + (Bot.Cfg.LegitMode ? Rng.HumanMinutes(10, 60) : TimeSpan.Zero)) : []) {
+		foreach ((ulong id, DateTime due) in awake ? _waiting.Arm(DateTime.UtcNow, () => TradeWait() + (Bot.Cfg.LegitMode ? AfterWaking() : TimeSpan.Zero)) : []) {
 			Log.Debug(new Said("trade offer #{0} waited for the account to wake - handling it around {1}", id, (Func<string>) (() => Fmt.Clock(due))), Bot.Name);
 		}
 

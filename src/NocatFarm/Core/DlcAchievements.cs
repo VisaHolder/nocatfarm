@@ -40,8 +40,11 @@ namespace NocatFarm.Core;
 /// DOES own are unlocked (<see cref="Map.Sure"/>), and the rest of the game is left alone. Holding a game costs nothing - the hunt moves on. Unlocking
 /// one wrong achievement can't be taken back.
 ///
-/// The one way past that is the owner's word: a game on the account's AchievementDlcTrusted list is taken as one it
-/// owns every DLC of, and nothing in it is held for DLC (see <see cref="Counted"/>).
+/// The one way past that is the owner's word: a game on the account's AchievementDlcTrusted list (the dashboard asks
+/// about each held game, and "I own what matters - carry on" puts it there) has every DLC that can't be placed counted
+/// as owned, so nothing in it is held on a guess. A DLC whose achievements ARE known exactly is still judged by the
+/// licences: Call of Duty on an account with Modern Warfare II but not III, vouched for, still never has III's 39
+/// unlocked (see <see cref="Counted"/>).
 ///
 /// Built lazily, only for games something is about to unlock in, one game at a time, slowly (the store answers about
 /// two hundred questions every five minutes for everything on this PC, and a game like Call of Duty has close to a
@@ -65,11 +68,13 @@ public static class DlcAchievements {
 	/// word that can mean something else only counts with a pack after it, more words say a DLC has something to play,
 	/// and a game that can't be fully mapped keeps the certain part of each block (<see cref="Map.Sure"/>). 4 and 5: an
 	/// amount of money only makes a currency pack at the end of the name or before a pack word, with two digits or more
-	/// ("1849 Gold Rush" and "The 7 Gems" are stories). A map saved
+	/// ("1849 Gold Rush" and "The 7 Gems" are stories). 6: the map keeps the game's whole DLC list, which the "leave it
+	/// paused" answer is keyed on - one built before had only the DLC with achievements, and its first rebuild changed
+	/// the key and asked again. A map saved
 	/// under older rules (0: before this was kept) is built again at once, and used as it is for the minute or two that
 	/// takes.
 	/// </summary>
-	public const int RuleNow = 5;
+	public const int RuleNow = 6;
 
 	/// <summary>
 	/// How long a map built while Steam didn't answer for some DLC names is used before it is built again. Without the
@@ -192,6 +197,14 @@ public static class DlcAchievements {
 		/// </summary>
 		public List<string>? Names { get; set; }
 
+		/// <summary>
+		/// Every id of every DLC the game has - Steam's list and the store's, and the store app a DLC's page really is -
+		/// with achievements or not. The same however the map was built: a hurried build and a full one group the DLC
+		/// differently, but the game's DLC are the same ones. What the owner's answer is remembered against
+		/// (<see cref="LicenceKey"/>). Null on maps saved before it was kept: then the ids in <see cref="Groups"/>.
+		/// </summary>
+		public List<uint>? Dlc { get; set; }
+
 		private HashSet<string>? _names;
 
 		/// <summary>Was this achievement in the list the map was built from.</summary>
@@ -305,12 +318,42 @@ public static class DlcAchievements {
 		map == null ? [] : [.. map.Groups.Where(g => g.Ids.Any(owns)).Select(static g => g.App)];
 
 	/// <summary>
-	/// The DLC the rule counts as owned: what the licences say - or, for a game the owner listed as one the account owns
-	/// every DLC of (AchievementDlcTrusted), every DLC it has. Their word for it: nothing in that game is held for DLC,
-	/// placed or not. Only for that game; every other game keeps to its licences.
+	/// The ids of the game's DLC this account has for good (<paramref name="owns"/>), as one string in order. Only the
+	/// licences: never the owner's "carry on", and never how the map grouped the DLC - so it reads the same before and
+	/// after an answer, and after the map is built again (in a hurry, or in full). What "leave it paused" is remembered
+	/// with, and what asks again once it changes: a DLC bought, or one refunded.
+	/// </summary>
+	public static string LicenceKey(Map? map, Func<uint, bool> owns) {
+		if (map == null) {
+			return "";
+		}
+
+		IEnumerable<uint> ids = map.Dlc ?? map.Groups.SelectMany(static g => g.Ids.Append(g.App));
+
+		return string.Join(",", ids.Where(owns).Distinct().Order());
+	}
+
+	/// <summary>
+	/// The DLC the rule counts as owned: what the licences say - and, for a game the owner vouched for
+	/// (AchievementDlcTrusted, "I own what matters - carry on"), every DLC that can't be placed as well. Their word
+	/// covers only what nobody can know: which achievements come with a DLC Steam says nothing about. A DLC that IS
+	/// placed is still judged by the licences, so its block stays held on an account without it - the owner's Call of
+	/// Duty, vouched for, has Modern Warfare II but not III, and III's 39 are never unlocked. Only for that game; every
+	/// other game keeps to its licences.
 	/// </summary>
 	public static HashSet<uint> Counted(Map? map, IReadOnlySet<uint> licensed, bool trusted) =>
-		trusted && (map != null) ? [.. map.Groups.Select(static g => g.App)] : [.. licensed];
+		trusted && (map != null)
+			? [.. licensed, .. map.Groups.Where(static g => g.Unsure != Doubt.None).Select(static g => g.App)]
+			: [.. licensed];
+
+	/// <summary>
+	/// Is this achievement certainly from a DLC this account doesn't own: inside the block of a DLC whose store names
+	/// lined up exactly (<see cref="Map.Sure"/>)? Only then is it said to be "from DLC this account doesn't own". One
+	/// held on a guess - a block drawn generously, a DLC named in its description, a game that can't be mapped - is
+	/// "can't tell", not that.
+	/// </summary>
+	public static bool CertainlyNotOwned(Map? map, string apiName, IReadOnlySet<uint> ownedGroups) =>
+		(map?.Sure != null) && map.Sure.TryGetValue(apiName.ToLowerInvariant(), out List<uint>? sure) && sure.Any(d => !ownedGroups.Contains(d));
 
 	/// <summary>
 	/// How far through a game an account can really get: the achievements it has, and how many there are once the ones
@@ -337,13 +380,22 @@ public static class DlcAchievements {
 	public sealed class View {
 		public Map? Map { get; init; }
 
-		/// <summary>The DLC the rule counts as owned - see <see cref="Counted"/>. Every one, in a game the owner vouched for.</summary>
+		/// <summary>The DLC the rule counts as owned - see <see cref="Counted"/>. In a game the owner vouched for, every one that can't be placed too.</summary>
 		public HashSet<uint> Owned { get; init; } = [];
 
 		/// <summary>The DLC its licences say it owns, vouched for or not - for saying what it really has.</summary>
 		public HashSet<uint> Licensed { get; init; } = [];
 
-		/// <summary>The owner listed this game as one the account owns every DLC of (AchievementDlcTrusted).</summary>
+		/// <summary>
+		/// Which of the game's DLC ids it has for good, as one string (<see cref="LicenceKey"/>) - null when the licences
+		/// weren't read. What the owner's answer about the game is remembered with.
+		/// </summary>
+		public string? LicenceKey { get; init; }
+
+		/// <summary>
+		/// The owner vouched for this game (AchievementDlcTrusted): the DLC that can't be placed count as owned, the ones
+		/// that can still go by the licences - see <see cref="Counted"/>.
+		/// </summary>
 		public bool Trusted { get; init; }
 
 		/// <summary>
@@ -397,8 +449,18 @@ public static class DlcAchievements {
 		/// <summary>Still locked, and from DLC this account doesn't own - or, in a game that can't be mapped, maybe.</summary>
 		public int HeldIn(AchievementSet set) => set.All.Count(a => !a.Unlocked && (Of(a) is Hold.NotOwned or Hold.Unmapped));
 
-		/// <summary>Already unlocked although it's from DLC this account doesn't own - not something this app did.</summary>
-		public int UnlockedWithout(AchievementSet set) => set.All.Count(a => a.Unlocked && (Of(a) == Hold.NotOwned));
+		/// <summary>
+		/// Already unlocked although it's certainly from DLC this account doesn't own - not something this app did. Only
+		/// what is known exactly (<see cref="Certain"/>): one held on a guess may well be the base game's.
+		/// </summary>
+		public int UnlockedWithout(AchievementSet set) => set.All.Count(a => a.Unlocked && (Of(a) == Hold.NotOwned) && Certain(a));
+
+		/// <summary>Certainly from a DLC this account doesn't own - see <see cref="CertainlyNotOwned"/>.</summary>
+		public bool Certain(Achievement a) => Known && CertainlyNotOwned(Map, a.Name, Owned);
+
+		/// <summary>Is this achievement certainly inside this DLC's block (<see cref="Map.Sure"/>)?</summary>
+		public bool SurelyIn(Achievement a, uint group) =>
+			Map?.Sure is { } sure && sure.TryGetValue(a.Name.ToLowerInvariant(), out List<uint>? dlc) && dlc.Contains(group);
 
 		/// <summary>
 		/// How many of the game's achievements are left alone for DLC, locked or not: the ones from DLC this account
@@ -433,9 +495,18 @@ public static class DlcAchievements {
 		public bool In(Achievement a, uint group) =>
 			Map is { } map && map.Owners.TryGetValue(a.Name.ToLowerInvariant(), out List<uint>? needs) && needs.Contains(group);
 
-		private static string NameOf(Map map, uint dlc) =>
-			map.Groups.FirstOrDefault(g => g.App == dlc)?.Name is { Length: > 0 } n ? n : GameNames.Of(dlc);
+		private static string NameOf(Map map, uint dlc) => DlcName(map, dlc);
 	}
+
+	/// <summary>A DLC's name: the store's, or Steam's when the store has none (Black Ops 6 opens Call of Duty's page).</summary>
+	public static string DlcName(Map map, uint dlc) =>
+		map.Groups.FirstOrDefault(g => g.App == dlc)?.Name is { Length: > 0 } n ? n : GameNames.Of(dlc);
+
+	/// <summary>
+	/// The DLC this account doesn't own that stop the game being mapped, by name - what a game held whole is missing.
+	/// </summary>
+	public static List<string> UnplaceableNames(Map? map, IReadOnlyCollection<uint> owned) =>
+		map == null ? [] : [.. map.Groups.Where(g => (g.Unsure != Doubt.None) && !owned.Contains(g.App)).Select(g => DlcName(map, g.App))];
 
 	/// <summary>How old a map has to be before an achievement it has never seen has the game built again.</summary>
 	private static readonly TimeSpan UnfamiliarAfter = TimeSpan.FromHours(1);
@@ -475,8 +546,8 @@ public static class DlcAchievements {
 		// Read before the licences are: one that lands while they're being read then shows up as a change later.
 		long stamp = bot.LicenseStamp;
 
-		// The owner's word that this account has every DLC of the game. Read each time, so taking a game off the list
-		// holds it again from the next look.
+		// The owner's word that this account has what matters in the game ("carry on"). Read each time, so taking the
+		// answer back holds it again from the next look.
 		bool trusted = bot.Cfg.AchievementDlcTrusted.Contains(app);
 
 		if ((map == null) || !map.HasDlc) {
@@ -496,9 +567,13 @@ public static class DlcAchievements {
 		// Its OWN licence only, and one it has for good. A family member's DLC can't be told apart from the outside, and
 		// "can't tell" is no. A free weekend, a timed trial, or a licence that ran out, was cancelled or hasn't gone through
 		// is on the list too - and isn't owning the DLC.
-		HashSet<uint> licensed = OwnedGroups(map, id => licences.TryGetValue(id, out AppOwnership o) && o.Permanent);
+		bool Permanent(uint id) => licences.TryGetValue(id, out AppOwnership o) && o.Permanent;
+		HashSet<uint> licensed = OwnedGroups(map, Permanent);
 
-		return new View { Map = map, Bot = bot, Licences = stamp, Trusted = trusted, Licensed = licensed, Owned = Counted(map, licensed, trusted) };
+		return new View {
+			Map = map, Bot = bot, Licences = stamp, Trusted = trusted, Licensed = licensed, Owned = Counted(map, licensed, trusted),
+			LicenceKey = LicenceKey(map, Permanent)
+		};
 	}
 
 	/// <summary>
@@ -889,6 +964,27 @@ public static class DlcAchievements {
 	}
 
 	/// <summary>
+	/// A DLC's name to show a person: as the store writes it, without ® and ™, and without the game's own name in front
+	/// when there is something after it - "Call of Duty®: Black Ops 7" under Call of Duty is "Black Ops 7". The same
+	/// word-by-word match as <see cref="WithoutGame"/>, but the letters keep their case.
+	/// </summary>
+	public static string ShortName(string name, string baseName) {
+		string clean = Regex.Replace(name ?? "", @"[®™©℠]", "").Replace('’', '\'').Trim();
+		string[] game = [.. Regex.Matches(Plain(baseName), @"[\p{L}\p{N}']+").Select(static m => m.Value)];
+		MatchCollection words = Regex.Matches(clean, @"[\p{L}\p{N}']+");
+
+		if ((game.Length == 0) || (words.Count <= game.Length)
+			|| Enumerable.Range(0, game.Length).Any(i => words[i].Value.Normalize(NormalizationForm.FormKC).ToLowerInvariant() != game[i])) {
+			return clean;
+		}
+
+		Match last = words[game.Length - 1];
+		string rest = clean[(last.Index + last.Length)..].TrimStart(' ', '-', '–', '—', ':', ',', '.', '|').Trim();
+
+		return rest.Length > 0 ? rest : clean;
+	}
+
+	/// <summary>
 	/// A DLC that is plainly only looks or in-game money: once the game's own name is off it (<see cref="WithoutGame"/>),
 	/// its name has one of <see cref="CosmeticWords"/> or <see cref="CosmeticPatterns"/>, none of
 	/// <see cref="ContentWords"/>, no "+" or "&amp;", and no letters these lists can't read. "Modern Warfare II - Desert
@@ -899,7 +995,7 @@ public static class DlcAchievements {
 	/// <remarks>
 	/// Kept narrow on purpose. A DLC called harmless that does bring achievements lets the rest of the game be unlocked
 	/// on an account without it - the thing all this is here to stop. One missed only holds a game back, and the owner
-	/// can vouch for that game (AchievementDlcTrusted).
+	/// can vouch for that game ("I own what matters - carry on", kept in AchievementDlcTrusted).
 	/// </remarks>
 	public static bool Cosmetic(string name, string baseName = "") {
 		string plain = WithoutGame(name, baseName);
@@ -1313,6 +1409,9 @@ public static class DlcAchievements {
 			x.Facts.Highlighted, x.Facts.Listed, x.Facts.Type)), baseName);
 		Map map = Assemble(app, baseName, schema, merged, all.Count, described.Count(static x => x.Facts.Listed), DateTime.UtcNow);
 		map.Hurried = !answered;
+		// Every id of every DLC, however they were grouped: what the owner's answer is remembered against.
+		map.Dlc = [.. all.Concat(described.Select(static x => x.Facts.StoreApp)).Concat(map.Groups.SelectMany(static g => g.Ids.Append(g.App)))
+			.Where(d => (d != 0) && (d != app)).Distinct().Order()];
 		Save(map);
 
 		int unsure = map.Groups.Count(static g => g.Unsure != Doubt.None);

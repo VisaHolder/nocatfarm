@@ -23,8 +23,9 @@ def unescape(x):
 
 
 commands = []
-for m in re.finditer(r'new\(\s*' + STR + r',\s*' + STR + r',\s*(Group\w+),\s*' + STR + r'(?:,\s*' + STR + r')?\s*\)', body):
-    name, args, group, help_, aliases = m.groups()
+# The sixth string, HiddenAliases (older names that still work), is read past but not listed.
+for m in re.finditer(r'new\(\s*' + STR + r',\s*' + STR + r',\s*(Group\w+),\s*' + STR + r'(?:,\s*' + STR + r'(?:,\s*' + STR + r')?)?\s*\)', body):
+    name, args, group, help_, aliases, _hidden = m.groups()
     commands.append({"name": unescape(name), "args": unescape(args), "group": groups[group],
                      "help": unescape(help_), "aliases": [a for a in unescape(aliases or "").split("|") if a]})
 

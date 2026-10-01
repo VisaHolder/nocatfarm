@@ -188,13 +188,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return 0;
 		}
 
-		// A drop run ('drops' on this account) gets real weight: the main game's share of the sittings, or the
-		// card-sittings share if that's higher - still one sitting at a time, with every break and bedtime.
-		int share = Math.Clamp(Bot.Cfg.CardSittingsPct, 5, 95);
-
-		if (Bot.DropsFirstActive) {
-			share = Math.Max(share, Math.Clamp(_mainSharePct > 0 ? _mainSharePct : 65, 5, 95));
-		}
+		int share = CardShare(Bot.Cfg, Bot.DropsFirstActive, _mainSharePct);
 
 		if ((Bot.EffectiveFarmWhen == FarmWhen.Mixed) && !Chance(share / 100.0)) {
 			return 0;
@@ -205,6 +199,25 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		}
 
 		return farmer.NextGame;
+	}
+
+	/// <summary>
+	/// The share of sittings (percent) that farm cards with "mixed". A drop run ('drops' on this account) gets real weight:
+	/// the main game's share of the sittings, or the card-sittings share if that's higher - still one sitting at a time,
+	/// with every break and bedtime. That card-sittings share counts only where "mixed" was chosen: on an account set to
+	/// farm at night or any time it's hidden (it shows only under "mixed"), and a number nobody can see shouldn't decide
+	/// how much of the day a drop run takes - there it's the main game's share.
+	/// </summary>
+	public static int CardShare(BotConfig cfg, bool dropsRun, int mainSharePct) {
+		int share = Math.Clamp(cfg.CardSittingsPct, 5, 95);
+
+		if (!dropsRun) {
+			return share;
+		}
+
+		int main = Math.Clamp(mainSharePct > 0 ? mainSharePct : 65, 5, 95);
+
+		return cfg.FarmCardsWhen == FarmWhen.Mixed ? Math.Max(share, main) : main;
 	}
 
 	/// <summary>How many clear reads in a row, one per tick, before a game may go on.</summary>
@@ -258,7 +271,11 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				Phase.ShortBreak => Loc.T("short break · back in {0}", Left(_phaseEnds)),
 				Phase.MealBreak => Loc.T("meal break · back in {0}", Left(_phaseEnds)),
 				Phase.NightIdle or Phase.Asleep when _nightFarming => Loc.T("asleep, the card farmer is working · up {0}", (NextWakeTime()).ToString("HH:mm")),
+				// Games it picked itself are named, so nobody wonders what is banking all night.
+				Phase.NightIdle when NightPicked is { Count: > 0 } picked => Loc.T("asleep, no games chosen - idling your {0} most-played game(s): {1} · up {2}", picked.Count, NightPickedNames(picked), (NextWakeTime()).ToString("HH:mm")),
 				Phase.NightIdle => Loc.T("asleep, banking hours quietly on {0} game(s) · up {1}", NightGames().Count, (NextWakeTime()).ToString("HH:mm")),
+				// Banking overnight is on by default; with nothing it may play, say so rather than sleep quietly.
+				Phase.Asleep when NothingToBank => Loc.T("asleep · up {0} · nothing to bank overnight - add games to the overnight list", (NextWakeTime()).ToString("HH:mm")),
 				Phase.Asleep => Loc.T("asleep · up {0}", (NextWakeTime()).ToString("HH:mm")),
 				Phase.DoneForToday => Loc.T("done for today ({0}) · back {1}", Fmt.Hm(_playedMinutesToday), (NextWakeTime()).ToString("HH:mm")),
 				Phase.DayOff => Loc.T("not playing today · back {0}", (NextWakeTime()).ToString("HH:mm")),
@@ -272,6 +289,21 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	}
 
 	public Phase Current => Bot.Cfg.LegitMode ? _phase : Phase.Off;
+
+	/// <summary>"Bank hours overnight" is on, but there's nothing to bank: no overnight games, no most-played game it may play, and no hour target needing the night.</summary>
+	private bool NothingToBank => Bot.Cfg.OfflineIdleAtNight && (NightGames().Count == 0);
+
+	/// <summary>
+	/// The games the night banks on when the overnight list is empty - the account's most-played - or none when the list
+	/// has games (the list always wins) or banking overnight is off.
+	/// </summary>
+	public IReadOnlyList<uint> NightPicked => Bot.Cfg.LegitMode && Bot.Cfg.OfflineIdleAtNight && (Bot.Cfg.OfflineIdleGames.Count == 0) ? TopForNight() : [];
+
+	/// <summary>"Counter-Strike 2, Dota 2" - the library's names, for the status and the dashboard.</summary>
+	public string NightPickedNames(IReadOnlyList<uint> picked) => string.Join(", ", picked.Select(a => Bot.Library.Find(a)?.Name ?? GameNames.Of(a)));
+
+	/// <summary>How many games bank the night: the list or the most-played picked in its place, and any hour target that needs it.</summary>
+	public int NightGameCount => NightGames().Count;
 	public int PlayedMinutesToday => _playedMinutesToday;
 	public int TargetMinutesToday => _targetMinutes;
 	public uint PlayingNow => _phase == Phase.Playing ? _game : 0;
@@ -319,7 +351,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	// Not while it's actually settling in (the morning's settle, say): signed in since last night, the time fallback
 	// said "warmed up" the minute it woke, and trades and the farmer went ahead while the board said settling in.
 	public bool WarmedUp => (_warmedUp && (Bot.OnlineSince is { } armed) && (_gateArmedFor == armed))
-		|| ((_phase != Phase.WarmingUp) && SafeToPlay && (Bot.OnlineSince is { } on) && (DateTime.UtcNow >= on.AddSeconds(SafetyGateSeconds).AddMinutes(Math.Max(1, Bot.Cfg.WarmUpMaxMinutes))));
+		|| ((_phase != Phase.WarmingUp) && SafeToPlay && (Bot.OnlineSince is { } on) && (DateTime.UtcNow >= on.AddSeconds(SafetyGateSeconds).AddMinutes(Math.Max(1, WarmUp.Max))));
+
+	/// <summary>Settling in after a sign-in, as configured and scaled by the reaction speed. The safety gate is on top, never scaled.</summary>
+	private (int Min, int Max) WarmUp => ReactionSpeed.Range(Bot.Cfg, nameof(BotConfig.WarmUpMinMinutes), nameof(BotConfig.WarmUpMaxMinutes));
 
 	/// <summary>
 	/// The owner-safety half of settling in on its own: three minutes past this sign-in and several clear reads in a
@@ -962,7 +997,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	public TimeSpan SettleLeft {
 		get {
 			DateTime loggedOn = Bot.OnlineSince ?? DateTime.UtcNow;
-			DateTime ready = _gateArmedFor == loggedOn ? _readyAt : loggedOn.AddMinutes(Math.Max(0, Bot.Cfg.WarmUpMaxMinutes));
+			DateTime ready = _gateArmedFor == loggedOn ? _readyAt : loggedOn.AddMinutes(Math.Max(0, WarmUp.Max));
 			TimeSpan left = ready - DateTime.UtcNow;
 
 			return left > TimeSpan.Zero ? left : TimeSpan.Zero;
@@ -979,8 +1014,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			_announcedWarmUp = false;
 			_warmedUp = false;
 
-			int lo = Math.Max(0, Bot.Cfg.WarmUpMinMinutes);
-			int hi = Math.Max(lo, Bot.Cfg.WarmUpMaxMinutes);
+			(int warmLo, int warmHi) = WarmUp;
+			int lo = Math.Max(0, warmLo);
+			int hi = Math.Max(lo, warmHi);
 
 			// Counted from the sign-in itself, not from when human mode first looked: an account that has been online
 			// a while (done for the day, then a grind asked for) is long past its warm-up, and was made to sit through
@@ -1650,10 +1686,14 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_switchingTo = 0;
 
 		if (banking) {
-			Log.Info(new Said("asleep - banking hours quietly until {0}", (NextWakeTime()).ToString("HH:mm")), Bot.Name);
+			Log.Info(NightPicked is { Count: > 0 } picked
+				? new Said("asleep - no games chosen, so banking hours quietly on your most-played until {0}: {1}", (NextWakeTime()).ToString("HH:mm"), NightPickedNames(picked))
+				: new Said("asleep - banking hours quietly until {0}", (NextWakeTime()).ToString("HH:mm")), Bot.Name);
 		} else {
 			Bot.StopPlaying();
-			Log.Info(new Said("asleep - back around {0}", (NextWakeTime()).ToString("HH:mm")), Bot.Name);
+			Log.Info(NothingToBank
+				? new Said("asleep - back around {0}. Nothing to bank overnight: add games to the overnight list", (NextWakeTime()).ToString("HH:mm"))
+				: new Said("asleep - back around {0}", (NextWakeTime()).ToString("HH:mm")), Bot.Name);
 		}
 	}
 
@@ -1927,8 +1967,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// flat 8-25 minutes every single time is its own signature.
 	/// </summary>
 	private void ShortBreak() {
-		int min = Math.Max(1, Bot.Cfg.BreakMinMinutes);
-		int max = Math.Max(min + 2, Bot.Cfg.BreakMaxMinutes);
+		(int breakLo, int breakHi) = ReactionSpeed.Range(Bot.Cfg, nameof(BotConfig.BreakMinMinutes), nameof(BotConfig.BreakMaxMinutes));
+		int min = Math.Max(1, breakLo);
+		int max = Math.Max(min + 2, breakHi);
 		int span = max - min;
 		int roll = Rng(0, 99);
 
@@ -1946,7 +1987,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_mealsUsed++;
 		Persist();   // or a restart during it hands the day an extra meal - the count was only saved with the next minute played
 
-		int centre = Math.Max(10, Bot.Cfg.MealBreakMinutes);
+		int centre = Math.Max(10, ReactionSpeed.One(Bot.Cfg, nameof(BotConfig.MealBreakMinutes)));
 		int minutes = Chance(0.70) ? Rng(centre - 5, centre + 10) : Rng(centre + 10, centre + 40);
 
 		_phase = Phase.MealBreak;
@@ -1971,7 +2012,8 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		// The status changes a few minutes in, the way a client goes Away once nobody's touched it for a bit - and a
 		// break too short for that just stays online.
-		int after = Rng(Math.Max(0, Bot.Cfg.BreakAwayAfterMinMinutes), Math.Max(Bot.Cfg.BreakAwayAfterMinMinutes, Bot.Cfg.BreakAwayAfterMaxMinutes));
+		(int awayLo, int awayHi) = ReactionSpeed.Range(Bot.Cfg, nameof(BotConfig.BreakAwayAfterMinMinutes), nameof(BotConfig.BreakAwayAfterMaxMinutes));
+		int after = Rng(Math.Max(0, awayLo), Math.Max(awayLo, awayHi));
 
 		if (minutes <= after + 2) {
 			Log.Info(new Said("{0} - back in about {1}", what, Fmt.Hm(minutes)), Bot.Name);
@@ -2609,7 +2651,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// time. Only matters with night banking switched on - that stays the owner's call.
 	/// </summary>
 	private List<uint> NightGames() {
-		List<uint> games = [.. Bot.Cfg.OfflineIdleGames];
+		List<uint> games = Bot.Cfg.OfflineIdleGames.Count > 0 ? [.. Bot.Cfg.OfflineIdleGames] : TopForNight();
 
 		foreach (HourTargets.Progress p in OpenTargets()) {
 			if ((p.Target.By != null) && (p.DailyMinutesNeeded > Math.Max(30, _targetMinutes * 0.6)) && !games.Contains(p.Target.AppId)) {
@@ -2617,8 +2659,52 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			}
 		}
 
+		// The games typed into the list (and the hour targets) go by the same rules as the ones it picks itself: a game
+		// held for its refund idled all night on the list, where the most-played pick already left it out.
+		HashSet<uint> banned = BannedNow();
+		games = [.. games.Where(a => MayBankAtNight(a, banned))];
+
 		return games.Count > Core.SteamIds.GamesAtOnce ? games[..Core.SteamIds.GamesAtOnce] : games;
 	}
+
+	/// <summary>
+	/// With nothing on the overnight list, the account's own most-played games - "...or, with none chosen, its top games"
+	/// of them. Only games it may play anyway (<see cref="MayBankAtNight"/>).
+	/// </summary>
+	private List<uint> TopForNight() {
+		HashSet<uint> banned = BannedNow();
+
+		return TopPlayed(Bot.Library.Games, Bot.Cfg.OfflineIdleTopGames, a => MayBankAtNight(a, banned));
+	}
+
+	private HashSet<uint> BannedNow() => [.. BotManager.ModuleOf<BanWatch>(Bot)?.BannedGames ?? []];
+
+	/// <summary>
+	/// How many games on the overnight list it may really bank - what selfcheck's advice is about. The raw list counted
+	/// games the rules leave out (blacklisted, held for a refund), and said "it banks 3 at once" of a night that ran one.
+	/// </summary>
+	public int ListedNightCount {
+		get {
+			HashSet<uint> banned = BannedNow();
+
+			return Math.Min(Core.SteamIds.GamesAtOnce, Bot.Cfg.OfflineIdleGames.Count(a => MayBankAtNight(a, banned)));
+		}
+	}
+
+	/// <summary>
+	/// May this game bank hours overnight: not blacklisted, not held for a refund, not one Steam has it banned in, and not
+	/// a family game unless shared games are allowed and nobody in the family is on it. A game typed into the list that
+	/// the library doesn't show (a free game never played, say) still goes on - only a family game is known to be one.
+	/// </summary>
+	private bool MayBankAtNight(uint app, HashSet<uint> banned) =>
+		!banned.Contains(app) && !Bot.Cfg.BlacklistedGames.Contains(app) && !Live.Global.GlobalBlacklistedGames.Contains(app) && !Bot.Refunds.Holds(app)
+		&& ((Bot.Library.Find(app) is not { Shared: true }) || (Bot.Cfg.IncludeFamilyLibrary && !Bot.Library.FamilyIsPlaying(app)));
+
+	/// <summary>The most-played games that are allowed, most minutes first - only ones it has actually played.</summary>
+	public static List<uint> TopPlayed(IEnumerable<Library.Entry> games, int count, Func<uint, bool> allowed) =>
+		[.. games.Where(static g => g.MinutesPlayed > 0).Where(g => allowed(g.AppId))
+			.OrderByDescending(static g => g.MinutesPlayed).ThenBy(static g => g.AppId)
+			.Take(Math.Clamp(count, 1, 10)).Select(static g => g.AppId)];
 
 	/// <summary>The 'hours' command: each target, where it stands, and whether it's on course.</summary>
 	public List<string> TargetReport() {

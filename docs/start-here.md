@@ -127,8 +127,8 @@ It also, without being asked:
   [Steam groups](phone-and-notifications.md#steam-groups))
 - clears Steam's notification counters
 - writes a daily summary in the log at 09:30
-- checks for updates every 2 hours and tells you what's new, but only installs one by itself if you turn on
-  *Update by itself*
+- checks for updates every 2 hours and tells you what's new, but only installs one by itself if you set *Updates*
+  to *install by itself at night*
 
 These stay **off** until you turn them on: human mode (unless you picked "My main"), claiming free games, earning
 achievements, selling cards, crafting badges, fair card swaps, Discord and Telegram, rep4rep, and plugins.
@@ -161,14 +161,14 @@ All of these are in **Settings**, with the account picked on the left. The comma
 **Games to idle** (farm accounts): *What it plays → Games to idle*, or `play myaccount 730, 440`. These play once
 the cards are done.
 
-**A custom game name** (farm accounts): *What it plays → Show as*, or `name myaccount nocat.lol`. Friends see that
+**A custom game name** (farm accounts): *What it plays → Show as*, or `gamename myaccount nocat.lol`. Friends see that
 name instead of the real game, and the real games still count playtime.
 
 **Human mode**: *Human mode → Human mode*. Then set **Games and how often** (`730:70, 440:30` means 70%
 Counter-Strike 2 and 30% Team Fortress 2), the hours it plays and its bedtime.
 
-**Claim free games**: *Free stuff → Claim free games*. Paid games that Steam gives away free-to-keep get added to
-the account.
+**Claim free games**: *Free stuff → Claim free games*, set to *games* (or *games and DLC* for free DLC too). Paid
+games that Steam gives away free-to-keep get added to the account.
 
 **I sign into this one myself**: *Account → I sign into this one myself*. Turn it on for any account you also use in
 your own Steam app.
@@ -191,7 +191,7 @@ Type these in the app window or the dashboard's Console tab, using the name you 
 | `pause myaccount 60` | Stop playing for 60 minutes, then carry on by itself. `resume myaccount` ends it early. |
 | `cards` | Cards left to farm, and about how long it'll take. |
 | `play myaccount 730, 440` | Idle these games. |
-| `name myaccount nocat.lol` | Show this name instead of the real game. `name myaccount off` removes it. |
+| `gamename myaccount nocat.lol` | Show this name instead of the real game. `gamename myaccount off` removes it. |
 | `offers` | Trade offers waiting on your accounts. |
 | `update` | Check for a new version. |
 | `help` | Every command. `help <command>` or `help <setting>` explains one; `help rot` lists everything starting with "rot". |
@@ -204,14 +204,14 @@ Type these in the app window or the dashboard's Console tab, using the name you 
 `update accept`. nocat.farm downloads the new version, signs your accounts out one by one, swaps the files and
 restarts. Your accounts, settings, logs and plugins are kept.
 
-If you'd rather it didn't restart while an account is in the middle of something, set *When I say update*
-(Settings → Global settings → Updates & plugins) to *when my accounts are asleep*. The Update button and
+That's *Updates* set to *install when I click* (Settings → Global settings → Updates & plugins), the default. If
+you'd rather it didn't restart while an account is in the middle of something, set it to *install when I click, once everyone's asleep*. The Update button and
 `update accept` then wait until no human-mode account is awake, nobody is playing on any account, and no trade or
 gift is waiting its turn. Robot accounts that stay on all night don't hold it up. With no human-mode accounts at
-all, it waits for the night hours of *Update by itself* instead (3 to 6 in the morning unless you change them). A
+all, it waits for the night install hours instead (3 to 6 in the morning unless you change them). A
 waiting update is forgotten if you restart nocat.farm. `update now` always installs straight away.
 
-To have it update with no click at all, set *Update by itself* to **install at night**. It then installs a new
+To have it update with no click at all, set *Updates* to **install by itself at night**. It then installs a new
 version on its own, but only between the hours you pick (3 to 6 in the morning by default), only once the version
 has been out for a while (*Wait after a release for*, 2 hours) so a bad release can be fixed first, and only while
 no human-mode account is awake, nobody is playing and no trade offer or gift is waiting. *Look for updates every*
@@ -245,7 +245,7 @@ Check the **Log** tab first. It says what happened in plain words. Some common o
 | Steam kicks you off Friends & Chat | Turn on *I sign into this one myself* for that account. |
 | Friends see the real game, not your custom name | The account card warns "Steam shows …" and nocat.farm puts the name back by itself. Human-mode accounts have no custom name, on purpose. |
 | Nothing is farming | Type `cards myaccount`. With no cards left it idles its games, if it has any. If it says it's waiting, human mode may have it asleep or on a break; `human myaccount` shows its day. |
-| The dashboard says "Too many wrong passwords" | Five wrong tries lock that address out: for a minute on this PC, an hour from anywhere else. The page counts down; type `unlock` in the app window (or on Telegram) to skip the wait. |
+| The dashboard says "Too many wrong passwords" | Five wrong tries lock that address out: for a minute on this PC, an hour from anywhere else. The page counts down; type `dashboard unlock` in the app window (or on Telegram) to skip the wait. |
 | The settings page looks short | Tick **Show advanced**. |
 
 Still stuck? Open an [issue](https://github.com/VisaHolder/nocatfarm/issues) and paste the log lines.

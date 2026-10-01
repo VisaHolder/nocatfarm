@@ -1019,7 +1019,6 @@
     "Open its Steam store page": "Steamストアページを開く",
     "{0} card(s) - farmed in some of its sittings, between its usual games": "カード{0}枚 - いつものゲームの合間に、一部のセッションでファーム",
     "recent licence: package {0}, {1}, {2}": "最近のライセンス: パッケージ {0}、{1}、{2}",
-    "{0} is a free DLC - left alone (\"...free DLC too\" is off)": "{0} は無料DLC - 受け取らない(「…無料DLCも」がオフ)",
     "{0} is free, but only to owners of {1} - this account doesn't have it": "{0} は無料だが {1} の所有者のみ - このアカウントは持っていない",
     "couldn't claim {0} for its DLC - {1}": "DLCのための {0} を受け取れませんでした - {1}",
     "joined the Steam group {0}": "Steamグループ {0} に参加しました",
@@ -1692,11 +1691,8 @@
     "key queue: {0}": "キーのキュー: {0}",
     "Friends & comments": "フレンドとコメント",
     "update: {0}MB downloaded - unpacking": "更新: {0}MB ダウンロード済み - 展開中",
-    "{0} will install when your accounts are asleep (When I say update) - 'update now' installs it right away": "{0} はアカウントが寝たら入ります（アップデートと言ったら）- 'update now' ですぐ入れます",
     "achievement boost: {0} games to hunt ({1} shared)": "実績狙い: {0} ゲーム（{1} 共有）",
     "achievement boost: {0} games to hunt": "実績狙い: {0} ゲーム",
-    "not grinding {0} - still refundable (Protect refundable games)": "{0} はグラインドしません - まだ返金可能（返金可能なゲームを保護）",
-    "not putting {0} first - still refundable (Protect refundable games)": "{0} は優先しません - まだ返金可能（返金可能なゲームを保護）",
     "{0}: all {1} card drop(s) in - back to normal": "{0}: カードドロップ {1} 個すべて獲得 - 通常に戻ります",
     "still going for {0}: {1} of {2} card drop(s)": "引き続き {0}: カードドロップ {1}/{2}",
     "confirmed trade offer {0} with its authenticator": "トレードオファー {0} を自身の認証で確認",
@@ -1918,7 +1914,7 @@
     "  (this PC only, no password)": "（この PC のみ、パスワードなし）",
     "{0} games, {1} cards to farm - about {2} in all": "{0} ゲーム、カード {1} 枚 - 全部で約 {2}",
     "Too many wrong passwords - try again in {0}.": "パスワードの間違いが多すぎます - {0} 後にもう一度どうぞ。",
-    "Or type unlock in the nocat.farm window.": "または nocat.farm のウィンドウで unlock と入力してください。",
+    "Or type dashboard unlock in the nocat.farm window.": "または nocat.farm のウィンドウで dashboard unlock と入力してください。",
     "You can try again now.": "もう一度試せます。",
     "dashboard unlocked - you can sign in again": "ダッシュボードのロックを解除しました - またサインインできます",
     "nothing was locked - the dashboard sign-in works": "ロックされていませんでした - ダッシュボードにサインインできます",
@@ -2262,10 +2258,10 @@
     "\"{0}\" may come with DLC {1} doesn't own, and Steam doesn't list which achievements that DLC adds ({2}) - it won't be unlocked.": "「{0}」は {1} が持っていない DLC の実績かもしれません。Steam はその DLC がどの実績を追加するかを公開していません（{2}）- 解除しません。",
     "{0} left alone - can't tell which achievements come with its DLC": "{0} 件はそのまま - どの実績が DLC のものか分かりません",
     "can't tell which achievements come with its DLC - left alone": "どの実績が DLC のものか分かりません - そのまま",
-    "see 'dlcach {0} {1}'": "「dlcach {0} {1}」を参照",
     "{0}: games with achievements left alone for DLC it doesn't own (never unlocked)": "{0}：持っていない DLC のためにそのままにしている実績があるゲーム（解除しません）",
     "Couldn't read which DLC {0} owns just now - nothing in {1} is unlocked until it can. Try again in a few minutes.": "{0} がどの DLC を持っているか今は読めませんでした - 読めるまで {1} では何も解除しません。数分後にもう一度試してください。",
     "Held: {0} is missing DLC, and Steam doesn't list which achievements they add - so {1} achievement(s) outside the DLC it owns are left alone.": "保留中：{0} には持っていない DLC があり、Steam はそれらがどの実績を追加するかを公開していません - そのため、持っている DLC 以外の実績 {1} 件はそのままにします。",
+    "{0} is missing DLC, and Steam doesn't list which achievements they add - but every achievement outside the DLC it owns is already unlocked, so there's nothing to hold.": "{0} には持っていない DLC があり、Steam はそれがどの実績を追加するかを示しません - ただし、所有している DLC 以外の実績はすべて解除済みなので、保留するものはありません。",
     "its store page is the game's own": "ストアページがゲーム本体のもの",
     "it isn't on the store any more": "もうストアにありません",
     "the store's names for its achievements aren't in the game's list": "ストアでの実績名がゲームのリストにありません",
@@ -2281,11 +2277,51 @@
     "{0}: can't tell which achievements come with its DLC - nothing to grind": "{0}：どの実績が DLC のものか分かりません - グラインドするものはありません",
     "{0}: {1}/{2} - can't tell which achievements come with its DLC - left alone": "{0}：{1}/{2} - どの実績が DLC のものか分かりません - そのまま",
     "Playing {0} — {1}; can't tell which achievements come with its DLC, so the rest are left alone.": "{0} をプレイ中 - {1}。どの実績が DLC のものか分からないので、残りはそのままにします。",
-    "Nothing held in {0} - you listed them as owning all their DLC": "{0} では何も保留しません - DLC をすべて持っていると登録されています",
-    "Trusted: you listed it as owning all its DLC (\"Games I own all the DLC for\"), so nothing in it is held for DLC.": "信頼済み：DLC をすべて持っていると登録されている（「DLC をすべて持っているゲーム」）ので、DLC を理由に保留する実績はありません。",
-    "not in its licences, but counted as owned - you listed the game": "ライセンスにはないが、所有として扱う - ゲームが登録されています",
-    "If {0} owns all of {1}'s DLC, add {2} to \"Games I own all the DLC for\" in its settings - then nothing in it is held for DLC.": "{0} が {1} の DLC をすべて持っているなら、設定の「DLC をすべて持っているゲーム」に {2} を追加してください - DLC を理由に保留するものはなくなります。",
-    "If this account owns all its DLC, add the game to “{0}”.": "このアカウントが DLC をすべて持っているなら、このゲームを「{0}」に追加してください。"
+    "see 'dlc {0} {1}'": "「dlc {0} {1}」を参照",
+    "Nothing held in {0} - you said carry on": "{0} では何も保留していません - 続けると答えました",
+    "Trusted: you said {0} owns what matters, so nothing in it is held just because Steam doesn't say which add-on an achievement comes with.": "信頼済み：{0} は大事なものを持っていると答えたので、どの追加コンテンツの実績か Steam が言わないというだけで保留するものはありません。",
+    "Trusted: you said {0} owns what matters. {1} achievement(s) from {2}, which it doesn't own, are still left alone.": "信頼済み：{0} は大事なものを持っていると答えました。持っていない {2} の実績 {1} 件はそのまま触れません。",
+    "If {0} owns what matters in {1}, answer on the dashboard or type 'dlc carryon {0} {2}'. Achievements that certainly come with an add-on it doesn't own stay locked.": "{0} が {1} の大事なものを持っているなら、ダッシュボードで答えるか「dlc carryon {0} {2}」と入力してください。持っていない追加コンテンツの実績だと確実なものはロックされたままです。",
+    "{0}: carrying on with {1}. Only achievements that certainly come with an add-on it doesn't own stay locked.": "{0}：{1} を続けます。持っていない追加コンテンツの実績だと確実なものだけはロックされたままです。",
+    "{0}: {1} stays paused for achievements. It won't be asked about again unless its add-ons change.": "{0}：{1} は実績を一時停止したままにします。追加コンテンツが変わらない限り、もう聞きません。",
+    "{0}: there's no answer for {1} to take back.": "{0}：{1} には取り消す答えがありません。",
+    "{0}: took back \"carry on\" for {1}. Nothing in it is unlocked on a guess any more.": "{0}：{1} の「続ける」を取り消しました。推測で解除されるものはもうありません。",
+    "{0}: {1} will be asked about again.": "{0}：{1} についてまた聞きます。",
+    "Which game? Its name or its appID.": "どのゲーム？名前か appID で。",
+    "{0} has no game called \"{1}\". Try its appID - the number in its store link.": "{0} には「{1}」というゲームがありません。appID（ストアのリンクにある数字）で試してください。",
+    "More than one game matches \"{0}\": {1}. Type more of the name, or the appID.": "「{0}」に合うゲームが複数あります：{1}。名前をもっと入力するか、appID を入力してください。",
+    "{0}: {1} is paused for achievements - it has add-ons this account doesn't own. Answer on the dashboard, or 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.": "{0}：{1} は実績を一時停止中です - このアカウントが持っていない追加コンテンツがあります。ダッシュボードで答えるか、「dlc carryon {0} {2}」/「dlc leave {0} {2}」で。",
+    "Only skin, team and other packs are missing.": "足りないのはスキン・チームなどのパックだけです。",
+    "Missing: {0}": "足りないもの：{0}",
+    "Missing: {0} add-ons": "足りないもの：追加コンテンツ {0} 件",
+    "{0} is paused for achievements. It has add-ons this account doesn't own, and Steam doesn't say which of them come with achievements.": "{0} は実績を一時停止中です。このアカウントが持っていない追加コンテンツがあり、そのどれに実績があるかを Steam は示していません。",
+    "Achievements that certainly come with an add-on it doesn't own stay locked either way.": "持っていない追加コンテンツの実績だと確実なものは、どちらにしてもロックされたままです。",
+    "I own what matters - carry on": "大事なものは持っている - 続ける",
+    "Leave it paused": "一時停止のままにする",
+    "You said carry on for:": "「続ける」と答えたゲーム：",
+    "undo": "取り消す",
+    "You said leave it paused for:": "「一時停止のまま」と答えたゲーム：",
+    "ask again": "もう一度聞く",
+    "not grinding {0} - still refundable (Protect refunds)": "{0} はグラインドしません - まだ返金可能（返金を守る）",
+    "not putting {0} first - still refundable (Protect refunds)": "{0} は優先しません - まだ返金可能（返金を守る）",
+    "asleep, no games chosen - idling your {0} most-played game(s): {1} · up {2}": "就寝中、ゲーム未選択 - いちばん遊んでいる {0} 本を放置中: {1} · {2} に起床",
+    "asleep · up {0} · nothing to bank overnight - add games to the overnight list": "就寝中 · {0} に起床 · 夜間に貯めるものがありません - 夜間のリストにゲームを追加してください",
+    "asleep - back around {0}. Nothing to bank overnight: add games to the overnight list": "就寝中 - {0}ごろ戻ります。夜間に貯めるものがありません: 夜間のリストにゲームを追加してください",
+    "asleep - no games chosen, so banking hours quietly on your most-played until {0}: {1}": "就寝中 - ゲーム未選択のため、{0}までいちばん遊んでいるゲームで静かに時間を貯めます: {1}",
+    "Overnight it goes invisible and, with no games chosen, idles your most-played: {0}.": "夜間はオフライン表示になり、ゲームが選ばれていないので、いちばん遊んでいるゲームを回します: {0}。",
+    "Nothing to bank overnight yet: add games to \"Games to idle overnight\".": "まだ夜間に貯めるものがありません: 「夜間に回すゲーム」にゲームを追加してください。",
+    "{0} is a free DLC - left alone (\"Claim free games\" is on games only)": "{0} は無料DLC - 受け取らない(「無料ゲームを受け取る」がゲームのみ)",
+    "{0} will install when your accounts are asleep - 'update now' installs it right away": "{0} はアカウントが寝たら入ります - 'update now' ですぐ入れます",
+    "Search by name, or paste an appID": "名前で検索、または appID を貼り付け",
+    "appID {0} - open its Steam store page": "appID {0} - Steam ストアのページを開く",
+    "No game in its library matches - paste its appID or store link.": "ライブラリに一致するゲームがありません - appID かストアのリンクを貼り付けてください。",
+    "Its games haven't been read yet - paste an appID or store link.": "まだゲームを読み込んでいません - appID かストアのリンクを貼り付けてください。",
+    "{0}: {1} hasn't been looked at since the app started - try again in a few minutes.": "{0}：{1} はアプリの起動後まだ確認されていません - 数分後にもう一度試してください。",
+    "{0}: {1} isn't paused for add-ons it doesn't own, so there's nothing to answer for it.": "{0}：{1} は持っていない追加コンテンツのために一時停止していないので、答えることはありません。",
+    "Type more of the game's name, or its appID.": "ゲーム名をもう少し入力するか、appID を入力してください。",
+    "{0}: Claim free games now also claims a free DLC's game when that's free too - that was its own switch, and it was off.": "{0}：無料ゲームを受け取るは、無料 DLC の本体ゲームも無料のときはそれも受け取るようになりました - 以前は別のスイッチで、オフになっていました。",
+    "{0}: Bank hours overnight was on with no games listed, which banked nothing - switched off so nothing changes. Turn it on to idle its most-played games overnight.": "{0}：夜間に時間を稼ぐがオンでしたが、ゲームが登録されておらず何も稼いでいませんでした - 何も変わらないようにオフにしました。オンにすると、夜間にいちばん遊んでいるゲームを回します。",
+    "Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).": "夜間はオフライン表示になり、ゲームが選ばれていないので、いちばん遊んでいるゲームを {0} 本回します。"
   },
   "settings": {
     "WebEnabled": {
@@ -2577,11 +2613,11 @@
     },
     "OfflineIdleAtNight": {
       "label": "夜間に時間を稼ぐ",
-      "tip": "寝ているあいだはオフライン表示になって放置を続けます。フレンドにはオフラインに見えても、時間は貯まります。「カードを収集するタイミング」でカードを夜に回している場合は、そちらを先に収集します。"
+      "tip": "寝ているあいだはオフライン表示になり、「夜間に回すゲーム」のゲームを放置し続けます（何も選んでいなければ、いちばん遊んでいるゲーム）。フレンドにはオフラインに見えても、時間は貯まります。「カードを収集するタイミング」でカードを夜に回している場合は、そちらを先に収集します。"
     },
     "OfflineIdleGames": {
       "label": "夜間に回すゲーム",
-      "tip": "夜にオフライン表示のまま放置するゲームです。複数を同時に回せます。「夜間に時間を稼ぐ」がオンのときだけ使います。"
+      "tip": "夜にオフライン表示のまま放置するゲームです。複数を同時に回せます。空にしておくと、いちばん遊んでいるゲームを使います。「夜間に時間を稼ぐ」がオンのときだけ使います。"
     },
     "IdleGames": {
       "label": "時間を稼ぐゲーム",
@@ -2624,18 +2660,6 @@
     "AchievementMaxCompletionPct": {
       "label": "達成率の上限",
       "tip": "1 本のゲームで達成する最大の割合（%）です。いくつか未獲得のまま残すと、本物のライブラリらしく見えます。ゲームがここまで達すると、ハントはそのゲームを完全に外します。この値を上げると戻ってきます。grind コマンドはこれを無視します。"
-    },
-    "ClaimFreeGames": {
-      "label": "無料ゲームを受け取る",
-      "tip": "有料ゲームが無料で配布され、ずっと自分のものにできる機会を見張り、このアカウントに追加します。基本無料のゲームは飛ばします。"
-    },
-    "ClaimFreeDlc": {
-      "label": "…無料DLCも",
-      "tip": "有料DLCが無料になっているとき(サポーターパックなど)も受け取ります。SteamはDLCを本編を持っているアカウントにしか渡さないので、持っていないアカウントは飛ばします。「無料ゲームを受け取る」がオンのときだけ使われます。"
-    },
-    "ClaimFreeDlcBase": {
-      "label": "…本編も無料ならそれも",
-      "tip": "無料DLCにこのアカウントが持っていない本編が必要で、その本編も今無料なら、先に本編を受け取ってからDLCを受け取ります。「…無料DLCも」がオンのときだけ使われます。"
     },
     "CraftBadges": {
       "label": "カードからバッジを作る",
@@ -2788,19 +2812,15 @@
       "choices": "0 オフ | 1 選んだゲーム | 2 シングルプレイ全部"
     },
     "SkipRefundableGames": {
-      "tip": "買ったばかりのゲームには触れず、返金できる状態を保ちます。Steam は 2 時間以上遊ぶと返金を断るので、返金期間が終わるまで放置も収集も周回もしません。",
-      "label": "返金できるゲームを守る"
-    },
-    "ProtectGiftedGames": {
-      "label": "…ギフトされたゲームも",
-      "tip": "贈ってくれたフレンドにまだ返金できるあいだは、ギフトされたゲームにも触れません。「返金できるゲームを守る」がオンのときだけ使います。"
+      "tip": "まだ返金できるゲームには触れず、放置・収集・周回・実績狩りで Steam の 2 時間を超えないようにします。対象は最近 14 日以内に購入またはギフトされたゲームと、ファミリーライブラリに加わってから 14 日以内のゲームです。",
+      "label": "返金を守る"
     },
     "ShowInventoryValue": {
       "tip": "このアカウントのインベントリが Steam マーケット価格でいくらになるかを計算し、ダッシュボードに表示します。カードを数枚しか持たないアカウントではオフにしてください。",
       "label": "インベントリの価値を算出する"
     },
     "CheckForUpdates": {
-      "tip": "新しいバージョンを確認し、ログ・Telegram・Discord で知らせます。オフにすると自動アップデートも止まります。",
+      "tip": "新しいバージョンを確認し、ログ・Telegram・Discord で知らせます。オフにすると夜の自動インストールも止まります。",
       "label": "更新があれば知らせる"
     },
     "UpdateReminders": {
@@ -2844,18 +2864,14 @@
       "label": "自分で遊んだことのないゲームは飛ばす",
       "tip": "自分で一度も起動したことのないゲームを飛ばします。最初のプレイ時間がここから付くことはありません。"
     },
-    "RefundHoldDays": {
-      "label": "...この日数だけ",
-      "tip": "買ったばかりのゲームに触れない日数です。Steam の返金期間は 14 日なので、判断に余裕がほしい場合だけ上げてください。"
-    },
     "FarmCardsWhen": {
       "label": "カードを収集するタイミング",
-      "tip": "人間モードのみ - これは「自動」ファームです: カードのあるゲームは nocat.farm が自分で選びます。日中: いつものプレイの時間にカードを集めます。夜のみ: 寝ているあいだだけ集めます。いつでも: 終わるまでぶっ通しで集めます。ミックス: 一部のプレイでカードを集め、残りはいつものゲームを遊ぶので、カードは数日かけて少しずつ集まります。特定のゲームのカードを先に集めたいときは、drops <account> <appID> <count> と入力してください (例: drops myaccount 460920 2 = Steep のカードを先に 2 枚) - 人間モードのアカウントでは、それでも休憩と就寝時間のある通常のプレイで遊びます。",
+      "tip": "このアカウントがカードを集めるタイミングです。カードのあるゲームは自分で選びます。日中: いつものプレイの時間に。夜のみ: 寝ているあいだだけ。いつでも: 終わるまでぶっ通しで。ミックス: 一部のプレイでカードを集め、残りはいつものゲームを遊ぶので、カードは数日かけて集まります。",
       "choices": "0 日中 | 1 夜のみ | 2 いつでも | 3 ミックス、一部のセッションでカード、残りはいつものゲーム"
     },
     "CardSittingsPct": {
-      "label": "カードをファームするセッションの割合(ミックス)",
-      "tip": "「カードを収集するタイミング」がミックスのとき、カードを集めるプレイのおおよその割合（%）です。高いほどカードが早く終わり、低いほどいつものゲームに時間を残せます。ドロップ集め (drops コマンド) には少なくともメインゲームと同じ割合が回るので、選んだゲームの番が早く来ます。"
+      "label": "カードをファームするセッションの割合",
+      "tip": "カードを集めるプレイのおおよその割合（%）です。高いほどカードが早く終わり、低いほどいつものゲームに時間を残せます。ドロップ集め (drops コマンド) には少なくともメインゲームと同じ割合が回るので、選んだゲームの番が早く来ます。"
     },
     "FarmFromHour": {
       "label": "この時刻からだけカードを集める",
@@ -2909,10 +2925,6 @@
       "label": "共有ゲームは求められたらすぐ返す",
       "tip": "借りているファミリーのゲームを家族の誰かが起動したら、すぐに返して次へ移ります。相手がやめてから 20 分間はローテーションから外します。"
     },
-    "HoldNewFamilyGames": {
-      "label": "家族ライブラリに来たばかりのゲームは触らない",
-      "tip": "ライブラリに来たばかりのファミリー共有ゲームを飛ばします。買った人が返金したい場合に備えるためです。日数は「返金できるゲームを守る」と同じです。"
-    },
     "IncludeFamilyLibrary": {
       "label": "ファミリー共有のゲームも含める",
       "tip": "Steam ファミリーでこのアカウントに共有されたゲームでも実績を狙います。所有するゲームと同じようにこのアカウントに記録されます。所有するゲームが常に先です。"
@@ -2928,10 +2940,6 @@
     "AchievementNeverGames": {
       "label": "このゲームでは決して",
       "tip": "完全に触れないゲームです。実績は解除されず、ブーストも選びません。人間モードでは、アカウントのメインゲームも飛ばします。"
-    },
-    "AchievementDlcTrusted": {
-      "label": "DLC をすべて持っているゲーム",
-      "tip": "このアカウントが DLC をすべて持っているゲーム。nocat.farm はすべての DLC を持っているものとして、その実績を解除します。"
     },
     "AchievementGames": {
       "label": "このゲームだけ",
@@ -2957,10 +2965,6 @@
     "SellPerRun": {
       "label": "1回の出品枚数",
       "tip": "1 回に出品する余ったカードの枚数です。価値の高いものから出します。数枚ずつなら自然に見えます。"
-    },
-    "BoosterGames": {
-      "label": "ブースターパックを作るゲーム",
-      "tip": "ジェムでブースターパックを作るゲームの ID を、カンマ区切りで入力します。Steam が許すのは 1 ゲームにつき 1 日 1 パックで、カードがまだ落ちるゲームだけです。オフにするなら空にします。"
     },
     "BoosterGems": {
       "label": "ブースターパックに使う",
@@ -3214,11 +3218,6 @@
       "label": "人間モード: 狙うゲームの重み",
       "tip": "人間モードのみ。実績を狙うゲームが遊ぶゲームに加わり、これはその出る頻度です。「ゲームと頻度」と同じ重みです。休憩や就寝のある普通のセッションで遊び、他のゲームを途中で打ち切ることはありません。"
     },
-    "AutoUpdate": {
-      "label": "自動アップデート",
-      "tip": "新しいバージョンが出たときの動き。知らせる: ログ・Telegram・Discord で知らせ、update accept で入れます。夜にインストール: 下の時間帯に自動で入れます。人間モードのアカウントが起きておらず、誰もアカウントでプレイしていないときだけで、前後に知らせます。Docker と Linux のサービスでは使えません（手動で更新します）。",
-      "choices": "0 知らせる | 1 夜にインストール"
-    },
     "AutoUpdateFromHour": {
       "label": "...の間（開始）",
       "tip": "自動でインストールしてよい最も早い時刻（24 時間表記）。"
@@ -3299,11 +3298,6 @@
       "label": "実際のプレイ時間でペース配分",
       "tip": "各ゲームが普通のプレイヤーでどのくらいかかるかを調べ（SteamSpy の公開データ。送るのはゲーム ID だけ）、実績のペースを合わせます。レア実績はそのゲームの速さで開き、章ごとに相応の時間が必要で、「クリア」はほぼ 1 周分を遊ぶまで来ません。"
     },
-    "UpdateWhenAsked": {
-      "label": "アップデートと言ったら",
-      "tip": "update accept とアップデートボタンの動き。すぐに: 今すぐ入れます。アカウントが寝たら: 人間モードのアカウントが誰も起きておらず、誰もプレイしておらず、待っているトレードやギフトがないときまで待ちます。一晩中動くロボットのアカウントは邪魔しません。人間モードのアカウントがなければ下の時間帯を待ちます。update now は常にすぐ入れます。Docker と Linux のサービスでは使えません（手動で更新します）。",
-      "choices": "0 すぐに | 1 アカウントが寝たら"
-    },
     "DiscordSecondLine": {
       "label": "2行目",
       "tip": "アカウント名がオフのとき、Discord カードの2行目が数えるもの: 今日のカード、または過去1週間か過去1か月のプレイ時間 - 全アカウントの合計です。",
@@ -3315,7 +3309,7 @@
     },
     "IdleWholeLibrary": {
       "label": "ライブラリ全体で時間を稼ぐ",
-      "tip": "このアカウントが持っているすべてのゲームで時間を稼ぎます（「時間を稼ぐゲーム」のあとに）。「これには絶対に触らない」のゲーム、返金できるゲーム、ファミリー共有のゲーム（「ファミリー共有のゲームも含める」がオンの場合を除く）は飛ばします。Steamは同時に32本までなので、全部のゲームに順番が回るよう「リストを順番に回す」をオンにしてください。"
+      "tip": "このアカウントが持っているすべてのゲームで時間を稼ぎます（「時間を稼ぐゲーム」のあとに）。「これには絶対に触らない」のゲーム、ファミリー共有のゲーム（「ファミリー共有のゲームも含める」がオンの場合を除く）、「返金を守る」が保留中のゲームは飛ばします。Steamは同時に32本までなので、全部のゲームに順番が回るよう「リストを順番に回す」をオンにしてください。"
     },
     "RotateIdleGames": {
       "label": "リストを順番に回す",
@@ -3332,7 +3326,7 @@
     },
     "NewGamesFirst": {
       "label": "新しいゲームを最初は多めに遊ぶ",
-      "tip": "ライブラリに届いたばかりのゲーム（購入、ギフト、無料）は、3〜10 日間セッションが増え、日ごとに減っていきます。新しいものを試すときのようにです。まだ返金できるゲーム、ブラックリストやファミリー共有のゲーム、ほかのアカウントが起動中のゲームには触れません。"
+      "tip": "ライブラリに届いたばかりのゲーム（購入、ギフト、無料）は、3〜10 日間セッションが増え、日ごとに減っていきます。新しいものを試すときのようにです。ブラックリストやファミリー共有のゲーム、ほかのアカウントが起動中のゲームには触れず、「返金を守る」が保留中のゲームは保留が終わるまで待ちます。"
     },
     "LongerRhythms": {
       "label": "静かな時期と夜更かし",
@@ -3340,7 +3334,7 @@
     },
     "JoinFriends": {
       "label": "ときどきフレンドと同じゲームを遊ぶ",
-      "tip": "Steam のフレンドがこのアカウントの持っているゲームを遊んでいると、ときどき次のセッションにそのゲームを選びます。1 日 2 回までで、起きている間だけです。あなた自身のアカウントとそれらが起動中のゲームは無視し、ブラックリストや返金可能なゲームも選びません。"
+      "tip": "Steam のフレンドがこのアカウントの持っているゲームを遊んでいると、ときどき次のセッションにそのゲームを選びます。1 日 2 回までで、起きている間だけです。あなた自身のアカウントとそれらが起動中のゲームは無視し、ブラックリストのゲームや「返金を守る」が保留中のゲームも選びません。"
     },
     "StuckAlarm": {
       "label": "止まったアカウントを再起動",
@@ -3362,6 +3356,29 @@
     "WeeklyReportHour": {
       "label": "週次レポート · 時",
       "tip": "週次レポートが届く時刻 (24 時間表記)。"
+    },
+    "OfflineIdleTopGames": {
+      "label": "...選んでいなければ、よく遊ぶゲーム",
+      "tip": "「夜間に回すゲーム」が空のとき、夜はいちばん遊んでいるゲームをこの本数だけ回します。1〜2 本がいちばん自然です。たくさん同時に回すと、selfcheck が真っ先に指摘します。"
+    },
+    "ClaimFree": {
+      "label": "無料ゲームを受け取る",
+      "tip": "有料ゲームが無料で配布され、ずっと自分のものにできる機会を見張り、このアカウントに追加します。基本無料のゲームは飛ばします。「ゲームとDLC」では、無料になった有料DLC(サポーターパックなど)も受け取ります。SteamはDLCを本編を持っているアカウントにしか渡さないので、その本編も今無料なら先に本編を受け取ります。",
+      "choices": "0 オフ | 1 ゲーム | 2 ゲームとDLC"
+    },
+    "UpdateMode": {
+      "label": "アップデート",
+      "tip": "新しいバージョンが出たときの動作です。必ず先にログと Telegram・Discord でお知らせします。クリックしたら、みんなが寝てからインストール：更新ボタンや update accept を押すと、アカウントが寝てから（人間モードのアカウントが起きておらず、誰もプレイしておらず、トレードやギフトが待っていないとき）インストールします。クリックしたらインストール：すぐにインストールします。夜に自動でインストール：下の時間帯の静かなときに自動でインストールし、前後にお知らせします。update now は常にすぐインストールします。Docker や Linux サービスでは使えません（手動で更新します）。",
+      "choices": "0 クリックしたら、みんなが寝てからインストール | 1 クリックしたらインストール | 2 夜に自動でインストール"
+    },
+    "ReactionSpeed": {
+      "label": "反応の速さ",
+      "tip": "どれくらい早く反応するか、休憩がどれくらい続くか。待ち時間は毎回ランダムのままです - 速いは半分、ゆったりは倍になります。",
+      "choices": "0 ふつう | 1 速い | 2 ゆったり"
+    },
+    "BoosterPackGames": {
+      "label": "ブースターパックを作るゲーム",
+      "tip": "ジェムをブースターパックに変えるゲームです。Steam で作れるのは 1 ゲームにつき 1 日 1 パックで、まだカードがドロップするゲームだけです。空にするとオフになります。"
     }
   }
 }
