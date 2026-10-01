@@ -105,14 +105,16 @@ public static partial class Backup {
 			: "state";
 	}
 
-	// Each branch marks itself with an empty group, so Kind can tell which one matched.
+	// Each branch marks itself with an empty group, so Kind can tell which one matched. Ends at \z, not $: in .NET a $
+	// also matches before a last newline, so a name in a zip ending in one got through as one of ours.
 	[GeneratedRegex(@"^(?:(?<acct>)(?<name>[^/\\:*?""<>|]+)\.json" +
 		@"|tokens/(?<token>)(?<name>[^/\\:*?""<>|]+)\.(?:token|access)" +
 		@"|authenticators/(?<ma>)(?<name>[^/\\:*?""<>|]+)\.maFile" +
 		@"|state/(?<key>)secret\.key" +
 		@"|state/history/(?<hist>)\d{4}-\d{2}\.json" +
 		@"|state/(?:lifetime|lifetime-games|keys|report|weekly-report)\.json" +
-		@"|state/(?:human|hunt|rep4rep|owner|rotation)-(?<name>[^/\\:*?""<>|]+)\.json)$", RegexOptions.CultureInvariant)]
+		@"|state/(?:human|hunt|rep4rep|owner|rotation)-(?<name>[^/\\:*?""<>|]+)\.json" +
+		@"|state/overnight-(?<name>[^/\\:*?""<>|]+)\.seen)\z", RegexOptions.CultureInvariant)]
 	private static partial Regex Pattern();
 
 	/// <summary>Every file of ours in the config folder now, as (path under config/ with forward slashes, full path).</summary>
@@ -479,8 +481,17 @@ public static partial class Backup {
 
 		string root = Path.GetFullPath(ConfigStore.ConfigDir) + Path.DirectorySeparatorChar;
 		int written = 0;
+		// Case ignored, as the check for two files of the same name does, and as Windows does.
+		HashSet<string> restored = new(contents.Select(static c => c.Rel), StringComparer.OrdinalIgnoreCase);
 
 		foreach ((string rel, byte[] data) in contents) {
+			// An account's overnight note is put back together with the account's own file, below - never on its own
+			// ahead of it. Written in zip order, a note sorting before its account ("state/" before "zed.json") was down
+			// already when a file in between failed, and the old account file left behind was taken as looked at.
+			if (NoteOf(rel) is { } noted && restored.Contains($"{noted}.json")) {
+				continue;
+			}
+
 			string full = Path.GetFullPath(Path.Combine(root, rel.Replace('/', Path.DirectorySeparatorChar)));
 
 			if (!full.StartsWith(root, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) {
@@ -505,10 +516,39 @@ public static partial class Backup {
 			}
 
 			written++;
+
+			// The note that an account's overnight setting was looked at comes with the backup, like the rest of its
+			// state: put back with it when the backup has it, and gone when it doesn't. One from before 1.6.5 never has
+			// it, and its file - the switch on, nothing listed, which banked nothing - gets the switch-off. One from 1.6.5
+			// on has it exactly when that install had looked. Right after the account's own file, not after the loop: a
+			// later file failing to write stopped the restore before the notes were seen to, and the old file was taken
+			// as looked at for good.
+			if (Kind(rel) == "account") {
+				string name = rel[..^".json".Length];
+				string seen = ConfigStore.OvernightSeen(name);
+
+				try {
+					if (restored.Contains($"state/overnight-{name}.seen")) {
+						Directory.CreateDirectory(Path.GetDirectoryName(seen)!);
+						File.WriteAllText(seen, "");
+						written++;
+					} else {
+						File.Delete(seen);
+					}
+				} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+					Log.Failed("putting back a restored account's overnight note", e);
+				}
+			}
 		}
 
 		return written;
 	}
+
+	/// <summary>The account an overnight note in a backup belongs to - "zed" for state/overnight-zed.seen - or null.</summary>
+	private static string? NoteOf(string rel) =>
+		rel.StartsWith("state/overnight-", StringComparison.OrdinalIgnoreCase) && rel.EndsWith(".seen", StringComparison.OrdinalIgnoreCase)
+			? rel["state/overnight-".Length..^".seen".Length]
+			: null;
 
 	/// <summary>Every global secret that came back empty takes the value in use now. True when any did.</summary>
 	internal static bool KeepSecrets(GlobalConfig restored, GlobalConfig current) {

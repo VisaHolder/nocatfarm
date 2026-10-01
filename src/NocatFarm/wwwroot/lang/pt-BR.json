@@ -1019,7 +1019,6 @@
     "Open its Steam store page": "Abrir a página dele na loja Steam",
     "{0} card(s) - farmed in some of its sittings, between its usual games": "{0} carta(s) - farmadas em algumas sessões, entre os jogos de sempre",
     "recent licence: package {0}, {1}, {2}": "licença recente: pacote {0}, {1}, {2}",
-    "{0} is a free DLC - left alone (\"...free DLC too\" is off)": "{0} é um DLC grátis - deixado de lado (\"...DLC grátis também\" está desligado)",
     "{0} is free, but only to owners of {1} - this account doesn't have it": "{0} está grátis, mas só para quem tem {1} - esta conta não tem",
     "couldn't claim {0} for its DLC - {1}": "não deu para resgatar {0} para o DLC dele - {1}",
     "joined the Steam group {0}": "entrou no grupo Steam {0}",
@@ -1692,11 +1691,8 @@
     "key queue: {0}": "fila de chaves: {0}",
     "Friends & comments": "Amigos e comentários",
     "update: {0}MB downloaded - unpacking": "atualização: {0}MB baixados - descompactando",
-    "{0} will install when your accounts are asleep (When I say update) - 'update now' installs it right away": "{0} vai instalar quando suas contas dormirem (Quando eu mando atualizar) - 'update now' instala agora",
     "achievement boost: {0} games to hunt ({1} shared)": "caça de conquistas: {0} jogos ({1} compartilhados)",
     "achievement boost: {0} games to hunt": "caça de conquistas: {0} jogos",
-    "not grinding {0} - still refundable (Protect refundable games)": "não vou farmar {0} - ainda reembolsável (Proteger jogos reembolsáveis)",
-    "not putting {0} first - still refundable (Protect refundable games)": "{0} não vai primeiro - ainda reembolsável (Proteger jogos reembolsáveis)",
     "{0}: all {1} card drop(s) in - back to normal": "{0}: todos os {1} drops de cartas vieram - de volta ao normal",
     "still going for {0}: {1} of {2} card drop(s)": "ainda em {0}: {1} de {2} drops de cartas",
     "confirmed trade offer {0} with its authenticator": "oferta {0} confirmada com o autenticador dela",
@@ -1918,7 +1914,7 @@
     "  (this PC only, no password)": "(só este PC, sem senha)",
     "{0} games, {1} cards to farm - about {2} in all": "{0} jogos, {1} cartas para farmar - cerca de {2} no total",
     "Too many wrong passwords - try again in {0}.": "Senhas erradas demais - tente de novo em {0}.",
-    "Or type unlock in the nocat.farm window.": "Ou digite unlock na janela do nocat.farm.",
+    "Or type dashboard unlock in the nocat.farm window.": "Ou digite dashboard unlock na janela do nocat.farm.",
     "You can try again now.": "Pode tentar de novo agora.",
     "dashboard unlocked - you can sign in again": "painel desbloqueado - você pode entrar de novo",
     "nothing was locked - the dashboard sign-in works": "nada estava bloqueado - o login do painel funciona",
@@ -2262,10 +2258,10 @@
     "\"{0}\" may come with DLC {1} doesn't own, and Steam doesn't list which achievements that DLC adds ({2}) - it won't be unlocked.": "\"{0}\" pode vir com um DLC que {1} não tem, e a Steam não diz quais conquistas esse DLC adiciona ({2}) - não será desbloqueada.",
     "{0} left alone - can't tell which achievements come with its DLC": "{0} deixada(s) de lado - não dá para saber quais conquistas vêm com o DLC",
     "can't tell which achievements come with its DLC - left alone": "não dá para saber quais conquistas vêm com o DLC - fica de lado",
-    "see 'dlcach {0} {1}'": "veja 'dlcach {0} {1}'",
     "{0}: games with achievements left alone for DLC it doesn't own (never unlocked)": "{0}: jogos com conquistas deixadas de lado por DLC que ela não tem (nunca desbloqueadas)",
     "Couldn't read which DLC {0} owns just now - nothing in {1} is unlocked until it can. Try again in a few minutes.": "Não deu para ler agora quais DLC {0} tem - nada em {1} é desbloqueado até dar. Tente de novo em alguns minutos.",
     "Held: {0} is missing DLC, and Steam doesn't list which achievements they add - so {1} achievement(s) outside the DLC it owns are left alone.": "Retido: faltam DLC para {0}, e a Steam não diz quais conquistas eles adicionam - por isso {1} conquista(s) fora dos DLC que ela tem ficam de lado.",
+    "{0} is missing DLC, and Steam doesn't list which achievements they add - but every achievement outside the DLC it owns is already unlocked, so there's nothing to hold.": "Faltam DLCs em {0}, e a Steam não diz quais conquistas elas adicionam - mas todas as conquistas fora das DLCs que tem já estão desbloqueadas, então não há nada a segurar.",
     "its store page is the game's own": "a página dele na loja é a do próprio jogo",
     "it isn't on the store any more": "não está mais na loja",
     "the store's names for its achievements aren't in the game's list": "os nomes das conquistas dele na loja não estão na lista do jogo",
@@ -2281,11 +2277,51 @@
     "{0}: can't tell which achievements come with its DLC - nothing to grind": "{0}: não dá para saber quais conquistas vêm com o DLC - nada para farmar",
     "{0}: {1}/{2} - can't tell which achievements come with its DLC - left alone": "{0}: {1}/{2} - não dá para saber quais conquistas vêm com o DLC - fica de lado",
     "Playing {0} — {1}; can't tell which achievements come with its DLC, so the rest are left alone.": "Jogando {0} - {1}; não dá para saber quais conquistas vêm com o DLC, então o resto fica de lado.",
-    "Nothing held in {0} - you listed them as owning all their DLC": "Nada retido em {0} - você informou que tem todos os DLC deles",
-    "Trusted: you listed it as owning all its DLC (\"Games I own all the DLC for\"), so nothing in it is held for DLC.": "Confiável: você informou que tem todos os DLC dele (\"Jogos dos quais tenho todos os DLC\"), então nada nele fica retido por DLC.",
-    "not in its licences, but counted as owned - you listed the game": "não está nas licenças, mas conta como seu - você adicionou o jogo",
-    "If {0} owns all of {1}'s DLC, add {2} to \"Games I own all the DLC for\" in its settings - then nothing in it is held for DLC.": "Se {0} tem todos os DLC de {1}, adicione {2} a \"Jogos dos quais tenho todos os DLC\" nas configurações dela - assim nada nele fica retido por DLC.",
-    "If this account owns all its DLC, add the game to “{0}”.": "Se esta conta tem todos os DLC, adicione o jogo a “{0}”."
+    "see 'dlc {0} {1}'": "veja 'dlc {0} {1}'",
+    "Nothing held in {0} - you said carry on": "Nada retido em {0} - você disse para continuar",
+    "Trusted: you said {0} owns what matters, so nothing in it is held just because Steam doesn't say which add-on an achievement comes with.": "Confiável: você disse que {0} tem o que importa, então nada nele fica retido só porque a Steam não diz de qual complemento vem uma conquista.",
+    "Trusted: you said {0} owns what matters. {1} achievement(s) from {2}, which it doesn't own, are still left alone.": "Confiável: você disse que {0} tem o que importa. {1} conquista(s) de {2}, que ele não tem, continuam de lado.",
+    "If {0} owns what matters in {1}, answer on the dashboard or type 'dlc carryon {0} {2}'. Achievements that certainly come with an add-on it doesn't own stay locked.": "Se {0} tem o que importa em {1}, responda no painel ou digite 'dlc carryon {0} {2}'. Conquistas que com certeza vêm de um complemento que ele não tem continuam bloqueadas.",
+    "{0}: carrying on with {1}. Only achievements that certainly come with an add-on it doesn't own stay locked.": "{0}: continuando com {1}. Só continuam bloqueadas as conquistas que com certeza vêm de um complemento que ele não tem.",
+    "{0}: {1} stays paused for achievements. It won't be asked about again unless its add-ons change.": "{0}: {1} continua pausado para conquistas. Não vai perguntar de novo, a não ser que os complementos dele mudem.",
+    "{0}: there's no answer for {1} to take back.": "{0}: não há resposta para desfazer em {1}.",
+    "{0}: took back \"carry on\" for {1}. Nothing in it is unlocked on a guess any more.": "{0}: \"continuar\" desfeito para {1}. Nada nele é mais desbloqueado no chute.",
+    "{0}: {1} will be asked about again.": "{0}: vai perguntar de novo sobre {1}.",
+    "Which game? Its name or its appID.": "Qual jogo? O nome ou o appID.",
+    "{0} has no game called \"{1}\". Try its appID - the number in its store link.": "{0} não tem nenhum jogo chamado \"{1}\". Tente o appID - o número no link da loja.",
+    "More than one game matches \"{0}\": {1}. Type more of the name, or the appID.": "Mais de um jogo combina com \"{0}\": {1}. Digite mais do nome, ou o appID.",
+    "{0}: {1} is paused for achievements - it has add-ons this account doesn't own. Answer on the dashboard, or 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.": "{0}: {1} está pausado para conquistas - tem complementos que esta conta não tem. Responda no painel, ou 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.",
+    "Only skin, team and other packs are missing.": "Só faltam pacotes de skins, de times e afins.",
+    "Missing: {0}": "Faltando: {0}",
+    "Missing: {0} add-ons": "Faltando: {0} complementos",
+    "{0} is paused for achievements. It has add-ons this account doesn't own, and Steam doesn't say which of them come with achievements.": "{0} está pausado para conquistas. Tem complementos que esta conta não tem, e a Steam não diz quais deles trazem conquistas.",
+    "Achievements that certainly come with an add-on it doesn't own stay locked either way.": "Conquistas que com certeza vêm de um complemento que ele não tem continuam bloqueadas de qualquer jeito.",
+    "I own what matters - carry on": "Tenho o que importa - continuar",
+    "Leave it paused": "Deixar pausado",
+    "You said carry on for:": "Você disse continuar para:",
+    "undo": "desfazer",
+    "You said leave it paused for:": "Você disse deixar pausado para:",
+    "ask again": "perguntar de novo",
+    "not grinding {0} - still refundable (Protect refunds)": "não vou farmar {0} - ainda reembolsável (Proteger reembolsos)",
+    "not putting {0} first - still refundable (Protect refunds)": "{0} não vai primeiro - ainda reembolsável (Proteger reembolsos)",
+    "asleep, no games chosen - idling your {0} most-played game(s): {1} · up {2}": "dormindo, nenhum jogo escolhido - rodando seus {0} jogo(s) mais jogado(s): {1} · acorda às {2}",
+    "asleep · up {0} · nothing to bank overnight - add games to the overnight list": "dormindo · acorda às {0} · nada para acumular à noite - adicione jogos à lista da noite",
+    "asleep - back around {0}. Nothing to bank overnight: add games to the overnight list": "dormindo - volta por volta de {0}. Nada para acumular à noite: adicione jogos à lista da noite",
+    "asleep - no games chosen, so banking hours quietly on your most-played until {0}: {1}": "dormindo - nenhum jogo escolhido, então acumulando horas discretamente nos mais jogados até {0}: {1}",
+    "Overnight it goes invisible and, with no games chosen, idles your most-played: {0}.": "De madrugada fica invisível e, sem jogos escolhidos, roda os seus mais jogados: {0}.",
+    "Nothing to bank overnight yet: add games to \"Games to idle overnight\".": "Ainda não há nada para acumular à noite: adicione jogos a “Jogos para a noite”.",
+    "{0} is a free DLC - left alone (\"Claim free games\" is on games only)": "{0} é um DLC grátis - deixado de lado (\"Resgatar jogos grátis\" está só em jogos)",
+    "{0} will install when your accounts are asleep - 'update now' installs it right away": "{0} vai instalar quando suas contas dormirem - 'update now' instala agora",
+    "Search by name, or paste an appID": "Busque pelo nome ou cole um appID",
+    "appID {0} - open its Steam store page": "appID {0} - abrir a página dele na loja Steam",
+    "No game in its library matches - paste its appID or store link.": "Nenhum jogo da biblioteca combina - cole o appID ou o link da loja.",
+    "Its games haven't been read yet - paste an appID or store link.": "Os jogos ainda não foram lidos - cole um appID ou um link da loja.",
+    "{0}: {1} hasn't been looked at since the app started - try again in a few minutes.": "{0}: {1} ainda não foi verificado desde que o app abriu - tente de novo em alguns minutos.",
+    "{0}: {1} isn't paused for add-ons it doesn't own, so there's nothing to answer for it.": "{0}: {1} não está pausado por complementos que a conta não tem, então não há nada para responder.",
+    "Type more of the game's name, or its appID.": "Digite mais do nome do jogo, ou o appID dele.",
+    "{0}: Claim free games now also claims a free DLC's game when that's free too - that was its own switch, and it was off.": "{0}: Resgatar jogos grátis agora também resgata o jogo de uma DLC grátis quando ele também está grátis - isso era um interruptor separado, e estava desligado.",
+    "{0}: Bank hours overnight was on with no games listed, which banked nothing - switched off so nothing changes. Turn it on to idle its most-played games overnight.": "{0}: Acumular horas à noite estava ligado sem jogos na lista, então não acumulava nada - desligado para nada mudar. Ligue para rodar os jogos mais jogados de madrugada.",
+    "Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).": "De madrugada fica invisível e, sem jogos escolhidos, roda os {0} jogos mais jogados."
   },
   "settings": {
     "WebEnabled": {
@@ -2577,11 +2613,11 @@
     },
     "OfflineIdleAtNight": {
       "label": "Acumular horas à noite",
-      "tip": "Enquanto dorme, ela fica invisível e continua rodando jogos, então as horas contam enquanto os amigos a veem offline. Se “Quando farmar cartas” manda as cartas para a noite, elas são farmadas primeiro."
+      "tip": "Enquanto dorme, ela fica invisível e continua rodando os jogos de “Jogos para a noite” - ou, sem nenhum escolhido, os jogos mais jogados dela -, então as horas contam enquanto os amigos a veem offline. Se “Quando farmar cartas” manda as cartas para a noite, elas são farmadas primeiro."
     },
     "OfflineIdleGames": {
       "label": "Jogos para a noite",
-      "tip": "Jogos para deixar rodando enquanto ela aparece offline à noite. Vários podem rodar ao mesmo tempo. Só vale quando “Acumular horas à noite” está ligado."
+      "tip": "Jogos para deixar rodando enquanto ela aparece offline à noite. Vários podem rodar ao mesmo tempo. Deixe vazio para usar os jogos mais jogados dela. Só vale quando “Acumular horas à noite” está ligado."
     },
     "IdleGames": {
       "label": "Jogos em segundo plano",
@@ -2624,18 +2660,6 @@
     "AchievementMaxCompletionPct": {
       "label": "Não concluir mais que",
       "tip": "O máximo que ela vai completar de qualquer jogo, em porcentagem. Deixar algumas sem ganhar parece uma biblioteca de verdade. Quando um jogo chega lá, a caça o deixa de vez - aumente este valor e ele volta. O comando grind ignora isto."
-    },
-    "ClaimFreeGames": {
-      "label": "Resgatar jogos grátis",
-      "tip": "Fica de olho em jogos pagos dados de graça para sempre e os adiciona a esta conta. Tralha free-to-play é ignorada."
-    },
-    "ClaimFreeDlc": {
-      "label": "...DLC grátis também",
-      "tip": "Também resgata DLC pago que ficou grátis, como um pacote de apoiador. A Steam só dá DLC para contas que têm o jogo dele, então as outras são puladas. Só vale quando \"Resgatar jogos grátis\" está ligado."
-    },
-    "ClaimFreeDlcBase": {
-      "label": "...e o jogo dele, se também estiver grátis",
-      "tip": "Quando um DLC grátis precisa de um jogo que esta conta não tem, e esse jogo também está grátis agora, resgata o jogo primeiro e depois o DLC. Só vale quando \"...DLC grátis também\" está ligado."
     },
     "CraftBadges": {
       "label": "Criar emblemas com as cartas",
@@ -2788,19 +2812,15 @@
       "choices": "0 desligado | 1 jogos que você escolher | 2 todos os de um jogador"
     },
     "SkipRefundableGames": {
-      "tip": "Deixa em paz os jogos que você acabou de comprar, para você ainda poder pedir reembolso. A Steam recusa reembolso depois de 2 horas jogadas, então nada roda, farma ou insiste neles até o prazo de reembolso acabar.",
-      "label": "Proteger jogos reembolsáveis"
-    },
-    "ProtectGiftedGames": {
-      "label": "...jogos de presente também",
-      "tip": "Também deixa em paz os jogos de presente enquanto ainda podem ser reembolsados ao amigo que deu. Só vale quando “Proteger jogos reembolsáveis” está ligado."
+      "tip": "Deixa um jogo em paz enquanto ele ainda pode ser reembolsado, para que nada o rode, farme, insista nele ou cace conquistas nele além das 2 horas da Steam. Vale para jogos comprados ou presenteados nos últimos 14 dias e para jogos novos na biblioteca da família nos primeiros 14 dias.",
+      "label": "Proteger reembolsos"
     },
     "ShowInventoryValue": {
       "tip": "Calcula quanto vale o inventário desta conta pelos preços do mercado da Steam e mostra no painel. Desligue em contas que só guardam algumas cartas.",
       "label": "Calcular quanto vale o inventário dela"
     },
     "CheckForUpdates": {
-      "tip": "Procura uma versão nova e avisa no log, no Telegram e no Discord. Desligar também para o Atualizar sozinho.",
+      "tip": "Procura uma versão nova e avisa no log, no Telegram e no Discord. Desligar também para a instalação sozinha à noite.",
       "label": "Avisar se houver atualização"
     },
     "UpdateReminders": {
@@ -2844,18 +2864,14 @@
       "label": "Pular jogos que você nunca jogou",
       "tip": "Pula os jogos que você nunca abriu, para nenhum deles ganhar a primeira hora de jogo por aqui."
     },
-    "RefundHoldDays": {
-      "label": "...por estes dias",
-      "tip": "Por quantos dias um jogo recém-comprado fica em paz. O prazo de reembolso da Steam é de 14 dias, então aumente só se quiser mais tempo para decidir."
-    },
     "FarmCardsWhen": {
       "label": "Quando farmar cartas",
-      "tip": "Só no modo humano - este é o farm AUTOMÁTICO: o nocat.farm escolhe sozinho os jogos com cartas. De dia: as cartas são farmadas nas sessões normais. À noite: só enquanto ela dorme. A qualquer hora: sem parar até acabar. Misto: algumas sessões farmam cartas e o resto joga os jogos de sempre, então as cartas vão caindo aos poucos ao longo de dias. Quer as cartas de um jogo primeiro? Digite drops <account> <appID> <count> (ex.: drops myaccount 460920 2 = 2 cartas de Steep primeiro) - numa conta no modo humano, ele continua jogando em sessões normais, com pausas e hora de dormir.",
+      "tip": "Quando esta conta farma cartas - ela escolhe sozinha os jogos com cartas. De dia: nas sessões normais. À noite: só enquanto ela dorme. A qualquer hora: sem parar até acabar. Misto: algumas sessões farmam cartas e o resto joga os jogos de sempre, então as cartas chegam ao longo de alguns dias.",
       "choices": "0 de dia | 1 só à noite | 2 a qualquer hora | 3 misto, algumas sessões cartas, o resto seus jogos"
     },
     "CardSittingsPct": {
-      "label": "Parte das sessões que farmam cartas (misto)",
-      "tip": "Mais ou menos que porcentagem das sessões farma cartas quando “Quando farmar cartas” está em misto. Mais alto termina as cartas mais cedo, mais baixo deixa mais tempo para os jogos de sempre. Uma rodada de drops (o comando drops) recebe pelo menos a parte do jogo principal, então o jogo que você escolheu vem mais cedo."
+      "label": "Parte das sessões que farmam cartas",
+      "tip": "Mais ou menos que porcentagem das sessões farma cartas. Mais alto termina as cartas mais cedo, mais baixo deixa mais tempo para os jogos de sempre. Uma rodada de drops (o comando drops) recebe pelo menos a parte do jogo principal, então o jogo que você escolheu vem mais cedo."
     },
     "FarmFromHour": {
       "label": "Farmar cartas só a partir das",
@@ -2909,10 +2925,6 @@
       "label": "Devolver um jogo compartilhado quando quiserem",
       "tip": "Devolve na hora um jogo emprestado da família quando alguém da família abre ele, e passa para outro. Ele fica fora do rodízio por 20 minutos depois que a pessoa para."
     },
-    "HoldNewFamilyGames": {
-      "label": "Deixar em paz os jogos novos da família",
-      "tip": "Pula um jogo compartilhado da família enquanto ele é novo na biblioteca, caso quem comprou queira reembolso. Usa o mesmo número de dias de “Proteger jogos reembolsáveis”."
-    },
     "IncludeFamilyLibrary": {
       "label": "Incluir jogos compartilhados da família",
       "tip": "Também caça conquistas em jogos compartilhados com esta conta pela Família Steam. Eles contam nesta conta como jogos próprios, e os jogos próprios sempre vêm primeiro."
@@ -2928,10 +2940,6 @@
     "AchievementNeverGames": {
       "label": "Nunca nestes jogos",
       "tip": "Jogos para deixar totalmente em paz. Nenhuma conquista é desbloqueada neles e os impulsos nunca os escolhem. No modo humano, o jogo principal da conta também fica de fora."
-    },
-    "AchievementDlcTrusted": {
-      "label": "Jogos dos quais tenho todos os DLC",
-      "tip": "Jogos dos quais esta conta tem todos os DLC. O nocat.farm então desbloqueia as conquistas deles como se todos os DLC fossem dela."
     },
     "AchievementGames": {
       "label": "Só estes jogos",
@@ -2957,10 +2965,6 @@
     "SellPerRun": {
       "label": "Cartas por rodada",
       "tip": "Quantas cartas sobrando cada rodada anuncia, as mais valiosas primeiro. Poucas por vez parece natural."
-    },
-    "BoosterGames": {
-      "label": "Criar pacotes de cartas de",
-      "tip": "IDs de jogos para transformar gemas em pacotes de cartas, separados por vírgulas. A Steam permite um pacote por jogo por dia, só para jogos que ainda soltam cartas. Deixe vazio para desligar."
     },
     "BoosterGems": {
       "label": "Pacotes de cartas usam",
@@ -3214,11 +3218,6 @@
       "label": "Modo humano: peso do jogo caçado",
       "tip": "Só no modo humano. O jogo que está sendo caçado entra nos jogos que ele joga, e isto é a frequência com que aparece - um peso como os de \"Jogos e com que frequência\". Ele é jogado em sessões normais, com pausas e hora de dormir, sem nunca cortar outro jogo."
     },
-    "AutoUpdate": {
-      "label": "Atualizar sozinho",
-      "tip": "O que acontece quando sai uma versão nova. Me avisar: diz no log, no Telegram e no Discord, e você digita update accept. Instalar à noite: instala sozinho nos horários abaixo, só quando nenhuma conta em modo humano está acordada e ninguém está jogando numa conta, e avisa antes e depois. Não no Docker nem como serviço do Linux, que se atualizam à mão.",
-      "choices": "0 me avisar | 1 instalar à noite"
-    },
     "AutoUpdateFromHour": {
       "label": "...entre",
       "tip": "O horário mais cedo em que pode instalar sozinho, no formato 24 horas."
@@ -3299,11 +3298,6 @@
       "label": "Ritmo pela duração real dos jogos",
       "tip": "Consulta quanto tempo cada jogo leva para um jogador típico (números públicos do SteamSpy - só o ID do jogo é enviado) e dá o ritmo das conquistas: as raras abrem no ritmo daquele jogo, um capítulo precisa da sua parte das horas e \"zerar o jogo\" nunca vem antes da maior parte de uma jogatina."
     },
-    "UpdateWhenAsked": {
-      "label": "Quando eu mando atualizar",
-      "tip": "O que update accept e o botão Atualizar fazem. Na hora: instala agora. Quando minhas contas dormirem: espera até nenhuma conta em modo humano estar acordada, ninguém estar jogando numa conta e nenhuma troca ou presente estar esperando - contas robô ligadas a noite toda não atrapalham. Sem contas em modo humano, espera pelas horas abaixo. update now sempre instala na hora. Não no Docker nem como serviço do Linux, que se atualizam à mão.",
-      "choices": "0 na hora | 1 quando minhas contas dormirem"
-    },
     "DiscordSecondLine": {
       "label": "Segunda linha",
       "tip": "O que a segunda linha do cartão do Discord conta quando os nomes das contas estão desligados: as cartas de hoje, ou as horas jogadas na última semana ou no último mês - somadas em todas as suas contas.",
@@ -3315,7 +3309,7 @@
     },
     "IdleWholeLibrary": {
       "label": "Minha biblioteca inteira",
-      "tip": "Roda todos os jogos que a conta tem, depois dos de \"Jogos em segundo plano\". Pula os de \"Nunca tocar nestes\", jogos reembolsáveis e jogos compartilhados da família (a menos que \"Incluir jogos compartilhados da família\" esteja ligado). A Steam roda 32 ao mesmo tempo, então ligue \"Rodízio da lista\" para cada jogo ter sua vez."
+      "tip": "Roda todos os jogos que a conta tem, depois dos de \"Jogos em segundo plano\". Pula os de \"Nunca tocar nestes\", jogos compartilhados da família (a menos que \"Incluir jogos compartilhados da família\" esteja ligado) e jogos que \"Proteger reembolsos\" está segurando. A Steam roda 32 ao mesmo tempo, então ligue \"Rodízio da lista\" para cada jogo ter sua vez."
     },
     "RotateIdleGames": {
       "label": "Rodízio da lista",
@@ -3332,7 +3326,7 @@
     },
     "NewGamesFirst": {
       "label": "Jogar mais os jogos novos no começo",
-      "tip": "Um jogo que acabou de chegar à biblioteca, comprado, presenteado ou grátis, ganha sessões extras por 3 a 10 dias, menos a cada dia, como quem experimenta algo novo. Jogos que você ainda pode reembolsar, jogos na lista negra ou compartilhados pela família, e jogos que suas outras contas estão rodando ficam de fora."
+      "tip": "Um jogo que acabou de chegar à biblioteca, comprado, presenteado ou grátis, ganha sessões extras por 3 a 10 dias, menos a cada dia, como quem experimenta algo novo. Jogos na lista negra ou compartilhados pela família e jogos que suas outras contas estão rodando ficam de fora, e um jogo que \"Proteger reembolsos\" está segurando espera até isso acabar."
     },
     "LongerRhythms": {
       "label": "Fases calmas e noites longas",
@@ -3340,7 +3334,7 @@
     },
     "JoinFriends": {
       "label": "Às vezes jogar o que um amigo está jogando",
-      "tip": "Quando um amigo da Steam está num jogo que esta conta tem, ela de vez em quando escolhe esse jogo para a próxima sessão, no máximo duas vezes por dia e só enquanto está acordada. Suas próprias contas e os jogos que elas estão rodando são ignorados, assim como jogos na lista negra e reembolsáveis."
+      "tip": "Quando um amigo da Steam está num jogo que esta conta tem, ela de vez em quando escolhe esse jogo para a próxima sessão, no máximo duas vezes por dia e só enquanto está acordada. Suas próprias contas e os jogos que elas estão rodando são ignorados, assim como jogos na lista negra e jogos que \"Proteger reembolsos\" está segurando."
     },
     "StuckAlarm": {
       "label": "Reiniciar uma conta travada",
@@ -3362,6 +3356,29 @@
     "WeeklyReportHour": {
       "label": "Relatório semanal · hora",
       "tip": "A hora em que o relatório semanal chega, no formato de 24 horas."
+    },
+    "OfflineIdleTopGames": {
+      "label": "...ou, sem nenhum escolhido, os mais jogados",
+      "tip": "Com “Jogos para a noite” vazio, à noite ela roda esta quantidade dos jogos mais jogados da conta. 1 ou 2 parece o mais natural - muitos ao mesmo tempo é a primeira coisa que o selfcheck aponta."
+    },
+    "ClaimFree": {
+      "label": "Resgatar jogos grátis",
+      "tip": "Fica de olho em jogos pagos dados de graça para sempre e os adiciona a esta conta. Tralha free-to-play é ignorada. Jogos e DLC também resgata DLC pago que ficou grátis, como um pacote de apoiador. A Steam só dá DLC para contas que têm o jogo dele, então, se esse jogo também estiver grátis agora, resgata o jogo primeiro.",
+      "choices": "0 desligado | 1 jogos | 2 jogos e DLC"
+    },
+    "UpdateMode": {
+      "label": "Atualizações",
+      "tip": "O que acontece quando sai uma versão nova. Sempre avisa primeiro, no log e no Telegram e Discord. Instalar quando eu clicar, quando todos dormirem: o botão Atualizar ou update accept instala quando suas contas estão dormindo - nenhuma conta no modo humano acordada, ninguém jogando, nenhuma troca ou presente esperando. Instalar quando eu clicar: na hora. Instalar sozinha à noite: instala sozinha nas horas abaixo, num momento tranquilo, e avisa antes e depois. update now sempre instala na hora. Não no Docker nem como serviço do Linux, que se atualizam à mão.",
+      "choices": "0 instalar quando eu clicar, quando todos dormirem | 1 instalar quando eu clicar | 2 instalar sozinha à noite"
+    },
+    "ReactionSpeed": {
+      "label": "Velocidade de reação",
+      "tip": "Quão rápido ela reage e quanto duram as pausas. Toda espera continua aleatória - Rápida corta pela metade, Tranquila dobra.",
+      "choices": "0 normal | 1 rápida | 2 tranquila"
+    },
+    "BoosterPackGames": {
+      "label": "Criar pacotes de cartas de",
+      "tip": "Jogos para transformar gemas em pacotes de cartas. A Steam permite um pacote por jogo por dia, só de jogos que ainda soltam cartas. Deixe vazio para desligar."
     }
   }
 }

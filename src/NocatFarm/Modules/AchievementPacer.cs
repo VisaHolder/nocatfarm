@@ -174,9 +174,11 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		public int DlcSaid = -1;        // the DlcHeld last written to the log, so it is said once, not every look
 		public bool Unmapped;           // can't tell which achievements come with a DLC it doesn't own: all but its owned DLC's left alone
 		public long Licences;           // the account's licence stamp when the DLC it owns was last read for this game
-		public List<uint> DlcOwned = []; // which of the game's DLC it counted as owned then (all of them, vouched for) - a change releases DlcOnly, DlcUnmapped and Capped
+		public List<uint> DlcOwned = []; // which of the game's DLC it counted as owned then (with the unplaceable ones, vouched for) - a change releases DlcOnly, DlcUnmapped and Capped
 		public long MapStamp;           // which build of the game's DLC map that was read from (DlcAchievements.Stamp); 0 = not known
 		public long HoldKey;            // what that map said about every achievement then (DlcAchievements.HoldKey) - a change releases the game too
+		public string? DlcAsked;        // held whole: its DlcKey when the owner was asked about it - asked once per that
+		public string? DlcKey;          // which of the game's DLC ids the account has for good (DlcAchievements.LicenceKey) - what an answer is kept with; null = not read
 	}
 
 	/// <summary>
@@ -212,8 +214,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// is already known (no store questions): the same, and it stays as it is; different, and it's looked at afresh.
 	/// Licences that can't be read yet leave it as it is and are tried again next minute.
 	///
-	/// The owner vouching for a game (AchievementDlcTrusted) counts as a change too: every DLC of it is then counted
-	/// as owned, so a game held for DLC is let go within the minute - and taken off the list, it is held again.
+	/// The owner vouching for a game ("I own what matters - carry on", kept in AchievementDlcTrusted) counts as a change
+	/// too: the DLC of it that can't be placed are then counted as owned, so a game held whole is let go within the
+	/// minute - and taken back, it is held again. A DLC whose achievements are known exactly still goes by the licences.
 	///
 	/// So does the game's DLC map being built again. A game held on a map that couldn't place a DLC (Steam didn't
 	/// answer for its name, say) stayed held when the next build could place it - nothing about the licences had
@@ -304,6 +307,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 				g.Licences = view.Licences;
 				g.DlcOwned = [.. view.Owned.Order()];
+				g.DlcKey = view.LicenceKey ?? g.DlcKey;
 				g.MapStamp = DlcAchievements.Stamp(view.Map);
 				g.HoldKey = key;
 
@@ -343,12 +347,125 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	private readonly Lock _gate = new();
 
 	private DateTime _lastTick = DateTime.MinValue;
-	private bool _loaded;
 	private Said _status = new("off");
 	private uint _grindReset;   // the app whose schedule we've already pulled forward for the current grind (0 = none)
 
 	public override string Name => "achievements";
 	public override string Status => Bot.Cfg.UnlockAchievements ? _status : "";
+
+	/// <summary>
+	/// Read the saved state, once - by the minute's tick, or first by whoever asks about the games (the dashboard, a
+	/// 'dlc' command) before the first tick has run. Asked before it, an answer was given for a game this didn't know
+	/// was held yet.
+	/// </summary>
+	private void EnsureLoaded() {
+		// Held for the whole read: a tick that went ahead while the dashboard's read was half done saved the state it
+		// had so far over the file.
+		lock (_loadGate) {
+			if (!_loaded) {
+				Load();
+				_loaded = true;
+			}
+		}
+	}
+
+	private bool _loaded;
+	private readonly Lock _loadGate = new();
+
+	/// <summary>
+	/// A game held whole for DLC Steam says nothing about, the DLC the account counted as owned for it then, which of its
+	/// DLC ids the account has for good (<see cref="DlcAchievements.LicenceKey"/>, null while not read since an update),
+	/// and that key when the owner was last asked.
+	/// </summary>
+	public sealed record HeldWhole(uint App, IReadOnlyList<uint> Owned, string? Key, string? Asked);
+
+	/// <summary>
+	/// The games held whole because it can't be told which achievements come with a DLC the account doesn't own - the
+	/// ones the owner may be asked about. Only games the pacer works on: not on the never list, and on the allow list
+	/// when there is one.
+	/// </summary>
+	public IReadOnlyList<HeldWhole> HeldWholeGames() {
+		EnsureLoaded();
+		List<uint> never = Bot.Cfg.AchievementNeverGames;
+		List<uint> allowed = Bot.Cfg.AchievementGames;
+
+		lock (_gate) {
+			return [.. _games
+				.Where(kv => (Current(kv.Value) == Outcome.DlcUnmapped) && !never.Contains(kv.Key) && ((allowed.Count == 0) || allowed.Contains(kv.Key)))
+				.OrderBy(static kv => kv.Key)
+				.Select(static kv => new HeldWhole(kv.Key, [.. kv.Value.DlcOwned], kv.Value.DlcKey, kv.Value.DlcAsked))];
+		}
+	}
+
+	/// <summary>
+	/// Which of a game's DLC ids the account had for good when it was last looked at (<see cref="DlcAchievements.LicenceKey"/>);
+	/// null when that hasn't been read.
+	/// </summary>
+	public string? DlcKeyOf(uint app) {
+		EnsureLoaded();
+
+		lock (_gate) {
+			return _games.TryGetValue(app, out GameState? g) ? g.DlcKey : null;
+		}
+	}
+
+	/// <summary>
+	/// The owner said to carry on with a game held for DLC: looked at again the next time it's played, rather than
+	/// waiting out the minute's licence look (which would get there too). What it may then unlock is worked out afresh,
+	/// with the owner's word - nothing is unlocked by this.
+	/// </summary>
+	public void Release(uint app) {
+		EnsureLoaded();
+
+		lock (_gate) {
+			if (!_games.TryGetValue(app, out GameState? g) || !HeldForDlc(g.Last)) {
+				return;
+			}
+
+			g.Last = Outcome.Unknown;
+			g.NextAllow = DateTime.UtcNow;
+		}
+
+		Save();
+	}
+
+	/// <summary>
+	/// One line - on screen, and to Discord or Telegram under Achievements - the first time a game is held whole and the
+	/// owner hasn't answered for it. Once per game per account: asked again only when the DLC the account owns for it
+	/// changes (a DLC bought) and it's still held.
+	/// </summary>
+	private void AskAboutHeldGames() {
+		bool asked = false;
+
+		foreach (HeldWhole held in HeldWholeGames()) {
+			// Keyed on the licences, not on the DLC counted as owned: those change with a "carry on" and with how the
+			// map grouped the DLC, and a game left paused was asked about again after the next look.
+			if (held.Key is not { } key) {
+				continue;
+			}
+
+			if (!DlcQuestions.Asks(true, Bot.Cfg.AchievementDlcTrusted.Contains(held.App), Bot.Cfg.AchievementDlcLeft, held.App, key) || (held.Asked == key)) {
+				continue;
+			}
+
+			lock (_gate) {
+				if (_games.TryGetValue(held.App, out GameState? g)) {
+					g.DlcAsked = key;
+				}
+			}
+
+			Said line = new Said("{0}: {1} is paused for achievements - it has add-ons this account doesn't own. Answer on the dashboard, or 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.",
+				Bot.Name, GameNames.Of(held.App), DlcQuestions.Typed(Bot, held.App));
+			Log.Info(line, Bot.Name);
+			Log.Publish(Topic.Achievements, Bot.Name, line);
+			asked = true;
+		}
+
+		// Kept straight away: the tick doesn't always get as far as saving, and a restart before it did asked again.
+		if (asked) {
+			Save();
+		}
+	}
 
 	protected override async Task RunAsync(CancellationToken ct) {
 		while (!ct.IsCancellationRequested) {
@@ -389,10 +506,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	private readonly Dictionary<uint, DateTime> _sittingSince = [];
 
 	private async Task StepAsync(CancellationToken ct) {
-		if (!_loaded) {
-			_loaded = true;
-			Load();
-		}
+		EnsureLoaded();
 
 		if (!Bot.IsOnline || Bot.Paused || Bot.PlayingBlocked) {
 			_status = new Said("waiting");
@@ -401,6 +515,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		}
 
 		await RecheckLicencesAsync(ct).ConfigureAwait(false);
+		AskAboutHeldGames();
 
 		// One minute of credit per tick, and only for time that genuinely elapsed. Without this a restart loop,
 		// or a tick that ran late, would hand out playtime the account never spent - and playtime is exactly
@@ -634,23 +749,19 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			g.Unmapped = unmapped;
 			g.Licences = dlc.Licences;
 			g.DlcOwned = [.. dlc.Owned.Order()];
+			g.DlcKey = dlc.LicenceKey ?? g.DlcKey;
 			g.MapStamp = mapStamp;
 			g.HoldKey = holdKey;
 			saidHeld = g.DlcSaid == held;
 			g.DlcSaid = held;
 		}
 
+		// Held whole on the strength of a DLC Steam says nothing about, the owner is asked about it - once, and from the
+		// minute's tick (AskAboutHeldGames), not from here.
 		if (!saidHeld && (held > 0)) {
 			Log.Info(new Said("{0}: {1}", GameNames.Of(app), unmapped
 				? new Said("can't tell which achievements come with its DLC - {0} left alone", held)
 				: new Said("{0} achievement(s) are from DLC this account doesn't own - left alone", held)), Bot.Name);
-
-			// Held whole on the strength of a DLC Steam says nothing about. Only the owner knows whether the account has
-			// it all - so the way to say so goes with it.
-			if (unmapped) {
-				Log.Info(new Said("If {0} owns all of {1}'s DLC, add {2} to \"Games I own all the DLC for\" in its settings - then nothing in it is held for DLC.",
-					Bot.Name, GameNames.Of(app), app), Bot.Name);
-			}
 		}
 
 		// What the order rules look at: everything but the locked ones it will never have. A ladder's lower rung, a
@@ -1668,6 +1779,12 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		// again once, the first time its map is read.
 		public long MapStamp { get; set; }
 		public long HoldKey { get; set; }
+
+		// Absent from older files: null, so a game held whole before the owner could be asked is asked about once.
+		public string? DlcAsked { get; set; }
+
+		// Absent from older files: null - read again the next time the game is looked at.
+		public string? DlcKey { get; set; }
 	}
 
 	private static string PathFor(string bot) => Path.Combine(ConfigStore.ConfigDir, "state", $"cheevo-{bot}.json");
@@ -1704,7 +1821,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						Licences = s.Licences,
 						DlcOwned = s.DlcOwned ?? [],
 						MapStamp = s.MapStamp,
-						HoldKey = s.HoldKey
+						HoldKey = s.HoldKey,
+						DlcAsked = s.DlcAsked,
+						DlcKey = s.DlcKey
 					};
 
 					// A file written before outcomes existed says nothing about them, and a finished or capped game
@@ -1813,7 +1932,19 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		}
 	}
 
+	/// <summary>
+	/// Held from the copy to the write: the dashboard's "carry on" saves from its own thread while the minute's tick
+	/// saves from this one. Without it, a copy taken earlier could be written last and put back what the later one changed.
+	/// </summary>
+	private readonly Lock _saveGate = new();
+
 	private void Save() {
+		lock (_saveGate) {
+			SaveInOrder();
+		}
+	}
+
+	private void SaveInOrder() {
 		try {
 			List<Saved> saved;
 
@@ -1833,7 +1964,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 					Licences = kv.Value.Licences,
 					DlcOwned = kv.Value.DlcOwned,
 					MapStamp = kv.Value.MapStamp,
-					HoldKey = kv.Value.HoldKey
+					HoldKey = kv.Value.HoldKey,
+					DlcAsked = kv.Value.DlcAsked,
+					DlcKey = kv.Value.DlcKey
 				}).ToList();
 			}
 

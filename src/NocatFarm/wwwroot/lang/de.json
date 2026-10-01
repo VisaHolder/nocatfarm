@@ -1019,7 +1019,6 @@
     "Open its Steam store page": "Seine Steam-Shopseite öffnen",
     "{0} card(s) - farmed in some of its sittings, between its usual games": "{0} Karte(n) - werden in manchen Sitzungen gefarmt, zwischen den üblichen Spielen",
     "recent licence: package {0}, {1}, {2}": "neue Lizenz: Paket {0}, {1}, {2}",
-    "{0} is a free DLC - left alone (\"...free DLC too\" is off)": "{0} ist ein Gratis-DLC - bleibt liegen („...auch Gratis-DLC“ ist aus)",
     "{0} is free, but only to owners of {1} - this account doesn't have it": "{0} ist gratis, aber nur für Besitzer von {1} - dieses Konto hat es nicht",
     "couldn't claim {0} for its DLC - {1}": "konnte {0} für sein DLC nicht holen - {1}",
     "joined the Steam group {0}": "ist der Steam-Gruppe {0} beigetreten",
@@ -1692,11 +1691,8 @@
     "key queue: {0}": "Schlüssel-Warteschlange: {0}",
     "Friends & comments": "Freunde & Kommentare",
     "update: {0}MB downloaded - unpacking": "Update: {0} MB heruntergeladen - wird entpackt",
-    "{0} will install when your accounts are asleep (When I say update) - 'update now' installs it right away": "{0} wird installiert, wenn deine Konten schlafen (Wenn ich 'update' sage) - 'update now' installiert sofort",
     "achievement boost: {0} games to hunt ({1} shared)": "Erfolgsjagd: {0} Spiele ({1} geteilt)",
     "achievement boost: {0} games to hunt": "Erfolgsjagd: {0} Spiele",
-    "not grinding {0} - still refundable (Protect refundable games)": "{0} wird nicht gegrindet - noch erstattbar (Erstattbare Spiele schützen)",
-    "not putting {0} first - still refundable (Protect refundable games)": "{0} nicht vorgezogen - noch erstattbar (Erstattbare Spiele schützen)",
     "{0}: all {1} card drop(s) in - back to normal": "{0}: alle {1} Kartendrops da - zurück zum Normalen",
     "still going for {0}: {1} of {2} card drop(s)": "weiter an {0}: {1} von {2} Kartendrops",
     "confirmed trade offer {0} with its authenticator": "Handelsangebot {0} mit dem eigenen Authenticator bestätigt",
@@ -1918,7 +1914,7 @@
     "  (this PC only, no password)": "(nur dieser PC, kein Passwort)",
     "{0} games, {1} cards to farm - about {2} in all": "{0} Spiele, {1} Karten zu farmen - etwa {2} insgesamt",
     "Too many wrong passwords - try again in {0}.": "Zu viele falsche Passwörter - versuch es in {0} wieder.",
-    "Or type unlock in the nocat.farm window.": "Oder tipp unlock im nocat.farm-Fenster.",
+    "Or type dashboard unlock in the nocat.farm window.": "Oder tipp dashboard unlock im nocat.farm-Fenster.",
     "You can try again now.": "Du kannst es jetzt wieder versuchen.",
     "dashboard unlocked - you can sign in again": "Dashboard entsperrt - du kannst dich wieder anmelden",
     "nothing was locked - the dashboard sign-in works": "nichts war gesperrt - die Anmeldung am Dashboard funktioniert",
@@ -2262,10 +2258,10 @@
     "\"{0}\" may come with DLC {1} doesn't own, and Steam doesn't list which achievements that DLC adds ({2}) - it won't be unlocked.": "„{0}“ gehört vielleicht zu einem DLC, das {1} nicht besitzt, und Steam sagt nicht, welche Erfolge dieses DLC bringt ({2}) - wird nicht freigeschaltet.",
     "{0} left alone - can't tell which achievements come with its DLC": "{0} bleiben liegen - unklar, welche Erfolge zu seinem DLC gehören",
     "can't tell which achievements come with its DLC - left alone": "unklar, welche Erfolge zu seinem DLC gehören - bleibt liegen",
-    "see 'dlcach {0} {1}'": "siehe „dlcach {0} {1}“",
     "{0}: games with achievements left alone for DLC it doesn't own (never unlocked)": "{0}: Spiele mit Erfolgen, die wegen DLC liegen bleiben, das es nicht besitzt (werden nie freigeschaltet)",
     "Couldn't read which DLC {0} owns just now - nothing in {1} is unlocked until it can. Try again in a few minutes.": "Konnte gerade nicht lesen, welche DLC {0} besitzt - in {1} wird nichts freigeschaltet, bis das geht. Versuch es in ein paar Minuten noch mal.",
     "Held: {0} is missing DLC, and Steam doesn't list which achievements they add - so {1} achievement(s) outside the DLC it owns are left alone.": "Liegt: {0} fehlen DLC, und Steam sagt nicht, welche Erfolge sie bringen - darum bleiben {1} Erfolg(e) außerhalb der DLC, die es besitzt, liegen.",
+    "{0} is missing DLC, and Steam doesn't list which achievements they add - but every achievement outside the DLC it owns is already unlocked, so there's nothing to hold.": "{0} fehlen DLC, und Steam sagt nicht, welche Erfolge sie hinzufügen - aber jeder Erfolg außerhalb der DLC, die es besitzt, ist schon freigeschaltet, also gibt es nichts zurückzuhalten.",
     "its store page is the game's own": "seine Store-Seite ist die des Spiels selbst",
     "it isn't on the store any more": "es ist nicht mehr im Store",
     "the store's names for its achievements aren't in the game's list": "die Namen seiner Erfolge aus dem Store stehen nicht in der Liste des Spiels",
@@ -2281,11 +2277,51 @@
     "{0}: can't tell which achievements come with its DLC - nothing to grind": "{0}: unklar, welche Erfolge zu seinem DLC gehören - nichts zu grinden",
     "{0}: {1}/{2} - can't tell which achievements come with its DLC - left alone": "{0}: {1}/{2} - unklar, welche Erfolge zu seinem DLC gehören - bleibt liegen",
     "Playing {0} — {1}; can't tell which achievements come with its DLC, so the rest are left alone.": "Spielt {0} - {1}; unklar, welche Erfolge zu seinem DLC gehören, darum bleibt der Rest liegen.",
-    "Nothing held in {0} - you listed them as owning all their DLC": "In {0} liegt nichts - du hast angegeben, dass alle ihre DLC im Besitz sind",
-    "Trusted: you listed it as owning all its DLC (\"Games I own all the DLC for\"), so nothing in it is held for DLC.": "Vertraut: du hast angegeben, dass alle seine DLC im Besitz sind („Spiele, deren DLC ich alle besitze“), darum liegt darin nichts wegen DLC.",
-    "not in its licences, but counted as owned - you listed the game": "nicht in seinen Lizenzen, aber als im Besitz gezählt - du hast das Spiel eingetragen",
-    "If {0} owns all of {1}'s DLC, add {2} to \"Games I own all the DLC for\" in its settings - then nothing in it is held for DLC.": "Wenn {0} alle DLC von {1} besitzt, trag {2} in seinen Einstellungen unter „Spiele, deren DLC ich alle besitze“ ein - dann liegt darin nichts mehr wegen DLC.",
-    "If this account owns all its DLC, add the game to “{0}”.": "Wenn dieses Konto alle seine DLC besitzt, trag das Spiel unter „{0}“ ein."
+    "see 'dlc {0} {1}'": "siehe „dlc {0} {1}“",
+    "Nothing held in {0} - you said carry on": "Nichts liegt in {0} - du hast „weitermachen“ gesagt",
+    "Trusted: you said {0} owns what matters, so nothing in it is held just because Steam doesn't say which add-on an achievement comes with.": "Vertraut: du hast gesagt, dass {0} besitzt, was zählt - darum liegt darin nichts nur deshalb, weil Steam nicht sagt, zu welchem Add-on ein Erfolg gehört.",
+    "Trusted: you said {0} owns what matters. {1} achievement(s) from {2}, which it doesn't own, are still left alone.": "Vertraut: du hast gesagt, dass {0} besitzt, was zählt. {1} Erfolg(e) aus {2}, das es nicht besitzt, bleiben trotzdem liegen.",
+    "If {0} owns what matters in {1}, answer on the dashboard or type 'dlc carryon {0} {2}'. Achievements that certainly come with an add-on it doesn't own stay locked.": "Wenn {0} in {1} besitzt, was zählt, antworte im Dashboard oder tippe „dlc carryon {0} {2}“. Erfolge, die sicher zu einem Add-on gehören, das es nicht besitzt, bleiben gesperrt.",
+    "{0}: carrying on with {1}. Only achievements that certainly come with an add-on it doesn't own stay locked.": "{0}: {1} geht weiter. Nur Erfolge, die sicher zu einem Add-on gehören, das es nicht besitzt, bleiben gesperrt.",
+    "{0}: {1} stays paused for achievements. It won't be asked about again unless its add-ons change.": "{0}: {1} bleibt für Erfolge pausiert. Es wird nicht wieder gefragt, außer seine Add-ons ändern sich.",
+    "{0}: there's no answer for {1} to take back.": "{0}: für {1} gibt es keine Antwort zum Zurücknehmen.",
+    "{0}: took back \"carry on\" for {1}. Nothing in it is unlocked on a guess any more.": "{0}: „weitermachen“ für {1} zurückgenommen. Darin wird nichts mehr auf Verdacht freigeschaltet.",
+    "{0}: {1} will be asked about again.": "{0}: zu {1} wird wieder gefragt.",
+    "Which game? Its name or its appID.": "Welches Spiel? Sein Name oder seine App-ID.",
+    "{0} has no game called \"{1}\". Try its appID - the number in its store link.": "{0} hat kein Spiel namens „{1}“. Versuch seine App-ID - die Zahl in seinem Store-Link.",
+    "More than one game matches \"{0}\": {1}. Type more of the name, or the appID.": "Mehr als ein Spiel passt zu „{0}“: {1}. Tippe mehr vom Namen oder die App-ID.",
+    "{0}: {1} is paused for achievements - it has add-ons this account doesn't own. Answer on the dashboard, or 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.": "{0}: {1} ist für Erfolge pausiert - es hat Add-ons, die dieses Konto nicht besitzt. Antworte im Dashboard oder mit „dlc carryon {0} {2}“ / „dlc leave {0} {2}“.",
+    "Only skin, team and other packs are missing.": "Es fehlen nur Skin-, Team- und andere Pakete.",
+    "Missing: {0}": "Es fehlt: {0}",
+    "Missing: {0} add-ons": "Es fehlen: {0} Add-ons",
+    "{0} is paused for achievements. It has add-ons this account doesn't own, and Steam doesn't say which of them come with achievements.": "{0} ist für Erfolge pausiert. Es hat Add-ons, die dieses Konto nicht besitzt, und Steam sagt nicht, welche davon Erfolge mitbringen.",
+    "Achievements that certainly come with an add-on it doesn't own stay locked either way.": "Erfolge, die sicher zu einem Add-on gehören, das es nicht besitzt, bleiben so oder so gesperrt.",
+    "I own what matters - carry on": "Ich besitze, was zählt - weitermachen",
+    "Leave it paused": "Pausiert lassen",
+    "You said carry on for:": "Du hast „weitermachen“ gesagt für:",
+    "undo": "rückgängig",
+    "You said leave it paused for:": "Du hast „pausiert lassen“ gesagt für:",
+    "ask again": "wieder fragen",
+    "not grinding {0} - still refundable (Protect refunds)": "{0} wird nicht gegrindet - noch erstattbar (Erstattungen schützen)",
+    "not putting {0} first - still refundable (Protect refunds)": "{0} nicht vorgezogen - noch erstattbar (Erstattungen schützen)",
+    "asleep, no games chosen - idling your {0} most-played game(s): {1} · up {2}": "schläft, keine Spiele gewählt - sammelt in deinen {0} meistgespielten Spiel(en): {1} · auf um {2}",
+    "asleep · up {0} · nothing to bank overnight - add games to the overnight list": "schläft · auf um {0} · nachts gibt es nichts zu sammeln - füge Spiele zur Nachtliste hinzu",
+    "asleep - back around {0}. Nothing to bank overnight: add games to the overnight list": "schläft - zurück gegen {0}. Nachts gibt es nichts zu sammeln: füge Spiele zur Nachtliste hinzu",
+    "asleep - no games chosen, so banking hours quietly on your most-played until {0}: {1}": "schläft - keine Spiele gewählt, sammelt also bis {0} still Stunden in deinen meistgespielten: {1}",
+    "Overnight it goes invisible and, with no games chosen, idles your most-played: {0}.": "Über Nacht wird es unsichtbar und sammelt, da keine Spiele gewählt sind, in deinen meistgespielten: {0}.",
+    "Nothing to bank overnight yet: add games to \"Games to idle overnight\".": "Nachts gibt es noch nichts zu sammeln: füge Spiele zu „Spiele für die Nacht“ hinzu.",
+    "{0} is a free DLC - left alone (\"Claim free games\" is on games only)": "{0} ist ein Gratis-DLC - bleibt liegen („Gratisspiele holen“ steht nur auf Spiele)",
+    "{0} will install when your accounts are asleep - 'update now' installs it right away": "{0} wird installiert, wenn deine Konten schlafen - 'update now' installiert sofort",
+    "Search by name, or paste an appID": "Nach Namen suchen oder eine appID einfügen",
+    "appID {0} - open its Steam store page": "appID {0} - seine Steam-Shopseite öffnen",
+    "No game in its library matches - paste its appID or store link.": "Kein Spiel in seiner Bibliothek passt - füge die appID oder den Shop-Link ein.",
+    "Its games haven't been read yet - paste an appID or store link.": "Seine Spiele wurden noch nicht gelesen - füge eine appID oder einen Shop-Link ein.",
+    "{0}: {1} hasn't been looked at since the app started - try again in a few minutes.": "{0}: {1} wurde seit dem Start der App noch nicht angesehen - versuch es in ein paar Minuten noch mal.",
+    "{0}: {1} isn't paused for add-ons it doesn't own, so there's nothing to answer for it.": "{0}: {1} ist nicht wegen fehlender Add-ons pausiert, also gibt es dafür nichts zu beantworten.",
+    "Type more of the game's name, or its appID.": "Tipp mehr vom Namen des Spiels ein, oder seine App-ID.",
+    "{0}: Claim free games now also claims a free DLC's game when that's free too - that was its own switch, and it was off.": "{0}: Gratisspiele holen holt jetzt auch das Spiel zu einem Gratis-DLC, wenn es gerade ebenfalls gratis ist - das war ein eigener Schalter, und er war aus.",
+    "{0}: Bank hours overnight was on with no games listed, which banked nothing - switched off so nothing changes. Turn it on to idle its most-played games overnight.": "{0}: Nachts Stunden sammeln war an, aber ohne Spiele in der Liste - gesammelt wurde nichts. Ausgeschaltet, damit sich nichts ändert. Schalt es ein, um nachts die meistgespielten Spiele laufen zu lassen.",
+    "Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).": "Über Nacht wird es unsichtbar und sammelt, da keine Spiele gewählt sind, in seinen {0} meistgespielten Spielen."
   },
   "settings": {
     "WebEnabled": {
@@ -2577,11 +2613,11 @@
     },
     "OfflineIdleAtNight": {
       "label": "Nachts Stunden sammeln",
-      "tip": "Während es schläft, wird es unsichtbar und sammelt weiter. So zählen Stunden weiter, während Freunde es offline sehen. Schickt „Wann Karten farmen“ die Karten in die Nacht, werden zuerst diese gefarmt."
+      "tip": "Während es schläft, wird es unsichtbar und sammelt weiter in den Spielen aus „Spiele für die Nacht“ - oder, wenn keine gewählt sind, in seinen meistgespielten Spielen. So zählen Stunden weiter, während Freunde es offline sehen. Schickt „Wann Karten farmen“ die Karten in die Nacht, werden zuerst diese gefarmt."
     },
     "OfflineIdleGames": {
       "label": "Spiele für die Nacht",
-      "tip": "Spiele, die gesammelt werden, während es nachts offline erscheint. Mehrere können gleichzeitig laufen. Gilt nur, wenn „Nachts Stunden sammeln“ an ist."
+      "tip": "Spiele, die gesammelt werden, während es nachts offline erscheint. Mehrere können gleichzeitig laufen. Leer lassen, um stattdessen seine meistgespielten Spiele zu nehmen. Gilt nur, wenn „Nachts Stunden sammeln“ an ist."
     },
     "IdleGames": {
       "label": "Spiele zum Sammeln",
@@ -2624,18 +2660,6 @@
     "AchievementMaxCompletionPct": {
       "label": "Nicht mehr abschließen als",
       "tip": "Wie viel Prozent eines Spiels es höchstens abschließt. Ein paar offene Errungenschaften wirken wie eine echte Bibliothek. Hat ein Spiel das erreicht, lässt die Jagd es endgültig - erhöhst du den Wert, kommt es zurück. Der Befehl grind ignoriert das."
-    },
-    "ClaimFreeGames": {
-      "label": "Gratisspiele holen",
-      "tip": "Hält Ausschau nach Kaufspielen, die gratis zum Behalten verschenkt werden, und fügt sie diesem Konto hinzu. Free-to-Play-Müll wird übersprungen."
-    },
-    "ClaimFreeDlc": {
-      "label": "...auch Gratis-DLC",
-      "tip": "Holt auch kostenpflichtige DLC, die auf gratis reduziert sind, zum Beispiel ein Supporter-Paket. Steam gibt DLC nur Konten, denen das zugehörige Spiel gehört, alle anderen werden übersprungen. Nur aktiv, wenn „Gratisspiele holen“ an ist."
-    },
-    "ClaimFreeDlcBase": {
-      "label": "...und sein Spiel, falls das auch gratis ist",
-      "tip": "Wenn ein Gratis-DLC ein Spiel braucht, das diesem Konto fehlt, und dieses Spiel gerade auch gratis ist, holt es zuerst das Spiel und dann das DLC. Nur aktiv, wenn „...auch Gratis-DLC“ an ist."
     },
     "CraftBadges": {
       "label": "Abzeichen aus Kartensätzen herstellen",
@@ -2788,19 +2812,15 @@
       "choices": "0 aus | 1 Spiele deiner Wahl | 2 alle Einzelspieler-Titel"
     },
     "SkipRefundableGames": {
-      "tip": "Lässt frisch gekaufte Spiele in Ruhe, damit du sie noch erstatten lassen kannst. Steam verweigert Erstattungen nach 2 Stunden Spielzeit. Deshalb werden sie nicht gesammelt, gefarmt oder gegrindet, bis die Erstattungsfrist vorbei ist.",
-      "label": "Erstattungsfähige Spiele schützen"
-    },
-    "ProtectGiftedGames": {
-      "label": "...auch geschenkte Spiele",
-      "tip": "Lässt auch geschenkte Spiele in Ruhe, solange sie noch an den Freund erstattet werden können, der sie geschenkt hat. Gilt nur, wenn „Erstattungsfähige Spiele schützen“ an ist."
+      "tip": "Lässt ein Spiel in Ruhe, solange es noch erstattet werden kann, damit nichts es über Steams 2 Stunden hinaus sammelt, farmt, grindet oder auf Erfolgsjagd spielt. Das gilt für Spiele, die in den letzten 14 Tagen gekauft oder geschenkt wurden, und für Spiele, die neu in der Familienbibliothek sind, in ihren ersten 14 Tagen.",
+      "label": "Erstattungen schützen"
     },
     "ShowInventoryValue": {
       "tip": "Rechnet aus, was das Inventar dieses Kontos zu Steam-Marktpreisen wert ist, und zeigt es im Dashboard. Schalte es bei Konten aus, die nur ein paar Karten haben.",
       "label": "Ausrechnen, was sein Inventar wert ist"
     },
     "CheckForUpdates": {
-      "tip": "Sucht nach einer neuen Version und sagt es im Log, auf Telegram und Discord. Ausschalten stoppt auch Von selbst aktualisieren.",
+      "tip": "Sucht nach einer neuen Version und sagt es im Log, auf Telegram und Discord. Ausschalten stoppt auch das nächtliche Installieren von selbst.",
       "label": "Melden, wenn ein Update da ist"
     },
     "UpdateReminders": {
@@ -2844,18 +2864,14 @@
       "label": "Nie gespielte Spiele überspringen",
       "tip": "Überspringt Spiele, die du selbst nie gestartet hast. So bekommt keines davon seine erste Spielzeit von hier."
     },
-    "RefundHoldDays": {
-      "label": "...für so viele Tage",
-      "tip": "Wie viele Tage ein neu gekauftes Spiel in Ruhe gelassen wird. Steams Erstattungsfrist beträgt 14 Tage. Erhöhe das nur, wenn du mehr Bedenkzeit willst."
-    },
     "FarmCardsWhen": {
       "label": "Wann Karten farmen",
-      "tip": "Nur im menschlichen Modus - das ist AUTOMATISCHES Farmen: nocat.farm sucht sich die Kartenspiele selbst aus. Tagsüber: Karten werden in den normalen Sitzungen gefarmt. Nur nachts: nur während es schläft. Jederzeit: am Stück, bis alles fertig ist. Gemischt: manche Sitzungen farmen Karten, die anderen spielen die üblichen Spiele, sodass die Karten über Tage nach und nach reinkommen. Willst du die Karten eines bestimmten Spiels zuerst? Tipp drops <account> <appID> <count> ein (z. B. drops myaccount 460920 2 = zuerst 2 Karten aus Steep) - auf einem Konto im menschlichen Modus spielt es trotzdem in normalen Sitzungen, mit Pausen und Schlafenszeit.",
+      "tip": "Wann dieses Konto Karten farmt - die Kartenspiele sucht es sich selbst aus. Tagsüber: in seinen normalen Sitzungen. Nur nachts: nur während es schläft. Jederzeit: am Stück, bis alles fertig ist. Gemischt: manche Sitzungen farmen Karten, die anderen spielen die üblichen Spiele, sodass die Karten über ein paar Tage reinkommen.",
       "choices": "0 tagsüber | 1 nur nachts | 2 jederzeit | 3 gemischt, manche Sitzungen Karten, der Rest seine Spiele"
     },
     "CardSittingsPct": {
-      "label": "Anteil der Sitzungen, die Karten farmen (gemischt)",
-      "tip": "Ungefähr wie viel Prozent der Sitzungen Karten farmen, wenn „Wann Karten farmen“ auf gemischt steht. Höher wird mit den Karten schneller fertig, niedriger lässt mehr Zeit für die üblichen Spiele. Ein Drop-Lauf (der Befehl drops) bekommt mindestens den Anteil des Hauptspiels, damit das gewählte Spiel schneller drankommt."
+      "label": "Anteil der Sitzungen, die Karten farmen",
+      "tip": "Ungefähr wie viel Prozent der Sitzungen Karten farmen. Höher wird mit den Karten schneller fertig, niedriger lässt mehr Zeit für die üblichen Spiele. Ein Drop-Lauf (der Befehl drops) bekommt mindestens den Anteil des Hauptspiels, damit das gewählte Spiel schneller drankommt."
     },
     "FarmFromHour": {
       "label": "Karten erst ab",
@@ -2909,10 +2925,6 @@
       "label": "Ein geteiltes Spiel zurückgeben, wenn sie es wollen",
       "tip": "Gibt ein geliehenes Familienspiel sofort zurück, wenn jemand aus der Familie es startet, und macht mit etwas anderem weiter. Nachdem sie aufhören, bleibt es 20 Minuten aus der Rotation."
     },
-    "HoldNewFamilyGames": {
-      "label": "Brandneue Familienspiele in Ruhe lassen",
-      "tip": "Überspringt ein familiengeteiltes Spiel, solange es neu in der Bibliothek ist, falls der Käufer es erstatten lassen will. Nutzt dieselbe Anzahl Tage wie „Erstattungsfähige Spiele schützen“."
-    },
     "IncludeFamilyLibrary": {
       "label": "Familiengeteilte Spiele einbeziehen",
       "tip": "Jagt Errungenschaften auch in Spielen, die über die Steam-Familie mit diesem Konto geteilt werden. Sie zählen auf diesem Konto wie eigene Spiele, und eigene Spiele kommen immer zuerst."
@@ -2928,10 +2940,6 @@
     "AchievementNeverGames": {
       "label": "Nie in diesen Spielen",
       "tip": "Spiele, die komplett in Ruhe gelassen werden. Darin wird keine Errungenschaft freigeschaltet, und Schübe wählen sie nie. Im menschlichen Modus wird auch das Hauptspiel des Kontos übersprungen."
-    },
-    "AchievementDlcTrusted": {
-      "label": "Spiele, deren DLC ich alle besitze",
-      "tip": "Spiele, von denen dieses Konto jedes DLC besitzt. nocat.farm schaltet Erfolge darin dann so frei, als wäre jedes DLC im Besitz."
     },
     "AchievementGames": {
       "label": "Nur diese Spiele",
@@ -2957,10 +2965,6 @@
     "SellPerRun": {
       "label": "Karten pro Runde",
       "tip": "Wie viele übrige Karten jede Runde einstellt, die wertvollsten zuerst. Ein paar auf einmal wirkt natürlich."
-    },
-    "BoosterGames": {
-      "label": "Boosterpacks erstellen für",
-      "tip": "Spiel-IDs, für die Edelsteine in Booster-Packs umgewandelt werden, getrennt durch Kommas. Steam erlaubt ein Pack pro Spiel und Tag, nur für Spiele, die noch Karten fallen lassen. Leer lassen, um es auszuschalten."
     },
     "BoosterGems": {
       "label": "Booster-Packs verwenden",
@@ -3214,11 +3218,6 @@
       "label": "Menschen-Modus: Gewicht des Jagdspiels",
       "tip": "Nur im Menschen-Modus. Das gejagte Spiel kommt zu den Spielen, die es spielt, und das hier ist, wie oft es drankommt - ein Gewicht wie bei „Spiele und wie oft“. Es läuft in normalen Sitzungen, mit Pausen und Schlafenszeit, und bricht nie ein anderes Spiel ab."
     },
-    "AutoUpdate": {
-      "label": "Von selbst aktualisieren",
-      "tip": "Was passiert, wenn eine neue Version da ist. Sag Bescheid: es sagt es im Log, auf Telegram und Discord, und du tippst update accept. Nachts installieren: es installiert von selbst in den Stunden unten, nur wenn kein Konto im Menschen-Modus wach ist und niemand auf einem Konto spielt, und sagt vorher und nachher Bescheid. Nicht in Docker oder als Linux-Dienst, die werden von Hand aktualisiert.",
-      "choices": "0 Bescheid sagen | 1 nachts installieren"
-    },
     "AutoUpdateFromHour": {
       "label": "...zwischen",
       "tip": "Die früheste Stunde, in der es von selbst installieren darf, im 24-Stunden-Format."
@@ -3299,11 +3298,6 @@
       "label": "Nach echter Spieldauer takten",
       "tip": "Schaut nach, wie lange jedes Spiel einen typischen Spieler beschäftigt (öffentliche SteamSpy-Zahlen - nur die Spiel-ID wird gesendet), und taktet die Erfolge danach: seltene öffnen sich im Tempo dieses Spiels, ein Kapitel braucht seinen Anteil an den Stunden, und „das Spiel beenden“ kommt nie vor dem Großteil eines Durchgangs."
     },
-    "UpdateWhenAsked": {
-      "label": "Wenn ich 'update' sage",
-      "tip": "Was update accept und der Update-Knopf tun. Sofort: es installiert jetzt. Wenn meine Konten schlafen: es wartet, bis kein Menschen-Modus-Konto wach ist, niemand auf einem Konto spielt und kein Tausch oder Geschenk wartet - Roboter-Konten, die die ganze Nacht an sind, halten es nicht auf. Ohne Menschen-Modus-Konten wartet es stattdessen auf die Stunden unten. update now installiert immer sofort. Nicht in Docker oder als Linux-Dienst, die werden von Hand aktualisiert.",
-      "choices": "0 sofort | 1 wenn meine Konten schlafen"
-    },
     "DiscordSecondLine": {
       "label": "Zweite Zeile",
       "tip": "Was die zweite Zeile der Discord-Karte zählt, wenn die Kontonamen aus sind: die heute bekommenen Karten oder die gespielten Stunden der letzten Woche oder des letzten Monats - zusammengezählt über alle deine Konten.",
@@ -3315,7 +3309,7 @@
     },
     "IdleWholeLibrary": {
       "label": "Meine ganze Bibliothek sammeln",
-      "tip": "Sammelt Stunden in jedem Spiel, das das Konto besitzt, nach denen in „Spiele zum Sammeln“. Lässt Spiele aus „Diese nie anfassen“, erstattungsfähige Spiele und familiengeteilte Spiele aus (außer „Familiengeteilte Spiele einbeziehen“ ist an). Steam spielt 32 gleichzeitig, also schalte „Sammelliste durchwechseln“ ein, damit jedes Spiel drankommt."
+      "tip": "Sammelt Stunden in jedem Spiel, das das Konto besitzt, nach denen in „Spiele zum Sammeln“. Lässt Spiele aus „Diese nie anfassen“ aus, familiengeteilte Spiele (außer „Familiengeteilte Spiele einbeziehen“ ist an) und Spiele, die „Erstattungen schützen“ zurückhält. Steam spielt 32 gleichzeitig, also schalte „Sammelliste durchwechseln“ ein, damit jedes Spiel drankommt."
     },
     "RotateIdleGames": {
       "label": "Sammelliste durchwechseln",
@@ -3332,7 +3326,7 @@
     },
     "NewGamesFirst": {
       "label": "Neue Spiele anfangs öfter spielen",
-      "tip": "Ein Spiel, das gerade in die Bibliothek gekommen ist, gekauft, geschenkt oder gratis, bekommt 3 bis 10 Tage lang zusätzliche Sitzungen, jeden Tag weniger, wie wenn man etwas Neues ausprobiert. Spiele, die du noch zurückgeben kannst, gesperrte oder per Familie geteilte Spiele und Spiele, die deine anderen Konten gerade laufen haben, bleiben unberührt."
+      "tip": "Ein Spiel, das gerade in die Bibliothek gekommen ist, gekauft, geschenkt oder gratis, bekommt 3 bis 10 Tage lang zusätzliche Sitzungen, jeden Tag weniger, wie wenn man etwas Neues ausprobiert. Gesperrte oder per Familie geteilte Spiele und Spiele, die deine anderen Konten gerade laufen haben, bleiben unberührt, und ein Spiel, das „Erstattungen schützen“ zurückhält, wartet, bis das vorbei ist."
     },
     "LongerRhythms": {
       "label": "Ruhige Phasen und lange Nächte",
@@ -3340,7 +3334,7 @@
     },
     "JoinFriends": {
       "label": "Manchmal spielen, was ein Freund spielt",
-      "tip": "Wenn ein Steam-Freund in einem Spiel ist, das dieses Konto besitzt, nimmt es ab und zu dieses Spiel für die nächste Sitzung, höchstens zweimal am Tag und nur, wenn es wach ist. Deine eigenen Konten und die Spiele, die sie laufen haben, werden ignoriert, ebenso gesperrte und erstattbare Spiele."
+      "tip": "Wenn ein Steam-Freund in einem Spiel ist, das dieses Konto besitzt, nimmt es ab und zu dieses Spiel für die nächste Sitzung, höchstens zweimal am Tag und nur, wenn es wach ist. Deine eigenen Konten und die Spiele, die sie laufen haben, werden ignoriert, ebenso gesperrte Spiele und Spiele, die „Erstattungen schützen“ zurückhält."
     },
     "StuckAlarm": {
       "label": "Hängendes Konto neu starten",
@@ -3362,6 +3356,29 @@
     "WeeklyReportHour": {
       "label": "Wochenbericht · Stunde",
       "tip": "Die Stunde, zu der der Wochenbericht kommt, im 24-Stunden-Format."
+    },
+    "OfflineIdleTopGames": {
+      "label": "...oder, wenn keine gewählt sind, seine Top-Spiele",
+      "tip": "Ist „Spiele für die Nacht“ leer, sammelt es nachts in so vielen seiner meistgespielten Spiele. 1 oder 2 wirkt am natürlichsten - viele auf einmal ist das Erste, was selfcheck bemängelt."
+    },
+    "ClaimFree": {
+      "label": "Gratisspiele holen",
+      "tip": "Hält Ausschau nach Kaufspielen, die gratis zum Behalten verschenkt werden, und fügt sie diesem Konto hinzu. Free-to-Play-Müll wird übersprungen. Spiele und DLC holt auch kostenpflichtige DLC, die auf gratis reduziert sind, zum Beispiel ein Supporter-Paket. Steam gibt DLC nur Konten, denen das Spiel gehört - ist dieses Spiel gerade auch gratis, holt es zuerst das Spiel.",
+      "choices": "0 aus | 1 Spiele | 2 Spiele und DLC"
+    },
+    "UpdateMode": {
+      "label": "Updates",
+      "tip": "Was passiert, wenn eine neue Version da ist. Es sagt es immer zuerst im Log und auf Telegram und Discord. Installieren, wenn ich klicke, sobald alle schlafen: der Update-Knopf oder update accept installiert sie, sobald deine Konten schlafen - kein Konto im Menschen-Modus wach, niemand spielt, kein Tausch oder Geschenk wartet. Installieren, wenn ich klicke: sofort. Nachts von selbst installieren: es installiert sie selbst in den Stunden unten, zu einer ruhigen Zeit, und sagt vorher und nachher Bescheid. update now installiert immer sofort. Nicht in Docker oder als Linux-Dienst, die werden von Hand aktualisiert.",
+      "choices": "0 installieren, wenn ich klicke, sobald alle schlafen | 1 installieren, wenn ich klicke | 2 nachts von selbst installieren"
+    },
+    "ReactionSpeed": {
+      "label": "Reaktionstempo",
+      "tip": "Wie schnell es reagiert und wie lange seine Pausen dauern. Jede Wartezeit bleibt zufällig - Schnell halbiert sie, Gemütlich verdoppelt sie.",
+      "choices": "0 normal | 1 schnell | 2 gemütlich"
+    },
+    "BoosterPackGames": {
+      "label": "Boosterpacks erstellen für",
+      "tip": "Spiele, für die Edelsteine in Booster-Packungen verwandelt werden. Steam erlaubt eine Packung pro Spiel und Tag, nur für Spiele, die noch Karten droppen. Leer lassen, um es auszuschalten."
     }
   }
 }

@@ -164,7 +164,7 @@ public sealed class Bot : IAsyncDisposable {
 
 	public bool StartGrind(uint app, TimeSpan how, TimeSpan delay = default, bool boost = false, int drops = 0) {
 		if (Refunds.Holds(app)) {
-			Log.Warn(new Said("not grinding {0} - still refundable (Protect refundable games)", GameNames.Of(app)), Name);
+			Log.Warn(new Said("not grinding {0} - still refundable (Protect refunds)", GameNames.Of(app)), Name);
 
 			return false;
 		}
@@ -261,7 +261,7 @@ public sealed class Bot : IAsyncDisposable {
 
 	public bool StartDropsFirst(uint app, int want) {
 		if (Refunds.Holds(app)) {
-			Log.Warn(new Said("not putting {0} first - still refundable (Protect refundable games)", GameNames.Of(app)), Name);
+			Log.Warn(new Said("not putting {0} first - still refundable (Protect refunds)", GameNames.Of(app)), Name);
 
 			return false;
 		}
@@ -1571,7 +1571,7 @@ public sealed class Bot : IAsyncDisposable {
 		// off a short, random beat later. Only for a genuine graceful stop of a running human-mode account:
 		// never a restart teardown, a shutdown, a non-human account, or one that wasn't even online.
 		if (graceful && _running && HumanOwned && IsOnline) {
-			int max = Math.Max(0, Cfg.LegitStopMaxSeconds);
+			int max = Math.Max(0, NocatFarm.Modules.ReactionSpeed.One(Cfg, nameof(BotConfig.LegitStopMaxSeconds)));
 
 			if (max > 0) {
 				// Clamped: with the setting at 1 or 2 the three-second floor sat above the ceiling, Rng.Next threw,
@@ -3889,7 +3889,7 @@ public sealed class Bot : IAsyncDisposable {
 /// </param>
 public readonly record struct AppOwnership(DateTime Since, bool Paid, bool Own, bool Gift = false, bool Permanent = false) {
 	/// <summary>Somebody could lose money if it's played: bought by this account, or gifted and still refundable to the giver.</summary>
-	public bool Refundable(bool gifts) => Paid || (Gift && gifts);
+	public bool Refundable => Paid || Gift;
 
 	/// <summary>
 	/// The same app from two licences. Earliest licence wins - that's when you really got it. A game can also arrive

@@ -96,7 +96,7 @@ function loginLocked(seconds, thisPc) {
   const draw = () => {
     const wait = left >= 60 ? `${Math.ceil(left / 60)}m` : `${left}s`;
     $('loginError').textContent = tf('Too many wrong passwords - try again in {0}.', wait)
-      + (thisPc ? ' ' + t('Or type unlock in the nocat.farm window.') : '');
+      + (thisPc ? ' ' + t('Or type dashboard unlock in the nocat.farm window.') : '');
   };
   draw();
   loginLockTimer = setInterval(() => {
@@ -1171,6 +1171,7 @@ function renderAccounts() {
       ${b.Notes ? `<div class="bot-notes" title="${esc(b.Notes)}">${esc(b.Notes)}</div>` : ''}
       ${b.Guard ? `<div class="bot-guard">${esc(tf('Waiting on you: {0}', b.Guard))}</div>` : ''}
       <div class="bot-playing" title="${esc(b.Playing || '')}">${b.Playing ? esc(b.Playing) : `<span class="real">${esc(t('not playing anything'))}</span>`}</div>
+      ${dlcAsks(b.Name, b.DlcQuestions)}
       ${b.Online ? `<div class="bot-persona ${b.PersonaHidden ? 'hidden-persona' : ''}"
         data-tip="${esc(t("What your friends list shows for this account. The status is what nocat.farm set it to, and the game comes straight back from Steam. While it is invisible, friends see it as offline with no game - the hours still count. Human mode changes the status by itself: invisible overnight, away on a break, Snooze over a meal."))}">${esc(t('your friends see:'))} <b>${esc(b.PersonaHidden ? t('offline') : b.Persona)}</b>${b.Seen && !b.PersonaHidden ? ` · <b>${esc(b.Seen)}</b>` : ''}</div>` : ''}
       ${b.Bans ? `<div class="bot-bans" data-tip="${esc(t('What Steam shows about this account\'s bans. nocat.farm checks every few hours and tells you when a new one appears. Games it is banned in are left out of trades; trading cards still trade.'))}">${esc(tf('bans: {0}', b.Bans))}</div>` : ''}
@@ -2092,7 +2093,7 @@ async function togglePlugin(name, enabled) {
 // logs - lives in config/ and is never part of the archive, so it survives untouched.
 function askUpdate() {
   const to = (state && state.UpdateAvailable) || '';
-  // "When I say update" set to wait: the button queues it rather than installing now, and the dialog says so - it used
+  // Updates set to "once everyone's asleep": the button queues it rather than installing now, and the dialog says so - it used
   // to promise a download and restart that then didn't happen until the night.
   const waits = !!(state && state.UpdateWaits);
   modal(`
@@ -2283,7 +2284,7 @@ async function tutLoadDash() {
     phone: info && info.ListensBeyondThisPc ? true : null,
     anywhere: g.WebRemoteAccess ? true : null,
     pw: '', pwShow: false, pwDone: false, fwMsg: '', fwBad: false,
-    autoUpdate: g.AutoUpdate === 1,
+    autoUpdate: g.UpdateMode === 2,
     fromHour: g.AutoUpdateFromHour ?? 3, untilHour: g.AutoUpdateUntilHour ?? 6,
     waitHours: g.AutoUpdateWaitHours ?? 2, checkHours: g.UpdateCheckHours ?? 2,
   };
@@ -2905,10 +2906,13 @@ async function tutSaveUpdates() {
   const d = tutDash;
   const g = (config && config.Global) || {};
   const changes = {};
-  const auto = d.autoUpdate ? 1 : 0;
-  if (auto !== g.AutoUpdate) changes.AutoUpdate = auto;
+  // "Install by itself at night" (2) or not. Switched off from "at night", a click does what it did: one that waited for
+  // the accounts to sleep is "once everyone's asleep" (0), one that installed right away "install when I click" (1).
+  // Anything else is left as it is.
+  const mode = d.autoUpdate ? 2 : (g.UpdateMode === 2 ? (g.UpdateWhenAsked === 1 ? 0 : 1) : g.UpdateMode);
+  if (mode !== g.UpdateMode) changes.UpdateMode = mode;
   // Looking for updates switched off stops installing them too - so switching installing on has to switch it back on.
-  if (auto === 1 && g.CheckForUpdates === false) changes.CheckForUpdates = true;
+  if (mode === 2 && g.CheckForUpdates === false) changes.CheckForUpdates = true;
 
   if (tutorialMode === 'advanced') {
     const clamp = (v, lo, hi, was) => (Number.isFinite(v) ? Math.max(lo, Math.min(hi, Math.round(v))) : was);
@@ -3957,6 +3961,9 @@ document.addEventListener('click', (e) => {
     case 'postnow': postNow(name); break;
     case 'register': registerProfile(name); break;
     case 'inventory': refreshInventory(name); break;
+    case 'dlccarryon': answerDlc(name, el.dataset.app, 'carryon'); break;
+    case 'dlcleave': answerDlc(name, el.dataset.app, 'leave'); break;
+    case 'dlcundo': answerDlc(name, el.dataset.app, 'undo'); break;
   }
 });
 
@@ -4507,6 +4514,7 @@ function renderSettings() {
   if (!schema || !config) return;
 
   if (settingsTarget !== GLOBAL && !config.Bots[settingsTarget]) { settingsTarget = GLOBAL; pending = {}; }
+  dropHiddenEdits();
 
   // left pane: Global, then one entry per account
   $('settingsNavGlobal').innerHTML =
@@ -4562,6 +4570,8 @@ function renderSettings() {
       // of the way until it's switched on.
       if (d.Mode === 'rage' && legitOn) return false;
       if (d.Mode === 'legit' && !legitOn) return false;
+      // Only under one answer of another setting (the share of card sittings only means something with "mixed").
+      if (!shownWhen(d, values)) return false;
       // The Discord profile panel and the Notifications chips have their own switch and chips for these - a
       // second row for each was the same setting twice.
       if (settingsTarget === GLOBAL && PANEL_ROWS.has(d.Name)) return false;
@@ -4610,6 +4620,9 @@ let pacerFor = null;
 let pacerRows = null;
 let pacerRecent = [];
 let pacerHunt = null;
+let pacerAsks = [];        // games held whole for add-ons, waiting for "carry on" or "leave it paused"
+let pacerCarried = [];     // answered "carry on" - each with an undo
+let pacerLeft = [];        // answered "leave it paused" - each with "ask again"
 
 async function loadPacer(name) {
   if (pacerFor === name) return;
@@ -4623,15 +4636,62 @@ async function loadPacer(name) {
     pacerRows = d.Games || [];
     pacerRecent = d.Recent || [];
     pacerHunt = d.Hunt || null;
+    pacerAsks = d.DlcQuestions || [];
+    pacerCarried = d.DlcCarriedOn || [];
+    pacerLeft = d.DlcLeft || [];
     // Resolve any "app 12345" names against Steam so the table reads with real game names; learnNames redraws
     // the settings pane (which this pacer lives in) once they land.
     learnNames(pacerRows.map((g) => g.App).filter(Boolean));
   } catch {
     if (pacerFor !== name) return;
-    pacerRows = []; pacerRecent = []; pacerHunt = null;
+    pacerRows = []; pacerRecent = []; pacerHunt = null; pacerAsks = []; pacerCarried = []; pacerLeft = [];
   }
 
   if (view === 'settings' && settingsTarget === name) renderSettings();
+}
+
+// "Is it OK to carry on?" - one box per game held whole because it has add-ons this account doesn't own and Steam
+// doesn't say which of them come with achievements. Only the owner knows whether the account has what matters, so it
+// asks, in plain words, with the two answers as buttons. Every name here came from Steam, so all of it is escaped.
+function dlcAsks(name, asks) {
+  if (!asks || !asks.length) return '';
+
+  return asks.map((q) => {
+    const game = GAME_NAMES[q.App] || q.Game;
+    const names = (q.Missing || []).join(', ');
+    const missing = q.OnlyPacks ? t('Only skin, team and other packs are missing.')
+      : names ? tf('Missing: {0}', q.More > 0 ? `${names}, ${tf('and {0} more', q.More)}` : names)
+      : q.More > 0 ? tf('Missing: {0} add-ons', q.More)
+      : '';
+
+    return `<div class="dlcask">
+      <p>${tf("{0} is paused for achievements. It has add-ons this account doesn't own, and Steam doesn't say which of them come with achievements.", `<b>${esc(game)}</b>`)}</p>
+      ${missing ? `<p class="muted small">${esc(missing)}</p>` : ''}
+      <div class="actions">
+        <button data-act="dlccarryon" data-bot="${esc(name)}" data-app="${Number(q.App)}" data-tip="${esc(t("Achievements that certainly come with an add-on it doesn't own stay locked either way."))}">${esc(t('I own what matters - carry on'))}</button>
+        <button class="ghost" data-act="dlcleave" data-bot="${esc(name)}" data-app="${Number(q.App)}">${esc(t('Leave it paused'))}</button>
+      </div></div>`;
+  }).join('');
+}
+
+// The answers already given, each with a way back - no appIDs, just the games.
+function dlcAnswered(name) {
+  const link = (g, label) => `${esc(GAME_NAMES[g.App] || g.Game)} <a role="button" tabindex="0" data-act="dlcundo" data-bot="${esc(name)}" data-app="${Number(g.App)}">(${esc(label)})</a>`;
+  const line = (list, label, undo) => (list && list.length
+    ? `<p class="muted small dlcanswered">${esc(label)} ${list.map((g) => link(g, undo)).join(' · ')}</p>`
+    : '');
+
+  return line(pacerCarried, t('You said carry on for:'), t('undo')) + line(pacerLeft, t('You said leave it paused for:'), t('ask again'));
+}
+
+async function answerDlc(name, app, answer) {
+  const res = await post(`/api/bots/${encodeURIComponent(name)}/achievements/dlc`, { App: Number(app), Answer: answer });
+  if (!res.ok) { toast(res.error || t("That didn't work"), true); return; }
+  if (res.note) toast(res.note);
+
+  // The account card and the achievements section both show it: read both again.
+  refresh();
+  if (pacerFor === name) { pacerFor = null; loadPacer(name); }
 }
 
 // What the hunter is doing and what it will do next. This is the part that was missing: the table below says
@@ -4755,9 +4815,9 @@ function pacerLine(live, name, hrs, done) {
       }
       return `<p class="muted small">${tf("Playing {0} — {1}; the rest are from DLC this account doesn't own, so they're left alone.", name, done)}</p>`;
     case 'DlcUnmapped': {
-      // Only the owner knows whether the account has all of it - so the way to say so is right here.
-      const setting = esc(tSetting({ Name: 'AchievementDlcTrusted', Label: 'Games I own all the DLC for' }, 'label'));
-      return `<p class="muted small">${tf("Playing {0} — {1}; can't tell which achievements come with its DLC, so the rest are left alone.", name, done)} ${tf('If this account owns all its DLC, add the game to “{0}”.', setting)}</p>`;
+      // Only the owner knows whether the account has what matters - the question about it is just above, or, once
+      // answered "leave it paused", the "ask again" below.
+      return `<p class="muted small">${tf("Playing {0} — {1}; can't tell which achievements come with its DLC, so the rest are left alone.", name, done)}</p>`;
     }
     case 'DlcChecking':
       return `<p class="muted small">${tf('Playing {0} — first checking which of its achievements come with DLC.', name)}</p>`;
@@ -4832,9 +4892,11 @@ function sectionIntro(section, values) {
       <p style="margin:8px 0 0">${esc(t('Unlocking a pile of achievements the second it logs in is what gives a bot away. This drips them out the way a real player would instead - a few at a time, only the common ones, paced to the hours actually put in.'))}
       ${esc(tf('It stops at {0}% of any one game, and never unlocks a milestone before the achievements it is a milestone of.', cap || 90))}</p>
     </div>
+    ${dlcAsks(settingsTarget, pacerFor === settingsTarget ? pacerAsks : [])}
     ${huntPanel()}
     ${recentUnlocks()}
-    ${pacerTable()}`;
+    ${pacerTable()}
+    ${pacerFor === settingsTarget ? dlcAnswered(settingsTarget) : ''}`;
   }
 
   if (section === 'What it plays') {
@@ -4895,7 +4957,21 @@ function sectionIntro(section, values) {
     // so the preview quoted a number nothing used and that no control on the page could move.
     const weekday = val('WeekdayHours'), weekend = val('WeekendHours');
     const dayOff = val('DayOffChancePct');
-    const night = val('OfflineIdleAtNight') && (val('OfflineIdleGames') || []).length;
+    // With the overnight list empty it idles the account's most-played games - named here, from the server's pick, so
+    // it's clear what banks all night; and when there's nothing it may play, said too rather than left silent.
+    const card = state && (state.Bots || []).find((b) => b.Name === settingsTarget);
+    const listed = (val('OfflineIdleGames') || []).length > 0;
+    // The server's pick is made from the SAVED settings and the library as read. An edit not saved yet that changes what
+    // it would pick - or a library not read yet - and it can't be quoted: then it's what the setting says, its N
+    // most-played games. "Nothing" only when the library is in and nothing in it may be played.
+    const unsaved = ['LegitMode', 'OfflineIdleAtNight', 'OfflineIdleGames', 'OfflineIdleTopGames', 'BlacklistedGames',
+      'IncludeFamilyLibrary', 'SkipRefundableGames'].some((k) => pending[k] !== undefined);
+    const known = !!card && !!card.LibraryReady && !unsaved;
+    const picked = !listed && known && card.NightPicked ? card.NightPicked : '';
+    const night = val('OfflineIdleAtNight') && listed;
+    const nightPick = val('OfflineIdleAtNight') && picked;
+    const nightTop = val('OfflineIdleAtNight') && !listed && !known;
+    const nightEmpty = val('OfflineIdleAtNight') && !listed && known && !picked;
     // The four "a life, not just a day" extras, named only when switched on.
     const extras = [
       Number(val('LearnFromOwner') || 0) > 0 ? t('learns from how you play') : '',
@@ -4923,6 +4999,9 @@ function sectionIntro(section, values) {
       ${tf('One game at a time, in sittings of {0}.', `<b>${val('SessionMinMinutes')}–${val('SessionMaxMinutes')} min</b>`)}
       ${mostly}
       ${night ? esc(t('Overnight it goes invisible and keeps banking hours.')) : ''}
+      ${nightPick ? tf('Overnight it goes invisible and, with no games chosen, idles your most-played: {0}.', `<b>${esc(picked)}</b>`) : ''}
+      ${nightTop ? tf('Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).', `<b>${Number(val('OfflineIdleTopGames')) || 1}</b>`) : ''}
+      ${nightEmpty ? esc(t('Nothing to bank overnight yet: add games to "Games to idle overnight".')) : ''}
       ${extras.length ? tf('It also {0}.', esc(extras.join(', '))) : ''}
       </div>`;
   }
@@ -5318,6 +5397,14 @@ function liveValue(name, values) {
   return pending[name] !== undefined ? pending[name] : values[name];
 }
 
+// A setting with ShowWhen ("FarmCardsWhen=3", "SomeSwitch=true") shows only while that other setting has that value -
+// including an edit not saved yet, since choices and switches redraw the form.
+function shownWhen(def, values) {
+  if (!def.ShowWhen) return true;
+  const at = def.ShowWhen.indexOf('=');
+  return String(liveValue(def.ShowWhen.slice(0, at), values)) === def.ShowWhen.slice(at + 1);
+}
+
 function isChanged(def, values, defaults) {
   // A secret is never sent to the browser, so comparing it to the default would always say "unchanged" even
   // when one is stored. Treat "is set" or "edited right now" as changed.
@@ -5660,12 +5747,15 @@ function fieldHtml(def, values, defaults) {
     }
     case 'AppIds': {
       const list = cur || [];
-      // A bare "2767030" means nothing to anybody - each game shows its name, with the appID beside it linking to
-      // its store page. Names arrive from Steam after the first draw (learnNames redraws once they're in).
+      // A bare "2767030" means nothing to anybody - each game shows by name, the name a link to its store page and the
+      // appID in its tooltip. Names arrive from Steam after the first draw (learnNames redraws once they're in), and
+      // from the library, fetched here ahead of the first search.
       learnNames(list);
+      libraryFor(libKey());
       ctl = `<div class="tags" data-setting="${def.Name}">
-        ${list.map((a, i) => `<span class="tag">${GAME_NAMES[a] ? `<span>${esc(GAME_NAMES[a])}</span>` : ''}<a class="tagid" href="https://store.steampowered.com/app/${a}" target="_blank" rel="noopener" data-tip="${esc(t('Open its Steam store page'))}">${a}</a><b role="button" tabindex="0" onclick="removeApp('${def.Name}',${i})">×</b></span>`).join('')}
-        <input type="text" class="appin" placeholder="${esc(t('appID or store URL'))}" onkeydown="if(event.key==='Enter'||event.key===','){addApp('${def.Name}',this);event.preventDefault();}" onblur="addApp('${def.Name}',this)">
+        ${list.map((a, i) => `<span class="tag"><a href="https://store.steampowered.com/app/${a}" target="_blank" rel="noopener" data-tip="${esc(tf('appID {0} - open its Steam store page', a))}">${esc(gameLabel(a))}</a><b role="button" tabindex="0" onclick="removeApp('${def.Name}',${i})">×</b></span>`).join('')}
+        <input type="text" class="appin" autocomplete="off" placeholder="${esc(t('Search by name, or paste an appID'))}"
+          oninput="appSearch('${def.Name}',this)" onkeydown="appKey('${def.Name}',this,event)" onblur="appBlur('${def.Name}',this)">
       </div>`;
       break;
     }
@@ -5977,6 +6067,17 @@ function editAndRender(name, value) {
   renderSettings();
 }
 
+// A setting that only shows under another one's answer (ShowWhen) loses its unsaved edit when that answer changes and
+// hides it: Save would otherwise save a change nobody can see any more. Run on every redraw of the form, whichever
+// control changed the answer.
+function dropHiddenEdits() {
+  const values = schema && config ? settingsValues() : null;
+  if (!values) return;
+  for (const def of (settingsTarget === GLOBAL ? schema.Global : schema.Bot) || []) {
+    if (def.ShowWhen && pending[def.Name] !== undefined && !shownWhen(def, values)) delete pending[def.Name];
+  }
+}
+
 function refreshPreviews() {
   if (!schema || !config) return;
   const values = settingsValues();
@@ -6022,16 +6123,128 @@ function parseAppId(raw) {
   return m ? parseInt(m[1]) : 0;
 }
 
-function addApp(name, input) {
+// ── game lists: picked from the library by name ──────────────────────────
+// Every game-list setting (the idle list, the blacklists, booster games, ...) searches the account's own library: type
+// part of a name and pick it. The whole library comes once per account and is searched here as it's typed - nothing is
+// asked of the server per key, so it stays quick with thousands of games. A global list searches every account's games
+// together. A pasted appID or store link still goes in as it is, for a game the account doesn't own.
+const libCache = new Map();   // account name, or '*' for every account -> { games, at } or { loading }
+
+function libKey() { return settingsTarget === GLOBAL ? '*' : settingsTarget; }
+
+function libraryFor(key) {
+  const have = libCache.get(key);
+  if (have && have.loading) return have.loading;
+  // An empty answer (the account not signed in yet) is asked again after a minute; a real one is kept for the visit.
+  if (have && have.games && (have.games.length || Date.now() - have.at < 60000)) return Promise.resolve(have.games);
+  const url = key === '*' ? '/api/library' : `/api/bots/${encodeURIComponent(key)}/library?all=1`;
+  const loading = api(url).then((d) => {
+    const games = ((d && d.Games) || []).map((g) => ({ id: g.AppId, name: g.Name || '', low: (g.Name || '').toLowerCase(), mins: g.Minutes || 0 }));
+    games.forEach((g) => { if (g.name && !GAME_NAMES[g.id]) GAME_NAMES[g.id] = g.name; });
+    libCache.set(key, { games, at: Date.now() });
+    return games;
+  }).catch(() => { libCache.delete(key); return []; });
+  libCache.set(key, { loading });
+  return loading;
+}
+
+function appListNow(name) { return (pending[name] !== undefined ? pending[name] : settingsValues()[name]) || []; }
+
+// Up to ten games with the typed text in their name: names that start with it first, then the rest, each most played
+// first (the library comes sorted that way). Games already on the list aren't offered again.
+function appMatches(games, q, have) {
+  const starts = [];
+  const inside = [];
+  for (const g of games) {
+    if (have.has(g.id) || !g.low) continue;
+    const at = g.low.indexOf(q);
+    if (at === 0) starts.push(g); else if (at > 0 && inside.length < 10) inside.push(g);
+    if (starts.length >= 10) break;
+  }
+  return [...starts, ...inside].slice(0, 10);
+}
+
+// Typing into a game list's box: the matches drop down under it. Only that little list is redrawn - the box keeps its
+// focus and what's typed.
+async function appSearch(name, input) {
+  const box = input.closest('.tags');
+  const q = input.value.trim().toLowerCase();
+  let sug = box.querySelector('.appsug');
+  if (!q || parseAppId(q)) { if (sug) sug.remove(); return; }
+  const games = await libraryFor(libKey());
+  if (!input.isConnected || input.value.trim().toLowerCase() !== q) return;   // typed on, or redrawn, meanwhile
+  const hits = appMatches(games, q, new Set(appListNow(name)));
+  if (!sug) { sug = document.createElement('div'); sug.className = 'appsug'; sug.setAttribute('role', 'listbox'); box.appendChild(sug); }
+  sug.innerHTML = hits.length
+    ? hits.map((g, i) => `<div class="s${i === 0 ? ' on' : ''}" role="option" data-app="${g.id}" onmousedown="event.preventDefault();pickApp('${name}',${g.id})">${esc(g.name)}${g.mins ? ` <span class="muted">${esc(tutHours(g.mins))}</span>` : ''}</div>`).join('')
+    : `<div class="muted small none">${esc(games.length ? t('No game in its library matches - paste its appID or store link.') : t("Its games haven't been read yet - paste an appID or store link."))}</div>`;
+}
+
+// Up and down move through the matches, Enter takes the one picked (or a typed appID or link), Escape closes them.
+function appKey(name, input, e) {
+  const sug = input.closest('.tags').querySelector('.appsug');
+  const rows = sug ? [...sug.querySelectorAll('.s')] : [];
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && rows.length) {
+    e.preventDefault();
+    const at = rows.findIndex((r) => r.classList.contains('on'));
+    const next = (at + (e.key === 'ArrowDown' ? 1 : rows.length - 1)) % rows.length;
+    rows.forEach((r, j) => r.classList.toggle('on', j === next));
+  } else if (e.key === 'Escape' && sug) {
+    sug.remove();
+  } else if (e.key === 'Enter' || (e.key === ',' && parseAppId(input.value))) {
+    // A comma only ends an appID or a link - in a name it's just a comma ("Papers, Please", "Warhammer 40,000").
+    e.preventDefault();
+    const on = rows.find((r) => r.classList.contains('on'));
+    if (parseAppId(input.value)) addApp(name, input, true);
+    else if (on) pickApp(name, Number(on.dataset.app));
+    else appEnterLater(name, input);
+  }
+}
+
+// Enter before the matches are there - the library still coming, or typed faster than it searched: wait for it, search
+// again, and take the top match. Nothing matching, the list under the box says why.
+async function appEnterLater(name, input) {
+  const typed = input.value;
+  if (!typed.trim()) return;
+  await appSearch(name, input);
+  if (!input.isConnected || input.value !== typed) return;   // typed on, or redrawn, meanwhile
+  const sug = input.closest('.tags').querySelector('.appsug');
+  const on = sug && sug.querySelector('.s.on');
+  if (on) pickApp(name, Number(on.dataset.app));
+}
+
+// Leaving the box: a typed appID or link still goes in, as it always did; a half-typed name just stays put.
+function appBlur(name, input) {
+  setTimeout(() => {
+    const sug = input.isConnected ? input.closest('.tags').querySelector('.appsug') : null;
+    if (sug) sug.remove();
+  }, 150);
+  if (parseAppId(input.value)) addApp(name, input);
+}
+
+function pickApp(name, id) {
+  const list = appListNow(name).slice();
+  if (!list.includes(id)) list.push(id);
+  editAndRender(name, list);
+  // Back in the box, ready for the next one.
+  const input = document.querySelector(`#settingsBody [data-setting="${name}"] .appin`);
+  if (input) input.focus();
+}
+
+function addApp(name, input, refocus) {
   const raw = input.value.trim().replace(/,$/, '');
   if (!raw) return;
   const m = raw.match(/\/app\/(\d+)/) || raw.match(/^(\d+)$/);
-  if (!m) { toast(t('That is not an appID'), true); return; }
+  if (!m) { toast(t('No game in its library matches - paste its appID or store link.'), true); return; }
   const list = (pending[name] !== undefined ? pending[name] : settingsValues()[name] || []).slice();
   const id = parseInt(m[1]);
   if (!list.includes(id)) list.push(id);
   input.value = '';
   editAndRender(name, list);
+  // Typed in with Enter: back in the box, like a game picked from the matches. Not when it went in on leaving the box -
+  // the focus is going somewhere else then.
+  const again = refocus && document.querySelector(`#settingsBody [data-setting="${name}"] .appin`);
+  if (again) again.focus();
 }
 
 function removeApp(name, index) {

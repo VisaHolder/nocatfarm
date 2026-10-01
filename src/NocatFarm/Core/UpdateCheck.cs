@@ -12,6 +12,18 @@ namespace NocatFarm.Core;
 ///
 /// Off is a setting. Nothing here ever blocks startup: a check that fails is a debug line and nothing else.
 /// </summary>
+/// <summary>What happens when a new version is out - the UpdateMode setting.</summary>
+public static class UpdateModes {
+	/// <summary>Says so; the Update button and 'update accept' install it once the accounts are asleep.</summary>
+	public const int JustTellMe = 0;
+
+	/// <summary>Says so; the Update button and 'update accept' install it right away. The default.</summary>
+	public const int WhenIClick = 1;
+
+	/// <summary>Installs by itself at a quiet time in the night hours.</summary>
+	public const int AtNight = 2;
+}
+
 public static class UpdateCheck {
 	private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
 
@@ -190,7 +202,7 @@ public static class UpdateCheck {
 		// The log only: an hourly pop-up (or Telegram message) would be spam - the first one already said it there.
 		// With "Update by itself" on, it says it's going to - "'update accept' installs it" read as if nothing would happen
 		// without you.
-		Log.Attention(SelfUpdate.Supported && (Live.Global.AutoUpdate == 1)
+		Log.Attention(SelfUpdate.Supported && (Live.Global.UpdateMode == UpdateModes.AtNight)
 				? new Said("reminder: nocat.farm {0} is out - it installs by itself at a quiet time ('update accept' does it now)", Available)
 			: SelfUpdate.Supported
 				? new Said("reminder: nocat.farm {0} is out - 'update accept' installs it", Available)
@@ -205,7 +217,7 @@ public static class UpdateCheck {
 	// first - a version number alone gives nobody a reason to update.
 	private static Said UpdateBrief(string tag) {
 		Said how = SelfUpdate.Supported
-			? Live.Global.AutoUpdate == 1
+			? Live.Global.UpdateMode == UpdateModes.AtNight
 				? new("{0} is out - you have {1}. It installs by itself tonight, or type update accept (on Telegram: /update accept) to install it now.", tag, Build.Version)
 				: new("{0} is out - you have {1}. Type update accept in the nocat.farm window, or /update accept here, to install it.", tag, Build.Version)
 			// Docker (no image is published - it's built from the source) or a service: the same steps 'update' gives.
@@ -283,7 +295,7 @@ public static class UpdateCheck {
 
 			// Said once when it's first seen; after that the hourly reminder carries it.
 			if ((Available != tag) && !quiet && !IsSkipped(tag)) {
-				Log.Attention(SelfUpdate.Supported && (Live.Global.AutoUpdate == 1)
+				Log.Attention(SelfUpdate.Supported && (Live.Global.UpdateMode == UpdateModes.AtNight)
 						? new Said("nocat.farm {0} is out - it installs by itself at a quiet time ('update accept' does it now)", tag)
 					: SelfUpdate.Supported
 						? new Said("nocat.farm {0} is out - 'update accept' installs it", tag)
@@ -334,7 +346,7 @@ public static class UpdateCheck {
 	public static void AutoInstallIfDue(BotManager mgr) {
 		GlobalConfig g = Live.Global;
 
-		if (Commands.ExitRequested || (g.AutoUpdate != 1) || !g.CheckForUpdates || !SelfUpdate.Supported || SelfUpdate.Busy || (Available == null) || IsSkipped(Available)
+		if (Commands.ExitRequested || (g.UpdateMode != UpdateModes.AtNight) || !g.CheckForUpdates || !SelfUpdate.Supported || SelfUpdate.Busy || (Available == null) || IsSkipped(Available)
 			|| (DateTime.UtcNow - _seenAt < TimeSpan.FromHours(Math.Max(0, g.AutoUpdateWaitHours)))
 			|| (DateTime.UtcNow - _autoTriedAt < TimeSpan.FromHours(4))) {
 			return;
@@ -412,12 +424,12 @@ public static class UpdateCheck {
 		? new Said("{0} is out, and you have {1}. There's no download for this computer yet. Your update accept still stands: it installs later, once the download is up.", tag, Build.Version)
 		: new Said("{0} is out, and you have {1}. There's no download for this computer yet. It usually comes within the hour.", tag, Build.Version);
 
-	/// <summary>'update accept' with "When I say update" set to wait: remember it, and say how it will go.</summary>
+	/// <summary>'update accept' when a click waits for the accounts to sleep ("once everyone's asleep"): remember it, and say how it will go.</summary>
 	public static Said Queue(string tag) {
 		Queued = tag;
 		_queuedSaidAt = DateTime.UtcNow;
 
-		return new Said("{0} will install when your accounts are asleep (When I say update) - 'update now' installs it right away", tag);
+		return new Said("{0} will install when your accounts are asleep - 'update now' installs it right away", tag);
 	}
 
 	/// <summary>
@@ -552,6 +564,9 @@ public static class UpdateCheck {
 
 	/// <summary>Is this release tag newer than what is running? Used by the updater before it downloads.</summary>
 	public static bool IsNewerThanThisBuild(string tag) => IsNewer(tag.TrimStart('v', 'V'), Build.Version);
+
+	/// <summary>Is this version the given one or later - "1.6.5" or newer, say. A version that can't be read counts as 0.0.0.</summary>
+	public static bool AtLeast(string version, string min) => !IsNewer(min, version);
 
 	/// <summary>Compares 1.2.10 against 1.2.9 properly, which a string comparison does not.</summary>
 	private static bool IsNewer(string candidate, string current) {

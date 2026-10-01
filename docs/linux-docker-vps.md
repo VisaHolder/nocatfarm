@@ -63,7 +63,7 @@ sudo systemctl daemon-reload && sudo systemctl enable --now nocatfarm
 appear.
 
 **Updating.** Started from a terminal or a desktop, it updates itself like on Windows: **Update** on the dashboard,
-`update accept`, or *Update by itself* at night. It makes a safety copy first, and a new version that won't start is
+`update accept`, or by itself at night (*Updates*: *install by itself at night*). It makes a safety copy first, and a new version that won't start is
 put back. The new version starts in the background; the dashboard is where you see it. **Run as a service** (the systemd
 unit above) it doesn't, because systemd would stop the update half way: it tells you when a new version is out, and
 you stop it, unzip the new zip over the folder (`unzip -o`), and start it again. `config/` and `logs/` aren't in the
@@ -95,8 +95,8 @@ Discord app, so it stays off.
 Like on Linux there's no window or tray icon: you get the Terminal and the web dashboard, and everything else is the
 same. To have it start when you log in: **System Settings → General → Login Items**, press **+** and pick `start.command`.
 
-**Updating.** It updates itself like on Windows: **Update** on the dashboard, `update accept`, or *Update by itself*
-at night. The old version closes, and the new one opens in a Terminal window of its own. A safety copy is made
+**Updating.** It updates itself like on Windows: **Update** on the dashboard, `update accept`, or by itself at
+night (*Updates*: *install by itself at night*). The old version closes, and the new one opens in a Terminal window of its own. A safety copy is made
 first, and a new version that won't start is put back.
 
 Saved logins are encrypted with a key in `config/state/secret.key` that only your user can read, as on Linux.

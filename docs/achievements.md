@@ -5,10 +5,10 @@
 You can set achievements by hand:
 
 ```
-cheevo myaccount 440                  # its achievements, easiest first, with how rare each is
-cheevo myaccount 440 unlock all       # all the ones that can be set, now
-cheevo myaccount 440 unlock ACH_NAME  # just one
-cheevo myaccount 440 lock ACH_NAME    # put one back
+achievements myaccount 440                  # its achievements, easiest first, with how rare each is
+achievements myaccount 440 unlock all       # all the ones that can be set, now
+achievements myaccount 440 unlock ACH_NAME  # just one
+achievements myaccount 440 lock ACH_NAME    # put one back
 ```
 
 But unlocking a whole list at once shows on the profile forever, all with one timestamp. **Earn achievements over
@@ -43,7 +43,7 @@ unlock those, and the log says so.
 
 Many games keep their DLC's achievements in the base game's list. Call of Duty is one: 63 of its 157 come with
 Modern Warfare II and III. An achievement from DLC the account doesn't own is one nobody could have earned, so
-nothing unlocks it: not the pacer, not the hunter, not `cheevo ... unlock`, not unlocking everything. The first time
+nothing unlocks it: not the pacer, not the hunter, not `achievements ... unlock`, not unlocking everything. The first time
 a game is played it looks up the game's DLC on Steam's store, slowly (a game with a hundred DLC takes a few
 minutes), and unlocks nothing there until it has. The answer is kept for a week, and looked up again sooner when an
 achievement turns up that wasn't in the game's list last time (a new DLC, usually).
@@ -81,16 +81,44 @@ by those, whatever it's called. About 40 of Call of Duty's nearly 100 DLC come o
 charity packs, Modern Warfare II and III's multiplayer, co-op and vault packs, Warzone) still hold it on an account
 without them.
 
-When you know an account owns every DLC of a game, say so: add the game to *Games I own all the DLC for*
-(`AchievementDlcTrusted`, per account, empty to start). Nothing in those games is held for DLC - they're unlocked as
-if every DLC were owned, and a game held for DLC is let go within a minute of adding it. Take it off the list and
-it's held again. Only you can know this, so nothing adds a game there for you. `dlcach` says when a game is on the
-list, and a held game's `dlcach` and log line say how to add it.
+### "Is it OK to carry on?"
+
+When a game is held whole like that, nocat.farm asks you about it, once. The account's card on the Accounts page and
+its Achievements section say, for example:
+
+> **Call of Duty** is paused for achievements. It has add-ons this account doesn't own, and Steam doesn't say which of
+> them come with achievements.
+> Missing: Black Ops 7, Black Ops 6 - Vault Edition Upgrade, and 3 more
+
+Skin, team, league, charity and other packs are left out of that list, to keep it short (they still count). Then two
+buttons:
+
+- **I own what matters - carry on**: nothing in the game is held any more just because Steam doesn't say which
+  add-on an achievement comes with. It's looked at again within a minute. Achievements Steam does tie to an add-on the
+  account doesn't own stay locked anyway: on an account with Modern Warfare II but not III, III's 39 are never
+  unlocked.
+- **Leave it paused**: it stays as it is, and you aren't asked again - unless the account gets (or loses) one of
+  the game's add-ons later, when it may ask once more.
+
+The same question goes in the log, and to Discord or Telegram if *Achievements* notifications are on: "new: Call of
+Duty is paused for achievements - it has add-ons this account doesn't own. Answer on the dashboard, or 'dlc carryon
+new Call of Duty' / 'dlc leave new Call of Duty'." Under the achievements section, "You said carry on for: ..." and
+"You said leave it paused for: ..." list your answers, each with *undo* or *ask again*. In the Console that's
+`dlc undo <account> <game>`. The game can be typed by name (any case, or two letters or more of it) or appID. If two
+of the account's games have the same name, the log line gives the appID instead. Only a game it's asking about, or one
+you've already answered, can be answered. The answers can't be given from Steam chat (see
+[Commands by Steam chat](settings.md#commands-by-steam-chat)).
+
+Only games held whole are asked about, and only ones the pacer or the hunter wanted to work on. A game where Steam
+says exactly which achievements come with the add-on the account doesn't own needs no question: those are never
+unlocked, and the rest of the game carries on.
 
 Those achievements don't count towards *Finish no more than* or the hunter's "far enough", and the status says how
-many were left alone. `dlcach myaccount 1938090` lists a game's DLC with achievements, whether the account owns
-each, and how many of them it already has - and when the whole game is held, which DLC it's missing and why.
-`dlcach myaccount` lists the games it plays where some are left alone.
+many were left alone. `dlc myaccount Call of Duty` lists a game's DLC with achievements, whether the account owns
+each, and how many of them it already has - and when the whole game is held, which DLC it's missing and why. `dlc
+myaccount` lists the games it plays where some are left alone. (`dlcach` still works.) In `achievements myaccount <appID>`,
+`[d]` and `[X]` mark achievements that certainly come with an add-on the account doesn't own (locked, and unlocked
+anyway); `[?]` marks ones held because it can't be told.
 
 With an account picked in Settings, the Achievements section shows what the pacer is doing in each game and what it
 unlocked recently.
@@ -128,8 +156,8 @@ block it, and starts as soon as it has a few. `hunt myaccount` shows what it wou
 were ruled out.
 
 **Steam Families.** *Include family-shared games* (off) lets the hunter use games shared with the account; owned
-games always go first. *Leave brand-new family games alone* (on) skips a shared game while it could still be
-refunded, and *Give a shared game back when they want it* (on) hands a game back the moment someone in the family
+games always go first. With *Protect refunds* on, a shared game is skipped for its first 14 days in case whoever
+bought it wants a refund. *Give a shared game back when they want it* (on) hands a game back the moment someone in the family
 starts it, then leaves it alone until 20 minutes after they stop.
 
 ## Unlocking everything

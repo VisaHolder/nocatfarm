@@ -30,12 +30,8 @@ public sealed class Boosters(Bot bot) : BotModule(bot) {
 	public override string Name => "boosters";
 	public override string Status => Games(Bot).Count > 0 ? _status : "";
 
-	/// <summary>The appIDs in this account's BoosterGames setting.</summary>
-	public static List<uint> Games(Bot bot) => [.. bot.Cfg.BoosterGames
-		.Split([',', ' ', ';'], StringSplitOptions.RemoveEmptyEntries)
-		.Select(static s => uint.TryParse(s, NumberStyles.None, CultureInfo.InvariantCulture, out uint id) ? id : 0)
-		.Where(static id => id != 0)
-		.Distinct()];
+	/// <summary>The appIDs in this account's "Make booster packs for" list.</summary>
+	public static List<uint> Games(Bot bot) => [.. bot.Cfg.BoosterPackGames.Where(static id => id != 0).Distinct()];
 
 	private static DateTime Later(int minHours, int maxHours) => DateTime.UtcNow.AddMinutes(Rng.Next(minHours * 60, (maxHours * 60) + 1));
 

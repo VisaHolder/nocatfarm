@@ -600,6 +600,7 @@ public static partial class Notifier {
 		Commands.GroupInfo => new Said("Profile & info"),
 		Commands.GroupRep4Rep => new Said("rep4rep"),
 		Commands.GroupSettings => new Said("Settings"),
+		Commands.GroupAdvanced => new Said("Advanced"),
 		_ => new Said("The app")
 	};
 }

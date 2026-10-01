@@ -5,6 +5,17 @@ using SteamKit2;
 
 namespace NocatFarm.Modules;
 
+/// <summary>What "Claim free games" takes - the ClaimFree setting.</summary>
+public static class FreeClaims {
+	public const int Off = 0;
+
+	/// <summary>Paid games given away free to keep.</summary>
+	public const int Games = 1;
+
+	/// <summary>Those, paid DLC marked down to free, and a free DLC's game first when that game is free right now too.</summary>
+	public const int GamesAndDlc = 2;
+}
+
 /// <summary>
 /// Claims genuinely free Steam games as they appear, so the library - and therefore the card-farming income -
 /// grows on its own.
@@ -53,7 +64,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 	/// them, and asking once per account per pass is how the store API gets rate-limited.</summary>
 	private static readonly Dictionary<string, (bool Worth, string Name, bool Dlc, uint Base)> Verdicts = new(StringComparer.Ordinal);
 
-	/// <summary>DLC giveaways left alone this run because "...free DLC too" is off - said once each, not every pass.</summary>
+	/// <summary>DLC giveaways left alone this run because "Claim free games" is on games only - said once each, not every pass.</summary>
 	private readonly HashSet<string> _dlcNoted = [];
 
 	/// <summary>Store lookups, one at a time and a little apart, whichever account is asking.</summary>
@@ -89,8 +100,8 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			}
 
 			// Store giveaways ("g/") are re-judged after every start rather than remembered as a no: they're a short
-			// list, they don't last, and a DLC turned down while "...free DLC too" was off has to be takeable the
-			// moment it's switched on.
+			// list, they don't last, and a DLC turned down while "Claim free games" was on games only has to be takeable
+			// the moment it's set to games and DLC.
 			_seen.UnionWith((saved.Seen ?? []).Where(static t => !t.StartsWith("g/", StringComparison.Ordinal)));
 
 			foreach ((string token, SavedFailure f) in saved.Failed ?? []) {
@@ -125,7 +136,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 
 		// Stays alive when switched off, so turning it on doesn't need a restart.
 		while (!ct.IsCancellationRequested) {
-			if (!Bot.Cfg.ClaimFreeGames) {
+			if (Bot.Cfg.ClaimFree == FreeClaims.Off) {
 				_status = new Said("off");
 
 				if (!await Sleep(TimeSpan.FromSeconds(20), ct).ConfigureAwait(false)) {
@@ -191,7 +202,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			// is claimed straight away rather than when the list next catches up.
 			DateTime nextList = DateTime.UtcNow + Rng.Minutes(PollLowMinutes, PollHighMinutes);
 
-			while ((DateTime.UtcNow < nextList) && Bot.Cfg.ClaimFreeGames) {
+			while ((DateTime.UtcNow < nextList) && (Bot.Cfg.ClaimFree != FreeClaims.Off)) {
 				TimeSpan left = nextList - DateTime.UtcNow;
 
 				if (!await Sleep(left < TimeSpan.FromMinutes(40) ? left : Rng.Minutes(30, 40), ct).ConfigureAwait(false)) {
@@ -318,9 +329,9 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 
 			// A DLC given away is only taken when the account is set to - and it isn't written off when it's not,
 			// so switching the setting on picks it up on the next pass.
-			if (worth && isDlc && !Bot.Cfg.ClaimFreeDlc) {
+			if (worth && isDlc && (Bot.Cfg.ClaimFree < FreeClaims.GamesAndDlc)) {
 				if (_dlcNoted.Add(token)) {
-					Log.Debug(new Said("{0} is a free DLC - left alone (\"...free DLC too\" is off)", name), Bot.Name);
+					Log.Debug(new Said("{0} is a free DLC - left alone (\"Claim free games\" is on games only)", name), Bot.Name);
 				}
 
 				continue;
@@ -328,29 +339,27 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 
 			// Steam only hands a DLC to an account that owns its game ("Supporter Pack" free, the game itself not).
 			// Asking anyway just earns a refusal. If the game is free right now too - free to play, or itself given
-			// away - and the account is set to, it takes the game first and then the DLC. Otherwise it doesn't ask,
+			// away - it takes the game first and then the DLC (part of "games and DLC"). Otherwise it doesn't ask,
 			// and doesn't write the DLC off either, since owning the game later makes it takeable.
 			if (worth && isDlc && (baseApp != 0) && (Bot.Library.Find(baseApp) is not { SharedFrom: 0 })) {
 				bool gotBase = false;
 
-				if (Bot.Cfg.ClaimFreeDlcBase) {
-					(bool? baseFree, string baseName, bool baseGiveaway) = await FreeNowAsync(baseApp, ct).ConfigureAwait(false);
+				(bool? baseFree, string baseName, bool baseGiveaway) = await FreeNowAsync(baseApp, ct).ConfigureAwait(false);
 
-					if (baseFree == true) {
-						_claims.Add(DateTime.UtcNow);
-						uint baseSub = baseGiveaway ? await FreeSubAsync(baseApp, ct).ConfigureAwait(false) : 0;
-						ClaimResult first = baseSub != 0 ? await AddPackageAsync(Bot, baseSub, ct).ConfigureAwait(false)
-							: await AddAppAsync(Bot, baseApp, ct).ConfigureAwait(false);
+				if (baseFree == true) {
+					_claims.Add(DateTime.UtcNow);
+					uint baseSub = baseGiveaway ? await FreeSubAsync(baseApp, ct).ConfigureAwait(false) : 0;
+					ClaimResult first = baseSub != 0 ? await AddPackageAsync(Bot, baseSub, ct).ConfigureAwait(false)
+						: await AddAppAsync(Bot, baseApp, ct).ConfigureAwait(false);
 
-						if (first.Added || (first.Detail == EPurchaseResultDetail.AlreadyPurchased)) {
-							gotBase = true;
-							Log.Good(new Said("claimed {0} (free now) for its free DLC {1}", baseName, name), Bot.Name);
+					if (first.Added || (first.Detail == EPurchaseResultDetail.AlreadyPurchased)) {
+						gotBase = true;
+						Log.Good(new Said("claimed {0} (free now) for its free DLC {1}", baseName, name), Bot.Name);
 
-							// A person adds the game, then the DLC a moment later.
-							await Task.Delay(Rng.Seconds(4, 12), ct).ConfigureAwait(false);
-						} else {
-							Log.Debug(new Said("couldn't claim {0} for its DLC - {1}", baseName, first.Reason), Bot.Name);
-						}
+						// A person adds the game, then the DLC a moment later.
+						await Task.Delay(Rng.Seconds(4, 12), ct).ConfigureAwait(false);
+					} else {
+						Log.Debug(new Said("couldn't claim {0} for its DLC - {1}", baseName, first.Reason), Bot.Name);
 					}
 				}
 
@@ -467,7 +476,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 	/// giveaways, leave the free-to-play shovelware, which is most of the feed. Demos, soundtracks and unreleased
 	/// games are left alone the same way they are for packages. A DLC on a 100% discount is a real giveaway too
 	/// (a supporter pack marked down from $1.99 to free), so it passes - flagged, and taken only when the account
-	/// has "...free DLC too" on.
+	/// is set to games and DLC.
 	/// </remarks>
 	/// <returns>Worth null when the store couldn't be asked - which is not the same as a no.</returns>
 	private async Task<(bool? Worth, string Name, bool Dlc, uint Base)> AppWorthwhileAsync(uint appId, bool mustBeGivenAway, CancellationToken ct) {

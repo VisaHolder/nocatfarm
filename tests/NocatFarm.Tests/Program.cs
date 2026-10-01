@@ -414,7 +414,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("commands: 'boost' and 'key' no longer reach hunt/redeem", Canon("boost") == null && Canon("key") == null);
 	Check("commands: farm and transfer are gone", Canon("farm") == null && Canon("transfer") == null);
 
-	List<string> words = [.. NocatFarm.Commands.All.SelectMany(static c => c.Aliases.Split('|', StringSplitOptions.RemoveEmptyEntries).Prepend(c.Name)).Select(static w => w.ToLowerInvariant())];
+	List<string> words = [.. NocatFarm.Commands.All.SelectMany(static c => $"{c.Aliases}|{c.HiddenAliases}".Split('|', StringSplitOptions.RemoveEmptyEntries).Prepend(c.Name)).Select(static w => w.ToLowerInvariant())];
 	List<string> twice = [.. words.GroupBy(static w => w).Where(static g => g.Count() > 1).Select(static g => g.Key)];
 	Check("commands: no word reaches two commands", twice.Count == 0, string.Join(", ", twice));
 
@@ -2021,6 +2021,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("name: naming it switches the custom name on, so 'now showing' is true", robot.Cfg.CustomGameNameEnabled && (robot.CustomName == "nocat.lol"), named);
 		string legit = await Commands.RunAsync(mgr, "name person nocat.lol");
 		Check("name: a human-mode account doesn't claim to be showing it", !legit.Contains("now showing", StringComparison.Ordinal), legit);
+		string shown = await Commands.RunAsync(mgr, "gamename robo");
+		Check("gamename: the listed name does what 'name' did", shown.Contains("\"nocat.lol\"", StringComparison.Ordinal) && shown.Contains("'gamename robo off'", StringComparison.Ordinal), shown);
 
 		string human = await Commands.RunAsync(mgr, "human person");
 		Check("human: 730:70, 440:10 reads 70/30, as the day splits it (not 88/12)", human.Contains(" 70%", StringComparison.Ordinal) && human.Contains(" 30%", StringComparison.Ordinal), human.Split('\n').FirstOrDefault(static l => l.Contains("set to play", StringComparison.Ordinal)) ?? human);
@@ -4370,7 +4372,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("new games: keenest on the first day, less every day after, nothing once its days are up",
 			(taper[0] == 1.0) && taper.Take(5).Zip(taper.Skip(1).Take(4)).All(static p => p.First > p.Second) && (taper[4] > 0) && (taper[5] == 0) && (taper[6] == 0) && (TS(got, got.AddDays(-1), 5) == 0),
 			string.Join(" ", taper.Select(static t => t.ToString("0.00"))));
-		var guarded = new NocatFarm.Config.BotConfig { SkipRefundableGames = true, RefundHoldDays = 14 };
+		var guarded = new NocatFarm.Config.BotConfig { SkipRefundableGames = true };
 		Check("new games: a bought game refund protection is holding is tried once the hold ends; a free one straight away",
 			(TStart(new NocatFarm.Core.AppOwnership(got, true, true), guarded) == got.AddDays(14)) && (TStart(new NocatFarm.Core.AppOwnership(got, false, true), guarded) == got)
 			&& (TStart(new NocatFarm.Core.AppOwnership(got, true, true), new NocatFarm.Config.BotConfig()) == got));
@@ -5216,7 +5218,11 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("steam chat: visitors, who, backup, report and stuck are refused",
 		new[] { "visitors", "backup", "report", "stuck" }.All(NocatFarm.Commands.SteamChatRefuses));
 	string cmds = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Commands.cs"));
-	Check("steam chat: refused by the command an alias reaches ('who' is 'visitors')", cmds.Contains("if (Resolve(verb)?.Name is { } name && SteamChatRefuses(name)) {", StringComparison.Ordinal));
+	Check("steam chat: refused by the command an alias reaches ('who' is 'visitors')", cmds.Contains("if ((Resolve(verb)?.Name is { } name && SteamChatRefuses(name)) || SteamChatRefusesAnswer(mgr, line)) {", StringComparison.Ordinal));
+	Check("steam chat: a bare 'bots' means this account, like 'status' - by the command it reaches",
+		NocatFarm.Commands.DefaultsToThisBot(NocatFarm.Commands.Resolve("bots")!.Name) && NocatFarm.Commands.DefaultsToThisBot(NocatFarm.Commands.Resolve("guard")!.Name)
+		&& NocatFarm.Commands.DefaultsToThisBot(NocatFarm.Commands.Resolve("s")!.Name) && !NocatFarm.Commands.DefaultsToThisBot("trade")
+		&& cmds.Contains("DefaultsToThisBot(Resolve(verb)?.Name ?? \"\")", StringComparison.Ordinal));
 }
 
 // ── backups only at home; break-in alerts; switching itself off ─────────────────────────────────────────────────────
@@ -7429,7 +7435,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	System.Globalization.CultureInfo.CurrentCulture = prev;
 	string sc = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "SelfCheck.cs"));
 	Check("self-check: hours from before human mode are said to be from before, not blamed on a one-game night list",
-		sc.Contains("bool fromBefore = bot.Cfg.LegitMode", StringComparison.Ordinal) && sc.Contains("(nightGames > 2", StringComparison.Ordinal));
+		sc.Contains("bool fromBefore = bot.Cfg.LegitMode", StringComparison.Ordinal) && sc.Contains("(listGames > 2", StringComparison.Ordinal));
 }
 
 // ── round 2: a new grind isn't ended by an old drop run, restores keep the environment, env values go with it, ─────
@@ -8085,7 +8091,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("dlc: the game's list is read for every game, DLC or none",
 		dlcSrc.Contains("List<Entry>? schema = await SchemaAsync(app, ct).ConfigureAwait(false);", StringComparison.Ordinal)
 		&& !dlcSrc.Contains("if (listed.Count > 0) {", StringComparison.Ordinal));
-	Check("dlc: dlcach is in the command list", NocatFarm.Commands.All.Any(static c => c.Name == "dlcach"));
+	Check("dlc: 'dlc' is in the command list, with dlcach still reaching it",
+		NocatFarm.Commands.All.Any(static c => (c.Name == "dlc") && c.Matches("dlcach") && c.Matches("dlcachievements")) && !NocatFarm.Commands.All.Any(static c => c.Name == "dlcach"));
 
 	// Pure cosmetics never hold a game. Call of Duty has close to a hundred DLC, nearly all skins and points, and every
 	// one of them used to hold the whole game on an account without it. Real store names.
@@ -8149,24 +8156,27 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("dlc map: Call of Duty's skin pack isn't a group at all - only what could hold the game is",
 		codMap.Groups.All(static g => g.App != 2127790) && (codMap.Rule == NocatFarm.Core.DlcAchievements.RuleNow));
 
-	// A game the owner vouched for: every DLC counted as owned, placed or not. Only that game.
+	// A game the owner vouched for ("I own what matters - carry on"): the DLC that can't be placed count as owned, the
+	// ones placed exactly still go by the licences. Only that game.
 	HashSet<uint> vouched = NocatFarm.Core.DlcAchievements.Counted(codMap, ownsNothing, trusted: true);
 	NocatFarm.Core.DlcAchievements.View trustedView = new() { Map = codMap, Licensed = ownsNothing, Owned = vouched, Trusted = true };
-	Check("dlc trusted: every DLC counted as owned - Modern Warfare II's block and the base game both unlockable",
-		vouched.SetEquals(codMap.Groups.Select(static g => g.App)) && (HoldOf(codMap, "ACH_0", [.. vouched]) == None)
-		&& (HoldOf(codMap, "ACH_30", [.. vouched]) == None) && (HoldOf(codMap, "ACH_140", [.. vouched]) == None));
-	Check("dlc trusted: the view holds nothing and isn't 'can't map'; an achievement the map has never seen still waits",
-		trustedView.Known && !trustedView.Unmapped && (trustedView.NotOwnedCount == 0) && trustedView.Allows(Ach("ACH_3"))
-		&& trustedView.Allows(Ach("ACH_140")) && (trustedView.Of(Ach("ACH_157")) == Checking) && (trustedView.Unplaceable.Count == 0));
+	Check("dlc trusted: only what can't be placed is counted as owned - Black Ops 6's 63-156 unlockable, both Modern Warfares still held",
+		vouched.SetEquals([2933620u, 2127791u]) && (HoldOf(codMap, "ACH_0", [.. vouched]) == NotOwned)
+		&& (HoldOf(codMap, "ACH_30", [.. vouched]) == NotOwned) && (HoldOf(codMap, "ACH_140", [.. vouched]) == None),
+		string.Join(",", vouched));
+	Check("dlc trusted: the view isn't 'can't map', holds only the Modern Warfares' 63; an achievement the map has never seen still waits",
+		trustedView.Known && !trustedView.Unmapped && (trustedView.NotOwnedCount == 63) && !trustedView.Allows(Ach("ACH_3"))
+		&& trustedView.Allows(Ach("ACH_140")) && (trustedView.Of(Ach("ACH_157")) == Checking) && (trustedView.Unplaceable.Count == 0),
+		$"{trustedView.NotOwnedCount}");
 	Check("dlc trusted: not vouched for, the licences are all that count; no map, nothing is counted",
 		NocatFarm.Core.DlcAchievements.Counted(codMap, ownsMw2, trusted: false).SetEquals(ownsMw2)
 		&& (NocatFarm.Core.DlcAchievements.Counted(null, ownsNothing, trusted: true).Count == 0));
 	NocatFarm.Core.DlcAchievements.View trustedUnread = new() { Map = codMap, OwnershipRead = false, Trusted = true };
 	Check("dlc trusted: licences that couldn't be read are still 'checking' - vouching doesn't skip that",
 		!trustedUnread.Known && (trustedUnread.Of(Ach("ACH_140")) == Checking));
-	Check("dlc trusted: 'Games I own all the DLC for' is a per-account list, empty by default",
-		NocatFarm.Config.Settings.Bot.Any(static d => (d.Name == "AchievementDlcTrusted") && (d.Kind == NocatFarm.Config.SettingKind.AppIds) && (d.Label == "Games I own all the DLC for"))
-		&& (new NocatFarm.Config.BotConfig().AchievementDlcTrusted.Count == 0));
+	Check("dlc trusted: the answers are kept per account, empty by default - and are no longer settings anybody fills in",
+		!NocatFarm.Config.Settings.Bot.Any(static d => d.Name is "AchievementDlcTrusted" or "AchievementDlcLeft")
+		&& (new NocatFarm.Config.BotConfig().AchievementDlcTrusted.Count == 0) && (new NocatFarm.Config.BotConfig().AchievementDlcLeft.Count == 0));
 
 	MethodInfo trustKey = typeof(NocatFarm.Modules.AchievementPacer).GetMethod("TrustKey", BindingFlags.Static | BindingFlags.NonPublic)!;
 	string TrustKey(List<uint>? apps) => (string) trustKey.Invoke(null, [apps])!;
@@ -8177,10 +8187,11 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		&& pacerSrc.Contains("if (!trustChanged && (licences == stamp) && !mapChanged) {", StringComparison.Ordinal)
 		&& dlcSrc.Contains("bool trusted = bot.Cfg.AchievementDlcTrusted.Contains(app);", StringComparison.Ordinal)
 		&& dlcSrc.Contains("Owned = Counted(map, licensed, trusted)", StringComparison.Ordinal));
-	Check("dlc trusted: dlcach says a game is vouched for, and a held game says how to vouch for it",
-		commandsSrc.Contains("\"Trusted: you listed it as owning all its DLC", StringComparison.Ordinal)
+	Check("dlc trusted: 'dlc' says a game is vouched for and what a DLC known exactly still holds, and a held game says how to answer",
+		commandsSrc.Contains("\"Trusted: you said {0} owns what matters. {1} achievement(s) from {2}, which it doesn't own, are still left alone.\"", StringComparison.Ordinal)
 		&& commandsSrc.Contains("lines.Add(\"  \" + VouchHint(bot, app));", StringComparison.Ordinal)
-		&& commandsSrc.Contains("+ \" \" + VouchHint(bot, appId)", StringComparison.Ordinal));
+		&& commandsSrc.Contains("+ \" \" + VouchHint(bot, appId)", StringComparison.Ordinal)
+		&& commandsSrc.Contains("type 'dlc carryon {0} {2}'", StringComparison.Ordinal));
 	Check("dlc rules: a map built by older rules is built again",
 		dlcSrc.Contains("(map.Rule < RuleNow)", StringComparison.Ordinal));
 
@@ -8227,7 +8238,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		&& Src("Core/Library.cs").Contains("licensed.TryGetValue(app, out AppOwnership o) && o.Permanent", StringComparison.Ordinal)
 		&& botSrc.Contains("_licenseStamp = StampOf(_licenses.Where(static l => l.Value.Own && l.Value.Permanent)", StringComparison.Ordinal)
 		&& botSrc.Contains("IsPermanent(license.LicenseFlags, license.MinuteLimit, license.LicenseType, license.PaymentMethod)", StringComparison.Ordinal)
-		&& Src("Core/RefundGuard.cs").Contains("own.Refundable(bot.Cfg.ProtectGiftedGames)", StringComparison.Ordinal));
+		&& Src("Core/RefundGuard.cs").Contains("own.Refundable && ", StringComparison.Ordinal));
 
 	// 2. A block drawn generously holds back; only its certain part lets an achievement go in a game that can't be
 	// mapped. Base 0-4, a DLC nobody can place at 5-7 (hidden), an owned DLC at 8-11.
@@ -8318,7 +8329,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		&& !Cos("Zombie Army 4", "Zombie Army 4") && Cos("Zombie Army 4: Skin Pack", "Zombie Army 4") && !Cos("Zombie Army 4: Skin Pack"));
 	NocatFarm.Core.DlcAchievements.Map ruleTwo = new() { App = 7, BuiltAt = DateTime.UtcNow, Rule = 2, Names = ["c4"] };
 	Check("dlc cosmetic: the rules moved on - a map built by the old ones is built again",
-		(NocatFarm.Core.DlcAchievements.RuleNow == 5) && NocatFarm.Core.DlcAchievements.Stale(ruleTwo) && !NocatFarm.Core.DlcAchievements.Stale(noDlc));
+		(NocatFarm.Core.DlcAchievements.RuleNow == 6) && NocatFarm.Core.DlcAchievements.Stale(ruleTwo) && !NocatFarm.Core.DlcAchievements.Stale(noDlc));
 
 	// 4. A game with DLC held back and some only Steam can award is held for DLC - so buying the DLC lets it go.
 	Check("dlc steam-only: held for DLC whenever any are held, and a game saved as Steam-only with some held is moved over",
@@ -8361,6 +8372,11 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		// Part of Steam's answer is no answer, for ownership and for DLC names alike.
 		&& Src("Core/Bot.cs").Contains("if ((pages == null) || !result.Complete) {", StringComparison.Ordinal)
 		&& Src("Core/DlcAchievements.cs").Contains("if (info.Failed || (info.Results == null) || !info.Complete) {", StringComparison.Ordinal)
+		// A grind that ends has the card farmer look again within the minute, not after its whole wait.
+		&& Src("Modules/CardFarmer.cs").Contains("|| (grinding && !Bot.Grinding)) {", StringComparison.Ordinal)
+		// dlcach with nothing left to hold says so, not "0 achievement(s) ... are left alone".
+		&& Src("Commands.cs").Contains("? new Said(\"Held: {0} is missing DLC", StringComparison.Ordinal)
+		&& Src("Commands.cs").Contains("so there's nothing to hold.\", bot.Name)", StringComparison.Ordinal)
 		// No ownership answer keeps refund protection's holds rather than letting every game go.
 		&& Src("Core/RefundGuard.cs").Contains("bool unanswered = owned.Count == 0;", StringComparison.Ordinal)
 		&& Src("Core/RefundGuard.cs").Contains("if (unanswered) {\n\t\t\t\t\tif (_held.Contains(game.AppId)) {\n\t\t\t\t\t\theld.Add(game.AppId);", StringComparison.Ordinal)
@@ -8397,6 +8413,799 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		&& commandsSrc.Contains("SetAsync(bot, set, chosen, unlock, dlc: dlc)", StringComparison.Ordinal)
 		&& unlockSrc.Contains("SetAsync(bot, set, locked, true, dlc: dlc)", StringComparison.Ordinal)
 		&& new NocatFarm.Core.DlcAchievements.View { Map = null }.StillSo(null!) && new NocatFarm.Core.DlcAchievements.View { Map = noDlc }.StillSo(null!));
+
+	// ── "is it OK to carry on?" - the owner's word, and what it can't lift ───────────────────────────────────────────
+	// Call of Duty as on the owner's account: Modern Warfare II owned, III not; Black Ops 6 and 7 open the hub's own page
+	// or none at all; a pile of packs with no figures, one of them named in a Black Ops 6 achievement's description.
+	List<NocatFarm.Core.DlcAchievements.Entry> codFull = [.. Enumerable.Range(0, 157).Select(static i => new NocatFarm.Core.DlcAchievements.Entry(
+		$"ACH_{i}", $"Achievement {i}", i == 100 ? "Win a match wearing the Pale Horse Pack." : "Do a thing.", false))];
+	List<NocatFarm.Core.DlcAchievements.Dlc> codAll = NocatFarm.Core.DlcAchievements.Merge(1938090, [
+		new(1962660, 3595230, "Call of Duty®: Modern Warfare® II", 24, [.. Enumerable.Range(0, 10).Select(static i => $"Achievement {i}")]),
+		new(2519060, 3595270, "Call of Duty®: Modern Warfare® III", 39, [.. Enumerable.Range(24, 10).Select(static i => $"Achievement {i}")]),
+		new(2933620, 1938090, "Call of Duty®", 157, [], Type: "game"),
+		new(3606480, 0, "Call of Duty®: Black Ops 7", 0, [], Listed: false),
+		new(2127791, 2127791, "Call of Duty®: Black Ops 6 - Vault Edition Upgrade", 0, [], Type: "dlc"),
+		new(4000001, 4000001, "Call of Duty League™ - Atlanta FaZe Pack 2023", 0, [], Type: "dlc"),
+		new(4000002, 4000002, "Call of Duty Endowment (C.O.D.E.) - Protector Pack", 0, [], Type: "dlc"),
+		new(4000003, 4000003, "Call of Duty®: Black Ops 6 - Final Judgement Bundle", 0, [], Type: "dlc"),
+		new(4000004, 4000004, "Call of Duty®: Black Ops 6 - Ghost Legacy Pack", 0, [], Type: "dlc"),
+		new(4000005, 4000005, "Call of Duty®: Black Ops 6 - Pale Horse Pack", 0, [], Type: "dlc"),
+		new(2127790, 2127790, "Call of Duty®: Modern Warfare® II - Desert Rogue: Pro Pack", 0, [], Type: "dlc")
+	], "Call of Duty®");
+	NocatFarm.Core.DlcAchievements.Map codFullMap = NocatFarm.Core.DlcAchievements.Assemble(1938090, "Call of Duty®", codFull, codAll, 96, 80, DateTime.UtcNow);
+	HashSet<uint> mw2Licensed = NocatFarm.Core.DlcAchievements.OwnedGroups(codFullMap, static id => id == 3595230);
+	HashSet<uint> mw2Trusted = NocatFarm.Core.DlcAchievements.Counted(codFullMap, mw2Licensed, trusted: true);
+	Check("dlc carry on: the Pale Horse pack claims its achievement by name, and nothing about it is certain",
+		codFullMap.Owners["ach_100"].SequenceEqual([4000005u]) && !(codFullMap.Sure?.ContainsKey("ach_100") ?? true)
+		&& Enumerable.Range(24, 39).All(i => codFullMap.Sure!.TryGetValue($"ach_{i}", out List<uint>? s) && s.Contains(2519060u)),
+		string.Join(",", codFullMap.Owners.GetValueOrDefault("ach_100") ?? []));
+	Check("dlc carry on: not vouched for - Modern Warfare II's fine, III held, Black Ops 6's range held whole, the Pale Horse one held",
+		(HoldOf(codFullMap, "ACH_5", [.. mw2Licensed]) == None) && (HoldOf(codFullMap, "ACH_30", [.. mw2Licensed]) == NotOwned)
+		&& (HoldOf(codFullMap, "ACH_120", [.. mw2Licensed]) == Unmapped) && (HoldOf(codFullMap, "ACH_100", [.. mw2Licensed]) == NotOwned));
+	Check("dlc carry on: vouched for - Modern Warfare II and Black Ops 6/7's range unlockable, Modern Warfare III's block (24-62) still held",
+		(HoldOf(codFullMap, "ACH_5", [.. mw2Trusted]) == None) && (HoldOf(codFullMap, "ACH_23", [.. mw2Trusted]) == None)
+		&& Enumerable.Range(24, 39).All(i => HoldOf(codFullMap, $"ACH_{i}", [.. mw2Trusted]) == NotOwned)
+		&& Enumerable.Range(63, 94).All(i => HoldOf(codFullMap, $"ACH_{i}", [.. mw2Trusted]) == None)
+		&& !mw2Trusted.Contains(2519060u),
+		string.Join(",", mw2Trusted.Order()));
+	NocatFarm.Core.DlcAchievements.View mw2View = new() { Map = codFullMap, Licensed = mw2Licensed, Owned = mw2Licensed };
+	NocatFarm.Core.DlcAchievements.View mw2Vouched = new() { Map = codFullMap, Licensed = mw2Licensed, Owned = mw2Trusted, Trusted = true };
+	Check("dlc carry on: vouched for, the view isn't 'can't map', holds 39 (Modern Warfare III's), and refuses one of them",
+		!mw2Vouched.Unmapped && (mw2Vouched.NotOwnedCount == 39) && !mw2Vouched.Allows(Ach("ACH_40")) && mw2Vouched.Allows(Ach("ACH_100"))
+		&& mw2Vouched.Allows(Ach("ACH_150")), $"{mw2Vouched.NotOwnedCount}");
+
+	// [X] "unlocked, but from DLC this account doesn't own" only for what's certain - Modern Warfare III's block. One held
+	// on a guess (the Pale Horse one, claimed only by a pack named in its description) is "can't tell".
+	Check("dlc certain: Modern Warfare III's are certainly not owned; the Pale Horse one and Black Ops 6's aren't certain",
+		mw2View.Certain(Ach("ACH_30")) && !mw2View.Certain(Ach("ACH_100")) && !mw2View.Certain(Ach("ACH_120")) && !mw2View.Certain(Ach("ACH_5"))
+		&& mw2View.SurelyIn(Ach("ACH_30"), 2519060) && !mw2View.SurelyIn(Ach("ACH_100"), 4000005));
+	NocatFarm.Core.AchievementSet codSet = new() {
+		AppId = 1938090, StatValues = [], CrcStats = 0,
+		All = [.. Enumerable.Range(0, 157).Select(i => Ach($"ACH_{i}", unlocked: i is 30 or 100 or 120 or 5))]
+	};
+	Check("dlc certain: only the one certainly from Modern Warfare III counts as 'unlocked without owning it'",
+		(mw2View.UnlockedWithout(codSet) == 1) && (mw2Vouched.UnlockedWithout(codSet) == 1), $"{mw2View.UnlockedWithout(codSet)}");
+	MethodInfo describe = typeof(NocatFarm.Commands).GetMethod("DescribeAchievements", BindingFlags.NonPublic | BindingFlags.Static)!;
+	string listed = (string) describe.Invoke(null, [new NocatFarm.Core.Bot("marks", new NocatFarm.Config.BotConfig()), codSet, mw2View])!;
+	string MarkOf(string name) => listed.Split('\n').FirstOrDefault(l => l.Contains($" {name} ", StringComparison.Ordinal))?.Trim()[..3] ?? "";
+	Check("dlc marks: [X] only inside Modern Warfare III's exact block; the Pale Horse one unlocked is [?]; a locked one held on a guess [?], never [d]",
+		(MarkOf("ACH_30") == "[X]") && (MarkOf("ACH_100") == "[?]") && (MarkOf("ACH_31") == "[d]") && (MarkOf("ACH_5") == "[x]")
+		&& (MarkOf("ACH_121") == "[?]") && (MarkOf("ACH_120") == "[x]"),
+		$"30 {MarkOf("ACH_30")} 100 {MarkOf("ACH_100")} 31 {MarkOf("ACH_31")} 5 {MarkOf("ACH_5")} 121 {MarkOf("ACH_121")} 120 {MarkOf("ACH_120")}");
+	Check("dlc marks: 'dlc' counts 'unlocked without owning it' only from the certain block",
+		commandsSrc.Contains("int without = owned ? 0 : set.All.Count(a => a.Unlocked && view.SurelyIn(a, g.App));", StringComparison.Ordinal));
+
+	// What's shown as missing: only what could matter, without the game's name in front.
+	Check("dlc question: team, league, charity, bundle and legacy packs aren't named; Black Ops 7, a campaign and a map pack are",
+		NocatFarm.Core.DlcQuestions.LooksLikeExtra("Call of Duty League™ - Atlanta FaZe Pack 2023", "Call of Duty®")
+		&& NocatFarm.Core.DlcQuestions.LooksLikeExtra("Call of Duty Endowment (C.O.D.E.) - Protector Pack", "Call of Duty®")
+		&& NocatFarm.Core.DlcQuestions.LooksLikeExtra("Final Judgement Bundle", "Call of Duty®")
+		&& NocatFarm.Core.DlcQuestions.LooksLikeExtra("Ghost Legacy Pack", "Call of Duty®")
+		&& NocatFarm.Core.DlcQuestions.LooksLikeExtra("Call of Duty®: Modern Warfare® II - Desert Rogue: Pro Pack", "Call of Duty®")
+		&& NocatFarm.Core.DlcQuestions.LooksLikeExtra("Game - Original Soundtrack", "Game")
+		&& !NocatFarm.Core.DlcQuestions.LooksLikeExtra("Call of Duty®: Black Ops 7", "Call of Duty®")
+		&& !NocatFarm.Core.DlcQuestions.LooksLikeExtra("Call of Duty®: Modern Warfare® III - Campaign", "Call of Duty®")
+		&& !NocatFarm.Core.DlcQuestions.LooksLikeExtra("Game - Zombies Map Pack", "Game"));
+	Check("dlc question: names without the game in front, their marks gone, their case kept",
+		(NocatFarm.Core.DlcAchievements.ShortName("Call of Duty®: Black Ops 7", "Call of Duty®") == "Black Ops 7")
+		&& (NocatFarm.Core.DlcAchievements.ShortName("Call of Duty League™ - Atlanta FaZe Pack 2023", "Call of Duty®") == "League - Atlanta FaZe Pack 2023")
+		&& (NocatFarm.Core.DlcAchievements.ShortName("Call of Duty®", "Call of Duty®") == "Call of Duty")
+		&& (NocatFarm.Core.DlcAchievements.ShortName("Fallout New Vegas: Dead Money", "Fallout: New Vegas") == "Dead Money"));
+	NocatFarm.Core.DlcQuestions.Question codAsk = NocatFarm.Core.DlcQuestions.Build(1938090, "Call of Duty®", codFullMap, mw2Licensed);
+	Check("dlc question: Call of Duty names the Vault Edition and Black Ops 7, counts Black Ops 6 (no name yet), leaves the packs out",
+		// Black Ops 6 is named too once Steam has given its name here; until then it's counted.
+		codAsk.Missing.Contains("Black Ops 6 - Vault Edition Upgrade") && codAsk.Missing.Contains("Black Ops 7") && (codAsk.Missing.Count + codAsk.More == 3) && !codAsk.OnlyPacks
+		&& !codAsk.Missing.Any(static n => n.Contains("Pack", StringComparison.Ordinal) || n.Contains("Bundle", StringComparison.Ordinal)),
+		$"{string.Join(" | ", codAsk.Missing)} +{codAsk.More}");
+	NocatFarm.Core.DlcQuestions.Question packsOnly = NocatFarm.Core.DlcQuestions.Build(1938090, "Call of Duty®", codFullMap, [1962660, 2933620, 3606480, 2127791]);
+	Check("dlc question: with only packs missing it says so, and names none",
+		packsOnly.OnlyPacks && (packsOnly.Missing.Count == 0) && (packsOnly.More == 0));
+	NocatFarm.Core.DlcAchievements.Map manyStories = new() {
+		App = 77, Names = ["s"], Groups = [.. Enumerable.Range(1, 8).Select(static i => new NocatFarm.Core.DlcAchievements.Group {
+			App = (uint) (770 + i), Ids = [(uint) (770 + i)], Name = $"Saga - Story Chapter {i}", Unsure = NocatFarm.Core.DlcAchievements.Doubt.NoFigures })]
+	};
+	NocatFarm.Core.DlcQuestions.Question many = NocatFarm.Core.DlcQuestions.Build(77, "Saga", manyStories, []);
+	Check("dlc question: eight missing - five named, \"and 3 more\"",
+		(many.Missing.Count == 5) && (many.Missing[0] == "Story Chapter 1") && (many.More == 3), $"{many.Missing.Count} +{many.More}");
+	Check("dlc question: asked for a game held whole; not once it's vouched for, nor when left paused with the same DLC owned - but again once that changes",
+		NocatFarm.Core.DlcQuestions.Asks(true, false, null, 1, "")
+		&& !NocatFarm.Core.DlcQuestions.Asks(false, false, null, 1, "")
+		&& !NocatFarm.Core.DlcQuestions.Asks(true, true, null, 1, "")
+		&& !NocatFarm.Core.DlcQuestions.Asks(true, false, new Dictionary<uint, string> { [1] = "10" }, 1, "10")
+		&& NocatFarm.Core.DlcQuestions.Asks(true, false, new Dictionary<uint, string> { [1] = "10" }, 1, "10,20")
+		&& NocatFarm.Core.DlcQuestions.Asks(true, false, new Dictionary<uint, string> { [2] = "10" }, 1, "10")
+		&& (NocatFarm.Core.DlcQuestions.OwnedKey([20, 10, 20]) == "10,20") && (NocatFarm.Core.DlcQuestions.OwnedKey(null) == ""));
+
+	// The answer is kept with the licences among the game's DLC ids - the same whether the map was built in a hurry (a
+	// nameless DLC taken as one that may have achievements, so a group of its own) or in full (named a soundtrack, so
+	// no group), and the same before and after a "carry on".
+	NocatFarm.Core.DlcAchievements.Map hurried = new() {
+		App = 50, Dlc = [51, 52, 53, 54], Hurried = true, Groups = [
+			new() { App = 51, Ids = [51], Name = "Story", Unsure = NocatFarm.Core.DlcAchievements.Doubt.NoFigures },
+			new() { App = 52, Ids = [52], Name = "", Unsure = NocatFarm.Core.DlcAchievements.Doubt.Delisted }]
+	};
+	NocatFarm.Core.DlcAchievements.Map full = new() {
+		App = 50, Dlc = [51, 52, 53, 54], Groups = [new() { App = 51, Ids = [51], Name = "Story", Unsure = NocatFarm.Core.DlcAchievements.Doubt.NoFigures }]
+	};
+	HashSet<uint> ownsThese = [52, 54, 999];
+	string hurriedKey = NocatFarm.Core.DlcAchievements.LicenceKey(hurried, ownsThese.Contains);
+	string fullKey = NocatFarm.Core.DlcAchievements.LicenceKey(full, ownsThese.Contains);
+	Dictionary<uint, string> leftThen = new() { [50] = hurriedKey };
+	Check("dlc question: a map built again (hurried, then in full) keeps the same key, so a game left paused isn't asked again",
+		(hurriedKey == "52,54") && (fullKey == hurriedKey) && !NocatFarm.Core.DlcQuestions.Asks(true, false, leftThen, 50, fullKey)
+		&& NocatFarm.Core.DlcQuestions.Asks(true, false, leftThen, 50, NocatFarm.Core.DlcAchievements.LicenceKey(full, new HashSet<uint> { 51, 52, 54 }.Contains)),
+		$"{hurriedKey} / {fullKey}");
+	Check("dlc question: a map saved before the DLC list was kept uses its groups' ids", NocatFarm.Core.DlcAchievements.LicenceKey(
+		new NocatFarm.Core.DlcAchievements.Map { App = 60, Groups = [new() { App = 61, Ids = [61, 6100] }] }, static id => id == 6100) == "6100");
+}
+
+// ── "is it OK to carry on?": which held games are asked about, the answers, the log line, the dlc commands ───────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	NocatFarm.Config.GlobalConfig realGlobal = NocatFarm.Config.Live.Global;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-dlcask-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	List<(NocatFarm.Topic Topic, string Source, string Text)> published = [];
+	void Heard(NocatFarm.Topic topic, string source, string text) {
+		lock (published) {
+			published.Add((topic, source, text));
+		}
+	}
+
+	try {
+		// What the pacer last concluded, as it saves it: 440 and 730 held whole, 22380 held for a DLC known exactly, 500
+		// already answered "carry on", 600 left paused with the same DLC owned, 700 left paused before a DLC was bought,
+		// 800 held whole but on the never list. (9 = DlcUnmapped, 7 = DlcOnly.)
+		File.WriteAllText(Path.Combine(tmpRoot, "config", "state", "cheevo-asker.json"), """
+			[
+			  { "App": 440, "Last": 9, "Total": 50, "Unlocked": 10, "DlcOwned": [], "DlcKey": "" },
+			  { "App": 730, "Last": 9, "Total": 50, "Unlocked": 10, "DlcOwned": [731, 9999], "DlcKey": "731" },
+			  { "App": 22380, "Last": 7, "Total": 50, "Unlocked": 10, "DlcOwned": [], "DlcKey": "" },
+			  { "App": 500, "Last": 9, "Total": 50, "Unlocked": 10, "DlcOwned": [], "DlcKey": "" },
+			  { "App": 600, "Last": 9, "Total": 50, "Unlocked": 10, "DlcOwned": [601], "DlcKey": "" },
+			  { "App": 700, "Last": 9, "Total": 50, "Unlocked": 10, "DlcOwned": [701], "DlcKey": "701" },
+			  { "App": 800, "Last": 9, "Total": 50, "Unlocked": 10, "DlcOwned": [], "DlcKey": "" },
+			  { "App": 900, "Last": 9, "Total": 50, "Unlocked": 10, "DlcOwned": [] }
+			]
+			""");
+
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
+		var asker = new NocatFarm.Core.Bot("asker", new NocatFarm.Config.BotConfig {
+			UnlockAchievements = true, AchievementDlcTrusted = [500], AchievementDlcLeft = new() { [600] = "", [700] = "" }, AchievementNeverGames = [800]
+		});
+		var pacer = new NocatFarm.Modules.AchievementPacer(asker);
+		asker.AddModule(pacer);
+		bots["asker"] = asker;
+
+		List<uint> Asked() => [.. NocatFarm.Core.DlcQuestions.For(asker).Select(static q => q.App)];
+		Check("dlc ask: held whole yes; held for a DLC known exactly, carried on, left paused or on the never list no; left paused before a DLC was bought, yes again",
+			Asked().SequenceEqual([440u, 700u, 730u]), string.Join(",", Asked()));
+		Check("dlc ask: kept with the licences, not the DLC counted as owned (600 counts one it doesn't own, still not asked); a game whose licences aren't read since an update waits",
+			!Asked().Contains(600u) && !Asked().Contains(900u));
+		Check("dlc ask: nothing is asked while the account earns no achievements",
+			NocatFarm.Core.DlcQuestions.For(new NocatFarm.Core.Bot("quiet", new NocatFarm.Config.BotConfig { UnlockAchievements = false })).Count == 0);
+
+		// The log line: once per game, under Achievements, with the two commands to type.
+		NocatFarm.Log.Published += Heard;
+		MethodInfo ask = typeof(NocatFarm.Modules.AchievementPacer).GetMethod("AskAboutHeldGames", BindingFlags.NonPublic | BindingFlags.Instance)!;
+		ask.Invoke(pacer, []);
+		List<(NocatFarm.Topic Topic, string Source, string Text)> first = [.. published];
+		ask.Invoke(pacer, []);
+		NocatFarm.Log.Published -= Heard;
+		string tf2 = first.FirstOrDefault(static p => p.Text.Contains("Team Fortress 2", StringComparison.Ordinal)).Text ?? "";
+		Check("dlc ask: one line per game held whole, said once, to Discord/Telegram under Achievements",
+			(first.Count == 3) && (published.Count == 3) && first.All(static p => (p.Topic == NocatFarm.Topic.Achievements) && (p.Source == "asker")),
+			string.Join(" | ", published.Select(static p => p.Text)));
+		Check("dlc ask: it names the game and says how to answer, by name",
+			tf2.StartsWith("asker: Team Fortress 2 is paused for achievements - it has add-ons this account doesn't own.", StringComparison.Ordinal)
+			&& tf2.Contains("'dlc carryon asker Team Fortress 2' / 'dlc leave asker Team Fortress 2'", StringComparison.Ordinal), tf2);
+		Check("dlc ask: what was asked is kept with the game's state, so a restart doesn't ask again",
+			File.ReadAllText(Path.Combine(tmpRoot, "config", "state", "cheevo-asker.json")).Contains("\"DlcAsked\": \"731\"", StringComparison.Ordinal));
+
+		// Carry on, by part of the name, any case: on the trusted list, saved, no longer asked, and let go.
+		string carried = await Commands.RunAsync(mgr, "dlc carryon asker team fortress");
+		string onDisk = File.ReadAllText(Path.Combine(tmpRoot, "config", "asker.json"));
+		Check("dlc carryon: by name - on the account's list, saved, not asked about any more",
+			carried.Contains("carrying on with Team Fortress 2", StringComparison.Ordinal) && asker.Cfg.AchievementDlcTrusted.Contains(440u)
+			&& System.Text.RegularExpressions.Regex.IsMatch(onDisk, @"""AchievementDlcTrusted"": \[\s*500,\s*440\s*\]") && !Asked().Contains(440u), carried);
+		Check("dlc carryon: the game is let go at once - looked at again next time it's played, not held",
+			!pacer.HeldWholeGames().Any(static h => h.App == 440) && (pacer.Snapshot().Single(static r => r.App == 440).State == "Unknown"));
+
+		// Leave it paused, by the whole name: remembered with the DLC owned then, and not asked again.
+		string left = await Commands.RunAsync(mgr, "dlc leave asker COUNTER-STRIKE 2");
+		Check("dlc leave: by the whole name, any case - remembered with what it owned, not asked again",
+			left.Contains("Counter-Strike 2 stays paused", StringComparison.Ordinal) && (asker.Cfg.AchievementDlcLeft.GetValueOrDefault(730u) == "731")
+			&& !Asked().Contains(730u) && File.ReadAllText(Path.Combine(tmpRoot, "config", "asker.json")).Contains("\"730\": \"731\"", StringComparison.Ordinal), left);
+		Check("dlc leave: asked again once a DLC is bought for it (what it owns changed) - not before",
+			!NocatFarm.Core.DlcQuestions.Asks(true, false, asker.Cfg.AchievementDlcLeft, 730, "731")
+			&& NocatFarm.Core.DlcQuestions.Asks(true, false, asker.Cfg.AchievementDlcLeft, 730, "731,732"));
+		string leftAgain = await Commands.RunAsync(mgr, "dlc leave asker 440");
+		Check("dlc leave: leaving a game carried on takes the carry on back", !asker.Cfg.AchievementDlcTrusted.Contains(440u) && asker.Cfg.AchievementDlcLeft.ContainsKey(440u), leftAgain);
+
+		// Undo, by appID: asked about again.
+		string undone = await Commands.RunAsync(mgr, "dlc undo asker 730");
+		Check("dlc undo: the answer is taken back and the game is asked about again",
+			undone.Contains("will be asked about again", StringComparison.Ordinal) && !asker.Cfg.AchievementDlcLeft.ContainsKey(730u) && Asked().Contains(730u), undone);
+		string undoTrust = await Commands.RunAsync(mgr, "dlc undo asker 500");
+		Check("dlc undo: after carry on it's paused again", undoTrust.Contains("took back \"carry on\"", StringComparison.Ordinal) && !asker.Cfg.AchievementDlcTrusted.Contains(500u), undoTrust);
+		string nothing = await Commands.RunAsync(mgr, "dlc undo asker 22380");
+		Check("dlc undo: nothing to take back says so", nothing.Contains("no answer for", StringComparison.Ordinal), nothing);
+		Check("dlc: the answers listed for the dashboard's undo, by name",
+			NocatFarm.Core.DlcQuestions.LeftPaused(asker).Select(static a => a.App).Order().SequenceEqual([440u, 600u, 700u])
+			&& NocatFarm.Core.DlcQuestions.CarriedOn(asker).Count == 0);
+
+		// Only a game it asks about, or one answered, can be answered - not any number.
+		string notHeld = await Commands.RunAsync(mgr, "dlc carryon asker 22380");
+		Check("dlc carryon: a game that isn't paused for add-ons can't be answered for", notHeld.Contains("nothing to answer for it", StringComparison.Ordinal)
+			&& !asker.Cfg.AchievementDlcTrusted.Contains(22380u) && !NocatFarm.Core.DlcQuestions.Answerable(asker, 22380) && NocatFarm.Core.DlcQuestions.Answerable(asker, 700), notHeld);
+		string tooShort = await Commands.RunAsync(mgr, "dlc carryon asker e");
+		string zero = await Commands.RunAsync(mgr, "dlc carryon asker 0");
+		Check("dlc find: one letter or a bare 0 doesn't pick a game", tooShort.Contains("Type more of the game's name", StringComparison.Ordinal)
+			&& zero.Contains("Type more of the game's name", StringComparison.Ordinal), tooShort + " / " + zero);
+
+		// Steam chat: looking is fine, answering is for the owner.
+		Check("dlc: the answers are refused from Steam chat, looking isn't",
+			NocatFarm.Commands.SteamChatRefusesAnswer(mgr, "dlc carryon asker 440") && NocatFarm.Commands.SteamChatRefusesAnswer(mgr, "dlcach leave asker 440")
+			&& NocatFarm.Commands.SteamChatRefusesAnswer(mgr, "dlc UNDO asker 440") && !NocatFarm.Commands.SteamChatRefusesAnswer(mgr, "dlc asker")
+			&& !NocatFarm.Commands.SteamChatRefusesAnswer(mgr, "dlc asker Team Fortress 2"));
+		NocatFarm.Core.BotManager? realHost = NocatFarm.Commands.Host;
+		NocatFarm.Commands.Host = mgr;
+		string fromChat = await NocatFarm.Commands.RunAsync("dlc leave asker 700", "asker");
+		NocatFarm.Commands.Host = realHost;
+		Check("dlc: a Steam chat answer isn't taken", fromChat.Contains("has to be done at the PC", StringComparison.Ordinal)
+			&& (asker.Cfg.AchievementDlcLeft.GetValueOrDefault(700u) == ""), fromChat);
+
+		// Finding the game, and the old name.
+		string unsure = await Commands.RunAsync(mgr, "dlc carryon asker te");
+		string noGame = await Commands.RunAsync(mgr, "dlc carryon asker Half-Life 3");
+		Check("dlc find: a name that fits several asks which; one that fits none says so",
+			unsure.Contains("More than one game matches \"te\"", StringComparison.Ordinal) && noGame.Contains("has no game called \"Half-Life 3\"", StringComparison.Ordinal)
+			&& !asker.Cfg.AchievementDlcTrusted.Any(), unsure + " / " + noGame);
+		string old = await Commands.RunAsync(mgr, "dlcach asker");
+		string usage = await Commands.RunAsync(mgr, "dlcach");
+		Check("dlc: 'dlcach' still works - it's 'dlc' - and the bare command shows the answers",
+			old.Contains("asker isn't logged in", StringComparison.Ordinal) && usage.Contains("dlc carryon <account> <game>", StringComparison.Ordinal)
+			&& usage.Contains("dlc undo <account> <game>", StringComparison.Ordinal), old + " / " + usage);
+		string noAccount = await Commands.RunAsync(mgr, "dlc carryon nobody 440");
+		Check("dlc: an answer for an account that isn't there is refused", !noAccount.Contains("carrying on", StringComparison.Ordinal), noAccount);
+
+		// Two games of the same name: the log line gives the appID, which finds just the one. A game called "140" is found
+		// by its name before the number is taken as an appID.
+		BindingFlags libFlags = BindingFlags.NonPublic | BindingFlags.Instance;
+		List<NocatFarm.Core.Library.Entry> twins = [new(90001, "Doom", 600, DateTime.MinValue, 0), new(90002, "DOOM", 60, DateTime.MinValue, 0), new(90003, "140", 60, DateTime.MinValue, 0)];
+		typeof(NocatFarm.Core.Library).GetField("_games", libFlags)!.SetValue(asker.Library, twins);
+		typeof(NocatFarm.Core.Library).GetField("_byApp", libFlags)!.SetValue(asker.Library, twins.ToDictionary(static e => e.AppId));
+		NocatFarm.Core.GameNames.Learn(90001, "Doom");
+		NocatFarm.Core.GameNames.Learn(90002, "DOOM");
+		Check("dlc: the name to type is the appID when another game has the same name, the name otherwise",
+			(NocatFarm.Core.DlcQuestions.Typed(asker, 90001) == "90001") && (NocatFarm.Core.DlcQuestions.Typed(asker, 440) == "Team Fortress 2")
+			&& (NocatFarm.Core.DlcQuestions.Find(asker, "90001").App == 90001),
+			NocatFarm.Core.DlcQuestions.Typed(asker, 90001));
+		Check("dlc find: a game called \"140\" by its name, not as appID 140", NocatFarm.Core.DlcQuestions.Find(asker, "140").App == 90003);
+		Check("dlc: the pacer's state is written in order - the copy and the write under one lock, the dashboard's save and the tick's can't swap",
+			File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Modules", "AchievementPacer.cs"))
+				.Replace("\r\n", "\n").Contains("\tprivate void Save() {\n\t\tlock (_saveGate) {\n\t\t\tSaveInOrder();", StringComparison.Ordinal));
+	} finally {
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+		NocatFarm.Config.Live.Global = realGlobal;
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+
+	// The dashboard: the question on the account's card and in its achievements section, the answers with their undo,
+	// and one endpoint for all three - authorised like every other.
+	string js = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "wwwroot", "app.js")).Replace("\r\n", "\n");
+	string web = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Web", "WebHost.cs")).Replace("\r\n", "\n");
+	Check("dlc dashboard: the question on the card and in the achievements section, escaped, with the two answers and the undo",
+		js.Contains("${dlcAsks(b.Name, b.DlcQuestions)}", StringComparison.Ordinal) && js.Contains("${dlcAsks(settingsTarget,", StringComparison.Ordinal)
+		&& js.Contains("`<b>${esc(game)}</b>`", StringComparison.Ordinal) && js.Contains("t('I own what matters - carry on')", StringComparison.Ordinal)
+		&& js.Contains("t('Leave it paused')", StringComparison.Ordinal) && js.Contains("case 'dlcundo': answerDlc(name, el.dataset.app, 'undo'); break;", StringComparison.Ordinal)
+		&& !js.Contains("AchievementDlcTrusted", StringComparison.Ordinal));
+	Check("dlc dashboard: the answer endpoint checks the sign-in first, and the status carries the questions",
+		web.Contains("app.MapPost(\"/api/bots/{name}/achievements/dlc\", async (HttpContext ctx, string name) => {\n\t\t\tif (!Authorised(ctx)) {", StringComparison.Ordinal)
+		&& web.Contains("DlcQuestions = DlcQuestions.For(b),", StringComparison.Ordinal) && web.Contains("DlcLeft = bot == null ? [] : DlcQuestions.LeftPaused(bot),", StringComparison.Ordinal));
+}
+
+// ── simpler settings: one switch for refunds ──────────────────────────────────────────────────────────────
+{
+	var protect = NocatFarm.Config.Settings.FindBot("SkipRefundableGames");
+	Check("refunds: one visible switch, \"Protect refunds\", under What it plays, on every kind of account",
+		protect is { Label: "Protect refunds", Advanced: false, Mode: "any", Kind: NocatFarm.Config.SettingKind.Bool } && (protect.Section == NocatFarm.Config.Settings.SecPlaying));
+	Check("refunds: gifted games, family games and the day count aren't settings any more",
+		new[] { "ProtectGiftedGames", "RefundHoldDays", "HoldNewFamilyGames" }.All(static n => NocatFarm.Config.Settings.Find(n) == null));
+	Check("refunds: Steam's own 14 days, and gifted games count", (NocatFarm.Core.RefundGuard.HoldDays == 14)
+		&& new NocatFarm.Core.AppOwnership(DateTime.UtcNow, false, true, Gift: true).Refundable && !new NocatFarm.Core.AppOwnership(DateTime.UtcNow, false, true).Refundable);
+	Check("refunds: off for a new account", !new NocatFarm.Config.BotConfig().SkipRefundableGames);
+	Check("refunds: the tooltips no longer say refundable games are skipped regardless",
+		new[] { "IdleWholeLibrary", "NewGamesFirst", "JoinFriends" }.All(static n => NocatFarm.Config.Settings.FindBot(n)!.Tooltip.Contains("\"Protect refunds\"", StringComparison.Ordinal)));
+
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-simple-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+
+	try {
+		string Write(string name, string json) { File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, name + ".json"), json); return name; }
+		string OnDisk(string name) => File.ReadAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, name + ".json"));
+
+		// An account that had it all on, gifted games off and a 30-day hold: protection stays on (that's the choice that
+		// matters), and the folded-in keys are gone from the file once it's saved.
+		var on = NocatFarm.Config.ConfigStore.LoadBot(Write("refund-on", "{\"SkipRefundableGames\":true,\"ProtectGiftedGames\":false,\"RefundHoldDays\":30,\"HoldNewFamilyGames\":false}"))!;
+		NocatFarm.Config.ConfigStore.SaveBot("refund-on", on);
+		var off = NocatFarm.Config.ConfigStore.LoadBot(Write("refund-off", "{\"SkipRefundableGames\":false,\"ProtectGiftedGames\":true}"))!;
+		Check("refunds migration: an old file keeps its switch as it was, on or off", on.SkipRefundableGames && !off.SkipRefundableGames);
+		Check("refunds migration: the folded-in keys stay in the file as they were, for the version before if an update is put back",
+			OnDisk("refund-on").Contains("\"ProtectGiftedGames\": false", StringComparison.Ordinal) && OnDisk("refund-on").Contains("\"RefundHoldDays\": 30", StringComparison.Ordinal)
+			&& OnDisk("refund-on").Contains("\"HoldNewFamilyGames\": false", StringComparison.Ordinal));
+		NocatFarm.Config.ConfigStore.SaveBot("refund-new", new NocatFarm.Config.BotConfig { SkipRefundableGames = true });
+		Check("refunds: a new account's file doesn't get them (the version before's defaults are the same as now: gifted, family, 14 days)",
+			!OnDisk("refund-new").Contains("ProtectGiftedGames", StringComparison.Ordinal) && !OnDisk("refund-new").Contains("RefundHoldDays", StringComparison.Ordinal)
+			&& !OnDisk("refund-new").Contains("HoldNewFamilyGames", StringComparison.Ordinal));
+		// Free games: three chained switches became one choice - off, games, games and DLC.
+		var claim = NocatFarm.Config.Settings.FindBot("ClaimFree");
+		Check("free games: one choice, off / games / games and DLC, off by default",
+			claim is { Kind: NocatFarm.Config.SettingKind.Choice, Advanced: false } && (NocatFarm.Config.Settings.ParseChoices(claim).Count == 3)
+			&& (new NocatFarm.Config.BotConfig().ClaimFree == NocatFarm.Modules.FreeClaims.Off)
+			&& new[] { "ClaimFreeGames", "ClaimFreeDlc", "ClaimFreeDlcBase" }.All(static n => NocatFarm.Config.Settings.Find(n) == null));
+		var typed = new NocatFarm.Config.BotConfig();
+		Check("free games: typed by name at the console", (NocatFarm.Config.Settings.Apply(typed, claim!, "games and DLC") == null) && (typed.ClaimFree == 2)
+			&& (NocatFarm.Config.Settings.Apply(typed, claim!, "games") == null) && (typed.ClaimFree == 1));
+		int Claimed(string name, string json) => NocatFarm.Config.ConfigStore.LoadBot(Write(name, json))!.ClaimFree;
+		Check("free games migration: games on -> games", Claimed("free-games", "{\"ClaimFreeGames\":true}") == NocatFarm.Modules.FreeClaims.Games);
+		Check("free games migration: games and DLC on (its game switch off or on) -> games and DLC",
+			(Claimed("free-dlc", "{\"ClaimFreeGames\":true,\"ClaimFreeDlc\":true,\"ClaimFreeDlcBase\":false}") == NocatFarm.Modules.FreeClaims.GamesAndDlc)
+			&& (Claimed("free-dlc2", "{\"ClaimFreeGames\":true,\"ClaimFreeDlc\":true}") == NocatFarm.Modules.FreeClaims.GamesAndDlc));
+		Check("free games migration: DLC on without games did nothing, so stays off; nothing set stays off",
+			(Claimed("free-onlydlc", "{\"ClaimFreeDlc\":true}") == NocatFarm.Modules.FreeClaims.Off) && (Claimed("free-none", "{\"Enabled\":true}") == NocatFarm.Modules.FreeClaims.Off));
+		Check("free games migration: written back as the one choice, with the old switches beside it for the version before",
+			OnDisk("free-dlc").Contains("\"ClaimFree\": 2", StringComparison.Ordinal) && OnDisk("free-dlc").Contains("\"ClaimFreeGames\": true", StringComparison.Ordinal)
+			&& OnDisk("free-dlc").Contains("\"ClaimFreeDlc\": true", StringComparison.Ordinal) && OnDisk("free-dlc").Contains("\"ClaimFreeDlcBase\": true", StringComparison.Ordinal));
+		Check("free games: games only is written for the version before as games on, DLC off; off as nothing",
+			OnDisk("free-games").Contains("\"ClaimFreeGames\": true", StringComparison.Ordinal) && !OnDisk("free-games").Contains("\"ClaimFreeDlc", StringComparison.Ordinal)
+			&& !OnDisk("free-onlydlc").Contains("\"ClaimFreeGames\"", StringComparison.Ordinal));
+		Check("free games: the new choice wins over the copy beside it (read twice, and edited by hand to disagree)",
+			(Claimed("free-dlc", OnDisk("free-dlc")) == NocatFarm.Modules.FreeClaims.GamesAndDlc)
+			&& (Claimed("free-hand", "{\"ClaimFree\":1,\"ClaimFreeGames\":true,\"ClaimFreeDlc\":true}") == NocatFarm.Modules.FreeClaims.Games)
+			&& (Claimed("free-off", "{\"ClaimFree\":0,\"ClaimFreeGames\":true}") == NocatFarm.Modules.FreeClaims.Off));
+		List<string> freeSaid = [];
+		void FreeHeard(NocatFarm.Log.Entry e) {
+			if (e.Said.ToEnglish().Contains("Claim free games now also claims", StringComparison.Ordinal)) {
+				lock (freeSaid) {
+					freeSaid.Add(e.Source + "|" + e.Said.ToEnglish());
+				}
+			}
+		}
+		NocatFarm.Log.Written += FreeHeard;
+		Claimed("free-base-off", "{\"ClaimFreeGames\":true,\"ClaimFreeDlc\":true,\"ClaimFreeDlcBase\":false}");
+		Claimed("free-base-off", OnDisk("free-base-off"));
+		Claimed("free-base-on", "{\"ClaimFreeGames\":true,\"ClaimFreeDlc\":true,\"ClaimFreeDlcBase\":true}");
+		NocatFarm.Log.Written -= FreeHeard;
+		Check("free games migration: games and DLC with its game's switch off says once that free DLC's games are claimed now",
+			(freeSaid.Count == 1) && freeSaid[0].StartsWith("free-base-off|free-base-off: Claim free games now also claims a free DLC's game", StringComparison.Ordinal),
+			string.Join(" / ", freeSaid));
+		Check("free games migration: an already-moved file is left as it is", Claimed("free-new", "{\"ClaimFree\":2}") == NocatFarm.Modules.FreeClaims.GamesAndDlc);
+		// Updates: "Update by itself" and "When I say update" became one choice - nobody's updates behave any differently.
+		var mode = NocatFarm.Config.Settings.FindGlobal("UpdateMode");
+		Check("updates: one visible choice - once everyone's asleep / install when I click / install by itself at night",
+			mode is { Kind: NocatFarm.Config.SettingKind.Choice, Advanced: false } && (NocatFarm.Config.Settings.ParseChoices(mode).Count == 3)
+			&& (NocatFarm.Config.Settings.FindGlobal("AutoUpdate") == null) && (NocatFarm.Config.Settings.FindGlobal("UpdateWhenAsked") == null));
+		var freshG = new NocatFarm.Config.GlobalConfig();
+		Check("updates: a new install is \"install when I click\" - the same as before (tell me, right away)",
+			(freshG.UpdateMode == NocatFarm.Core.UpdateModes.WhenIClick) && !freshG.UpdateClickWaits);
+		(int Mode, bool Waits, string File) Global(string json) {
+			File.WriteAllText(NocatFarm.Config.ConfigStore.GlobalPath, json);
+			NocatFarm.Config.GlobalConfig g = NocatFarm.Config.ConfigStore.LoadGlobal();
+			NocatFarm.Config.GlobalConfig again = NocatFarm.Config.ConfigStore.LoadGlobal();   // read twice: the move happens once
+
+			return (again.UpdateMode == g.UpdateMode) && (again.UpdateClickWaits == g.UpdateClickWaits)
+				? (g.UpdateMode, g.UpdateClickWaits, File.ReadAllText(NocatFarm.Config.ConfigStore.GlobalPath))
+				: (-1, false, "changed on the second read");
+		}
+		var tellNow = Global("{\"AutoUpdate\":0,\"UpdateWhenAsked\":0}");
+		var tellWait = Global("{\"AutoUpdate\":0,\"UpdateWhenAsked\":1}");
+		var nightNow = Global("{\"AutoUpdate\":1,\"UpdateWhenAsked\":0}");
+		var nightWait = Global("{\"AutoUpdate\":1,\"UpdateWhenAsked\":1}");
+		Check("updates migration: tell me + right away -> install when I click (a click installs now)", (tellNow.Mode == 1) && !tellNow.Waits, tellNow.File);
+		Check("updates migration: tell me + when asleep -> once everyone's asleep (a click waits)", (tellWait.Mode == 0) && tellWait.Waits, tellWait.File);
+		Check("updates migration: install at night + right away -> at night, a click installs now", (nightNow.Mode == 2) && !nightNow.Waits, nightNow.File);
+		Check("updates migration: install at night + when asleep -> at night, and a click still waits", (nightWait.Mode == 2) && nightWait.Waits, nightWait.File);
+		Check("updates migration: written as the one choice, with the old keys beside it for the version before",
+			nightWait.File.Contains("\"AutoUpdate\": 1", StringComparison.Ordinal) && nightWait.File.Contains("\"UpdateWhenAsked\": 1", StringComparison.Ordinal)
+			&& nightWait.File.Contains("\"UpdateMode\": 2", StringComparison.Ordinal));
+		Check("updates: the version before reads the same choice - once everyone's asleep is tell me + wait, install when I click is tell me + right away",
+			tellWait.File.Contains("\"UpdateWhenAsked\": 1", StringComparison.Ordinal) && !tellWait.File.Contains("\"AutoUpdate\"", StringComparison.Ordinal)
+			&& nightNow.File.Contains("\"AutoUpdate\": 1", StringComparison.Ordinal) && nightNow.File.Contains("\"UpdateWhenAsked\": 0", StringComparison.Ordinal));
+		NocatFarm.Config.GlobalConfig switched = NocatFarm.Config.ConfigStore.LoadGlobal();
+		NocatFarm.Config.Settings.Apply(switched, mode!, "install when I click");
+		NocatFarm.Config.ConfigStore.SaveGlobal(switched);
+		NocatFarm.Config.GlobalConfig rereadG = NocatFarm.Config.ConfigStore.LoadGlobal();
+		string clickFile = File.ReadAllText(NocatFarm.Config.ConfigStore.GlobalPath);
+		Check("updates: choosing another one later sticks (the old click-waits doesn't bring it back)", (rereadG.UpdateMode == 1) && !rereadG.UpdateClickWaits
+			&& !clickFile.Contains("\"AutoUpdate\"", StringComparison.Ordinal) && clickFile.Contains("\"UpdateWhenAsked\": 0", StringComparison.Ordinal), clickFile);
+		var handEdited = Global("{\"AutoUpdate\":1,\"UpdateWhenAsked\":1,\"UpdateMode\":1}");
+		Check("updates: once the new key is in the file it wins over the copy beside it", (handEdited.Mode == 1) && !handEdited.Waits, handEdited.File);
+		File.WriteAllText(NocatFarm.Config.ConfigStore.GlobalPath, "{\"UpdateMode\":2,\"UpdateWhenAsked\":1}");
+		int offWaited = NocatFarm.Config.SetupChoices.Run(["AutoUpdate=0"]);
+		NocatFarm.Config.GlobalConfig afterWaited = NocatFarm.Config.ConfigStore.LoadGlobal();
+		File.WriteAllText(NocatFarm.Config.ConfigStore.GlobalPath, "{\"UpdateMode\":2,\"UpdateWhenAsked\":0}");
+		int offNow = NocatFarm.Config.SetupChoices.Run(["AutoUpdate=0"]);
+		NocatFarm.Config.GlobalConfig afterNow = NocatFarm.Config.ConfigStore.LoadGlobal();
+		Check("updates: a setup turning \"at night\" off keeps what a click did - it waited, so once everyone's asleep; else install when I click",
+			(offWaited == 0) && (afterWaited.UpdateMode == 0) && (offNow == 0) && (afterNow.UpdateMode == 1), $"{afterWaited.UpdateMode} {afterNow.UpdateMode}");
+		string tutJs = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "wwwroot", "app.js")).Replace("\r\n", "\n");
+		Check("updates: the first-run setup does the same when \"Keep it up to date by itself\" is switched off",
+			tutJs.Contains("const mode = d.autoUpdate ? 2 : (g.UpdateMode === 2 ? (g.UpdateWhenAsked === 1 ? 0 : 1) : g.UpdateMode);", StringComparison.Ordinal));
+		File.WriteAllText(NocatFarm.Config.ConfigStore.GlobalPath, "{}");
+		int setup = NocatFarm.Config.SetupChoices.Run(["AutoUpdate=1"]);
+		Check("updates: a setup that still says AutoUpdate=1 means install by itself at night", (setup == 0) && (NocatFarm.Config.ConfigStore.LoadGlobal().UpdateMode == 2), setup.ToString());
+		// Booster games: a text box of numbers became a game list like the others.
+		var boostDef = NocatFarm.Config.Settings.FindBot("BoosterPackGames");
+		Check("boosters: a game list now, and the old name still finds it ('set new BoosterGames 730')",
+			boostDef is { Kind: NocatFarm.Config.SettingKind.AppIds } && (NocatFarm.Config.Settings.FindBot("BoosterGames")?.Name == "BoosterPackGames"));
+		var bcfg = NocatFarm.Config.ConfigStore.LoadBot(Write("boost-old", "{\"BoosterGames\":\"730, 440 ;x 0 440\"}"))!;
+		Check("boosters migration: the typed list becomes the game list, junk and repeats dropped, written as text beside it for the version before",
+			bcfg.BoosterPackGames.SequenceEqual<uint>([730, 440]) && (bcfg.BoosterGames == null) && OnDisk("boost-old").Contains("\"BoosterGames\": \"730, 440\"", StringComparison.Ordinal),
+			string.Join(",", bcfg.BoosterPackGames));
+		var bhand = NocatFarm.Config.ConfigStore.LoadBot(Write("boost-hand", "{\"BoosterPackGames\":[730],\"BoosterGames\":\"730, 440\"}"))!;
+		Check("boosters: once the list is in the file it wins - a game taken off it doesn't come back from the copy",
+			bhand.BoosterPackGames.SequenceEqual<uint>([730]) && (bhand.BoosterGames == null), string.Join(",", bhand.BoosterPackGames));
+		var bempty = NocatFarm.Config.ConfigStore.LoadBot(Write("boost-empty", "{\"BoosterGames\":\"\"}"))!;
+		Check("boosters migration: an empty one is just empty", (bempty.BoosterPackGames.Count == 0) && !OnDisk("boost-empty").Contains("\"BoosterGames\"", StringComparison.Ordinal));
+		Check("boosters: the module reads the list", NocatFarm.Modules.Boosters.Games(new NocatFarm.Core.Bot("harness-boost", bcfg)).SequenceEqual<uint>([730, 440]));
+		// Overnight: a file from before the top-games number with the switch on and nothing listed banked nothing - it keeps
+		// banking nothing. Said once.
+		List<string> nightSaid = [];
+		void NightHeard(NocatFarm.Log.Entry e) {
+			if (e.Said.ToEnglish().Contains("Bank hours overnight was on with no games listed", StringComparison.Ordinal)) {
+				lock (nightSaid) {
+					nightSaid.Add(e.Said.ToEnglish());
+				}
+			}
+		}
+		NocatFarm.Log.Written += NightHeard;
+		var nightOld = NocatFarm.Config.ConfigStore.LoadBot(Write("night-old", "{\"LegitMode\":true,\"OfflineIdleAtNight\":true,\"OfflineIdleGames\":[]}"))!;
+		var nightAgain = NocatFarm.Config.ConfigStore.LoadBot("night-old")!;
+		var nightListed = NocatFarm.Config.ConfigStore.LoadBot(Write("night-listed", "{\"OfflineIdleAtNight\":true,\"OfflineIdleGames\":[730]}"))!;
+		var nightOff = NocatFarm.Config.ConfigStore.LoadBot(Write("night-off", "{\"OfflineIdleAtNight\":false}"))!;
+		var nightBare = NocatFarm.Config.ConfigStore.LoadBot(Write("night-bare", "{\"LegitMode\":true}"))!;
+		var nightNew = NocatFarm.Config.ConfigStore.LoadBot(Write("night-new", "{\"OfflineIdleAtNight\":true,\"OfflineIdleGames\":[],\"OfflineIdleTopGames\":2}"))!;
+		NocatFarm.Config.ConfigStore.SaveBot("night-fresh", new NocatFarm.Config.BotConfig());
+		var nightFresh = NocatFarm.Config.ConfigStore.LoadBot("night-fresh")!;
+		NocatFarm.Log.Written -= NightHeard;
+		Check("overnight migration: on with nothing listed, from before the top-games number - switched off, so nothing changes; said once",
+			!nightOld.OfflineIdleAtNight && !nightAgain.OfflineIdleAtNight && OnDisk("night-old").Contains("\"OfflineIdleTopGames\": 1", StringComparison.Ordinal)
+			&& (nightSaid.Count == 1) && (nightSaid[0] == "night-old: Bank hours overnight was on with no games listed, which banked nothing - switched off so nothing changes. Turn it on to idle its most-played games overnight."),
+			string.Join(" / ", nightSaid));
+		Check("overnight migration: a list with games, off already, a file without the switch, one written since, and a new account are left alone",
+			nightListed.OfflineIdleAtNight && !nightOff.OfflineIdleAtNight && nightBare.OfflineIdleAtNight && nightNew.OfflineIdleAtNight && nightFresh.OfflineIdleAtNight);
+		// Back to the version before by hand: it saves the file without the top-games number. The owner had turned the
+		// switch on since; updating again must not switch it off a second time.
+		var nightRolled = NocatFarm.Config.ConfigStore.LoadBot(Write("night-old", "{\"LegitMode\":true,\"OfflineIdleAtNight\":true,\"OfflineIdleGames\":[]}"))!;
+		Check("overnight migration: once seen, a file the version before saved again is left as it is",
+			nightRolled.OfflineIdleAtNight && File.Exists(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "overnight-night-old.seen"))
+			&& !NocatFarm.Config.ConfigStore.MigrateOvernight(new NocatFarm.Config.BotConfig { OfflineIdleAtNight = true }, "x", seenBefore: true));
+		// SIMPLE-MIGRATIONS
+	} finally {
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+		try { Directory.Delete(tmpRoot, true); } catch (IOException) { }
+	}
+}
+
+// ── simpler settings: banking overnight with nothing on the list ─────────────────────────────────────────────────
+{
+	string Src(string rel) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", rel)).Replace("\r\n", "\n");
+	List<NocatFarm.Config.SettingDef> bot = [.. NocatFarm.Config.Settings.Bot];
+	int at = bot.FindIndex(static d => d.Name == "OfflineIdleAtNight");
+	Check("overnight: the list and the top-games number sit right under the switch, not behind Show advanced, human mode only",
+		(at >= 0) && (bot[at + 1].Name == "OfflineIdleGames") && (bot[at + 2].Name == "OfflineIdleTopGames")
+		&& bot.Skip(at).Take(3).All(static d => !d.Advanced && (d.Mode == "legit")));
+	Check("overnight: the top-games number is 1 to 10, 1 by default", bot[at + 2] is { Kind: NocatFarm.Config.SettingKind.Int, Min: 1.0, Max: 10.0 }
+		&& (new NocatFarm.Config.BotConfig().OfflineIdleTopGames == 1));
+
+	List<NocatFarm.Core.Library.Entry> lib = [
+		new(730, "CS2", 90000, DateTime.MinValue, 0), new(440, "TF2", 50000, DateTime.MinValue, 0), new(570, "Dota 2", 40000, DateTime.MinValue, 0),
+		new(620, "Portal 2", 3000, DateTime.MinValue, 0), new(550, "L4D2", 2000, DateTime.MinValue, 0), new(4000, "GMod", 1000, DateTime.MinValue, 0),
+		new(8001, "Borrowed", 99999, DateTime.MinValue, 76561198000000001), new(999, "Never played", 0, DateTime.MinValue, 0)
+	];
+	Check("overnight: the most-played first, only games actually played, as many as asked",
+		NocatFarm.Modules.HumanMode.TopPlayed(lib, 3, static a => a != 8001).SequenceEqual<uint>([730, 440, 570])
+		&& NocatFarm.Modules.HumanMode.TopPlayed(lib, 10, static a => a != 8001).Count == 6
+		&& !NocatFarm.Modules.HumanMode.TopPlayed(lib, 10, static _ => true).Contains(999u));
+
+	var cfg = new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730:70, 440:30", BlacklistedGames = [730], SkipRefundableGames = true };
+	var nb = new NocatFarm.Core.Bot("harness-night-top", cfg);
+	var hm = new NocatFarm.Modules.HumanMode(nb);
+	nb.AddModule(hm);
+	BindingFlags inst = BindingFlags.NonPublic | BindingFlags.Instance;
+	typeof(NocatFarm.Core.Library).GetField("_games", inst)!.SetValue(nb.Library, lib);
+	typeof(NocatFarm.Core.Library).GetField("_byApp", inst)!.SetValue(nb.Library, lib.ToDictionary(static e => e.AppId));
+	typeof(NocatFarm.Core.Library).GetProperty("Ready")!.SetValue(nb.Library, true);
+	typeof(NocatFarm.Core.RefundGuard).GetField("_held", inst)!.SetValue(nb.Refunds, new HashSet<uint> { 440 });
+	Check("overnight: an empty list idles the top game it may play - not the blacklisted one, not one held for a refund, not a family game",
+		hm.NightPicked.SequenceEqual<uint>([570]) && (hm.NightGameCount == 1) && (hm.NightPickedNames(hm.NightPicked) == "Dota 2"), string.Join(",", hm.NightPicked));
+	cfg.IncludeFamilyLibrary = true;
+	Check("overnight: a family game counts once shared games are allowed", hm.NightPicked.SequenceEqual<uint>([8001]));
+	cfg.IncludeFamilyLibrary = false;
+	var bw = new NocatFarm.Modules.BanWatch(nb);
+	nb.AddModule(bw);
+	Type savedT = typeof(NocatFarm.Modules.BanWatch).GetNestedType("Saved", BindingFlags.NonPublic)!;
+	typeof(NocatFarm.Modules.BanWatch).GetField("_loaded", inst)!.SetValue(bw, true);
+	typeof(NocatFarm.Modules.BanWatch).GetField("_seen", inst)!.SetValue(bw, Activator.CreateInstance(savedT, 0, 1, false, "none", 0, 0L, new List<uint> { 570 }));
+	Check("overnight: not a game Steam has it banned in", hm.NightPicked.SequenceEqual<uint>([620]), string.Join(",", hm.NightPicked));
+	typeof(NocatFarm.Modules.BanWatch).GetField("_seen", inst)!.SetValue(bw, Activator.CreateInstance(savedT, 0, 0, false, "none", 0, 0L, null));
+	cfg.OfflineIdleTopGames = 3;
+	Check("overnight: the number sets how many", hm.NightPicked.SequenceEqual<uint>([570, 620, 550]) && (hm.NightGameCount == 3));
+	Check("overnight: selfcheck counts the games it really banks (the picked ones)", NocatFarm.Core.SelfCheck.NightGames(nb) == 3);
+	cfg.OfflineIdleGames = [4000];
+	Check("overnight: a list with games wins, and the number is ignored", (hm.NightPicked.Count == 0) && (hm.NightGameCount == 1) && (NocatFarm.Core.SelfCheck.NightGames(nb) == 1));
+	cfg.OfflineIdleGames = [440, 730, 8001, 4000, 77777];
+	Check("overnight: the list goes by the same rules as the games it picks - not held for a refund, blacklisted or a family game; one the library doesn't show still goes on",
+		hm.NightGameCount == 2, $"{hm.NightGameCount}");
+	cfg.IncludeFamilyLibrary = true;
+	Check("overnight: a family game on the list goes on once shared games are allowed", hm.NightGameCount == 3, $"{hm.NightGameCount}");
+	cfg.IncludeFamilyLibrary = false;
+
+	// The self-check's advice goes by what the list puts on, not by the dated hour target that needs the night too: with a
+	// list of one it doesn't say to cut the list down to one or two.
+	cfg.OfflineIdleGames = [4000];
+	cfg.HourTargets = $"620:1000@{DateTime.Now.AddDays(5):yyyy-MM-dd}";
+	typeof(NocatFarm.Core.Library).GetField("_twoWeeks", inst)!.SetValue(nb.Library, new Dictionary<uint, int> { [4000] = 14 * 24 * 60 + 600 });
+	MethodInfo score = typeof(NocatFarm.Core.SelfCheck).GetMethod("Score", BindingFlags.NonPublic | BindingFlags.Static)!;
+	var report = (NocatFarm.Core.SelfCheck.Report) score.Invoke(null, [nb, null])!;
+	string fixes = string.Join(" | ", report.Tells.Select(static t => t.Fix));
+	Check("self-check: a list of one and an hour target - the advice is about the target, not \"cut it down to one or two\"",
+		(hm.NightGameCount == 2) && fixes.Contains("dated hour targets", StringComparison.Ordinal) && !fixes.Contains("down to one or two", StringComparison.Ordinal), fixes);
+	cfg.HourTargets = "";
+	cfg.OfflineIdleGames = [4000, 620, 550];
+	report = (NocatFarm.Core.SelfCheck.Report) score.Invoke(null, [nb, null])!;
+	fixes = string.Join(" | ", report.Tells.Select(static t => t.Fix));
+	Check("self-check: a list of three still says to cut it down", fixes.Contains("it banks 3 games at once every night - cut OfflineIdleGames down to one or two", StringComparison.Ordinal), fixes);
+	typeof(NocatFarm.Core.Library).GetField("_twoWeeks", inst)!.SetValue(nb.Library, new Dictionary<uint, int>());
+	cfg.OfflineIdleGames = [4000];
+
+	// A drop run on an account that farms at night or any time: the hidden card-sittings share doesn't raise its share of
+	// the day - only the main game's does. With "mixed" (where the share shows) the higher of the two, as before.
+	var shareCfg = new NocatFarm.Config.BotConfig { CardSittingsPct = 90, FarmCardsWhen = NocatFarm.Modules.FarmWhen.Night };
+	int nightShare = NocatFarm.Modules.HumanMode.CardShare(shareCfg, true, 60);
+	shareCfg.FarmCardsWhen = NocatFarm.Modules.FarmWhen.Any;
+	int anyShare = NocatFarm.Modules.HumanMode.CardShare(shareCfg, true, 60);
+	shareCfg.FarmCardsWhen = NocatFarm.Modules.FarmWhen.Mixed;
+	int mixedShare = NocatFarm.Modules.HumanMode.CardShare(shareCfg, true, 60);
+	int mixedNoRun = NocatFarm.Modules.HumanMode.CardShare(shareCfg, false, 60);
+	Check("drop run: farming at night or any time uses the main game's share, not the hidden card-sittings one; mixed keeps the higher",
+		(nightShare == 60) && (anyShare == 60) && (mixedShare == 90) && (mixedNoRun == 90), $"{nightShare} {anyShare} {mixedShare} {mixedNoRun}");
+	cfg.OfflineIdleGames = [];
+	cfg.OfflineIdleAtNight = false;
+	Check("overnight: nothing is picked with banking overnight off", hm.NightPicked.Count == 0);
+	cfg.OfflineIdleAtNight = true;
+	cfg.LegitMode = false;
+	Check("overnight: nor on a robot account", hm.NightPicked.Count == 0);
+	cfg.LegitMode = true;
+	typeof(NocatFarm.Core.Library).GetField("_games", inst)!.SetValue(nb.Library, new List<NocatFarm.Core.Library.Entry>());
+	typeof(NocatFarm.Core.Library).GetField("_byApp", inst)!.SetValue(nb.Library, new Dictionary<uint, NocatFarm.Core.Library.Entry>());
+	Check("overnight: nothing it may play - nothing picked, and the status says to add games", (hm.NightPicked.Count == 0) && (hm.NightGameCount == 0)
+		&& Src("Modules/HumanMode.cs").Contains("Phase.Asleep when NothingToBank => Loc.T(\"asleep · up {0} · nothing to bank overnight - add games to the overnight list\"", StringComparison.Ordinal));
+	Check("overnight: the status names the games it picked itself",
+		Src("Modules/HumanMode.cs").Contains("Phase.NightIdle when NightPicked is { Count: > 0 } picked => Loc.T(\"asleep, no games chosen - idling your {0} most-played game(s): {1} · up {2}\"", StringComparison.Ordinal));
+	string js = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "wwwroot", "app.js")).Replace("\r\n", "\n");
+	Check("overnight: the Human mode panel names the picked games, or says to add some", js.Contains("card.NightPicked", StringComparison.Ordinal)
+		&& js.Contains("t('Nothing to bank overnight yet: add games to \"Games to idle overnight\".')", StringComparison.Ordinal));
+}
+
+// ── simpler settings: card farming's when, only where it means something ─────────────────────────────────────────
+{
+	var farmWhen = NocatFarm.Config.Settings.FindBot("FarmCardsWhen")!;
+	var cardShare = NocatFarm.Config.Settings.FindBot("CardSittingsPct")!;
+	Check("cards: \"When to farm cards\" is human mode only, and its tooltip has no console example",
+		(farmWhen.Mode == "legit") && !farmWhen.Tooltip.Contains("drops ", StringComparison.Ordinal) && !farmWhen.Tooltip.Contains("<account>", StringComparison.Ordinal));
+	Check("cards: the share of card sittings shows only with \"mixed\"", (cardShare.ShowWhen == $"FarmCardsWhen={NocatFarm.Modules.FarmWhen.Mixed}")
+		&& (cardShare.Mode == "legit") && !cardShare.Label.Contains("mixed", StringComparison.Ordinal));
+	Check("cards: the clock window is for robot accounts", new[] { "FarmFromHour", "FarmUntilHour" }.All(static n => NocatFarm.Config.Settings.FindBot(n) is { Mode: "rage" }));
+	Check("settings: ShowWhen names a real setting, with a value it can have", NocatFarm.Config.Settings.Bot.Concat(NocatFarm.Config.Settings.Global)
+		.Where(static d => d.ShowWhen != null).All(static d => d.ShowWhen!.Split('=') is [{ } k, { Length: > 0 }] && (NocatFarm.Config.Settings.Find(k) != null)));
+
+	// The window, an hour or two from now, so now is outside it whatever the day's jitter: a robot waits, a human-mode
+	// account doesn't (its own day and "When to farm cards" decide), and its numbers stay in the file.
+	int h = DateTime.Now.Hour;
+	var wcfg = new NocatFarm.Config.BotConfig { FarmFromHour = (h + 2) % 24, FarmUntilHour = (h + 3) % 24 };
+	var wbot = new NocatFarm.Core.Bot("harness-farm-window", wcfg);
+	var farmer = new NocatFarm.Modules.CardFarmer(wbot);
+	MethodInfo inWindow = typeof(NocatFarm.Modules.CardFarmer).GetMethod("InFarmWindow", BindingFlags.NonPublic | BindingFlags.Instance)!;
+	bool robotIn = (bool) inWindow.Invoke(farmer, [])!;
+	wcfg.LegitMode = true;
+	bool humanIn = (bool) inWindow.Invoke(farmer, [])!;
+	Check("cards: outside the clock window a robot waits; a human-mode account isn't held by it, and keeps the numbers",
+		!robotIn && humanIn && (wcfg.FarmFromHour == (h + 2) % 24));
+
+	string js = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "wwwroot", "app.js")).Replace("\r\n", "\n");
+	Check("settings page: a ShowWhen setting is drawn only under that answer, unsaved edits included",
+		js.Contains("if (!shownWhen(d, values)) return false;", StringComparison.Ordinal)
+		&& js.Contains("return String(liveValue(def.ShowWhen.slice(0, at), values)) === def.ShowWhen.slice(at + 1);", StringComparison.Ordinal));
+}
+
+// ── simpler commands: one listed name each, older names still work, the hand tools last ───────────────────────────
+{
+	string? Canon(string w) => NocatFarm.Commands.Resolve(w)?.Name;
+	Check("commands: the old names still reach their command", (Canon("name") == "gamename") && (Canon("unlock") == "dashboard") && (Canon("weekly") == "report")
+		&& (Canon("loot") == "send") && (Canon("bots") == "status") && (Canon("cheevo") == "achievements") && (Canon("ach") == "achievements"));
+	Check("commands: listed as gamename, achievements and dashboard unlock - no 'name', 'cheevo' or 'unlock' command of their own",
+		!NocatFarm.Commands.All.Any(static c => c.Name is "name" or "cheevo" or "unlock") && NocatFarm.Commands.All.Any(static c => (c.Name == "dashboard") && c.Args.Contains("unlock", StringComparison.Ordinal)));
+	Check("commands: the hidden names aren't shown", NocatFarm.Commands.All.All(static c => !c.Display.Split('|').Any(a => a is "name" or "unlock" or "weekly" or "loot" or "bots")));
+	List<string> order = [.. NocatFarm.Commands.All.Select(static c => c.Group).Distinct()];
+	Check("commands: an Advanced group, last, with the hand tools in it", (order[^1] == NocatFarm.Commands.GroupAdvanced)
+		&& new[] { "fairswap", "addlicense", "reload", "screen" }.All(static n => NocatFarm.Commands.All.Single(c => c.Name == n).Group == NocatFarm.Commands.GroupAdvanced));
+	string Help(params string[] args) => (string) typeof(NocatFarm.Commands).GetMethod("Help", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [args])!;
+	string all = Help();
+	Check("help: Advanced is the last group, and no hidden name is listed", all.IndexOf("ADVANCED", StringComparison.Ordinal) > all.IndexOf("THE APP", StringComparison.Ordinal)
+		&& !all.Contains("|bots", StringComparison.Ordinal) && !all.Contains("|loot", StringComparison.Ordinal) && !all.Contains("|weekly", StringComparison.Ordinal)
+		&& !all.Contains("\n  unlock ", StringComparison.Ordinal) && !all.Contains("\n  name ", StringComparison.Ordinal));
+	Check("help: 'help unlock' and 'help name' explain the command they reach", Help("unlock").StartsWith("dashboard", StringComparison.Ordinal) && Help("name").StartsWith("gamename", StringComparison.Ordinal));
+	Check("help: stats says it's everything and report the short one",
+		NocatFarm.Commands.All.Single(static c => c.Name == "stats").Help.StartsWith("Everything", StringComparison.Ordinal)
+		&& NocatFarm.Commands.All.Single(static c => c.Name == "report").Help.StartsWith("The short one", StringComparison.Ordinal));
+	Check("steam chat: the old 'unlock' is still refused there (it reaches dashboard)", NocatFarm.Commands.SteamChatRefuses(Canon("unlock")!));
+	string docs = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "docs", "COMMANDS.md"));
+	Check("docs: COMMANDS.md is generated from this list (Advanced last, no hidden names)", docs.Contains("## Advanced", StringComparison.Ordinal)
+		&& docs.Contains("`gamename <account> [text\\|off]`", StringComparison.Ordinal) && !docs.Contains("`loot`", StringComparison.Ordinal));
+}
+
+// ── reaction speed: one choice that scales human mode's waits as they're picked ───────────────────────────────────
+{
+	var rs = NocatFarm.Config.Settings.FindBot("ReactionSpeed");
+	Check("reaction speed: a visible human-mode choice, normal by default, with the one-line tooltip",
+		rs is { Kind: NocatFarm.Config.SettingKind.Choice, Advanced: false, Mode: "legit" } && (rs.Section == NocatFarm.Config.Settings.SecHuman)
+		&& (NocatFarm.Config.Settings.ParseChoices(rs).Select(static c => c.Label).SequenceEqual(["normal", "quick", "relaxed"]))
+		&& (new NocatFarm.Config.BotConfig().ReactionSpeed == NocatFarm.Modules.ReactionSpeed.Normal)
+		&& (rs.Tooltip == "How quickly it reacts and how long its breaks last. Every wait is still random - Quick halves them, Relaxed doubles them."));
+
+	int Raw(NocatFarm.Config.BotConfig c, string n) => Convert.ToInt32(NocatFarm.Config.Settings.Read(c, n));
+	var scaled = NocatFarm.Modules.ReactionSpeed.Scaled;
+	Check("reaction speed: every scaled setting is a real per-account setting", scaled.All(static p => (NocatFarm.Config.Settings.FindBot(p.Min) != null) && ((p.Max == null) || (NocatFarm.Config.Settings.FindBot(p.Max) != null))));
+
+	// Normal - and any account not in human mode - is exactly what's configured, for any numbers at all: the same values
+	// go to the same random calls as before.
+	var rnd = new Random(7);
+	bool normalSame = true;
+	for (int i = 0; i < 500; i++) {
+		var c = new NocatFarm.Config.BotConfig { LegitMode = i % 2 == 0, ReactionSpeed = i % 2 == 0 ? 0 : rnd.Next(0, 3) };
+		foreach ((string sMin, string? sMax) in scaled) {
+			NocatFarm.Config.Settings.Apply(c, NocatFarm.Config.Settings.FindBot(sMin)!, rnd.Next(0, 200).ToString(System.Globalization.CultureInfo.InvariantCulture));
+			if (sMax != null) {
+				NocatFarm.Config.Settings.Apply(c, NocatFarm.Config.Settings.FindBot(sMax)!, rnd.Next(0, 200).ToString(System.Globalization.CultureInfo.InvariantCulture));
+			}
+		}
+		foreach ((string sMin, string? sMax) in scaled) {
+			normalSame &= sMax == null
+				? NocatFarm.Modules.ReactionSpeed.One(c, sMin) == Raw(c, sMin)
+				: NocatFarm.Modules.ReactionSpeed.Range(c, sMin, sMax) == (Raw(c, sMin), Raw(c, sMax));
+		}
+		normalSame &= NocatFarm.Modules.ReactionSpeed.Fixed(c, 10, 60) == (10, 60);
+	}
+	Check("reaction speed: Normal, and every robot account, use the configured numbers untouched (inverted pairs too)", normalSame);
+
+	var quick = new NocatFarm.Config.BotConfig { LegitMode = true, ReactionSpeed = NocatFarm.Modules.ReactionSpeed.Quick,
+		GiftDelayMinMinutes = 2, GiftDelayMaxMinutes = 15, BreakMinMinutes = 1, BreakMaxMinutes = 30, WakeDelayMinMinutes = 0, WakeDelayMaxMinutes = 0, AutoReplyDelaySeconds = 3 };
+	var relaxed = new NocatFarm.Config.BotConfig { LegitMode = true, ReactionSpeed = NocatFarm.Modules.ReactionSpeed.Relaxed,
+		GiftDelayMinMinutes = 2, GiftDelayMaxMinutes = 1000, MealBreakMinutes = 35 };
+	Check("reaction speed: Quick halves both ends, rounding to the nearest minute",
+		NocatFarm.Modules.ReactionSpeed.Range(quick, "GiftDelayMinMinutes", "GiftDelayMaxMinutes") == (1, 8)
+		&& NocatFarm.Modules.ReactionSpeed.Fixed(quick, 10, 60) == (5, 30) && NocatFarm.Modules.ReactionSpeed.One(quick, "AutoReplyDelaySeconds") == 2);
+	Check("reaction speed: a wait above zero never becomes zero, and one switched off stays off",
+		NocatFarm.Modules.ReactionSpeed.Range(quick, "BreakMinMinutes", "BreakMaxMinutes") == (1, 15)
+		&& NocatFarm.Modules.ReactionSpeed.Range(quick, "WakeDelayMinMinutes", "WakeDelayMaxMinutes") == (0, 0));
+	Check("reaction speed: Relaxed doubles both ends, never past what the setting allows",
+		NocatFarm.Modules.ReactionSpeed.Range(relaxed, "GiftDelayMinMinutes", "GiftDelayMaxMinutes") == (4, (int) NocatFarm.Config.Settings.FindBot("GiftDelayMaxMinutes")!.Max)
+		&& NocatFarm.Modules.ReactionSpeed.One(relaxed, "MealBreakMinutes") == 70);
+	bool ordered = true;
+	foreach (int speed in new[] { 1, 2 }) {
+		for (int i = 0; i < 300; i++) {
+			var c = new NocatFarm.Config.BotConfig { LegitMode = true, ReactionSpeed = speed, TradeDelayMinMinutes = rnd.Next(0, 721), TradeDelayMaxMinutes = rnd.Next(0, 1441) };
+			(int lo, int hi) = NocatFarm.Modules.ReactionSpeed.Range(c, "TradeDelayMinMinutes", "TradeDelayMaxMinutes");
+			ordered &= (lo <= hi) && ((c.TradeDelayMinMinutes == 0) == (lo == 0));
+		}
+	}
+	Check("reaction speed: scaled, the shortest is never above the longest", ordered);
+
+	// Still random: many trade waits on Quick land all over the halved range, not on one value.
+	var tbot = new NocatFarm.Core.Bot("harness-reaction", new NocatFarm.Config.BotConfig { LegitMode = true, ReactionSpeed = 1, TradeDelayMinMinutes = 4, TradeDelayMaxMinutes = 40 });
+	var trading = new NocatFarm.Modules.Trading(tbot);
+	MethodInfo tradeWait = typeof(NocatFarm.Modules.Trading).GetMethod("TradeWait", BindingFlags.NonPublic | BindingFlags.Instance)!;
+	List<double> waits = [.. Enumerable.Range(0, 400).Select(_ => ((TimeSpan) tradeWait.Invoke(trading, [])!).TotalMinutes)];
+	Check("reaction speed: every wait is still drawn at random, inside the scaled range (2-20 on Quick for 4-40)",
+		waits.All(static w => w is >= 2 and <= 20) && (waits.Distinct().Count() > 50) && (waits.Max() > 15), $"{waits.Min():0.0}-{waits.Max():0.0}, {waits.Distinct().Count()} different");
+
+	// The owner's safety: three minutes and clear reads after signing in come before any game, whatever the speed.
+	var safeCfg = new NocatFarm.Config.BotConfig { LegitMode = true, ReactionSpeed = NocatFarm.Modules.ReactionSpeed.Quick, WarmUpMinMinutes = 1, WarmUpMaxMinutes = 1, GameWeights = "730" };
+	var sbot = new NocatFarm.Core.Bot("harness-reaction-safe", safeCfg);
+	var shm = new NocatFarm.Modules.HumanMode(sbot);
+	sbot.AddModule(shm);
+	DateTime signedIn = DateTime.UtcNow;
+	typeof(NocatFarm.Core.Bot).GetProperty("OnlineSince")!.SetValue(sbot, signedIn);
+	typeof(NocatFarm.Modules.HumanMode).GetMethod("SettledIn", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(shm, []);
+	DateTime ready = (DateTime) typeof(NocatFarm.Modules.HumanMode).GetField("_readyAt", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(shm)!;
+	Check("reaction speed: Quick never starts a game inside the three minutes after signing in", ready >= signedIn.AddSeconds(180), $"{(ready - signedIn).TotalSeconds:0}s");
+	string[] never = ["ResumeDelayMinutes", "Rep4RepGapMinMinutes", "Rep4RepGapMaxMinutes", "Rep4RepDailyCap", "SessionMinMinutes", "SessionMaxMinutes",
+		"WeekdayHours", "WeekendHours", "HoursUntilCardDrops", "AchievementGrindGapMinMinutes", "BoostSessionHours", "PostFarmWindDownMinMinutes", "FarmingDelayMinutes"];
+	Check("reaction speed: what protects the owner, Steam's limits and how much it plays are never scaled",
+		never.All(n => !scaled.Any(p => (p.Min == n) || (p.Max == n))));
+}
+
+// ── game lists: picked from the library by name ──────────────────────────────────────────────────────────────────
+{
+	string[] lists = ["IdleGames", "OfflineIdleGames", "BlacklistedGames", "PriorityGames", "AchievementGames", "AchievementNeverGames",
+		"AchievementBoostGames", "InventoryIgnoreGames", "BoosterPackGames"];
+	Check("game lists: every one is a game list (and the global blacklist too)", lists.All(static n => NocatFarm.Config.Settings.FindBot(n)?.Kind == NocatFarm.Config.SettingKind.AppIds)
+		&& (NocatFarm.Config.Settings.FindGlobal("GlobalBlacklistedGames")?.Kind == NocatFarm.Config.SettingKind.AppIds));
+	var lcfg = new NocatFarm.Config.BotConfig();
+	Check("game lists: a pasted store link still goes in", (NocatFarm.Config.Settings.Apply(lcfg, NocatFarm.Config.Settings.FindBot("BoosterPackGames")!, "https://store.steampowered.com/app/440/Team_Fortress_2/") == null)
+		&& lcfg.BoosterPackGames.SequenceEqual<uint>([440]));
+	string root = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm");
+	string js = File.ReadAllText(Path.Combine(root, "wwwroot", "app.js")).Replace("\r\n", "\n");
+	string web = File.ReadAllText(Path.Combine(root, "Web", "WebHost.cs")).Replace("\r\n", "\n");
+	Check("game lists: the whole library comes once per account (every account's for a global list), behind the sign-in",
+		web.Contains("app.MapGet(\"/api/bots/{name}/library\", (HttpContext ctx, string name, string? all) => Guard(ctx, () => {", StringComparison.Ordinal)
+		&& web.Contains("app.MapGet(\"/api/library\", (HttpContext ctx) => Guard(ctx, () => {", StringComparison.Ordinal)
+		&& js.Contains("const url = key === '*' ? '/api/library' : `/api/bots/${encodeURIComponent(key)}/library?all=1`;", StringComparison.Ordinal));
+	Check("game lists: searched on the page as it's typed - ten at most, the box keeps its focus (no redraw while typing)",
+		js.Contains("oninput=\"appSearch('${def.Name}',this)\"", StringComparison.Ordinal) && js.Contains("return [...starts, ...inside].slice(0, 10);", StringComparison.Ordinal)
+		&& !System.Text.RegularExpressions.Regex.Match(js, @"async function appSearch[\s\S]*?\n}\n").Value.Contains("renderSettings", StringComparison.Ordinal));
+	Check("game lists: chips show the game's name, the appID only in the tooltip",
+		js.Contains("data-tip=\"${esc(tf('appID {0} - open its Steam store page', a))}\">${esc(gameLabel(a))}</a>", StringComparison.Ordinal) && !js.Contains("class=\"tagid\"", StringComparison.Ordinal));
+	Check("game lists: a comma ends only an appID or a link - \"Papers, Please\" can be typed",
+		js.Contains("} else if (e.key === 'Enter' || (e.key === ',' && parseAppId(input.value))) {", StringComparison.Ordinal));
+	Check("game lists: Enter before the matches are in waits for the library and takes the top match, rather than \"no game matches\"",
+		js.Contains("else appEnterLater(name, input);", StringComparison.Ordinal) && js.Contains("async function appEnterLater(name, input) {\n  const typed = input.value;\n  if (!typed.trim()) return;\n  await appSearch(name, input);", StringComparison.Ordinal));
+	Check("game lists: an appID typed with Enter puts the focus back in the box (not when it went in on leaving the box)",
+		js.Contains("if (parseAppId(input.value)) addApp(name, input, true);", StringComparison.Ordinal) && js.Contains("const again = refocus && document.querySelector(", StringComparison.Ordinal)
+		&& js.Contains("  if (parseAppId(input.value)) addApp(name, input);\n}", StringComparison.Ordinal));
+	Check("settings page: an edit to a setting that gets hidden (ShowWhen) is dropped, so Save never saves what can't be seen",
+		js.Contains("pending = {}; }\n  dropHiddenEdits();\n", StringComparison.Ordinal)
+		&& js.Contains("if (def.ShowWhen && pending[def.Name] !== undefined && !shownWhen(def, values)) delete pending[def.Name];", StringComparison.Ordinal));
+	Check("overnight preview: with nothing listed and the pick not known yet (unsaved edits, library not read), it says it idles its N most-played - \"nothing\" only when that's known",
+		js.Contains("const known = !!card && !!card.LibraryReady && !unsaved;", StringComparison.Ordinal)
+		&& js.Contains("tf('Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).'", StringComparison.Ordinal)
+		&& js.Contains("const nightEmpty = val('OfflineIdleAtNight') && !listed && known && !picked;", StringComparison.Ordinal)
+		&& web.Contains("LibraryReady = b.Library.Ready,", StringComparison.Ordinal));
+	// The Linux/Mac swap script reaches the shell with \n alone. Built on Windows, the source can have \r\n, and 1.6.4's
+	// script failed on its first command with every line ending in \r - the app closed for the update and never came back.
+	{
+		string shScript = (string) typeof(NocatFarm.Core.SelfUpdate).GetProperty("UnixScript", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+		Check("update: the Linux/Mac swap script has no \\r in it, whatever the source's line endings",
+			!shScript.Contains('\r') && shScript.StartsWith("#!/bin/sh\n", StringComparison.Ordinal)
+			&& File.ReadAllText(Path.Combine(root, "Core", "SelfUpdate.cs")).Contains("SwapScript(Environment.ProcessId) : UnixScript, ct)", StringComparison.Ordinal));
+	}
+	// The overnight note: looked for before the file is read, written only once the switch-off is on disk, and forgotten
+	// for every account a restore puts back.
+	string cfgSrc = File.ReadAllText(Path.Combine(root, "Config", "Configs.cs")).Replace("\r\n", "\n");
+	string backupSrc = File.ReadAllText(Path.Combine(root, "Core", "Backup.cs")).Replace("\r\n", "\n");
+	Check("overnight note: checked before reading, written after a good save, cleared by a restore",
+		(cfgSrc.IndexOf("bool seenBefore = File.Exists(seen);", StringComparison.Ordinal) < cfgSrc.IndexOf("BotConfig? cfg = JsonSerializer.Deserialize<BotConfig>(File.ReadAllText(file), Json);", StringComparison.Ordinal))
+		&& cfgSrc.Contains("if (!seenBefore && (!night || saved)) {", StringComparison.Ordinal)
+		&& backupSrc.Contains("@\"|state/overnight-(?<name>", StringComparison.Ordinal)
+		&& backupSrc.Contains("if (restored.Contains($\"state/overnight-{name}.seen\")) {", StringComparison.Ordinal)
+		// ...together with the account's own file, in either zip order, case ignored; and names end at \z, not $.
+		&& backupSrc.Contains("if (NoteOf(rel) is { } noted && restored.Contains($\"{noted}.json\")) {\n\t\t\t\tcontinue;", StringComparison.Ordinal)
+		&& backupSrc.Contains("new(contents.Select(static c => c.Rel), StringComparer.OrdinalIgnoreCase);", StringComparison.Ordinal)
+		&& backupSrc.Contains(".seen)\\z\", RegexOptions.CultureInvariant)]", StringComparison.Ordinal)
+		&& NocatFarm.Core.UpdateCheck.AtLeast("1.6.5", "1.6.5") && NocatFarm.Core.UpdateCheck.AtLeast("1.7.0", "1.6.5")
+		&& !NocatFarm.Core.UpdateCheck.AtLeast("1.6.4", "1.6.5") && !NocatFarm.Core.UpdateCheck.AtLeast("", "1.6.5"));
+	// selfcheck counts the overnight games it may really bank; a DLC map from before the whole-DLC list is built again.
+	Check("selfcheck: the overnight advice counts only games the night rules allow; maps from before rule 6 are rebuilt",
+		File.ReadAllText(Path.Combine(root, "Core", "SelfCheck.cs")).Contains("(human?.ListedNightCount ?? bot.Cfg.OfflineIdleGames.Count)", StringComparison.Ordinal)
+		&& File.ReadAllText(Path.Combine(root, "Modules", "HumanMode.cs")).Contains("Bot.Cfg.OfflineIdleGames.Count(a => MayBankAtNight(a, banned))", StringComparison.Ordinal)
+		&& (NocatFarm.Core.DlcAchievements.RuleNow == 6));
+	Check("old names: the sign-in page says 'dashboard unlock', the achievements usage says 'achievements'",
+		js.Contains("t('Or type dashboard unlock in the nocat.farm window.')", StringComparison.Ordinal) && !js.Contains("'Or type unlock in", StringComparison.Ordinal)
+		&& !File.ReadAllText(Path.Combine(root, "Commands.cs")).Contains("\"cheevo <account>", StringComparison.Ordinal)
+		&& !File.ReadAllText(Path.Combine(root, "Commands.cs")).Contains("'cheevo {bot.Name}", StringComparison.Ordinal)
+		&& !File.ReadAllText(Path.Combine(root, "..", "..", "docs", "phone-and-notifications.md")).Contains("/dashboard anywhere", StringComparison.Ordinal));
 }
 
 // SETTINGSCOUNT

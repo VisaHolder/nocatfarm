@@ -45,7 +45,14 @@ public sealed record SettingDef(
 	double Max = double.MaxValue,
 
 	/// <summary>"any" | "legit" (only meaningful in human mode) | "rage" (hidden and neutralised in human mode).</summary>
-	string Mode = "any"
+	string Mode = "any",
+
+	/// <summary>
+	/// Shown on the dashboard only while another setting has one value: "FarmCardsWhen=3" (a choice's number) or
+	/// "SomeSwitch=true". For a setting that only means something under one answer of another - the share of sittings
+	/// that farm cards, say, which only "mixed" uses. Null shows it whenever its Mode does. The console lists it anyway.
+	/// </summary>
+	string? ShowWhen = null
 );
 
 public static class Settings {
@@ -98,8 +105,18 @@ public static class Settings {
 		return [.. all.Where(d => !windowsOnly.Contains(d.Name, StringComparer.OrdinalIgnoreCase))];
 	}
 
-	public static SettingDef? FindGlobal(string name) => Global.FirstOrDefault(d => d.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-	public static SettingDef? FindBot(string name) => Bot.FirstOrDefault(d => d.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+	public static SettingDef? FindGlobal(string name) => Global.FirstOrDefault(d => d.Name.Equals(NewName(name), StringComparison.OrdinalIgnoreCase));
+	public static SettingDef? FindBot(string name) => Bot.FirstOrDefault(d => d.Name.Equals(NewName(name), StringComparison.OrdinalIgnoreCase));
+
+	/// <summary>
+	/// Settings that changed name and mean the same thing, so 'set new BoosterGames 730' and 'help BoosterGames' - typed
+	/// from habit, or in a script or a plugin - still reach the setting.
+	/// </summary>
+	private static readonly Dictionary<string, string> Renamed = new(StringComparer.OrdinalIgnoreCase) {
+		["BoosterGames"] = "BoosterPackGames"
+	};
+
+	private static string NewName(string name) => Renamed.GetValueOrDefault(name, name);
 
 	/// <summary>Look a name up in both lists - the console's <c>help set</c> doesn't care which it is.</summary>
 	public static SettingDef? Find(string name) => FindGlobal(name) ?? FindBot(name);
@@ -681,12 +698,10 @@ public static class Settings {
 			"How often to check your rep4rep points total, in minutes. Avoid very low values for long stretches, since rep4rep has no published limit.",
 			Advanced: true, Min: 1, Max: 1440),
 		// ── Updates & plugins ──
-		new("AutoUpdate", "Update by itself", SecUpdates, SettingKind.Choice,
-			"What happens when a new version is out. Tell me: it says so in the log, on Telegram and Discord, and you type update accept. Install at night: it installs by itself in the hours below, only while no human-mode account is awake and nobody is playing on an account, and tells you before and after. Not in Docker or as a Linux service, which update by hand.",
-			Choices: "0 tell me | 1 install at night"),
-		new("UpdateWhenAsked", "When I say update", SecUpdates, SettingKind.Choice,
-			"What update accept and the Update button do. Right away: it installs now. When my accounts are asleep: it waits until no human-mode account is awake, nobody is playing on an account and no trade or gift is waiting - robot accounts that stay on all night don't hold it up. With no human-mode accounts, it waits for the hours below instead. update now always installs right away. Not in Docker or as a Linux service, which update by hand.",
-			Choices: "0 right away | 1 when my accounts are asleep"),
+		// One choice where there were two ("Update by itself" and "When I say update") that only made sense together.
+		new("UpdateMode", "Updates", SecUpdates, SettingKind.Choice,
+			"What happens when a new version is out. It always tells you first, in the log and on Telegram and Discord. Install when I click, once everyone's asleep: the Update button or update accept installs it once your accounts are asleep - no human-mode account awake, nobody playing, no trade or gift waiting. Install when I click: right away. Install by itself at night: it installs on its own in the hours below, at a quiet time, and tells you before and after. update now always installs right away. Not in Docker or as a Linux service, which update by hand.",
+			Choices: "0 install when I click, once everyone's asleep | 1 install when I click | 2 install by itself at night"),
 		new("AutoUpdateFromHour", "...between", SecUpdates, SettingKind.Int,
 			"The earliest hour it may install by itself, on a 24-hour clock.",
 			Advanced: true, Min: 0, Max: 23),
@@ -697,7 +712,7 @@ public static class Settings {
 			"Hours to wait after a new version comes out before installing it by itself, so a release with a problem can be fixed first.",
 			Advanced: true, Min: 0, Max: 168),
 		new("CheckForUpdates", "Notify if an update is available", SecUpdates, SettingKind.Bool,
-			"Looks for a new version and tells you in the log, on Telegram and Discord. Turning it off also stops Update by itself.",
+			"Looks for a new version and tells you in the log, on Telegram and Discord. Turning it off also stops it installing by itself at night.",
 			Advanced: true),
 		new("UpdateCheckHours", "Look for updates every", SecUpdates, SettingKind.Int,
 			"Hours between two looks for a new version. It also looks once when nocat.farm starts, and whenever you type update.",
@@ -873,14 +888,19 @@ public static class Settings {
 			"Notes when you play on this account yourself and which games. After 7 days of that, it leans its day toward yours: when it gets on and goes to bed, and how its time splits between the games in \"Games and how often\". It never adds a game that isn't in that list, and how long it plays still comes from the hours settings. The habits command shows what it has learned.",
 			Mode: "legit", Choices: "0 off | 1 a little | 2 a lot"),
 		new("NewGamesFirst", "Play new games more at first", SecHuman, SettingKind.Bool,
-			"A game that has just arrived in the library, bought, gifted or free, gets extra sittings for 3 to 10 days, fewer each day, like trying something new. Games you can still refund, blacklisted or family-shared games, and games your other accounts are running are left alone.",
+			"A game that has just arrived in the library, bought, gifted or free, gets extra sittings for 3 to 10 days, fewer each day, like trying something new. Blacklisted or family-shared games and games your other accounts are running are left alone, and a game \"Protect refunds\" is holding waits until the hold ends.",
 			Advanced: true, Mode: "legit"),
 		new("LongerRhythms", "Quiet spells and late nights", SecHuman, SettingKind.Bool,
 			"Once or twice a month it has a quiet spell of 2 to 5 days with noticeably shorter days, and now and then a Friday or Saturday night runs later than usual. Days off and the hours settings still apply. human week shows them.",
 			Advanced: true, Mode: "legit"),
 		new("JoinFriends", "Sometimes play what a friend is playing", SecHuman, SettingKind.Bool,
-			"When a Steam friend is in a game this account owns, it now and then picks that game for its next sitting, at most twice a day and only while it's up. Your own accounts and the games they're running are ignored, and so are blacklisted and refundable games.",
+			"When a Steam friend is in a game this account owns, it now and then picks that game for its next sitting, at most twice a day and only while it's up. Your own accounts and the games they're running are ignored, and so are blacklisted games and games \"Protect refunds\" is holding.",
 			Advanced: true, Mode: "legit"),
+		// One knob for all the waits below (and the reaction waits under Trades and Friends): it scales them as they're
+		// picked, never the numbers themselves - see Modules/ReactionSpeed for exactly which.
+		new("ReactionSpeed", "Reaction speed", SecHuman, SettingKind.Choice,
+			"How quickly it reacts and how long its breaks last. Every wait is still random - Quick halves them, Relaxed doubles them.",
+			Choices: "0 normal | 1 quick | 2 relaxed", Mode: "legit"),
 		// settling in
 		new("WarmUpMinMinutes", "Settle in for at least", SecHuman, SettingKind.Int,
 			"The shortest wait after signing in before it starts a game, in minutes. Also applies when you turn on \"Human mode\", so it doesn't launch a game instantly.",
@@ -920,10 +940,16 @@ public static class Settings {
 			"The most times a day it shows offline on a break, so it doesn't flicker on and off your friends list. 0 turns it off and every break shows Away.",
 			Advanced: true, Min: 0, Max: 40, Mode: "legit"),
 		// overnight
+		// The list sits right under its switch and isn't behind Show advanced: the switch is on by default, and with the
+		// list empty (and hidden) it used to bank nothing at all without saying so. Now an empty list means the account's
+		// own most-played games, as many as the number below it.
 		new("OfflineIdleAtNight", "Bank hours overnight", SecHuman, SettingKind.Bool,
-			"While it's asleep, it goes invisible and keeps idling, so hours still count while friends see it offline. If \"When to farm cards\" sends cards to the night, those farm first.", Mode: "legit"),
+			"While it's asleep, it goes invisible and keeps idling the games in \"Games to idle overnight\" - or, with none chosen, its most-played games - so hours still count while friends see it offline. If \"When to farm cards\" sends cards to the night, those farm first.", Mode: "legit"),
 		new("OfflineIdleGames", "Games to idle overnight", SecHuman, SettingKind.AppIds,
-			"Games to idle while it shows offline at night. Several can run at once. Only used when \"Bank hours overnight\" is on.", Advanced: true, Mode: "legit"),
+			"Games to idle while it shows offline at night. Several can run at once. Leave it empty to use its most-played games instead. Only used when \"Bank hours overnight\" is on.", Mode: "legit"),
+		new("OfflineIdleTopGames", "...or, with none chosen, its top games", SecHuman, SettingKind.Int,
+			"With nothing in \"Games to idle overnight\", it idles this many of the account's most-played games at night. 1 or 2 looks the most natural - many at once is the first thing selfcheck flags.",
+			Min: 1, Max: 10, Mode: "legit"),
 		new("ActOnlyWhileAwake", "Only react while awake", SecHuman, SettingKind.Bool,
 			"Human mode only. Holds anything others can see, like trades, gifts, invites, replies, comments and achievements, while the account is asleep. Turn it off to answer at night too.",
 			Advanced: true, Mode: "legit"),
@@ -950,8 +976,12 @@ public static class Settings {
 			"Games to idle for playtime when no cards are left to farm. Use the game ID (the number in its store link) or paste the whole link, separated by commas.",
 			Placeholder: "730, 440", Mode: "rage"),
 		new("IdleWholeLibrary", "Idle my whole library", SecPlaying, SettingKind.Bool,
-			"Idles every game the account owns, after the ones in \"Games to idle\". Skips games in \"Never touch these\", refundable games and family-shared games (unless \"Include family-shared games\" is on). Steam plays 32 at once, so turn on \"Rotate the idle list\" to give every game a turn.",
+			"Idles every game the account owns, after the ones in \"Games to idle\". Skips games in \"Never touch these\", family-shared games (unless \"Include family-shared games\" is on), and games \"Protect refunds\" is holding. Steam plays 32 at once, so turn on \"Rotate the idle list\" to give every game a turn.",
 			Mode: "rage"),
+		// One switch for every kind of refund, where the games are chosen - it used to be three settings and a day count,
+		// behind Show advanced under Trading cards, while it guards idling, grinds and the achievement hunt just as much.
+		new("SkipRefundableGames", "Protect refunds", SecPlaying, SettingKind.Bool,
+			"Leaves a game alone while it can still be refunded, so nothing idles, farms, grinds or hunts it past Steam's 2 hours. That covers games bought or gifted in the last 14 days, and games new to the family library for their first 14 days."),
 		new("RotateIdleGames", "Rotate the idle list", SecPlaying, SettingKind.Bool,
 			"When there are more games than Steam plays at once (32, or 31 with a custom name), it idles one batch at a time and moves to the next batch every so often, so every game gets hours. Games with an hour target and the least played go first.",
 			Mode: "rage"),
@@ -973,12 +1003,13 @@ public static class Settings {
 		// ── Trading cards ──
 		new("FarmCards", "Farm trading cards", SecCards, SettingKind.Bool,
 			"Farms Steam trading cards. Games with cards left get played until they stop dropping, before anything else."),
+		// Human mode only: a robot account farms the moment there are cards, so the choice did nothing there.
 		new("FarmCardsWhen", "When to farm cards", SecCards, SettingKind.Choice,
-			"Human mode only - this is AUTOMATIC farming: nocat.farm picks the card games itself. Day: cards farm in its normal sittings. Night: only while it's asleep. Any time: nonstop until done. Mixed: some sittings farm cards, the rest play its usual games, so cards trickle in over days. Want one game's cards first? Type drops <account> <appID> <count> (e.g. drops myaccount 460920 2 = 2 cards from Steep first) - on a human-mode account that still plays in normal sittings, with breaks and bedtime.",
-			Choices: "0 day, in its sittings | 1 night, while it's asleep | 2 any time | 3 mixed, some sittings cards, the rest its games"),
-		new("CardSittingsPct", "Share of sittings that farm cards (mixed)", SecCards, SettingKind.Int,
-			"Roughly what percent of sittings farm cards when \"When to farm cards\" is set to mixed. Higher finishes cards sooner, lower keeps more time on its usual games. A drops run (the drops command) gets at least the main game's share, so the game you picked comes sooner.",
-			Min: 5, Max: 95, Mode: "legit"),
+			"When this account farms cards - it picks the card games itself. Day: in its normal sittings. Night: only while it's asleep. Any time: nonstop until done. Mixed: some sittings farm cards and the rest play its usual games, so cards come in over a few days.",
+			Choices: "0 day, in its sittings | 1 night, while it's asleep | 2 any time | 3 mixed, some sittings cards, the rest its games", Mode: "legit"),
+		new("CardSittingsPct", "Share of sittings that farm cards", SecCards, SettingKind.Int,
+			"Roughly what percent of sittings farm cards. Higher finishes cards sooner, lower keeps more time on its usual games. A drops run (the drops command) gets at least the main game's share, so the game you picked comes sooner.",
+			Min: 5, Max: 95, Mode: "legit", ShowWhen: "FarmCardsWhen=3"),
 		new("HoursUntilCardDrops", "Hours before cards drop", SecCards, SettingKind.Float,
 			"How many hours a game needs before Steam drops its cards. Set 0 if this account has spent over $5 on Steam, so nothing plays longer than it needs to.",
 			Min: 0, Max: 100, Advanced: true),
@@ -997,27 +1028,20 @@ public static class Settings {
 		new("SkipUnplayedGames", "Skip games you've never played", SecCards, SettingKind.Bool,
 			"Skips games you've never launched yourself, so none of them get their first playtime from here.",
 			Advanced: true),
-		new("SkipRefundableGames", "Protect refundable games", SecCards, SettingKind.Bool,
-			"Leaves games you just bought alone so you can still refund them. Steam refuses refunds after 2 hours played, so nothing idles, farms or grinds them until the refund window is over.",
-			Advanced: true),
-		new("ProtectGiftedGames", "...gifted games too", SecCards, SettingKind.Bool,
-			"Also leaves gifted games alone while they can still be refunded to the friend who gave them. Only used when \"Protect refundable games\" is on.",
-			Advanced: true),
-		new("RefundHoldDays", "...for this many days", SecCards, SettingKind.Int,
-			"How many days a newly bought game is left alone. Steam's refund window is 14 days, so raise this only if you want extra time to decide.",
-			Advanced: true, Min: 1, Max: 90),
 		new("FarmInSittings", "Farm in sittings, not flat out", SecCards, SettingKind.Bool,
 			"Farms cards in a few blocks a day with breaks between them, instead of nonstop. Only makes a real difference on an account with nothing else to idle.",
 			Advanced: true, Mode: "rage"),
 		new("FarmHoursPerDay", "Hours a day to farm", SecCards, SettingKind.Int,
 			"Roughly how many hours a day the farming blocks add up to. It varies each day and runs longer at weekends. Only used when \"Farm in sittings, not flat out\" is on.",
 			Advanced: true, Min: 1, Max: 20, Mode: "rage"),
+		// Robot accounts only. On a human-mode account "When to farm cards" and its own day already decide when cards farm,
+		// and a clock window on top fought them - with night farming and a 9-to-23 window, cards never farmed at all.
 		new("FarmFromHour", "Farm cards only from", SecCards, SettingKind.Int,
 			"Farms cards only from this hour, on a 24-hour clock. Leave this and \"...until\" both at 0 to farm any time.",
-			Advanced: true, Min: 0, Max: 23),
+			Advanced: true, Min: 0, Max: 23, Mode: "rage"),
 		new("FarmUntilHour", "...until", SecCards, SettingKind.Int,
 			"Farms cards up to this hour, on a 24-hour clock. Set it earlier than the start hour to run past midnight, so 22 to 6 farms overnight.",
-			Advanced: true, Min: 0, Max: 24),
+			Advanced: true, Min: 0, Max: 24, Mode: "rage"),
 		new("PostFarmWindDownMinMinutes", "After the last card, keep playing at least", SecCards, SettingKind.Int,
 			"Human mode only. After a game drops its last card, it keeps playing it for a few minutes, then takes a break. Set both to 0 to stop right away.",
 			Advanced: true, Min: 0, Max: 120, Mode: "legit"),
@@ -1042,9 +1066,10 @@ public static class Settings {
 		new("UnpackBoosterPacks", "Open booster packs", SecBadges, SettingKind.Bool,
 			"Opens booster packs that land in the inventory, so their cards count toward badges.",
 			Advanced: true),
-		new("BoosterGames", "Make booster packs for", SecBadges, SettingKind.Text,
-			"Game IDs to turn gems into booster packs for, separated by commas. Steam allows one pack per game a day, only for games that still drop cards. Leave empty to turn it off.",
-			Advanced: true, Placeholder: "730, 440"),
+		// A game list like the others now (search by name, chips with names), where it was a box of numbers to type.
+		new("BoosterPackGames", "Make booster packs for", SecBadges, SettingKind.AppIds,
+			"Games to turn gems into booster packs for. Steam allows one pack per game a day, only for games that still drop cards. Leave it empty to turn it off.",
+			Advanced: true),
 		new("BoosterGems", "Booster packs use", SecBadges, SettingKind.Choice,
 			"Which gems booster packs use when the account has both kinds. Tradable first makes packs you can trade or sell. Untradable first uses up gems that can't go anywhere else.",
 			Advanced: true, Choices: "0 tradable gems first | 1 untradable gems first"),
@@ -1070,9 +1095,6 @@ public static class Settings {
 			Advanced: true),
 		new("AchievementNeverGames", "Never in these games", SecAchievements, SettingKind.AppIds,
 			"Games to leave alone completely. No achievements are unlocked in them and boosts never pick them. In human mode the account's main game is skipped too.",
-			Advanced: true),
-		new("AchievementDlcTrusted", "Games I own all the DLC for", SecAchievements, SettingKind.AppIds,
-			"Games this account owns every DLC of. nocat.farm then unlocks achievements in them as if every DLC were owned.",
 			Advanced: true),
 		new("AchievementGrindGapMinMinutes", "While grinding, one achievement every", SecAchievements, SettingKind.Int,
 			"How far apart achievements unlock during a grind, in minutes. A grind sits on one game, so this is a faster, active pace. Easiest ones go first.",
@@ -1121,19 +1143,14 @@ public static class Settings {
 		new("IncludeFamilyLibrary", "Include family-shared games", SecAchievements, SettingKind.Bool,
 			"Also hunts achievements in games shared with this account through Steam Family. They count on this account like owned games, and owned games always go first.",
 			Advanced: true),
-		new("HoldNewFamilyGames", "Leave brand-new family games alone", SecAchievements, SettingKind.Bool,
-			"Skips a family-shared game while it's new to the library, in case whoever bought it wants a refund. Uses the same number of days as \"Protect refundable games\".",
-			Advanced: true),
 		new("YieldToFamily", "Give a shared game back when they want it", SecAchievements, SettingKind.Bool,
 			"Hands a borrowed family game straight back when someone in the family starts it, and moves on. It stays out of the rotation for 20 minutes after they stop.",
 			Advanced: true),
 		// ── Free stuff ──
-		new("ClaimFreeGames", "Claim free games", SecExtras, SettingKind.Bool,
-			"Watches for paid games given away free to keep and adds them to this account. Free-to-play junk is skipped."),
-		new("ClaimFreeDlc", "...free DLC too", SecExtras, SettingKind.Bool,
-			"Also grabs paid DLC that is marked down to free, like a supporter pack. Steam only gives DLC to accounts that own the game it belongs to, so the rest are skipped. Only used when \"Claim free games\" is on."),
-		new("ClaimFreeDlcBase", "...and its game, if that's free too", SecExtras, SettingKind.Bool,
-			"When a free DLC needs a game this account doesn't have, and that game is free right now too, it claims the game first and then the DLC. Only used when \"...free DLC too\" is on."),
+		// One choice where there were three chained switches (free games, then free DLC too, then the DLC's game too).
+		new("ClaimFree", "Claim free games", SecExtras, SettingKind.Choice,
+			"Watches for paid games given away free to keep and adds them to this account. Free-to-play junk is skipped. Games and DLC also takes paid DLC marked down to free, like a supporter pack. Steam only gives DLC to accounts that own its game, so when that game is free right now too, it claims the game first.",
+			Choices: "0 off | 1 games | 2 games and DLC"),
 		new("ClaimEventItems", "Claim free event items", SecExtras, SettingKind.Bool,
 			"Picks up the free daily sticker during Steam sales and anything that costs 0 points in the Points Shop."),
 		new("DiscoveryQueue", "Go through the discovery queue", SecExtras, SettingKind.Choice,

@@ -1385,8 +1385,8 @@ public sealed class WebHost : IAsyncDisposable {
 				UpdateCheck.Skipped = null;
 			}
 
-			// "When I say update" set to wait: the button queues it for when the accounts are asleep, like 'update accept'.
-			if (Live.Global.UpdateWhenAsked == 1) {
+			// Updates set to "once everyone's asleep": the button queues it for when the accounts are asleep, like 'update accept'.
+			if (Live.Global.UpdateClickWaits) {
 				return Results.Json(new { Message = UpdateCheck.Queue(UpdateCheck.Available).ToString() });
 			}
 
@@ -1709,6 +1709,11 @@ public sealed class WebHost : IAsyncDisposable {
 			return Results.Json(new {
 				On = bot?.Cfg.UnlockAchievements ?? false,
 				Games = pacer?.Snapshot() ?? [],
+				// The games held whole for add-ons Steam says nothing about, asked about one by one - and the answers
+				// already given, so each can be taken back.
+				DlcQuestions = bot == null ? [] : DlcQuestions.For(bot),
+				DlcCarriedOn = bot == null ? [] : DlcQuestions.CarriedOn(bot),
+				DlcLeft = bot == null ? [] : DlcQuestions.LeftPaused(bot),
 				Recent = pacer?.Recent.Take(6) ?? [],
 				Hunt = new {
 					plan.Mode,
@@ -1722,6 +1727,45 @@ public sealed class WebHost : IAsyncDisposable {
 				}
 			});
 		}));
+
+		// The answer to "is it OK to carry on?" for one game: carry on, leave it paused, or take the answer back. Only the
+		// account's own answer, kept in its settings file - nothing is unlocked by it, and a game the account doesn't
+		// own is never asked about anyway.
+		app.MapPost("/api/bots/{name}/achievements/dlc", async (HttpContext ctx, string name) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			Bot? bot = _mgr.Get(name);
+
+			if (bot == null) {
+				return Results.Json(new { ok = false, error = $"There is no account called {name}." }, statusCode: 404);
+			}
+
+			DlcAnswerRequest? body = await ReadJsonAsync<DlcAnswerRequest>(ctx).ConfigureAwait(false);
+
+			if ((body == null) || (body.App == 0)) {
+				return Results.Json(new { ok = false, error = "Which game?" }, statusCode: 400);
+			}
+
+			string answer = body.Answer?.Trim().ToLowerInvariant() ?? "";
+
+			// Only a game it's asking about, or one already answered - not any number sent here.
+			if ((answer is "carryon" or "leave") && !DlcQuestions.Answerable(bot, body.App)) {
+				return Results.Json(new { ok = false, error = new Said("{0}: {1} isn't paused for add-ons it doesn't own, so there's nothing to answer for it.", bot.Name, GameNames.Of(body.App)).ToString() }, statusCode: 400);
+			}
+
+			Said? said = answer switch {
+				"carryon" => DlcQuestions.CarryOn(bot, body.App),
+				"leave" => DlcQuestions.Leave(bot, body.App),
+				"undo" => DlcQuestions.Undo(bot, body.App),
+				_ => null
+			};
+
+			return said is { } done
+				? Results.Json(new { ok = true, note = done.ToString() })
+				: Results.Json(new { ok = false, error = "The answer is carryon, leave or undo." }, statusCode: 400);
+		});
 
 		app.MapPost("/api/theme", async (HttpContext ctx) => {
 			if (!Authorised(ctx)) {
@@ -2074,17 +2118,42 @@ public sealed class WebHost : IAsyncDisposable {
 			return Results.Json(new { Ok = done, Done = done ? picked.Count : 0, Error = done ? "" : "Steam didn't take it - try again" });
 		});
 
-		app.MapGet("/api/bots/{name}/library", (HttpContext ctx, string name) => Guard(ctx, () => {
+		// The first-run setup's picker: the 40 most played of its own games. With ?all=1, every game it can play - shared ones
+		// too, marked - for the settings page's game lists to search by name. Filtered on the page, as it's typed: one fetch,
+		// then nothing more to ask, however big the library.
+		app.MapGet("/api/bots/{name}/library", (HttpContext ctx, string name, string? all) => Guard(ctx, () => {
 			Bot? bot = _mgr.Get(name);
 
 			if (bot == null) {
 				return Results.Json(new { Ready = false, Games = Array.Empty<object>() });
 			}
 
+			if (all == "1") {
+				return Results.Json(new {
+					bot.Library.Ready,
+					Games = bot.Library.Games.OrderByDescending(static g => g.MinutesPlayed)
+						.Select(static g => new { g.AppId, g.Name, Minutes = g.MinutesPlayed, g.Shared }).ToList()
+				});
+			}
+
 			return Results.Json(new {
 				bot.Library.Ready,
 				Games = bot.Library.Games.Where(static g => !g.Shared).OrderByDescending(static g => g.MinutesPlayed).Take(40)
 					.Select(static g => new { g.AppId, g.Name, Minutes = g.MinutesPlayed }).ToList()
+			});
+		}));
+
+		// Every account's games together, for the global game lists ("Never touch these (all accounts)"): one row a game,
+		// with the hours of every account that has it added up.
+		app.MapGet("/api/library", (HttpContext ctx) => Guard(ctx, () => {
+			List<Bot> bots = [.. _mgr.All];
+
+			return Results.Json(new {
+				Ready = bots.Any(static b => b.Library.Ready),
+				Games = bots.SelectMany(static b => b.Library.Games)
+					.GroupBy(static g => g.AppId)
+					.Select(static grp => new { AppId = grp.Key, grp.First().Name, Minutes = grp.Sum(static g => g.MinutesPlayed), Shared = grp.All(static g => g.Shared) })
+					.OrderByDescending(static g => g.Minutes).ToList()
 			});
 		}));
 
@@ -2778,7 +2847,7 @@ public sealed class WebHost : IAsyncDisposable {
 			InventoryValue = bots.Sum(static b => b.Inventory.Total),
 			Currency = PriceBook.Symbol,
 			UpdateAvailable = UpdateCheck.Available,
-			UpdateWaits = Live.Global.UpdateWhenAsked == 1,   // the Update button's dialog says which it will do
+			UpdateWaits = Live.Global.UpdateClickWaits,   // the Update button's dialog says which it will do
 			UpdateUrl = UpdateCheck.Url,
 			// A newer version with no download for this machine yet: the version chip says so, and there's no button.
 			UpdateNoDownloadYet = UpdateCheck.Available == null ? UpdateCheck.NoDownloadYet : null,
@@ -2820,6 +2889,8 @@ public sealed class WebHost : IAsyncDisposable {
 					PersonaHidden = b.PersonaWord is "invisible" or "offline",
 					Seen = b.PlayingAsSeen,
 					NameNotShowing = b.CustomNameNotShowing,
+					// "Is it OK to carry on?" for games held whole for add-ons - shown on the account's card.
+					DlcQuestions = DlcQuestions.For(b),
 					Bans = BotManager.ModuleOf<BanWatch>(b)?.Last is { Any: true } bans ? BanWatch.Summary(bans).ToString() : "",
 					Online = b.IsOnline,
 					Paused = b.Paused,
@@ -2853,6 +2924,13 @@ public sealed class WebHost : IAsyncDisposable {
 					MinutesMonth = (int) History.MinutesOver(30, [b.Name]),
 					// The idle rotation, for the account's "What it plays" panel: "idling 31 of 214 - next batch at 14:10".
 					// Null while it isn't rotating (off, human mode, or everything fits at once).
+					// The overnight games it picked itself (its most-played) while "Games to idle overnight" is empty, for the
+					// Human mode panel - empty when the list has games or banking overnight is off.
+					NightPicked = BotManager.ModuleOf<HumanMode>(b) is { NightPicked: { Count: > 0 } picked } nightHuman
+						? nightHuman.NightPickedNames(picked)
+						: "",
+					// Whether its games have been read: until then an empty pick isn't "nothing it may play".
+					LibraryReady = b.Library.Ready,
 					Rotation = BotManager.ModuleOf<Idler>(b)?.Rotating is { } rot
 						? new { Idling = rot.Now.Count, rot.Total, Next = IdleRotation.When(rot.MovesAt) }
 						: null,
@@ -3036,6 +3114,11 @@ public sealed class WebHost : IAsyncDisposable {
 
 	private sealed class ConfirmRequest {
 		public string? Confirm { get; set; }
+	}
+
+	private sealed class DlcAnswerRequest {
+		public uint App { get; set; }
+		public string? Answer { get; set; }
 	}
 
 	private sealed class AddBotRequest {

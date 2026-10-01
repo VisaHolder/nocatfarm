@@ -1019,7 +1019,6 @@
     "Open its Steam store page": "Steam mağaza sayfasını aç",
     "{0} card(s) - farmed in some of its sittings, between its usual games": "{0} kart - bazı oturumlarda, her zamanki oyunların arasında farmlanır",
     "recent licence: package {0}, {1}, {2}": "yeni lisans: paket {0}, {1}, {2}",
-    "{0} is a free DLC - left alone (\"...free DLC too\" is off)": "{0} ücretsiz bir DLC - alınmadı (\"...ücretsiz DLC'leri de\" kapalı)",
     "{0} is free, but only to owners of {1} - this account doesn't have it": "{0} ücretsiz, ama yalnızca {1} sahiplerine - bu hesapta yok",
     "couldn't claim {0} for its DLC - {1}": "DLC'si için {0} alınamadı - {1}",
     "joined the Steam group {0}": "{0} Steam grubuna katıldı",
@@ -1692,11 +1691,8 @@
     "key queue: {0}": "anahtar sırası: {0}",
     "Friends & comments": "Arkadaşlar ve yorumlar",
     "update: {0}MB downloaded - unpacking": "güncelleme: {0}MB indirildi - açılıyor",
-    "{0} will install when your accounts are asleep (When I say update) - 'update now' installs it right away": "{0} hesapların uyuyunca kurulacak (Güncelle dediğimde) - 'update now' hemen kurar",
     "achievement boost: {0} games to hunt ({1} shared)": "başarım avı: {0} oyun ({1} paylaşılan)",
     "achievement boost: {0} games to hunt": "başarım avı: {0} oyun",
-    "not grinding {0} - still refundable (Protect refundable games)": "{0} kasılmıyor - hâlâ iade edilebilir (İade edilebilir oyunları koru)",
-    "not putting {0} first - still refundable (Protect refundable games)": "{0} öne alınmıyor - hâlâ iade edilebilir (İade edilebilir oyunları koru)",
     "{0}: all {1} card drop(s) in - back to normal": "{0}: {1} kart düşüşünün hepsi geldi - normale dönülüyor",
     "still going for {0}: {1} of {2} card drop(s)": "{0} sürüyor: {2} kart düşüşünden {1}",
     "confirmed trade offer {0} with its authenticator": "{0} numaralı teklif kendi doğrulayıcısıyla onaylandı",
@@ -1918,7 +1914,7 @@
     "  (this PC only, no password)": "(sadece bu bilgisayar, şifresiz)",
     "{0} games, {1} cards to farm - about {2} in all": "{0} oyun, farm edilecek {1} kart - toplam yaklaşık {2}",
     "Too many wrong passwords - try again in {0}.": "Çok fazla yanlış parola - {0} sonra tekrar dene.",
-    "Or type unlock in the nocat.farm window.": "Ya da nocat.farm penceresine unlock yaz.",
+    "Or type dashboard unlock in the nocat.farm window.": "Ya da nocat.farm penceresine dashboard unlock yaz.",
     "You can try again now.": "Şimdi tekrar deneyebilirsin.",
     "dashboard unlocked - you can sign in again": "panelin kilidi açıldı - yeniden giriş yapabilirsin",
     "nothing was locked - the dashboard sign-in works": "kilitli bir şey yoktu - panele giriş çalışıyor",
@@ -2262,10 +2258,10 @@
     "\"{0}\" may come with DLC {1} doesn't own, and Steam doesn't list which achievements that DLC adds ({2}) - it won't be unlocked.": "\"{0}\", {1} hesabında olmayan bir DLC'ye ait olabilir ve Steam o DLC'nin hangi başarımları eklediğini söylemiyor ({2}) - açılmayacak.",
     "{0} left alone - can't tell which achievements come with its DLC": "{0} tanesine dokunulmadı - hangi başarımların DLC'sine ait olduğu bilinmiyor",
     "can't tell which achievements come with its DLC - left alone": "hangi başarımların DLC'sine ait olduğu bilinmiyor - dokunulmuyor",
-    "see 'dlcach {0} {1}'": "bkz. 'dlcach {0} {1}'",
     "{0}: games with achievements left alone for DLC it doesn't own (never unlocked)": "{0}: sahip olmadığı DLC yüzünden dokunulmayan başarımları olan oyunlar (asla açılmaz)",
     "Couldn't read which DLC {0} owns just now - nothing in {1} is unlocked until it can. Try again in a few minutes.": "{0} hesabının hangi DLC'lere sahip olduğu şu an okunamadı - okunana kadar {1} içinde hiçbir şey açılmaz. Birkaç dakika sonra tekrar dene.",
     "Held: {0} is missing DLC, and Steam doesn't list which achievements they add - so {1} achievement(s) outside the DLC it owns are left alone.": "Bekletiliyor: {0} hesabında bazı DLC'ler yok ve Steam bunların hangi başarımları eklediğini söylemiyor - bu yüzden sahip olduğu DLC'lerin dışındaki {1} başarıma dokunulmuyor.",
+    "{0} is missing DLC, and Steam doesn't list which achievements they add - but every achievement outside the DLC it owns is already unlocked, so there's nothing to hold.": "{0} hesabında eksik DLC var ve Steam bunların hangi başarımları eklediğini söylemiyor - ama sahip olunan DLC dışındaki tüm başarımlar zaten açık, yani bekletilecek bir şey yok.",
     "its store page is the game's own": "mağaza sayfası oyunun kendi sayfası",
     "it isn't on the store any more": "artık mağazada değil",
     "the store's names for its achievements aren't in the game's list": "mağazadaki başarım adları oyunun listesinde yok",
@@ -2281,11 +2277,51 @@
     "{0}: can't tell which achievements come with its DLC - nothing to grind": "{0}: hangi başarımların DLC'sine ait olduğu bilinmiyor - grind edilecek bir şey yok",
     "{0}: {1}/{2} - can't tell which achievements come with its DLC - left alone": "{0}: {1}/{2} - hangi başarımların DLC'sine ait olduğu bilinmiyor - dokunulmuyor",
     "Playing {0} — {1}; can't tell which achievements come with its DLC, so the rest are left alone.": "{0} oynanıyor - {1}; hangi başarımların DLC'sine ait olduğu bilinmiyor, bu yüzden kalanlara dokunulmuyor.",
-    "Nothing held in {0} - you listed them as owning all their DLC": "{0} içinde bekletilen yok - tüm DLC'lerine sahip olduğunu belirttin",
-    "Trusted: you listed it as owning all its DLC (\"Games I own all the DLC for\"), so nothing in it is held for DLC.": "Güvenilir: tüm DLC'lerine sahip olduğunu belirttin (\"Tüm DLC'lerine sahip olduğum oyunlar\"), bu yüzden içinde DLC yüzünden bekletilen bir şey yok.",
-    "not in its licences, but counted as owned - you listed the game": "lisanslarında yok ama sahip sayılıyor - oyunu listeye ekledin",
-    "If {0} owns all of {1}'s DLC, add {2} to \"Games I own all the DLC for\" in its settings - then nothing in it is held for DLC.": "{0}, {1} oyununun tüm DLC'lerine sahipse, ayarlarında {2} oyununu \"Tüm DLC'lerine sahip olduğum oyunlar\" listesine ekle - o zaman içinde DLC yüzünden bekletilen bir şey kalmaz.",
-    "If this account owns all its DLC, add the game to “{0}”.": "Bu hesap tüm DLC'lerine sahipse oyunu “{0}” listesine ekle."
+    "see 'dlc {0} {1}'": "bkz. 'dlc {0} {1}'",
+    "Nothing held in {0} - you said carry on": "{0} içinde bekletilen bir şey yok - devam et dedin",
+    "Trusted: you said {0} owns what matters, so nothing in it is held just because Steam doesn't say which add-on an achievement comes with.": "Güvenilir: {0} için önemli olanlara sahip dedin, bu yüzden içinde sırf Steam bir başarımın hangi eklentiden geldiğini söylemediği için bekletilen bir şey yok.",
+    "Trusted: you said {0} owns what matters. {1} achievement(s) from {2}, which it doesn't own, are still left alone.": "Güvenilir: {0} için önemli olanlara sahip dedin. Sahip olmadığı {2} içinden {1} başarıma hâlâ dokunulmuyor.",
+    "If {0} owns what matters in {1}, answer on the dashboard or type 'dlc carryon {0} {2}'. Achievements that certainly come with an add-on it doesn't own stay locked.": "{0}, {1} içinde önemli olanlara sahipse panelden yanıtla ya da 'dlc carryon {0} {2}' yaz. Sahip olmadığı bir eklentiden geldiği kesin olan başarımlar kilitli kalır.",
+    "{0}: carrying on with {1}. Only achievements that certainly come with an add-on it doesn't own stay locked.": "{0}: {1} ile devam ediliyor. Yalnızca sahip olmadığı bir eklentiden geldiği kesin olan başarımlar kilitli kalır.",
+    "{0}: {1} stays paused for achievements. It won't be asked about again unless its add-ons change.": "{0}: {1} başarımlar için duraklatılmış kalıyor. Eklentileri değişmedikçe bir daha sorulmayacak.",
+    "{0}: there's no answer for {1} to take back.": "{0}: {1} için geri alınacak bir yanıt yok.",
+    "{0}: took back \"carry on\" for {1}. Nothing in it is unlocked on a guess any more.": "{0}: {1} için \"devam et\" geri alındı. İçinde artık tahminle hiçbir şey açılmıyor.",
+    "{0}: {1} will be asked about again.": "{0}: {1} yeniden sorulacak.",
+    "Which game? Its name or its appID.": "Hangi oyun? Adı ya da appID'si.",
+    "{0} has no game called \"{1}\". Try its appID - the number in its store link.": "{0} hesabında \"{1}\" adında bir oyun yok. appID'sini dene - mağaza bağlantısındaki sayı.",
+    "More than one game matches \"{0}\": {1}. Type more of the name, or the appID.": "\"{0}\" ile birden fazla oyun eşleşiyor: {1}. Adın daha fazlasını ya da appID'yi yaz.",
+    "{0}: {1} is paused for achievements - it has add-ons this account doesn't own. Answer on the dashboard, or 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.": "{0}: {1} başarımlar için duraklatıldı - bu hesabın sahip olmadığı eklentileri var. Panelden yanıtla ya da 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.",
+    "Only skin, team and other packs are missing.": "Yalnızca kaplama, takım ve benzeri paketler eksik.",
+    "Missing: {0}": "Eksik: {0}",
+    "Missing: {0} add-ons": "Eksik: {0} eklenti",
+    "{0} is paused for achievements. It has add-ons this account doesn't own, and Steam doesn't say which of them come with achievements.": "{0} başarımlar için duraklatıldı. Bu hesabın sahip olmadığı eklentileri var ve Steam hangilerinin başarım getirdiğini söylemiyor.",
+    "Achievements that certainly come with an add-on it doesn't own stay locked either way.": "Sahip olmadığı bir eklentiden geldiği kesin olan başarımlar her durumda kilitli kalır.",
+    "I own what matters - carry on": "Önemli olanlar bende - devam et",
+    "Leave it paused": "Duraklatılmış kalsın",
+    "You said carry on for:": "Devam et dediğin oyunlar:",
+    "undo": "geri al",
+    "You said leave it paused for:": "Duraklatılmış kalsın dediğin oyunlar:",
+    "ask again": "yeniden sor",
+    "not grinding {0} - still refundable (Protect refunds)": "{0} kasılmıyor - hâlâ iade edilebilir (İadeleri koru)",
+    "not putting {0} first - still refundable (Protect refunds)": "{0} öne alınmıyor - hâlâ iade edilebilir (İadeleri koru)",
+    "asleep, no games chosen - idling your {0} most-played game(s): {1} · up {2}": "uyuyor, oyun seçilmedi - en çok oynadığın {0} oyunda saat biriktiriyor: {1} · {2} kalkacak",
+    "asleep · up {0} · nothing to bank overnight - add games to the overnight list": "uyuyor · {0} kalkacak · gece biriktirecek bir şey yok - gece listesine oyun ekle",
+    "asleep - back around {0}. Nothing to bank overnight: add games to the overnight list": "uyuyor - {0} civarı döner. Gece biriktirecek bir şey yok: gece listesine oyun ekle",
+    "asleep - no games chosen, so banking hours quietly on your most-played until {0}: {1}": "uyuyor - oyun seçilmedi, bu yüzden {0} saatine kadar en çok oynadıklarında sessizce saat biriktiriyor: {1}",
+    "Overnight it goes invisible and, with no games chosen, idles your most-played: {0}.": "Gece görünmez olur ve oyun seçilmediği için en çok oynadıklarında saat biriktirir: {0}.",
+    "Nothing to bank overnight yet: add games to \"Games to idle overnight\".": "Gece henüz biriktirecek bir şey yok: “Gece için oyunlar” listesine oyun ekle.",
+    "{0} is a free DLC - left alone (\"Claim free games\" is on games only)": "{0} ücretsiz bir DLC - alınmadı (\"Ücretsiz oyunları al\" yalnızca oyunlarda)",
+    "{0} will install when your accounts are asleep - 'update now' installs it right away": "{0} hesapların uyuyunca kurulacak - 'update now' hemen kurar",
+    "Search by name, or paste an appID": "Ada göre ara ya da bir appID yapıştır",
+    "appID {0} - open its Steam store page": "appID {0} - Steam mağaza sayfasını aç",
+    "No game in its library matches - paste its appID or store link.": "Kütüphanesinde eşleşen oyun yok - appID'sini ya da mağaza bağlantısını yapıştır.",
+    "Its games haven't been read yet - paste an appID or store link.": "Oyunları henüz okunmadı - bir appID ya da mağaza bağlantısı yapıştır.",
+    "{0}: {1} hasn't been looked at since the app started - try again in a few minutes.": "{0}: {1} uygulama açıldığından beri henüz incelenmedi - birkaç dakika sonra tekrar dene.",
+    "{0}: {1} isn't paused for add-ons it doesn't own, so there's nothing to answer for it.": "{0}: {1}, sahip olmadığı eklentiler yüzünden duraklatılmış değil, yani yanıtlanacak bir şey yok.",
+    "Type more of the game's name, or its appID.": "Oyunun adından biraz daha yaz ya da appID'sini yaz.",
+    "{0}: Claim free games now also claims a free DLC's game when that's free too - that was its own switch, and it was off.": "{0}: Ücretsiz oyunları al artık ücretsiz bir DLC'nin oyununu da, o da ücretsizse alıyor - bu ayrı bir anahtardı ve kapalıydı.",
+    "{0}: Bank hours overnight was on with no games listed, which banked nothing - switched off so nothing changes. Turn it on to idle its most-played games overnight.": "{0}: Gece saat biriktir açıktı ama listede oyun yoktu, yani hiçbir şey biriktirmiyordu - hiçbir şey değişmesin diye kapatıldı. Gece en çok oynadığı oyunlarda saat biriktirmesi için aç.",
+    "Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).": "Gece görünmez olur ve oyun seçilmediği için en çok oynadığı {0} oyunda saat biriktirir."
   },
   "settings": {
     "WebEnabled": {
@@ -2577,11 +2613,11 @@
     },
     "OfflineIdleAtNight": {
       "label": "Gece saat biriktir",
-      "tip": "Uyurken görünmez olur ve saat biriktirmeye devam eder. Böylece arkadaşlar onu çevrimdışı görürken saatler yine sayılır. “Kartlar ne zaman toplansın” kartları geceye veriyorsa önce onlar toplanır."
+      "tip": "Uyurken görünmez olur ve “Gece için oyunlar” listesindeki oyunlarda - hiçbiri seçilmemişse en çok oynadığı oyunlarda - saat biriktirmeye devam eder. Böylece arkadaşlar onu çevrimdışı görürken saatler yine sayılır. “Kartlar ne zaman toplansın” kartları geceye veriyorsa önce onlar toplanır."
     },
     "OfflineIdleGames": {
       "label": "Gece için oyunlar",
-      "tip": "Geceleri çevrimdışı görünürken saat biriktirilecek oyunlar. Birkaçı aynı anda çalışabilir. Yalnızca “Gece saat biriktir” açıkken kullanılır."
+      "tip": "Geceleri çevrimdışı görünürken saat biriktirilecek oyunlar. Birkaçı aynı anda çalışabilir. Boş bırakırsan yerine en çok oynadığı oyunlar kullanılır. Yalnızca “Gece saat biriktir” açıkken kullanılır."
     },
     "IdleGames": {
       "label": "Saat biriktirilecek oyunlar",
@@ -2624,18 +2660,6 @@
     "AchievementMaxCompletionPct": {
       "label": "Şundan fazlasını tamamlama",
       "tip": "Herhangi bir oyunu en fazla yüzde kaç tamamlayacağı. Birkaçını kazanılmamış bırakmak gerçek bir kütüphane gibi görünür. Bir oyun oraya ulaşınca av onu kalıcı olarak bırakır - bu değeri yükseltirsen geri gelir. grind komutu bunu yok sayar."
-    },
-    "ClaimFreeGames": {
-      "label": "Ücretsiz oyunları al",
-      "tip": "Kalıcı olarak ücretsiz dağıtılan ücretli oyunları takip eder ve bu hesaba ekler. Oynaması ücretsiz çöp oyunlar atlanır."
-    },
-    "ClaimFreeDlc": {
-      "label": "...ücretsiz DLC'leri de",
-      "tip": "Ücretsize düşen ücretli DLC'leri de alır, örneğin bir destekçi paketi. Steam DLC'yi yalnızca ait olduğu oyuna sahip hesaplara verir, diğerleri atlanır. Yalnızca \"Ücretsiz oyunları al\" açıkken kullanılır."
-    },
-    "ClaimFreeDlcBase": {
-      "label": "...ve oyunu da ücretsizse onu da",
-      "tip": "Ücretsiz bir DLC bu hesapta olmayan bir oyun gerektiriyorsa ve o oyun da şu an ücretsizse, önce oyunu sonra DLC'yi alır. Yalnızca \"...ücretsiz DLC'leri de\" açıkken kullanılır."
     },
     "CraftBadges": {
       "label": "Kart setlerinden rozet üret",
@@ -2788,19 +2812,15 @@
       "choices": "0 kapalı | 1 seçtiğiniz oyunlar | 2 tüm tek oyunculu oyunlar"
     },
     "SkipRefundableGames": {
-      "tip": "Yeni aldığın oyunlara dokunmaz, böylece onları hâlâ iade edebilirsin. Steam 2 saat oynandıktan sonra iadeyi reddeder. Bu yüzden iade süresi bitene kadar hiçbir şey o oyunlarda saat biriktirmez, kart toplamaz veya başarım kasmaz.",
-      "label": "İade edilebilir oyunları koru"
-    },
-    "ProtectGiftedGames": {
-      "label": "...hediye edilen oyunları da",
-      "tip": "Hediye edilen oyunlara da, onları veren arkadaşa hâlâ iade edilebildikleri sürece dokunmaz. Yalnızca “İade edilebilir oyunları koru” açıkken kullanılır."
+      "tip": "Bir oyun hâlâ iade edilebilirken ona dokunmaz, böylece hiçbir şey Steam'in 2 saatini aşacak şekilde orada saat biriktirmez, kart toplamaz, kasmaz ya da başarım avlamaz. Son 14 günde satın alınan veya hediye edilen oyunlar ile aile kütüphanesine yeni gelen oyunlar ilk 14 gün boyunca kapsanır.",
+      "label": "İadeleri koru"
     },
     "ShowInventoryValue": {
       "tip": "Bu hesabın envanterinin Steam pazar fiyatlarıyla ne ettiğini hesaplar ve panoda gösterir. Yalnızca birkaç kartı olan hesaplarda kapat.",
       "label": "Envanterinin ne ettiğini hesapla"
     },
     "CheckForUpdates": {
-      "tip": "Yeni sürümü kontrol eder ve günlükte, Telegram'da ve Discord'da söyler. Kapatmak Kendini güncelle'yi de durdurur.",
+      "tip": "Yeni sürümü kontrol eder ve günlükte, Telegram'da ve Discord'da söyler. Kapatmak gece kendiliğinden kurmayı da durdurur.",
       "label": "Güncelleme varsa haber ver"
     },
     "UpdateReminders": {
@@ -2844,18 +2864,14 @@
       "label": "Hiç oynamadığın oyunları atla",
       "tip": "Kendin hiç açmadığın oyunları atlar, böylece hiçbiri ilk oynama süresini buradan almaz."
     },
-    "RefundHoldDays": {
-      "label": "...şu kadar gün boyunca",
-      "tip": "Yeni alınmış bir oyuna kaç gün dokunulmayacağı. Steam'in iade süresi 14 gündür. Bunu yalnızca karar vermek için fazladan zaman istiyorsan artır."
-    },
     "FarmCardsWhen": {
       "label": "Kartlar ne zaman toplansın",
-      "tip": "Yalnızca insan modunda - bu OTOMATİK farmlamadır: kartlı oyunları nocat.farm kendisi seçer. Gündüz: kartlar normal oturumlarında toplanır. Gece: yalnızca uyurken. Her zaman: bitene kadar aralıksız. Karışık: bazı oturumlar kart toplar, kalanı her zamanki oyunlarını oynar, böylece kartlar günler içinde yavaş yavaş gelir. Önce tek bir oyunun kartlarını mı istiyorsun? drops <account> <appID> <count> yaz (ör. drops myaccount 460920 2 = önce Steep'ten 2 kart) - insan modundaki bir hesapta yine molalar ve yatma saatiyle normal oturumlarda oynar.",
+      "tip": "Bu hesabın ne zaman kart topladığı - kartlı oyunları kendisi seçer. Gündüz: normal oturumlarında. Gece: yalnızca uyurken. Her zaman: bitene kadar aralıksız. Karışık: bazı oturumlar kart toplar, kalanı her zamanki oyunlarını oynar, böylece kartlar birkaç gün içinde gelir.",
       "choices": "0 gündüz | 1 yalnızca gece | 2 her zaman | 3 karışık, bazı oturumlar kart, kalanı kendi oyunları"
     },
     "CardSittingsPct": {
-      "label": "Kart farmlayan oturumların payı (karışık)",
-      "tip": "“Kartlar ne zaman toplansın” karışık olarak ayarlıyken oturumların kabaca yüzde kaçının kart topladığı. Yüksek değer kartları daha çabuk bitirir, düşük değer her zamanki oyunlarına daha çok zaman bırakır. Bir düşüş turu (drops komutu) en az ana oyunun payını alır, böylece seçtiğin oyunun sırası daha erken gelir."
+      "label": "Kart farmlayan oturumların payı",
+      "tip": "Oturumların kabaca yüzde kaçının kart topladığı. Yüksek değer kartları daha çabuk bitirir, düşük değer her zamanki oyunlarına daha çok zaman bırakır. Bir düşüş turu (drops komutu) en az ana oyunun payını alır, böylece seçtiğin oyunun sırası daha erken gelir."
     },
     "FarmFromHour": {
       "label": "Kartları yalnızca şu saatten sonra topla",
@@ -2909,10 +2925,6 @@
       "label": "Paylaşılan oyunu istediklerinde geri ver",
       "tip": "Ailedeki biri ödünç alınan bir aile oyununu başlatınca onu hemen geri verir ve devam eder. O kişi bıraktıktan sonra 20 dakika boyunca oyun sıraya girmez."
     },
-    "HoldNewFamilyGames": {
-      "label": "Yeni gelen aile oyunlarına dokunma",
-      "tip": "Aileyle paylaşılan bir oyun kütüphanede yeniyken onu atlar, satın alan kişi iade isterse diye. “İade edilebilir oyunları koru” ile aynı gün sayısını kullanır."
-    },
     "IncludeFamilyLibrary": {
       "label": "Aileyle paylaşılan oyunları dahil et",
       "tip": "Bu hesapla Steam Ailesi üzerinden paylaşılan oyunlarda da başarım avlar. Bunlar bu hesapta sahip olunan oyunlar gibi sayılır. Sahip olunan oyunlar her zaman önce gelir."
@@ -2928,10 +2940,6 @@
     "AchievementNeverGames": {
       "label": "Bu oyunlarda asla",
       "tip": "Tamamen dokunulmayacak oyunlar. Bunlarda hiç başarım açılmaz ve hızlandırmalar onları asla seçmez. İnsan modunda hesabın ana oyunu da atlanır."
-    },
-    "AchievementDlcTrusted": {
-      "label": "Tüm DLC'lerine sahip olduğum oyunlar",
-      "tip": "Bu hesabın tüm DLC'lerine sahip olduğu oyunlar. nocat.farm bunlardaki başarımları her DLC'ye sahipmiş gibi açar."
     },
     "AchievementGames": {
       "label": "Yalnızca bu oyunlar",
@@ -2957,10 +2965,6 @@
     "SellPerRun": {
       "label": "Seferde kart sayısı",
       "tip": "Her turda kaç fazla kartın ilana konduğu, en değerlisinden başlayarak. Birkaçar birkaçar koymak doğal görünür."
-    },
-    "BoosterGames": {
-      "label": "Kart paketi oluşturulacak oyunlar",
-      "tip": "Mücevherlerin kart paketine çevrileceği oyun kimlikleri, virgülle ayrılmış. Steam her oyun için günde bir pakete izin verir, yalnızca hâlâ kart düşüren oyunlarda. Kapatmak için boş bırak."
     },
     "BoosterGems": {
       "label": "Kart paketleri şunu kullansın",
@@ -3214,11 +3218,6 @@
       "label": "İnsan modu: av oyununun ağırlığı",
       "tip": "Yalnızca insan modunda. Avlanan oyun, oynadığı oyunlara katılır ve bu, ne sıklıkla geldiğidir - \"Oyunlar ve sıklığı\"ndaki gibi bir ağırlık. Molalar ve uyku saatiyle normal oturumlarda oynanır, başka bir oyunu asla yarıda kesmez."
     },
-    "AutoUpdate": {
-      "label": "Kendini güncelle",
-      "tip": "Yeni sürüm çıkınca ne olacağı. Bana söyle: günlükte, Telegram'da ve Discord'da söyler, sen update accept yazarsın. Gece kur: aşağıdaki saatlerde kendiliğinden kurar, sadece insan modundaki hiçbir hesap uyanık değilken ve kimse bir hesapta oynamıyorken, öncesinde ve sonrasında haber verir. Docker'da ya da Linux hizmeti olarak değil; onlar elle güncellenir.",
-      "choices": "0 bana söyle | 1 gece kur"
-    },
     "AutoUpdateFromHour": {
       "label": "...arasında (başlangıç)",
       "tip": "Kendiliğinden kurabileceği en erken saat, 24 saat biçiminde."
@@ -3299,11 +3298,6 @@
       "label": "Oyunların gerçek süresine göre tempo",
       "tip": "Her oyunun sıradan bir oyuncuda ne kadar sürdüğüne bakar (SteamSpy'ın herkese açık rakamları - yalnızca oyunun kimliği gönderilir) ve başarımları buna göre ayarlar: nadir olanlar o oyunun hızında açılır, bir bölüm saatlerden payını ister ve \"oyunu bitir\" bir oynanışın çoğundan önce gelmez."
     },
-    "UpdateWhenAsked": {
-      "label": "Güncelle dediğimde",
-      "tip": "update accept ve Güncelle düğmesinin yaptığı. Hemen: şimdi kurar. Hesaplarım uyuyunca: insan modundaki hiçbir hesap uyanık değilken, kimse bir hesapta oynamıyorken ve bekleyen takas ya da hediye yokken kurar - gece boyu açık robot hesaplar engel olmaz. İnsan modunda hesap yoksa aşağıdaki saatleri bekler. update now her zaman hemen kurar. Docker'da ya da Linux hizmeti olarak değil; onlar elle güncellenir.",
-      "choices": "0 hemen | 1 hesaplarım uyuyunca"
-    },
     "DiscordSecondLine": {
       "label": "İkinci satır",
       "tip": "Hesap adları kapalıyken Discord kartının ikinci satırının saydığı şey: bugün düşen kartlar ya da son bir hafta veya son bir ayda oynanan saatler - tüm hesaplarının toplamı.",
@@ -3315,7 +3309,7 @@
     },
     "IdleWholeLibrary": {
       "label": "Tüm kütüphanem",
-      "tip": "\"Saat biriktirilecek oyunlar\" listesindekilerden sonra, hesabın sahip olduğu her oyunda saat biriktirir. \"Bunlara asla dokunma\" listesindekileri, iade edilebilir oyunları ve aileyle paylaşılan oyunları (\"Aileyle paylaşılan oyunları dahil et\" açık değilse) atlar. Steam aynı anda 32 oyun çalıştırır, bu yüzden her oyuna sıra gelsin diye \"Listeyi sırayla döndür\" ayarını aç."
+      "tip": "\"Saat biriktirilecek oyunlar\" listesindekilerden sonra, hesabın sahip olduğu her oyunda saat biriktirir. \"Bunlara asla dokunma\" listesindekileri, aileyle paylaşılan oyunları (\"Aileyle paylaşılan oyunları dahil et\" açık değilse) ve \"İadeleri koru\"nun beklettiği oyunları atlar. Steam aynı anda 32 oyun çalıştırır, bu yüzden her oyuna sıra gelsin diye \"Listeyi sırayla döndür\" ayarını aç."
     },
     "RotateIdleGames": {
       "label": "Listeyi sırayla döndür",
@@ -3332,7 +3326,7 @@
     },
     "NewGamesFirst": {
       "label": "Yeni oyunları başta daha çok oyna",
-      "tip": "Kütüphaneye yeni gelen bir oyun, satın alınmış, hediye ya da ücretsiz, 3 ila 10 gün boyunca her gün biraz azalan ek oturumlar alır, yeni bir şey denemek gibi. Hâlâ iade edebileceğin oyunlara, kara listedeki ya da aileyle paylaşılan oyunlara ve diğer hesaplarının çalıştırdığı oyunlara dokunulmaz."
+      "tip": "Kütüphaneye yeni gelen bir oyun, satın alınmış, hediye ya da ücretsiz, 3 ila 10 gün boyunca her gün biraz azalan ek oturumlar alır, yeni bir şey denemek gibi. Kara listedeki ya da aileyle paylaşılan oyunlara ve diğer hesaplarının çalıştırdığı oyunlara dokunulmaz; \"İadeleri koru\"nun beklettiği bir oyun da bekleme bitene kadar bekler."
     },
     "LongerRhythms": {
       "label": "Sakin dönemler ve geç geceler",
@@ -3340,7 +3334,7 @@
     },
     "JoinFriends": {
       "label": "Bazen bir arkadaşın oynadığını oyna",
-      "tip": "Bir Steam arkadaşı bu hesabın sahip olduğu bir oyundayken, arada bir sonraki oturum için o oyunu seçer; günde en çok iki kez ve yalnızca uyanıkken. Kendi hesapların ve onların çalıştırdığı oyunlar yok sayılır, kara listedeki ve iade edilebilir oyunlar da."
+      "tip": "Bir Steam arkadaşı bu hesabın sahip olduğu bir oyundayken, arada bir sonraki oturum için o oyunu seçer; günde en çok iki kez ve yalnızca uyanıkken. Kendi hesapların ve onların çalıştırdığı oyunlar yok sayılır, kara listedeki oyunlar ve \"İadeleri koru\"nun beklettiği oyunlar da."
     },
     "StuckAlarm": {
       "label": "Takılan hesabı yeniden başlat",
@@ -3362,6 +3356,29 @@
     "WeeklyReportHour": {
       "label": "Haftalık rapor · saat",
       "tip": "Haftalık raporun geldiği saat, 24 saat biçiminde."
+    },
+    "OfflineIdleTopGames": {
+      "label": "...ya da hiçbiri seçilmemişse en çok oynananlar",
+      "tip": "“Gece için oyunlar” boşsa, gece hesabın en çok oynadığı bu kadar oyunda saat biriktirir. 1 ya da 2 en doğal görünür - aynı anda çok sayıda oyun, selfcheck'in ilk yakaladığı şeydir."
+    },
+    "ClaimFree": {
+      "label": "Ücretsiz oyunları al",
+      "tip": "Kalıcı olarak ücretsiz dağıtılan ücretli oyunları takip eder ve bu hesaba ekler. Oynaması ücretsiz çöp oyunlar atlanır. Oyunlar ve DLC, ücretsize düşen ücretli DLC'leri de alır, örneğin bir destekçi paketi. Steam DLC'yi yalnızca oyununa sahip hesaplara verir; o oyun da şu an ücretsizse önce oyunu alır.",
+      "choices": "0 kapalı | 1 oyunlar | 2 oyunlar ve DLC"
+    },
+    "UpdateMode": {
+      "label": "Güncellemeler",
+      "tip": "Yeni sürüm çıkınca ne olacağı. Her zaman önce günlükte, Telegram ve Discord'da haber verir. Tıklayınca, herkes uyuyunca kur: Güncelle düğmesi ya da update accept, hesapların uyuyunca kurar - uyanık insan modu hesabı yok, kimse oynamıyor, bekleyen takas ya da hediye yok. Tıklayınca kur: hemen. Gece kendi kursun: aşağıdaki saatlerde sakin bir anda kendisi kurar, önce ve sonra haber verir. update now her zaman hemen kurar. Docker'da ya da Linux hizmeti olarak değil; onlar elle güncellenir.",
+      "choices": "0 tıklayınca, herkes uyuyunca kur | 1 tıklayınca kur | 2 gece kendi kursun"
+    },
+    "ReactionSpeed": {
+      "label": "Tepki hızı",
+      "tip": "Ne kadar çabuk tepki verdiği ve molalarının ne kadar sürdüğü. Her bekleme yine rastgeledir - Hızlı yarıya indirir, Rahat iki katına çıkarır.",
+      "choices": "0 normal | 1 hızlı | 2 rahat"
+    },
+    "BoosterPackGames": {
+      "label": "Kart paketi oluşturulacak oyunlar",
+      "tip": "Değerli taşların güçlendirici paketlere dönüştürüleceği oyunlar. Steam oyun başına günde bir paket verir, yalnızca hâlâ kart düşüren oyunlar için. Kapatmak için boş bırak."
     }
   }
 }

@@ -41,7 +41,7 @@ Pick commands from Discord's `/` menu:
 |---|---|
 | `/status` | A summary of every account, the last 24 hours, and the version |
 | `/dashboard` | The dashboard's links: this PC, the same Wi-Fi, and from anywhere |
-| `/dashboard anywhere on` (or `/anywhere on`) | Opens the dashboard from anywhere (your router forwards the port) and answers with the link. `/dashboard anywhere off` closes it; `/anywhere` on its own says whether it's on |
+| `/anywhere on` | Opens the dashboard from anywhere (your router forwards the port) and answers with the link. `/anywhere off` closes it; `/anywhere` on its own says whether it's on |
 | `/cards`, `/human`, `/offers`, `/confirmations`, `/2fa`, `/stats`, `/update` | The everyday ones. Each has an optional `args` box for what goes after it: `/human args: week`, `/offers args: farm1`, `/update args: accept`. |
 | `/nocat command: ...` | Any console command, like `/nocat command: pause farm1 30` or `/nocat command: trade accept myaccount 4` |
 | `/help` | The command list |

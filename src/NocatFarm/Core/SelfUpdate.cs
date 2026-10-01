@@ -817,7 +817,7 @@ public static class SelfUpdate {
 				return Fail(new Said("update failed: couldn't back up the current version ({0})", Log.Scrub(e.Message)));
 			}
 
-			await File.WriteAllTextAsync(script, OperatingSystem.IsWindows() ? SwapScript(Environment.ProcessId) : UnixSwapScript, ct).ConfigureAwait(false);
+			await File.WriteAllTextAsync(script, OperatingSystem.IsWindows() ? SwapScript(Environment.ProcessId) : UnixScript, ct).ConfigureAwait(false);
 
 			// Skipped while it downloaded: stopped here, before a single account is signed out for nothing.
 			if (UpdateCheck.IsSkipped(tag)) {
@@ -1079,6 +1079,13 @@ public static class SelfUpdate {
 	/// expression, so "nocat.farm (1)" never matched itself - a good update was taken for a crash and put back - and
 	/// pkill -f couldn't stop anything there, or stopped another copy's.
 	/// </remarks>
+	/// <summary>
+	/// The swap script as the shell gets it: one \n per line, whatever this file's own line endings were when it was
+	/// built. The releases are built on Windows, where the source can have \r\n - and 1.6.4's script did: sh read every
+	/// line with a \r on the end, failed on its first command, and the app it had just closed never came back.
+	/// </summary>
+	internal static string UnixScript => UnixSwapScript.ReplaceLineEndings("\n");
+
 	private const string UnixSwapScript = """
 		#!/bin/sh
 		# nocat.farm self-update. Written by the app, run once. The options to start with are this script's arguments.

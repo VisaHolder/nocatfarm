@@ -400,7 +400,7 @@ internal static class HumanHabits {
 	/// ends, since it can't be touched before then anyway.
 	/// </summary>
 	internal static DateTime TrialStart(AppOwnership owned, BotConfig cfg) =>
-		cfg.SkipRefundableGames && owned.Refundable(cfg.ProtectGiftedGames) ? owned.Since.AddDays(Math.Max(1, cfg.RefundHoldDays)) : owned.Since;
+		cfg.SkipRefundableGames && owned.Refundable ? owned.Since.AddDays(Core.RefundGuard.HoldDays) : owned.Since;
 
 	/// <summary>How keen on it today: all in on its first day, less each day after, nothing once its days are up.</summary>
 	internal static double TrialStrength(DateTime start, DateTime now, int days) {

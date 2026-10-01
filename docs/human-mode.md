@@ -9,7 +9,12 @@ The account then plays one game at a time, in sittings of believable length, wit
 Weekdays and weekends look different, and now and then it takes a day off. It takes short breaks and meal breaks,
 sometimes showing Away or offline while it's gone, and at night it goes to bed. With *Bank hours overnight* on (it is
 by default), it goes invisible while asleep and keeps idling the games in *Games to idle overnight*, so hours still
-count while friends see it offline.
+count while friends see it offline. With none chosen, it idles its own most-played game instead (*...or, with none
+chosen, its top games*, 1 by default; 1 or 2 looks the most natural). It only idles games it may play: not
+blacklisted, not held by *Protect refunds*, not a family game unless shared games are allowed, and not one it's
+banned in - the games you put on the list too. The Human mode panel and `human` name the games it picked. An
+account that had *Bank hours overnight* on with an empty list before the most-played pick existed banked nothing,
+so it was switched off when it updated (the log says so): turn it on to idle its most-played games overnight.
 
 It doesn't start a game the moment it signs in. It settles in first, and no game starts until at least 3 minutes
 after sign-in and several checks that you aren't already playing on the account yourself. No setting shortens that.
@@ -19,9 +24,15 @@ time, and while it's asleep they wait for morning (*Only react while awake*, on)
 badges, free games, booster packs and selling run at any hour, just not the moment it signs in. And when you stop
 the account, it finishes up for a few seconds instead of vanishing mid-game.
 
+*Reaction speed* (normal, quick or relaxed) sets all those waits at once: quick halves them and relaxed doubles them,
+each still picked at random, and your own numbers stay as you set them (normal uses them exactly). It covers the
+waits before a gift, a trade, a friend request or a reply, the waits after waking or signing in, settling in, breaks,
+going Away on a break, meals and finishing up when stopped. It never touches how much the account plays, card
+farming, achievements, rep4rep, or the three minutes and checks after signing in before any game starts.
+
 Some settings make no sense on a believable account, so human mode switches them off and hides them: games to idle,
-the custom game name, keep-name-while-farming, farm in sittings, hours a day to farm, farm while appearing offline,
-and log out when finished. They come back unchanged when you turn human mode off.
+the custom game name, keep-name-while-farming, farm in sittings, hours a day to farm, the farm-cards clock window,
+farm while appearing offline and log out when finished. They come back unchanged when you turn human mode off.
 
 ## Setting it up
 
@@ -88,8 +99,8 @@ that isn't in that list, and how long it plays still comes from the hours settin
 list), and `habits myaccount forget` wipes it.
 
 *Play new games more at first* gives a game that has just arrived (bought, gifted or free) extra sittings for 3 to 10
-days, fewer each day, at most 3 sittings a day. Games still refundable (with refund protection on it waits for that
-to end), blacklisted or family-shared games, and games your other accounts are running are left alone.
+days, fewer each day, at most 3 sittings a day. Blacklisted or family-shared games and games your other accounts
+are running are left alone, and with *Protect refunds* on a game still refundable waits until that ends.
 
 *Quiet spells and late nights*: once or twice a month a quiet spell of 2 to 5 days with days about half as long, and
 now and then a Friday or Saturday night that runs one to two and a half hours later. Days off and the hours still
@@ -97,7 +108,7 @@ apply, and `human week` shows the same quiet spells and late nights the real day
 
 *Sometimes play what a friend is playing*: when a Steam friend is in a game this account owns, now and then (at most
 twice a day, only while it's up and between sittings) its next sitting is that game. Your own accounts, anything they
-are running, blacklisted and refundable games, and the main game are never picked this way.
+are running, blacklisted games, games *Protect refunds* is holding, and the main game are never picked this way.
 
 `human myaccount` says what each one that is on is doing today.
 

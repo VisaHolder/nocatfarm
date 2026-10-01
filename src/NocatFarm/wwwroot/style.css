@@ -649,17 +649,21 @@ table.today tr.fleet td:first-child { color: var(--muted); }
 .field .revert:hover { color: var(--text); }
 .field .restart { color: var(--warn); cursor: help; }
 
-.tags { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.tags { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; position: relative; }
 /* Wide enough for its own placeholder - at 150px it read "appID or store UR". */
-.tags .appin { max-width: 190px; }
+.tags .appin { max-width: 220px; }
 .tag { background: var(--panel2); border: 1px solid var(--line); border-radius: 0; padding: 2px 6px; font-size: 12px; display: inline-flex; gap: 5px; align-items: center; }
 .tag b { cursor: pointer; color: var(--muted); font-weight: 400; }
-/* The appID beside a game's name: quieter than the name, and a link to its store page. On its own (name not
-   known yet) it's the whole label, so it keeps the normal text colour until a name sits in front of it. */
-.tag .tagid { color: inherit; text-decoration: none; }
-.tag span + .tagid { color: var(--muted); font-size: 11px; }
-.tag .tagid:hover { text-decoration: underline; color: var(--text); }
+/* The game's name, a link to its store page (the appID is in its tooltip). */
+.tag a { color: inherit; text-decoration: none; }
+.tag a:hover { text-decoration: underline; color: var(--text); }
 .tag b:hover { color: var(--bad); }
+/* The game search's matches, dropped down under its box. */
+.appsug { position: absolute; top: 100%; left: 0; z-index: 6; width: 300px; max-width: 100%; margin-top: 2px;
+  background: var(--panel); border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(0, 0, 0, .35); }
+.appsug .s { padding: 5px 8px; font-size: 12px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.appsug .s.on, .appsug .s:hover { background: var(--panel2); }
+.appsug .none { padding: 6px 8px; white-space: normal; }
 
 .pills { display: flex; flex-wrap: wrap; gap: 5px; }
 .pills .p { font-size: 12px; padding: 4px 10px; border-radius: 0; border: 1px solid var(--line); cursor: pointer; color: var(--muted); }
@@ -1074,6 +1078,15 @@ button.danger:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 .hchip { display: inline-block; align-self: flex-start; font-size: 11px; line-height: 1.6; padding: 1px 7px; border: 1px solid var(--line); background: var(--panel); color: var(--text); white-space: nowrap; max-width: 24ch; overflow: hidden; text-overflow: ellipsis; }
 .hchip.shared { border-style: dashed; }
 .hchip.ghost { color: var(--muted); border-style: dotted; }
+
+/* "Is it OK to carry on?" - a game held whole for add-ons, with the owner's two answers. On the account's card and
+   in its achievements section. The buttons wrap rather than run off a phone's 375px. */
+.dlcask { margin: var(--s2) 0 0; padding: var(--s2) var(--s3); max-width: 90ch; border: 1px solid var(--warn); background: var(--panel2); font-size: 12px; overflow-wrap: anywhere; }
+.dlcask p { margin: 0 0 var(--s1); }
+.dlcask .actions { margin-top: var(--s2); }
+.dlcask .actions button { white-space: normal; text-align: left; }
+.dlcanswered { margin: var(--s2) 0 0; overflow-wrap: anywhere; }
+.dlcanswered a { cursor: pointer; text-decoration: underline; }
 
 /* Recently earned. Deliberately a plain list - it is a feed, and it reads better as one. */
 .unlocks { list-style: none; margin: var(--s3) 0 0; padding: 0; max-width: 90ch; font-size: 12px; }

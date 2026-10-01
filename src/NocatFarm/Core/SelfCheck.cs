@@ -20,6 +20,12 @@ public static class SelfCheck {
 		return Score(bot, privacy);
 	}
 
+	/// <summary>
+	/// How many games bank the night: the overnight list, or the most-played games human mode picks when it's empty (and an
+	/// hour target that needs the night). Without human mode's own answer, just the list.
+	/// </summary>
+	public static int NightGames(Bot bot) => Core.BotManager.ModuleOf<Modules.HumanMode>(bot)?.NightGameCount ?? bot.Cfg.OfflineIdleGames.Count;
+
 	/// <summary>The scoring itself, separate from the network so it can be tested.</summary>
 	internal static Report Score(Bot bot, Privacy.Settings? privacy) {
 		List<Tell> tells = [];
@@ -43,10 +49,16 @@ public static class SelfCheck {
 		int total = recent.Values.Sum();
 		double perDay = total / 14.0 / 60;
 
-		// Where the surplus comes from decides the fix: with human mode on it can only be the overnight list, which
-		// runs every game on it at once all night.
-		int nightGames = bot.Cfg.OfflineIdleGames.Count;
+		// Where the surplus comes from decides the fix: with human mode on it can only be the overnight games, which all
+		// run at once all night - the list, or with the list empty the most-played games picked in its place.
+		int nightGames = NightGames(bot);
+		bool picked = bot.Cfg.OfflineIdleGames.Count == 0;
 		bool nightBank = bot.Cfg.LegitMode && bot.Cfg.OfflineIdleAtNight && (nightGames > 0);
+		// What the list (or the top-games number) itself puts on: the advice is about that. nightGames also counts a dated
+		// hour target that needs the night, and with one of those and a list of one, it said to cut the list "down to one
+		// or two" - which it already was.
+		Modules.HumanMode? human = Core.BotManager.ModuleOf<Modules.HumanMode>(bot);
+		int listGames = picked ? (human?.NightPicked.Count ?? 0) : (human?.ListedNightCount ?? bot.Cfg.OfflineIdleGames.Count);
 
 		// More a day than today's settings could ever bank (every night game all day, plus the day's one game): the
 		// hours are from before human mode, when it idled many games at once. On a robot account switched to human mode
@@ -55,9 +67,13 @@ public static class SelfCheck {
 		string manyFix = fromBefore
 			? "those hours are from before human mode, when it idled many games at once - they leave Steam's two-week count by themselves within 14 days"
 			: nightBank
-				? (nightGames > 2
-					? $"it banks {nightGames} games at once every night - cut OfflineIdleGames down to one or two, or turn OfflineIdleAtNight off"
-					: "the overnight games bank hours all night - turn OfflineIdleAtNight off, or lower WeekdayHours / WeekendHours")
+				? (listGames > 2
+					? picked
+						? $"it banks its {listGames} most-played games at once every night - set OfflineIdleTopGames to 1 or 2, or turn OfflineIdleAtNight off"
+						: $"it banks {listGames} games at once every night - cut OfflineIdleGames down to one or two, or turn OfflineIdleAtNight off"
+					: nightGames > listGames
+						? "the overnight games, and the dated hour targets that need the night, bank hours all night - turn OfflineIdleAtNight off, or give the targets in HourTargets later dates"
+						: "the overnight games bank hours all night - turn OfflineIdleAtNight off, or lower WeekdayHours / WeekendHours")
 				: bot.Cfg.LegitMode ? "lower WeekdayHours / WeekendHours" : "idle fewer games at once, or turn on human mode (one game at a time)";
 
 		if (total > TwoWeeks) {

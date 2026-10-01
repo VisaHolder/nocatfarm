@@ -1019,7 +1019,6 @@
     "Open its Steam store page": "Steam 상점 페이지 열기",
     "{0} card(s) - farmed in some of its sittings, between its usual games": "카드 {0}장 - 평소 게임 사이에 일부 세션에서 파밍",
     "recent licence: package {0}, {1}, {2}": "최근 라이선스: 패키지 {0}, {1}, {2}",
-    "{0} is a free DLC - left alone (\"...free DLC too\" is off)": "{0}은(는) 무료 DLC - 받지 않음('...무료 DLC도'가 꺼짐)",
     "{0} is free, but only to owners of {1} - this account doesn't have it": "{0}은(는) 무료지만 {1} 소유자만 받을 수 있음 - 이 계정에는 없음",
     "couldn't claim {0} for its DLC - {1}": "DLC를 위한 {0}을(를) 받지 못함 - {1}",
     "joined the Steam group {0}": "Steam 그룹 {0}에 가입함",
@@ -1692,11 +1691,8 @@
     "key queue: {0}": "키 대기열: {0}",
     "Friends & comments": "친구 및 댓글",
     "update: {0}MB downloaded - unpacking": "업데이트: {0}MB 받음 - 압축 푸는 중",
-    "{0} will install when your accounts are asleep (When I say update) - 'update now' installs it right away": "{0}은(는) 계정이 잠들면 설치됩니다 (업데이트라고 하면) - 'update now'로 바로 설치",
     "achievement boost: {0} games to hunt ({1} shared)": "업적 사냥: 게임 {0}개 ({1}개 공유)",
     "achievement boost: {0} games to hunt": "업적 사냥: 게임 {0}개",
-    "not grinding {0} - still refundable (Protect refundable games)": "{0} 그라인드 안 함 - 아직 환불 가능 (환불 가능한 게임 보호)",
-    "not putting {0} first - still refundable (Protect refundable games)": "{0} 우선 안 함 - 아직 환불 가능 (환불 가능한 게임 보호)",
     "{0}: all {1} card drop(s) in - back to normal": "{0}: 카드 드롭 {1}개 모두 완료 - 평소대로 복귀",
     "still going for {0}: {1} of {2} card drop(s)": "계속 {0}: 카드 드롭 {1}/{2}",
     "confirmed trade offer {0} with its authenticator": "교환 제안 {0}, 자체 인증기로 확인",
@@ -1918,7 +1914,7 @@
     "  (this PC only, no password)": "(이 PC만, 비밀번호 없음)",
     "{0} games, {1} cards to farm - about {2} in all": "게임 {0}개, 카드 {1}장 - 총 약 {2}",
     "Too many wrong passwords - try again in {0}.": "비밀번호를 너무 많이 틀렸습니다 - {0} 뒤에 다시 시도하세요.",
-    "Or type unlock in the nocat.farm window.": "또는 nocat.farm 창에 unlock을 입력하세요.",
+    "Or type dashboard unlock in the nocat.farm window.": "또는 nocat.farm 창에 dashboard unlock을 입력하세요.",
     "You can try again now.": "이제 다시 시도할 수 있습니다.",
     "dashboard unlocked - you can sign in again": "대시보드 잠금 해제 - 다시 로그인할 수 있습니다",
     "nothing was locked - the dashboard sign-in works": "잠긴 것이 없습니다 - 대시보드 로그인이 됩니다",
@@ -2262,10 +2258,10 @@
     "\"{0}\" may come with DLC {1} doesn't own, and Steam doesn't list which achievements that DLC adds ({2}) - it won't be unlocked.": "\"{0}\"은(는) {1}이(가) 갖고 있지 않은 DLC의 것일 수 있고, Steam은 그 DLC가 어떤 도전 과제를 추가하는지 알려 주지 않습니다({2}) - 달성하지 않습니다.",
     "{0} left alone - can't tell which achievements come with its DLC": "{0}개는 그대로 둠 - 어떤 도전 과제가 DLC의 것인지 알 수 없음",
     "can't tell which achievements come with its DLC - left alone": "어떤 도전 과제가 DLC의 것인지 알 수 없음 - 그대로 둠",
-    "see 'dlcach {0} {1}'": "'dlcach {0} {1}' 참고",
     "{0}: games with achievements left alone for DLC it doesn't own (never unlocked)": "{0}: 갖고 있지 않은 DLC 때문에 그대로 두는 도전 과제가 있는 게임 (달성하지 않음)",
     "Couldn't read which DLC {0} owns just now - nothing in {1} is unlocked until it can. Try again in a few minutes.": "지금은 {0}이(가) 어떤 DLC를 갖고 있는지 읽을 수 없습니다 - 읽을 수 있을 때까지 {1}에서는 아무것도 달성하지 않습니다. 몇 분 뒤에 다시 시도하세요.",
     "Held: {0} is missing DLC, and Steam doesn't list which achievements they add - so {1} achievement(s) outside the DLC it owns are left alone.": "보류: {0}에게 없는 DLC가 있고, Steam은 그 DLC가 어떤 도전 과제를 추가하는지 알려 주지 않습니다 - 그래서 갖고 있는 DLC 밖의 도전 과제 {1}개는 그대로 둡니다.",
+    "{0} is missing DLC, and Steam doesn't list which achievements they add - but every achievement outside the DLC it owns is already unlocked, so there's nothing to hold.": "{0}에는 없는 DLC가 있고, Steam은 그 DLC가 어떤 도전 과제를 추가하는지 알려주지 않습니다 - 하지만 보유한 DLC 밖의 도전 과제는 이미 모두 달성되어 보류할 것이 없습니다.",
     "its store page is the game's own": "상점 페이지가 게임 자체의 페이지임",
     "it isn't on the store any more": "더 이상 상점에 없음",
     "the store's names for its achievements aren't in the game's list": "상점의 도전 과제 이름이 게임 목록에 없음",
@@ -2281,11 +2277,51 @@
     "{0}: can't tell which achievements come with its DLC - nothing to grind": "{0}: 어떤 도전 과제가 DLC의 것인지 알 수 없음 - 그라인드할 것 없음",
     "{0}: {1}/{2} - can't tell which achievements come with its DLC - left alone": "{0}: {1}/{2} - 어떤 도전 과제가 DLC의 것인지 알 수 없음 - 그대로 둠",
     "Playing {0} — {1}; can't tell which achievements come with its DLC, so the rest are left alone.": "{0} 플레이 중 - {1}. 어떤 도전 과제가 DLC의 것인지 알 수 없어 나머지는 그대로 둡니다.",
-    "Nothing held in {0} - you listed them as owning all their DLC": "{0}에서는 보류하지 않음 - DLC를 모두 가졌다고 등록했습니다",
-    "Trusted: you listed it as owning all its DLC (\"Games I own all the DLC for\"), so nothing in it is held for DLC.": "신뢰함: DLC를 모두 가졌다고 등록했으므로(\"DLC를 모두 가진 게임\") DLC 때문에 보류하는 도전 과제가 없습니다.",
-    "not in its licences, but counted as owned - you listed the game": "라이선스에는 없지만 보유로 계산 - 게임을 등록했습니다",
-    "If {0} owns all of {1}'s DLC, add {2} to \"Games I own all the DLC for\" in its settings - then nothing in it is held for DLC.": "{0}이(가) {1}의 DLC를 모두 가졌다면, 설정의 \"DLC를 모두 가진 게임\"에 {2}을(를) 추가하세요 - DLC 때문에 보류하는 것이 없어집니다.",
-    "If this account owns all its DLC, add the game to “{0}”.": "이 계정이 DLC를 모두 가졌다면 이 게임을 \"{0}\"에 추가하세요."
+    "see 'dlc {0} {1}'": "'dlc {0} {1}' 참고",
+    "Nothing held in {0} - you said carry on": "{0}에서 보류하는 것 없음 - 계속하라고 답함",
+    "Trusted: you said {0} owns what matters, so nothing in it is held just because Steam doesn't say which add-on an achievement comes with.": "신뢰함: {0}이(가) 중요한 것은 가졌다고 답했으므로, 도전 과제가 어떤 추가 콘텐츠의 것인지 Steam이 말하지 않는다는 이유만으로 보류하는 것은 없습니다.",
+    "Trusted: you said {0} owns what matters. {1} achievement(s) from {2}, which it doesn't own, are still left alone.": "신뢰함: {0}이(가) 중요한 것은 가졌다고 답했습니다. 갖고 있지 않은 {2}의 도전 과제 {1}개는 그대로 둡니다.",
+    "If {0} owns what matters in {1}, answer on the dashboard or type 'dlc carryon {0} {2}'. Achievements that certainly come with an add-on it doesn't own stay locked.": "{0}이(가) {1}에서 중요한 것을 가졌다면 대시보드에서 답하거나 'dlc carryon {0} {2}'를 입력하세요. 갖고 있지 않은 추가 콘텐츠의 것이 확실한 도전 과제는 계속 잠겨 있습니다.",
+    "{0}: carrying on with {1}. Only achievements that certainly come with an add-on it doesn't own stay locked.": "{0}: {1}을(를) 계속합니다. 갖고 있지 않은 추가 콘텐츠의 것이 확실한 도전 과제만 잠긴 채로 둡니다.",
+    "{0}: {1} stays paused for achievements. It won't be asked about again unless its add-ons change.": "{0}: {1}의 도전 과제는 계속 일시 정지합니다. 추가 콘텐츠가 바뀌지 않는 한 다시 묻지 않습니다.",
+    "{0}: there's no answer for {1} to take back.": "{0}: {1}에는 되돌릴 답이 없습니다.",
+    "{0}: took back \"carry on\" for {1}. Nothing in it is unlocked on a guess any more.": "{0}: {1}의 '계속'을 되돌렸습니다. 이제 추측으로 달성되는 것은 없습니다.",
+    "{0}: {1} will be asked about again.": "{0}: {1}에 대해 다시 묻습니다.",
+    "Which game? Its name or its appID.": "어떤 게임인가요? 이름이나 appID로.",
+    "{0} has no game called \"{1}\". Try its appID - the number in its store link.": "{0}에는 \"{1}\"(이)라는 게임이 없습니다. appID(상점 링크의 숫자)로 해 보세요.",
+    "More than one game matches \"{0}\": {1}. Type more of the name, or the appID.": "\"{0}\"에 맞는 게임이 여러 개입니다: {1}. 이름을 더 입력하거나 appID를 입력하세요.",
+    "{0}: {1} is paused for achievements - it has add-ons this account doesn't own. Answer on the dashboard, or 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.": "{0}: {1}의 도전 과제가 일시 정지됨 - 이 계정에 없는 추가 콘텐츠가 있습니다. 대시보드에서 답하거나 'dlc carryon {0} {2}' / 'dlc leave {0} {2}'.",
+    "Only skin, team and other packs are missing.": "스킨, 팀 등의 팩만 빠져 있습니다.",
+    "Missing: {0}": "없는 것: {0}",
+    "Missing: {0} add-ons": "없는 것: 추가 콘텐츠 {0}개",
+    "{0} is paused for achievements. It has add-ons this account doesn't own, and Steam doesn't say which of them come with achievements.": "{0}의 도전 과제가 일시 정지되었습니다. 이 계정에 없는 추가 콘텐츠가 있고, 그중 어느 것에 도전 과제가 있는지 Steam이 알려 주지 않습니다.",
+    "Achievements that certainly come with an add-on it doesn't own stay locked either way.": "갖고 있지 않은 추가 콘텐츠의 것이 확실한 도전 과제는 어느 쪽이든 잠긴 채로 둡니다.",
+    "I own what matters - carry on": "중요한 건 가지고 있음 - 계속",
+    "Leave it paused": "일시 정지 유지",
+    "You said carry on for:": "계속하라고 답한 게임:",
+    "undo": "되돌리기",
+    "You said leave it paused for:": "일시 정지로 두라고 답한 게임:",
+    "ask again": "다시 묻기",
+    "not grinding {0} - still refundable (Protect refunds)": "{0} 그라인드 안 함 - 아직 환불 가능 (환불 보호)",
+    "not putting {0} first - still refundable (Protect refunds)": "{0} 우선 안 함 - 아직 환불 가능 (환불 보호)",
+    "asleep, no games chosen - idling your {0} most-played game(s): {1} · up {2}": "취침 중, 고른 게임 없음 - 가장 많이 한 게임 {0}개로 시간 적립: {1} · {2}에 기상",
+    "asleep · up {0} · nothing to bank overnight - add games to the overnight list": "취침 중 · {0}에 기상 · 밤에 쌓을 게 없습니다 - 밤 목록에 게임을 추가하세요",
+    "asleep - back around {0}. Nothing to bank overnight: add games to the overnight list": "취침 중 - {0}쯤 돌아옵니다. 밤에 쌓을 게 없습니다: 밤 목록에 게임을 추가하세요",
+    "asleep - no games chosen, so banking hours quietly on your most-played until {0}: {1}": "취침 중 - 고른 게임이 없어 {0}까지 가장 많이 한 게임으로 조용히 시간을 적립합니다: {1}",
+    "Overnight it goes invisible and, with no games chosen, idles your most-played: {0}.": "밤에는 오프라인으로 바뀌고, 고른 게임이 없어 가장 많이 한 게임을 돌립니다: {0}.",
+    "Nothing to bank overnight yet: add games to \"Games to idle overnight\".": "아직 밤에 쌓을 게 없습니다: “밤에 돌릴 게임”에 게임을 추가하세요.",
+    "{0} is a free DLC - left alone (\"Claim free games\" is on games only)": "{0}은(는) 무료 DLC - 받지 않음('무료 게임 받기'가 게임만으로 설정됨)",
+    "{0} will install when your accounts are asleep - 'update now' installs it right away": "{0}은(는) 계정이 잠들면 설치됩니다 - 'update now'로 바로 설치",
+    "Search by name, or paste an appID": "이름으로 검색하거나 appID 붙여넣기",
+    "appID {0} - open its Steam store page": "appID {0} - Steam 상점 페이지 열기",
+    "No game in its library matches - paste its appID or store link.": "라이브러리에 맞는 게임이 없습니다 - appID나 상점 링크를 붙여넣으세요.",
+    "Its games haven't been read yet - paste an appID or store link.": "아직 게임 목록을 읽지 못했습니다 - appID나 상점 링크를 붙여넣으세요.",
+    "{0}: {1} hasn't been looked at since the app started - try again in a few minutes.": "{0}: 앱이 시작된 뒤로 {1}을(를) 아직 확인하지 않았습니다 - 몇 분 뒤에 다시 해 보세요.",
+    "{0}: {1} isn't paused for add-ons it doesn't own, so there's nothing to answer for it.": "{0}: {1}은(는) 없는 추가 콘텐츠 때문에 일시 정지된 게임이 아니어서 답할 것이 없습니다.",
+    "Type more of the game's name, or its appID.": "게임 이름을 더 입력하거나 appID를 입력하세요.",
+    "{0}: Claim free games now also claims a free DLC's game when that's free too - that was its own switch, and it was off.": "{0}: 무료 게임 받기가 이제 무료 DLC의 본편도 무료일 때 함께 받습니다 - 원래 따로 있던 스위치였고, 꺼져 있었습니다.",
+    "{0}: Bank hours overnight was on with no games listed, which banked nothing - switched off so nothing changes. Turn it on to idle its most-played games overnight.": "{0}: 밤에 시간 쌓기가 켜져 있었지만 목록에 게임이 없어 아무것도 쌓지 않았습니다 - 바뀌는 것이 없도록 껐습니다. 켜면 밤에 가장 많이 한 게임을 돌립니다.",
+    "Overnight it goes invisible and, with no games chosen, idles its {0} most-played game(s).": "밤에는 오프라인으로 바뀌고, 고른 게임이 없어 가장 많이 한 게임 {0}개를 돌립니다."
   },
   "settings": {
     "WebEnabled": {
@@ -2577,11 +2613,11 @@
     },
     "OfflineIdleAtNight": {
       "label": "밤에 시간 쌓기",
-      "tip": "자는 동안 투명 상태가 되어 계속 시간을 쌓습니다. 친구들에게는 오프라인으로 보여도 시간은 계속 올라갑니다. “카드 파밍 시점”이 카드를 밤으로 보내면 카드부터 파밍합니다."
+      "tip": "자는 동안 투명 상태가 되어 “밤에 돌릴 게임”의 게임으로 계속 시간을 쌓습니다. 고른 게임이 없으면 가장 많이 한 게임으로 쌓습니다. 친구들에게는 오프라인으로 보여도 시간은 계속 올라갑니다. “카드 파밍 시점”이 카드를 밤으로 보내면 카드부터 파밍합니다."
     },
     "OfflineIdleGames": {
       "label": "밤에 돌릴 게임",
-      "tip": "밤에 오프라인으로 보이는 동안 시간을 쌓을 게임입니다. 여러 개를 동시에 돌릴 수 있습니다. “밤에 시간 쌓기”가 켜져 있을 때만 쓰입니다."
+      "tip": "밤에 오프라인으로 보이는 동안 시간을 쌓을 게임입니다. 여러 개를 동시에 돌릴 수 있습니다. 비워 두면 가장 많이 한 게임을 대신 씁니다. “밤에 시간 쌓기”가 켜져 있을 때만 쓰입니다."
     },
     "IdleGames": {
       "label": "시간을 쌓을 게임",
@@ -2624,18 +2660,6 @@
     "AchievementMaxCompletionPct": {
       "label": "완료 상한",
       "tip": "한 게임에서 최대 몇 퍼센트까지 완료할지입니다. 몇 개를 남겨 두면 진짜 라이브러리처럼 보입니다. 게임이 여기에 도달하면 헌트가 그 게임을 영구히 떠납니다. 이 값을 올리면 다시 돌아옵니다. 집중 플레이(grind) 명령은 이 값을 무시합니다."
-    },
-    "ClaimFreeGames": {
-      "label": "무료 게임 받기",
-      "tip": "영구 소장용으로 무료 배포되는 유료 게임을 지켜보다가 이 계정에 추가합니다. 쓸모없는 무료 플레이 게임은 건너뜁니다."
-    },
-    "ClaimFreeDlc": {
-      "label": "...무료 DLC도",
-      "tip": "유료 DLC가 무료로 풀리면(서포터 팩 등) 그것도 받습니다. Steam은 DLC를 본편을 가진 계정에만 주기 때문에 나머지는 건너뜁니다. '무료 게임 받기'가 켜져 있을 때만 쓰입니다."
-    },
-    "ClaimFreeDlcBase": {
-      "label": "...본편도 무료면 함께",
-      "tip": "무료 DLC에 이 계정에 없는 본편이 필요하고 그 본편도 지금 무료라면, 본편을 먼저 받은 뒤 DLC를 받습니다. '...무료 DLC도'가 켜져 있을 때만 쓰입니다."
     },
     "CraftBadges": {
       "label": "카드로 배지 제작",
@@ -2788,19 +2812,15 @@
       "choices": "0 끄기 | 1 직접 고른 게임 | 2 모든 싱글플레이 게임"
     },
     "SkipRefundableGames": {
-      "tip": "막 산 게임은 환불할 수 있도록 건드리지 않습니다. Steam은 2시간 넘게 플레이하면 환불을 거부하므로, 환불 기간이 끝날 때까지 시간 쌓기, 파밍, 집중 플레이를 하지 않습니다.",
-      "label": "환불 가능한 게임 보호"
-    },
-    "ProtectGiftedGames": {
-      "label": "...선물받은 게임도",
-      "tip": "선물받은 게임도 선물한 친구에게 환불될 수 있는 동안에는 건드리지 않습니다. “환불 가능한 게임 보호”가 켜져 있을 때만 쓰입니다."
+      "tip": "아직 환불할 수 있는 게임은 건드리지 않아, 시간 쌓기, 파밍, 집중 플레이, 업적 사냥으로 Steam의 2시간을 넘기지 않게 합니다. 최근 14일 안에 구매하거나 선물받은 게임과, 가족 라이브러리에 새로 들어온 지 14일이 안 된 게임이 해당됩니다.",
+      "label": "환불 보호"
     },
     "ShowInventoryValue": {
       "tip": "이 계정 인벤토리의 가치를 Steam 장터 가격으로 계산해 대시보드에 보여 줍니다. 카드 몇 장만 가진 계정에서는 끄세요.",
       "label": "인벤토리 가치 계산"
     },
     "CheckForUpdates": {
-      "tip": "새 버전을 확인해 로그, Telegram, Discord로 알려줍니다. 끄면 자동 업데이트도 멈춥니다.",
+      "tip": "새 버전을 확인해 로그, Telegram, Discord로 알려줍니다. 끄면 밤에 알아서 설치하는 것도 멈춥니다.",
       "label": "업데이트가 있으면 알림"
     },
     "UpdateReminders": {
@@ -2844,18 +2864,14 @@
       "label": "직접 해본 적 없는 게임 건너뛰기",
       "tip": "직접 한 번도 실행하지 않은 게임은 건너뜁니다. 그래서 어떤 게임도 첫 플레이 시간이 여기서 생기지 않습니다."
     },
-    "RefundHoldDays": {
-      "label": "...이 일수 동안",
-      "tip": "새로 산 게임을 건드리지 않는 일수입니다. Steam 환불 기간은 14일이니, 결정할 시간이 더 필요할 때만 올리세요."
-    },
     "FarmCardsWhen": {
       "label": "카드 파밍 시점",
-      "tip": "사람 모드 전용 - 이건 ‘자동’ 파밍입니다: 카드가 있는 게임은 nocat.farm이 직접 고릅니다. 낮에: 평소 플레이 시간에 카드를 파밍합니다. 밤에만: 자는 동안에만 파밍합니다. 언제든지: 끝날 때까지 쉬지 않고 파밍합니다. 혼합: 일부 플레이는 카드를 파밍하고 나머지는 평소 게임을 하므로, 카드가 며칠에 걸쳐 조금씩 들어옵니다. 특정 게임의 카드를 먼저 받고 싶다면 drops <account> <appID> <count> 명령을 입력하세요 (예: drops myaccount 460920 2 = Steep 카드 2장 먼저) - 사람 모드 계정에서는 그래도 휴식과 취침 시간이 있는 평소 세션으로 플레이합니다.",
+      "tip": "이 계정이 카드를 파밍하는 시점입니다. 카드가 있는 게임은 직접 고릅니다. 낮에: 평소 플레이 시간에. 밤에만: 자는 동안에만. 언제든지: 끝날 때까지 쉬지 않고. 혼합: 일부 플레이는 카드를 파밍하고 나머지는 평소 게임을 하므로, 카드가 며칠에 걸쳐 들어옵니다.",
       "choices": "0 낮에 | 1 밤에만 | 2 언제든지 | 3 혼합, 일부 세션은 카드, 나머지는 원래 게임"
     },
     "CardSittingsPct": {
-      "label": "카드를 파밍하는 세션 비율(혼합)",
-      "tip": "“카드 파밍 시점”이 혼합일 때 카드를 파밍하는 플레이의 대략적인 비율(%)입니다. 높을수록 카드를 빨리 끝내고, 낮을수록 평소 게임에 시간을 더 씁니다. 드롭 모으기(drops 명령)는 최소한 메인 게임만큼의 비율을 받으므로, 고른 게임의 차례가 더 빨리 옵니다."
+      "label": "카드를 파밍하는 세션 비율",
+      "tip": "카드를 파밍하는 플레이의 대략적인 비율(%)입니다. 높을수록 카드를 빨리 끝내고, 낮을수록 평소 게임에 시간을 더 씁니다. 드롭 모으기(drops 명령)는 최소한 메인 게임만큼의 비율을 받으므로, 고른 게임의 차례가 더 빨리 옵니다."
     },
     "FarmFromHour": {
       "label": "이 시각부터만 카드 파밍",
@@ -2909,10 +2925,6 @@
       "label": "공유 게임은 원하면 바로 돌려줌",
       "tip": "빌린 가족 게임을 가족 중 누군가 시작하면 바로 돌려주고 다음으로 넘어갑니다. 그 사람이 그만둔 뒤 20분 동안은 순서에서 빠집니다."
     },
-    "HoldNewFamilyGames": {
-      "label": "가족 라이브러리에 막 들어온 게임은 두기",
-      "tip": "구매한 사람이 환불할 수도 있으니, 가족 공유 게임이 라이브러리에 새로 들어온 동안에는 건너뜁니다. “환불 가능한 게임 보호”와 같은 일수를 씁니다."
-    },
     "IncludeFamilyLibrary": {
       "label": "가족 공유 게임도 포함",
       "tip": "Steam 가족으로 이 계정에 공유된 게임에서도 도전 과제를 노립니다. 이 계정에서는 소유한 게임처럼 인정되며, 소유한 게임이 늘 먼저입니다."
@@ -2928,10 +2940,6 @@
     "AchievementNeverGames": {
       "label": "이 게임들에서는 절대",
       "tip": "완전히 건드리지 않을 게임입니다. 도전 과제를 달성하지 않고 부스트도 절대 고르지 않습니다. 사람 모드에서는 계정의 메인 게임도 건너뜁니다."
-    },
-    "AchievementDlcTrusted": {
-      "label": "DLC를 모두 가진 게임",
-      "tip": "이 계정이 모든 DLC를 가진 게임입니다. nocat.farm은 모든 DLC를 가진 것으로 보고 그 도전 과제를 달성합니다."
     },
     "AchievementGames": {
       "label": "이 게임들만",
@@ -2957,10 +2965,6 @@
     "SellPerRun": {
       "label": "한 번에 올릴 카드 수",
       "tip": "한 번에 올릴 남는 카드 수입니다. 비싼 것부터 올립니다. 조금씩 올리는 게 자연스러워 보입니다."
-    },
-    "BoosterGames": {
-      "label": "부스터 팩을 만들 게임",
-      "tip": "보석으로 부스터 팩을 만들 게임 ID이며, 쉼표로 구분합니다. Steam은 게임당 하루 한 팩만, 그것도 아직 카드가 나오는 게임에만 허용합니다. 비워 두면 꺼집니다."
     },
     "BoosterGems": {
       "label": "부스터 팩에 사용할 보석",
@@ -3214,11 +3218,6 @@
       "label": "사람 모드: 사냥 게임 가중치",
       "tip": "사람 모드 전용. 업적을 노리는 게임이 플레이하는 게임에 추가되고, 이 값은 얼마나 자주 나오는지입니다. \"게임과 빈도\"의 가중치와 같습니다. 휴식과 취침이 있는 평소 세션으로 플레이하며 다른 게임을 중간에 끊지 않습니다."
     },
-    "AutoUpdate": {
-      "label": "자동 업데이트",
-      "tip": "새 버전이 나왔을 때 하는 일. 알려주기: 로그, Telegram, Discord로 알려주고 update accept를 입력해 설치합니다. 밤에 설치: 아래 시간대에 자동으로 설치하며, 사람 모드 계정이 깨어 있지 않고 아무도 계정으로 플레이하지 않을 때만 설치하고 전후로 알려줍니다. Docker나 Linux 서비스에서는 안 됩니다(직접 업데이트).",
-      "choices": "0 알려주기 | 1 밤에 설치"
-    },
     "AutoUpdateFromHour": {
       "label": "...사이(시작)",
       "tip": "자동으로 설치해도 되는 가장 이른 시각(24시간제)."
@@ -3299,11 +3298,6 @@
       "label": "실제 플레이 시간에 맞춰 속도 조절",
       "tip": "각 게임을 보통 사람이 얼마나 오래 하는지 확인해(SteamSpy 공개 수치 - 게임 ID만 보냄) 업적 속도를 맞춥니다. 희귀 업적은 그 게임 속도로 열리고, 챕터는 그만큼의 시간이 필요하며, '게임 클리어'는 한 회차 대부분을 하기 전엔 오지 않습니다."
     },
-    "UpdateWhenAsked": {
-      "label": "업데이트라고 하면",
-      "tip": "update accept와 업데이트 버튼이 하는 일. 바로: 지금 설치합니다. 계정이 잠들면: 사람 모드 계정이 모두 자고, 아무도 플레이하지 않고, 기다리는 거래나 선물이 없을 때까지 기다립니다. 밤새 켜진 로봇 계정은 막지 않습니다. 사람 모드 계정이 없으면 아래 시간대를 기다립니다. update now는 항상 바로 설치합니다. Docker나 Linux 서비스에서는 안 됩니다(직접 업데이트).",
-      "choices": "0 바로 | 1 계정이 잠들면"
-    },
     "DiscordSecondLine": {
       "label": "두 번째 줄",
       "tip": "계정 이름이 꺼져 있을 때 Discord 카드 두 번째 줄이 세는 것: 오늘 얻은 카드, 또는 지난 1주나 지난 1달 동안 플레이한 시간 - 모든 계정을 더한 값입니다.",
@@ -3315,7 +3309,7 @@
     },
     "IdleWholeLibrary": {
       "label": "라이브러리 전체 돌리기",
-      "tip": "\"시간을 쌓을 게임\" 다음으로, 계정이 가진 모든 게임에 시간을 쌓습니다. \"절대 건드리지 않을 것\"에 있는 게임, 환불 가능한 게임, 가족 공유 게임(\"가족 공유 게임도 포함\"이 켜져 있지 않으면)은 건너뜁니다. Steam은 한 번에 32개까지 돌리니, 모든 게임에 차례가 가도록 \"목록 순환\"을 켜세요."
+      "tip": "\"시간을 쌓을 게임\" 다음으로, 계정이 가진 모든 게임에 시간을 쌓습니다. \"절대 건드리지 않을 것\"에 있는 게임, 가족 공유 게임(\"가족 공유 게임도 포함\"이 켜져 있지 않으면), \"환불 보호\"가 잡아 둔 게임은 건너뜁니다. Steam은 한 번에 32개까지 돌리니, 모든 게임에 차례가 가도록 \"목록 순환\"을 켜세요."
     },
     "RotateIdleGames": {
       "label": "목록 순환",
@@ -3332,7 +3326,7 @@
     },
     "NewGamesFirst": {
       "label": "새 게임은 처음에 더 많이 하기",
-      "tip": "라이브러리에 막 들어온 게임(구매, 선물, 무료)은 3~10일 동안 세션이 더 생기고 날마다 줄어듭니다. 새로운 걸 해 보는 것처럼요. 아직 환불할 수 있는 게임, 블랙리스트나 가족 공유 게임, 다른 계정이 실행 중인 게임은 건드리지 않습니다."
+      "tip": "라이브러리에 막 들어온 게임(구매, 선물, 무료)은 3~10일 동안 세션이 더 생기고 날마다 줄어듭니다. 새로운 걸 해 보는 것처럼요. 블랙리스트나 가족 공유 게임, 다른 계정이 실행 중인 게임은 건드리지 않고, \"환불 보호\"가 잡아 둔 게임은 그 기간이 끝날 때까지 기다립니다."
     },
     "LongerRhythms": {
       "label": "조용한 시기와 늦은 밤",
@@ -3340,7 +3334,7 @@
     },
     "JoinFriends": {
       "label": "가끔 친구가 하는 게임 하기",
-      "tip": "Steam 친구가 이 계정이 가진 게임을 하고 있으면, 가끔 다음 세션에 그 게임을 고릅니다. 하루 최대 두 번, 깨어 있을 때만입니다. 당신의 다른 계정과 그 계정들이 실행 중인 게임은 무시하고, 블랙리스트와 환불 가능한 게임도 고르지 않습니다."
+      "tip": "Steam 친구가 이 계정이 가진 게임을 하고 있으면, 가끔 다음 세션에 그 게임을 고릅니다. 하루 최대 두 번, 깨어 있을 때만입니다. 당신의 다른 계정과 그 계정들이 실행 중인 게임은 무시하고, 블랙리스트 게임과 \"환불 보호\"가 잡아 둔 게임도 고르지 않습니다."
     },
     "StuckAlarm": {
       "label": "멈춘 계정 재시작",
@@ -3362,6 +3356,29 @@
     "WeeklyReportHour": {
       "label": "주간 보고서 · 시",
       "tip": "주간 보고서가 오는 시각 (24시간 표기)."
+    },
+    "OfflineIdleTopGames": {
+      "label": "...고른 게임이 없으면 가장 많이 한 게임",
+      "tip": "“밤에 돌릴 게임”이 비어 있으면, 밤에 가장 많이 한 게임을 이 개수만큼 돌립니다. 1~2개가 가장 자연스럽습니다. 한 번에 여러 개는 selfcheck가 가장 먼저 짚는 부분입니다."
+    },
+    "ClaimFree": {
+      "label": "무료 게임 받기",
+      "tip": "영구 소장용으로 무료 배포되는 유료 게임을 지켜보다가 이 계정에 추가합니다. 쓸모없는 무료 플레이 게임은 건너뜁니다. '게임과 DLC'는 무료로 풀린 유료 DLC(서포터 팩 등)도 받습니다. Steam은 DLC를 본편을 가진 계정에만 주므로, 그 본편도 지금 무료라면 본편을 먼저 받습니다.",
+      "choices": "0 끔 | 1 게임 | 2 게임과 DLC"
+    },
+    "UpdateMode": {
+      "label": "업데이트",
+      "tip": "새 버전이 나오면 어떻게 할지 정합니다. 항상 먼저 로그와 Telegram, Discord로 알려 줍니다. 클릭하면, 모두 잠든 뒤 설치: 업데이트 버튼이나 update accept를 누르면 계정들이 잠든 뒤(깨어 있는 사람 모드 계정이 없고, 아무도 플레이하지 않으며, 대기 중인 거래나 선물이 없을 때) 설치합니다. 클릭하면 설치: 바로 설치합니다. 밤에 알아서 설치: 아래 시간대의 조용한 때에 알아서 설치하고 전후로 알려 줍니다. update now는 항상 바로 설치합니다. Docker나 Linux 서비스에서는 직접 업데이트합니다.",
+      "choices": "0 클릭하면, 모두 잠든 뒤 설치 | 1 클릭하면 설치 | 2 밤에 알아서 설치"
+    },
+    "ReactionSpeed": {
+      "label": "반응 속도",
+      "tip": "얼마나 빨리 반응하고 휴식이 얼마나 오래 가는지. 모든 대기는 여전히 무작위입니다 - 빠르게는 절반, 느긋하게는 두 배입니다.",
+      "choices": "0 보통 | 1 빠르게 | 2 느긋하게"
+    },
+    "BoosterPackGames": {
+      "label": "부스터 팩을 만들 게임",
+      "tip": "보석을 부스터 팩으로 바꿀 게임입니다. Steam은 게임마다 하루에 한 팩, 아직 카드가 나오는 게임만 허용합니다. 비워 두면 꺼집니다."
     }
   }
 }

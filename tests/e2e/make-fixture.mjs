@@ -24,7 +24,7 @@ write(path.join(config, 'nocatFarm.json'), {
   WebPort: Number(portArg),
   WebHost: '127.0.0.1',
   CheckForUpdates: false,
-  AutoUpdate: 0,
+  UpdateMode: 1,
   StartWithWindows: false,
   TrayNotifications: false,
   Tray: false,
