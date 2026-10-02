@@ -1859,6 +1859,7 @@
     "human mode has no games - fill in \"Games and how often\"": "휴먼 모드에 게임 없음 - \"게임과 빈도\" 입력",
     "farming cards on {0} for ~{1} ({2}/{3} today)": "{0}에서 ~{1} 카드 파밍 (오늘 {2}/{3})",
     "playing {0} for ~{1} ({2}/{3} today)": "{0} 플레이 ~{1} (오늘 {2}/{3})",
+    "carrying on with {0} after the restart - {1} left ({2}/{3} today)": "재시작 후 {0} 계속 - {1} 남음 (오늘 {2}/{3})",
     "last card from {0} - playing on ~{1}, then a break": "{0}의 마지막 카드 - ~{1} 더 하고 휴식",
     "rep4rep won't add this account - check the API token": "rep4rep가 이 계정을 추가하지 않음 - API 토큰 확인",
     "not on rep4rep yet - add it there, or turn on Rep4RepAutoAddProfiles": "아직 rep4rep에 없음 - 거기서 추가하거나 Rep4RepAutoAddProfiles 켜기",
@@ -2633,7 +2634,7 @@
     },
     "GameWeights": {
       "label": "플레이할 게임과 빈도",
-      "tip": "어떤 게임을 플레이하고 각각 시간의 몇 퍼센트를 쓸지입니다. 합이 대략 100이 되게 하세요. 첫 번째가 메인 게임입니다. 숫자를 빼면 남은 몫을 나눠 갖고, 440:0처럼 쓰면 그 게임은 쉽니다."
+      "tip": "어떤 게임을 플레이하고 각각 시간의 몇 퍼센트를 쓸지입니다. 합이 대략 100이 되게 하세요. 첫 번째가 메인 게임입니다. 숫자를 빼면 남은 몫을 나눠 갖고, 440:0처럼 쓰면 그 게임은 쉽니다. 일주일 평균입니다. 사람처럼 하루는 한 게임에 더 치우칠 수 있습니다. \"도전 과제 부스트\"가 진행 중인 게임은 다른 게임들의 몫을 나눠 씁니다."
     },
     "HourTargets": {
       "label": "시간 목표",

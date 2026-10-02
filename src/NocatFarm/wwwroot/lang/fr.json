@@ -1859,6 +1859,7 @@
     "human mode has no games - fill in \"Games and how often\"": "le mode humain n'a pas de jeux - remplis \"Jeux et fréquence\"",
     "farming cards on {0} for ~{1} ({2}/{3} today)": "farm de cartes sur {0} pendant ~{1} ({2}/{3} aujourd'hui)",
     "playing {0} for ~{1} ({2}/{3} today)": "joue à {0} pendant ~{1} ({2}/{3} aujourd'hui)",
+    "carrying on with {0} after the restart - {1} left ({2}/{3} today)": "reprend {0} après le redémarrage - encore {1} ({2}/{3} aujourd'hui)",
     "last card from {0} - playing on ~{1}, then a break": "dernière carte de {0} - je continue ~{1}, puis pause",
     "rep4rep won't add this account - check the API token": "rep4rep n'ajoute pas ce compte - vérifie le jeton API",
     "not on rep4rep yet - add it there, or turn on Rep4RepAutoAddProfiles": "pas encore sur rep4rep - ajoute-le là-bas ou active Rep4RepAutoAddProfiles",
@@ -2633,7 +2634,7 @@
     },
     "GameWeights": {
       "label": "Jeux et à quelle fréquence",
-      "tip": "À quels jeux il joue et quel pourcentage de son temps chacun reçoit, pour un total d'environ 100. Le premier est le jeu principal. Sans nombre, un jeu partage ce qui reste. Écrivez 440:0 pour mettre un jeu de côté."
+      "tip": "À quels jeux il joue et quel pourcentage de son temps chacun reçoit, pour un total d'environ 100. Le premier est le jeu principal. Sans nombre, un jeu partage ce qui reste. Écrivez 440:0 pour mettre un jeu de côté. Ce sont des moyennes sur une semaine : un jour peut pencher vers un jeu, comme chez une vraie personne. Le jeu sur lequel est le \"Coup de pouce aux succès\" partage la part des autres jeux."
     },
     "HourTargets": {
       "label": "Objectifs d'heures",

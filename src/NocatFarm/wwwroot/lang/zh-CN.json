@@ -1859,6 +1859,7 @@
     "human mode has no games - fill in \"Games and how often\"": "拟人模式没有游戏 - 请填写“游戏和频率”",
     "farming cards on {0} for ~{1} ({2}/{3} today)": "在 {0} 刷卡约 {1}（今天 {2}/{3}）",
     "playing {0} for ~{1} ({2}/{3} today)": "玩 {0} 约 {1}（今天 {2}/{3}）",
+    "carrying on with {0} after the restart - {1} left ({2}/{3} today)": "重启后继续玩 {0} —— 还剩 {1}（今天 {2}/{3}）",
     "last card from {0} - playing on ~{1}, then a break": "{0} 最后一张卡到手 - 再玩约 {1}，然后休息",
     "rep4rep won't add this account - check the API token": "rep4rep 不肯添加此账号 - 检查 API 令牌",
     "not on rep4rep yet - add it there, or turn on Rep4RepAutoAddProfiles": "还不在 rep4rep 上 - 去那里添加，或开启 Rep4RepAutoAddProfiles",
@@ -2633,7 +2634,7 @@
     },
     "GameWeights": {
       "label": "游戏与频率",
-      "tip": "玩哪些游戏，以及每个游戏占多少百分比的时间，加起来约为 100。第一个是主玩游戏。不写数字就平分剩下的部分，写 440:0 表示让这个游戏坐冷板凳。"
+      "tip": "玩哪些游戏，以及每个游戏占多少百分比的时间，加起来约为 100。第一个是主玩游戏。不写数字就平分剩下的部分，写 440:0 表示让这个游戏坐冷板凳。 这些是一周的平均值——和真人一样，某一天可能偏向某个游戏。“成就冲刺”正在进行的游戏，会分享其他游戏的那一份时间。"
     },
     "HourTargets": {
       "label": "时长目标",

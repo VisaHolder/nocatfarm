@@ -170,6 +170,22 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// <summary>Playing on after the last card, and the game still has to be confirmed running once the farmer lets go.</summary>
 	private bool _playOnPending;
 
+	/// <summary>
+	/// A sitting, or a break, in progress (<see cref="SittingNow"/>) as the saved day keeps it. Game 0 with a break phase
+	/// is a break; otherwise it's a sitting on that game.
+	/// </summary>
+	private sealed record Sitting(uint Game, DateTime Started, DateTime Ends, bool Farm, Phase Break, DateTime BreakEnds);
+
+	/// <summary>
+	/// The sitting or break a restart cut off, read back from the saved day, to carry on with once the warm-up is done
+	/// (<see cref="TryResume"/>). Every restart - each update included - used to cut the sitting off and roll a fresh game,
+	/// and the main game's long sittings were the ones cut most, which kept it under its share.
+	/// </summary>
+	private Sitting? _resume;
+
+	/// <summary>What the saved day last said about the sitting, so it's written again whenever that changes.</summary>
+	private Sitting? _savedSitting;
+
 	/// <summary>Whether it's waking hours right now, whatever phase it's in - night farming hands back at this.</summary>
 	public bool AwakeHoursNow => InWakingHours(DateTime.Now);
 
@@ -599,6 +615,13 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		// and changed the day (its phase, its plan, the game) halfway through a step that was working from the old one.
 		lock (_stepGate) {
 			StepLocked();
+			DropCutOffResume();
+
+			// A sitting started, ended, cut short (you, bedtime, a grind) or a break begun: the saved day says so, or a
+			// restart brought back a sitting that was already over.
+			if (!Equals(SittingNow() ?? _resume, _savedSitting)) {
+				Persist();
+			}
 		}
 	}
 
@@ -975,6 +998,11 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return;
 		}
 
+		// Back from a restart in the middle of a sitting or a break: carry on with it, rather than a fresh game.
+		if (TryResume()) {
+			return;
+		}
+
 		StartSession();
 	}
 
@@ -1300,6 +1328,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_game = 0;
 		_lastGame = 0;
 		_switchingTo = 0;
+		_resume = null;   // a sitting from another day's plan isn't this one's
 
 		lock (_minutesByGame) {
 			_minutesByGame.Clear();
@@ -2175,6 +2204,12 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return;
 		}
 
+		// The sitting or break in progress - or, until it's been decided on, the one a restart cut off: a second restart
+		// during the warm-up still finds it.
+		Sitting? sitting = SittingNow() ?? _resume;
+		_savedSitting = sitting;
+		bool onBreak = sitting is { Game: 0, Break: Phase.ShortBreak or Phase.MealBreak };
+
 		new HumanDay {
 			DayOfYear = _dayStamp,
 
@@ -2202,8 +2237,155 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			FriendJoins = _friendJoins,
 			NewGameSittings = _newGameSittings,
 			JoinedToday = _joinedToday,
-			ByGame = ByGameSnapshot()
+			ByGame = ByGameSnapshot(),
+			SittingGame = sitting?.Game ?? 0,
+			SittingStarted = sitting is { Game: not 0 } ? sitting.Started : DateTime.MinValue,
+			SittingEnds = sitting is { Game: not 0 } ? sitting.Ends : DateTime.MinValue,
+			SittingFarm = sitting is { Game: not 0, Farm: true },
+			Break = onBreak ? sitting!.Break.ToString() : "",
+			BreakEnds = onBreak ? sitting!.BreakEnds : DateTime.MinValue
 		}.Save(Bot.Name);
+	}
+
+	/// <summary>
+	/// The sitting in progress as the saved day keeps it: an ordinary or card-farming sitting on a game, or a break. Not a
+	/// grind (it has no game of its own and picks itself back up), nor the few minutes played on after a last card (the
+	/// farming sitting's tail), nor the "closing the game" gap - the restart and its warm-up are that gap.
+	/// </summary>
+	private Sitting? SittingNow() {
+		if ((_phase == Phase.Playing) && (_game != 0) && !_wasGrinding && !_playOnPending && (!_farmSitting || _farmSession)) {
+			return new Sitting(_game, _sessionStarted, _sessionEnds, _farmSitting, Phase.Off, DateTime.MinValue);
+		}
+
+		return _phase is Phase.ShortBreak or Phase.MealBreak ? new Sitting(0, DateTime.MinValue, DateTime.MinValue, false, _phase, _phaseEnds) : null;
+	}
+
+	/// <summary>The sitting or break a saved day was cut off in, if it isn't over yet - null for none (and in older files).</summary>
+	private static Sitting? ResumableFrom(HumanDay saved, DateTime nowUtc) {
+		if ((saved.SittingGame != 0) && (saved.SittingEnds.ToUniversalTime() > nowUtc)) {
+			return new Sitting(saved.SittingGame, saved.SittingStarted.ToUniversalTime(), saved.SittingEnds.ToUniversalTime(), saved.SittingFarm, Phase.Off, DateTime.MinValue);
+		}
+
+		return Enum.TryParse(saved.Break, out Phase phase) && (phase is Phase.ShortBreak or Phase.MealBreak) && (saved.BreakEnds.ToUniversalTime() > nowUtc)
+			? new Sitting(0, DateTime.MinValue, DateTime.MinValue, false, phase, saved.BreakEnds.ToUniversalTime())
+			: null;
+	}
+
+	/// <summary>
+	/// Carry on with the sitting or break a restart cut off - once the warm-up after signing in is done, and only if it
+	/// still isn't over. A sitting carries on only on a game it may still play: still in "Games and how often" (the hunt's
+	/// game included), an open hour target or a new game being tried, not blacklisted or held for its refund - and for a
+	/// card-farming sitting, a game with cards left while cards farm in the day. Otherwise (and when there's nothing to
+	/// carry on with) false, and the day goes on as it would have: a fresh pick.
+	///
+	/// The minutes already played were banked and saved before the restart; the clock starts again from now, so nothing
+	/// is counted twice and the time spent restarting and warming up isn't counted at all.
+	/// </summary>
+	private bool TryResume() {
+		if (_resume is not { } was) {
+			return false;
+		}
+
+		_resume = null;   // decided on once: carried on with, or gone
+		DateTime now = DateTime.UtcNow;
+
+		// A break: the rest of it. Away (or Snooze for a meal) a few minutes in, as on any break - never offline, which
+		// would spend another of the day's sign-outs on the same break.
+		if (was.Game == 0) {
+			int left = (int) Math.Ceiling((was.BreakEnds - now).TotalMinutes);
+
+			if (left < 1) {
+				return false;
+			}
+
+			bool meal = was.Break == Phase.MealBreak;
+			_game = 0;
+			_phase = was.Break;
+			_phaseEnds = was.BreakEnds;
+			StepAway(left, meal ? 4 : 3, meal ? new Said("meal break") : new Said("short break"), 0.0);
+
+			return true;
+		}
+
+		if ((was.Ends <= now) || !MayCarryOn(was)) {
+			return false;
+		}
+
+		uint game = was.Game;
+		_farmSitting = was.Farm;
+		_farmSession = FarmInDay && (Bot.CardsRemaining > 0) && (was.Farm
+			|| (BotManager.ModuleOf<CardFarmer>(Bot)?.Queue.Any(g => (g.AppId == game) && (g.CardsRemaining > 0)) ?? false));
+		_game = game;
+		_lastGame = game;
+		_switchingTo = 0;
+		_firstSessionOfDay = false;
+		_phase = Phase.Playing;
+		_sessionStarted = was.Started;
+		_sessionEnds = was.Ends;
+		_bankedTo = now;
+		_lastBankAt = now;
+		_bankedForLogon = Bot.OnlineSince ?? now;
+
+		ShowAs(null);
+		Bot.SetPlaying([game]);   // ONE game, as ever
+		_playingAssertedFor = Bot.OnlineSince ?? now;
+
+		Log.Good(new Said("carrying on with {0} after the restart - {1} left ({2}/{3} today)", GameName(game), Left(was.Ends), Fmt.Hm(_playedMinutesToday), Fmt.Hm(_targetMinutes)), Bot.Name);
+
+		return true;
+	}
+
+	/// <summary>
+	/// The sitting a restart cut off is only waiting for the warm-up. If the day does something else with the account first
+	/// - you sit down at it (or pause it), a grind, bedtime, the card farmer taking over, the day's hours played - that
+	/// sitting is over, as it would have been without the restart. Kept, it came back afterwards: you played for twenty
+	/// minutes during the warm-up, got up, and the account went back to the game it had been on before the update.
+	/// </summary>
+	private void DropCutOffResume() {
+		if (_resume == null) {
+			return;
+		}
+
+		bool movedOn = _wasFarming || _phase switch {
+			Phase.Off or Phase.WarmingUp => false,
+
+			// Not every stand-down is you. Steam's first report after signing in still describes the session that just
+			// ended - on a restart mid-sitting, this program's own, still in that sitting's game - so every such restart
+			// stood down for a few seconds, and the very sitting it was carrying on with was dropped by it. A pause, or
+			// still on the account well after the sign-in, is you.
+			Phase.StoodDown => Bot.Paused || (Bot.PlayingBlocked && (Bot.OnlineSince is { } on) && (DateTime.UtcNow - on >= OwnSessionReportWithin)),
+			_ => true
+		};
+
+		if (movedOn) {
+			_resume = null;
+		}
+	}
+
+	/// <summary>
+	/// How long after signing in a "blocked" report may still be the session that just ended (ours, on a restart) rather
+	/// than you: the Bot takes one arriving within 20 seconds of the sign-in for its own and waits 25 more before saying so.
+	/// </summary>
+	private static readonly TimeSpan OwnSessionReportWithin = TimeSpan.FromSeconds(45);
+
+	/// <summary>Whether the sitting a restart cut off may go on: you're not on the account, and its game is still one it plays.</summary>
+	private bool MayCarryOn(Sitting was) {
+		uint game = was.Game;
+
+		if (!Bot.CanPlay || Bot.PlayingBlocked || (Bot.OtherSessionApp != 0)) {
+			return false;
+		}
+
+		if (Bot.Cfg.BlacklistedGames.Contains(game) || Live.Global.GlobalBlacklistedGames.Contains(game) || Bot.Refunds.Holds(game)) {
+			return false;
+		}
+
+		if (was.Farm) {
+			return FarmInDay && (Bot.CardsRemaining > 0) && (BotManager.ModuleOf<CardFarmer>(Bot) is { InFarmWindowNow: true } farmer)
+				&& farmer.Queue.Any(g => (g.AppId == game) && (g.CardsRemaining > 0));
+		}
+
+		return Weights().Exists(w => w.Game == game) || IsTargetGame(game) || TrialsNow().Exists(t => t.App == game);
 	}
 
 	private Dictionary<string, int> ByGameSnapshot() {
@@ -2245,7 +2427,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			}
 		}
 
-		// The session itself does not survive - only the day's shape and what it has already banked.
+		// The session itself isn't put back here - only the day's shape and what it has already banked. The sitting or break
+		// it was cut off in is kept aside, and carried on with after the warm-up if it still may be (TryResume).
+		_resume = ResumableFrom(saved, DateTime.UtcNow);
+		_savedSitting = _resume;
 		_game = 0;
 		_switchingTo = 0;
 		_firstSessionOfDay = _playedMinutesToday == 0;

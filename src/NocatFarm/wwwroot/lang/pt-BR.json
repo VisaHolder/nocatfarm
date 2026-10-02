@@ -1859,6 +1859,7 @@
     "human mode has no games - fill in \"Games and how often\"": "o modo humano não tem jogos - preencha \"Jogos e frequência\"",
     "farming cards on {0} for ~{1} ({2}/{3} today)": "farmando cartas em {0} por ~{1} ({2}/{3} hoje)",
     "playing {0} for ~{1} ({2}/{3} today)": "jogando {0} por ~{1} ({2}/{3} hoje)",
+    "carrying on with {0} after the restart - {1} left ({2}/{3} today)": "continuando {0} após o reinício - faltam {1} ({2}/{3} hoje)",
     "last card from {0} - playing on ~{1}, then a break": "última carta de {0} - jogando mais ~{1}, depois pausa",
     "rep4rep won't add this account - check the API token": "o rep4rep não adiciona esta conta - verifique o token da API",
     "not on rep4rep yet - add it there, or turn on Rep4RepAutoAddProfiles": "ainda não está no rep4rep - adicione lá ou ligue Rep4RepAutoAddProfiles",
@@ -2633,7 +2634,7 @@
     },
     "GameWeights": {
       "label": "Jogos e com que frequência",
-      "tip": "Quais jogos ela joga e que porcentagem do tempo cada um recebe, somando uns 100. O primeiro é o jogo principal. Deixe um sem número para dividir o que sobrar, ou escreva 440:0 para deixar um jogo no banco."
+      "tip": "Quais jogos ela joga e que porcentagem do tempo cada um recebe, somando uns 100. O primeiro é o jogo principal. Deixe um sem número para dividir o que sobrar, ou escreva 440:0 para deixar um jogo no banco. São médias de uma semana: um dia pode pender para um jogo, como o de uma pessoa. O jogo em que o \"Impulso de conquistas\" está divide a parte dos outros jogos."
     },
     "HourTargets": {
       "label": "Metas de horas",

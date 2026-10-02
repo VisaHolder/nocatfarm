@@ -1859,6 +1859,7 @@
     "human mode has no games - fill in \"Games and how often\"": "人間モードにゲームなし - 「ゲームと頻度」を入力",
     "farming cards on {0} for ~{1} ({2}/{3} today)": "{0} で約 {1} カードをファーム（今日 {2}/{3}）",
     "playing {0} for ~{1} ({2}/{3} today)": "{0} を約 {1} プレイ（今日 {2}/{3}）",
+    "carrying on with {0} after the restart - {1} left ({2}/{3} today)": "再起動後も {0} を続行 - 残り {1}（今日 {2}/{3}）",
     "last card from {0} - playing on ~{1}, then a break": "{0} の最後のカード - あと約 {1} 遊んで休憩",
     "rep4rep won't add this account - check the API token": "rep4rep がこのアカウントを追加しない - API トークンを確認",
     "not on rep4rep yet - add it there, or turn on Rep4RepAutoAddProfiles": "まだ rep4rep にない - そこで追加するか Rep4RepAutoAddProfiles をオン",
@@ -2633,7 +2634,7 @@
     },
     "GameWeights": {
       "label": "遊ぶゲームと頻度",
-      "tip": "遊ぶゲームと、それぞれに割く時間の割合（%）です。合計がだいたい 100 になるようにします。最初のゲームがメインゲームです。数字を書かないと残りを分け合い、440:0 と書くとそのゲームを休ませます。"
+      "tip": "遊ぶゲームと、それぞれに割く時間の割合（%）です。合計がだいたい 100 になるようにします。最初のゲームがメインゲームです。数字を書かないと残りを分け合い、440:0 と書くとそのゲームを休ませます。 これは 1 週間の平均です。人と同じように、1 日だけ見るとどれかのゲームに偏ることがあります。「実績ブースト」が取り組んでいるゲームは、ほかのゲームの分を分け合います。"
     },
     "HourTargets": {
       "label": "時間目標",

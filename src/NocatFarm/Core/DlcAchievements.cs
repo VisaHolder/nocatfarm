@@ -26,6 +26,9 @@ namespace NocatFarm.Core;
 ///   • the game's full list in order, from <c>IPlayerService/GetGameAchievements</c> (no key).
 /// A DLC's achievements sit together in that order, starting at its first highlighted one, so its block is that
 /// position and the next <c>total - 1</c>. See <see cref="Block"/> for what happens when the names don't line up.
+/// Not everything in a game's DLC list is a DLC: Portal lists Portal with RTX, a game of its own with its own copy of
+/// Portal's achievements. An entry whose own page isn't a DLC's (<see cref="NotDlc"/>), and figures as big as the game's
+/// whole list (<see cref="WholeGame"/>), say nothing about this game's achievements.
 ///
 /// Older games (Fallout: New Vegas, Borderlands 2, Civilization V) have DLC achievements in their list but the store
 /// says nothing about which: their DLC pages carry no achievement figures at all. There the only clue is the wording,
@@ -77,11 +80,14 @@ public static class DlcAchievements {
 	/// and a game that can't be fully mapped keeps the certain part of each block (<see cref="Map.Sure"/>). 4 and 5: an
 	/// amount of money only makes a currency pack at the end of the name or before a pack word, with two digits or more
 	/// ("1849 Gold Rush" and "The 7 Gems" are stories). 6: the map keeps the game's whole DLC list, which a game left
-	/// alone ('dlc leave') is remembered with - one built before had only the DLC with achievements. A map saved
+	/// alone ('dlc leave') is remembered with - one built before had only the DLC with achievements. 7: an entry in the
+	/// game's DLC list whose own store page isn't a DLC's (Portal with RTX is a game of its own) is no DLC at all
+	/// (<see cref="NotDlc"/>), and figures as big as the game's whole list are a separate game's or edition's, never a
+	/// DLC's (<see cref="WholeGame"/>) - Portal was held whole on an account without Portal with RTX. A map saved
 	/// under older rules (0: before this was kept) is built again at once, and used as it is for the minute or two that
-	/// takes.
+	/// takes; a game held on it is looked at again once the new map says something else.
 	/// </summary>
-	public const int RuleNow = 6;
+	public const int RuleNow = 7;
 
 	/// <summary>
 	/// How long a map built while Steam didn't answer for some DLC names is used before it is built again. Without the
@@ -1159,6 +1165,29 @@ public static class DlcAchievements {
 	}
 
 	/// <summary>
+	/// An entry in the game's DLC list that is no DLC: its own store page (the store didn't send it to another app's)
+	/// says it is something else - a game, a mod, a demo, a soundtrack. Portal lists Portal with RTX (2012840, a free game
+	/// of its own with its own copy of Portal's 15 achievements) and Half-Life 2 lists Half-Life 2 RTX (a mod): taken as
+	/// DLC, the first held all of Portal on an account without it. Such an app never adds achievements to this game's list.
+	/// </summary>
+	/// <remarks>
+	/// Only a page that is the entry's own. Call of Duty's Modern Warfare II (1962660) is a DLC the store sends to a page
+	/// of type "game" (3595230): that type is the page's, not the DLC's, and its achievements ARE in Call of Duty's list.
+	/// A page that is the base game's own is <see cref="Doubt.BasePage"/>, and an unknown type ("") says nothing.
+	/// </remarks>
+	public static bool NotDlc(uint app, Page page) =>
+		page.Listed && (page.StoreApp != app) && ((page.StoreApp == 0) || (page.StoreApp == page.Id))
+		&& (page.Type.Length > 0) && !page.Type.Equals("dlc", StringComparison.OrdinalIgnoreCase);
+
+	/// <summary>
+	/// A DLC's achievements can never be all, or nearly all, of the game's: the game has its own. Figures that big - the
+	/// store's count, or the block its names point at - are a separate game's or edition's with the same achievements
+	/// (a remaster, an RTX version, a "Definitive Edition"), never a DLC's, and say nothing about which of this game's
+	/// achievements come with a DLC. "Nearly": all but less than a tenth of the list (all of it, under ten).
+	/// </summary>
+	public static bool WholeGame(int dlcAchievements, int count) => (count > 0) && (dlcAchievements >= count - (count / 10));
+
+	/// <summary>
 	/// The store's pages, one DLC each. The same DLC under two ids (the store sends 1962660 to its page at 3595230) is
 	/// one DLC, owned by either.
 	///
@@ -1179,6 +1208,12 @@ public static class DlcAchievements {
 
 		foreach (Page p in pages) {
 			bool harmless = Harmless(p.Type, p.Name, baseName);
+
+			// Not a DLC at all - a game, a mod, a demo, a soundtrack with a page of its own: it adds nothing to this
+			// game's list, whatever figures its page gives (those are its own list's).
+			if (NotDlc(app, p)) {
+				continue;
+			}
 
 			if (!p.Listed) {
 				Add(p.Id, new Dlc(p.Id, [p.Id], p.Name, 0, [], harmless ? Doubt.None : Doubt.Delisted), harmless);
@@ -1264,9 +1299,26 @@ public static class DlcAchievements {
 			GroupOf(d);
 		}
 
+		// Figures as big as the whole game: another game's or edition's, not a DLC's - nothing is known from them, and
+		// nothing is held for them, by the figures or by the wording.
+		HashSet<uint> wholeGames = [];
+
 		foreach (Dlc d in dlcs.Where(static d => (d.Unsure == Doubt.None) && (d.Total > 0) && (d.Highlighted.Count > 0))) {
-			map.StoreSays = true;
+			if (WholeGame(d.Total, schema.Count)) {
+				wholeGames.Add(d.App);
+
+				continue;
+			}
+
 			(List<int> indices, bool exact, List<int> strict) = LocateBoth(Places(names, d.Highlighted), d.Total, schema.Count, hidden);
+
+			if (WholeGame(indices.Count, schema.Count)) {
+				wholeGames.Add(d.App);
+
+				continue;
+			}
+
+			map.StoreSays = true;
 
 			// Found nowhere in this game's list. Its achievements could be in a list of their own - or the names just
 			// didn't match. Not knowing which, it can't be placed.
@@ -1301,7 +1353,7 @@ public static class DlcAchievements {
 
 		// The wording, for what no block covers. Only ever adds a DLC an achievement needs.
 		foreach (Dlc d in dlcs) {
-			if (DistinctName(d.Name, baseName) is not { } phrase) {
+			if (wholeGames.Contains(d.App) || (DistinctName(d.Name, baseName) is not { } phrase)) {
 				continue;
 			}
 

@@ -1859,6 +1859,7 @@
     "human mode has no games - fill in \"Games and how often\"": "el modo humano no tiene juegos - rellena \"Juegos y frecuencia\"",
     "farming cards on {0} for ~{1} ({2}/{3} today)": "farmeando cartas en {0} ~{1} ({2}/{3} hoy)",
     "playing {0} for ~{1} ({2}/{3} today)": "jugando a {0} ~{1} ({2}/{3} hoy)",
+    "carrying on with {0} after the restart - {1} left ({2}/{3} today)": "sigo con {0} tras el reinicio - quedan {1} ({2}/{3} hoy)",
     "last card from {0} - playing on ~{1}, then a break": "última carta de {0} - sigo jugando ~{1}, luego descanso",
     "rep4rep won't add this account - check the API token": "rep4rep no añade esta cuenta - revisa el token de la API",
     "not on rep4rep yet - add it there, or turn on Rep4RepAutoAddProfiles": "aún no está en rep4rep - añádela ahí o activa Rep4RepAutoAddProfiles",
@@ -2633,7 +2634,7 @@
     },
     "GameWeights": {
       "label": "Juegos y con qué frecuencia",
-      "tip": "A qué juegos juega y qué porcentaje de su tiempo recibe cada uno, sumando unos 100. El primero es el juego principal. Deja uno sin número para que comparta lo que sobra, o escribe 440:0 para apartar un juego."
+      "tip": "A qué juegos juega y qué porcentaje de su tiempo recibe cada uno, sumando unos 100. El primero es el juego principal. Deja uno sin número para que comparta lo que sobra, o escribe 440:0 para apartar un juego. Son promedios de una semana: un día puede inclinarse hacia un juego, como el de una persona. El juego en el que está el \"Impulso de logros\" comparte la parte de los otros juegos."
     },
     "HourTargets": {
       "label": "Objetivos de horas",

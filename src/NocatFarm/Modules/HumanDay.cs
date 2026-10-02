@@ -56,6 +56,20 @@ public sealed class HumanDay {
 	/// <summary>Minutes per appID so far today, so the console's breakdown survives a restart too.</summary>
 	public Dictionary<string, int> ByGame { get; set; } = [];
 
+	/// <summary>
+	/// The sitting in progress, so a restart (an update, say) carries on with it rather than cutting it off and rolling a
+	/// fresh game: the game, when it started and when it ends (UTC), and whether it's a card-farming one. 0 / unset when
+	/// nothing is being played, and in older files.
+	/// </summary>
+	public uint SittingGame { get; set; }
+	public DateTime SittingStarted { get; set; }
+	public DateTime SittingEnds { get; set; }
+	public bool SittingFarm { get; set; }
+
+	/// <summary>The break in progress ("ShortBreak" or "MealBreak") and when it ends (UTC). Empty when there isn't one.</summary>
+	public string Break { get; set; } = "";
+	public DateTime BreakEnds { get; set; }
+
 	public bool IsFor(DateTime when) => (DayOfYear == when.DayOfYear) && (Year == when.Year);
 
 	private static string PathFor(string bot) => Path.Combine(ConfigStore.ConfigDir, "state", $"human-{bot}.json");

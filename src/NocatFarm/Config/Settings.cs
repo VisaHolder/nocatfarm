@@ -924,7 +924,7 @@ public static class Settings {
 		new("LegitMode", "Human mode", SecHuman, SettingKind.Bool,
 			"Plays like a person: one game at a time, realistic sittings, breaks, meals, days off and offline at night. Bot-like settings are hidden while it's on and come back unchanged when you turn it off."),
 		new("GameWeights", "Games and how often", SecHuman, SettingKind.Text,
-			"Which games it plays and what percent of its time each gets, adding up to about 100. The first one is the main game. Leave a number off to share what's left, or write 440:0 to bench a game.",
+			"Which games it plays and what percent of its time each gets, adding up to about 100. The first one is the main game. Leave a number off to share what's left, or write 440:0 to bench a game. These are averages over a week - one day can lean toward one game, like a person's. The game \"Achievement boost\" is on shares the other games' part.",
 			Placeholder: "730:70, 440:20, 550:10", Mode: "legit"),
 		new("HourTargets", "Hour targets", SecHuman, SettingKind.Text,
 			"Hours to reach in a game, with an optional date. 730:100@2026-12-01 means 100 hours of CS2 by 1 December. It plays that game more until the target is hit.",
