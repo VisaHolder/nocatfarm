@@ -1859,6 +1859,7 @@
     "human mode has no games - fill in \"Games and how often\"": "Menschmodus hat keine Spiele - \"Spiele und wie oft\" ausfüllen",
     "farming cards on {0} for ~{1} ({2}/{3} today)": "farme Karten auf {0} für ~{1} ({2}/{3} heute)",
     "playing {0} for ~{1} ({2}/{3} today)": "spiele {0} für ~{1} ({2}/{3} heute)",
+    "carrying on with {0} after the restart - {1} left ({2}/{3} today)": "mache nach dem Neustart mit {0} weiter - noch {1} ({2}/{3} heute)",
     "last card from {0} - playing on ~{1}, then a break": "letzte Karte aus {0} - spiele noch ~{1}, dann Pause",
     "rep4rep won't add this account - check the API token": "rep4rep nimmt dieses Konto nicht auf - API-Token prüfen",
     "not on rep4rep yet - add it there, or turn on Rep4RepAutoAddProfiles": "noch nicht auf rep4rep - dort hinzufügen oder Rep4RepAutoAddProfiles einschalten",
@@ -2633,7 +2634,7 @@
     },
     "GameWeights": {
       "label": "Spiele und wie oft",
-      "tip": "Welche Spiele es spielt und wie viel Prozent seiner Zeit jedes bekommt, zusammen etwa 100. Das erste ist das Hauptspiel. Lass eine Zahl weg, damit es sich den Rest teilt, oder schreib 440:0, um ein Spiel auf die Bank zu setzen."
+      "tip": "Welche Spiele es spielt und wie viel Prozent seiner Zeit jedes bekommt, zusammen etwa 100. Das erste ist das Hauptspiel. Lass eine Zahl weg, damit es sich den Rest teilt, oder schreib 440:0, um ein Spiel auf die Bank zu setzen. Das sind Durchschnitte über eine Woche - ein Tag kann mehr zu einem Spiel neigen, wie bei einem Menschen. Das Spiel, an dem der \"Erfolgs-Schub\" gerade ist, teilt sich den Anteil der anderen Spiele."
     },
     "HourTargets": {
       "label": "Stundenziele",

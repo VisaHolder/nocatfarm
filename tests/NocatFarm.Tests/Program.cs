@@ -8063,8 +8063,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	// The whole map, Call of Duty's shape.
 	List<NocatFarm.Core.DlcAchievements.Entry> cod = [.. Enumerable.Range(0, 157).Select(static i => new NocatFarm.Core.DlcAchievements.Entry($"ACH_{i}", $"Achievement {i}", "Do a thing.", false))];
 	List<NocatFarm.Core.DlcAchievements.Dlc> codDlc = NocatFarm.Core.DlcAchievements.Merge(1938090, [
-		new(1962660, 3595230, "Call of Duty®: Modern Warfare® II", 24, [.. Enumerable.Range(0, 10).Select(static i => $"Achievement {i}")]),
-		new(2519060, 3595270, "Call of Duty®: Modern Warfare® III", 39, [.. Enumerable.Range(24, 10).Select(static i => $"Achievement {i}")]),
+		// The store sends both DLC ids to pages of type "game" (3595230, 3595270) - the page's type, not the DLC's.
+		new(1962660, 3595230, "Call of Duty®: Modern Warfare® II", 24, [.. Enumerable.Range(0, 10).Select(static i => $"Achievement {i}")], Type: "game"),
+		new(2519060, 3595270, "Call of Duty®: Modern Warfare® III", 39, [.. Enumerable.Range(24, 10).Select(static i => $"Achievement {i}")], Type: "game"),
 		// Black Ops 6's campaign DLC opens the hub's own page: those figures are the whole game's, not the DLC's.
 		new(2933620, 1938090, "Call of Duty®", 157, [.. Enumerable.Range(0, 10).Select(static i => $"Achievement {i}")], Type: "game"),
 		// No figures, and nothing in its name says it's only looks: it may well add achievements.
@@ -8086,6 +8087,91 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		&& codMap.Owners["ach_0"].SequenceEqual([1962660u]) && codMap.Owners["ach_62"].SequenceEqual([2519060u]) && !codMap.Owners.ContainsKey("ach_63")
 		&& (codMap.Names?.Count == 157),
 		$"{codMap.Owners.Count} owned, {codMap.Groups.Count} groups");
+
+	// Not a DLC at all, though the game's DLC list has it. Portal (400) lists its soundtrack and Portal with RTX (2012840):
+	// a free game of its own, type "game", with its own copy of Portal's 15 achievements - the store's figures for it are
+	// Portal's own names. Taken as a DLC, all 15 were held on an account without it, and Portal was dropped from the hunt.
+	List<string> portalNames = ["Lab Rat", "Fratricide", "Partygoer", "Heartbreaker", "Terminal Velocity", .. Enumerable.Range(5, 10).Select(static i => $"Portal {i}")];
+	List<NocatFarm.Core.DlcAchievements.Entry> portal = [.. portalNames.Select(static (n, i) => new NocatFarm.Core.DlcAchievements.Entry($"PORTAL_{i}", n, "Do a thing.", false))];
+	NocatFarm.Core.DlcAchievements.Page portalRtx = new(2012840, 2012840, "Portal with RTX", 15, [.. portalNames.Take(10)], Type: "game");
+	List<NocatFarm.Core.DlcAchievements.Dlc> portalDlc = NocatFarm.Core.DlcAchievements.Merge(400, [
+		new(323170, 323170, "Portal Soundtrack", 0, [], Type: "music"), portalRtx], "Portal");
+	NocatFarm.Core.DlcAchievements.Map portalMap = NocatFarm.Core.DlcAchievements.Assemble(400, "Portal", portal, portalDlc, 2, 2, DateTime.UtcNow);
+	bool NothingHeld(NocatFarm.Core.DlcAchievements.Map m) =>
+		portal.All(e => (NocatFarm.Core.DlcAchievements.EffectiveHold(m, e.Name, new HashSet<uint>(), new HashSet<uint>()) == None) && (HoldOf(m, e.Name) == None)
+			&& !NocatFarm.Core.DlcAchievements.CertainlyNotOwned(m, e.Name, new HashSet<uint>()));
+	Check("dlc not a dlc: Portal with RTX (a game) and Portal's soundtrack aren't Portal's DLC - nothing in Portal is held",
+		(portalDlc.Count == 0) && (portalMap.Groups.Count == 0) && (portalMap.Owners.Count == 0) && (portalMap.Sure?.Count == 0) && !portalMap.HasDlc
+		&& NothingHeld(portalMap) && new NocatFarm.Core.DlcAchievements.View { Map = portalMap }.Allows(new() { Name = "PORTAL_3", Display = "Heartbreaker", StatId = 1, Bit = 3, Unlocked = false, Protected = false }),
+		$"{portalDlc.Count} dlc, {portalMap.Owners.Count} held");
+	Check("dlc not a dlc: a mod, a demo or a game with a page of its own is no DLC; a DLC sent to a game's page (Modern Warfare II) still is",
+		NocatFarm.Core.DlcAchievements.NotDlc(220, new(2477290, 2477290, "Half-Life 2 RTX", 0, [], Type: "mod"))
+		&& NocatFarm.Core.DlcAchievements.NotDlc(400, new(2410180, 2410180, "Portal: Prelude RTX", 0, [], Type: "mod"))
+		&& NocatFarm.Core.DlcAchievements.NotDlc(400, new(2, 2, "Some Demo", 0, [], Type: "demo"))
+		&& NocatFarm.Core.DlcAchievements.NotDlc(400, portalRtx)
+		&& !NocatFarm.Core.DlcAchievements.NotDlc(1938090, new(1962660, 3595230, "Call of Duty®: Modern Warfare® II", 24, [], Type: "game"))
+		&& !NocatFarm.Core.DlcAchievements.NotDlc(1938090, new(2933620, 1938090, "Call of Duty®", 157, [], Type: "game"))
+		&& !NocatFarm.Core.DlcAchievements.NotDlc(400, new(3, 3, "Story Pack", 0, [], Type: "dlc"))
+		&& !NocatFarm.Core.DlcAchievements.NotDlc(400, new(4, 4, "Story Pack", 0, [], Type: ""))
+		&& !NocatFarm.Core.DlcAchievements.NotDlc(400, new(5, 0, "Gone", 0, [], Listed: false)));
+	// Half-Life 2 RTX (a mod with no figures, its fullgame Half-Life 2) used to be a DLC that can't be placed: on a game
+	// left alone ('dlc leave') all of Half-Life 2 was held for it, and anything with "DLC" in its API name was too.
+	List<NocatFarm.Core.DlcAchievements.Entry> hl2 = [.. Enumerable.Range(0, 33).Select(static i => new NocatFarm.Core.DlcAchievements.Entry($"HL2_{i}", $"Achievement {i}", "Do a thing.", false))];
+	NocatFarm.Core.DlcAchievements.Map hl2Map = NocatFarm.Core.DlcAchievements.Assemble(220, "Half-Life 2", hl2, NocatFarm.Core.DlcAchievements.Merge(220, [
+		new(323140, 323140, "Half-Life 2 Soundtrack", 0, [], Type: "music"), new(2477290, 2477290, "Half-Life 2 RTX", 0, [], Type: "mod")], "Half-Life 2"), 2, 2, DateTime.UtcNow);
+	Check("dlc not a dlc: Half-Life 2 RTX (a mod) holds nothing in Half-Life 2, even left alone",
+		(hl2Map.Groups.Count == 0) && hl2.All(e => HoldOf(hl2Map, e.Name) == None)
+		&& !NocatFarm.Core.DlcAchievements.NamedDlcHeld(hl2Map, "ACH_DLC_1", new HashSet<uint>()));
+
+	// The same figures on a page that does say "dlc" (or says nothing): a block that is the whole game is no DLC's.
+	foreach (string type in (string[]) ["dlc", ""]) {
+		NocatFarm.Core.DlcAchievements.Map whole = NocatFarm.Core.DlcAchievements.Assemble(400, "Portal", portal,
+			NocatFarm.Core.DlcAchievements.Merge(400, [portalRtx with { Type = type }], "Portal"), 1, 1, DateTime.UtcNow);
+		Check($"dlc whole game: figures as big as the game's whole list are another game's, not a DLC's - nothing held (type \"{type}\")",
+			(whole.Groups.Count == 0) && (whole.Owners.Count == 0) && !whole.StoreSays && NothingHeld(whole), $"{whole.Owners.Count} held");
+	}
+
+	// Nearly the whole list is the same: 18 of a 20-achievement game is no DLC's; 17 is, and its block is held.
+	List<NocatFarm.Core.DlcAchievements.Entry> twenty = [.. Enumerable.Range(0, 20).Select(static i => new NocatFarm.Core.DlcAchievements.Entry($"A_{i}", $"Achievement {i}", "Do a thing.", false))];
+	NocatFarm.Core.DlcAchievements.Map Twenty(int total) => NocatFarm.Core.DlcAchievements.Assemble(70, "Game", twenty, NocatFarm.Core.DlcAchievements.Merge(70, [
+		new(71, 71, "Game - The Story", total, [.. Enumerable.Range(20 - total, Math.Min(10, total)).Select(static i => $"Achievement {i}")], Type: "dlc")]), 1, 1, DateTime.UtcNow);
+	Check("dlc whole game: nearly all of the list is no DLC's (18 of 20); a big block that isn't is still held (17 of 20)",
+		(Twenty(18).Owners.Count == 0) && (Twenty(17).Owners.Count == 17) && (HoldOf(Twenty(17), "A_3") == NotOwned) && (HoldOf(Twenty(17), "A_2") == None),
+		$"{Twenty(18).Owners.Count}, {Twenty(17).Owners.Count}");
+	Check("dlc whole game: the line - all but under a tenth of the list (all of it under ten)",
+		NocatFarm.Core.DlcAchievements.WholeGame(15, 15) && NocatFarm.Core.DlcAchievements.WholeGame(14, 15) && !NocatFarm.Core.DlcAchievements.WholeGame(13, 15)
+		&& NocatFarm.Core.DlcAchievements.WholeGame(142, 157) && !NocatFarm.Core.DlcAchievements.WholeGame(141, 157)
+		&& !NocatFarm.Core.DlcAchievements.WholeGame(24, 157) && !NocatFarm.Core.DlcAchievements.WholeGame(39, 157)
+		&& NocatFarm.Core.DlcAchievements.WholeGame(5, 5) && !NocatFarm.Core.DlcAchievements.WholeGame(4, 5) && !NocatFarm.Core.DlcAchievements.WholeGame(0, 0));
+
+	// Call of Duty is untouched by both: on an account with Modern Warfare II but not III, the game earns anyway (what
+	// can't be placed counted as owned) - II's block and the rest are fine, III's 39 (24-62) are held, and certainly.
+	HashSet<uint> licMw2 = NocatFarm.Core.DlcAchievements.OwnedGroups(codMap, static id => id == 1962660);
+	HashSet<uint> countedMw2 = NocatFarm.Core.DlcAchievements.Counted(codMap, licMw2, true);
+	List<int> heldWithMw2 = [.. Enumerable.Range(0, 157).Where(i => NocatFarm.Core.DlcAchievements.EffectiveHold(codMap, $"ACH_{i}", countedMw2, licMw2) != None)];
+	Check("dlc map: Call of Duty with Modern Warfare II and not III - exactly III's 24-62 held, and certainly",
+		heldWithMw2.SequenceEqual(Range(24, 39)) && Range(24, 39).All(i => NocatFarm.Core.DlcAchievements.CertainlyNotOwned(codMap, $"ACH_{i}", countedMw2))
+		&& codMap.Groups.Single(static g => g.App == 2519060) is { Exact: true, Located: 39 } && codMap.Groups.Single(static g => g.App == 1962660) is { Exact: true, Located: 24 },
+		$"{heldWithMw2.FirstOrDefault()}-{heldWithMw2.LastOrDefault()} ({heldWithMw2.Count})");
+
+	// A map built under the old rules is built again, and what it says about every achievement changes - which is what
+	// lets a game held on it go (the pacer compares the two). The game's DLC ids are the same, so a 'dlc leave' kept
+	// with them still matches.
+	NocatFarm.Core.DlcAchievements.Map portalOld = new() {
+		App = 400, BuiltAt = DateTime.UtcNow.AddDays(-1), Rule = 6, DlcCount = 2, OnStore = 2, StoreSays = true, SchemaCount = 15,
+		Names = [.. portal.Select(static e => e.Name.ToLowerInvariant())], Dlc = [323170, 2012840],
+		Groups = [new() { App = 2012840, Ids = [2012840], Name = "Portal with RTX", Total = 15, Located = 15, Exact = true }],
+		Owners = portal.ToDictionary(static e => e.Name.ToLowerInvariant(), static _ => new List<uint> { 2012840 }),
+		Sure = portal.ToDictionary(static e => e.Name.ToLowerInvariant(), static _ => new List<uint> { 2012840 })
+	};
+	portalMap.Dlc = [323170, 2012840];
+	Check("dlc rules: a map built under the old rules (Portal held whole) is built again, and the new one says something else",
+		(NocatFarm.Core.DlcAchievements.RuleNow >= 7) && NocatFarm.Core.DlcAchievements.Stale(portalOld) && !NocatFarm.Core.DlcAchievements.Stale(portalMap)
+		&& (HoldOf(portalOld, "PORTAL_0") == NotOwned)
+		&& (NocatFarm.Core.DlcAchievements.HoldKey(portalOld, new HashSet<uint>(), new HashSet<uint>()) != NocatFarm.Core.DlcAchievements.HoldKey(portalMap, new HashSet<uint>(), new HashSet<uint>()))
+		&& (NocatFarm.Core.DlcAchievements.Stamp(portalOld) != NocatFarm.Core.DlcAchievements.Stamp(portalMap))
+		&& (NocatFarm.Core.DlcAchievements.LicenceKey(portalOld, static id => id == 2012840) == "2012840")
+		&& (NocatFarm.Core.DlcAchievements.LicenceKey(portalMap, static id => id == 2012840) == "2012840"));
 
 	// The rule.
 	HashSet<uint> ownsNothing = NocatFarm.Core.DlcAchievements.OwnedGroups(codMap, static _ => false);
@@ -8522,7 +8608,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		&& !Cos("Zombie Army 4", "Zombie Army 4") && Cos("Zombie Army 4: Skin Pack", "Zombie Army 4") && !Cos("Zombie Army 4: Skin Pack"));
 	NocatFarm.Core.DlcAchievements.Map ruleTwo = new() { App = 7, BuiltAt = DateTime.UtcNow, Rule = 2, Names = ["c4"] };
 	Check("dlc cosmetic: the rules moved on - a map built by the old ones is built again",
-		(NocatFarm.Core.DlcAchievements.RuleNow == 6) && NocatFarm.Core.DlcAchievements.Stale(ruleTwo) && !NocatFarm.Core.DlcAchievements.Stale(noDlc));
+		(NocatFarm.Core.DlcAchievements.RuleNow == 7) && NocatFarm.Core.DlcAchievements.Stale(ruleTwo) && !NocatFarm.Core.DlcAchievements.Stale(noDlc));
 
 	// 4. A game with DLC held back and some only Steam can award is held for DLC - so buying the DLC lets it go.
 	Check("dlc steam-only: held for DLC whenever any are held, and a game saved as Steam-only with some held is moved over",
@@ -8613,8 +8699,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	List<NocatFarm.Core.DlcAchievements.Entry> codFull = [.. Enumerable.Range(0, 157).Select(static i => new NocatFarm.Core.DlcAchievements.Entry(
 		$"ACH_{i}", $"Achievement {i}", i == 100 ? "Win a match wearing the Pale Horse Pack." : "Do a thing.", false))];
 	List<NocatFarm.Core.DlcAchievements.Dlc> codAll = NocatFarm.Core.DlcAchievements.Merge(1938090, [
-		new(1962660, 3595230, "Call of Duty®: Modern Warfare® II", 24, [.. Enumerable.Range(0, 10).Select(static i => $"Achievement {i}")]),
-		new(2519060, 3595270, "Call of Duty®: Modern Warfare® III", 39, [.. Enumerable.Range(24, 10).Select(static i => $"Achievement {i}")]),
+		// The store sends both DLC ids to pages of type "game" (3595230, 3595270) - the page's type, not the DLC's.
+		new(1962660, 3595230, "Call of Duty®: Modern Warfare® II", 24, [.. Enumerable.Range(0, 10).Select(static i => $"Achievement {i}")], Type: "game"),
+		new(2519060, 3595270, "Call of Duty®: Modern Warfare® III", 39, [.. Enumerable.Range(24, 10).Select(static i => $"Achievement {i}")], Type: "game"),
 		new(2933620, 1938090, "Call of Duty®", 157, [], Type: "game"),
 		new(3606480, 0, "Call of Duty®: Black Ops 7", 0, [], Listed: false),
 		new(2127791, 2127791, "Call of Duty®: Black Ops 6 - Vault Edition Upgrade", 0, [], Type: "dlc"),
@@ -9730,6 +9817,87 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		&& web.Contains("DlcLeft = bot == null ? [] : DlcChoices.LeftPaused(bot),", StringComparison.Ordinal));
 }
 
+// ── a game held on a wrong DLC map comes back by itself: Portal, held whole for Portal with RTX ─────────────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-dlcfree-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	var maps = (Dictionary<uint, NocatFarm.Core.DlcAchievements.Map>) typeof(NocatFarm.Core.DlcAchievements)
+		.GetField("Maps", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+	NocatFarm.Core.Bot? bot = null;
+
+	try {
+		// Portal as the old rules mapped it: all 15 "from" Portal with RTX, which the account doesn't own. 6 unlocked, the
+		// other 9 held - the pacer called it done for DLC, and the hunt dropped it ("done with Portal's achievements").
+		List<NocatFarm.Core.DlcAchievements.Entry> portal = [.. Enumerable.Range(0, 15).Select(static i => new NocatFarm.Core.DlcAchievements.Entry($"PORTAL_{i}", $"Achievement {i}", "Do a thing.", false))];
+		List<string> keys = [.. portal.Select(static e => e.Name.ToLowerInvariant())];
+		NocatFarm.Core.DlcAchievements.Map old = new() {
+			App = 400, BuiltAt = DateTime.UtcNow.AddDays(-1), Rule = 6, DlcCount = 2, OnStore = 2, StoreSays = true, SchemaCount = 15, Names = keys, Dlc = [323170, 2012840],
+			Groups = [new() { App = 2012840, Ids = [2012840], Name = "Portal with RTX", Total = 15, Located = 15, Exact = true }],
+			Owners = keys.ToDictionary(static k => k, static _ => new List<uint> { 2012840 }), Sure = keys.ToDictionary(static k => k, static _ => new List<uint> { 2012840 })
+		};
+		long oldStamp = NocatFarm.Core.DlcAchievements.Stamp(old);
+		long oldKey = NocatFarm.Core.DlcAchievements.HoldKey(old, new HashSet<uint>(), new HashSet<uint>());
+		File.WriteAllText(Path.Combine(tmpRoot, "config", "state", "cheevo-freed.json"), $$"""
+			[
+			  { "App": 400, "Last": 7, "Total": 15, "Unlocked": 6, "Reachable": 6, "DlcHeld": 9, "DlcOwned": [], "DlcKey": "", "Licences": 77, "MapStamp": {{oldStamp}}, "HoldKey": {{oldKey}} },
+			  { "App": 620, "Last": 1, "Total": 51, "Unlocked": 3 }
+			]
+			""");
+
+		bot = new NocatFarm.Core.Bot("freed", new NocatFarm.Config.BotConfig {
+			UnlockAchievements = true, AchievementBoost = 1, AchievementBoostGames = [400, 620], BoostSwitchFromPct = 100, BoostSwitchToPct = 100
+		});
+		var pacer = new NocatFarm.Modules.AchievementPacer(bot);
+		var hunt = new NocatFarm.Modules.AchievementBoost(bot);
+		bot.AddModule(pacer);
+		bot.AddModule(hunt);
+		NocatFarm.Core.DlcAchievements.Current(400);   // read the (empty) saved maps first, so they can't land on top
+		maps[400] = old;
+		_ = pacer.IsUnclear(400);                      // reads the saved state
+		MethodInfo targets = typeof(NocatFarm.Modules.AchievementBoost).GetMethod("Targets", BindingFlags.NonPublic | BindingFlags.Instance)!;
+		MethodInfo nextTarget = typeof(NocatFarm.Modules.AchievementBoost).GetMethod("NextTarget", BindingFlags.NonPublic | BindingFlags.Instance)!;
+		List<uint> Targets() => (List<uint>) targets.Invoke(hunt, [])!;
+		Check("dlc freed: held whole on the old map, Portal is 'nothing left' and out of the hunt",
+			pacer.NothingLeft(400) && !Targets().Contains(400) && Targets().Contains(620), string.Join(",", Targets()));
+
+		// The new rules build it again: Portal with RTX is a game, not a DLC - nothing in Portal is held.
+		NocatFarm.Core.DlcAchievements.Map rebuilt = NocatFarm.Core.DlcAchievements.Assemble(400, "Portal", portal, NocatFarm.Core.DlcAchievements.Merge(400, [
+			new(323170, 323170, "Portal Soundtrack", 0, [], Type: "music"),
+			new(2012840, 2012840, "Portal with RTX", 15, [.. portal.Take(10).Select(static e => e.Display)], Type: "game")], "Portal"), 2, 2, DateTime.UtcNow);
+		rebuilt.Dlc = [323170, 2012840];
+		maps[400] = rebuilt;
+
+		// The minute's look at held games - the account's licences read, unchanged.
+		Type botType = typeof(NocatFarm.Core.Bot);
+		botType.GetField("_licenseStamp", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(bot, 77L);
+		botType.GetField("_appOwnedSince", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(bot,
+			new Dictionary<uint, NocatFarm.Core.AppOwnership> { [400] = new(DateTime.UtcNow.AddYears(-5), true, true, Permanent: true) });
+		await (Task) typeof(NocatFarm.Modules.AchievementPacer).GetMethod("RecheckLicencesAsync", BindingFlags.NonPublic | BindingFlags.Instance)!
+			.Invoke(pacer, [CancellationToken.None])!;
+		string state = pacer.Snapshot().Single(static r => r.App == 400).State;
+		Check("dlc freed: once the map is built again, Portal is looked at again by itself - no longer 'nothing left', and not 6 of 6",
+			(state == "Unknown") && !pacer.NothingLeft(400) && (pacer.Progress(400) == (6, 15)), $"{state} {pacer.Progress(400)}");
+		List<uint> picks = [(uint) nextTarget.Invoke(hunt, [Targets()])!, (uint) nextTarget.Invoke(hunt, [Targets()])!];
+		Check("dlc freed: and it's back in the hunt - in its turn with the other game again",
+			Targets().Contains(400) && picks.Contains(400u) && picks.Contains(620u), string.Join(",", picks));
+	} finally {
+		maps.Remove(400);
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		if (bot != null) {
+			await bot.DisposeAsync();
+		}
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
 // ── simpler settings: one switch for refunds ──────────────────────────────────────────────────────────────
 {
 	var protect = NocatFarm.Config.Settings.FindBot("SkipRefundableGames");
@@ -10217,7 +10385,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("selfcheck: the overnight advice counts only games the night rules allow; maps from before rule 6 are rebuilt",
 		File.ReadAllText(Path.Combine(root, "Core", "SelfCheck.cs")).Contains("(human?.ListedNightCount ?? bot.Cfg.OfflineIdleGames.Count)", StringComparison.Ordinal)
 		&& File.ReadAllText(Path.Combine(root, "Modules", "HumanMode.cs")).Contains("Bot.Cfg.OfflineIdleGames.Count(a => MayBankAtNight(a, banned))", StringComparison.Ordinal)
-		&& (NocatFarm.Core.DlcAchievements.RuleNow == 6));
+		&& (NocatFarm.Core.DlcAchievements.RuleNow >= 6));
 	Check("old names: the sign-in page says 'dashboard unlock', the achievements usage says 'achievements'",
 		js.Contains("t('Or type dashboard unlock in the nocat.farm window.')", StringComparison.Ordinal) && !js.Contains("'Or type unlock in", StringComparison.Ordinal)
 		&& !File.ReadAllText(Path.Combine(root, "Commands.cs")).Contains("\"cheevo <account>", StringComparison.Ordinal)
@@ -11521,6 +11689,199 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			// temp - it goes when Windows tidies up
 		}
 	}
+}
+
+// ── human mode: a restart carries on with the sitting in progress, not a fresh game ──
+{
+	const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance;
+	Type ht = typeof(NocatFarm.Modules.HumanMode);
+	Type bt = typeof(NocatFarm.Core.Bot);
+	FieldInfo HF(string f) => ht.GetField(f, Inst) ?? throw new MissingFieldException(f);
+	T HGet<T>(object h, string f) => (T) HF(f).GetValue(h)!;
+	void Set(object h, string f, object? v) => HF(f).SetValue(h, v);
+	object? HCall(object h, string m, params object?[] args) => ht.GetMethod(m, Inst)!.Invoke(h, args);
+	void BotSet(NocatFarm.Core.Bot b, string p, object? v) => bt.GetProperty(p)!.SetValue(b, v);
+	NocatFarm.Modules.HumanMode.Phase PhaseOf(object h) => (NocatFarm.Modules.HumanMode.Phase) HF("_phase").GetValue(h)!;
+	const NocatFarm.Modules.HumanMode.Phase Playing = NocatFarm.Modules.HumanMode.Phase.Playing;
+
+	string rname = "harness-resume-" + Guid.NewGuid().ToString("N")[..6];
+	var rcfg = new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730:75, 1085660:25" };
+	var rbot = new NocatFarm.Core.Bot(rname, rcfg);
+	BotSet(rbot, "State", NocatFarm.Core.BotState.Online);
+	BotSet(rbot, "OnlineSince", DateTime.UtcNow.AddMinutes(-20));
+
+	// A sitting in progress, saved as it plays: 36 minutes into 1h09m of Counter-Strike 2, 2h already banked today.
+	NocatFarm.Modules.HumanMode Playing36(uint game, DateTime ends) {
+		var h = new NocatFarm.Modules.HumanMode(rbot);
+		Set(h, "_dayStamp", DateTime.Now.DayOfYear);
+		Set(h, "_wakeMinuteOfDay", 0);
+		Set(h, "_bedHour", 23);
+		Set(h, "_bedMinute", 59);
+		Set(h, "_bedIsTomorrow", true);
+		Set(h, "_targetMinutes", 480);
+		Set(h, "_playedMinutesToday", 120);
+		Set(h, "_phase", Playing);
+		Set(h, "_game", game);
+		Set(h, "_sessionStarted", DateTime.UtcNow.AddMinutes(-36));
+		Set(h, "_sessionEnds", ends);
+		HCall(h, "Persist");
+		return h;
+	}
+
+	// ...and the app restarts: a new module reads the saved day back.
+	NocatFarm.Modules.HumanMode Restarted() {
+		var h = new NocatFarm.Modules.HumanMode(rbot);
+		Set(h, "_dayStamp", DateTime.Now.DayOfYear);
+		HCall(h, "Restore", NocatFarm.Modules.HumanDay.Load(rname, DateTime.Now)!);
+		return h;
+	}
+
+	NocatFarm.Log.Suppressed = true;
+	DateTime ends = DateTime.UtcNow.AddMinutes(33);
+	Playing36(730, ends);
+	NocatFarm.Modules.HumanDay? saved = NocatFarm.Modules.HumanDay.Load(rname, DateTime.Now);
+	Check("restart mid-sitting: the sitting is in the saved day", (saved?.SittingGame == 730) && (Math.Abs((saved.SittingEnds - ends).TotalSeconds) < 1));
+	var back = Restarted();
+	Check("restart mid-sitting: nothing plays before the warm-up", (PhaseOf(back) != Playing) && (HGet<uint>(back, "_game") == 0));
+	HCall(back, "Persist");   // a second restart during the warm-up still finds the sitting
+	Check("restart mid-sitting: still saved through the warm-up", NocatFarm.Modules.HumanDay.Load(rname, DateTime.Now)?.SittingGame == 730);
+	bool resumed = (bool) HCall(back, "TryResume")!;
+	Check("restart mid-sitting: carries on with the same game and the same end", resumed && (PhaseOf(back) == Playing) && (HGet<uint>(back, "_game") == 730)
+		&& (Math.Abs((HGet<DateTime>(back, "_sessionEnds") - ends).TotalSeconds) < 1), $"{PhaseOf(back)} {HGet<uint>(back, "_game")}");
+	Check("restart mid-sitting: the minutes already banked aren't counted again", (HGet<int>(back, "_playedMinutesToday") == 120)
+		&& (Math.Abs((HGet<DateTime>(back, "_bankedTo") - DateTime.UtcNow).TotalSeconds) < 5));
+	Check("restart mid-sitting: carried on with once, not again", !(bool) HCall(back, "TryResume")!);
+
+	// Its end came and went during the restart and the warm-up: a fresh pick, as before.
+	Playing36(730, DateTime.UtcNow.AddMinutes(-1));
+	var late = Restarted();
+	Check("restart mid-sitting: one that's already over rolls fresh", !(bool) HCall(late, "TryResume")! && (PhaseOf(late) != Playing) && (HGet<uint>(late, "_game") == 0));
+
+	// A game it no longer plays: out of "Games and how often", or blacklisted since.
+	Playing36(440, DateTime.UtcNow.AddMinutes(33));
+	Check("restart mid-sitting: a game no longer in its games rolls fresh", !(bool) HCall(Restarted(), "TryResume")!);
+	Playing36(730, DateTime.UtcNow.AddMinutes(33));
+	rcfg.BlacklistedGames.Add(730);
+	Check("restart mid-sitting: a game blacklisted since rolls fresh", !(bool) HCall(Restarted(), "TryResume")!);
+	rcfg.BlacklistedGames.Clear();
+
+	// You're on the account: it doesn't carry on underneath you.
+	Playing36(730, DateTime.UtcNow.AddMinutes(33));
+	var owner = Restarted();
+	BotSet(rbot, "PlayingBlocked", true);
+	Check("restart mid-sitting: not while you're playing", !(bool) HCall(owner, "TryResume")! && (PhaseOf(owner) != Playing));
+	BotSet(rbot, "PlayingBlocked", false);
+
+	// A meal break carries on to its end - no extra meal, no early game.
+	var meal = Playing36(730, DateTime.UtcNow.AddMinutes(33));
+	Set(meal, "_mealsUsed", 1);
+	Set(meal, "_phase", NocatFarm.Modules.HumanMode.Phase.MealBreak);
+	Set(meal, "_game", 0u);
+	DateTime mealEnds = DateTime.UtcNow.AddMinutes(40);
+	Set(meal, "_phaseEnds", mealEnds);
+	HCall(meal, "Persist");
+	var fed = Restarted();
+	Check("restart mid-meal: the meal carries on to its end", (bool) HCall(fed, "TryResume")! && (PhaseOf(fed) == NocatFarm.Modules.HumanMode.Phase.MealBreak)
+		&& (Math.Abs((HGet<DateTime>(fed, "_phaseEnds") - mealEnds).TotalSeconds) < 1) && (HGet<int>(fed, "_mealsUsed") == 1) && (HGet<uint>(fed, "_game") == 0));
+
+	// A file from before this, with none of it, loads as before - and one with it is read fine by an older version.
+	string path = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", $"human-{rname}.json");
+	var node = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(path))!.AsObject();
+	foreach (string k in new[] { "SittingGame", "SittingStarted", "SittingEnds", "SittingFarm", "Break", "BreakEnds" }) {
+		node.Remove(k);
+	}
+	File.WriteAllText(path, node.ToJsonString());
+	var old = Restarted();
+	Check("restart: an older saved day without the sitting loads, and rolls fresh", (HGet<int>(old, "_playedMinutesToday") == 120) && !(bool) HCall(old, "TryResume")!);
+	NocatFarm.Log.Suppressed = false;
+
+	BotSet(rbot, "State", NocatFarm.Core.BotState.Stopped);
+	NocatFarm.Modules.HumanDay.Forget(rname);
+	await rbot.DisposeAsync();
+}
+
+// ── human mode: a sitting a restart cut off doesn't come back after the day moved on (you, a grind, bedtime, the farmer) ──
+{
+	const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance;
+	Type ht = typeof(NocatFarm.Modules.HumanMode);
+	FieldInfo HF(string f) => ht.GetField(f, Inst) ?? throw new MissingFieldException(f);
+	void Set(object h, string f, object? v) => HF(f).SetValue(h, v);
+	object? HCall(object h, string m, params object?[] args) => ht.GetMethod(m, Inst)!.Invoke(h, args);
+	void BotSet(NocatFarm.Core.Bot b, string p, object? v) => typeof(NocatFarm.Core.Bot).GetProperty(p)!.SetValue(b, v);
+
+	string cname = "harness-cutoff-" + Guid.NewGuid().ToString("N")[..6];
+	var ccfg = new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730:75, 1085660:25" };
+	var cbot = new NocatFarm.Core.Bot(cname, ccfg);
+	BotSet(cbot, "State", NocatFarm.Core.BotState.Online);
+	BotSet(cbot, "OnlineSince", DateTime.UtcNow.AddMinutes(-20));
+
+	// Saved mid-sitting, 33 minutes of Counter-Strike 2 still to go, then the app restarts.
+	NocatFarm.Modules.HumanMode Restarted() {
+		var p = new NocatFarm.Modules.HumanMode(cbot);
+		Set(p, "_dayStamp", DateTime.Now.DayOfYear);
+		Set(p, "_wakeMinuteOfDay", 0);
+		Set(p, "_bedHour", 23);
+		Set(p, "_bedMinute", 59);
+		Set(p, "_bedIsTomorrow", true);
+		Set(p, "_targetMinutes", 480);
+		Set(p, "_playedMinutesToday", 120);
+		Set(p, "_phase", NocatFarm.Modules.HumanMode.Phase.Playing);
+		Set(p, "_game", 730u);
+		Set(p, "_sessionStarted", DateTime.UtcNow.AddMinutes(-36));
+		Set(p, "_sessionEnds", DateTime.UtcNow.AddMinutes(33));
+		HCall(p, "Persist");
+
+		var h = new NocatFarm.Modules.HumanMode(cbot);
+		Set(h, "_dayStamp", DateTime.Now.DayOfYear);
+		HCall(h, "Restore", NocatFarm.Modules.HumanDay.Load(cname, DateTime.Now)!);
+		return h;
+	}
+
+	NocatFarm.Log.Suppressed = true;
+
+	// Still warming up: kept.
+	var warming = Restarted();
+	Set(warming, "_phase", NocatFarm.Modules.HumanMode.Phase.WarmingUp);
+	HCall(warming, "DropCutOffResume");
+	Check("restart, still warming up: the cut-off sitting is still waiting", (bool) HCall(warming, "TryResume")!);
+
+	// You sat down at the account during the warm-up (or a grind, bedtime, the day's hours, the farmer): gone, and gone
+	// from the saved day too - your own session ended it, as it would have without the restart.
+	foreach (NocatFarm.Modules.HumanMode.Phase cut in new[] { NocatFarm.Modules.HumanMode.Phase.StoodDown, NocatFarm.Modules.HumanMode.Phase.Playing,
+		NocatFarm.Modules.HumanMode.Phase.Asleep, NocatFarm.Modules.HumanMode.Phase.DoneForToday, NocatFarm.Modules.HumanMode.Phase.ShortBreak }) {
+		var h = Restarted();
+		Set(h, "_phase", cut);
+		BotSet(cbot, "PlayingBlocked", cut == NocatFarm.Modules.HumanMode.Phase.StoodDown);   // you, 20 minutes after the sign-in
+		HCall(h, "DropCutOffResume");
+		BotSet(cbot, "PlayingBlocked", false);
+		Set(h, "_phase", NocatFarm.Modules.HumanMode.Phase.Off);
+		HCall(h, "Persist");
+		Check($"restart, then {cut} before the warm-up was over: the old sitting doesn't come back", !(bool) HCall(h, "TryResume")!
+			&& (NocatFarm.Modules.HumanDay.Load(cname, DateTime.Now)?.SittingGame == 0));
+	}
+
+	var farmed = Restarted();
+	Set(farmed, "_wasFarming", true);
+	HCall(farmed, "DropCutOffResume");
+	Check("restart, then the card farmer took the account: the old sitting doesn't come back after it", !(bool) HCall(farmed, "TryResume")!);
+
+	// Steam's first report after signing in is the session that just ended - on a restart mid-sitting, our own, "blocked"
+	// on that sitting's game - so it stands down for a few seconds. That isn't you: the sitting still carries on after.
+	var echo = Restarted();
+	BotSet(cbot, "OnlineSince", DateTime.UtcNow.AddSeconds(-5));
+	BotSet(cbot, "PlayingBlocked", true);
+	Set(echo, "_phase", NocatFarm.Modules.HumanMode.Phase.StoodDown);
+	HCall(echo, "DropCutOffResume");
+	BotSet(cbot, "PlayingBlocked", false);
+	BotSet(cbot, "OnlineSince", DateTime.UtcNow.AddMinutes(-20));
+	HCall(echo, "DropCutOffResume");   // a later tick, still stood down for the courtesy wait after it
+	Set(echo, "_phase", NocatFarm.Modules.HumanMode.Phase.WarmingUp);
+	Check("restart mid-sitting, Steam's report of our own ended session right after sign-in: the sitting still carries on", (bool) HCall(echo, "TryResume")!);
+	NocatFarm.Log.Suppressed = false;
+
+	BotSet(cbot, "State", NocatFarm.Core.BotState.Stopped);
+	NocatFarm.Modules.HumanDay.Forget(cname);
+	await cbot.DisposeAsync();
 }
 
 // SETTINGSCOUNT

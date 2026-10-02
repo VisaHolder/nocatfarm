@@ -165,7 +165,8 @@ the cards are done.
 name instead of the real game, and the real games still count playtime.
 
 **Human mode**: *Human mode → Human mode*. Then set **Games and how often** (`730:70, 440:30` means 70%
-Counter-Strike 2 and 30% Team Fortress 2), the hours it plays and its bedtime.
+Counter-Strike 2 and 30% Team Fortress 2, on average over a week - one day can lean more toward one game), the hours it
+plays and its bedtime.
 
 **Claim free games**: *Free stuff → Claim free games*, set to *games* (or *games and DLC* for free DLC too). Paid
 games that Steam gives away free-to-keep get added to the account.

@@ -454,6 +454,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				if (changed) {
 					g.Last = Outcome.Unknown;
 					g.NextAllow = DateTime.UtcNow;
+					ForgetReach(g);
 				}
 			}
 
@@ -551,9 +552,20 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 			g.Last = Outcome.Unknown;
 			g.NextAllow = DateTime.UtcNow;
+			ForgetReach(g);
 		}
 
 		Save();
+	}
+
+	/// <summary>
+	/// A game held for DLC is let go: what it could reach was counted without the held ones, and that's forgotten until
+	/// the next look works it out again. Kept, Portal let go after being held 9 of 15 read as 6 of 6 - finished - and the
+	/// hunt rested it for days the moment it came back. Called under the gate.
+	/// </summary>
+	private static void ForgetReach(GameState g) {
+		g.Reachable = 0;
+		g.DlcHeld = 0;
 	}
 
 	/// <summary>

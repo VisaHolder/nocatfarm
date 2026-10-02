@@ -1859,6 +1859,7 @@
     "human mode has no games - fill in \"Games and how often\"": "insan modunda oyun yok - \"Oyunlar ve sıklık\" alanını doldur",
     "farming cards on {0} for ~{1} ({2}/{3} today)": "{0} üzerinde ~{1} kart farm (bugün {2}/{3})",
     "playing {0} for ~{1} ({2}/{3} today)": "{0} oynanıyor ~{1} (bugün {2}/{3})",
+    "carrying on with {0} after the restart - {1} left ({2}/{3} today)": "yeniden başlatmadan sonra {0} devam ediyor - {1} kaldı (bugün {2}/{3})",
     "last card from {0} - playing on ~{1}, then a break": "{0} son kartı geldi - ~{1} daha oynanıyor, sonra mola",
     "rep4rep won't add this account - check the API token": "rep4rep bu hesabı eklemiyor - API token'ını kontrol et",
     "not on rep4rep yet - add it there, or turn on Rep4RepAutoAddProfiles": "henüz rep4rep'te değil - orada ekle ya da Rep4RepAutoAddProfiles'ı aç",
@@ -2633,7 +2634,7 @@
     },
     "GameWeights": {
       "label": "Oyunlar ve ne sıklıkta",
-      "tip": "Hangi oyunları oynadığı ve her birinin zamanının yüzde kaçını aldığı. Toplam yaklaşık 100 olmalı. İlk oyun ana oyundur. Kalanı paylaşması için bir oyuna sayı yazma. Bir oyunu kenara almak için 440:0 yaz."
+      "tip": "Hangi oyunları oynadığı ve her birinin zamanının yüzde kaçını aldığı. Toplam yaklaşık 100 olmalı. İlk oyun ana oyundur. Kalanı paylaşması için bir oyuna sayı yazma. Bir oyunu kenara almak için 440:0 yaz. Bunlar bir haftanın ortalamasıdır - tıpkı bir insanınki gibi, bir gün bir oyuna daha çok kayabilir. \"Başarım hızlandırma\"nın üzerinde olduğu oyun, diğer oyunların payını paylaşır."
     },
     "HourTargets": {
       "label": "Saat hedefleri",

@@ -1859,6 +1859,7 @@
     "human mode has no games - fill in \"Games and how often\"": "tryb ludzki nie ma gier - wypełnij \"Gry i jak często\"",
     "farming cards on {0} for ~{1} ({2}/{3} today)": "farmię karty na {0} przez ~{1} ({2}/{3} dziś)",
     "playing {0} for ~{1} ({2}/{3} today)": "gram w {0} przez ~{1} ({2}/{3} dziś)",
+    "carrying on with {0} after the restart - {1} left ({2}/{3} today)": "po restarcie gram dalej w {0} - zostało {1} ({2}/{3} dziś)",
     "last card from {0} - playing on ~{1}, then a break": "ostatnia karta z {0} - gram jeszcze ~{1}, potem przerwa",
     "rep4rep won't add this account - check the API token": "rep4rep nie dodaje tego konta - sprawdź token API",
     "not on rep4rep yet - add it there, or turn on Rep4RepAutoAddProfiles": "jeszcze nie na rep4rep - dodaj je tam albo włącz Rep4RepAutoAddProfiles",
@@ -2633,7 +2634,7 @@
     },
     "GameWeights": {
       "label": "Gry i jak często",
-      "tip": "W jakie gry gra i jaki procent czasu dostaje każda, razem około 100. Pierwsza to gra główna. Pomiń liczbę, żeby gra dzieliła resztę, albo wpisz 440:0, żeby odstawić grę na ławkę."
+      "tip": "W jakie gry gra i jaki procent czasu dostaje każda, razem około 100. Pierwsza to gra główna. Pomiń liczbę, żeby gra dzieliła resztę, albo wpisz 440:0, żeby odstawić grę na ławkę. To średnie z tygodnia - jeden dzień może przechylić się w stronę jednej gry, jak u człowieka. Gra, na której jest \"Przyspieszenie osiągnięć\", dzieli się częścią pozostałych gier."
     },
     "HourTargets": {
       "label": "Cele godzinowe",
