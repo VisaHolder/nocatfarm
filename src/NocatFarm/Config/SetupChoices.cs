@@ -1,4 +1,3 @@
-using System.Globalization;
 using NocatFarm.Core;
 
 namespace NocatFarm.Config;
@@ -12,7 +11,7 @@ namespace NocatFarm.Config;
 public static class SetupChoices {
 	/// <summary>The settings the wizard offers. Anything else is refused, so nothing unexpected can slip in.</summary>
 	private static readonly HashSet<string> Allowed = new(StringComparer.OrdinalIgnoreCase) {
-		"Language", "StartWithWindows", "StartMinimized", "Tray", "AutoUpdate", "UpdateMode", "WebEnabled", "WebPort", "WebHost", "WebRemoteAccess"
+		"Language", "StartWithWindows", "StartMinimized", "Tray", "UpdateMode", "WebEnabled", "WebPort", "WebHost", "WebRemoteAccess"
 	};
 
 	/// <summary>Puts the startup entry in step with the choice - Windows only. Tests put their own here, so a test of the
@@ -103,17 +102,6 @@ public static class SetupChoices {
 				importPath = value;
 
 				continue;
-			}
-
-			// "Update by itself" was its own setting, and a setup may still name it: 1 is installing by itself at night, 0 is
-			// not - which leaves "once everyone's asleep" and "install when I click" as they are. Off from "at night", a click
-			// does what it did before: one that waited for the accounts to sleep is "once everyone's asleep", one that
-			// installed right away is "install when I click".
-			if (name.Equals("AutoUpdate", StringComparison.OrdinalIgnoreCase) && value is "0" or "1") {
-				name = "UpdateMode";
-				value = (value == "1" ? UpdateModes.AtNight
-					: g.UpdateMode != UpdateModes.AtNight ? g.UpdateMode
-					: g.UpdateClickWaits ? UpdateModes.JustTellMe : UpdateModes.WhenIClick).ToString(CultureInfo.InvariantCulture);
 			}
 
 			if (!Allowed.Contains(name) || (Settings.FindGlobal(name) is not { } def) || (Settings.Apply(g, def, value) != null)) {

@@ -126,9 +126,6 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 		}
 	}
 
-	/// <summary>When the current run of idling began, so the log can say how long it has been going.</summary>
-	public DateTime? IdlingSince { get; private set; }
-
 	/// <summary>Re-send what this account should be playing, unless something with a stronger claim owns it.</summary>
 	public void Assert() {
 		// Human mode runs its own grinds, after the owner-safety wait at logon. Playing the grind game from here
@@ -160,7 +157,6 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 
 			if (grind != 0) {
 				Bot.SetPlaying([grind]);
-				IdlingSince ??= DateTime.UtcNow;
 			}
 
 			return;   // the user asked for hours on one game; nothing else gets a say until it expires
@@ -177,14 +173,12 @@ public sealed class Idler(Bot bot) : BotModule(bot) {
 
 		if (games.Count == 0 && string.IsNullOrWhiteSpace(Bot.CustomName)) {
 			Bot.StopPlaying();
-			IdlingSince = null;
 
 			return;
 		}
 
 		// With a custom name set and no games, Steam still shows the name - that combination is deliberate.
 		Bot.SetPlaying(games);
-		IdlingSince ??= DateTime.UtcNow;
 	}
 
 	/// <summary>

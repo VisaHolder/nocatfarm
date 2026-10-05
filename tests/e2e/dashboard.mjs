@@ -133,8 +133,8 @@ const TEXT_VALUE = {
   WebPublicAddress: 'http://192.0.2.1:7377', WebTrustedProxies: '192.0.2.10', WebProxy: 'http://127.0.0.1:9', WebProxyUsername: 'e2e',
   TelegramChatId: '123456789', DiscordOwnerId: '123456789012345678', GroupsToJoin: 'e2e-group', SteamLogin: 'not_a_real_account_e2e',
   Notes: 'e2e note', MachineName: 'e2e-pc', AccountProxy: 'http://127.0.0.1:9', AccountProxyUsername: 'e2e', CustomGameName: 'e2e game',
-  HourTargets: '440:10', SendItemTypes: 'cards', TradeMasters: '76561197960287930', AutoTradeWith: '76561197960287930',
-  TradeMasterToken: 'e2etoken', CommandMasters: '76561197960287930', AutoReply: 'e2e reply', ExtraGroupsToJoin: 'e2e-group',
+  HourTargets: '440:10', SendItemTypes: 'cards', TradeMasters: '76561201960265729', AutoTradeWith: '76561201960265729',
+  TradeMasterToken: 'e2etoken', CommandMasters: '76561201960265729', AutoReply: 'e2e reply', ExtraGroupsToJoin: 'e2e-group',
 };
 // A choice that shows other settings under one answer is changed TO that answer, so those settings appear and get
 // changed and put back too ("Share of sittings that farm cards" only shows with "mixed").
@@ -829,7 +829,7 @@ async function putBack(def, orig, target, defaults) {
       if (await btn.count()) await btn.click(); else return false;
     } finally { dialogAnswer = 'dismiss'; }
   } else if (n === 'DiscordSecondLine') {
-    // The pills in their order on screen: people using nocat.farm (3), then cards today, hours past week, past month.
+    // The pills in their order on screen: Steam accounts on nocat.farm (3), then cards today, hours past week, past month.
     await page.locator('#settingsBody .dline .p').nth(DISCORD_LINES.indexOf(Number(orig))).click();
   } else if (n === 'GameWeights') {
     // Built back through the editor: every side game dropped, the main game swapped back, the others added, the share set.
@@ -1120,32 +1120,39 @@ for (const bot of Object.keys((await api('/api/config')).Bots)) settingsCount[bo
   await healthy('weights picker: healthy after searching');
 }
 
-// The user count: the copy pinged the stand-in for nocat.lol (never the real one), the Overview says how many people use
-// nocat.farm, the Discord card's preview counts them, and "Count me as a user" off hides it all.
+// The user count: the copy pinged the stand-in for nocat.lol (never the real one), the Overview says how many Steam
+// accounts are on nocat.farm, the Discord card's preview counts them, and "Count me as a user" off hides it all.
 if (PING_STUB) {
-  let users = null;
-  for (let i = 0; i < 60 && users !== 212; i++) { users = (await api('/api/status')).Users; if (users !== 212) await sleep(1000); }
-  check('user count: the status says 212 people, from the stand-in\'s answer', users === 212, String(users));
+  let status = {};
+  for (let i = 0; i < 60 && status.Accounts !== 1240; i++) { status = await api('/api/status'); if (status.Accounts !== 1240) await sleep(1000); }
+  check('user count: the status says 1240 Steam accounts, from the stand-in\'s answer', status.Accounts === 1240, String(status.Accounts));
+  check('user count: ...and still the copies (Users), for whatever reads it', status.Users === 212, String(status.Users));
   const seen = await fetch(`${PING_STUB}/seen`).then((r) => r.json()).catch(() => []);
   const first = seen[0] || {};
   let body = {};
   try { body = JSON.parse(first.body || '{}'); } catch { /* checked below */ }
-  check('user count: the ping is a JSON POST of the install id, the version and the platform - nothing else',
-    seen.length >= 1 && JSON.stringify(Object.keys(body)) === '["id","v","os"]' && /^[0-9a-f]{32}$/.test(body.id || '')
-      && ['windows', 'linux', 'mac', 'docker'].includes(body.os) && /^application\/json/.test(first.contentType || '')
-      && (first.userAgent || '') === `nocat.farm/${body.v}`, JSON.stringify(first));
+  // The fixture's accounts are all switched off, so none is signed in: "a" is 0 - a plain number, nothing about them.
+  check('user count: the ping is a JSON POST of the install id, the version, the platform and the accounts signed in - nothing else',
+    seen.length >= 1 && JSON.stringify(Object.keys(body)) === '["id","v","os","a"]' && /^[0-9a-f]{32}$/.test(body.id || '')
+      && ['windows', 'linux', 'mac', 'docker'].includes(body.os) && Number.isInteger(body.a) && body.a === 0
+      && /^application\/json/.test(first.contentType || '') && (first.userAgent || '') === `nocat.farm/${body.v}`, JSON.stringify(first));
   await gotoView('overview');
   await settle(300);
   const line = page.locator('#usercount');
-  check('user count: the Overview says "212 people using nocat.farm today"', await line.isVisible() && (await line.textContent()) === '212 people using nocat.farm today',
+  check('user count: the Overview says "1,240 Steam accounts on nocat.farm"', await line.isVisible() && (await line.textContent()) === '1,240 Steam accounts on nocat.farm',
     await line.textContent());
+  check('user count: ...and its tooltip says only how many accounts, as a number', /only how many, as a number/.test(await line.getAttribute('data-tip') || ''),
+    await line.getAttribute('data-tip'));
   await settingsOn(null);
-  check('user count: the Discord card\'s preview counts the people', (await page.locator('#settingsBody .dcard .dstate').textContent() || '').includes('212 people using nocat.farm'),
-    await page.locator('#settingsBody .dcard .dstate').textContent());
+  // The card already says Playing nocat.farm: its second line is the short "1,240 Steam accounts", without "on nocat.farm".
+  const cardLine = await page.locator('#settingsBody .dcard .dstate').textContent() || '';
+  check('user count: the Discord card\'s preview counts the Steam accounts, in the short form',
+    cardLine.includes('1,240 Steam accounts') && !cardLine.includes('on nocat.farm'), cardLine);
   await field('CountMeAsUser').locator('label.switch').first().click();
   await settle(150);
   await saveNow(null);
-  check('user count: Count me as a user off - the status has no count', (await api('/api/status')).Users == null);
+  const offStatus = await api('/api/status');
+  check('user count: Count me as a user off - the status has no count', offStatus.Accounts == null && offStatus.Users == null);
   check('user count: ...and the Discord card falls back to the cards today', /cards today/.test(await page.locator('#settingsBody .dcard .dstate').textContent() || ''),
     await page.locator('#settingsBody .dcard .dstate').textContent());
   await gotoView('overview');
@@ -1155,19 +1162,19 @@ if (PING_STUB) {
   await field('CountMeAsUser').locator('label.switch').first().click();
   await settle(150);
   await saveNow(null);
-  check('user count: switched back on, the count is back', (await api('/api/status')).Users === 212);
+  check('user count: switched back on, the count is back', (await api('/api/status')).Accounts === 1240);
   await healthy('user count: healthy after switching it off and on');
 } else {
   skip('user count', 'no --ping-stub: the copy would tell nocat.lol it is running');
 }
 
-// The Discord card's second line: people using nocat.farm first (the default), no account names any more.
+// The Discord card's second line: Steam accounts on nocat.farm first (the default), no account names any more.
 {
   await settingsOn(null);
   const pills = await page.locator('#settingsBody .dline .p').allTextContents();
-  check('discord card: the second line is people using nocat.farm, cards today, hours past week or month - no account names',
-    pills.length === 4 && pills[0] === 'People using nocat.farm' && !pills.some((x) => /account names/i.test(x)), pills.join(' | '));
-  check('discord card: people using nocat.farm is picked by default', Number(await live('DiscordSecondLine')) === 3
+  check('discord card: the second line is Steam accounts on nocat.farm, cards today, hours past week or month - no account names, no people',
+    pills.length === 4 && pills[0] === 'Steam accounts on nocat.farm' && !pills.some((x) => /account names|people/i.test(x)), pills.join(' | '));
+  check('discord card: Steam accounts on nocat.farm is picked by default', Number(await live('DiscordSecondLine')) === 3
     && await page.locator('#settingsBody .dline .p').first().evaluate((e) => e.classList.contains('on')));
 }
 

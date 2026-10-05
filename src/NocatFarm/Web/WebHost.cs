@@ -1242,41 +1242,6 @@ public sealed class WebHost : IAsyncDisposable {
 
 		app.MapGet("/api/commands", (HttpContext ctx) => Guard(ctx, () => Results.Json(Commands.All)));
 
-		// ── importing from ArchiSteamFarm ──
-		app.MapGet("/api/import/asf", (HttpContext ctx) => Guard(ctx, () => {
-			string? dir = AsfImport.Detect();
-
-			return Results.Json(new {
-				Found = dir != null,
-				Path = dir ?? "",
-				Accounts = dir == null ? [] : AsfImport.Preview(dir).Select(static c => new {
-					c.Name,
-					c.SteamLogin,
-					c.HasToken,
-					c.HasPassword
-				})
-			});
-		}));
-
-		app.MapPost("/api/import/asf", async (HttpContext ctx) => {
-			if (!Authorised(ctx)) {
-				return Unauthorised();
-			}
-
-			ImportRequest? body = await ReadJsonAsync<ImportRequest>(ctx).ConfigureAwait(false);
-			string? dir = string.IsNullOrWhiteSpace(body?.Path) ? AsfImport.Detect() : body.Path;
-
-			if (dir == null || !Directory.Exists(dir)) {
-				return Results.Json(new { ok = false, error = "Couldn't find an ArchiSteamFarm config folder there." });
-			}
-
-			AsfImport.Result result = AsfImport.Run(dir, _mgr.Global, body?.Overwrite ?? false, body?.Human);
-			await _mgr.SyncFromDiskAsync().ConfigureAwait(false);
-			Log.Good(new Said("imported {0} account(s) from ArchiSteamFarm", result.Imported));
-
-			return Results.Json(new { ok = true, result.Imported, result.Skipped, result.Notes });
-		});
-
 		// ── importing from any idler: the list, a preview, then only what was confirmed ──
 		// Every program's usual places, looked at now, and the "coming from" choice the installer left.
 		app.MapGet("/api/import/tools", (HttpContext ctx) => Guard(ctx, () => {
@@ -1836,8 +1801,7 @@ public sealed class WebHost : IAsyncDisposable {
 		}));
 
 		// The owner's choice about one game with add-ons Steam doesn't explain: leave it alone, or take that back (the
-		// dashboard's undo). 'carryon' is the old answer, still taken. Only the account's own choice, kept in its settings
-		// file - nothing is unlocked by it.
+		// dashboard's undo). Only the account's own choice, kept in its settings file - nothing is unlocked by it.
 		app.MapPost("/api/bots/{name}/achievements/dlc", async (HttpContext ctx, string name) => {
 			if (!Authorised(ctx)) {
 				return Unauthorised();
@@ -1863,7 +1827,6 @@ public sealed class WebHost : IAsyncDisposable {
 			}
 
 			Said? said = answer switch {
-				"carryon" => DlcChoices.CarryOn(bot, body.App),
 				"leave" => DlcChoices.Leave(bot, body.App),
 				"undo" => DlcChoices.Undo(bot, body.App),
 				_ => null
@@ -2931,14 +2894,22 @@ public sealed class WebHost : IAsyncDisposable {
 			_ = CachedPointsAsync(false);
 		}
 
+		// Everything still waiting on a price across every account being valued, each item once - two accounts holding the
+		// same card wait on one price, not two. The count and the requests from the same list: summed per account, the
+		// tile said twice the items there were, and an account switched off mid-pricing left "about 0 requests" for good.
+		List<(uint App, string Hash)> fleetWaiting = [.. bots.Where(static b => b.Cfg.ShowInventoryValue).SelectMany(static b => b.Inventory.Waiting()).Distinct()];
+		int fleetRequests = fleetWaiting.Count == 0 ? 0 : PriceBook.RequestsFor(fleetWaiting);
+
 		return new {
 			Version = Build.Version,   // read from the assembly, not typed in - it was stuck at 1.0.0 for two releases
 			BootId = _started.Ticks,   // the browser resets its log buffer when this changes
 			RefreshSeconds = Math.Clamp(_mgr.Global.WebRefreshSeconds, 1, 60),
 			UptimeMinutes = (int) (DateTime.UtcNow - _started).TotalMinutes,
-			// People using nocat.farm in the last 24 hours, from nocat.lol's answer to the hourly ping. Null while it isn't
-			// known, is too old, or "Count me as a user" is off - the page then shows nothing for it.
-			Users = UserCount.Current(),
+			// Steam accounts on nocat.farm, from nocat.lol's answer to the hourly ping - what the page shows. Null while it
+			// isn't known (an older nocat.lol doesn't say it), is too old, or "Count me as a user" is off: then nothing shows.
+			Accounts = UserCount.Accounts(),
+			// The copies running, as before: still in the answer for whatever reads it, no longer shown.
+			Users = UserCount.Users(),
 			Prompt = Prompt.Pending,
 			PromptSecret = Prompt.PendingSecret,
 			Rep4RepEnabled = _mgr.Global.Rep4RepEnabled,
@@ -2982,7 +2953,17 @@ public sealed class WebHost : IAsyncDisposable {
 			DiscordOwner = Notifier.DiscordConnected ? Notifier.DiscordOwner : "",
 			DiscordOwnerId = _mgr.Global.DiscordOwnerId,
 			UpdateProgress = SelfUpdate.Progress,
-			InventoryPending = bots.Sum(static b => b.Inventory.Pending),
+			InventoryPending = fleetWaiting.Count,
+			// How many market requests the prices still waiting will take - every account's together, an item two of them
+			// hold counted once, as it is asked once - and how long that is at the market pace, for the tile's "about 14
+			// requests · ~2m". Seconds, so the page can say it in its own language.
+			InventoryRequests = fleetRequests,
+			InventoryEtaSeconds = InventoryValue.EtaSeconds(fleetRequests),
+			// Steam told the market lookups to wait: the tile says so, and until when, instead of a time left.
+			InventoryPausedUntil = PriceBook.PausedUntil,
+			// The market refusing both ways: the value stands on the last prices it gave. When those came in and when the
+			// market is asked again, for the tile's "prices from 14:20 · ... trying again at 15:05". Null otherwise.
+			InventoryStale = PriceBook.Stale is { } stale ? new { stale.From, stale.RetryAt } : null,
 			GamesLeft = bots.Sum(static b => b.GamesRemaining),
 			Bots = bots.Select(b => {
 				Rep4RepModule? r4r = BotManager.ModuleOf<Rep4RepModule>(b);
@@ -3021,6 +3002,8 @@ public sealed class WebHost : IAsyncDisposable {
 					InventoryChange = InventoryHistory.Since(b.Name, TimeSpan.FromHours(24))?.Change,
 					InventoryChangePct = InventoryHistory.Since(b.Name, TimeSpan.FromHours(24))?.Percent,
 					InventoryPending = b.Inventory.Pending,
+					InventoryRequests = b.Inventory.RequestsLeft,
+					InventoryEtaSeconds = InventoryValue.EtaSeconds(b.Inventory.RequestsLeft),
 					InventoryReady = b.Inventory.Ready,
 
 					// Whether it is being valued AT ALL. Without this the dashboard cannot tell "still working
@@ -3107,14 +3090,6 @@ public sealed class WebHost : IAsyncDisposable {
 
 	private sealed class TokenRequest {
 		public string? Token { get; set; }
-	}
-
-	private sealed class ImportRequest {
-		public string? Path { get; set; }
-		public bool Overwrite { get; set; }
-
-		/// <summary>Accounts to bring across in human mode - the ones the walkthrough was told you play on.</summary>
-		public List<string>? Human { get; set; }
 	}
 
 	private sealed class ApplyImportRequest {

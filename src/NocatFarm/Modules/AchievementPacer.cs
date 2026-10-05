@@ -168,6 +168,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		public int Unlocked = -1;       // last known unlocked count; -1 means unknown, so treat as onboarding
 		public int Total;               // how many the game has at all, so progress reads as a fraction
 		public int BurstLeft;           // mid-burst: this many more pop quickly, bypassing the played-time gate
+		public bool Quick;              // the wait to NextAllow is a burst's few minutes - only one common enough to burst may end it (see MayBurst)
 		public Outcome Last;            // what the last real read of Steam concluded
 		public int CappedAt;            // the ceiling in force when it stopped, so raising it can release the game
 		public int Reachable;           // Total less the locked ones from DLC this account doesn't own; 0 = not worked out
@@ -1148,7 +1149,23 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			g.SkipOnce = null;
 		}
 
-		Achievement pick = NextPick(eligible, a => sorted.Later.Contains(a.Name), _rng.Next(100) < 20, skip);
+		Func<Achievement, bool> later = a => sorted.Later.Contains(a.Name);
+		Achievement pick = NextPick(eligible, later, _rng.Next(100) < 20, skip);
+		int burstMin = Bot.Cfg.AchievementBurstMinPct;
+
+		// In a burst, and this one is too rare to come a few minutes after the last (what's open moved since then, say): the
+		// burst ends here, and it waits the full time from the last unlock - and the played-time gate again.
+		lock (_gate) {
+			if (((g.BurstLeft > 0) || g.Quick) && !MayBurst(pick, burstMin)) {
+				g.BurstLeft = 0;
+				g.Quick = false;
+				g.NextAllow = g.PacedFrom.AddMinutes(Paced(FullGap(grind, onboarding, prof)));
+				g.PaceUsed = PaceOf(Bot.Cfg.AchievementPace);
+				g.Pulled = false;
+
+				return false;
+			}
+		}
 
 		(bool ok, string message, int changed, Achievements.Refusal refusal) = await Achievements.SetCheckedAsync(Bot, set, [pick], true, ct, dlc).ConfigureAwait(false);
 
@@ -1187,6 +1204,10 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		int nowUnlocked = already + 1;
 		int gap;
 
+		// Whether the one after this may come a few minutes later: only one common enough (AchievementBurstMinPct). Worked
+		// out from what's open now, as the next look would pick it - with the wobble and without.
+		bool burstNext = NextMayBurst(eligible, pick, later, burstMin);
+
 		lock (_gate) {
 			g.MinsAtLastUnlock = g.PlayedMins;
 			g.Unlocked = nowUnlocked;
@@ -1194,36 +1215,31 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 
 			// Cluster like a person: several within a couple of minutes as a level or campaign finishes, then
 			// nothing for a long stretch. A steady one-every-N-minutes drip is the thing to avoid.
-			if (grind) {
-				// Active-play pace: what a real person mopping up a game's easy achievements looks like - a handful
-				// an hour, not a dump. Mostly the configured gap apart (default ~12-24 min, so ~3-5/hr, never 20),
-				// easiest-first, only among what's reachable for the hours in the game (the rarity floor above), and
-				// still Paced() by the account's setting. But not a metronome: now and then a level or objective
-				// pops two or three together, then a longer quiet - exactly how a person's history looks.
-				int glo = Math.Max(1, Bot.Cfg.AchievementGrindGapMinMinutes);
-				int ghi = Math.Max(glo, Bot.Cfg.AchievementGrindGapMaxMinutes);
+			//
+			// In a grind - active play, mopping up a game's easy achievements - it's mostly the grind's gap apart (default
+			// ~12-24 min, so ~3-5/hr, never 20), easiest-first, only among what's reachable for the hours in the game (the
+			// rarity floor above), and still Paced() by the account's setting. But not a metronome: now and then a level or
+			// objective pops two or three together, then a longer quiet - exactly how a person's history looks.
+			//
+			// Only common ones burst, normal play and grind alike. Three achievements that 1% of players have, eight minutes
+			// apart, is nothing a person does: a rare one never comes a few minutes after another - it ends any burst and
+			// gets the full wait.
+			int burstChance = grind ? 25 : onboarding ? 45 : 12;
+			bool quick;
 
-				if (g.BurstLeft > 0) {
-					g.BurstLeft--;
-					gap = _rng.Next(1, 5);
-				} else if ((eligible.Count > 1) && (_rng.Next(100) < 25)) {
-					g.BurstLeft = _rng.Next(1, 3);
-					gap = _rng.Next(1, 5);
-				} else {
-					gap = _rng.Next(glo, ghi + 1);
-				}
-			} else if (g.BurstLeft > 0) {
+			if (burstNext && (g.BurstLeft > 0)) {
 				g.BurstLeft--;
-				gap = _rng.Next(1, 5);
-			} else if ((eligible.Count > 1) && (_rng.Next(100) < (onboarding ? 45 : 12))) {
+				quick = true;
+			} else if (burstNext && (_rng.Next(100) < burstChance)) {
 				g.BurstLeft = _rng.Next(1, 3);
-				gap = _rng.Next(1, 5);
+				quick = true;
 			} else {
-				gap = onboarding
-					? _rng.Next(prof.OnboardGapLo, prof.OnboardGapHi + 1)
-					: _rng.Next(prof.SteadyGapLo, prof.SteadyGapHi + 1);
+				g.BurstLeft = 0;
+				quick = false;
 			}
 
+			gap = quick ? _rng.Next(1, 5) : FullGap(grind, onboarding, prof);
+			g.Quick = quick;
 			g.NextAllow = DateTime.UtcNow.AddMinutes(Paced(gap));
 			g.PacedFrom = DateTime.UtcNow;
 			g.PaceUsed = PaceOf(Bot.Cfg.AchievementPace);
@@ -1576,9 +1592,86 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// The ones that may go now: open at these hours (<see cref="RarityAllows"/>) and every order rule satisfied. One short
 	/// of its counter ("Complete 100 parries") never gets here (see <see cref="Sort"/>); nothing writes counters, so a
 	/// ladder of counted rungs waits for the real count, rung by rung.
+	///
+	/// And the game's own list, last (<see cref="ListStepBefore"/>): one listed just before another and about as common goes
+	/// first - when nothing else holds it, so the rules above always win.
 	/// </summary>
-	internal static List<Achievement> Eligible(Sorted sorted, IReadOnlyCollection<Achievement> all, int already, int floor, double hours, double? typical) =>
-		[.. sorted.Candidates.Where(a => !a.CounterShort && RarityAllows(a, floor) && InOrder(a, sorted.Reach, all, already, hours, typical))];
+	internal static List<Achievement> Eligible(Sorted sorted, IReadOnlyCollection<Achievement> all, int already, int floor, double hours, double? typical) {
+		List<Achievement> inOrder = [.. sorted.Candidates.Where(a => !a.CounterShort && RarityAllows(a, LowestFloor) && InOrder(a, sorted.Reach, all, already, hours, typical))];
+		Dictionary<string, int> place = ListPlaces(all);
+
+		return [.. inOrder.Where(a => RarityAllows(a, floor) && !inOrder.Any(b => ListStepBefore(b, a, place)))];
+	}
+
+	/// <summary>Where each achievement sits in the game's own list (stat, then bit), by API name.</summary>
+	private static Dictionary<string, int> ListPlaces(IReadOnlyCollection<Achievement> all) {
+		Dictionary<string, int> place = new(StringComparer.Ordinal);
+		int i = 0;
+
+		foreach (Achievement a in all.OrderBy(static a => a.StatId).ThenBy(static a => a.Bit)) {
+			place.TryAdd(a.Name, i++);
+		}
+
+		return place;
+	}
+
+	/// <summary>
+	/// The game's own list decides between two about as common: <paramref name="step"/> comes first when the game lists it
+	/// just before <paramref name="after"/> (at most <see cref="ListStepReach"/> places) and they are close in how many
+	/// players have them (<see cref="Close"/>), and they are about the same thing (<see cref="SameSubject"/>). Games list
+	/// their story and bosses in the order they come, and Steam's figures are too close there to tell: Terraria's "Defeat the
+	/// four celestial towers of the moon" (23.2%) is listed right before "Defeat the Moon Lord" (24.7%), who only comes after
+	/// them. Two far apart in the list, far apart in how common they are, or about different things keep the plain order: a
+	/// list that isn't in story order can't reorder what is - Elden Ring lists "Godskin Duo" (43.2%) right before "Fire
+	/// Giant" (45.0%), who comes first, and the two share nothing but the word "defeated". Never waits on
+	/// an ending, a New Game+ one or one for having the others: those have rules of their own, and they come above this.
+	/// Only <paramref name="step"/>s that are in order themselves count, so this can't hold anything against a ladder,
+	/// a difficulty or a story rule; one rarer than any floor ever opens never holds anything.
+	/// </summary>
+	private static bool ListStepBefore(Achievement step, Achievement after, IReadOnlyDictionary<string, int> place) {
+		if ((step.Name == after.Name) || !place.TryGetValue(step.Name, out int at) || !place.TryGetValue(after.Name, out int then)
+			|| (then - at is < 1 or > ListStepReach) || !Close(step, after) || (step.GlobalPercent < LowestFloor) || !SameSubject(step, after)) {
+			return false;
+		}
+
+		Traits t = TraitsOf(step);
+
+		return !t.Ending && !t.NewGamePlus && (t.Meta == Meta.None);
+	}
+
+	/// <summary>
+	/// About the same thing: the two share a word that says what they are about - "moon" in "the four celestial towers of
+	/// the moon" and "the Moon Lord" - not just the words every achievement uses ("defeat", "complete", "enemies", "public").
+	/// </summary>
+	private static bool SameSubject(Achievement a, Achievement b) => TraitsOf(a).Subject.Overlaps(TraitsOf(b).Subject);
+
+	/// <summary>The words an achievement is about, for <see cref="SameSubject"/>: four letters or more, and none of the common ones.</summary>
+	private static HashSet<string> SubjectWords(Achievement a) =>
+		new(Regex.Matches($"{a.Display} {a.Description}".ToLowerInvariant(), @"\p{L}[\p{L}'’]{3,}").Select(static m => m.Value).Where(static w => !CommonWords.Contains(w)), StringComparer.Ordinal);
+
+	/// <summary>Words nearly every achievement list uses: they say nothing about what one is about.</summary>
+	private static readonly HashSet<string> CommonWords = new(StringComparer.Ordinal) {
+		"complete", "completed", "completing", "finish", "finished", "defeat", "defeated", "kill", "killed", "kills", "destroy",
+		"destroyed", "collect", "collected", "find", "found", "obtain", "obtained", "acquire", "acquired", "reach", "reached", "earn",
+		"earned", "unlock", "unlocks", "unlocked", "using", "play", "played", "survive", "survived", "have", "having", "with",
+		"without", "your", "from", "into", "them", "they", "their", "this", "that", "these", "those", "every", "each", "other",
+		"during", "after", "before", "first", "single", "enemy", "enemies", "player", "players", "match", "matches", "round",
+		"rounds", "public", "above", "below", "least", "more", "than", "total", "game", "games", "level", "levels", "mode",
+		"difficulty", "achievement", "achievements", "time", "times", "while", "once", "make", "take", "three", "four", "five",
+		"some", "such", "same", "only", "within", "under", "over", "multiplayer", "online", "campaign", "mission", "missions",
+		"story", "chapter", "quest", "quests", "contract", "contracts", "heist", "mask", "material", "pattern", "death",
+		"sentence", "wish", "overkill", "mayhem", "normal", "hard", "easy", "expert"
+	};
+
+	/// <summary>How far down the game's list one may be and still wait on the one before it.</summary>
+	private const int ListStepReach = 2;
+
+	/// <summary>
+	/// About as common: within 2 percentage points, and within a tenth of the larger figure - 24.7% and 23.2% are, 5% and 4%
+	/// aren't. Both need a figure.
+	/// </summary>
+	private static bool Close(Achievement a, Achievement b) =>
+		(a.GlobalPercent is { } x) && (b.GlobalPercent is { } y) && (Math.Abs(x - y) <= Math.Min(2.0, Math.Max(x, y) * 0.1));
 
 	/// <summary>
 	/// Could anything left open at all, at any number of hours: the lowest rarity floor there is, and every hour a story
@@ -1674,6 +1767,11 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	/// onto an ending, a step of the story, a New Game+ one or a rung of a ladder, which have a place in the order of
 	/// their own, and never from a base-game one to an add-on one.
 	///
+	/// The wobble also never steps onto a hidden one, nor onto one the game lists after the first: games hide their story's
+	/// beats and list them in the order they come, and two beats as common as each other are the two that follow each other
+	/// - Skyrim's "capture a fort" (11.1%) and "capture the capital" (11.0%), Portal 2's last two chapters. Ties go in the
+	/// game's own order too (see <see cref="ListOrder"/>).
+	///
 	/// <paramref name="skip"/> (turned down on the last look) steps aside when there is another to take in its place -
 	/// still base game first: an add-on one never goes ahead of a base-game one for it.
 	/// </summary>
@@ -1685,14 +1783,77 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			pool.RemoveAll(a => a.Name == skip);
 		}
 
-		pool.Sort(static (a, b) => (b.GlobalPercent ?? -1).CompareTo(a.GlobalPercent ?? -1));
+		pool.Sort(static (a, b) => {
+			int byPlayers = PickRank(b).CompareTo(PickRank(a));
+
+			return byPlayers != 0 ? byPlayers : ListOrder(a, b);
+		});
 
 		if (wobble && (pool.Count > 1) && (pool[0].GlobalPercent is { } first) && (pool[1].GlobalPercent is { } second)
-			&& (second >= first * WobbleShare) && !HasItsPlace(pool[1])) {
+			&& (second >= first * WobbleShare) && !HasItsPlace(pool[1]) && !pool[1].Hidden && (ListOrder(pool[1], pool[0]) <= 0)) {
 			return pool[1];
 		}
 
 		return pool[0];
+	}
+
+	/// <summary>
+	/// How common it is, for the order: Steam's figure - an ending's a little lower (<see cref="EndingMargin"/>), so it
+	/// never goes ahead of one about as common. The last boss and the ending are had by nearly the same players, and Steam
+	/// gives a tenth of a percent: Sekiro's Isshin Ashina and its Shura ending are both 19.2%, DOOM's Spider Mastermind is
+	/// 32.2% and the campaign's end 32.3% - taken by the figure alone, the ending came first as often as not. One with no
+	/// figure goes last.
+	/// </summary>
+	private static double PickRank(Achievement a) =>
+		a.GlobalPercent is not { } percent ? -1
+		: TraitsOf(a).Ending ? percent - Math.Max(0.15, percent * EndingMargin)
+		: percent;
+
+	/// <summary>How much lower an ending ranks than its figure: 3% of it (at least 0.15 points).</summary>
+	private const double EndingMargin = 0.03;
+
+	/// <summary>
+	/// The game's own order of two achievements - stat, then bit - which is mostly the order its story goes in: what breaks
+	/// a tie, and the only way round the wobble may step. Two in the same place (nothing known) count as level.
+	/// </summary>
+	private static int ListOrder(Achievement a, Achievement b) {
+		int byStat = a.StatId.CompareTo(b.StatId);
+
+		return byStat != 0 ? byStat : a.Bit.CompareTo(b.Bit);
+	}
+
+	/// <summary>
+	/// Whether an achievement may come in a quick burst - a few minutes after the one before, as when a level finishes: at
+	/// least <paramref name="minPct"/> percent of players have it (AchievementBurstMinPct). 0 lets any one burst, one with no
+	/// figure too; 100 turns bursts off. A rarer one always comes alone, with the full wait.
+	/// </summary>
+	internal static bool MayBurst(Achievement a, int minPct) =>
+		(minPct < 100) && ((minPct <= 0) || ((a.GlobalPercent is { } percent) && (percent >= minPct)));
+
+	/// <summary>
+	/// Whether the one after <paramref name="pick"/> may come in a burst: the next look's pick from what's open now, with
+	/// the wobble and without (see <see cref="NextPick"/>), may both burst. Nothing else open - nothing to burst with.
+	/// </summary>
+	internal static bool NextMayBurst(IReadOnlyList<Achievement> eligible, Achievement pick, Func<Achievement, bool> later, int minPct) {
+		if (minPct >= 100) {
+			return false;
+		}
+
+		List<Achievement> rest = [.. eligible.Where(a => a.Name != pick.Name)];
+
+		return (rest.Count > 0) && MayBurst(NextPick(rest, later, false), minPct) && MayBurst(NextPick(rest, later, true), minPct);
+	}
+
+	/// <summary>The full wait after an unlock, in minutes before the pace: the grind's gap, or the game's onboarding or steady one.</summary>
+	private int FullGap(bool grind, bool onboarding, Profile prof) {
+		if (grind) {
+			int glo = Math.Max(1, Bot.Cfg.AchievementGrindGapMinMinutes);
+			int ghi = Math.Max(glo, Bot.Cfg.AchievementGrindGapMaxMinutes);
+
+			return _rng.Next(glo, ghi + 1);
+		}
+
+		return onboarding ? _rng.Next(prof.OnboardGapLo, prof.OnboardGapHi + 1) : _rng.Next(prof.SteadyGapLo, prof.SteadyGapHi + 1);
 	}
 
 	/// <summary>How close the second most common has to be to the first for the wobble to step to it.</summary>
@@ -1725,7 +1886,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		bool LevelUp,
 		bool NewGamePlus,                               // "in New Game+", "NG+": a second run, after the first one's ending
 		bool Multiplayer,                               // needs other players - see IsMultiplayer
-		Meta Meta                                       // "obtain all other achievements" - see MetaOf
+		Meta Meta,                                      // "obtain all other achievements" - see MetaOf
+		(string Label, string[] Words, int Count)? Near, // the description as words around its one count - see NearLower
+		HashSet<string> Subject                          // the words it is about - see SameSubject
 	);
 
 	/// <summary>An achievement for having the others: none, every other one, or every other one of the base game.</summary>
@@ -1760,7 +1923,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			Regex.IsMatch(Normalize(desc), @"\b(reach|reached|attain|attained|hit)\s+(the\s+)?(max(imum)?\s+)?(level|rank)\b") && !Regex.IsMatch(text, @"\bprestige\b", RegexOptions.IgnoreCase),
 			IsNewGamePlus(a),
 			MultiplayerByItself(a),
-			MetaOf(a));
+			MetaOf(a),
+			NearKey(label, desc),
+			SubjectWords(a));
 	}
 
 	/// <summary>
@@ -2004,9 +2169,83 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			if (Lower(theirs, mine) && !Lower(mine, theirs)) {
 				return true;
 			}
+
+			if (NearLower(other, a)) {
+				return true;
+			}
 		}
 
 		return false;
+	}
+
+	/// <summary>
+	/// A lower rung worded a little differently: the same count of the same thing, with a word or two more in one of them -
+	/// Destiny 2's "Collect 10 Forsaken Exotic weapons or armor" and "Collect 15 Forsaken Exotic weapons or pieces of armor".
+	/// Read as one ladder only when the words before the count and the word straight after it are the same, and what the
+	/// longer one adds asks nothing more ("pieces of", not "with a pistol", "in a row" or "on Hard" - see
+	/// <see cref="HarderWord"/>): "Kill 5 enemies with a pistol" and "Kill 10 enemies with a shotgun" are no ladder. And only
+	/// while the lower one is at least half as common as the higher one, so a wrong match can't hold it for ever.
+	/// </summary>
+	private static bool NearLower(Achievement lower, Achievement higher) {
+		if ((TraitsOf(lower).Near is not { } lo) || (TraitsOf(higher).Near is not { } hi) || (lo.Label != hi.Label) || (lo.Count >= hi.Count)
+			|| lo.Words.SequenceEqual(hi.Words)) {
+			return false;
+		}
+
+		if ((lower.GlobalPercent is { } lowPct) && (higher.GlobalPercent is { } highPct) && (lowPct < highPct * 0.5)) {
+			return false;
+		}
+
+		int at = Array.IndexOf(lo.Words, "#");
+
+		if ((at != Array.IndexOf(hi.Words, "#")) || (at + 1 >= Math.Min(lo.Words.Length, hi.Words.Length))
+			|| !lo.Words.AsSpan(0, at + 2).SequenceEqual(hi.Words.AsSpan(0, at + 2))) {
+			return false;
+		}
+
+		(string[] shorter, string[] longer) = lo.Words.Length <= hi.Words.Length ? (lo.Words, hi.Words) : (hi.Words, lo.Words);
+
+		if (longer.Length - shorter.Length is < 1 or > 3) {
+			return false;
+		}
+
+		// The shorter one, word for word, inside the longer one; what's left over is what the longer one adds.
+		List<string> added = [];
+		int i = 0;
+
+		foreach (string word in longer) {
+			if ((i < shorter.Length) && (word == shorter[i])) {
+				i++;
+			} else {
+				added.Add(word);
+			}
+		}
+
+		return (i == shorter.Length) && !added.Any(HarderWord);
+	}
+
+	/// <summary>A word that asks for more, or narrows what counts: "with", "in", "without", "row", "single", "hard"...</summary>
+	private static bool HarderWord(string word) =>
+		Regex.IsMatch(word, HarderWords) || Regex.IsMatch(word, Qualifiers) || Regex.IsMatch(word, "^" + DifficultyPattern + "$")
+		|| Regex.IsMatch(word, @"^(row|same|one|life|match|matches|round|rounds|game|games|run|level|difficulty|mode|online|co-?op|headshots?|\d+|#|~)$");
+
+	/// <summary>
+	/// The description, lower case and plain, as words with its one count as "#" - or null when it has no count or more than
+	/// one, or the count is a limit ("in under 5 minutes"). With the label, so two parts of a collection are never one.
+	/// </summary>
+	private static (string Label, string[] Words, int Count)? NearKey(string label, string desc) {
+		(string ownLabel, string body) = SplitLabel(desc);
+		string normal = Regex.Replace(Regex.Replace(Normalize(body), @"[^\p{L}\p{N}\s]", " "), @"\s+", " ").Trim();
+		MatchCollection numbers = Regex.Matches(normal, @"(?<![\p{L}\d])\d{1,7}(?![\p{L}\d])");
+
+		if ((numbers.Count != 1) || Regex.IsMatch(normal, @"\b(under|within|less than|fewer than|at most|or less|or fewer|no more than)\b")
+			|| !int.TryParse(numbers[0].Value, NumberStyles.None, CultureInfo.InvariantCulture, out int count)) {
+			return null;
+		}
+
+		string[] words = (normal[..numbers[0].Index] + "#" + normal[(numbers[0].Index + numbers[0].Length)..]).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+		return words.Length >= 3 ? (label.Length > 0 ? label : ownLabel, words, count) : null;
 	}
 
 	/// <summary>Any ladder in <paramref name="lower"/> a lower rung of the same ladder in <paramref name="higher"/>.</summary>
@@ -2077,7 +2316,12 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			normal = Regex.Replace(normal, @"\b(under|within|less than|fewer than|at most|no more than)\s+(?=\d)", "$1 ~");
 			normal = Regex.Replace(normal, @"(?<![\w~])(\d{1,7})((?:\s+[a-z]+){0,3}\s+or\s+(?:less|fewer))\b", "~$1$2");
 
-			// "Find all Collectibles" is the top rung of "Find 10 Collectibles" and "Find 25 Collectibles".
+			// "Find all Collectibles" is the top rung of "Find 10 Collectibles" and "Find 25 Collectibles" - and "half of" the
+			// rung below it: Hollow Knight's "Rescue half of the imprisoned grubs" before "Rescue all of the imprisoned grubs".
+			normal = Regex.Replace(normal, @"\bhalf\b(?=\s+of\b)", (AllRung / 2).ToString(CultureInfo.InvariantCulture));
+
+			// "All six" is rung six: Portal's "Beat all six Portal advanced maps" after "Beat four Portal advanced maps".
+			normal = Regex.Replace(normal, @"\b(all|every)\s+(?=\d)", "");
 			normal = Regex.Replace(normal, @"\b(all|every)\b(?!\s+(of\s+)?(the\s+)?~?\d)", AllRung.ToString(CultureInfo.InvariantCulture));
 
 			// Only a number standing on its own: "ME1", "E1M1", "The D20" and "2Fort" are names.
@@ -2111,9 +2355,12 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	private static readonly Dictionary<string, int> NumberWords = new(StringComparer.Ordinal) {
 		["one"] = 1, ["two"] = 2, ["three"] = 3, ["four"] = 4, ["five"] = 5, ["six"] = 6, ["seven"] = 7, ["eight"] = 8, ["nine"] = 9,
 		["ten"] = 10, ["eleven"] = 11, ["twelve"] = 12, ["thirteen"] = 13, ["fourteen"] = 14, ["fifteen"] = 15, ["sixteen"] = 16,
-		["seventeen"] = 17, ["eighteen"] = 18, ["nineteen"] = 19, ["twenty"] = 20, ["thirty"] = 30, ["fifty"] = 50, ["hundred"] = 100,
+		["seventeen"] = 17, ["eighteen"] = 18, ["nineteen"] = 19, ["twenty"] = 20, ["thirty"] = 30, ["forty"] = 40, ["fifty"] = 50,
+		["sixty"] = 60, ["seventy"] = 70, ["eighty"] = 80, ["ninety"] = 90, ["hundred"] = 100,
 		["first"] = 1, ["second"] = 2, ["third"] = 3, ["fourth"] = 4, ["fifth"] = 5, ["sixth"] = 6, ["seventh"] = 7, ["eighth"] = 8,
-		["ninth"] = 9, ["tenth"] = 10
+		["ninth"] = 9, ["tenth"] = 10, ["eleventh"] = 11, ["twelfth"] = 12, ["thirteenth"] = 13, ["fourteenth"] = 14, ["fifteenth"] = 15,
+		["sixteenth"] = 16, ["seventeenth"] = 17, ["eighteenth"] = 18, ["nineteenth"] = 19, ["twentieth"] = 20, ["thirtieth"] = 30,
+		["fortieth"] = 40, ["fiftieth"] = 50
 	};
 
 	/// <summary>Story parts: what a "beat the game" achievement comes after, and what a roman numeral follows.</summary>
@@ -2127,6 +2374,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		string s = text.ToLowerInvariant();
 		s = Regex.Replace(s, @"(?<=\d),(?=\d{3}\b)", "");
 		s = Regex.Replace(s, @"\b(\d{1,4})k\b", static m => (int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture) * 1000).ToString(CultureInfo.InvariantCulture));
+		// "Twenty-first" as one number, not 20 and 1: PAYDAY 2's ranks of Infamy go up to "the twenty-fifth".
+		s = Regex.Replace(s, @"\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[\s-](one|two|three|four|five|six|seven|eight|nine|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth)\b",
+			static m => (NumberWords[m.Groups[1].Value] + NumberWords[m.Groups[2].Value]).ToString(CultureInfo.InvariantCulture));
 		s = Regex.Replace(s, @"\b[a-z]+\b", static m => NumberWords.TryGetValue(m.Value, out int n) ? n.ToString(CultureInfo.InvariantCulture) : m.Value);
 		s = Regex.Replace(s, @"\b(" + StoryParts + @")\s+([ivx]{1,5})\b", static m => Roman(m.Groups[2].Value) is > 0 and var r ? $"{m.Groups[1].Value} {r}" : m.Value);
 
@@ -2156,6 +2406,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		["hard"] = 3, ["hardened"] = 3, ["heroic"] = 3, ["veteran"] = 4, ["expert"] = 4, ["hardcore"] = 4, ["professional"] = 4,
 		["master"] = 5, ["insane"] = 5, ["extreme"] = 5, ["madhouse"] = 5, ["realism"] = 5, ["realistic"] = 5,
 		["nightmare"] = 6, ["legendary"] = 6, ["hell"] = 6, ["inferno"] = 7, ["torment"] = 7,
+		// PAYDAY 2's scale, past Hard: Very Hard, OVERKILL, Mayhem, Death Wish, Death Sentence. "Very hard" is matched whole
+		// (the pattern takes the leftmost), so it's never read as Hard.
+		["very hard"] = 4, ["overkill"] = 5, ["mayhem"] = 6, ["death wish"] = 7, ["death sentence"] = 8,
 		["bronze"] = 1, ["silver"] = 2, ["gold"] = 3, ["platinum"] = 4
 	};
 
@@ -2199,9 +2452,14 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	private static (string Stem, int Rank)? DifficultyKey(Achievement a) {
 		foreach (string text in new[] { a.Description, a.Display }) {
 			string normal = Regex.Replace(Regex.Replace(Normalize(text ?? ""), @"[^\p{L}\p{N}%:\s]", " "), @"\s+", " ").Trim();
-			Match m = Regex.Match(normal, DifficultyPattern);
+			// The one that is the difficulty when there are two: PAYDAY 2's "the Bank Heist: Gold job on the Hard difficulty"
+			// is about Hard, not Gold.
+			List<Match> found = Regex.Matches(normal, DifficultyPattern).ToList();
+			Match? m = found.FirstOrDefault(x => Regex.IsMatch(normal[(x.Index + x.Length)..], @"^\s+(difficulty|difficulties|mode|setting|or\s+(above|higher|harder|better))\b"))
+				?? found.FirstOrDefault(x => Regex.IsMatch(normal[..x.Index], @"\b(on|in)\s+(the\s+)?$"))
+				?? found.FirstOrDefault();
 
-			if (m.Success) {
+			if (m != null) {
 				return (DifficultyStem(normal[..m.Index] + " ~ " + normal[(m.Index + m.Length)..]), Difficulties[m.Value]);
 			}
 		}
@@ -2219,8 +2477,17 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 	}
 
 	/// <summary>
-	/// "Beat the game", "finish the story", the final chapter, every level: never before the chapters, missions and
-	/// acts that lead up to it. Nobody plays the last mission first.
+	/// Words that never come in an ending's name: "ending" after one of them is the verb or a collection - "Reach wave 10
+	/// without ending your turn", "Earn 100 points before ending the round", "See every ending" - or the start of the
+	/// game: "See the tutorial ending". Taken as an ending, an early one let an add-on's ending go before the game's own
+	/// (one base ending is enough - see VariantBlocked).
+	/// </summary>
+	private const string NotAnEndingsName = @"(without|before|after|while|whilst|when|until|till|by|from|in|on|at|with|not|never|then|every|each|all|tutorial|prologue|intro|introduction|demo)";
+
+	/// <summary>
+	/// "Beat the game", "finish the story", the final chapter, every level, an ending by name (Sekiro's 'Attained the
+	/// "Shura" ending', NieR's "Achieve ending A"): never before the chapters, missions and acts that lead up to it. Nobody
+	/// plays the last mission first. ("All endings achieved" is a collection, not an ending.)
 	/// </summary>
 	private static bool IsEnding(Achievement a) {
 		string text = Normalize($"{a.Display} {a.Description}");
@@ -2229,6 +2496,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		return Regex.IsMatch(text, @"(?<!\b(a|an)\s+)\b(complete|completed|finish|finished|beat|beaten|clear|cleared|conquer|conquered)\s+(the\s+)?(entire\s+|whole\s+|main\s+|base\s+)?(game|story|campaign|adventure|storyline|main quest)(?!['’]s|\s+(intro|introduction|tutorial|prologue|demo))\b")
 			|| Regex.IsMatch(text, @"\b(roll|see|watch)\s+the\s+(credits|ending)\b")
 			|| Regex.IsMatch(text, @"\b(reach|reached|witness|witnessed|see|saw|complete|completed)\s+the\s+epilogue\b")
+			|| Regex.IsMatch(text, @"\b(achieve|achieved|attain|attained|reach|reached|unlock|unlocked|get|got|earn|earned|obtain|obtained|see|saw|view|viewed|witness|witnessed|watch|watched)\s+(the\s+|an?\s+|your\s+)?((?!" + NotAnEndingsName + @"\b)([""“'‘]?[\w'’-]+[""”'’]?)\s+){0,4}?ending\b(?![s'’])(?!\s+(of|to|for|the|your|my|his|her|their|its|this|that)\b)")
 			|| Regex.IsMatch(text, @"\b(complete|completed|finish|finished|beat|clear)\s+(all|every)\s+(the\s+)?(?!(side|optional|secret|bonus|extra|daily|weekly|challenge|co-op|coop)\b)([a-z]+\s+)?(chapters?|missions?|levels?|acts?|episodes?|stages?)\b(?!\s+(challenges?|collectibles?|secrets?))")
 			|| Regex.IsMatch(text, @"\b(final|last)\s+(" + StoryParts + @"|boss)\b");
 	}
@@ -2362,7 +2630,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 				return true;
 			}
 
-			if (dlcEnd && them.PlainEnding && (them.Label == me.Label) && !other.AddOn && !Regex.IsMatch(them.Modes, @"\b(dlc|expansion)\b")) {
+			// One of the game's own endings is enough: The Witcher 3's "Ran the Gauntlet" (the game on Death March, 6.5%)
+			// held "Finish the Hearts of Stone expansion" long after "Finish the game" was earned.
+			if (dlcEnd && BaseEnding(other, me) && !all.Any(o => o.Unlocked && BaseEnding(o, me))) {
 				return true;
 			}
 
@@ -2372,6 +2642,13 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		}
 
 		return false;
+	}
+
+	/// <summary>One of the game's own plain endings, for an add-on's to come after: same label, and not an add-on's itself.</summary>
+	private static bool BaseEnding(Achievement o, Traits me) {
+		Traits them = TraitsOf(o);
+
+		return them.PlainEnding && (them.Label == me.Label) && !o.AddOn && !Regex.IsMatch(them.Modes, @"\b(dlc|expansion)\b");
 	}
 
 	/// <summary>
@@ -2539,6 +2816,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 			g.NextAllow = DateTime.UtcNow.Add(wait);
 			g.PaceUsed = -1;
 			g.Pulled = false;
+			g.Quick = false;
 		}
 	}
 
@@ -2828,6 +3106,9 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 		public int PaceUsed { get; set; } = -1;
 		public DateTime PacedFrom { get; set; }
 
+		// Absent from older files: false - a restart in the middle of a burst's few minutes still holds a rare one back.
+		public bool Quick { get; set; }
+
 		// Absent from older files: null. StuckOwnMins was PlayedMins then, so RanMins starts from that (see Load).
 		public long? RanMins { get; set; }
 		public Dictionary<string, List<DateTime>>? Strikes { get; set; }
@@ -2891,6 +3172,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 						WroteOkAt = s.WroteOkAt,
 						PaceUsed = s.PaceUsed,
 						PacedFrom = s.PacedFrom,
+						Quick = s.Quick,
 						Strikes = s.Strikes ?? [],
 						MetaLook = !s.MetasLooked
 					};
@@ -3084,6 +3366,7 @@ public sealed class AchievementPacer(Bot bot) : BotModule(bot) {
 					WroteOkAt = kv.Value.WroteOkAt,
 					PaceUsed = kv.Value.PaceUsed,
 					PacedFrom = kv.Value.PacedFrom,
+					Quick = kv.Value.Quick,
 					MetasLooked = !kv.Value.MetaLook,
 					Multiplayer = kv.Value.Multiplayer,
 					Rules = kv.Value.Rules,

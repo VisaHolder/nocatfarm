@@ -289,6 +289,9 @@ public static class LevelPlanner {
 
 	private static string SetsPath => Path.Combine(ConfigStore.ConfigDir, "state", "cardsets.json");
 
+	/// <summary>Steam's own inventory, where trading cards live.</summary>
+	private const uint SteamItems = 753;
+
 	private const string Search = "/market/search/render/?norender=1&appid=753&category_753_item_class[]=tag_item_class_2&category_753_cardborder[]=tag_cardborder_0&l=english";
 
 	/// <summary>A game's set price from the cache, or from the market if it's older than a day. Asked = a request was made.</summary>
@@ -311,14 +314,16 @@ public static class LevelPlanner {
 
 		// The market hands out fewer than asked per page (ten, signed out), so page by what actually came back.
 		for (int start = 0; start < 300; ) {   // nobody makes a set of 300 cards
-			await Task.Delay(Rng.Seconds(3, 5), ct).ConfigureAwait(false);
-
-			string? json = await bot.Web.GetAsync(new Uri(WebSession.Community,
-				$"{Search}&category_753_Game[]=tag_app_{app}&start={start}&count=100&currency={cur}"), ct).ConfigureAwait(false);
+			// In the price book's queue, not on a pace of its own: the same gap after whatever was asked last, and
+			// nothing while the market's pause stands. Signed out, like every price - a read needs no account, and an
+			// account's own market standing (a ban, no mobile authenticator) can get its session refused.
+			string? json = await PriceBook.MarketGetAsync($"{Search}&category_753_Game[]=tag_app_{app}&start={start}&count=100&currency={cur}", ct).ConfigureAwait(false);
 
 			if (string.IsNullOrEmpty(json)) {
 				return (null, true);
 			}
+
+			PriceBook.Learn(SteamItems, json, cur);   // the inventory value needs these same card prices
 
 			using JsonDocument doc = JsonDocument.Parse(json);
 			JsonElement root = doc.RootElement;
@@ -364,14 +369,14 @@ public static class LevelPlanner {
 		List<uint> games = [];
 
 		for (int start = 0, page = 0; (start < 200) && (page < 4); page++) {
-			await Task.Delay(Rng.Seconds(3, 5), ct).ConfigureAwait(false);
-
-			string? json = await bot.Web.GetAsync(new Uri(WebSession.Community,
-				$"{Search}&sort_column=price&sort_dir=asc&start={start}&count=100&currency={Math.Max(1, Live.Global.MarketCurrency)}"), ct).ConfigureAwait(false);
+			int cur = Math.Max(1, Live.Global.MarketCurrency);
+			string? json = await PriceBook.MarketGetAsync($"{Search}&sort_column=price&sort_dir=asc&start={start}&count=100&currency={cur}", ct).ConfigureAwait(false);
 
 			if (string.IsNullOrEmpty(json)) {
 				break;
 			}
+
+			PriceBook.Learn(SteamItems, json, cur);
 
 			using JsonDocument doc = JsonDocument.Parse(json);
 			int got = 0;

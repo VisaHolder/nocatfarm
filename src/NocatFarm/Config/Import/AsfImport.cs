@@ -21,10 +21,6 @@ namespace NocatFarm.Config;
 /// interesting bits (which games to idle, the custom game name, whether rep4rep is on) live in the plugin keys.
 /// </summary>
 public static class AsfImport {
-	public sealed record Candidate(string Name, string SteamLogin, bool HasToken, bool HasPassword);
-
-	public sealed record Result(int Imported, int Skipped, List<string> Notes);
-
 	/// <summary>The importer as the dashboard's list sees it.</summary>
 	public sealed class Importer : IIdlerImporter {
 		public string Id => "asf";
@@ -91,22 +87,6 @@ public static class AsfImport {
 		}
 
 		return null;
-	}
-
-	/// <summary>What would be imported from <paramref name="dir"/>, without importing anything.</summary>
-	public static List<Candidate> Preview(string dir) =>
-		Read(ConfigFolder(dir) ?? dir).Accounts.Select(static a => new Candidate(a.Name, a.SteamLogin, a.Token != null, a.HasPassword)).ToList();
-
-	/// <summary>
-	/// Import every bot from an ASF config folder. Existing nocatFarm accounts of the same name are left alone
-	/// unless <paramref name="overwrite"/> is set - importing twice should not clobber settings you've changed.
-	/// </summary>
-	/// <param name="human">Accounts to bring across in human mode (by name); the rest keep the robot defaults.</param>
-	public static Result Run(string dir, GlobalConfig global, bool overwrite = false, IReadOnlyCollection<string>? human = null) {
-		ImportScan scan = Read(ConfigFolder(dir) ?? dir);
-		IdlerImport.Outcome outcome = IdlerImport.Apply(scan, IdlerImport.All(scan, human), global, overwrite);
-
-		return new Result(outcome.Imported, outcome.Skipped, outcome.Notes.Select(static n => n.ToString()).ToList());
 	}
 
 	/// <summary>Everything in an ASF config folder, as a preview. Reads only.</summary>

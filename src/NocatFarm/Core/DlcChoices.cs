@@ -16,9 +16,7 @@ namespace NocatFarm.Core;
 ///
 /// Someone who would rather a game like that were left alone says so with 'dlc leave': the game goes on the account's
 /// AchievementDlcLeft list, with which of its add-ons the account has for good then (<see cref="DlcAchievements.LicenceKey"/>),
-/// and is held as it used to be - nothing unlocked on a guess. 'dlc undo' (or the dashboard) takes that back. The old
-/// "carry on" answer (AchievementDlcTrusted) isn't needed: every game earns anyway now. 'dlc carryon' still works, for
-/// scripts - it takes back a 'dlc leave', or says it isn't needed.
+/// and is held as it used to be - nothing unlocked on a guess. 'dlc undo' (or the dashboard) takes that back.
 /// </remarks>
 public static class DlcChoices {
 	/// <summary>A game left alone, for the dashboard's undo.</summary>
@@ -64,13 +62,6 @@ public static class DlcChoices {
 		lock (bot.CfgGate) {
 			// A new dictionary rather than changed in place: a save or the pacer can be reading the old one right now.
 			bot.Cfg.AchievementDlcLeft = new(bot.Cfg.AchievementDlcLeft) { [app] = key };
-
-			// And off the old "carry on" list, as 1.6.5's "leave it paused" did. Unused here, but 1.6.5 goes by it before
-			// anything: kept on it, a game left alone went back to earning on a guess after a rollback.
-			if (bot.Cfg.AchievementDlcTrusted.Contains(app)) {
-				bot.Cfg.AchievementDlcTrusted = [.. bot.Cfg.AchievementDlcTrusted.Where(a => a != app)];
-			}
-
 			saved = ConfigStore.SaveBot(bot.Name, bot.Cfg);
 		}
 
@@ -121,15 +112,6 @@ public static class DlcChoices {
 
 		return Told(bot, saved, new Said("{0}: {1} earns achievements again - the base game's first. Those of an add-on it doesn't own stay locked.", bot.Name, GameNames.Of(app)));
 	}
-
-	/// <summary>
-	/// The old "carry on" answer, kept so scripts that type it still work: it takes back a 'dlc leave', and otherwise
-	/// says it isn't needed - every game earns anyway now.
-	/// </summary>
-	public static Said CarryOn(Bot bot, uint app) =>
-		bot.Cfg.AchievementDlcLeft.ContainsKey(app)
-			? Undo(bot, app)
-			: new Said("{0}: 'dlc carryon' isn't needed any more - {1} earns anyway, the base game's achievements first.", bot.Name, GameNames.Of(app));
 
 	/// <summary>The games left alone, for the dashboard's undo.</summary>
 	public static List<Answered> LeftPaused(Bot bot) => [.. bot.Cfg.AchievementDlcLeft.Keys.Order().Select(static a => new Answered(a, GameNames.Of(a)))];

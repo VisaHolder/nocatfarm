@@ -797,6 +797,10 @@ public sealed class Bot : IAsyncDisposable {
 	private DateTime? _accessTokenValidUntil;
 	private DateTime _lastRemint = DateTime.MinValue;
 
+	// The last web-token mint that failed, and the sign-in it was for - see GetAccessTokenAsync and MintRetryAt.
+	private DateTime? _mintFailedAt;
+	private long _mintFailedGeneration;
+
 	// Guards the two tokens and their files, and counts every time a sign-in (or a rejected one) replaced them. See
 	// AdoptMinted for the race it closes.
 	private readonly Lock _tokenSync = new();
@@ -2141,8 +2145,8 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		// Put the custom game name back up immediately on a non-human account, rather than leaving it showing
-		// plain "online" (no game) for the idler's settle delay after every reconnect. A boosting account like
-		// old/kylro should never be seen off its 💀nocat.lol💀 - so re-assert it the instant it's back, not in
+		// plain "online" (no game) for the idler's settle delay after every reconnect. A boosting account with a
+		// custom name should never be seen without it - so re-assert it the instant it's back, not in
 		// twenty seconds. Human mode owns its own accounts' timing, so this leaves those alone.
 		//
 		// Keyed on the CONFIG flag, not the runtime HumanOwned: on the very first logon after start/restart,
@@ -3328,6 +3332,69 @@ public sealed class Bot : IAsyncDisposable {
 	/// <summary>The web access token is treated as live for its whole span except the last few minutes.</summary>
 	private const int AccessTokenSlackMinutes = 5;
 
+	/// <summary>After a web-token mint fails, the next one waits this long - on that account.</summary>
+	/// <remarks>
+	/// Every web request that finds no usable token asks for one, so with nothing to hold it back a failed mint (Steam
+	/// down, the connection half gone) was tried again on every page any module wanted - a mint request a second, and a
+	/// warning each time. A sign-in since (new tokens) lifts the wait at once.
+	/// </remarks>
+	public static readonly TimeSpan MintRetryAfter = TimeSpan.FromMinutes(10);
+
+	/// <summary>What <see cref="GetAccessTokenAsync"/> does next.</summary>
+	public enum TokenStep {
+		/// <summary>The token held is good for more than the last few minutes: hand it back, no network call.</summary>
+		Reuse,
+
+		/// <summary>Get a new one from Steam.</summary>
+		Mint,
+
+		/// <summary>A mint failed less than <see cref="MintRetryAfter"/> ago: no new try yet.</summary>
+		Wait
+	}
+
+	/// <summary>
+	/// Reuse the token held, mint a new one, or wait out a failed mint. A token within its last
+	/// <see cref="AccessTokenSlackMinutes"/> minutes is renewed, and one Steam just turned away (<paramref name="rejected"/>)
+	/// is replaced - both only once the wait after a failed mint is over.
+	/// </summary>
+	public static TokenStep NextTokenStep(bool rejected, string? access, DateTime? validUntil, DateTime? mintFailedAt, DateTime nowUtc) {
+		if (!rejected && !string.IsNullOrEmpty(access) && (validUntil is { } until) && (until > nowUtc.AddMinutes(AccessTokenSlackMinutes))) {
+			return TokenStep.Reuse;
+		}
+
+		return (mintFailedAt is { } failed) && (nowUtc - failed < MintRetryAfter) ? TokenStep.Wait : TokenStep.Mint;
+	}
+
+	/// <summary>
+	/// While waiting out a failed mint: the token held if it still has life left and Steam hasn't turned it away - a
+	/// renewal in the last few minutes that failed keeps using the old one until it really runs out - or null.
+	/// </summary>
+	public static string? HeldWhileWaiting(bool rejected, string? access, DateTime? validUntil, DateTime nowUtc) =>
+		!rejected && !string.IsNullOrEmpty(access) && (validUntil is { } until) && (until > nowUtc) ? access : null;
+
+	/// <summary>When a new web-token mint may be tried again after one failed, or null when none is being held back.</summary>
+	public DateTime? MintRetryAt {
+		get {
+			lock (_tokenSync) {
+				return (_mintFailedAt is { } failed) && (_mintFailedGeneration == _tokenGeneration) ? failed + MintRetryAfter : null;
+			}
+		}
+	}
+
+	/// <summary>A mint for the sign-in <paramref name="generation"/> failed: none again for <see cref="MintRetryAfter"/>.</summary>
+	private void NoteMintFailed(long generation, DateTime nowUtc) {
+		lock (_tokenSync) {
+			_mintFailedAt = nowUtc;
+			_mintFailedGeneration = generation;
+		}
+	}
+
+	private void ClearMintFailed() {
+		lock (_tokenSync) {
+			_mintFailedAt = null;
+		}
+	}
+
 	/// <summary>Record a web access token and read its expiry out of the JWT so reuse can be judged.</summary>
 	private void SetAccessToken(string? token) {
 		_accessToken = string.IsNullOrEmpty(token) ? null : token;
@@ -3414,39 +3481,54 @@ public sealed class Bot : IAsyncDisposable {
 
 		await _tokenLock.WaitAsync().ConfigureAwait(false);
 
-		try {
-			bool rejected = remint && (DateTime.UtcNow - _lastRemint > TimeSpan.FromMinutes(10));
+		long generation = 0;
 
-			if (rejected) {
-				_lastRemint = DateTime.UtcNow;
-			}
+		try {
+			DateTime now = DateTime.UtcNow;
+			bool rejected = remint && (now - _lastRemint > TimeSpan.FromMinutes(10));
 
 			// Read together: a sign-in can be replacing them this moment, and half of each is a token with the wrong expiry.
 			string? access;
 			DateTime? validUntil;
 			string? refresh;
-			long generation;
+			DateTime? mintFailedAt;
 
 			lock (_tokenSync) {
 				access = _accessToken;
 				validUntil = _accessTokenValidUntil;
 				refresh = _refreshToken;
 				generation = _tokenGeneration;
+				// A failed mint holds the next one back only while the sign-in it was for is still the one in force.
+				mintFailedAt = _mintFailedGeneration == generation ? _mintFailedAt : null;
 			}
 
-			// Still good for more than the slack window - hand back exactly what we already have. No network call,
-			// no new session, nothing for Steam to arbitrate against the owner's client.
-			if (!rejected && !string.IsNullOrEmpty(access) && validUntil.HasValue
-				&& (validUntil.Value > DateTime.UtcNow.AddMinutes(AccessTokenSlackMinutes))) {
-				Log.Debug(new Said("reusing web token (good for {0}h) - no new web session", ((validUntil.Value - DateTime.UtcNow).TotalHours).ToString("0.#")), Name);
+			switch (NextTokenStep(rejected, access, validUntil, mintFailedAt, now)) {
+				case TokenStep.Reuse:
+					// Still good for more than the slack window - hand back exactly what we already have. No network call,
+					// no new session, nothing for Steam to arbitrate against the owner's client.
+					Log.Debug(new Said("reusing web token (good for {0}h) - no new web session", ((validUntil!.Value - now).TotalHours).ToString("0.#")), Name);
 
-				return access;
+					return access;
+				case TokenStep.Wait:
+					// The last mint failed minutes ago: not again yet. Every web request comes through here, so this is
+					// said once, not per request.
+					string? held = HeldWhileWaiting(rejected, access, validUntil, now);
+					Log.DebugOnChange($"mintwait:{Name}", held != null
+						? "getting a new web token failed - using the old one until it runs out, trying again in 10 minutes"
+						: "getting a web token failed - trying again in 10 minutes", Name);
+
+					return held;
 			}
 
 			if (string.IsNullOrEmpty(refresh)) {
 				Log.Debug("no web token: there is no login token to get one with", Name);
 
 				return null;
+			}
+
+			// The ten minutes between two re-mints for a rejected token start when one is really sent.
+			if (rejected) {
+				_lastRemint = now;
 			}
 
 			Log.Info("daily web refresh - getting a new web token", Name);
@@ -3456,8 +3538,18 @@ public sealed class Bot : IAsyncDisposable {
 			// running for months without the password.
 			AccessTokenGenerateResult result = await Client.Authentication.GenerateAccessTokenForAppAsync(SteamId, refresh, true).ConfigureAwait(false);
 
+			if (string.IsNullOrEmpty(result.AccessToken)) {
+				NoteMintFailed(generation, DateTime.UtcNow);
+				Log.Debug("no web token: Steam sent none back - trying again in 10 minutes", Name);
+			} else {
+				ClearMintFailed();
+				Log.Recovered($"mintwait:{Name}");
+			}
+
 			return AdoptMinted(generation, result.RefreshToken, result.AccessToken);
 		} catch (Exception e) {
+			NoteMintFailed(generation, DateTime.UtcNow);
+			// Said once a try - and with the wait, a try is at most every 10 minutes, not every web request.
 			Log.Warn(new Said("couldn't get a web token: {0}", Log.Scrub(e.Message)), Name);
 
 			return null;
@@ -3527,7 +3619,7 @@ public sealed class Bot : IAsyncDisposable {
 		}
 
 		// Log a change in what friends actually see - the custom name, a real game, or nothing - once per change.
-		// This makes "old/kylro should never leave 💀nocat.lol💀" checkable: if the custom name ever lapses to a
+		// This makes "a boosting account never leaves its custom name" checkable: if the custom name ever lapses to a
 		// real game or to nothing, there's a timestamped line for it instead of a silent flip nobody can trace.
 		// The comparison stays on plain text; only what is SHOWN is a sentence. "nothing" passed as a value rode
 		// untranslated inside the translated line, so it is a sentence of its own.

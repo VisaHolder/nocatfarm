@@ -16,9 +16,10 @@ only come into it if you set them up, and the Discord profile card only talks to
 hunter's game-length lookups go to SteamSpy with nothing but the game's ID. *Open from anywhere*, if you turn it on,
 talks to your router.
 
-Once an hour it tells nocat.lol it's running, to count users: a random install ID, the version and the platform,
-nothing else. No Steam account, name or setting goes with it, and the install ID isn't in backups. That's where
-"212 people using nocat.farm" on the Overview and the Discord card comes from. *Count me as a user* (*Global settings
+Once an hour it tells nocat.lol it's running, to count Steam accounts: a random install ID, the version, the platform
+and how many of your Steam accounts are signed in, as a number only. No account name, Steam ID or setting goes with
+it, and the install ID isn't in backups. That's where "1,240 Steam accounts on nocat.farm" on the Overview and the
+Discord card comes from. *Count me as a user* (*Global settings
 → Updates & plugins*) turns it off: then nothing is sent and the count isn't shown.
 
 The dashboard only listens on this PC by default. With no password it refuses anything that isn't from this PC, even

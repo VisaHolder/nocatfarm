@@ -33,7 +33,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$root  = Split-Path -Parent $PSScriptRoot          # the repo root (idle/)
+$root  = Split-Path -Parent $PSScriptRoot          # the repo root
 $proj  = Join-Path $root 'src/NocatFarm'
 $dist  = Join-Path $root 'dist'
 $stage = Join-Path $dist 'nocat.farm'

@@ -472,7 +472,7 @@ if (!shutdown.IsCancellationRequested) {
 	// "Open from anywhere": the router forwards the dashboard's port, while the switch is on.
 	NocatFarm.Core.RemoteAccess.Start();
 
-	// "Count me as a user": the hourly ping behind "212 people using nocat.farm". Sends nothing while it's off.
+	// "Count me as a user": the hourly ping behind "1,240 Steam accounts on nocat.farm". Sends nothing while it's off.
 	NocatFarm.Core.UserCount.Start();
 }
 

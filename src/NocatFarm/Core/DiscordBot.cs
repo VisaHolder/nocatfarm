@@ -184,7 +184,7 @@ public static partial class Notifier {
 		];
 
 		List<Dictionary<string, object>> set = [.. everyday.Select(c => Command(c.Name, c.Description, "args", args, false))];
-		set.Add(Command("nocat", new Said("Run any console command, like pause kylro 30"), "command", new Said("The command, typed like in the window"), true));
+		set.Add(Command("nocat", new Said("Run any console command, like pause farm1 30"), "command", new Said("The command, typed like in the window"), true));
 		set.Add(Command("connect", new Said("Connect your Discord account to nocat.farm"), "code", new Said("The code Connect Discord shows in nocat.farm"), true));
 
 		return set;
@@ -1001,9 +1001,9 @@ public static partial class Notifier {
 		sb.AppendLine(MdHeader());
 		sb.AppendLine($"**{new Said("Discord")}:**");
 		sb.AppendLine($"/status - {Md(new Said("what every account is doing").ToString())}");
-		sb.AppendLine($"/nocat - {Md(new Said("run any console command, like pause kylro 30").ToString())}");
+		sb.AppendLine($"/nocat - {Md(new Said("run any console command, like pause farm1 30").ToString())}");
 		sb.AppendLine($"/help - {Md(new Said("this list").ToString())}");
-		sb.AppendLine(Md(new Said("The others take what goes after them in args - /human args: week, /offers args: kylro.").ToString()));
+		sb.AppendLine(Md(new Said("The others take what goes after them in args - /human args: week, /offers args: farm1.").ToString()));
 
 		// Window-only commands (the mini panel, the dashboard theme, clearing a screen) mean nothing from a phone.
 		string[] skip = ["mini", "theme", "tutorial", "help", "clear"];

@@ -403,27 +403,6 @@ public static class DlcAchievements {
 	}
 
 	/// <summary>
-	/// How far through a game an account can really get: the achievements it has, and how many there are once the ones
-	/// from DLC it doesn't own - and hasn't got - are taken out. Those can never be earned, so counting them left a game
-	/// "not done" for ever, and the hunt kept coming back to it.
-	/// </summary>
-	public static (int Unlocked, int Reachable, int Held) Reach(IEnumerable<(bool Unlocked, Hold Hold)> all) {
-		int unlocked = 0, total = 0, held = 0;
-
-		foreach ((bool isUnlocked, Hold hold) in all) {
-			total++;
-
-			if (isUnlocked) {
-				unlocked++;
-			} else if (hold is Hold.NotOwned or Hold.Unmapped) {
-				held++;
-			}
-		}
-
-		return (unlocked, total - held, held);
-	}
-
-	/// <summary>
 	/// How far apart two achievement stats have to be, in stat numbers, to start a new block - for the ORDER only, never
 	/// to hold anything (free updates of the base game are put after a jump too: PAYDAY 2, Dead by Daylight). A game keeps its
 	/// achievements as bits of numbered stats, 32 to a stat, and the base game's fill stats 1, 2, 3... in a row. An
@@ -916,25 +895,6 @@ public static class DlcAchievements {
 		return [.. highlighted.Select(name => (IReadOnlyList<int>) (where.TryGetValue(Plain(name), out List<int>? at) ? at : []))];
 	}
 
-	/// <summary>
-	/// One place per highlighted name: where it is, taking a name used twice at the place that agrees with the most
-	/// other names; null for a name that isn't there. For showing and testing - <see cref="Locate"/> keeps every place.
-	/// </summary>
-	public static List<int?> Anchors(IReadOnlyList<string> schemaNames, IReadOnlyList<string> highlighted) {
-		List<IReadOnlyList<int>> places = Places(schemaNames, highlighted);
-		Dictionary<int, int> votes = [];
-
-		for (int k = 0; k < places.Count; k++) {
-			foreach (int start in places[k].Select(i => i - k).Distinct()) {
-				votes[start] = votes.GetValueOrDefault(start) + 1;
-			}
-		}
-
-		int agreed = votes.Count == 0 ? 0 : votes.OrderByDescending(static v => v.Value).ThenBy(static v => v.Key).First().Key;
-
-		return [.. places.Select((p, k) => p.Count == 0 ? (int?) null : p.OrderBy(i => Math.Abs(i - k - agreed)).ThenBy(static i => i).First())];
-	}
-
 	/// <summary>Words that say nothing about which DLC it is: "Pro Pack", "Season Pass", "Ultra HD Texture Pack".</summary>
 	private static readonly HashSet<string> Generic = new(StringComparer.Ordinal) {
 		"a", "an", "and", "the", "of", "for", "in", "on", "with", "or", "to", "pack", "packs", "pro", "starter", "bundle", "edition",
@@ -1125,27 +1085,6 @@ public static class DlcAchievements {
 		Match last = words[game.Length - 1];
 
 		return plain[(last.Index + last.Length)..].TrimStart(' ', '-', '–', '—', ':', ',', '.', '|').Trim();
-	}
-
-	/// <summary>
-	/// A DLC's name to show a person: as the store writes it, without ® and ™, and without the game's own name in front
-	/// when there is something after it - "Call of Duty®: Black Ops 7" under Call of Duty is "Black Ops 7". The same
-	/// word-by-word match as <see cref="WithoutGame"/>, but the letters keep their case.
-	/// </summary>
-	public static string ShortName(string name, string baseName) {
-		string clean = Regex.Replace(name ?? "", @"[®™©℠]", "").Replace('’', '\'').Trim();
-		string[] game = [.. Regex.Matches(Plain(baseName), @"[\p{L}\p{N}']+").Select(static m => m.Value)];
-		MatchCollection words = Regex.Matches(clean, @"[\p{L}\p{N}']+");
-
-		if ((game.Length == 0) || (words.Count <= game.Length)
-			|| Enumerable.Range(0, game.Length).Any(i => words[i].Value.Normalize(NormalizationForm.FormKC).ToLowerInvariant() != game[i])) {
-			return clean;
-		}
-
-		Match last = words[game.Length - 1];
-		string rest = clean[(last.Index + last.Length)..].TrimStart(' ', '-', '–', '—', ':', ',', '.', '|').Trim();
-
-		return rest.Length > 0 ? rest : clean;
 	}
 
 	/// <summary>
@@ -1412,15 +1351,6 @@ public static class DlcAchievements {
 	private static readonly Lock QueueGate = new();
 	private static bool _working;   // a worker is running - set and cleared under QueueGate, so none is ever missed
 	private static uint _building;
-
-	/// <summary>How many games are waiting to be worked out, the one being worked on included.</summary>
-	public static int Pending {
-		get {
-			lock (QueueGate) {
-				return Queue.Count + (_building != 0 ? 1 : 0);
-			}
-		}
-	}
 
 	/// <summary>Is this game waiting to be worked out, or being worked out now?</summary>
 	public static bool IsPending(uint app) {

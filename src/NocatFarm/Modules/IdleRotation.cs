@@ -68,14 +68,6 @@ public sealed class IdleRotation {
 			: local.ToString("MM-dd HH:mm", CultureInfo.InvariantCulture);
 	}
 
-	public int Position {
-		get {
-			lock (_gate) {
-				return _pos;
-			}
-		}
-	}
-
 	public DateTime MovesAt {
 		get {
 			lock (_gate) {

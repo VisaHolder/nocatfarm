@@ -45,9 +45,6 @@ public static class Loc {
 	[ThreadStatic]
 	private static bool _loading;
 
-	/// <summary>The language whose phrases are in use now - for the tests.</summary>
-	internal static string Loaded => _pack.Code;
-
 	/// <summary>Re-read the pack for whatever language is now selected. Cheap, and idempotent.</summary>
 	/// <remarks>
 	/// Loaded outside any lock (a slow disk never holds up a thread that only wants a word translated), then put in

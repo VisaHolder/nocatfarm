@@ -174,8 +174,8 @@ public sealed class GlobalConfig {
 	public bool DiscordShowTimer { get; set; } = true;
 
 	/// <summary>What the card's second line counts: 0 cards today, 1 hours in the past week, 2 hours in the past month,
-	/// 3 people using nocat.farm (<see cref="Core.DiscordPresence.LinePeople"/>).</summary>
-	public int DiscordSecondLine { get; set; } = Core.DiscordPresence.LinePeople;
+	/// 3 Steam accounts on nocat.farm (<see cref="Core.DiscordPresence.LineAccounts"/>, once "people using nocat.farm").</summary>
+	public int DiscordSecondLine { get; set; } = Core.DiscordPresence.LineAccounts;
 
 	/// <summary>The colour of "telegram" and "discord" in the log, from the same palette as the accounts'.</summary>
 	public int TelegramLogColour { get; set; } = 6;
@@ -282,8 +282,8 @@ public sealed class GlobalConfig {
 	public int UpdateCheckHours { get; set; } = 2;
 
 	/// <summary>
-	/// Retired "Update by itself" (0 tell me, 1 install at night) - read so an old file carries over to <see cref="UpdateMode"/>,
-	/// and still written (from UpdateMode) so the version before reads the same choice if it's put back.
+	/// Retired "Update by itself" (0 tell me, 1 install at night) - only read, so an old file carries over to
+	/// <see cref="UpdateMode"/> (see <see cref="ConfigStore.MigrateUpdates"/>). Never written now: it's always 0 once read.
 	/// </summary>
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 	public int AutoUpdate { get; set; }
@@ -314,8 +314,8 @@ public sealed class GlobalConfig {
 	private int _updateMode = Core.UpdateModes.WhenIClick;
 
 	/// <summary>
-	/// UpdateMode was in the file (or has been chosen since): then it's what counts, and AutoUpdate and UpdateWhenAsked
-	/// next to it are only the copy written for the version before (see <see cref="ConfigStore.ForTheVersionBefore(GlobalConfig)"/>).
+	/// UpdateMode was in the file (or has been chosen since): then it's what counts, and an AutoUpdate next to it is only the
+	/// copy 1.6.5 to 1.6.9 wrote for the version before them - never read as a choice.
 	/// </summary>
 	[JsonIgnore]
 	public bool UpdateModeSet => _updateModeSet;
@@ -428,25 +428,11 @@ public sealed class BotConfig {
 	/// <summary>
 	/// "Protect refunds": bought and gifted games for Steam's 14 days, and games new to the family library for as long
 	/// (<see cref="Core.RefundGuard"/>). It was this plus three more settings - gifted games too, family games too, and
-	/// how many days - which are folded in now: their old keys in a file aren't used any more.
+	/// how many days - which are folded in now: their old keys in a file (ProtectGiftedGames, RefundHoldDays,
+	/// HoldNewFamilyGames) aren't read, and are gone from it at its next save.
 	/// </summary>
 	public bool SkipRefundableGames { get; set; }
 
-	// The three folded-in refund settings, passed through untouched: never used here, but kept in the file so the version
-	// before has the same choices if an update is put back. Missing, it would take its defaults - gifted on, family on, 14
-	// days - and somebody who'd chosen 30 days would get 14. Not written for an account that never had them.
-
-	/// <summary>Retired "...gifted games too" - only kept for the version before.</summary>
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public bool? ProtectGiftedGames { get; set; }
-
-	/// <summary>Retired "...for this many days" - only kept for the version before.</summary>
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public int? RefundHoldDays { get; set; }
-
-	/// <summary>Retired "...games new to the family library too" - only kept for the version before.</summary>
-	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-	public bool? HoldNewFamilyGames { get; set; }
 	/// <summary>When a human-mode account farms cards - <see cref="Modules.FarmWhen"/>. The day's sittings by default.</summary>
 	public int FarmCardsWhen { get; set; }
 
@@ -515,14 +501,6 @@ public sealed class BotConfig {
 	public List<uint> AchievementNeverGames { get; set; } = [];
 
 	/// <summary>
-	/// Games the owner once answered "I own what matters - carry on" for. Not used any more: every game with add-ons Steam
-	/// doesn't explain earns anyway now, base game first (Core/DlcAchievements). Still read, so account files that have
-	/// the list load as they did, and written back - less a game left alone ('dlc leave'), which 1.6.5 would otherwise
-	/// still carry on with after a rollback.
-	/// </summary>
-	public List<uint> AchievementDlcTrusted { get; set; } = [];
-
-	/// <summary>
 	/// Games the owner left alone ('dlc leave', or "Leave it paused" on the dashboard before): the game, and which of its
 	/// DLC the account had for good then (as <see cref="Core.DlcAchievements.LicenceKey"/> writes it). Such a game is held
 	/// as it used to be - nothing in it unlocked on a guess - whatever DLC it gets later, until 'dlc undo'. Not a setting.
@@ -547,6 +525,12 @@ public sealed class BotConfig {
 
 	/// <summary>0 careful, 1 normal, 2 brisk. Scales every gap the pacer waits.</summary>
 	public int AchievementPace { get; set; } = 1;
+
+	/// <summary>
+	/// Only achievements at least this many percent of players have may come in a quick burst (a few minutes after the one
+	/// before); rarer ones always come alone, with the full wait. 0 lets any one burst; 100 turns bursts off.
+	/// </summary>
+	public int AchievementBurstMinPct { get; set; } = 10;
 
 	/// <summary>Hard cap on how much of any one game will ever be completed. 0 uses each game's own ceiling.</summary>
 	public int AchievementMaxCompletionPct { get; set; } = 90;
@@ -573,14 +557,17 @@ public sealed class BotConfig {
 
 	private int _claimFree;
 
-	/// <summary>ClaimFree was in the file (or chosen since): the three old switches next to it are only its copy for the version before.</summary>
+	/// <summary>
+	/// ClaimFree was in the file (or chosen since): the three old switches next to it are only the copy 1.6.5 to 1.6.9 wrote
+	/// for the version before them - never read as a choice.
+	/// </summary>
 	[JsonIgnore]
 	public bool ClaimFreeSet => _claimFreeSet;
 
 	private bool _claimFreeSet;
 
-	// The retired keys below are read so an old file carries over, and written again from their new settings
-	// (ConfigStore.ForTheVersionBefore) so the version before reads the same choices if an update is put back.
+	// The retired keys below are only read, so an old file carries over (ConfigStore.MigrateFreeGames). Never written now:
+	// they're always off once read.
 
 	/// <summary>Retired "Claim free games" - carried over to <see cref="ClaimFree"/>.</summary>
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -607,13 +594,16 @@ public sealed class BotConfig {
 
 	private List<uint> _boosterPackGames = [];
 
-	/// <summary>BoosterPackGames was in the file (or set since): BoosterGames next to it is only its copy for the version before.</summary>
+	/// <summary>
+	/// BoosterPackGames was in the file (or set since): a BoosterGames next to it is only the copy 1.6.5 to 1.6.9 wrote for
+	/// the version before them - never read as a choice.
+	/// </summary>
 	[JsonIgnore]
 	public bool BoosterPackGamesSet => _boosterPackGamesSet;
 
 	private bool _boosterPackGamesSet;
 
-	/// <summary>Retired: the same list as text ("730, 440") - carried over to <see cref="BoosterPackGames"/>.</summary>
+	/// <summary>Retired: the same list as text ("730, 440") - only read, and carried over to <see cref="BoosterPackGames"/>.</summary>
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 	public string? BoosterGames { get; set; }
 
@@ -1151,7 +1141,6 @@ public static class ConfigStore {
 				onDisk.WebPassword = Secrets.Protect(cfg.WebPassword, "global");
 				onDisk.Rep4RepApiToken = Secrets.Protect(cfg.Rep4RepApiToken, "global");
 				onDisk.WebProxyPassword = Secrets.Protect(cfg.WebProxyPassword, "global");
-				ForTheVersionBefore(onDisk);
 				AtomicFile.Write(GlobalPath, JsonSerializer.Serialize(onDisk, Json));
 			}
 
@@ -1222,8 +1211,8 @@ public static class ConfigStore {
 	/// </summary>
 	/// <returns>true when the config changed and should be written back.</returns>
 	public static bool MigrateUpdates(GlobalConfig g) {
-		// Written by this version: UpdateMode is what counts, and the old keys beside it are only its copy for the version
-		// before. Read as the old choice again, a click that waits next to "install when I click" would undo it.
+		// Written by 1.6.5 or later: UpdateMode is what counts, and an AutoUpdate beside it is only the copy 1.6.5 to 1.6.9
+		// wrote for the version before. Read as the old choice again, it would undo the one made since.
 		if (g.UpdateModeSet) {
 			g.AutoUpdate = 0;
 
@@ -1251,7 +1240,7 @@ public static class ConfigStore {
 
 	/// <summary>
 	/// The Discord card's "Account names" second line is gone. A file still holding DiscordShowNames gets it taken out: on
-	/// (the old default) takes the new default, people using nocat.farm; off had picked one of the counts, which it keeps.
+	/// (the old default) takes the new default, Steam accounts on nocat.farm; off had picked one of the counts, which it keeps.
 	/// A file without the key is left alone, so a count picked since is never touched.
 	/// </summary>
 	/// <returns>true when the config changed and should be written back (without the old key).</returns>
@@ -1286,7 +1275,7 @@ public static class ConfigStore {
 		}
 
 		// Off with no second line written: it showed the old default, hours past week.
-		g.DiscordSecondLine = names.Value ? Core.DiscordPresence.LinePeople : lineInFile ? g.DiscordSecondLine : 1;
+		g.DiscordSecondLine = names.Value ? Core.DiscordPresence.LineAccounts : lineInFile ? g.DiscordSecondLine : 1;
 
 		return true;
 	}
@@ -1298,8 +1287,8 @@ public static class ConfigStore {
 			return false;
 		}
 
-		// Written by this version: the list is what counts, the text beside it only its copy for the version before. Read
-		// in again, a game taken off the list here would come back from the copy.
+		// Written by 1.6.5 or later: the list is what counts, a text beside it only the copy 1.6.5 to 1.6.9 wrote for the
+		// version before. Read in again, a game taken off the list here would come back from the copy.
 		if (cfg.BoosterPackGamesSet) {
 			cfg.BoosterGames = null;
 
@@ -1327,8 +1316,8 @@ public static class ConfigStore {
 		bool dlcBaseOff = cfg.ClaimFreeDlcBase == false;
 		cfg.ClaimFreeDlcBase = null;
 
-		// Written by this version: ClaimFree is what counts, and the switches beside it are only its copy for the version
-		// before - read in again they'd say the same, or (edited by hand) undo a choice made here.
+		// Written by 1.6.5 or later: ClaimFree is what counts, and switches beside it are only the copy 1.6.5 to 1.6.9 wrote
+		// for the version before - read in again they'd say the same, or (edited by hand) undo a choice made here.
 		if (cfg.ClaimFreeSet || (!cfg.ClaimFreeGames && !cfg.ClaimFreeDlc)) {
 			cfg.ClaimFreeGames = false;
 			cfg.ClaimFreeDlc = false;
@@ -1370,40 +1359,6 @@ public static class ConfigStore {
 
 		cfg.OfflineIdleAtNight = false;
 		Log.Info(new Said("{0}: Bank hours overnight was on with no games listed, which banked nothing - switched off so nothing changes. Turn it on to idle its most-played games overnight.", name), name);
-
-		return true;
-	}
-
-	/// <summary>
-	/// The keys the version before reads, written from today's settings: if an update's trial fails and the version before
-	/// is put back (or somebody goes back by hand), it reads the same choices instead of its defaults - free games off,
-	/// updates back to "tell me". On the copy that goes to disk, never on the live settings. For this release; the copies
-	/// can go once the version before is long gone. See SelfUpdate.OnTrial for the same idea with secrets.
-	/// </summary>
-	public static void ForTheVersionBefore(GlobalConfig onDisk) {
-		onDisk.AutoUpdate = onDisk.UpdateMode == Core.UpdateModes.AtNight ? 1 : 0;
-		onDisk.UpdateWhenAsked = onDisk.UpdateClickWaits ? 1 : 0;
-	}
-
-	/// <inheritdoc cref="ForTheVersionBefore(GlobalConfig)"/>
-	public static void ForTheVersionBefore(BotConfig onDisk) {
-		onDisk.ClaimFreeGames = onDisk.ClaimFree >= Modules.FreeClaims.Games;
-		onDisk.ClaimFreeDlc = onDisk.ClaimFree == Modules.FreeClaims.GamesAndDlc;
-		onDisk.ClaimFreeDlcBase = onDisk.ClaimFree == Modules.FreeClaims.GamesAndDlc ? true : null;
-		onDisk.BoosterGames = onDisk.BoosterPackGames.Count > 0 ? string.Join(", ", onDisk.BoosterPackGames) : null;
-	}
-
-	/// <summary>
-	/// "Keep playing after the last card" went from 5-12 minutes to 15-20. A config still holding the old default
-	/// pair gets the new one; a value somebody chose on purpose is left alone.
-	/// </summary>
-	public static bool MigrateWindDown(BotConfig cfg) {
-		if ((cfg.PostFarmWindDownMinMinutes != 5) || (cfg.PostFarmWindDownMaxMinutes != 12)) {
-			return false;
-		}
-
-		cfg.PostFarmWindDownMinMinutes = 15;
-		cfg.PostFarmWindDownMaxMinutes = 20;
 
 		return true;
 	}
@@ -1515,7 +1470,6 @@ public static class ConfigStore {
 			migrated |= MigrateGameShares(cfg, name);
 			migrated |= MigrateAchievementCeiling(cfg, name);
 			migrated |= MigrateFarmWhen(cfg, name);
-			migrated |= MigrateWindDown(cfg);
 			migrated |= MigrateFreeGames(cfg, name);
 			migrated |= MigrateBoosterGames(cfg);
 			// Marked as seen in config/state, where the version before can't take it away: going back to it by hand and
@@ -1566,7 +1520,6 @@ public static class ConfigStore {
 				// Copied inside the lock, like SaveGlobal. Copied before it, a module's save and a dashboard save that
 				// ran together could write in the opposite order to the one they copied in - older settings last.
 				BotConfig onDisk = Secrets.Available ? Sealed(cfg) : JsonSerializer.Deserialize<BotConfig>(JsonSerializer.Serialize(cfg, Json), Json)!;
-				ForTheVersionBefore(onDisk);
 				AtomicFile.Write(Path.Combine(ConfigDir, name + ".json"), JsonSerializer.Serialize(onDisk, Json));
 			}
 

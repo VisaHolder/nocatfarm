@@ -162,8 +162,11 @@ async function doLogin(e) {
 // an untranslated string shows the English rather than a key or a blank, so a language can be filled in over
 // time without anything ever looking broken.
 let lang = { ui: {}, settings: {} };
+/// The language picked, for writing numbers its way ("1,240", "1.240", "1 240").
+let langCode = 'en';
 
 async function loadLanguage(code) {
+  langCode = code || 'en';
   if (!code || code === 'en') { lang = { ui: {}, settings: {} }; return; }
   try {
     const res = await fetch(`lang/${encodeURIComponent(code)}.json`, { cache: 'no-cache' });
@@ -288,8 +291,8 @@ function valueDelta(b) {
   if (b.InventoryChangePct === null || b.InventoryChangePct === undefined) return '';
   const up = b.InventoryChangePct >= 0;
   const tip = up
-    ? tf('Up {0} over the last 24 hours, at the market median.', usdExact(Math.abs(b.InventoryChange)))
-    : tf('Down {0} over the last 24 hours, at the market median.', usdExact(Math.abs(b.InventoryChange)));
+    ? tf('Up {0} over the last 24 hours, at the lowest market prices.', usdExact(Math.abs(b.InventoryChange)))
+    : tf('Down {0} over the last 24 hours, at the lowest market prices.', usdExact(Math.abs(b.InventoryChange)));
   return `<span class="delta ${up ? 'up' : 'down'}" data-tip="${esc(tip)}">${up ? '+' : '-'}${Math.abs(b.InventoryChangePct).toFixed(1)}%</span>`;
 }
 
@@ -333,7 +336,7 @@ function valueTip(b) {
     ? tf('{0} - skipped, nothing in it can be sold ({1})', g.Game, items(g.Items))
     : tf('{0} - {1}  ({2})', g.Game, usdExact(g.Value), items(g.Items)));
   if (b.InventoryPending > 0) lines.push(tf('...{0} more still being priced', items(b.InventoryPending)));
-  return tf('{0} at market median', usdExact(b.InventoryValue)) + nlChar + nlChar + lines.join(nlChar);
+  return tf('{0} at the lowest market prices', usdExact(b.InventoryValue)) + nlChar + nlChar + lines.join(nlChar);
 }
 
 // ── formatting ───────────────────────────────────────────────────────
@@ -343,6 +346,33 @@ function hm(minutes) {
     ? minutes + t('m')
     : Math.floor(minutes / 60) + t('h') + String(minutes % 60).padStart(2, '0') + t('m');
 }
+
+// About how long the prices still waiting will take: "~25m", "~2h". The same rounding as InventoryValue.Eta.
+function eta(secs) {
+  if (!(secs > 0)) return '';
+  const mins = Math.ceil(secs / 60);
+  return '~' + (mins < 60 ? mins + t('m') : Math.round(mins / 60) + t('h'));
+}
+
+// A time of day from an ISO time: "14:30".
+const clock = (iso) => { const d = new Date(iso); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+// "14:20" today, "4 Oct 14:20" on an earlier day - in the dashboard's own language.
+const stamp = (iso) => {
+  const d = new Date(iso);
+  if (d.toDateString() === new Date().toDateString()) return clock(iso);
+  return histDate(d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate()) + ' ' + clock(iso);
+};
+
+// "pricing · 931 items · about 14 requests · ~2m" while an inventory's prices are still coming in - requests, not items,
+// because one market search prices a whole game's cards. The count and the value move with every price, so this is
+// where it shows it is working rather than stuck - or, when Steam has told the lookups to wait, until when. When the
+// market is refusing outright, the value stands on old prices: it says from when, and when the market is asked again.
+const pricingLine = (left, requests, secs, paused, stale) => {
+  if (stale) return tf("prices from {0} · Steam's market isn't answering, trying again at {1}", stamp(stale.From), clock(stale.RetryAt));
+  const things = left === 1 ? tf('{0} item', left) : tf('{0} items', left);
+  if (paused) return tf('pricing · {0} · Steam asked it to wait until {1}', things, clock(paused));
+  return tf('pricing · {0} · {1} · {2}', things, requests === 1 ? t('about 1 request') : tf('about {0} requests', requests), eta(secs));
+};
 
 function ago(iso) {
   if (!iso) return t('never');
@@ -652,12 +682,12 @@ function renderOverview() {
   }
   $('verdict').textContent = verdict;
 
-  // How many people use nocat.farm, from nocat.lol's answer to the hourly ping. Nothing while it isn't known, is too old,
-  // or Count me as a user is off.
-  const people = $('usercount');
-  if (people) {
-    people.classList.toggle('hidden', !state.Users);
-    people.textContent = state.Users ? (state.Users === 1 ? t('1 person using nocat.farm today') : tf('{0} people using nocat.farm today', state.Users.toLocaleString('en-US'))) : '';
+  // How many Steam accounts are on nocat.farm, from nocat.lol's answer to the hourly ping. Nothing while it isn't known
+  // (an older nocat.lol doesn't say it), is too old, or Count me as a user is off.
+  const accountsLine = $('usercount');
+  if (accountsLine) {
+    accountsLine.classList.toggle('hidden', !state.Accounts);
+    accountsLine.textContent = state.Accounts ? steamAccountsOn(state.Accounts) : '';
   }
 
   const tile = (n, k, tip, sub) =>
@@ -667,8 +697,8 @@ function renderOverview() {
     tile(state.CardsLeft, 'Cards left', 'Trading cards still to drop across every account.', state.CardsLeft ? '' : t('nothing left to farm')) +
     tile(state.GamesLeft, 'Games left', 'Games with at least one card still to drop, across every account.') +
     tile(state.CardsToday, 'Cards today', 'Trading cards that dropped in the last 24 hours.') +
-    tile(usd(state.InventoryValue), 'Inventory', "What every account's inventory would fetch at the market's median price. Everything in there is counted at what it's worth, whether or not it can be sold right now.",
-      state.InventoryPending > 0 ? tf('still pricing {0}', state.InventoryPending) : '') +
+    tile(usd(state.InventoryValue), 'Inventory', "What every account's inventory would fetch at the lowest price each item is listed for on the market. Everything in there is counted at what it's worth, whether or not it can be sold right now.",
+      state.InventoryPending > 0 ? pricingLine(state.InventoryPending, state.InventoryRequests, state.InventoryEtaSeconds, state.InventoryPausedUntil, state.InventoryStale) : '') +
     (!r4rOn()
       ? ''
       : state.Rep4RepToken
@@ -677,7 +707,7 @@ function renderOverview() {
         : tile(state.CommentsToday, 'Comments today', 'rep4rep comments posted in the last 24 hours.')));
 
   paint('glance', bots.length ? `<div class="tablewrap"><table>
-    <tr><th>${esc(t('Account'))}</th><th>${esc(t('State'))}</th><th>${esc(t('Playing'))}</th><th>${esc(t('Cards'))}</th><th data-tip="${esc(t("What everything in this account's inventory would fetch at the market's median price. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth."))}">${esc(t('Value'))}</th>${r4rOn() ? `<th class="r4r">${esc(t('rep4rep'))}</th>` : ''}<th class="up">${esc(t('Up'))}</th></tr>
+    <tr><th>${esc(t('Account'))}</th><th>${esc(t('State'))}</th><th>${esc(t('Playing'))}</th><th>${esc(t('Cards'))}</th><th data-tip="${esc(t("What everything in this account's inventory would fetch at the lowest price each item is listed for on the market. Items with no market listing count as nothing; items it merely can't sell right now (trade holds, bans) are still counted at what they are worth."))}">${esc(t('Value'))}</th>${r4rOn() ? `<th class="r4r">${esc(t('rep4rep'))}</th>` : ''}<th class="up">${esc(t('Up'))}</th></tr>
     ${bots.map((b) => `<tr class="click" data-act="cards" data-bot="${esc(b.Name)}">
       <td><b>${esc(b.Name)}</b></td>
       <td><span class="chip ${b.Group}"><i class="dot"></i>${esc(b.Status)}</span></td>
@@ -1074,7 +1104,7 @@ function renderHistory() {
     valueSub = `<span class="delta ${up ? 'up' : 'down'}">${esc(histSigned(Math.round(change), usd))} (${up ? '+' : '-'}${Math.abs((change / inRange[firstAt].v) * 100).toFixed(1)}%)</span> `
       + esc(tf('since {0}', histDate(histData.Days[m.off + firstAt])));
   }
-  panels.push(panel(t('Inventory value'), t('What the inventory was worth at the end of each day, at the market median. A day with no new reading carries the last one over.'),
+  panels.push(panel(t('Inventory value'), t('What the inventory was worth at the end of each day, at the lowest market prices. A day with no new reading carries the last one over.'),
     last ? esc(usd(last.v)) : '', valueSub,
     firstAt >= 0 ? chart('value') : empty(t('No inventory readings yet.'))));
   draws.value = (w, h) => histLine(w, h, m, (i) => {
@@ -1190,6 +1220,7 @@ function renderAccounts() {
         ${r4rOn() && b.Rep4Rep ? `<span>${tf('<b>{0}</b>/{1} comments', b.Rep4RepToday, b.Rep4RepCap)}</span>` : ''}
         <span>${tf('<b>{0}</b> up', b.UptimeMinutes ? hm(b.UptimeMinutes) : '—')}</span>
         ${b.InventoryValue > 0 ? `<span data-tip="${esc(valueTip(b))}">${tf('<b>{0}</b> inventory', usd(b.InventoryValue))} ${valueDelta(b)}</span>` : ''}
+        ${b.InventoryOn !== false && b.InventoryPending > 0 ? `<span class="muted">${esc(pricingLine(b.InventoryPending, b.InventoryRequests, b.InventoryEtaSeconds, state.InventoryPausedUntil, state.InventoryStale))}</span>` : ''}
       </div>
       ${r4rOn() && b.Rep4Rep ? `<div class="bar" data-tip="${esc(t("Comments posted in the last 24 hours against this account's daily cap."))}"><i style="width:${capPct}%"></i></div>` : ''}
       <div class="rows">
@@ -4667,7 +4698,7 @@ function dlcAnswered(name) {
   const tip = esc(t("Lets it earn achievements again - the base game's first. Those of an add-on it doesn't own stay locked."));
   const link = (g) => `${esc(GAME_NAMES[g.App] || g.Game)} <a role="button" tabindex="0" data-act="dlcundo" data-bot="${esc(name)}" data-app="${Number(g.App)}" data-tip="${tip}">(${esc(t('undo'))})</a>`;
 
-  return `<p class="muted small dlcanswered">${esc(t('You said leave it paused for:'))} ${pacerLeft.map(link).join(' · ')}</p>`;
+  return `<p class="muted small dlcanswered">${esc(t('Left alone for achievements:'))} ${pacerLeft.map(link).join(' · ')}</p>`;
 }
 
 async function answerDlc(name, app, answer) {
@@ -5884,9 +5915,9 @@ const PANEL_ROWS = new Set(['DiscordPresence', 'DiscordSecondLine', 'DiscordShow
 function discordCardIntro(val) {
   const on = !!val('DiscordPresence');
   const parts = [['DiscordShowCounter', 'Accounts online'], ['DiscordShowAvatar', 'Avatar'], ['DiscordShowTimer', 'Timer']];
-  // The second line is one pick of four: the people using nocat.farm, or one of three counts.
+  // The second line is one pick of four: the Steam accounts on nocat.farm, or one of three counts.
   const line = Number(val('DiscordSecondLine') ?? 3);
-  const lines = [[3, 'People using nocat.farm'], [0, 'Cards today'], [1, 'Hours past week'], [2, 'Hours past month']];
+  const lines = [[3, 'Steam accounts on nocat.farm'], [0, 'Cards today'], [1, 'Hours past week'], [2, 'Hours past month']];
   return `<div class="explain dcard-intro">
     <div class="dhead"><b>${esc(t('Show on my Discord profile'))}</b>
       <label class="switch"><input type="checkbox" ${on ? 'checked' : ''} onchange="editAndRender('DiscordPresence', this.checked)"><span></span></label></div>
@@ -5900,9 +5931,19 @@ function discordCardIntro(val) {
   </div>`;
 }
 
-/// "212 people using nocat.farm" - the Discord card's second line.
-function peopleUsing(n) {
-  return n === 1 ? t('1 person using nocat.farm') : tf('{0} people using nocat.farm', n.toLocaleString('en-US'));
+/// A whole number written the way the language picked writes it - the same grouping as the Discord card's (Fmt.Grouped).
+function grouped(n) {
+  try { return Number(n).toLocaleString(langCode); } catch { return Number(n).toLocaleString('en-US'); }
+}
+
+/// "1,240 Steam accounts on nocat.farm" - the Overview line.
+function steamAccountsOn(n) {
+  return n === 1 ? t('1 Steam account on nocat.farm') : tf('{0} Steam accounts on nocat.farm', grouped(n));
+}
+
+/// "1,240 Steam accounts" - the Discord card's second line, which already says Playing nocat.farm above it.
+function steamAccounts(n) {
+  return n === 1 ? t('1 Steam account') : tf('{0} Steam accounts', grouped(n));
 }
 
 function discordPreview(val) {
@@ -5931,12 +5972,12 @@ function discordPreview(val) {
     return h < 10 ? String(Math.round(h * 10) / 10) : Math.round(h).toLocaleString('en-US');
   };
   const line = Number(val('DiscordSecondLine') ?? 3);
-  // As on the real card: the people count falls back to the cards today while it isn't known (or Count me as a user is off).
-  // The switch read as set on this page, so turning it off shows the fallback straight away, not at the next refresh.
-  const users = val('CountMeAsUser') !== false && state && state.Users;
+  // As on the real card: the accounts count falls back to the cards today while it isn't known (or Count me as a user is
+  // off). The switch read as set on this page, so turning it off shows the fallback straight away, not at the next refresh.
+  const accounts = val('CountMeAsUser') !== false && state && state.Accounts;
   const stateLine = line === 1 ? tf('{0} hrs past week', hours('MinutesWeek'))
     : line === 2 ? tf('{0} hrs past month', hours('MinutesMonth'))
-    : line === 3 && users ? peopleUsing(users)
+    : line === 3 && accounts ? steamAccounts(accounts)
     : tf('{0} cards today', today);
   const lead = featured || ordered.find((b) => b.Avatar) || ordered[0];
   const face = val('DiscordShowAvatar') && lead && lead.Avatar ? lead : null;
@@ -5958,11 +5999,14 @@ function discordPreview(val) {
   // The last line as Discord draws it: the state line by the party icon, then the timer by a controller.
   const pad = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 6h10a5 5 0 0 1 4.9 6l-.8 4a3 3 0 0 1-5 1.6L14 16h-4l-2.1 1.6a3 3 0 0 1-5-1.6l-.8-4A5 5 0 0 1 7 6Zm1 3v2H6v2h2v2h2v-2h2v-2h-2V9H8Zm7.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Zm3-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>';
   const party = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 19c0-3.3 3.1-6 7-6s7 2.7 7 6v1H2v-1Zm16 1v-1c0-1.9-.8-3.6-2.1-4.9 3.5.1 6.1 2.2 6.1 4.9v1h-4Z"/></svg>';
-  // As on the real card: the short "3 linked" when the long one would run past what Discord shows (37 characters).
+  // As on the real card: the short "3 linked" when the long one would run past what Discord shows (37 characters), and
+  // no counter at all when even that doesn't fit.
   const all = connected === bots.length;
   const long = all ? (connected === 1 ? t('1 account linked') : tf('{0} accounts linked', connected)) : tf('{0} of {1} accounts linked', connected, bots.length);
   const short = all ? tf('{0} linked', connected) : tf('{0} of {1} linked', connected, bots.length);
-  const stateWithCounter = val('DiscordShowCounter') && bots.length ? `${stateLine} · ${(stateLine + ' · ' + long).length <= 37 ? long : short}` : stateLine;
+  const withCounter = (stateLine + ' · ' + long).length <= 37 ? `${stateLine} · ${long}`
+    : (stateLine + ' · ' + short).length <= 37 ? `${stateLine} · ${short}` : stateLine;
+  const stateWithCounter = val('DiscordShowCounter') && bots.length ? withCounter : stateLine;
   const meta = (shown.length ? `<span class="dstate">${party}${esc(stateWithCounter)}</span>` : '')
     + (val('DiscordShowTimer') ? `<span class="dtime">${pad}${esc(timer)}</span>` : '');
 

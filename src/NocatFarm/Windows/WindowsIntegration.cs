@@ -59,19 +59,6 @@ public static class WindowsIntegration {
 	[return: MarshalAs(UnmanagedType.Bool)]
 	private static extern bool PowerClearRequest(IntPtr request, PowerRequestType type);
 
-	/// <summary>Is nocatFarm registered to start when this user signs in?</summary>
-	public static bool StartsWithWindows() {
-		try {
-			using RegistryKey? key = Registry.CurrentUser.OpenSubKey(RunKey);
-
-			return key?.GetValue(ValueName) != null;
-		} catch (Exception e) {
-			Log.Failed("reading the Windows startup entry", e);
-
-			return false;
-		}
-	}
-
 	/// <summary>Whether the startup entry starts THIS exe - a moved or copied folder leaves it pointing at the old one.</summary>
 	public static bool StartupPointsHere() {
 		try {

@@ -8,13 +8,13 @@ using NocatFarm.Config;
 namespace NocatFarm.Core;
 
 /// <summary>
-/// How many people use nocat.farm: once an hour this copy tells nocat.lol it's running, and nocat.lol answers with how
-/// many different copies did the same in the last 24 hours.
+/// How many Steam accounts run on nocat.farm: once an hour this copy tells nocat.lol it's running and how many of its
+/// accounts are signed in, and nocat.lol answers with the accounts over every copy (and, as before, how many copies).
 /// </summary>
 /// <remarks>
-/// What goes out is all there is: a random number made for this install (<see cref="InstallId"/>), the app version and
-/// the platform. No Steam account, name, setting or address of anything. "Count me as a user" off sends nothing at all,
-/// and the count isn't shown either.
+/// What goes out is all there is: a random number made for this install (<see cref="InstallId"/>), the app version, the
+/// platform and how many of its Steam accounts are signed in right now - only that number. No Steam account name or id,
+/// no setting, no address of anything. "Count me as a user" off sends nothing at all, and the count isn't shown either.
 ///
 /// The random number lives in config/state/install-id.txt, which a backup leaves out on purpose - a backup restored on a
 /// second PC would otherwise make the two count as one. It is never written to the log.
@@ -35,7 +35,7 @@ public static class UserCount {
 	public static readonly TimeSpan Jitter = TimeSpan.FromMinutes(4);
 
 	private static readonly Lock Gate = new();
-	private static int? _users;
+	private static Counts? _counts;
 	private static DateTime _readAt = DateTime.MinValue;
 	private static DateTime _next = DateTime.MaxValue;
 	private static CancellationTokenSource? _stop;
@@ -48,7 +48,7 @@ public static class UserCount {
 
 	private static readonly Lazy<HttpClient> Http = new(static () => MakeClient(new SocketsHttpHandler {
 		AllowAutoRedirect = false,
-		UseCookies = false,   // nothing set by the site ever comes back on a later ping: each one is only the three fields
+		UseCookies = false,   // nothing set by the site ever comes back on a later ping: each one is only the four fields
 		PooledConnectionLifetime = TimeSpan.FromMinutes(15)
 	}));
 
@@ -125,12 +125,30 @@ public static class UserCount {
 	/// <summary>When the first ping (or the one after switching it on) is due: 1-3 minutes from now.</summary>
 	private static DateTime Soon() => DateTime.UtcNow.AddSeconds(ToTestStub ? 5 : Random.Shared.Next(60, 181));
 
-	/// <summary>The body sent: the install's number, the version and the platform, nothing else.</summary>
-	public static string Body() => JsonSerializer.Serialize(new { id = InstallId(), v = Build.Version, os = Os });
+	/// <summary>The most signed-in accounts one copy ever says it has: a bigger number is sent as this.</summary>
+	public const int MaxAccounts = 1000;
 
-	/// <summary>The count in nocat.lol's answer: a 200 with {"users":N}. Anything else - another status, not JSON, no
-	/// number, nobody - is null, "unknown".</summary>
-	public static int? ParseReply(HttpStatusCode status, string body) {
+	/// <summary>
+	/// What nocat.lol answered: the copies running (<see cref="Users"/>) and the Steam accounts signed in on them
+	/// (<see cref="Accounts"/>). Either can be null, unknown - an older nocat.lol only ever says the copies.
+	/// </summary>
+	public readonly record struct Counts(int? Users, int? Accounts);
+
+	/// <summary>How many of this copy's Steam accounts are signed in right now. Only this number is sent, nothing about them.</summary>
+	public static int SignedIn() => BotManager.Instance?.All.Count(static b => b.IsOnline) ?? 0;
+
+	/// <summary>The body sent: the install's number, the version, the platform and how many accounts are signed in.</summary>
+	public static string Body() => Body(SignedIn());
+
+	/// <param name="signedIn">Accounts signed in right now, sent as a whole number from 0 to <see cref="MaxAccounts"/>.</param>
+	public static string Body(int signedIn) =>
+		JsonSerializer.Serialize(new { id = InstallId(), v = Build.Version, os = Os, a = Math.Clamp(signedIn, 0, MaxAccounts) });
+
+	/// <summary>
+	/// The counts in nocat.lol's answer: a 200 with {"users":N,"accounts":M}. A count that's missing, not a whole number,
+	/// or 0 is unknown; another status, not JSON, or no count in it at all is null.
+	/// </summary>
+	public static Counts? ParseReply(HttpStatusCode status, string body) {
 		if (status != HttpStatusCode.OK) {
 			return null;
 		}
@@ -138,18 +156,32 @@ public static class UserCount {
 		try {
 			using JsonDocument doc = JsonDocument.Parse(body);
 
-			return (doc.RootElement.ValueKind == JsonValueKind.Object)
-				&& doc.RootElement.TryGetProperty("users", out JsonElement u)
-				&& (u.ValueKind == JsonValueKind.Number) && u.TryGetInt32(out int n) && (n > 0)
+			if (doc.RootElement.ValueKind != JsonValueKind.Object) {
+				return null;
+			}
+
+			JsonElement root = doc.RootElement;
+
+			int? Read(string name) => root.TryGetProperty(name, out JsonElement e)
+				&& (e.ValueKind == JsonValueKind.Number) && e.TryGetInt32(out int n) && (n > 0)
 				? n
 				: null;
+
+			Counts read = new(Read("users"), Read("accounts"));
+
+			return (read.Users == null) && (read.Accounts == null) ? null : read;
 		} catch (JsonException) {
 			return null;
 		}
 	}
 
+	/// <summary>"1,240 Steam accounts on nocat.farm", the number grouped the way the language picked writes it.</summary>
+	public static string AccountsLine(int n) => n == 1
+		? new Said("1 Steam account on nocat.farm").ToString()
+		: new Said("{0} Steam accounts on nocat.farm", Fmt.Grouped(n)).ToString();
+
 	/// <summary>
-	/// One ping: says this copy is running and keeps the count that comes back. Nothing at all with "Count me as a user"
+	/// One ping: says this copy is running and keeps the counts that come back. Nothing at all with "Count me as a user"
 	/// off. Never throws - a failure is one debug line and false, and the next try is the next hour's.
 	/// </summary>
 	public static async Task<bool> PingAsync(HttpClient http, GlobalConfig g, CancellationToken ct = default) {
@@ -164,13 +196,13 @@ public static class UserCount {
 			using HttpResponseMessage resp = await http.SendAsync(req, ct).ConfigureAwait(false);
 			string text = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
 
-			if (ParseReply(resp.StatusCode, text) is not { } users) {
+			if (ParseReply(resp.StatusCode, text) is not { } counts) {
 				Log.Debug($"user count: no count in nocat.lol's answer (HTTP {(int) resp.StatusCode}) - trying again in an hour");
 
 				return false;
 			}
 
-			Remember(users, DateTime.UtcNow);
+			Remember(counts, DateTime.UtcNow);
 
 			return true;
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
@@ -184,34 +216,40 @@ public static class UserCount {
 		}
 	}
 
-	/// <summary>Keeps a count and when it was read.</summary>
-	public static void Remember(int users, DateTime atUtc) {
+	/// <summary>Keeps the counts and when they were read.</summary>
+	public static void Remember(Counts counts, DateTime atUtc) {
 		lock (Gate) {
-			_users = users;
+			_counts = counts;
 			_readAt = atUtc;
 		}
 	}
 
-	/// <summary>Drops the count kept - for the checks.</summary>
+	/// <summary>Drops the counts kept - for the checks.</summary>
 	public static void Forget() {
 		lock (Gate) {
-			_users = null;
+			_counts = null;
 			_readAt = DateTime.MinValue;
 		}
 	}
 
-	/// <summary>The count to show, or null: "Count me as a user" off, nothing read yet, or the last one older than <see cref="StaleAfter"/>.</summary>
-	public static int? Current(GlobalConfig g, DateTime nowUtc) {
+	/// <summary>The counts to go by, or null: "Count me as a user" off, nothing read yet, or the last ones older than <see cref="StaleAfter"/>.</summary>
+	public static Counts? Current(GlobalConfig g, DateTime nowUtc) {
 		if (!g.CountMeAsUser) {
 			return null;
 		}
 
 		lock (Gate) {
-			return (_users is { } n) && (nowUtc - _readAt <= StaleAfter) ? n : null;
+			return (_counts is { } c) && (nowUtc - _readAt <= StaleAfter) ? c : null;
 		}
 	}
 
-	public static int? Current() => Current(Live.Global, DateTime.UtcNow);
+	/// <summary>The Steam accounts on nocat.farm - the number shown - or null while it isn't known.</summary>
+	public static int? Accounts(GlobalConfig g, DateTime nowUtc) => Current(g, nowUtc)?.Accounts;
+
+	public static int? Accounts() => Accounts(Live.Global, DateTime.UtcNow);
+
+	/// <summary>The copies running. Still read, for an older nocat.lol, but no longer shown.</summary>
+	public static int? Users() => Current(Live.Global, DateTime.UtcNow)?.Users;
 
 	/// <summary>The gap to the next ping: an hour, give or take a few minutes.</summary>
 	public static TimeSpan NextGap() => Every + TimeSpan.FromSeconds(Random.Shared.Next(-(int) Jitter.TotalSeconds, (int) Jitter.TotalSeconds + 1));
@@ -254,7 +292,7 @@ public static class UserCount {
 			bool switchedOn = on && !_wasOn;
 			_wasOn = on;
 
-			if (!switchedOn || (_stop == null) || ((_users != null) && (nowUtc - _readAt <= StaleAfter))) {
+			if (!switchedOn || (_stop == null) || ((_counts != null) &&(nowUtc - _readAt <= StaleAfter))) {
 				return false;
 			}
 

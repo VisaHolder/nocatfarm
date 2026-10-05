@@ -60,7 +60,7 @@ public interface IPluginAccount {
 	/// <summary>Everything it owns that can be launched, with Steam's own playtime.</summary>
 	IReadOnlyList<PluginGame> Library { get; }
 
-	/// <summary>What its inventory is worth per game, at the market median. Empty until it has been priced.</summary>
+	/// <summary>What its inventory is worth per game, at the lowest market listing. Empty until it has been priced.</summary>
 	IReadOnlyList<PluginGameValue> InventoryByGame { get; }
 }
 

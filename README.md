@@ -220,8 +220,8 @@ It talks to Steam, and to GitHub every 2 hours to see if there's a new version (
 off). Discord, Telegram, rep4rep and SteamSpy (game lengths for achievements) only come into it if you turn them
 on, and *Open from anywhere* only talks to your router if you turn it on.
 
-Once an hour it tells nocat.lol it's running, to count users: a random install ID, the version and the platform,
-nothing else. *Count me as a user* turns it off.
+Once an hour it tells nocat.lol it's running, to count Steam accounts: a random install ID, the version, the platform
+and how many of your accounts are signed in (just the number), nothing else. *Count me as a user* turns it off.
 
 It won't fight you for an account. Launch a game on one of its accounts and that account steps back. For an account
 you also use in your own Steam app, turn on *I sign into this one myself* and it won't kick you off Friends & Chat.

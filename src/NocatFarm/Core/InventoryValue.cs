@@ -18,8 +18,9 @@ namespace NocatFarm.Core;
 /// valuation of a large inventory fills in over a few minutes and every one after that is instant.
 /// </summary>
 public sealed partial class InventoryValue(Bot bot) {
-	/// <summary>How many item names to price per sweep. The rest are picked up on the next one.</summary>
-	private const int PricesPerSweep = 60;
+	/// <summary>How many market requests to make per sweep - one search page can price a whole game's cards. The rest
+	/// are picked up on the next one.</summary>
+	private const int RequestsPerSweep = 60;
 
 	/// <summary>Inventories to look at, largest first. Nobody has thirty games worth of tradables.</summary>
 	private const int MaxInventories = 12;
@@ -29,20 +30,22 @@ public sealed partial class InventoryValue(Bot bot) {
 
 	public sealed record GameValue(uint AppId, string Game, int Items, decimal Value, bool Blocked);
 
-	/// <summary>The total and the games it adds up from, published together as one object. A decimal is four words
-	/// and isn't written in one go: the dashboard reading it while a recount wrote it could get half of each.</summary>
-	private sealed record Figures(decimal Total, List<GameValue> ByGame);
+	/// <summary>The total, the games it adds up from and how many names still wait on a price, published together as
+	/// one object. A decimal is four words and isn't written in one go: the dashboard reading it while a recount wrote
+	/// it could get half of each.</summary>
+	private sealed record Figures(decimal Total, List<GameValue> ByGame, int Pending);
 
-	private volatile Figures _figures = new(0, []);
+	private volatile Figures _figures = new(0, [], 0);
 
-	/// <summary>Total US dollars, at the market's median price, across every game.</summary>
+	/// <summary>The total in the chosen currency, at each item's lowest market listing, across every game.</summary>
 	public decimal Total => _figures.Total;
 
 	/// <summary>Per-game totals, most valuable first.</summary>
 	public IReadOnlyList<GameValue> ByGame => _figures.ByGame;
 
-	/// <summary>Item names still waiting on a price. While this is above zero the total is still climbing.</summary>
-	public int Pending { get; private set; }
+	/// <summary>Item names still waiting on a price. While this is above zero the total is still climbing - and it
+	/// counts down one by one as the prices land, not only when the inventory is read again.</summary>
+	public int Pending => _figures.Pending;
 
 	public bool Ready { get; private set; }
 
@@ -382,16 +385,12 @@ public sealed partial class InventoryValue(Bot bot) {
 			}
 		}
 
-		Pending = wanted.Count;
-
 		// Order matters more than it looks.
 		//
 		// The market answers about one item every few seconds, so a large inventory takes the best part of an hour
 		// to price - and what gets asked about FIRST decides what the number looks like for that hour. Left in
 		// whatever order they came out of the inventory, nine hundred trading cards worth a penny each were
 		// consuming the whole rate limit while fifty skins worth four figures sat unpriced, so an account with
-		int done = 0;
-
 		// $1,500 of CS2 read as $13. Two rules fix it. Steam's own inventory goes LAST - app 753 is cards,
 		// backgrounds and emoticons, thousands of items worth pennies each - and the games themselves are worked
 		// through ROUND-ROBIN, one item from each in turn.
@@ -400,22 +399,12 @@ public sealed partial class InventoryValue(Bot bot) {
 		// be wrong somewhere: ordering by fewest distinct names put Team Fortress (many hats, few names) ahead of
 		// CS2 (few skins, every one unique) and starved exactly the inventory that mattered. Taking turns needs no
 		// guess - every game's total starts climbing immediately, and none of them can be starved by another.
-		foreach ((uint app, string hash) in RoundRobin(wanted).Take(PricesPerSweep)) {
-			ct.ThrowIfCancellationRequested();
-
-			if (await PriceBook.FetchAsync(app, hash, ct).ConfigureAwait(false) == null) {
-				break;   // the market has stopped answering - stop pushing and try again next sweep
-			}
-
-			Pending--;
-			done++;
-
-			// Re-total every so often rather than only at the end of the sweep. Sixty lookups is three and a half
-			// minutes of one account's turn, and with several accounts queued behind the same rate limit a total
-			// could sit unchanged for ten - which reads as broken, not as busy.
-			if (done % 10 == 0) {
-				Recount();
-			}
+		//
+		// The book works out how: a whole game's Steam items, or every wear of a skin, from one search page where it
+		// can, one item at a time where it can't. Each price that comes back is in the total and off the count already
+		// - the book tells every account holding the item (Priced) - so nothing here re-totals along the way.
+		if (wanted.Count > 0) {
+			await PriceBook.PriceAsync([.. RoundRobin(wanted)], RequestsPerSweep, ct).ConfigureAwait(false);
 		}
 	}
 
@@ -477,41 +466,170 @@ public sealed partial class InventoryValue(Bot bot) {
 		}
 	}
 
-	private void Recount() {
-		List<GameValue> byGame = [];
+	// ── the running total ────────────────────────────────────────────────────
+	// What each item was counted at, so a price that lands moves the total by exactly quantity x (new - counted) the
+	// moment it lands. Pricing a big inventory takes hours at one lookup every few seconds; re-totalled only now and
+	// then, the number and the "still pricing" count sat still for minutes at a time and read as stuck.
+	//
+	// A recount builds all of this from scratch and replaces it, under the same lock a landing price takes, and a price
+	// is in the book before it is told to anyone: either the recount read it already (counted at the new price, off
+	// the waiting list, so the landing moves nothing) or it lands after and moves the total once. Never twice.
+	private readonly Lock _tallyGate = new();
 
-		lock (_holdings) {
-			foreach ((uint app, (string game, Dictionary<string, Held> items, bool blocked)) in _holdings) {
-				decimal value = 0;
-				int count = 0;
+	private sealed class TallyGame(string game, bool blocked) {
+		public string Game { get; } = game;
+		public bool Blocked { get; } = blocked;
+		public int Items { get; set; }
+		public decimal Value { get; set; }
 
-				foreach ((string hash, Held held) in items) {
-					value += blocked ? 0 : (PriceBook.Known(app, hash) ?? 0) * held.Count;
-					count += held.Count;
+		/// <summary>Each item name: how many are held and the price it is counted at. Never filled for a skipped game.</summary>
+		public Dictionary<string, (int Count, decimal Price)> Counted { get; } = new(StringComparer.Ordinal);
+	}
+
+	private Dictionary<uint, TallyGame> _tally = [];
+
+	/// <summary>The (game, item name) pairs still waiting on a price - the dashboard's "still pricing" count.</summary>
+	private HashSet<(uint App, string Hash)> _waiting = [];
+
+	/// <summary>What is still waiting on a price, as it stands - for working out how many requests are left.</summary>
+	public List<(uint App, string Hash)> Waiting() {
+		lock (_tallyGate) {
+			return [.. _waiting];
+		}
+	}
+
+	/// <summary>About how many market requests the prices still waiting will take.</summary>
+	public int RequestsLeft => _figures.Pending == 0 ? 0 : PriceBook.RequestsFor(Waiting());
+
+	/// <summary>The currency the running total is in. 0 until the first recount.</summary>
+	private int _tallyCurrency;
+
+	private int _watching;
+
+	/// <summary>
+	/// A price just landed in the book - from this account's lookup or another's. Moves this account's total by what it
+	/// holds of that item and takes it off the waiting count. Nothing else: no request, no file.
+	/// </summary>
+	internal void Priced(uint app, string marketHashName, decimal price, int currency) {
+		bool recount = false;
+
+		lock (_tallyGate) {
+			if (_tallyCurrency == 0) {
+				return;   // never counted yet - the first recount reads the book anyway
+			}
+
+			if (currency != _tallyCurrency) {
+				recount = true;   // the currency was changed: everything starts again from the book, as a recount always did
+			} else {
+				bool moved = false;
+
+				if (_tally.TryGetValue(app, out TallyGame? g) && !g.Blocked && g.Counted.TryGetValue(marketHashName, out (int Count, decimal Price) was)) {
+					g.Value += (price - was.Price) * was.Count;
+					g.Counted[marketHashName] = (was.Count, price);
+					moved = true;
 				}
 
-				if (count > 0) {
-					byGame.Add(new GameValue(app, game, count, decimal.Round(value, 2), blocked));
+				if (_waiting.Remove((app, marketHashName))) {
+					moved = true;
+				}
+
+				if (moved) {
+					PublishLocked();
 				}
 			}
 		}
 
-		decimal was = Total;
-		List<GameValue> sorted = [.. byGame.OrderByDescending(static g => g.Value)];
-		Figures now = new(decimal.Round(sorted.Sum(static g => g.Value), 2), sorted);
+		if (recount) {
+			Recount();
+		}
+	}
+
+	/// <summary>The running total as the figures everyone reads. Called with <see cref="_tallyGate"/> held.</summary>
+	private Figures PublishLocked() {
+		List<GameValue> sorted = [.. _tally
+			.Select(static g => new GameValue(g.Key, g.Value.Game, g.Value.Items, decimal.Round(g.Value.Value, 2), g.Value.Blocked))
+			.OrderByDescending(static g => g.Value)];
+		Figures now = new(decimal.Round(sorted.Sum(static g => g.Value), 2), sorted, _waiting.Count);
 
 		_figures = now;
-		decimal total = now.Total;
 		RefreshedAt = DateTime.UtcNow;
+
+		return now;
+	}
+
+	/// <summary>
+	/// About how long <paramref name="requests"/> market requests take at one every <paramref name="gapSeconds"/>: "~25m",
+	/// "~2h", or nothing when none are left. Rough on purpose - the market's pauses make anything finer a guess.
+	/// </summary>
+	public static string Eta(int requests, double gapSeconds) {
+		if (requests <= 0) {
+			return "";
+		}
+
+		double minutes = Math.Ceiling(requests * Math.Clamp(gapSeconds, 1, 60) / 60);
+
+		return minutes < 60 ? $"~{minutes:0}m" : $"~{Math.Round(minutes / 60, MidpointRounding.AwayFromZero):0}h";
+	}
+
+	/// <summary>Seconds <paramref name="requests"/> market requests take at the market pace - what the dashboard's "~2h" is
+	/// worked from. Requests, not items: one search page can price a whole game's cards.</summary>
+	public static long EtaSeconds(int requests) => requests <= 0 ? 0 : (long) (requests * Math.Clamp((double) Config.Live.Global.MarketGapSeconds, 1, 60));
+
+	/// <summary>Total everything again from the holdings and the book, replacing the running total.</summary>
+	private void Recount() {
+		if (Interlocked.Exchange(ref _watching, 1) == 0) {
+			PriceBook.Watch(this);
+		}
+
+		decimal was = Total;
+		Figures now;
+
+		lock (_holdings) {
+			lock (_tallyGate) {
+				Dictionary<uint, TallyGame> tally = [];
+				HashSet<(uint App, string Hash)> waiting = [];
+
+				foreach ((uint app, (string game, Dictionary<string, Held> items, bool blocked)) in _holdings) {
+					TallyGame g = new(game, blocked);
+
+					foreach ((string hash, Held held) in items) {
+						g.Items += held.Count;
+
+						if (blocked) {
+							continue;   // a game you've told it to skip: its items are counted, never priced or waited on
+						}
+
+						decimal price = PriceBook.Known(app, hash) ?? 0;
+						g.Counted[hash] = (held.Count, price);
+						g.Value += price * held.Count;
+
+						if (PriceBook.NeedsRefresh(app, hash)) {
+							waiting.Add((app, hash));
+						}
+					}
+
+					if (g.Items > 0) {
+						tally[app] = g;
+					}
+				}
+
+				_tally = tally;
+				_waiting = waiting;
+				_tallyCurrency = PriceBook.CurrencyId;
+				now = PublishLocked();
+			}
+		}
+
+		decimal total = now.Total;
 
 		// Only banked once the whole thing has a price. A total that is still filling in would otherwise be
 		// recorded as a genuine drop and then a genuine rise, and the day's percentage would be fiction.
-		if ((Pending == 0) && _complete) {
+		if ((now.Pending == 0) && _complete) {
 			InventoryHistory.Note(bot.Name, total);
 		}
 
 		if (total != was) {
-			Log.Debug(new Said("inventory now {0}{1} across {2} game(s), {3} item(s) still to price", PriceBook.Symbol, (total).ToString("0.00"), sorted.Count, Pending), bot.Name);
+			Log.Debug(new Said("inventory now {0}{1} across {2} game(s), {3} item(s) still to price", PriceBook.Symbol, (total).ToString("0.00"), now.ByGame.Count, now.Pending), bot.Name);
 		}
 	}
 

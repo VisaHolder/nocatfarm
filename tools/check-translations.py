@@ -11,6 +11,11 @@ app itself uses them, then reports, per language:
   - settings with no translated label or explanation
   - text typed with its accents stripped ("fuer" for "für") - still a translation, still wrong
 
+and, across the packs, entries nothing uses any more - a string that was reworded or a feature that went, whose
+old sentence stays in every pack until somebody notices (a setting's label and explanation too, once it's gone).
+
+Log lines count: Log.Info/Good/Warn/Error/Reward/Attention/Debug("...") are translated like any Said, Debug too.
+
 and, across the code, English that reaches a translated sentence as one of its VALUES. The frame translates and
 the value doesn't - "rep4rep: 休息 23h47m (manual reset)". A value only translates if it is itself a Said, and
 English finds four ways in:
@@ -199,6 +204,24 @@ def used_keys(files):
             if value:
                 keys.setdefault(value, f"{rel}:{src.count(chr(10), 0, m.start()) + 1}")
 
+        # A log line written as a plain string is a Said too - Log.Info(string) is Info(new Said(text)) - so the
+        # dashboard log shows it translated. Debug included: it is the same path, only hidden on screen by default.
+        # DebugOnChange's text is its second argument; Log.Failed and $"..." lines can never match a key.
+        for m in re.finditer(r'\bLog\.(?:Info|Good|Warn|Error|Reward|Debug|Attention)\(\s*(?=")', src):
+            value, _ = cs_literal(src, m.end())
+
+            if value:
+                keys.setdefault(value, f"{rel}:{src.count(chr(10), 0, m.start()) + 1}")
+
+        for m in re.finditer(r"\bLog\.DebugOnChange\(", src):
+            args = call_args(src, m.end())
+
+            if (len(args) >= 2) and args[1].startswith('"'):
+                value, _ = cs_literal(args[1], 0)
+
+                if value:
+                    keys.setdefault(value, f"{rel}:{src.count(chr(10), 0, m.start()) + 1}")
+
     js = ROOT / "wwwroot" / "app.js"
     src = io.open(js, encoding="utf-8").read()
 
@@ -220,6 +243,112 @@ def used_keys(files):
     # A key with no words in it - "{0}", "{0} {1} -> {2}" - reads the same in every language, and the English
     # fallback is already the right answer. Nothing to translate, so nothing to report.
     return {k: v for k, v in keys.items() if re.search(r"[^\W\d_]", re.sub(r"\{\d+\}", "", k))}
+
+
+# ── what is no longer used ───────────────────────────────────────────────
+
+# The log's level chips are translated from the level's own name - t('Info'), t('Good') - built at run time.
+LOG_CHIPS = {"Info", "Good", "Warn", "Error", "Debug"}
+
+
+def cs_code(src):
+    """C# with its comments blanked out, strings and everything else kept. A key that is only named in a comment -
+    "the old 'carry on' list" - is not a use of it."""
+    out, i, n = [], 0, len(src)
+
+    while i < n:
+        if src.startswith("//", i):
+            j = src.find("\n", i)
+            i = n if j < 0 else j
+            continue
+
+        if src.startswith("/*", i):
+            j = src.find("*/", i + 2)
+            i = n if j < 0 else j + 2
+            continue
+
+        if src[i] == "'":
+            # A char literal - '"' must not open a string. '\'' and '\u0041' both end at the next quote after the escape.
+            j = src.find("'", i + 3 if src[i + 1:i + 2] == "\\" else i + 2) + 1
+            j = j if j > i else n
+            out.append(src[i:j])
+            i = j
+            continue
+
+        m = re.match(r'\$*@?\$*("{3,}|")', src[i:i + 12])
+
+        if m and (src[i] in '$@"'):
+            quotes = m.group(1)
+            start = i + m.start(1)
+
+            if len(quotes) >= 3:                                  # raw: """...""" up to the same run of quotes
+                j = src.find(quotes, start + len(quotes))
+                j = n if j < 0 else j + len(quotes)
+            elif "@" in m.group(0):                               # verbatim: "" is a quote, \ is just a backslash
+                j = start + 1
+
+                while j < n:
+                    if src[j] == '"':
+                        if src[j + 1:j + 2] == '"':
+                            j += 2
+                            continue
+
+                        j += 1
+                        break
+
+                    j += 1
+            else:
+                j = skip_cs_string(src, start - 1 if src[start - 1:start] == "$" else start)
+
+            out.append(src[i:j])
+            i = j
+            continue
+
+        out.append(src[i])
+        i += 1
+
+    return "".join(out)
+
+
+def js_code(src):
+    """app.js without its whole-line comments. Trailing comments stay: telling one from a regex literal or a URL
+    in a template takes a real parser, and a key a trailing comment happens to quote only errs towards 'used'."""
+    return "\n".join(line for line in src.split("\n") if not line.lstrip().startswith(("//", "/*", "*")))
+
+
+def unused_keys(files, strict):
+    """Pack keys nothing shows any more. Used means passed to the translator (strict), or written as a whole string
+    literal anywhere in the code - which covers the dynamic routes: a status kept as a plain string and translated
+    later, a word table, the server handing the dashboard a section name or a reason it puts through t()."""
+    keys = set()
+
+    for pack in LANG.glob("*.json"):
+        keys |= set(json.load(io.open(pack, encoding="utf-8")).get("ui", {}))
+
+    cs = "\n".join(cs_code(src) for src in files.values())
+    js = js_code(io.open(ROOT / "wwwroot" / "app.js", encoding="utf-8").read())
+    html = "\n".join(io.open(p, encoding="utf-8").read() for p in (ROOT / "wwwroot").glob("*.html"))
+
+    def cs_quoted(k):
+        return '"' + k.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n").replace("\t", "\\t") + '"'
+
+    def js_quoted(k):
+        body = k.replace("\\", "\\\\").replace("\n", "\\n").replace("\t", "\\t")
+        return ["'" + body.replace("'", "\\'") + "'", '"' + body.replace('"', '\\"') + '"', "`" + body.replace("`", "\\`") + "`"]
+
+    used = set(strict) | LOG_CHIPS
+    unused = []
+
+    for k in sorted(keys - used):
+        if cs_quoted(k) in cs:
+            continue
+
+        if any((q in js) or (q in html) for q in js_quoted(k)):
+            continue
+
+        unused.append(k)
+
+    return unused
 
 
 def settings():
@@ -432,6 +561,22 @@ def main():
         print(f"  {route:9} {rel}:{line}  {what}")
 
     problems += len(values)
+
+    # Dead entries cost nothing at run time, but every one is a sentence the next translation pass pays for, and
+    # a stale one ("You said leave it paused for:") reads as current to whoever edits the pack.
+    unused = unused_keys(files, keys)
+    print(f"\nPack entries nothing uses any more: {len(unused) or 'none'}")
+
+    for k in unused:
+        print(f"  unused    {k!r}")
+
+    # And a setting's label and explanation, once the setting is gone.
+    gone = sorted({n for pack in packs for n in json.load(io.open(pack, encoding="utf-8")).get("settings", {})} - set(names))
+
+    for n in gone:
+        print(f"  unused    setting {n}")
+
+    problems += len(unused) + len(gone)
     print("\nall clear" if problems == 0 else f"\n{problems} problem(s)")
 
     return 1 if problems else 0

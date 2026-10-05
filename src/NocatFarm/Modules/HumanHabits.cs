@@ -388,8 +388,6 @@ internal sealed class OwnerWatch {
 	private uint _app;
 	private DateTime _lastSeen;
 
-	internal bool Watching => _since != null;
-
 	internal void Reset() {
 		_since = null;
 		_app = 0;

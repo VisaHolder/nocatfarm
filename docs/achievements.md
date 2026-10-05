@@ -47,7 +47,10 @@ most games (the usual figures - a few games have their own):
 | During a `grind` (default 12-24 min) | 12-24 min | 24-48 min | 6-12 min |
 
 So in a long sitting, once the first few are in, it's about one every 1-2.5 hours on normal, every 2-5 hours on
-careful and every 30-75 minutes on brisk, with the odd cluster of two or three. The chance of a cluster (45% early on, 12% after, 25% in a grind) doesn't change. No
+careful and every 30-75 minutes on brisk, with the odd cluster of two or three. The chance of a cluster (45% early on, 12% after, 25% in a grind) doesn't change.
+Only common achievements cluster: *Quick bursts only for achievements at least* (10% of players by default, behind Show
+advanced) - a rarer one never comes a few minutes after another. It ends the cluster and waits the full time, in a
+`grind` too. 0 lets any achievement cluster; 100 turns clusters off. No
 pace changes which achievements are open: the rarity floor goes by hours played, and the order rules, counters,
 DLC holds and the multiplayer skip are the same at every pace. A new choice counts from the next look, within the
 minute - the wait already running is stretched or shortened to match, no restart needed. The hunter's rotation (how
@@ -172,7 +175,7 @@ certainly from an add-on the account owns are unlocked there, and the rest of th
 each with *undo*; in the Console that's `dlc undo <account> <game>`. The game can be typed by name (any case, or two
 letters or more of it) or appID. Only a game with add-ons Steam doesn't explain can be left alone. Neither can be done
 from Steam chat (see [Commands by Steam chat](settings.md#commands-by-steam-chat)). Games left paused before this
-version stay left alone. `dlc carryon` isn't needed any more - it still works, and takes back a `dlc leave`.
+version stay left alone.
 
 Those achievements don't count towards *Finish no more than* or the hunter's "far enough", and the status says how
 many were left alone. `dlc myaccount Call of Duty` lists a game's DLC with achievements, whether the account owns

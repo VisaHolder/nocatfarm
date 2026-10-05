@@ -266,14 +266,14 @@ public static partial class Commands {
 	}
 
 	/// <summary>
-	/// A choice about a game with add-ons ('dlc leave|undo', and the old 'dlc carryon'): the owner's word, which decides
+	/// A choice about a game with add-ons ('dlc leave|undo'): the owner's word, which decides
 	/// what it unlocks - not something a Steam-chat master gives for them. Looking ('dlc &lt;account&gt;') is fine. An
 	/// account that happens to be called "leave" is that account, as it is at the PC.
 	/// </summary>
 	public static bool SteamChatRefusesAnswer(BotManager mgr, string line) {
 		string[] words = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-		return (words.Length > 1) && (Resolve(words[0])?.Name == "dlc") && (words[1].ToLowerInvariant() is "carryon" or "leave" or "undo")
+		return (words.Length > 1) && (Resolve(words[0])?.Name == "dlc") && (words[1].ToLowerInvariant() is "leave" or "undo")
 			&& (mgr.Get(words[1]) == null);
 	}
 
@@ -924,8 +924,8 @@ public static partial class Commands {
 		nocat.farm {Build.Version} - Steam idler, trading-card farmer and rep4rep commenter.
 		Everything runs on this PC. Your accounts never leave it; the only thing that talks
 		to rep4rep is the task queue. Once an hour it tells nocat.lol it's running, to count
-		users: a random install ID, the version and the platform, nothing else. Count me as a
-		user turns it off.
+		Steam accounts: a random install ID, the version, the platform and how many accounts
+		are signed in (just the number), nothing else. Count me as a user turns it off.
 		""";
 
 	// ── help ────────────────────────────────────────────────────────────────
@@ -2065,6 +2065,10 @@ public static partial class Commands {
 	/// knife or four hundred trading cards, and the answer changes what you would do about it.
 	/// </summary>
 	private static string InventoryText(BotManager mgr, string[] args) {
+		// ", about 14 request(s), ~2m to go" - requests, not items: one market search can price a whole game's cards.
+		static string Left(int requests) => requests <= 0 ? ""
+			: $", about {requests} request(s), {InventoryValue.Eta(requests, Live.Global.MarketGapSeconds)} to go";
+
 		bool refresh = args.Any(static a => a.Equals("refresh", StringComparison.OrdinalIgnoreCase));
 		string[] names = [.. args.Where(static a => !a.Equals("refresh", StringComparison.OrdinalIgnoreCase))];
 
@@ -2078,7 +2082,6 @@ public static partial class Commands {
 
 		List<string> lines = [];
 		decimal total = 0;
-		int pending = 0;
 
 		foreach (Bot bot in targets) {
 			if (refresh) {
@@ -2092,14 +2095,13 @@ public static partial class Commands {
 			}
 
 			total += bot.Inventory.Total;
-			pending += bot.Inventory.Pending;
 
 			string moved = InventoryHistory.Since(bot.Name, TimeSpan.FromHours(24)) is { } d
 				? $"   {(d.Change >= 0 ? "+" : "")}{PriceBook.Symbol}{d.Change:0.00} ({(d.Percent >= 0 ? "+" : "")}{d.Percent:0.0}%) in 24h"
 				: "";
 
 			lines.Add($"{bot.Name}: {PriceBook.Symbol}{bot.Inventory.Total:N2}{moved}"
-				+ (bot.Inventory.Pending > 0 ? $"   ({bot.Inventory.Pending} item(s) still being priced)" : "")
+				+ (bot.Inventory.Pending > 0 ? $"   ({bot.Inventory.Pending} item(s) still being priced{Left(bot.Inventory.RequestsLeft)})" : "")
 				+ (bot.Inventory.Ready ? "" : "   (reading it now)"));
 
 			foreach (InventoryValue.GameValue game in bot.Inventory.ByGame.Take(6)) {
@@ -2110,11 +2112,28 @@ public static partial class Commands {
 		}
 
 		if (targets.Count > 1) {
-			lines.Add($"all: {PriceBook.Symbol}{total:N2}{(pending > 0 ? $"   ({pending} still being priced)" : "")}");
+			// Each item once, from the accounts being valued - two holding the same card wait on one price, as the dashboard says.
+			List<(uint App, string Hash)> waiting = [.. targets.Where(static b => b.Cfg.ShowInventoryValue).SelectMany(static b => b.Inventory.Waiting()).Distinct()];
+			lines.Add($"all: {PriceBook.Symbol}{total:N2}{(waiting.Count > 0 ? $"   ({waiting.Count} still being priced{Left(PriceBook.RequestsFor(waiting))})" : "")}");
 		}
 
 		if (refresh) {
 			lines.Add("Reading the inventories again - prices are kept for a day, so only what CHANGED gets looked up.");
+		}
+
+		// The market refusing, with prices still to refresh: the value stands on the last prices it gave - say from when,
+		// and when it is asked again, as the dashboard's tile does.
+		if ((PriceBook.Stale is { } stale) && targets.Any(static b => b.Cfg.ShowInventoryValue && (b.Inventory.Pending > 0))) {
+			// "14:20" today, "2026-10-04 14:20" on an earlier day.
+			static string Stamp(DateTime utc) {
+				DateTime local = utc.ToLocalTime();
+
+				return local.ToString(local.Date == DateTime.Today ? "HH:mm" : "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
+			}
+
+			lines.Add(new Said("prices from {0} · Steam's market isn't answering, trying again at {1}", Stamp(stale.From), Stamp(stale.RetryAt)).ToString());
+		} else if (PriceBook.PausedUntil is { } paused) {
+			lines.Add($"Steam asked the price lookups to wait - they start again at {paused.ToLocalTime():HH:mm}.");
 		}
 
 		return string.Join(Environment.NewLine, lines);
@@ -2320,9 +2339,9 @@ public static partial class Commands {
 				"trade accept <account> <number|all>    accept a waiting offer",
 				"trade decline <account> <number|all>   decline one",
 				"trade cancel <account> <offer id|all>  take back an offer the account sent",
-				"  trade accept new 3      the offer numbered 3 in 'offers new' and the announcement",
-				"  trade decline old all   every offer waiting on old",
-				"  trade cancel kylro all  every offer kylro sent that hasn't gone through"
+				"  trade accept myaccount 3  the offer numbered 3 in 'offers myaccount' and the announcement",
+				"  trade decline farm1 all   every offer waiting on farm1",
+				"  trade cancel farm2 all    every offer farm2 sent that hasn't gone through"
 			]);
 		}
 
@@ -2857,11 +2876,10 @@ public static partial class Commands {
 			]);
 		}
 
-		// A choice - unless there's an account called that, which is then what was meant. 'carryon' is the old answer,
-		// kept so scripts that type it still work.
+		// A choice - unless there's an account called that, which is then what was meant.
 		string verb = args[0].ToLowerInvariant();
 
-		if ((verb is "carryon" or "leave" or "undo") && (mgr.Get(args[0]) == null)) {
+		if ((verb is "leave" or "undo") && (mgr.Get(args[0]) == null)) {
 			return DlcAnswer(mgr, verb, args[1..]);
 		}
 
@@ -2951,7 +2969,7 @@ public static partial class Commands {
 	}
 
 	/// <summary>
-	/// 'dlc leave|undo &lt;account&gt; &lt;game&gt;' (and the old 'dlc carryon') - the dashboard's undo, typed. Doesn't
+	/// 'dlc leave|undo &lt;account&gt; &lt;game&gt;' - the dashboard's undo, typed. Doesn't
 	/// need the account signed in: it's only the account's choice, kept in its settings file.
 	/// </summary>
 	private static string DlcAnswer(BotManager mgr, string verb, string[] args) {
@@ -2971,11 +2989,7 @@ public static partial class Commands {
 			return problem.ToString();
 		}
 
-		return verb switch {
-			"carryon" => DlcChoices.CarryOn(bot, app),
-			"leave" => DlcChoices.Leave(bot, app),
-			_ => DlcChoices.Undo(bot, app)
-		};
+		return verb == "leave" ? DlcChoices.Leave(bot, app) : DlcChoices.Undo(bot, app);
 	}
 
 	private static async Task<string> DlcGameAsync(Bot bot, uint app) {

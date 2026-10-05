@@ -107,9 +107,11 @@ value                    # every account, by game, and the change in the last 24
 value myaccount refresh  # read that account's inventory again
 ```
 
-Items are priced at the Steam market's median, in *Inventory prices in* (US dollar by default; match it to your
-Steam store). Inventories are read again every 6 hours. Prices are looked up slowly so Steam doesn't refuse, which
-means the first valuation of a big inventory can take hours. Turn *Work out what its inventory is worth* off on
+Items are priced at the lowest price each one is listed for on the Steam market, in *Inventory prices in* (US dollar
+by default; match it to your Steam store). Inventories are read again every 6 hours. Prices are asked a whole game's
+cards, backgrounds and emoticons at a time, and every wear of a skin at once, where the market allows it - so even a
+big inventory is a few dozen requests, not one per item. Requests are still spaced out so Steam doesn't refuse; the
+Inventory tile shows how many are left and about how long that is. Turn *Work out what its inventory is worth* off on
 accounts that only hold a few cards. Games listed in *...but not these games* are left out.
 
 ## History charts

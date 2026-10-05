@@ -482,9 +482,8 @@ public static class IdlerImport {
 		return said;
 	}
 
-	/// <summary>Everything in the scan, as a console import (or the old ArchiSteamFarm endpoint) takes it.</summary>
-	public static List<Pick> All(ImportScan scan, IReadOnlyCollection<string>? human = null) =>
-		scan.Accounts.Select(a => new Pick(a.Key, human?.Contains(a.Key, StringComparer.OrdinalIgnoreCase) == true)).ToList();
+	/// <summary>Everything in the scan, as a console import takes it - none of it in human mode.</summary>
+	public static List<Pick> All(ImportScan scan) => scan.Accounts.Select(static a => new Pick(a.Key)).ToList();
 
 	/// <summary>
 	/// Steam Game Idler's saved sign-in: a generic credential whose secret is UTF-16 text holding base64 of the JWT.

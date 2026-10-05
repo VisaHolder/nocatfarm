@@ -16,6 +16,12 @@ public sealed record Achievement {
 	/// <summary>The achievement's description - used to spot milestone/meta ones that need other achievements first.</summary>
 	public string Description { get; init; } = "";
 
+	/// <summary>
+	/// Kept off the profile until it's earned, by the game's own choice: what games hide is mostly their story (a boss, an
+	/// ending), so the order's wobble never steps onto one of these.
+	/// </summary>
+	public bool Hidden { get; init; }
+
 	/// <summary>Which stat holds it, and which bit inside that stat. Together these are its address.</summary>
 	public required uint StatId { get; init; }
 	public required int Bit { get; init; }
@@ -68,13 +74,11 @@ public sealed record Achievement {
 	public bool AddOn => AddOnPart.Length > 0;
 }
 
-/// <summary>Everything known about one game's achievements, and the raw stat values needed to write them back.</summary>
+/// <summary>Everything known about one game's achievements, as read: each one's stat and bit, and the checksum a write
+/// quotes back. A write reads the stat values fresh first (see SetCheckedAsync) - a copy kept here would go stale.</summary>
 public sealed class AchievementSet {
 	public required uint AppId { get; init; }
 	public required List<Achievement> All { get; init; }
-
-	/// <summary>Current value of every stat, keyed by stat id. Writing an achievement is a bit flip in here.</summary>
-	public required Dictionary<uint, uint> StatValues { get; init; }
 
 	/// <summary>
 	/// The checksum Steam sent with the schema, which every write has to quote back.
@@ -213,7 +217,7 @@ public static class Achievements {
 		if ((result != EResult.OK) || (response.schema == null) || (response.schema.Length == 0)) {
 			Log.Debug(new Said("Steam has no achievement stats for {0} ({1})", GameNames.Of(appId), result), bot.Name);
 
-			return new AchievementSet { AppId = appId, All = [], StatValues = [], CrcStats = 0 };
+			return new AchievementSet { AppId = appId, All = [], CrcStats = 0 };
 		}
 
 		KeyValue schema = new();
@@ -325,12 +329,13 @@ public static class Achievements {
 					Unlocked = unlocked,
 					Protected = locked,
 					ProgressMax = progressMax,
-					ProgressNow = progressNow
+					ProgressNow = progressNow,
+					Hidden = bitNode["display"]["hidden"].AsInteger() != 0
 				});
 			}
 		}
 
-		AchievementSet set = new() { AppId = appId, All = all, StatValues = statValues, CrcStats = response.crc_stats };
+		AchievementSet set = new() { AppId = appId, All = all, CrcStats = response.crc_stats };
 		await AddGlobalPercentagesAsync(set, bot.Name, ct).ConfigureAwait(false);
 
 		return set;

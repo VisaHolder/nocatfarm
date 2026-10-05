@@ -1,6 +1,8 @@
 ﻿using NocatFarm.Config;
 using NocatFarm.Core;
 using NocatFarm.Rep4Rep;
+using SteamKit2;
+using System.Text.RegularExpressions;
 
 namespace NocatFarm.Modules;
 
@@ -19,8 +21,10 @@ namespace NocatFarm.Modules;
 ///   • an UNKNOWN outcome is counted and never retried: Steam may well have posted it, and a retry would put a
 ///     second identical comment on the same profile
 ///   • a commenting window, because nobody leaves +rep on strangers at 4am
+///   • the profile is looked at first: one with no comment box for this account (private, or friends-only and not a
+///     friend) is skipped without posting, and without a strike - it says nothing about this account
 /// </summary>
-public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
+public sealed partial class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	private const int NoTaskRetryMinutes = 30;
 	private const int RetryLowSeconds = 2 * 60;
 	private const int RetryHighSeconds = 6 * 60;
@@ -537,6 +541,16 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 				return 60;
 			}
 
+			// Look at the profile first, as a person would. No comment box for this account means Steam would only refuse
+			// the comment - which used to count as a strike, and three of those rested the whole account for a day.
+			if (await CommentsClosedAsync(task, ct).ConfigureAwait(false)) {
+				return Rng.Next(60, 4 * 60);
+			}
+
+			if (StoppedPosting()) {
+				return 60;   // stopped while it looked
+			}
+
 			_status = new Said("commenting on {0}", task.TargetName);
 			(Outcome outcome, string? error) = await PostCommentAsync(task, ct).ConfigureAwait(false);
 
@@ -674,6 +688,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 
 	private async Task CountPostAsync(Rep4RepTask task) {
 		_state!.RecordPost(task.TaskId);
+		_closedRun = 0;
 		_rateLimitRun = 0;
 		_notSentRun = 0;
 		Stats.Record(Stats.KindComment, Bot.Name);
@@ -681,6 +696,7 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 	}
 
 	private async Task<int> OnTargetRefusedAsync(Rep4RepTask task) {
+		_closedRun = 0;
 		// One bad profile is not a bad account. Skip the target, try a different one, and only after three
 		// DIFFERENT profiles refuse in a row conclude that it's the account.
 		_state!.MarkDeadTarget(task.TargetSteamId, DateTime.UtcNow.AddSeconds(DeadTargetSeconds));
@@ -827,6 +843,110 @@ public sealed class Rep4RepModule(Bot bot, Rep4RepApi api) : BotModule(bot) {
 		}
 
 		return null;
+	}
+
+	// ── is the comment box there? ───────────────────────────────────────────
+	/// <summary>What a target's profile page, as this account sees it, says about leaving a comment on it.</summary>
+	internal enum CommentBox { Open, Closed, Unreadable }
+
+	/// <summary>Profiles in a row that showed no box. A post or a refusal resets it - see <see cref="ClosedRunToDoubt"/>.</summary>
+	private int _closedRun;
+
+	/// <summary>After this many profiles in a row show no box, the next one is posted to whatever its page says.</summary>
+	/// <remarks>
+	/// An account Steam won't let comment at all may well see no box on ANY profile - and skipping without a strike would
+	/// then skip forever and never reach the 24h rest a real refusal leads to. One real try settles it: a post resets
+	/// this, a refusal counts as it always did.
+	/// </remarks>
+	private const int ClosedRunToDoubt = 5;
+
+	/// <summary>Read a profile page for the comment entry box.</summary>
+	/// <remarks>
+	/// Steam builds the page for whoever is looking at it. The comment thread's entry - "commentthread_entry", holding the
+	/// textarea "commentthread_Profile_&lt;steamid&gt;_textarea" - is only on it when that viewer may post: comments open to
+	/// all, or friends-only and the viewer is a friend. Private comments, a private profile, or friends-only to a stranger
+	/// show the comments (if any) and no box.
+	///
+	/// A signed-out page shows nobody the box, so its absence only counts on a page signed in as THIS account (g_steamID)
+	/// about THIS target (g_rgProfileData). Anything else - an error page, a sign-in page, someone else's profile - is
+	/// Unreadable, and the comment goes ahead as it always did.
+	/// </remarks>
+	internal static CommentBox ReadCommentBox(string? page, ulong target, ulong viewer) {
+		if (string.IsNullOrEmpty(page)) {
+			return CommentBox.Unreadable;
+		}
+
+		Match owner = ProfileOwnerRx().Match(page);
+
+		if (!owner.Success || (owner.Groups[1].Value != target.ToString(System.Globalization.CultureInfo.InvariantCulture))) {
+			return CommentBox.Unreadable;
+		}
+
+		Match who = ViewerRx().Match(page);
+
+		if (!who.Success || ((viewer != 0) && (who.Groups[1].Value != viewer.ToString(System.Globalization.CultureInfo.InvariantCulture)))) {
+			return CommentBox.Unreadable;   // signed out, or another session - says nothing about this account
+		}
+
+		return page.Contains($"commentthread_Profile_{target}_textarea", StringComparison.Ordinal)
+			|| page.Contains("class=\"commentthread_textarea\"", StringComparison.Ordinal)
+			? CommentBox.Open
+			: CommentBox.Closed;
+	}
+
+	[GeneratedRegex("""g_rgProfileData\s*=\s*\{[^\n]*?"steamid"\s*:\s*"(\d+)"(?#owner)""", RegexOptions.CultureInvariant)]
+	private static partial Regex ProfileOwnerRx();
+
+	[GeneratedRegex("""g_steamID\s*=\s*"(\d+)"(?#viewer)""", RegexOptions.CultureInvariant)]
+	private static partial Regex ViewerRx();
+
+	/// <summary>
+	/// Look at the target's profile - the one ordinary page load a person makes before commenting - and say whether to
+	/// skip it. True: no box for this account, so the profile is set aside like a refused one, with no strike. A page
+	/// that can't be read never stops the comment.
+	/// </summary>
+	private async Task<bool> CommentsClosedAsync(Rep4RepTask task, CancellationToken ct) {
+		_status = new Said("commenting on {0}", task.TargetName);
+
+		string? page;
+
+		try {
+			page = await Bot.Web.GetAsync(new Uri(WebSession.Community, $"/profiles/{task.TargetSteamId}/"), ct).ConfigureAwait(false);
+		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+			throw;
+		} catch (Exception e) {
+			Log.Debug($"couldn't look at {task.TargetSteamId}'s profile first: {Log.Describe(e)}", Bot.Name);
+			page = null;
+		}
+
+		CommentBox box = ReadCommentBox(page, task.TargetSteamId, Bot.SteamId);
+
+		if ((box == CommentBox.Closed) && (_closedRun >= ClosedRunToDoubt)) {
+			Log.Debug($"{_closedRun} profiles in a row showed no comment box - posting on {task.TargetSteamId} anyway, to see whether it's this account", Bot.Name);
+			box = CommentBox.Open;
+		}
+
+		if (box == CommentBox.Closed) {
+			_closedRun++;
+			_state!.MarkDeadTarget(task.TargetSteamId, DateTime.UtcNow.AddSeconds(DeadTargetSeconds));
+			await _state.SaveAsync(Bot.Name).ConfigureAwait(false);
+			Log.Info(new Said("{0} doesn't take comments - skipping", task.TargetName), Bot.Name);
+
+			return true;
+		}
+
+		if (box == CommentBox.Unreadable) {
+			// The friends list already in memory - no request. Either way the comment goes ahead, as it always did; a
+			// friend's is just the likelier one to land.
+			bool friend = Bot.Friends?.GetFriendRelationship(new SteamID(task.TargetSteamId)) == EFriendRelationship.Friend;
+			Log.Debug($"couldn't read {task.TargetSteamId}'s profile ({(page == null ? "no page" : WebSession.FailureText(page))}) - commenting as before{(friend ? " (a friend)" : "")}", Bot.Name);
+		}
+
+		// The few seconds a person takes between the page loading and the comment going in.
+		await Sleep(Rng.Seconds(4, 12), ct).ConfigureAwait(false);
+		ct.ThrowIfCancellationRequested();   // shutting down - no comment after all
+
+		return false;
 	}
 
 	// ── posting ─────────────────────────────────────────────────────────────

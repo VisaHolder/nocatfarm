@@ -167,7 +167,7 @@ public static class DiscordPresence {
 	///
 	///   nocat.farm
 	///   Farming cards · 12 left          what the shown accounts are doing
-	///   212 people using nocat.farm · 3 linked    what Second line picks, and how many are signed in
+	///   1,240 Steam accounts · 3 linked  what Second line picks, and how many are signed in
 	///   5:12:00 elapsed                  since nocat.farm was opened
 	///   [ Get nocat.farm ] [ reap. on Steam ]
 	///
@@ -180,14 +180,21 @@ public static class DiscordPresence {
 	/// <summary>
 	/// The line with how many accounts are signed in on the end: "3 accounts linked", or the short "3 linked" when
 	/// the long one would run past what Discord shows. "591 hrs past week · 3 accounts connect..." said nothing.
+	/// When even the short one doesn't fit - a long count in a long language - the counter is left off: the line's own
+	/// number is what the card is for, and Discord would cut the end of it off with "...".
 	/// </summary>
 	public static string WithCounter(string line, int connected, int total) {
 		string full = line + " · " + (connected == total
 			? connected == 1 ? new Said("1 account linked") : new Said("{0} accounts linked", connected)
 			: new Said("{0} of {1} accounts linked", connected, total));
 
-		return full.Length <= LineFits ? full
-			: line + " · " + (connected == total ? new Said("{0} linked", connected) : new Said("{0} of {1} linked", connected, total));
+		if (full.Length <= LineFits) {
+			return full;
+		}
+
+		string brief = line + " · " + (connected == total ? new Said("{0} linked", connected) : new Said("{0} of {1} linked", connected, total));
+
+		return brief.Length <= LineFits ? brief : line;
 	}
 
 	private static object? Card() {
@@ -210,9 +217,9 @@ public static class DiscordPresence {
 		string details = Details(online).ToString();
 		string today = new Said("{0} cards today", cardsToday).ToString();
 
-		// The line counts what Second line picks - hours over every account, like Steam's "hrs past 2 weeks", or the people
-		// using nocat.farm.
-		string state = SecondLine(G.DiscordSecondLine, UserCount.Current(), today,
+		// The line counts what Second line picks - hours over every account, like Steam's "hrs past 2 weeks", or the Steam
+		// accounts on nocat.farm.
+		string state = SecondLine(G.DiscordSecondLine, UserCount.Accounts(), today,
 			days => History.MinutesOver(days, farm.Select(static b => b.Name)));
 
 		// How many are signed in, said in words. Discord's own party counter only ever reads "(2 of 2)", with nothing
@@ -284,24 +291,30 @@ public static class DiscordPresence {
 			: new Said("Resting");
 	}
 
-	/// <summary>The Second line choice that shows how many people use nocat.farm - the default.</summary>
-	public const int LinePeople = 3;
+	/// <summary>
+	/// The Second line choice that shows how many Steam accounts are on nocat.farm - the default. It was "people using
+	/// nocat.farm" once and keeps its number, so a config that picked it still does.
+	/// </summary>
+	public const int LineAccounts = 3;
 
 	/// <summary>
-	/// The card's second line for a Second line choice: 1 hours past week, 2 hours past month, 3 people using nocat.farm,
-	/// anything else the cards today. The people count falls back to the cards today while it isn't known - "Count me as a
-	/// user" off, no answer yet, or the last one too old (<paramref name="people"/> null).
+	/// The card's second line for a Second line choice: 1 hours past week, 2 hours past month, 3 Steam accounts (the card
+	/// already says Playing nocat.farm, so not "on nocat.farm" again), anything else the cards today. The accounts count falls back to the cards today while it isn't known -
+	/// "Count me as a user" off, no answer yet, an older nocat.lol that doesn't say it, or the last one too old
+	/// (<paramref name="accounts"/> null).
 	/// </summary>
 	/// <param name="minutesOver">The minutes played over the last so many days, over every account.</param>
-	public static string SecondLine(int choice, int? people, string cardsToday, Func<int, double> minutesOver) => choice switch {
+	public static string SecondLine(int choice, int? accounts, string cardsToday, Func<int, double> minutesOver) => choice switch {
 		1 => new Said("{0} hrs past week", Hours(minutesOver(7))).ToString(),
 		2 => new Said("{0} hrs past month", Hours(minutesOver(30))).ToString(),
-		LinePeople when people is { } n => People(n),
+		LineAccounts when accounts is { } n => SteamAccounts(n),
 		_ => cardsToday
 	};
 
-	/// <summary>"212 people using nocat.farm".</summary>
-	public static string People(int n) => n == 1 ? new Said("1 person using nocat.farm").ToString() : new Said("{0} people using nocat.farm", n).ToString();
+	/// <summary>"1,240 Steam accounts" - the card's short form of the Overview's "1,240 Steam accounts on nocat.farm".</summary>
+	public static string SteamAccounts(int n) => n == 1
+		? new Said("1 Steam account").ToString()
+		: new Said("{0} Steam accounts", Fmt.Grouped(n)).ToString();
 
 	/// <summary>The Steam name people know the account by; the nocat.farm name until Steam has said it.</summary>
 	private static string Display(Bot b) => b.SteamName.Length > 0 ? b.SteamName : b.Name;

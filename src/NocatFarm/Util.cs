@@ -41,9 +41,6 @@ public static class Prompt {
 	/// <summary>The question currently waiting for an answer, or null.</summary>
 	public static string? Pending => _current?.Text;
 
-	/// <summary>Who asked it, so stopping one account can't answer a different account's question.</summary>
-	public static string? PendingOwner => _current?.Owner;
-
 	/// <summary>Whether the pending answer is a secret, so the console stops echoing what is typed.</summary>
 	public static bool PendingSecret => _current?.Secret ?? false;
 
@@ -232,6 +229,41 @@ public static class Rng {
 }
 
 public static class Fmt {
+	/// <summary>
+	/// A whole number with its thousands grouped the way the language picked writes them - "1,240", "1.240", "1 240" - the
+	/// same as the dashboard's toLocaleString. By hand because the app runs without the system's culture data
+	/// (InvariantGlobalization), where every culture groups like English. Spanish and Polish leave a 4-digit number whole.
+	/// </summary>
+	public static string Grouped(int n, string? language = null) {
+		string lang = language ?? Config.Live.Global.Language ?? "en";
+		(string sep, bool fourWhole) = lang switch {
+			"de" or "pt-BR" or "tr" => (".", false),
+			"es" => (".", true),
+			"fr" => (" ", false),
+			"ru" => (" ", false),
+			"pl" => (" ", true),
+			_ => (",", false)
+		};
+
+		string digits = Math.Abs((long) n).ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+		if ((digits.Length <= 3) || (fourWhole && (digits.Length == 4))) {
+			return (n < 0 ? "-" : "") + digits;
+		}
+
+		StringBuilder sb = new(digits.Length + 8);
+
+		for (int i = 0; i < digits.Length; i++) {
+			if ((i > 0) && ((digits.Length - i) % 3 == 0)) {
+				sb.Append(sep);
+			}
+
+			sb.Append(digits[i]);
+		}
+
+		return (n < 0 ? "-" : "") + sb;
+	}
+
 	/// <summary>Minutes as "3h20m" / "45m".</summary>
 	public static string Hm(int minutes) {
 		if (minutes < 60) {

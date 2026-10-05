@@ -565,9 +565,6 @@ public static class UpdateCheck {
 	/// <summary>Is this release tag newer than what is running? Used by the updater before it downloads.</summary>
 	public static bool IsNewerThanThisBuild(string tag) => IsNewer(tag.TrimStart('v', 'V'), Build.Version);
 
-	/// <summary>Is this version the given one or later - "1.6.5" or newer, say. A version that can't be read counts as 0.0.0.</summary>
-	public static bool AtLeast(string version, string min) => !IsNewer(min, version);
-
 	/// <summary>Compares 1.2.10 against 1.2.9 properly, which a string comparison does not.</summary>
 	private static bool IsNewer(string candidate, string current) {
 		int[] a = Parts(candidate);
