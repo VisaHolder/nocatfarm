@@ -15,6 +15,14 @@ public static class SetupChoices {
 		"Language", "StartWithWindows", "StartMinimized", "Tray", "AutoUpdate", "UpdateMode", "WebEnabled", "WebPort", "WebHost", "WebRemoteAccess"
 	};
 
+	/// <summary>Puts the startup entry in step with the choice - Windows only. Tests put their own here, so a test of the
+	/// setup never touches the real startup entry.</summary>
+	public static Action<bool> StartWithWindows { get; set; } = static on => {
+		if (OperatingSystem.IsWindows()) {
+			Windows.WindowsIntegration.SetStartWithWindows(on);
+		}
+	};
+
 	/// <summary>The choices were fine but didn't reach the disk - a folder it can't write, a config that didn't load.</summary>
 	public const int SaveFailed = 4;
 
@@ -133,9 +141,7 @@ public static class SetupChoices {
 
 		// Straight away, not at the first start - closing the setup without opening nocat.farm must still leave it
 		// starting with Windows (or not), as chosen.
-		if (OperatingSystem.IsWindows()) {
-			Windows.WindowsIntegration.SetStartWithWindows(g.StartWithWindows);
-		}
+		StartWithWindows(g.StartWithWindows);
 
 		return 0;
 	}

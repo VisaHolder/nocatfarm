@@ -27,14 +27,31 @@ public static partial class BanGames {
 
 		List<uint>? games = Parse(html);
 
+		// Once, not every few hours: the same page comes back the same way until something changes. The length alone
+		// ("30477 chars") said nothing - it was Steam's sign-in page, which only its title gives away.
 		if (games == null) {
-			Log.Debug($"couldn't read the banned games: {Log.Where(Page)} wasn't the bans page ({html.Length} chars)", bot.Name);
+			Log.DebugOnChange($"bangames:{bot.Name}", $"couldn't read the banned games: {Log.Where(Page)} {Describe(html)}", bot.Name);
+		} else {
+			Log.Recovered($"bangames:{bot.Name}");
 		}
 
 		return games;
 	}
 
-	/// <summary>The games on the page; empty for a clean account; null when it isn't the bans page at all (a login page).</summary>
+	/// <summary>What a page that isn't the bans page was, for the log: its title, and whether Steam saw the account signed out.</summary>
+	public static string Describe(string html) =>
+		$"came back as {WebSession.FailureText(html)}, not the bans page" + (SignedOut(html) ? " - Steam saw the account as signed out" : "");
+
+	/// <summary>
+	/// A Steam page shown to nobody in particular. The help site says so in its page data ("logged_in":false), and the
+	/// sign-in form it sends a spent session to carries the redirect back here.
+	/// </summary>
+	public static bool SignedOut(string html) =>
+		html.Contains("logged_in&quot;:false", StringComparison.Ordinal)
+		|| html.Contains("\"logged_in\":false", StringComparison.Ordinal)
+		|| html.Contains("/login?need_password", StringComparison.Ordinal);
+
+	/// <summary>The games on the page; empty for a clean account; null when it isn't the bans page at all (the sign-in page).</summary>
 	public static List<uint>? Parse(string html) {
 		if (html.Contains("no_vac_bans_header", StringComparison.Ordinal)) {
 			return [];

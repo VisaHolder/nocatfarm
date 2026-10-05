@@ -268,6 +268,9 @@ public sealed class BotManager : IAsyncDisposable {
 			// login token behind, so the account came back at the next start.
 			lock (_adding) {
 				TokenStore.Clear(bot.Name);
+				// And the rest of its own files, in any case - left, they came back with the account, and an account added
+				// again as "Main" after "main" had its state twice, so backups were refused off Windows.
+				ConfigStore.DeleteAccountFiles(bot.Name);
 
 				return ConfigStore.DeleteBot(bot.Name);
 			}

@@ -42,7 +42,7 @@ if ($Mode -eq 'installed') {
   Copy-Item "$W\base" $here -Recurse
 }
 New-Item -ItemType Directory -Force "$here\config" | Out-Null
-Set-Content "$here\config\nocatFarm.json" -Encoding utf8 -Value ('{"WebPort":' + $port + ',"CheckForUpdates":true,"JoinGroup":false,"StartWithWindows":false,"TrayNotifications":false,"OpenBrowserOnStart":false,"TutorialDone":true}')
+Set-Content "$here\config\nocatFarm.json" -Encoding utf8 -Value ('{"WebPort":' + $port + ',"CheckForUpdates":true,"JoinGroup":false,"StartWithWindows":false,"TrayNotifications":false,"OpenBrowserOnStart":false,"TutorialDone":true,"CountMeAsUser":false}')
 $api = "http://127.0.0.1:$port"
 function Ver { try { (Invoke-RestMethod "$api/api/status" -TimeoutSec 3).Version } catch { '' } }
 function Cmd($l) { (Invoke-RestMethod "$api/api/command" -Method Post -ContentType 'application/json' -Body (@{ Line = $l } | ConvertTo-Json)).output }

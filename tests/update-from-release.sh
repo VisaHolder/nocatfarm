@@ -41,11 +41,13 @@ printf '{"tag_name":"v9.9.9","body":"- this build","assets":[{"name":"nocat.farm
 for i in $(seq 1 30); do curl -sf "http://127.0.0.1:$FEED/latest.json" > /dev/null && break; sleep 1; done
 
 mkdir -p "$T/app/config"
-echo "{\"WebPort\":$PORT,\"CheckForUpdates\":true,\"JoinGroup\":false,\"OpenBrowserOnStart\":false}" > "$T/app/config/nocatFarm.json"
+echo "{\"WebPort\":$PORT,\"CheckForUpdates\":true,\"JoinGroup\":false,\"OpenBrowserOnStart\":false,\"CountMeAsUser\":false}" > "$T/app/config/nocatFarm.json"
 echo '{"Enabled":false,"SteamLogin":"not_a_real_account"}' > "$T/app/config/demo.json"
 
 ver() { curl -sf "http://127.0.0.1:$PORT/api/status" | python3 -c 'import json,sys; print(json.load(sys.stdin)["Version"])' 2>/dev/null || true; }
-(cd "$T/app" && env -u INVOCATION_ID -u JOURNAL_STREAM NOCATFARM_UPDATE_FEED="http://127.0.0.1:$FEED/latest.json" \
+# Its user-count ping to a dead port here as well, never nocat.lol: the release it starts as doesn't know CountMeAsUser,
+# and a config it writes back without it would be taken as on by this build.
+(cd "$T/app" && env -u INVOCATION_ID -u JOURNAL_STREAM NOCATFARM_UPDATE_FEED="http://127.0.0.1:$FEED/latest.json" NOCATFARM_PING_URL="http://127.0.0.1:9/api/farm/ping" \
 	nohup "$T/app/nocatFarm" --no-gui > "$T/run.log" 2>&1 &)
 for i in $(seq 1 60); do [ -n "$(ver)" ] && break; sleep 1; done
 test "$(ver)" = "$FROM" || { echo "FAIL: the release didn't start ($(ver))"; tail -n 30 "$T/run.log"; exit 1; }

@@ -83,11 +83,13 @@ public static class DlcAchievements {
 	/// alone ('dlc leave') is remembered with - one built before had only the DLC with achievements. 7: an entry in the
 	/// game's DLC list whose own store page isn't a DLC's (Portal with RTX is a game of its own) is no DLC at all
 	/// (<see cref="NotDlc"/>), and figures as big as the game's whole list are a separate game's or edition's, never a
-	/// DLC's (<see cref="WholeGame"/>) - Portal was held whole on an account without Portal with RTX. A map saved
+	/// DLC's (<see cref="WholeGame"/>) - Portal was held whole on an account without Portal with RTX. 8: only from a
+	/// page that isn't a DLC page - a real DLC can be nearly all of a game whose own part is small, and 7 unlocked its
+	/// achievements on an account without it. A map saved
 	/// under older rules (0: before this was kept) is built again at once, and used as it is for the minute or two that
 	/// takes; a game held on it is looked at again once the new map says something else.
 	/// </summary>
-	public const int RuleNow = 7;
+	public const int RuleNow = 8;
 
 	/// <summary>
 	/// How long a map built while Steam didn't answer for some DLC names is used before it is built again. Without the
@@ -978,8 +980,9 @@ public static class DlcAchievements {
 	public sealed record Entry(string Name, string Display, string Description, bool Hidden);
 
 	/// <summary>One DLC as the store describes it. Total 0 and no names for most; <paramref name="Unsure"/> when its
-	/// achievements, if it has any, can't be placed.</summary>
-	public sealed record Dlc(uint App, List<uint> Ids, string Name, int Total, List<string> Highlighted, Doubt Unsure = Doubt.None);
+	/// achievements, if it has any, can't be placed. <paramref name="Type"/> is the store's type of the page its figures
+	/// came from - "dlc" for its own DLC page, "game" for one the store sends to a game's (Modern Warfare II), "" unknown.</summary>
+	public sealed record Dlc(uint App, List<uint> Ids, string Name, int Total, List<string> Highlighted, Doubt Unsure = Doubt.None, string Type = "");
 
 	/// <summary>
 	/// One DLC's store page, as asked for by its DLC id: the app the page really is, its name and figures.
@@ -1180,12 +1183,23 @@ public static class DlcAchievements {
 		&& (page.Type.Length > 0) && !page.Type.Equals("dlc", StringComparison.OrdinalIgnoreCase);
 
 	/// <summary>
-	/// A DLC's achievements can never be all, or nearly all, of the game's: the game has its own. Figures that big - the
-	/// store's count, or the block its names point at - are a separate game's or edition's with the same achievements
-	/// (a remaster, an RTX version, a "Definitive Edition"), never a DLC's, and say nothing about which of this game's
-	/// achievements come with a DLC. "Nearly": all but less than a tenth of the list (all of it, under ten).
+	/// Figures as big as the game's whole list - the store's count, or the block its names point at - from a page that
+	/// isn't a DLC page: a separate game's or edition's with the same achievements (a remaster, an RTX version, a
+	/// "Definitive Edition"), never a DLC's, and they say nothing about which of this game's achievements come with a DLC.
 	/// </summary>
-	public static bool WholeGame(int dlcAchievements, int count) => (count > 0) && (dlcAchievements >= count - (count / 10));
+	/// <remarks>
+	/// The list is the whole game's, its DLC's achievements in it - so a game whose own part is small and whose DLC adds
+	/// the rest (2 of its own and an 18-achievement story DLC) has a DLC with nearly all of it. Taken as another game's,
+	/// those 18 were unlocked on an account without the DLC. So by the page's type (<paramref name="type"/>):
+	/// <list type="bullet">
+	/// <item>"dlc": the DLC's own page - never another game's, however big.</item>
+	/// <item>any other type (a DLC the store sends to a game's page, as Modern Warfare II's): only all of the list or more.
+	/// Call of Duty's own part is a launcher's; a DLC like that can be nearly all of it.</item>
+	/// <item>unknown (said about before types were kept): all but less than a tenth of the list (all of it, under ten).</item>
+	/// </list>
+	/// </remarks>
+	public static bool WholeGame(int dlcAchievements, int count, string type = "") =>
+		(count > 0) && !IsDlcPage(type) && (dlcAchievements >= (type.Length == 0 ? count - (count / 10) : count));
 
 	/// <summary>
 	/// The store's pages, one DLC each. The same DLC under two ids (the store sends 1962660 to its page at 3595230) is
@@ -1232,7 +1246,7 @@ public static class DlcAchievements {
 			uint key = ownPage ? p.StoreApp : p.Id;
 			List<uint> ids = ownPage && (p.StoreApp != p.Id) ? [p.Id, p.StoreApp] : [p.Id];
 
-			Add(key, new Dlc(p.Id, ids, p.Name, p.Total, p.Highlighted), harmless);
+			Add(key, new Dlc(p.Id, ids, p.Name, p.Total, p.Highlighted, Type: p.Type), harmless);
 		}
 
 		// No figures and not plainly harmless: it may have achievements, and nothing says which. Most DLC are like this,
@@ -1256,8 +1270,13 @@ public static class DlcAchievements {
 		Name = had.Name.Length > 0 ? had.Name : next.Name,
 		Total = Math.Max(had.Total, next.Total),
 		Highlighted = had.Highlighted.Count >= next.Highlighted.Count ? had.Highlighted : next.Highlighted,
-		Unsure = had.Unsure != Doubt.None ? had.Unsure : next.Unsure
+		Unsure = had.Unsure != Doubt.None ? had.Unsure : next.Unsure,
+		// Either page a DLC page: it is a DLC, and never taken for another game (see WholeGame).
+		Type = IsDlcPage(had.Type) || IsDlcPage(next.Type) ? "dlc" : had.Type.Length > 0 ? had.Type : next.Type
 	};
+
+	/// <summary>The store's type for a DLC's own page.</summary>
+	private static bool IsDlcPage(string type) => type.Equals("dlc", StringComparison.OrdinalIgnoreCase);
 
 	/// <summary>
 	/// The map, from the game's list and its DLC. Pure - everything it needs is passed in, so it can be tested without
@@ -1304,7 +1323,7 @@ public static class DlcAchievements {
 		HashSet<uint> wholeGames = [];
 
 		foreach (Dlc d in dlcs.Where(static d => (d.Unsure == Doubt.None) && (d.Total > 0) && (d.Highlighted.Count > 0))) {
-			if (WholeGame(d.Total, schema.Count)) {
+			if (WholeGame(d.Total, schema.Count, d.Type)) {
 				wholeGames.Add(d.App);
 
 				continue;
@@ -1312,7 +1331,7 @@ public static class DlcAchievements {
 
 			(List<int> indices, bool exact, List<int> strict) = LocateBoth(Places(names, d.Highlighted), d.Total, schema.Count, hidden);
 
-			if (WholeGame(indices.Count, schema.Count)) {
+			if (WholeGame(indices.Count, schema.Count, d.Type)) {
 				wholeGames.Add(d.App);
 
 				continue;

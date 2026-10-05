@@ -165,18 +165,17 @@ public sealed class GlobalConfig {
 
 	public string DiscordButton2 { get; set; } = "";
 
-	/// <summary>What else the Discord card shows.</summary>
-	public bool DiscordShowNames { get; set; } = true;
-
+	/// <summary>What else the Discord card shows. (The account names it could show went in 1.6.9 - see
+	/// <see cref="ConfigStore.MigrateDiscordNames"/>.)</summary>
 	public bool DiscordShowCounter { get; set; } = true;
 
 	public bool DiscordShowAvatar { get; set; } = true;
 
 	public bool DiscordShowTimer { get; set; } = true;
 
-	/// <summary>What the card's second line counts when account names are off: 0 cards today, 1 hours in the past
-	/// week, 2 hours in the past month.</summary>
-	public int DiscordSecondLine { get; set; } = 1;
+	/// <summary>What the card's second line counts: 0 cards today, 1 hours in the past week, 2 hours in the past month,
+	/// 3 people using nocat.farm (<see cref="Core.DiscordPresence.LinePeople"/>).</summary>
+	public int DiscordSecondLine { get; set; } = Core.DiscordPresence.LinePeople;
 
 	/// <summary>The colour of "telegram" and "discord" in the log, from the same palette as the accounts'.</summary>
 	public int TelegramLogColour { get; set; } = 6;
@@ -274,6 +273,10 @@ public sealed class GlobalConfig {
 	public int PriceCacheHours { get; set; } = 24;
 
 	public bool CheckForUpdates { get; set; } = true;
+
+	/// <summary>The hourly "this copy is running" to nocat.lol behind the user count - see Core/UserCount.cs. Off sends nothing.</summary>
+	public bool CountMeAsUser { get; set; } = true;
+
 	public bool UpdateReminders { get; set; } = true;
 
 	public int UpdateCheckHours { get; set; } = 2;
@@ -642,7 +645,7 @@ public sealed class BotConfig {
 	public int Rep4RepStartHour { get; set; } = 10;
 	public int Rep4RepEndHour { get; set; } = 23;
 	public bool Rep4RepLearnCap { get; set; } = true;
-	public bool Rep4RepRetryRefused { get; set; } = true;
+	public bool Rep4RepRetryRefused { get; set; } = false;
 
 	// ── human mode ──
 	public bool LegitMode { get; set; }
@@ -658,6 +661,8 @@ public sealed class BotConfig {
 	public int DayStartHour { get; set; } = 13;
 	public int BedHour { get; set; } = 2;
 	public int LateNightExtraHours { get; set; } = 2;
+	public int SleepMinHours { get; set; } = 6;
+	public int SleepMaxHours { get; set; } = 9;
 
 	// How the games are split.
 	//
@@ -935,16 +940,27 @@ public static class ConfigStore {
 
 	public static GlobalConfig LoadGlobal() {
 		Directory.CreateDirectory(ConfigDir);
+		LanguageFromComputer = null;
 
 		if (!File.Exists(GlobalPath)) {
 			GlobalConfig fresh = new();
+
+			// A brand-new install starts in the computer's own language, written in like any other default. The installer's
+			// pick (--setup Language=) goes on after this, so it still wins; an existing config never comes here.
+			LanguageFromComputer = SystemLanguage.Probe();
+
+			if (LanguageFromComputer != null) {
+				fresh.Language = LanguageFromComputer;
+			}
+
 			SaveGlobal(fresh);
 
 			return fresh;
 		}
 
 		try {
-			GlobalConfig loaded = FillNulls(JsonSerializer.Deserialize<GlobalConfig>(File.ReadAllText(GlobalPath), Json) ?? new GlobalConfig());
+			string text = File.ReadAllText(GlobalPath);
+			GlobalConfig loaded = FillNulls(JsonSerializer.Deserialize<GlobalConfig>(text, Json) ?? new GlobalConfig());
 
 			// "pt-br" typed into the file by hand is pt-BR: the language packs are files, and off Windows a file name's case
 			// counts - pt-br.json wasn't found, and the dashboard and the log stayed English.
@@ -975,6 +991,7 @@ public static class ConfigStore {
 			GlobalLoadProblem = null;
 
 			bool migrated = MigrateUpdates(loaded);
+			migrated |= MigrateDiscordNames(loaded, text);
 
 			if ((plain && Secrets.Available) || migrated) {
 				SaveGlobal(loaded);
@@ -1016,6 +1033,10 @@ public static class ConfigStore {
 
 	/// <summary>The last read of the global config failed - what it returned is defaults, not the settings.</summary>
 	public static bool GlobalBroken => _globalBroken;
+
+	/// <summary>The language a brand-new config was given from this computer's own; null when there was a config already
+	/// (or the computer didn't say). For Program to tell once logging exists.</summary>
+	public static string? LanguageFromComputer { get; private set; }
 
 	/// <summary>Why the global config last failed to load, as a log line; null when it loaded.</summary>
 	public static string? GlobalLoadProblem { get; private set; }
@@ -1226,6 +1247,48 @@ public static class ConfigStore {
 		}
 
 		return false;
+	}
+
+	/// <summary>
+	/// The Discord card's "Account names" second line is gone. A file still holding DiscordShowNames gets it taken out: on
+	/// (the old default) takes the new default, people using nocat.farm; off had picked one of the counts, which it keeps.
+	/// A file without the key is left alone, so a count picked since is never touched.
+	/// </summary>
+	/// <returns>true when the config changed and should be written back (without the old key).</returns>
+	public static bool MigrateDiscordNames(GlobalConfig g, string json) {
+		bool? names = null;
+		bool lineInFile = false;
+
+		try {
+			using JsonDocument doc = JsonDocument.Parse(json);
+
+			if (doc.RootElement.ValueKind != JsonValueKind.Object) {
+				return false;
+			}
+
+			foreach (JsonProperty p in doc.RootElement.EnumerateObject()) {
+				if (p.Name.Equals("DiscordShowNames", StringComparison.OrdinalIgnoreCase)) {
+					names = p.Value.ValueKind switch {
+						JsonValueKind.True => true,
+						JsonValueKind.False => false,
+						_ => names
+					};
+				} else if (p.Name.Equals(nameof(GlobalConfig.DiscordSecondLine), StringComparison.OrdinalIgnoreCase)) {
+					lineInFile = true;
+				}
+			}
+		} catch (JsonException) {
+			return false;
+		}
+
+		if (names == null) {
+			return false;
+		}
+
+		// Off with no second line written: it showed the old default, hours past week.
+		g.DiscordSecondLine = names.Value ? Core.DiscordPresence.LinePeople : lineInFile ? g.DiscordSecondLine : 1;
+
+		return true;
 	}
 
 	/// <summary>Carries the booster games typed as text ("730, 440") over to the game list.</summary>
@@ -1553,5 +1616,71 @@ public static class ConfigStore {
 
 			return false;
 		}
+	}
+
+	/// <summary>
+	/// The files an account keeps besides its config, as (folder under config/, start, end): the account's name goes
+	/// between the two. Every per-account file the app writes - a new one goes in here too (a test checks).
+	/// </summary>
+	/// <remarks>Not its authenticator (authenticators/*.maFile): that is the only copy of a Steam Guard secret.</remarks>
+	public static readonly (string Dir, string Start, string End)[] AccountFiles = [
+		("tokens", "", ".token"), ("tokens", "", ".access"),
+		("state", "bans-", ".json"), ("state", "cardcheck-", ".json"), ("state", "cardpace-", ".json"), ("state", "cheevo-", ".json"),
+		("state", "dropsfirst-", ".json"), ("state", "freegames-", ".json"), ("state", "freeitems-", ".json"), ("state", "grind-", ".json"),
+		("state", "human-", ".json"), ("state", "hunt-", ".json"), ("state", "invvalue-", ".json"), ("state", "owner-", ".json"),
+		("state", "queue-", ".txt"), ("state", "rep4rep-", ".json"), ("state", "rotation-", ".json"), ("state", "send-", ".json"),
+		("state", "trades-announced-", ".json"), ("state", "overnight-", ".seen")
+	];
+
+	/// <summary>
+	/// Is <paramref name="file"/> (a file name, no folder) one of the account's own, in any case: "human-Main.json" is
+	/// main's. Only exactly its name - "human-main2.json" and "human-main-alt.json" are other accounts'.
+	/// </summary>
+	public static bool IsAccountFile(string file, string name, string start, string end) =>
+		(file.Length == start.Length + name.Length + end.Length)
+		&& file.StartsWith(start, StringComparison.OrdinalIgnoreCase) && file.EndsWith(end, StringComparison.OrdinalIgnoreCase)
+		&& file.AsSpan(start.Length, name.Length).Equals(name, StringComparison.OrdinalIgnoreCase);
+
+	/// <summary>
+	/// Deletes a removed account's own files - its login tokens and its state - in any case. Left behind, they came back
+	/// with the account if it was added again; and off Windows, added again as "Main" after "main", its state was there
+	/// twice ("human-main.json" and "human-Main.json"), and every backup was refused as "in the zip twice". Returns how
+	/// many went. Call after the account is stopped, so nothing writes them again.
+	/// </summary>
+	public static int DeleteAccountFiles(string name) {
+		int deleted = 0;
+
+		if (!IsValidBotName(name)) {
+			return 0;
+		}
+
+		foreach (IGrouping<string, (string Dir, string Start, string End)> dir in AccountFiles.GroupBy(static f => f.Dir)) {
+			string full = Path.Combine(ConfigDir, dir.Key);
+
+			try {
+				if (!Directory.Exists(full)) {
+					continue;
+				}
+
+				foreach (string path in Directory.EnumerateFiles(full)) {
+					string file = Path.GetFileName(path);
+
+					if (!dir.Any(f => IsAccountFile(file, name, f.Start, f.End))) {
+						continue;
+					}
+
+					try {
+						File.Delete(path);
+						deleted++;
+					} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+						Log.Failed($"config: deleting {dir.Key}/{file}", e, name);
+					}
+				}
+			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+				Log.Failed($"config: looking through {dir.Key}/", e, name);
+			}
+		}
+
+		return deleted;
 	}
 }

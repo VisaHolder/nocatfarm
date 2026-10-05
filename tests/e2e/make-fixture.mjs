@@ -1,14 +1,16 @@
 // The throwaway config the browser test runs against, written into <folder>/config before the copy starts:
-//   node tests/e2e/make-fixture.mjs <folder> <port>
+//   node tests/e2e/make-fixture.mjs <folder> <port> [--ping-stub]
 // Three accounts, all switched off with made-up logins, so nothing ever signs in to Steam: a human-mode one, a robot
 // one and one with an authenticator secret (so the Authenticator tab shows). Updates, the Steam group, the startup
 // entry, the tray icon, pop-ups, keeping the PC awake and the browser opening by itself are all off. A few days of history so the charts draw, and a
-// pretend ArchiSteamFarm folder for the import dialog to find.
+// pretend ArchiSteamFarm folder for the import dialog to find. "Count me as a user" is off unless --ping-stub says the copy
+// is started with NOCATFARM_PING_URL pointing at ping-stub.mjs - a test copy never counts itself on nocat.lol.
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-const [dir, portArg] = process.argv.slice(2);
+const [dir, portArg] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+const pingStub = process.argv.includes('--ping-stub');
 if (!dir || !portArg) {
   console.error('usage: node make-fixture.mjs <folder> <port>');
   process.exit(2);
@@ -34,6 +36,7 @@ write(path.join(config, 'nocatFarm.json'), {
   OpenBrowserOnStart: false,
   OpenDashboardAfterAdd: false,
   DiscordPresence: false,
+  CountMeAsUser: pingStub,
   Rep4RepEnabled: true,
   TutorialDone: true,
 });

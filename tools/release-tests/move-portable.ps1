@@ -30,8 +30,11 @@ try {
   Remove-Item $old, $inst -Recurse -Force -ErrorAction SilentlyContinue
   Expand-Archive "$Repo\dist\nocat.farm-v$From-portable.zip" $old
   New-Item -ItemType Directory -Force "$old\config" | Out-Null
-  '{ "WebPort": 7288, "WebHost": "127.0.0.1", "StartWithWindows": true, "StartMinimized": true, "OpenBrowserOnStart": false, "CheckForUpdates": false, "Language": "en", "TutorialDone": true }' | Set-Content "$old\config\nocatFarm.json" -Encoding utf8
+  '{ "WebPort": 7288, "WebHost": "127.0.0.1", "StartWithWindows": true, "StartMinimized": true, "OpenBrowserOnStart": false, "CheckForUpdates": false, "Language": "en", "TutorialDone": true, "CountMeAsUser": false }' | Set-Content "$old\config\nocatFarm.json" -Encoding utf8
   '{ "Enabled": false, "SteamLogin": "nf_dummy_moved", "IdleGames": [730, 440], "CustomGameNameEnabled": true, "CustomGameName": "moved ok" }' | Set-Content "$old\config\moved.json" -Encoding utf8
+  # No copy here ever pings nocat.lol (every one started below inherits this): an older release can save its settings
+  # without "Count me as a user" off.
+  $env:NOCATFARM_PING_URL = 'http://127.0.0.1:9/api/farm/ping'
   $p = Start-Process "$old\nocatFarm.exe" -ArgumentList '--minimized' -WorkingDirectory $old -WindowStyle Hidden -PassThru
   Start-Sleep 6
   Set-ItemProperty $runKey -Name nocatFarm -Value "`"$old\nocatFarm.exe`" --minimized"

@@ -240,6 +240,11 @@ if (ConfigStore.GlobalLoadProblem is { } configProblem) {
 	Log.Debug(configProblem);
 }
 
+// A brand-new config took the computer's language: said once, in it, with where to change it.
+if (ConfigStore.LanguageFromComputer is { } fromComputer) {
+	Log.Info(new Said("language set to {0} from this computer - change it in Settings", SystemLanguage.NameOf(fromComputer)));
+}
+
 Banner();
 
 // NOCATFARM_WEB_HOST / _PORT / _PASSWORD(_FILE), for Docker. Nothing happens unless one is set.
@@ -466,6 +471,9 @@ if (!shutdown.IsCancellationRequested) {
 
 	// "Open from anywhere": the router forwards the dashboard's port, while the switch is on.
 	NocatFarm.Core.RemoteAccess.Start();
+
+	// "Count me as a user": the hourly ping behind "212 people using nocat.farm". Sends nothing while it's off.
+	NocatFarm.Core.UserCount.Start();
 }
 
 // 1.5.9's "Tell me if nocat.farm stops" (removed in 1.6.0) left its random id behind; nothing reads it any more.
@@ -545,6 +553,7 @@ Log.Info("shutting down...");
 
 // No more update looks, reminders or installs by itself from here - the timer is gone, not just ignored.
 NocatFarm.Core.UpdateCheck.Stop();
+NocatFarm.Core.UserCount.Stop();
 
 // Closed straight after an update: that's somebody closing it, not the new version failing to start.
 NocatFarm.Core.SelfUpdate.ConfirmStarted();

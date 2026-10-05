@@ -12,8 +12,11 @@ $port = 7295
 if (Test-Path $dir) { Remove-Item $dir -Recurse -Force }
 Expand-Archive "$Repo\dist\nocat.farm-v$From-portable.zip" $dir
 New-Item -ItemType Directory -Force (Join-Path $dir 'config') | Out-Null
-Set-Content (Join-Path $dir 'config\nocatFarm.json') -Encoding utf8 -Value "{`"WebPort`":$port,`"CheckForUpdates`":true,`"JoinGroup`":false,`"StartWithWindows`":false,`"TrayNotifications`":false,`"OpenBrowserOnStart`":false}"
+Set-Content (Join-Path $dir 'config\nocatFarm.json') -Encoding utf8 -Value "{`"WebPort`":$port,`"CheckForUpdates`":true,`"JoinGroup`":false,`"StartWithWindows`":false,`"TrayNotifications`":false,`"OpenBrowserOnStart`":false,`"CountMeAsUser`":false}"
 
+# Its user-count ping to a dead port here, never nocat.lol: the release it starts as doesn't know CountMeAsUser, and a
+# config it writes back without it would be taken as on by the new version (which the update starts with this too).
+$env:NOCATFARM_PING_URL = 'http://127.0.0.1:9/api/farm/ping'
 $p = Start-Process (Join-Path $dir 'nocatFarm.exe') -ArgumentList '--minimized' -WorkingDirectory $dir -WindowStyle Hidden -PassThru
 $api = "http://127.0.0.1:$port"
 $v = $null

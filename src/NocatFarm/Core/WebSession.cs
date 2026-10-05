@@ -16,7 +16,7 @@ namespace NocatFarm.Core;
 /// error, so expiry is detected from the FINAL url of a response, then the token is re-minted over the live
 /// Steam connection and the request is retried exactly once.
 /// </summary>
-public sealed class WebSession : IDisposable {
+public sealed partial class WebSession : IDisposable {
 	public static readonly Uri Community = new("https://steamcommunity.com");
 
 	/// <summary>
@@ -190,7 +190,7 @@ public sealed class WebSession : IDisposable {
 	}
 
 	private async Task<string?> SendAsync(Uri url, IEnumerable<KeyValuePair<string, string>>? form, Uri? referer, bool allowRetry, CancellationToken ct, bool skipReadyCheck = false, bool errorVerdict = false, SendNote? note = null) {
-		if (!skipReadyCheck && !Ready && !await RefreshAsync(true, ct).ConfigureAwait(false)) {
+		if (!skipReadyCheck && NeedsRefresh && !await RefreshAsync(!Ready, ct).ConfigureAwait(false)) {
 			return null;
 		}
 
@@ -329,7 +329,7 @@ public sealed class WebSession : IDisposable {
 	/// useful part of the answer and leaves the caller guessing at the cause.
 	/// </summary>
 	public async Task<string?> PostAllowingFailureAsync(Uri url, Dictionary<string, string> form, Uri? referer = null, CancellationToken ct = default) {
-		if (!Ready && !await RefreshAsync(true, ct).ConfigureAwait(false)) {
+		if (NeedsRefresh && !await RefreshAsync(!Ready, ct).ConfigureAwait(false)) {
 			return null;
 		}
 
@@ -408,9 +408,29 @@ public sealed class WebSession : IDisposable {
 		}
 	}
 
-	private static bool IsSessionExpired(Uri uri) =>
+	/// <summary>
+	/// Whether a response ended on a sign-in page. The community and the store send a spent session to /login; the help
+	/// site puts the language first - /en/login?redir=... - and only "/login" was looked for, so on help.steampowered.com
+	/// an expired token came back as a 200 sign-in page that nobody noticed, and the bans page was never read.
+	/// </summary>
+	internal static bool IsSessionExpired(Uri uri) =>
 		uri.AbsolutePath.StartsWith("/login", StringComparison.OrdinalIgnoreCase)
+		|| (uri.Host.Equals(Help.Host, StringComparison.OrdinalIgnoreCase) && LanguageLoginPath().IsMatch(uri.AbsolutePath))
 		|| uri.Host.Equals("lostauth", StringComparison.OrdinalIgnoreCase);
+
+	/// <summary>
+	/// "/en/login", "/es-419/login", "/zh-cn/login/" - a sign-in page under a language prefix. The help site's only: on
+	/// the community "/id/login/" is the profile of someone who named himself "login".
+	/// </summary>
+	[System.Text.RegularExpressions.GeneratedRegex(@"^/[a-z]{2}(?:-[a-z0-9]{2,3})?/login(?:/|$)", System.Text.RegularExpressions.RegexOptions.IgnoreCase)]
+	private static partial System.Text.RegularExpressions.Regex LanguageLoginPath();
+
+	/// <summary>
+	/// No session yet, or one whose token runs out within minutes. Only !Ready was checked before a request, so a token
+	/// past its day went on being sent: the community bounced it to /login and it was renewed there, but a page that
+	/// shows a signed-out version instead of bouncing never renewed it - and only the next API call or bounce did.
+	/// </summary>
+	private bool NeedsRefresh => !Ready || (TokenValidUntil is { } until && until <= DateTime.UtcNow.AddMinutes(5));
 
 	private string? CookieValue(Uri url, string name) {
 		foreach (Cookie c in _cookies.GetCookies(url).Cast<Cookie>()) {

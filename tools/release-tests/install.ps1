@@ -52,6 +52,7 @@ $cfgRaw = Get-Content "$inst\config\nocatFarm.json" -Raw | ConvertFrom-Json
 $cfgRaw | Add-Member -NotePropertyName OpenBrowserOnStart -NotePropertyValue $false -Force
 $cfgRaw | Add-Member -NotePropertyName JoinGroup -NotePropertyValue $false -Force
 $cfgRaw | Add-Member -NotePropertyName CheckForUpdates -NotePropertyValue $false -Force
+$cfgRaw | Add-Member -NotePropertyName CountMeAsUser -NotePropertyValue $false -Force   # a test copy never counts itself on nocat.lol
 [IO.File]::WriteAllText("$inst\config\nocatFarm.json", ($cfgRaw | ConvertTo-Json -Depth 10))
 Start-Process "$inst\nocatFarm.exe" -ArgumentList '--minimized' -WorkingDirectory $inst; Start-Sleep 7
 $st = try { (Invoke-RestMethod http://127.0.0.1:7289/api/status).Version } catch { "down: $($_.Exception.Message)" }

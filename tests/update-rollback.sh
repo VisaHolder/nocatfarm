@@ -53,8 +53,8 @@ fresh() {
 	cp -R "$APP" "$HERE"
 	rm -rf "$HERE/config" "$HERE/logs"
 	mkdir -p "$DATA/config" "$CWD/data2/config"
-	echo "{\"WebPort\":$PORT,\"CheckForUpdates\":true,\"JoinGroup\":false,\"OpenBrowserOnStart\":false}" > "$DATA/config/nocatFarm.json"
-	echo "{\"WebPort\":$PORT2,\"CheckForUpdates\":false,\"JoinGroup\":false,\"OpenBrowserOnStart\":false}" > "$CWD/data2/config/nocatFarm.json"
+	echo "{\"WebPort\":$PORT,\"CheckForUpdates\":true,\"JoinGroup\":false,\"OpenBrowserOnStart\":false,\"CountMeAsUser\":false}" > "$DATA/config/nocatFarm.json"
+	echo "{\"WebPort\":$PORT2,\"CheckForUpdates\":false,\"JoinGroup\":false,\"OpenBrowserOnStart\":false,\"CountMeAsUser\":false}" > "$CWD/data2/config/nocatFarm.json"
 }
 
 # As from a terminal: a CI runner is itself a systemd service, and what it starts inherits the markers that make
@@ -142,7 +142,7 @@ stop
 if [ "$(uname)" = "Darwin" ] && [ -x "$HERE/start.command" ]; then
 	echo "== 4. Mac, started from start.command"
 	fresh
-	echo "{\"WebPort\":$PORT,\"CheckForUpdates\":true,\"JoinGroup\":false,\"OpenBrowserOnStart\":false}" > "$HERE/config.json.tmp"
+	echo "{\"WebPort\":$PORT,\"CheckForUpdates\":true,\"JoinGroup\":false,\"OpenBrowserOnStart\":false,\"CountMeAsUser\":false}" > "$HERE/config.json.tmp"
 	mkdir -p "$HERE/config" && mv "$HERE/config.json.tmp" "$HERE/config/nocatFarm.json"
 	(cd "$HERE" && NOCATFARM_UPDATE_FEED="http://127.0.0.1:$FEED/good.json" nohup "$HERE/start.command" --no-gui > "$T/run-command.log" 2>&1 &)
 	for i in $(seq 1 60); do curl -sf "http://127.0.0.1:$PORT/api/status" > /dev/null && break; sleep 1; done

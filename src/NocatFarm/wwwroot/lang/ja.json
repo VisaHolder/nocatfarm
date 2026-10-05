@@ -1177,7 +1177,6 @@
     "While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.": "nocat.farm を開いている間、Discord プロフィールにゲームのように表示されます。カードに出す内容を選んでください。プレビューがほかの人に見える姿です。",
     "Buttons and which accounts it shows are under Show advanced. Discord shows your buttons to everyone but you.": "ボタンと表示するアカウントは「詳細を表示」にあります。Discord はあなたのボタンを、あなた以外の全員に表示します。",
     "No accounts picked": "アカウントが選ばれていません",
-    "Account names": "アカウント名",
     "Accounts online": "オンラインのアカウント",
     "Avatar": "アバター",
     "Timer": "タイマー",
@@ -2401,7 +2400,14 @@
     "1 comment today": "今日のコメント 1 件",
     "{0} comments today": "今日のコメント {0} 件",
     "{0}/{1} online": "オンライン {0}/{1}",
-    "{0} inventory": "インベントリ {0}"
+    "{0} inventory": "インベントリ {0}",
+    "language set to {0} from this computer - change it in Settings": "このコンピューターに合わせて言語を{0}にしました - 設定で変更できます",
+    "People using nocat.farm": "nocat.farm の利用者数",
+    "{0} people using nocat.farm": "{0} 人が nocat.farm を使用中",
+    "1 person using nocat.farm": "1 人が nocat.farm を使用中",
+    "{0} people using nocat.farm today": "今日 {0} 人が nocat.farm を使用中",
+    "1 person using nocat.farm today": "今日 1 人が nocat.farm を使用中",
+    "Copies of nocat.farm that were running in the last 24 hours. Count me as a user, under Updates & plugins, adds yours - off sends nothing and hides this.": "過去24時間に動いていた nocat.farm の数です。「ユーザーとして数える」(アップデートとプラグイン) をオンにするとあなたの分も入ります。オフなら何も送らず、これも表示しません。"
   },
   "settings": {
     "WebEnabled": {
@@ -2663,6 +2669,14 @@
     "LateNightExtraHours": {
       "label": "金・土は遅くまで起きている",
       "tip": "金曜と土曜の夜に、追加で起きている時間数です。"
+    },
+    "SleepMinHours": {
+      "label": "最低睡眠時間",
+      "tip": "翌日が始まるまでの夜の長さ（時間）。この値と次の値の間でランダムに、毎晩違う長さになります。朝5時に寝た場合も、この時間が過ぎるまでは戻りません。"
+    },
+    "SleepMaxHours": {
+      "label": "…最大",
+      "tip": "その範囲の上限（時間）。"
     },
     "PureMainDayChancePct": {
       "label": "メインゲームだけの日",
@@ -3241,11 +3255,7 @@
     },
     "DiscordPresenceAccounts": {
       "label": "表示するアカウント",
-      "tip": "カードが名前を出して説明するアカウント。自動は人間モード以外のすべて、または好きなものにチェックを入れてください。カードの数字は常に全アカウントです。"
-    },
-    "DiscordShowNames": {
-      "label": "アカウント名を表示",
-      "tip": "Discord カードの 2 行目に、アカウントを Steam の名前で並べます（例: kylro · old）。オフにすると、2行目で選んだものが出ます。"
+      "tip": "カードが扱うアカウント: 1行目にそのアカウントが何をしているかが出ます。自動は人間モード以外のすべて、または好きなものにチェックを入れてください。カードの数字は常に全アカウントです。"
     },
     "DiscordShowCounter": {
       "label": "オンラインのアカウントを表示",
@@ -3385,8 +3395,8 @@
     },
     "DiscordSecondLine": {
       "label": "2行目",
-      "tip": "アカウント名がオフのとき、Discord カードの2行目が数えるもの: 今日のカード、または過去1週間か過去1か月のプレイ時間 - 全アカウントの合計です。",
-      "choices": "0 今日のカード | 1 過去1週間の時間 | 2 過去1か月の時間"
+      "tip": "Discord カードの2行目に出すもの: nocat.farm の利用者数、今日のカード、または過去1週間か過去1か月のプレイ時間 - 全アカウントの合計です。利用者数には「ユーザーとして数える」がオンである必要があり、分かるまでは今日のカードを表示します。",
+      "choices": "3 nocat.farm の利用者数 | 0 今日のカード | 1 過去1週間の時間 | 2 過去1か月の時間"
     },
     "SendAroundHour": {
       "label": "...頃に",
@@ -3464,6 +3474,10 @@
       "label": "アップデート",
       "tip": "新しいバージョンが出たときの動作です。必ず先にログと Telegram・Discord でお知らせします。クリックしたら、みんなが寝てからインストール：更新ボタンや update accept を押すと、アカウントが寝てから（人間モードのアカウントが起きておらず、誰もプレイしておらず、トレードやギフトが待っていないとき）インストールします。クリックしたらインストール：すぐにインストールします。夜に自動でインストール：下の時間帯の静かなときに自動でインストールし、前後にお知らせします。update now は常にすぐインストールします。Docker や Linux サービスでは使えません（手動で更新します）。",
       "choices": "0 クリックしたら、みんなが寝てからインストール | 1 クリックしたらインストール | 2 夜に自動でインストール"
+    },
+    "CountMeAsUser": {
+      "label": "ユーザーとして数える",
+      "tip": "1時間に1回、このコピーが動いていることを nocat.lol に伝えます - このインストール用に作られたランダムな番号、アプリのバージョン、プラットフォームだけで、Steam アカウントや名前、設定は送りません。これで利用者数を数えます。オフなら何も送りません。"
     },
     "ReactionSpeed": {
       "label": "反応の速さ",

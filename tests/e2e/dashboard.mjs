@@ -1,8 +1,10 @@
 // Every button, switch, tab, chip and form of the nocat.farm dashboard, clicked in a real browser (Chromium, through
 // Playwright) against a copy that is already running:
-//   node tests/e2e/dashboard.mjs <base url> <dashboard password> [--fixture <folder>] [--set-password] [--headed]
+//   node tests/e2e/dashboard.mjs <base url> <dashboard password> [--fixture <folder>] [--set-password] [--ping-stub <url>] [--headed]
 // --set-password  the copy has no password yet: set this one first, from this PC, the way the Phone page does
 // --fixture       the folder make-fixture.mjs wrote (for the pretend ArchiSteamFarm folder the import dialog is shown)
+// --ping-stub     ping-stub.mjs, which the copy was started to send its "Count me as a user" ping to (NOCATFARM_PING_URL):
+//                 the user count is checked against it. Without it the setting is left alone - it would tell nocat.lol.
 //
 // It signs in (a wrong password first), then on every page lists everything that can be clicked, typed in or picked,
 // and uses each in a safe way: switches and boxes are put back afterwards, anything that deletes, signs in to Steam,
@@ -24,12 +26,13 @@ import path from 'node:path';
 const argv = process.argv.slice(2);
 const flag = (name) => argv.includes(name);
 const option = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : undefined; };
-const positional = argv.filter((a, i) => !a.startsWith('--') && !(i > 0 && ['--fixture'].includes(argv[i - 1])));
+const positional = argv.filter((a, i) => !a.startsWith('--') && !(i > 0 && ['--fixture', '--ping-stub'].includes(argv[i - 1])));
 const BASE = (positional[0] || '').replace(/\/+$/, '');
 const PASSWORD = positional[1] || '';
 const FIXTURE = option('--fixture') || '';
+const PING_STUB = (option('--ping-stub') || '').replace(/\/+$/, '');
 if (!BASE || !PASSWORD) {
-  console.error('usage: node dashboard.mjs <base url> <dashboard password> [--fixture <folder>] [--set-password] [--headed]');
+  console.error('usage: node dashboard.mjs <base url> <dashboard password> [--fixture <folder>] [--set-password] [--ping-stub <url>] [--headed]');
   process.exit(2);
 }
 const HOST = new URL(BASE).host;
@@ -113,6 +116,7 @@ const SKIP_SETTING = {
   CheckForUpdates: 'asks GitHub for a newer version',
   UpdateMode: 'could install a newer version mid-test',
   DiscordPresence: "shows on the Discord running on this PC",
+  ...(PING_STUB ? {} : { CountMeAsUser: 'tells nocat.lol this copy is running (no --ping-stub to send it to instead)' }),
   TelegramBotToken: 'connects to Telegram',
   DiscordBotToken: 'connects to Discord',
   DiscordWebhookUrl: 'posts to Discord',
@@ -655,6 +659,8 @@ async function settingsOn(target) {
   if (await page.inputValue('#setSearch')) { await page.fill('#setSearch', ''); await settle(200); }
 }
 
+// The Discord card's second-line pills, in the order they're drawn.
+const DISCORD_LINES = [3, 0, 1, 2];
 const valuesOf = (cfg, target) => (target ? cfg.Bots[target] : cfg.Global);
 const secretsOf = (cfg, target) => (target ? (cfg.BotSecretsSet || {})[target] || [] : cfg.GlobalSecretsSet || []);
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -670,7 +676,7 @@ const shownSettings = () => evalq(() => {
     if (!window.__e2e.visible(el) && !el.closest('label.switch')) return;
     if (el.dataset.setting) { add(el.dataset.setting, el); return; }
     if (el.closest('.dhead')) { add('DiscordPresence', el); return; }
-    if (el.closest('.dline')) { add('DiscordShowNames', el); add('DiscordSecondLine', el); return; }
+    if (el.closest('.dline')) { add('DiscordSecondLine', el); return; }
     const m = (el.getAttribute('onclick') || '').match(/editAndRender\('(\w+)'/);
     if (m) add(m[1], el);
   });
@@ -724,11 +730,10 @@ async function change(def, target) {
   const box = boxOf(n);
   const tag = (await box.count()) ? await box.evaluate((e) => e.tagName.toLowerCase() + ':' + (e.type || '') + ':' + e.className) : '';
 
-  if (n === 'DiscordShowNames' || n === 'DiscordSecondLine') {
+  if (n === 'DiscordSecondLine') {
     const pills = page.locator('#settingsBody .dline .p');
     const on = await pills.evaluateAll((els) => els.findIndex((e) => e.classList.contains('on')));
-    const pick = n === 'DiscordShowNames' ? (on === 0 ? 1 : 0) : (on === 1 ? 2 : 1);
-    await pills.nth(pick).click();
+    await pills.nth(on === 1 ? 2 : 1).click();
   } else if (n === 'GameWeights') {
     await weightsScenario();
   } else if (!tag) {
@@ -777,7 +782,7 @@ async function change(def, target) {
   }
   await settle(150);
   const p = await pendingNow();
-  if (!(n in p) && !(n === 'DiscordSecondLine' && 'DiscordShowNames' in p)) return { why: 'the control changed nothing', fail: true };
+  if (!(n in p)) return { why: 'the control changed nothing', fail: true };
   return { pending: p };
 }
 
@@ -794,7 +799,7 @@ async function weightsScenario() {
     const after = (await pendingNow()).GameWeights;
     check(`settings weights: ${what}`, after !== undefined && after !== before, `${before} -> ${after}`);
   };
-  const add = async () => { const input = page.locator('#settingsBody .weights .wadd input'); await input.fill(String(await unused())); await input.press('Enter'); };
+  const add = async () => { const input = page.locator('#settingsBody .weights .wadd .appin'); await input.fill(String(await unused())); await input.press('Enter'); };
   await step('adding a game', add);
   while (await rows() < 3) await step('adding another game', add);
   await step("changing a side game's share", async () => { const box = page.locator('#settingsBody .weights .wpct').nth(1); await box.fill('20'); await box.blur(); });
@@ -823,13 +828,9 @@ async function putBack(def, orig, target, defaults) {
       const btn = field(n).locator('button[onclick^="clearSecret"]');
       if (await btn.count()) await btn.click(); else return false;
     } finally { dialogAnswer = 'dismiss'; }
-  } else if (n === 'DiscordShowNames' || n === 'DiscordSecondLine') {
-    const pills = page.locator('#settingsBody .dline .p');
-    const names = await live('DiscordShowNames');
-    const line = Number(await live('DiscordSecondLine'));
-    const wantNames = n === 'DiscordShowNames' ? orig : names;
-    const wantLine = n === 'DiscordSecondLine' ? Number(orig) : line;
-    await pills.nth(wantNames ? 0 : wantLine + 1).click();
+  } else if (n === 'DiscordSecondLine') {
+    // The pills in their order on screen: people using nocat.farm (3), then cards today, hours past week, past month.
+    await page.locator('#settingsBody .dline .p').nth(DISCORD_LINES.indexOf(Number(orig))).click();
   } else if (n === 'GameWeights') {
     // Built back through the editor: every side game dropped, the main game swapped back, the others added, the share set.
     const want = String(orig || '').split(',').map((s) => s.trim()).filter(Boolean).map((s) => s.split(':').map(Number));
@@ -841,7 +842,7 @@ async function putBack(def, orig, target, defaults) {
       }
       await page.locator('#settingsBody .weights .wact b').filter({ hasText: '⇄' }).first().click(); await settle(150);
       await page.locator('#settingsBody .wmainedit').fill(String(want[0][0])); await page.locator('#settingsBody .wmainedit').press('Enter'); await settle(150);
-      for (const [g] of want.slice(1)) { await page.locator('#settingsBody .weights .wadd input').fill(String(g)); await page.locator('#settingsBody .weights .wadd input').press('Enter'); await settle(150); }
+      for (const [g] of want.slice(1)) { await page.locator('#settingsBody .weights .wadd .appin').fill(String(g)); await page.locator('#settingsBody .weights .wadd .appin').press('Enter'); await settle(150); }
       const main = page.locator('#settingsBody .weights .wpct').first();
       await main.fill(String(want[0][1])); await main.blur();
     }
@@ -951,8 +952,8 @@ async function settingsRound(target) {
     if (res && res.Adjusted && res.Adjusted.length) note(`${who}: the save adjusted: ${res.Adjusted.join(' · ')}`);
     for (const { def, before } of batch) {
       const n = def.Name;
-      // What this setting's control put in (the Discord card's second line sets the names switch as well).
-      const keys = Object.keys(edits).filter((k) => k === n || (n === 'DiscordSecondLine' && k === 'DiscordShowNames'));
+      // What this setting's control put in.
+      const keys = Object.keys(edits).filter((k) => k === n);
       const wrong = keys.filter((k) => {
         const d = defs.find((y) => y.Name === k);
         if (d && d.Kind === 'Secret') return !secretsOf(saved, target).includes(k);
@@ -1050,6 +1051,124 @@ for (const bot of Object.keys((await api('/api/config')).Bots)) settingsCount[bo
   await box.fill('');
   await evalq(() => { pending = {}; renderSettings(); });
   await healthy('game lists: healthy after searching');
+}
+
+// "Games and how often" searches the library like every other game list: its add box and the main game's swap box. The
+// test accounts' libraries are empty, so one is handed to the page first (the human account's, the one with the list).
+{
+  await settingsOn('human');
+  const library = [{ id: 400, name: 'Portal' }, { id: 620, name: 'Portal 2' }, { id: 220, name: 'Half-Life 2' }];
+  await evalq((games) => {
+    libCache.set('human', { games: games.map((g) => ({ ...g, low: g.name.toLowerCase(), mins: 90 })), at: Date.now() });
+    pending = {}; renderSettings();
+  }, library);
+  await settle(200);
+  const weights = page.locator('#settingsBody .weights');
+  const ids = async () => String((await live('GameWeights')) || '').split(',').map((x) => parseInt(x)).filter(Boolean);
+  const before = await ids();
+  const add = weights.locator('.wadd .appin');
+  check('weights picker: the add box is a library search', (await add.count()) === 1
+    && /search/i.test(await add.getAttribute('placeholder') || ''));
+  await add.click();
+  await add.type('port', { delay: 20 });
+  await page.waitForSelector('#settingsBody .weights .wadd .appsug .s', { timeout: 5000 }).catch(() => {});
+  const hits = await weights.locator('.wadd .appsug .s').allTextContents();
+  check('weights picker: typing part of a name lists the library\'s games', hits.length === 2 && hits[0].startsWith('Portal'), hits.join(' | '));
+  check('weights picker: the box keeps its text and focus while it searches',
+    (await add.inputValue()) === 'port' && await add.evaluate((e) => document.activeElement === e));
+  await add.press('ArrowDown');
+  await add.press('Enter');
+  await settle(200);
+  const added = await ids();
+  check('weights picker: Enter takes the picked game, added at the end with a share', added.length === before.length + 1 && added[added.length - 1] === 620
+    && added[0] === before[0], `${before} -> ${added}`);
+  check('weights picker: back in the box for the next one', await weights.locator('.wadd .appin').evaluate((e) => document.activeElement === e));
+  check('weights picker: a game already listed isn\'t offered again', await (async () => {
+    await weights.locator('.wadd .appin').type('portal', { delay: 20 });
+    await page.waitForSelector('#settingsBody .weights .wadd .appsug', { timeout: 5000 }).catch(() => {});
+    const offered = await weights.locator('.wadd .appsug .s').evaluateAll((els) => els.map((e) => Number(e.dataset.app)));
+    await weights.locator('.wadd .appin').press('Escape');
+    await weights.locator('.wadd .appin').fill('');
+    return JSON.stringify(offered) === '[400]';
+  })());
+  // An appID or a store link typed in still works.
+  await weights.locator('.wadd .appin').fill('https://store.steampowered.com/app/4000/Garrys_Mod/');
+  await weights.locator('.wadd .appin').press('Enter');
+  await settle(200);
+  check('weights picker: a pasted store link still goes in', (await ids()).includes(4000), String(await ids()));
+
+  // The main game swapped from the library: it keeps the main game's share.
+  const share = String((await live('GameWeights')) || '').split(',')[0].split(':')[1];
+  await weights.locator('.wact b').filter({ hasText: '⇄' }).first().click();
+  await settle(200);
+  const swap = page.locator('#settingsBody .weights .wmainedit');
+  check('weights picker: the main game\'s swap box is a library search too', (await swap.count()) === 1 && await swap.evaluate((e) => document.activeElement === e));
+  await swap.type('half', { delay: 20 });
+  await page.waitForSelector('#settingsBody .weights .wname .appsug .s', { timeout: 5000 }).catch(() => {});
+  await page.locator('#settingsBody .weights .wname .appsug .s').first().click();
+  await settle(200);
+  const swapped = String((await live('GameWeights')) || '').split(',')[0].trim();
+  check('weights picker: a game picked by name becomes the main one, with the main game\'s share', swapped === `220:${share}`, swapped);
+  // Escape (nothing dropped down) leaves the main game as it is.
+  await weights.locator('.wact b').filter({ hasText: '⇄' }).first().click();
+  await settle(200);
+  await page.locator('#settingsBody .weights .wmainedit').press('Escape');
+  await settle(200);
+  check('weights picker: Escape in the swap box changes nothing', (await page.locator('#settingsBody .weights .wmainedit').count()) === 0
+    && String((await live('GameWeights')) || '').split(',')[0].trim() === swapped);
+  await evalq(() => { pending = {}; libCache.delete('human'); renderSettings(); });
+  await healthy('weights picker: healthy after searching');
+}
+
+// The user count: the copy pinged the stand-in for nocat.lol (never the real one), the Overview says how many people use
+// nocat.farm, the Discord card's preview counts them, and "Count me as a user" off hides it all.
+if (PING_STUB) {
+  let users = null;
+  for (let i = 0; i < 60 && users !== 212; i++) { users = (await api('/api/status')).Users; if (users !== 212) await sleep(1000); }
+  check('user count: the status says 212 people, from the stand-in\'s answer', users === 212, String(users));
+  const seen = await fetch(`${PING_STUB}/seen`).then((r) => r.json()).catch(() => []);
+  const first = seen[0] || {};
+  let body = {};
+  try { body = JSON.parse(first.body || '{}'); } catch { /* checked below */ }
+  check('user count: the ping is a JSON POST of the install id, the version and the platform - nothing else',
+    seen.length >= 1 && JSON.stringify(Object.keys(body)) === '["id","v","os"]' && /^[0-9a-f]{32}$/.test(body.id || '')
+      && ['windows', 'linux', 'mac', 'docker'].includes(body.os) && /^application\/json/.test(first.contentType || '')
+      && (first.userAgent || '') === `nocat.farm/${body.v}`, JSON.stringify(first));
+  await gotoView('overview');
+  await settle(300);
+  const line = page.locator('#usercount');
+  check('user count: the Overview says "212 people using nocat.farm today"', await line.isVisible() && (await line.textContent()) === '212 people using nocat.farm today',
+    await line.textContent());
+  await settingsOn(null);
+  check('user count: the Discord card\'s preview counts the people', (await page.locator('#settingsBody .dcard .dstate').textContent() || '').includes('212 people using nocat.farm'),
+    await page.locator('#settingsBody .dcard .dstate').textContent());
+  await field('CountMeAsUser').locator('label.switch').first().click();
+  await settle(150);
+  await saveNow(null);
+  check('user count: Count me as a user off - the status has no count', (await api('/api/status')).Users == null);
+  check('user count: ...and the Discord card falls back to the cards today', /cards today/.test(await page.locator('#settingsBody .dcard .dstate').textContent() || ''),
+    await page.locator('#settingsBody .dcard .dstate').textContent());
+  await gotoView('overview');
+  await settle(300);
+  check('user count: ...and the Overview hides the line', !(await line.isVisible()));
+  await settingsOn(null);
+  await field('CountMeAsUser').locator('label.switch').first().click();
+  await settle(150);
+  await saveNow(null);
+  check('user count: switched back on, the count is back', (await api('/api/status')).Users === 212);
+  await healthy('user count: healthy after switching it off and on');
+} else {
+  skip('user count', 'no --ping-stub: the copy would tell nocat.lol it is running');
+}
+
+// The Discord card's second line: people using nocat.farm first (the default), no account names any more.
+{
+  await settingsOn(null);
+  const pills = await page.locator('#settingsBody .dline .p').allTextContents();
+  check('discord card: the second line is people using nocat.farm, cards today, hours past week or month - no account names',
+    pills.length === 4 && pills[0] === 'People using nocat.farm' && !pills.some((x) => /account names/i.test(x)), pills.join(' | '));
+  check('discord card: people using nocat.farm is picked by default', Number(await live('DiscordSecondLine')) === 3
+    && await page.locator('#settingsBody .dline .p').first().evaluate((e) => e.classList.contains('on')));
 }
 
 // ── 6. the keyboard ──────────────────────────────────────────────────────────

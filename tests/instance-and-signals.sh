@@ -14,7 +14,7 @@ fails=0
 check() { name="$1"; shift; if "$@"; then echo "PASS  $name"; else echo "FAIL  $name"; fails=$((fails + 1)); fi; }
 
 rm -rf "$T" && mkdir -p "$T/data/config"
-echo "{\"WebPort\":$PORT,\"CheckForUpdates\":false,\"JoinGroup\":false,\"OpenBrowserOnStart\":false}" > "$T/data/config/nocatFarm.json"
+echo "{\"WebPort\":$PORT,\"CheckForUpdates\":false,\"JoinGroup\":false,\"OpenBrowserOnStart\":false,\"CountMeAsUser\":false}" > "$T/data/config/nocatFarm.json"
 echo '{"Enabled":false,"SteamLogin":"not_a_real_account"}' > "$T/data/config/demo.json"
 
 up() { for i in $(seq 1 60); do curl -sf "http://127.0.0.1:$PORT/api/status" > /dev/null && return 0; sleep 1; done; return 1; }

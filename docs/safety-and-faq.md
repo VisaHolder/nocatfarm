@@ -4,7 +4,7 @@
 
 ## Privacy and safety
 
-Everything stays on your PC. Accounts, login tokens and logs are never uploaded anywhere.
+Your accounts stay on your PC. Accounts, login tokens, settings and logs are never uploaded anywhere.
 
 Passwords are optional. After the first sign-in a Steam login token does the work. Login tokens, saved passwords,
 authenticator secrets and proxy passwords are all encrypted on disk: on Windows they're tied to your Windows user,
@@ -15,6 +15,11 @@ downloads one when you say so; *Notify if an update is available* turns the chec
 only come into it if you set them up, and the Discord profile card only talks to the Discord app on your own PC. The
 hunter's game-length lookups go to SteamSpy with nothing but the game's ID. *Open from anywhere*, if you turn it on,
 talks to your router.
+
+Once an hour it tells nocat.lol it's running, to count users: a random install ID, the version and the platform,
+nothing else. No Steam account, name or setting goes with it, and the install ID isn't in backups. That's where
+"212 people using nocat.farm" on the Overview and the Discord card comes from. *Count me as a user* (*Global settings
+→ Updates & plugins*) turns it off: then nothing is sent and the count isn't shown.
 
 The dashboard only listens on this PC by default. With no password it refuses anything that isn't from this PC, even
 if you open it to the network, and five wrong passwords lock an address out (an hour, or a minute on this PC). From

@@ -5,6 +5,8 @@
 nocat.farm runs on a home server, a NAS, a Raspberry Pi 4 or 5 (64-bit) or a VPS. There's no window or tray icon on
 Linux; you get the console and the web dashboard, and everything else is the same.
 
+On the first start the language follows `LANG` (`LANG=de_DE.UTF-8` starts it in German; in Docker, uncomment the `LANG` line in the compose file); change it later in Settings.
+
 ## From the zip
 
 1. Download `nocat.farm-v<version>_linux-x64.zip` (Intel/AMD) or `nocat.farm-v<version>_linux-arm64.zip` (Raspberry

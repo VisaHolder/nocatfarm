@@ -430,13 +430,17 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			}
 
 			// Past bedtime, or the day already played (a day off included): one more sitting, like somebody who couldn't sleep.
-			if (lastNight || !InPlannedHours(now) || (_playedMinutesToday >= _targetMinutes)) {
+			// Bed closer than the shortest sitting too: no new game starts then (BedTooCloseToStart), so without this a 'wake'
+			// in the last minutes before bed said nothing and went straight to "done for the day".
+			bool bedClose = !lastNight && BedTooCloseToStart(false, (PlanBed() - now).TotalMinutes, Bot.Cfg.SessionMinMinutes);
+
+			if (WakeStaysUp(lastNight, InPlannedHours(now), _playedMinutesToday >= _targetMinutes, bedClose)) {
 				int min = Math.Max(5, Bot.Cfg.SessionMinMinutes);
 				int max = Math.Max(min + 5, Bot.Cfg.SessionMaxMinutes);
 				_stayUpUntil = now.AddMinutes(Rng(min, max));
 
 				// In its planned hours (a day off, or the day's hours played) it doesn't go to bed after it - it's done for today.
-				Log.Info(lastNight || !InPlannedHours(now)
+				Log.Info(lastNight || !InPlannedHours(now) || bedClose
 					? new Said("up late - one more sitting, then bed around {0}", _stayUpUntil.ToString("HH:mm"))
 					: new Said("up for one sitting until about {0}, then done for today", _stayUpUntil.ToString("HH:mm")), Bot.Name);
 				Persist();   // a restart during the sitting keeps it, rather than putting the account back to bed
@@ -1383,6 +1387,13 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			: new DayExtras(Bot.Cfg.LongerRhythms ? HumanHabits.RhythmFor(Bot.Name, date) : default, habits, pull);
 	}
 
+	/// <summary>A night's sleep before the next day can start, in minutes: "Sleeps at least ... up to", in hours.</summary>
+	public static (int Lo, int Hi) SleepMinutes(BotConfig cfg) {
+		int lo = Math.Clamp(Math.Min(cfg.SleepMinHours, cfg.SleepMaxHours), 3, 16) * 60;
+
+		return (lo, Math.Clamp(Math.Max(cfg.SleepMinHours, cfg.SleepMaxHours), 3, 16) * 60);
+	}
+
 	/// <summary>
 	/// Roll one day. A real week is not flat: weekday gaming is mostly evenings, weekends start earlier and run
 	/// longer, and Friday and Saturday nights go late because nothing is on tomorrow. The real day and 'human week'
@@ -1443,8 +1454,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		// Never up before last night is over, nor straight after it: a night's sleep first, a different length every
 		// time. With the day starting at 2, a late Friday rolled a Saturday that got up before Friday had gone to bed.
+		// "Sleeps at least", 6-9 hours by default: a fixed four to six let a 05:23 bedtime get up at 09:31, which nobody
+		// does after a 5am night.
 		if (lastBed != DateTime.MinValue) {
-			wake = Math.Max(wake, (int) Math.Ceiling((lastBed.AddMinutes(Roll(240, 360)) - date.Date).TotalMinutes));
+			wake = Math.Max(wake, (int) Math.Ceiling((lastBed.AddMinutes(Roll(SleepMinutes(cfg).Lo, SleepMinutes(cfg).Hi)) - date.Date).TotalMinutes));
 		}
 
 		wake = Math.Clamp(wake, 0, (23 * 60) + 59);
@@ -1774,6 +1787,25 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return;
 		}
 
+		// Too close to bed for even the shortest sitting: no new game, just wait for bed. With under a minute to go the
+		// minutes rounded down to 0, which reads as "no bedtime" - Counter-Strike 2 started "for ~1h03m" at 01:55:40 and
+		// was closed for the night at 01:56:00.
+		if (BedTooCloseToStart(_stayUpUntil > DateTime.Now, (PlanBed() - DateTime.Now).TotalMinutes, Bot.Cfg.SessionMinMinutes)) {
+			if (_phase != Phase.DoneForToday) {
+				BankSession();
+				_phase = Phase.DoneForToday;
+				_farmSession = false;
+				_game = 0;
+				_switchingTo = 0;
+				ClearBreakState();
+				Bot.StopPlaying();
+				ShowAs(null);
+				Log.Info(new Said("done for the day - {0} played, back around {1}", Fmt.Hm(_playedMinutesToday), (NextWakeTime()).ToString("HH:mm")), Bot.Name);
+			}
+
+			return;
+		}
+
 		uint game;
 		bool farmPick;
 		uint farm = FarmGameNow();
@@ -1938,6 +1970,20 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		return Math.Max(5, length);
 	}
+
+	/// <summary>
+	/// Whether bed is too close to sit down to a game: less than the shortest sitting left. Never while staying up after a
+	/// 'wake' (that sitting runs to the time it said), and not once bed has passed - going to bed handles that.
+	/// </summary>
+	public static bool BedTooCloseToStart(bool stayingUp, double minutesToBed, int sessionMinMinutes) =>
+		!stayingUp && (minutesToBed > 0) && (minutesToBed < Math.Max(5, sessionMinMinutes));
+
+	/// <summary>
+	/// Whether a 'wake' stays up for one more sitting: still last night, past bedtime, the day's hours played - or bed too
+	/// close for a sitting to start at all (<see cref="BedTooCloseToStart"/>), where a plain wake would have done nothing.
+	/// </summary>
+	public static bool WakeStaysUp(bool lastNight, bool inPlannedHours, bool dayPlayed, bool bedTooClose) =>
+		lastNight || !inPlannedHours || dayPlayed || bedTooClose;
 
 	/// <summary>The longest the day's first sitting runs: a little way above the shortest sitting, always with room to vary.</summary>
 	internal static int FirstSittingCap(int min, int max) => Math.Min(max, min + Math.Max(5, (max - min) * 15 / 100));

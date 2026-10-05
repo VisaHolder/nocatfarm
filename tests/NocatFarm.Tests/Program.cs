@@ -335,6 +335,29 @@ Check("undercut: a cent under, never below 3", NocatFarm.Core.Seller.UndercutFor
 	Check("ban games: each banned game once (VAC and game ban on CS2 = one), BattlEye skipped", bg != null && bg.SequenceEqual([730u, 1234u]), string.Join(",", bg ?? []));
 	Check("ban games: a clean account", NocatFarm.Modules.BanGames.Parse("""<div class="no_vac_bans_header">You have no bans</div>""") is { Count: 0 });
 	Check("ban games: a login page says nothing", NocatFarm.Modules.BanGames.Parse("<html>Sign in</html>") == null);
+
+	// Real pages, saved 2026-10-04 (account details replaced): a robot account's bans page, and the sign-in page the help
+	// site sends a spent session to - the "30477 chars" page that was read as "wasn't the bans page" every day.
+	string samples = Path.Combine(AppContext.BaseDirectory, "samples");
+	string realPage = File.ReadAllText(Path.Combine(samples, "vacbans-page.html"));
+	string signIn = File.ReadAllText(Path.Combine(samples, "vacbans-signin.html"));
+	var real = NocatFarm.Modules.BanGames.Parse(realPage);
+	Check("ban games: the real bans page - a game ban (PUBG) and a VAC ban (CS2)", real != null && real.SequenceEqual([578080u, 730u]), string.Join(",", real ?? []));
+	Check("ban games: the real bans page is a signed-in one", !NocatFarm.Modules.BanGames.SignedOut(realPage));
+	Check("ban games: the help site's sign-in page is not the bans page", NocatFarm.Modules.BanGames.Parse(signIn) == null);
+	string said = NocatFarm.Modules.BanGames.Describe(signIn);
+	Check("ban games: the sign-in page is logged by its title and as signed out, not by its length",
+		said.Contains("\"Steam Help\"", StringComparison.Ordinal) && said.Contains("signed out", StringComparison.Ordinal) && !said.Contains("chars", StringComparison.Ordinal), said);
+
+	MethodInfo expired = typeof(NocatFarm.Core.WebSession).GetMethod("IsSessionExpired", BindingFlags.NonPublic | BindingFlags.Static)!;
+	bool Bounced(string url) => (bool) expired.Invoke(null, [new Uri(url)])!;
+	Check("web: the help site's sign-in page (/en/login) is a spent session, like the community's /login",
+		Bounced("https://help.steampowered.com/en/login?need_password=1&title=Sign+In&redir=%2Fen%2Fwizard%2FVacBans")
+		&& Bounced("https://help.steampowered.com/es-419/login/") && Bounced("https://steamcommunity.com/login/home/?goto=")
+		&& Bounced("https://store.steampowered.com/login/?redir=") && Bounced("https://lostauth/"));
+	Check("web: ordinary pages aren't taken for a sign-in page",
+		!Bounced("https://help.steampowered.com/en/wizard/VacBans") && !Bounced("https://steamcommunity.com/id/login/badges/")
+		&& !Bounced("https://help.steampowered.com/en/wizard/Login_Help") && !Bounced("https://steamcommunity.com/profiles/76561190000000000/"));
 }
 
 // Optional: NOCAT_BANPAGES=<folder of saved prof_<steamid>.html pages> parses whole real profile pages too.
@@ -8123,22 +8146,23 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		(hl2Map.Groups.Count == 0) && hl2.All(e => HoldOf(hl2Map, e.Name) == None)
 		&& !NocatFarm.Core.DlcAchievements.NamedDlcHeld(hl2Map, "ACH_DLC_1", new HashSet<uint>()));
 
-	// The same figures on a page that does say "dlc" (or says nothing): a block that is the whole game is no DLC's.
-	foreach (string type in (string[]) ["dlc", ""]) {
+	// The same figures on a page that says nothing (facts kept before types were), or is a game's page the store sent a
+	// DLC id to: a block that is the whole game is no DLC's.
+	foreach (string type in (string[]) ["", "game"]) {
 		NocatFarm.Core.DlcAchievements.Map whole = NocatFarm.Core.DlcAchievements.Assemble(400, "Portal", portal,
 			NocatFarm.Core.DlcAchievements.Merge(400, [portalRtx with { Type = type }], "Portal"), 1, 1, DateTime.UtcNow);
 		Check($"dlc whole game: figures as big as the game's whole list are another game's, not a DLC's - nothing held (type \"{type}\")",
 			(whole.Groups.Count == 0) && (whole.Owners.Count == 0) && !whole.StoreSays && NothingHeld(whole), $"{whole.Owners.Count} held");
 	}
 
-	// Nearly the whole list is the same: 18 of a 20-achievement game is no DLC's; 17 is, and its block is held.
+	// Nearly the whole list from a page of unknown type: 18 of a 20-achievement game is no DLC's; 17 is, and its block is held.
 	List<NocatFarm.Core.DlcAchievements.Entry> twenty = [.. Enumerable.Range(0, 20).Select(static i => new NocatFarm.Core.DlcAchievements.Entry($"A_{i}", $"Achievement {i}", "Do a thing.", false))];
-	NocatFarm.Core.DlcAchievements.Map Twenty(int total) => NocatFarm.Core.DlcAchievements.Assemble(70, "Game", twenty, NocatFarm.Core.DlcAchievements.Merge(70, [
-		new(71, 71, "Game - The Story", total, [.. Enumerable.Range(20 - total, Math.Min(10, total)).Select(static i => $"Achievement {i}")], Type: "dlc")]), 1, 1, DateTime.UtcNow);
-	Check("dlc whole game: nearly all of the list is no DLC's (18 of 20); a big block that isn't is still held (17 of 20)",
+	NocatFarm.Core.DlcAchievements.Map Twenty(int total, string type = "") => NocatFarm.Core.DlcAchievements.Assemble(70, "Game", twenty, NocatFarm.Core.DlcAchievements.Merge(70, [
+		new(71, 71, "Game - The Story", total, [.. Enumerable.Range(20 - total, Math.Min(10, total)).Select(static i => $"Achievement {i}")], Type: type)]), 1, 1, DateTime.UtcNow);
+	Check("dlc whole game: nearly all of the list is no DLC's (18 of 20, type unknown); a big block that isn't is still held (17 of 20)",
 		(Twenty(18).Owners.Count == 0) && (Twenty(17).Owners.Count == 17) && (HoldOf(Twenty(17), "A_3") == NotOwned) && (HoldOf(Twenty(17), "A_2") == None),
 		$"{Twenty(18).Owners.Count}, {Twenty(17).Owners.Count}");
-	Check("dlc whole game: the line - all but under a tenth of the list (all of it under ten)",
+	Check("dlc whole game: the line - all but under a tenth of the list (all of it under ten) when the page's type isn't known",
 		NocatFarm.Core.DlcAchievements.WholeGame(15, 15) && NocatFarm.Core.DlcAchievements.WholeGame(14, 15) && !NocatFarm.Core.DlcAchievements.WholeGame(13, 15)
 		&& NocatFarm.Core.DlcAchievements.WholeGame(142, 157) && !NocatFarm.Core.DlcAchievements.WholeGame(141, 157)
 		&& !NocatFarm.Core.DlcAchievements.WholeGame(24, 157) && !NocatFarm.Core.DlcAchievements.WholeGame(39, 157)
@@ -8608,7 +8632,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		&& !Cos("Zombie Army 4", "Zombie Army 4") && Cos("Zombie Army 4: Skin Pack", "Zombie Army 4") && !Cos("Zombie Army 4: Skin Pack"));
 	NocatFarm.Core.DlcAchievements.Map ruleTwo = new() { App = 7, BuiltAt = DateTime.UtcNow, Rule = 2, Names = ["c4"] };
 	Check("dlc cosmetic: the rules moved on - a map built by the old ones is built again",
-		(NocatFarm.Core.DlcAchievements.RuleNow == 7) && NocatFarm.Core.DlcAchievements.Stale(ruleTwo) && !NocatFarm.Core.DlcAchievements.Stale(noDlc));
+		(NocatFarm.Core.DlcAchievements.RuleNow == 8) && NocatFarm.Core.DlcAchievements.Stale(ruleTwo) && !NocatFarm.Core.DlcAchievements.Stale(noDlc));
 
 	// 4. A game with DLC held back and some only Steam can award is held for DLC - so buying the DLC lets it go.
 	Check("dlc steam-only: held for DLC whenever any are held, and a game saved as Steam-only with some held is moved over",
@@ -11884,6 +11908,541 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	await cbot.DisposeAsync();
 }
 
+// ── bedtime: no new game with less than a sitting left ─────────────────────────────────────
+{
+	Check("bedtime: 20 seconds before bed starts no game (it read as no bedtime once the minutes rounded to 0)",
+		NocatFarm.Modules.HumanMode.BedTooCloseToStart(false, 0.33, 20) && NocatFarm.Modules.HumanMode.BedTooCloseToStart(false, 19.5, 20)
+		&& !NocatFarm.Modules.HumanMode.BedTooCloseToStart(false, 25, 20) && !NocatFarm.Modules.HumanMode.BedTooCloseToStart(true, 0.33, 20)
+		&& NocatFarm.Modules.HumanMode.BedTooCloseToStart(false, 4, 0) && !NocatFarm.Modules.HumanMode.BedTooCloseToStart(false, 6, 0)
+		&& !NocatFarm.Modules.HumanMode.BedTooCloseToStart(false, 0, 20) && !NocatFarm.Modules.HumanMode.BedTooCloseToStart(false, -30, 20));
+}
+
+// ── first start: the language comes from the computer ─────────────────────────────────────
+{
+	string? L(string? s) => NocatFarm.Config.SystemLanguage.FromLocale(s);
+	string? Env(params (string Name, string Value)[] vars) =>
+		NocatFarm.Config.SystemLanguage.FromEnvironment(n => vars.FirstOrDefault(v => v.Name == n).Value);
+
+	Check("language: LANG values read as their pack", L("de_DE.UTF-8") == "de" && L("pt_BR") == "pt-BR" && L("fr_FR.UTF-8@euro") == "fr"
+		&& L("ja_JP.eucJP") == "ja" && L("ko_KR.UTF-8") == "ko" && L("tr_TR") == "tr" && L("pl_PL.UTF-8") == "pl" && L("ru_RU.KOI8-R") == "ru"
+		&& L("es_MX.UTF-8") == "es" && L("en_GB.UTF-8") == "en" && L("de") == "de" && L("de-AT") == "de");
+	Check("language: C, POSIX and C.UTF-8 are English; a language with no pack is English; nothing is nothing",
+		L("C") == "en" && L("POSIX") == "en" && L("C.UTF-8") == "en" && L("fi_FI.UTF-8") == "en" && L("nl-NL") == "en"
+		&& L(null) == null && L("") == null && L("  ") == null);
+	Check("language: close variants - any Portuguese is pt-BR, Simplified Chinese is zh-CN, Traditional is English",
+		L("pt_PT.UTF-8") == "pt-BR" && L("pt-BR") == "pt-BR" && L("pt") == "pt-BR"
+		&& L("zh-Hans") == "zh-CN" && L("zh_CN.UTF-8") == "zh-CN" && L("zh-SG") == "zh-CN" && L("zh-Hans-CN") == "zh-CN" && L("zh") == "zh-CN"
+		&& L("zh-Hant") == "en" && L("zh_TW.UTF-8") == "en" && L("zh-HK") == "en" && L("zh-Hant-TW") == "en");
+	Check("language: LC_ALL beats LC_MESSAGES beats LANG, and an empty one is skipped",
+		Env(("LC_ALL", "ru_RU.UTF-8"), ("LC_MESSAGES", "fr_FR"), ("LANG", "de_DE.UTF-8")) == "ru"
+		&& Env(("LC_MESSAGES", "fr_FR"), ("LANG", "de_DE.UTF-8")) == "fr"
+		&& Env(("LC_ALL", ""), ("LANG", "de_DE.UTF-8")) == "de"
+		&& Env(("LC_ALL", "fi_FI.UTF-8"), ("LANG", "de_DE.UTF-8")) == "en"
+		&& Env(("LANG", "C")) == "en" && Env() == null);
+	Check("language: a Mac's AppleLanguages list - the first one counts",
+		NocatFarm.Config.SystemLanguage.FromAppleLanguages("(\n    \"de-DE\",\n    en\n)\n") == "de"
+		&& NocatFarm.Config.SystemLanguage.FromAppleLanguages("(\n    \"zh-Hans-CN\"\n)") == "zh-CN"
+		&& NocatFarm.Config.SystemLanguage.FromAppleLanguages("(\n)") == null && NocatFarm.Config.SystemLanguage.FromAppleLanguages("") == null);
+	Check("language: every pack is one the Language setting offers",
+		NocatFarm.Config.SystemLanguage.Packs.All(p => NocatFarm.Config.SystemLanguage.NameOf(p) != p) && NocatFarm.Config.SystemLanguage.NameOf("de") == "Deutsch");
+	string? here = NocatFarm.Config.SystemLanguage.Detect();
+	Check("language: asking this computer never throws - and Windows always says (its display language)",
+		(here == null || NocatFarm.Config.SystemLanguage.Packs.Contains(here)) && (!OperatingSystem.IsWindows() || here != null), here ?? "(nothing)");
+
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	Func<string?> realProbe = NocatFarm.Config.SystemLanguage.Probe;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-lang-" + Guid.NewGuid().ToString("N"));
+	NocatFarm.Config.SystemLanguage.Probe = static () => "de";
+	Action<bool> realStartup = NocatFarm.Config.SetupChoices.StartWithWindows;
+	NocatFarm.Config.SetupChoices.StartWithWindows = static _ => { };   // never the real startup entry
+
+	try {
+		// A brand-new install: the computer's language, written into the file like any other default.
+		NocatFarm.Config.ConfigStore.UseRoot(Path.Combine(tmpRoot, "fresh"));
+		NocatFarm.Config.GlobalConfig fresh = NocatFarm.Config.ConfigStore.LoadGlobal();
+		Check("language: a brand-new config takes the computer's language, saved in the file", fresh.Language == "de"
+			&& NocatFarm.Config.ConfigStore.LanguageFromComputer == "de" && NocatFarm.Config.ConfigStore.LoadGlobal().Language == "de"
+			&& NocatFarm.Config.ConfigStore.LanguageFromComputer == null);
+
+		// An existing config keeps what it says - English left at the default included.
+		NocatFarm.Config.ConfigStore.UseRoot(Path.Combine(tmpRoot, "existing"));
+		Directory.CreateDirectory(NocatFarm.Config.ConfigStore.ConfigDir);
+		File.WriteAllText(NocatFarm.Config.ConfigStore.GlobalPath, "{ \"Language\": \"en\" }");
+		string before = File.ReadAllText(NocatFarm.Config.ConfigStore.GlobalPath);
+		NocatFarm.Config.GlobalConfig kept = NocatFarm.Config.ConfigStore.LoadGlobal();
+		File.WriteAllText(NocatFarm.Config.ConfigStore.GlobalPath, "{ }");
+		NocatFarm.Config.GlobalConfig keptDefault = NocatFarm.Config.ConfigStore.LoadGlobal();
+		Check("language: an existing config isn't changed", kept.Language == "en" && keptDefault.Language == "en" && before.Contains("\"en\"")
+			&& NocatFarm.Config.ConfigStore.LanguageFromComputer == null);
+
+		// The installer's pick wins over the computer's - and a setup that doesn't name one keeps the computer's.
+		NocatFarm.Config.ConfigStore.UseRoot(Path.Combine(tmpRoot, "installer"));
+		// "Start with Windows" is a choice only Windows has - anywhere else the setup rightly refuses it.
+		string[] startup = OperatingSystem.IsWindows() ? ["StartWithWindows=false"] : [];
+		int code = NocatFarm.Config.SetupChoices.Run(["Language=ja", .. startup]);
+		Check("language: the installer's Language= wins over the computer's", (code == 0) && NocatFarm.Config.ConfigStore.LoadGlobal().Language == "ja", $"exit {code}");
+		NocatFarm.Config.ConfigStore.UseRoot(Path.Combine(tmpRoot, "installer-keeping"));
+		int keeping = NocatFarm.Config.SetupChoices.Run(startup);
+		Check("language: a setup that names no language leaves the computer's", (keeping == 0) && NocatFarm.Config.ConfigStore.LoadGlobal().Language == "de", $"exit {keeping}");
+
+		// Nothing to go on: English, as before.
+		NocatFarm.Config.SystemLanguage.Probe = static () => null;
+		NocatFarm.Config.ConfigStore.UseRoot(Path.Combine(tmpRoot, "silent"));
+		Check("language: a computer that doesn't say starts in English", NocatFarm.Config.ConfigStore.LoadGlobal().Language == "en"
+			&& NocatFarm.Config.ConfigStore.LanguageFromComputer == null);
+	} finally {
+		NocatFarm.Config.SystemLanguage.Probe = realProbe;
+		NocatFarm.Config.SetupChoices.StartWithWindows = realStartup;
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch {
+			// best effort
+		}
+	}
+}
+
+// ── DLC rule 8: a real DLC can be nearly all of a small game - only another game's page is "the whole game" ───────
+{
+	const NocatFarm.Core.DlcAchievements.Hold None = NocatFarm.Core.DlcAchievements.Hold.None;
+	const NocatFarm.Core.DlcAchievements.Hold NotOwned = NocatFarm.Core.DlcAchievements.Hold.NotOwned;
+	NocatFarm.Core.DlcAchievements.Hold HoldOf(NocatFarm.Core.DlcAchievements.Map m, string name, params uint[] owned) =>
+		NocatFarm.Core.DlcAchievements.HoldOf(m, name, new HashSet<uint>(owned));
+
+	// 20 achievements: 2 the game's own, 18 a story DLC's (positions 2-19). Rule 7 took any 18 of 20 as another game's
+	// copy, held nothing, and an account without the DLC had its 18 unlocked.
+	List<NocatFarm.Core.DlcAchievements.Entry> small = [.. Enumerable.Range(0, 20).Select(static i => new NocatFarm.Core.DlcAchievements.Entry($"S_{i}", $"Story {i}", "Do a thing.", false))];
+	NocatFarm.Core.DlcAchievements.Map Small(int total, string type, uint storeApp = 81) => NocatFarm.Core.DlcAchievements.Assemble(80, "Small Game", small,
+		NocatFarm.Core.DlcAchievements.Merge(80, [new(81, storeApp, "Small Game - The Long Story", total,
+			[.. Enumerable.Range(20 - total, Math.Min(10, total)).Select(static i => $"Story {i}")], Type: type)], "Small Game"), 1, 1, DateTime.UtcNow);
+
+	NocatFarm.Core.DlcAchievements.Map story = Small(18, "dlc");
+	Check("dlc rule 8: an 18-achievement DLC page in a 20-achievement game is a DLC - its 18 held without it, the game's own 2 not",
+		(story.Owners.Count == 18) && story.StoreSays && (HoldOf(story, "S_2") == NotOwned) && (HoldOf(story, "S_19") == NotOwned)
+		&& (HoldOf(story, "S_0") == None) && (HoldOf(story, "S_1") == None) && (HoldOf(story, "S_10", 81) == None),
+		$"{story.Owners.Count} held");
+	NocatFarm.Core.DlcAchievements.Map allDlc = Small(20, "DLC");
+	Check("dlc rule 8: a DLC page with every achievement (a game with none of its own) holds them all without it",
+		(allDlc.Owners.Count == 20) && (HoldOf(allDlc, "S_0") == NotOwned), $"{allDlc.Owners.Count} held");
+
+	// A DLC the store sends to a game's page, as Call of Duty's Modern Warfare II: nearly all of a launcher-like game is
+	// still a DLC; only all of it is another game's.
+	NocatFarm.Core.DlcAchievements.Map sent = Small(18, "game", 3595230);
+	NocatFarm.Core.DlcAchievements.Map sentWhole = Small(20, "game", 3595230);
+	Check("dlc rule 8: a DLC sent to a game's page - 18 of 20 held; all 20 is another game's and holds nothing",
+		(sent.Owners.Count == 18) && (HoldOf(sent, "S_5") == NotOwned) && (NocatFarm.Core.DlcAchievements.HoldOf(sent, "S_5", NocatFarm.Core.DlcAchievements.OwnedGroups(sent, static id => id == 3595230)) == None)
+		&& (sentWhole.Owners.Count == 0) && (sentWhole.Groups.Count == 0), $"{sent.Owners.Count}, {sentWhole.Owners.Count}");
+
+	Check("dlc rule 8: the line by the page's type - never for a DLC page, all of it for another type, all but a tenth unknown",
+		!NocatFarm.Core.DlcAchievements.WholeGame(18, 20, "dlc") && !NocatFarm.Core.DlcAchievements.WholeGame(20, 20, "DLC")
+		&& !NocatFarm.Core.DlcAchievements.WholeGame(500, 20, "dlc")
+		&& !NocatFarm.Core.DlcAchievements.WholeGame(19, 20, "game") && NocatFarm.Core.DlcAchievements.WholeGame(20, 20, "game")
+		&& NocatFarm.Core.DlcAchievements.WholeGame(15, 15, "game") && NocatFarm.Core.DlcAchievements.WholeGame(18, 20, "")
+		&& !NocatFarm.Core.DlcAchievements.WholeGame(17, 20, "") && !NocatFarm.Core.DlcAchievements.WholeGame(0, 0, "game"));
+
+	// Two ids for one DLC: one of them a DLC page is enough to make it one.
+	List<NocatFarm.Core.DlcAchievements.Dlc> joined = NocatFarm.Core.DlcAchievements.Merge(80, [
+		new(82, 90, "Small Game - Pack", 18, ["Story 2"], Type: "game"), new(90, 90, "Small Game - Pack", 18, ["Story 2"], Type: "dlc")], "Small Game");
+	Check("dlc rule 8: the type goes with the DLC through the merge, a DLC page's winning",
+		(joined.Count == 1) && (joined[0].Type == "dlc") && joined[0].Ids.SequenceEqual([82u, 90u])
+		&& (NocatFarm.Core.DlcAchievements.Join(new(1, [1], "", 0, [], Type: ""), new(2, [2], "", 0, [], Type: "game")).Type == "game"),
+		string.Join(",", joined.Select(static d => d.Type)));
+
+	NocatFarm.Core.DlcAchievements.Map rule7 = new() { App = 80, BuiltAt = DateTime.UtcNow, Rule = 7, Names = ["s_0"] };
+	Check("dlc rule 8: the rules moved on - a map built under rule 7 is built again",
+		(NocatFarm.Core.DlcAchievements.RuleNow == 8) && NocatFarm.Core.DlcAchievements.Stale(rule7) && !NocatFarm.Core.DlcAchievements.Stale(story));
+}
+
+// ── accounts: removing one deletes its own files, in any case, and nobody else's ───────────────────────────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	NocatFarm.Config.GlobalConfig realGlobal = NocatFarm.Config.Live.Global;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-rmfiles-" + Guid.NewGuid().ToString("N"));
+	string cfg = Path.Combine(tmpRoot, "config");
+	Directory.CreateDirectory(Path.Combine(cfg, "state", "history"));
+	Directory.CreateDirectory(Path.Combine(cfg, "tokens"));
+	Directory.CreateDirectory(Path.Combine(cfg, "authenticators"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+
+	try {
+		void Put(string rel) => File.WriteAllText(Path.Combine(cfg, rel), "{}");
+		bool Has(string rel) => File.Exists(Path.Combine(cfg, rel));
+
+		// main's own, written under several spellings of its name.
+		string[] mains = ["state/human-Main.json", "state/cheevo-main.json", "state/overnight-MAIN.seen", "state/trades-announced-mAin.json",
+			"state/queue-main.txt", "state/rep4rep-Main.json", "tokens/main.token", "tokens/MAIN.access"];
+		// Other accounts' whose names start (or end) the same, the app's own files, and main's authenticator.
+		string[] others = ["state/human-main2.json", "state/human-main-alt.json", "state/hunt-mainx.json", "state/cheevo-xmain.json",
+			"state/owner-ma.json", "tokens/main2.token", "tokens/main-alt.access", "state/lifetime.json", "state/lifetime-games.json",
+			"state/dlc-achievements.json", "state/history/2026-10.json", "authenticators/main.maFile", "main2.json", "state/human-main.json.bak"];
+
+		foreach (string rel in mains.Concat(others)) {
+			Put(rel);
+		}
+
+		int gone = NocatFarm.Config.ConfigStore.DeleteAccountFiles("main");
+		Check("remove files: all of main's own state and tokens go, whatever their case",
+			(gone == mains.Length) && mains.All(r => !Has(r)), $"{gone} deleted, left: {string.Join(", ", mains.Where(Has))}");
+		Check("remove files: an account whose name starts the same keeps its files, and so do the app's own and main's authenticator",
+			others.All(Has), $"missing: {string.Join(", ", others.Where(r => !Has(r)))}");
+		Check("remove files: a name that isn't one deletes nothing",
+			(NocatFarm.Config.ConfigStore.DeleteAccountFiles("..") == 0) && (NocatFarm.Config.ConfigStore.DeleteAccountFiles("") == 0) && others.All(Has));
+		Check("remove files: only exactly the name between start and end",
+			NocatFarm.Config.ConfigStore.IsAccountFile("human-MAIN.json", "main", "human-", ".json")
+			&& !NocatFarm.Config.ConfigStore.IsAccountFile("human-main2.json", "main", "human-", ".json")
+			&& !NocatFarm.Config.ConfigStore.IsAccountFile("xhuman-main.json", "main", "human-", ".json")
+			&& !NocatFarm.Config.ConfigStore.IsAccountFile("human-main.json.tmp", "main", "human-", ".json")
+			&& !NocatFarm.Config.ConfigStore.IsAccountFile("human-main.seen", "main", "human-", ".json"));
+
+		// Every per-account file the app writes is on the list, and no two starts can claim the same file.
+		string src = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm");
+		HashSet<string> written = [.. Directory.EnumerateFiles(src, "*.cs", SearchOption.AllDirectories)
+			.SelectMany(static f => System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(f),
+				@"\$""([a-z0-9][a-z0-9-]*-)\{(?:Bot\.Name|bot\.Name|Name|bot|name|botName)\}(\.[a-zA-Z]+)""").Select(static m => m.Groups[1].Value + "|" + m.Groups[2].Value))
+			.Where(static k => k != "netlog-|.txt")];   // the network log, beside the app - a log, not state
+		HashSet<string> listed = [.. NocatFarm.Config.ConfigStore.AccountFiles.Where(static f => f.Dir == "state").Select(static f => f.Start + "|" + f.End)];
+		var starts = NocatFarm.Config.ConfigStore.AccountFiles.Where(static f => f.Start.Length > 0).ToList();
+		Check("remove files: every per-account state file the app writes is deleted with the account",
+			(written.Count >= 18) && written.IsSubsetOf(listed), $"{written.Count} found, not listed: {string.Join(", ", written.Except(listed))}");
+		Check("remove files: no start is the start of another (one file, one kind)",
+			!starts.Any(a => starts.Any(b => (a != b) && (a.Dir == b.Dir) && b.Start.StartsWith(a.Start, StringComparison.OrdinalIgnoreCase))));
+
+		// The real thing: removed, added back as "MIXED", and the backup has each file once.
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		await mgr.AddAsync("mixed", new NocatFarm.Config.BotConfig { Enabled = false });
+		Put("state/human-mixed.json");
+		Put("state/hunt-Mixed.json");
+		Put("state/human-mixed2.json");
+		bool removed = await mgr.RemoveAsync("MIXED");
+		Check("remove: the account's state goes with it, another account's stays",
+			removed && !Has("mixed.json") && !Has("state/human-mixed.json") && !Has("state/hunt-Mixed.json") && Has("state/human-mixed2.json"));
+		await mgr.AddAsync("MIXED", new NocatFarm.Config.BotConfig { Enabled = false });
+		Put("state/human-MIXED.json");
+		NocatFarm.Core.Backup.Inspection back = NocatFarm.Core.Backup.Inspect(NocatFarm.Core.Backup.Create());
+		Check("remove: added back in another case, the backup still restores", back.Ok && back.Accounts.Contains("MIXED"), back.Error ?? "");
+		await mgr.RemoveAsync("MIXED");
+	} finally {
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+		NocatFarm.Config.Live.Global = realGlobal;
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+		}
+	}
+}
+
+// ── user count: the hourly ping to nocat.lol, never the real network here ────────────────────────────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	NocatFarm.Config.GlobalConfig realGlobal = NocatFarm.Config.Live.Global;
+	string? realPingUrl = Environment.GetEnvironmentVariable("NOCATFARM_PING_URL");
+	string ucRoot = Path.Combine(Path.GetTempPath(), "nf-usercount-" + Guid.NewGuid().ToString("N"));
+	string ucOther = Path.Combine(Path.GetTempPath(), "nf-usercount-b-" + Guid.NewGuid().ToString("N"));
+	Type uc = typeof(NocatFarm.Core.UserCount);
+	bool wasSuppressed = NocatFarm.Log.Suppressed;
+	NocatFarm.Log.Suppressed = true;
+
+	try {
+		Environment.SetEnvironmentVariable("NOCATFARM_PING_URL", null);
+		NocatFarm.Config.ConfigStore.UseRoot(ucRoot);
+		NocatFarm.Config.ConfigStore.SaveGlobal(new NocatFarm.Config.GlobalConfig());
+
+		// The install id: made once, 32 lowercase hex, kept in state/ and nowhere else.
+		Check("user count: no id until one is needed", !File.Exists(NocatFarm.Core.UserCount.IdPath));
+		string id = NocatFarm.Core.UserCount.InstallId();
+		Check("user count: the install id is 32 lowercase hex", (id.Length == 32) && id.All(c => char.IsAsciiDigit(c) || c is >= 'a' and <= 'f'), id.Length.ToString());
+		Check("user count: asked again it's the same id, kept on disk", (NocatFarm.Core.UserCount.InstallId() == id) && (File.ReadAllText(NocatFarm.Core.UserCount.IdPath).Trim() == id));
+		Check("user count: the id isn't in the settings file", !File.ReadAllText(NocatFarm.Config.ConfigStore.GlobalPath).Contains(id, StringComparison.Ordinal));
+
+		string? Kind(string rel) => (string?) typeof(NocatFarm.Core.Backup).GetMethod("Kind", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)!.Invoke(null, [rel]);
+		byte[] zip = NocatFarm.Core.Backup.Create();
+		NocatFarm.Core.Backup.Inspection look = NocatFarm.Core.Backup.Inspect(zip);
+		bool idInZip = false;
+		using (var za = new System.IO.Compression.ZipArchive(new MemoryStream(zip))) {
+			foreach (var entry in za.Entries) {
+				using var sr = new StreamReader(entry.Open());
+				idInZip |= sr.ReadToEnd().Contains(id, StringComparison.Ordinal);
+			}
+		}
+		Check("user count: the id isn't in a backup (another PC restoring it gets its own)", look.Ok && (Kind("state/install-id.txt") == null)
+			&& !look.Files.Any(f => f.Contains("install-id", StringComparison.Ordinal)) && !idInZip, string.Join(",", look.Files));
+
+		NocatFarm.Config.ConfigStore.UseRoot(ucOther);
+		Check("user count: another install makes its own id", NocatFarm.Core.UserCount.InstallId() is { } other && (other != id) && NocatFarm.Core.UserCount.IsId(other));
+		File.WriteAllText(NocatFarm.Core.UserCount.IdPath, "not an id\n");
+		Check("user count: a spoilt id file gets a fresh id", NocatFarm.Core.UserCount.IsId(NocatFarm.Core.UserCount.InstallId())
+			&& NocatFarm.Core.UserCount.IsId(File.ReadAllText(NocatFarm.Core.UserCount.IdPath).Trim()));
+		NocatFarm.Config.ConfigStore.UseRoot(ucRoot);
+
+		// What's sent: the id, the version and the platform - nothing else.
+		using (System.Text.Json.JsonDocument body = System.Text.Json.JsonDocument.Parse(NocatFarm.Core.UserCount.Body())) {
+			string[] keys = [.. body.RootElement.EnumerateObject().Select(p => p.Name)];
+			Check("user count: the body is the id, the version and the platform, nothing else", keys.SequenceEqual(["id", "v", "os"])
+				&& (body.RootElement.GetProperty("id").GetString() == id) && (body.RootElement.GetProperty("v").GetString() == NocatFarm.Build.Version)
+				&& new[] { "windows", "linux", "mac", "docker" }.Contains(body.RootElement.GetProperty("os").GetString()), string.Join(",", keys));
+		}
+		Check("user count: Windows says windows", !OperatingSystem.IsWindows() || (NocatFarm.Core.UserCount.Os == "windows"));
+		Check("user count: HTTPS to nocat.lol", NocatFarm.Core.UserCount.Endpoint == "https://nocat.lol/api/farm/ping" && NocatFarm.Core.UserCount.Target == NocatFarm.Core.UserCount.Endpoint);
+		Environment.SetEnvironmentVariable("NOCATFARM_PING_URL", "https://example.com/steal");
+		Check("user count: a test address that isn't this PC is ignored", NocatFarm.Core.UserCount.Target == NocatFarm.Core.UserCount.Endpoint);
+		Environment.SetEnvironmentVariable("NOCATFARM_PING_URL", "http://127.0.0.1:9/api/farm/ping");
+		Check("user count: a test address on this PC is used (the browser test's stub)", NocatFarm.Core.UserCount.Target == "http://127.0.0.1:9/api/farm/ping");
+		Environment.SetEnvironmentVariable("NOCATFARM_PING_URL", null);
+
+		// The answer.
+		Check("user count: reads a good answer", NocatFarm.Core.UserCount.ParseReply(System.Net.HttpStatusCode.OK, """{"users":212}""") == 212);
+		Check("user count: bad JSON is unknown", NocatFarm.Core.UserCount.ParseReply(System.Net.HttpStatusCode.OK, "<html>oops") == null);
+		Check("user count: a number that isn't one is unknown", NocatFarm.Core.UserCount.ParseReply(System.Net.HttpStatusCode.OK, """{"users":"212"}""") == null
+			&& NocatFarm.Core.UserCount.ParseReply(System.Net.HttpStatusCode.OK, """{"users":2.5}""") == null
+			&& NocatFarm.Core.UserCount.ParseReply(System.Net.HttpStatusCode.OK, """{"users":0}""") == null
+			&& NocatFarm.Core.UserCount.ParseReply(System.Net.HttpStatusCode.OK, """[212]""") == null
+			&& NocatFarm.Core.UserCount.ParseReply(System.Net.HttpStatusCode.OK, """{"count":212}""") == null);
+		Check("user count: anything but a 200 is unknown", NocatFarm.Core.UserCount.ParseReply(System.Net.HttpStatusCode.ServiceUnavailable, """{"users":212}""") == null
+			&& NocatFarm.Core.UserCount.ParseReply(System.Net.HttpStatusCode.NoContent, "") == null);
+
+		// The ping itself, through a fake handler.
+		FakePing Answer(System.Net.HttpStatusCode code, string text) =>
+			new((_, _) => Task.FromResult(new HttpResponseMessage(code) { Content = new StringContent(text) }));
+		NocatFarm.Config.GlobalConfig on = new(), off = new() { CountMeAsUser = false };
+		Check("user count: Count me as a user is on by default", on.CountMeAsUser);
+
+		NocatFarm.Core.UserCount.Forget();
+		FakePing silent = Answer(System.Net.HttpStatusCode.OK, """{"users":212}""");
+		using (HttpClient http = NocatFarm.Core.UserCount.MakeClient(silent)) {
+			bool sent = await NocatFarm.Core.UserCount.PingAsync(http, off);
+			Check("user count: off sends nothing at all", !sent && (silent.Calls == 0));
+		}
+
+		FakePing good = Answer(System.Net.HttpStatusCode.OK, """{"users":212}""");
+		using (HttpClient http = NocatFarm.Core.UserCount.MakeClient(good)) {
+			bool ok = await NocatFarm.Core.UserCount.PingAsync(http, on);
+			Check("user count: a good answer is kept", ok && (good.Calls == 1) && (NocatFarm.Core.UserCount.Current(on, DateTime.UtcNow) == 212));
+			Check("user count: one POST of JSON to nocat.lol, as nocat.farm/<version>", (good.Method == "POST") && (good.Url == NocatFarm.Core.UserCount.Endpoint)
+				&& (good.ContentType == "application/json") && (good.UserAgent == "nocat.farm/" + NocatFarm.Build.Version) && good.Body.Contains(id, StringComparison.Ordinal),
+				$"{good.Method} {good.Url} {good.ContentType} {good.UserAgent}");
+		}
+		Check("user count: off hides the count it has", NocatFarm.Core.UserCount.Current(off, DateTime.UtcNow) == null);
+
+		foreach ((string what, FakePing bad) in new[] {
+			("bad JSON", Answer(System.Net.HttpStatusCode.OK, "not json {")),
+			("a 503", Answer(System.Net.HttpStatusCode.ServiceUnavailable, """{"users":999}""")),
+			("a 404", Answer(System.Net.HttpStatusCode.NotFound, "")),
+			("no connection", new FakePing((_, _) => throw new HttpRequestException("no route"))) }) {
+			NocatFarm.Core.UserCount.Forget();
+			using HttpClient http = NocatFarm.Core.UserCount.MakeClient(bad);
+			bool ok = await NocatFarm.Core.UserCount.PingAsync(http, on);
+			Check($"user count: {what} is skipped quietly, once, and the count stays unknown", !ok && (bad.Calls == 1) && (NocatFarm.Core.UserCount.Current(on, DateTime.UtcNow) == null));
+		}
+
+		FakePing slow = new(async (_, ct) => { await Task.Delay(TimeSpan.FromSeconds(30), ct); return new HttpResponseMessage(System.Net.HttpStatusCode.OK); });
+		using (HttpClient http = NocatFarm.Core.UserCount.MakeClient(slow)) {
+			Check("user count: the client gives up after 10 seconds", http.Timeout == TimeSpan.FromSeconds(10));
+			http.Timeout = TimeSpan.FromMilliseconds(200);
+			bool timeoutThrew = false, ok = true;
+			try {
+				ok = await NocatFarm.Core.UserCount.PingAsync(http, on);
+			} catch (Exception) {
+				timeoutThrew = true;
+			}
+			Check("user count: a timeout (a cancellation nobody asked for) doesn't escape", !timeoutThrew && !ok);
+		}
+		using (HttpClient http = NocatFarm.Core.UserCount.MakeClient(Answer(System.Net.HttpStatusCode.OK, """{"users":5}"""))) {
+			using CancellationTokenSource closing = new();
+			closing.Cancel();
+			bool closeThrew = false;
+			try {
+				await NocatFarm.Core.UserCount.PingAsync(http, on, closing.Token);
+			} catch (Exception) {
+				closeThrew = true;
+			}
+			Check("user count: closing mid-ping doesn't throw either", !closeThrew);
+		}
+
+		// Stale counts are hidden.
+		DateTime nowUtc = DateTime.UtcNow;
+		NocatFarm.Core.UserCount.Remember(212, nowUtc.AddHours(-2));
+		Check("user count: two hours old is still shown", NocatFarm.Core.UserCount.Current(on, nowUtc) == 212);
+		NocatFarm.Core.UserCount.Remember(212, nowUtc.AddHours(-3.5));
+		Check("user count: older than three hours is hidden", NocatFarm.Core.UserCount.Current(on, nowUtc) == null);
+		TimeSpan[] pingGaps = [.. Enumerable.Range(0, 500).Select(_ => NocatFarm.Core.UserCount.NextGap())];
+		Check("user count: an hour apart, give or take a few minutes", pingGaps.All(g => (g >= TimeSpan.FromMinutes(55)) && (g <= TimeSpan.FromMinutes(65))) && (pingGaps.Distinct().Count() > 10));
+
+		// The Discord card's second line.
+		string Line(int choice, int? people) => NocatFarm.Core.DiscordPresence.SecondLine(choice, people, "5 cards today", _ => 600);
+		Check("discord card: people using nocat.farm", Line(NocatFarm.Core.DiscordPresence.LinePeople, 212) == "212 people using nocat.farm", Line(3, 212));
+		Check("discord card: just one person", Line(3, 1) == "1 person using nocat.farm", Line(3, 1));
+		Check("discord card: count unknown (or Count me as a user off) falls back to the cards today", Line(3, null) == "5 cards today"
+			&& Line(3, NocatFarm.Core.UserCount.Current(off, DateTime.UtcNow)) == "5 cards today");
+		Check("discord card: the other choices are untouched", (Line(0, 212) == "5 cards today") && (Line(1, 212) == "10 hrs past week") && (Line(2, null) == "10 hrs past month"));
+		Check("discord card: people using nocat.farm is the default", new NocatFarm.Config.GlobalConfig().DiscordSecondLine == NocatFarm.Core.DiscordPresence.LinePeople);
+		Check("settings: Count me as a user is there, Show account names is gone",
+			(NocatFarm.Config.Settings.FindGlobal("CountMeAsUser") is { Kind: NocatFarm.Config.SettingKind.Bool, Advanced: false })
+			&& (NocatFarm.Config.Settings.FindGlobal("DiscordShowNames") == null) && (typeof(NocatFarm.Config.GlobalConfig).GetProperty("DiscordShowNames") == null)
+			&& NocatFarm.Config.Settings.ParseChoices(NocatFarm.Config.Settings.FindGlobal("DiscordSecondLine")!).Select(o => o.Value).Order().SequenceEqual([0, 1, 2, 3]));
+
+		// An old config with DiscordShowNames still loads: names on take the new default, a count picked is kept.
+		NocatFarm.Config.GlobalConfig LoadOld(string json) {
+			File.WriteAllText(NocatFarm.Config.ConfigStore.GlobalPath, json);
+			return NocatFarm.Config.ConfigStore.LoadGlobal();
+		}
+		NocatFarm.Config.GlobalConfig named = LoadOld("""{ "StatusEveryMinutes": 7, "DiscordShowNames": true, "DiscordSecondLine": 1 }""");
+		Check("old config: DiscordShowNames on still loads, and takes people using nocat.farm", !NocatFarm.Config.ConfigStore.GlobalBroken
+			&& (named.StatusEveryMinutes == 7) && (named.DiscordSecondLine == NocatFarm.Core.DiscordPresence.LinePeople));
+		Check("old config: ...and is written back without the old key", !File.ReadAllText(NocatFarm.Config.ConfigStore.GlobalPath).Contains("DiscordShowNames", StringComparison.Ordinal)
+			&& (NocatFarm.Config.ConfigStore.LoadGlobal().DiscordSecondLine == NocatFarm.Core.DiscordPresence.LinePeople));
+		Check("old config: names off with a count picked keeps the count", LoadOld("""{ "DiscordShowNames": false, "DiscordSecondLine": 2 }""").DiscordSecondLine == 2
+			&& LoadOld("""{ "discordShowNames": false, "DiscordSecondLine": 0 }""").DiscordSecondLine == 0);
+		Check("old config: names off with no count written keeps what it showed (hours past week)", LoadOld("""{ "DiscordShowNames": false }""").DiscordSecondLine == 1);
+		Check("old config: names on with no count written takes the new default", LoadOld("""{ "DiscordShowNames": true }""").DiscordSecondLine == NocatFarm.Core.DiscordPresence.LinePeople);
+		Check("new config: a count picked since is never touched", LoadOld("""{ "DiscordSecondLine": 0 }""").DiscordSecondLine == 0
+			&& LoadOld("""{ "CountMeAsUser": false }""") is { CountMeAsUser: false, DiscordSecondLine: NocatFarm.Core.DiscordPresence.LinePeople });
+	} finally {
+		NocatFarm.Core.UserCount.Forget();
+		Environment.SetEnvironmentVariable("NOCATFARM_PING_URL", realPingUrl);
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+		NocatFarm.Config.Live.Global = realGlobal;
+		NocatFarm.Log.Suppressed = wasSuppressed;
+
+		foreach (string dir in new[] { ucRoot, ucOther }) {
+			try {
+				Directory.Delete(dir, true);
+			} catch (IOException) {
+				// a temp folder
+			}
+		}
+	}
+}
+
+// ── user count: only switching it on brings the ping forward; no test copy ever pings nocat.lol ─────────────────────
+{
+	const BindingFlags S = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
+	Type uc = typeof(NocatFarm.Core.UserCount);
+	FieldInfo stopField = uc.GetField("_stop", S)!, nextField = uc.GetField("_next", S)!, wasOnField = uc.GetField("_wasOn", S)!;
+	object? stopBefore = stopField.GetValue(null), nextBefore = nextField.GetValue(null), wasOnBefore = wasOnField.GetValue(null);
+	string? pingUrlBefore = Environment.GetEnvironmentVariable("NOCATFARM_PING_URL");
+
+	try {
+		// Running (a stop handle there, as Start leaves it - nothing is started here), the next ping an hour away.
+		Environment.SetEnvironmentVariable("NOCATFARM_PING_URL", null);
+		using CancellationTokenSource running = new();
+		stopField.SetValue(null, running);
+		NocatFarm.Core.UserCount.Forget();
+		DateTime now = DateTime.UtcNow;
+		void HourAway() => nextField.SetValue(null, now.AddHours(1));
+
+		HourAway();
+		NocatFarm.Core.UserCount.Nudge(false, now);
+		bool switchedOn = NocatFarm.Core.UserCount.Nudge(true, now);
+		Check("user count: switching Count me as a user on brings the ping forward (1-3 minutes)", switchedOn
+			&& (DateTime) nextField.GetValue(null)! <= DateTime.UtcNow.AddMinutes(3));
+
+		// The dashboard runs it on every save, for every setting: it was on already, so nothing moves - with nocat.lol not
+		// answering, every save used to send another ping.
+		int moved = 0;
+		for (int i = 0; i < 5; i++) {
+			HourAway();
+			moved += NocatFarm.Core.UserCount.Nudge(true, now) ? 1 : 0;
+		}
+		Check("user count: saving other settings with it on doesn't send another ping", (moved == 0) && ((DateTime) nextField.GetValue(null)! == now.AddHours(1)), $"{moved} moved");
+
+		HourAway();
+		NocatFarm.Core.UserCount.Nudge(false, now);
+		Check("user count: switched off, nothing is brought forward", (DateTime) nextField.GetValue(null)! == now.AddHours(1));
+		NocatFarm.Core.UserCount.Remember(212, now);
+		Check("user count: switched back on with a count still showing, nothing is brought forward", !NocatFarm.Core.UserCount.Nudge(true, now)
+			&& ((DateTime) nextField.GetValue(null)! == now.AddHours(1)));
+		NocatFarm.Core.UserCount.Forget();
+		NocatFarm.Core.UserCount.Nudge(false, now);
+		Check("user count: off and on again (no count), it's brought forward again", NocatFarm.Core.UserCount.Nudge(true, now));
+	} finally {
+		stopField.SetValue(null, stopBefore);
+		nextField.SetValue(null, nextBefore);
+		wasOnField.SetValue(null, wasOnBefore);
+		NocatFarm.Core.UserCount.Forget();
+		Environment.SetEnvironmentVariable("NOCATFARM_PING_URL", pingUrlBefore);
+	}
+
+	// Every config a test script or workflow writes switches the ping off, and the CI runs and test containers point it at a
+	// dead port here as well - a test run never counts itself on nocat.lol. (The browser test points it at its stub.)
+	string repo = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..");
+	string workflows = Path.Combine(repo, ".github", "workflows");
+	IEnumerable<string> scripts = Directory.GetFiles(Path.Combine(repo, "tests"), "*.sh")
+		.Concat(Directory.GetFiles(Path.Combine(repo, "tools", "release-tests"), "*.ps1"))
+		.Concat(Directory.Exists(workflows) ? Directory.GetFiles(workflows, "*.yml") : []);
+	System.Text.RegularExpressions.Regex configLiteral = new(@"WebPort[\\""`']*\s*:");
+	System.Text.RegularExpressions.Regex pingOff = new(@"CountMeAsUser[\\""`']*\s*:\s*false");
+	List<string> counting = [];
+	int literals = 0;
+	foreach (string file in scripts) {
+		string[] lines = File.ReadAllLines(file);
+		for (int i = 0; i < lines.Length; i++) {
+			if (configLiteral.IsMatch(lines[i]) && !lines[i].Contains("grep", StringComparison.Ordinal)) {
+				literals++;
+				if (!pingOff.IsMatch(lines[i])) {
+					counting.Add($"{Path.GetFileName(file)}:{i + 1}");
+				}
+			}
+		}
+	}
+	string install = File.ReadAllText(Path.Combine(repo, "tools", "release-tests", "install.ps1"));
+	Check("user count: every config a test writes has Count me as a user off", (literals >= 10) && (counting.Count == 0)
+		&& install.Contains("-NotePropertyName CountMeAsUser -NotePropertyValue $false", StringComparison.Ordinal),
+		$"{literals} configs, on in: {string.Join(", ", counting)}");
+
+	const string deadPort = "NOCATFARM_PING_URL: http://127.0.0.1:9/api/farm/ping";
+	string Read(params string[] parts) => File.ReadAllText(Path.Combine([repo, .. parts])).Replace("\r\n", "\n");
+	bool workflowsChecked = !Directory.Exists(workflows) || (Read(".github", "workflows", "linux.yml").Contains("\nenv:\n  " + deadPort + "\n", StringComparison.Ordinal)
+		&& Read(".github", "workflows", "macos.yml").Contains("\nenv:\n  " + deadPort + "\n", StringComparison.Ordinal)
+		&& Read(".github", "workflows", "linux.yml").Contains("docker run -d --name nf --init -e NOCATFARM_WEB_PASSWORD=a-long-test-password-123 -e TZ=Europe/London -e NOCATFARM_PING_URL ", StringComparison.Ordinal));
+	Check("user count: the CI runs, their Docker container and the compose test ping a dead port here, not nocat.lol", workflowsChecked
+		&& Read("tests", "docker-compose.sh").Contains("      " + deadPort + "\n", StringComparison.Ordinal)
+		&& Read("tests", "update-from-release.sh").Contains("NOCATFARM_PING_URL=\"http://127.0.0.1:9/api/farm/ping\"", StringComparison.Ordinal)
+		&& Read("tools", "release-tests", "update-from-release.ps1").Contains("$env:NOCATFARM_PING_URL = 'http://127.0.0.1:9/api/farm/ping'", StringComparison.Ordinal));
+}
+
+// ── 'wake' just before bed, and a Mac set to Simplified Chinese outside mainland China ─────────────
+{
+	Check("wake: with bed closer than the shortest sitting it stays up for one (a plain wake started nothing and was done for the day)",
+		NocatFarm.Modules.HumanMode.WakeStaysUp(false, true, false, true) && !NocatFarm.Modules.HumanMode.WakeStaysUp(false, true, false, false)
+		&& NocatFarm.Modules.HumanMode.WakeStaysUp(true, true, false, false) && NocatFarm.Modules.HumanMode.WakeStaysUp(false, false, false, false)
+		&& NocatFarm.Modules.HumanMode.WakeStaysUp(false, true, true, false));
+	string wakeSrc = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Modules", "HumanMode.cs")).Replace("\r\n", "\n");
+	Check("wake: WakeNow asks whether bed is too close, by the same rule a new game is held back by",
+		wakeSrc.Contains("bool bedClose = !lastNight && BedTooCloseToStart(false, (PlanBed() - now).TotalMinutes, Bot.Cfg.SessionMinMinutes);", StringComparison.Ordinal)
+		&& wakeSrc.Contains("if (WakeStaysUp(lastNight, InPlannedHours(now), _playedMinutesToday >= _targetMinutes, bedClose)) {", StringComparison.Ordinal));
+	Check("language: a script said outright beats the region - zh-Hans-HK, zh-Hans-TW and zh-Hans-MO are Simplified",
+		NocatFarm.Config.SystemLanguage.FromLocale("zh-Hans-HK") == "zh-CN" && NocatFarm.Config.SystemLanguage.FromLocale("zh-Hans-TW") == "zh-CN"
+		&& NocatFarm.Config.SystemLanguage.FromLocale("zh-Hans-MO") == "zh-CN" && NocatFarm.Config.SystemLanguage.FromLocale("zh-Hant-HK") == "en"
+		&& NocatFarm.Config.SystemLanguage.FromLocale("zh-HK") == "en"
+		&& NocatFarm.Config.SystemLanguage.FromAppleLanguages("(\n    \"zh-Hans-HK\",\n    en\n)\n") == "zh-CN");
+}
+
+// ── a night's sleep is "Sleeps at least" (6-9 hours by default): a 05:23 bedtime no longer gets up at 09:31 ─────
+{
+	MethodInfo rollSleep = typeof(NocatFarm.Modules.HumanMode).GetMethod("RollDay", BindingFlags.NonPublic | BindingFlags.Static)!;
+	DateTime day = new(2026, 10, 4);
+	DateTime lateBed = new(2026, 10, 4, 5, 23, 0);
+
+	int Earliest(NocatFarm.Config.BotConfig cfg) {
+		int earliest = int.MaxValue;
+
+		for (int seed = 0; seed < 400; seed++) {
+			object roll = rollSleep.Invoke(null, [cfg, day, 75, true, lateBed, new Random(seed)])!;
+			earliest = Math.Min(earliest, (int) roll.GetType().GetProperty("WakeMinute")!.GetValue(roll)!);
+		}
+
+		return earliest;
+	}
+
+	int byDefault = Earliest(new NocatFarm.Config.BotConfig { LegitMode = true });
+	int longer = Earliest(new NocatFarm.Config.BotConfig { LegitMode = true, SleepMinHours = 8, SleepMaxHours = 10 });
+	Check("sleep: after a 05:23 bedtime the next day starts 6 hours later at the earliest by default (it was 4)", byDefault >= (5 * 60) + 23 + (6 * 60), $"earliest {byDefault / 60:00}:{byDefault % 60:00}");
+	Check("sleep: \"Sleeps at least\" 8 holds it to 13:23 at the earliest", longer >= (5 * 60) + 23 + (8 * 60), $"earliest {longer / 60:00}:{longer % 60:00}");
+	Check("sleep: a range typed backwards still reads lowest to highest", NocatFarm.Modules.HumanMode.SleepMinutes(new NocatFarm.Config.BotConfig { SleepMinHours = 9, SleepMaxHours = 6 }) == (360, 540));
+}
+
 // SETTINGSCOUNT
 Console.WriteLine($"settings: {NocatFarm.Config.Settings.Global.Count} global ({NocatFarm.Config.Settings.Global.Count(d => !d.Advanced)} basic), {NocatFarm.Config.Settings.Bot.Count} per account ({NocatFarm.Config.Settings.Bot.Count(d => !d.Advanced)} basic)");
 Console.WriteLine(fails == 0 ? "all passed" : $"{fails} failed");
@@ -11899,5 +12458,26 @@ sealed class RaceProbeModule(NocatFarm.Core.Bot bot) : NocatFarm.Core.IBotModule
 	public Task StopAsync() {
 		SawSignIn = bot.OnlineSince != null;
 		return Task.CompletedTask;
+	}
+}
+
+/// <summary>A pretend nocat.lol for the user count checks: answers however it's told and notes what it was sent. Nothing reaches the network.</summary>
+sealed class FakePing(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> answer) : HttpMessageHandler {
+	public int Calls { get; private set; }
+	public string Method { get; private set; } = "";
+	public string Url { get; private set; } = "";
+	public string ContentType { get; private set; } = "";
+	public string UserAgent { get; private set; } = "";
+	public string Body { get; private set; } = "";
+
+	protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) {
+		Calls++;
+		Method = request.Method.Method;
+		Url = request.RequestUri?.ToString() ?? "";
+		ContentType = request.Content?.Headers.ContentType?.ToString() ?? "";
+		UserAgent = request.Headers.UserAgent.ToString();
+		Body = request.Content == null ? "" : await request.Content.ReadAsStringAsync(ct);
+
+		return await answer(request, ct);
 	}
 }

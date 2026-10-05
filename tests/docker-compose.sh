@@ -27,6 +27,8 @@ services:
     user: "$(id -u):$(id -g)"
     environment:
       NOCATFARM_TRUSTED_PROXIES: 172.16.0.0/12
+      # A test container never counts itself on nocat.lol: its user-count ping goes to a dead port inside it.
+      NOCATFARM_PING_URL: http://127.0.0.1:9/api/farm/ping
     healthcheck:
       interval: 5s
       start_period: 5s

@@ -33,6 +33,8 @@ services:
       # Your time zone, from .env (TZ=Europe/London, say). Human mode's day, the night-time rules and the daily report all
       # follow it. Without one it's UTC.
       TZ: ${TZ:-Etc/UTC}
+      # The language of the dashboard and the log on the very first start (de_DE.UTF-8 is German). Change it later in Settings.
+      # LANG: de_DE.UTF-8
       # REQUIRED - compose won't start without it (it's read from .env). With no password the dashboard only
       # lets in requests from inside the container itself, which through a published port is nobody.
       NOCATFARM_WEB_PASSWORD: ${NOCATFARM_WEB_PASSWORD:?put NOCATFARM_WEB_PASSWORD=yourpassword in a .env file next to docker-compose.yml}

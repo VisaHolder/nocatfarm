@@ -9,6 +9,10 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Saved Steam pages the checks parse (account details replaced). -->
+    <None Include="samples\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\src\NocatFarm\NocatFarm.csproj" />
   </ItemGroup>
 </Project>

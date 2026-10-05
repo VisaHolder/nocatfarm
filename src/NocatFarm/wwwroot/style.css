@@ -361,6 +361,7 @@ nav { display: flex; flex-direction: row; gap: var(--s1); flex: 0 1 auto; overfl
 label.inline { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
 
 .verdict { font-size: 20px; margin: 2px 0 var(--s4); max-width: 70ch; letter-spacing: .3px; }
+.usercount { margin: calc(-1 * var(--s3)) 0 var(--s4); }
 
 /* auto-FIT collapses the empty tracks and stretches whatever is left, so four tiles each holding one number
    became 328px wide on a big monitor. A max in the minmax stops them growing; start keeps them together. */
@@ -980,8 +981,10 @@ button.ghost:hover:not(:disabled) { background: var(--line); }
 .wact b { cursor: pointer; color: var(--muted); font-weight: 400; font-size: 13px; line-height: 1; }
 .wact b:hover { color: var(--text); }
 .wact b:last-child:hover { color: var(--bad); }
-.wadd { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
-.wadd input { max-width: 180px; }
+.wadd { display: flex; gap: 8px; align-items: center; margin-top: 4px; position: relative; }
+.wadd input { max-width: 220px; }
+/* The main game's swap box drops its matches down under it, like the add box's. */
+.wname { position: relative; }
 
 /* What the friends list actually shows. Dimmed when nobody can see the account at all. */
 /* Dragging an account card. grab/grabbing on the name only - making the whole card grab would fight the

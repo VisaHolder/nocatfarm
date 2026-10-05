@@ -1177,7 +1177,6 @@
     "While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.": "nocat.farm이 열려 있는 동안 Discord 프로필에 게임처럼 표시됩니다. 카드에 보일 내용을 고르세요 - 미리보기가 다른 사람에게 보이는 모습입니다.",
     "Buttons and which accounts it shows are under Show advanced. Discord shows your buttons to everyone but you.": "버튼과 표시할 계정은 고급 표시에 있습니다. Discord는 내 버튼을 나만 빼고 모두에게 보여 줍니다.",
     "No accounts picked": "선택한 계정 없음",
-    "Account names": "계정 이름",
     "Accounts online": "온라인 계정",
     "Avatar": "아바타",
     "Timer": "타이머",
@@ -2401,7 +2400,14 @@
     "1 comment today": "오늘 댓글 1개",
     "{0} comments today": "오늘 댓글 {0}개",
     "{0}/{1} online": "온라인 {0}/{1}",
-    "{0} inventory": "인벤토리 {0}"
+    "{0} inventory": "인벤토리 {0}",
+    "language set to {0} from this computer - change it in Settings": "이 컴퓨터에 맞춰 언어를 {0}(으)로 설정했습니다 - 설정에서 바꿀 수 있습니다",
+    "People using nocat.farm": "nocat.farm 사용자 수",
+    "{0} people using nocat.farm": "{0}명이 nocat.farm 사용 중",
+    "1 person using nocat.farm": "1명이 nocat.farm 사용 중",
+    "{0} people using nocat.farm today": "오늘 {0}명이 nocat.farm 사용 중",
+    "1 person using nocat.farm today": "오늘 1명이 nocat.farm 사용 중",
+    "Copies of nocat.farm that were running in the last 24 hours. Count me as a user, under Updates & plugins, adds yours - off sends nothing and hides this.": "지난 24시간 동안 실행된 nocat.farm 수입니다. 업데이트와 플러그인의 '사용자로 집계'를 켜면 내 것도 들어갑니다. 끄면 아무것도 보내지 않고 이것도 숨깁니다."
   },
   "settings": {
     "WebEnabled": {
@@ -2663,6 +2669,14 @@
     "LateNightExtraHours": {
       "label": "금/토는 더 늦게까지",
       "tip": "금요일과 토요일 밤에 더 늦게까지 깨어 있는 시간입니다."
+    },
+    "SleepMinHours": {
+      "label": "최소 수면 시간",
+      "tip": "다음 날이 시작되기 전까지 밤이 이어지는 시간(시간 단위)입니다. 이 값과 다음 값 사이에서 매일 밤 다르게 무작위로 정해집니다. 새벽 5시에 자도 이 시간이 지나기 전에는 돌아오지 않습니다."
+    },
+    "SleepMaxHours": {
+      "label": "...최대",
+      "tip": "그 범위의 최댓값(시간)."
     },
     "PureMainDayChancePct": {
       "label": "메인 게임만 하는 날",
@@ -3241,11 +3255,7 @@
     },
     "DiscordPresenceAccounts": {
       "label": "표시할 계정",
-      "tip": "카드가 이름을 보여 주고 설명할 계정입니다. 자동은 사람 모드가 아닌 모든 계정이고, 원하는 계정에 체크해도 됩니다. 카드의 숫자는 항상 모든 계정을 셉니다."
-    },
-    "DiscordShowNames": {
-      "label": "계정 이름 표시",
-      "tip": "Discord 카드의 두 번째 줄에 계정을 Steam 이름으로 나열합니다(예: kylro · old). 끄면 두 번째 줄에서 고른 것이 나옵니다."
+      "tip": "카드가 다루는 계정입니다: 첫 줄에 그 계정들이 무엇을 하는지 나옵니다. 자동은 사람 모드가 아닌 모든 계정이고, 원하는 계정에 체크해도 됩니다. 카드의 숫자는 항상 모든 계정을 셉니다."
     },
     "DiscordShowCounter": {
       "label": "온라인 계정 표시",
@@ -3385,8 +3395,8 @@
     },
     "DiscordSecondLine": {
       "label": "두 번째 줄",
-      "tip": "계정 이름이 꺼져 있을 때 Discord 카드 두 번째 줄이 세는 것: 오늘 얻은 카드, 또는 지난 1주나 지난 1달 동안 플레이한 시간 - 모든 계정을 더한 값입니다.",
-      "choices": "0 오늘 카드 | 1 지난 1주 시간 | 2 지난 1달 시간"
+      "tip": "Discord 카드 두 번째 줄에 보여 줄 것: nocat.farm 사용자 수, 오늘 얻은 카드, 또는 지난 1주나 지난 1달 동안 플레이한 시간 - 모든 계정을 더한 값입니다. 사용자 수는 '사용자로 집계'가 켜져 있어야 하며, 알 수 있을 때까지는 오늘 카드를 보여 줍니다.",
+      "choices": "3 nocat.farm 사용자 수 | 0 오늘 카드 | 1 지난 1주 시간 | 2 지난 1달 시간"
     },
     "SendAroundHour": {
       "label": "...쯤에",
@@ -3464,6 +3474,10 @@
       "label": "업데이트",
       "tip": "새 버전이 나오면 어떻게 할지 정합니다. 항상 먼저 로그와 Telegram, Discord로 알려 줍니다. 클릭하면, 모두 잠든 뒤 설치: 업데이트 버튼이나 update accept를 누르면 계정들이 잠든 뒤(깨어 있는 사람 모드 계정이 없고, 아무도 플레이하지 않으며, 대기 중인 거래나 선물이 없을 때) 설치합니다. 클릭하면 설치: 바로 설치합니다. 밤에 알아서 설치: 아래 시간대의 조용한 때에 알아서 설치하고 전후로 알려 줍니다. update now는 항상 바로 설치합니다. Docker나 Linux 서비스에서는 직접 업데이트합니다.",
       "choices": "0 클릭하면, 모두 잠든 뒤 설치 | 1 클릭하면 설치 | 2 밤에 알아서 설치"
+    },
+    "CountMeAsUser": {
+      "label": "사용자로 집계",
+      "tip": "한 시간에 한 번, 이 사본이 실행 중이라고 nocat.lol에 알립니다 - 이 설치용으로 만든 무작위 번호, 앱 버전, 플랫폼만 보내고 Steam 계정, 이름, 설정은 보내지 않습니다. 사용자 수는 이렇게 셉니다. 끄면 아무것도 보내지 않습니다."
     },
     "ReactionSpeed": {
       "label": "반응 속도",

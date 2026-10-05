@@ -1177,7 +1177,6 @@
     "While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.": "Mientras nocat.farm está abierto, tu perfil de Discord lo muestra como un juego. Elige qué muestra la tarjeta - la vista previa es lo que ve la gente.",
     "Buttons and which accounts it shows are under Show advanced. Discord shows your buttons to everyone but you.": "Los botones y qué cuentas muestra están en Mostrar avanzados. Discord muestra tus botones a todos menos a ti.",
     "No accounts picked": "Ninguna cuenta elegida",
-    "Account names": "Nombres de cuenta",
     "Accounts online": "Cuentas conectadas",
     "Avatar": "Avatar",
     "Timer": "Temporizador",
@@ -2401,7 +2400,14 @@
     "1 comment today": "1 comentario hoy",
     "{0} comments today": "{0} comentarios hoy",
     "{0}/{1} online": "{0}/{1} en línea",
-    "{0} inventory": "{0} de inventario"
+    "{0} inventory": "{0} de inventario",
+    "language set to {0} from this computer - change it in Settings": "idioma puesto en {0}, el de este equipo - cámbialo en Ajustes",
+    "People using nocat.farm": "Gente usando nocat.farm",
+    "{0} people using nocat.farm": "{0} personas usando nocat.farm",
+    "1 person using nocat.farm": "1 persona usando nocat.farm",
+    "{0} people using nocat.farm today": "{0} personas usan nocat.farm hoy",
+    "1 person using nocat.farm today": "1 persona usa nocat.farm hoy",
+    "Copies of nocat.farm that were running in the last 24 hours. Count me as a user, under Updates & plugins, adds yours - off sends nothing and hides this.": "Copias de nocat.farm que estuvieron en marcha en las últimas 24 horas. Contarme como usuario, en Actualizaciones y plugins, suma la tuya; apagado no envía nada y oculta esto."
   },
   "settings": {
     "WebEnabled": {
@@ -2663,6 +2669,14 @@
     "LateNightExtraHours": {
       "label": "Se queda hasta más tarde vie/sáb",
       "tip": "Horas extra que se queda despierta el viernes y el sábado por la noche."
+    },
+    "SleepMinHours": {
+      "label": "Duerme al menos",
+      "tip": "Cuánto dura una noche antes de que pueda empezar el día siguiente, en horas: una duración al azar entre este valor y el siguiente, distinta cada noche. Tras acostarse a las 5 de la mañana no vuelve antes de que pase."
+    },
+    "SleepMaxHours": {
+      "label": "...hasta",
+      "tip": "El máximo de ese rango, en horas."
     },
     "PureMainDayChancePct": {
       "label": "Días solo con el juego principal",
@@ -3241,11 +3255,7 @@
     },
     "DiscordPresenceAccounts": {
       "label": "Cuentas que muestra",
-      "tip": "Qué cuentas nombra y describe la tarjeta. Automático son todas las cuentas que no están en modo humano, o marca las que quieras. Los números de la tarjeta siempre cuentan todas las cuentas."
-    },
-    "DiscordShowNames": {
-      "label": "Mostrar nombres de cuenta",
-      "tip": "La segunda línea de la tarjeta de Discord lista las cuentas por su nombre de Steam, como kylro · old. Desactivado muestra lo que elijas en Segunda línea."
+      "tip": "De qué cuentas trata la tarjeta: lo que su primera línea dice que están haciendo. Automático son todas las cuentas que no están en modo humano, o marca las que quieras. Los números de la tarjeta siempre cuentan todas las cuentas."
     },
     "DiscordShowCounter": {
       "label": "Mostrar cuentas conectadas",
@@ -3385,8 +3395,8 @@
     },
     "DiscordSecondLine": {
       "label": "Segunda línea",
-      "tip": "Lo que cuenta la segunda línea de la tarjeta de Discord cuando los nombres de cuenta están desactivados: los cromos conseguidos hoy, o las horas jugadas la última semana o el último mes, sumadas entre todas tus cuentas.",
-      "choices": "0 cromos hoy | 1 horas la última semana | 2 horas el último mes"
+      "tip": "Lo que muestra la segunda línea de la tarjeta de Discord: cuánta gente usa nocat.farm, los cromos conseguidos hoy, o las horas jugadas la última semana o el último mes, sumadas entre todas tus cuentas. El número de gente necesita Contarme como usuario encendido; mientras no se conozca, muestra los cromos de hoy.",
+      "choices": "3 gente usando nocat.farm | 0 cromos hoy | 1 horas la última semana | 2 horas el último mes"
     },
     "SendAroundHour": {
       "label": "...hacia las",
@@ -3464,6 +3474,10 @@
       "label": "Actualizaciones",
       "tip": "Qué pasa cuando sale una versión nueva. Siempre te avisa primero, en el registro y en Telegram y Discord. Instalar cuando haga clic, cuando todos duerman: el botón Actualizar o update accept la instala cuando tus cuentas duermen - ninguna cuenta en modo humano despierta, nadie jugando, ningún intercambio ni regalo esperando. Instalar cuando haga clic: al momento. Instalar sola por la noche: la instala por su cuenta en las horas de abajo, en un momento tranquilo, y avisa antes y después. update now siempre instala al momento. No en Docker ni como servicio de Linux, que se actualizan a mano.",
       "choices": "0 instalar cuando haga clic, cuando todos duerman | 1 instalar cuando haga clic | 2 instalar sola por la noche"
+    },
+    "CountMeAsUser": {
+      "label": "Contarme como usuario",
+      "tip": "Una vez por hora, le dice a nocat.lol que esta copia está en marcha: un número aleatorio creado para esta instalación, la versión de la app y la plataforma, nada más: ni cuentas de Steam, ni nombres, ni ajustes. Así se calcula el número de usuarios. Apagado no envía nada."
     },
     "ReactionSpeed": {
       "label": "Velocidad de reacción",

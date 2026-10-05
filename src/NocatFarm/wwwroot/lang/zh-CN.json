@@ -1177,7 +1177,6 @@
     "While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.": "nocat.farm 打开时，你的 Discord 资料会像玩游戏一样显示它。选择卡片上显示什么——预览就是别人看到的样子。",
     "Buttons and which accounts it shows are under Show advanced. Discord shows your buttons to everyone but you.": "按钮和显示哪些账户在“显示高级”里。Discord 会把你的按钮显示给除你以外的所有人。",
     "No accounts picked": "没有选择账户",
-    "Account names": "账户名",
     "Accounts online": "在线账户",
     "Avatar": "头像",
     "Timer": "计时器",
@@ -2401,7 +2400,14 @@
     "1 comment today": "今日 1 条评论",
     "{0} comments today": "今日 {0} 条评论",
     "{0}/{1} online": "{0}/{1} 在线",
-    "{0} inventory": "库存 {0}"
+    "{0} inventory": "库存 {0}",
+    "language set to {0} from this computer - change it in Settings": "已按这台电脑的设置将语言设为{0} - 可在设置中更改",
+    "People using nocat.farm": "nocat.farm 使用人数",
+    "{0} people using nocat.farm": "{0} 人正在使用 nocat.farm",
+    "1 person using nocat.farm": "1 人正在使用 nocat.farm",
+    "{0} people using nocat.farm today": "今天有 {0} 人在使用 nocat.farm",
+    "1 person using nocat.farm today": "今天有 1 人在使用 nocat.farm",
+    "Copies of nocat.farm that were running in the last 24 hours. Count me as a user, under Updates & plugins, adds yours - off sends nothing and hides this.": "过去 24 小时内运行过的 nocat.farm 副本数。“把我算作用户”（在更新与插件中）会把你的也算上 - 关闭后不发送任何内容，也不显示这一行。"
   },
   "settings": {
     "WebEnabled": {
@@ -2663,6 +2669,14 @@
     "LateNightExtraHours": {
       "label": "周五/周六熬得更晚",
       "tip": "周五和周六晚上额外多熬几个小时。"
+    },
+    "SleepMinHours": {
+      "label": "至少睡",
+      "tip": "下一天开始前一晚持续的时长（小时）——在此值与下一个值之间随机，每晚不同。即使凌晨 5 点才睡，也要过了这段时间才会回来。"
+    },
+    "SleepMaxHours": {
+      "label": "…最多",
+      "tip": "该范围的上限（小时）。"
     },
     "PureMainDayChancePct": {
       "label": "只玩主玩游戏的天数",
@@ -3241,11 +3255,7 @@
     },
     "DiscordPresenceAccounts": {
       "label": "显示哪些账户",
-      "tip": "卡片上写名字和描述的账户。自动是所有未开人类模式的账户，也可以勾选你想要的。卡片上的数字始终计算所有账户。"
-    },
-    "DiscordShowNames": {
-      "label": "显示账户名",
-      "tip": "Discord 卡片的第二行按 Steam 名字列出账户，比如 kylro · old。关闭时显示“第二行”选中的内容。"
+      "tip": "卡片所描述的账户：顶行会说它们在做什么。自动是所有未开人类模式的账户，也可以勾选你想要的。卡片上的数字始终计算所有账户。"
     },
     "DiscordShowCounter": {
       "label": "显示在线账户",
@@ -3385,8 +3395,8 @@
     },
     "DiscordSecondLine": {
       "label": "第二行",
-      "tip": "账户名称关闭时，Discord 卡片第二行统计的内容：今天掉落的卡牌，或过去一周、过去一个月的游戏小时数 - 按你所有账户合计。",
-      "choices": "0 今日卡牌 | 1 过去一周的小时数 | 2 过去一个月的小时数"
+      "tip": "Discord 卡片第二行显示的内容：使用 nocat.farm 的人数、今天掉落的卡牌，或过去一周、过去一个月的游戏小时数 - 按你所有账户合计。人数需要开启“把我算作用户”；在得知人数之前，显示今日卡牌。",
+      "choices": "3 nocat.farm 使用人数 | 0 今日卡牌 | 1 过去一周的小时数 | 2 过去一个月的小时数"
     },
     "SendAroundHour": {
       "label": "...大约在",
@@ -3464,6 +3474,10 @@
       "label": "更新",
       "tip": "有新版本时怎么做。总会先在日志、Telegram 和 Discord 里告诉你。我点击后，等大家都睡了再安装：点更新按钮或 update accept 后，等账号都睡了（没有醒着的人类模式账号、没人在玩、没有待处理的交易或礼物）再安装。我点击后安装：马上安装。夜里自动安装：在下面的时间段里找安静的时候自动安装，并在前后告诉你。update now 总是马上安装。Docker 或 Linux 服务里不适用，需要手动更新。",
       "choices": "0 我点击后，等大家都睡了再安装 | 1 我点击后安装 | 2 夜里自动安装"
+    },
+    "CountMeAsUser": {
+      "label": "把我算作用户",
+      "tip": "每小时一次，告诉 nocat.lol 这个副本正在运行 - 只发送为本次安装生成的随机编号、应用版本和平台，别的都不发：没有 Steam 账户、名称或设置。用户数就是这样统计的。关闭则什么都不发送。"
     },
     "ReactionSpeed": {
       "label": "反应速度",

@@ -6,6 +6,9 @@
 # Nothing of it can show on this PC's screen. The copy runs on a desktop of its own that is never switched to (so its
 # window, if it opens one, is drawn where nobody can see it), with no tray icon (--no-tray, and Tray off in its config),
 # and the browser is headless. Not --no-gui: on Windows that opens a console window instead of the app's own.
+#
+# Its hourly "Count me as a user" ping never reaches nocat.lol: NOCATFARM_PING_URL points it at tests\e2e\ping-stub.mjs on
+# this PC (port+1), which answers like nocat.lol does, so the dashboard's user count is tested too.
 param([int]$Port = 7377, [string]$TestRoot = '', [string]$AppDir = '')
 $ErrorActionPreference = 'Stop'
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
@@ -15,6 +18,8 @@ $E2E = Join-Path $Repo 'tests\e2e'
 
 # Never the real dashboard's port.
 if ($Port -eq 7242) { Write-Output 'FAIL  7242 is the real dashboard''s port - pick another'; exit 1 }
+$StubPort = $Port + 1
+if ($StubPort -eq 7242) { Write-Output 'FAIL  the ping stub would sit on 7242 - pick another port'; exit 1 }
 
 Add-Type -TypeDefinition @'
 using System;
@@ -69,7 +74,7 @@ public static class OffScreen {
 if (Test-Path $W) { Remove-Item $W -Recurse -Force }
 New-Item -ItemType Directory -Force $W | Out-Null
 if ($AppDir) { Copy-Item "$AppDir\*" $W -Recurse } else { Expand-Archive "$Repo\dist\nocat.farm-v$Version-portable.zip" -DestinationPath $W }
-node "$E2E\make-fixture.mjs" $W $Port
+node "$E2E\make-fixture.mjs" $W $Port --ping-stub
 
 # Playwright and its Chromium, once.
 Push-Location $E2E
@@ -78,7 +83,10 @@ cmd /c "npx playwright install chromium 2>&1" | Out-Null
 Pop-Location
 
 $password = 'e2e-' + [guid]::NewGuid().ToString('N')
-$id = [OffScreen]::Start("$W\nocatFarm.exe", '--minimized --no-tray', $W)
+# The stand-in for nocat.lol first, then the copy - started with the address of it, so its pings go there and nowhere else.
+$stub = [OffScreen]::Start((Get-Command node).Source, "`"$E2E\ping-stub.mjs`" $StubPort", $E2E)
+$env:NOCATFARM_PING_URL = "http://127.0.0.1:$StubPort/api/farm/ping"
+try { $id = [OffScreen]::Start("$W\nocatFarm.exe", '--minimized --no-tray', $W) } finally { Remove-Item Env:NOCATFARM_PING_URL -ErrorAction SilentlyContinue }
 
 try {
   $up = $false
@@ -87,7 +95,7 @@ try {
   }
   if (-not $up) { Write-Output "FAIL  the copy didn't start on port $Port"; exit 1 }
 
-  node "$E2E\dashboard.mjs" "http://127.0.0.1:$Port" $password --fixture $W --set-password
+  node "$E2E\dashboard.mjs" "http://127.0.0.1:$Port" $password --fixture $W --set-password --ping-stub "http://127.0.0.1:$StubPort"
   $code = $LASTEXITCODE
 } finally {
   $q = [OffScreen]::Start("$W\nocatFarm.exe", '--quit', $W)
@@ -95,6 +103,7 @@ try {
   Start-Sleep 1
   # Only if it's still the test copy: the id of one that closed on its own can already belong to something else.
   Get-Process -Id $id -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq "$W\nocatFarm.exe" } | Stop-Process -Force -ErrorAction SilentlyContinue
+  Get-Process -Id $stub -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -eq 'node' } | Stop-Process -Force -ErrorAction SilentlyContinue
 }
 
 exit $code

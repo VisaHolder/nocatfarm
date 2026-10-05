@@ -923,7 +923,9 @@ public static partial class Commands {
 		$"""
 		nocat.farm {Build.Version} - Steam idler, trading-card farmer and rep4rep commenter.
 		Everything runs on this PC. Your accounts never leave it; the only thing that talks
-		to rep4rep is the task queue.
+		to rep4rep is the task queue. Once an hour it tells nocat.lol it's running, to count
+		users: a random install ID, the version and the platform, nothing else. Count me as a
+		user turns it off.
 		""";
 
 	// ── help ────────────────────────────────────────────────────────────────
@@ -4189,6 +4191,10 @@ public static partial class Commands {
 		switch (def.Name) {
 			case "WebRemoteAccess":
 				RemoteAccess.Poke();
+
+				break;
+			case "CountMeAsUser":
+				UserCount.Nudge();
 
 				break;
 			case "MiniOnTop":

@@ -101,19 +101,19 @@ for problems* (Steam Guard needed, failed sign-ins, comment bans, bans) and *Pop
 
 **Discord profile card** (*Global settings → Discord profile*, off). While nocat.farm is open, your Discord profile
 shows *Playing nocat.farm*, with what it's doing (farming cards, idling games, or *Paused* when every account it
-shows is paused or you're playing on it) and the hours banked this past week. It needs the Discord app open on the same PC,
+shows is paused or you're playing on it) and how many people use nocat.farm. It needs the Discord app open on the same PC,
 with Discord's Activity Privacy letting it share what you play. Nothing goes over the internet for this. The options
 are under Show advanced:
 
-- *Accounts it shows*: *every account not in human mode*, or tick the accounts you want. This only decides the names
-  on the card. The numbers always count every account, like *3 accounts linked*
+- *Accounts it shows*: *every account not in human mode*, or tick the accounts you want. This only decides what the
+  top line says they're doing. The numbers always count every account, like *3 accounts linked*
 - *Featured account*: which account's Steam avatar sits on the logo. Left on *the first account
-  shown*, it's the first one the card names
-- *Show account names*, *Show accounts online*, *Show an account's avatar* and *Show how long it's been running*,
-  all on
-- *Second line*: with account names off, the card counts cards today, hours past week (the default) or hours past
-  month, added up over all your accounts. Every running game counts, the way Steam counts it: 8 games for an hour
-  is 8 hours
+  shown*, it's the first account shown
+- *Show accounts online*, *Show an account's avatar* and *Show how long it's been running*, all on
+- *Second line*: *people using nocat.farm* (the default, like *212 people using nocat.farm*), cards today, hours past
+  week or hours past month, added up over all your accounts. Every running game counts, the way Steam counts it: 8
+  games for an hour is 8 hours. The people count comes from *Count me as a user*; while it's off or not known yet, the
+  card shows the cards today
 - Discord allows two pictures and two buttons on a card, no more. The big picture is the logo, the small one the
   featured account's avatar
 - *Button 1* and *Button 2*: pick *Get nocat.farm*, an account's Steam page, *Your own link* (a box for the button's

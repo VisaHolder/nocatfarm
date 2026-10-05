@@ -17,6 +17,13 @@ on:
 permissions:
   contents: read
 
+# Every copy started here - the test copies, the ones an update restarts, the Docker containers - sends its "Count me as
+# a user" ping to a dead port on this machine, never to nocat.lol: a test run must never count itself as a user. The
+# test configs switch it off as well; this covers a config a copy writes for itself. (The browser test's own copy points
+# at tests/e2e/ping-stub.mjs instead.)
+env:
+  NOCATFARM_PING_URL: http://127.0.0.1:9/api/farm/ping
+
 jobs:
   zip:
     name: zip - ${{ matrix.rid }}
@@ -67,7 +74,7 @@ jobs:
       - name: start it headless
         run: |
           mkdir -p "$APP/config"
-          echo '{"WebPort":7242,"CheckForUpdates":false,"JoinGroup":false}' > "$APP/config/nocatFarm.json"
+          echo '{"WebPort":7242,"CheckForUpdates":false,"JoinGroup":false,"CountMeAsUser":false}' > "$APP/config/nocatFarm.json"
           echo '{"Enabled":false,"SteamLogin":"not_a_real_account"}' > "$APP/config/demo.json"
           cd "$APP" && (setsid ./nocatFarm --no-gui < /dev/null > "$GITHUB_WORKSPACE/run.log" 2>&1 & echo $! > "$GITHUB_WORKSPACE/pid")
           for i in $(seq 1 60); do curl -sf http://127.0.0.1:7242/api/status > /dev/null && break; sleep 1; done
@@ -179,7 +186,7 @@ jobs:
           mkdir -p data/config data/logs && chmod 777 data/config data/logs
           # a pretend ArchiSteamFarm folder, mounted read-only where the compose example puts one
           mkdir -p asf/config && echo '{}' > asf/config/ASF.json && echo '{"SteamLogin":"not_a_real_login","Enabled":true}' > asf/config/pretend.json
-          docker run -d --name nf --init -e NOCATFARM_WEB_PASSWORD=a-long-test-password-123 -e TZ=Europe/London \
+          docker run -d --name nf --init -e NOCATFARM_WEB_PASSWORD=a-long-test-password-123 -e TZ=Europe/London -e NOCATFARM_PING_URL \
             -p 7242:7242 -v "$PWD/data/config:/data/config" -v "$PWD/data/logs:/data/logs" -v "$PWD/asf:/import/asf:ro" nocatfarm:test
           for i in $(seq 1 60); do curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:7242/api/ping | grep -q 200 && break; sleep 1; done
           docker logs nf | tail -n 20

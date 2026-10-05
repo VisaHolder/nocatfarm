@@ -24,6 +24,13 @@ on:
 permissions:
   contents: write   # only used to add the zips to a release when a tag is given
 
+# Every copy started here - the test copies, the ones an update restarts, the Docker containers - sends its "Count me as
+# a user" ping to a dead port on this machine, never to nocat.lol: a test run must never count itself as a user. The
+# test configs switch it off as well; this covers a config a copy writes for itself. (The browser test's own copy points
+# at tests/e2e/ping-stub.mjs instead.)
+env:
+  NOCATFARM_PING_URL: http://127.0.0.1:9/api/farm/ping
+
 jobs:
   mac:
     name: mac - ${{ matrix.rid }}
@@ -88,7 +95,7 @@ jobs:
       - name: start it through start.command
         run: |
           mkdir -p "$APP/config"
-          echo '{"WebPort":7242,"CheckForUpdates":false,"JoinGroup":false,"OpenBrowserOnStart":false}' > "$APP/config/nocatFarm.json"
+          echo '{"WebPort":7242,"CheckForUpdates":false,"JoinGroup":false,"OpenBrowserOnStart":false,"CountMeAsUser":false}' > "$APP/config/nocatFarm.json"
           echo '{"Enabled":false,"SteamLogin":"not_a_real_account"}' > "$APP/config/demo.json"
           # quarantined like a real download, so start.command's own fix is tested too
           xattr -w com.apple.quarantine "0081;00000000;Safari;" "$APP/nocatFarm" || true

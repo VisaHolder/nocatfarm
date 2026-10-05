@@ -652,6 +652,14 @@ function renderOverview() {
   }
   $('verdict').textContent = verdict;
 
+  // How many people use nocat.farm, from nocat.lol's answer to the hourly ping. Nothing while it isn't known, is too old,
+  // or Count me as a user is off.
+  const people = $('usercount');
+  if (people) {
+    people.classList.toggle('hidden', !state.Users);
+    people.textContent = state.Users ? (state.Users === 1 ? t('1 person using nocat.farm today') : tf('{0} people using nocat.farm today', state.Users.toLocaleString('en-US'))) : '';
+  }
+
   const tile = (n, k, tip, sub) =>
     `<div class="tile"><div class="n">${n}</div><div class="k">${esc(t(k))}${tipIcon(t(tip))}</div>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}</div>`;
 
@@ -5143,7 +5151,8 @@ function weightsEditor(spec) {
     // other one and stood three times as tall - it was being laid out as if it were the page.
     return `<div class="wrow ${i === 0 ? 'wmain' : ''}">
       <span class="wname">${i === 0 && changingMain
-        ? `<input class="wmainedit" type="text" placeholder="${esc(t('appID or store URL'))}" title="${esc(t('the new main game: appID or store URL'))}" onkeydown="if(event.key==='Enter'){setMainGame(this.value);event.preventDefault();}else if(event.key==='Escape'){setMainGame('');}" onblur="setMainGame(this.value)">`
+        ? `<input class="appin wmainedit" type="text" autocomplete="off" placeholder="${esc(t('Search by name, or paste an appID'))}" title="${esc(t('the new main game: appID or store URL'))}"
+            oninput="appSearch('GameWeightsMain',this)" onkeydown="appKey('GameWeightsMain',this,event)" onblur="appBlur('GameWeightsMain',this)">`
         : `<b class="wgame" title="${esc(gameLabel(r.game))}">${esc(gameLabel(r.game))}</b>${i === 0 ? `<b class="wtag">${esc(t('main'))}</b>` : ''}<i class="wid">${r.game}</i>`}</span>
       <span class="wbar"><i style="width:${share}%"></i></span>
       <input class="wpct" type="number" min="1" max="95" value="${share}" data-w-index="${i}"
@@ -5176,11 +5185,15 @@ function weightsEditor(spec) {
       <input type="number" min="0" max="24" value="${hunt.hours}" onchange="editAndRender('BoostHoursPerDay', Math.max(0, Math.min(24, parseInt(this.value) || 0)))">
       <span>${esc(t('hours a day (0 = no limit)'))}</span></div>` : '';
 
+  // The add box searches the account's library by name, like every other game list - fetched ahead of the first search.
+  libraryFor(libKey());
+
   return `<div class="weights" data-setting="GameWeights">
     ${body || `<p class="muted small" style="margin:0 0 8px">${esc(t('No games yet — add the one this account is meant to be into first.'))}</p>`}
     ${huntHtml}
     <div class="wadd">
-      <input type="text" placeholder="${esc(t('appID or store URL'))}" onkeydown="if(event.key==='Enter'){addWeight(this);event.preventDefault();}" onblur="addWeight(this)">
+      <input type="text" class="appin" autocomplete="off" placeholder="${esc(t('Search by name, or paste an appID'))}"
+        oninput="appSearch('GameWeights',this)" onkeydown="appKey('GameWeights',this,event)" onblur="appBlur('GameWeights',this)">
       <span class="muted small">${esc(t('The first game added is the main one.'))}</span>
     </div>
   </div>`;
@@ -5279,9 +5292,8 @@ function setShare(index, wantPct) {
   editAndRender('GameWeights', weightsSpec(rows));
 }
 
-function addWeight(input) {
-  const id = parseAppId(input.value);
-  input.value = '';
+/// A game added to the list - picked from the library by name, or an appID or store link typed in. The first is the main one.
+function addWeight(id) {
   if (!id) return;
 
   const rows = parseWeights(liveWeights());
@@ -5360,6 +5372,7 @@ let changingMain = false;
 function setMainGame(raw) {
   if (!changingMain) return;
   changingMain = false;
+  closeAppSug();
   const id = parseAppId(raw);
   const rows = parseWeights(liveWeights());
   if (!id || !rows.length || rows[0].game === id) { renderSettings(); return; }
@@ -5864,18 +5877,16 @@ function edit(name, value) {
 const PANEL_SECTIONS = new Set(['Discord profile']);
 
 // Settings drawn by a section's own panel (chips and switches) instead of as rows.
-const PANEL_ROWS = new Set(['DiscordPresence', 'DiscordShowNames', 'DiscordSecondLine', 'DiscordShowCounter', 'DiscordShowAvatar', 'DiscordShowTimer',
+const PANEL_ROWS = new Set(['DiscordPresence', 'DiscordSecondLine', 'DiscordShowCounter', 'DiscordShowAvatar', 'DiscordShowTimer',
   'SendCardDrops', 'SendFreeStuff', 'SendTrades', 'SendProblems', 'SendUpdates', 'SendInstalls', 'SendDailySummary', 'SendComments',
   'SendAchievements', 'SendRep4Rep', 'SendSignIns', 'SendBreakIns']);
 
 function discordCardIntro(val) {
   const on = !!val('DiscordPresence');
   const parts = [['DiscordShowCounter', 'Accounts online'], ['DiscordShowAvatar', 'Avatar'], ['DiscordShowTimer', 'Timer']];
-  // The second line is one pick of four: the names, or one of three counts.
-  const names = !!val('DiscordShowNames');
-  const line = Number(val('DiscordSecondLine') ?? 1);
-  const lines = [[-1, 'Account names'], [0, 'Cards today'], [1, 'Hours past week'], [2, 'Hours past month']];
-  const pickLine = (n) => n < 0 ? `editAndRender('DiscordShowNames', true)` : `pending.DiscordShowNames = false; editAndRender('DiscordSecondLine', ${n})`;
+  // The second line is one pick of four: the people using nocat.farm, or one of three counts.
+  const line = Number(val('DiscordSecondLine') ?? 3);
+  const lines = [[3, 'People using nocat.farm'], [0, 'Cards today'], [1, 'Hours past week'], [2, 'Hours past month']];
   return `<div class="explain dcard-intro">
     <div class="dhead"><b>${esc(t('Show on my Discord profile'))}</b>
       <label class="switch"><input type="checkbox" ${on ? 'checked' : ''} onchange="editAndRender('DiscordPresence', this.checked)"><span></span></label></div>
@@ -5883,10 +5894,15 @@ function discordCardIntro(val) {
     <div class="langpick">${parts.map(([k, label]) =>
       `<span class="p ${val(k) ? 'on' : ''}" role="button" tabindex="0" onclick="editAndRender('${k}', ${!val(k)})">${esc(t(label))}</span>`).join('')}</div>
     <div class="dline"><span class="muted small">${esc(t('Second line'))}</span><div class="langpick">${lines.map(([n, label]) =>
-      `<span class="p ${(n < 0 ? names : !names && line === n) ? 'on' : ''}" role="button" tabindex="0" onclick="${pickLine(n)}">${esc(t(label))}</span>`).join('')}</div></div>
+      `<span class="p ${line === n ? 'on' : ''}" role="button" tabindex="0" onclick="editAndRender('DiscordSecondLine', ${n})">${esc(t(label))}</span>`).join('')}</div></div>
     ${discordPreview(val)}
     <p class="muted small" style="margin:8px 0 0">${esc(t('Buttons and which accounts it shows are under Show advanced. Discord shows your buttons to everyone but you.'))}</p>
   </div>`;
+}
+
+/// "212 people using nocat.farm" - the Discord card's second line.
+function peopleUsing(n) {
+  return n === 1 ? t('1 person using nocat.farm') : tf('{0} people using nocat.farm', n.toLocaleString('en-US'));
 }
 
 function discordPreview(val) {
@@ -5910,20 +5926,18 @@ function discordPreview(val) {
   const details = !shown.length && !featured ? t('No accounts picked') : !online.length ? t('Resting')
     : !working.length ? t('Paused')
     : cardsLeft > 0 ? tf('Farming cards · {0} left', cardsLeft) : t('Idling games');
-  // The featured account is left out of the names only while it's the picture - as on the real card.
-  const featuredShown = !!(featured && val('DiscordShowAvatar') && featured.Avatar);
-  const who = ordered.filter((b) => !featuredShown || b !== featured).map(display);
   const hours = (key) => {
     const h = bots.reduce((n, b) => n + (b[key] || 0), 0) / 60;
     return h < 10 ? String(Math.round(h * 10) / 10) : Math.round(h).toLocaleString('en-US');
   };
-  const line = Number(val('DiscordSecondLine') ?? 1);
-  const counted = line === 1 ? tf('{0} hrs past week', hours('MinutesWeek'))
+  const line = Number(val('DiscordSecondLine') ?? 3);
+  // As on the real card: the people count falls back to the cards today while it isn't known (or Count me as a user is off).
+  // The switch read as set on this page, so turning it off shows the fallback straight away, not at the next refresh.
+  const users = val('CountMeAsUser') !== false && state && state.Users;
+  const stateLine = line === 1 ? tf('{0} hrs past week', hours('MinutesWeek'))
     : line === 2 ? tf('{0} hrs past month', hours('MinutesMonth'))
+    : line === 3 && users ? peopleUsing(users)
     : tf('{0} cards today', today);
-  const stateLine = val('DiscordShowNames') && who.length
-    ? (who.length <= 3 ? who.join(' · ') : who.slice(0, 2).join(' · ') + ' · +' + (who.length - 2))
-    : counted;
   const lead = featured || ordered.find((b) => b.Avatar) || ordered[0];
   const face = val('DiscordShowAvatar') && lead && lead.Avatar ? lead : null;
   const up = Math.max(0, (state && state.UptimeMinutes) || 0);
@@ -6187,7 +6201,28 @@ function libraryFor(key) {
   return loading;
 }
 
-function appListNow(name) { return (pending[name] !== undefined ? pending[name] : settingsValues()[name]) || []; }
+// "Games and how often" uses the same search for its two boxes: adding a game (GameWeights) and swapping the main one
+// (GameWeightsMain). Their list is the games already weighted - or, swapping, only the main game itself, so one further
+// down can still be picked and moves up.
+const WEIGHT_PICKS = new Set(['GameWeights', 'GameWeightsMain']);
+
+function appListNow(name) {
+  if (name === 'GameWeights') return parseWeights(liveWeights()).map((r) => r.game);
+  if (name === 'GameWeightsMain') return parseWeights(liveWeights()).slice(0, 1).map((r) => r.game);
+  return (pending[name] !== undefined ? pending[name] : settingsValues()[name]) || [];
+}
+
+/// The box a game list's matches drop down under: the list's tags, or one of the weights' boxes.
+function appHost(input) { return input.closest('.tags, .wadd, .wname'); }
+
+/// The search box of a game list, to put the focus back in after a pick.
+function appInput(name) {
+  return document.querySelector(name === 'GameWeights' ? '#settingsBody .weights .wadd .appin'
+    : name === 'GameWeightsMain' ? '#settingsBody .weights .wmainedit'
+    : `#settingsBody [data-setting="${name}"] .appin`);
+}
+
+function closeAppSug() { document.querySelectorAll('#settingsBody .appsug').forEach((e) => e.remove()); }
 
 // Up to ten games with the typed text in their name: names that start with it first, then the rest, each most played
 // first (the library comes sorted that way). Games already on the list aren't offered again.
@@ -6206,7 +6241,7 @@ function appMatches(games, q, have) {
 // Typing into a game list's box: the matches drop down under it. Only that little list is redrawn - the box keeps its
 // focus and what's typed.
 async function appSearch(name, input) {
-  const box = input.closest('.tags');
+  const box = appHost(input);
   const q = input.value.trim().toLowerCase();
   let sug = box.querySelector('.appsug');
   if (!q || parseAppId(q)) { if (sug) sug.remove(); return; }
@@ -6221,7 +6256,7 @@ async function appSearch(name, input) {
 
 // Up and down move through the matches, Enter takes the one picked (or a typed appID or link), Escape closes them.
 function appKey(name, input, e) {
-  const sug = input.closest('.tags').querySelector('.appsug');
+  const sug = appHost(input).querySelector('.appsug');
   const rows = sug ? [...sug.querySelectorAll('.s')] : [];
   if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && rows.length) {
     e.preventDefault();
@@ -6230,6 +6265,8 @@ function appKey(name, input, e) {
     rows.forEach((r, j) => r.classList.toggle('on', j === next));
   } else if (e.key === 'Escape' && sug) {
     sug.remove();
+  } else if (e.key === 'Escape' && name === 'GameWeightsMain') {
+    setMainGame('');   // nothing dropped down: Escape leaves the main game as it was
   } else if (e.key === 'Enter' || (e.key === ',' && parseAppId(input.value))) {
     // A comma only ends an appID or a link - in a name it's just a comma ("Papers, Please", "Warhammer 40,000").
     e.preventDefault();
@@ -6247,7 +6284,7 @@ async function appEnterLater(name, input) {
   if (!typed.trim()) return;
   await appSearch(name, input);
   if (!input.isConnected || input.value !== typed) return;   // typed on, or redrawn, meanwhile
-  const sug = input.closest('.tags').querySelector('.appsug');
+  const sug = appHost(input).querySelector('.appsug');
   const on = sug && sug.querySelector('.s.on');
   if (on) pickApp(name, Number(on.dataset.app));
 }
@@ -6255,19 +6292,31 @@ async function appEnterLater(name, input) {
 // Leaving the box: a typed appID or link still goes in, as it always did; a half-typed name just stays put.
 function appBlur(name, input) {
   setTimeout(() => {
-    const sug = input.isConnected ? input.closest('.tags').querySelector('.appsug') : null;
+    const sug = input.isConnected ? appHost(input).querySelector('.appsug') : null;
     if (sug) sug.remove();
   }, 150);
+  // Leaving the main game's box without a game in it: the main game stays as it was.
+  if (name === 'GameWeightsMain' && !parseAppId(input.value)) { setMainGame(''); return; }
   if (parseAppId(input.value)) addApp(name, input);
 }
 
 function pickApp(name, id) {
+  if (WEIGHT_PICKS.has(name)) { pickWeight(name, id, true); return; }
   const list = appListNow(name).slice();
   if (!list.includes(id)) list.push(id);
   editAndRender(name, list);
   // Back in the box, ready for the next one.
-  const input = document.querySelector(`#settingsBody [data-setting="${name}"] .appin`);
+  const input = appInput(name);
   if (input) input.focus();
+}
+
+/// A game picked or typed into one of the weights' boxes: added to the list, or made the main game.
+function pickWeight(name, id, refocus) {
+  closeAppSug();
+  if (name === 'GameWeightsMain') { setMainGame(String(id)); return; }
+  addWeight(id);
+  const again = refocus && appInput(name);
+  if (again) again.focus();
 }
 
 function addApp(name, input, refocus) {
@@ -6275,6 +6324,7 @@ function addApp(name, input, refocus) {
   if (!raw) return;
   const m = raw.match(/\/app\/(\d+)/) || raw.match(/^(\d+)$/);
   if (!m) { toast(t('No game in its library matches - paste its appID or store link.'), true); return; }
+  if (WEIGHT_PICKS.has(name)) { input.value = ''; pickWeight(name, parseInt(m[1]), refocus); return; }
   const list = (pending[name] !== undefined ? pending[name] : settingsValues()[name] || []).slice();
   const id = parseInt(m[1]);
   if (!list.includes(id)) list.push(id);

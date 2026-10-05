@@ -2936,6 +2936,9 @@ public sealed class WebHost : IAsyncDisposable {
 			BootId = _started.Ticks,   // the browser resets its log buffer when this changes
 			RefreshSeconds = Math.Clamp(_mgr.Global.WebRefreshSeconds, 1, 60),
 			UptimeMinutes = (int) (DateTime.UtcNow - _started).TotalMinutes,
+			// People using nocat.farm in the last 24 hours, from nocat.lol's answer to the hourly ping. Null while it isn't
+			// known, is too old, or "Count me as a user" is off - the page then shows nothing for it.
+			Users = UserCount.Current(),
 			Prompt = Prompt.Pending,
 			PromptSecret = Prompt.PendingSecret,
 			Rep4RepEnabled = _mgr.Global.Rep4RepEnabled,

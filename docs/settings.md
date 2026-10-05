@@ -38,7 +38,7 @@ You can edit them by hand and type `reload`. Back up the `config` folder and you
 | Pop-ups (Windows) | *Show pop-ups* | which kinds: earnings, comments, problems, trade offers |
 | Inventory prices | *Inventory prices in* (the currency) | price lookup speed, how long a price is trusted |
 | rep4rep account | *Use rep4rep at all*, *API token* | *Hold commenting for (hours)*, *Register accounts automatically* |
-| Updates & plugins | *Updates*: install when I click, once everyone's asleep (the Update button waits until your accounts are asleep), install when I click (right away), or install by itself at night | the hours it may install in (3 to 6), *Wait after a release for* (2 hours), *Notify if an update is available*, *Look for updates every* (2 hours), *Remind me every hour*, *Load plugins* |
+| Updates & plugins | *Updates*: install when I click, once everyone's asleep (the Update button waits until your accounts are asleep), install when I click (right away), or install by itself at night; *Count me as a user* (on: once an hour tells nocat.lol it's running, see [Privacy and safety](safety-and-faq.md#privacy-and-safety)) | the hours it may install in (3 to 6), *Wait after a release for* (2 hours), *Notify if an update is available*, *Look for updates every* (2 hours), *Remind me every hour*, *Load plugins* |
 | Steam connection | | gap between logins, reconnect, timeout, *Farm at most* (accounts farming at once), rate-limit cooldown, web request gap, *Connect using*, proxy |
 | Logging | | *Say what it's doing every* (5 minutes while playing) and *And while it's resting, every* (30 minutes), where 0 turns them off; *Write a log file*; *Show debug detail on screen* (the log file always has it); *Keep logs for* (14 days); the daily summary and its time; the *Weekly report* (off), its day and hour; the colours of `telegram` and `discord` in the log |
 
@@ -115,6 +115,7 @@ and the next start clears what it had set, unless you've changed it in Settings 
 | `NOCATFARM_PUBLIC_ADDRESS` | *Public address* (`WebPublicAddress`): the address it's reached at from the internet, like `farm.example.com` or `203.0.113.7:7242`. On a VPS it's what lets visitors from outside in at all - see [On a VPS](linux-docker-vps.md#on-a-vps-a-rented-server). |
 | `NOCATFARM_TRUSTED_PROXIES` | *Trust forwarded addresses from* (`WebTrustedProxies`): a reverse proxy that isn't on this PC, like Caddy in front of Docker (`172.16.0.0/12`). Its X-Forwarded-For is believed, so internet visitors count as the internet. A proxy on this PC needs nothing. |
 | `NOCATFARM_HOME_ADDRESS` | Your computer's address on your Wi-Fi, like `192.168.1.20` (add `:port` if Docker publishes a different one). Inside Docker nocat.farm can't see it, so without this the Phone page and `/dashboard` can't show the home link or its QR code, and tell you what to open instead. |
+| `NOCATFARM_PING_URL` | For the browser test only: sends the *Count me as a user* ping to a stand-in on this PC instead of nocat.lol. Only an address on this PC is taken; anything else is ignored. |
 | `NOCATFARM_NETLOG=1` | For troubleshooting: writes every Steam message to `netlog-<account>.txt`. |
 
 ## Commands

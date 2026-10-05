@@ -167,7 +167,7 @@ public static class DiscordPresence {
 	///
 	///   nocat.farm
 	///   Farming cards · 12 left          what the shown accounts are doing
-	///   kylro · old · 2 of 3 accounts linked      their Steam names, and how many are signed in
+	///   212 people using nocat.farm · 3 linked    what Second line picks, and how many are signed in
 	///   5:12:00 elapsed                  since nocat.farm was opened
 	///   [ Get nocat.farm ] [ reap. on Steam ]
 	///
@@ -201,7 +201,7 @@ public static class DiscordPresence {
 
 		Bot[] online = [.. shown.Where(static b => b.IsOnline)];
 
-		// The numbers are the whole farm's - every account it runs. Which accounts are shown only decides the names and
+		// The numbers are the whole farm's - every account it runs. Which accounts are shown only decides the avatar and
 		// what the top line says they're doing: "2 accounts linked" with three running read as a mistake.
 		Bot[] farm = [.. _mgr?.All ?? []];
 		int connected = farm.Count(static b => b.IsOnline);
@@ -210,18 +210,10 @@ public static class DiscordPresence {
 		string details = Details(online).ToString();
 		string today = new Said("{0} cards today", cardsToday).ToString();
 
-		// With names off, the line counts what Second line picks - hours over every account, like Steam's "hrs past 2 weeks".
-		string counted = G.DiscordSecondLine switch {
-			1 => new Said("{0} hrs past week", Hours(History.MinutesOver(7, farm.Select(static b => b.Name)))).ToString(),
-			2 => new Said("{0} hrs past month", Hours(History.MinutesOver(30, farm.Select(static b => b.Name)))).ToString(),
-			_ => today
-		};
-
-		// The names line leaves out the featured account - it's already the picture. Only while it IS the picture: with
-		// the avatar off (or none to show) it was on the card nowhere at all.
-		bool featuredShown = (featured != null) && G.DiscordShowAvatar && (featured.AvatarUrl.Length > 0);
-		Bot[] named = [.. shown.Where(b => !featuredShown || (b != featured))];
-		string state = G.DiscordShowNames && (named.Length > 0) ? Names(named) : counted;
+		// The line counts what Second line picks - hours over every account, like Steam's "hrs past 2 weeks", or the people
+		// using nocat.farm.
+		string state = SecondLine(G.DiscordSecondLine, UserCount.Current(), today,
+			days => History.MinutesOver(days, farm.Select(static b => b.Name)));
 
 		// How many are signed in, said in words. Discord's own party counter only ever reads "(2 of 2)", with nothing
 		// to say 2 of what - it looked like a player count.
@@ -244,8 +236,8 @@ public static class DiscordPresence {
 			assets["small_url"] = Profile(lead);
 		}
 
-		// Both lines are links too, on top of the two buttons: Discord hides your own buttons from you, but not these.
-		// The first goes to GitHub, the names to the first named account's Steam profile.
+		// The top line is a link too, on top of the two buttons: Discord hides your own buttons from you, but not this.
+		// It goes to GitHub.
 		Dictionary<string, object> card = new() {
 			["type"] = 0,
 			["details"] = details,
@@ -253,10 +245,6 @@ public static class DiscordPresence {
 			["state"] = state,
 			["assets"] = assets
 		};
-
-		if (G.DiscordShowNames && named.FirstOrDefault() is { SteamId: not 0 } first) {
-			card["state_url"] = Profile(first);
-		}
 
 		if (G.DiscordShowTimer) {
 			card["timestamps"] = new { start = StartedUnix };
@@ -296,12 +284,24 @@ public static class DiscordPresence {
 			: new Said("Resting");
 	}
 
-	/// <summary>"kylro · old", or "kylro · old · +2" for a long list - Discord cuts the line off anyway.</summary>
-	private static string Names(Bot[] shown) {
-		string[] names = [.. shown.Select(Display)];
+	/// <summary>The Second line choice that shows how many people use nocat.farm - the default.</summary>
+	public const int LinePeople = 3;
 
-		return names.Length <= 3 ? string.Join(" · ", names) : string.Join(" · ", names.Take(2)) + $" · +{names.Length - 2}";
-	}
+	/// <summary>
+	/// The card's second line for a Second line choice: 1 hours past week, 2 hours past month, 3 people using nocat.farm,
+	/// anything else the cards today. The people count falls back to the cards today while it isn't known - "Count me as a
+	/// user" off, no answer yet, or the last one too old (<paramref name="people"/> null).
+	/// </summary>
+	/// <param name="minutesOver">The minutes played over the last so many days, over every account.</param>
+	public static string SecondLine(int choice, int? people, string cardsToday, Func<int, double> minutesOver) => choice switch {
+		1 => new Said("{0} hrs past week", Hours(minutesOver(7))).ToString(),
+		2 => new Said("{0} hrs past month", Hours(minutesOver(30))).ToString(),
+		LinePeople when people is { } n => People(n),
+		_ => cardsToday
+	};
+
+	/// <summary>"212 people using nocat.farm".</summary>
+	public static string People(int n) => n == 1 ? new Said("1 person using nocat.farm").ToString() : new Said("{0} people using nocat.farm", n).ToString();
 
 	/// <summary>The Steam name people know the account by; the nocat.farm name until Steam has said it.</summary>
 	private static string Display(Bot b) => b.SteamName.Length > 0 ? b.SteamName : b.Name;

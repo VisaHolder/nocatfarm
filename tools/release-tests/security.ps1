@@ -10,7 +10,7 @@ $W = Join-Path $(if ($TestRoot) { $TestRoot } else { Join-Path $env:TEMP 'nocatf
 if (Test-Path $W) { Remove-Item $W -Recurse -Force }
 New-Item -ItemType Directory -Force "$W\config" | Out-Null
 Expand-Archive "$Repo\dist\nocat.farm-v$Version-portable.zip" -DestinationPath $W
-Set-Content "$W\config\nocatFarm.json" -Encoding utf8 -Value "{`"WebPort`":$port,`"WebHost`":`"127.0.0.1`",`"CheckForUpdates`":false,`"AutoUpdate`":0,`"JoinGroup`":false,`"StartWithWindows`":false,`"TrayNotifications`":false,`"OpenBrowserOnStart`":false}"
+Set-Content "$W\config\nocatFarm.json" -Encoding utf8 -Value "{`"WebPort`":$port,`"WebHost`":`"127.0.0.1`",`"CheckForUpdates`":false,`"AutoUpdate`":0,`"JoinGroup`":false,`"StartWithWindows`":false,`"TrayNotifications`":false,`"OpenBrowserOnStart`":false,`"CountMeAsUser`":false}"
 Set-Content "$W\config\demo.json" -Encoding utf8 -Value '{"Enabled":false,"SteamLogin":"not_a_real_account"}'
 $p = Start-Process "$W\nocatFarm.exe" -ArgumentList '--minimized' -WorkingDirectory $W -WindowStyle Hidden -PassThru
 

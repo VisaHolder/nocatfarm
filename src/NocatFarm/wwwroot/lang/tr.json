@@ -1177,7 +1177,6 @@
     "While nocat.farm is open, your Discord profile shows it like a game. Pick what the card shows - the preview is what people see.": "nocat.farm açıkken Discord profilin onu bir oyun gibi gösterir. Kartta ne görüneceğini seç - önizleme, başkalarının gördüğü şeydir.",
     "Buttons and which accounts it shows are under Show advanced. Discord shows your buttons to everyone but you.": "Düğmeler ve hangi hesapların gösterileceği Gelişmişleri göster altında. Discord düğmelerini senin dışında herkese gösterir.",
     "No accounts picked": "Hiç hesap seçilmedi",
-    "Account names": "Hesap adları",
     "Accounts online": "Çevrimiçi hesaplar",
     "Avatar": "Avatar",
     "Timer": "Sayaç",
@@ -2401,7 +2400,14 @@
     "1 comment today": "bugün 1 yorum",
     "{0} comments today": "bugün {0} yorum",
     "{0}/{1} online": "{0}/{1} çevrimiçi",
-    "{0} inventory": "{0} envanter"
+    "{0} inventory": "{0} envanter",
+    "language set to {0} from this computer - change it in Settings": "dil bu bilgisayara göre {0} olarak ayarlandı - Ayarlar'dan değiştirebilirsin",
+    "People using nocat.farm": "nocat.farm kullananlar",
+    "{0} people using nocat.farm": "{0} kişi nocat.farm kullanıyor",
+    "1 person using nocat.farm": "1 kişi nocat.farm kullanıyor",
+    "{0} people using nocat.farm today": "Bugün {0} kişi nocat.farm kullanıyor",
+    "1 person using nocat.farm today": "Bugün 1 kişi nocat.farm kullanıyor",
+    "Copies of nocat.farm that were running in the last 24 hours. Count me as a user, under Updates & plugins, adds yours - off sends nothing and hides this.": "Son 24 saatte çalışan nocat.farm kopyaları. Güncellemeler ve eklentiler altındaki Beni kullanıcı say seninkini de ekler - kapalıyken hiçbir şey göndermez ve bunu gizler."
   },
   "settings": {
     "WebEnabled": {
@@ -2663,6 +2669,14 @@
     "LateNightExtraHours": {
       "label": "Cuma/Cumartesi daha geç yatar",
       "tip": "Cuma ve cumartesi geceleri fazladan kaç saat ayakta kaldığı."
+    },
+    "SleepMinHours": {
+      "label": "En az uyur",
+      "tip": "Ertesi gün başlamadan önce bir gecenin kaç saat sürdüğü - bu değerle sonraki arasında, her gece farklı rastgele bir süre. Sabah 5'te yatsa da bu süre geçmeden dönmez."
+    },
+    "SleepMaxHours": {
+      "label": "...en fazla",
+      "tip": "Bu aralığın üst sınırı, saat olarak."
     },
     "PureMainDayChancePct": {
       "label": "Yalnızca ana oyun günleri",
@@ -3241,11 +3255,7 @@
     },
     "DiscordPresenceAccounts": {
       "label": "Gösterilen hesaplar",
-      "tip": "Kartın adını verip anlattığı hesaplar. Otomatik, insan modunda olmayan tüm hesaplardır; ya da istediklerini işaretle. Karttaki sayılar her zaman tüm hesapları sayar."
-    },
-    "DiscordShowNames": {
-      "label": "Hesap adlarını göster",
-      "tip": "Discord kartının ikinci satırı hesapları Steam adlarıyla listeler, örneğin kylro · old. Kapalıyken İkinci satır'da seçilen gösterilir."
+      "tip": "Kartın konu ettiği hesaplar: üst satırı onların ne yaptığını söyler. Otomatik, insan modunda olmayan tüm hesaplardır; ya da istediklerini işaretle. Karttaki sayılar her zaman tüm hesapları sayar."
     },
     "DiscordShowCounter": {
       "label": "Çevrimiçi hesapları göster",
@@ -3385,8 +3395,8 @@
     },
     "DiscordSecondLine": {
       "label": "İkinci satır",
-      "tip": "Hesap adları kapalıyken Discord kartının ikinci satırının saydığı şey: bugün düşen kartlar ya da son bir hafta veya son bir ayda oynanan saatler - tüm hesaplarının toplamı.",
-      "choices": "0 bugünkü kartlar | 1 son bir haftadaki saatler | 2 son bir aydaki saatler"
+      "tip": "Discord kartının ikinci satırının gösterdiği: nocat.farm'ı kaç kişinin kullandığı, bugün düşen kartlar ya da son bir hafta veya son bir ayda oynanan saatler - tüm hesaplarının toplamı. Kişi sayısı için Beni kullanıcı say açık olmalı; sayı bilinene kadar bugünkü kartları gösterir.",
+      "choices": "3 nocat.farm kullananlar | 0 bugünkü kartlar | 1 son bir haftadaki saatler | 2 son bir aydaki saatler"
     },
     "SendAroundHour": {
       "label": "...civarında",
@@ -3464,6 +3474,10 @@
       "label": "Güncellemeler",
       "tip": "Yeni sürüm çıkınca ne olacağı. Her zaman önce günlükte, Telegram ve Discord'da haber verir. Tıklayınca, herkes uyuyunca kur: Güncelle düğmesi ya da update accept, hesapların uyuyunca kurar - uyanık insan modu hesabı yok, kimse oynamıyor, bekleyen takas ya da hediye yok. Tıklayınca kur: hemen. Gece kendi kursun: aşağıdaki saatlerde sakin bir anda kendisi kurar, önce ve sonra haber verir. update now her zaman hemen kurar. Docker'da ya da Linux hizmeti olarak değil; onlar elle güncellenir.",
       "choices": "0 tıklayınca, herkes uyuyunca kur | 1 tıklayınca kur | 2 gece kendi kursun"
+    },
+    "CountMeAsUser": {
+      "label": "Beni kullanıcı say",
+      "tip": "Saatte bir, bu kopyanın çalıştığını nocat.lol'a söyler - bu kurulum için üretilmiş rastgele bir sayı, uygulama sürümü ve platform, başka hiçbir şey: Steam hesabı, ad veya ayar yok. Kullanıcı sayısı böyle çıkar. Kapalıyken hiçbir şey göndermez."
     },
     "ReactionSpeed": {
       "label": "Tepki hızı",
