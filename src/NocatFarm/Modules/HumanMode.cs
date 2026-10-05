@@ -47,6 +47,12 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	private int _otherPlayed;
 
 	/// <summary>
+	/// Side-game minutes ahead of the shares rolled (below 0: behind), kept from day to day - what the pick steers back to
+	/// nothing (<see cref="SideOddsNow"/>), so a side-heavy day is made up over its next sittings, or the next day.
+	/// </summary>
+	private double _sideAhead;
+
+	/// <summary>
 	/// Minutes today's card-farming sittings have played - their own thing, kept apart from the main and side games.
 	///
 	/// They used to count as side-game time whenever the card game wasn't the main one, so with cards farmed in
@@ -204,13 +210,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// <summary>The game the next sitting farms, or 0 when this sitting should play the usual games.</summary>
 	/// Mixed rolls this per sitting: CardSittingsPct of them farm, the rest play the usual games.
 	private uint FarmGameNow() {
-		if (!FarmInDay || (Bot.CardsRemaining <= 0) || (BotManager.ModuleOf<CardFarmer>(Bot) is not { InFarmWindowNow: true } farmer)) {
-			return 0;
-		}
+		double odds = FarmOddsNow();
 
-		int share = CardShare(Bot.Cfg, Bot.DropsFirstActive, _mainSharePct);
-
-		if ((Bot.EffectiveFarmWhen == FarmWhen.Mixed) && !Chance(share / 100.0)) {
+		if ((odds <= 0) || ((odds < 1) && !Chance(odds)) || (BotManager.ModuleOf<CardFarmer>(Bot) is not { } farmer)) {
 			return 0;
 		}
 
@@ -219,6 +221,15 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		}
 
 		return farmer.NextGame;
+	}
+
+	/// <summary>How likely the next sitting is to farm cards: 0 with nothing to farm right now, 1 when every sitting does.</summary>
+	private double FarmOddsNow() {
+		if (!FarmInDay || (Bot.CardsRemaining <= 0) || (BotManager.ModuleOf<CardFarmer>(Bot) is not { InFarmWindowNow: true })) {
+			return 0;
+		}
+
+		return Bot.EffectiveFarmWhen == FarmWhen.Mixed ? CardShare(Bot.Cfg, Bot.DropsFirstActive, _mainSharePct) / 100.0 : 1;
 	}
 
 	/// <summary>
@@ -1301,6 +1312,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return;
 		}
 
+		// What yesterday left over, up to an hour of it. Only from yesterday: after a day it didn't run at all it starts afresh.
+		_sideAhead = Math.Clamp(HumanDay.Load(Bot.Name, date.AddDays(-1))?.SideAhead ?? 0, -MaxCarryMinutes, MaxCarryMinutes);
+
 		// The main game's own written share is the centre of today's roll. It used to be ignored outright in
 		// favour of a separate box, so the number typed beside the main game did nothing at all and only its
 		// position in the list carried meaning.
@@ -1348,7 +1362,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 		Said mix = _otherBudget == 0
 			? new Said("{0} only today", GameName(MainGame()))
-			: new Said("{0} about {1}%, around {2} on the others", GameName(MainGame()), _mainSharePct, Fmt.Hm(SideExpected(_targetMinutes, _mainSharePct)));
+			: new Said("{0} about {1}%, around {2} on the others", GameName(MainGame()), MainShareAimed, Fmt.Hm(SideExpected(_targetMinutes, MainShareAimed)));
 
 		Log.Info(new Said("today: ~{0} of play, up {1}, bed {2}", Fmt.Hm(_targetMinutes), (PlanWake()).ToString("HH:mm"), (PlanBed()).ToString("HH:mm")), Bot.Name);
 		Log.Debug(new Said("today's mix: {0}", mix), Bot.Name);
@@ -1360,11 +1374,37 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		}
 	}
 
-	/// <summary>A mixed day's side-game allowance, as a multiple of the side games' share of it (see RollDay).</summary>
-	internal const int SideAllowanceTimes = 3;
+	/// <summary>
+	/// A mixed day's side-game allowance, as a multiple of the side games' share of it: a backstop about a sitting above it.
+	/// It used to be three times their share - a 6h27m day planned around 2h03m on the side games let them have over six
+	/// hours, so it never stopped anything. What keeps a day on its share now is <see cref="SideOddsNow"/>.
+	/// </summary>
+	internal const double SideAllowanceTimes = 1.5;
 
 	/// <summary>
-	/// What the side games can expect on a mixed day: their share of it. The allowance is a cap well above that, so it is
+	/// The most of a day's lead (or shortfall) on the side games that is carried into the next day, in minutes. A day can only
+	/// even itself out with the sittings it has left; what is still out at bedtime is made up the next day, which is what holds
+	/// the weeks to the shares written down. An hour at most - a day that went far off (a long stand-down, a stretch of hour-
+	/// target sittings) shouldn't tilt the next one much.
+	/// </summary>
+	internal const int MaxCarryMinutes = 60;
+
+	/// <summary>The side games' share of today as rolled - 0 on a main-game-only day.</summary>
+	private double SideShareToday => _otherBudget > 0 ? Math.Clamp(100 - _mainSharePct, 1, 95) / 100.0 : 0;
+
+	/// <summary>The main game's share today aims at, in percent: its roll, moved by what yesterday carried over.</summary>
+	private int MainShareAimed => _targetMinutes <= 0 ? _mainSharePct
+		: (int) Math.Round(Math.Clamp(100 * (1 - SideShareToday + (_sideAhead / _targetMinutes)), 5, 99));
+
+	/// <summary>
+	/// Today's side-game allowance in minutes - the day's roll (<see cref="SideAllowanceTimes"/> their share), and as much again
+	/// as they're behind it (yesterday's shortfall included), so a day that swung the main game's way can always swing back -
+	/// or 0 on a main-game-only day.
+	/// </summary>
+	private int SideAllowance => _otherBudget <= 0 ? 0 : _otherBudget + (int) Math.Max(0, -_sideAhead);
+
+	/// <summary>
+	/// What the side games can expect on a mixed day: their share of it. The allowance is a cap above that, so it is
 	/// not the number to show anybody - the day's log line said "up to 2h54m on the others" for a day that, like 'human week'
 	/// and 'human' said, would put about an hour and a half on them.
 	/// </summary>
@@ -1538,14 +1578,19 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			// independent number was a second limit on the same minutes: whichever happened to be tighter won, and the
 			// weights quietly became fiction whenever it was this one.
 			//
-			// Three times the side games' share, not an eighth over it. A day is only a handful of sittings, so its
-			// side-game time swings a lot either way; a cap that close cut off every day that swung up while nothing made
-			// up for the days that swung down, and a main game set to 70% played 76-79% of the time. Twice still did it on
-			// a smaller scale - a point over on the defaults, more on a main game set high, where one side-game sitting is
-			// already most of the day's side time. At three times it still stops a runaway day of side games, and the
-			// average stays where the number says.
+			// Half as much again as the side games' share (SideAllowanceTimes). A day is only a handful of sittings, and with
+			// every pick rolled as if nothing had happened yet its side-game time swung a long way either way; a cap close to
+			// the share cut off every day that swung up while nothing made up for the days that swung down, and a main game
+			// set to 70% played 76-79% of the time. So it went to three times the share - where it stopped nothing at all: a
+			// 6h27m day planned around 2h03m on the side games could put six hours on them.
+			//
+			// Now the day is steered back toward its share as soon as it swings (SideOddsNow), the days that swing down get
+			// it back too - more side-game odds, and the allowance grows by what they're behind (SideAllowance) - and what's
+			// still out at bedtime, over or under, is carried into the next day. So the cap only meets a day that went up and
+			// stayed up despite all that, and even then what it cuts off is carried, not lost: the average stays where the
+			// number says (the simulated sittings check it on five quite different setups).
 			int side = Math.Clamp(100 - mainShare, 1, 95);
-			otherBudget = Math.Max(20, target * side / 100 * SideAllowanceTimes);
+			otherBudget = Math.Max(20, (int) Math.Round(target * side / 100.0 * SideAllowanceTimes));
 		}
 
 		int signOuts = Math.Clamp(cfg.MaxSignOutsPerDay, 0, 40);
@@ -1921,7 +1966,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		int length = Rng(bands[band].Lo, bands[band].Hi);
 
 		if (game != main) {
-			int left = SideBudgetNow(_otherBudget, _targetMinutes, _farmPlayed) - _otherPlayed;
+			int left = SideBudgetNow(SideAllowance, _targetMinutes, _farmPlayed) - _otherPlayed;
 
 			if ((left > 0) && (length > left)) {
 				length = Math.Max(15, left);
@@ -2238,6 +2283,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				_farmPlayed += played;
 			} else if (_game != MainGame()) {
 				_otherPlayed += played;
+				_sideAhead += (1 - SideShareToday) * played;
+			} else {
+				_sideAhead -= SideShareToday * played;
 			}
 		}
 
@@ -2267,6 +2315,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			MainSharePct = _mainSharePct,
 			OtherBudget = _otherBudget,
 			OtherPlayed = _otherPlayed,
+			SideAhead = _sideAhead,
 			FarmPlayed = _farmPlayed,
 			SignOutCap = _signOutCap,
 			SignOutsUsed = _signOutsUsed,
@@ -2446,6 +2495,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_mainSharePct = saved.MainSharePct;
 		_otherBudget = saved.OtherBudget;
 		_otherPlayed = saved.OtherPlayed;
+		_sideAhead = saved.SideAhead;
 		_farmPlayed = saved.FarmPlayed;
 		_signOutCap = saved.SignOutCap;
 		_signOutsUsed = saved.SignOutsUsed;
@@ -3175,7 +3225,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		}
 
 		// Once today's side-game allowance is spent it is the main game for the rest of the day.
-		if ((weights.Count == 1) || !SideGameAllowed(_otherPlayed, SideBudgetNow(_otherBudget, _targetMinutes, _farmPlayed))) {
+		if ((weights.Count == 1) || !SideGameAllowed(_otherPlayed, SideBudgetNow(SideAllowance, _targetMinutes, _farmPlayed))) {
 			return [(weights[0].Game, 1.0)];
 		}
 
@@ -3190,7 +3240,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			// so off its share.
 			int min = Math.Max(5, Bot.Cfg.SessionMinMinutes);
 			int max = Math.Max(min + 5, Bot.Cfg.SessionMaxMinutes);
-			int sideLeft = SideBudgetNow(_otherBudget, _targetMinutes, _farmPlayed) - _otherPlayed;
+			int sideLeft = SideBudgetNow(SideAllowance, _targetMinutes, _farmPlayed) - _otherPlayed;
 			int first = _firstSessionOfDay ? FirstSittingCap(min, max) : 0;
 			int remaining = _targetMinutes - _playedMinutesToday;
 			int untilBed = MinutesUntilBed();
@@ -3208,10 +3258,16 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			}
 		}
 
-		double mainWeight = MainWeight(sideTotal, _mainSharePct, mainMean, sideMean);
-		double all = mainWeight + sideTotal;
+		double sideShare = SideShareToday;
+		double side = sideTotal / (MainWeight(sideTotal, 100 * (1 - sideShare), mainMean, sideMean) + sideTotal);
 
-		return [(weights[0].Game, mainWeight / all), .. weights.Skip(1).Select(w => (w.Game, Math.Max(1, w.Weight) / all))];
+		// Each pick on its own odds let a day wander a long way from its share - five side-game sittings in a row and none of
+		// the main game, on a day planned at 68% main. Steer back toward the share with what's left of the day.
+		if (_stayUpUntil <= DateTime.Now) {
+			side = SideOddsNow(side, _sideAhead, sideShare, mainMean, sideMean, OrdinaryLeft(mainMean, (side * sideMean) + ((1 - side) * mainMean)));
+		}
+
+		return [(weights[0].Game, 1 - side), .. weights.Skip(1).Select(w => (w.Game, side * Math.Max(1, w.Weight) / sideTotal))];
 	}
 
 	/// <summary>Rolls one game from odds that add up to 1 (or near enough - the last one takes any rounding).</summary>
@@ -3237,8 +3293,42 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// </summary>
 	/// <param name="mainMean">How long a main-game sitting would run this time, on average (<see cref="MeanLength"/>).</param>
 	/// <param name="sideMean">The same for the side games, weighted between them.</param>
-	internal static double MainWeight(int sideTotal, int mainPct, double mainMean, double sideMean) =>
-		Math.Max(0.01, sideTotal * mainPct / (double) Math.Max(1, 100 - mainPct) * Math.Max(1, sideMean) / Math.Max(1, mainMean));
+	internal static double MainWeight(int sideTotal, double mainPct, double mainMean, double sideMean) =>
+		Math.Max(0.01, sideTotal * mainPct / Math.Max(1, 100 - mainPct) * Math.Max(1, sideMean) / Math.Max(1, mainMean));
+
+	/// <summary>
+	/// The odds of a side game for this sitting, steered toward the day's share. <paramref name="side"/> gives the share when
+	/// nothing has been played yet; the side games' minutes ahead of their share so far (<paramref name="ahead"/>, below 0 when
+	/// behind) are then evened out over what's left of the day, a sitting's worth at a time - so a day that has gone the side
+	/// games' way leans to the main game for its next sittings, and the other way round, while every pick is still a roll of
+	/// the dice. Rolled as if nothing had happened yet, as each pick was, five side-game sittings in a row came along about one
+	/// mixed day in two hundred, and one day in four put half as much again on the side games as planned, or more.
+	/// </summary>
+	/// <param name="side">The side games' odds before steering.</param>
+	/// <param name="ahead">Side-game minutes ahead of the share so far (yesterday's leftover included); below 0 when behind.</param>
+	/// <param name="sideShare">The side games' share today aims at.</param>
+	/// <param name="mainMean">How long a main-game sitting would run this time, on average (<see cref="MeanLength"/>).</param>
+	/// <param name="sideMean">The same for the side games.</param>
+	/// <param name="left">Minutes of ordinary play (not card farming) still to come today.</param>
+	internal static double SideOddsNow(double side, double ahead, double sideShare, double mainMean, double sideMean, double left) {
+		// Each point of odds moves the side games' expected lead by this much, and this sitting's part of evening the lead out
+		// over the rest of the day is its length over what's left.
+		double perOdds = ((1 - sideShare) * Math.Max(1, sideMean)) + (sideShare * Math.Max(1, mainMean));
+		double length = (side * Math.Max(1, sideMean)) + ((1 - side) * Math.Max(1, mainMean));
+
+		return Math.Clamp(side - (ahead * length / (Math.Max(1, left) * perOdds)), 0, 1);
+	}
+
+	/// <summary>
+	/// Minutes of ordinary play still to come today: what's left of the hours, less the part card-farming sittings can expect
+	/// to take of it - those aren't the side games' or the main game's to even out.
+	/// </summary>
+	private double OrdinaryLeft(double farmMean, double ordinaryMean) {
+		double farm = FarmOddsNow();
+		double farmTime = farm >= 1 ? 1 : farm * Math.Max(1, farmMean) / ((farm * Math.Max(1, farmMean)) + ((1 - farm) * Math.Max(1, ordinaryMean)));
+
+		return Math.Max(1, (_targetMinutes - _playedMinutesToday) * (1 - farmTime));
+	}
 
 	/// <summary>
 	/// The ranges a sitting's length is rolled from, with how often each: the main game's real gaming sessions - mostly

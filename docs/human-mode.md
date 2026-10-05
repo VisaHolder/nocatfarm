@@ -48,6 +48,9 @@ set myaccount BedHour 2                              # goes to bed around 2am
 
 Some days go on the main game alone (*Days on the main game only*, 25%), so side games show up in bursts. That
 lowers their weekly share, and the dashboard and `human` show the real weekly figure next to the one you set.
+On the other days the mix stays near the day's own share: a day that has gone the side games' way leans back to the
+main game for its next sittings (and the other way round), and whatever is still off at bedtime, up to an hour, is
+made up the next day.
 
 To see what it's up to:
 

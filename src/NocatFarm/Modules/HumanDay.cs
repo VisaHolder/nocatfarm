@@ -26,6 +26,9 @@ public sealed class HumanDay {
 	public int OtherBudget { get; set; }
 	public int OtherPlayed { get; set; }
 
+	/// <summary>Side-game minutes ahead of the shares rolled (below 0: behind), carried from day to day (0 in older files).</summary>
+	public double SideAhead { get; set; }
+
 	/// <summary>Minutes the card-farming sittings have played - kept apart from the side games' (0 in older files).</summary>
 	public int FarmPlayed { get; set; }
 	public int SignOutCap { get; set; }

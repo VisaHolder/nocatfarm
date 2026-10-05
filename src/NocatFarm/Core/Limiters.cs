@@ -71,23 +71,32 @@ public static class Limiters {
 	// back into it - a few restarts in a row were enough to get steamcommunity.com shut for everyone. So every
 	// backoff is written down (state/backoff.json) and a fresh start picks the wait up where the last one left it.
 	private static readonly object RememberGate = new();   // Monitor: Remember re-enters it through Remembered
-	private static Dictionary<string, (DateTime Until, int Minutes)>? _remembered;
+	// Each line is "key|ticks|minutes", and "key|ticks|minutes|version" when the wait was written down with the app's
+	// version - the market's is, so a new version can tell a pause an older one earned (see PriceBook.LoadCool).
+	private static Dictionary<string, (DateTime Until, int Minutes, string? By)>? _remembered;
 
 	private static string RememberPath => Path.Combine(Config.ConfigStore.ConfigDir, "state", "backoff.json");
 
 	/// <summary>The backoff last written for <paramref name="key"/> - a host, or "market" - or nothing.</summary>
 	public static (DateTime Until, int Minutes) Remembered(string key) {
+		(DateTime until, int minutes, _) = RememberedBy(key);
+
+		return (until, minutes);
+	}
+
+	/// <summary>The backoff last written for <paramref name="key"/>, and the app version that wrote it (null when none was written with it).</summary>
+	public static (DateTime Until, int Minutes, string? By) RememberedBy(string key) {
 		lock (RememberGate) {
 			if (_remembered == null) {
-				_remembered = new Dictionary<string, (DateTime, int)>(StringComparer.OrdinalIgnoreCase);
+				_remembered = new Dictionary<string, (DateTime, int, string?)>(StringComparer.OrdinalIgnoreCase);
 
 				try {
 					if (File.Exists(RememberPath)) {
 						foreach (string line in File.ReadAllLines(RememberPath)) {
 							string[] part = line.Split('|');
 
-							if ((part.Length == 3) && long.TryParse(part[1], out long ticks) && int.TryParse(part[2], out int minutes) && (ticks > 0)) {
-								_remembered[part[0]] = (new DateTime(ticks, DateTimeKind.Utc), minutes);
+							if ((part.Length is 3 or 4) && long.TryParse(part[1], out long ticks) && int.TryParse(part[2], out int minutes) && (ticks > 0)) {
+								_remembered[part[0]] = (new DateTime(ticks, DateTimeKind.Utc), minutes, (part.Length == 4) && (part[3].Length > 0) ? part[3] : null);
 							}
 						}
 					}
@@ -101,16 +110,17 @@ public static class Limiters {
 		}
 	}
 
-	/// <summary>Write a backoff down so a restart keeps to it. Only called when it changes.</summary>
-	public static void Remember(string key, DateTime until, int minutes) {
+	/// <summary>Write a backoff down so a restart keeps to it. Only called when it changes. <paramref name="by"/> is the
+	/// app version to write down with it, for a wait a newer version must not inherit; null for none.</summary>
+	public static void Remember(string key, DateTime until, int minutes, string? by = null) {
 		lock (RememberGate) {
-			Remembered(key);   // loads the file once
+			RememberedBy(key);   // loads the file once
 
-			if (_remembered!.TryGetValue(key, out (DateTime Until, int Minutes) old) && (old.Until == until) && (old.Minutes == minutes)) {
+			if (_remembered!.TryGetValue(key, out (DateTime Until, int Minutes, string? By) old) && (old.Until == until) && (old.Minutes == minutes) && (old.By == by)) {
 				return;
 			}
 
-			_remembered[key] = (until, minutes);
+			_remembered[key] = (until, minutes, by);
 
 			// Anything long over and reset has nothing left to say.
 			DateTime stale = DateTime.UtcNow.AddDays(-1);
@@ -118,7 +128,7 @@ public static class Limiters {
 			try {
 				AtomicFile.Write(RememberPath, string.Join(Environment.NewLine, _remembered
 					.Where(r => (r.Value.Minutes > 0) || (r.Value.Until > stale))
-					.Select(static r => $"{r.Key}|{r.Value.Until.Ticks}|{r.Value.Minutes}")));
+					.Select(static r => r.Value.By is { } by ? $"{r.Key}|{r.Value.Until.Ticks}|{r.Value.Minutes}|{by}" : $"{r.Key}|{r.Value.Until.Ticks}|{r.Value.Minutes}")));
 			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 				// Best effort: it only matters if the process restarts inside the wait.
 				Log.Failed("couldn't write down the rate-limit wait", e);

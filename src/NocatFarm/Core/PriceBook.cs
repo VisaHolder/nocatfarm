@@ -279,6 +279,9 @@ public static partial class PriceBook {
 	/// pricing at the same moment went on with no pause at all and asked straight into the one a restart had kept.</summary>
 	private static readonly Lock CoolGate = new();
 
+	/// <summary>Write the market's pause down, with this version - so it binds a restart, but never a newer version.</summary>
+	private static void SaveCool() => Limiters.Remember("market", _coolUntil, MinutesOf(_coolSeconds), Build.Version);
+
 	private static void LoadCool() {
 		if (Volatile.Read(ref _coolLoaded)) {
 			return;
@@ -286,7 +289,24 @@ public static partial class PriceBook {
 
 		lock (CoolGate) {
 			if (!_coolLoaded) {
-				(_coolUntil, int minutes) = Limiters.Remembered("market");   // a restart doesn't lift the market's limit
+				(DateTime until, int minutes, string? by) = Limiters.RememberedBy("market");   // a restart doesn't lift the market's limit
+
+				// ...but a new version does. A pause is only as good as the requests that earned it: up to 1.6.9 every request
+				// went without an Accept header and was refused for that alone, and 1.7.0 then sat out the twelve-hour pause
+				// those refusals had built up before asking once. So a pause written by any other version - or by one too old
+				// to write its version down - is dropped: the first start of a new version asks straight away, and if it is
+				// refused the ladder starts again from the bottom. The way that last answered is still kept.
+				if (by != Build.Version) {
+					if ((minutes > 0) || (until > DateTime.UtcNow)) {
+						Log.Debug($"market: a pause written by {by ?? "an older version"} is dropped - this version {Build.Version} asks straight away");
+						Limiters.Remember("market", DateTime.MinValue, 0, Build.Version);
+					}
+
+					until = DateTime.MinValue;
+					minutes = 0;
+				}
+
+				_coolUntil = until;
 				_coolSeconds = minutes * 60;
 				_saidRefused = _coolSeconds >= RefusedSeconds;                 // and it was said before the restart
 				_goodWay = _way = Limiters.Remembered("market-way").Minutes == 1 ? 1 : 0;   // nor forget which way answered
@@ -392,7 +412,7 @@ public static partial class PriceBook {
 
 					if (_coolUntil > coolBefore) {
 						_coolUntil = coolBefore;
-						Limiters.Remember("market", _coolUntil, MinutesOf(_coolSeconds));
+						SaveCool();
 					}
 
 					continue;
@@ -569,7 +589,7 @@ public static partial class PriceBook {
 		// same limit, so it waits too - asking into it only makes it last longer.
 		if (Limiters.RateLimitedFor(WebSession.Community.Host) is { } shut && (shut > TimeSpan.Zero)) {
 			_coolUntil = DateTime.UtcNow + shut;
-			Limiters.Remember("market", _coolUntil, MinutesOf(_coolSeconds));
+			SaveCool();
 
 			return (null, false, false);
 		}
@@ -584,7 +604,7 @@ public static partial class PriceBook {
 			// makes it last longer - nor is a request never sent a refusal that should lengthen the market's next pause.
 			if (Limiters.RateLimitedFor(WebSession.Community.Host) is { } closed && (closed > TimeSpan.Zero)) {
 				_coolUntil = DateTime.UtcNow + closed;
-				Limiters.Remember("market", _coolUntil, MinutesOf(_coolSeconds));
+				SaveCool();
 
 				return (null, false, false);
 			}
@@ -605,7 +625,7 @@ public static partial class PriceBook {
 		if (!response.IsSuccessStatusCode) {
 			// Not a refusal - Steam's own trouble, a 500 or a 502: a couple of minutes, and no step up the ladder.
 			_coolUntil = DateTime.UtcNow.AddMinutes(2);
-			Limiters.Remember("market", _coolUntil, MinutesOf(_coolSeconds));
+			SaveCool();
 			Log.Debug(new Said("the market answered {0} - pausing price lookups until {1}", (int) response.StatusCode, (_coolUntil.ToLocalTime()).ToString("HH:mm")));
 
 			return (null, false, true);
@@ -654,7 +674,7 @@ public static partial class PriceBook {
 		_coolSeconds = NextCoolSeconds(_coolSeconds);
 		_coolUntil = DateTime.UtcNow.AddSeconds(_coolSeconds * (1 + (Rng.Next(0, 251) / 1000d)));
 		_checkFirst = true;
-		Limiters.Remember("market", _coolUntil, MinutesOf(_coolSeconds));
+		SaveCool();
 
 		// Past the end of the ladder: once, in plain words, rather than the same pause line twice a day for days.
 		bool refused = _coolSeconds >= RefusedSeconds;
@@ -690,7 +710,7 @@ public static partial class PriceBook {
 
 		if (_coolSeconds != 0) {
 			_coolSeconds = 0;
-			Limiters.Remember("market", _coolUntil, 0);
+			Limiters.Remember("market", _coolUntil, 0, Build.Version);
 		}
 
 		if (_saidRefused) {

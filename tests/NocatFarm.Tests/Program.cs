@@ -2368,6 +2368,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Set(fh, "_mainSharePct", 70);
 	Set(fh, "_firstSessionOfDay", false);   // an ordinary sitting, the day's first being short whatever it's on
 	Set(fh, "_otherBudget", 1_000_000);     // with side-game time left to give
+	Set(fh, "_sideAhead", 0.0);             // and nothing to even out yet - this is about the cards, not the day so far
 	double mw = (double) Static("MainWeight", 30, 70, (double) Static("MeanLength", true, 30, 150, 0, -1, 0, int.MaxValue, 0)!,
 		(double) Static("MeanLength", false, 30, 150, 0, -1, 0, int.MaxValue, 0)!)!;
 	int picked440 = 0;
@@ -2716,10 +2717,13 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			$"{freeBed / freeNights:0.0}h vs {schoolBed / schoolNights:0.0}h after the day's midnight");
 	}
 
-	// Sittings: years of days through the real session picker and the real banking, cards farmed in some sittings every
-	// other day. The clock is kept out of it (up round the clock) - this is about the mix. Several shapes of settings,
-	// because a lean that cancels out on the defaults can still show on a main game set to 50 or 85, or on short
-	// sittings where the day's first and last are most of it.
+	// Sittings: years of days through the real session picker and the real banking, cards farmed in some sittings for a
+	// month at a time, then a month without - the way cards come, a batch of games with drops lasting weeks. (Every other
+	// day it was, until a day's leftover started being carried into the next: then a card day made up for the plain day
+	// before it, and the two were each a point or so off in opposite directions while together they were spot on.) The
+	// clock is kept out of it (up round the clock) - this is about the mix. Several shapes of settings, because a lean that
+	// cancels out on the defaults can still show on a main game set to 50 or 85, or on short sittings where the day's first
+	// and last are most of it.
 	MethodInfo rollMix = ht.GetMethod("RollDay", Stat)!;
 	(double Plain, double Card, double Farm, int CardSittings, int DidntStart, int Longest, int OverDay, double NoSideDays, double MainRun) Simulate(string weights,
 		int centre, Action<NocatFarm.Config.BotConfig> tweak, int days, int seed) {
@@ -2742,7 +2746,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		NocatFarm.Log.Suppressed = true;
 
 		for (int day = 0; day < days; day++) {
-			int cards = day % 2;
+			int cards = day / 30 % 2;
 			typeof(NocatFarm.Core.Bot).GetProperty("CardsRemaining")!.SetValue(simBot, cards == 1 ? 50 : 0);
 			object plan = rollMix.Invoke(null, [simCfg, new DateTime(2026, 3, 2).AddDays(day), centre, true, DateTime.MinValue, dayRng])!;
 			int P(string n) => (int) plan.GetType().GetProperty(n)!.GetValue(plan)!;
@@ -2850,6 +2854,157 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check($"simulated sittings, {mixName}: the main game's share is within half a point of its {centre}%", Math.Abs(s.Plain - want) < 0.005,
 			$"{s.Plain:P2}, {s.NoSideDays:P1} of the days with no side game, main-game sittings {s.MainRun:0.00} in a row");
 		Check($"simulated sittings, {mixName}: ...on days cards farm in some sittings too", Math.Abs(s.Card - want) < 0.005, $"{s.Card:P2}");
+	}
+
+	// The 'new' account's own setup: Counter-Strike 2 at 75 and nothing else written down, the achievement hunt's game
+	// joining at "hunt game's weight" 25, sittings of 45-120 minutes. Every pick used to be rolled as if nothing had happened
+	// yet that day, so a day could wander a long way from its share: on 5 October it played five side-game sittings in a row
+	// (4h44m: Destiny 2 twice, Metro 2033 Redux, Portal twice) and no Counter-Strike 2 at all, on a day planned at 68%. On
+	// this harness, before the fix: about one mixed day in two hundred opened with five side-game sittings, one in twenty-five
+	// played under 40% main, one in four put half as much again on the side games as planned or more (the allowance was three
+	// times their share), and a day was 13.7 points off its plan on average. Ten simulated years through the real picker and
+	// banking, the hunt's game as the one side game, and the day's leftover carried into the next as the morning's roll does.
+	(double Main, double MeanOff, int ZeroMain, int UnderForty, int FiveSideFirst, int OverCap, int Mixed, double WeekLo, double WeekHi, double DayLo, double DayHi)
+		HuntYears(int pureMainPct, int days, int seed) {
+		string huntName = "harness-hunt-" + Guid.NewGuid().ToString("N")[..6];
+		var huntCfg = new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730:75", PureMainDayChancePct = pureMainPct,
+			SessionMinMinutes = 45, SessionMaxMinutes = 120, AchievementBoost = 2, BoostWeight = 25, BoostGamesInRotation = 5 };
+		var huntBot = new NocatFarm.Core.Bot(huntName, huntCfg);
+		var huntMode = new NocatFarm.Modules.HumanMode(huntBot);
+		huntBot.AddModule(huntMode);
+		var hunter = new NocatFarm.Modules.AchievementBoost(huntBot);
+		typeof(NocatFarm.Modules.AchievementBoost).GetProperty("HuntTarget")!.SetValue(hunter, 286690u);   // Metro 2033 Redux
+		huntBot.AddModule(hunter);
+		HF("_rng").SetValue(huntMode, new Random(seed));
+		DateTime huntLogon = DateTime.UtcNow.AddHours(-1);
+		typeof(NocatFarm.Core.Bot).GetProperty("OnlineSince")!.SetValue(huntBot, huntLogon);
+		int carryMost = (int) ht.GetField("MaxCarryMinutes", Stat | BindingFlags.Public)!.GetValue(null)!;
+		Random dayDice = new(seed * 7);
+		double allMain = 0, allSide = 0, weekMain = 0, weekSide = 0, off = 0;
+		int zeroMain = 0, underForty = 0, fiveSideFirst = 0, overCap = 0, mixed = 0;
+		List<double> weeks = [], dayShares = [];
+		NocatFarm.Log.Suppressed = true;
+
+		for (int day = 0; day < days; day++) {
+			object plan = rollMix.Invoke(null, [huntCfg, new DateTime(2026, 3, 2).AddDays(day), 75, true, DateTime.MinValue, dayDice])!;
+			int P(string n) => (int) plan.GetType().GetProperty(n)!.GetValue(plan)!;
+			int target = P("Target"), share = P("MainSharePct"), budget = P("OtherBudget");
+
+			if (target > 0) {
+				// The morning's roll: yesterday's leftover, an hour of it at most (RollFor), and the day's plan.
+				double carried = Math.Clamp(HGet<double>(huntMode, "_sideAhead"), -carryMost, carryMost);
+				Set(huntMode, "_sideAhead", carried);
+				Set(huntMode, "_dayStamp", -1);
+				Set(huntMode, "_stayUpUntil", DateTime.MinValue);
+				Set(huntMode, "_targetMinutes", target);
+				Set(huntMode, "_mainSharePct", share);
+				Set(huntMode, "_otherBudget", budget);
+				Set(huntMode, "_playedMinutesToday", 0);
+				Set(huntMode, "_otherPlayed", 0);
+				Set(huntMode, "_farmPlayed", 0);
+				Set(huntMode, "_firstSessionOfDay", true);
+				Set(huntMode, "_lastGame", 0u);
+				Set(huntMode, "_switchingTo", 0u);
+				double main = 0, side = 0;
+				int sittings = 0;
+				bool sideOnly = true;
+
+				while (HGet<int>(huntMode, "_playedMinutesToday") < target) {
+					Set(huntMode, "_phase", NocatFarm.Modules.HumanMode.Phase.Off);
+					HCall(huntMode, "StartSession");
+					uint game = HGet<uint>(huntMode, "_game");
+					int m = (int) Math.Round((HGet<DateTime>(huntMode, "_sessionEnds") - HGet<DateTime>(huntMode, "_sessionStarted")).TotalMinutes);
+					Set(huntMode, "_bankedForLogon", huntLogon);
+					Set(huntMode, "_bankedTo", DateTime.UtcNow.AddMinutes(-m));
+					Set(huntMode, "_lastBankAt", DateTime.UtcNow.AddSeconds(-10));
+					HCall(huntMode, "BankSession");
+					main += game == 730 ? m : 0;
+					side += game == 730 ? 0 : m;
+					sideOnly &= game != 730;
+					fiveSideFirst += (++sittings == 5) && sideOnly ? 1 : 0;
+				}
+
+				allMain += main;
+				allSide += side;
+				weekMain += main;
+				weekSide += side;
+
+				if (budget > 0) {
+					double dayShare = main / (main + side);
+					mixed++;
+					dayShares.Add(dayShare);
+					off += Math.Abs((dayShare * 100) - share);
+					zeroMain += main == 0 ? 1 : 0;
+					underForty += dayShare < 0.40 ? 1 : 0;
+					// The allowance holds: half as much again as the side games' share, plus what yesterday left them short
+					// of - a quarter-hour over at most, the shortest a side game's last sitting is cut to.
+					overCap += side > budget + Math.Max(0, -carried) + 15 ? 1 : 0;
+				}
+			}
+
+			if (day % 7 == 6) {
+				weeks.Add(weekMain / Math.Max(1, weekMain + weekSide));
+				weekMain = weekSide = 0;
+			}
+		}
+
+		NocatFarm.Log.Suppressed = false;
+		NocatFarm.Modules.HumanDay.Forget(huntName);
+		huntBot.DisposeAsync().AsTask().GetAwaiter().GetResult();
+		dayShares.Sort();
+
+		return (allMain / (allMain + allSide), off / Math.Max(1, mixed), zeroMain, underForty, fiveSideFirst, overCap, mixed, weeks.Min(), weeks.Max(),
+			dayShares[dayShares.Count / 20], dayShares[dayShares.Count * 19 / 20]);
+	}
+
+	var hy = HuntYears(0, 3650, 21);
+	string hyDetail = $"{hy.Main:P2} main over {hy.Mixed} mixed days, a day {hy.MeanOff:0.0} points off its plan on average, days {hy.DayLo:P0}-{hy.DayHi:P0} (5th-95th), weeks {hy.WeekLo:P0}-{hy.WeekHi:P0}";
+	Check("hunt as the one side game (730:75 + hunt at 25, 45-120m): over ten simulated years Counter-Strike 2 gets its 75%, within 2 points", Math.Abs(hy.Main - 0.75) < 0.02, hyDetail);
+	Check("hunt as the one side game: no mixed day without Counter-Strike 2, none under 40% of it", (hy.ZeroMain == 0) && (hy.UnderForty == 0), $"{hy.ZeroMain} with none, {hy.UnderForty} under 40%");
+	Check("hunt as the one side game: five side-game sittings to open a day at most one day in a thousand (was one in two hundred)", hy.FiveSideFirst <= hy.Mixed / 1000, $"{hy.FiveSideFirst} of {hy.Mixed}");
+	Check("hunt as the one side game: a day lands near its own plan - under 8 points off on average (was 13.7)", hy.MeanOff < 8, hyDetail);
+	Check("hunt as the one side game: ...and still varies - a day's share spreads over 10 points and more (5th-95th)", hy.DayHi - hy.DayLo >= 0.10, hyDetail);
+	Check("hunt as the one side game: every week within 10 points of 75%", (hy.WeekLo >= 0.65) && (hy.WeekHi <= 0.85), hyDetail);
+	Check("hunt as the one side game: the side allowance holds - never more than 1.5x the side games' share (plus yesterday's shortfall) and a quarter-hour",
+		hy.OverCap == 0, $"{hy.OverCap} days over");
+	var hyPure = HuntYears(25, 3650, 22);
+	Check("hunt as the one side game, a day in four main-game-only: 81.25% main (25% x 100 + 75% x 75), within 2 points", Math.Abs(hyPure.Main - 0.8125) < 0.02,
+		$"{hyPure.Main:P2}, no mixed day without Counter-Strike 2: {hyPure.ZeroMain == 0}");
+
+	// The steering, on its own: nothing to even out leaves the odds alone; a lead on the side games lowers them, a shortfall
+	// raises them, more the less of the day is left; and they stay odds.
+	double SideOdds(double side, double ahead, double left) => (double) ht.GetMethod("SideOddsNow", Stat)!.Invoke(null, [side, ahead, 0.32, 77.0, 55.0, left])!;
+	Check("steering: nothing ahead or behind - the odds as rolled", Math.Abs(SideOdds(0.40, 0, 300) - 0.40) < 1e-9);
+	Check("steering: side games ahead - fewer side-game sittings, more so late in the day",
+		(SideOdds(0.40, 36, 334) < 0.40) && (SideOdds(0.40, 80, 269) < SideOdds(0.40, 36, 334)) && (SideOdds(0.40, 36, 60) < SideOdds(0.40, 36, 334)),
+		$"{SideOdds(0.40, 36, 334):P0} after one Destiny 2 sitting, {SideOdds(0.40, 80, 269):P0} after two");
+	Check("steering: side games behind - more side-game sittings", SideOdds(0.40, -60, 300) > 0.40, $"{SideOdds(0.40, -60, 300):P0}");
+	Check("steering: always odds (0 to 1), however far out", (SideOdds(0.40, 5_000, 30) == 0) && (SideOdds(0.40, -5_000, 30) == 1));
+
+	// What's left over at bedtime goes into the next day - an hour of it at most - and survives a restart.
+	{
+		string carryName = "harness-carry-" + Guid.NewGuid().ToString("N")[..6];
+		var carryBot = new NocatFarm.Core.Bot(carryName, new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730:75, 440:25" });
+		var carryMode = new NocatFarm.Modules.HumanMode(carryBot);
+		carryBot.AddModule(carryMode);
+		DateTime yesterday = DateTime.Today.AddDays(-1);
+		NocatFarm.Log.Suppressed = true;
+		new NocatFarm.Modules.HumanDay { DayOfYear = yesterday.DayOfYear, Year = yesterday.Year, TargetMinutes = 300, PlayedMinutes = 300, SideAhead = 200 }.Save(carryName);
+		HCall(carryMode, "RollFor", DateTime.Today, DateTime.MinValue);
+		double carriedIn = HGet<double>(carryMode, "_sideAhead");
+		new NocatFarm.Modules.HumanDay { DayOfYear = yesterday.DayOfYear, Year = yesterday.Year, TargetMinutes = 300, PlayedMinutes = 300, SideAhead = -25 }.Save(carryName);
+		HCall(carryMode, "RollFor", DateTime.Today, DateTime.MinValue);
+		double behindIn = HGet<double>(carryMode, "_sideAhead");
+		double savedNow = NocatFarm.Modules.HumanDay.Load(carryName, DateTime.Today)?.SideAhead ?? double.NaN;
+		NocatFarm.Modules.HumanDay.Forget(carryName);
+		HCall(carryMode, "RollFor", DateTime.Today, DateTime.MinValue);
+		double afterGap = HGet<double>(carryMode, "_sideAhead");
+		NocatFarm.Log.Suppressed = false;
+		NocatFarm.Modules.HumanDay.Forget(carryName);
+		carryBot.DisposeAsync().AsTask().GetAwaiter().GetResult();
+		Check("carry: yesterday's lead on the side games comes into today, an hour of it at most", carriedIn == 60, $"{carriedIn}");
+		Check("carry: a shortfall comes in too, and is saved with today's plan for a restart", (behindIn == -25) && (savedNow == -25), $"{behindIn}, saved {savedNow}");
+		Check("carry: after a day it didn't run at all, it starts afresh", afterGap == 0, $"{afterGap}");
 	}
 
 	// What the pick's sums are built on: the average sitting worked out from the ranges is what the real roll gives - the
@@ -13953,6 +14108,88 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("market ways: every request actually sent, either way, carried its Accept header and its own name", sentA && sentB && allAccept);
 		gapP.SetValue(null, 0d);
 
+		// 7b. A pause written down by an older version is dropped on the first start of a new one: up to 1.6.9 every request
+		// was refused for want of an Accept header, and 1.7.0 sat out the twelve-hour pause those refusals had built up.
+		{
+			FieldInfo vpRememberedF = typeof(NocatFarm.Core.Limiters).GetField("_remembered", All)!;
+			string vpBackoffFile = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "backoff.json");
+			string vpMe = NocatFarm.Build.Version;
+			long vpHoursAhead = DateTime.UtcNow.AddHours(9).Ticks;
+
+			// What a restart does: the file is all there is - read afresh, the book's pause loaded from it.
+			void vpRestart(params string[] lines) {
+				Fresh();
+				Directory.CreateDirectory(Path.GetDirectoryName(vpBackoffFile)!);
+				File.WriteAllText(vpBackoffFile, string.Join(Environment.NewLine, lines));
+				lock (typeof(NocatFarm.Core.Limiters).GetField("RememberGate", All)!.GetValue(null)!) {
+					vpRememberedF.SetValue(null, null);
+				}
+				F("_coolLoaded").SetValue(null, false);
+				F("_coolUntil").SetValue(null, DateTime.MinValue);
+				F("_coolSeconds").SetValue(null, 0);
+				F("_way").SetValue(null, 0);
+				F("_goodWay").SetValue(null, 0);
+				pb.GetMethod("LoadCool", All)!.Invoke(null, []);
+			}
+
+			// The very file 1.6.9 left behind: the market at the twelve-hour step, another host's own wait, the way kept.
+			vpRestart($"market|{vpHoursAhead}|720", $"{host}|{vpHoursAhead}|60", $"market-way|{DateTime.UtcNow.Ticks}|1");
+			bool vpDropped = (NocatFarm.PriceBook.PausedUntil == null) && (Field<int>("_coolSeconds") == 0) && !Field<bool>("_saidRefused") && (NocatFarm.PriceBook.Stale == null);
+			bool vpHostKept = NocatFarm.Core.Limiters.Remembered(host) is { Minutes: 60 } vpHk && (vpHk.Until.Ticks == vpHoursAhead);
+			bool vpWayKept = (Field<int>("_way") == 1) && (Field<int>("_goodWay") == 1);
+			string vpAfterDrop = File.ReadAllText(vpBackoffFile);
+			Check("market pause: one saved by 1.6.9 (no version on it) is dropped on load - other hosts' waits and the way that answered are kept",
+				vpDropped && vpHostKept && vpWayKept && !vpAfterDrop.Contains($"market|{vpHoursAhead}", StringComparison.Ordinal) && vpAfterDrop.Contains($"{host}|{vpHoursAhead}|60", StringComparison.Ordinal),
+				vpAfterDrop.Replace(Environment.NewLine, " ; "));
+
+			// ...and pricing asks straight away. The host's own wait is lifted here so only the market's is being tested.
+			OpenHost();
+			answer = (_, r) => Price(r);
+			lock (sent) sent.Clear();
+			bool vpAskedNow = await PriceAll((730, $"Old Pause {tag}"));
+			Check("market pause: after an older version's pause is dropped, pricing asks the market right away",
+				vpAskedNow && (sent.Count == 1) && (Known(730, $"Old Pause {tag}") == 1.23m), Ways());
+
+			// Refused at once: the ladder starts again from its bottom step, not from where 1.6.9 left it.
+			vpRestart($"market|{vpHoursAhead}|720");
+			answer = (_, _) => Status(429);
+			lock (sent) sent.Clear();
+			await PriceAll((730, $"Old Pause Refused {tag}"));
+			Check("market pause: refused straight after the dropped pause - the ladder starts from 90 seconds, written down with this version",
+				(Field<int>("_coolSeconds") == 90) && (NocatFarm.Core.Limiters.RememberedBy("market").By == vpMe) && File.ReadAllText(vpBackoffFile).Contains($"|{vpMe}", StringComparison.Ordinal),
+				$"{Field<int>("_coolSeconds")} / {Ways()}");
+
+			// Another version's stamp - older or newer - is dropped the same way.
+			vpRestart($"market|{vpHoursAhead}|720|1.7.0-not-this");
+			Check("market pause: one written by a different version is dropped too", (NocatFarm.PriceBook.PausedUntil == null) && (Field<int>("_coolSeconds") == 0));
+
+			// This version's own pause binds a restart, exactly as before.
+			vpRestart($"market|{vpHoursAhead}|720|{vpMe}");
+			answer = (_, r) => Price(r);
+			lock (sent) sent.Clear();
+			bool vpHeldOwn = !await PriceAll((730, $"Own Pause {tag}"));
+			Check("market pause: one written by this same version still holds after a restart - nothing asked, the refusal remembered",
+				vpHeldOwn && (sent.Count == 0) && (NocatFarm.PriceBook.PausedUntil is { } vpOwnUntil) && (vpOwnUntil.Ticks == vpHoursAhead)
+				&& (Field<int>("_coolSeconds") == 720 * 60) && Field<bool>("_saidRefused"), Ways());
+
+			// The new line format: written, read back from the file, the same - and a host's line stays the old three fields.
+			DateTime vpUntil = new(DateTime.UtcNow.AddMinutes(37).Ticks, DateTimeKind.Utc);
+			vpRestart();
+			NocatFarm.Core.Limiters.Remember("market", vpUntil, 15, vpMe);
+			NocatFarm.Core.Limiters.Remember(host, vpUntil, 4);
+			string vpWritten = File.ReadAllText(vpBackoffFile);
+			lock (typeof(NocatFarm.Core.Limiters).GetField("RememberGate", All)!.GetValue(null)!) {
+				vpRememberedF.SetValue(null, null);
+			}
+			var vpBack = NocatFarm.Core.Limiters.RememberedBy("market");
+			var vpHostBack = NocatFarm.Core.Limiters.RememberedBy(host);
+			Check("market pause: the versioned line round-trips - until, minutes and version - and a host's line keeps no version",
+				(vpBack.Until == vpUntil) && (vpBack.Minutes == 15) && (vpBack.By == vpMe) && (vpHostBack.Until == vpUntil) && (vpHostBack.Minutes == 4) && (vpHostBack.By == null)
+				&& vpWritten.Contains($"market|{vpUntil.Ticks}|15|{vpMe}", StringComparison.Ordinal) && vpWritten.Contains($"{host}|{vpUntil.Ticks}|4", StringComparison.Ordinal)
+				&& !vpWritten.Contains($"{host}|{vpUntil.Ticks}|4|", StringComparison.Ordinal), vpWritten.Replace(Environment.NewLine, " ; "));
+			Fresh();
+		}
+
 		// 8. Old prices while the market refuses: the book says from when, and when it asks again - the tile and the command too.
 		Fresh();
 		pb.GetMethod("Remember", All)!.Invoke(null, [(uint) 730, $"Stale Thing {tag}", 2.50m]);
@@ -13980,7 +14217,13 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		invT.GetMethod("Recount", All)!.Invoke(holder.Inventory, []);
 		F("_coolUntil").SetValue(null, retry);   // the manager's settings don't lift it
 		string inventory = await Commands.RunAsync(mgr, "inventory stale-holder");
-		string expected = $"prices from {stale!.Value.From.ToLocalTime():HH:mm} · Steam's market isn't answering, trying again at {retry.ToLocalTime():HH:mm}";
+		// As the command writes them: the time today, the date too past midnight (45 minutes ahead can be tomorrow).
+		static string StaleStamp(DateTime utc) {
+			DateTime local = utc.ToLocalTime();
+
+			return local.ToString(local.Date == DateTime.Today ? "HH:mm" : "yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+		}
+		string expected = $"prices from {StaleStamp(stale!.Value.From)} · Steam's market isn't answering, trying again at {StaleStamp(retry)}";
 		Check("stale prices: 'inventory' says from when the prices are and when the market is asked again",
 			(holder.Inventory.Pending > 0) && inventory.Contains(expected, StringComparison.Ordinal) && inventory.Contains("$2.50", StringComparison.Ordinal), inventory);
 
