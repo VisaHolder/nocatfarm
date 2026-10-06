@@ -160,7 +160,7 @@ public sealed class Sender(Bot bot) : BotModule(bot) {
 			}
 
 			_busyTries = 0;
-			Schedule(hours);
+			Schedule(hours, justSent: true);
 			DateTime again = _nextDue!.Value;
 			Log.Debug(new Said("next send around {0}", (Func<string>) (() => Fmt.Clock(again))), Bot.Name);
 		}
@@ -173,21 +173,34 @@ public sealed class Sender(Bot bot) : BotModule(bot) {
 	/// every 24 hours is the next time that hour comes round, every 48 skips a day. Without one: one period from now,
 	/// plus up to a tenth of it again so it never lands on the same minute.
 	/// </summary>
-	private void Schedule(int hours) {
-		_nextDue = NextDue(DateTime.Now, hours, Bot.Cfg.SendAroundHour, Rng.Next(0, 60), Rng.Next(0, 101) / 1000.0).ToUniversalTime();
+	/// <param name="justSent">A send has just finished - see <see cref="NextDue"/>.</param>
+	private void Schedule(int hours, bool justSent = false) {
+		_nextDue = NextDue(DateTime.Now, hours, Bot.Cfg.SendAroundHour, Rng.Next(0, 60), Rng.Next(0, 101) / 1000.0, justSent).ToUniversalTime();
 		Save();
 	}
 
 	/// <summary>When the next send is due, in local time - separate so it can be tested.</summary>
-	internal static DateTime NextDue(DateTime nowLocal, int hours, int atHour, int minute, double slack) {
+	/// <param name="justSent">
+	/// A send has just finished. The next one is then at least half a day off, and with a longer period all but half a
+	/// day of it - so after the 22:07 send, "around 22:00" is tomorrow.
+	/// </param>
+	/// <remarks>
+	/// Picking a fresh random minute in the hour straight after the send found one still ahead today about half the
+	/// time: sent at 22:07, next 22:12, then 22:27, then tomorrow - two or three offers a night instead of one. And
+	/// every 48 hours could come round again in 24, when the new minute happened to land a little later than the last.
+	/// </remarks>
+	internal static DateTime NextDue(DateTime nowLocal, int hours, int atHour, int minute, double slack, bool justSent = false) {
 		if (atHour is < 0 or > 23) {
 			return nowLocal + TimeSpan.FromHours(hours * (1 + slack));
 		}
 
 		DateTime due = nowLocal.Date.AddHours(atHour).AddMinutes(minute);
 
-		// At least the period less a day away: 24 hours is simply the next time the hour comes round.
-		while ((due <= nowLocal) || (due - nowLocal < TimeSpan.FromHours(Math.Max(0, hours - 24)))) {
+		// At least the period less a day away: 24 hours is simply the next time the hour comes round - today, if it's
+		// still ahead, the first time it's set. Right after a send, at least half a day (see justSent).
+		TimeSpan least = TimeSpan.FromHours(justSent ? Math.Max(12, hours - 12) : Math.Max(0, hours - 24));
+
+		while ((due <= nowLocal) || (due - nowLocal < least)) {
 			due = due.AddDays(1);
 		}
 

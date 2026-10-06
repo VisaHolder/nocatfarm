@@ -117,7 +117,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	// ── a life, not just a day (each off unless its setting is on) ──
 	/// <summary>What it has learned from you playing on the account - read from disk the first time it's wanted.</summary>
 	private OwnerHabits? _habits;
-	private readonly OwnerWatch _ownerWatch = new();
+	private readonly OwnerWatch _ownerWatch = new(bot.Name);
 
 	/// <summary>
 	/// What's learned, worked out again only when something is added, a setting changes or the hour turns - the fade
@@ -564,6 +564,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			// a disconnect stopped the modules and banked this sign-in then - see BankSessionLocked.
 			lock (_stepGate) {
 				BankSessionOnStop();
+				_ownerWatch.Flush();   // your sitting so far, as last seen - a restart carries on with it
 			}
 		} catch (Exception e) {
 			Log.Debug(new Said("couldn't bank the session on shutdown: {0}", Log.Describe(e)), Bot.Name);
@@ -1216,6 +1217,10 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 				Bot.StopPlaying();
 			}
 
+			// What the side games are ahead or behind so far goes into the new plan. It used to be read back from the saved
+			// plan - the very file thrown away just below - so every reroll quietly started the steering from nothing.
+			double? carry = _dayStamp >= 0 ? _sideAhead : null;
+
 			HumanDay.Forget(Bot.Name);
 
 			if (_breakPersonaSet) {
@@ -1230,7 +1235,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			_switchingTo = 0;
 
 			Log.Info("new plan for today from the current settings", Bot.Name);
-			RollFor(date, lastBed);
+			RollFor(date, lastBed, carry);
 
 			if (wasUp && (now < PlanWake())) {
 				_wakeMinuteOfDay = Math.Clamp((int) (now - PlanDate(_dayStamp, now)).TotalMinutes, 0, (23 * 60) + 59);
@@ -1297,7 +1302,9 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 
 	/// <summary>The plan for <paramref name="date"/>: the one already saved for it, or a fresh roll.</summary>
 	/// <param name="lastBed">When the night before really ended - MinValue when that isn't known.</param>
-	private void RollFor(DateTime date, DateTime lastBed) {
+	/// <param name="carry">What the side games were ahead or behind coming into this plan, when that's known without the saved
+	/// plan - a reroll has just thrown it away. Null: read from yesterday's plan.</param>
+	private void RollFor(DateTime date, DateTime lastBed, double? carry = null) {
 		_dayStamp = date.DayOfYear;
 		_stayUpUntil = DateTime.MinValue;   // last night's 'wake' sitting doesn't carry into a new day's plan
 
@@ -1312,14 +1319,15 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			return;
 		}
 
-		// What yesterday left over, up to an hour of it. Only from yesterday: after a day it didn't run at all it starts afresh.
-		_sideAhead = Math.Clamp(HumanDay.Load(Bot.Name, date.AddDays(-1))?.SideAhead ?? 0, -MaxCarryMinutes, MaxCarryMinutes);
-
 		// The main game's own written share is the centre of today's roll. It used to be ignored outright in
 		// favour of a separate box, so the number typed beside the main game did nothing at all and only its
 		// position in the list carried meaning.
 		List<(uint Game, int Weight)> spread = Weights();
 		DayRoll roll = RollDayWith(Bot.Cfg, date, Math.Clamp(spread.Count > 0 ? spread[0].Weight : 70, 5, 95), spread.Count >= 2, lastBed, _rng, Extras(date));
+
+		// What yesterday left over, up to an hour of it (CarryIn). Only from yesterday: after a day it didn't run at all it
+		// starts afresh. Read before today's plan is saved over yesterday's.
+		_sideAhead = CarryIn(carry ?? HumanDay.Load(Bot.Name, date.AddDays(-1))?.SideAhead ?? 0, spread.Count >= 2, roll.Target, roll.OtherBudget);
 
 		_wakeMinuteOfDay = roll.WakeMinute;
 		_bedHour = roll.BedHour;
@@ -1388,6 +1396,34 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 	/// target sittings) shouldn't tilt the next one much.
 	/// </summary>
 	internal const int MaxCarryMinutes = 60;
+
+	/// <summary>
+	/// What a fresh day starts with on the side games (<see cref="_sideAhead"/>), from what the day before left over: an hour of
+	/// it at most (<see cref="MaxCarryMinutes"/>), nothing when there are no side games at all, and half of it on a day rolled
+	/// to the main game alone.
+	///
+	/// With no side games there is no share to make up toward. What was left over used to be read back and saved again every
+	/// day regardless, so taking the side games out mid-day left an hour's shortfall sitting there for weeks - paid back all
+	/// at once the day they were put back - and on one game alone a friend's game or a new game's sittings pushed it up to the
+	/// hour and pinned it there. A main-game-only day in a mixed setup can't pay anything back either, so a run of them
+	/// carried the same lead unchanged; halved each one, it fades instead. A day off keeps it - nothing was played.
+	/// </summary>
+	internal static double CarryIn(double before, bool hasSides, int target, int otherBudget) {
+		if (!hasSides) {
+			return 0;
+		}
+
+		double carried = Math.Clamp(before, -MaxCarryMinutes, MaxCarryMinutes);
+
+		return (target > 0) && (otherBudget <= 0) ? carried / 2 : carried;
+	}
+
+	/// <summary>A mixed day's side-game allowance as rolled: <see cref="SideAllowanceTimes"/> the side games' share of the day.</summary>
+	internal static int SideBudget(int target, int mainSharePct) {
+		int side = Math.Clamp(100 - mainSharePct, 1, 95);
+
+		return Math.Max(20, (int) Math.Round(target * side / 100.0 * SideAllowanceTimes));
+	}
 
 	/// <summary>The side games' share of today as rolled - 0 on a main-game-only day.</summary>
 	private double SideShareToday => _otherBudget > 0 ? Math.Clamp(100 - _mainSharePct, 1, 95) / 100.0 : 0;
@@ -1589,8 +1625,7 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			// still out at bedtime, over or under, is carried into the next day. So the cap only meets a day that went up and
 			// stayed up despite all that, and even then what it cuts off is carried, not lost: the average stays where the
 			// number says (the simulated sittings check it on five quite different setups).
-			int side = Math.Clamp(100 - mainShare, 1, 95);
-			otherBudget = Math.Max(20, (int) Math.Round(target * side / 100.0 * SideAllowanceTimes));
+			otherBudget = SideBudget(target, mainShare);
 		}
 
 		int signOuts = Math.Clamp(cfg.MaxSignOutsPerDay, 0, 40);
@@ -2281,11 +2316,21 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			// A farming sitting's minutes are its own - side-game time would have used up the side games' allowance.
 			if (_farmSitting) {
 				_farmPlayed += played;
-			} else if (_game != MainGame()) {
-				_otherPlayed += played;
-				_sideAhead += (1 - SideShareToday) * played;
 			} else {
-				_sideAhead -= SideShareToday * played;
+				bool sideGame = _game != MainGame();
+
+				if (sideGame) {
+					_otherPlayed += played;
+				}
+
+				// Only a day with a side-game share moves the lead on it. On a main-game-only day a friend's game, a new game's
+				// sittings or an hour target added every minute to it and nothing took any off, so on one game alone it went
+				// to the hour carried (MaxCarryMinutes) and stayed there.
+				double share = SideShareToday;
+
+				if (share > 0) {
+					_sideAhead += sideGame ? (1 - share) * played : -share * played;
+				}
 			}
 		}
 
@@ -2495,8 +2540,18 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 		_mainSharePct = saved.MainSharePct;
 		_otherBudget = saved.OtherBudget;
 		_otherPlayed = saved.OtherPlayed;
-		_sideAhead = saved.SideAhead;
 		_farmPlayed = saved.FarmPlayed;
+		_sideAhead = saved.SideAhead ?? 0;
+
+		// A plan saved before the day was steered (1.7.0 and older) - an update in the middle of the day. Read as nothing ahead
+		// and with the old allowance of three times the side games' share, the rest of that day went on as before the steering:
+		// 4h44m on the side games against a plan of about 2h03m, and it still started Half-Life 2 47 minutes after the update. So
+		// the lead is worked out from what the day has played, and the allowance cut to today's.
+		if ((saved.SideAhead == null) && (_otherBudget > 0)) {
+			_otherBudget = Math.Min(_otherBudget, SideBudget(_targetMinutes, _mainSharePct));
+			_sideAhead = _otherPlayed - (SideShareToday * Math.Max(0, _playedMinutesToday - _farmPlayed));
+		}
+
 		_signOutCap = saved.SignOutCap;
 		_signOutsUsed = saved.SignOutsUsed;
 		_mealCap = saved.MealCap;

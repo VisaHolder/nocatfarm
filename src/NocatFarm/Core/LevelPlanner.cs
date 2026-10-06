@@ -35,7 +35,9 @@ public static class LevelPlanner {
 	private static readonly TimeSpan PriceLife = TimeSpan.FromHours(24);
 
 	// ── what's been worked out ──────────────────────────────────────────────
-	private sealed record Finished(int Target, string Text, DateTime At);
+	/// <summary>A worked-out answer. Once: shown the next time it's asked for and then dropped, not kept for half an hour -
+	/// what the market didn't answer, it isn't a plan.</summary>
+	private sealed record Finished(int Target, string Text, DateTime At, bool Once = false);
 
 	private static readonly Dictionary<string, Finished> Plans = new(StringComparer.OrdinalIgnoreCase);
 	private static readonly HashSet<string> Working = new(StringComparer.OrdinalIgnoreCase);
@@ -44,6 +46,10 @@ public static class LevelPlanner {
 	public static string Ask(Bot bot, int target) {
 		lock (Plans) {
 			if (Plans.TryGetValue(bot.Name, out Finished? done) && (done.Target == target) && (DateTime.UtcNow - done.At < TimeSpan.FromMinutes(30))) {
+				if (done.Once) {
+					Plans.Remove(bot.Name);
+				}
+
 				return done.Text;
 			}
 
@@ -55,14 +61,22 @@ public static class LevelPlanner {
 				return "Steam is rate-limiting the community site right now - try again in a few minutes.";
 			}
 
+			// The market's pause asks nothing, and every price it didn't ask came back as "no set": a plan of "to buy: 0
+			// badge level(s), about $0.00", kept for half an hour. Said instead, with when it can be asked.
+			if (MarketClosed() is { } closed) {
+				return $"{bot.Name}: {closed}";
+			}
+
 			Working.Add(bot.Name);
 		}
 
 		_ = Task.Run(async () => {
 			string text;
+			bool once = false;
 
 			try {
-				text = await BuildAsync(bot, target, CancellationToken.None).ConfigureAwait(false);
+				(text, bool whole) = await BuildAsync(bot, target, CancellationToken.None).ConfigureAwait(false);
+				once = !whole;
 			} catch (Exception e) {
 				// Only shown if somebody asks again - written down here so it isn't lost when nobody does.
 				Log.Failed("couldn't work the level plan out", e, bot.Name);
@@ -70,7 +84,7 @@ public static class LevelPlanner {
 			}
 
 			lock (Plans) {
-				Plans[bot.Name] = new Finished(target, text, DateTime.UtcNow);
+				Plans[bot.Name] = new Finished(target, text, DateTime.UtcNow, once);
 				Working.Remove(bot.Name);
 			}
 
@@ -81,14 +95,29 @@ public static class LevelPlanner {
 			+ $"doesn't mind (a minute or two). Type 'levelup {bot.Name} {target}' again when the log says it's ready.";
 	}
 
+	/// <summary>Why the market can't be asked right now and when it can, or null when it can.</summary>
+	private static string? MarketClosed() {
+		if (PriceBook.PausedUntil is { } paused) {
+			return $"Steam asked the market lookups to wait - try again after {paused.ToLocalTime():HH:mm}.";
+		}
+
+		// Searches are all a plan asks for.
+		return PriceBook.SearchesBackAt is { } back ? $"The market is turning its searches down - try again after {back.ToLocalTime():HH:mm}." : null;
+	}
+
+	/// <summary>What a plan says instead when the market stopped answering partway: no plan from half the prices.</summary>
+	private static string Stopped(Bot bot) =>
+		$"{bot.Name}: the market stopped answering partway through, so there's no plan yet. {MarketClosed() ?? "Try again in a few minutes."}";
+
 	// ── the plan ─────────────────────────────────────────────────────────────
-	private static async Task<string> BuildAsync(Bot bot, int target, CancellationToken ct) {
+	/// <summary>The plan, and whether it is one: false when the market stopped answering partway (see <see cref="Finished"/>).</summary>
+	private static async Task<(string Text, bool Whole)> BuildAsync(Bot bot, int target, CancellationToken ct) {
 		if (await BadgesAsync(bot, ct).ConfigureAwait(false) is not { } badges) {
-			return $"{bot.Name}: Steam wouldn't say what its badges are - try again later.";
+			return ($"{bot.Name}: Steam wouldn't say what its badges are - try again later.", false);
 		}
 
 		if (target <= badges.Level) {
-			return $"{bot.Name} is already level {badges.Level}.";
+			return ($"{bot.Name} is already level {badges.Level}.", true);
 		}
 
 		int xpNeeded = XpFor(target) - badges.Xp;
@@ -116,7 +145,13 @@ public static class LevelPlanner {
 			(SetPrice? set, bool asked) = await PriceAsync(bot, app, ct).ConfigureAwait(false);
 			lookups += asked ? 1 : 0;
 
-			if ((set == null) || (set.Size == 0)) {
+			// No answer - paused, refused, Steam's trouble: everything after it would be no answer too, each counted as "no
+			// set", and the plan would be built on nothing.
+			if (set == null) {
+				return (Stopped(bot), false);
+			}
+
+			if (set.Size == 0) {
 				continue;
 			}
 
@@ -146,14 +181,18 @@ public static class LevelPlanner {
 		if (stillNeeded == 0) {
 			sb.AppendLine("  that's enough - craft those and it's there, for nothing.");
 
-			return sb.ToString().TrimEnd();
+			return (sb.ToString().TrimEnd(), true);
 		}
 
 		// ── the cheapest way to the rest ────────────────────────────────────
 		// Finishing a started set is often cheaper than any whole set, so those go in the same list.
 		List<(string Game, int Levels, int Cents, string How)> options = [.. finish.Select(static f => (f.Game, 1, f.Cents, $"finish it: {f.Missing} card(s)"))];
 
-		foreach (uint app in await CheapestGamesAsync(bot, ct).ConfigureAwait(false)) {
+		if (await CheapestGamesAsync(bot, ct).ConfigureAwait(false) is not { } cheapest) {
+			return (Stopped(bot), false);
+		}
+
+		foreach (uint app in cheapest) {
 			if (lookups >= MaxLookups) {
 				break;
 			}
@@ -165,7 +204,11 @@ public static class LevelPlanner {
 			(SetPrice? set, bool asked) = await PriceAsync(bot, app, ct).ConfigureAwait(false);
 			lookups += asked ? 1 : 0;
 
-			if ((set != null) && (set.Size > 0) && set.Cards.Values.All(static c => c > 0)) {
+			if (set == null) {
+				return (Stopped(bot), false);
+			}
+
+			if ((set.Size > 0) && set.Cards.Values.All(static c => c > 0)) {
 				options.Add((set.Game, Left(app), set.Cents, $"{set.Size} cards"));
 			}
 		}
@@ -201,7 +244,7 @@ public static class LevelPlanner {
 
 		sb.Append("  (buying several copies of a card usually costs a little over the lowest listing. Each craft also gives gems, a background or an emoticon, and a coupon.)");
 
-		return sb.ToString().TrimEnd();
+		return (sb.ToString().TrimEnd(), true);
 	}
 
 	// ── badges ───────────────────────────────────────────────────────────────
@@ -294,7 +337,8 @@ public static class LevelPlanner {
 
 	private const string Search = "/market/search/render/?norender=1&appid=753&category_753_item_class[]=tag_item_class_2&category_753_cardborder[]=tag_cardborder_0&l=english";
 
-	/// <summary>A game's set price from the cache, or from the market if it's older than a day. Asked = a request was made.</summary>
+	/// <summary>A game's set price from the cache, or from the market if it's older than a day - null when the market
+	/// didn't answer. Asked = a request was actually sent: none is while the market's pause stands.</summary>
 	/// <param name="currency">Steam's currency id to price in; the global display currency when not given. Selling
 	/// passes the account's own wallet currency - Steam reads a listing's price in that.</param>
 	internal static async Task<(SetPrice? Set, bool Asked)> PriceAsync(Bot bot, uint app, CancellationToken ct, int? currency = null) {
@@ -311,16 +355,18 @@ public static class LevelPlanner {
 		Dictionary<string, int> cards = new(StringComparer.Ordinal);
 		string game = GameNames.Of(app);
 		int total = 0;
+		bool asked = false;
 
 		// The market hands out fewer than asked per page (ten, signed out), so page by what actually came back.
 		for (int start = 0; start < 300; ) {   // nobody makes a set of 300 cards
 			// In the price book's queue, not on a pace of its own: the same gap after whatever was asked last, and
 			// nothing while the market's pause stands. Signed out, like every price - a read needs no account, and an
 			// account's own market standing (a ban, no mobile authenticator) can get its session refused.
-			string? json = await PriceBook.MarketGetAsync($"{Search}&category_753_Game[]=tag_app_{app}&start={start}&count=100&currency={cur}", ct).ConfigureAwait(false);
+			(string? json, bool sent) = await PriceBook.MarketGetAsync($"{Search}&category_753_Game[]=tag_app_{app}&start={start}&count=100&currency={cur}", ct).ConfigureAwait(false);
+			asked |= sent;
 
 			if (string.IsNullOrEmpty(json)) {
-				return (null, true);
+				return (null, asked);
 			}
 
 			PriceBook.Learn(SteamItems, json, cur);   // the inventory value needs these same card prices
@@ -364,16 +410,16 @@ public static class LevelPlanner {
 		return (set, true);
 	}
 
-	/// <summary>Games whose cards are the cheapest on the market right now, cheapest first.</summary>
-	private static async Task<List<uint>> CheapestGamesAsync(Bot bot, CancellationToken ct) {
+	/// <summary>Games whose cards are the cheapest on the market right now, cheapest first - null when the market didn't answer.</summary>
+	private static async Task<List<uint>?> CheapestGamesAsync(Bot bot, CancellationToken ct) {
 		List<uint> games = [];
 
 		for (int start = 0, page = 0; (start < 200) && (page < 4); page++) {
 			int cur = Math.Max(1, Live.Global.MarketCurrency);
-			string? json = await PriceBook.MarketGetAsync($"{Search}&sort_column=price&sort_dir=asc&start={start}&count=100&currency={cur}", ct).ConfigureAwait(false);
+			(string? json, _) = await PriceBook.MarketGetAsync($"{Search}&sort_column=price&sort_dir=asc&start={start}&count=100&currency={cur}", ct).ConfigureAwait(false);
 
 			if (string.IsNullOrEmpty(json)) {
-				break;
+				return null;
 			}
 
 			PriceBook.Learn(SteamItems, json, cur);

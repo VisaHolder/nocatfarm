@@ -16,9 +16,9 @@ namespace NocatFarm;
 /// lookups are spaced out, capped per sweep, and a price is kept for a day before it's asked again.
 ///
 /// The market also changes what it will answer without a word, so there are fallbacks: two ways of asking (a refusal
-/// one way sends the next request the other way), a short pause that grows only while both are refused, and single
-/// lookups when its searches are refused but those aren't. Every request, whichever way and however many tries, goes
-/// through one queue at one pace.
+/// from a way that hasn't answered lately sends the next request the other way), a short pause that grows while the
+/// market keeps refusing, and single lookups when its searches are refused but those aren't. Every request, whichever
+/// way and however many tries, goes through one queue at one pace.
 ///
 /// Nothing here is ever load-bearing: an unknown price simply counts as zero and is looked up later, which is why
 /// a fresh install shows a value that climbs for a few minutes and then settles - and while the market refuses, the
@@ -123,9 +123,15 @@ public static partial class PriceBook {
 	// ── two ways of asking ──────────────────────────────────────────────────
 	// 0 is the app's own name (Http), 1 a desktop browser (HttpB). The market's rules change without a word: on
 	// 2026-10-05 it was refusing every request with no Accept header, and a browser string it had taken before, while
-	// the same requests written differently were answered. The next change won't be announced either. So a refused
-	// request is followed by one asked the other way, the way that last got an answer is the one used - remembered
-	// across restarts, like the pause - and only both ways refused in a row counts as the market refusing.
+	// the same requests written differently were answered. The next change won't be announced either. So a refusal
+	// from a way that hasn't answered lately is followed at once by one asked the other way, and the way that last got
+	// an answer is the one used - remembered across restarts, like the pause.
+	//
+	// But both ways come from the same internet connection, and the market's commonest refusal is its limit on that
+	// connection: 870 lookups answered, then a 429, and the same item asked the other way eight seconds later was
+	// refused too - and so on at every step of the pause, two requests into a limit that only grows with each. So a way
+	// that was answering until a moment ago and is now refused is the limit, not the way: it pauses at once, and the one
+	// request at the end of each pause goes the other way from the one before, so both are still tried.
 
 	/// <summary>The way the next request goes.</summary>
 	private static int _way;
@@ -136,12 +142,25 @@ public static partial class PriceBook {
 	/// <summary>Requests refused in a row since the last answer. Two - one each way - is the market refusing.</summary>
 	private static int _refusedInRow;
 
-	/// <summary>Every refusal in the current run was a search page: see <see cref="SearchOff"/>.</summary>
-	private static bool _runWasSearch;
+	/// <summary>When each way last got an answer, since the start. Never written down: a restart may be a new version,
+	/// asking differently, and nothing it hasn't seen answered counts as answering.</summary>
+	private static readonly DateTime[] AnsweredAt = [DateTime.MinValue, DateTime.MinValue];
+
+	/// <summary>A way refused within this long of its last answer is the market's limit on the connection, not the way.</summary>
+	private static readonly TimeSpan AnsweringLately = TimeSpan.FromMinutes(15);
+
+	/// <summary>True when <paramref name="way"/> hasn't been answered lately - or at all since the start.</summary>
+	private static bool Quiet(int way) => DateTime.UtcNow - AnsweredAt[way] > AnsweringLately;
 
 	/// <summary>
-	/// The pause after the market has refused both ways in a row, in seconds: ninety, then five minutes, fifteen, thirty,
-	/// an hour, two, four - each a little longer at random, never shorter. Any answer starts it again from the top.
+	/// A search page was just refused this way (0 or 1; -1 when not): the next request is one item on its own, which tells
+	/// searches refused (it is answered) from the market's limit (it is refused too) - see <see cref="SearchOff"/>.
+	/// </summary>
+	private static int _searchDoubt = -1;
+
+	/// <summary>
+	/// The pause after the market has refused, in seconds: ninety, then five minutes, fifteen, thirty, an hour, two, four -
+	/// each a little longer at random, never shorter. Any answer starts it again from the top.
 	/// </summary>
 	/// <remarks>
 	/// It used to start at fifteen minutes and double. But the refusals that kept it climbing were never the market's
@@ -152,13 +171,13 @@ public static partial class PriceBook {
 	private static readonly int[] Ladder = [90, 5 * 60, 15 * 60, 30 * 60, 60 * 60, 120 * 60, 240 * 60];
 
 	/// <summary>
-	/// The pause once both ways have been refused even after the longest step: asked twice a day from then on.
+	/// The pause once the market has refused even after the longest step: asked twice a day from then on.
 	/// </summary>
 	/// <remarks>
 	/// Before there were two ways it went like this for days: every four hours one lookup, that one refused, and it looked
 	/// like Steam turning the whole internet connection away. It was the request - asked differently, the same connection
-	/// got its answers (2026-10-05). So this is only reached when both ways have been refused through every step of the
-	/// ladder, and past that a request into a limit still in force may only keep it in force.
+	/// got its answers (2026-10-05). So this is only reached when every step of the ladder has ended in a refusal, the
+	/// ways taking turns, and past that a request into a limit still in force may only keep it in force.
 	/// </remarks>
 	private const int RefusedSeconds = 12 * 60 * 60;
 
@@ -184,14 +203,20 @@ public static partial class PriceBook {
 	/// <summary>How long searches were last left alone: thirty minutes, doubling to four hours while they stay refused.</summary>
 	private static int _searchOffMinutes;
 
-	/// <summary>When a single lookup (priceoverview) last got an answer.</summary>
-	private static DateTime _overviewAt = DateTime.MinValue;
-
 	/// <summary>
-	/// True while search pages are being refused both ways and single lookups answered: everything wanted is priced one
-	/// item at a time, at the same pace, and searches are tried again when this runs out.
+	/// True while search pages are being refused and single lookups answered: everything wanted is priced one item at a
+	/// time, at the same pace, and searches are tried again when this runs out.
 	/// </summary>
+	/// <remarks>
+	/// Told apart by the request after a refused search, which is one item on its own the same way: answered, it is the
+	/// searches. Refused too, it is the market's limit on the connection - a pause, and searches stay on. It used to be
+	/// "a single lookup answered in the last hour", and the limit hit on a search then switched searches off for half an
+	/// hour and sent two more requests into it.
+	/// </remarks>
 	public static bool SearchOff => DateTime.UtcNow < _searchOffUntil;
+
+	/// <summary>When searches are tried again, or null while they're in use - the level planner, which only searches, says so.</summary>
+	public static DateTime? SearchesBackAt => SearchOff ? _searchOffUntil : null;
 
 	/// <summary>The newest price in the book, unix seconds - what "prices from 14:20" says.</summary>
 	private static long _newestAt;
@@ -316,7 +341,7 @@ public static partial class PriceBook {
 	}
 
 	/// <summary>
-	/// Set while the market is refusing - both ways, and pausing - and the book has prices to fall back on: when its newest
+	/// Set while the market is refusing, and pausing, and the book has prices to fall back on: when its newest
 	/// price came in, and when the market is asked again. The dashboard's tile and "inventory" say so with it; null otherwise.
 	/// </summary>
 	public static (DateTime From, DateTime RetryAt)? Stale {
@@ -345,8 +370,8 @@ public static partial class PriceBook {
 		await Gate.WaitAsync(ct).ConfigureAwait(false);
 
 		try {
-			// Refused one way: once more the other way, behind the same gap - never a third time.
-			(decimal? price, bool again, _) = await FetchLockedAsync(app, marketHashName, ct).ConfigureAwait(false);
+			// Refused by a way that hasn't answered lately: once more the other way, behind the same gap - never a third time.
+			(decimal? price, bool again, _, _) = await FetchLockedAsync(app, marketHashName, ct).ConfigureAwait(false);
 
 			return (price == null) && again ? (await FetchLockedAsync(app, marketHashName, ct).ConfigureAwait(false)).Price : price;
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
@@ -387,26 +412,39 @@ public static partial class PriceBook {
 					return true;
 				}
 
+				// Something else first, after a 500: whether the market answers it is what says whose trouble that was.
+				List<(uint App, string Hash)> next = SkipSuspects(left);
+
 				// The first request since the start or a pause is one wanted item on its own (_checkFirst); after that, the
 				// cheapest way to what's left.
-				Ask ask = _checkFirst ? new Ask(left[0].App, left[0].Hash) : NextAsk(left);
+				Ask ask = _checkFirst ? new Ask(next[0].App, next[0].Hash) : NextAsk(next);
 				what = ask.Hash;
 				DateTime coolBefore = _coolUntil;
-				bool answered, again, fault;
+				bool answered, again, fault, trouble;
 
 				if (ask.Search == null) {
-					(decimal? price, again, fault) = await FetchLockedAsync(ask.App, ask.Hash, ct).ConfigureAwait(false);
+					(decimal? price, again, fault, trouble) = await FetchLockedAsync(ask.App, ask.Hash, ct).ConfigureAwait(false);
 					answered = price != null;
 				} else {
-					(answered, again, fault) = await SearchLockedAsync(ask, ct).ConfigureAwait(false);
+					(answered, again, fault, trouble) = await SearchLockedAsync(ask, ct).ConfigureAwait(false);
 				}
 
-				// Answered, but with nothing usable for THIS request: a 500, an empty answer, no price or no results list in
-				// it. The second time in a row for the same item (or search) it is set aside, and the rest of the queue goes
-				// on in this same sweep - without the short pause a 500 starts, which was the item's trouble, not the
-				// market's. The first time the sweep stops, as it always did: it may only have been a moment's trouble.
+				// Answered, but with nothing usable for THIS request: no price or no results list in it. The second time in
+				// a row for the same item (or search) it is set aside, and the rest of the queue goes on in this same sweep.
+				// The first time the sweep stops, as it always did: it may only have been a moment's trouble.
 				if (fault) {
 					if (!Faulted(ask)) {
+						return false;
+					}
+
+					continue;
+				}
+
+				// A 500 or an empty answer: Steam's own trouble, and the short pause it started stands - unless this item is
+				// the only thing failing while the market answers everything else, when it is set aside instead and the rest
+				// of the queue goes on now, without the pause: the item's trouble, not the market's.
+				if (trouble) {
+					if (!Unwell(ask)) {
 						return false;
 					}
 
@@ -418,9 +456,9 @@ public static partial class PriceBook {
 					continue;
 				}
 
-				// Refused one way with the other still to try, or searches refused while single lookups are answered: the
-				// next turn goes on - through the same gap, counted against the same cap. Otherwise the market has stopped
-				// answering: stop pushing and try again next sweep.
+				// Refused by a way that hasn't answered lately with the other still to try, or a search refused with the
+				// single lookup that tells why still to ask: the next turn goes on - through the same gap, counted against the
+				// same cap. Otherwise the market has stopped answering: stop pushing and try again next sweep.
 				if (!answered && !again) {
 					return false;
 				}
@@ -440,13 +478,14 @@ public static partial class PriceBook {
 
 	/// <summary>
 	/// One item's price from priceoverview, whether to ask again at once if there's none (see <see cref="AskLockedAsync"/>),
-	/// and whether the answer was no use for this item (see <see cref="Faulted"/>). Gate held.
+	/// whether the answer was no use for this item (see <see cref="Faulted"/>), and whether it was Steam's own trouble -
+	/// a 500, an empty answer (see <see cref="Unwell"/>). Gate held.
 	/// </summary>
-	private static async Task<(decimal? Price, bool AskAgain, bool Fault)> FetchLockedAsync(uint app, string marketHashName, CancellationToken ct) {
-		(string? json, bool again, bool fault) = await AskLockedAsync($"/market/priceoverview/?appid={app}&currency={Currency}&market_hash_name={Uri.EscapeDataString(marketHashName)}", marketHashName, ct).ConfigureAwait(false);
+	private static async Task<(decimal? Price, bool AskAgain, bool Fault, bool Trouble)> FetchLockedAsync(uint app, string marketHashName, CancellationToken ct) {
+		(string? json, bool again, bool trouble) = await AskLockedAsync($"/market/priceoverview/?appid={app}&currency={Currency}&market_hash_name={Uri.EscapeDataString(marketHashName)}", Key(app, marketHashName), ct).ConfigureAwait(false);
 
 		if (json == null) {
-			return (null, again, fault);
+			return (null, again, false, trouble);
 		}
 
 		JsonDocument doc;
@@ -456,7 +495,7 @@ public static partial class PriceBook {
 		} catch (JsonException) {
 			Log.Debug($"market lookup for {marketHashName}: no price in the answer");
 
-			return (null, false, true);
+			return (null, false, true, false);
 		}
 
 		using (doc) {
@@ -464,13 +503,13 @@ public static partial class PriceBook {
 			if (doc.RootElement.ValueKind != JsonValueKind.Object) {
 				Log.Debug($"market lookup for {marketHashName}: no price in the answer");
 
-				return (null, false, true);
+				return (null, false, true, false);
 			}
 
 			if (!doc.RootElement.TryGetProperty("success", out JsonElement ok) || (ok.ValueKind != JsonValueKind.True)) {
 				Remember(app, marketHashName, 0);   // no market listing at all - genuinely worth nothing
 
-				return (0, false, false);
+				return (0, false, false, false);
 			}
 
 			// The lowest listing, the same number a search gives (see above); the median only when nothing is listed. Neither -
@@ -478,23 +517,23 @@ public static partial class PriceBook {
 			decimal price = Money(Text(doc.RootElement, "lowest_price")) ?? Money(Text(doc.RootElement, "median_price")) ?? 0;
 			Remember(app, marketHashName, price);
 
-			return (price, false, false);
+			return (price, false, false, false);
 		}
 	}
 
 	/// <summary>One page of a market search, every price on it remembered - not only the ones asked for. Gate held.</summary>
-	private static async Task<(bool Answered, bool AskAgain, bool Fault)> SearchLockedAsync(Ask ask, CancellationToken ct) {
+	private static async Task<(bool Answered, bool AskAgain, bool Fault, bool Trouble)> SearchLockedAsync(Ask ask, CancellationToken ct) {
 		// count=100 is only the most it may send: signed out, Steam sends ten whatever is asked, and the page says so.
-		(string? json, bool again, bool fault) = await AskLockedAsync($"{ask.Search}&start={ask.Start}&count=100&currency={Currency}&l=english", ask.Hash, ct).ConfigureAwait(false);
+		(string? json, bool again, bool trouble) = await AskLockedAsync($"{ask.Search}&start={ask.Start}&count=100&currency={Currency}&l=english", SearchKey(ask.PageKey), ct).ConfigureAwait(false);
 
 		if (json == null) {
-			return (false, again, fault);
+			return (false, again, false, trouble);
 		}
 
 		if (ParseSearch(json) is not { } page) {
 			Log.Debug($"market search for {ask.Hash}: no results list in the answer");
 
-			return (false, false, true);
+			return (false, false, true, false);
 		}
 
 		if (page.PageSize > 0) {
@@ -512,35 +551,42 @@ public static partial class PriceBook {
 
 		Cleared(SearchKey(ask.PageKey));
 
-		return (true, false, false);
+		return (true, false, false, false);
 	}
 
 	/// <summary>
 	/// One market request for something other than an inventory value - the level planner's and the seller's card set
 	/// prices - in the SAME queue: behind the same gate, the same gap after whatever was asked last, and nothing at all
 	/// while the market's pause stands. Two separate paces each keeping to the limit add up to twice it. Signed out, like
-	/// every price: a read needs no account. Null when it wasn't asked or wasn't answered.
+	/// every price: a read needs no account. Json is null when it wasn't asked or wasn't answered; Asked says whether a
+	/// request was actually sent - nothing is, while the market's pause stands or searches are being left alone.
 	/// </summary>
-	public static async Task<string?> MarketGetAsync(string pathAndQuery, CancellationToken ct) {
+	public static async Task<(string? Json, bool Asked)> MarketGetAsync(string pathAndQuery, CancellationToken ct) {
 		LoadCool();
 
 		if (DateTime.UtcNow < _coolUntil) {
-			return null;
+			return (null, false);
 		}
 
 		await Gate.WaitAsync(ct).ConfigureAwait(false);
+		int sentBefore = Volatile.Read(ref Asked);   // every request is sent with the gate held: a change since is this one's
 
 		try {
-			// Refused one way: once more the other way, behind the same gap. Not while searches are being left alone.
-			(string? json, bool again, _) = await AskLockedAsync(pathAndQuery, "card set", ct).ConfigureAwait(false);
+			// Refused by a way that hasn't answered lately: once more the other way, behind the same gap. Not while searches
+			// are being left alone, nor while a refused search waits on a single lookup to tell why.
+			(string? json, bool again, _) = await AskLockedAsync(pathAndQuery, null, ct).ConfigureAwait(false);
 
-			return (json == null) && again ? (await AskLockedAsync(pathAndQuery, "card set", ct).ConfigureAwait(false)).Json : json;
+			if ((json == null) && again) {
+				json = (await AskLockedAsync(pathAndQuery, null, ct).ConfigureAwait(false)).Json;
+			}
+
+			return (json, Volatile.Read(ref Asked) != sentBefore);
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 			throw;
 		} catch (Exception e) {
 			Log.Debug($"market search for a card set failed: {Log.Describe(e)}");
 
-			return null;
+			return (null, Volatile.Read(ref Asked) != sentBefore);
 		} finally {
 			Gate.Release();
 		}
@@ -567,12 +613,13 @@ public static partial class PriceBook {
 	/// <summary>
 	/// One market request with the gate held, signed out: waits out the gap, honours a pause, and goes the way that last
 	/// got an answer. Json is null when it wasn't asked or wasn't answered. AskAgain says a refusal still leaves something
-	/// to try straight away - the other way, or single lookups instead of searches - so the caller may go on (through the
-	/// gap, like every request); false means stop. Fault says the market did answer, but with nothing usable - a 500, an
-	/// empty answer - which counts against what was asked about (<see cref="Faulted"/>). A refusal never does: that is the
-	/// market's limit, and the pause's business, not the item's.
+	/// to try straight away - the other way, or a single lookup after a refused search - so the caller may go on (through
+	/// the gap, like every request); false means stop. Trouble says the market answered with a 500 or nothing at all:
+	/// Steam's own trouble, a short pause, and never by itself a fault of what was asked about (<see cref="Unwell"/>).
+	/// Nor is a refusal: that is the market's limit, and the pause's business, not the item's. <paramref name="key"/> is
+	/// the price (or search) key asked about, if any.
 	/// </summary>
-	private static async Task<(string? Json, bool AskAgain, bool Fault)> AskLockedAsync(string pathAndQuery, string what, CancellationToken ct) {
+	private static async Task<(string? Json, bool AskAgain, bool Trouble)> AskLockedAsync(string pathAndQuery, string? key, CancellationToken ct) {
 		// Asked again once it's our turn. Several accounts pricing at once queue here, and when the one ahead is told
 		// 429, the rest used to go on and ask anyway - each refused in turn, each lengthening the pause.
 		if (DateTime.UtcNow < _coolUntil) {
@@ -581,8 +628,10 @@ public static partial class PriceBook {
 
 		bool search = pathAndQuery.StartsWith("/market/search/", StringComparison.Ordinal);
 
-		if (search && SearchOff) {
-			return (null, false, false);   // the level planner's search, while searches are being refused
+		// The level planner's search, while searches are being refused - or while a refused one waits on the single
+		// lookup that says whether it was the searches or the market's limit: another search would only be refused too.
+		if (search && (SearchOff || (_searchDoubt >= 0))) {
+			return (null, false, false);
 		}
 
 		// steamcommunity.com as a whole is serving a 429 wait (an account's own request tripped it): the market is the
@@ -622,55 +671,67 @@ public static partial class PriceBook {
 			return (null, Refused(way, search), false);
 		}
 
-		if (!response.IsSuccessStatusCode) {
-			// Not a refusal - Steam's own trouble, a 500 or a 502: a couple of minutes, and no step up the ladder.
+		// Not a refusal - Steam's own trouble, a 500 or a 502, or an answer with nothing in it: a couple of minutes, and no
+		// step up the ladder. During Steam's maintenance every request answers like this, whatever it asks about: counted
+		// against each item asked, eleven of thirteen were set aside for six hours one by one, the most valuable first.
+		if (!response.IsSuccessStatusCode || string.IsNullOrEmpty(body)) {
 			_coolUntil = DateTime.UtcNow.AddMinutes(2);
+			_searchDoubt = -1;   // nothing told by this one: searches stay on
 			SaveCool();
-			Log.Debug(new Said("the market answered {0} - pausing price lookups until {1}", (int) response.StatusCode, (_coolUntil.ToLocalTime()).ToString("HH:mm")));
+			string until = (_coolUntil.ToLocalTime()).ToString("HH:mm");
+			Log.Debug(response.IsSuccessStatusCode
+				? new Said("the market's answer was empty - pausing price lookups until {0}", until)
+				: new Said("the market answered {0} - pausing price lookups until {1}", (int) response.StatusCode, until));
 
 			return (null, false, true);
 		}
 
-		Answered(way, search);
-
-		if (string.IsNullOrEmpty(body)) {
-			Log.Debug($"market lookup for {what}: empty answer ({(int) response.StatusCode})");
-
-			return (null, false, true);   // ask again next sweep, don't poison the cache
-		}
+		Answered(way, search, key);
 
 		return (body, false, false);
 	}
 
 	/// <summary>
-	/// A request was turned down. The first refusal sends the next request the other way; the second in a row - both ways
-	/// refused - is the market refusing, and the pause steps up the <see cref="Ladder"/>. Unless it was search pages both
-	/// times while single lookups have been answered lately: then searches are left alone for a while instead, and pricing
-	/// goes on one item at a time. True when the caller may ask again straight away. Gate held.
+	/// A request was turned down. From a way that hasn't answered lately, the next request goes the other way at once -
+	/// the way may be what's refused. From one that was answering until a moment ago it is the market's limit on the
+	/// connection, the same whichever way is asked: the pause steps up the <see cref="Ladder"/> straight away. So does a
+	/// second refusal in a row, and the one request at the end of a pause; the next request then goes the other way, so
+	/// the ways take turns across the steps. A refused search is followed by one item on its own instead (see
+	/// <see cref="SearchOff"/>). True when the caller may ask again straight away. Gate held.
 	/// </summary>
 	private static bool Refused(int way, bool search) {
-		_runWasSearch = (_refusedInRow == 0 || _runWasSearch) && search;
+		bool doubted = _searchDoubt >= 0;
+		_searchDoubt = -1;
 		_refusedInRow++;
 
-		if (_refusedInRow < 2) {
-			_way = 1 - way;
-			Log.Debug(new Said("the market turned a price lookup down - the next one asks the other way"));
+		// Not the request at the end of a pause (that one is only ever one), and nothing refused just before.
+		if ((_coolSeconds == 0) && (_refusedInRow < 2)) {
+			if (search) {
+				// Searches refused, or everything? The next request is one item on its own: the same way when that way was
+				// answering, the other way when it wasn't (the way may be what's refused).
+				_searchDoubt = way;
 
-			return true;
+				if (Quiet(way)) {
+					_way = 1 - way;
+				}
+
+				Log.Debug(new Said("the market turned a search down - the next request asks for one item, to see whether it's only searches"));
+
+				return true;
+			}
+
+			if (Quiet(way)) {
+				_way = 1 - way;
+				Log.Debug(new Said("the market turned a price lookup down - the next one asks the other way"));
+
+				return true;
+			}
 		}
 
-		// Both ways, one after the other. Whatever comes next starts from the way that last got an answer.
+		// A pause. The request at its end goes the other way from this one - every step tries the way the last didn't.
+		bool bothWays = (_refusedInRow >= 2) && !doubted;
 		_refusedInRow = 0;
-		_way = _goodWay;
-
-		if (_runWasSearch && (DateTime.UtcNow - _overviewAt < TimeSpan.FromHours(1))) {
-			_searchOffMinutes = _searchOffMinutes <= 0 ? 30 : Math.Min(240, _searchOffMinutes * 2);
-			_searchOffUntil = DateTime.UtcNow.AddMinutes(_searchOffMinutes);
-			Log.Debug(new Said("the market turns its searches down but answers single lookups - pricing one item at a time until {0}", (_searchOffUntil.ToLocalTime()).ToString("HH:mm")));
-
-			return true;
-		}
-
+		_way = 1 - way;
 		_coolSeconds = NextCoolSeconds(_coolSeconds);
 		_coolUntil = DateTime.UtcNow.AddSeconds(_coolSeconds * (1 + (Rng.Next(0, 251) / 1000d)));
 		_checkFirst = true;
@@ -683,7 +744,10 @@ public static partial class PriceBook {
 			_saidRefused = true;
 			Log.Info(new Said("Steam's market is refusing price lookups from this internet connection - inventory values keep the last prices it gave, and it is asked again twice a day"));
 		} else if (!refused) {
-			Log.Debug(new Said("the market turned price lookups down both ways - pausing them until {0}", (_coolUntil.ToLocalTime()).ToString("HH:mm")));
+			string until = (_coolUntil.ToLocalTime()).ToString("HH:mm");
+			Log.Debug(bothWays
+				? new Said("the market turned price lookups down both ways - pausing them until {0}", until)
+				: new Said("the market turned a price lookup down - pausing them until {0}", until));
 		}
 
 		return false;
@@ -691,11 +755,15 @@ public static partial class PriceBook {
 
 	/// <summary>
 	/// The market answered: the way it answered is the one used from now on (and remembered), the ladder starts again from
-	/// its first step, and a search answered means searches are fine again. Gate held.
+	/// its first step, and a search answered means searches are fine again. A single lookup answered the same way a search
+	/// was just refused means it is the searches being refused: they're left alone for a while, and pricing goes on one
+	/// item at a time. And whatever had a 500 meanwhile had it while the market answered - its own trouble after all
+	/// (<see cref="Unwell"/>). <paramref name="key"/> is what was answered. Gate held.
 	/// </summary>
-	private static void Answered(int way, bool search) {
+	private static void Answered(int way, bool search, string? key) {
 		_refusedInRow = 0;
 		_checkFirst = false;
+		AnsweredAt[way] = DateTime.UtcNow;
 
 		if (way != _goodWay) {
 			_goodWay = way;
@@ -704,9 +772,13 @@ public static partial class PriceBook {
 
 		if (search) {
 			_searchOffMinutes = 0;
-		} else {
-			_overviewAt = DateTime.UtcNow;
+		} else if (_searchDoubt == way) {
+			_searchOffMinutes = _searchOffMinutes <= 0 ? 30 : Math.Min(240, _searchOffMinutes * 2);
+			_searchOffUntil = DateTime.UtcNow.AddMinutes(_searchOffMinutes);
+			Log.Debug(new Said("the market turns its searches down but answers single lookups - pricing one item at a time until {0}", (_searchOffUntil.ToLocalTime()).ToString("HH:mm")));
 		}
+
+		_searchDoubt = -1;
 
 		if (_coolSeconds != 0) {
 			_coolSeconds = 0;
@@ -717,6 +789,8 @@ public static partial class PriceBook {
 			_saidRefused = false;
 			Log.Info(new Said("Steam's market answers price lookups again"));
 		}
+
+		Recovered(key);
 	}
 
 	/// <summary>
@@ -759,7 +833,8 @@ public static partial class PriceBook {
 	// One item - or one search - the market answers with a 500 every time, or with "null", or with no results list: every
 	// sweep stopped on it, and the next started on it again, so nothing behind it in the queue was ever priced. Twice in a
 	// row with nothing usable and it is set aside - six hours, then a day each time after - and the rest go on. Only
-	// answers count: a refusal (429, 403, a block page) is the market's limit, which the pause deals with, not the item.
+	// answers about the item count: a refusal (429, 403, a block page) is the market's limit, which the pause deals with,
+	// and a 500 only counts once the market has answered something else meanwhile (see Unwell).
 
 	/// <summary>Per price key (or <see cref="SearchKey"/>): no-use answers in a row since the last price, until when it is
 	/// set aside (unix seconds, 0 if it isn't), and how many times it has been. Under its own lock, taken after Cache's.</summary>
@@ -779,7 +854,8 @@ public static partial class PriceBook {
 	}
 
 	/// <summary>
-	/// What <paramref name="ask"/> asked about got an answer with nothing usable in it. True when that set it aside: the
+	/// What <paramref name="ask"/> asked about got an answer with nothing usable in it, or a 500 while the market answered
+	/// other things (<see cref="Unwell"/>). True when that set it aside: the
 	/// second time in a row, or the first after it has been set aside before. Gate held.
 	/// </summary>
 	private static bool Faulted(Ask ask) {
@@ -822,6 +898,97 @@ public static partial class PriceBook {
 				Troubled.Remove(key);
 			}
 		}
+	}
+
+	// ── a 500: the market's trouble, or the item's ──────────────────────────
+	// During Steam's maintenance every request answers 500 or 503, whatever it asks about. Counted against the item asked,
+	// each sweep set one aside and went on to the next - eleven of thirteen sat out six hours, the knife first, counted at
+	// nothing, and the inventory's history saved the total without them: a crash, then a recovery. So a 500 is the
+	// market's trouble until the market answers something else. What had one is a suspect, the next request is for
+	// something else, and only if that one is answered does the suspect's 500 count against it: it failed while the market
+	// answered. More different things failing in a row than one inventory's bad items ever are, and it is the market.
+
+	/// <summary>What had a 500 or an empty answer since the market last answered, by price (or search) key. Gate held.</summary>
+	private static readonly Dictionary<string, Ask> Suspects = new(StringComparer.Ordinal);
+
+	/// <summary>More different things failing in a row than this is the market failing, not any of them.</summary>
+	private const int SuspectsAtMost = 3;
+
+	/// <summary>Set once more than <see cref="SuspectsAtMost"/> different things failed in a row: nothing is a suspect, or counted
+	/// against, until the market answers again. Gate held.</summary>
+	private static bool _marketDown;
+
+	private static string KeyOf(Ask ask) => ask.Search != null ? SearchKey(ask.PageKey) : Key(ask.App, ask.Hash);
+
+	/// <summary>
+	/// What <paramref name="ask"/> asked about had a 500 or an empty answer. Counted against it at once only when it is the
+	/// one thing failing while the market answered within the hour, and failed before too - a second 500 in a row with
+	/// nothing else to ask in between, or after one already counted, or once back from being set aside. Otherwise it is a
+	/// suspect (see <see cref="Recovered"/>).
+	/// True when that set it aside. Gate held.
+	/// </summary>
+	private static bool Unwell(Ask ask) {
+		string key = KeyOf(ask);
+		bool failedBefore;
+
+		lock (Troubled) {
+			failedBefore = Troubled.TryGetValue(key, out (int Fails, long Until, int Times) t) && ((t.Fails > 0) || (t.Times > 0));
+		}
+
+		bool alone = !_marketDown && Suspects.Keys.All(k => k == key) && (failedBefore || Suspects.ContainsKey(key))
+			&& (DateTime.UtcNow - (AnsweredAt[0] > AnsweredAt[1] ? AnsweredAt[0] : AnsweredAt[1]) < TimeSpan.FromHours(1));
+
+		if (alone) {
+			Suspects.Remove(key);
+
+			return Faulted(ask);
+		}
+
+		if (_marketDown || Suspects.ContainsKey(key)) {
+			return false;
+		}
+
+		if (Suspects.Count >= SuspectsAtMost) {
+			Suspects.Clear();
+			_marketDown = true;
+			Log.Debug(new Said("the market is failing whatever it is asked - nothing counts against any item until it answers again"));
+
+			return false;
+		}
+
+		Suspects[key] = ask;
+
+		return false;
+	}
+
+	/// <summary>
+	/// The market answered (<paramref name="key"/>, if it was about something): whatever had a 500 since failed while the
+	/// market answered, and it counts against each of them now. Gate held.
+	/// </summary>
+	private static void Recovered(string? key) {
+		_marketDown = false;
+
+		if (Suspects.Count == 0) {
+			return;
+		}
+
+		List<Ask> failed = [.. Suspects.Where(s => s.Key != key).Select(static s => s.Value)];
+		Suspects.Clear();
+
+		foreach (Ask ask in failed) {
+			Faulted(ask);
+		}
+	}
+
+	/// <summary>What's left, less anything that had a 500 since the market last answered - unless that's everything. Gate held.</summary>
+	private static List<(uint App, string Hash)> SkipSuspects(List<(uint App, string Hash)> left) {
+		if (Suspects.Count == 0) {
+			return left;
+		}
+
+		List<(uint App, string Hash)> rest = [.. left.Where(static l => !Suspects.ContainsKey(Key(l.App, l.Hash)))];
+
+		return rest.Count > 0 ? rest : left;
 	}
 
 	// ── planning: the fewest requests for what's wanted ─────────────────────
@@ -923,8 +1090,9 @@ public static partial class PriceBook {
 		(uint app, string hash) = left[0];
 		Ask single = new(app, hash);
 
-		// Searches being refused while single lookups are answered: one at a time until they're tried again.
-		if (SearchOff || (GroupOf(app, hash) is not { } group)) {
+		// Searches being refused while single lookups are answered: one at a time until they're tried again. And right after
+		// a refused search, one item on its own - its answer says which it was.
+		if (SearchOff || (_searchDoubt >= 0) || (GroupOf(app, hash) is not { } group)) {
 			return single;
 		}
 
@@ -939,6 +1107,10 @@ public static partial class PriceBook {
 
 		if (SetAside(SearchKey(page.PageKey))) {
 			return single;   // a search with no usable answer twice: its items one at a time until it is tried again
+		}
+
+		if ((Suspects.Count > 0) && Suspects.ContainsKey(SearchKey(page.PageKey))) {
+			return single;   // a 500 for this search just now: something else next, to see whose trouble that was
 		}
 
 		lock (Pages) {

@@ -1487,12 +1487,22 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 // ── sending items at a set hour ──────────────────────────────────────────────────────────────────────────────
 {
 	MethodInfo nextDue = typeof(NocatFarm.Modules.Sender).GetMethod("NextDue", BindingFlags.NonPublic | BindingFlags.Static)!;
-	DateTime Due(DateTime now, int hours, int at) => (DateTime) nextDue.Invoke(null, [now, hours, at, 10, 0.0])!;
+	DateTime Due(DateTime now, int hours, int at, int minute = 10, bool sent = false) => (DateTime) nextDue.Invoke(null, [now, hours, at, minute, 0.0, sent])!;
 	DateTime nine = new(2026, 9, 29, 21, 0, 0);
 	Check("send: every 24h around 4 - tonight at 21:00 it's tomorrow 04:10", Due(nine, 24, 4) == new DateTime(2026, 9, 30, 4, 10, 0));
 	Check("send: every 24h around 22 - at 21:00 it's in an hour, today", Due(nine, 24, 22) == new DateTime(2026, 9, 29, 22, 10, 0));
 	Check("send: every 48h around 4 - skips a day", Due(nine, 48, 4) == new DateTime(2026, 10, 1, 4, 10, 0));
 	Check("send: every 6h with no hour set - 6 hours from now", Due(nine, 6, -1) == nine.AddHours(6));
+	// Right after a send, the hour coming round again later the same evening is not the next send.
+	DateTime sent = new(2026, 9, 29, 22, 15, 5);
+	Check("send: every 24h around 22, just sent at 22:15 - tomorrow, not 22:30", Due(sent, 24, 22, 30, true) == new DateTime(2026, 9, 30, 22, 30, 0));
+	Check("send: just sent at 22:07, picked 22:12 - tomorrow", Due(new DateTime(2026, 9, 29, 22, 7, 6), 24, 22, 12, true) == new DateTime(2026, 9, 30, 22, 12, 0));
+	Check("send: just sent at 22:07, picked 22:02 - tomorrow too", Due(new DateTime(2026, 9, 29, 22, 7, 6), 24, 22, 2, true) == new DateTime(2026, 9, 30, 22, 2, 0));
+	Check("send: every 48h, just sent at 22:07, picked 22:12 - two days on, not one", Due(new DateTime(2026, 9, 29, 22, 7, 6), 48, 22, 12, true) == new DateTime(2026, 10, 1, 22, 12, 0));
+	Check("send: every 12h around 22, just sent - tomorrow (an hour is once a day)", Due(sent, 12, 22, 30, true) == new DateTime(2026, 9, 30, 22, 30, 0));
+	Check("send: every 6h around 22, just sent - tomorrow", Due(sent, 6, 22, 30, true) == new DateTime(2026, 9, 30, 22, 30, 0));
+	Check("send: around 22, a send held up until 03:00 by bedtime - still that evening", Due(new DateTime(2026, 9, 30, 3, 0, 0), 24, 22, 30, true) == new DateTime(2026, 9, 30, 22, 30, 0));
+	Check("send: every 6h with no hour set, just sent - 6 hours from now", Due(nine, 6, -1, 10, true) == nine.AddHours(6));
 }
 
 // ── card farming sittings: one that runs past midnight isn't cut off when the day turns over ──────────────────
@@ -1684,6 +1694,47 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("hunt: 20 minutes left of the hour a day - no sitting on it runs past that", huntMost <= 20, $"longest {huntMost}m");
 	NocatFarm.Modules.HumanDay.Forget(name);
 	await bot.DisposeAsync();
+}
+
+// ── achievement hunt: stopping saves it, so a restart doesn't lose the minutes since the last ten-minute save ────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-hunt-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+
+	try {
+		var cfg = new NocatFarm.Config.BotConfig { LegitMode = true, UnlockAchievements = true, AchievementBoost = 1 };
+		var bot = new NocatFarm.Core.Bot("harness-hunt", cfg);
+		Type bt = typeof(NocatFarm.Modules.AchievementBoost);
+		const BindingFlags Inst = BindingFlags.NonPublic | BindingFlags.Instance;
+		string file = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "hunt-harness-hunt.json");
+
+		// Never loaded: nothing it holds is newer than the file, so stopping must not write a blank hunt over it.
+		await new NocatFarm.Modules.AchievementBoost(bot).StopAsync();
+		Check("hunt stop: a hunt that never loaded writes nothing", !File.Exists(file));
+
+		// Saved a minute ago with 30 minutes played; 7 more since then.
+		var hunter = new NocatFarm.Modules.AchievementBoost(bot);
+		bt.GetField("_huntLoaded", Inst)!.SetValue(hunter, true);
+		bt.GetProperty("HuntTarget")!.SetValue(hunter, 550u);
+		bt.GetField("_huntGoal", Inst)!.SetValue(hunter, 120);
+		bt.GetField("_huntMinutes", Inst)!.SetValue(hunter, 37.0);
+		bt.GetField("_today", Inst)!.SetValue(hunter, DateTime.Today);
+		bt.GetField("_todayMinutes", Inst)!.SetValue(hunter, 37.0);
+		bt.GetField("_huntSavedAt", Inst)!.SetValue(hunter, DateTime.UtcNow.AddMinutes(-1));
+		await hunter.StopAsync();
+
+		var back = new NocatFarm.Modules.AchievementBoost(bot);
+		bt.GetMethod("LoadHunt", Inst)!.Invoke(back, null);
+		Check("hunt stop: the minutes played since the last save are kept", ((uint) bt.GetProperty("HuntTarget")!.GetValue(back)! == 550u)
+			&& ((double) bt.GetField("_huntMinutes", Inst)!.GetValue(back)! == 37.0) && ((double) bt.GetField("_todayMinutes", Inst)!.GetValue(back)! == 37.0),
+			File.Exists(file) ? File.ReadAllText(file) : "no file");
+		await bot.DisposeAsync();
+	} finally {
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+		try { Directory.Delete(tmpRoot, true); } catch { }
+	}
 }
 
 // ── login cooldown: it's everybody's, so stopping the account that hit it doesn't end it ───────────────────────
@@ -2878,7 +2929,6 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		HF("_rng").SetValue(huntMode, new Random(seed));
 		DateTime huntLogon = DateTime.UtcNow.AddHours(-1);
 		typeof(NocatFarm.Core.Bot).GetProperty("OnlineSince")!.SetValue(huntBot, huntLogon);
-		int carryMost = (int) ht.GetField("MaxCarryMinutes", Stat | BindingFlags.Public)!.GetValue(null)!;
 		Random dayDice = new(seed * 7);
 		double allMain = 0, allSide = 0, weekMain = 0, weekSide = 0, off = 0;
 		int zeroMain = 0, underForty = 0, fiveSideFirst = 0, overCap = 0, mixed = 0;
@@ -2891,8 +2941,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			int target = P("Target"), share = P("MainSharePct"), budget = P("OtherBudget");
 
 			if (target > 0) {
-				// The morning's roll: yesterday's leftover, an hour of it at most (RollFor), and the day's plan.
-				double carried = Math.Clamp(HGet<double>(huntMode, "_sideAhead"), -carryMost, carryMost);
+				// The morning's roll: yesterday's leftover, an hour of it at most and halved on a main-game-only day (RollFor,
+				// CarryIn), and the day's plan.
+				double carried = (double) ht.GetMethod("CarryIn", Stat)!.Invoke(null, [HGet<double>(huntMode, "_sideAhead"), true, target, budget])!;
 				Set(huntMode, "_sideAhead", carried);
 				Set(huntMode, "_dayStamp", -1);
 				Set(huntMode, "_stayUpUntil", DateTime.MinValue);
@@ -2984,20 +3035,20 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	// What's left over at bedtime goes into the next day - an hour of it at most - and survives a restart.
 	{
 		string carryName = "harness-carry-" + Guid.NewGuid().ToString("N")[..6];
-		var carryBot = new NocatFarm.Core.Bot(carryName, new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730:75, 440:25" });
+		var carryBot = new NocatFarm.Core.Bot(carryName, new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = "730:75, 440:25", PureMainDayChancePct = 0 });
 		var carryMode = new NocatFarm.Modules.HumanMode(carryBot);
 		carryBot.AddModule(carryMode);
 		DateTime yesterday = DateTime.Today.AddDays(-1);
 		NocatFarm.Log.Suppressed = true;
 		new NocatFarm.Modules.HumanDay { DayOfYear = yesterday.DayOfYear, Year = yesterday.Year, TargetMinutes = 300, PlayedMinutes = 300, SideAhead = 200 }.Save(carryName);
-		HCall(carryMode, "RollFor", DateTime.Today, DateTime.MinValue);
+		HCall(carryMode, "RollFor", DateTime.Today, DateTime.MinValue, null);
 		double carriedIn = HGet<double>(carryMode, "_sideAhead");
 		new NocatFarm.Modules.HumanDay { DayOfYear = yesterday.DayOfYear, Year = yesterday.Year, TargetMinutes = 300, PlayedMinutes = 300, SideAhead = -25 }.Save(carryName);
-		HCall(carryMode, "RollFor", DateTime.Today, DateTime.MinValue);
+		HCall(carryMode, "RollFor", DateTime.Today, DateTime.MinValue, null);
 		double behindIn = HGet<double>(carryMode, "_sideAhead");
 		double savedNow = NocatFarm.Modules.HumanDay.Load(carryName, DateTime.Today)?.SideAhead ?? double.NaN;
 		NocatFarm.Modules.HumanDay.Forget(carryName);
-		HCall(carryMode, "RollFor", DateTime.Today, DateTime.MinValue);
+		HCall(carryMode, "RollFor", DateTime.Today, DateTime.MinValue, null);
 		double afterGap = HGet<double>(carryMode, "_sideAhead");
 		NocatFarm.Log.Suppressed = false;
 		NocatFarm.Modules.HumanDay.Forget(carryName);
@@ -3005,6 +3056,143 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("carry: yesterday's lead on the side games comes into today, an hour of it at most", carriedIn == 60, $"{carriedIn}");
 		Check("carry: a shortfall comes in too, and is saved with today's plan for a restart", (behindIn == -25) && (savedNow == -25), $"{behindIn}, saved {savedNow}");
 		Check("carry: after a day it didn't run at all, it starts afresh", afterGap == 0, $"{afterGap}");
+	}
+
+	// The carry through a reroll, with no side games, and on main-game-only days.
+	{
+		DateTime yesterday = DateTime.Today.AddDays(-1);
+		DateTime simLogon = DateTime.UtcNow.AddHours(-1);
+		double CarryIn(double before, bool hasSides, int target, int budget) => (double) ht.GetMethod("CarryIn", Stat)!.Invoke(null, [before, hasSides, target, budget])!;
+		(NocatFarm.Core.Bot Bot, NocatFarm.Modules.HumanMode Mode) Make(string prefix, string weights) {
+			var b = new NocatFarm.Core.Bot(prefix + Guid.NewGuid().ToString("N")[..6],
+				new NocatFarm.Config.BotConfig { LegitMode = true, GameWeights = weights, PureMainDayChancePct = 0, DayOffChancePct = 0 });
+			var m = new NocatFarm.Modules.HumanMode(b);
+			b.AddModule(m);
+			typeof(NocatFarm.Core.Bot).GetProperty("OnlineSince")!.SetValue(b, simLogon);
+
+			return (b, m);
+		}
+		// A sitting of `minutes` on `game`, banked by the real banking.
+		void Sit(NocatFarm.Modules.HumanMode m, uint game, int minutes) {
+			Set(m, "_phase", NocatFarm.Modules.HumanMode.Phase.Playing);
+			Set(m, "_game", game);
+			Set(m, "_farmSitting", false);
+			Set(m, "_bankedForLogon", simLogon);
+			Set(m, "_bankedTo", DateTime.UtcNow.AddMinutes(-minutes));
+			Set(m, "_lastBankAt", DateTime.UtcNow.AddSeconds(-10));
+			HCall(m, "BankSession");
+			Set(m, "_phase", NocatFarm.Modules.HumanMode.Phase.Off);
+			Set(m, "_game", 0u);
+		}
+		NocatFarm.Log.Suppressed = true;
+
+		// 'human reroll' throws today's saved plan away - the very file the new plan read its carry from.
+		var (rrBot, rrMode) = Make("harness-reroll-", "730:75, 440:25");
+		new NocatFarm.Modules.HumanDay { DayOfYear = yesterday.DayOfYear, Year = yesterday.Year, TargetMinutes = 300, PlayedMinutes = 300, SideAhead = -40 }.Save(rrBot.Name);
+		HCall(rrMode, "RollFor", DateTime.Today, DateTime.MinValue, null);
+		double rrMorning = HGet<double>(rrMode, "_sideAhead");
+		rrMode.RerollToday();
+		double rrAfter = HGet<double>(rrMode, "_sideAhead");
+		double rrSaved = NocatFarm.Modules.HumanDay.Load(rrBot.Name, DateTime.Today)?.SideAhead ?? double.NaN;
+		Set(rrMode, "_sideAhead", 95.0);   // a side-heavy morning, then a reroll: what it's ahead by comes along, an hour of it
+		rrMode.RerollToday();
+		double rrAhead = HGet<double>(rrMode, "_sideAhead");
+		NocatFarm.Modules.HumanDay.Forget(rrBot.Name);
+		rrBot.DisposeAsync().AsTask().GetAwaiter().GetResult();
+		Check("carry: 'human reroll' keeps what the side games are behind (it read it from the plan it had just thrown away, and lost it)",
+			(rrMorning == -40) && (rrAfter == -40) && (rrSaved == -40), $"{rrMorning} this morning, {rrAfter} after the reroll, saved {rrSaved}");
+		Check("carry: ...and what they're ahead by, an hour of it at most", rrAhead == 60, $"{rrAhead}");
+
+		// The main game alone: nothing to make up toward, so nothing comes in - and a friend's game or a new game's sittings
+		// don't push it up either. On one game it was pinned at +60 for good.
+		var (oneBot, oneMode) = Make("harness-onegame-", "730:100");
+		new NocatFarm.Modules.HumanDay { DayOfYear = yesterday.AddDays(-1).DayOfYear, Year = yesterday.AddDays(-1).Year, TargetMinutes = 300, PlayedMinutes = 300, SideAhead = -60 }
+			.Save(oneBot.Name);
+		HCall(oneMode, "RollFor", yesterday, DateTime.MinValue, null);
+		double oneIn = HGet<double>(oneMode, "_sideAhead");
+		Sit(oneMode, 620, 90);    // a friend's game
+		Sit(oneMode, 400, 75);    // a new game being tried out
+		Sit(oneMode, 730, 120);
+		double oneDay = HGet<double>(oneMode, "_sideAhead");
+		int oneOther = HGet<int>(oneMode, "_otherPlayed");
+		HCall(oneMode, "RollFor", DateTime.Today, DateTime.MinValue, null);
+		double oneNext = HGet<double>(oneMode, "_sideAhead");
+		NocatFarm.Modules.HumanDay.Forget(oneBot.Name);
+		oneBot.DisposeAsync().AsTask().GetAwaiter().GetResult();
+		Check("carry: the main game alone starts each day at nothing, whatever was left over", oneIn == 0, $"{oneIn}");
+		Check("carry: the main game alone - a friend's game and a new game's sittings don't pin it at +60 (still counted as played on others)",
+			(oneDay == 0) && (oneNext == 0) && (oneOther == 165), $"{oneDay} after the day, {oneNext} the next morning, {oneOther}m on others");
+
+		// The side games taken out with them an hour behind, then put back a few days later: nothing frozen is paid back.
+		var (cutBot, cutMode) = Make("harness-sidesout-", "730:75, 440:25");
+		HCall(cutMode, "RollFor", DateTime.Today.AddDays(-3), DateTime.MinValue, null);
+		Set(cutMode, "_sideAhead", -200.0);
+		Sit(cutMode, 730, 10);
+		cutBot.Cfg.GameWeights = "730:100";
+		List<double> cutDays = [];
+
+		for (int d = 2; d >= 0; d--) {
+			if (d == 0) {
+				cutBot.Cfg.GameWeights = "730:75, 440:25";
+			}
+
+			HCall(cutMode, "RollFor", DateTime.Today.AddDays(-d), DateTime.MinValue, null);
+			cutDays.Add(HGet<double>(cutMode, "_sideAhead"));
+			Sit(cutMode, 730, 60);
+		}
+
+		NocatFarm.Modules.HumanDay.Forget(cutBot.Name);
+		cutBot.DisposeAsync().AsTask().GetAwaiter().GetResult();
+		Check("carry: side games taken out an hour behind - it doesn't sit at -60 for weeks and get paid back when they return",
+			cutDays.All(static c => c == 0), string.Join(", ", cutDays));
+
+		// A main-game-only day in a mixed setup: half of it each such day, rather than the same lead carried on unchanged.
+		Check("carry: a main-game-only day halves it; a mixed day, a day off and the hour cap as before; no side games, nothing",
+			(CarryIn(-60, true, 300, 0) == -30) && (CarryIn(-30, true, 300, 0) == -15) && (CarryIn(-60, true, 300, 150) == -60) && (CarryIn(-60, true, 0, 0) == -60)
+			&& (CarryIn(200, true, 300, 150) == 60) && (CarryIn(200, false, 300, 0) == 0) && (CarryIn(-200, false, 300, 0) == 0));
+
+		// A plan saved by 1.7.0 or older (no SideAhead), read back after an update in the middle of the day: 4h44m on the side
+		// games against about 2h03m planned. It read as nothing ahead with the old allowance of three times their share, and
+		// went on picking side games for the rest of the day.
+		var (oldBot, oldMode) = Make("harness-oldplan-", "730:70, 440:30");
+		DateTime n = DateTime.Now;
+		Directory.CreateDirectory(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state"));
+		File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", $"human-{oldBot.Name}.json"),
+			$"{{\"DayOfYear\":{n.DayOfYear},\"Year\":{n.Year},\"TargetMinutes\":600,\"PlayedMinutes\":400,\"MainSharePct\":70,\"OtherBudget\":540,\"OtherPlayed\":284,"
+			+ "\"FarmPlayed\":0,\"WakeMinuteOfDay\":0,\"BedHour\":23,\"BedMinute\":59,\"BedIsTomorrow\":false}");
+		NocatFarm.Modules.HumanDay oldDay = NocatFarm.Modules.HumanDay.Load(oldBot.Name, n)!;
+		HCall(oldMode, "Restore", oldDay);
+		double oldAhead = HGet<double>(oldMode, "_sideAhead");
+		int oldBudget = HGet<int>(oldMode, "_otherBudget");
+		int SidePicks(NocatFarm.Modules.HumanMode m) {
+			Set(m, "_dayStamp", -1);   // nothing saved, and no bedtime to cut a sitting short
+			Set(m, "_stayUpUntil", DateTime.MinValue);
+			HF("_rng").SetValue(m, new Random(9));
+			int side = 0;
+
+			for (int i = 0; i < 200; i++) {
+				Set(m, "_phase", NocatFarm.Modules.HumanMode.Phase.Off);
+				Set(m, "_lastGame", 0u);
+				Set(m, "_firstSessionOfDay", false);
+				HCall(m, "StartSession");
+				side += HGet<uint>(m, "_game") is not (0 or 730) ? 1 : 0;
+			}
+
+			return side;
+		}
+		int oldSide = SidePicks(oldMode);
+		// The same day as 1.7.0 left it, for comparison.
+		HCall(oldMode, "Restore", oldDay);
+		Set(oldMode, "_sideAhead", 0.0);
+		Set(oldMode, "_otherBudget", 540);
+		int asBefore = SidePicks(oldMode);
+		NocatFarm.Modules.HumanDay.Forget(oldBot.Name);
+		oldBot.DisposeAsync().AsTask().GetAwaiter().GetResult();
+		NocatFarm.Log.Suppressed = false;
+		Check("carry: a 1.7.0 plan read back mid-day works out how far ahead the side games are (284 - 30% of 400 = 164) and cuts the allowance to 1.5x (270)",
+			(Math.Abs(oldAhead - 164) < 1e-9) && (oldBudget == 270) && (oldDay.SideAhead == null), $"{oldAhead} ahead, allowance {oldBudget}");
+		Check("carry: ...and steers - no more side games that day (read as 1.7.0 left it, they kept coming)", (oldSide == 0) && (asBefore > 20),
+			$"{oldSide} of 200 picks on a side game, {asBefore} as before");
 	}
 
 	// What the pick's sums are built on: the average sitting worked out from the ranges is what the real roll gives - the
@@ -4370,6 +4558,62 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		var lostGap = Obs(w0.AddHours(10), true, 570);
 		Check("learning: an unnamed game takes the name Steam gives it next; a long silence ends the sitting where it was last seen",
 			(lostGap.Count == 1) && (lostGap[0].App == 570) && (lostGap[0].Minutes == 20), string.Join(", ", lostGap.Select(static x => $"{x.App} {x.Minutes}m")));
+
+		// ── learning: a restart in the middle of your sitting ──
+		// He played from 21:26, nocat.farm updated at 22:18, and all it kept was "Counter-Strike 2 for 37m" from 22:19.
+		object RsWatcher(string bot) => Activator.CreateInstance(watchT, Inst, null, [bot], null)!;
+		List<NocatFarm.Modules.OwnerHabits.Sitting> RsSee(object w, DateTime at, bool on, uint app) =>
+			((IEnumerable) watchT.GetMethod("Observe", Inst)!.Invoke(w, [at, on, app])!).Cast<NocatFarm.Modules.OwnerHabits.Sitting>().ToList();
+		List<NocatFarm.Modules.OwnerHabits.Sitting> RsPlaying(object w, DateTime from, DateTime until, uint app) {
+			List<NocatFarm.Modules.OwnerHabits.Sitting> done = [];
+
+			for (DateTime t = from; t < until; t = t.AddMinutes(5)) {
+				done.AddRange(RsSee(w, t, true, app));
+			}
+
+			return done;
+		}
+		string RsSaid(List<NocatFarm.Modules.OwnerHabits.Sitting> s) => string.Join(", ", s.Select(static x => $"{x.App} {x.Start:HH:mm} {x.Minutes}m"));
+
+		string rsName = "harness-ownerrestart-" + Guid.NewGuid().ToString("N")[..6];
+		DateTime rs0 = new(2026, 10, 5, 21, 26, 0);
+		object rsBefore = RsWatcher(rsName);
+		var rsCutShort = RsPlaying(rsBefore, rs0, rs0.AddMinutes(52), 730);   // 21:26 to 22:18
+		watchT.GetMethod("Flush", Inst)!.Invoke(rsBefore, []);          // the module stops for the update
+		object rsAfter = RsWatcher(rsName);
+		var rsNotYet = RsSee(rsAfter, rs0.AddMinutes(53), false, 0);          // signed in again; Steam hasn't said he's on yet
+		var rsThrough = RsPlaying(rsAfter, rs0.AddMinutes(55), rs0.AddMinutes(91), 730);
+		var rsWhole = RsSee(rsAfter, rs0.AddMinutes(91), false, 0);
+		Check("learning: a restart in the middle of your sitting carries on with it - from when you really started, all of it",
+			(rsCutShort.Count == 0) && (rsNotYet.Count == 0) && (rsThrough.Count == 0) && (rsWhole.Count == 1) && (rsWhole[0].Start == rs0) && (rsWhole[0].Minutes == 91) && (rsWhole[0].App == 730),
+			RsSaid(rsWhole));
+
+		// Stopped while nocat.farm was off: a few minutes' grace for Steam to say otherwise, then it ends where he was last seen.
+		object rsGone = RsWatcher(rsName);
+		RsPlaying(rsGone, rs0, rs0.AddMinutes(40), 730);
+		watchT.GetMethod("Flush", Inst)!.Invoke(rsGone, []);
+		object rsBack = RsWatcher(rsName);
+		var rsGraceOff = RsSee(rsBack, rs0.AddMinutes(37), false, 0);
+		var rsLastSeen = RsSee(rsBack, rs0.AddMinutes(41), false, 0);
+		Check("learning: you stopped during the restart - it ends where you were last seen, once Steam has had a few minutes to say",
+			(rsGraceOff.Count == 0) && (rsLastSeen.Count == 1) && (rsLastSeen[0].Start == rs0) && (rsLastSeen[0].Minutes == 35), $"{RsSaid(rsGraceOff)} | {RsSaid(rsLastSeen)}");
+
+		// Off for longer than 30 minutes: the sitting read back ends where it was last seen, and one going on now is a new one.
+		object rsLongBefore = RsWatcher(rsName);
+		RsPlaying(rsLongBefore, rs0, rs0.AddMinutes(60), 730);
+		watchT.GetMethod("Flush", Inst)!.Invoke(rsLongBefore, []);
+		object rsLongAfter = RsWatcher(rsName);
+		var rsLost = RsSee(rsLongAfter, rs0.AddMinutes(100), true, 730);
+		var rsFresh = RsSee(rsLongAfter, rs0.AddMinutes(130), false, 0);
+		Check("learning: off for over 30 minutes, the sitting from before the restart ends where it was last seen; the one now is new",
+			(rsLost.Count == 1) && (rsLost[0].Start == rs0) && (rsLost[0].Minutes == 55) && (rsFresh.Count == 1) && (rsFresh[0].Start == rs0.AddMinutes(100)) && (rsFresh[0].Minutes == 30),
+			$"{RsSaid(rsLost)} | {RsSaid(rsFresh)}");
+		bool rsOpenLeft = File.Exists(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", $"ownersitting-{rsName}.json"));
+		object rsForgot = RsWatcher(rsName);
+		RsPlaying(rsForgot, rs0, rs0.AddMinutes(20), 730);
+		watchT.GetMethod("Reset", Inst)!.Invoke(rsForgot, []);
+		bool rsOpenAfterReset = File.Exists(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", $"ownersitting-{rsName}.json"));
+		Check("learning: the sitting so far isn't left on disk once it ends, nor after 'habits forget' or the setting off", !rsOpenLeft && !rsOpenAfterReset);
 
 		// ── learning: keeping it ──
 		var habits = new NocatFarm.Modules.OwnerHabits();
@@ -13319,6 +13563,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		return Task.FromResult(refuse ? new HttpResponseMessage(System.Net.HttpStatusCode.TooManyRequests) : Answer(request));
 	});
 	MethodInfo setPrice = typeof(NocatFarm.Core.LevelPlanner).GetMethod("PriceAsync", All)!;
+	string plannerSrc0() => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "LevelPlanner.cs")).Replace("\r\n", "\n");
 	async Task<(object? Set, bool Asked)> PlannerPrice(NocatFarm.Core.Bot b, uint app) {
 		Task t = (Task) setPrice.Invoke(null, [b, app, CancellationToken.None, null])!;
 		await t;
@@ -13416,13 +13661,15 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("market search: two items on a 3-page search - one page, then one each rather than two more pages",
 			(Asked() - before == 3) && (NocatFarm.PriceBook.Known(753, $"5200-Late2-{tag} (Foil Trading Card)") == 3.01m), $"{Asked() - before}");
 
-		// 4. Told 429 both ways: it stops, says until when, and asks nothing more until then.
+		// 4. Told 429 by the way that was answering a moment ago - the market's limit: it stops at once, says until when,
+		// and asks nothing more until then.
 		refuse = true;
 		before = Asked();
 		bool stopped = !await NocatFarm.PriceBook.PriceAsync([(730, $"Nothing Yet {tag}")], 100, CancellationToken.None);
 		bool paused = NocatFarm.PriceBook.PausedUntil is { } until && (until > DateTime.UtcNow.AddSeconds(85));
 		bool quiet = !await NocatFarm.PriceBook.PriceAsync([(730, $"Nothing Yet {tag}")], 100, CancellationToken.None);
-		Check("market: a 429 both ways stops pricing, pauses every market request and says until when", stopped && paused && quiet && (Asked() - before == 2), $"{Asked() - before} requests");
+		Check("market: a 429 from the way that was answering stops pricing after that one request, pauses every market request and says until when",
+			stopped && paused && quiet && (Asked() - before == 1), $"{Asked() - before} requests");
 		refuse = false;
 		coolUntilF.SetValue(null, DateTime.MinValue);
 		coolMinutesF.SetValue(null, 0);
@@ -13460,12 +13707,29 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			(NocatFarm.PriceBook.Known(753, $"{setGame}-Set3-{tag} (Trading Card)") == 0.10m) && !NocatFarm.PriceBook.NeedsRefresh(753, $"{setGame}-Set5-{tag} (Trading Card)"));
 		gapP.SetValue(null, 0d);
 
-		// Told 429 by a price lookup: the planner asks nothing until the pause is over.
+		// Told 429 by a price lookup: the planner asks nothing until the pause is over - and says it asked nothing, so no
+		// lookup of its budget is spent on it.
 		refuse = true;
 		before = Asked();
 		await NocatFarm.PriceBook.PriceAsync([(730, $"Refused Thing {tag}")], 100, CancellationToken.None);
-		(object? noSet, bool _) = await PlannerPrice(planner, 5301);
-		Check("level planner: while the market's pause stands it asks nothing", (noSet == null) && (Asked() - before == 2) && (NocatFarm.PriceBook.PausedUntil != null), $"{Asked() - before}");
+		(object? noSet, bool noSetAsked) = await PlannerPrice(planner, 5301);
+		Check("level planner: while the market's pause stands it asks nothing, and says so", (noSet == null) && !noSetAsked && (Asked() - before == 1) && (NocatFarm.PriceBook.PausedUntil != null), $"{Asked() - before}");
+
+		// 'levelup' asked meanwhile: it says when the market can be asked, and works nothing out - nothing cached either.
+		Type plannerT = typeof(NocatFarm.Core.LevelPlanner);
+		var plans = (System.Collections.IDictionary) plannerT.GetField("Plans", All)!.GetValue(null)!;
+		var working = (HashSet<string>) plannerT.GetField("Working", All)!.GetValue(null)!;
+		int callsBefore = fake.Calls;
+		string duringPause = NocatFarm.Core.LevelPlanner.Ask(planner, 60);
+		string pauseClock = NocatFarm.PriceBook.PausedUntil!.Value.ToLocalTime().ToString("HH:mm");
+		bool nothingKept;
+		lock (plans) nothingKept = !plans.Contains(planner.Name) && !working.Contains(planner.Name);
+		Check("levelup: during the market's pause it says so and when it can be asked - nothing worked out, nothing cached, nothing sent",
+			duringPause.Contains("Steam asked the market lookups to wait - try again after " + pauseClock, StringComparison.Ordinal) && nothingKept && (fake.Calls == callsBefore),
+			duringPause);
+		Check("levelup: a plan that met a market that didn't answer isn't kept - shown once, then worked out again",
+			plannerSrc0().Contains("if (set == null) {\n\t\t\t\treturn (Stopped(bot), false);", StringComparison.Ordinal)
+			&& plannerSrc0().Contains("if (done.Once) {\n\t\t\t\t\tPlans.Remove(bot.Name);", StringComparison.Ordinal));
 		refuse = false;
 		coolUntilF.SetValue(null, DateTime.MinValue);
 		coolMinutesF.SetValue(null, 0);
@@ -13770,7 +14034,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		coolMinutesF.SetValue(null, 3600);   // after a run of 429s
 		pb.GetField("_refusedInRow", All)!.SetValue(null, 0);
 		pb.GetField("_searchOffUntil", All)!.SetValue(null, DateTime.MinValue);
-		pb.GetField("_overviewAt", All)!.SetValue(null, DateTime.MinValue);   // the searches here are the planner's, refused outright
+		pb.GetField("_searchDoubt", All)!.SetValue(null, -1);
 		saidF.SetValue(null, false);
 		OpenHost();
 
@@ -13782,9 +14046,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		httpBF.SetValue(null, new HttpClient(fake));
 		const string Path1 = "/market/search/render/?norender=1&appid=753&start=0&count=100&currency=1";
 
-		string? answered = await NocatFarm.PriceBook.MarketGetAsync(Path1, CancellationToken.None);
+		(string? answered, bool answeredSent) = await NocatFarm.PriceBook.MarketGetAsync(Path1, CancellationToken.None);
 		Check("market: an answer starts the pause ladder again from its shortest",
-			(answered != null) && (fake.Calls == 1) && fake.Url.StartsWith("https://steamcommunity.com/market/search/", StringComparison.Ordinal) && ((int) coolMinutesF.GetValue(null)! == 0),
+			(answered != null) && answeredSent && (fake.Calls == 1) && fake.Url.StartsWith("https://steamcommunity.com/market/search/", StringComparison.Ordinal) && ((int) coolMinutesF.GetValue(null)! == 0),
 			$"{fake.Calls} call(s), pause {coolMinutesF.GetValue(null)}m");
 
 		// An account's own 429 shuts the host while the market request waits out its gap: it isn't sent, and the market's
@@ -13792,12 +14056,12 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		coolMinutesF.SetValue(null, 900);
 		gapP.SetValue(null, 0.5d);
 		lastCallF.SetValue(null, DateTime.UtcNow);
-		Task<string?> queued = NocatFarm.PriceBook.MarketGetAsync(Path1, CancellationToken.None);
+		Task<(string? Json, bool Asked)> queued = NocatFarm.PriceBook.MarketGetAsync(Path1, CancellationToken.None);
 		await Task.Delay(100);
 		NocatFarm.Core.Limiters.NoteRateLimited(host);
-		string? unsent = await queued;
+		(string? unsent, bool unsentAsked) = await queued;
 		Check("market: the host shut by an account's 429 during the gap - nothing sent, the pause waits it out without a step up",
-			(unsent == null) && (fake.Calls == 1) && ((int) coolMinutesF.GetValue(null)! == 900) && (NocatFarm.PriceBook.PausedUntil != null),
+			(unsent == null) && !unsentAsked && (fake.Calls == 1) && ((int) coolMinutesF.GetValue(null)! == 900) && (NocatFarm.PriceBook.PausedUntil != null),
 			$"{fake.Calls} call(s), pause {coolMinutesF.GetValue(null)}m");
 
 		// A 429 on a signed-out request: the pause starts, and every other market request waits it out - the planner's too.
@@ -13808,12 +14072,15 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		FakePing refusing = new((_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.TooManyRequests)));
 		httpF.SetValue(null, new HttpClient(refusing));
 		httpBF.SetValue(null, new HttpClient(refusing));
-		string? refused = await NocatFarm.PriceBook.MarketGetAsync(Path1, CancellationToken.None);
-		string? held = await NocatFarm.PriceBook.MarketGetAsync(Path1, CancellationToken.None);
+		// The planner's search refused: no second search (the next request is a single lookup, to tell searches refused
+		// from the market's limit); that one refused too - the limit: the pause, and every market request waits it out.
+		(string? refused, bool refusedSent) = await NocatFarm.PriceBook.MarketGetAsync(Path1, CancellationToken.None);
+		(string? held, bool heldSent) = await NocatFarm.PriceBook.MarketGetAsync(Path1, CancellationToken.None);
 		bool pricedNothing = !await NocatFarm.PriceBook.PriceAsync([(730, "Pause Probe Case")], 10, CancellationToken.None);
-		Check("market: a signed-out 429 both ways pauses every market request - searches, lookups and the planner's alike",
-			(refused == null) && (held == null) && pricedNothing && (refusing.Calls == 2) && ((int) coolMinutesF.GetValue(null)! == 90)
-			&& (NocatFarm.PriceBook.PausedUntil is { } pausedTo) && (pausedTo > DateTime.UtcNow.AddSeconds(85)),
+		(string? afterPause, bool afterPauseSent) = await NocatFarm.PriceBook.MarketGetAsync(Path1, CancellationToken.None);
+		Check("market: a refused search then a refused single lookup pause every market request - searches, lookups and the planner's alike",
+			(refused == null) && refusedSent && (held == null) && !heldSent && pricedNothing && (afterPause == null) && !afterPauseSent && (refusing.Calls == 2)
+			&& ((int) coolMinutesF.GetValue(null)! == 90) && (NocatFarm.PriceBook.PausedUntil is { } pausedTo) && (pausedTo > DateTime.UtcNow.AddSeconds(85)),
 			$"{refusing.Calls} call(s), pause {coolMinutesF.GetValue(null)}m");
 
 		Check("inventory: the fleet's \"pricing N items\" counts each item once, from the accounts being valued - the same list its requests come from",
@@ -13890,11 +14157,19 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		F("_checkFirst").SetValue(null, false);
 		F("_searchOffUntil").SetValue(null, DateTime.MinValue);
 		F("_searchOffMinutes").SetValue(null, 0);
-		F("_overviewAt").SetValue(null, DateTime.MinValue);
+		F("_searchDoubt").SetValue(null, -1);
+		Quiet();
+		((System.Collections.IDictionary) F("Suspects").GetValue(null)!).Clear();
+		F("_marketDown").SetValue(null, false);
 		F("_lastCall").SetValue(null, DateTime.MinValue);
 		NocatFarm.Core.Limiters.Remember("market", DateTime.MinValue, 0);
 		NocatFarm.Core.Limiters.Remember("market-way", DateTime.UtcNow, 0);
 	}
+
+	// When each way last got an answer - none since the start, or a few minutes ago.
+	DateTime[] AnsweredAt() => (DateTime[]) F("AnsweredAt").GetValue(null)!;
+	void Quiet() => Array.Fill(AnsweredAt(), DateTime.MinValue);
+	void AnsweredLately(int way) => AnsweredAt()[way] = DateTime.UtcNow.AddMinutes(-3);
 
 	// The pretend market. Each way answers as `answer` says; every request sent is noted - which way, what, when, and the
 	// headers it went with. Nothing reaches Steam.
@@ -13957,19 +14232,21 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("market ways: the next request goes the way that last got an answer first - and still does after a restart",
 			(Ways() == "B") && (Field<int>("_way") == 1) && (Field<int>("_goodWay") == 1), Ways());
 
-		// 403, and a web page where the prices should be: refusals too.
+		// 403, and a web page where the prices should be: refusals too - each from a way that hasn't answered lately.
 		lock (sent) sent.Clear();
+		Quiet();
 		answer = (w, r) => w == 'B' ? Status(403) : Price(r);
 		await PriceAll((730, $"Way Three {tag}"));
 		string forbidden = Ways();
 		lock (sent) sent.Clear();
+		Quiet();
 		answer = (w, r) => w == 'A' ? Json("<!DOCTYPE html>\n<html><body>Access Denied</body></html>") : Price(r);
 		await PriceAll((730, $"Way Four {tag}"));
-		Check("market ways: a 403, or a block page instead of prices, turns the next request the other way - and the page is no price",
+		Check("market ways: a 403, or a block page instead of prices, from a way not answering lately turns the next request the other way - and the page is no price",
 			(forbidden == "BA") && (Ways() == "AB") && (Known(730, $"Way Three {tag}") == 1.23m) && (Known(730, $"Way Four {tag}") == 1.23m) && (Field<int>("_goodWay") == 1),
 			$"{forbidden} / {Ways()}");
 
-		// 2. Both refused in a row: only now is the market refusing - 90 seconds and a little, and nothing asked meanwhile.
+		// 2. Both refused in a row - neither had answered lately: the market refusing, 90 seconds and a little, nothing asked meanwhile.
 		Fresh();
 		lock (sent) sent.Clear();
 		answer = (_, _) => Status(429);
@@ -13979,16 +14256,18 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("market ways: refused both ways in a row - a 90-second pause (a little more at random, never less), nothing asked meanwhile",
 			!went && held && (Ways() == "AB") && (Field<int>("_coolSeconds") == 90) && (firstPause is { } fp) && (fp >= DateTime.UtcNow.AddSeconds(88)) && (fp <= DateTime.UtcNow.AddSeconds(113)),
 			$"{Ways()} / {firstPause:HH:mm:ss}");
-		Check("market ways: after both were refused, the next run starts from the way that last got an answer", (Field<int>("_way") == 0) && (Field<int>("_refusedInRow") == 0));
+		Check("market ways: after both were refused, the request at the pause's end goes the other way from the last refused", (Field<int>("_way") == 0) && (Field<int>("_refusedInRow") == 0));
 
 		List<int> steps = [];
+		lock (sent) sent.Clear();
 		for (int i = 0; i < 8; i++) {
-			F("_coolUntil").SetValue(null, DateTime.MinValue);   // the pause is over - and both ways are refused again
+			F("_coolUntil").SetValue(null, DateTime.MinValue);   // the pause is over - and the market still refuses
 			await PriceAll((730, $"Ladder {tag}"));
 			steps.Add(Field<int>("_coolSeconds"));
 		}
 		Check("market ways: still refused - 5, 15, 30, 60, 120, 240 minutes, then twice a day, said once",
 			steps.SequenceEqual([300, 900, 1800, 3600, 7200, 14400, 43200, 43200]) && Field<bool>("_saidRefused"), string.Join(",", steps));
+		Check("market ways: one request at the end of each pause, the ways taking turns", Ways() == "ABABABAB", Ways());
 
 		F("_coolUntil").SetValue(null, DateTime.MinValue);
 		answer = (_, r) => Price(r);
@@ -14008,22 +14287,24 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			&& sent[1].Path.StartsWith("/market/search/", StringComparison.Ordinal) && stock.All(h => Known(753, h) is not null),
 			string.Join(" ", sent.Select(static s => s.Path)));
 
-		// 4. Searches refused both ways while single lookups are answered: priced one at a time, no pause; searches later.
+		// 4. A search refused, then the single lookup after it answered the same way: it's the searches - priced one at a
+		// time, no pause; searches later.
 		Fresh();
-		F("_overviewAt").SetValue(null, DateTime.UtcNow.AddMinutes(-5));
+		AnsweredLately(0);
 		answer = (_, r) => IsSearch(r) ? Status(429) : Price(r);
 		List<(uint, string)> cards = [.. Enumerable.Range(0, 4).Select(i => ((uint) 753, $"7800-Card{i}{tag} (Trading Card)"))];
 		lock (sent) sent.Clear();
 		bool fellBack = await PriceAll([.. cards]);
 		int searches = sent.Count(static s => s.Path.StartsWith("/market/search/", StringComparison.Ordinal)), singles = sent.Count(static s => s.Path == "/market/priceoverview/");
-		Check("market ways: searches refused both ways while single lookups answer - no pause; every item priced by itself",
-			fellBack && (searches == 2) && (singles == 4) && NocatFarm.PriceBook.SearchOff && (NocatFarm.PriceBook.PausedUntil == null)
-			&& cards.All(c => Known(c.Item1, c.Item2) == 1.23m) && (Field<int>("_searchOffMinutes") == 30), $"{searches} searches, {singles} single");
+		Check("market ways: a search 429 followed by an answered single lookup - searches off, no pause; every item priced by itself",
+			fellBack && (searches == 1) && (singles == 4) && (sent[1].Path == "/market/priceoverview/") && (sent[1].Way == sent[0].Way) && NocatFarm.PriceBook.SearchOff
+			&& (NocatFarm.PriceBook.PausedUntil == null) && cards.All(c => Known(c.Item1, c.Item2) == 1.23m) && (Field<int>("_searchOffMinutes") == 30),
+			$"{searches} searches, {singles} single, {Ways()}");
 		List<(uint App, string Hash)> nineCards = [.. Enumerable.Range(0, 9).Select(i => ((uint) 753, $"7810-Est{i}{tag} (Trading Card)"))];
 		int sentBefore = sent.Count;
-		string? plannerSearch = await NocatFarm.PriceBook.MarketGetAsync("/market/search/render/?norender=1&appid=753&start=0&count=100&currency=1", CancellationToken.None);
+		(string? plannerSearch, bool plannerSent) = await NocatFarm.PriceBook.MarketGetAsync("/market/search/render/?norender=1&appid=753&start=0&count=100&currency=1", CancellationToken.None);
 		Check("market ways: meanwhile a request is one item, the estimate counts one each, and the planner's searches aren't sent",
-			(NocatFarm.PriceBook.NextAsk(nineCards).Search == null) && (NocatFarm.PriceBook.RequestsFor(nineCards) == 9) && (plannerSearch == null) && (sent.Count == sentBefore));
+			(NocatFarm.PriceBook.NextAsk(nineCards).Search == null) && (NocatFarm.PriceBook.RequestsFor(nineCards) == 9) && (plannerSearch == null) && !plannerSent && (sent.Count == sentBefore));
 
 		F("_searchOffUntil").SetValue(null, DateTime.UtcNow.AddSeconds(-1));   // the time is up
 		answer = (_, r) => Price(r);
@@ -14045,20 +14326,61 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		}
 		Check("market ways: searches still refused when tried again - left alone 30 minutes, then 60", offFor.SequenceEqual([30, 60]) && (NocatFarm.PriceBook.PausedUntil == null), string.Join(",", offFor));
 
-		// Searches refused with no single lookup answered lately: that's the market refusing, and the pause. The first
-		// request after it is a single lookup; answered, the searches being refused are left alone and pricing goes on.
+		// A search refused and the single lookup after it refused too: the market's limit on the connection, not searches -
+		// a pause after those two, and searches stay on. Its end asks one item, the other way.
 		Fresh();
+		AnsweredLately(0);
+		answer = (_, _) => Status(429);
 		List<(uint, string)> late = [.. Enumerable.Range(0, 3).Select(i => ((uint) 753, $"8100-Late{i}{tag} (Trading Card)"))];
 		lock (sent) sent.Clear();
 		bool paused = !await PriceAll([.. late]);
-		int coolAfter = Field<int>("_coolSeconds");
+		string limitRun = string.Join(" ", sent.Select(static s => $"{s.Way}{s.Path}"));
+		bool limitTold = paused && (sent.Count == 2) && sent[0].Path.StartsWith("/market/search/", StringComparison.Ordinal) && (sent[1].Path == "/market/priceoverview/")
+			&& (sent[0].Way == 'A') && (sent[1].Way == 'A') && (Field<int>("_coolSeconds") == 90) && !NocatFarm.PriceBook.SearchOff && (Field<int>("_searchOffMinutes") == 0);
 		F("_coolUntil").SetValue(null, DateTime.MinValue);
+		answer = (_, r) => Price(r);
+		stock.Clear();
+		stock.AddRange(late.Select(static l => l.Item2));
 		lock (sent) sent.Clear();
 		bool resumed = await PriceAll([.. late]);
-		Check("market ways: searches refused and nothing else known - the pause; after it a single lookup first, then one at a time",
-			paused && (coolAfter == 90) && resumed && (sent[0].Path == "/market/priceoverview/") && NocatFarm.PriceBook.SearchOff
-			&& (NocatFarm.PriceBook.PausedUntil == null) && late.All(c => Known(c.Item1, c.Item2) == 1.23m),
+		Check("market ways: a search 429 followed by a refused single lookup - a pause after two requests, searches kept on",
+			limitTold, limitRun);
+		Check("market ways: ...and the pause's end asks one item the other way, then searches again",
+			resumed && (sent.Count == 2) && (sent[0].Path == "/market/priceoverview/") && (sent[0].Way == 'B') && sent[1].Path.StartsWith("/market/search/", StringComparison.Ordinal)
+			&& !NocatFarm.PriceBook.SearchOff && (NocatFarm.PriceBook.PausedUntil == null) && late.All(c => Known(c.Item1, c.Item2) is not null),
 			string.Join(" ", sent.Select(static s => $"{s.Way}{s.Path}")));
+
+		// The market's limit on the connection: way A was answering until a moment ago (and B a little before), and is
+		// refused - the same whichever way is asked, so it pauses at once on ONE request, not two.
+		Fresh();
+		AnsweredLately(0);
+		AnsweredLately(1);
+		answer = (_, _) => Status(429);
+		lock (sent) sent.Clear();
+		bool limited = !await PriceAll((730, $"Limit One {tag}"), (730, $"Limit Two {tag}"));
+		string limitedWays = Ways();
+		int limitPause = Field<int>("_coolSeconds");
+		F("_coolUntil").SetValue(null, DateTime.MinValue);   // the pause is over
+		lock (sent) sent.Clear();
+		bool stillLimited = !await PriceAll((730, $"Limit One {tag}"), (730, $"Limit Two {tag}"));
+		Check("market ways: a 429 from a way that was answering - the IP limit: ONE request, then the pause",
+			limited && (limitedWays == "A") && (limitPause == 90) && stillLimited, $"{limitedWays} / {limitPause}");
+		Check("market ways: ...and the end of the pause sends ONE request, the other way", (Ways() == "B") && (NocatFarm.PriceBook.PausedUntil != null) && (Field<int>("_coolSeconds") == 300), Ways());
+		answer = (_, r) => Price(r);
+		F("_coolUntil").SetValue(null, DateTime.MinValue);
+		lock (sent) sent.Clear();
+		bool limitOver = await PriceAll((730, $"Limit One {tag}"), (730, $"Limit Two {tag}"));
+		Check("market ways: once the limit is over, the request at the pause's end is answered and that way is kept",
+			limitOver && (Ways() == "AA") && (Field<int>("_goodWay") == 0) && (Field<int>("_coolSeconds") == 0), Ways());
+
+		// No answer from either way lately (or ever, this run): a refusal may be how the request is written - the next
+		// request goes the other way at once.
+		Fresh();
+		answer = (w, r) => w == 'A' ? Status(429) : Price(r);
+		lock (sent) sent.Clear();
+		bool switched = await PriceAll((730, $"Switch Now {tag}"));
+		Check("market ways: a 429 with no recent answer from either way - the other way asked at once, no pause",
+			switched && (Ways() == "AB") && (NocatFarm.PriceBook.PausedUntil == null) && (Field<int>("_goodWay") == 1), Ways());
 
 		// 5. The gap wanders: 10 seconds give or take a quarter, and every four add up to exactly forty.
 		gapP.SetValue(null, 10d);
@@ -14077,8 +14399,13 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		gapP.SetValue(null, Gap);
 		Field<Queue<double>>("Wobble").Clear();
 		int aCalls = 0, bCalls = 0;
-		// Each way refuses every other request it gets - never both in a row - so every item takes a refusal and a retry.
-		answer = (w, r) => (w == 'A' ? (++aCalls % 2 == 1) : (++bCalls % 2 == 0)) ? Status(429) : Price(r);
+		// Each way refuses every other request it gets - never both in a row - so every item takes a refusal and a retry:
+		// neither is ever counted as answering lately, so each refusal turns the next request the other way.
+		answer = (w, r) => {
+			bool no = w == 'A' ? (++aCalls % 2 == 1) : (++bCalls % 2 == 0);
+			Quiet();
+			return no ? Status(429) : Price(r);
+		};
 		lock (sent) sent.Clear();
 		bool paced = await PriceAll([.. Enumerable.Range(0, 10).Select(i => ((uint) 730, $"Pace {i} {tag}"))]);
 		List<DateTime> at;
@@ -14207,6 +14534,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager).GetField("_bots", All)!.GetValue(mgr)!;
 		var holder = new NocatFarm.Core.Bot("stale-holder", new NocatFarm.Config.BotConfig());
 		bots["stale-holder"] = holder;
+		typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(holder, NocatFarm.Core.BotState.Online);   // signed in, so being priced
 		Directory.CreateDirectory(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state"));
 		File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "invvalue-stale-holder.json"), System.Text.Json.JsonSerializer.Serialize(new {
 			ReadAt = DateTime.UtcNow.Ticks,
@@ -14215,6 +14543,16 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Type invT = typeof(NocatFarm.Core.InventoryValue);
 		invT.GetMethod("LoadSnapshot", All)!.Invoke(holder.Inventory, [TimeSpan.FromHours(6)]);
 		invT.GetMethod("Recount", All)!.Invoke(holder.Inventory, []);
+
+		// A stopped account holding two items nothing has priced: it isn't pricing anything, so they aren't "being priced".
+		var stopped = new NocatFarm.Core.Bot("stale-stopped", new NocatFarm.Config.BotConfig());
+		bots["stale-stopped"] = stopped;
+		File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "invvalue-stale-stopped.json"), System.Text.Json.JsonSerializer.Serialize(new {
+			ReadAt = DateTime.UtcNow.Ticks,
+			Games = new object[] { new { App = 730, Game = "Stale Game", Items = new Dictionary<string, int[]> { [$"Stopped Thing {tag}"] = [1, 5], [$"Stopped Other {tag}"] = [2, 5] } } }
+		}));
+		invT.GetMethod("LoadSnapshot", All)!.Invoke(stopped.Inventory, [TimeSpan.FromHours(6)]);
+		invT.GetMethod("Recount", All)!.Invoke(stopped.Inventory, []);
 		F("_coolUntil").SetValue(null, retry);   // the manager's settings don't lift it
 		string inventory = await Commands.RunAsync(mgr, "inventory stale-holder");
 		// As the command writes them: the time today, the date too past midnight (45 minutes ahead can be tomorrow).
@@ -14227,6 +14565,22 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("stale prices: 'inventory' says from when the prices are and when the market is asked again",
 			(holder.Inventory.Pending > 0) && inventory.Contains(expected, StringComparison.Ordinal) && inventory.Contains("$2.50", StringComparison.Ordinal), inventory);
 
+		string stoppedText = await Commands.RunAsync(mgr, "inventory stale-stopped");
+		string allText = await Commands.RunAsync(mgr, "inventory all");
+		bool stoppedOut = (stopped.Inventory.Pending == 2) && (stopped.Inventory.Pricing == 0) && (stopped.Inventory.Waiting().Count == 0) && (stopped.Inventory.RequestsLeft == 0);
+		Check("stopped account: its items leave the waiting totals - not 'still being priced' in 'inventory', alone or with the rest",
+			stoppedOut && !stoppedText.Contains("still being priced", StringComparison.Ordinal) && !stoppedText.Contains("prices from", StringComparison.Ordinal)
+			&& allText.Contains("all: $2.50   (1 still being priced", StringComparison.Ordinal) && (holder.Inventory.Pricing == 1),
+			$"{stoppedText} || {allText}");
+		typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(stopped, NocatFarm.Core.BotState.Online);
+		Check("stopped account: back online, its items are being priced again", (stopped.Inventory.Pricing == 2) && (stopped.Inventory.Waiting().Count == 2), $"{stopped.Inventory.Pricing}");
+		typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(stopped, NocatFarm.Core.BotState.Stopped);
+		Check("stopped account: the dashboard counts what's being priced the same way - the fleet from Waiting(), each account from Pricing",
+			Src(Path.Combine("Web", "WebHost.cs")).Contains("InventoryPending = b.Inventory.Pricing,", StringComparison.Ordinal)
+			&& Src(Path.Combine("Web", "WebHost.cs")).Contains("SelectMany(static b => b.Inventory.Waiting())", StringComparison.Ordinal)
+			&& Src("Commands.cs").Contains("bot.Inventory.Pricing > 0 ?", StringComparison.Ordinal));
+		typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(holder, NocatFarm.Core.BotState.Stopped);
+
 		string appJs = Src(Path.Combine("wwwroot", "app.js"));
 		Check("stale prices: the tile says the same - from when, and when it tries again - on the fleet tile and each account's line",
 			appJs.Contains("if (stale) return tf(\"prices from {0} · Steam's market isn't answering, trying again at {1}\", stamp(stale.From), clock(stale.RetryAt));", StringComparison.Ordinal)
@@ -14236,6 +14590,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	} finally {
 		Fresh();
 		F("_checkFirst").SetValue(null, true);
+		Quiet();
 		F("Http").SetValue(null, httpBefore);
 		F("HttpB").SetValue(null, httpBBefore);
 		gapP.SetValue(null, null);
@@ -14292,7 +14647,10 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		F("_checkFirst").SetValue(null, false);
 		F("_searchOffUntil").SetValue(null, DateTime.MinValue);
 		F("_searchOffMinutes").SetValue(null, 0);
-		F("_overviewAt").SetValue(null, DateTime.MinValue);
+		F("_searchDoubt").SetValue(null, -1);
+		Array.Fill((DateTime[]) F("AnsweredAt").GetValue(null)!, DateTime.MinValue);
+		((System.Collections.IDictionary) F("Suspects").GetValue(null)!).Clear();
+		F("_marketDown").SetValue(null, false);
 		NocatFarm.Core.Limiters.Remember("market", DateTime.MinValue, 0);
 	}
 
@@ -14325,15 +14683,16 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		F("Http").SetValue(null, new HttpClient(fake));
 		F("HttpB").SetValue(null, new HttpClient(fake));
 
-		// 1. A 500 for one item, every time: the first sweep stops on it (and pauses two minutes) as before; the next sets it
-		// aside and prices everything behind it in the same sweep - with no pause.
+		// 1. A 500 for one item, every time: the first sweep stops on it (and pauses two minutes) - nothing counted against
+		// it yet, it may be the whole market. The next asks something else first, which is answered: then the item's 500
+		// counts, it fails again, and it is set aside with everything behind it priced in the same sweep - no pause.
 		Fresh();
 		string bad = $"Aside Broken {tag}";
 		(uint, string)[] line = [(730, bad), (730, $"Aside Fine One {tag}"), (730, $"Aside Fine Two {tag}"), (730, $"Aside Fine Three {tag}")];
 		trouble[bad] = () => Status(500);
 		bool first = await Sweep(line);
 		bool firstPaused = NocatFarm.PriceBook.PausedUntil != null;
-		bool notYet = Due(730, bad) && (Trouble(730, bad)?.Fails == 1) && line.Skip(1).All(q => Due(q.Item1, q.Item2));
+		bool notYet = Due(730, bad) && (Trouble(730, bad) == null) && line.Skip(1).All(q => Due(q.Item1, q.Item2));
 		TimePasses();
 		bool second = await Sweep(line);
 		Check("set aside: a 500 for one item - the first sweep stops on it, the second sets it aside and prices the rest in the SAME sweep, no pause",
@@ -14341,11 +14700,11 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			&& (NocatFarm.PriceBook.PausedUntil == null) && (NocatFarm.PriceBook.Known(730, bad) == null) && (HoursAside(730, bad) is > 5.9 and <= 6.01),
 			$"first={first} paused={firstPaused} notYet={notYet} second={second} aside={HoursAside(730, bad):0.00}h");
 
-		// 2. "null", an empty answer, a page with no prices in it: each counts like a 500, and twice sets it aside.
+		// 2. "null", a bare number, a page with no prices in it: answers about the item with nothing in them - twice sets it aside.
 		Fresh();
-		string nul = $"Aside Null {tag}", empty = $"Aside Empty {tag}", junk = $"Aside Junk {tag}", fine = $"Aside Fine Four {tag}";
+		string nul = $"Aside Null {tag}", empty = $"Aside Number {tag}", junk = $"Aside Junk {tag}", fine = $"Aside Fine Four {tag}";
 		trouble[nul] = () => Json("null");
-		trouble[empty] = () => Json("");
+		trouble[empty] = () => Json("42");
 		trouble[junk] = () => Json("not json at all");
 		(uint, string)[] odd = [(730, nul), (730, empty), (730, junk), (730, fine)];
 		int sweeps = 0;
@@ -14355,7 +14714,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			sweeps++;
 			dueAfter.Add(odd.Count(o => Due(o.Item1, o.Item2)));
 		}
-		Check("set aside: \"null\", an empty answer, or no price in it - set aside after twice, the rest priced; 3 bad items, 4 sweeps",
+		Check("set aside: \"null\", a bare number, or no price in it - set aside after twice, the rest priced; 3 bad items, 4 sweeps",
 			(sweeps == 4) && new[] { nul, empty, junk }.All(h => !Due(730, h) && (Trouble(730, h)?.Times == 1) && (NocatFarm.PriceBook.Known(730, h) == null))
 			&& (NocatFarm.PriceBook.Known(730, fine) == 1.23m) && (NocatFarm.PriceBook.PausedUntil == null), $"{sweeps} sweeps, due after each: {string.Join(",", dueAfter)}");
 
@@ -14416,7 +14775,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			Due(730, limited) && (Trouble(730, limited) == null) && (Field<int>("_coolSeconds") > 0), $"{Trouble(730, limited)}");
 
 		// 5. The queue always gets on: a mix of bad and good - every sweep after the first either prices or sets aside
-		// something, never two in a row without, until nothing is due.
+		// something, never two in a row without, until nothing is due. The 500s and empty answers too: each fails while
+		// the market answers the good items between them.
 		Fresh();
 		Func<HttpResponseMessage>[] kinds = [() => Status(500), () => Status(502), () => Json("null"), () => Json(""), () => Json("[1,2]")];
 		List<(uint, string)> mix = [];
@@ -14436,8 +14796,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			was = now;
 		}
 		int badCount = mix.Count(m => trouble.ContainsKey(m.Item2));
-		Check("set aside: the queue always gets on - never two sweeps in a row without progress, done in at most two sweeps per bad item",
-			!mix.Any(m => Due(m.Item1, m.Item2)) && (worstStuck <= 1) && (rounds <= (2 * badCount) + 1)
+		// Two 500s at the head of the queue cost two sweeps before anything is answered: neither is blamed until then.
+		Check("set aside: the queue always gets on - never more than two sweeps in a row without progress, done in at most two sweeps per bad item",
+			!mix.Any(m => Due(m.Item1, m.Item2)) && (worstStuck <= 2) && (rounds <= (2 * badCount) + 1)
 			&& mix.Where(m => !trouble.ContainsKey(m.Item2)).All(m => NocatFarm.PriceBook.Known(m.Item1, m.Item2) == 1.23m),
 			$"{rounds} sweeps for {badCount} bad, worst {worstStuck} without progress");
 
@@ -14475,6 +14836,47 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("set aside: off the \"still to price\" count at once, and after a recount - the tile never waits on it",
 			(pendingBefore == 2) && (pendingMid == 2) && (pendingAfter == 0) && (requestsAfter == 0) && (holder.Inventory.Pending == 0) && (holder.Inventory.Total == 1.23m),
 			$"{pendingBefore} -> {pendingMid} -> {pendingAfter} / {holder.Inventory.Pending}, total {holder.Inventory.Total}");
+		var historyPoints = (System.Collections.IDictionary) typeof(NocatFarm.Core.InventoryHistory).GetField("Points", All)!.GetValue(null)!;
+		bool Banked(string bot) => historyPoints.Contains(bot);
+		Check("set aside: an item set aside before it was ever priced keeps the total out of the history - it isn't worth $0, it isn't known",
+			!Banked("aside-holder"), $"{holder.Inventory.Total}");
+
+		// 8. Steam's maintenance: every request answers 503 or nothing, whatever it asks about. Twelve sweeps of it set
+		// nothing aside - not the knife first, not anything - and save no point in the history. Once it answers again,
+		// everything is priced and nothing has been counted against.
+		Fresh();
+		string[] outage = [$"★ Aside Knife {tag}", .. Enumerable.Range(0, 12).Select(i => $"Aside Case {i} {tag}")];
+		for (int i = 0; i < outage.Length; i++) {
+			trouble[outage[i]] = i % 2 == 0 ? () => Status(503) : () => Json("");
+		}
+		var outageHolder = new NocatFarm.Core.Bot("outage-holder", new NocatFarm.Config.BotConfig());
+		File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "invvalue-outage-holder.json"), System.Text.Json.JsonSerializer.Serialize(new {
+			ReadAt = DateTime.UtcNow.Ticks,
+			Games = new object[] { new { App = 730, Game = "Outage Game", Items = outage.ToDictionary(static h => h, static h => new[] { 1, h.StartsWith('★') ? 0 : 5 }) } }
+		}));
+		invT.GetMethod("LoadSnapshot", All)!.Invoke(outageHolder.Inventory, [TimeSpan.FromHours(6)]);
+		invT.GetMethod("Recount", All)!.Invoke(outageHolder.Inventory, []);
+		lock (asked) asked.Clear();
+		for (int i = 0; i < 12; i++) {
+			TimePasses();
+			await Sweep([.. outage.Select(static h => ((uint) 730, h))]);
+		}
+		invT.GetMethod("Recount", All)!.Invoke(outageHolder.Inventory, []);
+		int outageAsked;
+		lock (asked) outageAsked = asked.Count;
+		Check("set aside: 12 sweeps of 503s and empty answers - nothing set aside, nothing counted against any item, one request a sweep",
+			outage.All(h => Due(730, h) && (Trouble(730, h) == null)) && (outageAsked == 12) && (outageHolder.Inventory.Pending == 13),
+			$"{outageAsked} asked, aside: {string.Join(", ", outage.Where(h => !Due(730, h)))}");
+		Check("set aside: ...and no point saved in the history while it lasts", !Banked("outage-holder"));
+		foreach (string h in outage) {
+			trouble.Remove(h);
+		}
+		TimePasses();
+		bool outageOver = await Sweep([.. outage.Select(static h => ((uint) 730, h))]);
+		invT.GetMethod("Recount", All)!.Invoke(outageHolder.Inventory, []);
+		Check("set aside: once the market answers again everything is priced, nothing was counted against, and the real total is banked",
+			outageOver && outage.All(h => (NocatFarm.PriceBook.Known(730, h) == 1.23m) && (Trouble(730, h) == null)) && (outageHolder.Inventory.Pending == 0)
+			&& Banked("outage-holder"), $"{outageHolder.Inventory.Total}");
 	} finally {
 		Fresh();
 		F("_checkFirst").SetValue(null, true);
@@ -14482,6 +14884,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		F("HttpB").SetValue(null, httpBBefore);
 		gapP.SetValue(null, null);
 		lock (troubled) troubled.Clear();
+		F("_coolUntil").SetValue(null, DateTime.MinValue);
 		NocatFarm.Config.Live.Global = liveBefore;
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
 

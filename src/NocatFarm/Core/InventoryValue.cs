@@ -47,6 +47,17 @@ public sealed partial class InventoryValue(Bot bot) {
 	/// counts down one by one as the prices land, not only when the inventory is read again.</summary>
 	public int Pending => _figures.Pending;
 
+	/// <summary>
+	/// <see cref="Pending"/> while the account is online and so being priced; nothing while it isn't. What the dashboard and
+	/// "inventory" say is still being priced.
+	/// </summary>
+	/// <remarks>
+	/// Each account prices its own inventory, and only while it is signed in. An item only a stopped account held stayed in
+	/// "pricing · 12 items · about 4 requests · ~1m" for good: nothing was ever going to ask about it, and the tile never
+	/// emptied. Its total still shows, at the prices it has; it is priced again when the account is back.
+	/// </remarks>
+	public int Pricing => bot.IsOnline ? _figures.Pending : 0;
+
 	public bool Ready { get; private set; }
 
 	public DateTime RefreshedAt { get; private set; }
@@ -491,15 +502,20 @@ public sealed partial class InventoryValue(Bot bot) {
 	/// <summary>The (game, item name) pairs still waiting on a price - the dashboard's "still pricing" count.</summary>
 	private HashSet<(uint App, string Hash)> _waiting = [];
 
-	/// <summary>What is still waiting on a price, as it stands - for working out how many requests are left.</summary>
+	/// <summary>What is still waiting on a price and being priced, as it stands - for working out how many requests are
+	/// left. Nothing while the account isn't online (see <see cref="Pricing"/>).</summary>
 	public List<(uint App, string Hash)> Waiting() {
+		if (!bot.IsOnline) {
+			return [];
+		}
+
 		lock (_tallyGate) {
 			return [.. _waiting];
 		}
 	}
 
-	/// <summary>About how many market requests the prices still waiting will take.</summary>
-	public int RequestsLeft => _figures.Pending == 0 ? 0 : PriceBook.RequestsFor(Waiting());
+	/// <summary>About how many market requests the prices still being priced will take.</summary>
+	public int RequestsLeft => Pricing == 0 ? 0 : PriceBook.RequestsFor(Waiting());
 
 	/// <summary>The currency the running total is in. 0 until the first recount.</summary>
 	private int _tallyCurrency;
@@ -583,11 +599,13 @@ public sealed partial class InventoryValue(Bot bot) {
 
 		decimal was = Total;
 		Figures now;
+		int unknown;
 
 		lock (_holdings) {
 			lock (_tallyGate) {
 				Dictionary<uint, TallyGame> tally = [];
 				HashSet<(uint App, string Hash)> waiting = [];
+				unknown = 0;
 
 				foreach ((uint app, (string game, Dictionary<string, Held> items, bool blocked)) in _holdings) {
 					TallyGame g = new(game, blocked);
@@ -599,8 +617,14 @@ public sealed partial class InventoryValue(Bot bot) {
 							continue;   // a game you've told it to skip: its items are counted, never priced or waited on
 						}
 
-						decimal price = PriceBook.Known(app, hash) ?? 0;
+						decimal? known = PriceBook.Known(app, hash);
+						decimal price = known ?? 0;
 						g.Counted[hash] = (held.Count, price);
+
+						if (known == null) {
+							unknown++;
+						}
+
 						g.Value += price * held.Count;
 
 						if (PriceBook.NeedsRefresh(app, hash)) {
@@ -623,8 +647,10 @@ public sealed partial class InventoryValue(Bot bot) {
 		decimal total = now.Total;
 
 		// Only banked once the whole thing has a price. A total that is still filling in would otherwise be
-		// recorded as a genuine drop and then a genuine rise, and the day's percentage would be fiction.
-		if ((now.Pending == 0) && _complete) {
+		// recorded as a genuine drop and then a genuine rise, and the day's percentage would be fiction. Nothing waiting
+		// isn't enough: an item set aside before it was ever priced waits on nothing and counts as nothing, and banked
+		// that way a knife set aside during Steam's maintenance was a crash in the history, and its return a recovery.
+		if ((now.Pending == 0) && (unknown == 0) && _complete) {
 			InventoryHistory.Note(bot.Name, total);
 		}
 

@@ -2101,7 +2101,7 @@ public static partial class Commands {
 				: "";
 
 			lines.Add($"{bot.Name}: {PriceBook.Symbol}{bot.Inventory.Total:N2}{moved}"
-				+ (bot.Inventory.Pending > 0 ? $"   ({bot.Inventory.Pending} item(s) still being priced{Left(bot.Inventory.RequestsLeft)})" : "")
+				+ (bot.Inventory.Pricing > 0 ? $"   ({bot.Inventory.Pricing} item(s) still being priced{Left(bot.Inventory.RequestsLeft)})" : "")
 				+ (bot.Inventory.Ready ? "" : "   (reading it now)"));
 
 			foreach (InventoryValue.GameValue game in bot.Inventory.ByGame.Take(6)) {
@@ -2112,7 +2112,8 @@ public static partial class Commands {
 		}
 
 		if (targets.Count > 1) {
-			// Each item once, from the accounts being valued - two holding the same card wait on one price, as the dashboard says.
+			// Each item once, from the accounts being valued - two holding the same card wait on one price, as the dashboard says;
+			// none from an account that isn't online, which isn't pricing anything (InventoryValue.Pricing).
 			List<(uint App, string Hash)> waiting = [.. targets.Where(static b => b.Cfg.ShowInventoryValue).SelectMany(static b => b.Inventory.Waiting()).Distinct()];
 			lines.Add($"all: {PriceBook.Symbol}{total:N2}{(waiting.Count > 0 ? $"   ({waiting.Count} still being priced{Left(PriceBook.RequestsFor(waiting))})" : "")}");
 		}
@@ -2123,7 +2124,7 @@ public static partial class Commands {
 
 		// The market refusing, with prices still to refresh: the value stands on the last prices it gave - say from when,
 		// and when it is asked again, as the dashboard's tile does.
-		if ((PriceBook.Stale is { } stale) && targets.Any(static b => b.Cfg.ShowInventoryValue && (b.Inventory.Pending > 0))) {
+		if ((PriceBook.Stale is { } stale) && targets.Any(static b => b.Cfg.ShowInventoryValue && (b.Inventory.Pricing > 0))) {
 			// "14:20" today, "2026-10-04 14:20" on an earlier day.
 			static string Stamp(DateTime utc) {
 				DateTime local = utc.ToLocalTime();

@@ -182,6 +182,13 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 	private DateTime _lastHuntTick = DateTime.MinValue;
 	private DateTime _huntSavedAt = DateTime.MinValue;
 	private bool _huntLoaded;
+
+	/// <summary>
+	/// Held for a whole tick, and by the save as the module stops - so that save can't write the hunt halfway through
+	/// a tick changing it, or serialize the game plans while a tick is adding to them.
+	/// </summary>
+	private readonly Lock _huntGate = new();
+
 	// Was the grind currently running started by the boost? Backed by the flag the grind itself persists, so
 	// a session that outlived a restart is still recognised as ours - it used to come back disowned, which left
 	// it running with nothing able to stop it short of ending the grind by hand.
@@ -210,7 +217,13 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			try {
 				if (On) {
 					await DiscoverIfNeededAsync(ct).ConfigureAwait(false);
-					Tick();
+
+					lock (_huntGate) {
+						// Stopping saved the hunt already; a tick after that save would only change what was saved.
+						if (!ct.IsCancellationRequested) {
+							Tick();
+						}
+					}
 				} else {
 					// Switching the boost off has to stop what it is DOING, not just stop it starting anything
 					// else. Without this, an account put on a two-hour hunt carried on playing that game for the
@@ -240,6 +253,29 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			if (!await Sleep(TimeSpan.FromMinutes(1), ct).ConfigureAwait(false)) {
 				return;
 			}
+		}
+	}
+
+	/// <summary>
+	/// Save the hunt as the module stops. Played minutes are only written every ten minutes, so a restart - an update,
+	/// say - used to lose up to ten minutes of the hunt game's playing and of "Hunt at most, hours a day".
+	/// </summary>
+	public override async Task StopAsync() {
+		// Cancel first, then wait out any tick in flight: the tick that holds the gate finishes, and the next one
+		// sees the cancel and leaves the hunt alone - so this is the last write.
+		await base.StopAsync().ConfigureAwait(false);
+
+		try {
+			lock (_huntGate) {
+				// Never loaded means nothing here is newer than the file - saving now would write a blank hunt over it.
+				// Switched off, it is left as it was, the same as before stopping saved at all.
+				if (_huntLoaded && On) {
+					SaveHunt();
+				}
+			}
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't save the achievement hunt on shutdown: {0}", Log.Describe(e)), Bot.Name);
+			Log.StackToFile(e, Bot.Name);   // nothing in here talks to Steam - a throw is a bug
 		}
 	}
 
@@ -760,7 +796,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 			StartHunt(next, targets.Count);
 			SaveHunt();
 		} else if (now - _huntSavedAt > TimeSpan.FromMinutes(10)) {
-			SaveHunt();
+			SaveHunt();   // and as the module stops, so a restart doesn't lose these ten minutes - see StopAsync
 		}
 
 		_status = DailyLimitReached

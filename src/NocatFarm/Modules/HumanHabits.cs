@@ -384,19 +384,61 @@ internal sealed class OwnerWatch {
 	/// <summary>No word for this long (the PC asleep, nocat.farm closed) and the sitting ends where it was last seen.</summary>
 	internal static readonly TimeSpan LostAfter = TimeSpan.FromMinutes(30);
 
+	/// <summary>How often "last seen" is written out while a sitting goes on - every tick would be a write every 20 seconds.</summary>
+	internal static readonly TimeSpan SaveEvery = TimeSpan.FromMinutes(5);
+
+	/// <summary>
+	/// After a restart, how long a sitting read back waits for Steam to say he's still on. Steam takes a while after signing in
+	/// to say somebody else is playing (about two and a half minutes has been seen), and the first look saying "nobody"
+	/// would otherwise end his sitting there and start a new one a minute later.
+	/// </summary>
+	internal static readonly TimeSpan RestoredGrace = TimeSpan.FromMinutes(3);
+
+	/// <summary>The account it keeps the sitting in progress for, on disk - null: in memory only.</summary>
+	private readonly string? _bot;
+	private bool _loaded;
+	private bool _onDisk;
+	private DateTime _savedSeen;
+
+	/// <summary>When a sitting was read back after a restart and Steam hasn't said he's on since - null otherwise.</summary>
+	private DateTime? _restoredAt;
+
 	private DateTime? _since;
 	private uint _app;
 	private DateTime _lastSeen;
 
+	internal OwnerWatch() {
+		_loaded = true;
+	}
+
+	/// <summary>
+	/// One that keeps the sitting in progress in the account's state, so a restart in the middle of one (an update, say)
+	/// carries on with it. It was kept in memory only: he played from 21:26, nocat.farm updated at 22:18, and all it kept
+	/// was "Counter-Strike 2 for 37m" from 22:19 - the first 53 minutes gone and the start time wrong.
+	/// </summary>
+	internal OwnerWatch(string bot) {
+		_bot = bot;
+	}
+
 	internal void Reset() {
 		_since = null;
 		_app = 0;
+		_restoredAt = null;
+
+		// Not read yet: one left from before goes too ('habits forget', or the setting off).
+		if ((_bot != null) && (_onDisk || !_loaded)) {
+			Delete();
+		}
+
+		_loaded = true;
 	}
 
 	/// <summary>One look: is he on, and on what. Hands back any sitting that just finished (long enough to count).</summary>
 	internal List<OwnerHabits.Sitting> Observe(DateTime now, bool on, uint app) {
+		Load(now);
 		List<OwnerHabits.Sitting> done = [];
 
+		// One read back after a restart is ended here too, when nocat.farm was off for longer than this.
 		if ((_since is { } open) && (now - _lastSeen > LostAfter)) {
 			Close(open, _lastSeen, done);
 		}
@@ -415,12 +457,102 @@ internal sealed class OwnerWatch {
 			}
 
 			_lastSeen = now;
+			_restoredAt = null;
 		} else if (_since is { } started) {
-			Close(started, now, done);
+			// Just back from a restart: Steam may not have said yet. Still nothing after a few minutes, and he stopped
+			// while nocat.farm was off - the sitting ends where he was last seen.
+			if (_restoredAt is { } back) {
+				if (now - back >= RestoredGrace) {
+					Close(started, _lastSeen, done);
+				}
+			} else {
+				Close(started, now, done);
+			}
 		}
+
+		Keep(false);
 
 		return done;
 	}
+
+	/// <summary>Write the sitting in progress out as it stands - when the module stops.</summary>
+	internal void Flush() => Keep(true);
+
+	/// <summary>Bring the saved sitting up to date: written when it starts or changes game, now and then while it goes on, and gone when it ends.</summary>
+	private void Keep(bool force) {
+		if (_bot == null) {
+			return;
+		}
+
+		if (_since is not { } since) {
+			if (_onDisk) {
+				Delete();
+			}
+
+			return;
+		}
+
+		if (!force && _onDisk && (_lastSeen - _savedSeen < SaveEvery)) {
+			return;
+		}
+
+		try {
+			string path = PathFor(_bot);
+			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+			AtomicFile.Write(path, JsonSerializer.Serialize(new Open(since, _app, _lastSeen)));
+			_onDisk = true;
+			_savedSeen = _lastSeen;
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't save what it learned from your play: {0}", Log.Describe(e)), _bot);
+		}
+	}
+
+	private void Load(DateTime now) {
+		if (_loaded) {
+			return;
+		}
+
+		_loaded = true;
+
+		try {
+			string path = PathFor(_bot!);
+
+			if (!File.Exists(path)) {
+				return;
+			}
+
+			_onDisk = true;
+
+			if (JsonSerializer.Deserialize<Open>(File.ReadAllText(path)) is { } open && (open.Since <= open.LastSeen) && (open.LastSeen <= now)) {
+				_since = open.Since;
+				_app = open.App;
+				_lastSeen = open.LastSeen;
+				_savedSeen = open.LastSeen;
+				_restoredAt = now;
+			}
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't read what it learned from your play: {0}", Log.Describe(e)), _bot!);
+		}
+	}
+
+	private void Delete() {
+		try {
+			string path = PathFor(_bot!);
+
+			if (File.Exists(path)) {
+				File.Delete(path);
+			}
+		} catch (Exception e) {
+			Log.Debug(new Said("couldn't forget what it learned from your play: {0}", Log.Describe(e)), _bot!);
+		}
+
+		_onDisk = false;
+	}
+
+	private static string PathFor(string bot) => Path.Combine(ConfigStore.ConfigDir, "state", $"ownersitting-{bot}.json");
+
+	/// <summary>The sitting in progress as saved: when it started, the game (0: not named yet), when he was last seen on.</summary>
+	internal sealed record Open(DateTime Since, uint App, DateTime LastSeen);
 
 	private void Close(DateTime from, DateTime to, List<OwnerHabits.Sitting> done) {
 		int minutes = (int) (to - from).TotalMinutes;
@@ -431,6 +563,7 @@ internal sealed class OwnerWatch {
 
 		_since = null;
 		_app = 0;
+		_restoredAt = null;
 	}
 }
 

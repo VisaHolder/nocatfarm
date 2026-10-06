@@ -26,8 +26,11 @@ public sealed class HumanDay {
 	public int OtherBudget { get; set; }
 	public int OtherPlayed { get; set; }
 
-	/// <summary>Side-game minutes ahead of the shares rolled (below 0: behind), carried from day to day (0 in older files).</summary>
-	public double SideAhead { get; set; }
+	/// <summary>
+	/// Side-game minutes ahead of the shares rolled (below 0: behind), carried from day to day. Null in a file saved before the
+	/// day was steered (1.7.0 and older): there it is worked out from what the day has played (HumanMode.Restore).
+	/// </summary>
+	public double? SideAhead { get; set; }
 
 	/// <summary>Minutes the card-farming sittings have played - kept apart from the side games' (0 in older files).</summary>
 	public int FarmPlayed { get; set; }

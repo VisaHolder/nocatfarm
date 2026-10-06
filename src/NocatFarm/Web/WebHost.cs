@@ -2897,6 +2897,7 @@ public sealed class WebHost : IAsyncDisposable {
 		// Everything still waiting on a price across every account being valued, each item once - two accounts holding the
 		// same card wait on one price, not two. The count and the requests from the same list: summed per account, the
 		// tile said twice the items there were, and an account switched off mid-pricing left "about 0 requests" for good.
+		// Only accounts that are online: one that's stopped isn't pricing anything (InventoryValue.Pricing).
 		List<(uint App, string Hash)> fleetWaiting = [.. bots.Where(static b => b.Cfg.ShowInventoryValue).SelectMany(static b => b.Inventory.Waiting()).Distinct()];
 		int fleetRequests = fleetWaiting.Count == 0 ? 0 : PriceBook.RequestsFor(fleetWaiting);
 
@@ -3001,7 +3002,7 @@ public sealed class WebHost : IAsyncDisposable {
 					InventoryValue = b.Inventory.Total,
 					InventoryChange = InventoryHistory.Since(b.Name, TimeSpan.FromHours(24))?.Change,
 					InventoryChangePct = InventoryHistory.Since(b.Name, TimeSpan.FromHours(24))?.Percent,
-					InventoryPending = b.Inventory.Pending,
+					InventoryPending = b.Inventory.Pricing,
 					InventoryRequests = b.Inventory.RequestsLeft,
 					InventoryEtaSeconds = InventoryValue.EtaSeconds(b.Inventory.RequestsLeft),
 					InventoryReady = b.Inventory.Ready,

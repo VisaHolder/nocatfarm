@@ -1581,7 +1581,7 @@ public static class ConfigStore {
 		("state", "bans-", ".json"), ("state", "cardcheck-", ".json"), ("state", "cardpace-", ".json"), ("state", "cheevo-", ".json"),
 		("state", "dropsfirst-", ".json"), ("state", "freegames-", ".json"), ("state", "freeitems-", ".json"), ("state", "grind-", ".json"),
 		("state", "human-", ".json"), ("state", "hunt-", ".json"), ("state", "invvalue-", ".json"), ("state", "owner-", ".json"),
-		("state", "queue-", ".txt"), ("state", "rep4rep-", ".json"), ("state", "rotation-", ".json"), ("state", "send-", ".json"),
+		("state", "ownersitting-", ".json"), ("state", "queue-", ".txt"), ("state", "rep4rep-", ".json"), ("state", "rotation-", ".json"), ("state", "send-", ".json"),
 		("state", "trades-announced-", ".json"), ("state", "overnight-", ".seen")
 	];
 
