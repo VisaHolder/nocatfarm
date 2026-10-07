@@ -3630,6 +3630,47 @@ public sealed class HumanMode(Bot bot) : BotModule(bot) {
 			&& human.WarmedUp && !human._offlineBreak));
 	}
 
+	/// <summary>Asleep by its own plan (or idling the night away) - known only once human mode has looked at the clock this run.</summary>
+	public static bool Asleep(Bot bot) => bot.Cfg.LegitMode && (bot.Modules.OfType<HumanMode>().FirstOrDefault() is { _ticked: true } human)
+		&& ((human.Current is Phase.Asleep or Phase.NightIdle) || human.NightGrind);
+
+	/// <summary>On a break it's spending offline (appearing offline, back in a while) - false without human mode.</summary>
+	public static bool OnOfflineBreak(Bot bot) => bot.Cfg.LegitMode && (bot.Modules.OfType<HumanMode>().FirstOrDefault() is { _offlineBreak: true });
+
+	/// <summary>
+	/// Why <see cref="UpFor"/> says no, in plain words: asleep, on a break it spends offline, or still settling in after
+	/// signing in or waking - with about when that's done. Empty when it's up.
+	/// </summary>
+	public static Said NotUpWhy(Bot bot) {
+		if (UpFor(bot)) {
+			return default;
+		}
+
+		HumanMode? human = bot.Modules.OfType<HumanMode>().FirstOrDefault();
+
+		if (bot.Stopping) {
+			return new Said("it's signing off");
+		}
+
+		if ((human == null) || !human._ticked) {
+			return new Said("human mode is still working out its day after the start - try again in a minute");
+		}
+
+		if (Asleep(bot)) {
+			return new Said("it's asleep - human mode only does this in its own day");
+		}
+
+		if (human._offlineBreak) {
+			return new Said("it's on a break, signed out to its friends - human mode waits until it's back");
+		}
+
+		int left = human.WarmUpMinutesLeft;
+
+		return left > 0
+			? new Said("it's still settling in after signing in or waking - it can go ahead from about {0}", Fmt.Clock(DateTime.UtcNow.AddMinutes(left + 1)))
+			: new Said("it's still settling in after signing in or waking");
+	}
+
 	// ═══ showing your work ══════════════════════════════════════════════════
 	/// <summary>
 	/// Roll the next seven days the same way the real scheduler does and describe them.

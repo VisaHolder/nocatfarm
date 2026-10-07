@@ -218,6 +218,18 @@ has been out for a while (*Wait after a release for*, 2 hours) so a bad release 
 no human-mode account is awake, nobody is playing and no trade offer or gift is waiting. *Look for updates every*
 sets how often it checks (2 hours).
 
+`update file <zip>` installs a nocat.farm zip that's already on this PC, the same way, putting back included. It only
+works in the nocat.farm window or its console, or the dashboard opened on this PC. A zip with the same or an older
+version needs `update file <zip> force`. Type just `update file` (or press *Install from a file…* under Settings →
+Updates & plugins on this PC) and a window opens to pick the zip, starting in Downloads. On Linux or a Mac, type the
+path. In Docker, nocat.farm is updated by hand (see below).
+
+To go back to an older version, `update versions` lists the ones still on GitHub (the last 5 releases), and
+`update to 1.7.1` installs one, the same way. Or use *Go back to an older version* under Settings → Updates &
+plugins. Your settings are saved first (in config/backups), and any the older version doesn't know come back when
+you update again, without undoing what you changed in between. The version you came from won't install by itself
+until a newer one is out; `update accept` brings it back.
+
 `update skip` stops the reminders for that version, and it will never install by itself. The version after it is
 announced as usual, and `update accept` still installs the skipped one if you change your mind.
 

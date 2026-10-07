@@ -248,6 +248,26 @@ public static partial class PriceBook {
 	};
 
 	/// <summary>
+	/// A money amount that went up or down, the sign in front of the symbol as anybody writes it: "+$12.30", "-$98.82".
+	/// Formatted as a plain number after the symbol, a fall read "$-98.82". No change is "$0.00", without a sign - nor a
+	/// "-$0.00" for a fall of a fraction of a cent.
+	/// </summary>
+	public static string Signed(decimal change) {
+		decimal cents = Math.Round(change, 2, MidpointRounding.AwayFromZero);
+		string sign = cents > 0 ? "+" : cents < 0 ? "-" : "";
+
+		return sign + Symbol + Math.Abs(cents).ToString("N2", CultureInfo.InvariantCulture);
+	}
+
+	/// <summary>A percentage that went up or down: "+5.5%", "-5.5%", and "0.0%" for none (never "-0.0%").</summary>
+	public static string SignedPercent(double change) {
+		double tenths = Math.Round(change, 1, MidpointRounding.AwayFromZero);
+		string sign = tenths > 0 ? "+" : tenths < 0 ? "-" : "";
+
+		return sign + Math.Abs(tenths).ToString("0.0", CultureInfo.InvariantCulture) + "%";
+	}
+
+	/// <summary>
 	/// Market prices are per (game, item name, currency) - the same name in two games is two different things,
 	/// and the same item in two currencies is two different numbers. Currency is part of the key so switching it
 	/// re-prices from scratch instead of quietly mixing dollars into a euro total.

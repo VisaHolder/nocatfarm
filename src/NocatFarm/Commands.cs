@@ -64,7 +64,7 @@ public static partial class Commands {
 
 		new("play", "<account> <appIDs|none>", GroupPlaying, "Set the games this account idles for playtime."),
 		new("gamename", "<account> [text|off]", GroupPlaying, "Custom non-Steam game name shown instead of the real game. No text shows the current one; 'off' clears it.", "", "name"),
-		new("persona", "<account> <state>", GroupPlaying, "What the account shows your friends: online | offline | busy | away | snooze | looking to trade | looking to play | invisible (or its number, 0-7). Same as the OnlineStatus setting."),
+		new("persona", "<account> [state]", GroupPlaying, "What the account shows your friends: online | offline | busy | away | snooze | looking to trade | looking to play | invisible (or its number, 0-7). Same as the OnlineStatus setting. No state says what it shows now."),
 		new("nickname", "<account> <profile name>", GroupPlaying, "Change the name everybody sees on the profile and friends list. Not the custom game name, that's 'gamename'."),
 		new("grind", "<account|all> <appID> <hours> | <account> off", GroupPlaying,
 			"Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs."),
@@ -96,6 +96,7 @@ public static partial class Commands {
 		new("hunt", "[account]", GroupAchievements, "What the achievement boost would hunt next, in order, and what it ruled out and why."),
 		new("dlc", "<account> [game] | leave|undo <account> <game>", GroupAchievements, "Achievements that come with add-ons (DLC). 'dlc <account>' lists the games where add-ons matter. Add a game, by name or appID, to see its add-ons, which ones the account owns, and what is held. Achievements Steam ties to an add-on the account doesn't own are never unlocked. When a game has add-ons the account doesn't own and Steam doesn't say which achievements they bring, it earns anyway: the base game's first, the ones it can't place last. 'dlc leave <account> <game>' leaves a game like that alone instead, and 'dlc undo <account> <game>' takes that back.", "dlcach|dlcachievements"),
 
+		new("freegames", "[account|all]", GroupFree, "Look for free games now: paid games given away free to keep, the same check \"Claim free games\" makes by itself every half hour or so. Says what it claimed, and what was free but couldn't be claimed, and why. On an account with it off, it takes games only."),
 		new("freeitems", "[account|all]", GroupFree, "Look for free event items now: the daily sale sticker, and anything in the Points Shop at 0 points. The ClaimEventItems setting does it by itself."),
 		new("queue", "[account|all]", GroupFree, "Go through today's discovery queue now, a few seconds on each game. The DiscoveryQueue setting does it by itself once a day (during sales, by default)."),
 		new("redeem", "[account] <key|file.txt> [key...]", GroupFree, "Activate product keys, or point it at a text file full of them. More than five queues itself and activates them slowly. With an account, only that account ever gets them, queued ones too. Without one it tries each account in turn until one can use it."),
@@ -122,7 +123,7 @@ public static partial class Commands {
 		new("log", "[count|folder]", GroupOther, "The last few log lines. 'log folder' opens the folder the log files are in, on this PC.", "logs"),
 		new("stats", "[hours]", GroupOther, "Everything: each account's last 24 hours (hours banked, cards, comments, totals), then cards dropped and comments posted, by hour. Give a number of hours to look further back."),
 		new("report", "[week]", GroupOther, "The short one: just each account's last 24 hours, the daily summary - the first part of 'stats'. 'report week' is the weekly report: the last seven days next to the seven before (hours banked, cards, cards listed, inventory value, comments).", "", "weekly"),
-		new("notify", "[test]", GroupOther, "Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now."),
+		new("notify", "[test|link]", GroupOther, "Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now. 'notify link' gives the link that connects your Telegram, only in the nocat.farm window or its console (or the dashboard on this PC): whoever opens it first is connected as the owner."),
 		new("plugins", "", GroupOther, "Which plugins are loaded, and where they came from."),
 		new("tutorial", "[topic]", GroupOther, "Getting started, in order, ticking off what you have already done.", "guide|setup"),
 		new("help", "[command|setting]", GroupOther, "This list, or what one command or setting does. Only know how it starts? 'help rot' lists every command and setting starting with \"rot\".", "?|h"),
@@ -133,7 +134,7 @@ public static partial class Commands {
 		new("clear", "", GroupOther, "Clears the log off the screen you type it in: the nocat.farm window, or the dashboard's Log and Console. The other one keeps its lines, and nothing is deleted: the log file has every line (Settings, Logging, Open the log folder).", "cls"),
 		new("visitors", "[signout]", GroupOther, "Who has been at the dashboard: sign-ins, wrong passwords, lockouts, and visitors from the internet turned away. It shows when, from where and on what. 'visitors signout' signs every browser and phone out; you sign in again with the password.", "who"),
 		new("version", "", GroupOther, "Which version this is.", "about"),
-		new("update", "[accept|now|skip]", GroupOther, "Check for a newer release. 'update accept' downloads it and restarts into it. Or, with Updates set to install when I click, once everyone's asleep, it installs once your accounts are asleep. 'update now' always installs right away. 'update skip' skips that version until a newer one comes out: no more reminders about it, and it never installs by itself. Nothing installs by itself unless Updates is set to install by itself at night."),
+		new("update", "[accept|now|skip] | file [zip] [force] | versions | to <version>", GroupOther, "Check for a newer release. 'update accept' downloads it and restarts into it. Or, with Updates set to install when I click, once everyone's asleep, it installs once your accounts are asleep. 'update now' always installs right away. 'update skip' skips that version until a newer one comes out: no more reminders about it, and it never installs by itself. Nothing installs by itself unless Updates is set to install by itself at night. 'update file <zip>' installs a nocat.farm zip that's on this PC, the same way (add 'force' for the same or an older version); with no zip named, a window opens to pick it. Only in the nocat.farm window or its console, or the dashboard on this PC. 'update versions' lists the older versions still on GitHub, and 'update to <version>' goes back to one. Your settings are saved first and come back when you update again, and the version you came from doesn't install by itself until a newer one is out."),
 		new("answer", "<text>", GroupOther, "Answer whatever nocat.farm is waiting on, like a Steam Guard code or a password."),
 		new("exit", "", GroupOther, "Shut nocat.farm down.", "quit|q"),
 
@@ -166,15 +167,19 @@ public static partial class Commands {
 	/// Commands that take an account name are rewritten to name the account the message was sent to, so you can
 	/// message an idler "pause" and have it pause itself rather than having to remember what you called it.
 	/// </summary>
-	public static async Task<string> RunAsync(string input, string botName) {
+	/// <param name="later">Where a slow command's answer goes once it's done - back to the chat it came from, which can't read the log.</param>
+	public static async Task<string> RunAsync(string input, string botName, Action<string>? later = null) {
 		BotManager? mgr = Host;
 
 		if (mgr == null) {
 			return "nocat.farm isn't ready yet";
 		}
 
+		// The guards below read the words as the dispatcher does - split at any white space, so 'set<tab>WebPassword' is 'set'
+		// to them too. The line itself goes on as typed: put back together with one space between its words, a game name
+		// sent as 'gamename new a<nbsp>b' was stored as "a b".
 		string line = input.Trim();
-		string verb = line.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.ToLowerInvariant() ?? "";
+		string verb = Words(line).FirstOrDefault()?.ToLowerInvariant() ?? "";
 
 		// Never let a remote command shut the whole thing down - it is one mis-sent word from taking every
 		// account offline, and there is no way to start it again from Steam. Deleting an account is the same kind
@@ -182,6 +187,12 @@ public static partial class Commands {
 		// REACHES, not the word itself - 'delete' is 'remove' under another name, and it used to get straight through.
 		if (Resolve(verb)?.Name is "exit" or "remove") {
 			return "that one has to be done at the PC";
+		}
+
+		// Installing a zip from this PC is for this PC alone - not Telegram or Discord, as the refusal below would say.
+		if ((Resolve(verb)?.Name == "update") && Words(line) is [_, string file, ..]
+			&& file.Equals("file", StringComparison.OrdinalIgnoreCase)) {
+			return await UpdateFromFile("", atThisPc: false).ConfigureAwait(false);
 		}
 
 		// Someone allowed to command ONE account - an ASF Master of that bot comes across as one - could reach every other
@@ -200,44 +211,394 @@ public static partial class Commands {
 		// word is alone: 'value refresh' or 'pause 30' name no account either, and with none these mean every account.
 		line = ThisBotFilledIn(mgr, line, botName);
 
-		return await RunAsync(mgr, line).ConfigureAwait(false);
+		return await RunAsync(mgr, line, atThisPc: false, later).ConfigureAwait(false);
 	}
 
 	/// <summary>The command a typed word reaches - its name or any alias - or null when it reaches none.</summary>
-	/// <remarks>Slashes off first, as the dispatcher takes them off: "//exit" from a chat has to meet the same guard as "exit".</remarks>
-	public static CommandDef? Resolve(string typed) => All.FirstOrDefault(c => c.Matches(typed.TrimStart('/')));
+	/// <remarks>Slashes and '!' off first, as the dispatcher takes them off: "//exit" or "!exit" from a chat has to meet the same
+	/// guard as "exit".</remarks>
+	public static CommandDef? Resolve(string typed) => All.FirstOrDefault(c => c.Matches(Unprefixed(typed)));
 
 	/// <summary>
-	/// A command line as it may be written to the log: the value of a secret setting ('set new SteamPassword x')
-	/// and whatever is typed after 'answer' (a password, a Steam Guard code) are masked. Everything else is left
-	/// as typed, so what was done from a phone or a chat is still visible at the PC.
+	/// A command word without what may come before it: '/' - the Telegram habit - and '!', ArchiSteamFarm's. Typed in the
+	/// window, Telegram's console or Discord's /nocat, '!status' answered "there's no '!…' command" though Steam chat took it.
 	/// </summary>
-	public static string ForLog(string line) {
-		string[] parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+	internal static string Unprefixed(string word) => word.TrimStart('/', '!');
 
+	/// <summary>
+	/// A typed line as the log, the chats, the window and the dashboard may have it, and what was hidden from it - so a reply
+	/// that says it back is masked the same. An allowlist, not a guess at what looks secret: six rounds of guessing kept
+	/// finding a password that looked like a typo, a code alone, a key with a comma on it, and a group or game name hidden
+	/// that was nothing of the sort.
+	///
+	/// A command it knows is shown as typed, with only the slots that take a secret masked (<see cref="ArgumentsMasked"/>).
+	/// A word that is no command is never shown at all: "(not a command)", and the command it's nearest to - unless it is one
+	/// typo off a command's name or a plugin's (3 or more letters, and the name's own digits - <see cref="MayBeTypoOf"/>), when
+	/// it's the word and "***" for the rest.
+	/// </summary>
+	/// <param name="Word">The command word as it may be shown - "(not a command)" for one that isn't.</param>
+	/// <param name="Hidden">What was hidden, and what it is shown as instead - for the reply.</param>
+	/// <param name="Kept">Whether the line may be kept for the up arrow.</param>
+	/// <param name="NotKeys">Words never masked as a product key, in the line or its reply: a Steam login (<see cref="NotKeys"/>).</param>
+	private readonly record struct Masking(string Shown, string Word, (string Text, string As)[] Hidden, bool Kept, IReadOnlySet<string>? NotKeys = null);
+
+	private static Masking Masked(string line) {
+		line = line.Trim();
+		string[] parts = Words(line);
+
+		if (parts.Length == 0) {
+			return new(line, "", [], true);
+		}
+
+		// The command word as typed: a Telegram bot's name is taken off on the way in from Telegram (Notifier.TelegramLine), not
+		// here - 's@cretbot' cut at the '@' was 's', which is 'status', and the password went in the log whole.
+		string verb = Unprefixed(parts[0]).ToLowerInvariant();
+
+		if ((verb.Length > 0) && ((Resolve(verb) != null) || Plugins.PluginHost.Commands.ContainsKey(verb))) {
+			string command = Resolve(verb)?.Name ?? verb;
+			(string args, (string, string)[] hidden) = ArgumentsMasked(command, line, parts);
+			HashSet<string> notKeys = NotKeys(command, line, parts);
+			string shown = KeysMasked(Log.Scrub(args), notKeys);
+
+			return new(shown, Words(shown).FirstOrDefault() ?? "", hidden, shown == line, notKeys);
+		}
+
+		// One typo off a command: shown and kept for the up arrow, 'pasue alt' typed again fixed - but nothing after it shown, and
+		// not kept when a command it may have meant would hide what follows ('anwser hunter2', 'sett WebPassword x', 'redem KEY'):
+		// any 2 typos off it, or starting with it - 'ans hunter2' is one off 'bans', and 'answer' cut short.
+		if (OneTypoOff(parts[0]).Count > 0) {
+			string rest = parts.Length > 1 ? " " + Tail(line, 1) : "";
+
+			return new(parts[0] + (rest.Length > 0 ? " ***" : ""), parts[0], [], (rest.Length == 0) || MayHaveMeant(parts[0]).All(n => Masked(n + rest).Kept));
+		}
+
+		// Anything else - a password or a Steam Guard code pasted at the prompt, a product key, a token - in no shape at all.
+		string said = Close(parts[0]) is { } close ? $"(not a command, nearest '{close}')" : "(not a command)";
+
+		return new(said, said, [], false);
+	}
+
+	/// <summary>
+	/// A known command's arguments, with the slots that take a secret masked - and what each masked one was. Every other
+	/// command is as typed: its arguments are accounts, appIDs, numbers, names, paths.
+	/// </summary>
+	private static (string Line, (string Text, string As)[] Hidden) ArgumentsMasked(string command, string line, string[] parts) {
+		switch (command) {
+			// A password, a Steam Guard code, a Family View PIN - whatever is being asked.
+			case "answer" when parts.Length > 1:
+				return ($"{parts[0]} ***", [(Tail(line, 1), "***")]);
+
+			// 'add <name> <login> [human|robot|qr]' takes no password - one typed on the end anyway stays out.
+			case "add":
+				return Slots(line, parts, (w, i) => (i < 3) || (w.ToLowerInvariant() is "human" or "robot" or "qr") ? null : "***");
+
+			// 'redeem [account] <key|file> [key...]': a key in any shape it takes. A path is where the keys are, not one; anything
+			// else - a key half typed ('AAAA-BBBB-CCCC'), a password pasted in the wrong place - is masked as well.
+			case "redeem": {
+				int keep = (parts.Length > 1) && (Host?.Get(parts[1]) != null) ? 2 : 1;
+
+				return Slots(line, parts, (w, i) => i < keep ? null : Redeeming.LooksLikeKey(w) ? "[key]" : LooksLikePath(w) ? null : "***");
+			}
+
+			case "set":
+				return SetMasked(line, parts);
+
+			default:
+				return (line, []);
+		}
+	}
+
+	/// <summary>
+	/// A line with some of its words masked: as typed when none is, put back together with one space between them when one is.
+	/// <paramref name="masked"/> says what a word is shown as instead, or null to keep it.
+	/// </summary>
+	private static (string Line, (string Text, string As)[] Hidden) Slots(string line, string[] parts, Func<string, int, string?> masked) {
+		string?[] instead = [.. parts.Select((w, i) => masked(w, i))];
+
+		return instead.All(static m => m == null)
+			? (line, [])
+			: (string.Join(' ', parts.Select((w, i) => instead[i] ?? w)), [.. parts.Select((w, i) => (w, instead[i])).Where(static x => x.Item2 != null).Select(static x => (x.w, x.Item2!))]);
+	}
+
+	/// <summary>
+	/// 'set <key> <value>' or 'set <account> <key> <value>': the key shown, the value only for a setting it knows that isn't a
+	/// secret. A proxy's address is shown without the user name and password typed into it. A key it doesn't know - a misspelt
+	/// secret as likely as anything - keeps the first word and nothing after it.
+	/// </summary>
+	private static (string Line, (string Text, string As)[] Hidden) SetMasked(string line, string[] parts) {
 		if (parts.Length < 2) {
-			return line;
+			return (line, []);
 		}
 
-		// Telegram addresses a command to a bot as /set@yourbot - the part after @ isn't the command.
-		string verb = parts[0].TrimStart('/').Split('@')[0].ToLowerInvariant();
+		int words = Math.Min(3, parts.Length);
 
-		if (Resolve(verb)?.Name == "answer") {
-			return $"{parts[0]} ***";
-		}
+		// What a value is hidden as, with its quotes and without: 'set' takes them off ('set WebProxy "user:pass@host"'), so
+		// what it says back has none - and with them on, the reply's address went past the mask whole.
+		static (string, string)[] Both(string value, string shown) => Unquote(value) is var bare && (bare != value) && (bare.Length > 0)
+			? [(value, shown), (bare, shown)]
+			: [(value, shown)];
 
-		if ((Resolve(verb)?.Name != "set") || (parts.Length < 3)) {
-			return line;
-		}
+		for (int i = 1; i < words; i++) {
+			(string key, bool joined) = KeyOf(parts[i]);
+			SettingDef? def = Settings.Find(key);
+			string shownKey = string.Join(' ', [.. parts[..i], key]);
 
-		// 'set <key> <value>' or 'set <account> <key> <value>' - whichever word names a secret, what follows it goes.
-		for (int i = 1; i < Math.Min(3, parts.Length - 1); i++) {
-			if (Settings.Find(parts[i]) is { Kind: SettingKind.Secret }) {
-				return string.Join(' ', parts[..(i + 1)]) + " ***";
+			if (def is { Kind: SettingKind.Secret }) {
+				string value = SetValue(line, parts, i);
+
+				return (shownKey + (joined || (parts.Length > i + 1) ? " ***" : ""), value.Length > 0 ? Both(value, "***") : []);
+			}
+
+			// A proxy's address with a user name and password typed into it ('user:pass@host:port'): scheme://host:port, or "***"
+			// when it won't read as an address - in quotes or not, as 'set' takes it. Without an '@' there's no password in it,
+			// and it's as typed.
+			if (Settings.IsProxy(def) && SetValue(line, parts, i) is { } proxy && proxy.Contains('@', StringComparison.Ordinal)) {
+				string address = Settings.ProxyShown(Unquote(proxy));
+
+				return ($"{shownKey} {address}", Both(proxy, address));
 			}
 		}
 
-		return line;
+		// An ordinary setting is left as typed.
+		for (int i = 1; i < words; i++) {
+			if (Settings.Find(KeyOf(parts[i]).Key) != null) {
+				return (line, []);
+			}
+		}
+
+		// A word that is no setting - a password pasted after 'set' as likely as a name misspelt - shows nothing of itself or
+		// what follows it: 'set hunter2' went in the log as typed, and was kept for the up arrow. An account before it is shown.
+		int at = (Host?.Get(parts[1]) != null) || parts[1].Equals("all", StringComparison.OrdinalIgnoreCase) ? 2 : 1;
+
+		if (at >= parts.Length) {
+			return (line, []);
+		}
+
+		(string Text, string As)[] hidden = [(Tail(line, at), "***"), (KeyOf(parts[at]).Key, "***"), .. Both(SetValue(line, parts, at), "***")];
+
+		return ($"{string.Join(' ', parts[..at])} (not a setting)", [.. hidden.Where(static h => h.Text.Length > 0).Distinct()]);
+	}
+
+	/// <summary>
+	/// The value of 'set' after the key at word <paramref name="key"/>: stuck on it by '=' or ':' ('WebPassword=x'), and whatever
+	/// comes after it as typed - two spaces in a password kept. Empty when there's none.
+	/// </summary>
+	private static string SetValue(string line, string[] parts, int key) {
+		int cut = parts[key].IndexOfAny(['=', ':']);
+
+		return cut >= 0 ? Tail(line, key)[(cut + 1)..].Trim() : parts.Length > key + 1 ? Tail(line, key + 1) : "";
+	}
+
+	/// <summary>
+	/// The words of a known command never masked as a product key: a Steam login - the login of 'add', the value of 'set ...
+	/// SteamLogin' - is any run of letters and digits its owner chose. 'Login2024user99' went in the log as "[key]", and the
+	/// line was dropped from the up arrow.
+	/// </summary>
+	private static HashSet<string> NotKeys(string command, string line, string[] parts) {
+		HashSet<string> login = new(StringComparer.OrdinalIgnoreCase);
+
+		if ((command == "add") && (parts.Length > 2)) {
+			login.Add(parts[2]);
+		}
+
+		for (int i = 1; (command == "set") && (i < Math.Min(3, parts.Length)); i++) {
+			if (Settings.Find(KeyOf(parts[i]).Key)?.Name == nameof(BotConfig.SteamLogin)) {
+				login.UnionWith(Words(Unquote(SetValue(line, parts, i))));
+
+				break;
+			}
+		}
+
+		return login;
+	}
+
+	/// <summary>
+	/// A word as the setting it may name: quotes off, and cut at '=' or ':' - 'WebPassword=x' and '"WebPassword"' went
+	/// straight past a lookup of the word as typed. Joined: a value came with it.
+	/// </summary>
+	private static (string Key, bool Joined) KeyOf(string word) {
+		int cut = word.IndexOfAny(['=', ':']);
+		string key = (cut < 0 ? word : word[..cut]).Trim('"', '\'', '`', '“', '”', '‘', '’');
+
+		return (key, cut >= 0);
+	}
+
+	/// <summary>
+	/// A line's words as every command reads them: split at any white space. Split at spaces alone, a tab or a no-break
+	/// space after 'answer' made one unknown word of the answer too - and "there's no such command" said the answer back.
+	/// For the command word and the account and setting slots; free text after them is <see cref="Tail"/>.
+	/// </summary>
+	internal static string[] Words(string line) => line.Split((char[]?) null, StringSplitOptions.RemoveEmptyEntries);
+
+	/// <summary>
+	/// What was typed after a line's first <paramref name="skip"/> words, as it was typed: the gap after them taken off, and
+	/// everything from there on kept - a no-break space in a game name, two spaces in a password. Put back together from
+	/// <see cref="Words"/>, 'gamename new a<nbsp>b' stored "a b".
+	/// </summary>
+	internal static string Tail(string line, int skip) {
+		int i = 0;
+
+		for (int word = 0; word < skip; word++) {
+			while ((i < line.Length) && char.IsWhiteSpace(line[i])) {
+				i++;
+			}
+
+			while ((i < line.Length) && !char.IsWhiteSpace(line[i])) {
+				i++;
+			}
+		}
+
+		while ((i < line.Length) && char.IsWhiteSpace(line[i])) {
+			i++;
+		}
+
+		return line[i..].TrimEnd();
+	}
+
+	/// <summary>
+	/// The words after a line's first <paramref name="skip"/>, split at spaces alone - as a plugin's command and the path of
+	/// 'update file' always had them, a no-break space staying inside its word.
+	/// </summary>
+	internal static string[] Loose(string line, int skip) => Tail(line, skip).Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+	/// <summary>
+	/// A command word without the name of the Telegram bot it was sent to: '/status@mybot', picked from the menu in a group.
+	/// Only a bot's name - Telegram's end in "bot" - is taken off, <paramref name="bot"/>'s when it's known: cut at any '@',
+	/// the password 's@cret12' was 's', which is 'status', and went in the log whole. On the Telegram path only
+	/// (Notifier.TelegramLine): taken off anywhere, 's@cretbot' was 's' as well.
+	/// </summary>
+	/// <param name="bot">The connected bot's name, with or without its '@' - empty when it isn't known yet.</param>
+	internal static string WithoutBotName(string word, string bot = "") {
+		int at = word.IndexOf('@', StringComparison.Ordinal);
+
+		if (at <= 0) {
+			return word;
+		}
+
+		string name = word[(at + 1)..];
+		string own = bot.TrimStart('@');
+
+		return BotName().IsMatch(name) && ((own.Length == 0) || name.Equals(own, StringComparison.OrdinalIgnoreCase)) ? word[..at] : word;
+	}
+
+	/// <summary>A Telegram bot's user name: 5 to 32 letters, digits and underscores, starting with a letter, ending in "bot".</summary>
+	[System.Text.RegularExpressions.GeneratedRegex(@"^[A-Za-z]\w{2,29}bot$", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
+	private static partial System.Text.RegularExpressions.Regex BotName();
+
+	/// <summary>
+	/// The commands a word that is no command is one typo off - the word with one '/' or '!' off the front, 3 or more letters
+	/// (and the digits of a name with digits, <see cref="MayBeTypoOf"/>), against every name a command has and every
+	/// plugin's. Empty for anything else: a word with a mark in it, or a digit no name has, is a password as likely as a typo.
+	/// </summary>
+	private static List<string> OneTypoOff(string word) {
+		if (word.StartsWith('/') || word.StartsWith('!')) {
+			word = word[1..];
+		}
+
+		if ((word.Length < 3) || !word.All(char.IsLetterOrDigit)) {
+			return [];
+		}
+
+		return Within(word.ToLowerInvariant(), static (typed, name) => MayBeTypoOf(typed, name) && (Typos(typed, name) <= 1));
+	}
+
+	/// <summary>
+	/// Whether a typed word can be a typo of a name at all: letters only - or, for a name with a digit in it ('2fa', 'rep4rep',
+	/// 'r4r'), letters and that name's own digits in its order. '2af' and 'rep4ep' are typos; '2fa9' and 'Status1' are a
+	/// password as likely as not.
+	/// </summary>
+	private static bool MayBeTypoOf(string typed, string name) =>
+		typed.All(char.IsLetter)
+		|| (typed.All(char.IsLetterOrDigit) && name.Any(char.IsAsciiDigit) && typed.Where(char.IsDigit).SequenceEqual(name.Where(char.IsAsciiDigit)));
+
+	/// <summary>The commands a word one typo off a command may have been meant for: 2 typos off it at most, or starting with it.</summary>
+	private static List<string> MayHaveMeant(string word) =>
+		Within(Unprefixed(word).ToLowerInvariant(), static (typed, name) => (Typos(typed, name) <= 2) || name.StartsWith(typed, StringComparison.Ordinal));
+
+	/// <summary>The commands with a name - its own, a short one, a hidden one or a plugin's - that <paramref name="near"/> says a typed word is near.</summary>
+	private static List<string> Within(string typed, Func<string, string, bool> near) =>
+		[.. Names().Where(n => near(typed, n.Name.ToLowerInvariant())).Select(static n => n.Command).Distinct(StringComparer.OrdinalIgnoreCase)];
+
+	/// <summary>
+	/// Every name a command can be typed by - its own, its short ones, its hidden ones - with the command it reaches, and every
+	/// plugin's command: 'nigthjob' was no command at all, never one typo off a plugin's 'nightjob'.
+	/// </summary>
+	private static IEnumerable<(string Name, string Command, bool Hidden)> Names() =>
+		All.SelectMany(static c => $"{c.Name}|{c.Aliases}".Split('|', StringSplitOptions.RemoveEmptyEntries).Select(n => (n, c.Name, false))
+			.Concat(c.HiddenAliases.Split('|', StringSplitOptions.RemoveEmptyEntries).Select(n => (n, c.Name, true))))
+			.Concat(Plugins.PluginHost.Commands.Keys.Select(static verb => (verb, verb, false)));
+
+	/// <summary>
+	/// The command a word that is no command is nearest to, 1 or 2 typos off, for "did you mean" - the word with the marks
+	/// around it off ('.status', '"status"'), 3 or more letters (and a name's own digits, <see cref="MayBeTypoOf"/>), against
+	/// every command's names and every plugin's. A word of 3 or 4 only 1 off, and never a name shorter than 3: two off 's' or
+	/// 'h' is any short word ('the'). The name it is nearest is the one given, unless that's a hidden one. Null when nothing
+	/// is that near.
+	/// </summary>
+	private static string? Close(string word) {
+		string bare = Bare(word).ToLowerInvariant();
+
+		if ((bare.Length < 3) || !bare.All(char.IsLetterOrDigit)) {
+			return null;
+		}
+
+		(string? name, int typos) best = (null, bare.Length < 5 ? 2 : 3);
+
+		foreach ((string n, string command, bool hidden) in Names().Where(n => (n.Name.Length >= 3) && MayBeTypoOf(bare, n.Name.ToLowerInvariant()))) {
+			if (Typos(bare, n.ToLowerInvariant()) is int t && (t < best.typos)) {
+				best = (hidden ? command : n, t);
+			}
+		}
+
+		return best.name;
+	}
+
+	/// <summary>A word with the marks around it taken off - '.status' and '"status"' are "status".</summary>
+	private static string Bare(string word) {
+		int start = 0, end = word.Length;
+
+		while ((start < end) && !char.IsLetterOrDigit(word[start])) {
+			start++;
+		}
+
+		while ((end > start) && !char.IsLetterOrDigit(word[end - 1])) {
+			end--;
+		}
+
+		return word[start..end];
+	}
+
+	/// <summary>
+	/// Whether a line is kept from the up arrow (the window's, the console's, the dashboard's): whenever <see cref="LineForLog"/>
+	/// hides anything in it - a secret slot of a command it knows, or a word that is no command. Not a mistyped one that is
+	/// one typo off a command, 'pasue new': typing it again with the up arrow is the point - unless the command it's off would
+	/// hide what follows it.
+	/// </summary>
+	public static bool HoldsSecret(string line) => !Masked(line).Kept;
+
+	/// <summary>How many letters apart two words are: one changed, added, dropped, or two swapped round, each counts one.</summary>
+	private static int Typos(string a, string b) {
+		int[,] d = new int[a.Length + 1, b.Length + 1];
+
+		for (int i = 0; i <= a.Length; i++) {
+			d[i, 0] = i;
+		}
+
+		for (int j = 0; j <= b.Length; j++) {
+			d[0, j] = j;
+		}
+
+		for (int i = 1; i <= a.Length; i++) {
+			for (int j = 1; j <= b.Length; j++) {
+				d[i, j] = Math.Min(Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1), d[i - 1, j - 1] + (a[i - 1] == b[j - 1] ? 0 : 1));
+
+				if ((i > 1) && (j > 1) && (a[i - 1] == b[j - 2]) && (a[i - 2] == b[j - 1])) {
+					d[i, j] = Math.Min(d[i, j], d[i - 2, j - 2] + 1);
+				}
+			}
+		}
+
+		return d[a.Length, b.Length];
 	}
 
 	/// <summary>
@@ -248,7 +609,7 @@ public static partial class Commands {
 		command is "status" or "pause" or "resume" or "start" or "stop" or "cards" or "config" or "human" or "habits" or "2fa"
 			// With no account these go over every account - claiming event items on all of them, every account's trades,
 			// wallet, inventory and bans - which from one account's chat reached past it.
-			or "hunt" or "selfcheck" or "confirmations" or "offers" or "booster" or "freeitems" or "queue" or "value" or "level"
+			or "hunt" or "selfcheck" or "confirmations" or "offers" or "booster" or "freegames" or "freeitems" or "queue" or "value" or "level"
 			or "balance" or "points" or "bans";
 
 	/// <summary>
@@ -256,13 +617,14 @@ public static partial class Commands {
 	/// without one, means every account - unless an account is already named there.
 	/// </summary>
 	public static string ThisBotFilledIn(BotManager mgr, string line, string botName) {
-		string[] words = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+		string[] words = Words(line);
 
 		if ((words.Length == 0) || !DefaultsToThisBot(Resolve(words[0])?.Name ?? "") || ((words.Length > 1) && (mgr.Get(words[1]) != null))) {
 			return line;
 		}
 
-		return string.Join(' ', [words[0], botName, .. words[1..]]);
+		// The rest as it was typed, not put back together a word at a time.
+		return $"{words[0]} {botName}" + (words.Length > 1 ? " " + Tail(line, 1) : "");
 	}
 
 	/// <summary>
@@ -271,7 +633,7 @@ public static partial class Commands {
 	/// account that happens to be called "leave" is that account, as it is at the PC.
 	/// </summary>
 	public static bool SteamChatRefusesAnswer(BotManager mgr, string line) {
-		string[] words = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+		string[] words = Words(line);
 
 		return (words.Length > 1) && (Resolve(words[0])?.Name == "dlc") && (words[1].ToLowerInvariant() is "leave" or "undo")
 			&& (mgr.Get(words[1]) == null);
@@ -301,7 +663,7 @@ public static partial class Commands {
 	/// the items are this account's; 'send kylro to new' is not).
 	/// </summary>
 	internal static bool ReachesPast(BotManager mgr, string line, string botName) {
-		string[] words = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+		string[] words = Words(line);
 		int accountAt = Resolve(words.FirstOrDefault() ?? "")?.Name == "trade" ? 2 : 1;
 
 		if ((words.Length > accountAt) && words[accountAt].Equals("all", StringComparison.OrdinalIgnoreCase)) {
@@ -314,6 +676,163 @@ public static partial class Commands {
 		return words.Skip(1).Select((w, i) => (w, i: i + 1))
 			.Any(x => !(sendTo && (x.i == 3)) && (mgr.Get(x.w) is { } other) && !other.Name.Equals(botName, StringComparison.OrdinalIgnoreCase));
 	}
+
+	/// <summary>
+	/// Run a command typed at this PC: the nocat.farm window, its console, or the dashboard opened on this PC itself. Only
+	/// those three call it. Everything else - Steam chat, Telegram, Discord, a plugin, a dashboard on a phone or from the
+	/// internet - is not at this PC.
+	/// </summary>
+	/// <remarks>
+	/// Handed down to the command as it runs, never left lying about for whatever runs next. It used to flow with the command
+	/// (an AsyncLocal), and so into everything the command started: 'start' typed in the window started the account's loop
+	/// inside it, the loop ran its Steam chat, and a master's 'update file' there counted as typed at this PC.
+	/// </remarks>
+	/// <param name="from">Where it was typed, for the log file ("window", "console", "dashboard on this PC"); null writes nothing there.</param>
+	public static async Task<string> RunAtThisPcAsync(BotManager mgr, string input, string? from = null) {
+		string reply = await RunAsync(mgr, input, atThisPc: true).ConfigureAwait(false);
+
+		if (from != null) {
+			LogExchange(from, input, reply);
+		}
+
+		return reply;
+	}
+
+	/// <summary>Run a command from somewhere else - Telegram, Discord, a dashboard on a phone, a plugin - and write it and its reply to the log file.</summary>
+	public static async Task<string> RunLoggedAsync(BotManager mgr, string input, string from) {
+		string reply = await RunAsync(mgr, input).ConfigureAwait(false);
+		LogExchange(from, input, reply);
+
+		return reply;
+	}
+
+	/// <summary>The most reply lines the log file takes from one command - 'log 1000' or every account's status is plenty.</summary>
+	internal const int LoggedReplyLines = 200;
+
+	/// <summary>
+	/// A command and its whole reply into the log file, marked with where it came from - the window shows the reply and
+	/// forgets it, and a question about something done from a phone or a chat last night had nothing to go on. Secrets
+	/// never go in (see <see cref="ExchangeLines"/>).
+	/// </summary>
+	public static void LogExchange(string from, string line, string reply) {
+		try {
+			Log.FileLines("INFO", "command", ExchangeLines(from, line, reply));
+		} catch (Exception e) {
+			// the command has run; only its line in the file is lost
+			Log.Failed("writing a command to the log file", e);
+		}
+	}
+
+	/// <summary>
+	/// The lines a command and its reply take in the log file: "telegram> 2fa", then one line per reply line, past
+	/// <see cref="LoggedReplyLines"/> counted rather than written. Masked as <see cref="LineForLog"/> and
+	/// <see cref="ReplyForLog"/> say.
+	/// </summary>
+	internal static List<string> ExchangeLines(string from, string line, string reply) =>
+		[$"{from}> {LineForLog(line)}", .. ReplyForLog(line, reply).Select(l => $"{from}  {l}")];
+
+	/// <summary>
+	/// A typed line as the log file, the chats, the window and the dashboard may have it. A command it knows as typed, with
+	/// only what goes in a secret's place masked: the value of a secret setting, whatever is typed after 'answer', anything
+	/// extra after 'add', the keys after 'redeem', a password in a proxy's address - and the tokens and keys of
+	/// <see cref="FreeTextForLog"/>. A word that is no command shows nothing of what was typed: "(not a command)".
+	/// </summary>
+	public static string LineForLog(string line) => Masked(line).Shown;
+
+	/// <summary>
+	/// A Steam chat message as the log may have it. A command ('/' or '!' first) masked as <see cref="LineForLog"/> masks it -
+	/// written word for word, '/set new SteamPassword x', '/answer x' and '/redeem KEY' put the secret in the log before the
+	/// command was even looked at. Anything else is somebody talking, and stays readable (<see cref="FreeTextForLog"/>).
+	/// </summary>
+	/// <param name="fromOwn">Sent by one of your own accounts - see <see cref="FreeTextForLog"/>.</param>
+	public static string MessageForLog(string text, bool fromOwn = false) {
+		string trimmed = text.Trim();
+
+		return trimmed.StartsWith('/') || trimmed.StartsWith('!') ? LineForLog(trimmed) : FreeTextForLog(trimmed, fromOwn);
+	}
+
+	/// <summary>
+	/// Text nobody typed as a command - a chat message, a reply - with only what is surely a secret masked: a product key with
+	/// a digit in it, a password in a proxy's address after its scheme, the tokens <see cref="Log.Scrub"/> knows, and a Steam
+	/// Guard code with letters and digits both in it. A dashed word, a game's name in capitals, a price or a time is as said.
+	/// One of your own accounts answering '/2fa' sends its codes: from one (<paramref name="fromOwn"/>), or on a line in the
+	/// shape '2fa' answers with ("BCDFG   (25s left)"), a code of letters alone or digits alone is masked too.
+	/// </summary>
+	public static string FreeTextForLog(string text, bool fromOwn = false) {
+		string masked = KeysMasked(Log.Scrub(text));
+		masked = (fromOwn ? GuardCode() : GuardCodeWithTimeLeft()).Replace(masked, "*****");
+
+		return MixedGuardCode().Replace(masked, "*****");
+	}
+
+	/// <summary>
+	/// The command word of a line as the log file may have it. The first word split at spaces was 'answer<tab>hunter2' -
+	/// the answer and all.
+	/// </summary>
+	public static string CommandForLog(string line) => Masked(line).Word;
+
+	/// <summary>
+	/// A command's reply as the log file may have it: one entry per line, masked, and past <see cref="LoggedReplyLines"/>
+	/// "… N more lines". For Telegram and Discord too, which show their replies in the log as well. What the line's masking
+	/// hid is hidden here too, wherever the reply says it back: 'set WebProxy' answers with the address, 'redeem' with the key.
+	/// </summary>
+	public static List<string> ReplyForLog(string line, string reply) {
+		string verb = VerbOf(line);
+		Masking masking = Masked(line);
+		string[] said = [.. reply.ReplaceLineEndings("\n").Split('\n').Where(static l => l.Trim().Length > 0)];
+		List<string> lines = [.. said.Take(LoggedReplyLines).Select(l => MaskedReply(verb, l, masking.Hidden, masking.NotKeys))];
+
+		if (said.Length > LoggedReplyLines) {
+			lines.Add($"… {said.Length - LoggedReplyLines} more lines");
+		}
+
+		return lines;
+	}
+
+	/// <summary>The command a line reaches, by its own name: "2fa" for "/guard new".</summary>
+	private static string VerbOf(string line) => Resolve(Unprefixed(Words(line).FirstOrDefault() ?? ""))?.Name ?? "";
+
+	/// <param name="hidden">What the line it answers had hidden, and what as - shown the same wherever the reply says it.</param>
+	/// <param name="notKeys">What the line it answers says is no key: the login 'add' was given, said back.</param>
+	private static string MaskedReply(string verb, string text, (string Text, string As)[]? hidden = null, IReadOnlySet<string>? notKeys = null) {
+		string masked = text;
+
+		// Before the scrubber, which would have changed a proxy's address so it's no longer found. Longest first, so a password's
+		// words don't break up the password before it's found whole. Short ones are left: a two-letter word in a reply is any word.
+		foreach ((string secret, string shown) in (hidden ?? []).SelectMany(static h => Words(h.Text).Select(w => (w, h.As)).Prepend(h))
+			.Where(static h => h.Item1.Length >= 3).OrderByDescending(static h => h.Item1.Length)) {
+			masked = System.Text.RegularExpressions.Regex.Replace(masked, $@"(?<![\p{{L}}\p{{Nd}}]){System.Text.RegularExpressions.Regex.Escape(secret)}(?![\p{{L}}\p{{Nd}}])",
+				shown.Replace("$", "$$", StringComparison.Ordinal), System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+		}
+
+		masked = KeysMasked(Log.Scrub(masked), notKeys);
+
+		// 'redeem' answers with the key on a line of its own, or first, or quoted - in whatever shape it was given, and a key
+		// queued and activated later comes back with no line to say what it was. Not every long word in it: the game's name.
+		if (verb == "redeem") {
+			masked = RedeemedKey().Replace(masked, static m => Redeeming.LooksLikeKey(m.Groups["key"].Value) ? m.Value.Replace(m.Groups["key"].Value, "[key]", StringComparison.Ordinal) : m.Value);
+		}
+
+		// '2fa' answers with the codes themselves - good for 30 seconds, but a code in a file is a code someone can read.
+		return verb == "2fa" ? GuardCode().Replace(masked, "*****") : masked;
+	}
+
+	/// <summary>A word first on a line, or in quotes: where 'redeem' puts the key it was given.</summary>
+	[System.Text.RegularExpressions.GeneratedRegex(@"^\s*(?<key>[^\s']+)|'(?<key>[^\s']+)'", System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
+	private static partial System.Text.RegularExpressions.Regex RedeemedKey();
+
+	/// <summary>A Steam Guard code: five of Steam's own 26 letters and digits.</summary>
+	[System.Text.RegularExpressions.GeneratedRegex(@"\b[23456789BCDFGHJKMNPQRTVWXY]{5}\b", System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
+	private static partial System.Text.RegularExpressions.Regex GuardCode();
+
+	/// <summary>A Steam Guard code as '2fa' says it, with the seconds it has left after it: "BCDFG   (25s left)".</summary>
+	[System.Text.RegularExpressions.GeneratedRegex(@"\b[23456789BCDFGHJKMNPQRTVWXY]{5}\b(?=\s+\(\d+s left\))", System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
+	private static partial System.Text.RegularExpressions.Regex GuardCodeWithTimeLeft();
+
+	/// <summary>A Steam Guard code with a letter and a digit both in it - 'B2C4D', never a price (23456) or a word (BHGKM).</summary>
+	[System.Text.RegularExpressions.GeneratedRegex(@"\b(?=[2-9BCDFGHJKMNPQRTVWXY]{0,4}[2-9])(?=[2-9BCDFGHJKMNPQRTVWXY]{0,4}[BCDFGHJKMNPQRTVWXY])[23456789BCDFGHJKMNPQRTVWXY]{5}\b",
+		System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
+	private static partial System.Text.RegularExpressions.Regex MixedGuardCode();
 
 	/// <summary>Set by the host so 'exit' works from the dashboard too, not just from the console.</summary>
 	public static Action? ExitHandler { get; set; }
@@ -378,19 +897,37 @@ public static partial class Commands {
 	/// <summary>Set by the tray icon so minimise-to-tray applies the moment it's changed.</summary>
 	public static Action<bool>? TrayHook { get; set; }
 
-	public static async Task<string> RunAsync(BotManager mgr, string input) {
+	/// <summary>Run a command from anywhere but this PC - see <see cref="RunAtThisPcAsync"/> for the one that is.</summary>
+	public static Task<string> RunAsync(BotManager mgr, string input) => RunAsync(mgr, input, atThisPc: false);
+
+	/// <param name="atThisPc">Typed at this PC (<see cref="RunAtThisPcAsync"/>): 'update file' and 'notify link' work only then.</param>
+	/// <param name="later">Where a slow command's answer goes once it's done, besides the log (see <see cref="LateReply"/>).</param>
+	private static async Task<string> RunAsync(BotManager mgr, string input, bool atThisPc, Action<string>? later = null) {
 		string line = input.Trim();
+
+		// Set by every command, the chat null for all but Steam chat - never left over from an earlier one: an account a Steam-chat
+		// 'start' set going carries it along, and a command run from inside it later would have answered to that chat. With what
+		// the line hid: a slow 'redeem' answering late put "'ABCDE-FGHIJ-KLMN' doesn't look like a Steam key" in the log whole.
+		LateReply.Value = (later, Masked(line).Hidden);
 
 		if (line.Length == 0) {
 			return "";
 		}
 
-		string[] parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+		// At any white space, exactly as the log masks the line (LineForLog): split at spaces alone, 'answer<tab>hunter2' was one
+		// unknown word here and the answer went out in the reply.
+		string[] parts = Words(line);
 
 		// With or without a slash, as 'help' and 'clear' already were: "/pause kylro" - the Telegram habit - typed in the
-		// window or the dashboard's Console answered "there's no '/pause' command".
-		string cmd = parts[0].TrimStart('/').ToLowerInvariant();
+		// window or the dashboard's Console answered "there's no '/pause' command". And '!', as ArchiSteamFarm has it.
+		// Free text - a game name, a setting's value, a path - is taken from the line as typed (Tail), not from these words.
+		string cmd = Unprefixed(parts[0]).ToLowerInvariant();
 		string[] rest = parts[1..];
+
+		// A '!' or '/' with nothing on it - alone, or '! status' with a space after it - answered "There's no '' command".
+		if (cmd.Length == 0) {
+			return $"Type a command after the '{parts[0][^1]}' - 'help' lists them.";
+		}
 
 		try {
 			return cmd switch {
@@ -415,7 +952,7 @@ public static partial class Commands {
 				"human" => Human(mgr, rest),
 				"habits" => Habits(mgr, rest),
 				"wake" or "wakeup" or "skipsleep" => Wake(mgr, rest),
-				"redeem" => await RedeemAsync(mgr, rest).ConfigureAwait(false),
+				"redeem" => await RedeemAsync(mgr, rest, line).ConfigureAwait(false),
 				"send" or "loot" => await SendAsync(mgr, rest).ConfigureAwait(false),
 				"2fa" or "guard" => TwoFactor(mgr, rest),
 				"confirmations" => await ConfirmationsAsync(mgr, rest).ConfigureAwait(false),
@@ -427,29 +964,30 @@ public static partial class Commands {
 				"value" or "inv" or "inventory" => InventoryText(mgr, rest),
 				"keys" => KeysText(rest),
 				"match" => await MatchAsync(mgr, rest).ConfigureAwait(false),
-				"gamename" or "name" => Name(mgr, rest),
-				"persona" => Persona(mgr, rest),
-				"nickname" => await NicknameAsync(mgr, rest).ConfigureAwait(false),
+				"gamename" or "name" => Name(mgr, rest, line),
+				"persona" => Persona(mgr, rest, line),
+				"nickname" => await NicknameAsync(mgr, rest, line).ConfigureAwait(false),
 				"level" => await LevelAsync(mgr, rest).ConfigureAwait(false),
 				"balance" or "wallet" => Balance(mgr, rest),
 				"points" => await PointsAsync(mgr, rest).ConfigureAwait(false),
 				"booster" or "boosters" => await BoosterAsync(mgr, rest).ConfigureAwait(false),
+				"freegames" => await FreeGamesAsync(mgr, rest).ConfigureAwait(false),
 				"freeitems" => await FreeItemsAsync(mgr, rest).ConfigureAwait(false),
 				"queue" => await QueueAsync(mgr, rest).ConfigureAwait(false),
 				"sell" => await SellAsync(mgr, rest).ConfigureAwait(false),
 				"fairswap" => await FairSwapCheckAsync(mgr, rest).ConfigureAwait(false),
 				"privacy" => await PrivacyAsync(mgr, rest).ConfigureAwait(false),
-				"joingroup" => await JoinGroupAsync(mgr, rest).ConfigureAwait(false),
-				"notify" => await NotifyAsync(rest).ConfigureAwait(false),
+				"joingroup" => await JoinGroupAsync(mgr, rest, line).ConfigureAwait(false),
+				"notify" => await NotifyAsync(rest, atThisPc).ConfigureAwait(false),
 				"cards" => Cards(mgr, rest),
 				"rep4rep" or "r4r" => await Rep4RepAsync(mgr, rest).ConfigureAwait(false),
 				"add" => await AddAsync(mgr, rest).ConfigureAwait(false),
 				"remove" or "delete" => await RemoveAsync(mgr, rest).ConfigureAwait(false),
 				"enable" => Enable(mgr, rest, true),
 				"disable" => Enable(mgr, rest, false),
-				"set" => Set(mgr, rest),
+				"set" => Set(mgr, rest, line),
 				"config" => ShowConfig(mgr, rest),
-				"import" => await ImportAsync(mgr, rest).ConfigureAwait(false),
+				"import" => await ImportAsync(mgr, rest, line).ConfigureAwait(false),
 				"reload" => await ReloadAsync(mgr).ConfigureAwait(false),
 				"log" or "logs" => Logs(rest),
 				"stats" => StatsText(rest),
@@ -457,7 +995,7 @@ public static partial class Commands {
 				"weekly" => WeeklyReport.Text(mgr),
 				"stuck" or "alarm" => StuckWatch.Text(mgr),
 				"backup" => BackupNow(),
-				"answer" => Prompt.Answer(string.Join(' ', rest)) ? "answered" : "nothing is waiting for an answer",
+				"answer" => Prompt.Answer(Tail(line, 1)) ? "answered" : "nothing is waiting for an answer",
 				"theme" or "dark" or "light" => Theme(cmd, rest),
 				"screen" or "monitor" or "display" => await ScreenAsync(rest).ConfigureAwait(false),
 				"dashboard" or "web" or "link" => (rest.Length > 0) && rest[0].Equals("unlock", StringComparison.OrdinalIgnoreCase)
@@ -474,13 +1012,18 @@ public static partial class Commands {
 				"plugins" => PluginList(),
 				"owns" => Owns(mgr, rest),
 				"addlicense" => await AddLicense(mgr, rest).ConfigureAwait(false),
-				"update" => await Update(rest).ConfigureAwait(false),
+				// 'update file <path>': the path just as it was typed, not split into words and joined again - from the line's
+				// words, a no-break space in a folder's name was a gap, and joined with one space, two in a row ("a  b") were one
+				// and there was "no file at" a path that was there.
+				"update" => (rest.Length > 0) && rest[0].Equals("file", StringComparison.OrdinalIgnoreCase)
+					? await UpdateFromFile(Tail(line, 2), atThisPc).ConfigureAwait(false)
+					: await Update(rest).ConfigureAwait(false),
 				"exit" or "quit" or "q" => Exit(),
 				// A plugin's own command, tried only after every built-in has been ruled out - so a plugin can
 				// never take a verb the app already answers to, whatever it registered.
 				_ => Plugins.PluginHost.Commands.TryGetValue(cmd, out (string Usage, string Help, Func<string[], Task<string>> Run) added)
-					? await added.Run(rest).ConfigureAwait(false)
-					: Suggest(cmd)
+					? await added.Run(Loose(line, 1)).ConfigureAwait(false)   // split at spaces, as a plugin's words always were
+					: Suggest(parts[0])
 			};
 		} catch (Exception e) {
 			// A command that throws is a bug, not an answer - the reply scrolls away, so the file keeps the stack.
@@ -491,14 +1034,14 @@ public static partial class Commands {
 		}
 	}
 
-	private static string Suggest(string cmd) {
-		CommandDef? near = All.FirstOrDefault(c => c.Name.StartsWith(cmd, StringComparison.OrdinalIgnoreCase))
-			?? All.FirstOrDefault(c => c.Name.Contains(cmd, StringComparison.OrdinalIgnoreCase));
-
-		return near == null
-			? $"There's no '{cmd}' command. Type 'help' for the list, or 'tutorial' if you're just starting."
-			: $"There's no '{cmd}' command. Did you mean '{near.Name}'? Type 'help' for the list.";
-	}
+	/// <summary>
+	/// The answer to a word that is no command. Never the word: it goes on screen, to the chats and into the log, and what
+	/// isn't a command is as often a password, a Steam Guard code or a key pasted in the wrong place - every attempt to show
+	/// "only the safe part" of it found another shape it leaked in. A command 1 or 2 typos off it is named.
+	/// </summary>
+	private static string Suggest(string typed) => Close(typed) is { } near
+		? new Said("That's not a command - did you mean '{0}'?", near).ToString()
+		: new Said("That's not a command - 'help' lists them.").ToString();
 
 	/// <summary>
 	/// Check for a newer release, and on "now", install it.
@@ -614,8 +1157,8 @@ public static partial class Commands {
 		return new Said("screens off in a moment - move the mouse to turn them back on").ToString();
 	}
 
-	/// <summary>'clear' or 'cls', with or without a slash - handled by whichever screen it was typed in.</summary>
-	public static bool IsClear(string line) => line.Trim().TrimStart('/').ToLowerInvariant() is "clear" or "cls";
+	/// <summary>'clear' or 'cls', with or without a slash or '!' - handled by whichever screen it was typed in.</summary>
+	public static bool IsClear(string line) => Unprefixed(line.Trim()).ToLowerInvariant() is "clear" or "cls";
 
 	/// <summary>'visitors': who has been at the dashboard; 'visitors signout' signs every browser and phone out.</summary>
 	private static string VisitorsCommand(string[] args) {
@@ -638,6 +1181,14 @@ public static partial class Commands {
 
 	private static async Task<string> Update(string[] args) {
 		string what = args.Length > 0 ? args[0].ToLowerInvariant() : "";
+
+		if (what == "versions") {
+			return await UpdateVersions().ConfigureAwait(false);
+		}
+
+		if (what == "to") {
+			return await UpdateTo(args[1..]).ConfigureAwait(false);
+		}
 
 		bool accept = what is "accept" or "now" or "install";
 
@@ -715,6 +1266,316 @@ public static partial class Commands {
 		});
 
 		return $"downloading {UpdateCheck.Available} in the background - the log shows how far along it is, and it restarts into it by itself when it's done.";
+	}
+
+	/// <summary>
+	/// 'update file [zip] [force]': install a nocat.farm zip that's on this PC - a build to try out before it's released -
+	/// picked in a window when no zip is named (see <see cref="PickAndInstall"/>),
+	/// the way an update goes in, safety copy and putting back included.
+	/// </summary>
+	/// <remarks>
+	/// Only at this PC. It replaces the program with whatever is in the file, so from anywhere else it would be a way to run
+	/// any program on this PC: from Steam chat, Telegram, Discord, a plugin, or a dashboard opened on a phone or from the
+	/// internet, it is refused. A version that isn't newer needs 'force', so an old zip lying around isn't put in by mistake.
+	/// </remarks>
+	/// <param name="atThisPc">Typed at this PC - handed down from <see cref="RunAtThisPcAsync"/>, and false from everywhere else.</param>
+	/// <param name="rest">Everything typed after 'update file', as it was typed.</param>
+	private static async Task<string> UpdateFromFile(string rest, bool atThisPc) {
+		// Docker and a service first: there it's "update by hand" wherever it was typed - "only at this PC" sent somebody to
+		// the PC for something that can't happen there either.
+		if (!SelfUpdate.Supported) {
+			return SelfUpdate.ByHand(null).ToString();
+		}
+
+		if (!atThisPc) {
+			return "update file only works at this PC - in the nocat.farm window or its console, or the dashboard opened on this PC. Not from Steam chat, Telegram, Discord or another device.";
+		}
+
+		(string path, bool force) = FileAndForce(rest);
+
+		return path.Length == 0 ? PickAndInstall(force) : await InstallFromFile(path, force).ConfigureAwait(false);
+	}
+
+	/// <summary>
+	/// What follows 'update file': the path, and whether it ends in the word 'force' (any case, after a space or a tab). Only
+	/// that one word comes off the end, and the quotes round the path - the rest is left exactly as typed: two spaces in a
+	/// row, a tab inside a quoted path.
+	/// </summary>
+	internal static (string Path, bool Force) FileAndForce(string rest) {
+		const string Force = "force";
+		string path = rest.Trim();
+		bool force = path.EndsWith(Force, StringComparison.OrdinalIgnoreCase)
+			&& ((path.Length == Force.Length) || char.IsWhiteSpace(path[^(Force.Length + 1)]));
+
+		if (force) {
+			path = path[..^Force.Length].Trim();
+		}
+
+		return (DraggedPath(path.Trim('"', '\'').Trim(), OperatingSystem.IsWindows()), force);
+	}
+
+	/// <summary>
+	/// A file dragged into a Mac's Terminal is pasted with a backslash before every space and bracket -
+	/// .../nocat.farm-v1.7.4_osx-arm64\ \(1\).zip - and there was "no file at" it. Off Windows, a path that isn't there is taken
+	/// without them. On Windows a backslash is a folder, and stays.
+	/// </summary>
+	internal static string DraggedPath(string path, bool windows) =>
+		windows || !path.Contains('\\') || File.Exists(path) ? path : Escaped().Replace(path, "$1");
+
+	/// <summary>A backslash and the character it stands before.</summary>
+	[System.Text.RegularExpressions.GeneratedRegex(@"\\(.)", System.Text.RegularExpressions.RegexOptions.Singleline | System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
+	private static partial System.Text.RegularExpressions.Regex Escaped();
+
+	/// <summary>
+	/// The "pick a file" window for 'update file' typed with no path: on Windows, the nocat.farm window's own, opened on
+	/// this PC's desktop. Null where there's no desktop to open one on - Linux, a Mac, Docker, --no-gui, a service.
+	/// </summary>
+	private static Func<Task<string?>>? Picker() =>
+		FilePicker ?? (OperatingSystem.IsWindows() && (Window is { CanPick: true } window) ? window.PickZipAsync : null);
+
+	/// <summary>Stands in for the "pick a file" window in the checks, Cancel and all. Null: the real one, where there is one.</summary>
+	internal static Func<Task<string?>>? FilePicker { get; set; }
+
+	/// <summary>Whether 'update file' with no path can open a window to pick the zip here - for the dashboard's button.</summary>
+	public static bool CanPickFile => SelfUpdate.Supported && (Picker() != null);
+
+	/// <summary>The window to pick a file, while it's open - one at a time. The checks wait on it.</summary>
+	internal static Task? Picking { get; private set; }
+
+	private static int _picking;
+
+	/// <summary>
+	/// 'update file' with no path: a window to pick the zip opens on this PC, and whatever is picked goes through exactly
+	/// what a typed path does. The answer can't wait for it - typed in the dashboard, the page would sit there until the
+	/// window closed - so what happens next goes in the log.
+	/// </summary>
+	private static string PickAndInstall(bool force) {
+		if (!SelfUpdate.Supported) {
+			return SelfUpdate.ByHand(null).ToString();
+		}
+
+		if (Picker() is not { } pick) {
+			return "There's no window to pick a file with here. Type where the zip is:  update file <path to the zip>";
+		}
+
+		if (SelfUpdate.Busy) {
+			return "an update is already going - give it a minute";
+		}
+
+		if (Interlocked.CompareExchange(ref _picking, 1, 0) != 0) {
+			return "The window to pick the file is already open on this PC.";
+		}
+
+		Picking = Task.Run(async () => {
+			try {
+				string? chosen;
+
+				try {
+					chosen = await pick().ConfigureAwait(false);
+				} catch (Exception e) {
+					Log.Failed("update file: the window to pick a file", e);
+					Log.Warn(new Said("the window to pick a file didn't open ({0}) - type where the zip is: update file <path>", Log.Scrub(e.Message)));
+
+					return;
+				}
+
+				if (string.IsNullOrEmpty(chosen)) {
+					Log.Info(new Said("nothing chosen - nothing changed"));
+
+					return;
+				}
+
+				Log.Info(await InstallFromFile(chosen, force).ConfigureAwait(false));
+			} catch (Exception e) {
+				// Nobody awaits this task: a throw left in it reached the lost-task handler, said without what it was.
+				Log.Error(new Said("update failed: {0} - nothing was changed", Log.Cause(e)));
+				Log.Failed("update file", e);
+			} finally {
+				Volatile.Write(ref _picking, 0);
+			}
+		});
+
+		return "A window to pick the file opened on this PC. Pick the nocat.farm zip there, or Cancel to change nothing.";
+	}
+
+	/// <summary>A zip on this PC, typed or picked: checked, then installed the way an update is.</summary>
+	private static async Task<string> InstallFromFile(string path, bool force) {
+		if (!SelfUpdate.Supported) {
+			return SelfUpdate.ByHand(null).ToString();
+		}
+
+		if (SelfUpdate.Busy) {
+			return "an update is already going - give it a minute";
+		}
+
+		// ~ is the home folder, as a shell has it: 'update file ~/Downloads/x.zip' looked for a folder called "~" in here.
+		if ((path == "~") || path.StartsWith("~/", StringComparison.Ordinal) || (OperatingSystem.IsWindows() && path.StartsWith("~\\", StringComparison.Ordinal))) {
+			path = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), path[1..].TrimStart('/', '\\'));
+		}
+
+		try {
+			path = Path.GetFullPath(path);
+		} catch (Exception e) when (e is ArgumentException or NotSupportedException or PathTooLongException) {
+			return $"'{path}' isn't a path to a file";
+		}
+
+		(string? version, Said problem) = SelfUpdate.LookInZip(path);
+
+		if (version == null) {
+			return problem.ToString();
+		}
+
+		// Before 'force' is offered: forced in, it signed every account out, never said it started, and was put back.
+		if (SelfUpdate.TooOld(version) is { } tooOld) {
+			return tooOld.ToString();
+		}
+
+		string file = Path.GetFileName(path);
+
+		if (!force && !UpdateCheck.IsNewerThanThisBuild(version)) {
+			return $"{file} has nocat.farm {version}, and you have {Build.Version} - {(version == Build.Version ? "the same version" : "an older one")}. To install it anyway:  update file {path} force";
+		}
+
+		// A file goes in skipped or not (the install doesn't look), and a skip of the release with its number is left as it is:
+		// the file is a build of its own, a test build often. Cleared here, a test build that crashed and was put back - or an
+		// install that stopped before the swap - lost the skip, and "install at night" put that release in after all.
+		bool back = UpdateCheck.IsOlderThanThisBuild(version);
+
+		// Which version to hold off depends on the newest release, and 'update to' has always asked for it by then - a zip
+		// may well be the first thing typed after starting. Not knowing it, this version was held off even with a newer one
+		// out, and a skip typed for that one was lost. Asked here, before the install reads it too; a list from the last ten
+		// minutes does, and with GitHub out of reach it holds off this version as before.
+		if (back && (UpdateCheck.Latest == null)) {
+			_ = await UpdateCheck.ReleasesAsync(fresh: false).ConfigureAwait(false);
+		}
+
+		string? hold = back ? Rollback.HoldOff(version)?.TrimStart('v') : null;
+
+		_ = Task.Run(async () => {
+			try {
+				if (await SelfUpdate.ApplyAsync(CancellationToken.None, fromFile: path).ConfigureAwait(false) is { Length: > 0 } refused) {
+					Log.Warn(refused);
+				}
+			} catch (Exception e) {
+				Log.Error(new Said("update failed: {0} - nothing was changed", Log.Scrub(e.Message)));
+				Log.Failed("update file", e);
+			}
+		});
+
+		return $"installing nocat.farm {version} from {file} - the log shows how it goes, and it restarts into it by itself. If it doesn't start, {Build.Version} is put back."
+			+ (back ? " " + GoingBackSaid(version, hold) : "");
+	}
+
+	/// <summary>What going back to an older version keeps, and what it holds off - the same words wherever it's asked for.</summary>
+	/// <param name="hold">Null when nothing is held off: the newest release is newer than this one, and that's what the older
+	/// version offers (or leaves alone, if it was skipped).</param>
+	private static string GoingBackSaid(string version, string? hold) =>
+		$"Your settings are saved first, and the ones {version} doesn't know come back when you update again."
+			+ (hold != null ? $" {hold} won't install by itself until a newer one is out; 'update accept' brings it back." : "");
+
+	/// <summary>'update versions': the older versions still on GitHub, that 'update to' can go back to.</summary>
+	private static async Task<string> UpdateVersions() {
+		(List<string>? all, Said? problem) = await UpdateCheck.ReleasesAsync(fresh: true).ConfigureAwait(false);
+
+		if (all == null) {
+			return new Said("couldn't reach GitHub to check ({0}) - try again in a minute", problem).ToString();
+		}
+
+		List<string> older = [.. all.Where(static v => UpdateCheck.IsOlderThanThisBuild(v))];
+
+		if (older.Count == 0) {
+			return $"You have {Build.Version}. There's no older version on GitHub to go back to - only the last 5 releases are kept there.";
+		}
+
+		return $"You have {Build.Version}. You can go back to: {string.Join(", ", older)}"
+			+ Environment.NewLine + $"  To go back:  update to {older[0]}"
+			+ Environment.NewLine + "  Your settings are saved first, and come back when you update again.";
+	}
+
+	/// <summary>
+	/// 'update to &lt;version&gt;': that release from GitHub, installed through the normal update path - an older one too, which
+	/// is what it's for, without 'force'. The same rights as 'update accept': the PC, the dashboard signed in, Telegram,
+	/// Discord - never Steam chat.
+	/// </summary>
+	private static async Task<string> UpdateTo(string[] args) {
+		string version = args.Length > 0 ? args[0].Trim().TrimStart('v', 'V') : "";
+
+		if (!UpdateCheck.IsVersion(version)) {
+			return "update to <version> - like update to 1.7.1. 'update versions' lists the ones you can go back to.";
+		}
+
+		if (UpdateCheck.Compare(version, Build.Version) == 0) {
+			return $"You're on {Build.Version} already.";
+		}
+
+		// Docker and a service update by hand, whichever version it is - told how to put in THAT one, not the newest. Going
+		// back, the settings are saved first all the same: the older version drops the ones it doesn't know whoever put it in,
+		// and they come back once this one or a newer one starts again.
+		if (!SelfUpdate.Supported) {
+			if (!UpdateCheck.IsOlderThanThisBuild(version)) {
+				return SelfUpdate.ByHandTo(version).ToString();
+			}
+
+			try {
+				Rollback.Snapshot(version);
+			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+				Log.Failed("update to: saving the settings before going back", e);
+
+				return new Said("update stopped - couldn't save your settings first ({0}); nothing changed", Log.Scrub(e.Message)).ToString();
+			}
+
+			return SelfUpdate.ByHandTo(version).ToString() + " " + $"Your settings are saved first, and the ones {version} doesn't know come back when you update again.";
+		}
+
+		// Too old to say it started: no point asking GitHub for it.
+		if (SelfUpdate.TooOld(version) is { } tooOld) {
+			return tooOld.ToString();
+		}
+
+		if (SelfUpdate.Busy) {
+			return "an update is already going - give it a minute";
+		}
+
+		(List<string>? all, Said? problem) = await UpdateCheck.ReleasesAsync(fresh: true).ConfigureAwait(false);
+
+		if (all == null) {
+			return new Said("couldn't reach GitHub to check ({0}) - try again in a minute", problem).ToString();
+		}
+
+		// There, but with no zip for this computer - yet: the Mac zips go up a while after the rest.
+		if (!all.Contains(version) && UpdateCheck.Tagged.Contains(version)) {
+			return $"{version} has no download for this computer (yet) - try again later.";
+		}
+
+		if (!all.Contains(version)) {
+			List<string> older = [.. all.Where(static v => UpdateCheck.IsOlderThanThisBuild(v))];
+
+			return $"{version} isn't on GitHub any more - only the last 5 releases are kept there."
+				+ (older.Count > 0 ? $" You can go back to: {string.Join(", ", older)}." : " There's no older version there to go back to.");
+		}
+
+		// Choosing a version by hand is choosing it, skipped or not - as 'update accept' does.
+		if (UpdateCheck.IsSkipped(version)) {
+			UpdateCheck.Skipped = null;
+		}
+
+		bool back = UpdateCheck.IsOlderThanThisBuild(version);
+		string? hold = back ? Rollback.HoldOff(version)?.TrimStart('v') : null;
+
+		_ = Task.Run(async () => {
+			try {
+				if (await SelfUpdate.ApplyAsync(CancellationToken.None, toVersion: version).ConfigureAwait(false) is { Length: > 0 } refused) {
+					Log.Warn(refused);
+				}
+			} catch (Exception e) {
+				Log.Error(new Said("update failed: {0} - nothing was changed", Log.Scrub(e.Message)));
+				Log.Failed("update to", e);
+			}
+		});
+
+		return back
+			? $"Going back to {version}: downloading it now - the log shows how it goes, and it restarts into it by itself. " + GoingBackSaid(version, hold)
+			: $"downloading {version} in the background - the log shows how far along it is, and it restarts into it by itself when it's done.";
 	}
 
 	/// <summary>
@@ -825,16 +1686,41 @@ public static partial class Commands {
 			return "No ID in that. A subID is a number - 12345 - and a free app is a/12345. Several can be separated by commas.";
 		}
 
-		StringBuilder sb = new();
+		async Task<string> Add(Bot bot) {
+			// Every ID this batch will ask for on this account, taken before the first is asked for and given back once it's
+			// through: an ID another addlicense is already adding here is left to it. Two batches with an ID in common asked
+			// Steam for it twice, a second or so apart.
+			HashSet<(bool App, uint Id)> mine = [];
 
-		foreach (Bot bot in targets) {
-			if (!bot.IsOnline) {
-				sb.AppendLine($"{bot.Name}: not online");
-
-				continue;
+			lock (Licensing) {
+				foreach ((bool App, uint Id) w in wanted) {
+					if (Licensing.Add((bot.Name.ToLowerInvariant(), w.App, w.Id))) {
+						mine.Add(w);
+					}
+				}
 			}
 
+			try {
+				return await AddMine(bot, mine).ConfigureAwait(false);
+			} finally {
+				lock (Licensing) {
+					foreach ((bool App, uint Id) w in mine) {
+						Licensing.Remove((bot.Name.ToLowerInvariant(), w.App, w.Id));
+					}
+				}
+			}
+		}
+
+		async Task<string> AddMine(Bot bot, HashSet<(bool App, uint Id)> mine) {
+			StringBuilder sb = new();
+
 			foreach ((bool app, uint id) in wanted) {
+				if (!mine.Contains((app, id))) {
+					sb.AppendLine($"{bot.Name}: {(app ? "a/" : "")}{id} - already being added by another addlicense");
+
+					continue;
+				}
+
 				if (app) {
 					sb.AppendLine($"{bot.Name}: a/{id} - {await AddFreeAppAsync(bot, id).ConfigureAwait(false)}");
 
@@ -850,10 +1736,21 @@ public static partial class Commands {
 				FreeGames.ClaimResult result = await FreeGames.AddPackageAsync(bot, id, CancellationToken.None).ConfigureAwait(false);
 				sb.AppendLine($"{bot.Name}: {id} - {(result.Added ? "added" : $"refused - {result.Reason}")}");
 			}
+
+			return sb.ToString().TrimEnd();
 		}
 
-		return sb.ToString().TrimEnd();
+		// Several IDs on every account, one request after another: past the reply's wait, the rest goes to the log.
+		// Other IDs are another job; the same ones, however they were typed, aren't added twice at once.
+		Slow job = new("addlicense", "adding the licences",
+			Key: "addlicense " + string.Join(',', wanted.Select(static w => (w.App ? "a/" : "") + w.Id.ToString(CultureInfo.InvariantCulture)).Order(StringComparer.Ordinal)));
+
+		return await SlowAsync(job, targets, Add, ReplyWithin, oneAtATime: true,
+			cannot: static b => b.IsOnline ? null : $"{b.Name}: not online").ConfigureAwait(false);
 	}
+
+	/// <summary>The licences an addlicense is asking for right now, by account - see AddLicense.</summary>
+	private static readonly HashSet<(string Account, bool App, uint Id)> Licensing = [];
 
 	private static string PluginList() {
 		if (!Live.Global.PluginsEnabled) {
@@ -880,7 +1777,9 @@ public static partial class Commands {
 			sb.AppendLine("commands they added:");
 
 			foreach ((string verb, (string usage, string help, _)) in added.OrderBy(static c => c.Key, StringComparer.Ordinal)) {
-				sb.AppendLine($"  {(verb + " " + usage).TrimEnd(),-30} {help}");
+				foreach (string line in UsageLines((verb + " " + usage).TrimEnd(), 32, help)) {
+					sb.AppendLine(line);
+				}
 			}
 		}
 
@@ -989,8 +1888,11 @@ public static partial class Commands {
 
 			foreach (CommandDef c in commands.Take(Most)) {
 				string left = (c.Display + " " + c.Args).TrimEnd();
-				string what = c.Help.Length > 70 ? c.Help[..67] + "..." : c.Help;
-				sb.AppendLine(left.Length > 34 ? $"  {left}\n  {new string(' ', 34)}{what}" : $"  {left,-34}{what}");
+				string what = Columns.ClipChars(c.Help, 70, "...");
+
+				foreach (string line in UsageLines(left, 34, what)) {
+					sb.AppendLine(line);
+				}
 			}
 
 			if (commands.Count > Most) {
@@ -1006,7 +1908,9 @@ public static partial class Commands {
 			sb.AppendLine($"Settings starting with '{start}':");
 
 			foreach (SettingDef d in settings.Take(Most)) {
-				sb.AppendLine($"  {d.Name,-34}{d.Label}");
+				foreach (string line in UsageLines(d.Name, 34, d.Label)) {
+					sb.AppendLine(line);
+				}
 			}
 
 			if (settings.Count > Most) {
@@ -1018,6 +1922,17 @@ public static partial class Commands {
 
 		return sb.ToString();
 	}
+
+	/// <summary>
+	/// A usage and what it does, the usage padded to <paramref name="column"/> - or, when it doesn't fit with two spaces to
+	/// spare, on a line of its own with the description under it, indented to the column. Only a usage LONGER than the
+	/// column used to wrap: one exactly as wide ran straight into its description - "joingroup &lt;account|all&gt; &lt;group
+	/// link or name&gt;Join a Steam group..." - and one a column short was left a single space.
+	/// </summary>
+	public static string[] UsageLines(string usage, int column, string what) =>
+		Columns.Width(usage) + 2 > column
+			? [$"  {usage}", $"  {new string(' ', column)}{what}"]
+			: [$"  {Columns.PadRight(usage, column)}{what}"];
 
 	private static string Help(string[] args) {
 		if (args.Length > 0) {
@@ -1058,16 +1973,11 @@ public static partial class Commands {
 			help.AppendLine(group.ToUpperInvariant());
 
 			foreach (CommandDef c in All.Where(c => c.Group == group)) {
-				string left = (c.Display + " " + c.Args).TrimEnd();
-
 				// Wrap rather than widen. Padding to fit the longest entry would push every other line's help
 				// text 24 columns to the right to accommodate three commands, which reads far worse than the
 				// three long ones taking a second line.
-				if (left.Length > 44) {
-					help.AppendLine($"  {left}");
-					help.AppendLine($"  {new string(' ', 44)}{c.Help}");
-				} else {
-					help.AppendLine($"  {left,-44}{c.Help}");
+				foreach (string line in UsageLines((c.Display + " " + c.Args).TrimEnd(), 44, c.Help)) {
+					help.AppendLine(line);
 				}
 			}
 
@@ -1120,7 +2030,7 @@ public static partial class Commands {
 			string state = StateWord(b);
 			sb.AppendLine($"  {Log.Pad(b.Name, 12)} {Log.Pad(state, 12)} {Log.Pad(uptime, 7)} {Log.Pad(playing, 23)} {Log.Pad(cards, 6)} {comments}");
 
-			if (state.Length > 12) {
+			if (Columns.Width(state) > 12) {
 				sb.AppendLine($"    {bar} {Log.Pad("state", 12)} {state}");
 			}
 
@@ -1205,7 +2115,7 @@ public static partial class Commands {
 		return $"There's no account called '{name}'. You have: {known}";
 	}
 
-	private static async Task<string> LifecycleAsync(BotManager mgr, string[] args, string verb, bool graceful = false) {
+	private static async Task<string> LifecycleAsync(BotManager mgr, string[] args, string verb, bool graceful = false, bool untilStopped = false) {
 		if (args.Length == 0) {
 			return $"{verb} <account|all>";
 		}
@@ -1239,7 +2149,7 @@ public static partial class Commands {
 			pauseFor = TimeSpan.FromMinutes(Math.Min(minutes, 7 * 24 * 60));
 		}
 
-		List<Task> stops = [];
+		List<(Bot Bot, Task Task)> stops = [];
 		int disabled = 0;
 
 		foreach (Bot bot in targets.ToArray()) {
@@ -1255,7 +2165,7 @@ public static partial class Commands {
 
 					break;
 				case "stop":
-					stops.Add(bot.StopAsync(graceful));
+					stops.Add((bot, bot.StopAsync(graceful)));
 
 					break;
 				case "pause":
@@ -1272,8 +2182,22 @@ public static partial class Commands {
 			count++;
 		}
 
+		// A human-mode account finishes up for up to half a minute (LegitStopMaxSeconds) before it signs out. "signing out" is
+		// true from the start, so past the reply's wait it answers and the stop carries on - a restart waits for it.
 		if (stops.Count > 0) {
-			await Task.WhenAll(stops).ConfigureAwait(false);
+			if (untilStopped) {
+				await Task.WhenAll(stops.Select(static s => s.Task)).ConfigureAwait(false);
+			} else {
+				// Each one's failure said under its own name: past the reply's wait nothing else looks at it, and a stop left
+				// faulted turned up later as "a background task failed", in red.
+				Task stopped = Task.WhenAll(stops.Select(static s => s.Task.ContinueWith(t => {
+					if (t.Exception?.GetBaseException() is { } e) {
+						Fell("stop", e, [s.Bot], null, s.Bot.Name);
+					}
+				}, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default)));
+
+				await Task.WhenAny(stopped, Task.Delay(ReplyWithin)).ConfigureAwait(false);
+			}
 		}
 
 		// Echoing the verb back - "kylro: pause" - reads like the command bounced rather than ran. Say what
@@ -1313,10 +2237,14 @@ public static partial class Commands {
 
 		// Stopped the way 'stop' stops: a human-mode account finishes up and signs off a short beat later, as a person
 		// would, instead of vanishing mid-game. Robots (not human-owned) stop at once either way - Bot.StopAsync decides.
-		await LifecycleAsync(mgr, args, "stop", graceful: true).ConfigureAwait(false);
-		await Task.Delay(1500).ConfigureAwait(false);
+		// The stop has to be over before the start, and a human-mode account finishing up takes up to half a minute - so past
+		// the reply's wait it says so, and the log has the rest.
+		return await SlowAsync(new Slow("restart", "restarting", Key: "restart " + args[0].ToLowerInvariant()), async () => {
+			await LifecycleAsync(mgr, args, "stop", graceful: true, untilStopped: true).ConfigureAwait(false);
+			await Task.Delay(1500).ConfigureAwait(false);
 
-		return await LifecycleAsync(mgr, args, "start").ConfigureAwait(false);
+			return await LifecycleAsync(mgr, args, "start").ConfigureAwait(false);
+		}, ReplyWithin, mgr.Get(args[0]) is { } one ? [one] : [.. mgr.All]).ConfigureAwait(false);
 	}
 
 	private static async Task<string> AddAsync(BotManager mgr, string[] args) {
@@ -1558,7 +2486,7 @@ public static partial class Commands {
 				int total = Math.Max(1, byGame.Sum(static g => g.Minutes));
 
 				foreach ((uint game, int minutes) in byGame) {
-					sb.AppendLine($"                {GameNames.Of(game),-28} {Fmt.Hm(minutes),8}   {minutes * 100 / total,3}%");
+					sb.AppendLine($"                {Columns.PadRight(GameNames.Of(game), 28)} {Fmt.Hm(minutes),8}   {minutes * 100 / total,3}%");
 				}
 			}
 
@@ -1614,7 +2542,7 @@ public static partial class Commands {
 	/// use it - which is the case that actually comes up, because a key you got from a bundle only fits whichever
 	/// of your accounts doesn't already own the game.
 	/// </summary>
-	private static async Task<string> RedeemAsync(BotManager mgr, string[] args) {
+	private static async Task<string> RedeemAsync(BotManager mgr, string[] args, string line) {
 		if (args.Length == 0) {
 			return "redeem <key>, or redeem <account> <key> to send it to one account only.";
 		}
@@ -1635,10 +2563,10 @@ public static partial class Commands {
 		// A batch of keys arrives as a file far more often than as something anybody would type, and pasting two
 		// hundred of them into a command line is not a thing people do. Any line shape works - one per line, with
 		// or without a game name beside it - because the key is found by its shape rather than by position.
-		// The words are put back together first: the command line is split on spaces, so "C:\Users\John Smith\keys.txt"
-		// arrived as two words and each was turned away as a bad key.
+		// The path as typed, from the line itself: the command line is split into words, so "C:\Users\John Smith\keys.txt"
+		// arrived as two words and each was turned away as a bad key - and put back together, a no-break space was a space.
 		if ((keys.Length > 0) && LooksLikePath(keys[0]) && !keys.Any(Redeeming.LooksLikeKey)) {
-			string path = string.Join(' ', keys).Trim().Trim('"');
+			string path = Tail(line, only == null ? 1 : 2).Trim().Trim('"');
 
 			if (!File.Exists(path)) {
 				return $"There's no file at '{path}'.";
@@ -1687,13 +2615,21 @@ public static partial class Commands {
 				+ $"an account may try per hour. 'keys' shows what's left.{(queued < keys.Length ? $" ({keys.Length - queued} were already in the queue.)" : "")}";
 		}
 
-		StringBuilder sb = new();
+		async Task<string> Activate() {
+			StringBuilder sb = new();
 
-		foreach (string key in keys) {
-			sb.AppendLine(await Redeeming.RedeemAcrossAsync(targets, key).ConfigureAwait(false));
+			foreach (string key in keys) {
+				sb.AppendLine(await Redeeming.RedeemAcrossAsync(targets, key).ConfigureAwait(false));
+			}
+
+			return sb.ToString().TrimEnd();
 		}
 
-		return sb.ToString().TrimEnd();
+		// Each key tries the accounts in turn, a few seconds apart: five keys over a few accounts outlast the reply, and the
+		// rest goes to the log. The same keys typed twice aren't activated twice at once; other keys go ahead.
+		Slow job = new("redeem", "activating the keys", Key: "redeem " + string.Join(',', keys.Select(static k => k.ToUpperInvariant()).Order(StringComparer.Ordinal)));
+
+		return await SlowAsync(job, Activate, ReplyWithin, targets).ConfigureAwait(false);
 	}
 
 	/// <summary>
@@ -1710,6 +2646,15 @@ public static partial class Commands {
 			return "Card matching needs at least two accounts logged in - it swaps between your own.";
 		}
 
+		// Every account's offers and cards read, then each swap sent a few seconds apart: with a few accounts it outlasts the
+		// reply, and the rest goes to the log.
+		// Working the plan out only reads, so 'match do' isn't turned away while it does - only a second 'match do' is.
+		Slow job = new("match", send ? "sending the card swaps" : "working out card swaps", Key: send ? "match do" : "match");
+
+		return await SlowAsync(job, () => MatchNowAsync(mgr, bots, send), ReplyWithin, bots).ConfigureAwait(false);
+	}
+
+	private static async Task<string> MatchNowAsync(BotManager mgr, List<Bot> bots, bool send) {
 		Dictionary<Bot, List<Looting.Item>> inventories = [];
 		HashSet<ulong> busy = [];
 		HashSet<(Bot, Bot)> busyPairs = [];
@@ -1807,6 +2752,35 @@ public static partial class Commands {
 	[System.Text.RegularExpressions.GeneratedRegex(@"\b[A-Za-z0-9]{5}-[A-Za-z0-9]{5}-[A-Za-z0-9]{5}(?:-[A-Za-z0-9]{5}){0,2}\b")]
 	private static partial System.Text.RegularExpressions.Regex SteamKeyPattern();
 
+	/// <summary>
+	/// Text with every product key in it that is surely one masked: Steam's dashed groups of five (5-5-5 up to 5x5), or a run of
+	/// 15 to 25 letters and digits - each with a digit in it. A run with small letters in it needs digits in two places at
+	/// least: 'Ab3dE6gH9jKlMn0p' is a key, 'NightRaid2024Edition' a game. Never a word with no digit ('steam-cards-trade',
+	/// 'PLAYERUNKNOWNS-BATTLEGROUNDS', 'CONGRATULATIONS'), a run of digits alone (a SteamID, an offer), a setting's name, or an
+	/// account's name or login. On a 'redeem' line every key in any shape it takes goes anyway (<see cref="ArgumentsMasked"/>).
+	/// </summary>
+	/// <param name="notKeys">Words that are never a key wherever they are: a Steam login typed into the line (<see cref="NotKeys"/>).</param>
+	private static string KeysMasked(string text, IReadOnlySet<string>? notKeys = null) =>
+		DashedKey().Replace(KeyRun().Replace(text, m => RunIsKey(m.Value) && (notKeys?.Contains(m.Value) != true) ? "[key]" : m.Value),
+			m => m.Value.Any(char.IsAsciiDigit) && (notKeys?.Contains(m.Value) != true) ? "[key]" : m.Value);
+
+	private static bool RunIsKey(string run) =>
+		run.Any(char.IsAsciiLetter) && run.Any(char.IsAsciiDigit)
+		&& (!run.Any(char.IsLower) || (run.Where((c, i) => char.IsAsciiDigit(c) && ((i == 0) || !char.IsAsciiDigit(run[i - 1]))).Count() >= 2))
+		&& (Settings.Find(run) == null) && !AccountOrLogin(run);
+
+	/// <summary>An account's name, or the Steam login of any account.</summary>
+	private static bool AccountOrLogin(string word) =>
+		(Host is { } mgr) && ((mgr.Get(word) != null) || mgr.All.Any(b => b.Cfg.SteamLogin.Equals(word, StringComparison.OrdinalIgnoreCase)));
+
+	/// <summary>Steam's key shape: 3 to 5 groups of five letters and digits, a dash between.</summary>
+	[System.Text.RegularExpressions.GeneratedRegex(@"(?<![\p{L}\p{Nd}-])[A-Za-z0-9]{5}(?:-[A-Za-z0-9]{5}){2,4}(?![\p{L}\p{Nd}-])", System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
+	private static partial System.Text.RegularExpressions.Regex DashedKey();
+
+	/// <summary>A run of 15 to 25 letters and digits, a word of its own.</summary>
+	[System.Text.RegularExpressions.GeneratedRegex(@"(?<![\p{L}\p{Nd}-])[A-Za-z0-9]{15,25}(?![\p{L}\p{Nd}-])", System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
+	private static partial System.Text.RegularExpressions.Regex KeyRun();
+
 	/// <summary>What is still waiting to be activated.</summary>
 	private static string KeysText(string[] args) {
 		if (args.FirstOrDefault()?.Equals("clear", StringComparison.OrdinalIgnoreCase) == true) {
@@ -1891,15 +2865,13 @@ public static partial class Commands {
 			return "That's the same account both ways.";
 		}
 
-		List<string> lines = [];
+		// An inventory read, then the offers a few seconds apart - several accounts in a row outlast the reply, and the rest
+		// goes to the log.
+		// One send at a time an account, wherever it goes: two at once could put the same items in two offers.
+		Slow job = new("send", to != null ? $"sending its items to {to.Name}" : "sending its items");
 
-		foreach (Bot bot in bots) {
-			lines.Add(to != null
-				? await Looting.SendItemsAsync(bot, to.SteamId, null, types ?? "").ConfigureAwait(false)
-				: await Looting.SendToMasterAsync(bot, types).ConfigureAwait(false));
-		}
-
-		return string.Join(Environment.NewLine, lines);
+		return await SlowAsync(job, bots, b => to != null ? Looting.SendItemsAsync(b, to.SteamId, null, types ?? "") : Looting.SendToMasterAsync(b, types),
+			ReplyWithin, oneAtATime: true).ConfigureAwait(false);
 	}
 
 	/// <summary>
@@ -2097,7 +3069,7 @@ public static partial class Commands {
 			total += bot.Inventory.Total;
 
 			string moved = InventoryHistory.Since(bot.Name, TimeSpan.FromHours(24)) is { } d
-				? $"   {(d.Change >= 0 ? "+" : "")}{PriceBook.Symbol}{d.Change:0.00} ({(d.Percent >= 0 ? "+" : "")}{d.Percent:0.0}%) in 24h"
+				? $"   {PriceBook.Signed(d.Change)} ({PriceBook.SignedPercent(d.Percent)}) in 24h"
 				: "";
 
 			lines.Add($"{bot.Name}: {PriceBook.Symbol}{bot.Inventory.Total:N2}{moved}"
@@ -2106,8 +3078,8 @@ public static partial class Commands {
 
 			foreach (InventoryValue.GameValue game in bot.Inventory.ByGame.Take(6)) {
 				lines.Add(game.Blocked
-					? $"      {game.Game,-30} skipped - on this account's ignore list ({game.Items} item(s))"
-					: $"      {game.Game,-30} {PriceBook.Symbol}{game.Value,10:N2}   {game.Items} item(s)");
+					? $"      {Columns.PadRight(game.Game, 30)} skipped - on this account's ignore list ({game.Items} item(s))"
+					: $"      {Columns.PadRight(game.Game, 30)} {PriceBook.Symbol}{game.Value,10:N2}   {game.Items} item(s)");
 			}
 		}
 
@@ -2310,28 +3282,29 @@ public static partial class Commands {
 			return problem!;
 		}
 
-		List<string> lines = [];
+		List<Bot> watched = [.. bots.Where(static b => BotManager.ModuleOf<BanWatch>(b) != null)];
 
-		foreach (Bot bot in bots) {
-			if (BotManager.ModuleOf<BanWatch>(bot) is not { } watch) {
-				continue;
-			}
+		if (watched.Count == 0) {
+			return new Said("nothing to look up").ToString();
+		}
 
+		static async Task<string> Look(Bot bot) {
+			BanWatch watch = BotManager.ModuleOf<BanWatch>(bot)!;
 			BanWatch.Bans? now = bot.IsOnline && bot.Web.Ready ? await watch.CheckAsync().ConfigureAwait(false) : null;
 			BanWatch.Bans? shown = now ?? watch.Last;
 
 			if (shown == null) {
-				lines.Add(new Said("{0}: couldn't look - it needs to be logged in", bot.Name).ToString());
-
-				continue;
+				return new Said("{0}: couldn't look - it needs to be logged in", bot.Name).ToString();
 			}
 
 			string when = now != null ? "" : watch.CheckedAt is { } at ? " " + new Said("(as of {0})", Fmt.Clock(at)) : "";
 			string games = watch.BannedGames.Count > 0 ? " - " + new Said("banned in {0}", string.Join(", ", watch.BannedGames.Select(GameNames.Of))) : "";
-			lines.Add($"{bot.Name}: {BanWatch.Summary(shown)}{games}{when}");
+
+			return $"{bot.Name}: {BanWatch.Summary(shown)}{games}{when}";
 		}
 
-		return lines.Count > 0 ? string.Join(Environment.NewLine, lines) : new Said("nothing to look up").ToString();
+		// A second or so an account - but a fleet of them, or Steam slow to answer, and it outlasts the reply.
+		return await SlowAsync(new Slow("bans", "looking up its bans"), watched, Look, ReplyWithin, oneAtATime: true).ConfigureAwait(false);
 	}
 
 	private static async Task<string> TradeAsync(BotManager mgr, string[] args) {
@@ -2354,11 +3327,14 @@ public static partial class Commands {
 			return $"{bot.Name} has no trade module running.";
 		}
 
-		if (args[0].Equals("cancel", StringComparison.OrdinalIgnoreCase)) {
-			return await trading.CancelSentAsync(args[2]).ConfigureAwait(false);
-		}
+		// 'all' is each offer in turn, a second or three apart, and an accept that sends items out is confirmed too: a long
+		// list outlasts the reply, and the rest goes to the log.
+		string verb = args[0].ToLowerInvariant();
+		// By offer, not by account: 'trade decline 5' while 'trade accept 3' goes is another offer.
+		Slow job = new("trade", verb switch { "accept" => "accepting the offers", "decline" => "declining the offers", _ => "taking back the offers" },
+			Key: $"trade {verb} {args[2].TrimStart('#').ToLowerInvariant()}");
 
-		return await trading.AnswerAsync(args[0].Equals("accept", StringComparison.OrdinalIgnoreCase), args[2]).ConfigureAwait(false);
+		return await SlowAsync(job, [bot], _ => verb == "cancel" ? trading.CancelSentAsync(args[2]) : trading.AnswerAsync(verb == "accept", args[2]), ReplyWithin).ConfigureAwait(false);
 	}
 
 	private static async Task<string> OffersAsync(BotManager mgr, string[] args) {
@@ -3186,7 +4162,7 @@ public static partial class Commands {
 		static bool AtLeastAMinute(double h) => double.IsFinite(h) && (Math.Round(h * 60, 6) >= 1);
 	}
 
-	private static string Name(BotManager mgr, string[] args) {
+	private static string Name(BotManager mgr, string[] args, string line) {
 		if (args.Length == 0) {
 			return "gamename <account> [text|off]   (no text shows the current one, 'off' clears it)";
 		}
@@ -3205,7 +4181,8 @@ public static partial class Commands {
 				: $"{bot.Name}: shows \"{bot.Cfg.CustomGameName}\"{(bot.Cfg.LegitMode ? " (not while human mode is on)" : bot.Cfg.CustomGameNameEnabled ? "" : " (switched off under Settings)")} · 'gamename {bot.Name} off' clears it";
 		}
 
-		string text = string.Join(' ', args[1..]);
+		// As typed, from the line: put back together from its words, "a<nbsp>b" was stored as "a b".
+		string text = Tail(line, 2);
 		bool clearing = text.Equals("off", StringComparison.OrdinalIgnoreCase) || text.Equals("clear", StringComparison.OrdinalIgnoreCase);
 
 		lock (bot.CfgGate) {
@@ -3228,9 +4205,9 @@ public static partial class Commands {
 			: $"{bot.Name}: now showing \"{bot.Cfg.CustomGameName}\"";
 	}
 
-	private static string Persona(BotManager mgr, string[] args) {
-		if (args.Length < 2) {
-			return "persona <account> online|offline|busy|away|snooze|looking to trade|looking to play|invisible (or 0-7)";
+	private static string Persona(BotManager mgr, string[] args, string line) {
+		if (args.Length == 0) {
+			return "persona <account> [online|offline|busy|away|snooze|looking to trade|looking to play|invisible (or 0-7)]   (no state says the current one)";
 		}
 
 		Bot? bot = mgr.Get(args[0]);
@@ -3241,9 +4218,14 @@ public static partial class Commands {
 
 		SettingDef def = Settings.FindBot("OnlineStatus")!;
 
+		// Just the account: say what it shows, as 'gamename <account>' does for the name. This answered with the usage.
+		if (args.Length == 1) {
+			return PersonaNow(bot, def);
+		}
+
 		lock (bot.CfgGate) {
 			// Everything after the account: "looking to trade" is three words, and only the first used to reach here.
-			string? error = Settings.Apply(bot.Cfg, def, string.Join(' ', args[1..]));
+			string? error = Settings.Apply(bot.Cfg, def, Tail(line, 2));
 
 			if (error != null) {
 				return error;
@@ -3257,29 +4239,67 @@ public static partial class Commands {
 		return $"{bot.Name}: {Settings.ChoiceLabel(def, bot.Cfg.OnlineStatus)}";
 	}
 
+	/// <summary>
+	/// 'persona &lt;account&gt;': what its friends see now and what OnlineStatus is set to - the two differ while human mode has it
+	/// away on a break or invisible for the night, while your own Steam client is overriding it, and while it's signed out.
+	/// </summary>
+	internal static string PersonaNow(Bot bot, SettingDef def) {
+		string set = Settings.ChoiceLabel(def, bot.Cfg.OnlineStatus);
+		string shows = !bot.IsOnline ? $"signed out, so friends see it offline - set to {set}"
+			: bot.Cfg.IUseThisAccount ? $"left to your own Steam client (\"I sign into this one myself\" is on) - set to {set} for when that's off"
+			: bot.PersonaOverridden ? $"{bot.PersonaReallyWord} - your own Steam client is overriding the {bot.PersonaWord} it sets"
+			: bot.EffectivePersona != bot.Cfg.OnlineStatus ? $"{bot.PersonaWord} for now - set to {set}"
+			: set;
+		string human = bot.Cfg.LegitMode && !bot.Cfg.IUseThisAccount
+			? ". Human mode sets it through the day - away on breaks, invisible overnight - so this is its status while playing"
+			: "";
+
+		return $"{bot.Name}: {shows} - 'persona {bot.Name} <state>' changes it (online, offline, busy, away, snooze, looking to trade, looking to play, invisible){human}";
+	}
+
 	/// <summary>'notify': what's set up, and what gets sent - in words, not the code's names for them.</summary>
-	private static async Task<string> NotifyAsync(string[] args) {
+	/// <param name="atThisPc">'notify link' gives the Telegram connect link only then: whoever opens it first is connected as
+	/// the owner, so it isn't for a phone, a chat, or the log (it used to be written there for anyone with the file to use).</param>
+	private static async Task<string> NotifyAsync(string[] args, bool atThisPc) {
 		if ((args.Length > 0) && args[0].Equals("test", StringComparison.OrdinalIgnoreCase)) {
 			return string.Join(Environment.NewLine, await Notifier.TestAsync().ConfigureAwait(false));
 		}
 
 		GlobalConfig g = Live.Global;
+
+		if ((args.Length > 0) && args[0].Equals("link", StringComparison.OrdinalIgnoreCase)) {
+			if (!atThisPc) {
+				return "The Telegram connect link is only given at this PC: 'notify link' in the nocat.farm window or its console, or Connect Telegram in the dashboard's Settings, Notifications.";
+			}
+
+			return Notifier.TelegramConnectLink is { } link
+				? $"Open {link} and press Start. Whoever does that first is connected as the owner, so keep the link to yourself."
+				: g.TelegramBotToken.Length == 0 ? "There's no Telegram bot yet - put its token in Settings, Notifications first."
+				: g.TelegramChatId.Length > 0 ? "Telegram is already connected."
+				: "Telegram hasn't said who the bot is yet - try again in a minute.";
+		}
+
 		List<string> sent = [.. Enum.GetValues<Topic>().Where(Notifier.Wanted).Select(Notifier.Label)];
 
 		return $"Discord: {(g.DiscordWebhookUrl.Length > 0 ? "set up" : "not set up")}"
-			+ Environment.NewLine + $"Telegram: {(g.TelegramBotToken.Length == 0 ? "not set up" : g.TelegramChatId.Length == 0 ? "bot set - press Connect Telegram in Settings, Notifications to link it" : "connected")}"
+			+ Environment.NewLine + $"Telegram: {(g.TelegramBotToken.Length == 0 ? "not set up" : g.TelegramChatId.Length == 0 ? "bot set - press Connect Telegram in Settings, Notifications to link it, or type 'notify link' here at this PC" : "connected")}"
 			+ Environment.NewLine + Notifier.DiscordBotState()
 			+ Environment.NewLine + $"Sends: {(sent.Count > 0 ? string.Join(", ", sent) : "nothing")}"
 			+ Environment.NewLine + "'notify test' sends a test message now. Set it up under Settings, Notifications.";
 	}
 
-	private static async Task<string> JoinGroupAsync(BotManager mgr, string[] args) {
+	private static async Task<string> JoinGroupAsync(BotManager mgr, string[] args, string line) {
 		if (args.Length < 2) {
 			return "joingroup <account|all> <group link or name>   e.g. joingroup all steamcommunity.com/groups/nocatfarm";
 		}
 
-		if (GroupJoin.Normalise(args[1]) is not { } path) {
-			return $"\"{args[1]}\" doesn't look like a Steam group - paste its link, like steamcommunity.com/groups/name";
+		// The group as typed - its word split at spaces alone, as it always was: from the line's words, a no-break space in a
+		// group's name cut the name short there. A line break or a tab is a gap too: a Telegram message on two lines ran the
+		// group into the next line, and it "didn't look like a Steam group".
+		string typed = Tail(line, 2).Split([' ', '\t', '\r', '\n'], StringSplitOptions.RemoveEmptyEntries)[0];
+
+		if (GroupJoin.Normalise(typed) is not { } path) {
+			return $"\"{typed}\" doesn't look like a Steam group - paste its link, like steamcommunity.com/groups/name";
 		}
 
 		if (Pick(mgr, [args[0]], out string? problem) is not { } bots) {
@@ -3297,7 +4317,6 @@ public static partial class Commands {
 			}
 		}
 
-		string typed = args[1];
 		string Say(Bot b, GroupJoin.Outcome outcome, string name) => outcome switch {
 			GroupJoin.Outcome.Joined => $"{b.Name}: joined {name}",
 			GroupJoin.Outcome.AlreadyIn => $"{b.Name}: already in {name}",
@@ -3342,6 +4361,285 @@ public static partial class Commands {
 		return string.Join(Environment.NewLine, lines);
 	}
 
+	// ── slow commands ───────────────────────────────────────────────────────
+	/// <summary>
+	/// How long a command waits on its own work before it answers that the work is still going. The discovery queue takes
+	/// about four minutes; the dashboard's request gave up at two and said "timed out" about a queue that went through
+	/// fine, and Telegram and Discord sat there with nothing. Anything quicker than this still comes back as the reply.
+	/// </summary>
+	public static TimeSpan ReplyWithin { get; set; } = TimeSpan.FromSeconds(20);
+
+	/// <summary>
+	/// Command work still going, by what and whose, with what it is doing - so a second 'queue old' says it's on it rather
+	/// than starting another, and says what is going rather than what was just asked for.
+	/// </summary>
+	private static readonly Dictionary<string, Underway> Going = new(StringComparer.OrdinalIgnoreCase);
+
+	/// <summary>
+	/// Where the answer of a slow command run now goes once it's done, besides the log - set by every command as it starts
+	/// (see <see cref="RunAsync(BotManager, string, bool, Action{string})"/>). Only Steam chat has one: 'log' is refused
+	/// there, so a master's '!queue' was told "the log says when it's done" and never saw how it went. Telegram and Discord
+	/// read the log with 'log'. And what the command's line hid (<see cref="Masked"/>), so the answer that comes late is masked
+	/// in the log as one in time is (<see cref="ReplyForLog"/>).
+	/// </summary>
+	private static readonly AsyncLocal<(Action<string>? Tell, (string Text, string As)[]? Hidden)> LateReply = new();
+
+	/// <summary>One account's slow work still going: what it's doing, and the chats waiting to be told how it went.</summary>
+	private sealed class Underway(string doing) {
+		private readonly List<Action<string>> _waiting = [];
+		private string? _answer;
+
+		public string Doing { get; } = doing;
+
+		/// <summary>Told the answer when it comes - false when it has already come, and nothing will be told any more.</summary>
+		public bool Tell(Action<string> who) {
+			lock (_waiting) {
+				if (_answer != null) {
+					return false;
+				}
+
+				_waiting.Add(who);
+
+				return true;
+			}
+		}
+
+		/// <summary>The answer, to everybody waiting for it. A chat that can't be reached any more doesn't keep it from the rest.</summary>
+		public void Answer(string answer, string source) {
+			Action<string>[] waiting;
+
+			lock (_waiting) {
+				_answer = answer;
+				waiting = [.. _waiting];
+				_waiting.Clear();
+			}
+
+			foreach (Action<string> who in waiting) {
+				try {
+					who(answer);
+				} catch (Exception e) {
+					Log.Failed("sending a command's answer back", e, source);
+				}
+			}
+		}
+	}
+
+	/// <summary>
+	/// A command whose work can take a while. <paramref name="What"/> is the command; <paramref name="Doing"/> reads after the
+	/// account's name and after "already" and "still" ("going through today's discovery queue"); <paramref name="HowLong"/>
+	/// is said when it answers straight away. <paramref name="Key"/>, when the same command can rightly run twice at once
+	/// for different things - two batches of keys, two offers. Without one, a second 'trade decline 5' while 'trade accept 3'
+	/// was going was turned away as "already", and offer 5 was never declined.
+	/// </summary>
+	public sealed record Slow(string What, string Doing, string HowLong = "", string? Key = null);
+
+	/// <summary>
+	/// Run a slow command's work, account by account, and answer within <paramref name="wait"/>: what each finished account
+	/// said, and for the rest that it's going on and the log says when it's done - where its answer then goes, under the
+	/// account's name. Asked from Steam chat, which can't read the log, the answer goes back to the chat as well, and the reply
+	/// says so. An account already doing this same thing for an earlier command isn't started twice.
+	/// <paramref name="cannot"/> answers at once for an account that can't (not signed in, say). One at a time when
+	/// <paramref name="oneAtATime"/>: several accounts claiming games or sending items in the same second is a giveaway.
+	/// </summary>
+	public static Task<string> SlowAsync(Slow job, IReadOnlyList<Bot> bots, Func<Bot, Task<string>> work, TimeSpan wait,
+		bool oneAtATime = false, Func<Bot, string?>? cannot = null) =>
+		SlowAsync(job, bots, static b => b.Name, static b => [b], work, wait, oneAtATime, cannot);
+
+	/// <summary>
+	/// The same for work that isn't any one account's - card swaps, a batch of keys: said and logged without a name.
+	/// <paramref name="accounts"/> are the ones it works with, so one of them signing out partway is said as that.
+	/// </summary>
+	public static Task<string> SlowAsync(Slow job, Func<Task<string>> work, TimeSpan wait, IReadOnlyList<Bot>? accounts = null) =>
+		SlowAsync(job, [""], static _ => "", _ => accounts ?? [], _ => work(), wait, false, null);
+
+	private static async Task<string> SlowAsync<T>(Slow job, IReadOnlyList<T> who, Func<T, string> nameOf, Func<T, IReadOnlyList<Bot>> accountsOf,
+		Func<T, Task<string>> work, TimeSpan wait, bool oneAtATime, Func<T, string?>? cannot) {
+		string[] lines = new string[who.Count];
+		Task<Done>?[] tasks = new Task<Done>?[who.Count];
+		Underway?[] underway = new Underway?[who.Count];
+		Task before = Task.CompletedTask;
+
+		// Asked from Steam chat, the answer goes back there when it's done: the log, where it goes anyway, can't be read from there.
+		(Action<string>? later, (string Text, string As)[]? typed) = LateReply.Value;
+		string whereItGoes = later != null ? "the answer comes here when it's done" : "the log says when it's done";
+
+		for (int i = 0; i < who.Count; i++) {
+			T one = who[i];
+			string name = nameOf(one);
+			string named = name.Length > 0 ? name + ": " : "";
+
+			if (cannot?.Invoke(one) is { } why) {
+				lines[i] = why;
+
+				continue;
+			}
+
+			string key = $"{job.Key ?? job.What} {name}";
+
+			lock (Going) {
+				if (Going.TryGetValue(key, out Underway? going)) {
+					// Still in Going, so its answer hasn't come yet: that is given only after it's out of here.
+					if (later != null) {
+						going.Tell(later);
+					}
+
+					lines[i] = $"{named}already {going.Doing} - {whereItGoes}";
+
+					continue;
+				}
+
+				Going[key] = underway[i] = new Underway(job.Doing);
+			}
+
+			Underway mine = underway[i]!;
+			string from = name.Length > 0 ? name : "nocat.farm";
+			tasks[i] = Run(one, name, key, before);
+			_ = tasks[i]!.ContinueWith(done => mine.Answer(done.Result.Reply, from), CancellationToken.None, TaskContinuationOptions.OnlyOnRanToCompletion,
+				TaskScheduler.Default);
+
+			if (oneAtATime) {
+				before = tasks[i]!;
+			}
+		}
+
+		// Run never throws - a failure comes back as its answer, already in the log - so nothing here is ever a faulted task
+		// left for the lost-task handler to find: "a background task failed", in red, about a queue cut short by a sign-out.
+		Task all = Task.WhenAll(tasks.OfType<Task<Done>>());
+
+		if (!all.IsCompleted && (wait > TimeSpan.Zero)) {
+			await Task.WhenAny(all, Task.Delay(wait)).ConfigureAwait(false);
+		}
+
+		// And should one ever throw after all, seen here: past the reply nothing else is left to look at it.
+		_ = all.ContinueWith(static t => _ = t.Exception, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
+
+		for (int i = 0; i < who.Count; i++) {
+			if (tasks[i] is not { } task) {
+				continue;
+			}
+
+			string name = nameOf(who[i]);
+			string named = name.Length > 0 ? name + ": " : "";
+
+			// Done in time, it's the reply itself. Asked to be told later and the answer came meanwhile (false), the same.
+			if (task.IsCompletedSuccessfully || ((later != null) && !underway[i]!.Tell(later))) {
+				lines[i] = task.Result.Reply;
+
+				continue;
+			}
+
+			lines[i] = wait == TimeSpan.Zero
+				? $"{named}{job.Doing} now{(job.HowLong.Length > 0 ? " - " + job.HowLong : "")}; {whereItGoes}"
+				: $"{named}still {job.Doing} - {whereItGoes}";
+
+			string source = name.Length > 0 ? name : "nocat.farm";
+			Background.Run(job.What, () => task.ContinueWith(done => {
+				// Cut short or failed: Run has already said so in the log, the way it was.
+				if (done.Result.Logged) {
+					return;
+				}
+
+				foreach (string line in done.Result.Reply.ReplaceLineEndings("\n").Split('\n').Where(static l => l.Trim().Length > 0)) {
+					// Masked as the command log masks a reply: a product key 'redeem' was given stays out of the log. And without
+					// the account's name in front - it goes in under that name already, and read "licclaim │ licclaim: 71456".
+					Log.Info(MaskedReply(job.What, Unnamed(line, name), typed), source);
+				}
+			}, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default), source);
+		}
+
+		return string.Join(Environment.NewLine, lines);
+
+		async Task<Done> Run(T one, string name, string key, Task after) {
+			string source = name.Length > 0 ? name : "nocat.farm";
+			IReadOnlyList<Bot> accounts = accountsOf(one);
+			long[] stops = [.. accounts.Select(static b => b.StopCount)];
+
+			try {
+				// The one before it, finished - each account's own failure is its own, and none of them throws.
+				await after.ConfigureAwait(false);
+
+				// Looked at again now its turn has come: that can be minutes after the command, and 'freegames all' went on
+				// claiming for an account that had signed out meanwhile - every claim failing, and each put off for hours.
+				if (cannot?.Invoke(one) is { } why) {
+					return new Done(why, false);
+				}
+
+				return new Done(await work(one).ConfigureAwait(false), false);
+			} catch (Exception e) {
+				// Said in the log, not left to the debug log: nobody is waiting on the reply any more to see it.
+				(Said said, bool cutOff) = Fell(job.What, e, accounts, stops, source);
+
+				return new Done((name.Length > 0 ? name + ": " : "") + (cutOff ? said.ToEnglish() : "couldn't - " + Log.Cause(e).ToEnglish()), true);
+			} finally {
+				lock (Going) {
+					Going.Remove(key);
+				}
+			}
+		}
+	}
+
+	/// <summary>A slow command's answer for one account, and whether it was already said in the log.</summary>
+	private readonly record struct Done(string Reply, bool Logged);
+
+	/// <summary>A line of an account's answer without the "name: " it starts with, for the log that already names the account.</summary>
+	private static string Unnamed(string line, string name) =>
+		(name.Length > 0) && line.StartsWith(name + ": ", StringComparison.OrdinalIgnoreCase) ? line[(name.Length + 2)..] : line;
+
+	/// <summary>
+	/// Says in the log how a command's work ended before it was done, and returns what it said. An account it works with
+	/// signing out, stopping or losing its connection partway isn't a failure - Steam drops every request still out, and
+	/// that showed as a warning ("Exception of type 'SteamKit2.AsyncJobFailedException' was thrown") and then again, in
+	/// red, as a lost task - so that's one plain line saying what stopped. Anything else is a warning with the cause in
+	/// plain words. The type and the stack go to the debug log either way. <paramref name="stops"/> are the accounts'
+	/// <see cref="Bot.StopCount"/> when the work began: one stopped and started again meanwhile counts as signed out too.
+	/// </summary>
+	internal static (Said Said, bool CutOff) Fell(string what, Exception e, IReadOnlyList<Bot> accounts, long[]? stops, string source) {
+		Log.Failed($"'{what}' stopped before it was done", e, source);
+		Log.StackToFile(e, source);
+
+		Bot? gone = null;
+
+		for (int i = 0; (i < accounts.Count) && (gone == null); i++) {
+			Bot b = accounts[i];
+
+			// Its web sign-in gone counts too - still connected, but the store and the community no longer take it: 'freegames'
+			// stops there, and that said "Steam didn't answer in time". It's 'not logged in' to the commands' own check.
+			if (!b.IsOnline || !b.Web.Ready || b.Stopping || ((stops != null) && (i < stops.Length) && (b.StopCount != stops[i]))) {
+				gone = b;
+			}
+		}
+
+		if ((gone != null) && Log.IsCutOff(e)) {
+			Said said = SignedOutPartway(what, gone.Name);
+			Log.Info(said, source);
+
+			return (said, true);
+		}
+
+		Said failed = new("'{0}' stopped before it was done: {1}", what, Log.Cause(e));
+		Log.Warn(failed, source);
+
+		return (failed, false);
+	}
+
+	/// <summary>What stopped when an account signed out partway through a command's work, and what becomes of the rest.</summary>
+	private static Said SignedOutPartway(string what, string account) => what switch {
+		"queue" => new Said("the discovery queue stopped - {0} signed out before it was done; it's done again next time", account),
+		"freeitems" => new Said("the look for free event items stopped - {0} signed out before it was done; 'freeitems' looks again once it's signed in", account),
+		"freegames" => new Said("the look for free games stopped - {0} signed out before it was done; 'freegames' looks again once it's signed in", account),
+		"booster" => new Said("making booster packs stopped - {0} signed out before it was done; 'booster' again once it's signed in makes the rest", account),
+		"sell" => new Said("the market work stopped - {0} signed out before it was done; 'sell' again once it's signed in carries on", account),
+		"match" => new Said("the card swaps stopped - {0} signed out before they were done; 'match' again once it's signed in", account),
+		"redeem" => new Said("activating the keys stopped - {0} signed out before it was done; give 'redeem' the keys it didn't get to once it's signed in", account),
+		"send" => new Said("sending the items stopped - {0} signed out before it was done; 'send' again once it's signed in sends the rest", account),
+		"trade" => new Said("answering the trade offers stopped - {0} signed out before it was done; the ones it didn't get to are still waiting", account),
+		"bans" => new Said("the ban look stopped - {0} signed out before it was done; 'bans' looks again once it's signed in", account),
+		"addlicense" => new Said("adding the licences stopped - {0} signed out before it was done; 'addlicense' again once it's signed in adds the rest", account),
+		"restart" => new Said("the restart stopped - {0} signed out before it was done; 'start {0}' signs it back in", account),
+		"stop" => new Said("{0} signed out before it had finished up", account),
+		_ => new Said("'{1}' stopped - {0} signed out before it was done", account, what)
+	};
+
 	private static List<Bot>? Pick(BotManager mgr, string[] args, out string? problem) {
 		problem = null;
 
@@ -3358,7 +4656,7 @@ public static partial class Commands {
 		return null;
 	}
 
-	private static async Task<string> NicknameAsync(BotManager mgr, string[] args) {
+	private static async Task<string> NicknameAsync(BotManager mgr, string[] args, string line) {
 		if (args.Length < 2) {
 			return "nickname <account> <profile name>";
 		}
@@ -3367,7 +4665,7 @@ public static partial class Commands {
 			return NoSuchAccount(mgr, args[0]);
 		}
 
-		string name = string.Join(' ', args[1..]).Trim();
+		string name = Tail(line, 2);   // as typed - put back together from its words, a no-break space in it was a space
 
 		// Steam's own limit for a profile name.
 		if (name.Length > 32) {
@@ -3446,23 +4744,107 @@ public static partial class Commands {
 		};
 	}
 
+	/// <summary>
+	/// 'freegames': the free-games look, now - the same one "Claim free games" makes every half hour or so, with the same
+	/// limits: Steam's activation window, a rate limit's pause, what it has stopped asking for, and on a human-mode account
+	/// its day. One account at a time, so several accounts don't all add games in the same second.
+	/// </summary>
+	private static async Task<string> FreeGamesAsync(BotManager mgr, string[] args) {
+		if (Pick(mgr, args, out string? problem) is not { } bots) {
+			return problem!;
+		}
+
+		string setting = Settings.FindBot(nameof(BotConfig.ClaimFree))?.Label ?? "Claim free games";
+
+		async Task<string> Look(Bot b) {
+			FreeGames free = BotManager.ModuleOf<FreeGames>(b)!;
+			List<string> lines = [];
+
+			// Off on this account: asked for, so it looks anyway - for games only, the least the setting would take.
+			bool off = b.Cfg.ClaimFree == FreeClaims.Off;
+			string howToTurnOn = $"To have it look by itself: Settings, {b.Name}, Free stuff, \"{setting}\" (or: set {b.Name} ClaimFree games).";
+			string NotNow(Said holding) {
+				lines.Add($"{b.Name}: not now - {holding}.{(off ? "" : " It looks by itself once it can.")}");
+
+				if (off) {
+					lines.Add($"{b.Name}: \"{setting}\" is off, so it doesn't look by itself. {howToTurnOn}");
+				}
+
+				return string.Join(Environment.NewLine, lines);
+			}
+
+			Said holding = free.Holding();
+
+			if (!holding.IsEmpty) {
+				return NotNow(holding);
+			}
+
+			FreeGames.Report report = new();
+
+			try {
+				await PicsWatch.PollAsync(b, CancellationToken.None).ConfigureAwait(false);
+				await free.CheckAsync(true, CancellationToken.None, off ? FreeClaims.Games : null, report).ConfigureAwait(false);
+			} catch (Exception e) when (!Log.IsCutOff(e)) {
+				// Anything but signing out partway - that goes on to the slow command's own "signed out before it was done", not
+				// "couldn't look".
+				Log.Failed("freegames", e, b.Name);
+
+				return $"{b.Name}: couldn't look - {Log.Scrub(e.Message)}";
+			}
+
+			// Shut by the time its turn came - behind a look that spaced the next ones out, say.
+			if (!report.NotNow.IsEmpty) {
+				return NotNow(report.NotNow);
+			}
+
+			lines.AddRange(FreeGamesSaid(b.Name, report));
+
+			if (off) {
+				lines.Add($"{b.Name}: \"{setting}\" is off, so this looked for games only. {howToTurnOn}");
+			}
+
+			return string.Join(Environment.NewLine, lines);
+		}
+
+		// Usually seconds, but each claim waits a little before the next, and several accounts go one after another - so
+		// past the reply's wait it carries on and the log has the rest.
+		return await SlowAsync(new Slow("freegames", "looking for free games"), bots, Look, ReplyWithin, oneAtATime: true,
+			cannot: static b => !b.IsOnline || !b.Web.Ready || (BotManager.ModuleOf<FreeGames>(b) is null) ? $"{b.Name}: not logged in" : null).ConfigureAwait(false);
+	}
+
+	/// <summary>One account's look, in plain words: what it claimed, what was free but wasn't, and why - or that there's nothing.</summary>
+	internal static List<string> FreeGamesSaid(string name, FreeGames.Report report) {
+		List<string> lines = [];
+
+		if (report.Claimed.Count > 0) {
+			lines.Add($"{name}: claimed {string.Join(", ", report.Claimed)}");
+		}
+
+		if (report.Missed.Count > 0) {
+			lines.Add($"{name}: free, but not claimed:");
+			lines.AddRange(report.Missed.Select(static m => $"  {m.Name} - {m.Why}"));
+		}
+
+		if (!report.Stopped.IsEmpty) {
+			lines.Add($"{name}: {report.Stopped}");
+		}
+
+		if (lines.Count == 0) {
+			lines.Add(report.LibraryNotReady ? $"{name}: still reading its game library - try again in a minute"
+				: report.Unanswered > 0 ? $"{name}: nothing claimed - the Steam store didn't answer about {report.Unanswered}, so it asks again next time"
+				: $"{name}: nothing free right now");
+		}
+
+		return lines;
+	}
+
 	private static async Task<string> FreeItemsAsync(BotManager mgr, string[] args) {
 		if (Pick(mgr, args, out string? problem) is not { } bots) {
 			return problem!;
 		}
 
-		List<string> lines = [];
-		List<(Bot Bot, EventItems Events)> ready = [];
-
-		foreach (Bot b in bots) {
-			if (!b.IsOnline || !b.Web.Ready || (BotManager.ModuleOf<EventItems>(b) is not { } events)) {
-				lines.Add($"{b.Name}: not logged in");
-			} else {
-				ready.Add((b, events));
-			}
-		}
-
-		async Task<string> Look(Bot b, EventItems events) {
+		static async Task<string> Look(Bot b) {
+			EventItems events = BotManager.ModuleOf<EventItems>(b)!;
 			bool sticker = await events.StickerAsync(CancellationToken.None).ConfigureAwait(false);
 			int shop = await events.ShopAsync(CancellationToken.None).ConfigureAwait(false);
 
@@ -3470,28 +4852,12 @@ public static partial class Commands {
 		}
 
 		// The first look after a start reads the whole Points Shop, which takes minutes - long enough that a
-		// console just sitting there looks hung. So that one goes on in the background and says so; the answer
-		// lands in the log.
-		if ((ready.Count > 0) && !EventItems.ShopKnown) {
-			_ = Task.Run(async () => {
-				foreach ((Bot b, EventItems events) in ready) {
-					try {
-						Log.Info(await Look(b, events).ConfigureAwait(false), b.Name);
-					} catch (Exception e) {
-						Log.Failed("free items", e, b.Name);
-					}
-				}
-			});
-			lines.Add($"Reading the Points Shop first - it's big, so the first look after a start takes a few minutes. {(ready.Count == 1 ? ready[0].Bot.Name : $"{ready.Count} accounts")}: the answer goes to the log when it's done.");
+		// console just sitting there looks hung. So that one answers at once and says so; the answer lands in the log.
+		bool known = EventItems.ShopKnown;
+		Slow job = new("freeitems", "looking for free event items", known ? "" : "the first look after a start reads the whole Points Shop, so a few minutes");
 
-			return string.Join(Environment.NewLine, lines);
-		}
-
-		foreach ((Bot b, EventItems events) in ready) {
-			lines.Add(await Look(b, events).ConfigureAwait(false));
-		}
-
-		return string.Join(Environment.NewLine, lines);
+		return await SlowAsync(job, bots, Look, known ? ReplyWithin : TimeSpan.Zero, oneAtATime: true,
+			cannot: static b => !b.IsOnline || !b.Web.Ready || (BotManager.ModuleOf<EventItems>(b) is null) ? $"{b.Name}: not logged in" : null).ConfigureAwait(false);
 	}
 
 	private static async Task<string> SellAsync(BotManager mgr, string[] args) {
@@ -3510,6 +4876,20 @@ public static partial class Commands {
 		string what = args.Length > 1 ? args[1].ToLowerInvariant() : "preview";
 		int count = (args.Length > 2) && int.TryParse(args[2], NumberStyles.None, CultureInfo.InvariantCulture, out int n) ? Math.Clamp(n, 1, 25) : Math.Clamp(bot.Cfg.SellPerRun, 1, 25);
 
+		// Listing waits half a minute or so between cards, as a person working the market page would - five of them is a few
+		// minutes - and taking listings down a few seconds each. The reply says it's going; the log, what it did.
+		// By what it does: a preview or a relist while 'sell do' lists cards is another job, not "already listing".
+		string doing = what is "do" or "relist" ? what : "preview";
+		Slow job = new("sell", doing switch {
+			"do" => "listing spare cards on the market",
+			"relist" => "taking down stale listings",
+			_ => "working out what it would sell"
+		}, Key: "sell " + doing);
+
+		return await SlowAsync(job, [bot], b => SellNowAsync(b, what, count), ReplyWithin).ConfigureAwait(false);
+	}
+
+	private static async Task<string> SellNowAsync(Bot bot, string what, int count) {
 		if (what == "relist") {
 			(int removed, int stale) = await Seller.RelistAsync(bot, CancellationToken.None).ConfigureAwait(false);
 
@@ -3534,8 +4914,7 @@ public static partial class Commands {
 		sb.AppendLine($"{bot.Name}: {plan.Duplicates} spare card(s){(plan.Unpriced > 0 ? $" ({plan.Unpriced} not priced yet)" : "")} - the {plan.Offers.Count} it would list next:");
 
 		foreach (Seller.Offer o in plan.Offers) {
-			string game = o.Game.Length > 24 ? o.Game[..23] + "…" : o.Game;
-			sb.AppendLine($"  {game,-24} {o.Card,-24} lowest {Seller.Money(o.LowestCents, bot)} -> list at {Seller.Money(o.BuyerCents, bot)}, you get {Seller.Money(o.YouGetCents, bot)}");
+			sb.AppendLine($"  {Columns.Fit(o.Game, 24)} {Columns.PadRight(o.Card, 24)} lowest {Seller.Money(o.LowestCents, bot)} -> list at {Seller.Money(o.BuyerCents, bot)}, you get {Seller.Money(o.YouGetCents, bot)}");
 		}
 
 		List<Seller.Listing>? up = await Seller.ListingsAsync(bot, CancellationToken.None).ConfigureAwait(false);
@@ -3554,17 +4933,13 @@ public static partial class Commands {
 			return problem!;
 		}
 
-		string[] lines = await Task.WhenAll(bots.Select(static async b => {
-			if (!b.IsOnline || (BotManager.ModuleOf<EventItems>(b) is not { } events)) {
-				return $"{b.Name}: not logged in";
-			}
-
-			int seen = await events.QueueAsync(CancellationToken.None).ConfigureAwait(false);
+		// A few seconds on each game, a dozen of them: about four minutes, every time. So it answers at once and the log says
+		// when it's through - waited on, the dashboard gave up at two minutes and said "timed out".
+		return await SlowAsync(new Slow("queue", "going through today's discovery queue", "about 4 minutes"), bots, static async b => {
+			int seen = await BotManager.ModuleOf<EventItems>(b)!.QueueAsync(CancellationToken.None).ConfigureAwait(false);
 
 			return seen < 0 ? $"{b.Name}: Steam wouldn't hand out the queue right now" : $"{b.Name}: looked through {seen} game(s) in the discovery queue";
-		})).ConfigureAwait(false);
-
-		return string.Join(Environment.NewLine, lines);
+		}, TimeSpan.Zero, cannot: static b => !b.IsOnline || (BotManager.ModuleOf<EventItems>(b) is null) ? $"{b.Name}: not logged in" : null).ConfigureAwait(false);
 	}
 
 	private static async Task<string> BoosterAsync(BotManager mgr, string[] args) {
@@ -3580,40 +4955,15 @@ public static partial class Commands {
 				return $"{maker.Name}: not logged in";
 			}
 
-			if (await Boosters.ReadAsync(maker).ConfigureAwait(false) is not { } page) {
-				return $"{maker.Name}: couldn't read the booster creator";
-			}
+			// A pause of a few seconds after each pack, as a person clicking through the creator would: a list of games
+			// outlasts the reply, and the rest goes to the log.
+			// One batch at a time an account, whatever games: each reads the gems once and spends from that, so two at once
+			// spent the same gems twice - and '440 730' with '730' made 730's pack in one and had it "refused by Steam" in the
+			// other. The "already" says which games are being made.
+			string games = string.Join(", ", args[1..].SelectMany(static a => a.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+				.Distinct(StringComparer.Ordinal));
 
-			List<string> said = [];
-			uint tradable = page.TradableGems, untradable = page.UntradableGems, gems = page.Gems;
-
-			// "730,440" as well as "730 440" - a comma list came back as one bad appID.
-			foreach (string arg in args[1..].SelectMany(static a => a.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))) {
-				if (!uint.TryParse(arg, NumberStyles.None, CultureInfo.InvariantCulture, out uint appId) || (appId == 0)) {
-					said.Add($"'{arg}' isn't an appID");
-
-					continue;
-				}
-
-				if (!page.Offers.TryGetValue(appId, out Boosters.Offer? offer)) {
-					said.Add($"{GameNames.Of(appId)}: not on the booster creator - no card drops left in it here, or no cards at all");
-				} else if (offer.Unavailable) {
-					said.Add($"{offer.Name}: made recently - available again {offer.AvailableAt}");
-				} else if (gems < offer.Price) {
-					said.Add($"{offer.Name}: needs {offer.Price} gems, {gems} here");
-				} else {
-					(bool made, uint left, uint leftTradable, uint leftUntradable, string? why) = await Boosters.CreateAsync(maker, offer, tradable, untradable).ConfigureAwait(false);
-
-					if (made) {
-						(gems, tradable, untradable) = (left, leftTradable, leftUntradable);
-						said.Add($"{offer.Name}: made a booster pack for {offer.Price} gems - {gems} left");
-					} else {
-						said.Add($"{offer.Name}: Steam refused it {why}");
-					}
-				}
-			}
-
-			return $"{maker.Name}:{Environment.NewLine}  " + string.Join(Environment.NewLine + "  ", said);
+			return await SlowAsync(new Slow("booster", $"making booster packs for {games}"), [maker], b => MakeBoostersAsync(b, args[1..]), ReplyWithin).ConfigureAwait(false);
 		}
 
 		if (Pick(mgr, args, out string? problem) is not { } bots) {
@@ -3650,6 +5000,44 @@ public static partial class Commands {
 		}
 
 		return string.Join(Environment.NewLine, lines);
+	}
+
+	/// <summary>'booster &lt;account&gt; &lt;appIDs&gt;': make those packs now, each from the gems the one before left.</summary>
+	private static async Task<string> MakeBoostersAsync(Bot maker, string[] ids) {
+		if (await Boosters.ReadAsync(maker).ConfigureAwait(false) is not { } page) {
+			return $"{maker.Name}: couldn't read the booster creator";
+		}
+
+		List<string> said = [];
+		uint tradable = page.TradableGems, untradable = page.UntradableGems, gems = page.Gems;
+
+		// "730,440" as well as "730 440" - a comma list came back as one bad appID.
+		foreach (string arg in ids.SelectMany(static a => a.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))) {
+			if (!uint.TryParse(arg, NumberStyles.None, CultureInfo.InvariantCulture, out uint appId) || (appId == 0)) {
+				said.Add($"'{arg}' isn't an appID");
+
+				continue;
+			}
+
+			if (!page.Offers.TryGetValue(appId, out Boosters.Offer? offer)) {
+				said.Add($"{GameNames.Of(appId)}: not on the booster creator - no card drops left in it here, or no cards at all");
+			} else if (offer.Unavailable) {
+				said.Add($"{offer.Name}: made recently - available again {offer.AvailableAt}");
+			} else if (gems < offer.Price) {
+				said.Add($"{offer.Name}: needs {offer.Price} gems, {gems} here");
+			} else {
+				(bool made, uint left, uint leftTradable, uint leftUntradable, string? why) = await Boosters.CreateAsync(maker, offer, tradable, untradable).ConfigureAwait(false);
+
+				if (made) {
+					(gems, tradable, untradable) = (left, leftTradable, leftUntradable);
+					said.Add($"{offer.Name}: made a booster pack for {offer.Price} gems - {gems} left");
+				} else {
+					said.Add($"{offer.Name}: Steam refused it {why}");
+				}
+			}
+		}
+
+		return $"{maker.Name}:{Environment.NewLine}  " + string.Join(Environment.NewLine + "  ", said);
 	}
 
 	private static string PrivacyWord(int level) => level switch { 1 => "private", 2 => "friends", 3 => "public", _ => $"?{level}" };
@@ -3817,9 +5205,22 @@ public static partial class Commands {
 
 				(int Points, int PendingPoints)? user = await mgr.Rep4Rep.GetUserAsync().ConfigureAwait(false);
 
-				return user == null
-					? "rep4rep didn't answer. Check the token is right and that you can reach rep4rep.com."
-					: $"rep4rep: {user.Value.Points} points you can spend, {user.Value.PendingPoints} still being verified.";
+				if (user is not { } got) {
+					return "rep4rep didn't answer. Check the token is right and that you can reach rep4rep.com.";
+				}
+
+				// rep4rep really does answer "-107 still being verified" now and then - the dashboard's own check, and its
+				// last sensible figure when there is one, rather than the nonsense as if it were true.
+				if (!Web.WebHost.Believable(got)) {
+					return $"rep4rep gave an impossible balance ({got.Points} points, {got.PendingPoints} still being verified)"
+						+ (Web.WebHost.Current?.LastSensiblePoints is { } kept
+							? $" - the last sensible one was {kept.Points} points you can spend, {kept.PendingPoints} still being verified."
+							: " - nothing sensible from it yet; try again in a while.");
+				}
+
+				Web.WebHost.Current?.RememberPoints(got.Points, got.PendingPoints);
+
+				return $"rep4rep: {got.Points} points you can spend, {got.PendingPoints} still being verified.";
 			}
 
 			case "profiles": {
@@ -3870,7 +5271,7 @@ public static partial class Commands {
 				sb.AppendLine($"{tasks.Count} task(s) waiting for {bot.Name}:");
 
 				foreach (Rep4RepTask t in tasks.Take(15)) {
-					sb.AppendLine($"  {t.TargetName,-24} \"{t.CommentText}\"");
+					sb.AppendLine($"  {Columns.PadRight(t.TargetName, 24)} \"{t.CommentText}\"");
 				}
 
 				return sb.ToString().TrimEnd();
@@ -4030,7 +5431,8 @@ public static partial class Commands {
 			sb.AppendLine($"  {section.ToUpperInvariant()}");
 
 			foreach (SettingDef def in shown) {
-				sb.AppendLine($"    {def.Name.PadRight(width)}{Settings.Show(config, def)}");
+				// A proxy without the password typed into it (Settings.Shown): this goes to the chats and the log as well.
+				sb.AppendLine($"    {def.Name.PadRight(width)}{Settings.Shown(config, def)}");
 			}
 		}
 
@@ -4062,23 +5464,55 @@ public static partial class Commands {
 			: value;
 	}
 
-	private static string Set(BotManager mgr, string[] args) {
-		if (args.Length < 2) {
-			return "set <key> <value>            change a global setting\nset <account> <key> <value>  change one account's setting";
+	/// <summary>
+	/// A key typed in quotes with its value stuck on inside them - '"SteamPassword:x"': what is the value, and where do the
+	/// quotes end? Asked for again with a space rather than saved as 'x"'.
+	/// </summary>
+	private static bool QuotedKey(string word) => word.Length > 0 && (word[0] is '"' or '\'' or '`' or '“' or '‘');
+
+	private static string Set(BotManager mgr, string[] args, string line) {
+		const string Usage = "set <key> <value>            change a global setting\nset <account> <key> <value>  change one account's setting";
+
+		if (args.Length == 0) {
+			return Usage;
 		}
 
-		// 'set <account> <key> <value>' only when the first word really is an account AND a key follows.
+		// The key read as the log's masking reads it - quotes off, cut at '=' or ':' (KeyOf) - and its value after a space or
+		// stuck on with '=' (SetValue): 'set alt Rep4Rep=on' answered "there's no setting called 'alt'", and 'set alt "Rep4Rep" on'
+		// that there was no Rep4Rep. A quoted key with a value stuck on inside the quotes is asked for again, with a space.
+		string[] parts = Words(line);
 		Bot? bot = mgr.Get(args[0]);
 
-		if (bot != null && args.Length >= 3 && Settings.FindBot(args[1]) != null) {
-			SettingDef def = Settings.FindBot(args[1])!;
+		// 'set <account> <key> <value>' when the first word really is an account and a key follows.
+		if ((bot != null) && (args.Length >= 2)) {
+			(string key, bool joined) = KeyOf(args[1]);
+
+			if (Settings.FindBot(key) is not { } def) {
+				// What was typed isn't said back: a password pasted in the key's place is as likely as a name misspelt. Only a real
+				// setting's name - one of the global ones - is.
+				return Settings.FindGlobal(key) is { } global
+					? $"'{global.Name}' is a global setting, not one account's. Try:  set {global.Name} <value>"
+					: $"That's not a per-account setting - 'config {bot.Name}' lists them all.";
+			}
+
+			if (joined && QuotedKey(args[1])) {
+				return $"Use a space: set {bot.Name} {def.Name} <value>";
+			}
+
+			string value = SetValue(line, parts, 2);
+
+			// 'set kylro Rep4Rep' with the value left off answered "there's no setting called 'kylro'".
+			if (value.Length == 0) {
+				return new Said("set {0} {1} <value> - the value is missing. It's {2} now.", bot.Name, def.Name, Settings.Shown(bot.Cfg, def)).ToString();
+			}
+
 			List<string> pulled;
 
 			// The change and its save under the account's lock: a dashboard save of it at the same moment put its older copy
 			// back over this one, in memory and on disk.
 			lock (bot.CfgGate) {
 				bool wasLegit = bot.Cfg.LegitMode;
-				string? error = Settings.Apply(bot.Cfg, def, Unquote(string.Join(' ', args[2..])));
+				string? error = Settings.Apply(bot.Cfg, def, Unquote(value));
 
 				if (error != null) {
 					return error;
@@ -4095,31 +5529,38 @@ public static partial class Commands {
 
 			ApplyBotSideEffects(bot, def);
 
-			return $"{bot.Name}.{def.Name} = {Settings.Show(bot.Cfg, def)}"
+			// The value as 'config' shows it: a proxy without the password typed into it.
+			return $"{bot.Name}.{def.Name} = {Settings.Shown(bot.Cfg, def)}"
 				+ (def.NeedsRestart ? "   (applies after a restart)" : "")
 				+ (pulled.Count > 0 ? Environment.NewLine + "  " + string.Join(Environment.NewLine + "  ", pulled) : "");
 		}
 
-		// A real account name followed by something that isn't a setting: the complaint is about the SETTING, not
-		// about the account. Falling through to the global branch here reported "there's no setting called 'new'",
-		// which points at the one part of the line that was correct.
-		if ((bot != null) && (args.Length >= 3)) {
-			return $"There's no per-account setting called '{args[1]}'. 'config {bot.Name}' lists them all.";
+		// 'set <account>' alone.
+		if (bot != null) {
+			return Usage;
 		}
 
-		// 'set kylro Rep4Rep' with the value left off answered "there's no setting called 'kylro'".
-		if ((bot != null) && (args.Length == 2) && (Settings.FindBot(args[1]) is { } missingValue)) {
-			return new Said("set {0} {1} <value> - the value is missing. It's {2} now.", bot.Name, missingValue.Name, Settings.Show(bot.Cfg, missingValue)).ToString();
-		}
+		(string globalKey, bool globalJoined) = KeyOf(args[0]);
+		SettingDef? globalDef = Settings.FindGlobal(globalKey);
 
-		SettingDef? globalDef = Settings.FindGlobal(args[0]);
-
+		// What was typed isn't said back here either - 'set hunter2' answered "There's no setting called 'hunter2'", on screen,
+		// in the chats and in the log. Only a real setting's name is.
 		if (globalDef == null) {
-			SettingDef? asBot = Settings.FindBot(args[0]);
+			SettingDef? asBot = Settings.FindBot(globalKey);
 
 			return asBot != null
 				? $"'{asBot.Name}' is a per-account setting. Try:  set <account> {asBot.Name} <value>"
-				: $"There's no setting called '{args[0]}'. 'config' lists the global ones, 'config <account>' the per-account ones.";
+				: "That's not a setting - 'config' lists the global ones, 'config <account>' the per-account ones.";
+		}
+
+		if (globalJoined && QuotedKey(args[0])) {
+			return $"Use a space: set {globalDef.Name} <value>";
+		}
+
+		string globalValue = SetValue(line, parts, 1);
+
+		if (globalValue.Length == 0) {
+			return Usage;
 		}
 
 		string passwordBefore;
@@ -4128,7 +5569,7 @@ public static partial class Commands {
 		// this change away with the settings it was made on.
 		lock (ConfigStore.GlobalEditGate) {
 			passwordBefore = mgr.Global.WebPassword;
-			string? failure = Settings.Apply(mgr.Global, globalDef, Unquote(string.Join(' ', args[1..])));
+			string? failure = Settings.Apply(mgr.Global, globalDef, Unquote(globalValue));
 
 			if (failure != null) {
 				return failure;
@@ -4145,7 +5586,7 @@ public static partial class Commands {
 			Web.WebHost.Current?.SignOutAll();
 		}
 
-		return $"{globalDef.Name} = {Settings.Show(mgr.Global, globalDef)}"
+		return $"{globalDef.Name} = {Settings.Shown(mgr.Global, globalDef)}"
 			+ (globalDef.NeedsRestart && (globalDef.Name != "WebPassword") ? "   (applies after a restart)" : "");
 	}
 
@@ -4304,7 +5745,7 @@ public static partial class Commands {
 		}
 	}
 
-	private static async Task<string> ImportAsync(BotManager mgr, string[] args) {
+	private static async Task<string> ImportAsync(BotManager mgr, string[] args, string line) {
 		string tools = string.Join("|", IdlerImport.Tools.Select(static t => t.Id)) + "|" + IdlerImport.Auto;
 
 		if ((args.Length == 0) || ((IdlerImport.Find(args[0]) == null) && !args[0].Equals(IdlerImport.Auto, StringComparison.OrdinalIgnoreCase))) {
@@ -4317,8 +5758,12 @@ public static partial class Commands {
 		}
 
 		bool force = args.Any(static a => a.Equals("force", StringComparison.OrdinalIgnoreCase));
-		string[] rest = args[1..].Where(static a => !a.Equals("force", StringComparison.OrdinalIgnoreCase)).ToArray();
-		string? path = rest.Length > 0 ? string.Join(' ', rest).Trim('"') : null;
+		// The path as typed, from the line - only a 'force' of its own taken out. Put back together from the line's words, a
+		// no-break space in a folder's name was a space, and the folder wasn't found. A line break or a tab is a gap, as it
+		// is to 'force' above (no folder's name has one): a Telegram message with 'force' on its own line kept the path as
+		// "C:\ASF" + a line break + "force".
+		string rest = string.Join(' ', Tail(line, 2).Split([' ', '\t', '\r', '\n']).Where(static w => !w.Trim().Equals("force", StringComparison.OrdinalIgnoreCase))).Trim().Trim('"');
+		string? path = rest.Length > 0 ? rest : null;
 
 		if ((path != null) && !Directory.Exists(path) && !File.Exists(path)) {
 			return $"There's no folder at {path}";

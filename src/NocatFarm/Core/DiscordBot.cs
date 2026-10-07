@@ -212,7 +212,7 @@ public static partial class Notifier {
 		static string Fit(Said s) {
 			string text = s.ToString();
 
-			return text.Length <= 100 ? text : text[..99] + "…";
+			return Columns.ClipChars(text, 100);
 		}
 	}
 
@@ -861,11 +861,9 @@ public static partial class Notifier {
 	/// </summary>
 	private static async Task<List<string>> DiscordAnswerAsync(string line, string how, CancellationToken ct) {
 		// Everything shows in the log, the way a command typed in the window does - secrets masked.
-		Log.Info(new Said("> /" + Commands.ForLog(line)), "discord");
+		Log.Info(new Said("> /" + Commands.LineForLog(line)), "discord");
 
-		int space = line.IndexOf(' ');
-		string first = (space < 0 ? line : line[..space]).ToLowerInvariant();
-		string rest = space < 0 ? "" : line[(space + 1)..].Trim();
+		(string first, string rest) = CommandWords(line);
 
 		if (first.Length == 0) {
 			return [new Said("Send /status for a summary, /help for the commands, or /nocat to run any console command.").ToString()];
@@ -913,7 +911,7 @@ public static partial class Notifier {
 			output = new Said("done").ToString();
 		}
 
-		EchoToLog(output, "discord");
+		EchoToLog(line, output, "discord");
 
 		return DiscordBlocks(output);
 	}

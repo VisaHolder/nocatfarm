@@ -263,6 +263,8 @@ public static class UpdateCheck {
 			// Otherwise it reads as "up to date" - a changed feed or an error object would hide every release.
 			if (tag.Length == 0) {
 				Log.Debug($"update check: no tag_name in the answer from {FeedWhere()}");
+			} else {
+				Latest = tag;
 			}
 
 			if (!IsNewer(tag.TrimStart('v', 'V'), Build.Version)) {
@@ -564,6 +566,101 @@ public static class UpdateCheck {
 
 	/// <summary>Is this release tag newer than what is running? Used by the updater before it downloads.</summary>
 	public static bool IsNewerThanThisBuild(string tag) => IsNewer(tag.TrimStart('v', 'V'), Build.Version);
+
+	/// <summary>Is this release tag older than what is running? Going back to one saves the settings first (see <see cref="Rollback"/>).</summary>
+	public static bool IsOlderThanThisBuild(string tag) => IsNewer(Build.Version, tag.TrimStart('v', 'V'));
+
+	/// <summary>Two versions, "v" or not: below zero when <paramref name="a"/> is older, zero when they're the same, above when it's newer.</summary>
+	internal static int Compare(string a, string b) {
+		string x = a.TrimStart('v', 'V'), y = b.TrimStart('v', 'V');
+
+		return IsNewer(x, y) ? 1 : IsNewer(y, x) ? -1 : 0;
+	}
+
+	/// <summary>A version as it's typed and tagged: 1.7.1, three numbers.</summary>
+	internal static bool IsVersion(string text) => System.Text.RegularExpressions.Regex.IsMatch(text.TrimStart('v', 'V'), @"^\d{1,4}\.\d{1,4}\.\d{1,4}\z");
+
+	/// <summary>
+	/// The newest release GitHub has named, newer than this build or not - Available only holds one that's newer. Going
+	/// back to an older version holds this one off too when it's in between (see <see cref="Rollback.HoldOff"/>).
+	/// </summary>
+	internal static string? Latest { get; private set; }
+
+	/// <summary>The releases last listed and when, so the dashboard opening its list again doesn't ask GitHub every time.</summary>
+	private static (DateTime At, List<string> Versions)? _releases;
+
+	/// <summary>
+	/// Every version on GitHub when the releases were last listed, without the "v" - with a zip for this computer or not. A
+	/// version there with none (yet: the Mac zips go up a while after the rest) is "no download for this computer", not gone.
+	/// </summary>
+	internal static IReadOnlyList<string> Tagged { get; private set; } = [];
+
+	/// <summary>
+	/// The versions on GitHub this computer can install, newest first and without the "v": every release kept there (the
+	/// last five) that has a zip for this machine and isn't too old to go in that way - or, where it doesn't update itself
+	/// (Docker, a service), every one, since those are updated by hand. Drafts and test releases are left out, as GitHub's
+	/// "latest" leaves them out.
+	/// </summary>
+	/// <param name="fresh">Somebody asked ('update versions', 'update to'): asked again now. Otherwise a list from the last
+	/// ten minutes is used - GitHub lets a PC ask only 60 times an hour.</param>
+	/// <returns>The versions, or null and why GitHub couldn't be asked - a Said, so it's in the language of the sentence it goes in.</returns>
+	internal static async Task<(List<string>? Versions, Said? Problem)> ReleasesAsync(bool fresh, CancellationToken ct = default) {
+		if (!fresh && (_releases is { } known) && (DateTime.UtcNow - known.At < TimeSpan.FromMinutes(10))) {
+			return (known.Versions, null);
+		}
+
+		try {
+			string json = await Http.GetStringAsync(SelfUpdate.ListFeed, ct).ConfigureAwait(false);
+			using JsonDocument doc = JsonDocument.Parse(json);
+
+			if (doc.RootElement.ValueKind != JsonValueKind.Array) {
+				Log.Debug($"update: the list of releases from {Log.Where(Uri.TryCreate(SelfUpdate.ListFeed, UriKind.Absolute, out Uri? odd) ? odd : null)} isn't a list");
+
+				return (null, new Said("GitHub gave no list of releases"));
+			}
+
+			List<string> found = [], tagged = [];
+			string? newest = null;
+
+			foreach (JsonElement release in doc.RootElement.EnumerateArray()) {
+				string tag = release.TryGetProperty("tag_name", out JsonElement t) ? t.GetString() ?? "" : "";
+
+				if (!IsVersion(tag) || (release.TryGetProperty("draft", out JsonElement draft) && draft.ValueKind == JsonValueKind.True)
+					|| (release.TryGetProperty("prerelease", out JsonElement pre) && pre.ValueKind == JsonValueKind.True)) {
+					continue;
+				}
+
+				if ((newest == null) || (Compare(tag, newest) > 0)) {
+					newest = tag;
+				}
+
+				tagged.Add(tag.TrimStart('v', 'V'));
+
+				// Nor one too old to say it started (see SelfUpdate.TooOld): 'update to' refuses it, so it isn't offered either.
+				if (!SelfUpdate.Supported || ((SelfUpdate.ZipForThisMachine(release) != null) && (SelfUpdate.TooOld(tag) == null))) {
+					found.Add(tag.TrimStart('v', 'V'));
+				}
+			}
+
+			List<string> versions = [.. found.Distinct().OrderByDescending(static v => v, Comparer<string>.Create(Compare))];
+
+			if (newest != null) {
+				Latest = newest;
+			}
+
+			_releases = (DateTime.UtcNow, versions);
+			Tagged = [.. tagged.Distinct()];
+
+			return (versions, null);
+		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
+			throw;
+		} catch (Exception e) when (e is HttpRequestException or TaskCanceledException or JsonException) {
+			// GitHub's refusal (a rate limit's 403) arrives in the message, status included.
+			Log.Debug($"update: asking {Log.Where(Uri.TryCreate(SelfUpdate.ListFeed, UriKind.Absolute, out Uri? list) ? list : null)} for the releases failed: {Log.Describe(e)}");
+
+			return (null, new Said("{0}", Log.Scrub(e.Message)));
+		}
+	}
 
 	/// <summary>Compares 1.2.10 against 1.2.9 properly, which a string comparison does not.</summary>
 	private static bool IsNewer(string candidate, string current) {

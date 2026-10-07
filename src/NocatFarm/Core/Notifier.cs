@@ -22,7 +22,7 @@ namespace NocatFarm.Core;
 /// events, which would feed straight back into this and loop.
 /// </summary>
 public static partial class Notifier {
-	private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
+	private static HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };   // not readonly: the checks answer for Telegram
 
 	/// <summary>Where the bot's picture comes from - the app icon, from the repo.</summary>
 	private const string Avatar = "https://raw.githubusercontent.com/VisaHolder/nocatfarm/main/assets/icon.png";
@@ -412,7 +412,7 @@ public static partial class Notifier {
 			if ((d.RootElement.ValueKind == JsonValueKind.Object) && d.RootElement.TryGetProperty(field, out JsonElement v) && (v.ValueKind == JsonValueKind.String)) {
 				string said = Log.Scrub(v.GetString());
 
-				return ": " + (said.Length > 150 ? said[..150] : said);
+				return ": " + Columns.ClipChars(said, 150, "");
 			}
 		} catch (JsonException) {
 			// not JSON (a proxy's error page) - nothing worth quoting
@@ -469,7 +469,7 @@ public static partial class Notifier {
 	}
 
 	/// <summary>The most of <paramref name="text"/> that fits in <paramref name="max"/> characters, with "…" when cut.</summary>
-	internal static string Fit(string text, int max) => text.Length <= max ? text : text[..Math.Max(0, max - 1)] + "…";
+	internal static string Fit(string text, int max) => Columns.ClipChars(text, max);
 
 	/// <summary>
 	/// One block as Telegram HTML: "// CARDS · kylro" then "◆ card dropped in Rust - 2 to go" - the owner's site bot's look,
@@ -500,7 +500,7 @@ public static partial class Notifier {
 					string cut = line;
 
 					while ((cut.Length > 0) && (Html(cut).Length + 1 > left)) {
-						cut = cut[..(cut.Length * 9 / 10)];
+						cut = Columns.ClipChars(cut, cut.Length * 9 / 10, "");
 					}
 
 					body.Append(Html(cut)).Append('…');
@@ -776,9 +776,11 @@ public static partial class Notifier {
 			_botName = "";
 		}
 
-		if (TelegramConnectLink is { } link) {
+		// Not the link itself: whoever opens it first is connected as the owner, and the log is read in more places than this
+		// PC - a file sent with a question, 'docker logs'. Asked for at this PC instead, where it's meant to be pressed.
+		if (TelegramConnectLink != null) {
 			Log.Info(new Said("Telegram bot {0} found - press Connect Telegram in Settings", _botName), "telegram");
-			Log.Info(new Said("or open {0} and press Start", link), "telegram");
+			Log.Info(new Said("or type 'notify link' in the nocat.farm window or its console for the link to press Start on"), "telegram");
 		}
 
 		return true;

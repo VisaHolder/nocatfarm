@@ -71,6 +71,8 @@ jobs:
           unzip -l "$name" | grep -E ' (nocatFarm|start\.command)$'
           # never a bare "! cmd" or "a && b" as a check: bash -e stops for neither, so such a check could never fail
           if unzip -l "$name" | grep 'DS_Store'; then echo "FAIL: .DS_Store in the zip"; exit 1; fi
+          # names only (-Z1), one a line: a top-level folder of somebody's data, or a zip inside - a backup or an old release
+          if unzip -Z1 "$name" | grep -E '^(config|logs|backups|tokens|state|authenticators)/|\.zip$'; then echo "FAIL: personal folders or a zip in the zip"; exit 1; fi
           # MAC_ZIP, not ZIP: zip reads $ZIP as options of its own, and every zip made later in the job went wrong
           echo "MAC_ZIP=$name" >> "$GITHUB_ENV"
 

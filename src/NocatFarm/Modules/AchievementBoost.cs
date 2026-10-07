@@ -367,7 +367,7 @@ public sealed class AchievementBoost(Bot bot) : BotModule(bot) {
 		foreach (uint app in plan.Skip(_index % Math.Max(1, plan.Count)).Concat(plan.Take(_index % Math.Max(1, plan.Count))).Take(12)) {
 			Library.Entry? game = Bot.Library.Find(app);
 
-			lines.Add($"      {GameNames.Of(app),-38} {(game == null ? "" : $"{Fmt.Hm(game.MinutesPlayed)} played")}{(game?.Shared == true ? "  (shared)" : "")}");
+			lines.Add($"      {Columns.PadRight(GameNames.Of(app), 38)} {(game == null ? "" : $"{Fmt.Hm(game.MinutesPlayed)} played")}{(game?.Shared == true ? "  (shared)" : "")}");
 		}
 
 		if (plan.Count > 12) {

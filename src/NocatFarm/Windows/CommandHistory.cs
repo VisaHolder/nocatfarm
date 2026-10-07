@@ -58,3 +58,61 @@ public sealed class CommandHistory {
 		return _at == -1 ? _draft : _lines[_lines.Count - 1 - _at];
 	}
 }
+
+/// <summary>
+/// Which question a line typed in the window is for, the way the console tells: the one up when its first key was pressed -
+/// and whether one was up at any time while it was typed. Read at Enter only, a password typed for a question that was
+/// answered from the dashboard (or given up) a moment before Enter found nothing up, and ran as a command: into the log,
+/// on screen, and under the up arrow.
+/// </summary>
+public sealed class QuestionWatch {
+	public enum Verdict { Run, Answer, Drop }
+
+	private readonly Lock _gate = new();
+
+	/// <summary>A line is being typed: a key has been pressed since the last Enter.</summary>
+	private bool _typing;
+
+	private Prompt.Question? _for;
+	private bool _asked;
+
+	/// <summary>A key in the command box. <paramref name="empty"/>: nothing in it yet, so this key starts a new line.</summary>
+	public void Key(bool empty, Prompt.Question? up) {
+		lock (_gate) {
+			if (empty || !_typing) {
+				_typing = true;
+				_for = up;
+				_asked = false;
+			}
+
+			_asked |= up != null;
+		}
+	}
+
+	/// <summary>A question went up or came down - one up at any moment of the line counts, not only at a key.</summary>
+	public void Changed(Prompt.Question? up) {
+		lock (_gate) {
+			_asked |= _typing && (up != null);
+		}
+	}
+
+	/// <summary>
+	/// Enter, with the question up now: answer it when the line was typed for it (or before any was up); run it when no
+	/// question was up at any time; and otherwise drop it - typed for a question that has gone, it may be a password.
+	/// </summary>
+	public (Verdict What, Prompt.Question? Question) Enter(Prompt.Question? up) {
+		lock (_gate) {
+			Prompt.Question? typedFor = _typing ? _for : up;
+			bool asked = (_typing && _asked) || (up != null);
+			_typing = false;
+			_for = null;
+			_asked = false;
+
+			if ((up != null) && ((typedFor == null) || (typedFor == up))) {
+				return (Verdict.Answer, up);
+			}
+
+			return (asked ? Verdict.Drop : Verdict.Run, null);
+		}
+	}
+}

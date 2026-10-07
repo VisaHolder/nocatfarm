@@ -106,6 +106,8 @@ released, paid games showing 100% off get claimed, never free-to-play games, dem
 about 30 activations per 90 minutes, so it stops at 20 to leave room for you. Free DLC (with *games and DLC*) needs
 the game; if the game is missing but free right now, it claims the game first and then the DLC.
 
+`freegames [account|all]` looks for free games now and says what it claimed, or what was free but couldn't be
+claimed and why. It keeps to the same limits, and on an account with *Claim free games* off it takes games only.
 `freeitems [account|all]` looks for event items now, and `queue [account|all]` does the discovery queue now.
 `addlicense myaccount <subID>` adds a free licence by hand (`a/<appID>` for a free app); Steam refuses paid ones.
 

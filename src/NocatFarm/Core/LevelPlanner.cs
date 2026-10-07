@@ -225,8 +225,7 @@ public static class LevelPlanner {
 			int take = Math.Min(levels, stillNeeded - bought);
 			bought += take;
 			cost += take * cents;
-			string name = game.Length > 30 ? game[..29] + "…" : game;
-			lines.Add($"    {name,-30}  {take} x {Money(cents)}  ({how})");
+			lines.Add($"    {Columns.Fit(game, 30)}  {take} x {Money(cents)}  ({how})");
 		}
 
 		sb.AppendLine($"  to buy: {bought} badge level(s), about {Money(cost)} at the market's lowest listings");

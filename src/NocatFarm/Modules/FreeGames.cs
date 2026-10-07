@@ -48,6 +48,24 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 
 	private static readonly HttpClient Http = Browser.Anonymous(TimeSpan.FromSeconds(30));
 
+	/// <summary>One store lookup - the store itself, unless the checks hand in their own answers.</summary>
+	internal static Func<string, CancellationToken, Task<string?>> Fetch { get; set; } = GetAsync;
+
+	/// <summary>One free licence asked for: a package through the store, or an app (true) over the connection. Swappable
+	/// so the checks can claim without Steam.</summary>
+	internal static Func<Bot, uint, bool, CancellationToken, Task<ClaimResult>> Claim { get; set; } =
+		static (bot, id, app, ct) => app ? AddAppAsync(bot, id, ct) : AddPackageAsync(bot, id, ct);
+
+	/// <summary>The pauses a person would take between claims and store lookups - left out only by the checks.</summary>
+	internal static bool NoPauses { get; set; }
+
+	/// <summary>One look at a time on this account, whether the loop or the freegames command started it - both change what
+	/// has been claimed and decided.</summary>
+	private readonly SemaphoreSlim _looking = new(1, 1);
+
+	/// <summary>Why each giveaway it won't ask for again was turned down, this run - so the freegames command can still say.</summary>
+	private readonly Dictionary<string, Said> _refusedWhy = [];
+
 	/// <summary>Feed entries decided for this run - "a/123" and "s/123" are different things with the same number.</summary>
 	private readonly HashSet<string> _seen = [];
 	private readonly List<DateTime> _claims = [];
@@ -58,7 +76,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 	/// long as the package sat in the feed. Backing off 2h, 8h, then a day, and giving up after the fourth,
 	/// turns thousands of doomed requests into a handful.
 	/// </remarks>
-	private readonly Dictionary<string, (int Tries, DateTime NotBefore)> _failed = [];
+	private readonly Dictionary<string, (int Tries, DateTime NotBefore, string Name)> _failed = [];
 
 	/// <summary>What the store said each entry is. Shared by every account - the answer is the same for all of
 	/// them, and asking once per account per pass is how the store API gets rate-limited.</summary>
@@ -91,7 +109,9 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 	/// </remarks>
 	private sealed record SavedState(List<string> Seen, Dictionary<string, SavedFailure> Failed, long QuietUntilTicks);
 
-	private sealed record SavedFailure(int Tries, long NotBeforeTicks);
+	/// <summary>One put off, with its name: the store's answers are only kept for the run, and after a restart the freegames
+	/// command listed it as "p/123456 - it didn't work last time". Empty in a file from before.</summary>
+	private sealed record SavedFailure(int Tries, long NotBeforeTicks, string? Name = null);
 
 	private void Load() {
 		try {
@@ -105,7 +125,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 			_seen.UnionWith((saved.Seen ?? []).Where(static t => !t.StartsWith("g/", StringComparison.Ordinal)));
 
 			foreach ((string token, SavedFailure f) in saved.Failed ?? []) {
-				_failed[token] = (f.Tries, new DateTime(f.NotBeforeTicks, DateTimeKind.Utc));
+				_failed[token] = (f.Tries, new DateTime(f.NotBeforeTicks, DateTimeKind.Utc), f.Name ?? "");
 			}
 
 			_quietUntil = new DateTime(saved.QuietUntilTicks, DateTimeKind.Utc);
@@ -115,13 +135,20 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 	}
 
 	private void Save() {
+		// A look still out when the account was removed, or while a backup is restored, ends after that: it wrote the removed
+		// account's file back (see ConfigStore.DeleteAccountFiles - nothing writes after a stop), or its own state over the
+		// restored one just before the restore read it in.
+		if (Bot.Disposed || Config.ConfigStore.RestoreWriting) {
+			return;
+		}
+
 		try {
 			// Change-feed finds are mostly free-to-play packages; don't let a year of them pile up.
 			if (_seen.Count > 5000) {
 				_seen.RemoveWhere(static t => t.StartsWith("p/", StringComparison.Ordinal));
 			}
 
-			SavedState state = new([.. _seen], _failed.ToDictionary(static kv => kv.Key, static kv => new SavedFailure(kv.Value.Tries, kv.Value.NotBefore.Ticks)), _quietUntil.Ticks);
+			SavedState state = new([.. _seen], _failed.ToDictionary(static kv => kv.Key, static kv => new SavedFailure(kv.Value.Tries, kv.Value.NotBefore.Ticks, kv.Value.Name.Length > 0 ? kv.Value.Name : null)), _quietUntil.Ticks);
 			Directory.CreateDirectory(Path.GetDirectoryName(StatePath)!);
 			AtomicFile.Write(StatePath, JsonSerializer.Serialize(state));
 		} catch (Exception e) {
@@ -131,13 +158,68 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 
 	private HumanGate? _gate;
 
+	/// <summary>The human-mode gate, made once - the loop and the freegames command wait on the same one.</summary>
+	private HumanGate Gate => LazyInitializer.EnsureInitialized(ref _gate, () => HumanGate.OwnDay(Bot));
+
+	/// <summary>
+	/// Why a look can't happen right now, the way the loop decides it - paused, or a human-mode account outside its day, with
+	/// you playing on it, settling in, or in the short wait after it signed in or woke - in words, with the times; empty when
+	/// it can go ahead. Asking starts the gate's wait if it hadn't started, as the loop's next look would.
+	/// </summary>
+	public Said Holding() {
+		if (Bot.Paused) {
+			return new Said("it's paused - 'resume' it first");
+		}
+
+		Said waiting = Gate.Waiting();
+
+		// Asleep, in the free games' own words.
+		return !waiting.IsEmpty && HumanMode.Asleep(Bot) && !Bot.PlayingBlocked ? new Said("it's asleep - human mode only claims games in its own day") : waiting;
+	}
+
+	/// <summary>What one look found, for the freegames command.</summary>
+	public sealed class Report {
+		/// <summary>Games (and DLC) added to the account.</summary>
+		public List<string> Claimed { get; } = [];
+
+		/// <summary>Free right now, but not added, and why.</summary>
+		public List<(string Name, Said Why)> Missed { get; } = [];
+
+		/// <summary>Why it stopped before the end - Steam's limit, or Steam asking it to slow down. Empty when it didn't.</summary>
+		public Said Stopped { get; set; }
+
+		/// <summary>The library wasn't read yet, so games from the change feed and the store list waited.</summary>
+		public bool LibraryNotReady { get; set; }
+
+		/// <summary>Finds the store didn't answer about this time - looked at again next time.</summary>
+		public int Unanswered { get; set; }
+
+		/// <summary>Why it didn't look after all (see <see cref="Holding"/>) - asked again once its turn came. Empty when it looked.</summary>
+		public Said NotNow { get; set; }
+	}
+
 	protected override async Task RunAsync(CancellationToken ct) {
-		Load();
+		// Not while a look is going. Signed in again quickly, the loop starts over while a 'freegames' typed before is still
+		// looking - and read the saved state in over the one it was using: a wait Steam had just asked for, or a game just put
+		// off, gone mid-look. Once it's done, what it saved is what's read.
+		await _looking.WaitAsync(ct).ConfigureAwait(false);
+
+		try {
+			Load();
+		} finally {
+			_looking.Release();
+		}
 
 		// Stays alive when switched off, so turning it on doesn't need a restart.
 		while (!ct.IsCancellationRequested) {
 			if (Bot.Cfg.ClaimFree == FreeClaims.Off) {
 				_status = new Said("off");
+
+				// The gate still watches while it's off, as the loop does when it's on: 'freegames <account>' asks it, and a
+				// gate first asked then counted its wait from a sign-in long ago - and said no the first time, every time.
+				if (Bot.IsOnline) {
+					_ = Gate.Open;
+				}
 
 				if (!await Sleep(TimeSpan.FromSeconds(20), ct).ConfigureAwait(false)) {
 					return;
@@ -168,9 +250,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 
 			// A game added shows in the account's recent activity with the time, so a human-mode account claims in its
 			// own day - not in the small hours while it's asleep.
-			_gate ??= HumanGate.OwnDay(Bot);
-
-			if (!_gate.Open) {
+			if (!Gate.Open) {
 				if (!await Sleep(TimeSpan.FromMinutes(2), ct).ConfigureAwait(false)) {
 					return;
 				}
@@ -189,6 +269,8 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 				}
 			} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 				throw;
+			} catch (OperationCanceledException) when (!Bot.IsOnline || !Bot.Web.Ready) {
+				// signed out partway through the look - the next one, once it's back, picks it up
 			} catch (Exception e) {
 				Log.Warn(new Said("free-game check failed: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
 
@@ -209,7 +291,7 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 					return;
 				}
 
-				if (!Bot.IsOnline || !Bot.Web.Ready || Bot.Paused || !_gate.Open) {
+				if (!Bot.IsOnline || !Bot.Web.Ready || Bot.Paused || !Gate.Open) {
 					continue;
 				}
 
@@ -222,6 +304,8 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 					}
 				} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
 					throw;
+				} catch (OperationCanceledException) when (!Bot.IsOnline || !Bot.Web.Ready) {
+					// signed out partway through the look - the next one, once it's back, picks it up
 				} catch (Exception e) {
 					Log.Debug(new Said("free-game check failed: {0}: {1}", e.GetType().Name, Log.Scrub(e.Message)), Bot.Name);
 
@@ -237,9 +321,46 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 	/// One pass over the giveaway list (when <paramref name="readList"/>) and whatever Steam's change feed has
 	/// turned up. Returns how many licences were actually added.
 	/// </summary>
-	public async Task<int> CheckAsync(bool readList, CancellationToken ct) {
+	/// <param name="takes">What to take (<see cref="FreeClaims"/>) - the account's "Claim free games" unless the freegames
+	/// command says otherwise: games only, on an account where it's off.</param>
+	/// <param name="report">Filled in with what was found, for the freegames command.</param>
+	public async Task<int> CheckAsync(bool readList, CancellationToken ct, int? takes = null, Report? report = null) {
+		await _looking.WaitAsync(ct).ConfigureAwait(false);
+
+		try {
+			// Asked again now it's this one's turn. A 'freegames' typed while the loop was looking asked before it waited, and the
+			// look it waited for had claimed two and spaced the next ones out - so it went straight on and claimed two more.
+			Said holding = Holding();
+
+			if (!holding.IsEmpty) {
+				if (report != null) {
+					report.NotNow = holding;
+				}
+
+				return 0;
+			}
+
+			return await LookAsync(readList, takes ?? Bot.Cfg.ClaimFree, report, ct).ConfigureAwait(false);
+		} finally {
+			_looking.Release();
+		}
+	}
+
+	private async Task<int> LookAsync(bool readList, int takes, Report? report, CancellationToken ct) {
+		StillSignedIn();
+
 		if (DateTime.UtcNow < _quietUntil) {
+			DateTime back = _quietUntil;
+
+			if (report != null) {
+				report.Stopped = new Said("Steam asked it to slow down - it tries again after {0}", (Func<string>) (() => Fmt.Clock(back)));
+			}
+
 			return 0;
+		}
+
+		if (report != null) {
+			report.LibraryNotReady = !Bot.Library.Ready;
 		}
 
 		List<string> tokens = [];
@@ -258,195 +379,272 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 
 		int added = 0;
 
-		foreach (string line in tokens) {
-			ct.ThrowIfCancellationRequested();
+		// Saved however the look ends. A sign-out (StillSignedIn) or a stop throws out of the loop, and what it had decided -
+		// a game just claimed, a refusal, a wait - was lost, so the next start asked Steam for them all again.
+		try {
+			foreach (string line in tokens) {
+				ct.ThrowIfCancellationRequested();
+				StillSignedIn();
 
-			string token = line.Trim();
+				string token = line.Trim();
 
-			// Both kinds. Packages ("s/") are claimed through the store; apps ("a/") over the Steam connection.
-			// Apps used to be skipped outright on the theory that they are all permanently free-to-play, and most
-			// are - but paid games given away turn up as apps too. A check of the live feed found three of them,
-			// promos already over, that were never so much as looked at. The store says which is which.
-			// "g/" is a game the store search showed at 100% off: judged like an app, claimed through its free package.
-			bool giveaway = token.StartsWith("g/", StringComparison.Ordinal);
-			bool app = token.StartsWith("a/", StringComparison.Ordinal) || giveaway;
-			bool pics = token.StartsWith("p/", StringComparison.Ordinal);
+				// Both kinds. Packages ("s/") are claimed through the store; apps ("a/") over the Steam connection.
+				// Apps used to be skipped outright on the theory that they are all permanently free-to-play, and most
+				// are - but paid games given away turn up as apps too. A check of the live feed found three of them,
+				// promos already over, that were never so much as looked at. The store says which is which.
+				// "g/" is a game the store search showed at 100% off: judged like an app, claimed through its free package.
+				bool giveaway = token.StartsWith("g/", StringComparison.Ordinal);
+				bool app = token.StartsWith("a/", StringComparison.Ordinal) || giveaway;
+				bool pics = token.StartsWith("p/", StringComparison.Ordinal);
 
-			if ((!app && !pics && !token.StartsWith("s/", StringComparison.Ordinal))
-				|| !uint.TryParse(token.AsSpan(2), NumberStyles.None, CultureInfo.InvariantCulture, out uint id) || (id == 0)) {
-				continue;
-			}
-
-			// What the account owns comes from its library for these, which is empty until it has been read after signing
-			// in: read as "not owned", a game it already had was claimed again after every restart. They wait for it.
-			if ((app || pics) && !Bot.Library.Ready) {
-				continue;
-			}
-
-			// Only skip what we have genuinely already decided about. Committing to _seen BEFORE the claim meant
-			// a package that failed once (rate limit, network blip) was never looked at again this run. A game
-			// borrowed through family sharing is not owned - taking it for real is exactly the point.
-			bool owned = app ? Bot.Library.Find(id) is { SharedFrom: 0 }
-				: Bot.OwnsPackage(id) || (pics && Bot.Library.Find(picsApp[id]) is { SharedFrom: 0 });
-
-			if (_seen.Contains(token) || owned) {
-				continue;
-			}
-
-			if (_failed.TryGetValue(token, out (int Tries, DateTime NotBefore) earlier) && (DateTime.UtcNow < earlier.NotBefore)) {
-				continue;
-			}
-
-			if (RecentClaims() >= MaxPerWindow) {
-				_status = new Said("paused - {0} activations this window", MaxPerWindow);
-				Log.Info(new Said("{0} activations in {1}m - pausing to stay under Steam's limit", MaxPerWindow, WindowMinutes), Bot.Name);
-
-				break;
-			}
-
-			(bool Worth, string Name, bool Dlc, uint Base) verdict;
-			bool known;
-
-			lock (Verdicts) {
-				known = Verdicts.TryGetValue(token, out verdict);
-			}
-
-			if (!known) {
-				// Every find, from the list or the change feed, has to be a paid game on a 100% discount. Anything
-				// else free is a free-to-play game, a demo-like free edition of a paid one, or not being given away.
-				(bool? told, string called, bool dlc, uint baseGame) = app ? await AppWorthwhileAsync(id, true, ct).ConfigureAwait(false)
-					: pics ? await AppWorthwhileAsync(picsApp[id], true, ct).ConfigureAwait(false)
-					: await WorthwhileAsync(id, ct).ConfigureAwait(false);
-
-				// The store didn't answer. That is not a "no" - a free promo seen during a network blip used to be
-				// written off for the rest of the run, and promos don't last. Leave it for the next pass.
-				if (told == null) {
+				if ((!app && !pics && !token.StartsWith("s/", StringComparison.Ordinal))
+					|| !uint.TryParse(token.AsSpan(2), NumberStyles.None, CultureInfo.InvariantCulture, out uint id) || (id == 0)) {
 					continue;
 				}
 
-				verdict = (told.Value, called, dlc, baseGame);
-
-				lock (Verdicts) {
-					Verdicts[token] = verdict;
-				}
-			}
-
-			(bool worth, string name, bool isDlc, uint baseApp) = verdict;
-
-			// A DLC given away is only taken when the account is set to - and it isn't written off when it's not,
-			// so switching the setting on picks it up on the next pass.
-			if (worth && isDlc && (Bot.Cfg.ClaimFree < FreeClaims.GamesAndDlc)) {
-				if (_dlcNoted.Add(token)) {
-					Log.Debug(new Said("{0} is a free DLC - left alone (\"Claim free games\" is on games only)", name), Bot.Name);
+				// What the account owns comes from its library for these, which is empty until it has been read after signing
+				// in: read as "not owned", a game it already had was claimed again after every restart. They wait for it.
+				if ((app || pics) && !Bot.Library.Ready) {
+					continue;
 				}
 
-				continue;
-			}
+				// Only skip what we have genuinely already decided about. Committing to _seen BEFORE the claim meant
+				// a package that failed once (rate limit, network blip) was never looked at again this run. A game
+				// borrowed through family sharing is not owned - taking it for real is exactly the point.
+				bool owned = app ? Bot.Library.Find(id) is { SharedFrom: 0 }
+					: Bot.OwnsPackage(id) || (pics && Bot.Library.Find(picsApp[id]) is { SharedFrom: 0 });
 
-			// Steam only hands a DLC to an account that owns its game ("Supporter Pack" free, the game itself not).
-			// Asking anyway just earns a refusal. If the game is free right now too - free to play, or itself given
-			// away - it takes the game first and then the DLC (part of "games and DLC"). Otherwise it doesn't ask,
-			// and doesn't write the DLC off either, since owning the game later makes it takeable.
-			if (worth && isDlc && (baseApp != 0) && (Bot.Library.Find(baseApp) is not { SharedFrom: 0 })) {
-				bool gotBase = false;
-
-				(bool? baseFree, string baseName, bool baseGiveaway) = await FreeNowAsync(baseApp, ct).ConfigureAwait(false);
-
-				uint baseSub = (baseFree == true) && baseGiveaway ? await FreeSubAsync(baseApp, ct).ConfigureAwait(false) : 0;
-
-				if (AlreadyHas(Bot, baseSub)) {
-					gotBase = true;   // its free package is on the account already - nothing to ask for
-				} else if (baseFree == true) {
-					_claims.Add(DateTime.UtcNow);
-					ClaimResult first = baseSub != 0 ? await AddPackageAsync(Bot, baseSub, ct).ConfigureAwait(false)
-						: await AddAppAsync(Bot, baseApp, ct).ConfigureAwait(false);
-
-					if (first.Added || (first.Detail == EPurchaseResultDetail.AlreadyPurchased)) {
-						gotBase = true;
-						Log.Good(new Said("claimed {0} (free now) for its free DLC {1}", baseName, name), Bot.Name);
-
-						// A person adds the game, then the DLC a moment later.
-						await Task.Delay(Rng.Seconds(4, 12), ct).ConfigureAwait(false);
-					} else {
-						Log.Debug(new Said("couldn't claim {0} for its DLC - {1}", baseName, first.Reason), Bot.Name);
-					}
-				}
-
-				if (!gotBase) {
-					if (_dlcNoted.Add(token)) {
-						Log.Debug(new Said("{0} is free, but only to owners of {1} - this account doesn't have it", name, GameNames.Of(baseApp)), Bot.Name);
+				if (_seen.Contains(token) || owned) {
+					// Turned down before and not asked for again - still free, so still worth a line when somebody asks.
+					if (!owned && (report != null) && _refusedWhy.TryGetValue(token, out Said before)) {
+						report.Missed.Add((KnownName(token, pics ? picsApp[id] : 0), new Said("{0} - not asking again", before)));
 					}
 
 					continue;
 				}
-			}
 
-			if (!worth) {
-				_seen.Add(token);   // a permanent "no" - free-to-play, DLC, demo, unreleased
+				if (_failed.TryGetValue(token, out (int Tries, DateTime NotBefore, string Name) earlier) && (DateTime.UtcNow < earlier.NotBefore)) {
+					if (report != null) {
+						DateTime retry = earlier.NotBefore;
+						report.Missed.Add((earlier.Name.Length > 0 ? earlier.Name : KnownName(token, pics ? picsApp[id] : 0), new Said("it didn't work last time - it tries again after {0}", (Func<string>) (() => Fmt.Clock(retry)))));
+					}
 
-				continue;
-			}
+					continue;
+				}
 
-			// A store giveaway is claimed the way the store's own "Add to account" button does it - through the package
-			// that's free right now. Only if the store names none is the app asked for over the connection instead.
-			uint freeSub = giveaway ? await FreeSubAsync(id, ct).ConfigureAwait(false) : 0;
+				if (RecentClaims() >= MaxPerWindow) {
+					_status = new Said("paused - {0} activations this window", MaxPerWindow);
+					Log.Info(new Said("{0} activations in {1}m - pausing to stay under Steam's limit", MaxPerWindow, WindowMinutes), Bot.Name);
 
-			// That package is on the account already - a DLC given away, which the library (games only) never shows. Asked
-			// for again after every restart, and with an answer that names no verdict it was "claimed" - and announced - again.
-			if (AlreadyHas(Bot, freeSub)) {
-				_seen.Add(token);
-
-				continue;
-			}
-
-			_claims.Add(DateTime.UtcNow);
-			ClaimResult result = freeSub != 0 ? await AddPackageAsync(Bot, freeSub, ct).ConfigureAwait(false)
-				: app ? await AddAppAsync(Bot, id, ct).ConfigureAwait(false)
-				: await AddPackageAsync(Bot, id, ct).ConfigureAwait(false);
-
-			if (result.Added) {
-				_seen.Add(token);
-				_failed.Remove(token);
-				added++;
-				_claimed++;
-				Log.Reward(new Said("claimed {0}", name), Bot.Name, topic: Topic.FreeStuff);
-
-				// A person adds a free game or two and gets on with their day; the rest wait for a later pass.
-				if (Bot.Cfg.LegitMode && (added >= 2)) {
-					_gate?.Space(20, 120);
+					if (report != null) {
+						DateTime frees = _claims.Min().AddMinutes(WindowMinutes);
+						report.Stopped = new Said("Steam's limit: {0} added in the last {1} minutes, so the rest wait until about {2}", MaxPerWindow, WindowMinutes,
+							(Func<string>) (() => Fmt.Clock(frees)));
+					}
 
 					break;
 				}
-			} else if (result.RateLimited) {
-				// Pressing on only lengthens it. Steam's own wording is "try again in an hour".
-				_quietUntil = DateTime.UtcNow.AddMinutes(Rng.Next(62, 80));
-				DateTime back = _quietUntil;
-				Log.Info(new Said("free-game claims rate-limited - retrying after {0}", (Func<string>) (() => Fmt.Clock(back))), Bot.Name);
 
-				break;
-			} else if (result.Final) {
-				_seen.Add(token);
-				Log.Debug(new Said("won't get {0} - {1}; not asking again", name, result.Reason), Bot.Name);
-			} else {
-				int tries = (_failed.TryGetValue(token, out (int Tries, DateTime NotBefore) before) ? before.Tries : 0) + 1;
+				(bool Worth, string Name, bool Dlc, uint Base) verdict;
+				bool known;
 
-				if (tries > Backoff.Length) {
+				lock (Verdicts) {
+					known = Verdicts.TryGetValue(token, out verdict);
+				}
+
+				if (!known) {
+					// Every find, from the list or the change feed, has to be a paid game on a 100% discount. Anything
+					// else free is a free-to-play game, a demo-like free edition of a paid one, or not being given away.
+					(bool? told, string called, bool dlc, uint baseGame) = app ? await AppWorthwhileAsync(id, true, ct).ConfigureAwait(false)
+						: pics ? await AppWorthwhileAsync(picsApp[id], true, ct).ConfigureAwait(false)
+						: await WorthwhileAsync(id, ct).ConfigureAwait(false);
+
+					// The store didn't answer. That is not a "no" - a free promo seen during a network blip used to be
+					// written off for the rest of the run, and promos don't last. Leave it for the next pass.
+					if (told == null) {
+						if (report != null) {
+							report.Unanswered++;
+						}
+
+						continue;
+					}
+
+					verdict = (told.Value, called, dlc, baseGame);
+
+					lock (Verdicts) {
+						Verdicts[token] = verdict;
+					}
+				}
+
+				(bool worth, string name, bool isDlc, uint baseApp) = verdict;
+
+				// A DLC given away is only taken when the account is set to - and it isn't written off when it's not,
+				// so switching the setting on picks it up on the next pass.
+				if (worth && isDlc && (takes < FreeClaims.GamesAndDlc)) {
+					if (_dlcNoted.Add(token)) {
+						Log.Debug(new Said("{0} is a free DLC - left alone (\"Claim free games\" is on games only)", name), Bot.Name);
+					}
+
+					report?.Missed.Add((name, new Said("it's DLC - only taken with \"Claim free games\" on games and DLC")));
+
+					continue;
+				}
+
+				// Steam only hands a DLC to an account that owns its game ("Supporter Pack" free, the game itself not).
+				// Asking anyway just earns a refusal. If the game is free right now too - free to play, or itself given
+				// away - it takes the game first and then the DLC (part of "games and DLC"). Otherwise it doesn't ask,
+				// and doesn't write the DLC off either, since owning the game later makes it takeable.
+				if (worth && isDlc && (baseApp != 0) && (Bot.Library.Find(baseApp) is not { SharedFrom: 0 })) {
+					bool gotBase = false;
+
+					(bool? baseFree, string baseName, bool baseGiveaway) = await FreeNowAsync(baseApp, ct).ConfigureAwait(false);
+
+					uint baseSub = (baseFree == true) && baseGiveaway ? await FreeSubAsync(baseApp, ct).ConfigureAwait(false) : 0;
+
+					if (AlreadyHas(Bot, baseSub)) {
+						gotBase = true;   // its free package is on the account already - nothing to ask for
+					} else if (baseFree == true) {
+						_claims.Add(DateTime.UtcNow);
+						ClaimResult first = baseSub != 0 ? await Claim(Bot, baseSub, false, ct).ConfigureAwait(false)
+							: await Claim(Bot, baseApp, true, ct).ConfigureAwait(false);
+
+						if (first.Added || (first.Detail == EPurchaseResultDetail.AlreadyPurchased)) {
+							gotBase = true;
+							Log.Good(new Said("claimed {0} (free now) for its free DLC {1}", baseName, name), Bot.Name);
+
+							if (first.Added) {
+								report?.Claimed.Add(baseName);
+							}
+
+							// A person adds the game, then the DLC a moment later.
+							await Task.Delay(NoPauses ? TimeSpan.Zero : Rng.Seconds(4, 12), ct).ConfigureAwait(false);
+						} else {
+							Log.Debug(new Said("couldn't claim {0} for its DLC - {1}", baseName, first.Reason), Bot.Name);
+						}
+					}
+
+					if (!gotBase) {
+						if (_dlcNoted.Add(token)) {
+							Log.Debug(new Said("{0} is free, but only to owners of {1} - this account doesn't have it", name, GameNames.Of(baseApp)), Bot.Name);
+						}
+
+						report?.Missed.Add((name, new Said("free only to owners of {0}", GameNames.Of(baseApp))));
+
+						continue;
+					}
+				}
+
+				if (!worth) {
+					_seen.Add(token);   // a permanent "no" - free-to-play, DLC, demo, unreleased
+
+					continue;
+				}
+
+				// A store giveaway is claimed the way the store's own "Add to account" button does it - through the package
+				// that's free right now. Only if the store names none is the app asked for over the connection instead.
+				uint freeSub = giveaway ? await FreeSubAsync(id, ct).ConfigureAwait(false) : 0;
+
+				// That package is on the account already - a DLC given away, which the library (games only) never shows. Asked
+				// for again after every restart, and with an answer that names no verdict it was "claimed" - and announced - again.
+				if (AlreadyHas(Bot, freeSub)) {
+					_seen.Add(token);
+
+					continue;
+				}
+
+				_claims.Add(DateTime.UtcNow);
+				ClaimResult result = freeSub != 0 ? await Claim(Bot, freeSub, false, ct).ConfigureAwait(false)
+					: await Claim(Bot, id, app, ct).ConfigureAwait(false);
+
+				// Not added because the account signed out while it was asked: no answer from Steam, but not the giveaway's fault -
+				// filed as a failure, it was put off for hours and written to disk.
+				if (!result.Added) {
+					StillSignedIn();
+				}
+
+				if (result.Added) {
 					_seen.Add(token);
 					_failed.Remove(token);
-					Log.Debug(new Said("gave up on {0} after {1} tries - {2}", name, tries, result.Reason), Bot.Name);
-				} else {
-					DateTime next = DateTime.UtcNow + Backoff[tries - 1];
-					_failed[token] = (tries, next);
-					Log.Debug(new Said("couldn't claim {0} - {1}; trying again after {2}", name, result.Reason, (Func<string>) (() => Fmt.Clock(next))), Bot.Name);
-				}
-			}
+					added++;
+					_claimed++;
+					Log.Reward(new Said("claimed {0}", name), Bot.Name, topic: Topic.FreeStuff);
+					report?.Claimed.Add(name);
 
-			await Sleep(Rng.Seconds(ClaimGapLowSeconds, ClaimGapHighSeconds), ct).ConfigureAwait(false);
+					// A person adds a free game or two and gets on with their day; the rest wait for a later pass.
+					if (Bot.Cfg.LegitMode && (added >= 2)) {
+						_gate?.Space(20, 120);
+
+						break;
+					}
+				} else if (result.RateLimited) {
+					// Pressing on only lengthens it. Steam's own wording is "try again in an hour".
+					_quietUntil = DateTime.UtcNow.AddMinutes(Rng.Next(62, 80));
+					DateTime back = _quietUntil;
+					Log.Info(new Said("free-game claims rate-limited - retrying after {0}", (Func<string>) (() => Fmt.Clock(back))), Bot.Name);
+
+					if (report != null) {
+						report.Stopped = new Said("Steam asked it to slow down - it tries again after {0}", (Func<string>) (() => Fmt.Clock(back)));
+					}
+
+					break;
+				} else if (result.Final) {
+					_seen.Add(token);
+					_refusedWhy[token] = result.Reason;
+					Log.Debug(new Said("won't get {0} - {1}; not asking again", name, result.Reason), Bot.Name);
+					report?.Missed.Add((name, result.Reason));
+				} else {
+					int tries = (_failed.TryGetValue(token, out (int Tries, DateTime NotBefore, string Name) before) ? before.Tries : 0) + 1;
+
+					if (tries > Backoff.Length) {
+						_seen.Add(token);
+						_failed.Remove(token);
+						_refusedWhy[token] = result.Reason;
+						Log.Debug(new Said("gave up on {0} after {1} tries - {2}", name, tries, result.Reason), Bot.Name);
+						report?.Missed.Add((name, result.Reason));
+					} else {
+						DateTime next = DateTime.UtcNow + Backoff[tries - 1];
+						_failed[token] = (tries, next, name);
+						Log.Debug(new Said("couldn't claim {0} - {1}; trying again after {2}", name, result.Reason, (Func<string>) (() => Fmt.Clock(next))), Bot.Name);
+						report?.Missed.Add((name, new Said("{0} - it tries again after {1}", result.Reason, (Func<string>) (() => Fmt.Clock(next)))));
+					}
+				}
+
+				await Sleep(NoPauses ? TimeSpan.Zero : Rng.Seconds(ClaimGapLowSeconds, ClaimGapHighSeconds), ct).ConfigureAwait(false);
+			}
+		} finally {
+			Save();
 		}
 
-		Save();
-
 		return added;
+	}
+
+	/// <summary>
+	/// Stops a look on an account that has signed out. The freegames command looks with no token of its own, and an account's
+	/// turn in 'freegames all' can come minutes later: it went on asking Steam for every giveaway signed out - each "no usable
+	/// answer", each put off for hours, every one counted against Steam's limit.
+	/// </summary>
+	private void StillSignedIn() {
+		if (!Bot.IsOnline || !Bot.Web.Ready) {
+			throw new OperationCanceledException($"{Bot.Name} signed out");
+		}
+	}
+
+	/// <summary>
+	/// A find's name as the store gave it, when it has been asked - otherwise the game's own (a change-feed package's by its
+	/// first app, <paramref name="app"/>), or what it is with its number: "app 123456", "package 123456" - never "p/123456".
+	/// </summary>
+	private static string KnownName(string token, uint app = 0) {
+		lock (Verdicts) {
+			if (Verdicts.TryGetValue(token, out (bool Worth, string Name, bool Dlc, uint Base) v)) {
+				return v.Name;
+			}
+		}
+
+		uint id = uint.TryParse(token.AsSpan(2), NumberStyles.None, CultureInfo.InvariantCulture, out uint n) ? n : 0;
+
+		return token.StartsWith('g') || token.StartsWith('a') ? GameNames.Of(id)
+			: (app != 0) && GameNames.IsKnown(app) ? GameNames.Of(app)
+			: "package " + id.ToString(CultureInfo.InvariantCulture);
 	}
 
 	/// <summary>The store's name for it, trimmed - it sends some with a space on the end ("claimed Train Sim World 7 ").</summary>
@@ -618,13 +816,13 @@ public sealed class FreeGames(Bot bot) : BotModule(bot) {
 		try {
 			TimeSpan since = DateTime.UtcNow - _lastStoreCall;
 
-			if (since < TimeSpan.FromSeconds(1.5)) {
+			if (!NoPauses && (since < TimeSpan.FromSeconds(1.5))) {
 				await Task.Delay(TimeSpan.FromSeconds(1.5) - since, ct).ConfigureAwait(false);
 			}
 
 			_lastStoreCall = DateTime.UtcNow;
 
-			return await GetAsync(url, ct).ConfigureAwait(false);
+			return await Fetch(url, ct).ConfigureAwait(false);
 		} finally {
 			StoreGate.Release();
 		}

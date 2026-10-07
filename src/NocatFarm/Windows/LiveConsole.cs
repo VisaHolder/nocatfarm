@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using NocatFarm.Core;
 
 namespace NocatFarm.Windows;
@@ -298,36 +299,43 @@ public sealed class LiveConsole : IDisposable {
 		return "\u001b[36m" + new string('#', filled) + "\u001b[90m" + new string('.', Cells - filled) + "\u001b[0m";
 	}
 
-	/// <summary>Pad to a column width counting only VISIBLE characters, so colour codes can't skew the layout.</summary>
+	/// <summary>
+	/// Pad to a column width counting only VISIBLE columns, so colour codes can't skew the layout - and an emoji, two
+	/// columns wide, can't push the rest of its row along by one.
+	/// </summary>
 	private static string Pad(string text, int width) {
-		int visible = Visible(text);
+		string cut = Visible(text) > width ? Trim(text, width) : text;
 
-		return visible >= width ? Trim(text, width) : text + new string(' ', width - visible);
+		return cut + new string(' ', Math.Max(0, width - Visible(cut)));
 	}
 
 	private static int Visible(string text) {
 		int count = 0;
-		bool escape = false;
 
-		foreach (char c in text) {
-			if (escape) {
-				if (char.IsLetter(c)) {
-					escape = false;
-				}
+		for (int i = 0; i < text.Length;) {
+			if (text[i] == '\u001b') {
+				i = PastEscape(text, i);
 
 				continue;
 			}
 
-			if (c == '\u001b') {
-				escape = true;
-
-				continue;
-			}
-
-			count++;
+			int n = StringInfo.GetNextTextElementLength(text.AsSpan(i));
+			count += Columns.ElementWidth(text.AsSpan(i, n));
+			i += n;
 		}
 
 		return count;
+	}
+
+	/// <summary>Where the colour code starting at <paramref name="at"/> ends: just past its first letter.</summary>
+	private static int PastEscape(string text, int at) {
+		int i = at + 1;
+
+		while ((i < text.Length) && !char.IsLetter(text[i])) {
+			i++;
+		}
+
+		return Math.Min(i + 1, text.Length);
 	}
 
 	private static string Colour(Bot bot, string name) {
@@ -346,29 +354,28 @@ public sealed class LiveConsole : IDisposable {
 
 	private static string Dim(string text) => "\x1b[90m" + text + "\x1b[0m";
 
-	/// <summary>Trim to the terminal width WITHOUT counting the escape sequences, which take no screen columns.</summary>
+	/// <summary>
+	/// Trim to the terminal width WITHOUT counting the escape sequences, which take no screen columns - on a whole text
+	/// element, so the cut never leaves half an emoji behind to be drawn as "�".
+	/// </summary>
 	private static string Trim(string text, int width) {
 		int visible = 0;
-		bool escape = false;
 
-		for (int i = 0; i < text.Length; i++) {
-			if (escape) {
-				if (char.IsLetter(text[i])) {
-					escape = false;
-				}
-
-				continue;
-			}
-
+		for (int i = 0; i < text.Length;) {
 			if (text[i] == '\x1b') {
-				escape = true;
+				i = PastEscape(text, i);
 
 				continue;
 			}
 
-			if (++visible > width) {
+			int n = StringInfo.GetNextTextElementLength(text.AsSpan(i));
+			visible += Columns.ElementWidth(text.AsSpan(i, n));
+
+			if (visible > width) {
 				return text[..i] + "\x1b[0m";
 			}
+
+			i += n;
 		}
 
 		return text;

@@ -320,10 +320,11 @@ public static class DlcAchievements {
 
 	/// <summary>
 	/// Does the game have a DLC this account doesn't own whose achievements can't be placed? Then only what is certainly
-	/// inside the block of a DLC it owns is known to be safe, and the rest of the game is left alone.
+	/// inside the block of a DLC it owns is known to be safe, and the rest of the game is left alone. Never for a game with
+	/// no achievements at all: there is nothing a DLC could have added, and 'dlc &lt;account&gt;' listed it as uncertain.
 	/// </summary>
 	public static bool Unplaced(Map? map, IReadOnlySet<uint> ownedGroups) =>
-		(map != null) && map.Groups.Any(g => (g.Unsure != Doubt.None) && !ownedGroups.Contains(g.App));
+		(map != null) && (map.Names is not { Count: 0 }) && map.Groups.Any(g => (g.Unsure != Doubt.None) && !ownedGroups.Contains(g.App));
 
 	/// <summary>
 	/// The DLC this account owns, of the ones in <paramref name="map"/>. Only what <paramref name="owns"/> says yes to -

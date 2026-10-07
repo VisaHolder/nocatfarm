@@ -579,8 +579,8 @@ public sealed class TrayIcon : IDisposable {
 
 		NotifyIconData data = NewData();
 		data.uFlags = NifInfo | (_usingGuid ? NifGuid : 0);
-		data.szInfoTitle = title.Length > 60 ? title[..60] : title;
-		data.szInfo = text.Length > 250 ? text[..250] : text;
+		data.szInfoTitle = Columns.ClipChars(title, 60, "");
+		data.szInfo = Columns.ClipChars(text, 250, "");
 
 		if (!Shell_NotifyIcon(NimModify, ref data)) {
 			Log.DebugOnChange("tray:notify", "tray: Windows refused a pop-up notification");

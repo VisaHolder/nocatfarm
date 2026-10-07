@@ -34,7 +34,7 @@ internal sealed class Host(BotManager mgr, string owner) : IPluginHost {
 
 	private async Task<string> Commands_RunAsync(string line) {
 		try {
-			return await NocatFarm.Commands.RunAsync(mgr, line).ConfigureAwait(false);
+			return await NocatFarm.Commands.RunLoggedAsync(mgr, line, "plugin").ConfigureAwait(false);
 		} catch (Exception e) {
 			// Handed back to the plugin, which may well not say it anywhere: a command throwing is a bug, so it goes in the file.
 			NocatFarm.Log.Failed($"plugin {_owner}: running a command", e);

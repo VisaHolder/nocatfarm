@@ -352,7 +352,7 @@ public static class DiscordPresence {
 	}
 
 	/// <summary>Discord refuses a button label over 32 characters - and the whole card with it.</summary>
-	private static string Clip(string label) => label.Length <= 32 ? label : label[..31] + "…";
+	private static string Clip(string label) => Columns.ClipChars(label, 32);
 
 	/// <summary>"Show these accounts": names, or "all"; empty means every account that isn't in human mode.</summary>
 	/// <summary>Minutes as hours the way Steam writes them: 4.5 under ten, then whole hours with a thousands comma.</summary>

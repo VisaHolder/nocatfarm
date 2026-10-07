@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Text.Json;
@@ -23,7 +24,7 @@ namespace NocatFarm.Core;
 /// Windows will not let a running process overwrite its own exe, so the swap is done by a small script that
 /// outlives us: wait for this PID to go, copy the staged files over the top, start the new one, delete itself.
 /// Everything is staged and checked BEFORE anything is touched, so a download that fails or arrives truncated
-/// leaves the installation exactly as it was. config/ and logs/ are never in the archive and never copied over.
+/// leaves the installation exactly as it was. config/, logs/ and backups/ are never in the archive and never copied over.
 ///
 /// On Linux and a Mac the same happens with a shell script (see UnixSwapScript): run from a terminal, a desktop or
 /// start.command it updates itself exactly like Windows does, safety copy and putting back included. Not in two
@@ -44,8 +45,68 @@ public static class SelfUpdate {
 		&& (feed.StartsWith("http://127.0.0.1:", StringComparison.Ordinal) || feed.StartsWith("http://localhost:", StringComparison.Ordinal))
 			? feed : Releases;
 
+	/// <summary>Every release kept on GitHub - the last five - for 'update versions'.</summary>
+	private const string ReleaseList = "https://api.github.com/repos/VisaHolder/nocatfarm/releases";
+
+	/// <summary>
+	/// Where to ask for every release: GitHub - or, while <see cref="Feed"/> is a copy on this machine, the same copy under
+	/// /releases, so the tests can hand it old versions too.
+	/// </summary>
+	internal static string ListFeed => Feed == Releases ? ReleaseList : new Uri(Feed).GetLeftPart(UriPartial.Authority) + "/releases";
+
+	/// <summary>One release by its version, for 'update to': .../releases/tags/v1.7.1, from the same place as <see cref="ListFeed"/>.</summary>
+	internal static string TagFeed(string version) => $"{ListFeed}/tags/v{version.TrimStart('v', 'V')}";
+
 	/// <summary>The program's own file: nocatFarm.exe on Windows, nocatFarm everywhere else.</summary>
-	private static string ExeName => OperatingSystem.IsWindows() ? "nocatFarm.exe" : "nocatFarm";
+	private static string ExeName => ExeNameFor(OperatingSystem.IsWindows());
+
+	private static string ExeNameFor(bool windows) => windows ? "nocatFarm.exe" : "nocatFarm";
+
+	/// <summary>The program itself, on every platform - the version is read from it.</summary>
+	private const string ProgramDll = "nocatFarm.dll";
+
+	/// <summary>Before the version in the swap script's tag when it was installed from a file ('update file').</summary>
+	internal const string FromFileMark = "file:";
+
+	/// <summary>Before the version in the swap script's tag when it's an older one, gone back to ('update to').</summary>
+	internal const string BackMark = "back:";
+
+	/// <summary>Before the version in the swap script's tag when it's a newer one asked for by name ('update to').</summary>
+	internal const string ToMark = "to:";
+
+	/// <summary>
+	/// The oldest version that can go in this way: 1.4.6 is the first to tell the swap script it came up fine (NF_OK). One
+	/// older never says "ok" - every account was signed out, it ran three minutes, and was put back as "didn't start".
+	/// </summary>
+	private const string OldestThatAnswers = "1.4.6";
+
+	/// <summary>
+	/// The same on a Mac started from start.command: the new version comes up in a Terminal window of its own, which starts
+	/// clean, and finds where to answer in update-verify.txt - read from 1.5.4 on.
+	/// </summary>
+	private const string OldestThatAnswersInTerminal = "1.5.4";
+
+	/// <summary>Started from start.command on a Mac: a version put in comes up in a Terminal window of its own.</summary>
+	private static bool OpensInTerminal => OperatingSystem.IsMacOS() && (Environment.GetEnvironmentVariable("NOCATFARM_STARTER") == "start.command");
+
+	/// <summary>The oldest version this copy can put in by itself.</summary>
+	internal static string OldestInstallable => OpensInTerminal ? OldestThatAnswersInTerminal : OldestThatAnswers;
+
+	/// <summary>
+	/// Why <paramref name="version"/> can't go in this way - too old to say it started - or null when it can. Asked before
+	/// anything is downloaded, saved or signed out ('update file', 'update to', and the install itself).
+	/// </summary>
+	internal static Said? TooOld(string version) => TooOld(version, OpensInTerminal);
+
+	/// <param name="version">The version going in.</param>
+	/// <param name="inTerminal">Started from start.command on a Mac - this copy, or another in the checks.</param>
+	internal static Said? TooOld(string version, bool inTerminal) {
+		string oldest = inTerminal ? OldestThatAnswersInTerminal : OldestThatAnswers;
+
+		return UpdateCheck.Compare(version, oldest) < 0
+			? new Said("{0} is too old to install this way - the oldest that can is {1}", version.TrimStart('v', 'V'), oldest)
+			: null;
+	}
 
 	/// <summary>Where a person gets it by hand when updating itself can't.</summary>
 	private const string ReleasesPage = "https://github.com/VisaHolder/nocatfarm/releases/latest";
@@ -101,7 +162,8 @@ public static class SelfUpdate {
 	/// version and start nocat.farm again after it had been closed. The flag goes up under this same lock, so closing
 	/// lands either before the check (nothing is started) or after the swap has been (too late, as for a skip) - never
 	/// between the two, where it was read as still open and the swap then started anyway.</remarks>
-	internal static bool HandOver(string tag, Action start) {
+	/// <param name="tag">The version going in, for a skip of it to win - null for one from a file, which a skip doesn't stop.</param>
+	internal static bool HandOver(string? tag, Action start) {
 		lock (HandoverGate) {
 			if (UpdateCheck.IsSkipped(tag) || Commands.ExitRequested) {
 				return false;
@@ -166,9 +228,29 @@ public static class SelfUpdate {
 		return new Said("running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again", ReleaseZipName(tag), ReleasesPage);
 	}
 
+	/// <summary>
+	/// 'update to' where updating itself isn't possible: how to put in <paramref name="version"/> by hand - that version, not
+	/// the newest. In Docker its tag in the checkout; as a service its own release page and zip. "git pull" and the newest
+	/// zip, said for every version, put the newest in instead - forward again, when going back was the point.
+	/// </summary>
+	public static Said ByHandTo(string version) {
+		string v = version.TrimStart('v', 'V');
+
+		if (Platform.InContainer) {
+			return new Said("nocat.farm doesn't update itself inside Docker - in the nocatfarm folder run git fetch --tags, then git checkout v{0}, then docker compose up -d --build. config/ and logs/ are kept; to come back: git checkout main, then git pull, then docker compose up -d --build", v);
+		}
+
+		return new Said("running as a service, nocat.farm doesn't update itself - stop it, extract {0} from {1} over this folder (config/ and logs/ are kept) and start it again", ReleaseZipName(v), ReleasePage(v));
+	}
+
 	/// <summary>The release file for this machine off Windows: nocat.farm-v1.3.9_linux-x64.zip. A file name, not prose.</summary>
 	private static string ReleaseZipName(string? tag) =>
 		$"nocat.farm-{(string.IsNullOrEmpty(tag) ? "v*" : "v" + tag.TrimStart('v', 'V'))}_{Platform.ReleaseRid}.zip";
+
+	/// <summary>What the zip for <paramref name="rid"/> is called: nocat.farm-v&lt;version&gt;-portable.zip on Windows,
+	/// nocat.farm-v&lt;version&gt;_linux-x64.zip and so on elsewhere. A file name, not prose.</summary>
+	private static string ZipNameFor(string rid) =>
+		rid.StartsWith("win-", StringComparison.Ordinal) ? "nocat.farm-v<version>-portable.zip" : $"nocat.farm-v<version>_{rid}.zip";
 
 	/// <summary>
 	/// Is this release asset the zip for this machine?
@@ -179,16 +261,19 @@ public static class SelfUpdate {
 	/// "_" sorts after the "." of ".zip", so the Windows zip stays first and those copies keep updating properly -
 	/// with "-linux" it would sort first and every one of them would download the Linux build and refuse it.
 	/// </summary>
-	internal static bool IsZipForThisMachine(string asset) {
+	internal static bool IsZipForThisMachine(string asset) => IsZipFor(asset, Platform.ReleaseRid);
+
+	/// <param name="rid">The machine it's for, as a release names it: this one, or another in the checks.</param>
+	private static bool IsZipFor(string asset, string rid) {
 		if (!asset.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) {
 			return false;
 		}
 
-		if (OperatingSystem.IsWindows()) {
+		if (rid.StartsWith("win-", StringComparison.Ordinal)) {
 			return !asset.Contains("linux", StringComparison.OrdinalIgnoreCase) && !asset.Contains("osx", StringComparison.OrdinalIgnoreCase);
 		}
 
-		return asset.EndsWith("_" + Platform.ReleaseRid + ".zip", StringComparison.OrdinalIgnoreCase);
+		return asset.EndsWith("_" + rid + ".zip", StringComparison.OrdinalIgnoreCase);
 	}
 
 	/// <summary>
@@ -206,6 +291,159 @@ public static class SelfUpdate {
 			if (IsZipForThisMachine(assetName) && asset.TryGetProperty("browser_download_url", out JsonElement u) && (u.GetString() is { Length: > 0 } url)) {
 				return (url, asset.TryGetProperty("size", out JsonElement s) && s.TryGetInt64(out long size) ? size : 0);
 			}
+		}
+
+		return null;
+	}
+
+	/// <summary>
+	/// 'update file': the version in a nocat.farm zip on this PC, or why it can't go in here - checked the way the updater
+	/// checks a download, before anything is signed out: a zip for this machine, readable, and the program at the top of it
+	/// (or inside its one folder, like releases up to 1.2.6). The version is read from the program itself, not the file
+	/// name, which anybody can rename. Which kind of computer it's for: on Windows by its name, the way an update picks its
+	/// download; on Linux and a Mac by the program in it. Told by the name there too, a download the browser saved as
+	/// "nocat.farm-v1.7.4_linux-x64 (1).zip" - or one renamed to anything - was refused as for another kind of computer.
+	/// </summary>
+	internal static (string? Version, Said Problem) LookInZip(string path) => LookInZipFor(path, Platform.ReleaseRid);
+
+	/// <param name="rid">The machine it's for, as a release names it (win-x64, linux-arm64, osx-arm64): this one, or another
+	/// in the checks.</param>
+	internal static (string? Version, Said Problem) LookInZipFor(string path, string rid) {
+		string name = Path.GetFileName(path);
+		bool windows = rid.StartsWith("win-", StringComparison.Ordinal);
+		string exeName = ExeNameFor(windows);
+		string zipName = ZipNameFor(rid);
+		Said another = new("{0} is a nocat.farm for another kind of computer - this one needs {1}", name, zipName);
+
+		if (!File.Exists(path)) {
+			return (null, new Said("there's no file at {0}", path));
+		}
+
+		if (!name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) {
+			return (null, new Said("{0} isn't a zip - it needs a nocat.farm zip like {1}", name, zipName));
+		}
+
+		if (windows && (name.Contains("linux", StringComparison.OrdinalIgnoreCase) || name.Contains("osx", StringComparison.OrdinalIgnoreCase))) {
+			return (null, another);
+		}
+
+		try {
+			using ZipArchive zip = ZipFile.OpenRead(path);
+
+			// Flat, or everything inside one folder - the same two layouts the updater takes.
+			string[] tops = [.. zip.Entries.Select(static e => e.FullName.Replace('\\', '/')).Where(static n => n.Length > 0)
+				.Select(static n => n.Contains('/') ? n[..(n.IndexOf('/') + 1)] : n).Distinct()];
+			string folder = tops.Contains(exeName) ? "" : (tops is [string only] && only.EndsWith('/') ? only : "");
+			ZipArchiveEntry? Entry(string file) => zip.Entries.FirstOrDefault(e => e.FullName.Replace('\\', '/') == folder + file);
+
+			if (Entry(exeName) is not { } exe) {
+				// Off Windows, the Windows zip: its program is nocatFarm.exe.
+				return (null, !windows && (Entry(ExeNameFor(true)) != null)
+					? another
+					: new Said("{0} isn't a nocat.farm zip for this computer - there's no {1} in it", name, exeName));
+			}
+
+			if (!windows) {
+				byte[] head = new byte[4096];
+				int got;
+
+				using (Stream from = exe.Open()) {
+					got = from.ReadAtLeast(head, head.Length, throwOnEndOfStream: false);
+				}
+
+				switch (RunsOn(head.AsSpan(0, got), rid, name)) {
+					case null:
+						return (null, new Said("{0} isn't a nocat.farm zip - its {1} isn't a program", name, exeName));
+					case false:
+						return (null, another);
+				}
+			}
+
+			if (Entry(ProgramDll) is not { } program) {
+				return (null, new Said("{0} isn't a nocat.farm zip - there's no {1} in it", name, ProgramDll));
+			}
+
+			using MemoryStream copy = new();
+
+			using (Stream from = program.Open()) {
+				from.CopyTo(copy);
+			}
+
+			copy.Position = 0;
+			using System.Reflection.PortableExecutable.PEReader pe = new(copy);
+
+			if (!pe.HasMetadata) {
+				return (null, new Said("{0} isn't a nocat.farm zip - its {1} isn't a program", name, ProgramDll));
+			}
+
+			System.Reflection.Metadata.MetadataReader meta = System.Reflection.Metadata.PEReaderExtensions.GetMetadataReader(pe);
+			System.Reflection.Metadata.AssemblyDefinition assembly = meta.GetAssemblyDefinition();
+
+			if (!meta.GetString(assembly.Name).Equals(Path.GetFileNameWithoutExtension(exeName), StringComparison.Ordinal)) {
+				return (null, new Said("{0} isn't a nocat.farm zip - its {1} is another program", name, ProgramDll));
+			}
+
+			Version v = assembly.Version;
+
+			return ($"{v.Major}.{v.Minor}.{v.Build}", default);
+		} catch (Exception e) when (e is IOException or InvalidDataException or UnauthorizedAccessException or BadImageFormatException) {
+			return (null, new Said("couldn't read {0} as a zip ({1})", name, Log.Scrub(e.Message)));
+		}
+	}
+
+	/// <summary>
+	/// Whether a program file runs on <paramref name="rid"/>'s kind of computer, from its first bytes: Linux's ELF says its
+	/// processor at byte 18, a Mac's Mach-O right after its magic number - or, in a universal one, in its list of the ones it
+	/// has. Null when it's neither.
+	/// </summary>
+	/// <param name="name">The zip's name: for a chip not in the list below, the name says it, as an update picks its download.
+	/// Without it every zip was refused there - "needs nocat.farm-v&lt;version&gt;_linux-riscv64.zip", the very name it had.</param>
+	private static bool? RunsOn(ReadOnlySpan<byte> head, string rid, string name) {
+		bool linux = rid.StartsWith("linux-", StringComparison.Ordinal), mac = rid.StartsWith("osx-", StringComparison.Ordinal);
+		string arch = rid[(rid.IndexOf('-') + 1)..];
+
+		if ((head.Length >= 20) && head[..4].SequenceEqual("\u007FELF"u8)) {
+			// In the file's own byte order: 1 little-endian, 2 big.
+			ushort machine = head[5] == 2 ? BinaryPrimitives.ReadUInt16BigEndian(head[18..]) : BinaryPrimitives.ReadUInt16LittleEndian(head[18..]);
+
+			// Every chip .NET runs Linux on, by the number ELF gives it.
+			int? want = arch switch {
+				"x64" => 62, "arm64" => 183, "arm" => 40, "x86" => 3, "riscv64" => 243, "loongarch64" => 258, "s390x" => 22, "ppc64le" => 21, _ => null
+			};
+
+			return linux && (want is { } w ? machine == w : IsZipFor(name, rid));
+		}
+
+		if (head.Length < 8) {
+			return null;
+		}
+
+		uint cpu = arch switch { "x64" => 0x01000007, "arm64" => 0x0100000C, "arm" => 12, "x86" => 7, _ => 0 };
+
+		// Apple silicon runs an Intel Mac's program too (Rosetta) - and a trial that fails puts the old version back. Called
+		// "for another kind of computer", the Intel zip was refused on a Mac that runs it.
+		bool Runs(uint c) => (c == cpu) || ((arch == "arm64") && (c == 0x01000007));
+
+		switch (BinaryPrimitives.ReadUInt32LittleEndian(head)) {
+			case 0xFEEDFACF or 0xFEEDFACE:
+				return mac && Runs(BinaryPrimitives.ReadUInt32LittleEndian(head[4..]));
+			case 0xCFFAEDFE or 0xCEFAEDFE:
+				return mac && Runs(BinaryPrimitives.ReadUInt32BigEndian(head[4..]));
+		}
+
+		// Universal: a list of the ones it has, 20 bytes each - or 32 in the 64-bit list (0xCAFEBABF), which was taken for no
+		// program at all.
+		if (BinaryPrimitives.ReadUInt32BigEndian(head) is 0xCAFEBABE or 0xCAFEBABF) {
+			int each = BinaryPrimitives.ReadUInt32BigEndian(head) == 0xCAFEBABF ? 32 : 20;
+			uint count = BinaryPrimitives.ReadUInt32BigEndian(head[4..]);
+
+			for (int i = 0; (i < count) && (8 + (each * i) + 4 <= head.Length); i++) {
+				if (Runs(BinaryPrimitives.ReadUInt32BigEndian(head[(8 + (each * i))..]))) {
+					return mac;
+				}
+			}
+
+			return false;
 		}
 
 		return null;
@@ -334,6 +572,9 @@ public static class SelfUpdate {
 
 			// Another copy started from this folder while the accounts were signing out: nothing was copied.
 			if (swapCode?.StartsWith("busy", StringComparison.Ordinal) == true) {
+				string? noted = NotedTarget();
+				PutSkipBack(noted);
+				Gone(noted);
 				TryDelete(NotePath);
 				TryDelete(NotesPath);
 				Fail(new Said("update stopped - another nocat.farm is running from this folder (process {0}); close it first, nothing changed", swapCode[4..].Trim()));
@@ -345,6 +586,48 @@ public static class SelfUpdate {
 				string bad = swapCode[7..].Trim();
 				TryDelete(NotePath);
 				TryDelete(NotesPath);
+
+				// From a file ('update file'): put back, and not skipped - it's the file that didn't start, and the release
+				// with that number, when it comes, is a different build. An older zip ('update file ... force') went back too, and
+				// its tag says "file:" first: the skip goes back to what it was, as for 'update to'. Left out, the version held
+				// off stayed skipped. A newer file never matches the kept pair, and a note left from before goes.
+				if (bad.StartsWith(FromFileMark, StringComparison.Ordinal)) {
+					PutSkipBack(bad[FromFileMark.Length..]);
+					Gone(bad[FromFileMark.Length..]);
+					Fail(new Said("update undone: nocat.farm {0} from the file didn't start, back on {1}", bad[FromFileMark.Length..], Build.Version));
+
+					return;
+				}
+
+				// Gone back to an older version that didn't start: not skipped either - an older version is never offered, and
+				// "'update accept' retries" would install the newest, not the one asked for. And the skip goes back to what it
+				// was before going back held a version off: still on this version, there's nothing to hold off.
+				if (bad.StartsWith(BackMark, StringComparison.Ordinal)) {
+					PutSkipBack(bad[BackMark.Length..]);
+					Gone(bad[BackMark.Length..]);
+					Fail(new Said("going back didn't work: nocat.farm {0} didn't start, so you're on {1} again", bad[BackMark.Length..], Build.Version));
+
+					return;
+				}
+
+				// A newer version asked for by name ('update to') that didn't start: put back, the skip as it was before, and then
+				// this one skipped - unless a newer one already is. Skipped over that, a skip typed by hand for a newer one (1.7.5,
+				// while 1.7.4 was asked for) was written over, and that one installed by itself the same night. Left as it was, a
+				// version asked for when it was the newest, with nothing skipped, was installed again by itself that night - and
+				// crashed again. 'update to' asks for it by name, skipped or not; 'update accept' would install the newest.
+				if (bad.StartsWith(ToMark, StringComparison.Ordinal)) {
+					string asked = bad[ToMark.Length..];
+					PutSkipBack(asked);
+
+					if ((asked.Length > 0) && !((UpdateCheck.Skipped is { } kept) && UpdateCheck.IsVersion(kept) && (UpdateCheck.Compare(kept, asked) > 0))) {
+						UpdateCheck.Skipped = asked;
+					}
+
+					UpdateCheck.NoteFailedInstall();
+					Fail(new Said("update undone: {0} didn't start, back on {1} - 'update to {0}' tries it again", asked, Build.Version));
+
+					return;
+				}
 
 				// Skipped, or "Update by itself" would install the same broken version again the next night.
 				if (bad.Length > 0) {
@@ -372,8 +655,16 @@ public static class SelfUpdate {
 				return;
 			}
 
-			if (p[1] == Build.Version) {
+			// The version noted, and the swap left nothing behind. The same version from a file ('update file ... force') whose files
+			// didn't copy in is this version too - read as done, it said "updated 1.7.3 → 1.7.3" and "Install complete".
+			if ((p[1] == Build.Version) && (swapCode == null)) {
 				Log.Good(new Said("updated {0} → {1} · {2}MB in {3}s", p[0], p[1], p[2], p[3]));
+
+				// Back from an older version: a settings copy taken for going to it, with nothing it didn't know, is done now
+				// (see Rollback.CameForward).
+				if (UpdateCheck.IsVersion(p[0]) && UpdateCheck.IsOlderThanThisBuild(p[0])) {
+					Rollback.CameForward(p[0]);
+				}
 
 				string notes = "";
 
@@ -394,15 +685,83 @@ public static class SelfUpdate {
 
 				ConfirmWhenSettled(p[0], p[1], notes);
 			} else if (swapCode != null) {
+				PutSkipBack(p[1]);
+				Gone(p[1]);
 				UpdateCheck.NoteFailedInstall();
 				// The swap put every file back the way it was before starting this version again, so "nothing was
 				// changed" is true - see SwapScript.
 				Fail(SwapFailure(swapCode, OperatingSystem.IsWindows()));
 			} else {
+				PutSkipBack(p[1]);
+				Gone(p[1]);
 				Fail(new Said("update failed: {0} didn't start - still on {1}, try again", p[1], Build.Version));
 			}
 		} catch (Exception e) {
 			Log.Failed("couldn't read the update note", e);
+		}
+	}
+
+	/// <summary>
+	/// The skip as it was before going back to an older version held one off: "1.7.3|1.7.1|v1.7.4" - the version it was on,
+	/// the one it went back to, and what was skipped then (nothing after the last |, when nothing was). Read by this same
+	/// version if the older one didn't go in after all.
+	/// </summary>
+	private static string SkipBeforePath => Path.Combine(ConfigStore.ConfigDir, "state", "update-skip-before.txt");
+
+	/// <summary>Going back to <paramref name="target"/>: the skip as it is now, kept for <see cref="PutSkipBack"/>.</summary>
+	private static void KeepSkipBefore(string target) {
+		try {
+			Directory.CreateDirectory(Path.GetDirectoryName(SkipBeforePath)!);
+			AtomicFile.Write(SkipBeforePath, string.Join('|', Build.Version, target.TrimStart('v', 'V'), UpdateCheck.Skipped ?? ""));
+		} catch (Exception e) {
+			// Gone rather than left as it was: an older one for the same two versions would put back the wrong skip.
+			TryDelete(SkipBeforePath);
+			Log.Failed("update: keeping the skipped version to put back", e);
+		}
+	}
+
+	/// <summary>
+	/// Going back to <paramref name="target"/> didn't happen, and this version is running again: the skip goes back to what
+	/// it was before going back held a version off. Left as that, a version skipped by hand was forgotten, and this very
+	/// version - or a newer one tried out from a file - stayed skipped. Only for this same pair of versions.
+	/// </summary>
+	private static void PutSkipBack(string? target) {
+		if ((target == null) || !File.Exists(SkipBeforePath)) {
+			return;
+		}
+
+		try {
+			string[] kept = File.ReadAllText(SkipBeforePath).Trim().Split('|', 3);
+
+			if ((kept.Length == 3) && (kept[0] == Build.Version) && (UpdateCheck.Compare(kept[1], target) == 0)) {
+				UpdateCheck.Skipped = kept[2].Length > 0 ? kept[2] : null;
+			}
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			Log.Failed("update: putting the skipped version back", e);
+		}
+
+		TryDelete(SkipBeforePath);
+	}
+
+	/// <summary>
+	/// Going to <paramref name="target"/> didn't happen: a settings copy taken for going back to it goes (see
+	/// <see cref="Rollback.DiscardPending"/>). Kept, it waited for good with every saved login in it - only a swap that never
+	/// started got rid of its copy. Nothing for a newer version, which never had one.
+	/// </summary>
+	private static void Gone(string? target) {
+		if (target != null) {
+			Rollback.DiscardPending(target);
+		}
+	}
+
+	/// <summary>The version the update note says was going in, or null when there's no note to read.</summary>
+	private static string? NotedTarget() {
+		try {
+			return File.Exists(NotePath) && (File.ReadAllText(NotePath).Split('|') is [_, string to, ..]) ? to : null;
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			Log.Failed("update: reading the update note", e);
+
+			return null;
 		}
 	}
 
@@ -474,8 +833,57 @@ public static class SelfUpdate {
 
 	/// <summary>Tell the swap script this version is fine. Once; nothing to do when this start wasn't an update.</summary>
 	public static void ConfirmStarted() {
+		bool trial = OnTrial;
 		_confirmed = true;
 		Mark("ok");
+
+		// Tried out and staying: there's no skip left to put back - and nothing left to keep plain for the version before.
+		if (trial) {
+			TryDelete(SkipBeforePath);
+			Reseal();
+		}
+
+		// The settings brought back on this start stay now: their copies are done (see Rollback.RestoreMissing).
+		Rollback.ConfirmApplied();
+	}
+
+	/// <summary>
+	/// The trial is over: what was left plain during it (see <see cref="OnTrial"/>) is written again, encrypted - the key
+	/// queue and every account's file. Left alone, a Family View PIN or a key queue the version before had written plain
+	/// stayed plain until something saved it again, and so did every backup and settings copy made meanwhile.
+	/// </summary>
+	private static void Reseal() {
+		KeyQueue.Flush();
+
+		string[] files;
+
+		try {
+			files = Directory.GetFiles(ConfigStore.ConfigDir, "*.json");
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			Log.Failed("update: encrypting the accounts' secrets again", e);
+
+			return;
+		}
+
+		foreach (string file in files) {
+			string name = Path.GetFileNameWithoutExtension(file);
+
+			if (string.Equals(name, "nocatFarm", StringComparison.OrdinalIgnoreCase) || (name.Length == 0) || (name[0] == '.')) {
+				continue;
+			}
+
+			// Under the account's lock, like every save of it. A running account's own settings are saved; a file nothing runs
+			// on is read again, which writes a plain secret back encrypted.
+			Bot? bot = BotManager.Instance?.Get(name);
+
+			lock (bot?.CfgGate ?? BotManager.GateFor(name)) {
+				if (bot == null) {
+					ConfigStore.LoadBot(name);
+				} else if (File.Exists(file)) {
+					ConfigStore.SaveBot(bot.Name, bot.Cfg);
+				}
+			}
+		}
 	}
 
 	private static volatile bool _confirmed;
@@ -616,6 +1024,12 @@ public static class SelfUpdate {
 		}
 	}
 
+	/// <summary>Starts the swap script. Swappable so the checks can see what it would be started with, and nothing is replaced.</summary>
+	internal static Action<ProcessStartInfo> StartSwap { get; set; } = static swap => Process.Start(swap)?.Dispose();
+
+	/// <summary>Closes nocat.farm once the swap script has it. Swappable for the same reason.</summary>
+	internal static Action ExitForSwap { get; set; } = Commands.RequestExit;
+
 	/// <summary>Where it got to, for the dashboard to show.</summary>
 	public static string Progress { get; private set; } = "";
 
@@ -626,7 +1040,14 @@ public static class SelfUpdate {
 	/// shut down and the script takes over - so the caller should treat a null return as "we're going down".
 	/// </summary>
 	/// <param name="byItself">"Update by itself" started it, at night - the message says so.</param>
-	public static async Task<string?> ApplyAsync(CancellationToken ct, bool byItself = false) {
+	/// <param name="fromFile">'update file': a nocat.farm zip on this PC, installed instead of the newest release - checked
+	/// with <see cref="LookInZip"/> first, then everything after the download is the same: unpacked, the safety copy, the
+	/// accounts signed out one at a time, the swap, the half-minute check and putting the old version back.</param>
+	/// <param name="toVersion">'update to': that release instead of the newest - an older one too, which is the point. Its
+	/// own zip for this machine, picked the way an update picks one.</param>
+	/// <remarks>Any version older than this one - from 'update to' or a file - saves the settings first and holds off the
+	/// version it came from, so that one isn't put straight back by itself (see <see cref="Rollback"/>).</remarks>
+	public static async Task<string?> ApplyAsync(CancellationToken ct, bool byItself = false, string? fromFile = null, string? toVersion = null) {
 		// Not a failure - there is simply another way to do it here, and nothing was attempted.
 		if (!Supported) {
 			Said how = ByHand(UpdateCheck.Available);
@@ -650,54 +1071,93 @@ public static class SelfUpdate {
 		// The download's own folder, gone again if the update stops before the swap script takes it over.
 		string? work = null;
 
+		// Going back: the copy of the settings taken first - gone again if the swap never starts. It holds every saved login,
+		// and left behind it waited for good: nothing older ever went in to drop a setting, so every start read it again, and
+		// every try that stopped added another.
+		string? copy = null;
+		bool swapStarted = false;
+
 		try {
-			// Looked at again now it's this install's turn. The bedtime queue and "Update by itself" check for a skip and
-			// then start this on another thread, so an 'update skip' typed in between used to be too late.
-			if ((UpdateCheck.Available is { } known) && UpdateCheck.IsSkipped(known)) {
-				return SkippedStop(known);
+			string tag, body = "", url = "";
+			long size = 0;
+
+			if (fromFile != null) {
+				// Looked at again here, not only when the command was typed: the file could have changed in between.
+				(string? inZip, Said problem) = LookInZip(fromFile);
+
+				if (inZip == null) {
+					return Fail(problem);
+				}
+
+				tag = inZip;
+				Progress = $"installing {tag} from a file";
+				Log.Good(new Said("installing nocat.farm {0} from {1}", tag, Path.GetFileName(fromFile)));
+			} else {
+				// Looked at again now it's this install's turn. The bedtime queue and "Update by itself" check for a skip and
+				// then start this on another thread, so an 'update skip' typed in between used to be too late.
+				if ((toVersion == null) && (UpdateCheck.Available is { } known) && UpdateCheck.IsSkipped(known)) {
+					return SkippedStop(known);
+				}
+
+				Progress = toVersion != null ? $"asking GitHub for {toVersion}" : "asking GitHub what's newest";
+				Log.Good(toVersion != null ? new Said("update: asking GitHub for {0}", toVersion) : new Said("update: asking GitHub what's newest"));
+
+				string json;
+
+				try {
+					json = await Http.GetStringAsync(toVersion != null ? TagFeed(toVersion) : Feed, ct).ConfigureAwait(false);
+				} catch (HttpRequestException e) when ((toVersion != null) && (e.StatusCode == System.Net.HttpStatusCode.NotFound)) {
+					// Only the last five releases are kept: one deleted since the list was read.
+					return Fail(new Said("update failed: {0} isn't on GitHub any more - 'update versions' lists what is", toVersion));
+				} catch (Exception e) when (e is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested) {
+					// Where it asked, for the file: GitHub's refusal (a rate limit's 403) is in the message, status included.
+					Log.Debug($"update: asking {UpdateCheck.FeedWhere()} failed: {Log.Describe(e)}");
+
+					return Fail(new Said("update failed: couldn't reach GitHub ({0}) - nothing changed", Log.Scrub(e.Message)));
+				}
+
+				using JsonDocument doc = JsonDocument.Parse(json);
+				JsonElement root = doc.RootElement;
+
+				tag = root.TryGetProperty("tag_name", out JsonElement t) ? t.GetString() ?? "" : "";
+				body = root.TryGetProperty("body", out JsonElement nb) ? nb.GetString() ?? "" : "";
+
+				if (tag.Length == 0) {
+					return Fail(toVersion != null
+						? new Said("update failed: GitHub gave nothing for {0} - try again soon", toVersion)
+						: new Said("update failed: GitHub gave no latest release - try again soon"));
+				}
+
+				// A version asked for by name is that version, newer or older - only not the one running.
+				if (toVersion != null) {
+					if (UpdateCheck.Compare(tag, Build.Version) == 0) {
+						return $"already on {Build.Version} - nothing to do";
+					}
+				} else if (!UpdateCheck.IsNewerThanThisBuild(tag)) {
+					return $"already on the newest release ({Build.Version}) - nothing to do";
+				}
+
+				if (UpdateCheck.IsSkipped(tag)) {
+					return SkippedStop(tag);
+				}
+
+				// Closed while GitHub was asked: nothing downloaded for an app on its way out.
+				if (Commands.ExitRequested) {
+					return Fail(new Said("update stopped - nocat.farm was closed first; nothing changed"));
+				}
+
+				// The zip for this machine - not the source tarballs GitHub adds to every release by itself, and not
+				// the Linux builds that sit beside the Windows one.
+				if (ZipForThisMachine(root) is not ({ } found, long length)) {
+					return Fail(new Said("update failed: {0} has no download yet - try again later", tag));
+				}
+
+				(url, size) = (found, length);
 			}
 
-			Progress = "asking GitHub what's newest";
-			Log.Good("update: asking GitHub what's newest");
-
-			string json;
-
-			try {
-				json = await Http.GetStringAsync(Feed, ct).ConfigureAwait(false);
-			} catch (Exception e) when (e is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested) {
-				// Where it asked, for the file: GitHub's refusal (a rate limit's 403) is in the message, status included.
-				Log.Debug($"update: asking {UpdateCheck.FeedWhere()} failed: {Log.Describe(e)}");
-
-				return Fail(new Said("update failed: couldn't reach GitHub ({0}) - nothing changed", Log.Scrub(e.Message)));
-			}
-
-			using JsonDocument doc = JsonDocument.Parse(json);
-			JsonElement root = doc.RootElement;
-
-			string tag = root.TryGetProperty("tag_name", out JsonElement t) ? t.GetString() ?? "" : "";
-			string body = root.TryGetProperty("body", out JsonElement nb) ? nb.GetString() ?? "" : "";
-
-			if (tag.Length == 0) {
-				return Fail(new Said("update failed: GitHub gave no latest release - try again soon"));
-			}
-
-			if (!UpdateCheck.IsNewerThanThisBuild(tag)) {
-				return $"already on the newest release ({Build.Version}) - nothing to do";
-			}
-
-			if (UpdateCheck.IsSkipped(tag)) {
-				return SkippedStop(tag);
-			}
-
-			// Closed while GitHub was asked: nothing downloaded for an app on its way out.
-			if (Commands.ExitRequested) {
-				return Fail(new Said("update stopped - nocat.farm was closed first; nothing changed"));
-			}
-
-			// The zip for this machine - not the source tarballs GitHub adds to every release by itself, and not
-			// the Linux builds that sit beside the Windows one.
-			if (ZipForThisMachine(root) is not ({ } url, long size)) {
-				return Fail(new Said("update failed: {0} has no download yet - try again later", tag));
+			// Too old to tell the swap script it started: stopped here, before the settings are saved or an account signs out.
+			if (TooOld(tag) is { } tooOld) {
+				return Fail(tooOld);
 			}
 
 			// Another copy running from this folder (on a config folder of its own): replacing the files under it, and
@@ -716,60 +1176,71 @@ public static class SelfUpdate {
 
 			string zip = Path.Combine(work, "release.zip");
 
-			Progress = $"downloading {tag}";
-			Log.Good(new Said("update: downloading {0} ({1}MB)", tag, size / 1048576));
-
-			// By hand rather than CopyToAsync, so it can say how far along it is. A 50MB download on a slow line
-			// takes minutes, and "downloading" followed by silence looked exactly like a hang.
+			// When it started, for the "in 3s" the new version says it took.
 			DateTime started = DateTime.UtcNow;
 
-			try {
-			await using (Stream from = await Http.GetStreamAsync(url, ct).ConfigureAwait(false))
-			await using (FileStream to = File.Create(zip)) {
-				byte[] buffer = new byte[81920];
-				long done = 0;
-				int lastTenth = 0;
-				DateTime lastSaid = DateTime.UtcNow;   // the first progress line only once it has taken 15 seconds
-				int read;
+			if (fromFile != null) {
+				// Copied into the update's own folder, like a download: the file the command named can be moved, changed or
+				// deleted while the accounts sign out, and the swap script must still find exactly what was checked.
+				try {
+					File.Copy(fromFile, zip, true);
+				} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+					return Fail(new Said("update failed: couldn't read {0} ({1}) - nothing changed", Path.GetFileName(fromFile), Log.Scrub(e.Message)));
+				}
+			} else {
+				Progress = $"downloading {tag}";
+				Log.Good(new Said("update: downloading {0} ({1}MB)", tag, size / 1048576));
 
-				// A connection that dies without closing sends nothing, ever - and the read waited for ever with it,
-				// the update stuck "busy" until a restart. Each read gets a minute; the clock restarts on every one.
-				using CancellationTokenSource stall = CancellationTokenSource.CreateLinkedTokenSource(ct);
+				// By hand rather than CopyToAsync, so it can say how far along it is. A 50MB download on a slow line
+				// takes minutes, and "downloading" followed by silence looked exactly like a hang.
+				try {
+				await using (Stream from = await Http.GetStreamAsync(url, ct).ConfigureAwait(false))
+				await using (FileStream to = File.Create(zip)) {
+					byte[] buffer = new byte[81920];
+					long done = 0;
+					int lastTenth = 0;
+					DateTime lastSaid = DateTime.UtcNow;   // the first progress line only once it has taken 15 seconds
+					int read;
 
-				while ((read = await ReadWithin(from, buffer, stall).ConfigureAwait(false)) > 0) {
-					await to.WriteAsync(buffer.AsMemory(0, read), ct).ConfigureAwait(false);
-					done += read;
+					// A connection that dies without closing sends nothing, ever - and the read waited for ever with it,
+					// the update stuck "busy" until a restart. Each read gets a minute; the clock restarts on every one.
+					using CancellationTokenSource stall = CancellationTokenSource.CreateLinkedTokenSource(ct);
 
-					if (size <= 0) {
-						continue;
-					}
+					while ((read = await ReadWithin(from, buffer, stall).ConfigureAwait(false)) > 0) {
+						await to.WriteAsync(buffer.AsMemory(0, read), ct).ConfigureAwait(false);
+						done += read;
 
-					int pct = (int) (done * 100 / size);
-					double secs = (DateTime.UtcNow - started).TotalSeconds;
-					// Time left only once there's a minute or more of it - "about 1m left" a second before the end is noise.
-					double leftSecs = (secs > 2) && (done > 0) ? (size - done) * secs / done : 0;
-					int leftMin = leftSecs >= 60 ? (int) Math.Round(leftSecs / 60) : 0;
-					Progress = $"downloading {tag} - {pct}%";
+						if (size <= 0) {
+							continue;
+						}
 
-					// Into the log on a slow download only - a quarter at a time, at least 15 seconds apart. Every tenth
-					// was eleven lines for a download that takes five seconds, most of a small window. The dashboard shows
-					// Progress live either way.
-					if ((pct / 25 > lastTenth) && (pct < 100) && (DateTime.UtcNow - lastSaid > TimeSpan.FromSeconds(15))) {
-						lastTenth = pct / 25;
-						lastSaid = DateTime.UtcNow;
-						Log.Good(leftMin > 0
-							? new Said("update: {0} {1}% · {2} of {3}MB · about {4}m left", Bar(pct), pct, done / 1048576, size / 1048576, leftMin)
-							: new Said("update: {0} {1}% · {2} of {3}MB", Bar(pct), pct, done / 1048576, size / 1048576));
+						int pct = (int) (done * 100 / size);
+						double secs = (DateTime.UtcNow - started).TotalSeconds;
+						// Time left only once there's a minute or more of it - "about 1m left" a second before the end is noise.
+						double leftSecs = (secs > 2) && (done > 0) ? (size - done) * secs / done : 0;
+						int leftMin = leftSecs >= 60 ? (int) Math.Round(leftSecs / 60) : 0;
+						Progress = $"downloading {tag} - {pct}%";
+
+						// Into the log on a slow download only - a quarter at a time, at least 15 seconds apart. Every tenth
+						// was eleven lines for a download that takes five seconds, most of a small window. The dashboard shows
+						// Progress live either way.
+						if ((pct / 25 > lastTenth) && (pct < 100) && (DateTime.UtcNow - lastSaid > TimeSpan.FromSeconds(15))) {
+							lastTenth = pct / 25;
+							lastSaid = DateTime.UtcNow;
+							Log.Good(leftMin > 0
+								? new Said("update: {0} {1}% · {2} of {3}MB · about {4}m left", Bar(pct), pct, done / 1048576, size / 1048576, leftMin)
+								: new Said("update: {0} {1}% · {2} of {3}MB", Bar(pct), pct, done / 1048576, size / 1048576));
+						}
 					}
 				}
-			}
-			} catch (OperationCanceledException) when (!ct.IsCancellationRequested) {
-				return Fail(new Said("update failed: download stalled for a minute - try again"));
-			} catch (Exception e) when (e is HttpRequestException or IOException && !ct.IsCancellationRequested) {
-				// Which address, for the file: a refused download (a 404 for a release still uploading) says its status in the message.
-				Log.Debug($"update: downloading {Log.Where(Uri.TryCreate(url, UriKind.Absolute, out Uri? address) ? address : null)} failed: {Log.Describe(e)}");
+				} catch (OperationCanceledException) when (!ct.IsCancellationRequested) {
+					return Fail(new Said("update failed: download stalled for a minute - try again"));
+				} catch (Exception e) when (e is HttpRequestException or IOException && !ct.IsCancellationRequested) {
+					// Which address, for the file: a refused download (a 404 for a release still uploading) says its status in the message.
+					Log.Debug($"update: downloading {Log.Where(Uri.TryCreate(url, UriKind.Absolute, out Uri? address) ? address : null)} failed: {Log.Describe(e)}");
 
-				return Fail(new Said("update failed: download broke off ({0}) - try again", Log.Scrub(e.Message)));
+					return Fail(new Said("update failed: download broke off ({0}) - try again", Log.Scrub(e.Message)));
+				}
 			}
 
 			// A truncated download extracts to a broken install. Check before touching anything.
@@ -779,7 +1250,7 @@ public static class SelfUpdate {
 				return Fail(new Said("update failed: download stopped at {0} of {1}MB - try again", got / 1048576, size / 1048576));
 			}
 
-			Log.Good(new Said("update: {0}MB downloaded - unpacking", got / 1048576));
+			Log.Good(fromFile != null ? new Said("update: {0}MB copied - unpacking", got / 1048576) : new Said("update: {0}MB downloaded - unpacking", got / 1048576));
 			Progress = "unpacking";
 			string staged = Path.Combine(work, "staged");
 
@@ -803,6 +1274,25 @@ public static class SelfUpdate {
 
 			if (!File.Exists(exe)) {
 				return Fail(new Said("update failed: the download has no {0}", ExeName));
+			}
+
+			// config/, logs/ and backups/ are this install's own and never go in from a zip (see the remarks above). A release
+			// has none of them, but a zip made from somebody's folder ('update file') can: copied over, its settings, saved
+			// logins and logs replaced these - and putting the old version back didn't bring them back. A backup is named by its
+			// day, so theirs wrote over today's here. Taken out before the safety copy and the list of added files, so neither
+			// knows they were there.
+			try {
+				foreach (string dir in Directory.GetDirectories(payload)) {
+					string top = Path.GetFileName(dir);
+
+					if (top.Equals("config", StringComparison.OrdinalIgnoreCase) || top.Equals("logs", StringComparison.OrdinalIgnoreCase)
+						|| top.Equals("backups", StringComparison.OrdinalIgnoreCase)) {
+						Directory.Delete(dir, true);
+						Log.Info(new Said("update: left out the {0} folder in the zip - yours stays as it is", top + "/"));
+					}
+				}
+			} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+				return Fail(new Said("update failed: couldn't unpack ({0}) - disk full?", Log.Scrub(e.Message)));
 			}
 
 			string here = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
@@ -838,14 +1328,34 @@ public static class SelfUpdate {
 
 			await File.WriteAllTextAsync(script, OperatingSystem.IsWindows() ? WindowsScript(Environment.ProcessId) : UnixScript, ct).ConfigureAwait(false);
 
-			// Skipped while it downloaded: stopped here, before a single account is signed out for nothing.
-			if (UpdateCheck.IsSkipped(tag)) {
+			// Skipped while it downloaded: stopped here, before a single account is signed out for nothing. Not a file: that's
+			// chosen by hand, skipped or not - and a skip of the release with its number stays as it is, whatever happens to it.
+			if ((fromFile == null) && UpdateCheck.IsSkipped(tag)) {
 				return SkippedStop(tag);
 			}
 
-			Log.Publish(Topic.Installs, "nocat.farm", byItself
-				? new Said("Downloaded {0} ({1}MB) - installing it now, by itself. The accounts sign out one at a time; back in about a minute.", tag, got / 1048576)
-				: new Said("Downloaded {0} ({1}MB) - installing it now. The accounts sign out one at a time; back in about a minute.", tag, got / 1048576));
+			// An older version rewrites the settings files without the settings it doesn't know. Everything is saved first -
+			// here, before a single account is signed out, so a copy that can't be made stops the update with nothing changed -
+			// and the missing ones come back once a version that knows them starts again (Rollback.RestoreMissing).
+			bool goingBack = UpdateCheck.IsOlderThanThisBuild(tag);
+
+			if (goingBack) {
+				try {
+					copy = Rollback.Snapshot(tag);
+				} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+					Log.Failed("update: saving the settings before going back", e);
+
+					return Fail(new Said("update stopped - couldn't save your settings first ({0}); nothing changed", Log.Scrub(e.Message)));
+				}
+			}
+
+			Log.Publish(Topic.Installs, "nocat.farm", fromFile != null
+				? new Said("Installing nocat.farm {0} from {1}. The accounts sign out one at a time; back in about a minute.", tag, Path.GetFileName(fromFile))
+				: goingBack
+					? new Said("Downloaded {0} ({1}MB) - going back to it now. The accounts sign out one at a time; back in about a minute.", tag, got / 1048576)
+				: byItself
+					? new Said("Downloaded {0} ({1}MB) - installing it now, by itself. The accounts sign out one at a time; back in about a minute.", tag, got / 1048576)
+					: new Said("Downloaded {0} ({1}MB) - installing it now. The accounts sign out one at a time; back in about a minute.", tag, got / 1048576));
 
 			await SignOutOneByOneAsync(tag, signedOut, ct).ConfigureAwait(false);
 
@@ -896,7 +1406,7 @@ public static class SelfUpdate {
 				swap.Environment["NF_EXE"] = ProgramPath(Environment.ProcessPath, here, ExeName);
 
 				// Started from start.command on a Mac: the new version opens the same way, in a Terminal window of its own.
-				if (OperatingSystem.IsMacOS() && (Environment.GetEnvironmentVariable("NOCATFARM_STARTER") == "start.command")) {
+				if (OpensInTerminal) {
 					swap.Environment["NF_TERMINAL"] = "1";
 				}
 			}
@@ -910,11 +1420,15 @@ public static class SelfUpdate {
 				swap.Environment["NF_ARGS"] = RelaunchArgs();
 			}
 			swap.Environment["NF_OK"] = okFile;
-			swap.Environment["NF_TAG"] = tag.TrimStart('v', 'V');
+			// From a file, marked as such: if it doesn't start, it's put back like any update - but a version from a file isn't
+			// skipped afterwards, or a test build that crashed would hide the real release with the same number. An older
+			// version gone back to isn't skipped either, and is said as what it was - nor a newer one asked for by name, whose
+			// skip goes back to what it was.
+			swap.Environment["NF_TAG"] = (fromFile != null ? FromFileMark : goingBack ? BackMark : (toVersion != null) ? ToMark : "") + tag.TrimStart('v', 'V');
 
 			// The last moment a skip can still win: the notes and the swap go under the same lock 'update skip' takes, so it
 			// lands either before them and nothing is started, or after and is told it's too late - never in between.
-			bool swapped = HandOver(tag, () => {
+			bool swapped = HandOver(fromFile == null ? tag : null, () => {
 				// A note for the version that comes back up, so its first line can say what just happened. The window
 				// that showed the download closes a moment later and the new one starts empty - on a quick download
 				// the whole thing was over before anyone saw it, and nothing afterwards said an update had happened.
@@ -937,7 +1451,23 @@ public static class SelfUpdate {
 				Progress = "restarting into " + tag;
 				Log.Good(new Said("update: all signed out - restarting into {0}", tag));
 
-				Process.Start(swap);
+				StartSwap(swap);
+				swapStarted = true;
+
+				// Going back: the version it came from is skipped, so the older one doesn't offer it - or put it straight back
+				// by itself in the night - the moment it starts. The older version reads the same file. A release newer than
+				// that one is announced as usual, and 'update accept' brings this one back. Once the swap has really started:
+				// one that couldn't be started leaves nothing skipped.
+				// Not when the newest release is newer than this one: that's the one the older version offers, and a skip already
+				// there (typed for it) stays. The skip as it was is kept, to go back if the older version doesn't go in.
+				// Any version asked for by name keeps it too: one that doesn't start puts the skip back as it was.
+				if (goingBack || (toVersion != null)) {
+					KeepSkipBefore(tag);
+				}
+
+				if (goingBack && (Rollback.HoldOff(tag) is { } hold)) {
+					UpdateCheck.Skipped = hold;
+				}
 			});
 
 			if (!swapped) {
@@ -953,7 +1483,7 @@ public static class SelfUpdate {
 
 			handedOver = true;   // stays busy from here: the swap script owns the folder until this copy has gone
 
-			Commands.RequestExit();
+			ExitForSwap();
 
 			return null;
 		} catch (OperationCanceledException) when (ct.IsCancellationRequested) {
@@ -965,6 +1495,10 @@ public static class SelfUpdate {
 
 			return Fail(new Said("update failed: {0} - nothing changed", Log.Scrub(e.Message)));
 		} finally {
+			if ((copy != null) && !swapStarted) {
+				Rollback.Discard(copy);
+			}
+
 			if (!handedOver) {
 				Volatile.Write(ref _busy, 0);
 

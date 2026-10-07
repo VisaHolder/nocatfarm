@@ -159,6 +159,7 @@ public static class Tutorial {
 			"  set <name> UnpackBoosterPacks true    open booster packs that land in the inventory",
 			"",
 			"  booster <name>                        gems, and which games can be made into packs",
+			"  freegames all                         look for free games now",
 			"  freeitems all                         look for free event items now",
 			"",
 			"A gift is never declined. Turn AcceptGiftedGames off to decide each gifted game yourself.",

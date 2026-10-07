@@ -53,8 +53,11 @@ function Assert-Clean([string]$dir) {
     $bad = @()
     $bad += Get-ChildItem $dir -Recurse -Force -Directory -ErrorAction SilentlyContinue |
             Where-Object { $_.Name -in 'config','logs','tokens','state','authenticators' }
+    # backups/ is the 'backup' command's folder, every saved login in it - next to the program, not in config/. And no zip
+    # belongs in a package at all: one inside is a backup, a settings copy or an old release that slipped in.
+    $bad += Get-ChildItem $dir -Force -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -eq 'backups' }
     $bad += Get-ChildItem $dir -Recurse -Force -File -ErrorAction SilentlyContinue |
-            Where-Object { $_.Extension -in '.token','.access','.key' -or $_.Name -like 'netlog-*' }
+            Where-Object { $_.Extension -in '.token','.access','.key','.zip' -or $_.Name -like 'netlog-*' }
 
     if ($bad) {
         Write-Host 'ABORTING - personal / config data found in the build output:' -ForegroundColor Red

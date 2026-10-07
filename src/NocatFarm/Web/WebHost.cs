@@ -1354,9 +1354,26 @@ public sealed class WebHost : IAsyncDisposable {
 				return Results.Json(new { output = "" });
 			}
 
-			string output = await Commands.RunAsync(_mgr, body.Line).ConfigureAwait(false);
+			// Typed on this PC itself, or from somewhere else (a phone, the internet): a few commands - 'update file' - only work
+			// at this PC.
+			string output = AtThisPc(ctx)
+				? await Commands.RunAtThisPcAsync(_mgr, body.Line, "dashboard on this PC").ConfigureAwait(false)
+				: await Commands.RunLoggedAsync(_mgr, body.Line, "dashboard from another device").ConfigureAwait(false);
 
-			return Results.Json(new { output });
+			return Results.Json(CommandAnswer(body.Line, output));
+		});
+
+		// The Console's saved up-arrow list, asked about once the page is signed in: the lines that hold a secret are dropped.
+		// Before the page asked, every line typed went in the browser's storage and stayed there - a password pasted at the
+		// prompt, a product key.
+		app.MapPost("/api/command/history", async (HttpContext ctx) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			HistoryRequest? body = await ReadJsonAsync<HistoryRequest>(ctx).ConfigureAwait(false);
+
+			return Results.Json(new { Lines = HistoryKept(body?.Lines ?? []) });
 		});
 
 		// Installing an update, only ever because the button was pressed. There is no GET here and no schedule
@@ -1471,6 +1488,31 @@ public sealed class WebHost : IAsyncDisposable {
 			return Results.Json(new {
 				Ok = failure == null,
 				Message = failure ?? Loc.T("Downloading. It restarts by itself when it lands.")
+			});
+		});
+
+		// Beside the update controls: whether this page is open on this PC - only there can "Install from a file" open its
+		// window - and, asked for with list=1, the older versions still on GitHub to go back to. Going back itself is 'update to'
+		// through /api/command: the same rights as the Update button, signed in from anywhere.
+		app.MapGet("/api/update/versions", async (HttpContext ctx, int? list) => {
+			if (!Authorised(ctx)) {
+				return Unauthorised();
+			}
+
+			bool here = AtThisPc(ctx);
+			(List<string>? all, Said? problem) = (list == 1) && SelfUpdate.Supported
+				? await UpdateCheck.ReleasesAsync(fresh: false, ctx.RequestAborted).ConfigureAwait(false)
+				: ([], null);
+			string[] older = all?.Where(static v => UpdateCheck.IsOlderThanThisBuild(v)).ToArray() ?? [];
+
+			return Results.Json(new {
+				Current = Build.Version,
+				CanSelfUpdate = SelfUpdate.Supported,
+				AtThisPc = here,
+				CanPick = here && Commands.CanPickFile,
+				Older = older,
+				Holds = HoldsFor(older),
+				Problem = all == null ? new Said("couldn't reach GitHub to check ({0}) - try again in a minute", problem).ToString() : null
 			});
 		});
 
@@ -2413,10 +2455,21 @@ public sealed class WebHost : IAsyncDisposable {
 	/// authenticator seeds and the per-account proxy password ended up being served to the browser in clear
 	/// while the UI cheerfully reported them as "not set".
 	/// </summary>
+	/// <remarks>
+	/// A proxy's address goes without a user name and password typed into it (Settings.ProxyShown): 'user:pass@host:port'
+	/// went to the browser as saved, a password like any other. The page shows where it goes and can still change it; sent
+	/// back as it came, the saved one is kept (<see cref="KeepSecrets{T}"/>).
+	/// </remarks>
 	private static T Redact<T>(T config, IReadOnlyList<SettingDef> defs, out List<string> wereSet) where T : class {
 		wereSet = [];
 
 		foreach (SettingDef def in defs) {
+			if (Settings.IsProxy(def) && (typeof(T).GetProperty(def.Name) is { CanWrite: true } proxy) && (proxy.GetValue(config) is string address)) {
+				proxy.SetValue(config, Settings.ProxyShown(address));
+
+				continue;
+			}
+
 			if (def.Kind != SettingKind.Secret) {
 				continue;
 			}
@@ -2443,8 +2496,20 @@ public sealed class WebHost : IAsyncDisposable {
 	/// Same reasoning as Redact: driven off the registry, because the by-hand version protected two secrets and
 	/// would have silently wiped the other three on every save from the dashboard.
 	/// </summary>
+	/// <remarks>
+	/// A proxy sent back as <see cref="Redact{T}"/> showed it - without its password - is the one saved: a page with no Base
+	/// (an old one, a script) sends every field, and it was saved without the password the page never had.
+	/// </remarks>
 	private static void KeepSecrets<T>(T incoming, T existing, IReadOnlyList<SettingDef> defs) where T : class {
 		foreach (SettingDef def in defs) {
+			if (Settings.IsProxy(def) && (typeof(T).GetProperty(def.Name) is { CanWrite: true } proxy)
+				&& (proxy.GetValue(incoming) is string sentProxy) && (proxy.GetValue(existing) is string storedProxy)
+				&& (sentProxy != storedProxy) && (sentProxy == Settings.ProxyShown(storedProxy))) {
+				proxy.SetValue(incoming, storedProxy);
+
+				continue;
+			}
+
 			if (def.Kind != SettingKind.Secret) {
 				continue;
 			}
@@ -2810,11 +2875,15 @@ public sealed class WebHost : IAsyncDisposable {
 	/// Their API really does serve things like "-107 waiting to be verified" from time to time. Believing one
 	/// puts a nonsense figure on screen; caching one keeps it there long after the API has recovered.
 	/// </summary>
-	private static bool Believable((int Points, int PendingPoints)? user) =>
+	/// <remarks>The 'rep4rep points' command asks the same, so the dashboard and the command agree on what's nonsense.</remarks>
+	internal static bool Believable((int Points, int PendingPoints)? user) =>
 		user is null or { Points: >= 0, PendingPoints: >= 0 };
 
+	/// <summary>The last sensible rep4rep balance the dashboard got, or null when it has none yet.</summary>
+	internal (int Points, int PendingPoints)? LastSensiblePoints => CachedPoints();
+
 	/// <summary>The only place the points cache is written, so nothing can slip past the check above.</summary>
-	private void RememberPoints(int points, int pending) {
+	internal void RememberPoints(int points, int pending) {
 		if (Believable((points, pending))) {
 			_pointsCache = new PointsSnapshot(points, pending, DateTime.UtcNow);
 		}
@@ -2853,6 +2922,20 @@ public sealed class WebHost : IAsyncDisposable {
 
 		return !thisPc && IsInternet(ip);
 	}
+
+	/// <summary>
+	/// The request came from this PC itself - not a phone on the Wi-Fi, not the internet, and not the internet through a proxy
+	/// on this PC. What 'update file' needs: it puts in a program from a file on this PC.
+	/// </summary>
+	internal static bool AtThisPc(HttpContext ctx) => WhoIsSigningIn(ctx).ThisPc;
+
+	/// <summary>
+	/// For the "go back" dialog: for each older version, the version going back to it would hold off (null for none) - asked
+	/// of <see cref="Rollback.HoldOff"/>, as 'update to' asks it, so the page says what will happen. It said this version
+	/// every time: wrong when nothing is held off (a newer release is out) and when the newest release is, instead.
+	/// </summary>
+	internal static Dictionary<string, string?> HoldsFor(string[] older) =>
+		older.Distinct(StringComparer.Ordinal).ToDictionary(static v => v, static v => Rollback.HoldOff(v)?.TrimStart('v', 'V'), StringComparer.Ordinal);
 
 	/// <summary>Shut to the internet after too many wrong guesses, and this visitor is from the internet.</summary>
 	private bool ShutToThis(HttpContext ctx) => FromOutside(ctx) && InternetShut();
@@ -3084,6 +3167,21 @@ public sealed class WebHost : IAsyncDisposable {
 	private sealed class CommandRequest {
 		public string? Line { get; set; }
 	}
+
+	private sealed class HistoryRequest {
+		public List<string?>? Lines { get; set; }
+	}
+
+	/// <summary>
+	/// What /api/command answers: the reply, whether the line holds a secret (so the page doesn't keep it for the up arrow),
+	/// and the line as it may be shown - the page echoed what was typed, a password after 'add' or a product key and all.
+	/// </summary>
+	internal static object CommandAnswer(string line, string output) =>
+		new { output, holdsSecret = Commands.HoldsSecret(line), line = Commands.LineForLog(line) };
+
+	/// <summary>The lines of a saved up-arrow list that may stay: the 100 newest that hold no secret.</summary>
+	internal static List<string> HistoryKept(IEnumerable<string?> lines) =>
+		[.. lines.Take(100).OfType<string>().Where(static l => (l.Trim().Length > 0) && !Commands.HoldsSecret(l))];
 
 	private sealed class PromptRequest {
 		public string? Value { get; set; }

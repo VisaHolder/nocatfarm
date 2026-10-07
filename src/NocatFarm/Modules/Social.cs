@@ -373,11 +373,14 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 		// Flatten to one short line - a command reply (e.g. the whole /help wall) echoes back to whoever
 		// sent it, and logging its newlines and tab columns raw turned the log into a mess.
 		// By name, not the 17-digit number it used to print.
-		string oneLine = string.Join(' ', text.Split((char[]?) null, StringSplitOptions.RemoveEmptyEntries));
-		string said = oneLine.Length > 120 ? oneLine[..120] + "…" : oneLine;
 		// From one of your own accounts it's the answer to a command you sent it from this one - you read it in your chat
 		// already. On screen it read as a stranger's message: "new: message from kylro: ACCOUNT STATE UPTIME ...".
 		bool own = SteamNames.IsOwn(from);
+		// Masked as the command log masks: a command typed in a chat ('/set new SteamPassword ...', '/answer ...', '/redeem
+		// KEY') went in word for word before it was even looked at - a master's or not - and one of your own accounts
+		// answering '/2fa' sends its codes: from one, a code of letters alone ('BCDFG') or digits alone is masked as well.
+		string oneLine = string.Join(' ', Commands.MessageForLog(text, own).Split((char[]?) null, StringSplitOptions.RemoveEmptyEntries));
+		string said = Columns.ClipChars(oneLine, 121);
 		_ = Task.Run(async () => {
 			Said line = new("message from {0}: {1}", await SteamNames.OfAsync(Bot, from).ConfigureAwait(false), said);
 
@@ -535,8 +538,13 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 		}
 
 		try {
-			Log.Info(new Said("command from {0}: {1}", who, Commands.ForLog(command)), Bot.Name);   // a secret typed in chat stays out of the log
-			string answer = await Commands.RunAsync(command, Bot.Name).ConfigureAwait(false);
+			Log.Info(new Said("command from {0}: {1}", who, Commands.LineForLog(command)), Bot.Name);   // a secret typed in chat stays out of the log
+			// A slow one ('queue', 'freegames', 'sell') answers again here when it's done: 'log' is refused in Steam chat.
+			string answer = await Commands.RunAsync(command, Bot.Name, done => Send(from, done.Length > 1900 ? done[..1900] + "\n… (cut short)" : done))
+				.ConfigureAwait(false);
+
+			// The reply into the log file too, masked - refused or not, what was said back is on record.
+			Commands.LogExchange($"steam chat {Bot.Name} from {who}", command, answer);
 
 			if (string.IsNullOrWhiteSpace(answer)) {
 				answer = "done";
@@ -548,7 +556,7 @@ public sealed class Social(Bot bot) : BotModule(bot) {
 			}
 
 			Bot.SendChatMessage(from, answer);
-			Log.Info(new Said("answered {0} ({1}) in {2}s", who, command.Split(' ')[0], (int) (DateTime.UtcNow - received).TotalSeconds), Bot.Name);
+			Log.Info(new Said("answered {0} ({1}) in {2}s", who, Commands.CommandForLog(command), (int) (DateTime.UtcNow - received).TotalSeconds), Bot.Name);
 		} catch (Exception e) {
 			Log.Warn(new Said("the command from {0} failed: {1}", who, Log.Describe(e)), Bot.Name);
 			Log.StackToFile(e, Bot.Name);

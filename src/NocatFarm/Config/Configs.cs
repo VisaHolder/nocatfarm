@@ -1442,7 +1442,7 @@ public static class ConfigStore {
 		bool seenBefore = File.Exists(seen);
 
 		try {
-			BotConfig? cfg = JsonSerializer.Deserialize<BotConfig>(File.ReadAllText(file), Json);
+			BotConfig? cfg = JsonSerializer.Deserialize<BotConfig>(ReadShared(file), Json);
 
 			if (cfg == null) {
 				return null;
@@ -1477,7 +1477,10 @@ public static class ConfigStore {
 			// before - switching off overnight banking somebody had turned on since.
 			bool night = MigrateOvernight(cfg, name, seenBefore);
 			migrated |= night;
-			bool saved = !migrated || SaveBot(name, cfg);
+			// Not saved back once the file is gone: the account was removed while this read it, and the save brought it back.
+			// Looked at under the save lock, which a remove takes too: looked at before it, a remove in between had its file
+			// written back - every read saves while an update is on trial with a plain PIN (see Sealed), so not that rare.
+			bool saved = !migrated || SaveBot(name, cfg, onlyIfThere: true);
 
 			// Only once it's on disk: marked before a save that failed, the next start skipped the migration and banked
 			// the most-played games all night on a file that still said nothing was chosen.
@@ -1485,6 +1488,13 @@ public static class ConfigStore {
 				try {
 					Directory.CreateDirectory(Path.GetDirectoryName(seen)!);
 					File.WriteAllText(seen, "");
+
+					// And taken back if the account was removed while this read its file: written after the remove deleted the
+					// account's files, the mark stayed - and an account added again by that name skipped the migration. The file
+					// is deleted before the rest (see BotManager.RemoveAsync), so one still there now means the mark goes with them.
+					if (!File.Exists(file)) {
+						File.Delete(seen);
+					}
 				} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 					Log.Failed("noting that an account's overnight setting was looked at", e, name);
 				}
@@ -1502,7 +1512,11 @@ public static class ConfigStore {
 	}
 
 	/// <returns>False when nothing reached the disk.</returns>
-	public static bool SaveBot(string name, BotConfig cfg) {
+	public static bool SaveBot(string name, BotConfig cfg) => SaveBot(name, cfg, onlyIfThere: false);
+
+	/// <param name="onlyIfThere">Only over a file that's still there, looked at under the lock - for a read saving what it
+	/// read: a removed account isn't written back.</param>
+	private static bool SaveBot(string name, BotConfig cfg, bool onlyIfThere) {
 		try {
 			Directory.CreateDirectory(ConfigDir);
 
@@ -1513,13 +1527,17 @@ public static class ConfigStore {
 					return false;
 				}
 
+				if (onlyIfThere && !File.Exists(Path.Combine(ConfigDir, name + ".json"))) {
+					return false;
+				}
+
 				// The secrets go to disk encrypted, but the config in memory stays readable - so a COPY is written
 				// rather than the live object. Encrypting in place would leave every other part of the program
 				// holding ciphertext where it expects a password.
 				//
 				// Copied inside the lock, like SaveGlobal. Copied before it, a module's save and a dashboard save that
 				// ran together could write in the opposite order to the one they copied in - older settings last.
-				BotConfig onDisk = Secrets.Available ? Sealed(cfg) : JsonSerializer.Deserialize<BotConfig>(JsonSerializer.Serialize(cfg, Json), Json)!;
+				BotConfig onDisk = Secrets.Available ? Sealed(cfg, name) : JsonSerializer.Deserialize<BotConfig>(JsonSerializer.Serialize(cfg, Json), Json)!;
 				AtomicFile.Write(Path.Combine(ConfigDir, name + ".json"), JsonSerializer.Serialize(onDisk, Json));
 			}
 
@@ -1538,7 +1556,7 @@ public static class ConfigStore {
 	/// meant anything that could read the folder - a sync client, a backup, somebody looking over a shoulder -
 	/// had the account. Hand-edited plain text still works: reading accepts either, and the next save seals it.
 	/// </summary>
-	private static BotConfig Sealed(BotConfig cfg) {
+	private static BotConfig Sealed(BotConfig cfg, string name) {
 		BotConfig copy = JsonSerializer.Deserialize<BotConfig>(JsonSerializer.Serialize(cfg, Json), Json)!;
 
 		copy.SteamPassword = Secrets.Protect(cfg.SteamPassword, cfg.SteamLogin);
@@ -1547,21 +1565,74 @@ public static class ConfigStore {
 		copy.AccountProxyPassword = Secrets.Protect(cfg.AccountProxyPassword, cfg.SteamLogin);
 
 		// The Family View PIN is a secret setting too - it was the one still written out in the clear.
-		// Left as it is while an update is on trial - the version before reads it plain (see SelfUpdate.OnTrial).
-		copy.SteamParentalCode = Core.SelfUpdate.OnTrial ? cfg.SteamParentalCode : Secrets.Protect(cfg.SteamParentalCode, cfg.SteamLogin);
+		// Left plain while an update is on trial if the file has it plain - the version before reads it plain (see
+		// SelfUpdate.OnTrial). One that was encrypted stays so: written plain, it sat in the clear in every backup and settings
+		// copy made until the trial was over.
+		copy.SteamParentalCode = Core.SelfUpdate.OnTrial && PinPlainOnDisk(name) ? cfg.SteamParentalCode : Secrets.Protect(cfg.SteamParentalCode, cfg.SteamLogin);
 
 		return copy;
+	}
+
+	/// <summary>
+	/// The Family View PIN in <paramref name="name"/>'s file is plain text now - or there's none yet, no file or no PIN in it.
+	/// Written encrypted then, a PIN set during the trial was one the version before couldn't read if the trial failed.
+	/// </summary>
+	private static bool PinPlainOnDisk(string name) {
+		try {
+			string file = Path.Combine(ConfigDir, name + ".json");
+
+			if (!File.Exists(file)) {
+				return true;
+			}
+
+			string? pin = JsonSerializer.Deserialize<BotConfig>(ReadShared(file), Json)?.SteamParentalCode;
+
+			return string.IsNullOrEmpty(pin) || Secrets.IsPlain(pin);
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException) {
+			return false;   // encrypted, then - never plain on a guess
+		}
+	}
+
+	/// <summary>
+	/// An account's file as text, read so that it can be deleted or saved over while it's open. Read with File.ReadAllText,
+	/// a reload that happened to be reading it made a 'remove' fail ("being used by another process"): the account went
+	/// from the list, its file stayed, and it was back at the next start.
+	/// </summary>
+	internal static string ReadShared(string file) {
+		using FileStream fs = new(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+		using StreamReader reader = new(fs);
+
+		return reader.ReadToEnd();
+	}
+
+	/// <summary>
+	/// Deletes <paramref name="path"/>, trying again a few times while something else has it open - a virus scanner or a
+	/// sync client looking at a file that was just written lets go in a moment. Throws the last error if it never does.
+	/// </summary>
+	internal static void DeleteFile(string path) {
+		for (int wait = 50; ; wait *= 2) {
+			try {
+				File.Delete(path);
+
+				return;
+			} catch (Exception e) when (e is (IOException or UnauthorizedAccessException) and not (FileNotFoundException or DirectoryNotFoundException) && (wait <= 400)) {
+				Thread.Sleep(wait);
+			}
+		}
 	}
 
 	public static bool DeleteBot(string name) {
 		try {
 			string p = Path.Combine(ConfigDir, name + ".json");
 
-			if (!File.Exists(p)) {
-				return false;
-			}
+			// Under the save lock, so a read saving the file back (see ReadBot) is either done before it goes or finds it gone.
+			lock (SaveGate) {
+				if (!File.Exists(p)) {
+					return false;
+				}
 
-			File.Delete(p);
+				DeleteFile(p);
+			}
 
 			return true;
 		} catch (Exception e) {
@@ -1623,7 +1694,7 @@ public static class ConfigStore {
 					}
 
 					try {
-						File.Delete(path);
+						DeleteFile(path);
 						deleted++;
 					} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
 						Log.Failed($"config: deleting {dir.Key}/{file}", e, name);

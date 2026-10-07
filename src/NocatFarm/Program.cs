@@ -231,9 +231,33 @@ if (singleInstance == null) {
 	return 1;
 }
 
+// Back on a version after going back to an older one: the settings the older one didn't know, and so left out when it
+// saved, are put back before anything reads them - only those (see Rollback). Said once the log is open.
+// Nothing in it may stop nocat.farm starting: whatever it didn't expect is said, and the settings load as they are.
+List<Rollback.Note> broughtBack;
+
+try {
+	broughtBack = Rollback.RestoreMissing();
+} catch (Exception e) {
+	broughtBack = [
+		new Rollback.Note(true, new Said("couldn't bring back the settings from {0} ({1}) - it tries again next start", Path.GetFileName(Rollback.Folder), Log.Scrub(e.Message))),
+		new Rollback.Note(false, default, $"rollback: {Log.Describe(e)}")
+	];
+}
+
 GlobalConfig global = ConfigStore.LoadGlobal();
 Live.Global = global;
 Log.Configure(global.FileLogging, global.Debug, root, global.LogRetentionDays);
+
+foreach (Rollback.Note note in broughtBack) {
+	if (note.Detail != null) {
+		Log.Debug(note.Detail);
+	} else if (note.Problem) {
+		Log.Warn(note.Line);
+	} else {
+		Log.Good(note.Line);
+	}
+}
 
 // Said before there was a file to say it in - so written again, now that there is one.
 if (ConfigStore.GlobalLoadProblem is { } configProblem) {
@@ -788,11 +812,12 @@ async Task ConsoleLoop(BotManager mgr, CancellationTokenSource cts) {
 			continue;
 		}
 
-		string output = await Commands.RunAsync(mgr, line).ConfigureAwait(false);
+		string output = await Commands.RunAtThisPcAsync(mgr, line, "console").ConfigureAwait(false);
 
 		if (output.Length > 0) {
+			// Masked as the log has it: the board scrolls the line out above itself, and 'add new login hunter2' stayed there.
 			if (Commands.Board is { Active: true } showing) {
-				showing.Show(line, output);
+				showing.Show(Commands.LineForLog(line), output);
 			} else {
 				Console.WriteLine(output);
 			}
@@ -861,7 +886,8 @@ string? ReadLine(CancellationToken ct) {
 
 				string result = buffer.ToString();
 
-				if (result.Trim().Length > 0 && !asked && Prompt.Pending == null) {
+				// Never a line with a secret in it either - a password typed after 'add', a product key - as the window keeps none.
+				if (result.Trim().Length > 0 && !asked && Prompt.Pending == null && !Commands.HoldsSecret(result)) {
 					typed.Insert(0, result);
 
 					if (typed.Count > 50) {

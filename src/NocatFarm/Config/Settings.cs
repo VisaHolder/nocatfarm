@@ -165,6 +165,23 @@ public static class Settings {
 		};
 	}
 
+	/// <summary>
+	/// What 'config' and 'set' say a setting is: <see cref="Show"/>, but a proxy's address without a user name and password
+	/// typed into it (<see cref="ProxyShown"/>) - 'config all' printed 'user:pass@host:port' as it was saved, on screen, in
+	/// the chats and in the log. <see cref="Show"/> itself stays the value: the dashboard compares settings with it.
+	/// </summary>
+	public static string Shown(object config, SettingDef def) => IsProxy(def) ? ProxyShown(Show(config, def)) : Show(config, def);
+
+	/// <summary>A proxy's address - the global one or an account's own - which can have a user name and password typed into it.</summary>
+	public static bool IsProxy(SettingDef? def) => def?.Name is nameof(GlobalConfig.WebProxy) or nameof(BotConfig.AccountProxy);
+
+	/// <summary>
+	/// A proxy's address as it may be shown: scheme://host:port when a user name and password are typed into it
+	/// ('user:pass@host:port'), "***" when that won't read as an address. Without an '@' there's no password in it, and it's as saved.
+	/// </summary>
+	public static string ProxyShown(string address) =>
+		address.Contains('@', StringComparison.Ordinal) ? Core.Bot.ProxyShown(address) ?? "***" : address;
+
 	public static string ChoiceLabel(SettingDef def, int value) {
 		foreach ((int Value, string Label) option in ParseChoices(def)) {
 			if (option.Value == value) {
@@ -385,6 +402,11 @@ public static class Settings {
 			default:
 				if ((def.Name == "WebTrustedProxies") && (Core.TrustedProxies.Unreadable(raw) is { } bad)) {
 					return $"'{bad}' isn't an address or a range like 172.16.0.0/12";
+				}
+
+				// Not said back: an address that won't parse is often one with the password typed into it (user:pass@host).
+				if ((def.Name is "WebProxy" or "AccountProxy") && (raw.Length > 0) && !Core.Bot.ProxyReadable(raw)) {
+					return $"{def.Label} has to be an address like http://host:port, and that one can't be used. A user name and password go in their own settings below it";
 				}
 
 				p.SetValue(config, raw);

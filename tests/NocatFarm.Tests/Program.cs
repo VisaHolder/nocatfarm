@@ -440,12 +440,6 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	List<string> words = [.. NocatFarm.Commands.All.SelectMany(static c => $"{c.Aliases}|{c.HiddenAliases}".Split('|', StringSplitOptions.RemoveEmptyEntries).Prepend(c.Name)).Select(static w => w.ToLowerInvariant())];
 	List<string> twice = [.. words.GroupBy(static w => w).Where(static g => g.Count() > 1).Select(static g => g.Key)];
 	Check("commands: no word reaches two commands", twice.Count == 0, string.Join(", ", twice));
-
-	Check("log: a secret setting's value is masked", NocatFarm.Commands.ForLog("set new SteamPassword hunter2") == "set new SteamPassword ***");
-	Check("log: a global secret too", NocatFarm.Commands.ForLog("/set WebPassword abc def") == "/set WebPassword ***");
-	Check("log: 'answer' is masked", NocatFarm.Commands.ForLog("answer hunter2") == "answer ***");
-	Check("log: an ordinary setting is left alone", NocatFarm.Commands.ForLog("set new FarmCards on") == "set new FarmCards on");
-	Check("log: other commands are left alone", NocatFarm.Commands.ForLog("status new") == "status new");
 }
 
 // ── reconnects: the wait grows, and stops at five minutes ─────────────────────────────────────────────────
@@ -3359,25 +3353,8 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	Check("discord counter: the long form is only used when it fits", new[] { ("a", 3, 3), ("kylro · old", 2, 3), ("8 cards today", 1, 1) }.All(x => { string r = Line(x.Item1, x.Item2, x.Item3); return !r.Contains("accounts") || r.Length <= fits; }));
 }
 
-// ── failures in the log: the reason is written down, the secrets never are ─────────────────────────────────────
+// ── failures in the log: the reason is written down, the secrets never are (the scrubber itself: the secrets table) ──
 {
-	string api = NocatFarm.Log.Scrub("GET /IPlayerService/GetOwnedGames/v1/?access_token=eyJhbGciOiJFZERTQSJ9.eyJpc3MiOiJyOjE.c2ln&steamid=7656 -> 401");
-	Check("scrub: a Web API access_token is hidden", !api.Contains("eyJ") && api.Contains("access_token=[hidden]") && api.Contains("steamid=7656"), api);
-	string jwt = NocatFarm.Log.Scrub("token was eyJhbGciOiJFZERTQSJ9.eyJpc3MiOiJyOjE.c2lnbmF0dXJl, refused");
-	Check("scrub: a bare Steam JWT is hidden", !jwt.Contains("eyJpc3M") && jwt.Contains("[hidden]") && jwt.EndsWith(", refused"), jwt);
-	string cookie = NocatFarm.Log.Scrub("Cookie: steamLoginSecure=76561198000000000%7C%7CeyJabc; sessionid=0123456789abcdef01234567");
-	Check("scrub: cookies are hidden", !cookie.Contains("76561198000000000") && !cookie.Contains("0123456789abcdef"), cookie);
-	string auth = NocatFarm.Log.Scrub("Authorization: Bot MTIzNDU2Nzg5MDEyMzQ1Njc4OTA.GhIjKl.abcdefghijklmnopqrstuvwxyz");
-	Check("scrub: a Discord bot token in a header is hidden", !auth.Contains("MTIzNDU2") && auth.Contains("Bot [hidden]"), auth);
-	string form = NocatFarm.Log.Scrub("POST apiToken body key=ABCDEF0123456789&password=hunter2&steamid=1");
-	Check("scrub: key= and password= are hidden", !form.Contains("ABCDEF0123456789") && !form.Contains("hunter2") && form.Contains("steamid=1"), form);
-	string r4rKey = NocatFarm.Log.Scrub("rep4rep said no to /pub-api/tasks?apiToken=abcdef123456&steamProfile=7656");
-	Check("scrub: rep4rep's apiToken is hidden", !r4rKey.Contains("abcdef123456") && r4rKey.Contains("steamProfile=7656"), r4rKey);
-	string proxy = NocatFarm.Log.Scrub("bad proxy 'http://farmer:s3cret@10.0.0.2:8080' (UriFormatException)");
-	Check("scrub: a proxy's user and password are hidden, the address kept", !proxy.Contains("s3cret") && !proxy.Contains("farmer") && proxy.Contains("http://[hidden]@10.0.0.2:8080"), proxy);
-	string plain = "trade offer #123 refused: AccessDenied (15) on steamcommunity.com/tradeoffer/123/accept";
-	Check("scrub: an ordinary failure line is left alone", NocatFarm.Log.Scrub(plain) == plain, NocatFarm.Log.Scrub(plain));
-
 	string tg = NocatFarm.Log.Where(new Uri("https://api.telegram.org/bot123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw/getUpdates?offset=5&timeout=50"));
 	Check("where: a Telegram URL loses the bot token and the query", tg == "api.telegram.org/bot[hidden]/getUpdates", tg);
 	string hook = NocatFarm.Log.Where(new Uri("https://discord.com/api/webhooks/1234567890/abcDEF-ghi_jkl.mno"));
@@ -5654,9 +5631,9 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 
 	Check("history: keeps the last 100", n == NocatFarm.Windows.CommandHistory.Keep, n.ToString());
 	string mw = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Windows", "MainWindow.cs"));
-	Check("history: an answer to a question (a password, a Steam Guard code) or a masked line is never remembered",
-		mw.Contains("Prompt.Question? question = Prompt.Current;", StringComparison.Ordinal)
-		&& mw.Contains("if ((question == null) && (Commands.ForLog(line) == line)) {", StringComparison.Ordinal));
+	Check("history: an answer to a question (a password, a Steam Guard code) or a line with a secret in it is never remembered",
+		mw.Contains("Prompt.Question? question) = _question.Enter(Prompt.Current);", StringComparison.Ordinal)
+		&& mw.Contains("if ((question == null) && !Commands.HoldsSecret(line)) {", StringComparison.Ordinal));
 }
 
 // ── who has been at the dashboard ──────────────────────────────────────────────────────────────────────────────────
@@ -7023,6 +7000,103 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 			await mgr.RemoveAsync("churn");
 		}
 		Check("remove: never an account left running with its file deleted (or a file with nothing running it)", mismatched == 0, $"{mismatched} of 25");
+
+		// A reload reading the file the moment it's removed. Read the way it reads, the read lets go of nothing: the file goes,
+		// and an add of the same name right after saves over it - the reload still holding the old one open.
+		string configs = NocatFarm.Config.ConfigStore.ConfigDir, stateDir = Path.Combine(configs, "state");
+		await mgr.AddAsync("held", new NocatFarm.Config.BotConfig { Enabled = false });
+		bool removedUnderRead, goneUnderRead;
+		NocatFarm.Core.Bot? addedUnderRead;
+		using (FileStream reading = new(Path.Combine(configs, "held.json"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete)) {
+			removedUnderRead = await mgr.RemoveAsync("held");
+			goneUnderRead = !File.Exists(Path.Combine(configs, "held.json")) && (mgr.Get("held") == null);
+			addedUnderRead = await mgr.AddAsync("held", new NocatFarm.Config.BotConfig { Enabled = false, Notes = "again" });
+		}
+		Check("remove while a reload reads the file: removed, and the file is gone with it", removedUnderRead && goneUnderRead, $"{removedUnderRead} {goneUnderRead}");
+		Check("remove while a reload reads the file: added again right after, the new file is the one on disk",
+			(addedUnderRead != null) && (NocatFarm.Config.ConfigStore.LoadBot("held")?.Notes == "again"), NocatFarm.Config.ConfigStore.LoadBot("held")?.Notes ?? "no file");
+		await mgr.RemoveAsync("held");
+		string configsCode = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Config", "Configs.cs"));
+		Check("remove: an account's file is read so it can still be deleted - never File.ReadAllText on it",
+			!configsCode.Contains("File.ReadAllText(file)", StringComparison.Ordinal) && configsCode.Contains("FileShare.ReadWrite | FileShare.Delete", StringComparison.Ordinal));
+
+		// Something else with it open for a moment (a virus scanner, a sync client): the delete waits for it, not given up.
+		await mgr.AddAsync("scanned", new NocatFarm.Config.BotConfig { Enabled = false });
+		Task<bool> removingScanned;
+		using (FileStream scanning = new(Path.Combine(configs, "scanned.json"), FileMode.Open, FileAccess.Read, FileShare.Read)) {
+			removingScanned = Task.Run(() => mgr.RemoveAsync("scanned"));
+			await Task.Delay(150);
+		}
+		bool removedScanned = await removingScanned;
+		Check("remove while the file is open elsewhere for a moment: tried again, and it's gone - not back at the next start",
+			removedScanned && !File.Exists(Path.Combine(configs, "scanned.json")) && (mgr.Get("scanned") == null), $"{removedScanned}");
+
+		// A file that can't be saved over: not added. Added, it ran on whatever the old file said.
+		// Windows only: a file held open there can't be saved over. Linux and macOS replace it by renaming, open or not, so
+		// the save goes through and there's nothing to refuse.
+		if (OperatingSystem.IsWindows()) {
+			string blockedFile = Path.Combine(configs, "blocked.json");
+			File.WriteAllText(blockedFile, "{\"Notes\":\"old\"}");
+			NocatFarm.Core.Bot? blocked;
+			using (FileStream locked = new(blockedFile, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+				blocked = await mgr.AddAsync("blocked", new NocatFarm.Config.BotConfig { Enabled = false, Notes = "new" });
+			}
+			Check("add: its file couldn't be saved - not added, nothing running on the old file", (blocked == null) && (mgr.Get("blocked") == null), blocked?.Cfg.Notes ?? "");
+			File.Delete(blockedFile);
+		}
+
+		// Hundreds of rounds at once, reloads reading every file all the while: an account runs exactly when its file is
+		// there, and a removed one leaves nothing behind - no file, no overnight mark. On trial after an update, with a plain
+		// Family View PIN, so every read saves the file again (see ConfigStore.Sealed): a reload's save lands right beside a
+		// remove, and found the file there just before the remove deleted it - and wrote it back.
+		int stressWrong = 0, stressLeft = 0;
+		FieldInfo stressTrialF = typeof(NocatFarm.Core.SelfUpdate).GetField("_trialOk", BindingFlags.NonPublic | BindingFlags.Static)!;
+		FieldInfo stressConfirmedF = typeof(NocatFarm.Core.SelfUpdate).GetField("_confirmed", BindingFlags.NonPublic | BindingFlags.Static)!;
+		object? stressTrialBefore = stressTrialF.GetValue(null), stressConfirmedBefore = stressConfirmedF.GetValue(null);
+		stressTrialF.SetValue(null, Path.Combine(tmpRoot, "started.txt"));
+		stressConfirmedF.SetValue(null, false);
+		bool stressResaves = false;
+		System.Diagnostics.Stopwatch stressTook = System.Diagnostics.Stopwatch.StartNew();
+		try {
+			using (CancellationTokenSource stop = new()) {
+				Task[] reloading = [.. Enumerable.Range(0, 2).Select(_ => Task.Run(async () => {
+					while (!stop.IsCancellationRequested) {
+						await mgr.SyncFromDiskAsync();
+					}
+				}))];
+				await Task.WhenAll(Enumerable.Range(0, 6).Select(k => Task.Run(async () => {
+					string n = "stress" + k;
+					for (int r = 0; r < 50; r++) {
+						await mgr.AddAsync(n, new NocatFarm.Config.BotConfig { Enabled = false, SteamParentalCode = "1234" });
+						await Task.WhenAll(Task.Run(() => mgr.RemoveAsync(n)), Task.Run(() => mgr.AddAsync(n, new NocatFarm.Config.BotConfig { Enabled = false, SteamParentalCode = "1234" })),
+							Task.Run(() => mgr.SyncFromDiskAsync()));
+						if ((mgr.Get(n) != null) != File.Exists(Path.Combine(configs, n + ".json"))) {
+							Interlocked.Increment(ref stressWrong);
+						}
+						await mgr.RemoveAsync(n);
+						if ((mgr.Get(n) != null) || File.Exists(Path.Combine(configs, n + ".json"))) {
+							Interlocked.Increment(ref stressLeft);
+						}
+					}
+				})));
+				stop.Cancel();
+				await Task.WhenAll(reloading);
+			}
+
+			// The PIN stays plain through every save, so each read really did save again.
+			await mgr.AddAsync("stresspin", new NocatFarm.Config.BotConfig { Enabled = false, SteamParentalCode = "1234" });
+			stressResaves = File.ReadAllText(Path.Combine(configs, "stresspin.json")).Contains("\"1234\"", StringComparison.Ordinal);
+			await mgr.RemoveAsync("stresspin");
+		} finally {
+			stressTrialF.SetValue(null, stressTrialBefore);
+			stressConfirmedF.SetValue(null, stressConfirmedBefore);
+		}
+		int marks = Directory.Exists(stateDir) ? Directory.GetFiles(stateDir, "overnight-stress*.seen").Length : 0;
+		Check("remove, 300 rounds beside reloads: on trial with a plain PIN, so every read saves the file again", stressResaves || !NocatFarm.Core.Secrets.Available);
+		Check("remove, 300 rounds beside reloads: running exactly when the file is there", stressWrong == 0, $"{stressWrong} of 300");
+		Check("remove, 300 rounds beside reloads: removed means gone - no file left to come back at the next start", stressLeft == 0, $"{stressLeft} of 300");
+		Check("remove, 300 rounds beside reloads: no overnight mark left behind for a removed account", marks == 0, $"{marks} left");
+		Check("remove, 300 rounds beside reloads: done in a few seconds", stressTook.Elapsed < TimeSpan.FromSeconds(20), $"{stressTook.Elapsed.TotalSeconds:0.0}s");
 		await mgr.RemoveAsync("synced");
 	} finally {
 		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
@@ -7619,7 +7693,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	string mw = File.ReadAllText(Path.Combine(root, "Windows", "MainWindow.cs")).Replace("\r\n", "\n");
 	string prog = File.ReadAllText(Path.Combine(root, "Program.cs")).Replace("\r\n", "\n");
 	Check("prompt: the window and the console answer the question they read, not 'whatever is up now'",
-		mw.Contains("Prompt.Question? question = Prompt.Current;", StringComparison.Ordinal) && mw.Contains("Prompt.Answer(question, line);", StringComparison.Ordinal)
+		mw.Contains("Prompt.Question? question) = _question.Enter(Prompt.Current);", StringComparison.Ordinal) && mw.Contains("Prompt.Answer(question, line);", StringComparison.Ordinal)
 		&& prog.Contains("Prompt.Answer(question, line);", StringComparison.Ordinal) && !mw.Contains("Prompt.Answer(line)", StringComparison.Ordinal));
 }
 
@@ -11152,7 +11226,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	string cfgSrc = File.ReadAllText(Path.Combine(root, "Config", "Configs.cs")).Replace("\r\n", "\n");
 	string backupSrc = File.ReadAllText(Path.Combine(root, "Core", "Backup.cs")).Replace("\r\n", "\n");
 	Check("overnight note: checked before reading, written after a good save, cleared by a restore",
-		(cfgSrc.IndexOf("bool seenBefore = File.Exists(seen);", StringComparison.Ordinal) < cfgSrc.IndexOf("BotConfig? cfg = JsonSerializer.Deserialize<BotConfig>(File.ReadAllText(file), Json);", StringComparison.Ordinal))
+		(cfgSrc.IndexOf("bool seenBefore = File.Exists(seen);", StringComparison.Ordinal) < cfgSrc.IndexOf("BotConfig? cfg = JsonSerializer.Deserialize<BotConfig>(ReadShared(file), Json);", StringComparison.Ordinal))
 		&& cfgSrc.Contains("if (!seenBefore && (!night || saved)) {", StringComparison.Ordinal)
 		&& backupSrc.Contains("@\"|state/overnight-(?<name>", StringComparison.Ordinal)
 		&& backupSrc.Contains("if (restored.Contains($\"state/overnight-{name}.seen\")) {", StringComparison.Ordinal)
@@ -12265,7 +12339,7 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 		Check("free games: the owned check comes before the activation is counted, and app giveaways wait for the library",
 			(subAt > 0) && (free5.IndexOf("if (AlreadyHas(Bot, freeSub)) {", subAt, StringComparison.Ordinal) is > 0 and int ownedAt)
 			&& (ownedAt < free5.IndexOf("_claims.Add(DateTime.UtcNow);", subAt, StringComparison.Ordinal))
-			&& free5.Contains("if ((app || pics) && !Bot.Library.Ready) {\n\t\t\t\tcontinue;", StringComparison.Ordinal)
+			&& free5.Contains("if ((app || pics) && !Bot.Library.Ready) {\n\t\t\t\t\tcontinue;", StringComparison.Ordinal)
 			&& free5.Contains("if (AlreadyHas(Bot, baseSub)) {", StringComparison.Ordinal));
 
 		// 7. Dashboard: a cross-site GET to the API is refused, a network share is never looked at, the switched-off check
@@ -14895,6 +14969,4717 @@ if (Environment.GetEnvironmentVariable("NOCAT_BANPAGES") is { Length: > 0 } banP
 	}
 }
 
+// ── freegames: the free-games look on demand, against a pretend store and change feed ───────────────────────────────
+{
+	const BindingFlags AnyInst = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+	const BindingFlags AnyStatic = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+	Type fgT = typeof(NocatFarm.Modules.FreeGames);
+	PropertyInfo fetchP = fgT.GetProperty("Fetch", AnyStatic)!, claimP = fgT.GetProperty("Claim", AnyStatic)!, pausesP = fgT.GetProperty("NoPauses", AnyStatic)!;
+	object? fetchBefore = fetchP.GetValue(null), claimBefore = claimP.GetValue(null);
+	FieldInfo giveawaysF = fgT.GetField("_giveaways", AnyStatic)!;
+	var verdicts = (IDictionary) fgT.GetField("Verdicts", AnyStatic)!.GetValue(null)!;
+	Type picsT = typeof(NocatFarm.Modules.FreeGames).Assembly.GetType("NocatFarm.Core.PicsWatch")!;
+	var picsFound = (IDictionary) picsT.GetField("Found", AnyStatic)!.GetValue(null)!;
+	Type candT = picsT.GetNestedType("Candidate", AnyStatic)!;
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-fg-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	List<NocatFarm.Core.Bot> made = [];
+
+	// The store, as the module asks it: its giveaway search, and each app's details and packages. Made-up apps, high numbers.
+	string search = "";
+	Dictionary<string, string> store = new(StringComparer.Ordinal) {
+		["3999001|basic"] = """{"3999001":{"success":true,"data":{"type":"game","name":"Fake Giveaway","is_free":false,"price_overview":{"discount_percent":100}}}}""",
+		["3999001|packages"] = """{"3999001":{"success":true,"data":{"package_groups":[{"subs":[{"packageid":5999001,"price_in_cents_with_discount":0}]}]}}}""",
+		["3999002|basic"] = """{"3999002":{"success":true,"data":{"type":"dlc","name":"Fake Supporter Pack","fullgame":{"appid":"3999003","name":"Fake Base"},"is_free":false,"price_overview":{"discount_percent":100}}}}""",
+		["3999003|basic"] = """{"3999003":{"success":true,"data":{"type":"game","name":"Fake Base","is_free":false,"price_overview":{"discount_percent":0}}}}""",
+		["3999004|basic"] = """{"3999004":{"success":true,"data":{"type":"game","name":"Fake Feed Game","is_free":false,"price_overview":{"discount_percent":100}}}}"""
+	};
+	int asked = 0;
+	Task<string?> FakeStore(string url, CancellationToken ct) {
+		Interlocked.Increment(ref asked);
+
+		if (url.Contains("/search/results/", StringComparison.Ordinal)) {
+			return Task.FromResult<string?>(search);
+		}
+
+		string app = System.Text.RegularExpressions.Regex.Match(url, @"appids=(\d+)").Groups[1].Value;
+		string kind = url.Contains("filters=packages", StringComparison.Ordinal) ? "packages" : "basic";
+
+		return Task.FromResult<string?>(store.TryGetValue(app + "|" + kind, out string? json) ? json : "{\"" + app + "\":{\"success\":false}}");
+	}
+	string Search(params uint[] apps) => System.Text.Json.JsonSerializer.Serialize(new {
+		success = 1, results_html = string.Concat(apps.Select(static a => $"<a href=\"https://store.example/app/{a}/\" data-ds-appid=\"{a}\">x</a>")), total_count = apps.Length
+	}, new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping });   // as the store sends it: \" and no <
+
+	List<(string Bot, uint Id, bool App)> claims = [];
+	// An account named here gets no usable answer to a claim - put off for hours, as a real one is.
+	HashSet<string> noAnswer = new(StringComparer.Ordinal);
+	// ...and this one's web sign-in drops while its claim is out.
+	string dropWebOf = "";
+	Task<NocatFarm.Modules.FreeGames.ClaimResult> FakeClaim(NocatFarm.Core.Bot b, uint id, bool app, CancellationToken ct) {
+		lock (claims) {
+			claims.Add((b.Name, id, app));
+		}
+
+		if (b.Name == dropWebOf) {
+			typeof(NocatFarm.Core.WebSession).GetProperty("Ready")!.SetValue(typeof(NocatFarm.Core.Bot).GetProperty("Web", AnyInst)!.GetValue(b), false);
+		}
+
+		return Task.FromResult((b.Name == dropWebOf) || noAnswer.Contains(b.Name)
+			? new NocatFarm.Modules.FreeGames.ClaimResult(false, SteamKit2.EPurchaseResultDetail.Timeout, new NocatFarm.Core.Said("no usable answer from Steam"))
+			: new NocatFarm.Modules.FreeGames.ClaimResult(true, SteamKit2.EPurchaseResultDetail.NoDetail, default));
+	}
+
+	var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+	var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+		.GetField("_bots", AnyInst)!.GetValue(mgr)!;
+	FieldInfo failedF = fgT.GetField("_failed", AnyInst)!, quietF = fgT.GetField("_quietUntil", AnyInst)!, lookingF = fgT.GetField("_looking", AnyInst)!;
+	string StateOf(string name) => Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", $"freegames-{name}.json");
+	object Candidate(uint sub, uint app) => Activator.CreateInstance(candT, sub, app, DateTime.UtcNow)!;
+
+	NocatFarm.Modules.FreeGames Ready(string name, int claimFree) {
+		var b = new NocatFarm.Core.Bot(name, new NocatFarm.Config.BotConfig { ClaimFree = claimFree });
+		typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(b, NocatFarm.Core.BotState.Online);
+		typeof(NocatFarm.Core.WebSession).GetProperty("Ready")!.SetValue(typeof(NocatFarm.Core.Bot).GetProperty("Web", AnyInst)!.GetValue(b), true);
+		var owned = new List<NocatFarm.Core.Library.Entry> { new(730, "CS2", 100, DateTime.MinValue, 0) };
+		typeof(NocatFarm.Core.Library).GetField("_games", AnyInst)!.SetValue(b.Library, owned);
+		typeof(NocatFarm.Core.Library).GetField("_byApp", AnyInst)!.SetValue(b.Library, owned.ToDictionary(static e => e.AppId));
+		typeof(NocatFarm.Core.Library).GetProperty("Ready")!.SetValue(b.Library, true);
+		var free = new NocatFarm.Modules.FreeGames(b);
+		b.AddModule(free);
+		bots[name] = b;
+		made.Add(b);
+
+		return free;
+	}
+	void Fresh() {
+		giveawaysF.SetValue(null, (DateTime.MinValue, new List<string>()));
+		lock (verdicts) {
+			verdicts.Clear();
+		}
+		lock (claims) {
+			claims.Clear();
+		}
+	}
+
+	try {
+		fetchP.SetValue(null, (Func<string, CancellationToken, Task<string?>>) FakeStore);
+		claimP.SetValue(null, (Func<NocatFarm.Core.Bot, uint, bool, CancellationToken, Task<NocatFarm.Modules.FreeGames.ClaimResult>>) FakeClaim);
+		pausesP.SetValue(null, true);
+
+		// 1. A giveaway on the store list, one in the change feed, and a free DLC of a game the account doesn't have.
+		Fresh();
+		Ready("fgclaim", NocatFarm.Modules.FreeClaims.GamesAndDlc);
+		search = Search(3999001, 3999002);
+		lock (picsFound) {
+			picsFound[5999004u] = Activator.CreateInstance(candT, 5999004u, 3999004u, DateTime.UtcNow)!;
+		}
+		string claimed = await Commands.RunAsync(mgr, "freegames fgclaim");
+		lock (picsFound) {
+			picsFound.Remove(5999004u);
+		}
+		Check("freegames: claims what's free - the store's giveaway through its free package, the change feed's by its package",
+			claimed.Contains("fgclaim: claimed Fake Giveaway, Fake Feed Game", StringComparison.Ordinal)
+			&& claims.SequenceEqual([("fgclaim", 5999001u, false), ("fgclaim", 5999004u, false)]), claimed);
+		Check("freegames: a DLC free only to owners of its game is said, with the game, and not asked for",
+			claimed.Contains("fgclaim: free, but not claimed:", StringComparison.Ordinal)
+			&& claimed.Contains("  Fake Supporter Pack - free only to owners of Fake Base", StringComparison.Ordinal)
+			&& !claims.Any(static c => c.Id is 3999002 or 3999003), claimed);
+		string again = await Commands.RunAsync(mgr, "freegames fgclaim");
+		Check("freegames: what it claimed isn't asked for again", (claims.Count == 2) && !again.Contains("fgclaim: claimed", StringComparison.Ordinal), again);
+
+		// 2. Nothing given away.
+		Fresh();
+		Ready("fgnone", NocatFarm.Modules.FreeClaims.Games);
+		search = Search();
+		string nothing = await Commands.RunAsync(mgr, "freegames fgnone");
+		Check("freegames: nothing free - says so, and claims nothing", (nothing == "fgnone: nothing free right now") && (claims.Count == 0), nothing);
+
+		// 3. "Claim free games" off on the account: asked for, it still looks - games only - and says how to turn it on.
+		Fresh();
+		Ready("fgoff", NocatFarm.Modules.FreeClaims.Off);
+		search = Search(3999001, 3999002);
+		string off = await Commands.RunAsync(mgr, "freegames fgoff");
+		Check("freegames: with Claim free games off it still claims the game",
+			off.Contains("fgoff: claimed Fake Giveaway", StringComparison.Ordinal) && claims.SequenceEqual([("fgoff", 5999001u, false)]), off);
+		Check("freegames: ...but games only - the DLC is left, with why",
+			off.Contains("  Fake Supporter Pack - it's DLC - only taken with \"Claim free games\" on games and DLC", StringComparison.Ordinal), off);
+		Check("freegames: ...and one line on how to turn it on, by the setting's name",
+			off.Contains("fgoff: \"Claim free games\" is off, so this looked for games only. To have it look by itself: Settings, fgoff, Free stuff, \"Claim free games\" (or: set fgoff ClaimFree games).", StringComparison.Ordinal), off);
+
+		// 4. Steam's activation window already full: nothing is asked for, and it says until when.
+		Fresh();
+		var full = Ready("fgfull", NocatFarm.Modules.FreeClaims.Games);
+		var window = (List<DateTime>) fgT.GetField("_claims", AnyInst)!.GetValue(full)!;
+		DateTime oldest = DateTime.UtcNow.AddMinutes(-60);
+		for (int i = 0; i < 20; i++) {
+			window.Add(oldest.AddMinutes(i));
+		}
+		search = Search(3999001);
+		string limited = await Commands.RunAsync(mgr, "freegames fgfull");
+		Check("freegames: Steam's limit reached - nothing is claimed, and it says when the rest can go",
+			(claims.Count == 0) && limited.Contains($"fgfull: Steam's limit: 20 added in the last 90 minutes, so the rest wait until about {Fmt.Clock(oldest.AddMinutes(90))}", StringComparison.Ordinal)
+			&& !limited.Contains("nothing free", StringComparison.Ordinal), limited);
+
+		// 5. A rate limit's pause is kept to as well.
+		Fresh();
+		var quiet = Ready("fgquiet", NocatFarm.Modules.FreeClaims.Games);
+		DateTime back = DateTime.UtcNow.AddMinutes(40);
+		fgT.GetField("_quietUntil", AnyInst)!.SetValue(quiet, back);
+		string paused = await Commands.RunAsync(mgr, "freegames fgquiet");
+		Check("freegames: while Steam has asked it to slow down it asks nothing, and says until when",
+			(claims.Count == 0) && paused.Contains($"fgquiet: Steam asked it to slow down - it tries again after {Fmt.Clock(back)}", StringComparison.Ordinal), paused);
+
+		// 6. Paused, like the loop: it waits.
+		Fresh();
+		Ready("fgpaused", NocatFarm.Modules.FreeClaims.Games);
+		typeof(NocatFarm.Core.Bot).GetProperty("Paused", AnyInst)!.SetValue(bots["fgpaused"], true);
+		search = Search(3999001);
+		string waited = await Commands.RunAsync(mgr, "freegames fgpaused");
+		Check("freegames: a paused account isn't touched - it says why", (claims.Count == 0) && waited.Contains("fgpaused: not now - it's paused", StringComparison.Ordinal), waited);
+
+		// 7. Human mode: one typed while the loop's look is still going waits its turn - and that look claims two and spaces the
+		// next 20-120 minutes. The command had already asked the gate, so it claimed two more straight after.
+		Fresh();
+		var spaced = Ready("fgspaced", NocatFarm.Modules.FreeClaims.Games);
+		bots["fgspaced"].Cfg.LegitMode = true;
+		bots["fgspaced"].Cfg.WakeDelayMinMinutes = 0;
+		bots["fgspaced"].Cfg.WakeDelayMaxMinutes = 0;
+		search = Search(3999001);
+		var spacedLooking = (SemaphoreSlim) lookingF.GetValue(spaced)!;
+		await spacedLooking.WaitAsync();
+		Task<string> queued;
+
+		try {
+			queued = Commands.RunAsync(mgr, "freegames fgspaced");
+			await Task.Delay(300);   // past its look at the gate, waiting for the loop's look
+			((NocatFarm.Modules.HumanGate) fgT.GetProperty("Gate", AnyInst)!.GetValue(spaced)!).Space(20, 120);
+		} finally {
+			spacedLooking.Release();
+		}
+
+		string afterSpacing = await queued;
+		Check("freegames: in human mode, one that waited behind a look keeps to the spacing that look started - nothing claimed, and it says why",
+			(claims.Count == 0) && afterSpacing.Contains("fgspaced: not now - it did something at ", StringComparison.Ordinal)
+			&& afterSpacing.Contains("human mode spaces things out", StringComparison.Ordinal), afterSpacing);
+
+		// 8. The account's web sign-in drops while a claim is out: said as the sign-out it is, not "Steam didn't answer in time".
+		Fresh();
+		Ready("fgweb", NocatFarm.Modules.FreeClaims.Games);
+		search = Search(3999001);
+		dropWebOf = "fgweb";
+		string webDropped = await Commands.RunAsync(mgr, "freegames fgweb");
+		dropWebOf = "";
+		Check("freegames: the web sign-in dropping partway is said plainly, as signed out",
+			webDropped.Contains("fgweb: the look for free games stopped - fgweb signed out before it was done; 'freegames' looks again once it's signed in", StringComparison.Ordinal)
+			&& !webDropped.Contains("didn't answer in time", StringComparison.Ordinal), webDropped);
+
+		// 9. After a restart the store's answers are gone: what didn't work last time is said by the name kept with it, not
+		// "p/5999005" - and one kept by the version before, with no name, in plain words.
+		Fresh();
+		var named = Ready("fgnames", NocatFarm.Modules.FreeClaims.Games);
+		search = Search();
+		store["3999005|basic"] = """{"3999005":{"success":true,"data":{"type":"game","name":"Fake Retry Game","is_free":false,"price_overview":{"discount_percent":100}}}}""";
+		noAnswer.Add("fgnames");
+		lock (picsFound) {
+			picsFound[5999005u] = Candidate(5999005, 3999005);
+		}
+
+		string firstTry = await Commands.RunAsync(mgr, "freegames fgnames");
+		lock (verdicts) {
+			verdicts.Clear();
+		}
+		((System.Collections.Concurrent.ConcurrentDictionary<uint, string>) typeof(NocatFarm.Core.GameNames).GetField("Known", AnyStatic)!.GetValue(null)!).TryRemove(3999005u, out _);
+		((IDictionary) failedF.GetValue(named)!).Clear();
+		var onDisk = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(StateOf("fgnames")))!;
+		onDisk["Failed"]!["p/5999006"] = new System.Text.Json.Nodes.JsonObject { ["Tries"] = 1, ["NotBeforeTicks"] = DateTime.UtcNow.AddHours(2).Ticks };
+		File.WriteAllText(StateOf("fgnames"), onDisk.ToJsonString());
+		fgT.GetMethod("Load", AnyInst)!.Invoke(named, null);
+		lock (picsFound) {
+			picsFound[5999006u] = Candidate(5999006, 3999006);
+		}
+
+		string afterRestart = await Commands.RunAsync(mgr, "freegames fgnames");
+		lock (picsFound) {
+			picsFound.Remove(5999005u);
+			picsFound.Remove(5999006u);
+		}
+		noAnswer.Clear();
+		Check("freegames after a restart: what didn't work last time is said by its name, kept with it",
+			afterRestart.Contains("  Fake Retry Game - it didn't work last time - it tries again after ", StringComparison.Ordinal) && !afterRestart.Contains("p/", StringComparison.Ordinal),
+			firstTry + " || " + afterRestart);
+		Check("freegames after a restart: ...and one kept by the version before, with no name, as a package in plain words",
+			afterRestart.Contains("  package 5999006 - it didn't work last time - it tries again after ", StringComparison.Ordinal), afterRestart);
+
+		// 10. Signed in again quickly while a look is still going: the loop starting over doesn't read the saved state in over
+		// the one that look is using - only once it's done.
+		Fresh();
+		var reloaded = Ready("fgreload", NocatFarm.Modules.FreeClaims.Off);
+		File.WriteAllText(StateOf("fgreload"), $$$"""{"Seen":[],"Failed":{"g/3999001":{"Tries":1,"NotBeforeTicks":{{{DateTime.UtcNow.AddHours(2).Ticks}}}}},"QuietUntilTicks":0}""");
+		DateTime inUse = DateTime.UtcNow.AddMinutes(40);
+		quietF.SetValue(reloaded, inUse);
+		var reloadLooking = (SemaphoreSlim) lookingF.GetValue(reloaded)!;
+		await reloadLooking.WaitAsync();
+		bool untouched;
+
+		try {
+			await reloaded.StartAsync();
+			await Task.Delay(300);
+			untouched = ((DateTime) quietF.GetValue(reloaded)! == inUse) && (((IDictionary) failedF.GetValue(reloaded)!).Count == 0);
+		} finally {
+			reloadLooking.Release();
+		}
+
+		bool loadedAfter = false;
+		for (int i = 0; (i < 100) && !loadedAfter; i++) {
+			await Task.Delay(20);
+			loadedAfter = ((IDictionary) failedF.GetValue(reloaded)!).Count == 1;
+		}
+		await reloaded.StopAsync();
+		Check("freegames: starting over while a look is going leaves its state alone, and reads the saved one in once it's done", untouched && loadedAfter, $"{untouched} {loadedAfter}");
+
+		Check("freegames: listed with the free commands, and a bare one from Steam chat means that account",
+			(Commands.Resolve("freegames")?.Group == Commands.GroupFree) && Commands.DefaultsToThisBot("freegames") && !Commands.SteamChatRefuses("freegames")
+			&& (Commands.ThisBotFilledIn(mgr, "freegames", "fgclaim") == "freegames fgclaim"));
+	} finally {
+		fetchP.SetValue(null, fetchBefore);
+		claimP.SetValue(null, claimBefore);
+		pausesP.SetValue(null, false);
+		Fresh();
+
+		foreach (NocatFarm.Core.Bot b in made) {
+			await b.DisposeAsync();
+		}
+
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── update file: a nocat.farm zip on this PC, installed the way an update is - only from this PC ──────────────────────
+{
+	const BindingFlags AnyStatic = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+	Type su = typeof(NocatFarm.Core.SelfUpdate);
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-uf-" + Guid.NewGuid().ToString("N"));
+	string zips = Path.Combine(tmpRoot, "dev builds (1)");
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	Directory.CreateDirectory(zips);
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	string exe = FakeProgram.ExeFor(FakeProgram.Here);
+
+	// A zip the way the release script makes one (see FakeProgram): for this machine, or the kind of computer named.
+	string Zip(string name, Version version, bool withExe = true, string? rid = null)
+		=> FakeProgram.Zip(Path.Combine(zips, name), version, rid, withExe: withExe, extra: [("README.md", "readme")]);
+	string Mine(string v) => OperatingSystem.IsWindows() ? $"nocat.farm-v{v}-portable.zip" : $"nocat.farm-v{v}_{NocatFarm.Core.Platform.ReleaseRid}.zip";
+	string newer = Zip(Mine("9.9.9"), new Version(9, 9, 9));
+	string older = Zip(Mine("1.6.0"), new Version(1, 6, 0));
+	string same = Zip(Mine(Build.Version), Version.Parse(Build.Version));
+	// For another kind of computer, really: a Mac's off Windows (told by its name there), Windows' own off it (nocatFarm.exe).
+	string other = OperatingSystem.IsWindows() ? Zip("nocat.farm-v9.9.9_osx-arm64.zip", new Version(9, 9, 9), rid: "osx-arm64")
+		: Zip("nocat.farm-v9.9.9-portable.zip", new Version(9, 9, 9), rid: "win-x64");
+	// ...and off Windows the other chip, by what's in it - under this machine's own name. Apple silicon runs an Intel Mac's
+	// program, so there it's Intel that has no other.
+	string? otherChipRid = FakeProgram.Here switch {
+		"linux-x64" => "linux-arm64", "linux-arm64" => "linux-x64", "osx-x64" => "osx-arm64", _ => null
+	};
+	string? otherChip = otherChipRid == null ? null : Zip(Mine("9.9.7"), new Version(9, 9, 7), rid: otherChipRid);
+	string noExe = Zip(Mine("9.9.8"), new Version(9, 9, 8), withExe: false);
+	MethodInfo look = su.GetMethod("LookInZip", AnyStatic)!;
+	(string? V, NocatFarm.Core.Said Why) Look(string path) {
+		var (v, why) = ((string?, NocatFarm.Core.Said)) look.Invoke(null, [path])!;
+		return (v, why);
+	}
+
+	var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+	NocatFarm.Core.BotManager? hostBefore = Commands.Host;
+	PropertyInfo startP = su.GetProperty("StartSwap", AnyStatic)!, exitP = su.GetProperty("ExitForSwap", AnyStatic)!;
+	object? startBefore = startP.GetValue(null), exitBefore = exitP.GetValue(null);
+	Func<IEnumerable<NocatFarm.Core.Bot>>? fleetBefore = NocatFarm.Core.SelfUpdate.Fleet;
+
+	try {
+		string renamed = Path.Combine(zips, Mine("1.2.3"));
+		File.Copy(newer, renamed);
+		Check("update file: reads the version from the program in the zip, not the file name",
+			(Look(newer).V == "9.9.9") && (Look(renamed).V == "9.9.9"), Look(renamed).Why.ToString());
+		Check("update file: no file there - says so", (Look(Path.Combine(zips, "gone.zip")).V == null)
+			&& Look(Path.Combine(zips, "gone.zip")).Why.ToString().Contains("there's no file at", StringComparison.Ordinal));
+		Check("update file: a zip for another kind of computer is refused, and says which one this needs",
+			(Look(other).V == null) && Look(other).Why.ToString().Contains("another kind of computer", StringComparison.Ordinal)
+			&& ((otherChip == null) || ((Look(otherChip).V == null) && Look(otherChip).Why.ToString().Contains("another kind of computer", StringComparison.Ordinal))),
+			$"{Look(other).Why} | {(otherChip == null ? "" : Look(otherChip).Why.ToString())}");
+		Check("update file: a zip without the program in it is refused, like a download would be",
+			(Look(noExe).V == null) && Look(noExe).Why.ToString().Contains($"there's no {exe} in it", StringComparison.Ordinal), Look(noExe).Why.ToString());
+
+		// Only at this PC: Telegram, Discord and plugins run commands without it, Steam chat too, and a dashboard request
+		// counts only when it really came from this PC.
+		string fromChat = await Commands.RunAsync(mgr, $"update file {newer}");
+		Commands.Host = mgr;
+		string fromSteam = await Commands.RunAsync($"update file {newer}", "someaccount");
+		Check("update file: refused from Telegram, Discord (and plugins), and from Steam chat - and says where it works",
+			fromChat.Contains("only works at this PC", StringComparison.Ordinal) && fromSteam.Contains("only works at this PC", StringComparison.Ordinal), fromChat + " / " + fromSteam);
+		Microsoft.AspNetCore.Http.DefaultHttpContext From(string ip, string? forwarded = null) {
+			var ctx = new Microsoft.AspNetCore.Http.DefaultHttpContext();
+			ctx.Connection.RemoteIpAddress = System.Net.IPAddress.Parse(ip);
+			if (forwarded != null) {
+				ctx.Request.Headers["X-Forwarded-For"] = forwarded;
+			}
+			return ctx;
+		}
+		MethodInfo atThisPc = typeof(NocatFarm.Web.WebHost).GetMethod("AtThisPc", AnyStatic)!;
+		bool At(Microsoft.AspNetCore.Http.HttpContext c) => (bool) atThisPc.Invoke(null, [c])!;
+		string web = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Web", "WebHost.cs")).Replace("\r\n", "\n");
+		Check("update file: the dashboard counts as this PC only from this PC - not a phone, the internet, or the internet through a proxy here",
+			At(From("127.0.0.1")) && At(From("::1")) && !At(From("192.168.1.20")) && !At(From("203.0.113.9")) && !At(From("127.0.0.1", "203.0.113.9"))
+			&& web.Contains("string output = AtThisPc(ctx)\n\t\t\t\t? await Commands.RunAtThisPcAsync(_mgr, body.Line, \"dashboard on this PC\").ConfigureAwait(false)\n\t\t\t\t: await Commands.RunLoggedAsync(_mgr, body.Line, \"dashboard from another device\").ConfigureAwait(false);", StringComparison.Ordinal));
+
+		if (NocatFarm.Core.SelfUpdate.Supported) {
+			string old = await Commands.RunAtThisPcAsync(mgr, $"update file {older}");
+			string sameSaid = await Commands.RunAtThisPcAsync(mgr, $"update file {same}");
+			Check("update file: an older version needs force, and says so plainly",
+				old.Contains($"has nocat.farm 1.6.0, and you have {Build.Version} - an older one", StringComparison.Ordinal) && old.Contains($"update file {older} force", StringComparison.Ordinal)
+				&& !NocatFarm.Core.SelfUpdate.Busy, old);
+			Check("update file: so does the same version", sameSaid.Contains("the same version", StringComparison.Ordinal) && sameSaid.Contains(" force", StringComparison.Ordinal), sameSaid);
+
+			// Older than the first version that tells the swap script it came up: put in, every account signed out, it never said
+			// "ok", and three minutes later it was put back as "didn't start". Refused before anything happens, force or not.
+			string ancient = Zip(Mine("1.4.5"), new Version(1, 4, 5));
+			startP.SetValue(null, (Action<System.Diagnostics.ProcessStartInfo>) (_ => throw new InvalidOperationException("no swap in the checks")));
+			exitP.SetValue(null, (Action) (() => { }));
+			MethodInfo? tooOldFor = su.GetMethod("TooOld", AnyStatic, [typeof(string), typeof(bool)]);
+			string? TooOld(string v, bool terminal) => tooOldFor == null ? "(none)" : ((NocatFarm.Core.Said?) tooOldFor.Invoke(null, [v, terminal]))?.ToEnglish();
+			string oldest = su.GetProperty("OldestInstallable", AnyStatic)?.GetValue(null) as string ?? "(none)";
+			string tooOld = await Commands.RunAtThisPcAsync(mgr, $"update file {ancient} force");
+			string tooOldUnforced = await Commands.RunAtThisPcAsync(mgr, $"update file {ancient}");
+			Check("update file: a version too old to say it started is refused, force or not, and says which is the oldest that can go in",
+				tooOld.Contains($"1.4.5 is too old to install this way - the oldest that can is {oldest}", StringComparison.Ordinal) && (tooOldUnforced == tooOld)
+				&& !NocatFarm.Core.SelfUpdate.Busy, $"{tooOld} | {tooOldUnforced}");
+			bool signingOut = false;
+			NocatFarm.Core.SelfUpdate.Fleet = () => {
+				signingOut = true;
+				return [];
+			};
+			string? refused = await NocatFarm.Core.SelfUpdate.ApplyAsync(CancellationToken.None, fromFile: ancient);
+			Check("update file: ...and the install itself refuses it too - before an account signs out or the settings are saved",
+				(refused?.Contains("1.4.5 is too old to install this way", StringComparison.Ordinal) == true) && !signingOut
+				&& (!Directory.Exists(NocatFarm.Core.Rollback.Folder) || (Directory.GetFiles(NocatFarm.Core.Rollback.Folder, "before-1.4.5-*").Length == 0)), refused ?? "null");
+			NocatFarm.Core.SelfUpdate.Fleet = fleetBefore;
+			Check("update file: the oldest is 1.4.6, the first to say \"ok\" - and 1.5.4 on a Mac started from start.command, the first to find where in a new Terminal window",
+				(TooOld("1.4.5", false)?.Contains("the oldest that can is 1.4.6", StringComparison.Ordinal) == true) && (TooOld("v1.4.6", false) == null)
+				&& (TooOld("1.5.3", false) == null) && (TooOld("1.5.3", true)?.Contains("1.5.3 is too old to install this way - the oldest that can is 1.5.4", StringComparison.Ordinal) == true)
+				&& (TooOld("1.5.4", true) == null), $"{TooOld("1.4.5", false)} | {TooOld("1.5.3", true)}");
+
+			string wrong = await Commands.RunAtThisPcAsync(mgr, $"update file {other}");
+			Check("update file: at this PC, the wrong platform's zip is still refused", wrong.Contains("another kind of computer", StringComparison.Ordinal) && !NocatFarm.Core.SelfUpdate.Busy, wrong);
+
+			// A newer one goes the normal way: copied, unpacked, the safety copy, the countdown, the swap - which is only
+			// looked at here, never started.
+			System.Diagnostics.ProcessStartInfo? swapped = null;
+			bool exited = false;
+			startP.SetValue(null, (Action<System.Diagnostics.ProcessStartInfo>) (p => swapped = p));
+			exitP.SetValue(null, (Action) (() => exited = true));
+			NocatFarm.Core.SelfUpdate.Fleet = static () => [];
+			string going = await Commands.RunAtThisPcAsync(mgr, $"update file {newer}");
+			for (int i = 0; (i < 120) && !exited; i++) {
+				await Task.Delay(500);
+			}
+			string note = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "updated.txt");
+			string staged = swapped?.Environment["NF_STAGED"] ?? "";
+			Check("update file: a newer zip says what it installs, from which file",
+				going.StartsWith($"installing nocat.farm 9.9.9 from {Path.GetFileName(newer)}", StringComparison.Ordinal), going);
+			Check("update file: ...and goes down the normal swap: staged with the program, the note for \"updated A → B\", then nocat.farm closes",
+				exited && (swapped != null) && File.Exists(Path.Combine(staged, exe)) && File.Exists(Path.Combine(staged, "nocatFarm.dll"))
+				&& (swapped.Environment["NF_TAG"] == "file:9.9.9") && File.Exists(note) && File.ReadAllText(note).StartsWith($"{Build.Version}|9.9.9|", StringComparison.Ordinal),
+				$"{exited} {swapped?.Environment["NF_TAG"]} {staged}");
+
+			// Back as it was: nothing was started, so nothing owns the work folder.
+			typeof(NocatFarm.Core.SelfUpdate).GetField("_busy", AnyStatic)!.SetValue(null, 0);
+			typeof(NocatFarm.Core.SelfUpdate).GetField("_handedOver", AnyStatic)!.SetValue(null, false);
+			if (swapped?.Environment["NF_WORK"] is { Length: > 0 } work) {
+				try {
+					Directory.Delete(work, true);
+				} catch (IOException) {
+				}
+			}
+			File.Delete(note);
+			File.Delete(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "update-verify.txt"));
+			File.Delete(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "update-notes.txt"));
+		}
+
+		// A version from a file that didn't start: put back, and not skipped - the release with that number is another build.
+		NocatFarm.Core.UpdateCheck.Skipped = null;
+		File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "update-failed.txt"), "crashed file:9.9.9");
+		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+		Check("update file: one that crashed is put back and said, but its version isn't skipped",
+			(NocatFarm.Core.UpdateCheck.Skipped == null) && (NocatFarm.Core.SelfUpdate.LastFailure?.Contains("nocat.farm 9.9.9 from the file didn't start", StringComparison.Ordinal) == true),
+			NocatFarm.Core.SelfUpdate.LastFailure ?? "null");
+
+		// The same version from a file ('force'), whose files didn't all copy in: the note names the version that's running, and
+		// that was read as done - "updated 1.7.3 → 1.7.3" and "Install complete" - before the copy's failure was looked at.
+		long sameMark = Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+		string sameNote = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "updated.txt");
+		File.WriteAllText(sameNote, $"{Build.Version}|{Build.Version}|12|3|{DateTime.UtcNow.Ticks}");
+		File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "update-failed.txt"), "8");
+		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+		bool saidUpdated = Log.Since(sameMark).Any(static e => e.Said.ToEnglish().Contains($"updated {Build.Version} → {Build.Version}", StringComparison.Ordinal));
+		Check("update file, the same version: files that didn't copy in are said as the failure - never \"updated A → A\" first",
+			!saidUpdated && (NocatFarm.Core.SelfUpdate.LastFailure?.StartsWith("update failed:", StringComparison.Ordinal) == true) && !File.Exists(sameNote),
+			$"{saidUpdated} | {NocatFarm.Core.SelfUpdate.LastFailure}");
+	} finally {
+		startP.SetValue(null, startBefore);
+		exitP.SetValue(null, exitBefore);
+		NocatFarm.Core.SelfUpdate.Fleet = fleetBefore;
+		Commands.Host = hostBefore;
+		NocatFarm.Core.UpdateCheck.Skipped = null;
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── update file: whose program it is, for every kind of computer - whichever one these checks run on ────────────────────
+// A Mac's checks can't run here, so its side is checked from every machine: the program's start for each kind of computer
+// put to SelfUpdate.RunsOn as each one, and the whole zip to LookInZipFor.
+{
+	MethodInfo runsOnM = typeof(NocatFarm.Core.SelfUpdate).GetMethod("RunsOn", BindingFlags.NonPublic | BindingFlags.Static)!;
+	RunsOnCheck runsOn = runsOnM.CreateDelegate<RunsOnCheck>();
+	string[] rids = ["linux-x64", "linux-arm64", "osx-x64", "osx-arm64"];
+	byte[] MachOBigEndian(uint cpu) {
+		byte[] b = new byte[32];
+		System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(b, 0xFEEDFACF);
+		System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(b.AsSpan(4), cpu);
+		return b;
+	}
+
+	// What each program is, and the machines that run it: Apple silicon runs an Intel Mac's program too (Rosetta).
+	(string What, byte[] Program, string[] RunsOn)[] programs = [
+		("Linux x64 (ELF 62)", FakeProgram.For("linux-x64"), ["linux-x64"]),
+		("Linux arm64 (ELF 183)", FakeProgram.For("linux-arm64"), ["linux-arm64"]),
+		("Intel Mac (Mach-O 0x01000007)", FakeProgram.For("osx-x64"), ["osx-x64", "osx-arm64"]),
+		("Apple silicon (Mach-O 0x0100000C)", FakeProgram.For("osx-arm64"), ["osx-arm64"]),
+		("Apple silicon, big-endian Mach-O", MachOBigEndian(FakeProgram.AppleSilicon), ["osx-arm64"]),
+		("universal, both", FakeProgram.Fat(false, FakeProgram.Intel, FakeProgram.AppleSilicon), ["osx-x64", "osx-arm64"]),
+		("universal 64-bit list, Apple silicon only", FakeProgram.Fat(true, FakeProgram.AppleSilicon), ["osx-arm64"]),
+	];
+	List<string> wrong = [];
+	foreach ((string what, byte[] program, string[] runsOnThese) in programs) {
+		foreach (string rid in rids) {
+			bool? said = runsOn(program, rid, $"nocat.farm-v1.7.4_{rid}.zip");
+			if (said != runsOnThese.Contains(rid)) {
+				wrong.Add($"{what} on {rid}: {said?.ToString() ?? "not a program"}");
+			}
+		}
+	}
+	foreach ((string what, byte[] program) in new[] { ("Windows' MZ", FakeProgram.For("win-x64")), ("nothing", Array.Empty<byte>()), ("text", "program"u8.ToArray()) }) {
+		foreach (string rid in rids) {
+			if (runsOn(program, rid, $"nocat.farm-v1.7.4_{rid}.zip") != null) {
+				wrong.Add($"{what} on {rid}: taken for a Linux or Mac program");
+			}
+		}
+	}
+	Check("update file: whose program it is - ELF and Mach-O (plain, big-endian, universal) put to every Linux and Mac machine", wrong.Count == 0, string.Join(" | ", wrong));
+
+	// The whole zip, as 'update file' reads it on each kind of computer: the pretend one for that machine is taken, version
+	// read from its nocatFarm.dll - the same way on all of them.
+	string zips = Path.Combine(Path.GetTempPath(), "nf-rids-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(zips);
+	try {
+		List<string> refused = [];
+		foreach (string rid in rids.Append("win-x64")) {
+			string name = rid.StartsWith("win-", StringComparison.Ordinal) ? "nocat.farm-v1.7.4-portable.zip" : $"nocat.farm-v1.7.4_{rid}.zip";
+			string path = FakeProgram.Zip(Path.Combine(zips, name), new Version(1, 7, 4), rid);
+			var (v, why) = ((string?, NocatFarm.Core.Said)) typeof(NocatFarm.Core.SelfUpdate).GetMethod("LookInZipFor", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [path, rid])!;
+			if (v != "1.7.4") {
+				refused.Add($"{rid}: {why.ToEnglish()}");
+			}
+		}
+		Check("update file: the pretend nocat.farm for each kind of computer is taken there, its version read from nocatFarm.dll", refused.Count == 0, string.Join(" | ", refused));
+	} finally {
+		try {
+			Directory.Delete(zips, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── update file with no path, update versions, update to: a window to pick the zip, and going back on a pretend GitHub ──
+{
+	const BindingFlags AnyStatic = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+	Type su = typeof(NocatFarm.Core.SelfUpdate);
+	Type uc = typeof(NocatFarm.Core.UpdateCheck);
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-ut-" + Guid.NewGuid().ToString("N"));
+	string zips = Path.Combine(tmpRoot, "zips");
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	Directory.CreateDirectory(zips);
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	string exe = FakeProgram.ExeFor(FakeProgram.Here);
+	string cur = Build.Version;
+
+	// A release zip as the release script makes one, for this machine (see FakeProgram).
+	byte[] ZipBytes(Version version) => FakeProgram.ZipBytes(version);
+	string Mine(string v) => OperatingSystem.IsWindows() ? $"nocat.farm-v{v}-portable.zip" : $"nocat.farm-v{v}_{NocatFarm.Core.Platform.ReleaseRid}.zip";
+	string notMine = OperatingSystem.IsWindows() ? "nocat.farm-v1.6.3_osx-arm64.zip" : "nocat.farm-v1.6.3-portable.zip";
+	string olderZip = Path.Combine(zips, Mine("1.6.0"));
+	File.WriteAllBytes(olderZip, ZipBytes(new Version(1, 6, 0)));
+
+	// A pretend GitHub on this PC: the newest release, the list of them, one by its tag, and the zips - by path, like the real one.
+	System.Net.Sockets.TcpListener listener = new(System.Net.IPAddress.Loopback, 0);
+	listener.Start();
+	int port = ((System.Net.IPEndPoint) listener.LocalEndpoint).Port;
+	Dictionary<string, byte[]> served = new(StringComparer.Ordinal);
+	List<string> askedFor = [];
+	CancellationTokenSource stopServing = new();
+
+	_ = Task.Run(async () => {
+		while (!stopServing.IsCancellationRequested) {
+			System.Net.Sockets.TcpClient client;
+
+			try {
+				client = await listener.AcceptTcpClientAsync(stopServing.Token);
+			} catch {
+				break;
+			}
+
+			using (client) {
+				System.Net.Sockets.NetworkStream ns = client.GetStream();
+				byte[] buffer = new byte[8192];
+				string head = "";
+
+				while (!head.Contains("\r\n\r\n", StringComparison.Ordinal)) {
+					int read = await ns.ReadAsync(buffer);
+					if (read <= 0) {
+						break;
+					}
+
+					head += System.Text.Encoding.ASCII.GetString(buffer, 0, read);
+				}
+
+				string path = head.Split(' ').ElementAtOrDefault(1) ?? "";
+				lock (askedFor) {
+					askedFor.Add(path);
+				}
+				bool found = served.TryGetValue(path, out byte[]? body);
+				body ??= System.Text.Encoding.UTF8.GetBytes("{\"message\":\"Not Found\"}");
+				byte[] reply = System.Text.Encoding.ASCII.GetBytes($"HTTP/1.1 {(found ? "200 OK" : "404 Not Found")}\r\nContent-Type: application/octet-stream\r\nContent-Length: {body.Length}\r\nConnection: close\r\n\r\n");
+				await ns.WriteAsync(reply);
+				await ns.WriteAsync(body);
+			}
+		}
+	});
+
+	byte[] back = ZipBytes(new Version(1, 6, 1));
+	served["/zips/" + Mine("1.6.1")] = back;
+	object Release(string v, string[] assets, bool pre = false) => new {
+		tag_name = "v" + v, html_url = "https://example.invalid/", body = "- a test", draft = false, prerelease = pre,
+		assets = assets.Select(a => new { name = a, browser_download_url = $"http://127.0.0.1:{port}/zips/{a}", size = a == Mine("1.6.1") ? back.Length : 1234 }).ToArray()
+	};
+	byte[] Json(object o) => System.Text.Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize(o));
+	served["/latest.json"] = Json(Release(cur, [Mine(cur)]));
+	served["/releases"] = Json(new[] {
+		Release("1.6.4", [Mine("1.6.4")], pre: true), Release(cur, [Mine(cur)]), Release("1.6.1", [Mine("1.6.1")]),
+		Release("1.6.3", [notMine]), Release("1.6.2", [Mine("1.6.2")]), Release("1.4.5", [Mine("1.4.5")])
+	});
+	served["/releases/tags/v1.6.1"] = Json(Release("1.6.1", [notMine, Mine("1.6.1")]));
+
+	var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+	NocatFarm.Core.BotManager? hostBefore = Commands.Host;
+	PropertyInfo startP = su.GetProperty("StartSwap", AnyStatic)!, exitP = su.GetProperty("ExitForSwap", AnyStatic)!;
+	PropertyInfo pickerP = typeof(Commands).GetProperty("FilePicker", AnyStatic)!, pickingP = typeof(Commands).GetProperty("Picking", AnyStatic)!;
+	object? startBefore = startP.GetValue(null), exitBefore = exitP.GetValue(null);
+	Func<IEnumerable<NocatFarm.Core.Bot>>? fleetBefore = NocatFarm.Core.SelfUpdate.Fleet;
+	NocatFarm.Config.GlobalConfig globalBefore = NocatFarm.Config.Live.Global;
+	long Mark() => Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+	bool Said(long since, string english) => Log.Since(since).Any(e => e.Said.ToEnglish().Contains(english, StringComparison.Ordinal));
+
+	Environment.SetEnvironmentVariable("NOCATFARM_UPDATE_FEED", $"http://127.0.0.1:{port}/latest.json");
+
+	try {
+		// ── update file with no path ──
+		string remote = await Commands.RunAsync(mgr, "update file");
+		Commands.Host = mgr;
+		string fromSteam = await Commands.RunAsync("update file force", "someaccount");
+		Check("update file with no path: refused away from this PC - Telegram, Discord, a phone, Steam chat - and no window opens",
+			remote.Contains("only works at this PC", StringComparison.Ordinal) && fromSteam.Contains("only works at this PC", StringComparison.Ordinal) && (pickingP.GetValue(null) == null),
+			remote + " / " + fromSteam);
+		string web = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Web", "WebHost.cs")).Replace("\r\n", "\n");
+		Check("update file: the dashboard's \"Install from a file\" shows only on this PC",
+			web.Contains("CanPick = here && Commands.CanPickFile,", StringComparison.Ordinal) && web.Contains("bool here = AtThisPc(ctx);", StringComparison.Ordinal));
+
+		if (NocatFarm.Core.SelfUpdate.Supported) {
+			pickerP.SetValue(null, null);
+			string noGui = await Commands.RunAtThisPcAsync(mgr, "update file");
+			Check("update file with no path: with no desktop to pick on (Linux, Mac, Docker, --no-gui) it says to type the path",
+				noGui.Contains("update file <path to the zip>", StringComparison.Ordinal) && !Commands.CanPickFile && (pickingP.GetValue(null) == null), noGui);
+
+			int opened = 0;
+			pickerP.SetValue(null, (Func<Task<string?>>) (() => {
+				Interlocked.Increment(ref opened);
+
+				return Task.FromResult<string?>(null);
+			}));
+			long before = Mark();
+			string pick = await Commands.RunAtThisPcAsync(mgr, "update file");
+			await (Task) pickingP.GetValue(null)!;
+			Check("update file with no path: a window to pick the file opens on this PC",
+				(opened == 1) && pick.Contains("A window to pick the file opened on this PC", StringComparison.Ordinal) && Commands.CanPickFile, pick);
+			Check("update file with no path: Cancel - nothing chosen, nothing changed", Said(before, "nothing chosen - nothing changed") && !NocatFarm.Core.SelfUpdate.Busy);
+
+			pickerP.SetValue(null, (Func<Task<string?>>) (() => Task.FromResult<string?>(olderZip)));
+			before = Mark();
+			await Commands.RunAtThisPcAsync(mgr, "update file");
+			await (Task) pickingP.GetValue(null)!;
+			Check("update file with no path: the picked zip goes through the same checks as a typed one - an older one needs force",
+				Said(before, $"has nocat.farm 1.6.0, and you have {cur} - an older one") && Said(before, $"update file {olderZip} force") && !NocatFarm.Core.SelfUpdate.Busy);
+		}
+
+		pickerP.SetValue(null, null);
+
+		// ── update versions / update to ──
+		_ = await NocatFarm.Core.UpdateCheck.LookAsync(force: true, quiet: true);
+		string versions = await Commands.RunAsync(mgr, "update versions");
+		Check("update versions: the older versions on GitHub with a zip for this computer, newest first - not this one, a test release, or one with no zip here",
+			versions.Contains($"You have {cur}. You can go back to: 1.6.2, 1.6.1", StringComparison.Ordinal) && versions.Contains("update to 1.6.2", StringComparison.Ordinal)
+			&& !versions.Contains("1.6.3", StringComparison.Ordinal) && !versions.Contains("1.6.4", StringComparison.Ordinal)
+			&& (!NocatFarm.Core.SelfUpdate.Supported || !versions.Contains("1.4.5", StringComparison.Ordinal)), versions);
+		Check("update versions: asks the same pretend GitHub the update check does", askedFor.Contains("/releases"), string.Join(" ", askedFor));
+
+		string gone = await Commands.RunAsync(mgr, "update to 1.6.0");
+		Check("update to: a version that's no longer on GitHub says so, and lists what is",
+			gone.Contains("1.6.0 isn't on GitHub any more", StringComparison.Ordinal) && gone.Contains("You can go back to: 1.6.2, 1.6.1.", StringComparison.Ordinal) && !NocatFarm.Core.SelfUpdate.Busy, gone);
+
+		if (NocatFarm.Core.SelfUpdate.Supported) {
+			startP.SetValue(null, (Action<System.Diagnostics.ProcessStartInfo>) (_ => throw new InvalidOperationException("no swap in the checks")));
+			exitP.SetValue(null, (Action) (() => { }));
+
+			// On GitHub, but with no zip for this computer - yet: the Mac zips go up a while after the rest. "Isn't on GitHub any
+			// more" sent somebody looking for a version that was right there.
+			string noZip = await Commands.RunAsync(mgr, "update to 1.6.3");
+			Check("update to: a version on GitHub with no download for this computer says so - not that it's gone",
+				noZip.Contains("1.6.3 has no download for this computer (yet)", StringComparison.Ordinal) && !noZip.Contains("isn't on GitHub", StringComparison.Ordinal)
+				&& !NocatFarm.Core.SelfUpdate.Busy, noZip);
+
+			// Too old to say it started: refused straight away, before GitHub is even asked.
+			int asked;
+			lock (askedFor) {
+				asked = askedFor.Count;
+			}
+			string ancient = await Commands.RunAsync(mgr, "update to 1.4.5");
+			int askedAfter;
+			lock (askedFor) {
+				askedAfter = askedFor.Count;
+			}
+			Check("update to: a version too old to say it started is refused before anything is asked or downloaded",
+				ancient.Contains("1.4.5 is too old to install this way - the oldest that can is ", StringComparison.Ordinal) && (askedAfter == asked) && !NocatFarm.Core.SelfUpdate.Busy, ancient);
+		}
+
+		string same = await Commands.RunAsync(mgr, "update to v" + cur);
+		Check("update to: the version it's on already - nothing to do", same == $"You're on {cur} already.", same);
+		string fromChat = await Commands.RunAsync("update to 1.6.1", "someaccount");
+		Check("update to: never from Steam chat, as 'update accept' isn't", fromChat.Contains("has to be done at the PC", StringComparison.Ordinal) && !NocatFarm.Core.SelfUpdate.Busy, fromChat);
+
+		if (NocatFarm.Core.SelfUpdate.Supported) {
+			System.Diagnostics.ProcessStartInfo? swapped = null;
+			bool exited = false;
+			startP.SetValue(null, (Action<System.Diagnostics.ProcessStartInfo>) (p => swapped = p));
+			exitP.SetValue(null, (Action) (() => exited = true));
+			NocatFarm.Core.SelfUpdate.Fleet = static () => [];
+
+			// Skipped once: asking for it by name is choosing it, as 'update accept' does. Typed from a phone: the same
+			// rights as 'update accept' - signed in is enough.
+			NocatFarm.Core.UpdateCheck.Skipped = "v1.6.1";
+			string going = await Commands.RunAsync(mgr, "update to 1.6.1");
+			for (int i = 0; (i < 120) && !exited; i++) {
+				await Task.Delay(500);
+			}
+
+			string note = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "updated.txt");
+			string staged = swapped?.Environment["NF_STAGED"] ?? "";
+			Check("update to: going back says what it keeps, and which version won't install by itself",
+				going.StartsWith("Going back to 1.6.1: downloading it now", StringComparison.Ordinal)
+				&& going.Contains("Your settings are saved first, and the ones 1.6.1 doesn't know come back when you update again.", StringComparison.Ordinal)
+				&& going.Contains($"{cur} won't install by itself until a newer one is out; 'update accept' brings it back.", StringComparison.Ordinal), going);
+			Check("update to: that release's own zip for this computer, down the normal swap - marked as going back",
+				exited && (swapped != null) && File.Exists(Path.Combine(staged, exe)) && File.Exists(Path.Combine(staged, "nocatFarm.dll"))
+				&& (swapped.Environment["NF_TAG"] == "back:1.6.1") && askedFor.Contains("/releases/tags/v1.6.1") && askedFor.Contains("/zips/" + Mine("1.6.1"))
+				&& File.Exists(note) && File.ReadAllText(note).StartsWith($"{cur}|1.6.1|", StringComparison.Ordinal),
+				$"{exited} {swapped?.Environment["NF_TAG"]} {staged}");
+			string[] copies = Directory.Exists(NocatFarm.Core.Rollback.Folder) ? Directory.GetFiles(NocatFarm.Core.Rollback.Folder, $"before-1.6.1-from-{cur}-*.zip") : [];
+			Check("update to: the whole config folder was saved first, as a backup takes it",
+				(copies.Length == 1) && NocatFarm.Core.Backup.Inspect(File.ReadAllBytes(copies[0])).Ok, string.Join(" ", copies));
+			Check("update to: the version gone back to isn't skipped", NocatFarm.Core.UpdateCheck.Skipped?.TrimStart('v') != "1.6.1", NocatFarm.Core.UpdateCheck.Skipped ?? "null");
+			Check("update to: the version it came from is, as GitHub tags it - so the older version doesn't offer it",
+				NocatFarm.Core.UpdateCheck.Skipped == "v" + cur, NocatFarm.Core.UpdateCheck.Skipped ?? "null");
+
+			// Back as it was: nothing was started, so nothing owns the work folder.
+			su.GetField("_busy", AnyStatic)!.SetValue(null, 0);
+			su.GetField("_handedOver", AnyStatic)!.SetValue(null, false);
+			if (swapped?.Environment["NF_WORK"] is { Length: > 0 } work) {
+				try {
+					Directory.Delete(work, true);
+				} catch (IOException) {
+				}
+			}
+			File.Delete(note);
+			File.Delete(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "update-verify.txt"));
+			File.Delete(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "update-notes.txt"));
+
+			// As the older version sees it once it's up: the version it came from is out and newer, and it would install by
+			// itself in the night. Skipped, it isn't reminded of or installed - and once it's not, it would be.
+			uc.GetProperty("Available")!.SetValue(null, "v" + cur);
+			NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig {
+				UpdateMode = NocatFarm.Core.UpdateModes.AtNight, AutoUpdateFromHour = 0, AutoUpdateUntilHour = 24, AutoUpdateWaitHours = 0
+			};
+			uc.GetField("_remindedAt", AnyStatic)!.SetValue(null, DateTime.MinValue);
+			uc.GetField("_autoTriedAt", AnyStatic)!.SetValue(null, DateTime.MinValue);
+			long quiet = Mark();
+			NocatFarm.Core.UpdateCheck.RemindIfDue();
+			NocatFarm.Core.UpdateCheck.AutoInstallIfDue(mgr);
+			Check("update to: the newer version isn't offered again, or put back by itself at night",
+				!Said(quiet, $"nocat.farm v{cur} is out") && !Said(quiet, $"installing v{cur} by itself") && !NocatFarm.Core.SelfUpdate.Busy);
+			NocatFarm.Core.UpdateCheck.Skipped = null;
+			long loud = Mark();
+			NocatFarm.Core.UpdateCheck.RemindIfDue();
+			Check("update to: ...which it would be, without the skip", Said(loud, $"reminder: nocat.farm v{cur} is out"));
+			uc.GetProperty("Available")!.SetValue(null, null);
+
+			// The older version didn't start and the newer one was put back: said as going back, and nothing is skipped for it.
+			File.WriteAllText(Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "update-failed.txt"), "crashed back:1.6.1");
+			NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+			Check("update to: an older version that didn't start - put back, said plainly, and not skipped",
+				(NocatFarm.Core.UpdateCheck.Skipped == null) && (NocatFarm.Core.SelfUpdate.LastFailure?.Contains($"going back didn't work: nocat.farm 1.6.1 didn't start, so you're on {cur} again", StringComparison.Ordinal) == true),
+				NocatFarm.Core.SelfUpdate.LastFailure ?? "null");
+		}
+	} finally {
+		Environment.SetEnvironmentVariable("NOCATFARM_UPDATE_FEED", null);
+		stopServing.Cancel();
+		listener.Stop();
+		pickerP.SetValue(null, null);
+		startP.SetValue(null, startBefore);
+		exitP.SetValue(null, exitBefore);
+		NocatFarm.Core.SelfUpdate.Fleet = fleetBefore;
+		NocatFarm.Config.Live.Global = globalBefore;
+		Commands.Host = hostBefore;
+		NocatFarm.Core.UpdateCheck.Skipped = null;
+		uc.GetProperty("Available")!.SetValue(null, null);
+		uc.GetProperty("Latest", AnyStatic)!.SetValue(null, null);
+		uc.GetField("_releases", AnyStatic)!.SetValue(null, null);
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── going back and forth: the settings an older version didn't know come back, once, and only those ──────────────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-rb-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	string cfg = NocatFarm.Config.ConfigStore.ConfigDir;
+	string cur = Build.Version;
+
+	// What an older version does to a file: reads the settings it knows, writes back only those.
+	void OlderWrites(string file, string[] unknown, Action<System.Text.Json.Nodes.JsonObject>? change = null) {
+		var json = (System.Text.Json.Nodes.JsonObject) System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(file))!;
+		foreach (string key in unknown) {
+			json.Remove(key);
+		}
+		change?.Invoke(json);
+		File.WriteAllText(file, json.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+	}
+	List<string> Good(List<NocatFarm.Core.Rollback.Note> notes) => [.. notes.Where(static n => (n.Detail == null) && !n.Problem).Select(static n => n.Line.ToEnglish())];
+
+	try {
+		// On this version: settings set away from their defaults, an account to keep and one that goes.
+		NocatFarm.Config.ConfigStore.SaveGlobal(new NocatFarm.Config.GlobalConfig {
+			UpdateCheckHours = 7, UpdateReminders = false, AutoUpdateFromHour = 4, DisabledPlugins = ["one"], Tray = true
+		});
+		NocatFarm.Config.ConfigStore.SaveBot("rbkeep", new NocatFarm.Config.BotConfig {
+			IdleGames = [440, 570], HoursUntilCardDrops = 5, ClaimEventItems = false, DiscoveryQueue = 2, CraftBadges = false
+		});
+		NocatFarm.Config.ConfigStore.SaveBot("rbgone", new NocatFarm.Config.BotConfig { DiscoveryQueue = 2 });
+
+		string copy = NocatFarm.Core.Rollback.Snapshot("v1.0.1");
+		Check("going back: the copy is named for both versions, in config/backups",
+			Path.GetDirectoryName(copy) == Path.Combine(cfg, "backups")
+			&& System.Text.RegularExpressions.Regex.IsMatch(Path.GetFileName(copy), $@"^before-1\.0\.1-from-{System.Text.RegularExpressions.Regex.Escape(cur)}-\d{{8}}-\d{{6}}\.zip$"),
+			copy);
+
+		// On the older version: it drops what it doesn't know, a setting is changed there, an account removed, one added.
+		OlderWrites(Path.Combine(cfg, "nocatFarm.json"), ["UpdateCheckHours", "UpdateReminders", "AutoUpdateFromHour", "DisabledPlugins"], static j => j["Tray"] = false);
+		OlderWrites(Path.Combine(cfg, "rbkeep.json"), ["IdleGames", "HoursUntilCardDrops", "ClaimEventItems", "DiscoveryQueue"], static j => j["CraftBadges"] = true);
+		File.Delete(Path.Combine(cfg, "rbgone.json"));
+		string added = "{\n  \"SteamLogin\": \"rbnew\",\n  \"DiscoveryQueue\": 0\n}";
+		File.WriteAllText(Path.Combine(cfg, "rbnew.json"), added);
+
+		// A version in between - older than the one the copy came from: it fills in the settings it knows (here, all of them),
+		// and the copy waits for a version that knows the rest.
+		List<NocatFarm.Core.Rollback.Note> early = NocatFarm.Core.Rollback.RestoreMissing("1.0.2");
+		Check("going back: a version in between fills in what it knows - and the copy waits, not marked as done",
+			Good(early).SequenceEqual(["brought back 8 settings that 1.0.1 didn't know"]) && File.Exists(copy) && !File.Exists(copy[..^".zip".Length] + "-applied.zip")
+			&& File.ReadAllText(Path.Combine(cfg, "nocatFarm.json")).Contains("UpdateCheckHours", StringComparison.Ordinal),
+			string.Join(" | ", early.Select(static n => n.Detail ?? n.Line.ToEnglish())));
+
+		// Dropped again, as the older version had them, for the rest.
+		OlderWrites(Path.Combine(cfg, "nocatFarm.json"), ["UpdateCheckHours", "UpdateReminders", "AutoUpdateFromHour", "DisabledPlugins"]);
+		OlderWrites(Path.Combine(cfg, "rbkeep.json"), ["IdleGames", "HoursUntilCardDrops", "ClaimEventItems", "DiscoveryQueue"]);
+
+		// Started again as this version.
+		List<NocatFarm.Core.Rollback.Note> notes = NocatFarm.Core.Rollback.RestoreMissing();
+		Check("going back: back on this version, it says in plain words how many settings came back",
+			Good(notes).SequenceEqual(["brought back 8 settings that 1.0.1 didn't know"]) && notes.Any(static n => n.Detail?.Contains("rbkeep.json: IdleGames", StringComparison.Ordinal) == true),
+			string.Join(" | ", notes.Select(static n => n.Detail ?? n.Line.ToEnglish())));
+
+		NocatFarm.Config.GlobalConfig g = NocatFarm.Config.ConfigStore.LoadGlobal();
+		NocatFarm.Config.BotConfig? keep = NocatFarm.Config.ConfigStore.LoadBot("rbkeep");
+		Check("going back: every global setting the older version dropped is back, as it was",
+			(g.UpdateCheckHours == 7) && !g.UpdateReminders && (g.AutoUpdateFromHour == 4) && g.DisabledPlugins.SequenceEqual(["one"]));
+		Check("going back: ...and every account setting", (keep != null) && keep.IdleGames.SequenceEqual([440u, 570u]) && (keep.HoursUntilCardDrops == 5)
+			&& !keep.ClaimEventItems && (keep.DiscoveryQueue == 2));
+		Check("going back: a setting changed on the older version keeps the change", !g.Tray && (keep?.CraftBadges == true));
+		Check("going back: an account removed in between isn't brought back, and one added in between is left alone",
+			!File.Exists(Path.Combine(cfg, "rbgone.json")) && (File.ReadAllText(Path.Combine(cfg, "rbnew.json")) == added));
+		Check("going back: the copy is marked as done", !File.Exists(copy) && File.Exists(copy[..^".zip".Length] + "-applied.zip"));
+
+		// Once only: dropped again later (an older version again, by hand), a done copy doesn't bring anything back.
+		OlderWrites(Path.Combine(cfg, "rbkeep.json"), ["DiscoveryQueue"]);
+		List<NocatFarm.Core.Rollback.Note> again = NocatFarm.Core.Rollback.RestoreMissing();
+		Check("going back: done once - the next start brings nothing back from that copy",
+			(Good(again).Count == 0) && !File.ReadAllText(Path.Combine(cfg, "rbkeep.json")).Contains("DiscoveryQueue", StringComparison.Ordinal),
+			string.Join(" | ", again.Select(static n => n.Detail ?? n.Line.ToEnglish())));
+
+		// Gone back to a version that knew every setting, and forward again by an update: nothing was missing, so nothing ever
+		// marked the copy done - read at every start, with every saved login in it, and one more for each round trip.
+		string full = NocatFarm.Core.Rollback.Snapshot("v1.6.1");
+		NocatFarm.Core.Rollback.RestoreMissing("1.6.1");   // the older version starting: it knows them all, drops none
+		NocatFarm.Core.Rollback.RestoreMissing();          // this one again
+		bool waiting = File.Exists(full);
+		string note = Path.Combine(cfg, "state", "updated.txt");
+		File.WriteAllText(note, $"1.6.1|{cur}|12|3|{DateTime.UtcNow.Ticks}");
+		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+		Check("going back and forth: back from a version that knew every setting, the copy for that pair is done once the update is in",
+			waiting && !File.Exists(full) && File.Exists(full[..^".zip".Length] + "-applied.zip"),
+			string.Join(" ", Directory.GetFiles(NocatFarm.Core.Rollback.Folder).Select(Path.GetFileName)));
+
+		// On trial, only once it has said it's fine: put back, the older version runs again and the copy is still needed then.
+		const BindingFlags AnyStatic = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+		FieldInfo trialF = typeof(NocatFarm.Core.SelfUpdate).GetField("_trialOk", AnyStatic)!, confirmedF = typeof(NocatFarm.Core.SelfUpdate).GetField("_confirmed", AnyStatic)!;
+		object? trialBefore = trialF.GetValue(null), confirmedBefore = confirmedF.GetValue(null);
+		string trialCopy = NocatFarm.Core.Rollback.Snapshot("v1.6.2");
+		NocatFarm.Core.Rollback.RestoreMissing();
+
+		try {
+			trialF.SetValue(null, Path.Combine(cfg, "state", "started.txt"));
+			confirmedF.SetValue(null, false);
+			typeof(NocatFarm.Core.Rollback).GetMethod("CameForward", AnyStatic)?.Invoke(null, ["1.6.2"]);
+			bool heldOn = File.Exists(trialCopy);
+			typeof(NocatFarm.Core.Rollback).GetMethod("ConfirmApplied", AnyStatic)!.Invoke(null, []);
+			Check("going back and forth: on trial, the copy is done once the new version has said it's fine - not before",
+				heldOn && !File.Exists(trialCopy) && File.Exists(trialCopy[..^".zip".Length] + "-applied.zip"), $"{heldOn}");
+		} finally {
+			trialF.SetValue(null, trialBefore);
+			confirmedF.SetValue(null, confirmedBefore);
+		}
+	} finally {
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── human mode's wait, said as it is: the first sign-in since nocat.farm started is "signed in at", one after a reconnect
+//    "signed in again at", each with when it opens ─────────────────────────────────────────────────────────────────
+{
+	var cfg = new NocatFarm.Config.BotConfig { LegitMode = true, WakeDelayMinMinutes = 30, WakeDelayMaxMinutes = 30 };
+	var bot = new NocatFarm.Core.Bot("harness-gate-why", cfg);
+	void SetProp(string name, object? value) => typeof(NocatFarm.Core.Bot).GetProperty(name)?.SetValue(bot, value);
+	SetProp("State", NocatFarm.Core.BotState.Online);
+	DateTime signedIn = DateTime.UtcNow.AddMinutes(-3);
+	SetProp("SignIns", 1);
+	SetProp("OnlineSince", signedIn);
+	var gate = NocatFarm.Modules.HumanGate.OwnDay(bot);
+	FieldInfo openAt = typeof(NocatFarm.Modules.HumanGate).GetField("_openAt", BindingFlags.NonPublic | BindingFlags.Instance)!;
+	string why = gate.Waiting().ToEnglish();
+	DateTime opens = (DateTime) openAt.GetValue(gate)!;
+	Check("human gate: closed by the first sign-in since starting, it says so - when it signed in and when it can go ahead, not \"again\" or \"woken up\"",
+		why.StartsWith($"it signed in at {Fmt.Clock(signedIn)} - human mode waits a little", StringComparison.Ordinal)
+		&& why.EndsWith($"it can go ahead from about {Fmt.Clock(opens)}", StringComparison.Ordinal) && !why.Contains("woke", StringComparison.Ordinal)
+		&& (opens > DateTime.UtcNow), why);
+	Check("human gate: asking starts the wait the loop's next look would have", (opens != DateTime.MaxValue) && !gate.Open);
+
+	var free = new NocatFarm.Modules.FreeGames(bot);
+	string holding = free.Holding().ToEnglish();
+	Check("freegames: holding says the same as the gate - signed in, with the times", holding.StartsWith($"it signed in at {Fmt.Clock(signedIn)}", StringComparison.Ordinal), holding);
+
+	DateTime back = DateTime.UtcNow.AddMinutes(-1);
+	SetProp("SignIns", 2);
+	SetProp("OnlineSince", back);
+	string again = gate.Waiting().ToEnglish();
+	Check("human gate: a sign-in after a reconnect is \"signed in again\"", again.StartsWith($"it signed in again at {Fmt.Clock(back)} - human mode waits a little", StringComparison.Ordinal), again);
+
+	openAt.SetValue(gate, DateTime.UtcNow.AddSeconds(-1));
+	Check("human gate: open once its wait is over - nothing to say", gate.Waiting().IsEmpty);
+	gate.Space(20, 20);
+	string spaced = gate.Waiting().ToEnglish();
+	Check("human gate: spaced out after doing something - said as that", spaced.StartsWith("it did something at ", StringComparison.Ordinal)
+		&& spaced.Contains("human mode spaces things out; it can go ahead from about", StringComparison.Ordinal), spaced);
+
+	await bot.DisposeAsync();
+}
+
+// ── every command typed goes in the log file with its reply, where it came from, and no secret ───────────────────
+{
+	string logRoot = Path.Combine(Path.GetTempPath(), "nf-cmdlog-" + Guid.NewGuid().ToString("N"));
+	string? folderBefore = Log.Folder;
+	bool debugBefore = Log.DebugEnabled;
+	Log.Configure(fileLogging: true, debug: false, logRoot);
+	var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+	// Every day's file: a run across midnight wrote to one and, named from the clock when it read, looked in the next.
+	string File() => string.Concat(Directory.GetFiles(Path.Combine(logRoot, "logs"), "nocatFarm-*.log").Order(StringComparer.Ordinal).Select(static f => System.IO.File.ReadAllText(f)));
+
+	try {
+		string reply = await Commands.RunAtThisPcAsync(mgr, "version", "window");
+		string firstLine = reply.ReplaceLineEndings("\n").Split('\n')[0];
+		string text = File();
+		Check("command log: a command typed in the window and its reply land in the log file, marked where it came from",
+			text.Contains("|INFO|command|window> version", StringComparison.Ordinal) && text.Contains($"|INFO|command|window  {firstLine}", StringComparison.Ordinal), text);
+
+		string web = System.IO.File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Web", "WebHost.cs")).Replace("\r\n", "\n");
+		string social = System.IO.File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Modules", "Social.cs")).Replace("\r\n", "\n");
+		string telegram = System.IO.File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "TelegramCommands.cs")).Replace("\r\n", "\n");
+		string discord = System.IO.File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "DiscordBot.cs")).Replace("\r\n", "\n");
+		Check("command log: the dashboard, Steam chat, Telegram and Discord write theirs too, each named",
+			web.Contains("RunAtThisPcAsync(_mgr, body.Line, \"dashboard on this PC\")", StringComparison.Ordinal)
+			&& web.Contains("RunLoggedAsync(_mgr, body.Line, \"dashboard from another device\")", StringComparison.Ordinal)
+			&& social.Contains("Commands.LogExchange($\"steam chat {Bot.Name} from {who}\", command, answer);", StringComparison.Ordinal)
+			&& telegram.Contains("EchoToLog(line, output, \"telegram\");", StringComparison.Ordinal) && discord.Contains("EchoToLog(line, output, \"discord\");", StringComparison.Ordinal)
+			&& telegram.Contains("Commands.LineForLog(trimmed)", StringComparison.Ordinal) && discord.Contains("Commands.LineForLog(line)", StringComparison.Ordinal));
+
+		// Secrets: typed as an argument, or said back in a reply.
+		(string Line, string Reply, string Secret, string What)[] secrets = [
+			("set new SteamPassword hunter2pass", "saved", "hunter2pass", "a Steam password"),
+			("set WebPassword dashpw-91827", "saved", "dashpw-91827", "the dashboard password"),
+			("set TelegramBotToken 123456789:AAbbCCddEEffGGhhIIjjKKllMMnnOOpp", "saved", "AAbbCCddEEffGGhhIIjjKKllMMnnOOpp", "the Telegram bot token"),
+			("set DiscordBotToken MTA5ODc2.discordbot.token-value", "saved", "discordbot.token-value", "the Discord bot token"),
+			("set Rep4RepApiToken r4rtoken55667788", "saved", "r4rtoken55667788", "the rep4rep API token"),
+			("set new SharedSecret c2hhcmVkc2VjcmV0eA==", "saved", "c2hhcmVkc2VjcmV0eA==", "an authenticator secret"),
+			("answer K7B2X", "thanks", "K7B2X", "a Steam Guard code given as an answer"),
+			("/answer mypassw0rd!", "thanks", "mypassw0rd!", "a password given as an answer"),
+			("add alt altlogin MyPassw0rd", "Added 'alt'", "MyPassw0rd", "a password typed after 'add'"),
+			("2fa", "Steam Guard codes (they change every 30 seconds):\n  new          K7B2X   (12s left)", "K7B2X", "a Steam Guard code in what '2fa' says"),
+			("guard new", "new: CR4TF   (9s left)", "CR4TF", "a Steam Guard code from '2fa' under another name"),
+			("redeem ABCDE-FGHIJ-KLMNO", "ABCDE-FGHIJ-KLMNO: activated on new", "ABCDE-FGHIJ-KLMNO", "a product key, typed and said back"),
+			("import asf C:\\asf\\config apikey=0123456789ABCDEF", "imported", "0123456789ABCDEF", "an API key in an import line"),
+			("log 5", "GET /api?access_token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.sig", "eyJhbGciOiJIUzI1NiJ9", "a token in a reply")
+		];
+
+		foreach ((string line, string said, string secret, string what) in secrets) {
+			Commands.LogExchange("telegram", line, said);
+		}
+
+		text = File();
+
+		foreach ((string line, string said, string secret, string what) in secrets) {
+			Check($"command log: {what} comes out masked", !text.Contains(secret, StringComparison.Ordinal)
+				&& !Commands.LineForLog(line).Contains(secret, StringComparison.Ordinal) && !string.Join("\n", Commands.ReplyForLog(line, said)).Contains(secret, StringComparison.Ordinal),
+				Commands.LineForLog(line) + " / " + string.Join(" | ", Commands.ReplyForLog(line, said)));
+		}
+
+		Check("command log: ...and what isn't secret is still there to read",
+			text.Contains("telegram> set new SteamPassword ***", StringComparison.Ordinal) && text.Contains("telegram> add alt altlogin ***", StringComparison.Ordinal)
+			&& text.Contains("new          *****   (12s left)", StringComparison.Ordinal) && text.Contains("telegram> redeem [key]", StringComparison.Ordinal), text);
+
+		// A long reply: one entry per line, all at one time, and past 200 lines counted, not written.
+		string longReply = string.Join("\n", Enumerable.Range(1, 250).Select(static i => $"row {i}"));
+		Commands.LogExchange("dashboard on this PC", "status", longReply);
+		string[] rows = [.. File().ReplaceLineEndings("\n").Split('\n').Where(static l => l.Contains("|command|dashboard on this PC", StringComparison.Ordinal))];
+		Check("command log: a long reply - a line each, the same time on every one, capped at 200 with how many more",
+			(rows.Length == 202) && rows[1].EndsWith("dashboard on this PC  row 1", StringComparison.Ordinal) && rows[200].EndsWith("row 200", StringComparison.Ordinal)
+			&& rows[201].EndsWith("dashboard on this PC  … 50 more lines", StringComparison.Ordinal) && (rows.Select(static r => r[..19]).Distinct().Count() == 1),
+			$"{rows.Length} {rows.LastOrDefault()}");
+	} finally {
+		Log.Configure(folderBefore != null, debugBefore, folderBefore != null ? Path.GetDirectoryName(folderBefore)! : logRoot);
+
+		try {
+			Directory.Delete(logRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── tables cut text on whole characters: an emoji at the cut is never left half there ───────────────────────────
+{
+	// A lone half of a surrogate pair is what a console draws as "�".
+	static bool Whole(string s) {
+		for (int i = 0; i < s.Length; i++) {
+			if (char.IsHighSurrogate(s[i]) && (i + 1 < s.Length) && char.IsLowSurrogate(s[i + 1])) {
+				i++;
+			} else if (char.IsSurrogate(s[i]) || (s[i] == '�')) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	const string Skulls = "💀nocat.lol/nocatfarm💀 (+8)";
+	Check("columns: an emoji is two columns, the rest one", (Columns.Width("💀nocat.lol/nocatfarm💀") == 23) && (Columns.Width("abc") == 3) && (Columns.Width("☠️x") == 3),
+		$"{Columns.Width("💀nocat.lol/nocatfarm💀")} {Columns.Width("☠️x")}");
+
+	bool fitOk = true, clipOk = true, charsOk = true;
+	string fitBad = "", clipBad = "", charsBad = "";
+
+	for (int w = 1; w <= 30; w++) {
+		string fit = Columns.Fit(Skulls, w);
+
+		if (!Whole(fit) || (Columns.Width(fit) != w)) {
+			fitOk = false;
+			fitBad = $"{w}: '{fit}' is {Columns.Width(fit)} wide";
+		}
+
+		string clip = Columns.Clip(Skulls, w);
+
+		if (!Whole(clip) || (Columns.Width(clip) > w) || ((Columns.Width(Skulls) > w) && !clip.EndsWith('…'))) {
+			clipOk = false;
+			clipBad = $"{w}: '{clip}'";
+		}
+
+		string chars = Columns.ClipChars(Skulls, w);
+
+		if (!Whole(chars) || (chars.Length > w)) {
+			charsOk = false;
+			charsBad = $"{w}: '{chars}'";
+		}
+	}
+
+	Check("columns: cut to every width from 1 to 30, never half an emoji, always exactly that wide", fitOk, fitBad);
+	Check("columns: clipped to every width, never half an emoji, never wider, '…' when cut", clipOk, clipBad);
+	Check("columns: cut to a number of chars (a chat's limit), never half an emoji", charsOk, charsBad);
+	Check("columns: the status table's cut is the whole skull or none of it", Columns.Fit(Skulls, 23) == "💀nocat.lol/nocatfarm… ", $"'{Columns.Fit(Skulls, 23)}'");
+	Check("columns: what fits is left alone; padding counts the emoji as two", (Columns.Fit("💀ab", 6) == "💀ab  ") && (Columns.PadRight("💀", 4) == "💀  ") && (Columns.PadRight("toolong", 3) == "toolong"));
+
+	var logPad = typeof(Log).GetMethod("Pad", BindingFlags.NonPublic | BindingFlags.Static)!;
+	string padded = (string) logPad.Invoke(null, [Skulls, 23])!;
+	Check("columns: Log.Pad (the status table's) cuts on the whole emoji", Whole(padded) && (Columns.Width(padded) == 23), padded);
+
+	// The live board pads and trims with colour codes in the line, which take no columns.
+	Type board = typeof(NocatFarm.Windows.LiveConsole);
+	var boardPad = board.GetMethod("Pad", BindingFlags.NonPublic | BindingFlags.Static)!;
+	var boardTrim = board.GetMethod("Trim", BindingFlags.NonPublic | BindingFlags.Static)!;
+	var boardVisible = board.GetMethod("Visible", BindingFlags.NonPublic | BindingFlags.Static)!;
+	string coloured = "\x1b[36m💀nocat\x1b[0m💀💀";
+	bool boardOk = true;
+	string boardBad = "";
+
+	for (int w = 1; w <= 12; w++) {
+		string p = (string) boardPad.Invoke(null, [coloured, w])!;
+		string t = (string) boardTrim.Invoke(null, [coloured, w])!;
+
+		if (!Whole(p) || !Whole(t) || ((int) boardVisible.Invoke(null, [p])! != w) || ((int) boardVisible.Invoke(null, [t])! > w)) {
+			boardOk = false;
+			boardBad = $"{w}: '{p.Replace("\x1b", "ESC")}' / '{t.Replace("\x1b", "ESC")}'";
+		}
+	}
+
+	Check("live board: padded and trimmed around colour codes, never half an emoji, the width it was asked for", boardOk, boardBad);
+
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-cut-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+
+	try {
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
+		var skull = new NocatFarm.Core.Bot("skull", new NocatFarm.Config.BotConfig());
+		typeof(NocatFarm.Core.Bot).GetProperty("Playing")!.SetValue(skull, Skulls);
+		bots["skull"] = skull;
+		string table = await Commands.RunAsync(mgr, "status");
+		string row = table.Split('\n').First(static l => l.TrimStart().StartsWith("skull ", StringComparison.Ordinal));
+		Check("status: a custom name with an emoji at the cut - no '�', the emoji whole or gone, the next column still a space away",
+			Whole(table) && row.Contains("💀nocat.lol/nocatfarm… ", StringComparison.Ordinal), row);
+	} finally {
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── money that went down reads "-$98.82", not "$-98.82" ────────────────────────────────────────────────────────
+{
+	string s = NocatFarm.PriceBook.Symbol;
+	Check("money: a fall has its minus in front of the symbol", NocatFarm.PriceBook.Signed(-98.82m) == "-" + s + "98.82", NocatFarm.PriceBook.Signed(-98.82m));
+	Check("money: a rise has a plus", NocatFarm.PriceBook.Signed(12.3m) == "+" + s + "12.30", NocatFarm.PriceBook.Signed(12.3m));
+	Check("money: no change has no sign", NocatFarm.PriceBook.Signed(0m) == s + "0.00", NocatFarm.PriceBook.Signed(0m));
+	Check("money: a fall of a fraction of a cent is no change, not '-$0.00'", NocatFarm.PriceBook.Signed(-0.004m) == s + "0.00", NocatFarm.PriceBook.Signed(-0.004m));
+	Check("money: thousands grouped, either way", (NocatFarm.PriceBook.Signed(-1234.5m) == "-" + s + "1,234.50") && (NocatFarm.PriceBook.Signed(1234.5m) == "+" + s + "1,234.50"),
+		NocatFarm.PriceBook.Signed(-1234.5m));
+	Check("money: percentages likewise - -5.5%, +5.5%, 0.0% (never -0.0%)",
+		(NocatFarm.PriceBook.SignedPercent(-5.5) == "-5.5%") && (NocatFarm.PriceBook.SignedPercent(5.5) == "+5.5%")
+		&& (NocatFarm.PriceBook.SignedPercent(0) == "0.0%") && (NocatFarm.PriceBook.SignedPercent(-0.04) == "0.0%"),
+		$"{NocatFarm.PriceBook.SignedPercent(-5.5)} {NocatFarm.PriceBook.SignedPercent(5.5)} {NocatFarm.PriceBook.SignedPercent(0)} {NocatFarm.PriceBook.SignedPercent(-0.04)}");
+	var weeklyMoney = typeof(NocatFarm.Core.WeeklyReport).GetMethod("Money", BindingFlags.NonPublic | BindingFlags.Static)!;
+	Check("money: the weekly report (Telegram, Discord) the same way",
+		((string) weeklyMoney.Invoke(null, [-2.5m])! == "-" + s + "2.50") && ((string) weeklyMoney.Invoke(null, [2.5m])! == "+" + s + "2.50"),
+		(string) weeklyMoney.Invoke(null, [-2.5m])!);
+
+	string app = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "wwwroot", "app.js"));
+	Check("money: the dashboard's money puts a minus in front of the symbol too",
+		!app.Contains("cur() + (Number(n) || 0)", StringComparison.Ordinal) && app.Contains("(v < 0 && /[1-9]/.test(shown) ? '-' : '') + cur() + shown", StringComparison.Ordinal));
+}
+
+// ── help: a usage as wide as its column goes on its own line, never straight into the description ──────────────
+{
+	string help = await Commands.RunAsync(new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false }), "help");
+	string[] helpLines = help.ReplaceLineEndings("\n").Split('\n');
+	List<string> bad = [];
+
+	foreach (CommandDef c in Commands.All) {
+		string usage = (c.Display + " " + c.Args).TrimEnd();
+		int at = Array.FindIndex(helpLines, l => l.StartsWith("  " + usage, StringComparison.Ordinal));
+
+		if (at < 0) {
+			bad.Add(usage + " (not found)");
+
+			continue;
+		}
+
+		string line = helpLines[at];
+		bool sameLine = line.EndsWith(c.Help, StringComparison.Ordinal) && line[..^c.Help.Length].EndsWith("  ", StringComparison.Ordinal)
+			&& (line[..^c.Help.Length].TrimEnd() == "  " + usage);
+		bool ownLine = (line == "  " + usage) && (at + 1 < helpLines.Length) && (helpLines[at + 1] == "  " + new string(' ', 44) + c.Help);
+
+		if (!sameLine && !ownLine) {
+			bad.Add(line);
+		}
+	}
+
+	Check("help: every description at least two spaces after its usage, or on its own indented line below", bad.Count == 0, string.Join(" | ", bad));
+	Check("help: joingroup's usage (exactly the column's width) wraps",
+		helpLines.Contains("  joingroup <account|all> <group link or name>") && !help.Contains("<group link or name>Join", StringComparison.Ordinal));
+	Check("help: a usage two short of the column fits with two spaces; one short wraps",
+		(Commands.UsageLines(new string('x', 42), 44, "what").Single() == "  " + new string('x', 42) + "  what")
+		&& (Commands.UsageLines(new string('x', 43), 44, "what").Length == 2) && (Commands.UsageLines(new string('x', 44), 44, "what")[1] == "  " + new string(' ', 44) + "what"));
+}
+
+// ── a '!' or '/' with no command after it says to type one, not "there's no '' command" ─────────────────────────
+{
+	var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+	string bang = await Commands.RunAsync(mgr, "!");
+	string slash = await Commands.RunAsync(mgr, "/");
+	string spaced = await Commands.RunAsync(mgr, "! status");
+	Check("empty command: '!' alone, or '! status' with a space, says to type a command after the '!'",
+		(bang == "Type a command after the '!' - 'help' lists them.") && (spaced == bang), $"{bang} / {spaced}");
+	Check("empty command: '/' alone says the same with '/'", slash == "Type a command after the '/' - 'help' lists them.", slash);
+}
+
+// ── slow commands answer at once, finish in the background, and aren't started twice ─────────────────────────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-slow-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+
+	try {
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
+		var slowA = new NocatFarm.Core.Bot("slowa", new NocatFarm.Config.BotConfig());
+		var slowB = new NocatFarm.Core.Bot("slowb", new NocatFarm.Config.BotConfig());
+		bots["slowa"] = slowA;
+		bots["slowb"] = slowB;
+
+		var watch = System.Diagnostics.Stopwatch.StartNew();
+		string queueAll = await Commands.RunAsync(mgr, "queue all");
+		Check("queue: an account that isn't signed in says so at once", (watch.Elapsed < TimeSpan.FromSeconds(3))
+			&& queueAll.Contains("slowa: not logged in", StringComparison.Ordinal) && queueAll.Contains("slowb: not logged in", StringComparison.Ordinal), queueAll);
+
+		Commands.Slow job = new("testqueue", "going through today's discovery queue", "about 4 minutes");
+		TaskCompletionSource<string> finishA = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		TaskCompletionSource<string> finishB = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		watch.Restart();
+		string first = await Commands.SlowAsync(job, [slowA, slowB], b => b == slowA ? finishA.Task : finishB.Task, TimeSpan.Zero);
+		Check("slow: answers straight away, a line per account, saying how long and where the answer goes",
+			(watch.Elapsed < TimeSpan.FromSeconds(2))
+			&& first.Contains("slowa: going through today's discovery queue now - about 4 minutes; the log says when it's done", StringComparison.Ordinal)
+			&& first.Contains("slowb: going through today's discovery queue now - about 4 minutes; the log says when it's done", StringComparison.Ordinal), first);
+
+		string again = await Commands.SlowAsync(job, [slowA], static _ => Task.FromResult("started twice"), TimeSpan.Zero);
+		Check("slow: a second one while the first is going says it's already going, and starts nothing",
+			again == "slowa: already going through today's discovery queue - the log says when it's done", again);
+
+		finishA.SetResult("slowa: looked through 12 game(s) in the discovery queue");
+		finishB.SetResult("slowb: looked through 12 game(s) in the discovery queue");
+		bool logged = false;
+
+		for (int i = 0; (i < 50) && !logged; i++) {
+			await Task.Delay(20);
+			logged = Log.Recent(500).Any(static e => (e.Source == "slowa") && (e.Text == "looked through 12 game(s) in the discovery queue"));
+		}
+
+		Check("slow: the answer goes to the log under the account's name when it's done - the name said once, not again in the line", logged
+			&& !Log.Recent(500).Any(static e => (e.Source == "slowa") && e.Text.StartsWith("slowa: looked through", StringComparison.Ordinal)));
+
+		string after = await Commands.SlowAsync(job, [slowA], static _ => Task.FromResult("slowa: quick"), TimeSpan.FromSeconds(5));
+		Check("slow: once it's done it can run again - and a quick one is the reply itself", after == "slowa: quick", after);
+
+		string mixed = await Commands.SlowAsync(job, [slowA, slowB], static b => Task.FromResult($"{b.Name}: done"), TimeSpan.FromSeconds(5),
+			oneAtATime: true, cannot: b => b == slowA ? "slowa: not logged in" : null);
+		Check("slow: accounts that can't answer in their place, in order", mixed == "slowa: not logged in" + Environment.NewLine + "slowb: done", mixed);
+
+		string failed = await Commands.SlowAsync(job, [slowB], static async _ => {
+			await Task.Delay(300);
+
+			throw new InvalidOperationException("Steam went away");
+		}, TimeSpan.FromMilliseconds(50));
+		Check("slow: past its wait it says it's still going", failed == "slowb: still going through today's discovery queue - the log says when it's done", failed);
+
+		// Polled, not a fixed wait: on a busy machine the background failure took longer than 600 ms to land.
+		var going = (IEnumerable) typeof(Commands).GetField("Going", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+		bool warned = false;
+
+		for (int i = 0; (i < 250) && !warned; i++) {
+			await Task.Delay(20);
+
+			lock (going) {
+				warned = !going.Cast<object>().Any(static o => o.ToString()!.Contains("testqueue slowb", StringComparison.Ordinal)) && Log.Recent(500).Any(static e => (e.Source == "slowb") && (e.Level == "WARN") && e.Text.Contains("Steam went away", StringComparison.Ordinal));
+			}
+		}
+
+		string retried = await Commands.SlowAsync(job, [slowB], static _ => Task.FromResult("slowb: fine"), TimeSpan.FromSeconds(5));
+		Check("slow: one that failed in the background is warned about and can be started again",
+			(retried == "slowb: fine") && Log.Recent(500).Any(static e => (e.Source == "slowb") && (e.Level == "WARN") && e.Text.Contains("Steam went away", StringComparison.Ordinal)), retried);
+
+		// From Steam chat the log can't be read - 'log' is refused there - so the answer goes back to the chat when it's done,
+		// to every chat that asked. Anywhere else it still says the log has it.
+		var lateReply = typeof(Commands).GetField("LateReply", BindingFlags.NonPublic | BindingFlags.Static)?.GetValue(null)
+			as AsyncLocal<(Action<string>? Tell, (string Text, string As)[]? Hidden)>;
+		List<string> told = [];
+
+		async Task<string> FromChat(Func<Task<string>> run) {
+			lateReply!.Value = (s => {
+				lock (told) {
+					told.Add(s);
+				}
+			}, null);
+
+			return await run();
+		}
+
+		if (lateReply == null) {
+			Check("slow: from Steam chat the answer is sent back there when it's done", false, "nothing to send it back with");
+		} else {
+			TaskCompletionSource<string> finishC = new(TaskCreationOptions.RunContinuationsAsynchronously);
+			string chat = await FromChat(() => Commands.SlowAsync(job, [slowA], _ => finishC.Task, TimeSpan.Zero));
+			string chatAgain = await FromChat(() => Commands.SlowAsync(job, [slowA], static _ => Task.FromResult("started twice"), TimeSpan.Zero));
+			string pcAgain = await Commands.SlowAsync(job, [slowA], static _ => Task.FromResult("started twice"), TimeSpan.Zero);
+			Check("slow: from Steam chat it says the answer comes back there, not that the log has it",
+				(chat == "slowa: going through today's discovery queue now - about 4 minutes; the answer comes here when it's done")
+				&& (chatAgain == "slowa: already going through today's discovery queue - the answer comes here when it's done"), $"{chat} / {chatAgain}");
+			Check("slow: ...and from anywhere else, that the log has it", pcAgain == "slowa: already going through today's discovery queue - the log says when it's done", pcAgain);
+
+			finishC.SetResult("slowa: looked through 9 game(s) in the discovery queue");
+			int count = 0;
+
+			for (int i = 0; (i < 250) && (count < 2); i++) {
+				await Task.Delay(20);
+
+				lock (told) {
+					count = told.Count;
+				}
+			}
+
+			await Task.Delay(100);   // and no third
+
+			lock (told) {
+				Check("slow: from Steam chat the answer is sent back when it's done - once to each chat that asked",
+					(told.Count == 2) && told.All(static t => t == "slowa: looked through 9 game(s) in the discovery queue"), string.Join(" | ", told));
+			}
+
+			string quick = await FromChat(() => Commands.SlowAsync(job, [slowA], static _ => Task.FromResult("slowa: quick"), TimeSpan.FromSeconds(5)));
+			await Task.Delay(100);
+
+			lock (told) {
+				Check("slow: one done within its wait is the reply itself, not sent again", (quick == "slowa: quick") && (told.Count == 2), $"{quick}; told {told.Count}");
+			}
+		}
+
+		string social = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Modules", "Social.cs"));
+		Check("steam chat: a command from it hands over where a late answer goes", social.Contains("Commands.RunAsync(command, Bot.Name, ", StringComparison.Ordinal));
+	} finally {
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── persona <account> says what it shows, like gamename <account> ─────────────────────────────────────────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-persona-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+
+	try {
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
+		var robot = new NocatFarm.Core.Bot("probot", new NocatFarm.Config.BotConfig { OnlineStatus = 7 });
+		var person = new NocatFarm.Core.Bot("pperson", new NocatFarm.Config.BotConfig { LegitMode = true, OnlineStatus = 1 });
+		bots["probot"] = robot;
+		bots["pperson"] = person;
+
+		string shown = await Commands.RunAsync(mgr, "persona probot");
+		Check("persona: the account alone says what it shows and its setting, not the usage",
+			shown.StartsWith("probot: signed out, so friends see it offline - set to invisible", StringComparison.Ordinal)
+			&& shown.Contains("'persona probot <state>' changes it (online, offline, busy, away, snooze, looking to trade, looking to play, invisible)", StringComparison.Ordinal)
+			&& !shown.Contains("Human mode", StringComparison.Ordinal), shown);
+		string human = await Commands.RunAsync(mgr, "persona pperson");
+		Check("persona: on a human-mode account it says human mode sets it through the day",
+			human.Contains("set to online", StringComparison.Ordinal) && human.Contains("Human mode sets it through the day", StringComparison.Ordinal), human);
+		string set = await Commands.RunAsync(mgr, "persona probot looking to trade");
+		Check("persona: with a state it still sets it", (robot.Cfg.OnlineStatus == 5) && (set == "probot: looking to trade"), set);
+		string bare = await Commands.RunAsync(mgr, "persona");
+		Check("persona: bare, the usage", bare.StartsWith("persona <account>", StringComparison.Ordinal), bare);
+	} finally {
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── a slow command cut short by a sign-out is said plainly, and leaves no lost task behind ─────────────────────────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-slowfail-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+
+	List<string> lost = [];
+	void Lost(object? sender, UnobservedTaskExceptionEventArgs e) {
+		string seen = e.Exception.ToString();
+
+		if (seen.Contains("SlowAsync", StringComparison.Ordinal) || seen.Contains("slowfail marker", StringComparison.Ordinal)) {
+			lock (lost) {
+				lost.Add(seen.Split('\n')[0]);
+			}
+		}
+	}
+
+	TaskScheduler.UnobservedTaskException += Lost;
+
+	try {
+		// Never signed in, as an account that signed out partway is by the time Steam drops what it had out.
+		var gone = new NocatFarm.Core.Bot("sfgone", new NocatFarm.Config.BotConfig());
+		var other = new NocatFarm.Core.Bot("sfother", new NocatFarm.Config.BotConfig());
+		long seq = Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+
+		// Past the hand-off: the reply has gone, and nothing but SlowAsync itself is left to see how it ended.
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+		static async Task<string> HandOff(NocatFarm.Core.Bot bot, Exception thrown, string what) =>
+			await Commands.SlowAsync(new Commands.Slow(what, "going through today's discovery queue"), [bot], async _ => {
+				await Task.Delay(150);
+
+				throw thrown;
+			}, TimeSpan.Zero);
+
+		string cut = await HandOff(gone, new SteamKit2.AsyncJobFailedException(), "queue");
+		string real = await HandOff(other, new InvalidOperationException("the market page said no (slowfail marker)"), "sell");
+		string unnamed = await Commands.SlowAsync(new Commands.Slow("match", "working out card swaps"), static async () => {
+			await Task.Delay(150);
+
+			throw new SteamKit2.AsyncJobFailedException();
+		}, TimeSpan.Zero);
+
+		Check("slow: a job that goes on past the reply says so first", cut.StartsWith("sfgone: going through", StringComparison.Ordinal) && real.StartsWith("sfother: going through", StringComparison.Ordinal), cut + " / " + real);
+
+		await Task.Delay(800);
+
+		for (int i = 0; i < 3; i++) {
+			GC.Collect();
+			GC.WaitForPendingFinalizers();
+		}
+
+		await Task.Delay(100);
+		Check("slow: a job that fails after the hand-off leaves no lost task behind", lost.Count == 0, string.Join(" / ", lost));
+
+		List<Log.Entry> said = [.. Log.Since(seq)];
+		List<Log.Entry> gones = [.. said.Where(static e => e.Source == "sfgone")];
+		Check("slow: cut short by the account signing out is one plain INFO line, no warning or error",
+			gones.Any(static e => (e.Level == "INFO") && (e.Text == "the discovery queue stopped - sfgone signed out before it was done; it's done again next time"))
+			&& !gones.Any(static e => e.Level is "WARN" or "ERROR"), string.Join(" / ", gones.Select(static e => $"{e.Level} {e.Text}")));
+
+		List<Log.Entry> others = [.. said.Where(static e => e.Source == "sfother")];
+		Check("slow: a real failure is a warning with its cause in plain words",
+			others.Any(static e => (e.Level == "WARN") && (e.Text == "'sell' stopped before it was done: the market page said no (slowfail marker)")), string.Join(" / ", others.Select(static e => $"{e.Level} {e.Text}")));
+
+		List<Log.Entry> shown = [.. said.Where(static e => (e.Level != "DEBUG") && (e.Source is "sfgone" or "sfother" || e.Text.Contains("'match'", StringComparison.Ordinal)))];
+		Check("slow: no 'Exception of type' text and no exception type in a line people see",
+			shown.Count > 0 && !shown.Any(static e => e.Text.Contains("Exception", StringComparison.Ordinal)), string.Join(" / ", shown.Select(static e => $"{e.Level} {e.Text}")));
+		Check("slow: Steam dropping a request with nobody signed out is a warning that says so",
+			shown.Any(static e => (e.Source == "nocat.farm") && (e.Level == "WARN") && (e.Text == "'match' stopped before it was done: Steam dropped the request")), unnamed);
+
+		string quick = await Commands.SlowAsync(new Commands.Slow("bans", "looking up its bans"), [gone], static _ => throw new SteamKit2.AsyncJobFailedException(), TimeSpan.FromSeconds(5));
+		Check("slow: cut short inside the reply's wait, the reply says it plainly too",
+			quick == "sfgone: the ban look stopped - sfgone signed out before it was done; 'bans' looks again once it's signed in", quick);
+
+		// The lost-task handler: a cancellation is a warning saying where, not the red line.
+		Exception where;
+
+		try {
+			Commands.UsageLines(null!, 44, "what");
+			where = new InvalidOperationException("didn't throw");
+		} catch (Exception e) {
+			where = e;
+		}
+
+		long seq2 = Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+		Log.OnUnobservedTask(null, new UnobservedTaskExceptionEventArgs(new AggregateException(new SteamKit2.AsyncJobFailedException())));
+		List<Log.Entry> handler = [.. Log.Since(seq2).Where(static e => e.Level != "DEBUG")];
+		Check("lost task: one only cut off is a warning, not an error",
+			handler.Count == 1 && (handler[0].Level == "WARN") && handler[0].Text.Contains("cut off partway", StringComparison.Ordinal), string.Join(" / ", handler.Select(static e => $"{e.Level} {e.Text}")));
+		// Where the null is hit depends on what the JIT inlines: Commands.UsageLines on x64, the Columns.Width it calls on Apple silicon. Either is "where in nocat.farm".
+		Check("lost task: it says where in nocat.farm it was when it can", Log.WhereFrom(where) is "Commands.UsageLines" or "Columns.Width", Log.WhereFrom(where) + " | " + where.StackTrace);
+	} finally {
+		TaskScheduler.UnobservedTaskException -= Lost;
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── going back holds off the right version, keeps a skip, and puts it back if it doesn't go in ─────────────────────
+{
+	const BindingFlags AnyStatic = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+	Type su = typeof(NocatFarm.Core.SelfUpdate);
+	Type uc = typeof(NocatFarm.Core.UpdateCheck);
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-hold-" + Guid.NewGuid().ToString("N"));
+	string zips = Path.Combine(tmpRoot, "zips");
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	Directory.CreateDirectory(zips);
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	string state = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state");
+	string exe = FakeProgram.ExeFor(FakeProgram.Here);
+	string cur = Build.Version;
+	int[] parts = [.. cur.Split('.').Select(int.Parse)];
+	string newer = $"{parts[0]}.{parts[1]}.{parts[2] + 1}";
+	PropertyInfo latestP = uc.GetProperty("Latest", AnyStatic)!;
+	string? Hold(string? latest, string target) {
+		latestP.SetValue(null, latest);
+
+		return NocatFarm.Core.Rollback.HoldOff(target);
+	}
+
+	var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+	NocatFarm.Core.BotManager? hostBefore = Commands.Host;
+	PropertyInfo startP = su.GetProperty("StartSwap", AnyStatic)!, exitP = su.GetProperty("ExitForSwap", AnyStatic)!;
+	PropertyInfo pickerP = typeof(Commands).GetProperty("FilePicker", AnyStatic)!, pickingP = typeof(Commands).GetProperty("Picking", AnyStatic)!;
+	object? startBefore = startP.GetValue(null), exitBefore = exitP.GetValue(null);
+	Func<IEnumerable<NocatFarm.Core.Bot>>? fleetBefore = NocatFarm.Core.SelfUpdate.Fleet;
+	long Mark() => Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+	bool Said(long since, string english) => Log.Since(since).Any(e => e.Said.ToEnglish().Contains(english, StringComparison.Ordinal));
+
+	// A pretend GitHub on this PC, for the list of releases: the newest is newer than this build.
+	System.Net.Sockets.TcpListener listener = new(System.Net.IPAddress.Loopback, 0);
+	listener.Start();
+	int port = ((System.Net.IPEndPoint) listener.LocalEndpoint).Port;
+	List<string> askedFor = [];
+	CancellationTokenSource stopServing = new();
+	string Mine(string v) => OperatingSystem.IsWindows() ? $"nocat.farm-v{v}-portable.zip" : $"nocat.farm-v{v}_{NocatFarm.Core.Platform.ReleaseRid}.zip";
+	byte[] releases = System.Text.Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize(new[] {
+		new { tag_name = "v" + newer, draft = false, prerelease = false, assets = new[] { new { name = Mine(newer), browser_download_url = $"http://127.0.0.1:{port}/zips/x.zip", size = 1234 } } }
+	}));
+
+	_ = Task.Run(async () => {
+		while (!stopServing.IsCancellationRequested) {
+			System.Net.Sockets.TcpClient client;
+
+			try {
+				client = await listener.AcceptTcpClientAsync(stopServing.Token);
+			} catch {
+				break;
+			}
+
+			using (client) {
+				System.Net.Sockets.NetworkStream ns = client.GetStream();
+				byte[] buffer = new byte[8192];
+				string head = "";
+
+				while (!head.Contains("\r\n\r\n", StringComparison.Ordinal)) {
+					int read = await ns.ReadAsync(buffer);
+					if (read <= 0) {
+						break;
+					}
+
+					head += System.Text.Encoding.ASCII.GetString(buffer, 0, read);
+				}
+
+				string path = head.Split(' ').ElementAtOrDefault(1) ?? "";
+				lock (askedFor) {
+					askedFor.Add(path);
+				}
+				bool found = path == "/releases";
+				byte[] body = found ? releases : System.Text.Encoding.UTF8.GetBytes("{\"message\":\"Not Found\"}");
+				await ns.WriteAsync(System.Text.Encoding.ASCII.GetBytes($"HTTP/1.1 {(found ? "200 OK" : "404 Not Found")}\r\nContent-Type: application/json\r\nContent-Length: {body.Length}\r\nConnection: close\r\n\r\n"));
+				await ns.WriteAsync(body);
+			}
+		}
+	});
+
+	Environment.SetEnvironmentVariable("NOCATFARM_UPDATE_FEED", $"http://127.0.0.1:{port}/latest.json");
+
+	try {
+		// Which version to hold off going back to 1.0.1.
+		Check("hold off: the newest release newer than this one - nothing held off, so a skip typed for it stays", Hold("v" + newer, "1.0.1") == null);
+		Check("hold off: the newest release in between (a build tried out from a file) - that release", Hold("v1.0.2", "1.0.1") == "v1.0.2");
+		Check("hold off: the newest release is this one - this one", Hold("v" + cur, "1.0.1") == "v" + cur);
+		Check("hold off: the newest release older than the target, or not known - this one", (Hold("v1.0.0", "1.0.1") == "v" + cur) && (Hold(null, "1.0.1") == "v" + cur));
+		latestP.SetValue(null, null);
+
+		// Going back that didn't go in: the skip goes back to what it was before going back held a version off.
+		MethodInfo keep = su.GetMethod("KeepSkipBefore", AnyStatic)!;
+		string skipBefore = Path.Combine(state, "update-skip-before.txt");
+		string failed = Path.Combine(state, "update-failed.txt");
+		NocatFarm.Core.UpdateCheck.Skipped = "v8.8.8";
+		keep.Invoke(null, ["v1.0.1"]);
+		NocatFarm.Core.UpdateCheck.Skipped = "v" + cur;   // as the handover holds it off
+		File.WriteAllText(failed, "crashed back:1.0.1");
+		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+		Check("going back didn't start: the skip from before is put back, and its note goes",
+			(NocatFarm.Core.UpdateCheck.Skipped == "v8.8.8") && !File.Exists(skipBefore), NocatFarm.Core.UpdateCheck.Skipped ?? "null");
+
+		NocatFarm.Core.UpdateCheck.Skipped = null;
+		keep.Invoke(null, ["1.0.1"]);
+		NocatFarm.Core.UpdateCheck.Skipped = "v" + cur;
+		File.WriteAllText(failed, "crashed back:1.0.1");
+		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+		Check("going back didn't start: nothing skipped before - nothing skipped now", NocatFarm.Core.UpdateCheck.Skipped == null, NocatFarm.Core.UpdateCheck.Skipped ?? "null");
+
+		File.WriteAllText(skipBefore, $"{cur}|1.0.2|v8.8.8");
+		NocatFarm.Core.UpdateCheck.Skipped = "v" + cur;
+		File.WriteAllText(failed, "crashed back:1.0.1");
+		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+		Check("going back didn't start: a note for another version going back is never used", NocatFarm.Core.UpdateCheck.Skipped == "v" + cur, NocatFarm.Core.UpdateCheck.Skipped ?? "null");
+		File.Delete(skipBefore);
+		NocatFarm.Core.UpdateCheck.Skipped = null;
+
+		// Docker and a service: the version asked for, by hand.
+		string byHand = NocatFarm.Core.SelfUpdate.ByHandTo("v1.0.1").ToEnglish();
+		Check("update to, by hand: that version's own way in - its tag in Docker, its release page and zip as a service",
+			NocatFarm.Core.Platform.InContainer
+				? byHand.Contains("git checkout v1.0.1", StringComparison.Ordinal)
+				: byHand.Contains(NocatFarm.Core.SelfUpdate.ReleasePage("1.0.1"), StringComparison.Ordinal) && byHand.Contains("nocat.farm-v1.0.1_", StringComparison.Ordinal), byHand);
+		string commands = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Commands.cs")).Replace("\r\n", "\n");
+		int fromFile = commands.IndexOf("private static async Task<string> UpdateFromFile(", StringComparison.Ordinal);
+		Check("update to, by hand: going back saves the settings first there too; update file says \"by hand\" before \"only at this PC\"",
+			commands.Contains("if (!SelfUpdate.Supported) {\n\t\t\tif (!UpdateCheck.IsOlderThanThisBuild(version)) {\n\t\t\t\treturn SelfUpdate.ByHandTo(version).ToString();\n\t\t\t}\n\n\t\t\ttry {\n\t\t\t\tRollback.Snapshot(version);", StringComparison.Ordinal)
+			&& (fromFile > 0) && (commands.IndexOf("if (!SelfUpdate.Supported) {", fromFile, StringComparison.Ordinal) < commands.IndexOf("if (!atThisPc) {", fromFile, StringComparison.Ordinal)));
+
+		// "At this PC" stays with the command typed: a loop it starts doesn't carry it on. The window to pick a file is one -
+		// started inside 'update file' typed here; a Steam-chat master's 'update file' from in there is still refused.
+		string bot = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "Bot.cs")).Replace("\r\n", "\n");
+		Check("at this PC: an account's loop is started clean, taking nothing from the command that started it",
+			bot.Contains("ExecutionContext.SuppressFlow();\n\n\t\t\ttry {\n\t\t\t\t_pump = Task.Run(() => Pump(ct), CancellationToken.None);", StringComparison.Ordinal));
+		Commands.Host = mgr;
+
+		if (NocatFarm.Core.SelfUpdate.Supported) {
+			string? fromSteam = null, fromChat = null;
+			pickerP.SetValue(null, (Func<Task<string?>>) (async () => {
+				fromSteam = await Commands.RunAsync("update file", "someaccount");
+				fromChat = await Commands.RunAsync(mgr, "update file");
+
+				return null;
+			}));
+			await Commands.RunAtThisPcAsync(mgr, "update file");
+			await (Task) pickingP.GetValue(null)!;
+			Check("at this PC: started inside a command typed here, Steam chat and Telegram still aren't at this PC",
+				(fromSteam?.Contains("only works at this PC", StringComparison.Ordinal) == true) && (fromChat?.Contains("only works at this PC", StringComparison.Ordinal) == true),
+				$"{fromSteam} / {fromChat}");
+			pickerP.SetValue(null, null);
+
+			// Going back from a file, the newest release not looked at yet and newer than this one - skipped by hand. And the
+			// zip has a config/ and a logs/ of its own, as one made from somebody's folder would.
+			string olderZip = FakeProgram.Zip(Path.Combine(zips, Mine("1.6.0")), new Version(1, 6, 0),
+				extra: [("config/nocatFarm.json", "{}"), ("Logs/old.log", "someone else's log")]);
+
+			System.Diagnostics.ProcessStartInfo? swapped = null;
+			bool exited = false;
+			startP.SetValue(null, (Action<System.Diagnostics.ProcessStartInfo>) (p => swapped = p));
+			exitP.SetValue(null, (Action) (() => exited = true));
+			NocatFarm.Core.SelfUpdate.Fleet = static () => [];
+			uc.GetField("_releases", AnyStatic)!.SetValue(null, null);
+			NocatFarm.Core.UpdateCheck.Skipped = "v" + newer;
+			long before = Mark();
+			string going = await Commands.RunAtThisPcAsync(mgr, $"update file {olderZip} force");
+			for (int i = 0; (i < 120) && !exited; i++) {
+				await Task.Delay(500);
+			}
+
+			string staged = swapped?.Environment["NF_STAGED"] ?? "";
+			string work = swapped?.Environment["NF_WORK"] ?? "";
+			Check("update file, going back: the newest release is asked for first when it isn't known", askedFor.Contains("/releases"), string.Join(" ", askedFor));
+			Check("update file, going back: a newer release skipped by hand stays skipped, and nothing says this one is held off",
+				exited && (NocatFarm.Core.UpdateCheck.Skipped == "v" + newer) && going.Contains("Your settings are saved first", StringComparison.Ordinal)
+				&& !going.Contains("won't install by itself", StringComparison.Ordinal), $"{exited} {NocatFarm.Core.UpdateCheck.Skipped} | {going}");
+			Check("update file, going back: the skip as it was is kept, to put back if it doesn't go in",
+				File.Exists(skipBefore) && (File.ReadAllText(skipBefore) == $"{cur}|1.6.0|v{newer}"), File.Exists(skipBefore) ? File.ReadAllText(skipBefore) : "none");
+			Check("update file: the zip's own config/ and logs/ are left out - never copied over these, never in the added list - and said",
+				(staged.Length > 0) && File.Exists(Path.Combine(staged, exe))
+				&& !Directory.GetDirectories(staged).Any(static d => Path.GetFileName(d).ToLowerInvariant() is "config" or "logs")
+				&& !File.ReadAllLines(Path.Combine(work, "added.txt")).Any(static l => l.StartsWith("config", StringComparison.OrdinalIgnoreCase) || l.StartsWith("logs", StringComparison.OrdinalIgnoreCase))
+				&& Said(before, "update: left out the config/ folder in the zip") && Said(before, "update: left out the Logs/ folder in the zip"), staged);
+
+			su.GetField("_busy", AnyStatic)!.SetValue(null, 0);
+			su.GetField("_handedOver", AnyStatic)!.SetValue(null, false);
+			if (work.Length > 0) {
+				try {
+					Directory.Delete(work, true);
+				} catch (IOException) {
+				}
+			}
+			foreach (string left in new[] { "updated.txt", "update-verify.txt", "update-notes.txt", "update-skip-before.txt" }) {
+				File.Delete(Path.Combine(state, left));
+			}
+		}
+	} finally {
+		Environment.SetEnvironmentVariable("NOCATFARM_UPDATE_FEED", null);
+		stopServing.Cancel();
+		listener.Stop();
+		pickerP.SetValue(null, null);
+		startP.SetValue(null, startBefore);
+		exitP.SetValue(null, exitBefore);
+		NocatFarm.Core.SelfUpdate.Fleet = fleetBefore;
+		Commands.Host = hostBefore;
+		NocatFarm.Core.UpdateCheck.Skipped = null;
+		latestP.SetValue(null, null);
+		uc.GetField("_releases", AnyStatic)!.SetValue(null, null);
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── bringing settings back: a file that doesn't read, and a start that's a new version on trial ───────────────────────
+{
+	const BindingFlags AnyStatic = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+	Type su = typeof(NocatFarm.Core.SelfUpdate);
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-rb2-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	string cfg = NocatFarm.Config.ConfigStore.ConfigDir;
+	FieldInfo trialF = su.GetField("_trialOk", AnyStatic)!, confirmedF = su.GetField("_confirmed", AnyStatic)!;
+	object? trialBefore = trialF.GetValue(null), confirmedBefore = confirmedF.GetValue(null);
+	void Drop(string file, params string[] keys) {
+		var json = (System.Text.Json.Nodes.JsonObject) System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(file))!;
+		foreach (string key in keys) {
+			json.Remove(key);
+		}
+		File.WriteAllText(file, json.ToJsonString());
+	}
+	string Notes(List<NocatFarm.Core.Rollback.Note> notes) => string.Join(" | ", notes.Select(static n => n.Detail ?? n.Line.ToEnglish()));
+
+	try {
+		NocatFarm.Config.ConfigStore.SaveGlobal(new NocatFarm.Config.GlobalConfig { UpdateCheckHours = 7 });
+		NocatFarm.Config.ConfigStore.SaveBot("rbdup", new NocatFarm.Config.BotConfig { DiscoveryQueue = 2 });
+		NocatFarm.Config.ConfigStore.SaveBot("rbok", new NocatFarm.Config.BotConfig { DiscoveryQueue = 2 });
+		string copy = NocatFarm.Core.Rollback.Snapshot("v1.0.1");
+		string applied = copy[..^".zip".Length] + "-applied.zip";
+
+		// Back on this version: one file not JSON at all, one with a name in it twice - and one fine, missing a setting.
+		File.WriteAllText(Path.Combine(cfg, "nocatFarm.json"), "{ not json");
+		File.WriteAllText(Path.Combine(cfg, "rbdup.json"), "{\"SteamLogin\": \"a\", \"SteamLogin\": \"b\"}");
+		Drop(Path.Combine(cfg, "rbok.json"), "DiscoveryQueue");
+		List<NocatFarm.Core.Rollback.Note> notes = [];
+		Exception? thrown = null;
+
+		try {
+			notes = NocatFarm.Core.Rollback.RestoreMissing();
+		} catch (Exception e) {
+			thrown = e;
+		}
+
+		Check("bringing back: a file that doesn't read - not JSON, or a name in it twice - doesn't stop the start, and the rest come back",
+			(thrown == null) && File.ReadAllText(Path.Combine(cfg, "rbok.json")).Contains("DiscoveryQueue", StringComparison.Ordinal)
+			&& notes.Any(static n => n.Detail?.Contains("passed over nocatFarm.json", StringComparison.Ordinal) == true)
+			&& notes.Any(static n => n.Detail?.Contains("passed over rbdup.json", StringComparison.Ordinal) == true), thrown?.ToString() ?? Notes(notes));
+		Check("bringing back: ...and with a file passed over, the copy isn't marked as done - it tries again next start", File.Exists(copy) && !File.Exists(applied));
+		string program = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Program.cs")).Replace("\r\n", "\n");
+		Check("bringing back: nothing it throws stops nocat.farm starting - said, and the settings load as they are",
+			program.Contains("try {\n\tbroughtBack = Rollback.RestoreMissing();\n} catch (Exception e) {", StringComparison.Ordinal));
+
+		// Fixed, and started as a new version on trial: filled in, but marked as done only once the trial is over - put back,
+		// the version before drops them again and the copy has to still be there.
+		NocatFarm.Config.ConfigStore.SaveGlobal(new NocatFarm.Config.GlobalConfig());
+		Drop(Path.Combine(cfg, "nocatFarm.json"), "UpdateCheckHours");
+		File.Delete(Path.Combine(cfg, "rbdup.json"));
+		trialF.SetValue(null, Path.Combine(tmpRoot, "started.txt"));
+		confirmedF.SetValue(null, false);
+		List<NocatFarm.Core.Rollback.Note> onTrial = NocatFarm.Core.Rollback.RestoreMissing();
+		Check("bringing back: on trial, the settings come back but the copy isn't marked as done yet",
+			NocatFarm.Core.SelfUpdate.OnTrial && (NocatFarm.Config.ConfigStore.LoadGlobal().UpdateCheckHours == 7) && File.Exists(copy) && !File.Exists(applied), Notes(onTrial));
+		NocatFarm.Core.SelfUpdate.ConfirmStarted();
+		Check("bringing back: ...and once the trial says it's fine, it is", !File.Exists(copy) && File.Exists(applied));
+	} finally {
+		trialF.SetValue(null, trialBefore);
+		confirmedF.SetValue(null, confirmedBefore);
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── secrets while an update is on trial: an encrypted one isn't written plain, and a plain one is sealed once it's over ──
+{
+	const BindingFlags AnyStatic = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+	Type su = typeof(NocatFarm.Core.SelfUpdate);
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-trialsec-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	string cfg = NocatFarm.Config.ConfigStore.ConfigDir;
+	string keysFile = Path.Combine(cfg, "state", "keys.json");
+	FieldInfo trialF = su.GetField("_trialOk", AnyStatic)!, confirmedF = su.GetField("_confirmed", AnyStatic)!;
+	object? trialBefore = trialF.GetValue(null), confirmedBefore = confirmedF.GetValue(null);
+	MethodInfo reload = typeof(NocatFarm.Core.KeyQueue).GetMethod("Reload", AnyStatic)!;
+	bool Has(string file, string text) => File.ReadAllText(file).Contains(text, StringComparison.Ordinal);
+
+	try {
+		// Encrypted before the update: saved during the trial, it stays encrypted.
+		reload.Invoke(null, []);
+		NocatFarm.Core.KeyQueue.Add(["TRIAL-ENC01-AAAAA"]);
+		NocatFarm.Config.ConfigStore.SaveBot("trialenc", new NocatFarm.Config.BotConfig { SteamLogin = "trialenc", SteamParentalCode = "7391" });
+		trialF.SetValue(null, Path.Combine(tmpRoot, "started.txt"));
+		confirmedF.SetValue(null, false);
+		NocatFarm.Core.KeyQueue.Add(["TRIAL-ENC02-BBBBB"]);
+		NocatFarm.Config.ConfigStore.SaveBot("trialenc", new NocatFarm.Config.BotConfig { SteamLogin = "trialenc", SteamParentalCode = "7391" });
+		Check("trial: the key queue encrypted before the update isn't written plain during it", NocatFarm.Core.SelfUpdate.OnTrial
+			&& !Has(keysFile, "TRIAL-ENC01-AAAAA") && !Has(keysFile, "TRIAL-ENC02-BBBBB"));
+		Check("trial: ...nor a Family View PIN that was encrypted", !Has(Path.Combine(cfg, "trialenc.json"), "\"7391\""));
+
+		// Plain before the update (the version before wrote it so): left plain during the trial, encrypted once it's over.
+		File.WriteAllText(keysFile, """[{"Key":"TRIAL-PLN01-CCCCC","AddedAt":1,"Tries":0,"NotBefore":0}]""");
+		reload.Invoke(null, []);
+		NocatFarm.Core.KeyQueue.Add(["TRIAL-PLN02-DDDDD"]);
+		File.WriteAllText(Path.Combine(cfg, "trialpln.json"), """{ "SteamLogin": "trialpln", "SteamParentalCode": "2468" }""");
+		NocatFarm.Config.BotConfig? pln = NocatFarm.Config.ConfigStore.LoadBot("trialpln");
+		Check("trial: a key queue that was plain stays plain while on trial - the version before reads it", Has(keysFile, "TRIAL-PLN02-DDDDD"));
+		Check("trial: ...and a plain Family View PIN too", (pln?.SteamParentalCode == "2468") && Has(Path.Combine(cfg, "trialpln.json"), "\"2468\""));
+		NocatFarm.Core.SelfUpdate.ConfirmStarted();
+		Check("trial: once the trial says it's fine, the key queue is encrypted", !Has(keysFile, "TRIAL-PLN01-CCCCC") && !Has(keysFile, "TRIAL-PLN02-DDDDD"));
+		Check("trial: ...and every account's file too", !Has(Path.Combine(cfg, "trialpln.json"), "\"2468\"")
+			&& (NocatFarm.Config.ConfigStore.LoadBot("trialpln")?.SteamParentalCode == "2468"));
+	} finally {
+		trialF.SetValue(null, trialBefore);
+		confirmedF.SetValue(null, confirmedBefore);
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+		reload.Invoke(null, []);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── going back that started but didn't go in: the settings copy taken for it goes too ──────────────────────────────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-backgone-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	string state = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state");
+	string backups = NocatFarm.Core.Rollback.Folder;
+	Directory.CreateDirectory(backups);
+	string cur = Build.Version;
+	string? skippedBefore = NocatFarm.Core.UpdateCheck.Skipped;
+	string Copy(string name) { string p = Path.Combine(backups, name); File.WriteAllText(p, "zip"); return p; }
+	// The copy itself a real one, as 'update to' takes it: a start reads it through, finds nothing missing, and only then may
+	// it go - one it couldn't read stays for the next start (see Rollback.DiscardPending).
+	string taken = NocatFarm.Core.Rollback.Snapshot("v1.0.1");
+	byte[] real = File.ReadAllBytes(taken);
+	File.Delete(taken);
+	string mine = $"before-1.0.1-from-{cur}-20261006-143000.zip";
+	string Mine() { string p = Path.Combine(backups, mine); File.WriteAllBytes(p, real); NocatFarm.Core.Rollback.RestoreMissing(); return p; }
+	// Left alone every time: one already used, one for another version, and one taken by another version going back.
+	string done = Copy($"before-1.0.1-from-{cur}-20261001-120000-applied.zip");
+	string other = Copy($"before-1.0.0-from-{cur}-20261002-120000.zip");
+	string fromElse = Copy("before-1.0.1-from-0.0.1-20261003-120000.zip");
+	bool Others() => File.Exists(done) && File.Exists(other) && File.Exists(fromElse);
+	void Note(string to) => File.WriteAllText(Path.Combine(state, "updated.txt"), $"{cur}|{to}|1|1|{DateTime.UtcNow.Ticks}");
+	void Failed(string code) => File.WriteAllText(Path.Combine(state, "update-failed.txt"), code);
+
+	try {
+		string copy = Mine();
+		Failed("crashed back:1.0.1");
+		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+		Check("going back didn't start: the settings copy taken for it goes, the others stay", !File.Exists(copy) && Others());
+
+		copy = Mine();
+		Failed("crashed file:1.0.1");
+		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+		Check("going back from an older zip didn't start: its copy goes too", !File.Exists(copy) && Others());
+
+		copy = Mine();
+		Note("1.0.1");
+		Failed("busy 1234");
+		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+		Check("going back stopped by another copy running: its copy goes", !File.Exists(copy) && Others());
+
+		copy = Mine();
+		Note("1.0.1");
+		Failed("8");
+		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+		Check("going back whose files couldn't be copied in: its copy goes", !File.Exists(copy) && Others());
+
+		copy = Mine();
+		Note("1.0.1");
+		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+		Check("going back that didn't start, with no code left: its copy goes", !File.Exists(copy) && Others());
+	} finally {
+		NocatFarm.Core.UpdateCheck.Skipped = skippedBefore;
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── freegames: a look stopped by a sign-out still saves what it decided ──────────────────────────────────────────────
+{
+	const BindingFlags AnyInst = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+	const BindingFlags AnyStatic = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+	Type fgT = typeof(NocatFarm.Modules.FreeGames);
+	PropertyInfo fetchP = fgT.GetProperty("Fetch", AnyStatic)!, claimP = fgT.GetProperty("Claim", AnyStatic)!, pausesP = fgT.GetProperty("NoPauses", AnyStatic)!;
+	object? fetchBefore = fetchP.GetValue(null), claimBefore = claimP.GetValue(null);
+	FieldInfo giveawaysF = fgT.GetField("_giveaways", AnyStatic)!;
+	var verdicts = (IDictionary) fgT.GetField("Verdicts", AnyStatic)!.GetValue(null)!;
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-fgsave-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	string search = System.Text.Json.JsonSerializer.Serialize(new { success = 1, total_count = 2,
+		results_html = "<a href=\"https://store.example/app/3999201/\" data-ds-appid=\"3999201\">x</a><a href=\"https://store.example/app/3999202/\" data-ds-appid=\"3999202\">y</a>" },
+		new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
+	Task<string?> FakeStore(string url, CancellationToken ct) {
+		if (url.Contains("/search/results/", StringComparison.Ordinal)) {
+			return Task.FromResult<string?>(search);
+		}
+
+		string id = url.Contains("3999201", StringComparison.Ordinal) ? "3999201" : "3999202";
+
+		return Task.FromResult<string?>(url.Contains("filters=packages", StringComparison.Ordinal)
+			? """{"ID":{"success":true,"data":{"package_groups":[{"subs":[{"packageid":5UB,"price_in_cents_with_discount":0}]}]}}}""".Replace("ID", id).Replace("5UB", "5" + id[1..])
+			: """{"ID":{"success":true,"data":{"type":"game","name":"Fake Save Giveaway ID","is_free":false,"price_overview":{"discount_percent":100}}}}""".Replace("ID", id));
+	}
+	// The first claim goes through, and the account signs out while it's out: the look stops before the second.
+	Task<NocatFarm.Modules.FreeGames.ClaimResult> FakeClaim(NocatFarm.Core.Bot b, uint id, bool app, CancellationToken ct) {
+		typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(b, NocatFarm.Core.BotState.Stopped);
+
+		return Task.FromResult(new NocatFarm.Modules.FreeGames.ClaimResult(true, SteamKit2.EPurchaseResultDetail.NoDetail, default));
+	}
+	var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+	var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager).GetField("_bots", AnyInst)!.GetValue(mgr)!;
+	var b = new NocatFarm.Core.Bot("fgsave", new NocatFarm.Config.BotConfig { ClaimFree = NocatFarm.Modules.FreeClaims.Games });
+	void Fresh() {
+		giveawaysF.SetValue(null, (DateTime.MinValue, new List<string>()));
+		lock (verdicts) {
+			verdicts.Clear();
+		}
+	}
+
+	try {
+		fetchP.SetValue(null, (Func<string, CancellationToken, Task<string?>>) FakeStore);
+		claimP.SetValue(null, (Func<NocatFarm.Core.Bot, uint, bool, CancellationToken, Task<NocatFarm.Modules.FreeGames.ClaimResult>>) FakeClaim);
+		pausesP.SetValue(null, true);
+		Fresh();
+		typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(b, NocatFarm.Core.BotState.Online);
+		typeof(NocatFarm.Core.WebSession).GetProperty("Ready")!.SetValue(typeof(NocatFarm.Core.Bot).GetProperty("Web", AnyInst)!.GetValue(b), true);
+		var owned = new List<NocatFarm.Core.Library.Entry> { new(730, "CS2", 100, DateTime.MinValue, 0) };
+		typeof(NocatFarm.Core.Library).GetField("_games", AnyInst)!.SetValue(b.Library, owned);
+		typeof(NocatFarm.Core.Library).GetField("_byApp", AnyInst)!.SetValue(b.Library, owned.ToDictionary(static e => e.AppId));
+		typeof(NocatFarm.Core.Library).GetProperty("Ready")!.SetValue(b.Library, true);
+		b.AddModule(new NocatFarm.Modules.FreeGames(b));
+		bots["fgsave"] = b;
+
+		string said = await Commands.RunAsync(mgr, "freegames fgsave");
+		string statePath = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", "freegames-fgsave.json");
+		Check("freegames: a look stopped by a sign-out still saves the game it had just claimed", File.Exists(statePath)
+			&& File.ReadAllText(statePath).Contains("g/3999201", StringComparison.Ordinal), said);
+	} finally {
+		fetchP.SetValue(null, fetchBefore);
+		claimP.SetValue(null, claimBefore);
+		pausesP.SetValue(null, false);
+		Fresh();
+		await b.DisposeAsync();
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── 'update to' in Docker: the way back to the newest is said in full - checking main out alone leaves the older one built ──
+{
+	// Only said inside a container, which this never is - so read from the source, as it's written.
+	string selfUpdate = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "SelfUpdate.cs"));
+	Check("update to, by hand in Docker: coming back is checkout main, then pull, then build again",
+		selfUpdate.Contains("to come back: git checkout main, then git pull, then docker compose up -d --build\", v);", StringComparison.Ordinal)
+		&& !selfUpdate.Contains("git checkout main brings back the newest", StringComparison.Ordinal));
+}
+
+// ── going back, round two: a file that didn't start, a zip's own backups/, the copy by hand, a copy that doesn't read ──
+{
+	const BindingFlags AnyStatic = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+	Type su = typeof(NocatFarm.Core.SelfUpdate);
+	Type uc = typeof(NocatFarm.Core.UpdateCheck);
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-back2-" + Guid.NewGuid().ToString("N"));
+	string zips = Path.Combine(tmpRoot, "zips");
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	Directory.CreateDirectory(zips);
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	string cfg = NocatFarm.Config.ConfigStore.ConfigDir;
+	string state = Path.Combine(cfg, "state");
+	string cur = Build.Version;
+	int[] parts = [.. cur.Split('.').Select(int.Parse)];
+	string newer = $"{parts[0]}.{parts[1]}.{parts[2] + 1}";
+	PropertyInfo latestP = uc.GetProperty("Latest", AnyStatic)!;
+	PropertyInfo startP = su.GetProperty("StartSwap", AnyStatic)!, exitP = su.GetProperty("ExitForSwap", AnyStatic)!;
+	object? startBefore = startP.GetValue(null), exitBefore = exitP.GetValue(null);
+	Func<IEnumerable<NocatFarm.Core.Bot>>? fleetBefore = NocatFarm.Core.SelfUpdate.Fleet;
+	var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+	long Mark() => Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+	bool Said(long since, string english) => Log.Since(since).Any(e => e.Said.ToEnglish().Contains(english, StringComparison.Ordinal));
+	string Src(string rel) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", rel)).Replace("\r\n", "\n");
+
+	// The program for each kind of computer, and a nocat.farm zip: see FakeProgram.
+	byte[] Elf(ushort machine) => FakeProgram.Elf(machine);
+	byte[] MachO(uint cpu) => FakeProgram.MachO(cpu);
+	byte[] mz = FakeProgram.For("win-x64");
+	byte[] Here() => FakeProgram.For(FakeProgram.Here);
+	string exeHere = FakeProgram.ExeFor(FakeProgram.Here);
+	string MakeZip(string file, Version v, string exe, byte[] program, params string[] extra)
+		=> FakeProgram.Zip(Path.Combine(zips, file), v, exe: exe, program: program, extra: extra.Select(static n => (n, "someone else's")));
+	(string? V, string Why) Look(string path, string rid) {
+		var (v, why) = ((string?, NocatFarm.Core.Said)) su.GetMethod("LookInZipFor", AnyStatic)!.Invoke(null, [path, rid])!;
+		return (v, why.ToEnglish());
+	}
+
+	try {
+		// 1. Going back from a file ('update file <older zip> force') that didn't start: the skip from before goes back.
+		MethodInfo keep = su.GetMethod("KeepSkipBefore", AnyStatic)!;
+		string skipBefore = Path.Combine(state, "update-skip-before.txt");
+		string failed = Path.Combine(state, "update-failed.txt");
+		NocatFarm.Core.UpdateCheck.Skipped = "v8.8.8";
+		keep.Invoke(null, ["1.0.0"]);
+		NocatFarm.Core.UpdateCheck.Skipped = "v" + cur;   // as the handover holds it off
+		File.WriteAllText(failed, "crashed file:1.0.0");
+		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+		Check("update file, going back didn't start: the skip from before is put back, and its note goes",
+			(NocatFarm.Core.UpdateCheck.Skipped == "v8.8.8") && !File.Exists(skipBefore)
+			&& (NocatFarm.Core.SelfUpdate.LastFailure?.Contains("nocat.farm 1.0.0 from the file didn't start", StringComparison.Ordinal) == true),
+			$"{NocatFarm.Core.UpdateCheck.Skipped} {File.Exists(skipBefore)} {NocatFarm.Core.SelfUpdate.LastFailure}");
+
+		File.WriteAllText(skipBefore, $"{cur}|1.0.0|v8.8.8");
+		NocatFarm.Core.UpdateCheck.Skipped = null;
+		File.WriteAllText(failed, "crashed file:9.9.9");
+		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+		Check("update file, a newer one didn't start: a note for another version going back isn't used, and doesn't stay behind",
+			(NocatFarm.Core.UpdateCheck.Skipped == null) && !File.Exists(skipBefore), $"{NocatFarm.Core.UpdateCheck.Skipped} {File.Exists(skipBefore)}");
+		File.Delete(skipBefore);
+
+		// 2. A zip with a backups/ folder of its own: this install's backups (one a day, by date) aren't written over.
+		if (NocatFarm.Core.SelfUpdate.Supported) {
+			string withBackups = MakeZip(OperatingSystem.IsWindows() ? "nocat.farm-v9.9.9-portable.zip" : $"nocat.farm-v9.9.9_{NocatFarm.Core.Platform.ReleaseRid}.zip",
+				new Version(9, 9, 9), exeHere, Here(), "Backups/nocat.farm-backup-2026-10-06.zip");
+			System.Diagnostics.ProcessStartInfo? swapped = null;
+			bool exited = false;
+			startP.SetValue(null, (Action<System.Diagnostics.ProcessStartInfo>) (p => swapped = p));
+			exitP.SetValue(null, (Action) (() => exited = true));
+			NocatFarm.Core.SelfUpdate.Fleet = static () => [];
+			long before = Mark();
+			string going = await Commands.RunAtThisPcAsync(mgr, $"update file {withBackups}");
+			for (int i = 0; (i < 120) && !exited; i++) {
+				await Task.Delay(500);
+			}
+
+			string staged = swapped?.Environment["NF_STAGED"] ?? "";
+			string work = swapped?.Environment["NF_WORK"] ?? "";
+			Check("update file: the zip's own backups/ is left out too - this install's backup of the day isn't written over - and said",
+				exited && (staged.Length > 0) && File.Exists(Path.Combine(staged, exeHere))
+				&& !Directory.GetDirectories(staged).Any(static d => Path.GetFileName(d).Equals("backups", StringComparison.OrdinalIgnoreCase))
+				&& !File.ReadAllLines(Path.Combine(work, "added.txt")).Any(static l => l.StartsWith("backups", StringComparison.OrdinalIgnoreCase))
+				&& Said(before, "update: left out the Backups/ folder in the zip"), $"{exited} {staged} | {going}");
+
+			su.GetField("_busy", AnyStatic)!.SetValue(null, 0);
+			su.GetField("_handedOver", AnyStatic)!.SetValue(null, false);
+			if (work.Length > 0) {
+				try {
+					Directory.Delete(work, true);
+				} catch (IOException) {
+				}
+			}
+			foreach (string left in new[] { "updated.txt", "update-verify.txt", "update-notes.txt", "update-skip-before.txt" }) {
+				File.Delete(Path.Combine(state, left));
+			}
+		}
+
+		// 3. 'update to' in Docker or as a service: the copy is taken, and the older version goes in by hand - later. The same
+		// version starting again first (a restart, the PC rebooting) leaves the copy for after the older one has been.
+		NocatFarm.Config.ConfigStore.SaveGlobal(new NocatFarm.Config.GlobalConfig { UpdateCheckHours = 7 });
+		string copy = NocatFarm.Core.Rollback.Snapshot("v1.0.1");
+		string applied = copy[..^".zip".Length] + "-applied.zip";
+		NocatFarm.Core.Rollback.RestoreMissing(cur);
+		Check("going back by hand: this same version starting again first leaves the copy waiting", File.Exists(copy) && !File.Exists(applied));
+		var global = (System.Text.Json.Nodes.JsonObject) System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(Path.Combine(cfg, "nocatFarm.json")))!;
+		global.Remove("UpdateCheckHours");   // what the older version does to it
+		File.WriteAllText(Path.Combine(cfg, "nocatFarm.json"), global.ToJsonString());
+		NocatFarm.Core.Rollback.RestoreMissing(cur);
+		Check("going back by hand: ...so once the older one has been, the setting it dropped comes back - and then the copy is done",
+			(NocatFarm.Config.ConfigStore.LoadGlobal().UpdateCheckHours == 7) && !File.Exists(copy) && File.Exists(applied));
+
+		// 4. The copy's own file has a name in it twice: passed over, and the copy is done anyway - tried again at every start,
+		// it kept every saved login in config/backups for good.
+		Directory.Delete(NocatFarm.Core.Rollback.Folder, true);
+		NocatFarm.Config.ConfigStore.SaveBot("rbtwice", new NocatFarm.Config.BotConfig { DiscoveryQueue = 2 });
+		string copy4 = NocatFarm.Core.Rollback.Snapshot("v1.0.1");
+
+		using (var z = System.IO.Compression.ZipFile.Open(copy4, System.IO.Compression.ZipArchiveMode.Update)) {
+			z.GetEntry("config/rbtwice.json")!.Delete();
+			using StreamWriter w = new(z.CreateEntry("config/rbtwice.json").Open());
+			w.Write("{\"DiscoveryQueue\": 2, \"DiscoveryQueue\": 3}");
+		}
+
+		List<NocatFarm.Core.Rollback.Note> twice = NocatFarm.Core.Rollback.RestoreMissing(newer);
+		Check("bringing back: a file in the copy that doesn't read - the copy is done anyway, and the log says which file",
+			!File.Exists(copy4) && File.Exists(copy4[..^".zip".Length] + "-applied.zip") && twice.Any(static n => n.Detail?.Contains("rbtwice.json", StringComparison.Ordinal) == true),
+			string.Join(" | ", twice.Select(static n => n.Detail ?? n.Line.ToEnglish())));
+
+		// 5. 'update file' off Windows: the zip is judged by what's in it, not its name - a download renamed "(1)" goes in.
+		string linuxRenamed = MakeZip("nocat.farm-v1.7.4_linux-x64 (1).zip", new Version(1, 7, 4), "nocatFarm", Elf(62));
+		string anyName = MakeZip("download.zip", new Version(1, 7, 4), "nocatFarm", Elf(62));
+		string linuxArm = MakeZip("nocat.farm-v1.7.4_linux-arm64.zip", new Version(1, 7, 4), "nocatFarm", Elf(183));
+		string mac = MakeZip("nocat.farm-v1.7.4_osx-arm64 (2).zip", new Version(1, 7, 4), "nocatFarm", MachO(0x0100000C));
+		string windowsZip = MakeZip("nocat.farm-v1.7.4-portable.zip", new Version(1, 7, 4), "nocatFarm.exe", mz);
+		Check("update file off Windows: a renamed zip, or any name, with the program for this computer is taken",
+			(Look(linuxRenamed, "linux-x64").V == "1.7.4") && (Look(anyName, "linux-x64").V == "1.7.4") && (Look(mac, "osx-arm64").V == "1.7.4"),
+			$"{Look(linuxRenamed, "linux-x64").Why} | {Look(anyName, "linux-x64").Why} | {Look(mac, "osx-arm64").Why}");
+		Check("update file off Windows: what really is for another kind of computer still says so - another chip, a Mac, Windows",
+			Look(linuxArm, "linux-x64").Why.Contains("another kind of computer", StringComparison.Ordinal)
+			&& Look(mac, "linux-arm64").Why.Contains("another kind of computer", StringComparison.Ordinal)
+			&& Look(mac, "osx-x64").Why.Contains("another kind of computer", StringComparison.Ordinal)
+			&& Look(linuxRenamed, "osx-x64").Why.Contains("another kind of computer", StringComparison.Ordinal)
+			&& Look(windowsZip, "linux-x64").Why.Contains("another kind of computer", StringComparison.Ordinal)
+			&& (Look(linuxArm, "linux-arm64").V == "1.7.4"),
+			$"{Look(linuxArm, "linux-x64").Why} | {Look(mac, "linux-arm64").Why} | {Look(windowsZip, "linux-x64").Why}");
+		Check("update file on Windows: as it was - by its name",
+			(Look(windowsZip, "win-x64").V == "1.7.4") && Look(linuxRenamed, "win-x64").Why.Contains("another kind of computer", StringComparison.Ordinal));
+
+		// 6. ~ is the home folder, as a shell has it.
+		if (NocatFarm.Core.SelfUpdate.Supported) {
+			string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+			string name = "nf-tilde-" + Guid.NewGuid().ToString("N") + ".zip";
+			string slash = await Commands.RunAtThisPcAsync(mgr, $"update file ~/{name}");
+			string back = OperatingSystem.IsWindows() ? await Commands.RunAtThisPcAsync(mgr, $"update file ~\\{name}") : slash;
+			Check("update file: ~/ (and ~\\ on Windows) is the home folder",
+				slash.Contains("there's no file at " + Path.Combine(home, name), StringComparison.Ordinal)
+				&& back.Contains("there's no file at " + Path.Combine(home, name), StringComparison.Ordinal), $"{slash} | {back}");
+		}
+
+		// 7. The dashboard's "go back": what it says is held off is what will be, for each version.
+		MethodInfo? holdsFor = typeof(NocatFarm.Web.WebHost).GetMethod("HoldsFor", AnyStatic);
+		Dictionary<string, string?>? Holds(string? latest, params string[] older) {
+			latestP.SetValue(null, latest);
+			return (Dictionary<string, string?>?) holdsFor?.Invoke(null, [older]);
+		}
+		var nothing = Holds("v" + newer, "1.0.1");
+		var between = Holds("v1.0.2", "1.0.1", "1.0.0");
+		var self = Holds("v" + cur, "1.0.1");
+		latestP.SetValue(null, null);
+		Check("go back, dashboard: the server says what each version would hold off - nothing, the newest release, or this one",
+			(nothing != null) && nothing.ContainsKey("1.0.1") && (nothing["1.0.1"] == null)
+			&& (between?["1.0.1"] == "1.0.2") && (between["1.0.0"] == "1.0.2") && (self?["1.0.1"] == cur));
+		string js = Src("src/NocatFarm/wwwroot/app.js");
+		int ask = js.IndexOf("async function askGoBack(", StringComparison.Ordinal);
+		string askBody = ask < 0 ? "" : js[ask..js.IndexOf("\nasync function goBack(", ask, StringComparison.Ordinal)];
+		Check("go back, dashboard: the dialog words it from that, never as this version whatever is held",
+			Src("src/NocatFarm/Web/WebHost.cs").Contains("Holds = HoldsFor(older),", StringComparison.Ordinal)
+			&& askBody.Contains("r.Holds", StringComparison.Ordinal) && !js.Contains("update accept brings it back.\", r.Current", StringComparison.Ordinal), askBody);
+
+		// 8. The words: Docker can't 'update file', and the console counts as this PC.
+		string startHere = System.Text.RegularExpressions.Regex.Replace(Src("docs/start-here.md"), @"\s+", " ");   // as it reads, not as it's wrapped
+		Check("docs: a path is typed on Linux or a Mac, and Docker is updated by hand",
+			!startHere.Contains("On Linux, a Mac or in Docker, type the path", StringComparison.Ordinal) && startHere.Contains("On Linux or a Mac, type the path", StringComparison.Ordinal));
+		string commandsSrc = Src("src/NocatFarm/Commands.cs");
+		Check("update file: the help, the refusal, the command list and the guide count the console as this PC",
+			commandsSrc.Contains("Only in the nocat.farm window or its console, or the dashboard on this PC.", StringComparison.Ordinal)
+			&& commandsSrc.Contains("\"update file only works at this PC - in the nocat.farm window or its console, or the dashboard opened on this PC.", StringComparison.Ordinal)
+			&& Src("docs/COMMANDS.md").Contains("Only in the nocat.farm window or its console, or the dashboard on this PC.", StringComparison.Ordinal)
+			&& startHere.Contains("only works in the nocat.farm window or its console, or the dashboard opened on this PC", StringComparison.Ordinal));
+	} finally {
+		startP.SetValue(null, startBefore);
+		exitP.SetValue(null, exitBefore);
+		NocatFarm.Core.SelfUpdate.Fleet = fleetBefore;
+		NocatFarm.Core.UpdateCheck.Skipped = null;
+		latestP.SetValue(null, null);
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── the window: the line shown is masked as the log masks it (what's masked: the secrets table) ─────────────────────────
+{
+	string mw = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Windows", "MainWindow.cs"));
+	Check("window: the line shown and the up-arrow history are masked as the log masks them - 'add ... password', a product key",
+		mw.Contains("new Core.Said(\"> \" + Commands.LineForLog(line))", StringComparison.Ordinal) && !mw.Contains("Commands.ForLog(", StringComparison.Ordinal)
+		&& (Commands.LineForLog("add alt login hunter2") != "add alt login hunter2") && (Commands.LineForLog("redeem ABCDE-FGHIJ-KLMNO") != "redeem ABCDE-FGHIJ-KLMNO"));
+}
+
+// ── 'freegames <account>' with claiming off: the gate's wait runs from the real sign-in, not the first time it's asked ──
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-freeoff-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	var bot = new NocatFarm.Core.Bot("harness-free-off", new NocatFarm.Config.BotConfig {
+		LegitMode = true, ClaimFree = NocatFarm.Modules.FreeClaims.Off, WakeDelayMinMinutes = 30, WakeDelayMaxMinutes = 30
+	});
+
+	try {
+		typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(bot, NocatFarm.Core.BotState.Online);
+		typeof(NocatFarm.Core.Bot).GetProperty("OnlineSince")!.SetValue(bot, DateTime.UtcNow.AddMinutes(-1));
+		var free = new NocatFarm.Modules.FreeGames(bot);
+		await free.StartAsync();
+
+		// Until the wait has started, not just until the gate is there: the gate is made a moment before its wait starts, and
+		// a second was too little on a busy machine.
+		object? gate = null;
+		FieldInfo openAt = typeof(NocatFarm.Modules.HumanGate).GetField("_openAt", BindingFlags.NonPublic | BindingFlags.Instance)!;
+		bool waitStarted = false;
+
+		for (int i = 0; (i < 500) && !waitStarted; i++) {
+			await Task.Delay(20);
+			gate = typeof(NocatFarm.Modules.FreeGames).GetField("_gate", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(free);
+			waitStarted = (gate != null) && ((DateTime) openAt.GetValue(gate)! != DateTime.MaxValue);
+		}
+
+		await free.StopAsync();
+		Check("freegames off: the loop still starts the gate's wait once it's signed in, as it does when on", waitStarted);
+
+		if (gate != null) {
+			openAt.SetValue(gate, DateTime.UtcNow.AddSeconds(-1));
+		}
+
+		Check("freegames off: asked once that wait is over, it can go ahead - not a fresh wait the first time", waitStarted && free.Holding().IsEmpty, free.Holding().ToEnglish());
+	} finally {
+		await bot.DisposeAsync();
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── human mode's wait after a break spent offline says "back from a break", not "signed in again" ─────────────────────
+{
+	const BindingFlags I = BindingFlags.NonPublic | BindingFlags.Instance;
+	var bot = new NocatFarm.Core.Bot("harness-gate-back", new NocatFarm.Config.BotConfig { LegitMode = true, WakeDelayMinMinutes = 30, WakeDelayMaxMinutes = 30 });
+	DateTime signedIn = DateTime.UtcNow.AddHours(-2);
+	typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(bot, NocatFarm.Core.BotState.Online);
+	typeof(NocatFarm.Core.Bot).GetProperty("OnlineSince")!.SetValue(bot, signedIn);
+	var hm = new NocatFarm.Modules.HumanMode(bot);
+	bot.AddModule(hm);
+	void HSet(string name, object value) => typeof(NocatFarm.Modules.HumanMode).GetField(name, I)!.SetValue(hm, value);
+	HSet("_ticked", true);
+	HSet("_phase", NocatFarm.Modules.HumanMode.Phase.ShortBreak);
+	HSet("_warmedUp", true);
+	HSet("_gateArmedFor", signedIn);
+	HSet("_offlineBreak", true);
+
+	var gate = NocatFarm.Modules.HumanGate.OwnDay(bot);
+	bool shut = !gate.Open;
+	Check("offline break: human mode says it's on one", NocatFarm.Modules.HumanMode.OnOfflineBreak(bot) && shut);
+	HSet("_offlineBreak", false);
+	DateTime back = DateTime.UtcNow;
+	string why = gate.Waiting().ToEnglish();
+	Check("offline break: the wait after it is 'back from a break' with the time it came back, not 'signed in again'",
+		!NocatFarm.Modules.HumanMode.OnOfflineBreak(bot) && why.StartsWith("it was back from a break at ", StringComparison.Ordinal)
+		&& (why.Contains(Fmt.Clock(back), StringComparison.Ordinal) || why.Contains(Fmt.Clock(back.AddMinutes(1)), StringComparison.Ordinal))
+		&& !why.Contains("signed in again", StringComparison.Ordinal), why);
+	Check("offline break: none without human mode", !NocatFarm.Modules.HumanMode.OnOfflineBreak(new NocatFarm.Core.Bot("harness-gate-robot", new NocatFarm.Config.BotConfig())));
+	await bot.DisposeAsync();
+}
+
+// ── Telegram and Discord in the log: "… and N more" counts the reply, not the log file's cut of it ───────────────────
+{
+	MethodInfo echo = typeof(NocatFarm.Core.Notifier).GetMethod("EchoToLog", BindingFlags.NonPublic | BindingFlags.Static)!;
+	long seq = Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+	string reply = string.Join("\n", Enumerable.Range(1, 250).Select(static i => $"line {i}"));
+	echo.Invoke(null, ["status", reply, "echo-count"]);
+	List<Log.Entry> echoed = [.. Log.Since(seq).Where(static e => e.Source == "echo-count")];
+	Check("echo: 250 lines, 40 on screen, '… and 210 more' - not 161",
+		(echoed.Count == 41) && (echoed[^1].Text == "  ... and 210 more line(s)"), echoed.LastOrDefault()?.Text ?? "");
+
+	long seq2 = Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+	echo.Invoke(null, ["status", "one\n\ntwo", "echo-short"]);
+	Check("echo: a short reply has no 'more' line", Log.Since(seq2).Count(static e => e.Source == "echo-short") == 2);
+}
+
+// ── table widths: the emoji a terminal draws two wide ─────────────────────────────────────────────────────────────
+{
+	string[] wide = ["✅", "❌", "⚡", "⭐", "⌛", "⏳", "☔", "♈", "⚽", "⛔", "❓", "➕", "⭕", "\U0001F7E0", "\U0001F7EB"];
+	string narrow = string.Join(" ", wide.Where(static w => Columns.Width(w) != 2).Select(static w => $"U+{char.ConvertToUtf32(w, 0):X4}"));
+	Check("columns: the BMP emoji and the coloured circles are two wide", narrow.Length == 0, narrow);
+	Check("columns: a flag is one picture, two wide", Columns.Width("\U0001F1FA\U0001F1F8") == 2 && Columns.Width("\U0001F1FA\U0001F1F8\U0001F1E9\U0001F1EA") == 4);
+	Check("columns: a narrow symbol asked for as a picture is two wide, as text one", Columns.Width("☠️") == 2 && Columns.Width("☠") == 1);
+	Check("columns: plain text and the symbols around them stay one wide", Columns.Width("ab") == 2 && Columns.Width("→") == 1 && Columns.Width("◆") == 1);
+	Check("columns: padding a row with one in it ends where the rest do", Columns.Width(Columns.PadRight("✅ ok", 8)) == 8);
+}
+
+// ── stats: the hour bars add up to the totals line; the daily summary counts cards from the last summary ──────────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-stathours-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	_ = NocatFarm.Stats.Recent(1);   // loaded first, so what goes in below isn't read over
+	var cache = (List<NocatFarm.Stats.Event>) typeof(NocatFarm.Stats).GetField("Cache", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+	Type dr = typeof(NocatFarm.Core.DailyReport);
+	FieldInfo stateField = dr.GetField("_state", BindingFlags.NonPublic | BindingFlags.Static)!;
+	object savedState = stateField.GetValue(null)!;
+	DateTime now = DateTime.UtcNow;
+	List<NocatFarm.Stats.Event> added = [
+		new(now.AddHours(-24).AddSeconds(30), NocatFarm.Stats.KindCard, "hrs-a"),
+		new(now.AddHours(-24).AddSeconds(40), NocatFarm.Stats.KindComment, "hrs-a"),
+		new(now.AddHours(-24).AddSeconds(-30), NocatFarm.Stats.KindCard, "hrs-a"),
+		new(now.AddHours(-20), NocatFarm.Stats.KindCard, "hrs-a"),
+		new(now.AddHours(-1), NocatFarm.Stats.KindCard, "hrs-a"),
+		new(now.AddHours(-1), NocatFarm.Stats.KindComment, "hrs-a")
+	];
+
+	try {
+		lock (cache) {
+			cache.AddRange(added);
+		}
+
+		List<(DateTime Hour, int Cards, int Comments)> bars = NocatFarm.Stats.ByHour(24);
+		(int cards, int comments) = NocatFarm.Stats.Totals(24);
+		Check("stats: the hour bars add up to the totals for the same hours - the window's first part-hour is a bar too",
+			(bars.Sum(static b => b.Cards) == cards) && (bars.Sum(static b => b.Comments) == comments) && (bars.Count == 25),
+			$"bars {bars.Sum(static b => b.Cards)}/{bars.Sum(static b => b.Comments)}, totals {cards}/{comments}, {bars.Count} bars");
+
+		// The summary 3 hours ago: one card and one comment since, not the day's three cards.
+		object fresh = Activator.CreateInstance(savedState.GetType())!;
+		savedState.GetType().GetProperty("LastAt")!.SetValue(fresh, now.AddHours(-3));
+		savedState.GetType().GetProperty("Lifetime")!.SetValue(fresh, new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase) { ["hrs-a"] = 0 });
+		stateField.SetValue(null, fresh);
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false, Rep4RepEnabled = true });   // comments are shown with rep4rep on
+		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
+		bots["hrs-a"] = new NocatFarm.Core.Bot("hrs-a", new NocatFarm.Config.BotConfig());
+		MethodInfo build = dr.GetMethod("Build", BindingFlags.NonPublic | BindingFlags.Static)!;
+		string Summary() {
+			object built = build.Invoke(null, [mgr, false, now])!;
+
+			return ((NocatFarm.Core.ReportCard) built.GetType().GetProperty("Card")!.GetValue(built)!).Text();
+		}
+
+		// The heading's own rule: the time alone today, with the date on another day.
+		string SummaryAt(DateTime utc) => utc.ToLocalTime().Date == now.ToLocalTime().Date
+			? utc.ToLocalTime().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)
+			: utc.ToLocalTime().ToString("MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+
+		string text = Summary();
+		string row = text.ReplaceLineEndings("\n").Split('\n').FirstOrDefault(static l => l.Contains("hrs-a", StringComparison.Ordinal))?.Trim() ?? "";
+		Check("summary: cards and comments counted from the last summary, like its hours and heading",
+			row.Contains("1 card", StringComparison.Ordinal) && !row.Contains("cards", StringComparison.Ordinal)
+			&& row.Contains("1 comment", StringComparison.Ordinal) && !row.Contains("comments", StringComparison.Ordinal)
+			&& text.Contains($"since the daily summary at {SummaryAt(now.AddHours(-3))}", StringComparison.Ordinal), text);
+
+		savedState.GetType().GetProperty("LastAt")!.SetValue(fresh, now.AddHours(-30));
+		string late = Summary();
+		string lateRow = late.ReplaceLineEndings("\n").Split('\n').FirstOrDefault(static l => l.Contains("hrs-a", StringComparison.Ordinal))?.Trim() ?? "";
+		Check("summary: a summary late after the PC was off counts every card since the last one, past 24h too",
+			lateRow.Contains("4 cards", StringComparison.Ordinal), late);
+	} finally {
+		lock (cache) {
+			cache.RemoveAll(added.Contains);
+		}
+
+		stateField.SetValue(null, savedState);
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── 'rep4rep points': an impossible balance is said to be one, not printed as if it were true ───────────────────────
+{
+	var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+	string answer = """{"points":12,"pendingPoints":-107}""";
+	var fake = new FakePing((_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent(answer) }));
+	mgr.Rep4Rep.Token = "test-token";
+	typeof(NocatFarm.Rep4Rep.Rep4RepApi).GetField("_http", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(mgr.Rep4Rep, new HttpClient(fake));
+
+	string odd = await Commands.RunAsync(mgr, "rep4rep points");
+	Check("rep4rep points: a negative pending balance is called impossible, not shown as the balance",
+		odd.StartsWith("rep4rep gave an impossible balance (12 points, -107 still being verified)", StringComparison.Ordinal)
+		&& !odd.StartsWith("rep4rep: 12 points", StringComparison.Ordinal) && (fake.Calls == 1), odd);
+
+	answer = """{"points":12,"pendingPoints":3}""";
+	string fine = await Commands.RunAsync(mgr, "rep4rep points");
+	Check("rep4rep points: a sensible one is shown as it is", fine == "rep4rep: 12 points you can spend, 3 still being verified.", fine);
+
+	MethodInfo believable = typeof(NocatFarm.Web.WebHost).GetMethod("Believable", BindingFlags.NonPublic | BindingFlags.Static)!;
+	Check("rep4rep points: the dashboard's check is the one used", !(bool) believable.Invoke(null, [((int, int)?) (12, -107)])!
+		&& (bool) believable.Invoke(null, [((int, int)?) (12, 3)])!);
+	mgr.Rep4Rep.Dispose();
+}
+
+// ── 'dlc <account>': a game with no achievements at all is never uncertain ───────────────────────────────────────────
+{
+	var unsure = new NocatFarm.Core.DlcAchievements.Group { App = 4242, Ids = [4242], Name = "Some DLC", Unsure = NocatFarm.Core.DlcAchievements.Doubt.Delisted };
+	var noAch = new NocatFarm.Core.DlcAchievements.Map { App = 4241, Names = [], Groups = [unsure] };
+	var some = new NocatFarm.Core.DlcAchievements.Map { App = 4241, Names = ["ach_1"], Groups = [unsure] };
+	var old = new NocatFarm.Core.DlcAchievements.Map { App = 4241, Names = null, Groups = [unsure] };
+	HashSet<uint> owned = [];
+	Check("dlc: no achievements at all - nothing a DLC could add, so not uncertain", !NocatFarm.Core.DlcAchievements.Unplaced(noAch, owned));
+	Check("dlc: with achievements and a DLC that can't be placed, still uncertain - and a map from before names were kept too",
+		NocatFarm.Core.DlcAchievements.Unplaced(some, owned) && NocatFarm.Core.DlcAchievements.Unplaced(old, owned) && !NocatFarm.Core.DlcAchievements.Unplaced(null, owned));
+}
+
+// ── the command log: a tab or a no-break space after the command word, and a command word that is no command ────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	NocatFarm.Config.GlobalConfig realGlobal = NocatFarm.Config.Live.Global;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-gaps-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	NocatFarm.Core.BotManager? host = Commands.Host;
+	static string Shown(string s) => s.Replace("\t", "<tab>").Replace(" ", "<nbsp>");
+
+	try {
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
+		bots["alt"] = new NocatFarm.Core.Bot("alt", new NocatFarm.Config.BotConfig());
+		bots["other"] = new NocatFarm.Core.Bot("other", new NocatFarm.Config.BotConfig());
+
+		// Typed at the PC, Telegram, Discord or the dashboard: the line and its reply, as the log file, the chats and the window get them.
+		foreach (string line in (string[]) ["answer\thunter2", "/answer hunter2", "set\tWebPassword\thunter2", "set alt SteamPassword Hunter2",
+			"answer:hunter2", "sett WebPassword hunter2", "set: WebPassword hunter2"]) {
+			string reply = await Commands.RunAsync(mgr, line);
+			var logged = (List<string>) typeof(Commands).GetMethod("ExchangeLines", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, ["window", line, reply])!;
+			Check($"command log: '{Shown(line)}' - the secret is in neither the line nor the reply",
+				!reply.Contains("hunter2", StringComparison.OrdinalIgnoreCase) && !logged.Any(static l => l.Contains("hunter2", StringComparison.OrdinalIgnoreCase)),
+				string.Join(" | ", logged));
+		}
+
+		Check("set: a tab between the words is a gap, as a space is", mgr.Global.WebPassword == "hunter2", mgr.Global.WebPassword);
+		Check("set: no-break spaces between the words are gaps too", bots["alt"].Cfg.SteamPassword == "Hunter2", bots["alt"].Cfg.SteamPassword);
+
+		// Steam chat: its guards read the words as the dispatcher does, or a tab walked past them.
+		Commands.Host = mgr;
+		mgr.Global.WebPassword = "kept-password";
+		string chatSet = await Commands.RunAsync("set\tWebPassword\tstolen1", "alt");
+		Check("guards: 'set<tab>WebPassword' from Steam chat is refused like 'set WebPassword'",
+			chatSet.Contains("at the PC", StringComparison.Ordinal) && (mgr.Global.WebPassword == "kept-password"), chatSet);
+		string chatPast = await Commands.RunAsync("pause other", "alt");
+		Check("guards: 'pause<nbsp>other' from one account's Steam chat doesn't reach another account",
+			chatPast.Contains("only takes commands for itself", StringComparison.Ordinal) && !bots["other"].Paused, chatPast);
+
+		// Telegram and Discord: the confirm guard reads the command word as the dispatcher does.
+		Type notifier = typeof(NocatFarm.Core.Bot).Assembly.GetType("NocatFarm.Core.Notifier")!;
+		MethodInfo? words = notifier.GetMethod("CommandWords", BindingFlags.NonPublic | BindingFlags.Static);
+		MethodInfo guard = notifier.GetMethod("ConfirmGuard", BindingFlags.NonPublic | BindingFlags.Static)!;
+		string? Needs(string line) {
+			var (first, rest) = ((string, string)) words!.Invoke(null, [line])!;
+
+			return (((string?, string)) guard.Invoke(null, [first, rest])!).Item1;
+		}
+
+		Check("guards: '/remove<tab>alt' and '/exit<nbsp>now' on Telegram or Discord still ask for confirm",
+			(words != null) && (Needs("remove\talt") == "remove") && (Needs("exit now") == "exit") && (Needs("remove alt\tconfirm") == null));
+
+		string social = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Modules", "Social.cs"));
+		Check("steam chat: 'answered ... (<command>)' in the log names the command as the log masks it, not the first space-split word",
+			!social.Contains("command.Split(' ')[0]", StringComparison.Ordinal));
+	} finally {
+		Commands.Host = host;
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+		NocatFarm.Config.Live.Global = realGlobal;
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── the daily summary: a last summary 'in the future' (the clock put back) counts the last 24h, not nothing ────────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-futuresum-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	_ = NocatFarm.Stats.Recent(1);
+	var cache = (List<NocatFarm.Stats.Event>) typeof(NocatFarm.Stats).GetField("Cache", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+	Type dr = typeof(NocatFarm.Core.DailyReport);
+	FieldInfo stateField = dr.GetField("_state", BindingFlags.NonPublic | BindingFlags.Static)!;
+	object savedState = stateField.GetValue(null)!;
+	DateTime now = DateTime.UtcNow;
+	List<NocatFarm.Stats.Event> added = [
+		new(now.AddHours(-30), NocatFarm.Stats.KindCard, "fut-a"),
+		new(now.AddHours(-20), NocatFarm.Stats.KindCard, "fut-a"),
+		new(now.AddHours(-2), NocatFarm.Stats.KindCard, "fut-a"),
+		new(now.AddHours(-1), NocatFarm.Stats.KindComment, "fut-a")
+	];
+
+	try {
+		lock (cache) {
+			cache.AddRange(added);
+		}
+
+		object fresh = Activator.CreateInstance(savedState.GetType())!;
+		savedState.GetType().GetProperty("LastAt")!.SetValue(fresh, now.AddHours(5));
+		savedState.GetType().GetProperty("Lifetime")!.SetValue(fresh, new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase) { ["fut-a"] = 0 });
+		stateField.SetValue(null, fresh);
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false, Rep4RepEnabled = true });
+		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
+		bots["fut-a"] = new NocatFarm.Core.Bot("fut-a", new NocatFarm.Config.BotConfig());
+		object built = dr.GetMethod("Build", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [mgr, false, now])!;
+		string text = ((NocatFarm.Core.ReportCard) built.GetType().GetProperty("Card")!.GetValue(built)!).Text();
+		string row = text.ReplaceLineEndings("\n").Split('\n').FirstOrDefault(static l => l.Contains("fut-a", StringComparison.Ordinal))?.Trim() ?? "";
+		Check("summary: a last summary later than now (the clock put back) counts the last 24h - 2 cards and a comment, not none",
+			row.Contains("2 cards", StringComparison.Ordinal) && row.Contains("1 comment", StringComparison.Ordinal), text);
+		Check("summary: ...and its heading says the same 24h, not a time still to come", NocatFarm.Core.DailyReport.Note(false, now).ToEnglish() == "last 24h",
+			NocatFarm.Core.DailyReport.Note(false, now).ToEnglish());
+	} finally {
+		lock (cache) {
+			cache.RemoveAll(added.Contains);
+		}
+
+		stateField.SetValue(null, savedState);
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── 'stats' hour bars: the window's first part-hour is labelled with when it starts, not the hour it shares with now ───
+// The clock is pinned: on the real one the first minute of an hour (22:00:30 - the start read "22:00", as did the hour now
+// under way) came round about one run in 60.
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-statlabels-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	_ = NocatFarm.Stats.Recent(1);
+	var cache = (List<NocatFarm.Stats.Event>) typeof(NocatFarm.Stats).GetField("Cache", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+	PropertyInfo clockProp = typeof(NocatFarm.Stats).GetProperty("UtcNow", BindingFlags.NonPublic | BindingFlags.Static)!;
+	object realClock = clockProp.GetValue(null)!;
+
+	try {
+		// A mid-January day, so no clock change falls inside the 24h anywhere.
+		foreach ((int hour, int minute, int second, string first) in new[] { (22, 0, 30, "22:01"), (22, 59, 30, "22:59"), (14, 37, 0, "14:37") }) {
+			DateTime now = new DateTime(2026, 1, 14, hour, minute, second, DateTimeKind.Local).ToUniversalTime();
+			DateTime start = now.AddHours(-24);
+			string at = $"{hour:00}:{minute:00}:{second:00}";
+			List<NocatFarm.Stats.Event> added = [
+				new(start.AddSeconds(10), NocatFarm.Stats.KindCard, "lbl-a"),   // in the first part-hour
+				new(start.AddHours(1), NocatFarm.Stats.KindCard, "lbl-a"),      // in the bar after it
+				new(now.AddHours(-5), NocatFarm.Stats.KindComment, "lbl-a"),
+				new(now.AddSeconds(-2), NocatFarm.Stats.KindCard, "lbl-a")      // in the hour now under way
+			];
+			clockProp.SetValue(null, (Func<DateTime>) (() => now));
+
+			try {
+				lock (cache) {
+					cache.AddRange(added);
+				}
+
+				string text = (string) typeof(Commands).GetMethod("StatsText", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [new[] { "24" }])!;
+				List<string> labels = [.. text.ReplaceLineEndings("\n").Split('\n').Where(static l => l.StartsWith("  ", StringComparison.Ordinal) && l.Contains(" card(s), ", StringComparison.Ordinal))
+					.Select(static l => l.Trim().Split(' ')[0])];
+				List<(DateTime Hour, int Cards, int Comments)> bars = NocatFarm.Stats.ByHour(24);
+				(int cards, int comments) = NocatFarm.Stats.Totals(24);
+				Check($"stats at {at}: no two hour bars carry the same time, and the first starts when the 24h do ({first})",
+					(labels.Count == 4) && (labels.Distinct().Count() == labels.Count) && (labels[0] == first), string.Join(", ", labels));
+				Check($"stats at {at}: ...and the bars still add up to the totals", (bars.Sum(static b => b.Cards) == cards) && (bars.Sum(static b => b.Comments) == comments) && (cards == 3) && (comments == 1),
+					$"bars {bars.Sum(static b => b.Cards)}/{bars.Sum(static b => b.Comments)}, totals {cards}/{comments}");
+			} finally {
+				clockProp.SetValue(null, realClock);
+
+				lock (cache) {
+					cache.RemoveAll(added.Contains);
+				}
+			}
+		}
+	} finally {
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── 'stats' hour bars across a clock change: each bar is one real hour, and the first starts when the 24h do ───────────
+// Stepped on the local clock, the bars ran an hour off the window's start the day the clocks went back or forward: the
+// first bar was empty, or the window's first minutes were in no bar at all. A made-up zone keeping UK hours, so it's the
+// same on every computer - no Windows or IANA zone name to look up.
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-statdst-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	_ = NocatFarm.Stats.Recent(1);
+	var cache = (List<NocatFarm.Stats.Event>) typeof(NocatFarm.Stats).GetField("Cache", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+	PropertyInfo clockProp = typeof(NocatFarm.Stats).GetProperty("UtcNow", BindingFlags.NonPublic | BindingFlags.Static)!;
+	PropertyInfo? zoneProp = typeof(NocatFarm.Stats).GetProperty("Zone", BindingFlags.NonPublic | BindingFlags.Static);
+	object realClock = clockProp.GetValue(null)!;
+	object? realZone = zoneProp?.GetValue(null);
+	TimeZoneInfo uk = TimeZoneInfo.CreateCustomTimeZone("nf-test-uk", TimeSpan.Zero, "test UK", "test GMT", "test BST", [
+		TimeZoneInfo.AdjustmentRule.CreateAdjustmentRule(new DateTime(2000, 1, 1), new DateTime(2099, 12, 31), TimeSpan.FromHours(1),
+			TimeZoneInfo.TransitionTime.CreateFloatingDateRule(new DateTime(1, 1, 1, 1, 0, 0), 3, 5, DayOfWeek.Sunday),
+			TimeZoneInfo.TransitionTime.CreateFloatingDateRule(new DateTime(1, 1, 1, 2, 0, 0), 10, 5, DayOfWeek.Sunday))
+	]);
+	static string Hm(DateTime t) => t.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+
+	try {
+		Check("stats across a clock change: the time zone can be set for the check", zoneProp != null);
+
+		// Clocks back on 25 October 2026 (02:00 BST is 01:00 GMT, so 01:xx comes twice); forward on 29 March (01:00 GMT is 02:00 BST).
+		foreach ((string when, DateTime now, string first, string second, DateTime twiceA, DateTime twiceB) in new[] {
+			("back", new DateTime(2026, 10, 25, 12, 20, 0, DateTimeKind.Utc), "13:20", "14:00", new DateTime(2026, 10, 25, 0, 30, 0, DateTimeKind.Utc), new DateTime(2026, 10, 25, 1, 30, 0, DateTimeKind.Utc)),
+			("forward", new DateTime(2026, 3, 29, 12, 20, 0, DateTimeKind.Utc), "12:20", "13:00", new DateTime(2026, 3, 29, 0, 30, 0, DateTimeKind.Utc), new DateTime(2026, 3, 29, 1, 30, 0, DateTimeKind.Utc))
+		}) {
+			if (zoneProp == null) {
+				break;
+			}
+
+			DateTime start = now.AddHours(-24);
+			List<NocatFarm.Stats.Event> added = [
+				new(start.AddSeconds(10), NocatFarm.Stats.KindCard, "dst-a"),   // in the first part-hour
+				new(twiceA, NocatFarm.Stats.KindCard, "dst-a"),                 // the hour either side of the change
+				new(twiceB, NocatFarm.Stats.KindCard, "dst-a"),
+				new(now.AddSeconds(-2), NocatFarm.Stats.KindComment, "dst-a")   // in the hour now under way
+			];
+			clockProp.SetValue(null, (Func<DateTime>) (() => now));
+			zoneProp.SetValue(null, uk);
+
+			try {
+				lock (cache) {
+					cache.AddRange(added);
+				}
+
+				List<(DateTime Hour, int Cards, int Comments)> bars = NocatFarm.Stats.ByHour(24);
+				(int cards, int comments) = NocatFarm.Stats.Totals(24);
+				string seen = string.Join(" ", bars.Select(static b => $"{Hm(b.Hour)}={b.Cards}/{b.Comments}"));
+				Check($"stats, clocks {when}: 25 bars, the first starting when the 24h do ({first}) with the window's first card in it, then {second}",
+					(bars.Count == 25) && (Hm(bars[0].Hour) == first) && (bars[0].Cards == 1) && (Hm(bars[1].Hour) == second), seen);
+				Check($"stats, clocks {when}: the hour either side of the change is a bar each, and the bars add up to the totals",
+					(bars.Sum(static b => b.Cards) == cards) && (bars.Sum(static b => b.Comments) == comments) && (cards == 3) && (comments == 1) && bars.All(static b => b.Cards <= 1)
+					&& (bars[^1].Comments == 1), seen);
+			} finally {
+				clockProp.SetValue(null, realClock);
+				zoneProp.SetValue(null, realZone);
+
+				lock (cache) {
+					cache.RemoveAll(added.Contains);
+				}
+			}
+		}
+	} finally {
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── slow commands: a second, different request for the same account runs; only the same one is turned away ────────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-slowkeys-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	TimeSpan replyWithin = Commands.ReplyWithin;
+	Commands.ReplyWithin = TimeSpan.FromMilliseconds(300);
+	const BindingFlags AnyInst = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+
+	// Every web request the account makes waits here until let go, and then fails - nothing reaches Steam.
+	var hold = new HoldHandler();
+	var going = (System.Collections.IEnumerable) typeof(Commands).GetField("Going", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+	int Going() {
+		lock (going) {
+			return going.Cast<object>().Count();
+		}
+	}
+
+	try {
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
+		// Signed in as far as the commands can tell, with a made-up Steam ID and token, and its web requests held.
+		NocatFarm.Core.Bot Held(string name, ulong id) {
+			var b = new NocatFarm.Core.Bot(name, new NocatFarm.Config.BotConfig());
+			typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(b, NocatFarm.Core.BotState.Online);
+			typeof(NocatFarm.Core.Bot).GetProperty("SteamId")!.SetValue(b, id);
+			typeof(NocatFarm.Core.Bot).GetProperty("WalletCurrency")!.SetValue(b, SteamKit2.ECurrencyCode.USD);
+			var web = (NocatFarm.Core.WebSession) typeof(NocatFarm.Core.Bot).GetProperty("Web", AnyInst)!.GetValue(b)!;
+			web.Init(id, "test-token");
+			typeof(NocatFarm.Core.WebSession).GetField("_http", AnyInst)!.SetValue(web, new HttpClient(hold, disposeHandler: false));
+			b.AddModule(new NocatFarm.Modules.Trading(b));
+			bots[name] = b;
+
+			return b;
+		}
+
+		Held("slowpoke", 1);
+		Held("receiver", 2);
+
+		async Task<(string First, string Second)> Both(string first, string second) =>
+			(await Commands.RunAsync(mgr, first), await Commands.RunAsync(mgr, second));
+
+		var trade = await Both("trade accept slowpoke 3", "trade decline slowpoke 5");
+		Check("trade: 'trade decline 5' while 'trade accept 3' is going runs - it isn't 'already declining'",
+			trade.First.Contains("still accepting", StringComparison.Ordinal) && trade.Second.Contains("still declining", StringComparison.Ordinal), $"{trade.First} / {trade.Second}");
+		string again = await Commands.RunAsync(mgr, "trade accept slowpoke 3");
+		Check("trade: the same 'trade accept 3' again is still not started twice", again.Contains("already accepting", StringComparison.Ordinal), again);
+
+		// Booster packs one batch at a time an account: every batch spends the same gems, and two at once on '440 730' and '730'
+		// made 730's pack in one and had it "refused by Steam" in the other. The "already" names the games being made.
+		var booster = await Both("booster slowpoke 440 730", "booster slowpoke 730");
+		string otherGame = await Commands.RunAsync(mgr, "booster slowpoke 570");
+		Check("booster: a second batch on the same account while one is being made is turned away, naming the games going",
+			booster.First.Contains("still making booster packs for 440, 730", StringComparison.Ordinal)
+			&& booster.Second.Contains("already making booster packs for 440, 730", StringComparison.Ordinal)
+			&& otherGame.Contains("already making booster packs for 440, 730", StringComparison.Ordinal), $"{booster.First} / {booster.Second} / {otherGame}");
+
+		var licence = await Both("addlicense slowpoke 123", "addlicense slowpoke 456");
+		Check("addlicense: other IDs while one batch is going are added too",
+			licence.First.Contains("still adding", StringComparison.Ordinal) && licence.Second.Contains("still adding", StringComparison.Ordinal), $"{licence.First} / {licence.Second}");
+
+		var sell = await Both("sell slowpoke do", "sell slowpoke preview");
+		string relist = await Commands.RunAsync(mgr, "sell slowpoke relist");
+		Check("sell: a preview or a relist while 'sell do' is going runs, and says what it's doing",
+			sell.First.Contains("still listing", StringComparison.Ordinal) && sell.Second.Contains("still working out", StringComparison.Ordinal)
+			&& relist.Contains("still taking down", StringComparison.Ordinal), $"{sell.First} / {sell.Second} / {relist}");
+
+		// Sending stays one at a time an account - two sends at once could put the same items in two offers - but the
+		// "already" names the send that is going, not the one just asked for.
+		var send = await Both("send slowpoke to receiver", "send slowpoke");
+		Check("send: a second send from the same account while one is going names the one going",
+			send.First.Contains("still sending its items to receiver", StringComparison.Ordinal) && send.Second.Contains("already sending its items to receiver", StringComparison.Ordinal),
+			$"{send.First} / {send.Second}");
+
+		var match = await Both("match", "match do");
+		string matchAgain = await Commands.RunAsync(mgr, "match do");
+		Check("match: 'match do' while the plan is being worked out sends - it isn't 'already working out card swaps'; a second 'match do' is",
+			match.First.Contains("still working out", StringComparison.Ordinal) && match.Second.Contains("still sending the card swaps", StringComparison.Ordinal)
+			&& matchAgain.Contains("already sending the card swaps", StringComparison.Ordinal), $"{match.First} / {match.Second} / {matchAgain}");
+	} finally {
+		hold.Release();
+
+		// Let what was started finish (each fails at once now) before the next check reads anything.
+		for (int i = 0; (i < 300) && (Going() > 0); i++) {
+			await Task.Delay(100);
+		}
+
+		Commands.ReplyWithin = replyWithin;
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── going back, round three: a copy for a going back that never happened, a damaged copy, other chips, an Intel Mac zip,
+// a skip kept over a file, and what a package may never have in it ──────────────────────────────────────────────────
+{
+	const BindingFlags AnyStatic = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+	Type su = typeof(NocatFarm.Core.SelfUpdate);
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-back3-" + Guid.NewGuid().ToString("N"));
+	string zips = Path.Combine(tmpRoot, "zips");
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	Directory.CreateDirectory(zips);
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	string cfg = NocatFarm.Config.ConfigStore.ConfigDir;
+	string state = Path.Combine(cfg, "state");
+	string cur = Build.Version;
+	int[] parts = [.. cur.Split('.').Select(int.Parse)];
+	string newer = $"{parts[0]}.{parts[1]}.{parts[2] + 1}";
+	PropertyInfo startP = su.GetProperty("StartSwap", AnyStatic)!, exitP = su.GetProperty("ExitForSwap", AnyStatic)!;
+	object? startBefore = startP.GetValue(null), exitBefore = exitP.GetValue(null);
+	Func<IEnumerable<NocatFarm.Core.Bot>>? fleetBefore = NocatFarm.Core.SelfUpdate.Fleet;
+	FieldInfo exitFlag = typeof(Commands).GetField("_exitRequested", AnyStatic)!;
+	bool exitFlagBefore = Commands.ExitRequested;
+	NocatFarm.Core.BotManager? hostBefore = Commands.Host;
+	var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+	long Mark() => Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+	bool Said(long since, string english) => Log.Since(since).Any(e => e.Said.ToEnglish().Contains(english, StringComparison.Ordinal));
+	string Src(string rel) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", rel)).Replace("\r\n", "\n");
+	string Mine(string v) => OperatingSystem.IsWindows() ? $"nocat.farm-v{v}-portable.zip" : $"nocat.farm-v{v}_{NocatFarm.Core.Platform.ReleaseRid}.zip";
+
+	// The start of a program file - Linux's ELF (either byte order), a Mac's Mach-O, a Mac's universal one - and a
+	// nocat.farm zip: see FakeProgram.
+	byte[] Elf(ushort machine, bool bigEndian = false) => FakeProgram.Elf(machine, bigEndian);
+	byte[] MachO(uint cpu) => FakeProgram.MachO(cpu);
+	byte[] Fat(bool wide, params uint[] cpus) => FakeProgram.Fat(wide, cpus);
+	const uint Intel = FakeProgram.Intel, AppleSilicon = FakeProgram.AppleSilicon;
+	byte[] Here() => FakeProgram.For(FakeProgram.Here);
+	string exeHere = FakeProgram.ExeFor(FakeProgram.Here);
+	string MakeZip(string file, Version v, string exe, byte[] program) => FakeProgram.Zip(Path.Combine(zips, file), v, exe: exe, program: program);
+	(string? V, string Why) Look(string path, string rid) {
+		var (v, why) = ((string?, NocatFarm.Core.Said)) su.GetMethod("LookInZipFor", AnyStatic)!.Invoke(null, [path, rid])!;
+		return (v, why.ToEnglish());
+	}
+
+	// The copies still waiting to be brought back - not the ones that are done.
+	string[] Waiting() => Directory.Exists(NocatFarm.Core.Rollback.Folder)
+		? [.. Directory.GetFiles(NocatFarm.Core.Rollback.Folder, "before-*.zip").Where(static f => !f.EndsWith("-applied.zip", StringComparison.Ordinal))]
+		: [];
+
+	// What a handover leaves for the next start, and the busy flag: back as they were, nothing having been started.
+	void Settle(System.Diagnostics.ProcessStartInfo? swapped) {
+		su.GetField("_busy", AnyStatic)!.SetValue(null, 0);
+		su.GetField("_handedOver", AnyStatic)!.SetValue(null, false);
+		if (swapped?.Environment["NF_WORK"] is { Length: > 0 } work) {
+			try {
+				Directory.Delete(work, true);
+			} catch (IOException) {
+			}
+		}
+		foreach (string left in new[] { "updated.txt", "update-verify.txt", "update-notes.txt", "update-skip-before.txt", "update-failed.txt" }) {
+			File.Delete(Path.Combine(state, left));
+		}
+	}
+
+	// A pretend GitHub on this PC, for 'update to': one release by its tag, and its zip.
+	System.Net.Sockets.TcpListener listener = new(System.Net.IPAddress.Loopback, 0);
+	listener.Start();
+	int port = ((System.Net.IPEndPoint) listener.LocalEndpoint).Port;
+	Dictionary<string, byte[]> served = new(StringComparer.Ordinal);
+	CancellationTokenSource stopServing = new();
+
+	_ = Task.Run(async () => {
+		while (!stopServing.IsCancellationRequested) {
+			System.Net.Sockets.TcpClient client;
+
+			try {
+				client = await listener.AcceptTcpClientAsync(stopServing.Token);
+			} catch {
+				break;
+			}
+
+			using (client) {
+				System.Net.Sockets.NetworkStream ns = client.GetStream();
+				byte[] buffer = new byte[8192];
+				string head = "";
+
+				while (!head.Contains("\r\n\r\n", StringComparison.Ordinal)) {
+					int read = await ns.ReadAsync(buffer);
+					if (read <= 0) {
+						break;
+					}
+
+					head += System.Text.Encoding.ASCII.GetString(buffer, 0, read);
+				}
+
+				string path = head.Split(' ').ElementAtOrDefault(1) ?? "";
+				bool found = served.TryGetValue(path, out byte[]? body);
+				body ??= System.Text.Encoding.UTF8.GetBytes("{\"message\":\"Not Found\"}");
+				await ns.WriteAsync(System.Text.Encoding.ASCII.GetBytes($"HTTP/1.1 {(found ? "200 OK" : "404 Not Found")}\r\nContent-Type: application/octet-stream\r\nContent-Length: {body.Length}\r\nConnection: close\r\n\r\n"));
+				await ns.WriteAsync(body);
+			}
+		}
+	});
+
+	Environment.SetEnvironmentVariable("NOCATFARM_UPDATE_FEED", $"http://127.0.0.1:{port}/latest.json");
+
+	try {
+		NocatFarm.Config.ConfigStore.SaveGlobal(new NocatFarm.Config.GlobalConfig { UpdateCheckHours = 7 });
+
+		// 1. Going back that never happened: the copy of the settings it took goes again - it holds every saved login, and was
+		// re-read at every start for good. Closed while the accounts signed out, a skip just before the hand-over, a surprise.
+		if (NocatFarm.Core.SelfUpdate.Supported) {
+			string older = MakeZip(Mine("1.6.0"), new Version(1, 6, 0), exeHere, Here());
+			System.Diagnostics.ProcessStartInfo? swapped = null;
+			startP.SetValue(null, (Action<System.Diagnostics.ProcessStartInfo>) (p => swapped = p));
+			exitP.SetValue(null, (Action) (() => { }));
+
+			NocatFarm.Core.SelfUpdate.Fleet = () => {
+				exitFlag.SetValue(null, true);   // closed while the accounts sign out
+				return [];
+			};
+			string? closed = await NocatFarm.Core.SelfUpdate.ApplyAsync(CancellationToken.None, fromFile: older);
+			exitFlag.SetValue(null, false);
+			Check("going back that stopped - closed while the accounts signed out: the copy it took of the settings goes again",
+				(closed?.Contains("nocat.farm was closed first", StringComparison.Ordinal) == true) && (swapped == null) && (Waiting().Length == 0),
+				$"{closed} | {string.Join(" ", Waiting().Select(Path.GetFileName))}");
+			Settle(swapped);
+
+			NocatFarm.Core.SelfUpdate.Fleet = static () => [];
+			startP.SetValue(null, (Action<System.Diagnostics.ProcessStartInfo>) (_ => throw new InvalidOperationException("no shell here")));
+			string? surprise = await NocatFarm.Core.SelfUpdate.ApplyAsync(CancellationToken.None, fromFile: older);
+			Check("going back that stopped - something unexpected before the swap started: the copy goes again",
+				(surprise?.Contains("no shell here", StringComparison.Ordinal) == true) && (Waiting().Length == 0),
+				$"{surprise} | {string.Join(" ", Waiting().Select(Path.GetFileName))}");
+			Settle(swapped);
+
+			// 'update to' an older release, skipped just before the hand-over: not started, and the copy goes.
+			byte[] olderBytes = File.ReadAllBytes(older);
+			served["/zips/" + Mine("1.6.0")] = olderBytes;
+			served["/releases/tags/v1.6.0"] = System.Text.Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize(new {
+				tag_name = "v1.6.0", html_url = "https://example.invalid/", body = "- a test", draft = false, prerelease = false,
+				assets = new[] { new { name = Mine("1.6.0"), browser_download_url = $"http://127.0.0.1:{port}/zips/{Mine("1.6.0")}", size = olderBytes.Length } }
+			}));
+			startP.SetValue(null, (Action<System.Diagnostics.ProcessStartInfo>) (p => swapped = p));
+			NocatFarm.Core.SelfUpdate.Fleet = static () => {
+				NocatFarm.Core.UpdateCheck.Skipped = "v1.6.0";   // 'update skip' while the accounts sign out
+				return [];
+			};
+			string? skipped = await NocatFarm.Core.SelfUpdate.ApplyAsync(CancellationToken.None, toVersion: "1.6.0");
+			Check("going back that stopped - skipped just before the hand-over: not started, and the copy goes again",
+				(skipped?.Contains("1.6.0 was skipped", StringComparison.Ordinal) == true) && (swapped == null) && (Waiting().Length == 0),
+				$"{skipped} | {string.Join(" ", Waiting().Select(Path.GetFileName))}");
+			NocatFarm.Core.UpdateCheck.Skipped = null;
+			Settle(swapped);
+		}
+
+		// ...and by hand (Docker, a service), where nothing ever says the older version went in: typed again, the copy for the
+		// same two versions replaces the one before rather than piling up. Another pair, and copies that are done, stay.
+		if (Directory.Exists(NocatFarm.Core.Rollback.Folder)) {
+			Directory.Delete(NocatFarm.Core.Rollback.Folder, true);
+		}
+		string first = NocatFarm.Core.Rollback.Snapshot("v1.0.1");
+		string earlier = Path.Combine(NocatFarm.Core.Rollback.Folder, $"before-1.0.1-from-{cur}-20000101-000000.zip");
+		File.Move(first, earlier);
+		string otherPair = Path.Combine(NocatFarm.Core.Rollback.Folder, $"before-1.0.0-from-{cur}-20000101-000000.zip");
+		string done = Path.Combine(NocatFarm.Core.Rollback.Folder, $"before-1.0.1-from-{cur}-19990101-000000-applied.zip");
+		File.Copy(earlier, otherPair);
+		File.Copy(earlier, done);
+		MethodInfo? byHand = typeof(NocatFarm.Core.Rollback).GetMethod("Snapshot", AnyStatic, [typeof(string), typeof(bool)]);
+		string? again = (string?) byHand?.Invoke(null, ["v1.0.1", true]);
+		Check("going back by hand, typed again: the copy for the same two versions replaces the one before - another pair, and done ones, stay",
+			(again != null) && Waiting().Order(StringComparer.Ordinal).SequenceEqual(new[] { again, otherPair }.Order(StringComparer.Ordinal)) && File.Exists(done),
+			string.Join(" ", Waiting().Select(Path.GetFileName)));
+		Check("going back by hand: Docker and a service are the ones that replace", Src("src/NocatFarm/Core/Rollback.cs").Contains("Snapshot(older, !SelfUpdate.Supported)", StringComparison.Ordinal));
+
+		// 2. A damaged entry in a copy - a broken header, or packed bytes that don't unpack: passed over like a file that
+		// doesn't read, said in the log once, and the copy is done. Escaping, it was a red line at every start for good.
+		Directory.Delete(NocatFarm.Core.Rollback.Folder, true);
+		NocatFarm.Config.ConfigStore.SaveBot("rbheader", new NocatFarm.Config.BotConfig { DiscoveryQueue = 2 });
+		NocatFarm.Config.ConfigStore.SaveBot("rbpacked", new NocatFarm.Config.BotConfig { DiscoveryQueue = 2 });
+		NocatFarm.Config.ConfigStore.SaveBot("rbfine", new NocatFarm.Config.BotConfig { DiscoveryQueue = 2 });
+		string damaged = NocatFarm.Core.Rollback.Snapshot("v1.0.1");
+		byte[] bytes = File.ReadAllBytes(damaged);
+		int Named(string entry) => bytes.AsSpan().IndexOf(System.Text.Encoding.ASCII.GetBytes(entry));   // the local header's copy comes first
+		int header = Named("config/rbheader.json") - 30;
+		bytes[header] = 0;   // its signature, broken
+		int packed = Named("config/rbpacked.json");
+		bool deflated = System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(bytes.AsSpan(packed - 30 + 8)) == 8;
+		bytes[packed + "config/rbpacked.json".Length + System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(bytes.AsSpan(packed - 2))] = 0xFF;   // a block of no kind there is
+		File.WriteAllBytes(damaged, bytes);
+		var rbfine = (System.Text.Json.Nodes.JsonObject) System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(Path.Combine(cfg, "rbfine.json")))!;
+		rbfine.Remove("DiscoveryQueue");
+		File.WriteAllText(Path.Combine(cfg, "rbfine.json"), rbfine.ToJsonString());
+
+		List<NocatFarm.Core.Rollback.Note> brokenNotes = [];
+		Exception? brokenThrew = null;
+		try {
+			brokenNotes = NocatFarm.Core.Rollback.RestoreMissing(newer);
+		} catch (Exception e) {
+			brokenThrew = e;
+		}
+		string brokenSaid = brokenThrew?.ToString() ?? string.Join(" | ", brokenNotes.Select(static n => (n.Problem ? "PROBLEM " : "") + (n.Detail ?? n.Line.ToEnglish())));
+		Check("bringing back: a damaged entry in the copy is passed over, not a red 'tries again next start' - and the rest still come back",
+			(brokenThrew == null) && !brokenNotes.Any(static n => n.Problem) && File.ReadAllText(Path.Combine(cfg, "rbfine.json")).Contains("DiscoveryQueue", StringComparison.Ordinal)
+			&& brokenNotes.Any(static n => n.Detail?.Contains("passed over rbheader.json in the copy", StringComparison.Ordinal) == true)
+			&& (!deflated || brokenNotes.Any(static n => n.Detail?.Contains("passed over rbpacked.json in the copy", StringComparison.Ordinal) == true)), brokenSaid);
+		Check("bringing back: ...and the copy with it is done, so it's said once", !File.Exists(damaged) && File.Exists(damaged[..^".zip".Length] + "-applied.zip"), brokenSaid);
+
+		// 3. 'update file' on a chip the list didn't have: the program's own machine for the ones .NET runs on, and the name
+		// for any other. Every one of them was refused, "needs nocat.farm-v<version>_linux-riscv64.zip" - the name it had.
+		(string Rid, byte[] Program)[] chips = [("linux-riscv64", Elf(243)), ("linux-loongarch64", Elf(258)), ("linux-s390x", Elf(22, bigEndian: true)), ("linux-ppc64le", Elf(21))];
+		List<string> chipsSaid = [];
+		foreach ((string rid, byte[] program) in chips) {
+			string named = MakeZip($"nocat.farm-v1.7.4_{rid}.zip", new Version(1, 7, 4), "nocatFarm", program);
+			string renamed = MakeZip($"download-{rid}.zip", new Version(1, 7, 4), "nocatFarm", program);
+			(string? v, string why) = Look(named, rid);
+			(string? v2, string why2) = Look(renamed, rid);
+			(string? onX64, _) = Look(named, "linux-x64");
+			if ((v != "1.7.4") || (v2 != "1.7.4") || (onX64 != null)) {
+				chipsSaid.Add($"{rid}: {why} / {why2} / x64 {onX64}");
+			}
+		}
+		Check("update file on RISC-V, LoongArch, s390x, ppc64le: the zip with that chip's program is taken - named or not - and refused on another chip",
+			chipsSaid.Count == 0, string.Join(" | ", chipsSaid));
+		string mipsNamed = MakeZip("nocat.farm-v1.7.4_linux-mips64.zip", new Version(1, 7, 4), "nocatFarm", Elf(8));
+		string mipsOther = MakeZip("nocat.farm-v1.7.4_linux-x64 (3).zip", new Version(1, 7, 4), "nocatFarm", Elf(8));
+		Check("update file on a chip not in the list: by its name, as an update picks its download",
+			(Look(mipsNamed, "linux-mips64").V == "1.7.4") && Look(mipsOther, "linux-mips64").Why.Contains("another kind of computer", StringComparison.Ordinal),
+			$"{Look(mipsNamed, "linux-mips64").Why} | {Look(mipsOther, "linux-mips64").Why}");
+
+		// 4. Apple silicon runs an Intel program too (Rosetta), and a trial that fails puts the old one back: an Intel Mac
+		// zip is taken there, plain or universal, with the universal list in 32 or 64 bits. An Intel Mac still can't run Apple's.
+		string intelMac = MakeZip("nocat.farm-v1.7.4_osx-x64.zip", new Version(1, 7, 4), "nocatFarm", MachO(Intel));
+		string intelFat = MakeZip("intel-fat.zip", new Version(1, 7, 4), "nocatFarm", Fat(false, Intel));
+		string wideBoth = MakeZip("wide-both.zip", new Version(1, 7, 4), "nocatFarm", Fat(true, Intel, AppleSilicon));
+		string wideApple = MakeZip("wide-apple.zip", new Version(1, 7, 4), "nocatFarm", Fat(true, AppleSilicon));
+		string appleMac = MakeZip("nocat.farm-v1.7.4_osx-arm64.zip", new Version(1, 7, 4), "nocatFarm", MachO(AppleSilicon));
+		Check("update file on Apple silicon: an Intel Mac zip is taken - plain, universal, or universal with the 64-bit list",
+			(Look(intelMac, "osx-arm64").V == "1.7.4") && (Look(intelFat, "osx-arm64").V == "1.7.4") && (Look(wideBoth, "osx-arm64").V == "1.7.4")
+			&& (Look(wideApple, "osx-arm64").V == "1.7.4") && (Look(wideBoth, "osx-x64").V == "1.7.4"),
+			$"{Look(intelMac, "osx-arm64").Why} | {Look(intelFat, "osx-arm64").Why} | {Look(wideBoth, "osx-arm64").Why} | {Look(wideApple, "osx-arm64").Why} | {Look(wideBoth, "osx-x64").Why}");
+		Check("update file on an Intel Mac: Apple silicon's program is still for another kind of computer, universal or not, and a Mac zip isn't Linux's",
+			Look(appleMac, "osx-x64").Why.Contains("another kind of computer", StringComparison.Ordinal) && Look(wideApple, "osx-x64").Why.Contains("another kind of computer", StringComparison.Ordinal)
+			&& Look(intelMac, "linux-x64").Why.Contains("another kind of computer", StringComparison.Ordinal),
+			$"{Look(appleMac, "osx-x64").Why} | {Look(wideApple, "osx-x64").Why}");
+
+		// 5. 'update file' with a newer test build doesn't throw away a skip of that release: it goes in skipped or not, and if
+		// it crashes - or stops before the swap - the release stays skipped and "install at night" leaves it alone.
+		if (NocatFarm.Core.SelfUpdate.Supported) {
+			string newerZip = MakeZip(Mine(newer), Version.Parse(newer), exeHere, Here());
+			System.Diagnostics.ProcessStartInfo? swapped = null;
+			bool exited = false;
+			startP.SetValue(null, (Action<System.Diagnostics.ProcessStartInfo>) (p => swapped = p));
+			exitP.SetValue(null, (Action) (() => exited = true));
+			NocatFarm.Core.SelfUpdate.Fleet = static () => [];
+			Commands.Host = mgr;
+
+			NocatFarm.Core.UpdateCheck.Skipped = "v" + newer;
+			string going = await Commands.RunAtThisPcAsync(mgr, $"update file {newerZip}");
+			for (int i = 0; (i < 120) && !exited; i++) {
+				await Task.Delay(500);
+			}
+			Check("update file, a newer test build of a skipped release: it goes in, and the skip stays as it was",
+				exited && (swapped?.Environment["NF_TAG"] == "file:" + newer) && (NocatFarm.Core.UpdateCheck.Skipped == "v" + newer),
+				$"{exited} {swapped?.Environment["NF_TAG"]} {NocatFarm.Core.UpdateCheck.Skipped} | {going}");
+			Settle(swapped);
+			File.WriteAllText(Path.Combine(state, "update-failed.txt"), "crashed file:" + newer);
+			NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+			Check("update file, the newer test build crashed and was put back: the release is still skipped",
+				(NocatFarm.Core.UpdateCheck.Skipped == "v" + newer) && (NocatFarm.Core.SelfUpdate.LastFailure?.Contains("from the file didn't start", StringComparison.Ordinal) == true),
+				$"{NocatFarm.Core.UpdateCheck.Skipped} | {NocatFarm.Core.SelfUpdate.LastFailure}");
+
+			swapped = null;
+			exited = false;
+			NocatFarm.Core.SelfUpdate.Fleet = () => {
+				exitFlag.SetValue(null, true);   // closed while the accounts sign out
+				return [];
+			};
+			long before = Mark();
+			await Commands.RunAtThisPcAsync(mgr, $"update file {newerZip}");
+			for (int i = 0; (i < 120) && !Said(before, "nocat.farm was closed first"); i++) {
+				await Task.Delay(100);
+			}
+			exitFlag.SetValue(null, false);
+			Check("update file, a newer test build that stopped before the swap: the release is still skipped",
+				Said(before, "nocat.farm was closed first") && !exited && (NocatFarm.Core.UpdateCheck.Skipped == "v" + newer),
+				$"{exited} {NocatFarm.Core.UpdateCheck.Skipped}");
+			for (int i = 0; (i < 50) && NocatFarm.Core.SelfUpdate.Busy; i++) {
+				await Task.Delay(100);
+			}
+			Settle(swapped);
+			NocatFarm.Core.UpdateCheck.Skipped = null;
+		}
+
+		// 6. A package never has a backups/ folder (the 'backup' command's, every saved login in it) or a zip in it - on
+		// Windows, Linux or a Mac.
+		string ps1 = Src("tools/package-release.ps1");
+		int fn = ps1.IndexOf("function Assert-Clean(", StringComparison.Ordinal);
+		string assertClean = fn < 0 ? "" : ps1[fn..(ps1.IndexOf("\n}\n", fn, StringComparison.Ordinal) + 2)];
+		string? shell = OperatingSystem.IsWindows() ? "powershell.exe"
+			: (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator).Select(static d => Path.Combine(d, "pwsh")).FirstOrDefault(File.Exists);
+		int Package(params string[] files) {
+			string dir = Path.Combine(tmpRoot, "pkg-" + Guid.NewGuid().ToString("N")[..8]);
+			foreach (string f in files) {
+				Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(dir, f))!);
+				File.WriteAllText(Path.Combine(dir, f), "x");
+			}
+			string script = dir + ".ps1";
+			File.WriteAllText(script, "$ErrorActionPreference = 'Stop'\n" + assertClean + "\nAssert-Clean '" + dir.Replace("'", "''") + "'\n");
+			var psi = new System.Diagnostics.ProcessStartInfo(shell!) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+			foreach (string a in new[] { "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", script }) {
+				psi.ArgumentList.Add(a);
+			}
+			using var p = System.Diagnostics.Process.Start(psi)!;
+			_ = p.StandardOutput.ReadToEndAsync();
+			_ = p.StandardError.ReadToEndAsync();
+			return p.WaitForExit(60_000) ? p.ExitCode : -1;
+		}
+		if ((shell != null) && (assertClean.Length > 0)) {
+			int clean = Package("nocatFarm.exe", "wwwroot/app.js", "README.md");
+			int backups = Package("nocatFarm.exe", "backups/nocat.farm-backup-2026-10-06.zip");
+			int strayZip = Package("nocatFarm.exe", "nocat.farm-v1.7.2-portable.zip");
+			int deepZip = Package("nocatFarm.exe", "wwwroot/old.zip");
+			Check("packaging: a clean build packs; a top-level backups/ or any zip in it is refused",
+				(clean == 0) && (backups != 0) && (strayZip != 0) && (deepZip != 0), $"clean {clean}, backups {backups}, zip {strayZip}, deep zip {deepZip}");
+		}
+		const string ZipCheck = "| grep -E '^(config|logs|backups|tokens|state|authenticators)/|\\.zip$'; then echo \"FAIL: personal folders or a zip in the zip\"; exit 1; fi";
+		Check("packaging: the Linux and Mac jobs refuse the same in what they zip",
+			Src(".github/workflows/linux.yml").Contains("if unzip -Z1 \"$zip\" " + ZipCheck, StringComparison.Ordinal)
+			&& Src(".github/workflows/macos.yml").Contains("if unzip -Z1 \"$name\" " + ZipCheck, StringComparison.Ordinal));
+	} finally {
+		Environment.SetEnvironmentVariable("NOCATFARM_UPDATE_FEED", null);
+		stopServing.Cancel();
+		listener.Stop();
+		exitFlag.SetValue(null, exitFlagBefore);
+		Commands.Host = hostBefore;
+		startP.SetValue(null, startBefore);
+		exitP.SetValue(null, exitBefore);
+		NocatFarm.Core.SelfUpdate.Fleet = fleetBefore;
+		NocatFarm.Core.UpdateCheck.Skipped = null;
+		su.GetField("_busy", AnyStatic)!.SetValue(null, 0);
+		su.GetField("_handedOver", AnyStatic)!.SetValue(null, false);
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── Steam chat: a command sent to an account goes in the log masked, as 'command from' has it - never word for word ─────
+{
+	const BindingFlags AnyInst = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+	var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+	var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+		.GetField("_bots", AnyInst)!.GetValue(mgr)!;
+	var me = new NocatFarm.Core.Bot("chatme", new NocatFarm.Config.BotConfig());
+	var other = new NocatFarm.Core.Bot("chatfrom", new NocatFarm.Config.BotConfig());
+	const ulong From = 900001;   // made up - one of "your own accounts", so its name needs no lookup
+	typeof(NocatFarm.Core.Bot).GetProperty("SteamId")!.SetValue(other, From);
+	bots["chatme"] = me;
+	bots["chatfrom"] = other;
+	var social = new NocatFarm.Modules.Social(me);
+	MethodInfo onChat = typeof(NocatFarm.Modules.Social).GetMethod("OnChatMessage", AnyInst)!;
+	string[] sent = ["/set new SteamPassword hunter2", "/answer hunter2", "!redeem AAAAA-BBBBB-CCCCC", "!set\tWebPassword\thunter2", "/anwser hunter2", "alt: 2BCDF"];
+	long seq = Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+
+	foreach (string s in sent) {
+		onChat.Invoke(social, [From, s]);
+	}
+
+	List<string> Said() => [.. Log.Since(seq).Where(static e => e.Source == "chatme").Select(static e => e.Text)];
+	SpinWait.SpinUntil(() => Said().Count(static l => l.Contains("message from", StringComparison.Ordinal)) >= sent.Length, 5000);
+	List<string> said = Said();
+	Check("steam chat: a command's 'message from' line has the secret masked - a password, an answer, a product key",
+		(said.Count(static l => l.Contains("message from", StringComparison.Ordinal)) == sent.Length)
+		&& !said.Any(static l => l.Contains("hunter2", StringComparison.Ordinal) || l.Contains("AAAAA-BBBBB", StringComparison.Ordinal)), string.Join(" | ", said));
+	Check("steam chat: one of your own accounts answering '/2fa' - its Steam Guard code stays out of the log",
+		said.Any(static l => l.Contains("message from chatfrom: alt: *****", StringComparison.Ordinal)) && !said.Any(static l => l.Contains("2BCDF", StringComparison.Ordinal)),
+		string.Join(" | ", said));
+	Check("steam chat: ...and still says which command it was", said.Any(static l => l.Contains("message from chatfrom: /set new SteamPassword ***", StringComparison.Ordinal)),
+		string.Join(" | ", said));
+	await me.DisposeAsync();
+	await other.DisposeAsync();
+}
+
+// ── free text keeps the spaces it was typed with: the command word and the account split at any white space, not the rest ──
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	NocatFarm.Config.GlobalConfig realGlobal = NocatFarm.Config.Live.Global;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-tail-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	NocatFarm.Core.BotManager? host = Commands.Host;
+	Type hostType = typeof(NocatFarm.Plugins.IPluginHost).Assembly.GetType("NocatFarm.Plugins.Host")!;
+	var hosts = (IList) typeof(NocatFarm.Plugins.PluginHost).GetField("Hosts", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+	object? plugin = null;
+
+	try {
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
+		var robo = new NocatFarm.Core.Bot("robo", new NocatFarm.Config.BotConfig());
+		bots["robo"] = robo;
+
+		const string Odd = "a\u3000b\u00a0c  d";
+		await Commands.RunAsync(mgr, "gamename robo " + Odd);
+		Check("gamename: a no-break space, an ideographic space and two spaces in the name are kept as typed", robo.Cfg.CustomGameName == Odd, robo.Cfg.CustomGameName);
+		await Commands.RunAsync(mgr, "set robo CustomGameName x\u00a0y  z");
+		Check("set <account> CustomGameName: the value keeps its spaces", robo.Cfg.CustomGameName == "x\u00a0y  z", robo.Cfg.CustomGameName);
+		await Commands.RunAsync(mgr, "set robo AutoReply hi\u00a0there  you");
+		Check("set <account> AutoReply: the value keeps its spaces", robo.Cfg.AutoReply == "hi\u00a0there  you", robo.Cfg.AutoReply);
+		await Commands.RunAsync(mgr, "set WebPassword pa\u00a0ss  w\u3000rd");
+		Check("set WebPassword: a password with a no-break space in it is the password typed", mgr.Global.WebPassword == "pa\u00a0ss  w\u3000rd", mgr.Global.WebPassword);
+		await Commands.RunAsync(mgr, "set\tWebPassword\thunter2");
+		Check("set: a tab between the words is still a gap", mgr.Global.WebPassword == "hunter2", mgr.Global.WebPassword);
+
+		string redeem = await Commands.RunAsync(mgr, "redeem C:\\no\u00a0such  folder\\keys.txt");
+		Check("redeem <file>: the path is the one typed", redeem.Contains("'C:\\no\u00a0such  folder\\keys.txt'", StringComparison.Ordinal), redeem);
+		string import = await Commands.RunAsync(mgr, "import asf C:\\no\u00a0such\u3000dir force");
+		Check("import <tool> <path>: the path is the one typed", import == "There's no folder at C:\\no\u00a0such\u3000dir", import);
+
+		// A Telegram message on two lines: the line break is a gap between words, not part of the path or the group.
+		string asfDir = Path.Combine(tmpRoot, "asf\u00a0here");
+		Directory.CreateDirectory(asfDir);
+		string twoLines = await Commands.RunAsync(mgr, "import asf " + asfDir + "\nforce");
+		Check("import <tool> <path>\\nforce: the path stops at the line break, and 'force' on the next line is still 'force'",
+			!twoLines.StartsWith("There's no folder", StringComparison.Ordinal) && !twoLines.Contains("force", StringComparison.Ordinal), twoLines);
+		string group = await Commands.RunAsync(mgr, "joingroup all nocatfarm\r\nthanks");
+		Check("joingroup all <group>\\n...: the group is the group, not run into the next line", !group.Contains("doesn't look like a Steam group", StringComparison.Ordinal), group);
+
+		// Steam chat: the line isn't put back together with one space between the words.
+		Commands.Host = mgr;
+		await Commands.RunAsync("gamename robo q\u00a0r  s", "robo");
+		Check("steam chat: gamename keeps the spaces too", robo.Cfg.CustomGameName == "q\u00a0r  s", robo.Cfg.CustomGameName);
+		Check("steam chat: this account put in after the command keeps the rest as typed",
+			Commands.ThisBotFilledIn(mgr, "status  x\u00a0y", "robo") == "status robo x\u00a0y", Commands.ThisBotFilledIn(mgr, "status  x\u00a0y", "robo"));
+
+		// Telegram and Discord: the rest of the line, as typed.
+		Type notifier = typeof(NocatFarm.Core.Bot).Assembly.GetType("NocatFarm.Core.Notifier")!;
+		var (first, rest) = ((string, string)) notifier.GetMethod("CommandWords", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, ["gamename\trobo a\u3000b  c"])!;
+		Check("telegram/discord: the command word split at a tab, the rest as typed", (first == "gamename") && (rest == "robo a\u3000b  c"), $"{first} / {rest}");
+
+		// A plugin's command gets its words as it always did: split at spaces, a no-break space inside a word.
+		plugin = Activator.CreateInstance(hostType, [mgr, "harness-tail"])!;
+		((NocatFarm.Plugins.IPluginHost) plugin).AddCommand("echoargs", "", "", static a => Task.FromResult(string.Join("|", a)));
+		hosts.Add(plugin);
+		string echoed = await Commands.RunAsync(mgr, "echoargs a\u00a0b c");
+		Check("plugin command: its words are split at spaces, as before", echoed == "a\u00a0b|c", echoed);
+	} finally {
+		if (plugin != null) {
+			hosts.Remove(plugin);
+		}
+
+		Commands.Host = host;
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+		NocatFarm.Config.Live.Global = realGlobal;
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── the window's up arrow: it asks whether a line holds a secret (which do: the secrets table) ───────────────────────────────
+{
+	string window = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Windows", "MainWindow.cs"));
+	Check("history: the window asks whether the line holds a secret, not whether the log changed it",
+		window.Contains("Commands.HoldsSecret(line)", StringComparison.Ordinal) && !window.Contains("Commands.LineForLog(line) == line", StringComparison.Ordinal));
+}
+
+// ── a punctuation mark before the command word: '!' is a prefix like '/' (anything else: the secrets table) ────────────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-bang-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	NocatFarm.Core.BotManager? host = Commands.Host;
+
+	try {
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
+		bots["alt"] = new NocatFarm.Core.Bot("alt", new NocatFarm.Config.BotConfig());
+
+		string bang = await Commands.RunAsync(mgr, "!status");
+		Check("'!status' runs status, as ArchiSteamFarm's habit is", !bang.Contains("not a command", StringComparison.Ordinal) && bang.Contains("alt", StringComparison.Ordinal), bang);
+		Commands.Host = mgr;
+		string exit = await Commands.RunAsync("!exit", "alt");
+		string set = await Commands.RunAsync("!set WebPassword stolen1", "alt");
+		Check("guards: '!exit' and '!set' from Steam chat meet the same guards as '/exit' and '/set'",
+			exit.Contains("at the PC", StringComparison.Ordinal) && set.Contains("at the PC", StringComparison.Ordinal), $"{exit} / {set}");
+		Type notifier = typeof(NocatFarm.Core.Bot).Assembly.GetType("NocatFarm.Core.Notifier")!;
+		string? needs = (((string?, string)) notifier.GetMethod("ConfirmGuard", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, ["!remove", "alt"])!).Item1;
+		Check("guards: '!remove alt' on Telegram or Discord still asks for confirm", needs == "remove", needs ?? "null");
+	} finally {
+		Commands.Host = host;
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── 'set' with the value stuck on the key by '=': the "no such setting" reply doesn't say the value back ────────────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-seteq-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+
+	try {
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
+		bots["robo"] = new NocatFarm.Core.Bot("robo", new NocatFarm.Config.BotConfig());
+
+		foreach (string line in (string[]) ["set robo SteamPassword=hunter2xyz extra", "set WebPassword=hunter2 x", "set robo \"SteamPassword:hunter2\" x", "set WebPassword:hunter2"]) {
+			string reply = await Commands.RunAsync(mgr, line);
+			var logged = (List<string>) typeof(Commands).GetMethod("ExchangeLines", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, ["window", line, reply])!;
+			Check($"set: '{line}' - the value is in neither the reply nor the log", !reply.Contains("hunter2", StringComparison.Ordinal)
+				&& !logged.Any(static l => l.Contains("hunter2", StringComparison.Ordinal)), string.Join(" | ", logged));
+		}
+
+		string named = await Commands.RunAsync(mgr, "set robo SteamPassword=hunter2xyz extra");
+		Check("set: ...'Key=value' is the setting it names, and the reply names the key", named.StartsWith("robo.SteamPassword = (set)", StringComparison.Ordinal), named);
+	} finally {
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── addlicense: an ID already being added to an account by another addlicense isn't asked for twice ──────────────────────
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-licclaim-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	TimeSpan replyWithin = Commands.ReplyWithin;
+	Commands.ReplyWithin = TimeSpan.FromMilliseconds(300);
+	const BindingFlags AnyInst = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+	var hold = new HoldHandler();
+	var going = (IEnumerable) typeof(Commands).GetField("Going", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+	int Going() {
+		lock (going) {
+			return going.Cast<object>().Count();
+		}
+	}
+	long seq = Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+	NocatFarm.Core.Bot? b = null;
+
+	try {
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", AnyInst)!.GetValue(mgr)!;
+		b = new NocatFarm.Core.Bot("licclaim", new NocatFarm.Config.BotConfig());
+		typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(b, NocatFarm.Core.BotState.Online);
+		typeof(NocatFarm.Core.Bot).GetProperty("SteamId")!.SetValue(b, 3UL);
+		var web = (NocatFarm.Core.WebSession) typeof(NocatFarm.Core.Bot).GetProperty("Web", AnyInst)!.GetValue(b)!;
+		web.Init(3, "test-token");
+		typeof(NocatFarm.Core.WebSession).GetField("_http", AnyInst)!.SetValue(web, new HttpClient(hold, disposeHandler: false));
+		bots["licclaim"] = b;
+
+		string first = await Commands.RunAsync(mgr, "addlicense licclaim 71123,71456");
+		string second = await Commands.RunAsync(mgr, "addlicense licclaim 71456 71789");
+		hold.Release();
+
+		for (int i = 0; (i < 300) && (Going() > 0); i++) {
+			await Task.Delay(100);
+		}
+
+		int asked456;
+
+		lock (hold.Asked) {
+			asked456 = hold.Asked.Count(static u => u.Contains("/addfreelicense/71456", StringComparison.Ordinal));
+		}
+
+		// The second batch's answer goes in the log just after its work is done - polled for, not read at once.
+		List<string> said = [];
+
+		for (int i = 0; (i < 150) && !said.Any(static l => l.Contains("71456 - already being added", StringComparison.Ordinal)); i++) {
+			await Task.Delay(20);
+			said = [.. Log.Since(seq).Where(static e => e.Source == "licclaim").Select(static e => e.Text)];
+		}
+
+		Check("addlicense: overlapping batches on one account ask for the shared ID once",
+			first.Contains("still adding", StringComparison.Ordinal) && second.Contains("still adding", StringComparison.Ordinal) && (asked456 == 1)
+			&& hold.Asked.Any(static u => u.Contains("/addfreelicense/71789", StringComparison.Ordinal)), $"{asked456} asks for 71456; {first} / {second}");
+		Check("addlicense: ...and the second says the shared one was already being added",
+			said.Any(static l => l.Contains("71456 - already being added", StringComparison.Ordinal)), string.Join(" | ", said));
+	} finally {
+		hold.Release();
+
+		for (int i = 0; (i < 300) && (Going() > 0); i++) {
+			await Task.Delay(100);
+		}
+
+		if (b != null) {
+			await b.DisposeAsync();
+		}
+
+		Commands.ReplyWithin = replyWithin;
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── 'freegames all': an account that signed out before its turn, or during its claim, isn't claimed for or put off 2 hours ──
+{
+	const BindingFlags AnyInst = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+	const BindingFlags AnyStatic = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+	Type fgT = typeof(NocatFarm.Modules.FreeGames);
+	PropertyInfo fetchP = fgT.GetProperty("Fetch", AnyStatic)!, claimP = fgT.GetProperty("Claim", AnyStatic)!, pausesP = fgT.GetProperty("NoPauses", AnyStatic)!;
+	object? fetchBefore = fetchP.GetValue(null), claimBefore = claimP.GetValue(null);
+	FieldInfo giveawaysF = fgT.GetField("_giveaways", AnyStatic)!;
+	var verdicts = (IDictionary) fgT.GetField("Verdicts", AnyStatic)!.GetValue(null)!;
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-fgout-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	List<NocatFarm.Core.Bot> made = [];
+	string search = System.Text.Json.JsonSerializer.Serialize(new { success = 1, results_html = "<a href=\"https://store.example/app/3999101/\" data-ds-appid=\"3999101\">x</a>", total_count = 1 },
+		new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
+	Task<string?> FakeStore(string url, CancellationToken ct) =>
+		Task.FromResult<string?>(url.Contains("/search/results/", StringComparison.Ordinal) ? search
+			: url.Contains("filters=packages", StringComparison.Ordinal) ? """{"3999101":{"success":true,"data":{"package_groups":[{"subs":[{"packageid":5999101,"price_in_cents_with_discount":0}]}]}}}"""
+			: """{"3999101":{"success":true,"data":{"type":"game","name":"Fake Out Giveaway","is_free":false,"price_overview":{"discount_percent":100}}}}""");
+	List<string> claims = [];
+	Func<NocatFarm.Core.Bot, Task<NocatFarm.Modules.FreeGames.ClaimResult>> onClaim = null!;
+	Task<NocatFarm.Modules.FreeGames.ClaimResult> FakeClaim(NocatFarm.Core.Bot b, uint id, bool app, CancellationToken ct) {
+		lock (claims) {
+			claims.Add(b.Name);
+		}
+
+		return onClaim(b);
+	}
+	var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+	var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager).GetField("_bots", AnyInst)!.GetValue(mgr)!;
+	void SignOut(NocatFarm.Core.Bot b) => typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(b, NocatFarm.Core.BotState.Stopped);
+	NocatFarm.Modules.FreeGames Ready(string name) {
+		var b = new NocatFarm.Core.Bot(name, new NocatFarm.Config.BotConfig { ClaimFree = NocatFarm.Modules.FreeClaims.Games });
+		typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(b, NocatFarm.Core.BotState.Online);
+		typeof(NocatFarm.Core.WebSession).GetProperty("Ready")!.SetValue(typeof(NocatFarm.Core.Bot).GetProperty("Web", AnyInst)!.GetValue(b), true);
+		var owned = new List<NocatFarm.Core.Library.Entry> { new(730, "CS2", 100, DateTime.MinValue, 0) };
+		typeof(NocatFarm.Core.Library).GetField("_games", AnyInst)!.SetValue(b.Library, owned);
+		typeof(NocatFarm.Core.Library).GetField("_byApp", AnyInst)!.SetValue(b.Library, owned.ToDictionary(static e => e.AppId));
+		typeof(NocatFarm.Core.Library).GetProperty("Ready")!.SetValue(b.Library, true);
+		var free = new NocatFarm.Modules.FreeGames(b);
+		b.AddModule(free);
+		bots[name] = b;
+		made.Add(b);
+
+		return free;
+	}
+	void Fresh() {
+		giveawaysF.SetValue(null, (DateTime.MinValue, new List<string>()));
+		lock (verdicts) {
+			verdicts.Clear();
+		}
+		lock (claims) {
+			claims.Clear();
+		}
+	}
+	int Failed(NocatFarm.Modules.FreeGames f) => ((IDictionary) fgT.GetField("_failed", AnyInst)!.GetValue(f)!).Count;
+	var nothing = new NocatFarm.Modules.FreeGames.ClaimResult(false, SteamKit2.EPurchaseResultDetail.Timeout, new NocatFarm.Core.Said("no usable answer from Steam"));
+
+	try {
+		fetchP.SetValue(null, (Func<string, CancellationToken, Task<string?>>) FakeStore);
+		claimP.SetValue(null, (Func<NocatFarm.Core.Bot, uint, bool, CancellationToken, Task<NocatFarm.Modules.FreeGames.ClaimResult>>) FakeClaim);
+		pausesP.SetValue(null, true);
+
+		// 1. Two accounts, one after the other: the first one's claim signs the other out before its turn.
+		Fresh();
+		var one = Ready("fgout1");
+		var two = Ready("fgout2");
+		// Answered a moment later, as Steam does - so the second account's turn is already lined up when the first signs it out.
+		onClaim = async b => {
+			await Task.Delay(50);
+
+			foreach (NocatFarm.Core.Bot x in made.Where(x => x != b)) {
+				SignOut(x);
+			}
+
+			return new NocatFarm.Modules.FreeGames.ClaimResult(true, SteamKit2.EPurchaseResultDetail.NoDetail, default);
+		};
+		string all = await Commands.RunAsync(mgr, "freegames all");
+		string later = claims.Count > 0 ? (claims[0] == "fgout1" ? "fgout2" : "fgout1") : "";
+		Check("freegames all: an account signed out before its turn isn't claimed for, and says it's not logged in",
+			(claims.Count == 1) && all.Contains($"{later}: not logged in", StringComparison.Ordinal) && (Failed(one) + Failed(two) == 0), $"{string.Join(",", claims)}: {all}");
+
+		// 2. One account, signed out while its own claim was out: no 2-hour wait saved, and the reply says it signed out.
+		Fresh();
+		var third = Ready("fgout3");
+		onClaim = b => {
+			SignOut(b);
+
+			return Task.FromResult(nothing);
+		};
+		string cut = await Commands.RunAsync(mgr, "freegames fgout3");
+		Check("freegames: a claim cut by a sign-out isn't put off for 2 hours, and the reply says it signed out - not 'no usable answer'",
+			(Failed(third) == 0) && cut.Contains("signed out", StringComparison.Ordinal) && !cut.Contains("no usable answer", StringComparison.Ordinal), cut);
+	} finally {
+		fetchP.SetValue(null, fetchBefore);
+		claimP.SetValue(null, claimBefore);
+		pausesP.SetValue(null, false);
+		Fresh();
+
+		foreach (NocatFarm.Core.Bot b in made) {
+			await b.DisposeAsync();
+		}
+
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── secrets, round 4: what a pasted password, a product key, a proxy password or the Telegram link could still reach ──────
+{
+	string SrcS4(string rel) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", rel)).Replace("\r\n", "\n");
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	NocatFarm.Config.GlobalConfig realGlobal = NocatFarm.Config.Live.Global;
+	NocatFarm.Core.BotManager? host = Commands.Host;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-secrets4-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	Type notifierS4 = typeof(NocatFarm.Core.Bot).Assembly.GetType("NocatFarm.Core.Notifier")!;
+	FieldInfo nHttp = notifierS4.GetField("Http", BindingFlags.NonPublic | BindingFlags.Static)!;
+	FieldInfo nBotName = notifierS4.GetField("_botName", BindingFlags.NonPublic | BindingFlags.Static)!;
+	object? nHttpBefore = nHttp.GetValue(null);
+	long LastSeq() => Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+
+	try {
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
+		bots["alt"] = new NocatFarm.Core.Bot("alt", new NocatFarm.Config.BotConfig());
+		Commands.Host = mgr;
+		List<string> Logged(string line, string reply) =>
+			(List<string>) typeof(Commands).GetMethod("ExchangeLines", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, ["window", line, reply])!;
+
+		// 1. The dashboard's console: the server says whether a line holds a secret and how it may be shown, and the page
+		// keeps (and shows) only that.
+		Type webT = typeof(NocatFarm.Web.WebHost);
+		MethodInfo? answerM = webT.GetMethod("CommandAnswer", BindingFlags.NonPublic | BindingFlags.Static);
+		object? answered = answerM?.Invoke(null, ["set WebPassword hunter2", "WebPassword is set"]);
+		string PropS4(object? o, string name) => o?.GetType().GetProperty(name)?.GetValue(o)?.ToString() ?? "";
+		Check("dashboard console: /api/command says the line holds a secret, and gives it masked",
+			(PropS4(answered, "holdsSecret") == "True") && (PropS4(answered, "line") == "set WebPassword ***") && (PropS4(answered, "output") == "WebPassword is set"),
+			answerM == null ? "no CommandAnswer" : $"{PropS4(answered, "holdsSecret")} / {PropS4(answered, "line")}");
+		object? plain = answerM?.Invoke(null, ["status alt", "fine"]);
+		Check("dashboard console: ...and a line with none as typed", (PropS4(plain, "holdsSecret") == "False") && (PropS4(plain, "line") == "status alt"));
+		MethodInfo? keptM = webT.GetMethod("HistoryKept", BindingFlags.NonPublic | BindingFlags.Static);
+		var keptS4 = keptM?.Invoke(null, [new List<string?> { "status alt", "set WebPassword hunter2", "redeem AAAAABBBBBCCCCC", "pasue alt", "$ecret99", null, "answer 12345" }]) as List<string>;
+		Check("dashboard console: a saved list is checked once signed in - only the lines with no secret stay",
+			keptS4?.SequenceEqual(["status alt", "pasue alt"]) == true, keptS4 == null ? "no HistoryKept" : string.Join(" | ", keptS4));
+		string js = SrcS4("wwwroot/app.js");
+		string host4 = SrcS4("Web/WebHost.cs");
+		int sendAt = js.IndexOf("function sendCommand(", StringComparison.Ordinal);
+		string sendFn = sendAt < 0 ? "" : js[sendAt..js.IndexOf("\n}\n", sendAt, StringComparison.Ordinal)];
+		int runAt = js.IndexOf("async function run(line)", StringComparison.Ordinal);
+		string runFn = runAt < 0 ? "" : js[runAt..js.IndexOf("\n}\n", runAt, StringComparison.Ordinal)];
+		Check("dashboard console: a line goes under the up arrow only once the server says it holds no secret",
+			(sendFn.IndexOf("!res.holdsSecret", StringComparison.Ordinal) is > 0 and int heldAt) && (sendFn.IndexOf("history.unshift(line)", StringComparison.Ordinal) > heldAt)
+			&& !js.Contains("let history = JSON.parse(localStorage.getItem('nocatfarm-history')", StringComparison.Ordinal), sendFn);
+		Check("dashboard console: the echo is the masked line the server sends back, never the line as typed",
+			!runFn.Contains("&gt; ${esc(line)}", StringComparison.Ordinal) && runFn.Contains("res.line", StringComparison.Ordinal));
+		Check("dashboard console: the saved list is asked about once signed in, and goes on sign-out",
+			js.Contains("'/api/command/history'", StringComparison.Ordinal) && host4.Contains("app.MapPost(\"/api/command/history\"", StringComparison.Ordinal)
+			&& js.Contains("localStorage.removeItem('nocatfarm-history')", StringComparison.Ordinal)
+			&& js.Contains("if (res.status === 401) { forgetHistory();", StringComparison.Ordinal));
+
+		// 2 and 3, what a key or a password pasted shows: the secrets table.
+
+		// 4. The window: the question is the one up at the first key, and a line typed while one was up is never run.
+		Type? watchT = typeof(Commands).Assembly.GetType("NocatFarm.Windows.QuestionWatch");
+		ConstructorInfo questionCtor = typeof(Prompt.Question).GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance)[0];
+		Prompt.Question q1 = (Prompt.Question) questionCtor.Invoke(["Steam password", true, "alt"]);
+		Prompt.Question q2 = (Prompt.Question) questionCtor.Invoke(["Steam Guard code", false, "other"]);
+		string Line4(Action<object> typing, Prompt.Question? atEnter) {
+			if (watchT == null) {
+				return "no QuestionWatch";
+			}
+
+			object w = Activator.CreateInstance(watchT)!;
+			typing(w);
+			object result = watchT.GetMethod("Enter")!.Invoke(w, [atEnter])!;
+			object? verdict = result.GetType().GetField("Item1")!.GetValue(result);
+			object? question = result.GetType().GetField("Item2")!.GetValue(result);
+
+			return $"{verdict}{(question == null ? "" : ":" + ((Prompt.Question) question).Text)}";
+		}
+
+		void Key(object w, bool empty, Prompt.Question? up) => watchT!.GetMethod("Key")!.Invoke(w, [empty, up]);
+		void Changed(object w, Prompt.Question? up) => watchT!.GetMethod("Changed")!.Invoke(w, [up]);
+		string answeredElsewhere = Line4(w => { Key(w, true, q1); Key(w, false, q1); Changed(w, null); }, null);
+		string cameAndWent = Line4(w => { Key(w, true, null); Changed(w, q1); Changed(w, null); Key(w, false, null); }, null);
+		string forIt = Line4(w => { Key(w, true, q1); Key(w, false, q1); }, q1);
+		string forAnother = Line4(w => { Key(w, true, q1); Changed(w, null); Changed(w, q2); }, q2);
+		string command = Line4(w => { Key(w, true, null); Key(w, false, null); }, null);
+		string upMidway = Line4(w => { Key(w, true, null); Changed(w, q1); }, q1);
+		Check("window: a password typed for a question answered elsewhere before Enter is dropped, not run", answeredElsewhere == "Drop", answeredElsewhere);
+		Check("window: ...and so is a line typed while a question came and went", cameAndWent == "Drop", cameAndWent);
+		Check("window: a line typed for the question up answers it, and only that one",
+			(forIt == "Answer:Steam password") && (forAnother == "Drop") && (upMidway == "Answer:Steam password"), $"{forIt} / {forAnother} / {upMidway}");
+		Check("window: with no question up at all, it's a command", command == "Run", command);
+		string mw = SrcS4("Windows/MainWindow.cs");
+		Check("window: the box tells the watch about every key, and Enter asks it rather than reading the question then",
+			mw.Contains("_question.Key(", StringComparison.Ordinal) && mw.Contains("_question.Enter(Prompt.Current)", StringComparison.Ordinal)
+			&& !mw.Contains("Prompt.Question? question = Prompt.Current;", StringComparison.Ordinal));
+
+		// 5. The console: no secret under the up arrow, and the board shows the line masked.
+		string program = SrcS4("Program.cs");
+		Check("console: a line holding a secret isn't kept for the up arrow", program.Contains("&& !Commands.HoldsSecret(result)", StringComparison.Ordinal));
+		Check("console: the live board shows the line as the log has it", program.Contains("showing.Show(Commands.LineForLog(line), output);", StringComparison.Ordinal)
+			&& !program.Contains("showing.Show(line, output);", StringComparison.Ordinal));
+
+		// 6. A proxy address with its password in it.
+		MethodInfo buildProxy = typeof(NocatFarm.Core.Bot).GetMethod("BuildProxyHandler", BindingFlags.NonPublic | BindingFlags.Static)!;
+		foreach (string bad in new[] { "user:hunter2@proxyhost:notaport", "http://user:hun/ter2@proxyhost:x" }) {
+			NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig { WebEnabled = false, WebProxy = bad };
+			long mark = LastSeq();
+			using (var handler = (HttpClientHandler) buildProxy.Invoke(null, [null])!) {
+				List<string> said = [.. Log.Recent(500).Where(e => e.Seq > mark).Select(static e => e.Text)];
+				Check($"proxy: '{bad.Replace("hunter2", "…", StringComparison.Ordinal).Replace("hun/ter2", "…", StringComparison.Ordinal)}' that won't parse is logged without its password",
+					(said.Count > 0) && !said.Any(static t => t.Contains("hunter2", StringComparison.Ordinal) || t.Contains("ter2", StringComparison.Ordinal)), string.Join(" | ", said));
+			}
+
+			string? refused = NocatFarm.Config.Settings.Apply(new NocatFarm.Config.GlobalConfig(), NocatFarm.Config.Settings.FindGlobal("WebProxy")!, bad);
+			string? refusedBot = NocatFarm.Config.Settings.Apply(new NocatFarm.Config.BotConfig(), NocatFarm.Config.Settings.FindBot("AccountProxy")!, bad);
+			Check("proxy: set to one that won't parse, it's refused - without saying the password back",
+				(refused != null) && (refusedBot != null) && !refused.Contains("ter2", StringComparison.Ordinal) && !refusedBot.Contains("ter2", StringComparison.Ordinal),
+				$"{refused} / {refusedBot}");
+		}
+
+		NocatFarm.Config.Live.Global = mgr.Global;
+		Check("proxy: a good one, or none, is still taken",
+			(NocatFarm.Config.Settings.Apply(new NocatFarm.Config.GlobalConfig(), NocatFarm.Config.Settings.FindGlobal("WebProxy")!, "http://127.0.0.1:8080") == null)
+			&& (NocatFarm.Config.Settings.Apply(new NocatFarm.Config.GlobalConfig(), NocatFarm.Config.Settings.FindGlobal("WebProxy")!, "") == null)
+			&& (NocatFarm.Config.Settings.Apply(new NocatFarm.Config.BotConfig(), NocatFarm.Config.Settings.FindBot("AccountProxy")!, "socks5://10.0.0.2:1080") == null));
+		string setReply = await Commands.RunAsync(mgr, "set WebProxy user:hunter2@proxyhost:notaport");
+		Check("proxy: 'set WebProxy' with a bad one changes nothing, and neither the reply nor the log has the password",
+			(mgr.Global.WebProxy.Length == 0) && !setReply.Contains("hunter2", StringComparison.Ordinal)
+			&& !Logged("set WebProxy user:hunter2@proxyhost:notaport", setReply).Any(static l => l.Contains("hunter2", StringComparison.Ordinal)), setReply);
+
+		// 7. The Telegram connect link: whoever opens it first is the owner, so its code stays out of the log.
+		bool swapped = false;
+
+		try {
+			nHttp.SetValue(null, new HttpClient(new FakePing((_, _) => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) {
+				Content = new StringContent("{\"ok\":true,\"result\":{\"username\":\"nftestbot\"}}")
+			}))));
+			swapped = true;
+		} catch (FieldAccessException) {
+			// a readonly field: the check below fails, as it should
+		}
+
+		mgr.Global.TelegramBotToken = "123456:not-a-real-token-for-the-checks";
+		mgr.Global.TelegramChatId = "";
+		long tgMark = LastSeq();
+
+		if (swapped) {
+			await (Task<bool>) notifierS4.GetMethod("CheckTelegramTokenAsync", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [CancellationToken.None])!;
+		}
+
+		string pair = (string) notifierS4.GetField("PairCode", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+		List<string> tgSaid = [.. Log.Recent(500).Where(e => (e.Seq > tgMark) && (e.Source == "telegram")).Select(static e => e.Text)];
+		Check("telegram: the bot found is said, but the connect link's code isn't in the log",
+			swapped && (tgSaid.Count > 0) && !tgSaid.Any(t => t.Contains(pair, StringComparison.Ordinal)) && tgSaid.Any(static t => t.Contains("notify link", StringComparison.Ordinal)),
+			string.Join(" | ", tgSaid));
+		nBotName.SetValue(null, "@nftestbot");
+		string here = await Commands.RunAtThisPcAsync(mgr, "notify link");
+		string away = await Commands.RunAsync(mgr, "notify link");
+		Check("telegram: 'notify link' at this PC gives the whole link; anywhere else it doesn't",
+			here.Contains("https://t.me/nftestbot?start=" + pair, StringComparison.Ordinal) && !away.Contains(pair, StringComparison.Ordinal), $"{here} / {away}");
+		Check("telegram: ...and the log file has it without the code",
+			!Logged("notify link", here).Any(l => l.Contains(pair, StringComparison.Ordinal)) && !Log.Scrub("open https://t.me/nftestbot?start=" + pair).Contains(pair, StringComparison.Ordinal));
+	} finally {
+		nBotName.SetValue(null, "");
+
+		try {
+			nHttp.SetValue(null, nHttpBefore);
+		} catch (FieldAccessException) {
+			// never swapped
+		}
+
+		Commands.Host = host;
+		NocatFarm.Config.Live.Global = realGlobal;
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── round 5, free games: a look still out writes nothing after 'remove', or over a backup being restored ──────────────
+{
+	const BindingFlags AnyInst = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+	const BindingFlags AnyStatic = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+	Type fgT = typeof(NocatFarm.Modules.FreeGames);
+	PropertyInfo fetchP = fgT.GetProperty("Fetch", AnyStatic)!, claimP = fgT.GetProperty("Claim", AnyStatic)!, pausesP = fgT.GetProperty("NoPauses", AnyStatic)!;
+	object? fetchBefore = fetchP.GetValue(null), claimBefore = claimP.GetValue(null);
+	FieldInfo giveawaysF = fgT.GetField("_giveaways", AnyStatic)!;
+	var verdicts = (IDictionary) fgT.GetField("Verdicts", AnyStatic)!.GetValue(null)!;
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-fgstop-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	List<NocatFarm.Core.Bot> made = [];
+	string search = System.Text.Json.JsonSerializer.Serialize(new { success = 1, results_html = "<a href=\"https://store.example/app/3999301/\" data-ds-appid=\"3999301\">x</a>", total_count = 1 },
+		new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
+	Task<string?> FakeStore(string url, CancellationToken ct) =>
+		Task.FromResult<string?>(url.Contains("/search/results/", StringComparison.Ordinal) ? search
+			: url.Contains("filters=packages", StringComparison.Ordinal) ? """{"3999301":{"success":true,"data":{"package_groups":[{"subs":[{"packageid":5999301,"price_in_cents_with_discount":0}]}]}}}"""
+			: """{"3999301":{"success":true,"data":{"type":"game","name":"Fake Stop Giveaway","is_free":false,"price_overview":{"discount_percent":100}}}}""");
+	TaskCompletionSource asked = new(TaskCreationOptions.RunContinuationsAsynchronously), answer = new(TaskCreationOptions.RunContinuationsAsynchronously);
+	async Task<NocatFarm.Modules.FreeGames.ClaimResult> FakeClaim(NocatFarm.Core.Bot b, uint id, bool app, CancellationToken ct) {
+		asked.TrySetResult();
+		await answer.Task;
+
+		return new NocatFarm.Modules.FreeGames.ClaimResult(true, SteamKit2.EPurchaseResultDetail.NoDetail, default);
+	}
+	var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+	var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager).GetField("_bots", AnyInst)!.GetValue(mgr)!;
+	NocatFarm.Modules.FreeGames Ready(string name) {
+		var b = new NocatFarm.Core.Bot(name, new NocatFarm.Config.BotConfig { ClaimFree = NocatFarm.Modules.FreeClaims.Games });
+		typeof(NocatFarm.Core.Bot).GetProperty("State")!.SetValue(b, NocatFarm.Core.BotState.Online);
+		typeof(NocatFarm.Core.WebSession).GetProperty("Ready")!.SetValue(typeof(NocatFarm.Core.Bot).GetProperty("Web", AnyInst)!.GetValue(b), true);
+		var owned = new List<NocatFarm.Core.Library.Entry> { new(730, "CS2", 100, DateTime.MinValue, 0) };
+		typeof(NocatFarm.Core.Library).GetField("_games", AnyInst)!.SetValue(b.Library, owned);
+		typeof(NocatFarm.Core.Library).GetField("_byApp", AnyInst)!.SetValue(b.Library, owned.ToDictionary(static e => e.AppId));
+		typeof(NocatFarm.Core.Library).GetProperty("Ready")!.SetValue(b.Library, true);
+		var free = new NocatFarm.Modules.FreeGames(b);
+		b.AddModule(free);
+		bots[name] = b;
+		made.Add(b);
+
+		return free;
+	}
+	void Fresh() {
+		giveawaysF.SetValue(null, (DateTime.MinValue, new List<string>()));
+		lock (verdicts) {
+			verdicts.Clear();
+		}
+		asked = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		answer = new(TaskCreationOptions.RunContinuationsAsynchronously);
+	}
+	string StateOf(string name) => Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state", $"freegames-{name}.json");
+	async Task Done(Task<int> look) {
+		try {
+			await look.WaitAsync(TimeSpan.FromSeconds(20));
+		} catch (Exception e) when (e is not TimeoutException) {
+			// how it ended isn't the point - what it wrote is
+		}
+	}
+
+	try {
+		fetchP.SetValue(null, (Func<string, CancellationToken, Task<string?>>) FakeStore);
+		claimP.SetValue(null, (Func<NocatFarm.Core.Bot, uint, bool, CancellationToken, Task<NocatFarm.Modules.FreeGames.ClaimResult>>) FakeClaim);
+		pausesP.SetValue(null, true);
+
+		// 1. 'remove' while a claim is out: the account's files go, and the look finishing after doesn't write its state back.
+		Fresh();
+		NocatFarm.Config.ConfigStore.SaveBot("fgremoved", new NocatFarm.Config.BotConfig { ClaimFree = NocatFarm.Modules.FreeClaims.Games });
+		Task<int> look = Ready("fgremoved").CheckAsync(true, CancellationToken.None);
+		await asked.Task.WaitAsync(TimeSpan.FromSeconds(20));
+		bool removed = await mgr.RemoveAsync("fgremoved");
+		answer.TrySetResult();
+		await Done(look);
+		Check("free games: a look that ends after 'remove' doesn't write the removed account's state back",
+			removed && !File.Exists(StateOf("fgremoved")), File.Exists(StateOf("fgremoved")) ? File.ReadAllText(StateOf("fgremoved")) : "removed: " + removed);
+
+		// 2. A backup restored while a claim is out: the restored state is what's left, not this look's.
+		Fresh();
+		look = Ready("fgrestored").CheckAsync(true, CancellationToken.None);
+		await asked.Task.WaitAsync(TimeSpan.FromSeconds(20));
+		IDisposable restoring = await Task.Run(NocatFarm.Config.ConfigStore.BeginRestore);
+		string restored = """{"Seen":["a/111"],"Failed":{},"QuietUntilTicks":0}""";
+		File.WriteAllText(StateOf("fgrestored"), restored);
+		answer.TrySetResult();
+		await Done(look);
+		string after = File.ReadAllText(StateOf("fgrestored"));
+		restoring.Dispose();
+		Check("free games: a look that ends while a backup is being restored doesn't write over the restored state", after == restored, after);
+	} finally {
+		fetchP.SetValue(null, fetchBefore);
+		claimP.SetValue(null, claimBefore);
+		pausesP.SetValue(null, false);
+		answer.TrySetResult();
+		giveawaysF.SetValue(null, (DateTime.MinValue, new List<string>()));
+		lock (verdicts) {
+			verdicts.Clear();
+		}
+
+		foreach (NocatFarm.Core.Bot b in made) {
+			await b.DisposeAsync();
+		}
+
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── round 5, settings copies: a going back that didn't happen removes only the copies a start found nothing to do with ──
+{
+	const BindingFlags AnyStatic = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-rb5-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	string cfg = NocatFarm.Config.ConfigStore.ConfigDir;
+	string cur = Build.Version;
+	MethodInfo discard = typeof(NocatFarm.Core.Rollback).GetMethod("DiscardPending", AnyStatic)!;
+	string Left() => string.Join(" ", Directory.GetFiles(NocatFarm.Core.Rollback.Folder).Select(Path.GetFileName));
+
+	try {
+		NocatFarm.Config.ConfigStore.SaveGlobal(new NocatFarm.Config.GlobalConfig());
+		NocatFarm.Config.ConfigStore.SaveBot("rb5", new NocatFarm.Config.BotConfig { DiscoveryQueue = 2 });
+		string taken = NocatFarm.Core.Rollback.Snapshot("v1.0.1");
+		byte[] real = File.ReadAllBytes(taken);
+		File.Delete(taken);
+		string Copy(string at, byte[] bytes) {
+			string p = Path.Combine(NocatFarm.Core.Rollback.Folder, $"before-1.0.1-from-{cur}-{at}.zip");
+			File.WriteAllBytes(p, bytes);
+			return p;
+		}
+
+		// 1. A copy that isn't a zip, one another program had open (antivirus, OneDrive) while the start read it, and one that
+		// came after the start had looked: each was left to try again, and stays. Only the one found to need nothing goes.
+		string notZip = Copy("20261006-140001", "zip"u8.ToArray());
+		string locked = Copy("20261006-140002", real);
+		string fine = Copy("20261006-140003", real);
+		List<NocatFarm.Core.Rollback.Note> notes;
+
+		using (new FileStream(locked, FileMode.Open, FileAccess.Read, FileShare.None)) {
+			notes = NocatFarm.Core.Rollback.RestoreMissing();
+		}
+
+		string later = Copy("20261006-140004", real);
+		discard.Invoke(null, ["1.0.1"]);
+		Check("settings copies: one that couldn't be read (not a zip, or held open by another program) stays for the next start",
+			File.Exists(notZip) && File.Exists(locked), Left() + " | " + string.Join(" | ", notes.Select(static n => n.Detail ?? n.Line.ToEnglish())));
+		Check("settings copies: ...and one the start never looked at stays", File.Exists(later), Left());
+		Check("settings copies: one the start found nothing missing for still goes", !File.Exists(fine), Left());
+		File.Delete(notZip);
+		File.Delete(locked);
+		File.Delete(later);
+
+		// 2. A settings file of this install's that doesn't read: the copy was left to try again, so it stays.
+		string held = Copy("20261006-140005", real);
+		string good = File.ReadAllText(Path.Combine(cfg, "rb5.json"));
+		File.WriteAllText(Path.Combine(cfg, "rb5.json"), "{ not json");
+		NocatFarm.Core.Rollback.RestoreMissing();
+		File.WriteAllText(Path.Combine(cfg, "rb5.json"), good);
+		discard.Invoke(null, ["1.0.1"]);
+		Check("settings copies: one passed over for a file of this install's that didn't read stays for the next start", File.Exists(held), Left());
+	} finally {
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── round 5, trial: a key queue or Family View PIN that wasn't on disk yet is written plain while on trial ──────────────
+{
+	const BindingFlags AnyStatic = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+	Type su = typeof(NocatFarm.Core.SelfUpdate);
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-trialnew-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	string cfg = NocatFarm.Config.ConfigStore.ConfigDir;
+	string keysFile = Path.Combine(cfg, "state", "keys.json");
+	FieldInfo trialF = su.GetField("_trialOk", AnyStatic)!, confirmedF = su.GetField("_confirmed", AnyStatic)!;
+	object? trialBefore = trialF.GetValue(null), confirmedBefore = confirmedF.GetValue(null);
+	MethodInfo reload = typeof(NocatFarm.Core.KeyQueue).GetMethod("Reload", AnyStatic)!;
+	bool Has(string file, string text) => File.Exists(file) && File.ReadAllText(file).Contains(text, StringComparison.Ordinal);
+
+	try {
+		reload.Invoke(null, []);
+		trialF.SetValue(null, Path.Combine(tmpRoot, "started.txt"));
+		confirmedF.SetValue(null, false);
+
+		// No key queue yet, no account file yet, and an account file with no PIN in it.
+		NocatFarm.Core.KeyQueue.Add(["TRIAL-NEW01-AAAAA"]);
+		NocatFarm.Config.ConfigStore.SaveBot("trialnew", new NocatFarm.Config.BotConfig { SteamLogin = "trialnew", SteamParentalCode = "1357" });
+		File.WriteAllText(Path.Combine(cfg, "trialnopin.json"), """{ "SteamLogin": "trialnopin" }""");
+		NocatFarm.Config.ConfigStore.SaveBot("trialnopin", new NocatFarm.Config.BotConfig { SteamLogin = "trialnopin", SteamParentalCode = "8642" });
+		Check("trial: a key queue that wasn't there yet is written plain - the version before reads it if the trial fails",
+			NocatFarm.Core.SelfUpdate.OnTrial && Has(keysFile, "TRIAL-NEW01-AAAAA"));
+		Check("trial: ...and a Family View PIN set where there was none, new account or not",
+			Has(Path.Combine(cfg, "trialnew.json"), "\"1357\"") && Has(Path.Combine(cfg, "trialnopin.json"), "\"8642\""));
+		NocatFarm.Core.SelfUpdate.ConfirmStarted();
+		Check("trial: ...all encrypted once the trial says it's fine", !Has(keysFile, "TRIAL-NEW01-AAAAA")
+			&& !Has(Path.Combine(cfg, "trialnew.json"), "\"1357\"") && !Has(Path.Combine(cfg, "trialnopin.json"), "\"8642\"")
+			&& (NocatFarm.Config.ConfigStore.LoadBot("trialnopin")?.SteamParentalCode == "8642"));
+	} finally {
+		trialF.SetValue(null, trialBefore);
+		confirmedF.SetValue(null, confirmedBefore);
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+		reload.Invoke(null, []);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── round 5, 'update to' a newer version that doesn't start: a skip typed by hand stays, and the hint is 'update to' ────
+if (NocatFarm.Core.SelfUpdate.Supported) {
+	const BindingFlags AnyStatic = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
+	Type su = typeof(NocatFarm.Core.SelfUpdate);
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-upto5-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config", "state"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+	string state = Path.Combine(NocatFarm.Config.ConfigStore.ConfigDir, "state");
+	string cur = Build.Version;
+	int[] parts = [.. cur.Split('.').Select(int.Parse)];
+	string newer = $"{parts[0]}.{parts[1]}.{parts[2] + 1}", newest = $"{parts[0]}.{parts[1]}.{parts[2] + 2}";
+	PropertyInfo startP = su.GetProperty("StartSwap", AnyStatic)!, exitP = su.GetProperty("ExitForSwap", AnyStatic)!;
+	object? startBefore = startP.GetValue(null), exitBefore = exitP.GetValue(null);
+	Func<IEnumerable<NocatFarm.Core.Bot>>? fleetBefore = NocatFarm.Core.SelfUpdate.Fleet;
+	string? skippedBefore = NocatFarm.Core.UpdateCheck.Skipped;
+	string mine = OperatingSystem.IsWindows() ? $"nocat.farm-v{newer}-portable.zip" : $"nocat.farm-v{newer}_{NocatFarm.Core.Platform.ReleaseRid}.zip";
+	byte[] zipBytes = FakeProgram.ZipBytes(Version.Parse(newer));
+
+	// A pretend GitHub on this PC: the one release, by its tag, and its zip.
+	System.Net.Sockets.TcpListener listener = new(System.Net.IPAddress.Loopback, 0);
+	listener.Start();
+	int port = ((System.Net.IPEndPoint) listener.LocalEndpoint).Port;
+	Dictionary<string, byte[]> served = new(StringComparer.Ordinal) {
+		["/zips/" + mine] = zipBytes,
+		[$"/releases/tags/v{newer}"] = System.Text.Encoding.UTF8.GetBytes(System.Text.Json.JsonSerializer.Serialize(new {
+			tag_name = "v" + newer, html_url = "https://example.invalid/", body = "- a test", draft = false, prerelease = false,
+			assets = new[] { new { name = mine, browser_download_url = $"http://127.0.0.1:{port}/zips/{mine}", size = zipBytes.Length } }
+		}))
+	};
+	CancellationTokenSource stopServing = new();
+	_ = Task.Run(async () => {
+		while (!stopServing.IsCancellationRequested) {
+			System.Net.Sockets.TcpClient client;
+
+			try {
+				client = await listener.AcceptTcpClientAsync(stopServing.Token);
+			} catch {
+				break;
+			}
+
+			using (client) {
+				System.Net.Sockets.NetworkStream ns = client.GetStream();
+				byte[] buffer = new byte[8192];
+				string head = "";
+
+				while (!head.Contains("\r\n\r\n", StringComparison.Ordinal)) {
+					int read = await ns.ReadAsync(buffer);
+					if (read <= 0) {
+						break;
+					}
+
+					head += System.Text.Encoding.ASCII.GetString(buffer, 0, read);
+				}
+
+				bool found = served.TryGetValue(head.Split(' ').ElementAtOrDefault(1) ?? "", out byte[]? body);
+				body ??= System.Text.Encoding.UTF8.GetBytes("{\"message\":\"Not Found\"}");
+				await ns.WriteAsync(System.Text.Encoding.ASCII.GetBytes($"HTTP/1.1 {(found ? "200 OK" : "404 Not Found")}\r\nContent-Type: application/octet-stream\r\nContent-Length: {body.Length}\r\nConnection: close\r\n\r\n"));
+				await ns.WriteAsync(body);
+			}
+		}
+	});
+	Environment.SetEnvironmentVariable("NOCATFARM_UPDATE_FEED", $"http://127.0.0.1:{port}/latest.json");
+	System.Diagnostics.ProcessStartInfo? swapped = null;
+
+	try {
+		startP.SetValue(null, (Action<System.Diagnostics.ProcessStartInfo>) (p => swapped = p));
+		exitP.SetValue(null, (Action) (() => { }));
+		NocatFarm.Core.SelfUpdate.Fleet = static () => [];
+
+		// The newest is skipped by hand; the one before it is asked for by name, and doesn't start.
+		NocatFarm.Core.UpdateCheck.Skipped = "v" + newest;
+		string? going = await NocatFarm.Core.SelfUpdate.ApplyAsync(CancellationToken.None, toVersion: newer);
+		Check("update to a newer version: the swap is marked as asked for by name, and the skip typed for another is left alone",
+			(going == null) && (swapped?.Environment["NF_TAG"] == "to:" + newer) && (NocatFarm.Core.UpdateCheck.Skipped == "v" + newest),
+			$"{going} | {swapped?.Environment["NF_TAG"]} | {NocatFarm.Core.UpdateCheck.Skipped}");
+		su.GetField("_busy", AnyStatic)!.SetValue(null, 0);
+		su.GetField("_handedOver", AnyStatic)!.SetValue(null, false);
+		foreach (string left in new[] { "updated.txt", "update-verify.txt", "update-notes.txt" }) {
+			File.Delete(Path.Combine(state, left));
+		}
+
+		File.WriteAllText(Path.Combine(state, "update-failed.txt"), "crashed " + swapped?.Environment["NF_TAG"]);
+		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+		string failure = NocatFarm.Core.SelfUpdate.LastFailure ?? "";
+		Check("update to a newer version that didn't start: the skip typed by hand stays - the newest isn't put in by itself that night",
+			NocatFarm.Core.UpdateCheck.Skipped == "v" + newest, NocatFarm.Core.UpdateCheck.Skipped ?? "null");
+		Check("update to a newer version that didn't start: says 'update to' tries it again, not 'update accept'",
+			failure.Contains($"'update to {newer}' tries it again", StringComparison.Ordinal) && !failure.Contains("update accept", StringComparison.Ordinal), failure);
+
+		// Nothing skipped, and the one asked for is the newest: it didn't start, so it's skipped now - put back as nothing,
+		// "Update by itself" installed the same broken version again that night.
+		Type uc = typeof(NocatFarm.Core.UpdateCheck);
+		bool Skips(string tag) => (bool) uc.GetMethod("IsSkipped", AnyStatic)!.Invoke(null, [tag])!;
+		uc.GetField("_autoTriedAt", AnyStatic)!.SetValue(null, DateTime.MinValue);
+		NocatFarm.Core.UpdateCheck.Skipped = null;
+		swapped = null;
+		going = await NocatFarm.Core.SelfUpdate.ApplyAsync(CancellationToken.None, toVersion: newer);
+		su.GetField("_busy", AnyStatic)!.SetValue(null, 0);
+		su.GetField("_handedOver", AnyStatic)!.SetValue(null, false);
+		foreach (string left in new[] { "updated.txt", "update-verify.txt", "update-notes.txt" }) {
+			File.Delete(Path.Combine(state, left));
+		}
+
+		File.WriteAllText(Path.Combine(state, "update-failed.txt"), "crashed " + swapped?.Environment["NF_TAG"]);
+		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+		DateTime tried = (DateTime) uc.GetField("_autoTriedAt", AnyStatic)!.GetValue(null)!;
+		Check("update to the newest, nothing skipped, didn't start: it's skipped now - not put in by itself that night",
+			(going == null) && Skips("v" + newer), $"{going} | {NocatFarm.Core.UpdateCheck.Skipped ?? "null"}");
+		Check("update to the newest that didn't start: noted as a failed install, so the night's retry waits",
+			DateTime.UtcNow - tried < TimeSpan.FromMinutes(1), tried.ToString("O"));
+
+		// A skip of an older version is no reason to leave this one open: it's the one that didn't start.
+		NocatFarm.Core.UpdateCheck.Skipped = "v0.0.1";
+		File.WriteAllText(Path.Combine(state, "update-failed.txt"), "crashed to:" + newer);
+		NocatFarm.Core.SelfUpdate.AnnounceIfJustUpdated();
+		Check("update to a newer version that didn't start, an older one skipped: this one is skipped instead",
+			Skips("v" + newer), NocatFarm.Core.UpdateCheck.Skipped ?? "null");
+		uc.GetField("_autoTriedAt", AnyStatic)!.SetValue(null, DateTime.MinValue);
+	} finally {
+		Environment.SetEnvironmentVariable("NOCATFARM_UPDATE_FEED", null);
+		stopServing.Cancel();
+		listener.Stop();
+		startP.SetValue(null, startBefore);
+		exitP.SetValue(null, exitBefore);
+		NocatFarm.Core.SelfUpdate.Fleet = fleetBefore;
+		NocatFarm.Core.UpdateCheck.Skipped = skippedBefore;
+		su.GetField("_busy", AnyStatic)!.SetValue(null, 0);
+		su.GetField("_handedOver", AnyStatic)!.SetValue(null, false);
+		if (swapped?.Environment["NF_WORK"] is { Length: > 0 } work) {
+			try {
+				Directory.Delete(work, true);
+			} catch (IOException) {
+			}
+		}
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── round 5, 'update file': the path as typed - two spaces in a row, a tab, quotes, and 'force' ──────────────────────────
+if (NocatFarm.Core.SelfUpdate.Supported) {
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-upfile5-" + Guid.NewGuid().ToString("N"));
+	string folder = Path.Combine(tmpRoot, "two  spaces");
+	Directory.CreateDirectory(folder);
+	string notZip = Path.Combine(folder, "nocat  farm.zip");
+	File.WriteAllText(notZip, "not a zip");
+	var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+	MethodInfo? pathOf = typeof(Commands).GetMethod("FileAndForce", BindingFlags.NonPublic | BindingFlags.Static);
+	(string Path, bool Force)? Split(string rest) => ((string, bool)?) pathOf?.Invoke(null, [rest]);
+
+	try {
+		List<string> lost = [];
+		foreach (string line in new[] { $"update file {notZip}", $"update file \"{notZip}\"", $"update file {notZip} force", $"update file \"{notZip}\" FORCE", $"update file '{notZip}'\tforce" }) {
+			string said = await Commands.RunAtThisPcAsync(mgr, line);
+			// Found: it's read, and isn't a nocat.farm zip - not "there's no file at" a path with one space where two were.
+			if (!said.Contains("nocat  farm.zip as a zip", StringComparison.Ordinal) || said.Contains("there's no file at", StringComparison.Ordinal)) {
+				lost.Add($"{line} -> {said}");
+			}
+		}
+		Check("update file: a path with two spaces in a row is found, quoted or not, with 'force' or without", lost.Count == 0, string.Join(" | ", lost));
+		// A path as this kind of computer writes one: C:\ and backslashes on Windows, /tmp/ and slashes elsewhere - where a
+		// backslash is a Mac Terminal's escape and comes out of a path that isn't there.
+		string root = OperatingSystem.IsWindows() ? "C:\\" : "/tmp/";
+		char sep = Path.DirectorySeparatorChar;
+		string tabbed = $"{root}a\tb{sep}x  y.zip", noForce = $"{root}nocatforce", xZip = $"{root}x.zip";
+		Check("update file: a tab inside a quoted path stays in it, and 'force' after a tab is still 'force'",
+			(Split($"\"{tabbed}\"\tforce") == (tabbed, true)) && (Split("/tmp/a\tb.zip") == ("/tmp/a\tb.zip", false)),
+			$"{Split($"\"{tabbed}\"\tforce")} {Split("/tmp/a\tb.zip")}");
+		Check("update file: 'force' is only ever a whole word at the end",
+			(Split(noForce) == (noForce, false)) && (Split("force") == ("", true)) && (Split($"{xZip}  force ") == (xZip, true))
+			&& (Split("") == ("", false)), $"{Split(noForce)} {Split("force")} {Split($"{xZip}  force ")}");
+
+		// A file dragged into a Mac's Terminal is pasted with a backslash before every space and bracket - and "there's no file
+		// at" a path with the backslashes in. Off Windows, a path that isn't there is tried again without them.
+		string dragged = Path.Combine(folder, "nocat.farm-v1.7.4_osx-arm64 (1).zip").Replace('\\', '/');
+		File.WriteAllText(dragged, "not a zip");
+		string escaped = dragged.Replace(" ", "\\ ", StringComparison.Ordinal).Replace("(", "\\(", StringComparison.Ordinal).Replace(")", "\\)", StringComparison.Ordinal);
+		MethodInfo? draggedP = typeof(Commands).GetMethod("DraggedPath", BindingFlags.NonPublic | BindingFlags.Static);
+		string? Dragged(string typed, bool windows) => (string?) draggedP?.Invoke(null, [typed, windows]);
+		Check("update file off Windows: a file dragged into the Terminal, a backslash before each space and bracket, is found",
+			(Dragged(escaped, false) == dragged) && (Dragged(dragged, false) == dragged) && (Dragged("~/Downloads/a\\ b.zip", false) == "~/Downloads/a b.zip")
+			&& (OperatingSystem.IsWindows() || (Split(escaped + " force") == (dragged, true))),
+			$"{Dragged(escaped, false)} | {Dragged("~/Downloads/a\\ b.zip", false)}");
+		Check("update file on Windows: a backslash is a folder, never taken out", Dragged(escaped, true) == escaped, Dragged(escaped, true) ?? "null");
+	} finally {
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
+// ── secrets in what's typed, one table: the log line, the reply and the up arrow, then chat, replies and the scrubber ──────
+// An allowlist, not a guess at what looks secret: a command it knows shows only its secret slots masked, a word that is no
+// command shows nothing of itself ("(not a command)"), and free text keeps everything but what is surely a secret.
+{
+	string realRoot = NocatFarm.Config.ConfigStore.Root;
+	NocatFarm.Config.GlobalConfig realGlobal = NocatFarm.Config.Live.Global;
+	NocatFarm.Core.BotManager? host = Commands.Host;
+	string tmpRoot = Path.Combine(Path.GetTempPath(), "nf-secrets-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(Path.Combine(tmpRoot, "config"));
+	NocatFarm.Config.ConfigStore.UseRoot(tmpRoot);
+
+	try {
+		var mgr = new NocatFarm.Core.BotManager(new NocatFarm.Config.GlobalConfig { WebEnabled = false });
+		var bots = (System.Collections.Concurrent.ConcurrentDictionary<string, NocatFarm.Core.Bot>) typeof(NocatFarm.Core.BotManager)
+			.GetField("_bots", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(mgr)!;
+		bots["alt"] = new NocatFarm.Core.Bot("alt", new NocatFarm.Config.BotConfig());
+		bots["kylro"] = new NocatFarm.Core.Bot("kylro", new NocatFarm.Config.BotConfig { SteamLogin = "kylrologin" });
+		bots["robo"] = new NocatFarm.Core.Bot("robo", new NocatFarm.Config.BotConfig { SteamLogin = "ROBOLOGIN2024NAME" });
+		bots["FARMBOT2024ALPHA"] = new NocatFarm.Core.Bot("FARMBOT2024ALPHA", new NocatFarm.Config.BotConfig());
+		Commands.Host = mgr;
+		MethodInfo exchange = typeof(Commands).GetMethod("ExchangeLines", BindingFlags.NonPublic | BindingFlags.Static)!;
+		List<string> Logged(string line, string reply) => (List<string>) exchange.Invoke(null, ["window", line, reply])!;
+		static string Shown(string s) => s.Replace("\t", "<tab>").Replace("\u00a0", "<nbsp>");
+		static string[] Spaced(string s) => s.Split((char[]?) null, StringSplitOptions.RemoveEmptyEntries);
+
+		// Each row: what was typed, the line the log (and the window, the chats, the dashboard) shows, whether the reply may say
+		// it back, and whether the up arrow keeps it. A row that may not be said back: no piece of it the log line hides may be in
+		// the reply - the real one for a word that is no command (it runs nothing), else a reply that says the whole line back.
+		List<(string Group, string Line, string Log, bool Echo, bool Kept)> rows = [];
+		void Row(string group, string line, string log, bool echo, bool kept) => rows.Add((group, line, log, echo, kept));
+		void Plain(string group, string line) => Row(group, line, line.Trim(), true, true);
+		void Hidden(string group, string line, string log) => Row(group, line, log, false, false);
+
+		// ── passwords: alone, after 'answer', in a secret setting, on the end of 'add' - in every shape six reviews found ──
+		string[] passwords = [
+			"hunter2", "Summer2024", "!Summer2024", "#Hunter2!", "$ecret99", "!Pause1", "#Trade1", "@Start1", "!Level9", "!Hours7", "!Help1", "!Value1", "~Queue1",
+			".Cards1", "-Stats1", "!Point5", "%Match1", "Help@123", "Backup@2024", "Update@2024", "Start@123", "Dark@2024", "Status@2024", "Stats@2024", "Trade@2024",
+			"Admin@123", "P@ssw0rd", "!P@ssw0rd", "!Ca$h2024", "Pause!2024", "letmein", "Status1", "pause1", "pa ss word", "correct horse battery staple",
+			"\"quoted pass\"", "ÄÖÜpass1", "密码123456", "-dashpass", "--long-dashed-password-123", "ABCDEFGHIJKLMNOPQ", "Answer@1", "status@Hunter2", "!status@Hunter2",
+			"/Help@123", ".Pause1", "Trade1!", "Q1w2e3r4", "qwerty123", "1234567890", "!12345", "#2fa99", "set@bot", "Set@2024", "Log@1234", "Web@2024", "Link@2024",
+			"Guard@2024", "Wallet@99", "Setup@2024", "Remote@1", "Light@2024", "Who@2024", "Q@2024", "s@cret12", "h@ckme22", "add@2024", ":hunter2", "$ecret99 more",
+			"answer@hunter2", "S@mantha1 x", "h@ppy2024", "q@wsx123", "Summer2024!", "abcdefghijklmnopq",
+		];
+
+		foreach (string p in passwords) {
+			string stars = string.Join(' ', Spaced(p).Select(static _ => "***"));
+			Hidden("password alone", p, "(not a command)");
+			Hidden("password", "answer " + p, "answer ***");
+			Hidden("password", "answer\t" + p, "answer ***");
+			Hidden("password", "answer:" + p, "(not a command)");
+			Hidden("password", "/answer " + p, "/answer ***");
+			Hidden("password", "!answer " + p, "!answer ***");
+			Hidden("password", "anwser " + p, "anwser ***");
+			Hidden("password", "answr " + p, "answr ***");
+			Hidden("password", "set alt SteamPassword " + p, "set alt SteamPassword ***");
+			Hidden("password", "set alt SteamPassword=" + p, "set alt SteamPassword ***");
+			Hidden("password", "set alt steampassword " + p, "set alt steampassword ***");
+			Hidden("password", "set alt SteamPasword " + p, "set alt (not a setting)");
+			Hidden("password", "sett alt SteamPassword " + p, "sett ***");
+			Hidden("password", "set alt \"SteamPassword\" " + p, "set alt SteamPassword ***");
+			Hidden("password", "/set alt SteamPassword " + p, "/set alt SteamPassword ***");
+			Hidden("password", "/set@nocatbot alt SteamPassword " + p, "(not a command)");
+			Hidden("password", "set all SteamPassword " + p, "set all SteamPassword ***");
+			Hidden("password", "set WebPassword " + p, "set WebPassword ***");
+			Hidden("password", "set WebProxyPassword " + p, "set WebProxyPassword ***");
+			Hidden("password", "set alt SteamParentalCode " + p, "set alt SteamParentalCode ***");
+			Hidden("password", "add newbot newlogin " + p, "add newbot newlogin " + stars);
+			Hidden("password", "add newbot newlogin human " + p, "add newbot newlogin human " + stars);
+			Hidden("password", "ad newbot newlogin " + p, "(not a command)");
+			Hidden("password", "add\talt\tlogin\t" + p, "add alt login " + stars);
+			Hidden("password", "add	alt	login	" + p, "add alt login " + stars);
+		}
+
+		// ── Steam Guard codes, alone and answered ──
+		foreach (string g in (string[]) ["B2C4D", "b2c4d", "XK7QR", "23456", "GHJKM", "/B2C4D"]) {
+			Hidden("guard code", g, "(not a command)");
+			Hidden("guard code", "answer " + g, "answer ***");
+			Hidden("guard code", "/answer " + g, "/answer ***");
+		}
+
+		// ── product keys: alone, after 'redeem' in every way it's typed, and in another command ──
+		string[] keys = [
+			"AAAAA-BBBBB-CCCCC", "ABCDE-FGHIJ-KLMNO-PQRST-UVWXY", "AB3DEFG7HJKLM2P", "abcde-fghij-klmno", "AAAA-BBBB-CCCC-DDDD", "AAAAABBBBBCCCCC", "abcdefghijklmnopq",
+			"Ab3dE6gH9jKlMn0p", "AB-CDEFGHIJKLMNOP", "ab-cdefghijklmnop", "A-B-C-D-EFGHIJKLMNOPQ", "AAAAA--BBBBB-CCCCC", "-AAAAABBBBBCCCCC", "AAAAABBBBBCCCCC-",
+			"AAAAA-BBBBB-CCCCC-DDDDD-EEEEE", "ab3de-fg4ij-kl5no", "Abcde-Fghij-Klmno", "aaaa-bbbb-cccc-dddd", "AB3DE-FG4IJ-KL5NO-PQ", "ABCDEFGHIJKLMNOPQRSTUVWXYZABCD",
+			"ABCDE-12345-FGHIJ", "1AAAA-2BBBB-3CCCC", "ÄBCDE-FGHIJ-KLMNO", "AAAAA_BBBBB_CCCCC", "AAAAA2BBBBBCCCC",
+		];
+		// Surely a key wherever it is: a digit in it, in Steam's dashed fives or a run of 15 to 25 (small letters: digits in two places).
+		HashSet<string> surely = ["AB3DEFG7HJKLM2P", "Ab3dE6gH9jKlMn0p", "ab3de-fg4ij-kl5no", "ABCDE-12345-FGHIJ", "1AAAA-2BBBB-3CCCC", "AAAAA2BBBBBCCCC"];
+
+		foreach (string k in keys) {
+			string asKey = NocatFarm.Core.Redeeming.LooksLikeKey(k) ? "[key]" : "***";
+			Hidden("key alone", k, "(not a command)");
+			Hidden("key alone", k + ",", "(not a command)");
+			Hidden("key alone", "\"" + k + "\"", "(not a command)");
+			Hidden("key alone", "(" + k + ")", "(not a command)");
+			Hidden("key alone", k + " AB3DEFG7HJKLM2Q", "(not a command)");
+			Hidden("redeem", "redeem " + k, "redeem " + asKey);
+			Hidden("redeem", "redeem alt " + k, "redeem alt " + asKey);
+			Hidden("redeem", "redeem AB3DEFG7HJKLM2Q " + k, "redeem [key] " + asKey);
+			Hidden("redeem", "/redeem " + k, "/redeem " + asKey);
+			Hidden("redeem", "/redeem@nocatbot alt " + k, "(not a command)");
+			Hidden("redeem", "redeem\t" + k, "redeem " + asKey);
+			Hidden("redeem", "redem " + k, "redem ***");
+			Hidden("redeem", "redee " + k, "redee ***");
+
+			if (surely.Contains(k)) {
+				Hidden("key in another command", "gamename alt " + k, "gamename alt [key]");
+			} else {
+				Plain("key-like name in another command", "gamename alt " + k);
+			}
+		}
+
+		Hidden("redeem", "redeem alt AAAA-BBBB-CCCC", "redeem alt ***");
+		Hidden("redeem", "redeem AAAAABBBBBCCCCC DDDDDEEEEEFFFFF", "redeem [key] [key]");
+		Hidden("redeem", "redeem hunter2", "redeem ***");
+		Hidden("redeem", "redeem AAAAAA-BBBBBB-CCCCCC", "redeem [key]");
+		Plain("redeem", "redeem C:\\keys\\batch.txt");
+
+		// ── secret settings in every way the key is written, and proxies with a password typed into the address ──
+		const string token = "123456789:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+		Hidden("set", "set new SteamPasword hunter2", "set (not a setting)");
+		Hidden("set", "set alt SteamPasword hunter2", "set alt (not a setting)");
+		Hidden("set", "set hunter2", "set (not a setting)");
+		Hidden("set", "set alt hunter2", "set alt (not a setting)");
+		Hidden("set", "set \"hunter2\"", "set (not a setting)");
+		Hidden("set", "set WebPassword=hunter2", "set WebPassword ***");
+		Hidden("set", "set WebPassword \"hunter2\"", "set WebPassword ***");
+		Hidden("set", "set WebPassword=hunter2 x", "set WebPassword ***");
+		Hidden("set", "set new SteamPassword:hunter2", "set new SteamPassword ***");
+		Hidden("set", $"set TelegramBotTokn {token}", "set (not a setting)");
+		Hidden("set", $"set TelegramBotToken {token}", "set TelegramBotToken ***");
+		Hidden("set", "set DiscordBotToken MTA5ODc2.discordbot.token-value", "set DiscordBotToken ***");
+		Hidden("set", "set Rep4RepApiToken r4rtoken55667788", "set Rep4RepApiToken ***");
+		Hidden("set", "set new SharedSecret c2hhcmVkc2VjcmV0eA==", "set new SharedSecret ***");
+		Hidden("set", "set new SteamPassword\thunter2", "set new SteamPassword ***");
+		Hidden("set", "set new SteamPassword\u00a0hunter2", "set new SteamPassword ***");
+		Hidden("set", "set \"WebPassword\" hunter2", "set WebPassword ***");
+		Hidden("set", "set WebPasword=hunter2", "set (not a setting)");
+		Hidden("set", "set WebPasword hunter2", "set (not a setting)");
+		Hidden("set", "/set WebPassword abc def", "/set WebPassword ***");
+		Hidden("set", "set robo SteamPassword=hunter2xyz extra", "set robo SteamPassword ***");
+		Hidden("set", "set robo \"SteamPassword:hunter2\" x", "set robo SteamPassword ***");
+		Hidden("set", "set\tWebPassword\thunter2", "set WebPassword ***");
+		Hidden("set", "set Theme hunter2", "set (not a setting)");
+		Hidden("set", "set alt GameName meet me at 10:30@lunch", "set alt (not a setting)");
+		Hidden("proxy", "set WebProxy robouser:hunter2@proxyhost", "set WebProxy http://proxyhost:80");
+		Hidden("proxy", "set WebProxy 123456:hunter2@proxyhost:8080", "set WebProxy http://proxyhost:8080");
+		Hidden("proxy", "set WebProxy http://:hunter2@proxyhost:8080", "set WebProxy http://proxyhost:8080");
+		Hidden("proxy", "set WebProxy http://robo@mail.com:hunter2@proxyhost:8080", "set WebProxy ***");
+		Hidden("proxy", "set WebProxy http://robouser:hun'ter2@proxyhost:8080", "set WebProxy http://proxyhost:8080");
+		Hidden("proxy", "set WebProxy socks5://robouser:hunter2@proxyhost:1080", "set WebProxy socks5://proxyhost:1080");
+		Hidden("proxy", "set WebProxy=robouser:hunter2@proxyhost:8080", "set WebProxy http://proxyhost:8080");
+		Hidden("proxy", "set WebProxy user:hunter2@proxyhost:notaport", "set WebProxy ***");
+		Hidden("proxy", "set alt AccountProxy robouser:hunter2@proxyhost", "set alt AccountProxy http://proxyhost:80");
+		Hidden("proxy", "set alt AccountProxy robouser:hunter2@[::1]:8080", "set alt AccountProxy http://[::1]:8080");
+		Hidden("proxy", "set WebProxy \"robouser:hunter2@proxyhost:8080\"", "set WebProxy http://proxyhost:8080");
+		Hidden("proxy", "set alt AccountProxy 'robouser:hunter2@proxyhost:8080'", "set alt AccountProxy http://proxyhost:8080");
+		Plain("proxy", "set WebProxy http://proxyhost:8080");
+		Plain("proxy", "set alt AccountProxy socks5://10.0.0.2:1080");
+
+		// ── Telegram's '/command@bot': the bot's name comes off on the Telegram path only (below) - anywhere else the '@' is
+		// part of the word, and a password ending in "bot" is no command with a bot's name on it ──
+		Hidden("telegram @", "/status@nocatbot", "(not a command)");
+		Hidden("telegram @", "/pause@nocatfarmbot alt 30", "(not a command)");
+		Hidden("telegram @", "/pause@mybot alt 30", "(not a command)");
+		Hidden("telegram @", "/guard@NocatFarm_Bot alt", "(not a command)");
+		Hidden("telegram @", "/answer@nocatbot hunter2", "(not a command)");
+		Hidden("telegram @", "status@bot", "(not a command)");
+		Hidden("telegram @", "s@cretbot", "(not a command)");
+		Hidden("telegram @", "S@cretRobot", "(not a command)");
+
+		// ── a word that is no command: one typo off a command's name is shown and kept, unless what follows may be a secret ──
+		Row("one typo off", "stauts", "stauts", false, true);
+		Row("one typo off", "satus", "satus", false, true);
+		Row("one typo off", "pasue alt", "pasue ***", false, true);
+		Row("one typo off", "!stauts", "!stauts", false, true);
+		Row("one typo off", "stat alt", "stat ***", false, true);
+		Row("one typo off", "wallt", "wallt", false, true);
+		Row("one typo off", "rep4ep status", "rep4ep ***", false, true);
+		Row("one typo off", "2af", "2af", false, true);
+		Row("one typo off", "r4t", "r4t", false, true);
+		Hidden("one typo off", "2fa9", "(not a command)");
+		Hidden("one typo off", "rep4rep9", "(not a command)");
+		Hidden("one typo off", "ans hunter2", "ans ***");
+		Hidden("one typo off", "sett WebPassword hunter2", "sett ***");
+		Hidden("one typo off", "redem AAAAABBBBBCCCCC", "redem ***");
+		Hidden("one typo off", "redem abcdefghijklmnopq", "redem ***");
+		Hidden("one typo off", "gamenam alt AB3DEFG7HJKLM2P", "gamenam ***");
+		Hidden("not a command", ".status", "(not a command, nearest 'status')");
+		Hidden("not a command", "\"status\"", "(not a command, nearest 'status')");
+		Hidden("not a command", ".status alt", "(not a command, nearest 'status')");
+		Hidden("not a command", ".stauts alt", "(not a command, nearest 'status')");
+		Hidden("not a command", "set: WebPassword hunter2", "(not a command, nearest 'set')");
+		Hidden("not a command", "!answer:hunter2", "(not a command)");
+		Hidden("not a command", "ad robo login hunter2", "(not a command)");
+		Hidden("not a command", "hunter", "(not a command, nearest 'hunt')");
+		Hidden("not a command", "! hunter2", "(not a command)");
+		Hidden("not a command", "hello there", "(not a command, nearest 'tells')");
+		Hidden("not a command", "correct horse", "(not a command)");
+
+		// ── ordinary lines: as typed, said back as typed, kept for the up arrow ──
+		foreach (string line in (string[]) [
+			"set alt HourTargets 730:100@2026-12-01", "set alt HourTargets \"730:100@2026-12-01, 440:50\"", "set alt HourTargets 730:100@2026-12-01,440:50@2027-01-01",
+			"set alt HourTargets 730:100@2026-12-01T10:00", "set alt HourTargets tf2:100@2026-12-01", "pause alt 12:34", "pause kylro 30", "/pause kylro", "!status", "!status alt",
+			"owns appid:440", "add newbot robologin2024name human", "add alt3 Login2024user99 robot", "add newbot qr", "add newbot newlogin robot", "set alt SteamLogin robologin2024name", "set alt SteamLogin Login2024user99", "set alt SteamLogin=Login2024user99",
+			"set alt SteamLogin ROBOLOGIN2024NAME", "status robo", "status kylrologin", "status FARMBOT2024ALPHA", "persona alt ROBOLOGIN2024NAME",
+			"joingroup alt nocatfarmofficialgroup2024", "joingroup alt https://steamcommunity.com/groups/nocatfarmofficial2024", "joingroup alt steam-cards-trade",
+			"joingroup alt https://steamcommunity.com/groups/steam-cards-trade", "joingroup alt idle-games-group", "joingroup alt groups/nocat",
+			"set GroupsToJoin steam-cards-trade", "set alt CustomGameName steam-cards-trade", "set alt CustomGameName PLAYERUNKNOWNS-BATTLEGROUNDS",
+			"set alt CustomGameName meet 10:30@home", "set alt CustomGameName x", "set alt Notes nocat-farms-group is ours", "set alt Notes mailto:someone@example.com",
+			"set WebPublicAddress https://farm.example.com:8443", "set new FarmCards on", "set DailyReportHour=8",
+			"gamename alt NightRaid2024Edition", "gamename alt NIGHTRAID ULTIMATE EDITION", "gamename alt Counter-Strike 2", "gamename alt Hello-Neighbor-Hide-and-Seek",
+			"gamename alt Grand Theft Auto V", "gamename alt S.T.A.L.K.E.R. 2", "gamename alt Half-Life: Alyx", "gamename alt NieR:Automata", "gamename alt a b",
+			"gamename alt super-happy-funny-games", "gamename alt PLAYERUNKNOWNS-BATTLEGROUNDS", "gamename alt WARHAMMER-40000-DARKTIDE", "gamename alt BOOSTER-PACK-CARDS",
+			"gamename alt Party@Home: 10:30", "gamename alt Ratio 3:1@arena:2", "gamename alt user:pass@host:port is a joke", "gamename alt DESKTOP-ABC1234",
+			"gamename alt STEAM-SUMMER-SALE-2024", "gamename alt XCOM2-WAR-OF-CHOSEN", "gamename alt CALL-OF-DUTY-WW2", "gamename alt C:\\Games\\Portal2",
+			"trade accept alt 71234567890123456", "status 76561190000000001", "play alt 730 440 570", "hours alt", "status", "status alt", "status\talt", "dlcach alt",
+			"persona alt reap. @ home", "persona alt someone@example.com", "persona alt Ca$h", "nickname alt Mr. Smith", "notify test", "log 100", "2fa", "guard alt",
+			"import asf C:\\asf\\config", "update file C:\\Downloads\\nocat.farm.zip", "redeem", "redeem alt", "answer",
+		]) {
+			Plain("ordinary", line);
+		}
+
+		Dictionary<string, List<string>> wrong = [];
+
+		foreach ((string group, string line, string log, bool echo, bool kept) in rows) {
+			List<string> problems = wrong.TryGetValue(group, out List<string>? had) ? had : wrong[group] = [];
+			string logged = Commands.LineForLog(line);
+			bool keptNow = !Commands.HoldsSecret(line);
+			// The command word as the log reads it: '/set@nocatbot' is no command outside Telegram, 's@cret12' isn't 's'.
+			string first = Spaced(line).FirstOrDefault() ?? "";
+			bool known = Commands.Resolve(first) != null;
+			// A word that is no command runs nothing, so its real reply is asked for. A command is only asked to say the line back.
+			string reply = known ? "you typed: " + line : await Commands.RunAsync(mgr, line);
+			List<string> replyLogged = Commands.ReplyForLog(line, reply);
+			List<string> both = [.. Logged(line, reply), known ? string.Join(" | ", replyLogged) : reply, Commands.MessageForLog("/" + line.TrimStart('/', '!'))];
+
+			if (logged != log) {
+				problems.Add($"'{Shown(line)}' logged as '{Shown(logged)}', not '{Shown(log)}'");
+			}
+
+			if (keptNow != kept) {
+				problems.Add($"'{Shown(line)}' {(keptNow ? "kept" : "not kept")} for the up arrow");
+			}
+
+			if (echo && (!known || !replyLogged.SequenceEqual([reply.Trim()]))) {
+				problems.Add($"'{Shown(line)}': the reply isn't said back as typed: {string.Join(" | ", replyLogged)}");
+			}
+
+			// Whatever the log line hides - every piece of the line, cut at gaps and marks, that it doesn't show - is in no reply.
+			if (!echo) {
+				char[] cuts = [' ', '\t', '\u00a0', '=', ':', '@', '/', '"', '\'', ',', '.', '(', ')', '!', '#', '$', '%', '~', '-', ';'];
+				string[] logPieces = log.Split(cuts, StringSplitOptions.RemoveEmptyEntries);
+				IEnumerable<string> secret = line.Split(cuts, StringSplitOptions.RemoveEmptyEntries)
+					.Where(w => (w.Length >= 3) && !logPieces.Contains(w, StringComparer.OrdinalIgnoreCase) && (Commands.Resolve(w) == null));
+
+				foreach (string piece in secret) {
+					// As a word of its own: 'word' of a password 'pa ss word' is in 'SteamPassword' anyway.
+					var alone = new System.Text.RegularExpressions.Regex($@"(?<![\p{{L}}\p{{Nd}}]){System.Text.RegularExpressions.Regex.Escape(piece)}(?![\p{{L}}\p{{Nd}}])",
+						System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+					if (both.FirstOrDefault(alone.IsMatch) is { } said) {
+						problems.Add($"'{Shown(line)}': '{piece}' is in '{Shown(said)}'");
+
+						break;
+					}
+				}
+			}
+		}
+
+		foreach ((string group, List<string> problems) in wrong) {
+			Check($"secrets table, {group}: {rows.Count(r => r.Group == group)} lines - the log line, the reply and the up arrow as each says", problems.Count == 0,
+				string.Join(" || ", problems.Take(8)) + (problems.Count > 8 ? $" || ... {problems.Count - 8} more" : ""));
+		}
+
+		// The reply to a word that is no command: never the word, and a command that's near it named.
+		Check("not a command: the reply never says the word, and names a command 1 or 2 typos off",
+			(await Commands.RunAsync(mgr, ".status") == "That's not a command - did you mean 'status'?")
+			&& (await Commands.RunAsync(mgr, "s@cret12") == "That's not a command - 'help' lists them.")
+			&& (await Commands.RunAsync(mgr, "satsu") == "That's not a command - did you mean 'status'?")
+			&& (await Commands.RunAsync(mgr, "the") == "That's not a command - 'help' lists them."),
+			$"{await Commands.RunAsync(mgr, ".status")} / {await Commands.RunAsync(mgr, "s@cret12")} / {await Commands.RunAsync(mgr, "the")}");
+		Check("not a command: the command word for the log is '(not a command)', not the word typed",
+			(Commands.CommandForLog("hunter2 x") == "(not a command)") && (Commands.CommandForLog("answer\thunter2") == "answer") && (Commands.CommandForLog("pasue alt") == "pasue"));
+
+		// ── chat: a Steam message that is no command stays readable, only what is surely a secret masked ──
+		List<string> chatWrong = [];
+
+		foreach ((string said, string want) in (ValueTuple<string, string>[]) [
+			("meet at 10:30@home", "meet at 10:30@home"), ("see you at 12:34", "see you at 12:34"), ("mailto:someone@example.com", "mailto:someone@example.com"),
+			("mail me at someone@example.com", "mail me at someone@example.com"), ("appid:440 is TF2", "appid:440 is TF2"),
+			("CONGRATULATIONS on level 50", "CONGRATULATIONS on level 50"), ("NightRaid2024Edition is out", "NightRaid2024Edition is out"),
+			("join steamcommunity.com/groups/nocatfarmofficial2024 please", "join steamcommunity.com/groups/nocatfarmofficial2024 please"),
+			("gg wp", "gg wp"), ("lol that was CRAZY", "lol that was CRAZY"), ("trade me your BOOSTER-PACK-CARDS", "trade me your BOOSTER-PACK-CARDS"),
+			("check https://store.steampowered.com/app/1091500/Cyberpunk_2077/", "check https://store.steampowered.com/app/1091500/Cyberpunk_2077/"),
+			("steam-cards-trade group?", "steam-cards-trade group?"), ("join steam-cards-trade please", "join steam-cards-trade please"),
+			("got PLAYERUNKNOWNS-BATTLEGROUNDS today", "got PLAYERUNKNOWNS-BATTLEGROUNDS today"), ("it costs $4.99 @ 10:30", "it costs $4.99 @ 10:30"),
+			("user:me@host:8080 lol", "user:me@host:8080 lol"), ("ratio 3:1@arena:2", "ratio 3:1@arena:2"), ("my steamid is 76561190000000001", "my steamid is 76561190000000001"),
+			("add me: idler240fps", "add me: idler240fps"), ("ok see u @ 9:30 at home:door", "ok see u @ 9:30 at home:door"), ("the code word is HORSE", "the code word is HORSE"),
+			("https://youtube.com/watch?v=dQw4w9WgXcQ", "https://youtube.com/watch?v=dQw4w9WgXcQ"), ("I got LVL100 BADGE today", "I got LVL100 BADGE today"),
+			("lmao WHATTHEHELLISGOINGON", "lmao WHATTHEHELLISGOINGON"), ("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+			("WOOOOOOOOOOOOOOOOOOW", "WOOOOOOOOOOOOOOOOOOW"), ("GGGGGGGGGGGGGGGGGG", "GGGGGGGGGGGGGGGGGG"), ("nice-to-meet-you", "nice-to-meet-you"),
+			("happy-happy-happy", "happy-happy-happy"), ("BHGKM is a word", "BHGKM is a word"), ("price 23456 coins", "price 23456 coins"), ("my code 73245 lol", "my code 73245 lol"),
+			("got abcde-fghij-klmno from a friend", "got abcde-fghij-klmno from a friend"), ("AAAAA-BBBBB-CCCCC", "AAAAA-BBBBB-CCCCC"),
+			// surely a secret
+			("got AB3DEFG7HJKLM2P from a friend", "got [key] from a friend"), ("got ab3de-fg4ij-kl5no ok", "got [key] ok"), ("ABCDE-12345-FGHIJ", "[key]"),
+			("key Ab3dE6gH9jKlMn0p", "key [key]"), ("got AAAAA2BBBBBCCCC from a friend", "got [key] from a friend"), ("HAHAHAHAHAHAHAHAHA2", "[key]"),
+			("B2C4D", "*****"), ("code is XK7QR", "code is *****"), ("alt          B2C4D  (12s left)", "alt          *****  (12s left)"),
+			("old: BCDFG   (25s left)", "old: *****   (25s left)"), ("kylro        23456   (25s left)", "kylro        *****   (25s left)"),
+			("proxy http://robouser:hunter2@proxyhost:8080", "proxy http://[hidden]@proxyhost:8080"),
+			("https://steamcommunity.com/tradeoffer/new/?partner=12345&token=AbCdEfGh", "https://steamcommunity.com/tradeoffer/new/?partner=12345&token=[hidden]"),
+			("https://discord.com/api/webhooks/123456789012345678/abcDEF123-_ghiJKL456", "https://discord.com/api/webhooks/123456789012345678/[hidden]"),
+			// a command typed in a chat is masked as a command is
+			("/answer hunter2", "/answer ***"), ("!set alt SteamPassword hunter2", "!set alt SteamPassword ***"), ("/redeem AAAAABBBBBCCCCC", "/redeem [key]"),
+			("/hunter2", "(not a command)"), ("!status alt", "!status alt"),
+		]) {
+			if (Commands.MessageForLog(said) != want) {
+				chatWrong.Add($"'{said}' -> '{Commands.MessageForLog(said)}'");
+			}
+		}
+
+		Check("secrets table, chat: a message is as said, but for a key with a digit, a Guard code, a proxy password after a scheme, a token", chatWrong.Count == 0, string.Join(" || ", chatWrong));
+
+		// ── replies: as said, but for 2fa's codes, redeem's key, what the line hid, and the scrubber's tokens ──
+		List<string> replyWrong = [];
+
+		foreach ((string line, string reply, string want) in (ValueTuple<string, string, string>[]) [
+			("set alt HourTargets 730:100@2026-12-01", "HourTargets on alt is now 730:100@2026-12-01", "HourTargets on alt is now 730:100@2026-12-01"),
+			("status", "robo signed in as ROBOLOGIN2024NAME, FARMBOT2024ALPHA is farming", "robo signed in as ROBOLOGIN2024NAME, FARMBOT2024ALPHA is farming"),
+			("offers", "offer 71234567890123456 from 76561190000000001", "offer 71234567890123456 from 76561190000000001"),
+			("gamename alt NightRaid2024Edition", "alt now shows NightRaid2024Edition", "alt now shows NightRaid2024Edition"),
+			("joingroup alt steam-cards-trade", "alt joined steam-cards-trade", "alt joined steam-cards-trade"),
+			("status", "alt  playing Hello-Neighbor-Hide-and-Seek", "alt  playing Hello-Neighbor-Hide-and-Seek"),
+			("status", "alt  playing STEAM-SUMMER-SALE-2024", "alt  playing STEAM-SUMMER-SALE-2024"), ("status", "farming CALL-OF-DUTY-WW2", "farming CALL-OF-DUTY-WW2"),
+			("value", "alt  BOOSTER-PACK-CARDS  12.34", "alt  BOOSTER-PACK-CARDS  12.34"), ("level", "alt is level 100, 23456 xp", "alt is level 100, 23456 xp"),
+			("2fa", "alt  PANIC", "alt  PANIC"), ("status", "alt playing Counter-Strike 2, 1234.5h", "alt playing Counter-Strike 2, 1234.5h"),
+			("log", "12:34:56 INFO  alt  connected via 10.0.0.2:8080", "12:34:56 INFO  alt  connected via 10.0.0.2:8080"),
+			("log", "12:34:56 INFO  alt  proxy http://proxyhost:8080", "12:34:56 INFO  alt  proxy http://proxyhost:8080"),
+			("status", "listing 1234567890123456789", "listing 1234567890123456789"),
+			("redeem alt AB3DEFG7HJKLM2P", "  alt          OK - Portal 2 (package 12345)", "  alt          OK - Portal 2 (package 12345)"),
+			("redeem alt AB3DEFG7HJKLM2P", "  alt          already owned: Counter-Strike-Global-Offensive", "  alt          already owned: Counter-Strike-Global-Offensive"),
+			("redeem alt AB3DEFG7HJKLM2P", "  alt          activated: TheElderScrollsVSkyrim", "  alt          activated: TheElderScrollsVSkyrim"),
+			// hidden
+			("2fa", "Steam Guard codes (they change every 30 seconds):", "Steam Guard codes (they change every 30 seconds):"),
+			("2fa", "  new          K7B2X   (12s left)", "  new          *****   (12s left)"), ("guard new", "new: CR4TF   (9s left)", "new: *****   (9s left)"),
+			("2fa", "alt          GHJKM  (12s left)", "alt          *****  (12s left)"),
+			("redeem ABCDE-FGHIJ-KLMNO", "ABCDE-FGHIJ-KLMNO: activated on new", "[key]: activated on new"),
+			("redeem alt abcdefghijklmnopq", "abcdefghijklmnopq", "[key]"),
+			("redeem", "AAAAA-BBBBB-CCCCC\n  alt          activated (Portal 2)", "[key] |   alt          activated (Portal 2)"),
+			("redeem", "'aaaaabbbbbccccc' doesn't look like a Steam key", "'[key]' doesn't look like a Steam key"),
+			("redeem hunter2", "There's no account called 'hunter2', and it isn't a key either", "There's no account called '***', and it isn't a key either"),
+			("set WebProxy robouser:hunter2@proxyhost:8080", "WebProxy = robouser:hunter2@proxyhost:8080", "WebProxy = http://proxyhost:8080"),
+			("set alt SteamPasword hunter2", "There's no per-account setting called 'SteamPasword'", "There's no per-account setting called '***'"),
+			("set WebProxy \"robouser:hunter2@proxyhost:8080\"", "WebProxy = robouser:hunter2@proxyhost:8080", "WebProxy = http://proxyhost:8080"),
+			("set hunter2", "There's no setting called 'hunter2'", "There's no setting called '***'"),
+			("add alt altlogin MyPassw0rd", "Added 'alt' - it asks for MyPassw0rd", "Added 'alt' - it asks for ***"),
+			("status", "got AB3DEFG7HJKLM2P in a message", "got [key] in a message"),
+			("log 5", "GET /api?access_token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.sig", "GET /api?access_token=[hidden]"),
+			("notify link", "open https://t.me/nftestbot?start=0123456789abcdef", "open https://t.me/nftestbot?start=[hidden]"),
+		]) {
+			string got = string.Join(" | ", Commands.ReplyForLog(line, reply));
+
+			if (got != want) {
+				replyWrong.Add($"'{line}': '{Shown(reply)}' -> '{Shown(got)}'");
+			}
+		}
+
+		Check("secrets table, replies: as said, but for 2fa's codes, the key redeem was given, what the line hid and the tokens", replyWrong.Count == 0, string.Join(" || ", replyWrong));
+
+		// ── a proxy with a password typed into it: 'set' and 'config' say where it goes, never the password ──
+		const string proxied = "bob:s3cret@10.0.0.5:3128";
+		List<string> proxySaid = [
+			await Commands.RunAsync(mgr, "set WebProxy " + proxied), await Commands.RunAsync(mgr, "config all"),
+			await Commands.RunAsync(mgr, "set alt AccountProxy " + proxied), await Commands.RunAsync(mgr, "config alt all"),
+			await Commands.RunAsync(mgr, "set alt AccountProxy"), await Commands.RunAsync(mgr, "set WebProxy \"" + proxied + "\""),
+		];
+		Check("proxy: 'set' and 'config' say where it goes, never the password typed into it - and it's saved as typed",
+			(mgr.Global.WebProxy == proxied) && (bots["alt"].Cfg.AccountProxy == proxied) && proxySaid.All(static s => !s.Contains("s3cret", StringComparison.Ordinal))
+			&& proxySaid.All(static s => s.Contains("http://10.0.0.5:3128", StringComparison.Ordinal)), string.Join(" || ", proxySaid));
+
+		// The dashboard: sent without it, and a page that sends that back unchanged - with a Base or without - keeps the real one.
+		var web = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = null, PropertyNameCaseInsensitive = true };
+		MethodInfo redact = typeof(NocatFarm.Web.WebHost).GetMethod("Redact", BindingFlags.NonPublic | BindingFlags.Static)!;
+		MethodInfo savePage = typeof(NocatFarm.Web.WebHost).GetMethod("SaveFromPage", BindingFlags.NonPublic | BindingFlags.Static)!;
+		MethodInfo saveBotPage = typeof(NocatFarm.Web.WebHost).GetMethod("SaveBotFromPage", BindingFlags.NonPublic | BindingFlags.Static)!;
+		var pageGlobal = (NocatFarm.Config.GlobalConfig) redact.MakeGenericMethod(typeof(NocatFarm.Config.GlobalConfig))
+			.Invoke(null, [new NocatFarm.Config.GlobalConfig { WebProxy = proxied }, NocatFarm.Config.Settings.Global, null])!;
+		var pageBot = (NocatFarm.Config.BotConfig) redact.MakeGenericMethod(typeof(NocatFarm.Config.BotConfig))
+			.Invoke(null, [new NocatFarm.Config.BotConfig { AccountProxy = proxied }, NocatFarm.Config.Settings.Bot, null])!;
+		var liveProxy = new NocatFarm.Config.GlobalConfig { WebProxy = proxied, Language = "en" };
+		System.Text.Json.Nodes.JsonObject loadedPage = System.Text.Json.JsonSerializer.SerializeToNode(pageGlobal, web)!.AsObject();
+		var withBase = (System.Text.Json.Nodes.JsonObject) loadedPage.DeepClone();
+		withBase["Language"] = "de";
+		withBase["Base"] = loadedPage.DeepClone();
+		savePage.Invoke(null, [liveProxy, withBase, web]);
+		bool keptWithBase = (liveProxy.WebProxy == proxied) && (liveProxy.Language == "de");
+		var noBase = (System.Text.Json.Nodes.JsonObject) loadedPage.DeepClone();
+		noBase["Language"] = "fr";
+		savePage.Invoke(null, [liveProxy, noBase, web]);
+		bool keptNoBase = (liveProxy.WebProxy == proxied) && (liveProxy.Language == "fr");
+		var proxyBot = new NocatFarm.Core.Bot("pxbot", new NocatFarm.Config.BotConfig { AccountProxy = proxied });
+		saveBotPage.Invoke(null, [proxyBot, new System.Text.Json.Nodes.JsonObject { ["AccountProxy"] = pageBot.AccountProxy, ["Notes"] = "x" }, web]);
+		bool keptBot = (proxyBot.Cfg.AccountProxy == proxied) && (proxyBot.Cfg.Notes == "x");
+		var edited = (System.Text.Json.Nodes.JsonObject) loadedPage.DeepClone();
+		edited["WebProxy"] = "http://newhost:8080";
+		savePage.Invoke(null, [liveProxy, edited, web]);
+		Check("proxy: the dashboard is sent it without the password, an unchanged page keeps the real one, and it can still be changed there",
+			!pageGlobal.WebProxy.Contains("s3cret", StringComparison.Ordinal) && pageGlobal.WebProxy.Contains("10.0.0.5", StringComparison.Ordinal)
+			&& !pageBot.AccountProxy.Contains("s3cret", StringComparison.Ordinal) && keptWithBase && keptNoBase && keptBot && (liveProxy.WebProxy == "http://newhost:8080"),
+			$"{pageGlobal.WebProxy} / {pageBot.AccountProxy} / {keptWithBase} {keptNoBase} {keptBot} / {liveProxy.WebProxy}");
+
+		// ── 'set' with a word that is no setting: not said back. 'Key=value' and a quoted key are the setting they name ──
+		string[] notSettings = [await Commands.RunAsync(mgr, "set hunter2"), await Commands.RunAsync(mgr, "set alt hunter2"), await Commands.RunAsync(mgr, "set alt hunter2 on"),
+			await Commands.RunAsync(mgr, "set hunter2 on")];
+		Check("set: a word that is no setting isn't said back, and the account named isn't blamed",
+			notSettings.All(static s => !s.Contains("hunter2", StringComparison.Ordinal) && !s.Contains("'alt'", StringComparison.Ordinal) && s.StartsWith("That's not a", StringComparison.Ordinal)),
+			string.Join(" || ", notSettings));
+		string joinedOn = await Commands.RunAsync(mgr, "set alt Rep4Rep=on");
+		bool onAfterJoined = bots["alt"].Cfg.Rep4Rep;
+		string quotedOff = await Commands.RunAsync(mgr, "set alt \"Rep4Rep\" off");
+		string globalJoined = await Commands.RunAsync(mgr, "set DailyReportHour=7");
+		Check("set: 'Key=value' and a quoted key are the setting they name, for an account and globally",
+			onAfterJoined && !bots["alt"].Cfg.Rep4Rep && joinedOn.StartsWith("alt.Rep4Rep = true", StringComparison.Ordinal) && quotedOff.StartsWith("alt.Rep4Rep = false", StringComparison.Ordinal)
+			&& (mgr.Global.DailyReportHour == 7), $"{joinedOn} / {quotedOff} / {globalJoined}");
+
+		// ── one typo off a command with a digit in its name, or a plugin's: shown, kept, and named in the reply ──
+		string[] digitTypos = [await Commands.RunAsync(mgr, "2af"), await Commands.RunAsync(mgr, "rep4ep status"), await Commands.RunAsync(mgr, "r4t")];
+		Check("one typo off a command with a digit in it: 'did you mean' names it",
+			(digitTypos[0] == "That's not a command - did you mean '2fa'?") && (digitTypos[1] == "That's not a command - did you mean 'rep4rep'?")
+			&& (digitTypos[2] == "That's not a command - did you mean 'r4r'?"), string.Join(" || ", digitTypos));
+		Type pluginHostType = typeof(NocatFarm.Plugins.IPluginHost).Assembly.GetType("NocatFarm.Plugins.Host")!;
+		var pluginHosts = (System.Collections.IList) typeof(NocatFarm.Plugins.PluginHost).GetField("Hosts", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+		object nightPlugin = Activator.CreateInstance(pluginHostType, [mgr, "harness-typos"])!;
+		((NocatFarm.Plugins.IPluginHost) nightPlugin).AddCommand("nightjob", "", "", static _ => Task.FromResult("ran"));
+		pluginHosts.Add(nightPlugin);
+
+		try {
+			string pluginTypo = await Commands.RunAsync(mgr, "nigthjob");
+			Check("one typo off a plugin's command: shown, kept, and named in the reply",
+				(Commands.LineForLog("nigthjob x") == "nigthjob ***") && !Commands.HoldsSecret("nigthjob x") && !Commands.HoldsSecret("nigthjob")
+				&& (pluginTypo == "That's not a command - did you mean 'nightjob'?"), $"{Commands.LineForLog("nigthjob x")} / {pluginTypo}");
+		} finally {
+			pluginHosts.Remove(nightPlugin);
+		}
+
+		// ── Telegram's '/command@bot': taken off there, before anything reads the line - and only a bot's name, the connected one when known ──
+		Type notifierType = typeof(NocatFarm.Core.Bot).Assembly.GetType("NocatFarm.Core.Notifier")!;
+		MethodInfo telegramLine = notifierType.GetMethod("TelegramLine", BindingFlags.NonPublic | BindingFlags.Static)!;
+		FieldInfo telegramBot = notifierType.GetField("_botName", BindingFlags.NonPublic | BindingFlags.Static)!;
+		string Tg(string s) => (string) telegramLine.Invoke(null, [s])!;
+		object? botNameBefore = telegramBot.GetValue(null);
+		telegramBot.SetValue(null, "");
+		bool anyBot = (Tg("/set@nocatbot alt SteamPassword hunter2") == "/set alt SteamPassword hunter2")
+			&& (Commands.LineForLog(Tg("/set@nocatbot alt SteamPassword hunter2")) == "/set alt SteamPassword ***") && (Tg("/status@NocatFarm_Bot") == "/status")
+			&& (Tg("s@cretbot") == "s@cretbot") && (Tg("/pause@mybot alt") == "/pause@mybot alt");
+		telegramBot.SetValue(null, "@realfarmbot");
+		bool ownBot = (Tg("/status@RealFarmBot new") == "/status new") && (Tg("/status@otherbot") == "/status@otherbot");
+		telegramBot.SetValue(null, botNameBefore);
+		string telegramSource = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Core", "TelegramCommands.cs")).Replace("\r\n", "\n");
+		Check("telegram: '/command@bot' comes off on the Telegram path, before the line is logged - the connected bot's name when it's known",
+			anyBot && ownBot && telegramSource.Contains("string trimmed = TelegramLine(text);", StringComparison.Ordinal), $"{anyBot} {ownBot}");
+
+		// ── chat: a Guard code from one of your own accounts is masked whatever it's made of ──
+		string socialSource = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Modules", "Social.cs")).Replace("\r\n", "\n");
+		Check("chat: a Guard code from one of your own accounts is masked - all letters or all digits too; a stranger's word isn't",
+			(Commands.MessageForLog("BCDFG", fromOwn: true) == "*****") && (Commands.MessageForLog("old: 23456", fromOwn: true) == "old: *****")
+			&& (Commands.MessageForLog("BHGKM is a word") == "BHGKM is a word") && (Commands.MessageForLog("price 23456 coins") == "price 23456 coins")
+			&& socialSource.Contains("Commands.MessageForLog(text, own)", StringComparison.Ordinal),
+			$"{Commands.MessageForLog("BCDFG", fromOwn: true)} / {Commands.MessageForLog("old: 23456", fromOwn: true)}");
+
+		// ── a slow command's late answer: masked with what its line hid, as the reply in time is ──
+		FieldInfo lateField = typeof(Commands).GetField("LateReply", BindingFlags.NonPublic | BindingFlags.Static)!;
+		object late = lateField.GetValue(null)!;
+		var answerNow = new TaskCompletionSource();
+		long lateMark = Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+		string lateNow = await Task.Run(async () => {
+			late.GetType().GetProperty("Value")!.SetValue(late, ((Action<string>?) null, ((string, string)[]) [("ABCDE-FGHIJ-KLMN", "***")]));
+
+			return await Commands.SlowAsync(new Commands.Slow("redeem", "activating the keys", Key: "redeem late-probe"), async () => {
+				await answerNow.Task;
+
+				return "'ABCDE-FGHIJ-KLMN' doesn't look like a Steam key";
+			}, TimeSpan.Zero);
+		});
+		answerNow.SetResult();
+		List<string> lateLogged = [];
+
+		for (int i = 0; (i < 100) && (lateLogged.Count == 0); i++) {
+			await Task.Delay(50);
+			lateLogged = [.. Log.Recent(500).Where(e => (e.Seq > lateMark) && e.Text.Contains("look like a Steam key", StringComparison.Ordinal)).Select(static e => e.Text)];
+		}
+
+		string commandsSource = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "NocatFarm", "Commands.cs")).Replace("\r\n", "\n");
+		Check("slow command: its late answer in the log is masked with what the typed line hid",
+			(lateLogged.Count == 1) && !lateLogged[0].Contains("ABCDE-FGHIJ-KLMN", StringComparison.Ordinal) && !lateNow.Contains("ABCDE", StringComparison.Ordinal)
+			&& commandsSource.Contains("LateReply.Value = (later, Masked(line).Hidden);", StringComparison.Ordinal), string.Join(" || ", lateLogged));
+
+		// ── the log's scrubber: tokens, cookies and a proxy password after a scheme - and nothing else ──
+		List<string> scrubWrong = [];
+
+		foreach ((string text, string want) in (ValueTuple<string, string>[]) [
+			("GET /IPlayerService/GetOwnedGames/v1/?access_token=eyJhbGciOiJFZERTQSJ9.eyJpc3MiOiJyOjE.c2ln&steamid=7656 -> 401", "GET /IPlayerService/GetOwnedGames/v1/?access_token=[hidden]&steamid=7656 -> 401"),
+			("token was eyJhbGciOiJFZERTQSJ9.eyJpc3MiOiJyOjE.c2lnbmF0dXJl, refused", "token was [hidden], refused"),
+			("Cookie: steamLoginSecure=76561190000000001%7C%7CeyJabc; sessionid=0123456789abcdef01234567", "Cookie: steamLoginSecure=[hidden]; sessionid=[hidden]"),
+			("Authorization: Bot MTIzNDU2Nzg5MDEyMzQ1Njc4OTA.GhIjKl.abcdefghijklmnopqrstuvwxyz", "Authorization: Bot [hidden]"),
+			("Authorization: Bearer abcdefghijklmnopqrstuvwxyz0123", "Authorization: Bearer [hidden]"),
+			("POST apiToken body key=ABCDEF0123456789&password=hunter2&steamid=1", "POST apiToken body key=[hidden]&password=[hidden]&steamid=1"),
+			("rep4rep said no to /pub-api/tasks?apiToken=abcdef123456&steamProfile=7656", "rep4rep said no to /pub-api/tasks?apiToken=[hidden]&steamProfile=7656"),
+			("https://api.telegram.org/bot123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw/getUpdates", "https://api.telegram.org/bot[hidden]/getUpdates"),
+			("https://discord.com/api/webhooks/123456789012345678/abcDEF123-_ghiJKL456", "https://discord.com/api/webhooks/123456789012345678/[hidden]"),
+			("access_token=abcdef0123456789", "access_token=[hidden]"),
+			("bad proxy 'http://farmer:s3cret@10.0.0.2:8080' (UriFormatException)", "bad proxy 'http://[hidden]@10.0.0.2:8080' (UriFormatException)"),
+			("http://robouser:hunter2@proxyhost:8080", "http://[hidden]@proxyhost:8080"), ("socks5://robouser:hunter2@proxyhost:1080", "socks5://[hidden]@proxyhost:1080"),
+			("http://robouser:hun@ter2@proxyhost:8080", "http://[hidden]@proxyhost:8080"), ("http://robouser:hunter2@proxyhost", "http://[hidden]@proxyhost"),
+			("http://:hunter2@proxyhost:8080", "http://[hidden]@proxyhost:8080"), ("http://robo@mail.com:hunter2@proxyhost:8080", "http://[hidden]@proxyhost:8080"),
+			("http://robouser:hun'ter2@proxyhost:8080", "http://[hidden]@proxyhost:8080"), ("http://robouser:hun\"ter2@proxyhost:8080", "http://[hidden]@proxyhost:8080"),
+			("http://robouser:hun<ter2@proxyhost:8080", "http://[hidden]@proxyhost:8080"), ("http://robouser:hunter2@[::1]:8080", "http://[hidden]@[::1]:8080"),
+			("http://robouser:hunter2@proxyhost:8080/x", "http://[hidden]@proxyhost:8080/x"),
+			("trade offer #123 refused: AccessDenied (15) on steamcommunity.com/tradeoffer/123/accept", "trade offer #123 refused: AccessDenied (15) on steamcommunity.com/tradeoffer/123/accept"),
+			// No scheme: an hour target, a time, an email - left alone (a proxy typed so is masked where it's typed, and by the proxy code)
+			("set alt HourTargets 730:100@2026-12-01", "set alt HourTargets 730:100@2026-12-01"), ("meet at 10:30@home", "meet at 10:30@home"),
+			("mailto:someone@example.com", "mailto:someone@example.com"), ("user:me@host:8080 lol", "user:me@host:8080 lol"),
+		]) {
+			if (Log.Scrub(text) != want) {
+				scrubWrong.Add($"'{text}' -> '{Log.Scrub(text)}'");
+			}
+		}
+
+		Check("secrets table, the scrubber: tokens, cookies and a proxy password after a scheme hidden - an hour target, a time, an email not", scrubWrong.Count == 0,
+			string.Join(" || ", scrubWrong));
+
+		// A proxy with no scheme that won't parse is logged by the proxy code without its password.
+		MethodInfo buildProxy = typeof(NocatFarm.Core.Bot).GetMethod("BuildProxyHandler", BindingFlags.NonPublic | BindingFlags.Static)!;
+		List<string> proxyWrong = [];
+
+		foreach (string bad in (string[]) ["user:hunter2@proxyhost:notaport", "robouser:hun@ter2@proxyhost:x", "http://user:hun/ter2@proxyhost:x", "http://robo@mail.com:hunter2@proxyhost:8080"]) {
+			NocatFarm.Config.Live.Global = new NocatFarm.Config.GlobalConfig { WebEnabled = false, WebProxy = bad };
+			long mark = Log.Recent(1).LastOrDefault()?.Seq ?? 0;
+
+			using (var handler = (HttpClientHandler) buildProxy.Invoke(null, [null])!) {
+				List<string> said = [.. Log.Recent(500).Where(e => e.Seq > mark).Select(static e => e.Text)];
+
+				if ((said.Count == 0) || said.Any(static t => t.Contains("ter2", StringComparison.Ordinal)) || !said.Any(static t => t.Contains("proxyhost", StringComparison.Ordinal))) {
+					proxyWrong.Add(string.Join(" | ", said));
+				}
+			}
+		}
+
+		Check("proxy: one that won't parse is logged with where it goes, never its password", proxyWrong.Count == 0, string.Join(" || ", proxyWrong));
+	} finally {
+		Commands.Host = host;
+		NocatFarm.Config.Live.Global = realGlobal;
+		NocatFarm.Config.ConfigStore.UseRoot(realRoot);
+
+		try {
+			Directory.Delete(tmpRoot, true);
+		} catch (IOException) {
+			// temp - it goes when Windows tidies up
+		}
+	}
+}
+
 // SETTINGSCOUNT
 Console.WriteLine($"settings: {NocatFarm.Config.Settings.Global.Count} global ({NocatFarm.Config.Settings.Global.Count(d => !d.Advanced)} basic), {NocatFarm.Config.Settings.Bot.Count} per account ({NocatFarm.Config.Settings.Bot.Count(d => !d.Advanced)} basic)");
 Console.WriteLine(fails == 0 ? "all passed" : $"{fails} failed");
@@ -14931,5 +19716,136 @@ sealed class FakePing(Func<HttpRequestMessage, CancellationToken, Task<HttpRespo
 		Body = request.Content == null ? "" : await request.Content.ReadAsStringAsync(ct);
 
 		return await answer(request, ct);
+	}
+}
+
+/// <summary>A Steam that is slow to answer: every request waits until let go, then fails. Nothing reaches the network.</summary>
+sealed class HoldHandler : HttpMessageHandler {
+	private readonly TaskCompletionSource _go = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+	/// <summary>Every address asked for, in order.</summary>
+	public List<string> Asked { get; } = [];
+
+	public void Release() => _go.TrySetResult();
+
+	protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) {
+		lock (Asked) {
+			Asked.Add(request.RequestUri?.ToString() ?? "");
+		}
+
+		await _go.Task.WaitAsync(ct);
+
+		return new HttpResponseMessage(System.Net.HttpStatusCode.ServiceUnavailable) { Content = new StringContent("") };
+	}
+}
+
+/// <summary>SelfUpdate.RunsOn, called straight: whether a program's first bytes run on a kind of computer (null: no program).</summary>
+delegate bool? RunsOnCheck(ReadOnlySpan<byte> head, string rid, string name);
+
+/// <summary>
+/// A pretend nocat.farm for 'update file' and the updater, for any kind of computer as a release names it (win-x64,
+/// linux-arm64, osx-x64): the program with just enough of a real start for SelfUpdate.LookInZipFor to know whose it is -
+/// Linux's ELF with its machine at byte 18, a Mac's Mach-O with its CPU after the magic number - and nocatFarm.dll, where
+/// the version is read from on every kind of computer. Windows is told by the zip's name, so its program is only "MZ".
+/// </summary>
+static class FakeProgram {
+	public const uint Intel = 0x01000007, AppleSilicon = 0x0100000C;
+
+	/// <summary>This machine, the way the release names its zip.</summary>
+	public static string Here => NocatFarm.Core.Platform.ReleaseRid;
+
+	public static string ExeFor(string rid) => rid.StartsWith("win-", StringComparison.Ordinal) ? "nocatFarm.exe" : "nocatFarm";
+
+	/// <summary>The program's first bytes for <paramref name="rid"/>.</summary>
+	public static byte[] For(string rid) {
+		string arch = rid[(rid.IndexOf('-') + 1)..];
+
+		if (rid.StartsWith("win-", StringComparison.Ordinal)) {
+			return "MZ program"u8.ToArray();
+		}
+
+		if (rid.StartsWith("osx-", StringComparison.Ordinal)) {
+			return MachO(arch switch { "x64" => Intel, "arm64" => AppleSilicon, _ => throw new ArgumentException($"no Mac program for {rid}") });
+		}
+
+		return arch switch {
+			"x64" => Elf(62), "arm64" => Elf(183), "arm" => Elf(40), "x86" => Elf(3), "riscv64" => Elf(243), "loongarch64" => Elf(258),
+			"s390x" => Elf(22, bigEndian: true), "ppc64le" => Elf(21), _ => throw new ArgumentException($"no Linux program for {rid}")
+		};
+	}
+
+	/// <summary>A 64-bit ELF header: the magic, 64-bit, its byte order, version 1, and the machine at byte 18 in that order.</summary>
+	public static byte[] Elf(ushort machine, bool bigEndian = false) {
+		byte[] b = new byte[64];
+		"\u007FELF"u8.CopyTo(b);
+		b[4] = 2;
+		b[5] = (byte) (bigEndian ? 2 : 1);
+		b[6] = 1;
+		if (bigEndian) {
+			System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(b.AsSpan(18), machine);
+		} else {
+			System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(18), machine);
+		}
+		return b;
+	}
+
+	/// <summary>A 64-bit Mach-O header as it is on disk on both Macs: 0xFEEDFACF little-endian (CF FA ED FE), then the CPU.</summary>
+	public static byte[] MachO(uint cpu) {
+		byte[] b = new byte[32];
+		System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(b, 0xFEEDFACF);
+		System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(4), cpu);
+		return b;
+	}
+
+	/// <summary>A Mac's universal program, big-endian: the 32-bit list (0xCAFEBABE, 20 bytes each) or the 64-bit one
+	/// (0xCAFEBABF, 32 each), with the CPUs it has.</summary>
+	public static byte[] Fat(bool wide, params uint[] cpus) {
+		int each = wide ? 32 : 20;
+		byte[] b = new byte[8 + (each * cpus.Length) + 16];
+		System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(b, wide ? 0xCAFEBABFu : 0xCAFEBABEu);
+		System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(b.AsSpan(4), (uint) cpus.Length);
+		for (int i = 0; i < cpus.Length; i++) {
+			System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(b.AsSpan(8 + (each * i)), cpus[i]);
+		}
+		return b;
+	}
+
+	/// <summary>
+	/// A nocat.farm zip as the release script makes one: flat, the program for <paramref name="rid"/> (this machine unless
+	/// named) and nocatFarm.dll - an assembly called nocatFarm at <paramref name="version"/> - and any other files given.
+	/// </summary>
+	public static byte[] ZipBytes(Version version, string? rid = null, string? exe = null, byte[]? program = null, bool withExe = true,
+		IEnumerable<(string Name, string Text)>? extra = null) {
+		rid ??= Here;
+		using MemoryStream ms = new();
+
+		using (var zip = new System.IO.Compression.ZipArchive(ms, System.IO.Compression.ZipArchiveMode.Create, leaveOpen: true)) {
+			if (withExe) {
+				using Stream w = zip.CreateEntry(exe ?? ExeFor(rid)).Open();
+				w.Write(program ?? For(rid));
+			}
+
+			var made = new System.Reflection.Emit.PersistedAssemblyBuilder(new AssemblyName("nocatFarm") { Version = version }, typeof(object).Assembly);
+			made.DefineDynamicModule("nocatFarm");
+			using (MemoryStream dll = new()) {
+				made.Save(dll);
+				using Stream to = zip.CreateEntry("nocatFarm.dll").Open();
+				to.Write(dll.ToArray());
+			}
+
+			foreach ((string name, string text) in extra ?? []) {
+				using StreamWriter w = new(zip.CreateEntry(name).Open());
+				w.Write(text);
+			}
+		}
+
+		return ms.ToArray();
+	}
+
+	/// <summary><see cref="ZipBytes"/>, saved at <paramref name="path"/>; the path back.</summary>
+	public static string Zip(string path, Version version, string? rid = null, string? exe = null, byte[]? program = null, bool withExe = true,
+		IEnumerable<(string Name, string Text)>? extra = null) {
+		File.WriteAllBytes(path, ZipBytes(version, rid, exe, program, withExe, extra));
+		return path;
 	}
 }

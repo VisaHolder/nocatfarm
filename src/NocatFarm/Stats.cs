@@ -32,6 +32,14 @@ public static class Stats {
 
 	private static string PathFor() => Path.Combine(ConfigStore.Root, "logs", "stats.log");
 
+	/// <summary>What "now" is for the reading side - the hour bars and the counts. Swappable so the checks can pin the time
+	/// of day: the bars' labels hang on it, and a check on the real clock only met the first minute of an hour once in 60 runs.</summary>
+	internal static Func<DateTime> UtcNow { get; set; } = static () => DateTime.UtcNow;
+
+	/// <summary>The time zone the bars are labelled in - this computer's. Swappable so the checks can put a clock change in the
+	/// window on any computer.</summary>
+	internal static TimeZoneInfo Zone { get; set; } = TimeZoneInfo.Local;
+
 	public static void Record(string kind, string bot) {
 		DateTime now = DateTime.UtcNow;
 
@@ -63,7 +71,7 @@ public static class Stats {
 
 	/// <summary>Events from the last <paramref name="hours"/> hours, oldest first.</summary>
 	public static IReadOnlyList<Event> Recent(int hours) {
-		DateTime cutoff = DateTime.UtcNow.AddHours(-Math.Clamp(hours, 1, 24 * 90));
+		DateTime cutoff = UtcNow().AddHours(-Math.Clamp(hours, 1, 24 * 90));
 
 		lock (Gate) {
 			EnsureLoaded();
@@ -72,14 +80,31 @@ public static class Stats {
 		}
 	}
 
-	/// <summary>Per-hour counts for the last <paramref name="hours"/> hours, oldest bucket first.</summary>
+	/// <summary>
+	/// Per-hour counts for the last <paramref name="hours"/> hours, oldest bucket first - the hour now under way last, and
+	/// first the part of an hour that the window starts in, so the bars add up to <see cref="Totals"/> for the same hours.
+	/// Starting at the next full hour, the last minutes of the window's first hour were in the totals and in no bar. That
+	/// first part-hour is given its real start, up to the minute (14:37, not 14:00) - as 14:00 it had the same time as the
+	/// hour now under way.
+	/// </summary>
+	/// <remarks>
+	/// The bars are real hours, stepped in UTC; only the times they're shown with are local. Stepped on the local clock, the
+	/// day the clocks changed the bars ran an hour off the window: going back, the first bar was empty and the hour that
+	/// came twice was one bar with both in it; going forward, the window's first minutes were in no bar at all.
+	/// </remarks>
 	public static List<(DateTime Hour, int Cards, int Comments)> ByHour(int hours) {
 		hours = Math.Clamp(hours, 1, 24 * 14);
-		DateTime end = new(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, 0, 0, DateTimeKind.Local);
+		TimeZoneInfo zone = Zone;
+		DateTime now = UtcNow();
+		DateTime from = now.AddHours(-hours);
+
+		// When the hour now under way began on the local clock, in UTC - not always a whole UTC hour (India is 5:30 ahead).
+		long intoHour = (now.Ticks + zone.GetUtcOffset(now).Ticks) % TimeSpan.TicksPerHour;
+		DateTime end = new(now.Ticks - intoHour, DateTimeKind.Utc);
 		List<(DateTime, int, int)> buckets = [];
 		IReadOnlyList<Event> events = Recent(hours + 1);
 
-		for (int i = hours - 1; i >= 0; i--) {
+		for (int i = hours; i >= 0; i--) {
 			DateTime hour = end.AddHours(-i);
 			DateTime next = hour.AddHours(1);
 
@@ -87,9 +112,7 @@ public static class Stats {
 			int comments = 0;
 
 			foreach (Event e in events) {
-				DateTime local = e.When.ToLocalTime();
-
-				if ((local < hour) || (local >= next)) {
+				if ((e.When < hour) || (e.When >= next) || (e.When < from)) {
 					continue;
 				}
 
@@ -100,10 +123,23 @@ public static class Stats {
 				}
 			}
 
-			buckets.Add((hour, cards, comments));
+			DateTime shown = TimeZoneInfo.ConvertTimeFromUtc(hour, zone);
+			buckets.Add(((i == hours) && (from > hour) ? StartLabel(TimeZoneInfo.ConvertTimeFromUtc(from, zone), shown.AddHours(1)) : shown, cards, comments));
 		}
 
 		return buckets;
+	}
+
+	/// <summary>
+	/// The time the first part-hour bar is shown with, to the minute. Its start is rounded up to the next whole minute: the
+	/// 'stats' text prints HH:mm, and at 22:00:30 the start read "22:00" - the same as the hour now under way. Not up into
+	/// the next hour, though - 22:59:30 stays 22:59, as 23:00 is the bar after it.
+	/// </summary>
+	private static DateTime StartLabel(DateTime start, DateTime next) {
+		DateTime minute = new(start.Ticks - (start.Ticks % TimeSpan.TicksPerMinute), start.Kind);
+		DateTime up = minute < start ? minute.AddMinutes(1) : minute;
+
+		return up < next ? up : minute;
 	}
 
 	public static (int Cards, int Comments) Totals(int hours) {

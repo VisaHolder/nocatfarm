@@ -34,6 +34,14 @@ public sealed class Bot : IAsyncDisposable {
 		private set => Volatile.Write(ref _onlineSinceTicks, ToTicks(value));
 	}
 
+	/// <summary>How many times it has signed in since nocat.farm started: past the first, a sign-in is one "again".</summary>
+	public int SignIns {
+		get => Volatile.Read(ref _signIns);
+		private set => Volatile.Write(ref _signIns, value);
+	}
+
+	private int _signIns;
+
 	public string Playing { get; private set; } = "";
 
 	/// <summary>
@@ -1358,10 +1366,39 @@ public sealed class Bot : IAsyncDisposable {
 			handler.Proxy = proxy;
 			handler.UseProxy = true;
 		} catch (Exception e) {
-			Log.Warn(new Said("bad proxy '{0}' ({1}) - connecting directly", address, Log.Scrub(e.Message)));
+			// Without what comes before the last '@': an address that won't parse is often one with a password typed into it -
+			// 'user:pass@host:port', no scheme, which the log's scrubber leaves alone.
+			string shown = ProxyShown(address) ?? (address.Contains('@', StringComparison.Ordinal) ? "***@" + address[(address.LastIndexOf('@') + 1)..] : address);
+			Log.Warn(new Said("bad proxy '{0}' ({1}) - connecting directly", Log.Scrub(shown), Log.Scrub(e.Message)));
 		}
 
 		return handler;
+	}
+
+	/// <summary>
+	/// Whether a proxy address can be used as one - checked when it's set, so one that can't is refused there and then rather
+	/// than found at the next sign-in.
+	/// </summary>
+	internal static bool ProxyReadable(string address) {
+		try {
+			_ = new System.Net.WebProxy(address);
+
+			return true;
+		} catch (Exception e) when (e is UriFormatException or ArgumentException) {
+			return false;
+		}
+	}
+
+	/// <summary>
+	/// A proxy address as the log may have it: scheme://host:port, a user name and password typed into it ('user:pass@host')
+	/// taken off. Null when it won't read as an address.
+	/// </summary>
+	internal static string? ProxyShown(string address) {
+		try {
+			return new System.Net.WebProxy(address.Trim()).Address is { } u ? $"{u.Scheme}://{u.Host}:{u.Port}" : null;
+		} catch (Exception e) when (e is UriFormatException or ArgumentException) {
+			return null;
+		}
 	}
 
 	/// <summary>Subscribe to one Steam callback for as long as the returned handle is held.</summary>
@@ -1493,7 +1530,16 @@ public sealed class Bot : IAsyncDisposable {
 			_cts = new CancellationTokenSource();
 			ct = _cts.Token;   // kept here: a stop from now on disposes the source, and reading its token then throws
 			_runToken = ct;
-			_pump = Task.Run(() => Pump(ct), CancellationToken.None);
+			// Started clean: the loop runs for as long as the account does, and takes nothing along from whatever started it.
+			// Started by a command typed at this PC, it carried "at this PC" on into its Steam chat - a master's 'update file'
+			// there counted as typed here.
+			AsyncFlowControl? clean = ExecutionContext.IsFlowSuppressed() ? null : ExecutionContext.SuppressFlow();
+
+			try {
+				_pump = Task.Run(() => Pump(ct), CancellationToken.None);
+			} finally {
+				clean?.Undo();
+			}
 
 			State = BotState.Connecting;
 			StatusText = "waiting for a login slot";
@@ -2040,6 +2086,7 @@ public sealed class Bot : IAsyncDisposable {
 
 		SteamId = cb.ClientSteamID?.ConvertToUInt64() ?? 0;
 		State = BotState.Online;
+		SignIns++;
 		OnlineSince = DateTime.UtcNow;
 		StatusText = "online";
 		_guardPrompt = null;
@@ -3157,7 +3204,7 @@ public sealed class Bot : IAsyncDisposable {
 			foreach (ProfileComment c in Enumerable.Reverse(fresh)) {
 				Log.Event(c.Text.StartsWith("This comment is awaiting analysis", StringComparison.Ordinal)
 					? new Said("new comment from {0} - Steam is still checking what it says", c.Author)
-					: new Said("new comment from {0}: \"{1}\"", c.Author, c.Text.Length > 200 ? c.Text[..197] + "..." : c.Text), Name);
+					: new Said("new comment from {0}: \"{1}\"", c.Author, Columns.ClipChars(c.Text, 200, "...")), Name);
 			}
 		} finally {
 			_commentGate.Release();
@@ -4111,7 +4158,8 @@ public static class TokenStore {
 				return null;
 			}
 
-			string stored = File.ReadAllText(path).Trim();
+			// Read so a 'remove' clearing it at the same moment still can - see ConfigStore.ReadShared.
+			string stored = ConfigStore.ReadShared(path).Trim();
 			string plain = Secrets.Unprotect(stored);
 
 			if (Secrets.IsPlain(stored) && Secrets.Available && (plain.Length > 0)) {
@@ -4157,7 +4205,7 @@ public static class TokenStore {
 		foreach (string path in new[] { PathFor(bot), AccessPathFor(bot) }) {
 			try {
 				if (File.Exists(path)) {
-					File.Delete(path);
+					ConfigStore.DeleteFile(path);
 				}
 			} catch (Exception e) {
 				// nothing to do - but a revoked token left on disk is tried again at the next start, so say so

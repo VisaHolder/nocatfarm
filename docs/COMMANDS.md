@@ -20,14 +20,14 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | **[Trades & items](#trades--items)** | `offers` `trade` `send` |
 | **[Steam Guard](#steam-guard)** | `2fa` `confirmations` `confirm` `deny` |
 | **[Achievements](#achievements)** | `achievements` `hunt` `dlc` |
-| **[Free stuff & keys](#free-stuff--keys)** | `freeitems` `queue` `redeem` `keys` |
+| **[Free stuff & keys](#free-stuff--keys)** | `freegames` `freeitems` `queue` `redeem` `keys` |
 | **[Profile & info](#profile--info)** | `value` `level` `balance` `points` `bans` `owns` `privacy` `joingroup` |
 | **[rep4rep](#rep4rep)** | `rep4rep` |
 | **[Settings](#settings)** | `config` `set` `backup` `import` |
 | **[The app](#the-app)** | `log` `stats` `report` `notify` `plugins` `tutorial` `help` `theme` `mini` `dashboard` `anywhere` `clear` `visitors` `version` `update` `answer` `exit` |
 | **[Advanced](#advanced)** | `fairswap` `addlicense` `reload` `screen` |
 
-76 commands in all.
+77 commands in all.
 
 ## Accounts
 
@@ -51,7 +51,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 |---|---|
 | `play <account> <appIDs\|none>` | Set the games this account idles for playtime. |
 | `gamename <account> [text\|off]` | Custom non-Steam game name shown instead of the real game. No text shows the current one; 'off' clears it. |
-| `persona <account> <state>` | What the account shows your friends: online \| offline \| busy \| away \| snooze \| looking to trade \| looking to play \| invisible (or its number, 0-7). Same as the OnlineStatus setting. |
+| `persona <account> [state]` | What the account shows your friends: online \| offline \| busy \| away \| snooze \| looking to trade \| looking to play \| invisible (or its number, 0-7). Same as the OnlineStatus setting. No state says what it shows now. |
 | `nickname <account> <profile name>` | Change the name everybody sees on the profile and friends list. Not the custom game name, that's 'gamename'. |
 | `grind <account\|all> <appID> <hours> \| <account> off` | Put an account on one game for a set number of hours, then let it go back to whatever it was doing. Outranks human mode while it runs. |
 | `human [account] [week\|reroll]` | What human mode is doing today, and what it played. Add 'week' to see the next seven days, or 'reroll' to throw today's plan away and roll a fresh one from the current settings. |
@@ -101,6 +101,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 
 | Command | What it does |
 |---|---|
+| `freegames [account\|all]` | Look for free games now: paid games given away free to keep, the same check "Claim free games" makes by itself every half hour or so. Says what it claimed, and what was free but couldn't be claimed, and why. On an account with it off, it takes games only. |
 | `freeitems [account\|all]` | Look for free event items now: the daily sale sticker, and anything in the Points Shop at 0 points. The ClaimEventItems setting does it by itself. |
 | `queue [account\|all]` | Go through today's discovery queue now, a few seconds on each game. The DiscoveryQueue setting does it by itself once a day (during sales, by default). |
 | `redeem [account] <key\|file.txt> [key...]` | Activate product keys, or point it at a text file full of them. More than five queues itself and activates them slowly. With an account, only that account ever gets them, queued ones too. Without one it tries each account in turn until one can use it. |
@@ -141,7 +142,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `log [count\|folder]` <br>also `logs` | The last few log lines. 'log folder' opens the folder the log files are in, on this PC. |
 | `stats [hours]` | Everything: each account's last 24 hours (hours banked, cards, comments, totals), then cards dropped and comments posted, by hour. Give a number of hours to look further back. |
 | `report [week]` | The short one: just each account's last 24 hours, the daily summary - the first part of 'stats'. 'report week' is the weekly report: the last seven days next to the seven before (hours banked, cards, cards listed, inventory value, comments). |
-| `notify [test]` | Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now. |
+| `notify [test\|link]` | Discord and Telegram notifications: says what's set up (the webhook, the Telegram bot, the Discord bot) and what gets sent. 'notify test' sends a test message to each right now. 'notify link' gives the link that connects your Telegram, only in the nocat.farm window or its console (or the dashboard on this PC): whoever opens it first is connected as the owner. |
 | `plugins` | Which plugins are loaded, and where they came from. |
 | `tutorial [topic]` <br>also `guide`, `setup` | Getting started, in order, ticking off what you have already done. |
 | `help [command\|setting]` <br>also `?`, `h` | This list, or what one command or setting does. Only know how it starts? 'help rot' lists every command and setting starting with "rot". |
@@ -152,7 +153,7 @@ In the app, `help` lists them all and `help <command>` explains one. It explains
 | `clear` <br>also `cls` | Clears the log off the screen you type it in: the nocat.farm window, or the dashboard's Log and Console. The other one keeps its lines, and nothing is deleted: the log file has every line (Settings, Logging, Open the log folder). |
 | `visitors [signout]` <br>also `who` | Who has been at the dashboard: sign-ins, wrong passwords, lockouts, and visitors from the internet turned away. It shows when, from where and on what. 'visitors signout' signs every browser and phone out; you sign in again with the password. |
 | `version` <br>also `about` | Which version this is. |
-| `update [accept\|now\|skip]` | Check for a newer release. 'update accept' downloads it and restarts into it. Or, with Updates set to install when I click, once everyone's asleep, it installs once your accounts are asleep. 'update now' always installs right away. 'update skip' skips that version until a newer one comes out: no more reminders about it, and it never installs by itself. Nothing installs by itself unless Updates is set to install by itself at night. |
+| `update [accept\|now\|skip] \| file [zip] [force] \| versions \| to <version>` | Check for a newer release. 'update accept' downloads it and restarts into it. Or, with Updates set to install when I click, once everyone's asleep, it installs once your accounts are asleep. 'update now' always installs right away. 'update skip' skips that version until a newer one comes out: no more reminders about it, and it never installs by itself. Nothing installs by itself unless Updates is set to install by itself at night. 'update file <zip>' installs a nocat.farm zip that's on this PC, the same way (add 'force' for the same or an older version); with no zip named, a window opens to pick it. Only in the nocat.farm window or its console, or the dashboard on this PC. 'update versions' lists the older versions still on GitHub, and 'update to <version>' goes back to one. Your settings are saved first and come back when you update again, and the version you came from doesn't install by itself until a newer one is out. |
 | `answer <text>` | Answer whatever nocat.farm is waiting on, like a Steam Guard code or a password. |
 | `exit` <br>also `quit`, `q` | Shut nocat.farm down. |
 

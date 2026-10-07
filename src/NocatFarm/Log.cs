@@ -57,9 +57,11 @@ public static class Log {
 		}
 	}
 
-	/// <summary>Pad or truncate to an exact width, so columns line up whatever the account is called.</summary>
-	internal static string Pad(string s, int width) =>
-		s.Length <= width ? s.PadRight(width) : s[..(width - 1)] + "…";
+	/// <summary>
+	/// Pad or truncate to an exact width, so columns line up whatever the account is called - in columns as the terminal
+	/// draws them, and never through the middle of an emoji (see <see cref="Columns"/>).
+	/// </summary>
+	internal static string Pad(string s, int width) => Columns.Fit(s, width);
 
 	private static readonly ConcurrentQueue<Entry> Ring = new();
 	private static readonly object ConsoleLock = new();
@@ -331,6 +333,40 @@ public static class Log {
 	/// <summary>"what: ExceptionType: message", as a DEBUG line - for a catch that carries on without the thing it tried.</summary>
 	public static void Failed(string what, Exception e, string source = "nocat.farm") => Debug($"{what}: {Describe(e)}", source);
 
+	/// <summary>
+	/// Whether a failure is only the work being cut off: Steam failing every request still out when the connection drops
+	/// (an AsyncJobFailedException - exactly what signing out does to one), or a wait cancelled. On an account
+	/// that signed out, stopped or lost its connection meanwhile, that's the sign-out and not something going wrong.
+	/// </summary>
+	public static bool IsCutOff(Exception e) => Unwrap(e) is SteamKit2.AsyncJobFailedException or OperationCanceledException;
+
+	/// <summary>
+	/// Why something failed, for the line people read. Some exceptions have no message of their own - SteamKit's says
+	/// "Exception of type 'SteamKit2.AsyncJobFailedException' was thrown." - and the type and stack go to the debug log.
+	/// </summary>
+	public static Said Cause(Exception e) => Unwrap(e) switch {
+		SteamKit2.AsyncJobFailedException => new Said("Steam dropped the request"),
+		OperationCanceledException or TimeoutException => new Said("Steam didn't answer in time"),
+		{ } x when string.IsNullOrWhiteSpace(x.Message) || x.Message.StartsWith("Exception of type '", StringComparison.Ordinal) => new Said("something unexpected went wrong"),
+		{ } x => new Said(Scrub(x.Message))
+	};
+
+	/// <summary>The one exception inside an AggregateException (a task's), however deep.</summary>
+	private static Exception Unwrap(Exception e) {
+		while ((e is AggregateException a) && (a.InnerExceptions.Count == 1)) {
+			e = a.InnerExceptions[0];
+		}
+
+		return e;
+	}
+
+	private static readonly System.Text.RegularExpressions.Regex OwnFrame =
+		new(@"at NocatFarm\.(?:\w+\.)*?(\w+\.\w+)\(", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+	/// <summary>Where in nocat.farm a failure came from - "EventItems.QueueLockedAsync" - or empty when no frame of ours says.</summary>
+	public static string WhereFrom(Exception e) =>
+		OwnFrame.Match(Unwrap(e).StackTrace ?? "") is { Success: true } m ? m.Groups[1].Value : "";
+
 	/// <summary>An exception as "Type: message", with anything secret-looking in the message hidden.</summary>
 	public static string Describe(Exception e) => $"{e.GetType().Name}: {Scrub(e.Message)}";
 
@@ -355,10 +391,15 @@ public static class Log {
 		// key=value pairs in a query, a form or a cookie header
 		new(@"(?i)\b((?:access_token|oauth_token|refresh_token|webapi_token|apitoken|apikey|api_key|key|token|password|pass|steamLoginSecure|sessionid|secret)=)[^&\s;""',]+",
 			System.Text.RegularExpressions.RegexOptions.Compiled),
-		// user:password@ in a proxy or any other address
-		new(@"(://)[^/\s:@]+:[^/\s@]+(?=@)",System.Text.RegularExpressions.RegexOptions.Compiled),
+		// user:password@ in a proxy or any other address, up to the last @ (a password may have '/', '@' or a quote in it, and
+		// the user may be left out: 'http://:pw@host'). Only after a scheme: with none, 'user:x@y' was 'HourTargets
+		// 730:100@2026-12-01', 'meet at 10:30@home' and 'mailto:someone@example.com' as often as a proxy. A proxy typed without
+		// one is masked where it's typed ('set WebProxy') and logged by the proxy code without its password (Bot.ProxyShown).
+		new(@"(://)[^/\s:'""<>]*:(?!//)\S*(?=@[^\s@'""<>]*(?:$|[\s'""<>)]))", System.Text.RegularExpressions.RegexOptions.Compiled),
 		// Telegram: api.telegram.org/bot<id>:<secret>/method
 		new(@"(?i)(bot)\d{5,}:[A-Za-z0-9_-]{20,}", System.Text.RegularExpressions.RegexOptions.Compiled),
+		// Telegram's connect link: t.me/<bot>?start=<code> - whoever opens it first is connected as the owner
+		new(@"(t\.me/[A-Za-z0-9_]+\?start=)[A-Za-z0-9_-]+", System.Text.RegularExpressions.RegexOptions.Compiled),
 		// Discord: /api/webhooks/<id>/<secret>
 		new(@"(?i)(webhooks/\d+/)[A-Za-z0-9_.-]+", System.Text.RegularExpressions.RegexOptions.Compiled),
 		// Authorization: Bot xxx / Bearer xxx
@@ -426,11 +467,26 @@ public static class Log {
 		StackToFile(e, source);
 	}
 
-	/// <summary>For <see cref="TaskScheduler.UnobservedTaskException"/>: a task nobody awaited threw. Written down and marked seen.</summary>
+	/// <summary>
+	/// For <see cref="TaskScheduler.UnobservedTaskException"/>: a task nobody awaited threw. Written down and marked seen,
+	/// with where in nocat.farm it was when a frame of ours says. One only cut off - an account signing out under it, Steam
+	/// not answering - is a warning, not the red line: nothing broke, and the red line read as if something had.
+	/// </summary>
 	public static void OnUnobservedTask(object? sender, UnobservedTaskExceptionEventArgs e) {
 		try {
-			Exception inner = e.Exception.InnerExceptions.Count == 1 ? e.Exception.InnerExceptions[0] : e.Exception;
-			Crash(new Said("a background task failed: {0}", Describe(inner)), e.Exception);
+			Exception inner = Unwrap(e.Exception);
+			string where = WhereFrom(inner);
+
+			if (IsCutOff(inner)) {
+				Warn(where.Length > 0
+					? new Said("a background job was cut off partway in {0} - an account signed out, or Steam stopped answering, before it was done", where)
+					: new Said("a background job was cut off partway - an account signed out, or Steam stopped answering, before it was done"));
+				StackToFile(e.Exception);
+			} else {
+				Crash(where.Length > 0
+					? new Said("a background task failed in {0}: {1}", where, Describe(inner))
+					: new Said("a background task failed: {0}", Describe(inner)), e.Exception);
+			}
 		} catch {
 			// logging must never take the app down
 		}
@@ -570,6 +626,28 @@ public static class Log {
 				// logging must never take the app down
 			}
 		}
+	}
+
+	/// <summary>
+	/// Lines for the log file alone, each its own entry with the same time - a command and its reply, which the screen it
+	/// was typed on already shows. Not the screen, the dashboard's log or the listeners: shown there again, every reply
+	/// would appear twice. Nothing when file logging is off.
+	/// </summary>
+	public static void FileLines(string level, string source, IEnumerable<string> lines) {
+		string? file = TodaysFile();
+
+		if (file == null) {
+			return;
+		}
+
+		string when = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+		System.Text.StringBuilder text = new();
+
+		foreach (string line in lines) {
+			text.Append(when).Append('|').Append(level).Append('|').Append(source).Append('|').Append(line.ReplaceLineEndings(" ")).Append(Environment.NewLine);
+		}
+
+		Append(file, text.ToString(), level == "DEBUG");
 	}
 
 	/// <summary>

@@ -24,7 +24,9 @@ let logLines = [];
 // 'clear' in this dashboard hides everything up to here - in this browser only. The window and the file keep theirs.
 let logClearedAt = 0;
 let localLines = [];
-let history = JSON.parse(localStorage.getItem('nocatfarm-history') || '[]');
+// The Console's up arrow. Never a line with a secret in it - the server says which those are - and a list saved in this
+// browser is only offered once the server has looked it over (checkHistory): until then there is none.
+let history = [];
 let historyAt = -1;
 let view = location.hash.replace('#', '') || 'overview';
 let acctFilter = '';
@@ -66,7 +68,7 @@ async function api(path, options = {}) {
   const opts = { ...options, headers: { 'Content-Type': 'application/json', ...(options.headers || {}) } };
   if (token) opts.headers['Authorization'] = 'Bearer ' + token;
   const res = await fetch(path, opts);
-  if (res.status === 401) { showLogin(); throw new Error('unauthorised'); }
+  if (res.status === 401) { forgetHistory(); showLogin(); throw new Error('unauthorised'); }
   return res.json();
 }
 
@@ -280,10 +282,21 @@ document.addEventListener('focusin', (e) => {
 const tipIcon = (text) => text ? `<i class="info" data-tip="${esc(text)}"></i>` : '';
 
 // Inventory money. Whole dollars in the table - cents on a four-figure inventory are noise - and the full
-// figure in the tooltip, where the breakdown lives.
+// figure in the tooltip, where the breakdown lives. A minus goes in front of the symbol, "-$98.82": the number's own
+// sign after it read "$-98.82". Rounded first, so a fall of a few cents in whole dollars is "$0", not "-$0".
 const cur = () => (state && state.Currency) || '$';
-const usd = (n) => cur() + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-const usdExact = (n) => cur() + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const money = (n, digits, opts) => {
+  const v = Number(n) || 0;
+  const shown = Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits, ...opts });
+  return (v < 0 && /[1-9]/.test(shown) ? '-' : '') + cur() + shown;
+};
+const usd = (n) => money(n, 0);
+const usdExact = (n) => money(n, 2);
+// Up or down by a percentage: "+5.5%", "-5.5%", and "0.0%" with no sign when it rounds to nothing.
+const signedPct = (p) => {
+  const shown = Math.abs(Number(p) || 0).toFixed(1);
+  return (Number(shown) === 0 ? '' : p > 0 ? '+' : '-') + shown + '%';
+};
 
 // Up or down over the last day. Nothing at all until there is a reading old enough to compare against - a
 // percentage worked out from twenty minutes of history is noise dressed up as information.
@@ -293,7 +306,7 @@ function valueDelta(b) {
   const tip = up
     ? tf('Up {0} over the last 24 hours, at the lowest market prices.', usdExact(Math.abs(b.InventoryChange)))
     : tf('Down {0} over the last 24 hours, at the lowest market prices.', usdExact(Math.abs(b.InventoryChange)));
-  return `<span class="delta ${up ? 'up' : 'down'}" data-tip="${esc(tip)}">${up ? '+' : '-'}${Math.abs(b.InventoryChangePct).toFixed(1)}%</span>`;
+  return `<span class="delta ${up ? 'up' : 'down'}" data-tip="${esc(tip)}">${signedPct(b.InventoryChangePct)}</span>`;
 }
 
 // Copy text, over plain http too. navigator.clipboard only exists in a secure context - over http://<lan-ip>
@@ -944,8 +957,8 @@ function histLine(w, h, m, tipFor, label) {
   if (top <= bottom) { top = bottom + step; bottom = Math.max(0, bottom - step); }
   const ticks = [];
   for (let v = bottom; v <= top + step / 2; v += step) ticks.push(v);
-  const money = (v) => (step < 1 ? usdExact(v) : v >= 10000 ? cur() + v.toLocaleString('en-US', { notation: 'compact', maximumFractionDigits: 1 }) : usd(v));
-  const padL = 8 + 6.2 * Math.max(...ticks.map((v) => money(v).length));
+  const tick = (v) => (step < 1 ? usdExact(v) : v >= 10000 ? money(v, 0, { notation: 'compact', minimumFractionDigits: 0, maximumFractionDigits: 1 }) : usd(v));
+  const padL = 8 + 6.2 * Math.max(...ticks.map((v) => tick(v).length));
   const padR = 6, padT = 8, padB = 18;
   const pw = w - padL - padR, ph = h - padT - padB;
   const slot = pw / m.n;
@@ -956,7 +969,7 @@ function histLine(w, h, m, tipFor, label) {
   ticks.forEach((v, k) => {
     const yy = Math.round(y(v)) + 0.5;
     s += `<line class="${k === 0 ? 'base' : 'grid'}" x1="${histR(padL)}" x2="${w - padR}" y1="${yy}" y2="${yy}"/>`
-      + `<text class="yl" x="${histR(padL - 6)}" y="${yy + 3.5}" text-anchor="end">${esc(money(v))}</text>`;
+      + `<text class="yl" x="${histR(padL - 6)}" y="${yy + 3.5}" text-anchor="end">${esc(tick(v))}</text>`;
   });
 
   const drawn = pts.map((p, j) => (p ? [histR(x(j)), histR(y(p.v))] : null)).filter(Boolean);
@@ -1101,7 +1114,7 @@ function renderHistory() {
     const up = change >= 0;
     // "since" the first closing value in the window, which is exactly what the change is measured from - "in 30
     // days" would be a day out, because the first day's close is already the end of that day.
-    valueSub = `<span class="delta ${up ? 'up' : 'down'}">${esc(histSigned(Math.round(change), usd))} (${up ? '+' : '-'}${Math.abs((change / inRange[firstAt].v) * 100).toFixed(1)}%)</span> `
+    valueSub = `<span class="delta ${up ? 'up' : 'down'}">${esc(histSigned(Math.round(change), usd))} (${signedPct((change / inRange[firstAt].v) * 100)})</span> `
       + esc(tf('since {0}', histDate(histData.Days[m.off + firstAt])));
   }
   panels.push(panel(t('Inventory value'), t('What the inventory was worth at the end of each day, at the lowest market prices. A day with no new reading carries the last one over.'),
@@ -3678,6 +3691,7 @@ async function phoneSignOutAll(btn) {
   btn.disabled = true;
   const r = await api('/api/visitors/signout', { method: 'POST' }).catch(() => null);
   if (!r || !r.ok) { toast(t("That didn't work"), true); btn.disabled = false; return; }
+  forgetHistory();
   location.reload();
 }
 
@@ -4353,14 +4367,34 @@ function pushLocal(html) {
   $('out').scrollTop = $('out').scrollHeight;
 }
 
+// The line typed, on screen. Until the server has answered, only the command word if it is one: the line as typed was
+// echoed straight away, and a password typed after 'add', a product key or a password pasted at the prompt sat there.
+let echoes = 0;
+function pushEcho(line) {
+  const id = 'echo' + (++echoes);
+  const words = line.trim().split(/\s+/);
+  const word = words[0].replace(/^[/!]+/, '').toLowerCase();
+  const known = (commands || []).some((c) => c.Name === word);
+  pushLocal(`<div><span class="echo" id="${id}">&gt; ${esc(known ? words[0] + (words.length > 1 ? ' …' : '') : '…')}</span></div>`);
+  return id;
+}
+
+function showEcho(id, line) {
+  const at = localLines.findIndex((l) => l.includes(`id="${id}"`));
+  if (at < 0) return;
+  localLines[at] = `<div><span class="echo" id="${id}">&gt; ${esc(line)}</span></div>`;
+  renderOut();
+}
+
 async function run(line) {
-  pushLocal(`<div><span class="echo">&gt; ${esc(line)}</span></div>`);
+  const echo = pushEcho(line);
   // help is a reference, not output. /? and /help work too, because both are what people try.
   const asHelp = line.trim().replace(/^\//, '').toLowerCase();
 
   if (asHelp === 'help' || asHelp === '?' || asHelp === 'h') {
+    showEcho(echo, line);
     helpModal('');
-    return '';
+    return { output: '' };
   }
 
   // 'help <word>' opens the reference filtered to matching commands - unless the word is a setting, or matches
@@ -4378,8 +4412,9 @@ async function run(line) {
     const isCommand = (commands || []).some((c) => (c.Name + ' ' + c.Args + ' ' + c.Help).toLowerCase().includes(q));
 
     if (!isSetting && isCommand) {
+      showEcho(echo, line);
       helpModal(q);
-      return '';
+      return { output: '' };
     }
   }
 
@@ -4392,13 +4427,14 @@ async function run(line) {
     localLines = [];
     renderOut();
     if (view === 'log') renderLog();
-    return '';
+    return { output: '' };
   }
 
   const res = await post('/api/command', { Line: asHelp.startsWith('help ') ? line.trim().replace(/^\//, '') : line });
+  showEcho(echo, typeof res.line === 'string' ? res.line : '…');
   if (res.output) pushLocal(`<div class="reply">${linked(res.output)}</div>`);
   refresh();
-  return res.output;
+  return res;
 }
 
 function sendCommand(e) {
@@ -4406,13 +4442,41 @@ function sendCommand(e) {
   const input = $('cmd');
   const line = input.value.trim();
   if (!line) return false;
-  history.unshift(line);
-  history = history.slice(0, 100);
-  localStorage.setItem('nocatfarm-history', JSON.stringify(history));
   historyAt = -1;
   input.value = '';
-  run(line);
+  // Kept for the up arrow once the server has said the line holds no secret: a password, an answer, a product key never
+  // goes in - nor a line it never answered.
+  run(line).then((res) => {
+    if (res && !res.holdsSecret) {
+      history.unshift(line);
+      history = history.slice(0, 100);
+      localStorage.setItem('nocatfarm-history', JSON.stringify(history));
+    }
+  }).catch(() => {});
   return false;
+}
+
+// The up-arrow list saved in this browser, looked over by the server once signed in: a line that holds a secret goes. Saved
+// before the server said which do, every line typed went in - a password pasted at the prompt, a product key - and stayed.
+// Once a visit: signing in again (boot runs again) would add the same lines twice.
+let historyChecked = false;
+async function checkHistory() {
+  if (historyChecked) return;
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem('nocatfarm-history') || '[]'); } catch { saved = []; }
+  if (!Array.isArray(saved) || !saved.length) { historyChecked = true; return; }
+  const res = await post('/api/command/history', { Lines: saved.filter((l) => typeof l === 'string') }).catch(() => null);
+  if (!res || !Array.isArray(res.Lines)) return;   // not answered: nothing from before is offered until it is
+  historyChecked = true;
+  history = [...history, ...res.Lines].slice(0, 100);
+  localStorage.setItem('nocatfarm-history', JSON.stringify(history));
+}
+
+// Signed out: the up-arrow list goes with the session.
+function forgetHistory() {
+  history = [];
+  historyAt = -1;
+  localStorage.removeItem('nocatfarm-history');
 }
 
 function renderCommandList() {
@@ -4888,6 +4952,11 @@ function sectionIntro(section, values) {
 
   if (section === 'Discord profile' && settingsTarget === GLOBAL) {
     return discordCardIntro(val);
+  }
+
+  // Going back to an older version, and a zip from this PC - beside the settings for updating.
+  if (section === 'Updates & plugins' && settingsTarget === GLOBAL) {
+    return otherVersionsPanel();
   }
 
   // Where the files are, one click away - the log on screen is only the last few hundred lines.
@@ -5560,6 +5629,103 @@ async function applyRestore(btn) {
   toast(r.Message);
   await loadConfig().catch(() => {});
   if (view === 'settings') renderSettings();
+}
+
+// ── other versions ───────────────────────────────────────────────────────────
+// Under the update settings: going back to an older version still on GitHub, and a nocat.farm zip from this PC. The
+// zip button only shows on this PC, where the window to pick it opens - from a phone it would open on a screen nobody
+// is looking at, and 'update file' refuses it from there anyway. Going back is 'update to', the same rights as Update.
+let versionsInfo = null;
+let versionsLoading = false;
+
+async function loadVersionsInfo() {
+  if (versionsLoading) return;
+  versionsLoading = true;
+  try {
+    versionsInfo = await api('/api/update/versions');
+  } catch {
+    versionsInfo = null;
+  } finally {
+    versionsLoading = false;
+  }
+  const box = $('otherVersions');
+  if (box) box.innerHTML = otherVersionsHtml();
+}
+
+function otherVersionsPanel() {
+  if (state && state.CanSelfUpdate === false) return '';
+  if (!versionsInfo) loadVersionsInfo();
+  return `<div id="otherVersions">${otherVersionsHtml()}</div>`;
+}
+
+function otherVersionsHtml() {
+  const v = versionsInfo;
+  if (!v || !v.CanSelfUpdate) return '';
+  return `<div class="explain"><b>${esc(t('Other versions'))}</b>
+    <p style="margin:6px 0 10px">${esc(t('Go back to an older version still on GitHub. Your settings are saved first, and come back when you update again.'))}</p>
+    <div class="backupbtns">
+      <button class="ghost" onclick="askGoBack(this)">${esc(t('Go back to an older version'))}</button>
+      ${v.CanPick ? `<button class="ghost" data-tip="${esc(t('Opens a window on this PC to pick a nocat.farm zip, and installs it the way an update goes in.'))}" onclick="installFromFile(this)">${esc(t('Install from a file…'))}</button>` : ''}
+    </div></div>`;
+}
+
+async function installFromFile(btn) {
+  btn.disabled = true;
+  try {
+    const r = await post('/api/command', { Line: 'update file' });
+    toast(r.output || t("That didn't work"));
+  } catch {
+    toast(t("That didn't work"), true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// What going back to each older version holds off, from the server - the version that won't install by itself, or none.
+// The same answer 'update to' acts on, so the dialog says what will happen: this version, the newest release, or nothing
+// (a newer release is out, and that's what the older version offers).
+let goBackHolds = {};
+
+function goBackHold(to) {
+  const hold = goBackHolds[to];
+  return hold
+    ? tf("Your settings are saved first, and come back when you update again. {0} won't install by itself until a newer version is out - update accept brings it back.", hold)
+    : t('Your settings are saved first, and come back when you update again.');
+}
+
+async function askGoBack(btn) {
+  btn.disabled = true;
+  let r = null;
+  try { r = await api('/api/update/versions?list=1'); } catch { r = null; } finally { btn.disabled = false; }
+
+  if (!r) { toast(t("That didn't work"), true); return; }
+  if (r.Problem) { toast(r.Problem, true); return; }
+  if (!r.Older || !r.Older.length) { toast(t("There's no older version on GitHub to go back to.")); return; }
+  goBackHolds = r.Holds || {};
+
+  modal(`
+    <h2>${esc(t('Go back to an older version'))}</h2>
+    <p>${esc(tf('You have {0}.', r.Current))}</p>
+    <select id="goBackTo" aria-label="${esc(t('Go back to an older version'))}" onchange="$('goBackHold').textContent = goBackHold(this.value)">${r.Older.map((x) => `<option value="${esc(x)}">${esc(x)}</option>`).join('')}</select>
+    <p class="small" id="goBackHold">${esc(goBackHold(r.Older[0]))}</p>
+    <div class="actions">
+      <button class="ghost" onclick="closeModal()">${esc(t('Cancel'))}</button>
+      <button class="danger" onclick="goBack(this)">${esc(t('Go back'))}</button>
+    </div>`);
+}
+
+async function goBack(btn) {
+  const to = ($('goBackTo') || {}).value || '';
+  if (!/^\d+\.\d+\.\d+$/.test(to)) return;
+  btn.disabled = true;
+  try {
+    const r = await post('/api/command', { Line: 'update to ' + to });
+    closeModal();
+    toast(r.output || t("That didn't work"));
+  } catch {
+    closeModal();
+    toast(t("That didn't work"), true);
+  }
 }
 
 function dangerZone(name) {
@@ -6556,6 +6722,7 @@ async function boot() {
 
   go(view);
   await refresh();   // arms the single polling timer
+  checkHistory();
 
   if (shouldShowTutorial()) { startTutorial(); return; }
 

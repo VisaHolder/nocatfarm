@@ -149,6 +149,26 @@ public static class DailyReport {
 			return new Said("counting starts now");
 		}
 
+		if (LastSummaryAt() is not { } last) {
+			return new Said("since the last daily summary");
+		}
+
+		TimeSpan gap = nowUtc - last;
+
+		// Later than now (the clock put back): the cards and comments are the last 24h then (Build), and so is this.
+		if ((gap < TimeSpan.Zero) || ((gap > TimeSpan.FromHours(23.5)) && (gap < TimeSpan.FromHours(24.5)))) {
+			return new Said("last 24h");
+		}
+
+		DateTime local = last.ToLocalTime();
+		string when = local.Date == nowUtc.ToLocalTime().Date ? local.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)
+			: local.ToString("MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+
+		return new Said("since the daily summary at {0} ({1})", when, Fmt.Hm((int) gap.TotalMinutes));
+	}
+
+	/// <summary>When the last summary went out, as far as it's known - null when it isn't.</summary>
+	private static DateTime? LastSummaryAt() {
 		DateTime? at;
 		string day;
 
@@ -163,21 +183,7 @@ public static class DailyReport {
 			at = fired.AddHours(mgr.Global.DailyReportHour).AddMinutes(mgr.Global.DailyReportMinute).ToUniversalTime();
 		}
 
-		if (at is not { } last) {
-			return new Said("since the last daily summary");
-		}
-
-		TimeSpan gap = nowUtc - last;
-
-		if ((gap > TimeSpan.FromHours(23.5)) && (gap < TimeSpan.FromHours(24.5))) {
-			return new Said("last 24h");
-		}
-
-		DateTime local = last.ToLocalTime();
-		string when = local.Date == nowUtc.ToLocalTime().Date ? local.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)
-			: local.ToString("MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture);
-
-		return new Said("since the daily summary at {0} ({1})", when, Fmt.Hm((int) gap.TotalMinutes));
+		return at;
 	}
 
 	/// <summary>One account's day as the summary counts it.</summary>
@@ -272,8 +278,6 @@ public static class DailyReport {
 		List<Bot> bots = [.. mgr.All];   // in the dashboard's order, like everywhere else
 
 		bool r4r = mgr.Global.Rep4RepEnabled;
-		Dictionary<string, int> cards = Count(Stats.KindCard);
-		Dictionary<string, int> comments = Count(Stats.KindComment);
 
 		Dictionary<string, double> prev;
 		Dictionary<string, double>? prevGames;
@@ -285,6 +289,15 @@ public static class DailyReport {
 		}
 
 		bool first = prev.Count == 0;
+
+		// Cards and comments over the same time as the hours and the heading (Note): from the last summary. Counted over
+		// the last 24h, a 'report' at 09:47 put a whole day of cards beside 3h47m of hours "since the summary at 06:00".
+		// A last summary later than now - the clock was put back since - counted from a time still to come, which is nothing
+		// at all: the last 24h then, as the heading says (Note).
+		DateTime countFrom = !first && (LastSummaryAt() is { } last) && (last <= nowUtc) ? last : nowUtc.AddHours(-24);
+		Dictionary<string, int> cards = Count(Stats.KindCard, countFrom, nowUtc);
+		Dictionary<string, int> comments = Count(Stats.KindComment, countFrom, nowUtc);
+
 		Dictionary<string, double> snapshot = new(StringComparer.OrdinalIgnoreCase);
 		Dictionary<string, double> games = new(StringComparer.OrdinalIgnoreCase);
 		Dictionary<string, int> bans = new(StringComparer.OrdinalIgnoreCase);
@@ -330,9 +343,9 @@ public static class DailyReport {
 			return clock > 0 ? Math.Max(1, banked / clock) : 1;
 		}
 
-		static Dictionary<string, int> Count(string kind) =>
-			Stats.Recent(24)
-				.Where(e => e.Kind == kind)
+		static Dictionary<string, int> Count(string kind, DateTime since, DateTime nowUtc) =>
+			Stats.Recent((int) Math.Min(24 * 90, Math.Ceiling((nowUtc - since).TotalHours) + 1))
+				.Where(e => (e.Kind == kind) && (e.When >= since))
 				.GroupBy(static e => e.Bot, StringComparer.OrdinalIgnoreCase)
 				.ToDictionary(static g => g.Key, static g => g.Count(), StringComparer.OrdinalIgnoreCase);
 	}

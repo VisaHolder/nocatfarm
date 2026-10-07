@@ -234,7 +234,14 @@ public sealed class BotManager : IAsyncDisposable {
 				return null;
 			}
 
-			ConfigStore.SaveBot(name, cfg);
+			// Not added when it isn't on disk. A file it couldn't save over (open somewhere else) was still there, and the
+			// account ran on whatever that old file said - and came back as that at the next start.
+			if (!ConfigStore.SaveBot(name, cfg)) {
+				Log.Warn(new Said("not added - its settings couldn't be saved, so nothing was started. Try again in a moment"), name);
+
+				return null;
+			}
+
 			bot = new(name, cfg);
 			Wire(bot);
 			_bots[name] = bot;
@@ -268,11 +275,15 @@ public sealed class BotManager : IAsyncDisposable {
 			// login token behind, so the account came back at the next start.
 			lock (_adding) {
 				TokenStore.Clear(bot.Name);
+				// Its config before the rest: a reload reading it right now writes its overnight mark and then takes it back
+				// if the config is gone (see ConfigStore.ReadBot) - and if it isn't gone yet, the mark is written before the
+				// rest go, and goes with them.
+				bool deleted = ConfigStore.DeleteBot(bot.Name);
 				// And the rest of its own files, in any case - left, they came back with the account, and an account added
 				// again as "Main" after "main" had its state twice, so backups were refused off Windows.
 				ConfigStore.DeleteAccountFiles(bot.Name);
 
-				return ConfigStore.DeleteBot(bot.Name);
+				return deleted;
 			}
 		} finally {
 			lock (_adding) {

@@ -207,8 +207,7 @@ public static class WeeklyReport {
 	private static string Key(DateTime day) => day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
 	/// <summary>"+$1.23", "-€0.40", or a dash when there's nothing to compare yet.</summary>
-	internal static string Money(decimal? change) => change is not { } c ? "—"
-		: (c < 0 ? "-" : "+") + PriceBook.Symbol + Math.Abs(c).ToString("0.00", CultureInfo.InvariantCulture);
+	internal static string Money(decimal? change) => change is not { } c ? "—" : PriceBook.Signed(c);
 
 	private static void Mark(DateTime day) {
 		lock (Gate) {

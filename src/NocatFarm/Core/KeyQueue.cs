@@ -289,6 +289,22 @@ public static class KeyQueue {
 		}
 	}
 
+	/// <summary>
+	/// The queue on disk is plain text now - left so by a version from before it was encrypted - or there's none yet. Only
+	/// then is it written plain while an update is on trial: an encrypted one written plain sat in the clear in every backup
+	/// and settings copy made until the trial was over, and the version before reads it encrypted anyway. One that wasn't
+	/// there, written encrypted, was a queue the version before might not read if the trial failed.
+	/// </summary>
+	private static bool PlainOnDisk() {
+		try {
+			string stored = File.Exists(Path) ? File.ReadAllText(Path) : "";
+
+			return (stored.Trim().Length == 0) || (Secrets.IsPlain(stored) && stored.TrimStart().StartsWith('['));
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			return false;   // encrypted, then - never plain on a guess
+		}
+	}
+
 	public static void Save() {
 		if (ConfigStore.RestoreWriting) {
 			return;   // see ConfigStore.RestoreWriting: the restored queue is about to be read in
@@ -314,7 +330,7 @@ public static class KeyQueue {
 				}
 
 				Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
-				AtomicFile.Write(Path, SelfUpdate.OnTrial ? json : Secrets.Protect(json, "keys"));   // see SelfUpdate.OnTrial
+				AtomicFile.Write(Path, SelfUpdate.OnTrial && PlainOnDisk() ? json : Secrets.Protect(json, "keys"));   // see SelfUpdate.OnTrial
 			}
 		} catch (Exception e) {
 			Log.Warn(new Said("couldn't save the key queue: {0}", Log.Scrub(e.Message)));

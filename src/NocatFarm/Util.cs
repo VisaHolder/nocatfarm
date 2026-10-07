@@ -347,6 +347,142 @@ public static class Fmt {
 	}
 }
 
+/// <summary>
+/// Text cut and padded for a table, by what the eye sees rather than by chars.
+/// </summary>
+/// <remarks>
+/// A char is half an emoji. The status table cut a custom game name of "💀nocat.lol/nocatfarm💀" between the two halves of
+/// the second skull and printed "💀nocat.lol/nocatfarm�…" - a lone surrogate the console can only show as "�". So text is
+/// cut on whole text elements (a pair, an emoji with its variation selector, a letter with its accent), and measured in
+/// the columns a terminal gives it: two for an emoji or a CJK character, one for the rest. Padded by chars, a row with
+/// an emoji in it ended a column later than the rest.
+/// </remarks>
+public static class Columns {
+	/// <summary>The columns <paramref name="text"/> takes in a terminal.</summary>
+	public static int Width(string text) {
+		int width = 0;
+
+		for (int i = 0; i < text.Length;) {
+			int n = System.Globalization.StringInfo.GetNextTextElementLength(text.AsSpan(i));
+			width += ElementWidth(text.AsSpan(i, n));
+			i += n;
+		}
+
+		return width;
+	}
+
+	/// <summary>One text element's columns: none for a control char, two for an emoji or a wide (CJK) character, one otherwise.</summary>
+	public static int ElementWidth(ReadOnlySpan<char> element) {
+		if (element.IsEmpty || (Rune.DecodeFromUtf16(element, out Rune first, out _) != System.Buffers.OperationStatus.Done)) {
+			return element.IsEmpty ? 0 : 1;
+		}
+
+		if (Rune.IsControl(first)) {
+			return 0;
+		}
+
+		// U+FE0F asks for the emoji picture, which is drawn two wide: ☠️ as against the text-style ☠.
+		return element.Contains('️') || Wide(first.Value) ? 2 : 1;
+	}
+
+	private static bool Wide(int c) =>
+		c is (>= 0x1100 and <= 0x115F)             // Hangul jamo
+			or (>= 0x2E80 and <= 0x303E)           // CJK radicals and punctuation
+			or (>= 0x3041 and <= 0x33FF)           // kana, CJK symbols
+			or (>= 0x3400 and <= 0x4DBF)
+			or (>= 0x4E00 and <= 0x9FFF)           // CJK ideographs
+			or (>= 0xA000 and <= 0xA4CF)
+			or (>= 0xAC00 and <= 0xD7A3)           // Hangul syllables
+			or (>= 0xF900 and <= 0xFAFF)
+			or (>= 0xFE30 and <= 0xFE4F)
+			or (>= 0xFF00 and <= 0xFF60)           // fullwidth forms
+			or (>= 0xFFE0 and <= 0xFFE6)
+			// Emoji in the BMP drawn as a picture without asking: ⌚ ⏳ ☔ ♈ ⚡ ⚽ ⛔ ✅ ❌ ❓ ➕ ⭐ ⭕ and their kin.
+			or 0x231A or 0x231B or (>= 0x23E9 and <= 0x23EC) or 0x23F0 or 0x23F3 or 0x25FD or 0x25FE
+			or 0x2614 or 0x2615 or (>= 0x2648 and <= 0x2653) or 0x267F or 0x2693 or 0x26A1 or 0x26AA or 0x26AB
+			or 0x26BD or 0x26BE or 0x26C4 or 0x26C5 or 0x26CE or 0x26D4 or 0x26EA or 0x26F2 or 0x26F3 or 0x26F5
+			or 0x26FA or 0x26FD or 0x2705 or 0x270A or 0x270B or 0x2728 or 0x274C or 0x274E or (>= 0x2753 and <= 0x2755)
+			or 0x2757 or (>= 0x2795 and <= 0x2797) or 0x27B0 or 0x27BF or 0x2B1B or 0x2B1C or 0x2B50 or 0x2B55
+			or 0x1F004 or 0x1F0CF or 0x1F18E or (>= 0x1F191 and <= 0x1F19A)
+			or (>= 0x1F1E6 and <= 0x1F1FF)         // regional indicators: a flag is a pair of them, one element, two wide
+			or (>= 0x1F200 and <= 0x1F251)
+			or (>= 0x1F300 and <= 0x1F64F)         // pictographs and faces
+			or (>= 0x1F680 and <= 0x1F6FF)         // transport and map
+			or (>= 0x1F7E0 and <= 0x1F7EB)         // coloured circles and squares
+			or (>= 0x1F900 and <= 0x1F9FF)
+			or (>= 0x1FA70 and <= 0x1FAFF)
+			or (>= 0x20000 and <= 0x3FFFD);
+
+	/// <summary>At most <paramref name="width"/> columns, cut on a whole text element and ended with "…" when something was left off.</summary>
+	public static string Clip(string text, int width) {
+		if (Width(text) <= width) {
+			return text;
+		}
+
+		if (width <= 0) {
+			return "";
+		}
+
+		StringBuilder sb = new();
+		int used = 0;
+
+		for (int i = 0; i < text.Length;) {
+			int n = System.Globalization.StringInfo.GetNextTextElementLength(text.AsSpan(i));
+			int w = ElementWidth(text.AsSpan(i, n));
+
+			if (used + w > width - 1) {
+				break;
+			}
+
+			sb.Append(text, i, n);
+			used += w;
+			i += n;
+		}
+
+		return sb.Append('…').ToString();
+	}
+
+	/// <summary>Exactly <paramref name="width"/> columns: cut as <see cref="Clip"/> does, or padded with spaces.</summary>
+	public static string Fit(string text, int width) {
+		string cut = Clip(text, width);
+
+		return cut + new string(' ', Math.Max(0, width - Width(cut)));
+	}
+
+	/// <summary>Padded out to <paramref name="width"/> columns, and never cut - the {x,-30} of a column, measured by eye.</summary>
+	public static string PadRight(string text, int width) => text + new string(' ', Math.Max(0, width - Width(text)));
+
+	/// <summary>
+	/// At most <paramref name="max"/> chars, <paramref name="tail"/> included when it's cut - for a limit counted in chars
+	/// (a chat message, a Discord button, a tray balloon) - and cut on a whole text element, never half an emoji.
+	/// </summary>
+	public static string ClipChars(string text, int max, string tail = "…") {
+		if (text.Length <= max) {
+			return text;
+		}
+
+		int room = max - tail.Length;
+
+		if (room < 0) {
+			return "";
+		}
+
+		int end = 0;
+
+		while (end < text.Length) {
+			int n = System.Globalization.StringInfo.GetNextTextElementLength(text.AsSpan(end));
+
+			if (end + n > room) {
+				break;
+			}
+
+			end += n;
+		}
+
+		return text[..end] + tail;
+	}
+}
+
 /// <summary>Loops started in the background and never awaited.</summary>
 public static class Background {
 	/// <summary>

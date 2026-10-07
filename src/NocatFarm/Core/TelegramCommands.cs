@@ -294,23 +294,34 @@ public static partial class Notifier {
 		}
 	}
 
-	private static async Task HandleAsync(string text, CancellationToken ct) {
+	/// <summary>
+	/// A Telegram message with the bot's name off its command: '/status@mybot', picked from the menu in a group, is '/status'.
+	/// Taken off here, before anything reads the line - the log included - and nowhere else: anywhere else the '@' is part of
+	/// the word, and the password 's@cretbot' isn't 's' (<see cref="Commands.WithoutBotName"/>). The connected bot's name
+	/// when it's known.
+	/// </summary>
+	private static string TelegramLine(string text) {
 		string trimmed = text.Trim();
+
+		if (!trimmed.StartsWith('/')) {
+			return trimmed;
+		}
+
+		string first = Commands.Words(trimmed)[0];
+
+		return Commands.WithoutBotName(first, _botName) + trimmed[first.Length..];
+	}
+
+	private static async Task HandleAsync(string text, CancellationToken ct) {
+		string trimmed = TelegramLine(text);
 
 		// Everything the chat sends shows in the log (the window, the dashboard and the log file), the way a command
 		// typed in the window does - so what was done from a phone is never invisible at the PC. A secret's value
 		// ('/set new SteamPassword ...') is masked, or the log file would hold the password in plain text.
-		Log.Info(new Said("> " + Commands.ForLog(trimmed)), "telegram");
+		Log.Info(new Said("> " + Commands.LineForLog(trimmed)), "telegram");
 		bool slash = trimmed.StartsWith('/');
 		string line = slash ? trimmed[1..] : trimmed;
-		int space = line.IndexOf(' ');
-		string first = (space < 0 ? line : line[..space]).ToLowerInvariant();
-		string rest = space < 0 ? "" : line[(space + 1)..].Trim();
-
-		// "/status@mybot" when commands are picked from the menu in a group
-		if (first.IndexOf('@') is int at and >= 0) {
-			first = first[..at];
-		}
+		(string first, string rest) = CommandWords(line);
 
 		if (slash) {
 			switch (first) {
@@ -382,12 +393,24 @@ public static partial class Notifier {
 			output = new Said("done").ToString();
 		}
 
-		EchoToLog(output, "telegram");
+		EchoToLog(line, output, "telegram");
 
 		// A code block keeps the console's columns lined up; long replies go as a couple of messages, then stop.
 		foreach (string chunk in ChatChunks(output, 3500)) {
 			await PostTelegramAsync($"<pre>{Html(chunk)}</pre>", ct).ConfigureAwait(false);
 		}
+	}
+
+	/// <summary>
+	/// A chat line's command word and the rest, split where the dispatcher splits - at any white space. Split at a space
+	/// alone, '/remove<tab>alt' was one unknown word to the confirm guard below and 'remove alt' to the dispatcher, which
+	/// deleted it without a "confirm". The rest as it was typed: put back together a word at a time, a game name or a
+	/// password lost its no-break spaces.
+	/// </summary>
+	internal static (string First, string Args) CommandWords(string line) {
+		string[] words = Commands.Words(line);
+
+		return words.Length == 0 ? ("", "") : (words[0].ToLowerInvariant(), Commands.Tail(line, 1));
 	}
 
 	/// <summary>
@@ -402,8 +425,9 @@ public static partial class Notifier {
 			return (null, rest);
 		}
 
-		// "confirm" as a word of its own: '/remove autoconfirm' ran 'remove auto' without asking.
-		string[] words = rest.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+		// "confirm" as a word of its own: '/remove autoconfirm' ran 'remove auto' without asking. A word at any white space,
+		// as the dispatcher reads them - 'alt<tab>confirm' is two.
+		string[] words = Commands.Words(rest);
 
 		return (words.Length > 0) && words[^1].Equals("confirm", StringComparison.OrdinalIgnoreCase)
 			? (null, string.Join(' ', words[..^1]))
@@ -433,17 +457,26 @@ public static partial class Notifier {
 		return kept;
 	}
 
-	/// <summary>The reply in the log too - the first 40 lines of it, so one long answer doesn't bury everything else.</summary>
-	internal static void EchoToLog(string output, string source) {
+	/// <summary>
+	/// The reply in the log too, masked as the log file masks a command's reply (Steam Guard codes, keys, tokens): the
+	/// first 40 lines on screen, so one long answer doesn't bury everything else, and the rest - up to the log file's
+	/// own limit - in the file alone.
+	/// </summary>
+	internal static void EchoToLog(string line, string output, string source) {
 		const int MaxLines = 40;
-		string[] lines = [.. output.Replace("\r\n", "\n").Split('\n').Where(static l => l.Length > 0)];
+		List<string> lines = Commands.ReplyForLog(line, output);
+
+		// Counted from the reply itself: past the log file's own limit its lines end in one "… N more lines", and counting
+		// those said 161 more of a reply with thousands.
+		int total = output.ReplaceLineEndings("\n").Split('\n').Count(static l => l.Trim().Length > 0);
 
 		foreach (string outLine in lines.Take(MaxLines)) {
 			Log.Info(new Said("  " + outLine), source);
 		}
 
-		if (lines.Length > MaxLines) {
-			Log.Info(new Said("  ... and {0} more line(s)", lines.Length - MaxLines), source);
+		if (total > MaxLines) {
+			Log.FileLines("INFO", source, lines.Skip(MaxLines).Select(static l => "  " + l));
+			Log.Info(new Said("  ... and {0} more line(s)", total - MaxLines), source);
 		}
 	}
 
@@ -456,7 +489,7 @@ public static partial class Notifier {
 				part.Clear();
 			}
 
-			part.Append(part.Length > 0 ? "\n" : "").Append(l.Length > size ? l[..size] : l);
+			part.Append(part.Length > 0 ? "\n" : "").Append(Columns.ClipChars(l, size, ""));
 		}
 
 		if (part.Length > 0) {

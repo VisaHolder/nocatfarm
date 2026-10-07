@@ -197,11 +197,12 @@ def used_keys(files):
         rel = path.relative_to(ROOT).as_posix()
 
         # Only a plain literal is a key. `new Said(reason)` translates whatever reason holds at run time, and
-        # an interpolated $"..." is a bug in its own right - it can never match a pack entry.
-        for m in re.finditer(r'(?:new Said|Loc\.T|Loc\.Is)\(\s*(?=")', src):
-            value, _ = cs_literal(src, m.end())
+        # an interpolated $"..." is a bug in its own right - it can never match a pack entry. Nor can a literal with
+        # more added at run time: `new Core.Said("> cards " + name)` is a line echoed as it was typed.
+        for m in re.finditer(r'(?:new (?:[\w.]+\.)?Said|Loc\.T|Loc\.Is)\(\s*(?=")', src):
+            value, end = cs_literal(src, m.end())
 
-            if value:
+            if value and not re.match(r"\s*\+", src[end:end + 20]):
                 keys.setdefault(value, f"{rel}:{src.count(chr(10), 0, m.start()) + 1}")
 
         # A log line written as a plain string is a Said too - Log.Info(string) is Info(new Said(text)) - so the
@@ -390,7 +391,7 @@ def prose(expr):
 
 
 def translated(expr):
-    return ("new Said(" in expr) or ("Loc.T(" in expr) or (re.match(r"new\s*\(", expr) is not None)
+    return (re.search(r"new (?:[\w.]+\.)?Said\(", expr) is not None) or ("Loc.T(" in expr) or (re.match(r"new\s*\(", expr) is not None)
 
 
 def english_values(files):
@@ -419,7 +420,7 @@ def english_values(files):
     for path, src in files.items():
         rel = path.relative_to(ROOT).as_posix()
 
-        for m in re.finditer(r"(?:new Said|Loc\.T)\(", src):
+        for m in re.finditer(r"(?:new (?:[\w.]+\.)?Said|Loc\.T)\(", src):
             args = call_args(src, m.end())
             line = src.count("\n", 0, m.start()) + 1
 
@@ -482,7 +483,7 @@ def english_values(files):
                 name = parts[-1]
                 raw = False
 
-                for sm in re.finditer(r"(?:new Said|Loc\.T)\(", body):
+                for sm in re.finditer(r"(?:new (?:[\w.]+\.)?Said|Loc\.T)\(", body):
                     if any(re.fullmatch(re.escape(name), a) for a in call_args(body, sm.end())[1:]):
                         raw = True
                         break

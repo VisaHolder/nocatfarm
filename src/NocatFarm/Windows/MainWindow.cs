@@ -230,6 +230,7 @@ public sealed partial class MainWindow : IDisposable {
 		_mgr = mgr;
 		_url = url;
 		_exit = exit;
+		Prompt.Changed += () => _question.Changed(Prompt.Current);
 	}
 
 	public bool Visible { get; private set; }
@@ -490,6 +491,11 @@ public sealed partial class MainWindow : IDisposable {
 	}
 
 	private IntPtr InputProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam) {
+		// Every key and paste, so the line knows which question was up as it was typed (see QuestionWatch).
+		if (msg is WmKeyDown or WmChar or WmPaste) {
+			_question.Key(GetWindowTextLength(_input) == 0, Prompt.Current);
+		}
+
 		if ((msg == WmKeyDown) && (wParam.ToInt32() == VkReturn)) {
 			RunTypedCommand();
 
@@ -518,6 +524,9 @@ public sealed partial class MainWindow : IDisposable {
 	/// <summary>The commands typed in this window, for up/down.</summary>
 	private readonly CommandHistory _typed = new();
 
+	/// <summary>The question up as the line in the box was typed.</summary>
+	private readonly QuestionWatch _question = new();
+
 	private string CurrentInput() {
 		StringBuilder buffer = new(Math.Max(1, GetWindowTextLength(_input)) + 1);
 		GetWindowText(_input, buffer, buffer.Capacity);
@@ -537,12 +546,24 @@ public sealed partial class MainWindow : IDisposable {
 
 		SetWindowText(_input, "");
 
-		// The question up as the line was sent, read once for everything below.
-		Prompt.Question? question = Prompt.Current;
+		// The question the line was typed for - the one up at its first key, as the console has it - read once for
+		// everything below. A question up at any time while it was typed, and gone (answered from the dashboard, or given
+		// up) by Enter, and the line is dropped: not run, not written down, not kept - it may well be the password.
+		(QuestionWatch.Verdict verdict, Prompt.Question? question) = _question.Enter(Prompt.Current);
 
-		// Remembered for up/down - never an answer to a question (a password, a Steam Guard code), and never a line
-		// the log would mask ('set ... SteamPassword ...').
-		if ((question == null) && (Commands.ForLog(line) == line)) {
+		if (verdict == QuestionWatch.Verdict.Drop) {
+			_typed.Reset();
+			Append(new Log.Entry(0, DateTime.Now, "WARN", "", new Core.Said("  that line was typed while nocat.farm was asking something, so it wasn't run or kept - type it again if it was a command")));
+			Invalidate();
+
+			return;
+		}
+
+		// Remembered for up/down - never an answer to a question (a password, a Steam Guard code), and never a line with a
+		// secret in it ('set ... SteamPassword ...', a password typed on the end of 'add', a product key). Not "a line the
+		// log would mask": the log keeps only the word of a mistyped command, and 'pasue new' was then the one line the up
+		// arrow couldn't bring back to fix.
+		if ((question == null) && !Commands.HoldsSecret(line)) {
 			_typed.Add(line);
 		} else {
 			_typed.Reset();
@@ -568,7 +589,7 @@ public sealed partial class MainWindow : IDisposable {
 		// Sixty lines into the log pushes whatever you were reading off the top and cannot be scrolled on its
 		// own, which is exactly what makes it useless at the moment you need it. Shown as a panel instead, the
 		// same way the accounts list is. /help and /? both work because both are what people type.
-		string asHelp = line.Trim().TrimStart('/').ToLowerInvariant();
+		string asHelp = Commands.Unprefixed(line.Trim()).ToLowerInvariant();
 
 		if (asHelp is "help" or "?" or "h") {
 			SetHelpSheet(true);
@@ -585,12 +606,13 @@ public sealed partial class MainWindow : IDisposable {
 			return;
 		}
 
-		// Masked like Telegram and Steam chat: 'set myaccount SteamPassword ...' must not sit on screen in plain text.
-		Append(new Log.Entry(0, DateTime.Now, "INFO", "you", new Core.Said("> " + Commands.ForLog(line))));
+		// Masked like Telegram and Steam chat: 'set myaccount SteamPassword ...', a password on the end of 'add' or a
+		// product key must not sit on screen in plain text.
+		Append(new Log.Entry(0, DateTime.Now, "INFO", "you", new Core.Said("> " + Commands.LineForLog(line))));
 
 		_ = Task.Run(async () => {
 			try {
-				string output = await Commands.RunAsync(_mgr, line).ConfigureAwait(false);
+				string output = await Commands.RunAtThisPcAsync(_mgr, line, "window").ConfigureAwait(false);
 
 				foreach (string outLine in output.Replace("\r\n", "\n").Split('\n')) {
 					if (outLine.Length > 0) {
@@ -653,6 +675,13 @@ public sealed partial class MainWindow : IDisposable {
 				return new IntPtr(1);   // everything is painted into a back buffer; erasing here only flickers
 
 			case WmTimer:
+				// The "pick a file" window's own timer, not the once-a-second one.
+				if (wParam == new IntPtr(PickTimer)) {
+					RaisePicker();
+
+					return IntPtr.Zero;
+				}
+
 				WatchPrompt();
 
 				if (_mini) {
@@ -684,6 +713,11 @@ public sealed partial class MainWindow : IDisposable {
 
 			case WmRefreshOnTop:
 				ApplyOnTop();
+
+				return IntPtr.Zero;
+
+			case WmRunHere:
+				RunPosted();
 
 				return IntPtr.Zero;
 
@@ -2269,6 +2303,7 @@ public sealed partial class MainWindow : IDisposable {
 	/// <summary>WM_APP + 1: mini mode on (wParam 1) or off, posted so the switch always runs on the window's own thread.</summary>
 	private const int WmSetMini = 0x8001;
 	private const int WmChar = 0x0102;
+	private const int WmPaste = 0x0302;
 	private const int WmQueryEndSession = 0x0011;
 	private const int WmEndSession = 0x0016;
 	private const int EmSetPasswordChar = 0x00CC;
